@@ -1,0 +1,14 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: TraceAbstractionConcurrent
+Bundle-SymbolicName: TraceAbstractionConcurrent;singleton:=true
+Bundle-Version: 0.0.1
+Bundle-Activator: de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstractionconcurrent.Activator
+Require-Bundle: Library-log4j,
+ UltimateCore,
+ Library-ModelCheckerUtils,
+ RCFGBuilder,
+ NestedWordAutomata,
+ TraceAbstraction
+Bundle-ActivationPolicy: lazy
+Bundle-RequiredExecutionEnvironment: JavaSE-1.6

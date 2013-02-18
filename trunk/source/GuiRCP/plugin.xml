@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.2"?>
+<plugin>
+
+   <extension
+         point="de.uni_freiburg.informatik.ultimate.ep.controller">
+      <impl
+            class="de.uni_freiburg.informatik.ultimate.gui.GuiController"
+            isGraphical="true"/>
+   </extension>
+   
+   <extension
+         point="org.eclipse.ui.perspectives">
+      <perspective
+            class="de.uni_freiburg.informatik.ultimate.gui.UltimateDefaultPerspective"
+            id="de.uni_freiburg.informatik.ultimate.gui.UltimateDefaultPerspective"
+            name="default perspective"/>
+   </extension>
+   <extension
+         point="org.eclipse.ui.views">
+      <view
+            class="de.uni_freiburg.informatik.ultimate.gui.views.LoggingView"
+            id="de.uni_freiburg.informatik.ultimate.gui.views.LoggingView"
+            name="Logging Window"/>
+      <view
+            class="de.uni_freiburg.informatik.ultimate.gui.views.NodeView"
+            id="de.uni_freiburg.informatik.ultimate.gui.views.NodeView"
+            name="NodeView"/>
+   </extension>
+   <extension point="org.eclipse.ui.perspectiveExtensions">
+          <perspectiveExtension targetID="de.uni_freiburg.informatik.ultimate.gui.UltimateDefaultPerspective">               
+               <view 
+               id="de.uni_freiburg.informatik.ultimate.gui.views.NodeView" 
+               relationship="stack"               
+               relative="de.uni_freiburg.informatik.ultimate.gui.UltimateDefaultPerspective.FolderRight"
+               ratio="0.8f"/>
+          </perspectiveExtension>
+</extension>
+   
+   <extension
+         point="de.uni_freiburg.informatik.ultimate.ep.LoggingWindow">
+      <impl class="de.uni_freiburg.informatik.ultimate.gui.logging.GuiLoggingWindow"/>
+   </extension>
+   <extension
+         point="org.eclipse.ui.menus">
+      <menuContribution
+            locationURI="toolbar:org.eclipse.ui.main.toolbar?after=additions">
+         <toolbar
+               id="GuiRCP.toolbar1">
+            <control
+                  class="de.uni_freiburg.informatik.ultimate.gui.contrib.PreludeContribution"
+                  id="de.uni_freiburg.informatik.ultimate.gui.contrib.Prelude">
+            </control>
+         </toolbar>
+      </menuContribution>
+   </extension>
+</plugin>

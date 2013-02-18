@@ -1,0 +1,12 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: BoogiePreprocessorTest
+Bundle-SymbolicName: BoogiePreprocessorTest
+Bundle-Version: 0.0.1
+Require-Bundle: org.junit4, 
+ Library-log4j,
+ UltimateCore,
+ BoogieParser 
+Bundle-ActivationPolicy: lazy
+Bundle-RequiredExecutionEnvironment: JavaSE-1.7
+Fragment-Host: BoogiePreprocessor

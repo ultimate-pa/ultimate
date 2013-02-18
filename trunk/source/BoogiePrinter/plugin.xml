@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.2"?>
+<plugin>
+   <extension
+         point="de.uni_freiburg.informatik.ultimate.ep.output">
+      <impl class="de.uni_freiburg.informatik.ultimate.boogie.printer.BoogiePrinter"/>
+   </extension>
+   <extension
+         point="org.eclipse.ui.preferencePages">
+      <page
+            category="de.uni_freiburg.informatik.ultimate.core.coreplugin.preferences.OutputPreferencePage"
+            class="de.uni_freiburg.informatik.ultimate.boogie.printer.preferences.PreferencePage"
+            id="de.uni_freiburg.informatik.ultimate.boogie.printer.preferences.PreferencePage"
+            name="Boogie Printer">
+      </page>
+   </extension>
+</plugin>

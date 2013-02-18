@@ -1,0 +1,13 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: IRSDependencies
+Bundle-SymbolicName: IRSDependencies;singleton:=true
+Bundle-Version: 0.0.1
+Bundle-Activator: de.uni_freiburg.informatik.ultimate.irs.dependencies.Activator
+Require-Bundle: UltimateCore,
+ Library-log4j,
+ Library-ModelCheckerUtils,
+ BoogieParser,
+ RCFGBuilder
+Bundle-RequiredExecutionEnvironment: JavaSE-1.7
+Bundle-ActivationPolicy: lazy

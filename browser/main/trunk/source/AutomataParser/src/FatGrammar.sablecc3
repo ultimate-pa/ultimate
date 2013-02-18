@@ -1,0 +1,203 @@
+Package local.TestGrammar;
+
+Helpers
+  all = [0..0xFFFF];
+  letter = ['a'..'z'] | ['A'..'Z'] | ['0'..'9'] | '_';
+
+  tab = 9;
+  lf = 10; // line feed, 10/0x000a
+  cr = 13; // carriage return, 13/0x000d
+  eol = lf | cr | cr lf;
+  not_cr_lf = [all - [cr + lf]];
+
+  white_space = (' ' | tab | eol)+;
+  short_comment = ('/' '/' not_cr_lf* eol); 
+
+
+
+Tokens
+  white_space = white_space;
+  comment = short_comment;
+
+  equal = ':='; // eq
+  l_paren = '('; // lp
+  r_paren = ')'; // rp
+  l_brace = '{';  // lb
+  r_brace = '}';  // rb
+  l_brak = '['; // lp
+  r_brak = ']'; // rp
+  comma = ',';  // c
+  hash = '#';
+
+  id = letter+;  // non-empty identifier
+  call_tag = '<';
+  return_tag = '>';
+//  tagged_id = letter+;
+
+  nwa = '#nwa';
+  net = '#net';
+
+  call_alphabet = '#callAlphabet';
+  internal_alphabet = '#internalAlphabet';
+  return_alphabet = '#returnAlphabet';
+
+  states = '#states';
+  initial_states = '#initialStates';
+  final_states = '#finalStates';
+
+  call_transitions = '#callTransitions';
+  internal_transitions = '#internalTransitions';
+  return_transitions = '#returnTransitions';
+  
+  alphabet = '#alphabet';
+  places = '#places';
+  net_transitions = '#transitions';
+  initial_marking = '#initialMarking';
+  accepting_markings = '#acceptingMarkings';
+  accepting_places = '#acceptingPlaces';
+
+
+Ignored Tokens
+  white_space, comment; // comma as delimiter
+
+
+Productions
+
+  test_file {-> test_file} = 
+    test_case* automaton_definition*
+    {-> New test_file([test_case], [automaton_definition])};
+
+  test_case {-> test_case} = 
+      {nested_word} [h1]:hash id expression l_brak nested_word r_brak
+      {-> New test_case.nested_word	(id, expression, nested_word)}
+    | {nested_lasso_word} hash id expression l_brak [stem]:nested_word comma 
+    	[loop]:nested_word r_brak
+      {-> New test_case.nested_lasso_word(id, expression, stem, loop)}
+    | {no_word} hash id expression
+      {-> New test_case.no_word(id, expression)};
+
+  expression {-> expression} = 
+      {operation} id l_paren [expressions]:expression* r_paren 
+      {-> New expression.operation(id, [expressions])}
+    | {automaton_name} id {-> New expression.automaton_name(id)};
+    
+  tagged_symbol {-> tagged_symbol} = 
+      {call} id call_tag
+      {-> New tagged_symbol.call(id)}
+    | {internal} id
+      {-> New tagged_symbol.internal(id)}
+    | {return} return_tag id
+      {-> New tagged_symbol.return(id)};
+
+  nested_word {-> nested_word} = [nested_word]:tagged_symbol* 
+  	{-> New nested_word([nested_word])};
+
+  call_transition {-> call_transition} = 
+    [lp11]:l_paren [predecessor1]:id [symbol1]:id [successor1]:id [rp11]:r_paren
+    {-> New call_transition(predecessor1, symbol1, successor1)};
+
+  internal_transition {-> internal_transition} = 
+    [lp12]:l_paren [predecessor2]:id [symbol2]:id [successor2]:id [rp12]:r_paren
+    {-> New internal_transition(predecessor2, symbol2, successor2)};
+
+  return_transition {-> return_transition} = 
+    [lp13]:l_paren [predecessor3]:id [linear_predecessor]:id [symbol3]:id 
+    [successor3]:id [rp13]:r_paren
+    {-> New return_transition(predecessor3, linear_predecessor, symbol3, 
+    successor3)};
+
+  net_transition {-> net_transition} = [lp_outer]:l_paren [lp1]:l_brace 
+  [predecessors]:id* [rp1]:r_brace [symbol]:id 
+  [lp2]:l_brace [successors]:id* [rp2]:r_brace [rp_outer]:r_paren
+  	{-> New net_transition([predecessors], symbol, [successors])};
+  	
+  marking {-> marking} = [lb1]:l_brace [places]:id* [rb1]:r_brace
+  	{->New marking([places])};
+
+  automaton_definition {-> automaton_definition} = 
+  	{nwa} 
+    	nwa id [eq1]:equal [lp1]:l_paren
+    	call_alphabet [eq2]:equal [lb1]:l_brace [call]:id* [rb1]:r_brace [c1]:comma
+    	internal_alphabet [eq3]:equal [lb2]:l_brace [internal]:id* [rb2]:r_brace [c2]:comma
+    	return_alphabet [eq4]:equal [lb3]:l_brace [return]:id* [rb3]:r_brace [c3]:comma
+    	states [eq5]:equal [lb4]:l_brace [state]:id* [rb4]:r_brace [c4]:comma
+    	initial_states [eq6]:equal [lb5]:l_brace [initial]:id* [rb5]:r_brace [c5]:comma
+    	final_states [eq7]:equal [lb6]:l_brace [final]:id* [rb6]:r_brace [c6]:comma
+    	call_transitions [eq8]:equal [lb7]:l_brace call_transition* [rb7]:r_brace [c7]:comma
+    	internal_transitions [eq9]:equal [lb8]:l_brace internal_transition* [rb8]:r_brace [c8]:comma
+    	return_transitions [eq10]:equal [lb9]:l_brace return_transition* [rb9]:r_brace
+    	[rp1]:r_paren
+    	{-> New automaton_definition.nwa(id, [call], [internal], [return], [state], [initial], [final], [call_transition.call_transition], [internal_transition.internal_transition], [return_transition.return_transition])}
+    | {petri_net_jan}
+    	net id [eq1]:equal [lp1]:l_paren
+    	alphabet [eq2]:equal [lb1]:l_brace [alpha]:id* [rb1]:r_brace [c1]:comma
+    	places [eq3]:equal [lb2]:l_brace [place]:id* [rb2]:r_brace [c2]:comma
+    	net_transitions [eq4]:equal [lb3]:l_brace [transition]:net_transition* [rb3]:r_brace [c3]:comma
+    	initial_marking [eq5]:equal [initial]:marking [c4]:comma
+    	accepting_markings [eq6]:equal [lb4]:l_brace [accepting]:marking* [rb4]:r_brace
+    	[rp1]:r_paren
+    	{-> New automaton_definition.netjan(id, [alpha], [place], [transition], initial, [accepting])}
+    | {petri_net_julian}
+    	net id [eq1]:equal [lp1]:l_paren
+    	alphabet [eq2]:equal [lb1]:l_brace [alpha]:id* [rb1]:r_brace [c1]:comma
+    	places [eq3]:equal [lb2]:l_brace [place]:id* [rb2]:r_brace [c2]:comma
+    	net_transitions [eq4]:equal [lb3]:l_brace [transition]:net_transition* [rb3]:r_brace [c3]:comma
+    	initial_marking [eq5]:equal [initial]:marking [c4]:comma
+    	accepting_places [eq6]:equal [lb4]:l_brace [accepting]:id* [rb4]:r_brace
+    	[rp1]:r_paren
+    	{-> New automaton_definition.netjulian(id, [alpha], [place], [transition], initial, [accepting])};
+
+
+Abstract Syntax Tree
+  test_file = [test_case]:test_case* [automaton_definition]:automaton_definition*;
+  
+  test_case = {nested_word} [test_operation]:id [expression]:expression [nested_word]:nested_word
+            | {nested_lasso_word} [test_operation]:id [expression]:expression [stem]:nested_word [loop]:nested_word
+            | {no_word} [test_operation]:id [expression]:expression;
+
+  expression = {operation} [operation]:id [expressions]:expression* 
+  | {automaton_name} [name]:id;
+  
+   tagged_symbol = {call} [symbol]:id
+            | {internal} [symbol]:id
+            | {return} [symbol]:id;
+
+  nested_word = [nested_word]:tagged_symbol*;
+
+  call_transition = [predecessor]:id [symbol]:id [successor]:id;
+
+  internal_transition = [predecessor]:id [symbol]:id [successor]:id;
+	
+  return_transition = [predecessor]:id  [linear_predecessor]:id [symbol]:id 
+  [successor]:id;
+  
+  net_transition = [predecessors]:id* [symbol]:id [successors]:id*; 
+  
+  marking = [places]:id*;
+	
+  automaton_definition =
+  	{nwa}
+    	[name]:id
+    	[call_alphabet]:id*
+    	[internal_alphabet]:id*
+    	[return_alphabet]:id*
+    	[states]:id*
+    	[initial_states]:id*
+    	[final_states]:id*
+    	[call_transitions]:call_transition*
+    	[internal_transitions]:internal_transition*
+    	[return_transitions]:return_transition*
+    | {netjan}
+    	[name]:id
+    	[alphabet]:id*
+    	[places]:id*
+    	[transitions]:net_transition*
+    	[initial_marking]:marking
+    	[accepting_markings]:marking*
+    | {netjulian}
+    	[name]:id
+    	[alphabet]:id*
+    	[places]:id*
+    	[transitions]:net_transition*
+    	[initial_marking]:marking
+    	[accepting_places]:id*;

@@ -1,0 +1,38 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: GuiRCP Plug-in
+Bundle-SymbolicName: STALINGui;singleton:=true
+Bundle-Version: 1.0.0
+Require-Bundle: 
+ org.eclipse.ui;visibility:=reexport,
+ org.eclipse.core.runtime;visibility:=reexport,
+ STALINCore
+Export-Package: 
+ local.stalin.gui;uses:="org.eclipse.ui,local.stalin.ep.interfaces",
+ local.stalin.gui.actions;
+  uses:="org.eclipse.jface.action,
+   org.eclipse.ui,
+   org.eclipse.ui.actions,
+   org.eclipse.jface.viewers,
+   local.stalin.plugins.general",
+ local.stalin.gui.advisors;
+  uses:="org.eclipse.jface.action,
+   org.eclipse.ui.application,
+   org.eclipse.ui,
+   local.stalin.plugins.general",
+ local.stalin.gui.dialogs;uses:="org.eclipse.swt.widgets,local.stalin.ep.interfaces",
+ local.stalin.gui.interfaces;uses:="local.stalin.model,org.eclipse.jface.viewers",
+ local.stalin.gui.logging;
+  uses:="org.eclipse.jface.resource,
+   org.apache.log4j,
+   org.eclipse.ui,
+   local.stalin.ep.interfaces",
+ local.stalin.gui.misc,
+ local.stalin.gui.provider;uses:="org.eclipse.jface.viewers",
+ local.stalin.gui.views;
+  uses:="org.eclipse.ui,
+   org.eclipse.jface.viewers,
+   org.eclipse.ui.part,
+   org.eclipse.swt.widgets"
+Bundle-RequiredExecutionEnvironment: JavaSE-1.6
+

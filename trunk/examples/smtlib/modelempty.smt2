@@ -1,0 +1,11 @@
+(set-option :produce-models true)
+(set-logic QF_UF)
+(declare-sort U 0)
+(declare-fun f (U) U)
+(declare-fun x () U)
+(check-sat)
+(get-model)
+(get-value (x (f x)))
+(get-model)
+(exit)
+

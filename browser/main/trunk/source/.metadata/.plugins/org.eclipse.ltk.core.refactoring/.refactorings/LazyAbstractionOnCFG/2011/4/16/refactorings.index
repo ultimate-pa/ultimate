@@ -1,0 +1,34 @@
+1303115736337	Rename local variable 'i'
+1303121100826	Rename local variable 'openNodes'
+1303122204638	Rename local variable 'Assumption'
+1303129450777	Rename local variable 'assumption'
+1303154183010	Rename type 'GraphOutputter'
+1303200784497	Rename local variable 'src'
+1303200915257	Rename method 'build_graph'
+1303202005401	Rename local variable 'line'
+1303205601326	Rename method 'getNodeLabel'
+1303285278679	Delete element
+1303285285790	Delete element
+1303285293645	Delete element
+1303291330943	Rename local variable 'assertion'
+1303291450716	Rename local variable 'assertion'
+1303293034999	Rename local variable 'toReturn'
+1303295871230	Rename type 'FormulaWalker'
+1303305002754	Copy compilation unit
+1303305031948	Rename method 'getFreeVariables'
+1303305067878	Rename method 'getFreeVariables'
+1303305079781	Rename method 'getFreeVariables'
+1303305085981	Rename method 'getConstanst'
+1303305116132	Rename type 'FormulaWalkerGetConstants'
+1303305136143	Rename type 'MyFormulaWalker'
+1303307611413	Rename local variable 'termVariables'
+1303309549653	Copy compilation unit
+1303309645831	Rename method 'transformFormula'
+1303309668866	Rename method 'transformTerms'
+1303309678734	Rename method 'transformTerm'
+1303315107007	Copy compilation unit
+1303315119955	Rename type 'FormulaDeepCloner'
+1303406048131	Rename local variable 'edges'
+1303406094167	Rename local variable 'edge'
+1303406316155	Rename local variable 'notInOutVars'
+1303419787415	Rename field 'go'

@@ -1,0 +1,14 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: ErrorLocationGenerator Plug-in
+Bundle-SymbolicName: ErrorLocationGenerator;singleton:=true
+Bundle-Version: 0.0.1
+Bundle-Activator: de.uni_freiburg.informatik.ultimate.plugins.errorlocationgenerator.Activator
+Require-Bundle: UltimateCore,
+ CFGBuilder,
+ CFG2SMT,
+ Library-log4j,
+ Library-ModelCheckerUtils
+Bundle-ActivationPolicy: lazy
+Bundle-RequiredExecutionEnvironment: JavaSE-1.6
+Export-Package: de.uni_freiburg.informatik.ultimate.plugins.errorlocationgenerator

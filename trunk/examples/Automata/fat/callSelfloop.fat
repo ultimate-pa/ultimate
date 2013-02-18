@@ -1,0 +1,33 @@
+// Testfile dumped by Ultimate at 2011/04/14 16:23:18
+// Revision r3493
+//java.lang.AssertionError
+//	at de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.BfsEmptiness.constructRun(BfsEmptiness.java:561)
+//	at de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.BfsEmptiness.constructRun(BfsEmptiness.java:512)
+//	at de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.BfsEmptiness.constructRun(BfsEmptiness.java:556)
+//	at de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.BfsEmptiness.constructRun(BfsEmptiness.java:512)
+//	at de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.BfsEmptiness.constructRun(BfsEmptiness.java:556)
+//	at de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.BfsEmptiness.constructRun(BfsEmptiness.java:512)
+//	at de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.BfsEmptiness.getAcceptingRun(BfsEmptiness.java:259)
+//	at de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton.getAcceptingNestedRun(NestedWordAutomaton.java:499)
+
+//#IsNotEmpty nwa
+#Print minimizeSevpa(nwa)
+
+
+#nwa nwa := (
+	#callAlphabet := { call },
+	#internalAlphabet := { },
+	#returnAlphabet := { return },
+	#states := {q0 q1 q2 },
+	#initialStates := { q0 },
+	#finalStates := { q2 },
+	#callTransitions := {
+		 (q0 call q0)
+	},
+	#internalTransitions := {
+	},
+	#returnTransitions := {
+		 (q0 q0 return q1)
+		 (q1 q0 return q2)
+	}
+)

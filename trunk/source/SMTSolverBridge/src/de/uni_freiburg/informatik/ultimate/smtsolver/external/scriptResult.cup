@@ -1,0 +1,557 @@
+/* CUP specification for smtlib */
+
+package de.uni_freiburg.informatik.ultimate.smtsolver.external;
+import de.uni_freiburg.informatik.ultimate.logic.*;
+import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.util.MapValuation;
+import de.uni_freiburg.informatik.ultimate.util.ScopedHashMap;
+import java.math.BigInteger;
+import java.math.BigDecimal;
+import java.util.Arrays;
+import java.util.HashMap;
+import java_cup.runtime.Symbol;
+import java.util.Iterator;
+
+
+parser Parser;
+option expect = 1;
+option symbols = LexerSymbols;
+option java15, compact_red, newpositions;
+
+parser code {:
+	String filename;
+	Iterator<Symbol> m_AnswerIterator;
+	
+	/* Oday: Added Script, set, and get methods */
+	private Script m_Script;
+	public void setScript(Script script) {
+		m_Script = script;
+	}
+	
+	public Script getScript() {
+		return m_Script;
+	}
+
+	public void report_error(String s, Object sym) {
+		String location;
+		if (sym instanceof MySymbolFactory.LineColumnSymbol) {
+			MySymbolFactory.LineColumnSymbol bsym = (MySymbolFactory.LineColumnSymbol) sym;
+			location = bsym.getLocation();
+	    } else if ((sym instanceof Symbol) 
+	    	       && ((Symbol)sym).sym == LexerSymbols.EOF) {
+	    	location = "EOF";
+	    } else
+	        location = "UNKNOWN";
+	    
+	    action_obj.setError(filename+":"+location+": "+s);
+	}
+
+	public void report_error(String s) {
+		report_error(s, cur_token);
+	}
+
+	public void syntax_error(Symbol sym) {
+	    report_error("Syntax Error", sym);
+	}
+
+	public void setFileName(String filename) {
+		this.filename = filename;
+	}
+	
+	public void setAnswer(Iterable<Symbol> answer) {
+		this.m_AnswerIterator = answer.iterator();
+	}
+:}
+
+action code {:
+	ScopedHashMap<String,TermVariable> localVars = 
+		new ScopedHashMap<String, TermVariable>(); 
+	Sort[] sortParams = null;
+	
+	static class Binding {
+	    TermVariable mVar;
+	    Term mTerm;
+	    public Binding(TermVariable var, Term term) {
+	        mVar = var;
+	        mTerm = term;
+	    }
+	    TermVariable getVar() {
+	        return mVar;
+	    }
+	    Term getTerm() {
+	        return mTerm;
+	    }
+	}
+	
+	static class IndexedIdentifier {
+	    String mName;
+	    BigInteger[] mIndices;
+	    public IndexedIdentifier(String name, BigInteger[] indices) {
+	        mName = name;
+	        mIndices = indices;
+	    }
+	    public String getName() {
+	        return mName;
+	    }
+	    public BigInteger[] getIndices() {
+	        return mIndices;
+	    }
+	    
+	    public String toString() {
+	    	if (mIndices == null)
+	    		return mName;
+	    	return "(_ "+mName+" "+Arrays.toString(mIndices)+")";
+	    }
+	}
+
+	static class QualIdentifier {
+	    String mName;
+	    BigInteger[] mIndices;
+	    Sort mSort;
+	    public QualIdentifier(IndexedIdentifier id, Sort sort) {
+	        mName = id.getName();
+	        mIndices = id.getIndices();
+	        mSort = sort;
+	    }
+	    public String getIdentifier() {
+	        return mName;
+	    }
+	    public BigInteger[] getIndices() {
+	        return mIndices;
+	    }
+	    public Sort getSort() {
+	        return mSort;
+	    }
+
+	    public String toString() {
+	    	String indexedId;
+	    	if (mIndices == null)
+	    		indexedId = mName;
+	    	else
+	    		indexedId = "(_ "+mName+" "+Arrays.toString(mIndices)+")";
+	    	if (mSort == null)
+	    		return indexedId;
+	    	return "(as " + indexedId + " " + mSort + ")";
+	    }
+	}
+
+	String errorMessage;
+	public void setError(String message) {
+		if (errorMessage == null)
+			errorMessage = message;
+	}
+	public boolean hasError() {
+		return errorMessage != null;
+	}
+	public String getError() {
+		String result = errorMessage;
+		errorMessage = null;
+		return result;
+	}
+	
+	public Sort lookupSort(Symbol sym, IndexedIdentifier id, Sort[] args) {
+	    for (Sort s: args) {
+	        if (s == null) return null;
+	    }
+		String name = id.getName();
+		if (args.length == 0 && id.getIndices() == null && sortParams != null) {
+		    for (Sort s: sortParams) {
+		        if (s.getName().equals(name))
+		            return s;
+		    }
+		}
+		try {
+			return parser.getScript().sort(name, id.getIndices(), args);
+		} catch (SMTLIBException se) {
+			parser.report_error("Undeclared sort ("+id+" "+args.length+")", sym);
+		}
+		return null;
+	}
+	
+	public Term createTerm(Symbol fsym, String name, BigInteger[] indices, Sort resultSort, Term[] param) {
+		try {
+			return parser.getScript().term(name, indices, resultSort, param);
+		} catch (SMTLIBException se) {
+			parser.report_error("Undeclared function symbol "+name, fsym);
+		}
+		return null;
+	}
+
+	public TermVariable createTermVariable(String name, Sort sort) {
+  	    if (sort == null)
+  	        return null;
+  	    try {
+	    	TermVariable tv = parser.getScript().variable(name, sort);
+	    	localVars.put(tv.getName(), tv);
+	    	return tv;
+	    } catch (SMTLIBException cannotHappen) {}
+	    // Actually unreachable
+	    throw new AssertionError();
+	}
+	
+	private Term getTermVariable(String name) {
+		return localVars.get(name);
+	}	
+	
+  	public Term annotateTerm(Term term, Annotation[] annots) {
+  	    if (term == null)
+  	        return null;
+  	    try {
+  			return parser.getScript().annotate(term, annots);
+  		} catch (SMTLIBException se) {
+  			parser.report_error(se.getMessage());
+  		}
+  		return null;
+  	}
+
+    private Object[] mergeArrays(Object[][] arrs) {
+    	int len = 0;
+    	for (int i = 0; i < arrs.length; i++)
+    		len += arrs[i].length;
+    	Object[] result = new Object[len];
+    	int offset = 0;
+    	for (int i = 0; i < arrs.length; i++) {		  
+    		System.arraycopy(arrs[i], 0, result, offset, arrs[i].length);
+    		offset += arrs[i].length;
+    	}
+    	return result;
+    }
+:}
+
+/*init with {: getScanner().init(); :} */
+scan with {: return m_AnswerIterator.hasNext() ? m_AnswerIterator.next()
+                                               : new Symbol(LexerSymbols.EOF); :}
+
+
+/* Predefined Symbols */
+terminal String UNDERSCORE, BANG,
+         AS, ASSERT, CHECKSAT, CONTINUEDEXECUTION, 
+         DECLARESORT, DECLAREFUN, DEFINESORT, DEFINEFUN, ERRORSYM,
+         EXISTS, EXIT, FALSE, FORALL, GETASSERTIONS, GETASSIGNMENT, GETINFO,
+         GETINTERPOLANTS,
+         GETMODEL, GETOPTION, GETPROOF, GETUNSATCORE, GETVALUE, IMMEDIATEEXIT,
+         INCOMPLETE, LET, LOGIC, NONE, NUMERALSYM, MEMOUT, PAR, POP, PUSH,
+         DECIMALSYM, SAT, SUCCESS, SETLOGIC, SETINFO, SETOPTION, STRINGSYM,
+         THEORY, TRUE, UNKNOWN, UNSUPPORTED, UNSAT,
+         INCLUDE, RESET, SIMPLIFY, TIMED, TERM,
+         /* Oday (not in standard) */ TIMEOUT, ASSERTED, STDOUT, STDERR;
+
+/* Predefined Keywords */
+terminal String /* attribute */
+         CNAMED, CPATTERN,
+         /* theory */
+         CSORTSDESCRIPTION, CSORTS, CFUNS, CFUNSDESCRIPTION, CDEFINITION,
+         /* logic */
+         CEXTENSIONS, CLANGUAGE, CTHEORIES,
+         /* theory + logic */
+         CNOTES, CVALUES,
+         /* options */
+         CDIAGNOSTICOUTPUTCHANNEL, CREGULAROUTPUTCHANNEL,
+         CEXPANDDEFINITIONS, CINTERACTIVEMODE, CPRINTSUCCESS, CVERBOSITY,     
+	     CPRODUCEASSIGNMENTS, CPRODUCEMODELS, CPRODUCEPROOFS, CPRODUCEUNSATCORES, 
+	     CRANDOMSEED, CINTERPOLANTCHECKMODE, CSTRONGSIMPLIFIER,
+	     CTIMEOUT,
+	     /* Oday: keywords for get-info */
+	     CERRORBEHAVIOR, CNAME, CAUTHORS, CVERSION, CSTATUS, CREASONUNKNOWN,
+	     /* for proof */ CPIVOT, CASSERTED;
+	     
+terminal String SYMBOL, KEYWORD;
+terminal BigInteger NUMERAL;
+terminal BigDecimal DECIMAL;
+terminal String HEXADECIMAL, BINARY, STRING;
+terminal LPAR, RPAR;
+
+non terminal String keyword, symbol;
+non terminal String keywordAttr, keywordOption;
+non terminal String keywordTheory, keywordLogic, keywordTheoryLogic;
+non terminal String keywordNoAttr, keywordNoTheory, keywordNoLogic, keywordNoOption;
+non terminal String booleanOption, stringOption, numeralOption;
+non terminal IndexedIdentifier identifier, identifierIndexed;
+non terminal Object specConstant;
+non terminal Object sExpr;
+
+non terminal Sort sort;
+non terminal Object attributeValue;
+non terminal Annotation attribute;
+non terminal Annotation attributeTheory, attributeLogic;
+non terminal QualIdentifier qualIdentifier;
+non terminal Binding varBinding;
+non terminal TermVariable sortedVar;
+non terminal Term constantTerm, term;
+non terminal sortSymbolDecl;
+non terminal metaSpecConstant;
+non terminal parFunSymbolDecl, funSymbolDecl;
+non terminal theoryAttribute;
+non terminal logicAttribute;
+non terminal Boolean bValue;
+non terminal option;
+non terminal String infoFlag;
+non terminal command;
+non terminal commandPar;
+non terminal theoryDecl, logic, script;
+
+non terminal genResponse, errorResponse;
+non terminal LBool status;
+non terminal Object goal;
+
+/* Oday (defining non-terminals) */
+non terminal String errorBehavior;
+non terminal ReasonUnknown reasonUnknown;
+non terminal Object infoResponse;
+non terminal Object giResponse;
+non terminal LBool csResponse;
+non terminal Term[] gaResponse;
+non terminal Object proof;
+non terminal Object gpResponse;
+non terminal Object goResponse;
+non terminal Term[] gucResponse;
+non terminal HashMap valuationPair;
+non terminal Valuation gvResponse;
+non terminal HashMap tValuationPair;
+non terminal Assignments gtaResponse;
+
+goal ::= SUCCESS genResponse {: RESULT = null; :}
+       | GETINFO giResponse:i {: RESULT = i; :}
+       | CHECKSAT csResponse:s {: RESULT = s; :}
+       | GETASSERTIONS gaResponse:a {: RESULT = a; :}
+       | GETUNSATCORE gucResponse:u {: RESULT = u; :}
+       | GETVALUE gvResponse:v {: RESULT = v; :}
+       | GETASSIGNMENT gtaResponse:a {: RESULT = a; :}
+       | GETOPTION goResponse:o {: RESULT = o; :}
+       | TERM term:t {: RESULT = t; :};
+
+specConstant ::= NUMERAL:n {: RESULT = n; :}
+             | DECIMAL:n {: RESULT = n; :}
+             | HEXADECIMAL:n {: RESULT = n; :}
+             | BINARY:n {: RESULT = n; :}
+             | STRING:n {: RESULT = new QuotedObject(n); :};
+             
+sExpr ::= specConstant
+        | symbol
+        | KEYWORD
+        | LPAR sExpr*:s RPAR {: RESULT = s; :};
+
+constantTerm ::= NUMERAL:n 
+				{: try {
+					RESULT = parser.getScript().numeral(n);
+					} catch (SMTLIBException se) {
+						parser.report_error(se.getMessage());
+						RESULT = null;
+					} :}
+             | DECIMAL:n
+             	{: try {
+             		RESULT = parser.getScript().decimal(n);
+             		} catch (SMTLIBException se) {
+             			parser.report_error(se.getMessage());
+             			RESULT = null;
+             		} :}
+             | HEXADECIMAL:n {: try {
+             		RESULT = parser.getScript().hexadecimal(n);
+             		} catch (SMTLIBException se) {
+             			parser.report_error(se.getMessage());
+             			RESULT = null;
+             		}  :}
+             | BINARY:n {: try {
+             		RESULT = parser.getScript().binary(n);
+             		} catch (SMTLIBException se) {
+             			parser.report_error(se.getMessage());
+             			RESULT = null;
+             		} :}
+             | STRING:n {: RESULT = parser.getScript().string(n); :};
+identifierIndexed ::= LPAR UNDERSCORE symbol:id NUMERAL+:indices RPAR
+             {: RESULT = new IndexedIdentifier(id, indices); :};
+identifier ::= symbol:s {: RESULT = new IndexedIdentifier(s, null); :}
+           | identifierIndexed;
+
+sort ::= identifier:id {: RESULT = lookupSort(id$, id, new Sort[0]); :} 
+       | LPAR identifier:id sort+:sorts RPAR
+         {: RESULT = lookupSort(id$, id, sorts); :};
+attribute ::= keywordNoAttr:k attributeValue?:v {: RESULT = new Annotation(k, v); :}
+        | CNAMED:k symbol:v {: RESULT = new Annotation(k, v); :}
+        | CPATTERN:k LPAR term*:t RPAR {: RESULT = new Annotation(k, t); :};
+attributeValue ::= specConstant
+        | symbol
+        | LPAR sExpr*:s RPAR {: RESULT = s; :};
+attributeLogic  ::= keywordNoLogic:k  attributeValue?:v
+                    {: RESULT = new Annotation(k, v); :};
+attributeTheory ::= keywordNoTheory:k attributeValue?:v
+                    {: RESULT = new Annotation(k, v); :};
+
+qualIdentifier ::= identifier:i 
+         {: RESULT = new QualIdentifier(i, null); :}
+       | LPAR AS identifier:i sort:s RPAR 
+         {: RESULT = new QualIdentifier(i, s); :};
+varBinding ::= LPAR symbol:sym term:t RPAR
+         {: if (!hasError()) {
+         		TermVariable tv = createTermVariable(sym, t.getSort());
+            	RESULT = new Binding(tv, t);
+            } else
+            	RESULT = null;
+          :};
+sortedVar ::= LPAR symbol:sym sort:s RPAR
+         {: RESULT = createTermVariable(sym, s); :};
+term ::= constantTerm
+       | qualIdentifier:fun
+         {: RESULT = fun.getIndices() == null && fun.getSort() == null ? getTermVariable(fun.getIdentifier()) : null;
+            if (RESULT == null)
+                RESULT = createTerm(fun$, fun.getIdentifier(), fun.getIndices(), fun.getSort(), new Term[0]); :}
+       | LPAR qualIdentifier:fun term+:args RPAR
+         {: RESULT = createTerm(fun$, fun.getIdentifier(), fun.getIndices(), fun.getSort(), args); :}
+       | LPAR LET {: localVars.beginScope(); :}
+                  LPAR varBinding+:bindings RPAR term:t RPAR
+         {: TermVariable[] vars = new TermVariable[bindings.length];
+            Term[] terms = new Term[bindings.length];
+            for (int i = 0; i < bindings.length; i++) {
+            	if (bindings[i] != null) {
+               		vars[i] = bindings[i].getVar();
+               		terms[i] = bindings[i].getTerm();
+               	}
+            }
+            localVars.endScope();
+            if (hasError())
+            	RESULT = null;
+            else
+            	RESULT = parser.getScript().let(vars, terms, t); :}
+       | LPAR FORALL {: localVars.beginScope(); :}
+              LPAR sortedVar+:vars RPAR term:t RPAR
+         {: localVars.endScope();
+            if (hasError())
+            	RESULT = null;
+            else
+            	RESULT = parser.getScript().quantifier(Script.FORALL, vars, t); :}
+       | LPAR EXISTS {: localVars.beginScope(); :}
+              LPAR sortedVar+:vars RPAR term:t RPAR
+         {: localVars.endScope();
+            if (hasError())
+            	RESULT = null;
+            else
+            	RESULT = parser.getScript().quantifier(Script.EXISTS, vars, t); :}
+       | LPAR BANG term:t attribute+:attr RPAR
+         {: RESULT = annotateTerm(t, attr); :};
+
+
+symbol ::= SYMBOL | CONTINUEDEXECUTION | ERRORSYM | FALSE | IMMEDIATEEXIT |
+           INCOMPLETE | LOGIC | NONE | MEMOUT | SAT | SUCCESS | THEORY | TRUE |
+           UNKNOWN | UNSUPPORTED | UNSAT | INCLUDE | RESET |
+           SIMPLIFY | /* Oday: Added Symbols */ TIMEOUT | ASSERTED;
+         
+/* The following are reserved words
+         PAR | NUMERALSYM | DECIMALSYM | STRINGSYM |
+         UNDERSCORE | AS | BANG | LET | FORALL | EXISTS |
+         ASSERT | CHECKSAT |  
+         DECLARESORT | DECLAREFUN | DEFINESORT | DEFINEFUN | 
+         EXIT | GETASSERTIONS | GETASSIGNMENT | GETINFO |
+         GETMODEL | GETOPTION | GETPROOF | GETUNSATCORE | GETVALUE |
+         POP | PUSH | SETLOGIC | SETINFO | SETOPTION; */
+
+keywordAttr   ::= CPATTERN | CNAMED;
+keywordTheory ::= CSORTSDESCRIPTION | CSORTS | 
+                  CFUNS | CFUNSDESCRIPTION | CDEFINITION;
+keywordLogic ::= CEXTENSIONS | CLANGUAGE | CTHEORIES;
+keywordTheoryLogic ::= keywordTheory | keywordLogic | CNOTES | CVALUES;
+keywordOption ::= CDIAGNOSTICOUTPUTCHANNEL | CREGULAROUTPUTCHANNEL |
+         CEXPANDDEFINITIONS | CINTERACTIVEMODE | CPRINTSUCCESS | CVERBOSITY |     
+	     CPRODUCEASSIGNMENTS | CPRODUCEMODELS | CPRODUCEPROOFS | CPRODUCEUNSATCORES | 
+	     CRANDOMSEED | CTIMEOUT | CINTERPOLANTCHECKMODE | CSTRONGSIMPLIFIER;
+
+keywordNoAttr ::= KEYWORD | keywordTheoryLogic | keywordOption;
+keywordNoTheory ::= KEYWORD | keywordAttr | keywordLogic | keywordOption;
+keywordNoLogic ::= KEYWORD | keywordAttr | keywordTheory | keywordOption;
+keywordNoOption ::= KEYWORD | keywordAttr | keywordTheoryLogic;
+keyword ::= KEYWORD | keywordAttr | keywordTheoryLogic | keywordOption |
+/* Oday */ CERRORBEHAVIOR | CNAME | CAUTHORS | CVERSION | CSTATUS | CREASONUNKNOWN;
+
+errorResponse ::= UNSUPPORTED {: if (true) throw new UnsupportedOperationException(); :}
+                | LPAR ERRORSYM STRING:err RPAR {: if (true) throw new SMTLIBException(err); :}
+                ;
+
+genResponse ::= SUCCESS
+	| errorResponse;
+	
+status ::= 
+	  SAT {: RESULT = LBool.SAT; :}
+	| UNSAT {: RESULT = LBool.UNSAT; :}
+	| UNKNOWN {: RESULT = LBool.UNKNOWN; :}
+	;
+
+/* Oday: specify responses */
+
+errorBehavior ::= IMMEDIATEEXIT:i {: RESULT = i; :} |
+				  CONTINUEDEXECUTION:c {: RESULT = c; :};
+
+
+reasonUnknown ::= TIMEOUT {: RESULT = ReasonUnknown.TIMEOUT; :} |
+				  MEMOUT {: RESULT = ReasonUnknown.MEMOUT; :} |
+				  INCOMPLETE {: RESULT = ReasonUnknown.INCOMPLETE; :};
+
+
+infoResponse ::= CERRORBEHAVIOR:c errorBehavior:e {: RESULT = e; :} |
+				 CNAME:c STRING:i {: RESULT = new QuotedObject(i); :} |
+				 CAUTHORS:c STRING:i {: RESULT = new QuotedObject(i); :} |
+				 CVERSION:c STRING:i {: RESULT = new QuotedObject(i); :} |
+				 CSTATUS:c status:s {: RESULT = s; :} |
+				 CREASONUNKNOWN:c reasonUnknown:r {: RESULT = r; :} |
+				 attribute:a {: RESULT = a.getValue() == null ? a.getKey() : new Object[] { a.getKey(), a.getValue() }; :};
+				 
+giResponse ::= LPAR infoResponse+:i RPAR {: RESULT = i; :}
+			 | errorResponse;
+
+
+csResponse ::= status
+			 | errorResponse;
+
+gaResponse ::= LPAR term*:t RPAR {: RESULT = t; :}
+			 | errorResponse;
+
+/* (Proofs are unsupported)
+proof ::= sExpr;
+gpResponse ::= proof;
+*/
+
+gucResponse ::= LPAR symbol*:s RPAR {: Term[] terms = new Term[s.length];
+							           for (int i = 0; i < s.length; i++) {
+            							   terms[i] = parser.getScript().term(s[i]);
+               						   }
+               						   RESULT = terms;
+            						   :}
+			 | errorResponse;
+				   
+valuationPair ::= LPAR term:t1 term:t2 RPAR
+{:  HashMap<Term, Term> pair = new HashMap<Term, Term>();
+	pair.put(t1,t2);
+	RESULT = pair;
+:};
+
+gvResponse ::= LPAR valuationPair+:p RPAR
+{:  HashMap<Term, Term> all = new HashMap<Term, Term>();
+	for (int i=0; i<p.length; i++)
+		all.putAll(p[i]);
+	MapValuation val = new MapValuation(all);
+	RESULT = val;
+:}
+			 | errorResponse;
+
+bValue ::= TRUE {: RESULT = true; :} | FALSE {: RESULT = false; :};
+
+tValuationPair ::= LPAR symbol:s bValue:v RPAR 
+{:  HashMap<String, Boolean> pair = new HashMap<String, Boolean>();
+	pair.put(s,v);
+	RESULT = pair;
+:};
+
+gtaResponse ::= LPAR tValuationPair*:a RPAR
+{:  HashMap<String, Boolean> all = new HashMap<String, Boolean>();
+	for (int i=0; i<a.length; i++)
+		all.putAll(a[i]);
+	Assignments assign = new Assignments(all);
+	RESULT = assign;
+:}
+			 | errorResponse;
+
+/* get option response */
+goResponse ::= TRUE {: RESULT = true; :}
+			 | FALSE {: RESULT = false; :}
+			 | NUMERAL:n {: RESULT = n; :}
+			 | STDOUT:s {: RESULT = s; :}
+			 | STDERR:s {: RESULT = s; :}
+			 | errorResponse;

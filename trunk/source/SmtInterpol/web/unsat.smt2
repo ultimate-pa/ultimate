@@ -1,0 +1,12 @@
+(set-option :produce-proofs true)
+(set-logic QF_UFLIA)
+(declare-fun f (Int) Int)
+(declare-fun g (Int) Int)
+(declare-fun x () Int)
+(declare-fun y () Int)
+(assert (! (and (= (f x) (g y)) (= x y)) :named CCPart))
+(assert (! (> (f x) (g x)) :named LAPart))
+(check-sat)
+(get-proof)
+(exit)
+

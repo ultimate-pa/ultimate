@@ -1,0 +1,22 @@
+1298285067762	Delete element
+1298285355466	Rename type 'UndwindingNode'
+1298296703568	Delete element
+1298296812284	Delete element
+1298555211747	Rename local variable 'procNode'
+1298556695132	Rename local variable 'oldNode'
+1298556704803	Rename local variable 'newNode'
+1298557387189	Rename method 'expand'
+1298565090642	Rename field 'm_allNodesInOrder'
+1298565480671	Rename local variable 'procNode'
+1298566969528	Extract method 'paper_UNWIND'
+1298568221472	Infer generic type arguments
+1298570485568	Encapsulate field 'm_isCovered'
+1298574463565	Encapsulate field 'm_coveringNode'
+1298574469172	Encapsulate field 'm_coveredNode'
+1298575233450	Encapsulate field 'm_coveredNodes'
+1298579699956	Rename method 'uncoverRec'
+1298585968224	Encapsulate field 'm_isLeaf'
+1298654104936	Rename local variable 'm_ShortestPath'
+1298654149460	Rename local variable 'm_OutConstants'
+1298654212329	Rename local variable 'm_ShortestPath'
+1298654279612	Rename local variable 'm_OutConstants'

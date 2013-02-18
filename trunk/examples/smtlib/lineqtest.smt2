@@ -1,0 +1,8 @@
+(set-option :produce-proofs true)
+(set-info :status sat)
+(set-logic QF_UFLRA)
+(declare-fun x () Real)
+(declare-fun y () Real)
+(assert (and (distinct x 7.0 0.0) (distinct y 7.0 0.0) (= (+ x y) 7.0)))
+(check-sat)
+(exit)

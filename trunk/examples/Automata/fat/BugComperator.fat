@@ -1,0 +1,51 @@
+// heizmann@informatik.uni-freiburg.de 04.02.2011
+// Obtained by modification of 2 process Peterson
+// Revealed bug of tree maps and comperator
+
+#Accepts resultNwa [initCrit initEnsures 0crit0 1crit1 0Ensures]
+#Accepts determinize(resultNwa) [initCrit initEnsures 0crit0 1crit1 0Ensures]
+#NotAccepts complement(resultNwa) [initCrit initEnsures 0crit0 1crit1 0Ensures]
+#IsNotEmpty determinize(resultNwa)
+
+#Print complement(resultNwa)
+
+#nwa resultNwa := (
+	#callAlphabet := {},
+	#internalAlphabet := {1crit0 1Ensures 1crit1 initCrit 0Ensures initEnsures 0crit0 0crit1 },
+	#returnAlphabet := {},
+	#states := {_7b_p4_2c_q3_7d_ _7b_pe_2c_q2_7d_ _7b_pe_2c_q4_7d_ _7b_q0_2c_p0_7d_ _7b_q4_2c_p3_7d_ _7b_p1_2c_q1_7d_ _7b_q3_2c_p2_7d_ _7b_q2_2c_p2_7d_ FuckFuckFuck _7b_q4_2c_p2_7d_ Zerrung _7b_q2_2c_p3_7d_ _7b_qe_2c_p2_7d_ _7b_p4_2c_q2_7d_ _7b_q3_2c_pe_7d_ _7b_q3_2c_p3_7d_ _7b_pe_2c_qe_7d_ _7b_p4_2c_q4_7d_ },
+	#initialStates := {_7b_q0_2c_p0_7d_ },
+	#finalStates := {_7b_qe_2c_p2_7d_ _7b_pe_2c_q2_7d_ _7b_q3_2c_pe_7d_ _7b_pe_2c_qe_7d_ Zerrung _7b_pe_2c_q4_7d_ FuckFuckFuck },
+	#callTransitions := {
+	},
+	#internalTransitions := {
+		 (_7b_q0_2c_p0_7d_ initCrit _7b_p1_2c_q1_7d_)
+		 (_7b_p1_2c_q1_7d_ initEnsures _7b_q2_2c_p2_7d_)
+		 (_7b_q2_2c_p2_7d_ 0crit0 _7b_q2_2c_p3_7d_)
+		 (_7b_q2_2c_p2_7d_ 0crit1 _7b_pe_2c_q2_7d_)
+		 (_7b_q2_2c_p2_7d_ 1crit0 _7b_q3_2c_p2_7d_)
+		 (_7b_q2_2c_p2_7d_ 1crit1 _7b_qe_2c_p2_7d_)
+		 (_7b_q3_2c_p2_7d_ 1Ensures _7b_q4_2c_p2_7d_)
+		 (_7b_q3_2c_p2_7d_ 0crit0 _7b_q3_2c_p3_7d_)
+		 (_7b_q3_2c_p2_7d_ 0crit1 _7b_q3_2c_pe_7d_)
+		 (_7b_qe_2c_p2_7d_ 0crit0 Zerrung)
+		 (_7b_qe_2c_p2_7d_ 0crit1 _7b_pe_2c_qe_7d_)
+		 (_7b_pe_2c_q2_7d_ 1crit0 _7b_q3_2c_pe_7d_)
+		 (_7b_pe_2c_q2_7d_ 1crit1 _7b_pe_2c_qe_7d_)
+		 (_7b_q2_2c_p3_7d_ 1crit0 _7b_q3_2c_p3_7d_)
+		 (_7b_q2_2c_p3_7d_ 1crit1 Zerrung)
+		 (_7b_q2_2c_p3_7d_ 0Ensures _7b_p4_2c_q2_7d_)
+		 (_7b_q3_2c_pe_7d_ 1Ensures _7b_pe_2c_q4_7d_)
+		 (_7b_q3_2c_p3_7d_ 0Ensures _7b_p4_2c_q3_7d_)
+		 (_7b_q3_2c_p3_7d_ 1Ensures _7b_q4_2c_p3_7d_)
+		 (_7b_q4_2c_p2_7d_ 0crit0 _7b_q4_2c_p3_7d_)
+		 (_7b_q4_2c_p2_7d_ 0crit1 _7b_pe_2c_q4_7d_)
+		 (Zerrung 0Ensures FuckFuckFuck)
+		 (_7b_p4_2c_q2_7d_ 1crit0 _7b_p4_2c_q3_7d_)
+		 (_7b_p4_2c_q2_7d_ 1crit1 FuckFuckFuck)
+		 (_7b_q4_2c_p3_7d_ 0Ensures _7b_p4_2c_q4_7d_)
+		 (_7b_p4_2c_q3_7d_ 1Ensures _7b_p4_2c_q4_7d_)
+	},
+	#returnTransitions := {
+	}
+)

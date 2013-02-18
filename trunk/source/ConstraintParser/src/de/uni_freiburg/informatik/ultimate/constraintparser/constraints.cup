@@ -1,0 +1,107 @@
+/* CUP specification for smtlib */
+
+package de.uni_freiburg.informatik.ultimate.constraintparser;
+import de.uni_freiburg.informatik.ultimate.logic.*;
+import java.util.HashMap;
+import org.apache.log4j.Logger;
+import java_cup.runtime.Symbol;
+
+parser Parser;
+option symbols = LexerSymbols;
+option java15, compact_red, newpositions;
+
+parser code {:
+	String filename;
+	public void setFileName(String filename) {
+		this.filename = filename;
+	}
+	
+	public void report_error(String s, Object sym) {
+		String location;
+		if (sym instanceof MySymbolFactory.LineColumnSymbol) {
+			MySymbolFactory.LineColumnSymbol bsym = (MySymbolFactory.LineColumnSymbol) sym;
+			location = bsym.getLocation();
+	    } else if ((sym instanceof Symbol) 
+	    	       && ((Symbol)sym).sym == LexerSymbols.EOF) {
+	    	location = "EOF";
+	    } else
+	        location = "UNKNOWN";
+	    
+		Logger.getRootLogger().error(filename+":"+location+": "+s);
+	}
+
+	public void report_error(String s) {	
+		report_error(s, cur_token);
+	}
+	Theory theory = null;
+	public void setTheory(Theory theory) {
+		this.theory = theory;
+	}
+:}
+
+action code {:
+    HashMap<String,Term> variables = new HashMap<String,Term>();
+	Script theory = new NoopScript();
+    {
+    	theory.setLogic(Logics.QF_LRA);
+    }
+	Sort realSort = theory.sort("Real");
+
+	public Term getId(String name) {
+		Term sym = variables.get(name);
+		if (sym == null) {
+		    theory.declareFun(name, new Sort[0], realSort);
+		    sym = theory.term(name);
+			variables.put(name, sym);
+		}
+		return sym;
+	}
+:}
+
+init with {: :} 
+scan with {: return getScanner().next_token(); :}
+
+
+/* Keywords */
+terminal LPAR, RPAR;
+terminal AND, OR, NOT, TRUE, FALSE;
+terminal String NUMERAL, DECIMAL;
+terminal String ID, ARITH_PRED, ARITH_MUL, ARITH_PLUS;
+
+non terminal Term formula;
+non terminal Term atom;
+non terminal Term term;
+
+precedence left OR;
+precedence left AND;
+precedence nonassoc NOT;
+precedence left ARITH_PRED;
+precedence left ARITH_PLUS;
+precedence left ARITH_MUL;
+
+formula ::= atom:a {: RESULT = a; :}
+          | formula:f1 AND formula:f2
+              {: RESULT = theory.term("and", f1, f2); :}
+          | formula:f1 OR formula:f2
+              {: RESULT = theory.term("or", f1, f2); :}
+          | NOT formula:f
+              {: RESULT = theory.term("not", f); :}
+          | LPAR formula:f RPAR {: RESULT = f; :}
+          ;
+
+atom ::= term:t1 ARITH_PRED:op term:t2
+         {: RESULT = theory.term(op, t1, t2); :}
+	   ;
+term ::= term:t1 ARITH_MUL:op term:t2
+         {: RESULT = theory.term(op, t1, t2); :}
+       | term:t1 ARITH_PLUS:op term:t2
+         {: RESULT = theory.term(op, t1, t2); :}
+       | ID:id
+         {: RESULT = getId(id); :}
+       | NUMERAL:n
+         {: RESULT = theory.decimal(n+".0"); :}
+       | DECIMAL:r
+         {: RESULT = theory.decimal(r); :}
+       | LPAR term:t RPAR
+         {: RESULT = t; :}
+       ;

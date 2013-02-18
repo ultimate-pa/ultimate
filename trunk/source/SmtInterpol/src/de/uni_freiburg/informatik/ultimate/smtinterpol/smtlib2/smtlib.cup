@@ -1,0 +1,754 @@
+/*
+ * Copyright (C) 2009-2012 University of Freiburg
+ *
+ * This file is part of SMTInterpol.
+ *
+ * SMTInterpol is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * SMTInterpol is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with SMTInterpol.  If not, see <http://www.gnu.org/licenses/>.
+ */
+/* CUP specification for smtlib */
+
+package de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2;
+import de.uni_freiburg.informatik.ultimate.logic.*;
+import de.uni_freiburg.informatik.ultimate.util.ScopedHashMap;
+import java.math.BigInteger;
+import java.math.BigDecimal;
+import java.util.Arrays;
+import java_cup.runtime.Symbol;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.util.MySymbolFactory;
+
+parser Parser;
+option symbols = LexerSymbols;
+option java15, compact_red, newpositions;
+
+parser code {:
+	String filename;
+	ParseEnvironment env;
+
+	public void report_error(String s, Object sym) {
+		String location;
+		if (sym instanceof MySymbolFactory.LineColumnSymbol) {
+			MySymbolFactory.LineColumnSymbol bsym = (MySymbolFactory.LineColumnSymbol) sym;
+			location = bsym.getLocation();
+	    } else if ((sym instanceof Symbol) 
+	    	       && ((Symbol)sym).sym == LexerSymbols.EOF) {
+	    	location = "EOF";
+	    } else
+	        location = "UNKNOWN";
+	    
+	    action_obj.setError(filename+":"+location+": "+s);
+	}
+
+	public void report_error(String s) {	
+		report_error(s, cur_token);
+	}
+	
+	public void syntax_error(Symbol sym) {
+	    report_error("Syntax Error", sym);
+		env.printError(action_obj.getError());
+	}
+
+	public void setFileName(String filename) {
+		this.filename = filename;
+	}
+	
+	public void setParseEnvironment(ParseEnvironment env) {
+		this.env = env;
+	}	
+:}
+
+action code {:
+	ScopedHashMap<String,TermVariable> localVars = 
+		new ScopedHashMap<String, TermVariable>(); 
+	Sort[] sortParams = null;
+	
+	static class Binding {
+	    TermVariable mVar;
+	    Term mTerm;
+	    public Binding(TermVariable var, Term term) {
+	        mVar = var;
+	        mTerm = term;
+	    }
+	    TermVariable getVar() {
+	        return mVar;
+	    }
+	    Term getTerm() {
+	        return mTerm;
+	    }
+	}
+	
+	static class IndexedIdentifier {
+	    String mName;
+	    BigInteger[] mIndices;
+	    public IndexedIdentifier(String name, BigInteger[] indices) {
+	        mName = name;
+	        mIndices = indices;
+	    }
+	    public String getName() {
+	        return mName;
+	    }
+	    public BigInteger[] getIndices() {
+	        return mIndices;
+	    }
+	    
+	    public String toString() {
+	    	if (mIndices == null)
+	    		return mName;
+	    	return "(_ "+mName+" "+Arrays.toString(mIndices)+")";
+	    }
+	}
+
+	static class QualIdentifier {
+	    String mName;
+	    BigInteger[] mIndices;
+	    Sort mSort;
+	    public QualIdentifier(IndexedIdentifier id, Sort sort) {
+	        mName = id.getName();
+	        mIndices = id.getIndices();
+	        mSort = sort;
+	    }
+	    public String getIdentifier() {
+	        return mName;
+	    }
+	    public BigInteger[] getIndices() {
+	        return mIndices;
+	    }
+	    public Sort getSort() {
+	        return mSort;
+	    }
+
+	    public String toString() {
+	    	String indexedId;
+	    	if (mIndices == null)
+	    		indexedId = mName;
+	    	else
+	    		indexedId = "(_ "+mName+" "+Arrays.toString(mIndices)+")";
+	    	if (mSort == null)
+	    		return indexedId;
+	    	return "(as " + indexedId + " " + mSort + ")";
+	    }
+	}
+
+	String errorMessage;
+	public void setError(String message) {
+		if (errorMessage == null)
+			errorMessage = message;
+	}
+	public boolean hasError() {
+		return errorMessage != null;
+	}
+	public String getError() {
+		String result = errorMessage;
+		errorMessage = null;
+		return result;
+	}
+	
+	public Sort lookupSort(Symbol sym, IndexedIdentifier id, Sort[] args) {
+	    for (Sort s: args) {
+	        if (s == null) return null;
+	    }
+		String name = id.getName();
+		if (args.length == 0 && id.getIndices() == null && sortParams != null) {
+		    for (Sort s: sortParams) {
+		        if (s.getName().equals(name))
+		            return s;
+		    }
+		}
+		try {
+			return parser.env.getScript().sort(name, id.getIndices(), args);
+		} catch (SMTLIBException se) {
+			parser.report_error("Undeclared sort ("+id+" "+args.length+")", sym);
+		}
+		return null;
+	}
+	
+	public Term createTerm(Symbol fsym, String name, BigInteger[] indices, Sort resultSort, Term[] param) {
+		// check if there was an error when creating the child term.
+		for (Term p : param) {
+			if (p == null)
+				return null;
+		}
+		try {
+			return parser.env.getScript().term(name, indices, resultSort, param);
+		} catch (SMTLIBException se) {
+			parser.report_error(se.getMessage(), fsym);
+		}
+		return null;
+	}
+
+	public TermVariable createTermVariable(String name, Sort sort) {
+  	    if (sort == null)
+  	        return null;
+  	    try {
+	    	TermVariable tv = parser.env.getScript().variable(name, sort);
+	    	localVars.put(tv.getName(), tv);
+	    	return tv;
+	    } catch (SMTLIBException cannotHappen) {}
+	    // Actually unreachable
+	    throw new AssertionError();
+	}
+	
+	private Term getTermVariable(String name) {
+		return localVars.get(name);
+	}	
+	
+  	public Term annotateTerm(Term term, Annotation[] annots) {
+  	    if (term == null)
+  	        return null;
+  	    try {
+  			return parser.env.getScript().annotate(term, annots);
+  		} catch (SMTLIBException se) {
+  			parser.report_error(se.getMessage());
+  		}
+  		return null;
+  	}
+
+:}
+
+/*init with {: getScanner().init(); :} */
+scan with {: return getScanner().next_token(); :}
+
+
+/* Predefined Symbols */
+terminal String UNDERSCORE, BANG,
+         AS, ASSERT, CHECKSAT, CONTINUEDEXECUTION, 
+         DECLARESORT, DECLAREFUN, DEFINESORT, DEFINEFUN, ERRORSYM,
+         EXISTS, EXIT, FALSE, FORALL, GETASSERTIONS, GETASSIGNMENT, GETINFO,
+         GETINTERPOLANTS,
+         GETMODEL, GETOPTION, GETPROOF, GETUNSATCORE, GETVALUE, IMMEDIATEEXIT,
+         INCOMPLETE, LET, LOGIC, NONE, NUMERALSYM, MEMOUT, PAR, POP, PUSH,
+         DECIMALSYM, SAT, SUCCESS, SETLOGIC, SETINFO, SETOPTION, STRINGSYM,
+         THEORY, TRUE, UNKNOWN, UNSUPPORTED, UNSAT,
+         INCLUDE, RESET, SIMPLIFY, TIMED;
+
+/* Predefined Keywords */
+terminal String /* attribute */
+         CNAMED, CPATTERN,
+         /* theory */
+         CSORTSDESCRIPTION, CSORTS, CFUNS, CFUNSDESCRIPTION, CDEFINITION,
+         /* logic */
+         CEXTENSIONS, CLANGUAGE, CTHEORIES,
+         /* theory + logic */
+         CNOTES, CVALUES,
+         /* options */
+         CDIAGNOSTICOUTPUTCHANNEL, CREGULAROUTPUTCHANNEL,
+         CEXPANDDEFINITIONS, CINTERACTIVEMODE, CPRINTSUCCESS, CVERBOSITY,     
+	     CPRODUCEASSIGNMENTS, CPRODUCEMODELS, CPRODUCEPROOFS, CPRODUCEUNSATCORES, 
+	     CRANDOMSEED, CINTERPOLANTCHECKMODE, CSTRONGSIMPLIFIER,
+	     CTIMEOUT;
+terminal String SYMBOL, KEYWORD;
+terminal BigInteger NUMERAL;
+terminal BigDecimal DECIMAL;
+terminal String HEXADECIMAL, BINARY, STRING;
+terminal LPAR, RPAR;
+
+non terminal String keyword, symbol;
+non terminal String keywordAttr, keywordOption;
+non terminal String keywordTheory, keywordLogic, keywordTheoryLogic;
+non terminal String keywordNoAttr, keywordNoTheory, keywordNoLogic, keywordNoOption;
+non terminal String booleanOption, stringOption, numeralOption;
+non terminal IndexedIdentifier identifier, identifierIndexed;
+non terminal Object specConstant;
+non terminal Object sExpr;
+
+non terminal Sort sort;
+non terminal Object attributeValue;
+non terminal Annotation attribute;
+non terminal Annotation attributeTheory, attributeLogic;
+non terminal QualIdentifier qualIdentifier;
+non terminal Binding varBinding;
+non terminal TermVariable sortedVar;
+non terminal Term constantTerm, term;
+non terminal InterpolationInfo interpolantpartition;
+non terminal sortSymbolDecl;
+non terminal metaSpecConstant;
+non terminal parFunSymbolDecl, funSymbolDecl;
+non terminal theoryAttribute;
+non terminal logicAttribute;
+non terminal Boolean bValue;
+non terminal option;
+non terminal String infoFlag;
+non terminal command;
+non terminal commandPar;
+non terminal goal, theoryDecl, logic, script;
+
+goal ::= theoryDecl | logic | script;
+
+specConstant ::= NUMERAL:n {: RESULT = n; :}
+             | DECIMAL:n {: RESULT = n; :}
+             | HEXADECIMAL:n {: RESULT = n; :}
+             | BINARY:n {: RESULT = n; :}
+             | STRING:n {: RESULT = new QuotedObject(n); :};
+sExpr ::= specConstant
+        | symbol
+        | KEYWORD
+        | LPAR sExpr*:s RPAR {: RESULT = s; :};
+
+constantTerm ::= NUMERAL:n 
+				{: try {
+					RESULT = parser.env.getScript().numeral(n);
+					} catch (SMTLIBException se) {
+						parser.report_error(se.getMessage());
+						RESULT = null;
+					} :}
+             | DECIMAL:n
+             	{: try {
+             		RESULT = parser.env.getScript().decimal(n);
+             		} catch (SMTLIBException se) {
+             			parser.report_error(se.getMessage());
+             			RESULT = null;
+             		} :}
+             | HEXADECIMAL:n {: try {
+             		RESULT = parser.env.getScript().hexadecimal(n);
+             		} catch (SMTLIBException se) {
+             			parser.report_error(se.getMessage());
+             			RESULT = null;
+             		}  :}
+             | BINARY:n {: try {
+             		RESULT = parser.env.getScript().binary(n);
+             		} catch (SMTLIBException se) {
+             			parser.report_error(se.getMessage());
+             			RESULT = null;
+             		} :}
+             | STRING:n {: try {
+                    RESULT = parser.env.getScript().string(n);
+             		} catch (SMTLIBException se) {
+             			parser.report_error(se.getMessage());
+             			RESULT = null;
+             		} :};
+identifierIndexed ::= LPAR UNDERSCORE symbol:id NUMERAL+:indices RPAR
+             {: RESULT = new IndexedIdentifier(id, indices); :};
+identifier ::= symbol:s {: RESULT = new IndexedIdentifier(s, null); :}
+           | identifierIndexed;
+
+sort ::= identifier:id {: RESULT = lookupSort(id$, id, new Sort[0]); :} 
+       | LPAR identifier:id sort+:sorts RPAR
+         {: RESULT = lookupSort(id$, id, sorts); :};
+attribute ::= keywordNoAttr:k attributeValue?:v {: RESULT = new Annotation(k, v); :}
+        | CNAMED:k symbol:v {: RESULT = new Annotation(k, v); :}
+        | CPATTERN:k LPAR term*:t RPAR {: RESULT = new Annotation(k, t); :};
+attributeValue ::= specConstant
+        | symbol
+        | LPAR sExpr*:s RPAR {: RESULT = s; :};
+attributeLogic  ::= keywordNoLogic:k  attributeValue?:v
+                    {: RESULT = new Annotation(k, v); :};
+attributeTheory ::= keywordNoTheory:k attributeValue?:v
+                    {: RESULT = new Annotation(k, v); :};
+
+qualIdentifier ::= identifier:i 
+         {: RESULT = new QualIdentifier(i, null); :}
+       | LPAR AS identifier:i sort:s RPAR 
+         {: RESULT = new QualIdentifier(i, s); :};
+varBinding ::= LPAR symbol:sym term:t RPAR
+         {: if (!hasError()) {
+         		TermVariable tv = createTermVariable(sym, t.getSort());
+            	RESULT = new Binding(tv, t);
+            } else
+            	RESULT = null;
+          :};
+sortedVar ::= LPAR symbol:sym sort:s RPAR
+         {: RESULT = createTermVariable(sym, s); :};
+term ::= constantTerm
+       | qualIdentifier:fun
+         {: RESULT = fun.getIndices() == null && fun.getSort() == null ? getTermVariable(fun.getIdentifier()) : null;
+            if (RESULT == null)
+                RESULT = createTerm(fun$, fun.getIdentifier(), fun.getIndices(), fun.getSort(), new Term[0]); :}
+       | LPAR qualIdentifier:fun term+:args RPAR
+         {: RESULT = createTerm(fun$, fun.getIdentifier(), fun.getIndices(), fun.getSort(), args); :}
+       | LPAR LET {: localVars.beginScope(); :}
+                  LPAR varBinding+:bindings RPAR term:t RPAR
+         {: TermVariable[] vars = new TermVariable[bindings.length];
+            Term[] terms = new Term[bindings.length];
+            for (int i = 0; i < bindings.length; i++) {
+            	if (bindings[i] != null) {
+               		vars[i] = bindings[i].getVar();
+               		terms[i] = bindings[i].getTerm();
+               	}
+            }
+            localVars.endScope();
+            if (hasError())
+            	RESULT = null;
+            else
+            	RESULT = parser.env.getScript().let(vars, terms, t); :}
+       | LPAR FORALL {: localVars.beginScope(); :}
+              LPAR sortedVar+:vars RPAR term:t RPAR
+         {: localVars.endScope();
+            if (hasError())
+            	RESULT = null;
+            else
+            	RESULT = parser.env.getScript().quantifier(Script.FORALL, vars, t); :}
+       | LPAR EXISTS {: localVars.beginScope(); :}
+              LPAR sortedVar+:vars RPAR term:t RPAR
+         {: localVars.endScope();
+            if (hasError())
+            	RESULT = null;
+            else
+            	RESULT = parser.env.getScript().quantifier(Script.EXISTS, vars, t); :}
+       | LPAR BANG term:t attribute+:attr RPAR
+         {: RESULT = annotateTerm(t, attr); :};
+
+sortSymbolDecl ::= LPAR identifier NUMERAL attribute* RPAR;
+metaSpecConstant ::= NUMERALSYM | DECIMALSYM | STRINGSYM;
+funSymbolDecl ::= LPAR specConstant sort attribute* RPAR
+                | LPAR metaSpecConstant sort attribute* RPAR
+                | LPAR identifier sort+ attribute* RPAR;
+
+parFunSymbolDecl ::= funSymbolDecl
+       | LPAR PAR LPAR symbol+ RPAR 
+                  LPAR identifier sort+ attribute* RPAR RPAR;
+theoryAttribute ::= CSORTS LPAR sortSymbolDecl+ RPAR
+                  | CFUNS  LPAR parFunSymbolDecl+ RPAR
+                  | CSORTSDESCRIPTION STRING
+                  | CFUNSDESCRIPTION STRING
+                  | CDEFINITION STRING
+                  | CVALUES STRING
+                  | CNOTES STRING
+                  | attributeTheory;
+theoryDecl ::= LPAR THEORY symbol theoryAttribute+ RPAR;
+
+logicAttribute ::= CTHEORIES LPAR symbol+ RPAR
+                 | CLANGUAGE STRING
+                 | CEXTENSIONS STRING
+                 | CVALUES STRING
+                 | CNOTES STRING
+                 | attributeLogic;
+logic ::= LPAR LOGIC symbol logicAttribute+ RPAR;
+
+bValue ::= TRUE {: RESULT = true; :} | FALSE {: RESULT = false; :};
+
+booleanOption ::= CPRINTSUCCESS | CEXPANDDEFINITIONS | CINTERACTIVEMODE 
+                | CPRODUCEPROOFS | CPRODUCEUNSATCORES | CPRODUCEMODELS
+                | CPRODUCEASSIGNMENTS | CINTERPOLANTCHECKMODE
+                | CSTRONGSIMPLIFIER;
+stringOption ::= CREGULAROUTPUTCHANNEL | CDIAGNOSTICOUTPUTCHANNEL;
+numeralOption ::= CRANDOMSEED | CVERBOSITY | CTIMEOUT;
+option ::= booleanOption:o bValue:b
+           {: try { 
+           		parser.env.setOption(o, b);
+           		parser.env.printSuccess();
+           	} catch (UnsupportedOperationException uoe) {
+           		parser.env.printResponse("unsupported");
+           	} catch (SMTLIBException se) {
+           		parser.env.printError(se.getMessage());
+           	} :}
+         | stringOption:o STRING:s
+           {: try {
+           		parser.env.setOption(o, s);
+           		parser.env.printSuccess(); 
+           	} catch (UnsupportedOperationException uoe) {
+           		parser.env.printResponse("unsupported");
+           	} catch (SMTLIBException se) {
+           		parser.env.printError(se.getMessage());
+           	}:}
+         | numeralOption:o NUMERAL:n
+           {: try {
+           		parser.env.setOption(o, n);
+           		parser.env.printSuccess();
+           	} catch (UnsupportedOperationException uoe) {
+           		parser.env.printResponse("unsupported");
+           	} catch (SMTLIBException se) {
+           		parser.env.printError(se.getMessage());
+           	}:}
+         | keywordNoOption:k attributeValue?:v
+           {: try {
+           		parser.env.setOption(k, v);
+           		parser.env.printSuccess();
+           	} catch (UnsupportedOperationException uoe) {
+           		parser.env.printResponse("unsupported");
+           	} catch (SMTLIBException se) {
+           		parser.env.printError(se.getMessage());
+           	} :};
+infoFlag ::= keyword;
+
+interpolantpartition 
+         ::= interpolantpartition:child SYMBOL:symb 
+             {: if (child.isEmpty() && symb.equals("and"))
+                   child.makeAndTerm();
+                else
+                   child.addParent(createTerm(symb$, symb, null, null, new Term[0])); 
+                RESULT = child;:}
+           | interpolantpartition:child LPAR interpolantpartition:sibling RPAR
+             {: if (sibling.isAndTerm() && !hasError()) 
+             	    child.addParent(parser.env.getScript()
+             	    				.term("and", sibling.getPartition()));
+                else if (!child.isClosedTree())
+					parser.report_error("Interpolation tree malformed.", child$);
+				else
+				    child.addSibling(sibling);
+                RESULT = child; :}
+           | /* empty */
+             {: RESULT = new InterpolationInfo(); :}
+           ;
+
+command ::= SETLOGIC symbol:logic
+            {: try {
+            	parser.env.getScript().setLogic(logic);
+            	parser.env.printSuccess();
+            } catch (UnsupportedOperationException uoe) {
+            	parser.env.printResponse("unsupported");
+            } catch (SMTLIBException se) {
+            	parser.env.printError(se.getMessage());
+            }
+             :}
+          | SETOPTION option:opt
+          | SETINFO keyword:k attributeValue?:v
+            {: parser.env.setInfo(k, v);
+            parser.env.printSuccess(); :}
+          | DECLARESORT symbol:sort NUMERAL:n
+            {: if (n.bitLength() >= 32)
+            	   parser.report_error("sort has too many arguments", n$);
+               if (hasError())
+            	   parser.env.printError(getError());
+               else {
+                   try {
+                   		parser.env.getScript().declareSort(sort, n.intValue());
+                   		parser.env.printSuccess();
+                   	} catch (SMTLIBException se) {
+                   		parser.env.printError(se.getMessage());
+                   	}
+               }
+            :}
+          | DEFINESORT symbol:sort LPAR symbol*:sortVars
+            {: sortParams = parser.env.getScript().sortVariables(sortVars); :} 
+            RPAR sort:def
+            {: if (hasError())
+            	   parser.env.printError(getError());
+               else {
+                   try {
+                   	parser.env.getScript().defineSort(sort, sortParams, def);
+                   	parser.env.printSuccess();
+                   } catch (SMTLIBException se) {
+                   	parser.env.printError(se.getMessage());
+                   }
+               }
+            :}
+          | DECLAREFUN symbol:fun LPAR sort*:param RPAR sort:result
+            {: if (hasError())
+            	   parser.env.printError(getError());
+               else {
+                   try {
+                   	parser.env.getScript().declareFun(fun, param, result);
+                   	parser.env.printSuccess();
+                   } catch (SMTLIBException se) {
+                   	parser.env.printError(se.getMessage());
+                   }
+               }
+            :}
+          | DEFINEFUN {: localVars.beginScope(); :} symbol:fun
+                      LPAR sortedVar*:param RPAR sort:resultSort term:value
+            {: localVars.endScope();
+               if (hasError())
+            	   parser.env.printError(getError());
+               else {
+                   try {
+                   	parser.env.getScript().defineFun(fun, param, resultSort, value);
+                   	parser.env.printSuccess();
+                   } catch (SMTLIBException se) {
+                   	parser.env.printError(se.getMessage());
+                   }
+               }
+            :}
+          | PUSH NUMERAL:n
+            {: if (n.bitLength() >= 32)  {
+            	   parser.report_error("too many push levels", n$);
+            	   parser.env.printError(getError());
+               } else {
+               	   try {
+                      parser.env.getScript().push(n.intValue());
+                      parser.env.printSuccess();
+                   } catch (SMTLIBException se) {
+                      parser.env.printError(se.getMessage());
+                   }
+               } :}
+          | POP NUMERAL:n
+            {: if (n.bitLength() >= 32) {
+            	   parser.report_error("too many pop levels", n$);
+            	   parser.env.printError(getError());
+               } else {
+               	try {
+                   parser.env.getScript().pop(n.intValue());
+                   parser.env.printSuccess();
+                } catch (SMTLIBException se) {
+                	parser.env.printError(se.getMessage());
+                }
+               } :}
+          | PUSH
+            {: try {
+            	parser.env.getScript().push(1);
+            	parser.env.printSuccess();
+               } catch (SMTLIBException se) {
+               	parser.env.printError(se.getMessage());
+               } :}
+          | POP
+            {: try {
+            	parser.env.getScript().pop(1);
+            	parser.env.printSuccess();
+            } catch (SMTLIBException se) {
+            	parser.env.printError(se.getMessage());
+            }  :}
+          | ASSERT term:t
+            {: if (hasError())
+            	   parser.env.printError(getError());
+               else {
+               	try {
+                   parser.env.getScript().assertTerm(t);
+                   parser.env.printSuccess();
+                 } catch (SMTLIBException se) {
+                 	parser.env.printError(se.getMessage());
+                 }
+               }
+            :}
+          | CHECKSAT
+            {: try {
+            	Script.LBool res = parser.env.getScript().checkSat();
+            	parser.env.printResponse(res);
+            } catch(SMTLIBException se) {
+            	parser.env.printError(se.getMessage());
+            } :}
+          | GETASSERTIONS
+            {: try {
+            	Term[] res = parser.env.getScript().getAssertions();
+            	parser.env.printTermResponse(res);
+            } catch (SMTLIBException se) {
+            	parser.env.printError(se.getMessage());
+            } :}
+          | GETINTERPOLANTS interpolantpartition:ips
+            {: if (!ips.isClosedTree())
+                   parser.report_error("Interpolation tree malformed", ips$);
+               if (hasError())
+            	   parser.env.printError(getError());
+               else {
+               	try {
+                   Term[] partition = ips.getPartition();
+                   int[] startOfSubtree = ips.getTreeStructure();
+                   Term[] res = parser.env.getScript()
+                       .getInterpolants(partition, startOfSubtree);
+                   parser.env.printResponse(res);
+                } catch (SMTLIBException se) {
+                	parser.env.printError(se.getMessage());
+                } catch (UnsupportedOperationException ignored) {
+            	    parser.env.printResponse("unsupported");
+                }
+               } :}
+          | GETPROOF
+            {: try {
+            	Term proof = parser.env.getScript().getProof();
+            	parser.env.printResponse(proof);
+            } catch (SMTLIBException se) {
+            	parser.env.printError(se.getMessage());
+            } :}
+          | GETUNSATCORE
+            {: try {
+            	Term[] res = parser.env.getScript().getUnsatCore();
+            	parser.env.printResponse(res);
+            } catch (SMTLIBException se) {
+            	parser.env.printError(se.getMessage());
+            } catch (UnsupportedOperationException uoe) {
+            	parser.env.printResponse("unsupported");
+            } :}
+          |  GETMODEL
+            {: try {
+                Model model = parser.env.getScript().getModel();
+                parser.env.printResponse(model);
+            } catch (SMTLIBException se) {
+            	parser.env.printError(se.getMessage());
+            } catch (UnsupportedOperationException uoe) {
+            	parser.env.printResponse("unsupported");
+            } :}
+          | GETVALUE LPAR term+:t RPAR
+            {: if (hasError())
+            	   parser.env.printError(getError());
+               else {
+               	try {
+                   Valuation val = parser.env.getScript().getValue(t);
+                   parser.env.printResponse(val);
+                } catch (SMTLIBException se) {
+                	parser.env.printError(se.getMessage());
+                }
+               } :}
+          | GETASSIGNMENT
+            {: try {
+            	Assignments ass = parser.env.getScript().getAssignment();
+            	parser.env.printResponse(ass);
+            } catch (SMTLIBException se) {
+            	parser.env.printError(se.getMessage());
+            } :}
+          | GETOPTION keyword:opt
+            {: try {
+            	parser.env.printResponse(parser.env.getScript().getOption(opt));
+            } catch (UnsupportedOperationException ignored) {
+            	parser.env.printResponse("unsupported");
+            } :}
+          | GETINFO infoFlag:info
+            {: try {
+            	parser.env.printInfoResponse(info, parser.env.getInfo(info));
+            } catch (UnsupportedOperationException ignored) {
+            	parser.env.printResponse("unsupported");
+            } catch (SMTLIBException se) {
+            	parser.env.printError(se.getMessage());
+            } :}
+          | INCLUDE STRING:file
+          	{: try {
+          		parser.env.include(file);
+          		parser.env.printSuccess();
+          	} catch (SMTLIBException se) {
+          		parser.env.printError(se.getMessage());
+          	}:}
+          | SIMPLIFY term:t
+            {: if (hasError())
+            	   parser.env.printError(getError());
+               else
+                   parser.env.printResponse(parser.env.getScript().simplifyTerm(t));
+            :}
+          | RESET
+            {: parser.env.getScript().reset(); parser.env.printSuccess(); :}
+          | EXIT
+            {: parser.env.getScript().exit(); parser.done_parsing(); :}
+          | TIMED
+            {: parser.env.startTiming(); :}
+            commandPar*
+            {: parser.env.endTiming(); :}
+          ;
+commandPar ::= LPAR command RPAR
+             | error;
+script ::= commandPar*;
+
+symbol ::= SYMBOL | CONTINUEDEXECUTION | ERRORSYM | FALSE | IMMEDIATEEXIT |
+           INCOMPLETE | LOGIC | NONE | MEMOUT | SAT | SUCCESS | THEORY | TRUE |
+           UNKNOWN | UNSUPPORTED | UNSAT | INCLUDE | RESET |
+           SIMPLIFY;
+         
+/* The following are reserved words
+         PAR | NUMERALSYM | DECIMALSYM | STRINGSYM |
+         UNDERSCORE | AS | BANG | LET | FORALL | EXISTS |
+         ASSERT | CHECKSAT |  
+         DECLARESORT | DECLAREFUN | DEFINESORT | DEFINEFUN | 
+         EXIT | GETASSERTIONS | GETASSIGNMENT | GETINFO |
+         GETMODEL | GETOPTION | GETPROOF | GETUNSATCORE | GETVALUE |
+         POP | PUSH | SETLOGIC | SETINFO | SETOPTION; */
+
+keywordAttr   ::= CPATTERN | CNAMED;
+keywordTheory ::= CSORTSDESCRIPTION | CSORTS | 
+                  CFUNS | CFUNSDESCRIPTION | CDEFINITION;
+keywordLogic ::= CEXTENSIONS | CLANGUAGE | CTHEORIES;
+keywordTheoryLogic ::= keywordTheory | keywordLogic | CNOTES | CVALUES;
+keywordOption ::= CDIAGNOSTICOUTPUTCHANNEL | CREGULAROUTPUTCHANNEL |
+         CEXPANDDEFINITIONS | CINTERACTIVEMODE | CPRINTSUCCESS | CVERBOSITY |     
+	     CPRODUCEASSIGNMENTS | CPRODUCEMODELS | CPRODUCEPROOFS | CPRODUCEUNSATCORES | 
+	     CRANDOMSEED | CTIMEOUT | CINTERPOLANTCHECKMODE | CSTRONGSIMPLIFIER;
+
+keywordNoAttr ::= KEYWORD | keywordTheoryLogic | keywordOption;
+keywordNoTheory ::= KEYWORD | keywordAttr | keywordLogic | keywordOption;
+keywordNoLogic ::= KEYWORD | keywordAttr | keywordTheory | keywordOption;
+keywordNoOption ::= KEYWORD | keywordAttr | keywordTheoryLogic;
+keyword ::= KEYWORD | keywordAttr | keywordTheoryLogic | keywordOption;

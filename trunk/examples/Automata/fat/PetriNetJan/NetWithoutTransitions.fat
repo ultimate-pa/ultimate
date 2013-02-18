@@ -1,0 +1,16 @@
+// 14.01.2010
+// heizmann@informatik.uni-freiburg.de
+//
+// Bug: In revision r3061 the getInitialConditions() method of OccurenceNet
+// returns an empty Collection.
+
+#Print finitePrefix(net)
+
+#net net := (
+  #alphabet := {a b c},
+  #places := {s1 s2 s3 s4},
+  #transitions := {
+		   },
+  #initialMarking := {s1 s2},
+  #acceptingMarkings := {{s1 s2}}
+)

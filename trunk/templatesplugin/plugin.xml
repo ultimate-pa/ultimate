@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.2"?>
+<plugin>
+
+   <extension
+         point="org.eclipse.ui.newWizards">
+      <category
+            name="Ultimate"
+            id="de.uni_freiburg.informatik.ultimate.dev.ultimatecategory">
+      </category>
+      <wizard
+            canFinishEarly="false"
+            category="de.uni_freiburg.informatik.ultimate.dev.ultimatecategory"
+            class="de.uni_freiburg.informatik.ultimate.dev.eclipse.templates.wizards.NewUltimatePluginWizard"
+            finalPerspective="org.eclipse.pde.ui.PDEPerspective"
+            icon="icons/sample.gif"
+            id="de.uni_freiburg.informatik.ultimate.dev.eclipse.templates.wizards.NewUltimatePluginWizard"
+            name="Ultimate Plug-in"
+            project="true">
+      </wizard>
+   </extension>
+
+</plugin>

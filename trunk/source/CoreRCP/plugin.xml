@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.2"?>
+<plugin>
+   <extension-point id="de.uni_freiburg.informatik.ultimate.ep.analysis" name="Analysis Extension Point" schema="schema/de.uni_freiburg.informatik.ultimate.ep.analysis.exsd"/>
+   <extension-point id="de.uni_freiburg.informatik.ultimate.ep.generator" name="Generator Extension Point" schema="schema/de.uni_freiburg.informatik.ultimate.ep.generator.exsd"/>
+   <extension-point id="de.uni_freiburg.informatik.ultimate.ep.output" name="Output Extension Point" schema="schema/de.uni_freiburg.informatik.ultimate.ep.output.exsd"/>
+   <extension-point id="de.uni_freiburg.informatik.ultimate.ep.LoggingWindow" name="LoggingWindow Extension Point" schema="schema/de.uni_freiburg.informatik.ultimate.ep.LoggingWindow.exsd"/>
+   <extension-point id="de.uni_freiburg.informatik.ultimate.ep.controller" name="Controller Extension Point" schema="schema/de.uni_freiburg.informatik.ultimate.ep.controller.exsd"/>
+   <extension-point id="de.uni_freiburg.informatik.ultimate.ep.source" name="Source Extension Point" schema="schema/de.uni_freiburg.informatik.ultimate.ep.source.exsd"/>
+   <extension-point id="de.uni_freiburg.informatik.ultimate.ep.serialization" name="de.uni_freiburg.informatik.ultimate.ep.serialization" schema="schema/de.uni_freiburg.informatik.ultimate.ep.serialization.exsd"/>
+
+   <extension
+         id="ultimateapplication"
+         point="org.eclipse.core.runtime.applications">
+      <application>
+         <run
+               class="de.uni_freiburg.informatik.ultimate.core.coreplugin.Application">
+         </run>
+      </application>
+   </extension>
+   
+   
+   <extension
+         id="product"
+         point="org.eclipse.core.runtime.products">
+      <product
+            application="UltimateCore.ultimateapplication"
+            name="Ultimate">
+         <property
+               name="appName"
+               value="Ultimate">
+         </property>
+         <property
+               name="aboutImage"
+               value="icons/about.gif">
+         </property>
+         <property
+               name="aboutText"
+               value="Ultimate Ultimate is a tool for model checking and static program analysis. It provides multiple toolchains which check properties or transform input files.">
+         </property>
+      </product>
+   </extension>
+  
+   <extension
+         point="org.eclipse.ui.preferencePages">
+      <page
+            class="de.uni_freiburg.informatik.ultimate.core.coreplugin.preferences.UltimatePreferencePage"
+            id="de.uni_freiburg.informatik.ultimate.core.coreplugin.preferences.UltimatePreferencePage"
+            name="Ultimate Preferences"/>
+      <page
+            category="de.uni_freiburg.informatik.ultimate.core.coreplugin.preferences.UltimatePreferencePage"
+            class="de.uni_freiburg.informatik.ultimate.core.coreplugin.preferences.OutputPreferencePage"
+            id="de.uni_freiburg.informatik.ultimate.core.coreplugin.preferences.OutputPreferencePage"
+            name="Output Plugins"/>
+      <page
+            category="de.uni_freiburg.informatik.ultimate.core.coreplugin.preferences.UltimatePreferencePage"
+            class="de.uni_freiburg.informatik.ultimate.core.coreplugin.preferences.ToolsPreferencePage"
+            id="de.uni_freiburg.informatik.ultimate.core.coreplugin.preferences.ToolsPreferencePage"
+            name="Tool Plugins"/>            
+      <page
+            category="de.uni_freiburg.informatik.ultimate.core.coreplugin.preferences.UltimatePreferencePage"
+            class="de.uni_freiburg.informatik.ultimate.core.coreplugin.preferences.CorePreferencePage"
+            id="de.uni_freiburg.informatik.ultimate.core.coreplugin.preferences.CorePreferencePage"
+            name="Core Preferences"/>
+      <page
+            category="de.uni_freiburg.informatik.ultimate.core.coreplugin.preferences.CorePreferencePage"
+            class="de.uni_freiburg.informatik.ultimate.core.coreplugin.preferences.LoggingPreferencePage"
+            id="de.uni_freiburg.informatik.ultimate.core.coreplugin.preferences.LoggingPreferencePage"
+            name="Log Levels">
+      </page>
+      <page
+            category="de.uni_freiburg.informatik.ultimate.core.coreplugin.preferences.LoggingPreferencePage"
+            class="de.uni_freiburg.informatik.ultimate.core.coreplugin.preferences.LoggingDetailsPreferencePage"
+            id="de.uni_freiburg.informatik.ultimate.core.coreplugin.preferences.LoggingDetailsPreferencePage"
+            name="Plug-in-specific Log Levels">
+      </page>
+      <page
+            category="de.uni_freiburg.informatik.ultimate.core.coreplugin.preferences.LoggingPreferencePage"
+            class="de.uni_freiburg.informatik.ultimate.core.coreplugin.preferences.LoggingToolsPreferencePage"
+            id="de.uni_freiburg.informatik.ultimate.core.coreplugin.preferences.LoggingToolsPreferencePage"
+            name="Log Levels for external tools">
+      </page>
+      <page
+            category="de.uni_freiburg.informatik.ultimate.core.coreplugin.preferences.CorePreferencePage"
+            class="de.uni_freiburg.informatik.ultimate.core.coreplugin.preferences.ModelManagerPreferencePage"
+            id="de.uni_freiburg.informatik.ultimate.core.coreplugin.preferences.ModelManagerPreferencePage"
+            name="Model Manager">
+      </page>
+   </extension>
+   <extension
+         point="org.eclipse.core.runtime.preferences">
+      <initializer class="de.uni_freiburg.informatik.ultimate.core.coreplugin.preferences.CorePreferenceInitializer"/>
+   </extension>
+   <extension
+         id="commandlineproduct"
+         point="org.eclipse.core.runtime.products">
+      <product
+            application="UltimateCore.ultimateapplication"
+            name="Ultimate-CommandLine">
+         <property
+               name="aboutText"
+               value="Ultimate Ultimate is a tool for model checking and static program analysis. It provides multiple toolchains which check properties or transform input files.">
+         </property>
+         <property
+               name="aboutImage"
+               value="icons/about.gif">
+         </property>
+         <property
+               name="appName"
+               value="Ultimate-CommandLine">
+         </property>
+      </product>
+   </extension>
+   <extension
+         id="product2"
+         point="org.eclipse.core.runtime.products">
+      <product
+            application="UltimateCore.ultimateapplication"
+            name="Ultimate-Debug">
+         <property
+               name="appName"
+               value="Ultimate-Debug">
+         </property>
+      </product>
+   </extension>
+
+</plugin>
+

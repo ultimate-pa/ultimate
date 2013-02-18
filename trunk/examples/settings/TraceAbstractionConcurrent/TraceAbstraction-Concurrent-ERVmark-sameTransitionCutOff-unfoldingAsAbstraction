@@ -1,0 +1,30 @@
+#Sun Aug 05 15:20:32 CEST 2012
+file_export_version=3.0
+/instance/UltimateCore/ultimate.logging.tools=warn
+\!/instance/UltimateCore=
+/instance/UltimateCore/ultimate.logging.tooldetails=SmtInterpol\=Warn;SMTInterface\=Warn;Groundifier\=Warn;
+@UltimateCore=0.0.1
+/instance/UltimateCore/ultimate.logging.plugins=info
+#Sun Aug 05 15:20:32 CEST 2012
+file_export_version=3.0
+/configuration/JungVisualization/shapeForNodePreference=RoundRectangle
+/configuration/JungVisualization/annotatedEdgesPreference=true
+\!/configuration/JungVisualization=
+#Sun Aug 05 15:20:32 CEST 2012
+file_export_version=3.0
+/configuration/CACSL2BoogieTranslator/Translation-Mode=SV_COMP
+\!/configuration/CACSL2BoogieTranslator=
+#Sun Aug 05 15:20:32 CEST 2012
+file_export_version=3.0
+\!/configuration/CFGReducer=
+/configuration/CFGReducer/SelectedSolver=0
+#Sun Aug 05 15:20:32 CEST 2012
+file_export_version=3.0
+/configuration/RCFGBuilder/BlockSize=single program statement
+/configuration/RCFGBuilder/AssignGlobals=false
+/configuration/RCFGBuilder/AdditionalEdges=None
+/configuration/RCFGBuilder/Order=ERV with equal markings
+/configuration/RCFGBuilder/InterpolantAutomaton=SingleTrace
+\!/configuration/RCFGBuilder=
+/configuration/RCFGBuilder/Difference=false
+/configuration/RCFGBuilder/unfolding2Net=true

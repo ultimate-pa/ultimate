@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.2"?>
+<plugin>
+   <extension
+         point="org.eclipse.ui.preferencePages">
+      <page
+            class="local.stalin.SMTInterface.preferences.PreferencePage"
+            id="smtinterface.page1"
+            name="SMTInterface">
+      </page>
+      <page
+            class="local.stalin.SMTInterface.preferences.nativez3.NativeZ3PreferencePage"
+            id="smtinterface.nativez3"
+            name="SMTInterface-NativeZ3"
+            category="smtinterface.page1">
+      </page>
+   </extension>
+   <extension
+         point="org.eclipse.core.runtime.preferences">
+      <initializer class="local.stalin.SMTInterface.preferences.PreferenceInitializer"/>
+      <initializer class="local.stalin.SMTInterface.preferences.nativez3.PreferenceInitializer"/>
+   </extension>
+</plugin>

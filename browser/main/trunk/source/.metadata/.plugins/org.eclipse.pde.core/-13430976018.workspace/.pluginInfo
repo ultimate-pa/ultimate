@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<map>
+	<bundle bundleID="347" localization="OSGI-INF/l10n/bundle" name="AntlrV3" project="AntlrV3">
+		<library name="antlr-3.2.jar"/>
+	</bundle>
+	<bundle bundleID="348" localization="OSGI-INF/l10n/bundle" name="Log4j Plug-in" project="log4j">
+		<library name="log4j-1.2.15.jar"/>
+	</bundle>
+	<bundle bundleID="349" localization="OSGI-INF/l10n/bundle" name="Jung_base" project="Jung_base">
+		<library name="Jung_base.jar"/>
+		<library name="lib/batik-anim.jar"/>
+		<library name="lib/batik-awt-util.jar"/>
+		<library name="lib/batik-bridge.jar"/>
+		<library name="lib/batik-codec.jar"/>
+		<library name="lib/batik-css.jar"/>
+		<library name="lib/batik-dom.jar"/>
+		<library name="lib/batik-ext.jar"/>
+		<library name="lib/batik-extension.jar"/>
+		<library name="lib/batik-gui-util.jar"/>
+		<library name="lib/batik-gvt.jar"/>
+		<library name="lib/batik-parser.jar"/>
+		<library name="lib/batik-script.jar"/>
+		<library name="lib/batik-svg-dom.jar"/>
+		<library name="lib/batik-svggen.jar"/>
+		<library name="lib/batik-swing.jar"/>
+		<library name="lib/batik-transcoder.jar"/>
+		<library name="lib/batik-util.jar"/>
+		<library name="lib/batik-xml.jar"/>
+		<library name="lib/collections-generic-4.01.jar"/>
+		<library name="lib/colt.jar"/>
+		<library name="lib/commons-collections-testframework-4.01.jar"/>
+		<library name="lib/concurrent.jar"/>
+		<library name="lib/js.jar"/>
+		<library name="lib/junit-4.7.jar"/>
+		<library name="lib/pdf-transcoder.jar"/>
+		<library name="lib/xalan-2.6.0.jar"/>
+		<library name="lib/xerces_2_5_0.jar"/>
+		<library name="lib/jai-1_1_3/lib/jai_codec.jar"/>
+		<library name="lib/jai-1_1_3/lib/jai_core.jar"/>
+	</bundle>
+	<bundle bundleID="350" class="local.stalin.plugins.errorlocationgenerator.Activator" localization="OSGI-INF/l10n/bundle" name="ErrorLocationGenerator Plug-in" project="ErrorLocationGenerator"/>
+	<bundle bundleID="351" class="local.stalin.boogie.preprocessor.Activator" localization="OSGI-INF/l10n/bundle" name="Boogie Preprocessor" project="BoogiePreprocessor"/>
+	<bundle bundleID="352" class="local.stalin.core.coreplugin.Activator" localization="OSGI-INF/l10n/bundle" name="CoreRCP Plug-in" project="CoreRCP"/>
+	<bundle bundleID="353" localization="OSGI-INF/l10n/bundle" name="GuiRCP Plug-in" project="GuiRCP"/>
+	<bundle bundleID="354" class="local.stalin.boogie.cfg2smt.Activator" localization="OSGI-INF/l10n/bundle" name="CFG2SMT Plug-in" project="CFG2SMT"/>
+	<bundle bundleID="356" class="local.stalin.boogie.parser.Activator" localization="OSGI-INF/l10n/bundle" name="BoogieParser Plug-in" project="BoogiePLParser" provider="Stalin@Uni"/>
+	<bundle bundleID="355" class="local.stalin.plugins.safetychecker.Activator" localization="OSGI-INF/l10n/bundle" name="SafetyCheck General Purpose Plug-in" project="SafetyChecker"/>
+	<bundle bundleID="357" localization="OSGI-INF/l10n/bundle" name="Native Z3 Linux X86 Fragment" project="SMTInterface.linux.x86"/>
+	<bundle bundleID="358" class="local.stalin.plugins.generator.lazyabstraction.Activator" localization="OSGI-INF/l10n/bundle" name="LazyAbstraction" project="LazyAbstraction"/>
+	<bundle bundleID="359" class="local.stalin.plugins.output.lazyabstractiononcfg.Activator" localization="OSGI-INF/l10n/bundle" name="LazyAbstractionOnCFG" project="LazyAbstractionOnCFG"/>
+	<bundle bundleID="360" class="local.stalin.boogie.cfgbuilder.Activator" localization="OSGI-INF/l10n/bundle" name="CFGBuilder Plug-in" project="CFGBuilder"/>
+	<bundle bundleID="361" class="local.stalin.boogie.cfgreducer.Activator" localization="OSGI-INF/l10n/bundle" name="%Bundle-Name" project="CFGReducer"/>
+	<bundle bundleID="363" class="local.stalin.plugins.output.jungvisualization.Activator" localization="OSGI-INF/l10n/bundle" name="Jung Visualization Plug-in" project="JungVisualization"/>
+	<bundle bundleID="362" localization="OSGI-INF/l10n/bundle" name="Smt Interpolator" project="SmtInterpol">
+		<library name="bin/"/>
+	</bundle>
+	<bundle bundleID="364" class="local.stalin.SMTInterface.Activator" localization="OSGI-INF/l10n/bundle" name="SMTInterface Plug-in" project="SMTInterface"/>
+	<bundle bundleID="365" class="interactiveconsole.Activator" localization="OSGI-INF/l10n/bundle" name="InteractiveConsole" project="InteractiveConsole"/>
+	<bundle bundleID="366" localization="OSGI-INF/l10n/bundle" name="JavaCup Plug-in" project="JavaCup">
+		<library name="."/>
+	</bundle>
+	<bundle bundleID="367" class="local.stalin.plugins.generator.rcfgbuilder.Activator" localization="OSGI-INF/l10n/bundle" name="RCFGBuilder" project="RCFGBuilder"/>
+</map>

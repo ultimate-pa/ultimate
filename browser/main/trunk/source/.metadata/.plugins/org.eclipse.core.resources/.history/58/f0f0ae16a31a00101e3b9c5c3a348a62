@@ -1,0 +1,14 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: CFGBuilder Plug-in
+Bundle-SymbolicName: CFGBuilder;singleton:=true
+Bundle-Version: 1.0.0
+Bundle-Activator: local.stalin.boogie.cfgbuilder.Activator
+Require-Bundle: org.eclipse.ui,
+ org.eclipse.core.runtime,
+ STALINCore,
+ BoogieParser
+Bundle-ActivationPolicy: lazy
+Export-Package: local.stalin.boogie.cfgbuilder
+Bundle-RequiredExecutionEnvironment: JavaSE-1.6
+

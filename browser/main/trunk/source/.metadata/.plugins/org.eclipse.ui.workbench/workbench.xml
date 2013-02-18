@@ -1,0 +1,674 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<workbench progressCount="25" version="2.0">
+<workbenchAdvisor/>
+<window height="965" maximized="true" width="1654" x="67" y="56">
+<fastViewData fastViewLocation="1024"/>
+<perspectiveBar>
+<itemSize x="298"/>
+</perspectiveBar>
+<coolbarLayout locked="0">
+<coolItem id="group.file" itemType="typeGroupMarker"/>
+<coolItem id="org.eclipse.ui.workbench.file" itemType="typeToolBarContribution" x="138" y="30"/>
+<coolItem id="additions" itemType="typeGroupMarker"/>
+<coolItem id="org.eclipse.debug.ui.launchActionSet" itemType="typeToolBarContribution" x="120" y="30"/>
+<coolItem id="org.eclipse.jdt.ui.ClassFileEditor" itemType="typePlaceholder" x="-1" y="-1"/>
+<coolItem id="org.eclipse.jdt.ui.CompilationUnitEditor" itemType="typeToolBarContribution" x="-1" y="-1"/>
+<coolItem id="org.eclipse.jdt.ui.JavaElementCreationActionSet" itemType="typeToolBarContribution" x="104" y="30"/>
+<coolItem id="org.eclipse.pde.ui.buildEditor" itemType="typePlaceholder" x="40" y="30"/>
+<coolItem id="org.eclipse.pde.ui.manifestEditor" itemType="typePlaceholder" x="40" y="30"/>
+<coolItem id="org.eclipse.search.searchActionSet" itemType="typeToolBarContribution" x="76" y="30"/>
+<coolItem id="org.eclipse.ui.DefaultTextEditor" itemType="typePlaceholder" x="-1" y="-1"/>
+<coolItem id="org.eclipse.ui.edit.text.actionSet.presentation" itemType="typeToolBarContribution" x="124" y="30"/>
+<coolItem id="group.nav" itemType="typeGroupMarker"/>
+<coolItem id="org.eclipse.ui.workbench.navigate" itemType="typeToolBarContribution" x="184" y="30"/>
+<coolItem id="group.editor" itemType="typeGroupMarker"/>
+<coolItem id="group.help" itemType="typeGroupMarker"/>
+<coolItem id="org.eclipse.ui.workbench.help" itemType="typeToolBarContribution" x="-1" y="-1"/>
+</coolbarLayout>
+<page aggregateWorkingSetId="Aggregate for window 1294069156703" focus="true" label="Workspace - Java">
+<editors>
+<editorArea activeWorkbook="DefaultEditorWorkbook">
+<info part="DefaultEditorWorkbook">
+<folder appearance="1" expanded="2">
+<presentation id="org.eclipse.ui.presentations.WorkbenchPresentationFactory">
+<part id="0"/>
+<part id="1"/>
+<part id="2"/>
+<part id="3"/>
+<part id="4"/>
+<part id="5"/>
+<part id="6"/>
+<part id="7"/>
+<part id="8"/>
+<part id="9"/>
+<part id="10"/>
+<part id="11"/>
+<part id="12"/>
+<part id="13"/>
+<part id="14"/>
+<part id="15"/>
+<part id="16"/>
+<part id="17"/>
+</presentation>
+</folder>
+</info>
+</editorArea>
+<editor id="org.eclipse.jdt.ui.CompilationUnitEditor" name="LazyAbstractionObserver.java" partName="LazyAbstractionObserver.java" path="/exchange/Studium/Seminare_Praktika/SMC-Teamprojekt/StalinSVN/LazyAbstraction/src/local/stalin/plugins/generator/lazyabstraction/LazyAbstractionObserver.java" title="LazyAbstractionObserver.java" tooltip="LazyAbstraction/src/local/stalin/plugins/generator/lazyabstraction/LazyAbstractionObserver.java" workbook="DefaultEditorWorkbook">
+<input factoryID="org.eclipse.ui.part.FileEditorInputFactory" path="/LazyAbstraction/src/local/stalin/plugins/generator/lazyabstraction/LazyAbstractionObserver.java"/>
+<editorState selectionHorizontalPixel="0" selectionLength="0" selectionOffset="22663" selectionTopPixel="9543"/>
+</editor>
+<editor id="org.eclipse.jdt.ui.CompilationUnitEditor" name="SMTNodeAnnotations.java" partName="SMTNodeAnnotations.java" path="/exchange/Studium/Seminare_Praktika/SMC-Teamprojekt/StalinSVN/CFGReducer/src/local/stalin/boogie/cfgreducer/SMTNodeAnnotations.java" title="SMTNodeAnnotations.java" tooltip="CFGReducer/src/local/stalin/boogie/cfgreducer/SMTNodeAnnotations.java" workbook="DefaultEditorWorkbook">
+<input factoryID="org.eclipse.ui.part.FileEditorInputFactory" path="/CFGReducer/src/local/stalin/boogie/cfgreducer/SMTNodeAnnotations.java"/>
+<editorState selectionHorizontalPixel="0" selectionLength="0" selectionOffset="2506" selectionTopPixel="1446"/>
+</editor>
+<editor id="org.eclipse.jdt.ui.CompilationUnitEditor" name="FreeVariableGetter.java" partName="FreeVariableGetter.java" path="/exchange/Studium/Seminare_Praktika/SMC-Teamprojekt/StalinSVN/LazyAbstractionOnCFG/src/local/stalin/plugins/output/lazyabstractiononcfg/FreeVariableGetter.java" title="FreeVariableGetter.java" tooltip="LazyAbstractionOnCFG/src/local/stalin/plugins/output/lazyabstractiononcfg/FreeVariableGetter.java" workbook="DefaultEditorWorkbook">
+<input factoryID="org.eclipse.ui.part.FileEditorInputFactory" path="/LazyAbstractionOnCFG/src/local/stalin/plugins/output/lazyabstractiononcfg/FreeVariableGetter.java"/>
+<editorState selectionHorizontalPixel="0" selectionLength="18" selectionOffset="888" selectionTopPixel="0"/>
+</editor>
+<editor id="org.eclipse.jdt.ui.CompilationUnitEditor" name="ConstToVariableVisitor.java" partName="ConstToVariableVisitor.java" path="/exchange/Studium/Seminare_Praktika/SMC-Teamprojekt/StalinSVN/LazyAbstractionOnCFG/src/local/stalin/plugins/output/lazyabstractiononcfg/ConstToVariableVisitor.java" title="ConstToVariableVisitor.java" tooltip="LazyAbstractionOnCFG/src/local/stalin/plugins/output/lazyabstractiononcfg/ConstToVariableVisitor.java" workbook="DefaultEditorWorkbook">
+<input factoryID="org.eclipse.ui.part.FileEditorInputFactory" path="/LazyAbstractionOnCFG/src/local/stalin/plugins/output/lazyabstractiononcfg/ConstToVariableVisitor.java"/>
+<editorState selectionHorizontalPixel="0" selectionLength="0" selectionOffset="2118" selectionTopPixel="563"/>
+</editor>
+<editor id="org.eclipse.jdt.ui.CompilationUnitEditor" name="ConstToVariableVisitor.java" partName="ConstToVariableVisitor.java" path="/exchange/Studium/Seminare_Praktika/SMC-Teamprojekt/StalinSVN/SafetyChecker/src/local/stalin/plugins/safetychecker/ConstToVariableVisitor.java" title="ConstToVariableVisitor.java" tooltip="SafetyChecker/src/local/stalin/plugins/safetychecker/ConstToVariableVisitor.java" workbook="DefaultEditorWorkbook">
+<input factoryID="org.eclipse.ui.part.FileEditorInputFactory" path="/SafetyChecker/src/local/stalin/plugins/safetychecker/ConstToVariableVisitor.java"/>
+<editorState selectionHorizontalPixel="0" selectionLength="22" selectionOffset="495" selectionTopPixel="0"/>
+</editor>
+<editor id="org.eclipse.jdt.ui.CompilationUnitEditor" name="FormulaWalker.java" partName="FormulaWalker.java" path="/exchange/Studium/Seminare_Praktika/SMC-Teamprojekt/StalinSVN/CoreRCP/src/local/stalin/logic/FormulaWalker.java" title="FormulaWalker.java" tooltip="CoreRCP/src/local/stalin/logic/FormulaWalker.java" workbook="DefaultEditorWorkbook">
+<input factoryID="org.eclipse.ui.part.FileEditorInputFactory" path="/CoreRCP/src/local/stalin/logic/FormulaWalker.java"/>
+<editorState selectionHorizontalPixel="0" selectionLength="13" selectionOffset="2140" selectionTopPixel="1102"/>
+</editor>
+<editor id="org.eclipse.jdt.ui.CompilationUnitEditor" name="SCNodeAnnotations.java" partName="SCNodeAnnotations.java" path="/exchange/Studium/Seminare_Praktika/SMC-Teamprojekt/StalinSVN/SafetyChecker/src/local/stalin/plugins/safetychecker/SCNodeAnnotations.java" title="SCNodeAnnotations.java" tooltip="SafetyChecker/src/local/stalin/plugins/safetychecker/SCNodeAnnotations.java" workbook="DefaultEditorWorkbook">
+<input factoryID="org.eclipse.ui.part.FileEditorInputFactory" path="/SafetyChecker/src/local/stalin/plugins/safetychecker/SCNodeAnnotations.java"/>
+<editorState selectionHorizontalPixel="0" selectionLength="17" selectionOffset="282" selectionTopPixel="66"/>
+</editor>
+<editor id="org.eclipse.jdt.ui.CompilationUnitEditor" name="SCNodeAnnotations.java" partName="SCNodeAnnotations.java" path="/exchange/Studium/Seminare_Praktika/SMC-Teamprojekt/StalinSVN/LazyAbstractionOnCFG/src/local/stalin/plugins/output/lazyabstractiononcfg/SCNodeAnnotations.java" title="SCNodeAnnotations.java" tooltip="LazyAbstractionOnCFG/src/local/stalin/plugins/output/lazyabstractiononcfg/SCNodeAnnotations.java" workbook="DefaultEditorWorkbook">
+<input factoryID="org.eclipse.ui.part.FileEditorInputFactory" path="/LazyAbstractionOnCFG/src/local/stalin/plugins/output/lazyabstractiononcfg/SCNodeAnnotations.java"/>
+<editorState selectionHorizontalPixel="0" selectionLength="0" selectionOffset="1247" selectionTopPixel="274"/>
+</editor>
+<editor id="org.eclipse.jdt.ui.CompilationUnitEditor" name="ConstantsGetter.java" partName="ConstantsGetter.java" path="/exchange/Studium/Seminare_Praktika/SMC-Teamprojekt/StalinSVN/LazyAbstractionOnCFG/src/local/stalin/plugins/output/lazyabstractiononcfg/ConstantsGetter.java" title="ConstantsGetter.java" tooltip="LazyAbstractionOnCFG/src/local/stalin/plugins/output/lazyabstractiononcfg/ConstantsGetter.java" workbook="DefaultEditorWorkbook">
+<input factoryID="org.eclipse.ui.part.FileEditorInputFactory" path="/LazyAbstractionOnCFG/src/local/stalin/plugins/output/lazyabstractiononcfg/ConstantsGetter.java"/>
+<editorState selectionHorizontalPixel="0" selectionLength="15" selectionOffset="888" selectionTopPixel="0"/>
+</editor>
+<editor id="org.eclipse.jdt.ui.CompilationUnitEditor" name="VariableEqualizer.java" partName="VariableEqualizer.java" path="/exchange/Studium/Seminare_Praktika/SMC-Teamprojekt/StalinSVN/LazyAbstractionOnCFG/src/local/stalin/plugins/output/lazyabstractiononcfg/VariableEqualizer.java" title="VariableEqualizer.java" tooltip="LazyAbstractionOnCFG/src/local/stalin/plugins/output/lazyabstractiononcfg/VariableEqualizer.java" workbook="DefaultEditorWorkbook">
+<input factoryID="org.eclipse.ui.part.FileEditorInputFactory" path="/LazyAbstractionOnCFG/src/local/stalin/plugins/output/lazyabstractiononcfg/VariableEqualizer.java"/>
+<editorState selectionHorizontalPixel="0" selectionLength="0" selectionOffset="7525" selectionTopPixel="3476"/>
+</editor>
+<editor id="org.eclipse.jdt.ui.CompilationUnitEditor" name="Atom.java" partName="Atom.java" path="/exchange/Studium/Seminare_Praktika/SMC-Teamprojekt/StalinSVN/CoreRCP/src/local/stalin/logic/Atom.java" title="Atom.java" tooltip="CoreRCP/src/local/stalin/logic/Atom.java" workbook="DefaultEditorWorkbook">
+<input factoryID="org.eclipse.ui.part.FileEditorInputFactory" path="/CoreRCP/src/local/stalin/logic/Atom.java"/>
+<editorState selectionHorizontalPixel="0" selectionLength="0" selectionOffset="425" selectionTopPixel="0"/>
+</editor>
+<editor id="org.eclipse.jdt.ui.CompilationUnitEditor" name="AbstractEdgeNode.java" partName="AbstractEdgeNode.java" path="/exchange/Studium/Seminare_Praktika/SMC-Teamprojekt/StalinSVN/CoreRCP/src/local/stalin/model/AbstractEdgeNode.java" title="AbstractEdgeNode.java" tooltip="CoreRCP/src/local/stalin/model/AbstractEdgeNode.java" workbook="DefaultEditorWorkbook">
+<input factoryID="org.eclipse.ui.part.FileEditorInputFactory" path="/CoreRCP/src/local/stalin/model/AbstractEdgeNode.java"/>
+<editorState selectionHorizontalPixel="0" selectionLength="0" selectionOffset="330" selectionTopPixel="95"/>
+</editor>
+<editor id="org.eclipse.jdt.ui.CompilationUnitEditor" name="SMT2File.java" partName="SMT2File.java" path="/exchange/Studium/Seminare_Praktika/SMC-Teamprojekt/StalinSVN/SafetyChecker/src/local/stalin/plugins/safetychecker/SMT2File.java" title="SMT2File.java" tooltip="SafetyChecker/src/local/stalin/plugins/safetychecker/SMT2File.java" workbook="DefaultEditorWorkbook">
+<input factoryID="org.eclipse.ui.part.FileEditorInputFactory" path="/SafetyChecker/src/local/stalin/plugins/safetychecker/SMT2File.java"/>
+<editorState selectionHorizontalPixel="0" selectionLength="0" selectionOffset="637" selectionTopPixel="0"/>
+</editor>
+<editor id="org.eclipse.jdt.ui.CompilationUnitEditor" name="SafetyCheckerObserver.java" partName="SafetyCheckerObserver.java" path="/exchange/Studium/Seminare_Praktika/SMC-Teamprojekt/StalinSVN/SafetyChecker/src/local/stalin/plugins/safetychecker/SafetyCheckerObserver.java" title="SafetyCheckerObserver.java" tooltip="SafetyChecker/src/local/stalin/plugins/safetychecker/SafetyCheckerObserver.java" workbook="DefaultEditorWorkbook">
+<input factoryID="org.eclipse.ui.part.FileEditorInputFactory" path="/SafetyChecker/src/local/stalin/plugins/safetychecker/SafetyCheckerObserver.java"/>
+<editorState selectionHorizontalPixel="0" selectionLength="0" selectionOffset="557" selectionTopPixel="95"/>
+</editor>
+<editor id="org.eclipse.jdt.ui.CompilationUnitEditor" name="CFGEdge.java" partName="CFGEdge.java" path="/exchange/Studium/Seminare_Praktika/SMC-Teamprojekt/StalinSVN/CFGReducer/src/local/stalin/boogie/cfgreducer/CFGEdge.java" title="CFGEdge.java" tooltip="CFGReducer/src/local/stalin/boogie/cfgreducer/CFGEdge.java" workbook="DefaultEditorWorkbook">
+<input factoryID="org.eclipse.ui.part.FileEditorInputFactory" path="/CFGReducer/src/local/stalin/boogie/cfgreducer/CFGEdge.java"/>
+<editorState selectionHorizontalPixel="0" selectionLength="0" selectionOffset="0" selectionTopPixel="0"/>
+</editor>
+<editor activePart="true" focus="true" id="org.eclipse.jdt.ui.CompilationUnitEditor" name="LazyAbstractionOnCFGObserver.java" partName="LazyAbstractionOnCFGObserver.java" path="/exchange/Studium/Seminare_Praktika/SMC-Teamprojekt/StalinSVN/LazyAbstractionOnCFG/src/local/stalin/plugins/output/lazyabstractiononcfg/LazyAbstractionOnCFGObserver.java" title="LazyAbstractionOnCFGObserver.java" tooltip="LazyAbstractionOnCFG/src/local/stalin/plugins/output/lazyabstractiononcfg/LazyAbstractionOnCFGObserver.java" workbook="DefaultEditorWorkbook">
+<input factoryID="org.eclipse.ui.part.FileEditorInputFactory" path="/LazyAbstractionOnCFG/src/local/stalin/plugins/output/lazyabstractiononcfg/LazyAbstractionOnCFGObserver.java"/>
+<editorState selectionHorizontalPixel="0" selectionLength="0" selectionOffset="8419" selectionTopPixel="80"/>
+</editor>
+<editor id="org.eclipse.jdt.ui.CompilationUnitEditor" name="CFGReducerObserver.java" partName="CFGReducerObserver.java" path="/exchange/Studium/Seminare_Praktika/SMC-Teamprojekt/StalinSVN/CFGReducer/src/local/stalin/boogie/cfgreducer/CFGReducerObserver.java" title="CFGReducerObserver.java" tooltip="CFGReducer/src/local/stalin/boogie/cfgreducer/CFGReducerObserver.java" workbook="DefaultEditorWorkbook">
+<input factoryID="org.eclipse.ui.part.FileEditorInputFactory" path="/CFGReducer/src/local/stalin/boogie/cfgreducer/CFGReducerObserver.java"/>
+<editorState selectionHorizontalPixel="0" selectionLength="0" selectionOffset="3496" selectionTopPixel="1577"/>
+</editor>
+<editor id="org.eclipse.jdt.ui.CompilationUnitEditor" name="ErrorLocationGeneratorObserver.java" partName="ErrorLocationGeneratorObserver.java" path="/exchange/Studium/Seminare_Praktika/SMC-Teamprojekt/StalinSVN/ErrorLocationGenerator/src/local/stalin/plugins/errorlocationgenerator/ErrorLocationGeneratorObserver.java" title="ErrorLocationGeneratorObserver.java" tooltip="ErrorLocationGenerator/src/local/stalin/plugins/errorlocationgenerator/ErrorLocationGeneratorObserver.java" workbook="DefaultEditorWorkbook">
+<input factoryID="org.eclipse.ui.part.FileEditorInputFactory" path="/ErrorLocationGenerator/src/local/stalin/plugins/errorlocationgenerator/ErrorLocationGeneratorObserver.java"/>
+<editorState selectionHorizontalPixel="0" selectionLength="0" selectionOffset="2335" selectionTopPixel="741"/>
+</editor>
+</editors>
+<views>
+<view id="org.eclipse.jdt.ui.TypeHierarchy" partName="Hierarchy">
+<viewState hidefields="false" hidelocaltypes="false" hidenonpublic="false" hidestatic="false" input="=CoreRCP/src&lt;local.stalin.model{IElement.java[IElement" link_editors="0" mv_vertical_scroll="0" orientation="3" qualified_names="0" ratio="350" selection="=CFGReducer/src&lt;local.stalin.boogie.cfgreducer{CFGEdge.java[CFGEdge" showinherited="false" sortbydefiningtype="false" vertical_scroll="0" view="2" workingSetName="Aggregate for window 1294069156703"/>
+</view>
+<view id="org.eclipse.search.ui.views.SearchView" partName="Search">
+<viewState isPinned="false">
+<view IMemento.internal.id="" org.eclipse.search.lastActivation="0"/>
+<view IMemento.internal.id="org.eclipse.jdt.ui.JavaSearchResultPage" org.eclipse.jdt.search.resultpage.grouping="3" org.eclipse.jdt.search.resultpage.limit="1000" org.eclipse.jdt.search.resultpage.limit_enabled="TRUE" org.eclipse.jdt.search.resultpage.sorting="1" org.eclipse.search.lastActivation="1" org.eclipse.search.resultpage.layout="2"/>
+</viewState>
+</view>
+<view id="org.eclipse.jdt.callhierarchy.view" partName="Call Hierarchy">
+<viewState search_scope_type="1"/>
+</view>
+<view id="org.eclipse.debug.ui.DebugView" partName="Debug">
+<viewState/>
+</view>
+<view id="org.eclipse.ui.views.TaskList" partName="Tasks"/>
+<view id="org.eclipse.debug.ui.VariableView" partName="Variables">
+<viewState/>
+</view>
+<view id="org.eclipse.debug.ui.BreakpointView" partName="Breakpoints">
+<viewState>
+<isTrackingSelection value="false"/>
+</viewState>
+</view>
+<view id="org.eclipse.ui.views.ContentOutline" partName="Outline">
+<viewState/>
+</view>
+<view id="org.eclipse.debug.ui.ExpressionView" partName="Expressions">
+<viewState/>
+</view>
+<view id="org.eclipse.ui.views.ProblemView" partName="Problems">
+<viewState PRIMARY_SORT_FIELD="org.eclipse.ui.ide.severityAndDescriptionField" categoryGroup="org.eclipse.ui.ide.severity" markerContentGenerator="org.eclipse.ui.ide.problemsGenerator" partName="Problems">
+<expanded>&#x0A;<category IMemento.internal.id="Errors"/>
+</expanded>
+<columnWidths org.eclipse.ui.ide.locationField="0" org.eclipse.ui.ide.markerType="0" org.eclipse.ui.ide.pathField="0" org.eclipse.ui.ide.resourceField="0" org.eclipse.ui.ide.severityAndDescriptionField="0"/>
+<visible IMemento.internal.id="org.eclipse.ui.ide.severityAndDescriptionField"/>
+<visible IMemento.internal.id="org.eclipse.ui.ide.resourceField"/>
+<visible IMemento.internal.id="org.eclipse.ui.ide.pathField"/>
+<visible IMemento.internal.id="org.eclipse.ui.ide.locationField"/>
+<visible IMemento.internal.id="org.eclipse.ui.ide.markerType"/>
+</viewState>
+</view>
+<view id="org.eclipse.ui.console.ConsoleView" partName="Console">
+<viewState/>
+</view>
+<view id="org.eclipse.jdt.ui.PackageExplorer" partName="Package Explorer">
+<viewState group_libraries="1" layout="2" linkWithEditor="0" rootMode="1" workingSetName="Aggregate for window 1294069156703">
+<customFilters userDefinedPatternsEnabled="false">
+<xmlDefinedFilters>
+<child filterId="org.eclipse.jdt.ui.PackageExplorer.LibraryFilter" isEnabled="false"/>
+<child filterId="org.eclipse.jdt.ui.PackageExplorer.LocalTypesFilter" isEnabled="false"/>
+<child filterId="org.eclipse.jdt.ui.PackageExplorer.StaticsFilter" isEnabled="false"/>
+<child filterId="org.eclipse.pde.ui.ExternalPluginLibrariesFilter1" isEnabled="true"/>
+<child filterId="org.eclipse.jdt.ui.PackageExplorer.ClosedProjectsFilter" isEnabled="true"/>
+<child filterId="org.eclipse.jdt.ui.PackageExplorer.NonSharedProjectsFilter" isEnabled="false"/>
+<child filterId="org.eclipse.jdt.ui.PackageExplorer.NonJavaElementFilter" isEnabled="false"/>
+<child filterId="org.eclipse.jdt.ui.PackageExplorer.ContainedLibraryFilter" isEnabled="false"/>
+<child filterId="org.eclipse.jdt.ui.PackageExplorer.CuAndClassFileFilter" isEnabled="false"/>
+<child filterId="org.eclipse.jdt.ui.PackageExplorer.NonJavaProjectsFilter" isEnabled="false"/>
+<child filterId="org.eclipse.jdt.internal.ui.PackageExplorer.EmptyInnerPackageFilter" isEnabled="true"/>
+<child filterId="org.eclipse.jdt.ui.PackageExplorer.PackageDeclarationFilter" isEnabled="true"/>
+<child filterId="org.eclipse.jdt.internal.ui.PackageExplorer.EmptyPackageFilter" isEnabled="false"/>
+<child filterId="org.eclipse.jdt.ui.PackageExplorer.ImportDeclarationFilter" isEnabled="true"/>
+<child filterId="org.eclipse.jdt.ui.PackageExplorer.FieldsFilter" isEnabled="false"/>
+<child filterId="org.eclipse.jdt.internal.ui.PackageExplorer.HideInnerClassFilesFilter" isEnabled="true"/>
+<child filterId="org.eclipse.jdt.ui.PackageExplorer.NonPublicFilter" isEnabled="false"/>
+<child filterId="org.eclipse.jdt.ui.PackageExplorer_patternFilterId_.*" isEnabled="true"/>
+<child filterId="org.eclipse.jdt.ui.PackageExplorer.EmptyLibraryContainerFilter" isEnabled="true"/>
+<child filterId="org.eclipse.pde.ui.BinaryProjectFilter1" isEnabled="false"/>
+<child filterId="org.eclipse.jdt.ui.PackageExplorer.SyntheticMembersFilter" isEnabled="true"/>
+</xmlDefinedFilters>
+<lastRecentlyUsedFilters>
+<child filterId="org.eclipse.jdt.ui.PackageExplorer.ClosedProjectsFilter"/>
+</lastRecentlyUsedFilters>
+</customFilters>
+</viewState>
+</view>
+<view id="org.eclipse.jdt.ui.SourceView" partName="Declaration">
+<viewState/>
+</view>
+<view id="org.eclipse.jdt.ui.JavadocView" partName="Javadoc">
+<viewState/>
+</view>
+</views>
+<perspectives activePart="org.eclipse.ui.console.ConsoleView" activePerspective="org.eclipse.jdt.ui.JavaPerspective">
+<perspective editorAreaTrimState="2" editorAreaVisible="1" fixed="0" version="0.016">
+<descriptor class="org.eclipse.jdt.internal.ui.JavaPerspectiveFactory" id="org.eclipse.jdt.ui.JavaPerspective" label="Java"/>
+<alwaysOnActionSet id="org.eclipse.search.searchActionSet"/>
+<alwaysOnActionSet id="org.eclipse.ui.edit.text.actionSet.annotationNavigation"/>
+<alwaysOnActionSet id="org.eclipse.ui.edit.text.actionSet.navigation"/>
+<alwaysOnActionSet id="org.eclipse.ui.edit.text.actionSet.convertLineDelimitersTo"/>
+<alwaysOnActionSet id="org.eclipse.ui.externaltools.ExternalToolsSet"/>
+<alwaysOnActionSet id="org.eclipse.ui.cheatsheets.actionSet"/>
+<alwaysOnActionSet id="org.eclipse.ui.actionSet.keyBindings"/>
+<alwaysOnActionSet id="org.eclipse.ui.actionSet.openFiles"/>
+<alwaysOnActionSet id="org.eclipse.debug.ui.launchActionSet"/>
+<alwaysOnActionSet id="org.eclipse.jdt.ui.JavaActionSet"/>
+<alwaysOnActionSet id="org.eclipse.jdt.ui.JavaElementCreationActionSet"/>
+<alwaysOnActionSet id="org.eclipse.ui.NavigateActionSet"/>
+<alwaysOnActionSet id="org.eclipse.debug.ui.breakpointActionSet"/>
+<alwaysOnActionSet id="org.eclipse.jdt.debug.ui.JDTDebugActionSet"/>
+<alwaysOnActionSet id="org.eclipse.jdt.junit.JUnitActionSet"/>
+<show_view_action id="org.eclipse.jdt.ui.PackageExplorer"/>
+<show_view_action id="org.eclipse.jdt.ui.TypeHierarchy"/>
+<show_view_action id="org.eclipse.jdt.ui.SourceView"/>
+<show_view_action id="org.eclipse.jdt.ui.JavadocView"/>
+<show_view_action id="org.eclipse.search.ui.views.SearchView"/>
+<show_view_action id="org.eclipse.ui.console.ConsoleView"/>
+<show_view_action id="org.eclipse.ui.views.ContentOutline"/>
+<show_view_action id="org.eclipse.ui.views.ProblemView"/>
+<show_view_action id="org.eclipse.ui.views.ResourceNavigator"/>
+<show_view_action id="org.eclipse.ui.views.TaskList"/>
+<show_view_action id="org.eclipse.ui.views.ProgressView"/>
+<show_view_action id="org.eclipse.ui.navigator.ProjectExplorer"/>
+<show_view_action id="org.eclipse.ui.texteditor.TemplatesView"/>
+<show_view_action id="org.eclipse.ant.ui.views.AntView"/>
+<show_view_action id="org.eclipse.pde.runtime.LogView"/>
+<new_wizard_action id="org.eclipse.jdt.ui.wizards.JavaProjectWizard"/>
+<new_wizard_action id="org.eclipse.jdt.ui.wizards.NewPackageCreationWizard"/>
+<new_wizard_action id="org.eclipse.jdt.ui.wizards.NewClassCreationWizard"/>
+<new_wizard_action id="org.eclipse.jdt.ui.wizards.NewInterfaceCreationWizard"/>
+<new_wizard_action id="org.eclipse.jdt.ui.wizards.NewEnumCreationWizard"/>
+<new_wizard_action id="org.eclipse.jdt.ui.wizards.NewAnnotationCreationWizard"/>
+<new_wizard_action id="org.eclipse.jdt.ui.wizards.NewSourceFolderCreationWizard"/>
+<new_wizard_action id="org.eclipse.jdt.ui.wizards.NewSnippetFileCreationWizard"/>
+<new_wizard_action id="org.eclipse.jdt.ui.wizards.NewJavaWorkingSetWizard"/>
+<new_wizard_action id="org.eclipse.ui.wizards.new.folder"/>
+<new_wizard_action id="org.eclipse.ui.wizards.new.file"/>
+<new_wizard_action id="org.eclipse.ui.editors.wizards.UntitledTextFileWizard"/>
+<new_wizard_action id="org.eclipse.jdt.junit.wizards.NewTestCaseCreationWizard"/>
+<perspective_action id="org.eclipse.debug.ui.DebugPerspective"/>
+<perspective_action id="org.eclipse.jdt.ui.JavaBrowsingPerspective"/>
+<hide_toolbar_item_id id="org.eclipse.ui.edit.text.toggleShowSelectedElementOnly"/>
+<view id="org.eclipse.ui.views.ProblemView"/>
+<view id="org.eclipse.jdt.ui.JavadocView"/>
+<view id="org.eclipse.jdt.ui.SourceView"/>
+<view id="org.eclipse.ui.console.ConsoleView"/>
+<view id="org.eclipse.search.ui.views.SearchView"/>
+<view id="org.eclipse.jdt.callhierarchy.view"/>
+<view id="org.eclipse.ui.views.ContentOutline"/>
+<view id="org.eclipse.jdt.ui.PackageExplorer"/>
+<view id="org.eclipse.jdt.ui.TypeHierarchy"/>
+<fastViewBars/>
+<layout>
+<mainWindow>
+<info folder="true" part="left">
+<folder activePageID="org.eclipse.jdt.ui.PackageExplorer" appearance="2" expanded="2">
+<page content="org.eclipse.jdt.ui.PackageExplorer" label="Package Explorer"/>
+<page content="org.eclipse.jdt.ui.TypeHierarchy" label="Hierarchy"/>
+<page content="org.eclipse.ui.views.ResourceNavigator" label="LabelNotFound"/>
+<page content="org.eclipse.ui.navigator.ProjectExplorer" label="LabelNotFound"/>
+<page content="org.eclipse.jdt.junit.ResultView" label="LabelNotFound"/>
+<presentation id="org.eclipse.ui.presentations.WorkbenchPresentationFactory">
+<part id="0"/>
+<part id="1"/>
+</presentation>
+</folder>
+</info>
+<info folder="true" part="org.eclipse.ui.internal.ViewStack@c65fb1" ratio="0.7495049" ratioLeft="757" ratioRight="253" relationship="2" relative="left">
+<folder appearance="2" expanded="2">
+<page content="org.eclipse.help.ui.HelpView" label="LabelNotFound"/>
+<page content="org.eclipse.ui.internal.introview" label="LabelNotFound"/>
+<page content="org.eclipse.ui.cheatsheets.views.CheatSheetView" label="LabelNotFound"/>
+<presentation id="org.eclipse.ui.presentations.WorkbenchPresentationFactory"/>
+</folder>
+</info>
+<info part="org.eclipse.ui.editorss" ratio="0.1527861" ratioLeft="255" ratioRight="1414" relationship="2" relative="left"/>
+<info folder="true" part="bottom" ratio="0.6682243" ratioLeft="572" ratioRight="284" relationship="4" relative="org.eclipse.ui.editorss">
+<folder activePageID="org.eclipse.ui.console.ConsoleView" appearance="2" expanded="2">
+<page content="org.eclipse.ui.views.ProblemView" label="Problems"/>
+<page content="org.eclipse.jdt.ui.JavadocView" label="Javadoc"/>
+<page content="org.eclipse.jdt.ui.SourceView" label="Declaration"/>
+<page content="org.eclipse.ui.console.ConsoleView" label="Console"/>
+<page content="org.eclipse.search.ui.views.SearchView" label="Search"/>
+<page content="org.eclipse.jdt.callhierarchy.view" label="Call Hierarchy"/>
+<page content="org.eclipse.ui.views.BookmarkView" label="LabelNotFound"/>
+<page content="org.eclipse.ui.views.ProgressView" label="LabelNotFound"/>
+<page content="org.eclipse.pde.runtime.LogView" label="LabelNotFound"/>
+<presentation id="org.eclipse.ui.presentations.WorkbenchPresentationFactory">
+<part id="0"/>
+<part id="1"/>
+<part id="2"/>
+<part id="3"/>
+<part id="4"/>
+<part id="5"/>
+</presentation>
+</folder>
+</info>
+<info folder="true" part="right" ratio="0.7768052" ratioLeft="1065" ratioRight="306" relationship="2" relative="org.eclipse.ui.editorss">
+<folder activePageID="org.eclipse.ui.views.ContentOutline" appearance="2" expanded="2">
+<page content="org.eclipse.ui.views.ContentOutline" label="Outline"/>
+<page content="org.eclipse.ui.texteditor.TemplatesView" label="LabelNotFound"/>
+<page content="org.eclipse.ant.ui.views.AntView" label="LabelNotFound"/>
+<presentation id="org.eclipse.ui.presentations.WorkbenchPresentationFactory">
+<part id="0"/>
+</presentation>
+</folder>
+</info>
+</mainWindow>
+</layout>
+</perspective>
+<perspective editorAreaTrimState="2" editorAreaVisible="1" fixed="0" version="0.016">
+<descriptor class="org.eclipse.debug.internal.ui.DebugPerspectiveFactory" id="org.eclipse.debug.ui.DebugPerspective" label="Debug"/>
+<alwaysOnActionSet id="org.eclipse.search.searchActionSet"/>
+<alwaysOnActionSet id="org.eclipse.ui.edit.text.actionSet.annotationNavigation"/>
+<alwaysOnActionSet id="org.eclipse.ui.edit.text.actionSet.navigation"/>
+<alwaysOnActionSet id="org.eclipse.ui.edit.text.actionSet.convertLineDelimitersTo"/>
+<alwaysOnActionSet id="org.eclipse.ui.externaltools.ExternalToolsSet"/>
+<alwaysOnActionSet id="org.eclipse.ui.cheatsheets.actionSet"/>
+<alwaysOnActionSet id="org.eclipse.ui.actionSet.keyBindings"/>
+<alwaysOnActionSet id="org.eclipse.ui.actionSet.openFiles"/>
+<alwaysOnActionSet id="org.eclipse.debug.ui.launchActionSet"/>
+<alwaysOnActionSet id="org.eclipse.cdt.debug.ui.debugActionSet"/>
+<alwaysOnActionSet id="org.eclipse.ui.NavigateActionSet"/>
+<alwaysOnActionSet id="org.eclipse.debug.ui.breakpointActionSet"/>
+<alwaysOnActionSet id="org.eclipse.jdt.debug.ui.JDTDebugActionSet"/>
+<alwaysOnActionSet id="org.eclipse.jdt.ui.JavaActionSet"/>
+<alwaysOnActionSet id="org.eclipse.debug.ui.debugActionSet"/>
+<show_view_action id="org.eclipse.debug.ui.DebugView"/>
+<show_view_action id="org.eclipse.debug.ui.VariableView"/>
+<show_view_action id="org.eclipse.debug.ui.BreakpointView"/>
+<show_view_action id="org.eclipse.debug.ui.ExpressionView"/>
+<show_view_action id="org.eclipse.ui.views.ContentOutline"/>
+<show_view_action id="org.eclipse.ui.console.ConsoleView"/>
+<show_view_action id="org.eclipse.ui.views.TaskList"/>
+<show_view_action id="org.eclipse.ant.ui.views.AntView"/>
+<show_view_action id="org.eclipse.cdt.debug.ui.SignalsView"/>
+<show_view_action id="org.eclipse.debug.ui.RegisterView"/>
+<show_view_action id="org.eclipse.debug.ui.ModuleView"/>
+<show_view_action id="org.eclipse.debug.ui.MemoryView"/>
+<show_view_action id="org.eclipse.cdt.debug.ui.DisassemblyView"/>
+<show_view_action id="org.eclipse.ui.views.ProblemView"/>
+<show_view_action id="org.eclipse.cdt.debug.ui.executablesView"/>
+<show_view_action id="org.eclipse.cdt.dsf.debug.ui.disassembly.view"/>
+<show_view_action id="org.eclipse.pde.runtime.LogView"/>
+<show_view_action id="org.eclipse.jdt.debug.ui.DisplayView"/>
+<perspective_action id="org.eclipse.cdt.ui.CPerspective"/>
+<perspective_action id="org.eclipse.jdt.ui.JavaPerspective"/>
+<perspective_action id="org.eclipse.jdt.ui.JavaBrowsingPerspective"/>
+<hide_toolbar_item_id id="org.eclipse.ui.edit.text.toggleShowSelectedElementOnly"/>
+<view id="org.eclipse.ui.console.ConsoleView"/>
+<view id="org.eclipse.ui.views.TaskList"/>
+<view id="org.eclipse.ui.views.ProblemView"/>
+<view id="org.eclipse.cdt.debug.ui.executablesView" removed="true"/>
+<view id="org.eclipse.search.ui.views.SearchView"/>
+<view id="org.eclipse.debug.ui.DebugView"/>
+<view id="org.eclipse.ui.views.ContentOutline"/>
+<view id="org.eclipse.debug.ui.VariableView"/>
+<view id="org.eclipse.debug.ui.BreakpointView"/>
+<view id="org.eclipse.debug.ui.ExpressionView"/>
+<fastViewBars/>
+<layout>&#x0A;<mainWindow>&#x0A;<info folder="true" part="org.eclipse.debug.internal.ui.NavigatorFolderView">&#x0A;<folder activePageID="org.eclipse.debug.ui.DebugView" appearance="2" expanded="2">&#x0A;<page content="org.eclipse.debug.ui.DebugView" label="Debug"/>
+<page content="org.eclipse.ui.views.ResourceNavigator" label="LabelNotFound"/>
+<page content="org.eclipse.jdt.ui.PackageExplorer" label="LabelNotFound"/>
+<page content="org.eclipse.jdt.ui.TypeHierarchy" label="LabelNotFound"/>
+<presentation id="org.eclipse.ui.presentations.WorkbenchPresentationFactory">&#x0A;<part id="0"/>
+</presentation>
+</folder>
+</info>
+<info folder="true" part="stickyFolderRight" ratio="0.74969476" ratioLeft="1228" ratioRight="410" relationship="2" relative="org.eclipse.debug.internal.ui.NavigatorFolderView">&#x0A;<folder appearance="2" expanded="2">&#x0A;<page content="org.eclipse.help.ui.HelpView" label="LabelNotFound"/>
+<page content="org.eclipse.ui.internal.introview" label="LabelNotFound"/>
+<page content="org.eclipse.ui.cheatsheets.views.CheatSheetView" label="LabelNotFound"/>
+</folder>
+</info>
+<info folder="true" part="org.eclipse.debug.internal.ui.ConsoleFolderView" ratio="0.69005847" ratioLeft="590" ratioRight="265" relationship="4" relative="org.eclipse.debug.internal.ui.NavigatorFolderView">&#x0A;<folder activePageID="org.eclipse.ui.console.ConsoleView" appearance="2" expanded="2">&#x0A;<page content="org.eclipse.ui.console.ConsoleView" label="Console"/>
+<page content="org.eclipse.ui.views.TaskList" label="Tasks"/>
+<page content="org.eclipse.ui.views.ProblemView" label="Problems"/>
+<page content="org.eclipse.cdt.debug.ui.executablesView" label="Executables"/>
+<page content="org.eclipse.search.ui.views.SearchView" label="Search"/>
+<page content="org.eclipse.ui.views.BookmarkView" label="LabelNotFound"/>
+<page content="org.eclipse.ui.views.PropertySheet" label="LabelNotFound"/>
+<page content="org.eclipse.jdt.debug.ui.DisplayView" label="LabelNotFound"/>
+<page content="org.eclipse.search.SearchResultView" label="LabelNotFound"/>
+<presentation id="org.eclipse.ui.presentations.WorkbenchPresentationFactory">&#x0A;<part id="0"/>
+<part id="1"/>
+<part id="2"/>
+<part id="3"/>
+<part id="4"/>
+</presentation>
+</folder>
+</info>
+<info part="org.eclipse.ui.editorss" ratio="0.48985958" ratioLeft="314" ratioRight="327" relationship="4" relative="org.eclipse.debug.internal.ui.NavigatorFolderView"/>
+<info folder="true" part="org.eclipse.debug.internal.ui.OutlineFolderView" ratio="0.74969476" ratioLeft="1228" ratioRight="410" relationship="2" relative="org.eclipse.ui.editorss">&#x0A;<folder activePageID="org.eclipse.ui.views.ContentOutline" appearance="2" expanded="2">&#x0A;<page content="org.eclipse.ui.views.ContentOutline" label="Outline"/>
+<page content="org.eclipse.ant.ui.views.AntView" label="LabelNotFound"/>
+<page content="org.eclipse.cdt.debug.ui.DisassemblyView" label="LabelNotFound"/>
+<page content="org.eclipse.cdt.dsf.debug.ui.disassembly.view" label="LabelNotFound"/>
+<presentation id="org.eclipse.ui.presentations.WorkbenchPresentationFactory">&#x0A;<part id="0"/>
+</presentation>
+</folder>
+</info>
+<info folder="true" part="org.eclipse.debug.internal.ui.ToolsFolderView" ratio="0.5" ratioLeft="819" ratioRight="819" relationship="2" relative="org.eclipse.debug.internal.ui.NavigatorFolderView">&#x0A;<folder appearance="2" expanded="2">&#x0A;<page content="org.eclipse.debug.ui.RegisterView" label="LabelNotFound"/>
+<page content="org.eclipse.cdt.debug.ui.SignalsView" label="LabelNotFound"/>
+<page content="org.eclipse.debug.ui.ModuleView" label="LabelNotFound"/>
+<presentation id="org.eclipse.ui.presentations.WorkbenchPresentationFactory"/>
+</folder>
+</info>
+<info folder="true" part="org.eclipse.ui.internal.ViewStack@19f6f27" ratio="0.5" ratioLeft="836" ratioRight="836" relationship="2" relative="org.eclipse.debug.internal.ui.NavigatorFolderView">&#x0A;<folder activePageID="org.eclipse.debug.ui.BreakpointView" appearance="2" expanded="2">&#x0A;<page content="org.eclipse.debug.ui.VariableView" label="Variables"/>
+<page content="org.eclipse.debug.ui.BreakpointView" label="Breakpoints"/>
+<page content="org.eclipse.debug.ui.ExpressionView" label="Expressions"/>
+<presentation id="org.eclipse.ui.presentations.WorkbenchPresentationFactory">&#x0A;<part id="0"/>
+<part id="1"/>
+<part id="2"/>
+</presentation>
+</folder>
+</info>
+</mainWindow>
+</layout>
+</perspective>
+</perspectives>
+<workingSets/>
+<navigationHistory>
+<editors>
+<editor factoryID="org.eclipse.ui.part.FileEditorInputFactory" id="org.eclipse.jdt.ui.CompilationUnitEditor" path="/CFGReducer/src/local/stalin/boogie/cfgreducer/CFGEdge.java"/>
+<editor factoryID="org.eclipse.ui.part.FileEditorInputFactory" id="org.eclipse.jdt.ui.CompilationUnitEditor" path="/CFGReducer/src/local/stalin/boogie/cfgreducer/CFGReducerObserver.java"/>
+<editor factoryID="org.eclipse.ui.part.FileEditorInputFactory" id="org.eclipse.jdt.ui.CompilationUnitEditor" path="/CFGReducer/src/local/stalin/boogie/cfgreducer/CFGEdge.java"/>
+<editor factoryID="org.eclipse.ui.part.FileEditorInputFactory" id="org.eclipse.jdt.ui.CompilationUnitEditor" path="/LazyAbstractionOnCFG/src/local/stalin/plugins/output/lazyabstractiononcfg/LazyAbstractionOnCFGObserver.java"/>
+<editor factoryID="org.eclipse.ui.part.FileEditorInputFactory" id="org.eclipse.jdt.ui.CompilationUnitEditor" path="/LazyAbstractionOnCFG/src/local/stalin/plugins/output/lazyabstractiononcfg/LazyAbstractionOnCFGObserver.java"/>
+<editor factoryID="org.eclipse.ui.part.FileEditorInputFactory" id="org.eclipse.jdt.ui.CompilationUnitEditor" path="/LazyAbstraction/src/local/stalin/plugins/generator/lazyabstraction/LazyAbstractionObserver.java"/>
+<editor factoryID="org.eclipse.ui.part.FileEditorInputFactory" id="org.eclipse.jdt.ui.CompilationUnitEditor" path="/LazyAbstractionOnCFG/src/local/stalin/plugins/output/lazyabstractiononcfg/LazyAbstractionOnCFGObserver.java"/>
+<editor factoryID="org.eclipse.ui.part.FileEditorInputFactory" id="org.eclipse.jdt.ui.CompilationUnitEditor" path="/LazyAbstractionOnCFG/src/local/stalin/plugins/output/lazyabstractiononcfg/ConstantsGetter.java"/>
+<editor factoryID="org.eclipse.ui.part.FileEditorInputFactory" id="org.eclipse.jdt.ui.CompilationUnitEditor" path="/LazyAbstractionOnCFG/src/local/stalin/plugins/output/lazyabstractiononcfg/GraphWriter.java"/>
+<editor factoryID="org.eclipse.ui.part.FileEditorInputFactory" id="org.eclipse.jdt.ui.CompilationUnitEditor" path="/LazyAbstractionOnCFG/src/local/stalin/plugins/output/lazyabstractiononcfg/FreeVariableGetter.java"/>
+<editor factoryID="org.eclipse.ui.part.FileEditorInputFactory" id="org.eclipse.jdt.ui.CompilationUnitEditor" path="/CFGReducer/src/local/stalin/boogie/cfgreducer/SMTNodeAnnotations.java"/>
+<editor factoryID="org.eclipse.ui.part.FileEditorInputFactory" id="org.eclipse.jdt.ui.CompilationUnitEditor" path="/LazyAbstraction/src/local/stalin/plugins/generator/lazyabstraction/LazyAbstractionObserver.java"/>
+<editor factoryID="org.eclipse.ui.part.FileEditorInputFactory" id="org.eclipse.jdt.ui.CompilationUnitEditor" path="/CFGReducer/src/local/stalin/boogie/cfgreducer/CFGReducerObserver.java"/>
+<editor factoryID="org.eclipse.ui.part.FileEditorInputFactory" id="org.eclipse.jdt.ui.CompilationUnitEditor" path="/ErrorLocationGenerator/src/local/stalin/plugins/errorlocationgenerator/ErrorLocationGeneratorObserver.java"/>
+<editor factoryID="org.eclipse.ui.part.FileEditorInputFactory" id="org.eclipse.jdt.ui.CompilationUnitEditor" path="/SafetyChecker/src/local/stalin/plugins/safetychecker/SafetyCheckerObserver.java"/>
+<editor factoryID="org.eclipse.ui.part.FileEditorInputFactory" id="org.eclipse.jdt.ui.CompilationUnitEditor" path="/CFGReducer/src/local/stalin/boogie/cfgreducer/CFGEdge.java"/>
+<editor factoryID="org.eclipse.ui.part.FileEditorInputFactory" id="org.eclipse.jdt.ui.CompilationUnitEditor" path="/CFGReducer/src/local/stalin/boogie/cfgreducer/CFGEdge.java"/>
+<editor factoryID="org.eclipse.ui.part.FileEditorInputFactory" id="org.eclipse.jdt.ui.CompilationUnitEditor" path="/LazyAbstractionOnCFG/src/local/stalin/plugins/output/lazyabstractiononcfg/LazyAbstractionOnCFGObserver.java"/>
+</editors>
+<item historyLabel="CFGEdge.java" index="0">
+<position info="not_deleted" x="4073" y="0"/>
+</item>
+<item historyLabel="CFGEdge.java" index="0">
+<position info="not_deleted" x="8572" y="18"/>
+</item>
+<item historyLabel="CFGEdge.java" index="0">
+<position info="not_deleted" x="8725" y="19"/>
+</item>
+<item historyLabel="CFGReducerObserver.java" index="1">
+<position info="not_deleted" x="4016" y="0"/>
+</item>
+<item historyLabel="CFGReducerObserver.java" index="1">
+<position info="not_deleted" x="13576" y="20"/>
+</item>
+<item historyLabel="CFGReducerObserver.java" index="1">
+<position info="not_deleted" x="13546" y="0"/>
+</item>
+<item historyLabel="CFGReducerObserver.java" index="1">
+<position info="not_deleted" x="7659" y="11"/>
+</item>
+<item historyLabel="CFGReducerObserver.java" index="1">
+<position info="not_deleted" x="9321" y="27"/>
+</item>
+<item historyLabel="CFGReducerObserver.java" index="1">
+<position info="not_deleted" x="7668" y="0"/>
+</item>
+<item historyLabel="CFGReducerObserver.java" index="1">
+<position info="not_deleted" x="1877" y="7"/>
+</item>
+<item historyLabel="CFGReducerObserver.java" index="1">
+<position info="not_deleted" x="3020" y="21"/>
+</item>
+<item historyLabel="CFGReducerObserver.java" index="1">
+<position info="not_deleted" x="7659" y="11"/>
+</item>
+<item historyLabel="CFGReducerObserver.java" index="1">
+<position info="not_deleted" x="9810" y="46"/>
+</item>
+<item historyLabel="CFGReducerObserver.java" index="1">
+<position info="not_deleted" x="13702" y="17"/>
+</item>
+<item historyLabel="CFGEdge.java" index="2">
+<position/>
+</item>
+<item historyLabel="CFGReducerObserver.java" index="1">
+<position info="not_deleted" x="13702" y="17"/>
+</item>
+<item historyLabel="LazyAbstractionOnCFGObserver.java" index="3">
+<position info="not_deleted" x="3828" y="0"/>
+</item>
+<item historyLabel="CFGEdge.java" index="2">
+<position info="not_deleted" x="0" y="0"/>
+</item>
+<item historyLabel="LazyAbstractionOnCFGObserver.java" index="3">
+<position info="not_deleted" x="4024" y="0"/>
+</item>
+<item historyLabel="CFGEdge.java" index="2">
+<position info="not_deleted" x="0" y="0"/>
+</item>
+<item historyLabel="CFGEdge.java" index="2">
+<position info="not_deleted" x="0" y="0"/>
+</item>
+<item historyLabel="CFGEdge.java" index="2">
+<position info="not_deleted" x="0" y="0"/>
+</item>
+<item historyLabel="LazyAbstractionOnCFGObserver.java" index="4">
+<position info="not_deleted" x="0" y="0"/>
+</item>
+<item historyLabel="CFGEdge.java" index="2">
+<position info="not_deleted" x="13648" y="0"/>
+</item>
+<item historyLabel="CFGEdge.java" index="2">
+<position info="not_deleted" x="9581" y="9"/>
+</item>
+<item historyLabel="LazyAbstractionObserver.java" index="5">
+<position info="not_deleted" x="22663" y="0"/>
+</item>
+<item historyLabel="LazyAbstractionOnCFGObserver.java" index="6">
+<position info="not_deleted" x="0" y="0"/>
+</item>
+<item historyLabel="ConstantsGetter.java" index="7">
+<position info="not_deleted" x="4877" y="0"/>
+</item>
+<item historyLabel="ConstantsGetter.java" index="7">
+<position info="not_deleted" x="888" y="15"/>
+</item>
+<item historyLabel="LazyAbstractionOnCFGObserver.java" index="6">
+<position info="not_deleted" x="6436" y="0"/>
+</item>
+<item historyLabel="GraphWriter.java" index="8">
+<position info="not_deleted" x="0" y="0"/>
+</item>
+<item historyLabel="LazyAbstractionOnCFGObserver.java" index="6">
+<position info="not_deleted" x="6436" y="0"/>
+</item>
+<item historyLabel="FreeVariableGetter.java" index="9">
+<position info="not_deleted" x="1440" y="16"/>
+</item>
+<item historyLabel="FreeVariableGetter.java" index="9">
+<position info="not_deleted" x="888" y="18"/>
+</item>
+<item historyLabel="LazyAbstractionOnCFGObserver.java" index="6">
+<position info="not_deleted" x="7539" y="0"/>
+</item>
+<item historyLabel="SMTNodeAnnotations.java" index="10">
+<position info="not_deleted" x="2506" y="0"/>
+</item>
+<item historyLabel="LazyAbstractionObserver.java" index="11">
+<position info="not_deleted" x="22663" y="0"/>
+</item>
+<item historyLabel="LazyAbstractionOnCFGObserver.java" index="6">
+<position info="not_deleted" x="8296" y="0"/>
+</item>
+<item historyLabel="CFGReducerObserver.java" index="12">
+<position info="not_deleted" x="3485" y="0"/>
+</item>
+<item historyLabel="ErrorLocationGeneratorObserver.java" index="13">
+<position info="not_deleted" x="781" y="30"/>
+</item>
+<item historyLabel="SafetyCheckerObserver.java" index="14">
+<position info="not_deleted" x="16017" y="0"/>
+</item>
+<item historyLabel="CFGEdge.java" index="15">
+<position info="not_deleted" x="9989" y="0"/>
+</item>
+<item historyLabel="CFGEdge.java" index="15">
+<position info="not_deleted" x="9581" y="9"/>
+</item>
+<item historyLabel="CFGEdge.java" index="15">
+<position info="not_deleted" x="13458" y="0"/>
+</item>
+<item historyLabel="CFGEdge.java" index="15">
+<position info="not_deleted" x="13409" y="0"/>
+</item>
+<item historyLabel="CFGReducerObserver.java" index="12">
+<position info="not_deleted" x="3496" y="0"/>
+</item>
+<item historyLabel="ErrorLocationGeneratorObserver.java" index="13">
+<position info="not_deleted" x="2335" y="0"/>
+</item>
+<item historyLabel="SafetyCheckerObserver.java" index="14">
+<position info="not_deleted" x="557" y="0"/>
+</item>
+<item historyLabel="CFGEdge.java" index="16">
+<position info="not_deleted" x="0" y="0"/>
+</item>
+<item active="true" historyLabel="LazyAbstractionOnCFGObserver.java" index="17">
+<position info="not_deleted" x="8419" y="0"/>
+</item>
+</navigationHistory>
+<input factoryID="org.eclipse.ui.internal.model.ResourceFactory" path="/" type="8"/>
+</page>
+<workbenchWindowAdvisor/>
+<actionBarAdvisor/>
+<trimLayout>
+<trimArea IMemento.internal.id="128">
+<trimItem IMemento.internal.id="org.eclipse.ui.internal.WorkbenchWindow.topBar"/>
+</trimArea>
+<trimArea IMemento.internal.id="1024">
+<trimItem IMemento.internal.id="org.eclise.ui.internal.FastViewBar"/>
+<trimItem IMemento.internal.id="org.eclipse.jface.action.StatusLineManager"/>
+<trimItem IMemento.internal.id="org.eclipse.ui.internal.progress.ProgressRegion"/>
+</trimArea>
+</trimLayout>
+</window>
+<mruList>
+<file factoryID="org.eclipse.ui.part.FileEditorInputFactory" id="org.eclipse.jdt.ui.CompilationUnitEditor" name="ErrorLocationGeneratorObserver.java" tooltip="ErrorLocationGenerator/src/local/stalin/plugins/errorlocationgenerator/ErrorLocationGeneratorObserver.java">
+<persistable path="/ErrorLocationGenerator/src/local/stalin/plugins/errorlocationgenerator/ErrorLocationGeneratorObserver.java"/>
+</file>
+<file factoryID="org.eclipse.ui.part.FileEditorInputFactory" id="org.eclipse.jdt.ui.CompilationUnitEditor" name="CFGReducerObserver.java" tooltip="CFGReducer/src/local/stalin/boogie/cfgreducer/CFGReducerObserver.java">
+<persistable path="/CFGReducer/src/local/stalin/boogie/cfgreducer/CFGReducerObserver.java"/>
+</file>
+<file factoryID="org.eclipse.ui.part.FileEditorInputFactory" id="org.eclipse.jdt.ui.CompilationUnitEditor" name="GraphWriter.java" tooltip="LazyAbstractionOnCFG/src/local/stalin/plugins/output/lazyabstractiononcfg/GraphWriter.java">
+<persistable path="/LazyAbstractionOnCFG/src/local/stalin/plugins/output/lazyabstractiononcfg/GraphWriter.java"/>
+</file>
+<file factoryID="org.eclipse.ui.part.FileEditorInputFactory" id="org.eclipse.jdt.ui.CompilationUnitEditor" name="LazyAbstractionOnCFGObserver.java" tooltip="LazyAbstractionOnCFG/src/local/stalin/plugins/output/lazyabstractiononcfg/LazyAbstractionOnCFGObserver.java">
+<persistable path="/LazyAbstractionOnCFG/src/local/stalin/plugins/output/lazyabstractiononcfg/LazyAbstractionOnCFGObserver.java"/>
+</file>
+<file factoryID="org.eclipse.ui.part.FileEditorInputFactory" id="org.eclipse.jdt.ui.CompilationUnitEditor" name="CFGEdge.java" tooltip="CFGReducer/src/local/stalin/boogie/cfgreducer/CFGEdge.java">
+<persistable path="/CFGReducer/src/local/stalin/boogie/cfgreducer/CFGEdge.java"/>
+</file>
+<file factoryID="org.eclipse.ui.part.FileEditorInputFactory" id="org.eclipse.jdt.ui.CompilationUnitEditor" name="SMTInterface.java" tooltip="SMTInterface/src/local/stalin/SMTInterface/SMTInterface.java">
+<persistable path="/SMTInterface/src/local/stalin/SMTInterface/SMTInterface.java"/>
+</file>
+<file factoryID="org.eclipse.jdt.ui.ClassFileEditorInputFactory" id="org.eclipse.jdt.ui.ClassFileEditor" name="TrueTypeFont.class" tooltip="sun.font.TrueTypeFont">
+<persistable org.eclipse.jdt.ui.ClassFileIdentifier="=ASTBuilder/\/usr\/lib\/jvm\/java-6-sun-1.6.0.24\/jre\/lib\/rt.jar&lt;sun.font(TrueTypeFont.class"/>
+</file>
+<file factoryID="org.eclipse.ui.part.FileEditorInputFactory" id="org.eclipse.jdt.ui.CompilationUnitEditor" name="SafetyCheckerObserver.java" tooltip="SafetyChecker/src/local/stalin/plugins/safetychecker/SafetyCheckerObserver.java">
+<persistable path="/SafetyChecker/src/local/stalin/plugins/safetychecker/SafetyCheckerObserver.java"/>
+</file>
+<file factoryID="org.eclipse.jdt.ui.ClassFileEditorInputFactory" id="org.eclipse.jdt.ui.ClassFileEditor" name="ModelBuilder.class" tooltip="com.sun.xml.internal.bind.v2.model.impl.ModelBuilder">
+<persistable org.eclipse.jdt.ui.ClassFileIdentifier="=ASTBuilder/\/usr\/lib\/jvm\/java-6-sun-1.6.0.24\/jre\/lib\/rt.jar&lt;com.sun.xml.internal.bind.v2.model.impl(ModelBuilder.class"/>
+</file>
+<file factoryID="org.eclipse.ui.part.FileEditorInputFactory" id="org.eclipse.jdt.ui.CompilationUnitEditor" name="MenuActions.java" tooltip="JungVisualization/src/local/stalin/plugins/output/jungvisualization/actions/MenuActions.java">
+<persistable path="/JungVisualization/src/local/stalin/plugins/output/jungvisualization/actions/MenuActions.java"/>
+</file>
+<file factoryID="org.eclipse.ui.part.FileEditorInputFactory" id="org.eclipse.jdt.ui.CompilationUnitEditor" name="FormulaUnFleterer.java" tooltip="CoreRCP/src/local/stalin/logic/FormulaUnFleterer.java">
+<persistable path="/CoreRCP/src/local/stalin/logic/FormulaUnFleterer.java"/>
+</file>
+<file factoryID="org.eclipse.ui.part.FileEditorInputFactory" id="org.eclipse.jdt.ui.CompilationUnitEditor" name="Theory.java" tooltip="CoreRCP/src/local/stalin/logic/Theory.java">
+<persistable path="/CoreRCP/src/local/stalin/logic/Theory.java"/>
+</file>
+<file factoryID="org.eclipse.ui.part.FileEditorInputFactory" id="org.eclipse.jdt.ui.CompilationUnitEditor" name="SMT2File.java" tooltip="SafetyChecker/src/local/stalin/plugins/safetychecker/SMT2File.java">
+<persistable path="/SafetyChecker/src/local/stalin/plugins/safetychecker/SMT2File.java"/>
+</file>
+<file factoryID="org.eclipse.ui.part.FileEditorInputFactory" id="org.eclipse.jdt.ui.CompilationUnitEditor" name="AbstractElement.java" tooltip="CoreRCP/src/local/stalin/model/AbstractElement.java">
+<persistable path="/CoreRCP/src/local/stalin/model/AbstractElement.java"/>
+</file>
+<file factoryID="org.eclipse.ui.part.FileEditorInputFactory" id="org.eclipse.jdt.ui.CompilationUnitEditor" name="AbstractEdgeNode.java" tooltip="CoreRCP/src/local/stalin/model/AbstractEdgeNode.java">
+<persistable path="/CoreRCP/src/local/stalin/model/AbstractEdgeNode.java"/>
+</file>
+</mruList>
+</workbench>

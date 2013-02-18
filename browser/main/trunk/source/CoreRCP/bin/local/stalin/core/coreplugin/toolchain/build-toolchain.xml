@@ -1,0 +1,15 @@
+<project name="proj1" default="generate_toolchain" basedir=".">
+
+	<!-- this expects the binary xjc to be known / to be in the PATH on your system,
+		 but if you really use some JDK 6 (what you are required to do anyway) that
+		 should automatically be the case on Unix machines -->
+	<!-- Beware Windows user: You might have to add JDK1.6.X/bin to your PATH environment variable -->
+	<target name="generate_toolchain">
+	<property environment="env"/>
+	<exec executable="${java.home}/../bin/xjc">
+	<arg line="-d ../../../../.. -p local.stalin.core.coreplugin.toolchain toolchain.xsd"/>
+	</exec>
+	</target>
+
+</project>
+

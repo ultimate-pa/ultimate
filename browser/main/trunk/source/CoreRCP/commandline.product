@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?pde version="3.5"?>
+
+<product name="Stalin" id="STALINCore.commandlineproduct" application="STALINCore.stalinapplication" useFeatures="false" includeLaunchers="true">
+
+   <aboutInfo>
+      <image path="/CoreRCP/icons/about.gif"/>
+      <text>
+         Stalin Ultimate is a tool for model checking and static program analysis. It provides multiple toolchains which check properties or transform input files.
+      </text>
+   </aboutInfo>
+
+   <configIni use="default">
+   </configIni>
+
+   <launcherArgs>
+      <programArgs>-nosplash --console</programArgs>
+      <programArgsLin>-data @user.home/.stalin</programArgsLin>
+      <programArgsWin>-data @user.home\stalin-data</programArgsWin>
+      <vmArgs>-Xmx1024M -Xms512M</vmArgs>
+   </launcherArgs>
+
+   <windowImages/>
+
+   <splash
+      location="AntlrV3" />
+   <launcher name="Stalin">
+      <solaris/>
+      <win useIco="false">
+         <bmp/>
+      </win>
+   </launcher>
+
+   <vm>
+   </vm>
+
+   <plugins>
+      <plugin id="AntlrV3"/>
+      <plugin id="AutomataParser" fragment=""/>
+      <plugin id="BoogieParser"/>
+      <plugin id="CFG2SMT"/>
+      <plugin id="CFGBuilder"/>
+      <plugin id="CFGReducer"/>
+      <plugin id="ErrorLocationGenerator"/>
+      <plugin id="JavaCup"/>
+      <plugin id="Jung_base"/>
+      <plugin id="LocalVariableRenamer" fragment=""/>
+      <plugin id="NestedWordAutomata" fragment=""/>
+      <plugin id="RCFGBuilder" fragment=""/>
+      <plugin id="SMTInterface"/>
+      <plugin id="SMTInterface.linux.x86" fragment="true"/>
+      <plugin id="SMTInterface.linux.x86_64" fragment="true"/>
+      <plugin id="SMTInterface.win32.x86" fragment="true"/>
+      <plugin id="SMTInterface.win32.x86_64" fragment="true"/>
+      <plugin id="SMTInterfaceTest" fragment="true"/>
+      <plugin id="STALINCore"/>
+      <plugin id="SmtInterpol"/>
+      <plugin id="TraceAbstraction" fragment=""/>
+      <plugin id="com.ibm.icu"/>
+      <plugin id="lazyabstraction"/>
+      <plugin id="local.stalin.InteractiveConsole"/>
+      <plugin id="local.stalin.boogie.preprocessor"/>
+      <plugin id="local.stalin.plugins.safetychecker"/>
+      <plugin id="log4j"/>
+      <plugin id="org.eclipse.core.commands"/>
+      <plugin id="org.eclipse.core.contenttype"/>
+      <plugin id="org.eclipse.core.databinding"/>
+      <plugin id="org.eclipse.core.databinding.observable"/>
+      <plugin id="org.eclipse.core.databinding.property"/>
+      <plugin id="org.eclipse.core.expressions"/>
+      <plugin id="org.eclipse.core.jobs"/>
+      <plugin id="org.eclipse.core.runtime"/>
+      <plugin id="org.eclipse.core.runtime.compatibility.registry" fragment="true"/>
+      <plugin id="org.eclipse.equinox.app"/>
+      <plugin id="org.eclipse.equinox.common"/>
+      <plugin id="org.eclipse.equinox.preferences"/>
+      <plugin id="org.eclipse.equinox.registry"/>
+      <plugin id="org.eclipse.help"/>
+      <plugin id="org.eclipse.jface"/>
+      <plugin id="org.eclipse.jface.databinding"/>
+      <plugin id="org.eclipse.osgi"/>
+      <plugin id="org.eclipse.swt"/>
+      <plugin id="org.eclipse.swt.gtk.linux.x86" fragment="true"/>
+      <plugin id="org.eclipse.swt.win32.win32.x86" fragment="true"/>
+      <plugin id="org.eclipse.ui"/>
+      <plugin id="org.eclipse.ui.workbench"/>
+   </plugins>
+
+
+</product>

@@ -1,0 +1,13 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: DSI AST Transformer
+Bundle-SymbolicName: DSITransformer;singleton:=true
+Bundle-Version: 0.0.1
+Bundle-Activator: de.uni_freiburg.informatik.ultimate.boogie.DSITransformer.Activator
+Require-Bundle: UltimateCore,
+ BoogieParser, 
+ Library-log4j
+Bundle-ActivationPolicy: lazy
+Export-Package: de.uni_freiburg.informatik.ultimate.boogie.DSITransformer
+Bundle-RequiredExecutionEnvironment: JavaSE-1.6
+

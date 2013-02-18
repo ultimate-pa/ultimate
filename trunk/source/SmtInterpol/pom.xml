@@ -1,0 +1,109 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+
+	<parent>
+		<artifactId>MavenParentUltimate</artifactId>
+		<groupId>Ultimate</groupId>
+		<version>0.0.1</version>
+		<relativePath>../BA_MavenParentUltimate/pom.xml</relativePath>
+	</parent>
+
+
+	<groupId>SmtInterpol</groupId>
+	<artifactId>SmtInterpol</artifactId>
+	<version>2.0.0</version>
+	<packaging>eclipse-plugin</packaging>
+
+	<build>
+		<plugins>
+			<plugin>
+				<artifactId>maven-antrun-plugin</artifactId>
+				<version>1.7</version>
+				<executions>
+					<execution>
+						<id>generate parser sources</id>
+						<phase>generate-sources</phase>
+						<configuration>
+							<tasks>
+								<echo>SmtInterpol: workspaceDir is ${workspaceDir}</echo>
+								<echo>SmtInterpol: cupDir is ${cupDir}</echo>
+								<echo>SmtInterpol: flexBinary is ${flexBinary}</echo>
+								<echo>SmtInterpol: smtlibDir is ${smtlibDir}</echo>
+								<echo>SmtInterpol: smtlib2Dir is ${smtlib2Dir}</echo>
+								<echo>SmtInterpol: dimacsDir is ${dimacsDir}</echo>
+
+								<java classname="java_cup.Main" classpath="${cupDir}" fork="true"
+									dir="${smtlibDir}">
+									<arg value="smtlib.cup" />
+								</java>
+								<java jar="${flexBinary}" fork="true" dir="${smtlibDir}">
+									<arg value="smtlib.flex" />
+								</java>
+
+								<java classname="java_cup.Main" classpath="${cupDir}" fork="true"
+									dir="${smtlib2Dir}">
+									<arg value="smtlib.cup" />
+								</java>
+								<java jar="${flexBinary}" fork="true" dir="${smtlib2Dir}">
+									<arg value="smtlib.flex" />
+								</java>
+								
+								<java classname="java_cup.Main" classpath="${cupDir}" fork="true"
+									dir="${dimacsDir}">
+									<arg value="dimacs.cup" />
+								</java>
+								<java jar="${flexBinary}" fork="true" dir="${dimacsDir}">
+									<arg value="dimacs.flex" />
+								</java>
+							</tasks>
+						</configuration>
+						<goals>
+							<goal>run</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<artifactId>maven-clean-plugin</artifactId>
+				<version>2.4.1</version>
+				<configuration>
+					<filesets>
+						<fileset>
+							<directory>${smtlibDir}</directory>
+							<includes>
+								<include>Parser.java</include>
+								<include>Lexer.java</include>
+								<include>Lexer.java~</include>
+								<include>LexerSymbols.java</include>
+							</includes>
+						</fileset>
+						<fileset>
+							<directory>${smtlib2Dir}</directory>
+							<includes>
+								<include>Parser.java</include>
+								<include>Lexer.java</include>
+								<include>Lexer.java~</include>
+								<include>LexerSymbols.java</include>
+							</includes>
+						</fileset>
+						<fileset>
+							<directory>${dimacsDir}</directory>
+							<includes>
+								<include>Parser.java</include>
+								<include>Lexer.java</include>
+								<include>Lexer.java~</include>
+								<include>LexerSymbols.java</include>
+							</includes>
+						</fileset>
+					</filesets>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
+
+</project>
+
+
+
+

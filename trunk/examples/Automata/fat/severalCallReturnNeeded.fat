@@ -1,0 +1,63 @@
+// NWA where several call transitions and return transitions are needed to
+// reach the final state.
+// Author: heizmann@informatik.uni-freiburg.de
+// Date: 3.8.2010
+
+#NotAccepts a1 [a< a< a<]
+#NotAccepts determinize(a1) [a a a]
+#NotAccepts a1 [a a a b a a a]
+#NotAccepts determinize(a1) [a a a b a a a]
+#NotAccepts a1 [a a a b]
+#NotAccepts determinize(a1) [a a a b]
+#IsNotEmpty a1
+#IsNotEmpty determinize(a1)
+#IsNotEmpty difference(all a1)
+#Accepts difference(all difference(all a1)) [a<  a  a  a  a  a  a<  a<  a<  > a > a > a > a]
+#IsEmpty intersect(a1 difference(all a1))
+#NotAccepts difference(all difference(all a1)) [a a<]
+#NotAccepts a1 [a a<]
+
+#Print a1
+
+#nwa all := (
+  #callAlphabet := {a b},
+  #internalAlphabet := {a b},
+  #returnAlphabet := {a b},
+  #states := {s},
+  #initialStates := {s},
+  #finalStates := {s},
+  #callTransitions := {(s a s)},
+  #internalTransitions := {(s a s)}, 
+  #returnTransitions := {(s s a s)}
+)
+
+
+ 
+
+
+#nwa a1 := (
+  #callAlphabet := {a b},
+  #internalAlphabet := {a b},
+  #returnAlphabet := {a b},
+  #states := {q0 q1 q2 q3 q4 q5 q6 q8 q9 s0 s1 s2 s3 r0 r1 p0 p},
+  #initialStates := {q0},
+  #finalStates := {p},
+  #callTransitions := {
+      (q0 a q1)
+      (q0 a s0) (q6 a s0) (q5 a s0)
+      (s0 a r0) (s2 a r0)
+      (r0 a p0)
+  },
+  #internalTransitions := {
+      (q0 a q1) (q1 a q2) (q2 a q3) (q3 a q4) (q4 a q5) (q5 a q6) (q5 a q5)
+      (s0 a s1) (s1 a s2)
+    
+  }, 
+  #returnTransitions := {
+      (p0 r0 a r1)
+      (r1 s0 a s3)
+      (s3 q5 a q8) (s3 q6 a q9)
+      (q9 q0 a p)
+  }
+)
+

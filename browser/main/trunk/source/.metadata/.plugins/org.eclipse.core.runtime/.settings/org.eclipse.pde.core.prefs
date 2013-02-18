@@ -1,0 +1,20 @@
+#Tue Jan 04 12:03:32 CET 2011
+target_platform_realization=false
+org.eclipse.pde.ui.os=linux
+additional_locations=
+program_args=
+platform_path=/usr/lib/eclipse
+eclipse.preferences.version=1
+target_mode=useThis
+target.profile=
+pooled_bundles=
+checkedPlugins=[savedAll]
+org.eclipse.pde.ui.arch=x86
+saved_platform3=
+saved_platform2=
+saved_platform1=
+saved_platform0=/usr/lib/eclipse
+workspace_target_handle=local\:1294069347046.target
+org.eclipse.pde.ui.ws=gtk
+org.eclipse.pde.ui.nl=de_DE
+vm_args=

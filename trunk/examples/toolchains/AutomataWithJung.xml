@@ -1,0 +1,4 @@
+<toolchain>
+	<plugin id="NestedWordAutomata"/>
+	<plugin id="JungVisualization"/>
+</toolchain>

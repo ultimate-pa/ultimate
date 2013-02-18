@@ -1,0 +1,290 @@
+// Trace Abstraction based termination proofs for our favorite program
+//
+// blue is: y>=0; y--;
+// green is: x>=0; x--; havoc(y)
+//
+// The automata manualIA1 manualIA2 are interpolantAutomata that we obtained
+// manually.
+//
+// The automata interpolantAutomata1... are interpolantAutomata obtained by
+// applying our CEGAR algorithm
+//
+//
+// Author: heizmann@informatik.uni-freiburg.de
+// Date: 19.7.2011
+
+
+// #IsEmptyBuchi buchiIntersect(controlAutomaton
+//                                 buchiIntersect(buchiComplementFKV(manualIA1)
+//                                                buchiComplementFKV(manualIA2)))
+
+#IsNotEmptyBuchi controlAutomaton
+#AcceptsBuchi controlAutomaton [blue, blue]
+#AcceptsBuchi interpolantAutomaton1 [blue, blue]
+
+#IsNotEmptyBuchi buchiIntersect(controlAutomaton buchiComplementFKV(interpolantAutomaton1))
+#AcceptsBuchi buchiIntersect(controlAutomaton buchiComplementFKV(interpolantAutomaton1)) [ green, blue blue]
+#AcceptsBuchi interpolantAutomaton2 [ green, blue blue]
+
+
+#IsNotEmptyBuchi buchiIntersect(
+                     buchiIntersect(controlAutomaton 
+                                    buchiComplementFKV(interpolantAutomaton1))
+                     buchiComplementFKV(interpolantAutomaton2))
+#AcceptsBuchi buchiIntersect(
+                     buchiIntersect(controlAutomaton 
+                                    buchiComplementFKV(interpolantAutomaton1))
+                     buchiComplementFKV(interpolantAutomaton2))
+              [green, green green ]
+#AcceptsBuchi interpolantAutomaton3 [ green, green green]
+
+
+
+#IsNotEmptyBuchi buchiIntersect(
+                     buchiIntersect(
+                         buchiIntersect(controlAutomaton 
+                             buchiComplementFKV(interpolantAutomaton1))
+                         buchiComplementFKV(interpolantAutomaton2))
+                     buchiComplementFKV(interpolantAutomaton3))
+#AcceptsBuchi buchiIntersect(
+                     buchiIntersect(
+                         buchiIntersect(controlAutomaton 
+                             buchiComplementFKV(interpolantAutomaton1))
+                         buchiComplementFKV(interpolantAutomaton2))
+                     buchiComplementFKV(interpolantAutomaton3))
+              [blue green, blue blue ]
+#AcceptsBuchi interpolantAutomaton4 [blue green, blue blue ]
+
+
+#IsNotEmptyBuchi buchiIntersect(
+                     buchiIntersect(
+                         buchiIntersect(
+                             buchiIntersect(controlAutomaton 
+                                 buchiComplementFKV(interpolantAutomaton1))
+                             buchiComplementFKV(interpolantAutomaton2))
+                         buchiComplementFKV(interpolantAutomaton3))
+                     buchiComplementFKV(interpolantAutomaton4))
+#AcceptsBuchi buchiIntersect(
+                     buchiIntersect(
+                         buchiIntersect(
+                             buchiIntersect(controlAutomaton 
+                                 buchiComplementFKV(interpolantAutomaton1))
+                             buchiComplementFKV(interpolantAutomaton2))
+                         buchiComplementFKV(interpolantAutomaton3))
+                     buchiComplementFKV(interpolantAutomaton4))
+              [blue blue green, green blue green green ]
+#AcceptsBuchi interpolantAutomaton5 [blue blue green, green blue green green ]
+
+
+
+#IsNotEmptyBuchi buchiIntersect(
+                     buchiIntersect(
+                         buchiIntersect(
+                             buchiIntersect(
+                                 buchiIntersect(controlAutomaton 
+                                     buchiComplementFKV(interpolantAutomaton1))
+                                 buchiComplementFKV(interpolantAutomaton2))
+                             buchiComplementFKV(interpolantAutomaton3))
+                         buchiComplementFKV(interpolantAutomaton4))
+                      buchiComplementFKV(interpolantAutomaton5))
+#AcceptsBuchi buchiIntersect(
+                     buchiIntersect(
+                         buchiIntersect(
+                             buchiIntersect(
+                                 buchiIntersect(controlAutomaton 
+                                     buchiComplementFKV(interpolantAutomaton1))
+                                 buchiComplementFKV(interpolantAutomaton2))
+                             buchiComplementFKV(interpolantAutomaton3))
+                         buchiComplementFKV(interpolantAutomaton4))
+                      buchiComplementFKV(interpolantAutomaton5))
+              [blue blue green, blue blue blue green ]
+#AcceptsBuchi interpolantAutomaton6 [blue blue green, blue blue blue green ]
+              
+              
+              
+#IsEmptyBuchi buchiIntersect(
+                     buchiIntersect(
+                         buchiIntersect(
+                             buchiIntersect(
+                                 buchiIntersect(
+                                     buchiIntersect(controlAutomaton 
+                                         buchiComplementFKV(interpolantAutomaton1))
+                                     buchiComplementFKV(interpolantAutomaton2))
+                                 buchiComplementFKV(interpolantAutomaton3))
+                             buchiComplementFKV(interpolantAutomaton4))
+                          buchiComplementFKV(interpolantAutomaton5))              
+                      buchiComplementFKV(interpolantAutomaton6))              
+              
+              
+              
+              
+#nwa controlAutomaton := (
+  #callAlphabet := { },
+  #internalAlphabet := {blue green},
+  #returnAlphabet := { },
+  #states := {"l"},
+  #initialStates := {"l"},
+  #finalStates := {"l"},
+  #callTransitions := {},
+  #internalTransitions := {("l" blue "l") ("l" green "l")}, 
+  #returnTransitions := {}
+)
+
+#nwa manualIA1 := (
+  #callAlphabet := { },
+  #internalAlphabet := {blue green},
+  #returnAlphabet := { },
+  #states := {"rk=inf" "y<rk A"},
+  #initialStates := {"rk=inf"},
+  #finalStates := {"y<rk A"},
+  #callTransitions := {},
+  #internalTransitions := {
+    ("rk=inf" blue "rk=inf") ("rk=inf" green "rk=inf")
+    ("rk=inf" blue "y<rk A") 
+    ("y<rk A" blue "y<rk A")
+  }, 
+  #returnTransitions := {}
+)
+
+
+#nwa manualIA2 := (
+  #callAlphabet := { },
+  #internalAlphabet := {blue green},
+  #returnAlphabet := { },
+  #states := {"rk=inf" "x<rk A" "x<=rk"},
+  #initialStates := {"rk=inf"},
+  #finalStates := {"x<rk A"},
+  #callTransitions := {},
+  #internalTransitions := {
+    ("rk=inf" green "rk=inf") ("rk=inf" blue "rk=inf") 
+    ("rk=inf" green "x<rk A") 
+    ("x<rk A" green "x<=rk") ("x<rk A" blue "x<=rk")
+    ("x<=rk" green "x<rk A") ("x<=rk" blue "x<=rk")
+  }, 
+  #returnTransitions := {}
+)
+
+
+
+
+
+#nwa interpolantAutomaton1 := (
+  #callAlphabet := { },
+  #internalAlphabet := {blue green},
+  #returnAlphabet := { },
+  #states := {"rk=inf" "x<rk A"},
+  #initialStates := {"rk=inf"},
+  #finalStates := {"x<rk A"},
+  #callTransitions := {},
+  #internalTransitions := {
+    ("rk=inf" blue "rk=inf") 
+    ("rk=inf" blue "x<rk A") 
+    ("x<rk A" blue "x<rk A")
+  }, 
+  #returnTransitions := {}
+)
+
+
+#nwa interpolantAutomaton2 := (
+  #callAlphabet := { },
+  #internalAlphabet := {blue green},
+  #returnAlphabet := { },
+  #states := {"rk=inf" "y<rk A" "y<rk"},
+  #initialStates := {"rk=inf"},
+  #finalStates := {"y<rk A"},
+  #callTransitions := {},
+  #internalTransitions := {
+    ("rk=inf" green "rk=inf") 
+    ("rk=inf" green "y<rk A") 
+    ("y<rk A" blue "y<rk")
+    ("y<rk" blue "y<rk A")
+  }, 
+  #returnTransitions := {}
+)
+
+
+
+#nwa interpolantAutomaton3 := (
+  #callAlphabet := { },
+  #internalAlphabet := {blue green},
+  #returnAlphabet := { },
+  #states := {"rk=inf" "x<rk A" "x<rk"},
+  #initialStates := {"rk=inf"},
+  #finalStates := {"x<rk A"},
+  #callTransitions := {},
+  #internalTransitions := {
+    ("rk=inf" green "rk=inf") 
+    ("rk=inf" green "x<rk A") 
+    ("x<rk A" green "x<rk")
+    ("x<rk" green "x<rk A")
+    ("x<rk A" green "x<rk A")
+    ("x<rk" green "x<rk")
+  }, 
+  #returnTransitions := {}
+)
+
+
+
+#nwa interpolantAutomaton4 := (
+  #callAlphabet := { },
+  #internalAlphabet := {blue green},
+  #returnAlphabet := { },
+  #states := {"rk=inf" "y<rk A" "y<rk"},
+  #initialStates := {"rk=inf"},
+  #finalStates := {"y<rk A"},
+  #callTransitions := {},
+  #internalTransitions := {
+    ("rk=inf" blue "rk=inf")
+    ("rk=inf" green "rk=inf")
+    ("rk=inf" green "y<rk A") 
+    ("y<rk A" blue "y<rk")
+    ("y<rk" blue "y<rk A")
+    ("y<rk A" blue "y<rk A")
+    ("y<rk" blue "y<rk")
+  }, 
+  #returnTransitions := {}
+)
+
+
+#nwa interpolantAutomaton5 := (
+  #callAlphabet := { },
+  #internalAlphabet := {blue green},
+  #returnAlphabet := { },
+  #states := {"rk=inf" "x<rk A" "x<rk"},
+  #initialStates := {"rk=inf"},
+  #finalStates := {"x<rk A"},
+  #callTransitions := {},
+  #internalTransitions := {
+    ("rk=inf" blue "rk=inf")
+    ("rk=inf" green "rk=inf")
+    ("rk=inf" green "x<rk A") 
+    ("x<rk A" green "x<rk")
+    ("x<rk" green "x<rk A")
+    ("x<rk A" green "x<rk A")
+    ("x<rk" green "x<rk")
+    ("x<rk" blue "x<rk")
+  }, 
+  #returnTransitions := {}
+)
+
+#nwa interpolantAutomaton6 := (
+  #callAlphabet := { },
+  #internalAlphabet := {blue green},
+  #returnAlphabet := { },
+  #states := {"rk=inf" "x<rk A" "x<rk"},
+  #initialStates := {"rk=inf"},
+  #finalStates := {"x<rk A"},
+  #callTransitions := {},
+  #internalTransitions := {
+    ("rk=inf" blue "rk=inf")
+    ("rk=inf" green "rk=inf")
+    ("rk=inf" green "x<rk A") 
+    ("x<rk A" green "x<rk")
+    ("x<rk A" blue "x<rk")
+    ("x<rk" green "x<rk A")
+    ("x<rk A" green "x<rk A")
+    ("x<rk" green "x<rk")
+    ("x<rk" blue "x<rk")
+  }, 
+  #returnTransitions := {}
+)

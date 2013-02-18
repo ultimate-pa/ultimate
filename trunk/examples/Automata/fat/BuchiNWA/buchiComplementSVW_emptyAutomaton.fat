@@ -1,0 +1,14 @@
+#Print buchiComplementSVW(emptyAutomaton)
+
+#nwa emptyAutomaton := (
+  #callAlphabet := { },
+  #internalAlphabet := {a b},
+  #returnAlphabet := { },
+  #states := { },
+  #initialStates := { },
+  #finalStates := { },
+  #callTransitions := { },
+  #internalTransitions := { }, 
+  #returnTransitions := { }
+)
+

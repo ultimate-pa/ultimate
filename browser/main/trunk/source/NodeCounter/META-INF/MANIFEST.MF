@@ -1,0 +1,9 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: Node Counting Plugin
+Bundle-SymbolicName: local.stalin.plugins.output.nodecounter;singleton:=true
+Bundle-Version: 1.0.0
+Require-Bundle: STALINCore;bundle-version="1.0.0"
+Bundle-RequiredExecutionEnvironment: JavaSE-1.6
+Bundle-ActivationPolicy: lazy
+Bundle-Activator: local.stalin.plugins.output.nodecounter.Activator

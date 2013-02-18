@@ -1,0 +1,9 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: Native Z3 Windows X86_64 Fragment
+Bundle-SymbolicName: SMTInterface.win32.x86_64
+Bundle-Version: 1.0.0
+Fragment-Host: SMTInterface;bundle-version="1.0.0"
+Bundle-RequiredExecutionEnvironment: JavaSE-1.6
+Eclipse-PlatformFilter: (&(osgi.os=win32) (osgi.arch=x86_64))
+Bundle-NativeCode: libs/nativez3.dll;libs/z3.dll;selection-filter="(&(osgi.arch=x86_64)(osgi.os=win32))"

@@ -1,0 +1,56 @@
+/**
+ * 
+ */
+package de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST;
+
+
+import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AtsASTNode;
+
+/**
+ * @author musab@informatik.uni-freiburg.de
+ */
+/*
+ 
+ */
+public class UnaryExpression extends AtsASTNode {
+
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1809386058471685881L;
+	private UnaryOperator m_operator;
+	
+	public UnaryExpression() {
+		m_returnType = Integer.class;
+		m_expectingType = m_returnType;
+	}
+	
+	public UnaryExpression(VariableExpression expr) {
+		m_returnType = Integer.class;
+		m_expectingType = m_returnType;
+		addOutgoingNode(expr);
+	}
+	
+	public UnaryOperator getOperator() {
+		return m_operator;
+	}
+
+	public void setOperator(UnaryOperator operator) {
+		this.m_operator = operator;
+	}
+
+	@Override
+	public String toString() {
+		return "UnaryExpression [" + operatorToString(m_operator) + "]";
+	}
+	
+	private String operatorToString(UnaryOperator uo) {
+		switch (uo) {
+		case EXPR_PLUSPLUS: return " expr++ ";
+		case EXPR_MINUSMINUS: return " expr-- ";
+		case PLUSPLUS_EXPR: return " ++expr ";
+		case MINUSMINUS_EXPR: return " --expr ";
+		default: return "";
+		}
+	}
+}

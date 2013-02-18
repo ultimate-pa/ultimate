@@ -1,0 +1,12 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: AutomataScriptInterpreter
+Bundle-SymbolicName: AutomataScriptInterpreter;singleton:=true
+Bundle-Version: 1.0.0
+Bundle-Activator: de.uni_freiburg.informatik.ultimate.plugins.generator.automatascriptinterpreter.Activator
+Require-Bundle: UltimateCore,
+ Library-log4j,
+ NestedWordAutomata,
+ AutomataScriptParser
+Bundle-ActivationPolicy: lazy
+Bundle-RequiredExecutionEnvironment: JavaSE-1.6

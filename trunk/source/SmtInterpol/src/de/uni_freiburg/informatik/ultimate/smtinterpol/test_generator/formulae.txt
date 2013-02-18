@@ -1,0 +1,78 @@
+(set-option :verbosity 5)
+(set-logic AUFLIRA)
+(declare-fun a () Int)
+(declare-fun b () Int)
+(declare-fun c () Int)
+(declare-fun f (Int) Int)
+(declare-fun f () Real)
+(declare-fun i () Real)
+(declare-fun j () Real)
+(declare-fun x () Bool)
+(declare-fun y () Bool)
+(declare-fun z () Bool)
+(assert (or (= (f (+ a b)) c) (and (= c a) (> c a) (=> x y) (> b c))))
+(check-sat)
+
+(set-logic QF_UFLIA)
+(declare-fun a () Int)
+(declare-fun x () Bool)
+(declare-fun y () Bool)
+(define-fun av ((p Int) (q Int)) Bool (or (> p (+ q 2)) (< p (- q 2))))
+(assert (=> (and (not (av a 2)) x) y))
+(declare-fun z () Bool)
+(assert (=> (and (av a 2) y) z))
+(check-sat)
+(exit)
+
+
+(set-logic QF_LIA)
+(declare-fun a () Int) ; declare some constants
+(declare-fun b () Int)
+(declare-fun c () Int)
+(declare-fun x () Bool)
+(declare-fun y () Bool)
+(declare-fun z () Bool)
+(assert (= (and (and (not y) z)(=> x y)) (and z (=> z y))))
+(check-sat)
+
+
+(set-logic QF_LIA)
+(declare-fun f () Int) ; declare some constants
+(declare-fun x () Int)
+(declare-fun z () Bool)
+(declare-fun w () Bool)
+(assert (>= x 1))
+(check-sat)
+
+
+(set-logic QF_LIA)
+(declare-fun f () Int) ; declare some constants
+(declare-fun x () Int)
+(declare-fun y () Int)
+(declare-fun z () Bool)
+(declare-fun w () Bool)
+(assert (and (= (or (not z) w) (=> z  w)) (or z (=> w z)) (< x y)))
+(check-sat)
+
+
+(set-logic QF_LIA)
+(declare-fun f () Int) ; declare some constants
+(declare-fun x () Int)
+(declare-fun z () Bool)
+(declare-fun w () Bool)
+(assert (= (/ x 2.3) (+ x (- 1))))
+(check-sat)
+
+(set-logic AUFLIA)
+(declare-fun a () Int)
+(declare-fun b () Int)
+(declare-fun c () Int)
+(declare-fun f (Int) Int)
+(declare-fun x () Bool)
+(declare-fun y () Bool)
+(declare-fun z () Bool)
+(push 1)
+(assert (and (<= (div (f a) 3) (+ b (- (f c) 2)))(=> (or z y) (and x z)) (or x y)))
+(check-sat)
+(pop 1)
+(exit)

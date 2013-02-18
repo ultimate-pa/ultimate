@@ -1,0 +1,10 @@
+digraph G {
+  1 [shape=Mdiamond, label="this is b"];
+  a -> 1 [label="hello", style=dashed];
+  c [shape=polygon, sides=5, peripheries=3];
+  d [style=bold];
+  
+  a -> c [label="world"];
+  c -> d; 1 -> c; d -> a;
+
+}

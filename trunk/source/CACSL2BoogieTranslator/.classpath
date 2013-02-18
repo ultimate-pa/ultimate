@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry exported="true" kind="con" path="org.eclipse.pde.core.requiredPlugins">
+		<accessrules>
+			<accessrule kind="accessible" pattern="org/eclipse/cdt/internal/core/dom/parser/c/**"/>
+			<accessrule kind="accessible" pattern="org/eclipse/cdt/internal/core/parser/scanner/**"/>
+			<accessrule kind="accessible" pattern="org/eclipse/cdt/internal/core/**"/>
+		</accessrules>
+	</classpathentry>
+	<classpathentry excluding="**/.svn/*" kind="src" path="src"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry kind="output" path="bin"/>
+</classpath>

@@ -1,0 +1,150 @@
+//Basic knowledge of sablecc is necessary.
+//This is the package of the sablecc parser.
+Package local.stalin.automata.parser.TestGrammar;
+
+
+//just Tokens to simplify the code below
+Helpers
+	letter = ['a'..'z'] | ['A'..'Z'] | ['0'..'9'];
+	lf = 0x000a;
+	cr = 0x000d;
+	line_terminator = lf | cr | cr lf;
+	sp = ' ';
+	ht = 0x0009;
+	anychar = [0..9] | [ 11..65535];
+
+
+//Add new Token for every keyword you need.
+Tokens
+	white_space = sp | ht | line_terminator;
+	comment_t = ('/' '/' anychar* 10);
+	testcasestoken = '#testcases';
+	nametoken = '#name';
+	automatatoken = '#automata';
+	internaltoken = '#internal';
+	calltoken = '#call';
+	returntoken = '#return';
+	initialtoken = '#initial';
+	statestoken = '#states';
+	finaltoken = '#final';
+	transitionstoken = '#transitions';
+	acceptstoken = 'ACCEPTS';
+	isemptytoken = 'ISEMPTY';
+	intersectiontoken = 'INTERSECTION';
+	differencetoken = 'DIFFERENCE';
+	determinizetoken = 'DETERMINIZE';
+	negationtoken = 'NEGATION';
+	printtoken = '#print';
+	id = letter*;
+	lparen = '(';
+	rparen = ')';
+	lbrace = '{';
+	rbrace = '}';
+	nestingcall = '<';
+	nestingreturn = '>';
+
+
+//Any whitespace like tabstop-, return- and spacecharacter are ignored.
+//Comments ( //comment ) are ignored.
+Ignored Tokens
+	white_space, comment_t;
+
+
+//These are the production rules for the complete grammar. The definition of the return-data-structure
+//of the parser (the AST) is defined in the section below this one.
+//The tokens define the grammar, and inside the brackets it is defined how the grammar is mapped
+//to the AST.
+Productions
+	test {-> abstracttest} = testcasestoken testcase* print? automatatoken automaton*
+		{-> New abstracttest([testcase.abstracttestcase], print.abstractprint, [automaton.abstractautomaton])};
+	
+	callcontent {-> abstractcall} = [l9]:lparen [callfrom]:id [callsymbol]:id  [callto]:id [r9]:rparen
+		{-> New abstractcall(callfrom, callto, callsymbol)};
+	
+	returncontent {-> abstractreturn} = [l10]:lparen [returnfrom]:id [returncallstate]:id [returnsymbol]:id [returnto]:id [r10]:rparen
+										{-> New abstractreturn(returnfrom, returnto, returnsymbol, returncallstate)};
+	
+	internalcontent {-> abstractinternal} = [l11]:lparen [internalfrom]:id [internalsymbol]:id [internalto]:id [r11]:rparen
+											{-> New abstractinternal(internalfrom, internalto, internalsymbol)};
+	
+	print {->abstractprint} = printtoken joinedautomaton
+		{-> New abstractprint(joinedautomaton.abstractjoinedautomaton)};
+
+	automaton {-> abstractautomaton} = nametoken [l1]:lbrace id [r1]:rbrace
+			[c1]:calltoken [l3]:lbrace [call]:id* [r3]:rbrace
+		        [i1]:internaltoken [l2]:lbrace [internal]:id* [r2]:rbrace
+		        [rt1]:returntoken [l4]:lbrace [return]:id* [r4]:rbrace
+		        initialtoken [l5]:lbrace [initial]:id* [r5]:rbrace
+		        statestoken [l6]:lbrace [states]:id* [r6]:rbrace
+		        finaltoken [l7]:lbrace [final]:id* [r7]:rbrace
+		        transitionstoken [l8]:lbrace 
+		        [c2]:calltoken callcontent* 
+		        [i2]:internaltoken internalcontent*
+			  [rt2]:returntoken returncontent*
+		        [r8]:rbrace
+		        {-> New abstractautomaton(id, [internal], [call], [return], [initial], [states], [final], [callcontent.abstractcall], [internalcontent.abstractinternal], [returncontent.abstractreturn])};
+
+	testcase {-> abstracttestcase} = {testaccept} acceptstoken lparen taggedsymbol* rparen joinedautomaton
+					{-> New abstracttestcase.accept([taggedsymbol.abstracttaggedsymbol], joinedautomaton.abstractjoinedautomaton)}
+					| {testisempty} isemptytoken joinedautomaton
+					 {-> New abstracttestcase.isempty(joinedautomaton.abstractjoinedautomaton)};
+
+	taggedsymbol {-> abstracttaggedsymbol} = {call} id nestingcall
+					     {-> New abstracttaggedsymbol.call(id)}
+		   		             | {internal} id
+					     {-> New abstracttaggedsymbol.internal(id)}
+		   			     | {return} nestingreturn id
+					     {-> New abstracttaggedsymbol.return(id)};
+
+
+	joinedautomaton {-> abstractjoinedautomaton} = {intersectautomaton} lparen [leftautomaton]:joinedautomaton intersectiontoken [rightautomaton]:joinedautomaton rparen
+												   {-> New abstractjoinedautomaton.intersect(leftautomaton.abstractjoinedautomaton, rightautomaton.abstractjoinedautomaton)}
+												   |{differenceautomaton} lparen [leftautomaton]:joinedautomaton differencetoken [rightautomaton]:joinedautomaton rparen
+												   {-> New abstractjoinedautomaton.difference(leftautomaton.abstractjoinedautomaton, rightautomaton.abstractjoinedautomaton)}
+			     								   | {negateautomaton} negationtoken joinedautomaton
+			     								   {-> New abstractjoinedautomaton.negate(joinedautomaton.abstractjoinedautomaton)}
+			     								   | {determinizeautomaton} determinizetoken joinedautomaton
+			     								   {-> New abstractjoinedautomaton.determinize(joinedautomaton.abstractjoinedautomaton)}
+			     								   | {normalautomaton} id
+			     								   {-> New abstractjoinedautomaton.normal(id)};
+
+
+//Here the AST is defined. In these production rules should only be defined the needed values for 
+//the further handling of the testcase. Redundant and not needed informations (brackets, ...) can be ignored.
+Abstract Syntax Tree
+	
+	abstracttest = [testcase]:abstracttestcase* [print]:abstractprint? [automata]:abstractautomaton*;
+	
+	abstractprint = [automaton]:abstractjoinedautomaton;	
+
+	abstractcall = [from]:id [to]:id [symbol]:id;
+	
+	abstractreturn = [from]:id [to]:id [symbol]:id [callfrom]:id;
+	
+	abstractinternal = [from]:id [to]:id [symbol]:id;
+	
+	abstracttaggedsymbol = {call} id
+				| {internal} id
+				| {return} id;
+
+	abstractautomaton = [name]:id
+						[internalalphabet]:id*
+						[callalphabet]:id*
+						[returnalphabet]:id*
+						[initial]:id*
+						[states]:id*
+						[final]:id*
+						[calltransitions]:abstractcall*
+						[internaltransitions]:abstractinternal*
+						[returntransitions]:abstractreturn*;
+						
+	abstracttestcase = {accept} abstracttaggedsymbol* abstractjoinedautomaton
+	           | {isempty} abstractjoinedautomaton;
+						
+	abstractjoinedautomaton = {intersect} [auto1]:abstractjoinedautomaton [auto2]:abstractjoinedautomaton
+							  | {difference} [auto1]:abstractjoinedautomaton [auto2]:abstractjoinedautomaton
+							  | {negate} abstractjoinedautomaton
+							  | {determinize} abstractjoinedautomaton
+							  | {normal} id;
+						
+						

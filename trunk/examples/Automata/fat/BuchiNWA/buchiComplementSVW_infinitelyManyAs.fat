@@ -1,0 +1,14 @@
+#Print buchiComplementSVW(infinitelyManyAs)
+
+#nwa infinitelyManyAs := (
+  #callAlphabet := { },
+  #internalAlphabet := {a b},
+  #returnAlphabet := { },
+  #states := {p q},
+  #initialStates := {p},
+  #finalStates := {q},
+  #callTransitions := { },
+  #internalTransitions := {(p a q) (p b p) (q a q) (q b p)}, 
+  #returnTransitions := { }
+)
+

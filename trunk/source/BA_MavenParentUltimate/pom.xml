@@ -1,0 +1,182 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<groupId>Ultimate</groupId>
+	<artifactId>MavenParentUltimate</artifactId>
+	<version>0.0.1</version>
+	<packaging>pom</packaging>
+
+	<properties>
+		<tycho-version>0.15.0</tycho-version>
+		
+		<workspaceDir>${basedir}/..</workspaceDir>
+		
+		<cupDir>${workspaceDir}/JavaCup/target/classes</cupDir>
+		<flexBinary>${workspaceDir}/JavaCup/JFlex.jar</flexBinary>
+		<astbuilderBinaries>${workspaceDir}/ASTBuilder/target/classes</astbuilderBinaries>
+
+		<acslparserDir>${workspaceDir}/ACSLParser/src/de/uni_freiburg/informatik/ultimate/acsl/parser</acslparserDir>
+		<acslastDir>${workspaceDir}/ACSLParser/src/de/uni_freiburg/informatik/ultimate/model/acsl/ast</acslastDir>
+		<astbuilderDir>${workspaceDir}/ASTBuilder/src/de/uni_freiburg/informatik/ultimate/astbuilder</astbuilderDir>
+		<boogieparserDir>${workspaceDir}/BoogiePLParser/src/de/uni_freiburg/informatik/ultimate/boogie/parser</boogieparserDir>
+		<boogieastDir>${workspaceDir}/CoreRCP/src/de/uni_freiburg/informatik/ultimate/model/boogie/ast</boogieastDir>
+		<toolchainDir>${workspaceDir}/CoreRCP/src/de/uni_freiburg/informatik/ultimate/core/coreplugin/toolchain</toolchainDir>
+		<interactiveconsoledir>${workspaceDir}/InteractiveConsole/src/de/uni_freiburg/informatik/ultimate/interactiveconsole</interactiveconsoledir>
+		<smtlibDir>${workspaceDir}/SmtInterpol/src/de/uni_freiburg/informatik/ultimate/smtinterpol/smtlib</smtlibDir>
+		<smtlib2Dir>${workspaceDir}/SmtInterpol/src/de/uni_freiburg/informatik/ultimate/smtinterpol/smtlib2</smtlib2Dir>
+		<dimacsDir>${workspaceDir}/SmtInterpol/src/de/uni_freiburg/informatik/ultimate/smtinterpol/dimacs</dimacsDir>
+		<externalsmtsolverDir>${workspaceDir}/SMTSolverBridge/src/de/uni_freiburg/informatik/ultimate/smtsolver/external</externalsmtsolverDir>
+		<automatascriptparserDir>${workspaceDir}/AutomataScriptParser/src/de/uni_freiburg/informatik/ultimate/plugins/source/automatascriptparser</automatascriptparserDir>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+	</properties>
+
+	<repositories>
+		<repository>
+			<id>eclipse-indigo</id>
+			<layout>p2</layout>
+			<url>http://download.eclipse.org/releases/indigo</url>
+		</repository>
+        <repository>
+            <id>javaxRepository</id>
+            <name>Java.net Repository for Maven</name>
+             <url>https://maven.java.net/content/repositories/releases/javax/</url>
+            <layout>default</layout>
+         </repository>
+	</repositories>
+
+	<build>
+		<plugins>
+			<plugin>
+				<!-- enable tycho build extension -->
+				<groupId>org.eclipse.tycho</groupId>
+				<artifactId>tycho-maven-plugin</artifactId>
+				<version>${tycho-version}</version>
+				<extensions>true</extensions>
+				
+			</plugin>
+			<plugin>
+				<groupId>org.eclipse.tycho</groupId>
+				<artifactId>target-platform-configuration</artifactId>
+				<version>${tycho-version}</version>
+				<configuration>
+					<environments>
+						<environment>
+							<os>win32</os>
+							<ws>win32</ws>
+							<arch>x86</arch>
+						</environment>
+						<environment>
+							<os>win32</os>
+							<ws>win32</ws>
+							<arch>x86_64</arch>
+						</environment>
+						<environment>
+							<os>linux</os>
+							<ws>gtk</ws>
+							<arch>x86</arch>
+						</environment>
+						<environment>
+							<os>linux</os>
+							<ws>gtk</ws>
+							<arch>x86_64</arch>
+						</environment>
+						<environment>
+              				<os>macosx</os>
+              				<ws>cocoa</ws>
+              				<arch>x86_64</arch>
+            			</environment>
+					</environments>
+				</configuration>
+			</plugin>
+
+		</plugins>
+
+		<pluginManagement>
+			<plugins>
+				<!--This plugin's configuration is used to store Eclipse m2e settings 
+					only. It has no influence on the Maven build itself. -->
+				<plugin>
+					<groupId>org.eclipse.m2e</groupId>
+					<artifactId>lifecycle-mapping</artifactId>
+					<version>1.0.0</version>
+					<configuration>
+						<lifecycleMappingMetadata>
+							<pluginExecutions>
+								<pluginExecution>
+									<pluginExecutionFilter>
+										<groupId>
+											org.apache.maven.plugins
+										</groupId>
+										<artifactId>
+											maven-antrun-plugin
+										</artifactId>
+										<versionRange>
+											[1.7,)
+										</versionRange>
+										<goals>
+											<goal>run</goal>
+										</goals>
+									</pluginExecutionFilter>
+									<action>
+										<ignore></ignore>
+									</action>
+								</pluginExecution>
+							</pluginExecutions>
+						</lifecycleMappingMetadata>
+					</configuration>
+				</plugin>
+			</plugins>
+		</pluginManagement>
+	</build>
+
+	<modules>
+		<module>../CoreRCP</module>
+		<module>../GuiRCP</module>
+		<module>../BoogiePLParser</module>
+		<module>../BoogiePreprocessor</module>
+		<module>../BoogiePrinter</module>
+		<module>../CFG2SMT</module>
+		<module>../PrefuseVisualization</module>
+		<module>../SmtInterpol</module>
+		<module>../TraceAbstraction</module>
+		<module>../TraceAbstractionConcurrent</module>
+		<module>../JavaCup</module>
+		<module>../CFGBuilder</module>
+		<module>../RCFGBuilder</module>
+		<module>../SafetyChecker</module>
+		<module>../NestedWordAutomata</module>
+		<module>../AutomataParser</module>
+		<module>../CFGReducer</module>
+		<module>../Library-log4j</module>
+		<module>../Library-prefuse</module>
+		<module>../BA_FeatureUltimate</module>
+		<module>../BA_SiteRepository</module>
+		<module>../SMTSolverBridge</module>
+		<module>../BA_FeatureUltimateCommandLine</module>
+		<module>../ACSLParser</module>
+		<module>../ConsoleOut</module>
+		<module>../LazyAbstraction</module>
+		<module>../LazyAbstractionOnCFG</module>
+		<module>../ReImpact</module>
+		<module>../Impulse</module>
+		<module>../Library-Batik</module>
+		<module>../Library-Jung</module>
+		<module>../CDTDummyParser</module>
+		<module>../CDTParser</module>
+		<module>../CDTPlugin</module>
+		<module>../InteractiveConsole</module>
+		<module>../CACSL2BoogieTranslator</module>
+		<module>../ErrorLocationGenerator</module>
+		<module>../ASTBuilder</module>
+		<module>../JungVisualization</module>
+		<module>../RankingFunctions</module>
+		<module>../WebUltimateBridge</module>
+		<module>../Library-ModelCheckerUtils</module>
+		<module>../IRSDependencies</module>
+		<module>../AutomataLibraryRandomizedTests</module>
+		<module>../AutomataScriptParser</module>
+	</modules>
+
+
+
+</project>

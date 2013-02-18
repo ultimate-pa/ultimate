@@ -1,0 +1,14 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: RankingFunctions
+Bundle-SymbolicName: RankingFunctions;singleton:=true
+Bundle-Version: 0.2.0
+Bundle-Activator: de.uni_freiburg.informatik.ultimate.plugins.generator.rankingfunctions.Activator
+Bundle-ActivationPolicy: lazy
+Bundle-RequiredExecutionEnvironment: JavaSE-1.6
+Require-Bundle: Library-log4j,
+ Library-ModelCheckerUtils,
+ UltimateCore,
+ SmtInterpol,
+ SMTSolverBridge,
+ RCFGBuilder

@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.2"?>
+<plugin>
+   <extension
+         point="de.uni_freiburg.informatik.ultimate.ep.analysis">
+      <impl class="de.uni_freiburg.informatik.ultimate.boogie.preprocessor.BoogiePreprocessor"/>
+   </extension>
+   <extension
+         point="org.eclipse.ui.preferencePages">
+      <page
+            category="de.uni_freiburg.informatik.ultimate.core.coreplugin.preferences.OutputPreferencePage"
+            class="de.uni_freiburg.informatik.ultimate.boogie.preferences.PreferencePage"
+            id="PrettyPrinter.page1"
+            name="PrettyPrinter"/>
+   </extension>
+   <extension
+         point="org.eclipse.core.runtime.preferences">
+      <initializer class="de.uni_freiburg.informatik.ultimate.boogie.preferences.PreferenceInitializer"/>
+   </extension>
+
+</plugin>

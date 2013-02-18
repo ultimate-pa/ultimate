@@ -1,0 +1,168 @@
+/*
+ * Copyright (C) 2009-2012 University of Freiburg
+ *
+ * This file is part of SMTInterpol.
+ *
+ * SMTInterpol is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * SMTInterpol is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with SMTInterpol.  If not, see <http://www.gnu.org/licenses/>.
+ */
+/* CUP specification for dimacs */
+
+package de.uni_freiburg.informatik.ultimate.smtinterpol.dimacs;
+import de.uni_freiburg.informatik.ultimate.logic.*;
+import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
+import org.apache.log4j.Logger;
+import java_cup.runtime.Symbol;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.util.MySymbolFactory;
+
+parser Parser;
+option symbols = LexerSymbols;
+option java15, compact_red, newpositions;
+
+parser code {:
+	String filename;
+	Script solver;
+	
+	public void init(String filename) {
+		this.filename = filename;
+	}
+	
+	public void setSolver(Script solver) {
+	    this.solver = solver;
+		solver.setOption(":produce-models", true);
+		solver.setLogic(Logics.CORE);
+    }
+	
+	public void report_error(String s, Object sym) {
+		String location;
+		if (sym instanceof MySymbolFactory.LineColumnSymbol) {
+			MySymbolFactory.LineColumnSymbol bsym = (MySymbolFactory.LineColumnSymbol) sym;
+			location = bsym.getLocation();
+	    } else if ((sym instanceof Symbol) 
+	    	       && ((Symbol)sym).sym == LexerSymbols.EOF) {
+	    	location = "EOF";
+	    } else
+	        location = "UNKNOWN";
+	    
+		Logger.getRootLogger().error(filename+":"+location+": "+s);
+	}
+
+	public void report_error(String s) {	
+		report_error(s, cur_token);
+	}
+	
+	public Script getSolver() {
+		return solver;
+	}
+:}
+
+action code {:
+	long m_NumCls;
+	long m_NumVars;
+	
+	public void declareVars(String numVars) {
+		m_NumVars = Long.parseLong(numVars);
+		Sort bool = parser.solver.sort("Bool");
+		Sort[] empty = new Sort[0];
+		for (long i = 1; i <= m_NumVars; ++i)
+			parser.solver.declareFun("" + i, empty, bool);
+	}
+	
+	public void setNumCls(String ncls) {
+		m_NumCls = Long.parseLong(ncls);
+	}
+	
+	public void newCls() {
+		--m_NumCls;
+	}
+	
+	public long checkCNF() {
+		if (m_NumCls != 0)
+			return m_NumCls;
+		LBool isSat = parser.solver.checkSat();
+		switch (isSat) {
+		case SAT: {
+			System.out.println("s SATISFIABLE");
+			Model m = parser.solver.getModel();
+			Term trueTerm = parser.solver.term("true");
+			for (long i = 1; i <= m_NumVars; ++i) {
+				if ((i % 8) == 1)
+					System.out.print("\nv ");
+				else
+					System.out.print(" ");
+				Term var = parser.solver.term(""+i);
+				Term val = m.evaluate(var);
+				System.out.print(val == trueTerm ? i : -i);
+			}
+			System.out.println(" 0");
+			break; 
+		}
+		case UNSAT:
+			System.out.println("s UNSATISFIABLE");
+			break;
+		case UNKNOWN:
+			System.out.println("s UNKNOWN");
+			break;
+		}
+		return 0;
+	}
+:}
+
+/*init with {: getScanner().init(); :} */
+scan with {: return getScanner().next_token(); :}
+
+
+/* Keywords */
+terminal PROBLEM, CNF;
+terminal NOT;
+terminal EOC;
+terminal String NUMBER;
+
+non terminal clause;
+non terminal Term literal;
+non terminal header;
+non terminal problemdesc;
+
+problemdesc ::= header clause* EOF {: long diff = checkCNF();
+									if (diff > 0)
+										parser.report_error(diff + " clauses missing");
+									else if (diff < 0)
+										parser.report_error(-diff + " clauses too much");
+									:};
+
+header ::= PROBLEM CNF NUMBER:v NUMBER:c {: declareVars(v); setNumCls(c); :};
+
+literal ::= NUMBER:a {: try {
+							RESULT = parser.solver.term(a);
+						} catch (SMTLIBException se) {
+							parser.report_error("Variable index out of bounds: " + a);
+							System.exit(1);
+							RESULT = null;
+						}
+						:}
+		  | NOT NUMBER:a {: try {
+							RESULT = parser.solver.term("not", parser.solver.term(a));
+						} catch (SMTLIBException se) {
+							parser.report_error("Variable index out of bounds: " + a);
+							System.exit(1);
+							RESULT = null;
+						}
+		  				:};
+
+clause ::= literal*:lts EOC {: newCls();
+								if (lts.length == 0)
+									parser.solver.assertTerm(parser.solver.term("false"));
+								else if (lts.length == 1)
+									parser.solver.assertTerm(lts[0]);
+								else
+									parser.solver.assertTerm(parser.solver.term("or", lts)); :};

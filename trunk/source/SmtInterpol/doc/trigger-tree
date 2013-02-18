@@ -1,0 +1,49 @@
+Trigger-Tree-Management
+
+- Insertion of a trigger into a trigger tree
+
+A trigger is inserted into a trigger tree whenever a quantifier proxy gets
+asserted.  The trigger has to be matched as far as possible.  Since we do not
+necessarily use the triggers of the proxy but the ones already present in the
+trigger tree until the first non-matching trigger, we should not execute the
+triggers from the proxy.  There are multiple ways to execute a new trigger:
+
+1) We execute the trigger while inserting it into the tree.  This could be
+included into the insertion algorithm of the tree.  A drawback of this method
+is that we would execute every statement more multiple times.
+
+2) Whenever we execute a goto trigger, we store the register content.  During
+insertion into the tree, we remember the last goto trigger that has register
+contents and start execution from that trigger.  This would reduce the number
+of triggers that are executed multiple times but increases the memory overhead
+needed for storing the registers of a goto trigger.
+
+3) We could modify the triggers stored in the quantifier proxy since we only
+store the first trigger and the yield trigger.  This would reduce the number of
+triggers that are present in the system whenever a quantifier proxy gets
+asserted.  But the removal of this trigger from the trigger tree would require
+to recreate the original trigger since we cannot modify the elements stored in
+the trigger tree.
+If we get a blocking trigger before we introduce the branching in the tree, we
+do not need to execute any trigger.  Otherwise, we could resemble to one of the
+methods mentioned above.  But this would be complicated.  Instead, we could
+remember the insertion path and execute it.
+
+Among all three possibilities, the last one seems to be the best but we have to
+change the procedure used to remove a trigger from a trigger tree to clone the
+shared trigger part and remove the gotos.  Furthermore, we have to modify the
+insertion procedure to store the insertion path.
+
+
+- General matching strategy
+
+Since we have a reactive system, we do not need to choose between matching and
+case splits.  We simply insert triggers when a quantifier proxy is asserted and
+let the evaluation produce new clauses on the fly.  For trigger processing, we
+modify the congruence closure to process triggers that blocked after insertion.
+Once we insert new triggers into a trigger tree, we have to execute the new
+trigger either until it matches or blocks.
+We only insert new clauses after setting a literal which might either be
+propagated or decided.  Hence, unit clauses inserted during matching should
+directly be handled without any modification of existing code.
+

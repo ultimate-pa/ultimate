@@ -1,0 +1,67 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+
+	<parent>
+		<artifactId>MavenParentUltimate</artifactId>
+		<groupId>Ultimate</groupId>
+		<version>0.0.1</version>
+		<relativePath>../BA_MavenParentUltimate/pom.xml</relativePath>
+	</parent>
+
+	<groupId>SMTSolverBridge</groupId>
+	<artifactId>SMTSolverBridge</artifactId>
+	<version>0.0.1</version>
+	<packaging>eclipse-plugin</packaging>
+
+	<build>
+		<plugins>
+			<plugin>
+				<artifactId>maven-antrun-plugin</artifactId>
+				<version>1.7</version>
+				<executions>
+					<execution>
+						<id>generate parser sources</id>
+						<phase>generate-sources</phase>
+						<configuration>
+							<tasks>
+								<echo>SMTSolverBridge: workspaceDir is ${workspaceDir}</echo>
+								<echo>SMTSolverBridge: cupDir is ${cupDir}</echo>
+								<echo>SMTSolverBridge: externalsmtsolverDir is ${externalsmtsolverDir}</echo>
+								<echo>SMTSolverBridge: flexBinary is ${flexBinary}</echo>
+
+								<java classname="java_cup.Main" classpath="${cupDir}" fork="true" dir="${externalsmtsolverDir}">
+									<arg value="scriptResult.cup" />
+								</java>
+								<java jar="${flexBinary}" fork="true" dir="${externalsmtsolverDir}">
+									<arg value="scriptResult.flex" />
+								</java>
+							</tasks>
+						</configuration>
+						<goals>
+							<goal>run</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<artifactId>maven-clean-plugin</artifactId>
+				<version>2.4.1</version>
+				<configuration>
+					<filesets>
+						<fileset>
+							<directory>${externalsmtsolverDir}</directory>
+							<includes>
+								<include>Parser.java</include>
+								<include>Lexer.java</include>
+								<include>Lexer.java~</include>
+								<include>LexerSymbols.java</include>
+							</includes>
+						</fileset>
+					</filesets>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
+
+</project>

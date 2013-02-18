@@ -1,0 +1,68 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  
+   	<parent>
+		<artifactId>MavenParentUltimate</artifactId>
+		<groupId>Ultimate</groupId>
+		<version>0.0.1</version>
+		<relativePath>../BA_MavenParentUltimate/pom.xml</relativePath>
+	</parent> 
+  
+  
+  <groupId>AutomataScriptParser</groupId>
+  <artifactId>AutomataScriptParser</artifactId>
+  <version>0.0.1</version>
+  <packaging>eclipse-plugin</packaging>
+  
+  <build>
+		<plugins>
+			<plugin>
+				<artifactId>maven-antrun-plugin</artifactId>
+				<version>1.7</version>
+				<executions>
+					<execution>
+						<id>generate parser sources</id>
+						<phase>generate-sources</phase>
+						<configuration>
+							<tasks>
+								<echo>AutomataScriptParser: workspaceDir is ${workspaceDir}</echo>
+								<echo>AutomataScriptParser: cupDir is ${cupDir}</echo>
+								<echo>AutomataScriptParser: automatascriptparserDir is ${automatascriptparserDir}</echo>
+								<echo>AutomataScriptParser: flexBinary is ${flexBinary}</echo>
+
+								<java classname="java_cup.Main" classpath="${cupDir}" fork="true"
+									dir="${automatascriptparserDir}">
+									<arg line="-parser Parser"/>
+									<arg value="AutomataTestFileGrammar.cup" />
+								</java>
+								<java jar="${flexBinary}" fork="true" dir="${automatascriptparserDir}">
+									<arg value="AutomataTestFileLexerSpec.jflex" />
+								</java>
+							</tasks>
+						</configuration>
+						<goals>
+							<goal>run</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<artifactId>maven-clean-plugin</artifactId>
+				<version>2.4.1</version>
+				<configuration>
+					<filesets>
+						<fileset>
+							<directory>${automatascriptparserDir}</directory>
+							<includes>
+								<include>Parser.java</include>
+								<include>Lexer.java</include>
+								<include>Lexer.java~</include>
+								<include>sym.java</include>
+							</includes>
+						</fileset>
+					</filesets>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
+</project>

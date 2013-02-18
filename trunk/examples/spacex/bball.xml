@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<sspaceex xmlns="http://www-verimag.imag.fr/xml-namespaces/sspaceex" version="0.2" math="SpaceEx">
+  <component id="ball_template">
+    <note>
+	<l id="1">
+	  <b> i &lt; 0.0</b>
+	</l>
+    </note>
+    <param name="x" type="real" local="false" d1="1" d2="1" dynamics="any" />
+    <param name="i" type="real" local="false" d1="1" d2="1" dynamics="any" />
+    <location id="1" name="first_loc" x="268.5" y="258.5" width="167.0" height="93.0">
+      <invariant>x &lt;= 10.0</invariant>
+      <flow>x' == 1.0, i'==0.0</flow>
+    </location>
+    <transition source="1" target="1">
+      <guard>x&gt;10.0</guard>
+      <assignment>i == i+1.0 &amp; x == 0.0</assignment>
+      <labelposition x="-48.0" y="-82.0" width="124.0" height="60.0" />
+    </transition>
+  </component>
+  <component id="system">
+    <note>A model of the vertical position x of a bouncing ball.
+
+Note the difference the choice of template directions makes: 
+Try box, octagonal and uniform with at least 10 constraints and watch for termination. 
+
+Variables: x,v</note>
+    <param name="x" type="real" local="false" d1="1" d2="1" dynamics="any" controlled="true" />
+    <param name="i" type="real" local="true" d1="1" d2="1" dynamics="any" controlled="true" />
+    <bind component="ball_template" as="ball" x="238.0" y="106.0">
+      <map key="x">x</map>
+      <map key="i">i</map>
+    </bind>
+  </component>
+</sspaceex>
+

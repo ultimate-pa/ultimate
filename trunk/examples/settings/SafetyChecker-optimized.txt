@@ -1,0 +1,34 @@
+#Fri Mar 16 11:19:54 CET 2012
+/instance/UltimateCore/ultimate.logging.controller=DEBUG
+/instance/UltimateCore/ultimate.logging.core=DEBUG
+/instance/UltimateCore/ultimate.logging.plugins=DEBUG
+/instance/UltimateCore/ultimate.logging.tooldetails=SmtInterpol\=WARN;SMTInterface\=WARN;Groundifier\=WARN;Z3Configurator\=WARN;
+file_export_version=3.0
+/instance/UltimateCore/ultimate.logging.tools=DEBUG
+/instance/UltimateCore/ultimate.logging.root=DEBUG
+\!/instance/UltimateCore=
+@UltimateCore=1.0.0
+/instance/UltimateCore/ultimate.logging.details=SafetyChecker\=INFO;CFGReducer\=INFO;ErrorLocationGenerator\=INFO;
+#Fri Mar 16 11:19:54 CET 2012
+\!/configuration/SMTInterface=
+file_export_version=3.0
+/configuration/SMTInterface/SMTExecutable=C\:\\Program Files (x86)\\Microsoft Research\\Z3-2.19\\bin\\z3.exe
+#Fri Mar 16 11:19:54 CET 2012
+file_export_version=3.0
+\!/configuration/de.uni_freiburg.informatik.ultimate.plugins.output.jungvisualization=
+/configuration/de.uni_freiburg.informatik.ultimate.plugins.output.jungvisualization/shapeForNodePreference=RoundRectangle
+#Fri Mar 16 11:19:54 CET 2012
+file_export_version=3.0
+/configuration/SafetyChecker/epsilon=false
+\!/configuration/SafetyChecker=
+/configuration/SafetyChecker/maxStepNumber=50
+/configuration/SafetyChecker/dumpPath=C\:\\Users\\ermis\\Desktop\\SMT-Files
+#Fri Mar 16 11:19:54 CET 2012
+file_export_version=3.0
+\!/configuration/ErrorLocationGenerator=
+/configuration/ErrorLocationGenerator/CheckValiditityOfErrorEdge=true
+#Fri Mar 16 11:19:54 CET 2012
+file_export_version=3.0
+/configuration/CFGReducer/MergeParallelEdges=true
+\!/configuration/CFGReducer=
+/configuration/CFGReducer/SelectedSolver=1

@@ -1,0 +1,52 @@
+strict digraph "Test Graph" {
+	edge [ style = "setlinewidth(1)" ];
+	graph [	size = "8.5,11",
+		ranksep = "0.3333",
+		center = true,
+		rankdir = LR,
+		orientation = landscape ];
+	node [	label = "\N" ];
+	graph [bb = "0,0,1042,397"];
+	TP [label="A|{{multi|field}|record}|shape", shape=record, pos="47,233", rects="0,249,94,265 0,233,44,249 0,217,44,233 44,217,94,249 0,201,94,217", width="1.31", height="0.89"];
+	UR [pos="219,\
+233", width="0.75", height="0.50", tip="Here's a tip for you.", color=turquoise, style=filled, fontcolor=yellow];
+	UL [shape=diamond, style=diagonals, peripheries=1, pos="346,233", width="0.83", height="0.67", tip="Another tip, if you want it."];
+	LL [shape=egg, pos="431,302", width="0.78", height="0.50", style=bold];
+	LR [shape=box, pos="593,279", width="0.75", height="0.50", style=italic];
+	MD [shape=diamond, pos="805,233", width="0.92", height="0.67" ];
+	MA [shape=trapezium, pos="689,187", width="0.86", height="0.50", style=dotted ];
+	MB [shape=parallelogram, pos="520,162", width="0.92", height="0.50", style=dashed ];
+	MC [shape=house, pos="431,179", width="0.75", height="0.58"];
+	ME [label="left\lright\rcenter", shape=hexagon, peripheries=5, pos="689,97", width="1.58", height="1.50"];
+	MF [shape=octagon, pos="805,79", width="0.75", height="0.50"];
+	MG [shape=doublecircle, pos="899,75", width="0.83", height="0.83"];
+	MH [shape=invtriangle, pos="1001,34", width="1.11", height="0.94"];
+	MI [shape=invtrapezium, pos="520,372", width="0.78", height="0.50"];
+	MJ [shape=invhouse, pos="689,375", width="0.75", height="0.58"];
+	MK [shape=doubleoctagon, pos="805,375", width="0.86", height="0.61"];
+	ML [shape=tripleoctagon, pos="899,344", width="0.97", height="0.72"];
+	MM [label="plain text", shape=plaintext, pos="899,233", width="0.92", height="0.50"];
+	MN [shape=box, pos="1001,233", width="0.75", height="0.50"];
+	TP -> UR [label="edge label\nis\ngoing here", pos="e,192,233 94,233 122,233 158,233 184,233", lp="143,257"];
+	UR -> UL [label=green, color=red, fontcolor=green, pos="e,316,233 246,233 264,233 288,233 308,233", lp="281,241"];
+	UL -> LL [pos="e,413,287 361,245 374,255 391,270 406,282"];
+	LL -> LR [pos="e,566,283 460,298 488,293 530,288 560,284"];
+	LR -> MD [pos="e,783,242 620,275 657,269 722,258 760,250 763,249 769,247 776,244"];
+	MD -> MM [pos="e,865,233 838,233 844,233 850,233 856,233"];
+	MM -> MN [pos="e,974,233 933,233 943,233 955,233 965,233"];
+	MD -> UL [pos="s,376,233 382,233 399,233 418,232 431,233 431,233 431,233 689,233 695,232 740,233 772,233"];
+	UL -> MC [pos="e,413,191 363,222 376,214 392,204 406,195"];
+	MC -> MB [pos="e,495,167 459,174 468,172 478,170 487,169"];
+	MB -> MA [pos="e,662,183 548,166 578,171 624,177 656,182"];
+	MA -> MD [pos="e,784,225 711,196 729,203 756,213 776,222"];
+	MB -> ME [pos="e,641,115 543,153 567,144 604,130 634,118"];
+	ME -> MF [pos="e,778,83 742,89 751,87 761,86 770,84"];
+	MF -> MG [pos="e,869,76 832,78 841,78 851,77 860,77"];
+	MG -> MH [pos="e,961,50 927,64 935,61 944,57 953,54"];
+	MH -> MB [pos="s,534,144 539,138 562,108 603,56 632,31 647,19 670,15 689,15 689,15 689,15 899,15 921,15 956,23 978,28"];
+	LL -> MI [pos="e,501,361 445,317 454,325 464,336 472,342 478,346 487,352 496,358"];
+	MI -> MJ [pos="e,662,374 542,372 571,373 622,374 655,374"];
+	MJ -> MK [pos="e,774,375 716,375 730,375 749,375 765,375"];
+	MK -> ML [pos="e,864,356 836,365 842,363 849,361 856,359"];
+	ML -> LL [pos="s,454,310 459,312 479,317 504,324 520,325 520,325 520,325 805,325 821,325 844,329 864,334"];
+}

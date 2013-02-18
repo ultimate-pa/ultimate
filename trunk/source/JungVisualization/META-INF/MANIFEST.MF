@@ -1,0 +1,13 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: Jung Visualization Plug-in
+Bundle-SymbolicName: JungVisualization;singleton:=true
+Bundle-Version: 0.0.1
+Require-Bundle: Library-Jung, 
+ Library-Batik, 
+ Library-log4j,
+ UltimateCore,
+ UltimateGui
+Bundle-RequiredExecutionEnvironment: JavaSE-1.6
+Bundle-ActivationPolicy: lazy
+Bundle-Activator: de.uni_freiburg.informatik.ultimate.plugins.output.jungvisualization.Activator

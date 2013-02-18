@@ -1,0 +1,24 @@
+*
+ * This document contains information about the CDTDummyParser
+ * @author Markus Lindenmann
+ * @author Oleksii Saukh
+ * @author Stefan Wissert
+ */
+ 
+ PACKAGE AND FOLDER STRUCTURE
+
+./src/de.uni_freiburg.informatik.ultimate.cdt.dummy.parser
+ 		
+GENERAL INFORMATION
+
+CDTDummyParser is a part of ULTIMATE project.
+Dummy parser is used to pass the already parsed AST through Ultimate!
+This is needed because we have to start Ultimate with a Source Plugin, which
+should generate some Output. So here we only use the a priori set AST and give it
+back.
+
+FILE INFORMATION
+
+Package: [de.uni_freiburg.informatik.ultimate.cdt.dummy.parser]
+	- Activator - The activator class controls the plug-in life cycle.
+	- CDTDummyParser - DummyParser class.

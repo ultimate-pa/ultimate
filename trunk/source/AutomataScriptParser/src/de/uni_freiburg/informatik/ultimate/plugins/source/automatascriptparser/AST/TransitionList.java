@@ -1,0 +1,120 @@
+/**
+ * 
+ */
+package de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST;
+
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AtsASTNode;
+
+/**
+ * @author musab@informatik.uni-freiburg.de
+ *
+ */
+public class TransitionList extends AtsASTNode {
+	
+	public class Pair<L, R> {
+		public final L left;
+		public final R right;
+		
+		public Pair(L left, R right) {
+			this.left = left;
+			this.right = right;
+		}
+
+		@Override
+		public int hashCode() {
+			final int prime = 31;
+			int result = 7;
+			result = prime * result + getOuterType().hashCode();
+			result = prime * result + ((left == null) ? 0 : left.hashCode());
+			result = prime * result + ((right == null) ? 0 : right.hashCode());
+			return result;
+		}
+
+		@Override
+		public boolean equals(Object obj) {
+			if (this == obj)
+				return true;
+			if (obj == null)
+				return false;
+			if (getClass() != obj.getClass())
+				return false;
+			@SuppressWarnings("unchecked")
+			Pair<L, R> other = (Pair<L, R>) obj;
+			if (!getOuterType().equals(other.getOuterType()))
+				return false;
+			if (left == null) {
+				if (other.left != null)
+					return false;
+			} else if (!left.equals(other.left))
+				return false;
+			if (right == null) {
+				if (other.right != null)
+					return false;
+			} else if (!right.equals(other.right))
+				return false;
+			return true;
+		}
+
+		private TransitionList getOuterType() {
+			return TransitionList.this;
+		}
+		
+		
+	}
+
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 4468320445354864058L;
+	private Map<Pair<String, String> , String> m_Transitions;
+	private Map<Pair<String, String>, Pair<String, String>> m_ReturnTransitions;
+	private List<PetriNetTransition> m_netTransitions;
+	
+	
+	public TransitionList() {
+		m_Transitions = new HashMap<Pair<String,String>, String>();
+		m_ReturnTransitions = new HashMap<Pair<String, String>, Pair<String, String>>();
+		m_netTransitions = new ArrayList<PetriNetTransition>();
+	}
+	
+	public void addTransition(String fromState, String label, String toState) {
+		m_Transitions.put(new Pair<String, String>(fromState, label), toState);
+	}
+	
+	public void addTransition(String fromState, String returnState, String label, String toState) {
+		m_ReturnTransitions.put(new Pair<String, String>(fromState, returnState), new Pair<String, String>(label, toState));
+	}
+	
+	public void addTransition(IdentifierList idList) {
+		List<String> ids = idList.getIdentifierList();
+		if (ids.size() == 3) {
+			addTransition(ids.get(0), ids.get(1), ids.get(2));
+		} else if (ids.size() == 4) {
+			addTransition(ids.get(0), ids.get(1), ids.get(2), ids.get(3));
+		}
+	}
+
+	public Map<Pair<String, String>, String> getTransitions() {
+		return m_Transitions;
+	}
+	
+	public Map<Pair<String, String>, Pair<String, String>> getReturnTransitions() {
+		return m_ReturnTransitions;
+	}
+	
+	public void addNetTransition(PetriNetTransition nt) {
+		m_netTransitions.add(nt);
+	}
+
+	public List<PetriNetTransition> getNetTransitions() {
+		return m_netTransitions;
+	}
+
+	
+}

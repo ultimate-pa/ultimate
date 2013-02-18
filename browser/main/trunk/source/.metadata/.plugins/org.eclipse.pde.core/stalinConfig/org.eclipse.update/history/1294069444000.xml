@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<config date="1294069444578" transient="true" version="3.0">
+<site enabled="true" list="StalinSVN/JungVisualization/,StalinSVN/AutomataParser/,StalinSVN/prefuse_base/,StalinSVN/InteractiveConsole/,StalinSVN/JavaCup/,StalinSVN/DSInvariantASTTransformer/,StalinSVN/SmtInterpol/,StalinSVN/BoogiePLParser/,StalinSVN/SMTInterface.win32.x86_64/,StalinSVN/Jung_base/,StalinSVN/SMTInterfaceTest/,StalinSVN/LocalVariableRenamer/,StalinSVN/SMTInterface.linux.x86/,StalinSVN/TraceAbstraction/,StalinSVN/PrefuseVisualization/,StalinSVN/ErrorLocationGenerator/,StalinSVN/NestedWordAutomata/,StalinSVN/GuiRCP/,StalinSVN/NestedInterpolants/,StalinSVN/BoogiePreprocessor/,StalinSVN/SafetyChecker/,StalinSVN/SMTInterface.linux.x86_64/,StalinSVN/SMTInterface/,StalinSVN/CFGConsoleOut/,StalinSVN/CoreRCP/,StalinSVN/UnstructuredBoogie2RecursiveCFG/,StalinSVN/ConsoleOut/,StalinSVN/AntlrV3/,StalinSVN/CFG2SMT/,StalinSVN/NodeCounter/,StalinSVN/RCFGBuilder/,StalinSVN/SMTInterface.win32.x86/,StalinSVN/CFGBuilder/,StalinSVN/BoogiePrinter/,StalinSVN/CFG2SMTtest/,StalinSVN/CFGReducer/,StalinSVN/log4j/" policy="USER-INCLUDE" updateable="true" url="file:/exchange/Studium/Seminare_Praktika/SMC-Teamprojekt/">
+</site>
+<site enabled="true" list="plugins/org.eclipse.core.databinding.property_1.2.0.M20090819-0800.jar,plugins/org.eclipse.core.databinding_1.2.0.M20090819-0800.jar,plugins/org.eclipse.equinox.common_3.5.1.R35x_v20090807-1100.jar,plugins/org.eclipse.equinox.util_1.0.100.v20090520-1800.jar,plugins/org.eclipse.core.commands_3.5.0.I20090525-2000.jar,plugins/org.eclipse.jface_3.5.2.M20100120-0800.jar,plugins/org.eclipse.swt.gtk.linux.x86_3.5.2.v3557f.jar,plugins/org.eclipse.jface.databinding_1.3.1.M20090826-0800.jar,plugins/org.eclipse.core.runtime.compatibility.auth_3.2.100.v20090413.jar,plugins/org.eclipse.ui_3.5.2.M20100120-0800.jar,plugins/org.eclipse.ui.workbench_3.5.2.M20100113-0800.jar,plugins/org.eclipse.equinox.launcher_1.0.201.R35x_v20090715.jar,plugins/org.eclipse.core.expressions_3.4.101.R35x_v20100209.jar,plugins/org.eclipse.core.databinding.beans_1.2.0.I20090525-2000.jar,plugins/org.eclipse.equinox.launcher.gtk.linux.x86_1.0.200.v20090520,plugins/org.eclipse.osgi.services_3.2.0.v20090520-1800.jar,plugins/org.eclipse.core.runtime_3.5.0.v20090525.jar,plugins/org.eclipse.help_3.4.1.v20090805_35x.jar,plugins/org.eclipse.core.contenttype_3.4.1.R35x_v20090826-0451.jar,plugins/org.eclipse.equinox.preferences_3.2.301.R35x_v20091117.jar,plugins/org.eclipse.equinox.simpleconfigurator_1.0.101.R35x_v20090807-1100.jar,plugins/org.eclipse.core.databinding.observable_1.2.0.M20090902-0800.jar,plugins/org.eclipse.equinox.registry_3.4.100.v20090520-1800.jar,plugins/org.eclipse.swt_3.5.2.v3557f.jar,plugins/org.eclipse.osgi_3.5.2.R35x_v20100126.jar,plugins/org.eclipse.equinox.ds_1.1.1.R35x_v20090806.jar,plugins/org.eclipse.rcp_3.5.0.v201002111343.jar,plugins/org.eclipse.core.jobs_3.4.100.v20090429-1800.jar,plugins/com.ibm.icu_4.0.1.v20100125.jar,plugins/org.eclipse.equinox.app_1.2.1.R35x_v20091203.jar,plugins/org.eclipse.update.configurator_3.3.0.v20090312.jar" policy="USER-INCLUDE" updateable="true" url="file:/usr/lib/eclipse/">
+<feature id="org.eclipse.jdt.source" url="features/org.eclipse.jdt.source_3.5.2.r352_v20100108-7r88FEwFH4SRsd9dz0fZ6z-rwffZ/" version="3.5.2.r352_v20100108-7r88FEwFH4SRsd9dz0fZ6z-rwffZ">
+</feature>
+<feature id="org.eclipse.platform" url="features/org.eclipse.platform_3.5.2.R35x_v20100210-0800-9rEiGCsFsyl-Wk9Skv1tPnGIHPqiv1lI7JHF7/" version="3.5.2.R35x_v20100210-0800-9rEiGCsFsyl-Wk9Skv1tPnGIHPqiv1lI7JHF7">
+</feature>
+<feature id="org.eclipse.rcp" url="features/org.eclipse.rcp_3.5.2.R35x_v20100119-9sAiFy4FoNUuOpDyaMNCvXb27BA6/" version="3.5.2.R35x_v20100119-9sAiFy4FoNUuOpDyaMNCvXb27BA6">
+</feature>
+<feature id="org.eclipse.help.source" url="features/org.eclipse.help.source_1.1.2.R35x_v20100119-7g7eFBFFAFkNPqPHZuSuNcB/" version="1.1.2.R35x_v20100119-7g7eFBFFAFkNPqPHZuSuNcB">
+</feature>
+<feature id="org.eclipse.jdt" url="features/org.eclipse.jdt_3.5.2.r352_v20100108-7r88FEwFH4SRsd9dz0fZ6z-rwffZ/" version="3.5.2.r352_v20100108-7r88FEwFH4SRsd9dz0fZ6z-rwffZ">
+</feature>
+<feature id="org.eclipse.sdk" url="features/org.eclipse.sdk_3.5.2.R35x_v20100119-7Q7bARBPhUIMolSdVSvpNolG4SrF0eT_fbMoaCICrLRl3/" version="3.5.2.R35x_v20100119-7Q7bARBPhUIMolSdVSvpNolG4SrF0eT_fbMoaCICrLRl3">
+</feature>
+<feature id="org.eclipse.help" plugin-identifier="org.eclipse.help.base" url="features/org.eclipse.help_1.1.2.R35x_v20100119-7g7eFBFFAFkNPqPHZuSuNcB/" version="1.1.2.R35x_v20100119-7g7eFBFFAFkNPqPHZuSuNcB">
+</feature>
+<feature id="org.eclipse.cvs.source" url="features/org.eclipse.cvs.source_1.1.101.R35x_v20100125-7E79FGD9kKF67BPDZ7PKCE1911/" version="1.1.101.R35x_v20100125-7E79FGD9kKF67BPDZ7PKCE1911">
+</feature>
+<feature id="org.eclipse.equinox.p2.user.ui.source" url="features/org.eclipse.equinox.p2.user.ui.source_1.1.2.R35x_v20091106-7u79FbOFRNWj_BE20aykhZT2932/" version="1.1.2.R35x_v20091106-7u79FbOFRNWj_BE20aykhZT2932">
+</feature>
+<feature id="org.eclipse.rcp.source" url="features/org.eclipse.rcp.source_3.5.2.R35x_v20100119-9sAiFy4FoNUuOpDyaMNCvXb27BA6/" version="3.5.2.R35x_v20100119-9sAiFy4FoNUuOpDyaMNCvXb27BA6">
+</feature>
+<feature id="org.eclipse.pde.source" url="features/org.eclipse.pde.source_3.5.2.R35x_v20100119-7Z7aFA2FC_xZVGWRoQA0wyqufobo/" version="3.5.2.R35x_v20100119-7Z7aFA2FC_xZVGWRoQA0wyqufobo">
+</feature>
+<feature id="org.eclipse.platform.source" url="features/org.eclipse.platform.source_3.5.2.R35x_v20100210-0800-9rEiGCsFsyl-Wk9Skv1tPnGIHPqiv1lI7JHF7/" version="3.5.2.R35x_v20100210-0800-9rEiGCsFsyl-Wk9Skv1tPnGIHPqiv1lI7JHF7">
+</feature>
+<feature id="org.eclipse.equinox.p2.user.ui" url="features/org.eclipse.equinox.p2.user.ui_1.1.2.R35x_v20091106-7u79FbOFRNWj_BE20aykhZT2932/" version="1.1.2.R35x_v20091106-7u79FbOFRNWj_BE20aykhZT2932">
+</feature>
+<feature id="org.eclipse.pde" url="features/org.eclipse.pde_3.5.2.R35x_v20100119-7Z7aFA2FC_xZVGWRoQA0wyqufobo/" version="3.5.2.R35x_v20100119-7Z7aFA2FC_xZVGWRoQA0wyqufobo">
+</feature>
+<feature id="org.eclipse.cvs" url="features/org.eclipse.cvs_1.1.101.R35x_v20100125-7E79FGD9kKF67BPDZ7PKCE1911/" version="1.1.101.R35x_v20100125-7E79FGD9kKF67BPDZ7PKCE1911">
+</feature>
+</site>
+</config>

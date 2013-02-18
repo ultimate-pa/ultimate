@@ -1,0 +1,1114 @@
+package Example;
+
+import java_cup.runtime.*;
+
+
+parser code {:
+	public static void main(String args[]) throws Exception {
+		SymbolFactory sf = new DefaultSymbolFactory();
+		new Parser(new Scanner(new java.io.FileInputStream("test.txt"),sf),sf).parse();
+	}
+:}
+
+
+/* Terminals */
+terminal MODULE, FUNCTION, CONTRACT, INCLUDE, EXT_AT, EXT_LET; /*, CEOF;*/
+terminal String IDENTIFIER, TYPENAME;
+terminal STRING_LITERAL;
+terminal CONSTANT;
+terminal CONSTANT10;
+terminal LPAR, RPAR, IF, ELSE, COLON, COLON2, COLONCOLON, DOT, DOTDOT, DOTDOTDOT;
+terminal INT, INTEGER, REAL, BOOLEAN, FLOAT, LT, GT, LE, GE, EQ, NE, COMMA, ARROW, EQUAL;
+terminal FORALL, EXISTS, IFF, IMPLIES, AND, OR, NOT, SEPARATED;
+terminal TRUE, FALSE, OLD, AT, RESULT, BLOCK_LENGTH, BASE_ADDR;
+terminal VALID, VALID_INDEX, VALID_RANGE, FRESH, DOLLAR;
+terminal QUESTION, MINUS, PLUS, STAR, AMP, SLASH, PERCENT, LSQUARE, RSQUARE;
+terminal GLOBAL, INVARIANT, VARIANT, DECREASES, FOR, LABEL, ASSERT, SEMICOLON, NULL, EMPTY;
+terminal REQUIRES, ENSURES, ASSIGNS, LOOP, NOTHING, SLICE, IMPACT, PRAGMA, FROM;
+terminal EXITS, BREAKS, CONTINUES, RETURNS;
+terminal VOLATILE, READS, WRITES;
+terminal LOGIC, PREDICATE, INDUCTIVE, AXIOMATIC, AXIOM, LEMMA, LBRACE, RBRACE;
+terminal GHOST, MODEL, CASE;
+terminal VOID, CHAR, SIGNED, UNSIGNED, SHORT, LONG, DOUBLE, STRUCT, ENUM, UNION;
+terminal BSUNION, INTER;
+terminal LTCOLON, COLONGT, TYPE, BEHAVIOR, BEHAVIORS, ASSUMES, COMPLETE, DISJOINT;
+terminal TERMINATES;
+terminal BIFF, BIMPLIES, HAT, HATHAT, PIPE, TILDE, GTGT, LTLT;
+terminal SIZEOF, LAMBDA, LET;
+terminal TYPEOF, BSTYPE;
+terminal WITH, CONST;
+terminal INITIALIZED;
+terminal prec_named, prec_forall, prec_exists, prec_lambda, prec_question, prec_no_rel,
+		 prec_rel_list, prec_cast, prec_unary_op, prec_par;
+/*terminal symbols for starting */
+terminal ASTART, SPSTART;
+
+/* Non-Terminals */
+/* non terminal lexpr_eof; */
+/* %start lexpr_eof */
+non terminal annot;
+/* %start annot */
+non terminal spec;
+/* %start spec */
+/* non terminal ext_spec; */
+/* %start ext_spec */
+non terminal lexpr_list, ne_lexpr_list, lexpr, lexpr_option, any_identifier, lexpr_rel,
+			 lexpr_end_rel, lexpr_inner, rel_list, lexpr_binder, bounded_var, binders,
+			 relation, string, constant, identifier_or_typename, range, logic_type, label_name,
+			 identifier, ne_tvar_list, cast_logic_type, type_spec, field_init, array_init, update,
+			 field_path_elt, field_init_elt, array_path_elt, array_init_elt, update_elt, path,
+			 path_elt, binders_reentrance, decl_spec, var_spec, var_spec_bis, stars, constant_option,
+			 abs_param_type_list, abs_param_list, abs_param, id_as_typename, ne_parameters, parameter,
+			 abs_spec_option, cv, type_spec_cv, abs_spec, logic_rt_type, begin_rt_type, end_rt_type,
+			 tabs, abs_spec_bis, exit_rt_type, enter_rt_type, ne_logic_type_list, full_lexpr,
+			 enter_kw_c_mode, exit_kw_c_mode, full_identifier, full_identifier_or_typename,
+			 full_parameters, full_parameter, full_zones, zones, full_ne_lexpr_list, full_logic_type,
+			 full_logic_rt_type, full_assigns, assigns, decl, contract, annotation,
+			 requires, terminates, decreases, simple_clauses,
+			 behaviors, complete_or_disjoint, ne_terminates, ne_decreases, ne_simple_clauses,
+			 ne_behaviors, ne_complete_or_disjoint, post_cond_kind, ne_requires, variant,
+			 grammar_extension, grammar_extension_name, post_cond, behavior_name, behavior_body,
+			 assumes, behavior_name_list, ne_zones, is_spec, any, decl_list, loop_annotations,
+			 ne_behavior_name_list, code_annotation, beg_code_annotation, loop_annot_stack,
+			 loop_invariant, loop_annot_opt, loop_effects, loop_variant, loop_pragma,
+			 loop_grammar_extension, slice_pragma, impact_pragma, volatile_opt, type_annot,
+			 model_annot, logic_def, deprecated_logic_decl, poly_id_type, poly_id_type_add_typename,
+			 poly_id, ne_label_list, opt_parameters, parameters, indcases, logic_decls, typedef,
+			 logic_decl_loc, logic_decl, reads_clause, ne_datacons_list, datacons_list, datacons,
+			 ne_type_list, keyword, c_keyword, acsl_c_keyword, is_acsl_spec, is_acsl_decl_or_code_annot,
+			 is_acsl_other, is_ext_spec, bs_keyword, wildcard, start_grammar;
+
+/* Precedence */
+precedence right prec_named;
+precedence nonassoc IDENTIFIER, TYPENAME, SEPARATED;
+precedence nonassoc prec_forall, prec_exists, prec_lambda, LET;
+precedence right QUESTION, prec_question;
+precedence right IFF;
+precedence right IMPLIES;
+precedence right OR;
+precedence right HATHAT;
+precedence right AND;
+precedence right PIPE;
+precedence right BIFF;
+precedence right BIMPLIES;
+precedence right HAT;
+precedence right AMP;
+precedence nonassoc prec_no_rel;
+precedence right prec_rel_list; /* for list of relations (LT GT LE GE EQ NE) */
+precedence right LT;
+precedence right LTLT, GTGT;
+precedence right PLUS, MINUS;
+precedence right STAR, SLASH, PERCENT, CONST, VOLATILE;
+precedence right prec_cast, TILDE, NOT, prec_unary_op;
+precedence nonassoc LTCOLON, COLONGT;
+precedence right DOT, ARROW, LSQUARE;
+precedence right prec_par;
+
+/* start */
+start with start_grammar;
+
+/* mehrere Einstiegspunkte... ? */
+start_grammar::= ASTART annot | SPSTART spec;
+
+/* komische Sachen weiﬂ nicht wofuer das sein soll */
+enter_kw_c_mode::= /*empty*/;
+
+exit_kw_c_mode::= /*empty*/;
+
+enter_rt_type::= /*empty*/;
+
+exit_rt_type::= /*empty*/;
+
+begin_rt_type::= /*empty*/;
+
+end_rt_type::= /*empty*/;
+
+
+/*Real-Start of Grammar */
+lexpr_list::=
+ /* epsilon */ 
+| ne_lexpr_list  
+;
+
+ne_lexpr_list::= lexpr                    
+| lexpr COMMA ne_lexpr_list 
+;
+
+/* lexpr_eof::= lexpr:e {: System.out.println(" = "+e+";"); :}  CEOF; */ 
+
+lexpr_option::=
+ /* epsilon */ 
+| lexpr         
+;
+
+lexpr::=
+/* predicates */
+ lexpr IMPLIES lexpr 
+| lexpr IFF lexpr 
+| lexpr OR lexpr     
+| lexpr AND lexpr    
+| lexpr HATHAT lexpr    
+/* terms */
+| lexpr AMP lexpr 
+| lexpr PIPE lexpr 
+| lexpr HAT lexpr 
+| lexpr BIMPLIES lexpr 
+| lexpr BIFF lexpr 
+| lexpr QUESTION lexpr COLON2 lexpr %prec prec_question
+/* both terms and predicates */
+| any_identifier COLON lexpr %prec prec_named 
+| lexpr_rel %prec prec_rel_list
+;
+
+lexpr_rel::=
+ lexpr_end_rel %prec prec_no_rel 
+| lexpr_inner rel_list %prec prec_rel_list
+;
+
+lexpr_binder::=
+ LET bounded_var EQUAL lexpr SEMICOLON lexpr %prec LET 
+| FORALL binders SEMICOLON lexpr  %prec prec_forall
+| EXISTS binders SEMICOLON lexpr  %prec prec_exists
+| LAMBDA binders SEMICOLON lexpr  %prec prec_lambda
+;
+
+lexpr_end_rel::=
+  lexpr_inner %prec prec_no_rel
+| lexpr_binder 
+| NOT lexpr_binder 
+;
+
+rel_list::=
+ relation lexpr_end_rel %prec prec_rel_list
+| relation lexpr_inner rel_list %prec prec_rel_list
+;
+
+relation::=
+ LT   
+| GT   
+| LE   
+| GE   
+| EQ   
+| NE   
+    /* C. Marche: added to produce better error messages */
+| EQUAL 
+;
+
+lexpr_inner::=
+ string 
+| NOT lexpr_inner 
+| TRUE 
+| FALSE 
+| VALID LPAR lexpr RPAR 
+| VALID_INDEX LPAR lexpr COMMA lexpr RPAR 
+| VALID_RANGE LPAR lexpr COMMA lexpr COMMA lexpr RPAR
+| INITIALIZED LPAR lexpr RPAR 
+| FRESH LPAR lexpr RPAR
+| NULL
+| constant 
+| lexpr_inner PLUS lexpr_inner 
+| lexpr_inner MINUS lexpr_inner 
+| lexpr_inner STAR lexpr_inner 
+| lexpr_inner SLASH lexpr_inner 
+| lexpr_inner PERCENT lexpr_inner 
+| lexpr_inner ARROW identifier_or_typename 
+| lexpr_inner DOT identifier_or_typename 
+| lexpr_inner LSQUARE range RSQUARE 
+| lexpr_inner LSQUARE lexpr RSQUARE 
+| MINUS lexpr_inner %prec prec_unary_op 
+| PLUS  lexpr_inner %prec prec_unary_op 
+| TILDE lexpr_inner 
+| STAR  lexpr_inner %prec prec_unary_op 
+| AMP   lexpr_inner %prec prec_unary_op 
+| SIZEOF LPAR lexpr RPAR 
+| SIZEOF LPAR logic_type RPAR 
+| OLD LPAR lexpr RPAR 
+| AT LPAR lexpr COMMA label_name RPAR 
+| BASE_ADDR LPAR lexpr RPAR 
+| BLOCK_LENGTH LPAR lexpr RPAR 
+| RESULT 
+| SEPARATED LPAR ne_lexpr_list RPAR
+| identifier LPAR ne_lexpr_list RPAR
+| identifier LBRACE ne_tvar_list RBRACE LPAR ne_lexpr_list RPAR
+| identifier LBRACE ne_tvar_list RBRACE
+| identifier %prec IDENTIFIER 
+| lexpr_inner GTGT lexpr_inner 
+| lexpr_inner LTLT lexpr_inner 
+| LPAR lexpr RPAR %prec prec_par 
+| LPAR range RPAR 
+| LPAR cast_logic_type RPAR lexpr_inner %prec prec_cast
+| lexpr_inner LTCOLON lexpr_inner %prec prec_cast
+| lexpr_inner COLONGT logic_type %prec prec_cast
+| lexpr_inner COLONGT lexpr_inner %prec prec_cast
+| TYPEOF LPAR lexpr RPAR 
+| BSTYPE LPAR type_spec STAR RPAR 
+    /* tsets */
+| EMPTY 
+| BSUNION LPAR lexpr_list RPAR 
+| INTER LPAR lexpr_list RPAR 
+| LBRACE lexpr RBRACE
+| LBRACE lexpr PIPE binders RBRACE
+| LBRACE lexpr PIPE binders SEMICOLON lexpr RBRACE
+    /* Aggregated object initialization */
+| LBRACE field_init RBRACE
+| LBRACE array_init RBRACE
+| LBRACE lexpr WITH update RBRACE
+;
+
+string::=
+ STRING_LITERAL 
+| string STRING_LITERAL 
+;
+
+range::=
+ lexpr_option DOTDOT lexpr_option
+;
+
+/*** Aggregated object initialization ***/
+
+field_path_elt::=
+ DOT identifier_or_typename 
+;
+
+field_init_elt::=
+ field_path_elt EQUAL lexpr 
+;
+
+field_init::=
+ field_init_elt                  
+| field_init_elt COMMA field_init 
+;
+
+array_path_elt::=
+ LSQUARE lexpr RSQUARE      
+| LSQUARE range RSQUARE      
+;
+
+array_init_elt::=
+ array_path_elt EQUAL lexpr 
+;
+
+array_init::=
+ array_init_elt                  
+| array_init_elt COMMA array_init 
+;
+
+/*** Functional update ***/
+update::=
+ update_elt                  
+| update_elt COMMA update 
+;
+
+update_elt::=
+ path EQUAL lexpr                
+| path EQUAL LBRACE WITH update RBRACE 
+;
+
+path::=
+ path_elt      
+| path_elt path 
+;
+
+path_elt::=
+ field_path_elt 
+| array_path_elt 
+;
+
+/*** binders ***/
+
+binders::=
+ binders_reentrance 
+;
+
+binders_reentrance::=
+ decl_spec 
+| binders_reentrance COMMA decl_spec
+| binders_reentrance COMMA var_spec
+;
+
+decl_spec::=
+ type_spec var_spec 
+;
+
+var_spec::=
+       var_spec_bis 
+| stars var_spec_bis
+;
+
+constant::=
+ CONSTANT   
+| CONSTANT10 
+;
+
+constant_option::=
+  constant 
+| /* empty */ 
+;
+
+var_spec_bis::=
+ identifier     
+| var_spec_bis LSQUARE constant_option RSQUARE
+| LPAR var_spec RPAR 
+| var_spec_bis LPAR abs_param_type_list RPAR
+;
+
+abs_param_type_list::=
+ /* empty */    
+| abs_param_list 
+| abs_param_list COMMA DOTDOTDOT 
+;
+
+abs_param_list::=
+ abs_param 
+| abs_param_list COMMA abs_param 
+;
+
+/* TODO: abs_param should be less restrictive than parameter
+since its name can be omitted
+*/
+abs_param::=
+ logic_type 
+;
+
+/*** restricted type expressions ***/
+
+id_as_typename::=
+ identifier 
+;
+
+ne_parameters::=
+ parameter 
+| parameter COMMA ne_parameters 
+;
+
+parameter::=
+ type_spec var_spec 
+| id_as_typename var_spec 
+;
+
+
+/*** type expressions ***/
+
+logic_type::=
+ type_spec abs_spec_option 
+;
+
+cv::=
+  CONST 
+| VOLATILE 
+;
+
+type_spec_cv::=
+     type_spec 
+|    cv type_spec 
+|    type_spec cv 
+;
+
+cast_logic_type::=
+ type_spec_cv abs_spec_option 
+ | type_spec_cv abs_spec cv 
+;
+
+logic_rt_type::=
+ id_as_typename 
+| begin_rt_type logic_type end_rt_type 
+;
+
+abs_spec_option::=
+ /* empty */ %prec TYPENAME  
+| abs_spec 
+;
+
+abs_spec::=
+                    tabs 
+| stars                   %prec TYPENAME 
+| stars              tabs                
+| stars abs_spec_bis      %prec TYPENAME 
+| stars abs_spec_bis tabs                
+|       abs_spec_bis tabs                
+|       abs_spec_bis      %prec TYPENAME 
+;
+
+abs_spec_bis::=
+ LPAR abs_spec RPAR 
+| abs_spec_bis LPAR abs_param_type_list RPAR
+;
+
+stars::=
+ STAR       
+| stars STAR 
+;
+
+tabs::=
+ LSQUARE constant_option RSQUARE %prec TYPENAME
+| LSQUARE constant_option RSQUARE tabs
+;
+
+type_spec::=
+ INTEGER        
+| REAL           
+| BOOLEAN        
+| VOID           
+| CHAR                  
+| SIGNED CHAR          
+| UNSIGNED CHAR       
+| INT                   
+| SIGNED INT            
+| UNSIGNED INT         
+| UNSIGNED       
+| SHORT               
+| SIGNED SHORT        
+| UNSIGNED SHORT      
+| LONG                
+| SIGNED LONG          
+| UNSIGNED LONG        
+| SIGNED LONG INT      
+| LONG  INT            
+| UNSIGNED LONG INT    
+| LONG LONG         
+| SIGNED LONG LONG 
+| UNSIGNED LONG LONG
+| LONG LONG INT
+| SIGNED LONG LONG INT
+| UNSIGNED LONG LONG INT
+| FLOAT             
+| DOUBLE            
+| LONG DOUBLE       
+| STRUCT exit_rt_type identifier 
+| ENUM   exit_rt_type identifier 
+| UNION  exit_rt_type identifier  
+| TYPENAME          
+| TYPENAME LT enter_rt_type ne_logic_type_list GT exit_rt_type
+;
+
+ne_logic_type_list::=
+ logic_type                          
+| logic_type COMMA enter_rt_type ne_logic_type_list 
+;
+
+/*** from annotations ***/
+
+full_lexpr::=
+ enter_kw_c_mode lexpr exit_kw_c_mode 
+;
+
+full_identifier::=
+ enter_kw_c_mode identifier exit_kw_c_mode 
+;
+
+full_identifier_or_typename::=
+ enter_kw_c_mode identifier_or_typename exit_kw_c_mode 
+;
+
+full_parameters::=
+ enter_kw_c_mode ne_parameters exit_kw_c_mode 
+;
+
+full_parameter::=
+ enter_kw_c_mode parameter exit_kw_c_mode 
+;
+
+full_zones::=
+ enter_kw_c_mode zones exit_kw_c_mode  
+;
+
+full_ne_lexpr_list::=
+enter_kw_c_mode ne_lexpr_list exit_kw_c_mode 
+;
+
+full_logic_type::=
+ enter_kw_c_mode logic_type exit_kw_c_mode 
+;
+
+full_logic_rt_type::=
+ enter_kw_c_mode logic_rt_type exit_kw_c_mode 
+;
+
+full_assigns::=
+ enter_kw_c_mode assigns exit_kw_c_mode 
+;
+
+
+/*** function and statement contracts ***/
+
+spec::=
+ contract /*CEOF*/ 
+;
+
+contract::=
+ requires terminates decreases simple_clauses behaviors complete_or_disjoint
+| requires ne_terminates REQUIRES 
+| requires terminates ne_decreases REQUIRES
+| requires terminates ne_decreases TERMINATES     
+| requires terminates decreases ne_simple_clauses REQUIRES
+| requires terminates decreases ne_simple_clauses TERMINATES
+| requires terminates decreases ne_simple_clauses DECREASES
+| requires terminates decreases simple_clauses ne_behaviors TERMINATES
+| requires terminates decreases simple_clauses ne_behaviors DECREASES
+| requires terminates decreases simple_clauses behaviors ne_complete_or_disjoint
+  REQUIRES
+| requires terminates decreases simple_clauses behaviors ne_complete_or_disjoint
+  TERMINATES
+| requires terminates decreases simple_clauses behaviors ne_complete_or_disjoint
+  DECREASES
+| requires terminates decreases simple_clauses behaviors ne_complete_or_disjoint
+  BEHAVIOR
+| requires terminates decreases simple_clauses behaviors ne_complete_or_disjoint
+  ASSIGNS
+| requires terminates decreases simple_clauses behaviors ne_complete_or_disjoint
+  post_cond_kind
+;
+
+requires::= ne_requires | /*epsilon*/ 
+;
+
+ne_requires::=
+ REQUIRES full_lexpr SEMICOLON requires 
+;
+
+terminates::=
+ /* epsilon */              
+| ne_terminates 
+;
+
+ne_terminates::=
+ TERMINATES full_lexpr SEMICOLON 
+;
+
+decreases::=
+ /* epsilon */   
+| ne_decreases 
+;
+
+ne_decreases::=
+ DECREASES variant SEMICOLON 
+;
+
+variant::=
+ full_lexpr FOR any_identifier 
+| full_lexpr                    
+;
+
+simple_clauses::=
+ /* epsilon */ 
+| ne_simple_clauses 
+;
+
+ne_simple_clauses::=
+ post_cond_kind full_lexpr SEMICOLON simple_clauses
+| ASSIGNS full_assigns SEMICOLON simple_clauses
+| grammar_extension SEMICOLON simple_clauses
+;
+
+grammar_extension::=
+/* Grammar Extensibility for plugins */
+ grammar_extension_name full_zones 
+;
+
+post_cond_kind::=
+ post_cond 
+;
+
+behaviors::=
+ /* epsilon */ 
+| ne_behaviors 
+;
+
+ne_behaviors::=
+ BEHAVIOR behavior_name COLON behavior_body behaviors
+;
+     
+behavior_body::=
+ assumes requires simple_clauses 
+| assumes ne_requires ASSUMES     
+| assumes requires ne_simple_clauses ASSUMES
+| assumes requires ne_simple_clauses REQUIRES
+;
+
+assumes::=
+ /* epsilon */ 
+| ASSUMES full_lexpr SEMICOLON assumes   
+;
+
+complete_or_disjoint::=
+ /* epsilon */ 
+| ne_complete_or_disjoint 
+;
+
+ne_complete_or_disjoint::=
+ COMPLETE BEHAVIORS behavior_name_list SEMICOLON
+    complete_or_disjoint     
+| DISJOINT BEHAVIORS behavior_name_list SEMICOLON
+          complete_or_disjoint
+;
+
+/*** assigns and tsets ***/
+
+assigns::=
+ zones 
+| ne_zones FROM zones 
+;
+
+zones ::=
+ ne_zones 
+| NOTHING  
+;
+
+ne_zones ::=
+ ne_lexpr_list 
+;
+
+/*** annotations ***/
+
+annot::=
+ annotation /*CEOF*/  
+| is_spec any /*CEOF*/ 
+| decl_list /*CEOF*/   
+;
+
+annotation::=
+ loop_annotations
+| FOR ne_behavior_name_list COLON contract
+| code_annotation 
+| code_annotation beg_code_annotation 
+| full_identifier_or_typename 
+;
+
+/*** loop annotations ***/
+
+loop_annotations::=
+ loop_annot_stack
+;
+
+/* TODO: gather loop assigns that are related to the same behavior */
+loop_annot_stack::=
+ loop_invariant loop_annot_opt   
+| loop_effects loop_annot_opt
+| FOR ne_behavior_name_list COLON loop_annot_stack
+| loop_variant loop_annot_opt
+| loop_pragma loop_annot_opt
+| loop_grammar_extension loop_annot_opt 
+;
+
+loop_annot_opt::=
+ /* epsilon */ 
+| loop_annot_stack
+;
+
+loop_effects::=
+ LOOP ASSIGNS full_assigns SEMICOLON 
+;
+
+loop_invariant::=
+ LOOP INVARIANT full_lexpr SEMICOLON 
+;
+
+loop_variant::=
+ LOOP VARIANT variant SEMICOLON 
+;
+
+/* Grammar Extensibility for plugins */
+loop_grammar_extension::=
+ LOOP grammar_extension SEMICOLON 
+;
+
+loop_pragma::=
+ LOOP PRAGMA any_identifier full_ne_lexpr_list SEMICOLON
+;
+
+/*** code annotations ***/
+
+beg_code_annotation::=
+ IMPACT 
+| SLICE 
+| FOR 
+| ASSERT 
+| INVARIANT 
+;
+
+code_annotation::=
+ slice_pragma     
+| impact_pragma    
+| FOR ne_behavior_name_list COLON ASSERT full_lexpr SEMICOLON 
+| FOR ne_behavior_name_list COLON INVARIANT full_lexpr SEMICOLON
+| ASSERT full_lexpr SEMICOLON    
+| INVARIANT full_lexpr SEMICOLON 
+;
+
+slice_pragma::=
+ SLICE PRAGMA any_identifier full_lexpr SEMICOLON
+| SLICE PRAGMA any_identifier SEMICOLON
+;
+
+impact_pragma::=
+ IMPACT PRAGMA any_identifier full_lexpr SEMICOLON
+| IMPACT PRAGMA any_identifier SEMICOLON
+;
+
+/*** declarations and logical definitions ***/
+
+decl_list::=
+ decl            
+| decl decl_list
+;  
+
+decl::=
+ GLOBAL INVARIANT any_identifier COLON full_lexpr SEMICOLON
+| VOLATILE ne_zones volatile_opt SEMICOLON 
+| type_annot 
+| model_annot 
+| logic_def  
+| deprecated_logic_decl 
+;
+
+volatile_opt::=
+ /* empty */ 
+| READS any_identifier volatile_opt
+| WRITES any_identifier volatile_opt
+;
+
+type_annot::=
+ TYPE INVARIANT any_identifier LPAR full_parameter RPAR EQUAL
+    full_lexpr SEMICOLON 
+;
+
+model_annot::=
+ MODEL type_spec LBRACE full_parameter RBRACE
+| MODEL id_as_typename LBRACE full_parameter RBRACE
+;
+
+poly_id_type::=
+ full_identifier
+| full_identifier LT ne_tvar_list GT
+;
+
+/* we need to recognize the typename as soon as it has been declared, so
+  so that it can be used in data constructors in the type definition itself
+*/
+poly_id_type_add_typename::=
+ poly_id_type 
+;
+
+poly_id::=
+ poly_id_type 
+| full_identifier LBRACE ne_label_list RBRACE 
+| full_identifier LBRACE ne_label_list RBRACE LT ne_tvar_list GT
+;
+
+opt_parameters::=
+ /*epsilon*/ 
+| parameters 
+;
+
+parameters::=
+ LPAR full_parameters RPAR 
+;
+
+logic_def::=
+/* logic function definition */
+ LOGIC full_logic_rt_type poly_id opt_parameters EQUAL full_lexpr SEMICOLON
+/* predicate definition */
+| PREDICATE poly_id opt_parameters EQUAL full_lexpr SEMICOLON
+/* inductive predicate definition */
+| INDUCTIVE poly_id parameters LBRACE indcases RBRACE
+| LEMMA poly_id COLON full_lexpr SEMICOLON
+| AXIOMATIC any_identifier LBRACE logic_decls RBRACE
+| TYPE poly_id_type_add_typename EQUAL typedef SEMICOLON
+;
+
+logic_decls::=
+ /* epsilon */
+| logic_decl_loc logic_decls
+;
+
+logic_decl::=
+ logic_def  
+/* logic function declaration */
+| LOGIC full_logic_rt_type poly_id opt_parameters reads_clause SEMICOLON
+/* predicate declaration */
+| PREDICATE poly_id opt_parameters reads_clause SEMICOLON
+/* type declaration */
+| TYPE poly_id_type SEMICOLON
+/* axiom */
+| AXIOM poly_id COLON full_lexpr SEMICOLON
+;
+
+logic_decl_loc::=
+ logic_decl 
+;
+
+
+reads_clause::=
+ /* epsilon */ 
+| READS zones 
+;
+
+typedef::=
+ ne_datacons_list 
+| full_logic_type 
+;
+
+datacons_list::=
+ /* epsilon */ 
+| PIPE datacons datacons_list 
+;
+
+ne_datacons_list::=
+ datacons datacons_list 
+| PIPE datacons datacons_list 
+;
+
+datacons::=
+ full_identifier 
+| full_identifier LPAR ne_type_list RPAR 
+;
+
+ne_type_list::=
+ full_logic_type 
+| full_logic_type COMMA ne_type_list
+; 
+
+indcases::=
+ /* epsilon */  
+| CASE poly_id COLON lexpr SEMICOLON indcases
+;
+
+
+ne_tvar_list::=
+ full_identifier                    
+| full_identifier COMMA ne_tvar_list 
+;
+
+ne_label_list::=
+ label_name                     
+| label_name COMMA ne_label_list 
+;
+
+/* names */
+label_name::=
+ any_identifier 
+;
+
+behavior_name_list::=
+ /* epsilon */         
+| ne_behavior_name_list 
+;
+
+ne_behavior_name_list::=
+ behavior_name                             
+| behavior_name COMMA ne_behavior_name_list 
+;
+
+behavior_name::=
+ any_identifier 
+;
+
+any_identifier::=
+ identifier_or_typename 
+| keyword 
+;
+
+identifier_or_typename::=
+ IDENTIFIER 
+| TYPENAME 
+;
+
+identifier::=
+ IDENTIFIER 
+;
+
+bounded_var::=
+ identifier 
+| TYPENAME  /* Since TYPENAME cannot be accepted by lexpr rule */
+;
+
+c_keyword::=
+ CASE 
+| CHAR 
+| BOOLEAN 
+| CONST 
+| DOUBLE 
+| ELSE 
+| ENUM 
+| FLOAT 
+| IF 
+| INT 
+| LONG 
+| SHORT 
+| SIGNED 
+| SIZEOF 
+| STRUCT 
+| UNION 
+| UNSIGNED 
+| VOID 
+;
+
+acsl_c_keyword::=
+ FOR 
+| VOLATILE 
+;
+
+post_cond::=
+ ENSURES 
+| EXITS   
+| BREAKS  
+| CONTINUES 
+| RETURNS 
+;
+
+is_acsl_spec::=
+ post_cond  
+| ASSIGNS    
+| BEHAVIOR   
+| REQUIRES   
+| TERMINATES 
+| COMPLETE   
+| DECREASES  
+| DISJOINT   
+;
+
+is_acsl_decl_or_code_annot::=
+ ASSERT    
+| ASSUMES   
+| GLOBAL    
+| IMPACT    
+| INDUCTIVE 
+| INVARIANT 
+| LEMMA     
+| LOGIC     
+| LOOP      
+| PRAGMA    
+| PREDICATE  
+| SLICE     
+| TYPE      
+| MODEL     
+;
+
+is_acsl_other::=
+ AXIOM 
+| BEHAVIORS 
+| INTEGER 
+| LABEL 
+| READS 
+| REAL 
+| WRITES 
+;
+
+is_ext_spec::=
+ CONTRACT 
+| FUNCTION 
+| MODULE   
+| INCLUDE  
+| EXT_AT   
+| EXT_LET  
+;
+
+keyword::=
+ c_keyword      
+| acsl_c_keyword 
+| is_ext_spec    
+| is_acsl_spec   
+| is_acsl_decl_or_code_annot 
+| is_acsl_other  
+;
+
+grammar_extension_name::=
+ full_identifier_or_typename  /* ACSL extension language */
+| is_acsl_other 
+| c_keyword     
+;
+
+/* Spec are parsed after the function prototype itself. This rule distinguishes
+   between spec and other annotations by the first keyword of the annotation.
+   in order to return the appropriate token in clexer.mll
+*/
+is_spec::=
+ is_acsl_spec 
+| grammar_extension_name  /* ACSL extension language */
+;
+
+bs_keyword::=
+ AT 
+| BASE_ADDR 
+| BLOCK_LENGTH 
+| EMPTY 
+| FALSE 
+| FORALL 
+| FRESH 
+| FROM 
+| INTER 
+| LAMBDA 
+| LET 
+| NOTHING 
+| NULL 
+| OLD 
+| RESULT 
+| SEPARATED 
+| TRUE 
+| BSTYPE 
+| TYPEOF 
+| BSUNION 
+| VALID 
+| VALID_INDEX 
+| VALID_RANGE 
+| INITIALIZED 
+| WITH 
+;
+
+wildcard::=
+ any_identifier 
+| bs_keyword 
+| AMP 
+| AND 
+| ARROW 
+| COLON 
+| COLON2 
+| COLONCOLON 
+| COLONGT 
+| COMMA 
+| CONSTANT 
+| CONSTANT10 
+| DOLLAR 
+| DOT 
+| DOTDOT 
+| DOTDOTDOT 
+| EQ 
+| EQUAL 
+| EXISTS 
+| GE 
+| GHOST 
+| GT 
+| GTGT 
+| HAT 
+| HATHAT 
+| IFF 
+| IMPLIES 
+| LBRACE 
+| LE 
+| LPAR 
+| LSQUARE 
+| LT 
+| LTCOLON 
+| LTLT 
+| MINUS 
+| NE 
+| NOT 
+| OR 
+| PERCENT 
+| PIPE 
+| PLUS 
+| QUESTION 
+| RBRACE 
+| RPAR 
+| RSQUARE 
+| SEMICOLON 
+| SLASH 
+| STAR 
+| STRING_LITERAL 
+| TILDE 
+;
+
+any::=
+ wildcard 
+| wildcard any 
+;

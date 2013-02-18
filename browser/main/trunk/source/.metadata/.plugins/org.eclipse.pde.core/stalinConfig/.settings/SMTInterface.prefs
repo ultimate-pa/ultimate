@@ -1,0 +1,7 @@
+#Fri Mar 11 13:59:06 CET 2011
+customParameters=AUTO_CONFIG\=false
+eclipse.preferences.version=1
+SMTParameter=AUTO_CONFIG\=false -t\:2
+tempPath=/exchange/Studium/Seminare_Praktika/SMC-Teamprojekt/tmp/
+softimeout=2
+SMTExecutable=/exchange/Studium/Seminare_Praktika/SMC-Teamprojekt/z3/bin/z3

@@ -1,0 +1,36 @@
+// Testfile dumped by Ultimate at 2011/12/14 15:16:39
+
+//#Print nwa
+#Print minimizeDFA(nwa)
+
+#nwa nwa := (
+	#callAlphabet := {},
+	#internalAlphabet := {"[assume !(y != -1);]21" "[assume x != -1;]34" "[assume y != -1;]321" "[assume !(x != -1);]164" "[assume true;]70" "[x := 0;, y := 0;]268" "[x := x + 1;]250" },
+	#returnAlphabet := {},
+	#states := {"#191#$Ultimate##3.1_30" "#193#$Ultimate##3Violation_40" "#187#SAS09paperINIT_10" "#189#$Ultimate##2.1_20" "#199#SAS09paperFINAL_70" "#201#$Ultimate##3.1_80" "#195#$Ultimate##2.1_50" "#197#$Ultimate##3.1Violation_60" "#207#SAS09paperEXIT_110" "#209#$Ultimate##3.1Violation_120" "#203#$Ultimate##3Violation_90" "#205#$Ultimate##2.1_100" "#215#$Ultimate##3.1Violation_150" "#211#$Ultimate##3.1_130" "#213#$Ultimate##3Violation_140" },
+	#initialStates := {"#187#SAS09paperINIT_10" },
+	#finalStates := {},
+	#callTransitions := {
+	},
+	#internalTransitions := {
+		 ("#187#SAS09paperINIT_10" "[x := 0;, y := 0;]268" "#189#$Ultimate##2.1_20")
+		 ("#189#$Ultimate##2.1_20" "[assume x != -1;]34" "#191#$Ultimate##3.1_30")
+		 ("#189#$Ultimate##2.1_20" "[assume !(x != -1);]164" "#193#$Ultimate##3Violation_40")
+		 ("#189#$Ultimate##2.1_20" "[x := x + 1;]250" "#195#$Ultimate##2.1_50")
+		 ("#191#$Ultimate##3.1_30" "[assume !(y != -1);]21" "#197#$Ultimate##3.1Violation_60")
+		 ("#191#$Ultimate##3.1_30" "[assume y != -1;]321" "#199#SAS09paperFINAL_70")
+		 ("#195#$Ultimate##2.1_50" "[assume x != -1;]34" "#201#$Ultimate##3.1_80")
+		 ("#195#$Ultimate##2.1_50" "[assume !(x != -1);]164" "#203#$Ultimate##3Violation_90")
+		 ("#195#$Ultimate##2.1_50" "[x := x + 1;]250" "#205#$Ultimate##2.1_100")
+		 ("#199#SAS09paperFINAL_70" "[assume true;]70" "#207#SAS09paperEXIT_110")
+		 ("#201#$Ultimate##3.1_80" "[assume !(y != -1);]21" "#209#$Ultimate##3.1Violation_120")
+		 ("#201#$Ultimate##3.1_80" "[assume y != -1;]321" "#199#SAS09paperFINAL_70")
+		 ("#205#$Ultimate##2.1_100" "[assume x != -1;]34" "#211#$Ultimate##3.1_130")
+		 ("#205#$Ultimate##2.1_100" "[assume !(x != -1);]164" "#213#$Ultimate##3Violation_140")
+		 ("#205#$Ultimate##2.1_100" "[x := x + 1;]250" "#205#$Ultimate##2.1_100")
+		 ("#211#$Ultimate##3.1_130" "[assume !(y != -1);]21" "#215#$Ultimate##3.1Violation_150")
+		 ("#211#$Ultimate##3.1_130" "[assume y != -1;]321" "#199#SAS09paperFINAL_70")
+	},
+	#returnTransitions := {
+	}
+)

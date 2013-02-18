@@ -1,0 +1,8 @@
+(set-option :produce-proofs true)
+(set-info :status sat)
+(set-logic QF_UFLIA)
+(declare-fun x () Int)
+(declare-fun y () Int)
+(assert (and (distinct x 7 0) (distinct y 7 0) (= (+ x y) 7)))
+(check-sat)
+(exit)

@@ -1,0 +1,2 @@
+const unique LOC_ID: int;
+axiom LOC_ID == 0;

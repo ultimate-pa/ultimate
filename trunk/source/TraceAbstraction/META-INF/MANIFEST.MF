@@ -1,0 +1,17 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: TraceAbstraction
+Bundle-SymbolicName: TraceAbstraction;singleton:=true
+Bundle-Version: 0.0.1
+Bundle-Activator: de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator
+Require-Bundle: Library-log4j,
+ Library-ModelCheckerUtils,
+ UltimateCore,
+ NestedWordAutomata,
+ RCFGBuilder,
+ SMTSolverBridge
+Bundle-ActivationPolicy: lazy
+Bundle-RequiredExecutionEnvironment: JavaSE-1.6
+Export-Package: de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction,
+ de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates,
+ de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck

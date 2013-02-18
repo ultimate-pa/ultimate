@@ -1,0 +1,47 @@
+// Testfile dumped by Ultimate at 2011/12/14 15:16:39
+
+//#Print nwa
+#Print minimizeDFA(nwa)
+
+#nwa nwa := (
+	#callAlphabet := {},
+	#internalAlphabet := {"[assume !(y != -1);]21" "[assume x != -1;]34" "[assume y != -1;]321" "[assume !(x != -1);]164" "[assume true;]70" "[x := 0;, y := 0;]268" "[x := x + 1;]250" },
+	#returnAlphabet := {},
+	#states := {"{$emptyStack=(= v__y 0)}_30" "{$emptyStack=false}_40" "{$emptyStack=true}_10" "{true=true}_20" },
+	#initialStates := {"{$emptyStack=true}_10" },
+	#finalStates := {"{$emptyStack=false}_40" },
+	#callTransitions := {
+	},
+	#internalTransitions := {
+		 ("{$emptyStack=true}_10" "[assume !(y != -1);]21" "{true=true}_20")
+		 ("{$emptyStack=true}_10" "[assume x != -1;]34" "{true=true}_20")
+		 ("{$emptyStack=true}_10" "[assume true;]70" "{true=true}_20")
+		 ("{$emptyStack=true}_10" "[assume !(x != -1);]164" "{true=true}_20")
+		 ("{$emptyStack=true}_10" "[x := x + 1;]250" "{true=true}_20")
+		 ("{$emptyStack=true}_10" "[x := 0;, y := 0;]268" "{$emptyStack=(= v__y 0)}_30")
+		 ("{$emptyStack=true}_10" "[assume y != -1;]321" "{true=true}_20")
+		 ("{true=true}_20" "[assume !(y != -1);]21" "{true=true}_20")
+		 ("{true=true}_20" "[assume x != -1;]34" "{true=true}_20")
+		 ("{true=true}_20" "[assume true;]70" "{true=true}_20")
+		 ("{true=true}_20" "[assume !(x != -1);]164" "{true=true}_20")
+		 ("{true=true}_20" "[x := x + 1;]250" "{true=true}_20")
+		 ("{true=true}_20" "[x := 0;, y := 0;]268" "{true=true}_20")
+		 ("{true=true}_20" "[assume y != -1;]321" "{true=true}_20")
+		 ("{$emptyStack=(= v__y 0)}_30" "[assume !(y != -1);]21" "{$emptyStack=false}_40")
+		 ("{$emptyStack=(= v__y 0)}_30" "[assume x != -1;]34" "{$emptyStack=(= v__y 0)}_30")
+		 ("{$emptyStack=(= v__y 0)}_30" "[assume true;]70" "{true=true}_20")
+		 ("{$emptyStack=(= v__y 0)}_30" "[assume !(x != -1);]164" "{true=true}_20")
+		 ("{$emptyStack=(= v__y 0)}_30" "[x := x + 1;]250" "{$emptyStack=(= v__y 0)}_30")
+		 ("{$emptyStack=(= v__y 0)}_30" "[x := 0;, y := 0;]268" "{true=true}_20")
+		 ("{$emptyStack=(= v__y 0)}_30" "[assume y != -1;]321" "{true=true}_20")
+		 ("{$emptyStack=false}_40" "[assume !(y != -1);]21" "{$emptyStack=false}_40")
+		 ("{$emptyStack=false}_40" "[assume x != -1;]34" "{$emptyStack=false}_40")
+		 ("{$emptyStack=false}_40" "[assume true;]70" "{$emptyStack=false}_40")
+		 ("{$emptyStack=false}_40" "[assume !(x != -1);]164" "{$emptyStack=false}_40")
+		 ("{$emptyStack=false}_40" "[x := x + 1;]250" "{$emptyStack=false}_40")
+		 ("{$emptyStack=false}_40" "[x := 0;, y := 0;]268" "{$emptyStack=false}_40")
+		 ("{$emptyStack=false}_40" "[assume y != -1;]321" "{$emptyStack=false}_40")
+	},
+	#returnTransitions := {
+	}
+)

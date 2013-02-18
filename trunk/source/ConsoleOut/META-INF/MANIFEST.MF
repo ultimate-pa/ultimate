@@ -1,0 +1,11 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: ConsoleOut Output Plug-in
+Bundle-SymbolicName: ConsoleOut;singleton:=true
+Bundle-Version: 0.0.1
+Bundle-Activator: de.uni_freiburg.informatik.ultimate.plugins.output.consoleout.Activator
+Bundle-Vendor: Ultimate
+Require-Bundle: UltimateCore,
+ Library-log4j
+Bundle-ActivationPolicy: lazy
+Bundle-RequiredExecutionEnvironment: JavaSE-1.6

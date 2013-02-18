@@ -1,0 +1,153 @@
+/**
+ * Methods, helping to interpret C constants.
+ */
+package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util;
+
+import java.math.BigInteger;
+
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.IncorrectSyntaxException;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
+import de.uni_freiburg.informatik.ultimate.model.ILocation;
+import de.uni_freiburg.informatik.ultimate.result.SyntaxErrorResult.SyntaxErrorType;
+
+/**
+ * This class holds methods, that help translating constants.
+ * 
+ * @author Markus Lindenmann
+ * @date 12.07.2012
+ */
+public final class ISOIEC9899TC3 {
+    /**
+     * Message: "Ignored suffix".
+     */
+    private static final String IGNORED_SUFFIX = "Ignored suffix";
+    /**
+     * Octal prefix.
+     */
+    private static final String OCT_0 = SFO.NR0;
+    /**
+     * HEX lower case prefix.
+     */
+    private static final String HEX_U0X = "0X";
+    /**
+     * HEX upper case prefix.
+     */
+    private static final String HEX_L0X = "0x";
+    /**
+     * Float suffixes.
+     */
+    private static final String[] SUFFIXES_FLOAT = new String[] { "f", "F",
+            "l", "L" };
+    /**
+     * Integer suffixes.
+     */
+    private static final String[] SUFFIXES_INT = new String[] { "ULL", "Ull",
+            "ull", "uLL", "llu", "llU", "LLu", "LLU", "ul", "uL", "Ul", "UL",
+            "lu", "lU", "Lu", "LU", "ll", "LL", "u", "U", "l", "L" };
+
+    /**
+     * Parses Integer constants according to <a
+     * href="www.open-std.org/jtc1/sc22/WG14/www/docs/n1256.pdf">ISO/IEC
+     * 9899:TC3</a>, chapter 6.4.4.4.
+     * 
+     * @param val
+     *            the value to parse
+     * @param loc
+     *            the location
+     * @return the parsed value
+     */
+    public static final String handleCharConstant(String val, ILocation loc) {
+        String value = val;
+        if (val.startsWith("L")) {
+            // ignore wide character prefix
+            value = val.substring(1, val.length());
+            Dispatcher.unsoundnessWarning(loc,
+                    "Char-Sequence wide character suffix L dropped",
+                    IGNORED_SUFFIX);
+        }
+        return value;
+    }
+
+    /**
+     * Parses Integer constants according to <a
+     * href="www.open-std.org/jtc1/sc22/WG14/www/docs/n1256.pdf">ISO/IEC
+     * 9899:TC3</a>, chapter 6.4.4.2.
+     * 
+     * @param val
+     *            the value to parse
+     * @param loc
+     *            the location
+     * @return the parsed value
+     */
+    public static final String handleFloatConstant(String val, ILocation loc) {
+        String value = val;
+        // if there is a float-suffix: throw it away
+        for (String s : SUFFIXES_FLOAT) {
+            if (val.endsWith(s)) {
+                value = val.substring(0, val.length() - s.length());
+                Dispatcher.unsoundnessWarning(loc, "Float suffix ignored: " + s,
+                        IGNORED_SUFFIX);
+                break;
+            }
+        }
+        try {
+            // check for integer-prefix.
+            if (value.startsWith(HEX_L0X) || value.startsWith(HEX_U0X)) {
+                // val is a hexadecimal-constant!
+
+                // this case is awful! do not want to support it!
+                // we would have to split the number, parse the values
+                // separately and then merge them to a new base 10 float
+                Dispatcher.error(loc, SyntaxErrorType.UnsupportedSyntax,
+                        "hexadecimal float constants are not yet supported!");
+                return value;
+            } // else
+            Float.parseFloat(value); // check if correct!
+            return value;
+        } catch (NumberFormatException nfe) {
+            String msg = "Unable to translate float!";
+            Dispatcher.error(loc, SyntaxErrorType.TypeError, msg);
+            throw new IncorrectSyntaxException(msg);
+        }
+    }
+
+    /**
+     * Parses Integer constants according to <a
+     * href="www.open-std.org/jtc1/sc22/WG14/www/docs/n1256.pdf">ISO/IEC
+     * 9899:TC3</a>, chapter 6.4.4.1.
+     * 
+     * @param val
+     *            the value to parse
+     * @param loc
+     *            the location
+     * @return the parsed value
+     */
+    public static final String handleIntegerConstant(String val, ILocation loc) {
+        String value = val;
+        // if there is a integer-suffix: throw it away
+        for (String s : SUFFIXES_INT) {
+            if (val.endsWith(s)) {
+                value = val.substring(0, val.length() - s.length());
+                Dispatcher.unsoundnessWarning(loc, "Integer suffix ignored: " + s,
+                        IGNORED_SUFFIX);
+                break;
+            }
+        }
+        try {
+            // check for integer-prefix.
+            if (value.startsWith(HEX_L0X) || value.startsWith(HEX_U0X)) {
+                // val is a hexadecimal-constant
+                return new BigInteger(value.substring(2), 16).toString();
+            } else if (value.startsWith(OCT_0)) {
+                // val is a octal-constant.
+                return new BigInteger(value, 8).toString();
+            } else {
+                return new BigInteger(value).toString(); // check if correct!
+            }
+        } catch (NumberFormatException nfe) {
+            String msg = "Unable to translate int!";
+            Dispatcher.error(loc, SyntaxErrorType.TypeError, msg);
+            throw new IncorrectSyntaxException(msg);
+        }
+    }
+}

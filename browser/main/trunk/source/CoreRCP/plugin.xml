@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.2"?>
+<plugin>
+   <extension-point id="local.stalin.ep.analysis" name="Analysis Extension Point" schema="schema/local.stalin.ep.analysis.exsd"/>
+   <extension-point id="local.stalin.ep.generator" name="Generator Extension Point" schema="schema/local.stalin.ep.generator.exsd"/>
+   <extension-point id="local.stalin.ep.output" name="Output Extension Point" schema="schema/local.stalin.ep.output.exsd"/>
+   <extension-point id="local.stalin.ep.LoggingWindow" name="LoggingWindow Extension Point" schema="schema/local.stalin.ep.LoggingWindow.exsd"/>
+   <extension-point id="local.stalin.ep.controller" name="Controller Extension Point" schema="schema/local.stalin.ep.controller.exsd"/>
+   <extension-point id="local.stalin.ep.source" name="Source Extension Point" schema="schema/local.stalin.ep.source.exsd"/>
+   <extension-point id="local.stalin.ep.serialization" name="local.stalin.ep.serialization" schema="schema/local.stalin.ep.serialization.exsd"/>
+
+   <extension
+         id="stalinapplication"
+         point="org.eclipse.core.runtime.applications">
+      <application>
+         <run
+               class="local.stalin.core.coreplugin.Application">
+         </run>
+      </application>
+   </extension>
+   
+   
+   <extension
+         id="product"
+         point="org.eclipse.core.runtime.products">
+      <product
+            application="STALINCore.stalinapplication"
+            name="Stalin">
+         <property
+               name="appName"
+               value="Stalin">
+         </property>
+         <property
+               name="aboutImage"
+               value="icons/about.gif">
+         </property>
+         <property
+               name="aboutText"
+               value="Stalin Ultimate is a tool for model checking and static program analysis. It provides multiple toolchains which check properties or transform input files.">
+         </property>
+      </product>
+   </extension>
+  
+   <extension
+         point="org.eclipse.ui.preferencePages">
+      <page
+            class="local.stalin.core.coreplugin.preferences.CorePreferencePage"
+            id="local.stalin.core.coreplugin.preferences.CorePreferencePage"
+            name="Core Preferences"/>
+      <page
+            class="local.stalin.core.coreplugin.preferences.LoggingPreferencePage"
+            id="local.stalin.core.coreplugin.preferences.LoggingPreferencePage"
+            name="Log Levels">
+      </page>
+      <page
+            category="local.stalin.core.coreplugin.preferences.LoggingPreferencePage"
+            class="local.stalin.core.coreplugin.preferences.LoggingDetailsPreferencePage"
+            id="local.stalin.core.coreplugin.preferences.LoggingDetailsPreferencePage"
+            name="Plug-in-specific Log Levels">
+      </page>
+      <page
+            category="local.stalin.core.coreplugin.preferences.LoggingPreferencePage"
+            class="local.stalin.core.coreplugin.preferences.LoggingToolsPreferencePage"
+            id="local.stalin.core.coreplugin.preferences.LoggingToolsPreferencePage"
+            name="Log Levels for external tools">
+      </page>
+      <page
+            class="local.stalin.core.coreplugin.preferences.ModelManagerPreferencePage"
+            id="local.stalin.core.coreplugin.preferences.ModelManagerPreferencePage"
+            name="Model Manager">
+      </page>
+   </extension>
+   <extension
+         point="org.eclipse.core.runtime.preferences">
+      <initializer class="local.stalin.core.coreplugin.preferences.CorePreferenceInitializer"/>
+   </extension>
+   <extension
+         id="commandlineproduct"
+         point="org.eclipse.core.runtime.products">
+      <product
+            application="STALINCore.stalinapplication"
+            name="Stalin">
+         <property
+               name="aboutText"
+               value="Stalin Ultimate is a tool for model checking and static program analysis. It provides multiple toolchains which check properties or transform input files.">
+         </property>
+         <property
+               name="aboutImage"
+               value="icons/about.gif">
+         </property>
+         <property
+               name="appName"
+               value="Stalin">
+         </property>
+      </product>
+   </extension>
+
+</plugin>
+

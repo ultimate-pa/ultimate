@@ -1,0 +1,14 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: AutomataScriptParser
+Bundle-SymbolicName: AutomataScriptParser;singleton:=true
+Bundle-Version: 0.0.1
+Bundle-Activator: de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.Activator
+Require-Bundle: UltimateCore,
+ Library-log4j,
+ JavaCup,
+ NestedWordAutomata;bundle-version="0.0.1"
+Bundle-ActivationPolicy: lazy
+Bundle-RequiredExecutionEnvironment: JavaSE-1.6
+Export-Package: de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser,
+ de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST

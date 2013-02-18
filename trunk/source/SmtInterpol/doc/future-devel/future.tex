@@ -1,0 +1,89 @@
+\documentclass{article}
+\usepackage[english]{babel}
+\usepackage{xspace}
+\usepackage{hyperref}
+
+\newcommand\SI{SMTInterpol\xspace}
+\newcommand\version{2.0pre\xspace}
+
+\title{\SI\ - Development Plan}
+
+\author{J\"urgen Christ, Jochen Hoenicke\\
+  University of Freiburg\\
+  \texttt{\{christj,hoenicke\}@informatik.uni-freiburg.de}}
+
+\begin{document}
+\maketitle
+\section{Current Version}
+This document covers the version \SI \version that will participate in the
+SMT-COMP 2011.  See the system description for further details.
+
+\section{General Development Plan}
+The future development of \SI should be guided by the requirements of the
+model checking tools that use \SI as backend.  These tools currently include
+Trace Abstraction, Slicing Abstraction, and Lazy Abstraction with the
+corresponding requirement providers Matthias Heizmann, Evren Ermis, and
+Alexander Nutz.
+
+\section{Detailed Development Plan}
+This section lists the detailed development steps for \SI.  The requirements
+and the providers are listed in the description.
+
+\subsection{Competition Cleanup}
+After the SMT-COMP 2011, all unsoundness results and bugs revealed during the
+competition should be fixed.  This step is a general requirement for all
+further development steps.
+
+\subsection{Interpolation}
+Interpolants shall be derived from the proof trees stored inside the solver.
+All users have this requirement.  Currently, we have an interpolator for the
+propositional core and the congruence closure.  An interpolator for linear
+arithmetic, and the theory combination are still to be done.
+
+\subsection{Models}
+The current solver produces and dumps a model in every theory solver.  These
+partial models should be joined to form a complete model.  Additionally, the
+SMTLIB~2 model query features should be implemented on top of this model,
+i.e., it should be possible to ask for values of specific terms in a model.
+
+This requirement currently comes from Evren Ermis to trace back the path by
+detecting the parts of a disjunction that evaluate to true.  This information
+is extracted using block labels that may be implemented using SMTLIB~2 named
+terms.  Extraction of this information can be done using
+\textbf{get-assignment} for named terms or \textbf{get-value} for arbitrary
+quantifier-free closed terms.
+
+\subsection{Arrays and Quantifiers}
+To express richer properties, we need support for arrays and quantifiers in
+the solver and the interpolator.  Although theoretically developed, a concrete
+and well performing implementation is still missing.  The remaining question
+here is how to support arrays.  Although we could support arrays through
+e-matching, specialized array decision procedures seem to have a better
+performance.
+
+The interpolation part has to be changed to support quantifier inference.
+Furthermore, model production becomes more difficult and - in general -
+impossible.
+
+Furthermore, a quantifier model checker based on MBQI could be implemented on
+top of the basic solver routine.  This checker needs some configuration of the
+number of iterations, i.e., checks it is allowed to perform to prevent
+non-termination.  Including this technique, we get a sound and complete solver
+for some fragments of quantified theories.
+
+The requirement comes from all providers and automatic translation tools used
+to generate Boogie input from C programs.
+
+\subsection{Non-linear Arithmetic}
+During verification of software, a small number of constraints asserted in the
+SMT solver end up as linear constraints.  For these so called ``large largely
+linear'' systems, the computation of Gr\"obner bases proved very efficient.
+Based on this approach, a non-linear arithmetic solver could be added to \SI.
+The interpolation of non-linear constraints might be done by a saturation
+based Gr\"obner bases construction loop and a separating term ordering.
+Soundness of this method is still to be determined.
+
+This requirement appears in a benchmark from Alexander Nutz and in some VCC
+benchmarks run by Matthias Heizmann.
+
+\end{document}

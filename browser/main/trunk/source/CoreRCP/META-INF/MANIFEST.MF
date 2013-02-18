@@ -1,0 +1,27 @@
+Manifest-Version: 1.0
+Eclipse-BuddyPolicy: dependent
+Bundle-ManifestVersion: 2
+Bundle-Name: CoreRCP Plug-in
+Bundle-SymbolicName: STALINCore;singleton:=true
+Bundle-Version: 1.0.0
+Bundle-Activator: local.stalin.core.coreplugin.Activator
+Require-Bundle: 
+ org.eclipse.ui;visibility:=reexport,
+ org.eclipse.core.runtime;visibility:=reexport,
+ log4j;visibility:=reexport
+Bundle-ActivationPolicy: lazy
+Export-Package: 
+ local.stalin.access,
+ local.stalin.access.walker,
+ local.stalin.core.api,
+ local.stalin.core.coreplugin.toolchain,
+ local.stalin.ep,
+ local.stalin.ep.interfaces;uses:="org.apache.log4j,local.stalin.model,local.stalin.model.persistent",
+ local.stalin.logic,
+ local.stalin.model,
+ local.stalin.model.boogie,
+ local.stalin.model.boogie.ast,
+ local.stalin.model.boogie.ast.wrapper;uses:="local.stalin.model",
+ local.stalin.plugins,
+ local.stalin.util
+Bundle-RequiredExecutionEnvironment: JavaSE-1.6

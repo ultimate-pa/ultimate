@@ -1,0 +1,12 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: Boogie Preprocessor
+Bundle-SymbolicName: BoogiePreprocessor;singleton:=true
+Bundle-Version: 0.0.1
+Bundle-Activator: de.uni_freiburg.informatik.ultimate.boogie.preprocessor.Activator
+Require-Bundle: Library-log4j,
+ UltimateCore,
+ BoogieParser
+Bundle-ActivationPolicy: lazy
+Export-Package: de.uni_freiburg.informatik.ultimate.boogie.type
+Bundle-RequiredExecutionEnvironment: JavaSE-1.6

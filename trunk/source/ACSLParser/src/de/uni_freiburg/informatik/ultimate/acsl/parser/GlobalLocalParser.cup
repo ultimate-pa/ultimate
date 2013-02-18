@@ -1,0 +1,1525 @@
+/*  This file contains the whole grammar for the ACSL-Parser, basically
+	the grammar is obtained from the Frama-C tooling. 
+File-History:
+	- 30.01. Initial commit, basic stuff implemented but some things missing (weak/strong/ACTL)
+*/
+
+package de.uni_freiburg.informatik.ultimate.acsl.parser;
+
+import java_cup.runtime.*;
+import java_cup.runtime.ComplexSymbolFactory.ComplexSymbol;
+
+import java.util.List;
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.Arrays;
+
+import de.uni_freiburg.informatik.ultimate.model.acsl.ast.*;
+import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLNode;
+
+import org.apache.log4j.Logger;
+
+parser Parser;
+option java15, compact_red, newpositions;
+
+parser code {:
+    /** The logger instance. */
+    protected static Logger s_Logger;
+    /** Holds an ACSL node. */
+	private ACSLNode acslNode;
+	/** the current start line number. */
+	private int startLineNumber;
+	/** the current end line number. */
+	private int endLineNumber;
+	/** List of expressions. */
+	public LinkedList<Expression> expressionList = new LinkedList<Expression>();
+	/** Binary expressions operator list. */
+	public LinkedList<BinaryExpression.Operator> opList = new LinkedList<BinaryExpression.Operator>();
+	/** Temporary loop annotation. */
+	public LoopAnnot tempLoopAnnot;
+	
+	/**
+	 * Constructor.
+	 * 
+	 * @param s the Scanner object.
+	 * @param sf the SymbolFactory object.
+	 * @param s_Logger the Logger object to be used.
+	 */
+	public Parser(java_cup.runtime.Scanner s, java_cup.runtime.SymbolFactory sf, Logger s_Logger) {
+		this(s, sf);
+		Parser.s_Logger = s_Logger;
+	}
+	
+	/**
+	 * Getter for ACSL node.
+	 *  
+	 * @return the ACSL node.
+	 */
+	public ACSLNode getAcslNode() {
+		return this.acslNode;
+	}
+	
+	/**
+	 * Setter for the ACSL node.
+	 * 
+	 * @param value the ACSL node to set.
+	 */
+	public void setAcslNode(ACSLNode value) {
+		this.acslNode = value;
+	}
+	
+	/**
+	 * Getter for the current start line number
+	 * 
+	 * @return the current start line number
+	 */
+	public int getStartLineNumber() {
+		return this.startLineNumber;
+	}
+	
+	/**
+	 * Setter for the start line number.
+	 * 
+	 * @param value the start line number to set.
+	 */
+	public void setStartLineNumber(int value) {
+		this.startLineNumber = value;
+	}
+	
+	/**
+	 * Getter for the current end line number
+	 * 
+	 * @return the current end line number
+	 */
+	public int getEndLineNumber() {
+		return this.endLineNumber;
+	}
+	
+	/**
+	 * Setter for the end line number.
+	 * 
+	 * @param value the end line number to set.
+	 */
+	public void setEndLineNumber(int value) {
+		this.endLineNumber = value;
+	}
+
+	/**
+	 * Parse a specific comment.
+	 * 
+	 * @param input the input string to be parsed
+	 * @param start the start line number.
+	 * @param end the end line number.
+	 * @return the parsed comment in an <code>ACSLNode</code>
+	 * @throws Exception Well yeah - care for it ...
+	 */
+	public static ACSLNode parseComment(String input, int start, int end) throws Exception {
+		java.io.InputStream instream = new java.io.ByteArrayInputStream(input.getBytes());
+		ComplexSymbolFactory sf = new ComplexSymbolFactory();
+		Scanner scanner = new Scanner(instream, sf);
+		Parser parser = new Parser(scanner, sf);
+		parser.setStartLineNumber(start);
+		parser.setEndLineNumber(end);
+		parser.parse();
+		return parser.getAcslNode();
+	}
+	
+	/**
+	 * Parse a specific comment.
+	 * 
+	 * @param input the input string to be parsed
+	 * @param start the start line number.
+	 * @param end the end line number.
+	 * @param s_Logger the Logger object to be used.
+	 * @return the parsed comment in an <code>ACSLNode</code>
+	 * @throws Exception Well yeah - care for it ...
+	 */
+	public static ACSLNode parseComment(String input, int start, int end, Logger s_Logger) throws Exception {
+		java.io.InputStream instream = new java.io.ByteArrayInputStream(input.getBytes());
+		ComplexSymbolFactory sf = new ComplexSymbolFactory();
+		Scanner scanner = new Scanner(instream, sf);
+		Parser parser = new Parser(scanner, sf, s_Logger);
+		parser.setStartLineNumber(start);
+		parser.setEndLineNumber(end);
+		parser.parse();
+		return parser.getAcslNode();
+	}
+
+	/**
+	 * Main method.
+	 * 
+	 * @param args the program parameters
+	 * @throws Exception Well yeah - care for it ...
+	 */
+	public static void main(String args[]) throws Exception {
+		ComplexSymbolFactory sf = new ComplexSymbolFactory();
+		java.io.FileInputStream fio = new java.io.FileInputStream("test.txt");
+		Scanner scanner = new Scanner(fio, sf);
+		Parser parser = new Parser(scanner, sf);
+		parser.parse();
+	}
+	
+	@Override
+	public void unrecovered_syntax_error(Symbol sym) throws Exception {
+        Assertion a = new Assertion(null);
+        if (sym.sym != 1 /*EOF*/) {
+			a.setStartingLineNumber(startLineNumber + ((ComplexSymbol)sym).getLeft().getLine());
+			a.setEndingLineNumber(endLineNumber + ((ComplexSymbol)sym).getLeft().getLine());
+		} else {
+			a.setStartingLineNumber(startLineNumber);
+			a.setEndingLineNumber(endLineNumber);
+		}
+		report_fatal_error("Syntax Error: " + sym.toString(), a);
+	}
+	
+	@Override
+	public void report_fatal_error(String message, Object info)
+    			throws java.lang.Exception
+    {
+    	if (info instanceof ACSLNode) {
+    		throw new ACSLSyntaxErrorException((ACSLNode)info, message);
+    	} else {
+    		throw new RuntimeException(message);
+    	}
+    }
+:}
+
+scan with {: return getScanner().next_token(); :}
+
+/* Terminals */
+terminal FREEABLE, MALLOCABLE;
+terminal MODULE, FUNCTION, CONTRACT, INCLUDE, EXT_AT, EXT_LET; /*, CEOF;*/
+terminal String IDENTIFIER;
+terminal String TYPENAME;
+terminal String STRING_LITERAL;
+terminal String CONSTANT;
+terminal String CONSTANT10;
+terminal String VOID, CHAR, SIGNED, UNSIGNED, SHORT, LONG, DOUBLE, STRUCT, ENUM, UNION;
+terminal String INT, INTEGER, REAL, BOOLEAN, FLOAT;
+terminal String STAR;
+terminal LPAR, RPAR, IF, ELSE, COLON, COLON2, COLONCOLON, DOT, DOTDOT, DOTDOTDOT;
+terminal LT, GT, LE, GE, EQ, NE, COMMA, ARROW, EQUAL;
+terminal FORALL, EXISTS, IFF, IMPLIES, AND, OR, NOT, SEPARATED;
+terminal TRUE, FALSE, OLD, AT, RESULT, BLOCK_LENGTH, BASE_ADDR;
+terminal VALID, VALID_INDEX, VALID_RANGE, FRESH, DOLLAR;
+terminal QUESTION, MINUS, PLUS, AMP, SLASH, PERCENT, LSQUARE, RSQUARE;
+terminal GLOBAL, INVARIANT, VARIANT, DECREASES, FOR, LABEL, ASSERT, SEMICOLON, NULL, EMPTY;
+terminal REQUIRES, ENSURES, ASSIGNS, LOOP, NOTHING, SLICE, IMPACT, PRAGMA, FROM;
+terminal EXITS, BREAKS, CONTINUES, RETURNS;
+terminal READS, WRITES;
+terminal LOGIC, PREDICATE, INDUCTIVE, AXIOMATIC, AXIOM, LEMMA, LBRACE, RBRACE;
+terminal GHOST, MODEL, CASE;
+terminal BSUNION, INTER;
+terminal LTCOLON, COLONGT, TYPE, BEHAVIOR, BEHAVIORS, ASSUMES, COMPLETE, DISJOINT;
+terminal TERMINATES;
+terminal BIFF, BIMPLIES, HAT, HATHAT, PIPE, TILDE, GTGT, LTLT;
+terminal SIZEOF, LAMBDA, LET;
+terminal TYPEOF, BSTYPE;
+terminal WITH, CONST;
+terminal INITIALIZED;
+terminal prec_named, prec_forall, prec_exists, prec_lambda, prec_question, prec_no_rel,
+		 prec_rel_list, prec_cast, prec_unary_op, prec_par;
+/*terminal symbols for starting */
+terminal LSTART, GSTART;
+
+non terminal String identifier, string, any_identifier, identifier_or_typename, label_name, type_spec;
+non terminal Expression lexpr, lexpr_inner, lexpr_rel, lexpr_end_rel, constant, constant_option;
+non terminal CodeAnnot code_annotation;
+non terminal LoopAnnot loop_annot_stack, loop_annot_opt, loop_annotations;
+non terminal String[] ne_behavior_name_list, behavior_name_list;
+non terminal List<String> behavior_name;
+non terminal BinaryExpression.Operator relation;
+non terminal LoopInvariant loop_invariant;
+non terminal LoopVariant loop_variant;
+non terminal LoopAssigns loop_effects;
+non terminal Expression[] ne_lexpr_list, zones, ne_zones, assigns;
+non terminal List<Requires> requires, ne_requires;
+non terminal Terminates terminates, ne_terminates;
+non terminal Decreases decreases, ne_decreases;
+non terminal List<ContractStatement> simple_clauses, ne_simple_clauses, behavior_body;
+non terminal List<Assumes> assumes;
+non terminal List<Behavior> behaviors, ne_behaviors;
+non terminal Completeness complete_or_disjoint, ne_complete_or_disjoint;
+non terminal Contract contract;
+non terminal TypeInvariant type_annot;
+non terminal StringBuffer var_spec_bis, abs_param_list, stars;
+non terminal String logic_type, var_spec, poly_id_type;
+non terminal List<String> ne_tvar_list, ne_label_list;
+non terminal Parameter parameter;
+non terminal ModelVariable model_annot;
+non terminal ACSLType logic_rt_type;
+non terminal List<Parameter> ne_parameters;
+non terminal Parameter[] parameters, opt_parameters;
+non terminal PolyIdentifier poly_id;
+non terminal List<Case> indcases;
+non terminal LogicStatement logic_def, logic_decl;
+non terminal List<LogicStatement> logic_decls;
+non terminal lexpr_list, lexpr_option, rel_list, lexpr_binder, bounded_var, binders,
+			 range, cast_logic_type,
+			 field_init, array_init, update, field_path_elt, field_init_elt, array_path_elt, array_init_elt,
+			 update_elt, path, path_elt, binders_reentrance, decl_spec, 
+			 abs_spec_option, type_spec_cv, abs_spec,
+			 tabs, abs_spec_bis, ne_logic_type_list,
+			 decl, annotation, post_cond_kind, post_cond, decl_list, beg_code_annotation, 
+			 poly_id_type_add_typename, typedef,
+			 reads_clause, ne_datacons_list, datacons_list, datacons,
+			 ne_type_list, keyword, c_keyword, acsl_c_keyword, is_acsl_spec, is_acsl_decl_or_code_annot,
+			 is_acsl_other, is_ext_spec, bs_keyword, wildcard, local, global, start_grammar;
+
+/* Precedence */
+precedence right prec_named;
+precedence nonassoc IDENTIFIER, TYPENAME, SEPARATED;
+precedence nonassoc prec_forall, prec_exists, prec_lambda, LET;
+precedence right QUESTION, prec_question;
+precedence left IFF;
+precedence right IMPLIES;
+precedence left OR;
+precedence left HATHAT;
+precedence left AND;
+precedence left PIPE;
+precedence left BIFF;
+precedence right BIMPLIES;
+precedence left HAT;
+precedence left AMP;
+precedence nonassoc prec_no_rel;
+precedence left prec_rel_list; /* for list of relations (LT GT LE GE EQ NE) */
+precedence left LT;
+precedence left LTLT, GTGT;
+precedence left PLUS, MINUS;
+precedence left STAR, SLASH, PERCENT, CONST;
+precedence right prec_cast, TILDE, NOT, prec_unary_op;
+precedence nonassoc LTCOLON, COLONGT;
+precedence left DOT, ARROW, LSQUARE;
+precedence right prec_par;
+/* bottom up - highest precedence */
+
+/* start */
+start with start_grammar;
+
+/* mehrere Einstiegspunkte... ? */
+start_grammar::= LSTART local {: if(s_Logger!=null){s_Logger.debug("Start Parsing Local");}else{System.out.println("Start Parsing Local");} :} 
+				| GSTART global {: if(s_Logger!=null){s_Logger.debug("Start Parsing Global");}else{System.out.println("Start Parsing Global");} :};
+
+/* Trennung von Local und Global Annotations */
+/* contract kann in beiden vorkommen, siehe Function Contract vs. Statement Contract */
+local::= 
+ contract 
+| annotation
+;
+
+global::= 
+ contract
+| decl_list
+; 
+
+
+/*Real-Start of Grammar */
+lexpr_list::=
+ /* epsilon */ 
+| ne_lexpr_list  
+;
+
+ne_lexpr_list::= 
+ lexpr:expr 
+ {: RESULT = new Expression[] {expr}; :} 
+| lexpr:expr COMMA ne_lexpr_list:exprList
+ {: ArrayList<Expression> tempList = new ArrayList<Expression>();
+ 	tempList.add(expr);
+ 	for (Expression ex : exprList) {
+ 		tempList.add(ex);
+ 	}
+ 	RESULT = tempList.toArray(new Expression[1]); :}
+;
+
+lexpr_option::=
+ /* epsilon */ 
+| lexpr         
+;
+
+
+/* TODO: right treatment of all expressions... */
+lexpr::=
+/* predicates */
+ lexpr:e1 IMPLIES lexpr:e2 {: RESULT = new BinaryExpression(BinaryExpression.Operator.LOGICIMPLIES, e1, e2);:}
+| lexpr:e1 IFF lexpr:e2 {: RESULT = new BinaryExpression(BinaryExpression.Operator.LOGICIFF, e1, e2);:} 
+| lexpr:e1 OR lexpr:e2 {: RESULT = new BinaryExpression(BinaryExpression.Operator.LOGICOR, e1, e2);:}    
+| lexpr:e1 AND lexpr:e2 {:RESULT = new BinaryExpression(BinaryExpression.Operator.LOGICAND, e1, e2);:}    
+| lexpr:e1 HATHAT lexpr:e2 {: RESULT = new BinaryExpression(BinaryExpression.Operator.LOGICXOR, e1, e2); :}   
+/* terms */
+| lexpr:e1 AMP lexpr:e2 {: RESULT = new BinaryExpression(BinaryExpression.Operator.BITAND, e1, e2); :}
+| lexpr:e1 PIPE lexpr:e2 {: RESULT = new BinaryExpression(BinaryExpression.Operator.BITOR, e1, e2); :} 
+| lexpr:e1 HAT lexpr:e2 {: RESULT = new BinaryExpression(BinaryExpression.Operator.BITXOR, e1, e2); :}
+| lexpr:e1 BIMPLIES lexpr:e2 {: RESULT = new BinaryExpression(BinaryExpression.Operator.BITIMPLIES, e1, e2); :}
+| lexpr:e1 BIFF lexpr:e2 {: RESULT = new BinaryExpression(BinaryExpression.Operator.BITIFF, e1, e2); :}
+| lexpr QUESTION lexpr COLON2 lexpr {: RESULT = new NotDefinedExpression(); :}  %prec prec_question 
+/* both terms and predicates */
+| any_identifier:id COLON lexpr:expr {: RESULT = new SyntacticNamingExpression(id, expr); :} %prec prec_named 
+| lexpr_rel:expr {: RESULT = expr; :} %prec prec_rel_list 
+;
+
+lexpr_rel::=
+ lexpr_end_rel:expr {: RESULT = expr; :} %prec prec_no_rel 
+| lexpr_inner:expr rel_list:exprRel 
+  {: Expression tempExpr = null;
+  	 if (parser.expressionList.size() >= 2) {
+  	 	while(!parser.expressionList.isEmpty()) {
+  	 		if (tempExpr==null) {
+  	 			Expression right = parser.expressionList.poll();
+  	 			Expression left = parser.expressionList.poll();
+  	 			tempExpr = new BinaryExpression(parser.opList.poll(), left, right);
+  	 		} else {
+  	 			Expression right = parser.expressionList.poll();
+  	 			Expression left = tempExpr;
+  	 			tempExpr = new BinaryExpression(parser.opList.poll(), left, right);
+  	 		}	
+  	 	}
+  	 	RESULT = new BinaryExpression(parser.opList.poll(), expr, tempExpr);
+  	 } else {
+  	 	RESULT = new BinaryExpression(parser.opList.poll(), expr, parser.expressionList.poll());
+  	 } :} %prec prec_rel_list
+;
+
+lexpr_binder::=
+ LET bounded_var EQUAL lexpr SEMICOLON lexpr %prec LET 
+| FORALL binders SEMICOLON lexpr  %prec prec_forall
+| EXISTS binders SEMICOLON lexpr  %prec prec_exists
+| LAMBDA binders SEMICOLON lexpr  %prec prec_lambda
+;
+
+lexpr_end_rel::=
+  lexpr_inner:expr {: RESULT = expr; :} %prec prec_no_rel
+| lexpr_binder {: RESULT = new NotDefinedExpression(); :}
+| NOT lexpr_binder {: RESULT = new NotDefinedExpression(); :}  
+;
+
+rel_list::=
+ relation:op lexpr_end_rel:endRel
+ {: parser.expressionList.add(endRel);
+ 	parser.opList.add(op); :} %prec prec_rel_list
+| relation:op lexpr_inner:expr rel_list  
+ {: parser.expressionList.add(expr);
+ 	parser.opList.add(op); :} %prec prec_rel_list
+;
+
+relation::=
+ LT		{: RESULT = BinaryExpression.Operator.COMPLT; :}   
+| GT   	{: RESULT = BinaryExpression.Operator.COMPGT; :}
+| LE   	{: RESULT = BinaryExpression.Operator.COMPLEQ; :}
+| GE   	{: RESULT = BinaryExpression.Operator.COMPGEQ; :}
+| EQ   	{: RESULT = BinaryExpression.Operator.COMPEQ; :}
+| NE   	{: RESULT = BinaryExpression.Operator.COMPNEQ; :}
+    /* C. Marche: added to produce better error messages */
+| EQUAL {: RESULT = BinaryExpression.Operator.COMPEQ; :}
+;
+
+/* TODO: Finish Expression!! */
+lexpr_inner::=
+ string:s {: RESULT = new StringLiteral(s); :}
+| NOT lexpr_inner:e {: RESULT = new UnaryExpression(UnaryExpression.Operator.LOGICNEG, e);:}
+| TRUE {: RESULT = new BooleanLiteral(true);:}
+| FALSE {: RESULT = new BooleanLiteral(false);:}
+| VALID LPAR lexpr:expr RPAR {: RESULT = new ValidExpression(expr); :}
+| FREEABLE LPAR lexpr:expr RPAR {: RESULT = new FreeableExpression(expr); :}
+| MALLOCABLE LPAR lexpr:expr RPAR {: RESULT = new MallocableExpression(expr); :}
+| VALID_INDEX LPAR lexpr COMMA lexpr RPAR {: RESULT = new NotDefinedExpression(); :}
+| VALID_RANGE LPAR lexpr COMMA lexpr COMMA lexpr RPAR {: RESULT = new NotDefinedExpression(); :}
+| INITIALIZED LPAR lexpr RPAR {: RESULT = new NotDefinedExpression(); :}
+| FRESH LPAR lexpr RPAR{: RESULT = new NotDefinedExpression(); :}
+| NULL {: RESULT = new NullPointer(); :}
+| constant:expr {: RESULT = expr; :}
+| lexpr_inner:e1 PLUS lexpr_inner:e2 {: RESULT = new BinaryExpression(BinaryExpression.Operator.ARITHPLUS, e1, e2);:}
+| lexpr_inner:e1 MINUS lexpr_inner:e2 {: RESULT = new BinaryExpression(BinaryExpression.Operator.ARITHMINUS, e1, e2);:}
+| lexpr_inner:e1 STAR lexpr_inner:e2 {: RESULT = new BinaryExpression(BinaryExpression.Operator.ARITHMUL, e1, e2);:} 
+| lexpr_inner:e1 SLASH lexpr_inner:e2 {: RESULT = new BinaryExpression(BinaryExpression.Operator.ARITHDIV, e1, e2);:}
+| lexpr_inner:e1 PERCENT lexpr_inner:e2 {: RESULT = new BinaryExpression(BinaryExpression.Operator.ARITHMOD, e1, e2);:} 
+| lexpr_inner:e ARROW identifier_or_typename:i {: RESULT = new FieldAccessExpression(e, i); :} // TODO Deref e
+| lexpr_inner:e DOT identifier_or_typename:i {: RESULT = new FieldAccessExpression(e, i); :}
+| lexpr_inner LSQUARE range RSQUARE {: RESULT = new NotDefinedExpression(); :}
+| lexpr_inner:array LSQUARE lexpr:indices RSQUARE {: RESULT = new ArrayAccessExpression(array, new Expression[] {indices}); :}
+| MINUS lexpr_inner:e {: RESULT = new UnaryExpression(UnaryExpression.Operator.MINUS, e); :} %prec prec_unary_op 
+| PLUS  lexpr_inner:e {: RESULT = new UnaryExpression(UnaryExpression.Operator.PLUS, e); :} %prec prec_unary_op 
+| TILDE lexpr_inner:e {: RESULT = new UnaryExpression(UnaryExpression.Operator.LOGICCOMPLEMENT, e); :}
+| STAR  lexpr_inner:e {: RESULT = new UnaryExpression(UnaryExpression.Operator.POINTER, e); :} %prec prec_unary_op 
+| AMP   lexpr_inner:e {: RESULT = new UnaryExpression(UnaryExpression.Operator.ADDROF, e); :} %prec prec_unary_op 
+| SIZEOF LPAR lexpr:expr RPAR 
+ {: SizeOfExpression sexpr = new SizeOfExpression(); 
+ 	sexpr.setFormula(expr);
+ 	RESULT = sexpr; :}
+| SIZEOF LPAR logic_type:lt RPAR 
+ {: SizeOfExpression sexpr = new SizeOfExpression(); 
+ 	sexpr.setLogicType(new ACSLType(lt));
+ 	RESULT = sexpr; :}
+| OLD LPAR lexpr:expr RPAR {: RESULT = new OldValueExpression(expr); :}
+| AT LPAR lexpr:expr COMMA label_name:label RPAR {: RESULT = new AtLabelExpression(expr, label); :}
+| BASE_ADDR LPAR lexpr:expr RPAR {: RESULT = new BaseAddrExpression(expr); :}
+| BLOCK_LENGTH LPAR lexpr:expr RPAR {: RESULT = new BlockLengthExpression(expr); :}
+| RESULT {: RESULT = new ResultExpression(); :}
+| SEPARATED LPAR ne_lexpr_list RPAR {: RESULT = new NotDefinedExpression(); :}
+| identifier LPAR ne_lexpr_list RPAR {: RESULT = new NotDefinedExpression(); :}
+| identifier LBRACE ne_tvar_list RBRACE LPAR ne_lexpr_list RPAR {: RESULT = new NotDefinedExpression(); :}
+| identifier LBRACE ne_tvar_list RBRACE {: RESULT = new NotDefinedExpression(); :}
+| identifier:ident {: RESULT = new IdentifierExpression(ident);
+					  RESULT.setStartingLineNumber(parser.getStartLineNumber() + ((ComplexSymbol)ident$).getLeft().getLine());
+  	 				  RESULT.setEndingLineNumber(parser.getStartLineNumber() + ((ComplexSymbol)ident$).getLeft().getLine());
+					:} %prec IDENTIFIER 
+| lexpr_inner GTGT lexpr_inner {: RESULT = new NotDefinedExpression(); :}
+| lexpr_inner LTLT lexpr_inner {: RESULT = new NotDefinedExpression(); :}
+| LPAR lexpr RPAR {: RESULT = new NotDefinedExpression(); :} %prec prec_par 
+| LPAR range RPAR {: RESULT = new NotDefinedExpression(); :}
+| LPAR cast_logic_type RPAR lexpr_inner {: RESULT = new NotDefinedExpression(); :} %prec prec_cast 
+| lexpr_inner LTCOLON lexpr_inner {: RESULT = new NotDefinedExpression(); :} %prec prec_cast 
+| lexpr_inner COLONGT logic_type {: RESULT = new NotDefinedExpression(); :} %prec prec_cast 
+| lexpr_inner COLONGT lexpr_inner {: RESULT = new NotDefinedExpression(); :} %prec prec_cast 
+| TYPEOF LPAR lexpr RPAR {: RESULT = new NotDefinedExpression(); :}
+| BSTYPE LPAR type_spec STAR RPAR {: RESULT = new NotDefinedExpression(); :}
+    /* tsets */
+| EMPTY {: RESULT = new NotDefinedExpression(); :}
+| BSUNION LPAR lexpr_list RPAR {: RESULT = new NotDefinedExpression(); :}
+| INTER LPAR lexpr_list RPAR {: RESULT = new NotDefinedExpression(); :}
+| LBRACE lexpr RBRACE {: RESULT = new NotDefinedExpression(); :}
+| LBRACE lexpr PIPE binders RBRACE {: RESULT = new NotDefinedExpression(); :}
+| LBRACE lexpr PIPE binders SEMICOLON lexpr RBRACE {: RESULT = new NotDefinedExpression(); :}
+    /* Aggregated object initialization */
+| LBRACE field_init RBRACE {: RESULT = new NotDefinedExpression(); :}
+| LBRACE array_init RBRACE {: RESULT = new NotDefinedExpression(); :}
+| LBRACE lexpr WITH update RBRACE {: RESULT = new NotDefinedExpression(); :}
+;
+
+string::=
+ STRING_LITERAL:s {: RESULT = s; :}
+| string:s1 STRING_LITERAL:s2 {: RESULT = s1 + s2; :}
+;
+
+range::=
+ lexpr_option DOTDOT lexpr_option
+;
+
+/*** Aggregated object initialization ***/
+
+field_path_elt::=
+ DOT identifier_or_typename 
+;
+
+field_init_elt::=
+ field_path_elt EQUAL lexpr 
+;
+
+field_init::=
+ field_init_elt                  
+| field_init_elt COMMA field_init 
+;
+
+array_path_elt::=
+ LSQUARE lexpr RSQUARE      
+| LSQUARE range RSQUARE      
+;
+
+array_init_elt::=
+ array_path_elt EQUAL lexpr 
+;
+
+array_init::=
+ array_init_elt                  
+| array_init_elt COMMA array_init 
+;
+
+/*** Functional update ***/
+update::=
+ update_elt                  
+| update_elt COMMA update 
+;
+
+update_elt::=
+ path EQUAL lexpr                
+| path EQUAL LBRACE WITH update RBRACE 
+;
+
+path::=
+ path_elt      
+| path_elt path 
+;
+
+path_elt::=
+ field_path_elt 
+| array_path_elt 
+;
+
+/*** binders ***/
+
+binders::=
+ binders_reentrance 
+;
+
+binders_reentrance::=
+ decl_spec 
+| binders_reentrance COMMA decl_spec
+| binders_reentrance COMMA var_spec
+;
+
+decl_spec::=
+ type_spec var_spec 
+;
+
+var_spec::=
+ var_spec_bis:var
+ {: RESULT = var.toString(); :}    
+| stars:st var_spec_bis:var
+ {: RESULT = st.toString() + var.toString(); :}
+;
+
+constant::=
+ CONSTANT:value
+ {: RESULT = new RealLiteral(value); :}  
+| CONSTANT10:value 
+ {: RESULT = new IntegerLiteral(value); :}
+;
+
+constant_option::=
+ constant:c
+ {: RESULT = c; :} 
+| /* empty */
+ {: RESULT = null; :}  
+;
+
+var_spec_bis::=
+ identifier:id
+ {: StringBuffer sb = new StringBuffer();
+ 	sb.append(id);
+ 	RESULT = sb; :}     
+| var_spec_bis:var LSQUARE constant_option:constopt RSQUARE
+ {: StringBuffer sb = new StringBuffer();
+ 	sb.append(var);
+ 	sb.append("[");
+ 	if (constopt != null) {
+ 		if (constopt instanceof IntegerLiteral) {
+ 			sb.append(((IntegerLiteral)constopt).getValue());
+ 		} else if (constopt instanceof RealLiteral) {
+ 			sb.append(((RealLiteral)constopt).getValue());
+ 		}
+ 	}
+ 	sb.append("]");
+ 	RESULT = sb; :}
+| LPAR var_spec:var RPAR
+ {: RESULT = new StringBuffer("(" + var + ")"); :} 
+| var_spec_bis:var LPAR abs_param_list:abs RPAR
+ {: StringBuffer sb = new StringBuffer();
+ 	sb.append(var);
+ 	sb.append("(");
+ 	sb.append(abs);
+ 	sb.append(")");
+ 	RESULT = sb; :}
+;
+
+abs_param_list::=
+ logic_type:lt 
+ {: RESULT = new StringBuffer(lt); :}
+| abs_param_list:abs COMMA logic_type:lt
+ {: StringBuffer sb = new StringBuffer();
+ 	sb.append(abs);
+ 	sb.append(",");
+ 	sb.append(lt);
+ 	RESULT = sb; :} 
+;
+
+
+/*** restricted type expressions ***/
+
+ne_parameters::=
+ parameter:param
+ {: RESULT = new ArrayList<Parameter>();
+ 	RESULT.add(param); :} 
+| parameter:param COMMA ne_parameters:list
+ {: ArrayList<Parameter> paramList = new ArrayList<Parameter>();
+ 	paramList.add(param);
+ 	paramList.addAll(list);
+ 	RESULT = paramList; :} 
+;
+
+/* identifier here as typename */
+parameter::=
+ type_spec:t var_spec:var
+ {: ACSLType type = new ACSLType(t);
+ 	RESULT = new Parameter(type, var); :} 
+| identifier:i var_spec:var
+ {: ACSLType type = new ACSLType(i);
+ 	RESULT = new Parameter(type, var); :} 
+;
+
+
+/*** type expressions ***/
+
+/* TODO hier geben wir nur type_spec zur�ck der rest ist seltsam*/
+logic_type::=
+ type_spec:type abs_spec_option 
+ {: RESULT = type; :} %prec TYPENAME
+;
+
+
+type_spec_cv::=
+     type_spec 
+|    CONST type_spec 
+|    type_spec CONST 
+;
+
+cast_logic_type::=
+ type_spec_cv abs_spec_option 
+ | type_spec_cv abs_spec CONST 
+;
+
+logic_rt_type::=
+ identifier:id
+ {: RESULT = new ACSLType(id); :}
+| logic_type:type
+ {: RESULT = new ACSLType(type); :}  
+;
+
+abs_spec_option::=
+ /* empty */ %prec TYPENAME  
+| abs_spec 
+;
+
+abs_spec::=
+                    tabs 
+| stars                   %prec TYPENAME 
+| stars              tabs                
+| stars abs_spec_bis      %prec TYPENAME 
+| stars abs_spec_bis tabs                
+|       abs_spec_bis tabs                
+|       abs_spec_bis      %prec TYPENAME 
+;
+
+abs_spec_bis::=
+ LPAR abs_spec RPAR 
+| abs_spec_bis LPAR abs_param_list RPAR
+;
+
+stars::=
+ STAR:star
+ {: RESULT = new StringBuffer(star); :}       
+| stars:st STAR:star
+ {: StringBuffer sb = new StringBuffer();
+ 	sb.append(st);
+ 	sb.append(star);
+ 	RESULT = sb; :} 
+;
+
+tabs::=
+ LSQUARE constant_option RSQUARE %prec TYPENAME
+| LSQUARE constant_option RSQUARE tabs
+;
+
+/* TODO: Vorerst String bessere L�sung? */
+type_spec::=
+ INTEGER:i {: RESULT = i; :}         
+| REAL:r {: RESULT = r; :}           
+| BOOLEAN:b {: RESULT = b; :}        
+| VOID:v {: RESULT = v; :}           
+| CHAR:c {: RESULT = c; :}                 
+| SIGNED:s CHAR:c {: RESULT = s + " " + c; :}         
+| UNSIGNED:u CHAR:c {: RESULT = u + " " + c; :}       
+| INT:i {: RESULT = i; :}                   
+| SIGNED:s INT:i {: RESULT = s + " " + i; :}           
+| UNSIGNED:u INT:i {: RESULT = u + " " + i; :}         
+| UNSIGNED:u {: RESULT = u; :}       
+| SHORT:s {: RESULT = s; :}               
+| SIGNED:s SHORT:sh {: RESULT = s + " " + sh; :}       
+| UNSIGNED:u SHORT:s {: RESULT = u + " " + s; :}     
+| LONG:l {: RESULT = l; :}                
+| SIGNED:s LONG:l {: RESULT = s + " " + l; :}          
+| UNSIGNED:u LONG:l {: RESULT = u + " " + l; :}        
+| SIGNED:s LONG:l INT:i {: RESULT = s + " " + l + " " + i; :}      
+| LONG:l INT:i {: RESULT = l + " "+ i; :}            
+| UNSIGNED:u LONG:l INT:i {: RESULT = u + " " + l + " " + i; :}     
+| LONG:l LONG:o {: RESULT = l + " " + o; :}         
+| SIGNED:s LONG:l LONG {: RESULT = s + " " + l + " " + l; :} 
+| UNSIGNED:u LONG:l LONG {: RESULT = u + " " + l + " " + l; :}
+| LONG:l LONG INT:i {: RESULT = l + " " + l + " " + i; :} 
+| SIGNED:s LONG:l LONG INT:i {: RESULT = s + " " + l + " " + l + " " + i; :} 
+| UNSIGNED:u LONG:l LONG INT:i {: RESULT = u + " " + l + " " + l + " " + i; :} 
+| FLOAT:f {: RESULT = f; :}             
+| DOUBLE:d {: RESULT = d; :}           
+| LONG:l DOUBLE:d {: RESULT = l + " " + d; :}       
+| STRUCT:s  identifier:i {: RESULT = s + " " + i; :} 
+| ENUM:e    identifier:i {: RESULT = e + " " + i; :} 
+| UNION:u   identifier:i {: RESULT = u + " " + i; :}  
+| TYPENAME:t {: RESULT = t; :}          
+| TYPENAME:t LT ne_logic_type_list GT {: RESULT = t; :} %prec TYPENAME 
+;
+
+ne_logic_type_list::=
+ logic_type                          
+| logic_type COMMA  ne_logic_type_list 
+;
+
+/*** from annotations ***/
+
+/*** function and statement contracts ***/
+
+contract::=
+ requires:req terminates:term decreases:de simple_clauses:sim behaviors:be complete_or_disjoint:com
+ {: ArrayList<ContractStatement> list = new ArrayList<ContractStatement>();
+ 	list.addAll(req);
+ 	if (term != null) {
+ 		list.add(term);
+ 	}
+ 	if (de != null) {
+ 		list.add(de);
+ 	}
+ 	list.addAll(sim);
+ 	RESULT = new Contract(list.toArray(new ContractStatement[0]), be.toArray(new Behavior[0]), com);
+ 	// Cannot use the following line in every case, so we take simply the first element in contract list
+ 	// RESULT.setStartingLineNumber(parser.getStartLineNumber() + ((ComplexSymbol)req$).getLeft().getLine());
+  	RESULT.setStartingLineNumber(list.get(0).getStartingLineNumber());
+  	RESULT.setEndingLineNumber(parser.getStartLineNumber() + ((ComplexSymbol)com$).getRight().getLine());  
+ 	parser.setAcslNode(RESULT);:}
+ /* TODO Rest wird nicht gebraucht? */
+ /*
+| requires ne_terminates REQUIRES 
+| requires terminates ne_decreases REQUIRES
+| requires terminates ne_decreases TERMINATES     
+| requires terminates decreases ne_simple_clauses REQUIRES
+| requires terminates decreases ne_simple_clauses TERMINATES
+| requires terminates decreases ne_simple_clauses DECREASES
+| requires terminates decreases simple_clauses ne_behaviors TERMINATES
+| requires terminates decreases simple_clauses ne_behaviors DECREASES
+| requires terminates decreases simple_clauses behaviors ne_complete_or_disjoint
+  REQUIRES
+| requires terminates decreases simple_clauses behaviors ne_complete_or_disjoint
+  TERMINATES
+| requires terminates decreases simple_clauses behaviors ne_complete_or_disjoint
+  DECREASES
+| requires terminates decreases simple_clauses behaviors ne_complete_or_disjoint
+  BEHAVIOR
+| requires terminates decreases simple_clauses behaviors ne_complete_or_disjoint
+  ASSIGNS
+| requires terminates decreases simple_clauses behaviors ne_complete_or_disjoint
+  post_cond_kind
+*/
+;
+
+requires::= 
+ ne_requires:req
+ {: RESULT = req; :} 
+| /*epsilon*/ 
+ {: RESULT = new ArrayList<Requires>(); :}
+;
+
+ne_requires::=
+ REQUIRES:r lexpr:expr SEMICOLON:s requires:req
+ {: expr.setStartingLineNumber(parser.getStartLineNumber() + ((ComplexSymbol)r$).getRight().getLine());
+  	expr.setEndingLineNumber(parser.getStartLineNumber() + ((ComplexSymbol)s$).getLeft().getLine());
+ 	Requires requires = new Requires(expr);
+ 	int tmpLn = parser.getStartLineNumber();
+ 	requires.setStartingLineNumber(tmpLn + ((ComplexSymbol)r$).getLeft().getLine());
+ 	requires.setEndingLineNumber(tmpLn + ((ComplexSymbol)s$).getRight().getLine());
+ 	req.add(requires);
+ 	RESULT = req; :} 
+;
+
+terminates::=
+ /* epsilon */
+ {: RESULT = null; :}              
+| ne_terminates:terminates
+ {: RESULT = terminates; :}
+;
+
+ne_terminates::=
+ TERMINATES:t lexpr:expr SEMICOLON:s
+ {: expr.setStartingLineNumber(parser.getStartLineNumber() + ((ComplexSymbol)t$).getRight().getLine());
+  	expr.setEndingLineNumber(parser.getStartLineNumber() + ((ComplexSymbol)s$).getLeft().getLine());
+ 	Terminates terminates = new Terminates(expr);
+ 	int tmpLn = parser.getStartLineNumber(); 
+ 	terminates.setStartingLineNumber(tmpLn + ((ComplexSymbol)t$).getLeft().getLine());
+ 	terminates.setEndingLineNumber(tmpLn + ((ComplexSymbol)s$).getRight().getLine());
+ 	RESULT = terminates; :} 
+;
+
+decreases::=
+ /* epsilon */
+ {: RESULT = null; :}   
+| ne_decreases:decreases 
+ {: RESULT = decreases; :}
+;
+
+ne_decreases::=
+ DECREASES:d lexpr:expr SEMICOLON:s
+ {: 
+ 	expr.setStartingLineNumber(parser.getStartLineNumber() + ((ComplexSymbol)d$).getRight().getLine());
+  	expr.setEndingLineNumber(parser.getStartLineNumber() + ((ComplexSymbol)s$).getLeft().getLine());
+ 	Decreases decreases = new Decreases(expr); 
+ 	int tmpLn = parser.getStartLineNumber(); 
+ 	decreases.setStartingLineNumber(tmpLn + ((ComplexSymbol)d$).getLeft().getLine());
+ 	decreases.setEndingLineNumber(tmpLn + ((ComplexSymbol)s$).getRight().getLine());
+ 	RESULT = decreases; :}
+| DECREASES:d lexpr:expr FOR:f any_identifier:id SEMICOLON:s
+ {: expr.setStartingLineNumber(parser.getStartLineNumber() + ((ComplexSymbol)d$).getRight().getLine());
+  	expr.setEndingLineNumber(parser.getStartLineNumber() + ((ComplexSymbol)f$).getLeft().getLine());
+ 	Decreases decreases = new Decreases(expr, id);
+ 	int tmpLn = parser.getStartLineNumber();
+ 	decreases.setStartingLineNumber(tmpLn + ((ComplexSymbol)d$).getLeft().getLine());
+ 	decreases.setEndingLineNumber(tmpLn + ((ComplexSymbol)s$).getRight().getLine());
+ 	RESULT = decreases; :}  
+;
+
+simple_clauses::=
+ /* epsilon */
+ {: RESULT = new ArrayList<ContractStatement>(); :}
+| ne_simple_clauses:simpleClauses 
+ {: RESULT = simpleClauses; :}
+;
+
+ne_simple_clauses::=
+ post_cond_kind:p lexpr:expr SEMICOLON:s simple_clauses:simClauses
+ {: expr.setStartingLineNumber(parser.getStartLineNumber() + ((ComplexSymbol)p$).getRight().getLine());
+  	expr.setEndingLineNumber(parser.getStartLineNumber() + ((ComplexSymbol)s$).getLeft().getLine());
+ 	Ensures ensures = new Ensures(expr);
+ 	int tmpLn = parser.getStartLineNumber();
+ 	ensures.setStartingLineNumber(tmpLn + ((ComplexSymbol)p$).getLeft().getLine());
+ 	ensures.setEndingLineNumber(tmpLn + ((ComplexSymbol)s$).getRight().getLine());
+ 	simClauses.add(ensures);
+ 	RESULT = simClauses; :}
+| ASSIGNS:a assigns:ass SEMICOLON:s simple_clauses:simClauses
+ {: Assigns assigns = new Assigns(ass);
+ 	int tmpLn = parser.getStartLineNumber();
+ 	assigns.setStartingLineNumber(tmpLn + ((ComplexSymbol)a$).getLeft().getLine());
+ 	assigns.setEndingLineNumber(tmpLn + ((ComplexSymbol)s$).getRight().getLine());
+ 	simClauses.add(assigns);
+ 	RESULT = simClauses; :} 
+;
+
+post_cond_kind::=
+ post_cond 
+;
+
+behaviors::=
+ /* epsilon */
+ {: RESULT = new ArrayList<Behavior>(); :} 
+| ne_behaviors:behaviors
+ {: RESULT = behaviors; :} 
+;
+
+ne_behaviors::=
+ BEHAVIOR behavior_name:name COLON behavior_body:body behaviors:behaviorList
+ {: Behavior behavior = new Behavior(name.toArray(new String[0]), body.toArray(new ContractStatement[0]));
+ 	behaviorList.add(behavior);
+ 	RESULT = behaviorList; :}
+;
+     
+behavior_body::=
+ assumes:ass requires:req simple_clauses:sim
+ {: List<ContractStatement> body = new ArrayList<ContractStatement>();
+ 	body.addAll(ass);
+ 	body.addAll(req);
+ 	body.addAll(sim);
+ 	RESULT = body; :} 
+| assumes:ass ne_requires:req ASSUMES
+ {: List<ContractStatement> body = new ArrayList<ContractStatement>();
+ 	body.addAll(ass);
+ 	body.addAll(req);
+ 	RESULT = body; :}     
+| assumes:ass requires:req ne_simple_clauses:sim ASSUMES
+ {: List<ContractStatement> body = new ArrayList<ContractStatement>();
+ 	body.addAll(ass);
+ 	body.addAll(req);
+ 	body.addAll(sim);
+ 	RESULT = body; :}
+| assumes:ass requires:req ne_simple_clauses:sim REQUIRES
+ {: List<ContractStatement> body = new ArrayList<ContractStatement>();
+ 	body.addAll(ass);
+ 	body.addAll(req);
+ 	body.addAll(sim);
+ 	RESULT = body; :}
+;
+
+assumes::=
+ /* epsilon */ 
+ {: RESULT = new ArrayList<Assumes>(); :}
+| ASSUMES lexpr:expr SEMICOLON assumes:assu
+ {: Assumes assume = new Assumes(expr);
+ 	assu.add(assume);
+ 	RESULT = assu; :}   
+;
+
+complete_or_disjoint::=
+ /* epsilon */
+ {: RESULT = new Completeness(); :} 
+| ne_complete_or_disjoint:completeness
+ {: RESULT = completeness; :} 
+;
+
+ne_complete_or_disjoint::=
+ COMPLETE BEHAVIORS behavior_name_list:names SEMICOLON complete_or_disjoint:completeness
+ {: String[] complete = completeness.getCompleteBehaviors();
+ 	ArrayList<String> list = new ArrayList<String>();
+ 	for (String name : complete) {
+ 		list.add(name);
+ 	}
+ 	for (String name : names) {
+ 		list.add(name);
+ 	}
+ 	completeness.setCompleteBehaviors(list.toArray(new String[0]));
+ 	RESULT = completeness; :}     
+| DISJOINT BEHAVIORS behavior_name_list:names SEMICOLON complete_or_disjoint:completeness
+ {: String[] disjoint = completeness.getDisjointBehaviors();
+ 	ArrayList<String> list = new ArrayList<String>();
+ 	for (String name : disjoint) {
+ 		list.add(name);
+ 	}
+ 	for (String name : names) {
+ 		list.add(name);
+ 	}
+ 	completeness.setDisjointBehaviors(list.toArray(new String[0]));
+ 	RESULT = completeness; :} 
+;
+
+/*** assigns and tsets ***/
+
+assigns::=
+ zones:zones {: RESULT = zones; :}
+/*| ne_zones FROM zones*/ 
+;
+
+zones ::=
+ ne_zones:zones {: RESULT = zones; :}
+| NOTHING 		{: RESULT = new Expression[0]; :} 
+;
+
+ne_zones ::=
+ ne_lexpr_list:list
+ {: RESULT = list; :} 
+;
+
+/*** annotations ***/
+
+annotation::=
+ loop_annotations
+| FOR ne_behavior_name_list COLON contract
+| code_annotation 
+| code_annotation beg_code_annotation
+;
+
+/*** loop annotations ***/
+
+loop_annotations::=
+ loop_annot_stack:loopAnnot 
+ {: RESULT = loopAnnot;
+ 	parser.setAcslNode(RESULT); :}
+;
+
+/* TODO: gather loop assigns that are related to the same behavior */
+loop_annot_stack::=
+ loop_invariant:inv loop_annot_opt:loop
+ {: ArrayList<LoopStatement> stmts = new ArrayList<LoopStatement>();
+ 	stmts.add(inv);
+ 	stmts.addAll(Arrays.asList(loop.getLoopStmt()));
+ 	RESULT = new LoopAnnot(loop.getLoopBehavior(), stmts.toArray(new LoopStatement[1]));
+ 	RESULT.setStartingLineNumber(parser.getStartLineNumber() + ((ComplexSymbol)inv$).getLeft().getLine());
+  	RESULT.setEndingLineNumber(parser.getStartLineNumber() + ((ComplexSymbol)loop$).getRight().getLine()); 
+ 	parser.tempLoopAnnot = RESULT; :}  
+| loop_effects:ass loop_annot_opt:loop
+ {: ArrayList<LoopStatement> stmts = new ArrayList<LoopStatement>();
+ 	stmts.add(ass);
+ 	stmts.addAll(Arrays.asList(loop.getLoopStmt()));
+ 	RESULT = new LoopAnnot(loop.getLoopBehavior(), stmts.toArray(new LoopStatement[1]));
+ 	RESULT.setStartingLineNumber(parser.getStartLineNumber() + ((ComplexSymbol)ass$).getLeft().getLine());
+  	RESULT.setEndingLineNumber(parser.getStartLineNumber() + ((ComplexSymbol)loop$).getRight().getLine()); 
+ 	parser.tempLoopAnnot = RESULT; :}
+| FOR:f ne_behavior_name_list:names COLON loop_annot_stack:loop
+ {: LoopForBehavior forBehavior = new LoopForBehavior(names, loop.getLoopStmt());
+	ArrayList<LoopForBehavior> list = new ArrayList<LoopForBehavior>();
+	list.add(forBehavior);
+	list.addAll(Arrays.asList(parser.tempLoopAnnot.getLoopBehavior()));
+	ArrayList<LoopStatement> slist = new ArrayList<LoopStatement>();
+	slist.addAll(Arrays.asList(parser.tempLoopAnnot.getLoopStmt()));
+	for (LoopStatement ls : loop.getLoopStmt()) {
+		slist.remove(ls);
+	}
+	RESULT = new LoopAnnot(list.toArray(new LoopForBehavior[0]), slist.toArray(new LoopStatement[0]));
+	RESULT.setStartingLineNumber(parser.getStartLineNumber() + ((ComplexSymbol)f$).getLeft().getLine());
+  	RESULT.setEndingLineNumber(parser.getStartLineNumber() + ((ComplexSymbol)loop$).getRight().getLine()); 
+	parser.tempLoopAnnot = RESULT; :}
+| loop_variant:var loop_annot_opt:loop
+ {: ArrayList<LoopStatement> stmts = new ArrayList<LoopStatement>();
+ 	stmts.add(var);
+ 	stmts.addAll(Arrays.asList(loop.getLoopStmt()));
+ 	RESULT = new LoopAnnot(loop.getLoopBehavior(), stmts.toArray(new LoopStatement[1]));
+ 	RESULT.setStartingLineNumber(parser.getStartLineNumber() + ((ComplexSymbol)var$).getLeft().getLine());
+  	RESULT.setEndingLineNumber(parser.getStartLineNumber() + ((ComplexSymbol)loop$).getRight().getLine()); 
+ 	parser.tempLoopAnnot = RESULT; :} 
+;
+
+loop_annot_opt::=
+ /* epsilon */
+ {: RESULT = new LoopAnnot(new LoopForBehavior[0], new LoopStatement[0]); :}  
+| loop_annot_stack:loop 
+ {: RESULT = loop; :}
+;
+
+loop_effects::=
+ LOOP:l ASSIGNS assigns:assign SEMICOLON:s
+ {: RESULT = new LoopAssigns(assign); 
+    RESULT.setStartingLineNumber(parser.getStartLineNumber() + ((ComplexSymbol)l$).getLeft().getLine());
+  	RESULT.setEndingLineNumber(parser.getStartLineNumber() + ((ComplexSymbol)s$).getRight().getLine()); :} 
+;
+
+loop_invariant::=
+ LOOP:l INVARIANT:i lexpr:expr SEMICOLON:s
+ {: expr.setStartingLineNumber(parser.getStartLineNumber() + ((ComplexSymbol)i$).getRight().getLine());
+  	expr.setEndingLineNumber(parser.getStartLineNumber() + ((ComplexSymbol)s$).getLeft().getLine());
+ 	RESULT = new LoopInvariant(expr); 
+ 	RESULT.setStartingLineNumber(parser.getStartLineNumber() + ((ComplexSymbol)l$).getLeft().getLine());
+  	RESULT.setEndingLineNumber(parser.getStartLineNumber() + ((ComplexSymbol)s$).getRight().getLine()); :} 
+;
+
+loop_variant::=
+ LOOP:l VARIANT:v lexpr:expr SEMICOLON:s
+ {: expr.setStartingLineNumber(parser.getStartLineNumber() + ((ComplexSymbol)v$).getRight().getLine());
+  	expr.setEndingLineNumber(parser.getStartLineNumber() + ((ComplexSymbol)s$).getLeft().getLine());
+ 	RESULT = new LoopVariant(expr); 
+ 	RESULT.setStartingLineNumber(parser.getStartLineNumber() + ((ComplexSymbol)l$).getLeft().getLine());
+  	RESULT.setEndingLineNumber(parser.getStartLineNumber() + ((ComplexSymbol)s$).getRight().getLine()); :}
+| LOOP:l VARIANT:v lexpr:expr FOR:f any_identifier:st SEMICOLON:s
+ {: expr.setStartingLineNumber(parser.getStartLineNumber() + ((ComplexSymbol)v$).getRight().getLine());
+  	expr.setEndingLineNumber(parser.getStartLineNumber() + ((ComplexSymbol)f$).getLeft().getLine());
+ 	RESULT = new LoopVariant(expr, st); 
+ 	RESULT.setStartingLineNumber(parser.getStartLineNumber() + ((ComplexSymbol)l$).getLeft().getLine());
+  	RESULT.setEndingLineNumber(parser.getStartLineNumber() + ((ComplexSymbol)s$).getRight().getLine()); :}   
+;
+
+/*** code annotations ***/
+
+beg_code_annotation::=
+ IMPACT 
+| SLICE 
+| FOR 
+| ASSERT 
+| INVARIANT 
+;
+
+code_annotation::=    
+  FOR:f ne_behavior_name_list:benames COLON ASSERT:a lexpr:expr SEMICOLON:s 
+  {: expr.setStartingLineNumber(parser.getStartLineNumber() + ((ComplexSymbol)a$).getRight().getLine());
+  	 expr.setEndingLineNumber(parser.getStartLineNumber() + ((ComplexSymbol)s$).getLeft().getLine());
+  	 RESULT = new CodeAnnotBehavior(new CodeForBehavior(benames, new Assertion(expr)));
+     RESULT.setStartingLineNumber(parser.getStartLineNumber() + ((ComplexSymbol)f$).getLeft().getLine());
+  	 RESULT.setEndingLineNumber(parser.getStartLineNumber() + ((ComplexSymbol)s$).getRight().getLine());  
+  	 parser.setAcslNode(RESULT); :}
+| FOR:f ne_behavior_name_list:benames COLON INVARIANT:i lexpr:expr SEMICOLON:s
+  {: expr.setStartingLineNumber(parser.getStartLineNumber() + ((ComplexSymbol)i$).getRight().getLine());
+  	 expr.setEndingLineNumber(parser.getStartLineNumber() + ((ComplexSymbol)s$).getLeft().getLine());
+  	 RESULT = new CodeAnnotBehavior(new CodeForBehavior(benames, new CodeInvariant(expr)));
+  	 RESULT.setStartingLineNumber(parser.getStartLineNumber() + ((ComplexSymbol)f$).getLeft().getLine());
+  	 RESULT.setEndingLineNumber(parser.getStartLineNumber() + ((ComplexSymbol)s$).getRight().getLine()); 
+  	 parser.setAcslNode(RESULT); :}		
+| ASSERT:a lexpr:expr SEMICOLON:s 
+  {: expr.setStartingLineNumber(parser.getStartLineNumber() + ((ComplexSymbol)a$).getRight().getLine());
+  	 expr.setEndingLineNumber(parser.getStartLineNumber() + ((ComplexSymbol)s$).getLeft().getLine());
+  	 RESULT = new CodeAnnotStmt(new Assertion(expr));
+  	 RESULT.setStartingLineNumber(parser.getStartLineNumber() + ((ComplexSymbol)a$).getLeft().getLine());
+  	 RESULT.setEndingLineNumber(parser.getStartLineNumber() + ((ComplexSymbol)s$).getRight().getLine()); 
+	 parser.setAcslNode(RESULT); :}    
+| INVARIANT:i lexpr:expr SEMICOLON:s 
+  {: expr.setStartingLineNumber(parser.getStartLineNumber() + ((ComplexSymbol)i$).getRight().getLine());
+  	 expr.setEndingLineNumber(parser.getStartLineNumber() + ((ComplexSymbol)s$).getLeft().getLine());
+  	 RESULT = new CodeAnnotStmt(new CodeInvariant(expr));
+  	 RESULT.setStartingLineNumber(parser.getStartLineNumber() + ((ComplexSymbol)i$).getLeft().getLine());
+  	 RESULT.setEndingLineNumber(parser.getStartLineNumber() + ((ComplexSymbol)s$).getRight().getLine()); 
+	 parser.setAcslNode(RESULT); :}
+;
+
+/*** declarations and logical definitions ***/
+
+/* TODO m�gliche Liste von logic definitions? */
+decl_list::=
+ decl            
+| decl decl_list
+;  
+
+decl::=
+ GLOBAL INVARIANT any_identifier:i COLON lexpr:e SEMICOLON
+ {: GlobalInvariant gInv = new GlobalInvariant(i, e);
+ 	parser.setAcslNode(gInv); :} 
+| type_annot:tInv
+ {: parser.setAcslNode(tInv); :}  
+| model_annot:model
+ {: parser.setAcslNode(model); :} 
+| logic_def:ldef
+ {: parser.setAcslNode(ldef); :}
+;
+
+type_annot::=
+ TYPE INVARIANT any_identifier:id LPAR parameter:param RPAR EQUAL
+    lexpr:expr SEMICOLON
+ {: RESULT =  new TypeInvariant(id, expr, param); :}
+;
+
+model_annot::=
+ MODEL type_spec:type LBRACE parameter:param RBRACE
+ {: RESULT = new ModelVariable(new ACSLType(type), param); :}
+| MODEL identifier:id LBRACE parameter:param RBRACE
+ {: RESULT = new ModelVariable(new ACSLType(id), param); :}
+;
+
+poly_id_type::=
+ identifier:id
+ {: RESULT = id; :}
+| identifier:id LT ne_tvar_list:list GT
+ {: RESULT = id + "<" + list.toString() + ">"; :}
+;
+
+/* we need to recognize the typename as soon as it has been declared, so
+  so that it can be used in data constructors in the type definition itself
+*/
+poly_id_type_add_typename::=
+ poly_id_type 
+;
+
+poly_id::=
+ poly_id_type:id
+ {: RESULT = new PolyIdentifier(id); :} 
+| identifier:id LBRACE ne_label_list:list RBRACE
+ {: RESULT = new PolyIdentifier(id, list.toArray(new String[0]), new String[0]); :} 
+| identifier:id LBRACE ne_label_list:llist RBRACE LT ne_tvar_list:vlist GT
+ {: RESULT = new PolyIdentifier(id, llist.toArray(new String[0]), vlist.toArray(new String[0])); :}
+;
+
+opt_parameters::=
+ /*epsilon*/
+ {: RESULT = null; :} 
+| parameters:params
+ {: RESULT = params; :} 
+;
+
+parameters::=
+ LPAR ne_parameters:list RPAR
+ {: RESULT = list.toArray(new Parameter[0]); :} 
+;
+
+logic_def::=
+/* logic function definition */
+ LOGIC logic_rt_type:type poly_id:id opt_parameters:param EQUAL lexpr:expr SEMICOLON
+ {: if (param == null) {
+ 		RESULT = new LogicFunction(id, type, expr);
+ 	} else {
+ 		RESULT = new LogicFunction(id, param, type, expr);
+ 	} :}
+/* predicate definition */
+| PREDICATE poly_id:id opt_parameters:param EQUAL lexpr:expr SEMICOLON
+ {: if (param == null) {
+ 		RESULT = new Predicate(id, expr);
+ 	} else {
+ 		RESULT = new Predicate(id, param, expr);
+ 	} :}
+/* inductive predicate definition */
+| INDUCTIVE poly_id:id parameters:param LBRACE indcases:cases RBRACE
+ {: RESULT = new Inductive(id, param, cases.toArray(new Case[0])); :}
+| LEMMA poly_id:id COLON lexpr:expr SEMICOLON
+ {: RESULT = new Lemma(id, expr); :}
+| AXIOMATIC any_identifier:id LBRACE logic_decls:ldecls RBRACE
+ {: RESULT = new Axiomatic(new PolyIdentifier(id), ldecls.toArray(new LogicStatement[0])); :}
+/* types are not supported */
+/*| TYPE poly_id_type_add_typename EQUAL typedef SEMICOLON */
+;
+
+logic_decls::=
+ /* epsilon */
+ {: RESULT = new ArrayList<LogicStatement>(); :}
+| logic_decl:ldecl logic_decls:list
+ {: list.add(0, ldecl);
+ 	RESULT = list; :}	
+;
+
+logic_decl::=
+ logic_def:ldef
+ {: RESULT = ldef; :}  
+/* logic function declaration / no idea what reads_clause is */
+/*| LOGIC logic_rt_type poly_id opt_parameters reads_clause SEMICOLON*/
+/* predicate declaration / no idea what reads_clause is */
+/*| PREDICATE poly_id opt_parameters reads_clause SEMICOLON*/
+/* type declaration / not supported */
+/*| TYPE poly_id_type SEMICOLON*/
+/* axiom */
+| AXIOM poly_id:id COLON lexpr:expr SEMICOLON
+ {: RESULT = new Axiom(id, expr); :}
+;
+
+reads_clause::=
+ /* epsilon */ 
+| READS zones 
+;
+
+typedef::=
+ ne_datacons_list 
+| logic_type 
+;
+
+datacons_list::=
+ /* epsilon */ 
+| PIPE datacons datacons_list 
+;
+
+ne_datacons_list::=
+ datacons datacons_list 
+| PIPE datacons datacons_list 
+;
+
+datacons::=
+ identifier 
+| identifier LPAR ne_type_list RPAR 
+;
+
+ne_type_list::=
+ logic_type 
+| logic_type COMMA ne_type_list
+; 
+
+indcases::=
+ /* epsilon */
+ {: RESULT = new ArrayList<Case>(); :}  
+| CASE poly_id:id COLON lexpr:expr SEMICOLON indcases:list
+ {: list.add(0, new Case(id, expr));
+ 	RESULT = list; :} 
+;
+
+
+ne_tvar_list::=
+ identifier:id
+ {: RESULT = new ArrayList<String>();
+ 	RESULT.add(id); :}                     
+| identifier:id COMMA ne_tvar_list:vlist
+ {: ArrayList<String> list = new ArrayList<String>();
+ 	list.add(id);
+ 	list.addAll(vlist);
+ 	RESULT = vlist; :}  
+;
+
+ne_label_list::=
+ label_name:name
+ {: RESULT = new ArrayList<String>();
+ 	RESULT.add(name); :}                     
+| label_name:name COMMA ne_label_list:llist
+ {: ArrayList<String> list = new ArrayList<String>();
+ 	list.add(name);
+ 	list.addAll(llist);
+ 	RESULT = list; :} 
+;
+
+/* names */
+label_name::=
+ any_identifier:i
+ {: RESULT = i; :} 
+;
+
+behavior_name_list::=
+ /* epsilon */
+ {: RESULT = new String[0]; :}         
+| ne_behavior_name_list:behavlist 
+ {: RESULT = behavlist; :}
+;
+
+ne_behavior_name_list::=
+ behavior_name:be	{: RESULT = be.toArray(new String[1]);:}                           
+| behavior_name:be COMMA ne_behavior_name_list:bel
+{:
+	for (String s : bel) {
+		be.add(s);	
+	}
+	RESULT = be.toArray(new String[1]);
+:} 
+;
+
+behavior_name::=
+ any_identifier:s {:RESULT = new ArrayList<String>();
+ 					RESULT.add(s); :}
+;
+
+/* TODO: Keywords as BehaviorName? */
+any_identifier::=
+ identifier_or_typename:i {: RESULT = i;:} 
+/*| keyword */ 
+;
+
+identifier_or_typename::=
+ IDENTIFIER:i	{: RESULT = i;:} 
+| TYPENAME:t	{: RESULT = t;:}	  
+;
+
+identifier::=
+ IDENTIFIER:i {: RESULT = i;:}
+;
+
+bounded_var::=
+ identifier 
+| TYPENAME  /* Since TYPENAME cannot be accepted by lexpr rule */
+;
+
+c_keyword::=
+ CASE 
+| CHAR 
+| BOOLEAN 
+| CONST 
+| DOUBLE 
+| ELSE 
+| ENUM 
+| FLOAT 
+| IF 
+| INT 
+| LONG 
+| SHORT 
+| SIGNED 
+| SIZEOF 
+| STRUCT 
+| UNION 
+| UNSIGNED 
+| VOID 
+;
+
+acsl_c_keyword::=
+ FOR 
+;
+
+post_cond::=
+ ENSURES 
+| EXITS   
+| BREAKS  
+| CONTINUES 
+| RETURNS 
+;
+
+is_acsl_spec::=
+ post_cond  
+| ASSIGNS    
+| BEHAVIOR   
+| REQUIRES   
+| TERMINATES 
+| COMPLETE   
+| DECREASES  
+| DISJOINT   
+;
+
+is_acsl_decl_or_code_annot::=
+ ASSERT    
+| ASSUMES   
+| GLOBAL    
+| IMPACT    
+| INDUCTIVE 
+| INVARIANT 
+| LEMMA     
+| LOGIC     
+| LOOP      
+| PRAGMA    
+| PREDICATE  
+| SLICE     
+| TYPE      
+| MODEL     
+;
+
+is_acsl_other::=
+ AXIOM 
+| BEHAVIORS 
+| INTEGER 
+| LABEL 
+| READS 
+| REAL 
+| WRITES 
+;
+
+is_ext_spec::=
+ CONTRACT 
+| FUNCTION 
+| MODULE   
+| INCLUDE  
+| EXT_AT   
+| EXT_LET  
+;
+
+keyword::=
+ c_keyword      
+| acsl_c_keyword 
+| is_ext_spec    
+| is_acsl_spec   
+| is_acsl_decl_or_code_annot 
+| is_acsl_other  
+;
+
+
+bs_keyword::=
+ AT 
+| BASE_ADDR 
+| BLOCK_LENGTH 
+| EMPTY 
+| FALSE 
+| FORALL 
+| FRESH 
+| FROM 
+| INTER 
+| LAMBDA 
+| LET 
+| NOTHING 
+| NULL 
+| OLD 
+| RESULT 
+| SEPARATED 
+| TRUE 
+| BSTYPE 
+| TYPEOF 
+| BSUNION 
+| VALID 
+| VALID_INDEX 
+| VALID_RANGE 
+| INITIALIZED 
+| WITH 
+;
+
+wildcard::=
+ any_identifier 
+| bs_keyword 
+| AMP 
+| AND 
+| ARROW 
+| COLON 
+| COLON2 
+| COLONCOLON 
+| COLONGT 
+| COMMA 
+| CONSTANT 
+| CONSTANT10 
+| DOLLAR 
+| DOT 
+| DOTDOT 
+| DOTDOTDOT 
+| EQ 
+| EQUAL 
+| EXISTS 
+| GE 
+| GHOST 
+| GT 
+| GTGT 
+| HAT 
+| HATHAT 
+| IFF 
+| IMPLIES 
+| LBRACE 
+| LE 
+| LPAR 
+| LSQUARE 
+| LT 
+| LTCOLON 
+| LTLT 
+| MINUS 
+| NE 
+| NOT 
+| OR 
+| PERCENT 
+| PIPE 
+| PLUS 
+| QUESTION 
+| RBRACE 
+| RPAR 
+| RSQUARE 
+| SEMICOLON 
+| SLASH 
+| STAR 
+| STRING_LITERAL 
+| TILDE 
+;

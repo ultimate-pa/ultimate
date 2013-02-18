@@ -1,0 +1,13 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: ConsoleOut Output Plug-in
+Bundle-SymbolicName: local.stalin.plugins.output.consoleout;singleton:=true
+Bundle-Version: 1.0.0
+Bundle-Activator: local.stalin.plugins.output.consoleout.Activator
+Bundle-Vendor: Stalin ;-)
+Require-Bundle: org.eclipse.ui;visibility:=reexport,
+ STALINCore,
+ org.eclipse.core.runtime,
+ log4j
+Bundle-ActivationPolicy: lazy
+Bundle-RequiredExecutionEnvironment: JavaSE-1.6

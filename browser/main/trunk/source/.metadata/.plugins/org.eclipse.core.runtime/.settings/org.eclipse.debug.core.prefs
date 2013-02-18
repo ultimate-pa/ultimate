@@ -1,0 +1,3 @@
+#Wed Apr 20 17:55:48 CEST 2011
+prefWatchExpressions=<?xml version\="1.0" encoding\="UTF-8" standalone\="no"?>\n<watchExpressions>\n<expression enabled\="true" text\="formulas"/>\n<expression enabled\="true" text\="node.getSMTAnnotations()"/>\n</watchExpressions>\n
+eclipse.preferences.version=1

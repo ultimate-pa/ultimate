@@ -1,0 +1,20 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: Smt Interpolator
+Bundle-SymbolicName: SmtInterpol
+Bundle-Version: 1.0.0
+Export-Package: local.stalin.smt.convert;
+  uses:="local.stalin.smt.theory.linar,
+   local.stalin.smt.dpll,
+   local.stalin.smt.theory.cclosure,
+   local.stalin.logic",
+ local.stalin.smt.dpll;uses:="org.apache.log4j,local.stalin.logic",
+ local.stalin.smt.hack,
+ local.stalin.smt.smtlib;uses:="java_cup.runtime,local.stalin.logic",
+ local.stalin.smt.util
+Bundle-RequiredExecutionEnvironment: JavaSE-1.6
+Bundle-ClassPath: bin/
+Import-Package: java_cup.runtime,
+ local.stalin.logic,
+ org.apache.log4j
+Eclipse-LazyStart: true

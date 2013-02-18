@@ -1,0 +1,204 @@
+package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+
+import org.apache.log4j.Logger;
+
+import de.uni_freiburg.informatik.ultimate.automata.Activator;
+import de.uni_freiburg.informatik.ultimate.automata.IOperation;
+import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
+import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.DoubleDecker;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
+
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
+
+
+public class Determinize<LETTER,STATE> extends DoubleDeckerBuilder<LETTER,STATE> 
+							  implements IOperation {
+
+	protected static Logger s_Logger = 
+		UltimateServices.getInstance().getLogger(Activator.PLUGIN_ID);
+	
+	protected INestedWordAutomaton<LETTER,STATE> m_Operand;
+	protected IStateDeterminizer<LETTER,STATE> stateDeterminizer;
+	protected StateFactory<STATE> contentFactory;
+	
+	
+	/**
+	 * Maps a DeterminizedState to its representative in the resulting automaton.
+	 */
+	protected Map<DeterminizedState<LETTER,STATE>,STATE> det2res =
+		new HashMap<DeterminizedState<LETTER,STATE>, STATE>();
+	
+	/**
+	 * Maps a state in resulting automaton to the DeterminizedState for which it
+	 * was created.
+	 */
+	protected final Map<STATE,DeterminizedState<LETTER,STATE>> res2det =
+		new HashMap<STATE, DeterminizedState<LETTER,STATE>>();
+
+	
+	@Override
+	public String operationName() {
+		return "determinize";
+	}
+	
+	
+	@Override
+	public String startMessage() {
+		return "Start " + operationName() + " Operand " + 
+			m_Operand.sizeInformation();
+	}
+	
+	
+	@Override
+	public String exitMessage() {
+		return "Finished " + operationName() + " Result " + 
+			m_TraversedNwa.sizeInformation();
+	}
+	
+	
+	
+	
+	public Determinize(
+			INestedWordAutomaton<LETTER,STATE> input,
+			IStateDeterminizer<LETTER,STATE> stateDeterminizer) throws OperationCanceledException {
+		this.contentFactory = input.getStateFactory();
+		this.m_Operand = input;
+		s_Logger.debug(startMessage());
+		this.stateDeterminizer = stateDeterminizer;
+		super.m_TraversedNwa = new NestedWordAutomaton<LETTER,STATE>(
+				input.getInternalAlphabet(),
+				input.getCallAlphabet(),
+				input.getReturnAlphabet(),
+				input.getStateFactory());
+		m_RemoveDeadEnds = false;
+		traverseDoubleDeckerGraph();
+		assert (m_TraversedNwa.isDeterministic());
+		s_Logger.debug(exitMessage());
+
+	}
+	
+	@Override
+	protected Collection<STATE> getInitialStates() {
+		ArrayList<STATE> resInitials = 
+			new ArrayList<STATE>(m_Operand.getInitialStates().size());
+		DeterminizedState<LETTER,STATE> detState = stateDeterminizer.initialState();
+		STATE resState = detState.getContent(contentFactory);
+		m_TraversedNwa.addState(true, detState.containsFinal(), resState);
+		det2res.put(detState,resState);
+		res2det.put(resState, detState);
+		resInitials.add(resState);
+
+		return resInitials;
+	}
+
+
+
+
+
+	@Override
+	protected Collection<STATE> buildInternalSuccessors(
+			DoubleDecker<STATE> doubleDecker) {
+		List<STATE> resInternalSuccessors = new LinkedList<STATE>();
+		STATE resState = doubleDecker.getUp();
+		
+		DeterminizedState<LETTER,STATE> detState = res2det.get(resState);
+		
+		for (LETTER symbol : m_Operand.getInternalAlphabet()) {
+			DeterminizedState<LETTER,STATE> detSucc = 
+				stateDeterminizer.internalSuccessor(detState, symbol);
+			STATE resSucc = getResState(detSucc);
+			m_TraversedNwa.addInternalTransition(resState, symbol, resSucc);
+			resInternalSuccessors.add(resSucc);
+		}
+		return resInternalSuccessors;
+	}
+	
+	
+	@Override
+	protected Collection<STATE> buildCallSuccessors(
+			DoubleDecker<STATE> doubleDecker) {
+		List<STATE> resCallSuccessors = new LinkedList<STATE>();
+		STATE resState = doubleDecker.getUp();
+		
+		DeterminizedState<LETTER,STATE> detState = res2det.get(resState);
+		
+		for (LETTER symbol : m_Operand.getCallAlphabet()) {
+			DeterminizedState<LETTER,STATE> detSucc = 
+				stateDeterminizer.callSuccessor(detState, symbol);
+			STATE resSucc = getResState(detSucc);
+			m_TraversedNwa.addCallTransition(resState, symbol, resSucc);
+			resCallSuccessors.add(resSucc);
+		}
+		return resCallSuccessors;
+	}
+
+
+	@Override
+	protected Collection<STATE> buildReturnSuccessors(
+			DoubleDecker<STATE> doubleDecker) {
+		List<STATE> resReturnSuccessors = new LinkedList<STATE>();
+		STATE resState = doubleDecker.getUp();
+		STATE resLinPred = doubleDecker.getDown();
+		DeterminizedState<LETTER,STATE> detState = res2det.get(resState);
+		DeterminizedState<LETTER,STATE> detLinPred = res2det.get(resLinPred);
+		if (resLinPred == m_TraversedNwa.getEmptyStackState()) {
+			return resReturnSuccessors;
+		}
+		
+		for (LETTER symbol : m_Operand.getReturnAlphabet()) {
+			DeterminizedState<LETTER,STATE> detSucc = 
+				stateDeterminizer.returnSuccessor(detState, detLinPred, symbol);
+			STATE resSucc = getResState(detSucc);
+			m_TraversedNwa.addReturnTransition(resState, resLinPred, symbol, resSucc);
+			resReturnSuccessors.add(resSucc);
+		}
+		return resReturnSuccessors;
+	}
+
+	
+	
+	/**
+	 * Get the state in the resulting automaton that represents a
+	 * DeterminizedState. If this state in the resulting automaton does not exist
+	 * yet, construct it.
+	 */
+	protected STATE getResState(DeterminizedState<LETTER,STATE> detState) {
+		if (det2res.containsKey(detState)) {
+			return det2res.get(detState);
+		}
+		else {
+			STATE resState = detState.getContent(contentFactory);
+			m_TraversedNwa.addState(false, detState.containsFinal(), resState);
+			det2res.put(detState,resState);
+			res2det.put(resState,detState);
+			return resState;
+		}
+	}
+
+
+	@Override
+	public INestedWordAutomaton<LETTER, STATE> getResult()
+			throws OperationCanceledException {
+		if (stateDeterminizer instanceof PowersetDeterminizer) {
+			assert (ResultChecker.determinize(m_Operand, m_TraversedNwa));
+		}
+		return super.getResult();
+	}
+
+
+	
+	
+	
+	
+}
+

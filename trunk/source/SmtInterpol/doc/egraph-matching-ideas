@@ -1,0 +1,188 @@
+E-Matching and Congruence-Closure
+
+The objects of class CCTerm build an equality-graph, 
+which is a set of equivalence classes of all elements appearing
+in our formula.  For handling triggers in quantifiers we need
+to match elements from this graph with a pattern, which contains
+place-holders.  The idea is to use a simple language for matching
+and compile patterns into this language.
+
+The basic language consists of the following statements:
+  find(f/k,j,x):  Find an arbitrary application term with 
+      function symbol f/k and store it into reg[j] and its
+      arguments into reg[j+1],...,reg[j+k].  Transfer 
+      control to x for each match.
+  bind(i,f/k,j,x): Find an application term with function
+      symbol f/k in the equivalence class of reg[i] and
+      store its arguments into reg[j],...,reg[j+k-1]. Transfer 
+      control to x for each match.
+  reverse(i,f/k,n,j,x): Find a function application f/k, such that 
+      reg[i] is the n-th argument of f and store it into reg[j] and
+      the other arguments into reg[j+1]..reg[j+k-1]. Transfer 
+      control to x for each match.
+  compare(i,j,x): Check if reg[i] is equivalent to reg[j]. Transfer 
+      control to x on success.
+  yield((i_1,...i_n), C) return C{reg[i_1],...,reg[i_n]}.
+  goto([x_1,...,x_n]): Transfer control nondeterministically 
+      to x_1,...,x_n.  (used to combine multiple trigger)  
+      
+The registers of a trigger may be initialized arbitrarily, to contain
+constant terms occurring in the pattern.  The method find is the most
+complex one and should be avoided if it can be replaced by reverse or
+bind.
+      
+A pattern matches, if there is a sequence ending in a yield 
+statement.  There is a lot of non-deterministic branching, for
+example the find and bind function can non-deterministically choose
+some function application.
+
+Every time a bind/reverse statement is executed, and every time a
+compare statement fails, the incremental algorithm annotates
+the corresponding CCTerm reg[i] with the current program location and
+register contents so that it can be re-executed on merges. 
+
+A compare trigger is re-activated only when the CCTerm with the trigger
+is merged with such that the trigger points to that equivalence class.
+The trigger can afterwards be removed (and needs to be reinserted 
+on split).
+
+A reverse trigger is re-activated when the CCTerm with the trigger is
+merged with another CCTerm with an CCpar entry for that
+func symbol and only if this does not lead to a congruence edge.
+
+A bind trigger is re-activated when the CCTerm with is merged with another
+CCTerm that contains in its equivalence class a corresponding function
+application and the function application was not the reason for this merge.
+
+
+Likewise for each find statement the function symbol is annotated so
+it will re-execute if a new function application is created.
+
+
+=====================================================================
+
+Reuse matches vs. create and congruate.
+
+Take as an example array select/store axiom:
+ALL a i j v { (select (store a i v) j) } @
+  (= i j) , (= (select (store a i v) j) (select a j))
+ALL a i j v { (select (store a i v) j) } @
+  !(= i j), (= (select (store a i v) j) v)
+When the pattern matches, there is already a term equivalent to
+(select (store a i v) j) in the e-graph, but in most cases it is
+really a different term and relies on other equalities to be congruent.
+There is the possibility to reuse this term and add all the necessary
+equalities to the new clause.  The other possibility is to create the
+exact term, apply congruence closure and add the clause using the newly
+created term.  Congruence closure will ensure that this leads to roughly
+the same state.  However this requires a lot of work.  It is better to
+only create new terms if an equivalent is not existing.
+
+There may be several terms that are congruent to (select (store a i v) j)
+under different equality literals.  So should we add all or rely on
+congruence closure?   It is enough if only one of the congruent application
+is considered for each find/bind/reverse rule.
+
+We still need to create new terms, for example (select a j) in the above
+axioms.  This term may then be used to match a new pattern if a is 
+equivalent to some (store b i v).
+
+==================================================================
+
+Example patterns:
+  (select (store ?a ?i ?v) ?j)
+gets translated to
+  (find select/2 0 (bind 1 store/3 3 (yield (3,4,5,2) CLAUSE))))
+or slightly faster:
+  (find store/3 0 (revfind 0 select/2 0 4 (yield (1,2,3,5) CLAUSE))))
+
+  (select (store ?a ?i ?v) ?i)
+gets translated to
+  (find store/3 0 (revfind 0 select/2 0 4 (compare 2 5 (yield (1,2,3) CLAUSE)))))
+or even
+  (find store/3 0 (revfind 2 select/2 1 4 (compare 0 5 (yield (1,2,3) CLAUSE)))))
+
+Simple pattern:
+  ($typed S p)
+-->
+  (find $typed/2 0 (yield (1,2) CLAUSE))
+Note, that this is evaluated once at creation time.
+It only needs to be executed for every newly created $typed application.
+
+Multi pattern:
+  ($typed ?S ?p) ($typed ?S ($emb(?S ?p))
+-->
+  (find $emb/2 0             % find ($emp S p)
+    (reverse 0 $typed/2 1 2  % find ($typed ? ($emp S p))
+      (compare 1 3           % test if S matches
+        (reverse 2 $typed/2 1 2   % find ($typed ? p) 
+          (compare 1 3            % test if S matches. 
+            (yield (1,2) CLAUSE))))))
+if the parameter S is more diverse then this may be faster:
+  (find $emb/2 0             % find ($emp S p)
+    (reverse 1 $typed/2 0 2  % find ($typed S ?)
+      (compare 0 3           % test if ($emp S p) matches
+        (reverse 1 $typed/2 0 2   % find ($typed S ?) 
+          (compare 2 3            % test if p matches. 
+            (yield (1,2) CLAUSE))))))
+   
+Another multi pattern:         
+  ($is_primitive ($typ ?p)) ($owner ?S ?p)
+-->
+  (find $owner/2 0
+    (reverse 2 $typ/1 0 0
+      (reverse 0 $is_primitive/1 0 0
+        (yield (1,2) CLAUSE))))
+  
+Partly constant pattern:
+  ($typed $int p)
+-->
+  reg[0] = $int ; (reverse 0 $typed/2 0 (yield (1) CLAUSE))
+  
+--------------------------------------------------------------------------------
+
+Implementation Notes:
+
+Instead of one array, we store a register transfer array.  This array specifies
+for every newly matched CCTerm that should be transfered between instructions in
+which register the match should be put.  We can specify the special value of -1
+to indicate that a CCTerm should not be passed to the next command.
+
+Example: McCarthy's Read-Over-Write-Axioms with triggers
+1. { select(store(a,i,v),j) }
+2. { select(store(a,i,v),i) }
+
+For 1, we create
+regs=\empty
+find store/3 {0,1,2,3}  % Find an application of store and set 
+						% regs[0]=(store a i v)
+						% regs[1]=a
+						% regs[2]=i
+						%r egs[3]=v
+reverse 0 select/2 0 {-1,0}	% Find a select-application with regs[0] as 0th 
+							% argument, drop the application 
+							% (select (store (a i v) j)) and set regs[0]=j
+yield {1,2,3,0}
+
+For 2, we create
+regs=\empty
+find store/3 {0,1,2,3}  % Find an application of store and set 
+						% regs[0]=(store a i v)
+						% regs[1]=a
+						% regs[2]=i
+						%r egs[3]=v
+reverse 0 select/2 0 {-1,0}	% Find a select-application with regs[0] as 0th 
+							% argument, drop the application 
+							% (select (store (a i v) j)) and set regs[0]=j
+compare 2 0				% Check whether i and j are equivalent.
+yield {1,2,3}
+
+We only need 4 registers using this translation and the trigger tree
+implementation can merge these instruction sequences.
+
+Resulting trigger tree:
+
+regs=\empty
+find store/3 {0,1,2,3}; reverse 0 select/2 0 {-1,0};
+	yield {1,2,3,0}
+	compare 2 0; yield {1,2,3}

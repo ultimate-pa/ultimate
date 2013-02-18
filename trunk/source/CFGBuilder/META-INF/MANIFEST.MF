@@ -1,0 +1,13 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: CFGBuilder Plug-in
+Bundle-SymbolicName: CFGBuilder;singleton:=true
+Bundle-Version: 0.0.1
+Bundle-Activator: de.uni_freiburg.informatik.ultimate.boogie.cfgbuilder.Activator
+Require-Bundle: UltimateCore,
+ BoogieParser,
+ Library-log4j,
+ Library-ModelCheckerUtils
+Bundle-ActivationPolicy: lazy
+Export-Package: de.uni_freiburg.informatik.ultimate.boogie.cfgbuilder
+Bundle-RequiredExecutionEnvironment: JavaSE-1.6

@@ -1,0 +1,15 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: RCFGBuilder
+Bundle-SymbolicName: RCFGBuilder;singleton:=true
+Bundle-Version: 1.0.0
+Bundle-Activator: local.stalin.plugins.generator.rcfgbuilder.Activator
+Require-Bundle: org.eclipse.core.runtime,
+ STALINCore,
+ CFG2SMT;bundle-version="1.0.0"
+Bundle-ActivationPolicy: lazy
+Bundle-RequiredExecutionEnvironment: JavaSE-1.6
+Import-Package: local.stalin.boogie.type
+Export-Package: local.stalin.plugins.generator.rcfgbuilder,
+ local.stalin.plugins.generator.rcfgbuilder.preferences,
+ local.stalin.plugins.generator.rcfgbuilder.smt

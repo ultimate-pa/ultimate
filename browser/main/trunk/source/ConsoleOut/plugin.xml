@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.2"?>
+<plugin>
+   <extension
+         point="local.stalin.ep.output">
+      <impl class="local.stalin.plugins.output.consoleout.ConsoleOut"/>
+   </extension>
+   <extension
+         point="org.eclipse.ui.preferencePages">
+      <page
+            class="local.stalin.plugins.output.consoleout.preferences.PreferencePage"
+            id="ConsoleOut.page1"
+            name="ConsoleOut"/>
+   </extension>
+   <extension
+         point="org.eclipse.core.runtime.preferences">
+      <initializer class="local.stalin.plugins.output.consoleout.preferences.PreferenceInitializer"/>
+   </extension>
+
+</plugin>

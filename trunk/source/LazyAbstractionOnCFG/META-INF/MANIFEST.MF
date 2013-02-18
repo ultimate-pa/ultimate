@@ -1,0 +1,13 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: LazyAbstractionOnCFG
+Bundle-SymbolicName: LazyAbstractionOnCFG;singleton:=true
+Bundle-Version: 0.0.1
+Bundle-Activator: de.uni_freiburg.informatik.ultimate.plugins.output.lazyabstractiononcfg.Activator
+Require-Bundle: Library-log4j,
+ Library-ModelCheckerUtils,
+ UltimateCore,
+ CFG2SMT
+Bundle-ActivationPolicy: lazy
+Bundle-RequiredExecutionEnvironment: JavaSE-1.6
+Import-Package: de.uni_freiburg.informatik.ultimate.boogie.cfgbuilder

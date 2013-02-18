@@ -1,0 +1,13 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: Jung Visualization Plug-in
+Bundle-SymbolicName: local.stalin.plugins.output.jungvisualization;singleton:=true
+Bundle-Version: 1.0.0
+Require-Bundle: STALINCore,
+ STALINGui,
+ Jung_base,
+ org.eclipse.core.runtime,
+ org.eclipse.ui
+Bundle-RequiredExecutionEnvironment: JavaSE-1.6
+Bundle-ActivationPolicy: lazy
+Bundle-Activator: local.stalin.plugins.output.jungvisualization.Activator

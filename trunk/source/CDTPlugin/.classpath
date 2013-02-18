@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.6"/>
+	<classpathentry kind="con" path="org.eclipse.pde.core.requiredPlugins">
+		<accessrules>
+			<accessrule kind="accessible" pattern="org/eclipse/cdt/core/dom/ast/gnu/**"/>
+			<accessrule kind="accessible" pattern="org/eclipse/cdt/core/dom/ast/c/**"/>
+			<accessrule kind="accessible" pattern="org/eclipse/cdt/core/dom/ast/cpp/**"/>
+			<accessrule kind="accessible" pattern="org/eclipse/cdt/internal/core/**"/>
+		</accessrules>
+	</classpathentry>
+	<classpathentry excluding="**/.svn/*" kind="src" path="src"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/ACSLParser"/>
+	<classpathentry kind="output" path="bin"/>
+</classpath>

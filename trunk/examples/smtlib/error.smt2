@@ -1,0 +1,6 @@
+(set-option :produce-proofs true)
+(set-logic AUFLIA)
+(declare-fun P ( Int) Bool)
+(assert (and (P 0) (not (P 102)) (forall ((x Int)) (=> (P (- x 1)) (P x)))))
+(check-sat)
+(exit)

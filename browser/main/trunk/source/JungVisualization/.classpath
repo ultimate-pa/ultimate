@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry exported="true" kind="con" path="org.eclipse.pde.core.requiredPlugins"/>
+	<classpathentry excluding=".svn/" kind="src" path="src"/>
+	<classpathentry kind="lib" path="/Jung_base/lib/batik-anim.jar"/>
+	<classpathentry kind="lib" path="/Jung_base/lib/batik-awt-util.jar"/>
+	<classpathentry kind="lib" path="/Jung_base/lib/batik-bridge.jar"/>
+	<classpathentry kind="lib" path="/Jung_base/lib/batik-codec.jar"/>
+	<classpathentry kind="lib" path="/Jung_base/lib/batik-css.jar"/>
+	<classpathentry kind="lib" path="/Jung_base/lib/batik-dom.jar"/>
+	<classpathentry kind="lib" path="/Jung_base/lib/batik-ext.jar"/>
+	<classpathentry kind="lib" path="/Jung_base/lib/batik-extension.jar"/>
+	<classpathentry kind="lib" path="/Jung_base/lib/batik-gui-util.jar"/>
+	<classpathentry kind="lib" path="/Jung_base/lib/batik-gvt.jar"/>
+	<classpathentry kind="lib" path="/Jung_base/lib/batik-parser.jar"/>
+	<classpathentry kind="lib" path="/Jung_base/lib/batik-script.jar"/>
+	<classpathentry kind="lib" path="/Jung_base/lib/batik-svg-dom.jar"/>
+	<classpathentry kind="lib" path="/Jung_base/lib/batik-svggen.jar"/>
+	<classpathentry kind="lib" path="/Jung_base/lib/batik-swing.jar"/>
+	<classpathentry kind="lib" path="/Jung_base/lib/batik-transcoder.jar"/>
+	<classpathentry kind="lib" path="/Jung_base/lib/batik-util.jar"/>
+	<classpathentry kind="lib" path="/Jung_base/lib/batik-xml.jar"/>
+	<classpathentry kind="lib" path="/Jung_base/lib/collections-generic-4.01.jar"/>
+	<classpathentry kind="lib" path="/Jung_base/lib/colt.jar"/>
+	<classpathentry kind="lib" path="/Jung_base/lib/commons-collections-testframework-4.01.jar"/>
+	<classpathentry kind="lib" path="/Jung_base/lib/concurrent.jar"/>
+	<classpathentry kind="lib" path="/Jung_base/lib/js.jar"/>
+	<classpathentry kind="lib" path="/Jung_base/lib/junit-4.7.jar"/>
+	<classpathentry kind="lib" path="/Jung_base/lib/pdf-transcoder.jar"/>
+	<classpathentry kind="lib" path="/Jung_base/lib/xalan-2.6.0.jar"/>
+	<classpathentry kind="lib" path="/Jung_base/lib/xerces_2_5_0.jar"/>
+	<classpathentry kind="lib" path="/Jung_base/lib/xml-apis.jar"/>
+	<classpathentry kind="lib" path="/Jung_base/lib/xml-apis-ext.jar"/>
+	<classpathentry kind="output" path="bin"/>
+</classpath>

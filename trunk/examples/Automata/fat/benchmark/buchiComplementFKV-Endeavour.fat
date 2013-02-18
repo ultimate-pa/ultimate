@@ -1,0 +1,126 @@
+// Author: heizmann@informatik.uni-freiburg.de
+// Date: 16.5.2011
+
+// Contains applications of in filename mentioned operation on several
+// automata.
+//
+// Correctness of these operations is not tested here. But you can use this
+// file to test correctness of intersection by enabling the automatic
+// correctness test for automaton operations is Ultimate.
+//
+// This file contains some automaton definitions which have been available in 
+// other files on 16.05.2011. (At his day Space Shuttle Endeavour started for
+// its final mission)
+
+#IsNotEmptyBuchi buchiComplementFKV(cKistner)
+#IsNotEmptyBuchi buchiComplementFKV(eNoether)
+#IsEmptyBuchi buchiComplementFKV(all)
+#IsNotEmptyBuchi buchiComplementFKV(finitelyManyA)
+#IsNotEmptyBuchi buchiComplementFKV(infinitelyManyA)
+#IsNotEmptyBuchi buchiComplementFKV(infinitelyManyA_Modification1)
+#IsNotEmptyBuchi buchiComplementFKV(infinitelyManyA_Modification2)
+
+#Print buchiComplementFKV(all)
+
+
+#nwa cKistner := (
+  #callAlphabet := { c },
+  #internalAlphabet := {a b},
+  #returnAlphabet := { r },
+  #states := {s0 s1 s2},
+  #initialStates := {s0},
+  #finalStates := {s1},
+  #callTransitions := { (s0 c s0) },
+  #internalTransitions := {(s0 a s1) }, 
+  #returnTransitions := { (s1 s0 r s2) (s2 s0 r s0) }
+)
+
+
+#nwa eNoether := (
+  #callAlphabet := {c},
+  #internalAlphabet := {a b},
+  #returnAlphabet := {r},
+  #states := {s0 s1 p1 p2},
+  #initialStates := {s0},
+  #finalStates := {s0},
+  #callTransitions := {(s1 c p1)},
+  #internalTransitions := {(s0 b s1) (p1 a p2)}, 
+  #returnTransitions := {(p2 s1 r s0)}
+)
+
+
+#nwa finitelyManyA := (
+  #callAlphabet := { },
+  #internalAlphabet := {a b},
+  #returnAlphabet := { },
+  #states := {q0 q1},
+  #initialStates := {q0},
+  #finalStates := {q1},
+  #callTransitions := { },
+  #internalTransitions := { (q0 a q0) (q0 b q0) (q0 b q1) (q1 b q1) }, 
+  #returnTransitions := { }
+)
+
+#nwa finitelyManyB := (
+  #callAlphabet := { },
+  #internalAlphabet := {a b},
+  #returnAlphabet := { },
+  #states := {q0 q1},
+  #initialStates := {q0},
+  #finalStates := {q1},
+  #callTransitions := { },
+  #internalTransitions := { (q0 b q0) (q0 a q0) (q0 a q1) (q1 a q1) }, 
+  #returnTransitions := { }
+)
+
+
+#nwa infinitelyManyA := (
+  #callAlphabet := { },
+  #internalAlphabet := {a b},
+  #returnAlphabet := { },
+  #states := {q0 q1 },
+  #initialStates := {q0},
+  #finalStates := {q1},
+  #callTransitions := { },
+  #internalTransitions := { (q0 a q1) (q0 b q0) (q1 a q1) (q1 b q0) }, 
+  #returnTransitions := { }
+)
+
+
+#nwa infinitelyManyA_Modification1 := (
+  #callAlphabet := { },
+  #internalAlphabet := {a b},
+  #returnAlphabet := { },
+  #states := {q0 q1 p0 p1 s0 s1},
+  #initialStates := {q0 p0 s0 s1},
+  #finalStates := {q1},
+  #callTransitions := { },
+  #internalTransitions := { (s1 a s1) (s0 a s1) (q0 a q1) (q0 b q0) (q1 a q1) (q1 b q0) }, 
+  #returnTransitions := { }
+)
+
+
+#nwa infinitelyManyA_Modification2 := (
+  #callAlphabet := { },
+  #internalAlphabet := {a b},
+  #returnAlphabet := { },
+  #states := {q0 q1 p0 p1 s0 s1},
+  #initialStates := {q0 p0 s0 s1},
+  #finalStates := {q1},
+  #callTransitions := { },
+  #internalTransitions := { (s1 a s1) (s0 a s1) (p0 a p1) (q0 a q1) (q0 b q0) (q1 a q1) (q1 b q0) }, 
+  #returnTransitions := { }
+)
+
+
+#nwa all := (
+  #callAlphabet := {c},
+  #internalAlphabet := {a b},
+  #returnAlphabet := {r},
+  #states := {s0},
+  #initialStates := {s0},
+  #finalStates := {s0},
+  #callTransitions := {(s0 c s0)},
+  #internalTransitions := {(s0 a s0) (s0 b s0)}, 
+  #returnTransitions := {(s0 s0 r s0)}
+)

@@ -1,0 +1,263 @@
+/**
+ * 
+ */
+package local.stalin.plugins.generator.lazyabstraction;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+
+import org.apache.log4j.Logger;
+
+import local.stalin.boogie.cfgreducer.Activator;
+import local.stalin.boogie.cfgreducer.CFGExplicitNode;
+import local.stalin.boogie.cfgreducer.SMTNodeAnnotations;
+import local.stalin.core.api.StalinServices;
+import local.stalin.logic.Atom;
+import local.stalin.logic.Formula;
+import local.stalin.logic.Theory;
+import local.stalin.model.AbstractEdgeNode;
+import local.stalin.model.IAnnotations;
+import local.stalin.model.IEdge;
+import local.stalin.model.INode;
+import local.stalin.model.IPayload;
+import local.stalin.model.Payload;
+
+/**
+ * @author Alexander Nutz
+ *
+ */
+public class UnwindingNode extends AbstractEdgeNode {
+
+	protected static Logger s_logger = StalinServices.getInstance().getLogger(Activator.PLUGIN_ID);
+	private boolean		m_isCovered = false;
+	private UnwindingNode m_coveringNode;
+	private ArrayList<UnwindingNode> m_coveredNodes;
+	private boolean		m_isLeaf = true; //TODO: isLeaf updaten, richtig init'd??
+	private boolean		m_isRoot = false;
+	protected UnwindingProcRoot m_procRoot;
+	protected Theory 		m_theory;
+	protected Formula 	m_formula;
+	protected CFGExplicitNode m_cfgLocation; //der zugehörige Knoten im CFG - repräsentiert gleichzeitig die Location
+//	private Payload		m_payload;  von AbstractElement wird "payload" und methoden geerbt
+	private List<IEdge> 				m_IncomingEdges		= new ArrayList<IEdge>();
+	private List<IEdge> 				m_OutgoingEdges		= new ArrayList<IEdge>();
+	
+	/**
+	 * 
+	 */
+	public UnwindingNode() {
+		this.setPayload(new Payload());
+	}
+	
+	public UnwindingNode(UnwindingProcRoot procRoot, CFGExplicitNode cfgNode) {
+		this.setPayload(new Payload());
+		procRoot.addToPreorder(this);
+		m_procRoot = procRoot;
+		m_cfgLocation = cfgNode;
+	}
+	
+//	/**
+//	 * 
+//	 */
+//	public UnwindingNode(IPayload payload) {
+//		this.setPayload(payload);
+//	}
+	
+	/**
+	 * 
+	 */
+	public UnwindingNode(Theory theory, Formula formula) {
+//		m_theory = theory;
+//		m_formula = formula;
+		// * taken from CFGExplicitNode:
+		this.setPayload(new Payload());
+		m_theory = theory;
+		HashMap<String, IAnnotations>	annotations = new HashMap<String, IAnnotations>();
+		SMTNodeAnnotations				annotation	= new SMTNodeAnnotations();
+		annotations.put("SMT", annotation);
+		formula = (formula != null) ? formula : Atom.TRUE;
+		annotation.setAssertion(formula);
+		annotation.setTheory(theory);
+		this.getPayload().setAnnotations(annotations);
+	}
+	
+	/**
+	 * Constructor variant used when adding to an unwinding within a procedure
+	 * additionally adds a pointer to the procedure root node 
+	 * and updates the preorder of the procedure nodes
+	 */
+	public UnwindingNode(Theory theory, Formula formula, UnwindingProcRoot procRoot, CFGExplicitNode cfgNode) {
+//		m_theory = theory;
+//		m_formula = formula;
+		// * taken from CFGExplicitNode:
+		this.setPayload(new Payload());
+		m_theory = theory;
+		HashMap<String, IAnnotations>	annotations = new HashMap<String, IAnnotations>();
+		SMTNodeAnnotations				annotation	= new SMTNodeAnnotations();
+		annotations.put("SMT", annotation);
+		formula = (formula != null) ? formula : Atom.TRUE;
+		annotation.setAssertion(formula);
+		annotation.setTheory(theory);
+		this.getPayload().setAnnotations(annotations);
+		
+		procRoot.addToPreorder(this);
+		m_procRoot = procRoot;
+		m_cfgLocation = cfgNode;
+	}
+
+	
+//	//@Override
+//	public IPayload getPayload() {
+//		return this.payload;
+//	}
+	
+	
+	/* (non-Javadoc)
+	 * @see local.stalin.model.INode#addIncomingEdge(local.stalin.model.IEdge)
+	 */
+	@Override
+	public boolean addIncomingEdge(IEdge element) {
+		return m_IncomingEdges.add(element);
+	}
+
+	/* (non-Javadoc)
+	 * @see local.stalin.model.INode#addIncomingEdge(local.stalin.model.INode)
+	 */
+	@Override
+	public boolean addIncomingEdge(INode src) {
+//		UnwindingEdge ue = new UnwindingEdge(m_theory, Atom.TRUE, );
+//		ue.setSource(src);
+//		ue.setTarget(this);
+//		
+//		src.addOutgoingEdge(ue);
+//		this.addIncomingEdge(ue);
+//		
+//		return true;
+		s_logger.error("addIncomingEdge(INode) has been called");
+		return false;
+	}
+
+	/* (non-Javadoc)
+	 * @see local.stalin.model.INode#addOutgoingEdge(local.stalin.model.IEdge)
+	 */
+	@Override
+	public boolean addOutgoingEdge(IEdge element) {
+		return m_OutgoingEdges.add(element);
+	}
+
+	/* (non-Javadoc)
+	 * @see local.stalin.model.INode#addOutgoingEdge(local.stalin.model.INode)
+	 */
+	@Override
+	public boolean addOutgoingEdge(INode target) {
+//		UnwindingEdge ue = new UnwindingEdge();
+//		ue.setSource(this);
+//		ue.setTarget(target);
+//		
+//		this.addOutgoingEdge(ue);
+//		target.addIncomingEdge(ue);
+//		
+//		return true;
+		s_logger.error("addIncomingEdge(INode) has been called");
+		return false;
+	}
+
+	/* (non-Javadoc)
+	 * @see local.stalin.model.INode#getIncomingEdges()
+	 */
+	@Override
+	public List<IEdge> getIncomingEdges() {
+		return m_IncomingEdges;
+	}
+
+	/* (non-Javadoc)
+	 * @see local.stalin.model.INode#getOutgoingEdges()
+	 */
+	@Override
+	public List<IEdge> getOutgoingEdges() {
+		return m_OutgoingEdges;
+	}
+
+	/* (non-Javadoc)
+	 * @see local.stalin.model.INode#removeAllIncoming()
+	 */
+	@Override
+	public void removeAllIncoming() {
+		m_IncomingEdges.clear();
+	}
+
+	/* (non-Javadoc)
+	 * @see local.stalin.model.INode#removeAllOutgoing()
+	 */
+	@Override
+	public void removeAllOutgoing() {
+		m_OutgoingEdges.clear();
+	}
+
+	/* (non-Javadoc)
+	 * @see local.stalin.model.INode#removeIncomingEdge(local.stalin.model.IEdge)
+	 */
+	@Override
+	public boolean removeIncomingEdge(IEdge element) {
+		return m_IncomingEdges.remove(element);
+	}
+
+	/* (non-Javadoc)
+	 * @see local.stalin.model.INode#removeOutgoingEdge(local.stalin.model.IEdge)
+	 */
+	@Override
+	public boolean removeOutgoingEdge(IEdge element) {
+		return m_OutgoingEdges.remove(element);
+	}
+	
+	public void setAsRoot() {
+		m_isRoot = true;
+	}
+
+	public boolean isRoot() {
+		return m_isRoot;
+	}
+	public String toString(){
+		return getPayload().getName();
+	}
+
+	public void setCovered(boolean m_isCovered) {
+		this.m_isCovered = m_isCovered;
+	}
+
+	public boolean isCovered() {
+		return m_isCovered;
+	}
+
+	public void set_coveringNode(UnwindingNode m_coveringNode) {
+		this.m_coveringNode = m_coveringNode;
+	}
+
+	public UnwindingNode get_coveringNode() {
+		return m_coveringNode;
+	}
+
+	public void set_coveredNodes(ArrayList<UnwindingNode> m_coveredNodes) {
+		this.m_coveredNodes = m_coveredNodes;
+	}
+
+	public ArrayList<UnwindingNode> get_coveredNodes() {
+		if(m_coveredNodes != null)
+			return m_coveredNodes;
+		else
+			return new ArrayList<UnwindingNode>();
+	}
+
+	public void set_isLeaf(boolean m_isLeaf) {
+		this.m_isLeaf = m_isLeaf;
+	}
+
+	public boolean isLeaf() {
+		return m_isLeaf;
+	}
+	
+	public SMTNodeAnnotations getSMTAnnotations(){
+		return (SMTNodeAnnotations)this.getPayload().getAnnotations().get("SMT");
+	}
+}

@@ -1,0 +1,15 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: ReImpact
+Bundle-SymbolicName: ReImpact;singleton:=true
+Bundle-Version: 0.0.1
+Bundle-Activator: de.uni_freiburg.informatik.ultimate.plugins.generator.reimpact.Activator
+Require-Bundle: org.eclipse.core.runtime,
+ UltimateCore,
+ Library-log4j;bundle-version="1.2.15",
+ Library-ModelCheckerUtils,
+ NestedWordAutomata,
+ RCFGBuilder,
+ TraceAbstraction
+Bundle-ActivationPolicy: lazy
+Bundle-RequiredExecutionEnvironment: JavaSE-1.6

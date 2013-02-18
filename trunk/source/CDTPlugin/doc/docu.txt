@@ -1,0 +1,65 @@
+/*
+ * This document contains information about the CDTPLUGIN
+ * @author Markus Lindenmann
+ * @author Oleksii Saukh
+ * @author Stefan Wissert
+ */
+ 
+PACKAGE STRUCTURE
+
+de.uni_freiburg.informatik.ultimate.
+ |-cdt.
+ |  |-codan           		
+
+GENERAL INFORMATION
+
+CDTPlugin is an extension of ULTIMATE project.
+The aim of CDTPlugin is that ULTIMATE is usable for regular C-Developers.
+So that they can verify their programs directly out of their Eclipse CDT.
+To realize this this plugin extends the Codan-Interface (Code Analysis), which
+is part of Eclipse CDT. To read more about Codan observe the following link:
+http://wiki.eclipse.org/CDT/designs/StaticAnalysis   
+
+FILE INFORMATION
+
+Package: [de.uni_freiburg.informatik.ultimate.cdt]
+	Contains decorator nodes that encapsulate the C nodes and ACSL nodes.
+	Contains also traversal algorithms that perform BreaddthFirstSearch
+	and DepthFirstSearch needed for AST-tree traversal.
+	
+Package: [de.uni_freiburg.informatik.ultimate.cdt.codan]
+		
+		- [UltimateCChecker]
+		This class is somehow the base class of this plugin, it extends
+		AbstractIndexASTChecker, so it obtains in process method an already
+		parsed AST. This AST is passed to UltimateServices where we store it
+		for the translation. Since Ultimate must always start with a source
+		plugin, we use the CDTDummyParser, which basically takes the set AST
+		from UltimateServices and passes it to next tool in the toolchain.
+		When the toolchain is finished the results are presented to the user.
+		Therefore there exists different problem types, which are declared in
+		the plugin xml.
+		
+		So for example the following lines define a codan problem:
+		<problem
+        	category="org.eclipse.cdt.codan.core.categories.Ultimate"
+            defaultEnabled="true"
+            defaultSeverity="Info"
+            description="Ultimate found an Invariant"
+            id="de.uni_freiburg.informatik.ultimate.cdt.codan.InvariantResult"
+            messagePattern="Ultimate found an Invariant here, &apos;&apos;{0}&apos;&apos;"
+            name="Ultimate Invariants">
+        </problem>
+        
+        - [UltimateCCheckerHelp]
+		This provides information for the "CodanProblemDetailsView", this view
+		provides some additional information for a certain problem to the user.
+		This view is very limited, there are only two SWT-Widgets "Link". Which
+		not allow any formating of the displayed text. In general the main problem
+		of Codan is the very limited UI behavior. Another problem of this kind is
+		in the preferences, the choosing of the toolchain should work dynamically,
+		for this a dropdown-box would be helpful, but this simply not exist.
+		        
+        - [CCheckerDescription]
+        This class externalized strings, which are used in the plugin.
+        

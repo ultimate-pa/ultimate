@@ -1,0 +1,14 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: AutomataParser Plug-in
+Bundle-SymbolicName: AutomataParser;singleton:=true
+Bundle-Version: 0.0.1
+Bundle-Activator: de.uni_freiburg.informatik.ultimate.automata.parser.Activator
+Bundle-Vendor: Ultimate@Uni
+Require-Bundle: Library-log4j,
+ UltimateCore
+Bundle-ActivationPolicy: lazy
+Bundle-RequiredExecutionEnvironment: JavaSE-1.6
+Export-Package: de.uni_freiburg.informatik.ultimate.automata.parser.astAnnotations,
+ de.uni_freiburg.informatik.ultimate.automata.parser.astAnnotations.nwa,
+ de.uni_freiburg.informatik.ultimate.automata.parser.astAnnotations.petrinet

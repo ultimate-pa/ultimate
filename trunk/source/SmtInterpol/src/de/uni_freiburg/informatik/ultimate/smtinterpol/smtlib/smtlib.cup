@@ -1,0 +1,266 @@
+/*
+ * Copyright (C) 2009-2012 University of Freiburg
+ *
+ * This file is part of SMTInterpol.
+ *
+ * SMTInterpol is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * SMTInterpol is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with SMTInterpol.  If not, see <http://www.gnu.org/licenses/>.
+ */
+/* CUP specification for smtlib */
+
+package de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib;
+import de.uni_freiburg.informatik.ultimate.logic.*;
+import de.uni_freiburg.informatik.ultimate.util.ScopedHashMap;
+import org.apache.log4j.Logger;
+import java_cup.runtime.Symbol;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.util.MySymbolFactory;
+
+parser Parser;
+option symbols = LexerSymbols;
+option java15, compact_red, newpositions;
+
+parser code {:
+	String filename;
+	Benchmark benchmark;
+	public void setFileName(String filename) {
+		this.filename = filename;
+	}
+	
+	public void report_error(String s, Object sym) {
+		String location;
+		if (sym instanceof MySymbolFactory.LineColumnSymbol) {
+			MySymbolFactory.LineColumnSymbol bsym = (MySymbolFactory.LineColumnSymbol) sym;
+			location = bsym.getLocation();
+	    } else if ((sym instanceof Symbol) 
+	    	       && ((Symbol)sym).sym == LexerSymbols.EOF) {
+	    	location = "EOF";
+	    } else
+	        location = "UNKNOWN";
+	    
+		Logger.getRootLogger().error(filename+":"+location+": "+s);
+	}
+
+	public void report_error(String s) {	
+		report_error(s, cur_token);
+	}
+	
+	public void setSolver(Script solver, boolean disableIPol) {
+		benchmark = new Benchmark(solver , disableIPol);
+	}
+	public Benchmark getBenchmark() {
+		return benchmark;
+	}
+:}
+
+action code {:
+    ScopedHashMap<String, TermVariable> varScopes = 
+    	new ScopedHashMap<String, TermVariable>();
+    ScopedHashMap<String, TermVariable> fvarScopes = 
+    	new ScopedHashMap<String, TermVariable>();
+	
+	public TermVariable findVar(Symbol var) {
+		TermVariable tv = varScopes.get((String) var.value);
+		if (tv == null)
+			parser.report_error("Undeclared variable "+var.value, var);
+		return tv;
+	}
+	
+	public TermVariable findFvar(Symbol var) {
+		TermVariable tv = fvarScopes.get((String) var.value);
+		if (tv == null)
+			parser.report_error("Undeclared form variable "+var.value, var);
+		return tv;
+	}
+
+:}
+
+/*init with {: getScanner().init(); :} */
+scan with {: return getScanner().next_token(); :}
+
+
+/* Keywords */
+terminal EQUALS,AND,BENCHMARK,DISTINCT,EXISTS,FALSE,FLET,FORALL,IF_THEN_ELSE,IFF,IMPLIES;
+terminal ITE,LET,LOGIC,NOT,OR,SAT,THEORY,TRUE,UNKNOWN,UNSAT,XOR;
+terminal String VAR, FVAR, ATTRIBUTE, USERVAL, ID, INDEXED_ID, NUMERAL, RATIONAL;
+terminal String ARITH_SYMB, ATTR_STRING;
+terminal ATTR_ASSUMPTION, ATTR_LOGIC, ATTR_FORMULA, ATTR_STATUS;
+terminal ATTR_EXTRASORTS, ATTR_EXTRAFUNS, ATTR_EXTRAPREDS, ATTR_NOTES;
+terminal LPAR, RPAR;
+terminal ATTR_PATTERN, LCPAR, RCPAR;
+
+non terminal Annotation annotation, patternAttr;
+non terminal Term pattern;
+non terminal Term formula;
+non terminal TermVariable quantVar;
+non terminal String connective;
+non terminal Term atom, prop_atom;
+non terminal Sort sort_symb;
+non terminal String pred_symb, fun_symb;
+non terminal Term term, base_term;
+non terminal extraSort, extraFun, extraPred; 
+non terminal bench_attribute;
+non terminal String status;
+non terminal benchmark;
+
+benchmark ::= LPAR BENCHMARK ID:name bench_attribute* RPAR;
+
+bench_attribute ::= 
+	ATTR_LOGIC ID:logic {: parser.benchmark.setLogic(logic); :}
+	| ATTR_ASSUMPTION formula:f {: parser.benchmark.assertTerm(f); :}
+	| ATTR_FORMULA formula:f {: parser.benchmark.assertTerm(f); :}
+	| ATTR_STATUS status:s {: parser.benchmark.setInfo(":status", s); :}
+	| ATTR_EXTRASORTS LPAR extraSort+ RPAR
+	| ATTR_EXTRAFUNS LPAR extraFun+ RPAR
+	| ATTR_EXTRAPREDS LPAR extraPred+ RPAR
+	| ATTR_NOTES ATTR_STRING:s {: parser.benchmark.note(s); :}
+	| ATTRIBUTE:a USERVAL:v {: parser.benchmark.setInfo(":" + a, (new QuotedObject(v)).toString()); :}
+	| ATTRIBUTE
+	;
+status ::= SAT {: RESULT = "sat"; :}
+	| UNSAT {: RESULT = "unsat"; :}
+	| UNKNOWN {: RESULT = "unknown"; :};
+extraSort ::= ID:sort {: parser.benchmark.declareSort(sort); :};
+extraFun ::= LPAR fun_symb:f sort_symb:rsort annotation*:a RPAR
+	{: parser.benchmark.declareFun(f, new Sort[0], rsort); :};
+extraFun ::= LPAR fun_symb:f sort_symb+:psorts sort_symb:rsort annotation*:a RPAR
+	{: parser.benchmark.declareFun(f, psorts, rsort); :};
+extraPred ::= LPAR fun_symb:f sort_symb*:psorts annotation*:a RPAR
+	{: parser.benchmark.declareFun(f, psorts, parser.benchmark.getBooleanSort()); :};
+
+formula ::= atom:a {: RESULT = a; :}
+          | LPAR NOT formula:f annotation*:a RPAR
+            {: RESULT = parser.benchmark.term("not", f);
+               RESULT = parser.benchmark.annotateTerm(RESULT, a); :}
+          | LPAR IF_THEN_ELSE formula:fc formula:ft formula:fe annotation*:a RPAR
+            {: RESULT = parser.benchmark.term("ite", fc, ft, fe);
+               RESULT = parser.benchmark.annotateTerm(RESULT, a); :}
+          | LPAR IMPLIES formula:f1 formula:f2 annotation*:a RPAR
+            {: RESULT = parser.benchmark.term("=>", f1, f2);
+               RESULT = parser.benchmark.annotateTerm(RESULT, a); :}
+          | LPAR connective:c formula+:fl  annotation*:a RPAR
+            {: if (fl.length == 1)
+				   RESULT = fl[0];
+               else
+				   RESULT = parser.benchmark.term(c, fl);
+               RESULT = parser.benchmark.annotateTerm(RESULT, a); :}
+          | LPAR EXISTS {: varScopes.beginScope(); :} 
+                 quantVar+:vl formula:f patternAttr*:t annotation*:a RPAR
+            {: varScopes.endScope();
+               RESULT = parser.benchmark.quantifier(Script.EXISTS, vl, parser.benchmark.annotateTerm(f, t), (Term[][])null);
+               RESULT = parser.benchmark.annotateTerm(RESULT, a); :}
+          | LPAR FORALL {: varScopes.beginScope(); :}
+                 quantVar+:vl formula:f patternAttr*:t annotation*:a RPAR
+            {: varScopes.endScope();
+               RESULT = parser.benchmark.quantifier(Script.FORALL, vl, parser.benchmark.annotateTerm(f, t), (Term[][])null);
+               RESULT = parser.benchmark.annotateTerm(RESULT, a); :}
+          | LPAR LET LPAR VAR:v term:tv RPAR
+          	  {: varScopes.beginScope();
+          	     varScopes.put(v, parser.benchmark.variable(v, tv.getSort())); :}
+              formula:f annotation*:a RPAR
+              {: RESULT = parser.benchmark.let(varScopes.get(v), tv, f);
+                 varScopes.endScope();
+                 RESULT = parser.benchmark.annotateTerm(RESULT, a); :}
+          | LPAR FLET LPAR FVAR:v formula:fv RPAR 
+          	  {: fvarScopes.beginScope();
+          	     fvarScopes.put(v, parser.benchmark.variable(v, parser.benchmark.getBooleanSort())); :}
+              formula:f annotation*:a RPAR
+              {: RESULT = parser.benchmark.let(fvarScopes.get(v), fv, f);
+                 fvarScopes.endScope();
+                 RESULT = parser.benchmark.annotateTerm(RESULT, a); :}
+          ;
+quantVar ::= LPAR VAR:v sort_symb:sort RPAR
+	  {: RESULT = parser.benchmark.variable(v, sort);
+	     varScopes.put(v, RESULT); :}
+	;
+connective ::= 
+	  OR {: RESULT = "or"; :}
+	| AND {: RESULT = "and"; :}
+	| IFF {:  RESULT = "="; :}
+	| XOR {: RESULT = "xor"; :}
+	;
+	
+atom ::=
+	  prop_atom:pa {: RESULT = pa; :}
+	| LPAR prop_atom:pa annotation*:a RPAR
+	  {: RESULT = pa;
+         RESULT = parser.benchmark.annotateTerm(RESULT, a); :}
+	| LPAR EQUALS term+:tl annotation*:a RPAR
+	  {: RESULT = parser.benchmark.term("=", tl); 
+	  if (RESULT == null) {parser.report_error("Bad equality"); System.exit(1);}
+         RESULT = parser.benchmark.annotateTerm(RESULT, a); :}
+	| LPAR DISTINCT term+:tl annotation*:a RPAR
+	  {: RESULT = parser.benchmark.term("distinct", tl); 
+	  if (RESULT == null) {parser.report_error("Bad distinct"); System.exit(1);}
+         RESULT = parser.benchmark.annotateTerm(RESULT, a); :}
+	| LPAR pred_symb:pred term+:tl annotation*:a RPAR
+	  {: RESULT = parser.benchmark.term(pred, tl); 
+	  if (RESULT == null) {parser.report_error("Undeclared predicate " + pred); System.exit(1); }
+         RESULT = parser.benchmark.annotateTerm(RESULT, a); :}
+	;
+prop_atom ::=
+	  TRUE {: RESULT = parser.benchmark.term("true"); :}
+	| FALSE {: RESULT = parser.benchmark.term("false"); :}
+	| FVAR:f {: RESULT = findFvar(f$); :}
+	| ID:pred {: RESULT = parser.benchmark.term(pred, new Term[0]);
+		if (RESULT == null) {parser.report_error("Undeclared predicate " + pred); System.exit(1);} :}
+	;
+pred_symb ::=
+	  ARITH_SYMB :s {: RESULT = s; :}
+	| ID:s {: RESULT = s; :} 
+	;
+fun_symb ::=
+	  ARITH_SYMB :s {: RESULT = s; :}
+	| ID:s {: RESULT = s; :} 
+	;
+sort_symb ::=
+	  ID:s {: RESULT = parser.benchmark.sort(s);
+	  	if (RESULT == null) {parser.report_error("Undeclared sort " + s); System.exit(1);} :} 
+	;
+annotation ::= ATTRIBUTE:a USERVAL?:u
+      {: RESULT = new Annotation(a, u); :}
+    ;
+
+base_term ::=
+       VAR:v {: RESULT = findVar(v$); :}
+     | NUMERAL:n {: RESULT = parser.benchmark.numeral(n); :}
+     | RATIONAL:n {: RESULT = parser.benchmark.decimal(n); :}
+     | ID:id {: RESULT = parser.benchmark.term(id, new Term[0]);
+     	if (RESULT == null) {parser.report_error("Undeclared term id " + id); System.exit(1);} :}
+     ;
+
+term ::= base_term:t {: RESULT = t; :}
+     | LPAR base_term:t annotation*:a RPAR
+       {: RESULT = t;
+          RESULT = parser.benchmark.annotateTerm(RESULT, a); :}
+     | LPAR fun_symb:f term+:param annotation*:a RPAR
+       {: RESULT = parser.benchmark.term(f, param);
+       if (RESULT == null) {parser.report_error("Undeclared term id " + f); System.exit(1);}
+          RESULT = parser.benchmark.annotateTerm(RESULT, a); :}
+     | LPAR ITE formula:cond term:th term:el annotation*:a RPAR
+       {: RESULT = parser.benchmark.term("ite", cond, th, el);
+          RESULT = parser.benchmark.annotateTerm(RESULT, a); :}
+     ;
+       
+patternAttr ::= ATTR_PATTERN LCPAR pattern+:t RCPAR 
+	  {: RESULT = new Annotation(":pattern", t); :}
+	;
+	
+pattern ::= LPAR EQUALS term+:tl annotation*:a RPAR
+	  {: RESULT = parser.benchmark.term("=", tl); 
+         RESULT = parser.benchmark.annotateTerm(RESULT, a); :}
+	| LPAR DISTINCT term+:tl annotation*:a RPAR
+	  {: RESULT = parser.benchmark.term("distinct", tl); 
+         RESULT = parser.benchmark.annotateTerm(RESULT, a); :}
+	| LPAR ID:pred term+:tl annotation*:a RPAR
+	  {: RESULT = parser.benchmark.annotateTerm(parser.benchmark.term(pred, tl), a); :}
+	;

@@ -1,0 +1,610 @@
+package local.stalin.plugins.generator.lazyabstraction;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+
+import local.stalin.access.IUnmanagedObserver;
+import local.stalin.access.WalkerOptions;
+import local.stalin.core.api.StalinServices;
+import local.stalin.model.IElement;
+import local.stalin.model.INode;
+
+import org.apache.log4j.Logger;
+import org.eclipse.core.runtime.preferences.ConfigurationScope;
+import org.eclipse.core.runtime.preferences.IEclipsePreferences;
+
+import local.stalin.SMTInterface.SMTInterface;
+import local.stalin.access.IUnmanagedObserver;
+import local.stalin.access.WalkerOptions;
+import local.stalin.boogie.cfgbuilder.CFGNode;
+import local.stalin.boogie.cfgbuilder.CFGRootAnnotations;
+import local.stalin.boogie.cfgreducer.Activator;
+import local.stalin.boogie.cfgreducer.CFGEdge;
+import local.stalin.boogie.cfgreducer.CFGExplicitNode;
+import local.stalin.boogie.cfgreducer.PayloadModifier;
+import local.stalin.boogie.cfgreducer.SMTEdgeAnnotations;
+import local.stalin.boogie.cfgreducer.SMTNodeAnnotations;
+//import local.stalin.boogie.cfgreducer.preferences.PreferenceValues;
+import local.stalin.core.api.StalinServices;
+import local.stalin.logic.Atom;
+import local.stalin.logic.Formula;
+import local.stalin.logic.FormulaUnFleterer;
+import local.stalin.logic.FormulaWalker;
+import local.stalin.logic.FunctionSymbol;
+import local.stalin.logic.Sort;
+import local.stalin.logic.Term;
+import local.stalin.logic.TermVariable;
+import local.stalin.logic.Theory;
+import local.stalin.model.IAnnotations;
+import local.stalin.model.IEdge;
+import local.stalin.model.IElement;
+import local.stalin.model.INode;
+import local.stalin.model.Payload;
+import local.stalin.plugins.ResultNotifier;
+
+
+/**
+ * Auto-Generated Stub for the plug-in's Observer
+ */
+public class LazyAbstractionObserver implements IUnmanagedObserver {
+
+	private static Logger s_Logger = StalinServices.getInstance().getLogger(Activator.PLUGIN_ID);
+	
+	private UnwindingNode m_graphroot;
+	
+	private HashMap<Term, String>		m_ConstantsToVariableName	= new HashMap<Term, String>();
+	
+	private Theory m_theory;
+	
+	private ArrayList<UnwindingNode> m_openNodes;
+	
+	private UnwindingErrorLocation m_ErrorLocation;
+	
+	SMTInterface m_SMTInterface;
+	
+	boolean m_returnToUnwind;
+	
+	@Override
+	public boolean process(IElement node) {
+		s_Logger.debug("entered process()");
+		CFGExplicitNode root	= (CFGExplicitNode) node;
+		m_theory 			= 
+			((CFGRootAnnotations)root.getPayload().getAnnotations().get("CFGBuilder")).getTheory();
+		m_graphroot		= new UnwindingNode(m_theory, Atom.TRUE);
+		m_graphroot.setPayload(PayloadModifier.copyPayload(root.getPayload()));
+		m_graphroot.setAsRoot();
+	
+		m_SMTInterface = new SMTInterface(m_theory, SMTInterface.SOLVER_GROUNDIFY);
+		StalinServices.getInstance().putInToolchainStore("solver", m_SMTInterface);
+		
+		m_ErrorLocation = new UnwindingErrorLocation();
+		
+		for (INode n : root.getOutgoingNodes()) {
+
+			UnwindingProcRoot procRoot = processProcedure((CFGExplicitNode) n);
+			
+			UnwindingEdge edge = new UnwindingEdge(m_theory, m_graphroot, procRoot);
+			procRoot.addIncomingEdge(edge);
+			m_graphroot.addOutgoingEdge(edge);
+			
+		}
+		return false;
+	}
+
+	public UnwindingProcRoot processProcedure(CFGExplicitNode cfgProcNode) {
+		UnwindingProcRoot procRoot = toUnwindingProcRoot(cfgProcNode);
+
+		//expand 1 - convention: a procedure root node has exactly one child
+		//and there's not assumption in the edge..
+		CFGEdge cEdge = (CFGEdge) cfgProcNode.getOutgoingEdges().get(0);
+		CFGExplicitNode cfgChild = (CFGExplicitNode) cEdge.getTarget();
+		UnwindingNode unwChild = toUnwindingNode(cfgChild, procRoot);
+		UnwindingEdge newEdge = 
+			new UnwindingEdge(cfgProcNode.getTheory(),
+					 procRoot, unwChild);
+		unwChild.addIncomingEdge(newEdge);
+		procRoot.addOutgoingEdge(newEdge);
+			
+		//execute the Lazy Abstraction Algorithm
+		m_openNodes = new ArrayList<UnwindingNode>();
+		m_openNodes.add(unwChild);
+		paper_UNWIND();
+		
+//		int maxDepth = 20;
+//		expandNode(procRoot, cfgProcNode, maxDepth);
+		
+		return procRoot;
+	}
+	
+	int counter = 3;
+	private void paper_UNWIND() {
+//		s_Logger.debug("UNWIND has been called");
+		
+		while(!m_openNodes.isEmpty()) {
+			//TODO: vorläufige abbruchbedingung
+			counter--;
+			if(counter < 0) return;
+			m_returnToUnwind = false;
+			ArrayList<UnwindingNode> openNodes_0 = 
+				(ArrayList<UnwindingNode>) m_openNodes.clone();
+			s_Logger.debug("UNWIND " + counter + ": open nodes " + openNodes_0);
+			for(UnwindingNode openNode : openNodes_0) {
+				//CLOSE() auf alle Vorgänger
+				closeRec((UnwindingNode)(openNode.getIncomingEdges().get(0).getSource()));
+				//DFS() auf openNode
+				paper_DFS(openNode);
+			}
+		}
+	}
+	
+	private void closeRec(UnwindingNode unwNode) {
+		if(!(unwNode instanceof UnwindingProcRoot)) {
+			paper_CLOSE(unwNode);
+			UnwindingNode parent = (UnwindingNode)(unwNode.getIncomingEdges().get(0).getSource());
+			if(!(parent instanceof UnwindingProcRoot)) {
+				closeRec(parent);
+			}
+		}
+	}
+
+
+	
+	private void paper_DFS(UnwindingNode v) {
+//		s_Logger.debug("DFS has been called");
+		if(m_returnToUnwind) return; 
+		paper_CLOSE(v);
+		//if(v is Error Location) {
+		paper_REFINE(v);
+		closeRec(v);
+		//}
+		paper_EXPAND(v);
+		
+		for(IEdge edge : v.getOutgoingEdges()) {
+			UnwindingEdge unwEdge = (UnwindingEdge) edge;
+			paper_DFS((UnwindingNode) unwEdge.getTarget());
+		}
+	}
+	
+
+	
+	private void paper_EXPAND(UnwindingNode v) {
+//		s_Logger.debug("open Nodes before: " + m_openNodes);
+//		s_Logger.debug("EXPAND has been called");
+		
+		if(!v.isCovered() && v.isLeaf()) {
+			CFGExplicitNode cfgNode = v.m_cfgLocation;//TODO: getter
+			v.set_isLeaf(false);
+			m_openNodes.remove(v);
+			for(IEdge edge : cfgNode.getOutgoingEdges()) {
+				CFGEdge cEdge = (CFGEdge) edge;
+				CFGExplicitNode cfgChild = (CFGExplicitNode) cEdge.getTarget();
+				UnwindingNode unwChild = toUnwindingNode(cfgChild, v.m_procRoot);
+				
+				UnwindingEdge newEdge = 
+					new UnwindingEdge(cfgNode.getTheory(), cEdge.getSMTAnnotations(), v, unwChild);
+				unwChild.addIncomingEdge(newEdge);
+				v.addOutgoingEdge(newEdge);
+				
+				m_openNodes.add(unwChild);
+			}
+		}
+		
+		s_Logger.debug("open Nodes after: " + m_openNodes);
+	}
+
+	private void paper_REFINE(UnwindingNode v) {
+//		s_Logger.debug("REFINE has been called");
+
+		if((v instanceof UnwindingErrorLocation) 
+				&& (!v.getSMTAnnotations().getAssertion().equals(Atom.FALSE))) {//v is error loc. and not yet annotated false
+			ArrayList<IElement> path = getPath(v, new ArrayList<IElement>());
+			Formula[] formulas = getFormulas(path);
+			//generiere refutation/Interpolantensequenz für path
+			//wenn sie existiert: 
+			//wenn sie nicht existiert: unsafe
+
+			try {
+				Formula[] interpolants = m_SMTInterface.computeInterpolants(formulas, null);
+				
+				//update node annotations with the new interpolants
+				s_Logger.debug("REFINE: generated sequence of interpolants");
+				for(int i = 1; i < path.size(); i++) {
+					SMTEdgeAnnotations annotation = 
+						(SMTEdgeAnnotations) path.get(i).getPayload().getAnnotations().get("SMT");
+					Formula oldFormula = annotation.getAssumption();
+					Formula newFormula = m_theory.and(oldFormula, interpolants[i]);
+					annotation.setAssumption(newFormula);
+				}
+				
+				m_openNodes.remove(v);
+				
+				//TODO: Close - ev closeRec..
+			} catch (RuntimeException ex) {
+				s_Logger.fatal("--------- P R O G R A M   U N S A F E ---------");
+			}
+			//sh. ELG process() , SafetyCheckerObs
+			//SSA: bei loops m_theory.let(..) invars, outvars, via Hashmap in Annot..
+			//mapping per let in Formeln einbauen
+			//invars, die keine Outvar haben: als Konstante, sh. auch SCObs -> getFormulas
+			//z3: in preferences von stmIF pfad setzen
+			//SafetyChecker: dumpFormula -> in Datei - z3 arbeitet darauf
+			//nur sat: m_SMTIF.checkSatisfiabilitySmtlib(form)
+			//covering: CFGEdge: checkSat/Val - baut die Formeln richtig um - assum true
+		}
+	}
+
+//	private ArrayList<Formula> getPath(UnwindingNode v, ArrayList<Formula> path) {
+//		if(!(v instanceof UnwindingProcRoot)) {
+//			path.add(((SMTNodeAnnotations)v.getPayload().getAnnotations().get("SMT")).getAssertion());
+//			path.add(((SMTEdgeAnnotations)v.getIncomingEdges().get(0).getPayload().getAnnotations().get("SMT")).getAssumption());
+//			return getPath((UnwindingNode)v.getIncomingNodes().get(0), path);	
+//		}
+//		else {
+//			return path;
+//		}
+//	}
+	
+	private ArrayList<IElement> getPath(UnwindingNode v, ArrayList<IElement> path) {
+		if(!(v instanceof UnwindingProcRoot)) {
+			path.add(v);
+			path.add(v.getIncomingEdges().get(0));
+			return getPath((UnwindingNode)v.getIncomingNodes().get(0), path);	
+		}
+		else {
+			//sieht so aus, als wollte getformulas den pfad bis ganz oben(jetzt nicht mehr..), außerdem in 
+			//umgekehrter Reihenfolge: von der Wurzel zum Blatt
+			path.add(v);
+//			path.add(v.getIncomingEdges().get(0));
+//			path.add(v.getIncomingEdges().get(0).getSource());
+			Collections.reverse(path);
+			return path;
+		}
+	}
+
+	private void paper_CLOSE(UnwindingNode v) {
+//		s_Logger.debug("CLOSE has been called");
+		//TODO: geht das effizienter?
+		ArrayList<UnwindingNode> predecessors = new ArrayList<UnwindingNode>(
+				v.m_procRoot.getPreorder().subList(0,
+					v.m_procRoot.getPreorder().indexOf(v))); 
+		
+		for(UnwindingNode pred : predecessors) {
+			if(pred.m_cfgLocation.equals(v.m_cfgLocation)) {
+				paper_COVER(v, pred);
+			}
+		}
+		
+	}
+
+//	/*
+//	 * helper for retrieving all ancestors
+//	 */
+//	private ArrayList<UnwindingNode> collectAncestors(
+//			UnwindingNode unwNode, ArrayList<UnwindingNode> collected) {
+//		UnwindingNode parent = (UnwindingNode)(unwNode.getIncomingEdges().get(0).getSource());
+//		if(parent.isProcRoot()) {
+//			return collected;
+//		}
+//		else {
+//			collected.add(parent);
+//			return collected;
+//		}
+//			
+//	}
+	
+//	private void expandNode(UnwindingNode node, CFGExplicitNode cfgNode, int maxDepth) {
+//		if(maxDepth > 0) {
+//			for(IEdge edge : cfgNode.getOutgoingEdges()) {
+//				CFGEdge cEdge = (CFGEdge) edge;
+//				CFGExplicitNode cfgChild = (CFGExplicitNode) cEdge.getTarget();
+//				UnwindingNode unwChild = toUnwindingNode(cfgChild);
+//				
+//				UnwindingEdge newEdge = 
+//					new UnwindingEdge(cfgNode.getTheory(), cEdge.getAssumption(), node, unwChild);
+//				unwChild.addIncomingEdge(newEdge);
+//				node.addOutgoingEdge(newEdge);
+//				
+//				expandNode(unwChild, cfgChild, maxDepth -1);
+//			}
+//		}
+//	} 
+
+	private void paper_COVER(UnwindingNode v, UnwindingNode w) {//w covert v ("v->w?")
+//		s_Logger.debug("COVER has been called" + v + w);
+		//ev nicht alle checks nötig..
+		if((!v.isCovered()) 
+				&& v.m_cfgLocation.equals(w.m_cfgLocation) 
+				&& v.m_procRoot.getPreorder().indexOf(v) < v.m_procRoot.getPreorder().indexOf(w)) 
+		{
+			s_Logger.debug("COVER : checking" + v.getSMTAnnotations().getAssertion() + " =>? " + w.getSMTAnnotations().getAssertion());	
+			if(0 == m_SMTInterface.checkSatisfiabilitySmtlib(m_theory.implies(v.getSMTAnnotations().getAssertion(), w.getSMTAnnotations().getAssertion()))) { 
+				v.set_coveringNode(w);
+				w.get_coveredNodes().add(v);
+				
+				v.setCovered(true);
+				m_openNodes.remove(v);
+				
+				coverRec(v.getOutgoingNodes());
+			}
+		}
+	}
+
+	/*
+	 * for each given element recursively remove all covering edges connected to it
+	 * and mark it as covered (by a node above of it by convention..)
+	 */
+	private void coverRec(List<INode> outgoingNodes) {
+		for(INode iNode : outgoingNodes) {
+			UnwindingNode unwNode = (UnwindingNode) iNode;
+			
+			unwNode.setCovered(true);
+			m_openNodes.remove(unwNode);
+			
+			if(unwNode.get_coveringNode() != null) {
+				unwNode.get_coveringNode().get_coveredNodes().remove(unwNode);
+			}
+			for(UnwindingNode un : unwNode.get_coveredNodes()) {
+				un.set_coveringNode(null);
+			}
+			unwNode.get_coveredNodes().clear();
+			unwNode.set_coveringNode(null);
+			
+			coverRec(unwNode.getOutgoingNodes());
+		}
+	}
+
+	/*
+	 * make an UnwindingNode out of a CFGNode - if there are assertions other than True
+	 * then make an edge to the Error Location and move them there 
+	 */
+	private UnwindingNode toUnwindingNode(CFGExplicitNode oldNode, UnwindingProcRoot procRoot) {
+		UnwindingNode newNode = new UnwindingNode(procRoot, oldNode);
+		Payload newPayload = PayloadModifier.copyPayload(oldNode.getPayload());
+		Formula assertion = ((SMTNodeAnnotations)newPayload.getAnnotations().get("SMT")).getAssertion();
+		
+		if(!(assertion.equals(Atom.TRUE))) {
+			//replace assertion with Atom.True in the Node
+			HashMap<String,IAnnotations> newAnnots = newPayload.getAnnotations();
+			SMTNodeAnnotations newA = new SMTNodeAnnotations();
+			newA.setAssertion(Atom.TRUE);
+			newAnnots.put("SMT", newA);
+			newPayload.setAnnotations(newAnnots); //unnötig/Quatsch?? wg ref?
+			
+			//add an edge with the assertion pointing to the error location
+//			UnwindingEdge errorEdge = new UnwindingEdge(m_theory, assertion, newNode, m_ErrorLocation);
+//			newNode.addOutgoingEdge(errorEdge);
+//			m_ErrorLocation.addIncomingEdge(errorEdge);
+			//version for improved graph readability: one error location each
+			UnwindingErrorLocation el = new UnwindingErrorLocation(procRoot, oldNode);
+			UnwindingEdge errorEdge = new UnwindingEdge(m_theory, oldNode.getSMTAnnotations(), newNode, el, true);
+			newNode.addOutgoingEdge(errorEdge);
+			el.addIncomingEdge(errorEdge);
+			el.set_isLeaf(true);
+			newNode.set_isLeaf(true);
+			//always do refinement on error locations first, thus insert them an the 
+			//beginning of m_openNodes
+			m_openNodes.add(0, el);//TODO: Effizienz -> ev was anderes als ArrayList verwenden
+			//if a new Error location has been discovered we have to return to UNWIND with the new list
+			//otherwise it will never find any error locations
+			m_returnToUnwind = true;
+		}
+		newNode.setPayload(newPayload);
+		return newNode;
+	}
+
+	private UnwindingProcRoot toUnwindingProcRoot(CFGExplicitNode oldNode) {
+		UnwindingProcRoot newNode = new UnwindingProcRoot();
+		newNode.setPayload(PayloadModifier.copyPayload(oldNode.getPayload()));
+		return newNode;
+	}
+	
+	
+	@Override
+	public void finish() {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public WalkerOptions getWalkerOptions() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public void init() {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public boolean performedChanges() {
+		// TODO Auto-generated method stub
+		return false;
+	}
+	
+	/**
+	 * @return the root of the CFG.
+	 */
+	public INode getRoot(){
+		s_Logger.debug("getRoot has been called");
+		boolean doLA = true; //TODO: only for debugging
+		if(doLA)
+			return (INode) m_graphroot;
+		else
+			return null;
+	}
+
+	//taken from SafetyChecker:
+	//returns an array of the formulas corresponding to the current shortest path
+	@SuppressWarnings("unchecked")
+	private Formula[] getFormulas(ArrayList<IElement> path){
+		ArrayList<Formula> tmp_formulas = new ArrayList<Formula>();
+		//get all global variables from procedure entry node
+		//If node holds any old variables then...
+		
+		//path has self-loops and therefore must be separated in pairs of node and outgoing edge
+		HashMap<String, Term> outConstants = new HashMap<String, Term>();
+		
+		UnwindingNode procEntry = (UnwindingNode)path.get(0);//alex: geändert
+		HashMap<TermVariable, Term> global_variables = new HashMap<TermVariable, Term>();
+		HashMap<String, TermVariable> old_vars = (HashMap<String, TermVariable>)procEntry.getSMTAnnotations().getAnnotationsAsMap().get("oldvars");
+		if (old_vars != null) {
+			for (TermVariable global_tv: old_vars.values()){
+				global_variables.put(global_tv, makeConstant(global_tv));
+			}
+			//filling up out_constants
+			for(String vname: old_vars.keySet()){
+				outConstants.put(vname, global_variables.get(old_vars.get(vname)));
+			}
+		}
+		/*iterates through shortest path from node to node until reaching last node with outgoing edge
+		 * and collects formulas in array tmp_formulas;
+		 * starts at the procedure node and not the root node*/
+		for (int i = 2; i < path.size(); i+=2){
+			Formula tmp_formula = get_partialFormula(i, path, outConstants);
+			//Adds all global variables to the formula
+			for (TermVariable global_tv: global_variables.keySet()){
+				tmp_formula = m_theory.let(global_tv, global_variables.get(global_tv), tmp_formula);
+			}
+			tmp_formulas.add(tmp_formula);
+		}
+		//putting list in an array and return that array
+		Formula[] formulas = new Formula[tmp_formulas.size()];
+		return tmp_formulas.toArray(formulas);
+	}
+	
+	//builds and returns the formula for a i'th node and its succeeding edge on the current path
+	private Formula get_partialFormula(int i, ArrayList<IElement> path, HashMap<String, Term> outConstants){
+		//will hold the resulting formula
+		Formula formula = null;
+		//will hold the out going variables of the edge if node is not end of path
+		HashMap<String, TermVariable> outgoingVariablesOfEdge = null;
+		HashSet<TermVariable> variablesOfEdge = null;
+		
+		UnwindingNode		node				= (UnwindingNode)path.get(i);
+		SMTNodeAnnotations	smtNodeAnnotations	= node.getSMTAnnotations();
+		UnwindingEdge 		edge 				= null;
+		SMTEdgeAnnotations	smtEdgeAnnotations	= new SMTEdgeAnnotations();
+		
+		//getting the incoming variables of the node
+		HashMap<String, TermVariable>	incomingVariablesOfNode	= smtNodeAnnotations.getInVars();
+		HashSet<TermVariable> 			variablesOfNode 		= smtNodeAnnotations.getVars();
+		HashSet<TermVariable>			newVariables			= new HashSet<TermVariable>();
+		newVariables.addAll(variablesOfNode);
+		//HashMap that store all let-statements of this node's variables that are mapped to a constant
+		HashMap<Term, TermVariable> allLetStatementsOfNode		= new HashMap<Term, TermVariable>();
+		HashMap<Term, TermVariable> allIncomingConstantsOfNode	= new HashMap<Term, TermVariable>();
+		//getting the formula of the node(assertion)
+		Formula assertion = (Formula)smtNodeAnnotations.getAssertion();
+		
+		//Check if node is end of path ...
+		if (i < path.size()-1){
+			//node is not the end of the path
+			edge = (UnwindingEdge)path.get(i+1);
+			smtEdgeAnnotations = edge.getSMTAnnotations();
+			//getting the outgoing variables of the edge
+			HashMap<String, TermVariable> incomingVariablesOfEdge = smtEdgeAnnotations.getInVars();
+			outgoingVariablesOfEdge = smtEdgeAnnotations.getOutVars();
+			variablesOfEdge = smtEdgeAnnotations.getVars();
+			//add node and edge variables to n_vars
+			newVariables.addAll(variablesOfEdge);
+			//getting the formula of the edge(assumption)
+			Formula assumption = smtEdgeAnnotations.getAssumption();
+			//building new formula but yet without mapping of in- and outgoing variables
+			formula = m_theory.and(assertion, assumption);
+			for(String vname: incomingVariablesOfEdge.keySet()){
+				//if a outgoing constant has been declared for this incoming variable of the node then ...
+				if (!outConstants.keySet().contains(vname)){
+					//s_Logger.debug("This incoming variable " + vname + ": " + incomingVariablesOfEdge.get(vname).toString() + " of the node " + m_ShortestPath.get(i) +
+					//		" has not been declared anywhere on the path \n" + m_ShortestPath.toString());
+					outConstants.put(vname, makeConstant(incomingVariablesOfEdge.get(vname)));
+				}
+				TermVariable in_var = incomingVariablesOfEdge.get(vname);
+				Term const_Term = outConstants.get(vname);
+				formula = m_theory.let(in_var, const_Term, formula);
+				allLetStatementsOfNode.put(const_Term, in_var);
+				newVariables.remove(in_var);
+			}
+		} else {
+			//node is end of path
+			formula = assertion;
+		}
+		//iterating through all incoming variables of the node/edge
+		for(String vname: incomingVariablesOfNode.keySet()){
+			//if a outgoing constant has been declared for this incoming variable of the node then ...
+			if (!outConstants.keySet().contains(vname)){
+				s_Logger.debug("This incoming variable " + vname + ": " + incomingVariablesOfNode.get(vname).toString() + " of the node " + path.get(i) +
+						" has not been declared anywhere on the path \n" + path.toString());
+				outConstants.put(vname, makeConstant(incomingVariablesOfNode.get(vname)));
+			}
+			TermVariable in_var = incomingVariablesOfNode.get(vname);
+			Term const_Term = outConstants.get(vname);
+			formula = m_theory.let(in_var, const_Term, formula);
+			allIncomingConstantsOfNode.put(const_Term, in_var);
+			allLetStatementsOfNode.put(const_Term, in_var);
+			newVariables.remove(in_var);
+		}
+		//make new constants only if there exists an outgoing edge
+		if (edge != null){
+			//get the incoming variables of the edge
+			HashMap<String, TermVariable> in_vars_edge = smtEdgeAnnotations.getInVars();
+			//iterating through all outgoing variables of the edge in order to declare constants and add them to out_constants
+			for (String vname: outgoingVariablesOfEdge.keySet()){
+				//check if this outgoing variable has really been changed or not
+				if (in_vars_edge.containsValue(outgoingVariablesOfEdge.get(vname))){
+					//if variable is also incoming variable then skip it
+					continue;
+				}
+				//create new constant term for variable
+				Term const_Term = makeConstant(outgoingVariablesOfEdge.get(vname));
+				//map new constant to variable name
+				outConstants.put(vname, const_Term);
+				//map out going variable to new constant
+				TermVariable out_var = outgoingVariablesOfEdge.get(vname);
+				formula = m_theory.let(out_var, const_Term, formula);
+				allLetStatementsOfNode.put(const_Term, out_var);
+				newVariables.remove(out_var);
+			}
+		}
+		//Check all remaining variables of the node which are not in or out variables
+		for (TermVariable var: newVariables){
+			Term const_Term = makeConstant(var);
+			formula = m_theory.let(var, const_Term, formula);
+			allLetStatementsOfNode.put(const_Term, var);
+		}
+		SCNodeAnnotations scAnnotations = (SCNodeAnnotations)node.getPayload().getAnnotations().get("SC");
+		if (scAnnotations == null){
+			scAnnotations = new SCNodeAnnotations();
+			node.getPayload().getAnnotations().put("SC", scAnnotations);
+		}
+		scAnnotations.m_constants = allLetStatementsOfNode;
+		return formula;
+	}
+
+	/*returns new constant for variable or
+	 * returns constant that has already been created for this variable before
+	 */
+	private Term makeConstant(TermVariable tv){
+		//new name for constant variable
+		String constName = tv.getName() + "_const";
+		//need a list of sorts of the input parameters of the function
+		Sort[] dummy_Sorts = {};
+		/*faking constant by creating function without input parameters and getting function symbol of newly created fake constant or
+		 * of old fake constant that has already been created before*/
+		FunctionSymbol fsym = m_theory.getFunction(constName, dummy_Sorts);
+		if (fsym == null)
+			fsym = m_theory.createFunction(constName, dummy_Sorts, tv.getSort());
+		//need list of terms for input parameters of function in order to create term out of it
+		Term[] dummyTerms = {};
+		//making constant term and returning it
+		Term const_Term = m_theory.term(fsym, dummyTerms);
+//		const_to_Variable.put(const_Term, tv);
+		m_ConstantsToVariableName.put(const_Term, tv.getName());
+		return const_Term;
+	}
+	
+}

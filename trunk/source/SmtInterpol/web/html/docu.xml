@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<page id="documentation">
+  <name>Documentation</name>
+  <content>
+    <head1>Command Line Interface</head1>
+    <txt><s /> can be used from command line using a <link url="http://smtlib.org">SMTLIB input script</link>.  After downloading the JAR file, you can run <s /> from command line as <verb>java -jar smtinterpol.jar input.smt2</verb>Without input file, <s /> reads from standard input.  This can be used in interactive mode.  According to the standard, <s /> replies to every command unless the user sets the option <tt>:print-success</tt> to <tt>false</tt></txt>
+    <txt>The solver supports the following command line options:</txt>
+    <table>
+      <headrow>
+	<col>Option</col>
+	<col>Value</col>
+	<col>Description</col>
+	<col>Equivalent SMTLIB option</col>
+      </headrow>
+      <row>
+	<col><tt>-q</tt></col>
+	<col>none</col>
+	<col>Do not print debugging and info messages.</col>
+	<col><tt>:set-verbosity 3</tt></col>
+      </row>
+      <row>
+	<col><tt>-v</tt></col>
+	<col>none</col>
+	<col>Print debugging and info messages.</col>
+	<col><tt>:set-verbosity 5</tt></col>
+      </row>
+      <row>
+	<col><tt>-t</tt></col>
+	<col>positive number</col>
+	<col>Set the timeout for a satisfiability check.</col>
+	<col><tt>:timeout </tt>arg</col>
+      </row>
+      <row>
+	<col><tt>-r</tt></col>
+	<col>positive number</col>
+	<col>Set the random seed.</col>
+	<col><tt>:random-seed </tt>arg</col>
+      </row>
+    </table>
+    <head1>API</head1>
+    <txt>See the <link url="doc/index.html">JavaDOC Documentation</link> for details.</txt>
+    <head1>Interpolation</head1>
+    <txt><s /> supports Craig interpolation via an extension of the <link url="http://smtlib.org">SMTLIB language</link>.  Names of terms asserted in the form <verb>(assert (! t :named f))</verb> can be used to describe interpolation partitions.  The syntax for the corresponding interpolation call is <verb>(get-interpolants p*)</verb> where <tt>p</tt> is either the name of a term asserted in the way described above or a conjunction of such names.</txt>
+    <head1>Additional SMTLIB Commands</head1>
+    <txt>Besides the <tt>get-interpolants</tt> command <s /> supports additional non-standard SMTLIB commands.  The following table summarizes these commands and describes their effects.</txt>
+    <table>
+      <headrow>
+	<col>Command</col>
+	<col>Argument(s)</col>
+	<col>Description</col>
+      </headrow>
+      <row>
+	<col><tt>get-interpolants</tt></col>
+	<col>Partition description</col>
+	<col>Compute an inductive sequence of interpolants</col>
+      </row>
+      <row>
+	<col><tt>include</tt></col>
+	<col>File name</col>
+	<col>Include the file in the current solver</col>
+      </row>
+      <row>
+	<col><tt>reset</tt></col>
+	<col>None</col>
+	<col>Reset the whole solver</col>
+      </row>
+      <row>
+	<col><tt>get-model</tt></col>
+	<col>None</col>
+	<col>Get a model for a satisfiable formula</col>
+      </row>
+      <row>
+	<col><tt>simplify</tt></col>
+	<col>Term</col>
+	<col>Interface to the formula simplifier (experimental)</col>
+      </row>
+      <row>
+	<col><tt>timed</tt></col>
+	<col>command(s)</col>
+	<col>Report the duration of the arguments (in seconds)</col>
+      </row>
+    </table>
+    <head1>Extended SMTLIB Logics</head1>
+    <txt><s /> extends the integer logics (QF_LIA, QF_UFLIA) defined by the <link url="http://smtlib.org">SMTLIB standard</link> to close them under interpolation.  The division-by-constant and modulo-by-constant operators are added.</txt>
+    <txt>Additionally, <s /> supports the logic QF_UFLIRA.  This logic combines uninterpreted functions with mixed linear integer and real arithmetic.</txt>
+  </content>
+</page>

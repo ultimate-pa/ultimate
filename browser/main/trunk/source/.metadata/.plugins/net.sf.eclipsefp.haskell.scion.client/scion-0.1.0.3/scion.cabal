@@ -1,0 +1,182 @@
+name:            scion
+version:         0.1.0.3
+license:         BSD3
+license-file:    docs/LICENSE
+author:          Thomas Schilling <nominolo@googlemail.com>
+maintainer:      Thomas Schilling <nominolo@googlemail.com>
+homepage:        http://github.com/nominolo/scion
+synopsis:        Haskell IDE library
+description:
+  Scion is a Haskell library that aims to implement those parts of a
+  Haskell IDE which are independent of a particular front-end.  Scion
+  is based on the GHC API and Cabal.  It provides both a Haskell API and
+  a server for non-Haskell clients such as Emacs and Vim.
+  .
+  See the homepage <http://code.google.com/p/scion-lib> and the README
+  <http://github.com/nominolo/scion/blob/master/README.markdown> for
+  more information.
+
+category:        Development
+stability:       provisional
+build-type:      Simple
+
+cabal-version:   >= 1.6
+extra-source-files: README.markdown
+data-files:
+  emacs/*.el
+  vim_runtime_path/autoload/*.vim
+  vim_runtime_path/ftplugin/*.vim
+  vim_runtime_path/plugin/*.vim
+
+flag testing
+  description: Enable Debugging things like QuickCheck properties, etc.
+  default: False
+
+flag server
+  description: Install the scion-server.
+  default: True
+
+flag cabal_1_8
+
+library
+  build-depends:
+    base         == 4.*,
+    containers   >= 0.2 && < 0.4,
+    directory    == 1.0.*,
+    filepath     == 1.1.*,
+    ghc          >= 6.10 && < 6.13,
+    ghc-paths    == 0.1.*,
+    ghc-syb,
+    ghc-syb-utils,
+    hslogger     == 1.0.*,
+    json         == 0.4.*,
+    multiset     >= 0.1 && < 0.3,
+    time         == 1.1.*,
+    uniplate     ,
+    list-tries ,
+    binary       == 0.5.*,
+    array        >= 0.2 && < 0.4,
+    old-time     == 1.0.*
+
+  if flag(cabal_1_8)
+    build-depends:  Cabal == 1.8.*
+    cpp-options:    -DCABAL_VERSION=108
+  else
+    build-depends:  Cabal == 1.6.*
+    cpp-options:    -DCABAL_VERSION=106
+
+  hs-source-dirs:  lib
+  extensions:      CPP, PatternGuards
+  exposed-modules:
+    Scion.Types,
+    Scion.Types.ExtraInstances,
+    Scion.Types.Notes,
+    Scion.Types.Outline,
+    Scion.Inspect,
+    Scion.Inspect.Find,
+    Scion.Inspect.TypeOf,
+    Scion.Inspect.DefinitionSite,
+    Scion.Inspect.PackageDB,
+    Scion.Utils,
+    Scion.Session,
+    Scion.Cabal,
+    Scion.Ghc,
+    Scion
+
+  if flag(testing)
+    build-depends: QuickCheck == 2.*
+    cpp-options:   -DSCION_DEBUG
+
+  if impl(ghc > 6.11)
+    cpp-options:   -DHAVE_PACKAGE_DB_MODULES
+
+  -- TODO: drop after 6.10.2 is out
+  if impl(ghc >= 6.11.20081113) || impl(ghc >= 6.10.2 && < 6.11)
+    cpp-options:   -DRECOMPILE_BUG_FIXED
+
+  if impl(ghc == 6.10.*)
+    cpp-options:   -DWPINLINE -DGHC_VERSION=610
+
+  if impl(ghc == 6.12.*)
+    cpp-options:   -DGHC_VERSION=612
+
+  ghc-options:  -Wall
+
+executable scion-server
+  if !flag(server)
+    buildable: False
+
+  main-is: Main.hs
+  hs-source-dirs: lib server
+
+  build-depends:
+    -- From the library:
+    base         == 4.*,
+    containers   >= 0.2 && < 0.4,
+    directory    == 1.0.*,
+    filepath     == 1.1.*,
+    ghc          >= 6.10 && < 6.13,
+    ghc-paths    == 0.1.*,
+    ghc-syb,
+    ghc-syb-utils,
+    hslogger     == 1.0.*,
+    json         == 0.4.*,
+    multiset     >= 0.1 && < 0.3,
+    time         == 1.1.*,
+    list-tries ,
+    binary       == 0.5.*,
+    array        >= 0.2 && < 0.4,
+    old-time     == 1.0.*
+
+  if flag(cabal_1_8)
+    build-depends:  Cabal == 1.8.*
+    cpp-options:    -DCABAL_VERSION=108
+  else
+    build-depends:  Cabal == 1.6.*
+    cpp-options:    -DCABAL_VERSION=106
+  
+  if flag(server)
+    build-depends:
+      -- Server only
+      bytestring   == 0.9.*,
+      network      >= 2.1 && < 2.3,
+      network-bytestring == 0.1.*,
+      utf8-string  == 0.3.*
+
+  other-modules:
+    Scion
+    Scion.Cabal
+    Scion.Inspect
+    Scion.Inspect.DefinitionSite
+    Scion.Session
+    Scion.Types
+    Scion.Types.Notes
+    Scion.Types.Outline
+    Scion.Utils
+    Scion.Ghc
+    
+
+    Scion.Server.Commands
+    Scion.Server.ConnectionIO
+    Scion.Server.Generic
+    Scion.Server.Protocol
+                 
+  ghc-options: -Wall
+  extensions:      CPP, PatternGuards
+
+  if flag(testing)
+    build-depends: QuickCheck == 2.*
+    cpp-options:   -DSCION_DEBUG
+
+  if impl(ghc > 6.11)
+    cpp-options:   -DHAVE_PACKAGE_DB_MODULES
+
+  -- TODO: drop after 6.10.2 is out
+  if impl(ghc >= 6.11.20081113) || impl(ghc >= 6.10.2 && < 6.11)
+    cpp-options:   -DRECOMPILE_BUG_FIXED
+
+  if impl(ghc == 6.10.*)
+    cpp-options:   -DWPINLINE -DGHC_VERSION=610
+
+  if impl(ghc == 6.12.*)
+    cpp-options:   -DGHC_VERSION=612

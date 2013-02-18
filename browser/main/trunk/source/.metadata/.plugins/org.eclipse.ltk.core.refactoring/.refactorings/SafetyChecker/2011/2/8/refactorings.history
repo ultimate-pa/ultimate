@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<session version="1.0">
+<refactoring comment="Copy 1 elements(s) to &apos;LazyAbstraction/src/local.stalin.plugins.generator.lazyabstraction&apos;&#x0A;- Original project: &apos;SafetyChecker&apos;&#x0A;- Destination element: &apos;LazyAbstraction/src/local.stalin.plugins.generator.lazyabstraction&apos;&#x0A;- Original element: &apos;local.stalin.plugins.safetychecker.SCNodeAnnotations.java&apos;" description="Copy compilation unit" destination="=LazyAbstraction/src&lt;local.stalin.plugins.generator.lazyabstraction" element1="/src&lt;local.stalin.plugins.safetychecker{SCNodeAnnotations.java" files="0" flags="589830" folders="0" id="org.eclipse.jdt.ui.copy" policy="org.eclipse.jdt.ui.copyResources" stamp="1298658296593" units="1" version="1.0"/>
+</session>

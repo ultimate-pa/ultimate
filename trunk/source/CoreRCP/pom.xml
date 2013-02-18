@@ -1,0 +1,81 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+
+	<parent>
+		<artifactId>MavenParentUltimate</artifactId>
+		<groupId>Ultimate</groupId>
+		<version>0.0.1</version>
+		<relativePath>../BA_MavenParentUltimate/pom.xml</relativePath>
+	</parent>
+
+	<groupId>CoreRCP</groupId>
+	<artifactId>UltimateCore</artifactId>
+	<version>0.0.1</version>
+	<packaging>eclipse-plugin</packaging>
+
+	<build>
+		<plugins>
+			<plugin>
+				<artifactId>maven-antrun-plugin</artifactId>
+				<version>1.7</version>
+				<executions>
+					<execution>
+						<id>generate parser sources</id>
+						<phase>generate-sources</phase>
+						<configuration>
+							<tasks>
+								<echo>CoreRCP: workspaceDir is ${workspaceDir}</echo>
+								<echo>CoreRCP: cupDir is ${cupDir}</echo>
+								<echo>CoreRCP: astbuilderBinaries is ${astbuilderBinaries}</echo>
+
+								<java classname="de.uni_freiburg.informatik.ultimate.astbuilder.Main"
+									classpath="${astbuilderBinaries}:${cupDir}" fork="true" dir="${boogieastDir}">
+									<arg value="-ultimate" />
+									<arg value="Boogie.ast" />
+								</java>
+
+								<exec executable="xjc">
+									<arg
+										line="-d '${workspaceDir}/CoreRCP/src' -p de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain '${toolchainDir}/toolchain.xsd'" />
+								</exec>
+
+							</tasks>
+						</configuration>
+						<goals>
+							<goal>run</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<artifactId>maven-clean-plugin</artifactId>
+				<version>2.4.1</version>
+				<configuration>
+					<filesets>
+						<fileset>
+							<directory>${boogieastDir}</directory>
+							<includes>
+								<include>*.java</include>
+							</includes>
+						</fileset>
+						<fileset>
+							<directory>${workspaceDir}/CoreRCP/src/de/uni_freiburg/informatik/ultimate/core/coreplugin/toolchain</directory>
+							<includes>
+								<include>ModelType.java</include>
+								<include>ObjectFactory.java</include>
+								<include>PluginType.java</include>
+								<include>SerializeType.java</include>
+								<include>SubchainType.java</include>
+								<include>ToolchainListType.java</include>
+								<include>DropmodelType.java</include>
+								<include>ModelIdOnlyType.java</include>
+							</includes>
+						</fileset>
+					</filesets>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
+
+</project>

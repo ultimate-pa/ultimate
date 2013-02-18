@@ -1,0 +1,15 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: TraceAbstraction
+Bundle-SymbolicName: TraceAbstraction;singleton:=true
+Bundle-Version: 1.0.0
+Bundle-Activator: local.stalin.plugins.generator.traceabstraction.Activator
+Require-Bundle: org.eclipse.core.runtime,
+ STALINCore,
+ NestedWordAutomata,
+ SMTInterface;bundle-version="1.0.0",
+ RCFGBuilder;bundle-version="1.0.0"
+Bundle-ActivationPolicy: lazy
+Bundle-RequiredExecutionEnvironment: JavaSE-1.6
+Export-Package: local.stalin.plugins.generator.traceabstraction,
+ local.stalin.plugins.generator.traceabstraction.preferences

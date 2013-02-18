@@ -1,0 +1,10 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: SMTSolverBridge
+Bundle-SymbolicName: SMTSolverBridge
+Bundle-Version: 0.0.1
+Export-Package: de.uni_freiburg.informatik.ultimate.smtsolver.external
+Require-Bundle: JavaCup,
+ UltimateCore,
+ SmtInterpol,
+ Library-log4j

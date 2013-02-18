@@ -1,0 +1,15 @@
+#Thu May 10 03:24:26 CEST 2012
+file_export_version=3.0
+/instance/UltimateCore/ultimate.logging.tools=info
+\!/instance/UltimateCore=
+/instance/UltimateCore/ultimate.logging.tooldetails=SmtInterpol\=Warn;SMTInterface\=Warn;Groundifier\=Warn;
+@UltimateCore=0.0.1
+/instance/UltimateCore/ultimate.logging.plugins=info
+#Thu May 10 03:24:26 CEST 2012
+file_export_version=3.0
+\!/configuration/CFGReducer=
+/configuration/CFGReducer/SelectedSolver=0
+#Thu May 10 03:24:26 CEST 2012
+file_export_version=3.0
+/configuration/RCFGBuilder/Timeout=30
+\!/configuration/RCFGBuilder=

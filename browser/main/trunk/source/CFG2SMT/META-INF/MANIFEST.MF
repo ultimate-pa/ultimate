@@ -1,0 +1,16 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: CFG2SMT Plug-in
+Bundle-SymbolicName: CFG2SMT;singleton:=true
+Bundle-Version: 1.0.0
+Bundle-Activator: local.stalin.boogie.cfg2smt.Activator
+Require-Bundle: STALINCore,
+ org.eclipse.ui,
+ org.eclipse.core.runtime,
+ CFGBuilder;bundle-version="1.0.0"
+Bundle-ActivationPolicy: lazy
+Export-Package: local.stalin.boogie.cfg2smt
+Import-Package: local.stalin.boogie.cfg2smt,
+ local.stalin.boogie.type
+Bundle-RequiredExecutionEnvironment: JavaSE-1.6
+

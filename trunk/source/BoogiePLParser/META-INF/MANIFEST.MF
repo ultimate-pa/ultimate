@@ -1,0 +1,21 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: BoogieParser Plug-in
+Bundle-SymbolicName: BoogieParser;singleton:=true
+Bundle-Version: 0.0.1
+Bundle-Activator: de.uni_freiburg.informatik.ultimate.boogie.parser.Activator
+Bundle-Vendor: Ultimate@Uni
+Require-Bundle: UltimateCore,
+ Library-log4j,
+ JavaCup
+Bundle-ActivationPolicy: lazy
+Bundle-RequiredExecutionEnvironment: JavaSE-1.6
+Export-Package: de.uni_freiburg.informatik.ultimate.boogie.parser;
+  uses:="org.eclipse.core.runtime,
+   java_cup.runtime,
+   org.apache.log4j,
+   de.uni_freiburg.informatik.ultimate.model.boogie.ast,
+   de.uni_freiburg.informatik.ultimate.model,
+   org.osgi.framework,
+   de.uni_freiburg.informatik.ultimate.ep.interfaces"
+

@@ -1,0 +1,8 @@
+1298998844377	Rename local variable 'oldAnnotation'
+1299003508325	Rename field 'returnToUnwind'
+1299247756634	Rename method 'transformAssertion'
+1299251092668	Extract method 'abortCondition'
+1299259006909	Rename local variable 'terms'
+1299272829076	Rename field 'node'
+1299333186653	Extract method 'updateVariableToTerm'
+1299333208196	Rename method 'updateVariableToTerm'

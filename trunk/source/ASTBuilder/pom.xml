@@ -1,0 +1,58 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<groupId>ASTBuilder</groupId>
+	<artifactId>ASTBuilder</artifactId>
+	<packaging>eclipse-plugin</packaging>
+  
+	<parent>
+		<groupId>Ultimate</groupId>
+		<artifactId>MavenParentUltimate</artifactId>
+		<version>0.0.1</version>
+		<relativePath>../BA_MavenParentUltimate</relativePath>
+	</parent>
+  
+	<build>
+		<plugins>
+			<plugin>
+				<artifactId>maven-antrun-plugin</artifactId>
+				<version>1.7</version>
+				<executions>
+					<execution>
+						<id>generate parser sources</id>
+						<phase>generate-sources</phase>
+						<configuration>
+							<tasks>
+								<echo>ASTBuilder: workspaceDir is ${workspaceDir}</echo>
+								<echo>ASTBuilder: cupDir is ${cupDir}</echo>
+								<echo>ASTBuilder: astbuilderDir is ${astbuilderDir}</echo>
+						        
+						        <java classname="java_cup.Main" classpath="${cupDir}" fork="true" dir="${astbuilderDir}">
+						                <arg value="parser.cup" />
+						        </java>
+							</tasks>
+						</configuration>
+						<goals>
+							<goal>run</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<artifactId>maven-clean-plugin</artifactId>
+				<version>2.4.1</version>
+				<configuration>
+					<filesets>
+						<fileset>
+							<directory>${astbuilderDir}</directory>
+							<includes>
+								<include>parser.java</include>
+								<include>sym.java</include>
+							</includes>
+						</fileset>
+					</filesets>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>  
+</project>

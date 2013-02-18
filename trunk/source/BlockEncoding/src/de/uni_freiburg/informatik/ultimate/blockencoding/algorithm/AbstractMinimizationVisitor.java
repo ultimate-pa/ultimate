@@ -1,0 +1,215 @@
+/**
+ * 
+ */
+package de.uni_freiburg.informatik.ultimate.blockencoding.algorithm;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+
+import de.uni_freiburg.informatik.ultimate.blockencoding.algorithm.visitor.IMinimizationVisitor;
+import de.uni_freiburg.informatik.ultimate.blockencoding.model.BasicEdge;
+import de.uni_freiburg.informatik.ultimate.blockencoding.model.MinimizedNode;
+import de.uni_freiburg.informatik.ultimate.blockencoding.model.interfaces.IBasicEdge;
+import de.uni_freiburg.informatik.ultimate.blockencoding.model.interfaces.IMinimizedEdge;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootEdge;
+
+/**
+ * This abstract class, is the base class for visitor who want to minimize the
+ * CFG. It traverses the CFG, according to DFS and makes sure that every edge is
+ * only visited once. <br>
+ * While traversing the RCFG, it builds up the new data model (->MinimizedNode)
+ * and initializes the nodes, if this had not happen before <br>
+ * It provides for subclasses an abstract method, which they could implement to
+ * apply the minimization rules.
+ * 
+ * @author Stefan Wissert
+ * 
+ */
+public abstract class AbstractMinimizationVisitor implements
+		IMinimizationVisitor {
+
+	protected HashSet<IMinimizedEdge> visitedEdges;
+
+	protected HashSet<MinimizedNode> notReachableNodes;
+
+	private HashMap<ProgramPoint, MinimizedNode> referenceNodeMap;
+
+	private HashMap<CodeBlock, IMinimizedEdge> referenceEdgeMap;
+
+	/**
+	 * Constructor which is called by the subclasses, to initialize the data
+	 * structures
+	 */
+	protected AbstractMinimizationVisitor() {
+		this.visitedEdges = new HashSet<IMinimizedEdge>();
+		this.notReachableNodes = new HashSet<MinimizedNode>();
+		referenceNodeMap = new HashMap<ProgramPoint, MinimizedNode>();
+		referenceEdgeMap = new HashMap<CodeBlock, IMinimizedEdge>();
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see
+	 * de.uni_freiburg.informatik.ultimate.blockencoding.interfaces.visitor.
+	 * IRCFGVisitor
+	 * #visitNode(de.uni_freiburg.informatik.ultimate.blockencoding.model
+	 * .MinimizedNode)
+	 */
+	@Override
+	public void visitNode(MinimizedNode node) {
+		// Remark 14.02.2012
+		// It can happen that, we have already an instance of an MinimizedNode,
+		// this must be used here. So ask here our referenceNodeMap.
+		if (!referenceNodeMap.containsKey(node.getOriginalNode())) {
+			referenceNodeMap.put(node.getOriginalNode(), node);
+		}
+		visitedEdges.clear();
+		notReachableNodes.clear();
+		internalVisitNode(node);
+	}
+
+	/**
+	 * The internally used visit-Method. This is necessary because we need to
+	 * reset the visitedEdges-Set
+	 * 
+	 * @param node
+	 *            the node to visit
+	 */
+	private void internalVisitNode(MinimizedNode node) {
+
+		// While traversing we are also building up the new model
+		if (node.getOutgoingEdges() == null) {
+			initializeOutgoingEdges(node);
+		}
+
+		if (node.getIncomingEdges() == null) {
+			initializeIncomingEdges(node);
+		}
+
+		// We have no outgoing edges, so we reached an end of the recursion
+		if (node.getOutgoingEdges().size() == 0) {
+			// Special Case: The last node can have multiple incoming nodes
+			// --> so a parallel merge is possible, we should apply the rules
+			// here!
+			applyMinimizationRules(node);
+			return;
+		}
+
+		// abstract method where the minimize visitor can apply there rules
+		MinimizedNode[] reVisitNodes = applyMinimizationRules(node);
+		if (reVisitNodes.length > 0) {
+			for (MinimizedNode toVisitNode : reVisitNodes) {
+				internalVisitNode(toVisitNode);
+			}
+
+		} else {
+			ArrayList<IMinimizedEdge> edgeList = new ArrayList<IMinimizedEdge>(
+					node.getMinimalOutgoingEdgeLevel());
+			for (IMinimizedEdge edge : edgeList) {
+				// We ignore Call- and Return-Edges
+				// They will be processed later
+				if (edge.isBasicEdge()
+						&& (((IBasicEdge) edge).getOriginalEdge() instanceof Call || ((IBasicEdge) edge)
+								.getOriginalEdge() instanceof Return)) {
+					continue;
+				}
+				if (!visitedEdges.contains(edge)) {
+					visitedEdges.add(edge);
+					if (edge.getTarget() != null) {
+						internalVisitNode(edge.getTarget());
+					}
+				}
+			}
+		}
+
+	}
+
+	/**
+	 * Abstract method, which should be implemented by the minimization
+	 * Visitors.
+	 * 
+	 * @param node
+	 *            the node to check if minimization is possible
+	 * @return an array of nodes which should be revisited, because we changed
+	 *         their edges
+	 */
+	protected abstract MinimizedNode[] applyMinimizationRules(MinimizedNode node);
+
+	/**
+	 * @param node
+	 */
+	protected void initializeOutgoingEdges(MinimizedNode node) {
+		// OutgoingEdges of MinimizedNode are not initialized
+		ArrayList<IMinimizedEdge> outEdges = new ArrayList<IMinimizedEdge>();
+		for (RCFGEdge edge : node.getOriginalNode().getOutgoingEdges()) {
+			outEdges.add(getReferencedMinEdge((CodeBlock) edge, node,
+					getReferencedMinNode((ProgramPoint) edge.getTarget())));
+		}
+		node.addNewOutgoingEdgeLevel(outEdges);
+	}
+
+	/**
+	 * @param node
+	 */
+	protected void initializeIncomingEdges(MinimizedNode node) {
+		// IncomingEdges of MinimizedNode are not initialized
+		ArrayList<IMinimizedEdge> inEdges = new ArrayList<IMinimizedEdge>();
+		for (RCFGEdge edge : node.getOriginalNode().getIncomingEdges()) {
+			if (edge instanceof RootEdge) {
+				continue;
+			}
+			inEdges.add(getReferencedMinEdge((CodeBlock) edge,
+					getReferencedMinNode((ProgramPoint) edge.getSource()), node));
+		}
+		node.addNewIncomingEdgeLevel(inEdges);
+	}
+
+	/**
+	 * @param originalEdge
+	 * @param source
+	 * @param target
+	 * @return
+	 */
+	private IMinimizedEdge getReferencedMinEdge(CodeBlock originalEdge,
+			MinimizedNode source, MinimizedNode target) {
+		if (!referenceEdgeMap.containsKey(originalEdge)) {
+			referenceEdgeMap.put(originalEdge, new BasicEdge(originalEdge,
+					source, target));
+		}
+		return referenceEdgeMap.get(originalEdge);
+	}
+
+	/**
+	 * @param originalNode
+	 * @return
+	 */
+	private MinimizedNode getReferencedMinNode(ProgramPoint originalNode) {
+		if (!referenceNodeMap.containsKey(originalNode)) {
+			referenceNodeMap.put(originalNode, new MinimizedNode(originalNode));
+		}
+		return referenceNodeMap.get(originalNode);
+	}
+
+	/**
+	 * If we have a call edge to an method entry (Ultimate.START), we create
+	 * while visiting one method, an MinimizedNode. We have to use it later,
+	 * since we want to keep our references.
+	 * 
+	 * @param methodEntry
+	 * @return null if there is no referenced node.
+	 */
+	public MinimizedNode getReferencedMethodEntryNode(ProgramPoint methodEntry) {
+		if (referenceNodeMap.containsKey(methodEntry)) {
+			return referenceNodeMap.get(methodEntry);
+		}
+		return null;
+	}
+
+}

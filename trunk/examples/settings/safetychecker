@@ -1,0 +1,13 @@
+#Fri Aug 10 13:43:02 EEST 2012
+file_export_version=3.0
+\!/configuration/UltimateCore=
+/configuration/UltimateCore/showresultnotifierpopup=true
+#Fri Aug 10 13:43:02 EEST 2012
+file_export_version=3.0
+/configuration/CFGReducer/MergeParallelEdges=true
+\!/configuration/CFGReducer=
+/configuration/CFGReducer/IdTagEdges=true
+#Fri Aug 10 13:43:02 EEST 2012
+file_export_version=3.0
+\!/configuration/ErrorLocationGenerator=
+/configuration/ErrorLocationGenerator/CheckValiditityOfErrorEdge=true

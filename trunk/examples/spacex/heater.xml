@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<sspaceex xmlns="http://www-verimag.imag.fr/xml-namespaces/sspaceex" version="0.2" math="SpaceEx">
+  <component id="heater">
+    <param name="T" type="real" local="false" d1="1" d2="1" dynamics="any" />
+    <param name="time" type="real" local="false" d1="1" d2="1" dynamics="any" />
+    <location id="1" name="on" x="174.5" y="225.5" width="167.0" height="93.0">
+      <invariant>T &gt;= 5.0 &amp; T &lt;= 20.0</invariant>
+      <flow>T' == 1.0, time' == 1.0</flow>
+    </location>
+    <location id="2" name="off" x="418.0" y="228.0" width="116.0" height="84.0">
+      <invariant>T &gt;= 5.0 &amp; T &lt;= 20.0</invariant>
+      <flow>T' == 1.0, time' == 1.0</flow>
+    </location>
+    <transition source="1" target="2">
+      <guard>T&gt;=15.0</guard>
+      <labelposition x="-27.0" y="-69.0" />
+      <middlepoint x="299.75" y="197.75" />
+    </transition>
+    <transition source="2" target="1">
+      <guard>T&lt;=10.0</guard>
+      <labelposition x="-21.0" y="28.0" />
+      <middlepoint x="302.75" y="254.25" />
+    </transition>
+  </component>
+  <component id="system">
+    <param name="T" type="real" local="false" d1="1" d2="1" dynamics="any" controlled="true" />
+    <param name="time" type="real" local="false" d1="1" d2="1" dynamics="any" controlled="true" />
+    <bind component="heater" as="heater_1">
+      <map key="T">T</map>
+      <map key="time">time</map>
+    </bind>
+  </component>
+</sspaceex>
+

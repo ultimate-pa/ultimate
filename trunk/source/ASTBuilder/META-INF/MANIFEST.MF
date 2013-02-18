@@ -1,0 +1,7 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: ASTBuilder
+Bundle-SymbolicName: ASTBuilder
+Bundle-Version: 0.0.1
+Require-Bundle: JavaCup
+Export-Package: de.uni_freiburg.informatik.ultimate.astbuilder
