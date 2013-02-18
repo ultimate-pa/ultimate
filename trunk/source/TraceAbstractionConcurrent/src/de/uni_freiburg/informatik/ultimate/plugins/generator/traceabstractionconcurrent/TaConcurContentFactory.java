@@ -13,20 +13,20 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbstractCegarLoop;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.TAContentFactory;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.ISLPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 
-public class TaConcurContentFactory extends TAContentFactory {
+public class TaConcurContentFactory extends PredicateFactory {
 
 	public TaConcurContentFactory(Map<String, Map<String, ProgramPoint>> locNodes,
 			AbstractCegarLoop abstractCegarLoop, SmtManager theory,
 			TAPreferences taPrefs,
 			boolean hoareAnnotation,
 			boolean interprocedural) {
-		super(locNodes, abstractCegarLoop, theory, taPrefs);
+		super(theory, taPrefs);
 		// TODO Auto-generated constructor stub
 	}
 	

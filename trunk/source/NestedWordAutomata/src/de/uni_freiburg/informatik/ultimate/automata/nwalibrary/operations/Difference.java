@@ -80,7 +80,13 @@ public class Difference<LETTER,STATE> extends DoubleDeckerBuilder<LETTER,STATE>
 	private final Map<STATE,DifferenceState<LETTER,STATE>> res2diff =
 		new HashMap<STATE, DifferenceState<LETTER,STATE>>();
 	
-	private final StateFactory<STATE> contentFactory;
+	/**
+	 * StateFactory used for the construction of new states. This is _NOT_ the
+	 * state factory relayed to the new automaton.
+	 * Necessary because the Automizer needs a special StateFactory during
+	 * abstraction refinement (for computation of HoareAnnotation).
+	 */
+	private final StateFactory<STATE> m_StateFactoryConstruction;
 	
 	
 //	private INestedWordAutomaton<LETTER,DeterminizedState<LETTER,STATE>> 
@@ -231,10 +237,11 @@ public class Difference<LETTER,STATE> extends DoubleDeckerBuilder<LETTER,STATE>
 			INestedWordAutomaton<LETTER,STATE> minuend,
 			INestedWordAutomaton<LETTER,STATE> subtrahend,
 			IStateDeterminizer<LETTER,STATE> stateDeterminizer,
+			StateFactory<STATE> stateFactory,
 			boolean minimize,
 			boolean subtrahendSigmaStarClosed) throws OperationCanceledException {
 		this.m_subtrahendSigmaStarClosed = subtrahendSigmaStarClosed;
-		contentFactory = minuend.getStateFactory();
+		m_StateFactoryConstruction = stateFactory;
 		this.minuend = minuend;
 		this.subtrahend = subtrahend;
 		s_Logger.info(startMessage());
@@ -274,7 +281,7 @@ public class Difference<LETTER,STATE> extends DoubleDeckerBuilder<LETTER,STATE>
 			INestedWordAutomaton<LETTER,STATE> minuend,
 			INestedWordAutomaton<LETTER,STATE> subtrahend) throws OperationCanceledException {
 		this.m_subtrahendSigmaStarClosed = false;
-		contentFactory = minuend.getStateFactory();
+		m_StateFactoryConstruction = minuend.getStateFactory();
 		this.minuend = minuend;
 		this.subtrahend = subtrahend;
 		s_Logger.info(startMessage());
@@ -329,9 +336,9 @@ public class Difference<LETTER,STATE> extends DoubleDeckerBuilder<LETTER,STATE>
 											!detState.containsFinal();
 			DifferenceState<LETTER,STATE> diffState = 
 				new DifferenceState<LETTER,STATE>(minuState, detState, isFinal);
-			STATE resState = contentFactory.intersection(
+			STATE resState = m_StateFactoryConstruction.intersection(
 					diffState.getMinuendState(), 
-					diffState.getSubtrahendDeterminizedState().getContent(contentFactory));
+					diffState.getSubtrahendDeterminizedState().getContent(minuend.getStateFactory()));
 			m_TraversedNwa.addState(true, diffState.isFinal(), resState);
 			diff2res.put(diffState,resState);
 			res2diff.put(resState, diffState);
@@ -533,9 +540,9 @@ public class Difference<LETTER,STATE> extends DoubleDeckerBuilder<LETTER,STATE>
 			return diff2res.get(diffState);
 		}
 		else {
-			STATE resState = contentFactory.intersection(
+			STATE resState = m_StateFactoryConstruction.intersection(
 					diffState.getMinuendState(), 
-					diffState.getSubtrahendDeterminizedState().getContent(contentFactory));
+					diffState.getSubtrahendDeterminizedState().getContent(minuend.getStateFactory()));
 			m_TraversedNwa.addState(false, diffState.isFinal(), resState);
 			diff2res.put(diffState,resState);
 			res2diff.put(resState,diffState);

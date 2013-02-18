@@ -65,7 +65,7 @@ public class UnknownState implements ISLPredicate {
 	
 	@Override
 	public Term getFormula() {
-		throw new UnsupportedOperationException();
+		return SmtManager.getDontCareTerm();
 	}
 
 	@Override

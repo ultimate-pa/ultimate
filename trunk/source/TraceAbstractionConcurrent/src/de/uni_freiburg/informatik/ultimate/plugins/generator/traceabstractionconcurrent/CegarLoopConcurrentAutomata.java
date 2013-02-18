@@ -10,7 +10,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Roo
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.TAPreferences.Artifact;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.BasicCegarLoop;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.TAContentFactory;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 
@@ -33,9 +33,7 @@ public class CegarLoopConcurrentAutomata extends BasicCegarLoop {
 	
 	@Override
 	protected void getInitialAbstraction() {
-		StateFactory<IPredicate> predicateFactory = new TAContentFactory(
-				m_RootNode.getRootAnnot().getProgramPoints(),
-				this,
+		StateFactory<IPredicate> predicateFactory = new PredicateFactory(
 				super.m_SmtManager,
 				m_Pref);
 		CFG2Automaton cFG2NestedWordAutomaton =

@@ -72,6 +72,15 @@ public class MinimizeSevpa<LETTER,STATE> implements IOperation {
 	private final boolean m_splitAllReturnsHier = false;
 	/* EXPERIMENTAL END */
 	
+	
+	/**
+	 * StateFactory used for the construction of new states. This is _NOT_ the
+	 * state factory relayed to the new automaton.
+	 * Necessary because the Automizer needs a special StateFactory during
+	 * abstraction refinement (for computation of HoareAnnotation).
+	 */
+	private final StateFactory<STATE> m_StateFactoryConstruction;
+	
 	/**
 	 * creates a copy of operand where non-reachable states are omitted
 	 * 
@@ -80,7 +89,7 @@ public class MinimizeSevpa<LETTER,STATE> implements IOperation {
 	 */
 	public MinimizeSevpa(INestedWordAutomaton<LETTER,STATE> operand)
 			throws OperationCanceledException {
-		this(operand, null, true, false);
+		this(operand, null, true, false, operand.getStateFactory());
 	}
 	
 	/**
@@ -96,11 +105,13 @@ public class MinimizeSevpa<LETTER,STATE> implements IOperation {
 			final INestedWordAutomaton<LETTER,STATE> operand,
 			Collection<Set<STATE>> equivalenceClasses,
 			final boolean removeUnreachables,
-			final boolean removeDeadEnds)
+			final boolean removeDeadEnds,
+			StateFactory<STATE> stateFactoryConstruction)
 					throws OperationCanceledException {
 		this.m_operand = operand;
 		this.m_removeUnreachables = removeUnreachables;
 		this.m_removeDeadEnds = removeDeadEnds;
+		this.m_StateFactoryConstruction = stateFactoryConstruction;
 		
 		// if no preprocessing is considered, no states can be removed there
 		this.m_noStatesRemoved = 
@@ -199,7 +210,7 @@ public class MinimizeSevpa<LETTER,STATE> implements IOperation {
 						m_operand.getStateFactory());
 		
 		// (only) state for the automaton
-		STATE state = m_operand.getStateFactory().minimize(
+		STATE state = m_StateFactoryConstruction.minimize(
 						states.getTrivialAutomatonStates());
 		result.addState(true, false, state);
 		
@@ -1715,8 +1726,8 @@ public class MinimizeSevpa<LETTER,STATE> implements IOperation {
 		/**
 		 * creates new state as merge of all states in this equivalence class
 		 */
-		void setUpRepresentative(StateFactory<STATE> stateFactory) {
-			m_representative = stateFactory.minimize(m_collection);
+		void setUpRepresentative() {
+			m_representative = m_StateFactoryConstruction.minimize(m_collection);
 		}
 		
 		/**
@@ -1857,7 +1868,7 @@ public class MinimizeSevpa<LETTER,STATE> implements IOperation {
 			
 			// inserts a new state with sensible naming
 			for (EquivalenceClass ec : m_equivalenceClasses) {
-				ec.setUpRepresentative(m_parentOperand.getStateFactory());
+				ec.setUpRepresentative();
 			}
 		}
 		

@@ -108,7 +108,8 @@ public class SmtManager {
 	public final static boolean m_AddDebugInformation = false;
 	
 	
-	public static Term m_DontCareTerm;
+	protected static Term m_DontCareTerm;
+	protected static Term m_EmptyStackTerm;
 	protected static String[] m_NoProcedure = new String[0];
 	protected static Set<BoogieVar> m_EmptyVars = new HashSet<BoogieVar>(0);
 	
@@ -118,6 +119,7 @@ public class SmtManager {
 					boolean dumpFormulaToFile,
 					String dumpPath) {
 		m_DontCareTerm = new AuxilliaryTerm("don't care");
+		m_EmptyStackTerm = new AuxilliaryTerm("emptyStack");
 		m_Smt2Boogie = smt2Boogie;
 		m_Script = m_Smt2Boogie.getScript();
 		m_GlobalVars = globalVars;
@@ -145,6 +147,10 @@ public class SmtManager {
 	
 	private Term True() {
 		return m_Script.term("true");
+	}
+	
+	public static Term getDontCareTerm() {
+		return m_DontCareTerm;
 	}
 	
 
@@ -415,7 +421,7 @@ public class SmtManager {
 		Term term = m_Script.term("true");
 		for (IPredicate p : preds) {
 			if (isDontCare(p)) {
-				assert false;
+				return new TermVarsProc(m_DontCareTerm, m_EmptyVars, m_NoProcedure, m_DontCareTerm);
 			}
 			vars.addAll(p.getVars());
 			procs.addAll(Arrays.asList(p.getProcedures()));
@@ -2853,6 +2859,15 @@ public class SmtManager {
 	public UnknownState newDontCarePredicate(ProgramPoint pp) {
 		UnknownState pred = new UnknownState(pp, m_SerialNumber++);
 		return pred;
+	}
+	
+	public ISLPredicate newEmptyStackPredicate() {
+		ProgramPoint pp = new ProgramPoint("noCaller", "noCaller", false, 
+				null, null, getScript());
+//		m_SmtManager.getScript().variable(
+//	"emptyStack", m_SmtManager.getScript().sort("Bool"));
+		return newSPredicate(pp, m_EmptyStackTerm, m_NoProcedure, m_EmptyVars, m_EmptyStackTerm);
+		
 	}
 	
 	public SPredicate newTrueSLPredicate(ProgramPoint pp) {
