@@ -127,7 +127,18 @@ public class BoogiePrinterObserver implements IUnmanagedObserver {
 	 * @param expr
 	 *            the expression to print.
 	 * @param precedence
-	 *            TODO: what is precedence?
+	 *            the precedence of the surrounding operator.
+	 *            0: if and only if
+	 *            1: implies
+	 *            3: logical or
+	 *            4: logical and
+	 *            5: comparison  
+	 *            6: bitvec concat
+	 *            7: addition
+	 *            8: multiplication
+	 *            9: unary minus/logical not
+	 *            10: struct/array/bitvector access
+	 *            11: old
 	 */
 	private void appendExpression(StringBuilder sb, Expression expr,
 			int precedence) {
