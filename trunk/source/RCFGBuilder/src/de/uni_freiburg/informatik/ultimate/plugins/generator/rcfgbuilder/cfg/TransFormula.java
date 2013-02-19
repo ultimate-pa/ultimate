@@ -156,7 +156,60 @@ public class TransFormula implements Serializable {
 	}
 	
 
+	private static boolean allVarsContainsFreeVars(
+										Set<TermVariable> allVars, Term term) {
+		Set<TermVariable> freeVars = 
+				new HashSet<TermVariable>(Arrays.asList(term.getFreeVars()));
+		boolean result = true;
+		for (TermVariable tv : freeVars) {
+			if (!allVars.contains(tv)) {
+				s_Logger.error("not in allVars: " + tv);
+				result = false;
+			}
+		}
+		return result;
+	}
 	
+	private static boolean freeVarsContainsAllVars(
+			Set<TermVariable> allVars, Term term) {
+		Set<TermVariable> freeVars = 
+				new HashSet<TermVariable>(Arrays.asList(term.getFreeVars()));
+		boolean result = true;
+		for (TermVariable tv : allVars) {
+			if (!freeVars.contains(tv)) {
+				s_Logger.error("not in allVars: " + tv);
+				result = false;
+			}
+		}
+		return result;
+	}
+	
+	private static boolean freeVarsSubsetInOutAuxBranch(Term term, 
+			Map<BoogieVar, TermVariable> inVars, 
+			Map<BoogieVar, TermVariable> outVars, 
+			Set<TermVariable> aux, Set<TermVariable> branchEncoders) {
+		Set<TermVariable> freeVars = 
+				new HashSet<TermVariable>(Arrays.asList(term.getFreeVars()));
+		boolean result = true;
+		for (TermVariable tv : freeVars) {
+			if (inVars.containsValue(tv)) {
+				continue;
+			}
+			if (outVars.containsValue(tv)) {
+				continue;
+			}
+			if (aux.contains(tv)) {
+				continue;
+			}
+			if (branchEncoders.contains(tv)) {
+				continue;
+			}
+			s_Logger.error("neither in out aux: " + tv);
+			result = false;
+		}
+		return result;
+	}
+
 
 	private boolean inOutAuxIsAll() {
 		boolean result = true;
@@ -270,8 +323,6 @@ public class TransFormula implements Serializable {
 			TermVariable outVar1 = outVars1.get(var);
 			TermVariable inVar1 = inVars1.get(var);
 			
-			
-			
 			if (inVar2 == null) {
 				if (outVar2 == null) {
 					//var does not occur in transFormula2
@@ -282,6 +333,9 @@ public class TransFormula implements Serializable {
 						inVars.put(var, inVar1);
 					}
 				} else {
+					assert (outVar1 != outVar2 && inVar1 != outVar2) : 
+						"accidently same tv is used twice, ask Matthias" +
+						"to implement this case";
 					//var is written but not read in transFormula2
 					if (inVar1 != null) {
 						inVars.put(var, inVar1);
@@ -302,9 +356,14 @@ public class TransFormula implements Serializable {
 						//var modified by both formulas
 						newAuxVars.add(newOutVar1);
 					}
+					assert (outVar1 != inVar2 && outVar1 != outVar2) : 
+						"accidently same tv is used twice, ask Matthias" +
+						"to implement this case";
 				} else if (inVar1 == outVar1) {
 					//var not modified in transFormula1
-					
+					assert (outVar1 != inVar2 && outVar1 != outVar2) : 
+						"accidently same tv is used twice, ask Matthias" +
+						"to implement this case";
 				} else {
 					if (outVar2 != inVar2) {
 						//var modified by both formulas
@@ -312,7 +371,7 @@ public class TransFormula implements Serializable {
 					}
 					String name = var.getIdentifier() + "_In" + serialNumber;
 					TermVariable newInVar = script.variable(
-										name, outVar2.getSort());
+										name, outVar1.getSort());
 					allVars.add(newInVar);
 					allVars.add(newInVar);
 					inVars.put(var, newInVar);
@@ -321,7 +380,40 @@ public class TransFormula implements Serializable {
 				}
 				
 			}
-			
+		}
+		
+		for (BoogieVar var : inVars1.keySet()) {
+			if (outVars1.containsKey(var)) {
+				// nothing do to, this var was already considered above 
+			} else {
+				TermVariable outVar2 = outVars2.get(var);
+				TermVariable inVar2 = inVars2.get(var);
+				TermVariable inVar1 = inVars1.get(var);
+				assert (inVar1 != inVar2) : 
+					"accidently same tv is used twice, ask Matthias" +
+					"to implement this case";
+				assert (inVar1 != outVar2) : 
+					"accidently same tv is used twice, ask Matthias" +
+					"to implement this case";
+				if (inVar2 == null) {
+					if (outVar2 == null) {
+						//var does not occur in transFormula2
+						inVars.put(var, inVar1);
+					} else {
+						//var is written but not read in transFormula2
+						inVars.put(var, inVar1);
+					}
+				} else {
+					if (outVar2 == inVar2) {
+						//var not modified in transFormula2
+						inVars.put(var, inVar1);
+					} else {
+						//var modified in transFormula2
+						inVars.put(var, inVar1);
+						newAuxVars.add(inVar2);
+					}
+				}
+			}
 		}
 		
 		TermVariable[] vars = replacees.toArray(new TermVariable[replacees.size()]);
@@ -370,18 +462,8 @@ public class TransFormula implements Serializable {
 				inVars.remove(bv);
 			}
 		}
-		{
-			List<BoogieVar> superfluousOutVars = new ArrayList<BoogieVar>();
-			for (Entry<BoogieVar, TermVariable> entry  : outVars.entrySet()) {
-				if (!occuringVars.contains(entry.getValue())) {
-					superfluousOutVars.add(entry.getKey());
-				}
-			}
-			for (BoogieVar bv : superfluousOutVars) {
-				outVars.remove(bv);
-			}
-
-		}
+		// we may not remove outVars e.g., if x is outvar and formula is true
+		// this means that x is havoced.
 		{
 			List<TermVariable> superfluousAuxVars = new ArrayList<TermVariable>();
 			for (TermVariable tv  : newAuxVars) {
@@ -398,6 +480,8 @@ public class TransFormula implements Serializable {
 		TransFormula result = new TransFormula(formula, inVars, outVars,
 				newAuxVars, newBranchEncoders, infeasibility, closedFormula);
 		result.getAuxVars().addAll(newAuxVars);
+		assert allVarsContainsFreeVars(allVars, formula);
+		assert freeVarsSubsetInOutAuxBranch(formula, inVars, outVars, newAuxVars, newBranchEncoders);
 		return result;
 	 
  }
