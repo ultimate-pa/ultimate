@@ -14,14 +14,12 @@ procedure Elevator()
 {
   // event variables
   var newgoal, start, stop, passed: bool;
-  var newgoal', start', stop', passed': bool;
 
   // constants
   var min, max: int;
 
   // data variables
   var current, goal, dir: int;
-  var current', goal', dir': int;
 
   // clocks
   var c2: int;
@@ -36,9 +34,9 @@ procedure Elevator()
   var qDC2: int;
 
   assume (min < max);
-  goal' := min;
-  current' := min;
-  dir' := 0;
+  goal := min;
+  current := min;
+  dir := 0;
   c2 := 0;
   c3 := 0;
   qCSP := 1;
@@ -46,54 +44,33 @@ procedure Elevator()
   qDC2 := 1;
 
 
-  while (*)
-    invariant ( 
-	      (qCSP == 3 && current' < goal' ==> qDC2 == 2 && dir' == 1) && 
-	      (qCSP == 3 && current' > goal' ==> qDC2 == 2 && dir' == -1) && 
-	min <= current' && current' <= max
-	/* (qCSP == 1 || qCSP == 2 || qCSP == 3) && 
-		(qDC1 == 1 || qDC1 == 2) &&
-		(qDC1 == 1 || qDC2 == 2 || qDC2 == 3) && */
-	     /*(qCSP == 2 ==> current' != goal') &&
-               (qCSP == 3 && current' < goal' ==> dir' == 1 && qDC2 == 2) &&
-               (qCSP == 3 && current' > goal' ==> dir' == -1 && qDC2 == 2) &&
-               (qCSP == 3 && current' == goal' ==> qDC1 == 2 && qDC2 == 3 && c3 == c2) &&
-	       (min <= goal' && goal' <= max)*/
-	/*
-	      (min <= goal' && goal' <= max && min <= current' && current' <= max &&
-	      (qCSP == 1 ==> current' == goal' && qDC2 == 1) && 
-	      (qCSP == 2 ==> qDC2 == 2 && current' != goal') && 
-	      (qCSP == 3 && current' < goal' ==> qDC2 == 2 && dir' == 1) && 
-	      (qCSP == 3 && current' > goal' ==> qDC2 == 2 && dir' == -1) && 
-	      (qCSP == 3 && current' == goal' ==> qDC2 == 3 && qDC1 == 2 && c2 == c3))
-	*/
-    );
+  while (*) 
+     invariant (min <= current && current <= max
+/*      && (qCSP == 1 ==> current == goal && qDC2 == 1)
+      && (qCSP == 2 ==> qDC2 == 2 && current != goal)
+      && (qCSP == 3 && current < goal ==> qDC2 == 2 && dir == 1)
+      && (qCSP == 3 && current > goal ==> qDC2 == 2 && dir == -1)
+      && (qCSP == 3 && current == goal ==> qDC2 == 3 && qDC1 == 2 && c2 == c3)
+*/
+);
   {
-    
     
     havoc newgoal;
     havoc start;
     havoc stop;
     havoc passed;
 
-    current := current';
-    goal := goal';
-    dir := dir';
-    
-    havoc current';
-    havoc goal';
-    havoc dir';
-
     havoc timeIncrease;
     assume (timeIncrease >= 0);
     c2 := c2 + timeIncrease;
     c3 := c3 + timeIncrease;
     if (qDC1 == 2) {
-      assume (c2 <= 3);
+      assume c2 <= 3;
     }
     if (qDC2 == 3) {
-      assume (c3 <= 2);
+      assume c3 <= 2;
     }
+
     
     
     // Automaton CSP, page 99
@@ -120,33 +97,23 @@ procedure Elevator()
 
     // Automaton Z, page 102
     if (!newgoal && !start && !stop && !passed) {
-      assume (current'==current);
-      assume (goal'==goal);
-      assume (dir'==dir);
     }
     else if (newgoal && !start && !stop && !passed) {
-      assume (min <= goal');
-      assume (goal' <= max);
-      assume (goal' != current);
-      assume (current'==current);
-      assume (dir'==dir);
+      havoc goal;
+      assume (min <= goal);
+      assume (goal <= max);
+      assume (goal != current);
     }
     else if (!newgoal && start && !stop && !passed) {
-      assume (goal > current ==> dir'==1);
-      assume (goal < current ==> dir'==-1);
-      assume (current'==current);
-      assume (goal'==goal);
+      havoc dir;
+      assume (goal > current ==> dir==1);
+      assume (goal < current ==> dir==-1);
     }
     else if (!newgoal && !start && stop && !passed) {
       assume (goal == current);
-      assume (current'==current);
-      assume (goal'==goal);
-      assume (dir'==dir); 
     }
     else if (!newgoal && !start && !stop && passed) {
-      assume (current' == current + dir);
-      assume (goal'==goal);
-      assume (dir'==dir); 
+      current := current + dir;
     }
     else {
       assume false;
@@ -171,15 +138,15 @@ procedure Elevator()
     }
     
     // DC Automaton 2, page 139
-    if (qDC2 == 1 && current'==goal') {
+    if (qDC2 == 1 && current==goal) {
     }
-    else if (qDC2 == 1 && current'!=goal') {
+    else if (qDC2 == 1 && current!=goal) {
       qDC2 := 2;
     }
-    else if (qDC2 == 2 && current'!=goal') {
+    else if (qDC2 == 2 && current!=goal) {
       
     }
-    else if (qDC2 == 2 && current'==goal') {
+    else if (qDC2 == 2 && current==goal) {
       qDC2 := 3;
       c3 := 0;
     }
@@ -192,8 +159,6 @@ procedure Elevator()
     else {
        assume false;
     }
-    
-    assert (min <= current' && current' <= max);
   }
 
 }

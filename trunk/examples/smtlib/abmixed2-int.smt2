@@ -1,11 +1,12 @@
 (set-option :produce-proofs true)
+(set-option :interpolant-check-mode true)
 (set-info :source "{
 Test formula which needs AB-mixed interpolators
 Desired Interpolant: (and (<= y x1) (implies (>= y x1) (< (f (- x1 5)) x2)))
 }")
 (set-info :status unsat)
 (set-info :difficulty "{ 0 }")
-(set-logic AUFLIRA)
+(set-logic QF_UFLIA)
 (declare-fun a1 () Int)
 (declare-fun a2 () Int)
 (declare-fun b1 () Int)

@@ -1,6 +1,6 @@
 (set-option :produce-proofs true)
 (set-info :source "{ Simple test for interpolation with quantified formulae }")
-(set-logic AUFLIA)
+(set-logic QF_UFLIA)
 (declare-fun P ( Int) Bool)
 (declare-fun b () Int)
 (assert (! (forall ((x Int)) (P x)) :named IP_0))
