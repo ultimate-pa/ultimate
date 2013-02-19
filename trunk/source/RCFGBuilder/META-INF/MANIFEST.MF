@@ -8,7 +8,8 @@ Require-Bundle: UltimateCore,
  Library-log4j,
  SMTSolverBridge,
  SmtInterpol,
- Library-ModelCheckerUtils
+ Library-ModelCheckerUtils,
+ BoogiePrinter;bundle-version="0.0.1"
 Bundle-ActivationPolicy: lazy
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
 Import-Package: de.uni_freiburg.informatik.ultimate.boogie.type
