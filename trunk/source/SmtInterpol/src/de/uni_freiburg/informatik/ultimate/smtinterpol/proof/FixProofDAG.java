@@ -73,30 +73,34 @@ public class FixProofDAG {
 					new ArrayDeque<ResolutionNode.Antecedent>();
 			boolean deleted = false;
 			boolean changed = false;
-			for (int i = antes.length - 1; !deleted && i >= 0; --i) {
-				if (removed != null) {
-					if (removed.contains(antes[i].pivot)) {
-						// Antecedent has been removed
-						changed = true;
-						continue;
+			
+			Clause primary = null;
+			newprimary: {
+				for (int i = antes.length - 1; i >= 0; --i) {
+					if (removed != null) {
+						if (removed.contains(antes[i].pivot)) {
+							// Antecedent has been removed
+							changed = true;
+							continue;
+						}
+						deleted = removed.contains(antes[i].pivot.negate());
 					}
-					deleted = removed.contains(antes[i].pivot.negate());
+					
+					Clause cls = engine.m_Transformed.get(antes[i].antecedent);
+					if (deleted || !cls.contains(antes[i].pivot)) {
+						primary = cls;
+						changed = true;
+						break newprimary;
+					}
+					
+					if (cls != antes[i].antecedent) {
+						newAntes.addFirst(new Antecedent(antes[i].pivot, cls));
+						changed = true;
+					} else
+						newAntes.addFirst(antes[i]);
 				}
-				Clause cls = engine.m_Transformed.get(antes[i].antecedent);
-				if (cls != antes[i].antecedent) {
-					newAntes.addFirst(new Antecedent(antes[i].pivot, cls));
-					changed = true;
-				} else
-					newAntes.addFirst(antes[i]);
-			}
-			Clause primary;
-			if (!deleted) {
 				primary = engine.m_Transformed.get(rn.getPrimary());
 				changed |= primary != rn.getPrimary();
-			} else {
-				changed = true;
-				Antecedent tmp = newAntes.removeFirst();
-				primary = tmp.antecedent;
 			}
 			if (!changed)
 				engine.m_Transformed.put(m_Cls, m_Cls);
