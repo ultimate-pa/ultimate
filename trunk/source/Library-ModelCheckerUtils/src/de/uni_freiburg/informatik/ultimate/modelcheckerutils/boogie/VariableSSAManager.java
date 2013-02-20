@@ -25,15 +25,31 @@ public class VariableSSAManager {
 	}
 	
 	public static TermVariable getFreshTermVariable(BoogieVar boogieVariable, Sort sort) {
-		TermVariable result = s_Script.variable("v_" + boogieVariable.getIdentifier() + "_" +
-				getNextVariableIndex(boogieVariable), sort);
+		TermVariable result;
+		if (boogieVariable.getProcedure() != null) {
+			result = s_Script.variable("v_" + boogieVariable.getIdentifier()
+					+ "_" + boogieVariable.getProcedure() + "_"
+					+ getNextVariableIndex(boogieVariable), sort);
+		} else {
+			result = s_Script.variable("v_" + boogieVariable.getIdentifier()
+					+ "_" + getNextVariableIndex(boogieVariable), sort);
+		}
 		s_Variable2BoogieVarMap.put(result, boogieVariable);
 		return result;
 	}
 	
 	public static TermVariable getFutureTermVariable(BoogieVar boogieVariable, Sort sort) {
-		TermVariable result = s_Script.variable("v_" + boogieVariable.getIdentifier() + "_" +
-				(getVariableIndex(boogieVariable, false)+1), sort);
+		TermVariable result;
+		if (boogieVariable.getProcedure() != null) {
+			result = s_Script.variable("v_" + boogieVariable.getIdentifier()
+					+ "_" + boogieVariable.getProcedure() + "_"
+					+ (getVariableIndex(boogieVariable, false) + 1), sort);
+		} else {
+			result = s_Script
+					.variable("v_" + boogieVariable.getIdentifier() + "_"
+							+ (getVariableIndex(boogieVariable, false) + 1),
+							sort);
+		}
 		s_Variable2BoogieVarMap.put(result, boogieVariable);
 		return result;
 	}
@@ -42,7 +58,14 @@ public class VariableSSAManager {
 		BoogieVar boogieVariable = s_Variable2BoogieVarMap.get(termVariable);
 		Sort sort = termVariable.getSort();
 		int index = getNextVariableIndex(boogieVariable);
-		TermVariable result =  s_Script.variable("v_" + boogieVariable.getIdentifier() + "_" + index, sort);
+		TermVariable result;
+		if (boogieVariable.getProcedure() != null) {
+			result = s_Script.variable("v_" + boogieVariable.getIdentifier()
+					+ "_" + boogieVariable.getProcedure() + "_" + index, sort);
+		} else {
+			result = s_Script.variable("v_" + boogieVariable.getIdentifier()
+					+ "_" + index, sort);
+		}
 		s_Variable2BoogieVarMap.put(result, boogieVariable);
 		return result;
 	}
