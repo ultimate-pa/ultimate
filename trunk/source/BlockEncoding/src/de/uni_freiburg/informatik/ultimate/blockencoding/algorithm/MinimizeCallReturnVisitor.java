@@ -40,7 +40,7 @@ public class MinimizeCallReturnVisitor implements IMinimizationVisitor {
 	private static Logger s_Logger;
 
 	private MinimizeBranchVisitor mbv;
-	
+
 	private HashSet<MinimizedNode> actualCallStack;
 
 	/**
@@ -61,7 +61,8 @@ public class MinimizeCallReturnVisitor implements IMinimizationVisitor {
 	/**
 	 * Internal recursive visit method.
 	 * 
-	 * @param node the Method-Entry-Node to inspect.
+	 * @param node
+	 *            the Method-Entry-Node to inspect.
 	 */
 	private void internalVisitNode(MinimizedNode node) {
 		// By calling this method, the parameter node is the the method head
@@ -177,8 +178,7 @@ public class MinimizeCallReturnVisitor implements IMinimizationVisitor {
 	/**
 	 * If we can substitute a method by one edge, this method will do this. It
 	 * searches the corresponding Return-Edge for an Call-Edge and composite it
-	 * in a Sequential way. The Summary-Edge is included in a Parallel Way.
-	 * <br>
+	 * in a Sequential way. The Summary-Edge is included in a Parallel Way. <br>
 	 * The new substitution edges are included in at the corresponding nodes.
 	 * 
 	 * @param callEdge
@@ -187,58 +187,66 @@ public class MinimizeCallReturnVisitor implements IMinimizationVisitor {
 	private void minimizeCallReturnEdge(IBasicEdge callEdge,
 			IMinimizedEdge substitute) {
 		MinimizedNode callingNode = (MinimizedNode) callEdge.getSource();
-		if (callingNode.getOutgoingEdges().size() == 2) {
-			// We to find the corresponding SummaryEdge
-			IBasicEdge summaryEdge = null;
-			for (IMinimizedEdge edge : callingNode
-					.getMinimalOutgoingEdgeLevel()) {
-				if (edge.isBasicEdge()
-						&& ((IBasicEdge) edge).getOriginalEdge() instanceof Summary) {
-					summaryEdge = (IBasicEdge) edge;
-					break;
-				}
-			}
-			if (summaryEdge == null) {
-				throw new IllegalStateException(
-						"There should be an summaryEdge");
-			}
-			// Now we search the corresponding ReturnEdge
-			IBasicEdge returnEdge = null;
-			MinimizedNode returningNode = (MinimizedNode) summaryEdge
-					.getTarget();
-			for (IMinimizedEdge edge : returningNode
-					.getMinimalIncomingEdgeLevel()) {
-				if (edge.isBasicEdge()
-						&& ((IBasicEdge) edge).getOriginalEdge() instanceof Return) {
-					returnEdge = (IBasicEdge) edge;
-					break;
-				}
-			}
-			if (returnEdge == null) {
-				throw new IllegalStateException("There should be an returnEdge");
-			}
-			s_Logger.debug("Add Return: " + substitute + " / " + returnEdge);
-			// We build our new Substitute Edge Call + Sub + Return
-			// Later Call and Return have to be replaced (to true)!
-			substitute = new ConjunctionEdge(substitute, returnEdge);
-			// now we add the Summary to the substitution (to false)!
-			s_Logger.debug("Handle Summary: " + summaryEdge + " / "
-					+ substitute);
-			substitute = new DisjunctionEdge(summaryEdge, substitute);
-			// Now substitute the Call / Return / Summary edges
-			callingNode.addNewOutgoingEdgeLevel(Collections
-					.singletonList(substitute));
-			// We have to replace the Return Edge on both sides
-			List<IMinimizedEdge> outgoingList = new ArrayList<IMinimizedEdge>(
-					returnEdge.getSource().getMinimalOutgoingEdgeLevel());
-			outgoingList.remove(returnEdge);
-			returnEdge.getSource().addNewOutgoingEdgeLevel(outgoingList);
+		// Note: It is possible that callingNode has more than two outgoing
+		// edges!
+		// --> we have to care for the edges which should be part of the new
+		// outgoing edge level
+		ArrayList<IMinimizedEdge> callNodeOutEdges = new ArrayList<IMinimizedEdge>(
+				callingNode.getMinimalOutgoingEdgeLevel());
+		// We first remove the call node from this list
+		callNodeOutEdges.remove(callEdge);
 
-			returningNode.addNewIncomingEdgeLevel(Collections
-					.singletonList(substitute));
-		} else {
-			throw new IllegalStateException(
-					"A node with an Call-Edge should have exactly two outgoing nodes!");
+		// We to find the corresponding SummaryEdge
+		IBasicEdge summaryEdge = null;
+		for (IMinimizedEdge edge : callingNode.getMinimalOutgoingEdgeLevel()) {
+			if (edge.isBasicEdge()
+					&& ((IBasicEdge) edge).getOriginalEdge() instanceof Summary) {
+				summaryEdge = (IBasicEdge) edge;
+				break;
+			}
 		}
+		if (summaryEdge == null) {
+			throw new IllegalStateException("There should be an summaryEdge");
+		}
+		// We remove also the summary edge of the new outgoing edge level
+		callNodeOutEdges.remove(summaryEdge);
+
+		// Now we search the corresponding ReturnEdge
+		IBasicEdge returnEdge = null;
+		MinimizedNode returningNode = (MinimizedNode) summaryEdge.getTarget();
+		for (IMinimizedEdge edge : returningNode.getMinimalIncomingEdgeLevel()) {
+			if (edge.isBasicEdge()
+					&& ((IBasicEdge) edge).getOriginalEdge() instanceof Return) {
+				returnEdge = (IBasicEdge) edge;
+				break;
+			}
+		}
+		if (returnEdge == null) {
+			throw new IllegalStateException("There should be an returnEdge");
+		}
+		s_Logger.debug("Add Return: " + substitute + " / " + returnEdge);
+		// We build our new Substitute Edge Call + Sub + Return
+		// Later Call and Return have to be replaced (to true)!
+		substitute = new ConjunctionEdge(substitute, returnEdge);
+		// now we add the Summary to the substitution (to false)!
+		s_Logger.debug("Handle Summary: " + summaryEdge + " / " + substitute);
+		substitute = new DisjunctionEdge(summaryEdge, substitute);
+		// Now substitute the Call / Return / Summary edges
+		callNodeOutEdges.add(substitute);
+		callingNode.addNewOutgoingEdgeLevel(callNodeOutEdges);
+		// We have to replace the Return Edge on both sides
+		List<IMinimizedEdge> outgoingList = new ArrayList<IMinimizedEdge>(
+				returnEdge.getSource().getMinimalOutgoingEdgeLevel());
+		outgoingList.remove(returnEdge);
+		returnEdge.getSource().addNewOutgoingEdgeLevel(outgoingList);
+
+		if (returningNode.getMinimalIncomingEdgeLevel().size() > 2) {
+			s_Logger.warn("Node at this point should only have Return and"
+					+ " Summary as incoming edges!");
+		}
+
+		returningNode.addNewIncomingEdgeLevel(Collections
+				.singletonList(substitute));
+
 	}
 }

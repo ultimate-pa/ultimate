@@ -94,7 +94,13 @@ public class BlockEncoder {
 							+ edge.getTarget());
 					mcrVisitor.visitNode(BlockEncodingAnnotation.getAnnotation(
 							(RootEdge) edge).getNode());
+				}
+			}
+			for (RCFGEdge edge : root.getOutgoingEdges()) {
+				if (edge instanceof RootEdge) {
 					mlVisitor.visitNode(BlockEncodingAnnotation.getAnnotation(
+							(RootEdge) edge).getNode());
+					tmVisitor.visitNode(BlockEncodingAnnotation.getAnnotation(
 							(RootEdge) edge).getNode());
 				}
 			}

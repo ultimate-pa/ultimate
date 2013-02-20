@@ -126,6 +126,7 @@ public class ConversionVisitor implements IMinimizationVisitor {
 			// if not, we generate one
 			initRefMap(node);
 		}
+		
 		// TODO: First we take here the most minimized variant,
 		// later we would choose here the probably best variant (according to
 		// SMTSolver)
@@ -142,6 +143,17 @@ public class ConversionVisitor implements IMinimizationVisitor {
 						+ edge.getSource() + " / Target: " + edge.getTarget());
 				s_Logger.debug("Size of Formula: " + edge.getElementCount());
 				cb = convertMinimizedEdge(edge);
+				if (cb instanceof GotoEdge) {
+					s_Logger.warn("Converted Goto-Edge is given back, this should not happen");
+					// FIXME: Wieso gibt es diesen Fall? Und das muss in der anderen Methode passieren!!!
+					cb = new StatementSequence((ProgramPoint) cb.getSource(),
+							(ProgramPoint) cb.getTarget(), new AssumeStatement(
+									cb.getPayload().getLocation(),
+									new BooleanLiteral(cb.getPayload()
+											.getLocation(), true)));
+					transFormBuilder.addTransitionFormulas(cb);
+
+				}
 				s_Logger.debug("<-Converted Formula->: "
 						+ cb.getTransitionFormula());
 				cb.connectSource(refNodeMap.get(edge.getSource()));
@@ -181,6 +193,8 @@ public class ConversionVisitor implements IMinimizationVisitor {
 	 * This recursive method, converts a MinimizedEdge into a valid CodeBlock.
 	 * While doing this, the method uses "Sequential" and "Parallel"
 	 * Composition.
+	 * 
+	 * TODO: Clean up this method!
 	 * 
 	 * @param edge
 	 *            the minimized edge to convert
@@ -254,7 +268,18 @@ public class ConversionVisitor implements IMinimizationVisitor {
 			}
 			if (edge instanceof ConjunctionEdge) {
 				// In a conjunction, we can ignore GotoEdges
-				if (leftSide instanceof GotoEdge) {
+				if (leftSide instanceof GotoEdge
+						&& rightSide instanceof GotoEdge) {
+					// Special case, we construct an "assume true"
+					StatementSequence replaceGoto = new StatementSequence(
+							(ProgramPoint) leftSide.getSource(),
+							(ProgramPoint) rightSide.getTarget(),
+							new AssumeStatement(leftSide.getPayload()
+									.getLocation(), new BooleanLiteral(leftSide
+									.getPayload().getLocation(), true)));
+					transFormBuilder.addTransitionFormulas(replaceGoto);
+					return replaceGoto;
+				} else if (leftSide instanceof GotoEdge) {
 					return rightSide;
 				} else if (rightSide instanceof GotoEdge) {
 					return leftSide;
