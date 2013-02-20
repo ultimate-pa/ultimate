@@ -183,33 +183,32 @@ public class TermCompiler extends TermTransformer {
 			pushTerm(expanded);
 			return;
 		} 
-		
-		boolean iraHackApplied = false;
+		 		
+		Term[] origArgs = null;
 		if (theory.getLogic().isIRA()
 			&& fsym.getParameterCount() == 2 
 			&& fsym.getParameterSort(0).getName().equals("Real") 
 			&& fsym.getParameterSort(1) == fsym.getParameterSort(0)) {
 			// IRA-Hack
 			if (args == appTerm.getParameters())
-				args = args.clone();
+				args = args.clone();				
 			for (int i = 0; i < args.length; i++) {
 				if (args[i].getSort().getName().equals("Int")) {
+					if (origArgs == null)
+						origArgs = m_Tracker.prepareIRAHack(args);
 					args[i] = SMTAffineTerm.create(args[i])
 						.toReal(fsym.getParameterSort(0));
-					iraHackApplied = true;
 				}
 			}
 		}
-		if (iraHackApplied)
-			m_Tracker.desugar(appTerm, args);
 		
-		boolean hasAffineArgs = false;
 		for (int i = 0; i < args.length; ++i) {
 			if (args[i] instanceof SMTAffineTerm) {
 				args[i] = ((SMTAffineTerm) args[i]).normalize();
-				hasAffineArgs = true;
 			}
 		}
+		if (origArgs != null)
+			m_Tracker.desugar(appTerm, origArgs, args);
 		
 		if (fsym.isIntern()) {
 			if (fsym == theory.m_Not) {
@@ -286,27 +285,32 @@ public class TermCompiler extends TermTransformer {
 				return;
 			}
 			if (fsym.getName().equals("+")) {
-				setResult(SMTAffineTerm.create(args[0])
-						.add(SMTAffineTerm.create(args[1])));
+				SMTAffineTerm res = SMTAffineTerm.create(args[0])
+						.add(SMTAffineTerm.create(args[1]));
+				m_Tracker.sum(fsym, args, res);
+				setResult(res);
 				return;
 			}
 			else if (fsym.getName().equals("-") && fsym.getParameterCount() == 2) {
-				setResult(SMTAffineTerm.create(args[0])
-						.add(SMTAffineTerm.create(Rational.MONE, args[1])));
+				SMTAffineTerm res = SMTAffineTerm.create(args[0])
+						.add(SMTAffineTerm.create(Rational.MONE, args[1]));
+				m_Tracker.sum(fsym, args, res);
+				setResult(res);
 				return;
 			} 
 			else if (fsym.getName().equals("*")) {
 				SMTAffineTerm arg0 = SMTAffineTerm.create(args[0]);
 				SMTAffineTerm arg1 = SMTAffineTerm.create(args[1]);
-				if (arg0.isConstant()) {
-					setResult(arg1.mul(arg0.getConstant()));
-					return;
-				} else if (arg1.isConstant()) {
-					setResult(arg0.mul(arg1.getConstant()));
-					return;
-				} else {
+				SMTAffineTerm res;
+				if (arg0.isConstant())
+					res = arg1.mul(arg0.getConstant());
+				else if (arg1.isConstant())
+					res = arg0.mul(arg1.getConstant());
+				else
 					throw new UnsupportedOperationException("Unsupported non-linear arithmetic");
-				}
+				m_Tracker.sum(fsym, args, res);
+				setResult(res);
+				return;
 			} else if (fsym.getName().equals("/")) {
 				SMTAffineTerm arg0 = SMTAffineTerm.create(args[0]);
 				SMTAffineTerm arg1 = SMTAffineTerm.create(args[1]);
@@ -427,8 +431,7 @@ public class TermCompiler extends TermTransformer {
 				m_Tracker.divisible(appTerm, res);
 				return;
 			}
-		} else if (hasAffineArgs)
-			m_Tracker.trackSums(appTerm.getParameters(), args);
+		}
 		super.convertApplicationTerm(appTerm, args);
 	}
 	

@@ -61,7 +61,7 @@ public class ProofTermGenerator {
 				args[i+1] = t.annotatedTerm(
 						new Annotation[] {
 								new Annotation(":pivot",
-										antes[i].pivot.getSMTFormula(t))},
+										antes[i].pivot.getSMTFormula(t, true))},
 										engine.getConverted());
 			Term res = t.term("@res", args);
 			engine.setResult(m_Cls, res);

@@ -606,6 +606,8 @@ public class Clausifier {
 					Literal lit = createLeq0(at);
 					IProofTracker sub = m_Tracker.getDescendent();
 					sub.intern(at, lit);
+					if (lit.getSign() == -1 && !positive)
+						sub.negateLit(lit, m_Theory);
 					addClause(new Literal[] {positive ? lit : lit.negate()},
 							null, getProofNewSource(sub.clause(m_ProofTerm)));
 				} else if (at == t.TRUE) {
@@ -744,7 +746,7 @@ public class Clausifier {
 						if (Config.REDUNDANT_ITE_CLAUSES) {
 							BuildClause bc3 = new BuildClause(
 									ProofConstants.AUX_ITE_POS_RED);
-							bc2.auxAxiom(m_AuxLit, at, null, null);
+							bc3.auxAxiom(m_AuxLit, at, null, null);
 							bc3.addLiteral(m_AuxLit.negate());
 							pushOperation(bc3);
 							pushOperation(new CollectLiterals(elseTerm, bc3));

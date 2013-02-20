@@ -227,10 +227,10 @@ public class Clause extends SimpleListable<Clause> {
 		if (m_literals.length == 0)
 			return "false";
 		if (m_literals.length == 1)
-			return m_literals[0].getSMTFormula(smtTheory).toString();
+			return m_literals[0].getSMTFormula(smtTheory, true).toString();
 		StringBuilder sb = new StringBuilder("(or");
 		for (Literal l : m_literals)
-			sb.append(' ').append(l.getSMTFormula(smtTheory));
+			sb.append(' ').append(l.getSMTFormula(smtTheory, true));
 		sb.append(')');
 		return sb.toString();
 	}
@@ -288,10 +288,10 @@ public class Clause extends SimpleListable<Clause> {
 		if (m_literals.length == 0)
 			return theory.FALSE;
 		if (m_literals.length == 1)
-			return m_literals[0].getSMTFormula(theory);
+			return m_literals[0].getSMTFormula(theory, true);
 		Term[] args = new Term[m_literals.length];
 		for (int i = 0; i < m_literals.length; ++i) 
-			args[i] = m_literals[i].getSMTFormula(theory);
+			args[i] = m_literals[i].getSMTFormula(theory, true);
 		return theory.term("or", args);
 	}
 	

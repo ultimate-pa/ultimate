@@ -19,10 +19,10 @@
 package de.uni_freiburg.informatik.ultimate.smtinterpol.proof;
 
 import java.util.ArrayDeque;
-import java.util.ArrayList;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
@@ -67,55 +67,65 @@ public class FixProofDAG {
 		public void process(FixProofDAG engine) {
 			ResolutionNode rn = (ResolutionNode) m_Cls.getProof();
 			// Simplify rn
-			Clause primary = engine.m_Transformed.get(rn.getPrimary());
-			HashSet<Literal> lits = new HashSet<Literal>();
-			if (primary != null) {
+			Set<Literal> removed = engine.m_DeletedNodes.get(m_Cls);
+			Antecedent[] antes = rn.getAntecedents();
+			ArrayDeque<Antecedent> newAntes = 
+					new ArrayDeque<ResolutionNode.Antecedent>();
+			boolean deleted = false;
+			boolean changed = false;
+			for (int i = antes.length - 1; !deleted && i >= 0; --i) {
+				if (removed != null) {
+					if (removed.contains(antes[i].pivot)) {
+						// Antecedent has been removed
+						changed = true;
+						continue;
+					}
+					deleted = removed.contains(antes[i].pivot.negate());
+				}
+				Clause cls = engine.m_Transformed.get(antes[i].antecedent);
+				if (cls != antes[i].antecedent) {
+					newAntes.addFirst(new Antecedent(antes[i].pivot, cls));
+					changed = true;
+				} else
+					newAntes.addFirst(antes[i]);
+			}
+			Clause primary;
+			if (!deleted) {
+				primary = engine.m_Transformed.get(rn.getPrimary());
+				changed |= primary != rn.getPrimary();
+			} else {
+				changed = true;
+				Antecedent tmp = newAntes.removeFirst();
+				primary = tmp.antecedent;
+			}
+			if (!changed)
+				engine.m_Transformed.put(m_Cls, m_Cls);
+			else if (newAntes.size() == 0)
+				engine.m_Transformed.put(m_Cls, primary);
+			else {
+				// recompute clause
+				HashSet<Literal> lits = new HashSet<Literal>();
 				for (int i = 0; i < primary.getSize(); ++i)
 					lits.add(primary.getLiteral(i));
-			}
-			Antecedent[] antes = rn.getAntecedents();
-			ArrayList<Antecedent> newAntes =
-				new ArrayList<ResolutionNode.Antecedent>(antes.length);
-			boolean changed = false;
-			for (Antecedent a : antes) {
-				Clause cls = engine.m_Transformed.get(a.antecedent);
-				if (cls != null) {
-					if (primary == null) {
-						primary = cls;
-						changed = true;
-						for (int i = 0; i < primary.getSize(); ++i)
-							lits.add(primary.getLiteral(i));
-					} else {
-						if (lits.remove(a.pivot.negate())) {
-							// Resolution step actually used.
-							// Pointer comparison desired here!
-							if (cls != a.antecedent) {
-								newAntes.add(new Antecedent(a.pivot, cls));
-								changed = true;
-							} else
-								newAntes.add(a);
-							for (int i = 0; i < cls.getSize(); ++i) {
-								Literal lit = cls.getLiteral(i);
-								if (lit != a.pivot)
-									lits.add(lit);
-							}
-						}
-						// Resolution step unused.
+				for (Iterator<Antecedent> it = newAntes.iterator(); it.hasNext(); ) {
+					Antecedent a = it.next();
+					boolean resolutionStepUsed = lits.remove(a.pivot.negate());
+					if (!resolutionStepUsed) {
+						it.remove();
+						continue;
 					}
-				} else
-					changed = true;
-			}
-			Clause result;
-			if (!changed)
-				result = m_Cls;
-			else if (newAntes.isEmpty())
-				result = primary;
-			else
-				result = new Clause(lits.toArray(new Literal[lits.size()]),
-						new ResolutionNode(primary,
-								newAntes.toArray(new Antecedent[newAntes.size()])));
-			if (result != null)
+					for (int j = 0; j < a.antecedent.getSize(); ++j) {
+						Literal lit = a.antecedent.getLiteral(j);
+						if (lit != a.pivot)
+							lits.add(lit);
+					}
+				}
+				Antecedent[] nantes = newAntes.toArray(
+						new Antecedent[newAntes.size()]);
+				Clause result = new Clause(lits.toArray(new Literal[lits.size()]),
+						new ResolutionNode(primary, nantes));
 				engine.m_Transformed.put(m_Cls, result);
+			}
 		}
 		public String toString() {
 			return "Collect: " + m_Cls.toString();

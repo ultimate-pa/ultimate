@@ -18,11 +18,15 @@
  */
 package de.uni_freiburg.informatik.ultimate.smtinterpol.interpolate;
 
+import java.util.ArrayDeque;
+
+import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.linar.InfinitNumber;
 
-public class LAInfo {
-	public LAInfo(InterpolatorAffineTerm s, InfinitNumber k, Term F) {
+public class LATerm extends Term {
+	public LATerm(InterpolatorAffineTerm s, InfinitNumber k, Term F) {
+		super(F.hashCode());
 		m_s = s;
 		m_k = k;
 		m_F = F;
@@ -32,11 +36,17 @@ public class LAInfo {
 	InfinitNumber m_k;
 	Term m_F;
 	
-	public String toString() {
-		return "LA(" + m_s + ", " + m_k + ", " + m_F.toStringDirect() + ")";
+	@Override
+	public Sort getSort() {
+		return m_F.getSort();
 	}
-	
-	public int hashCode() {
-		return m_s.hashCode() + 1021 * m_k.hashCode() + 10939 * m_F.hashCode();
+
+	@Override
+	public void toStringHelper(ArrayDeque<Object> mTodo) {
+		mTodo.addLast(")");
+		mTodo.addLast(m_F);
+		mTodo.addLast(", " + m_k + ", ");
+		mTodo.addLast(m_s);
+		mTodo.addLast("LA(");
 	}
 }

@@ -338,11 +338,8 @@ public class LAInterpolator {
 			ipl[part].mul(normFactor);
 			if (auxVars[part] != null) {
 				/* This is a mixed interpolant with auxiliary variables.
-				 * Prepare an LAInfo that wraps the interpolant.
+				 * Prepare an LATerm that wraps the interpolant.
 				 */
-				TermVariable placeHolder = 
-						m_Interpolator.m_Theory.createFreshTermVariable(
-								"LA", m_Interpolator.m_Theory.getBooleanSort());
 				InfinitNumber k;
 				Term F;
 				if (equalityInfo != null) {
@@ -368,9 +365,8 @@ public class LAInterpolator {
 						k = InfinitNumber.EPSILON.negate();
 					F = ipl[part].toLeq0(m_Interpolator.m_Theory);
 				}
-				LAInfo eqIn = new LAInfo(ipl[part], k, F);
-				result.m_Interpolants[part].m_term = placeHolder;
-				result.m_Interpolants[part].m_VarToLA.put(placeHolder, eqIn);
+				LATerm laTerm = new LATerm(ipl[part], k, F);
+				result.m_Interpolants[part].m_term = laTerm;
 			} else {
 				assert (equalityInfo == null 
 						|| !equalityInfo.isMixed(part));
@@ -411,7 +407,6 @@ public class LAInterpolator {
 					/* Literal in B: and */
 					result.m_Interpolants[part].m_term = m_Interpolator.m_Theory.
 							and(result.m_Interpolants[part].m_term, subInfo.m_Interpolants[part].m_term);
-					m_Interpolator.mergeLAHashMaps(result.m_Interpolants[part], subInfo.m_Interpolants[part]);
 				} else if (subInfo.isMixed(part)) {
 					TermVariable mixedVar = subInfo.m_AuxVar;
 					result.m_Interpolants[part] = m_Interpolator.mixedPivotLA(
@@ -423,12 +418,10 @@ public class LAInterpolator {
 								(subInfo.getSum().toSMTLibLeq0(m_Interpolator.m_Theory, false), 
 								result.m_Interpolants[part].m_term, 
 								subInfo.m_Interpolants[part].m_term);
-					m_Interpolator.mergeLAHashMaps(result.m_Interpolants[part], subInfo.m_Interpolants[part]);
 				} else {
 					/* Literal in A: or */
 					result.m_Interpolants[part].m_term = m_Interpolator.m_Theory.
 							or(result.m_Interpolants[part].m_term, subInfo.m_Interpolants[part].m_term);
-					m_Interpolator.mergeLAHashMaps(result.m_Interpolants[part], subInfo.m_Interpolants[part]);
 				}
 			}
 		}

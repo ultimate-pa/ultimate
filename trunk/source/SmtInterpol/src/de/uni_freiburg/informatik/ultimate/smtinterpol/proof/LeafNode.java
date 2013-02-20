@@ -64,6 +64,15 @@ public class LeafNode extends ProofNode {
 		return m_LeafKind >= 0;
 	}
 	/**
+	 * Can this leaf node be colored for interpolation?
+	 * @return <code>true</code> if and only if this node can be colored.
+	 */
+	public boolean isColorable() {
+		// Only leaves and non-eq tautologies
+		return m_LeafKind == NO_THEORY ||
+				(isTautology() && m_LeafKind != ProofConstants.AUX_EQ); 
+	}
+	/**
 	 * Get theory specific annotations.
 	 * @return Theory specific annotations.
 	 */

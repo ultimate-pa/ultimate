@@ -20,7 +20,6 @@ package de.uni_freiburg.informatik.ultimate.smtinterpol.interpolate;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.Collection;
@@ -34,7 +33,7 @@ import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
-import de.uni_freiburg.informatik.ultimate.logic.LetTerm;
+import de.uni_freiburg.informatik.ultimate.logic.NonRecursive;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
@@ -206,9 +205,13 @@ public class Interpolator {
 	}
 
 	private Term unfoldLAs(Interpolant interpolant) {
-		FormulaSubstitutor substitutor = new FormulaSubstitutor();
-		for (Entry<TermVariable, LAInfo> en : interpolant.m_VarToLA.entrySet())
-			substitutor.addSubstitution(en.getKey(), en.getValue().m_F);
+		TermTransformer substitutor = new TermTransformer() {
+			public void convert(Term term) {
+				if (term instanceof LATerm)
+					term = ((LATerm) term).m_F;
+				super.convert(term);
+			}
+		};
 		return substitutor.transform(interpolant.m_term);
 	}
 
@@ -234,8 +237,6 @@ public class Interpolator {
 			interpolants = new Interpolant[m_NumInterpolants];
 			for (int i = 0; i < m_NumInterpolants; i++) {
 				interpolants[i] = new Interpolant(primInterpolants[i].m_term);
-				interpolants[i].m_VarToLA = 
-					new HashMap<TermVariable,LAInfo>(primInterpolants[i].m_VarToLA);
 			}
 			
 			m_Logger.debug(new DebugMessage("Resolution Primary: {0}", prim));
@@ -255,16 +256,13 @@ public class Interpolator {
 					if (pivInfo.isALocal(i)) {
 						interpolants[i].m_term = 
 								m_Theory.or(interpolants[i].m_term, assInterp[i].m_term);
-						mergeLAHashMaps(interpolants[i], assInterp[i]);
 					} else if (pivInfo.isBLocal(i)) {
 						interpolants[i].m_term = 
 								m_Theory.and(interpolants[i].m_term, assInterp[i].m_term);
-						mergeLAHashMaps(interpolants[i], assInterp[i]);
 					} else if (pivInfo.isAB(i)) {
 						interpolants[i].m_term = 
 								m_Theory.ifthenelse(pivot.getSMTFormula(m_Theory), 
 										interpolants[i].m_term, assInterp[i].m_term);
-						mergeLAHashMaps(interpolants[i], assInterp[i]);
 					} else {
 						if (pivot.getAtom() instanceof CCEquality ||
 								pivot.getAtom() instanceof LAEquality) {
@@ -442,104 +440,7 @@ public class Interpolator {
 		}
 		return interpolants;
 	}
-
-	private Interpolant mixedEqInterpolate(final Interpolant eqIpol,
-			final Interpolant neqIpol, final TermVariable mixedVar) {
-		final Interpolant newI = new Interpolant();
-		final HashMap<TermVariable,TermVariable> tvSubst = 
-				new HashMap<TermVariable,TermVariable>();
-		final ArrayDeque<TermVariable> todoStack = new ArrayDeque<TermVariable>();
-		TermTransformer substitutor = new TermTransformer() {
-
-			public void convert(Term term) {
-				assert term != mixedVar;
-				if (term instanceof ApplicationTerm) {
-					ApplicationTerm appTerm = (ApplicationTerm) term;
-					if (appTerm.getParameters().length == 2 && 
-						(appTerm.getParameters()[0] == mixedVar
-						 || appTerm.getParameters()[1] == mixedVar)) {
-						assert appTerm.getFunction().isIntern()
-							&& appTerm.getFunction().getName().equals("=")
-							&& appTerm.getParameters().length == 2;
-						
-						Term s = appTerm.getParameters()[1];
-						if (s == mixedVar)
-							s = appTerm.getParameters()[0];
-						setResult(m_Theory.let(mixedVar, s, neqIpol.m_term));
-						return;
-					}
-				} else if (term instanceof TermVariable) {
-					TermVariable origVar = (TermVariable) term;
-					TermVariable newVar = tvSubst.get(origVar);
-					if (newVar == null && eqIpol.m_VarToLA.containsKey(origVar)) {
-						newVar = m_Theory.createFreshTermVariable("LA4", origVar.getSort());
-						tvSubst.put(origVar, newVar);
-						todoStack.add(origVar);
-					}
-					if (newVar != null)
-						term = newVar;
-				} else if (term instanceof LetTerm) {
-					LetTerm let = (LetTerm) term;
-					for (TermVariable tv : let.getVariables()) {
-						if (tv == mixedVar) {
-							setResult(term);
-							return;
-						}
-					}
-				}
-				super.convert(term);
-			}
-		};
-		
-		newI.m_term = substitutor.transform(eqIpol.m_term);
-		newI.m_VarToLA.putAll(eqIpol.m_VarToLA);
-		while (!todoStack.isEmpty()) {
-			TermVariable origTV = todoStack.removeFirst();
-			LAInfo la = eqIpol.m_VarToLA.get(origTV);
-			LAInfo newLa = new LAInfo(la.m_s, la.m_k, substitutor.transform(la.m_F));
-			newI.m_VarToLA.remove(origTV);
-			newI.m_VarToLA.put(tvSubst.get(origTV), newLa);
-		}
-		newI.m_VarToLA.putAll(neqIpol.m_VarToLA);
-		return newI;
-	}
 	
-	/**
-	 * the result of the merge is saved in ip1 (TODO vllt doch inlinen..)
-	 * @param ip1
-	 * @param ip2
-	 */
-	public void mergeLAHashMaps(Interpolant ip1, Interpolant ip2) {
-		ip1.m_VarToLA.putAll(ip2.m_VarToLA);
-	}
-
-	/**
-	 * Substitute termVar by replacement in mainTerm
-	 * @param mainTerm
-	 * @param replacement
-	 * @param termVar
-	 * @return substituted Term
-	 */
-	Term substitute(Term mainTerm, final Term replacement,
-			final TermVariable termVar) {
-		boolean termVarIsFree = false;
-		for (TermVariable t : mainTerm.getFreeVars()) {
-			if(t.equals(termVar))
-				termVarIsFree = true;
-		}
-		if(!termVarIsFree)
-			return mainTerm;
-
-		return new TermTransformer() {
-			public void convert(Term term) {
-				if (term.equals(termVar))
-					setResult(replacement);
-				else
-					super.convert(term);
-			}
-		}.transform(mainTerm);
-	}
-
 	public void colorLiterals(Clause root, HashSet<Clause> visited) {
 		if (visited.contains(root))
 			return;
@@ -547,7 +448,7 @@ public class Interpolator {
 		ProofNode pn = root.getProof();
 		if (pn.isLeaf()) {
 			LeafNode ln = (LeafNode) pn;
-			if (ln.getLeafKind() == LeafNode.NO_THEORY) {
+			if (ln.isColorable()) {
 				SourceAnnotation annot = 
 						(SourceAnnotation) ln.getTheoryAnnotation();
 				int partition = m_Partitions.containsKey(annot.getAnnotation())
@@ -728,177 +629,329 @@ public class Interpolator {
 		return info;
 	}
 
-	Interpolant mixedPivotRuleReal(Interpolant leqItp, Interpolant sgItp,
-			TermVariable mixedVar) {
-		Interpolant newI = new Interpolant(leqItp.m_term);
-
-		newI.m_VarToLA = new HashMap<TermVariable, LAInfo>(leqItp.m_VarToLA);
-		newI.m_VarToLA.putAll(sgItp.m_VarToLA);
-
-		for (Entry<TermVariable,LAInfo> entry1 : leqItp.m_VarToLA.entrySet()) {
-			LAInfo la1 = entry1.getValue();
-			if (!la1.m_s.getSummands().containsKey(mixedVar)) {
-				newI.m_VarToLA.put(entry1.getKey(), entry1.getValue());
-				continue;
-			}
-			Term currentI2Term = sgItp.m_term; 
-			newI.m_VarToLA.remove(la1);
-
-			for (Entry<TermVariable,LAInfo> entry2 : sgItp.m_VarToLA.entrySet()) {
-				LAInfo la2 = entry2.getValue();
-				if (!la2.m_s.getSummands().containsKey(mixedVar)) {
-					newI.m_VarToLA.put(entry2.getKey(), entry2.getValue());
-					continue;
-				}
-				newI.m_VarToLA.remove(la2);
-				TermVariable currentLA3TV = m_Theory.createFreshTermVariable(
-						"LA3", m_Theory.getBooleanSort());
-
-				//retrieve c1,c2,s2,s2
-				InterpolatorAffineTerm s1 = new InterpolatorAffineTerm(la1.m_s);
-				Rational               c1 = s1.getSummands().remove(mixedVar);
-				InterpolatorAffineTerm s2 = new InterpolatorAffineTerm(la2.m_s);
-				Rational               c2 = s2.getSummands().remove(mixedVar);
-				assert (c1.signum() * c2.signum() == -1);
-				InfinitNumber newK = la1.m_k.mul(c2.abs())
-						.add(la2.m_k.mul(c1.abs()));
-
-				//compute c1s2 + c2s1
-				InterpolatorAffineTerm c1s2c2s1 = new InterpolatorAffineTerm();
-				c1s2c2s1.add(c1.abs(), s2);
-				c1s2c2s1.add(c2.abs(), s1);
-
-				Term newF;
-				if (la1.m_k.less(InfinitNumber.ZERO)) {
-					//compute -s1/c1
-					InterpolatorAffineTerm s1divc1 = new InterpolatorAffineTerm(s1);
-					s1divc1.mul(c1.inverse().negate());
-					Term s1DivByc1 = s1divc1.toSMTLib(m_Theory, false);
-					newF = substitute(la2.m_F, s1DivByc1, mixedVar);
-					newK = la2.m_k;
-				} else {
-					assert (la2.m_k.less(InfinitNumber.ZERO));
-					//compute s2/c2
-					InterpolatorAffineTerm s2divc2 = new InterpolatorAffineTerm(s2);
-					s2divc2.mul(c2.inverse().negate());
-					Term s2DivByc2 = s2divc2.toSMTLib(m_Theory, false);
-					newF = substitute(la1.m_F, s2DivByc2, mixedVar);
-					newK = la1.m_k;
-				}
-				LAInfo la3 = new LAInfo(c1s2c2s1, newK, newF);
-				newI.m_VarToLA.put(currentLA3TV, la3);
-
-				currentI2Term = substitute(currentI2Term, currentLA3TV, entry2.getKey());
-			}
-
-			newI.m_term = substitute(newI.m_term, currentI2Term, entry1.getKey());
+	/**
+	 * This term transformer substitutes an auxiliary variable by an 
+	 * arbitrary term.  This is used for the LA and UF resolution rule.
+	 * For the UF resolution rule, it will replace the auxiliary variable
+	 * by the term that must be equal to it due to an EQ(x,s) term in the
+	 * other interpolant.  For the LA resolution rule, this will replace
+	 * the auxiliary variable by -s1/c1 - i in F1/F2 (see paper).
+	 * 
+	 * The replacement term may contain other auxiliary variables
+	 * that will be replaced later.  It may only contain auxiliary variables
+	 * for equalities with the negated equality in the clause or auxiliary 
+	 * variables for LA literals that are bound by a surrounding LATerm.
+	 *  
+	 * @author hoenicke
+	 */
+	public static class Substitutor extends TermTransformer {
+		Term m_TermVar;
+		Term m_Replacement;
+		
+		public Substitutor(TermVariable termVar, Term replacement) {
+			this.m_TermVar = termVar;
+			this.m_Replacement = replacement;
 		}
-		return newI;
-	}
-
-	Interpolant mixedPivotRuleInt(Interpolant leqItp, Interpolant sgItp,
-			TermVariable mixedVar) {
-		Interpolant newI = new Interpolant(leqItp.m_term);
-		newI.m_VarToLA = new HashMap<TermVariable,LAInfo>();
-
-		for (Entry<TermVariable,LAInfo> entry1 : leqItp.m_VarToLA.entrySet()) {
-			LAInfo la1 = entry1.getValue();
-			if (!la1.m_s.getSummands().containsKey(mixedVar)) {
-				newI.m_VarToLA.put(entry1.getKey(), entry1.getValue());
-				continue;
-			}
-			newI.m_VarToLA.remove(la1);
-			Term currentI2Term = sgItp.m_term; 
-
-			for (Entry<TermVariable,LAInfo> entry2 : sgItp.m_VarToLA.entrySet()) {
-				LAInfo la2 = entry2.getValue();
-				if (!la2.m_s.getSummands().containsKey(mixedVar)) {
-					newI.m_VarToLA.put(entry2.getKey(), entry2.getValue());
-					continue;
+		
+		public void convert(Term term) {
+			if (term instanceof LATerm) {
+				final LATerm laTerm = (LATerm) term;
+				InterpolatorAffineTerm s = laTerm.m_s; 
+				if (laTerm.m_s.getSummands().containsKey(m_TermVar)) {
+					s = new InterpolatorAffineTerm(s);
+					Rational factor = s.getSummands().remove(m_TermVar);
+					s.getSummands().put(m_Replacement, factor);
 				}
-				newI.m_VarToLA.remove(la2);
-				TermVariable currentLA3TV = m_Theory.createFreshTermVariable(
-						"LA3", m_Theory.getBooleanSort());
-
-				//retrieve c1,c2,s1,s2
-				InterpolatorAffineTerm s1 = new InterpolatorAffineTerm(la1.m_s);
-				Rational               c1 = s1.getSummands().remove(mixedVar);
-				InterpolatorAffineTerm s2 = new InterpolatorAffineTerm(la2.m_s);
-				Rational               c2 = s2.getSummands().remove(mixedVar);
-				assert (c1.isIntegral() && c2.isIntegral());
-				assert (c1.signum() * c2.signum() == -1);
-				Rational absc1 = c1.abs();
-				Rational absc2 = c2.abs();
-
-				//compute c1s2 + c2s1
-				InterpolatorAffineTerm c1s2c2s1 = new InterpolatorAffineTerm();
-				c1s2c2s1.add(absc1, s2);
-				c1s2c2s1.add(absc2, s1);
-
-				//compute newk = c2k1 + c1k2 + c1c2;
-				Rational c1c2 = absc1.mul(absc2);
-				InfinitNumber newK = la1.m_k.mul(absc2).add(la2.m_k.mul(absc1))
-						.add(new InfinitNumber(c1c2, 0));
-				assert (newK.isIntegral());
-				
-				Rational k1c1 = la1.m_k.ma.add(Rational.ONE).div(absc1).floor();
-				Rational k2c2 = la2.m_k.ma.add(Rational.ONE).div(absc2).floor();
-				Rational kc;
-				Rational theC;
-				InterpolatorAffineTerm theS;
-				if (k1c1.compareTo(k2c2) < 0) {
-					theC = c1;
-					theS = s1;
-					kc = k1c1;
-				} else {
-					theC = c2;
-					theS = s2;
-					kc = k2c2;
-				}
-				BigInteger cNum = theC.numerator().abs(); 
-				Term newF = m_Theory.FALSE;
-				// Use -s/c as start value.
-				InterpolatorAffineTerm sPlusOffset = new InterpolatorAffineTerm();
-				sPlusOffset.add(theC.signum() > 0 ? Rational.MONE : Rational.ONE, theS);
-				Rational offset = Rational.ZERO;
-				if (theC.signum() < 0)
-					sPlusOffset.add(theC.abs().add(Rational.MONE));
-				while (offset.compareTo(kc) <= 0) {
-					Term x;
-					x = sPlusOffset.toSMTLib(m_Theory, true);
-					if (!cNum.equals(BigInteger.ONE))
-						x = m_Theory.term("div", x, m_Theory.numeral(cNum));
-					Term F1 = substitute(la1.m_F, x, mixedVar);
-					Term F2 = substitute(la2.m_F, x, mixedVar);
-					
-					if (offset.compareTo(kc) == 0) {
-						if (theS == s1)
-							F1 = m_Theory.TRUE;
+				final InterpolatorAffineTerm newS = s; 
+				/* recurse into LA term */ 
+				enqueueWalker(new Walker() {
+					@Override
+					public void walk(NonRecursive engine) {
+						Substitutor me = (Substitutor) engine;
+						Term result = me.getConverted();
+						if (result == laTerm.m_F && newS == laTerm.m_s)
+							me.setResult(laTerm);
 						else
-							F2 = m_Theory.TRUE;
+							me.setResult(new LATerm(newS, laTerm.m_k, result));
 					}
-					newF = m_Theory.or(newF, m_Theory.and(F1, F2));
-					sPlusOffset = sPlusOffset.add(theC.negate());
-					offset = offset.add(c1c2);
-				}
-				
-				LAInfo la3 = new LAInfo(c1s2c2s1, newK, newF);
-				newI.m_VarToLA.put(currentLA3TV, la3);
-
-				currentI2Term = substitute(currentI2Term, currentLA3TV, entry2.getKey());
-			}
-
-			newI.m_term = substitute(newI.m_term, currentI2Term, entry1.getKey());
+				});
+				pushTerm(laTerm.m_F);
+				return;
+			} else if (term.equals(m_TermVar))
+				setResult(m_Replacement);
+			else
+				super.convert(term);
 		}
-		return newI;
 	}
 
+	/**
+	 * Substitute termVar by replacement in mainTerm.  This will also work
+	 * correctly with LATerms.
+	 * @param mainTerm the term where the replacement is done.
+	 * @param termVar the variable to replace.
+	 * @param replacement the replacement term. 
+	 * @return the substituted term.
+	 */
+	Term substitute(Term mainTerm, 
+			final TermVariable termVar, final Term replacement) {
+		return new Substitutor(termVar, replacement).transform(mainTerm);
+	}
+
+	class EQInterpolator extends TermTransformer {
+		Interpolant m_I2;
+		TermVariable m_AuxVar;
+		
+		EQInterpolator (Interpolant i2, TermVariable auxVar) {
+			m_I2 = i2;
+			m_AuxVar = auxVar;
+		}
+		
+		public void convert(Term term) {
+			assert term != m_AuxVar;
+			if (term instanceof LATerm) {
+				final LATerm laTerm = (LATerm) term;
+				/* recurse into LA term */ 
+				enqueueWalker(new Walker() {
+					@Override
+					public void walk(NonRecursive engine) {
+						EQInterpolator me = (EQInterpolator) engine;
+						Term result = me.getConverted();  
+						if (result == laTerm.m_F)
+							me.setResult(laTerm);
+						else
+							me.setResult(new LATerm(laTerm.m_s, laTerm.m_k, result));
+					}
+				});
+				pushTerm(laTerm.m_F);
+				return;
+			} else if (term instanceof ApplicationTerm) {
+				ApplicationTerm appTerm = (ApplicationTerm) term;
+				if (appTerm.getParameters().length == 2 && 
+					(appTerm.getParameters()[0] == m_AuxVar
+					 || appTerm.getParameters()[1] == m_AuxVar)) {
+					assert appTerm.getFunction().isIntern()
+						&& appTerm.getFunction().getName().equals("=")
+						&& appTerm.getParameters().length == 2;
+					
+					Term s = appTerm.getParameters()[1];
+					if (s == m_AuxVar)
+						s = appTerm.getParameters()[0];
+					setResult(substitute(m_I2.m_term, m_AuxVar, s));
+					return;
+				}
+			}
+			super.convert(term);
+		}
+	}
+
+	/**
+	 * Compute the interpolant for the resolution rule with a mixed equality
+	 * as pivot.  This is I1[I2(s_i)] for I1[x=s_i] and I2(x).
+	 * @param eqIpol the interpolant I1[x=s_i].
+	 * @param neqIpol the interpolant I2(x).
+	 * @param mixedVar the auxiliary variable x. 
+	 * @return the resulting interpolant.
+	 */
+	private Interpolant mixedEqInterpolate(Interpolant eqIpol,
+			Interpolant neqIpol, TermVariable mixedVar) {
+		TermTransformer ipolator = new EQInterpolator(neqIpol, mixedVar);
+		return new Interpolant(ipolator.transform(eqIpol.m_term));
+	}
+	
+	static abstract class MixedLAInterpolator extends TermTransformer {
+		TermVariable m_MixedVar;
+		Term m_I2;
+		LATerm m_LA1;
+		
+		public MixedLAInterpolator(Term i2, TermVariable mixed) {
+			m_MixedVar = mixed;
+			m_LA1 = null;
+			m_I2 = i2;
+		}
+
+		abstract Term interpolate(LATerm la1, LATerm la2);
+		
+		public void convert(Term term) {
+			assert term != m_MixedVar;
+			if (term instanceof LATerm) {
+				final LATerm laTerm = (LATerm) term;
+				if (laTerm.m_s.getSummands().get(m_MixedVar) != null) {
+					if (m_LA1 == null) {
+						/* We are inside I1. Remember the lainfo and push I2 
+						 * on the convert stack.  Also enqueue a walker that
+						 * will remove m_LA1 once we are finished with I2.
+						 */
+						m_LA1 = (LATerm) term;
+						enqueueWalker(new Walker() {
+							@Override
+							public void walk(NonRecursive engine) {
+								((MixedLAInterpolator) engine).m_LA1 = null;
+							}
+						});
+						pushTerm(m_I2);
+						return;
+					} else {
+						/* We are inside I2. Interpolate the LAInfos.
+						 */
+						setResult(interpolate(m_LA1, (LATerm) term));
+						return;
+					}
+				} else {
+					/* this is a LA term not involving the mixed variable */ 
+					enqueueWalker(new Walker() {
+						@Override
+						public void walk(NonRecursive engine) {
+							MixedLAInterpolator me = (MixedLAInterpolator) engine;
+							Term result = me.getConverted();
+							if (result == laTerm.m_F)
+								me.setResult(laTerm);
+							else
+								me.setResult(new LATerm(laTerm.m_s, laTerm.m_k, result));
+						}
+					});
+					pushTerm(laTerm.m_F);
+					return;
+				}
+			} else
+				super.convert(term);
+		}
+	}
+	
+	class RealInterpolator extends MixedLAInterpolator {
+		public RealInterpolator(Term i2, TermVariable mixedVar) {
+			super(i2, mixedVar);
+		}
+		
+		public Term interpolate(LATerm la1, LATerm la2) {
+			//retrieve c1,c2,s2,s2
+			InterpolatorAffineTerm s1 = new InterpolatorAffineTerm(la1.m_s);
+			Rational               c1 = s1.getSummands().remove(m_MixedVar);
+			InterpolatorAffineTerm s2 = new InterpolatorAffineTerm(la2.m_s);
+			Rational               c2 = s2.getSummands().remove(m_MixedVar);
+			assert (c1.signum() * c2.signum() == -1);
+			InfinitNumber newK = la1.m_k.mul(c2.abs())
+					.add(la2.m_k.mul(c1.abs()));
+
+			//compute c1s2 + c2s1
+			InterpolatorAffineTerm c1s2c2s1 = new InterpolatorAffineTerm();
+			c1s2c2s1.add(c1.abs(), s2);
+			c1s2c2s1.add(c2.abs(), s1);
+
+			Term newF;
+			if (la1.m_k.less(InfinitNumber.ZERO)) {
+				//compute -s1/c1
+				InterpolatorAffineTerm s1divc1 = new InterpolatorAffineTerm(s1);
+				s1divc1.mul(c1.inverse().negate());
+				Term s1DivByc1 = s1divc1.toSMTLib(m_Theory, false);
+				newF = substitute(la2.m_F, m_MixedVar, s1DivByc1);
+				newK = la2.m_k;
+			} else {
+				assert (la2.m_k.less(InfinitNumber.ZERO));
+				//compute s2/c2
+				InterpolatorAffineTerm s2divc2 = new InterpolatorAffineTerm(s2);
+				s2divc2.mul(c2.inverse().negate());
+				Term s2DivByc2 = s2divc2.toSMTLib(m_Theory, false);
+				newF = substitute(la1.m_F, m_MixedVar, s2DivByc2);
+				newK = la1.m_k;
+			}
+			LATerm la3 = new LATerm(c1s2c2s1, newK, newF);
+			return la3;
+		}
+	}
+
+	class IntegerInterpolator extends MixedLAInterpolator {
+		
+		public IntegerInterpolator(Term i2, TermVariable mixedVar) {
+			super (i2, mixedVar);
+		}
+		
+		public Term interpolate(LATerm la1, LATerm la2) {
+			//retrieve c1,c2,s1,s2
+			InterpolatorAffineTerm s1 = new InterpolatorAffineTerm(la1.m_s);
+			Rational               c1 = s1.getSummands().remove(m_MixedVar);
+			InterpolatorAffineTerm s2 = new InterpolatorAffineTerm(la2.m_s);
+			Rational               c2 = s2.getSummands().remove(m_MixedVar);
+			assert (c1.isIntegral() && c2.isIntegral());
+			assert (c1.signum() * c2.signum() == -1);
+			Rational absc1 = c1.abs();
+			Rational absc2 = c2.abs();
+
+			//compute c1s2 + c2s1
+			InterpolatorAffineTerm c1s2c2s1 = new InterpolatorAffineTerm();
+			c1s2c2s1.add(absc1, s2);
+			c1s2c2s1.add(absc2, s1);
+
+			//compute newk = c2k1 + c1k2 + c1c2;
+			Rational c1c2 = absc1.mul(absc2);
+			InfinitNumber newK = la1.m_k.mul(absc2).add(la2.m_k.mul(absc1))
+					.add(new InfinitNumber(c1c2, 0));
+			assert (newK.isIntegral());
+			
+			Rational k1c1 = la1.m_k.ma.add(Rational.ONE).div(absc1).floor();
+			Rational k2c2 = la2.m_k.ma.add(Rational.ONE).div(absc2).floor();
+			Rational kc;
+			Rational theC;
+			InterpolatorAffineTerm theS;
+			if (k1c1.compareTo(k2c2) < 0) {
+				theC = c1;
+				theS = s1;
+				kc = k1c1;
+			} else {
+				theC = c2;
+				theS = s2;
+				kc = k2c2;
+			}
+			BigInteger cNum = theC.numerator().abs(); 
+			Term newF = m_Theory.FALSE;
+			// Use -s/c as start value.
+			InterpolatorAffineTerm sPlusOffset = new InterpolatorAffineTerm();
+			sPlusOffset.add(theC.signum() > 0 ? Rational.MONE : Rational.ONE, theS);
+			Rational offset = Rational.ZERO;
+			if (theC.signum() < 0)
+				sPlusOffset.add(theC.abs().add(Rational.MONE));
+			while (offset.compareTo(kc) <= 0) {
+				Term x;
+				x = sPlusOffset.toSMTLib(m_Theory, true);
+				if (!cNum.equals(BigInteger.ONE))
+					x = m_Theory.term("div", x, m_Theory.numeral(cNum));
+				Term F1 = substitute(la1.m_F, m_MixedVar, x);
+				Term F2 = substitute(la2.m_F, m_MixedVar, x);
+				
+				if (offset.compareTo(kc) == 0) {
+					if (theS == s1)
+						F1 = m_Theory.TRUE;
+					else
+						F2 = m_Theory.TRUE;
+				}
+				newF = m_Theory.or(newF, m_Theory.and(F1, F2));
+				sPlusOffset = sPlusOffset.add(theC.negate());
+				offset = offset.add(c1c2);
+			}
+			LATerm la3 = new LATerm(c1s2c2s1, newK, newF);
+			return la3;
+		}
+	}
+
+	/**
+	 * Compute the interpolant for the resolution rule with a mixed inequality
+	 * as pivot.  This is I1[I2(LA3)] for I1[LA1] and I2[LA2].
+	 * Note that we use only one auxiliary variable, which corresponds to
+	 * x_1 and -x_2 in the paper.
+	 * @param leqItp the interpolant I1[LA1].
+	 * @param sgItp the interpolant I2[LA2].
+	 * @param mixedVar the auxiliary variable x used in the la term. 
+	 * @return the resulting interpolant.
+	 */
 	public Interpolant mixedPivotLA(Interpolant leqItp,
 			Interpolant sgItp, TermVariable mixedVar) {
+		final MixedLAInterpolator ipolator;
+
 		if (mixedVar.getSort().getName().equals("Real"))
-			return mixedPivotRuleReal(leqItp, sgItp, mixedVar);
+			ipolator = new RealInterpolator(sgItp.m_term, mixedVar);
 		else
-			return mixedPivotRuleInt(leqItp, sgItp, mixedVar);
+			ipolator = new IntegerInterpolator(sgItp.m_term, mixedVar);
+		Interpolant newI = new Interpolant(ipolator.transform(leqItp.m_term));
+		return newI;
 	}
 }
 

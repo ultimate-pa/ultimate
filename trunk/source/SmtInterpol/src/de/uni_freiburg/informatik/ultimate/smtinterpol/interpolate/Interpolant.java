@@ -18,14 +18,10 @@
  */
 package de.uni_freiburg.informatik.ultimate.smtinterpol.interpolate;
 
-import java.util.HashMap;
-
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
 public class Interpolant {
 	Term m_term;
-	HashMap<TermVariable, LAInfo> m_VarToLA = new HashMap<TermVariable, LAInfo>();
 
 	public Interpolant() {
 	}
@@ -35,9 +31,6 @@ public class Interpolant {
 	}
 
 	public String toString() {
-		if (m_VarToLA.isEmpty())
-			return String.valueOf(m_term);
-		else
-			return m_term.toStringDirect() + m_VarToLA.toString();
+		return m_term.toStringDirect();
 	}
 }

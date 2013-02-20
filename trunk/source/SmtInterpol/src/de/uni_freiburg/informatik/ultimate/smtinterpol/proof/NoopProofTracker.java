@@ -20,7 +20,9 @@ package de.uni_freiburg.informatik.ultimate.smtinterpol.proof;
 
 import de.uni_freiburg.informatik.ultimate.logic.AnnotatedTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
+import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.logic.Theory;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.SMTAffineTerm;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.DPLLAtom;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.Literal;
@@ -54,7 +56,7 @@ public class NoopProofTracker implements IProofTracker {
 	public void strip(AnnotatedTerm orig) {}
 
 	@Override
-	public void sum(Term orig, Term res) {}
+	public void sum(FunctionSymbol fsym, Term[] args, Term res) {}
 
 	@Override
 	public void toLeq0(Term orig, SMTAffineTerm leq, int rule) {}
@@ -63,7 +65,7 @@ public class NoopProofTracker implements IProofTracker {
 	public void leqSimp(SMTAffineTerm leq, Term res, int rule) {}
 
 	@Override
-	public void desugar(ApplicationTerm orig, Term[] newArgs) {}
+	public void desugar(ApplicationTerm orig, Term[] origArgs, Term[] newArgs) {}
 
 	@Override
 	public void divisible(Term div, Term res) {}
@@ -75,9 +77,6 @@ public class NoopProofTracker implements IProofTracker {
 	public Term getRewriteProof(Term asserted, Term result) {
 		return null;
 	}
-
-	@Override
-	public void trackSums(Term[] origArgs, Term[] newArgs) {}
 
 	@Override
 	public void equality(Term[] args, Object res, int rule) {}
@@ -137,5 +136,13 @@ public class NoopProofTracker implements IProofTracker {
 
 	@Override
 	public void toInt(SMTAffineTerm arg, SMTAffineTerm res) {}
+
+	@Override
+	public void negateLit(Literal lit, Theory theory) {}
+
+	@Override
+	public Term[] prepareIRAHack(Term[] args) {
+		return null;
+	}
 
 }

@@ -63,8 +63,7 @@ public class SourceAnnotation implements IAnnotation {
 							new Annotation(":input", m_annot)
 						}, res));
 		else {
-			// Full proof mode: if source is (@clause ...) or (@eq ...)
-			//                  build (@result ...) otherwise return source
+			// Full proof mode
 			if (cls.getSize() <= 1)
 				return m_Source;
 			res = theory.term("@clause", m_Source, res);

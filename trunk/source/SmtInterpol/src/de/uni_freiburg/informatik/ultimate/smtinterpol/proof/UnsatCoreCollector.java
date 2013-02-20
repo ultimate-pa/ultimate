@@ -72,7 +72,7 @@ public class UnsatCoreCollector {
 	}
 	// Visit leaf nodes
 	private void visit(LeafNode node) {
-		// TODO: What about the tautologies???
+		// Tautologies are not needed in an unsat core
 		if (node.getLeafKind() == LeafNode.NO_THEORY &&
 				node.getTheoryAnnotation() instanceof SourceAnnotation) {
 			String name = ((SourceAnnotation) node.getTheoryAnnotation()).

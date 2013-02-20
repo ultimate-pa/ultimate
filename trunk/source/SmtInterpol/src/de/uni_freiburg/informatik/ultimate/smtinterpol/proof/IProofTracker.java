@@ -20,7 +20,9 @@ package de.uni_freiburg.informatik.ultimate.smtinterpol.proof;
 
 import de.uni_freiburg.informatik.ultimate.logic.AnnotatedTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
+import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.logic.Theory;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.SMTAffineTerm;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.DPLLAtom;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.Literal;
@@ -102,10 +104,11 @@ public interface IProofTracker {
 	public void strip(AnnotatedTerm orig);
 	/**
 	 * Track a canonical summarization.
-	 * @param orig The original term.
+	 * @param fsym The function symbol of the original term.
+	 * @param args The arguments of the original term.
 	 * @param res  The result of the rewrite.
 	 */
-	public void sum(Term orig, Term res);
+	public void sum(FunctionSymbol fsym, Term[] args, Term res);
 	/**
 	 * Track a transformation into <=0-form.
 	 * @param orig The original term.
@@ -122,10 +125,11 @@ public interface IProofTracker {
 	public void leqSimp(SMTAffineTerm leq, Term res, int rule);
 	/**
 	 * Track an application of the IRA-Hack.
-	 * @param orig    The original term.
-	 * @param newArgs The arguments to that term after applying the IRA-Hack.
+	 * @param orig     The original term.
+	 * @param origArgs Arguments that should be used for the original term.
+	 * @param newArgs  The arguments to that term after applying the IRA-Hack.
 	 */
-	public void desugar(ApplicationTerm orig, Term[] newArgs);
+	public void desugar(ApplicationTerm orig, Term[] origArgs, Term[] newArgs);
 	/**
 	 * Track a modulo-rewrite. (mod x y) ==> (- x  (* y (div x y))) under the
 	 * assumption y is integral and not 0.
@@ -211,6 +215,13 @@ public interface IProofTracker {
 	 */
 	public void intern(Term term, Literal lit);
 	/**
+	 * Apply double negation elimination on a literal.  Note that the literal
+	 * has to be negated already.
+	 * @param lit    The literal to negate
+	 * @param theory The theory to use in conversion.
+	 */
+	public void negateLit(Literal lit, Theory theory);
+	/**
 	 * Create a clause-creation proof.  Note that this tracker does not yet
 	 * apply the @clause-rule which might be needed.  This will be done by the
 	 * source annotation when converting the clause into a proof term.
@@ -229,14 +240,6 @@ public interface IProofTracker {
 	 */
 	public Term auxAxiom(int auxKind, Literal auxLit, Term data, Term base,
 			Object auxData);
-	
-	//// ===== Multiple arguments sum tracking ====
-	/**
-	 * Track <code>CanonicalSum</code> applications for multiple arguments.
-	 * @param origArgs The arguments of the original term.
-	 * @param newArgs  The arguments of the new term.
-	 */
-	public void trackSums(Term[] origArgs, Term[] newArgs);
 	
 	//// ===== Accessors ====
 	/**
@@ -267,5 +270,13 @@ public interface IProofTracker {
 	 *         tracker.
 	 */
 	public IProofTracker getDescendent();
+	/**
+	 * Prepare to apply the IRA-Hack.  This should return a copy of the original
+	 * arguments to ensure correct applications of the desugar rule.
+	 * @param args The original arguments.
+	 * @return <code>null</code> if no desugar should be applied and a copy of
+	 *         the argument otherwise. 
+	 */
+	public Term[] prepareIRAHack(Term[] args);
 	
 }

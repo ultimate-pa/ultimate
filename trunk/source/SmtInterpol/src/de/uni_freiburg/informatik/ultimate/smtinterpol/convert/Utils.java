@@ -254,16 +254,29 @@ public class Utils {
 			}
 			if (foundTrue) {
 				// take care of (= true true ... true)
+				if (tmp.size() == 0) {
+					m_Tracker.equality(args, theory.TRUE,
+							ProofConstants.RW_EQ_SAME);
+					return theory.TRUE;
+				}
 				Term[] tmpArgs = tmp.toArray(new Term[tmp.size()]);
 				m_Tracker.equality(args, tmpArgs, ProofConstants.RW_EQ_TRUE);
-				return tmp.isEmpty() ? theory.TRUE : createAndInplace(tmpArgs);
+				if (tmpArgs.length == 1)
+					return tmpArgs[0];
+				return createAndInplace(tmpArgs);
 			}
 			if (foundFalse) {
+				if (tmp.size() == 0) {
+					m_Tracker.equality(args, theory.TRUE,
+							ProofConstants.RW_EQ_SAME);
+					return theory.TRUE;
+				}
 				Term[] tmpArgs = tmp.toArray(new Term[tmp.size()]);
 				m_Tracker.equality(args, tmpArgs, ProofConstants.RW_EQ_FALSE);
+				if (tmpArgs.length == 1)
+					return createNot(tmpArgs[0]);
 				// take care of (= false false ... false)
-				return tmp.isEmpty() ? theory.TRUE : createNot(
-						createOr(tmpArgs));
+				return createNot(createOr(tmpArgs));
 			}
 		} else {
 			for (Term t : args)
@@ -271,7 +284,7 @@ public class Utils {
 		}
 		// We had (= a ... a)
 		if (tmp.size() == 1) {
-			m_Tracker.equality(args, theory.TRUE, ProofConstants.RW_EQ_SIMP);
+			m_Tracker.equality(args, theory.TRUE, ProofConstants.RW_EQ_SAME);
 			return theory.TRUE;
 		}
 		// Make binary
@@ -373,6 +386,7 @@ public class Utils {
 		return false;
 	}
 	public Term createAndInplace(Term... args) {
+		assert (args.length > 1) : "Invalid and in simplification";
 		m_Tracker.removeConnective(args, null, ProofConstants.RW_AND_TO_OR);
 		for (int i = 0; i < args.length; ++i)
 			args[i] = createNot(args[i]);

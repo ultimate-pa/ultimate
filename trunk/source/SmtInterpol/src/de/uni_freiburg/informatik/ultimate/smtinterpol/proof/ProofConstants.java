@@ -75,8 +75,9 @@ public interface ProofConstants {
 	public final static int RW_DIV_MONE = 41;
 	public final static int RW_DIV_CONST = 42;
 	public final static int RW_TO_INT = 43;
+	public final static int RW_EQ_SAME = 44;
 	// This has to be last!!!
-	public final static int RW_END = 40;        /// Not a rewrite rule!!!
+	public final static int RW_END = 45;        /// Not a rewrite rule!!!
 	
 	public final static Annotation[] REWRITEANNOTS = {
 		new Annotation(":expand", null),
@@ -125,7 +126,8 @@ public interface ProofConstants {
 		new Annotation(":div1", null),
 		new Annotation(":div-1", null),
 		new Annotation(":divConst", null),
-		new Annotation(":toInt", null)
+		new Annotation(":toInt", null),
+		new Annotation(":eqSame", null)
 	};
 	
 	//// ==== Aux ids and names ====
