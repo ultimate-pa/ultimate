@@ -126,7 +126,7 @@ public class ConversionVisitor implements IMinimizationVisitor {
 			// if not, we generate one
 			initRefMap(node);
 		}
-		
+
 		// TODO: First we take here the most minimized variant,
 		// later we would choose here the probably best variant (according to
 		// SMTSolver)
@@ -142,17 +142,12 @@ public class ConversionVisitor implements IMinimizationVisitor {
 				s_Logger.debug("New Converted Edge: " + edge + " Source: "
 						+ edge.getSource() + " / Target: " + edge.getTarget());
 				s_Logger.debug("Size of Formula: " + edge.getElementCount());
+				// Now we create a converted CodeBlock-edge
 				cb = convertMinimizedEdge(edge);
 				if (cb instanceof GotoEdge) {
-					s_Logger.warn("Converted Goto-Edge is given back, this should not happen");
-					// FIXME: Wieso gibt es diesen Fall? Und das muss in der anderen Methode passieren!!!
-					cb = new StatementSequence((ProgramPoint) cb.getSource(),
-							(ProgramPoint) cb.getTarget(), new AssumeStatement(
-									cb.getPayload().getLocation(),
-									new BooleanLiteral(cb.getPayload()
-											.getLocation(), true)));
-					transFormBuilder.addTransitionFormulas(cb);
-
+					// it is possible that the found replacement, is Goto-Edge,
+					// which we have to convert in a valid edge
+					cb = replaceGotoEdge(cb, null);
 				}
 				s_Logger.debug("<-Converted Formula->: "
 						+ cb.getTransitionFormula());
@@ -193,8 +188,6 @@ public class ConversionVisitor implements IMinimizationVisitor {
 	 * This recursive method, converts a MinimizedEdge into a valid CodeBlock.
 	 * While doing this, the method uses "Sequential" and "Parallel"
 	 * Composition.
-	 * 
-	 * TODO: Clean up this method!
 	 * 
 	 * @param edge
 	 *            the minimized edge to convert
@@ -271,14 +264,7 @@ public class ConversionVisitor implements IMinimizationVisitor {
 				if (leftSide instanceof GotoEdge
 						&& rightSide instanceof GotoEdge) {
 					// Special case, we construct an "assume true"
-					StatementSequence replaceGoto = new StatementSequence(
-							(ProgramPoint) leftSide.getSource(),
-							(ProgramPoint) rightSide.getTarget(),
-							new AssumeStatement(leftSide.getPayload()
-									.getLocation(), new BooleanLiteral(leftSide
-									.getPayload().getLocation(), true)));
-					transFormBuilder.addTransitionFormulas(replaceGoto);
-					return replaceGoto;
+					return replaceGotoEdge(leftSide, rightSide);
 				} else if (leftSide instanceof GotoEdge) {
 					return rightSide;
 				} else if (rightSide instanceof GotoEdge) {
@@ -288,25 +274,11 @@ public class ConversionVisitor implements IMinimizationVisitor {
 						leftSide, rightSide);
 			}
 			if (edge instanceof DisjunctionEdge) {
-				// In a disjunction, we have to threat GotoEdges
-				// we convert them to "assume true" TODO: is that right?
 				if (leftSide instanceof GotoEdge) {
-					leftSide = new StatementSequence(
-							(ProgramPoint) leftSide.getSource(),
-							(ProgramPoint) leftSide.getTarget(),
-							new AssumeStatement(leftSide.getPayload()
-									.getLocation(), new BooleanLiteral(leftSide
-									.getPayload().getLocation(), true)));
-					transFormBuilder.addTransitionFormulas(leftSide);
+					leftSide = replaceGotoEdge(leftSide, null);
 				}
 				if (rightSide instanceof GotoEdge) {
-					rightSide = new StatementSequence(
-							(ProgramPoint) rightSide.getSource(),
-							(ProgramPoint) rightSide.getTarget(),
-							new AssumeStatement(rightSide.getPayload()
-									.getLocation(), new BooleanLiteral(
-									rightSide.getPayload().getLocation(), true)));
-					transFormBuilder.addTransitionFormulas(rightSide);
+					rightSide = replaceGotoEdge(rightSide, null);
 				}
 				return new ParallelComposition(null, null, boogie2smt,
 						leftSide, rightSide);
@@ -315,6 +287,38 @@ public class ConversionVisitor implements IMinimizationVisitor {
 		// should never reach this end here?
 		s_Logger.error("Failure during construction of formulas... " + edge);
 		return null;
+	}
+
+	/**
+	 * This method replaces an Goto-Edge with the statement "assume true". <br>
+	 * TODO: Need to be clarified if this is correct.
+	 * 
+	 * @param gotoEdge
+	 *            the Goto-Edge to convert
+	 * @param secondGotoEdge
+	 *            maybe somites we have to convert two Goto-Edges
+	 * @return the converted "assume true"
+	 */
+	private CodeBlock replaceGotoEdge(CodeBlock gotoEdge,
+			CodeBlock secondGotoEdge) {
+		StatementSequence replacement = null;
+		if (secondGotoEdge == null) {
+			replacement = new StatementSequence(
+					(ProgramPoint) gotoEdge.getSource(),
+					(ProgramPoint) gotoEdge.getTarget(), new AssumeStatement(
+							gotoEdge.getPayload().getLocation(),
+							new BooleanLiteral(gotoEdge.getPayload()
+									.getLocation(), true)));
+		} else {
+			replacement = new StatementSequence(
+					(ProgramPoint) gotoEdge.getSource(),
+					(ProgramPoint) secondGotoEdge.getTarget(),
+					new AssumeStatement(gotoEdge.getPayload().getLocation(),
+							new BooleanLiteral(gotoEdge.getPayload()
+									.getLocation(), true)));
+		}
+		transFormBuilder.addTransitionFormulas(replacement);
+		return replacement;
 	}
 
 	/**
