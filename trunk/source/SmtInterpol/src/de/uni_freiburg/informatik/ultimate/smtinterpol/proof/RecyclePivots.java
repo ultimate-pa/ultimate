@@ -74,6 +74,7 @@ public class RecyclePivots {
 	private interface Worker {
 		public void work();
 	}
+
 	/**
 	 * Helper class that checks for possible regularizations in a sub proof
 	 * w.r.t. a given set of safe literals for the root of the sub proof. 
@@ -86,18 +87,24 @@ public class RecyclePivots {
 		Clause m_Cls;
 		/**
 		 * The set of literals safe for the root.
+		 * This is null, if all literals are safe (because the
+		 * clause is not reached in this path).
 		 */
 		Set<Literal> m_Safes;
 		public SetAndExpand(Clause cls, Set<Literal> safes) {
 			m_Cls = cls;
 			m_Safes = safes;
 		}
+		
 		@Override
 		public void work() {
 			if (seen(m_Cls)) {
 				Set<Literal> oldSafes = m_SafeLits.get(m_Cls);
-				if (oldSafes != null)
+				if (m_Safes == null)
+					m_Safes = oldSafes;
+				else if (oldSafes != null)
 					m_Safes.retainAll(oldSafes);
+				
 				// Clause has been seen for the last time.
 				ProofNode pn = m_Cls.getProof();
 				// We can skip leaf nodes since they cannot be regularized
@@ -105,57 +112,52 @@ public class RecyclePivots {
 					Set<Literal> delLits = null;
 					ResolutionNode rn = (ResolutionNode) pn;
 					Antecedent[] antes = rn.getAntecedents();
-					// Flag to mark the deletion of an antecedent
-					// If true, we should only visit the rest without trying to
-					// regularize anything
-					boolean deleted = false;
 					for (int i = antes.length - 1; i >= 0; --i) {
-						if (deleted) {
-							m_Todo.push(new Visitor(antes[i].antecedent));
-							// delLits is not null here since we already deleted
-							// a literal
-							delLits.add(antes[i].pivot.negate());
-						} else {
-							if (m_Safes.contains(antes[i].pivot.negate())) {
-								// negation of pivot is safe =>
-								// delete antecedent clause
-								if (delLits == null)
-									delLits = new HashSet<Literal>();
-								delLits.add(antes[i].pivot);
-								// Only visit the subtree to get correct counts
-								m_Todo.push(new Visitor(antes[i].antecedent));
-							} else if (m_Safes.contains(antes[i].pivot)) {
-								// pivot is safe => delete antecedent
-								if (delLits == null)
-									delLits = new HashSet<Literal>();
-								delLits.add(antes[i].pivot.negate());
-								deleted = true;
-							} else if (
-									!antes[i].antecedent.getProof().isLeaf()) {
-								// Sub proof is not a leaf => try to regularize
-								HashSet<Literal> safes =
-									new HashSet<Literal>(m_Safes);
-								safes.add(antes[i].pivot);
-								m_Todo.push(
-										new SetAndExpand(
-												antes[i].antecedent, safes));
-							}
-							m_Safes.add(antes[i].pivot.negate());
+						HashSet<Literal> newSafes = null;
+						if (m_Safes == null) {
+							// do nothing, visit sub nodes with null
+						} else if (m_Safes.contains(antes[i].pivot.negate())) {
+							// negation of pivot is safe =>
+							// delete antecedent clause
+							if (delLits == null)
+								delLits = new HashSet<Literal>();
+							delLits.add(antes[i].pivot);
+							// visit antecedent with null since we do not use it.
+						} else 	if (!antes[i].antecedent.getProof().isLeaf()) {
+							// Sub proof is not a leaf => try to regularize
+							// copy safes and add the pivot to get the 
+							// new safes set for the antecedent.
+							newSafes = new HashSet<Literal>(m_Safes);
+							newSafes.add(antes[i].pivot);
 						}
+						
+						if (!antes[i].antecedent.getProof().isLeaf()) {
+							m_Todo.push(new SetAndExpand(
+									antes[i].antecedent, newSafes));
+						}
+
+						if (m_Safes != null && 
+							m_Safes.contains(antes[i].pivot)) {
+							// pivot is safe => delete antecedent
+							if (delLits == null)
+								delLits = new HashSet<Literal>();
+							delLits.add(antes[i].pivot.negate());
+							m_Safes = null;
+						}							
+						if (m_Safes != null)
+							m_Safes.add(antes[i].pivot.negate());
 					}
 					if (delLits != null)
 						m_Deleted.put(m_Cls, delLits);
 					// Handle primary
-					if (deleted)
-						m_Todo.push(new Visitor(rn.getPrimary()));
-					else if (!rn.getPrimary().getProof().isLeaf()) {
-						HashSet<Literal> safes = new HashSet<Literal>(m_Safes);
-						for (Antecedent a : rn.getAntecedents())
-							safes.add(a.pivot.negate());
-						m_Todo.push(new SetAndExpand(rn.getPrimary(), safes));
+					if (!rn.getPrimary().getProof().isLeaf()) {
+						HashSet<Literal> newSafes = null;
+						if (m_Safes != null)
+							newSafes = new HashSet<Literal>(m_Safes);
+						m_Todo.push(new SetAndExpand(rn.getPrimary(), newSafes));
 					}
 				}
-			} else {
+			} else if (m_Safes != null) {
 				// There are still parts left where we can reach this clause.
 				// Compute intersection of safe literals for the paths seen so
 				// far
@@ -166,52 +168,6 @@ public class RecyclePivots {
 					oldSafes.retainAll(m_Safes);
 			}
 		}
-	}
-	/**
-	 * Helper class used when an antecedent gets deleted.  This class only
-	 * visits sub proofs without computing safe literals.  Once a node in the
-	 * proof tree with fan out greater than 1 is visited for the last time, it
-	 * starts the regularization again.
-	 * @author Juergen Christ
-	 */
-	private class Visitor implements Worker {
-		/**
-		 * The root of the sub proof to visit.
-		 */
-		Clause m_Cls;
-		public Visitor(Clause cls) {
-			m_Cls = cls;
-		}
-		@Override
-		public void work() {
-			ProofNode pn = m_Cls.getProof();
-			// We can skip leaves since the cannot be regularized
-			if (!pn.isLeaf()) {
-				Integer seen = m_Seen.get(m_Cls);
-				int nseen = seen == null ? 1 : seen + 1;
-				int total = m_Counts.get(m_Cls);
-				if (total == nseen) {
-					// We see it for the last time
-					if (total > 1)
-						// It is fan out > 1
-						// Don't adjust the seen counter since SetAndExpand will
-						// do this again
-						m_Todo.push(new SetAndExpand(m_Cls,
-								m_SafeLits.get(m_Cls)));
-					else {
-						// Increment the usage counter and expand the node
-						m_Seen.put(m_Cls, nseen);
-						ResolutionNode rn = (ResolutionNode) pn;
-						m_Todo.push(new Visitor(rn.getPrimary()));
-						for (Antecedent ante : rn.getAntecedents())
-							m_Todo.push(new Visitor(ante.antecedent));
-					}
-				} else
-					// Increment the usage counter
-					m_Seen.put(m_Cls, nseen);
-			}
-		}
-		
 	}
 	/**
 	 * The occurrence map.
