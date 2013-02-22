@@ -16,8 +16,6 @@ import de.uni_freiburg.informatik.ultimate.blockencoding.model.DisjunctionEdge;
 import de.uni_freiburg.informatik.ultimate.blockencoding.model.MinimizedNode;
 import de.uni_freiburg.informatik.ultimate.blockencoding.model.interfaces.IBasicEdge;
 import de.uni_freiburg.informatik.ultimate.blockencoding.model.interfaces.IMinimizedEdge;
-import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.blockendcoding.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
@@ -39,17 +37,16 @@ public class MinimizeCallReturnVisitor implements IMinimizationVisitor {
 
 	private static Logger s_Logger;
 
-	private MinimizeBranchVisitor mbv;
+	private MinimizeLoopVisitor mbv;
 
 	private HashSet<MinimizedNode> actualCallStack;
 
 	/**
 	 * 
 	 */
-	public MinimizeCallReturnVisitor() {
-		mbv = new MinimizeBranchVisitor();
-		s_Logger = UltimateServices.getInstance().getLogger(
-				Activator.s_PLUGIN_ID);
+	public MinimizeCallReturnVisitor(Logger logger) {
+		mbv = new MinimizeLoopVisitor(logger);
+		s_Logger = logger;
 	}
 
 	@Override
@@ -79,11 +76,22 @@ public class MinimizeCallReturnVisitor implements IMinimizationVisitor {
 				// next step is to try if we can minimize the whole method, and
 				// substitute the summary edge by a concrete formula
 				if (substituteEdge == null) {
-					substituteEdge = tryToMergeMethod(node);
+					IMinimizedEdge edges[] = tryToMergeMethod(node);
 					// if the method is not mergeable we return null
-					if (substituteEdge == null) {
+					if (edges == null) {
 						return;
 					}
+					// We get the substitution and the shortcut to the error
+					// locations, which can be added directly
+					substituteEdge = edges[0];
+					ArrayList<IMinimizedEdge> newOutEdgeLevel = new ArrayList<IMinimizedEdge>(
+							edge.getSource().getOutgoingEdges());
+					for (int i = 1; i < edges.length; i++) {
+						newOutEdgeLevel
+								.add(new ConjunctionEdge(edge, edges[i]));
+					}
+					edge.getSource().addNewOutgoingEdgeLevel(newOutEdgeLevel);
+
 					// if our substitueEdge is an Call-Edge, we try do resolve
 					// it recursively, if this is not possible we do not
 					// minimize further (possible cycles in the call graph)
@@ -106,7 +114,20 @@ public class MinimizeCallReturnVisitor implements IMinimizationVisitor {
 							break;
 						}
 						internalVisitNode(substituteEdge.getTarget());
-						substituteEdge = tryToMergeMethod(node);
+						edges = tryToMergeMethod(node);
+						if (edges == null) {
+							substituteEdge = null;
+						} else {
+							substituteEdge = edges[0];
+							newOutEdgeLevel = new ArrayList<IMinimizedEdge>(
+									edge.getSource().getOutgoingEdges());
+							for (int i = 1; i < edges.length; i++) {
+								newOutEdgeLevel.add(new ConjunctionEdge(edge,
+										edges[i]));
+							}
+							edge.getSource().addNewOutgoingEdgeLevel(
+									newOutEdgeLevel);
+						}
 					}
 					// if the method is not mergeable we return null
 					if (substituteEdge == null) {
@@ -136,42 +157,54 @@ public class MinimizeCallReturnVisitor implements IMinimizationVisitor {
 	 * @return the already minimized edge or an Call-Edge for further
 	 *         minimization
 	 */
-	private IMinimizedEdge tryToMergeMethod(MinimizedNode node) {
+	private IMinimizedEdge[] tryToMergeMethod(MinimizedNode node) {
 		// now we have to check, if it is possible to minimize the method
-		if (node.getOutgoingEdges().size() == 1) {
-			IMinimizedEdge edge = (IMinimizedEdge) node.getOutgoingEdges().get(
-					0);
-			// so we check if the method is already minimized to one edge
-			boolean hasReturnEdges = false;
+		// We either have a direct shortcut to complete minimize the function or
+		// we have the shortcut and various ways to error locations, which also
+		// can be minimized
+		// Now we have a call edge directly in the method entry point
+		// If we find an call edge we return it!
+		IMinimizedEdge subsituteEdge = null;
+		ArrayList<IMinimizedEdge> errorLocationEdges = new ArrayList<IMinimizedEdge>();
+		for (IMinimizedEdge edge : node.getOutgoingEdges()) {
+			if (edge.isBasicEdge()) {
+				IBasicEdge basicEdge = (IBasicEdge) edge;
+				if (basicEdge.getOriginalEdge() instanceof Call) {
+					return new IMinimizedEdge[] { basicEdge };
+				}
+			}
+			// Another possibility is that we have a direct way to an error
+			// location, this is possible to minimize
+			if (edge.getTarget().getOriginalNode().isErrorLocation()) {
+				errorLocationEdges.add(edge);
+			}
 			for (IMinimizedEdge possibleReturnEdge : edge.getTarget()
 					.getOutgoingEdges()) {
 				if (possibleReturnEdge.isBasicEdge()) {
 					IBasicEdge basicEdge = (IBasicEdge) possibleReturnEdge;
 					if (basicEdge.getOriginalEdge() instanceof Call) {
-						return basicEdge;
+						return new IMinimizedEdge[] { basicEdge };
 					}
 					if (basicEdge.getOriginalEdge() instanceof Return) {
-						hasReturnEdges = true;
-					}
-				}
-			}
-			// there is no Return-Edge so we cannot minimize this method
-			if (!hasReturnEdges) {
-				return null;
-			}
-			return edge;
-		} else if (node.getOutgoingEdges().size() == 2) {
-			// Now we have a call edge directly in the method entry point
-			// If we find an call edge we return it!
-			for (IMinimizedEdge edge : node.getOutgoingEdges()) {
-				if (edge.isBasicEdge()) {
-					IBasicEdge basicEdge = (IBasicEdge) edge;
-					if (basicEdge.getOriginalEdge() instanceof Call) {
-						return basicEdge;
+						subsituteEdge = edge;
+						break;
 					}
 				}
 			}
 		}
+		// if we have a substitute and a list of possible error locations, we
+		// create the shortcuts for them, in all other cases we do not minimize
+		// further
+		if (subsituteEdge != null
+				&& errorLocationEdges.size() == (node.getOutgoingEdges().size() - 1)) {
+			ArrayList<IMinimizedEdge> edges = new ArrayList<IMinimizedEdge>();
+			edges.add(subsituteEdge);
+			edges.addAll(errorLocationEdges);
+			return edges.toArray(new IMinimizedEdge[0]);
+		} else if (subsituteEdge != null) {
+			return new IMinimizedEdge[] { subsituteEdge };
+		}
+
 		return null;
 	}
 

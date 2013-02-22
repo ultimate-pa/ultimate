@@ -12,10 +12,8 @@ import de.uni_freiburg.informatik.ultimate.blockencoding.model.ConjunctionEdge;
 import de.uni_freiburg.informatik.ultimate.blockencoding.model.DisjunctionEdge;
 import de.uni_freiburg.informatik.ultimate.blockencoding.model.MinimizedNode;
 import de.uni_freiburg.informatik.ultimate.blockencoding.model.interfaces.IBasicEdge;
-import de.uni_freiburg.informatik.ultimate.blockencoding.model.interfaces.IMinimizedEdge;
 import de.uni_freiburg.informatik.ultimate.blockencoding.model.interfaces.ICompositeEdge;
-import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.blockendcoding.Activator;
+import de.uni_freiburg.informatik.ultimate.blockencoding.model.interfaces.IMinimizedEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
@@ -34,16 +32,12 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Sum
  */
 public class MinimizeBranchVisitor extends AbstractMinimizationVisitor {
 
-	private static Logger s_Logger;
-
 	/**
 	 * Constructor for the MinimizeBranchVisitor
 	 * 
 	 */
-	public MinimizeBranchVisitor() {
-		super();
-		s_Logger = UltimateServices.getInstance().getLogger(
-				Activator.s_PLUGIN_ID);
+	public MinimizeBranchVisitor(Logger logger) {
+		super(logger);
 	}
 
 	@Override

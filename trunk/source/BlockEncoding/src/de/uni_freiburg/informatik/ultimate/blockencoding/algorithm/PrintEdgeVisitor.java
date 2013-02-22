@@ -7,8 +7,6 @@ import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.blockencoding.model.MinimizedNode;
 import de.uni_freiburg.informatik.ultimate.blockencoding.model.interfaces.IMinimizedEdge;
-import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.blockendcoding.Activator;
 
 /**
  * @author Stefan Wissert
@@ -16,12 +14,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.blockendcoding.Acti
  */
 public class PrintEdgeVisitor extends AbstractMinimizationVisitor {
 
-	private static Logger s_Logger;
-
-	public PrintEdgeVisitor() {
-		super();
-		s_Logger = UltimateServices.getInstance().getLogger(
-				Activator.s_PLUGIN_ID);
+	public PrintEdgeVisitor(Logger logger) {
+		super(logger);
 	}
 
 	/*

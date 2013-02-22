@@ -57,11 +57,11 @@ public class BlockEncoder {
 	public RootNode startMinimization(RootNode root) {
 		s_Logger.info("Start BlockEncoding on RCFG");
 		// Initialize the Visitors, which apply the minimization rules
-		mbVisitor = new MinimizeBranchVisitor();
-		mlVisitor = new MinimizeLoopVisitor();
-		mcrVisitor = new MinimizeCallReturnVisitor();
+		mbVisitor = new MinimizeBranchVisitor(s_Logger);
+		mlVisitor = new MinimizeLoopVisitor(s_Logger);
+		mcrVisitor = new MinimizeCallReturnVisitor(s_Logger);
 		// TODO this only for validating purposes
-		tmVisitor = new TestMinimizationVisitor();
+		tmVisitor = new TestMinimizationVisitor(s_Logger);
 
 		for (RCFGEdge edge : root.getOutgoingEdges()) {
 			if (edge instanceof RootEdge) {

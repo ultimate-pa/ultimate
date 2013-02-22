@@ -14,8 +14,6 @@ import de.uni_freiburg.informatik.ultimate.blockencoding.model.ConjunctionEdge;
 import de.uni_freiburg.informatik.ultimate.blockencoding.model.MinimizedNode;
 import de.uni_freiburg.informatik.ultimate.blockencoding.model.interfaces.IBasicEdge;
 import de.uni_freiburg.informatik.ultimate.blockencoding.model.interfaces.IMinimizedEdge;
-import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
-import de.uni_freiburg.informatik.ultimate.core.coreplugin.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
@@ -31,14 +29,10 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Sum
  */
 public class MinimizeLoopVisitor extends MinimizeBranchVisitor {
 
-	private static Logger s_Logger;
-
 	private int mergedNodes;
 
-	public MinimizeLoopVisitor() {
-		super();
-		s_Logger = UltimateServices.getInstance().getLogger(
-				Activator.s_PLUGIN_ID);
+	public MinimizeLoopVisitor(Logger logger) {
+		super(logger);
 	}
 
 	@Override
