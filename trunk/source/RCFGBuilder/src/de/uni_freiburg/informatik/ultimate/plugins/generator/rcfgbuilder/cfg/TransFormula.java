@@ -565,7 +565,7 @@ public class TransFormula implements Serializable {
 		}
 		
 		// overwrite (see comment above) the outvars if the outvar does not 
-		// coincide with the invar is some of the transFormulas
+		// coincide with the invar in some of the transFormulas
 		for (BoogieVar bv : assignedInSomeBranch.keySet()) {
 			Sort sort = assignedInSomeBranch.get(bv);
 			String outVarName = bv.getIdentifier()+"_Out"+ serialNumber;
@@ -600,6 +600,7 @@ public class TransFormula implements Serializable {
 			Term[] values = replacers.toArray(new Term[replacers.size()]);
 			Term originalFormula = transFormulas[i].getFormula();
 			renamedFormulas[i] = script.let( vars , values, originalFormula);
+			renamedFormulas[i] = (new FormulaUnLet()).unlet(renamedFormulas[i]);
 
 			for (BoogieVar bv : assignedInSomeBranch.keySet()) {
 				TermVariable inVar = transFormulas[i].getInVars().get(bv);
@@ -617,8 +618,8 @@ public class TransFormula implements Serializable {
 					assert newOutVars.get(bv) != null;
 					Term equality = script.term("=", newInVars.get(bv), newOutVars.get(bv));
 					renamedFormulas[i] = Util.and(script, renamedFormulas[i], equality);
-					replacees.add(inVar);
-					replacers.add(newInVars.get(bv));					
+					assert (replacees.add(inVar));
+					assert (replacers.add(newInVars.get(bv)));					
 				}
 			}
 
