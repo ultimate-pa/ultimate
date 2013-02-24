@@ -7,8 +7,11 @@ Bundle-Activator: de.uni_freiburg.informatik.ultimate.plugins.generator.rankingf
 Bundle-ActivationPolicy: lazy
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
 Require-Bundle: Library-log4j,
- Library-ModelCheckerUtils,
  UltimateCore,
  SmtInterpol,
  SMTSolverBridge,
+ Library-ModelCheckerUtils,
  RCFGBuilder
+Export-Package: de.uni_freiburg.informatik.ultimate.plugins.generator.rankingfunctions,
+ de.uni_freiburg.informatik.ultimate.plugins.generator.rankingfunctions.functions,
+ de.uni_freiburg.informatik.ultimate.plugins.generator.rankingfunctions.templates

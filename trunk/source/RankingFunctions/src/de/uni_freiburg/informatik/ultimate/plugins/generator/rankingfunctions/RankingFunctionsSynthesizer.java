@@ -78,7 +78,7 @@ public class RankingFunctionsSynthesizer {
 	 * @param script SMT Solver
 	 * @throws Exception If something goes wrong ;)
 	 */
-	RankingFunctionsSynthesizer(Script old_script, Script script,
+	public RankingFunctionsSynthesizer(Script old_script, Script script,
 			TransFormula stem, TransFormula loop) throws Exception {
 		m_old_script = old_script;
 		m_script = script;

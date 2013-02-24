@@ -346,7 +346,7 @@ public class RankingFunctionsObserver implements IUnmanagedObserver {
 		reportResult(unsupp);
 	}
 	
-	private String backtranslateExprWorkaround(Expression expr) {
+	public static String backtranslateExprWorkaround(Expression expr) {
 		ITranslator<?, ?, Expression, ?> iback = 
 				(ITranslator<?, ?, Expression, ?>) UltimateServices.getInstance().getTranslatorSequence().get(0);
 		Object backExpr = iback.translateExpression(expr);
