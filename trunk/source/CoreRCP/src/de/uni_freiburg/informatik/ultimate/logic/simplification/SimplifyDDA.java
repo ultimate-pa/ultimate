@@ -5,6 +5,7 @@ import java.util.HashSet;
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
+import de.uni_freiburg.informatik.ultimate.logic.FormulaUnLet;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
@@ -100,39 +101,40 @@ public class SimplifyDDA {
 	 */
 	private Term computeCriticalConstraint(Term criticalConstraintOfParent,
 			Term[] parameters, int positionI, HashSet<Term> newParameters,
-				String connective) throws SMTLIBException {
+				String connective, boolean isNegated) throws SMTLIBException {
 		// first we take the criticalConstraint of the parent
 		Term criticalConstraint = criticalConstraintOfParent;
-		if (connective == "and") {
-			// here we add all siblings which are > i
-			for (int j = positionI + 1; j < parameters.length; j++){
-				criticalConstraint = Util.and(m_Script, 
-						criticalConstraint, parameters[j]);
-			}
-			// here we add the siblings which have already been 
-			// simplified.
-			for (Term t : newParameters) {
-				criticalConstraint = Util.and(m_Script, 
-						criticalConstraint, t);
-			}
-			
+		// Is this a conjunctive context?
+		boolean isAnd = (connective == "and") != isNegated; 
+		// In an conjunctive context, the critical context is just the conjunction
+		// of all siblings.  These need to hold for the children to be relevant.
+		//
+		// In a disjunctive context, the critical context is the conjunction of
+		// the negation of all siblings.  All siblings must be false for the
+		// formula to be relevant.
+		
+		// here we add all siblings which are > i
+		for (int j = positionI + 1; j < parameters.length; j++){
+			boolean paramNegated = isNegated != (connective == "=>" && j < parameters.length - 1); 			
+			criticalConstraint = Util.and(m_Script, 
+					criticalConstraint, addNegation(parameters[j], isAnd == paramNegated));
 		}
-		if (connective == "or") {
-			// here we add all siblings which are > i
-			for (int j = positionI + 1; j < parameters.length; j++){
-				criticalConstraint = Util.and(m_Script, criticalConstraint, 
-						Util.not(m_Script, parameters[j]));
-			}
-			// here we add the siblings which have already been 
-			// simplified.
-			for (Term t : newParameters) {
-				criticalConstraint = Util.and(m_Script, criticalConstraint, 
-						Util.not(m_Script, t));
-			}
+		// here we add the siblings which have already been 
+		// simplified.
+		for (Term t : newParameters) {
+			criticalConstraint = Util.and(m_Script, 
+					criticalConstraint, addNegation(t, !isAnd));
 		}
 		return criticalConstraint;
 	}
 	
+	private Term addNegation(Term t, boolean isNegated) {
+		if (isNegated)
+			return Util.not(m_Script, t);
+		else
+			return t;
+	}
+
 	/**
 	 * Return a Term which is equivalent to term but whose number of leaves is
 	 * less than or equal to the number of leaves in term.
@@ -143,9 +145,11 @@ public class SimplifyDDA {
 	 * @param term whose Sort is Boolean
 	 */
 	public Term getSimplifiedTerm(Term term) throws SMTLIBException {
-		m_Logger.debug("Simplifying " + term);
-		term = (new NegationNormalForm(m_Script)).getNNF(term);
-		return this.getSimplifiedTerm(term, m_Script.term("true"));
+//		m_Logger.debug("Simplifying " + term);
+		term = new FormulaUnLet().unlet(term);
+		term = this.getSimplifiedTerm(term, m_Script.term("true"), false);
+		m_Logger.debug("Simplified to: " + term);
+		return term;
 	}
 	
 
@@ -159,7 +163,7 @@ public class SimplifyDDA {
 	 * @param inputTerm term whose Sort is Boolean
 	 * @param criticalConstraint whose Sort is Boolean
 	 */
-	private Term getSimplifiedTerm(Term inputTerm, Term criticalConstraint)
+	private Term getSimplifiedTerm(Term inputTerm, Term criticalConstraint, boolean isNegated)
 			throws SMTLIBException {
 
 		if (inputTerm instanceof ApplicationTerm) {
@@ -174,23 +178,47 @@ public class SimplifyDDA {
 			Boolean parameterSimplified = true;
 			Boolean inputParameterSimplified = false;
 			
-			if (connective == "and" || connective == "or") {
+			if (connective == "not")
+				return this.getSimplifiedTerm(parameters[0], criticalConstraint, !isNegated);
+			if (connective == "ite") {
+				Term cond = this.getSimplifiedTerm(parameters[0], criticalConstraint, false);
+				Term simpThen = this.getSimplifiedTerm(parameters[1], Util.and(m_Script, criticalConstraint, cond), isNegated);
+				Term simpElse = this.getSimplifiedTerm(parameters[2], Util.and(m_Script, criticalConstraint, Util.not(m_Script, cond)), isNegated);
+				Term trueTerm = m_Script.term("true");
+				Term falseTerm = m_Script.term("false");
+				if (cond == trueTerm) return simpThen;
+				else if (cond == falseTerm) return simpElse;
+				else if (simpThen == trueTerm) return Util.or(m_Script, cond, simpElse);
+				else if (simpElse == falseTerm) return Util.and(m_Script, cond, simpThen);
+				else if (simpThen == falseTerm) return Util.and(m_Script, Util.not(m_Script, cond), simpElse);
+				else if (simpElse == trueTerm) return Util.or(m_Script, Util.not(m_Script, cond), simpThen);
+				return m_Script.term("ite", cond, simpThen, simpElse);
+			}
+			if (connective == "and" || connective == "or" || connective == "=>") {
+				boolean isAnd = (connective == "and") != isNegated; 
 				while (parameterSimplified) {
 					parameterSimplified = false;
 					for ( int i = 0; i < parameters.length; i++) {
+						boolean paramNegated = isNegated != (connective == "=>" && i < parameters.length - 1); 
+						Term parami = addNegation(parameters[i], paramNegated);
+						if (newParameters.contains(parami)) {
+							parameterSimplified = true;
+							inputParameterSimplified = true;
+							continue;
+						}
 						// first compute critical constraint
 						Term criticalConstrainti = 
 								this.computeCriticalConstraint
 								(criticalConstraint, parameters, i, 
-										newParameters, connective);
+										newParameters, connective, isNegated);
 						// recursive call
 						Term simplifiedParameter = this.getSimplifiedTerm(
-								parameters[i], criticalConstrainti);
-						if (simplifiedParameter != parameters[i]) {
+								parameters[i], criticalConstrainti, paramNegated);
+						if (simplifiedParameter != parami) {
 							parameterSimplified = true;
 							inputParameterSimplified = true;
 						}
-						if (connective == "and") {
+						if (isAnd) {
 							if (simplifiedParameter == m_Script.term("true")) {
 								inputParameterSimplified = true;
 								parameterSimplified = true;
@@ -204,8 +232,7 @@ public class SimplifyDDA {
 							else {
 								newParameters.add(simplifiedParameter);
 							}
-						}
-						if (connective == "or") {
+						} else {
 							if (simplifiedParameter == m_Script.term("true")) {
 								inputParameterSimplified = true;
 								parameterSimplified = true;
@@ -223,61 +250,43 @@ public class SimplifyDDA {
 						
 					}
 					if (parameterSimplified) {
-						parameters = new Term[newParameters.size()];
-						int k = 0;
-						for (Term t : newParameters) {
-							parameters[k] = t;
-							k++;
-						}
-						newParameters.clear();
-						
+						break;
+//						parameters = new Term[newParameters.size()];
+//						int k = 0;
+//						for (Term t : newParameters) {
+//							parameters[k] = t;
+//							k++;
+//						}
+//						newParameters.clear();
+//						connective = isAnd ? "and" : "or";
+//						isNegated = false;
 					}
 				}
 				// if a parameter was simplified
 				if (inputParameterSimplified) {
 					// Building the return term
-					Term[] newParametersAsArray =
-							new Term[newParameters.size()];
-					int j = 0;
-					for (Term t : newParameters) {
-						newParametersAsArray[j] = t;
-						j++;
-					}
-					if (j == 0) {
-						if (connective == "and") {
-							return m_Script.term("true");
-						}
-						if (connective == "or") {
-							return m_Script.term("false");
-						}
-					}
-					// if there was only 1 term return it
-					if (j == 1){
-						return newParametersAsArray[0];
-					}
-					// if there were more than 1 term, return the conjunction
-					// if connective was and
-					if (connective == "and") {
+					Term[] newParametersAsArray = 
+							newParameters.toArray(new Term[newParameters.size()]);
+					if (isAnd) {
 						return Util.and(m_Script, newParametersAsArray);
-					}
-					
-					if (connective == "or") {
+					} else {
 						return Util.or(m_Script, newParametersAsArray);
 					}
 				}
 				// no parameter could be simplified so return the input term
 				else {
-					return inputTerm;
+					return addNegation(inputTerm, isNegated);
 				}
 				
 			}
 		}
-		Redundancy redundancy = this.getRedundancy(inputTerm, 
-															criticalConstraint);
+		Term realInput = addNegation(inputTerm, isNegated);
+		Redundancy redundancy = this.getRedundancy(realInput, 
+													criticalConstraint);
 		switch (redundancy) {
 				case NON_CONSTRAINING: return m_Script.term("true");
 				case NON_RELAXING: return m_Script.term("false");
-				default: return inputTerm;
+				default: return realInput;
 		}
 	}
 	
