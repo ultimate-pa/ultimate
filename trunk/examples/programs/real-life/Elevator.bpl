@@ -14,7 +14,6 @@ procedure Elevator()
 {
   // event variables
   var newgoal, start, stop, passed: bool;
-  var newgoal', start', stop', passed': bool;
 
   // constants
   var min, max: int;
@@ -36,9 +35,9 @@ procedure Elevator()
   var qDC2: int;
 
   assume (min < max);
-  goal' := min;
-  current' := min;
-  dir' := 0;
+  assume (min <= current');
+  assume (current' <= max);
+  goal' := current';
   c2 := 0;
   c3 := 0;
   qCSP := 1;
@@ -47,27 +46,17 @@ procedure Elevator()
 
 
   while (*)
+/*
     invariant ( 
-	      (qCSP == 3 && current' < goal' ==> qDC2 == 2 && dir' == 1) && 
-	      (qCSP == 3 && current' > goal' ==> qDC2 == 2 && dir' == -1) && 
-	min <= current' && current' <= max
-	/* (qCSP == 1 || qCSP == 2 || qCSP == 3) && 
-		(qDC1 == 1 || qDC1 == 2) &&
-		(qDC1 == 1 || qDC2 == 2 || qDC2 == 3) && */
-	     /*(qCSP == 2 ==> current' != goal') &&
-               (qCSP == 3 && current' < goal' ==> dir' == 1 && qDC2 == 2) &&
-               (qCSP == 3 && current' > goal' ==> dir' == -1 && qDC2 == 2) &&
-               (qCSP == 3 && current' == goal' ==> qDC1 == 2 && qDC2 == 3 && c3 == c2) &&
-	       (min <= goal' && goal' <= max)*/
-	/*
-	      (min <= goal' && goal' <= max && min <= current' && current' <= max &&
-	      (qCSP == 1 ==> current' == goal' && qDC2 == 1) && 
-	      (qCSP == 2 ==> qDC2 == 2 && current' != goal') && 
-	      (qCSP == 3 && current' < goal' ==> qDC2 == 2 && dir' == 1) && 
-	      (qCSP == 3 && current' > goal' ==> qDC2 == 2 && dir' == -1) && 
-	      (qCSP == 3 && current' == goal' ==> qDC2 == 3 && qDC1 == 2 && c2 == c3))
-	*/
+(((((((min <= goal' || 0 <= qCSP + -3) || qCSP <= 1) && ((((((((c2 <= c3 && 0 <= c3) && !(qCSP + -1 == 0)) && qDC2 + -3 == 0) && (current' <= goal' || -1 == dir')) && qDC1 + -2 == 0) || ((!(qCSP + -1 == 0) && goal' <= current' + -1) && !(qCSP + -3 == 0))) || qDC2 + -1 <= 0) || (((qDC2 + -2 == 0 && (current' <= goal' + -1 || goal' <= current' + -1)) && !(qCSP + -1 == 0)) && min <= goal'))) && ((((qDC2 + -2 == 0 && (goal' + 1 <= current' || 1 == dir')) || ((!(qCSP + -1 == 0) || 0 <= qDC2 + -1) && (((current' <= goal' && goal' <= current') && !(qCSP + -3 == 0)) || (((qCSP <= 2 || 0 <= qCSP + -4) && 0 <= qDC2 + -2) && qDC2 <= 2)))) || ((((!(qCSP + -1 <= 0) && c2 <= c3) && 0 <= c3) && qDC2 + -3 == 0) && qDC1 + -2 == 0)) || ((((((current' <= goal' && !(qCSP + -1 == 0)) && qDC2 <= 1) && 0 <= qDC2 + -1) && dir' <= 0) && 0 <= dir') && !(qCSP + -3 == 0)))) && current' <= max) && goal' <= max) && (((((!(qCSP + -2 == 0) && (current' <= goal' || (0 <= dir' && dir' <= 0))) || (!(qCSP + -2 == 0) && !(qCSP + -3 == 0))) || ((qDC2 + -2 <= 0 && -1 == dir') && !(qDC2 + -1 <= 0))) || ((qCSP <= 2 && qDC2 + -2 <= 0) && !(qDC2 + -1 <= 0))) || ((qDC2 + -3 == 0 && min <= goal') && !(qCSP + -2 == 0)))) && min <= current'
+//	      (qCSP == 2 ==> current' != goal') && 
+//	      (qCSP == 3 && current' < goal' ==> dir' == 1) && 
+//	      (qCSP == 3 && current' > goal' ==> dir' == -1) && 
+//	      (qCSP == 3 && current' == goal' ==> qDC2 == 3 && qDC1 == 2 && c2 <= c3) &&
+//	      min <= goal' && goal' <= max && 
+//	min <= current' && current' <= max
     );
+*/
   {
     
     
