@@ -494,9 +494,13 @@ public class Interpolator {
 			IAnnotation annot = shared.getAnnotation();
 			// TODO Here we need to change something if we have quantifiers.
 			if (annot instanceof SourceAnnotation) {
-				int partition = m_Partitions.get(
+				Integer partition = m_Partitions.get(
 						((SourceAnnotation) annot).getAnnotation());
-				result.occursIn(partition);
+				if (partition == null) {
+					for (int p = 0; p<m_NumInterpolants;p++)
+						result.occursIn(p);
+				} else
+					result.occursIn(partition);
 			}
 			m_SymbolPartition.put(shared, result);
 		}
