@@ -25,7 +25,7 @@ public class BoogieStatementPrettyPrinter {
 		BoogieOutput output = new BoogieOutput(pw);
 		output.printStatement(st, "");
 		pw.close();
-		return wr.getBuffer().toString();
+		return wr.getBuffer().toString().trim();
 	}
 	
 	/**
