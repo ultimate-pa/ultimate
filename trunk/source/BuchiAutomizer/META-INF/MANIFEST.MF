@@ -1,0 +1,16 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: BuchiAutomizer
+Bundle-SymbolicName: BuchiAutomizer;singleton:=true
+Bundle-Version: 1.0.0
+Bundle-Activator: de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.Activator
+Require-Bundle: org.eclipse.core.runtime,
+ Library-log4j;bundle-version="1.2.15",
+ UltimateCore,
+ NestedWordAutomata;bundle-version="0.0.1",
+ Library-ModelCheckerUtils,
+ RCFGBuilder;bundle-version="0.0.1",
+ TraceAbstraction;bundle-version="0.0.1",
+ RankingFunctions;bundle-version="0.2.0"
+Bundle-ActivationPolicy: lazy
+Bundle-RequiredExecutionEnvironment: JavaSE-1.6
