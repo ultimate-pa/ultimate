@@ -1,5 +1,5 @@
 (set-option :produce-proofs true)
-(set-logic AUFLIA)
+(set-logic QF_UFLIA)
 (declare-fun po_ ( Int Int) Bool)
 (declare-fun f__hlambda_h2 ( Int Int Int Int Int Int) Int)
 (declare-fun f__hlambda_h3 ( Int Int Int Int Int Int) Int)

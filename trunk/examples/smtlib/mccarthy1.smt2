@@ -39,7 +39,7 @@ Interpolant 1: (and (<= 0 (+ res9 (- 91))) (<= res9 (+ x7 (- 10))))
 }")
 (set-info :status unsat)
 (set-info :difficulty "{ 0 }")
-(set-logic AUFLIA)
+(set-logic QF_UFLIA)
 (declare-fun x_1 () Int)
 (declare-fun xm1 () Int)
 (declare-fun x2 () Int)
@@ -64,12 +64,6 @@ Interpolant 1: (and (<= 0 (+ res9 (- 91))) (<= res9 (+ x7 (- 10))))
 (assert (! (= res11 resm10) :named IP_11))
 (assert (! (and (<= x_1 101) (distinct res11 91)) :named IP_12))
 (check-sat)
-(get-interpolants IP_0 IP_1 (and IP_2 IP_3 IP_4 IP_5) IP_6 
-                  (and IP_7 IP_8 IP_9 IP_10) IP_11 IP_12)
-(get-interpolants IP_3 IP_4
-		  (and IP_0 IP_1 IP_2 IP_5 IP_6 
-                       IP_7 IP_8 IP_9 IP_10 IP_11 IP_12))
-(get-interpolants  IP_8 IP_9
-		  (and IP_0 IP_1 IP_2 IP_3 IP_4 IP_5 IP_6 
-                       IP_7 IP_10 IP_11 IP_12))
+(get-interpolants IP_0 IP_1 (IP_2 IP_3 IP_4 IP_5) IP_6 
+                  (IP_7 IP_8 IP_9 IP_10) IP_11 IP_12)
 (exit)
