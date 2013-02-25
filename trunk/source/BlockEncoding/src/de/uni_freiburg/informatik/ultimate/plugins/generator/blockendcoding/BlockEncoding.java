@@ -175,6 +175,6 @@ public class BlockEncoding implements IGenerator {
 	@Override
 	public IEclipsePreferences[] getPreferences(IScopeContext cs,
 			IScopeContext is) {
-		return null;
+		return new IEclipsePreferences[] {cs.getNode(s_PLUGIN_ID)};
 	}
 }
