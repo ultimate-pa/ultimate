@@ -415,6 +415,7 @@ public class SvCompCHandler extends CHandler {
                             result.decl.addAll(rExpr.decl);
                             result.stmt.addAll(rExpr.stmt);
                             result.stmt.add(as);
+                            result.auxVars.putAll(rExpr.auxVars);
                         }
                     }
                 }
