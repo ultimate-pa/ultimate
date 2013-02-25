@@ -59,7 +59,10 @@ public class SequentialComposition extends CodeBlock {
 		for (int i=0; i<codeBlocks.length; i++) {
 			if (! (codeBlocks[i] instanceof StatementSequence 
 					|| codeBlocks[i] instanceof SequentialComposition
-					|| codeBlocks[i] instanceof ParallelComposition)) {
+					|| codeBlocks[i] instanceof ParallelComposition
+					|| codeBlocks[i] instanceof Call
+					|| codeBlocks[i] instanceof Return
+					|| codeBlocks[i] instanceof Summary)) {
 				throw new IllegalArgumentException("Only StatementSequence," +
 						" SequentialComposition, and ParallelComposition supported");
 			}
