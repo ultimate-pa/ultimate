@@ -47,7 +47,7 @@ public class PredicateFactoryRefinement extends PredicateFactory {
 		if (!m_Pref.computeHoareAnnotation() || SmtManager.isDontCare(p1) || SmtManager.isDontCare(p2)) {
 			return m_SmtManager.newDontCarePredicate(pp);
 		}
-		TermVarsProc tvp = m_AbstractCegarLoop.getSmtManager().and(p1, p2);
+		TermVarsProc tvp = m_SmtManager.and(p1, p2);
 		IPredicate result;
 		if (s_DebugComputeHistory) {
 			assert (p1 instanceof PredicateWithHistory);
@@ -88,7 +88,7 @@ public class PredicateFactoryRefinement extends PredicateFactory {
 			assert false : "minimize empty set???";
 			return m_SmtManager.newDontCarePredicate(pp);
 		}
-		TermVarsProc tvp = m_AbstractCegarLoop.getSmtManager().or(
+		TermVarsProc tvp = m_SmtManager.or(
 				states.toArray(new IPredicate[0]));
 		if (tvp.getFormula() == SmtManager.getDontCareTerm()) {
 			return m_SmtManager.newDontCarePredicate(pp);
