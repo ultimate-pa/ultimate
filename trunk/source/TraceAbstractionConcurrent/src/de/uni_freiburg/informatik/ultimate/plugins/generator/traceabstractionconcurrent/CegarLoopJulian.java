@@ -3,7 +3,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstractionco
 import java.util.Collection;
 
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
-import de.uni_freiburg.informatik.ultimate.automata.TestFileWriter;
+import de.uni_freiburg.informatik.ultimate.automata.AtsDefinitionPrinter;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.Complement;
@@ -56,7 +56,7 @@ public class CegarLoopJulian extends BasicCegarLoop {
 			m_ArtifactAutomaton = m_Abstraction;
 		}
 		if (m_Pref.dumpAutomata()) {
-			new TestFileWriter<String,String>(m_Abstraction,
+			new AtsDefinitionPrinter<String,String>(m_Abstraction,
 					m_Pref.dumpPath()+"/Abstraction"+m_Iteration,m_PrintAutomataLabeling,"");
 		}
 	}
@@ -155,7 +155,7 @@ public class CegarLoopJulian extends BasicCegarLoop {
 		}
 		if (m_Pref.dumpAutomata()) {
 			String filename = m_Pref.dumpPath()+"/Abstraction"+m_Iteration;
-			new TestFileWriter<String,String>(m_Abstraction,filename,m_PrintAutomataLabeling, "");
+			new AtsDefinitionPrinter<String,String>(m_Abstraction,filename,m_PrintAutomataLabeling, "");
 		}
 		return true;
 	}	
