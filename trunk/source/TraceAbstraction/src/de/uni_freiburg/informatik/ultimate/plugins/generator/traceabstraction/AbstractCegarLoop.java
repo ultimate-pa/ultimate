@@ -13,8 +13,8 @@ import org.apache.log4j.Logger;
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
-import de.uni_freiburg.informatik.ultimate.automata.TestFileWriter;
-import de.uni_freiburg.informatik.ultimate.automata.TestFileWriter.Labeling;
+import de.uni_freiburg.informatik.ultimate.automata.AtsDefinitionPrinter;
+import de.uni_freiburg.informatik.ultimate.automata.AtsDefinitionPrinter.Labeling;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
@@ -39,6 +39,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.prefere
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.TAPreferences.Artifact;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.TAPreferences.InterpolatedLocs;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.ISLPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.AnnotateAndAsserter;
@@ -296,7 +297,7 @@ public abstract class AbstractCegarLoop {
 			m_ArtifactAutomaton = m_Abstraction;
 		}
 		if (m_Pref.dumpAutomata()) {
-			new TestFileWriter<String,String>(m_Abstraction,
+			new AtsDefinitionPrinter<String,String>(m_Abstraction,
 					m_Pref.dumpPath()+m_Name+"_Abstraction"+m_Iteration,m_PrintAutomataLabeling,"");
 		}
 		m_InitialAbstractionSize = m_Abstraction.size();
@@ -381,7 +382,7 @@ public abstract class AbstractCegarLoop {
 			if (m_Pref.dumpAutomata()) {
 				writeAutomatonToFile(m_Abstraction, "Abstraction_Iteration"+m_Iteration);
 				String filename = m_Pref.dumpPath()+"/Abstraction"+m_Iteration;
-				new TestFileWriter<String,String>(m_Abstraction,filename,m_PrintAutomataLabeling,"");
+				new AtsDefinitionPrinter<String,String>(m_Abstraction,filename,m_PrintAutomataLabeling,"");
 			}
 			
 			if (m_BiggestAbstractionSize < m_Abstraction.size()){
@@ -415,7 +416,7 @@ public abstract class AbstractCegarLoop {
 	
 	private void writeAutomatonToFile(
 			IAutomaton<CodeBlock, IPredicate> automaton, String filename) {
-		new TestFileWriter<String,String>(automaton, m_Pref.dumpPath()+filename,
+		new AtsDefinitionPrinter<String,String>(automaton, m_Pref.dumpPath()+filename,
 													m_PrintAutomataLabeling,"");
 	}
 	
@@ -465,7 +466,7 @@ public abstract class AbstractCegarLoop {
 				if (run instanceof NestedRun) { 
 					line = addIndentation(indentation,
 							"Location"+i+": " +
-							((SPredicate) stateSequence.get(i)).getProgramPoint());
+							((ISLPredicate) stateSequence.get(i)).getProgramPoint());
 					s_Logger.debug(line);
 					pW.println(line);
 				}
