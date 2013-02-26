@@ -50,9 +50,20 @@ public class LAAnnotation implements IAnnotation {
 	private static final Annotation g_trichotomy =
 			new Annotation(":trichotomy", null);
 	private LAAnnotation m_parent;
+	/**
+	 * Mapping of explained reason to annotation.  The form is such that the
+	 * disjunction of the explained reason and the literals in the annotation
+	 * form a lemma.
+	 */
 	private Map<LAReason, LAAnnotation> m_subReasons;
+	/**
+	 * Map from literal in the clause to a coefficient.
+	 */
 	private Map<Literal, Rational> m_coefficients;
 	private Map<LAAnnotation, Rational> m_auxAnnotations;
+	/**
+	 * All literals in the clause.
+	 */
 	private Set<Literal> m_allLiterals;
 	private Literal m_explainedLiteral;
 
@@ -305,9 +316,10 @@ public class LAAnnotation implements IAnnotation {
 				expcache.put(me.getValue(), explained);
 			}
 		ArrayDeque<LAAnnotation> todo = new ArrayDeque<LAAnnotation>();
-		todo.add(m_parent);
+		assert this == m_parent;
+		todo.add(this);
 		ArrayList<Term> antes = new ArrayList<Term>();
-		while (!todo.isEmpty()) {
+		todo_loop: while (!todo.isEmpty()) {
 			LAAnnotation convert = todo.pop();
 			Term res = cache.get(convert);
 			if (res != null) {
@@ -351,10 +363,13 @@ public class LAAnnotation implements IAnnotation {
 			}
 			for (Map.Entry<LAAnnotation, Rational> me :
 				convert.m_auxAnnotations.entrySet()) {
-				disjs[i] = theory.term(theory.m_Not, expcache.get(me.getKey()));
+				todo.push(me.getKey());
+				Term expl = expcache.get(me.getKey());
+				if (disjs.length == 2 && expl == disjs[0])
+					continue todo_loop;
+				disjs[i] = theory.term(theory.m_Not, expl);
 				coeffs[i] = me.getValue().div(gcd).toSMTLIB(theory);
 				++i;
-				todo.push(me.getKey());
 			}
 			res = theory.term(theory.m_Or, disjs);
 			Annotation[] annots = new Annotation[] {
@@ -363,7 +378,7 @@ public class LAAnnotation implements IAnnotation {
 			};
 			res = theory.annotatedTerm(annots, res);
 			res = theory.term("@lemma", res);
-			if (explained != null)
+			if (explained != null && !antes.isEmpty())
 				res = theory.annotatedTerm(new Annotation[]{
 				new Annotation(":pivot", explained)
 				}, res);

@@ -48,7 +48,6 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.DPLLEngine;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.IAnnotation;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.Literal;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.NamedAtom;
-import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.QuantifiedAtom;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.IProofTracker;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.LeafNode;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.NoopProofTracker;
@@ -1429,6 +1428,7 @@ public class Clausifier {
 	SharedTerm m_SharedTrue, m_SharedFalse;
 	
 	/// Statistics stuff
+	@SuppressWarnings("unused")
 	private int numAtoms = 0;
 	
 	/// Assertion stack stuff
@@ -1550,15 +1550,15 @@ public class Clausifier {
 		return atom;
 	}
 
-	QuantifiedAtom createQuantifiedAtom(Term smtFormula) {
-		String name = "quantproxy!" + numAtoms;
-		QuantifiedAtom atom = new QuantifiedAtom(name, smtFormula, m_StackLevel);
-		m_LiteralData.put(smtFormula, atom);
-		m_UndoTrail = new RemoveAtom(m_UndoTrail, smtFormula);
-		m_Engine.addAtom(atom);
-		++numAtoms;
-		return atom;
-	}
+//	QuantifiedAtom createQuantifiedAtom(Term smtFormula) {
+//		String name = "quantproxy!" + numAtoms;
+//		QuantifiedAtom atom = new QuantifiedAtom(name, smtFormula, m_StackLevel);
+//		m_LiteralData.put(smtFormula, atom);
+//		m_UndoTrail = new RemoveAtom(m_UndoTrail, smtFormula);
+//		m_Engine.addAtom(atom);
+//		++numAtoms;
+//		return atom;
+//	}
 	
 	public EqualityProxy createEqualityProxy(SharedTerm lhs, SharedTerm rhs) {
 		SMTAffineTerm diff = SMTAffineTerm.create(lhs.getTerm()).add(

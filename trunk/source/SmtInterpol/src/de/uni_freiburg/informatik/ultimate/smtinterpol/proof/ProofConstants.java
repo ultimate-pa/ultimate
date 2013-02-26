@@ -27,57 +27,56 @@ import de.uni_freiburg.informatik.ultimate.logic.Annotation;
 public interface ProofConstants {
 	
 	//// ==== Rewrite ids and names ====
-	public final static int RW_BEGIN = -1; // NOT A REWRITE RULE!!!
-	public final static int RW_EXPAND = 0;
-	public final static int RW_EXPAND_DEF = 1;
-	public final static int RW_TRUE_NOT_FALSE = 2;
-	public final static int RW_CONST_DIFF = 3;
-	public final static int RW_EQ_TRUE = 4;
-	public final static int RW_EQ_FALSE = 5;
-	public final static int RW_EQ_SIMP = 6;
-	public final static int RW_EQ_BINARY = 7;
-	public final static int RW_DISTINCT_BOOL = 8;
-	public final static int RW_DISTINCT_SAME = 9;
-	public final static int RW_DISTINCT_NEG = 10;
-	public final static int RW_DISTINCT_TRUE = 11;
-	public final static int RW_DISTINCT_FALSE = 12;
-	public final static int RW_DISTINCT_BINARY = 13;
-	public final static int RW_NOT_SIMP = 14;
-	public final static int RW_OR_SIMP = 15;
-	public final static int RW_OR_TAUT = 16;
-	public final static int RW_ITE_TRUE = 17;
-	public final static int RW_ITE_FALSE = 18;
-	public final static int RW_ITE_SAME = 19;
-	public final static int RW_ITE_BOOL_1 = 20;
-	public final static int RW_ITE_BOOL_2 = 21;
-	public final static int RW_ITE_BOOL_3 = 22;
-	public final static int RW_ITE_BOOL_4 = 23;
-	public final static int RW_ITE_BOOL_5 = 24;
-	public final static int RW_ITE_BOOL_6 = 25;
-	public final static int RW_AND_TO_OR = 26;
-	public final static int RW_XOR_TO_DISTINCT = 27;
-	public final static int RW_IMP_TO_OR = 28;
-	public final static int RW_STRIP = 29;
-	public final static int RW_CANONICAL_SUM = 30;
-	public final static int RW_LEQ_TO_LEQ0 = 31;
-	public final static int RW_LT_TO_LEQ0 = 32;
-	public final static int RW_GEQ_TO_LEQ0 = 33;
-	public final static int RW_GT_TO_LEQ0 = 34;
-	public final static int RW_LEQ_TRUE = 35;
-	public final static int RW_LEQ_FALSE = 36;
-	public final static int RW_DESUGAR = 37;
-	public final static int RW_DIVISIBLE = 38;
-	public final static int RW_MODULO = 39;
-	public final static int RW_MODULO_ONE = 40;
-	public final static int RW_MODULO_MONE = 41;
-	public final static int RW_MODULO_CONST = 42;
-	public final static int RW_DIV_ONE = 40;
-	public final static int RW_DIV_MONE = 41;
-	public final static int RW_DIV_CONST = 42;
-	public final static int RW_TO_INT = 43;
-	public final static int RW_EQ_SAME = 44;
-	// This has to be last!!!
-	public final static int RW_END = 45;        /// Not a rewrite rule!!!
+	public final static int RW_EXPAND            =  0;
+	public final static int RW_EXPAND_DEF        =  1;
+	public final static int RW_TRUE_NOT_FALSE    =  2;
+	public final static int RW_CONST_DIFF        =  3;
+	public final static int RW_EQ_TRUE           =  4;
+	public final static int RW_EQ_FALSE          =  5;
+	public final static int RW_EQ_SIMP           =  6;
+	public final static int RW_EQ_BINARY         =  7;
+	public final static int RW_DISTINCT_BOOL     =  8;
+	public final static int RW_DISTINCT_SAME     =  9;
+	public final static int RW_DISTINCT_NEG      = 10;
+	public final static int RW_DISTINCT_TRUE     = 11;
+	public final static int RW_DISTINCT_FALSE    = 12;
+	public final static int RW_DISTINCT_BINARY   = 13;
+	public final static int RW_NOT_SIMP          = 14;
+	public final static int RW_OR_SIMP           = 15;
+	public final static int RW_OR_TAUT           = 16;
+	public final static int RW_ITE_TRUE          = 17;
+	public final static int RW_ITE_FALSE         = 18;
+	public final static int RW_ITE_SAME          = 19;
+	public final static int RW_ITE_BOOL_1        = 20;
+	public final static int RW_ITE_BOOL_2        = 21;
+	public final static int RW_ITE_BOOL_3        = 22;
+	public final static int RW_ITE_BOOL_4        = 23;
+	public final static int RW_ITE_BOOL_5        = 24;
+	public final static int RW_ITE_BOOL_6        = 25;
+	public final static int RW_AND_TO_OR         = 26;
+	public final static int RW_XOR_TO_DISTINCT   = 27;
+	public final static int RW_IMP_TO_OR         = 28;
+	public final static int RW_STRIP             = 29;
+	public final static int RW_CANONICAL_SUM     = 30;
+	public final static int RW_LEQ_TO_LEQ0       = 31;
+	public final static int RW_LT_TO_LEQ0        = 32;
+	public final static int RW_GEQ_TO_LEQ0       = 33;
+	public final static int RW_GT_TO_LEQ0        = 34;
+	public final static int RW_LEQ_TRUE          = 35;
+	public final static int RW_LEQ_FALSE         = 36;
+	public final static int RW_DESUGAR           = 37;
+	public final static int RW_DIVISIBLE         = 38;
+	public final static int RW_MODULO            = 39;
+	public final static int RW_MODULO_ONE        = 40;
+	public final static int RW_MODULO_MONE       = 41;
+	public final static int RW_MODULO_CONST      = 42;
+	public final static int RW_DIV_ONE           = 43;
+	public final static int RW_DIV_MONE          = 44;
+	public final static int RW_DIV_CONST         = 45;
+	public final static int RW_TO_INT            = 46;
+	public final static int RW_EQ_SAME           = 47;
+	public final static int RW_STORE_OVER_STORE  = 48;
+	public final static int RW_SELECT_OVER_STORE = 49;
 	
 	public final static Annotation[] REWRITEANNOTS = {
 		new Annotation(":expand", null),
@@ -127,34 +126,33 @@ public interface ProofConstants {
 		new Annotation(":div-1", null),
 		new Annotation(":divConst", null),
 		new Annotation(":toInt", null),
-		new Annotation(":eqSame", null)
+		new Annotation(":eqSame", null),
+		new Annotation(":storeOverStore", null),
+		new Annotation(":selectOverStore", null)
 	};
 	
 	//// ==== Aux ids and names ====
-	public final static int AUX_BEGIN = -1;           /// NOT AN AUX AXIOM!!!
-	public final static int AUX_TRUE_NOT_FALSE = 0;
-	public final static int AUX_OR_POS = 1;
-	public final static int AUX_OR_NEG = 2;
-	public final static int AUX_ITE_POS_1 = 3;
-	public final static int AUX_ITE_POS_2 = 4;
-	public final static int AUX_ITE_POS_RED = 5;
-	public final static int AUX_ITE_NEG_1 = 6;
-	public final static int AUX_ITE_NEG_2 = 7;
-	public final static int AUX_ITE_NEG_RED = 8;
-	public final static int AUX_EQ_POS_1 = 9;
-	public final static int AUX_EQ_POS_2 = 10;
-	public final static int AUX_EQ_NEG_1 = 11;
-	public final static int AUX_EQ_NEG_2 = 12;
+	public final static int AUX_TRUE_NOT_FALSE    =  0;
+	public final static int AUX_OR_POS            =  1;
+	public final static int AUX_OR_NEG            =  2;
+	public final static int AUX_ITE_POS_1         =  3;
+	public final static int AUX_ITE_POS_2         =  4;
+	public final static int AUX_ITE_POS_RED       =  5;
+	public final static int AUX_ITE_NEG_1         =  6;
+	public final static int AUX_ITE_NEG_2         =  7;
+	public final static int AUX_ITE_NEG_RED       =  8;
+	public final static int AUX_EQ_POS_1          =  9;
+	public final static int AUX_EQ_POS_2          = 10;
+	public final static int AUX_EQ_NEG_1          = 11;
+	public final static int AUX_EQ_NEG_2          = 12;
 	public final static int AUX_EXCLUDED_MIDDLE_1 = 13;
 	public final static int AUX_EXCLUDED_MIDDLE_2 = 14;
-	public final static int AUX_TERM_ITE = 15;
-	public final static int AUX_DIV_LOW = 16;
-	public final static int AUX_DIV_HIGH = 17;
-	public final static int AUX_TO_INT_LOW = 18;
-	public final static int AUX_TO_INT_HIGH = 19;
-	public final static int AUX_EQ = 20;
-	// This has to be last!!!
-	public final static int AUX_END = 21;             /// NOT AN AUX AXIOM!!!
+	public final static int AUX_TERM_ITE          = 15;
+	public final static int AUX_DIV_LOW           = 16;
+	public final static int AUX_DIV_HIGH          = 17;
+	public final static int AUX_TO_INT_LOW        = 18;
+	public final static int AUX_TO_INT_HIGH       = 19;
+	public final static int AUX_EQ                = 20;
 	
 	public final static Annotation[] AUXANNOTS = {
 		new Annotation(":trueNotFalse", null),
@@ -181,17 +179,15 @@ public interface ProofConstants {
 	};
 	
 	//// ==== Structural splitting constants ====
-	public final static int SPLIT_BEGIN = -1;
-	public final static int SPLIT_NEG_OR = 0;
-	public final static int SPLIT_POS_EQ_1 = 1;
-	public final static int SPLIT_POS_EQ_2 = 2;
-	public final static int SPLIT_NEG_EQ_1 = 3;
-	public final static int SPLIT_NEG_EQ_2 = 4;
+	public final static int SPLIT_NEG_OR    = 0;
+	public final static int SPLIT_POS_EQ_1  = 1;
+	public final static int SPLIT_POS_EQ_2  = 2;
+	public final static int SPLIT_NEG_EQ_1  = 3;
+	public final static int SPLIT_NEG_EQ_2  = 4;
 	public final static int SPLIT_POS_ITE_1 = 5;
 	public final static int SPLIT_POS_ITE_2 = 6;
 	public final static int SPLIT_NEG_ITE_1 = 7;
 	public final static int SPLIT_NEG_ITE_2 = 8;
-	public final static int SPLIT_END = 9;	
 	
 	public final static Annotation[] SPLITANNOTS = {
 		new Annotation(":notOr", null),

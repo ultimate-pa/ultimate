@@ -241,7 +241,7 @@ public class Clause extends SimpleListable<Clause> {
 
 	public boolean equals(Object o) {
 		if (o instanceof Clause)
-			return Arrays.deepEquals(m_literals, ((Clause) o).m_literals);
+			return Arrays.equals(m_literals, ((Clause) o).m_literals);
 		return false;
 	}
 

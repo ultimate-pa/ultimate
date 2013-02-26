@@ -136,7 +136,7 @@ public abstract class LAReason {
 	public Term toSMTLIB(Theory smtTheory, boolean useAuxVars) {
 		MutableAffinTerm at = new MutableAffinTerm();
 		at.add(Rational.ONE, m_var);
-		at.add(m_bound.ma.negate());
+		at.add(m_bound.negate());
 		if (!m_isUpper)
 			at.negate();
 		return at.toSMTLibLeq0(smtTheory, useAuxVars);

@@ -387,7 +387,7 @@ public class TermCompiler extends TermTransformer {
 				    	SMTAffineTerm res = SMTAffineTerm.create(
 				    			theory.constant(mod, arg0.getSort()));
 				    	m_Tracker.mod(arg0, arg1, res,
-				    			ProofConstants.RW_MODULO_ONE);
+				    			ProofConstants.RW_MODULO_CONST);
 				    	setResult(res);
 				    } else {
 				    	Theory t = arg0.getTheory();
@@ -430,14 +430,65 @@ public class TermCompiler extends TermTransformer {
 				setResult(res);
 				m_Tracker.divisible(appTerm, res);
 				return;
+			} else if (fsym.getName().equals("store")) {
+				Term array = args[0];
+				Term idx = args[1];
+				Term nestedIdx = getArrayStoreIdx(array);
+				if (nestedIdx != null) {
+					// Check for store-over-store
+					SMTAffineTerm diff = SMTAffineTerm.create(idx).add(
+							SMTAffineTerm.create(nestedIdx).negate());
+					if (diff.isConstant() && 
+							diff.getConstant().equals(Rational.ZERO)) {
+						// Found store-over-store => ignore inner store
+						ApplicationTerm appArray = (ApplicationTerm) array;
+						Term result = theory.term(fsym,
+								appArray.getParameters()[0], args[1], args[2]);
+						m_Tracker.arrayRewrite(args, result,
+								ProofConstants.RW_STORE_OVER_STORE);
+						setResult(result);
+						return;
+					}
+				}
+			} else if (fsym.getName().equals("select")) {
+				Term array = args[0];
+				Term idx = args[1];
+				Term nestedIdx = getArrayStoreIdx(array);
+				if (nestedIdx != null) {
+					// Check for select-over-store
+					SMTAffineTerm diff = SMTAffineTerm.create(idx).add(
+							SMTAffineTerm.create(nestedIdx).negate());
+					if (diff.isConstant() && 
+							diff.getConstant().equals(Rational.ZERO)) {
+						// Found select-over-store => transform into value
+						ApplicationTerm appArray = (ApplicationTerm) array;
+						Term result = appArray.getParameters()[2];
+						m_Tracker.arrayRewrite(args, result,
+								ProofConstants.RW_SELECT_OVER_STORE);
+						setResult(result);
+						return;
+					}
+				}
 			}
-		}
+		}// intern function symbols
 		super.convertApplicationTerm(appTerm, args);
 	}
 	
 	public final static Rational constDiv(Rational c0, Rational c1) {
 		Rational div = c0.div(c1);
 		return c1.isNegative() ? div.ceil() : div.floor();
+	}
+	
+	private final static Term getArrayStoreIdx(Term array) {
+		if (array instanceof ApplicationTerm) {
+			ApplicationTerm appArray = (ApplicationTerm) array;
+			FunctionSymbol arrayFunc = appArray.getFunction();
+			if (arrayFunc.isIntern() &&
+					arrayFunc.getName().equals("store"))
+				// (store a i v)
+				return appArray.getParameters()[1];
+		}
+		return null;
 	}
 
 	@Override

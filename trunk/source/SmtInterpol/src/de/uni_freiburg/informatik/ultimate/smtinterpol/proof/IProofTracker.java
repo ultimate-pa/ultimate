@@ -169,6 +169,13 @@ public interface IProofTracker {
 	 * @param res The result.
 	 */
 	public void toInt(SMTAffineTerm arg, SMTAffineTerm res);
+	/**
+	 * Track an array rewrite.
+	 * @param args   The arguments of the original array.
+	 * @param result The result of the rewrite.
+	 * @param rule   The rule used.
+	 */
+	public void arrayRewrite(Term[] args, Term result, int rule);
 	
 	//// ==== Tracking of clausification ====
 	

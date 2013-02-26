@@ -715,4 +715,12 @@ public class ProofTracker implements IProofTracker {
 		append(new ResultRewrite(lhs, rhs, ProofConstants.RW_NOT_SIMP));
 	}
 
+	@Override
+	public void arrayRewrite(Term[] args, Term result, int rule) {
+		Theory t = result.getTheory();
+		Term input = rule == ProofConstants.RW_STORE_OVER_STORE ?
+				t.term("store", args) : t.term("select", args);
+		append(new ResultRewrite(input, result, rule));
+	}
+
 }

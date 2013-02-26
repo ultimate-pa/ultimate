@@ -145,4 +145,7 @@ public class NoopProofTracker implements IProofTracker {
 		return null;
 	}
 
+	@Override
+	public void arrayRewrite(Term[] args, Term result, int rule) {}
+
 }
