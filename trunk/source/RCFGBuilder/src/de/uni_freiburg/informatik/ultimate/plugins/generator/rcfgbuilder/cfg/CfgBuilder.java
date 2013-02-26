@@ -148,6 +148,7 @@ public class CfgBuilder {
 		   m_Script.setOption(":produce-interpolants", true);
 		   m_Script.setOption(":produce-unsat-cores", true);
 		   m_Script.setOption(":interpolant-check-mode", true);
+		   m_Script.setOption(":proof-transformation", "LU");
 		   m_Script.setLogic("QF_UFLIRA");
 //		   m_Script.setOption(":verbosity", 0);
 		   blackHolesArrays = false;
