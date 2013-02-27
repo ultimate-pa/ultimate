@@ -232,7 +232,7 @@ public class Interpolator {
 		}
 		m_Logger = logger;
 		m_SmtSolver = smtSolver;
-		m_Theory = smtSolver.getTheory();
+		m_Theory = theory;
 		m_NumInterpolants = partitions.length - 1;
 
 		m_startOfSubtrees = startOfSubTrees;
