@@ -482,7 +482,8 @@ public class Clausifier {
 				ApplicationTerm at = (ApplicationTerm) idx;
 				if (at.getFunction() == t.m_Or) {
 					if (positive) {
-						BuildClause bc = new BuildClause(m_ProofTerm);
+						BuildClause bc = new BuildClause(m_ProofTerm, at);
+						bc.setOrigArgs(at.getParameters());
 						pushOperation(bc);
 						for (Term p : at.getParameters())
 							pushOperation(new CollectLiterals(p, bc));
@@ -505,19 +506,23 @@ public class Clausifier {
 					if (lhs.getSort() == t.getBooleanSort()) {
 						BuildClause bc1 = new BuildClause(LeafNode.NO_THEORY);
 						pushOperation(bc1);
+						Term t1, t2;
 						if (positive) {
 							bc1.setProofTerm(m_Tracker.split(at, m_ProofTerm,
 										ProofConstants.SPLIT_POS_EQ_1));
 							pushOperation(new CollectLiterals(lhs, bc1));
 							pushOperation(new CollectLiterals(
-									new Utils(bc1.getTracker()).createNot(rhs),
+									t2 = new Utils(bc1.getTracker()).createNot(rhs),
 									bc1));
+							bc1.setOrigArgs(lhs, t2);
 						} else {
 							bc1.setProofTerm(m_Tracker.split(at, m_ProofTerm,
 									ProofConstants.SPLIT_NEG_EQ_1));
 							pushOperation(new CollectLiterals(lhs, bc1));
 							pushOperation(new CollectLiterals(rhs, bc1));
+							bc1.setOrigArgs(lhs, rhs);
 						}
+						bc1.getTracker().markPosition();
 						BuildClause bc2 = new BuildClause(LeafNode.NO_THEORY);
 						pushOperation(bc2);
 						Utils tmp = new Utils(bc2.getTracker());
@@ -525,16 +530,19 @@ public class Clausifier {
 							bc2.setProofTerm(m_Tracker.split(at, m_ProofTerm,
 									ProofConstants.SPLIT_POS_EQ_2));
 							pushOperation(new CollectLiterals(
-									tmp.createNot(lhs), bc2));
+									t1 = tmp.createNot(lhs), bc2));
 							pushOperation(new CollectLiterals(rhs, bc2));
+							bc2.setOrigArgs(t1, rhs);
 						} else {
 							bc2.setProofTerm(m_Tracker.split(at, m_ProofTerm,
 								ProofConstants.SPLIT_NEG_EQ_2));
 							pushOperation(new CollectLiterals(
-									tmp.createNot(lhs), bc2));
+									t1 = tmp.createNot(lhs), bc2));
 							pushOperation(new CollectLiterals(
-									tmp.createNot(rhs), bc2));
+									t2 = tmp.createNot(rhs), bc2));
+							bc2.setOrigArgs(t1, t2);
 						}
+						bc2.getTracker().markPosition();
 					} else {
 						SharedTerm slhs = getSharedTerm(lhs);
 						SharedTerm srhs = getSharedTerm(rhs);
@@ -577,29 +585,34 @@ public class Clausifier {
 					int kind1 = ProofConstants.SPLIT_POS_ITE_1;
 					int kind2 = ProofConstants.SPLIT_POS_ITE_2;
 					BuildClause bc1, bc2;
+					Term t1;
 					if (!positive) {
 						kind1 = ProofConstants.SPLIT_NEG_ITE_1;
 						kind2 = ProofConstants.SPLIT_NEG_ITE_2;
 					}
-					bc1 = new BuildClause(
-							m_Tracker.split(at, m_ProofTerm, kind1));
+					bc1 = new BuildClause(LeafNode.NO_THEORY);
+					bc1.setProofTerm(m_Tracker.split(at, m_ProofTerm, kind1));
 					Utils tmp1 = new Utils(bc1.getTracker());
 					pushOperation(bc1);
 					pushOperation(new CollectLiterals(
-							tmp1.createNot(cond), bc1));
+							t1 = tmp1.createNot(cond), bc1));
 					if (!positive)
 						thenForm = tmp1.createNot(thenForm);
+					bc1.setOrigArgs(t1, thenForm);
 					tmp1 = null;
 					pushOperation(new CollectLiterals(thenForm, bc1));
-					bc2 = new BuildClause(
-							m_Tracker.split(at, m_ProofTerm, kind2));
+					bc1.getTracker().markPosition();
+					bc2 = new BuildClause(LeafNode.NO_THEORY);
+					bc2.setProofTerm(m_Tracker.split(at, m_ProofTerm, kind2));
 					Utils tmp2 = new Utils(bc2.getTracker());
 					pushOperation(bc2);
 					pushOperation(new CollectLiterals(cond, bc2));
 					if (!positive)
 						elseForm = tmp2.createNot(elseForm);
+					bc2.setOrigArgs(cond, elseForm);
 					tmp2 = null;
 					pushOperation(new CollectLiterals(elseForm, bc2));
+					bc2.getTracker().markPosition();
 				} else if (at.getFunction().getName().equals("<=")) {
 					// (<= SMTAffineTerm 0)
 					Literal lit = createLeq0(at);
@@ -712,6 +725,8 @@ public class Clausifier {
 								ProofConstants.AUX_OR_POS);
 						bc.auxAxiom(m_AuxLit, at, null, null);
 						bc.addLiteral(m_AuxLit.negate());
+						bc.setOrigArgs(m_Tracker.produceAuxAxiom(
+								m_AuxLit.negate(), at.getParameters()));
 						pushOperation(bc);
 						for (Term param : at.getParameters())
 							pushOperation(new CollectLiterals(param, bc));
@@ -726,6 +741,7 @@ public class Clausifier {
 					Term thenTerm = at.getParameters()[1];
 					Term elseTerm = at.getParameters()[2];
 					if (m_Positive) {
+						Term t1;
 						BuildClause bc1 = new BuildClause(
 								ProofConstants.AUX_ITE_POS_1);
 						bc1.auxAxiom(m_AuxLit, at, null, null);
@@ -733,8 +749,11 @@ public class Clausifier {
 						pushOperation(bc1);
 						pushOperation(new CollectLiterals(thenTerm, bc1));
 						pushOperation(new CollectLiterals(
-								new Utils(bc1.getTracker()).createNot(cond),
+								t1 = new Utils(bc1.getTracker()).createNot(cond),
 								bc1));
+						bc1.setOrigArgs(m_Tracker.produceAuxAxiom(
+								m_AuxLit.negate(), t1, thenTerm));
+						bc1.getTracker().markPosition();
 						BuildClause bc2 = new BuildClause(
 								ProofConstants.AUX_ITE_POS_2);
 						bc2.auxAxiom(m_AuxLit, at, null, null);
@@ -742,6 +761,9 @@ public class Clausifier {
 						pushOperation(bc2);
 						pushOperation(new CollectLiterals(elseTerm, bc2));
 						pushOperation(new CollectLiterals(cond, bc2));
+						bc2.setOrigArgs(m_Tracker.produceAuxAxiom(
+								m_AuxLit.negate(), cond, elseTerm));
+						bc2.getTracker().markPosition();
 						if (Config.REDUNDANT_ITE_CLAUSES) {
 							BuildClause bc3 = new BuildClause(
 									ProofConstants.AUX_ITE_POS_RED);
@@ -750,8 +772,12 @@ public class Clausifier {
 							pushOperation(bc3);
 							pushOperation(new CollectLiterals(elseTerm, bc3));
 							pushOperation(new CollectLiterals(thenTerm, bc3));
+							bc3.setOrigArgs(m_Tracker.produceAuxAxiom(
+									m_AuxLit.negate(), thenTerm, elseTerm));
+							bc3.getTracker().markPosition();
 						}
 					} else {
+						Term t1, t2;
 						BuildClause bc1 = new BuildClause(
 								ProofConstants.AUX_ITE_NEG_1);
 						Utils tmp1 = new Utils(bc1.getTracker());
@@ -759,9 +785,12 @@ public class Clausifier {
 						bc1.addLiteral(m_AuxLit);
 						pushOperation(bc1);
 						pushOperation(new CollectLiterals(
-								tmp1.createNot(thenTerm), bc1));
+								t2 = tmp1.createNot(thenTerm), bc1));
 						pushOperation(new CollectLiterals(
-								tmp1.createNot(cond), bc1));
+								t1 = tmp1.createNot(cond), bc1));
+						bc1.setOrigArgs(m_Tracker.produceAuxAxiom(
+								m_AuxLit, t1, t2));
+						bc1.getTracker().markPosition();
 						tmp1 = null;
 						BuildClause bc2 = new BuildClause(
 								ProofConstants.AUX_ITE_NEG_2);
@@ -769,9 +798,12 @@ public class Clausifier {
 						bc2.addLiteral(m_AuxLit);
 						pushOperation(bc2);
 						pushOperation(new CollectLiterals(
-								new Utils(bc2.getTracker()).createNot(elseTerm),
+								t1 = new Utils(bc2.getTracker()).createNot(elseTerm),
 								bc2));
 						pushOperation(new CollectLiterals(cond, bc2));
+						bc2.setOrigArgs(m_Tracker.produceAuxAxiom(
+								m_AuxLit, cond, t1));
+						bc2.getTracker().markPosition();
 						if (Config.REDUNDANT_ITE_CLAUSES) {
 							BuildClause bc3 = new BuildClause(
 									ProofConstants.AUX_ITE_NEG_RED);
@@ -780,9 +812,12 @@ public class Clausifier {
 							bc3.addLiteral(m_AuxLit);
 							pushOperation(bc3);
 							pushOperation(new CollectLiterals(
-									tmp3.createNot(elseTerm), bc3));
+									t2 = tmp3.createNot(elseTerm), bc3));
 							pushOperation(new CollectLiterals(
-									tmp3.createNot(thenTerm), bc3));
+									t1 = tmp3.createNot(thenTerm), bc3));
+							bc3.setOrigArgs(m_Tracker.produceAuxAxiom(
+									m_AuxLit, t1, t2));
+							bc3.getTracker().markPosition();
 						}
 					}
 				} else if (at.getFunction().getName().equals("=")) {
@@ -791,8 +826,7 @@ public class Clausifier {
 					Term rhs = at.getParameters()[1];
 					assert (lhs.getSort() == t.getBooleanSort());
 					assert (rhs.getSort() == t.getBooleanSort());
-//					Term negLhs = Utils.createNot(lhs);
-//					Term negRhs = Utils.createNot(rhs);
+					Term t1, t2;
 					if (m_Positive) {
 						BuildClause bc1 = new BuildClause(
 								ProofConstants.AUX_EQ_POS_1);
@@ -800,9 +834,12 @@ public class Clausifier {
 						bc1.auxAxiom(m_AuxLit, at, null, null);
 						bc1.addLiteral(m_AuxLit.negate());
 						pushOperation(bc1);
-						pushOperation(
-								new CollectLiterals(tmp1.createNot(rhs), bc1));
+						pushOperation(new CollectLiterals(
+								t2 = tmp1.createNot(rhs), bc1));
 						pushOperation(new CollectLiterals(lhs, bc1));
+						bc1.setOrigArgs(m_Tracker.produceAuxAxiom(
+								m_AuxLit.negate(), lhs, t2));
+						bc1.getTracker().markPosition();
 						tmp1 = null;
 						BuildClause bc2 = new BuildClause(
 								ProofConstants.AUX_EQ_POS_2);
@@ -811,8 +848,11 @@ public class Clausifier {
 						bc2.addLiteral(m_AuxLit.negate());
 						pushOperation(bc2);
 						pushOperation(new CollectLiterals(rhs, bc2));
-						pushOperation(
-								new CollectLiterals(tmp2.createNot(lhs), bc2));
+						pushOperation(new CollectLiterals(
+								t1 = tmp2.createNot(lhs), bc2));
+						bc2.setOrigArgs(m_Tracker.produceAuxAxiom(
+								m_AuxLit.negate(), t1, rhs));
+						bc2.getTracker().markPosition();
 					} else {
 						BuildClause bc1 = new BuildClause(
 								ProofConstants.AUX_EQ_NEG_1);
@@ -821,16 +861,22 @@ public class Clausifier {
 						pushOperation(bc1);
 						pushOperation(new CollectLiterals(rhs, bc1));
 						pushOperation(new CollectLiterals(lhs, bc1));
+						bc1.setOrigArgs(m_Tracker.produceAuxAxiom(
+								m_AuxLit, lhs, rhs));
+						bc1.getTracker().markPosition();
 						BuildClause bc2 = new BuildClause(
 								ProofConstants.AUX_EQ_NEG_2);
 						Utils tmp = new Utils(bc2.getTracker());
 						bc2.auxAxiom(m_AuxLit, at, null, null);
 						bc2.addLiteral(m_AuxLit);
 						pushOperation(bc2);
-						pushOperation(
-								new CollectLiterals(tmp.createNot(rhs), bc2));
-						pushOperation(
-								new CollectLiterals(tmp.createNot(lhs), bc2));
+						pushOperation(new CollectLiterals(
+								t2 = tmp.createNot(rhs), bc2));
+						pushOperation(new CollectLiterals(
+								t1 = tmp.createNot(lhs), bc2));
+						bc2.setOrigArgs(m_Tracker.produceAuxAxiom(
+								m_AuxLit, t1, t2));
+						bc2.getTracker().markPosition();
 					}
 				} else {
 					throw new InternalError("AuxAxiom not implemented: " +
@@ -886,13 +932,16 @@ public class Clausifier {
 		
 		@Override
 		public void perform() {
+			Term t;
 			for (Term disj : m_Disjuncts) {
 				BuildClause bc = new BuildClause(ProofConstants.AUX_OR_NEG);
 				bc.auxAxiom(m_AuxLit, disj, null, null);
 				bc.addLiteral(m_AuxLit);
 				pushOperation(bc);
 				pushOperation(new CollectLiterals(
-						new Utils(bc.getTracker()).createNot(disj), bc));
+						t = new Utils(bc.getTracker()).createNot(disj), bc));
+				bc.setOrigArgs(m_Tracker.produceAuxAxiom(
+						m_AuxLit, t));
 			}
 		}
 		
@@ -932,8 +981,8 @@ public class Clausifier {
 	 */
 	private class CollectLiterals implements Operation {
 		private Term m_Term;
-		private LiteralCollector m_Collector;
-		public CollectLiterals(Term term, LiteralCollector collector) {
+		private BuildClause m_Collector;
+		public CollectLiterals(Term term, BuildClause collector) {
 			assert term.getSort() == m_Theory.getBooleanSort();
 			m_Term = term;
 			m_Collector = collector;
@@ -963,9 +1012,11 @@ public class Clausifier {
 						Literal lit = getLiteral(idx);
 						m_Collector.getTracker().quoted(idx, lit.getAtom());
 						m_Collector.addLiteral(lit);
-					} else
+					} else {
+						m_Collector.setFlatten();
 						for (Term p : at.getParameters())
 							pushOperation(new CollectLiterals(p, m_Collector));
+					}
 				} else if (!at.getFunction().isIntern() &&
 						at.getFunction().getReturnSort() == t.getBooleanSort()) {
 					Literal lit = createBooleanLit(at);
@@ -1031,45 +1082,52 @@ public class Clausifier {
 		}
 	}
 	
-	private interface LiteralCollector extends Operation {
-		void addLiteral(Literal lit);
-		void setTrue();
-		IProofTracker getTracker();
-	}
-	
-	private class BuildClause implements LiteralCollector {
+	private class BuildClause implements Operation {
 		private boolean m_IsTrue = false;
 		private int m_LeafKind;
 		private LinkedHashSet<Literal> m_Lits = new LinkedHashSet<Literal>();
 		private Term m_ProofTerm;
+		private Term[] m_OrigArgs;
 		private IProofTracker m_SubTracker = m_Tracker.getDescendent();
+		private boolean m_Flatten;
+		private boolean m_SimpOr;
 		//@ invariant ProofProductionEnabled ==>
 		//          (m_LeafKind != LeafNode.NO_THEORY) == (m_ProofTerm == null);
 		public BuildClause(int leafKind) {
 			m_LeafKind = leafKind;
 			m_ProofTerm = null;
 		}
+		public BuildClause(Term proofTerm, Term original) {
+			this(LeafNode.NO_THEORY);
+			m_ProofTerm = proofTerm;
+		}
 		public void auxAxiom(Literal lit, Term res, Term base, Object auxData) {
 			m_ProofTerm = m_SubTracker.auxAxiom(
 					m_LeafKind, lit, res, base, auxData);
 		}
-		public BuildClause(Term proofTerm) {
-			this(LeafNode.NO_THEORY);
-			m_ProofTerm = proofTerm;
-		}
 		public void setProofTerm(Term proof) {
 			m_ProofTerm = proof;
+		}
+		public void setOrigArgs(Term... args) {
+			m_OrigArgs = args;
 		}
 		public void addLiteral(Literal lit) {
 			if (m_Lits.add(lit)) {
 				m_IsTrue |= m_Lits.contains(lit.negate());
-			}
+			} else
+				m_SimpOr = true;
 		}
 		public void setTrue() {
 			m_IsTrue = true;
 		}
 		public void perform() {
 			if (!m_IsTrue) {
+				if (m_Flatten)
+					// Cast should be safe.  Strange clause production otherwise
+					m_SubTracker.flatten(m_OrigArgs, m_SimpOr);
+				else if (m_SimpOr)
+					// Cast should be safe.  Strange clause production otherwise
+					m_SubTracker.orSimpClause(m_OrigArgs);
 				addClause(m_Lits.toArray(new Literal[m_Lits.size()]),
 						null,
 						getProofNewSource(m_LeafKind,
@@ -1078,6 +1136,9 @@ public class Clausifier {
 		}
 		public IProofTracker getTracker() {
 			return m_SubTracker;
+		}
+		public void setFlatten() {
+			m_Flatten = true;
 		}
 	}
 		

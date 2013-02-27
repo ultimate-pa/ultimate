@@ -20,6 +20,9 @@ package de.uni_freiburg.informatik.ultimate.smtinterpol.proof;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
 
 import de.uni_freiburg.informatik.ultimate.logic.AnnotatedTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Annotation;
@@ -197,7 +200,7 @@ public class ProofTracker implements IProofTracker {
 		}
 	}
 	
-	private Rewrite m_First, m_Last;
+	private Rewrite m_First, m_Last, m_MarkPos;
 	private int m_NumRewrites = 0;
 
 	private void prepend(Rewrite rw) {
@@ -218,6 +221,16 @@ public class ProofTracker implements IProofTracker {
 		assert(invNumRewrites());
 	}
 	
+	private void insertAtMarkedPos(Rewrite rw) {
+		assert(invNumRewrites());
+		rw.m_Next = m_MarkPos.m_Next;
+		m_MarkPos.m_Next = rw;
+		++m_NumRewrites;
+		if (m_MarkPos == m_Last)
+			m_Last = rw;
+		assert(invNumRewrites());
+	}
+	
 	private boolean invNumRewrites() {
 		int i = 0;
 		for (Rewrite rw = m_First.m_Next; rw != null; rw = rw.m_Next)
@@ -227,13 +240,13 @@ public class ProofTracker implements IProofTracker {
 	}
 	
 	public ProofTracker() {
-		m_First = m_Last = new Rewrite();
+		m_First = m_Last = m_MarkPos = new Rewrite();
 	}
 
 	@Override
 	public void reset() {
 		m_First.m_Next = null;
-		m_Last = m_First;
+		m_Last = m_MarkPos = m_First;
 		m_NumRewrites = 0;
 		assert(invNumRewrites());
 	}
@@ -316,7 +329,7 @@ public class ProofTracker implements IProofTracker {
 				res = t.term(t.m_Or, t.term(t.m_Not, cond), thenTerm);
 				break;
 			case ProofConstants.RW_ITE_BOOL_6:
-				t.term(t.m_Not,	t.term(t.m_Or, t.term(t.m_Not, cond),
+				res = t.term(t.m_Not,	t.term(t.m_Or, t.term(t.m_Not, cond),
 						t.term(t.m_Not, thenTerm)));
 				break;
 				default:
@@ -476,8 +489,9 @@ public class ProofTracker implements IProofTracker {
 			Term base = t.term("@split", t.annotatedTerm(
 					new Annotation[] {ProofConstants.SPLITANNOTS[splitKind]},
 					proof), res);
+			Term posRes = res;
 			if (Utils.isNegation(data)) {
-				Term posRes = ((ApplicationTerm) data).getParameters()[0];
+				posRes = ((ApplicationTerm) data).getParameters()[0];
 				Term rewrite = t.term("@rewrite", t.annotatedTerm(
 						new Annotation[] {
 								ProofConstants.REWRITEANNOTS[ProofConstants.RW_NOT_SIMP]
@@ -553,7 +567,8 @@ public class ProofTracker implements IProofTracker {
 	}
 
 	@Override
-	public Term auxAxiom(int auxKind, Literal auxLit, Term data, Term base, Object auxData) {
+	public Term auxAxiom(
+			int auxKind, Literal auxLit, Term data, Term base, Object auxData) {
 		Theory t = data.getTheory();
 		Term axiom;
 		switch (auxKind) {
@@ -660,8 +675,8 @@ public class ProofTracker implements IProofTracker {
 			default:
 				throw new InternalError("BUG in ProofTracker: AUX");
 		}
-		return t.term("@tautology", t.annotatedTerm(new Annotation[] {
-				ProofConstants.AUXANNOTS[auxKind]}, axiom));
+		return t.term("@tautology", t.annotatedTerm(
+				new Annotation[] {ProofConstants.AUXANNOTS[auxKind]}, axiom));
 	}
 
 	@Override
@@ -723,4 +738,81 @@ public class ProofTracker implements IProofTracker {
 		append(new ResultRewrite(input, result, rule));
 	}
 
+	private final static class FlattenHelper {
+		private Term[] m_Args;
+		private int m_Offset;
+		public FlattenHelper(Term[] args, int offset) {
+			m_Args = args;
+			m_Offset = offset;
+		}
+		public void flatten(
+				ArrayDeque<FlattenHelper> todo, ArrayList<Term> args) {
+			for (int i = m_Offset; i < m_Args.length; ++i) {
+				if (m_Args[i] instanceof ApplicationTerm) {
+					ApplicationTerm tst = (ApplicationTerm) m_Args[i];
+					if (tst.getFunction() == tst.getTheory().m_Or) {
+						m_Offset = i + 1;
+						if (m_Offset < m_Args.length)
+							todo.addFirst(this);
+						todo.addFirst(new FlattenHelper(tst.getParameters(), 0));
+						return;
+					}
+				}
+				args.add(m_Args[i]);
+			}
+		}
+	}
+	
+	@Override
+	public void flatten(Term[] args, boolean simpOr) {
+		Theory t = args[0].getTheory();
+		ArrayDeque<FlattenHelper> toFlatten =
+				new ArrayDeque<FlattenHelper>();
+		toFlatten.add(new FlattenHelper(args, 0));
+		ArrayList<Term> newArgs = new ArrayList<Term>();
+		while (!toFlatten.isEmpty()) {
+			FlattenHelper fh = toFlatten.poll();
+			fh.flatten(toFlatten, newArgs);
+		}
+		ApplicationTerm res = (ApplicationTerm) 
+				t.term(t.m_Or, newArgs.toArray(new Term[newArgs.size()]));
+		if (simpOr)
+			orSimpClause(res.getParameters());
+		insertAtMarkedPos(
+				new ResultRewrite(t.term(t.m_Or, args), res,
+						ProofConstants.RW_FLATTEN));
+	}
+	
+	@Override
+	public void orSimpClause(Term[] args) {
+		Theory t = args[0].getTheory();
+		// Clause should be flattened here
+		LinkedHashSet<Term> newArgs = new LinkedHashSet<Term>();
+		for (Term term : args)
+			newArgs.add(term);
+		if (newArgs.size() == args.length)
+			// No simplification applied
+			return;
+		Term res = newArgs.size() == 1 ? newArgs.iterator().next() :
+			t.term(t.m_Or, newArgs.toArray(new Term[newArgs.size()]));
+		Rewrite rw =
+				new ResultRewrite(t.term(t.m_Or, args), res,
+						ProofConstants.RW_OR_SIMP);
+		insertAtMarkedPos(rw);
+	}
+
+	@Override
+	public void markPosition() {
+		m_MarkPos = m_Last;
+	}
+
+	@Override
+	public Term[] produceAuxAxiom(Literal auxlit, Term... args) {
+		Theory t = args[0].getTheory();
+		Term[] res = new Term[1 + args.length];
+		res[0] = auxlit.getSMTFormula(t, true);
+		System.arraycopy(args, 0, res, 1, args.length);
+		return res;
+	}
+	
 }

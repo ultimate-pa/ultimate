@@ -206,13 +206,4 @@ public class FormulaUnLet extends TermTransformer {
 			setResult(old);
 		}
 	}
-	
-	public void beginScope() {
-		m_LetMap.beginScope();
-	}
-	
-	public void endScope() {
-		m_LetMap.endScope();
-	}
-	
 }

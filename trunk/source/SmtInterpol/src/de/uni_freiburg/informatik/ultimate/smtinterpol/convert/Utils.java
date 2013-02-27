@@ -172,29 +172,25 @@ public class Utils {
 			Term res = theory.term("or", cond, falseBranch);
 			m_Tracker.ite(cond, trueBranch, falseBranch, res,
 					ProofConstants.RW_ITE_BOOL_3);
-			return res;
+			return createOr(cond, falseBranch);
 		}
 		if (trueBranch == theory.FALSE) {
 			// /\ !cond falseBranch => !(\/ cond !falseBranch)
-			Term res = theory.term("not",
-					theory.term("or", cond, createNot(falseBranch)));
 			m_Tracker.ite(cond, trueBranch, falseBranch, null,
 					ProofConstants.RW_ITE_BOOL_4);
-			return res;
+			return createNot(createOr(cond, createNot(falseBranch)));
 		}
 		if (falseBranch == theory.TRUE) {
 			// => cond trueBranch => \/ !cond trueBranch
-			Term res = theory.term("or", createNot(cond), trueBranch);
 			m_Tracker.ite(cond, trueBranch, falseBranch, null,
 					ProofConstants.RW_ITE_BOOL_5);
-			return res;
+			return createOr(createNot(cond), trueBranch);
 		}
 		if (falseBranch == theory.FALSE) {
 			// /\ cond trueBranch => !(\/ !cond !trueBranch)
 			m_Tracker.ite(cond, trueBranch, falseBranch, null,
 					ProofConstants.RW_ITE_BOOL_6);
-			return theory.term("not",
-					theory.term("or", createNot(cond), createNot(trueBranch)));
+			return createNot(createOr(createNot(cond), createNot(trueBranch)));
 		}
 		return theory.term("ite", cond, trueBranch, falseBranch);
 	}
@@ -327,7 +323,7 @@ public class Utils {
 				return theory.FALSE;
 			}
 			if (t0 == createNotUntracked(t1)) {
-				m_Tracker.distinct(args, theory.FALSE,
+				m_Tracker.distinct(args, theory.TRUE,
 						ProofConstants.RW_DISTINCT_NEG);
 				return theory.TRUE;
 			}

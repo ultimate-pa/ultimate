@@ -459,7 +459,7 @@ public class SMTInterpol extends NoopScript {
 				"Generate proofs (needed for interpolants)",
 				false, OPT_PRODUCE_PROOFS);
 		new BoolOption(":produce-models", "Produce models",
-				false, OPT_PRODUCE_MODELS);
+				true, OPT_PRODUCE_MODELS);
 		new BoolOption(":produce-assignments",
 				"Produce assignments for named Boolean terms",
 				false, OPT_PRODUCE_ASSIGNMENTS);
@@ -520,6 +520,7 @@ public class SMTInterpol extends NoopScript {
 		super(other.getTheory());
 		m_Logger = other.m_Logger;
 		m_Timeout = other.m_Timeout;
+		setOption(":interactive-mode", true);
 		m_Engine = new DPLLEngine(getTheory(), m_Logger);
         m_Clausifier = new Clausifier(m_Engine, 0);
 		m_Clausifier.setLogic(getTheory().getLogic());
@@ -952,28 +953,20 @@ public class SMTInterpol extends NoopScript {
 				parts[i].add(appTerm.getFunction().getName().intern());
 			}
 		}
-		Interpolator interpolator =
-			new Interpolator(m_Logger, getTheory(), parts, startOfSubtree);
-		Term[] ipls = interpolator.getInterpolants(refutation);
-		
-		if (m_By0Seen != -1) {
-			Div0Remover rem = new Div0Remover();
-			for (int i = 0; i < ipls.length; ++i)
-				ipls[i] = rem.transform(ipls[i]);
-		}
-		
+		SMTInterpol tmpBench = null;
+		SymbolCollector collector = null;
+		Set<FunctionSymbol> globals = null;
 		if (m_InterpolantCheckMode) {
 			HashSet<String> usedParts = new HashSet<String>();
 			for (Set<String> part : parts)
 				usedParts.addAll(part);
-			SMTInterpol tmpBench = new SMTInterpol(this);
+			tmpBench = new SMTInterpol(this);
 			Level old = tmpBench.m_Logger.getLevel();
-			boolean error = false;
 			try {
 				tmpBench.m_Logger.setLevel(Level.ERROR);
 				// Clone the current context except for the parts used in the
 				// interpolation problem
-				SymbolCollector collector = new SymbolCollector();
+				collector = new SymbolCollector();
 				collector.startCollectTheory();
 				termloop: for (Term asserted : m_Assertions) {
 					if (asserted instanceof AnnotatedTerm) {
@@ -987,9 +980,28 @@ public class SMTInterpol extends NoopScript {
 					tmpBench.assertTerm(asserted);
 					collector.addGlobalSymbols(asserted);
 				}
-				Set<FunctionSymbol> globals = collector.getTheorySymbols();
-				// free space
-				usedParts = null;
+				globals = collector.getTheorySymbols();
+			} finally {
+				tmpBench.m_Logger.setLevel(old);
+			}
+			// free space
+			usedParts = null;
+		}
+		Interpolator interpolator =
+			new Interpolator(m_Logger, tmpBench, getTheory(), parts, startOfSubtree);
+		Term[] ipls = interpolator.getInterpolants(refutation);
+		
+		if (m_By0Seen != -1) {
+			Div0Remover rem = new Div0Remover();
+			for (int i = 0; i < ipls.length; ++i)
+				ipls[i] = rem.transform(ipls[i]);
+		}
+		
+		if (m_InterpolantCheckMode) {
+			boolean error = false;
+			Level old = tmpBench.m_Logger.getLevel();
+			try {
+				tmpBench.m_Logger.setLevel(Level.ERROR);
 				// Compute Symbol occurrence
 				Map<FunctionSymbol, Integer>[] occs =
 					new Map[partition.length];

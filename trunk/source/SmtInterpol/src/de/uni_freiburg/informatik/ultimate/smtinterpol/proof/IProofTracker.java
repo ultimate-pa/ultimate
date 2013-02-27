@@ -208,14 +208,6 @@ public interface IProofTracker {
 	 */
 	public void leq0(SMTAffineTerm sum, Literal lit);
 	/**
-	 * Track a structural splitting step.
-	 * @param data      Data used to produce the result of the split.
-	 * @param proof     The proof for the formula being split.
-	 * @param splitKind The kind of split (@see ProofConstants).
-	 * @return The proof for the split.
-	 */
-	public Term split(Term data, Term proof, int splitKind);
-	/**
 	 * Track literal creation.
 	 * @param term The term transformed into a literal.
 	 * @param lit  The resulting literal.
@@ -228,6 +220,17 @@ public interface IProofTracker {
 	 * @param theory The theory to use in conversion.
 	 */
 	public void negateLit(Literal lit, Theory theory);
+	/**
+	 * Apply disjunction flattening.
+	 * @param args   The term to flatten.
+	 * @param simpOr Apply disjunction simplification afterwards.
+	 */
+	public void flatten(Term[] args, boolean simpOr);
+	/**
+	 * Prepend a disjunction simplification step.
+	 * @param args The disjunction to simplify.
+	 */
+	public void orSimpClause(Term[] args);
 	/**
 	 * Create a clause-creation proof.  Note that this tracker does not yet
 	 * apply the @clause-rule which might be needed.  This will be done by the
@@ -247,6 +250,14 @@ public interface IProofTracker {
 	 */
 	public Term auxAxiom(int auxKind, Literal auxLit, Term data, Term base,
 			Object auxData);
+	/**
+	 * Track a structural splitting step.
+	 * @param data      Data used to produce the result of the split.
+	 * @param proof     The proof for the formula being split.
+	 * @param splitKind The kind of split (@see ProofConstants).
+	 * @return The proof for the split.
+	 */
+	public Term split(Term data, Term proof, int splitKind);
 	
 	//// ===== Accessors ====
 	/**
@@ -285,5 +296,19 @@ public interface IProofTracker {
 	 *         the argument otherwise. 
 	 */
 	public Term[] prepareIRAHack(Term[] args);
+	/**
+	 * Mark the position where a clause simplification rule can be applied.
+	 * This function is necessary since clause simplification is delayed and,
+	 * hence, recognized at the wrong time. 
+	 */
+	public void markPosition();
+	/**
+	 * Produce the disjunctive arguments of an auxiliary axiom.
+	 * @param auxlit The auxiliary literal (in polarity of the aux axiom)
+	 * @param args   The remaining arguments.
+	 * @return Arguments of the clause (stub) or <code>null</code> if no proof
+	 *         tracking.
+	 */
+	public Term[] produceAuxAxiom(Literal auxlit, Term... args);
 	
 }

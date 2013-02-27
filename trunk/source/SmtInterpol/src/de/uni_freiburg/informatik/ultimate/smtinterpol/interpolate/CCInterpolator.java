@@ -67,9 +67,12 @@ public class CCInterpolator {
 	private int getChild(int color, Occurrence occur) {
 		/* find A-local child of m_Color */
 		int child = color - 1;
-		while (child >= 0 && !occur.isALocal(child))
+		while (child >= m_Interpolator.m_startOfSubtrees[color]) {
+			if (occur.isALocal(child))
+				return child;
 			child = m_Interpolator.m_startOfSubtrees[child] - 1;
-		return child;
+		}
+		return -1;
 	}
 
 	class PathInfo {

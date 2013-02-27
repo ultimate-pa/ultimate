@@ -148,4 +148,18 @@ public class NoopProofTracker implements IProofTracker {
 	@Override
 	public void arrayRewrite(Term[] args, Term result, int rule) {}
 
+	@Override
+	public void flatten(Term[] args, boolean simpOr) {}
+
+	@Override
+	public void orSimpClause(Term[] args) {}
+
+	@Override
+	public void markPosition() {}
+
+	@Override
+	public Term[] produceAuxAxiom(Literal auxlit, Term... args) {
+		return null;
+	}
+
 }

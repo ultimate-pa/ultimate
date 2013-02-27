@@ -123,11 +123,11 @@ public class TermTransformer extends NonRecursive {
 		}
 	}
 	
-	private void beginScope() {
+	protected void beginScope() {
 		m_Cache.addLast(new HashMap<Term, Term>());
 	}
 	
-	private void endScope() {
+	protected void endScope() {
 		m_Cache.removeLast();
 	}
 	
