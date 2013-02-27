@@ -436,7 +436,7 @@ public class BoogieOutput {
 		}
 	}
 	
-	public void printExpression(StringBuilder sb, Expression expr) {
+	public void appendExpression(StringBuilder sb, Expression expr) {
 		appendExpression(sb, expr, 0);
 	}
 
@@ -645,30 +645,27 @@ public class BoogieOutput {
 			}
 		}
 	}
-
+	
 	/**
-	 * Print statement.
+	 * Add the string representation of the statement to the string builder.
+	 * This method will only work with simple statements, if-statements and
+	 * while-statements are not supported and will result in an exception.
 	 * 
+	 * @param sb the string builder where the string will be appended to.
 	 * @param s
 	 *            the statement to print.
-	 * @param indent
-	 *            the current indent level.
 	 */
-	public void printStatement(Statement s, String indent) {
-		StringBuilder sb = new StringBuilder();
-		sb.append(indent);
+	public void appendStatement(StringBuilder sb, Statement s) {
 		if (s instanceof AssertStatement) {
 			AssertStatement assertstmt = (AssertStatement) s;
 			sb.append("assert ");
 			appendExpression(sb, assertstmt.getFormula(), 0);
 			sb.append(";");
-			m_Writer.println(sb.toString());
 		} else if (s instanceof AssumeStatement) {
 			AssumeStatement assumestmt = (AssumeStatement) s;
 			sb.append("assume ");
 			appendExpression(sb, assumestmt.getFormula(), 0);
 			sb.append(";");
-			m_Writer.println(sb.toString());
 		} else if (s instanceof HavocStatement) {
 			HavocStatement havoc = (HavocStatement) s;
 			sb.append("havoc ");
@@ -678,7 +675,6 @@ public class BoogieOutput {
 				comma = ", ";
 			}
 			sb.append(";");
-			m_Writer.println(sb.toString());
 		} else if (s instanceof AssignmentStatement) {
 			AssignmentStatement stmt = (AssignmentStatement) s;
 			String comma = "";
@@ -695,7 +691,6 @@ public class BoogieOutput {
 				comma = ", ";
 			}
 			sb.append(";");
-			m_Writer.println(sb.toString());
 		} else if (s instanceof CallStatement) {
 			CallStatement call = (CallStatement) s;
 			String comma;
@@ -719,8 +714,39 @@ public class BoogieOutput {
 				comma = ", ";
 			}
 			sb.append(");");
-			m_Writer.println(sb.toString());
-		} else if (s instanceof IfStatement) {
+		} else if (s instanceof BreakStatement) {
+			String label = ((BreakStatement) s).getLabel();
+			sb.append("break");
+			if (label != null)
+				sb.append(" ").append(label);
+			sb.append(";");
+		} else if (s instanceof ReturnStatement) {
+			sb.append("return;");
+		} else if (s instanceof GotoStatement) {
+			sb.append("goto ");
+			String comma = "";
+			for (String label : ((GotoStatement) s).getLabels()) {
+				sb.append(comma).append(label);
+				comma = ", ";
+			}
+			sb.append(";");
+		} else {
+			throw new IllegalArgumentException(s.toString());
+		}
+	}
+
+	/**
+	 * Print statement.
+	 * 
+	 * @param s
+	 *            the statement to print.
+	 * @param indent
+	 *            the current indent level.
+	 */
+	public void printStatement(Statement s, String indent) {
+		StringBuilder sb = new StringBuilder();
+		sb.append(indent);
+		if (s instanceof IfStatement) {
 			IfStatement stmt = (IfStatement) s;
 			Statement[] elsePart;
 			while (true) {
@@ -770,27 +796,9 @@ public class BoogieOutput {
 			sb = new StringBuilder();
 			sb.append(indent).append("}");
 			m_Writer.println(sb.toString());
-		} else if (s instanceof BreakStatement) {
-			String label = ((BreakStatement) s).getLabel();
-			sb.append("break");
-			if (label != null)
-				sb.append(" ").append(label);
-			sb.append(";");
-			m_Writer.println(sb.toString());
-		} else if (s instanceof ReturnStatement) {
-			sb.append("return;");
-			m_Writer.println(sb.toString());
-		} else if (s instanceof GotoStatement) {
-			sb.append("goto ");
-			String comma = "";
-			for (String label : ((GotoStatement) s).getLabels()) {
-				sb.append(comma).append(label);
-				comma = ", ";
-			}
-			sb.append(";");
-			m_Writer.println(sb.toString());
 		} else {
-			throw new IllegalArgumentException(s.toString());
+			appendStatement(sb, s);
+			m_Writer.println(sb.toString());
 		}
 	}
 
