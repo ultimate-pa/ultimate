@@ -61,6 +61,8 @@ import org.apache.log4j.Logger;
 public class ReImpactObserver implements IUnmanagedObserver {
 	public enum Result { CORRECT, TIMEOUT , MAXEDITERATIONS , UNKNOWN , INCORRECT }
 
+	private static final int c_badNestingRelationInit = -7;
+
 	private static Logger s_Logger = UltimateServices.getInstance().getLogger(Activator.s_PLUGIN_ID);
 	private SmtManager m_smtManager;
 	private int m_currentPreOrderIndex = 0;
@@ -97,6 +99,10 @@ public class ReImpactObserver implements IUnmanagedObserver {
 	
 	@Override
 	public boolean process(IElement root) {
+		assert c_badNestingRelationInit != NestedWord.INTERNAL_POSITION &&
+				c_badNestingRelationInit != NestedWord.MINUS_INFINITY &&
+				c_badNestingRelationInit != NestedWord.PLUS_INFINITY;
+		
 		m_graphRoot = (RootNode) root;
 		m_rootAnnot = m_graphRoot.getRootAnnot();
 		m_taPrefs = m_rootAnnot.getTaPrefs();
@@ -106,7 +112,7 @@ public class ReImpactObserver implements IUnmanagedObserver {
 		m_truePredicate = m_smtManager.newTruePredicate();
 		m_falsePredicate = m_smtManager.newFalsePredicate();
 
-		m_gw = new RIGraphWriter("/home/alexander/reImpactGraphs",
+		m_gw = new RIGraphWriter("",//"/home/alexander/reImpactGraphs",
 				true, true, true, true, m_smtManager.getScript());
 		
 		for (IMultigraphEdge edge : m_graphRoot.getOutgoingEdges()) {
@@ -162,7 +168,7 @@ public class ReImpactObserver implements IUnmanagedObserver {
 		
 		m_dummyUnwindingNode = new UnwindingNode(m_truePredicate, 
 				m_currentUnwProcRoot.getProgramPoint(), //TODO: harter hack..
-				null, -5); 
+				-5); 
 		m_dummyCodeBlock = new StatementSequence(
 				null, 
 				null, 
@@ -212,8 +218,8 @@ public class ReImpactObserver implements IUnmanagedObserver {
 					p_close(m_allNodes.get(i));
 			}
 			p_expand(node);
-			for (INode iNode : node.getOutgoingNodes())
-				p_dfs((UnwindingNode) iNode);
+			for (RIAnnotatedProgramPoint app : node.getOutgoingNodes())
+				p_dfs((UnwindingNode) app);
 				
 		}
 	}
@@ -237,7 +243,17 @@ public class ReImpactObserver implements IUnmanagedObserver {
 		assert node.isErrorLocation() &&
 			!node.getPredicate().getFormula().equals(m_smtManager.getScript().term("false"));
 		
-		Pair<UnwindingNode[], NestedWord<CodeBlock>> errorNWP = getErrorPathAsNestedWord(node);
+		//Pair<UnwindingNode[], NestedWord<CodeBlock>> errorNWP = getErrorPathAsNestedWord(node);
+		Pair<UnwindingNode[], CodeBlock[]> errorPath = getPath(node, null);
+		
+		int[] nestingRelation = computeNestingRelation(errorPath.getSecond());
+		
+		NestedWord<CodeBlock> errorPathAsNestedWord = 
+				new NestedWord<CodeBlock>(errorPath.getSecond(), nestingRelation); 
+		
+		Pair<UnwindingNode[], NestedWord<CodeBlock>> errorNWP =
+				new Pair<UnwindingNode[], NestedWord<CodeBlock>>(
+						errorPath.getFirst(), errorPathAsNestedWord);
 
 		TraceChecker traceChecker = new TraceChecker(m_smtManager, 
 				m_rootAnnot.getModifiedVars(),
@@ -248,9 +264,16 @@ public class ReImpactObserver implements IUnmanagedObserver {
 				errorNWP.getSecond());
 		m_pathChecks++;
 		
-		if (isSafe == LBool.UNSAT) {
+		if (nestingRelation[0] == c_badNestingRelationInit) {
+			UnwindingNode returnEdgeSource = errorNWP.getFirst()[nestingRelation[1]];
+			assert returnEdgeSource.getOutgoingEdgeLabel(errorNWP.getFirst()[nestingRelation[1] + 1])
+			  instanceof Return;
+			returnEdgeSource.removeOutgoingNode(errorNWP.getFirst()[nestingRelation[1] + 1]);
+			setPreCallNodeImportantFlags(errorNWP.getFirst(), nestingRelation[2], nestingRelation[1]);
+		} else if (isSafe == LBool.UNSAT) {
 			IPredicate[] interpolants = traceChecker.getInterpolants(new TraceChecker.AllIntegers());
 			refineTrace(errorNWP, interpolants);
+			setPreCallNodeImportantFlags(errorNWP.getFirst(), 0, getFirstPendingReturnIndex(nestingRelation));
 		} else {
 			traceChecker.forgetTrace();
 			if (isSafe == LBool.SAT)
@@ -265,6 +288,13 @@ public class ReImpactObserver implements IUnmanagedObserver {
 //			makeErrorTraceFromNW(errorNW); 
 		}
 		m_gw.writeGraphAsImage(m_currentUnwProcRoot, "grph_" + (++m_gwCounter) + "_refine" , m_openNodes);
+	}
+
+	private int getFirstPendingReturnIndex(int[] nestingRelation) {
+		for (int i = 0; i < nestingRelation.length; i++)
+			if (nestingRelation[i] == NestedWord.MINUS_INFINITY)
+				return i;
+		return -1;
 	}
 
 	private void makeErrorTraceFromNW(NestedWord<CodeBlock> errorNW) {
@@ -285,25 +315,24 @@ public class ReImpactObserver implements IUnmanagedObserver {
 			
 			if (m_smtManager.isCovered(pathNode.getPredicate(), interpolants[i])
 					!= LBool.UNSAT) {
-//				for (UnwindingNode coveredNode : pathNode.m_coveredNodes) {
-//					coveredNode.m_isCovered = false;
-//					coveredNode.m_coveringNode = null;
-//				}
-				uncoverRec(new ArrayList<INode>(pathNode.m_coveredNodes));
+				uncoverRec(new ArrayList<RIAnnotatedProgramPoint>(pathNode.m_coveredNodes));
 				pathNode.m_coveredNodes.clear();
 				if (pathNode.isLeaf())
 					m_openNodes.add(pathNode);
 				else
 					uncoverRec(pathNode.getOutgoingNodes());
 				
-				if (pathNode.isPreCallNode())
-					uncoverPreCallStackLevel(pathNode);
-				
 				TermVarsProc tvp = m_smtManager.and(pathNode.getPredicate(), interpolants[i]);
 				pathNode.setPredicate(m_smtManager.newPredicate(tvp.getFormula(), 
 						tvp.getProcedures(), tvp.getVars(), tvp.getClosedFormula()));
 			}
 		}
+	}
+
+	private void setPreCallNodeImportantFlags(
+			UnwindingNode[] errorPath, int startIndex, int endIndex) {
+		for (int i = startIndex; i < endIndex; i++) //TODO border cases??
+			errorPath[i].setPreCallNodeImportant(true);
 	}
 
 	private void p_close(UnwindingNode node) {
@@ -320,22 +349,14 @@ public class ReImpactObserver implements IUnmanagedObserver {
 //		m_gw.writeGraphAsImage(m_currentUnwProcRoot, "grph_" + (++m_gwCounter) + "_coverA" , m_openNodes);
 		if (!coveringSource.isCovered() &&
 				coveringSource.getPreOrderIndex() > coveringTarget.getPreOrderIndex()) {
-			IPredicate coveringSourcePreCallPredicate = coveringSource.getPreCallNode() == null ?
-					m_truePredicate /*m_smtManager.newTruePredicate(coveringSource.getProgramPoint())*/ : 
-						coveringSource.getPreCallNode().getPredicate();
-			IPredicate coveringTargetPreCallPredicate = coveringTarget.getPreCallNode() == null ?
-					m_truePredicate /*m_smtManager.newTruePredicate(coveringTarget.getProgramPoint())*/ : 
-								coveringTarget.getPreCallNode().getPredicate();
 							
 			if (m_smtManager.isCovered(
 					coveringSource.getPredicate(),
 					coveringTarget.getPredicate()) 
 					== LBool.UNSAT
 					&&
-					m_smtManager.isCovered(
-							coveringSourcePreCallPredicate, 
-							coveringTargetPreCallPredicate)
-							== LBool.UNSAT) {
+					(!coveringTarget.isPreCallNodeImportant 
+							|| findLastCall(coveringSource).equals(findLastCall(coveringTarget)))) {
 				coveringSource.m_isCovered = true;
 				coveringSource.m_coveringNode = coveringTarget;
 				coveringTarget.m_coveredNodes.add(coveringSource);
@@ -348,31 +369,31 @@ public class ReImpactObserver implements IUnmanagedObserver {
 		}
 	}
 	
-	/**
-	 * When a PreCallNode is strengthened, this may destroy all coverings from nodes which it is a PreCallNode of
-	 * i.e. its whole PreCallNodeStack-level
-	 */
-	private void uncoverPreCallStackLevel(UnwindingNode preCallNode) {
-		for (UnwindingNode node : m_allNodes) {
-			if (node.getPreCallNode() == preCallNode) {
-				uncoverRec(new ArrayList<INode>(node.m_coveredNodes));
-				node.m_coveredNodes.clear();
-				if (node.isLeaf())
-					m_openNodes.add(node);
-				else
-					uncoverRec(node.getOutgoingNodes());
-			}
+    /**
+     * follows edges upwards to the root, returns the node  before the first call it sees
+     * could be replaced by a field in UnwindingNode -- what is faster??
+     */
+	private UnwindingNode findLastCall(UnwindingNode coveringSource) {
+		UnwindingNode currentNode = coveringSource;
+		Object currentEdge = 
+				currentNode.getIncomingEdgeLabel(
+						(RIAnnotatedProgramPoint) currentNode.getIncomingNodes().get(0));
+		while (!(currentEdge instanceof Call)) {
+			currentNode = coveringSource;
+			currentEdge = 
+					currentNode.getIncomingEdgeLabel(
+							(RIAnnotatedProgramPoint) currentNode.getIncomingNodes().get(0));	
 		}
+		return (UnwindingNode) currentNode.getIncomingNodes().get(0);
 	}
-	
-	
+
 	/**
 	 * for each given element recursively (going down) remove all covering edges connected to it
 	 * and mark it as covered (by a node above of it by convention..)
 	 */
-	private void coverRec(List<INode> outgoingNodes) {
+	private void coverRec(List<RIAnnotatedProgramPoint> outgoingNodes) {
 		if(outgoingNodes == null) return;
-		for(INode iNode : outgoingNodes) {
+		for(RIAnnotatedProgramPoint iNode : outgoingNodes) {
 			UnwindingNode unwNode = (UnwindingNode) iNode;
 			
 			unwNode.m_isCovered = true;
@@ -402,9 +423,9 @@ public class ReImpactObserver implements IUnmanagedObserver {
 	 * for each given element recursively (going down) set isCovered false and 
 	 * clear the coveringNodes List 
 	 */
-	private void uncoverRec(List<INode> outgoingNodes) {
-		if(outgoingNodes == null) return;
-		for(INode iNode : outgoingNodes) {
+	private void uncoverRec(List<RIAnnotatedProgramPoint> arrayList) {
+		if(arrayList == null) return;
+		for(RIAnnotatedProgramPoint iNode : arrayList) {
 			UnwindingNode unwNode = (UnwindingNode) iNode;
 			unwNode.m_isCovered = false;
 			if(unwNode.isLeaf()) {
@@ -413,7 +434,7 @@ public class ReImpactObserver implements IUnmanagedObserver {
 			if(unwNode.m_coveringNode != null) {
 				unwNode.m_coveringNode = null;
 			}
-			uncoverRec(unwNode.getOutgoingNodes());
+			uncoverRec((List<RIAnnotatedProgramPoint>) unwNode.getOutgoingNodes());
 		}
 	}
 
@@ -423,29 +444,14 @@ public class ReImpactObserver implements IUnmanagedObserver {
 		for (IMultigraphEdge outEdge : node.getProgramPoint().getOutgoingEdges()) {
 			ProgramPoint target = (ProgramPoint) outEdge.getTarget();
 			
-			//do not unwind return edges that do not fit the last call
-			if (outEdge instanceof Return && 
-					(node.getPreCallNode() == null || //do not unwind return edges when we have not even seen a call
-							!((Return) outEdge).getCallerNode()
-							.equals(node.getPreCallNode().getProgramPoint())))
-				continue;
-			
 			if (outEdge instanceof Summary)
 				continue;
-			
-			Stack<UnwindingNode> preCallNodeStack = (Stack<UnwindingNode>) node.m_preCallNodeStack.clone();
-			if (outEdge instanceof Call) 
-				preCallNodeStack.push(node);
-			else if (outEdge instanceof Return && !preCallNodeStack.isEmpty()) 
-				preCallNodeStack.pop();
-//			UnwindingNode preCallNode = outEdge instanceof Call ? node : node.getPreCallNode();
 			
 			UnwindingNode newNode = null;
 			
 			if (target.isErrorLocation()) {
 				newNode = new UnwindingNode(
 						m_truePredicate, target, 
-						preCallNodeStack,
 						-m_currentPreOrderIndex);
 				//needed for termination: once we have seen 
 				//a new error location we have to refine
@@ -453,7 +459,6 @@ public class ReImpactObserver implements IUnmanagedObserver {
 			} else {
 				newNode = new UnwindingNode(
 						m_truePredicate, target, 
-						preCallNodeStack,
 						++m_currentPreOrderIndex);
 				m_allNodes.add(newNode);
 				
@@ -571,7 +576,7 @@ public class ReImpactObserver implements IUnmanagedObserver {
 		while (currentNode != border && !currentNode.m_isProcRoot) {
 			nodes.add(currentNode);
 			UnwindingNode incomingNode = (UnwindingNode) currentNode.getIncomingNodes().get(0);
-			CodeBlock edge = currentNode.getIncomingCodeBlockOf(
+			CodeBlock edge = currentNode.getIncomingEdgeLabel(
 					incomingNode);
 			currentNode = incomingNode;
 			edges.add(edge);
@@ -611,20 +616,39 @@ public class ReImpactObserver implements IUnmanagedObserver {
 				errorPath.getFirst(), errorPathAsNestedWord);
 	}
 
+	/**
+	 * Compute the nesting relation for a given error path in the NestedWord format from Matthias.
+	 * Also does a sanity check: If there is a Return following a Call that it does not fit to, a
+	 * special array is returned. This Array is of the form {special constant, first non-matching-
+	 * return-index, non-matching-call index}
+	 */
 	private static int[] computeNestingRelation(CodeBlock[] errorPath) {
 		int [] nr = new int[errorPath.length];
-		ArrayDeque<Integer> callStack = new ArrayDeque<Integer>();
+		Stack<Call> callStack = new Stack<Call>();
+		Stack<Integer> callStackIndizes = new Stack<Integer>();
 		for (int i = 0; i < nr.length; i++) {
 			if (errorPath[i] instanceof Call) {
 				nr[i] = -2;
-				callStack.push(i);
+				callStack.push((Call) errorPath[i]);
+				callStackIndizes.push(i);
 			} else if (errorPath[i] instanceof Return) {
-				nr[i] = callStack.pop();
-				nr[nr[i]] = i;
+				if (callStackIndizes.isEmpty())
+					nr[i] = NestedWord.MINUS_INFINITY;
+				Call matchingCall = callStack.pop();
+				if (((Return) errorPath[i]).getCallStatement().equals(matchingCall)) {
+					nr[i] = callStackIndizes.pop();
+					nr[nr[i]] = i;	
+				} else {
+					return new int[] {c_badNestingRelationInit , i, callStackIndizes.pop()};
+				}
+				
 			} else {
-				nr[i] = -2;
+				nr[i] = NestedWord.INTERNAL_POSITION;
 			}
 		}
+		//calls that are still on the stack are pending
+		for (Integer i : callStackIndizes)
+			nr[i] = NestedWord.PLUS_INFINITY;
 		return nr;
 	}
 	

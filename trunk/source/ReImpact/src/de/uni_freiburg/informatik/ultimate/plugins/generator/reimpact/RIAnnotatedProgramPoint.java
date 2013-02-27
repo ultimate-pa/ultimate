@@ -9,12 +9,13 @@ import de.uni_freiburg.informatik.ultimate.model.AbstractNoEdgeNode;
 import de.uni_freiburg.informatik.ultimate.model.IEdge;
 import de.uni_freiburg.informatik.ultimate.model.INode;
 import de.uni_freiburg.informatik.ultimate.model.IPayload;
+import de.uni_freiburg.informatik.ultimate.model.structure.BaseLabeledEdgesMultigraph;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IPredicate;
 
-public class RIAnnotatedProgramPoint extends AbstractNoEdgeNode{
+public class RIAnnotatedProgramPoint extends BaseLabeledEdgesMultigraph<RIAnnotatedProgramPoint, CodeBlock> {
 
 	/**
 	 * 
@@ -46,78 +47,100 @@ public class RIAnnotatedProgramPoint extends AbstractNoEdgeNode{
 		return m_programPoint.isErrorLocation();
 	}
 	
-	public CodeBlock getOutgoingCodeBlockOf(RIAnnotatedProgramPoint pp) {
-		return m_outgoingEdges.get(pp);
-	}
-	
-	public CodeBlock getIncomingCodeBlockOf(RIAnnotatedProgramPoint pp) {
-		return m_incomingEdges.get(pp);
-	}
-	
 	public ProgramPoint getProgramPoint() {
 		return m_programPoint;
 	}
 	
-	
-	//---------- interface stuff ---------------
-
-	@Override
-	public List<INode> getIncomingNodes() {
-		return new ArrayList<INode>(m_incomingEdges.keySet());
+	protected void addOutgoingNode(RIAnnotatedProgramPoint node, CodeBlock label) {
+		this.mOutgoingNodes.add(node);
+		this.mOutgoingEdgeLabels.put(node, label);
 	}
 
-	@Override
-	public List<INode> getOutgoingNodes() {
-		return new ArrayList<INode>(m_outgoingEdges.keySet());
-	}
-
-	@Override
-	public boolean addOutgoingNode(INode element) {
-		assert false;
-		return false; //TODO ??
-	}
-
-	@Override
-	public boolean addIncomingNode(INode element) {
-		assert false;
-		return false; //TODO ??
-	}
-
-	public void addOutgoingNode(RIAnnotatedProgramPoint app, CodeBlock cd) {
-		m_outgoingEdges.put(app, cd);
-	}
-
-	public void addIncomingNode(RIAnnotatedProgramPoint app, CodeBlock cd) {
-		m_incomingEdges.put(app, cd);
+	protected void removeOutgoingNode(RIAnnotatedProgramPoint node) {
+		mOutgoingNodes.remove(node);
+		mOutgoingEdgeLabels.remove(node);
 	}
 	
-	public void removeOutgoingNode(RIAnnotatedProgramPoint app) {
-		m_outgoingEdges.remove(app);
+	protected void addIncomingNode(RIAnnotatedProgramPoint node, CodeBlock label) {
+		this.mIncomingNodes.add(node);
+		node.mOutgoingEdgeLabels.put(node, label);
+		node.mOutgoingNodes.add(this);
 	}
 
-	public void removeIncomingNode(RIAnnotatedProgramPoint app) {
-		m_incomingEdges.remove(app);
+	protected void removeIncomingNode(RIAnnotatedProgramPoint node) {
+		mIncomingNodes.remove(node);
+		node.mOutgoingNodes.remove(this);
+		node.mOutgoingEdgeLabels.remove(this);
 	}
-	
-	@Override
-	public boolean removeOutgoingNode(INode element) {
-		return m_outgoingEdges.remove(element)!=null?true:false;
-	}
-
-	@Override
-	public boolean removeIncomingNode(INode element) {
-		return m_incomingEdges.remove(element)!=null?true:false;
-	}
-
-	@Override
-	public void removeAllIncoming() {
-		m_incomingEdges.clear();
-	}
-
-	@Override
-	public void removeAllOutgoing() {
-		m_outgoingEdges.clear();
-	}
+//
+//	protected void addIncomingNode(RIAnnotatedProgramPoint node, CodeBlock label) {
+//		this.mIncomingNodes.add(node);
+//		node.mOutgoingEdgeLabels.put(node, label);
+//	}
+//
+//	protected void removeIncomingNode(RIAnnotatedProgramPoint node) {
+//		mIncomingNodes.remove(node);
+//		node.mOutgoingNodes.remove(this);
+//	}
+	//	//---------- interface stuff ---------------
+//
+//	@Override
+//	public List<INode> getIncomingNodes() {
+//		return new ArrayList<INode>(m_incomingEdges.keySet());
+//	}
+//
+//	@Override
+//	public List<INode> getOutgoingNodes() {
+//		return new ArrayList<INode>(m_outgoingEdges.keySet());
+//	}
+//
+//	@Override
+//	public boolean addOutgoingNode(INode element) {
+//		assert false;
+//		return false; //TODO ??
+//	}
+//
+//	@Override
+//	public boolean addIncomingNode(INode element) {
+//		assert false;
+//		return false; //TODO ??
+//	}
+//
+//	public void addOutgoingNode(RIAnnotatedProgramPoint app, CodeBlock cd) {
+//		m_outgoingEdges.put(app, cd);
+//	}
+//
+//	public void addIncomingNode(RIAnnotatedProgramPoint app, CodeBlock cd) {
+//		m_incomingEdges.put(app, cd);
+//	}
+//	
+//	public void removeOutgoingNode(RIAnnotatedProgramPoint app) {
+//		m_outgoingEdges.remove(app);
+//	}
+//
+//	public void removeIncomingNode(RIAnnotatedProgramPoint app) {
+//		m_incomingEdges.remove(app);
+//	}
+//	
+//	@Override
+//	public boolean removeOutgoingNode(INode element) {
+//		return m_outgoingEdges.remove(element)!=null?true:false;
+//	}
+//
+//	@Override
+//	public boolean removeIncomingNode(INode element) {
+//		return m_incomingEdges.remove(element)!=null?true:false;
+//	}
+//
+//	@Override
+//	public void removeAllIncoming() {
+//		m_incomingEdges.clear();
+//	}
+//
+//	@Override
+//	public void removeAllOutgoing() {
+//		m_outgoingEdges.clear();
+//	}
 	
 	public IPayload getPayload() {
 		return m_programPoint.getPayload();

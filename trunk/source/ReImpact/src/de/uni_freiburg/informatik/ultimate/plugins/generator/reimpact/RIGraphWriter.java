@@ -124,11 +124,11 @@ public class RIGraphWriter {
 			ArrayList<UnwindingNode> current_openNodes = (ArrayList<UnwindingNode>) openNodes.clone();
 
 			for(UnwindingNode node : current_openNodes) {
-				ArrayList<INode> outNodes = node.getOutgoingNodes() == null ? 
-						new ArrayList<INode>() : 
-							new ArrayList<INode>(node.getOutgoingNodes());
+				ArrayList<RIAnnotatedProgramPoint> outNodes = node.getOutgoingNodes() == null ? 
+						new ArrayList<RIAnnotatedProgramPoint>() : 
+							new ArrayList<RIAnnotatedProgramPoint>(node.getOutgoingNodes());
 
-				for(INode n : outNodes) {
+				for(RIAnnotatedProgramPoint n : outNodes) {
 					if(!allNodes.contains(n)) {
 						allNodes.add((UnwindingNode) n);
 						openNodes.add((UnwindingNode) n);
@@ -146,9 +146,9 @@ public class RIGraphWriter {
 
 		for(Iterator<UnwindingNode> it = allNodes.iterator(); it.hasNext();){
 			UnwindingNode node = it.next();
-			for(INode outNode : node.getOutgoingNodes()) {
+			for(RIAnnotatedProgramPoint outNode : node.getOutgoingNodes()) {
 				allEdges.add(new GraphEdge(node,
-						((UnwindingNode) node).getOutgoingCodeBlockOf((RIAnnotatedProgramPoint) outNode),
+						((UnwindingNode) node).getOutgoingEdgeLabel((RIAnnotatedProgramPoint) outNode),
 						(UnwindingNode) outNode));
 			}
 		}
