@@ -34,7 +34,7 @@ import de.uni_freiburg.informatik.ultimate.automata.Word;
  * 
  * Example:
  * The nested word
- *                    (a b c d, {(0,2),(3,-infinity)} )
+ *                    (a b c d, {(0,2),(-infinity,3)} )
  * is modeled as
  *            m_Word = {'a',       'b'        ,'c'      'd' }
  * m_NestingRelation = { 2 , INTERNAL_POSITION, 0 , MINUS_INFINITY }
