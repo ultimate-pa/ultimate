@@ -15,6 +15,7 @@ import org.eclipse.cdt.core.dom.ast.IASTExpression;
 import org.eclipse.cdt.core.dom.ast.IASTSimpleDeclaration;
 
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CACSLLocation;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.InferredType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.InferredType.Type;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.SymbolTableValue;
@@ -223,22 +224,17 @@ public class ArrayHandler {
                         dimensions.add(rex.expr);
                     } else {
                         // use a variable to store the current value!
-                        String tempName = main.nameHandler.getTempVarUID(SFO.AUXVAR.ARRAYDIM);
-                        VarList tempVar = new VarList(loc,
-                                new String[] { tempName }, new PrimitiveType(
-                                        loc, new InferredType(Type.Integer),
-                                        SFO.INT));
-                        VariableDeclaration tVarDecl = 
-                        		new VariableDeclaration(loc, new Attribute[0],
-                                new VarList[] { tempVar });
+                        String tmpName = main.nameHandler.getTempVarUID(SFO.AUXVAR.ARRAYDIM);
+                        InferredType tmpType = new InferredType(Type.Integer);
+                        VariableDeclaration tVarDecl = SFO.getTempVarVariableDeclaration(tmpName, tmpType, loc);
                         auxVars.put(tVarDecl, loc);
                         decl.add(tVarDecl);
                         stmt.add(new AssignmentStatement(loc,
                                 new LeftHandSide[] { new VariableLHS(loc,
                                         new InferredType(Type.Integer),
-                                        tempName) },
+                                        tmpName) },
                                 new Expression[] { rex.expr }));
-                        dimensions.add(new IdentifierExpression(loc, tempName));
+                        dimensions.add(new IdentifierExpression(loc, tmpName));
                     }
                 } else {
                     if (dimensions.size() == 0) {

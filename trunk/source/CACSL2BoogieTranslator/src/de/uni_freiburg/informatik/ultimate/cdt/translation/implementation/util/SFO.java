@@ -3,6 +3,16 @@
  */
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util;
 
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.MemoryHandler;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.InferredType;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.InferredType.Type;
+import de.uni_freiburg.informatik.ultimate.model.ILocation;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ASTType;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Attribute;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.PrimitiveType;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VarList;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableDeclaration;
+
 /**
  * @author Markus Lindenmann
  * @date 16.08.2012
@@ -174,7 +184,13 @@ public final class SFO {
 	    * Auxiliary variable used to model temporary results of a short-circuit
 	    * evaluation, e.g., &&, or ||.
 	    */
-	   SHORTCIRCUIT("short");
+	   SHORTCIRCUIT("short"),
+	   
+	   /**
+	    * Auxiliary variable used to model temporary results of the ternary 
+	    * conditional expression, e.g., (x > 0) ? 23 : 42;
+	    */
+	   ITE("ite");
 	   
 	   String m_Id;
 	   
@@ -189,6 +205,26 @@ public final class SFO {
 		   return m_Id;
 	   }
 	   
-   };
+   }
+
+
+/**
+ * Return Variable Declaration for single variable with name tmpName, 
+ * InferredType tmpIType at location loc.
+ */
+public static VariableDeclaration getTempVarVariableDeclaration(
+		final String tmpName, final InferredType tmpIType, final ILocation loc) {
+	final VarList tempVar;
+	if (tmpIType.getType() == Type.Pointer) {
+		tempVar = new VarList(loc, new String[] { tmpName },
+                MemoryHandler.POINTER_TYPE);
+	} else {
+        ASTType tempType = new PrimitiveType(loc, tmpIType,
+                tmpIType.toString());
+		tempVar = new VarList(loc, new String[] { tmpName },
+                tempType);
+	}
+	return new VariableDeclaration(loc, new Attribute[0], new VarList[] { tempVar });
+};
     	
 }

@@ -13,6 +13,7 @@ import org.eclipse.cdt.core.dom.ast.IASTExpression;
 import org.eclipse.cdt.core.dom.ast.IASTLiteralExpression;
 
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CACSLLocation;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.InferredType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.InferredType.Type;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CArray;
@@ -626,15 +627,14 @@ public class MemoryHandler {
 				new HashMap<VariableDeclaration, CACSLLocation>();
         InferredType it = new InferredType(Type.Pointer);
         Expression[] args = new Expression[] { size };
-        String tId = main.nameHandler.getTempVarUID(SFO.AUXVAR.MALLOC);
-        VariableDeclaration tVarDecl = new VariableDeclaration(loc, new Attribute[0],
-                new VarList[] { new VarList(loc, new String[] { tId },
-                        POINTER_TYPE) });
+        String tmpId = main.nameHandler.getTempVarUID(SFO.AUXVAR.MALLOC);
+        InferredType tmpIType = new InferredType(Type.Pointer);
+        VariableDeclaration tVarDecl = SFO.getTempVarVariableDeclaration(tmpId, tmpIType, loc);
         auxVars.put(tVarDecl, loc);
         decl.add(tVarDecl);
-        stmt.add(new CallStatement(loc, false, new String[] { tId },
+        stmt.add(new CallStatement(loc, false, new String[] { tmpId },
                 SFO.MALLOC, args));
-        Expression e = new IdentifierExpression(loc, it, tId);
+        Expression e = new IdentifierExpression(loc, it, tmpId);
         // add required information to function handler.
         if (fh.getCurrentProcedureID() != null) {
             HashSet<String> mgM = new HashSet<String>();
@@ -869,23 +869,16 @@ public class MemoryHandler {
                 throw new UnsupportedSyntaxException(m);
         }
         assert t != SFO.EMPTY;
-        ASTType at;
-        if (t == SFO.POINTER) {
-            at = POINTER_TYPE;
-        } else {
-            at = new PrimitiveType(loc, t);
-        }
-        String tId = main.nameHandler.getTempVarUID(SFO.AUXVAR.MEMREAD);
-        VariableDeclaration tVarDecl = new VariableDeclaration(loc, new Attribute[0],
-                new VarList[] { new VarList(loc, new String[] { tId }, at) });
+        String tmpId = main.nameHandler.getTempVarUID(SFO.AUXVAR.MEMREAD);
+        VariableDeclaration tVarDecl = SFO.getTempVarVariableDeclaration(tmpId, it, loc);
         auxVars.put(tVarDecl, loc);
         decl.add(tVarDecl);
-        String[] lhs = new String[] { tId };
+        String[] lhs = new String[] { tmpId };
         stmt.add(new CallStatement(loc, false, lhs, "read~" + t,
                 new Expression[] { tPointer }));
 		assert (main.isAuxVarMapcomplete(decl, auxVars));
         return new ResultExpression(stmt, new IdentifierExpression(loc, it,
-                tId), decl, auxVars);
+                tmpId), decl, auxVars);
     }
 
     /**

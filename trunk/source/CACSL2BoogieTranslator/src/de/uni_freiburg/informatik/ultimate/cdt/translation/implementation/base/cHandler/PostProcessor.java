@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CACSLLocation;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.InferredType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.InferredType.Type;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CArray;
@@ -294,19 +295,15 @@ public class PostProcessor {
             Expression[] arrSize = ((CArray) lCvar).getDimensions();
             Expression nr0 = new IntegerLiteral(loc, SFO.NR0);
             for (int i = 0; i < arrSize.length; i++) {
-                String tId = main.nameHandler.getTempVarUID(SFO.AUXVAR.ARRAYINIT);
-                tempIdc.add(new IdentifierExpression(loc, new InferredType(
-                        Type.Integer), tId));
-                VarList tempVar = new VarList(loc, new String[] { tId },
-                        new PrimitiveType(loc, SFO.INT));
-                VariableDeclaration tVarDecl = 
-                		new VariableDeclaration(loc, new Attribute[0],
-                        new VarList[] { tempVar });
+                String tempVarName = main.nameHandler.getTempVarUID(SFO.AUXVAR.ARRAYINIT);
+                InferredType tempVarIType =  new InferredType(Type.Integer);
+                tempIdc.add(new IdentifierExpression(loc, tempVarIType, tempVarName));
+                VariableDeclaration tVarDecl = SFO.getTempVarVariableDeclaration(tempVarName, tempVarIType, loc);
                 auxVars.put(tVarDecl, loc);
                 decl.add(tVarDecl);
                 if (i == 0) {
                     stmt.add(new AssignmentStatement(loc,
-                            new LeftHandSide[] { new VariableLHS(loc, tId) },
+                            new LeftHandSide[] { new VariableLHS(loc, tempVarName) },
                             new Expression[] { nr0 }));
                 }
             }
@@ -416,6 +413,7 @@ public class PostProcessor {
                 String checkMethodRet = main.nameHandler.getTempVarUID(SFO.AUXVAR.RETURNED);
                 main.cHandler.getSymbolTable().addToReverseMap(checkMethodRet,
                         SFO.NO_REAL_C_VAR + checkMethodRet, loc);
+//                CHandler.getTempVarVariableDeclaration(checkMethodRet, out[0].getType()., loc);
                 VarList tempVar = new VarList(loc,
                         new String[] { checkMethodRet }, out[0].getType());
                 VariableDeclaration tmpVar = new VariableDeclaration(loc,

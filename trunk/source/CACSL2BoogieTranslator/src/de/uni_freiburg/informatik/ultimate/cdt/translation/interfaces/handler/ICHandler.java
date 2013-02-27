@@ -9,6 +9,7 @@ import org.eclipse.cdt.core.dom.ast.IASTBreakStatement;
 import org.eclipse.cdt.core.dom.ast.IASTCaseStatement;
 import org.eclipse.cdt.core.dom.ast.IASTCastExpression;
 import org.eclipse.cdt.core.dom.ast.IASTCompoundStatement;
+import org.eclipse.cdt.core.dom.ast.IASTConditionalExpression;
 import org.eclipse.cdt.core.dom.ast.IASTDeclarationStatement;
 import org.eclipse.cdt.core.dom.ast.IASTDefaultStatement;
 import org.eclipse.cdt.core.dom.ast.IASTDoStatement;
@@ -396,6 +397,17 @@ public interface ICHandler extends IHandler {
      */
     public Result visit(Dispatcher main, IASTCastExpression node);
 
+    /**
+     * Handles an IASTConditionalExpression.
+     * 
+     * @param main
+     *            a reference to the main dispatcher
+     * @param node
+     *            the node to visit
+     * @return a result object
+     */
+	public Result visit(Dispatcher main, IASTConditionalExpression node);
+    
     /**
      * Handles an IASTInitializerList.
      * 

@@ -171,18 +171,17 @@ public class SvCompCHandler extends CHandler {
         }
         for (String t : NONDET_TYPE_STRINGS)
             if (methodName.equals(NONDET_STRING + t)) {
-                InferredType type = new InferredType(Type.Integer);
-                if (t.equals("float"))
-                    type = new InferredType(Type.Real);
-                ASTType tempType = new PrimitiveType(loc, type, type.toString());
-                String[] tId = new String[] { main.nameHandler.getTempVarUID(SFO.AUXVAR.NONDET) };
-                VariableDeclaration tVarDecl = new VariableDeclaration(
-                		loc, new Attribute[0],
-                        new VarList[] { new VarList(loc, tId, tempType) });
-                auxVars.put(tVarDecl, loc);
+                final InferredType type; 
+                if (t.equals("float")) {
+                	type = new InferredType(Type.Real);
+                } else {
+                	type = new InferredType(Type.Integer);
+                }
+                String tmpName = main.nameHandler.getTempVarUID(SFO.AUXVAR.NONDET);
+                VariableDeclaration tVarDecl = SFO.getTempVarVariableDeclaration(tmpName, type, loc);
                 decl.add(tVarDecl);
-                stmt.add(new HavocStatement(loc, tId));
-                expr = new IdentifierExpression(loc, type, tId[0]);
+                stmt.add(new HavocStatement(loc, new String[]{ tmpName }));
+                expr = new IdentifierExpression(loc, type, tmpName );
                 return new ResultExpression(stmt, expr, decl, auxVars);
             }
         if (methodName.equals("printf")) {
@@ -236,6 +235,7 @@ public class SvCompCHandler extends CHandler {
     @Override
     public Result visit(Dispatcher main, IASTSimpleDeclaration node) {
         CACSLLocation loc = new CACSLLocation(node);
+        Map<VariableDeclaration, CACSLLocation> auxVars = new HashMap<VariableDeclaration, CACSLLocation>();
         if (node.getDeclarators() != null && node.getDeclarators().length > 0) {
             // we decide on the first declarator ... [0] does NOT mean, that
             // only the first declarator is handled!
@@ -415,7 +415,7 @@ public class SvCompCHandler extends CHandler {
                             result.decl.addAll(rExpr.decl);
                             result.stmt.addAll(rExpr.stmt);
                             result.stmt.add(as);
-                            result.auxVars.putAll(rExpr.auxVars);
+                            auxVars.putAll(rExpr.auxVars);
                         }
                     }
                 }
@@ -447,7 +447,7 @@ public class SvCompCHandler extends CHandler {
                 }
                 assert staticVarStorage.stmt.isEmpty();
             }
-            assert (main.isAuxVarMapcomplete(result.decl, result.auxVars));
+            result.stmt.addAll(Dispatcher.createHavocsForAuxVars(auxVars));
             return result;
         }
         String msg = "Unknown result type: " + r.getClass();

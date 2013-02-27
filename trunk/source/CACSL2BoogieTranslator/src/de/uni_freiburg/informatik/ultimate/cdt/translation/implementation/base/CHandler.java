@@ -19,6 +19,7 @@ import org.eclipse.cdt.core.dom.ast.IASTBreakStatement;
 import org.eclipse.cdt.core.dom.ast.IASTCaseStatement;
 import org.eclipse.cdt.core.dom.ast.IASTCastExpression;
 import org.eclipse.cdt.core.dom.ast.IASTCompoundStatement;
+import org.eclipse.cdt.core.dom.ast.IASTConditionalExpression;
 import org.eclipse.cdt.core.dom.ast.IASTDeclarationStatement;
 import org.eclipse.cdt.core.dom.ast.IASTDeclarator;
 import org.eclipse.cdt.core.dom.ast.IASTDefaultStatement;
@@ -685,7 +686,6 @@ public class CHandler implements ICHandler {
                 assert staticVarStorage.stmt.isEmpty();
             }
             result.stmt.addAll(Dispatcher.createHavocsForAuxVars(auxVars));
-            assert (main.isAuxVarMapcomplete(result.decl, auxVars));
             return result;
         }
         String msg = "Unknown result type: " + r.getClass();
@@ -860,7 +860,7 @@ public class CHandler implements ICHandler {
         result.cType = symbolTable.get(cId, loc).getCVariable();
         return result;
     }
-
+    
     @Override
     public Result visit(Dispatcher main, IASTUnaryExpression node) {
         ResultExpression o = (ResultExpression) main
@@ -889,26 +889,18 @@ public class CHandler implements ICHandler {
                 ArrayList<Statement> stmt = new ArrayList<Statement>();
                 Map<VariableDeclaration, CACSLLocation> auxVars = new HashMap<VariableDeclaration, CACSLLocation>();
                 // In this case we need a temporary variable
-                String tempName = main.nameHandler
+                String tmpName = main.nameHandler
                         .getTempVarUID(SFO.AUXVAR.POST_MOD);
-                InferredType iType = (InferredType) o.expr.getType();
-                ASTType tempType = new PrimitiveType(loc, iType,
-                        iType.toString());
-                VarList tempVar = new VarList(loc, new String[] { tempName },
-                        tempType);
-                if (iType.getType() == Type.Pointer) {
-                    tempVar = new VarList(loc, new String[] { tempName },
-                            MemoryHandler.POINTER_TYPE);
-                }
-                VariableDeclaration tmpVar = new VariableDeclaration(loc,
-                        new Attribute[0], new VarList[] { tempVar });
+                InferredType tmpIType = (InferredType) o.expr.getType();
+                VariableDeclaration tmpVar = 
+                		SFO.getTempVarVariableDeclaration(tmpName, tmpIType, loc);
                 auxVars.put(tmpVar, loc);
                 decl.add(tmpVar);
                 stmt.addAll(o.stmt);
                 decl.addAll(o.decl);
                 stmt.add(new AssignmentStatement(loc,
-                        new LeftHandSide[] { new VariableLHS(loc, iType,
-                                tempName) }, new Expression[] { o.expr }));
+                        new LeftHandSide[] { new VariableLHS(loc, tmpIType,
+                                tmpName) }, new Expression[] { o.expr }));
                 LeftHandSide lhs = BoogieASTUtil.getLHSforExpression(o.expr);
                 BinaryExpression.Operator op;
                 if (node.getOperator() == IASTUnaryExpression.op_postFixIncr) {
@@ -942,8 +934,8 @@ public class CHandler implements ICHandler {
                                 .get(functionHandler.getCurrentProcedureID())
                                 .add(SFO.MEMORY + "_" + t);
                     }
-                } else if (iType instanceof InferredType
-                        && ((InferredType) iType).getType() == Type.Pointer) {
+                } else if (tmpIType instanceof InferredType
+                        && ((InferredType) tmpIType).getType() == Type.Pointer) {
                     ResultExpression ptrMan = memoryHandler.manipulatePointer(
                             o.expr, op, nr1);
                     stmt.addAll(ptrMan.stmt);
@@ -956,7 +948,7 @@ public class CHandler implements ICHandler {
                             new LeftHandSide[] { lhs }, rhs));
                 }
                 return new ResultExpression(stmt, new IdentifierExpression(loc,
-                        iType, tempName), decl, auxVars);
+                        tmpIType, tmpName), decl, auxVars);
             case IASTUnaryExpression.op_prefixDecr:
             case IASTUnaryExpression.op_prefixIncr:
                 // ++E -> E = E+1; E
@@ -1168,24 +1160,22 @@ public class CHandler implements ICHandler {
                     // String msg = "Using integer value as pointer!";
                     // Dispatcher.warn(loc, SyntaxErrorType.TypeError, msg);
                     // FIXME: Assign constant pointer t={0, r.expr }.
-                    String tId = main.nameHandler
+                    String tmpId = main.nameHandler
                             .getTempVarUID(SFO.AUXVAR.CONSTPOINTER);
+                    InferredType tmpIType = new InferredType(Type.Pointer);
                     Expression idEx = new IdentifierExpression(loc,
-                            new InferredType(Type.Pointer), tId);
-                    VariableDeclaration tmpVar = new VariableDeclaration(loc,
-                            new Attribute[0], new VarList[] { new VarList(loc,
-                                    new String[] { tId },
-                                    MemoryHandler.POINTER_TYPE) });
+                            new InferredType(Type.Pointer), tmpId);
+                    VariableDeclaration tmpVar = SFO.getTempVarVariableDeclaration(tmpId, tmpIType, loc);
                     auxVars.put(tmpVar, loc);
                     decl.add(tmpVar);
                     stmt.add(new AssignmentStatement(
                             loc,
                             new LeftHandSide[] { new StructLHS(loc,
-                                    new VariableLHS(loc, tId), SFO.POINTER_BASE) },
+                                    new VariableLHS(loc, tmpId), SFO.POINTER_BASE) },
                             new Expression[] { new IntegerLiteral(loc, SFO.NR0) }));
                     stmt.add(new AssignmentStatement(loc,
                             new LeftHandSide[] { new StructLHS(loc,
-                                    new VariableLHS(loc, tId),
+                                    new VariableLHS(loc, tmpId),
                                     SFO.POINTER_OFFSET) },
                             new Expression[] { r.expr }));
                     r.expr = idEx;
@@ -2123,6 +2113,72 @@ public class CHandler implements ICHandler {
         Dispatcher.unsoundnessWarning(new CACSLLocation(node), msg,
                 "Ignored cast!");
         return expr;
+    }
+    
+    @Override
+    public Result visit(Dispatcher main, IASTConditionalExpression node) {
+        CACSLLocation loc = new CACSLLocation(node);
+        assert node.getChildren().length == 3;
+        Result resLocCond = main.dispatch(node.getLogicalConditionExpression());
+        assert resLocCond instanceof ResultExpression;
+        ResultExpression reLocCond = (ResultExpression) resLocCond;
+        
+        Result rPositive = main.dispatch(node.getPositiveResultExpression());
+        assert rPositive instanceof ResultExpression;
+        ResultExpression rePositive = (ResultExpression) rPositive;
+        
+        Result rNegative = main.dispatch(node.getNegativeResultExpression());
+        assert rNegative instanceof ResultExpression;
+        ResultExpression reNegative = (ResultExpression) rNegative;
+        
+        ArrayList<Statement> stmt = new ArrayList<Statement>();
+        ArrayList<Declaration> decl = new ArrayList<Declaration>();
+        Map<VariableDeclaration, CACSLLocation> auxVars = 
+        		new HashMap<VariableDeclaration, CACSLLocation>(0);
+        decl.addAll(reLocCond.decl);
+        stmt.addAll(reLocCond.stmt);
+        String tmpName = main.nameHandler.getTempVarUID(SFO.AUXVAR.ITE);
+        InferredType tmpIType = (InferredType) rePositive.expr.getType();
+        assert (tmpIType.equals(reNegative.expr.getType()));
+        VariableDeclaration tmpVar = SFO.getTempVarVariableDeclaration(tmpName, tmpIType, loc);
+        decl.add(tmpVar);
+        Expression condition = reLocCond.expr;
+        condition = main.typeHandler.checkBooleanAssignment(loc, new PrimitiveType(
+                loc, SFO.BOOL), condition);
+        List<Statement> ifStatements = new ArrayList<Statement>();
+        {
+        	ifStatements.addAll(rePositive.stmt);
+        	LeftHandSide[] lhs = { new VariableLHS(loc, tmpName) };
+        	AssignmentStatement assign = new AssignmentStatement(loc, lhs, new Expression[] { rePositive.expr });
+        	ifStatements.add(assign);
+        	List<HavocStatement> havocAuxVars = Dispatcher
+                    .createHavocsForAuxVars(rePositive.auxVars);
+        	ifStatements.addAll(havocAuxVars);
+        	decl.addAll(rePositive.decl);
+        }
+        
+        List<Statement> elseStatements = new ArrayList<Statement>();
+        {
+        	elseStatements.addAll(reNegative.stmt);
+        	LeftHandSide[] lhs = { new VariableLHS(loc, tmpName) };
+        	AssignmentStatement assign = new AssignmentStatement(loc, lhs, new Expression[] { reNegative.expr });
+        	elseStatements.add(assign);
+        	List<HavocStatement> havocAuxVars = Dispatcher
+                    .createHavocsForAuxVars(reNegative.auxVars);
+        	elseStatements.addAll(havocAuxVars);
+        	decl.addAll(reNegative.decl);
+        }
+        Statement ifStatement = new IfStatement(loc, condition, 
+        		ifStatements.toArray(new Statement[0]), 
+        		elseStatements.toArray(new Statement[0]));
+        stmt.add(ifStatement);
+       
+        IdentifierExpression tmpExpr = new IdentifierExpression(loc, tmpName);
+    	List<HavocStatement> havocAuxVars = Dispatcher
+                .createHavocsForAuxVars(reLocCond.auxVars);
+    	stmt.addAll(havocAuxVars);
+        auxVars.put(tmpVar,loc);
+        return new ResultExpression(stmt, tmpExpr, decl, auxVars);
     }
 
     @Override

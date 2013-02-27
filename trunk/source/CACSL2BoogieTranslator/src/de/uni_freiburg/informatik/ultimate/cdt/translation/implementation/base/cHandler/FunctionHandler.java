@@ -21,6 +21,7 @@ import org.eclipse.cdt.core.dom.ast.IASTSimpleDeclaration;
 import org.eclipse.cdt.internal.core.dom.parser.c.CASTFunctionDeclarator;
 
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CACSLLocation;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.InferredType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.InferredType.Type;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.SymbolTableValue;
@@ -650,17 +651,14 @@ public class FunctionHandler {
 				call = new CallStatement(loc, false, new String[0], methodName,
 						args.toArray(new Expression[0]));
 			} else if (type.length == 1) { // one return value
-				String ident = main.nameHandler
+				String tmpId = main.nameHandler
 						.getTempVarUID(SFO.AUXVAR.RETURNED);
-				expr = new IdentifierExpression(loc, new InferredType(
-						type[0].getType()), ident);
-				VarList tempVar = new VarList(loc, new String[] { ident },
-						type[0].getType());
-				VariableDeclaration tmpVar = new VariableDeclaration(loc,
-						new Attribute[0], new VarList[] { tempVar });
+				InferredType tmpIType = new InferredType(type[0].getType());
+				expr = new IdentifierExpression(loc, tmpIType, tmpId);
+				VariableDeclaration tmpVar = SFO.getTempVarVariableDeclaration(tmpId, tmpIType, loc); 
 				auxVars.put(tmpVar, loc);
 				decl.add(tmpVar);
-				call = new CallStatement(loc, false, new String[] { ident },
+				call = new CallStatement(loc, false, new String[] { tmpId },
 						methodName, args.toArray(new Expression[0]));
 			} else { // unsupported!
 				String msg = "Cannot handle multiple out params! "
