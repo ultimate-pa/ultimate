@@ -1,0 +1,9 @@
+// Author: heizmann@informatik.uni-freiburg.de
+// Date: 28.02.2013
+
+// operatration BfsEmptiness can not be used yet
+
+
+parseAutomata("../nwaDefinitions02.ats");
+BfsEmptiness(nwa1);
+
