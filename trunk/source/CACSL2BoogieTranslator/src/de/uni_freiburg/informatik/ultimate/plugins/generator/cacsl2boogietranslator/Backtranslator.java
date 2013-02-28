@@ -112,7 +112,7 @@ public class Backtranslator extends DefaultTranslator<ASTNode, CACSLLocation, Ex
 		} else if (m_boogie2C.getVar2cvar().containsKey(boogieId)) {
 			cId = m_boogie2C.getVar2cvar().get(boogieId);			
 		} else if (m_boogie2C.getInvar2cvar().containsKey(boogieId)) {
-			cId = m_boogie2C.getInvar2cvar().get(boogieId);
+			cId = "\\old(" + m_boogie2C.getInvar2cvar().get(boogieId) + ")";
 		} else if (m_boogie2C.getTempvar2obj().containsKey(boogieId)) {
 			throw new UnsupportedOperationException(
 					"auxilliary boogie variable " + boogieId);
