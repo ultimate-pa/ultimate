@@ -464,7 +464,7 @@ lexpr_inner::=
 					:} %prec IDENTIFIER 
 | lexpr_inner GTGT lexpr_inner {: RESULT = new NotDefinedExpression(); :}
 | lexpr_inner LTLT lexpr_inner {: RESULT = new NotDefinedExpression(); :}
-| LPAR lexpr RPAR {: RESULT = new NotDefinedExpression(); :} %prec prec_par 
+| LPAR lexpr:e RPAR {: RESULT = e; :} %prec prec_par 
 | LPAR range RPAR {: RESULT = new NotDefinedExpression(); :}
 | LPAR cast_logic_type RPAR lexpr_inner {: RESULT = new NotDefinedExpression(); :} %prec prec_cast 
 | lexpr_inner LTCOLON lexpr_inner {: RESULT = new NotDefinedExpression(); :} %prec prec_cast 
