@@ -167,6 +167,12 @@ public class MinimizeCallReturnVisitor implements IMinimizationVisitor {
 		IMinimizedEdge subsituteEdge = null;
 		ArrayList<IMinimizedEdge> errorLocationEdges = new ArrayList<IMinimizedEdge>();
 		for (IMinimizedEdge edge : node.getOutgoingEdges()) {
+			// If the oldVar-Operator is involved we do not minimize such
+			// methods! Due to a problem while composing with
+			// SequentialComposition, there is a scoping problem with old(g)
+			if (edge.isOldVarInvolved()) {
+				return null;
+			}
 			if (edge.isBasicEdge()) {
 				IBasicEdge basicEdge = (IBasicEdge) edge;
 				if (basicEdge.getOriginalEdge() instanceof Call) {

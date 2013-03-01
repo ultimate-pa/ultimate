@@ -233,4 +233,15 @@ public abstract class AbstractCompositeEdge implements ICompositeEdge {
 		return counter;
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see de.uni_freiburg.informatik.ultimate.blockencoding.model.interfaces.
+	 * IMinimizedEdge#isOldVarInvolved()
+	 */
+	@Override
+	public boolean isOldVarInvolved() {
+		return leftEdge.isOldVarInvolved() || rightEdge.isOldVarInvolved();
+	}
+
 }

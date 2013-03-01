@@ -3,11 +3,15 @@
  */
 package de.uni_freiburg.informatik.ultimate.blockencoding.model;
 
+import java.util.Set;
+
 import de.uni_freiburg.informatik.ultimate.blockencoding.model.interfaces.IBasicEdge;
 import de.uni_freiburg.informatik.ultimate.blockencoding.model.interfaces.IMinimizedEdge;
+import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.model.structure.ModifiableMultigraphEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CfgBuilder.GotoEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.TransFormula;
 
 /**
  * Wrapper class for a normal edge, which exists in the RCFG.
@@ -28,7 +32,6 @@ public class BasicEdge extends
 	 * the underlying original edge (of type "CodeBlock")
 	 */
 	private CodeBlock originalEdge;
-
 
 	public BasicEdge(CodeBlock originalEdge, MinimizedNode source,
 			MinimizedNode target) {
@@ -57,6 +60,33 @@ public class BasicEdge extends
 	@Override
 	public int getElementCount() {
 		return 1;
+	}
+
+	@Override
+	public boolean isOldVarInvolved() {
+		if (originalEdge.getTransitionFormula() == null) {
+			return false;
+		}
+		TransFormula tFormula = originalEdge.getTransitionFormula();
+		return checkBoogieVarSetForOldVar(tFormula.getAssignedVars())
+				|| checkBoogieVarSetForOldVar(tFormula.getInVars().keySet())
+				|| checkBoogieVarSetForOldVar(tFormula.getOutVars().keySet());
+	}
+
+	/**
+	 * This method checks a Set of BoogieVars, if there is a OldVar contained.
+	 * 
+	 * @param vars
+	 *            a Set of BoogieVars
+	 * @return true if there is an OldVar
+	 */
+	private boolean checkBoogieVarSetForOldVar(Set<BoogieVar> vars) {
+		for (BoogieVar boogieVar : vars) {
+			if (boogieVar.isOldvar()) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 }
