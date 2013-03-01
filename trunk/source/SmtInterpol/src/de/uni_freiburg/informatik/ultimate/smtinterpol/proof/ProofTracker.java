@@ -22,11 +22,14 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedHashSet;
+import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.logic.AnnotatedTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Annotation;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
+import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -200,8 +203,16 @@ public class ProofTracker implements IProofTracker {
 		}
 	}
 	
-	private Rewrite m_First, m_Last, m_MarkPos;
-	private int m_NumRewrites = 0;
+	private Rewrite m_First, m_Last, m_MarkPos, m_Save;
+	private int m_NumRewrites = 0, m_SaveNumRewrites;
+	
+	private Map<Term, Term> m_Lits;
+	
+	private void addToLits(Term orig, Term lit) {
+		if (m_Lits == null)
+			m_Lits = new HashMap<Term, Term>();
+		m_Lits.put(orig, lit);
+	}
 
 	private void prepend(Rewrite rw) {
 		assert(invNumRewrites());
@@ -436,8 +447,9 @@ public class ProofTracker implements IProofTracker {
 
 	@Override
 	public void quoted(Term orig, Literal quote) {
-		append(new InternRewrite(orig,
-				quote.getSMTFormula(orig.getTheory(), true)));
+		Term t = quote.getSMTFormula(orig.getTheory(), true);
+		append(new InternRewrite(orig, t));
+		addToLits(orig, t);
 	}
 
 	@Override
@@ -445,15 +457,22 @@ public class ProofTracker implements IProofTracker {
 		Term orig = res.getTheory().term("=", lhs, rhs);
 		if (orig != res)
 			append(new InternRewrite(orig, res));
+		if (res == res.getTheory().TRUE) {
+			orig = res.getTheory().term("not", orig);
+			res = res.getTheory().FALSE;
+		}
+		addToLits(orig, res);
 	}
 
 	@Override
 	public void eq(Term lhs, Term rhs, DPLLAtom eqAtom) {
 		Theory t = lhs.getTheory();
-		Term res = eqAtom.getSMTFormula(t, true);
+		Term res = SMTAffineTerm.cleanup(eqAtom.getSMTFormula(t, true));
 		Term orig = t.term("=", lhs, rhs);
 		if (orig != res)
 			append(new InternRewrite(orig, res));
+		addToLits(orig, res);
+		
 	}
 
 	@Override
@@ -465,6 +484,7 @@ public class ProofTracker implements IProofTracker {
 		Term res = lit.getSMTFormula(t, true);
 		if (orig != res)
 			append(new InternRewrite(orig, res));
+		addToLits(orig, res);
 	}
 
 	@Override
@@ -474,6 +494,7 @@ public class ProofTracker implements IProofTracker {
 		Term res = lit.getSMTFormula(t, true);
 		if (orig != res)
 			append(new InternRewrite(orig, res));
+		addToLits(orig, res);
 	}
 	
 	@Override
@@ -786,19 +807,26 @@ public class ProofTracker implements IProofTracker {
 	@Override
 	public void orSimpClause(Term[] args) {
 		Theory t = args[0].getTheory();
-		// Clause should be flattened here
-		LinkedHashSet<Term> newArgs = new LinkedHashSet<Term>();
-		for (Term term : args)
-			newArgs.add(term);
-		if (newArgs.size() == args.length)
-			// No simplification applied
-			return;
-		Term res = newArgs.size() == 1 ? newArgs.iterator().next() :
-			t.term(t.m_Or, newArgs.toArray(new Term[newArgs.size()]));
+		Term[] newArgs = args.clone();
+		LinkedHashSet<Term> clause = new LinkedHashSet<Term>();
+		for (int i = 0; i < newArgs.length; ++i) {
+			Term newDisj = m_Lits.get(newArgs[i]);
+			assert (newDisj != null);
+			newArgs[i] = newDisj;
+			if (newDisj != t.FALSE)
+				clause.add(newDisj);
+		}
+		Term res;
+		if (clause.size() == 0)
+			res = t.FALSE;
+		else if (clause.size() == 1)
+			res = clause.iterator().next();
+		else
+			res = t.term(t.m_Or, clause.toArray(new Term[clause.size()]));
 		Rewrite rw =
-				new ResultRewrite(t.term(t.m_Or, args), res,
+				new ResultRewrite(t.term(t.m_Or, newArgs), res,
 						ProofConstants.RW_OR_SIMP);
-		insertAtMarkedPos(rw);
+		append(rw);
 	}
 
 	@Override
@@ -813,6 +841,36 @@ public class ProofTracker implements IProofTracker {
 		res[0] = auxlit.getSMTFormula(t, true);
 		System.arraycopy(args, 0, res, 1, args.length);
 		return res;
+	}
+
+	@Override
+	public void save() {
+		m_Save = m_Last;
+		m_SaveNumRewrites = m_NumRewrites;
+	}
+
+	@Override
+	public void restore() {
+		if (m_Save != null) {
+			m_Last = m_Save;
+			m_Last.m_Next = null;
+			m_NumRewrites = m_SaveNumRewrites;
+			m_Save = null;
+		}
+		assert(invNumRewrites());
+	}
+	
+	@Override
+	public void cleanSave() {
+		m_Save = null;
+	}
+
+	@Override
+	public void normalized(ConstantTerm term, SMTAffineTerm res) {
+		Term rhs = SMTAffineTerm.cleanup(res);
+		if (rhs != term)
+			append(new ResultRewrite(
+					term, rhs, ProofConstants.RW_CANONICAL_SUM));
 	}
 	
 }

@@ -677,14 +677,21 @@ public class LinArSolve implements ITheory {
 			LAEquality laeq = (LAEquality)atom;
 			LinVar var = laeq.getVar();
 			if (literal == laeq) {
-				assert(var.getUpperBound().equals(new InfinitNumber(laeq.getBound(), 0)) && 
-						var.getLowerBound().equals(new InfinitNumber(laeq.getBound(), 0))) :
-							"Bounds on variable do not match propagated equality bound";
+				InfinitNumber bound = new InfinitNumber(laeq.getBound(), 0);
+				LAReason upperReason = var.m_upper;
+				while (upperReason.getBound().less(bound))
+					upperReason = upperReason.getOldReason();
+				LAReason lowerReason = var.m_lower;
+				while (bound.less(lowerReason.getBound()))
+					lowerReason = lowerReason.getOldReason();
+				assert upperReason.getBound().equals(bound) && 
+						lowerReason.getBound().equals(bound) :
+						"Bounds on variable do not match propagated equality bound";
 				LAAnnotation annot = new LAAnnotation(mengine.isProofGenerationEnabled(), literal);
 				LiteralReason uppereq = new LiteralReason(var, var.getUpperBound().sub(var.getEpsilon()), 
 						m_reasonDepth, true, laeq.negate());
-				uppereq.setOldReason(var.m_upper);
-				var.m_lower.explain(annot, var.getEpsilon(), Rational.MONE, this);
+				uppereq.setOldReason(upperReason);
+				lowerReason.explain(annot, var.getEpsilon(), Rational.MONE, this);
 				annot.addEQAnnotation(uppereq, Rational.ONE, this);
 
 				return annot.createClause(mengine);

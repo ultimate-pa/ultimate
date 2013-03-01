@@ -104,8 +104,6 @@ public class FixProofDAG {
 			}
 			if (!changed)
 				engine.m_Transformed.put(m_Cls, m_Cls);
-			else if (newAntes.size() == 0)
-				engine.m_Transformed.put(m_Cls, primary);
 			else {
 				// recompute clause
 				HashSet<Literal> lits = new HashSet<Literal>();
@@ -124,10 +122,15 @@ public class FixProofDAG {
 							lits.add(lit);
 					}
 				}
-				Antecedent[] nantes = newAntes.toArray(
+				Clause result;
+				if (newAntes.isEmpty()) {
+					result = primary;
+				} else {
+					Antecedent[] nantes = newAntes.toArray(
 						new Antecedent[newAntes.size()]);
-				Clause result = new Clause(lits.toArray(new Literal[lits.size()]),
+					result = new Clause(lits.toArray(new Literal[lits.size()]),
 						new ResolutionNode(primary, nantes));
+				}
 				engine.m_Transformed.put(m_Cls, result);
 			}
 		}

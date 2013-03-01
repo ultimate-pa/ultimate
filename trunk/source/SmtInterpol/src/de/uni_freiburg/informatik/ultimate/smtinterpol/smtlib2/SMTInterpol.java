@@ -55,7 +55,6 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.Config;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.Clausifier;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.Clause;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.DPLLEngine;
-import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.IProofProcessor;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.interpolate.Interpolator;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.interpolate.SymbolChecker;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.interpolate.SymbolCollector;
@@ -356,7 +355,6 @@ public class SMTInterpol extends NoopScript {
 	private Clausifier m_Clausifier;
 	private ScopedArrayList<Term> m_Assertions;
 	
-	private PrintWriter m_Out = new PrintWriter(System.out);
 	private String m_OutName = "stdout";
 	private PrintWriter m_Err = new PrintWriter(System.err);
 	private String m_ErrName = "stderr";
@@ -387,8 +385,6 @@ public class SMTInterpol extends NoopScript {
 	boolean m_ModelCheckMode = false;
 	
 	private int m_ProofMode;
-	
-	IProofProcessor m_ProofProcessor = null;
 	
 	de.uni_freiburg.informatik.ultimate.smtinterpol.model.Model m_Model = null;
 	
@@ -430,13 +426,12 @@ public class SMTInterpol extends NoopScript {
 	private final static int OPT_RANDOM_SEED = 8;
 	private final static int OPT_INTERACTIVE_MODE = 9;
 	private final static int OPT_INTERPOLANT_CHECK_MODE = 10;
-	private final static int OPT_PROOF_PROCESSOR = 11;
+	private final static int OPT_PRODUCE_INTERPOLANTS = 11;
 	private final static int OPT_PRODUCE_UNSAT_CORES = 12;
 	private final static int OPT_UNSAT_CORE_CHECK_MODE = 13;
 	private final static int OPT_PRINT_TERMS_CSE = 14;
 	private final static int OPT_MODEL_CHECK_MODE = 15;
 	private final static int OPT_PROOF_TRANSFORMATION = 16;
-	private final static int OPT_PRODUCE_INTERPOLANTS = 17;
 	//// Add a new option number for every new option
 	
 	// The Options Map
@@ -470,8 +465,6 @@ public class SMTInterpol extends NoopScript {
 		new BoolOption(":interpolant-check-mode",
 				"Check generated interpolants",
 				false, OPT_INTERPOLANT_CHECK_MODE);
-		new StringOption(":proof-processor", "Set a class to produce proofs",
-				true, OPT_PROOF_PROCESSOR);
 		new BoolOption(":produce-unsat-cores", "Enable unsat core generation",
 				false, OPT_PRODUCE_UNSAT_CORES);
 		new BoolOption(":unsat-core-check-mode", "Check generated unsat cores",
@@ -536,11 +529,6 @@ public class SMTInterpol extends NoopScript {
         	m_Assertions.clear();
 	}
 	
-	public void setOutStream(PrintWriter stream, String streamname) {
-		m_Out = stream;
-		m_OutName = streamname;
-	}
-
 	public void push(int n) throws SMTLIBException {
 		super.push(n);
 		modifyAssertionStack();
@@ -836,8 +824,6 @@ public class SMTInterpol extends NoopScript {
 			return m_Assertions != null;
 		case OPT_INTERPOLANT_CHECK_MODE:
 			return m_InterpolantCheckMode;
-		case OPT_PROOF_PROCESSOR:
-			return m_ProofProcessor.getClass().getName();
 		case OPT_PRODUCE_UNSAT_CORES:
 			return m_ProduceUnsatCores;
 		case OPT_UNSAT_CORE_CHECK_MODE:
@@ -879,14 +865,6 @@ public class SMTInterpol extends NoopScript {
 			assert correct;
 		}
 		try {
-			if (m_ProofProcessor == null) {
-				String syspropval = getPPSysProp();
-				if (syspropval != null)
-					m_ProofProcessor = 
-						(IProofProcessor)Class.forName(syspropval).newInstance();
-			}
-			if (m_ProofProcessor != null)
-				m_ProofProcessor.process(unsat, m_Clausifier, m_Engine, m_Out, m_Err);
 			ProofTermGenerator generator = new ProofTermGenerator(getTheory());
 			Term res = generator.convert(retrieveProof());
 			if (m_By0Seen != -1)
@@ -1229,13 +1207,7 @@ public class SMTInterpol extends NoopScript {
 			break;
 		}
 		case OPT_REGULAR_OUTPUT_CHANNEL:
-			try {
-				String arg = o.checkArg(value, m_OutName);
-				setOutStream(createChannel(arg), arg);
-			} catch (IOException ex) {
-				m_Logger.error(ex);
-				throw new SMTLIBException("file not found: "+value);
-			}
+			m_OutName = o.checkArg(value, m_OutName);
 			break;
 		case OPT_DIAGNOSTIC_OUTPUT_CHANNEL:
 			if (m_Appender == null)
@@ -1282,15 +1254,6 @@ public class SMTInterpol extends NoopScript {
 				o.checkArg(value, m_InterpolantCheckMode))
 				if (m_Assertions == null)
 					m_Assertions = new ScopedArrayList<Term>();
-			break;
-		case OPT_PROOF_PROCESSOR:
-			try {
-				m_ProofProcessor =
-					(IProofProcessor) Class.forName((String) value).
-						newInstance();
-			} catch (Exception exc) {
-				throw new SMTLIBException(exc.getMessage());
-			}
 			break;
 		case OPT_PRODUCE_UNSAT_CORES:
 			if (m_ProduceUnsatCores = o.checkArg(value, m_ProduceUnsatCores) &&
@@ -1339,10 +1302,6 @@ public class SMTInterpol extends NoopScript {
 		default:
 			throw new InternalError("This should be implemented!!!");
 		}
-	}
-	
-	private String getPPSysProp() {
-		return System.getProperty(Config.PP_SYS_PROP_NAME);
 	}
 	
 	public Term simplifyTerm(Term term) throws SMTLIBException {
@@ -1412,7 +1371,7 @@ public class SMTInterpol extends NoopScript {
 		}
 	}
 	
-	private Clause retrieveProof() throws SMTLIBException {
+	public Clause retrieveProof() throws SMTLIBException {
 		Clause unsat = m_Engine.getProof();
 		if (unsat == null)
 			throw new SMTLIBException("Logical context not inconsistent!");

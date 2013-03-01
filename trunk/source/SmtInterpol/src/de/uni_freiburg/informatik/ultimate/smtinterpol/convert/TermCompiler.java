@@ -134,7 +134,9 @@ public class TermCompiler extends TermTransformer {
 				return;
 			}
 		} else if (term instanceof ConstantTerm) {
-			setResult(SMTAffineTerm.create(term));
+			SMTAffineTerm res = SMTAffineTerm.create(term);
+			m_Tracker.normalized((ConstantTerm) term, res);
+			setResult(res);
 			return;
 		} else if (term instanceof AnnotatedTerm)
 			m_Tracker.strip((AnnotatedTerm) term);
@@ -414,7 +416,8 @@ public class TermCompiler extends TermTransformer {
 				SMTAffineTerm arg0 = SMTAffineTerm.create(args[0]);
 				if (arg0.isConstant()) {
 					SMTAffineTerm res = SMTAffineTerm.create(
-							arg0.getConstant().floor().toTerm(arg0.getSort()));
+							arg0.getConstant().floor().toTerm(
+									fsym.getReturnSort()));
 					m_Tracker.toInt(arg0, res);
 					setResult(res);
 					return;
@@ -424,9 +427,18 @@ public class TermCompiler extends TermTransformer {
 				SMTAffineTerm arg1 = SMTAffineTerm.create(
 						Rational.valueOf(fsym.getIndices()[0], BigInteger.ONE),
 						arg0.getSort());
-				Term res = theory.term("=", arg0,
-						theory.term("*", arg1,
-								theory.term("div", arg0, arg1)));
+				Term res;
+				if (arg1.getConstant().equals(Rational.ONE))
+					res = theory.TRUE;
+				else if (arg0.isConstant()) {
+					Rational c0 = arg0.getConstant();
+					Rational c1 = arg1.getConstant();
+					Rational mod = c0.sub(constDiv(c0, c1).mul(c1));
+					res = mod.equals(Rational.ZERO) ? 
+							theory.TRUE : theory.FALSE;
+				} else
+					res = theory.term("=", arg0, SMTAffineTerm.create(
+						theory.term("div", arg0, arg1)).mul(arg1.getConstant()));
 				setResult(res);
 				m_Tracker.divisible(appTerm, res);
 				return;

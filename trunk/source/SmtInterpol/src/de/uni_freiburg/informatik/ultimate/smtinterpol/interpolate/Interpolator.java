@@ -183,7 +183,7 @@ public class Interpolator {
 		}
 	}
 
-	private static final boolean DEEP_CHECK_INTERPOLANTS = true;
+	private static final boolean DEEP_CHECK_INTERPOLANTS = false;
 	SMTInterpol m_SmtSolver;
 
 	Logger m_Logger;
@@ -895,7 +895,7 @@ public class Interpolator {
 	 * @author hoenicke
 	 */
 	public static class Substitutor extends TermTransformer {
-		Term m_TermVar;
+		TermVariable m_TermVar;
 		Term m_Replacement;
 		
 		public Substitutor(TermVariable termVar, Term replacement) {
@@ -906,26 +906,31 @@ public class Interpolator {
 		public void convert(Term term) {
 			if (term instanceof LATerm) {
 				final LATerm laTerm = (LATerm) term;
-				InterpolatorAffineTerm s = laTerm.m_s; 
-				if (laTerm.m_s.getSummands().containsKey(m_TermVar)) {
-					s = new InterpolatorAffineTerm(s);
-					Rational factor = s.getSummands().remove(m_TermVar);
-					s.add(factor, m_Replacement);
-				}
-				final InterpolatorAffineTerm newS = s; 
+				final Term[] oldTerms = laTerm.m_s.getSummands().keySet()
+						.toArray(new Term[laTerm.m_s.getSummands().size()]);
 				/* recurse into LA term */ 
 				enqueueWalker(new Walker() {
 					@Override
 					public void walk(NonRecursive engine) {
 						Substitutor me = (Substitutor) engine;
 						Term result = me.getConverted();
-						if (result == laTerm.m_F && newS == laTerm.m_s)
+						Term[] newTerms = me.getConverted(oldTerms);
+						if (result == laTerm.m_F && newTerms == oldTerms) {
 							me.setResult(laTerm);
-						else
-							me.setResult(new LATerm(newS, laTerm.m_k, result));
+							return;
+						}
+						InterpolatorAffineTerm newS = 
+								new InterpolatorAffineTerm();
+						for (int i = 0; i< oldTerms.length; i++) {
+							newS.add(laTerm.m_s.getSummands().get(oldTerms[i]), 
+									newTerms[i]);
+						}
+						newS.add(laTerm.m_s.getConstant());
+						me.setResult(new LATerm(newS, laTerm.m_k, result));
 					}
 				});
 				pushTerm(laTerm.m_F);
+				pushTerms(oldTerms);
 				return;
 			} else if (term.equals(m_TermVar))
 				setResult(m_Replacement);

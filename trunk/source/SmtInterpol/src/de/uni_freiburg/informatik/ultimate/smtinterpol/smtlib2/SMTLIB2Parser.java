@@ -26,7 +26,6 @@ public class SMTLIB2Parser implements IParser {
 
 	@Override
 	public int run(Script solver, String filename) {
-		// TODO Auto-generated method stub
 		if (filename == null)
 			filename = "<stdin>";
         ParseEnvironment parseEnv = new ParseEnvironment(solver);

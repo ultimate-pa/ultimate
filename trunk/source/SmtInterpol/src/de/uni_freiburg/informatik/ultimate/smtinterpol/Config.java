@@ -80,9 +80,6 @@ public interface Config {
 	public final static boolean FEATURE_BLOCK_LOOPING_PATTERN = true;
 	
 	////// Proofs
-	/// The name of the system property for proof processors
-	public final static String PP_SYS_PROP_NAME = 
-		"de.uni_freiburg.informatik.ultimate.smt.proof.processor";
 	/// Check proofs for propositional validity
 	public final static boolean CHECK_PROP_PROOF = !COMPETITION;
 	

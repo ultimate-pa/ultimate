@@ -20,6 +20,7 @@ package de.uni_freiburg.informatik.ultimate.smtinterpol.proof;
 
 import de.uni_freiburg.informatik.ultimate.logic.AnnotatedTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
+import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
@@ -109,6 +110,13 @@ public interface IProofTracker {
 	 * @param res  The result of the rewrite.
 	 */
 	public void sum(FunctionSymbol fsym, Term[] args, Term res);
+	/**
+	 * Track a normalization of a constant term.  This rule is needed, e.g., to
+	 * justify the transformation of 1.5 into (/ 3 2).
+	 * @param term The constant.
+	 * @param res  The result of the transformation.
+	 */
+	public void normalized(ConstantTerm term, SMTAffineTerm res);
 	/**
 	 * Track a transformation into <=0-form.
 	 * @param orig The original term.
@@ -222,13 +230,13 @@ public interface IProofTracker {
 	public void negateLit(Literal lit, Theory theory);
 	/**
 	 * Apply disjunction flattening.
-	 * @param args   The term to flatten.
-	 * @param simpOr Apply disjunction simplification afterwards.
+	 * @param args     The term to flatten.
+	 * @param simpOr TODO
 	 */
 	public void flatten(Term[] args, boolean simpOr);
 	/**
 	 * Prepend a disjunction simplification step.
-	 * @param args The disjunction to simplify.
+	 * @param args    The disjunction to simplify.
 	 */
 	public void orSimpClause(Term[] args);
 	/**
@@ -310,5 +318,17 @@ public interface IProofTracker {
 	 *         tracking.
 	 */
 	public Term[] produceAuxAxiom(Literal auxlit, Term... args);
+	/**
+	 * Save the current position in the rewrite list.
+	 */
+	public void save();
+	/**
+	 * Restore to the last position in the list.
+	 */
+	public void restore();
+	/**
+	 * Remove all saved information.
+	 */
+	public void cleanSave();
 	
 }

@@ -20,6 +20,7 @@ package de.uni_freiburg.informatik.ultimate.smtinterpol.proof;
 
 import de.uni_freiburg.informatik.ultimate.logic.AnnotatedTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
+import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
@@ -161,5 +162,17 @@ public class NoopProofTracker implements IProofTracker {
 	public Term[] produceAuxAxiom(Literal auxlit, Term... args) {
 		return null;
 	}
+
+	@Override
+	public void save() {}
+
+	@Override
+	public void restore() {}
+
+	@Override
+	public void cleanSave() {}
+
+	@Override
+	public void normalized(ConstantTerm term, SMTAffineTerm res) {}
 
 }

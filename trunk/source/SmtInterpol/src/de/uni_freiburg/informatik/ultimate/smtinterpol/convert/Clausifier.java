@@ -553,7 +553,7 @@ public class Clausifier {
 						// eq == false and positive ==> addClause({})
 						if (eq == EqualityProxy.getTrueProxy()) {
 							if (!positive) {
-								// eq-tracking done by createEqualityProxy
+								m_Tracker.eq(lhs, rhs, m_Theory.TRUE);
 								m_Tracker.negation(m_Theory.TRUE,
 										m_Theory.FALSE,
 										ProofConstants.RW_NOT_SIMP);
@@ -564,7 +564,7 @@ public class Clausifier {
 						}
 						if (eq == EqualityProxy.getFalseProxy()) {
 							if (positive) {
-								// eq-tracking done by createEqualityProxy
+								m_Tracker.eq(lhs, rhs, m_Theory.FALSE);
 								addClause(new Literal[0], null, 
 										getClauseProof(m_ProofTerm));
 							}
@@ -1009,9 +1009,11 @@ public class Clausifier {
 				if (positive && at.getFunction() == t.m_Or) {
 					if (m_Term.tmpCtr > Config.OCC_INLINE_THRESHOLD) {
 //						m_Logger.trace("Don't inline the clause" + SMTAffineTerm.cleanup(idx));
+						m_Collector.getTracker().save();
 						Literal lit = getLiteral(idx);
 						m_Collector.getTracker().quoted(idx, lit.getAtom());
 						m_Collector.addLiteral(lit);
+						m_Collector.getTracker().cleanSave();
 					} else {
 						m_Collector.setFlatten();
 						for (Term p : at.getParameters())
@@ -1019,9 +1021,11 @@ public class Clausifier {
 					}
 				} else if (!at.getFunction().isIntern() &&
 						at.getFunction().getReturnSort() == t.getBooleanSort()) {
+					m_Collector.getTracker().save();
 					Literal lit = createBooleanLit(at);
 					m_Collector.getTracker().intern(idx, lit);
 					m_Collector.addLiteral(positive ? lit : lit.negate());
+					m_Collector.getTracker().cleanSave();
 //				} else if (at.getFunction().getName().equals("ite")) {
 //					Term cond = at.getParameters()[0];
 //					Term tc = at.getParameters()[1];
@@ -1048,26 +1052,37 @@ public class Clausifier {
 						if (positive)
 							m_Collector.setTrue();
 						m_Collector.getTracker().eq(lhs, rhs, m_Theory.TRUE);
+						m_Collector.getTracker().negation(m_Theory.TRUE,
+								m_Theory.FALSE,
+								ProofConstants.RW_NOT_SIMP);
+						m_Collector.setSimpOr();
 						return;
 					}
 					if (eq == EqualityProxy.getFalseProxy()) {
 						if (!positive)
 							m_Collector.setTrue();
 						m_Collector.getTracker().eq(lhs, rhs, m_Theory.FALSE);
+						m_Collector.setSimpOr();
 						return;
 					}
+					m_Collector.getTracker().save();
 					DPLLAtom eqAtom = eq.getLiteral();
 					m_Collector.getTracker().eq(lhs, rhs, eqAtom);
 					m_Collector.addLiteral(positive ? eqAtom : eqAtom.negate());
+					m_Collector.getTracker().cleanSave();
 				} else if (at.getFunction().getName().equals("<=")) {
 					// (<= SMTAffineTerm 0)
+					m_Collector.getTracker().save();
 					Literal lit = createLeq0(at);
 					m_Collector.getTracker().intern(at, lit);
 					m_Collector.addLiteral(positive ? lit : lit.negate());
+					m_Collector.getTracker().cleanSave();
 				} else {
+					m_Collector.getTracker().save();
 					Literal lit = getLiteral(m_Term);
 					m_Collector.getTracker().quoted(m_Term, lit);
 					m_Collector.addLiteral(lit);
+					m_Collector.getTracker().cleanSave();
 				}
 			} else {
 				if (positive) {
@@ -1114,22 +1129,22 @@ public class Clausifier {
 		public void addLiteral(Literal lit) {
 			if (m_Lits.add(lit)) {
 				m_IsTrue |= m_Lits.contains(lit.negate());
-			} else
+			} else {
+				m_SubTracker.restore();
 				m_SimpOr = true;
+			}
 		}
 		public void setTrue() {
 			m_IsTrue = true;
 		}
 		public void perform() {
 			if (!m_IsTrue) {
+				Literal[] lits = m_Lits.toArray(new Literal[m_Lits.size()]);
 				if (m_Flatten)
-					// Cast should be safe.  Strange clause production otherwise
 					m_SubTracker.flatten(m_OrigArgs, m_SimpOr);
 				else if (m_SimpOr)
-					// Cast should be safe.  Strange clause production otherwise
 					m_SubTracker.orSimpClause(m_OrigArgs);
-				addClause(m_Lits.toArray(new Literal[m_Lits.size()]),
-						null,
+				addClause(lits,	null,
 						getProofNewSource(m_LeafKind,
 								m_SubTracker.clause(m_ProofTerm)));
 			}
@@ -1139,6 +1154,9 @@ public class Clausifier {
 		}
 		public void setFlatten() {
 			m_Flatten = true;
+		}
+		public void setSimpOr() {
+			m_SimpOr = true;
 		}
 	}
 		
@@ -1626,17 +1644,14 @@ public class Clausifier {
 				SMTAffineTerm.create(rhs.getTerm()).negate());
 		if (diff.isConstant()) {
 			if (diff.getConstant().equals(Rational.ZERO)) {
-				m_Tracker.eq(lhs.getTerm(), rhs.getTerm(), m_Theory.TRUE);
 				return EqualityProxy.getTrueProxy();
 			} else {
-				m_Tracker.eq(lhs.getTerm(), rhs.getTerm(), m_Theory.FALSE);
 				return EqualityProxy.getFalseProxy();
 			}
 		}
 		diff = diff.div(diff.getGcd());
 		// check for unsatisfiable integer formula, e.g. 2x + 2y = 1.
 		if (diff.isIntegral() && !diff.getConstant().isIntegral()) {
-			m_Tracker.eq(lhs.getTerm(), rhs.getTerm(), m_Theory.FALSE);
 			return EqualityProxy.getFalseProxy();
 		}
 		// we cannot really normalize the sign of the term.  Try both signs.
