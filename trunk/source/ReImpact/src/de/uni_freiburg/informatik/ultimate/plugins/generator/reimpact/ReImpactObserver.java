@@ -3,6 +3,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.security.acl.LastOwnerException;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -85,7 +86,9 @@ public class ReImpactObserver implements IUnmanagedObserver {
 	RIGraphWriter m_gw;
 	int m_gwCounter = 0;
 	
+	//TODO revise forced covering before switching this on --> is matchLocation or equivalent used like in p_close?? 
 	private boolean m_doForcedCovering = false;
+	
 	private HashMap<ProgramPoint, ArrayDeque<UnwindingNode>> m_locationToUnwindingNodes =
 			new HashMap<ProgramPoint, ArrayDeque<UnwindingNode>>();
 	private int m_fewRecent = 5;
@@ -112,7 +115,7 @@ public class ReImpactObserver implements IUnmanagedObserver {
 		m_truePredicate = m_smtManager.newTruePredicate();
 		m_falsePredicate = m_smtManager.newFalsePredicate();
 
-		m_gw = new RIGraphWriter("",//"/home/alexander/reImpactGraphs",
+		m_gw = new RIGraphWriter("",//"C:/data/dumps",//"/home/alexander/reImpactGraphs",
 				true, true, true, true, m_smtManager.getScript());
 		
 		for (IMultigraphEdge edge : m_graphRoot.getOutgoingEdges()) {
@@ -167,7 +170,7 @@ public class ReImpactObserver implements IUnmanagedObserver {
 		m_allNodes.add(m_currentUnwProcRoot);
 		
 		m_dummyUnwindingNode = new UnwindingNode(m_truePredicate, 
-				m_currentUnwProcRoot.getProgramPoint(), //TODO: harter hack..
+				m_currentUnwProcRoot.getProgramPoint(), null, //TODO: harter hack..
 				-5); 
 		m_dummyCodeBlock = new StatementSequence(
 				null, 
@@ -248,6 +251,17 @@ public class ReImpactObserver implements IUnmanagedObserver {
 		
 		int[] nestingRelation = computeNestingRelation(errorPath.getSecond());
 		
+//		if (nestingRelation[0] == c_badNestingRelationInit) {
+//			cutBadReturnEdgeAndBelow(errorPath, nestingRelation[1]);
+//			setPreCallNodeImportantFlags(errorPath.getFirst(), nestingRelation[2], nestingRelation[1]);
+//			m_backToUnwind = true; //all nodes below have been closed, update openNodes we are working on
+//			return;
+//		} else 
+//		if (getFirstPendingReturnIndex(nestingRelation) != -1) {
+//			setPreCallNodeImportantFlags(errorPath.getFirst(), 0, getFirstPendingReturnIndex(nestingRelation));
+//			return;
+//		}
+		
 		NestedWord<CodeBlock> errorPathAsNestedWord = 
 				new NestedWord<CodeBlock>(errorPath.getSecond(), nestingRelation); 
 		
@@ -264,13 +278,7 @@ public class ReImpactObserver implements IUnmanagedObserver {
 				errorNWP.getSecond());
 		m_pathChecks++;
 		
-		if (nestingRelation[0] == c_badNestingRelationInit) {
-			UnwindingNode returnEdgeSource = errorNWP.getFirst()[nestingRelation[1]];
-			assert returnEdgeSource.getOutgoingEdgeLabel(errorNWP.getFirst()[nestingRelation[1] + 1])
-			  instanceof Return;
-			returnEdgeSource.removeOutgoingNode(errorNWP.getFirst()[nestingRelation[1] + 1]);
-			setPreCallNodeImportantFlags(errorNWP.getFirst(), nestingRelation[2], nestingRelation[1]);
-		} else if (isSafe == LBool.UNSAT) {
+		if (isSafe == LBool.UNSAT) {
 			IPredicate[] interpolants = traceChecker.getInterpolants(new TraceChecker.AllIntegers());
 			refineTrace(errorNWP, interpolants);
 			setPreCallNodeImportantFlags(errorNWP.getFirst(), 0, getFirstPendingReturnIndex(nestingRelation));
@@ -289,6 +297,27 @@ public class ReImpactObserver implements IUnmanagedObserver {
 		}
 		m_gw.writeGraphAsImage(m_currentUnwProcRoot, "grph_" + (++m_gwCounter) + "_refine" , m_openNodes);
 	}
+
+//	private void cutBadReturnEdgeAndBelow(
+//			Pair<UnwindingNode[], CodeBlock[]> errorPath, int returnEdgeIndex) {
+//		UnwindingNode returnEdgeSource = errorPath.getFirst()[returnEdgeIndex];
+//		assert returnEdgeSource.getOutgoingEdgeLabel(errorPath.getFirst()[returnEdgeIndex + 1])
+//		  instanceof Return;
+//		returnEdgeSource.removeOutgoingNode(errorPath.getFirst()[returnEdgeIndex + 1]);
+////		ArrayList<RIAnnotatedProgramPoint> list = new ArrayList<RIAnnotatedProgramPoint>();
+////		list.add(errorPath.getFirst()[returnEdgeIndex + 1]);
+////		coverRec(list);
+//		//remove the whole tree below -- it should suffice to remove the nodes from the global lists
+//		removeSubtreeFromLists(errorPath.getFirst()[returnEdgeIndex + 1]);
+//	}
+//
+//	private void removeSubtreeFromLists(RIAnnotatedProgramPoint root) {
+//		this.m_allNodes.set(((UnwindingNode) root).getPreOrderIndex(), null);
+//		this.m_openNodes.remove(root);
+//		for (RIAnnotatedProgramPoint app : root.getOutgoingNodes()) {
+//			removeSubtreeFromLists(app);
+//		}
+//	}
 
 	private int getFirstPendingReturnIndex(int[] nestingRelation) {
 		for (int i = 0; i < nestingRelation.length; i++)
@@ -338,8 +367,9 @@ public class ReImpactObserver implements IUnmanagedObserver {
 	private void p_close(UnwindingNode node) {
 //		m_gw.writeGraphAsImage(m_currentUnwProcRoot, "grph_" + (++m_gwCounter) + "_close" , m_openNodes);
 		for (int i = 0; i < node.getPreOrderIndex(); i++) 
-			if (!node.equals(m_allNodes.get(i)) && 
-					node.matchLocation(m_allNodes.get(i)) &&
+			if (m_allNodes.get(i) != null &&
+					!node.equals(m_allNodes.get(i)) && 
+					node.matchLocationForCovering(m_allNodes.get(i)) &&
 					!m_allNodes.get(i).m_isCovered)
 					p_cover(node, m_allNodes.get(i));
 	}
@@ -354,9 +384,9 @@ public class ReImpactObserver implements IUnmanagedObserver {
 					coveringSource.getPredicate(),
 					coveringTarget.getPredicate()) 
 					== LBool.UNSAT
-					&&
-					(!coveringTarget.isPreCallNodeImportant 
-							|| findLastCall(coveringSource).equals(findLastCall(coveringTarget)))) {
+					//the following is already done in matchLocation for covering by p_close
+					//&& (!coveringTarget.isPreCallNodeImportant || preCallNodesMatch(coveringSource, coveringTarget))
+					) {
 				coveringSource.m_isCovered = true;
 				coveringSource.m_coveringNode = coveringTarget;
 				coveringTarget.m_coveredNodes.add(coveringSource);
@@ -369,17 +399,35 @@ public class ReImpactObserver implements IUnmanagedObserver {
 		}
 	}
 	
-    /**
+    private boolean preCallNodesMatch(UnwindingNode coveringSource,
+			UnwindingNode coveringTarget) {
+    	
+    	UnwindingNode pc1 = findLastPreCallNode(coveringSource);
+     	UnwindingNode pc2 = findLastPreCallNode(coveringTarget);   	
+     	if (pc1 == null || pc2 == null)
+     		if (pc1 == null && pc2 == null)
+     			return true;
+     		else
+     			return false;
+     	else 
+     		return pc1.equals(pc2);
+	}
+
+	/**
      * follows edges upwards to the root, returns the node  before the first call it sees
      * could be replaced by a field in UnwindingNode -- what is faster??
      */
-	private UnwindingNode findLastCall(UnwindingNode coveringSource) {
-		UnwindingNode currentNode = coveringSource;
+	private UnwindingNode findLastPreCallNode(UnwindingNode node) {
+		UnwindingNode currentNode = node;
+		if(currentNode.getIncomingNodes().isEmpty())
+			return null;
 		Object currentEdge = 
 				currentNode.getIncomingEdgeLabel(
 						(RIAnnotatedProgramPoint) currentNode.getIncomingNodes().get(0));
 		while (!(currentEdge instanceof Call)) {
-			currentNode = coveringSource;
+			currentNode = (UnwindingNode) currentNode.getIncomingNodes().get(0);
+			if(currentNode.getIncomingNodes().isEmpty())
+				return null;
 			currentEdge = 
 					currentNode.getIncomingEdgeLabel(
 							(RIAnnotatedProgramPoint) currentNode.getIncomingNodes().get(0));	
@@ -447,18 +495,42 @@ public class ReImpactObserver implements IUnmanagedObserver {
 			if (outEdge instanceof Summary)
 				continue;
 			
+			//do not unwind return edges that do not fit the last call
+			//set flags in this case
+			if (outEdge instanceof Return) {
+				Pair<UnwindingNode[], CodeBlock[]> path = getPath(node, null);
+				if(node.getPreCallNode() == null) {//do not unwind return edges when we have not seen a call
+					setPreCallNodeImportantFlags(path.getFirst(), 0, path.getFirst().length);
+					continue;
+				} else if (!((Return) outEdge).getCallerNode().equals(node.getPreCallNode().getProgramPoint())) {
+					int matchingPreCallIndex = 
+							getIndexOfPreCallOnPath(path.getFirst(), node.getPreCallNode());
+					setPreCallNodeImportantFlags(path.getFirst(), matchingPreCallIndex + 1,
+							path.getFirst().length);
+					continue;
+				}
+			}
+					
+			Stack<UnwindingNode> preCallNodeStack = (Stack<UnwindingNode>) node.m_preCallNodeStack.clone();
+			if (outEdge instanceof Call) 
+				preCallNodeStack.push(node);
+			else if (outEdge instanceof Return && !preCallNodeStack.isEmpty()) 
+				preCallNodeStack.pop();
+			
 			UnwindingNode newNode = null;
 			
 			if (target.isErrorLocation()) {
 				newNode = new UnwindingNode(
 						m_truePredicate, target, 
-						-m_currentPreOrderIndex);
+						preCallNodeStack,
+						-m_currentPreOrderIndex);//was the "-" here a bug??
 				//needed for termination: once we have seen 
 				//a new error location we have to refine
 				m_backToUnwind = true; 
 			} else {
 				newNode = new UnwindingNode(
 						m_truePredicate, target, 
+						preCallNodeStack,
 						++m_currentPreOrderIndex);
 				m_allNodes.add(newNode);
 				
@@ -473,13 +545,39 @@ public class ReImpactObserver implements IUnmanagedObserver {
 			}
 			
 			node.addOutgoingNode(newNode, (CodeBlock) outEdge);
-			newNode.addIncomingNode(node, (CodeBlock) outEdge);
+			//newNode.addIncomingNode(node, (CodeBlock) outEdge);//the add.. method treats both nodes now
 			
 			newNode.setIsLeaf(true);
 			m_openNodes.add(newNode);
 		}
 	}
 	
+	private int getIndexOfPreCallOnPath(UnwindingNode[] path, UnwindingNode preCallUnwNode) {
+		for (int i = 0; i < path.length; i++)
+			if (path[i].equals(preCallUnwNode))
+				return i;
+		assert false;
+		return -1;
+	}
+
+	private Call findLastCall(UnwindingNode node) {
+		UnwindingNode currentNode = node;
+		if(currentNode.getIncomingNodes().isEmpty())
+			return null;
+		Object currentEdge = 
+				currentNode.getIncomingEdgeLabel(
+						(RIAnnotatedProgramPoint) currentNode.getIncomingNodes().get(0));
+		while (!(currentEdge instanceof Call)) {
+			currentNode = (UnwindingNode) currentNode.getIncomingNodes().get(0);
+			if(currentNode.getIncomingNodes().isEmpty())
+				return null;
+			currentEdge = 
+					currentNode.getIncomingEdgeLabel(
+							(RIAnnotatedProgramPoint) currentNode.getIncomingNodes().get(0));	
+		}
+		return (Call) currentEdge;
+	}
+
 	private boolean p_forceCover(UnwindingNode v, UnwindingNode w) {
 		assert (v.getPreOrderIndex() > w.getPreOrderIndex());
 		
@@ -574,6 +672,7 @@ public class ReImpactObserver implements IUnmanagedObserver {
 		UnwindingNode currentNode = errorLocation;
 		
 		while (currentNode != border && !currentNode.m_isProcRoot) {
+			assert(currentNode != null);
 			nodes.add(currentNode);
 			UnwindingNode incomingNode = (UnwindingNode) currentNode.getIncomingNodes().get(0);
 			CodeBlock edge = currentNode.getIncomingEdgeLabel(
@@ -632,10 +731,12 @@ public class ReImpactObserver implements IUnmanagedObserver {
 				callStack.push((Call) errorPath[i]);
 				callStackIndizes.push(i);
 			} else if (errorPath[i] instanceof Return) {
-				if (callStackIndizes.isEmpty())
+				if (callStackIndizes.isEmpty()) {
 					nr[i] = NestedWord.MINUS_INFINITY;
+					break;
+				}
 				Call matchingCall = callStack.pop();
-				if (((Return) errorPath[i]).getCallStatement().equals(matchingCall)) {
+				if (((Return) errorPath[i]).getCorrespondingCallAnnot().equals(matchingCall)) {
 					nr[i] = callStackIndizes.pop();
 					nr[nr[i]] = i;	
 				} else {

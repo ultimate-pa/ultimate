@@ -104,7 +104,6 @@ public class RIGraphWriter {
 
 			gv.addln(gv.end_graph());
 
-
 			gv.writeGraphToFile( gv.getGraph( gv.getDotSource(), "png" ), 
 					new File(imagePath + "/" + fileName + ".png"));
 		}
@@ -247,11 +246,14 @@ public class RIGraphWriter {
 			m_coveringRelation.put(node, node.m_coveringNode);
 		}
 		
+		String pcImportant = node.isPreCallNodeImportant ? "\\n pcnImportant" : "";
+		
 		nodeLabel = "\n" + quotName 
 				+ "[label = \"" + name + "\\n" 
 				+ prettifyFormula(assertion) + coveredBy 
+				+ pcImportant
 				//+ "\\n" + node.m_preorderIndex 
-				+ "\" , " + additionalOptions
+				+ "\"" + (additionalOptions == "" ? "" : ", " + additionalOptions) 
 				+ "];" + "\n";
 			
 		return nodeLabel;
@@ -299,6 +301,12 @@ public class RIGraphWriter {
 			this.source = source;
 			this.code = code;
 			this.target = target;
+		}
+		
+		public String toString() {
+			return source.toString() + 
+					" --" + code.toString() +
+					"--> " + target.toString();
 		}
 	}
 }
