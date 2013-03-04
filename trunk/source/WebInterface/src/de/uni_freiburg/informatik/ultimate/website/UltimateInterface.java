@@ -28,6 +28,8 @@ import de.uni_freiburg.informatik.ultimate.core.coreplugin.Application;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.Application.Ultimate_Mode;
 import de.uni_freiburg.informatik.ultimate.model.ILocation;
 import de.uni_freiburg.informatik.ultimate.result.CounterExampleResult;
+import de.uni_freiburg.informatik.ultimate.result.GenericResult;
+import de.uni_freiburg.informatik.ultimate.result.GenericResult.Severity;
 import de.uni_freiburg.informatik.ultimate.result.IResult;
 import de.uni_freiburg.informatik.ultimate.result.InvariantResult;
 import de.uni_freiburg.informatik.ultimate.result.NoResult;
@@ -369,12 +371,23 @@ public class UltimateInterface extends HttpServlet {
 						} else if (r instanceof TimeoutResult) {
 							type = "timeout";
 							packagedResult.logLvl = "error";
-						} else if (r instanceof PossibleUnsoundnessWarningResult<?>) {
-							type = "warning";
-							packagedResult.logLvl = "warning";
-						} else if (r instanceof RankingFunctionResult<?>) {
-							type = "rankingFunction";
-							packagedResult.logLvl = "info";
+//						} else if (r instanceof PossibleUnsoundnessWarningResult<?>) {
+//							type = "warning";
+//							packagedResult.logLvl = "warning";
+						} else if (r instanceof GenericResult<?>) {
+							GenericResult<?> rGen = (GenericResult<?>) r;
+							if (rGen.getSeverity().equals(Severity.ERROR)) {
+								type = "error";
+								packagedResult.logLvl = "error";
+							} else if (rGen.getSeverity().equals(Severity.WARNING)) {
+								type = "warning";
+								packagedResult.logLvl = "warning";
+							} else if (rGen.getSeverity().equals(Severity.INFO)) {
+								type = "info";
+								packagedResult.logLvl = "info";
+							} else {
+								throw new IllegalArgumentException("Unknown kind of severity.");
+							}
 						} else if (r instanceof NoResult<?>) {
 							type = "noResult";
 							packagedResult.logLvl = "warning";
