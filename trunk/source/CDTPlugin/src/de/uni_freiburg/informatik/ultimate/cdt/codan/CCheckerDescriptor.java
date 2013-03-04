@@ -51,10 +51,22 @@ public interface CCheckerDescriptor {
 			+ "codan.TimeoutResult";
 	
 	/**
-	 * The Problem-Identifier for time outs;
+	 * The Problem-Identifier for the generic info result;
 	 */
-	public static String POSSIBLE_UNSOUNDNESS_ID = "de.uni_freiburg.informatik.ultimate.cdt."
-			+ "codan.PossibleUnsoundnessWarningResult";
+	public static String GENERIC_INFO_RESULT_ID = "de.uni_freiburg.informatik.ultimate.cdt."
+			+ "codan.GenericInfoResult";
+	
+	/**
+	 * The Problem-Identifier for the generic warning result;
+	 */
+	public static String GENERIC_WARNING_RESULT_ID = "de.uni_freiburg.informatik.ultimate.cdt."
+			+ "codan.GenericWarningResult";
+	
+	/**
+	 * The Problem-Identifier for the generic error result;
+	 */
+	public static String GENERIC_ERROR_RESULT_ID = "de.uni_freiburg.informatik.ultimate.cdt."
+			+ "codan.GenericErrorResult";
 	
 	/**
 	 * Key for the Selection of Toolchains.

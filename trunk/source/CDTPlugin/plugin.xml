@@ -73,15 +73,33 @@
                 messagePattern="Ultimate got a time out here, &apos;&apos;{0}&apos;&apos;"
                 name="Ultimate Timeout">
          	</problem>
+            <problem
+                category="org.eclipse.cdt.codan.core.categories.Ultimate"
+                defaultEnabled="true"
+                defaultSeverity="Info"
+                description="Ultimate Info"
+                id="de.uni_freiburg.informatik.ultimate.cdt.codan.GenericInfoResult"
+                messagePattern="Info, &apos;&apos;{0}&apos;&apos;"
+                name="Info">
+            </problem>
 			<problem
                 category="org.eclipse.cdt.codan.core.categories.Ultimate"
                 defaultEnabled="true"
                 defaultSeverity="Warning"
                 description="Ultimate Warning"
-                id="de.uni_freiburg.informatik.ultimate.cdt.codan.PossibleUnsoundnessWarningResult"
-                messagePattern="Possible unsoundness, &apos;&apos;{0}&apos;&apos;"
-                name="Ultimate Timeout">
+                id="de.uni_freiburg.informatik.ultimate.cdt.codan.GenericWarningResult"
+                messagePattern="Warning, &apos;&apos;{0}&apos;&apos;"
+                name="Warning">
          	</problem>
+         	<problem
+                category="org.eclipse.cdt.codan.core.categories.Ultimate"
+                defaultEnabled="true"
+                defaultSeverity="Error"
+                description="Ultimate Error"
+                id="de.uni_freiburg.informatik.ultimate.cdt.codan.GenericErrorResult"
+                messagePattern="Error, &apos;&apos;{0}&apos;&apos;"
+                name="Error">
+            </problem>
       	</checker>
    	</extension>
    	
@@ -112,6 +130,18 @@
       			class="de.uni_freiburg.informatik.ultimate.cdt.codan.UltimateCCheckerHelp"
       			problemId="de.uni_freiburg.informatik.ultimate.cdt.codan.TimeoutResult">
       	  </problemDetails>
+      	  <problemDetails
+                class="de.uni_freiburg.informatik.ultimate.cdt.codan.UltimateCCheckerHelp"
+                problemId="de.uni_freiburg.informatik.ultimate.cdt.codan.GenericInfoResult">
+          </problemDetails>
+          <problemDetails
+                class="de.uni_freiburg.informatik.ultimate.cdt.codan.UltimateCCheckerHelp"
+                problemId="de.uni_freiburg.informatik.ultimate.cdt.codan.GenericWarningResult">
+          </problemDetails>
+          <problemDetails
+                class="de.uni_freiburg.informatik.ultimate.cdt.codan.UltimateCCheckerHelp"
+                problemId="de.uni_freiburg.informatik.ultimate.cdt.codan.GenericErrorResult">
+          </problemDetails>
    	</extension>
     <extension
           id="de.uni_freiburg.informatik.ultimate.cdt.UltimateViews"

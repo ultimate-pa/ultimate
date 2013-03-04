@@ -30,7 +30,11 @@ public class UltimateCCheckerHelp extends AbstractCodanProblemDetailsProvider {
 			return true;
 		} else if (CCheckerDescriptor.TIMEOUT_ID.equals(id)) {
 			return true;
-		} else if (CCheckerDescriptor.POSSIBLE_UNSOUNDNESS_ID.equals(id)) {
+		} else if (CCheckerDescriptor.GENERIC_INFO_RESULT_ID.equals(id)) {
+			return true;
+		} else if (CCheckerDescriptor.GENERIC_WARNING_RESULT_ID.equals(id)) {
+			return true;
+		} else if (CCheckerDescriptor.GENERIC_ERROR_RESULT_ID.equals(id)) {
 			return true;
 		}
 		return false;

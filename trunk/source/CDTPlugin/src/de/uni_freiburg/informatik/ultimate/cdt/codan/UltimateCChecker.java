@@ -38,10 +38,11 @@ import de.uni_freiburg.informatik.ultimate.cdt.views.resultlist.ResultList;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.Application;
 import de.uni_freiburg.informatik.ultimate.result.CounterExampleResult;
+import de.uni_freiburg.informatik.ultimate.result.GenericResult;
+import de.uni_freiburg.informatik.ultimate.result.GenericResult.Severity;
 import de.uni_freiburg.informatik.ultimate.result.IResult;
 import de.uni_freiburg.informatik.ultimate.result.InvariantResult;
 import de.uni_freiburg.informatik.ultimate.result.PositiveResult;
-import de.uni_freiburg.informatik.ultimate.result.PossibleUnsoundnessWarningResult;
 import de.uni_freiburg.informatik.ultimate.result.ProcedureContractResult;
 import de.uni_freiburg.informatik.ultimate.result.SyntaxErrorResult;
 import de.uni_freiburg.informatik.ultimate.result.TimeoutResult;
@@ -275,16 +276,26 @@ public class UltimateCChecker extends AbstractFullAstChecker {
 								this.getFile(), loc.getStartLine(),
 								err.getShortDescription());
 					}
-				} else if (result instanceof PossibleUnsoundnessWarningResult<?>) {
-					PossibleUnsoundnessWarningResult<?> err = (PossibleUnsoundnessWarningResult<?>) result;
+				} else if (result instanceof GenericResult<?>) {
+					GenericResult<?> err = (GenericResult<?>) result;
+					String id;
+					if (err.getSeverity().equals(Severity.INFO)) {
+						id = CCheckerDescriptor.GENERIC_INFO_RESULT_ID;
+					} else if (err.getSeverity().equals(Severity.WARNING)) {
+						id = CCheckerDescriptor.GENERIC_WARNING_RESULT_ID;
+					} else if (err.getSeverity().equals(Severity.ERROR)) {
+						id = CCheckerDescriptor.GENERIC_ERROR_RESULT_ID;
+					} else {
+						throw new IllegalArgumentException("unknown severity");
+					}
 					// We found an unsoundness warning, this was proved by Ultimate
 					if (loc.getcNode() != null) {
-						reportProblem(CCheckerDescriptor.POSSIBLE_UNSOUNDNESS_ID,
+						reportProblem(id,
 								loc.getcNode(), err.getShortDescription());
 					} else {
 						// We have an AST-Node
 						// ACSLNode acslNode = loc.getAcslNode();
-						reportProblem(CCheckerDescriptor.POSSIBLE_UNSOUNDNESS_ID,
+						reportProblem(id,
 								this.getFile(), loc.getStartLine(),
 								err.getShortDescription());
 					}
