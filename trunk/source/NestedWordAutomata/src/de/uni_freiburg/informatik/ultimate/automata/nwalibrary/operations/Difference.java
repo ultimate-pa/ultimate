@@ -238,7 +238,7 @@ public class Difference<LETTER,STATE> extends DoubleDeckerBuilder<LETTER,STATE>
 			INestedWordAutomaton<LETTER,STATE> subtrahend,
 			IStateDeterminizer<LETTER,STATE> stateDeterminizer,
 			StateFactory<STATE> stateFactory,
-			boolean minimize,
+			boolean removeDeadEnds,
 			boolean subtrahendSigmaStarClosed) throws OperationCanceledException {
 		this.m_subtrahendSigmaStarClosed = subtrahendSigmaStarClosed;
 		m_StateFactoryConstruction = stateFactory;
@@ -253,7 +253,7 @@ public class Difference<LETTER,STATE> extends DoubleDeckerBuilder<LETTER,STATE>
 				minuend.getCallAlphabet(),
 				minuend.getReturnAlphabet(),
 				minuend.getStateFactory());
-		super.m_RemoveDeadEnds = minimize;
+		super.m_RemoveDeadEnds = removeDeadEnds;
 		
 //		m_DeterminizedSubtrahend = 
 //			new NestedWordAutomaton<LETTER,DeterminizedState<LETTER,STATE>>(
