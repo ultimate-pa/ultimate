@@ -382,37 +382,37 @@ private Set<STATE> m_DeadEnds;
 		}
 	}
 	
-	protected NestedWordAutomaton<LETTER,STATE> getTotalizedEmptyAutomaton() {
-		NestedWordAutomaton<LETTER,STATE> emptyAutomaton = new NestedWordAutomaton<LETTER,STATE>(
-				m_TraversedNwa.getInternalAlphabet(), 
-				m_TraversedNwa.getCallAlphabet(), 
-				m_TraversedNwa.getReturnAlphabet(), 
-				m_TraversedNwa.getStateFactory());
-		STATE sinkState = emptyAutomaton.getStateFactory().createSinkStateContent();
-		emptyAutomaton.addState(true, false, sinkState);
-		
-		for (STATE state : emptyAutomaton.getStates()) {
-			for (LETTER letter : emptyAutomaton.getInternalAlphabet()) {				
-				if (emptyAutomaton.succInternal(state,letter).isEmpty()) {
-					emptyAutomaton.addInternalTransition(state, letter, sinkState);
-				}
-			}
-			for (LETTER letter : emptyAutomaton.getCallAlphabet()) {				
-				if (emptyAutomaton.succCall(state,letter).isEmpty()) {
-					emptyAutomaton.addCallTransition(state, letter, sinkState);
-				}
-			}
-			for (LETTER symbol : emptyAutomaton.getReturnAlphabet()) {
-				for (STATE hier : emptyAutomaton.getStates()) {
-					if (emptyAutomaton.succReturn(state,hier,symbol).isEmpty()) {
-						emptyAutomaton.addReturnTransition(state, hier, symbol, sinkState);
-					}
-				}
-			}
-		}
-
-		return emptyAutomaton;
-	}
+//	protected NestedWordAutomaton<LETTER,STATE> getTotalizedEmptyAutomaton() {
+//		NestedWordAutomaton<LETTER,STATE> emptyAutomaton = new NestedWordAutomaton<LETTER,STATE>(
+//				m_TraversedNwa.getInternalAlphabet(), 
+//				m_TraversedNwa.getCallAlphabet(), 
+//				m_TraversedNwa.getReturnAlphabet(), 
+//				m_TraversedNwa.getStateFactory());
+//		STATE sinkState = emptyAutomaton.getStateFactory().createSinkStateContent();
+//		emptyAutomaton.addState(true, false, sinkState);
+//		
+//		for (STATE state : emptyAutomaton.getStates()) {
+//			for (LETTER letter : emptyAutomaton.getInternalAlphabet()) {				
+//				if (emptyAutomaton.succInternal(state,letter).isEmpty()) {
+//					emptyAutomaton.addInternalTransition(state, letter, sinkState);
+//				}
+//			}
+//			for (LETTER letter : emptyAutomaton.getCallAlphabet()) {				
+//				if (emptyAutomaton.succCall(state,letter).isEmpty()) {
+//					emptyAutomaton.addCallTransition(state, letter, sinkState);
+//				}
+//			}
+//			for (LETTER symbol : emptyAutomaton.getReturnAlphabet()) {
+//				for (STATE hier : emptyAutomaton.getStates()) {
+//					if (emptyAutomaton.succReturn(state,hier,symbol).isEmpty()) {
+//						emptyAutomaton.addReturnTransition(state, hier, symbol, sinkState);
+//					}
+//				}
+//			}
+//		}
+//
+//		return emptyAutomaton;
+//	}
 
 	
 	/**
