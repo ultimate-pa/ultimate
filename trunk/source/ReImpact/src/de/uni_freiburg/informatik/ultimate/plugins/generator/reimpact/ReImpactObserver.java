@@ -115,7 +115,8 @@ public class ReImpactObserver implements IUnmanagedObserver {
 		m_truePredicate = m_smtManager.newTruePredicate();
 		m_falsePredicate = m_smtManager.newFalsePredicate();
 
-		m_gw = new RIGraphWriter("",//"C:/data/dumps",//"/home/alexander/reImpactGraphs",
+//		m_gw = new RIGraphWriter("",//"C:/data/dumps",//"/home/alexander/reImpactGraphs",
+		m_gw = new RIGraphWriter("C:/data/dumps",//"/home/alexander/reImpactGraphs",
 				true, true, true, true, m_smtManager.getScript());
 		
 		for (IMultigraphEdge edge : m_graphRoot.getOutgoingEdges()) {
@@ -344,12 +345,7 @@ public class ReImpactObserver implements IUnmanagedObserver {
 			
 			if (m_smtManager.isCovered(pathNode.getPredicate(), interpolants[i])
 					!= LBool.UNSAT) {
-				uncoverRec(new ArrayList<RIAnnotatedProgramPoint>(pathNode.m_coveredNodes));
-				pathNode.m_coveredNodes.clear();
-				if (pathNode.isLeaf())
-					m_openNodes.add(pathNode);
-				else
-					uncoverRec(pathNode.getOutgoingNodes());
+				removeAllCoverings(pathNode);
 				
 				TermVarsProc tvp = m_smtManager.and(pathNode.getPredicate(), interpolants[i]);
 				pathNode.setPredicate(m_smtManager.newPredicate(tvp.getFormula(), 
@@ -358,10 +354,26 @@ public class ReImpactObserver implements IUnmanagedObserver {
 		}
 	}
 
+	/**
+	 * All covering edges leading to the given node are removed.
+	 * Call this when the annotation of a node has been strengthened (by formula or flag).
+	 * @param pathNode
+	 */
+	private void removeAllCoverings(UnwindingNode pathNode) {
+		uncoverRec(new ArrayList<RIAnnotatedProgramPoint>(pathNode.m_coveredNodes));
+		pathNode.m_coveredNodes.clear();
+		if (pathNode.isLeaf())
+			m_openNodes.add(pathNode);
+		else
+			uncoverRec(pathNode.getOutgoingNodes());
+	}
+
 	private void setPreCallNodeImportantFlags(
 			UnwindingNode[] errorPath, int startIndex, int endIndex) {
-		for (int i = startIndex; i < endIndex; i++) //TODO border cases??
+		for (int i = startIndex; i < endIndex; i++) {//TODO border cases??
 			errorPath[i].setPreCallNodeImportant(true);
+			removeAllCoverings(errorPath[i]);
+		}
 	}
 
 	private void p_close(UnwindingNode node) {
