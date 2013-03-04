@@ -36,6 +36,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.Backtranslator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.PreferencePage;
+import de.uni_freiburg.informatik.ultimate.result.GenericResult;
 import de.uni_freiburg.informatik.ultimate.result.PossibleUnsoundnessWarningResult;
 import de.uni_freiburg.informatik.ultimate.result.SyntaxErrorResult;
 import de.uni_freiburg.informatik.ultimate.result.SyntaxErrorResult.SyntaxErrorType;
@@ -205,12 +206,12 @@ public abstract class Dispatcher {
      *            description.
      */
     public static void warn(ILocation loc, String msg) {
-        PossibleUnsoundnessWarningResult<ILocation> result = 
-        		new PossibleUnsoundnessWarningResult<ILocation>(loc,
+    	String shortDescription = "GenericWarning";
+        GenericResult<ILocation> result = 
+        		new GenericResult<ILocation>(loc,
                 Activator.s_PLUGIN_NAME,
                 UltimateServices.getInstance().getTranslatorSequence(),
-        		loc);
-        result.setLongDescription(msg);
+        		loc, shortDescription, msg, GenericResult.Severity.WARNING);
         UltimateServices us = UltimateServices.getInstance();
         us.getLogger(Activator.s_PLUGIN_ID).warn(msg);
         if (!notifyUltimate)
@@ -259,13 +260,11 @@ public abstract class Dispatcher {
      *            the short description.
      */
     public static void unsoundnessWarning(ILocation loc, String longDesc, String shortDesc) {
-    	PossibleUnsoundnessWarningResult<ILocation> result = 
-        		new PossibleUnsoundnessWarningResult<ILocation>(loc,
+        GenericResult<ILocation> result = 
+        		new GenericResult<ILocation>(loc,
                 Activator.s_PLUGIN_NAME,
-                UltimateServices.getInstance().getTranslatorSequence(),		
-        		loc);
-        result.setLongDescription(longDesc);
-        result.setShortDescription(shortDesc);
+                UltimateServices.getInstance().getTranslatorSequence(),
+        		loc, shortDesc, longDesc, GenericResult.Severity.WARNING);
         UltimateServices us = UltimateServices.getInstance();
         if (us.getLogger(Activator.s_PLUGIN_ID).isInfoEnabled()) {
             us.getLogger(Activator.s_PLUGIN_ID).info(longDesc);
