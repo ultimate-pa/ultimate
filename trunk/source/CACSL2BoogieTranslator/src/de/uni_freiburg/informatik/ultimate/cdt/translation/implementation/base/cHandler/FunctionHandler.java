@@ -668,10 +668,10 @@ public class FunctionHandler {
 			}
 		} else {
 			methodsCalledBeforeDeclared.add(methodName);
-			String msg = "Return value of method '"
+			String longDescription = "Return value of method '"
 					+ methodName
 					+ "' unknown! Methods should be declared, before they are used! Return value assumed to be int ...";
-			Dispatcher.warn(loc, msg);
+			Dispatcher.warn(loc, "Unsoundness Warning", longDescription);
 			String ident = main.nameHandler.getTempVarUID(SFO.AUXVAR.RETURNED);
 			expr = new IdentifierExpression(loc,
 					new InferredType(Type.Integer), ident);

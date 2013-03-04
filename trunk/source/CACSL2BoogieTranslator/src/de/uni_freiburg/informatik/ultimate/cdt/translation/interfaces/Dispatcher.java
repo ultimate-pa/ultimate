@@ -37,7 +37,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietransla
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.Backtranslator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.PreferencePage;
 import de.uni_freiburg.informatik.ultimate.result.GenericResult;
-import de.uni_freiburg.informatik.ultimate.result.PossibleUnsoundnessWarningResult;
 import de.uni_freiburg.informatik.ultimate.result.SyntaxErrorResult;
 import de.uni_freiburg.informatik.ultimate.result.SyntaxErrorResult.SyntaxErrorType;
 
@@ -202,18 +201,18 @@ public abstract class Dispatcher {
      *            where did it happen?
      * @param type
      *            why did it happen?
-     * @param msg
+     * @param longDescription
      *            description.
      */
-    public static void warn(ILocation loc, String msg) {
-    	String shortDescription = "GenericWarning";
+    public static void warn(ILocation loc, String shortDescription,
+    		String longDescription) {
         GenericResult<ILocation> result = 
         		new GenericResult<ILocation>(loc,
                 Activator.s_PLUGIN_NAME,
                 UltimateServices.getInstance().getTranslatorSequence(),
-        		loc, shortDescription, msg, GenericResult.Severity.WARNING);
+        		loc, shortDescription, longDescription, GenericResult.Severity.WARNING);
         UltimateServices us = UltimateServices.getInstance();
-        us.getLogger(Activator.s_PLUGIN_ID).warn(msg);
+        us.getLogger(Activator.s_PLUGIN_ID).warn(longDescription);
         if (!notifyUltimate)
             return;
         us.reportResult(Activator.s_PLUGIN_ID, result);

@@ -445,8 +445,9 @@ public class PostProcessor {
                 && !procedures.containsKey(checkMethod)) {
             String msg = "Settings: Method '" + checkMethod
                     + "' not found! Will continue in library mode!";
-            Dispatcher.error(loc, SyntaxErrorType.TypeError, msg);
+            Dispatcher.warn(loc, "Unsoundness Warning", msg);
         } else {
+        	assert false : "not reachable any more";
             IHandler.s_Logger.info("Settings: Library mode!");
         }
         return decl;
