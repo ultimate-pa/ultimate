@@ -142,12 +142,13 @@ public class RankingFunctionsObserver implements IUnmanagedObserver {
 			for (RCFGEdge hondaSucc : honda.getOutgoingEdges()) {
 				if (hondaSucc.getTarget() == honda) {
 					loopEdge = (CodeBlock) hondaSucc;
-				}
-				ProgramPoint interposition = (ProgramPoint) hondaSucc.getTarget();
-				for (RCFGEdge interpositionSucc : interposition.getOutgoingEdges()) {
-					if (interpositionSucc.getTarget() == honda) {
-						loopEdge = (CodeBlock) interpositionSucc;
-					}					
+				} else {
+					ProgramPoint interposition = (ProgramPoint) hondaSucc.getTarget();
+					for (RCFGEdge interpositionSucc : interposition.getOutgoingEdges()) {
+						if (interpositionSucc.getTarget() == honda) {
+							loopEdge = (CodeBlock) interpositionSucc;
+						}					
+					}
 				}
 			}
 			if (loopEdge == null) {
