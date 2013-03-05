@@ -738,9 +738,9 @@ public class NestedWordAutomaton<LETTER,STATE> implements INestedWordAutomaton<L
 			final LETTER letter, final STATE succ) {
 		return new Iterable<IncomingReturnTransition<LETTER, STATE>>() {
 			/**
-			 * Iterates over all IncomingCallTransition of succ.
-			 * Iterates over all incoming call letters and uses the 
-			 * iterators returned by callPredecessors(letter, succ)
+			 * Iterates over all IncomingReturnTransition of succ.
+			 * Iterates over all incoming return letters and uses the 
+			 * iterators returned by returnPredecessors(hier, letter, succ)
 			 */
 			@Override
 			public Iterator<IncomingReturnTransition<LETTER, STATE>> iterator() {
@@ -806,9 +806,9 @@ public class NestedWordAutomaton<LETTER,STATE> implements INestedWordAutomaton<L
 			final STATE succ) {
 		return new Iterable<IncomingReturnTransition<LETTER, STATE>>() {
 			/**
-			 * Iterates over all IncomingCallTransition of succ.
-			 * Iterates over all incoming call letters and uses the 
-			 * iterators returned by callPredecessors(letter, succ)
+			 * Iterates over all IncomingReturnTransition of succ.
+			 * Iterates over all incoming return letters and uses the 
+			 * iterators returned by returnPredecessors(letter, succ)
 			 */
 			@Override
 			public Iterator<IncomingReturnTransition<LETTER, STATE>> iterator() {
@@ -1051,7 +1051,7 @@ public class NestedWordAutomaton<LETTER,STATE> implements INestedWordAutomaton<L
 					LETTER m_CurrentLetter;
 					Iterator<OutgoingCallTransition<LETTER, STATE>> m_CurrentIterator;
 					{
-						m_LetterIterator = lettersInternal(state).iterator();
+						m_LetterIterator = lettersCall(state).iterator();
 						nextLetter();
 					}
 
@@ -1106,6 +1106,201 @@ public class NestedWordAutomaton<LETTER,STATE> implements INestedWordAutomaton<L
 	
 	
 	
+	
+	
+	
+	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSucccessors(
+			final STATE state, final STATE hier, final LETTER letter) {
+		return new Iterable<OutgoingReturnTransition<LETTER, STATE>>() {
+			@Override
+			public Iterator<OutgoingReturnTransition<LETTER, STATE>> iterator() {
+				Iterator<OutgoingReturnTransition<LETTER, STATE>> iterator = 
+						new Iterator<OutgoingReturnTransition<LETTER, STATE>>() {
+					Iterator<STATE> m_Iterator;
+					{
+						Map<LETTER, Map<STATE, Set<STATE>>> letter2hier2succ = m_ReturnOut.get(state);
+						if (letter2hier2succ != null) {
+							Map<STATE, Set<STATE>> hier2succ = letter2hier2succ.get(letter);
+							if (hier2succ != null) {
+								if (hier2succ.get(hier) != null) {
+									m_Iterator = hier2succ.get(hier).iterator();
+								} else {
+									m_Iterator = null;
+								}
+							} else {
+								m_Iterator = null;
+							}
+						} else {
+							m_Iterator = null;
+						}
+					}
+
+					@Override
+					public boolean hasNext() {
+						return m_Iterator == null || m_Iterator.hasNext();
+					}
+
+					@Override
+					public OutgoingReturnTransition<LETTER, STATE> next() {
+						if (m_Iterator == null) {
+							throw new NoSuchElementException();
+						} else {
+							STATE succ = m_Iterator.next(); 
+							return new OutgoingReturnTransition<LETTER, STATE>(hier, letter, succ);
+						}
+					}
+
+					@Override
+					public void remove() {
+						throw new UnsupportedOperationException();
+					}
+				};
+				return iterator;
+			}
+		};
+	}
+	
+	
+	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessors(
+			final STATE state, final LETTER letter) {
+		return new Iterable<OutgoingReturnTransition<LETTER, STATE>>() {
+			/**
+			 * Iterates over all OutgoingReturnTransition of state.
+			 * Iterates over all outgoing return letters and uses the 
+			 * iterators returned by returnSuccecessors(state, letter)
+			 */
+			@Override
+			public Iterator<OutgoingReturnTransition<LETTER, STATE>> iterator() {
+				Iterator<OutgoingReturnTransition<LETTER, STATE>> iterator = 
+						new Iterator<OutgoingReturnTransition<LETTER, STATE>>() {
+					Iterator<STATE> m_HierIterator;
+					STATE m_CurrentHier;
+					Iterator<OutgoingReturnTransition<LETTER, STATE>> m_CurrentIterator;
+					{
+						m_HierIterator = hierPred(state, letter).iterator();
+						nextHier();
+					}
+
+					private void nextHier() {
+						if (m_HierIterator.hasNext()) {
+							do {
+								m_CurrentHier = m_HierIterator.next();
+								m_CurrentIterator = returnSucccessors(
+										state, m_CurrentHier, letter).iterator();
+							} while (!m_CurrentIterator.hasNext()
+									&& m_HierIterator.hasNext());
+							if (!m_CurrentIterator.hasNext()) {
+								m_CurrentHier = null;
+								m_CurrentIterator = null;
+							}
+						} else {
+							m_CurrentHier = null;
+							m_CurrentIterator = null;
+						}
+					}
+
+					@Override
+					public boolean hasNext() {
+						return m_CurrentHier != null;
+					}
+
+					@Override
+					public OutgoingReturnTransition<LETTER, STATE> next() {
+						if (m_CurrentHier == null) {
+							throw new NoSuchElementException();
+						} else {
+							OutgoingReturnTransition<LETTER, STATE> result = 
+									m_CurrentIterator.next();
+							if (!m_CurrentIterator.hasNext()) {
+								nextHier();
+							}
+							return result;
+						}
+					}
+
+					@Override
+					public void remove() {
+						throw new UnsupportedOperationException();
+					}
+				};
+				return iterator;
+			}
+		};
+	}
+	
+	
+	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessors(
+			final STATE state) {
+		return new Iterable<OutgoingReturnTransition<LETTER, STATE>>() {
+			/**
+			 * Iterates over all OutgoingReturnTransition of state.
+			 * Iterates over all outgoing return letters and uses the 
+			 * iterators returned by returnSuccessors(state, letter)
+			 */
+			@Override
+			public Iterator<OutgoingReturnTransition<LETTER, STATE>> iterator() {
+				Iterator<OutgoingReturnTransition<LETTER, STATE>> iterator = 
+						new Iterator<OutgoingReturnTransition<LETTER, STATE>>() {
+					Iterator<LETTER> m_LetterIterator;
+					LETTER m_CurrentLetter;
+					Iterator<OutgoingReturnTransition<LETTER, STATE>> m_CurrentIterator;
+					{
+						m_LetterIterator = lettersReturn(state).iterator();
+						nextLetter();
+					}
+
+					private void nextLetter() {
+						if (m_LetterIterator.hasNext()) {
+							do {
+								m_CurrentLetter = m_LetterIterator.next();
+								m_CurrentIterator = returnSuccessors(state,
+										m_CurrentLetter).iterator();
+							} while (!m_CurrentIterator.hasNext()
+									&& m_LetterIterator.hasNext());
+							if (!m_CurrentIterator.hasNext()) {
+								m_CurrentLetter = null;
+								m_CurrentIterator = null;
+							}
+						} else {
+							m_CurrentLetter = null;
+							m_CurrentIterator = null;
+						}
+					}
+
+					@Override
+					public boolean hasNext() {
+						return m_CurrentLetter != null;
+					}
+
+					@Override
+					public OutgoingReturnTransition<LETTER, STATE> next() {
+						if (m_CurrentLetter == null) {
+							throw new NoSuchElementException();
+						} else {
+							OutgoingReturnTransition<LETTER, STATE> result = 
+									m_CurrentIterator.next();
+							if (!m_CurrentIterator.hasNext()) {
+								nextLetter();
+							}
+							return result;
+						}
+					}
+
+					@Override
+					public void remove() {
+						throw new UnsupportedOperationException();
+					}
+				};
+				return iterator;
+			}
+		};
+	}
+	
+	
+	
+	
+	
+	
 	private boolean checkTransitionsReturnedConsistent() {
 		boolean result = true;
 		for (STATE state : getStates()) {
@@ -1127,6 +1322,10 @@ public class NestedWordAutomaton<LETTER,STATE> implements INestedWordAutomaton<L
 			}
 			for (IncomingReturnTransition<LETTER, STATE> inTrans : returnPredecessors(state)) {
 				result &= containsReturnTransition(inTrans.getLinPred(), inTrans.getHierPred(), inTrans.getLetter(), state);
+				assert result;
+			}
+			for (OutgoingReturnTransition<LETTER, STATE> outTrans : returnSuccessors(state)) {
+				result &= containsReturnTransition(state, outTrans.getHierPred(), outTrans.getLetter(), outTrans.getSucc());
 				assert result;
 			}
 		}
