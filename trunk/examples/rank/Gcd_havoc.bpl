@@ -1,13 +1,12 @@
 //#rTermination
 /*
  * Date: 2012-05-09
- * Author: leikej@informatik.uni-freiburg.de
  *
  * Has the ranking function f(y1, y2) = y1 + y2
  * provided the supporting invariants y1 >= 0, y2 >= 0.
  */
 
-procedure BradleyMannaSipmaGCD() returns (y1: int, y2: int)
+procedure main() returns (y1: int, y2: int)
 {
   var y1_old: int;
   var y2_old: int;
