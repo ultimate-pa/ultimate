@@ -75,6 +75,6 @@ public class RCFG2AnnotatedRCFG {
 	}
 
 	private AnnotatedProgramPoint copyNode(ProgramPoint pp) {
-		return new AnnotatedProgramPoint(m_smtManager.newTruePredicate(null), pp);
+		return new AnnotatedProgramPoint(m_smtManager.newTruePredicate(), pp);
 	}
 }

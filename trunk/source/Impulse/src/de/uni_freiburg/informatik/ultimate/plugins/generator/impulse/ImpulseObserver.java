@@ -1,4 +1,5 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.impulse;
+
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -28,7 +29,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Sum
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.PreferenceValues.Solver;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.Predicate;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceChecker;
 import de.uni_freiburg.informatik.ultimate.result.CounterExampleResult;
@@ -51,8 +52,8 @@ public class ImpulseObserver implements IUnmanagedObserver {
 	private TAPreferences m_taPrefs;
 	private RootNode m_graphRoot;
 	
-	private Predicate m_truePredicate;
-	private Predicate m_falsePredicate;
+	private IPredicate m_truePredicate;
+	private IPredicate m_falsePredicate;
 	private ProgramPoint m_pELProgramPoint;
 
 	private HashMap<AnnotatedProgramPoint, AnnotatedProgramPoint> m_nodeToCopy;
@@ -73,8 +74,8 @@ public class ImpulseObserver implements IUnmanagedObserver {
 		m_smtManager = new SmtManager(rootAnnot.getBoogie2Smt(), 
 				Solver.SMTInterpol, rootAnnot.getGlobalVars(), false, "");
 
-		m_truePredicate = m_smtManager.newTruePredicate(null);
-		m_falsePredicate = m_smtManager.newFalsePredicate(null);
+		m_truePredicate = m_smtManager.newTruePredicate();
+		m_falsePredicate = m_smtManager.newFalsePredicate();
 		m_pELProgramPoint = new ProgramPoint("PEL", "all", true, null, null, m_smtManager.getScript());
 		
 		m_gw  = new GraphWriter("/home/alexander/impulseGraphs",
@@ -167,7 +168,7 @@ public class ImpulseObserver implements IUnmanagedObserver {
 						m_pathChecks++;
 
 						if(isSafe == LBool.UNSAT) {
-							Predicate[] interpolants = traceChecker.getInterpolants(
+							IPredicate[] interpolants = traceChecker.getInterpolants(
 									new TraceChecker.AllIntegers());
 
 							copyNodes(errorNWP, interpolants);
@@ -211,13 +212,13 @@ public class ImpulseObserver implements IUnmanagedObserver {
 	
 	private void copyNodes(
 			Pair<AnnotatedProgramPoint[], NestedWord<CodeBlock>> errorNWP,
-			Predicate[] interpolants) {
+			IPredicate[] interpolants) {
 		m_nodeToCopyCurrent.clear();
 
 		AnnotatedProgramPoint[] appPath = errorNWP.getFirst();
 
 		for (int i = 0; i < appPath.length - 1; i++) {
-			Predicate newPredicate = 
+			IPredicate newPredicate = 
 					m_smtManager.and(appPath[i].getPredicate(), interpolants[i]); //FIXME: indices may be incorrect
 
 			AnnotatedProgramPoint copy = new AnnotatedProgramPoint(newPredicate, appPath[i].getProgramPoint());

@@ -9,7 +9,7 @@ import de.uni_freiburg.informatik.ultimate.model.INode;
 import de.uni_freiburg.informatik.ultimate.model.IPayload;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.Predicate;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IPredicate;
 
 public class AnnotatedProgramPoint extends AbstractNoEdgeNode{
 
@@ -18,7 +18,7 @@ public class AnnotatedProgramPoint extends AbstractNoEdgeNode{
 	 */
 	private static final long serialVersionUID = -4398335480646555023L;
 	
-	private Predicate m_predicate;
+	private IPredicate m_predicate;
 	private ProgramPoint m_programPoint;
 	
 	private HashMap<AnnotatedProgramPoint, CodeBlock> m_incomingEdges =
@@ -28,23 +28,23 @@ public class AnnotatedProgramPoint extends AbstractNoEdgeNode{
 	
 	private boolean m_isPseudoErrorLocation = false;
 	
-	public AnnotatedProgramPoint(Predicate predicate, ProgramPoint programPoint) {
+	public AnnotatedProgramPoint(IPredicate predicate, ProgramPoint programPoint) {
 		m_predicate = predicate;
 		m_programPoint = programPoint;
 	}
 	
-	public AnnotatedProgramPoint(Predicate predicate, ProgramPoint programPoint, boolean isPseudoEL) {
+	public AnnotatedProgramPoint(IPredicate predicate, ProgramPoint programPoint, boolean isPseudoEL) {
 		assert isPseudoEL; //only then this constructor is needed
 		m_isPseudoErrorLocation = isPseudoEL;
 		m_predicate = predicate;
 		m_programPoint = programPoint;
 	}
 
-	public Predicate getPredicate() {
+	public IPredicate getPredicate() {
 		return m_predicate;
 	}
 	
-	public void setPredicate(Predicate predicate) {
+	public void setPredicate(IPredicate predicate) {
 		m_predicate = predicate;
 	}
 	
