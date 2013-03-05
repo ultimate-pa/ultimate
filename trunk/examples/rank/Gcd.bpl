@@ -6,7 +6,11 @@
  * provided the supporting invariants y1 >= 0, y2 >= 0.
  */
 
-procedure main() returns (y1: int, y2: int)
+
+var y1, y2: int;
+
+procedure main() returns ()
+modifies y1, y2;
 {
   assume(y1 > 0);
   assume(y2 > 0);

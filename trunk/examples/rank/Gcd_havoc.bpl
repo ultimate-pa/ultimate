@@ -6,7 +6,9 @@
  * provided the supporting invariants y1 >= 0, y2 >= 0.
  */
 
-procedure main() returns (y1: int, y2: int)
+var y1, y2: int;
+
+procedure main() returns ()
 {
   var y1_old: int;
   var y2_old: int;
