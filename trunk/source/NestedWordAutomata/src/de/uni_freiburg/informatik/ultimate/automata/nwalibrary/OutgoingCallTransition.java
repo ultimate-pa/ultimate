@@ -2,19 +2,19 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary;
 
 
 /**
- * Outgoing internal transition of a state.
+ * Outgoing call transition of a state.
  * 
  * @author heizmann@informatik.uni-freiburg.de
  *
  * @param <LETTER>
  * @param <STATE>
  */
-public class OutgoingInternalTransition<LETTER,STATE> {
+public class OutgoingCallTransition<LETTER,STATE> {
 	
 	private final LETTER m_Letter; 
 	private final STATE m_Succ;
 	
-	public OutgoingInternalTransition(LETTER letter, STATE succ) {
+	public OutgoingCallTransition(LETTER letter, STATE succ) {
 		m_Letter = letter;
 		m_Succ = succ;
 	}
