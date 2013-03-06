@@ -11,6 +11,7 @@ import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.DoubleDecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.DoubleDeckerAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INWA;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingCallTransition;
@@ -73,7 +74,7 @@ public class ReachableStatesBuilder<LETTER, STATE> extends DoubleDeckerVisitor<L
 	protected Collection<STATE> visitAndGetCallSuccessors(
 			DoubleDecker<STATE> doubleDecker) {
 		Set<STATE> succs = new HashSet<STATE>();
-		for (OutgoingCallTransition<LETTER, STATE> out : m_TraversedNwa.callSuccessors(doubleDecker.getUp())) {
+		for (OutgoingCallTransition<LETTER, STATE> out : ((INWA<LETTER, STATE>) m_TraversedNwa).callSuccessors(doubleDecker.getUp())) {
 			succs.add(out.getSucc());
 		}
 		return succs;
@@ -83,7 +84,7 @@ public class ReachableStatesBuilder<LETTER, STATE> extends DoubleDeckerVisitor<L
 	protected Collection<STATE> visitAndGetReturnSuccessors(
 			DoubleDecker<STATE> doubleDecker) {
 		Set<STATE> succs = new HashSet<STATE>();
-		for (OutgoingReturnTransition<LETTER, STATE> out : m_TraversedNwa.returnSuccessors(doubleDecker.getUp())) {
+		for (OutgoingReturnTransition<LETTER, STATE> out : ((INWA<LETTER, STATE>) m_TraversedNwa).returnSuccessors(doubleDecker.getUp())) {
 			succs.add(out.getSucc());
 		}
 		return succs;
