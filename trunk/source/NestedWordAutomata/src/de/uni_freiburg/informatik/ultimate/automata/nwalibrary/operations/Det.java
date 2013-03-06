@@ -7,15 +7,21 @@ import java.util.Map;
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.Word;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INWA;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.IncomingCallTransition;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.IncomingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.IncomingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingCallTransition;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingInternalTransition;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.SummaryReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.NestedLassoRun;
 
-public class Det<LETTER, STATE> implements INestedWordAutomaton<LETTER, STATE> {
+public class Det<LETTER, STATE> implements INestedWordAutomaton<LETTER, STATE>, INWA<LETTER, STATE> {
 	
 	private final INestedWordAutomaton<LETTER, STATE> m_Operand;
 	private final NestedWordAutomaton<LETTER, STATE> m_Cache;
@@ -302,6 +308,134 @@ public class Det<LETTER, STATE> implements INestedWordAutomaton<LETTER, STATE> {
 	@Override
 	public Iterable<IncomingReturnTransition<LETTER, STATE>> getIncomingReturnTransitions(
 			LETTER letter, STATE hier) {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public Iterable<IncomingInternalTransition<LETTER, STATE>> internalPredecessors(
+			LETTER letter, STATE succ) {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public Iterable<IncomingInternalTransition<LETTER, STATE>> internalPredecessors(
+			STATE succ) {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public Iterable<IncomingCallTransition<LETTER, STATE>> callPredecessors(
+			LETTER letter, STATE succ) {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public Iterable<IncomingCallTransition<LETTER, STATE>> callPredecessors(
+			STATE succ) {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public Iterable<OutgoingInternalTransition<LETTER, STATE>> internalSuccessors(
+			STATE state, LETTER letter) {
+		Collection<STATE> succs = m_Cache.succInternal(state, letter);
+		if (succs == null) {
+			DeterminizedState<LETTER, STATE> detState = m_res2det.get(state);
+			assert (detState != null);
+			DeterminizedState<LETTER, STATE> detSucc = 
+					m_StateDeterminizer.internalSuccessor(detState, letter);
+			STATE succ = getOrConstructState(detSucc);
+			m_Cache.addInternalTransition(state, letter, succ);
+		}
+		return m_Cache.internalSuccessors(state, letter);
+	}
+
+	@Override
+	public Iterable<OutgoingInternalTransition<LETTER, STATE>> internalSuccessors(
+			STATE state) {
+		for (LETTER letter : getInternalAlphabet()) {
+			internalSuccessors(state, letter);
+		}
+		return m_Cache.internalSuccessors(state);
+	}
+
+	@Override
+	public Iterable<OutgoingCallTransition<LETTER, STATE>> callSuccessors(
+			STATE state, LETTER letter) {
+		Collection<STATE> succs = m_Cache.succCall(state, letter);
+		if (succs == null) {
+			DeterminizedState<LETTER, STATE> detState = m_res2det.get(state);
+			assert (detState != null);
+			DeterminizedState<LETTER, STATE> detSucc = 
+					m_StateDeterminizer.callSuccessor(detState, letter);
+			STATE succ = getOrConstructState(detSucc);
+			m_Cache.addCallTransition(state, letter, succ);
+		}
+		return m_Cache.callSuccessors(state, letter);
+	}
+
+	@Override
+	public Iterable<OutgoingCallTransition<LETTER, STATE>> callSuccessors(
+			STATE state) {
+		for (LETTER letter : getCallAlphabet()) {
+			callSuccessors(state, letter);
+		}
+		return m_Cache.callSuccessors(state);
+	}
+
+	@Override
+	public Iterable<IncomingReturnTransition<LETTER, STATE>> returnPredecessors(
+			STATE hier, LETTER letter, STATE succ) {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public Iterable<IncomingReturnTransition<LETTER, STATE>> returnPredecessors(
+			LETTER letter, STATE succ) {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public Iterable<IncomingReturnTransition<LETTER, STATE>> returnPredecessors(
+			STATE succ) {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSucccessors(
+			STATE state, STATE hier, LETTER letter) {
+		Collection<STATE> succs = m_Cache.succReturn(state, hier, letter);
+		if (succs == null) {
+			DeterminizedState<LETTER, STATE> detState = m_res2det.get(state);
+			assert (detState != null);
+			DeterminizedState<LETTER, STATE> detHier = m_res2det.get(hier);
+			assert (detHier != null);
+			DeterminizedState<LETTER, STATE> detSucc = 
+					m_StateDeterminizer.returnSuccessor(detState, detHier, letter);
+			STATE succ = getOrConstructState(detSucc);
+			m_Cache.addReturnTransition(state, hier, letter, succ);
+		}
+		return m_Cache.returnSucccessors(state, hier, letter);
+	}
+
+	@Override
+	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessorsGivenHier(
+			STATE state, STATE hier) {
+		for (LETTER letter : getReturnAlphabet()) {
+			callSuccessors(state, letter);
+		}
+		return m_Cache.returnSuccessorsGivenHier(state, hier);
+	}
+
+	@Override
+	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessors(
+			STATE state) {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessors(
+			STATE state, LETTER letter) {
 		throw new UnsupportedOperationException();
 	}
 
