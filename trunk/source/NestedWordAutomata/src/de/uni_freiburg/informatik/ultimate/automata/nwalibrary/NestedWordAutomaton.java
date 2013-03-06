@@ -1228,6 +1228,74 @@ public class NestedWordAutomaton<LETTER,STATE> implements INestedWordAutomaton<L
 		};
 	}
 	
+	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessorsGivenHier(
+			final STATE state, final STATE hier) {
+		return new Iterable<OutgoingReturnTransition<LETTER, STATE>>() {
+			/**
+			 * Iterates over all OutgoingReturnTransition of state with 
+			 * hierarchical successor hier. 
+			 * Iterates over all outgoing return letters and uses the 
+			 * iterators returned by returnSuccecessors(state, hier, letter)
+			 */
+			@Override
+			public Iterator<OutgoingReturnTransition<LETTER, STATE>> iterator() {
+				Iterator<OutgoingReturnTransition<LETTER, STATE>> iterator = 
+						new Iterator<OutgoingReturnTransition<LETTER, STATE>>() {
+					Iterator<LETTER> m_LetterIterator;
+					LETTER m_CurrentLetter;
+					Iterator<OutgoingReturnTransition<LETTER, STATE>> m_CurrentIterator;
+					{
+						m_LetterIterator = lettersReturn(state).iterator();
+						nextLetter();
+					}
+
+					private void nextLetter() {
+						if (m_LetterIterator.hasNext()) {
+							do {
+								m_CurrentLetter = m_LetterIterator.next();
+								m_CurrentIterator = returnSucccessors(
+										state, hier, m_CurrentLetter).iterator();
+							} while (!m_CurrentIterator.hasNext()
+									&& m_LetterIterator.hasNext());
+							if (!m_CurrentIterator.hasNext()) {
+								m_CurrentLetter = null;
+								m_CurrentIterator = null;
+							}
+						} else {
+							m_CurrentLetter = null;
+							m_CurrentIterator = null;
+						}
+					}
+
+					@Override
+					public boolean hasNext() {
+						return m_CurrentLetter != null;
+					}
+
+					@Override
+					public OutgoingReturnTransition<LETTER, STATE> next() {
+						if (m_CurrentLetter == null) {
+							throw new NoSuchElementException();
+						} else {
+							OutgoingReturnTransition<LETTER, STATE> result = 
+									m_CurrentIterator.next();
+							if (!m_CurrentIterator.hasNext()) {
+								nextLetter();
+							}
+							return result;
+						}
+					}
+
+					@Override
+					public void remove() {
+						throw new UnsupportedOperationException();
+					}
+				};
+				return iterator;
+			}
+		};
+	}
+	
 	
 	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessors(
 			final STATE state) {
@@ -2339,29 +2407,7 @@ public class NestedWordAutomaton<LETTER,STATE> implements INestedWordAutomaton<L
 	}
 	
 	
-	/**
-	 * Return true iff state has successors
-	 */
-	public boolean hasSuccessors(STATE state) {
-		for (LETTER symbol : lettersInternal(state)) {
-			if (!succInternal(state, symbol).isEmpty()) {
-				return true;
-			}
-		}
-		for (LETTER symbol : lettersCall(state)) {
-			if (!succCall(state, symbol).isEmpty()) {
-				return true;
-			}
-		}
-		for (LETTER symbol : lettersReturn(state)) {
-			for (STATE hier : hierPred(state, symbol)) {
-				if (!succReturn(state, hier, symbol).isEmpty()) {
-					return true;
-				}
-			}
-		}
-		return false;
-	}
+
 	
 	
 	

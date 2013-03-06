@@ -479,7 +479,29 @@ public class SenwaWalker<LETTER,STATE> {
 
 	
 	
-
+	/**
+	 * Return true iff state has successors
+	 */
+	private boolean hasSuccessors(STATE state) {
+		for (LETTER symbol : m_TraversedSenwa.lettersInternal(state)) {
+			if (!m_TraversedSenwa.succInternal(state, symbol).isEmpty()) {
+				return true;
+			}
+		}
+		for (LETTER symbol : m_TraversedSenwa.lettersCall(state)) {
+			if (!m_TraversedSenwa.succCall(state, symbol).isEmpty()) {
+				return true;
+			}
+		}
+		for (LETTER symbol : m_TraversedSenwa.lettersReturn(state)) {
+			for (STATE hier : m_TraversedSenwa.hierPred(state, symbol)) {
+				if (!m_TraversedSenwa.succReturn(state, hier, symbol).isEmpty()) {
+					return true;
+				}
+			}
+		}
+		return false;
+	}
 
 
 	/**
@@ -490,7 +512,7 @@ public class SenwaWalker<LETTER,STATE> {
 
 		ArrayList<STATE> finalStatesWithoutSuccessor = new ArrayList<STATE>();
 		for (STATE accepting : m_TraversedSenwa.getFinalStates()) {
-			if (!m_TraversedSenwa.hasSuccessors(accepting)) {
+			if (!hasSuccessors(accepting)) {
 				finalStatesWithoutSuccessor.add(accepting);
 			}
 		}

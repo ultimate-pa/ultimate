@@ -47,7 +47,7 @@ public abstract class DoubleDeckerVisitor<LETTER,STATE> implements
 	public enum ReachFinal { UNKNOWN, AT_LEAST_ONCE  }
 	
 	
-	protected NestedWordAutomaton<LETTER,STATE> m_TraversedNwa;
+	protected INestedWordAutomaton<LETTER,STATE> m_TraversedNwa;
 
 
 	/**
@@ -445,7 +445,7 @@ private Set<STATE> m_DeadEnds;
 	private void enqueueInternalPred(STATE up, Collection<STATE> downStates, 
 												DoubleDeckerWorkList worklist) {
 		for (IncomingInternalTransition<LETTER, STATE> inTrans : 
-			m_TraversedNwa.internalPredecessors(up)) {
+			((NestedWordAutomaton<LETTER, STATE>) m_TraversedNwa).internalPredecessors(up)) {
 			STATE predUp = inTrans.getPred();
 			for (STATE down : downStates) {
 				ReachFinal doubleDeckerReach = m_Marked_Up2Down.get(predUp).get(down);
@@ -464,7 +464,7 @@ private Set<STATE> m_DeadEnds;
 		// we for call transitions we may use all of predecessors
 		// down states (use only when considering only non ret ancestors!)
 		for (IncomingCallTransition<LETTER, STATE> inTrans : 
-			m_TraversedNwa.callPredecessors(up)) {
+			((NestedWordAutomaton<LETTER, STATE>) m_TraversedNwa).callPredecessors(up)) {
 			STATE predUp = inTrans.getPred();
 			for (STATE predDown : m_Marked_Up2Down.get(predUp).keySet()) {
 				ReachFinal doubleDeckerReach = m_Marked_Up2Down.get(predUp).get(predDown);
@@ -483,7 +483,7 @@ private Set<STATE> m_DeadEnds;
 										DoubleDeckerWorkList summaryWorklist, 
 										DoubleDeckerWorkList linPredworklist) {
 		for (IncomingReturnTransition<LETTER, STATE> inTrans : 
-			m_TraversedNwa.returnPredecessors(up)) {
+			((NestedWordAutomaton<LETTER, STATE>) m_TraversedNwa).returnPredecessors(up)) {
 			STATE hier = inTrans.getHierPred();
 			// We have to check if there is some double decker (hier,down) with
 			// down∈downStates. Only in that case we may add (lin,hier) to the
@@ -726,7 +726,7 @@ private Set<STATE> m_DeadEnds;
 			statesThatShouldNotBeInitialAnyMore.add(state);
 		}
 		for (STATE state : statesThatShouldNotBeInitialAnyMore) {
-			m_TraversedNwa.makeStateNonIntial(state);
+			((NestedWordAutomaton<LETTER, STATE>) m_TraversedNwa).makeStateNonIntial(state);
 			s_Logger.warn("The following state is not final any more: " +state);
 		}
 		
@@ -802,7 +802,29 @@ private Set<STATE> m_DeadEnds;
 
 	
 	
-
+	/**
+	 * Return true iff state has successors
+	 */
+	private boolean hasSuccessors(STATE state) {
+		for (LETTER symbol : m_TraversedNwa.lettersInternal(state)) {
+			if (!m_TraversedNwa.succInternal(state, symbol).isEmpty()) {
+				return true;
+			}
+		}
+		for (LETTER symbol : m_TraversedNwa.lettersCall(state)) {
+			if (!m_TraversedNwa.succCall(state, symbol).isEmpty()) {
+				return true;
+			}
+		}
+		for (LETTER symbol : m_TraversedNwa.lettersReturn(state)) {
+			for (STATE hier : m_TraversedNwa.hierPred(state, symbol)) {
+				if (!m_TraversedNwa.succReturn(state, hier, symbol).isEmpty()) {
+					return true;
+				}
+			}
+		}
+		return false;
+	}
 
 
 	/**
@@ -813,7 +835,7 @@ private Set<STATE> m_DeadEnds;
 
 		ArrayList<STATE> finalStatesWithoutSuccessor = new ArrayList<STATE>();
 		for (STATE accepting : m_TraversedNwa.getFinalStates()) {
-			if (!m_TraversedNwa.hasSuccessors(accepting)) {
+			if (!hasSuccessors(accepting)) {
 				finalStatesWithoutSuccessor.add(accepting);
 			}
 		}
