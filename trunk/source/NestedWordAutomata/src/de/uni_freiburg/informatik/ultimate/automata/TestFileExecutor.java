@@ -26,6 +26,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.NestedLa
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.NestedLassoWord;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.Complement;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.Determinize;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.DeterminizeLazyTest;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.DeterminizeSadd;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.Difference;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.DifferenceSadd;
@@ -663,6 +664,12 @@ public class TestFileExecutor {
 			checkOperands(operation, operands, -100);
 			INestedWordAutomaton op0 = (INestedWordAutomaton) operands.get(0);
 			return (new DeterminizeSadd<String,String>(op0)).getResult();
+		}
+		
+		if (operation.equals("determinizeLazyTest")){
+			checkOperands(operation, operands, -100);
+			INestedWordAutomaton op0 = (INestedWordAutomaton) operands.get(0);
+			return (new DeterminizeLazyTest<String,String>(op0, new PowersetDeterminizer<String, String>(op0))).getResult();
 		}
 
 		if (operation.equals("complement")){
