@@ -4,8 +4,6 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
-import de.uni_freiburg.informatik.ultimate.model.IEdge;
-import de.uni_freiburg.informatik.ultimate.model.INode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
@@ -45,7 +43,7 @@ public class ErrorPathBuilder {
 		return nr;
 	}
 
-	private Pair<AnnotatedProgramPoint[], CodeBlock[]> bfsSearch(IEdge rootEdge) {
+	private Pair<AnnotatedProgramPoint[], CodeBlock[]> bfsSearch(CodeBlock rootEdge) {
 		ArrayDeque<BFSState> openBFSStates =  new ArrayDeque<BFSState>();
 		BFSState initialBFSState = new BFSState(rootEdge.getTarget(), rootEdge,
 				null, rootEdge, new ArrayList<BFSState>());
@@ -57,10 +55,10 @@ public class ErrorPathBuilder {
 					(AnnotatedProgramPoint) currentBFSState.getBFSState();
 			ArrayList<BFSState> currentPathPrefix = currentBFSState.getPathPrefix();
 			BFSState currentCallPoint = currentBFSState.getCallState();
-			IEdge currentCall = currentBFSState.getCall();
-			for (INode node : currentProgramPoint.getOutgoingNodes()) {
+			CodeBlock currentCall = currentBFSState.getCall();
+			for (AnnotatedProgramPoint node : currentProgramPoint.getOutgoingNodes()) {
 				AnnotatedProgramPoint newProgramPoint = (AnnotatedProgramPoint) node;
-				CodeBlock edge = currentProgramPoint.getOutgoingCodeBlockOf(newProgramPoint);
+				CodeBlock edge = currentProgramPoint.getOutgoingEdgeLabel(newProgramPoint);
 				BFSState newCallPoint = currentCallPoint;
 				if(edge instanceof Return && currentCallPoint != null) {
 					newCallPoint = currentCallPoint.getCallState();
@@ -69,7 +67,7 @@ public class ErrorPathBuilder {
 						newProgramPoint, newCallPoint)) {
 					continue;
 				}
-				IEdge newCall = currentCall;
+				CodeBlock newCall = currentCall;
 				ArrayList<BFSState> newPathPrefix = new ArrayList<BFSState>();
 				newPathPrefix.addAll(currentPathPrefix);
 				newPathPrefix.add(currentBFSState);
@@ -101,8 +99,8 @@ public class ErrorPathBuilder {
 	}
 	
 	private boolean hasBeenExpanded(ArrayList<BFSState> path,
-			INode programPoint, BFSState callPoint) {
-		BFSState dummyState = new BFSState(programPoint,
+			AnnotatedProgramPoint newProgramPoint, BFSState callPoint) {
+		BFSState dummyState = new BFSState(newProgramPoint,
 				null, callPoint, null, null);
 		for (int i = path.size()-1; i >= 0; i--) {
 			BFSState state = path.get(i);
@@ -140,17 +138,17 @@ public class ErrorPathBuilder {
 	
 	class BFSState {
 		private BFSState m_callState;
-		private IEdge m_call;
-		private IEdge m_takenEdge;
-		private INode m_AnnotatedProgamPoint;
+		private CodeBlock m_call;
+		private CodeBlock m_takenEdge;
+		private AnnotatedProgramPoint m_AnnotatedProgamPoint;
 		private ArrayList<BFSState> m_pathPrefix;
 		
-		public BFSState(INode annotatedProgramPoint, IEdge takenEdge, BFSState callState,
-				IEdge call, ArrayList<BFSState> pathPrefix) {
+		public BFSState(AnnotatedProgramPoint newProgramPoint, CodeBlock edge, BFSState callState,
+				CodeBlock newCall, ArrayList<BFSState> pathPrefix) {
 			m_callState = callState;
-			m_call = call;
-			m_takenEdge = takenEdge;
-			m_AnnotatedProgamPoint = annotatedProgramPoint;
+			m_call = newCall;
+			m_takenEdge = edge;
+			m_AnnotatedProgamPoint = newProgramPoint;
 			m_pathPrefix = pathPrefix;
 		}
 		
@@ -158,15 +156,15 @@ public class ErrorPathBuilder {
 			return m_callState;
 		}
 		
-		public IEdge getCall() {
+		public CodeBlock getCall() {
 			return m_call;
 		}
 		
-		public INode getBFSState() {
+		public AnnotatedProgramPoint getBFSState() {
 			return m_AnnotatedProgamPoint;
 		}
 		
-		public IEdge getTakenEdge() {
+		public CodeBlock getTakenEdge() {
 			return m_takenEdge;
 		}
 		
@@ -181,8 +179,8 @@ public class ErrorPathBuilder {
 			boolean callPointsAreEqual = false;
 			
 			BFSState otherCallState = other.getCallState();
-			INode otherCallPoint = otherCallState == null ? null : otherCallState.getBFSState();
-			INode callPoint = m_callState == null ? null : m_callState.getBFSState();
+			AnnotatedProgramPoint otherCallPoint = otherCallState == null ? null : otherCallState.getBFSState();
+			AnnotatedProgramPoint callPoint = m_callState == null ? null : m_callState.getBFSState();
 			
 			if (callPoint == null)
 				if (otherCallPoint == null)

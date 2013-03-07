@@ -31,6 +31,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.prefere
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager.TermVarsProc;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceChecker;
 import de.uni_freiburg.informatik.ultimate.result.CounterExampleResult;
 import de.uni_freiburg.informatik.ultimate.result.IResult;
@@ -50,7 +51,7 @@ public class ImpulseObserver implements IUnmanagedObserver {
 	private RootNode m_originalRoot;
 	private SmtManager m_smtManager;
 	private TAPreferences m_taPrefs;
-	private RootNode m_graphRoot;
+	private ImpRootNode m_graphRoot;
 	
 	private IPredicate m_truePredicate;
 	private IPredicate m_falsePredicate;
@@ -83,11 +84,11 @@ public class ImpulseObserver implements IUnmanagedObserver {
 
 		RCFG2AnnotatedRCFG r2ar = new RCFG2AnnotatedRCFG(m_smtManager);
 		m_graphRoot = r2ar.convert(m_originalRoot);
-
+		
 		Result overallResult = null;
 
-		for (RCFGEdge procEdge : m_graphRoot.getOutgoingEdges()) {
-			Result procResult = processProcedure(procEdge);
+		for (AnnotatedProgramPoint procRoot : m_graphRoot.getOutgoingNodes()) {
+			Result procResult = processProcedure(procRoot);
 
 			if (overallResult == null || 
 					(overallResult == Result.CORRECT && procResult != Result.CORRECT))
@@ -128,18 +129,19 @@ public class ImpulseObserver implements IUnmanagedObserver {
 		return false;
 	}
 
-	private Result processProcedure(RCFGEdge procEdge) {
-		ErrorPathBuilder epb = new ErrorPathBuilder();
+	private Result processProcedure(AnnotatedProgramPoint procRoot) {
+		EmptinessCheck emptinessCheck = new EmptinessCheck();
+		
 		m_nodeToCopy = new HashMap<AnnotatedProgramPoint, AnnotatedProgramPoint>();
 		m_nodeToCopyCurrent = new HashMap<AnnotatedProgramPoint, AnnotatedProgramPoint>();
-		m_currentProcRoot = (AnnotatedProgramPoint) procEdge.getTarget();
+		m_currentProcRoot = procRoot;
 
 		m_gw.writeGraphAsImage(m_currentProcRoot, "graph_" + (++m_gwCounter) + "_procproc");
 
 		while (true) {
 			s_Logger.debug("did " + m_pathChecks + " iterations, starting new");
 			Pair<AnnotatedProgramPoint[], NestedWord<CodeBlock>> errorNWP = 
-					epb.getErrorPathAsNestedWord(procEdge);
+					emptinessCheck.checkForEmptiness(procRoot);
 
 
 			if (errorNWP == null) {
@@ -218,14 +220,16 @@ public class ImpulseObserver implements IUnmanagedObserver {
 		AnnotatedProgramPoint[] appPath = errorNWP.getFirst();
 
 		for (int i = 0; i < appPath.length - 1; i++) {
-			IPredicate newPredicate = 
+			TermVarsProc tvp = 
 					m_smtManager.and(appPath[i].getPredicate(), interpolants[i]); //FIXME: indices may be incorrect
-
+			IPredicate newPredicate = m_smtManager.newPredicate(tvp.getFormula(), 
+							tvp.getProcedures(), tvp.getVars(), tvp.getClosedFormula());
+					
 			AnnotatedProgramPoint copy = new AnnotatedProgramPoint(newPredicate, appPath[i].getProgramPoint());
 
-			for (INode outNode : appPath[i].getOutgoingNodes()) {
+			for (AnnotatedProgramPoint outNode : appPath[i].getOutgoingNodes()) {
 				AnnotatedProgramPoint outApp = (AnnotatedProgramPoint) outNode;
-				copy.addOutgoingNode(outApp, appPath[i].getOutgoingCodeBlockOf(outApp));
+				copy.addOutgoingNode(outApp, appPath[i].getOutgoingEdgeLabel(outApp));
 			}
 			m_nodeToCopyCurrent.put(appPath[i], copy);
 		}
@@ -257,13 +261,13 @@ public class ImpulseObserver implements IUnmanagedObserver {
 
 		for (int i = 0; i < appPath.length - 1; i++) {
 			AnnotatedProgramPoint copy = m_nodeToCopyCurrent.get(appPath[i]);
-			for (INode outNode : copy.getOutgoingNodes()) {
+			for (AnnotatedProgramPoint outNode : copy.getOutgoingNodes()) {
 				AnnotatedProgramPoint outApp = (AnnotatedProgramPoint) outNode;
 
 				AnnotatedProgramPoint copyOfOutApp = m_nodeToCopy.get(outApp); 
 
 				if (copyOfOutApp != null) {
-					CodeBlock statement = copy.getOutgoingCodeBlockOf(outApp);
+					CodeBlock statement = copy.getOutgoingEdgeLabel(outApp);
 					if (statement instanceof Summary)
 						continue;
 
@@ -283,7 +287,7 @@ public class ImpulseObserver implements IUnmanagedObserver {
 						redirectEdge(copy, outApp, copyOfOutApp);
 					else
 						appendNewPseudoErrorLocation(copy, 
-								copy.getOutgoingCodeBlockOf(outApp), 
+								copy.getOutgoingEdgeLabel(outApp), 
 								copyOfOutApp.getPredicate());
 				}
 			}
@@ -291,7 +295,7 @@ public class ImpulseObserver implements IUnmanagedObserver {
 	}
 
 	private void appendNewPseudoErrorLocation(AnnotatedProgramPoint node,
-			CodeBlock codeBlock, Predicate predicate) {
+			CodeBlock codeBlock, IPredicate predicate) {
 //		Predicate newPredicate = m_smtManager.not(predicate); //will be negated implicitly by checkTrace
 		if (m_smtManager.isInductive(node.getPredicate(), codeBlock, predicate) == LBool.UNSAT)
 			return;
@@ -307,10 +311,10 @@ public class ImpulseObserver implements IUnmanagedObserver {
 	 */
 	private void redirectEdge(AnnotatedProgramPoint source, AnnotatedProgramPoint oldTarget,
 			AnnotatedProgramPoint newTarget) {
-		source.addOutgoingNode(newTarget, source.getOutgoingCodeBlockOf(oldTarget));
+		source.addOutgoingNode(newTarget, source.getOutgoingEdgeLabel(oldTarget));
 		source.removeOutgoingNode(oldTarget);
 		oldTarget.removeIncomingNode(source);
-		newTarget.addIncomingNode(source, source.getOutgoingCodeBlockOf(newTarget));
+		newTarget.addIncomingNode(source, source.getOutgoingEdgeLabel(newTarget));
 	}
 
 	private PrintWriter dumpInitialize() {
@@ -326,7 +330,7 @@ public class ImpulseObserver implements IUnmanagedObserver {
 		return null;
 	}
 
-	RootNode getRoot() {
+	ImpRootNode getRoot() {
 		return m_graphRoot;
 	}
 

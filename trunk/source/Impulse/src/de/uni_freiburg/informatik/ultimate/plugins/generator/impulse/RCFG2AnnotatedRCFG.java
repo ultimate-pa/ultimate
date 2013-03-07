@@ -8,6 +8,7 @@ import java.util.Map.Entry;
 import de.uni_freiburg.informatik.ultimate.model.IEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
@@ -22,20 +23,20 @@ public class RCFG2AnnotatedRCFG {
 	}
 	
 	
-	public RootNode convert(RootNode oldRoot) {
+	public ImpRootNode convert(RootNode oldRoot) {
 		
-		RootNode newRoot = new RootNode(oldRoot.getRootAnnot());
+		ImpRootNode newRoot = new ImpRootNode(oldRoot.getRootAnnot());
 		
 		ArrayDeque<ProgramPoint> openNodes = new ArrayDeque<ProgramPoint>();
 		HashMap<ProgramPoint, AnnotatedProgramPoint> oldPpTonew = 
 				new HashMap<ProgramPoint, AnnotatedProgramPoint>();
 		
 		
-		for (IEdge rootEdge : oldRoot.getOutgoingEdges()) {
+		for (RCFGEdge rootEdge : oldRoot.getOutgoingEdges()) {
 			ProgramPoint oldNode = (ProgramPoint) rootEdge.getTarget();
 			AnnotatedProgramPoint newNode = copyNode(oldNode);
 			
-			new RootEdge(newRoot, newNode);
+			//new RootEdge(newRoot, newNode);
 			openNodes.add(oldNode);
 			oldPpTonew.put(oldNode, newNode);
 		}
@@ -46,7 +47,7 @@ public class RCFG2AnnotatedRCFG {
 		while (!openNodes.isEmpty()) {
 			ProgramPoint currentNode = openNodes.pollFirst();
 			
-			for (IEdge outEdge : currentNode.getOutgoingEdges()) {
+			for (RCFGEdge outEdge : currentNode.getOutgoingEdges()) {
 				if (outEdge instanceof Return) {
 					returns.add((Return) outEdge);
 				}
@@ -58,11 +59,11 @@ public class RCFG2AnnotatedRCFG {
 			}
 		}
 		
-		/* put edges into annotated program points
-		 * 
+		/*
+		 *  put edges into annotated program points
 		 */
 		for (Entry<ProgramPoint, AnnotatedProgramPoint> entry  : oldPpTonew.entrySet()) {
-			for (IEdge outEdge : entry.getKey().getOutgoingEdges()) {
+			for (RCFGEdge outEdge : entry.getKey().getOutgoingEdges()) {
 				AnnotatedProgramPoint annotatedTarget = 
 						(AnnotatedProgramPoint) oldPpTonew.get(outEdge.getTarget());
 				entry.getValue().addOutgoingNode(

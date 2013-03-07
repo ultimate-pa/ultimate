@@ -1,43 +1,35 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.impulse;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
+import java.util.HashSet;
 
-import de.uni_freiburg.informatik.ultimate.model.AbstractNoEdgeNode;
-import de.uni_freiburg.informatik.ultimate.model.INode;
 import de.uni_freiburg.informatik.ultimate.model.IPayload;
+import de.uni_freiburg.informatik.ultimate.model.structure.BaseLabeledEdgesMultigraph;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IPredicate;
 
-public class AnnotatedProgramPoint extends AbstractNoEdgeNode{
+public class AnnotatedProgramPoint extends BaseLabeledEdgesMultigraph<AnnotatedProgramPoint, CodeBlock> {
 
-	/**
-	 * 
-	 */
 	private static final long serialVersionUID = -4398335480646555023L;
 	
 	private IPredicate m_predicate;
 	private ProgramPoint m_programPoint;
 	
-	private HashMap<AnnotatedProgramPoint, CodeBlock> m_incomingEdges =
-			new HashMap<AnnotatedProgramPoint, CodeBlock>();
-	private HashMap<AnnotatedProgramPoint, CodeBlock> m_outgoingEdges =
-			new HashMap<AnnotatedProgramPoint, CodeBlock>();
+	boolean m_isPseudoErrorLocation = false;
 	
-	private boolean m_isPseudoErrorLocation = false;
+	private HashMap<AnnotatedProgramPoint, HashSet<AnnotatedProgramPoint>> m_outgoingReturnAppToCallPreds;
 	
 	public AnnotatedProgramPoint(IPredicate predicate, ProgramPoint programPoint) {
 		m_predicate = predicate;
 		m_programPoint = programPoint;
 	}
 	
-	public AnnotatedProgramPoint(IPredicate predicate, ProgramPoint programPoint, boolean isPseudoEL) {
-		assert isPseudoEL; //only then this constructor is needed
-		m_isPseudoErrorLocation = isPseudoEL;
+	public AnnotatedProgramPoint(IPredicate predicate, ProgramPoint programPoint, boolean isPEL) {
 		m_predicate = predicate;
 		m_programPoint = programPoint;
+		m_isPseudoErrorLocation = isPEL;
 	}
 
 	public IPredicate getPredicate() {
@@ -49,83 +41,61 @@ public class AnnotatedProgramPoint extends AbstractNoEdgeNode{
 	}
 	
 	public boolean isErrorLocation() {
-		return m_programPoint.isErrorLocation() ||
-				m_isPseudoErrorLocation;
-	}
-	
-	public boolean isPseudoErrorLocation() {
-		return m_isPseudoErrorLocation;
-	}
-	
-	public CodeBlock getOutgoingCodeBlockOf(AnnotatedProgramPoint pp) {
-		return m_outgoingEdges.get(pp);
-	}
-	
-	public CodeBlock getIncomingCodeBlockOf(AnnotatedProgramPoint pp) {
-		return m_incomingEdges.get(pp);
+		return m_programPoint.isErrorLocation();
 	}
 	
 	public ProgramPoint getProgramPoint() {
 		return m_programPoint;
 	}
 	
-	
-	//---------- interface stuff ---------------
-
-	@Override
-	public List<INode> getIncomingNodes() {
-		return new ArrayList<INode>(m_incomingEdges.keySet());
+	public void addOutgoingNode(AnnotatedProgramPoint node, CodeBlock label) {
+		this.mOutgoingNodes.add(node);
+		this.mOutgoingEdgeLabels.put(node, label);
+		node.mIncomingNodes.add(this);
 	}
 
-	@Override
-	public List<INode> getOutgoingNodes() {
-		return new ArrayList<INode>(m_outgoingEdges.keySet());
-	}
-
-	@Override
-	public boolean addOutgoingNode(INode element) {
-		return false; //TODO ??
-	}
-
-	@Override
-	public boolean addIncomingNode(INode element) {
-		return false; //TODO ??
-	}
-
-	public void addOutgoingNode(AnnotatedProgramPoint app, CodeBlock cd) {
-		m_outgoingEdges.put(app, cd);
-	}
-
-	public void addIncomingNode(AnnotatedProgramPoint app, CodeBlock cd) {
-		m_incomingEdges.put(app, cd);
+	public void removeOutgoingNode(AnnotatedProgramPoint node) {
+		mOutgoingNodes.remove(node);
+		mOutgoingEdgeLabels.remove(node);
+		node.mIncomingNodes.remove(this);
 	}
 	
-	public void removeOutgoingNode(AnnotatedProgramPoint app) {
-		m_outgoingEdges.remove(app);
+	public void addIncomingNode(AnnotatedProgramPoint node, CodeBlock label) {
+		this.mIncomingNodes.add(node);
+		node.mOutgoingEdgeLabels.put(node, label);
+		node.mOutgoingNodes.add(this);
 	}
 
-	public void removeIncomingNode(AnnotatedProgramPoint app) {
-		m_incomingEdges.remove(app);
+	public void removeIncomingNode(AnnotatedProgramPoint node) {
+		mIncomingNodes.remove(node);
+		node.mOutgoingNodes.remove(this);
+		node.mOutgoingEdgeLabels.remove(this);
 	}
 	
-	@Override
-	public boolean removeOutgoingNode(INode element) {
-		return m_outgoingEdges.remove(element)!=null?true:false;
+	public void addOutGoingReturnCallPred(AnnotatedProgramPoint target, AnnotatedProgramPoint callPred) {
+		assert mOutgoingEdgeLabels.get(target) instanceof Return;
+		
+		if (m_outgoingReturnAppToCallPreds == null)
+			m_outgoingReturnAppToCallPreds = new HashMap<AnnotatedProgramPoint, HashSet<AnnotatedProgramPoint>>();
+		
+		if (m_outgoingReturnAppToCallPreds.get(target) == null)
+			m_outgoingReturnAppToCallPreds.put(target, new HashSet<AnnotatedProgramPoint>());
+		
+		m_outgoingReturnAppToCallPreds.get(target).add(callPred);
 	}
-
-	@Override
-	public boolean removeIncomingNode(INode element) {
-		return m_incomingEdges.remove(element)!=null?true:false;
+	
+	public void removeOutgoingReturnCallPred(AnnotatedProgramPoint target, AnnotatedProgramPoint callPred) {
+		assert mOutgoingEdgeLabels.get(target) instanceof Return;
+		assert m_outgoingReturnAppToCallPreds != null && m_outgoingReturnAppToCallPreds.get(target) != null;
+		
+		m_outgoingReturnAppToCallPreds.get(target).remove(callPred);		
 	}
-
-	@Override
-	public void removeAllIncoming() {
-		m_incomingEdges.clear();
-	}
-
-	@Override
-	public void removeAllOutgoing() {
-		m_outgoingEdges.clear();
+	
+	public boolean outGoingReturnAppToCallPredContains(AnnotatedProgramPoint target, AnnotatedProgramPoint callPred) {
+		assert mOutgoingEdgeLabels.get(target) instanceof Return;
+		assert m_outgoingReturnAppToCallPreds != null; 
+		
+		return m_outgoingReturnAppToCallPreds.get(target).contains(callPred);
 	}
 	
 	public IPayload getPayload() {
@@ -133,6 +103,14 @@ public class AnnotatedProgramPoint extends AbstractNoEdgeNode{
 	}
 	
 	public String toString() {
-		return m_isPseudoErrorLocation ? "PEL" + m_predicate.toString() : m_predicate.toString();
+		return m_programPoint.toString(); //+ ":" + m_predicate.toString();
+	}
+
+	public void setIsPseudoErrorLocation(boolean value) {
+		m_isPseudoErrorLocation = value;
+	}
+	
+	public boolean isPseudoErrorLocation() {
+		return m_isPseudoErrorLocation;
 	}
 }
