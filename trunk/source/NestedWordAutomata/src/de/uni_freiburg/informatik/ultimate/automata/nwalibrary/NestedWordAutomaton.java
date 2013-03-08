@@ -20,7 +20,7 @@ import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.BuchiComplementFKV;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.EmptinessCheck;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.NestedLassoRun;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.Acceptance;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.Accepts;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.BfsEmptiness;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.ConcurrentProduct;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.Difference;
@@ -2270,7 +2270,7 @@ public class NestedWordAutomaton<LETTER,STATE> implements INestedWordAutomaton<L
 		
 		NestedWord<LETTER> nw = NestedWord.nestedWord(word);
 		try {
-			return (new Acceptance<LETTER, STATE>(this, nw, false, false)).getResult();
+			return (new Accepts<LETTER, STATE>(this, nw, false, false)).getResult();
 		} catch (OperationCanceledException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

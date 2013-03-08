@@ -27,7 +27,7 @@ import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
  *            also (nondeterministically) lead to an initial state.
  * @author heizmann@informatik.uni-freiburg.de
  */
-public class Acceptance<LETTER,STATE> extends AbstractAcceptance<LETTER,STATE>
+public class Accepts<LETTER,STATE> extends AbstractAcceptance<LETTER,STATE>
 									  implements IOperation {
 
 	private final INestedWordAutomaton<LETTER,STATE> m_Automaton;
@@ -40,7 +40,7 @@ public class Acceptance<LETTER,STATE> extends AbstractAcceptance<LETTER,STATE>
 			Activator.PLUGIN_ID);
 
 
-	public Acceptance(INestedWordAutomaton<LETTER,STATE> automaton, NestedWord<LETTER> word,
+	public Accepts(INestedWordAutomaton<LETTER,STATE> automaton, NestedWord<LETTER> word,
 			boolean prefixOfIntputIsAccepted,
 			boolean inputIsSuffixOfAcceptedWord) {
 		super();
