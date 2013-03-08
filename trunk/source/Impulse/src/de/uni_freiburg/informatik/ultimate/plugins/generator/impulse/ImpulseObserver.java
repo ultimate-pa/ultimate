@@ -79,7 +79,8 @@ public class ImpulseObserver implements IUnmanagedObserver {
 		m_falsePredicate = m_smtManager.newFalsePredicate();
 		m_pELProgramPoint = new ProgramPoint("PEL", "all", true, null, null, m_smtManager.getScript());
 		
-		m_gw  = new GraphWriter("/home/alexander/impulseGraphs",
+//		m_gw  = new GraphWriter("/home/alexander/impulseGraphs",
+		m_gw  = new GraphWriter("",
 				true, true, true, true, m_smtManager.getScript());
 
 		RCFG2AnnotatedRCFG r2ar = new RCFG2AnnotatedRCFG(m_smtManager);
@@ -219,9 +220,9 @@ public class ImpulseObserver implements IUnmanagedObserver {
 
 		AnnotatedProgramPoint[] appPath = errorNWP.getFirst();
 
-		for (int i = 0; i < appPath.length - 1; i++) {
+		for (int i = 1; i < appPath.length - 1; i++) {
 			TermVarsProc tvp = 
-					m_smtManager.and(appPath[i].getPredicate(), interpolants[i]); //FIXME: indices may be incorrect
+					m_smtManager.and(appPath[i].getPredicate(), interpolants[i-1]); //FIXME: indices may be incorrect
 			IPredicate newPredicate = m_smtManager.newPredicate(tvp.getFormula(), 
 							tvp.getProcedures(), tvp.getVars(), tvp.getClosedFormula());
 					

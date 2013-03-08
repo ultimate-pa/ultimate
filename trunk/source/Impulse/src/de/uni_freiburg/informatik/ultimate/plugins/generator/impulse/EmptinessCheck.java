@@ -11,6 +11,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IPredicate;
 
 public class EmptinessCheck {
@@ -20,6 +21,7 @@ public class EmptinessCheck {
 	ArrayDeque<AppDoubleDecker> openNodes;
 	HashSet<AppDoubleDecker> visitedNodes;
 	HashMap<AnnotatedProgramPoint, HashSet<AnnotatedProgramPoint>> summaryEdges;
+	HashMap<Pair<AnnotatedProgramPoint,AnnotatedProgramPoint>, AnnotatedProgramPoint> summaryEdgeToReturnPred;
 	
 	/**
 	 * Search for a nested error path within the graph with the given root. Return null
@@ -35,6 +37,8 @@ public class EmptinessCheck {
 		
 		summaryEdges = 
 				new HashMap<AnnotatedProgramPoint, HashSet<AnnotatedProgramPoint>>();
+		summaryEdgeToReturnPred =
+				new HashMap<Pair<AnnotatedProgramPoint,AnnotatedProgramPoint>, AnnotatedProgramPoint>();
 		
 		EmptyStackSymbol emptyStackSymbol = new EmptyStackSymbol(null, null);
 		
@@ -48,23 +52,28 @@ public class EmptinessCheck {
 			for (AnnotatedProgramPoint app : currentAdd.top.getOutgoingNodes()) {
 				CodeBlock edge = currentAdd.top.getOutgoingEdgeLabel(app);
 				
+				if (edge instanceof Summary)//we are computing our own summaries
+					continue;
+				
 				AppDoubleDecker newAdd = null;
 				
 				if (!(edge instanceof Call || edge instanceof Return)) {
 
 					newAdd = new AppDoubleDecker(app, currentAdd.bot);
-					returnedPath = openNewNode(currentAdd, app, edge, newAdd);
+					if (returnedPath == null)
+						returnedPath = openNewNode(currentAdd, app, edge, newAdd);
 					
 				} else if (edge instanceof Call) {
 
 					newAdd = new AppDoubleDecker(app, currentAdd.top);
 					updateCallPredecessorMapping(currentAdd.top, currentAdd.bot);
-					returnedPath = openNewNode(currentAdd, app, edge, newAdd);
+					if (returnedPath == null)
+						returnedPath = openNewNode(currentAdd, app, edge, newAdd);
 				
 				} else if (edge instanceof Return) {
 					ArrayList<AnnotatedProgramPoint> cps = callPredecessorToItsCallPredecessors.get(currentAdd.bot);
 					
-					//only take return edges that match the current callpredecessor
+					//only take return edges that return to the current callpredecessor
 //					if (!((Return) edge).getCallerNode().equals(currentAdd.bot.getProgramPoint()))
 					if (!currentAdd.top.outGoingReturnAppToCallPredContains(app, currentAdd.bot))
 						continue;
@@ -74,18 +83,23 @@ public class EmptinessCheck {
 					for (AnnotatedProgramPoint callPredPred : cps) {
 						newAdd = new AppDoubleDecker(app, callPredPred);
 						addSummaryEdge(currentAdd.bot, app);
-						if (returnedPath == null)//TODO: diese Abfrage auch an den anderen Stellen?
+						summaryEdgeToReturnPred.put(
+								new Pair<AnnotatedProgramPoint, AnnotatedProgramPoint>(currentAdd.bot, app), 
+								currentAdd.top);
+						if (returnedPath == null)
 							returnedPath = openNewNode(currentAdd, app, edge, newAdd);
 					}
 				}
 			}
 			
 			//also unwind summaryEdges
-			for (AnnotatedProgramPoint target : summaryEdges.get(currentAdd.top)) {
-				AppDoubleDecker	newAdd = new AppDoubleDecker(target, currentAdd.bot);
-				returnedPath = openNewNode(currentAdd, target, null, newAdd);//convention: AddEdges which are summaries are labeled "null"
+			HashSet<AnnotatedProgramPoint> targets = summaryEdges.get(currentAdd.top);
+			if (targets != null) {
+				for (AnnotatedProgramPoint target : targets) {
+					AppDoubleDecker	newAdd = new AppDoubleDecker(target, currentAdd.bot);
+					returnedPath = openNewNode(currentAdd, target, null, newAdd);//convention: AddEdges which are summaries are labeled "null"
+				}
 			}
-			
 		}
 		return returnedPath;
 	}
@@ -105,21 +119,15 @@ public class EmptinessCheck {
 			AppDoubleDecker currentAdd, AnnotatedProgramPoint app,
 			CodeBlock edge, AppDoubleDecker newAdd) {
 		if (!visitedNodes.contains(newAdd)){
-			newAdd.appendToPath(new AddEdge(currentAdd, newAdd, edge));
+//			newAdd.appendToPath(new AddEdge(currentAdd, newAdd, edge));
+			AddEdge newAddEdge = new AddEdge(currentAdd, newAdd, edge);
+			newAdd.inEdge = newAddEdge;
+			currentAdd.outEdges.add(newAddEdge);
 
 			if (app.isErrorLocation())
 				return reconstructPath(newAdd);
 
 			openNodes.add(newAdd);
-
-//			if (!(edge instanceof Call || edge instanceof Return)) {
-//
-//
-//			} else if (edge instanceof Call) {
-//
-//			} else if (edge instanceof Return) {
-//
-//			}
 		}
 		return null;
 	}
@@ -153,6 +161,8 @@ public class EmptinessCheck {
 		}
 		errorPath.addFirst(currentAdd.top);
 		
+		expandSummaries(errorTrace, errorPath);
+		
 		CodeBlock[] errorTraceArray = new CodeBlock[errorTrace.size()];
 		errorTrace.toArray(errorTraceArray);
 		NestedWord<CodeBlock> errorNW = new NestedWord<CodeBlock>(
@@ -160,8 +170,6 @@ public class EmptinessCheck {
 		
 		AnnotatedProgramPoint[] errorPathArray = new AnnotatedProgramPoint[errorPath.size()];
 		errorPath.toArray(errorPathArray);
-		
-		expandSummaries(errorTrace, errorPath);
 		
 		return new Pair<AnnotatedProgramPoint[], NestedWord<CodeBlock>>(errorPathArray, errorNW);
 	}
@@ -217,19 +225,21 @@ public class EmptinessCheck {
 		AddEdge inEdge;
 		ArrayList<AddEdge> outEdges = new ArrayList<AddEdge>();
 		
-		ArrayList<AddEdge> path = new ArrayList<AddEdge>();
-		
 		AppDoubleDecker(AnnotatedProgramPoint top, AnnotatedProgramPoint bot) {
 			this.top = top;
 			this.bot = bot;
 		}
 		
+		public int hashCode() {
+			return (top.hashCode() * 2591 + bot.hashCode()) * 2591;
+	    }
+		
 		boolean equals(AppDoubleDecker add) {
 			return this.top.equals(add.top) && this.bot.equals(add.bot);
 		}
 		
-		void appendToPath(AddEdge edge) {
-			path.add(edge);
+		public String toString() {
+			return "(" + top + "|" + bot + ")";
 		}
 	}
 	
@@ -245,6 +255,10 @@ public class EmptinessCheck {
 			this.target = target;
 			this.label = label;
 		}
+		
+		public String toString() {
+			return source + "--" + label + "-->" + target;
+		}
 	}
 	
 	class EmptyStackSymbol extends AnnotatedProgramPoint {
@@ -257,6 +271,10 @@ public class EmptinessCheck {
 		
 		boolean equals(EmptyStackSymbol ess) {
 			return true;
+		}
+		
+		public String toString() {
+			return "€";
 		}
 	}
 

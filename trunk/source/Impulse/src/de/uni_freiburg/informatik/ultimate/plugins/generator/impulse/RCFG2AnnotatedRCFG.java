@@ -36,12 +36,14 @@ public class RCFG2AnnotatedRCFG {
 			ProgramPoint oldNode = (ProgramPoint) rootEdge.getTarget();
 			AnnotatedProgramPoint newNode = copyNode(oldNode);
 			
+			newRoot.addOutgoingNode(newNode, null);
 			//new RootEdge(newRoot, newNode);
 			openNodes.add(oldNode);
 			oldPpTonew.put(oldNode, newNode);
 		}
 		
-		/* collect all Nodes and create AnnotatedProgramPoints
+		/* 
+		 * collect all Nodes and create AnnotatedProgramPoints
 		 */
 		HashSet<Return> returns = new HashSet<Return>();
 		while (!openNodes.isEmpty()) {
@@ -68,8 +70,12 @@ public class RCFG2AnnotatedRCFG {
 						(AnnotatedProgramPoint) oldPpTonew.get(outEdge.getTarget());
 				entry.getValue().addOutgoingNode(
 				  annotatedTarget, (CodeBlock) outEdge);
-				annotatedTarget.addIncomingNode(
-						entry.getValue(), (CodeBlock) outEdge);
+//				annotatedTarget.addIncomingNode(
+//						entry.getValue(), (CodeBlock) outEdge);
+				if (outEdge instanceof Return) {
+					AnnotatedProgramPoint callPredApp = oldPpTonew.get(((Return) outEdge).getCallerNode());
+					entry.getValue().addOutGoingReturnCallPred(annotatedTarget, callPredApp);
+				}
 			}
 		}
 		return newRoot;
