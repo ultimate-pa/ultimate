@@ -29,7 +29,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.Determ
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.DeterminizeSadd;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.Difference;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.DifferenceSadd;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.Intersect;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.AbstractIntersect;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IntersectNodd;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.MinimizeDfa;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.PowersetDeterminizer;
@@ -111,10 +111,10 @@ public class ResultChecker<LETTER,STATE> {
 //		INestedWordAutomaton complementJM = (new Complement()).new ComplementJM(op).getResult();
 //		correct &=  ((new Intersect(false, false, op, complementJM)).getNwa().getAcceptingNestedRun() == null);
 		INestedWordAutomaton complementSadd = (new Complement()).new ComplementSadd(op).getResult();
-		INestedWordAutomaton intersectionWithSadd = (new Intersect(false, false, op, complementSadd)).getResult();
+		INestedWordAutomaton intersectionWithSadd = (new AbstractIntersect(false, false, op, complementSadd)).getResult();
 		correct &= (new BfsEmptiness(intersectionWithSadd).getResult() == null);
 		INestedWordAutomaton complementDD = (new Complement()).new ComplementDD(op).getResult();
-		INestedWordAutomaton intersectionWithDD = (new Intersect(false, false, op, complementDD)).getResult();
+		INestedWordAutomaton intersectionWithDD = (new AbstractIntersect(false, false, op, complementDD)).getResult();
 		correct &= (new BfsEmptiness(intersectionWithDD).getResult() == null);
 
 		s_Logger.debug("Finished testing correctness of complement");

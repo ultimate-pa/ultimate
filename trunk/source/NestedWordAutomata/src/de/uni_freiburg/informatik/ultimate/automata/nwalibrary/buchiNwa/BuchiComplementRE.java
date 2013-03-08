@@ -7,9 +7,10 @@ import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.BuchiIntersect;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.Determinize;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.DeterminizeUnderappox;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.Intersect;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.AbstractIntersect;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.PowersetDeterminizer;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.ReachableStatesCopy;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
@@ -74,7 +75,7 @@ public class BuchiComplementRE<LETTER,STATE> implements IOperation {
 			INestedWordAutomaton<LETTER,STATE> determinizedComplement =
 					(new BuchiComplementDeterministic<LETTER,STATE>(determinized)).getResult();
 			INestedWordAutomaton<LETTER,STATE> intersectionWithOperand =
-					(new Intersect<LETTER,STATE>(true, true, operandWithoutNonLiveStates, determinizedComplement)).getResult();
+					(new BuchiIntersect<LETTER,STATE>(true, true, operandWithoutNonLiveStates, determinizedComplement)).getResult();
 			NestedLassoRun<LETTER,STATE> run = (new EmptinessCheck<LETTER,STATE>()).getAcceptingNestedLassoRun(intersectionWithOperand);
 			if (run == null) {
 				s_Logger.info("Rüdigers determinization knack applicable");
