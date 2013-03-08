@@ -32,6 +32,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.Differ
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.DifferenceSadd;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.DifferenceSenwa;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.AbstractIntersect;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.Intersect;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IntersectNodd;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.MinimizeDfa;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.MinimizeSevpa;
@@ -688,7 +689,7 @@ public class TestFileExecutor {
 			checkOperands(operation, operands, -100, -100);
 			INestedWordAutomaton op0 = (INestedWordAutomaton) operands.get(0);
 			INestedWordAutomaton op1 = (INestedWordAutomaton) operands.get(1);
-			return (new AbstractIntersect<String,String>(false, true, op0, op1)).getResult();
+			return (new Intersect<String,String>(false, true, op0, op1)).getResult();
 		}
 		
 		if (operation.equals("intersectNodd")){
@@ -750,7 +751,7 @@ public class TestFileExecutor {
 			checkOperands(operation, operands, -100, -100);
 			INestedWordAutomaton op0 = (INestedWordAutomaton) operands.get(0);
 			INestedWordAutomaton op1 = (INestedWordAutomaton) operands.get(1);
-			return (new AbstractIntersect(true, true, op0, op1)).getResult();
+			return (new Intersect(true, true, op0, op1)).getResult();
 		}
 		
 		else if (operation.equals("buchiComplementFKV")){
