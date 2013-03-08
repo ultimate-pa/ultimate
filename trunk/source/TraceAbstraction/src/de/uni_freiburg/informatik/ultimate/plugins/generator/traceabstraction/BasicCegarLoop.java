@@ -363,7 +363,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 
 			s_Logger.debug("Start complementation");
 			INestedWordAutomaton<CodeBlock, IPredicate> nia = 
-				(new Complement<CodeBlock, IPredicate>()).new ComplementDD(dia).getResult();
+				(new Complement<CodeBlock, IPredicate>(dia)).getResult();
 			assert(!nia.accepts(m_Counterexample.getWord()));
 			s_Logger.info("Complemented interpolant automaton has "+nia.size() +" states");
 			

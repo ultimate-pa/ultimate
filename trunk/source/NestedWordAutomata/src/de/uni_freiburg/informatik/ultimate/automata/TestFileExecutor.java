@@ -25,6 +25,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.Emptines
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.NestedLassoRun;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.NestedLassoWord;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.Complement;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.ComplementSadd;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.Determinize;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.DeterminizeLazyTest;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.DeterminizeSadd;
@@ -676,13 +677,13 @@ public class TestFileExecutor {
 		if (operation.equals("complement")){
 			checkOperands(operation, operands, -100);
 			INestedWordAutomaton op0 = (INestedWordAutomaton) operands.get(0);
-			return (new Complement()).new ComplementDD(op0).getResult();
+			return (new Complement(op0)).getResult();
 		}
 		
 		if (operation.equals("complementSadd")){
 			checkOperands(operation, operands, -100);
 			INestedWordAutomaton op0 = (INestedWordAutomaton) operands.get(0);
-			return (new Complement()).new ComplementSadd(op0).getResult();
+			return (new ComplementSadd(op0)).getResult();
 		}
 
 		if (operation.equals("intersect")){

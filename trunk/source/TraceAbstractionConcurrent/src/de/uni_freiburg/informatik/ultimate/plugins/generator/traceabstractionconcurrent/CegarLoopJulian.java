@@ -120,7 +120,7 @@ public class CegarLoopJulian extends BasicCegarLoop {
 
 		//Complement the interpolant automaton
 		INestedWordAutomaton<CodeBlock, IPredicate> nia = 
-				(new Complement<CodeBlock, IPredicate>()).new ComplementDD(dia).getResult();
+				(new Complement<CodeBlock, IPredicate>(dia)).getResult();
 		assert(!nia.accepts(m_Counterexample.getWord())) : 
 			"Complementation broken!";
 		s_Logger.info("Complemented interpolant automaton has "+nia.getStates().size() +" states");

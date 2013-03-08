@@ -20,6 +20,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.NestedLa
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.NestedLassoWord;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.BfsEmptiness;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.Complement;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.ComplementSadd;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.ConcurrentProduct;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.Determinize;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.DeterminizeSadd;
@@ -106,10 +107,10 @@ public class ResultChecker<LETTER,STATE> {
 		boolean correct = true;
 //		INestedWordAutomaton complementJM = (new Complement()).new ComplementJM(op).getResult();
 //		correct &=  ((new Intersect(false, false, op, complementJM)).getNwa().getAcceptingNestedRun() == null);
-		INestedWordAutomaton complementSadd = (new Complement()).new ComplementSadd(op).getResult();
+		INestedWordAutomaton complementSadd = (new ComplementSadd(op)).getResult();
 		INestedWordAutomaton intersectionWithSadd = (new Intersect(false, false, op, complementSadd)).getResult();
 		correct &= (new BfsEmptiness(intersectionWithSadd).getResult() == null);
-		INestedWordAutomaton complementDD = (new Complement()).new ComplementDD(op).getResult();
+		INestedWordAutomaton complementDD = (new Complement(op)).getResult();
 		INestedWordAutomaton intersectionWithDD = (new Intersect(false, false, op, complementDD)).getResult();
 		correct &= (new BfsEmptiness(intersectionWithDD).getResult() == null);
 
@@ -134,7 +135,7 @@ public class ResultChecker<LETTER,STATE> {
 		s_Logger.info("Testing correctness of difference");
 
 		INestedWordAutomaton sndComplementDD = 
-			(new Complement()).new ComplementDD(snd).getResult();
+			(new Complement(snd)).getResult();
 		INestedWordAutomaton resultDD = 
 			(new IntersectNodd(fst,sndComplementDD)).getResult();
 		boolean correct = true;
@@ -144,7 +145,7 @@ public class ResultChecker<LETTER,STATE> {
 		assert correct;
 		
 		INestedWordAutomaton sndComplementSadd = 
-			(new Complement()).new ComplementSadd(snd).getResult();
+			(new ComplementSadd(snd)).getResult();
 		INestedWordAutomaton resultSadd = 
 			(new IntersectNodd(fst,sndComplementSadd)).getResult();
 		correct &= (result.included(resultSadd) == null);

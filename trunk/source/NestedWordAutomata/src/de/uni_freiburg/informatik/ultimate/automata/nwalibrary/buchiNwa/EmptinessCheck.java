@@ -238,7 +238,7 @@ public class EmptinessCheck<LETTER,STATE> {
 		/** Insert a reachable pair of states (source, target) the worklist. */
 		void enqueue(STATE source, STATE target) {
 			StatePair statePair = new StatePair(source, target); 
-			assert (! worklist.contains(statePair));
+//			assert (! worklist.contains(statePair));
 			worklist.addLast(statePair);
 		}
 		
