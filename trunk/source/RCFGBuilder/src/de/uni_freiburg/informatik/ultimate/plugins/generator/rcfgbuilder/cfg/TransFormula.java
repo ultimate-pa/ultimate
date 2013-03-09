@@ -96,7 +96,8 @@ public class TransFormula implements Serializable {
 		m_ClosedFormula = closedFormula;
 		assert (branchEncoders.size() > 0 || closedFormula.getFreeVars().length == 0);
 		m_Vars = new HashSet<TermVariable>(Arrays.asList(m_Formula.getFreeVars()));
-		assert (inOutAuxIsAll()) : "unnecessary many vars in TransFormula";
+		assert allSubsetInOutAuxBranch() : "unexpected vars in TransFormula";
+		assert InAuxSubsetAll() : "superfluous vars in TransFormula";
 		
 		// compute the assigned/updated variables. A variable is updated by this
 		// transition if it occurs as outVar and 
@@ -211,29 +212,43 @@ public class TransFormula implements Serializable {
 	}
 
 
-	private boolean inOutAuxIsAll() {
+	/**
+	 * Returns true if each Term variable in m_Vars occurs as
+	 * inVar, outVar, auxVar, or branchEncoder
+	 */
+	private boolean allSubsetInOutAuxBranch() {
 		boolean result = true;
 		for (TermVariable tv : m_Vars) {
 			result &= (m_InVars.values().contains(tv) || 
 					m_OutVars.values().contains(tv) || 
 					m_auxVars.contains(tv)
 					|| m_BranchEncoders.contains(tv));
-			assert result;
+			assert result : "unexpected variable in formula";
 		}
-//		for (TermVariable tv : m_InVars.values()) {
-//			result &= m_Vars.contains(tv);
-//			assert result;
-//		}
-//		for (TermVariable tv : m_OutVars.values()) {
-//			result &= m_Vars.contains(tv);
-//			assert result;
-//		}
 		for (TermVariable tv : m_auxVars) {
 			result &= m_Vars.contains(tv);
 			assert result : "unnecessary many vars in TransFormula";
 		}
 		return result;
 	}
+	
+	/**
+	 * Returns true if each Term variable in m_Vars occurs as
+	 * inVar, outVar, auxVar, or branchEncoder
+	 */
+	private boolean InAuxSubsetAll() {
+		boolean result = true;
+		for (TermVariable tv : m_InVars.values()) {
+			result &= m_Vars.contains(tv);
+			assert result : "superfluous inVar";
+		}
+		for (TermVariable tv : m_auxVars) {
+			result &= m_Vars.contains(tv);
+			assert result : "superfluous auxVar";
+		}
+		return result;
+	}
+	
 
 
 	public Term getFormula() {
@@ -541,11 +556,9 @@ public class TransFormula implements Serializable {
 				
 				// vars which are assigned in some but not all branches must
 				// also occur as inVar
-				// We could omit this step in the special case where the
-				// variable is assigned in all branches, 
-				// but we omitted this optimization in the current 
-				// implementation.				
-				if (!newInVars.containsKey(bv)) {
+				// We can omit this step in the special case where the
+				// variable is assigned in all branches.
+				if (!newInVars.containsKey(bv) && !assignedInAll(bv, transFormulas)) {
 					Sort sort = tf.getOutVars().get(bv).getSort();
 					String inVarName = bv.getIdentifier()+"_In"+ serialNumber;
 					newInVars.put(bv, script.variable(inVarName, sort));
@@ -647,6 +660,19 @@ public class TransFormula implements Serializable {
 				newInVars, newOutVars, auxVars, boogie2smt);
 		return new TransFormula(resultFormula, newInVars, newOutVars, auxVars, 
 				branchEncoders, inFeasibility, closedFormula);
+	}
+	
+	
+	/**
+	 * Return true iff bv is assigned in all transFormulas. 
+	 */
+	private static boolean assignedInAll(BoogieVar bv, TransFormula... transFormulas) {
+		for (TransFormula tf : transFormulas) {
+			if (!tf.getAssignedVars().contains(bv)) {
+				return false;
+			}
+		}
+		return true;
 	}
 
 
