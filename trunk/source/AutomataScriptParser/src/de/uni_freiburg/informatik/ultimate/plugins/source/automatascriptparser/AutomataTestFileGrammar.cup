@@ -919,10 +919,8 @@ operation_invocation ::=
 		IDENTIFIER:opName LPAREN argument_list_opt:args RPAREN:r
         {:  if (opName.equals("parseAutomata")) {
         	   for (Object arg : args.getArguments()) {
-        		   if (arg instanceof String) {
-        			   m_filesToParse.add((String) arg);
-        		   } else if ((arg instanceof ConstantExpression) && (((ConstantExpression)arg).isTypeCorrect(String.class)) ) {
-        			   m_filesToParse.add((String) ((ConstantExpression) arg).getValue());
+        		   if (arg instanceof VariableExpression) {
+        			   m_filesToParse.add(((VariableExpression) arg).getIdentifier());
         		   }
         	   }
         	   RESULT = null;
