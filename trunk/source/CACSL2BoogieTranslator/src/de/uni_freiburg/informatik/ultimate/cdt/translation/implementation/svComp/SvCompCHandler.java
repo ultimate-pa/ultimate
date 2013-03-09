@@ -180,7 +180,7 @@ public class SvCompCHandler extends CHandler {
                 String tmpName = main.nameHandler.getTempVarUID(SFO.AUXVAR.NONDET);
                 VariableDeclaration tVarDecl = SFO.getTempVarVariableDeclaration(tmpName, type, loc);
                 decl.add(tVarDecl);
-                stmt.add(new HavocStatement(loc, new String[]{ tmpName }));
+                auxVars.put(tVarDecl, loc);
                 expr = new IdentifierExpression(loc, type, tmpName );
                 return new ResultExpression(stmt, expr, decl, auxVars);
             }
