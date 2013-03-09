@@ -233,13 +233,13 @@ public class TransFormula implements Serializable {
 	}
 	
 	/**
-	 * Returns true if each Term variable in m_Vars occurs as
-	 * inVar, outVar, auxVar, or branchEncoder
+	 * Returns true each auxVar is in allVars and 
+	 * each inVar occurs in allVars or as outVar. 
 	 */
 	private boolean InAuxSubsetAll() {
 		boolean result = true;
-		for (TermVariable tv : m_InVars.values()) {
-			result &= m_Vars.contains(tv);
+		for (BoogieVar bv : m_InVars.keySet()) {
+			result &= (m_Vars.contains(m_InVars.get(bv)) || m_OutVars.containsKey(bv));
 			assert result : "superfluous inVar";
 		}
 		for (TermVariable tv : m_auxVars) {
