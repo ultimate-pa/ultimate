@@ -241,7 +241,7 @@ public class MainDispatcher extends Dispatcher {
         nameHandler = new NameHandler();
         backtranslator.setBoogie2C(nameHandler.getBoogie2C());
         preprocessorHandler = new PreprocessorHandler();
-        notifyUltimate = true;
+        REPORT_WARNINGS = true;
     }
 
     @Override

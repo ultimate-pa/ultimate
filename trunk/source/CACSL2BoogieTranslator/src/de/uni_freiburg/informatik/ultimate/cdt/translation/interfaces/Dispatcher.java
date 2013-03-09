@@ -76,9 +76,9 @@ public abstract class Dispatcher {
      */
     public IPreprocessorHandler preprocessorHandler;
     /**
-     * Whether UltimateServices is informed about warnings.
+     * This plugin creates results for warnings if set to true.
      */
-    protected static boolean notifyUltimate = true;
+    protected static boolean REPORT_WARNINGS = true;
     /**
      * Translation from Boogie to C for traces and expressions.
      */
@@ -213,7 +213,7 @@ public abstract class Dispatcher {
         		loc, shortDescription, longDescription, GenericResult.Severity.WARNING);
         UltimateServices us = UltimateServices.getInstance();
         us.getLogger(Activator.s_PLUGIN_ID).warn(longDescription);
-        if (!notifyUltimate)
+        if (!REPORT_WARNINGS)
             return;
         us.reportResult(Activator.s_PLUGIN_ID, result);
     }
@@ -242,7 +242,7 @@ public abstract class Dispatcher {
 //        } else {
 //            us.getLogger(Activator.s_PLUGIN_ID).warn(longDesc);
 //        }
-//        if (!notifyUltimate)
+//        if (!REPORT_WARNINGS)
 //            return;
 //        us.reportResult(Activator.s_PLUGIN_ID, result);
 //    }
@@ -270,7 +270,7 @@ public abstract class Dispatcher {
         } else {
             us.getLogger(Activator.s_PLUGIN_ID).warn(longDesc);
         }
-        if (!notifyUltimate)
+        if (!REPORT_WARNINGS)
             return;
         us.reportResult(Activator.s_PLUGIN_ID, result);
     }

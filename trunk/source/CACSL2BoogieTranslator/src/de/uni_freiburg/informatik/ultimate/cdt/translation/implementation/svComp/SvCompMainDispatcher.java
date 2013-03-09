@@ -29,6 +29,6 @@ public class SvCompMainDispatcher extends MainDispatcher {
         acslHandler = new ACSLHandler();
         nameHandler = new NameHandler();
         preprocessorHandler = new PreprocessorHandler();
-        notifyUltimate = false;
+        REPORT_WARNINGS = false;
     }
 }
