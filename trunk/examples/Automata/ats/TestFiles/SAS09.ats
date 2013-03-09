@@ -4,6 +4,13 @@
 // letters which consist of string with arbitrary symbols encompassed by quotes,
 // e.g. "L20loopEntry'21" are not parsed yet
 
+// (musab): Issue from above fixed. Strings now can be used as Identifiers.
+
+nw word = ["L20loopEntry'21"];
+
+accepts(nwaSAS09, word);
+assert(accepts(nwaSAS09, word));
+
 nwa nwaSAS09 = (
 	callAlphabet = {},
 	internalAlphabet = {"assume -1 != y;assum...35" "assume !(-1 != y);32" "x := 0;y := 0;24" "x := x + 1;28" "assume -1 != x;31" "assume !(-1 != x);30" },
@@ -11,18 +18,13 @@ nwa nwaSAS09 = (
 	states = {"L20loopEntry'21" "SAS09paperENTRY20" "L2523" "SAS09paperErr1AssertViolation22" },
 	initialStates = {"SAS09paperENTRY20" },
 	finalStates = {"SAS09paperErr1AssertViolation22" },
-	callTransitions = {
-	},
+	callTransitions = { },
 	internalTransitions = {
 		 ("L20loopEntry'21" "x := x + 1;28" "L20loopEntry'21")
 		 ("L20loopEntry'21" "assume -1 != x;31" "L2523")
 		 ("SAS09paperENTRY20" "x := 0;y := 0;24" "L20loopEntry'21")
 		 ("L2523" "assume !(-1 != y);32" "SAS09paperErr1AssertViolation22")
 	},
-	returnTransitions = {
-	}
+	returnTransitions = { }
 )
 
-nw word = ["L20loopEntry'21"];
-
-accepts(nwaSAS09, nw);

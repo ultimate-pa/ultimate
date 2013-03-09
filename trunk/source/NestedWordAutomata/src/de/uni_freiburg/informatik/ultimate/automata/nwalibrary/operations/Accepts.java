@@ -52,6 +52,9 @@ public class Accepts<LETTER,STATE> extends AbstractAcceptance<LETTER,STATE>
 		m_IsAccepted = isAccepted();
 		s_Logger.info(exitMessage());
 	}
+	public Accepts(INestedWordAutomaton<LETTER,STATE> automaton, NestedWord<LETTER> word) {
+		this(automaton, word, false, false);
+	}
 
 	@Override
 	public String operationName() {

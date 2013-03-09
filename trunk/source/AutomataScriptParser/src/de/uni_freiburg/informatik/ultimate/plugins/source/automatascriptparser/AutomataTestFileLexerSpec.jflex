@@ -57,7 +57,7 @@ IntegerLiteral = 0 | [1-9][0-9]*
 /* string and character literals */
 StringCharacter = [^\r\n\"\\]
 
-%state STRING, CHARLITERAL
+%state STRING
 %%
 
 /* ------------------------Lexical Rules Section---------------------- */
@@ -157,7 +157,7 @@ StringCharacter = [^\r\n\"\\]
 
 }
 <STRING> {
-  \"                             { yybegin(YYINITIAL); return symbol(sym.STRING_LITERAL, string.toString()); }
+  \"                             { yybegin(YYINITIAL); return symbol(sym.IDENTIFIER, string.toString()); }
   
   {StringCharacter}+             { string.append( yytext() ); }
   

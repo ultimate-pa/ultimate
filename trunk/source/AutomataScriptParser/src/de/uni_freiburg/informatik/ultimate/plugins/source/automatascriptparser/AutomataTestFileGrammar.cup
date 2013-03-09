@@ -106,9 +106,11 @@ parser code {:
     public void report_fatal_error(String message, Object info) {
         report_error(message, info);
         report_error("Parsing aborted.", null);
-        // System.exit(1);
     }
     
+    public void unrecovered_syntax_error(Symbol cur_token) {
+    	 report_fatal_error("Couldn't repair and continue parse", cur_token);
+    }
     
     public boolean containsOtherAutomataFilesToParse() {
     	return action_obj.containsOtherAutomataFilesToParse();
@@ -152,7 +154,6 @@ terminal Object NESTED_WORD, NESTED_LASSO_WORD;
 
 terminal java.lang.Integer INTEGER_LITERAL;
 terminal java.lang.Boolean BOOLEAN_LITERAL;
-terminal java.lang.String STRING_LITERAL;
 terminal java.lang.String IDENTIFIER; // name
 
 
@@ -268,10 +269,6 @@ literal ::=	INTEGER_LITERAL:i
 	|	BOOLEAN_LITERAL:b
                 {: ConstantExpression c = new ConstantExpression(b);
                    c.setLocation(getLocation(b$, b$));
-                   RESULT = c;:}
-	|	STRING_LITERAL:s
-                {: ConstantExpression c = new ConstantExpression(s);
-                   c.setLocation(getLocation(s$, s$));
                    RESULT = c;:}
     |       word_literal:w
                 {: RESULT = w; :}
