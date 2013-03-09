@@ -1,0 +1,12 @@
+#Sat Oct 13 11:29:09 CEST 2012
+/configuration/RCFGBuilder/Timeout=10
+/configuration/RCFGBuilder/DifferenceSenwa=false
+/configuration/RCFGBuilder/HoareAnnotation=true
+file_export_version=3.0
+/configuration/BlockEncoding/MinimizeCall=true
+\!/configuration/BlockEncoding=
+#Mon Feb 25 17:43:54 CET 2013
+file_export_version=3.0
+/configuration/RCFGBuilder/BlockSize=single program statement
+\!/configuration/RCFGBuilder=
+/configuration/RCFGBuilder/PreserveGotoEdges=true
