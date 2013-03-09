@@ -138,6 +138,7 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 			Map<ProgramPoint, ILocation> loopLocations = rootAnnot
 					.getLoopLocations();
 			for (ProgramPoint locNode : loopLocations.keySet()) {
+				assert (locNode.getAstNode() != null) : "locNode without ASTNode";
 				HoareAnnotation hoare = getHoareAnnotation(locNode);
 				if (hoare != null) {
 					InvariantResult<RcfgElement, Expression> invResult = 
