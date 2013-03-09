@@ -651,7 +651,7 @@ public class TestFileInterpreter {
 			if (arguments.get(1) instanceof NestedWord<?>) {
 				nw = (NestedWord<String>) arguments.get(1);
 			}
-			return new Acceptance<String, String>(nwa, nw, false, false);
+			return new Accepts<String, String>(nwa, nw, false, false);
 		} else if (opName.equalsIgnoreCase("complement")) {
 			if (arguments.size() != 1) {
 				// TODO: Print some error message
@@ -662,7 +662,7 @@ public class TestFileInterpreter {
 				nwa = (NestedWordAutomaton<String, String>) arguments.get(0);
 			}
 			try {
-				return (new Complement<String, String>()).new ComplementSadd(nwa);
+				return (new Complement<String, String>(nwa));
 			} catch (OperationCanceledException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
