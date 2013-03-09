@@ -26,7 +26,6 @@ public class AutomataScriptInterpreterObserver implements IUnmanagedObserver {
 	
 	@Override
 	public boolean process(IElement root) {
-//		Map<String, Class<?>> test = getOperations();
 		TestFileInterpreter ti = new TestFileInterpreter();
 		try {
 			ti.interpretTestFile((AtsASTNode)root);
@@ -64,73 +63,5 @@ public class AutomataScriptInterpreterObserver implements IUnmanagedObserver {
 	
 
 	
-	
-	static private Map<String, Class<?>> getOperations() {
-		Map<String, Class<?>> result = new HashMap<String, Class<?>>();
-		String baseDir = "/de/uni_freiburg/informatik/ultimate/automata/nwalibrary/operations";
-		String[] dirs = { "", "buchiReduction" };
-		for (String dir : dirs) {
-			String[] files = filesInDirectory(baseDir + "/" + dir);
-			for (String file : files) {
-				if (file.endsWith(".class")) {
-					String withoutSuffix = file.substring(0, file.length()-6);
-					String path = baseDir + "." + withoutSuffix;
-					Class<?> clazz = null;
-					try {
-						clazz = Class.forName(path);
-					} catch (ClassNotFoundException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
-					if (true) {
-						String operationName = withoutSuffix.toLowerCase();
-						result.put(operationName, clazz);
-					}
-				}
-			}
-		}
-		return result;
-	}
-	
-	
-	
-	/**
-	 * Return the filenames of the files in the folder
-	 * /resources/examples/ + dirSuffix (path given relative to root of this
-	 * package).
-	 * 
-	 * We use the classloader to get the URL of this folder. We support only
-	 * URLs with protocol <i>file</i> and <i>bundleresource</i>.
-	 * At the moment these are the only ones that occur in Website and
-	 * WebsiteEclipseBridge.
-	 */
-	private static String[] filesInDirectory(String dir) {
-		URL dirURL = IOperation.class.getClassLoader().getResource(dir);
-		if (dirURL == null) {
-			throw new UnsupportedOperationException("directory does not exist");
-		}
-		String protocol = dirURL.getProtocol();
-		File dirFile = null;
-		if (protocol.equals("file")) {
-			try {
-				dirFile = new File(dirURL.toURI());
-			} catch (URISyntaxException e) {
-				e.printStackTrace();
-				throw new UnsupportedOperationException("directory does not exist");
-			}
-		} else if (protocol.equals("bundleresource")) {
-			try {
-				URL fileURL = FileLocator.toFileURL(dirURL);
-				dirFile = new File(fileURL.toURI());
-			} catch (Exception e) {
-				e.printStackTrace();
-				throw new UnsupportedOperationException("directory does not exist");
-			}
-		} else {
-			throw new UnsupportedOperationException("unknown protocol");
-		}
-		String[] files = dirFile.list();
-		return files;
-	}
 	
 }

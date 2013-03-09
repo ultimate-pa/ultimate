@@ -178,6 +178,6 @@ StringCharacter = [^\r\n\"\\]
 }
 
 /* error fallback */
-.|\n                             { throw new RuntimeException("Illegal character \""+yytext()+ "\" at line "+(yyline + 1) + ", column "+( yycolumn + 1)); }
+.|\n                             { throw new RuntimeException("ErrorFallback: Illegal character \""+yytext()+ "\" at line "+(yyline + 1) + ", column "+( yycolumn + 1)); }
 /* EndOfFile */
 <<EOF>>                          { return symbol(sym.EOF); }

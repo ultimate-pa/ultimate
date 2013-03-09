@@ -22,6 +22,7 @@ public class NestedLassoword extends AtsASTNode {
 	public NestedLassoword(Nestedword nw1, Nestedword nw2) {
 		m_nw1 = nw1;
 		m_nw2 = nw2;
+		setType(this.getClass());
 	}
 
 	@Override

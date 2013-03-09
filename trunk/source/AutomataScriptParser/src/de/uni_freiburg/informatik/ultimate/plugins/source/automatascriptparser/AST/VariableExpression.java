@@ -29,10 +29,6 @@ public class VariableExpression extends AtsASTNode {
 		this.m_Identifier = identifier;
 	}
 	
-	public void setType(Class<?> type) {
-		m_returnType = type;
-		m_expectingType = type;
-	}
 
 	@Override
 	public String toString() {

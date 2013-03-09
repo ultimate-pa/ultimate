@@ -97,6 +97,18 @@ public class AtsASTNode extends BaseAST<AtsASTNode> {
 		return m_expectingType;
 	}
 
+	public void setType(Class<?> type) {
+		setReturnType(type);
+		setExpectingType(type);
+	}
+	
+	public void setReturnType(Class<?> type) {
+		m_returnType = type;
+	}
+	
+	public void setExpectingType(Class<?> type) {
+		m_expectingType = type;
+	}
 	
 	
 	public ILocation getLocation() {

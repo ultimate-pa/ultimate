@@ -52,6 +52,7 @@ public class Nestedword extends AtsASTNode {
 		m_Word = new ArrayList<String>();
 		m_NestingRelation = new ArrayList<Integer>();
 		m_sizeOfWordSymbols = 0;
+		setType(this.getClass());
 	}
 	
 	public void addSymbol(CallSymbol c) {

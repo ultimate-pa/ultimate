@@ -320,9 +320,6 @@ nested_word_symbol ::= IDENTIFIER:i        /* This is an internal symbol */
                        {: RESULT = new ReturnSymbol(i); :}
         ;
           
-                  
-                   
-
 // 3. Types
 type	::=     INT
                 {: RESULT = Integer.class; :}
@@ -342,9 +339,6 @@ name	::=	IDENTIFIER:v
 				var.setLocation(getLocation(v$, v$));
                            if ((v != null) && (m_varDeclarations.containsKey(v))) { 
                               var.setType(m_varDeclarations.get(v));
-                           } else {
-                        	 reportError("warn", var.getLocation());  
-                             reportError("warn", v + " was not declared before, but it may be declared later, if it is an automaton");
                            }
                            RESULT = var;  
                         :}
@@ -354,7 +348,8 @@ name	::=	IDENTIFIER:v
 variable_declaration ::=
 		type:t variable_declarators:varLst
                 {: RESULT = varLst;
-				   varLst.setLocation(getLocation(t$, varLst$));	
+				   varLst.setLocation(getLocation(t$, varLst$));
+				   varLst.setType(t);
                    if (varLst instanceof VariableDeclaration) {
                 	  for (String id : ((VariableDeclaration) varLst).getIdentifiers()) {
                 		  m_varDeclarations.put(id, t);
@@ -495,6 +490,18 @@ statement_expression ::=
                 {: RESULT = e; :}
 	|       operation_invocation:e
                 {: RESULT = e; :}
+    |    NOT:n operation_invocation:e
+    			{:  RESULT = null;
+					ILocation loc  = getLocation(n$, e$);
+                    if ((e instanceof AtsASTNode)) {
+                    	ConditionalBooleanExpression cbe = new ConditionalBooleanExpression((AtsASTNode) e);
+                    	cbe.setOperator(ConditionalBooleanOperator.NOT);
+                    	cbe.setLocation(loc);
+                    	RESULT = cbe;
+      	               } else {
+      	            	   reportError("error",  loc);
+      	            	   reportError("error",  "Parser_CondNotExpr: Expecting AtsASTNode Got:(Cond1) " + (e != null ? e.getClass().getSimpleName(): "null"));
+      	               }:}
 	;
 
 // 6.2 Conditional Statements
@@ -929,11 +936,6 @@ operation_invocation ::=
             	reportError("error", args.getLocation());
             	reportError("error", "Parser_OperationInvocation: Got wrong arguments " + args.getClass().getSimpleName());
             }
-//            This is not needed at the moment!
-//            if (!(op.existsMethod(opName, params))) {
-//            	reportError("error", getLocation(opName$, opName$));
-//            	reportError("error", "Parser_OperationInvocation: " + op.getErrorMessage());
-//            }
             RESULT = op; 
         	}
             :}
