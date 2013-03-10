@@ -2,7 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: BlockEncoding
 Bundle-SymbolicName: BlockEncoding;singleton:=true
-Bundle-Version: 1.0.0
+Bundle-Version: 0.0.1
 Bundle-Activator: de.uni_freiburg.informatik.ultimate.plugins.generator.blockendcoding.Activator
 Require-Bundle: UltimateCore,
  Library-log4j;bundle-version="1.2.15",

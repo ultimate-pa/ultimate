@@ -175,6 +175,7 @@
 		<module>../IRSDependencies</module>
 		<module>../AutomataLibraryRandomizedTests</module>
 		<module>../AutomataScriptParser</module>
+		<module>../BlockEncoding</module>
 	</modules>
 
 
