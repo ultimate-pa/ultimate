@@ -2067,7 +2067,7 @@ public class CHandler implements ICHandler {
         Map<VariableDeclaration, CACSLLocation> emptyAuxVars = new HashMap<VariableDeclaration, CACSLLocation>(
                 0);
         String label = node.getName().toString();
-        if (label.equals("ERROR")) {
+        if (m_ErrorLabelWarning && label.equals("ERROR")) {
         	String shortDescription = "ERROR label found";
         	String longDescription =  "The label \"ERROR\" does not have a special meaning in the translation mode you selected. You might want to change your settings and use the SV-COMP translation mode.";  
         	Dispatcher.warn(loc, shortDescription, longDescription);
@@ -2103,6 +2103,46 @@ public class CHandler implements ICHandler {
             return new ResultExpression(stmt, expr, decl, emptyAuxVars);
         }
     }
+    
+    public Result handleLabelCommonCode(Dispatcher main, IASTLabelStatement node, CACSLLocation loc) {
+
+        ArrayList<Statement> stmt = new ArrayList<Statement>();
+        ArrayList<Declaration> decl = new ArrayList<Declaration>();
+        Map<VariableDeclaration, CACSLLocation> emptyAuxVars = new HashMap<VariableDeclaration, CACSLLocation>(
+                0);
+        String label = node.getName().toString();
+        stmt.add(new Label(loc, label));
+        Result r = main.dispatch(node.getNestedStatement());
+        if (r instanceof ResultExpression) {
+            ResultExpression res = (ResultExpression) r;
+            decl.addAll(res.decl);
+            stmt.addAll(res.stmt);
+            return new ResultExpression(stmt, res.expr, decl, emptyAuxVars);
+        } else if (r instanceof ResultSkip) {
+            return new ResultExpression(stmt, null, decl, emptyAuxVars);
+        } else { // r instanceof Result ...
+            Expression expr = null;
+            if (r.node instanceof Statement) {
+                stmt.add((Statement) r.node);
+            } else if (r.node instanceof Declaration) {
+                decl.add((Declaration) r.node);
+            } else if (r.node instanceof Expression) {
+                expr = (Expression) r.node;
+            } else if (r.node instanceof Body) {
+                // we already have a unique naming for variables! --> unfold
+                Body b = ((Body) r.node);
+                decl.addAll(Arrays.asList(b.getLocalVars()));
+                stmt.addAll(Arrays.asList(b.getBlock()));
+            } else {
+                String msg = "Unexpected boogie AST node type: "
+                        + r.node.getClass();
+                Dispatcher.error(loc, SyntaxErrorType.UnsupportedSyntax, msg);
+                throw new UnsupportedSyntaxException(msg);
+            }
+            return new ResultExpression(stmt, expr, decl, emptyAuxVars);
+        }
+    }
+    
 
     @Override
     public Result visit(Dispatcher main, IASTGotoStatement node) {

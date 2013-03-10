@@ -55,6 +55,10 @@ public class Check extends AbstractAnnotations {
 	     */
 	    INVALID_MEMORY_ACCESS,
 	    /**
+	     * Error label reachable. 
+	     */
+	    ERROR_LABEL,
+	    /**
 	     * Not further specified or unknown.
 	     */
 	    UNKNOWN
@@ -98,6 +102,8 @@ public class Check extends AbstractAnnotations {
 			return "free always succeeds";
 		case INVALID_MEMORY_ACCESS:
 			return "memory access is always valid";
+		case ERROR_LABEL:
+			return "ERROR label is not reachable";
 		case UNKNOWN:
 			return "unknown kind of specification holds";
 		default:
@@ -127,6 +133,8 @@ public class Check extends AbstractAnnotations {
 			return "free of unallocated memory possible";
 		case INVALID_MEMORY_ACCESS:
 			return "memory access might be invalid";
+		case ERROR_LABEL:
+			return "ERROR label is reachable";
 		case UNKNOWN:
 			return "unknown kind of specification may be violated";
 		default:

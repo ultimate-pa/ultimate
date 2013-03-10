@@ -65,6 +65,8 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.Backtranslator;
+import de.uni_freiburg.informatik.ultimate.result.Check;
+import de.uni_freiburg.informatik.ultimate.result.Check.Spec;
 import de.uni_freiburg.informatik.ultimate.result.SyntaxErrorResult.SyntaxErrorType;
 
 /**
@@ -110,7 +112,7 @@ public class SvCompCHandler extends CHandler {
     public Result visit(Dispatcher main, IASTGotoStatement node) {
         String label = node.getName().toString();
         if (label.equals(ERROR_STRING)) {
-            CACSLLocation loc = new CACSLLocation(node);
+            CACSLLocation loc = new CACSLLocation(node, new Check(Spec.ERROR_LABEL));
             ArrayList<Statement> stmt = new ArrayList<Statement>();
             stmt.add(new AssertStatement(loc, new BooleanLiteral(loc,
                     new InferredType(Type.Boolean), false)));
@@ -126,7 +128,7 @@ public class SvCompCHandler extends CHandler {
         ResultExpression r = (ResultExpression) super.visit(main, node);
         String label = node.getName().toString();
         if (label.equals(ERROR_STRING)) {
-            CACSLLocation loc = new CACSLLocation(node);
+            CACSLLocation loc = new CACSLLocation(node, new Check(Spec.ERROR_LABEL));
             r.stmt.add(1, new AssertStatement(loc, new BooleanLiteral(loc,
                     new InferredType(Type.Boolean), false)));
         }
@@ -182,6 +184,7 @@ public class SvCompCHandler extends CHandler {
                 decl.add(tVarDecl);
                 auxVars.put(tVarDecl, loc);
                 expr = new IdentifierExpression(loc, type, tmpName );
+                assert (main.isAuxVarMapcomplete(decl, auxVars));
                 return new ResultExpression(stmt, expr, decl, auxVars);
             }
         if (methodName.equals("printf")) {
@@ -200,6 +203,7 @@ public class SvCompCHandler extends CHandler {
             decl.add(tVarDecl);
             stmt.add(new HavocStatement(loc, tId));
             expr = new IdentifierExpression(loc, type, tId[0]);
+            assert (main.isAuxVarMapcomplete(decl, auxVars));
             return new ResultExpression(stmt, expr, decl, auxVars);
         }
         return super.visit(main, node);
