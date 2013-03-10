@@ -42,7 +42,8 @@ public class HoareAnnotation extends SPredicate {
 	 */
 	private static final long serialVersionUID = 72852101509650437L;
 	
-	private final Script m_Script;
+//	private final Script m_Script;
+	private final SmtManager m_SmtManager;
 	
 	private final Map<Term,Term> m_Precondition2Invariant = 
 												new HashMap<Term,Term>();
@@ -50,11 +51,11 @@ public class HoareAnnotation extends SPredicate {
 	
 	private boolean m_FormulaHasBeenComputed = false;
 
-	public HoareAnnotation(ProgramPoint programPoint, int serialNumber, Script script) {
+	public HoareAnnotation(ProgramPoint programPoint, int serialNumber, SmtManager smtManager) {
 		super(programPoint, serialNumber, 
-				new String[]{programPoint.getProcedure()}, script.term("true"), 
+				new String[]{programPoint.getProcedure()}, smtManager.getScript().term("true"), 
 				new HashSet<BoogieVar>(), null);
-		m_Script = script;
+		m_SmtManager = smtManager;
 	}
 	
 	
@@ -105,7 +106,7 @@ public class HoareAnnotation extends SPredicate {
 			invarForPrecond = locInvarFormula;
 		}
 		else {
-			invarForPrecond = Util.and(m_Script,invarForPrecond, locInvarFormula);
+			invarForPrecond = Util.and(m_SmtManager.getScript(),invarForPrecond, locInvarFormula);
 		}
 //		invarForPrecond = (new SimplifyDDA(m_Script, s_Logger)).getSimplifiedTerm(invarForPrecond);
 //		procPrecondFormula = (new SimplifyDDA(m_Script, s_Logger)).getSimplifiedTerm(procPrecondFormula);
@@ -124,14 +125,17 @@ public class HoareAnnotation extends SPredicate {
 	
 	private void computeFormula() {
 		for (Term precond : getPrecondition2Invariant().keySet()) {
-			Term precondTerm = Util.implies(m_Script,precond, 
+			Term precondTerm = Util.implies(m_SmtManager.getScript(),precond, 
 					getPrecondition2Invariant().get(precond));
 			s_Logger.debug("In "+ this + " holds " + getPrecondition2Invariant().get(precond) + " for precond " + precond);
-			 m_Formula = Util.and(m_Script, m_Formula, precondTerm);	 
+			 m_Formula = Util.and(m_SmtManager.getScript(), m_Formula, precondTerm);	 
 		}
-		m_Formula = (new FormulaUnLet()).unlet(m_Formula);
-		m_Formula = (new SimplifyDDA(m_Script, s_Logger)).getSimplifiedTerm(m_Formula);
+		m_Formula = m_SmtManager.substituteOldVarsOfNonModifiableGlobals(
+				getProgramPoint().getProcedure(), m_Vars, m_Formula);
+		m_Formula = (new SimplifyDDA(m_SmtManager.getScript(), s_Logger)).getSimplifiedTerm(m_Formula);
 	}
+	
+
 	
 
 	/**

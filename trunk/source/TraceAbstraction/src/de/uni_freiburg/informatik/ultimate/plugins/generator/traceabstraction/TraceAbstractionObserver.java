@@ -73,6 +73,7 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 
 		SmtManager smtManager = new SmtManager(rootAnnot.getBoogie2Smt(),
 				taPrefs.solver(), rootAnnot.getGlobalVars(),
+				rootAnnot.getModifiedVars(),
 				taPrefs.dumpFormulas(), taPrefs.dumpPath());
 
 		Map<String, Collection<ProgramPoint>> proc2errNodes = rootAnnot.getErrorNodes();

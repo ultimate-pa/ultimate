@@ -69,6 +69,7 @@ public class SmtManager {
 	private final Smt2Boogie m_Smt2Boogie;
 	private final Script m_Script;
 	private final Map<String,ASTType> m_GlobalVars;
+	private final Map<String, Map<String, ASTType>> m_ModifiableGlobals;
 	private final boolean m_DumpFormulaToFile;
 	private final String m_DumpPath;
 	private int m_Iteration;
@@ -116,6 +117,7 @@ public class SmtManager {
 	public SmtManager(Smt2Boogie smt2Boogie,
 					Solver solver, 
 					Map<String,ASTType> globalVars,
+					Map<String, Map<String, ASTType>> modifiableGlobals, 
 					boolean dumpFormulaToFile,
 					String dumpPath) {
 		m_DontCareTerm = new AuxilliaryTerm("don't care");
@@ -123,6 +125,7 @@ public class SmtManager {
 		m_Smt2Boogie = smt2Boogie;
 		m_Script = m_Smt2Boogie.getScript();
 		m_GlobalVars = globalVars;
+		m_ModifiableGlobals =  modifiableGlobals;
 		m_DumpFormulaToFile = dumpFormulaToFile;
 		m_DumpPath = dumpPath;
 	}
@@ -259,8 +262,41 @@ public class SmtManager {
 		return result;
 	}
 	
-	
-	
+
+	/**
+	 * For each oldVar in vars that is not modifiable by procedure proc:
+	 * substitute the oldVar by the corresponding globalVar in term and
+	 * remove the oldvar from vars.
+	 */
+	public Term substituteOldVarsOfNonModifiableGlobals(String procedure, Set<BoogieVar> vars,  Term term) {
+		final Map<String, ASTType> modifiableByProc = m_ModifiableGlobals.get(procedure);
+		List<BoogieVar> replacedOldVars = new ArrayList<BoogieVar>();
+		
+		ArrayList<TermVariable> replacees = new ArrayList<TermVariable>();
+		ArrayList<Term> replacers = new ArrayList<Term>();
+		
+		for (BoogieVar bv : vars) {
+			if (bv.isOldvar()) {
+				String identifier = bv.getIdentifier();
+				if (!modifiableByProc.containsKey(identifier)) {
+					replacees.add(bv.getTermVariable());
+					replacers.add(getNonOldVar(bv).getTermVariable());
+					replacedOldVars.add(bv);
+				}
+			}
+		}
+		
+		TermVariable[] substVars = replacees.toArray(new TermVariable[replacees.size()]);
+		Term[] substValues = replacers.toArray(new Term[replacers.size()]);
+		Term result = m_Script.let( substVars , substValues, term);
+		result = (new FormulaUnLet()).unlet(result);
+		
+		for (BoogieVar bv  : replacedOldVars) {
+			vars.remove(bv);
+			vars.add(getNonOldVar(bv));
+		}
+		return result;
+	}
 	
 
 
@@ -2884,7 +2920,7 @@ public class SmtManager {
 	}
 	
 	public HoareAnnotation getNewHoareAnnotation(ProgramPoint pp) {
-		return new HoareAnnotation(pp, m_SerialNumber++, m_Smt2Boogie.getScript());
+		return new HoareAnnotation(pp, m_SerialNumber++, this);
 	}
 	
 	public class TermVarsProc {

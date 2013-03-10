@@ -110,7 +110,8 @@ public class ReImpactObserver implements IUnmanagedObserver {
 		m_rootAnnot = m_graphRoot.getRootAnnot();
 		m_taPrefs = m_rootAnnot.getTaPrefs();
 		m_smtManager = new SmtManager(m_rootAnnot.getBoogie2Smt(), 
-				Solver.SMTInterpol, m_rootAnnot.getGlobalVars(), false, "");
+				Solver.SMTInterpol, m_rootAnnot.getGlobalVars(), 
+				m_rootAnnot.getModifiedVars(), false, "");
 		
 		m_truePredicate = m_smtManager.newTruePredicate();
 		m_falsePredicate = m_smtManager.newFalsePredicate();

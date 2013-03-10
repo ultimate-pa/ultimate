@@ -56,6 +56,7 @@ public class TraceAbstractionConcurrentObserver implements IUnmanagedObserver {
 					rootNode.getRootAnnot().getBoogie2Smt(),
 					taPrefs.solver(),
 					rootNode.getRootAnnot().getGlobalVars(),
+					rootNode.getRootAnnot().getModifiedVars(),
 					false,
 					taPrefs.dumpPath());
 		

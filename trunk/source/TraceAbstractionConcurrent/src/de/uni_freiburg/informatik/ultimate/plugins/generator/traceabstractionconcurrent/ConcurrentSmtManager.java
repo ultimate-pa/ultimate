@@ -15,9 +15,9 @@ public class ConcurrentSmtManager extends SmtManager {
 
 	
 	public ConcurrentSmtManager(Smt2Boogie smt2Boogie, Solver solver,
-			Map<String, ASTType> globalVars, boolean dumpFormulaToFile,
+			Map<String, ASTType> globalVars, Map<String, Map<String, ASTType>> modifiableGlobals, boolean dumpFormulaToFile,
 			String dumpPath) {
-		super(smt2Boogie, solver, globalVars, dumpFormulaToFile, dumpPath);
+		super(smt2Boogie, solver, globalVars, modifiableGlobals, dumpFormulaToFile, dumpPath);
 		// TODO Auto-generated constructor stub
 	}
 
