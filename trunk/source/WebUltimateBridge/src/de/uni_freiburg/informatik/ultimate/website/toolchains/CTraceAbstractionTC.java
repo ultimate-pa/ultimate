@@ -69,8 +69,11 @@ public class CTraceAbstractionTC extends Toolchain {
     protected List<Tool> setTools() {
         List<Tool> tools = new ArrayList<Tool>();
         List<Setting> oCACSL = new ArrayList<Setting>();
-//        oCACSL.add(new Setting("/CheckedMethod", Setting.SettingType.STRING,
-//                "Checked Method: ", "main", true));
+        oCACSL.add(new Setting("/CheckedMethod", Setting.SettingType.STRING,
+                "Starting procedure: ", "main", true));
+        oCACSL.add(new Setting("/Translation-Mode", "Translation Mode",
+				new String[] { "Best SV_COMP" }, false, new String[] {
+						"BASE", "SV_COMP" }, true));
         List<Setting> mCACSL = new ArrayList<Setting>();
         tools.add(new Tool("CACSL2BoogieTranslator", oCACSL, mCACSL,
                 LoggingLevel.WARN));
@@ -86,14 +89,16 @@ public class CTraceAbstractionTC extends Toolchain {
         tools.add(new Tool("RCFGBuilder", oRCFGB, mRCFGB, LoggingLevel.WARN));
 
         List<Setting> oTrAbs = new ArrayList<Setting>();
-        oTrAbs.add(new Setting("", Setting.SettingType.STRING, "Mode",
-                "StrongestPost", true));
-        oTrAbs.add(new Setting("/AllErrorsAtOnce", Setting.SettingType.BOOLEAN,
-        		"check all specifications at once", "false", true));
+//        oTrAbs.add(new Setting("", Setting.SettingType.STRING, "Mode",
+//                "StrongestPost", true));
+//        oTrAbs.add(new Setting("/AllErrorsAtOnce", Setting.SettingType.BOOLEAN,
+//        		"check all specifications at once", "false", true));
 //        oTrAbs.add(new Setting("/Minimize", Setting.SettingType.BOOLEAN,
 //                "Use Minimization", "true", true));
         oRCFGB.add(new Setting("/HoareAnnotation", Setting.SettingType.BOOLEAN,
                 "Compute Hoare Annotation", "true", true));
+        oRCFGB.add(new Setting("/Timeout", Setting.SettingType.INTEGER,
+                "Timeout", "300", false));
 //        oTrAbs.add(new Setting("/Edges2True", Setting.SettingType.BOOLEAN,
 //                "Edges to true", "true", true));
 //        oTrAbs.add(new Setting("/Interpolants", Setting.SettingType.STRING,
