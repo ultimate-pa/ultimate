@@ -31,6 +31,9 @@ public interface IPreferenceConstants {
 	public static final String s_NAME_SHOWRESULTNOTIFIERPOPUP = "showresultnotifierpopup";
 	public static final String PREFID_MM_DROP_MODELS = "ultimate.modelmanager.dropmodels";
 	public static final String PREFID_MM_TMPDIRECTORY = "ultimate.modelmanager.tmpdirectory";
+	public static final String PREFID_LOGFILE = "ulitmate.logfile";
+	public static final String PREFID_LOGFILE_NAME = "ultimate.logfile.name";
+	public static final String PREFID_LOGFILE_DIR = "ultiamte.logfile.path";
 	
 	/**
 	 * others
@@ -78,6 +81,10 @@ public interface IPreferenceConstants {
 	public static final String LABEL_PLUGIN_DETAIL_PREF = "Log Levels for Specific Plug-ins";
 	public static final String LABEL_MM_DROPMODELS = "Drop models when Ultimate exits";
 	public static final String LABEL_MM_TMPDIRECTORY = "Repository Directory";
+	public static final String LABEL_LOGFILE = "Create a Logfile";
+	public static final String LABEL_LOGFILE_NAME = "Name of the Logfile:";
+	public static final String LABEL_LOGFILE_DIR = "Directory: (default: instance location):";
+	
 	
 	/**
 	 * Messages
@@ -89,5 +96,6 @@ public interface IPreferenceConstants {
 	public static final String ALL_PLUGINS_PRESENT = "All entered Plug-ins are in fact present!";
 	public static final String PLUGINS_NOT_PRESENT = "The following Plug-ins are not present at the moment: \n";
 	public static final String EMPTY_STRING = "";
+	public static final String DESC_LOGFILE = "The basic preferences for creating a log file (like enabled, name, directory)";
 	
 }

@@ -86,6 +86,12 @@
             id="de.uni_freiburg.informatik.ultimate.core.coreplugin.preferences.ModelManagerPreferencePage"
             name="Model Manager">
       </page>
+      <page
+            category="de.uni_freiburg.informatik.ultimate.core.coreplugin.preferences.CorePreferencePage"
+            class="de.uni_freiburg.informatik.ultimate.core.coreplugin.preferences.LogFilePreferencePage"
+            id="de.uni_freiburg.informatik.ultimate.core.coreplugin.preferences.LogFilePreferencePage"
+            name="Log File">
+      </page>
    </extension>
    <extension
          point="org.eclipse.core.runtime.preferences">
