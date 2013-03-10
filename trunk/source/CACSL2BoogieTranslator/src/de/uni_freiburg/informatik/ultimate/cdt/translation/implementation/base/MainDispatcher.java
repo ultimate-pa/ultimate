@@ -235,7 +235,7 @@ public class MainDispatcher extends Dispatcher {
     @Override
     protected void init() {
         sideEffectHandler = new SideEffectHandler();
-        cHandler = new CHandler(this, backtranslator);
+        cHandler = new CHandler(this, backtranslator, true);
         typeHandler = new TypeHandler();
         acslHandler = new ACSLHandler();
         nameHandler = new NameHandler();

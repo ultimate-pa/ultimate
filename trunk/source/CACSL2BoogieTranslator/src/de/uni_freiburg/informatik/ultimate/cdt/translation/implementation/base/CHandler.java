@@ -206,6 +206,12 @@ public class CHandler implements ICHandler {
      * Translation from Boogie to C for traces and expressions.
      */
     protected final Backtranslator backtranslator;
+    
+    /**
+     * If set to true and the program contains an error label ULTIMATE shows
+     * a warning that suggests a different translation mode.
+     */
+    protected final boolean m_ErrorLabelWarning;
 
     /**
      * Constructor.
@@ -215,7 +221,7 @@ public class CHandler implements ICHandler {
      * @param backtranslator
      *            a reference to the Backtranslator object.
      */
-    public CHandler(Dispatcher main, Backtranslator backtranslator) {
+    public CHandler(Dispatcher main, Backtranslator backtranslator, boolean errorLabelWarning) {
         this.arrayHandler = new ArrayHandler();
         this.functionHandler = new FunctionHandler();
         this.postProcessor = new PostProcessor();
@@ -228,6 +234,7 @@ public class CHandler implements ICHandler {
         this.axioms = new HashSet<Axiom>();
         this.backtranslator = backtranslator;
         this.contract = new ArrayList<ACSLNode>();
+        this.m_ErrorLabelWarning = errorLabelWarning;
     }
 
     @Override
@@ -2060,6 +2067,11 @@ public class CHandler implements ICHandler {
         Map<VariableDeclaration, CACSLLocation> emptyAuxVars = new HashMap<VariableDeclaration, CACSLLocation>(
                 0);
         String label = node.getName().toString();
+        if (label.equals("ERROR")) {
+        	String shortDescription = "ERROR label found";
+        	String longDescription =  "The label \"ERROR\" does not have a special meaning in the translation mode you selected. You might want to change your settings and use the SV-COMP translation mode.";  
+        	Dispatcher.warn(loc, shortDescription, longDescription);
+        }
         stmt.add(new Label(loc, label));
         Result r = main.dispatch(node.getNestedStatement());
         if (r instanceof ResultExpression) {

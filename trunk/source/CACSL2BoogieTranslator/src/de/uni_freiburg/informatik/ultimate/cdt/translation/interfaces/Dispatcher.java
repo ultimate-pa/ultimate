@@ -213,8 +213,8 @@ public abstract class Dispatcher {
         		loc, shortDescription, longDescription, GenericResult.Severity.WARNING);
         UltimateServices us = UltimateServices.getInstance();
         us.getLogger(Activator.s_PLUGIN_ID).warn(longDescription);
-        if (!REPORT_WARNINGS)
-            return;
+//        if (!REPORT_WARNINGS)
+//            return;
         us.reportResult(Activator.s_PLUGIN_ID, result);
     }
 

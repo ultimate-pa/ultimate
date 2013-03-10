@@ -97,7 +97,7 @@ public class SvCompCHandler extends CHandler {
      *            a reference to the main dispatcher.
      */
     public SvCompCHandler(Dispatcher main, Backtranslator backtranslator) {
-        super(main, backtranslator);
+        super(main, backtranslator, false);
         super.arrayHandler = new SVCompArrayHandler();
         super.functionHandler = new SVCompFunctionHandler();
     }
