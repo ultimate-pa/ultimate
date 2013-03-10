@@ -132,7 +132,12 @@ public class Backtranslator extends DefaultTranslator<ASTNode, CACSLLocation, Ex
 		} else if (expr instanceof UnaryExpression) {
 			UnaryExpression unexp = (UnaryExpression) expr;
 			String subexpr = processExpression(unexp.getExpr());
-			return "(" + translateUnExpOp(unexp.getOperator()) + subexpr + ")";
+			String operator = translateUnExpOp(unexp.getOperator());
+			if (operator.equals("\\old")) {
+				return operator + "(" + subexpr + ")";
+			} else {
+				return "(" + operator + subexpr + ")";
+			}
 		} else if (expr instanceof ArrayAccessExpression) {
 			throw new UnsupportedOperationException("Unsupported ArrayAccessExpression");
 		} else if (expr instanceof ArrayStoreExpression) {

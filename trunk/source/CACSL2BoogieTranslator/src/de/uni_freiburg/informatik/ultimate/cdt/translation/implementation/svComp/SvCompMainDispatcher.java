@@ -29,6 +29,7 @@ public class SvCompMainDispatcher extends MainDispatcher {
         acslHandler = new ACSLHandler();
         nameHandler = new NameHandler();
         preprocessorHandler = new PreprocessorHandler();
+        backtranslator.setBoogie2C(nameHandler.getBoogie2C());
         REPORT_WARNINGS = false;
     }
 }
