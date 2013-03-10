@@ -349,9 +349,10 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 					Activator.s_PLUGIN_NAME,
 					UltimateServices.getInstance().getTranslatorSequence(),
 					origin);
-			String timeOutMessage = origin.checkedSpecification().getPositiveMessage();
+			String timeOutMessage = "Timout! Unable to prove that " +
+					origin.checkedSpecification().getPositiveMessage();
 			timeOutMessage += " (line " + origin.getStartLine() + ")";
-			timeOutRes.setLongDescription(timeOutMessage);
+			timeOutRes.setShortDescription(timeOutMessage);
 			reportResult(timeOutRes);
 			s_Logger.warn(timeOutMessage);
 		}
@@ -366,7 +367,8 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 				UltimateServices.getInstance().getTranslatorSequence(),
 				origin);
 		uknRes.setFailurePath(failurePath);
-		String uknMessage = origin.checkedSpecification().getPositiveMessage();
+		String uknMessage = "Unable to prove that " + 
+				origin.checkedSpecification().getPositiveMessage();
 		uknRes.setShortDescription(uknMessage);
 		uknMessage += " (line " + origin.getStartLine() + ")";
 		uknRes.setLongDescription(failurePath.toString());

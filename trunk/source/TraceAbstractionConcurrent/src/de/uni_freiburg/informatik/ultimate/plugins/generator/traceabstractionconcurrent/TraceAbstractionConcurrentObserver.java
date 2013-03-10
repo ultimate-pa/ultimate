@@ -104,7 +104,7 @@ public class TraceAbstractionConcurrentObserver implements IUnmanagedObserver {
 			break;
 		}
 		case TIMEOUT:
-			reportTimoutResult(errNodesOfAllProc);
+			reportTimoutResult(errNodesOfAllProc, taPrefs.timeout());
 			break;
 		case UNKNOWN:
 		{
@@ -218,7 +218,7 @@ public class TraceAbstractionConcurrentObserver implements IUnmanagedObserver {
 		s_Logger.warn(ctxMessage);
 	}
 	
-	private void reportTimoutResult(Collection<ProgramPoint> errorLocs) {
+	private void reportTimoutResult(Collection<ProgramPoint> errorLocs, int timeout) {
 		for (ProgramPoint errorLoc : errorLocs) {
 			ILocation origin = errorLoc.getAstNode().getLocation().getOrigin();
 			TimeoutResult<RcfgElement> timeOutRes = new TimeoutResult<RcfgElement>(
@@ -226,9 +226,10 @@ public class TraceAbstractionConcurrentObserver implements IUnmanagedObserver {
 					Activator.s_PLUGIN_NAME,
 					UltimateServices.getInstance().getTranslatorSequence(),
 					origin);
-			String timeOutMessage = origin.checkedSpecification().getPositiveMessage();
+			String timeOutMessage = "Timout! (" + timeout + "s) Unable to prove that " +
+					origin.checkedSpecification().getPositiveMessage();
 			timeOutMessage += " (line " + origin.getStartLine() + ")";
-			timeOutRes.setLongDescription(timeOutMessage);
+			timeOutRes.setShortDescription(timeOutMessage);
 			reportResult(timeOutRes);
 			s_Logger.warn(timeOutMessage);
 		}
@@ -243,7 +244,8 @@ public class TraceAbstractionConcurrentObserver implements IUnmanagedObserver {
 				UltimateServices.getInstance().getTranslatorSequence(),
 				origin);
 		uknRes.setFailurePath(failurePath);
-		String uknMessage = origin.checkedSpecification().getPositiveMessage();
+		String uknMessage = "Unable to prove that " + 
+				origin.checkedSpecification().getPositiveMessage();
 		uknRes.setShortDescription(uknMessage);
 		uknMessage += " (line " + origin.getStartLine() + ")";
 		uknRes.setLongDescription(failurePath.toString());
