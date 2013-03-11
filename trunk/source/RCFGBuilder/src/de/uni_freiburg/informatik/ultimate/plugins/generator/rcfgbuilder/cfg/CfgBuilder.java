@@ -92,6 +92,13 @@ public class CfgBuilder {
 	private static Logger s_Logger = 
 		UltimateServices.getInstance().getLogger(Activator.PLUGIN_ID);
 	
+	
+	/**
+	 * Identifier of the auxiliary start procedure used e.g., by the 
+	 * CACSL2Boogie translation.
+	 */
+	public static final String START_PROCEDURE = "ULTIMATE.start";
+	
 	/**
      * Root Node of this Ultimate model. I use this to store information that
      * should be passed to the next plugin. The Successors of this node are
@@ -1296,9 +1303,13 @@ public class CfgBuilder {
 			m_current = returnNode;
 			
 			// Violations against the requires part of the procedure 
-			// specification
-			List<RequiresSpecification> requiresNonFree = m_RootAnnot.m_RequiresNonFree.get(callee);
-			if (requiresNonFree != null && !requiresNonFree.isEmpty()) {
+			// specification. Omit intruduction of these additional auxiliary
+			// assert statements if current procedure is START_PROCEDURE.
+			// 
+			List<RequiresSpecification> requiresNonFree = 
+					m_RootAnnot.m_RequiresNonFree.get(callee);
+			if (requiresNonFree != null && !requiresNonFree.isEmpty() &&
+					!m_currentProcedureName.equals(START_PROCEDURE)) {
 				for (RequiresSpecification spec : requiresNonFree) {
 					// use implementation if available and specification
 					// otherwise. To use the implementation is important in 
@@ -1317,7 +1328,8 @@ public class CfgBuilder {
 					assumeSt = new AssumeStatement(st.getLocation(),violatedRequires);
 					m_Backtranslator.putAux(assumeSt, spec);
 					ProgramPoint errorLocNode = addErrorNode(m_currentProcedureName, st);
-					StatementSequence errorCB = new StatementSequence(locNode, errorLocNode, assumeSt, Origin.REQUIRES);
+					StatementSequence errorCB = new StatementSequence(
+							locNode, errorLocNode, assumeSt, Origin.REQUIRES);
 					m_Edges.add(errorCB);
 				}
 			}
