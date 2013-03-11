@@ -659,7 +659,7 @@ public class TestFileExecutor {
 		if (operation.equals("determinize")){
 			checkOperands(operation, operands, -100);
 			INestedWordAutomaton op0 = (INestedWordAutomaton) operands.get(0);
-			return (new Determinize<String,String>(op0, new PowersetDeterminizer<String, String>(op0))).getResult();
+			return (new Determinize<String,String>(op0)).getResult();
 		}
 		
 		if (operation.equals("determinizeSadd")){

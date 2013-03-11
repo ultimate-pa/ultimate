@@ -89,7 +89,7 @@ public class ResultChecker<LETTER,STATE> {
 		INestedWordAutomaton resultSadd = (new DeterminizeSadd<String,String>(op)).getResult();
 		correct &= (resultSadd.included(result) == null);
 		correct &= (result.included(resultSadd) == null);
-		INestedWordAutomaton resultDD = (new Determinize<String,String>(op, new PowersetDeterminizer<String, String>(op))).getResult();
+		INestedWordAutomaton resultDD = (new Determinize<String,String>(op)).getResult();
 		correct &= (resultDD.included(result) == null);
 		correct &= (result.included(resultDD) == null);
 	

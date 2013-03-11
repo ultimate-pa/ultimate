@@ -68,9 +68,9 @@ public class Determinize<LETTER,STATE> extends DoubleDeckerBuilder<LETTER,STATE>
 	
 	
 	
-	public Determinize(
-			INestedWordAutomaton<LETTER,STATE> input,
-			IStateDeterminizer<LETTER,STATE> stateDeterminizer) throws OperationCanceledException {
+	public Determinize(INestedWordAutomaton<LETTER,STATE> input, 
+			IStateDeterminizer<LETTER,STATE> stateDeterminizer) 
+											throws OperationCanceledException {
 		this.contentFactory = input.getStateFactory();
 		this.m_Operand = input;
 		s_Logger.debug(startMessage());
@@ -84,8 +84,27 @@ public class Determinize<LETTER,STATE> extends DoubleDeckerBuilder<LETTER,STATE>
 		traverseDoubleDeckerGraph();
 		assert (m_TraversedNwa.isDeterministic());
 		s_Logger.debug(exitMessage());
-
 	}
+	
+	public Determinize(INestedWordAutomaton<LETTER,STATE> input) 
+											throws OperationCanceledException {
+		this.contentFactory = input.getStateFactory();
+		this.m_Operand = input;
+		s_Logger.debug(startMessage());
+		this.stateDeterminizer = new PowersetDeterminizer<LETTER, STATE>(input);
+		super.m_TraversedNwa = new NestedWordAutomaton<LETTER,STATE>(
+				input.getInternalAlphabet(),
+				input.getCallAlphabet(),
+				input.getReturnAlphabet(),
+				input.getStateFactory());
+		m_RemoveDeadEnds = false;
+		traverseDoubleDeckerGraph();
+		assert (m_TraversedNwa.isDeterministic());
+		s_Logger.debug(exitMessage());
+	}
+
+	
+	
 	
 	@Override
 	protected Collection<STATE> getInitialStates() {

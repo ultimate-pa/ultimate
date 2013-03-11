@@ -9,21 +9,20 @@ import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 
-public class ComplementSadd<LETTER,STATE> implements IOperation {
+public class ComplementSadd<LETTER, STATE> implements IOperation {
 
 	private static Logger s_Logger = UltimateServices.getInstance().getLogger(
 			Activator.PLUGIN_ID);
-	
-	protected INestedWordAutomaton<LETTER,STATE> m_Operand;
-	protected INestedWordAutomaton<LETTER,STATE> m_DeterminizedOperand;
-	protected INestedWordAutomaton<LETTER,STATE> m_Result;
-	
+
+	protected INestedWordAutomaton<LETTER, STATE> m_Operand;
+	protected INestedWordAutomaton<LETTER, STATE> m_DeterminizedOperand;
+	protected INestedWordAutomaton<LETTER, STATE> m_Result;
+
 	@Override
 	public String operationName() {
 		return "complementSadd";
 	}
-	
-	
+
 	@Override
 	public String startMessage() {
 		return "Start " + operationName() + " Operand "
@@ -36,25 +35,27 @@ public class ComplementSadd<LETTER,STATE> implements IOperation {
 				+ m_Result.sizeInformation();
 	}
 
-	public INestedWordAutomaton<LETTER,STATE> getResult() throws OperationCanceledException {
+	public INestedWordAutomaton<LETTER, STATE> getResult()
+											throws OperationCanceledException {
 		assert (ResultChecker.complement(m_Operand, m_Result));
 		return m_Result;
 	}
 
-	public ComplementSadd(INestedWordAutomaton<LETTER,STATE> operand)
-			throws OperationCanceledException {
-		
+	public ComplementSadd(INestedWordAutomaton<LETTER, STATE> operand)
+											throws OperationCanceledException {
+		m_Operand = operand;
+
 		s_Logger.info(startMessage());
 		if (!m_Operand.isDeterministic()) {
-			m_DeterminizedOperand = (new DeterminizeSadd<LETTER,STATE>(m_Operand)).getResult();
+			m_DeterminizedOperand = 
+					(new DeterminizeSadd<LETTER, STATE>(m_Operand)).getResult();
 		} else {
 			m_DeterminizedOperand = m_Operand;
 			s_Logger.debug("Operand is already deterministic");
 		}
-		m_Result = new ReachableStatesCopy<LETTER,STATE>(m_DeterminizedOperand,
-				true, true, false, false).getResult();
+		m_Result = new ReachableStatesCopy<LETTER, STATE>(
+				m_DeterminizedOperand, true, true, false, false).getResult();
 		s_Logger.info(exitMessage());
 	}
-
 
 }
