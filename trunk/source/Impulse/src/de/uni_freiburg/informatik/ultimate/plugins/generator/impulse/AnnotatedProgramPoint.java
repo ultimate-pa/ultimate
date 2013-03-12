@@ -5,12 +5,13 @@ import java.util.HashSet;
 
 import de.uni_freiburg.informatik.ultimate.model.IPayload;
 import de.uni_freiburg.informatik.ultimate.model.structure.BaseLabeledEdgesMultigraph;
+import de.uni_freiburg.informatik.ultimate.model.structure.ModifiableLabeledEdgesMultigraph;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IPredicate;
 
-public class AnnotatedProgramPoint extends BaseLabeledEdgesMultigraph<AnnotatedProgramPoint, CodeBlock> {
+public class AnnotatedProgramPoint extends ModifiableLabeledEdgesMultigraph<AnnotatedProgramPoint, CodeBlock> {
 
 	private static final long serialVersionUID = -4398335480646555023L;
 	
@@ -20,6 +21,29 @@ public class AnnotatedProgramPoint extends BaseLabeledEdgesMultigraph<AnnotatedP
 	boolean m_isPseudoErrorLocation = false;
 	
 	private HashMap<AnnotatedProgramPoint, HashSet<AnnotatedProgramPoint>> m_outgoingReturnAppToCallPreds;
+	
+	/**
+	 * copy constructor
+	 * @param oldApp AnnotatedProgramPoint to copy
+	 */
+	public AnnotatedProgramPoint(AnnotatedProgramPoint oldApp) {
+		m_predicate = oldApp.m_predicate;
+		m_programPoint = oldApp.m_programPoint;
+		m_isPseudoErrorLocation = oldApp.m_isPseudoErrorLocation;
+		m_outgoingReturnAppToCallPreds = oldApp.m_outgoingReturnAppToCallPreds;
+	}
+	
+	/**
+	 * copy constructor, except for a new predicate, which is given as an argument
+	 * @param oldApp AnnotatedProgramPoint to copy
+	 * @param newPred
+	 */
+	public AnnotatedProgramPoint(AnnotatedProgramPoint oldApp, IPredicate newPred) {
+		m_predicate = newPred;
+		m_programPoint = oldApp.m_programPoint;
+		m_isPseudoErrorLocation = oldApp.m_isPseudoErrorLocation;
+		m_outgoingReturnAppToCallPreds = oldApp.m_outgoingReturnAppToCallPreds;
+	}
 	
 	public AnnotatedProgramPoint(IPredicate predicate, ProgramPoint programPoint) {
 		m_predicate = predicate;
@@ -48,30 +72,6 @@ public class AnnotatedProgramPoint extends BaseLabeledEdgesMultigraph<AnnotatedP
 		return m_programPoint;
 	}
 	
-	public void addOutgoingNode(AnnotatedProgramPoint node, CodeBlock label) {
-		this.mOutgoingNodes.add(node);
-		this.mOutgoingEdgeLabels.put(node, label);
-		node.mIncomingNodes.add(this);
-	}
-
-	public void removeOutgoingNode(AnnotatedProgramPoint node) {
-		mOutgoingNodes.remove(node);
-		mOutgoingEdgeLabels.remove(node);
-		node.mIncomingNodes.remove(this);
-	}
-	
-	public void addIncomingNode(AnnotatedProgramPoint node, CodeBlock label) {
-		this.mIncomingNodes.add(node);
-		node.mOutgoingEdgeLabels.put(node, label);
-		node.mOutgoingNodes.add(this);
-	}
-
-	public void removeIncomingNode(AnnotatedProgramPoint node) {
-		mIncomingNodes.remove(node);
-		node.mOutgoingNodes.remove(this);
-		node.mOutgoingEdgeLabels.remove(this);
-	}
-	
 	public void addOutGoingReturnCallPred(AnnotatedProgramPoint target, AnnotatedProgramPoint callPred) {
 		assert mOutgoingEdgeLabels.get(target) instanceof Return;
 		
@@ -92,10 +92,18 @@ public class AnnotatedProgramPoint extends BaseLabeledEdgesMultigraph<AnnotatedP
 	}
 	
 	public boolean outGoingReturnAppToCallPredContains(AnnotatedProgramPoint target, AnnotatedProgramPoint callPred) {
-		assert mOutgoingEdgeLabels.get(target) instanceof Return;
+		if (!( mOutgoingEdgeLabels.get(target) instanceof Return))
+			return false;
 		assert m_outgoingReturnAppToCallPreds != null; 
 		
+		if (m_outgoingReturnAppToCallPreds.get(target) == null)
+			return false;
+		
 		return m_outgoingReturnAppToCallPreds.get(target).contains(callPred);
+	}
+	
+	public HashSet<AnnotatedProgramPoint> getCallPredsOfOutgoingReturnTarget(AnnotatedProgramPoint returnTarget) {
+		return m_outgoingReturnAppToCallPreds.get(returnTarget);
 	}
 	
 	public IPayload getPayload() {

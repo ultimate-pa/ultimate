@@ -1,11 +1,13 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.impulse;
 
-public class ImpRootEdge {
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGNode;
 
-//	ImpRootNode root;
-//	AnnotatedProgramPoint targetProcRoot;
+public class ImpRootEdge extends RCFGEdge {
 
-	public String toString() {
-		return "RootEdge";
+	protected ImpRootEdge(RCFGNode source, RCFGNode target) {
+		super(source, target);
+		// TODO Auto-generated constructor stub
 	}
+
 }

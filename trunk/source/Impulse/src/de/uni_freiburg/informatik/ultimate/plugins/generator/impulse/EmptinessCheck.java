@@ -4,6 +4,8 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.Stack;
 
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
@@ -13,6 +15,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Ret
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.util.HashUtils;
 
 public class EmptinessCheck {
 	private static int c_badNestingRelationInit = -7;
@@ -21,7 +24,7 @@ public class EmptinessCheck {
 	ArrayDeque<AppDoubleDecker> openNodes;
 	HashSet<AppDoubleDecker> visitedNodes;
 	HashMap<AnnotatedProgramPoint, HashSet<AnnotatedProgramPoint>> summaryEdges;
-	HashMap<Pair<AnnotatedProgramPoint,AnnotatedProgramPoint>, AnnotatedProgramPoint> summaryEdgeToReturnPred;
+	HashMap<Pair<AnnotatedProgramPoint,AnnotatedProgramPoint>, AppDoubleDecker> summaryEdgeToReturnPred;
 	
 	/**
 	 * Search for a nested error path within the graph with the given root. Return null
@@ -38,9 +41,9 @@ public class EmptinessCheck {
 		summaryEdges = 
 				new HashMap<AnnotatedProgramPoint, HashSet<AnnotatedProgramPoint>>();
 		summaryEdgeToReturnPred =
-				new HashMap<Pair<AnnotatedProgramPoint,AnnotatedProgramPoint>, AnnotatedProgramPoint>();
+				new HashMap<Pair<AnnotatedProgramPoint,AnnotatedProgramPoint>, AppDoubleDecker>();
 		
-		EmptyStackSymbol emptyStackSymbol = new EmptyStackSymbol(null, null);
+		EmptyStackSymbol emptyStackSymbol = new EmptyStackSymbol();
 		
 		openNodes.add(new AppDoubleDecker(root, emptyStackSymbol));
 		Pair<AnnotatedProgramPoint[],NestedWord<CodeBlock>> returnedPath = null;
@@ -85,7 +88,8 @@ public class EmptinessCheck {
 						addSummaryEdge(currentAdd.bot, app);
 						summaryEdgeToReturnPred.put(
 								new Pair<AnnotatedProgramPoint, AnnotatedProgramPoint>(currentAdd.bot, app), 
-								currentAdd.top);
+								currentAdd);
+//								currentAdd.top);
 						if (returnedPath == null)
 							returnedPath = openNewNode(currentAdd, app, edge, newAdd);
 					}
@@ -97,7 +101,8 @@ public class EmptinessCheck {
 			if (targets != null) {
 				for (AnnotatedProgramPoint target : targets) {
 					AppDoubleDecker	newAdd = new AppDoubleDecker(target, currentAdd.bot);
-					returnedPath = openNewNode(currentAdd, target, null, newAdd);//convention: AddEdges which are summaries are labeled "null"
+					if (returnedPath == null)
+						returnedPath = openNewNode(currentAdd, target, null, newAdd);//convention: AddEdges which are summaries are labeled "null"
 				}
 			}
 		}
@@ -161,7 +166,11 @@ public class EmptinessCheck {
 		}
 		errorPath.addFirst(currentAdd.top);
 		
-		expandSummaries(errorTrace, errorPath);
+		Pair<ArrayDeque<AnnotatedProgramPoint>, ArrayDeque<CodeBlock>> newErrorPathAndTrace = 
+				expandSummaries(errorTrace, errorPath);
+
+		errorPath = newErrorPathAndTrace.getFirst();
+		errorTrace = newErrorPathAndTrace.getSecond();
 		
 		CodeBlock[] errorTraceArray = new CodeBlock[errorTrace.size()];
 		errorTrace.toArray(errorTraceArray);
@@ -174,9 +183,51 @@ public class EmptinessCheck {
 		return new Pair<AnnotatedProgramPoint[], NestedWord<CodeBlock>>(errorPathArray, errorNW);
 	}
 
-	private void expandSummaries(ArrayDeque<CodeBlock> errorTrace,
+	private Pair<ArrayDeque<AnnotatedProgramPoint>, ArrayDeque<CodeBlock>> expandSummaries(ArrayDeque<CodeBlock> errorTrace,
 			ArrayDeque<AnnotatedProgramPoint> errorPath) {
+		ArrayDeque<CodeBlock> newErrorTrace = new ArrayDeque<CodeBlock>();
+		ArrayDeque<AnnotatedProgramPoint> newErrorPath = new ArrayDeque<AnnotatedProgramPoint>();
 		
+		Iterator<AnnotatedProgramPoint> pathIt = errorPath.iterator();
+		Iterator<CodeBlock> traceIt = errorTrace.iterator();
+		
+		AnnotatedProgramPoint nextApp = pathIt.next();			
+		
+		while (traceIt.hasNext()) {
+			CodeBlock currentCodeBlock = traceIt.next();
+			AnnotatedProgramPoint previousApp = nextApp;
+			
+			newErrorPath.add(previousApp);
+			newErrorTrace.add(currentCodeBlock);
+			
+			nextApp = pathIt.next();
+		
+			if (currentCodeBlock == null) {
+				assert false; //I want to see, when this happens for the first time
+				assert summaryEdges.get(previousApp).equals(nextApp);
+				
+				Pair<AnnotatedProgramPoint, AnnotatedProgramPoint> sourceAndTarget = 
+						new Pair<AnnotatedProgramPoint, AnnotatedProgramPoint>(previousApp, nextApp);
+				
+				AppDoubleDecker toInsertAdd = summaryEdgeToReturnPred.get(sourceAndTarget);
+				
+//				LinkedList<CodeBlock> traceToInsert = new LinkedList<CodeBlock>();
+//				LinkedList<AnnotatedProgramPoint> pathToInsert = new LinkedList<AnnotatedProgramPoint>();
+				
+//				pathToInsert.add(toInsertAdd.top);
+				
+				while (!(toInsertAdd.inEdge.label instanceof Call)) {
+//					traceToInsert.add(toInsertAdd.inEdge.label);
+//					pathToInsert.add(toInsertAdd.inEdge.target.top);
+					newErrorPath.add(toInsertAdd.inEdge.target.top);
+					newErrorTrace.add(toInsertAdd.inEdge.label);
+					toInsertAdd = toInsertAdd.inEdge.target;
+				}
+			}				
+		}
+		newErrorPath.add(nextApp);
+		
+		return new Pair<ArrayDeque<AnnotatedProgramPoint>, ArrayDeque<CodeBlock>>(newErrorPath, newErrorTrace);
 	}
 
 
@@ -231,11 +282,16 @@ public class EmptinessCheck {
 		}
 		
 		public int hashCode() {
-			return (top.hashCode() * 2591 + bot.hashCode()) * 2591;
+//			return (top.hashCode() * 2591 + bot.hashCode()) * 2591;
+			return HashUtils.hashJenkins(top.hashCode(), bot.hashCode());
 	    }
 		
-		boolean equals(AppDoubleDecker add) {
-			return this.top.equals(add.top) && this.bot.equals(add.bot);
+		public boolean equals(Object add) {
+			if (add instanceof AppDoubleDecker) 
+				return this.top.equals(((AppDoubleDecker)add).top) && 
+					this.bot.equals(((AppDoubleDecker)add).bot);
+			else
+				return false;
 		}
 		
 		public String toString() {
@@ -265,8 +321,8 @@ public class EmptinessCheck {
 		
 		private static final long serialVersionUID = 1L;
 
-		public EmptyStackSymbol(IPredicate predicate, ProgramPoint programPoint) {
-			super(null, null);
+		public EmptyStackSymbol() {
+			super((IPredicate) null, (ProgramPoint) null);
 		}
 		
 		boolean equals(EmptyStackSymbol ess) {

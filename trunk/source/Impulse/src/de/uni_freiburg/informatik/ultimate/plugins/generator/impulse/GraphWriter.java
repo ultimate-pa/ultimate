@@ -206,9 +206,9 @@ public class GraphWriter {
 			ArrayList<AnnotatedProgramPoint> current_openNodes = (ArrayList<AnnotatedProgramPoint>) openNodes.clone();
 
 			for(AnnotatedProgramPoint node : current_openNodes) {
-				ArrayList<INode> inOutNodes = node.getOutgoingNodes() == null ? 
-						new ArrayList<INode>() : 
-							new ArrayList<INode>(node.getOutgoingNodes());
+				ArrayList<AnnotatedProgramPoint> inOutNodes = node.getOutgoingNodes() == null ? 
+						new ArrayList<AnnotatedProgramPoint>() : 
+							new ArrayList<AnnotatedProgramPoint>(node.getOutgoingNodes());
 
 
 				if(m_showUnreachableEdges && 
@@ -217,7 +217,7 @@ public class GraphWriter {
 					inOutNodes.addAll(node.getIncomingNodes());
 
 
-				for (INode n : inOutNodes) {
+				for (AnnotatedProgramPoint n : inOutNodes) {
 					if(!allNodes.contains(n)) {
 						allNodes.add((AnnotatedProgramPoint) n);
 						openNodes.add((AnnotatedProgramPoint) n);
@@ -237,9 +237,9 @@ public class GraphWriter {
 
 		for(Iterator<AnnotatedProgramPoint> it = allNodes.iterator(); it.hasNext();){
 			AnnotatedProgramPoint node = it.next();
-			for(INode outNode : node.getOutgoingNodes()) {
+			for(AnnotatedProgramPoint outNode : node.getOutgoingNodes()) {
 				allEdges.add(new GraphEdge(node,
-						((AnnotatedProgramPoint) node).getOutgoingCodeBlockOf((AnnotatedProgramPoint) outNode),
+						((AnnotatedProgramPoint) node).getOutgoingEdgeLabel((AnnotatedProgramPoint) outNode),
 						(AnnotatedProgramPoint) outNode));
 			}
 		}
@@ -351,20 +351,25 @@ public class GraphWriter {
 		String quotName = convertNodeName(node);
 		String name = quotName.replace("\"", "");
 		String nodeLabel;
-		Term assertion = node.getPredicate().getFormula();
+		String assertionString;
+		if (node.getPredicate() != null) {
+			Term assertion = node.getPredicate().getFormula();
 
-		FormulaUnLet unLet = new FormulaUnLet();
-		assertion = unLet.unlet(assertion);
+			FormulaUnLet unLet = new FormulaUnLet();
+			assertion = unLet.unlet(assertion);
+			assertionString = prettifyFormula(assertion) ;
+		} else
+			assertionString = "noAssertion";
 
 		nodeLabel = "\n" + quotName 
-				+ "[label = \"" + name + "\\n" + prettifyFormula(assertion) 
+				+ "[label = \"" + name + "\\n" + assertionString
 				+ "\" , " + additionalOptions
 				+ "];" + "\n";
 
 		return nodeLabel;
 	}
 
-	String convertNodeName(INode node) {
+	String convertNodeName(AnnotatedProgramPoint node) {
 		String name = node.toString();
 		//		name = "\"" + name;
 		name = name.replace("[", "");
@@ -373,8 +378,10 @@ public class GraphWriter {
 		name = name.replace(", $Ultimate#", "");
 		name = name.replace("$Ultimate#", "");
 		name = name.replace("]", "");
-		String sUID = node.getPayload().getID().toString();
-		name = name + "-" + sUID.substring(0, sUID.length()/8);
+//		String sUID = node.getPayload().getID().toString();
+		String sUID = (new Integer(node.hashCode())).toString();//.getPayload().getID().toString();
+//		name = name + "-" + sUID.substring(0, sUID.length()/8);
+		name = name + "-" + sUID.substring(0, sUID.length()/2);
 		//		name = name + "\"";
 
 		String quotName = "\"" + name + "\"";
@@ -470,6 +477,12 @@ public class GraphWriter {
 			this.source = source;
 			this.code = code;
 			this.target = target;
+		}
+		
+		public String toString() {
+			return source.toString() + 
+					" --" + (code == null ? "null" : code.toString()) +
+					"--> " + target.toString();
 		}
 	}
 }

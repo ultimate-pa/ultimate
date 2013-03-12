@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 
 import de.uni_freiburg.informatik.ultimate.access.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.access.WalkerOptions;
@@ -61,6 +62,8 @@ public class ImpulseObserver implements IUnmanagedObserver {
 	private HashMap<AnnotatedProgramPoint, AnnotatedProgramPoint> m_nodeToCopyCurrent;
 	private AnnotatedProgramPoint m_currentProcRoot;
 
+	private HashMap<AnnotatedProgramPoint, ArrayList<AnnotatedProgramPoint>> m_callPredToReturnPreds;
+	
 	GraphWriter m_gw;
 	int m_gwCounter = 0;
 
@@ -79,12 +82,13 @@ public class ImpulseObserver implements IUnmanagedObserver {
 		m_falsePredicate = m_smtManager.newFalsePredicate();
 		m_pELProgramPoint = new ProgramPoint("PEL", "all", true, null, null, m_smtManager.getScript());
 		
-//		m_gw  = new GraphWriter("/home/alexander/impulseGraphs",
+//		m_gw  = new GraphWriter("C:/data/dumps",
 		m_gw  = new GraphWriter("",
 				true, true, true, true, m_smtManager.getScript());
 
 		RCFG2AnnotatedRCFG r2ar = new RCFG2AnnotatedRCFG(m_smtManager);
 		m_graphRoot = r2ar.convert(m_originalRoot);
+		m_callPredToReturnPreds = ((ImpRootAnnot) m_graphRoot.getRootAnnot()).getCallPredToReturnPreds();
 		
 		Result overallResult = null;
 
@@ -139,8 +143,8 @@ public class ImpulseObserver implements IUnmanagedObserver {
 
 		m_gw.writeGraphAsImage(m_currentProcRoot, "graph_" + (++m_gwCounter) + "_procproc");
 
-		while (true) {
-			s_Logger.debug("did " + m_pathChecks + " iterations, starting new");
+		while (true) { //(m_pathChecks < 1) {
+			s_Logger.info("did " + m_pathChecks + " iterations, starting new");
 			Pair<AnnotatedProgramPoint[], NestedWord<CodeBlock>> errorNWP = 
 					emptinessCheck.checkForEmptiness(procRoot);
 
@@ -152,56 +156,66 @@ public class ImpulseObserver implements IUnmanagedObserver {
 				s_Logger.debug("found an error path");
 				boolean isPEL = errorNWP.getFirst()[errorNWP.getFirst().length - 1].
 						isPseudoErrorLocation();
-				AnnotatedProgramPoint pEL = isPEL ? 
-						errorNWP.getFirst()[errorNWP.getFirst().length - 1] :
-							null;
-						if (isPEL)
-							s_Logger.debug("it is a Pseudo Error Location");
+				AnnotatedProgramPoint pEL = isPEL ? errorNWP.getFirst()[errorNWP.getFirst().length - 1] : null;
+				
+				if (isPEL)
+					s_Logger.debug("it is a Pseudo Error Location");
 
+				m_gw.writeGraphAsImage(m_currentProcRoot,
+						"graph_" + (++m_gwCounter) + "_ep", errorNWP.getFirst());
+
+				TraceChecker traceChecker = new TraceChecker(m_smtManager, 
+						m_originalRoot.getRootAnnot().getModifiedVars(), 
+						m_originalRoot.getRootAnnot().getEntryNodes(),
+						dumpInitialize());
+				LBool isSafe = traceChecker.checkTrace(m_truePredicate, 
+						isPEL ? pEL.getPredicate() : m_falsePredicate, 
+								errorNWP.getSecond());
+				m_pathChecks++;
+
+				if(isSafe == LBool.UNSAT) {
+					IPredicate[] interpolants = traceChecker.getInterpolants(
+							new TraceChecker.AllIntegers());
+					
+					boolean writeDetailesGraphs = false;
+
+					copyNodes(errorNWP, interpolants);
+					if (writeDetailesGraphs)
 						m_gw.writeGraphAsImage(m_currentProcRoot,
-								"graph_" + (++m_gwCounter) + "_ep", errorNWP.getFirst());
+								"graph_" + (++m_gwCounter) + "_cp", m_nodeToCopyCurrent, m_nodeToCopy);
 
-						TraceChecker traceChecker = new TraceChecker(m_smtManager, 
-								m_originalRoot.getRootAnnot().getModifiedVars(), 
-								m_originalRoot.getRootAnnot().getEntryNodes(),
-								dumpInitialize());
-						LBool isSafe = traceChecker.checkTrace(m_truePredicate, 
-								isPEL ? pEL.getPredicate() : m_falsePredicate, 
-										errorNWP.getSecond());
-						m_pathChecks++;
+					updateCallPredToReturnPredsMapping(errorNWP.getFirst());
 
-						if(isSafe == LBool.UNSAT) {
-							IPredicate[] interpolants = traceChecker.getInterpolants(
-									new TraceChecker.AllIntegers());
 
-							copyNodes(errorNWP, interpolants);
-							m_gw.writeGraphAsImage(m_currentProcRoot,
-									"graph_" + (++m_gwCounter) + "_cp", m_nodeToCopyCurrent, m_nodeToCopy);
+					doDefaultRedirecting(errorNWP);
+					if (writeDetailesGraphs)
+						m_gw.writeGraphAsImage(m_currentProcRoot,
+								"graph_" + (++m_gwCounter) + "_ddr", m_nodeToCopyCurrent, m_nodeToCopy);
 
-							doDefaultRedirecting(errorNWP);
-							m_gw.writeGraphAsImage(m_currentProcRoot,
-									"graph_" + (++m_gwCounter) + "_ddr", m_nodeToCopyCurrent, m_nodeToCopy);
+					redirect(errorNWP);
+					if (writeDetailesGraphs)
+						m_gw.writeGraphAsImage(m_currentProcRoot,
+							"graph_" + (++m_gwCounter) + "_rd", m_nodeToCopyCurrent, m_nodeToCopy);
 
-							redirect(errorNWP);
-							m_gw.writeGraphAsImage(m_currentProcRoot,
-									"graph_" + (++m_gwCounter) + "_rd", m_nodeToCopyCurrent, m_nodeToCopy);
-
-							//					m_gw.writeGraphAsImage(m_currentProcRoot, "graph_" + (++m_gwCounter) + "_cpddrrd");
-						} else {
-							if (isPEL) {
-								AnnotatedProgramPoint lastApp = errorNWP.getFirst()[errorNWP.getFirst().length - 1];
-								AnnotatedProgramPoint secondLastApp = errorNWP.getFirst()[errorNWP.getFirst().length - 2];
-								secondLastApp.removeOutgoingNode(lastApp);
-								lastApp.removeIncomingNode(secondLastApp);
-								traceChecker.forgetTrace();
-							} else {
-//								makeErrorTraceFromNW(errorNWP.getSecond());
-								return Result.INCORRECT;
-							}
-						}
+					//					m_gw.writeGraphAsImage(m_currentProcRoot, "graph_" + (++m_gwCounter) + "_cpddrrd");
+				} else {
+					if (isPEL) {
+						AnnotatedProgramPoint lastApp = errorNWP.getFirst()[errorNWP.getFirst().length - 1];
+						AnnotatedProgramPoint secondLastApp = errorNWP.getFirst()[errorNWP.getFirst().length - 2];
+						secondLastApp.disconnectOutgoing(lastApp);
+						//								secondLastApp.removeOutgoingNode(lastApp);
+						//								lastApp.removeIncomingNode(secondLastApp);
+						traceChecker.forgetTrace();
+					} else {
+						//								makeErrorTraceFromNW(errorNWP.getSecond());
+						return Result.INCORRECT;
+					}
+				}
 			}
 		}
+//		return Result.UNKNOWN;
 	}
+
 
 	private void makeErrorTraceFromNW(NestedWord<CodeBlock> errorNW) {
 		ArrayList<IElement> errorPathAL = new ArrayList<IElement>();
@@ -226,33 +240,86 @@ public class ImpulseObserver implements IUnmanagedObserver {
 			IPredicate newPredicate = m_smtManager.newPredicate(tvp.getFormula(), 
 							tvp.getProcedures(), tvp.getVars(), tvp.getClosedFormula());
 					
-			AnnotatedProgramPoint copy = new AnnotatedProgramPoint(newPredicate, appPath[i].getProgramPoint());
-
+//			AnnotatedProgramPoint copy = new AnnotatedProgramPoint(newPredicate, appPath[i].getProgramPoint());
+			AnnotatedProgramPoint copy = new AnnotatedProgramPoint(appPath[i], newPredicate);
+			
 			for (AnnotatedProgramPoint outNode : appPath[i].getOutgoingNodes()) {
 				AnnotatedProgramPoint outApp = (AnnotatedProgramPoint) outNode;
-				copy.addOutgoingNode(outApp, appPath[i].getOutgoingEdgeLabel(outApp));
+//				copy.addOutgoingNode(outApp, appPath[i].getOutgoingEdgeLabel(outApp));
+				copy.connectOutgoing(outApp, appPath[i].getOutgoingEdgeLabel(outApp));
 			}
 			m_nodeToCopyCurrent.put(appPath[i], copy);
+			
+
 		}
 		m_nodeToCopy.putAll(m_nodeToCopyCurrent);
 	}
 
+
+	private void updateCallPredToReturnPredsMapping(AnnotatedProgramPoint[] appPath) {
+		//update the mapping in two respects:
+		//1. callPredecessors on the appPath have to point to the new copy of the return predecessor, too
+		//2. copies of callPredecessors point to the same nodes their copied node points to
+		for (int i = 1; i < appPath.length - 1; i++) {
+			ArrayList<AnnotatedProgramPoint> returnPreds = m_callPredToReturnPreds.get(appPath[i]);
+			if (returnPreds != null) {//appPath[i] is a callPredecessor
+				ArrayList<Pair<AnnotatedProgramPoint, AnnotatedProgramPoint>> toAdd = 
+						new ArrayList<Pair<AnnotatedProgramPoint,AnnotatedProgramPoint>>();
+				AnnotatedProgramPoint newCallPred = m_nodeToCopyCurrent.get(appPath[i]);//the copy of appPath[i] is a new CallPredecessor
+				for (AnnotatedProgramPoint returnPred : returnPreds) {
+					AnnotatedProgramPoint copy = m_nodeToCopyCurrent.get(returnPred);
+					if (copy != null) {
+						toAdd.add(new Pair<AnnotatedProgramPoint, AnnotatedProgramPoint>(appPath[i], copy));//1.
+						toAdd.add(new Pair<AnnotatedProgramPoint, AnnotatedProgramPoint>(newCallPred, returnPred));//2.
+						toAdd.add(new Pair<AnnotatedProgramPoint, AnnotatedProgramPoint>(newCallPred, copy));//2.
+//						addReturnPredToCP2RPsMapping(appPath[i], copy);//1.
+//						addReturnPredToCP2RPsMapping(newCallPred, returnPred); //2.
+//						addReturnPredToCP2RPsMapping(newCallPred, copy); //2.
+					}
+				}
+				
+				for (Pair<AnnotatedProgramPoint, AnnotatedProgramPoint> pair : toAdd) {
+					addReturnPredToCP2RPsMapping(pair.getFirst(), pair.getSecond());
+				}
+			}
+		}
+		
+		//duplicate the return edges (now that the values of the map have been updated with the new
+		// returnPredecessors, it points to them and thus it suffices to walk over the copied nodes)
+		for (int i = 1; i < appPath.length - 1; i++) {
+			ArrayList<AnnotatedProgramPoint> returnPreds = m_callPredToReturnPreds.get(appPath[i]);
+			//if appPath[i] is a CallPredecessor, the corresponding Returns must be duplicated
+			//i.e. for each returnPredecessor, all outgoing returns that have the copied node as a
+			//CallPredecessor now also must have the copy as a CallPredecessor
+			if (returnPreds != null) {
+				for (AnnotatedProgramPoint returnPred : returnPreds) {
+					for (AnnotatedProgramPoint outNode : appPath[i].getOutgoingNodes()) {
+						if (returnPred.outGoingReturnAppToCallPredContains(outNode, appPath[i])) {
+							returnPred.addOutGoingReturnCallPred(outNode, m_nodeToCopy.get(appPath[i]));
+						}
+					}
+				}
+			}
+		}
+	}
+	
 	private void doDefaultRedirecting(
 			Pair<AnnotatedProgramPoint[], NestedWord<CodeBlock>> errorNWP) {
 		AnnotatedProgramPoint[] appPath = errorNWP.getFirst();
 
 		//always redirect "procRoot -> appPath[0]" towards "procRoot -> nodeToCopy(appPath[0)"
-		redirectEdge(m_currentProcRoot, appPath[0], m_nodeToCopyCurrent.get(appPath[0]));
+		redirectEdge(m_currentProcRoot, appPath[1], m_nodeToCopyCurrent.get(appPath[1]));
 
-		for (int i = 0; i < appPath.length - 2; i++) 
+		for (int i = 1; i < appPath.length - 2; i++) 
 			redirectEdge(m_nodeToCopyCurrent.get(appPath[i]), 
 					appPath[i+1], 
 					m_nodeToCopyCurrent.get(appPath[i+1]));
 
 		//always delete the edge from the last copy towards the error location
 		m_nodeToCopyCurrent.get(appPath[appPath.length - 2]).
-		removeOutgoingNode(appPath[appPath.length - 1]);
-		appPath[appPath.length - 1].removeIncomingNode(m_nodeToCopyCurrent.get(appPath[appPath.length - 2]));
+			disconnectOutgoing(appPath[appPath.length - 1]);
+//		removeOutgoingNode(appPath[appPath.length - 1]);
+//		appPath[appPath.length - 1].removeIncomingNode(m_nodeToCopyCurrent.get(appPath[appPath.length - 2]));
 
 	}
 
@@ -260,40 +327,90 @@ public class ImpulseObserver implements IUnmanagedObserver {
 			NestedWord<CodeBlock>> errorNWP) {
 		AnnotatedProgramPoint[] appPath = errorNWP.getFirst();
 
-		for (int i = 0; i < appPath.length - 1; i++) {
+		for (int i = 1; i < appPath.length - 2; i++) {
+			ArrayList<AnnotatedProgramPoint[]> toRedirect = new ArrayList<AnnotatedProgramPoint[]>();
+			ArrayList<AnnotatedProgramPoint[]> toRedirectReturns = new ArrayList<AnnotatedProgramPoint[]>();
+			
 			AnnotatedProgramPoint copy = m_nodeToCopyCurrent.get(appPath[i]);
 			for (AnnotatedProgramPoint outNode : copy.getOutgoingNodes()) {
 				AnnotatedProgramPoint outApp = (AnnotatedProgramPoint) outNode;
-
 				AnnotatedProgramPoint copyOfOutApp = m_nodeToCopy.get(outApp); 
 
 				if (copyOfOutApp != null) {
 					CodeBlock statement = copy.getOutgoingEdgeLabel(outApp);
 					if (statement instanceof Summary)
 						continue;
+					else if (!(statement instanceof Return)) {
+						LBool isInductive;
+						if (statement instanceof Call) 
+							isInductive = m_smtManager.isInductiveCall(
+									copy.getPredicate(), 
+									(Call) statement, 
+									copyOfOutApp.getPredicate());
+						else 
+							isInductive = m_smtManager.isInductive(
+									copy.getPredicate(), statement, copyOfOutApp.getPredicate());
 
-					LBool isInductive;
-					if (statement instanceof Call) 
-						isInductive = m_smtManager.isInductiveCall(
-								copy.getPredicate(), (Call) statement, copyOfOutApp.getPredicate());
-					else if (statement instanceof Return) 
-						isInductive = m_smtManager.isInductiveReturn(copy.getPredicate(), 
-								m_nodeToCopy.get(appPath[errorNWP.getSecond().getCallPosition(i+1)]).getPredicate(), //TODO: hm...
-								(Return) statement, copyOfOutApp.getPredicate());
-					else 
-						isInductive = m_smtManager.isInductive(
-								copy.getPredicate(), statement, copyOfOutApp.getPredicate());
-
-					if (isInductive == LBool.UNSAT)
-						redirectEdge(copy, outApp, copyOfOutApp);
-					else
-						appendNewPseudoErrorLocation(copy, 
-								copy.getOutgoingEdgeLabel(outApp), 
+						if (isInductive == LBool.UNSAT)
+							toRedirect.add(new AnnotatedProgramPoint[]{copy, outApp, copyOfOutApp});
+//							redirectEdge(copy, outApp, copyOfOutApp);
+						else 
+							appendNewPseudoErrorLocation(copy, 
+									copy.getOutgoingEdgeLabel(outApp), 
+									copyOfOutApp.getPredicate());
+					} else if (statement instanceof Return) {
+						HashSet<AnnotatedProgramPoint> callPreds = copy.getCallPredsOfOutgoingReturnTarget(outApp);
+						
+						for (AnnotatedProgramPoint callPred : callPreds) {
+							LBool isInductive = m_smtManager.isInductiveReturn(
+								copy.getPredicate(), 
+								callPred.getPredicate(),
+								(Return) statement, 
 								copyOfOutApp.getPredicate());
+							if (isInductive == LBool.UNSAT)
+								toRedirectReturns.add(new AnnotatedProgramPoint[]{copy, callPred, outApp, copyOfOutApp});
+//								redirectReturn(copy, callPred, outApp, copyOfOutApp);
+						}
+						//no PseudoErrorLocations after Returns, right?
+					}
 				}
 			}
+			for (AnnotatedProgramPoint[] appA : toRedirect) 
+				redirectEdge(appA[0], appA[1], appA[2]);
+			for (AnnotatedProgramPoint[] appA : toRedirectReturns) 
+				redirectReturn(appA[0], appA[1], appA[2], appA[3]);
+			//
 		}
 	}
+
+	/**
+	 * Redirect a return edge with the CallPredecessor callPred copy-->outApp towards copyOfOutApp. 
+	 * This is special for Returns as they have a special data structure.
+	 * @param copy
+	 * @param callPred
+	 * @param outApp
+	 * @param copyOfOutApp
+	 */
+	private void redirectReturn(AnnotatedProgramPoint copy,
+			AnnotatedProgramPoint callPred, AnnotatedProgramPoint outApp, AnnotatedProgramPoint copyOfOutApp) {
+
+		assert (copy.getOutgoingEdgeLabel(outApp) instanceof Return);
+		assert (copy.getCallPredsOfOutgoingReturnTarget(outApp).size() >=1);
+
+		//add new return edge
+		if (!(copy.getOutgoingEdgeLabel(copyOfOutApp) instanceof Return))
+			copy.connectOutgoing(copyOfOutApp, copy.getOutgoingEdgeLabel(outApp));
+		
+		copy.addOutGoingReturnCallPred(copyOfOutApp, callPred);
+			
+		
+		//delete old return edge
+		if (copy.getCallPredsOfOutgoingReturnTarget(outApp).size() == 1) 
+			copy.disconnectOutgoing(outApp);
+		
+		copy.removeOutgoingReturnCallPred(outApp, callPred);
+	}
+
 
 	private void appendNewPseudoErrorLocation(AnnotatedProgramPoint node,
 			CodeBlock codeBlock, IPredicate predicate) {
@@ -303,8 +420,9 @@ public class ImpulseObserver implements IUnmanagedObserver {
 
 		AnnotatedProgramPoint pEL = 
 				new AnnotatedProgramPoint(predicate, m_pELProgramPoint, true);
-		node.addOutgoingNode(pEL, codeBlock);
-		pEL.addIncomingNode(node, codeBlock);
+		node.connectIncoming(pEL, codeBlock);
+//		node.addOutgoingNode(pEL, codeBlock);
+//		pEL.addIncomingNode(node, codeBlock);
 	}
 
 	/*
@@ -312,10 +430,23 @@ public class ImpulseObserver implements IUnmanagedObserver {
 	 */
 	private void redirectEdge(AnnotatedProgramPoint source, AnnotatedProgramPoint oldTarget,
 			AnnotatedProgramPoint newTarget) {
-		source.addOutgoingNode(newTarget, source.getOutgoingEdgeLabel(oldTarget));
-		source.removeOutgoingNode(oldTarget);
-		oldTarget.removeIncomingNode(source);
-		newTarget.addIncomingNode(source, source.getOutgoingEdgeLabel(newTarget));
+		source.connectOutgoing(newTarget, source.getOutgoingEdgeLabel(oldTarget));
+		oldTarget.disconnectIncoming(source);
+//		source.addOutgoingNode(newTarget, source.getOutgoingEdgeLabel(oldTarget));
+//		source.removeOutgoingNode(oldTarget);
+//		oldTarget.removeIncomingNode(source);
+//		newTarget.addIncomingNode(source, source.getOutgoingEdgeLabel(newTarget));
+	}
+	
+
+	private void addReturnPredToCP2RPsMapping(
+			AnnotatedProgramPoint callPred,
+			AnnotatedProgramPoint returnPred) {
+		ArrayList<AnnotatedProgramPoint> returnPreds = m_callPredToReturnPreds.get(callPred);
+		if (returnPreds == null)
+			returnPreds = new ArrayList<AnnotatedProgramPoint>();
+		returnPreds.add(returnPred);
+		m_callPredToReturnPreds.put(callPred, returnPreds);
 	}
 
 	private PrintWriter dumpInitialize() {
