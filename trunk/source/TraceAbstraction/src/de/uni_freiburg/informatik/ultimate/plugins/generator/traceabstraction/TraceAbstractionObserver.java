@@ -103,6 +103,9 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 			}
 		}
 
+		s_Logger.debug("Compute Hoare Annotation: " + taPrefs.computeHoareAnnotation());
+		s_Logger.debug("Overall result: " + m_OverallResult);
+		s_Logger.debug("Continue processing: " + s_UlitmateServ.continueProcessing());
 		if (taPrefs.computeHoareAnnotation() && m_OverallResult != Result.TIMEOUT 
 				&& s_UlitmateServ.continueProcessing()) {
 			assert (smtManager.cfgInductive((RootNode) root));
