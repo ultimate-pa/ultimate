@@ -18,8 +18,11 @@ import de.uni_freiburg.informatik.ultimate.blockencoding.model.interfaces.ICompo
 import de.uni_freiburg.informatik.ultimate.blockencoding.model.interfaces.IMinimizedEdge;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.Activator;
+import de.uni_freiburg.informatik.ultimate.model.BoogieLocation;
+import de.uni_freiburg.informatik.ultimate.model.ILocation;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BooleanLiteral;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.wrapper.ASTNode;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.TransFormulaBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
@@ -48,6 +51,10 @@ public class ConversionVisitor implements IMinimizationVisitor {
 
 	private HashMap<MinimizedNode, ProgramPoint> refNodeMap;
 
+	private HashMap<ProgramPoint, ProgramPoint> origToNewMap;
+
+	private HashMap<String, HashMap<String, ProgramPoint>> locNodesForAnnot;
+
 	private HashSet<IMinimizedEdge> visitedEdges;
 
 	private Boogie2SMT boogie2smt;
@@ -62,6 +69,8 @@ public class ConversionVisitor implements IMinimizationVisitor {
 	 */
 	public ConversionVisitor(Boogie2SMT boogie2smt, RootNode root) {
 		this.refNodeMap = new HashMap<MinimizedNode, ProgramPoint>();
+		this.origToNewMap = new HashMap<ProgramPoint, ProgramPoint>();
+		this.locNodesForAnnot = new HashMap<String, HashMap<String, ProgramPoint>>();
 		this.visitedEdges = new HashSet<IMinimizedEdge>();
 		this.boogie2smt = boogie2smt;
 		this.checkForMultipleFormula = new HashMap<IMinimizedEdge, Integer>();
@@ -92,7 +101,6 @@ public class ConversionVisitor implements IMinimizationVisitor {
 	 */
 	@Override
 	public void visitNode(MinimizedNode node) {
-		this.refNodeMap.clear();
 		this.visitedEdges.clear();
 		if (startNode == null) {
 			s_Logger.warn("Illegal Execution Behaviour,"
@@ -100,7 +108,9 @@ public class ConversionVisitor implements IMinimizationVisitor {
 			throw new IllegalStateException(
 					"No valid state that startNode == null");
 		}
-		this.refNodeMap.put(node, startNode);
+		if (!refNodeMap.containsKey(node)) {
+			refNodeMap.put(node, startNode);
+		}
 		// Start recursion here
 		internalVisitNode(node);
 	}
@@ -119,12 +129,6 @@ public class ConversionVisitor implements IMinimizationVisitor {
 		if (node.getOutgoingEdges() == null
 				|| node.getOutgoingEdges().size() == 0) {
 			return;
-		}
-
-		// next step is to check if we already have mapping to a ProgramPoint
-		if (!refNodeMap.containsKey(node)) {
-			// if not, we generate one
-			initRefMap(node);
 		}
 
 		// TODO: First we take here the most minimized variant,
@@ -151,17 +155,21 @@ public class ConversionVisitor implements IMinimizationVisitor {
 				}
 				s_Logger.debug("<-Converted Formula->: "
 						+ cb.getTransitionFormula());
-				cb.connectSource(refNodeMap.get(edge.getSource()));
-				if (!refNodeMap.containsKey(edge.getTarget())) {
-					initRefMap(edge.getTarget());
-				}
-				cb.connectTarget(refNodeMap.get(edge.getTarget()));
+				cb.connectSource(getReferencedNode(edge.getSource()));
+				cb.connectTarget(getReferencedNode(edge.getTarget()));
 				// now we print out all edges which we added more than two times
 				for (IMinimizedEdge key : checkForMultipleFormula.keySet()) {
 					if (checkForMultipleFormula.get(key) >= 2) {
 						s_Logger.error("Edge: " + key + " Occurence: "
 								+ checkForMultipleFormula.get(key));
 					}
+				}
+				// Since we convert function by function, we do not need to
+				// follow Call- and Return-Edges
+				if (edge.isBasicEdge()
+						&& (((IBasicEdge) edge).getOriginalEdge() instanceof Call || ((IBasicEdge) edge)
+								.getOriginalEdge() instanceof Return)) {
+					continue;
 				}
 				if (edge.getTarget() != null) {
 					internalVisitNode(edge.getTarget());
@@ -172,16 +180,46 @@ public class ConversionVisitor implements IMinimizationVisitor {
 
 	/**
 	 * We put into our reference map to a minimized node a new ProgramPoint
-	 * which is used later on during the conversion
+	 * which is used later on during the conversion, and then we return it. the
+	 * access on the map, should always be handled by this method.
 	 * 
 	 * @param node
 	 *            the minimized Node to convert
+	 * @return the created ProgramPoint
 	 */
-	private void initRefMap(MinimizedNode node) {
-		refNodeMap.put(node, new ProgramPoint(node.getOriginalNode()
-				.getPosition(), node.getOriginalNode().getProcedure(), node
-				.getOriginalNode().isErrorLocation(), node.getOriginalNode()
-				.getAstNode(), null, null));
+	public ProgramPoint getReferencedNode(MinimizedNode node) {
+		if (refNodeMap.containsKey(node)) {
+			return refNodeMap.get(node);
+		} else {
+			ASTNode astNode = node.getOriginalNode().getAstNode();
+			if (astNode == null
+					&& node.getOriginalNode().getPayload().hasLocation()) {
+				ILocation loc = node.getOriginalNode().getPayload()
+						.getLocation();
+				if (loc instanceof BoogieLocation) {
+					astNode = ((BoogieLocation) loc).getASTNode();
+				}
+			}
+			ProgramPoint newNode = new ProgramPoint(node.getOriginalNode()
+					.getPosition(), node.getOriginalNode().getProcedure(), node
+					.getOriginalNode().isErrorLocation(), astNode, null, null);
+			refNodeMap.put(node, newNode);
+			// to reset the rootAnnot, we need to keep a map from the original
+			// program points, to the new ones. And since we only create
+			// ProgramPoints here it is the right place to store it.
+			origToNewMap.put(node.getOriginalNode(), newNode);
+			// In addition we also have to fill the map which stores every
+			// ProgramPoint in relation to its name and the procedure name
+			if (locNodesForAnnot.containsKey(newNode.getProcedure())) {
+				locNodesForAnnot.get(newNode.getProcedure()).put(
+						newNode.getLocationName(), newNode);
+			} else {
+				HashMap<String, ProgramPoint> newMap = new HashMap<String, ProgramPoint>();
+				newMap.put(newNode.getLocationName(), newNode);
+				locNodesForAnnot.put(newNode.getProcedure(), newMap);
+			}
+			return newNode;
+		}
 	}
 
 	/**
@@ -352,5 +390,19 @@ public class ConversionVisitor implements IMinimizationVisitor {
 		// should never reach this end here?
 		s_Logger.error("Failure during construction of formulas... " + edge);
 		return;
+	}
+
+	/**
+	 * @return the origToNewMap
+	 */
+	public HashMap<ProgramPoint, ProgramPoint> getOrigToNewMap() {
+		return origToNewMap;
+	}
+
+	/**
+	 * @return the locNodesForAnnot
+	 */
+	public HashMap<String, HashMap<String, ProgramPoint>> getLocNodesForAnnot() {
+		return locNodesForAnnot;
 	}
 }

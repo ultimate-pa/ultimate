@@ -3,17 +3,20 @@
  */
 package de.uni_freiburg.informatik.ultimate.blockencoding.converter;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.blockencoding.model.BlockEncodingAnnotation;
 import de.uni_freiburg.informatik.ultimate.blockencoding.model.MinimizedNode;
-import de.uni_freiburg.informatik.ultimate.blockencoding.model.interfaces.IBasicEdge;
-import de.uni_freiburg.informatik.ultimate.blockencoding.model.interfaces.IMinimizedEdge;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.blockendcoding.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootAnnot;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 
@@ -75,6 +78,10 @@ public class MinModelConverter {
 						"An outgoing edge of RootNode is not a RootEdge");
 			}
 		}
+		// Now we have to update the RootAnnot, which is created while executing
+		// the RCFGBuilder (this is needed for example for the
+		// HoareAnnotations)
+		updateRootAnnot(newRoot.getRootAnnot());
 		return newRoot;
 	}
 
@@ -87,22 +94,7 @@ public class MinModelConverter {
 	 * @return converted ProgramPoint
 	 */
 	private ProgramPoint convertFunction(MinimizedNode node) {
-		ProgramPoint newNode = new ProgramPoint(node.getOriginalNode()
-				.getPosition(), node.getOriginalNode().getProcedure(), node
-				.getOriginalNode().isErrorLocation(), node.getOriginalNode()
-				.getAstNode(), null, null);
-		// We have to insert the incoming RootNode into the new model point
-		for (IMinimizedEdge edge : node.getIncomingEdges()) {
-			if (edge instanceof IMinimizedEdge) {
-				IMinimizedEdge minEdge = (IMinimizedEdge) edge;
-				if (minEdge.isBasicEdge()) {
-					newNode.addIncoming(((IBasicEdge) edge).getOriginalEdge());
-				}
-			} else {
-				throw new IllegalStateException(
-						"First Node of a Function, has to start right!");
-			}
-		}
+		ProgramPoint newNode = convertVisitor.getReferencedNode(node);
 		// To do the conversion, we need to run over the minimized graph,
 		// and convert every edge into an regular RCFG edge
 		// ---> to do this we need some special Visitor which does the
@@ -110,5 +102,73 @@ public class MinModelConverter {
 		convertVisitor.init(newNode);
 		convertVisitor.visitNode(node);
 		return newNode;
+	}
+
+	/**
+	 * We have to update some Maps, which are stored in the RootAnnot. They are
+	 * needed for several computations afterwards. Most of the maps are usual
+	 * very small, so that iterating over them should be not that expensive. One
+	 * exception is the field "locNodes", there is every ProgramPoint stored,
+	 * with its name and the procedure name. We store during the conversion.
+	 * 
+	 * @param rootAnnot
+	 */
+	private void updateRootAnnot(RootAnnot rootAnnot) {
+		HashMap<ProgramPoint, ProgramPoint> progPointMap = convertVisitor
+				.getOrigToNewMap();
+		// Update the Entry-Nodes
+		HashMap<String, ProgramPoint> entryNodes = new HashMap<String, ProgramPoint>(
+				rootAnnot.getEntryNodes());
+		rootAnnot.getEntryNodes().clear();
+		for (String key : entryNodes.keySet()) {
+			ProgramPoint oldVal = entryNodes.get(key);
+			if (progPointMap.containsKey(oldVal)) {
+				rootAnnot.getEntryNodes().put(key, progPointMap.get(oldVal));
+			}
+		}
+		// Update the Exit-Nodes
+		HashMap<String, ProgramPoint> exitNodes = new HashMap<String, ProgramPoint>(
+				rootAnnot.getExitNodes());
+		rootAnnot.getExitNodes().clear();
+		for (String key : exitNodes.keySet()) {
+			ProgramPoint oldVal = exitNodes.get(key);
+			if (progPointMap.containsKey(oldVal)) {
+				rootAnnot.getExitNodes().put(key, progPointMap.get(oldVal));
+			}
+		}
+		// Update the Error-Nodes
+		for (String key : rootAnnot.getErrorNodes().keySet()) {
+			ArrayList<ProgramPoint> newReferences = new ArrayList<ProgramPoint>();
+			for (ProgramPoint oldVal : rootAnnot.getErrorNodes().get(key)) {
+				if (progPointMap.containsKey(oldVal)) {
+					newReferences.add(progPointMap.get(oldVal));
+				} else {
+					s_Logger.error("All error nodes should also be"
+							+ " in the graph after BlockEncoding");
+				}
+			}
+			rootAnnot.getErrorNodes().put(key, newReferences);
+		}
+		// Update the LoopLocations
+		// Attention: ProgramPoint implements equals, we have to care for that!
+		HashSet<ProgramPoint> keySet = new HashSet<ProgramPoint>(rootAnnot
+				.getLoopLocations().keySet());
+		rootAnnot.getLoopLocations().clear();
+		for (ProgramPoint oldVal : keySet) {
+			if (progPointMap.containsKey(oldVal)) {
+				ProgramPoint newVal = progPointMap.get(oldVal);
+				if (newVal.getAstNode() != null) {
+					// Since hashCode(oldVal) == hashCode(newVal), this line
+					// overwrites the old entry, so that we do not remove it in
+					// the end!
+					rootAnnot.getLoopLocations().put(newVal,
+							newVal.getAstNode().getLocation());
+				}
+			}
+		}
+		// update the locNodes, we rely here on the visitor
+		rootAnnot.getProgramPoints().clear();
+		rootAnnot.getProgramPoints().putAll(
+				convertVisitor.getLocNodesForAnnot());
 	}
 }
