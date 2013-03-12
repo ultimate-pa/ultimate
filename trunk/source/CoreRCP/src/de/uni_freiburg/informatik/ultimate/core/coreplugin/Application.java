@@ -1125,6 +1125,8 @@ public class Application implements IApplication, ICore {
 		if (m_CurrentToolchainMonitor.isCanceled()) {
 			return false;
 		}
+		s_Logger.debug("Deadline: " + m_Deadline);
+		s_Logger.debug("CurrentTime: " + System.currentTimeMillis());
 		return System.currentTimeMillis() < m_Deadline;
 	}
 	
@@ -1136,6 +1138,7 @@ public class Application implements IApplication, ICore {
 	 * Set point in time where the toolchain should be stopped. 
 	 */
 	public void setDeadline(long date) {
+		s_Logger.debug("Deadline set to " + date);
 		m_Deadline = date;
 	}
 
