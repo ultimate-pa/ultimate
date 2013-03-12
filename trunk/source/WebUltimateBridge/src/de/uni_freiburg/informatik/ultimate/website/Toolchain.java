@@ -173,7 +173,7 @@ public abstract class Toolchain {
 		settings.append("file_export_version=3.0").append(EOL);
 		settings.append("\\!/instance/UltimateCore=").append(EOL);
 		settings.append("@UltimateCore=1.0.0").append(EOL);
-		settings.append("/instance/UltimateCore/ulitmate.logfile=true").append(EOL);
+		settings.append("/instance/UltimateCore/ultimate.logfile=true").append(EOL);
 		settings.append("/instance/UltimateCore/ultimate.logging.tools=");
 		settings.append(getToolsLoggingLevel()).append(EOL);
 		settings.append("/instance/UltimateCore/ultimate.logging.plugins=info");
