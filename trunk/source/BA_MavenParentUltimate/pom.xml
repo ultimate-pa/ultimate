@@ -158,7 +158,6 @@
 		<module>../LazyAbstraction</module>
 		<module>../LazyAbstractionOnCFG</module>
 		<module>../ReImpact</module>
-		<module>../Impulse</module>
 		<module>../Library-Batik</module>
 		<module>../Library-Jung</module>
 		<module>../CDTDummyParser</module>
@@ -172,7 +171,6 @@
 		<module>../RankingFunctions</module>
 		<module>../WebUltimateBridge</module>
 		<module>../Library-ModelCheckerUtils</module>
-		<module>../IRSDependencies</module>
 		<module>../AutomataLibraryRandomizedTests</module>
 		<module>../AutomataScriptParser</module>
 		<module>../BlockEncoding</module>
