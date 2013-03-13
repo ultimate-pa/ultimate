@@ -19,6 +19,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Procedure;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.BoogieStatementPrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RcfgElement;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootAnnot;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
@@ -28,12 +29,14 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.prefere
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbstractCegarLoop.Result;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.result.CounterExampleResult;
+import de.uni_freiburg.informatik.ultimate.result.GenericResult;
 import de.uni_freiburg.informatik.ultimate.result.IResult;
 import de.uni_freiburg.informatik.ultimate.result.InvariantResult;
 import de.uni_freiburg.informatik.ultimate.result.PositiveResult;
 import de.uni_freiburg.informatik.ultimate.result.ProcedureContractResult;
 import de.uni_freiburg.informatik.ultimate.result.TimeoutResult;
 import de.uni_freiburg.informatik.ultimate.result.UnprovableResult;
+import de.uni_freiburg.informatik.ultimate.result.GenericResult.Severity;
 
 /**
  * Auto-Generated Stub for the plug-in's Observer
@@ -55,9 +58,12 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 	private int m_OverallStatesRemovedByMinimization;
 	private Result m_OverallResult;
 	private IElement m_Artifact;
+	private long m_StartingTime;
+	
 
 	@Override
 	public boolean process(IElement root) {
+		m_StartingTime = System.currentTimeMillis();
 		RootAnnot rootAnnot = ((RootNode) root).getRootAnnot();
 		TAPreferences taPrefs = rootAnnot.getTaPrefs();
 		
@@ -91,14 +97,14 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 
 		if (taPrefs.allErrorLocsAtOnce()) {
 			String name = "AllErrorsAtOnce";
-			iterate(name, root, taPrefs, smtManager, errNodesOfAllProc);
+			iterate(name, (RootNode) root, taPrefs, smtManager, errNodesOfAllProc);
 		} else {
 			for (ProgramPoint errorLoc : errNodesOfAllProc) {
 				String name = errorLoc.getLocationName();
 				ArrayList<ProgramPoint> errorLocs = new ArrayList<ProgramPoint>(1);
 				errorLocs.add(errorLoc);
 				UltimateServices.getInstance().setSubtask(errorLoc.toString());
-				iterate(name, root, taPrefs, smtManager, errorLocs);
+				iterate(name, (RootNode) root, taPrefs, smtManager, errorLocs);
 			}
 		}
 
@@ -222,18 +228,18 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 		return false;
 	}
 
-	private void iterate(String name, IElement root, TAPreferences taPrefs,
+	private void iterate(String name, RootNode root, TAPreferences taPrefs,
 			SmtManager smtManager, Collection<ProgramPoint> errorLocs) {
 		AbstractCegarLoop abstractCegarLoop;
 		if (taPrefs.interpolantAutomaton() == InterpolantAutomaton.TOTALINTERPOLATION) {
 			abstractCegarLoop = new CegarLoopSequentialWithBackedges(name, 
-					((RootNode) root), smtManager, taPrefs, errorLocs);
+					root, smtManager, taPrefs, errorLocs);
 		} else if (taPrefs.interpolatedLocs() == InterpolatedLocs.GUESS) {
 			abstractCegarLoop = new PredicateAbstractionCegarLoop(name, 
-					((RootNode) root), smtManager, taPrefs, errorLocs);
+					root, smtManager, taPrefs, errorLocs);
 		} else {
 			abstractCegarLoop = new BasicCegarLoop(name, 
-					((RootNode) root), smtManager, taPrefs, errorLocs);
+					root, smtManager, taPrefs, errorLocs);
 		}
 
 		Result result = abstractCegarLoop.iterate();
@@ -282,9 +288,8 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 			s_Logger.debug("Ommiting computation of Hoare annotation");
 			
 		}
-		
-		
 		m_Artifact = abstractCegarLoop.getArtifact();
+		reportTimingStatistics(root);	
 	}
 	
 	private String backtranslateExprWorkaround(Expression expr) {
@@ -376,6 +381,20 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 		uknRes.setLongDescription(failurePath.toString());
 		reportResult(uknRes);
 		s_Logger.warn(uknMessage);
+	}
+	
+	private void reportTimingStatistics(RootNode root) {
+		String shortDescription = "Ultimate Automizer runtime statistics";
+		long time = System.currentTimeMillis() - m_StartingTime;
+		String longDescription = "Ultimate Automizer took " + time + "ms";
+		s_Logger.warn(longDescription);
+		RCFGNode someNode = root.getOutgoingNodes().iterator().next();
+		GenericResult<RcfgElement> res = new GenericResult<RcfgElement>(
+				someNode, Activator.s_PLUGIN_NAME, 
+				UltimateServices.getInstance().getTranslatorSequence(), 
+				someNode.getPayload().getLocation(),
+				shortDescription, longDescription, Severity.INFO);
+		reportResult(res);
 	}
 	
 	
