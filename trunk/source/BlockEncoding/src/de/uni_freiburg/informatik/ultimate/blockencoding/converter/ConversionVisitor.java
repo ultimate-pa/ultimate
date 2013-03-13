@@ -342,15 +342,15 @@ public class ConversionVisitor implements IMinimizationVisitor {
 		StatementSequence replacement = null;
 		if (secondGotoEdge == null) {
 			replacement = new StatementSequence(
-					(ProgramPoint) gotoEdge.getSource(),
-					(ProgramPoint) gotoEdge.getTarget(), new AssumeStatement(
+					null,
+					null, new AssumeStatement(
 							gotoEdge.getPayload().getLocation(),
 							new BooleanLiteral(gotoEdge.getPayload()
 									.getLocation(), true)));
 		} else {
 			replacement = new StatementSequence(
-					(ProgramPoint) gotoEdge.getSource(),
-					(ProgramPoint) secondGotoEdge.getTarget(),
+					null,
+					null,
 					new AssumeStatement(gotoEdge.getPayload().getLocation(),
 							new BooleanLiteral(gotoEdge.getPayload()
 									.getLocation(), true)));
