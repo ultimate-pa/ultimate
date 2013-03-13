@@ -8,20 +8,24 @@ import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 
+public class BuchiIntersect<LETTER, STATE> extends
+		AbstractIntersect<LETTER, STATE> implements IOperation {
 
+	private static Logger s_Logger = UltimateServices.getInstance().getLogger(
+			Activator.PLUGIN_ID);
 
-public class BuchiIntersect<LETTER,STATE> extends AbstractIntersect<LETTER,STATE>
-							implements IOperation {
-
-	private static Logger s_Logger = 
-		UltimateServices.getInstance().getLogger(Activator.PLUGIN_ID);
-	
-	public BuchiIntersect(boolean buchiIntersection, boolean minimizeResult,
-					 INestedWordAutomaton<LETTER,STATE> fstNwa,
-					 INestedWordAutomaton<LETTER,STATE> sndNwa) throws OperationCanceledException {
-		super(true,minimizeResult,fstNwa, sndNwa);
+	public BuchiIntersect(INestedWordAutomaton<LETTER, STATE> fstNwa,
+			INestedWordAutomaton<LETTER, STATE> sndNwa)
+			throws OperationCanceledException {
+		super(true, false, fstNwa, sndNwa);
 	}
-	
+
+	public BuchiIntersect(boolean minimizeResult,
+			INestedWordAutomaton<LETTER, STATE> fstNwa,
+			INestedWordAutomaton<LETTER, STATE> sndNwa)
+			throws OperationCanceledException {
+		super(true, minimizeResult, fstNwa, sndNwa);
+	}
 
 	@Override
 	public String operationName() {
