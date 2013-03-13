@@ -746,21 +746,7 @@ public class TestFileInterpreter {
 		return builder.toString();
 	}
 	
-	/***
-	 * Checks if the given automaton has the operation op.
-	 * @param automaton The automaton on which the operation should be called
-	 * @param op The name of the operation which should be called on the automaton
-	 * @return The method object if the given automaton has the operation, otherwise null.
-	 */
-	private Method hasOperation(Object automaton, String op) {
-		for (Method m : automaton.getClass().getMethods()) {
-			if (m.getName().equalsIgnoreCase(op)) {
-				return m;
-			}
-		}
-		return null;
-	}
-	
+
 	private IOperation getAutomataOperation(String opName, ArrayList<Object> arguments) {
 		String operationName = opName.toLowerCase();
 		IOperation result = null;
@@ -821,7 +807,7 @@ public class TestFileInterpreter {
 	 * 
 	 * @return Returns a map from String to class objects from the classes found in the directories.
  	 */
-	static private Map<String, Class<?>> getOperationClasses() {
+	private static Map<String, Class<?>> getOperationClasses() {
 		Map<String, Class<?>> result = new HashMap<String, Class<?>>();
 		String baseDir = "/de/uni_freiburg/informatik/ultimate/automata/nwalibrary/operations";
 		String[] dirs = { "", "buchiReduction" };
