@@ -647,13 +647,14 @@ public class IsEmpty<LETTER,STATE> implements IOperation {
 		return false;
 	}
 	
-	
-
-
-
-
 	@Override
-	public NestedRun<LETTER,STATE> getResult() {
+	public Boolean getResult() {
+		assert (ResultChecker.isEmpty(m_nwa, m_acceptingRun));
+		return m_acceptingRun != null;
+	}
+
+
+	public NestedRun<LETTER,STATE> getNestedRun() {
 		assert (ResultChecker.isEmpty(m_nwa, m_acceptingRun));
 		return m_acceptingRun;
 	}

@@ -566,7 +566,7 @@ public class ResultChecker<LETTER,STATE> {
 	
 	private static NestedRun nwaLanguageInclusion(INestedWordAutomaton nwa1, INestedWordAutomaton nwa2) throws OperationCanceledException {
 		INestedWordAutomaton nwa1MinusNwa2 = (new Difference(nwa1, nwa2)).getResult();
-		NestedRun inNwa1ButNotInNwa2 = (new IsEmpty(nwa1MinusNwa2)).getResult();
+		NestedRun inNwa1ButNotInNwa2 = (new IsEmpty(nwa1MinusNwa2)).getNestedRun();
 		return inNwa1ButNotInNwa2;
 //		if (inNwa1ButNotInNwa2 != null) {
 //			s_Logger.error("Word accepted by nwa1, but not by nwa2: " + 

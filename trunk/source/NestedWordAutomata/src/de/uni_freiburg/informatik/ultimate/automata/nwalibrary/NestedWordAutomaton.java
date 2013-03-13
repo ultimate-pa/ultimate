@@ -2312,7 +2312,7 @@ public class NestedWordAutomaton<LETTER,STATE> implements INestedWordAutomaton<L
 	
 	@Deprecated
 	public NestedRun<LETTER,STATE> getAcceptingNestedRun() {
-		NestedRun<LETTER,STATE> result = (new IsEmpty<LETTER,STATE>(this).getResult());
+		NestedRun<LETTER,STATE> result = (new IsEmpty<LETTER,STATE>(this).getNestedRun());
 		return result;
 	}
 	
@@ -2444,13 +2444,13 @@ public class NestedWordAutomaton<LETTER,STATE> implements INestedWordAutomaton<L
 			INestedWordAutomaton<LETTER,STATE> nwa2) throws OperationCanceledException {
 	return new IsEmpty<LETTER, STATE>(
 			(new Difference<LETTER,STATE>(nwa1, nwa2)).getResult()
-			).getResult();
+			).getNestedRun();
 	}
 	
 	public NestedRun<LETTER,STATE> included(INestedWordAutomaton<LETTER,STATE> nwa2) throws OperationCanceledException {
 	return new IsEmpty<LETTER, STATE>(
 			(new Difference<LETTER,STATE>(this, nwa2)).getResult()
-			).getResult();
+			).getNestedRun();
 	}
 	
 	
