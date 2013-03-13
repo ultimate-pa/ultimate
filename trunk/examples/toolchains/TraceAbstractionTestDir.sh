@@ -62,7 +62,6 @@ TimeLimit=20;
 cd "$examplesFolder"
 #for f in `ls *.bpl`;
 files=`find . -name "*.bpl" -o -name "*.c"|sort`
-settings=`ls $Ultimate_PATH/settings`
 
 for f in $files;
 do
