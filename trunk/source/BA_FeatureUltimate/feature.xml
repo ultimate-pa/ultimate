@@ -234,20 +234,6 @@
          unpack="false"/>
 
    <plugin
-         id="LazyAbstraction"
-         download-size="0"
-         install-size="0"
-         version="0.0.0"
-         unpack="false"/>
-
-   <plugin
-         id="LazyAbstractionOnCFG"
-         download-size="0"
-         install-size="0"
-         version="0.0.0"
-         unpack="false"/>
-
-   <plugin
          id="AutomataLibraryRandomizedTests"
          download-size="0"
          install-size="0"
@@ -263,6 +249,13 @@
 
    <plugin
          id="AutomataScriptParser"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="BlockEncoding"
          download-size="0"
          install-size="0"
          version="0.0.0"

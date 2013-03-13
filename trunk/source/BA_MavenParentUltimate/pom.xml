@@ -155,8 +155,6 @@
 		<module>../BA_FeatureUltimateCommandLine</module>
 		<module>../ACSLParser</module>
 		<module>../ConsoleOut</module>
-		<module>../LazyAbstraction</module>
-		<module>../LazyAbstractionOnCFG</module>
 		<module>../ReImpact</module>
 		<module>../Library-Batik</module>
 		<module>../Library-Jung</module>
