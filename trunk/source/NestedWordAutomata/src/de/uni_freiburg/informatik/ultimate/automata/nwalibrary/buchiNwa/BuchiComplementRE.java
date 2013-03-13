@@ -75,7 +75,7 @@ public class BuchiComplementRE<LETTER,STATE> implements IOperation {
 			INestedWordAutomaton<LETTER,STATE> determinizedComplement =
 					(new BuchiComplementDeterministic<LETTER,STATE>(determinized)).getResult();
 			INestedWordAutomaton<LETTER,STATE> intersectionWithOperand =
-					(new BuchiIntersect<LETTER,STATE>(true, true, operandWithoutNonLiveStates, determinizedComplement)).getResult();
+					(new BuchiIntersect<LETTER,STATE>(true, operandWithoutNonLiveStates, determinizedComplement)).getResult();
 			NestedLassoRun<LETTER,STATE> run = (new EmptinessCheck<LETTER,STATE>()).getAcceptingNestedLassoRun(intersectionWithOperand);
 			if (run == null) {
 				s_Logger.info("Rüdigers determinization knack applicable");

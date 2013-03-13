@@ -374,7 +374,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 			s_Logger.debug("Start intersection");
 			Intersect<CodeBlock, IPredicate> intersect =
 					new Intersect<CodeBlock, IPredicate>(
-							false, false, oldAbstraction, nia);
+							false, oldAbstraction, nia);
 			if (m_RemoveDeadEnds && m_Pref.computeHoareAnnotation()) {
 				m_Haf.wipeReplacedContexts();
 				m_Haf.addDeadEndDoubleDeckers(intersect);

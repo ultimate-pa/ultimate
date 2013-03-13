@@ -2290,7 +2290,7 @@ public class NestedWordAutomaton<LETTER,STATE> implements INestedWordAutomaton<L
 												boolean minimizeResult) 
 												throws OperationCanceledException{
 		INestedWordAutomaton<LETTER,STATE> result = 
-			(new Intersect(true, minimizeResult, this, nwa)).getResult();
+			(new Intersect(minimizeResult, this, nwa)).getResult();
 		s_Logger.info("Result of IntersectionBuchi" + 
 				((NestedWordAutomaton<LETTER, STATE>) result).sizeInformation());
 
@@ -2461,7 +2461,7 @@ public class NestedWordAutomaton<LETTER,STATE> implements INestedWordAutomaton<L
 //				(new BuchiComplementRE<S,C>(snd)).getResult();
 				(new BuchiComplementFKV<LETTER,STATE>(snd)).getResult();
 		INestedWordAutomaton<LETTER, STATE> difference = 
-				(new Intersect<LETTER, STATE>(true, true, this, sndComplement)).getResult();
+				(new Intersect<LETTER, STATE>(true, this, sndComplement)).getResult();
 		NestedLassoRun<LETTER, STATE> ctx = new EmptinessCheck<LETTER, STATE>().
 				getAcceptingNestedLassoRun((INestedWordAutomaton<LETTER,STATE>) difference);
 		return ctx;

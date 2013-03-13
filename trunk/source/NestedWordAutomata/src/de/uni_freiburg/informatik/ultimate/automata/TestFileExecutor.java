@@ -690,7 +690,7 @@ public class TestFileExecutor {
 			checkOperands(operation, operands, -100, -100);
 			INestedWordAutomaton op0 = (INestedWordAutomaton) operands.get(0);
 			INestedWordAutomaton op1 = (INestedWordAutomaton) operands.get(1);
-			return (new Intersect<String,String>(false, true, op0, op1)).getResult();
+			return (new Intersect<String,String>(true, op0, op1)).getResult();
 		}
 		
 		if (operation.equals("intersectNodd")){
@@ -752,7 +752,7 @@ public class TestFileExecutor {
 			checkOperands(operation, operands, -100, -100);
 			INestedWordAutomaton op0 = (INestedWordAutomaton) operands.get(0);
 			INestedWordAutomaton op1 = (INestedWordAutomaton) operands.get(1);
-			return (new Intersect(true, true, op0, op1)).getResult();
+			return (new Intersect(true, op0, op1)).getResult();
 		}
 		
 		else if (operation.equals("buchiComplementFKV")){
