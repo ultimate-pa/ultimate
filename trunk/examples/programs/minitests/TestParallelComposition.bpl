@@ -12,10 +12,11 @@
  * 4. y is inVar and outVar y := y + 1;
  */
 
-procedure proc()
-{
   var in, a, y: int;
 
+procedure proc()
+modifies y, a;
+{
 
   // case 1-1
   y,a := 0, 10;
