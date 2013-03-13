@@ -42,7 +42,6 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 
 	private static Logger s_Logger = UltimateServices.getInstance().getLogger(
 			Activator.s_PLUGIN_ID);
-	private static UltimateServices s_UlitmateServ = UltimateServices.getInstance();
 	/**
 	 * Root Node of this Ultimate model. I use this to store information that
 	 * should be passed to the next plugin. The Successors of this node exactly
@@ -105,9 +104,9 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 
 		s_Logger.debug("Compute Hoare Annotation: " + taPrefs.computeHoareAnnotation());
 		s_Logger.debug("Overall result: " + m_OverallResult);
-		s_Logger.debug("Continue processing: " + s_UlitmateServ.continueProcessing());
+		s_Logger.debug("Continue processing: " + UltimateServices.getInstance().continueProcessing());
 		if (taPrefs.computeHoareAnnotation() && m_OverallResult != Result.TIMEOUT 
-				&& s_UlitmateServ.continueProcessing()) {
+				&& UltimateServices.getInstance().continueProcessing()) {
 			assert (smtManager.cfgInductive((RootNode) root));
 
 			Map<String, ProgramPoint> finalNodes = rootAnnot.getExitNodes();

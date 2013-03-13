@@ -28,7 +28,6 @@ public class SenwaWalker<LETTER,STATE> {
 	
 	private static Logger s_Logger = 
 		UltimateServices.getInstance().getLogger(Activator.PLUGIN_ID);
-	UltimateServices m_UltiServ = UltimateServices.getInstance();
 	
 	
 	protected Senwa<LETTER,STATE> m_TraversedSenwa;
@@ -235,7 +234,7 @@ public class SenwaWalker<LETTER,STATE> {
 				}
 			}
 			
-			if (!m_UltiServ.continueProcessing()) {
+			if (!UltimateServices.getInstance().continueProcessing()) {
 				throw new OperationCanceledException();
 			}
 			
