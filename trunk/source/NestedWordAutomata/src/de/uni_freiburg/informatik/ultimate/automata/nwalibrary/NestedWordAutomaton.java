@@ -21,7 +21,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.BuchiCom
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.EmptinessCheck;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.NestedLassoRun;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.Accepts;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.BfsEmptiness;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IsEmpty;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.ConcurrentProduct;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.Difference;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.Intersect;
@@ -2312,7 +2312,7 @@ public class NestedWordAutomaton<LETTER,STATE> implements INestedWordAutomaton<L
 	
 	@Deprecated
 	public NestedRun<LETTER,STATE> getAcceptingNestedRun() {
-		NestedRun<LETTER,STATE> result = (new BfsEmptiness<LETTER,STATE>(this).getResult());
+		NestedRun<LETTER,STATE> result = (new IsEmpty<LETTER,STATE>(this).getResult());
 		return result;
 	}
 	
@@ -2442,13 +2442,13 @@ public class NestedWordAutomaton<LETTER,STATE> implements INestedWordAutomaton<L
 	@Deprecated
 	public NestedRun<LETTER,STATE> included(INestedWordAutomaton<LETTER,STATE> nwa1,
 			INestedWordAutomaton<LETTER,STATE> nwa2) throws OperationCanceledException {
-	return new BfsEmptiness<LETTER, STATE>(
+	return new IsEmpty<LETTER, STATE>(
 			(new Difference<LETTER,STATE>(nwa1, nwa2)).getResult()
 			).getResult();
 	}
 	
 	public NestedRun<LETTER,STATE> included(INestedWordAutomaton<LETTER,STATE> nwa2) throws OperationCanceledException {
-	return new BfsEmptiness<LETTER, STATE>(
+	return new IsEmpty<LETTER, STATE>(
 			(new Difference<LETTER,STATE>(this, nwa2)).getResult()
 			).getResult();
 	}

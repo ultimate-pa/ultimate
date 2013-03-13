@@ -35,7 +35,7 @@ import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
  *
  */
 
-public class BfsEmptiness<LETTER,STATE> implements IOperation {
+public class IsEmpty<LETTER,STATE> implements IOperation {
 	
 	private static Logger s_Logger = 
 		UltimateServices.getInstance().getLogger(Activator.PLUGIN_ID);
@@ -189,7 +189,7 @@ public class BfsEmptiness<LETTER,STATE> implements IOperation {
 	private STATE m_ReconstructionPredK;
 	
 	
-	public BfsEmptiness(INestedWordAutomaton<LETTER,STATE> nwa) {
+	public IsEmpty(INestedWordAutomaton<LETTER,STATE> nwa) {
 		m_nwa = nwa;
 		dummyEmptyStackState = m_nwa.getEmptyStackState();
 		s_Logger.info(startMessage());

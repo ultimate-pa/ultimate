@@ -18,7 +18,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordGenerat
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.BuchiAccepts;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.NestedLassoRun;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.NestedLassoWord;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.BfsEmptiness;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IsEmpty;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.Complement;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.ComplementSadd;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.ConcurrentProduct;
@@ -109,10 +109,10 @@ public class ResultChecker<LETTER,STATE> {
 //		correct &=  ((new Intersect(false, false, op, complementJM)).getNwa().getAcceptingNestedRun() == null);
 		INestedWordAutomaton complementSadd = (new ComplementSadd(op)).getResult();
 		INestedWordAutomaton intersectionWithSadd = (new Intersect(false, op, complementSadd)).getResult();
-		correct &= (new BfsEmptiness(intersectionWithSadd).getResult() == null);
+		correct &= (new IsEmpty(intersectionWithSadd).getResult() == null);
 		INestedWordAutomaton complementDD = (new Complement(op)).getResult();
 		INestedWordAutomaton intersectionWithDD = (new Intersect(false, op, complementDD)).getResult();
-		correct &= (new BfsEmptiness(intersectionWithDD).getResult() == null);
+		correct &= (new IsEmpty(intersectionWithDD).getResult() == null);
 
 		s_Logger.debug("Finished testing correctness of complement");
 		resultCheckStackHeight--;
@@ -566,7 +566,7 @@ public class ResultChecker<LETTER,STATE> {
 	
 	private static NestedRun nwaLanguageInclusion(INestedWordAutomaton nwa1, INestedWordAutomaton nwa2) throws OperationCanceledException {
 		INestedWordAutomaton nwa1MinusNwa2 = (new Difference(nwa1, nwa2)).getResult();
-		NestedRun inNwa1ButNotInNwa2 = (new BfsEmptiness(nwa1MinusNwa2)).getResult();
+		NestedRun inNwa1ButNotInNwa2 = (new IsEmpty(nwa1MinusNwa2)).getResult();
 		return inNwa1ButNotInNwa2;
 //		if (inNwa1ButNotInNwa2 != null) {
 //			s_Logger.error("Word accepted by nwa1, but not by nwa2: " + 
