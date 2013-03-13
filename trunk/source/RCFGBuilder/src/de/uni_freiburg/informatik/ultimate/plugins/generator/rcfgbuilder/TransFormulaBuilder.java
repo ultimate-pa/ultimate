@@ -1,5 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -198,8 +200,9 @@ public class TransFormulaBuilder {
 		}
 		HashMap<BoogieVar, TermVariable> inVars = m_Boogie2smt.getInVars();
 		HashMap<BoogieVar, TermVariable> outVars = m_Boogie2smt.getOutVars();
+		
+		TransFormula.removeSuperfluousVars(formula, inVars, outVars, auxVars);
 		HashSet<TermVariable> branchEncoders = new HashSet<TermVariable>(0);
-
 		Term closedFormula = TransFormula.computeClosedFormula(
 				formula, inVars, outVars, auxVars, m_Boogie2smt);
 		TransFormula tf = new TransFormula(formula,	inVars, outVars, auxVars, 

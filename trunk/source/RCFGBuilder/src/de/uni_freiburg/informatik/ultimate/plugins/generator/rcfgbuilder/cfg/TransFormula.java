@@ -156,6 +156,49 @@ public class TransFormula implements Serializable {
 		return closedTerm;
 	}
 	
+	
+	
+	/**
+	 * Remove inVars, outVars and auxVars that are not necessary.
+	 * Remove auxVars if it does not occur in the formula.
+	 * Remove inVars if it does not occur in the formula.
+	 * Remove outVar if it does not occur in the formula and is also an inVar
+	 * (case where the var is not modified).
+	 * Note that we may not generally remove outVars that do not occur in the
+	 * formula (e.g., TransFormula for havoc statement).  
+	 */
+	public static void removeSuperfluousVars(Term formula, 
+			Map<BoogieVar, TermVariable> inVars, 
+			Map<BoogieVar, TermVariable> outVars, 
+			Set<TermVariable> auxVars) {
+		Set<TermVariable> allVars = 
+				new HashSet<TermVariable>(Arrays.asList(formula.getFreeVars()));
+		auxVars.retainAll(allVars);
+		List<BoogieVar> superfluousInVars = new ArrayList<BoogieVar>();
+		List<BoogieVar> superfluousOutVars = new ArrayList<BoogieVar>();
+		for (BoogieVar bv : inVars.keySet()) {
+			TermVariable inVar = inVars.get(bv);
+			if (!allVars.contains(inVar)) {
+				superfluousInVars.add(bv);
+			}
+		}
+		for (BoogieVar bv : outVars.keySet()) {
+			TermVariable outVar = outVars.get(bv);
+			if (!allVars.contains(outVar)) {
+				TermVariable inVar = inVars.get(bv);
+				if (outVar == inVar) {
+					superfluousOutVars.add(bv);
+				}
+			}
+		}
+		for (BoogieVar bv : superfluousInVars) {
+			inVars.remove(bv);
+		}
+		for (BoogieVar bv : superfluousOutVars) {
+			outVars.remove(bv);
+		}
+	}
+	
 
 	private static boolean allVarsContainsFreeVars(
 										Set<TermVariable> allVars, Term term) {
@@ -234,12 +277,12 @@ public class TransFormula implements Serializable {
 	
 	/**
 	 * Returns true each auxVar is in allVars and 
-	 * each inVar occurs in allVars or as outVar. 
+	 * each inVar occurs in allVars. 
 	 */
 	private boolean InAuxSubsetAll() {
 		boolean result = true;
 		for (BoogieVar bv : m_InVars.keySet()) {
-			result &= (m_Vars.contains(m_InVars.get(bv)) || m_OutVars.containsKey(bv));
+			result &= (m_Vars.contains(m_InVars.get(bv)));
 			assert result : "superfluous inVar";
 		}
 		for (TermVariable tv : m_auxVars) {
@@ -656,6 +699,8 @@ public class TransFormula implements Serializable {
 		} else {
 			inFeasibility = Infeasibility.UNPROVEABLE;
 		}
+		TransFormula.removeSuperfluousVars(resultFormula, 
+				newInVars, newOutVars, auxVars);
 		Term closedFormula = computeClosedFormula(resultFormula, 
 				newInVars, newOutVars, auxVars, boogie2smt);
 		return new TransFormula(resultFormula, newInVars, newOutVars, auxVars, 
