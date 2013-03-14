@@ -34,6 +34,10 @@ public class PreferencePage extends FieldEditorPreferencePage implements
 	public static String NAME_CALLMINIMIZE = "MinimizeCall";
 
 	public static String LABEL_CALLMINIMIZE = "Minimize Call and Return Edges";
+	
+	public static String NAME_EXECUTETESTS = "ExecuteUnitTests";
+	
+	public static String LABEL_EXECUTETESTS = "Excute Unit-Tests, with special Observer";
 
 	public PreferencePage() {
 		super(GRID);
@@ -55,6 +59,11 @@ public class PreferencePage extends FieldEditorPreferencePage implements
 				NAME_CALLMINIMIZE, LABEL_CALLMINIMIZE, getFieldEditorParent());
 		addField(useCallReturnMinimization);
 		preferences.setDefault(NAME_CALLMINIMIZE, false);
+		
+		BooleanFieldEditor executeUnitTests = new BooleanFieldEditor(
+				NAME_EXECUTETESTS, LABEL_EXECUTETESTS, getFieldEditorParent());
+		addField(executeUnitTests);
+		preferences.setDefault(NAME_EXECUTETESTS, false);
 	}
 
 	@Override
