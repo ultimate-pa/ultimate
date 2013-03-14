@@ -1,4 +1,5 @@
 #Sat Sep 29 17:41:40 CEST 2012
+file_export_version=3.0
 /configuration/RCFGBuilder/BlockSize=loop free block
 /configuration/RCFGBuilder/Timeout=10
 /configuration/RCFGBuilder/Determinization=LazyPost
