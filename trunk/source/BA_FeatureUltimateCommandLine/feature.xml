@@ -226,4 +226,18 @@
          version="0.0.0"
          unpack="false"/>
 
+   <plugin
+         id="Library-hamcrest"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="Library-junit"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
 </feature>
