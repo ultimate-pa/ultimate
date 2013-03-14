@@ -23,13 +23,23 @@ public interface IMinimizedEdge extends
 	/**
 	 * Since there is an unsolved problem to minimize Call- and Return-Edges
 	 * with SequentialComposition which the "old(...)"-Expression is contained,
-	 * we check edges if this expression is involved. If this is the case we
-	 * do not allow the minimization of Call-Edges in this case.
+	 * we check edges if this expression is involved. If this is the case we do
+	 * not allow the minimization of Call-Edges in this case.
 	 * 
 	 * @return <b>true</b> if old is used, <br>
 	 *         <b>false</b> if old is not used
 	 */
 	public boolean isOldVarInvolved();
+
+	/**
+	 * Every edge in the minimized model is rated with some metrics
+	 * (complexity). So that we are now able to control which edges we want, and
+	 * which we do not want. This is maybe needed because Large Block Encoding
+	 * does to much minimization.
+	 * 
+	 * @return the computed Rating of this edge.
+	 */
+	public IRating getRating();
 
 	public int getElementCount();
 

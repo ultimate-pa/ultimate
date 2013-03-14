@@ -4,6 +4,7 @@
 package de.uni_freiburg.informatik.ultimate.blockencoding.model;
 
 import de.uni_freiburg.informatik.ultimate.blockencoding.model.interfaces.IMinimizedEdge;
+import de.uni_freiburg.informatik.ultimate.blockencoding.model.interfaces.IRating;
 
 /**
  * This edge represents a conjunction of the formulas of two edges. This is here
@@ -28,6 +29,11 @@ public class ConjunctionEdge extends AbstractCompositeEdge {
 	public ConjunctionEdge(IMinimizedEdge left, IMinimizedEdge right) {
 		super(left, right);
 		this.payload.setName(leftEdge + " /\\ " + rightEdge);
+	}
+
+	@Override
+	public IRating getRating() {
+		throw new UnsupportedOperationException("Not implemented");
 	}
 
 }

@@ -1,6 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.blockencoding.model;
 
 import de.uni_freiburg.informatik.ultimate.blockencoding.model.interfaces.IMinimizedEdge;
+import de.uni_freiburg.informatik.ultimate.blockencoding.model.interfaces.IRating;
 
 /**
  * This edge represents a disjunction of the formulas of two edges. This is here
@@ -25,5 +26,10 @@ public class DisjunctionEdge extends AbstractCompositeEdge {
 	public DisjunctionEdge(IMinimizedEdge left, IMinimizedEdge right) {
 		super(left, right);
 		this.payload.setName(leftEdge + " V " + rightEdge);
+	}
+
+	@Override
+	public IRating getRating() {
+		throw new UnsupportedOperationException("Not implemented");
 	}
 }

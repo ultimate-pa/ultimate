@@ -7,6 +7,7 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.blockencoding.model.interfaces.IBasicEdge;
 import de.uni_freiburg.informatik.ultimate.blockencoding.model.interfaces.IMinimizedEdge;
+import de.uni_freiburg.informatik.ultimate.blockencoding.model.interfaces.IRating;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.model.structure.ModifiableMultigraphEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CfgBuilder.GotoEdge;
@@ -87,6 +88,11 @@ public class BasicEdge extends
 			}
 		}
 		return false;
+	}
+
+	@Override
+	public IRating getRating() {
+		throw new UnsupportedOperationException("Not implemented");
 	}
 
 }
