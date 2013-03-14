@@ -9,7 +9,7 @@ import org.eclipse.core.runtime.preferences.IEclipsePreferences;
 
 import de.uni_freiburg.informatik.ultimate.blockencoding.model.BlockEncodingAnnotation;
 import de.uni_freiburg.informatik.ultimate.blockencoding.model.MinimizedNode;
-import de.uni_freiburg.informatik.ultimate.blockencoding.test.TestMinimizationVisitor;
+import de.uni_freiburg.informatik.ultimate.blockencoding.test.visitor.TestMinimizationVisitor;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.blockendcoding.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.blockendcoding.preferences.PreferencePage;

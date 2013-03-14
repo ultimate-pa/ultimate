@@ -1,7 +1,7 @@
 /**
  * 
  */
-package de.uni_freiburg.informatik.ultimate.blockencoding.test;
+package de.uni_freiburg.informatik.ultimate.blockencoding.test.visitor;
 
 import java.util.ArrayList;
 import java.util.HashMap;
