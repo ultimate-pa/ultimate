@@ -20,7 +20,9 @@ import de.uni_freiburg.informatik.ultimate.model.IElement;
  *            <tt>public final class FinalModel implements ILabeledEdgesMultigraph&lt;FinalModel,L&gt;</tt>
  *            .
  * @param <L>
- *            The type of the edge labels of the graph.
+ *            The type of the edge labels of the graph. If this graph should
+ *            serve as a "real" multigraph, one should use a Collection as label
+ *            type.
  * 
  * @author dietsch
  * @see IElement

@@ -22,7 +22,6 @@ public abstract class IRSDependenciesAnnotation extends AbstractAnnotations {
 	}
 
 	public void addAnnotation(IElement e) {
-
 		e.getPayload().getAnnotations()
 				.put(Activator.PLUGIN_ID + this.getClass().getName(), this);
 	}

@@ -10,7 +10,11 @@ import de.uni_freiburg.informatik.ultimate.irs.dependencies.rcfg.annotations.IRS
 import de.uni_freiburg.informatik.ultimate.irs.dependencies.rcfg.annotations.UseDefSequence;
 import de.uni_freiburg.informatik.ultimate.irs.dependencies.rcfg.walker.RCFGWalkerUnroller;
 import de.uni_freiburg.informatik.ultimate.irs.dependencies.utils.Utils;
+import de.uni_freiburg.informatik.ultimate.model.IElement;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence;
 
 public class SequencingVisitor extends RCFGVisitor {
 
@@ -38,6 +42,110 @@ public class SequencingVisitor extends RCFGVisitor {
 	@Override
 	public void endOfTrace() {
 		super.endOfTrace();
+		RealSequencingEOT();
+		DebugSequencingEOT();
+	}
+
+	@Override
+	public void finish() {
+		super.finish();
+		DebugFinish();
+
+	}
+
+	@Override
+	public boolean performedChanges() {
+		return false;
+	}
+
+	@Override
+	public boolean abortCurrentBranch() {
+		return false;
+	}
+
+	@Override
+	public boolean abortAll() {
+		return false;
+	}
+
+	private void RealSequencingEOT() {
+		List<RCFGEdge> trace = getCurrentPrefix();
+
+		HashSet<String> remainingInputs = new HashSet<>(mInputs);
+		HashSet<String> remainingOutputs = new HashSet<>(mOutputs);
+
+		ZoneAnnotation currentZone = null;
+
+		boolean startFound = false;
+		boolean endFound = false;
+		boolean zoneShift = true;
+		boolean isStable = true;
+
+		for (RCFGEdge currentEdge : trace) {
+			UseDefSequence ud = UseDefSequence.getAnnotation(currentEdge,
+					UseDefSequence.class);
+			if (ud != null) {
+
+				List<Statement> stmts = extractStatements(currentEdge);
+
+				for (int j = 0; j < ud.Sequence.size(); j++) {
+					UseDefSet uds = ud.Sequence.get(j);
+
+					if (zoneShift) {
+						if (currentZone != null) {
+							currentZone.EndEdge = currentEdge;
+							currentZone.EndStatement = stmts.get(j);
+						}
+						currentZone = new ZoneAnnotation();
+						currentZone.StartEdge = currentEdge;
+						currentZone.StartStatement = stmts.get(j);
+
+						remainingInputs = new HashSet<>(mInputs);
+						remainingOutputs = new HashSet<>(mOutputs);
+
+						zoneShift = false;
+					}
+
+					boolean removedInput = remainingInputs.removeAll(uds.Use);
+					boolean removedOutput = remainingOutputs.removeAll(uds.Def);
+
+					if (removedInput || removedOutput) {
+						if (isStable) {
+							isStable = false;
+							zoneShift = true;
+						}
+					}
+
+					if (endFound) {
+						HashSet<String> readInputs = Utils.intersect(uds.Use,
+								mInputs);
+					}
+
+					if (remainingInputs.isEmpty() && remainingOutputs.isEmpty()
+							&& !endFound) {
+						endFound = true;
+						zoneShift = true;
+					}
+
+				}
+				currentZone.addAnnotation(currentEdge);
+			}
+		}
+	}
+
+	private List<Statement> extractStatements(RCFGEdge e) {
+		if (e instanceof StatementSequence) {
+			return ((StatementSequence) e).getStatements();
+		} else if (e instanceof Call) {
+			ArrayList<Statement> rtr = new ArrayList<>();
+			rtr.add(((Call) e).getCallStatement());
+			return rtr;
+		} else {
+			return new ArrayList<>();
+		}
+	}
+
+	private void DebugSequencingEOT() {
 		List<RCFGEdge> trace = getCurrentPrefix();
 
 		List<Tuple<Tuple<Integer>>> zones = new ArrayList<>();
@@ -60,7 +168,8 @@ public class SequencingVisitor extends RCFGVisitor {
 					UseDefSet uds = ud.Sequence.get(j);
 
 					if (searchForRealEnd) {
-						HashSet<String> readInputs = Utils.intersect(uds.Use, mInputs);
+						HashSet<String> readInputs = Utils.intersect(uds.Use,
+								mInputs);
 
 						if (!readInputs.isEmpty()) {
 							remainingInputs = new HashSet<>(mInputs);
@@ -83,13 +192,15 @@ public class SequencingVisitor extends RCFGVisitor {
 					} else {
 						remainingInputs.removeAll(uds.Use);
 					}
+
 					remainingOutputs.removeAll(uds.Def);
 
-					if (remainingInputs.isEmpty() && remainingOutputs.isEmpty() && !searchForRealEnd) {
+					if (remainingInputs.isEmpty() && remainingOutputs.isEmpty()
+							&& !searchForRealEnd) {
 						end.set(i, j);
 						searchForRealEnd = true;
 					}
-					
+
 					last.set(i, j);
 				}
 			}
@@ -97,14 +208,11 @@ public class SequencingVisitor extends RCFGVisitor {
 		if (start.compareTo(end) == -1) {
 			zones.add(new Tuple<SequencingVisitor.Tuple<Integer>>(start, end));
 		}
-		//sLogger.debug(insertLineBreaks(200, traceToString(trace)));
+		// sLogger.debug(insertLineBreaks(200, traceToString(trace)));
 		mDebugZoneMap.put(new ArrayList<>(trace), zones);
 	}
 
-	@Override
-	public void finish() {
-		super.finish();
-
+	private void DebugFinish() {
 		StringBuilder outer = new StringBuilder();
 
 		outer.append("List of zones:\n");
@@ -113,11 +221,17 @@ public class SequencingVisitor extends RCFGVisitor {
 			int i = 0;
 			StringBuilder inner = new StringBuilder();
 			for (RCFGEdge edge : e.getKey()) {
+				ZoneAnnotation za = IRSDependenciesAnnotation.getAnnotation(
+						edge, ZoneAnnotation.class);
+				if (za != null) {
+					outer.append(za).append(";");
+				}
 				inner.append("(").append(i).append(") ");
 				inner.append(Utils.edgeToString(edge));
 				inner.append(" ");
 				++i;
 			}
+			outer.append("\n");
 			outer.append(Utils.insertLineBreaks(200, inner.toString()));
 			outer.append("\n");
 
@@ -136,24 +250,15 @@ public class SequencingVisitor extends RCFGVisitor {
 
 	}
 
-	
+	private class ZoneAnnotation extends IRSDependenciesAnnotation {
 
-	@Override
-	public boolean performedChanges() {
-		return false;
-	}
+		private RCFGEdge StartEdge;
+		private Statement StartStatement;
 
-	@Override
-	public boolean abortCurrentBranch() {
-		return false;
-	}
+		private RCFGEdge EndEdge;
+		private Statement EndStatement;
 
-	@Override
-	public boolean abortAll() {
-		return false;
-	}
-	
-	private class ZoneAnnotation extends IRSDependenciesAnnotation{
+		private boolean IsStable;
 
 		@Override
 		protected String[] getFieldNames() {
@@ -166,7 +271,37 @@ public class SequencingVisitor extends RCFGVisitor {
 			// TODO Auto-generated method stub
 			return null;
 		}
-		
+
+		private void addOrMergeAnnotation(IElement e) {
+			ZoneAnnotation za = getAnnotation(e, this.getClass());
+			if (za != null) {
+				if (!za.equals(this)) {
+					// merge
+					sLogger.debug("Need to merge: " + this + " with " + za);
+				}
+
+			} else {
+				// add
+				addAnnotation(e);
+			}
+		}
+
+		@Override
+		public String toString() {
+			if (StartStatement == null || EndStatement == null) {
+				return "Invalid Zone";
+			}
+
+			if (IsStable) {
+				return "Stable: Start " + StartStatement.toString() + " End "
+						+ EndStatement.toString();
+			} else {
+				return "Unstable: Start " + StartStatement.toString() + " End "
+						+ EndStatement.toString();
+			}
+
+		}
+
 	}
 
 	private class Tuple<T extends Comparable<T>> implements
