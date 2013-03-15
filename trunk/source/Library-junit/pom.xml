@@ -11,6 +11,6 @@
   
   <groupId>Library-junit</groupId>
   <artifactId>Library-junit</artifactId>
-  <version>4.11</version>
+  <version>4.11.0</version>
   <packaging>eclipse-plugin</packaging>
 </project>

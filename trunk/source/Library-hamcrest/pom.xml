@@ -11,6 +11,6 @@
   
   <groupId>Library-hamcrest</groupId>
   <artifactId>Library-hamcrest</artifactId>
-  <version>1.3</version>
+  <version>1.3.0</version>
   <packaging>eclipse-plugin</packaging>
 </project>
