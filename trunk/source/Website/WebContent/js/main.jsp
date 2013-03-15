@@ -52,7 +52,7 @@ function toggleEditor() {
 }
 <%-- encode arbitrary string to html string --%>
 function htmlEncode(value){
-  return $('<div />').text(value).html();
+  return $('<div />').text(value).html().replace(/(\r\n|\n|\r)/gm,"<br />");
 }
 <%--decode html string to decoded string --%>
 function htmlDecode(value){
