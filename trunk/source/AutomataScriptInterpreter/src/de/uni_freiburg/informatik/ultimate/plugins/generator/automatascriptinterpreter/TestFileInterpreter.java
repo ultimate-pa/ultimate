@@ -40,25 +40,14 @@ import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.A
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.VariableExpression;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.WhileStatement;
+import de.uni_freiburg.informatik.ultimate.result.GenericResult;
+import de.uni_freiburg.informatik.ultimate.result.GenericResult.Severity;
 
 
 enum Flow {
 	NORMAL, BREAK, CONTINUE, RETURN;
 }
 public class TestFileInterpreter {
-	class TestCase {
-		private Boolean m_assertionState;
-		private ILocation m_location;
-		
-		private TestCase(boolean state, ILocation loc) {
-			m_assertionState = state;
-			m_location = loc;
-		}
-		
-		private String getAssertionSummary() {
-			return "Test at line " + m_location.getStartLine() + " is " + m_assertionState;
-		}
-	}
 	
 	class AutomataScriptTypeChecker {
 		
@@ -261,7 +250,7 @@ public class TestFileInterpreter {
 	private AutomataDefinitionInterpreter m_automInterpreter;
 	private AutomataScriptTypeChecker m_tChecker;
 	private static Logger s_Logger = UltimateServices.getInstance().getLogger(Activator.s_PLUGIN_ID);
-	private List<TestCase> m_testCases;
+	private List<GenericResult<Integer>> m_testCases;
 	
 	
 	
@@ -269,7 +258,7 @@ public class TestFileInterpreter {
 		m_variables = new HashMap<String, Object>();
 		m_flow = Flow.NORMAL;
 		m_automInterpreter = new AutomataDefinitionInterpreter();
-		m_testCases = new ArrayList<TestCase>();
+		m_testCases = new ArrayList<GenericResult<Integer>>();
 		m_tChecker = new AutomataScriptTypeChecker();
 		m_existingOperations = getOperationClasses();
 		m_operationNamesToCorrectClassNames = new HashMap<String, String>();
@@ -318,7 +307,7 @@ public class TestFileInterpreter {
 			return null;
 		}
 		Object result = interpret(children.get(0));
-		s_Logger.info(getTestCasesSummary());
+		reportResult();
 		return result;
 
 	}
@@ -591,22 +580,37 @@ public class TestFileInterpreter {
 
 		Object result = null;
 
-		if (oe.getOperationName().toLowerCase().equals("assert") && arguments.size() == 1) {
+		if (oe.getOperationName().equalsIgnoreCase("assert") && arguments.size() == 1) {
 			result = arguments.get(0);
 			if (result instanceof Boolean) {
-				m_testCases.add(new TestCase(((Boolean)result), oe.getLocation()));
+				if ((Boolean) result) {
+					m_testCases.add(new GenericResult<Integer>(oe.getLocation().getStartLine(), 
+									Activator.s_PLUGIN_ID, 
+							        null,
+							        oe.getLocation(), 
+							        "Assertion holds.", 
+							        "long", 
+							        Severity.INFO));
+				} else {
+					m_testCases.add(new GenericResult<Integer>(oe.getLocation().getStartLine(), 
+									Activator.s_PLUGIN_ID, 
+									null,
+									oe.getLocation(), 
+									"Assertion violated!", 
+									"long", 
+									Severity.ERROR));
+				}
 			}
+		} else if (oe.getOperationName().equalsIgnoreCase("print")) {
+			for (Object o : arguments) {
+				s_Logger.info(o.toString());
+			}
+			
 		} else {
 			IOperation op = getAutomataOperation(oe.getOperationName(), arguments);
 			if (op != null) {
 				result = op.getResult();
-			} else if (oe.getOperationName().equalsIgnoreCase("print")) {
-				for (Object arg : arguments) {
-					s_Logger.info(arg.toString());
-				}
-				return null;
-			}
-
+			} 
 		}
 		return result;
 	}
@@ -732,20 +736,22 @@ public class TestFileInterpreter {
 		return null;
 	}
 
-	
-	/**
-	 * 
-	 * @return A string which has all the test cases and their results.
-	 */
-	private String getTestCasesSummary() {
+	private void reportResult() {
 		StringBuilder builder = new StringBuilder();
 		builder.append("----------------- Test Summary -----------------\n");
-		for (int i = 0; i < m_testCases.size(); i++) {
-			builder.append((i+1) + ". " + m_testCases.get(i).getAssertionSummary() + "\n");
+		String testCasesSummary = "All testcases passed.";
+		for (GenericResult<Integer> test : m_testCases) {
+			UltimateServices.getInstance().reportResult(Activator.s_PLUGIN_ID, test);
+			switch (test.getSeverity()) {
+			case ERROR: {s_Logger.error("Line " + test.getLocation().getStartLine() + ": " + test.getShortDescription());
+			             testCasesSummary = "Some testcases failed."; } break;
+			case INFO: s_Logger.info("Line " + test.getLocation().getStartLine() + ": " + test.getShortDescription()); break;
+			default: s_Logger.error("Error: " + test.getShortDescription());
+			}
 		}
-		return builder.toString();
+		// Report summary of the testcases
+		s_Logger.info(testCasesSummary);
 	}
-	
 
 	private IOperation getAutomataOperation(String opName, ArrayList<Object> arguments) {
 		String operationName = opName.toLowerCase();
