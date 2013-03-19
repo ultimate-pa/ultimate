@@ -16,6 +16,7 @@ import org.eclipse.core.runtime.FileLocator;
 
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.NestedLassoWord;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.model.ILocation;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AtsASTNode;
@@ -551,12 +552,14 @@ public class TestFileInterpreter {
 		return null;
 	}
 	
-	private <T> Object interpret(Nestedword nw) throws Exception {
+	private <T> NestedWord<String> interpret(Nestedword nw) throws Exception {
 		return new NestedWord<String>(nw.getWordSymbols(), nw.getNestingRelation());
 	}
 	
-	private <T> Object interpret(NestedLassoword nw) throws Exception {
-		throw new UnsupportedOperationException("interpret(NestedLassoWord) not yet implemented!");
+	private <T> NestedLassoWord<String> interpret(NestedLassoword nw) throws Exception {
+		NestedWord<String> stem = interpret(nw.getStem());
+		NestedWord<String> loop = interpret(nw.getLoop());
+		return new NestedLassoWord<String>(stem, loop);
 	}
 	
 	private <T> Object interpret(OperationInvocationExpression oe) throws Exception {
@@ -737,9 +740,8 @@ public class TestFileInterpreter {
 	}
 
 	private void reportResult() {
-		StringBuilder builder = new StringBuilder();
-		builder.append("----------------- Test Summary -----------------\n");
 		String testCasesSummary = "All testcases passed.";
+		s_Logger.info("----------------- Test Summary -----------------");
 		for (GenericResult<Integer> test : m_testCases) {
 			UltimateServices.getInstance().reportResult(Activator.s_PLUGIN_ID, test);
 			switch (test.getSeverity()) {
@@ -750,17 +752,17 @@ public class TestFileInterpreter {
 			}
 		}
 		// Report summary of the testcases
-		s_Logger.info(testCasesSummary);
+		if (m_testCases.isEmpty()) {
+			s_Logger.error("No testcases defined!");
+		} else {
+			s_Logger.info(testCasesSummary);
+		}
+		
 	}
 
 	private IOperation getAutomataOperation(String opName, ArrayList<Object> arguments) {
 		String operationName = opName.toLowerCase();
 		IOperation result = null;
-		if (!m_existingOperations.containsKey(operationName)) {
-			if (m_operationNamesToCorrectClassNames.containsKey(operationName)) {
-				operationName = m_operationNamesToCorrectClassNames.get(operationName).toLowerCase();
-			}
-		}
 		if (m_existingOperations.containsKey(operationName)) {
 			Class<?> operationClass = m_existingOperations.get(operationName);
 			Class<?>[] implementedInterfaces = operationClass.getInterfaces();
@@ -790,6 +792,10 @@ public class TestFileInterpreter {
 				}
 			}
 			
+		} else {
+			String message = "Operation \"" + opName + "\" is not supported."; 
+			s_Logger.error(message);
+			throw new UnsupportedOperationException(message);
 		}
 		
 		return result;
@@ -815,29 +821,32 @@ public class TestFileInterpreter {
  	 */
 	private static Map<String, Class<?>> getOperationClasses() {
 		Map<String, Class<?>> result = new HashMap<String, Class<?>>();
-		String baseDir = "/de/uni_freiburg/informatik/ultimate/automata/nwalibrary/operations";
-		String[] dirs = { "", "buchiReduction" };
-		for (String dir : dirs) {
-			String[] files = filesInDirectory(baseDir + "/" + dir);
-			for (String file : files) {
-				if (file.endsWith(".class")) {
-					String fileWithoutSuffix = file.substring(0, file.length()-6);
-					String baseDirInPackageFormat = baseDir.replaceAll("/", ".");
-					if (baseDirInPackageFormat.charAt(0) == '.') {
-						baseDirInPackageFormat = baseDirInPackageFormat.substring(1);
+		String[] baseDirs = {"/de/uni_freiburg/informatik/ultimate/automata/nwalibrary/operations", "/de/uni_freiburg/informatik/ultimate/automata/nwalibrary/buchiNwa"};
+		// String baseDir = "/de/uni_freiburg/informatik/ultimate/automata/nwalibrary/operations";
+		for (String baseDir : baseDirs) {
+			String[] dirs = { "", "buchiReduction" };
+			for (String dir : dirs) {
+				String[] files = filesInDirectory(baseDir + "/" + dir);
+				for (String file : files) {
+					if (file.endsWith(".class")) {
+						String fileWithoutSuffix = file.substring(0, file.length()-6);
+						String baseDirInPackageFormat = baseDir.replaceAll("/", ".");
+						if (baseDirInPackageFormat.charAt(0) == '.') {
+							baseDirInPackageFormat = baseDirInPackageFormat.substring(1);
+						}
+						String path = baseDirInPackageFormat + "." + fileWithoutSuffix;
+						Class<?> clazz = null;
+						try {
+							clazz = Class.forName(path);
+						} catch (ClassNotFoundException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+							s_Logger.error("Couldn't load/find class " + path);
+							break;
+						}
+						String operationName = fileWithoutSuffix.toLowerCase();
+						result.put(operationName, clazz);
 					}
-					String path = baseDirInPackageFormat + "." + fileWithoutSuffix;
-					Class<?> clazz = null;
-					try {
-						clazz = Class.forName(path);
-					} catch (ClassNotFoundException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-						s_Logger.error("Couldn't load/find class " + path);
-						break;
-					}
-					String operationName = fileWithoutSuffix.toLowerCase();
-					result.put(operationName, clazz);
 				}
 			}
 		}
@@ -858,7 +867,9 @@ public class TestFileInterpreter {
 	private static String[] filesInDirectory(String dir) {
 		URL dirURL = IOperation.class.getClassLoader().getResource(dir);
 		if (dirURL == null) {
-			throw new UnsupportedOperationException("Directory \"" + dir + "\" does not exist");
+			// throw new UnsupportedOperationException("Directory \"" + dir + "\" does not exist");
+			s_Logger.error("Directory \"" + dir + "\" does not exist");
+			return new String[0];
 		}
 		String protocol = dirURL.getProtocol();
 		File dirFile = null;
@@ -867,7 +878,9 @@ public class TestFileInterpreter {
 				dirFile = new File(dirURL.toURI());
 			} catch (URISyntaxException e) {
 				e.printStackTrace();
-				throw new UnsupportedOperationException("Directory \"" + dir + "\" does not exist");
+				// throw new UnsupportedOperationException("Directory \"" + dir + "\" does not exist");
+				s_Logger.error("Directory \"" + dir + "\" does not exist");
+				return new String[0];
 			}
 		} else if (protocol.equals("bundleresource")) {
 			try {
@@ -875,7 +888,9 @@ public class TestFileInterpreter {
 				dirFile = new File(fileURL.toURI());
 			} catch (Exception e) {
 				e.printStackTrace();
-				throw new UnsupportedOperationException("Directory \"" + dir + "\" does not exist");
+				// throw new UnsupportedOperationException("Directory \"" + dir + "\" does not exist");
+				s_Logger.error("Directory \"" + dir + "\" does not exist");
+				return new String[0];
 			}
 		} else {
 			throw new UnsupportedOperationException("unknown protocol");

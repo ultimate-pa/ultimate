@@ -20,11 +20,8 @@ public class AutomataDefinitions extends AtsASTNode {
 	private static final long serialVersionUID = 302216547472553949L;
 	
 	private List<Automaton> m_AutomataDefinitions;
-	private List<String> m_filesToParse;
-	
 	public AutomataDefinitions() {
 		m_AutomataDefinitions = new ArrayList<Automaton>();
-		m_filesToParse = new ArrayList<String>();
 	}
 	
 	public AutomataDefinitions(Automaton a) {

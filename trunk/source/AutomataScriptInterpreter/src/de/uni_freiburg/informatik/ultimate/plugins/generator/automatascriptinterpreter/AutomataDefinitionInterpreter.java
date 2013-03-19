@@ -41,13 +41,15 @@ public class AutomataDefinitionInterpreter {
 		for (AtsASTNode n : children) {
 			if (n instanceof NestedwordAutomaton) {
 				interpret((NestedwordAutomaton) n);
+			} else if (n instanceof PetriNetAutomaton) {
+				interpret((PetriNetAutomaton) n);
 			}
 		}
 		return null;
 		
 	}
 	
-	public <T> Object interpret(NestedwordAutomaton nwa) throws Exception {
+	public <T> Object interpret(NestedwordAutomaton nwa) throws IllegalArgumentException {
 		
 		NestedWordAutomaton<String, String> nw = new NestedWordAutomaton<String, String>(
 				                                     Collections.unmodifiableCollection(nwa.getInternalAlphabet()), 
@@ -97,7 +99,7 @@ public class AutomataDefinitionInterpreter {
 		
 	}
 	
-	public <T> Object interpret(PetriNetAutomaton pna) throws Exception {
+	public <T> Object interpret(PetriNetAutomaton pna) throws IllegalArgumentException {
 		if (pna.isPetriNetJulianDefinition()) {
 			PetriNetJulian<String, String> net = new PetriNetJulian<String, String>(
 												Collections.unmodifiableCollection(pna.getAlphabet()), 

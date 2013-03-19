@@ -36,5 +36,11 @@ public class NestedLassoword extends AtsASTNode {
 		return b.toString();
 	}
 	
+	public Nestedword getStem() {
+		return m_nw1;
+	}
 	
+	public Nestedword getLoop() {
+		return m_nw2;
+	}
 }

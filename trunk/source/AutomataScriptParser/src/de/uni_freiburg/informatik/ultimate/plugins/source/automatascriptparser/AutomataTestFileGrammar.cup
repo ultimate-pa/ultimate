@@ -1063,7 +1063,7 @@ automata_definitions ::= automata_definition:atm
                         	 RESULT = defs; :}
                        ;
 
-automata_definition ::= nwa_definition:nwa {:RESULT = nwa; :} | petrinetJan_definition {:RESULT = null; :} | petrinetJulian_definition {:RESULT = null; :};
+automata_definition ::= nwa_definition:nwa {:RESULT = nwa; :} | petrinetJan_definition {:RESULT = null; :} | petrinetJulian_definition:petriNetJulian {:RESULT = petriNetJulian; :};
                        
 nwa_definition ::=      NESTEDWORD_AUTOMATA IDENTIFIER:id EQ
                         LPAREN:l call_alphabet_opt:call COMMA
@@ -1201,7 +1201,7 @@ petrinetJulian_definition ::= PETRINET_AUTOMATA IDENTIFIER:id EQ LPAREN
                               net_transitions:net_trans COMMA
                               initial_markings:init_mark COMMA
                               accepting_places:acc_places RPAREN
-                              {: PetriNetAutomaton petri = new PetriNetAutomaton(id);
+                              {: PetriNetAutomaton petri = new PetriNetAutomaton(id, true);
 								 petri.setAlphabet(alpha.getIdentifierList());
 								 petri.setPlaces(p.getIdentifierList());
 								 petri.setTransitions(net_trans.getNetTransitions());
