@@ -117,7 +117,7 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 
 			Map<String, ProgramPoint> finalNodes = rootAnnot.getExitNodes();
 			for (String proc : finalNodes.keySet()) {
-				if (proc.equals("ULTIMATE.init")) {
+				if (isAuxilliaryProcedure(proc)) {
 					continue;
 				}
 				ProgramPoint finalNode = finalNodes.get(proc);
@@ -398,6 +398,13 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 	}
 	
 	
+	private static boolean isAuxilliaryProcedure(String proc) {
+		if (proc.equals("ULTIMATE.init") || proc.equals("ULTIMATE.start")) {
+			return true;
+		} else {
+			return false;
+		}
+	}
 
 
 	// Term simplify(Term term, RootNode rootNode) {
