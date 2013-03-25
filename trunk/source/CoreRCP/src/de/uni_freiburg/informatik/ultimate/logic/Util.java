@@ -158,7 +158,7 @@ public class Util {
 		if (lastFormula == script.term("false")) {
 			Term[] allButLast = new Term[subforms.length-1];
 			System.arraycopy(subforms, 0, allButLast, 0, subforms.length-1);
-			return Util.and(script, allButLast);
+			return Util.not(script, Util.and(script, allButLast));
 		}
 		ArrayList<Term> newSubforms = new ArrayList<Term>();
 		for (int i=0; i<subforms.length-1; i++) {
