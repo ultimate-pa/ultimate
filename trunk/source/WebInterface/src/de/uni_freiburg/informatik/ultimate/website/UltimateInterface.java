@@ -203,7 +203,7 @@ public class UltimateInterface extends HttpServlet {
 	 * @throws JSONException
 	 *             happens when JSONObject is not used correctly
 	 */
-	private static JSONObject handleAction(Map<String, String[]> paramList)
+	private JSONObject handleAction(Map<String, String[]> paramList)
 			throws JSONException {
 		JSONObject json = new JSONObject();
 		String[] actions = paramList.get("action");
