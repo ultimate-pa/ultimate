@@ -21,21 +21,26 @@ public class CDTResultStore {
 	/**
 	 * The internal HashMap.
 	 */
-	private static HashMap<String, List<IResult>> fileToResults;
+	private static HashMap<String, HashMap<String, List<IResult>>> fileToResults;
 
 	/**
 	 * Adds Results to the internal Map.
 	 * 
-	 * @param key
+	 * @param file
 	 *            the filename
+	 * @param tool
+	 *            the reporting tool
 	 * @param value
 	 *            list of results
 	 */
-	public static void addResults(String key, List<IResult> value) {
+	public static void addResults(String file, String tool, List<IResult> value) {
 		if (fileToResults == null) {
-			fileToResults = new HashMap<String, List<IResult>>();
+			fileToResults = new HashMap<String, HashMap<String, List<IResult>>>();
 		}
-		fileToResults.put(key, value);
+		if (!fileToResults.containsKey(file)) {
+			fileToResults.put(file, new HashMap<String, List<IResult>>());
+		}
+		fileToResults.get(file).put(tool, value);
 	}
 
 	/**
@@ -47,7 +52,11 @@ public class CDTResultStore {
 	 */
 	public static List<IResult> getResults(String key) {
 		if (fileToResults != null && fileToResults.containsKey(key)) {
-			return fileToResults.get(key);
+			ArrayList<IResult> compResults = new ArrayList<IResult>();
+			for (String toolId : fileToResults.get(key).keySet()) {
+				compResults.addAll(fileToResults.get(key).get(toolId));
+			}
+			return compResults;
 		}
 		return new ArrayList<IResult>();
 	}
