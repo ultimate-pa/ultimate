@@ -198,6 +198,10 @@ public class ConversionVisitor implements IMinimizationVisitor {
 						.getLocation();
 				if (loc instanceof BoogieLocation) {
 					astNode = ((BoogieLocation) loc).getASTNode();
+					if (loc.getOrigin() != null) {
+						// we have to update the ast node with the original location
+						astNode.getPayload().setLocation(loc.getOrigin());
+					}
 				}
 			}
 			ProgramPoint newNode = new ProgramPoint(node.getOriginalNode()
