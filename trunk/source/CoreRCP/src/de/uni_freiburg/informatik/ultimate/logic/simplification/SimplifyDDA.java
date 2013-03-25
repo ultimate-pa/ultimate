@@ -1,27 +1,30 @@
 package de.uni_freiburg.informatik.ultimate.logic.simplification;
 
-import java.util.HashSet;
-
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.FormulaUnLet;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
+import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
-import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
+import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
 
 /**
- * Class to simplify Application terms with connective "and" or "or", other
- * terms are considered as literals and stay unchanged.
+ * Simplify formulas, but keep their Boolean structure.
+ * Replace subformulas by true or false if this replacement leads to an
+ * equivalent formula.
  * Based on the paper "Small Formulas for Large Programms: On-Line Constraint
- * Simplification in Scalable Static Analysis"
- * By Isil Dillig, Thomas Dillig and Alex Aiken
- * @author Markus Pomrehn
+ * Simplification in Scalable Static Analysis" by Isil Dillig, Thomas Dillig
+ * and Alex Aiken.
+ * This implementation extends this approach to formulas which are not in NNF,
+ * contain "=>" and "ite".
+ * 
+ * @author heizmann@informatik.uni-freiburg.de, Jochen Hoenicke, Markus Pomrehn
  *
  */
 public class SimplifyDDA {
@@ -82,26 +85,17 @@ public class SimplifyDDA {
 		LBool isTermConstraining =
 				Util.checkSat(m_Script, Util.not(m_Script, term));
 		if (isTermConstraining == LBool.UNSAT) {
-//			m_Logger.debug(nonConstrainingTestTerm + " is valid");
 			return Redundancy.NON_CONSTRAINING;
 		}
 				
 		LBool isTermRelaxing = Util.checkSat(m_Script, term);
 		if (isTermRelaxing == LBool.UNSAT) {
-//			m_Logger.debug(nonRelaxingTestTerm + " is valid");
 			return Redundancy.NON_RELAXING;
 		}
 		
 		return Redundancy.NOT_REDUNDANT;
 	}
 	
-	private Term addNegation(Term t, boolean isNegated) {
-		if (isNegated)
-			return Util.not(m_Script, t);
-		else
-			return t;
-	}
-
 	private static Term termVariable2constant(Script script, TermVariable tv) 
 			throws SMTLIBException {
 		String name = tv.getName() + "_const_" + tv.hashCode();
@@ -133,7 +127,7 @@ public class SimplifyDDA {
 		term = m_Script.let(vars, values, term);
 
 		term = new FormulaUnLet().unlet(term);
-		term = this.getSimplifiedTerm(term, false);
+		term = this.simplifySubTerm(term);
 		
 		term = new TermTransformer() {
 			@Override
@@ -145,155 +139,165 @@ public class SimplifyDDA {
 			}
 		}.transform(term);
 		m_Script.pop(1);
-		m_Logger.debug("Simplified to: " + term);
-		assert (checkEquivalence(inputTerm, term) == LBool.UNSAT);
+		m_Logger.debug(new DebugMessage("Simplified to: {0}", term));
+		assert (checkEquivalence(inputTerm, term) == LBool.UNSAT) : "Simplification Unsound";
 		return term;
 	}
 	
-
+	
 	/**
-	 * Simplify the inputTerm, or (not inputTerm) if isNegated is set.
-	 * The script may contain some assumptions and the inputTerm should
-	 * be simplified under these assumptions.
+	 * Simplify the inputTerm with respect to the critical constraint on the
+	 * assertion stack of m_Script.
 	 * 
 	 * We use the algorithm by Dillig, Dillig, Aiken.  The function is
-	 * recursively called.  For a conjunction we assume that all sibling
-	 * formulas hold (otherwise the conjunction is false anyway) and for
-	 * a disjunction we assume that all siblings are false.  
-	 * 
-	 * We also support ite, where the then part is simplified under the
-	 * assumption that the condition is true, and the else part is 
-	 * simplified under the assumption that the condition is false.
+	 * recursively called.
+	 * <ul>
+	 * <li> We simplify a sibling of an "and" under the assumption that all other
+	 * siblings hold.
+	 * <li> We simplify a sibling of an "or" under the assumption that all other
+	 * siblings do not hold.
+	 * <li> We simplify a sibling of "=>" under the corresponding assumptions.
+	 * <li> We simplify ite as follows: The condition without further 
+	 * assumptions, the if part under the assumption that the condition holds,
+	 * the else part under the assumption that the condition does not hold.
+	 * </ul> 
 	 * 
 	 * @param inputTerm term whose Sort is Boolean
-	 * @param isNegated true if negated inputTerm should be simplified.
 	 */
-	private Term getSimplifiedTerm(Term inputTerm, boolean isNegated)
-			throws SMTLIBException {
+	private Term simplifySubTerm(Term inputTerm)	throws SMTLIBException {
 		if (inputTerm instanceof ApplicationTerm) {
-			// Cast
-			ApplicationTerm applicationTerm = (ApplicationTerm) inputTerm;
-			// C
+			final ApplicationTerm applicationTerm = (ApplicationTerm) inputTerm;
 			Term[] parameters = applicationTerm.getParameters();
-			// C'
-			HashSet<Term> newParameters = new HashSet<Term>();
+			Term[] newParameters = new Term[parameters.length];
 			
-			String connective = applicationTerm.getFunction().getName();
-			Boolean parameterSimplified = true;
+			final String connective = applicationTerm.getFunction().getName();
 			
-			if (connective == "not")
-				return this.getSimplifiedTerm(parameters[0], !isNegated);
+			if (connective == "not") {
+				return Util.not(m_Script, this.simplifySubTerm(parameters[0]));
+			}
+				
 			if (connective == "ite") {
-				Term cond = this.getSimplifiedTerm(parameters[0], false);
+				Term simpCond = this.simplifySubTerm(parameters[0]);
 				m_Script.push(1);
-				m_Script.assertTerm(cond);
-				Term simpThen = this.getSimplifiedTerm(parameters[1], isNegated);
+				m_Script.assertTerm(simpCond);
+				Term simpThen = this.simplifySubTerm(parameters[1]);
 				m_Script.pop(1);
 				m_Script.push(1);
-				m_Script.assertTerm(Util.not(m_Script, cond));
-				Term simpElse = this.getSimplifiedTerm(parameters[2], isNegated);
+				m_Script.assertTerm(Util.not(m_Script, simpCond));
+				Term simpElse = this.simplifySubTerm(parameters[2]);
 				m_Script.pop(1);
-				if (cond == m_True || simpThen == simpElse) 
-					return simpThen;
-				else if (cond == m_False) 
-					return simpElse;
-				else if (simpThen == m_True) 
-					return Util.or(m_Script, cond, simpElse);
-				else if (simpElse == m_False) 
-					return Util.and(m_Script, cond, simpThen);
-				else if (simpThen == m_False) 
-					return Util.and(m_Script, Util.not(m_Script, cond), simpElse);
-				else if (simpElse == m_True) 
-					return Util.or(m_Script, Util.not(m_Script, cond), simpThen);
-				return m_Script.term("ite", cond, simpThen, simpElse);
+				return Util.ite(m_Script, simpCond, simpThen, simpElse);
 			}
 			if (connective == "and" || connective == "or" || connective == "=>") {
-				boolean isAnd = (connective == "and") != isNegated; 
-				while (parameterSimplified) {
-					parameterSimplified = false;
+				boolean parameterSimplifiedInLastIteration = true;
+				boolean parameterSimplifiedInAnyIteration = false;
+				while (parameterSimplifiedInLastIteration) {
+					
+					parameterSimplifiedInLastIteration = false;
 					// create n pushes with the original constraints on it.
 					m_Script.push(1);
 					for (int i = parameters.length-1; i > 0; i--) {
-						boolean paramNegated = isNegated != (connective == "=>" && i < parameters.length - 1); 
 						m_Script.push(1);
-						m_Script.assertTerm(addNegation(parameters[i], isAnd == paramNegated));
+						final Term contribution = negateSibling(
+								parameters[i], connective, i, parameters.length);
+						m_Script.assertTerm(contribution);
 					}
+
 					for (int i = 0; i < parameters.length; i++) {
-						boolean paramNegated = isNegated != (connective == "=>" && i < parameters.length - 1); 
-						// push other already simplified parameters
-						for (Term sibling : newParameters) {
-							m_Script.assertTerm(addNegation(sibling, !isAnd));
+						// push all already simplified siblings
+						for (int k=0; k < i; k++) {
+							final Term contribution = negateSibling(
+									newParameters[k], connective, k, parameters.length);
+							m_Script.assertTerm(contribution);
 						}
 						// simplify parameter recursively
-						Term simplifiedParameter = this.getSimplifiedTerm(
-								parameters[i], paramNegated);
+						newParameters[i] = this.simplifySubTerm(parameters[i]);
 						m_Script.pop(1);
-						if (simplifiedParameter == m_True) {
-							if (isAnd) {
-								parameterSimplified = true;
+						final Term earlyResult;
+						if (newParameters[i] == m_False) {
+							if (connective == "and") {
+								earlyResult = m_False;
+							} else if (connective == "=>" && i != parameters.length-1) {
+								earlyResult = m_True;
 							} else {
-								while (++i < parameters.length) {
-									m_Script.pop(1);
-								}
-								return m_True;
+								earlyResult = null;
 							}
-						} else if (simplifiedParameter == m_False) {
-							if (isAnd) {
-								while (++i < parameters.length) {
-									m_Script.pop(1);
-								}
-								return m_False;
-							}
-							else { 
-								parameterSimplified = true;
+						} else if (newParameters[i] == m_True) {
+							if (connective == "or") {
+								earlyResult = m_True;
+							} else if (connective == "=>" && i == parameters.length-1) {
+								earlyResult = m_True;
+							} else {
+								earlyResult = null;
 							}
 						} else {
-							if (simplifiedParameter != 
-									addNegation(parameters[i], isNegated)) {
-								parameterSimplified = true;
-							}
-							newParameters.add(simplifiedParameter);
+							earlyResult = null;
 						}
 						
+						if (earlyResult != null) {
+							while (++i < parameters.length) {
+								m_Script.pop(1);
+							}
+							return earlyResult;
+						} 
+						
+						if (newParameters[i] != parameters[i]) {
+							parameterSimplifiedInLastIteration = true;
+							parameterSimplifiedInAnyIteration = true;
+						}
 					}
-					if (parameterSimplified) {
-						break;
-//						parameters = new Term[newParameters.size()];
-//						int k = 0;
-//						for (Term t : newParameters) {
-//							parameters[k] = t;
-//							k++;
-//						}
-//						newParameters.clear();
-//						connective = isAnd ? "and" : "or";
-//						isNegated = false;
-					}
+					parameters = newParameters;
 				}
 				// if a parameter was simplified
-				if (parameterSimplified) {
+				if (parameterSimplifiedInAnyIteration) {
 					// Building the return term
-					Term[] newParametersAsArray = 
-							newParameters.toArray(new Term[newParameters.size()]);
-					if (isAnd) {
-						return Util.and(m_Script, newParametersAsArray);
+					if (connective == "and") {
+						return Util.and(m_Script, newParameters);
+					} else if (connective == "or") {
+						return Util.or(m_Script, newParameters);
+					} else if (connective == "=>") {
+						return Util.implies(m_Script, newParameters);
 					} else {
-						return Util.or(m_Script, newParametersAsArray);
+						throw new AssertionError("unknown connective");
 					}
 				}
 				// no parameter could be simplified so return the input term
 				else {
-					return addNegation(inputTerm, isNegated);
+					return inputTerm;
 				}
 				
 			}
 		}
-		Term realInput = addNegation(inputTerm, isNegated);
-		Redundancy redundancy = this.getRedundancy(realInput);
+		Redundancy redundancy = this.getRedundancy(inputTerm);
 		switch (redundancy) {
 				case NON_CONSTRAINING: return m_True;
 				case NON_RELAXING: return m_False;
-				default: return realInput;
+				default: return inputTerm;
 		}
 	}
+	
+	/**
+	 * Returns the contribution of a sibling to the critical constraint. This is
+	 * either the sibling itself or its negation. The result is the negated
+	 * sibling iff
+	 * <ul>
+	 * <li> the connective is "or"
+	 * <li> the connective is "=>" and i==n-1
+	 * </ul>
+	 * 
+	 * @param i Index of this sibling. E.g., sibling B has index 1 in the term
+	 * (and A B C)
+	 * @param n Number of all siblings. E.g., the term (and A B C) has three
+	 * siblings.
+	 */
+	private Term negateSibling(Term sibling, String connective, int i, int n) {
+		final boolean negate = (connective == "or" || connective == "=>" && i == n-1);
+		if (negate) {
+			return Util.not(m_Script, sibling);
+		} else {
+			return sibling;
+		}
+	}
+	
 	
 }
