@@ -3,11 +3,13 @@
  */
 package de.uni_freiburg.informatik.ultimate.blockencoding.model;
 
+import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.blockencoding.model.interfaces.IMinimizedEdge;
+import de.uni_freiburg.informatik.ultimate.blockencoding.model.interfaces.IRating;
 import de.uni_freiburg.informatik.ultimate.model.IPayload;
 import de.uni_freiburg.informatik.ultimate.model.Payload;
 import de.uni_freiburg.informatik.ultimate.model.structure.IModifiableExplicitEdgesMultigraph;
@@ -23,7 +25,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Pro
  * @author Stefan Wissert
  * 
  */
-public class MinimizedNode implements IModifiableExplicitEdgesMultigraph<MinimizedNode, IMinimizedEdge>{
+public class MinimizedNode implements
+		IModifiableExplicitEdgesMultigraph<MinimizedNode, IMinimizedEdge> {
 
 	/**
 	 * Serial number, do not know if this really needed
@@ -39,12 +42,14 @@ public class MinimizedNode implements IModifiableExplicitEdgesMultigraph<Minimiz
 	 * Because we want to store all levels of the minimization, we keep in track
 	 * all created edges. We store each level in this list. So the first entry
 	 * of list are all basic edges. The most recent entry is the set of the most
-	 * minimized edges.
+	 * minimized edges. Every set of minimized edges is stored with an rating.
+	 * Whereas the rating is the maximum rating of the complete set of minimized
+	 * edges.
 	 */
-	private List<List<IMinimizedEdge>> outgoingEdges;
+	private List<SimpleEntry<IRating, List<IMinimizedEdge>>> outgoingEdges;
 
-	private List<List<IMinimizedEdge>> incomingEdges;
-	
+	private List<SimpleEntry<IRating, List<IMinimizedEdge>>> incomingEdges;
+
 	private Payload payload;
 
 	/**
@@ -74,10 +79,22 @@ public class MinimizedNode implements IModifiableExplicitEdgesMultigraph<Minimiz
 	 * @param edges
 	 */
 	public void addNewOutgoingEdgeLevel(List<IMinimizedEdge> edges) {
-		if (this.outgoingEdges == null) {
-			this.outgoingEdges = new ArrayList<List<IMinimizedEdge>>();
+		// we have to determine the maximum Rating of all edges in the list
+		IRating maxRating = null;
+		for (IMinimizedEdge edge : edges) {
+			if (maxRating == null) {
+				maxRating = edge.getRating();
+			} else {
+				if (edge.getRating().compareTo(maxRating) > 0) {
+					maxRating = edge.getRating();
+				}
+			}
 		}
-		this.outgoingEdges.add(edges);
+		if (this.outgoingEdges == null) {
+			this.outgoingEdges = new ArrayList<SimpleEntry<IRating, List<IMinimizedEdge>>>();
+		}
+		this.outgoingEdges.add(new SimpleEntry<IRating, List<IMinimizedEdge>>(
+				maxRating, edges));
 	}
 
 	/**
@@ -88,7 +105,8 @@ public class MinimizedNode implements IModifiableExplicitEdgesMultigraph<Minimiz
 			return null;
 		}
 		if (this.outgoingEdges.size() > 0) {
-			return this.outgoingEdges.get(this.outgoingEdges.size() - 1);
+			return this.outgoingEdges.get(this.outgoingEdges.size() - 1)
+					.getValue();
 		}
 		return new ArrayList<IMinimizedEdge>();
 	}
@@ -97,10 +115,22 @@ public class MinimizedNode implements IModifiableExplicitEdgesMultigraph<Minimiz
 	 * @param edges
 	 */
 	public void addNewIncomingEdgeLevel(List<IMinimizedEdge> edges) {
-		if (this.incomingEdges == null) {
-			this.incomingEdges = new ArrayList<List<IMinimizedEdge>>();
+		// we have to determine the maximum Rating of all edges in the list
+		IRating maxRating = null;
+		for (IMinimizedEdge edge : edges) {
+			if (maxRating == null) {
+				maxRating = edge.getRating();
+			} else {
+				if (edge.getRating().compareTo(maxRating) > 0) {
+					maxRating = edge.getRating();
+				}
+			}
 		}
-		this.incomingEdges.add(edges);
+		if (this.incomingEdges == null) {
+			this.incomingEdges = new ArrayList<SimpleEntry<IRating, List<IMinimizedEdge>>>();
+		}
+		this.incomingEdges.add(new SimpleEntry<IRating, List<IMinimizedEdge>>(
+				maxRating, edges));
 	}
 
 	/**
@@ -111,7 +141,8 @@ public class MinimizedNode implements IModifiableExplicitEdgesMultigraph<Minimiz
 			return null;
 		}
 		if (this.incomingEdges.size() > 0) {
-			return this.incomingEdges.get(this.incomingEdges.size() - 1);
+			return this.incomingEdges.get(this.incomingEdges.size() - 1)
+					.getValue();
 		}
 		return new ArrayList<IMinimizedEdge>();
 	}
@@ -160,7 +191,7 @@ public class MinimizedNode implements IModifiableExplicitEdgesMultigraph<Minimiz
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	@Override
 	public List<IWalkable> getSuccessors() {
-		return (List<IWalkable>)(List)getOutgoingEdges();
+		return (List<IWalkable>) (List) getOutgoingEdges();
 	}
 
 	@Override
@@ -186,7 +217,7 @@ public class MinimizedNode implements IModifiableExplicitEdgesMultigraph<Minimiz
 
 	@Override
 	public void clearIncoming() {
-		throw new UnsupportedOperationException();		
+		throw new UnsupportedOperationException();
 	}
 
 	@Override
@@ -242,6 +273,6 @@ public class MinimizedNode implements IModifiableExplicitEdgesMultigraph<Minimiz
 
 	@Override
 	public boolean removeAllOutgoing(Collection<?> c) {
-throw new UnsupportedOperationException();
+		throw new UnsupportedOperationException();
 	}
 }

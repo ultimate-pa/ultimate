@@ -2,6 +2,7 @@ package de.uni_freiburg.informatik.ultimate.blockencoding.model;
 
 import de.uni_freiburg.informatik.ultimate.blockencoding.model.interfaces.IMinimizedEdge;
 import de.uni_freiburg.informatik.ultimate.blockencoding.model.interfaces.IRating;
+import de.uni_freiburg.informatik.ultimate.blockencoding.rating.RatingFactory;
 
 /**
  * This edge represents a disjunction of the formulas of two edges. This is here
@@ -18,7 +19,12 @@ public class DisjunctionEdge extends AbstractCompositeEdge {
 	 * Serial number, do not really use it.
 	 */
 	private static final long serialVersionUID = 1L;
-	
+
+	/**
+	 * the rating for this Disjunction-Edge
+	 */
+	private IRating rating;
+
 	/**
 	 * @param left
 	 * @param right
@@ -26,10 +32,11 @@ public class DisjunctionEdge extends AbstractCompositeEdge {
 	public DisjunctionEdge(IMinimizedEdge left, IMinimizedEdge right) {
 		super(left, right);
 		this.payload.setName(leftEdge + " V " + rightEdge);
+		this.rating = RatingFactory.getInstance().createRating(this);
 	}
 
 	@Override
 	public IRating getRating() {
-		throw new UnsupportedOperationException("Not implemented");
+		return rating;
 	}
 }

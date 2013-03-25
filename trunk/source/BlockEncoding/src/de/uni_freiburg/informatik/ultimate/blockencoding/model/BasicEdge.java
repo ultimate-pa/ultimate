@@ -8,6 +8,7 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.blockencoding.model.interfaces.IBasicEdge;
 import de.uni_freiburg.informatik.ultimate.blockencoding.model.interfaces.IMinimizedEdge;
 import de.uni_freiburg.informatik.ultimate.blockencoding.model.interfaces.IRating;
+import de.uni_freiburg.informatik.ultimate.blockencoding.rating.RatingFactory;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.model.structure.ModifiableMultigraphEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CfgBuilder.GotoEdge;
@@ -33,11 +34,22 @@ public class BasicEdge extends
 	 * the underlying original edge (of type "CodeBlock")
 	 */
 	private CodeBlock originalEdge;
+	
+	/**
+	 * the rating of this edge
+	 */
+	private IRating rating;
 
+	/**
+	 * @param originalEdge
+	 * @param source
+	 * @param target
+	 */
 	public BasicEdge(CodeBlock originalEdge, MinimizedNode source,
 			MinimizedNode target) {
 		super(source, target);
 		this.originalEdge = originalEdge;
+		this.rating = RatingFactory.getInstance().createRating(this);
 	}
 
 	@Override
@@ -92,7 +104,7 @@ public class BasicEdge extends
 
 	@Override
 	public IRating getRating() {
-		throw new UnsupportedOperationException("Not implemented");
+		return rating;
 	}
 
 }
