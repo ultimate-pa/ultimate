@@ -57,8 +57,6 @@ if [ ! -e "$UltimateEXE" ]; then
     exit
 fi
 
-TimeLimit=20;
-
 cd "$examplesFolder"
 #for f in `ls *.bpl`;
 files=`find . -name "*.bpl" -o -name "*.c"|sort`
@@ -137,10 +135,10 @@ do
 	#Ultimate_OUTPUT=`$Ultimate_PATH/console/eclipse/Ultimate --console $Ultimate_PATH/examples/toolchains/TraceAbstraction.xml $f --prelude $Ultimate_PATH/examples/VCC/VccPrelude.bpl --settings $Ultimate_PATH/examples/toolchains/TraceAbstractionLowTheoremProverUsage.settings 2>&1`
 
 	if [ "$VCCPRELUDE" ]; then 
-	    Ultimate_OUTPUT=`bash -c "ulimit -t $TimeLimit; $Ultimate_PATH/$UltimateEXE --console "$TOOLCHAIN" "$f" --prelude "$Ultimate_PATH/trunk/examples/programs/translated-vcc/Vcc2Prelude.bpl" --settings "$SETTINGS" 2>&1"`    
+	    Ultimate_OUTPUT=`bash -c "ulimit -t $timeout; $Ultimate_PATH/$UltimateEXE --console "$TOOLCHAIN" "$f" --prelude "$Ultimate_PATH/trunk/examples/programs/translated-vcc/Vcc2Prelude.bpl" --settings "$SETTINGS" 2>&1"`    
 	else
-	    #echo $Ultimate_PATH/$UltimateEXE --console "$TOOLCHAIN" "$f" --settings "$SETTINGS"
-	    Ultimate_OUTPUT=`bash -c "ulimit -t $TimeLimit; $Ultimate_PATH/$UltimateEXE --console "$TOOLCHAIN" "$f" --settings "$SETTINGS" 2>&1"`
+	    echo $Ultimate_PATH/$UltimateEXE --console "$TOOLCHAIN" "$f" --settings "$SETTINGS"
+	    Ultimate_OUTPUT=`bash -c "ulimit -t $timeout; $Ultimate_PATH/$UltimateEXE --console "$TOOLCHAIN" "$f" --settings "$SETTINGS" 2>&1"`
 	fi
 
 	USED_SETTINGS=`echo "$Ultimate_OUTPUT" | grep "ettings: "`
@@ -397,7 +395,7 @@ do
 
 
 	if [ "$INITIALIZED" ]; then
-	      printf "!!!FAIL!!! started Ultimate, received no answer after $TimeLimit seconds"
+	      printf "!!!FAIL!!! started Ultimate, received no answer after $timeout seconds"
 	    else
 	      printf "!!!FAIL!!! unknown program behaviour"
 	fi
