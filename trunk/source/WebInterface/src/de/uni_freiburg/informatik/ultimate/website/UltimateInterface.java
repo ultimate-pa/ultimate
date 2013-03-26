@@ -54,7 +54,7 @@ public class UltimateInterface extends HttpServlet {
 	/**
 	 * Whether the Servlet should be executed in Debug-Mode or not.
 	 */
-	private static final boolean DBG = false;
+	private static final boolean DEBUG = !false;
 
 	/**
 	 * Constructor.
@@ -63,7 +63,7 @@ public class UltimateInterface extends HttpServlet {
 	 */
 	public UltimateInterface() {
 		super();
-		if (DBG) {
+		if (DEBUG) {
 			System.out.println("########################################");
 			System.out.println("## Web-Server interface for Ultimate  ##");
 			System.out.println("########################################");
@@ -88,9 +88,11 @@ public class UltimateInterface extends HttpServlet {
 	@Override
 	protected void doGet(HttpServletRequest request,
 			HttpServletResponse response) throws ServletException, IOException {
-		if (DBG) {
-			System.out.println("Connection from " + request.getRemoteAddr());
-			System.out.println("This was a get: " + request.getQueryString());
+		if (DEBUG) {
+			String message = "Connection from " + request.getRemoteAddr() + 
+					"This was a get: " + request.getQueryString();
+			log(message);
+			System.out.println(message);
 		}
 
 		Map<String, String[]> paramList = new HashMap<String, String[]>();
@@ -116,14 +118,19 @@ public class UltimateInterface extends HttpServlet {
 			} else {
 				json = new JSONObject();
 				json.put("error", "Invalid Request! error code UI01");
-				if (DBG) {
-					System.out.println("This was an invalid request!");
+				if (DEBUG) {
+					String message = "This was an invalid request!";
+					log(message);
+					System.out.println(message);
 				}
 			}
 			json.write(out);
 		} catch (JSONException e) {
-			out.print("{\"error\" : \"Internal server error!\"}");
-			if (DBG) {
+			String message = "{\"error\" : \"Internal server error!\"}";
+			out.print(message);
+			log(message);
+			System.out.println(message);
+			if (DEBUG) {
 				e.printStackTrace();
 			}
 		}
@@ -145,10 +152,12 @@ public class UltimateInterface extends HttpServlet {
 		response.setContentType("application/json");
 		PrintWriter out = response.getWriter();
 
-		if (DBG) {
-			System.out.println("Connection from " + request.getRemoteAddr());
-			System.out.println("This was a post: " + request.getQueryString());
-			System.out.println("Reading All Request Parameters");
+		if (DEBUG) {
+			String message = "Connection from " + request.getRemoteAddr() 
+					+ "This was a post: " + request.getQueryString()
+					+ " Reading All Request Parameters";
+			log(message);
+			System.out.println(message);
 		}
 		Map<String, String[]> paramList = new HashMap<String, String[]>();
 		@SuppressWarnings("unchecked")
@@ -157,7 +166,7 @@ public class UltimateInterface extends HttpServlet {
 			String paramName = paramNames.nextElement();
 			String[] paramValues = request.getParameterValues(paramName);
 			paramList.put(paramName, paramValues);
-			if (DBG) {
+			if (DEBUG) {
 				System.out.print("\t{" + paramName + "} :: {");
 				for (String s : paramValues) {
 					System.out.print(s + "}");
@@ -183,8 +192,12 @@ public class UltimateInterface extends HttpServlet {
 
 			json.write(out);
 		} catch (JSONException e) {
-			out.print("{\"error\" : \"Invalid Request! error code UI02\"}");
-			if (DBG) {
+			String message = "{\"error\" : \"Invalid Request! error code UI02\"}";
+			out.print(message);
+			log(message);
+			System.out.println(message);
+
+			if (DEBUG) {
 				e.printStackTrace();
 			}
 		}
@@ -228,7 +241,7 @@ public class UltimateInterface extends HttpServlet {
 				String taskId = taskIDs[0];
 				String tcId = tcIDs[0];
 				String code = codes[0];
-				if (DBG) {
+				if (DEBUG) {
 					System.out.println("Execute ultimate for: " + taskId + ", "
 							+ tcId);
 				}
@@ -301,8 +314,8 @@ public class UltimateInterface extends HttpServlet {
 					fileExtension = "c";
 				} else if (taskId.equals("VerifyBoogie")) {
 					fileExtension = ".bpl";
-				} else if (taskId.equals("RunAutomataTestFile")) {
-					fileExtension = ".fat";
+				} else if (taskId.equals("AUTOMATA_SCRIPT")) {
+					fileExtension = ".ats";
 				} else if (taskId.equals("RunSmt2Script")) {
 					fileExtension = ".smt";
 				} else if (taskId.equals("TERMINATION_C")) {
@@ -334,6 +347,9 @@ public class UltimateInterface extends HttpServlet {
 				out.close();
 				app.setToolchainXML(tcFile);
 				try {
+					final String message = "ULTIMATE Application started";
+					System.out.println(message);
+					log(message);
 					app.start(null);
 				} catch (Throwable t) {
 					final String message = t.toString();
@@ -410,18 +426,23 @@ public class UltimateInterface extends HttpServlet {
 				toBeLogged = true;
 				json = new JSONObject();
 				json.put("error", "Invalid request! error code UI04");
-				if (DBG) {
+				if (DEBUG) {
 					System.out.println("This was an invalid request! "
 							+ e.getMessage());
 				}
 			} catch (IOException e) {
 				json = new JSONObject();
 				json.put("error", "Internal server error!");
-				if (DBG) {
+				if (DEBUG) {
 					System.out.println("There was an unexpected Exception!"
 							+ e.getMessage());
 					e.printStackTrace();
 				}
+			} catch (Exception e) {
+				String message = e.toString();
+				System.out.println(message);
+				log(message);
+				json.put("error", message);
 			} finally {
 				if (!toBeLogged) {
 					if (codeFile != null) codeFile.delete();
@@ -442,7 +463,7 @@ public class UltimateInterface extends HttpServlet {
 			return json;
 		}
 		json.put("error", "Invalid request! error code UI05");
-		if (DBG) {
+		if (DEBUG) {
 			System.out.println("Don't know how to handle action: " + action);
 		}
 		return json;
