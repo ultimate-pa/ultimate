@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
+import de.uni_freiburg.informatik.ultimate.website.toolchains.AutomtaScriptTC;
 import de.uni_freiburg.informatik.ultimate.website.toolchains.BoogieLassoRankerTC;
 import de.uni_freiburg.informatik.ultimate.website.toolchains.BoogieTraceAbstractionTC;
 import de.uni_freiburg.informatik.ultimate.website.toolchains.CLassoRankerTC;
@@ -24,7 +25,8 @@ public class Tasks {
 	 * that should be shown.
 	 */
 	@SuppressWarnings("rawtypes")
-	private static final Class[] actTCs = {BoogieTraceAbstractionTC.class,
+	private static final Class[] actTCs = {AutomtaScriptTC.class, 
+		BoogieTraceAbstractionTC.class,
 		CTraceAbstractionTC.class, BoogieLassoRankerTC.class, CLassoRankerTC.class};
 	/**
 	 * The String representations of TaskNames.
@@ -58,7 +60,7 @@ public class Tasks {
 		/**
 		 * Run automata test file.
 		 */
-		RunAutomataTestFile,
+		AUTOMATA_SCRIPT,
 		/**
 		 * Run automata test file.
 		 */
@@ -72,7 +74,7 @@ public class Tasks {
 	 */
 	private static void initTaskNames() {
 		// String should have at most 30 chars and must not be empty!
-		taskString.put(TaskNames.RunAutomataTestFile, "Run Automata Test File (not yet available)");
+		taskString.put(TaskNames.AUTOMATA_SCRIPT, "Run Automata Script");
 		taskString.put(TaskNames.RunSmt2Script, "Run Smt2Script (not yet available)");
 		taskString.put(TaskNames.VerifyBoogie, "Verify Boogie");
 		taskString.put(TaskNames.VerifyC, "Verify C");
@@ -159,6 +161,7 @@ public class Tasks {
 						if (!activeToolchains.containsKey(tn.toString())) {
 							activeToolchains.put(tn.toString(),
 									new ArrayList<Toolchain>());
+							System.out.println("Added " + c.getCanonicalName()  + " to " +tn.toString()); 
 						}
 						activeToolchains.get(tn.toString()).add(tc);
 					}
