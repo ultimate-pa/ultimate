@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Collection;
@@ -55,6 +56,8 @@ public class AtsDefinitionPrinter<S,C> {
 		
 		PrintWriter m_printWriter;
 		
+		StringWriter m_StringWriter;
+		
 		private void initializePrintWriter(String filename) {
 			File testfile = new File(filename + ".ats");
 			try {
@@ -65,24 +68,7 @@ public class AtsDefinitionPrinter<S,C> {
 			} 
 		}
 		
-		@SuppressWarnings("unchecked")
-		@Deprecated
-		public AtsDefinitionPrinter(Object automaton) {
-			initializePrintWriter("dumpedTestfile");
-			m_printWriter.println("// Testfile dumped by Ultimate at "+getDateTime());
-			m_printWriter.println("");
-			if (automaton instanceof NestedWordAutomaton) {
-				NestedWordAutomaton<S,C> nwa = (NestedWordAutomaton<S,C>) automaton;
-				new NwaTestFileWriter(nwa);
-			}
-			else if (automaton instanceof PetriNetJulian) {
-				PetriNetJulian<S,C> net = (PetriNetJulian<S,C>) automaton;
-				new NetTestFileWriter(net);
-			} 
-			m_printWriter.close();
-		}
 		
-		@SuppressWarnings("unchecked")
 		public AtsDefinitionPrinter(Object automaton, String filename, Labeling labels, String message) {
 			s_Logger.warn("Dumping Testfile");
 			initializePrintWriter(filename);
@@ -90,6 +76,27 @@ public class AtsDefinitionPrinter<S,C> {
 			m_printWriter.println("");
 			m_printWriter.println(message);
 			m_printWriter.println("");
+			printAutomaton(automaton, labels);
+		}
+		
+		
+		public AtsDefinitionPrinter(Object automaton) {
+			m_StringWriter = new StringWriter();
+			m_printWriter = new PrintWriter(m_StringWriter);
+			printAutomaton(automaton, Labeling.TOSTRING);
+		}
+		
+		public String getDefinitionAsString() {
+			if (m_StringWriter == null) {
+				throw new AssertionError("only available with different constructor");
+			}
+			m_StringWriter.flush();
+			return m_StringWriter.toString();
+		}
+		
+		
+		@SuppressWarnings("unchecked")
+		private void printAutomaton(Object automaton, Labeling labels) {
 			if (automaton instanceof NestedWordAutomaton) {
 				NestedWordAutomaton<S,C> nwa = (NestedWordAutomaton<S,C>) automaton;
 				if (labels == Labeling.TOSTRING) {
