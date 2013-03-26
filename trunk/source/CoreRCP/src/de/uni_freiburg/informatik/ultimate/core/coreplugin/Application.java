@@ -30,10 +30,6 @@ import org.eclipse.core.runtime.preferences.IScopeContext;
 import org.eclipse.core.runtime.preferences.InstanceScope;
 import org.eclipse.equinox.app.IApplication;
 import org.eclipse.equinox.app.IApplicationContext;
-import org.eclipse.ui.PlatformUI;
-import org.eclipse.ui.internal.progress.JobInfo;
-import org.eclipse.ui.internal.progress.ProgressManager;
-import org.eclipse.ui.progress.IProgressService;
 import org.xml.sax.SAXException;
 
 import de.uni_freiburg.informatik.ultimate.core.api.PreludeProvider;
@@ -56,7 +52,6 @@ import de.uni_freiburg.informatik.ultimate.ep.interfaces.ITool;
 import de.uni_freiburg.informatik.ultimate.logging.UltimateLoggerFactory;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.IModelManager;
-import de.uni_freiburg.informatik.ultimate.model.INode;
 import de.uni_freiburg.informatik.ultimate.model.PersistenceAwareModelManager;
 import de.uni_freiburg.informatik.ultimate.model.repository.StoreObjectException;
 import de.uni_freiburg.informatik.ultimate.plugins.Constants;
@@ -248,6 +243,9 @@ public class Application implements IApplication, ICore {
 				loadPreferencesInternal(m_SettingsFile.getPath());
 			}
 			
+			// Add log-File support if defined in the preferences
+			UltimateLoggerFactory.getInstance().appendLogFile();
+			
 			// throwing classes exported by plugins into arraylists
 			loadExtension();
 			
@@ -296,6 +294,9 @@ public class Application implements IApplication, ICore {
 		if (settingsfile != null) {
 			loadPreferencesInternal(settingsfile);
 		}
+		
+		// Add log-File support if defined in the preferences
+		UltimateLoggerFactory.getInstance().appendLogFile();
 		
 		// throwing classes exported by plugins into arraylists
 		loadExtension();

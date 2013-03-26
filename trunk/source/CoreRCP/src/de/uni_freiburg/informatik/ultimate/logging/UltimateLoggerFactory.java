@@ -77,8 +77,6 @@ public class UltimateLoggerFactory {
 			ex.printStackTrace();
 		}
 
-		appendLogFile();
-
 	}
 
 	public void appendLogFile() {
