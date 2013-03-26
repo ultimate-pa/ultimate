@@ -278,7 +278,7 @@ public class SmtManager {
 		for (BoogieVar bv : vars) {
 			if (bv.isOldvar()) {
 				String identifier = bv.getIdentifier();
-				if (!modifiableByProc.containsKey(identifier)) {
+				if (modifiableByProc == null || !modifiableByProc.containsKey(identifier)) {
 					replacees.add(bv.getTermVariable());
 					replacers.add(getNonOldVar(bv).getTermVariable());
 					replacedOldVars.add(bv);
