@@ -334,9 +334,12 @@ public class UltimateInterface extends HttpServlet {
 				out.close();
 				app.setToolchainXML(tcFile);
 				try {
-					Thread t = new Thread();
 					app.start(null);
 				} catch (Throwable t) {
+					final String message = t.toString();
+					System.out.println(message);
+					log(message);
+					json.put("error", message);
 					toBeLogged = true;
 				}
 				// get Result from Ultimate
