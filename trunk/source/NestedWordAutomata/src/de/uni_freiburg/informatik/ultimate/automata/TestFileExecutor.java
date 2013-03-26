@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -21,7 +20,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.BuchiCom
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.BuchiComplementFKV;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.BuchiComplementRE;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.BuchiComplementSVW;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.EmptinessCheck;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.BuchiIsEmpty;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.NestedLassoRun;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.NestedLassoWord;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.Complement;
@@ -32,7 +31,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.Determ
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.Difference;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.DifferenceSadd;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.DifferenceSenwa;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.AbstractIntersect;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.Intersect;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IntersectNodd;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.MinimizeDfa;
@@ -56,7 +54,6 @@ import de.uni_freiburg.informatik.ultimate.automata.parser.astAnnotations.nwa.Ca
 import de.uni_freiburg.informatik.ultimate.automata.parser.astAnnotations.nwa.InternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.parser.astAnnotations.nwa.NwaDefinition;
 import de.uni_freiburg.informatik.ultimate.automata.parser.astAnnotations.nwa.ReturnTransition;
-import de.uni_freiburg.informatik.ultimate.automata.parser.astAnnotations.petrinet.PetriNetJanDefinition;
 import de.uni_freiburg.informatik.ultimate.automata.parser.astAnnotations.petrinet.PetriNetJulianDefinition;
 import de.uni_freiburg.informatik.ultimate.automata.parser.astAnnotations.petrinet.TransitionDefinition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
@@ -337,7 +334,7 @@ public class TestFileExecutor {
 				NestedWordAutomaton<String,String> nwa = 
 					(NestedWordAutomaton<String,String>) autom.getAutomaton();
 				NestedLassoRun<String, String> nlr = 
-					new EmptinessCheck().getAcceptingNestedLassoRun(nwa);
+					new BuchiIsEmpty(nwa).getAcceptingNestedLassoRun();
 				if(nlr == null)
 				{
 					s_Logger.info("The NWA " + autom.getExpression() + 

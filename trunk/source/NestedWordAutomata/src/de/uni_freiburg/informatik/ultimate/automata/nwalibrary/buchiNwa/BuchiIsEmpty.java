@@ -10,11 +10,11 @@ import java.util.Set;
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.automata.Activator;
+import de.uni_freiburg.informatik.ultimate.automata.IOperation;
+import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
-
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 
 
@@ -25,9 +25,39 @@ import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
  * @param <STATE> Content. Type of the labels (the content) of the automata states. 
  * @version 2010-12-18
  */
-public class EmptinessCheck<LETTER,STATE> {
+public class BuchiIsEmpty<LETTER,STATE> implements IOperation {
 	
-	NestedWordAutomaton<LETTER, STATE> m_nwa;
+	
+	public BuchiIsEmpty(INestedWordAutomaton<LETTER, STATE> nwa) {
+		m_nwa = nwa;
+		s_Logger.info(startMessage());
+		checkEmptiness();
+		s_Logger.info(exitMessage());
+	}
+	
+	@Override
+	public String operationName() {
+		return "buchiIsEmpty";
+	}
+
+	@Override
+	public String startMessage() {
+			return "Start " + operationName() + ". Operand " + 
+			m_nwa.sizeInformation();	
+	}
+
+	@Override
+	public String exitMessage() {
+		return "Finished " + operationName() + " Result is " + m_Result; 
+	}
+
+	@Override
+	public Object getResult() throws OperationCanceledException {
+		return m_Result;
+	}
+	
+	INestedWordAutomaton<LETTER, STATE> m_nwa;
+	Boolean m_Result;
 
 	Bridge reachabilityBridge = new Bridge();
 	Bridge reachabilityBridgeA = new Bridge();
@@ -254,11 +284,12 @@ public class EmptinessCheck<LETTER,STATE> {
 		}	
 	}
 	
-	public NestedLassoRun<LETTER,STATE> getAcceptingNestedLassoRun(
-			INestedWordAutomaton<LETTER,STATE> nwa) {
-		s_Logger.info("Starting emptiness test. Operand" + 
-				((NestedWordAutomaton) nwa).sizeInformation());
-		if (! checkEmptiness(nwa)) {
+	public NestedLassoRun<LETTER,STATE> getAcceptingNestedLassoRun() {
+		if (m_Result) {
+			s_Logger.info("There is no accepting nested lasso run");
+			return null;
+		} else {
+			s_Logger.info("Starting construction of run");
 			NestedRun<LETTER,STATE> stem = 
 				reconstructionC(witnessInitial, witnessCritical);
 			NestedRun<LETTER,STATE> loop = 
@@ -272,7 +303,6 @@ public class EmptinessCheck<LETTER,STATE> {
 					acceptingNestedLassoRun.getLoop().getWord());
 			return acceptingNestedLassoRun;
 		}
-		return null;
 	}
 	
 	/**
@@ -282,28 +312,27 @@ public class EmptinessCheck<LETTER,STATE> {
 	 * @return true iff nwa does not accept any nested lasso word.
 	 */
 	// Requires collections of transitions to be final. 
-	public boolean checkEmptiness(INestedWordAutomaton<LETTER,STATE> nwa) {
-		m_nwa = (NestedWordAutomaton<LETTER, STATE>) nwa;
+	public boolean checkEmptiness() {
 		Worklist worklist = new Worklist();
 		Set<STATE> allStates = new HashSet<STATE>();
 		Set<STATE> acceptingStates = new HashSet<STATE>();
 		Set<STATE> initialStates = new HashSet<STATE>();
-		Collection<LETTER> internalAlphabet = nwa.getInternalAlphabet();
-		Collection<LETTER> callAlphabet = nwa.getCallAlphabet();
-		Collection<LETTER> returnAlphabet = nwa.getReturnAlphabet();
+		Collection<LETTER> internalAlphabet = m_nwa.getInternalAlphabet();
+		Collection<LETTER> callAlphabet = m_nwa.getCallAlphabet();
+		Collection<LETTER> returnAlphabet = m_nwa.getReturnAlphabet();
 		
 		// Get all states and accepting states
 		// TODO: xw: check the consequence of casting
-		for (STATE state : nwa.getStates()) {
+		for (STATE state : m_nwa.getStates()) {
 			allStates.add((STATE) state);
-			if (nwa.isFinal(state)) {
+			if (m_nwa.isFinal(state)) {
 				acceptingStates.add((STATE) state);
 			}
 		}
 		
 		// Get all initial states
 		// TODO: xw: check the consequence of casting
-		for (STATE state : nwa.getInitialStates()) {
+		for (STATE state : m_nwa.getInitialStates()) {
 			initialStates.add((STATE) state);
 		}
 		
@@ -328,7 +357,7 @@ public class EmptinessCheck<LETTER,STATE> {
 		for (STATE internalPredState : allStates) {
 			for (LETTER symbol : internalAlphabet) {
 				for (STATE temp : 
-					nwa.succInternal(internalPredState, symbol)) {
+					m_nwa.succInternal(internalPredState, symbol)) {
 					// TODO: xw: ill-effect of casting?
 					STATE internalSuccState = (STATE) temp;
 					if (! reachabilityBridge.containsPair(internalPredState, 
@@ -390,7 +419,7 @@ public class EmptinessCheck<LETTER,STATE> {
 		for (STATE callPredState : allStates) {
 			for (LETTER symbol : callAlphabet) {
 				for (STATE temp : 
-					nwa.succCall(callPredState, symbol)) {
+					m_nwa.succCall(callPredState, symbol)) {
 					// TODO: xw: ill-effect of casting?
 					STATE callSuccState = (STATE) temp;
 					if (! reachabilityBridgeC.containsPair(callPredState, 
@@ -706,18 +735,18 @@ public class EmptinessCheck<LETTER,STATE> {
 				destination); 
 		// Reconstruction-C: case 1 and 2, version 2010-12-21
 		// FIXME: xw: instance check
-		if (bridgeRange instanceof EmptinessCheck.QuadrupleBridge) {
+		if (bridgeRange instanceof BuchiIsEmpty.QuadrupleBridge) {
 			STATE callPredecessor = 
-				((EmptinessCheck<LETTER,STATE>.QuadrupleBridge) 
+				((BuchiIsEmpty<LETTER,STATE>.QuadrupleBridge) 
 						bridgeRange).callPredecessor; // origin
 			STATE callSuccessor = 
-				((EmptinessCheck<LETTER,STATE>.QuadrupleBridge) 
+				((BuchiIsEmpty<LETTER,STATE>.QuadrupleBridge) 
 						bridgeRange).callSuccessor;
 			STATE returnPredecessor = 
-				((EmptinessCheck<LETTER,STATE>.QuadrupleBridge) 
+				((BuchiIsEmpty<LETTER,STATE>.QuadrupleBridge) 
 						bridgeRange).returnPredecessor; 
 			STATE returnSuccessor = 
-				((EmptinessCheck<LETTER,STATE>.QuadrupleBridge) 
+				((BuchiIsEmpty<LETTER,STATE>.QuadrupleBridge) 
 						bridgeRange).returnSuccessor; // destination
 
 			NestedRun<LETTER,STATE> runOfCall = new NestedRun<LETTER,STATE>(
@@ -743,9 +772,9 @@ public class EmptinessCheck<LETTER,STATE> {
 					runOfReturn);
 		} 
 		// Reconstruction-C: case 3 and 4, version 2010-12-21
-		else if (bridgeRange instanceof EmptinessCheck.SingletonBridge) {
+		else if (bridgeRange instanceof BuchiIsEmpty.SingletonBridge) {
 			STATE singleton = 
-				((EmptinessCheck<LETTER,STATE>.SingletonBridge) 
+				((BuchiIsEmpty<LETTER,STATE>.SingletonBridge) 
 						bridgeRange).singleton;
 			// Reconstruction-C: case 4a, version 2010-12-21
 			if (getFirstInternalSymbol(origin, destination) != null) {
@@ -777,33 +806,33 @@ public class EmptinessCheck<LETTER,STATE> {
 		// Reconstruction-AC: case 1, version 2010-11-22
 		// TODO: xw: logical error check
 		// FIXME: xw: instance check
-		if (bridgeRange instanceof EmptinessCheck.OmegaBridge) {
+		if (bridgeRange instanceof BuchiIsEmpty.OmegaBridge) {
 			return reconstructionC(origin, destination);
 		}
 		
 		// Reconstruction-AC: case 2, version 2010-11-22
 		// FIXME: xw: instance check
-		else if (bridgeRange instanceof EmptinessCheck.SingletonBridge) {
+		else if (bridgeRange instanceof BuchiIsEmpty.SingletonBridge) {
 			STATE singleton = 
-				((EmptinessCheck<LETTER,STATE>.SingletonBridge) 
+				((BuchiIsEmpty<LETTER,STATE>.SingletonBridge) 
 						bridgeRange).singleton;
 			// TODO: where to break the long line
 			return reconstructionC(origin, singleton).concatenate(
 					reconstructionC(singleton, destination));
 		}
 		// Reconstruction-AC: case 3 and 4, version 2010-11-22
-		else if (bridgeRange instanceof EmptinessCheck.QuadrupleBridge) {
+		else if (bridgeRange instanceof BuchiIsEmpty.QuadrupleBridge) {
 			STATE callPredecessor = 
-				((EmptinessCheck<LETTER,STATE>.QuadrupleBridge) 
+				((BuchiIsEmpty<LETTER,STATE>.QuadrupleBridge) 
 						bridgeRange).callPredecessor; // origin
 			STATE callSuccessor = 
-				((EmptinessCheck<LETTER,STATE>.QuadrupleBridge) 
+				((BuchiIsEmpty<LETTER,STATE>.QuadrupleBridge) 
 						bridgeRange).callSuccessor;
 			STATE returnPredecessor = 
-				((EmptinessCheck<LETTER,STATE>.QuadrupleBridge) 
+				((BuchiIsEmpty<LETTER,STATE>.QuadrupleBridge) 
 						bridgeRange).returnPredecessor; 
 			STATE returnSuccessor = 
-				((EmptinessCheck<LETTER,STATE>.QuadrupleBridge) 
+				((BuchiIsEmpty<LETTER,STATE>.QuadrupleBridge) 
 						bridgeRange).returnSuccessor; // destination
 			
 			// Reconstruction-AC: case 3, version 2010-11-22
@@ -838,5 +867,7 @@ public class EmptinessCheck<LETTER,STATE> {
 		// TODO: xw: style: throw exception or change last else if to else?
 		return null;	
 	}
+
+
 
 }

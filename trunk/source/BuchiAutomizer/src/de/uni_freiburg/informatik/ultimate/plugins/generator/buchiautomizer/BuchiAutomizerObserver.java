@@ -4,22 +4,20 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Map;
 
-import javax.sound.midi.Synthesizer;
+import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.access.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.access.WalkerOptions;
-import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.EmptinessCheck;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.BuchiIsEmpty;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.NestedLassoRun;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.Difference;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
-import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
@@ -34,25 +32,19 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rankingfunctions.fu
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rankingfunctions.templates.LinearTemplate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RcfgElement;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootAnnot;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.SequentialComposition;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.TransFormula;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CFG2NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.InterpolantAutomataBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryRefinement;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbstractCegarLoop.Result;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.InterpolantAutomataTransitionAppender.StrongestPostDeterminizer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceChecker.AllIntegers;
-import de.uni_freiburg.informatik.ultimate.result.RankingFunctionResult;
-
-import org.apache.log4j.Logger;
 
 /**
  * Auto-Generated Stub for the plug-in's Observer
@@ -162,8 +154,8 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 		m_Abstraction = cFG2NestedWordAutomaton.getNestedWordAutomaton(
 				((RootNode) root), defaultStateFactory, allpp);
 		
-		EmptinessCheck<CodeBlock, IPredicate> ec = new EmptinessCheck<CodeBlock, IPredicate>();
-		NestedLassoRun<CodeBlock, IPredicate> ctx = ec.getAcceptingNestedLassoRun(m_Abstraction);
+		BuchiIsEmpty<CodeBlock, IPredicate> ec = new BuchiIsEmpty<CodeBlock, IPredicate>(m_Abstraction);
+		NestedLassoRun<CodeBlock, IPredicate> ctx = ec.getAcceptingNestedLassoRun();
 		NestedWord<CodeBlock> stem = ctx.getStem().getWord();
 		s_Logger.info("Stem: " + stem);
 		NestedWord<CodeBlock> loop = ctx.getLoop().getWord();
@@ -192,8 +184,8 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
-			ec = new EmptinessCheck<CodeBlock, IPredicate>();
-			ctx = ec.getAcceptingNestedLassoRun(m_Abstraction);
+			ec = new BuchiIsEmpty<CodeBlock, IPredicate>(m_Abstraction);
+			ctx = ec.getAcceptingNestedLassoRun();
 			stem = ctx.getStem().getWord();
 			s_Logger.info("Stem: " + stem);
 			loop = ctx.getLoop().getWord();
