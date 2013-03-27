@@ -128,15 +128,26 @@ public class Backtranslator extends DefaultTranslator<ASTNode, CACSLLocation, Ex
 			BinaryExpression binexp = (BinaryExpression) expr;
 			String left = processExpression(binexp.getLeft());
 			String right = processExpression(binexp.getRight());
-			return "(" + left + translateBinExpOp(binexp.getOperator()) + right + ")";
+			if (binexp.getOperator() == BinaryExpression.Operator.LOGICAND) {
+				return left + " " + translateBinExpOp(binexp.getOperator()) + " " + right;
+			} else {
+				return "(" + left + translateBinExpOp(binexp.getOperator()) + right + ")";
+			}
 		} else if (expr instanceof UnaryExpression) {
 			UnaryExpression unexp = (UnaryExpression) expr;
 			String subexpr = processExpression(unexp.getExpr());
 			String operator = translateUnExpOp(unexp.getOperator());
-			if (operator.equals("\\old")) {
+			if (unexp.getOperator().equals(UnaryExpression.Operator.OLD)) {
 				return operator + "(" + subexpr + ")";
+			} else if (unexp.getOperator().equals(UnaryExpression.Operator.LOGICNEG)) {
+				if (!subexpr.startsWith("(")) {
+					subexpr = "(" + subexpr + ")";
+				}
+				return operator + subexpr;
+			} else if (unexp.getOperator().equals(UnaryExpression.Operator.ARITHNEGATIVE)) {
+				return operator + subexpr;
 			} else {
-				return "(" + operator + subexpr + ")";
+				throw new IllegalArgumentException("unknown unary operator");
 			}
 		} else if (expr instanceof ArrayAccessExpression) {
 			throw new UnsupportedOperationException("Unsupported ArrayAccessExpression");
