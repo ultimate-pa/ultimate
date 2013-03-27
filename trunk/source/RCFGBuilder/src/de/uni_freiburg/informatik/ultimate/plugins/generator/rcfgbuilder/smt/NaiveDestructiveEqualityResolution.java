@@ -1,8 +1,8 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.Set;
 
 import org.apache.log4j.Logger;
@@ -48,7 +48,7 @@ public class NaiveDestructiveEqualityResolution {
 		Collection<TermVariable> eliminatedVars = new ArrayList<TermVariable>();
 		Term resFormula = new FormulaUnLet().unlet(term);
 		for (TermVariable tv : vars) {
-			Term replacementTerm = equalTerm(tv, resFormula);
+			Term replacementTerm = equalTerms(tv, resFormula);
 			if (replacementTerm != null) {
 				s_Logger.debug("eliminated existentially quantifed variable " + tv);
 				eliminatedVars.add(tv);
@@ -60,8 +60,6 @@ public class NaiveDestructiveEqualityResolution {
 			else {
 				s_Logger.debug("unable to eliminated existentially quantifed variable " + tv);
 			}
-		
-		
 		}
 		for (TermVariable tv : eliminatedVars) {
 			vars.remove(tv);
@@ -75,19 +73,7 @@ public class NaiveDestructiveEqualityResolution {
 	 * If null is returned no such t exists or the algorithm is not intelligent
 	 * enough to find such at t.
 	 */
-	private Term equalTerm(TermVariable tv, Term term) {
-		VarContext context = null;
-		context = computeEqualTerms(tv, term);
-		if (context.varOccurred == false) {
-			throw new IllegalArgumentException("var does not appear: " + tv);
-		}
-		if (context.getVarEqualTo().isEmpty()) {
-			return null;
-		}
-		return context.getVarEqualTo().iterator().next();
-	}
-	
-	private VarContext computeEqualTerms(TermVariable tv, Term term) {
+	private Term equalTerms(TermVariable tv, Term term) {
 		if (term instanceof ApplicationTerm) {
 			return computeEqualTerms(tv, (ApplicationTerm) term);
 		}
@@ -104,70 +90,31 @@ public class NaiveDestructiveEqualityResolution {
 	}
 	
 	
-	private VarContext computeEqualTerms(TermVariable tv, TermVariable term) {
-		if (term == tv) {
-			return new VarContext(true);
-		}
-		else {
-			return new VarContext(false);
-		}
+	private Term computeEqualTerms(TermVariable tv, TermVariable term) {
+		return null;
 	}
 	
-	private VarContext computeEqualTerms(TermVariable tv, ConstantTerm term) {
-		return new VarContext(false);
+	private Term computeEqualTerms(TermVariable tv, ConstantTerm term) {
+		return null;
 	}
 	
-	private VarContext computeEqualTerms(TermVariable tv, ApplicationTerm term) {
+	private Term computeEqualTerms(TermVariable tv, ApplicationTerm term) {
 		FunctionSymbol sym = term.getFunction();
 		Term[] params = term.getParameters();
-		VarContext[] contexts = new VarContext[params.length];
-		for (int i=0; i<params.length; i++) {
-			contexts[i] = computeEqualTerms(tv, params[i]);
-		}
-		int tvOnOneSideOfEquality = tvOnOneSideOfEquality(tv,sym,params,contexts);
-		if (tvOnOneSideOfEquality == 0 || tvOnOneSideOfEquality == 1) {
-			Set<Term> equalTerms = new HashSet<Term>();
-			equalTerms.add(params[tvOnOneSideOfEquality]);
-			return new VarContext(true, equalTerms, new HashSet<Term>());
-		}
-		if (sym.getName().equals("and")) {
-			boolean varOccurred = false;
-			Set<Term> varEqualTo = new HashSet<Term>();
-			Set<Term> varDifferentFrom = new HashSet<Term>();
-			for (int i=0; i<contexts.length; i++) {
-				varOccurred = varOccurred || contexts[i].hasVarOccurred();
-				varEqualTo.addAll(contexts[i].getVarEqualTo());
-				varDifferentFrom.addAll(contexts[i].getVarDifferentFrom());
-			}
-			return new VarContext(varOccurred,varEqualTo,varDifferentFrom);
-		}
-		else if (sym.getName().equals("or")) {
-			boolean varOccurred = false;
-			Set<Term> varEqualTo = new HashSet<Term>();
-			Set<Term> varDifferentFrom = new HashSet<Term>();
-			for (int i=0; i<contexts.length; i++) {
-				if (varOccurred == true && contexts[i].hasVarOccurred()) {
-					return new VarContext(true);
+		if (sym.getName().equals("=")) {
+			int tvOnOneSideOfEquality = tvOnOneSideOfEquality(tv, params);
+			return params[tvOnOneSideOfEquality];
+		} else if (sym.getName().equals("and")) {
+			for (Term param : params) {
+				Term equalTerm = equalTerms(tv, param);
+				if (equalTerm != null) {
+					return equalTerm;
 				}
-				varOccurred = varOccurred || contexts[i].hasVarOccurred();
-				varEqualTo.addAll(contexts[i].getVarEqualTo());
-				varDifferentFrom.addAll(contexts[i].getVarDifferentFrom());
 			}
-			return new VarContext(varOccurred,varEqualTo,varDifferentFrom);
+			return null;
+		} else {
+			return null;
 		}
-		else if (sym.getName().equals("not")) {
-			assert(params.length == 1);
-			return new VarContext(contexts[0].hasVarOccurred(), 
-					              contexts[0].getVarEqualTo(), 
-					              contexts[0].getVarDifferentFrom());
-		}
-
-		
-		boolean varOccurred = false;
-		for (int i=0; i<contexts.length; i++) {
-				varOccurred = varOccurred || contexts[i].hasVarOccurred();
-		}
-		return new VarContext(varOccurred);
 	}
 	
 	
@@ -181,24 +128,23 @@ public class NaiveDestructiveEqualityResolution {
 	 * </ul>
 	 * 
 	 */
-	private int tvOnOneSideOfEquality(TermVariable tv, FunctionSymbol sym, 
-										Term[] params, VarContext[] contexts) {
-		if (!sym.getName().equals("=")) {
-			return -1;
-		}
+	private int tvOnOneSideOfEquality(TermVariable tv, Term[] params) {
 		if (params.length != 2) {
-			return -1;
+			s_Logger.warn("Equality of length " + params.length);
 		}
 		if (params[0] == tv) {
-			if (contexts[1].hasVarOccurred()) {
+			final boolean rightHandSideContainsTv = 
+					Arrays.asList(params[1].getFreeVars()).contains(tv);
+			if (rightHandSideContainsTv) {
 				return -1;
 			}
 			else {
 				return 1;
 			}
-		}
-		if (params[1] == tv) {
-			if (contexts[0].hasVarOccurred()) {
+		} else if (params[1] == tv) {
+			final boolean leftHandSideContainsTv = 
+					Arrays.asList(params[0].getFreeVars()).contains(tv);
+			if (leftHandSideContainsTv) {
 				return -1;
 			}
 			else {
@@ -206,43 +152,6 @@ public class NaiveDestructiveEqualityResolution {
 			}
 		}
 		return -1;
-	}
-	
-	
-	private class VarContext {
-		boolean varOccurred;
-		Set<Term> varEqualTo;
-		Set<Term> varDifferentFrom;
-		
-		VarContext(boolean varOccurred) {
-			this.varOccurred = varOccurred;
-			this.varEqualTo = new HashSet<Term>(0);
-			this.varDifferentFrom = new HashSet<Term>(0);
-		}
-
-
-		private VarContext(boolean varOccurred, Set<Term> varEqualTo,
-				Set<Term> varDifferentFrom) {
-			super();
-			this.varOccurred = varOccurred;
-			this.varEqualTo = varEqualTo;
-			this.varDifferentFrom = varDifferentFrom;
-		}
-
-
-		private boolean hasVarOccurred() {
-			return varOccurred;
-		}
-
-		private Set<Term> getVarEqualTo() {
-			return varEqualTo;
-		}
-
-		private Set<Term> getVarDifferentFrom() {
-			return varDifferentFrom;
-		}
-		
-		
 	}
 
 }
