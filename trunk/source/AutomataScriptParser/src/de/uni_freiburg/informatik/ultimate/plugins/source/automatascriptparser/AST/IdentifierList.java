@@ -50,5 +50,16 @@ public class IdentifierList extends AtsASTNode {
 	public boolean isPair() {
 		return (m_idList.size() == 2);
 	}
+
+	@Override
+	public String getAsString() {
+		StringBuilder builder = new StringBuilder();
+		for (String id : m_idList) {
+			builder.append(id + " ");
+		}
+		return builder.toString();
+	}
+	
+	
 	
 }

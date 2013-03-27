@@ -26,4 +26,22 @@ public class IfElseStatement extends AtsASTNode {
 	public String toString() {
 		return "IfElseStatement";
 	}
+
+	@Override
+	public String getAsString() {
+		if (m_children.size() == 3) {
+			StringBuilder builder = new StringBuilder("if (");
+			builder.append(m_children.get(0).getAsString());
+			builder.append(") {\n");
+			builder.append(m_children.get(1).getAsString());
+			builder.append("\n} else {\n");
+			builder.append(m_children.get(2).getAsString());
+			builder.append("\n}");
+			return builder.toString();
+		} else {
+			return "";
+		}
+	}
+	
+	
 }

@@ -23,8 +23,8 @@ public class AtsASTNode extends BaseAST<AtsASTNode> {
 	 * 
 	 */
 	private static final long serialVersionUID = 8077752308820134631L;
-	private List<AtsASTNode> children;
-	private AtsASTNode parent;
+	protected List<AtsASTNode> m_children;
+	protected AtsASTNode m_parent;
 	// The type of the returned value
 	protected Class<?> m_returnType;
 	// The type the children of this node should have.
@@ -33,21 +33,21 @@ public class AtsASTNode extends BaseAST<AtsASTNode> {
 	protected ILocation m_location;
 	
 	public AtsASTNode() {
-		children = new ArrayList<AtsASTNode>();
-		parent = null;
+		m_children = new ArrayList<AtsASTNode>();
+		m_parent = null;
 		m_location = null;
 	}
 	
 	public AtsASTNode(ILocation loc) {
 		super(new Payload(loc, "AtsASTNode"));
-		children = new ArrayList<AtsASTNode>();
-		parent = null;
+		m_children = new ArrayList<AtsASTNode>();
+		m_parent = null;
 		m_location = loc;
 	}
 	
 	public AtsASTNode(AtsASTNode par) {
-		children = new ArrayList<AtsASTNode>();
-		parent = par;
+		m_children = new ArrayList<AtsASTNode>();
+		m_parent = par;
 	}
 
 	
@@ -59,22 +59,22 @@ public class AtsASTNode extends BaseAST<AtsASTNode> {
 
 	
 	public AtsASTNode getIncomingNode() {
-		return parent;
+		return m_parent;
 	}
 
 	public List<AtsASTNode> getOutgoingNodes() {
-		return children;
+		return m_children;
 	}
 	
 	
 	public boolean addIncomingNode(AtsASTNode par) {
-		parent = par;
+		m_parent = par;
 		return true;
 	}
 
 	
 	public boolean addOutgoingNode(AtsASTNode element) {
-		children.add(element);
+		m_children.add(element);
 		if (element != null) {
 			((AtsASTNode) element).addIncomingNode(this);
 		}
@@ -119,6 +119,18 @@ public class AtsASTNode extends BaseAST<AtsASTNode> {
 		mPayload = new Payload(loc, "AtsASTNode");
 		m_location = loc;
 		
+	}
+	
+	/**
+	 * 
+	 * @return String representation of this AtsASTNode
+	 */
+	public String getAsString() {
+		StringBuilder builder = new StringBuilder();
+		for (AtsASTNode n : m_children) {
+			builder.append(n.getAsString());
+		}
+		return builder.toString();
 	}
 	
 }

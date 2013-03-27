@@ -35,4 +35,11 @@ public class VariableExpression extends AtsASTNode {
 		return "VariableExpression [Identifier: " + m_Identifier + "]";
 	}
 
+	@Override
+	public String getAsString() {
+		return m_Identifier;
+	}
+	
+	
+
 }

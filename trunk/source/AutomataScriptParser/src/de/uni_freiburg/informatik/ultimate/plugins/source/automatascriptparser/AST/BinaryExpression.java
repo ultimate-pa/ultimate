@@ -56,4 +56,18 @@ public class BinaryExpression extends AtsASTNode {
 		}
 	}
 
+	@Override
+	public String getAsString() {
+		if (m_children.size() == 2) {
+			return m_children.get(0).getAsString() + " " + 
+		           operatorToString(m_operator) + " " + 
+				   m_children.get(1).getAsString();
+		} else {
+			return "";
+		}
+		
+	}
+	
+	
+
 }

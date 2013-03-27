@@ -36,4 +36,11 @@ public class ConstantExpression extends AtsASTNode {
 		return "ConstantExpression [Value : " + value + "]";
 	}
 
+	@Override
+	public String getAsString() {
+		return value.toString();
+	}
+	
+	
+
 }

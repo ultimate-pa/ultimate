@@ -210,4 +210,11 @@ public class Nestedword extends AtsASTNode {
 		}
 		return nestingRelation;
 	}
+
+	@Override
+	public String getAsString() {
+		return toString().substring(11);
+	}
+	
+	
 }

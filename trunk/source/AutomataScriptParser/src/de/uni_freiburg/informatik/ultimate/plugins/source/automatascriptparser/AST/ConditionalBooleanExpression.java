@@ -47,4 +47,20 @@ public class ConditionalBooleanExpression extends AtsASTNode {
 	public String toString() {
 		return "ConditionalBooleanExpression [#Arguments: " + getOutgoingNodes().size() + ", Operator: " + m_operator + "]";
 	}
+
+	@Override
+	public String getAsString() {
+		if (m_children.size() == 2) {
+			return m_children.get(0).getAsString() + " " +
+		           m_operator + " " +
+				   m_children.get(1).getAsString();	
+		           
+		} else if (m_children.size() == 1) {
+			return m_operator + m_children.get(0).getAsString();
+		} else {
+			return "";
+		}
+		
+	}
+	
 }

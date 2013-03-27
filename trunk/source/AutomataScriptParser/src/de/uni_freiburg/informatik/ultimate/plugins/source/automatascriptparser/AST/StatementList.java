@@ -36,4 +36,15 @@ public class StatementList extends AtsASTNode {
 	public String toString() {
 		return "StatementList [#Statements: " + getOutgoingNodes().size() + "]";
 	}
+
+	@Override
+	public String getAsString() {
+		StringBuilder builder = new StringBuilder();
+		for (AtsASTNode n : m_children) {
+			builder.append(n.getAsString() + ";\n");
+		}
+		return builder.toString();
+	}
+	
+	
 }

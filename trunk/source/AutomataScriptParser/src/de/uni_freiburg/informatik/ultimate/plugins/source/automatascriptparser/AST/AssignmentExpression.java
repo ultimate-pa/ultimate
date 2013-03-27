@@ -47,4 +47,18 @@ public class AssignmentExpression extends AtsASTNode {
 		}
 	}
 
+	@Override
+	public String getAsString() {
+		AtsASTNode var = null;
+		AtsASTNode value = null;
+		for (AtsASTNode n : m_children) {
+			if (n instanceof VariableExpression) {
+				var = n;
+			} else {
+				value = n;
+			}
+		}
+		return var.getAsString() + " " + operatorToString(m_operator) + " " + value.getAsString(); 
+	}
+
 }

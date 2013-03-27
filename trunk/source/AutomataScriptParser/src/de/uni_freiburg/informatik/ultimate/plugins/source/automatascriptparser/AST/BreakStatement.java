@@ -14,4 +14,10 @@ public class BreakStatement extends AtsASTNode {
 	public String toString() {
 		return "BreakStatement";
 	}
+	@Override
+	public String getAsString() {
+		return "break";
+	}
+	
+	
 }

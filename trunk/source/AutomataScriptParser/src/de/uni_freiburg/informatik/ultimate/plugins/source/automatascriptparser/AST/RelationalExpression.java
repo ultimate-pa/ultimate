@@ -47,4 +47,17 @@ public class RelationalExpression extends AtsASTNode {
 		default: return "";
 		}
 	}
+
+	@Override
+	public String getAsString() {
+		if (m_children.size() == 2) {
+			return m_children.get(0) + " " + 
+		           operatorToString(m_operator) + " " + 
+				   m_children.get(1);	
+		} else {
+			return "";
+		}
+	}
+	
+	
 }

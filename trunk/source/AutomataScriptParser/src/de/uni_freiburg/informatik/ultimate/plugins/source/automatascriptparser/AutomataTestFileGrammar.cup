@@ -260,6 +260,7 @@ automata_test_file ::= test_statement_block:stmtList
 						  n.addOutgoingNode(stmtList);
 						  n.addOutgoingNode(autDefs);
                     	   RESULT = n; :}
+                     | error
 			;
 // 2. Lexical Structure
 literal ::=	INTEGER_LITERAL:i 

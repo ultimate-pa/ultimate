@@ -10,24 +10,24 @@
 parseAutomata("nwaDefinitions01.ats");
 // Declares a nested word
 nw firstNW = [b b a b b b a];
-accepts(a2, firstNW);
-Accepts(a1, [a b c d]);
-accepts(a2, [a b a b]);
-accepts(a2, [a b b a]);
-accepts(a1, firstNW);
+assert(accepts(a2, firstNW));
+assert(accepts(a1, [a b c d]));
+assert(accepts(a2, [a b a b]));
+assert(accepts(a2, [a b b a]));
+assert(accepts(a1, firstNW));
 // "acceptsWithC" is an automaton defined in "nwaDefinitions01.ats"
 // This test should be true
-accepts(acceptsWithC, [c]);
+assert(accepts(acceptsWithC, [c]));
 // This test should be false
-accepts(acceptsWithC, [c c]);
+assert(accepts(acceptsWithC, [c c]));
 // This test should be false
-accepts(acceptsWithC, [c c a b c]);
+assert(accepts(acceptsWithC, [c c a b c]));
 // This test should be true
-accepts(acceptsWithC, [a a a b c]);
+assert(accepts(acceptsWithC, [a a a b c]));
 // This test should be false
-accepts(acceptsWithC, [a a a b b]);
+assert(accepts(acceptsWithC, [a a a b b]));
 // This test should be false
-accepts(acceptsNothing, firstNW);
+assert(accepts(acceptsNothing, firstNW));
 
 // Following automaton was defined in fat-file "abArchway.fat"
 

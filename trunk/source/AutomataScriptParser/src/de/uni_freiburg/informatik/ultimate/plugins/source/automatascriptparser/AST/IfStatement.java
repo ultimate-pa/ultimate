@@ -30,4 +30,20 @@ public class IfStatement extends AtsASTNode {
 	public String toString() {
 		return "IfStatement ";
 	}
+
+	@Override
+	public String getAsString() {
+		if (m_children.size() == 2) {
+			StringBuilder builder = new StringBuilder("if (");
+			builder.append(m_children.get(0).getAsString());
+			builder.append(") {\n");
+			builder.append(m_children.get(1).getAsString());
+			builder.append("\n}\n");
+			return builder.toString();
+		} else {
+			return "";
+		}
+	}
+	
+	
 }

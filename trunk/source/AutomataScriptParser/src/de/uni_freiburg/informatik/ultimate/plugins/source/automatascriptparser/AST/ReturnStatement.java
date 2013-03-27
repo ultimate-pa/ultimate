@@ -22,5 +22,11 @@ public class ReturnStatement extends AtsASTNode {
 	public String toString() {
 		return "ReturnStatement ";
 	}
+
+	@Override
+	public String getAsString() {
+		return "return";
+	}
+	
 }
 

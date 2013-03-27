@@ -45,4 +45,19 @@ public class VariableDeclaration extends AtsASTNode {
 	public String toString() {
 		return "VariableDeclaration [Vars: " + m_identifiers + "]";
 	}
+
+	@Override
+	public String getAsString() {
+		StringBuilder builder = new StringBuilder();
+		builder.append(m_returnType.getSimpleName());
+		for (String id : m_identifiers) {
+			builder.append(" " + id);
+		}
+		if (m_children.size() == 1) {
+			builder.append(" = " + m_children.get(0).getAsString());
+		}
+		return builder.toString();
+	}
+	
+	
 }

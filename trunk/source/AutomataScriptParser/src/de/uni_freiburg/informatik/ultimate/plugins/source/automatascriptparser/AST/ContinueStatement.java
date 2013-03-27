@@ -9,5 +9,17 @@ public class ContinueStatement extends AtsASTNode {
 
 	private static final long serialVersionUID = 7627587071909794385L;
 
+	@Override
+	public String getAsString() {
+		return "continue";
+	}
+
+	@Override
+	public String toString() {
+		return "ContinueStatement";
+	}
+	
+	
+
 }
 

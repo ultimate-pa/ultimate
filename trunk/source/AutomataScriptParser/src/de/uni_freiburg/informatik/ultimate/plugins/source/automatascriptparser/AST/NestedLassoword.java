@@ -43,4 +43,12 @@ public class NestedLassoword extends AtsASTNode {
 	public Nestedword getLoop() {
 		return m_nw2;
 	}
+
+	@Override
+	public String getAsString() {
+		return m_nw1.getAsString().substring(0, m_nw1.getAsString().length() - 1) + 
+				", " + m_nw2.getAsString().substring(1);
+	}
+	
+	
 }

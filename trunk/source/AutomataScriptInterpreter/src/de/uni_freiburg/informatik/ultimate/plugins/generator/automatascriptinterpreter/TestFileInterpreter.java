@@ -6,10 +6,13 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.log4j.Logger;
 import org.eclipse.core.runtime.FileLocator;
@@ -43,6 +46,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.A
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.WhileStatement;
 import de.uni_freiburg.informatik.ultimate.result.GenericResult;
 import de.uni_freiburg.informatik.ultimate.result.GenericResult.Severity;
+import de.uni_freiburg.informatik.ultimate.result.NoResult;
 
 
 enum Flow {
@@ -223,16 +227,14 @@ public class TestFileInterpreter {
 				OperationInvocationExpression oe = (OperationInvocationExpression) n;
 				String opName = oe.getOperationName().toLowerCase();
 				if (m_existingOperations.containsKey(opName)) {
-					Class<?> operationClass = m_existingOperations.get(opName);
-					for (Class<?> interFace : operationClass.getInterfaces()) {
-						if (interFace.equals(IOperation.class)) {
+					Set<Class<?>> operationClasses = m_existingOperations.get(opName);
+					for (Class<?> operationClass : operationClasses) {
 							for (Method m : operationClass.getMethods()) {
 								if (m.getName().equals("getResult")) {
 									return m.getReturnType();
 								}
 							}
 							throw new UnsupportedOperationException("Operation \"" + opName + "\" has no operation \"getResult()\"");
-						}
 					}
 				} else {
 					throw new UnsupportedOperationException("Operation \"" + opName + "\" was not found!");
@@ -245,8 +247,7 @@ public class TestFileInterpreter {
 	}
 	
 	private Map<String, Object> m_variables;
-	private Map<String, Class<?>> m_existingOperations;
-	private Map<String, String> m_operationNamesToCorrectClassNames;
+	private Map<String, Set<Class<?>>> m_existingOperations;
 	private Flow m_flow;
 	private AutomataDefinitionInterpreter m_automInterpreter;
 	private AutomataScriptTypeChecker m_tChecker;
@@ -262,29 +263,7 @@ public class TestFileInterpreter {
 		m_testCases = new ArrayList<GenericResult<Integer>>();
 		m_tChecker = new AutomataScriptTypeChecker();
 		m_existingOperations = getOperationClasses();
-		m_operationNamesToCorrectClassNames = new HashMap<String, String>();
-		m_operationNamesToCorrectClassNames.put("accepts", "Acceptance");
-//		m_operationNamesToCorrectClasses.put("accepts", "Acceptance");
-		m_operationNamesToCorrectClassNames.put("complement", "Complement$ComplementDD");
-		m_operationNamesToCorrectClassNames.put("complementsadd", "Complement$ComplementSadd");
-		// m_operationNamesToCorrectClasses.put("intersect", "Intersect");
-		// m_operationNamesToCorrectClasses.put("intersectNodd", "IntersectNodd");
-		// m_operationNamesToCorrectClasses.put("difference", "Difference");
-		// m_operationNamesToCorrectClasses.put("differenceSenwa", "DifferenceSenwa");
-//		m_operationNamesToCorrectClasses.put("superDifference", "SuperDifference");
-//		m_operationNamesToCorrectClasses.put("differenceSadd", "DifferenceSadd");
-//		m_operationNamesToCorrectClasses.put("determinizeSadd", "DeterminizeSadd");
-		m_operationNamesToCorrectClassNames.put("buchireduce", "ReduceBuchi");
-		m_operationNamesToCorrectClassNames.put("buchiintersect", "Intersect");
-		m_operationNamesToCorrectClassNames.put("finiteAutomaton", "PetriNet2FiniteAutomaton");
-//		m_operationNamesToCorrectClasses.put("accepts", "Acceptance");
-//		m_operationNamesToCorrectClasses.put("accepts", "Acceptance");
-//		m_operationNamesToCorrectClasses.put("accepts", "Acceptance");
-//		m_operationNamesToCorrectClasses.put("accepts", "Acceptance");
-//		m_operationNamesToCorrectClasses.put("accepts", "Acceptance");
-		
-//		m_operationNamesToCorrectClasses.put("reachablestatescopy", "ReachableStatesCopy");
-		m_operationNamesToCorrectClassNames.put("senwa", "SenwaBuilder");
+
 	}
 	
 	public Object interpretTestFile(AtsASTNode node) throws Exception {
@@ -592,7 +571,7 @@ public class TestFileInterpreter {
 							        null,
 							        oe.getLocation(), 
 							        "Assertion holds.", 
-							        "long", 
+							        oe.getAsString(), 
 							        Severity.INFO));
 				} else {
 					m_testCases.add(new GenericResult<Integer>(oe.getLocation().getStartLine(), 
@@ -600,11 +579,14 @@ public class TestFileInterpreter {
 									null,
 									oe.getLocation(), 
 									"Assertion violated!", 
-									"long", 
+									oe.getAsString(), 
 									Severity.ERROR));
 				}
 			}
 		} else if (oe.getOperationName().equalsIgnoreCase("print")) {
+			String argsAsString = children.get(0).getAsString();
+			ILocation loc = children.get(0).getLocation();
+			printMessage(Severity.INFO, "Printing " + argsAsString, loc);
 			for (Object o : arguments) {
 				s_Logger.info(o.toString());
 			}
@@ -751,53 +733,85 @@ public class TestFileInterpreter {
 			default: s_Logger.error("Error: " + test.getShortDescription());
 			}
 		}
-		// Report summary of the testcases
+		// Report summary of the testcases/
 		if (m_testCases.isEmpty()) {
 			s_Logger.error("No testcases defined!");
 		} else {
 			s_Logger.info(testCasesSummary);
+		}	
+	}
+	
+	
+	/**
+	 * Reports the given string to the logger
+	 * and to Ultimate as a NoResult.
+	 * @param sev the Severity
+	 * @param toPrint the string to be reported
+	 * @param loc the location of the String
+	 */
+	private static void printMessage(Severity sev, String toPrint, ILocation loc) {
+		reportToUltimate(sev, toPrint, loc);
+		reportToLogger(sev, toPrint);
+	}
+	
+	/**
+	 * Reports the given string with the given severity to Ultimate as a NoResult
+	 * @param sev the severity
+	 * @param toPrint the string to be reported
+	 * @param loc the location of the string
+	 */
+	private static void reportToUltimate(Severity sev, String toPrint, ILocation loc) {
+			NoResult<Integer> res = new NoResult<>(loc.getStartLine(), 
+					          Activator.s_PLUGIN_ID, null,
+					          loc);
+			res.setLongDescription(toPrint);
+			UltimateServices.getInstance().reportResult(Activator.s_PLUGIN_ID, res);
+	}
+	
+	/**
+	 * Reports the given string with the given severity to the logger 
+	 * @param sev the severity of the string
+	 * @param toPrint the string to be printed
+	 */
+	private static void reportToLogger(Severity sev, String toPrint) {
+		switch (sev){
+		case ERROR: s_Logger.error(toPrint); break;
+		case INFO: s_Logger.info(toPrint); break;
+		case WARNING: s_Logger.warn(toPrint); break;
+		default: s_Logger.info(toPrint); 
 		}
-		
 	}
 
 	private IOperation getAutomataOperation(String opName, ArrayList<Object> arguments) {
 		String operationName = opName.toLowerCase();
 		IOperation result = null;
 		if (m_existingOperations.containsKey(operationName)) {
-			Class<?> operationClass = m_existingOperations.get(operationName);
-			Class<?>[] implementedInterfaces = operationClass.getInterfaces();
-			for (Class<?> interFace : implementedInterfaces) {
-				if (interFace.equals(IOperation.class)) {
-					Constructor<?>[] operationConstructors = operationClass.getConstructors();
-					for (Constructor<?> c : operationConstructors) {
-						if (allArgumentsHaveCorrectTypeForThisConstructor(c, arguments)) {
-							try {
-								result = (IOperation) c.newInstance(arguments.toArray());
-								return result;
-							} catch (InstantiationException e) {
-								// TODO Auto-generated catch block
-								e.printStackTrace();
-							} catch (IllegalAccessException e) {
-								// TODO Auto-generated catch block
-								e.printStackTrace();
-							} catch (IllegalArgumentException e) {
-								// TODO Auto-generated catch block
-								e.printStackTrace();
-							} catch (InvocationTargetException e) {
-								// TODO Auto-generated catch block
-								e.printStackTrace();
-							}
+			Set<Class<?>> operationClasses = m_existingOperations.get(operationName);
+			for (Class<?> operationClass : operationClasses) {
+				Constructor<?>[] operationConstructors = operationClass.getConstructors();
+				// Find the constructor which expects the correct arguments
+				for (Constructor<?> c : operationConstructors) {
+					if (allArgumentsHaveCorrectTypeForThisConstructor(c, arguments)) {
+						try {
+							result = (IOperation) c.newInstance(arguments.toArray());
+							return result;
+						} catch (InstantiationException e) {
+							e.printStackTrace();
+						} catch (IllegalAccessException e) {
+							e.printStackTrace();
+						} catch (IllegalArgumentException e) {
+							e.printStackTrace();
+						} catch (InvocationTargetException e) {
+							e.printStackTrace();
 						}
-					}					
-				}
+					}
+				}					
 			}
-			
 		} else {
 			String message = "Operation \"" + opName + "\" is not supported."; 
 			s_Logger.error(message);
 			throw new UnsupportedOperationException(message);
 		}
-		
 		return result;
 	}
 	
@@ -819,13 +833,16 @@ public class TestFileInterpreter {
 	 * 
 	 * @return Returns a map from String to class objects from the classes found in the directories.
  	 */
-	private static Map<String, Class<?>> getOperationClasses() {
-		Map<String, Class<?>> result = new HashMap<String, Class<?>>();
-		String[] baseDirs = {"/de/uni_freiburg/informatik/ultimate/automata/nwalibrary/operations", "/de/uni_freiburg/informatik/ultimate/automata/nwalibrary/buchiNwa"};
-		// String baseDir = "/de/uni_freiburg/informatik/ultimate/automata/nwalibrary/operations";
+	private static Map<String, Set<Class<?>>> getOperationClasses() {
+		Map<String, Set<Class<?>>> result = new HashMap<String, Set<Class<?>>>();
+		String[] baseDirs = {"/de/uni_freiburg/informatik/ultimate/automata/nwalibrary/operations",
+				              "/de/uni_freiburg/informatik/ultimate/automata/nwalibrary/buchiNwa",
+				              "/de/uni_freiburg/informatik/ultimate/automata/petrinet/julian"};
 		for (String baseDir : baseDirs) {
-			String[] dirs = { "", "buchiReduction" };
-			for (String dir : dirs) {
+			ArrayDeque<String> dirs = new ArrayDeque<String>();
+			dirs.add("");
+			while (!dirs.isEmpty()) {
+				String dir = dirs.removeFirst();
 				String[] files = filesInDirectory(baseDir + "/" + dir);
 				for (String file : files) {
 					if (file.endsWith(".class")) {
@@ -834,18 +851,43 @@ public class TestFileInterpreter {
 						if (baseDirInPackageFormat.charAt(0) == '.') {
 							baseDirInPackageFormat = baseDirInPackageFormat.substring(1);
 						}
-						String path = baseDirInPackageFormat + "." + fileWithoutSuffix;
+						String path = "";
+						if (dir.isEmpty()) {
+							path = baseDirInPackageFormat + "." + fileWithoutSuffix;
+						} else {
+							path = baseDirInPackageFormat + "." + dir + "." + fileWithoutSuffix;
+						}
 						Class<?> clazz = null;
 						try {
 							clazz = Class.forName(path);
 						} catch (ClassNotFoundException e) {
-							// TODO Auto-generated catch block
 							e.printStackTrace();
 							s_Logger.error("Couldn't load/find class " + path);
 							break;
 						}
-						String operationName = fileWithoutSuffix.toLowerCase();
-						result.put(operationName, clazz);
+						if ((clazz != null) && (classImplementsIOperation(clazz))) {
+							String operationName = fileWithoutSuffix.toLowerCase();
+							if (result.containsKey(operationName)) {
+								Set<Class<?>> s = result.get(operationName);
+								s.add(clazz);
+							} else {
+								Set<Class<?>> s = new HashSet<Class<?>>();
+								s.add(clazz);
+								result.put(operationName, s);
+							}
+							
+							
+						}
+					}
+					// if the file has no ending, it may be a directory
+					else if (!file.contains(".")) {
+						try {
+							if (isDirectory(baseDir + "/" + file)) {
+								dirs.addLast(file);
+							}
+						} catch (Exception e) {
+							
+						}
 					}
 				}
 			}
@@ -853,12 +895,25 @@ public class TestFileInterpreter {
 		return result;
 	}
 	
+	private static boolean classImplementsIOperation(Class<?> c) {
+		Class<?>[] implementedInterfaces = c.getInterfaces();
+		for (Class<?> interFace : implementedInterfaces) {
+			if (interFace.equals(IOperation.class)) {
+				return true;
+			}
+		}
+		return false;
+	}
+	
+	private static boolean isDirectory(String dir) {
+		URL dirURL = IOperation.class.getClassLoader().getResource(dir);
+		if (dirURL == null) return false;
+		else return dirURL.getProtocol().equals("bundleresource");
+	}
 	
 	/**
-	 * Return the filenames of the files in the folder
-	 * /resources/examples/ + dirSuffix (path given relative to root of this
-	 * package).
-	 * 
+	 * Return the filenames of the files in the given
+	 * directory.
 	 * We use the classloader to get the URL of this folder. We support only
 	 * URLs with protocol <i>file</i> and <i>bundleresource</i>.
 	 * At the moment these are the only ones that occur in Website and

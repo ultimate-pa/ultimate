@@ -53,4 +53,17 @@ public class UnaryExpression extends AtsASTNode {
 		default: return "";
 		}
 	}
+
+	@Override
+	public String getAsString() {
+		switch (m_operator) {
+		case EXPR_PLUSPLUS: return m_children.get(0).getAsString() + "++";
+		case EXPR_MINUSMINUS: return m_children.get(0).getAsString() + "--";
+		case PLUSPLUS_EXPR: return "++" + m_children.get(0).getAsString();
+		case MINUSMINUS_EXPR: return "--" + m_children.get(0).getAsString();
+		default: return "";
+		}
+	}
+	
+	
 }
