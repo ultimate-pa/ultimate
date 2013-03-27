@@ -132,7 +132,11 @@ public class CFG2NestedWordAutomaton {
 					Summary summaryEdge = (Summary) edge;
 					Summary annot = summaryEdge;
 					if (annot.calledProcedureHasImplementation()) {
-						//do noting
+						//do nothing if analysis is interprocedural
+						//add summary otherwise
+						if (!m_Pref.interprocedural()) {
+							internalAlphabet.add(annot);
+						}
 					}
 					else {
 						internalAlphabet.add(annot);
@@ -213,7 +217,9 @@ public class CFG2NestedWordAutomaton {
 				} else if (edge instanceof Summary) {
 					Summary summaryEdge = (Summary) edge;
 					if (summaryEdge.calledProcedureHasImplementation()) {
-						//do noting
+						if (!m_Pref.interprocedural()) {
+							nwa.addInternalTransition(state,summaryEdge, succState);
+						}
 					}
 					else {
 						nwa.addInternalTransition(state, summaryEdge, succState);
