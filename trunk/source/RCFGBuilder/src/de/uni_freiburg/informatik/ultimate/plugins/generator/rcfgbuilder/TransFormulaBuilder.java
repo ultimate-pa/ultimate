@@ -87,12 +87,7 @@ public class TransFormulaBuilder {
 		}
 		else if (edge instanceof Summary) {
 			Summary summary = (Summary) edge;
-			if (!summary.calledProcedureHasImplementation()) {
-				summary.setTransitionFormula(getTransitionFormula(summary));
-			}
-			else {
-				//TODO
-			}
+			summary.setTransitionFormula(getTransitionFormula(summary));
 		}
 		else if (edge instanceof CodeBlock) { 
 			StatementSequence stseq = (StatementSequence) ((RCFGEdgeAnnotation) edge
