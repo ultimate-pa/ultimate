@@ -51,7 +51,7 @@ public class NwaToUltimateModel<LETTER,STATE> {
 						succVSN = new AutomatonState(succState,
 								nwa.isFinal(succState));
 						s_Logger.debug("Creating Node: " 
-								+ succVSN.getPayload().getName());
+								+ succVSN.toString());
 						visited.put(succState,succVSN);
 						queue.add(succState);
 					}

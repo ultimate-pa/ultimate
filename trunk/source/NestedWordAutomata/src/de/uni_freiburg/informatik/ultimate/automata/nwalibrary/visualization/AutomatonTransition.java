@@ -1,10 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.visualization;
 
-import java.util.HashMap;
-
 import de.uni_freiburg.informatik.ultimate.model.IAnnotations;
-import de.uni_freiburg.informatik.ultimate.model.INode;
-import de.uni_freiburg.informatik.ultimate.model.IPayload;
 import de.uni_freiburg.informatik.ultimate.model.structure.ModifiableMultigraphEdge;
 
 /**
@@ -18,6 +14,8 @@ public class AutomatonTransition extends ModifiableMultigraphEdge<AutomatonState
 	
 	public enum Transition { CALL, INTERNAL, RETURN, INITIAL };
 	
+	private String m_Name;
+	
 	public AutomatonTransition(AutomatonState state,
 							   Transition type,
 							   Object transitionLabel,
@@ -26,30 +24,27 @@ public class AutomatonTransition extends ModifiableMultigraphEdge<AutomatonState
 		super(state, succState);
 		assert(type == Transition.RETURN || linPred ==null);
 		assert(type != Transition.RETURN || linPred != null);
-		IPayload payload = getPayload();
 		switch (type) {
-		case CALL: payload.setName("Call"); break;
-		case INTERNAL: payload.setName("Internal"); break;
-		case RETURN: payload.setName("Return"); break;
-		case INITIAL: payload.setName(""); break;
+		case CALL: m_Name = "Call"; break;
+		case INTERNAL: m_Name = "Internal"; break;
+		case RETURN: m_Name = "Return"; break;
+		case INITIAL: m_Name = ""; break;
+		default: throw new IllegalArgumentException();
 		}
-		if (transitionLabel instanceof IAnnotations) {
-			HashMap<String,IAnnotations> a = new HashMap<String,IAnnotations>();
-			a.put("Symbol", (IAnnotations) transitionLabel);
-			payload.setAnnotations(a);
-
-		}
-		else {
-			payload.setName(payload.getName() + ": " + transitionLabel);
-		}
+		m_Name = m_Name + ": " + transitionLabel;
 		if (type == Transition.RETURN) {
-			payload.setName(payload.getName() + linPred.toString());
+			m_Name = m_Name + " " + linPred.toString();
+		}
+		
+		if (transitionLabel instanceof IAnnotations) {
+			getPayload().getAnnotations().put("Symbol", (IAnnotations) transitionLabel);
 		}
 		state.addOutgoing(this);
 		succState.addIncoming(this);
+		getPayload().setName(m_Name);
 	}
 	public String toString() {
-		return super.getPayload().getName();
+		return m_Name;
 	}
 
 }
