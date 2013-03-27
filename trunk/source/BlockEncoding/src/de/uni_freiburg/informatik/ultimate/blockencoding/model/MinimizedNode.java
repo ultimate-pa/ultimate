@@ -146,6 +146,20 @@ public class MinimizedNode implements
 		}
 		return new ArrayList<IMinimizedEdge>();
 	}
+	
+	/**
+	 * @return
+	 */
+	public List<SimpleEntry<IRating, List<IMinimizedEdge>>> getOutgoingEdgeLevels() {
+		return outgoingEdges;
+	}
+	
+	/**
+	 * @return
+	 */
+	public List<SimpleEntry<IRating, List<IMinimizedEdge>>> getIncomingEdgeLevels() {
+		return incomingEdges;
+	}
 
 	@Override
 	public List<IMinimizedEdge> getIncomingEdges() {

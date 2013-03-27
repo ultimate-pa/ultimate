@@ -8,12 +8,15 @@ import java.util.HashMap;
 import java.util.HashSet;
 
 import org.apache.log4j.Logger;
+import org.eclipse.core.runtime.preferences.ConfigurationScope;
+import org.eclipse.core.runtime.preferences.IEclipsePreferences;
 
 import de.uni_freiburg.informatik.ultimate.blockencoding.model.BlockEncodingAnnotation;
 import de.uni_freiburg.informatik.ultimate.blockencoding.model.MinimizedNode;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.blockendcoding.Activator;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.blockendcoding.preferences.PreferencePage;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootAnnot;
@@ -60,7 +63,7 @@ public class MinModelConverter {
 		RootNode newRoot = new RootNode(root.getRootAnnot());
 		boogie2smt = new Boogie2SMT(newRoot.getRootAnnot().getScript(), false,
 				false);
-		convertVisitor = new ConversionVisitor(boogie2smt, root);
+		convertVisitor = new ConversionVisitor(boogie2smt, root, getRatingBound());
 		for (RCFGEdge edge : root.getOutgoingEdges()) {
 			if (edge instanceof RootEdge) {
 				BlockEncodingAnnotation annot = BlockEncodingAnnotation
@@ -83,6 +86,28 @@ public class MinModelConverter {
 		// HoareAnnotations)
 		updateRootAnnot(newRoot.getRootAnnot());
 		return newRoot;
+	}
+
+	/**
+	 * Checks the preferences for a given rating bound.
+	 * 
+	 * @return gets the rating boundary
+	 */
+	private int getRatingBound() {
+		IEclipsePreferences prefs = ConfigurationScope.INSTANCE
+				.getNode(Activator.s_PLUGIN_ID);
+		String prefValue = prefs.get(PreferencePage.NAME_RATINGBOUND, "");
+		// if there is no boundary value given, we do Large Block Encoding
+		if (prefValue.equals("")) {
+			return -1;
+		}
+		try {
+			return Integer.parseInt(prefValue);
+		} catch (NumberFormatException e) {
+			s_Logger.error("Value in Preferences is not numeric,"
+					+ " Large Block Encoding is applied");
+			return -1;
+		}
 	}
 
 	/**

@@ -3,9 +3,11 @@
  */
 package de.uni_freiburg.informatik.ultimate.blockencoding.converter;
 
+import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 
 import org.apache.log4j.Logger;
 
@@ -16,6 +18,7 @@ import de.uni_freiburg.informatik.ultimate.blockencoding.model.MinimizedNode;
 import de.uni_freiburg.informatik.ultimate.blockencoding.model.interfaces.IBasicEdge;
 import de.uni_freiburg.informatik.ultimate.blockencoding.model.interfaces.ICompositeEdge;
 import de.uni_freiburg.informatik.ultimate.blockencoding.model.interfaces.IMinimizedEdge;
+import de.uni_freiburg.informatik.ultimate.blockencoding.model.interfaces.IRating;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.Activator;
 import de.uni_freiburg.informatik.ultimate.model.BoogieLocation;
@@ -63,11 +66,14 @@ public class ConversionVisitor implements IMinimizationVisitor {
 
 	private HashMap<IMinimizedEdge, Integer> checkForMultipleFormula;
 
+	private int ratingBound;
+
 	/**
 	 * @param boogie2smt
 	 * @param root
 	 */
-	public ConversionVisitor(Boogie2SMT boogie2smt, RootNode root) {
+	public ConversionVisitor(Boogie2SMT boogie2smt, RootNode root,
+			int ratingBound) {
 		this.refNodeMap = new HashMap<MinimizedNode, ProgramPoint>();
 		this.origToNewMap = new HashMap<ProgramPoint, ProgramPoint>();
 		this.locNodesForAnnot = new HashMap<String, HashMap<String, ProgramPoint>>();
@@ -76,6 +82,7 @@ public class ConversionVisitor implements IMinimizationVisitor {
 		this.checkForMultipleFormula = new HashMap<IMinimizedEdge, Integer>();
 		this.transFormBuilder = new TransFormulaBuilder(boogie2smt,
 				root.getRootAnnot());
+		this.ratingBound = ratingBound;
 	}
 
 	/**
@@ -131,11 +138,8 @@ public class ConversionVisitor implements IMinimizationVisitor {
 			return;
 		}
 
-		// TODO: First we take here the most minimized variant,
-		// later we would choose here the probably best variant (according to
-		// SMTSolver)
-		ArrayList<IMinimizedEdge> edgeList = new ArrayList<IMinimizedEdge>(
-				node.getMinimalOutgoingEdgeLevel());
+		// We now get the Edges according to the rating!
+		ArrayList<IMinimizedEdge> edgeList = getEdgesAccordingToRating(node);
 		for (IMinimizedEdge edge : edgeList) {
 			if (!visitedEdges.contains(edge)) {
 				visitedEdges.add(edge);
@@ -179,6 +183,36 @@ public class ConversionVisitor implements IMinimizationVisitor {
 	}
 
 	/**
+	 * Here we search the the level of edges, which fulfill the rating boundary.
+	 * 
+	 * @param node the minimized node
+	 * @return the edges which fulfill the rating boundary
+	 */
+	private ArrayList<IMinimizedEdge> getEdgesAccordingToRating(
+			MinimizedNode node) {
+		// if the rating bound is smaller zero, we use LBE
+		if (this.ratingBound < 0) {
+			return new ArrayList<IMinimizedEdge>(
+					node.getMinimalOutgoingEdgeLevel());
+		}
+		// we iterate over the different edge levels and check the property, we
+		// start with the most minimized level (which is LBE)
+		for (int i = node.getOutgoingEdgeLevels().size() - 1; i >= 0; i--) {
+			SimpleEntry<IRating, List<IMinimizedEdge>> entry = node
+					.getOutgoingEdgeLevels().get(i);
+			// we check if the rated value is okay, for a certain edge level, if
+			// not we can use this level
+			if (entry.getKey().getRatingAsInteger() <= this.ratingBound) {
+				return new ArrayList<IMinimizedEdge>(entry.getValue());
+			}
+		}
+		// We should never reach this state here, because there should exist at
+		// least one edge level which is below the boundary!
+		throw new IllegalStateException(
+				"No Outgoing-Edge-Level is below the boundary, should not happen!");
+	}
+
+	/**
 	 * We put into our reference map to a minimized node a new ProgramPoint
 	 * which is used later on during the conversion, and then we return it. the
 	 * access on the map, should always be handled by this method.
@@ -199,7 +233,8 @@ public class ConversionVisitor implements IMinimizationVisitor {
 				if (loc instanceof BoogieLocation) {
 					astNode = ((BoogieLocation) loc).getASTNode();
 					if (loc.getOrigin() != null) {
-						// we have to update the ast node with the original location
+						// we have to update the ast node with the original
+						// location
 						astNode.getPayload().setLocation(loc.getOrigin());
 					}
 				}
@@ -345,16 +380,12 @@ public class ConversionVisitor implements IMinimizationVisitor {
 			CodeBlock secondGotoEdge) {
 		StatementSequence replacement = null;
 		if (secondGotoEdge == null) {
-			replacement = new StatementSequence(
-					null,
-					null, new AssumeStatement(
-							gotoEdge.getPayload().getLocation(),
+			replacement = new StatementSequence(null, null,
+					new AssumeStatement(gotoEdge.getPayload().getLocation(),
 							new BooleanLiteral(gotoEdge.getPayload()
 									.getLocation(), true)));
 		} else {
-			replacement = new StatementSequence(
-					null,
-					null,
+			replacement = new StatementSequence(null, null,
 					new AssumeStatement(gotoEdge.getPayload().getLocation(),
 							new BooleanLiteral(gotoEdge.getPayload()
 									.getLocation(), true)));

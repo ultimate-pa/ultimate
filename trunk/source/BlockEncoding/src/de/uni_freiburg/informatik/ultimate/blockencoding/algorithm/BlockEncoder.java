@@ -9,6 +9,7 @@ import org.eclipse.core.runtime.preferences.IEclipsePreferences;
 
 import de.uni_freiburg.informatik.ultimate.blockencoding.model.BlockEncodingAnnotation;
 import de.uni_freiburg.informatik.ultimate.blockencoding.model.MinimizedNode;
+import de.uni_freiburg.informatik.ultimate.blockencoding.rating.RatingFactory;
 import de.uni_freiburg.informatik.ultimate.blockencoding.test.visitor.TestMinimizationVisitor;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.blockendcoding.Activator;
@@ -56,11 +57,15 @@ public class BlockEncoder {
 	 */
 	public RootNode startMinimization(RootNode root) {
 		s_Logger.info("Start BlockEncoding on RCFG");
+		// We need to know, which rating strategy should be chosen
+		IEclipsePreferences prefs = ConfigurationScope.INSTANCE
+				.getNode(Activator.s_PLUGIN_ID);
+		RatingFactory.getInstance().setRatingStrategy(
+				prefs.get(PreferencePage.NAME_STRATEGY, "0"));
 		// Initialize the Visitors, which apply the minimization rules
 		mbVisitor = new MinimizeBranchVisitor(s_Logger);
 		mlVisitor = new MinimizeLoopVisitor(s_Logger);
 		mcrVisitor = new MinimizeCallReturnVisitor(s_Logger);
-		// TODO this only for validating purposes
 		tmVisitor = new TestMinimizationVisitor(s_Logger);
 
 		for (RCFGEdge edge : root.getOutgoingEdges()) {
@@ -82,11 +87,7 @@ public class BlockEncoder {
 		}
 		// Since we merged some Call- and Return-Edges we need to execute
 		// mbVisitor again
-		// FIXME: it seems to work, but Call, Summary and Return-Edges can not
-		// be part of some Sequential or parallel composition
 		// Now it is configurable if this minimization should be done!
-		IEclipsePreferences prefs = ConfigurationScope.INSTANCE
-				.getNode(Activator.s_PLUGIN_ID);
 		if (prefs.getBoolean(PreferencePage.NAME_CALLMINIMIZE, false)) {
 			for (RCFGEdge edge : root.getOutgoingEdges()) {
 				if (edge instanceof RootEdge) {
@@ -134,7 +135,7 @@ public class BlockEncoder {
 		// subclass of MinimizeBranchVisitor)
 		// ---> internally it executes also the rules form mbVisitor
 		mlVisitor.visitNode(node);
-		// Validate the minimization (TODO maybe only for testing)
+		// Validate the minimization
 		tmVisitor.visitNode(node);
 		BlockEncodingAnnotation.addAnnotation(rootEdge,
 				new BlockEncodingAnnotation(node));

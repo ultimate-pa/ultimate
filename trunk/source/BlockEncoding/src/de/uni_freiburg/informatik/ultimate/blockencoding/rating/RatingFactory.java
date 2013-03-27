@@ -24,7 +24,11 @@ public class RatingFactory {
 		/**
 		 * The default strategy, is to count the statements.
 		 */
-		DEFAULT
+		DEFAULT,
+		/**
+		 * TODO
+		 */
+		PARALLEL_RATING
 	}
 
 	/**
@@ -54,6 +58,20 @@ public class RatingFactory {
 			instance = new RatingFactory();
 		}
 		return instance;
+	}
+
+	/**
+	 * Setting up the strategy for rating of the edges.
+	 * 
+	 * @param value the preference value
+	 */
+	public void setRatingStrategy(String value) {
+		try {
+			strategy = RatingStrategy.values()[Integer.parseInt(value)];
+		} catch (NumberFormatException e) {
+			throw new IllegalArgumentException(
+					"There is something wrong, with the enum setup");
+		}
 	}
 
 	/**

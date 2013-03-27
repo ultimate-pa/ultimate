@@ -79,7 +79,6 @@ public class ExecuteUnitTestObserver implements IUnmanagedObserver {
 	 */
 	@Override
 	public boolean process(IElement root) {
-		// TODO: Execute Unit Tests!
 		this.root = root;
 		RCFGStore.setRCFG((RCFGNode) root);
 		Result res = JUnitCore
@@ -94,7 +93,6 @@ public class ExecuteUnitTestObserver implements IUnmanagedObserver {
 			s_Logger.error("A JUnit Test Case have failed!");
 		}
 		for (Failure failure : res.getFailures()) {
-			// TODO: More output, how get the logging right here!
 			s_Logger.error(failure);
 			s_Logger.error(failure.getDescription());
 			s_Logger.error(failure.getException());
