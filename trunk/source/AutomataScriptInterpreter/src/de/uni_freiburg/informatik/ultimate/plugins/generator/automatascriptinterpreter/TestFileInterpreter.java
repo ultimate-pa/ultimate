@@ -761,7 +761,7 @@ public class TestFileInterpreter {
 	 * @param loc the location of the string
 	 */
 	private static void reportToUltimate(Severity sev, String toPrint, ILocation loc) {
-			NoResult<Integer> res = new NoResult<>(loc.getStartLine(), 
+			NoResult<Integer> res = new NoResult<Integer>(loc.getStartLine(), 
 					          Activator.s_PLUGIN_ID, null,
 					          loc);
 			res.setLongDescription(toPrint);
