@@ -12,14 +12,15 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.visualization.AutomatonTransition.Transition;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
+import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.INode;
 
 public class NwaToUltimateModel<LETTER,STATE> {
 	private static Logger s_Logger = 
 		UltimateServices.getInstance().getLogger(Activator.PLUGIN_ID);
 	
-	public INode getUltimateModelOfNwa(INestedWordAutomaton<LETTER,STATE> nwa) {
-		INode graphroot = new AutomatonState("Sucessors of this node are the" +
+	public IElement getUltimateModelOfNwa(INestedWordAutomaton<LETTER,STATE> nwa) {
+		AutomatonState graphroot = new AutomatonState("Sucessors of this node are the" +
 					" initial states",false);	
 		Collection<STATE> initialStates = nwa.getInitialStates();
 		Map<STATE,AutomatonState> visited = 

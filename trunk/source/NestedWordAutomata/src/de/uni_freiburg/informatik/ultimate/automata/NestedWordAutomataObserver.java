@@ -25,7 +25,7 @@ public class NestedWordAutomataObserver implements IUnmanagedObserver {
 	private static Logger s_Logger = 
 			UltimateServices.getInstance().getLogger(Activator.PLUGIN_ID);
 	
-	private static INode graphroot;
+	private static IElement graphroot;
 
 
 	/**

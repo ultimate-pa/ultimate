@@ -9,14 +9,17 @@ import de.uni_freiburg.informatik.ultimate.model.DefaultAnnotations;
 import de.uni_freiburg.informatik.ultimate.model.IAnnotations;
 import de.uni_freiburg.informatik.ultimate.model.IEdge;
 import de.uni_freiburg.informatik.ultimate.model.INode;
+import de.uni_freiburg.informatik.ultimate.model.IPayload;
 import de.uni_freiburg.informatik.ultimate.model.Payload;
+import de.uni_freiburg.informatik.ultimate.model.structure.BaseExplicitEdgesMultigraph;
+import de.uni_freiburg.informatik.ultimate.model.structure.ModifiableExplicitEdgesMultigraph;
 
 /**
  * Ultimate model of an automaton state.
  * @author heizmann@informatik.uni-freiburg.de 
  */
 
-public class AutomatonState extends AbstractEdgeNode {
+public class AutomatonState extends ModifiableExplicitEdgesMultigraph<AutomatonState, AutomatonTransition> {
 	/**
 	 * 
 	 */
@@ -26,7 +29,7 @@ public class AutomatonState extends AbstractEdgeNode {
 	
 	public AutomatonState(Object content, boolean isAccepting) {
 		
-		Payload payload = new Payload();
+		IPayload payload = super.getPayload();
 		DefaultAnnotations acceptance = new DefaultAnnotations();
 		acceptance.put("isAccepting",isAccepting);
 		HashMap<String,IAnnotations> annotations = 
@@ -41,59 +44,10 @@ public class AutomatonState extends AbstractEdgeNode {
 			payload.setName(content.toString());
 		}
 		payload.setAnnotations(annotations);
-		super.setPayload(payload);
-	}
-	
-	public List<IEdge> getIncomingEdges() {
-		return incoming;
-	}
-	
-	public boolean addIncomingEdge(IEdge element) {
-		return incoming.add(element);
-	}
-	
-	public List<IEdge> getOutgoingEdges() {
-		return outgoing;
-	}
-	
-	public boolean addOutgoingEdge(IEdge element) {
-		return outgoing.add(element);
 	}
 	
 	public String toString() {
 		return super.getPayload().getName();
 	}
-
-	@Override
-	public boolean addOutgoingEdge(INode target) {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
-	public void removeAllIncoming() {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
-	public void removeAllOutgoing() {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
-	public boolean removeIncomingEdge(IEdge element) {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
-	public boolean removeOutgoingEdge(IEdge element) {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
-	public boolean addIncomingEdge(INode src) {
-		throw new UnsupportedOperationException();
-	}
-	
-
 
 }
