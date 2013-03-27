@@ -103,7 +103,12 @@ public class NaiveDestructiveEqualityResolution {
 		Term[] params = term.getParameters();
 		if (sym.getName().equals("=")) {
 			int tvOnOneSideOfEquality = tvOnOneSideOfEquality(tv, params);
-			return params[tvOnOneSideOfEquality];
+			if (tvOnOneSideOfEquality == -1) {
+				return null;
+			} else {
+				assert (tvOnOneSideOfEquality == 0 || tvOnOneSideOfEquality == 1);
+				return params[tvOnOneSideOfEquality];				
+			}
 		} else if (sym.getName().equals("and")) {
 			for (Term param : params) {
 				Term equalTerm = equalTerms(tv, param);
