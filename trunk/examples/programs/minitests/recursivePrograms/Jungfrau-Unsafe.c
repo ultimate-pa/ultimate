@@ -3,9 +3,9 @@
 // Date: 6.10.2012
 
 int g;
-int nondet;
 
 int callee(int b) {
+    int nondet;
     g = b;
     if (nondet) {
         g++;

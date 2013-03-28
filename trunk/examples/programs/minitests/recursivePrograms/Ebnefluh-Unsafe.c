@@ -3,13 +3,13 @@
 // Date: 6.10.2012
 
 int g;
-int nondet;
 
 int stechelberg() {
   return;
 }
 
 int lauterbrunnen() {
+    int nondet;
     if (nondet) {
         stechelberg();
     } else {
