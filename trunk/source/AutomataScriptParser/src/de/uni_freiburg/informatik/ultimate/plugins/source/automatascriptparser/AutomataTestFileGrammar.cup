@@ -53,6 +53,10 @@ action code {:
 parser code {:
     private String m_fileName;    
     private String m_filePath;
+    private String m_errorMessageLong;
+    private String m_errorMessageShort;
+    private ILocation m_errorLocation;
+    
     public void setFileName(String filename) {
        this.m_fileName = filename;
     }
@@ -68,46 +72,70 @@ parser code {:
     public String getFilePath() {
     	return m_filePath;
     }
+    
+    public String getLongErrorMessage() {
+    	return m_errorMessageLong;
+    }
+    
+    public String getShortErrorMessage() {
+    	return m_errorMessageShort;
+    }
+    
+    public ILocation getErrorLocation() {
+    	return m_errorLocation;
+    }
    
 
+    @Override
     public void syntax_error(Symbol cur_token)
-    { 
+    {
+    	m_errorMessageLong = "Parsing aborted, because of syntax error.";
+    	m_errorMessageShort = "Syntax error";
         report_error("Syntax error", cur_token);
     }
-    public void report_error(String message, Object info) {
+    @Override
+    public void report_error(String message, Object sym) {
+    	Symbol info = (Symbol) sym;
         StringBuffer m = new StringBuffer(getFileName() + ": ");
         if (message != null) { 
         	m.append(message);
         } else {
         	m.append("Error");
         }
-   
-        if (info instanceof java_cup.runtime.Symbol) {
-            java_cup.runtime.Symbol s = ((java_cup.runtime.Symbol) info);
-   
-            /* Check if the line number in the input is greater or
+        if (info != null) {
+        	/* Check if the line number in the input is greater or
                equal to zero. */
-            if (s.left >= 0) {                
-                /* Add to the end of the StringBuffer error message
+        	if (info.left >= 0) {                
+        		/* Add to the end of the StringBuffer error message
                    the line number of the error in the input. */
-                m.append(" in line "+(s.left+1));   
-                /* Check if the column number in the input is greater
+        		m.append(" in line "+(info.left+1));   
+        		/* Check if the column number in the input is greater
                    or equal to zero. */
-                if (s.right >= 0)                    
-                    /* Add to the end of the StringBuffer error message
+        		if (info.right >= 0)                    
+        			/* Add to the end of the StringBuffer error message
                        the column number of the error in the input. */
-                    m.append(", column "+(s.right+1));
-            }
+        			m.append(", column "+(info.right+1));
+        		m.append(" Value: " + info.value);
+        		m.append(" Sym: " + info.sym);
+        		java_cup.runtime.Scanner s = getScanner();
+        		if (s instanceof Lexer) {
+        			m.append("\n Last Token: " + ((Lexer) s).getLastToken(info.sym));
+        		}
+        		
+        	}
         }
+
    
         AutomataScriptParser.s_Logger.error(m);
     }
    
+    @Override
     public void report_fatal_error(String message, Object info) {
         report_error(message, info);
         report_error("Parsing aborted.", null);
     }
     
+    @Override
     public void unrecovered_syntax_error(Symbol cur_token) {
     	 report_fatal_error("Couldn't repair and continue parse", cur_token);
     }
@@ -259,8 +287,7 @@ automata_test_file ::= test_statement_block:stmtList
                        {: AtsASTNode n = new AtsASTNode();
 						  n.addOutgoingNode(stmtList);
 						  n.addOutgoingNode(autDefs);
-                    	   RESULT = n; :}
-                     | error
+                  	      RESULT = n; :}
 			;
 // 2. Lexical Structure
 literal ::=	INTEGER_LITERAL:i 

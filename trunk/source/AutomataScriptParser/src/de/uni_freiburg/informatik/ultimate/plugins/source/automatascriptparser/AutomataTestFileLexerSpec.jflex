@@ -31,6 +31,10 @@ import java_cup.runtime.*;
     private Symbol symbol(int type, Object value) {
         return new Symbol(type, yyline, yycolumn, value);
     }
+
+    public String getLastToken(int sym) {
+      return getTokenName(sym);
+    }
 %}
 
 /* Some useful character classes */

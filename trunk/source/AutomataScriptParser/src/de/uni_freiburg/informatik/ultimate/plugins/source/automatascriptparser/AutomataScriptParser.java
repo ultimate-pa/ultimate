@@ -12,9 +12,12 @@ import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.ISource;
 import de.uni_freiburg.informatik.ultimate.model.GraphType;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
+import de.uni_freiburg.informatik.ultimate.model.ILocation;
 import de.uni_freiburg.informatik.ultimate.model.TokenMap;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.AutomataDefinitions;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.Automaton;
+import de.uni_freiburg.informatik.ultimate.result.NoResult;
+import de.uni_freiburg.informatik.ultimate.result.GenericResult.Severity;
 
 
 public class AutomataScriptParser implements ISource {
@@ -36,10 +39,15 @@ public class AutomataScriptParser implements ISource {
 			result = parser.parse().value;
 		} catch (Exception e) {
 			s_Logger.fatal(e);
+			reportToUltimate(Severity.ERROR, parser.getLongErrorMessage(),
+					         parser.getShortErrorMessage(), 
+					         parser.getErrorLocation());
 			throw new RuntimeException(e);
 		}
 
-		s_Logger.info("'" + file.getName() + "' successfully parsed");
+		String successMessage = "'" + file.getName() + "' successfully parsed"; 
+		s_Logger.info(successMessage);
+		// reportToUltimate(Severity.INFO, successMessage, "", null);
 		if (result instanceof AtsASTNode) {
 			List<AtsASTNode> children = ((AtsASTNode)result).getOutgoingNodes();
 			AutomataDefinitions autDefs = null;
@@ -176,6 +184,25 @@ public class AutomataScriptParser implements ISource {
 		}
 		return fileName;
 	}
+	
+	
+
+
+	/**
+	 * Reports the given string with the given severity to Ultimate as a NoResult
+	 * @param sev the severity
+	 * @param longMessage the string to be reported
+	 * @param loc the location of the string
+	 */
+	private static void reportToUltimate(Severity sev, String longMessage, String shortMessage, ILocation loc) {
+			NoResult<Integer> res = new NoResult<>((loc != null? loc.getStartLine() : -1), 
+					          Activator.s_PLUGIN_ID, null,
+					          loc);
+			res.setLongDescription(longMessage);
+			res.setShortDescription(shortMessage);
+			UltimateServices.getInstance().reportResult(Activator.s_PLUGIN_ID, res);
+	}
+	
 	/* (non-Javadoc)
 	 * @see de.uni_freiburg.informatik.ultimate.ep.interfaces.ISource#getFileTypes()
 	 */
@@ -233,7 +260,6 @@ public class AutomataScriptParser implements ISource {
 		m_FileNames.add(file.getName());
 		s_Logger.info("Parsing '" + file.getAbsolutePath() + "'");
 		return parseFile(file);
-		// throw new UnsupportedOperationException("Able to run this parser");
 	}
 
 	/* (non-Javadoc)

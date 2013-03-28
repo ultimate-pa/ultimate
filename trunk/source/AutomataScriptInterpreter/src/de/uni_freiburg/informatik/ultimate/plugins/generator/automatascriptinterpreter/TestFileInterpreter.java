@@ -735,9 +735,10 @@ public class TestFileInterpreter {
 		}
 		// Report summary of the testcases/
 		if (m_testCases.isEmpty()) {
-			s_Logger.error("No testcases defined!");
+			printMessage(Severity.WARNING, "No testcases defined!", null);
 		} else {
-			s_Logger.info(testCasesSummary);
+			reportToLogger(Severity.INFO, testCasesSummary);
+			
 		}	
 	}
 	
@@ -761,10 +762,11 @@ public class TestFileInterpreter {
 	 * @param loc the location of the string
 	 */
 	private static void reportToUltimate(Severity sev, String toPrint, ILocation loc) {
-			NoResult<Integer> res = new NoResult<Integer>(loc.getStartLine(), 
+			NoResult<Integer> res = new NoResult<Integer>((loc != null ? loc.getStartLine() : 0), 
 					          Activator.s_PLUGIN_ID, null,
 					          loc);
 			res.setLongDescription(toPrint);
+			res.setShortDescription("print:");
 			UltimateServices.getInstance().reportResult(Activator.s_PLUGIN_ID, res);
 	}
 	
@@ -865,7 +867,7 @@ public class TestFileInterpreter {
 							s_Logger.error("Couldn't load/find class " + path);
 							break;
 						}
-						if ((clazz != null) && (classImplementsIOperation(clazz))) {
+						if ((clazz != null) && (classImplementsIOperationInterface(clazz))) {
 							String operationName = fileWithoutSuffix.toLowerCase();
 							if (result.containsKey(operationName)) {
 								Set<Class<?>> s = result.get(operationName);
@@ -895,7 +897,7 @@ public class TestFileInterpreter {
 		return result;
 	}
 	
-	private static boolean classImplementsIOperation(Class<?> c) {
+	private static boolean classImplementsIOperationInterface(Class<?> c) {
 		Class<?>[] implementedInterfaces = c.getInterfaces();
 		for (Class<?> interFace : implementedInterfaces) {
 			if (interFace.equals(IOperation.class)) {
