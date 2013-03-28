@@ -92,6 +92,7 @@ parser code {:
     	m_errorMessageLong = "Parsing aborted, because of syntax error.";
     	m_errorMessageShort = "Syntax error";
         report_error("Syntax error", cur_token);
+        report_error("Parsing aborted.", null);
     }
     @Override
     public void report_error(String message, Object sym) {
@@ -102,7 +103,13 @@ parser code {:
         } else {
         	m.append("Error");
         }
+
         if (info != null) {
+            java_cup.runtime.Scanner s = getScanner();
+    		if (s instanceof Lexer) {
+    			m.append(" on token \"" + ((Lexer) s).getLastToken() + "\"");
+    		}
+    		
         	/* Check if the line number in the input is greater or
                equal to zero. */
         	if (info.left >= 0) {                
@@ -114,30 +121,18 @@ parser code {:
         		if (info.right >= 0)                    
         			/* Add to the end of the StringBuffer error message
                        the column number of the error in the input. */
-        			m.append(", column "+(info.right+1));
-        		m.append(" Value: " + info.value);
-        		m.append(" Sym: " + info.sym);
-        		java_cup.runtime.Scanner s = getScanner();
-        		if (s instanceof Lexer) {
-        			m.append("\n Last Token: " + ((Lexer) s).getLastToken(info.sym));
-        		}
-        		
+        			m.append(", column "+(info.right+1));		
         	}
         }
-
-   
         AutomataScriptParser.s_Logger.error(m);
     }
    
     @Override
     public void report_fatal_error(String message, Object info) {
-        report_error(message, info);
-        report_error("Parsing aborted.", null);
     }
     
     @Override
     public void unrecovered_syntax_error(Symbol cur_token) {
-    	 report_fatal_error("Couldn't repair and continue parse", cur_token);
     }
     
     public boolean containsOtherAutomataFilesToParse() {

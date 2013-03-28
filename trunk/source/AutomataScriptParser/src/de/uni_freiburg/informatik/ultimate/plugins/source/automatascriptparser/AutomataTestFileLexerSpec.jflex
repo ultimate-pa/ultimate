@@ -19,6 +19,9 @@ import java_cup.runtime.*;
 
 %{   
     StringBuffer string = new StringBuffer();
+    private String m_LastToken = new String();
+    private String m_CurToken = new String();
+
     /* To create a new java_cup.runtime.Symbol with information about
        the current token, the token will have no value in this
        case. */
@@ -32,8 +35,8 @@ import java_cup.runtime.*;
         return new Symbol(type, yyline, yycolumn, value);
     }
 
-    public String getLastToken(int sym) {
-      return getTokenName(sym);
+    public String getLastToken() {
+      return m_LastToken;
     }
 %}
 
@@ -68,86 +71,86 @@ StringCharacter = [^\r\n\"\\]
 
 <YYINITIAL> {
   /* keywords */
-  "boolean"                      { return symbol(sym.BOOLEAN); }
-  "break"                        { return symbol(sym.BREAK); }
-  "continue"                     { return symbol(sym.CONTINUE); }
-  "else"                         { return symbol(sym.ELSE); }
-  "for"                          { return symbol(sym.FOR); }
-  "int"                          { return symbol(sym.INT); }
-  "if"                           { return symbol(sym.IF); }
-  "return"                       { return symbol(sym.RETURN); }
-  "while"                        { return symbol(sym.WHILE); }
+  "boolean"                      { m_LastToken = m_CurToken; m_CurToken = "boolean"; return symbol(sym.BOOLEAN); }
+  "break"                        { m_LastToken = m_CurToken; m_CurToken = "break"; return symbol(sym.BREAK); }
+  "continue"                     { m_LastToken = m_CurToken; m_CurToken = "continue"; return symbol(sym.CONTINUE); }
+  "else"                         { m_LastToken = m_CurToken; m_CurToken = "else"; return symbol(sym.ELSE); }
+  "for"                          { m_LastToken = m_CurToken; m_CurToken = "for"; return symbol(sym.FOR); }
+  "int"                          { m_LastToken = m_CurToken; m_CurToken = "int"; return symbol(sym.INT); }
+  "if"                           { m_LastToken = m_CurToken; m_CurToken = "if"; return symbol(sym.IF); }
+  "return"                       { m_LastToken = m_CurToken; m_CurToken = "return"; return symbol(sym.RETURN); }
+  "while"                        { m_LastToken = m_CurToken; m_CurToken = "while"; return symbol(sym.WHILE); }
   
   /* keywords for Words */
-  "nw"                           { return symbol(sym.NESTED_WORD); }
-  "nlw"                          { return symbol(sym.NESTED_LASSO_WORD); }
+  "nw"                           { m_LastToken = m_CurToken; m_CurToken = "nw"; return symbol(sym.NESTED_WORD); }
+  "nlw"                          { m_LastToken = m_CurToken; m_CurToken = "nlw"; return symbol(sym.NESTED_LASSO_WORD); }
 
   /* keywords for AutomataDefinitionFile */
-  "nwa"                         { return symbol(sym.NESTEDWORD_AUTOMATA); }
-  "net"                         { return symbol(sym.PETRINET_AUTOMATA); }
-  "alphabet"                    { return symbol(sym.ALPHABET); }
-  "callAlphabet"                { return symbol(sym.CALL_ALPHABET); }
-  "internalAlphabet"            { return symbol(sym.INTERNAL_ALPHABET); }
-  "returnAlphabet"              { return symbol(sym.RETURN_ALPHABET); }
-  "states"                      { return symbol(sym.STATES); }
-  "initialStates"               { return symbol(sym.INITIAL_STATES); }
-  "finalStates"                 { return symbol(sym.FINAL_STATES); }
-  "callTransitions"             { return symbol(sym.CALL_TRANSITIONS); }
-  "internalTransitions"         { return symbol(sym.INTERNAL_TRANSITIONS); }
-  "returnTransitions"           { return symbol(sym.RETURN_TRANSITIONS); }
-  "places"                      { return symbol(sym.PLACES); }
+  "nwa"                         { m_LastToken = m_CurToken; m_CurToken = "nwa"; return symbol(sym.NESTEDWORD_AUTOMATA); }
+  "net"                         { m_LastToken = m_CurToken; m_CurToken = "net"; return symbol(sym.PETRINET_AUTOMATA); }
+  "alphabet"                    { m_LastToken = m_CurToken; m_CurToken = "alphabet"; return symbol(sym.ALPHABET); }
+  "callAlphabet"                { m_LastToken = m_CurToken; m_CurToken = "callAlphabet"; return symbol(sym.CALL_ALPHABET); }
+  "internalAlphabet"            { m_LastToken = m_CurToken; m_CurToken = "internalAlphabet"; return symbol(sym.INTERNAL_ALPHABET); }
+  "returnAlphabet"              { m_LastToken = m_CurToken; m_CurToken = "returnAlphabet"; return symbol(sym.RETURN_ALPHABET); }
+  "states"                      { m_LastToken = m_CurToken; m_CurToken = "states"; return symbol(sym.STATES); }
+  "initialStates"               { m_LastToken = m_CurToken; m_CurToken = "initialStates"; return symbol(sym.INITIAL_STATES); }
+  "finalStates"                 { m_LastToken = m_CurToken; m_CurToken = "finalStates"; return symbol(sym.FINAL_STATES); }
+  "callTransitions"             { m_LastToken = m_CurToken; m_CurToken = "callTransitions"; return symbol(sym.CALL_TRANSITIONS); }
+  "internalTransitions"         { m_LastToken = m_CurToken; m_CurToken = "internalTransitions"; return symbol(sym.INTERNAL_TRANSITIONS); }
+  "returnTransitions"           { m_LastToken = m_CurToken; m_CurToken = "returnTransitions"; return symbol(sym.RETURN_TRANSITIONS); }
+  "places"                      { m_LastToken = m_CurToken; m_CurToken = "places"; return symbol(sym.PLACES); }
 
   // Net transitions  
-  "transitions"                     { return symbol(sym.NET_TRANSITIONS); }
-  "initialMarking"                  { return symbol(sym.INITIAL_MARKINGS); }
-  "acceptingMarkings"               { return symbol(sym.ACCEPTING_MARKINGS); }
-  "acceptingPlaces"                 { return symbol(sym.ACCEPTING_PLACES); }
+  "transitions"                     { m_LastToken = m_CurToken; m_CurToken = "transitions"; return symbol(sym.NET_TRANSITIONS); }
+  "initialMarking"                  { m_LastToken = m_CurToken; m_CurToken = "initialMarking"; return symbol(sym.INITIAL_MARKINGS); }
+  "acceptingMarkings"               { m_LastToken = m_CurToken; m_CurToken = "acceptingMarkings"; return symbol(sym.ACCEPTING_MARKINGS); }
+  "acceptingPlaces"                 { m_LastToken = m_CurToken; m_CurToken = "acceptingPlaces"; return symbol(sym.ACCEPTING_PLACES); }
   /* boolean literals */
-  "true"                         { return symbol(sym.BOOLEAN_LITERAL, new Boolean(true)); }
-  "false"                        { return symbol(sym.BOOLEAN_LITERAL, new Boolean(false)); }
+  "true"                         { m_LastToken = m_CurToken; m_CurToken = "true"; return symbol(sym.BOOLEAN_LITERAL, new Boolean(true)); }
+  "false"                        { m_LastToken = m_CurToken; m_CurToken = "false"; return symbol(sym.BOOLEAN_LITERAL, new Boolean(false)); }
   
 
   /* separators */
-  "("                            { return symbol(sym.LPAREN); }
-  ")"                            { return symbol(sym.RPAREN); }
-  "{"                            { return symbol(sym.LBRACE); }
-  "}"                            { return symbol(sym.RBRACE); }
-  "["                            { return symbol(sym.LBRACK); }
-  "]"                            { return symbol(sym.RBRACK); }
-  ";"                            { return symbol(sym.SEMICOLON); }
-  ","                            { return symbol(sym.COMMA); }
-  "."                            { return symbol(sym.DOT); }
+  "("                            { m_LastToken = m_CurToken; m_CurToken = "("; return symbol(sym.LPAREN); }
+  ")"                            { m_LastToken = m_CurToken; m_CurToken = ")"; return symbol(sym.RPAREN); }
+  "{"                            { m_LastToken = m_CurToken; m_CurToken = "{"; return symbol(sym.LBRACE); }
+  "}"                            { m_LastToken = m_CurToken; m_CurToken = "}"; return symbol(sym.RBRACE); }
+  "["                            { m_LastToken = m_CurToken; m_CurToken = "["; return symbol(sym.LBRACK); }
+  "]"                            { m_LastToken = m_CurToken; m_CurToken = "]"; return symbol(sym.RBRACK); }
+  ";"                            { m_LastToken = m_CurToken; m_CurToken = ";"; return symbol(sym.SEMICOLON); }
+  ","                            { m_LastToken = m_CurToken; m_CurToken = ","; return symbol(sym.COMMA); }
+  "."                            { m_LastToken = m_CurToken; m_CurToken = "."; return symbol(sym.DOT); }
 
 
   /* operators */
-  "="                            { return symbol(sym.EQ); }
-  ">"                            { return symbol(sym.GT); }
-  "<"                            { return symbol(sym.LT); }
-  "!"                            { return symbol(sym.NOT); }
-  "?"                            { return symbol(sym.QUESTION); }
-  ":"                            { return symbol(sym.COLON); }
-  "=="                           { return symbol(sym.EQEQ); }
-  "<="                           { return symbol(sym.LTEQ); }
-  ">="                           { return symbol(sym.GTEQ); }
-  "!="                           { return symbol(sym.NOTEQ); }
-  "&&"                           { return symbol(sym.ANDAND); }
-  "||"                           { return symbol(sym.OROR); }
-  "++"                           { return symbol(sym.PLUSPLUS); }
-  "--"                           { return symbol(sym.MINUSMINUS); }
-  "+"                            { return symbol(sym.PLUS); }
-  "-"                            { return symbol(sym.MINUS); }
-  "*"                            { return symbol(sym.MULT); }
-  "/"                            { return symbol(sym.DIV); }
-  "+="                           { return symbol(sym.PLUSEQ); }
-  "-="                           { return symbol(sym.MINUSEQ); }
-  "*="                           { return symbol(sym.MULTEQ); }
-  "/="                           { return symbol(sym.DIVEQ); }
+  "="                            { m_LastToken = m_CurToken; m_CurToken = "="; return symbol(sym.EQ); }
+  ">"                            { m_LastToken = m_CurToken; m_CurToken = ">"; return symbol(sym.GT); }
+  "<"                            { m_LastToken = m_CurToken; m_CurToken = "<"; return symbol(sym.LT); }
+  "!"                            { m_LastToken = m_CurToken; m_CurToken = "!"; return symbol(sym.NOT); }
+  "?"                            { m_LastToken = m_CurToken; m_CurToken = "?"; return symbol(sym.QUESTION); }
+  ":"                            { m_LastToken = m_CurToken; m_CurToken = ":"; return symbol(sym.COLON); }
+  "=="                           { m_LastToken = m_CurToken; m_CurToken = "=="; return symbol(sym.EQEQ); }
+  "<="                           { m_LastToken = m_CurToken; m_CurToken = "<="; return symbol(sym.LTEQ); }
+  ">="                           { m_LastToken = m_CurToken; m_CurToken = ">="; return symbol(sym.GTEQ); }
+  "!="                           { m_LastToken = m_CurToken; m_CurToken = "!="; return symbol(sym.NOTEQ); }
+  "&&"                           { m_LastToken = m_CurToken; m_CurToken = "&&"; return symbol(sym.ANDAND); }
+  "||"                           { m_LastToken = m_CurToken; m_CurToken = "||"; return symbol(sym.OROR); }
+  "++"                           { m_LastToken = m_CurToken; m_CurToken = "++"; return symbol(sym.PLUSPLUS); }
+  "--"                           { m_LastToken = m_CurToken; m_CurToken = "--"; return symbol(sym.MINUSMINUS); }
+  "+"                            { m_LastToken = m_CurToken; m_CurToken = "+"; return symbol(sym.PLUS); }
+  "-"                            { m_LastToken = m_CurToken; m_CurToken = "-"; return symbol(sym.MINUS); }
+  "*"                            { m_LastToken = m_CurToken; m_CurToken = "*"; return symbol(sym.MULT); }
+  "/"                            { m_LastToken = m_CurToken; m_CurToken = "/"; return symbol(sym.DIV); }
+  "+="                           { m_LastToken = m_CurToken; m_CurToken = "+="; return symbol(sym.PLUSEQ); }
+  "-="                           { m_LastToken = m_CurToken; m_CurToken = "-="; return symbol(sym.MINUSEQ); }
+  "*="                           { m_LastToken = m_CurToken; m_CurToken = "*="; return symbol(sym.MULTEQ); }
+  "/="                           { m_LastToken = m_CurToken; m_CurToken = "/="; return symbol(sym.DIVEQ); }
 
   /* string literal */
   \"                             { yybegin(STRING); string.setLength(0); }
 
   /* numeric literals */
-  {IntegerLiteral}               { return symbol(sym.INTEGER_LITERAL, new Integer(yytext())); }
+  {IntegerLiteral}               { m_LastToken = m_CurToken; m_CurToken = yytext(); return symbol(sym.INTEGER_LITERAL, new Integer(yytext())); }
 
 
   /* comments */
@@ -157,11 +160,11 @@ StringCharacter = [^\r\n\"\\]
   {WhiteSpace}                   { /* ignore */ }
 
   /* identifiers */ 
-  {Identifier}                   { return symbol(sym.IDENTIFIER, yytext()); }  
+  {Identifier}                   { m_LastToken = m_CurToken; m_CurToken = yytext(); return symbol(sym.IDENTIFIER, yytext()); }  
 
 }
 <STRING> {
-  \"                             { yybegin(YYINITIAL); return symbol(sym.IDENTIFIER, string.toString()); }
+  \"                             { yybegin(YYINITIAL); m_LastToken = m_CurToken; m_CurToken = string.toString(); return symbol(sym.IDENTIFIER, string.toString()); }
   
   {StringCharacter}+             { string.append( yytext() ); }
   
@@ -184,4 +187,4 @@ StringCharacter = [^\r\n\"\\]
 /* error fallback */
 .|\n                             { throw new RuntimeException("ErrorFallback: Illegal character \""+yytext()+ "\" at line "+(yyline + 1) + ", column "+( yycolumn + 1)); }
 /* EndOfFile */
-<<EOF>>                          { return symbol(sym.EOF); }
+<<EOF>>                          { m_LastToken = m_CurToken; m_CurToken ="EOF"; return symbol(sym.EOF); }

@@ -38,7 +38,7 @@ public class AutomataScriptParser implements ISource {
 		try {
 			result = parser.parse().value;
 		} catch (Exception e) {
-			s_Logger.fatal(e);
+			s_Logger.error(e);
 			reportToUltimate(Severity.ERROR, parser.getLongErrorMessage(),
 					         parser.getShortErrorMessage(), 
 					         parser.getErrorLocation());
@@ -47,7 +47,6 @@ public class AutomataScriptParser implements ISource {
 
 		String successMessage = "'" + file.getName() + "' successfully parsed"; 
 		s_Logger.info(successMessage);
-		// reportToUltimate(Severity.INFO, successMessage, "", null);
 		if (result instanceof AtsASTNode) {
 			List<AtsASTNode> children = ((AtsASTNode)result).getOutgoingNodes();
 			AutomataDefinitions autDefs = null;
