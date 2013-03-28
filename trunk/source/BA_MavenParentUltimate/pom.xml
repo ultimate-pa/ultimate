@@ -171,6 +171,7 @@
 		<module>../Library-ModelCheckerUtils</module>
 		<module>../AutomataLibraryRandomizedTests</module>
 		<module>../AutomataScriptParser</module>
+		<module>../AutomataScriptInterpreter</module>
 		<module>../Library-hamcrest</module>
 		<module>../Library-junit</module>
 		<module>../BlockEncoding</module>
