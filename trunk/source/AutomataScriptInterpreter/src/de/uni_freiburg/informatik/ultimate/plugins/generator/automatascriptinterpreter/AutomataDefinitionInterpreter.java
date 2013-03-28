@@ -16,6 +16,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.A
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.PetriNetAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.PetriNetTransition;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.TransitionList.Pair;
+import de.uni_freiburg.informatik.ultimate.result.GenericResult.Severity;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StringFactory;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Place;
@@ -36,13 +37,26 @@ public class AutomataDefinitionInterpreter {
 		m_Automata = new HashMap<String, Object>();
 	}
 	
-	public <T> Object interpret(AutomataDefinitions automata) throws Exception {
+	public <T> Object interpret(AutomataDefinitions automata) {
 		List<? extends AtsASTNode> children = automata.getAutomataDefinitions();
 		for (AtsASTNode n : children) {
 			if (n instanceof NestedwordAutomaton) {
-				interpret((NestedwordAutomaton) n);
+				try {
+					interpret((NestedwordAutomaton) n);
+				} catch (Exception e) {
+					TestFileInterpreter.printMessage(Severity.ERROR, e.toString() 
+							+ System.getProperty("line.separator") + e.getStackTrace(),
+							"Exception thrown.", n.getLocation());
+				}
+
 			} else if (n instanceof PetriNetAutomaton) {
-				interpret((PetriNetAutomaton) n);
+				try {
+					interpret((PetriNetAutomaton) n);
+				} catch (Exception e) {
+					TestFileInterpreter.printMessage(Severity.ERROR, e.toString() 
+							+ System.getProperty("line.separator") + e.getStackTrace(), 
+							"Exception thrown.", n.getLocation());
+				}
 			}
 		}
 		return null;

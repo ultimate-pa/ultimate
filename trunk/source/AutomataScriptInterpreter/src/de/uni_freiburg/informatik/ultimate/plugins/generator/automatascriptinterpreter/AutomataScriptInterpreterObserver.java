@@ -1,19 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.automatascriptinterpreter;
-import java.io.File;
-import java.lang.reflect.Method;
-import java.net.URISyntaxException;
-import java.net.URL;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import org.eclipse.core.runtime.FileLocator;
-
 import de.uni_freiburg.informatik.ultimate.access.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.access.WalkerOptions;
-import de.uni_freiburg.informatik.ultimate.automata.IOperation;
+import de.uni_freiburg.informatik.ultimate.automata.Automaton2UltimateModel;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AtsASTNode;
 
@@ -23,16 +11,14 @@ import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.A
  */
 public class AutomataScriptInterpreterObserver implements IUnmanagedObserver {
 
+	IElement m_GraphrootOfUltimateModelOfLastPrintedAutomaton;
 	
 	@Override
 	public boolean process(IElement root) {
 		TestFileInterpreter ti = new TestFileInterpreter();
-		try {
-			ti.interpretTestFile((AtsASTNode)root);
-		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+		ti.interpretTestFile((AtsASTNode)root);
+		m_GraphrootOfUltimateModelOfLastPrintedAutomaton = 
+				Automaton2UltimateModel.ultimateModel(null);
 		return false;
 	}
 
@@ -58,6 +44,10 @@ public class AutomataScriptInterpreterObserver implements IUnmanagedObserver {
 	public boolean performedChanges() {
 		// TODO Auto-generated method stub
 		return false;
+	}
+	
+	IElement getUltimateModelOfLastPrintedAutomaton() {
+		return m_GraphrootOfUltimateModelOfLastPrintedAutomaton;
 	}
 
 	

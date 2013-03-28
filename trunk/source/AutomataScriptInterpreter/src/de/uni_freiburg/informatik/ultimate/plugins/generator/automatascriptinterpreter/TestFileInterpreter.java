@@ -266,7 +266,7 @@ public class TestFileInterpreter {
 
 	}
 	
-	public Object interpretTestFile(AtsASTNode node) throws Exception {
+	public Object interpretTestFile(AtsASTNode node) {
 		List<AtsASTNode> children = node.getOutgoingNodes();
 		if (children.size() != 2) {
 			s_Logger.warn("AtsASTNode should have 2 children!");
@@ -283,10 +283,15 @@ public class TestFileInterpreter {
 		try {
 			m_tChecker.checkType(children.get(0));
 		} catch (IllegalArgumentException ie) {
-			s_Logger.error("Typecheck error! Testfile won't be interpreted.");
+			s_Logger.warn("Typecheck error! Testfile won't be interpreted.");
 			return null;
 		}
-		Object result = interpret(children.get(0));
+		Object result;
+		if (children.get(0) instanceof StatementList) {
+			result = interpret((StatementList) children.get(0));
+		} else {
+			throw new AssertionError("Expecting Statement List");
+		}
 		reportResult();
 		return result;
 
@@ -634,12 +639,14 @@ public class TestFileInterpreter {
 		}
 	}
 	
-	private <T> Object interpret(StatementList stmtList) throws Exception {
+	private <T> Object interpret(StatementList stmtList) {
 		for (AtsASTNode stmt : stmtList.getOutgoingNodes()) {
 			try {
 				interpret(stmt);
 			} catch (Exception e) {
-				printMessage(Severity.ERROR, e.toString(), "Exception thrown.", stmt.getLocation());
+				TestFileInterpreter.printMessage(Severity.ERROR, e.toString() 
+						+ System.getProperty("line.separator") + e.getStackTrace(), 
+						"Exception thrown.", stmt.getLocation());
 			}
 		}
 		return null;
@@ -748,7 +755,7 @@ public class TestFileInterpreter {
 	 * @param longDescr the string to be reported
 	 * @param loc the location of the String
 	 */
-	private static void printMessage(Severity sev, String longDescr, String shortDescr, ILocation loc) {
+	static void printMessage(Severity sev, String longDescr, String shortDescr, ILocation loc) {
 		reportToUltimate(sev, longDescr, shortDescr, loc);
 		reportToLogger(sev, longDescr);
 	}
@@ -782,7 +789,7 @@ public class TestFileInterpreter {
 		}
 	}
 
-	private IOperation getAutomataOperation(String opName, ArrayList<Object> arguments) {
+	private IOperation getAutomataOperation(String opName, ArrayList<Object> arguments) throws Exception {
 		String operationName = opName.toLowerCase();
 		IOperation result = null;
 		if (m_existingOperations.containsKey(operationName)) {
@@ -797,12 +804,15 @@ public class TestFileInterpreter {
 							return result;
 						} catch (InstantiationException e) {
 							e.printStackTrace();
+							throw new AssertionError(e);
 						} catch (IllegalAccessException e) {
 							e.printStackTrace();
+							throw new AssertionError(e);
 						} catch (IllegalArgumentException e) {
 							e.printStackTrace();
+							throw new AssertionError(e);
 						} catch (InvocationTargetException e) {
-							e.printStackTrace();
+							throw (Exception) e.getCause();
 						}
 					}
 				}					
