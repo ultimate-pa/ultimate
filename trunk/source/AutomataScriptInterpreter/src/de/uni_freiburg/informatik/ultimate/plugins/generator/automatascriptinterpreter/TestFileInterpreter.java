@@ -654,7 +654,7 @@ public class TestFileInterpreter {
 				if (o instanceof IAutomaton) {
 					m_LastPrintedAutomaton = (IAutomaton<?, ?>) o;
 					String automatonAsString = (new AtsDefinitionPrinter(o)).getDefinitionAsString();
-					printMessage(Severity.INFO, automatonAsString, "print:", loc);
+					printMessage(Severity.INFO, automatonAsString, oe.getAsString(), loc);
 					if (m_printAutomataToFile) {
 						String comment = "/* " + oe.getAsString() + " */";
 						m_printWriter.println(comment);
@@ -663,7 +663,7 @@ public class TestFileInterpreter {
 					
 				} else {
 					s_Logger.info(o.toString());
-					printMessage(Severity.INFO, o.toString(), "print:", loc);
+					printMessage(Severity.INFO, o.toString(), oe.getAsString(), loc);
 					if (m_printAutomataToFile) {
 						String comment = "/* " + oe.getAsString() + " */";
 						m_printWriter.println(comment);
@@ -844,11 +844,11 @@ public class TestFileInterpreter {
 	 * @param loc the location of the string
 	 */
 	private static void reportToUltimate(Severity sev, String longDescr, String shortDescr, ILocation loc) {
-			NoResult<Integer> res = new NoResult<Integer>((loc != null ? loc.getStartLine() : 0), 
-					          Activator.s_PLUGIN_ID, null,
-					          loc);
-			res.setLongDescription(longDescr);
-			res.setShortDescription(shortDescr);
+			GenericResult<Integer> res = new GenericResult<Integer> ((loc != null ? loc.getStartLine() : 0),
+					                     Activator.s_PLUGIN_ID, null,
+					                     loc,
+					                     shortDescr, longDescr, 
+					                     sev);
 			UltimateServices.getInstance().reportResult(Activator.s_PLUGIN_ID, res);
 	}
 	

@@ -16,7 +16,7 @@ import de.uni_freiburg.informatik.ultimate.model.ILocation;
 import de.uni_freiburg.informatik.ultimate.model.TokenMap;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.AutomataDefinitions;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.Automaton;
-import de.uni_freiburg.informatik.ultimate.result.NoResult;
+import de.uni_freiburg.informatik.ultimate.result.GenericResult;
 import de.uni_freiburg.informatik.ultimate.result.GenericResult.Severity;
 
 
@@ -42,7 +42,7 @@ public class AutomataScriptParser implements ISource {
 			reportToUltimate(Severity.ERROR, parser.getLongErrorMessage(),
 					         parser.getShortErrorMessage(), 
 					         parser.getErrorLocation());
-			throw new RuntimeException(e);
+			return null;
 		}
 
 		String successMessage = "'" + file.getName() + "' successfully parsed"; 
@@ -189,17 +189,18 @@ public class AutomataScriptParser implements ISource {
 
 
 	/**
-	 * Reports the given string with the given severity to Ultimate as a NoResult
+	 * Reports the given string with the given severity to Ultimate as a GenericResult
 	 * @param sev the severity
 	 * @param longMessage the string to be reported
 	 * @param loc the location of the string
 	 */
 	private static void reportToUltimate(Severity sev, String longMessage, String shortMessage, ILocation loc) {
-			NoResult<Integer> res = new NoResult<Integer>((loc != null? loc.getStartLine() : -1), 
-					          Activator.s_PLUGIN_ID, null,
-					          loc);
-			res.setLongDescription(longMessage);
-			res.setShortDescription(shortMessage);
+		    GenericResult<Integer> res = new GenericResult<Integer>((loc != null? loc.getStartLine() : -1),
+		    		                     Activator.s_PLUGIN_ID,
+		    		                     null,
+		    		                     loc,
+		    		                     shortMessage, longMessage, 
+		    		                     sev);
 			UltimateServices.getInstance().reportResult(Activator.s_PLUGIN_ID, res);
 	}
 	
