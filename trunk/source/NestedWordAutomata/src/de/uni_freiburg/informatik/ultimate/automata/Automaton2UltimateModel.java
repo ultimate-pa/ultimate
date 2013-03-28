@@ -5,7 +5,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.visualization.Nwa
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.visualization.PetriNetToUltimateModel;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
-import de.uni_freiburg.informatik.ultimate.model.INode;
 
 
 public class Automaton2UltimateModel<LETTER,STATE> {

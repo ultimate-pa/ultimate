@@ -59,6 +59,7 @@ public class TestFileWriter<S,C> {
 			m_printWriter = new PrintWriter(fileWriter);
 		} catch (IOException e) {
 			e.printStackTrace();
+			throw new AssertionError(e);
 		} 
 	}
 	
