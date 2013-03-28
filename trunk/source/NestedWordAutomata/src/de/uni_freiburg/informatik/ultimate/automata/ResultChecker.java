@@ -109,10 +109,10 @@ public class ResultChecker<LETTER,STATE> {
 //		correct &=  ((new Intersect(false, false, op, complementJM)).getNwa().getAcceptingNestedRun() == null);
 		INestedWordAutomaton complementSadd = (new ComplementSadd(op)).getResult();
 		INestedWordAutomaton intersectionWithSadd = (new Intersect(false, op, complementSadd)).getResult();
-		correct &= (new IsEmpty(intersectionWithSadd).getResult() == null);
+		correct &=  ((new IsEmpty(intersectionWithSadd)).getResult() == true);
 		INestedWordAutomaton complementDD = (new Complement(op)).getResult();
 		INestedWordAutomaton intersectionWithDD = (new Intersect(false, op, complementDD)).getResult();
-		correct &= (new IsEmpty(intersectionWithDD).getResult() == null);
+		correct &= (new IsEmpty(intersectionWithDD).getResult() == true);
 
 		s_Logger.debug("Finished testing correctness of complement");
 		resultCheckStackHeight--;
