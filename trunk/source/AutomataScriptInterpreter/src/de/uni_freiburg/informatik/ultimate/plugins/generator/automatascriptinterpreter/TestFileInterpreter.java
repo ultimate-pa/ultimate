@@ -730,19 +730,13 @@ public class TestFileInterpreter {
 		s_Logger.info("----------------- Test Summary -----------------");
 		for (GenericResult<Integer> test : m_testCases) {
 			UltimateServices.getInstance().reportResult(Activator.s_PLUGIN_ID, test);
-			switch (test.getSeverity()) {
-			case ERROR: {s_Logger.error("Line " + test.getLocation().getStartLine() + ": " + test.getShortDescription());
-			             testCasesSummary = "Some testcases failed."; } break;
-			case INFO: s_Logger.info("Line " + test.getLocation().getStartLine() + ": " + test.getShortDescription()); break;
-			default: s_Logger.error("Error: " + test.getShortDescription());
-			}
+			reportToLogger(Severity.INFO, "Line " + test.getLocation().getStartLine() + ": " + test.getShortDescription());
 		}
 		// Report summary of the testcases/
 		if (m_testCases.isEmpty()) {
 			printMessage(Severity.WARNING, "No testcases defined!", "Warning" ,  null);
 		} else {
 			reportToLogger(Severity.INFO, testCasesSummary);
-			
 		}	
 	}
 	
