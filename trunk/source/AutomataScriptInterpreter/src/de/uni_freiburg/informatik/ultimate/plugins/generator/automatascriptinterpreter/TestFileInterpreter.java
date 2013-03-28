@@ -586,7 +586,7 @@ public class TestFileInterpreter {
 		} else if (oe.getOperationName().equalsIgnoreCase("print")) {
 			String argsAsString = children.get(0).getAsString();
 			ILocation loc = children.get(0).getLocation();
-			printMessage(Severity.INFO, "Printing " + argsAsString, loc);
+			printMessage(Severity.INFO, "Printing " + argsAsString, "print:", loc);
 			for (Object o : arguments) {
 				s_Logger.info(o.toString());
 			}
@@ -636,7 +636,11 @@ public class TestFileInterpreter {
 	
 	private <T> Object interpret(StatementList stmtList) throws Exception {
 		for (AtsASTNode stmt : stmtList.getOutgoingNodes()) {
-			interpret(stmt);
+			try {
+				interpret(stmt);
+			} catch (Exception e) {
+				printMessage(Severity.ERROR, e.toString(), "Exception thrown.", stmt.getLocation());
+			}
 		}
 		return null;
 	}
@@ -735,7 +739,7 @@ public class TestFileInterpreter {
 		}
 		// Report summary of the testcases/
 		if (m_testCases.isEmpty()) {
-			printMessage(Severity.WARNING, "No testcases defined!", null);
+			printMessage(Severity.WARNING, "No testcases defined!", "Warning" ,  null);
 		} else {
 			reportToLogger(Severity.INFO, testCasesSummary);
 			
@@ -747,26 +751,26 @@ public class TestFileInterpreter {
 	 * Reports the given string to the logger
 	 * and to Ultimate as a NoResult.
 	 * @param sev the Severity
-	 * @param toPrint the string to be reported
+	 * @param longDescr the string to be reported
 	 * @param loc the location of the String
 	 */
-	private static void printMessage(Severity sev, String toPrint, ILocation loc) {
-		reportToUltimate(sev, toPrint, loc);
-		reportToLogger(sev, toPrint);
+	private static void printMessage(Severity sev, String longDescr, String shortDescr, ILocation loc) {
+		reportToUltimate(sev, longDescr, shortDescr, loc);
+		reportToLogger(sev, longDescr);
 	}
 	
 	/**
 	 * Reports the given string with the given severity to Ultimate as a NoResult
 	 * @param sev the severity
-	 * @param toPrint the string to be reported
+	 * @param longDescr the string to be reported
 	 * @param loc the location of the string
 	 */
-	private static void reportToUltimate(Severity sev, String toPrint, ILocation loc) {
+	private static void reportToUltimate(Severity sev, String longDescr, String shortDescr, ILocation loc) {
 			NoResult<Integer> res = new NoResult<Integer>((loc != null ? loc.getStartLine() : 0), 
 					          Activator.s_PLUGIN_ID, null,
 					          loc);
-			res.setLongDescription(toPrint);
-			res.setShortDescription("print:");
+			res.setLongDescription(longDescr);
+			res.setShortDescription(shortDescr);
 			UltimateServices.getInstance().reportResult(Activator.s_PLUGIN_ID, res);
 	}
 	
