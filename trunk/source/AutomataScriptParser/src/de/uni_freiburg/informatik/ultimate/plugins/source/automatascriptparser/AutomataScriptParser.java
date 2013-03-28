@@ -195,7 +195,7 @@ public class AutomataScriptParser implements ISource {
 	 * @param loc the location of the string
 	 */
 	private static void reportToUltimate(Severity sev, String longMessage, String shortMessage, ILocation loc) {
-			NoResult<Integer> res = new NoResult<>((loc != null? loc.getStartLine() : -1), 
+			NoResult<Integer> res = new NoResult<Integer>((loc != null? loc.getStartLine() : -1), 
 					          Activator.s_PLUGIN_ID, null,
 					          loc);
 			res.setLongDescription(longMessage);
