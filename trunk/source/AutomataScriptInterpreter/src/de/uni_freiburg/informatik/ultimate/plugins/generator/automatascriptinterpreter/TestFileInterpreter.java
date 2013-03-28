@@ -1,13 +1,19 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.automatascriptinterpreter;
 
 import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -17,6 +23,8 @@ import java.util.Set;
 import org.apache.log4j.Logger;
 import org.eclipse.core.runtime.FileLocator;
 
+import de.uni_freiburg.informatik.ultimate.automata.AtsDefinitionPrinter;
+import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.NestedLassoWord;
@@ -253,6 +261,11 @@ public class TestFileInterpreter {
 	private AutomataScriptTypeChecker m_tChecker;
 	private static Logger s_Logger = UltimateServices.getInstance().getLogger(Activator.s_PLUGIN_ID);
 	private List<GenericResult<Integer>> m_testCases;
+	private IAutomaton<?, ?> m_LastPrintedAutomaton;
+	private static int m_timeout = 60;
+	private static boolean m_printAutomataToFile = false;
+	private static PrintWriter m_printWriter;
+	private static String m_path = ".";
 	
 	
 	
@@ -263,8 +276,26 @@ public class TestFileInterpreter {
 		m_testCases = new ArrayList<GenericResult<Integer>>();
 		m_tChecker = new AutomataScriptTypeChecker();
 		m_existingOperations = getOperationClasses();
+		m_LastPrintedAutomaton = null;
+		UltimateServices.getInstance().setDeadline(System.currentTimeMillis() + (m_timeout * 1000));
+		if (m_printAutomataToFile) {
+			String path = m_path + "automatascriptOutput" + getDateTime() + ".ats";
+			File file = new File(path);
+			try {
+				FileWriter writer = new FileWriter(file);
+				m_printWriter = new PrintWriter(writer);
+			} catch (IOException e) {
+				
+			}
+		}
 
 	}
+	
+	private static String getDateTime() {
+        DateFormat dateFormat = new SimpleDateFormat("yyyyMMddHHmmss");
+        Date date = new Date();
+        return dateFormat.format(date);
+    }
 	
 	public Object interpretTestFile(AtsASTNode node) {
 		List<AtsASTNode> children = node.getOutgoingNodes();
@@ -295,6 +326,10 @@ public class TestFileInterpreter {
 		reportResult();
 		return result;
 
+	}
+	
+	public IAutomaton<?, ?> getLastPrintedAutomaton() {
+		return m_LastPrintedAutomaton;
 	}
 	
 	private <T> Object interpret(AssignmentExpression as) throws Exception {
@@ -593,7 +628,26 @@ public class TestFileInterpreter {
 			ILocation loc = children.get(0).getLocation();
 			printMessage(Severity.INFO, "Printing " + argsAsString, "print:", loc);
 			for (Object o : arguments) {
-				s_Logger.info(o.toString());
+				if (o instanceof IAutomaton) {
+					m_LastPrintedAutomaton = (IAutomaton<?, ?>) o;
+					String automatonAsString = (new AtsDefinitionPrinter(o)).getDefinitionAsString();
+					printMessage(Severity.INFO, automatonAsString, "print:", loc);
+					if (m_printAutomataToFile) {
+						String comment = "/* " + oe.getAsString() + " */";
+						m_printWriter.println(comment);
+						m_printWriter.println(automatonAsString);
+					}
+					
+				} else {
+					s_Logger.info(o.toString());
+					printMessage(Severity.INFO, o.toString(), "print:", loc);
+					if (m_printAutomataToFile) {
+						String comment = "/* " + oe.getAsString() + " */";
+						m_printWriter.println(comment);
+						m_printWriter.println(o.toString());
+					}
+				}
+				
 			}
 			
 		} else {
