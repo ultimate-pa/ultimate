@@ -26,9 +26,9 @@ public class RatingFactory {
 		 */
 		DEFAULT,
 		/**
-		 * TODO
+		 * This strategy counts the amount of disjunctions.
 		 */
-		PARALLEL_RATING
+		DISJUNCTIVE_RATING
 	}
 
 	/**
@@ -86,6 +86,8 @@ public class RatingFactory {
 		switch (strategy) {
 		case DEFAULT:
 			return new DefaultRating(edge);
+		case DISJUNCTIVE_RATING:
+			return new DisjunctiveRating(edge);
 		default:
 			throw new IllegalArgumentException("No valid strategy choosen!");
 		}
