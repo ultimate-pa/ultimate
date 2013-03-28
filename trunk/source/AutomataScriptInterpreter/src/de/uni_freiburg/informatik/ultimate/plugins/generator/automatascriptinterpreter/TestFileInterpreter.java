@@ -22,6 +22,10 @@ import java.util.Set;
 
 import org.apache.log4j.Logger;
 import org.eclipse.core.runtime.FileLocator;
+import org.eclipse.core.runtime.preferences.ConfigurationScope;
+import org.eclipse.core.runtime.preferences.IEclipsePreferences;
+
+import automatascriptinterpreter.preferences.PreferenceConstants;
 
 import de.uni_freiburg.informatik.ultimate.automata.AtsDefinitionPrinter;
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
@@ -30,6 +34,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.NestedLassoWord;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.model.ILocation;
+
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AtsASTNode;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.AssignmentExpression;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.AutomataDefinitions;
@@ -262,14 +267,15 @@ public class TestFileInterpreter {
 	private static Logger s_Logger = UltimateServices.getInstance().getLogger(Activator.s_PLUGIN_ID);
 	private List<GenericResult<Integer>> m_testCases;
 	private IAutomaton<?, ?> m_LastPrintedAutomaton;
-	private static int m_timeout = 60;
-	private static boolean m_printAutomataToFile = false;
-	private static PrintWriter m_printWriter;
-	private static String m_path = ".";
+	private int m_timeout = 60;
+	private boolean m_printAutomataToFile = false;
+	private PrintWriter m_printWriter;
+	private String m_path = ".";
 	
 	
 	
 	public TestFileInterpreter() {
+		readPreferences();
 		m_variables = new HashMap<String, Object>();
 		m_flow = Flow.NORMAL;
 		m_automInterpreter = new AutomataDefinitionInterpreter();
@@ -279,17 +285,28 @@ public class TestFileInterpreter {
 		m_LastPrintedAutomaton = null;
 		UltimateServices.getInstance().setDeadline(System.currentTimeMillis() + (m_timeout * 1000));
 		if (m_printAutomataToFile) {
-			String path = m_path + "automatascriptOutput" + getDateTime() + ".ats";
+			String path = m_path + File.separator + "automatascriptOutput" + getDateTime() + ".ats";
 			File file = new File(path);
 			try {
 				FileWriter writer = new FileWriter(file);
 				m_printWriter = new PrintWriter(writer);
 			} catch (IOException e) {
-				
+				throw new AssertionError(e);
 			}
 		}
-
 	}
+	
+	private void readPreferences() {
+		ConfigurationScope scope = new ConfigurationScope();
+		IEclipsePreferences prefs = scope.getNode(Activator.s_PLUGIN_ID);
+		m_timeout = prefs.getInt(PreferenceConstants.Name_Timeout, 
+				PreferenceConstants.Default_Timeout);
+		m_printAutomataToFile = prefs.getBoolean(PreferenceConstants.Name_WriteToFile, 
+				PreferenceConstants.Default_WriteToFile);
+		m_path = prefs.get(PreferenceConstants.Name_Path, 
+				PreferenceConstants.Default_Path);
+	}
+	
 	
 	private static String getDateTime() {
         DateFormat dateFormat = new SimpleDateFormat("yyyyMMddHHmmss");
@@ -318,12 +335,18 @@ public class TestFileInterpreter {
 			return null;
 		}
 		Object result;
-		if (children.get(0) instanceof StatementList) {
+		if (children.get(0) == null) {
+			// File contains only automata definitions no testcases.
+			result = null;
+		} else if (children.get(0) instanceof StatementList) {
 			result = interpret((StatementList) children.get(0));
 		} else {
 			throw new AssertionError("Expecting Statement List");
 		}
 		reportResult();
+		if (m_printAutomataToFile) {
+			m_printWriter.close();
+		}
 		return result;
 
 	}

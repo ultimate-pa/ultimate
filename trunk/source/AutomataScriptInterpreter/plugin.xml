@@ -5,4 +5,19 @@
       <impl class="de.uni_freiburg.informatik.ultimate.plugins.generator.automatascriptinterpreter.AutomataScriptInterpreter">
       </impl>
    </extension>
+ <extension
+       point="org.eclipse.ui.preferencePages">
+    <page
+          category="de.uni_freiburg.informatik.ultimate.core.coreplugin.preferences.ToolsPreferencePage"
+          class="automatascriptinterpreter.preferences.PreferencePage"
+          id="automatascriptinterpreter.preferences.PreferencePage"
+          name="Automata Script Interpreter Preferences">
+    </page>
+ </extension>
+ <extension
+       point="org.eclipse.core.runtime.preferences">
+    <initializer
+          class="automatascriptinterpreter.preferences.PreferenceInitializer">
+    </initializer>
+ </extension>
 </plugin>

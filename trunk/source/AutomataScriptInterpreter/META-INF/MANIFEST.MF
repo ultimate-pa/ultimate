@@ -7,6 +7,8 @@ Bundle-Activator: de.uni_freiburg.informatik.ultimate.plugins.generator.automata
 Require-Bundle: UltimateCore,
  Library-log4j,
  NestedWordAutomata,
- AutomataScriptParser
+ AutomataScriptParser,
+ org.eclipse.core.runtime,
+ org.eclipse.ui
 Bundle-ActivationPolicy: lazy
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6

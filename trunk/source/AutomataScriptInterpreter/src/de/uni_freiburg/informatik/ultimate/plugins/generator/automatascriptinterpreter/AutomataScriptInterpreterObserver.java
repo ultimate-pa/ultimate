@@ -1,7 +1,12 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.automatascriptinterpreter;
+import java.util.HashSet;
+
 import de.uni_freiburg.informatik.ultimate.access.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.access.WalkerOptions;
 import de.uni_freiburg.informatik.ultimate.automata.Automaton2UltimateModel;
+import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StringFactory;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AtsASTNode;
 
@@ -17,8 +22,13 @@ public class AutomataScriptInterpreterObserver implements IUnmanagedObserver {
 	public boolean process(IElement root) {
 		TestFileInterpreter ti = new TestFileInterpreter();
 		ti.interpretTestFile((AtsASTNode)root);
+		
+		IAutomaton<?,?> printAutomaton = ti.getLastPrintedAutomaton();
+		if (printAutomaton == null) {
+			printAutomaton = getDummyAutomatonWithMessage();
+		}
 		m_GraphrootOfUltimateModelOfLastPrintedAutomaton = 
-				Automaton2UltimateModel.ultimateModel(null);
+				Automaton2UltimateModel.ultimateModel(printAutomaton);
 		return false;
 	}
 
@@ -51,7 +61,14 @@ public class AutomataScriptInterpreterObserver implements IUnmanagedObserver {
 	}
 
 	
-
-	
+	public IAutomaton<String,String> getDummyAutomatonWithMessage() {
+		NestedWordAutomaton<String,String> dummyAutomaton = 
+			new NestedWordAutomaton<String,String>(
+					new HashSet<String>(0), null, null, new StringFactory());
+		dummyAutomaton.addState(true, false,
+			"Use the print keyword in .ats file to select an automaton" +
+			" for visualization");
+		return dummyAutomaton;
+	}
 	
 }
