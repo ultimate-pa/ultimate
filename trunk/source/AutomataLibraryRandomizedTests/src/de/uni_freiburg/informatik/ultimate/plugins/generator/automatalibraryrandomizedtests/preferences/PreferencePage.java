@@ -78,7 +78,7 @@ public class PreferencePage
 				PreferenceConstants.Name_ProbabilityInitial,
 				getFieldEditorParent(),
 				6);
-		numberOfStates.setValidRange(0, 1000);
+		probabilityInitial.setValidRange(0, 1000);
 		addField(probabilityInitial);
 		
 		IntegerFieldEditor probabilityFinal = new IntegerFieldEditor(
@@ -86,7 +86,7 @@ public class PreferencePage
 				PreferenceConstants.Name_ProbabilityFinal,
 				getFieldEditorParent(),
 				6);
-		numberOfStates.setValidRange(0, 1000);
+		probabilityFinal.setValidRange(0, 1000);
 		addField(probabilityFinal);
 
 		
@@ -95,7 +95,7 @@ public class PreferencePage
 				PreferenceConstants.Name_ProbabilityInternalTransition,
 				getFieldEditorParent(),
 				6);
-		numberOfStates.setValidRange(0, 1000);
+		probabilityInternal.setValidRange(0, 1000);
 		addField(probabilityInternal);
 		
 		IntegerFieldEditor probabilityCall = new IntegerFieldEditor(
@@ -111,7 +111,7 @@ public class PreferencePage
 				PreferenceConstants.Name_ProbabilityReturnTransition,
 				getFieldEditorParent(),
 				6);
-		numberOfStates.setValidRange(0, 1000);
+		probabilityReturn.setValidRange(0, 1000);
 		addField(probabilityReturn);
 		
 		
