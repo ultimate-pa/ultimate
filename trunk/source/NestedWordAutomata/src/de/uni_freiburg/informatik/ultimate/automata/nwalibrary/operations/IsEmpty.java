@@ -650,7 +650,7 @@ public class IsEmpty<LETTER,STATE> implements IOperation {
 	@Override
 	public Boolean getResult() {
 		assert (ResultChecker.isEmpty(m_nwa, m_acceptingRun));
-		return m_acceptingRun != null;
+		return m_acceptingRun == null;
 	}
 
 
