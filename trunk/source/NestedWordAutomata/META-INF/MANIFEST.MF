@@ -30,9 +30,11 @@ Export-Package: de.uni_freiburg.informatik.ultimate.automata;
    org.apache.log4j,
    de.uni_freiburg.informatik.ultimate.core.api",
  de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction,
+ de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.old.vertex,
  de.uni_freiburg.informatik.ultimate.automata.nwalibrary.visualization;uses:="de.uni_freiburg.informatik.ultimate.model,de.uni_freiburg.informatik.ultimate.automata.nwalibrary",
  de.uni_freiburg.informatik.ultimate.automata.petrinet;uses:="de.uni_freiburg.informatik.ultimate.automata,de.uni_freiburg.informatik.ultimate.automata.nwalibrary",
  de.uni_freiburg.informatik.ultimate.automata.petrinet.julian;uses:="de.uni_freiburg.informatik.ultimate.automata.petrinet,de.uni_freiburg.informatik.ultimate.automata.nwalibrary,de.uni_freiburg.informatik.ultimate.automata",
+ de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.petruchio,
  de.uni_freiburg.informatik.ultimate.automata.petrinet.visualization;uses:="de.uni_freiburg.informatik.ultimate.automata.petrinet,de.uni_freiburg.informatik.ultimate.model,de.uni_freiburg.informatik.ultimate.automata.petrinet.julian",
  de.uni_freiburg.informatik.ultimate.automata.preferences
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
