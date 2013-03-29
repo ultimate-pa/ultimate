@@ -31,7 +31,16 @@ ERROR_OCCURRED=`echo "$Ultimate_OUTPUT" | grep "ERROR"`
 EXCEPTION=`echo "$Ultimate_OUTPUT" | grep "Exception"`
 RESULT_CORRECT=`echo "$Ultimate_OUTPUT" | grep "All testcases passed"`
 RESULT_INCORRECT=`echo "$Ultimate_OUTPUT" | grep "Some testcases failed"`
+RESULT_NOTESTCASES=`echo "$Ultimate_OUTPUT" | grep "No testcases defined"`
 RUNTIME=`echo "$Ultimate_OUTPUT" | grep "AutomataScriptInterpreter took" | cut -c82-`
+
+if [ "$ERROR_OCCURRED" ]; then
+   printf "!!!!! ERROR !!!!!"
+fi
+
+if [ "$EXCEPTION" ]; then
+   printf "!!!!! EXCEPTION THROWN !!!!!"
+fi
 
 if [ "$RESULT_CORRECT" ]; then
    printf "successful termination after "
@@ -47,12 +56,11 @@ if [ "$RESULT_INCORRECT" ]; then
    printf "result incorrect !!!!!"
 fi
 
-if [ "$ERROR_OCCURRED" ]; then
-   printf "!!!!! ERROR !!!!!"
-fi
-
-if [ "$EXCEPTION" ]; then
-   printf "!!!!! EXCEPTION THROWN !!!!!"
+if [ "$RESULT_NOTESTCASES" ]; then
+   printf "successful termination after "
+   printf "$RUNTIME"
+   printf " ***** "
+   printf "file does not contain testcases"
 fi
 
 printf "\n"
