@@ -37,6 +37,7 @@
       <plugin id="org.eclipse.cdt.core"/>
       <plugin id="org.eclipse.cdt.core.linux" fragment="true"/>
       <plugin id="org.eclipse.cdt.core.linux.x86" fragment="true"/>
+      <plugin id="org.eclipse.cdt.core.linux.x86_64" fragment="true"/>
       <plugin id="org.eclipse.cdt.core.win32" fragment="true"/>
       <plugin id="org.eclipse.cdt.core.win32.x86_64" fragment="true"/>
       <plugin id="org.eclipse.core.commands"/>
@@ -48,6 +49,7 @@
       <plugin id="org.eclipse.core.filebuffers"/>
       <plugin id="org.eclipse.core.filesystem"/>
       <plugin id="org.eclipse.core.filesystem.linux.x86" fragment="true"/>
+      <plugin id="org.eclipse.core.filesystem.linux.x86_64" fragment="true"/>
       <plugin id="org.eclipse.core.filesystem.win32.x86_64" fragment="true"/>
       <plugin id="org.eclipse.core.jobs"/>
       <plugin id="org.eclipse.core.resources"/>
@@ -74,6 +76,7 @@
       <plugin id="org.eclipse.osgi.services"/>
       <plugin id="org.eclipse.swt"/>
       <plugin id="org.eclipse.swt.gtk.linux.x86" fragment="true"/>
+      <plugin id="org.eclipse.swt.gtk.linux.x86_64" fragment="true"/>
       <plugin id="org.eclipse.swt.win32.win32.x86_64" fragment="true"/>
       <plugin id="org.eclipse.text"/>
       <plugin id="org.eclipse.ui"/>
@@ -113,6 +116,7 @@
       <plugin id="org.apache.log4j" autoStart="true" startLevel="0" />
       <plugin id="org.eclipse.ant.core" autoStart="true" startLevel="0" />
       <plugin id="org.eclipse.cdt.core" autoStart="true" startLevel="0" />
+      <plugin id="org.eclipse.cdt.core.linux.x86" autoStart="true" startLevel="0" />
       <plugin id="org.eclipse.cdt.core.win32" autoStart="true" startLevel="0" />
       <plugin id="org.eclipse.cdt.core.win32.x86_64" autoStart="true" startLevel="0" />
       <plugin id="org.eclipse.core.commands" autoStart="true" startLevel="0" />
@@ -123,6 +127,7 @@
       <plugin id="org.eclipse.core.expressions" autoStart="true" startLevel="0" />
       <plugin id="org.eclipse.core.filebuffers" autoStart="true" startLevel="0" />
       <plugin id="org.eclipse.core.filesystem" autoStart="true" startLevel="0" />
+      <plugin id="org.eclipse.core.filesystem.linux.x86" autoStart="true" startLevel="0" />
       <plugin id="org.eclipse.core.filesystem.win32.x86_64" autoStart="true" startLevel="0" />
       <plugin id="org.eclipse.core.jobs" autoStart="true" startLevel="0" />
       <plugin id="org.eclipse.core.resources" autoStart="true" startLevel="0" />
@@ -144,6 +149,7 @@
       <plugin id="org.eclipse.osgi" autoStart="true" startLevel="0" />
       <plugin id="org.eclipse.osgi.services" autoStart="true" startLevel="0" />
       <plugin id="org.eclipse.swt" autoStart="true" startLevel="0" />
+      <plugin id="org.eclipse.swt.gtk.linux.x86" autoStart="true" startLevel="0" />
       <plugin id="org.eclipse.swt.win32.win32.x86_64" autoStart="true" startLevel="0" />
       <plugin id="org.eclipse.text" autoStart="true" startLevel="0" />
       <plugin id="org.eclipse.ui" autoStart="true" startLevel="0" />
