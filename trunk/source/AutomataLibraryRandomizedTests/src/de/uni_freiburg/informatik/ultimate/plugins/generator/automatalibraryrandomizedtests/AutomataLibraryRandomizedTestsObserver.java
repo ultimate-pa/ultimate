@@ -9,9 +9,9 @@ import org.eclipse.core.runtime.preferences.IEclipsePreferences;
 
 import de.uni_freiburg.informatik.ultimate.access.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.access.WalkerOptions;
+import de.uni_freiburg.informatik.ultimate.automata.AtsDefinitionPrinter;
+import de.uni_freiburg.informatik.ultimate.automata.AtsDefinitionPrinter.Labeling;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
-import de.uni_freiburg.informatik.ultimate.automata.TestFileWriter;
-import de.uni_freiburg.informatik.ultimate.automata.TestFileWriter.Labeling;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomatonGenerator;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.BuchiComplementFKV;
@@ -68,7 +68,7 @@ public class AutomataLibraryRandomizedTestsObserver implements IUnmanagedObserve
 				if (writeToFile) {
 					String directory = getDirectory();
 					String filename = directory + File.separator+"Random" + i;
-					new TestFileWriter<String, String>(auto, filename, Labeling.QUOTED, "");
+					new AtsDefinitionPrinter<String, String>(auto, filename, Labeling.QUOTED, "");
 				}
 				
 				if (operation.equals("buchiComplementSVW")) {
