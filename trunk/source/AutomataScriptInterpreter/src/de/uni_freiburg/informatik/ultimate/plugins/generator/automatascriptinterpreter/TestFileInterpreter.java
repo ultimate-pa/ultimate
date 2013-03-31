@@ -67,6 +67,8 @@ enum Flow {
 }
 public class TestFileInterpreter {
 	
+	private static String UNKNOWN_OPERATION = "UNKNOWN_OPERATION";
+	
 	class AutomataScriptTypeChecker {
 		
 		public void checkType(AtsASTNode n) throws IllegalArgumentException {
@@ -674,7 +676,7 @@ public class TestFileInterpreter {
 			}
 			
 		} else {
-			IOperation op = getAutomataOperation(oe.getOperationName(), arguments);
+			IOperation op = getAutomataOperation(oe, arguments);
 			if (op != null) {
 				result = op.getResult();
 			} 
@@ -721,9 +723,13 @@ public class TestFileInterpreter {
 			try {
 				interpret(stmt);
 			} catch (Exception e) {
-				TestFileInterpreter.printMessage(Severity.ERROR, e.toString() 
-						+ System.getProperty("line.separator") + e.getStackTrace(), 
-						"Exception thrown.", stmt.getLocation());
+				if (e.getMessage().equals(UNKNOWN_OPERATION)) {
+					// do nothing - result was already reported
+				} else {
+					TestFileInterpreter.printMessage(Severity.ERROR, e.toString() 
+							+ System.getProperty("line.separator") + e.getStackTrace(), 
+							"Exception thrown.", stmt.getLocation());
+				}
 			}
 		}
 		return null;
@@ -867,8 +873,8 @@ public class TestFileInterpreter {
 		}
 	}
 
-	private IOperation getAutomataOperation(String opName, ArrayList<Object> arguments) throws Exception {
-		String operationName = opName.toLowerCase();
+	private IOperation getAutomataOperation(OperationInvocationExpression oe, ArrayList<Object> arguments) throws Exception {
+		String operationName = oe.getOperationName().toLowerCase();
 		IOperation result = null;
 		if (m_existingOperations.containsKey(operationName)) {
 			Set<Class<?>> operationClasses = m_existingOperations.get(operationName);
@@ -896,9 +902,12 @@ public class TestFileInterpreter {
 				}					
 			}
 		} else {
-			String message = "Operation \"" + opName + "\" is not supported."; 
-			s_Logger.error(message);
-			throw new UnsupportedOperationException(message);
+			String shortDescr = "Unsupported operation \"" + operationName + "\"";
+			String allOperations = (new ListExistingOperations(m_existingOperations)).prettyPrint();
+			String longDescr = "We support only the following operations " + System.getProperty("line.separator") + allOperations;
+			reportToUltimate(Severity.ERROR, longDescr, shortDescr, oe.getLocation());
+			s_Logger.warn(shortDescr);
+			throw new UnsupportedOperationException(UNKNOWN_OPERATION);
 		}
 		return result;
 	}
