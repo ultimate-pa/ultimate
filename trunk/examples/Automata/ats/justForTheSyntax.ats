@@ -10,8 +10,8 @@ assert(!BuchiAccepts(a1, [aaa a b<, a b<]));
 assert(!IsEmpty(intersect(a1, a1)));
 assert(IsEmpty(intersect(a1, complement(a1))));
 assert(!IsEmpty(intersect(a1, a2)));
-// assert(!IsEmptyBuchi(a2));
-// IsEmptyBuchi does not exist at the moment!
+// The operation IsEmptyBuchi is now called BuchiIsEmpty
+assert(!BuchiIsEmpty(a2)); 
 
 
 

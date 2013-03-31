@@ -814,6 +814,7 @@ public class TestFileInterpreter {
 		s_Logger.info("----------------- Test Summary -----------------");
 		for (GenericResult<Integer> test : m_testCases) {
 			UltimateServices.getInstance().reportResult(Activator.s_PLUGIN_ID, test);
+			if (test.getSeverity() == Severity.ERROR) testCasesSummary = "Some testcases failed.";
 			reportToLogger(Severity.INFO, "Line " + test.getLocation().getStartLine() + ": " + test.getShortDescription());
 		}
 		// Report summary of the testcases/

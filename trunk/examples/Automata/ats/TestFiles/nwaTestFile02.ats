@@ -3,24 +3,24 @@
 // Example of an .ats file, which doesn't contain
 // automata definitions at all.
 
-
-// This test should be true.
-accepts(accepts2Bs, wordWith2Bs);
-// This test should be false
-Accepts(accepts2Bs, wordWithManyBs);
-// This test should be true.
-accepts(acceptsWithC, wordWith1c);
-// This test should be false
-accepts(acceptsNothing, [a b b a]);
-// This test should be false
-accepts(acceptsNothing, wordWith2Bs);
-// This test should be false
-accepts(nwa1, [a< b< >r >s]);
-
 // Declaring some nested words
 nw wordWith2Bs = [b a c d c c a b];
 nw wordWithManyBs = [a b b c b b b d c];
 nw wordWith1c = [a b b b a c];
+
+
+// This test should be true.
+assert(accepts(accepts2Bs, wordWith2Bs));
+// This test should be false
+assert(Accepts(accepts2Bs, wordWithManyBs));
+// This test should be true.
+assert(accepts(acceptsWithC, wordWith1c));
+// This test should be false
+assert(accepts(acceptsNothing, [a b b a]));
+// This test should be false
+assert(accepts(acceptsNothing, wordWith2Bs));
+// This test should be false
+assert(accepts(nwa1, [a< b< >r >s]));
 
 // This operation parses all automata defined in the file "nwaDefinitions01.ats" and
 // stores them internally. Thus, you can use the automata from that file, as if
@@ -28,5 +28,6 @@ nw wordWith1c = [a b b b a c];
 // Other than automata definitions are ignored.
 parseAutomata("../nwaDefinitions02.ats");
 parseAutomata("../nwaDefinitions01.ats");
+
 // If file does not exist, the parser won't abort.
 parseAutomata("fileDoesNotExist.ats");
