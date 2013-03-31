@@ -9,7 +9,7 @@ import org.apache.log4j.Logger;
 import org.eclipse.core.runtime.preferences.ConfigurationScope;
 import org.eclipse.core.runtime.preferences.IEclipsePreferences;
 
-import de.uni_freiburg.informatik.ultimate.automata.TestFileWriter.Labeling;
+import de.uni_freiburg.informatik.ultimate.automata.AtsDefinitionPrinter.Labeling;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
@@ -621,7 +621,7 @@ public class ResultChecker<LETTER,STATE> {
 		if (writeToFile) {
 			String directory = prefs.get(PreferenceConstants.Name_Path, PreferenceConstants.Default_Path); 
 			String filename = directory + File.separator+filenamePrefix + getDateTime() + ".fat";
-			new TestFileWriter(automaton, filename, Labeling.TOSTRING, message);
+			new AtsDefinitionPrinter(automaton, filename, Labeling.QUOTED, message);
 		}
     }
 	
