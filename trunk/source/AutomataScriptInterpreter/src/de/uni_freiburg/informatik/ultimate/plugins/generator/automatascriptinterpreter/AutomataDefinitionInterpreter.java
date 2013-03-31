@@ -99,7 +99,7 @@ public class AutomataDefinitionInterpreter {
 		}
 		
 		for (Entry<Pair<String, String>, String> entry : nwa.getCallTransitions().entrySet()) {
-			nw.addInternalTransition(entry.getKey().left, entry.getKey().right, entry.getValue());
+			nw.addCallTransition(entry.getKey().left, entry.getKey().right, entry.getValue());
 		}
 		
 		for (Entry<Pair<String, String>, Pair<String, String>> entry : nwa.getReturnTransitions().entrySet()) {
