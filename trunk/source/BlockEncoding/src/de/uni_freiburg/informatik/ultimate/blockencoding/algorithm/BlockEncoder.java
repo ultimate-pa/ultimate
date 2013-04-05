@@ -3,6 +3,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.blockencoding.algorithm;
 
+import java.util.ArrayList;
+
 import org.apache.log4j.Logger;
 import org.eclipse.core.runtime.preferences.ConfigurationScope;
 import org.eclipse.core.runtime.preferences.IEclipsePreferences;
@@ -43,6 +45,10 @@ public class BlockEncoder {
 
 	private MinimizeCallReturnVisitor mcrVisitor;
 
+	private boolean shouldMinimizeCallReturn;
+	
+	private ArrayList<MinimizedNode> nonCallingFunctions;
+
 	public BlockEncoder() {
 		s_Logger = UltimateServices.getInstance().getLogger(
 				Activator.s_PLUGIN_ID);
@@ -62,11 +68,15 @@ public class BlockEncoder {
 				.getNode(Activator.s_PLUGIN_ID);
 		RatingFactory.getInstance().setRatingStrategy(
 				prefs.get(PreferencePage.NAME_STRATEGY, "0"));
+		shouldMinimizeCallReturn = prefs.getBoolean(
+				PreferencePage.NAME_CALLMINIMIZE, false);
 		// Initialize the Visitors, which apply the minimization rules
 		mbVisitor = new MinimizeBranchVisitor(s_Logger);
 		mlVisitor = new MinimizeLoopVisitor(s_Logger);
 		mcrVisitor = new MinimizeCallReturnVisitor(s_Logger);
 		tmVisitor = new TestMinimizationVisitor(s_Logger);
+		
+		nonCallingFunctions = new ArrayList<MinimizedNode>();
 
 		for (RCFGEdge edge : root.getOutgoingEdges()) {
 			if (edge instanceof RootEdge) {
@@ -88,12 +98,21 @@ public class BlockEncoder {
 		// Since we merged some Call- and Return-Edges we need to execute
 		// mbVisitor again
 		// Now it is configurable if this minimization should be done!
-		if (prefs.getBoolean(PreferencePage.NAME_CALLMINIMIZE, false)) {
+		if (shouldMinimizeCallReturn) {
+			for (MinimizedNode node : nonCallingFunctions) {
+				mlVisitor.visitNode(node);
+			}			
 			for (RCFGEdge edge : root.getOutgoingEdges()) {
 				if (edge instanceof RootEdge) {
 					s_Logger.debug("Try to merge Call- and Return-Edges for the Method: "
 							+ edge.getTarget());
 					mcrVisitor.visitNode(BlockEncodingAnnotation.getAnnotation(
+							(RootEdge) edge).getNode());
+				}
+			}
+			for (RCFGEdge edge : root.getOutgoingEdges()) {
+				if (edge instanceof RootEdge) {
+					mbVisitor.visitNode(BlockEncodingAnnotation.getAnnotation(
 							(RootEdge) edge).getNode());
 				}
 			}
@@ -134,9 +153,16 @@ public class BlockEncoder {
 		// To minimize such edges we use the MinimizeLoopVisitor (which is a
 		// subclass of MinimizeBranchVisitor)
 		// ---> internally it executes also the rules form mbVisitor
-		mlVisitor.visitNode(node);
-		// Validate the minimization
-		tmVisitor.visitNode(node);
+		if (!shouldMinimizeCallReturn) {
+			// if we do not want to minimize call and return edges, we do this
+			// minimization here, if not we do not do this here because it can
+			// lead to duplication of formulas
+			mlVisitor.visitNode(node);
+			// Validate the minimization
+			tmVisitor.visitNode(node);
+		} else if (!mbVisitor.isCallReturnEdgeInvolved()) {
+			nonCallingFunctions.add(node);
+		}
 		BlockEncodingAnnotation.addAnnotation(rootEdge,
 				new BlockEncodingAnnotation(node));
 	}

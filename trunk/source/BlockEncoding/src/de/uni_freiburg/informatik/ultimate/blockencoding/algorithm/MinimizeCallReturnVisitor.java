@@ -37,15 +37,12 @@ public class MinimizeCallReturnVisitor implements IMinimizationVisitor {
 
 	private static Logger s_Logger;
 
-	private MinimizeLoopVisitor mbv;
-
 	private HashSet<MinimizedNode> actualCallStack;
 
 	/**
 	 * 
 	 */
 	public MinimizeCallReturnVisitor(Logger logger) {
-		mbv = new MinimizeLoopVisitor(logger);
 		s_Logger = logger;
 	}
 
@@ -66,6 +63,7 @@ public class MinimizeCallReturnVisitor implements IMinimizationVisitor {
 		// --> we check the edges for Call-Edges
 		actualCallStack.add(node);
 		IMinimizedEdge substituteEdge = null;
+		IMinimizedEdge[] edges = null;
 		// we need a copy of the incoming edge list
 		List<IMinimizedEdge> incomingEdgeList = new ArrayList<IMinimizedEdge>(
 				node.getMinimalIncomingEdgeLevel());
@@ -76,7 +74,7 @@ public class MinimizeCallReturnVisitor implements IMinimizationVisitor {
 				// next step is to try if we can minimize the whole method, and
 				// substitute the summary edge by a concrete formula
 				if (substituteEdge == null) {
-					IMinimizedEdge edges[] = tryToMergeMethod(node);
+					edges = tryToMergeMethod(node);
 					// if the method is not mergeable we return null
 					if (edges == null) {
 						return;
@@ -84,13 +82,7 @@ public class MinimizeCallReturnVisitor implements IMinimizationVisitor {
 					// We get the substitution and the shortcut to the error
 					// locations, which can be added directly
 					substituteEdge = edges[0];
-					ArrayList<IMinimizedEdge> newOutEdgeLevel = new ArrayList<IMinimizedEdge>(
-							edge.getSource().getOutgoingEdges());
-					for (int i = 1; i < edges.length; i++) {
-						newOutEdgeLevel
-								.add(new ConjunctionEdge(edge, edges[i]));
-					}
-					edge.getSource().addNewOutgoingEdgeLevel(newOutEdgeLevel);
+					directEdgesToErrorLocation(edge, edges);
 
 					// if our substitueEdge is an Call-Edge, we try do resolve
 					// it recursively, if this is not possible we do not
@@ -119,20 +111,17 @@ public class MinimizeCallReturnVisitor implements IMinimizationVisitor {
 							substituteEdge = null;
 						} else {
 							substituteEdge = edges[0];
-							newOutEdgeLevel = new ArrayList<IMinimizedEdge>(
-									edge.getSource().getOutgoingEdges());
-							for (int i = 1; i < edges.length; i++) {
-								newOutEdgeLevel.add(new ConjunctionEdge(edge,
-										edges[i]));
-							}
-							edge.getSource().addNewOutgoingEdgeLevel(
-									newOutEdgeLevel);
+							directEdgesToErrorLocation(edge, edges);
 						}
 					}
 					// if the method is not mergeable we return null
 					if (substituteEdge == null) {
 						return;
 					}
+				} else {
+					// if we already found a substitution edge, we need to also
+					// insert the shortcuts to the error locations
+					directEdgesToErrorLocation(edge, edges);
 				}
 				// We build the edge Call + Substitute,
 				// the Return is still missing!
@@ -144,11 +133,44 @@ public class MinimizeCallReturnVisitor implements IMinimizationVisitor {
 						node.getMinimalIncomingEdgeLevel());
 				incomingListLevel.remove(edge);
 				node.addNewIncomingEdgeLevel(incomingListLevel);
-				mbv.visitNode(edge.getSource());
 			}
 		}
 		// No Call-Edges, nothing to do here
 		return;
+	}
+
+	/**
+	 * This method is used to generate shortcuts (direct edges) to error
+	 * locations, if this is possible. Basically we need to add a new entry to
+	 * the outgoing edges of the callEdge.getSource() and new incoming edges for
+	 * the respective error location.
+	 * 
+	 * @param callEdge
+	 * @param subEdges
+	 */
+	private void directEdgesToErrorLocation(IMinimizedEdge callEdge,
+			IMinimizedEdge[] subEdges) {
+		// First step is to add the new edges to callEdge.getSource->Outgoing
+		ArrayList<IMinimizedEdge> newOutEdgeLevel = new ArrayList<IMinimizedEdge>(
+				callEdge.getSource().getOutgoingEdges());
+		ArrayList<IMinimizedEdge> shortcuts = new ArrayList<IMinimizedEdge>();
+		for (int i = 1; i < subEdges.length; i++) {
+			ConjunctionEdge shortcut = new ConjunctionEdge(callEdge,
+					subEdges[i]);
+			newOutEdgeLevel.add(shortcut);
+			shortcuts.add(shortcut);
+		}
+		callEdge.getSource().addNewOutgoingEdgeLevel(newOutEdgeLevel);
+		// Second step is to add the new edges to the incoming set of the error
+		// locations
+		for (IMinimizedEdge shortcutEdge : shortcuts) {
+			ArrayList<IMinimizedEdge> newIncomingEdgeLevel = new ArrayList<IMinimizedEdge>(
+					shortcutEdge.getTarget().getIncomingEdges());
+			newIncomingEdgeLevel.add(shortcutEdge);
+			shortcutEdge.getTarget().addNewIncomingEdgeLevel(
+					newIncomingEdgeLevel);
+		}
+
 	}
 
 	/**
@@ -158,6 +180,15 @@ public class MinimizeCallReturnVisitor implements IMinimizationVisitor {
 	 *         minimization
 	 */
 	private IMinimizedEdge[] tryToMergeMethod(MinimizedNode node) {
+		// Remark 04.04.2013: It may be possible that one incoming edge is a
+		// self-loop, if one incoming edge is not a call or root edge should be
+		// sufficient as check
+		for (IMinimizedEdge edge : node.getIncomingEdges()) {
+			if (!edge.isBasicEdge()) {
+				return null;
+			}
+		}
+
 		// now we have to check, if it is possible to minimize the method
 		// We either have a direct shortcut to complete minimize the function or
 		// we have the shortcut and various ways to error locations, which also

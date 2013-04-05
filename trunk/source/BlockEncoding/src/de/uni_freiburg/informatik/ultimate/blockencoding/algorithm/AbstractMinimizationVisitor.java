@@ -39,12 +39,14 @@ public abstract class AbstractMinimizationVisitor implements
 	protected HashSet<IMinimizedEdge> visitedEdges;
 
 	protected HashSet<MinimizedNode> notReachableNodes;
-	
+
 	protected static Logger s_Logger;
 
 	private HashMap<ProgramPoint, MinimizedNode> referenceNodeMap;
 
 	private HashMap<CodeBlock, IMinimizedEdge> referenceEdgeMap;
+
+	private boolean containsCallReturnEdge;
 
 	/**
 	 * Constructor which is called by the subclasses, to initialize the data
@@ -77,6 +79,7 @@ public abstract class AbstractMinimizationVisitor implements
 		}
 		visitedEdges.clear();
 		notReachableNodes.clear();
+		containsCallReturnEdge = false;
 		internalVisitNode(node);
 	}
 
@@ -123,6 +126,9 @@ public abstract class AbstractMinimizationVisitor implements
 				if (edge.isBasicEdge()
 						&& (((IBasicEdge) edge).getOriginalEdge() instanceof Call || ((IBasicEdge) edge)
 								.getOriginalEdge() instanceof Return)) {
+					if (((IBasicEdge) edge).getOriginalEdge() instanceof Call) {
+						containsCallReturnEdge = true;
+					}
 					continue;
 				}
 				if (!visitedEdges.contains(edge)) {
@@ -215,6 +221,17 @@ public abstract class AbstractMinimizationVisitor implements
 			return referenceNodeMap.get(methodEntry);
 		}
 		return null;
+	}
+
+	/**
+	 * Now we can determine if for a certain visitor run (method node) there
+	 * exists a outgoing call edge. This is needed because there is a possible
+	 * duplication of formulas (detected on 03.04.2013 on pipline_unsafe.cil.c)
+	 * 
+	 * @return true, if there is an outgoing call edge
+	 */
+	public boolean isCallReturnEdgeInvolved() {
+		return containsCallReturnEdge;
 	}
 
 }
