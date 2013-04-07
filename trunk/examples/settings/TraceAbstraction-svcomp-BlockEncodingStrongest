@@ -21,7 +21,6 @@ file_export_version=3.0
 /configuration/CFGReducer/SelectedSolver=0
 #Tue Jul 24 22:01:47 CEST 2012
 /configuration/RCFGBuilder/DumpPath=dump
-/configuration/RCFGBuilder/BlockSize=loop free block
 /configuration/RCFGBuilder/AdditionalEdges=None
 \!/configuration/RCFGBuilder=
 /configuration/RCFGBuilder/Iterations=10000
@@ -31,3 +30,5 @@ file_export_version=3.0
 /configuration/RCFGBuilder/Concurrency=Finite Automata
 /configuration/RCFGBuilder/HoareAnnotation=false
 /configuration/RCFGBuilder/AllErrorsAtOnce=true
+/configuration/RCFGBuilder/BlockSize=single program statement
+/configuration/RCFGBuilder/PreserveGotoEdges=true
