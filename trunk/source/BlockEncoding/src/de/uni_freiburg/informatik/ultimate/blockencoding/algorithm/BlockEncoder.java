@@ -46,7 +46,7 @@ public class BlockEncoder {
 	private MinimizeCallReturnVisitor mcrVisitor;
 
 	private boolean shouldMinimizeCallReturn;
-	
+
 	private ArrayList<MinimizedNode> nonCallingFunctions;
 
 	public BlockEncoder() {
@@ -75,7 +75,7 @@ public class BlockEncoder {
 		mlVisitor = new MinimizeLoopVisitor(s_Logger);
 		mcrVisitor = new MinimizeCallReturnVisitor(s_Logger);
 		tmVisitor = new TestMinimizationVisitor(s_Logger);
-		
+
 		nonCallingFunctions = new ArrayList<MinimizedNode>();
 
 		for (RCFGEdge edge : root.getOutgoingEdges()) {
@@ -101,29 +101,47 @@ public class BlockEncoder {
 		if (shouldMinimizeCallReturn) {
 			for (MinimizedNode node : nonCallingFunctions) {
 				mlVisitor.visitNode(node);
-			}			
+			}
+			// Since it is possible to merge methods in different steps, we have
+			// to handle this. Therefore we made up a list where the
+			// MinimizeCallReturnVisitor tells us which nodes we have to inspect
+			// again!
+			ArrayList<MinimizedNode> methodNodes = new ArrayList<MinimizedNode>();
 			for (RCFGEdge edge : root.getOutgoingEdges()) {
 				if (edge instanceof RootEdge) {
+					methodNodes.add(BlockEncodingAnnotation.getAnnotation(
+							(RootEdge) edge).getNode());
+				}
+			}
+			// Now we start processing the method nodes, first step is to
+			// replace the call and return edges with substitutions
+			do {
+				for (MinimizedNode node : methodNodes) {
 					s_Logger.debug("Try to merge Call- and Return-Edges for the Method: "
-							+ edge.getTarget());
-					mcrVisitor.visitNode(BlockEncodingAnnotation.getAnnotation(
-							(RootEdge) edge).getNode());
+							+ node);
+					mcrVisitor.visitNode(node);
 				}
-			}
-			for (RCFGEdge edge : root.getOutgoingEdges()) {
-				if (edge instanceof RootEdge) {
-					mbVisitor.visitNode(BlockEncodingAnnotation.getAnnotation(
-							(RootEdge) edge).getNode());
+				methodNodes.clear();
+				methodNodes.addAll(mcrVisitor.getNodesForReVisit());
+				// clear the nodes found by the mcrVisitor
+				mcrVisitor.getNodesForReVisit().clear();
+				// Here try to minimize the rest of the CFG, so that maybe a
+				// further minimization is possible in the next run
+				for (RCFGEdge edge : root.getOutgoingEdges()) {
+					if (edge instanceof RootEdge) {
+						mbVisitor.visitNode(BlockEncodingAnnotation
+								.getAnnotation((RootEdge) edge).getNode());
+					}
 				}
-			}
-			for (RCFGEdge edge : root.getOutgoingEdges()) {
-				if (edge instanceof RootEdge) {
-					mlVisitor.visitNode(BlockEncodingAnnotation.getAnnotation(
-							(RootEdge) edge).getNode());
-					tmVisitor.visitNode(BlockEncodingAnnotation.getAnnotation(
-							(RootEdge) edge).getNode());
+				for (RCFGEdge edge : root.getOutgoingEdges()) {
+					if (edge instanceof RootEdge) {
+						mlVisitor.visitNode(BlockEncodingAnnotation
+								.getAnnotation((RootEdge) edge).getNode());
+						tmVisitor.visitNode(BlockEncodingAnnotation
+								.getAnnotation((RootEdge) edge).getNode());
+					}
 				}
-			}
+			} while (!methodNodes.isEmpty());
 		}
 		return root;
 	}

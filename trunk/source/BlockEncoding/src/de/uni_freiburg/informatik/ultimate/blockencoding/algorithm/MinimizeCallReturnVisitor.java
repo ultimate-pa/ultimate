@@ -40,10 +40,17 @@ public class MinimizeCallReturnVisitor implements IMinimizationVisitor {
 	private HashSet<MinimizedNode> actualCallStack;
 
 	/**
+	 * We need this list of nodes where we replaced an call edge by substitution.
+	 * Maybe it is possible to minimize them again, in a later step.
+	 */
+	private HashSet<MinimizedNode> nodesForReVisit;
+
+	/**
 	 * 
 	 */
 	public MinimizeCallReturnVisitor(Logger logger) {
 		s_Logger = logger;
+		nodesForReVisit = new HashSet<MinimizedNode>();
 	}
 
 	@Override
@@ -82,8 +89,9 @@ public class MinimizeCallReturnVisitor implements IMinimizationVisitor {
 					// We get the substitution and the shortcut to the error
 					// locations, which can be added directly
 					substituteEdge = edges[0];
-					directEdgesToErrorLocation(edge, edges);
-
+					if (edges.length > 1) {
+						directEdgesToErrorLocation(edge, edges);
+					}
 					// if our substitueEdge is an Call-Edge, we try do resolve
 					// it recursively, if this is not possible we do not
 					// minimize further (possible cycles in the call graph)
@@ -111,7 +119,9 @@ public class MinimizeCallReturnVisitor implements IMinimizationVisitor {
 							substituteEdge = null;
 						} else {
 							substituteEdge = edges[0];
-							directEdgesToErrorLocation(edge, edges);
+							if (edges.length > 1) {
+								directEdgesToErrorLocation(edge, edges);
+							}
 						}
 					}
 					// if the method is not mergeable we return null
@@ -127,6 +137,8 @@ public class MinimizeCallReturnVisitor implements IMinimizationVisitor {
 				// the Return is still missing!
 				substituteEdge = new ConjunctionEdge(edge, substituteEdge);
 				minimizeCallReturnEdge(((IBasicEdge) edge), substituteEdge);
+				// so we replaced an call here, so we may have to revisit this node
+				nodesForReVisit.add(edge.getSource());
 				// Since we have replaced the call-edge, we create a new
 				// incoming edge level for the Method-Entry-Node
 				ArrayList<IMinimizedEdge> incomingListLevel = new ArrayList<IMinimizedEdge>(
@@ -318,5 +330,12 @@ public class MinimizeCallReturnVisitor implements IMinimizationVisitor {
 		returningNode.addNewIncomingEdgeLevel(Collections
 				.singletonList(substitute));
 
+	}
+
+	/**
+	 * @return the nodesForReVisit
+	 */
+	public HashSet<MinimizedNode> getNodesForReVisit() {
+		return nodesForReVisit;
 	}
 }
