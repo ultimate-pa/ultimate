@@ -31,7 +31,7 @@ public class BuchiIsEmpty<LETTER,STATE> implements IOperation {
 	public BuchiIsEmpty(INestedWordAutomaton<LETTER, STATE> nwa) {
 		m_nwa = nwa;
 		s_Logger.info(startMessage());
-		checkEmptiness();
+		m_Result = checkEmptiness();
 		s_Logger.info(exitMessage());
 	}
 	
