@@ -397,8 +397,18 @@ public class TraceChecker {
 			//Check if subtrace is "compatible" with interpolants computed so
 			//far. Obviously trace fulfills specification, but we need this
 			//proof to be able to compute interpolants.
-			LBool isSafe = tc.checkTrace(precondition, 
-					m_Interpolants[returnPosition], pendingContexts, subtrace);
+			IPredicate interpolantAtReturnPosition;
+			if (returnPosition == nestedTrace.length()-1) {
+				// special case: last position of trace is return
+				// interpolant at this position is false and not necessarily
+				// contained in m_Interpolants
+				interpolantAtReturnPosition = m_PredicateBuilder.getOrConstructPredicate(
+						m_SmtManager.getScript().term("false"), new HashSet<BoogieVar>(0), new HashSet<String>(0));
+			} else {
+				interpolantAtReturnPosition = m_Interpolants[returnPosition]; 
+			}
+			LBool isSafe = tc.checkTrace(precondition, interpolantAtReturnPosition 
+					, pendingContexts, subtrace);
 			assert isSafe == LBool.UNSAT;
 			
 			//Compute interpolants for subsequence and add them to interpolants
@@ -432,7 +442,7 @@ public class TraceChecker {
 	
 		int currentContextStackDepth = 0;
 		NestedWord<CodeBlock> nestedTrace = (NestedWord<CodeBlock>) m_Trace;
-		for (int i=0; i<nestedTrace.length(); i++) {
+		for (int i=0; i<nestedTrace.length()-1 ; i++) {
 			
 			if (nestedTrace.isInternalPosition(i)) {
 				if (interpolatedPositions.contains(i) && currentContextStackDepth == 0) {

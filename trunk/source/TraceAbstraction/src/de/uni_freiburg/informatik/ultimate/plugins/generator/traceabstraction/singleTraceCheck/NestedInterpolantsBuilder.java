@@ -449,13 +449,24 @@ public class NestedInterpolantsBuilder {
 	private IPredicate[] computePredicates() {
 		IPredicate[] result = new IPredicate[m_Trace.length()-1];
 		assert m_CraigInterpolants.length == craigInt2interpolantIndex.size();
+		assert m_InterpolatedPositions.size() == m_CraigInterpolants.length;
 		FormulaWalker walker = new FormulaWalker(m_sfmv, m_Script);
 		
 		Map<Term,IPredicate> withIndices2Predicate =	new HashMap<Term,IPredicate>();
 		
 		int craigInterpolPos = 0;
 		for (int resultPos=0; resultPos<m_Trace.length()-1; resultPos++) {
-			int positionOfThisCraigInterpolant = craigInt2interpolantIndex.get(craigInterpolPos);
+			int positionOfThisCraigInterpolant;
+			if (craigInterpolPos == m_CraigInterpolants.length) {
+				// special case where trace ends with return
+				// we already added all CraigInterpolants
+				// remaining interpolants are "unknown" and the implicit given 
+				// false at the end
+				assert m_Trace.isReturnPosition(m_Trace.length()-1);
+				positionOfThisCraigInterpolant = Integer.MAX_VALUE;
+			} else {
+				positionOfThisCraigInterpolant = craigInt2interpolantIndex.get(craigInterpolPos);
+			}
 			assert positionOfThisCraigInterpolant >= resultPos;
 			if (isInterpolatedPositio(resultPos)) {
 					Term withIndices = m_CraigInterpolants[craigInterpolPos];
@@ -475,6 +486,7 @@ public class NestedInterpolantsBuilder {
 				result[resultPos] = m_SmtManager.newDontCarePredicate(null);
 			}
 		}
+		assert craigInterpolPos == m_CraigInterpolants.length;
 		return result;
 	}
 
