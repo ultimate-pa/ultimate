@@ -44,13 +44,16 @@ public class MinimizeCallReturnVisitor implements IMinimizationVisitor {
 	 * Maybe it is possible to minimize them again, in a later step.
 	 */
 	private HashSet<MinimizedNode> nodesForReVisit;
+	
+	private AbstractMinimizationVisitor amVisitor;
 
 	/**
 	 * 
 	 */
-	public MinimizeCallReturnVisitor(Logger logger) {
+	public MinimizeCallReturnVisitor(Logger logger, AbstractMinimizationVisitor amVisitor) {
 		s_Logger = logger;
 		nodesForReVisit = new HashSet<MinimizedNode>();
+		this.amVisitor = amVisitor;
 	}
 
 	@Override
@@ -138,7 +141,7 @@ public class MinimizeCallReturnVisitor implements IMinimizationVisitor {
 				substituteEdge = new ConjunctionEdge(edge, substituteEdge);
 				minimizeCallReturnEdge(((IBasicEdge) edge), substituteEdge);
 				// so we replaced an call here, so we may have to revisit this node
-				nodesForReVisit.add(edge.getSource());
+				nodesForReVisit.add(amVisitor.getCorrespondingStartNode(edge.getSource()));
 				// Since we have replaced the call-edge, we create a new
 				// incoming edge level for the Method-Entry-Node
 				ArrayList<IMinimizedEdge> incomingListLevel = new ArrayList<IMinimizedEdge>(

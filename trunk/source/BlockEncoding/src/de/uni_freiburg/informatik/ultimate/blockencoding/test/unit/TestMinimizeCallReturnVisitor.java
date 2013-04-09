@@ -62,7 +62,7 @@ public class TestMinimizeCallReturnVisitor extends TestCase {
 				.getLogger(Activator.s_PLUGIN_ID);
 		mbv = new MinimizeBranchVisitor(logger);
 		mlv = new MinimizeLoopVisitor(logger);
-		mcrv = new MinimizeCallReturnVisitor(logger);
+		mcrv = new MinimizeCallReturnVisitor(logger, mbv);
 	}
 
 	@Test

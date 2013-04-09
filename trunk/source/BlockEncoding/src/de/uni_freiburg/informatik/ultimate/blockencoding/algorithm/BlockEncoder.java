@@ -73,7 +73,7 @@ public class BlockEncoder {
 		// Initialize the Visitors, which apply the minimization rules
 		mbVisitor = new MinimizeBranchVisitor(s_Logger);
 		mlVisitor = new MinimizeLoopVisitor(s_Logger);
-		mcrVisitor = new MinimizeCallReturnVisitor(s_Logger);
+		mcrVisitor = new MinimizeCallReturnVisitor(s_Logger, mbVisitor);
 		tmVisitor = new TestMinimizationVisitor(s_Logger);
 
 		nonCallingFunctions = new ArrayList<MinimizedNode>();
