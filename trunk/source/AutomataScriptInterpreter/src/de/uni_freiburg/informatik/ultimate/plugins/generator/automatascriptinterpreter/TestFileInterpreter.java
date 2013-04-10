@@ -59,7 +59,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.A
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.WhileStatement;
 import de.uni_freiburg.informatik.ultimate.result.GenericResult;
 import de.uni_freiburg.informatik.ultimate.result.GenericResult.Severity;
-import de.uni_freiburg.informatik.ultimate.result.NoResult;
 
 
 enum Flow {
@@ -73,192 +72,295 @@ public class TestFileInterpreter {
 		
 		public void checkType(AtsASTNode n) throws IllegalArgumentException {
 			if (n instanceof AssignmentExpression) {
-				AssignmentExpression as = (AssignmentExpression) n;
-				List<AtsASTNode> children = as.getOutgoingNodes();
-				if (children.size() != 2) {
-					String message = as.getLocation().getStartLine() + ": AssignmentExpression: It should have 2 operands\n";
-					message = message.concat("On the left-hand side there  must be a VariableExpression, ");
-					message = message.concat("On the right-hand side there can be an arbitrary expression.");
-					throw new IllegalArgumentException(message);
-				}
-				VariableExpression var = (VariableExpression) children.get(0);
-				// Check for correct types
-				if (!var.isTypeCorrect(getType(children.get(1)))) {
-					String message = "AssignmentExpression: Type error";
-					message = message.concat(children.get(1).getReturnType() + " is not assignable to " + var.getReturnType());
-					throw new IllegalArgumentException(message);
-				}
+				checkType((AssignmentExpression) n);
 			} else if (n instanceof BinaryExpression) {
-				BinaryExpression be = (BinaryExpression) n;
-				List<AtsASTNode> children = be.getOutgoingNodes();
-				if (children.size() != 2) {
-					String message = be.getLocation().getStartLine() + ": BinaryExpression should always have 2 children!\nNum of children: " + children.size();
-					throw new IllegalArgumentException(message);
-				}
-				// Check for correct types
-				if (!be.isTypeCorrect(getType(children.get(0)))) {
-					String message = be.getLocation().getStartLine() + ": BinaryExpression: Left operand \n";
-					message = message.concat("Expected: " + be.getReturnType() + "\tGot: " + children.get(0).getReturnType());
-					throw new IllegalArgumentException(message);
-				} else if (!be.isTypeCorrect(getType(children.get(1)))) {
-					String message = be.getLocation().getStartLine() + ": BinaryExpression: Right operand\n";
-					message = message.concat("Expected: " + be.getReturnType() + "\tGot: " + children.get(1).getReturnType());
-					throw new IllegalArgumentException(message);
-				}
+				checkType((BinaryExpression) n);
 			}  else if (n instanceof ConditionalBooleanExpression) {
-				ConditionalBooleanExpression cbe = (ConditionalBooleanExpression)n;
-				List<AtsASTNode> children = cbe.getOutgoingNodes();
-				if ((cbe.getOperator() == ConditionalBooleanOperator.NOT) && (children.size() != 1)) {
-					String message = cbe.getLocation().getStartLine() + ": ConditionalBooleanExpression: NOT operator should have 1 operand!\nNum of operands: " + children.size();
-					throw new IllegalArgumentException(message);
-				} else if ((cbe.getOperator() == ConditionalBooleanOperator.AND) && (children.size() != 2)) {
-					String message = cbe.getLocation().getStartLine() + ": ConditionalBooleanExpression: AND operator should have 2 operands!\nNum of operands: " + children.size();
-					throw new IllegalArgumentException(message);
-				} else if ((cbe.getOperator() == ConditionalBooleanOperator.OR) && (children.size() != 2)) {
-					String message = cbe.getLocation().getStartLine() + ": ConditionalBooleanExpression: OR operator should have 2 operands!\nNum of operands: " + children.size();
-					throw new IllegalArgumentException(message);
-				}
-				// Check for correct types
-				if (!cbe.isTypeCorrect(getType(children.get(0)))) {
-					String message = cbe.getLocation().getStartLine() + ": ConditionalBooleanExpression: 1st child is not a Boolean expression\n";
-					message = message.concat("Expected: " + cbe.getReturnType() + "\tGot: " + children.get(0).getReturnType());
-					throw new IllegalArgumentException(message);
-				}
-				if ((children.size() == 2) && (!cbe.isTypeCorrect(getType(children.get(1))))) {
-					String message = cbe.getLocation().getStartLine() + ": ConditionalBooleanExpression: 2nd child\n";
-					message = message.concat("Expected: " + cbe.getReturnType() + "\tGot: " + children.get(1).getReturnType());
-					throw new IllegalArgumentException(message);
-				}
+				checkType((ConditionalBooleanExpression) n);
 			} else if (n instanceof ForStatement) {
-				ForStatement fs = (ForStatement)n;
-				List<AtsASTNode> children = fs.getOutgoingNodes();
-				if (children.size() != 4) {
-					String message = fs.getLocation().getStartLine() + ": ForStatement should have 4 children (condition, initStmt, updateStmt, stmtList)\n";
-					message = message.concat("Num of children: " + children.size());
-					throw new IllegalArgumentException(message);
-				}
-				if ((children.get(0) != null) && (children.get(0).getReturnType() != Boolean.class)) {
-					String message = fs.getLocation().getStartLine() + ": ForStatement: Loopcondition is not a Boolean expression\n";
-					message = message.concat("Expected: " + Boolean.class + "\tGot: " + children.get(0).getReturnType());
-					throw new IllegalArgumentException(message);
-				}
+				checkType((ForStatement) n);
 			} else if (n instanceof IfElseStatement) {
-				IfElseStatement is = (IfElseStatement) n;
-				List<AtsASTNode> children = is.getOutgoingNodes();
-				if (children.size() != 3) {
-					String message = is.getLocation().getStartLine() + ": IfElseStatement should have 3 children (Condition, Thenstatements, Elsestatements)";
-					message = message.concat("Num of children: " + children.size());
-					throw new IllegalArgumentException(message);
-				}
-				// Check for correct types
-				if (children.get(0).getReturnType() != Boolean.class) {
-					String message = is.getLocation().getStartLine() + ": IfElseStatement: Condition is not a Boolean expression\n";
-					message = message.concat("Expected: " + Boolean.class + "\tGot: " + children.get(0).getReturnType());
-					throw new IllegalArgumentException(message);
-				}
+				checkType((IfElseStatement) n);
 			} else if (n instanceof IfStatement) {
-				IfStatement is = (IfStatement) n;
-				List<AtsASTNode> children = is.getOutgoingNodes();
-				if (children.size() != 2) {
-					String message = is.getLocation().getStartLine() + ": IfStatement should have 2 children (condition, thenStatements)\n";
-					message = message.concat("Num of children: " + children.size());
-					throw new IllegalArgumentException(message);
-				}
-				if (children.get(0).getReturnType() != Boolean.class) {
-					String message = is.getLocation().getStartLine() + ": IfStatement: 1st child is not a Boolean expression\n";
-					message = message.concat("Expected: " + Boolean.class + "\tGot: " + children.get(0).getReturnType());
-					throw new IllegalArgumentException(message);
-				}
+				checkType((IfStatement) n);
 			} else if (n instanceof OperationInvocationExpression) {
-//				result = interpret((OperationInvocationExpression) n);
+				// TODO: Check type of parameters for this operation
 			} else if (n instanceof RelationalExpression) {
-				RelationalExpression re = (RelationalExpression)n;
-				List<AtsASTNode> children = re.getOutgoingNodes();
-				if (children.size() != 2) {
-					String message = re.getLocation().getStartLine() + ": RelationalExpression should always have 2 operands!\nNum of operands: " + children.size();
-					throw new IllegalArgumentException(message);
-				}
-				// Check for correct types
-				if (!children.get(0).isTypeCorrect(re.getExpectingType())) {
-					String message = re.getLocation().getStartLine() + ": RelationalExpression: Left operand\n";
-					message = message.concat("Expected: " + re.getExpectingType() + "\tGot: " + children.get(0).getReturnType());
-					throw new IllegalArgumentException(message);
-				} else if (!children.get(1).isTypeCorrect(re.getExpectingType())) {
-					String message = re.getLocation().getStartLine() + ": RelationalExpression: Right operand\n";
-					message = message.concat("Expected: " + re.getExpectingType() + "\tGot: " + children.get(1).getReturnType());
-					throw new IllegalArgumentException(message);
-				}
+				checkType((RelationalExpression) n);
 			} else if (n instanceof StatementList) {
 				for (AtsASTNode stmt : ((StatementList)n).getOutgoingNodes()) {
 					checkType(stmt);
 				}
 			} else if (n instanceof UnaryExpression) {
-				UnaryExpression ue = (UnaryExpression) n;
-				List<AtsASTNode> children = ue.getOutgoingNodes();
-				if (children.size() != 1) {
-					String message = ue.getLocation().getStartLine() + ": UnaryExpression at line should always have 1 child!\nNum of children: " + children.size();
-					throw new IllegalArgumentException(message);
-				}
-				if (!(children.get(0) instanceof VariableExpression)) {
-					String message = ue.getLocation().getStartLine() + ": Unary operators are applicable only on variables!\nYou want to apply it on " + children.get(0).getClass().getSimpleName();
-					throw new IllegalArgumentException(message);
-				}
-				// Check for correct types
-				if (!children.get(0).isTypeCorrect(ue.getReturnType())) {
-					String message = ue.getLocation().getStartLine() + ": UnaryExpression: 1st child\n";
-					message = message.concat("Expected: " + ue.getReturnType() + "\tGot: " + children.get(0).getReturnType());
-					throw new IllegalArgumentException(message);
-				}
+				checkType((UnaryExpression) n);
 			} else if (n instanceof VariableDeclaration) {
-				VariableDeclaration vd = (VariableDeclaration) n;
-				List<AtsASTNode> children = vd.getOutgoingNodes();
-		    	if ((children.size() != 0) && (children.size() != 1)) {
-		    		String message = vd.getLocation().getStartLine() + ": VariableDeclaration should have 0 or 1 child. (the value to assign)";
-					throw new IllegalArgumentException(message);
-		    	}
-		    	if (!vd.isTypeCorrect(getType(children.get(0)))) {
-		    		String message = vd.getLocation().getStartLine() + ": VariableDeclaration Typecheck error."
-		    				           + " Expression on the right side should have type " + vd.getExpectingType().getSimpleName();
-		    		throw new IllegalArgumentException(message);
-		    	}
+				checkType((VariableDeclaration) n);
 			} else if (n instanceof WhileStatement) {
-				WhileStatement ws = (WhileStatement) n;
-				List<AtsASTNode> children = ws.getOutgoingNodes();
-				if (children.size() != 2) {
-					String message = "WhileStatement should have 2 child nodes (condition, stmtList)\n";
-					message = message.concat("Number of children: " + children.size());
-					throw new IllegalArgumentException(message);
+				checkType((WhileStatement) n);
+			}
+				
+		}
+		
+		private void checkType(AssignmentExpression as) throws IllegalArgumentException {
+			List<AtsASTNode> children = as.getOutgoingNodes();
+			if (children.size() != 2) {
+				String message = as.getLocation().getStartLine() + ": AssignmentExpression: It should have 2 operands\n";
+				message = message.concat("On the left-hand side there  must be a VariableExpression, ");
+				message = message.concat("On the right-hand side there can be an arbitrary expression.");
+				throw new IllegalArgumentException(message);
+			}
+			VariableExpression var = (VariableExpression) children.get(0);
+			// Check the type of children
+			checkType(children.get(1));
+			for (Class<?> c : getTypes(children.get(1))) {
+				// Check for correct types
+				if (var.isTypeCorrect(c)) {
+					return;
 				}
-				if ((children.get(0) != null) && (children.get(0).getReturnType() != Boolean.class)) {
-					String message = "WhileStatement: Loop condition is not a Boolean expression\n";
-					message = message.concat("Expected: " + Boolean.class + "\tGot: " + children.get(0).getReturnType());
-					throw new IllegalArgumentException(message);
+			}
+			String message = "AssignmentExpression: Type error";
+			message = message.concat(children.get(1).getReturnType() + " is not assignable to " + var.getReturnType());
+			throw new IllegalArgumentException(message);
+			
+		}
+		
+		private void checkType(BinaryExpression be)  throws IllegalArgumentException {
+			List<AtsASTNode> children = be.getOutgoingNodes();
+			if (children.size() != 2) {
+				String message = be.getLocation().getStartLine() + ": BinaryExpression should always have 2 children!\nNum of children: " + children.size();
+				throw new IllegalArgumentException(message);
+			}
+			// Check children for correct type
+			checkType(children.get(0));
+			checkType(children.get(1));
+			
+			// Check type of the 1st children
+			boolean firstChildHasCorrectType = false;
+			for (Class<?> c : getTypes(children.get(0))) {
+				if (be.isTypeCorrect(c)) {
+					firstChildHasCorrectType = true;
 				}
+			}
+			if(!firstChildHasCorrectType) {
+				String message = be.getLocation().getStartLine() + ": BinaryExpression: Left operand \n";
+				message = message.concat("Expected: " + be.getReturnType() + "\tGot: " + children.get(0).getReturnType());
+				throw new IllegalArgumentException(message);
+			}
+			
+			// Check type of the 2nd children
+			for (Class<?> c : getTypes(children.get(1))) {
+				if (be.isTypeCorrect(c)) {
+					return;
+				}
+			}
+			String message = be.getLocation().getStartLine() + ": BinaryExpression: Right operand\n";
+			message = message.concat("Expected: " + be.getReturnType() + "\tGot: " + children.get(1).getReturnType());
+			throw new IllegalArgumentException(message);
+
+		}
+		
+		private void checkType(ConditionalBooleanExpression cbe)  throws IllegalArgumentException {
+			List<AtsASTNode> children = cbe.getOutgoingNodes();
+			if ((cbe.getOperator() == ConditionalBooleanOperator.NOT) && (children.size() != 1)) {
+				String message = cbe.getLocation().getStartLine() + ": ConditionalBooleanExpression: NOT operator should have 1 operand!\nNum of operands: " + children.size();
+				throw new IllegalArgumentException(message);
+			} else if ((cbe.getOperator() == ConditionalBooleanOperator.AND) && (children.size() != 2)) {
+				String message = cbe.getLocation().getStartLine() + ": ConditionalBooleanExpression: AND operator should have 2 operands!\nNum of operands: " + children.size();
+				throw new IllegalArgumentException(message);
+			} else if ((cbe.getOperator() == ConditionalBooleanOperator.OR) && (children.size() != 2)) {
+				String message = cbe.getLocation().getStartLine() + ": ConditionalBooleanExpression: OR operator should have 2 operands!\nNum of operands: " + children.size();
+				throw new IllegalArgumentException(message);
+			}
+			// Check children for correct type
+			checkType(children.get(0));
+			if (children.size() == 2) checkType(children.get(1));
+			boolean firstChildHasCorrectType = false;
+			for (Class<?> c : getTypes(children.get(0))) {
+				if (cbe.isTypeCorrect(c)) {
+					firstChildHasCorrectType = true;
+				}
+			}
+			if (!firstChildHasCorrectType) {
+				String message = cbe.getLocation().getStartLine() + ": ConditionalBooleanExpression: 1st child is not a Boolean expression\n";
+				message = message.concat("Expected: " + cbe.getReturnType() + "\tGot: " + children.get(0).getReturnType());
+				throw new IllegalArgumentException(message);
+			}
+			if (children.size() == 2) {
+				for (Class<?> c : getTypes(children.get(1))) {
+					if (cbe.isTypeCorrect(c)) {
+						return;
+					}
+				}
+				String message = cbe.getLocation().getStartLine() + ": ConditionalBooleanExpression: 2nd child\n";
+				message = message.concat("Expected: " + cbe.getReturnType() + "\tGot: " + children.get(1).getReturnType());
+				throw new IllegalArgumentException(message);
 			}
 		}
 		
-		private Class<?> getType(AtsASTNode n) throws UnsupportedOperationException {
+		private void checkType(ForStatement fs)  throws IllegalArgumentException {
+			List<AtsASTNode> children = fs.getOutgoingNodes();
+			if (children.size() != 4) {
+				String message = fs.getLocation().getStartLine() + ": ForStatement should have 4 children (condition, initStmt, updateStmt, stmtList)\n";
+				message = message.concat("Num of children: " + children.size());
+				throw new IllegalArgumentException(message);
+			}
+			if ((children.get(0) != null) && (children.get(0).getReturnType() != Boolean.class)) {
+				String message = fs.getLocation().getStartLine() + ": ForStatement: Loopcondition is not a Boolean expression\n";
+				message = message.concat("Expected: " + Boolean.class + "\tGot: " + children.get(0).getReturnType());
+				throw new IllegalArgumentException(message);
+			}
+		}
+		
+		private void checkType(IfElseStatement is)  throws IllegalArgumentException {
+			List<AtsASTNode> children = is.getOutgoingNodes();
+			if (children.size() != 3) {
+				String message = is.getLocation().getStartLine() + ": IfElseStatement should have 3 children (Condition, Thenstatements, Elsestatements)";
+				message = message.concat("Num of children: " + children.size());
+				throw new IllegalArgumentException(message);
+			}
+			// Check the if-condition for correct type
+			checkType(children.get(0));
+			// Check for correct types
+			if (children.get(0).getReturnType() != Boolean.class) {
+				String message = is.getLocation().getStartLine() + ": IfElseStatement: Condition is not a Boolean expression\n";
+				message = message.concat("Expected: " + Boolean.class + "\tGot: " + children.get(0).getReturnType());
+				throw new IllegalArgumentException(message);
+			}
+		}
+		
+		private void checkType(IfStatement is)  throws IllegalArgumentException {
+			List<AtsASTNode> children = is.getOutgoingNodes();
+			if (children.size() != 2) {
+				String message = is.getLocation().getStartLine() + ": IfStatement should have 2 children (condition, thenStatements)\n";
+				message = message.concat("Num of children: " + children.size());
+				throw new IllegalArgumentException(message);
+			}
+			// Check the if-condition for correct type
+			checkType(children.get(0));
+			if (children.get(0).getReturnType() != Boolean.class) {
+				String message = is.getLocation().getStartLine() + ": IfStatement: 1st child is not a Boolean expression\n";
+				message = message.concat("Expected: " + Boolean.class + "\tGot: " + children.get(0).getReturnType());
+				throw new IllegalArgumentException(message);
+			}
+		}
+		
+		private void checkType(RelationalExpression re)  throws IllegalArgumentException {
+			List<AtsASTNode> children = re.getOutgoingNodes();
+			if (children.size() != 2) {
+				String message = re.getLocation().getStartLine() + ": RelationalExpression should always have 2 operands!\nNum of operands: " + children.size();
+				throw new IllegalArgumentException(message);
+			}
+			// Check children for correct type
+			checkType(children.get(0));
+			checkType(children.get(1));
+			
+			boolean firstChildHasCorrectType = false;
+			for (Class<?> c : getTypes(children.get(0))) {
+				if (c.isAssignableFrom(re.getExpectingType())) {
+					firstChildHasCorrectType = true;
+				}
+			}
+			if (!firstChildHasCorrectType) {
+				String message = re.getLocation().getStartLine() + ": RelationalExpression: Left operand\n";
+				message = message.concat("Expected: " + re.getExpectingType() + "\tGot: " + children.get(0).getReturnType());
+				throw new IllegalArgumentException(message);
+			}
+			
+			for (Class<?> c : getTypes(children.get(1))) {
+				if (c.isAssignableFrom(re.getExpectingType())) {
+					return;
+				}
+			}
+			String message = re.getLocation().getStartLine() + ": RelationalExpression: Right operand\n";
+			message = message.concat("Expected: " + re.getExpectingType() + "\tGot: " + children.get(1).getReturnType());
+			throw new IllegalArgumentException(message);
+		}
+		
+		private void checkType(UnaryExpression ue)  throws IllegalArgumentException {
+			List<AtsASTNode> children = ue.getOutgoingNodes();
+			if (children.size() != 1) {
+				String message = ue.getLocation().getStartLine() + ": UnaryExpression at line should always have 1 child!\nNum of children: " + children.size();
+				throw new IllegalArgumentException(message);
+			}
+			// Check children for correct type
+			checkType(children.get(0));
+			
+			if (!(children.get(0) instanceof VariableExpression)) {
+				String message = ue.getLocation().getStartLine() + ": Unary operators are applicable only on variables!\nYou want to apply it on " + children.get(0).getClass().getSimpleName();
+				throw new IllegalArgumentException(message);
+			}
+			// Check for correct types
+			for (Class<?> c : getTypes(children.get(0))) {
+				if (c.isAssignableFrom(ue.getReturnType())) {
+					return;
+				}
+			}
+			String message = ue.getLocation().getStartLine() + ": UnaryExpression: 1st child\n";
+			message = message.concat("Expected: " + ue.getReturnType() + "\tGot: " + children.get(0).getReturnType());
+			throw new IllegalArgumentException(message);
+		}
+		
+		private void checkType(VariableDeclaration vd)  throws IllegalArgumentException {
+			List<AtsASTNode> children = vd.getOutgoingNodes();
+	    	if ((children.size() != 0) && (children.size() != 1)) {
+	    		String message = vd.getLocation().getStartLine() + ": VariableDeclaration should have 0 or 1 child. (the value to assign)";
+				throw new IllegalArgumentException(message);
+	    	}
+	    	if (children.size() == 0) return;
+	    	
+	    	for (Class<?> c : getTypes(children.get(0))) {
+	    		if (vd.isTypeCorrect(c)) {
+	    			return;
+	    		}
+	    	}
+	    	String message = vd.getLocation().getStartLine() + ": VariableDeclaration Typecheck error."
+	    			+ " Expression on the right side should have type " + vd.getExpectingType().getSimpleName();
+	    	throw new IllegalArgumentException(message);
+		}
+		
+		private void checkType(WhileStatement ws)  throws IllegalArgumentException {
+			List<AtsASTNode> children = ws.getOutgoingNodes();
+			if (children.size() != 2) {
+				String message = "WhileStatement should have 2 child nodes (condition, stmtList)\n";
+				message = message.concat("Number of children: " + children.size());
+				throw new IllegalArgumentException(message);
+			}
+			if ((children.get(0) != null) && (children.get(0).getReturnType() != Boolean.class)) {
+				String message = "WhileStatement: Loop condition is not a Boolean expression\n";
+				message = message.concat("Expected: " + Boolean.class + "\tGot: " + children.get(0).getReturnType());
+				throw new IllegalArgumentException(message);
+			}
+		}
+		
+		private Set<Class<?>> getTypes(AtsASTNode n) throws UnsupportedOperationException {
 			if (n instanceof OperationInvocationExpression) {
 				OperationInvocationExpression oe = (OperationInvocationExpression) n;
 				String opName = oe.getOperationName().toLowerCase();
+				Set<Class<?>> returnTypes = new HashSet<Class<?>>();
 				if (m_existingOperations.containsKey(opName)) {
 					Set<Class<?>> operationClasses = m_existingOperations.get(opName);
 					for (Class<?> operationClass : operationClasses) {
 							for (Method m : operationClass.getMethods()) {
 								if (m.getName().equals("getResult")) {
-									return m.getReturnType();
+									returnTypes.add(m.getReturnType());
 								}
 							}
-							throw new UnsupportedOperationException("Operation \"" + opName + "\" has no operation \"getResult()\"");
+					}
+					if (returnTypes.isEmpty()) {
+						throw new UnsupportedOperationException("Operation \"" + opName + "\" has no operation \"getResult()\"");
+					} else {
+						return returnTypes;
 					}
 				} else {
 					throw new UnsupportedOperationException("Operation \"" + opName + "\" was not found!");
 				}
-				return null;
 			} else {
-				return n.getReturnType();
+				Set<Class<?>> returnType = new HashSet<Class<?>>();
+				returnType.add(n.getReturnType());
+				return returnType;
 			}
 		}
+		
 	}
 	
 	private Map<String, Object> m_variables;
@@ -334,6 +436,8 @@ public class TestFileInterpreter {
 			m_tChecker.checkType(children.get(0));
 		} catch (IllegalArgumentException ie) {
 			s_Logger.warn("Typecheck error! Testfile won't be interpreted.");
+			s_Logger.info("Stack trace:");
+			ie.printStackTrace();
 			return null;
 		}
 		Object result;

@@ -5,6 +5,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.*;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AutomataScriptLocation; 
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.model.ILocation;
 import java.util.*;
 import java_cup.runtime.*;
@@ -241,7 +242,7 @@ non terminal Object nested_word_symbol;
  /* -------------------- Specification of Automata DEFINITION Files-----------------------*/
  /* -------------------- Specification of terminals   -----------------------*/
  // 1. Automata Types
- terminal Object NESTEDWORD_AUTOMATA, PETRINET_AUTOMATA;
+ terminal Object NESTEDWORD_AUTOMATA, NESTEDWORD_AUTOMATA_TYPE, PETRINET_AUTOMATA;
  // 2. Alphabets
  terminal Object ALPHABET, CALL_ALPHABET, INTERNAL_ALPHABET, RETURN_ALPHABET;
 // 3. States & Places
@@ -351,6 +352,8 @@ type	::=     INT
         		{: RESULT = Nestedword.class; :}
         |       NESTED_LASSO_WORD
         		{: RESULT = NestedLassoword.class; :}
+        |       NESTEDWORD_AUTOMATA_TYPE
+                {: RESULT = INestedWordAutomaton.class; :}
         ;
 
 // 4. Names

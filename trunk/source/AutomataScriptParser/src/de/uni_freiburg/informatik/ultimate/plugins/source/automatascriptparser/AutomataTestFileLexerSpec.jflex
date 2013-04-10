@@ -82,11 +82,16 @@ StringCharacter = [^\r\n\"\\]
   "while"                        { m_LastToken = m_CurToken; m_CurToken = "while"; return symbol(sym.WHILE); }
   
   /* keywords for Words */
+  /* NestedWord */
   "nw"                           { m_LastToken = m_CurToken; m_CurToken = "nw"; return symbol(sym.NESTED_WORD); }
+  /* NestedLassoWord */
   "nlw"                          { m_LastToken = m_CurToken; m_CurToken = "nlw"; return symbol(sym.NESTED_LASSO_WORD); }
 
   /* keywords for AutomataDefinitionFile */
-  "nwa"                         { m_LastToken = m_CurToken; m_CurToken = "nwa"; return symbol(sym.NESTEDWORD_AUTOMATA); }
+  /* NestedWordAutomaton */
+  "NestedWordAutomaton"          { m_LastToken = m_CurToken; m_CurToken = "NestedWordAutomaton"; return symbol(sym.NESTEDWORD_AUTOMATA_TYPE); }
+  "nwa"          { m_LastToken = m_CurToken; m_CurToken = "NestedWordAutomaton"; return symbol(sym.NESTEDWORD_AUTOMATA); }
+  /* PetriNetJulian */
   "net"                         { m_LastToken = m_CurToken; m_CurToken = "net"; return symbol(sym.PETRINET_AUTOMATA); }
   "alphabet"                    { m_LastToken = m_CurToken; m_CurToken = "alphabet"; return symbol(sym.ALPHABET); }
   "callAlphabet"                { m_LastToken = m_CurToken; m_CurToken = "callAlphabet"; return symbol(sym.CALL_ALPHABET); }
@@ -179,7 +184,7 @@ StringCharacter = [^\r\n\"\\]
   "\\\\"                         { string.append( '\\' ); }
   
   /* error cases */ /* (Betim): No error, because paths can have '\' followed by an arbitrary   character. */
-  \\.                            { /*throw new RuntimeException("Illegal escape sequence   \""+yytext()+"\""); */}
+  \\.                            { }
  
   {LineTerminator}               { throw new RuntimeException("Unterminated string at end of line"); }
 }
