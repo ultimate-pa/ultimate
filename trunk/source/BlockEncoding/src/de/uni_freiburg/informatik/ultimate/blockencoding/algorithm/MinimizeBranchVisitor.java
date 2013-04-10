@@ -102,6 +102,15 @@ public class MinimizeBranchVisitor extends AbstractMinimizationVisitor {
 				parallelEdges.add(pointingMap.get(incomingEdge.getSource()));
 				IMinimizedEdge parallelEdge = pointingMap.get(incomingEdge
 						.getSource());
+				// ParallelEdges maybe Return-Edges, we do not merge them
+				if (incomingEdge.isBasicEdge()
+						&& ((IBasicEdge) incomingEdge).getOriginalEdge() instanceof Return) {
+					return new IMinimizedEdge[0];
+				}
+				if (parallelEdge.isBasicEdge()
+						&& ((IBasicEdge) parallelEdge).getOriginalEdge() instanceof Return) {
+					throw new IllegalArgumentException("");
+				}
 				// Check for Duplication in Formulas, TODO: This may be
 				// algorithmic fixed
 				if (!incomingEdge.isBasicEdge()) {

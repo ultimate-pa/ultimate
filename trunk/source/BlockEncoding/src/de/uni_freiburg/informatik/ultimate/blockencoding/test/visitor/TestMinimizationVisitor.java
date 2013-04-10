@@ -30,7 +30,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Sum
  */
 public class TestMinimizationVisitor extends AbstractMinimizationVisitor {
 
-
 	public TestMinimizationVisitor(Logger logger) {
 		super(logger);
 	}
@@ -151,6 +150,15 @@ public class TestMinimizationVisitor extends AbstractMinimizationVisitor {
 			} else {
 				IMinimizedEdge parallelEdge = pointingMap.get(incomingEdge
 						.getSource());
+				// ParallelEdges maybe Return-Edges, we do not merge them
+				if (incomingEdge.isBasicEdge()
+						&& ((IBasicEdge) incomingEdge).getOriginalEdge() instanceof Return) {
+					return false;
+				}
+				if (parallelEdge.isBasicEdge()
+						&& ((IBasicEdge) parallelEdge).getOriginalEdge() instanceof Return) {
+					throw new IllegalArgumentException("");
+				}
 				// Check for Duplication in Formulas, TODO: This may be
 				// algorithmic fixed
 				if (!incomingEdge.isBasicEdge()) {
