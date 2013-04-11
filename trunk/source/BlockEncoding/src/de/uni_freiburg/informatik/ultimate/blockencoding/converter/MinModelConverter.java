@@ -63,7 +63,8 @@ public class MinModelConverter {
 		RootNode newRoot = new RootNode(root.getRootAnnot());
 		boogie2smt = new Boogie2SMT(newRoot.getRootAnnot().getScript(), false,
 				false);
-		convertVisitor = new ConversionVisitor(boogie2smt, root, getRatingBound());
+		convertVisitor = new ConversionVisitor(boogie2smt, root,
+				getRatingBound());
 		for (RCFGEdge edge : root.getOutgoingEdges()) {
 			if (edge instanceof RootEdge) {
 				BlockEncodingAnnotation annot = BlockEncodingAnnotation
@@ -168,8 +169,8 @@ public class MinModelConverter {
 				if (progPointMap.containsKey(oldVal)) {
 					newReferences.add(progPointMap.get(oldVal));
 				} else {
-					s_Logger.error("All error nodes should also be"
-							+ " in the graph after BlockEncoding");
+					s_Logger.warn("There is no correspondent node in the"
+							+ " new graph for the error location " + oldVal);
 				}
 			}
 			rootAnnot.getErrorNodes().put(key, newReferences);

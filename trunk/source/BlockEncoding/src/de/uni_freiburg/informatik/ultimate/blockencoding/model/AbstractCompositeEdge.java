@@ -94,17 +94,15 @@ public abstract class AbstractCompositeEdge implements ICompositeEdge {
 		return this.containedEdges;
 	}
 
+	
 	/**
-	 * This method checks whether we duplicate parts of our formula. In general
-	 * there should be no duplication, but there exist examples,
-	 * BigBranchingExample, where this can happen. If we have a duplication, we
-	 * not allow the algorithm to merge them!
+	 * Old and recursive variant of duplicationOfFormula
 	 * 
 	 * @param edgeToCheck
-	 * @return true if there is a duplication, false if there is no duplication
+	 * @return
 	 */
-	@Override
-	public boolean duplicationOfFormula(IMinimizedEdge edgeToCheck) {
+	@SuppressWarnings("unused")
+	private boolean duplicationOfFormulaRecursive(IMinimizedEdge edgeToCheck) {
 		if (edgeToCheck.isBasicEdge()) {
 			return containedEdges.contains(edgeToCheck);
 		} else {
@@ -118,6 +116,31 @@ public abstract class AbstractCompositeEdge implements ICompositeEdge {
 		boolean left = duplicationOfFormula(compositeEdges[0]);
 		boolean right = duplicationOfFormula(compositeEdges[1]);
 		return left || right;
+	}
+
+	/**
+	 * This method checks whether we duplicate parts of our formula. In general
+	 * there should be no duplication, but there exist examples,
+	 * BigBranchingExample, where this can happen. If we have a duplication, we
+	 * not allow the algorithm to merge them!
+	 * 
+	 * @param edgeToCheck
+	 * @return true if there is a duplication, false if there is no duplication
+	 */
+	@Override
+	public boolean duplicationOfFormula(IMinimizedEdge edgeToCheck) {
+		// Instead of using the recursive algorithm we use here Set-Intersection
+		// it seems to be a little bit faster, and way more easier to debug.
+		if (!edgeToCheck.isBasicEdge()) {
+			HashSet<IMinimizedEdge> interSection = new HashSet<IMinimizedEdge>(
+					containedEdges);
+			interSection.retainAll(((AbstractCompositeEdge) edgeToCheck)
+					.getContainedEdgesSet());
+
+			return !interSection.isEmpty();
+		} else {
+			return containedEdges.contains(edgeToCheck);
+		}
 	}
 
 	/*
