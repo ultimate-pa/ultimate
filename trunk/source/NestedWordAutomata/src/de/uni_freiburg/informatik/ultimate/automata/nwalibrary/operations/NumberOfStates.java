@@ -35,7 +35,7 @@ public class NumberOfStates<LETTER, STATE> implements IOperation {
 	}
 
 	@Override
-	public Object getResult() throws OperationCanceledException {
+	public Integer getResult() throws OperationCanceledException {
 		return m_Nwa.size();
 	}
 
