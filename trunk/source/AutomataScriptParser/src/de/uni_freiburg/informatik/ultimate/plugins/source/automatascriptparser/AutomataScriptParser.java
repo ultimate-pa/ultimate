@@ -15,6 +15,7 @@ import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.ILocation;
 import de.uni_freiburg.informatik.ultimate.model.TokenMap;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.AutomataDefinitions;
+import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.AutomataTestFile;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.Automaton;
 import de.uni_freiburg.informatik.ultimate.result.GenericResult;
 import de.uni_freiburg.informatik.ultimate.result.GenericResult.Severity;
@@ -47,17 +48,10 @@ public class AutomataScriptParser implements ISource {
 
 		String successMessage = "'" + file.getName() + "' successfully parsed"; 
 		s_Logger.info(successMessage);
-		if (result instanceof AtsASTNode) {
-			List<AtsASTNode> children = ((AtsASTNode)result).getOutgoingNodes();
-			AutomataDefinitions autDefs = null;
-			if (children.get(1) instanceof AutomataDefinitions) {
-				autDefs = (AutomataDefinitions) children.get(1);
-			} else if (children.get(1) == null) {
-				autDefs = new AutomataDefinitions();
-				result = new AtsASTNode();
-				((AtsASTNode) result).addOutgoingNode(children.get(0));
-				((AtsASTNode) result).addOutgoingNode(autDefs);
-			}
+		if (result instanceof AutomataTestFile) {
+			AutomataTestFile ats = (AutomataTestFile)result;
+			AutomataDefinitions autDefs = ats.getAutomataDefinitions();
+			
 			if (parser.containsOtherAutomataFilesToParse()) {
 				String baseDir = parser.getFilePath().substring(0, parser.getFilePath().lastIndexOf(File.separator) + 1);
 				List<Automaton> automataDefinitionsFromOtherFiles = parseAutomataDefinitions(parser.getFilesToParse(), baseDir);
@@ -70,6 +64,7 @@ public class AutomataScriptParser implements ISource {
 				}
 				
 			}
+			ats.setAutomataDefinitions(autDefs);
 			return (AtsASTNode) result;
 		} else {
 			return null;
@@ -115,10 +110,10 @@ public class AutomataScriptParser implements ISource {
 				e.printStackTrace();
 				continue;
 			}
-			if ((result != null) && (result instanceof AtsASTNode)) {
-				List<AtsASTNode> children = ((AtsASTNode)result).getOutgoingNodes();
-				if (children.get(1) instanceof AutomataDefinitions) {
-					List<Automaton> newAutomataDefinitions = ((AutomataDefinitions) children.get(1)).getAutomataDefinitions();
+			if ((result != null) && (result instanceof AutomataTestFile)) {
+				AutomataTestFile ats = (AutomataTestFile) result;
+				if (!ats.getAutomataDefinitions().isEmpty()) {
+					List<Automaton> newAutomataDefinitions = ats.getAutomataDefinitions().getListOfAutomataDefinitions();
 					for (Automaton a : newAutomataDefinitions) {
 						if (parsedAutomata.contains(a)) {
 							s_Logger.error("Automaton \"" + a.getName() + "\" from file \"" + fileToParse + " already declared in other file.");

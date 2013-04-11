@@ -16,7 +16,7 @@ assert(!BuchiIsEmpty(a2));
 
 
 
-nwa a1 = (
+NestedWordAutomaton a1 = (
   callAlphabet = {a b},
   internalAlphabet = {a b},
   returnAlphabet = {a b},
@@ -26,9 +26,9 @@ nwa a1 = (
   callTransitions = {(q0 a q0) (q0 a q1)},
   internalTransitions = {}, 
   returnTransitions = {(q1 q0 b q1)}
-)
+);
 
-nwa a2 = (
+NestedWordAutomaton a2 = (
   callAlphabet = {a b},
   internalAlphabet = {a b},
   returnAlphabet = {a b},
@@ -38,9 +38,9 @@ nwa a2 = (
   callTransitions = {(q0 a q1) (q1 a q1)},
   internalTransitions = {(q0 b q1)}, 
   returnTransitions = {(q1 q0 b q1)}
-)
+);
 
-nwa XiaolinOctoberBug = (
+NestedWordAutomaton XiaolinOctoberBug = (
   callAlphabet = {c},
   internalAlphabet = {a},
   returnAlphabet = {r},
@@ -50,5 +50,5 @@ nwa XiaolinOctoberBug = (
   callTransitions = {(q c p1)},
   internalTransitions = {(p1 a p2)}, 
   returnTransitions = {(p2 q r q)}
-)
+);
 

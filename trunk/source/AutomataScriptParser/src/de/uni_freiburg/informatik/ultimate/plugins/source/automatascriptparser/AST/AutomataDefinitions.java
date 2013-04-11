@@ -29,7 +29,7 @@ public class AutomataDefinitions extends AtsASTNode {
 		m_AutomataDefinitions.add(a);
 	}
 
-	public List<Automaton> getAutomataDefinitions() {
+	public List<Automaton> getListOfAutomataDefinitions() {
 		return m_AutomataDefinitions;
 	}
 
@@ -58,4 +58,7 @@ public class AutomataDefinitions extends AtsASTNode {
 		return builder.toString();
 	}
 	
+	public boolean isEmpty() {
+		return m_AutomataDefinitions.isEmpty();
+	}
 }

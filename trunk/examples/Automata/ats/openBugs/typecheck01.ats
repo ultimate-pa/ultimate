@@ -6,7 +6,7 @@
 int x;
 x = numberOfStates(a1);
 
-nwa a1 = (
+NestedWordAutomaton a1 = (
   callAlphabet = {a b},
   internalAlphabet = {a b},
   returnAlphabet = {a b},
@@ -16,4 +16,4 @@ nwa a1 = (
   callTransitions = {(q0 a q0) (q0 a q1)},
   internalTransitions = {}, 
   returnTransitions = {(q1 q0 b q1)}
-)
+);

@@ -3,7 +3,7 @@
 // This file contains only automata definitions.
 
 // A finite automaton which accepts words ending with 'c'
-nwa acceptsWithC = (
+NestedWordAutomaton acceptsWithC = (
   callAlphabet = {},
   internalAlphabet = {a  b c},
   returnAlphabet = {},
@@ -18,10 +18,10 @@ nwa acceptsWithC = (
                          (q1 b q1)
                          (q1 c q2)},
   returnTransitions = {}
-)
+);
 
 // A finite automaton which accepts nothing.
-nwa acceptsNothing = (
+NestedWordAutomaton acceptsNothing = (
   callAlphabet = {},
   internalAlphabet = {a  b c},
   returnAlphabet = {},
@@ -36,7 +36,7 @@ nwa acceptsNothing = (
                          (q1 b q1)
                          (q1 c q2)},
   returnTransitions = {}
-)
+);
 
 
 

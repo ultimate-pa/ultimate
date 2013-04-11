@@ -8,7 +8,7 @@
 assert(!IsEmpty(a));
 print(minimizeDFA(a));
 
-nwa a = (
+NestedWordAutomaton a = (
   callAlphabet = { },
   internalAlphabet = {a b c d},
   returnAlphabet = { },
@@ -55,5 +55,5 @@ nwa a = (
       (q8 d q8)
   }, 
   returnTransitions = {}
-)
+);
 

@@ -38,7 +38,7 @@ public class AutomataDefinitionInterpreter {
 	}
 	
 	public <T> Object interpret(AutomataDefinitions automata) {
-		List<? extends AtsASTNode> children = automata.getAutomataDefinitions();
+		List<? extends AtsASTNode> children = automata.getListOfAutomataDefinitions();
 		for (AtsASTNode n : children) {
 			if (n instanceof NestedwordAutomaton) {
 				try {

@@ -38,6 +38,7 @@ import de.uni_freiburg.informatik.ultimate.model.ILocation;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AtsASTNode;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.AssignmentExpression;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.AutomataDefinitions;
+import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.AutomataTestFile;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.BreakStatement;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.ConditionalBooleanExpression;
@@ -112,13 +113,14 @@ public class TestFileInterpreter {
 			VariableExpression var = (VariableExpression) children.get(0);
 			// Check the type of children
 			checkType(children.get(1));
+			Set<Class<?>> types = getTypes(children.get(1));
 			for (Class<?> c : getTypes(children.get(1))) {
 				// Check for correct types
 				if (var.isTypeCorrect(c)) {
 					return;
 				}
 			}
-			String message = "AssignmentExpression: Type error";
+			String message = "AssignmentExpression: Type error ";
 			message = message.concat(children.get(1).getReturnType() + " is not assignable to " + var.getReturnType());
 			throw new IllegalArgumentException(message);
 			
@@ -420,34 +422,37 @@ public class TestFileInterpreter {
 	
 	public Object interpretTestFile(AtsASTNode node) {
 		List<AtsASTNode> children = node.getOutgoingNodes();
-		if (children.size() != 2) {
-			s_Logger.warn("AtsASTNode should have 2 children!");
-			s_Logger.warn("It has: " + children.size() + " children.");
+		AutomataTestFile ats = null;
+		if (node instanceof AutomataTestFile) {
+			ats = (AutomataTestFile) node;
 		}
 		
 		// Interpret automata definitions, if the file contains any.
-		if (children.get(1) instanceof AutomataDefinitions) {
-			m_automInterpreter.interpret((AutomataDefinitions) children.get(1));
-		}
+		m_automInterpreter.interpret(ats.getAutomataDefinitions());
 		
+
 		m_variables.putAll(m_automInterpreter.getAutomata());
 		// Type checking
 		try {
-			m_tChecker.checkType(children.get(0));
+			m_tChecker.checkType(ats.getStatementList());
 		} catch (IllegalArgumentException ie) {
 			s_Logger.warn("Typecheck error! Testfile won't be interpreted.");
 			s_Logger.info("Stack trace:");
 			ie.printStackTrace();
 			return null;
 		}
-		Object result;
-		if (children.get(0) == null) {
+		Object result = null;
+		if (ats.getStatementList() == null) {
 			// File contains only automata definitions no testcases.
 			result = null;
-		} else if (children.get(0) instanceof StatementList) {
-			result = interpret((StatementList) children.get(0));
 		} else {
-			throw new AssertionError("Expecting Statement List");
+			try {
+				result = interpret(ats.getStatementList());
+			} catch (Exception e) {
+				// TODO Print error message
+				e.printStackTrace();
+				return null;
+			}
 		}
 		reportResult();
 		if (m_printAutomataToFile) {

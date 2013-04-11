@@ -6,6 +6,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.*;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AutomataScriptLocation; 
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.PetriNetJulian;
 import de.uni_freiburg.informatik.ultimate.model.ILocation;
 import java.util.*;
 import java_cup.runtime.*;
@@ -15,6 +16,8 @@ action code {:
     private Hashtable<String, Class<?>> m_varDeclarations = new Hashtable<String, Class<?>>();
 
     private List<String> m_filesToParse = new ArrayList<String>();
+
+    private AutomataDefinitions m_automataDefinitions = new AutomataDefinitions();
     
     public ILocation getLocation(Symbol sBegin, Symbol sEnd) {
        int startLine = sBegin.left + 1;
@@ -155,7 +158,6 @@ parser code {:
 terminal Object BOOLEAN; // primitive_type
 terminal Object INT, CHAR; // integral_type
 terminal Object LBRACK, RBRACK; // array_type
-terminal Object DOT; // qualified_name
 terminal Object SEMICOLON, COMMA, EQ, LBRACE, RBRACE, LPAREN, RPAREN, COLON;
 terminal Object IF, ELSE; // if_then_statement, if_then_else_statement
 terminal Object WHILE; // while_statement
@@ -178,7 +180,7 @@ terminal Object NESTED_WORD, NESTED_LASSO_WORD;
 
 terminal java.lang.Integer INTEGER_LITERAL;
 terminal java.lang.Boolean BOOLEAN_LITERAL;
-terminal java.lang.String IDENTIFIER; // name
+terminal java.lang.String IDENTIFIER; 
 
 
  /* -------------------- Specification of non-terminal symbols -----------*/
@@ -188,11 +190,9 @@ non terminal AtsASTNode automata_test_file;
 non terminal AtsASTNode literal;
 // 3. Types
 non terminal Class<?> type;
-// 4. Names
-non terminal AtsASTNode  name;
 // 5. Variable Declarations
 non terminal AtsASTNode variable_declarators, variable_declarator;
-non terminal java.lang.String variable_declarator_id;
+non terminal java.lang.String variable_identifier;
 // 6. Blocks and Statements
 non terminal AtsASTNode test_statement_block;
 non terminal AtsASTNode test_statements_opt, test_statements;
@@ -220,7 +220,6 @@ non terminal AtsASTNode expression_opt, expression;
 non terminal AtsASTNode operation_invocation;
 non terminal AtsASTNode primary;
 non terminal ArgumentList argument_list_opt, argument_list;
-non terminal AtsASTNode field_access;
 non terminal AtsASTNode postfix_expression;
 non terminal AtsASTNode postincrement_expression, postdecrement_expression;
 non terminal AtsASTNode preincrement_expression, predecrement_expression;
@@ -242,7 +241,7 @@ non terminal Object nested_word_symbol;
  /* -------------------- Specification of Automata DEFINITION Files-----------------------*/
  /* -------------------- Specification of terminals   -----------------------*/
  // 1. Automata Types
- terminal Object NESTEDWORD_AUTOMATA, NESTEDWORD_AUTOMATA_TYPE, PETRINET_AUTOMATA;
+ terminal Object NESTEDWORD_AUTOMATA, PETRINET_AUTOMATA;
  // 2. Alphabets
  terminal Object ALPHABET, CALL_ALPHABET, INTERNAL_ALPHABET, RETURN_ALPHABET;
 // 3. States & Places
@@ -250,15 +249,13 @@ terminal Object STATES, PLACES, INITIAL_STATES, FINAL_STATES;
 // 4. Transitions
 terminal Object NET_TRANSITIONS, INTERNAL_TRANSITIONS, CALL_TRANSITIONS, RETURN_TRANSITIONS;
 // 5. 
-terminal Object INITIAL_MARKINGS, ACCEPTING_MARKINGS, ACCEPTING_PLACES;
+terminal Object INITIAL_MARKINGS, ACCEPTING_PLACES;
  /* -------------------- Specification of non-terminals   -----------------------*/
-non terminal AutomataDefinitions automata_definitions_opt, automata_definitions;
-non terminal Automaton  automata_definition;
 non terminal IdentifierList identifier_list_opt, identifier_list;
 // Automata types
-non terminal Automaton nwa_definition, petrinetJan_definition, petrinetJulian_definition;
+non terminal Automaton nwa_definition, petrinetJulian_definition;
 // Alphabets
-non terminal IdentifierList alphabet_opt, alphabet, call_alphabet_opt, call_alphabet, return_alphabet_opt, return_alphabet, internal_alphabet_opt, internal_alphabet;
+non terminal IdentifierList alphabet_opt, petrinet_alphabet, call_alphabet, return_alphabet_opt, return_alphabet, internal_alphabet_opt, internal_alphabet;
 // States & Places
 non terminal IdentifierList states_opt, states, initial_states_opt, initial_states, final_states_opt, final_states;  
 non terminal IdentifierList places, accepting_places;
@@ -269,7 +266,7 @@ non terminal IdentifierList transition;
 non terminal TransitionList net_transitions, net_transition_list_opt, net_transition_list; 
 non terminal PetriNetTransition  net_transition;
 non terminal PetriNetMarking marking;
-non terminal PetriNetMarkingList marking_list_opt, marking_list, initial_markings, accepting_markings;
+non terminal PetriNetMarkingList initial_markings;
 
 
 
@@ -279,12 +276,9 @@ start with automata_test_file;
 
 // 1. Start of the grammar
 automata_test_file ::= test_statement_block:stmtList
-                       automata_definitions_opt:autDefs
-                       {: AtsASTNode n = new AtsASTNode();
-						  n.addOutgoingNode(stmtList);
-						  n.addOutgoingNode(autDefs);
-                  	      RESULT = n; :}
-			;
+                       {: AutomataTestFile ats = new AutomataTestFile(stmtList, m_automataDefinitions); 
+                          RESULT = ats; :};
+
 // 2. Lexical Structure
 literal ::=	INTEGER_LITERAL:i 
                 {: ConstantExpression c = new ConstantExpression(i);
@@ -352,21 +346,12 @@ type	::=     INT
         		{: RESULT = Nestedword.class; :}
         |       NESTED_LASSO_WORD
         		{: RESULT = NestedLassoword.class; :}
-        |       NESTEDWORD_AUTOMATA_TYPE
+        |       NESTEDWORD_AUTOMATA
                 {: RESULT = INestedWordAutomaton.class; :}
+        |       PETRINET_AUTOMATA         
+                {: RESULT = PetriNetJulian.class; :}
         ;
 
-// 4. Names
-name	::=	IDENTIFIER:v
-			{: VariableExpression var = new VariableExpression(v);
-				var.setLocation(getLocation(v$, v$));
-                           if ((v != null) && (m_varDeclarations.containsKey(v))) { 
-                              var.setType(m_varDeclarations.get(v));
-                           }
-                           RESULT = var;  
-                        :}
-			;
-			
 // 5. Variable Declarations
 variable_declaration ::=
 		type:t variable_declarators:varLst
@@ -378,6 +363,18 @@ variable_declaration ::=
                 		  m_varDeclarations.put(id, t);
                 	  }
                    }:}
+        | type:t nwa_definition:nwa
+          {: if (t.equals(INestedWordAutomaton.class))
+                { nwa.setType(t);
+                  m_automataDefinitions.addAutomaton(nwa);}
+             else {reportError("AutomataDefiniton: Type error", t.getSimpleName() + " is not compatible with INestedWordAutomaton"); }
+             RESULT = null;:}
+        | type:t petrinetJulian_definition:petri
+          {: if (t.equals(PetriNetJulian.class))
+                { petri.setType(t);
+                  m_automataDefinitions.addAutomaton(petri);}
+             else {reportError("AutomataDefiniton: Type error", t.getSimpleName() + " is not compatible with PetriNetAutomaton"); }
+             RESULT = null;:}
 	;
 variable_declarators ::=
 		variable_declarator:v
@@ -395,11 +392,11 @@ variable_declarators ::=
 	  			RESULT = varLst;:}
 	;
 variable_declarator ::=
-		variable_declarator_id:v
+		variable_identifier:v
                 {: VariableDeclaration var = new VariableDeclaration(v);
                    var.setLocation(getLocation(v$, v$)); 
                    RESULT = var; :}
-	|	variable_declarator_id:v EQ expression:e
+	|	variable_identifier:v EQ expression:e
                 {: RESULT = null;
                    VariableDeclaration var = new VariableDeclaration(v);
                    var.setLocation(getLocation(v$, e$));
@@ -412,8 +409,7 @@ variable_declarator ::=
 	               }   :}
 	               
 	;
-variable_declarator_id ::= IDENTIFIER:v {: RESULT = v; :} ;
-
+variable_identifier ::= IDENTIFIER:v {: RESULT = v; :} ;
 
 // 6. Blocks and Statements
 test_statement_block ::= test_statements_opt:stmts
@@ -444,9 +440,9 @@ test_statements ::=
                    if ((stmt instanceof AtsASTNode) && (stmtList instanceof StatementList)) {
                    ((StatementList) stmtList).addOutgoingNode((AtsASTNode) stmt);
                    	RESULT = stmtList;
-    	               } else {
+    	               } else if (stmt != null) {
     	            	   reportError("error", stmtList.getLocation());
-    	            	   reportError("error", "Parser_StmtList: Expecting AtsASTNode Got: " + (stmt != null ? stmt.getClass().getSimpleName() : "null"));
+    	            	   reportError("error", "Parser_StmtList: Expecting AtsASTNode Got: " + stmt.getClass().getSimpleName());
     	               }:}
 	;
 test_statement ::= 
@@ -698,7 +694,15 @@ assignment ::=	left_hand_side:v assignment_operator:op expression:e
                    }
                     :}
 	;
-left_hand_side ::= name:n {: RESULT = n; :};
+left_hand_side ::= variable_identifier:v 
+			{: VariableExpression var = new VariableExpression(v);
+			   var.setLocation(getLocation(v$, v$));
+                           if ((v != null) && (m_varDeclarations.containsKey(v))) { 
+                              var.setType(m_varDeclarations.get(v));
+                           }
+                           RESULT = var;  
+                        :}
+                        ;
 
 assignment_operator ::=
 		EQ
@@ -924,7 +928,6 @@ primary ::=
 		literal:l
                 {: RESULT = l; :}
 	|	LPAREN expression:e RPAREN {: RESULT = e; :}
-	|	field_access:a {: RESULT = a; :}
 	|	operation_invocation:oi {: RESULT = oi; :}
 	;
 
@@ -940,9 +943,9 @@ argument_list ::=
 	               argList.setLocation(getLocation(argList$, e$));
 	               RESULT = argList; :}
 	;
-field_access ::= primary DOT IDENTIFIER {:RESULT = null; :}	;
+
 operation_invocation ::=
-		IDENTIFIER:opName LPAREN argument_list_opt:args RPAREN:r
+		variable_identifier:opName LPAREN argument_list_opt:args RPAREN:r
         {:  if (opName.equals("parseAutomata")) {
         	   for (Object arg : args.getArguments()) {
         		   if (arg instanceof VariableExpression) {
@@ -960,14 +963,18 @@ operation_invocation ::=
             RESULT = op; 
         	}
             :}
-	|	primary DOT IDENTIFIER LPAREN argument_list_opt RPAREN 
-	    {:RESULT = null; :}
 	;
 postfix_expression ::=
 		primary:p
                 {: RESULT = p; :}
-	|	name:n
-                {: RESULT = n; :}
+	|	variable_identifier:v
+		{: VariableExpression var = new VariableExpression(v);
+		   var.setLocation(getLocation(v$, v$));
+                   if ((v != null) && (m_varDeclarations.containsKey(v))) { 
+                      var.setType(m_varDeclarations.get(v));
+                   }
+                   RESULT = var;  
+                :}
 	|	postincrement_expression:e
                 {: RESULT = e; :}
 	|	postdecrement_expression:e
@@ -1080,19 +1087,8 @@ ILocation loc  = getLocation(n$, e$);
 
 /* -------------------- Specification of Rules for Automata DEFINITION Files-----------------------*/
 
-automata_definitions_opt ::= automata_definitions:defs {: RESULT = defs; :} | {:RESULT = null; :};
-
-automata_definitions ::= automata_definition:atm
-						 {:RESULT = new AutomataDefinitions(atm); :}
-                       | automata_definitions:defs automata_definition:a
-                         {: defs.addAutomaton(a);
-                        	 RESULT = defs; :}
-                       ;
-
-automata_definition ::= nwa_definition:nwa {:RESULT = nwa; :} | petrinetJan_definition {:RESULT = null; :} | petrinetJulian_definition:petriNetJulian {:RESULT = petriNetJulian; :};
-                       
-nwa_definition ::=      NESTEDWORD_AUTOMATA IDENTIFIER:id EQ
-                        LPAREN:l call_alphabet_opt:call COMMA
+nwa_definition ::=      variable_identifier:id EQ
+                        LPAREN:l alphabet_opt:call COMMA
                                internal_alphabet_opt:intern COMMA
                                return_alphabet_opt:ret COMMA
                                states_opt:states COMMA
@@ -1118,7 +1114,6 @@ nwa_definition ::=      NESTEDWORD_AUTOMATA IDENTIFIER:id EQ
                         	RESULT = nwa; :}
                         ;
 
-call_alphabet_opt ::= call_alphabet:c {:RESULT = c; :} | {:RESULT = null; :};
 
 call_alphabet ::=  CALL_ALPHABET EQ LBRACE:l identifier_list_opt:idList  RBRACE:r 
 				   {:idList.setLocation(getLocation(l$, r$));
@@ -1132,8 +1127,8 @@ identifier_list ::= IDENTIFIER:id
 					   RESULT = idList; :} 
                     | identifier_list:idList IDENTIFIER:id
                       {:idList.addId(id);
-                    	RESULT = idList; :}
-                    ;
+                    	RESULT = idList; :} ;
+alphabet_opt ::= call_alphabet:a {:RESULT = a; :} | petrinet_alphabet:a {:RESULT = a; :} | {:RESULT = null; :} ;
 
 internal_alphabet_opt ::= internal_alphabet:intern {:RESULT = intern; :} | {: RESULT = new IdentifierList(); :};
 
@@ -1206,39 +1201,23 @@ transition ::= LPAREN:l identifier_list_opt:idList RPAREN:r
 				  RESULT = idList; :} ;                 
 
 
-petrinetJan_definition ::= PETRINET_AUTOMATA IDENTIFIER:id EQ LPAREN
-                           alphabet_opt:alpha COMMA
-                           places:p COMMA
-                           net_transitions:net_trans COMMA
-                           initial_markings:init_mark COMMA
-                           accepting_markings:acc_mark RPAREN
-                           {: PetriNetAutomaton petri = new PetriNetAutomaton(id);
-                              petri.setAlphabet(alpha.getIdentifierList());
-                              petri.setPlaces(p.getIdentifierList());
-                              petri.setTransitions(net_trans.getNetTransitions());
-                              petri.setInitialMarkings(init_mark);
-                              petri.setAcceptingMarkings(acc_mark);
-                        	  RESULT = petri; :}
-                           ;
-
-petrinetJulian_definition ::= PETRINET_AUTOMATA IDENTIFIER:id EQ LPAREN
+petrinetJulian_definition ::= variable_identifier:id EQ LPAREN
                               alphabet_opt:alpha COMMA
                               places:p COMMA
                               net_transitions:net_trans COMMA
                               initial_markings:init_mark COMMA
                               accepting_places:acc_places RPAREN
                               {: PetriNetAutomaton petri = new PetriNetAutomaton(id, true);
-								 petri.setAlphabet(alpha.getIdentifierList());
-								 petri.setPlaces(p.getIdentifierList());
-								 petri.setTransitions(net_trans.getNetTransitions());
-								 petri.setInitialMarkings(init_mark);
-								 petri.setAcceptingPlaces(acc_places.getIdentifierList());
+                                 petri.setAlphabet(alpha.getIdentifierList());
+                                 petri.setPlaces(p.getIdentifierList());
+                                 petri.setTransitions(net_trans.getNetTransitions());
+                                 petri.setInitialMarkings(init_mark);
+                                 petri.setAcceptingPlaces(acc_places.getIdentifierList());
+                                 m_varDeclarations.put(id, PetriNetJulian.class);
                             	  RESULT = petri; :}
                               ;
 
-alphabet_opt ::= alphabet:a {:RESULT = a; :} | {:RESULT = null; :} ;
-
-alphabet ::= ALPHABET EQ LBRACE:l identifier_list_opt:idList RBRACE:r
+petrinet_alphabet ::= ALPHABET EQ LBRACE:l identifier_list_opt:idList RBRACE:r
 						{:if (idList == null) {
 							RESULT = null;
 						} else {
@@ -1272,20 +1251,6 @@ net_transition ::= LPAREN:l marking:m1 IDENTIFIER:id marking:m2 RPAREN:r
                       :} ; 
 
 initial_markings ::= INITIAL_MARKINGS EQ marking:m {:RESULT = new PetriNetMarkingList(m); :}  ;
-
-accepting_markings ::= ACCEPTING_MARKINGS EQ LBRACE marking_list_opt:mlist RBRACE
-					   {: RESULT = mlist; :} ;
-
-marking_list_opt ::= marking_list:mList {: RESULT = mList; :} | {:RESULT = new PetriNetMarkingList(); :};
-
-marking_list ::= marking:m
-				{: PetriNetMarkingList mList = new PetriNetMarkingList();
-                   mList.addMarking(m);
-					 RESULT = mList; :}
-               | marking_list:mList marking:m
-               {:mList.addMarking(m);
-                 RESULT = mList; :}
-               ;
 
 marking ::= LBRACE:l identifier_list:idList RBRACE:r
             {: String place = idList.getIdentifier(0);

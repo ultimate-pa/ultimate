@@ -89,8 +89,8 @@ StringCharacter = [^\r\n\"\\]
 
   /* keywords for AutomataDefinitionFile */
   /* NestedWordAutomaton */
-  "NestedWordAutomaton"          { m_LastToken = m_CurToken; m_CurToken = "NestedWordAutomaton"; return symbol(sym.NESTEDWORD_AUTOMATA_TYPE); }
-  "nwa"          { m_LastToken = m_CurToken; m_CurToken = "NestedWordAutomaton"; return symbol(sym.NESTEDWORD_AUTOMATA); }
+  "NestedWordAutomaton"          { m_LastToken = m_CurToken; m_CurToken = "NestedWordAutomaton"; return symbol(sym.NESTEDWORD_AUTOMATA); }
+  /*"nwa"          { m_LastToken = m_CurToken; m_CurToken = "NestedWordAutomaton"; return * symbol(sym.NESTEDWORD_AUTOMATA); }*/
   /* PetriNetJulian */
   "net"                         { m_LastToken = m_CurToken; m_CurToken = "net"; return symbol(sym.PETRINET_AUTOMATA); }
   "alphabet"                    { m_LastToken = m_CurToken; m_CurToken = "alphabet"; return symbol(sym.ALPHABET); }
@@ -108,7 +108,6 @@ StringCharacter = [^\r\n\"\\]
   // Net transitions  
   "transitions"                     { m_LastToken = m_CurToken; m_CurToken = "transitions"; return symbol(sym.NET_TRANSITIONS); }
   "initialMarking"                  { m_LastToken = m_CurToken; m_CurToken = "initialMarking"; return symbol(sym.INITIAL_MARKINGS); }
-  "acceptingMarkings"               { m_LastToken = m_CurToken; m_CurToken = "acceptingMarkings"; return symbol(sym.ACCEPTING_MARKINGS); }
   "acceptingPlaces"                 { m_LastToken = m_CurToken; m_CurToken = "acceptingPlaces"; return symbol(sym.ACCEPTING_PLACES); }
   /* boolean literals */
   "true"                         { m_LastToken = m_CurToken; m_CurToken = "true"; return symbol(sym.BOOLEAN_LITERAL, new Boolean(true)); }
@@ -124,7 +123,6 @@ StringCharacter = [^\r\n\"\\]
   "]"                            { m_LastToken = m_CurToken; m_CurToken = "]"; return symbol(sym.RBRACK); }
   ";"                            { m_LastToken = m_CurToken; m_CurToken = ";"; return symbol(sym.SEMICOLON); }
   ","                            { m_LastToken = m_CurToken; m_CurToken = ","; return symbol(sym.COMMA); }
-  "."                            { m_LastToken = m_CurToken; m_CurToken = "."; return symbol(sym.DOT); }
 
 
   /* operators */

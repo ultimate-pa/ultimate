@@ -32,7 +32,7 @@ assert(accepts(acceptsNothing, firstNW));
 // Following automaton was defined in fat-file "abArchway.fat"
 
 // A nested word automaton that has no internal transitions.
-nwa a1 = (
+NestedWordAutomaton a1 = (
   callAlphabet = {a b},
   internalAlphabet = {a b},
   returnAlphabet = {a b},
@@ -42,7 +42,7 @@ nwa a1 = (
   callTransitions = {(q0 a q0) (q0 a q1)},
   internalTransitions = {}, 
   returnTransitions = {(q1 q0 b q1)}
-)
+);
 
 // Following automaton was defined in fat-file "abArchway.fat"
 
@@ -51,7 +51,7 @@ nwa a1 = (
 // return alphabet are empty. Therefore the complement of this automaton (in 
 // our nwa implementation) accepts also only nested words that consist only of
 // internal positions.
-nwa a2 = (
+NestedWordAutomaton a2 = (
   callAlphabet = {c d},
   internalAlphabet = {a b},
   returnAlphabet = {k i},
@@ -61,5 +61,5 @@ nwa a2 = (
   callTransitions = { },
   internalTransitions = {(q0 a q1) (q1 a q0) (q0 b q0) (q1 b q1)}, 
   returnTransitions = {}
-)
+);
 

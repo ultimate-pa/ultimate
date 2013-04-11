@@ -2,7 +2,7 @@
 // Date:  9.02.2013
 // This file contains only automata definitions.
 
-nwa nwa1 = (
+NestedWordAutomaton nwa1 = (
   callAlphabet = {a b c},
   internalAlphabet = {},
   returnAlphabet = {r s},
@@ -14,12 +14,12 @@ nwa nwa1 = (
   returnTransitions = { (q1 q0 r q1)
                         (q0 q1 s qAcc)
                         (q1 q0 s qAcc)}
-)
+);
 
 
 // This is basically a finite automaton
 // Accepts words which contain exactly 2 b's.
-nwa accepts2Bs = ( 
+NestedWordAutomaton accepts2Bs = ( 
   callAlphabet = {},
   internalAlphabet = {a b c d},
   returnAlphabet = {},
@@ -41,4 +41,4 @@ nwa accepts2Bs = (
                          (qNotAcc c qNotAcc)
                          (qNotAcc d qNotAcc)},
   returnTransitions = {}
-)
+);
