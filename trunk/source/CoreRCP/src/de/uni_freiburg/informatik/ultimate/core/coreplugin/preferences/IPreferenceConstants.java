@@ -34,6 +34,7 @@ public interface IPreferenceConstants {
 	public static final String PREFID_LOGFILE = "ulitmate.logfile";
 	public static final String PREFID_LOGFILE_NAME = "ultimate.logfile.name";
 	public static final String PREFID_LOGFILE_DIR = "ultiamte.logfile.path";
+	public static final String PREFID_APPEXLOGFILE = "ultimate.appexternal.logfile";
 	
 	/**
 	 * others
@@ -84,6 +85,7 @@ public interface IPreferenceConstants {
 	public static final String LABEL_LOGFILE = "Create a Logfile";
 	public static final String LABEL_LOGFILE_NAME = "Name of the Logfile:";
 	public static final String LABEL_LOGFILE_DIR = "Directory: (default: instance location):";
+	public static final String LABEL_APPEXLOGFILE = "Append to exisiting Logfile: ";
 	
 	
 	/**

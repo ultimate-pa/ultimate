@@ -99,8 +99,10 @@ public class UltimateLoggerFactory {
 				PatternLayout layout = new PatternLayout(
 						de.uni_freiburg.informatik.ultimate.plugins.Constants
 								.getLoggerPattern());
+				boolean append = preferenceStore
+						.getBoolean(IPreferenceConstants.PREFID_APPEXLOGFILE);
 				logFile = new FileAppender(layout, logDir + File.separator
-						+ logName + ".log", false);
+						+ logName + ".log", append);
 				Logger.getRootLogger().addAppender(logFile);
 			} catch (IOException e) {
 				System.err.println("Error while appending log file to logger: "

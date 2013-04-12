@@ -67,7 +67,15 @@ public class LogFilePreferencePage extends FieldEditorPreferencePage implements
 				IPreferenceConstants.PREFID_LOGFILE,
 				IPreferenceConstants.LABEL_LOGFILE, getFieldEditorParent());
 		addField(logFile);
-
+		
+		// Basic check-box for enabling appending to the existing log file
+		// ---> this is needed for running Ultimate in EXTERNAL_EXECUTION_MODE
+		BooleanFieldEditor appendExLogFile = new BooleanFieldEditor(
+				IPreferenceConstants.PREFID_APPEXLOGFILE,
+				IPreferenceConstants.LABEL_APPEXLOGFILE, getFieldEditorParent());
+		addField(appendExLogFile);
+		preferences.setDefault(IPreferenceConstants.PREFID_APPEXLOGFILE, false);
+		
 		// the name of the log file
 		StringFieldEditor nameLogFile = new StringFieldEditor(
 				IPreferenceConstants.PREFID_LOGFILE_NAME,
