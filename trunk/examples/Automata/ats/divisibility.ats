@@ -30,7 +30,7 @@ Print(difference(Amod2, complement(Amod3)));
 
 
 
-nwa Amod3 = (
+NestedWordAutomaton Amod3 = (
   callAlphabet = { },
   internalAlphabet = {"0" "1"},
   returnAlphabet = { },
@@ -46,9 +46,9 @@ nwa Amod3 = (
 	(q2 "0" q1)
 	(q2 "1" q2)},
   returnTransitions = {}
-)
+);
 
-nwa Amod2 = (
+NestedWordAutomaton Amod2 = (
   callAlphabet = { },
   internalAlphabet = {"0" "1"},
   returnAlphabet = { },
@@ -62,4 +62,4 @@ nwa Amod2 = (
 	(p1 "0" p0)
 	(p1 "1" p1)},
   returnTransitions = {}
-)
+);

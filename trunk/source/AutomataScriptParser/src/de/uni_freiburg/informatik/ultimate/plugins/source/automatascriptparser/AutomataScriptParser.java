@@ -39,7 +39,6 @@ public class AutomataScriptParser implements ISource {
 		try {
 			result = parser.parse().value;
 		} catch (Exception e) {
-			s_Logger.error(e);
 			reportToUltimate(Severity.ERROR, parser.getLongErrorMessage(),
 					         parser.getShortErrorMessage(), 
 					         parser.getErrorLocation());

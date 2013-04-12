@@ -37,7 +37,7 @@ assert(!IsEmpty(intersect(complement(a1), a2)));
 // )
 
 // Definition in the new syntax
-nwa a1 = (
+NestedWordAutomaton automat = (
   callAlphabet = {a b},
   internalAlphabet = {a b},
   returnAlphabet = {a b},
@@ -47,7 +47,7 @@ nwa a1 = (
   callTransitions = {(q0 a q0) (q0 a q1)},
   internalTransitions = {}, 
   returnTransitions = {(q1 q0 b q1)}
-)
+);
 
 // A nested word automaton, that represents a finite automaton. It accepts
 // nested words that have only internal positions. The call alphabet and the 
@@ -65,7 +65,7 @@ nwa a1 = (
 //  #internalTransitions := {(q0 a q1) (q1 a q0) (q0 b q0) (q1 b q1)}, 
 //  #returnTransitions := {}
 // )
-nwa a2 = (
+NestedWordAutomaton a2 = (
  callAlphabet = { },
  internalAlphabet = {a b},
  returnAlphabet = { },
@@ -75,5 +75,5 @@ nwa a2 = (
  callTransitions = {},
  internalTransitions = {(q0 a q1) (q1 a q0) (q0 b q0) (q1 b q1)}, 
  returnTransitions = {}
-)
+);
 

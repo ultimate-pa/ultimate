@@ -27,22 +27,15 @@ action code {:
        return new AutomataScriptLocation(parser.getFileName(), startLine, endLine, startColumn, endColumn);
     }
     
-    public void reportError(String type, ILocation loc) {
-    	reportError(type, loc.toString());
+    public void reportError(boolean stopParsing, ILocation loc) {
+    	reportError(stopParsing, loc.toString());
     }
     
-    public void reportError(String type, String message) {
-    	if (type.equals("info")) {
-    		AutomataScriptParser.s_Logger.info(message);
-    	} else if (type.equals("warn")) {
-    		AutomataScriptParser.s_Logger.warn(message);
-    	} else if (type.equals("debug")) {
-    		AutomataScriptParser.s_Logger.debug(message);
-    	} else if (type.equals("error")) {
-    		AutomataScriptParser.s_Logger.error(message);
-    	} else if (type.equals("fatal")) {
-    		AutomataScriptParser.s_Logger.fatal(message);
-    	}
+    public void reportError(boolean stopParsing, String message) {
+        AutomataScriptParser.s_Logger.info(message);
+        if (stopParsing) {
+           throw new RuntimeException(message);
+        }
     }
     
     public boolean containsOtherAutomataFilesToParse() {
@@ -111,7 +104,7 @@ parser code {:
         if (info != null) {
             java_cup.runtime.Scanner s = getScanner();
     		if (s instanceof Lexer) {
-    			m.append(" on token \"" + ((Lexer) s).getLastToken() + "\"");
+    			m.append(" on token \"" + ((Lexer) s).getCurrentToken() + "\"");
     		}
     		
         	/* Check if the line number in the input is greater or
@@ -128,7 +121,7 @@ parser code {:
         			m.append(", column "+(info.right+1));		
         	}
         }
-        AutomataScriptParser.s_Logger.error(m);
+        AutomataScriptParser.s_Logger.info(m);
     }
    
     @Override
@@ -156,7 +149,7 @@ parser code {:
 
  /* -------------------- Specification of terminal symbols -----------*/
 terminal Object BOOLEAN; // primitive_type
-terminal Object INT, CHAR; // integral_type
+terminal Object INT; // integral_type
 terminal Object LBRACK, RBRACK; // array_type
 terminal Object SEMICOLON, COMMA, EQ, LBRACE, RBRACE, LPAREN, RPAREN, COLON;
 terminal Object IF, ELSE; // if_then_statement, if_then_else_statement
@@ -340,8 +333,6 @@ type	::=     INT
                 {: RESULT = Integer.class; :}
         |       BOOLEAN
                 {: RESULT = Boolean.class; :}
-        |        CHAR
-                {: RESULT = Character.class; :}
         |       NESTED_WORD
         		{: RESULT = Nestedword.class; :}
         |       NESTED_LASSO_WORD
@@ -367,13 +358,13 @@ variable_declaration ::=
           {: if (t.equals(INestedWordAutomaton.class))
                 { nwa.setType(t);
                   m_automataDefinitions.addAutomaton(nwa);}
-             else {reportError("AutomataDefiniton: Type error", t.getSimpleName() + " is not compatible with INestedWordAutomaton"); }
+             else {reportError(true, "AutomataDefiniton: Type error \"" + t.getSimpleName() + "\" is not compatible with \"INestedWordAutomaton\""); }
              RESULT = null;:}
         | type:t petrinetJulian_definition:petri
           {: if (t.equals(PetriNetJulian.class))
                 { petri.setType(t);
                   m_automataDefinitions.addAutomaton(petri);}
-             else {reportError("AutomataDefiniton: Type error", t.getSimpleName() + " is not compatible with PetriNetAutomaton"); }
+             else {reportError(true, "AutomataDefiniton: Type error \"" + t.getSimpleName() + "\" is not compatible with \"PetriNetAutomaton\""); }
              RESULT = null;:}
 	;
 variable_declarators ::=
@@ -382,14 +373,11 @@ variable_declarators ::=
                    v.setLocation(getLocation(v$, v$)); :}
 	|	variable_declarators:varLst COMMA variable_declarator:v
                 {: RESULT = null;
-				   varLst.setLocation(getLocation(varLst$, v$));
+		   varLst.setLocation(getLocation(varLst$, v$));
                 	if (v instanceof VariableDeclaration) {
                 	((VariableDeclaration)varLst).addVariables(((VariableDeclaration)v).getIdentifiers());
-                } else {
-                	reportError("error", varLst.getLocation());
-                	reportError("error", "VariableDeclaration: Expected VariableDeclarator Got: " + (v != null ? v.getClass().getName() : "null"));
-                }
-	  			RESULT = varLst;:}
+                   } 
+                   RESULT = varLst;:}
 	;
 variable_declarator ::=
 		variable_identifier:v
@@ -403,12 +391,8 @@ variable_declarator ::=
 	               if (e instanceof AtsASTNode) {
                    var.addOutgoingNode((AtsASTNode) e);
                    RESULT = var;
-	               } else {
-	            	   reportError("error", var.getLocation());
-	            	   reportError("error", "Parser_Vardeclaration: Expecting AtsASTNode Got: " + (e != null ? e.getClass().getSimpleName() : "null"));
-	               }   :}
-	               
-	;
+	               } :}
+	         ;
 variable_identifier ::= IDENTIFIER:v {: RESULT = v; :} ;
 
 // 6. Blocks and Statements
@@ -426,24 +410,19 @@ test_statements ::=
                   if (stmt instanceof AtsASTNode) {
                 	  stmts.addOutgoingNode((AtsASTNode) stmt);
                 	  RESULT = stmts;
- 	               } else if (stmt != null) {
- 	            	   reportError("error", stmts.getLocation());
- 	            	   reportError("error", "Parser_StmtList: Expecting AtsASTNode Got: " + stmt.getClass().getSimpleName());
- 	               }
+ 	          } 
                   RESULT = stmts; :}
 	|	test_statements:stmtList test_statement:stmt
                 {: RESULT = stmtList;
-				   if (stmtList == null) {
-					   stmtList = new StatementList();
-				   }
-			       stmtList.setLocation(getLocation(stmtList$, stmt$));
-                   if ((stmt instanceof AtsASTNode) && (stmtList instanceof StatementList)) {
-                   ((StatementList) stmtList).addOutgoingNode((AtsASTNode) stmt);
-                   	RESULT = stmtList;
-    	               } else if (stmt != null) {
-    	            	   reportError("error", stmtList.getLocation());
-    	            	   reportError("error", "Parser_StmtList: Expecting AtsASTNode Got: " + stmt.getClass().getSimpleName());
-    	               }:}
+                  if (stmtList == null) {
+                    stmtList = new StatementList();
+                  }
+                  stmtList.setLocation(getLocation(stmtList$, stmt$));
+                  if ((stmt instanceof AtsASTNode) && (stmtList instanceof StatementList)) {
+                    ((StatementList) stmtList).addOutgoingNode((AtsASTNode) stmt);
+                    RESULT = stmtList;
+                  } 
+                  :}
 	;
 test_statement ::= 
 		variable_declaration_statement:varstmt
@@ -509,18 +488,18 @@ statement_expression ::=
                 {: RESULT = e; :}
 	|       operation_invocation:e
                 {: RESULT = e; :}
-    |    NOT:n operation_invocation:e
-    			{:  RESULT = null;
-					ILocation loc  = getLocation(n$, e$);
-                    if ((e instanceof AtsASTNode)) {
-                    	ConditionalBooleanExpression cbe = new ConditionalBooleanExpression((AtsASTNode) e);
-                    	cbe.setOperator(ConditionalBooleanOperator.NOT);
-                    	cbe.setLocation(loc);
-                    	RESULT = cbe;
-      	               } else {
-      	            	   reportError("error",  loc);
-      	            	   reportError("error",  "Parser_CondNotExpr: Expecting AtsASTNode Got:(Cond1) " + (e != null ? e.getClass().getSimpleName(): "null"));
-      	               }:}
+        |    NOT:n operation_invocation:e
+            {:  RESULT = null;
+              ILocation loc  = getLocation(n$, e$);
+              if ((e instanceof AtsASTNode)) {
+                ConditionalBooleanExpression cbe = new ConditionalBooleanExpression((AtsASTNode) e);
+                cbe.setOperator(ConditionalBooleanOperator.NOT);
+                cbe.setLocation(loc);
+                RESULT = cbe;
+              } else {
+                reportError(false,  loc);
+                reportError(true,  "Parser_CondNotExpr: Expecting AtsASTNode Got:(Cond1) " + (e != null ? e.getClass().getSimpleName(): "null"));
+              }:}
 	;
 
 // 6.2 Conditional Statements
@@ -529,33 +508,27 @@ statement_expression ::=
 if_then_statement ::=
               IF:i LPAREN expression:e RPAREN LBRACE test_statement_block:stmts RBRACE:r
                 {: RESULT = null;
-				   ILocation loc = getLocation(i$, r$);
+	           ILocation loc = getLocation(i$, r$);
                    if ((e instanceof AtsASTNode) && (stmts instanceof AtsASTNode)) {
-                	   IfStatement is = new IfStatement((AtsASTNode) e, (AtsASTNode) stmts);
-                	   is.setLocation(loc);
-                	   RESULT = is;
- 	               } else {
- 	            	   reportError("error", loc);
- 	            	   reportError("error", "Parser_IfStmt: Expecting AtsASTNode Got: (Expression) " + (e != null ? e.getClass().getSimpleName() : "null"));
- 	            	   reportError("error", "Parser_IfStmt: Expecting AtsASTNode Got: " + (stmts != null ? stmts.getClass().getSimpleName() : "null"));
- 	               }  :}
+                     IfStatement is = new IfStatement((AtsASTNode) e, (AtsASTNode) stmts);
+                     is.setLocation(loc);
+                     RESULT = is;
+                   } 
+ 	               :}
 	;
 
 if_then_else_statement ::=
 		IF:i LPAREN expression:e RPAREN LBRACE test_statement_block:stmts1 RBRACE:r
                 ELSE LBRACE test_statement_block:stmts2 RBRACE
-                {:  RESULT = null;
-					ILocation loc = getLocation(i$, r$);
-                	if ((e instanceof AtsASTNode) && (stmts1 instanceof AtsASTNode) && (stmts2 instanceof AtsASTNode)) {
-                	 IfElseStatement is = new IfElseStatement((AtsASTNode) e, (AtsASTNode) stmts1, (AtsASTNode) stmts2);
-                	 is.setLocation(loc);
-                	 RESULT = is;
-	               } else {
-	            	   reportError("error", loc);
-	            	   reportError("error", "Parser_IfElseStmt: Expecting AtsASTNode Got: (Expression) " + (e != null ? e.getClass().getSimpleName() : "null"));
-	            	   reportError("error", "Parser_IfElseStmt: Expecting AtsASTNode Got: (ThenStmts)" + (stmts1 != null ? stmts1.getClass().getSimpleName() : "null"));
-	            	   reportError("error", "Parser_IfElseStmt: Expecting AtsASTNode Got: (ElseStmts)" + (stmts2 != null ? stmts2.getClass().getSimpleName() : "null"));
-	               } :}
+                {:  
+                  RESULT = null;
+                  ILocation loc = getLocation(i$, r$);
+                  if ((e instanceof AtsASTNode) && (stmts1 instanceof AtsASTNode) && (stmts2 instanceof AtsASTNode)) {
+                    IfElseStatement is = new IfElseStatement((AtsASTNode) e, (AtsASTNode) stmts1, (AtsASTNode) stmts2);
+                    is.setLocation(loc);
+                    RESULT = is;
+                  }
+	          :}
 	;
 
 
@@ -563,42 +536,31 @@ if_then_else_statement ::=
 while_statement ::=
 		WHILE:w LPAREN expression:e RPAREN LBRACE test_statement_block:stmts RBRACE:r
                 {: RESULT = null;
-				   ILocation loc = getLocation(w$, r$);
-                	if ((e instanceof AtsASTNode) && (stmts instanceof AtsASTNode)) {
-                	WhileStatement ws = new WhileStatement((AtsASTNode) e, (AtsASTNode) stmts);
-                	ws.setLocation(loc);
-                	RESULT = ws;
- 	               } else {
- 	            	  reportError("error", loc);
- 	            	   reportError("error", "Parser_WhileStmt: Expecting AtsASTNode Got:(Condition) " + (e != null ? e.getClass().getSimpleName() : "null"));
- 	            	   reportError("error", "Parser_WhileStmt: Expecting AtsASTNode Got:(Stmts) " + (stmts != null ? stmts.getClass().getSimpleName() : "null"));
- 	               }  :}
-	;
+                  ILocation loc = getLocation(w$, r$);
+                  if ((e instanceof AtsASTNode) && (stmts instanceof AtsASTNode)) {
+                    WhileStatement ws = new WhileStatement((AtsASTNode) e, (AtsASTNode) stmts);
+                    ws.setLocation(loc);
+                    RESULT = ws;
+                  }
+ 	          :} ;
 
 
 for_statement ::=
 		FOR:f LPAREN for_init_opt:init_op SEMICOLON expression_opt:e SEMICOLON
 			for_update_opt:update RPAREN LBRACE test_statement_block:stmts RBRACE:r
                 {: RESULT = null;
-					ILocation loc = getLocation(f$, r$);
-                	if (((init_op == null) || (init_op instanceof AtsASTNode)) && (e instanceof AtsASTNode) && (stmts instanceof AtsASTNode) && (update instanceof AtsASTNode)) {
-                	if (init_op != null) {
-                		RESULT = new ForStatement((AtsASTNode) init_op, (AtsASTNode) e, (AtsASTNode) update, (AtsASTNode) stmts);
-                		RESULT.setLocation(loc);
-                	} else {
-                		RESULT = new ForStatement(null, (AtsASTNode) e, (AtsASTNode) update, (AtsASTNode) stmts);
-                		RESULT.setLocation(loc);
-                	}
-                	  
-	               } else {
-	            	   reportError("error", loc);
-	            	   reportError("error", "Parser_ForStmt: Expecting AtsASTNode Got:(Condition) " + (e != null ? e.getClass().getSimpleName() : "null"));
-	            	   reportError("error", "Parser_ForStmt: Expecting AtsASTNode Got:(Stmts) " + (stmts != null ? stmts.getClass().getSimpleName() : "null"));
-	            	   reportError("error", "Parser_ForStmt: Expecting AtsASTNode Got:(init_stmt) " + (init_op != null ? init_op.getClass().getSimpleName() : "null"));
-	            	   reportError("error", "Parser_ForStmt: Expecting AtsASTNode Got:(update_stmt) " + (update != null ? update.getClass().getSimpleName() : "null"));
-	               }  :}
-                
-	;
+                  ILocation loc = getLocation(f$, r$);
+                  if (((init_op == null) || (init_op instanceof AtsASTNode)) && (e instanceof AtsASTNode) && (stmts instanceof AtsASTNode) && (update instanceof AtsASTNode)) {
+                    if (init_op != null) {
+                      RESULT = new ForStatement((AtsASTNode) init_op, (AtsASTNode) e, (AtsASTNode) update, (AtsASTNode) stmts);
+                      RESULT.setLocation(loc);
+                    } else {
+                      RESULT = new ForStatement(null, (AtsASTNode) e, (AtsASTNode) update, (AtsASTNode) stmts);
+                      RESULT.setLocation(loc);
+                    }
+
+                  }
+	          :} ;
 
 for_init_opt ::= for_init:e {: RESULT = e; :} | {: RESULT = null; :} ;
 
@@ -615,27 +577,22 @@ for_update ::=	statement_expression_list:e {: RESULT = e; :} ;
 statement_expression_list ::=
 		statement_expression:stmt
                 {: RESULT = null;
-                	StatementList stmts = new StatementList();
-                	stmts.setLocation(getLocation(stmt$, stmt$));
-                	if (stmt instanceof AtsASTNode) {
-                	stmts.addOutgoingNode((AtsASTNode) stmt);
-                	RESULT = stmts;
- 	               } else {
- 	            	  reportError("error", stmts.getLocation());
- 	            	  reportError("error", "Parser_StmtExprList: Expecting AtsASTNode Got: " + (stmt != null ? stmt.getClass().getSimpleName() : "null"));
- 	               } :}
+                  StatementList stmts = new StatementList();
+                  stmts.setLocation(getLocation(stmt$, stmt$));
+                  if (stmt instanceof AtsASTNode) {
+                    stmts.addOutgoingNode((AtsASTNode) stmt);
+                    RESULT = stmts;
+                  }
+ 	               :}
 	|	statement_expression_list:stmtlst COMMA statement_expression:stmt
                 {: RESULT = null;
-					ILocation loc = getLocation(stmtlst$, stmt$);
-                	if (stmt instanceof AtsASTNode) {
-                	((StatementList) stmtlst).addOutgoingNode((AtsASTNode) stmt);
-                	stmtlst.setLocation(loc);
-                	RESULT = stmtlst;
- 	               } else {
- 	            	  reportError("error", loc);
- 	            	  reportError("error", "Parser_StmtExprList: Expecting AtsASTNode Got: " + (stmt != null ? stmt.getClass().getSimpleName() : "null"));
- 	               }  :}
-	;
+                  ILocation loc = getLocation(stmtlst$, stmt$);
+                  if (stmt instanceof AtsASTNode) {
+                    ((StatementList) stmtlst).addOutgoingNode((AtsASTNode) stmt);
+                    stmtlst.setLocation(loc);
+                    RESULT = stmtlst;
+                  } 
+ 	          :} ;
 
 //  6.2.3 Special loop statements
 break_statement ::= BREAK SEMICOLON {:RESULT = null; :} ;
@@ -644,12 +601,11 @@ continue_statement ::= CONTINUE SEMICOLON{:RESULT = null; :} ;
 return_statement ::=
 		RETURN:r expression_opt:e SEMICOLON
                 {: ReturnStatement rst = new ReturnStatement();
-				   rst.setLocation(getLocation(r$, e$)); 	
-                	if ((e != null) &&(e instanceof AtsASTNode)) {
-                		rst.addOutgoingNode((AtsASTNode) e);
- 	               } 
-                   RESULT = rst;:}
-	;
+                  rst.setLocation(getLocation(r$, e$)); 	
+                  if ((e != null) &&(e instanceof AtsASTNode)) {
+                    rst.addOutgoingNode((AtsASTNode) e);
+                  } 
+                   RESULT = rst;:} ;
 
 // 7. Expressions
 expression_opt ::= expression:e {: RESULT = e; :} | {:RESULT = null; :} ;
@@ -669,40 +625,33 @@ conditional_expression ::=
 	;
 assignment ::=	left_hand_side:v assignment_operator:op expression:e
                 {: RESULT = null;
-				   VariableExpression var = null;
-                	if (v instanceof VariableExpression) {
-                		var = (VariableExpression) v;
-                } else {
-                	reportError("error", v.getLocation());
-                	reportError("error", "AssignmentExpression: Left-hand side was not a Variable");
-                }
-                	if (m_varDeclarations.containsKey(var.getIdentifier())) {
-                		var.setType(m_varDeclarations.get(var.getIdentifier()));
-                	} else {
-                		reportError("error", v.getLocation());
-                		reportError("error", "AssignmentExpression: Variable \"" + var.getIdentifier() + "\" was not declared.");
-                	}
-                   if ((e != null) && (e instanceof AtsASTNode)) {
-                	   RESULT = new AssignmentExpression(var, op, (AtsASTNode) e);
-                	   RESULT.setLocation(getLocation(v$, e$));
-                   } else if (e == null) {
-                	   RESULT = new AssignmentExpression(var, op, null);
-                	   RESULT.setLocation(getLocation(v$, v$));
-                   } else {
-                	   reportError("error", getLocation(v$, e$));
-                	   reportError("error", "AssignmentExpression: Expected type of the assign value: AtsASTNode Got: " + e.getClass().getSimpleName());
-                   }
-                    :}
-	;
+                  VariableExpression var = null;
+                  if (v instanceof VariableExpression) {
+                    var = (VariableExpression) v;
+                  } else {
+                    reportError(false, v.getLocation());
+                    reportError(true, "AssignmentExpression: Left-hand side was not a Variable");
+                  }
+                  if (m_varDeclarations.containsKey(var.getIdentifier())) {
+                    var.setType(m_varDeclarations.get(var.getIdentifier()));
+                  } 
+                  if ((e != null) && (e instanceof AtsASTNode)) {
+                    RESULT = new AssignmentExpression(var, op, (AtsASTNode) e);
+                    RESULT.setLocation(getLocation(v$, e$));
+                  } else if (e == null) {
+                    RESULT = new AssignmentExpression(var, op, null);
+                    RESULT.setLocation(getLocation(v$, v$));
+                  }
+                    :} ;
+
 left_hand_side ::= variable_identifier:v 
-			{: VariableExpression var = new VariableExpression(v);
-			   var.setLocation(getLocation(v$, v$));
-                           if ((v != null) && (m_varDeclarations.containsKey(v))) { 
-                              var.setType(m_varDeclarations.get(v));
-                           }
-                           RESULT = var;  
-                        :}
-                        ;
+		{: VariableExpression var = new VariableExpression(v);
+                  var.setLocation(getLocation(v$, v$));
+                  if ((v != null) && (m_varDeclarations.containsKey(v))) { 
+                    var.setType(m_varDeclarations.get(v));
+                  }
+                  RESULT = var;  
+                :} ;
 
 assignment_operator ::=
 		EQ
@@ -723,206 +672,153 @@ conditional_or_expression ::=
                 {: RESULT = c; :}
 	|	conditional_or_expression:c1 OROR conditional_and_expression:c2
                 {: RESULT = null;
-				   ILocation loc = getLocation(c1$, c2$);	
-                	if ((c1 instanceof AtsASTNode) && (c2 instanceof AtsASTNode)) {
-                	ConditionalBooleanExpression cbe = new ConditionalBooleanExpression((AtsASTNode) c1,(AtsASTNode)  c2);
- 	               cbe.setOperator(ConditionalBooleanOperator.OR);
- 	               cbe.setLocation(loc);
- 	               RESULT = cbe;
- 	               } else {
- 	            	  reportError("error", loc);
- 	            	 reportError("error", "Parser_CondOrExpr: Expecting AtsASTNode Got:(Cond1) " + (c1 != null ? c1.getClass().getSimpleName() : "null"));
- 	            	reportError("error", "Parser_CondOrExpr: Expecting AtsASTNode Got:(Cond2) " + (c2 != null ? c2.getClass().getSimpleName() : "null"));
- 	               }  :}
-	;
+                  ILocation loc = getLocation(c1$, c2$);	
+                  if ((c1 instanceof AtsASTNode) && (c2 instanceof AtsASTNode)) {
+                    ConditionalBooleanExpression cbe = new ConditionalBooleanExpression((AtsASTNode) c1,(AtsASTNode)  c2);
+                    cbe.setOperator(ConditionalBooleanOperator.OR);
+                    cbe.setLocation(loc);
+                    RESULT = cbe;
+                  } :} ;
+
 conditional_and_expression ::=
 		equality_expression:e
                 {: RESULT = e; :}
 	|	conditional_and_expression:c1 ANDAND equality_expression:c2
                 {: RESULT = null;
-				   ILocation loc = getLocation(c1$, c2$);	
-                	if ((c1 instanceof AtsASTNode) && (c2 instanceof AtsASTNode)) {
-                	ConditionalBooleanExpression cbe = new ConditionalBooleanExpression((AtsASTNode) c1,(AtsASTNode)  c2);
-                	cbe.setOperator(ConditionalBooleanOperator.AND);
-                	cbe.setLocation(loc);
-  	               RESULT = cbe;
-  	               } else {
-  	            	 reportError("error", loc);
-  	            	reportError("error", "Parser_CondAndExpr: Expecting AtsASTNode Got:(Cond1) " + (c1 != null ? c2.getClass().getSimpleName() : "null"));
-  	            	reportError("error", "Parser_CondAndExpr: Expecting AtsASTNode Got:(Cond2) " + (c2 != null ? c2.getClass().getSimpleName() : "null"));
-  	               }:}
+                  ILocation loc = getLocation(c1$, c2$);	
+                  if ((c1 instanceof AtsASTNode) && (c2 instanceof AtsASTNode)) {
+                    ConditionalBooleanExpression cbe = new ConditionalBooleanExpression((AtsASTNode) c1,(AtsASTNode)  c2);
+                    cbe.setOperator(ConditionalBooleanOperator.AND);
+                    cbe.setLocation(loc);
+                    RESULT = cbe;
+                  } :}
 	;
 equality_expression ::=
 		relational_expression:e
                 {: RESULT = e; :}
 	|	equality_expression:e1 EQEQ relational_expression:e2
                 {: RESULT = null;
-				   ILocation loc = getLocation(e1$, e2$);
-                	RelationalExpression re = new RelationalExpression();
-	               if ((e1 instanceof AtsASTNode) && (e2 instanceof AtsASTNode)) {
-	            	   re.addOutgoingNode((AtsASTNode) e1);
-		               re.addOutgoingNode((AtsASTNode) e2);
-		               re.setOperator(RelationalOperator.EQ);
-		               re.setLocation(loc);
-		               RESULT = re;
-	               } else {
-	            	   reportError("error", loc);
-	            	   reportError("error", "Parser_RelationalEQExpr: Expecting AtsASTNode Got:(e1) " + (e1 != null ? e1.getClass().getSimpleName() : "null"));
-	            	   reportError("error", "Parser_RelationalEQExpr: Expecting AtsASTNode Got:(e2) " + (e2 != null ? e2.getClass().getSimpleName() : "null"));
-	               }:}
+                  ILocation loc = getLocation(e1$, e2$);
+                  RelationalExpression re = new RelationalExpression();
+                  if ((e1 instanceof AtsASTNode) && (e2 instanceof AtsASTNode)) {
+                    re.addOutgoingNode((AtsASTNode) e1);
+                    re.addOutgoingNode((AtsASTNode) e2);
+                    re.setOperator(RelationalOperator.EQ);
+                    re.setLocation(loc);
+                    RESULT = re;
+                  } :}
 	|	equality_expression:e1 NOTEQ relational_expression:e2
                 {: RESULT = null;
-					ILocation loc = getLocation(e1$, e2$);
-                	RelationalExpression re = new RelationalExpression();
-                	if ((e1 instanceof AtsASTNode) && (e2 instanceof AtsASTNode)) {
-	            	   re.addOutgoingNode((AtsASTNode) e1);
-		               re.addOutgoingNode((AtsASTNode) e2);
-		               re.setOperator(RelationalOperator.NOT_EQ);
-		               re.setLocation(loc);
-		               RESULT = re;
-	               } else {
-	            	   reportError("error", loc);
-	            	   reportError("error", "Parser_RelationalNotEQExpr: Expecting AtsASTNode Got:(e1) " + (e1 != null ? e1.getClass().getSimpleName() : "null"));
-	            	   reportError("error", "Parser_RelationalNotEQExpr: Expecting AtsASTNode Got:(e2) " + (e2 != null ? e2.getClass().getSimpleName() : "null"));
-	               } :}
-	;
+                  ILocation loc = getLocation(e1$, e2$);
+                  RelationalExpression re = new RelationalExpression();
+                  if ((e1 instanceof AtsASTNode) && (e2 instanceof AtsASTNode)) {
+                    re.addOutgoingNode((AtsASTNode) e1);
+                    re.addOutgoingNode((AtsASTNode) e2);
+                    re.setOperator(RelationalOperator.NOT_EQ);
+                    re.setLocation(loc);
+                    RESULT = re;
+	               } :} ;
+
 relational_expression ::=
 		additive_expression:e
                 {: RESULT = e; :}
 	|	relational_expression:e1 LT additive_expression:e2
                 {: RESULT = null;
-	ILocation loc = getLocation(e1$, e2$);
-                	RelationalExpression re = new RelationalExpression();
-            	if ((e1 instanceof AtsASTNode) && (e2 instanceof AtsASTNode)) {
-	            	   re.addOutgoingNode((AtsASTNode) e1);
-		               re.addOutgoingNode((AtsASTNode) e2);
-		               re.setOperator(RelationalOperator.LESSTHAN);
-		               re.setLocation(loc);
-		               RESULT = re;
-	               } else {
-	            	   reportError("error", loc);
-	            	   reportError("error", "Parser_RelationalLessThanExpr: Expecting AtsASTNode Got:(e1) " + (e1 != null ? e1.getClass().getSimpleName() : "null"));
-	            	   reportError("error", "Parser_RelationalLessThanExpr: Expecting AtsASTNode Got:(e2) " + (e2 != null ? e2.getClass().getSimpleName() : "null"));
-	               } :}
+                  ILocation loc = getLocation(e1$, e2$);
+                  RelationalExpression re = new RelationalExpression();
+                  if ((e1 instanceof AtsASTNode) && (e2 instanceof AtsASTNode)) {
+                    re.addOutgoingNode((AtsASTNode) e1);
+                    re.addOutgoingNode((AtsASTNode) e2);
+                    re.setOperator(RelationalOperator.LESSTHAN);
+                    re.setLocation(loc);
+                    RESULT = re;
+                  } :}
 	|	relational_expression:e1 GT additive_expression:e2
                 {: RESULT = null;
-	ILocation loc = getLocation(e1$, e2$);
-                	RelationalExpression re = new RelationalExpression();
-            	if ((e1 instanceof AtsASTNode) && (e2 instanceof AtsASTNode)) {
-	            	   re.addOutgoingNode((AtsASTNode) e1);
-		               re.addOutgoingNode((AtsASTNode) e2);
-		               re.setOperator(RelationalOperator.GREATERTHAN);
-		               re.setLocation(loc);
-		               RESULT = re;
-	               } else {
-	            	   reportError("error", loc);
-	            	   reportError("error", "Parser_RelationalGreaterThanExpr: Expecting AtsASTNode Got:(e1) " + (e1 != null ? e1.getClass().getSimpleName() : "null"));
-	            	   reportError("error", "Parser_RelationalGreaterThanExpr: Expecting AtsASTNode Got:(e2) " + (e2 != null ? e2.getClass().getSimpleName() : "null"));
-	               }:}
+                  ILocation loc = getLocation(e1$, e2$);
+                  RelationalExpression re = new RelationalExpression();
+                  if ((e1 instanceof AtsASTNode) && (e2 instanceof AtsASTNode)) {
+                    re.addOutgoingNode((AtsASTNode) e1);
+                    re.addOutgoingNode((AtsASTNode) e2);
+                    re.setOperator(RelationalOperator.GREATERTHAN);
+                    re.setLocation(loc);
+                    RESULT = re;
+                  } :}
 	|	relational_expression:e1 LTEQ additive_expression:e2
                 {: RESULT = null;
-				   ILocation loc = getLocation(e1$, e2$);
-                	RelationalExpression re = new RelationalExpression();
-            	if ((e1 instanceof AtsASTNode) && (e2 instanceof AtsASTNode)) {
-	            	   re.addOutgoingNode((AtsASTNode) e1);
-		               re.addOutgoingNode((AtsASTNode) e2);
-		               re.setOperator(RelationalOperator.LESS_EQ_THAN);
-		               re.setLocation(loc);
-		               RESULT = re;
-	               } else {
-	            	   reportError("error", loc);
-	            	   reportError("error", "Parser_RelationalLessEQThanExpr: Expecting AtsASTNode Got:(e1) " + (e1 != null ? e1.getClass().getSimpleName() : "null"));
-	            	   reportError("error", "Parser_RelationalLessEQThanExpr: Expecting AtsASTNode Got:(e2) " + (e2 != null ? e2.getClass().getSimpleName() : "null"));
-	               }:}
+                  ILocation loc = getLocation(e1$, e2$);
+                  RelationalExpression re = new RelationalExpression();
+                  if ((e1 instanceof AtsASTNode) && (e2 instanceof AtsASTNode)) {
+                    re.addOutgoingNode((AtsASTNode) e1);
+                    re.addOutgoingNode((AtsASTNode) e2);
+                    re.setOperator(RelationalOperator.LESS_EQ_THAN);
+                    re.setLocation(loc);
+                    RESULT = re;
+                  } :}
 	|	relational_expression:e1 GTEQ additive_expression:e2
                 {: RESULT = null;
-	ILocation loc = getLocation(e1$, e2$);
-                	RelationalExpression re = new RelationalExpression();
-            	if ((e1 instanceof AtsASTNode) && (e2 instanceof AtsASTNode)) {
-	            	   re.addOutgoingNode((AtsASTNode) e1);
-		               re.addOutgoingNode((AtsASTNode) e2);
-		               re.setOperator(RelationalOperator.GREATER_EQ_THAN);
-		               re.setLocation(loc);
-		               RESULT = re;
-	               } else {
-	            	   reportError("error", loc);
-	            	   reportError("error", "Parser_RelationalGreaterEQThanExpr: Expecting AtsASTNode Got:(e1) " + (e1 != null ? e1.getClass().getSimpleName() : "null"));
-	            	   reportError("error", "Parser_RelationalGreaterEQThanExpr: Expecting AtsASTNode Got:(e2) " + (e2 != null ? e2.getClass().getSimpleName() : "null"));
-	               }:}
-	;
+                  ILocation loc = getLocation(e1$, e2$);
+                  RelationalExpression re = new RelationalExpression();
+                  if ((e1 instanceof AtsASTNode) && (e2 instanceof AtsASTNode)) {
+                    re.addOutgoingNode((AtsASTNode) e1);
+                    re.addOutgoingNode((AtsASTNode) e2);
+                    re.setOperator(RelationalOperator.GREATER_EQ_THAN);
+                    re.setLocation(loc);
+                    RESULT = re;
+                  } :} ;
+
 additive_expression ::=
 		multiplicative_expression:e
                 {: RESULT = e; :}
 	|	additive_expression:a PLUS multiplicative_expression:m
                 {: RESULT = null;
-	ILocation loc = getLocation(a$, m$);
-                	if ((a instanceof AtsASTNode) && (m instanceof AtsASTNode)) {
-                	BinaryExpression be = new BinaryExpression((AtsASTNode) a, (AtsASTNode) m);
-                	be.setOperator(BinaryOperator.PLUS);
-                	be.setLocation(loc);
-                	RESULT = be;
-                } else {
-                	reportError("error", loc);
-                	reportError("error", "Parser_BinaryExprPlus: Expecting AtsASTNode Got:(e1) " + (a != null ? a.getClass().getSimpleName() : "null"));
-                	reportError("error", "Parser_BinaryExprPlus: Expecting AtsASTNode Got:(e1) " + (m != null ? m.getClass().getSimpleName() : "null"));
-                }:}
+                  ILocation loc = getLocation(a$, m$);
+                  if ((a instanceof AtsASTNode) && (m instanceof AtsASTNode)) {
+                    BinaryExpression be = new BinaryExpression((AtsASTNode) a, (AtsASTNode) m);
+                    be.setOperator(BinaryOperator.PLUS);
+                    be.setLocation(loc);
+                    RESULT = be;
+                  } :}
 	|	additive_expression:a MINUS multiplicative_expression:m
                 {: RESULT = null;
-	ILocation loc = getLocation(a$, m$);
-                	if ((a instanceof AtsASTNode) && (m instanceof AtsASTNode)) {
-                	BinaryExpression be = new BinaryExpression((AtsASTNode) a, (AtsASTNode) m);
-                	be.setOperator(BinaryOperator.MINUS);
-                	be.setLocation(loc);
-                	RESULT = be;
-                } else {
-                	reportError("error", loc);
-                	reportError("error", "Parser_BinaryExprMinus: Expecting AtsASTNode Got:(e1) " + (a != null ? a.getClass().getSimpleName() : "null"));
-                	reportError("error", "Parser_BinaryExprMinus: Expecting AtsASTNode Got:(e1) " + (m != null ? m.getClass().getSimpleName() : "null"));
-                } :}
-	;
+                  ILocation loc = getLocation(a$, m$);
+                  if ((a instanceof AtsASTNode) && (m instanceof AtsASTNode)) {
+                    BinaryExpression be = new BinaryExpression((AtsASTNode) a, (AtsASTNode) m);
+                    be.setOperator(BinaryOperator.MINUS);
+                    be.setLocation(loc);
+                    RESULT = be;
+                  } :} ;
+
 multiplicative_expression ::=
 		unary_expression:e
                 {: RESULT = e; :}
 	|	multiplicative_expression:a MULT unary_expression:m
                 {: RESULT = null;
-	ILocation loc = getLocation(a$, m$);
-                	if ((a instanceof AtsASTNode) && (m instanceof AtsASTNode)) {
-                	BinaryExpression be = new BinaryExpression((AtsASTNode) a, (AtsASTNode) m);
-                	be.setOperator(BinaryOperator.MULTIPLICATION);
-                	be.setLocation(loc);
-                	RESULT = be;
-                } else {
-                	reportError("error", loc);
-                	reportError("error", "Parser_BinaryExprMult: Expecting AtsASTNode Got:(e1) " + (a != null ? a.getClass().getSimpleName() : "null"));
-                	reportError("error", "Parser_BinaryExprMult: Expecting AtsASTNode Got:(e1) " + (m != null ? m.getClass().getSimpleName() : "null"));
-                } :}
+                  ILocation loc = getLocation(a$, m$);
+                  if ((a instanceof AtsASTNode) && (m instanceof AtsASTNode)) {
+                    BinaryExpression be = new BinaryExpression((AtsASTNode) a, (AtsASTNode) m);
+                    be.setOperator(BinaryOperator.MULTIPLICATION);
+                    be.setLocation(loc);
+                    RESULT = be;
+                  } :}
 	|	multiplicative_expression:a DIV unary_expression:m
                 {: RESULT = null;
-	ILocation loc = getLocation(a$, m$);
-                	if ((a instanceof AtsASTNode) && (m instanceof AtsASTNode)) {
-                	BinaryExpression be = new BinaryExpression((AtsASTNode) a, (AtsASTNode) m);
-                	be.setOperator(BinaryOperator.DIVISION);
-                	be.setLocation(loc);
-                	RESULT = be;
-                } else {
-                	reportError("error", loc);
-                	reportError("error", "Parser_BinaryExprDiv: Expecting AtsASTNode Got:(e1) " + (a != null ? a.getClass().getSimpleName() : "null"));
-                	reportError("error", "Parser_BinaryExprDiv: Expecting AtsASTNode Got:(e1) " + (m != null ? m.getClass().getSimpleName(): "null"));
-                } :}
+                  ILocation loc = getLocation(a$, m$);
+                  if ((a instanceof AtsASTNode) && (m instanceof AtsASTNode)) {
+                    BinaryExpression be = new BinaryExpression((AtsASTNode) a, (AtsASTNode) m);
+                    be.setOperator(BinaryOperator.DIVISION);
+                    be.setLocation(loc);
+                    RESULT = be;
+                  } :}
 	|	multiplicative_expression:a MOD unary_expression:m
                 {: RESULT = null;
-	ILocation loc = getLocation(a$, m$);
-                	if ((a instanceof AtsASTNode) && (m instanceof AtsASTNode)) {
-                	BinaryExpression be = new BinaryExpression((AtsASTNode) a, (AtsASTNode) m);
-                	be.setOperator(BinaryOperator.MODULO);
-                	be.setLocation(loc);
-                	RESULT = be;
-                } else {
-                	reportError("error", loc);
-                	reportError("error", "Parser_BinaryExprMod: Expecting AtsASTNode Got:(e1) " + (a != null ? a.getClass().getSimpleName(): "null"));
-                	reportError("error", "Parser_BinaryExprMod: Expecting AtsASTNode Got:(e1) " + (m != null ? m.getClass().getSimpleName(): "null"));
-                } :}
-	;
+                  ILocation loc = getLocation(a$, m$);
+                  if ((a instanceof AtsASTNode) && (m instanceof AtsASTNode)) {
+                    BinaryExpression be = new BinaryExpression((AtsASTNode) a, (AtsASTNode) m);
+                    be.setOperator(BinaryOperator.MODULO);
+                    be.setLocation(loc);
+                    RESULT = be;
+                  } :} ;
 
 primary ::=
 		literal:l
@@ -936,32 +832,32 @@ argument_list_opt ::= argument_list:args {: RESULT = args; :} | {:RESULT = null;
 argument_list ::=
 		expression:e
                 {: ArgumentList al = new ArgumentList(e);
-				   al.setLocation(getLocation(e$, e$)); 
-				   RESULT = al; :}
+                  al.setLocation(getLocation(e$, e$)); 
+                  RESULT = al; :}
 	|	argument_list:argList COMMA expression:e
                 {: ((ArgumentList) argList).addArg(e);
-	               argList.setLocation(getLocation(argList$, e$));
-	               RESULT = argList; :}
-	;
+                  argList.setLocation(getLocation(argList$, e$));
+                  RESULT = argList; :} ;
 
 operation_invocation ::=
 		variable_identifier:opName LPAREN argument_list_opt:args RPAREN:r
-        {:  if (opName.equals("parseAutomata")) {
-        	   for (Object arg : args.getArguments()) {
-        		   if (arg instanceof VariableExpression) {
-        			   m_filesToParse.add(((VariableExpression) arg).getIdentifier());
-        		   }
-        	   }
-        	   RESULT = null;
-        	} else {
-        	OperationInvocationExpression op = new OperationInvocationExpression(opName, args);
-            op.setLocation(getLocation(opName$, r$));
-            if ((args != null) && !(args instanceof ArgumentList)) {
-            	reportError("error", args.getLocation());
-            	reportError("error", "Parser_OperationInvocation: Got wrong arguments " + args.getClass().getSimpleName());
-            }
-            RESULT = op; 
-        	}
+                {:
+                  if (opName.equals("parseAutomata")) {
+                    for (Object arg : args.getArguments()) {
+                      if (arg instanceof VariableExpression) {
+                        m_filesToParse.add(((VariableExpression) arg).getIdentifier());
+                      }
+                    }
+                    RESULT = null;
+                  } else {
+                    OperationInvocationExpression op = new OperationInvocationExpression(opName, args);
+                    op.setLocation(getLocation(opName$, r$));
+                    if ((args != null) && !(args instanceof ArgumentList)) {
+                      reportError(false, args.getLocation());
+                      reportError(true, "Parser_OperationInvocation: Got wrong arguments " + args.getClass().getSimpleName());
+                    }
+                    RESULT = op; 
+                  }
             :}
 	;
 postfix_expression ::=
@@ -969,11 +865,11 @@ postfix_expression ::=
                 {: RESULT = p; :}
 	|	variable_identifier:v
 		{: VariableExpression var = new VariableExpression(v);
-		   var.setLocation(getLocation(v$, v$));
-                   if ((v != null) && (m_varDeclarations.containsKey(v))) { 
-                      var.setType(m_varDeclarations.get(v));
-                   }
-                   RESULT = var;  
+                  var.setLocation(getLocation(v$, v$));
+                  if ((v != null) && (m_varDeclarations.containsKey(v))) { 
+                    var.setType(m_varDeclarations.get(v));
+                  }
+                  RESULT = var;  
                 :}
 	|	postincrement_expression:e
                 {: RESULT = e; :}
@@ -983,31 +879,24 @@ postfix_expression ::=
 postincrement_expression ::=
 		postfix_expression:e PLUSPLUS
                 {: RESULT = null;
-                   ILocation loc  = getLocation(e$, e$);
-                	if ((e instanceof VariableExpression)) {
-                	UnaryExpression ue = new UnaryExpression((VariableExpression) e);
+                  ILocation loc  = getLocation(e$, e$);
+                  if ((e instanceof VariableExpression)) {
+                    UnaryExpression ue = new UnaryExpression((VariableExpression) e);
                     ue.setOperator(UnaryOperator.EXPR_PLUSPLUS);
                     ue.setLocation(loc);
                     RESULT = ue;
-                } else {
-                	reportError("error", loc);
-                	reportError("error", "Parser_UnaryExprPlusPlus: Expecting VariableExpression Got:(e) =  " + (e != null ? e.getClass().getSimpleName(): "null"));
-                }   :}
-	;
+                } :} ;
+
 postdecrement_expression ::=
 		postfix_expression:e MINUSMINUS
                 {: RESULT = null;
-					ILocation loc  = getLocation(e$, e$);
-                	if ((e instanceof VariableExpression)) {
-                	UnaryExpression ue = new UnaryExpression((VariableExpression) e);
+                  ILocation loc  = getLocation(e$, e$);
+                  if ((e instanceof VariableExpression)) {
+                    UnaryExpression ue = new UnaryExpression((VariableExpression) e);
                     ue.setOperator(UnaryOperator.EXPR_MINUSMINUS);
                     ue.setLocation(loc);
                     RESULT = ue;
-                } else {
-                	reportError("error", loc);
-                	reportError("error", "Parser_UnaryExprMinusMinus: Expecting VariableExpression Got:(e) =  " + (e != null ? e.getClass().getSimpleName(): "null"));
-                }  :}
-	;
+                } :} ;
 unary_expression ::=
 		preincrement_expression:e
                 {: RESULT = e; :}
@@ -1015,75 +904,61 @@ unary_expression ::=
                 {: RESULT = e; :}
 	|	PLUS unary_expression:e
                 {: RESULT = null;
-					ILocation loc  = getLocation(e$, e$);
-                	if ((e instanceof AtsASTNode)) {
-                	BinaryExpression be = new BinaryExpression(new ConstantExpression(0), (AtsASTNode) e);
-                	be.setOperator(BinaryOperator.PLUS);
-                	be.setLocation(loc);
-                	RESULT = be;
-                } else {
-                	reportError("error",  loc);
-                	reportError("error",  "Parser_BinaryExprPlus: Expecting AtsASTNode Got:(e) " + (e != null ? e.getClass().getSimpleName(): "null"));
-                } :}
+                  ILocation loc  = getLocation(e$, e$);
+                  if ((e instanceof AtsASTNode)) {
+                    BinaryExpression be = new BinaryExpression(new ConstantExpression(0), (AtsASTNode) e);
+                    be.setOperator(BinaryOperator.PLUS);
+                    be.setLocation(loc);
+                    RESULT = be;
+                  } 
+                :}
 	|	MINUS unary_expression:e
                 {:  RESULT = null;
-                	ILocation loc  = getLocation(e$, e$);
-                	if ((e instanceof AtsASTNode)) {
-                	BinaryExpression be = new BinaryExpression(new ConstantExpression(0), (AtsASTNode) e);
-                	be.setOperator(BinaryOperator.MINUS);
-                	be.setLocation(loc);
-                	RESULT = be;
-                } else {
-                	reportError("error",  loc);
-                	reportError("error",  "Parser_BinaryExprMinus: Expecting AtsASTNode Got:(e) " + (e != null ? e.getClass().getSimpleName(): "null"));
-                }  :}
+                  ILocation loc  = getLocation(e$, e$);
+                  if ((e instanceof AtsASTNode)) {
+                    BinaryExpression be = new BinaryExpression(new ConstantExpression(0), (AtsASTNode) e);
+                    be.setOperator(BinaryOperator.MINUS);
+                    be.setLocation(loc);
+                    RESULT = be;
+                  } 
+                :}
 	|	unary_expression_not_plus_minus:e
                 {: RESULT = e; :}
 	;
 preincrement_expression ::=
 		PLUSPLUS unary_expression:e
                 {: RESULT = null;
-ILocation loc  = getLocation(e$, e$);
-                	if ((e instanceof VariableExpression)) {
-                	UnaryExpression ue = new UnaryExpression((VariableExpression) e);
+                  ILocation loc  = getLocation(e$, e$);
+                  if ((e instanceof VariableExpression)) {
+                    UnaryExpression ue = new UnaryExpression((VariableExpression) e);
                     ue.setOperator(UnaryOperator.PLUSPLUS_EXPR);
                     ue.setLocation(loc);
                     RESULT = ue;
-                } else {
-                	reportError("error",  loc);
-                	reportError("error",  "Parser_UnaryPlusPlusExpr: Expecting VariableExpression Got:(e) =  " + (e != null ? e.getClass().getSimpleName(): "null"));
-                } :}
-	;
+                  } :} ;
+
 predecrement_expression ::=
 		MINUSMINUS unary_expression:e
                 {: RESULT = null;
-ILocation loc  = getLocation(e$, e$);
-                	if ((e instanceof VariableExpression)) {
-                	UnaryExpression ue = new UnaryExpression((VariableExpression) e);
+                  ILocation loc  = getLocation(e$, e$);
+                  if ((e instanceof VariableExpression)) {
+                    UnaryExpression ue = new UnaryExpression((VariableExpression) e);
                     ue.setOperator(UnaryOperator.MINUSMINUS_EXPR);
                     ue.setLocation(loc);
                     RESULT = ue;
-                } else {
-                	reportError("error",  loc);
-                	reportError("error",  "Parser_UnaryMinusMinusExpr: Expecting VariableExpression Got:(e) =  " + (e != null ? e.getClass().getSimpleName(): "null"));
-                } :}
-	;
+                  } :} ;
+
 unary_expression_not_plus_minus ::=
 		postfix_expression:p
                 {: RESULT = p; :}
 	|	NOT:n unary_expression:e
                 {:  RESULT = null;
-ILocation loc  = getLocation(n$, e$);
-                	if ((e instanceof AtsASTNode)) {
-                	ConditionalBooleanExpression cbe = new ConditionalBooleanExpression((AtsASTNode) e);
-                	cbe.setOperator(ConditionalBooleanOperator.NOT);
-                	cbe.setLocation(loc);
-                	RESULT = cbe;
-  	               } else {
-  	            	   reportError("error",  loc);
-  	            	   reportError("error",  "Parser_CondNotExpr: Expecting AtsASTNode Got:(Cond1) " + (e != null ? e.getClass().getSimpleName(): "null"));
-  	               }:}
-	;
+                  ILocation loc  = getLocation(n$, e$);
+                  if ((e instanceof AtsASTNode)) {
+                    ConditionalBooleanExpression cbe = new ConditionalBooleanExpression((AtsASTNode) e);
+                    cbe.setOperator(ConditionalBooleanOperator.NOT);
+                    cbe.setLocation(loc);
+                    RESULT = cbe;
+                  } :} ;
 
 /* -------------------- Specification of Rules for Automata DEFINITION Files-----------------------*/
 
@@ -1099,20 +974,19 @@ nwa_definition ::=      variable_identifier:id EQ
                                return_transitions_opt:ret_trans
                         RPAREN:r
                         {: NestedwordAutomaton nwa = new NestedwordAutomaton(id);
-						   nwa.setCallAlphabet(call.getIdentifierList());
-						   nwa.setInternalAlphabet(intern.getIdentifierList());
-						   nwa.setReturnAlphabet(ret.getIdentifierList());
-						   nwa.setStates(states.getIdentifierList());
-						   nwa.setInitialStates(init_states.getIdentifierList());
-						   nwa.setFinalStates(fin_states.getIdentifierList());
-						   nwa.setInternalTransitions(int_trans);
-						   nwa.setCallTransitions(call_trans);
-						   nwa.setReturnTransitions(ret_trans);
-						   nwa.setLocation(getLocation(l$, r$));
-						   // TODO: Error handling, e.g. if alphabet is null, or states are null, ..etc.
-						   m_varDeclarations.put(id, NestedwordAutomaton.class);
-                        	RESULT = nwa; :}
-                        ;
+                          nwa.setCallAlphabet(call.getIdentifierList());
+                          nwa.setInternalAlphabet(intern.getIdentifierList());
+                          nwa.setReturnAlphabet(ret.getIdentifierList());
+                          nwa.setStates(states.getIdentifierList());
+                          nwa.setInitialStates(init_states.getIdentifierList());
+                          nwa.setFinalStates(fin_states.getIdentifierList());
+                          nwa.setInternalTransitions(int_trans);
+                          nwa.setCallTransitions(call_trans);
+                          nwa.setReturnTransitions(ret_trans);
+                          nwa.setLocation(getLocation(l$, r$));
+                          // TODO: Error handling, e.g. if alphabet is null, or states are null, ..etc.
+                          m_varDeclarations.put(id, NestedwordAutomaton.class);
+                          RESULT = nwa; :} ;
 
 
 call_alphabet ::=  CALL_ALPHABET EQ LBRACE:l identifier_list_opt:idList  RBRACE:r 
@@ -1122,9 +996,9 @@ call_alphabet ::=  CALL_ALPHABET EQ LBRACE:l identifier_list_opt:idList  RBRACE:
 identifier_list_opt ::= identifier_list:idList {:RESULT = idList; :} | {:RESULT = new IdentifierList(); :};
 
 identifier_list ::= IDENTIFIER:id
-					{: IdentifierList idList = new IdentifierList();
-					   idList.addId(id);
-					   RESULT = idList; :} 
+                    {: IdentifierList idList = new IdentifierList();
+                      idList.addId(id);
+                      RESULT = idList; :} 
                     | identifier_list:idList IDENTIFIER:id
                       {:idList.addId(id);
                     	RESULT = idList; :} ;

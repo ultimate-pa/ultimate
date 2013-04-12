@@ -38,6 +38,10 @@ import java_cup.runtime.*;
     public String getLastToken() {
       return m_LastToken;
     }
+
+    public String getCurrentToken() {
+      return m_CurToken;
+    }
 %}
 
 /* Some useful character classes */
@@ -90,9 +94,7 @@ StringCharacter = [^\r\n\"\\]
   /* keywords for AutomataDefinitionFile */
   /* NestedWordAutomaton */
   "NestedWordAutomaton"          { m_LastToken = m_CurToken; m_CurToken = "NestedWordAutomaton"; return symbol(sym.NESTEDWORD_AUTOMATA); }
-  /*"nwa"          { m_LastToken = m_CurToken; m_CurToken = "NestedWordAutomaton"; return * symbol(sym.NESTEDWORD_AUTOMATA); }*/
-  /* PetriNetJulian */
-  "net"                         { m_LastToken = m_CurToken; m_CurToken = "net"; return symbol(sym.PETRINET_AUTOMATA); }
+  "PetriNet"   { m_LastToken = m_CurToken; m_CurToken = "PetriNet"; return symbol(sym.PETRINET_AUTOMATA); }
   "alphabet"                    { m_LastToken = m_CurToken; m_CurToken = "alphabet"; return symbol(sym.ALPHABET); }
   "callAlphabet"                { m_LastToken = m_CurToken; m_CurToken = "callAlphabet"; return symbol(sym.CALL_ALPHABET); }
   "internalAlphabet"            { m_LastToken = m_CurToken; m_CurToken = "internalAlphabet"; return symbol(sym.INTERNAL_ALPHABET); }
@@ -188,6 +190,6 @@ StringCharacter = [^\r\n\"\\]
 }
 
 /* error fallback */
-.|\n                             { throw new RuntimeException("ErrorFallback: Illegal character \""+yytext()+ "\" at line "+(yyline + 1) + ", column "+( yycolumn + 1)); }
+.|\n                             { m_LastToken = m_CurToken; m_CurToken = yytext(); return symbol(sym.error, "Syntax error: Illegal character \""+yytext()+ "\" at line "+(yyline + 1) + ", column "+( yycolumn + 1)); }
 /* EndOfFile */
 <<EOF>>                          { m_LastToken = m_CurToken; m_CurToken ="EOF"; return symbol(sym.EOF); }

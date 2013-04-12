@@ -11,7 +11,7 @@ nw word = ["L20loopEntry'21"];
 accepts(nwaSAS09, word);
 assert(accepts(nwaSAS09, word));
 
-nwa nwaSAS09 = (
+NestedWordAutomaton nwaSAS09 = (
 	callAlphabet = {},
 	internalAlphabet = {"assume -1 != y;assum...35" "assume !(-1 != y);32" "x := 0;y := 0;24" "x := x + 1;28" "assume -1 != x;31" "assume !(-1 != x);30" },
 	returnAlphabet = {},
@@ -26,5 +26,5 @@ nwa nwaSAS09 = (
 		 ("L2523" "assume !(-1 != y);32" "SAS09paperErr1AssertViolation22")
 	},
 	returnTransitions = { }
-)
+);
 
