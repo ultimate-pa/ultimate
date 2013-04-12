@@ -71,6 +71,8 @@ public class TestFileInterpreter {
 	
 	class AutomataScriptTypeChecker {
 		
+		private Map<String, Class<?>> m_localVariables = new HashMap<String, Class<?>>();
+		
 		public void checkType(AtsASTNode n) throws IllegalArgumentException {
 			if (n instanceof AssignmentExpression) {
 				checkType((AssignmentExpression) n);
@@ -96,6 +98,8 @@ public class TestFileInterpreter {
 				checkType((UnaryExpression) n);
 			} else if (n instanceof VariableDeclaration) {
 				checkType((VariableDeclaration) n);
+			} else if (n instanceof VariableExpression) {
+				checkType((VariableExpression) n);
 			} else if (n instanceof WhileStatement) {
 				checkType((WhileStatement) n);
 			}
@@ -110,18 +114,20 @@ public class TestFileInterpreter {
 				message = message.concat("On the right-hand side there can be an arbitrary expression.");
 				throw new IllegalArgumentException(message);
 			}
-			VariableExpression var = (VariableExpression) children.get(0);
 			// Check the type of children
+			checkType(children.get(0));
 			checkType(children.get(1));
-			Set<Class<?>> types = getTypes(children.get(1));
+			
+			VariableExpression var = (VariableExpression) children.get(0);
 			for (Class<?> c : getTypes(children.get(1))) {
 				// Check for correct types
 				if (var.isTypeCorrect(c)) {
 					return;
 				}
+				children.get(1).setType(c);
 			}
 			String message = "AssignmentExpression: Type error ";
-			message = message.concat(children.get(1).getReturnType() + " is not assignable to " + var.getReturnType());
+			message = message.concat("\"" + children.get(1).getReturnType().getSimpleName() + "\" is not assignable to \"" + var.getReturnType().getSimpleName() + "\"");
 			throw new IllegalArgumentException(message);
 			
 		}
@@ -302,11 +308,23 @@ public class TestFileInterpreter {
 			throw new IllegalArgumentException(message);
 		}
 		
+		private void checkType(VariableExpression v) {
+			if (m_localVariables.containsKey(v.getIdentifier())) {
+				v.setType(m_localVariables.get(v.getIdentifier()));
+			} else {
+				String message = "VariableExpression: Variable " + v.getIdentifier() + " at line " + v.getLocation().getStartLine() + " was not declared.";
+				throw new IllegalArgumentException(message);
+			}
+		}
+		
 		private void checkType(VariableDeclaration vd)  throws IllegalArgumentException {
 			List<AtsASTNode> children = vd.getOutgoingNodes();
 	    	if ((children.size() != 0) && (children.size() != 1)) {
 	    		String message = vd.getLocation().getStartLine() + ": VariableDeclaration should have 0 or 1 child. (the value to assign)";
 				throw new IllegalArgumentException(message);
+	    	}
+	    	for (String id : vd.getIdentifiers()) {
+	    		m_localVariables.put(id, vd.getExpectingType());
 	    	}
 	    	if (children.size() == 0) return;
 	    	
@@ -421,7 +439,6 @@ public class TestFileInterpreter {
     }
 	
 	public Object interpretTestFile(AtsASTNode node) {
-		List<AtsASTNode> children = node.getOutgoingNodes();
 		AutomataTestFile ats = null;
 		if (node instanceof AutomataTestFile) {
 			ats = (AutomataTestFile) node;
@@ -887,13 +904,13 @@ public class TestFileInterpreter {
     	return null;
     }
     
-	private <T> Object interpret(VariableExpression ve) throws Exception {
-		if (!m_variables.containsKey(ve.getIdentifier())) {
-			String message = "VariableExpression: Variable " + ve.getIdentifier() + " at line " + ve.getLocation().getStartLine() + " was not declared.";
-			throw new RuntimeException(message);
+	private <T> Object interpret(VariableExpression v) throws Exception {
+		if (!m_variables.containsKey(v.getIdentifier())) {
+			String message = "VariableExpression: Variable " + v.getIdentifier() + " at line " + v.getLocation().getStartLine() + " was not declared.";
+			throw new IllegalArgumentException(message);
 		}
 		
-		return m_variables.get(ve.getIdentifier());
+		return m_variables.get(v.getIdentifier());
 	}
 	
 	private <T> Object interpret(WhileStatement ws) throws Exception {

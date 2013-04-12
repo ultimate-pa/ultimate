@@ -3,7 +3,9 @@ package de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser;
 
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.model.ILocation;
 import de.uni_freiburg.informatik.ultimate.model.IPayload;
@@ -31,11 +33,15 @@ public class AtsASTNode extends BaseAST<AtsASTNode> {
 	protected Class<?> m_expectingType;
 
 	protected ILocation m_location;
+	private Map<Class<?>, Class<?>> m_primitiveToClassTypes;
 	
-	public AtsASTNode() {
+ 	public AtsASTNode() {
 		m_children = new ArrayList<AtsASTNode>();
 		m_parent = null;
 		m_location = null;
+		m_primitiveToClassTypes = new HashMap<Class<?>, Class<?>>();
+		m_primitiveToClassTypes.put(int.class, Integer.class);
+		m_primitiveToClassTypes.put(boolean.class, Boolean.class);
 	}
 	
 	public AtsASTNode(ILocation loc) {
@@ -82,8 +88,12 @@ public class AtsASTNode extends BaseAST<AtsASTNode> {
 	}
 	
 	public boolean isTypeCorrect(Class<?> expectedType){
+		Class<?> classType = expectedType;
+		if (m_primitiveToClassTypes.containsKey(expectedType)) {
+			classType = m_primitiveToClassTypes.get(expectedType);
+		}
 		if (m_returnType != null) {
-			return m_returnType.isAssignableFrom(expectedType);
+			return m_returnType.isAssignableFrom(classType);
 		} else {
 			return false;
 		}
@@ -98,8 +108,12 @@ public class AtsASTNode extends BaseAST<AtsASTNode> {
 	}
 
 	public void setType(Class<?> type) {
-		setReturnType(type);
-		setExpectingType(type);
+		Class<?> classType = type;
+		if (m_primitiveToClassTypes.containsKey(type)) {
+			classType = m_primitiveToClassTypes.get(type);
+		}
+		setReturnType(classType);
+		setExpectingType(classType);
 	}
 	
 	public void setReturnType(Class<?> type) {

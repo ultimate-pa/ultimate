@@ -16,4 +16,4 @@ NestedWordAutomaton a1 = (
   callTransitions = {(q0 a q0) (q0 a q1)},
   internalTransitions = {}, 
   returnTransitions = {(q1 q0 b q1)}
-)
+);
