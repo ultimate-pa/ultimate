@@ -170,7 +170,7 @@ public abstract class AbstractMinimizationVisitor implements
 					getReferencedMinNode((ProgramPoint) edge.getTarget(), edge,
 							false)));
 		}
-		node.addNewOutgoingEdgeLevel(outEdges);
+		node.addNewOutgoingEdgeLevel(outEdges, null);
 	}
 
 	/**

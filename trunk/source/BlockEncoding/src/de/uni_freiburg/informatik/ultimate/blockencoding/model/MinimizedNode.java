@@ -78,15 +78,20 @@ public class MinimizedNode implements
 	/**
 	 * @param edges
 	 */
-	public void addNewOutgoingEdgeLevel(List<IMinimizedEdge> edges) {
+	public void addNewOutgoingEdgeLevel(List<IMinimizedEdge> edges,
+			IMinimizedEdge edgeToRate) {
 		// we have to determine the maximum Rating of all edges in the list
 		IRating maxRating = null;
-		for (IMinimizedEdge edge : edges) {
-			if (maxRating == null) {
-				maxRating = edge.getRating();
-			} else {
-				if (edge.getRating().compareTo(maxRating) > 0) {
+		if (edgeToRate != null) {
+			maxRating = edgeToRate.getRating();
+		} else {
+			for (IMinimizedEdge edge : edges) {
+				if (maxRating == null) {
 					maxRating = edge.getRating();
+				} else {
+					if (edge.getRating().compareTo(maxRating) > 0) {
+						maxRating = edge.getRating();
+					}
 				}
 			}
 		}
@@ -115,6 +120,7 @@ public class MinimizedNode implements
 	 * @param edges
 	 */
 	public void addNewIncomingEdgeLevel(List<IMinimizedEdge> edges) {
+		// TODO: We need here the same, as for outgoing edge level?
 		// we have to determine the maximum Rating of all edges in the list
 		IRating maxRating = null;
 		for (IMinimizedEdge edge : edges) {
@@ -146,14 +152,14 @@ public class MinimizedNode implements
 		}
 		return new ArrayList<IMinimizedEdge>();
 	}
-	
+
 	/**
 	 * @return
 	 */
 	public List<SimpleEntry<IRating, List<IMinimizedEdge>>> getOutgoingEdgeLevels() {
 		return outgoingEdges;
 	}
-	
+
 	/**
 	 * @return
 	 */

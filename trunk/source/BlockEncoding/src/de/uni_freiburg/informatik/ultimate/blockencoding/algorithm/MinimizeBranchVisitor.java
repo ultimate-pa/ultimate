@@ -203,7 +203,7 @@ public class MinimizeBranchVisitor extends AbstractMinimizationVisitor {
 			}
 		}
 		// we have to add a new minimized level for the outgoing edges
-		disjunction.getSource().addNewOutgoingEdgeLevel(outgoingList);
+		disjunction.getSource().addNewOutgoingEdgeLevel(outgoingList, null);
 		if (disjunction.getTarget().getIncomingEdges() == null) {
 			initializeIncomingEdges(disjunction.getTarget());
 		}
@@ -251,7 +251,7 @@ public class MinimizeBranchVisitor extends AbstractMinimizationVisitor {
 				outgoingList.add(edge);
 			}
 		}
-		conjunction.getSource().addNewOutgoingEdgeLevel(outgoingList);
+		conjunction.getSource().addNewOutgoingEdgeLevel(outgoingList, null);
 		// IncomingEdges of conjunction.getTarget() may not initialized!
 		if (conjunction.getTarget().getIncomingEdges() == null) {
 			initializeIncomingEdges(conjunction.getTarget());

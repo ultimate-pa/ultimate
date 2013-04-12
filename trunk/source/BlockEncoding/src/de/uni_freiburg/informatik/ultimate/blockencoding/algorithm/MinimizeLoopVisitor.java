@@ -128,7 +128,7 @@ public class MinimizeLoopVisitor extends MinimizeBranchVisitor {
 				outgoingList.add(edge);
 			}
 		}
-		incoming.getSource().addNewOutgoingEdgeLevel(outgoingList);
+		incoming.getSource().addNewOutgoingEdgeLevel(outgoingList, null);
 		visitedEdges.add(incoming);
 		visitedEdges.addAll(outgoing);
 		notReachableNodes.add(incoming.getTarget());

@@ -133,13 +133,15 @@ public class ConversionVisitor implements IMinimizationVisitor {
 	 */
 	private void internalVisitNode(MinimizedNode node) {
 		// We have no outgoing edges, so we reached an end of the recursion
-		if (node.getOutgoingEdges() == null
-				|| node.getOutgoingEdges().size() == 0) {
+		if (node.getOutgoingEdges() == null) {
 			return;
 		}
-
 		// We now get the Edges according to the rating!
 		ArrayList<IMinimizedEdge> edgeList = getEdgesAccordingToRating(node);
+		// if edgeList has no entries, we reached an end of the graph
+		if (edgeList.size() == 0) {
+			return;
+		}
 		for (IMinimizedEdge edge : edgeList) {
 			if (!visitedEdges.contains(edge)) {
 				visitedEdges.add(edge);
@@ -185,7 +187,8 @@ public class ConversionVisitor implements IMinimizationVisitor {
 	/**
 	 * Here we search the the level of edges, which fulfill the rating boundary.
 	 * 
-	 * @param node the minimized node
+	 * @param node
+	 *            the minimized node
 	 * @return the edges which fulfill the rating boundary
 	 */
 	private ArrayList<IMinimizedEdge> getEdgesAccordingToRating(
@@ -200,6 +203,11 @@ public class ConversionVisitor implements IMinimizationVisitor {
 		for (int i = node.getOutgoingEdgeLevels().size() - 1; i >= 0; i--) {
 			SimpleEntry<IRating, List<IMinimizedEdge>> entry = node
 					.getOutgoingEdgeLevels().get(i);
+			if (entry.getKey() == null) {
+				s_Logger.debug("Outgoing edge level is null, should "
+						+ "only happen for ULTIMATE.start (" + node + ")");
+				return new ArrayList<IMinimizedEdge>();
+			}
 			// we check if the rated value is okay, for a certain edge level, if
 			// not we can use this level
 			if (entry.getKey().getRatingAsInteger() <= this.ratingBound) {
@@ -297,6 +305,7 @@ public class ConversionVisitor implements IMinimizationVisitor {
 						((Call) cb).getGlobalVarsAssignment());
 			}
 			if (cb instanceof Return) {
+				// TODO: Problem because we use here, old instance of CallAnnot?
 				copyOfCodeBlock = new Return(null, null,
 						((Return) cb).getCorrespondingCallAnnot(),
 						((Return) cb).getCallerNode());

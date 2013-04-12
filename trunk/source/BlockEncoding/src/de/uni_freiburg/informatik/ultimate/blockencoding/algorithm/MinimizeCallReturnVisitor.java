@@ -175,7 +175,7 @@ public class MinimizeCallReturnVisitor implements IMinimizationVisitor {
 			newOutEdgeLevel.add(shortcut);
 			shortcuts.add(shortcut);
 		}
-		callEdge.getSource().addNewOutgoingEdgeLevel(newOutEdgeLevel);
+		callEdge.getSource().addNewOutgoingEdgeLevel(newOutEdgeLevel, null);
 		// Second step is to add the new edges to the incoming set of the error
 		// locations
 		for (IMinimizedEdge shortcutEdge : shortcuts) {
@@ -318,12 +318,12 @@ public class MinimizeCallReturnVisitor implements IMinimizationVisitor {
 		substitute = new DisjunctionEdge(summaryEdge, substitute);
 		// Now substitute the Call / Return / Summary edges
 		callNodeOutEdges.add(substitute);
-		callingNode.addNewOutgoingEdgeLevel(callNodeOutEdges);
+		callingNode.addNewOutgoingEdgeLevel(callNodeOutEdges, null);
 		// We have to replace the Return Edge on both sides
 		List<IMinimizedEdge> outgoingList = new ArrayList<IMinimizedEdge>(
 				returnEdge.getSource().getMinimalOutgoingEdgeLevel());
 		outgoingList.remove(returnEdge);
-		returnEdge.getSource().addNewOutgoingEdgeLevel(outgoingList);
+		returnEdge.getSource().addNewOutgoingEdgeLevel(outgoingList, substitute);
 
 		if (returningNode.getMinimalIncomingEdgeLevel().size() > 2) {
 			s_Logger.warn("Node at this point should only have Return and"
