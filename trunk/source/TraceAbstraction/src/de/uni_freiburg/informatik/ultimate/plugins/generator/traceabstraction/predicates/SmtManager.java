@@ -499,20 +499,16 @@ public class SmtManager {
 
 
 	
-	public IPredicate not(SPredicate sf) {
-		boolean resultIsUnknownTerm = sf.isUnknown();
-		if (resultIsUnknownTerm) {
-			return this.newDontCarePredicate(sf.getProgramPoint());
+	public TermVarsProc not(IPredicate p) {
+		if (isDontCare(p)) {
+			return new TermVarsProc(m_DontCareTerm, m_EmptyVars, m_NoProcedure, m_DontCareTerm);
 		}
-		else {
-			Term formula = Util.not(m_Script,sf.getFormula());
-//			formula = new SimplifyDDA(m_Script, s_Logger).getSimplifiedTerm(formula);
-			Set<BoogieVar> vars = new HashSet<BoogieVar>();
-			vars.addAll(sf.getVars());
-			Term closedFormula = computeClosedFormula(formula, vars, m_Script);
-			return this.newSPredicate(sf.getProgramPoint(), formula, sf.getProcedures(), vars, closedFormula);
-		}
+		Term term = Util.not(m_Script,p.getFormula());
+		Term closedTerm = Util.not(m_Script,p.getClosedFormula());
+		return new TermVarsProc(term, p.getVars(), p.getProcedures(), closedTerm);
 	}
+	
+	
 	
 	public Term simplify(Term term) {
 		return new SimplifyDDA(m_Script, s_Logger).getSimplifiedTerm(term);
