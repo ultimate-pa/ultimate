@@ -352,7 +352,12 @@ public class UltimateInterface extends HttpServlet {
 					log(message);
 					app.start(null);
 				} catch (Throwable t) {
-					final String message = t.toString();
+					t.printStackTrace();
+					final String message = "failed to run ULTIMATE" 
+							+ System.getProperty("line.separator")
+							+ t.toString()
+							+ System.getProperty("line.separator")
+							+ t.getMessage();
 					System.out.println(message);
 					log(message);
 					json.put("error", message);
@@ -411,8 +416,11 @@ public class UltimateInterface extends HttpServlet {
 						}
 						// TODO : Add new "Out of resource" result here ...
 						ILocation loc = r.getLocation();
-						packagedResult.shortDesc = r.getShortDescription();
-						packagedResult.longDesc = r.getLongDescription();
+						if (r.getLocation() == null) {
+							throw new IllegalArgumentException("Location is null");
+						}
+						packagedResult.shortDesc = String.valueOf(r.getShortDescription());
+						packagedResult.longDesc = String.valueOf(r.getLongDescription());
 						packagedResult.startLNr = loc.getStartLine();
 						packagedResult.endLNr = loc.getEndLine();
 						packagedResult.startCol = loc.getStartColumn();
@@ -423,6 +431,7 @@ public class UltimateInterface extends HttpServlet {
 					json.put("results", new JSONArray(resultList.toArray(new JSONObject[0])));
 				}
 			} catch (IllegalArgumentException e) {
+				e.printStackTrace();
 				toBeLogged = true;
 				json = new JSONObject();
 				json.put("error", "Invalid request! error code UI04");
@@ -431,6 +440,7 @@ public class UltimateInterface extends HttpServlet {
 							+ e.getMessage());
 				}
 			} catch (IOException e) {
+				e.printStackTrace();
 				json = new JSONObject();
 				json.put("error", "Internal server error!");
 				if (DEBUG) {
@@ -439,7 +449,12 @@ public class UltimateInterface extends HttpServlet {
 					e.printStackTrace();
 				}
 			} catch (Exception e) {
-				String message = e.toString();
+				e.printStackTrace();
+				String message = "failed construct ULTIMATE run, run ULTIMATE, and present results"
+						+ System.getProperty("line.separator")
+						+ e.toString()
+						+ System.getProperty("line.separator")
+						+ e.getMessage();
 				System.out.println(message);
 				log(message);
 				json.put("error", message);
