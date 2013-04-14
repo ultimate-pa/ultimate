@@ -426,6 +426,15 @@ public class UltimateServices {
 	 *            the found results.
 	 */
 	public void reportResult(String id, IResult result) {
+		if (result.getLocation() == null) {
+			throw new IllegalArgumentException("Location is null");
+		}
+		if (result.getShortDescription() == null) {
+			throw new IllegalArgumentException("ShortDescription is null");
+		}
+		if (result.getLongDescription() == null) {
+			throw new IllegalArgumentException("LongDescription is null");
+		}
 		List<IResult> list = this.m_ResultMap.get(id);
 		if (list == null) {
 			list = new ArrayList<IResult>();
