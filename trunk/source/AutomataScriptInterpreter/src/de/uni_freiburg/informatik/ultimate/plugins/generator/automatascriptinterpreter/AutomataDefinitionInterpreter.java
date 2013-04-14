@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import de.uni_freiburg.informatik.ultimate.plugins.generator.automatascriptinterpreter.TestFileInterpreter.LoggerSeverity;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AtsASTNode;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.AutomataDefinitions;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.NestedwordAutomaton;
@@ -44,18 +45,18 @@ public class AutomataDefinitionInterpreter {
 				try {
 					interpret((NestedwordAutomaton) n);
 				} catch (Exception e) {
-					TestFileInterpreter.printMessage(Severity.ERROR, e.toString() 
+					TestFileInterpreter.printMessage(Severity.ERROR, LoggerSeverity.DEBUG, e.getMessage() 
 							+ System.getProperty("line.separator") + e.getStackTrace(),
-							"Exception thrown.", n.getLocation());
+							"Exception thrown", n.getLocation());
 				}
 
 			} else if (n instanceof PetriNetAutomaton) {
 				try {
 					interpret((PetriNetAutomaton) n);
 				} catch (Exception e) {
-					TestFileInterpreter.printMessage(Severity.ERROR, e.toString() 
+					TestFileInterpreter.printMessage(Severity.ERROR, LoggerSeverity.DEBUG, e.getMessage() 
 							+ System.getProperty("line.separator") + e.getStackTrace(), 
-							"Exception thrown.", n.getLocation());
+							"Exception thrown", n.getLocation());
 				}
 			}
 		}

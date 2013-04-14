@@ -42,11 +42,11 @@ public class AutomataScriptParser implements ISource {
 			reportToUltimate(Severity.ERROR, parser.getLongErrorMessage(),
 					         parser.getShortErrorMessage(), 
 					         parser.getErrorLocation());
+			s_Logger.debug("Parsing aborted.");
 			return null;
 		}
 
-		String successMessage = "'" + file.getName() + "' successfully parsed"; 
-		s_Logger.info(successMessage);
+		s_Logger.debug("'" + file.getName() + "' successfully parsed");
 		if (result instanceof AutomataTestFile) {
 			AutomataTestFile ats = (AutomataTestFile)result;
 			AutomataDefinitions autDefs = ats.getAutomataDefinitions();
@@ -56,7 +56,7 @@ public class AutomataScriptParser implements ISource {
 				List<Automaton> automataDefinitionsFromOtherFiles = parseAutomataDefinitions(parser.getFilesToParse(), baseDir);
 				for (Automaton a : automataDefinitionsFromOtherFiles) {
 					if (autDefs.hasAutomaton(a)) {
-						s_Logger.error("Automaton \"" + a.getName() + "\" was already declared in file \"" + file.getName() + "\".");
+						s_Logger.debug("Automaton \"" + a.getName() + "\" was already declared in file \"" + file.getName() + "\".");
 					} else {
 						autDefs.addAutomaton(a);
 					}
@@ -94,8 +94,7 @@ public class AutomataScriptParser implements ISource {
 			try {
 				l = new Lexer(new FileReader(file));
 			} catch (FileNotFoundException e) {
-				s_Logger.error("File \"" + fileToParse + "\" doesn't exist or couldn't open!");
-				e.printStackTrace();
+				s_Logger.debug("File \"" + fileToParse + "\" doesn't exist or couldn't open!");
 				continue;
 			}
 			Parser p = new Parser(l);
@@ -105,8 +104,7 @@ public class AutomataScriptParser implements ISource {
 			try {
 				result = p.parse().value;
 			} catch (Exception e) {
-				s_Logger.error("Parsing file \"" + fileToParse + "\" failed!");
-				e.printStackTrace();
+				s_Logger.debug("Parsing file \"" + fileToParse + "\" failed!");
 				continue;
 			}
 			if ((result != null) && (result instanceof AutomataTestFile)) {
@@ -115,14 +113,14 @@ public class AutomataScriptParser implements ISource {
 					List<Automaton> newAutomataDefinitions = ats.getAutomataDefinitions().getListOfAutomataDefinitions();
 					for (Automaton a : newAutomataDefinitions) {
 						if (parsedAutomata.contains(a)) {
-							s_Logger.error("Automaton \"" + a.getName() + "\" from file \"" + fileToParse + " already declared in other file.");
+							s_Logger.debug("Automaton \"" + a.getName() + "\" from file \"" + fileToParse + " already declared in other file.");
 						} else {
 							parsedAutomata.add(a);
 						}
 					}
 					
 				}
-				s_Logger.info("\"" + fileToParse + "\" successfully parsed.");
+				s_Logger.debug("\"" + fileToParse + "\" successfully parsed.");
 			}
 		}
 		return parsedAutomata;
@@ -136,7 +134,7 @@ public class AutomataScriptParser implements ISource {
 				baseDir = baseDir.substring(0, baseDir.lastIndexOf(File.separator) + 1);
 				f = new File(baseDir + fileName.substring(3));
 				if (!f.exists() || !f.canRead()) {
-					s_Logger.error("File \"" + fileName + "\" doesn't exist or couldn't open!");
+					s_Logger.debug("File \"" + fileName + "\" doesn't exist or couldn't open!");
 					return null;
 				} else {
 					return f;
@@ -144,7 +142,7 @@ public class AutomataScriptParser implements ISource {
 			} else {
 				f = new File(baseDir + fileName);
 				if (!f.exists() || !f.canRead()) {
-					s_Logger.error("File \"" + fileName + "\" doesn't exist or couldn't open!");
+					s_Logger.debug("File \"" + fileName + "\" doesn't exist or couldn't open!");
 					return null;
 				} else {
 					return f;
@@ -196,6 +194,8 @@ public class AutomataScriptParser implements ISource {
 		    		                     sev);
 			UltimateServices.getInstance().reportResult(Activator.s_PLUGIN_ID, res);
 	}
+	
+	
 	
 	/* (non-Javadoc)
 	 * @see de.uni_freiburg.informatik.ultimate.ep.interfaces.ISource#getFileTypes()

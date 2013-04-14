@@ -36,8 +36,8 @@ import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.model.ILocation;
 
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AtsASTNode;
+import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AutomataScriptLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.AssignmentExpression;
-import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.AutomataDefinitions;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.AutomataTestFile;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.BreakStatement;
@@ -72,6 +72,7 @@ public class TestFileInterpreter {
 	class AutomataScriptTypeChecker {
 		
 		private Map<String, Class<?>> m_localVariables = new HashMap<String, Class<?>>();
+		private ILocation m_errorLocation = null;
 		
 		public void checkType(AtsASTNode n) throws IllegalArgumentException {
 			if (n instanceof AssignmentExpression) {
@@ -86,8 +87,6 @@ public class TestFileInterpreter {
 				checkType((IfElseStatement) n);
 			} else if (n instanceof IfStatement) {
 				checkType((IfStatement) n);
-			} else if (n instanceof OperationInvocationExpression) {
-				// TODO: Check type of parameters for this operation
 			} else if (n instanceof RelationalExpression) {
 				checkType((RelationalExpression) n);
 			} else if (n instanceof StatementList) {
@@ -108,6 +107,7 @@ public class TestFileInterpreter {
 		
 		private void checkType(AssignmentExpression as) throws IllegalArgumentException {
 			List<AtsASTNode> children = as.getOutgoingNodes();
+			m_errorLocation = as.getLocation();
 			if (children.size() != 2) {
 				String message = as.getLocation().getStartLine() + ": AssignmentExpression: It should have 2 operands\n";
 				message = message.concat("On the left-hand side there  must be a VariableExpression, ");
@@ -134,6 +134,7 @@ public class TestFileInterpreter {
 		
 		private void checkType(BinaryExpression be)  throws IllegalArgumentException {
 			List<AtsASTNode> children = be.getOutgoingNodes();
+			m_errorLocation = be.getLocation();
 			if (children.size() != 2) {
 				String message = be.getLocation().getStartLine() + ": BinaryExpression should always have 2 children!\nNum of children: " + children.size();
 				throw new IllegalArgumentException(message);
@@ -169,6 +170,7 @@ public class TestFileInterpreter {
 		
 		private void checkType(ConditionalBooleanExpression cbe)  throws IllegalArgumentException {
 			List<AtsASTNode> children = cbe.getOutgoingNodes();
+			m_errorLocation = cbe.getLocation();
 			if ((cbe.getOperator() == ConditionalBooleanOperator.NOT) && (children.size() != 1)) {
 				String message = cbe.getLocation().getStartLine() + ": ConditionalBooleanExpression: NOT operator should have 1 operand!\nNum of operands: " + children.size();
 				throw new IllegalArgumentException(message);
@@ -207,6 +209,7 @@ public class TestFileInterpreter {
 		
 		private void checkType(ForStatement fs)  throws IllegalArgumentException {
 			List<AtsASTNode> children = fs.getOutgoingNodes();
+			m_errorLocation = fs.getLocation();
 			if (children.size() != 4) {
 				String message = fs.getLocation().getStartLine() + ": ForStatement should have 4 children (condition, initStmt, updateStmt, stmtList)\n";
 				message = message.concat("Num of children: " + children.size());
@@ -221,6 +224,7 @@ public class TestFileInterpreter {
 		
 		private void checkType(IfElseStatement is)  throws IllegalArgumentException {
 			List<AtsASTNode> children = is.getOutgoingNodes();
+			m_errorLocation = is.getLocation();
 			if (children.size() != 3) {
 				String message = is.getLocation().getStartLine() + ": IfElseStatement should have 3 children (Condition, Thenstatements, Elsestatements)";
 				message = message.concat("Num of children: " + children.size());
@@ -238,6 +242,7 @@ public class TestFileInterpreter {
 		
 		private void checkType(IfStatement is)  throws IllegalArgumentException {
 			List<AtsASTNode> children = is.getOutgoingNodes();
+			m_errorLocation = is.getLocation();
 			if (children.size() != 2) {
 				String message = is.getLocation().getStartLine() + ": IfStatement should have 2 children (condition, thenStatements)\n";
 				message = message.concat("Num of children: " + children.size());
@@ -254,6 +259,7 @@ public class TestFileInterpreter {
 		
 		private void checkType(RelationalExpression re)  throws IllegalArgumentException {
 			List<AtsASTNode> children = re.getOutgoingNodes();
+			m_errorLocation = re.getLocation();
 			if (children.size() != 2) {
 				String message = re.getLocation().getStartLine() + ": RelationalExpression should always have 2 operands!\nNum of operands: " + children.size();
 				throw new IllegalArgumentException(message);
@@ -286,6 +292,7 @@ public class TestFileInterpreter {
 		
 		private void checkType(UnaryExpression ue)  throws IllegalArgumentException {
 			List<AtsASTNode> children = ue.getOutgoingNodes();
+			m_errorLocation = ue.getLocation();
 			if (children.size() != 1) {
 				String message = ue.getLocation().getStartLine() + ": UnaryExpression at line should always have 1 child!\nNum of children: " + children.size();
 				throw new IllegalArgumentException(message);
@@ -309,6 +316,7 @@ public class TestFileInterpreter {
 		}
 		
 		private void checkType(VariableExpression v) {
+			m_errorLocation = v.getLocation();
 			if (m_localVariables.containsKey(v.getIdentifier())) {
 				v.setType(m_localVariables.get(v.getIdentifier()));
 			} else {
@@ -319,6 +327,7 @@ public class TestFileInterpreter {
 		
 		private void checkType(VariableDeclaration vd)  throws IllegalArgumentException {
 			List<AtsASTNode> children = vd.getOutgoingNodes();
+			m_errorLocation = vd.getLocation();
 	    	if ((children.size() != 0) && (children.size() != 1)) {
 	    		String message = vd.getLocation().getStartLine() + ": VariableDeclaration should have 0 or 1 child. (the value to assign)";
 				throw new IllegalArgumentException(message);
@@ -340,6 +349,7 @@ public class TestFileInterpreter {
 		
 		private void checkType(WhileStatement ws)  throws IllegalArgumentException {
 			List<AtsASTNode> children = ws.getOutgoingNodes();
+			m_errorLocation = ws.getLocation();
 			if (children.size() != 2) {
 				String message = "WhileStatement should have 2 child nodes (condition, stmtList)\n";
 				message = message.concat("Number of children: " + children.size());
@@ -380,6 +390,11 @@ public class TestFileInterpreter {
 				return returnType;
 			}
 		}
+
+		
+		public ILocation getErrorLocation() {
+			return m_errorLocation;
+		}
 		
 	}
 	
@@ -395,7 +410,7 @@ public class TestFileInterpreter {
 	private boolean m_printAutomataToFile = false;
 	private PrintWriter m_printWriter;
 	private String m_path = ".";
-	
+	public enum LoggerSeverity {INFO, WARNING, ERROR, DEBUG};
 	
 	
 	public TestFileInterpreter() {
@@ -443,22 +458,26 @@ public class TestFileInterpreter {
 		if (node instanceof AutomataTestFile) {
 			ats = (AutomataTestFile) node;
 		}
-		
-		// Interpret automata definitions, if the file contains any.
+		reportToLogger(LoggerSeverity.DEBUG, "Interpreting automata definitions...");
+		// Interpret automata definitions
 		m_automInterpreter.interpret(ats.getAutomataDefinitions());
 		
 
+		// Put all defined automata into variables map
 		m_variables.putAll(m_automInterpreter.getAutomata());
+		reportToLogger(LoggerSeverity.DEBUG, "Typechecking of test file...");
 		// Type checking
 		try {
 			m_tChecker.checkType(ats.getStatementList());
 		} catch (IllegalArgumentException ie) {
-			s_Logger.warn("Typecheck error! Testfile won't be interpreted.");
-			s_Logger.info("Stack trace:");
-			ie.printStackTrace();
+			reportToLogger(LoggerSeverity.DEBUG, "Typecheck error! Testfile won't be interpreted.");
+			reportToUltimate(Severity.WARNING, "Testfile won't be interpreted.", "Typecheck error", m_tChecker.getErrorLocation());
 			return null;
 		}
+		
+		// Interpreting test file
 		Object result = null;
+		reportToLogger(LoggerSeverity.DEBUG, "Interpreting test file...");
 		if (ats.getStatementList() == null) {
 			// File contains only automata definitions no testcases.
 			result = null;
@@ -466,35 +485,29 @@ public class TestFileInterpreter {
 			try {
 				result = interpret(ats.getStatementList());
 			} catch (Exception e) {
-				// TODO Print error message
-				e.printStackTrace();
+				reportToLogger(LoggerSeverity.DEBUG, e.getMessage());
+				reportToUltimate(Severity.ERROR, e.getMessage(), "Error", getPseudoLocation());
 				return null;
 			}
 		}
+		reportToLogger(LoggerSeverity.DEBUG, "Reporting results...");
 		reportResult();
 		if (m_printAutomataToFile) {
 			m_printWriter.close();
 		}
 		return result;
-
 	}
 	
 	public IAutomaton<?, ?> getLastPrintedAutomaton() {
 		return m_LastPrintedAutomaton;
 	}
 	
-	private <T> Object interpret(AssignmentExpression as) throws Exception {
+	private <T> Object interpret(AssignmentExpression as) throws NoSuchFieldException {
 		List<AtsASTNode> children = as.getOutgoingNodes();
-//		if (children.size() != 2) {
-//			String message = as.getLocation().getStartLine() + ": AssignmentExpression: It should have 2 operands\n";
-//			message = message.concat("On the left-hand side there  must be a VariableExpression, ");
-//			message = message.concat("On the right-hand side there can be an arbitrary expression.");
-//			throw new RuntimeException(message);
-//		}
 		VariableExpression var = (VariableExpression) children.get(0);
 		if (!m_variables.containsKey(var.getIdentifier())) {
-			String message = as.getLocation().getStartLine() + ": AssignmentExpression: Variable " + var.getIdentifier() + " was not declared before.";
-			throw new Exception(message);
+			String message = as.getLocation().getStartLine() + ": Variable \"" + var.getIdentifier() + "\" was not declared before.";
+			throw new NoSuchFieldException(message);
 		}
 		Object oldValue = m_variables.get(var.getIdentifier());
 		Object newValue = interpret(children.get(1));
@@ -525,7 +538,7 @@ public class TestFileInterpreter {
 		return oldValue;
 	}
 		
-	private <T> Object interpret(AtsASTNode node) throws Exception {
+	private <T> Object interpret(AtsASTNode node) throws NoSuchFieldException {
 		Object result = null;
 		if (node instanceof AssignmentExpression) {
 			result = interpret((AssignmentExpression) node);
@@ -550,7 +563,11 @@ public class TestFileInterpreter {
 		} else if (node instanceof NestedLassoword) {
 			result = interpret((NestedLassoword) node);
 		} else if (node instanceof OperationInvocationExpression) {
-			result = interpret((OperationInvocationExpression) node);
+			try {
+				result = interpret((OperationInvocationExpression) node);
+			} catch (Exception e) {
+				throw new RuntimeException(e.getMessage());
+			}
 		} else if (node instanceof RelationalExpression) {
 			result = interpret((RelationalExpression) node);
 		} else if (node instanceof ReturnStatement) {
@@ -569,7 +586,7 @@ public class TestFileInterpreter {
 		return result;
 	}
 
-	private <T> Integer interpret(BinaryExpression be) throws Exception {
+	private <T> Integer interpret(BinaryExpression be) throws NoSuchFieldException {
 		List<AtsASTNode> children = be.getOutgoingNodes();
 		Integer v1 = (Integer) interpret(children.get(0));
 		Integer v2 = (Integer) interpret(children.get(1));
@@ -583,20 +600,13 @@ public class TestFileInterpreter {
 		}
 	}
 	
-	private <T> Object interpret(BreakStatement bst) throws Exception {
-		List<AtsASTNode> children = bst.getOutgoingNodes();
-		if (children.size() != 0) {
-			String message = bst.getLocation().getStartLine() + ": BreakStatement: Should not have any children.\n";
-			message = message.concat("Num of children: " + children.size());
-			throw new Exception(message);
-		}
-		
+	private <T> Object interpret(BreakStatement bst) {
 		// Change the flow
 		m_flow = Flow.BREAK;
 		return null;
 	}
 	
-	private <T> Boolean interpret(ConditionalBooleanExpression cbe) throws Exception{
+	private <T> Boolean interpret(ConditionalBooleanExpression cbe) throws NoSuchFieldException {
 		List<AtsASTNode> children = cbe.getOutgoingNodes();
 		switch (cbe.getOperator()) {
 		case NOT: return !((Boolean) interpret(children.get(0)));
@@ -623,19 +633,13 @@ public class TestFileInterpreter {
 		return ce.getValue();
 	}
 	
-	private <T> Object interpret(ContinueStatement cst) throws Exception {
-		List<AtsASTNode> children = cst.getOutgoingNodes();
-		if (children.size() != 0) {
-			String message = cst.getLocation().getStartLine() + ": ContinueStatement: Should not have any children.\n";
-			message = message.concat("Num of children: " + children.size());
-			throw new Exception(message);
-		}
+	private <T> Object interpret(ContinueStatement cst) {
 		// Change the flow
 		m_flow  =  Flow.CONTINUE;
 		return null;
 	}
 	
-	private <T> Object interpret(ForStatement fs) throws Exception {
+	private <T> Object interpret(ForStatement fs) throws NoSuchFieldException {
 		List<AtsASTNode> children = fs.getOutgoingNodes();
 		
 		Boolean loopCondition = false;
@@ -700,7 +704,7 @@ public class TestFileInterpreter {
 		}
 		return null;
 	}
-	private <T> Object interpret(IfElseStatement is) throws Exception {
+	private <T> Object interpret(IfElseStatement is) throws NoSuchFieldException {
 		List<AtsASTNode> children = is.getOutgoingNodes();
 		
 		// children(0) is the condition
@@ -712,7 +716,7 @@ public class TestFileInterpreter {
 		return null;
 	}
 	
-	private <T> Object interpret(IfStatement is) throws Exception {
+	private <T> Object interpret(IfStatement is) throws NoSuchFieldException {
 		List<AtsASTNode> children = is.getOutgoingNodes();
 		if ((Boolean) interpret(children.get(0))) {
 			for (int i = 1; i < children.size(); i++) {
@@ -722,11 +726,11 @@ public class TestFileInterpreter {
 		return null;
 	}
 	
-	private <T> NestedWord<String> interpret(Nestedword nw) throws Exception {
+	private <T> NestedWord<String> interpret(Nestedword nw) {
 		return new NestedWord<String>(nw.getWordSymbols(), nw.getNestingRelation());
 	}
 	
-	private <T> NestedLassoWord<String> interpret(NestedLassoword nw) throws Exception {
+	private <T> NestedLassoWord<String> interpret(NestedLassoword nw) {
 		NestedWord<String> stem = interpret(nw.getStem());
 		NestedWord<String> loop = interpret(nw.getLoop());
 		return new NestedLassoWord<String>(stem, loop);
@@ -777,12 +781,12 @@ public class TestFileInterpreter {
 		} else if (oe.getOperationName().equalsIgnoreCase("print")) {
 			String argsAsString = children.get(0).getAsString();
 			ILocation loc = children.get(0).getLocation();
-			printMessage(Severity.INFO, "Printing " + argsAsString, "print:", loc);
+			printMessage(Severity.INFO, LoggerSeverity.INFO,"Printing " + argsAsString, "print:", loc);
 			for (Object o : arguments) {
 				if (o instanceof IAutomaton) {
 					m_LastPrintedAutomaton = (IAutomaton<?, ?>) o;
 					String automatonAsString = (new AtsDefinitionPrinter(o)).getDefinitionAsString();
-					printMessage(Severity.INFO, automatonAsString, oe.getAsString(), loc);
+					printMessage(Severity.INFO, LoggerSeverity.INFO, automatonAsString, oe.getAsString(), loc);
 					if (m_printAutomataToFile) {
 						String comment = "/* " + oe.getAsString() + " */";
 						m_printWriter.println(comment);
@@ -791,7 +795,7 @@ public class TestFileInterpreter {
 					
 				} else {
 					s_Logger.info(o.toString());
-					printMessage(Severity.INFO, o.toString(), oe.getAsString(), loc);
+					printMessage(Severity.INFO, LoggerSeverity.INFO, o.toString(), oe.getAsString(), loc);
 					if (m_printAutomataToFile) {
 						String comment = "/* " + oe.getAsString() + " */";
 						m_printWriter.println(comment);
@@ -810,7 +814,7 @@ public class TestFileInterpreter {
 		return result;
 	}
 	
-	private <T> Boolean interpret(RelationalExpression re) throws Exception{
+	private <T> Boolean interpret(RelationalExpression re) throws NoSuchFieldException {
 		List<AtsASTNode> children = re.getOutgoingNodes();
 		if (re.getExpectingType() == Integer.class) {
 			Integer v1 = (Integer) interpret(children.get(0));
@@ -828,13 +832,8 @@ public class TestFileInterpreter {
 		return null;
 	}
 	
-	private <T> Object interpret(ReturnStatement rst) throws Exception {
+	private <T> Object interpret(ReturnStatement rst) throws NoSuchFieldException {
 		List<AtsASTNode> children = rst.getOutgoingNodes();
-		if ((children.size() != 0) && (children.size() != 1)) {
-			String message = rst.getLocation().getStartLine() + ": ReturnStatement: Too many children\n";
-			message = message.concat("Num of children: " + children.size());
-			throw new Exception(message);
-		}
 		// Change the flow
 		m_flow = Flow.RETURN;
 		if (children.size() == 0) {
@@ -852,7 +851,7 @@ public class TestFileInterpreter {
 				if (e.getMessage().equals(UNKNOWN_OPERATION)) {
 					// do nothing - result was already reported
 				} else {
-					TestFileInterpreter.printMessage(Severity.ERROR, e.toString() 
+					TestFileInterpreter.printMessage(Severity.ERROR, LoggerSeverity.DEBUG, e.toString() 
 							+ System.getProperty("line.separator") + e.getStackTrace(), 
 							"Exception thrown.", stmt.getLocation());
 				}
@@ -861,11 +860,11 @@ public class TestFileInterpreter {
 		return null;
 	}
 	
-    private <T> Integer interpret(UnaryExpression ue) throws Exception {
+    private <T> Integer interpret(UnaryExpression ue) {
 		  List<AtsASTNode> children = ue.getOutgoingNodes();
 		  
 		  VariableExpression var = (VariableExpression) children.get(0);
-		  Integer oldVal = (Integer)interpret(var);
+		  Integer oldVal = (Integer) interpret(var);
 	      
 	      switch(ue.getOperator()) {
 	      case EXPR_PLUSPLUS: {
@@ -891,7 +890,7 @@ public class TestFileInterpreter {
 	      }
 		}
 	
-    private <T> Object interpret(VariableDeclaration vd) throws Exception {
+    private <T> Object interpret(VariableDeclaration vd) throws NoSuchFieldException {
     	List<AtsASTNode> children = vd.getOutgoingNodes();
     	Object value = null;
     	if (children.size() == 1) {
@@ -904,16 +903,11 @@ public class TestFileInterpreter {
     	return null;
     }
     
-	private <T> Object interpret(VariableExpression v) throws Exception {
-		if (!m_variables.containsKey(v.getIdentifier())) {
-			String message = "VariableExpression: Variable " + v.getIdentifier() + " at line " + v.getLocation().getStartLine() + " was not declared.";
-			throw new IllegalArgumentException(message);
-		}
-		
+	private <T> Object interpret(VariableExpression v) {
 		return m_variables.get(v.getIdentifier());
 	}
 	
-	private <T> Object interpret(WhileStatement ws) throws Exception {
+	private <T> Object interpret(WhileStatement ws) throws NoSuchFieldException {
 		List<AtsASTNode> children = ws.getOutgoingNodes();
 		Boolean loopCondition = (Boolean) interpret(children.get(0));
 		while (loopCondition) {
@@ -947,31 +941,31 @@ public class TestFileInterpreter {
 		for (GenericResult<Integer> test : m_testCases) {
 			UltimateServices.getInstance().reportResult(Activator.s_PLUGIN_ID, test);
 			if (test.getSeverity() == Severity.ERROR) testCasesSummary = "Some testcases failed.";
-			reportToLogger(Severity.INFO, "Line " + test.getLocation().getStartLine() + ": " + test.getShortDescription());
+			reportToLogger(LoggerSeverity.INFO, "Line " + test.getLocation().getStartLine() + ": " + test.getShortDescription());
 		}
 		// Report summary of the testcases/
 		if (m_testCases.isEmpty()) {
-			printMessage(Severity.WARNING, "No testcases defined!", "Warning" ,  null);
+			printMessage(Severity.WARNING, LoggerSeverity.DEBUG, "No testcases defined!", "Warning" ,  getPseudoLocation());
 		} else {
-			reportToLogger(Severity.INFO, testCasesSummary);
+			reportToLogger(LoggerSeverity.INFO, testCasesSummary);
 		}	
 	}
 	
 	
 	/**
 	 * Reports the given string to the logger
-	 * and to Ultimate as a NoResult.
+	 * and to Ultimate as a GenericResult.
 	 * @param sev the Severity
 	 * @param longDescr the string to be reported
 	 * @param loc the location of the String
 	 */
-	static void printMessage(Severity sev, String longDescr, String shortDescr, ILocation loc) {
-		reportToUltimate(sev, longDescr, shortDescr, loc);
-		reportToLogger(sev, longDescr);
+	static void printMessage(Severity severityForResult, LoggerSeverity severityForLogger, String longDescr, String shortDescr, ILocation loc) {
+		reportToUltimate(severityForResult, longDescr, shortDescr, loc);
+		reportToLogger(severityForLogger, longDescr);
 	}
 	
 	/**
-	 * Reports the given string with the given severity to Ultimate as a NoResult
+	 * Reports the given string with the given severity to Ultimate as a GenericResult
 	 * @param sev the severity
 	 * @param longDescr the string to be reported
 	 * @param loc the location of the string
@@ -985,21 +979,23 @@ public class TestFileInterpreter {
 			UltimateServices.getInstance().reportResult(Activator.s_PLUGIN_ID, res);
 	}
 	
+	
 	/**
 	 * Reports the given string with the given severity to the logger 
 	 * @param sev the severity of the string
 	 * @param toPrint the string to be printed
 	 */
-	private static void reportToLogger(Severity sev, String toPrint) {
+	private static void reportToLogger(LoggerSeverity sev, String toPrint) {
 		switch (sev){
 		case ERROR: s_Logger.error(toPrint); break;
 		case INFO: s_Logger.info(toPrint); break;
 		case WARNING: s_Logger.warn(toPrint); break;
+		case DEBUG: s_Logger.debug(toPrint); break;
 		default: s_Logger.info(toPrint); 
 		}
 	}
 
-	private IOperation getAutomataOperation(OperationInvocationExpression oe, ArrayList<Object> arguments) throws Exception {
+	private IOperation getAutomataOperation(OperationInvocationExpression oe, ArrayList<Object> arguments) throws Exception  {
 		String operationName = oe.getOperationName().toLowerCase();
 		IOperation result = null;
 		if (m_existingOperations.containsKey(operationName)) {
@@ -1032,7 +1028,7 @@ public class TestFileInterpreter {
 			String allOperations = (new ListExistingOperations(m_existingOperations)).prettyPrint();
 			String longDescr = "We support only the following operations " + System.getProperty("line.separator") + allOperations;
 			reportToUltimate(Severity.ERROR, longDescr, shortDescr, oe.getLocation());
-			s_Logger.warn(shortDescr);
+			reportToLogger(LoggerSeverity.DEBUG, shortDescr);
 			throw new UnsupportedOperationException(UNKNOWN_OPERATION);
 		}
 		return result;
@@ -1175,6 +1171,10 @@ public class TestFileInterpreter {
 		}
 		String[] files = dirFile.list();
 		return files;
+	}
+	
+	private static ILocation getPseudoLocation() {
+		return new AutomataScriptLocation("", 0, 0, 0, 0);
 	}
 	
 }
