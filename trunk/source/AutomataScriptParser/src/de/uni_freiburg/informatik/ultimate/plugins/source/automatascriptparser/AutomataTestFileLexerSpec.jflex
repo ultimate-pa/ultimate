@@ -87,9 +87,9 @@ StringCharacter = [^\r\n\"\\]
   
   /* keywords for Words */
   /* NestedWord */
-  "nw"                           { m_LastToken = m_CurToken; m_CurToken = "nw"; return symbol(sym.NESTED_WORD); }
+  "NestedWord"                           { m_LastToken = m_CurToken; m_CurToken = "nw"; return symbol(sym.NESTED_WORD); }
   /* NestedLassoWord */
-  "nlw"                          { m_LastToken = m_CurToken; m_CurToken = "nlw"; return symbol(sym.NESTED_LASSO_WORD); }
+  "NestedLassoWord"                          { m_LastToken = m_CurToken; m_CurToken = "nlw"; return symbol(sym.NESTED_LASSO_WORD); }
 
   /* keywords for AutomataDefinitionFile */
   /* NestedWordAutomaton */

@@ -2,14 +2,13 @@
 // Date: 9.02.2013
 // Example of an .ats file
 
-// parseAutomata("C:\\JavaCup\\Examples\\AutomataTestFile\\Tests\\NWA\\nwa.ats");
 // This operation parses all automata defined in the file "nwaDefinitions01.ats" and
 // stores them internally. Thus, you can use the automata from that file, as if
 // they'd have been defined in this file. 
 // Other than automata definitions are ignored.
 parseAutomata("nwaDefinitions01.ats");
 // Declares a nested word
-nw firstNW = [b b a b b b a];
+NestedWord firstNW = [b b a b b b a];
 assert(accepts(a2, firstNW));
 assert(accepts(a1, [a b c d]));
 assert(accepts(a2, [a b a b]));

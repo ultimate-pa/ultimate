@@ -37,7 +37,7 @@ assert(!IsEmpty(intersect(complement(a1), a2)));
 // )
 
 // Definition in the new syntax
-NestedWordAutomaton automat = (
+NestedWordAutomaton a1 = (
   callAlphabet = {a b},
   internalAlphabet = {a b},
   returnAlphabet = {a b},

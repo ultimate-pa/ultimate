@@ -4,9 +4,9 @@
 // automata definitions at all.
 
 // Declaring some nested words
-nw wordWith2Bs = [b a c d c c a b];
-nw wordWithManyBs = [a b b c b b b d c];
-nw wordWith1c = [a b b b a c];
+NestedWord wordWith2Bs = [b a c d c c a b];
+NestedWord wordWithManyBs = [a b b c b b b d c];
+NestedWord wordWith1c = [a b b b a c];
 
 
 // This test should be true.

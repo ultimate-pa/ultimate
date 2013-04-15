@@ -74,7 +74,14 @@ public class TestFileInterpreter {
 		private Map<String, Class<?>> m_localVariables = new HashMap<String, Class<?>>();
 		private ILocation m_errorLocation = null;
 		
-		public void checkType(AtsASTNode n) throws IllegalArgumentException {
+		public void checkTestFile(AtsASTNode n) throws IllegalArgumentException {
+			for (Map.Entry<String, Object > entry : m_variables.entrySet()) {
+				m_localVariables.put(entry.getKey(), entry.getValue().getClass());
+			}
+			checkType(n);
+		}
+		
+		private void checkType(AtsASTNode n) throws IllegalArgumentException {
 			if (n instanceof AssignmentExpression) {
 				checkType((AssignmentExpression) n);
 			} else if (n instanceof BinaryExpression) {
@@ -87,6 +94,8 @@ public class TestFileInterpreter {
 				checkType((IfElseStatement) n);
 			} else if (n instanceof IfStatement) {
 				checkType((IfStatement) n);
+			} else if (n instanceof OperationInvocationExpression) {
+				checkType((OperationInvocationExpression) n);
 			} else if (n instanceof RelationalExpression) {
 				checkType((RelationalExpression) n);
 			} else if (n instanceof StatementList) {
@@ -172,13 +181,13 @@ public class TestFileInterpreter {
 			List<AtsASTNode> children = cbe.getOutgoingNodes();
 			m_errorLocation = cbe.getLocation();
 			if ((cbe.getOperator() == ConditionalBooleanOperator.NOT) && (children.size() != 1)) {
-				String message = cbe.getLocation().getStartLine() + ": ConditionalBooleanExpression: NOT operator should have 1 operand!\nNum of operands: " + children.size();
+				String message = "Line " + cbe.getLocation().getStartLine() + ": NOT operator should have 1 operand!\nNum of operands: " + children.size();
 				throw new IllegalArgumentException(message);
 			} else if ((cbe.getOperator() == ConditionalBooleanOperator.AND) && (children.size() != 2)) {
-				String message = cbe.getLocation().getStartLine() + ": ConditionalBooleanExpression: AND operator should have 2 operands!\nNum of operands: " + children.size();
+				String message = "Line " + cbe.getLocation().getStartLine() + ": AND operator should have 2 operands!\nNum of operands: " + children.size();
 				throw new IllegalArgumentException(message);
 			} else if ((cbe.getOperator() == ConditionalBooleanOperator.OR) && (children.size() != 2)) {
-				String message = cbe.getLocation().getStartLine() + ": ConditionalBooleanExpression: OR operator should have 2 operands!\nNum of operands: " + children.size();
+				String message = "Line " + cbe.getLocation().getStartLine() + ": OR operator should have 2 operands!\nNum of operands: " + children.size();
 				throw new IllegalArgumentException(message);
 			}
 			// Check children for correct type
@@ -191,7 +200,7 @@ public class TestFileInterpreter {
 				}
 			}
 			if (!firstChildHasCorrectType) {
-				String message = cbe.getLocation().getStartLine() + ": ConditionalBooleanExpression: 1st child is not a Boolean expression\n";
+				String message = "Line " + cbe.getLocation().getStartLine() + ": 1st argument is not a Boolean expression\n";
 				message = message.concat("Expected: " + cbe.getReturnType() + "\tGot: " + children.get(0).getReturnType());
 				throw new IllegalArgumentException(message);
 			}
@@ -201,7 +210,7 @@ public class TestFileInterpreter {
 						return;
 					}
 				}
-				String message = cbe.getLocation().getStartLine() + ": ConditionalBooleanExpression: 2nd child\n";
+				String message = "Line " + cbe.getLocation().getStartLine() + ": 2nd argument is not a Boolean expression\n";
 				message = message.concat("Expected: " + cbe.getReturnType() + "\tGot: " + children.get(1).getReturnType());
 				throw new IllegalArgumentException(message);
 			}
@@ -255,6 +264,28 @@ public class TestFileInterpreter {
 				message = message.concat("Expected: " + Boolean.class + "\tGot: " + children.get(0).getReturnType());
 				throw new IllegalArgumentException(message);
 			}
+		}
+		
+		private void checkType(OperationInvocationExpression oe) throws IllegalArgumentException {
+			m_errorLocation = oe.getLocation();
+			String opName = oe.getOperationName().toLowerCase();
+			if (!m_existingOperations.containsKey(opName)) {
+				if (!opName.equals("assert") && !opName.equals("print")) {
+					String shortDescr = "Unsupported operation \"" + oe.getOperationName() + "\"";
+					String allOperations = (new ListExistingOperations(m_existingOperations)).prettyPrint();
+					String longDescr = "We support only the following operations " + System.getProperty("line.separator") + allOperations;
+					reportToUltimate(Severity.ERROR, longDescr, shortDescr, oe.getLocation());
+					reportToLogger(LoggerSeverity.DEBUG, shortDescr);
+					throw new UnsupportedOperationException(UNKNOWN_OPERATION);
+				}
+			}
+			
+			for (AtsASTNode n : oe.getOutgoingNodes().get(0).getOutgoingNodes()) {
+				checkType(n);
+			}
+			
+			// TODO: Check if parameters has correct type
+			
 		}
 		
 		private void checkType(RelationalExpression re)  throws IllegalArgumentException {
@@ -320,7 +351,7 @@ public class TestFileInterpreter {
 			if (m_localVariables.containsKey(v.getIdentifier())) {
 				v.setType(m_localVariables.get(v.getIdentifier()));
 			} else {
-				String message = "VariableExpression: Variable " + v.getIdentifier() + " at line " + v.getLocation().getStartLine() + " was not declared.";
+				String message = "Variable \"" + v.getIdentifier() + "\" at line " + v.getLocation().getStartLine() + " was not declared.";
 				throw new IllegalArgumentException(message);
 			}
 		}
@@ -468,12 +499,17 @@ public class TestFileInterpreter {
 		reportToLogger(LoggerSeverity.DEBUG, "Typechecking of test file...");
 		// Type checking
 		try {
-			m_tChecker.checkType(ats.getStatementList());
+			m_tChecker.checkTestFile(ats.getStatementList());
 		} catch (IllegalArgumentException ie) {
-			reportToLogger(LoggerSeverity.DEBUG, "Typecheck error! Testfile won't be interpreted.");
-			reportToUltimate(Severity.WARNING, "Testfile won't be interpreted.", "Typecheck error", m_tChecker.getErrorLocation());
+			reportToLogger(LoggerSeverity.DEBUG, "Error: " + ie.getMessage());
+			reportToLogger(LoggerSeverity.DEBUG, "Interpretation of testfile cancelled.");
+			reportToUltimate(Severity.WARNING, ie.getMessage() + " Interpretation of testfile cancelled.", "Error", m_tChecker.getErrorLocation());
+			return null;
+		} catch (UnsupportedOperationException ue) {
+			reportToLogger(LoggerSeverity.DEBUG, "Interpretation of testfile cancelled.");
 			return null;
 		}
+		
 		
 		// Interpreting test file
 		Object result = null;
@@ -848,7 +884,7 @@ public class TestFileInterpreter {
 			try {
 				interpret(stmt);
 			} catch (Exception e) {
-				if (e.getMessage().equals(UNKNOWN_OPERATION)) {
+				if (e.getMessage() != null && e.getMessage().equals(UNKNOWN_OPERATION)) {
 					// do nothing - result was already reported
 				} else {
 					TestFileInterpreter.printMessage(Severity.ERROR, LoggerSeverity.DEBUG, e.toString() 
@@ -904,6 +940,9 @@ public class TestFileInterpreter {
     }
     
 	private <T> Object interpret(VariableExpression v) {
+		if (!m_variables.containsKey(v.getIdentifier())) {
+			throw new IllegalArgumentException("Variable \"" + v.getIdentifier() + "\" was not declared before.");
+		}
 		return m_variables.get(v.getIdentifier());
 	}
 	
