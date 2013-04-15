@@ -29,19 +29,23 @@ public class DisjunctiveRating implements IRating {
 	 *            the edge to be rated
 	 */
 	DisjunctiveRating(IMinimizedEdge edge) {
+		if (edge.isBasicEdge()) {
+			countOfDisjunctions = new RatingValue<Integer>(0);
+		}
+		
 		// We only care for composite edges, since basic edge do not contain
 		// disjunctions, so there rating = 0
 		if (edge instanceof ICompositeEdge) {
 			ICompositeEdge compEdge = (ICompositeEdge) edge;
 			IMinimizedEdge left = compEdge.getCompositeEdges()[0];
 			IMinimizedEdge right = compEdge.getCompositeEdges()[1];
-			if (!(left.getRating() instanceof DefaultRating)
-					|| !(right.getRating() instanceof DefaultRating)) {
+			if (!(left.getRating() instanceof DisjunctiveRating)
+					|| !(right.getRating() instanceof DisjunctiveRating)) {
 				throw new IllegalArgumentException(
 						"Rating-Objects should be of the same type!");
 			}
-			DefaultRating leftRating = (DefaultRating) left.getRating();
-			DefaultRating rightRating = (DefaultRating) right.getRating();
+			DisjunctiveRating leftRating = (DisjunctiveRating) left.getRating();
+			DisjunctiveRating rightRating = (DisjunctiveRating) right.getRating();
 			// Since the underlying edge is a composite, we have to examine the
 			// left and the right side of the Disjunction
 			countOfDisjunctions = new RatingValue<Integer>(leftRating
@@ -53,7 +57,16 @@ public class DisjunctiveRating implements IRating {
 						.setValue(countOfDisjunctions.getValue() + 1);
 			}
 		}
+	}
 
+	/**
+	 * Constructor to create a rating boundary for the heuristic, visibility is
+	 * default (package)
+	 * 
+	 * @param value the boundary value
+	 */
+	DisjunctiveRating(RatingValue<Integer> value) {
+		this.countOfDisjunctions = value;
 	}
 
 	/*

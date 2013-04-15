@@ -22,6 +22,10 @@ public class RatingFactory {
 	 */
 	public static enum RatingStrategy {
 		/**
+		 * use large block encoding, there is no special rating
+		 */
+		LARGE_BLOCK,
+		/**
 		 * The default strategy, is to count the statements.
 		 */
 		DEFAULT,
@@ -84,6 +88,7 @@ public class RatingFactory {
 	 */
 	public IRating createRating(IMinimizedEdge edge) {
 		switch (strategy) {
+		case LARGE_BLOCK:
 		case DEFAULT:
 			return new DefaultRating(edge);
 		case DISJUNCTIVE_RATING:

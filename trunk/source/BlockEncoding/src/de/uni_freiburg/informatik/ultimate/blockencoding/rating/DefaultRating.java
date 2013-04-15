@@ -49,6 +49,16 @@ public class DefaultRating implements IRating {
 		}
 	}
 
+	/**
+	 * Constructor to create a rating for a heuristic, should be used only for
+	 * this operation. To protect it from misuse the visibility is default.
+	 * 
+	 * @param value the boundary value
+	 */
+	DefaultRating(RatingValue<Integer> value) {
+		this.countOfStatements = value;
+	}
+
 	/*
 	 * (non-Javadoc)
 	 * 

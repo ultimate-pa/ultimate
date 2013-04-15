@@ -13,6 +13,9 @@ import org.eclipse.core.runtime.preferences.IEclipsePreferences;
 
 import de.uni_freiburg.informatik.ultimate.blockencoding.model.BlockEncodingAnnotation;
 import de.uni_freiburg.informatik.ultimate.blockencoding.model.MinimizedNode;
+import de.uni_freiburg.informatik.ultimate.blockencoding.rating.ConfigurableHeuristic;
+import de.uni_freiburg.informatik.ultimate.blockencoding.rating.RatingFactory.RatingStrategy;
+import de.uni_freiburg.informatik.ultimate.blockencoding.rating.interfaces.IRatingHeuristic;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.blockendcoding.Activator;
@@ -64,7 +67,7 @@ public class MinModelConverter {
 		boogie2smt = new Boogie2SMT(newRoot.getRootAnnot().getScript(), false,
 				false);
 		convertVisitor = new ConversionVisitor(boogie2smt, root,
-				getRatingBound());
+				getRatingHeuristic());
 		for (RCFGEdge edge : root.getOutgoingEdges()) {
 			if (edge instanceof RootEdge) {
 				BlockEncodingAnnotation annot = BlockEncodingAnnotation
@@ -94,21 +97,19 @@ public class MinModelConverter {
 	 * 
 	 * @return gets the rating boundary
 	 */
-	private int getRatingBound() {
+	private IRatingHeuristic getRatingHeuristic() {
 		IEclipsePreferences prefs = ConfigurationScope.INSTANCE
 				.getNode(Activator.s_PLUGIN_ID);
 		String prefValue = prefs.get(PreferencePage.NAME_RATINGBOUND, "");
+		RatingStrategy strategy = RatingStrategy.values()[Integer
+				.parseInt(prefs.get(PreferencePage.NAME_STRATEGY, "0"))];
 		// if there is no boundary value given, we do Large Block Encoding
-		if (prefValue.equals("")) {
-			return -1;
+		if (strategy == RatingStrategy.LARGE_BLOCK) {
+			return null;
 		}
-		try {
-			return Integer.parseInt(prefValue);
-		} catch (NumberFormatException e) {
-			s_Logger.error("Value in Preferences is not numeric,"
-					+ " Large Block Encoding is applied");
-			return -1;
-		}
+		ConfigurableHeuristic heuristic = new ConfigurableHeuristic(strategy);
+		heuristic.init(prefValue);
+		return heuristic;
 	}
 
 	/**

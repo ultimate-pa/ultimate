@@ -19,6 +19,7 @@ import de.uni_freiburg.informatik.ultimate.blockencoding.model.interfaces.IBasic
 import de.uni_freiburg.informatik.ultimate.blockencoding.model.interfaces.ICompositeEdge;
 import de.uni_freiburg.informatik.ultimate.blockencoding.model.interfaces.IMinimizedEdge;
 import de.uni_freiburg.informatik.ultimate.blockencoding.rating.interfaces.IRating;
+import de.uni_freiburg.informatik.ultimate.blockencoding.rating.interfaces.IRatingHeuristic;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.Activator;
 import de.uni_freiburg.informatik.ultimate.model.BoogieLocation;
@@ -66,14 +67,16 @@ public class ConversionVisitor implements IMinimizationVisitor {
 
 	private HashMap<IMinimizedEdge, Integer> checkForMultipleFormula;
 
-	private int ratingBound;
+	private IRatingHeuristic heuristic;
+	
+	private boolean lbe;
 
 	/**
 	 * @param boogie2smt
 	 * @param root
 	 */
 	public ConversionVisitor(Boogie2SMT boogie2smt, RootNode root,
-			int ratingBound) {
+			IRatingHeuristic heuristic) {
 		this.refNodeMap = new HashMap<MinimizedNode, ProgramPoint>();
 		this.origToNewMap = new HashMap<ProgramPoint, ProgramPoint>();
 		this.locNodesForAnnot = new HashMap<String, HashMap<String, ProgramPoint>>();
@@ -82,7 +85,12 @@ public class ConversionVisitor implements IMinimizationVisitor {
 		this.checkForMultipleFormula = new HashMap<IMinimizedEdge, Integer>();
 		this.transFormBuilder = new TransFormulaBuilder(boogie2smt,
 				root.getRootAnnot());
-		this.ratingBound = ratingBound;
+		if (heuristic == null) {
+			lbe = true;
+		} else {
+			lbe = false;
+			this.heuristic = heuristic;
+		}
 	}
 
 	/**
@@ -193,8 +201,8 @@ public class ConversionVisitor implements IMinimizationVisitor {
 	 */
 	private ArrayList<IMinimizedEdge> getEdgesAccordingToRating(
 			MinimizedNode node) {
-		// if the rating bound is smaller zero, we use LBE
-		if (this.ratingBound < 0) {
+		// if we use LBE, we take alway the maximal minimization
+		if (lbe) {
 			return new ArrayList<IMinimizedEdge>(
 					node.getMinimalOutgoingEdgeLevel());
 		}
@@ -210,7 +218,7 @@ public class ConversionVisitor implements IMinimizationVisitor {
 			}
 			// we check if the rated value is okay, for a certain edge level, if
 			// not we can use this level
-			if ((Integer)(entry.getKey().getRatingValue().getValue()) <= this.ratingBound) {
+			if (heuristic.isRatingBoundReached(entry.getKey())) {
 				return new ArrayList<IMinimizedEdge>(entry.getValue());
 			}
 		}
