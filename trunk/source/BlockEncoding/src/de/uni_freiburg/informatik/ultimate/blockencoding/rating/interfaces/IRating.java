@@ -3,7 +3,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.blockencoding.rating.interfaces;
 
-import de.uni_freiburg.informatik.ultimate.blockencoding.rating.RatingValue;
+import de.uni_freiburg.informatik.ultimate.blockencoding.rating.RatingValueContainer;
 
 /**
  * Objects of this kind contains the rating of a certain IMinimizedEdge. Since
@@ -21,5 +21,5 @@ public interface IRating extends Comparable<IRating> {
 	 * 
 	 * @return a rating value container
 	 */
-	public RatingValue<?> getRatingValue();
+	public RatingValueContainer<?> getRatingValueContainer();
 }

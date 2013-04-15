@@ -20,7 +20,7 @@ import de.uni_freiburg.informatik.ultimate.blockencoding.rating.interfaces.IRati
  */
 public class DisjunctiveRating implements IRating {
 
-	private RatingValue<Integer> countOfDisjunctions;
+	private RatingValueContainer<Integer> countOfDisjunctions;
 
 	/**
 	 * Constructor, which is only visible in this package (default visibility)
@@ -30,7 +30,7 @@ public class DisjunctiveRating implements IRating {
 	 */
 	DisjunctiveRating(IMinimizedEdge edge) {
 		if (edge.isBasicEdge()) {
-			countOfDisjunctions = new RatingValue<Integer>(0);
+			countOfDisjunctions = new RatingValueContainer<Integer>(0);
 		}
 		
 		// We only care for composite edges, since basic edge do not contain
@@ -48,9 +48,9 @@ public class DisjunctiveRating implements IRating {
 			DisjunctiveRating rightRating = (DisjunctiveRating) right.getRating();
 			// Since the underlying edge is a composite, we have to examine the
 			// left and the right side of the Disjunction
-			countOfDisjunctions = new RatingValue<Integer>(leftRating
-					.getRatingValue().getValue()
-					+ rightRating.getRatingValue().getValue());
+			countOfDisjunctions = new RatingValueContainer<Integer>(leftRating
+					.getRatingValueContainer().getValue()
+					+ rightRating.getRatingValueContainer().getValue());
 			// if this edge itself is a Disjunction we have to add this
 			if (edge instanceof DisjunctionEdge) {
 				countOfDisjunctions
@@ -65,7 +65,7 @@ public class DisjunctiveRating implements IRating {
 	 * 
 	 * @param value the boundary value
 	 */
-	DisjunctiveRating(RatingValue<Integer> value) {
+	DisjunctiveRating(RatingValueContainer<Integer> value) {
 		this.countOfDisjunctions = value;
 	}
 
@@ -81,7 +81,7 @@ public class DisjunctiveRating implements IRating {
 					"Comparison of different Ratings is forbidden!");
 		}
 		return countOfDisjunctions.getValue().compareTo(
-				((DisjunctiveRating) other).getRatingValue().getValue());
+				((DisjunctiveRating) other).getRatingValueContainer().getValue());
 	}
 
 	/*
@@ -92,7 +92,7 @@ public class DisjunctiveRating implements IRating {
 	 * #getRatingValue()
 	 */
 	@Override
-	public RatingValue<Integer> getRatingValue() {
+	public RatingValueContainer<Integer> getRatingValueContainer() {
 		return countOfDisjunctions;
 	}
 

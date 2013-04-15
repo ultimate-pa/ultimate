@@ -17,7 +17,7 @@ import de.uni_freiburg.informatik.ultimate.blockencoding.rating.interfaces.IRati
  */
 public class DefaultRating implements IRating {
 
-	private RatingValue<Integer> countOfStatements;
+	private RatingValueContainer<Integer> countOfStatements;
 
 	/**
 	 * Constructor, which is only visible in this package (default visibility)
@@ -28,12 +28,12 @@ public class DefaultRating implements IRating {
 	DefaultRating(IMinimizedEdge edge) {
 		// Basic-Edges have exactly one statement
 		if (edge instanceof IBasicEdge) {
-			countOfStatements = new RatingValue<Integer>(1);
+			countOfStatements = new RatingValueContainer<Integer>(1);
 		}
 		// For Composite-Edges we summarize the count of statements of the left
 		// and the right side
 		if (edge instanceof ICompositeEdge) {
-			countOfStatements = new RatingValue<Integer>(0);
+			countOfStatements = new RatingValueContainer<Integer>(0);
 			ICompositeEdge compEdge = (ICompositeEdge) edge;
 			IMinimizedEdge left = compEdge.getCompositeEdges()[0];
 			IMinimizedEdge right = compEdge.getCompositeEdges()[1];
@@ -44,8 +44,8 @@ public class DefaultRating implements IRating {
 			}
 			DefaultRating leftRating = (DefaultRating) left.getRating();
 			DefaultRating rightRating = (DefaultRating) right.getRating();
-			countOfStatements.setValue(leftRating.getRatingValue().getValue()
-					+ rightRating.getRatingValue().getValue());
+			countOfStatements.setValue(leftRating.getRatingValueContainer().getValue()
+					+ rightRating.getRatingValueContainer().getValue());
 		}
 	}
 
@@ -55,7 +55,7 @@ public class DefaultRating implements IRating {
 	 * 
 	 * @param value the boundary value
 	 */
-	DefaultRating(RatingValue<Integer> value) {
+	DefaultRating(RatingValueContainer<Integer> value) {
 		this.countOfStatements = value;
 	}
 
@@ -67,7 +67,7 @@ public class DefaultRating implements IRating {
 	 * #getRatingValue()
 	 */
 	@Override
-	public RatingValue<Integer> getRatingValue() {
+	public RatingValueContainer<Integer> getRatingValueContainer() {
 		return countOfStatements;
 	}
 
@@ -79,7 +79,7 @@ public class DefaultRating implements IRating {
 		}
 		DefaultRating otherRating = (DefaultRating) other;
 		return countOfStatements.getValue().compareTo(
-				otherRating.getRatingValue().getValue());
+				otherRating.getRatingValueContainer().getValue());
 	}
 
 }

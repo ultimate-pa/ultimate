@@ -10,7 +10,7 @@ package de.uni_freiburg.informatik.ultimate.blockencoding.rating;
  * @author Stefan Wissert
  * 
  */
-public class RatingValue<T> {
+public class RatingValueContainer<T> {
 
 	/**
 	 * the generic value.
@@ -22,7 +22,7 @@ public class RatingValue<T> {
 	 * 
 	 * @param value the generic value.
 	 */
-	public RatingValue(T value) {
+	public RatingValueContainer(T value) {
 		this.value = value;
 	}
 
