@@ -6,7 +6,7 @@ package de.uni_freiburg.informatik.ultimate.blockencoding.rating;
 import de.uni_freiburg.informatik.ultimate.blockencoding.model.DisjunctionEdge;
 import de.uni_freiburg.informatik.ultimate.blockencoding.model.interfaces.ICompositeEdge;
 import de.uni_freiburg.informatik.ultimate.blockencoding.model.interfaces.IMinimizedEdge;
-import de.uni_freiburg.informatik.ultimate.blockencoding.model.interfaces.IRating;
+import de.uni_freiburg.informatik.ultimate.blockencoding.rating.interfaces.IRating;
 
 /**
  * Here we rate an CodeBlock: <br>
@@ -20,7 +20,7 @@ import de.uni_freiburg.informatik.ultimate.blockencoding.model.interfaces.IRatin
  */
 public class DisjunctiveRating implements IRating {
 
-	private int countOfDisjunctions;
+	private RatingValue<Integer> countOfDisjunctions;
 
 	/**
 	 * Constructor, which is only visible in this package (default visibility)
@@ -35,13 +35,22 @@ public class DisjunctiveRating implements IRating {
 			ICompositeEdge compEdge = (ICompositeEdge) edge;
 			IMinimizedEdge left = compEdge.getCompositeEdges()[0];
 			IMinimizedEdge right = compEdge.getCompositeEdges()[1];
+			if (!(left.getRating() instanceof DefaultRating)
+					|| !(right.getRating() instanceof DefaultRating)) {
+				throw new IllegalArgumentException(
+						"Rating-Objects should be of the same type!");
+			}
+			DefaultRating leftRating = (DefaultRating) left.getRating();
+			DefaultRating rightRating = (DefaultRating) right.getRating();
 			// Since the underlying edge is a composite, we have to examine the
 			// left and the right side of the Disjunction
-			countOfDisjunctions = left.getRating().getRatingAsInteger()
-					+ right.getRating().getRatingAsInteger();
+			countOfDisjunctions = new RatingValue<Integer>(leftRating
+					.getRatingValue().getValue()
+					+ rightRating.getRatingValue().getValue());
 			// if this edge itself is a Disjunction we have to add this
 			if (edge instanceof DisjunctionEdge) {
-				countOfDisjunctions++;
+				countOfDisjunctions
+						.setValue(countOfDisjunctions.getValue() + 1);
 			}
 		}
 
@@ -54,8 +63,12 @@ public class DisjunctiveRating implements IRating {
 	 */
 	@Override
 	public int compareTo(IRating other) {
-		return Integer.valueOf(countOfDisjunctions).compareTo(
-				Integer.valueOf(other.getRatingAsInteger()));
+		if (!(other instanceof DisjunctiveRating)) {
+			throw new IllegalArgumentException(
+					"Comparison of different Ratings is forbidden!");
+		}
+		return countOfDisjunctions.getValue().compareTo(
+				((DisjunctiveRating) other).getRatingValue().getValue());
 	}
 
 	/*
@@ -63,10 +76,10 @@ public class DisjunctiveRating implements IRating {
 	 * 
 	 * @see
 	 * de.uni_freiburg.informatik.ultimate.blockencoding.model.interfaces.IRating
-	 * #getRatingAsInteger()
+	 * #getRatingValue()
 	 */
 	@Override
-	public int getRatingAsInteger() {
+	public RatingValue<Integer> getRatingValue() {
 		return countOfDisjunctions;
 	}
 

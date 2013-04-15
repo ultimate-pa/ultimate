@@ -9,7 +9,7 @@ import java.util.Collection;
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.blockencoding.model.interfaces.IMinimizedEdge;
-import de.uni_freiburg.informatik.ultimate.blockencoding.model.interfaces.IRating;
+import de.uni_freiburg.informatik.ultimate.blockencoding.rating.interfaces.IRating;
 import de.uni_freiburg.informatik.ultimate.model.IPayload;
 import de.uni_freiburg.informatik.ultimate.model.Payload;
 import de.uni_freiburg.informatik.ultimate.model.structure.IModifiableExplicitEdgesMultigraph;

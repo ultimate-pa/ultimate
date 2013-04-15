@@ -18,7 +18,7 @@ import de.uni_freiburg.informatik.ultimate.blockencoding.model.MinimizedNode;
 import de.uni_freiburg.informatik.ultimate.blockencoding.model.interfaces.IBasicEdge;
 import de.uni_freiburg.informatik.ultimate.blockencoding.model.interfaces.ICompositeEdge;
 import de.uni_freiburg.informatik.ultimate.blockencoding.model.interfaces.IMinimizedEdge;
-import de.uni_freiburg.informatik.ultimate.blockencoding.model.interfaces.IRating;
+import de.uni_freiburg.informatik.ultimate.blockencoding.rating.interfaces.IRating;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.Activator;
 import de.uni_freiburg.informatik.ultimate.model.BoogieLocation;
@@ -210,7 +210,7 @@ public class ConversionVisitor implements IMinimizationVisitor {
 			}
 			// we check if the rated value is okay, for a certain edge level, if
 			// not we can use this level
-			if (entry.getKey().getRatingAsInteger() <= this.ratingBound) {
+			if ((Integer)(entry.getKey().getRatingValue().getValue()) <= this.ratingBound) {
 				return new ArrayList<IMinimizedEdge>(entry.getValue());
 			}
 		}

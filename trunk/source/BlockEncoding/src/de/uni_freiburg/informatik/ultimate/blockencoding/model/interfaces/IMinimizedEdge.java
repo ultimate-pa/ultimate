@@ -1,6 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.blockencoding.model.interfaces;
 
 import de.uni_freiburg.informatik.ultimate.blockencoding.model.MinimizedNode;
+import de.uni_freiburg.informatik.ultimate.blockencoding.rating.interfaces.IRating;
 import de.uni_freiburg.informatik.ultimate.model.structure.IModifiableMultigraphEdge;
 
 /**
