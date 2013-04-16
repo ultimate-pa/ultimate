@@ -367,7 +367,7 @@ public class TestFileInterpreter {
 	    		m_localVariables.put(id, vd.getExpectingType());
 	    	}
 	    	if (children.size() == 0) return;
-	    	
+	    	checkType(children.get(0));
 	    	for (Class<?> c : getTypes(children.get(0))) {
 	    		if (vd.isTypeCorrect(c)) {
 	    			return;
