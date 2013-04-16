@@ -52,7 +52,7 @@ public class BuchiIsEmpty<LETTER,STATE> implements IOperation {
 	}
 
 	@Override
-	public Object getResult() throws OperationCanceledException {
+	public Boolean getResult() throws OperationCanceledException {
 		return m_Result;
 	}
 	
