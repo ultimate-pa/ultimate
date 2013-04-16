@@ -102,7 +102,7 @@ public class EmptinessCheck {
 				for (AnnotatedProgramPoint target : targets) {
 					AppDoubleDecker	newAdd = new AppDoubleDecker(target, currentAdd.bot);
 					if (returnedPath == null)
-						returnedPath = openNewNode(currentAdd, target, null, newAdd);//convention: AddEdges which are summaries are labeled "null"
+						returnedPath = openNewNode(currentAdd, target, new DummyCodeBlock(), newAdd);//convention: AddEdges which are summaries are labeled "null"
 				}
 			}
 		}
@@ -202,7 +202,7 @@ public class EmptinessCheck {
 			
 			nextApp = pathIt.next();
 		
-			if (currentCodeBlock == null) {
+			if (currentCodeBlock instanceof DummyCodeBlock) {
 				assert false; //I want to see, when this happens for the first time
 				assert summaryEdges.get(previousApp).equals(nextApp);
 				
@@ -307,6 +307,7 @@ public class EmptinessCheck {
 		public AddEdge(AppDoubleDecker source, AppDoubleDecker target,
 				CodeBlock label) {
 			super();
+			assert (label != null);
 			this.source = source;
 			this.target = target;
 			this.label = label;

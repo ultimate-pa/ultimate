@@ -19,24 +19,25 @@ public class RCFG2AnnotatedRCFG {
 	
 	private SmtManager m_smtManager;
 	
-	HashMap<AnnotatedProgramPoint, ArrayList<AnnotatedProgramPoint>> callPredToReturnPreds;
+	HashMap<AnnotatedProgramPoint, ArrayList<AnnotatedProgramPoint>> m_callPredToReturnPreds;
+	
+	HashMap<ProgramPoint, AnnotatedProgramPoint> m_oldPpTonew;
 				
 	public RCFG2AnnotatedRCFG(SmtManager smtMan) {
 		m_smtManager = smtMan;
 	}
 	
-	
 	public ImpRootNode convert(RootNode oldRoot) {
-		callPredToReturnPreds =
+		m_callPredToReturnPreds =
 				new HashMap<AnnotatedProgramPoint, ArrayList<AnnotatedProgramPoint>>();
 		ImpRootAnnot ira = new ImpRootAnnot(oldRoot.getRootAnnot().getTaPrefs(),
-				oldRoot.getRootAnnot().getBoogie2SMT(), null, callPredToReturnPreds);
+				oldRoot.getRootAnnot().getBoogie2SMT(), null, m_callPredToReturnPreds);
 		
 		ImpRootNode newRoot = new ImpRootNode(ira);
 
 		
 		ArrayDeque<ProgramPoint> openNodes = new ArrayDeque<ProgramPoint>();
-		HashMap<ProgramPoint, AnnotatedProgramPoint> oldPpTonew = 
+		m_oldPpTonew = 
 				new HashMap<ProgramPoint, AnnotatedProgramPoint>();
 		
 		
@@ -44,10 +45,10 @@ public class RCFG2AnnotatedRCFG {
 			ProgramPoint oldNode = (ProgramPoint) rootEdge.getTarget();
 			AnnotatedProgramPoint newNode = copyNode(oldNode);
 			
-			newRoot.connectOutgoing(newNode, null);
+			newRoot.connectOutgoing(newNode, new DummyCodeBlock());
 			//new RootEdge(newRoot, newNode);
 			openNodes.add(oldNode);
-			oldPpTonew.put(oldNode, newNode);
+			m_oldPpTonew.put(oldNode, newNode);
 		}
 		
 		/* 
@@ -62,9 +63,9 @@ public class RCFG2AnnotatedRCFG {
 //					returns.add((Return) outEdge);
 //				}
 				ProgramPoint newNode = (ProgramPoint) outEdge.getTarget();
-				if (oldPpTonew.containsKey(newNode))
+				if (m_oldPpTonew.containsKey(newNode))
 					continue;
-				oldPpTonew.put(newNode, copyNode(newNode));
+				m_oldPpTonew.put(newNode, copyNode(newNode));
 				openNodes.add(newNode);
 			}
 		}
@@ -72,16 +73,16 @@ public class RCFG2AnnotatedRCFG {
 		/*
 		 *  put edges into annotated program points
 		 */
-		for (Entry<ProgramPoint, AnnotatedProgramPoint> entry  : oldPpTonew.entrySet()) {
+		for (Entry<ProgramPoint, AnnotatedProgramPoint> entry  : m_oldPpTonew.entrySet()) {
 			for (RCFGEdge outEdge : entry.getKey().getOutgoingEdges()) {
 				AnnotatedProgramPoint annotatedTarget = 
-						(AnnotatedProgramPoint) oldPpTonew.get(outEdge.getTarget());
+						(AnnotatedProgramPoint) m_oldPpTonew.get(outEdge.getTarget());
 				entry.getValue().connectOutgoing(
 				  annotatedTarget, (CodeBlock) outEdge);
 //				annotatedTarget.addIncomingNode(
 //						entry.getValue(), (CodeBlock) outEdge);
 				if (outEdge instanceof Return) {//add annotation needed for return edge duplication
-					AnnotatedProgramPoint callPredApp = oldPpTonew.get(((Return) outEdge).getCallerNode());
+					AnnotatedProgramPoint callPredApp = m_oldPpTonew.get(((Return) outEdge).getCallerNode());
 					entry.getValue().addOutGoingReturnCallPred(annotatedTarget, callPredApp);
 					updateCallPredToReturnPreds(callPredApp, entry.getValue());
 				}
@@ -95,10 +96,14 @@ public class RCFG2AnnotatedRCFG {
 	}
 	
 	private void updateCallPredToReturnPreds(AnnotatedProgramPoint callPred, AnnotatedProgramPoint returnPred) {
-		ArrayList<AnnotatedProgramPoint> returnPreds = callPredToReturnPreds.get(callPred);
+		ArrayList<AnnotatedProgramPoint> returnPreds = m_callPredToReturnPreds.get(callPred);
 		if (returnPreds == null)
 			returnPreds = new ArrayList<AnnotatedProgramPoint>();
 		returnPreds.add(returnPred);
-		callPredToReturnPreds.put(callPred, returnPreds);
+		m_callPredToReturnPreds.put(callPred, returnPreds);
+	}
+	
+	public HashMap<ProgramPoint, AnnotatedProgramPoint> getOldPpTonew() {
+		return m_oldPpTonew;
 	}
 }
