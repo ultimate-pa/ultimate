@@ -43,8 +43,7 @@ parser code {:
                 		UltimateServices.getInstance().getTranslatorSequence(),
                 		loc,
                 		SyntaxErrorType.IncorrectSyntax);
-// I don't know a useful long description                
-//        syntaxErrorResult.setLongDescription("IncorrectSyntax");
+        syntaxErrorResult.setLongDescription(String.valueOf(sym));
         UltimateServices us = UltimateServices.getInstance();
         us.reportResult(Activator.s_PLUGIN_ID, syntaxErrorResult);
         us.cancelToolchain();
