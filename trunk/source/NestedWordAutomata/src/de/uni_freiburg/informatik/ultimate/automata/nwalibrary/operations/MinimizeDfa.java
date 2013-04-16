@@ -57,7 +57,7 @@ public class MinimizeDfa<LETTER,STATE> implements IOperation {
 	 */
     public MinimizeDfa(INestedWordAutomaton<LETTER,STATE> operand)
             throws OperationCanceledException {
-        if (new HasUnreachableStates<LETTER,STATE>((NestedWordAutomaton<LETTER, STATE>) operand)
+        if (new HasUnreachableStates<LETTER,STATE>(operand)
 				.result()) {
 			throw new IllegalArgumentException("No unreachalbe states allowed");
 		}
