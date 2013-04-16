@@ -93,8 +93,8 @@ public class AtsDefinitionPrinter<LETTER,STATE> {
 		
 		@SuppressWarnings("unchecked")
 		private void printAutomaton(Object automaton, Labeling labels) {
-			if (automaton instanceof NestedWordAutomaton) {
-				NestedWordAutomaton<LETTER,STATE> nwa = (NestedWordAutomaton<LETTER,STATE>) automaton;
+			if (automaton instanceof INestedWordAutomaton) {
+				INestedWordAutomaton<LETTER,STATE> nwa = (INestedWordAutomaton<LETTER,STATE>) automaton;
 				if (labels == Labeling.TOSTRING) {
 					new NwaTestFileWriterToString(nwa);
 				}
@@ -142,7 +142,7 @@ public class AtsDefinitionPrinter<LETTER,STATE> {
 			Map<LETTER, String> returnAlphabet;
 			Map<STATE, String> stateMapping;
 
-			public NwaTestFileWriter(NestedWordAutomaton<LETTER,STATE> nwa) {
+			public NwaTestFileWriter(INestedWordAutomaton<LETTER,STATE> nwa) {
 				m_Nwa = nwa;
 				internalAlphabet = getAlphabetMapping(nwa.getInternalAlphabet(), "a");
 				callAlphabet = getAlphabetMapping(nwa.getCallAlphabet(), "c");
@@ -304,7 +304,7 @@ public class AtsDefinitionPrinter<LETTER,STATE> {
 		 */
 		private class NwaTestFileWriterToString extends NwaTestFileWriter{
 
-			public NwaTestFileWriterToString(NestedWordAutomaton<LETTER,STATE> nwa) {
+			public NwaTestFileWriterToString(INestedWordAutomaton<LETTER,STATE> nwa) {
 				super(nwa);
 			}
 
@@ -336,7 +336,7 @@ public class AtsDefinitionPrinter<LETTER,STATE> {
 		 */
 		private class NwaTestFileWriterToStringQuote extends NwaTestFileWriter{
 
-			public NwaTestFileWriterToStringQuote(NestedWordAutomaton<LETTER,STATE> nwa) {
+			public NwaTestFileWriterToStringQuote(INestedWordAutomaton<LETTER,STATE> nwa) {
 				super(nwa);
 			}
 
