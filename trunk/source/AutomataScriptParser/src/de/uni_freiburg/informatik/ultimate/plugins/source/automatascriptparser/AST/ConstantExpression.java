@@ -14,17 +14,17 @@ public class ConstantExpression extends AtsASTNode {
 	private Object value;
 	
 	public ConstantExpression(Integer val) {
-		m_returnType = Integer.class;
+		setType(Integer.class);
 		value = val;
 	}
 	
 	public ConstantExpression(String val) {
-		m_returnType = String.class;
+		setType(String.class);
 		this.value = val;
 	}
 	
 	public ConstantExpression(boolean val) {
-		m_returnType = Boolean.class;
+		setType(Boolean.class);
 		value = val;
 	}
 	public Object getValue() {

@@ -18,9 +18,10 @@ import java_cup.runtime.*;
 %cupdebug
 
 %{   
-    StringBuffer string = new StringBuffer();
+    StringBuffer stringBuffer = new StringBuffer();
     private String m_LastToken = new String();
     private String m_CurToken = new String();
+    private StringBuffer idBuffer = new StringBuffer();
 
     /* To create a new java_cup.runtime.Symbol with information about
        the current token, the token will have no value in this
@@ -68,7 +69,11 @@ IntegerLiteral = 0 | [1-9][0-9]*
 /* string and character literals */
 StringCharacter = [^\r\n\"\\]
 
-%state STRING
+/* Identifier Character */
+/* Which chars may occur in ' ' */
+IdentiferCharacter = [^\r\n\'\\]
+
+%state STRING, IDENTIFIER_IN_QUOTES
 %%
 
 /* ------------------------Lexical Rules Section---------------------- */
@@ -83,6 +88,7 @@ StringCharacter = [^\r\n\"\\]
   "int"                          { m_LastToken = m_CurToken; m_CurToken = "int"; return symbol(sym.INT); }
   "if"                           { m_LastToken = m_CurToken; m_CurToken = "if"; return symbol(sym.IF); }
   "return"                       { m_LastToken = m_CurToken; m_CurToken = "return"; return symbol(sym.RETURN); }
+  "String"                       { m_LastToken = m_CurToken; m_CurToken = "String"; return symbol(sym.STRING); }
   "while"                        { m_LastToken = m_CurToken; m_CurToken = "while"; return symbol(sym.WHILE); }
   
   /* keywords for Words */
@@ -152,8 +158,10 @@ StringCharacter = [^\r\n\"\\]
   "/="                           { m_LastToken = m_CurToken; m_CurToken = "/="; return symbol(sym.DIVEQ); }
 
   /* string literal */
-  \"                             { yybegin(STRING); string.setLength(0); }
+  \"                             { yybegin(STRING); stringBuffer.setLength(0); }
 
+  /* Identifier in Quotes */
+  \'                             { yybegin(IDENTIFIER_IN_QUOTES); idBuffer.setLength(0); }
   /* numeric literals */
   {IntegerLiteral}               { m_LastToken = m_CurToken; m_CurToken = yytext(); return symbol(sym.INTEGER_LITERAL, new Integer(yytext())); }
 
@@ -169,24 +177,36 @@ StringCharacter = [^\r\n\"\\]
 
 }
 <STRING> {
-  \"                             { yybegin(YYINITIAL); m_LastToken = m_CurToken; m_CurToken = string.toString(); return symbol(sym.IDENTIFIER, string.toString()); }
+  \"                             { yybegin(YYINITIAL); m_LastToken = m_CurToken; m_CurToken = stringBuffer.toString(); return symbol(sym.STRING_LITERAL, stringBuffer.toString()); }
   
-  {StringCharacter}+             { string.append( yytext() ); }
+  {StringCharacter}+             { stringBuffer.append( yytext() ); }
   
   /* escape sequences */
-  "\\b"                          { string.append( '\b' ); }
-  "\\t"                          { string.append( '\t' ); }
-  "\\n"                          { string.append( '\n' ); }
-  "\\f"                          { string.append( '\f' ); }
-  "\\r"                          { string.append( '\r' ); }
-  "\\\""                         { string.append( '\"' ); }
-  "\\'"                          { string.append( '\'' ); }
-  "\\\\"                         { string.append( '\\' ); }
+  "\\b"                          { stringBuffer.append( '\b' ); }
+  "\\t"                          { stringBuffer.append( '\t' ); }
+  "\\n"                          { stringBuffer.append( '\n' ); }
+  "\\f"                          { stringBuffer.append( '\f' ); }
+  "\\r"                          { stringBuffer.append( '\r' ); }
+  "\\\""                         { stringBuffer.append( '\"' ); }
+  "\\'"                          { stringBuffer.append( '\'' ); }
+  "\\\\"                         { stringBuffer.append( '\\' ); }
   
-  /* error cases */ /* (Betim): No error, because paths can have '\' followed by an arbitrary   character. */
-  \\.                            { }
- 
   {LineTerminator}               { throw new RuntimeException("Unterminated string at end of line"); }
+}
+
+<IDENTIFIER_IN_QUOTES> {
+  "\'"                             { yybegin(YYINITIAL); m_LastToken = m_CurToken; m_CurToken = idBuffer.toString(); return symbol(sym.IDENTIFIER, idBuffer.toString()); }
+  {IdentiferCharacter}+            { idBuffer.append(yytext()); }
+  /* escape sequences */
+  "\\b"                          { idBuffer.append( '\b' ); }
+  "\\t"                          { idBuffer.append( '\t' ); }
+  "\\n"                          { idBuffer.append( '\n' ); }
+  "\\f"                          { idBuffer.append( '\f' ); }
+  "\\r"                          { idBuffer.append( '\r' ); }
+  "\\\""                         { idBuffer.append( '\"' ); }
+  "\\'"                          { idBuffer.append( '\'' ); }
+  "\\\\"                         { idBuffer.append( '\\' ); }
+  {LineTerminator}               { throw new RuntimeException("Unterminated identifier at end of line"); }
 }
 
 /* error fallback */

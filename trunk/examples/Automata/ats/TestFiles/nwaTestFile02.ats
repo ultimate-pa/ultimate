@@ -22,12 +22,12 @@ assert(accepts(acceptsNothing, wordWith2Bs));
 // This test should be false
 assert(accepts(nwa1, [a< b< >r >s]));
 
-// This operation parses all automata defined in the file "nwaDefinitions01.ats" and
+// This operation parses all automata defined in the file 'nwaDefinitions01.ats' and
 // stores them internally. Thus, you can use the automata from that file, as if
 // they'd have been defined in this file. 
 // Other than automata definitions are ignored.
-parseAutomata("../nwaDefinitions02.ats");
-parseAutomata("../nwaDefinitions01.ats");
+parseAutomata('../nwaDefinitions02.ats');
+parseAutomata('../nwaDefinitions01.ats');
 
 // If file does not exist, the parser won't abort.
-parseAutomata("fileDoesNotExist.ats");
+parseAutomata('fileDoesNotExist.ats');

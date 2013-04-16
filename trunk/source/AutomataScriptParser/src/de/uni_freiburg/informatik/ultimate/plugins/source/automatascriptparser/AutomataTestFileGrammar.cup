@@ -151,7 +151,8 @@ parser code {:
  /* -------------------- Specification of terminal symbols -----------*/
 terminal Object BOOLEAN; // primitive_type
 terminal Object INT; // integral_type
-terminal Object LBRACK, RBRACK; // array_type
+terminal Object STRING;
+terminal Object LBRACK, RBRACK;
 terminal Object SEMICOLON, COMMA, EQ, LBRACE, RBRACE, LPAREN, RPAREN, COLON;
 terminal Object IF, ELSE; // if_then_statement, if_then_else_statement
 terminal Object WHILE; // while_statement
@@ -174,6 +175,7 @@ terminal Object NESTED_WORD, NESTED_LASSO_WORD;
 
 terminal java.lang.Integer INTEGER_LITERAL;
 terminal java.lang.Boolean BOOLEAN_LITERAL;
+terminal java.lang.String STRING_LITERAL;
 terminal java.lang.String IDENTIFIER; 
 
 
@@ -282,7 +284,11 @@ literal ::=	INTEGER_LITERAL:i
                 {: ConstantExpression c = new ConstantExpression(b);
                    c.setLocation(getLocation(b$, b$));
                    RESULT = c;:}
-    |       word_literal:w
+        |       STRING_LITERAL:s
+                {: ConstantExpression c = new ConstantExpression(s);
+                   c.setLocation(getLocation(s$, s$));
+                   RESULT = c; :}
+        |       word_literal:w
                 {: RESULT = w; :}
 	;
 
@@ -334,10 +340,12 @@ type	::=     INT
                 {: RESULT = Integer.class; :}
         |       BOOLEAN
                 {: RESULT = Boolean.class; :}
+        |       STRING
+                {: RESULT = String.class; :}
         |       NESTED_WORD
-        		{: RESULT = Nestedword.class; :}
+        	{: RESULT = Nestedword.class; :}
         |       NESTED_LASSO_WORD
-        		{: RESULT = NestedLassoword.class; :}
+        	{: RESULT = NestedLassoword.class; :}
         |       NESTEDWORD_AUTOMATA
                 {: RESULT = INestedWordAutomaton.class; :}
         |       PETRINET_AUTOMATA         

@@ -491,7 +491,14 @@ public class TestFileInterpreter {
 		}
 		reportToLogger(LoggerSeverity.DEBUG, "Interpreting automata definitions...");
 		// Interpret automata definitions
-		m_automInterpreter.interpret(ats.getAutomataDefinitions());
+		try {
+			m_automInterpreter.interpret(ats.getAutomataDefinitions());
+		} catch (Exception e) {
+			reportToLogger(LoggerSeverity.DEBUG, "Error during interpreting automata definitions.");
+			reportToLogger(LoggerSeverity.DEBUG, "Error: " + e.getMessage());
+			reportToLogger(LoggerSeverity.DEBUG, "Interpretation of testfile cancelled.");
+			reportToUltimate(Severity.WARNING, e.getMessage() + " Interpretation of testfile cancelled.", "Error", m_automInterpreter.getErrorLocation());
+		}
 		
 
 		// Put all defined automata into variables map
@@ -830,7 +837,6 @@ public class TestFileInterpreter {
 					}
 					
 				} else {
-					s_Logger.info(o.toString());
 					printMessage(Severity.INFO, LoggerSeverity.INFO, o.toString(), oe.getAsString(), loc);
 					if (m_printAutomataToFile) {
 						String comment = "/* " + oe.getAsString() + " */";

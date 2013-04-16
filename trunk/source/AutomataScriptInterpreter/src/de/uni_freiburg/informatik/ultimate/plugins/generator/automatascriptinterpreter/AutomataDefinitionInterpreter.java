@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import de.uni_freiburg.informatik.ultimate.model.ILocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.automatascriptinterpreter.TestFileInterpreter.LoggerSeverity;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AtsASTNode;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.AutomataDefinitions;
@@ -33,6 +34,7 @@ public class AutomataDefinitionInterpreter {
 	
 	
 	Map<String,Object> m_Automata;
+	ILocation m_errorLocation;
 	
 	public AutomataDefinitionInterpreter() {
 		m_Automata = new HashMap<String, Object>();
@@ -66,6 +68,7 @@ public class AutomataDefinitionInterpreter {
 	
 	public <T> Object interpret(NestedwordAutomaton nwa) throws IllegalArgumentException {
 		
+		m_errorLocation = nwa.getLocation();
 		NestedWordAutomaton<String, String> nw = new NestedWordAutomaton<String, String>(
 				                                     Collections.unmodifiableCollection(nwa.getInternalAlphabet()), 
 				                                     Collections.unmodifiableCollection(nwa.getCallAlphabet()), 
@@ -115,6 +118,7 @@ public class AutomataDefinitionInterpreter {
 	}
 	
 	public <T> Object interpret(PetriNetAutomaton pna) throws IllegalArgumentException {
+		m_errorLocation = pna.getLocation();
 		if (pna.isPetriNetJulianDefinition()) {
 			PetriNetJulian<String, String> net = new PetriNetJulian<String, String>(
 												Collections.unmodifiableCollection(pna.getAlphabet()), 
@@ -169,6 +173,11 @@ public class AutomataDefinitionInterpreter {
 		}
 		builder.append("]");
 		return builder.toString();
+	}
+
+	
+	public ILocation getErrorLocation() {
+		return m_errorLocation;
 	}
 	
 	

@@ -2,8 +2,8 @@
 // Date:  16.04.2013
 // A file to explain the syntax
 
-parseAutomata("nwaDefinitions01.ats");
-parseAutomata("nwaDefinitions02.ats");
+parseAutomata('nwaDefinitions01.ats');
+parseAutomata('nwaDefinitions02.ats');
 
 // Define some words
 NestedWord nw1 = [a< b< >c >d];
