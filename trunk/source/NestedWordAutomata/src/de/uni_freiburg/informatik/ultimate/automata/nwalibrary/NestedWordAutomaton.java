@@ -1934,6 +1934,9 @@ public class NestedWordAutomaton<LETTER,STATE> implements INestedWordAutomaton<L
 	
 	@Override
 	public void addInternalTransition(STATE pred, LETTER letter, STATE succ) {
+		if (!contains(pred)) {
+			throw new IllegalArgumentException();
+		}
 		assert contains(pred);
 		assert contains(succ);
 		Map<LETTER, Set<STATE>> letter2succs = m_InternalOut.get(pred);
