@@ -9,11 +9,9 @@ import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.automata.Activator;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.visualization.AutomatonTransition.Transition;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
-import de.uni_freiburg.informatik.ultimate.model.INode;
 
 public class NwaToUltimateModel<LETTER,STATE> {
 	private static Logger s_Logger = 
@@ -69,8 +67,7 @@ public class NwaToUltimateModel<LETTER,STATE> {
 					else {
 						succVSN = new AutomatonState(succState,
 							nwa.isFinal(succState));
-						s_Logger.debug("Creating Node: " +
-												succVSN.getPayload().getName());
+						s_Logger.debug("Creating Node: " + succVSN.toString());
 						visited.put(succState,succVSN);
 						queue.add(succState);
 					}
@@ -90,8 +87,7 @@ public class NwaToUltimateModel<LETTER,STATE> {
 						else {
 							succVSN = new AutomatonState(succState,
 								nwa.isFinal(succState));
-							s_Logger.debug("Creating Node: " 
-											+ succVSN.getPayload().getName());
+							s_Logger.debug("Creating Node: " + succVSN.toString());
 							visited.put(succState,succVSN);
 							queue.add(succState);
 						}

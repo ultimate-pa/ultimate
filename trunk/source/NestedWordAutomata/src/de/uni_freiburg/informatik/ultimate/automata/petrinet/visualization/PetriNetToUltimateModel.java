@@ -5,17 +5,16 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
 
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Place;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.Transition;
-import de.uni_freiburg.informatik.ultimate.model.INode;
 
 public class PetriNetToUltimateModel<S, C> {
 	
 	@SuppressWarnings("unchecked")
-	public INode getUltimateModelOfPetriNet(IPetriNet<S, C> net) {
+	public PetriNetInitialNode getUltimateModelOfPetriNet(IPetriNet<S, C> net) {
 		Collection<Collection<Place<S, C>>> acceptingMarkings = 
 			net.getAcceptingMarkings();
 		PetriNetInitialNode graphroot = 
@@ -37,8 +36,8 @@ public class PetriNetToUltimateModel<S, C> {
 			PlaceNode placeNode = new PlaceNode(place,
 					participatedAcceptingMarkings(place, acceptingMarkings));
 			place2placeNode.put(place,placeNode);
-			graphroot.addOutgoingNode(placeNode);
-			placeNode.addIncomingNode(graphroot);
+			graphroot.addOutgoing(placeNode);
+			placeNode.addIncoming(graphroot);
 			
 		}
 		
@@ -56,8 +55,8 @@ public class PetriNetToUltimateModel<S, C> {
 						transition2transitionNode.put(transition, transNode);
 						queue.add(transition);
 					}
-					placeNode.addOutgoingNode(transNode);
-					transNode.addIncomingNode(placeNode);
+					placeNode.addOutgoing(transNode);
+					transNode.addIncoming(placeNode);
 				}
 			}
 			else if (node instanceof ITransition) {
@@ -74,8 +73,8 @@ public class PetriNetToUltimateModel<S, C> {
 						place2placeNode.put(place, placeNode);
 						queue.add(place);
 					}
-					transitionNode.addOutgoingNode(placeNode);
-					placeNode.addIncomingNode(transitionNode);
+					transitionNode.addOutgoing(placeNode);
+					placeNode.addIncoming(transitionNode);
 				}
 			}
 		}
