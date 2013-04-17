@@ -15,7 +15,6 @@ import java.util.Map;
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
@@ -149,7 +148,7 @@ public class AtsDefinitionPrinter<LETTER,STATE> {
 				returnAlphabet = getAlphabetMapping(nwa.getReturnAlphabet(), "r");
 				stateMapping = getStateMapping(nwa.getStates());
 
-				m_printWriter.println("nwa nwa = (");
+				m_printWriter.println("NestedWordAutomaton nwa = (");
 				printAlphabetes();
 				printStates();
 				printInitialStates(nwa.getInitialStates());
@@ -157,7 +156,7 @@ public class AtsDefinitionPrinter<LETTER,STATE> {
 				printCallTransitions(nwa.getStates());
 				printInternalTransitions(nwa.getStates());
 				printReturnTransitions(nwa.getStates());
-				m_printWriter.println(")");
+				m_printWriter.println(");");
 				m_printWriter.close();
 			}
 
@@ -313,7 +312,7 @@ public class AtsDefinitionPrinter<LETTER,STATE> {
 					String symbol) {
 				Map<LETTER,String> alphabetMapping = new HashMap<LETTER,String>();
 				for (LETTER letter : alphabet) {
-					alphabetMapping.put(letter, "\"" + letter.toString() + "\"");
+					alphabetMapping.put(letter, "\'" + letter.toString().replaceAll("'", "\'") + "\'");
 				}
 				return alphabetMapping;
 			}
@@ -323,7 +322,7 @@ public class AtsDefinitionPrinter<LETTER,STATE> {
 					Collection<STATE> states) {
 				Map<STATE,String> stateMapping = new HashMap<STATE,String>();
 				for (STATE state : states) {
-					stateMapping.put(state, "\"" + state.toString() + "\"");
+					stateMapping.put(state, "\'" + state.toString().replaceAll("'", "\'") + "\'");
 				}
 				return stateMapping;
 			}
@@ -345,7 +344,7 @@ public class AtsDefinitionPrinter<LETTER,STATE> {
 					String symbol) {
 				Map<LETTER,String> alphabetMapping = new HashMap<LETTER,String>();
 				for (LETTER letter : alphabet) {
-					alphabetMapping.put(letter, "\"" + letter.toString() + (letter.hashCode()/m_HashDivisor) + "\"");
+					alphabetMapping.put(letter, "\'" + letter.toString().replaceAll("'", "\'") + (letter.hashCode()/m_HashDivisor) + "\'");
 				}
 				return alphabetMapping;
 			}
@@ -355,7 +354,7 @@ public class AtsDefinitionPrinter<LETTER,STATE> {
 					Collection<STATE> states) {
 				Map<STATE,String> stateMapping = new HashMap<STATE,String>();
 				for (STATE state : states) {
-					stateMapping.put(state, "\"" + state.toString() + (state.hashCode()/m_HashDivisor) + "\"");
+					stateMapping.put(state, "\'" + state.toString().replaceAll("'", "\'") + (state.hashCode()/m_HashDivisor) + "\'");
 				}
 				return stateMapping;
 			}
