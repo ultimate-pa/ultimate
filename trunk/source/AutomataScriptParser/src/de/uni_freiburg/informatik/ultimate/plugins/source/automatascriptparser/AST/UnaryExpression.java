@@ -54,6 +54,9 @@ public class UnaryExpression extends AtsASTNode {
 		}
 	}
 
+	public String getOperatorAsString() {
+		return operatorToString(m_operator);
+	}
 	@Override
 	public String getAsString() {
 		switch (m_operator) {

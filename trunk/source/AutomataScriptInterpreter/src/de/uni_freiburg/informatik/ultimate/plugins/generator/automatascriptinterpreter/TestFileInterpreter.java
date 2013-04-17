@@ -73,6 +73,8 @@ public class TestFileInterpreter {
 		
 		private Map<String, Class<?>> m_localVariables = new HashMap<String, Class<?>>();
 		private ILocation m_errorLocation = null;
+		private String m_shortDescription = "Typecheck error";
+		private String m_longDescription = "";
 		
 		public void checkTestFile(AtsASTNode n) throws IllegalArgumentException {
 			for (Map.Entry<String, Object > entry : m_variables.entrySet()) {
@@ -118,9 +120,11 @@ public class TestFileInterpreter {
 			List<AtsASTNode> children = as.getOutgoingNodes();
 			m_errorLocation = as.getLocation();
 			if (children.size() != 2) {
-				String message = as.getLocation().getStartLine() + ": AssignmentExpression: It should have 2 operands\n";
-				message = message.concat("On the left-hand side there  must be a VariableExpression, ");
-				message = message.concat("On the right-hand side there can be an arbitrary expression.");
+				m_shortDescription = "Error";
+				String message = "Assignment should have 2 operands." + System.getProperty("line.separator");
+				message = message.concat("On the left-hand side there  must be a variable, ");
+				message = message.concat("on the right-hand side there can be an arbitrary expression.");
+				m_longDescription = message;
 				throw new IllegalArgumentException(message);
 			}
 			// Check the type of children
@@ -130,13 +134,15 @@ public class TestFileInterpreter {
 			VariableExpression var = (VariableExpression) children.get(0);
 			for (Class<?> c : getTypes(children.get(1))) {
 				// Check for correct types
-				if (var.isTypeCorrect(c)) {
+				if (AssignableTest.isAssignableFrom(var.getReturnType(), c)) {
 					return;
 				}
 				children.get(1).setType(c);
 			}
-			String message = "AssignmentExpression: Type error ";
-			message = message.concat("\"" + children.get(1).getReturnType().getSimpleName() + "\" is not assignable to \"" + var.getReturnType().getSimpleName() + "\"");
+			String message = "Right side has incorrect type." + System.getProperty("line.separator");
+			message = message.concat("Expected: " + var.getReturnType().getSimpleName() + "\tGot: " +
+					  children.get(1).getReturnType().getSimpleName() + "");
+			m_longDescription = message;
 			throw new IllegalArgumentException(message);
 			
 		}
@@ -145,7 +151,10 @@ public class TestFileInterpreter {
 			List<AtsASTNode> children = be.getOutgoingNodes();
 			m_errorLocation = be.getLocation();
 			if (children.size() != 2) {
-				String message = be.getLocation().getStartLine() + ": BinaryExpression should always have 2 children!\nNum of children: " + children.size();
+				m_shortDescription  = "Error";
+				String message = be.getOperatorAsString() + " should have 2 operands of type \"int\"." +
+				                 System.getProperty("line.separator") + "Num of operands: " + children.size();
+				m_longDescription = message;
 				throw new IllegalArgumentException(message);
 			}
 			// Check children for correct type
@@ -155,24 +164,26 @@ public class TestFileInterpreter {
 			// Check type of the 1st children
 			boolean firstChildHasCorrectType = false;
 			for (Class<?> c : getTypes(children.get(0))) {
-				if (be.isTypeCorrect(c)) {
+				if (AssignableTest.isAssignableFrom(be.getReturnType(), c)) {
 					firstChildHasCorrectType = true;
 				}
 			}
 			if(!firstChildHasCorrectType) {
-				String message = be.getLocation().getStartLine() + ": BinaryExpression: Left operand \n";
-				message = message.concat("Expected: " + be.getReturnType() + "\tGot: " + children.get(0).getReturnType());
+				String message = "Left operand of \"" + be.getOperatorAsString() + "\" has incorrect type." + System.getProperty("line.separator");
+				message = message.concat("Expected: " + be.getReturnType().getSimpleName() + "\tGot: " + children.get(0).getReturnType().getSimpleName());
+				m_longDescription = message;
 				throw new IllegalArgumentException(message);
 			}
 			
 			// Check type of the 2nd children
 			for (Class<?> c : getTypes(children.get(1))) {
-				if (be.isTypeCorrect(c)) {
+				if (AssignableTest.isAssignableFrom(be.getReturnType(), c)) {
 					return;
 				}
 			}
-			String message = be.getLocation().getStartLine() + ": BinaryExpression: Right operand\n";
-			message = message.concat("Expected: " + be.getReturnType() + "\tGot: " + children.get(1).getReturnType());
+			String message = "Right operand of \"" + be.getOperatorAsString() + "\" has incorrect type." + System.getProperty("line.separator");
+			message = message.concat("Expected: " + be.getReturnType().getSimpleName() + "\tGot: " + children.get(1).getReturnType().getSimpleName() + "");
+			m_longDescription = message;
 			throw new IllegalArgumentException(message);
 
 		}
@@ -181,13 +192,19 @@ public class TestFileInterpreter {
 			List<AtsASTNode> children = cbe.getOutgoingNodes();
 			m_errorLocation = cbe.getLocation();
 			if ((cbe.getOperator() == ConditionalBooleanOperator.NOT) && (children.size() != 1)) {
-				String message = "Line " + cbe.getLocation().getStartLine() + ": NOT operator should have 1 operand!\nNum of operands: " + children.size();
+				m_shortDescription = "Error";
+				String message = "\"!\" operator should have 1 operand." + System.getProperty("line.separator") + "Num of operands: " + children.size();
+				m_longDescription = message;
 				throw new IllegalArgumentException(message);
 			} else if ((cbe.getOperator() == ConditionalBooleanOperator.AND) && (children.size() != 2)) {
-				String message = "Line " + cbe.getLocation().getStartLine() + ": AND operator should have 2 operands!\nNum of operands: " + children.size();
+				m_shortDescription = "Error";
+				String message = "\"&&\" operator should have 2 operands." + System.getProperty("line.separator") + "Num of operands: " + children.size();
+				m_longDescription = message;
 				throw new IllegalArgumentException(message);
 			} else if ((cbe.getOperator() == ConditionalBooleanOperator.OR) && (children.size() != 2)) {
-				String message = "Line " + cbe.getLocation().getStartLine() + ": OR operator should have 2 operands!\nNum of operands: " + children.size();
+				m_shortDescription = "Error";
+				String message = " \"||\" operator should have 2 operands." + System.getProperty("line.separator") + "Num of operands: " + children.size();
+				m_longDescription = message;
 				throw new IllegalArgumentException(message);
 			}
 			// Check children for correct type
@@ -195,23 +212,25 @@ public class TestFileInterpreter {
 			if (children.size() == 2) checkType(children.get(1));
 			boolean firstChildHasCorrectType = false;
 			for (Class<?> c : getTypes(children.get(0))) {
-				if (cbe.isTypeCorrect(c)) {
+				if (AssignableTest.isAssignableFrom(cbe.getReturnType(), c)) {
 					firstChildHasCorrectType = true;
 				}
 			}
 			if (!firstChildHasCorrectType) {
-				String message = "Line " + cbe.getLocation().getStartLine() + ": 1st argument is not a Boolean expression\n";
-				message = message.concat("Expected: " + cbe.getReturnType() + "\tGot: " + children.get(0).getReturnType());
+				String message = (children.size() == 2 ? "Left " : "") + "argument has incorrect type." + System.getProperty("line.separator");
+				message = message.concat("Expected: " + cbe.getReturnType().getSimpleName() + "\tGot: " + children.get(0).getReturnType().getSimpleName());
+				m_longDescription = message;
 				throw new IllegalArgumentException(message);
 			}
 			if (children.size() == 2) {
 				for (Class<?> c : getTypes(children.get(1))) {
-					if (cbe.isTypeCorrect(c)) {
+					if (AssignableTest.isAssignableFrom(cbe.getReturnType(), c)) {
 						return;
 					}
 				}
-				String message = "Line " + cbe.getLocation().getStartLine() + ": 2nd argument is not a Boolean expression\n";
-				message = message.concat("Expected: " + cbe.getReturnType() + "\tGot: " + children.get(1).getReturnType());
+				String message = "Right argument has incorrect type." + System.getProperty("line.separator");
+				message = message.concat("Expected: " + cbe.getReturnType().getSimpleName() + "\tGot: " + children.get(1).getReturnType().getSimpleName());
+				m_longDescription = message;
 				throw new IllegalArgumentException(message);
 			}
 		}
@@ -220,13 +239,16 @@ public class TestFileInterpreter {
 			List<AtsASTNode> children = fs.getOutgoingNodes();
 			m_errorLocation = fs.getLocation();
 			if (children.size() != 4) {
-				String message = fs.getLocation().getStartLine() + ": ForStatement should have 4 children (condition, initStmt, updateStmt, stmtList)\n";
+				m_shortDescription = "Error";
+				String message = "ForStatement should have 4 arguments (initStmt, condition, updateStmt) {stmtList}." + System.getProperty("line.separator");
 				message = message.concat("Num of children: " + children.size());
+				m_longDescription = message;
 				throw new IllegalArgumentException(message);
 			}
 			if ((children.get(0) != null) && (children.get(0).getReturnType() != Boolean.class)) {
-				String message = fs.getLocation().getStartLine() + ": ForStatement: Loopcondition is not a Boolean expression\n";
-				message = message.concat("Expected: " + Boolean.class + "\tGot: " + children.get(0).getReturnType());
+				String message = "Loopcondition has incorrect type." + System.getProperty("line.separator");
+				message = message.concat("Expected: " + Boolean.class.getSimpleName() + "\tGot: " + children.get(0).getReturnType().getSimpleName());
+				m_longDescription = message;
 				throw new IllegalArgumentException(message);
 			}
 		}
@@ -235,16 +257,18 @@ public class TestFileInterpreter {
 			List<AtsASTNode> children = is.getOutgoingNodes();
 			m_errorLocation = is.getLocation();
 			if (children.size() != 3) {
-				String message = is.getLocation().getStartLine() + ": IfElseStatement should have 3 children (Condition, Thenstatements, Elsestatements)";
-				message = message.concat("Num of children: " + children.size());
+				m_shortDescription = "Error";
+				String message = "IfElseStatement should have 3 operands (Condition) { Thenstatements} {Elsestatements})" + System.getProperty("line.separator");
+				message = message.concat("Num of operands: " + children.size());
 				throw new IllegalArgumentException(message);
 			}
 			// Check the if-condition for correct type
 			checkType(children.get(0));
 			// Check for correct types
 			if (children.get(0).getReturnType() != Boolean.class) {
-				String message = is.getLocation().getStartLine() + ": IfElseStatement: Condition is not a Boolean expression\n";
-				message = message.concat("Expected: " + Boolean.class + "\tGot: " + children.get(0).getReturnType());
+				String message = "Condition has incorrect type." + System.getProperty("line.separator");
+				message = message.concat("Expected: " + Boolean.class.getSimpleName() + "\tGot: " + children.get(0).getReturnType().getSimpleName());
+				m_longDescription = message;
 				throw new IllegalArgumentException(message);
 			}
 		}
@@ -253,15 +277,18 @@ public class TestFileInterpreter {
 			List<AtsASTNode> children = is.getOutgoingNodes();
 			m_errorLocation = is.getLocation();
 			if (children.size() != 2) {
-				String message = is.getLocation().getStartLine() + ": IfStatement should have 2 children (condition, thenStatements)\n";
-				message = message.concat("Num of children: " + children.size());
+				m_shortDescription = "Error";
+				String message = "IfStatement should have 2 operands (condition) {thenStatements}" +System.getProperty("line.separator");
+				message = message.concat("Num of operands: " + children.size());
+				m_longDescription = message;
 				throw new IllegalArgumentException(message);
 			}
 			// Check the if-condition for correct type
 			checkType(children.get(0));
 			if (children.get(0).getReturnType() != Boolean.class) {
-				String message = is.getLocation().getStartLine() + ": IfStatement: 1st child is not a Boolean expression\n";
-				message = message.concat("Expected: " + Boolean.class + "\tGot: " + children.get(0).getReturnType());
+				String message = "Condition has incorrect type." + System.getProperty("line.separator");
+				message = message.concat("Expected: " + Boolean.class.getSimpleName() + "\tGot: " + children.get(0).getReturnType().getSimpleName());
+				m_longDescription = message;
 				throw new IllegalArgumentException(message);
 			}
 		}
@@ -272,11 +299,11 @@ public class TestFileInterpreter {
 			if (!m_existingOperations.containsKey(opName)) {
 				if (!opName.equals("assert") && !opName.equals("print")) {
 					String shortDescr = "Unsupported operation \"" + oe.getOperationName() + "\"";
+					m_shortDescription = shortDescr;
 					String allOperations = (new ListExistingOperations(m_existingOperations)).prettyPrint();
 					String longDescr = "We support only the following operations " + System.getProperty("line.separator") + allOperations;
-					reportToUltimate(Severity.ERROR, longDescr, shortDescr, oe.getLocation());
-					reportToLogger(LoggerSeverity.DEBUG, shortDescr);
-					throw new UnsupportedOperationException(UNKNOWN_OPERATION);
+					m_longDescription = longDescr;
+					throw new UnsupportedOperationException(shortDescr);
 				}
 			}
 			
@@ -292,7 +319,10 @@ public class TestFileInterpreter {
 			List<AtsASTNode> children = re.getOutgoingNodes();
 			m_errorLocation = re.getLocation();
 			if (children.size() != 2) {
-				String message = re.getLocation().getStartLine() + ": RelationalExpression should always have 2 operands!\nNum of operands: " + children.size();
+				m_shortDescription = "Error";
+				String message = "\"" + re.getOperatorAsString() + " should have 2 operands." + System.getProperty("line.separator") + "Num of operands: "
+				                 + children.size();
+				m_longDescription = message;
 				throw new IllegalArgumentException(message);
 			}
 			// Check children for correct type
@@ -306,8 +336,9 @@ public class TestFileInterpreter {
 				}
 			}
 			if (!firstChildHasCorrectType) {
-				String message = re.getLocation().getStartLine() + ": RelationalExpression: Left operand\n";
-				message = message.concat("Expected: " + re.getExpectingType() + "\tGot: " + children.get(0).getReturnType());
+				String message = "Left operand has incorrect type." + System.getProperty("line.separator");
+				message = message.concat("Expected: " + re.getExpectingType().getSimpleName() + "\tGot: " + children.get(0).getReturnType().getSimpleName());
+				m_longDescription = message;
 				throw new IllegalArgumentException(message);
 			}
 			
@@ -316,8 +347,9 @@ public class TestFileInterpreter {
 					return;
 				}
 			}
-			String message = re.getLocation().getStartLine() + ": RelationalExpression: Right operand\n";
-			message = message.concat("Expected: " + re.getExpectingType() + "\tGot: " + children.get(1).getReturnType());
+			String message = "Right operand has incorrect type." + System.getProperty("line.separator");
+			message = message.concat("Expected: " + re.getExpectingType().getSimpleName() + "\tGot: " + children.get(1).getReturnType().getSimpleName());
+			m_longDescription = message;
 			throw new IllegalArgumentException(message);
 		}
 		
@@ -325,14 +357,18 @@ public class TestFileInterpreter {
 			List<AtsASTNode> children = ue.getOutgoingNodes();
 			m_errorLocation = ue.getLocation();
 			if (children.size() != 1) {
-				String message = ue.getLocation().getStartLine() + ": UnaryExpression at line should always have 1 child!\nNum of children: " + children.size();
+				m_shortDescription = "Error";
+				String message = "\"" + ue.getOperatorAsString() + "\" should have one variable as argument." + System.getProperty("line.separator") + "Num of arguments: " + children.size();
+				m_longDescription = message;
 				throw new IllegalArgumentException(message);
 			}
 			// Check children for correct type
 			checkType(children.get(0));
 			
 			if (!(children.get(0) instanceof VariableExpression)) {
-				String message = ue.getLocation().getStartLine() + ": Unary operators are applicable only on variables!\nYou want to apply it on " + children.get(0).getClass().getSimpleName();
+				m_shortDescription = "Error";
+				String message = "Unary operators are applicable only on variables." + System.getProperty("line.separator") + "You want to apply it on " + children.get(0).getClass().getSimpleName();
+				m_longDescription = message;
 				throw new IllegalArgumentException(message);
 			}
 			// Check for correct types
@@ -341,8 +377,9 @@ public class TestFileInterpreter {
 					return;
 				}
 			}
-			String message = ue.getLocation().getStartLine() + ": UnaryExpression: 1st child\n";
-			message = message.concat("Expected: " + ue.getReturnType() + "\tGot: " + children.get(0).getReturnType());
+			String message = "Operand has incorrect type." + System.getProperty("line.separator");
+			message = message.concat("Expected: " + ue.getExpectingType().getSimpleName() + "\tGot: " + children.get(0).getReturnType().getSimpleName());
+			m_longDescription = message;
 			throw new IllegalArgumentException(message);
 		}
 		
@@ -351,7 +388,9 @@ public class TestFileInterpreter {
 			if (m_localVariables.containsKey(v.getIdentifier())) {
 				v.setType(m_localVariables.get(v.getIdentifier()));
 			} else {
+				m_shortDescription = "Undeclared variable";
 				String message = "Variable \"" + v.getIdentifier() + "\" at line " + v.getLocation().getStartLine() + " was not declared.";
+				m_longDescription = "Variable \"" + v.getIdentifier() + "\" was not declared.";
 				throw new IllegalArgumentException(message);
 			}
 		}
@@ -360,7 +399,9 @@ public class TestFileInterpreter {
 			List<AtsASTNode> children = vd.getOutgoingNodes();
 			m_errorLocation = vd.getLocation();
 	    	if ((children.size() != 0) && (children.size() != 1)) {
-	    		String message = vd.getLocation().getStartLine() + ": VariableDeclaration should have 0 or 1 child. (the value to assign)";
+	    		m_shortDescription = "Error";
+	    		String message = "Variabledeclaration can have at most one operand. (the value to assign)";
+	    		m_longDescription = message;
 				throw new IllegalArgumentException(message);
 	    	}
 	    	for (String id : vd.getIdentifiers()) {
@@ -369,12 +410,13 @@ public class TestFileInterpreter {
 	    	if (children.size() == 0) return;
 	    	checkType(children.get(0));
 	    	for (Class<?> c : getTypes(children.get(0))) {
-	    		if (vd.isTypeCorrect(c)) {
+	    		if (AssignableTest.isAssignableFrom(vd.getReturnType(), c)) {
 	    			return;
 	    		}
 	    	}
-	    	String message = vd.getLocation().getStartLine() + ": VariableDeclaration Typecheck error."
-	    			+ " Expression on the right side should have type " + vd.getExpectingType().getSimpleName();
+	    	String message = "Operand on the right side has incorrect type." + System.getProperty("line.separator")
+	    			+ "Expected: " + vd.getExpectingType().getSimpleName() + "\tGot: " + children.get(0).getReturnType().getSimpleName();
+	    	m_longDescription = message;
 	    	throw new IllegalArgumentException(message);
 		}
 		
@@ -382,13 +424,16 @@ public class TestFileInterpreter {
 			List<AtsASTNode> children = ws.getOutgoingNodes();
 			m_errorLocation = ws.getLocation();
 			if (children.size() != 2) {
-				String message = "WhileStatement should have 2 child nodes (condition, stmtList)\n";
+				m_shortDescription = "Error";
+				String message = "WhileStatement should have 2 operands (condition) {stmtList}" + System.getProperty("line.separator");
 				message = message.concat("Number of children: " + children.size());
+				m_longDescription = message;
 				throw new IllegalArgumentException(message);
 			}
 			if ((children.get(0) != null) && (children.get(0).getReturnType() != Boolean.class)) {
-				String message = "WhileStatement: Loop condition is not a Boolean expression\n";
-				message = message.concat("Expected: " + Boolean.class + "\tGot: " + children.get(0).getReturnType());
+				String message = "Condition has incorrect type." + System.getProperty("line.separator");
+				message = message.concat("Expected: " + Boolean.class.getSimpleName() + "\tGot: " + children.get(0).getReturnType().getSimpleName());
+				m_longDescription = message;
 				throw new IllegalArgumentException(message);
 			}
 		}
@@ -426,6 +471,17 @@ public class TestFileInterpreter {
 		public ILocation getErrorLocation() {
 			return m_errorLocation;
 		}
+
+		
+		public String getShortDescription() {
+			return m_shortDescription;
+		}
+
+		public String getLongDescription() {
+			return m_longDescription;
+		}
+		
+		
 		
 	}
 	
@@ -453,6 +509,7 @@ public class TestFileInterpreter {
 		m_tChecker = new AutomataScriptTypeChecker();
 		m_existingOperations = getOperationClasses();
 		m_LastPrintedAutomaton = null;
+		AssignableTest.initPrimitiveTypes();
 		UltimateServices.getInstance().setDeadline(System.currentTimeMillis() + (m_timeout * 1000));
 		if (m_printAutomataToFile) {
 			String path = m_path + File.separator + "automatascriptOutput" + getDateTime() + ".ats";
@@ -497,7 +554,7 @@ public class TestFileInterpreter {
 			reportToLogger(LoggerSeverity.DEBUG, "Error during interpreting automata definitions.");
 			reportToLogger(LoggerSeverity.DEBUG, "Error: " + e.getMessage());
 			reportToLogger(LoggerSeverity.DEBUG, "Interpretation of testfile cancelled.");
-			reportToUltimate(Severity.WARNING, e.getMessage() + " Interpretation of testfile cancelled.", "Error", m_automInterpreter.getErrorLocation());
+			reportToUltimate(Severity.ERROR, e.getMessage() + " Interpretation of testfile cancelled.", "Error", m_automInterpreter.getErrorLocation());
 		}
 		
 
@@ -507,13 +564,10 @@ public class TestFileInterpreter {
 		// Type checking
 		try {
 			m_tChecker.checkTestFile(ats.getStatementList());
-		} catch (IllegalArgumentException ie) {
-			reportToLogger(LoggerSeverity.DEBUG, "Error: " + ie.getMessage());
+		} catch (Exception e) {
+			reportToLogger(LoggerSeverity.DEBUG, "Error: " + e.getMessage());
 			reportToLogger(LoggerSeverity.DEBUG, "Interpretation of testfile cancelled.");
-			reportToUltimate(Severity.WARNING, ie.getMessage() + " Interpretation of testfile cancelled.", "Error", m_tChecker.getErrorLocation());
-			return null;
-		} catch (UnsupportedOperationException ue) {
-			reportToLogger(LoggerSeverity.DEBUG, "Interpretation of testfile cancelled.");
+			reportToUltimate(Severity.ERROR, m_tChecker.getLongDescription(), m_tChecker.getShortDescription(), m_tChecker.getErrorLocation());
 			return null;
 		}
 		
@@ -554,6 +608,13 @@ public class TestFileInterpreter {
 		}
 		Object oldValue = m_variables.get(var.getIdentifier());
 		Object newValue = interpret(children.get(1));
+		
+		if (newValue == null) {
+			String longDescr = "Var \"" + var.getIdentifier() + "\" is assigned \"null\".";
+			String shortDescr = "Null assignment";
+			printMessage(Severity.WARNING, LoggerSeverity.DEBUG, longDescr, shortDescr, as.getLocation());
+		}
+		
 		switch(as.getOperator()) {
 		case ASSIGN: m_variables.put(var.getIdentifier(), newValue); break;
 		case PLUSASSIGN: {
@@ -782,7 +843,7 @@ public class TestFileInterpreter {
 	private <T> Object interpret(OperationInvocationExpression oe) throws Exception {
 		List<AtsASTNode> children = oe.getOutgoingNodes();
 		if (children.size() != 1) {
-			String message = oe.getLocation().getStartLine() + ": OperationExpression should have only 1 child (ArgumentList)";
+			String message ="Line "  + oe.getLocation().getStartLine() + ": OperationExpression should have only 1 child (ArgumentList)";
 			message = message.concat("Num of children: " + children.size());
 			throw new IllegalArgumentException(message);
 		}
@@ -824,7 +885,7 @@ public class TestFileInterpreter {
 		} else if (oe.getOperationName().equalsIgnoreCase("print")) {
 			String argsAsString = children.get(0).getAsString();
 			ILocation loc = children.get(0).getLocation();
-			printMessage(Severity.INFO, LoggerSeverity.INFO,"Printing " + argsAsString, "print:", loc);
+			reportToLogger(LoggerSeverity.INFO, "Printing " + argsAsString);
 			for (Object o : arguments) {
 				if (o instanceof IAutomaton) {
 					m_LastPrintedAutomaton = (IAutomaton<?, ?>) o;
@@ -859,8 +920,8 @@ public class TestFileInterpreter {
 	private <T> Boolean interpret(RelationalExpression re) throws NoSuchFieldException {
 		List<AtsASTNode> children = re.getOutgoingNodes();
 		if (re.getExpectingType() == Integer.class) {
-			Integer v1 = (Integer) interpret(children.get(0));
-			Integer v2 = (Integer) interpret(children.get(1));
+			int v1 = (Integer) interpret(children.get(0));
+			int v2 = (Integer) interpret(children.get(1));
 			switch (re.getOperator()) {
 			case GREATERTHAN: return v1 > v2;
 			case LESSTHAN: return v1 < v2;
@@ -868,7 +929,7 @@ public class TestFileInterpreter {
 			case LESS_EQ_THAN: return v1 <= v2;
 			case EQ: return v1 == v2;
 			case NOT_EQ: return v1 != v2;
-			default: throw new UnsupportedOperationException(re.getLocation().getStartLine() + ": RelationalExpression: This type of operator is not supported: " + re.getOperator());
+			default: throw new UnsupportedOperationException("This type of operator is not supported: " + re.getOperator());
 			}
 		}
 		return null;
@@ -1075,6 +1136,12 @@ public class TestFileInterpreter {
 			reportToUltimate(Severity.ERROR, longDescr, shortDescr, oe.getLocation());
 			reportToLogger(LoggerSeverity.DEBUG, shortDescr);
 			throw new UnsupportedOperationException(UNKNOWN_OPERATION);
+		}
+		if (result == null) {
+			String shortDescr = "Operation error";
+			String longDescr = "Operation \"" + oe.getOperationName() + "\" is not defined for " + 
+			                   (arguments.size() == 1? "this type of argument." : "these types of arguments.");
+			printMessage(Severity.ERROR, LoggerSeverity.DEBUG, longDescr, shortDescr, oe.getLocation());
 		}
 		return result;
 	}

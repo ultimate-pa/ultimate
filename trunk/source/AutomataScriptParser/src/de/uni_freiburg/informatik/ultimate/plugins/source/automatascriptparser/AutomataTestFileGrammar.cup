@@ -86,15 +86,28 @@ parser code {:
     @Override
     public void syntax_error(Symbol cur_token)
     {
-    	m_errorMessageLong = "Parsing aborted, because of syntax error.";
     	m_errorMessageShort = "Syntax error";
+        java_cup.runtime.Scanner s = getScanner();
+        m_errorMessageLong = "";
+        if (s instanceof Lexer) {
+          Lexer lex = (Lexer) s;
+          m_errorMessageLong = "Current token: " + lex.getCurrentToken() +
+                               " Last token: " + lex.getLastToken();
+        }
+        
+        m_errorLocation = action_obj.getLocation(cur_token, cur_token);
         report_error("Syntax error", cur_token);
         report_error("Parsing aborted.", null);
     }
     @Override
     public void report_error(String message, Object sym) {
-    	Symbol info = (Symbol) sym;
-        m_errorLocation = action_obj.getLocation(info, info);
+    	Symbol info;
+        if (sym != null) {
+           info = (Symbol) sym;
+        } else {
+           info = null;
+        }
+        
         StringBuffer m = new StringBuffer(getFileName() + ": ");
         if (message != null) { 
         	m.append(message);

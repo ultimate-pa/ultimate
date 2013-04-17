@@ -58,7 +58,7 @@ public class AssignmentExpression extends AtsASTNode {
 				value = n;
 			}
 		}
-		return var.getAsString() + " " + operatorToString(m_operator) + " " + value.getAsString(); 
+		return var.getAsString() + operatorToString(m_operator) + value.getAsString(); 
 	}
 
 }

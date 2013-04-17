@@ -17,12 +17,6 @@ public class StatementList extends AtsASTNode {
 	 */
 	private static final long serialVersionUID = 4839521364713345580L;
 
-	@Override
-	public boolean isTypeCorrect(Class<?> expectedType) {
-		throw new RuntimeException("StatementList does not have and does not need any type!");
-	}
-
-	@Override
 	public Class<?> getReturnType() {
 		throw new RuntimeException("StatementList does not have and does not need any type!");
 	}

@@ -51,12 +51,13 @@ public class ConditionalBooleanExpression extends AtsASTNode {
 	@Override
 	public String getAsString() {
 		if (m_children.size() == 2) {
+			String operatorAsString = (m_operator == ConditionalBooleanOperator.AND? "&&" : "||");
 			return m_children.get(0).getAsString() + " " +
-		           m_operator + " " +
+		           operatorAsString + " " +
 				   m_children.get(1).getAsString();	
 		           
 		} else if (m_children.size() == 1) {
-			return m_operator + m_children.get(0).getAsString();
+			return "!" + m_children.get(0).getAsString();
 		} else {
 			return "";
 		}

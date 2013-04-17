@@ -48,12 +48,16 @@ public class RelationalExpression extends AtsASTNode {
 		}
 	}
 
+	public String getOperatorAsString() {
+		return operatorToString(m_operator);
+	}
+	
 	@Override
 	public String getAsString() {
 		if (m_children.size() == 2) {
-			return m_children.get(0) + " " + 
-		           operatorToString(m_operator) + " " + 
-				   m_children.get(1);	
+			return m_children.get(0).getAsString() +  
+		           operatorToString(m_operator) +
+				   m_children.get(1).getAsString();	
 		} else {
 			return "";
 		}

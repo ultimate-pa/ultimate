@@ -87,18 +87,7 @@ public class AtsASTNode extends BaseAST<AtsASTNode> {
 		return true;
 	}
 	
-	public boolean isTypeCorrect(Class<?> expectedType){
-		Class<?> classType = expectedType;
-		if (m_primitiveToClassTypes.containsKey(expectedType)) {
-			classType = m_primitiveToClassTypes.get(expectedType);
-		}
-		if (m_returnType != null) {
-			return m_returnType.isAssignableFrom(classType);
-		} else {
-			return false;
-		}
-	}
-	
+		
 	public Class<?> getReturnType() {
 		return m_returnType;
 	}

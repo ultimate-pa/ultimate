@@ -38,6 +38,9 @@ public class ConstantExpression extends AtsASTNode {
 
 	@Override
 	public String getAsString() {
+		if (value instanceof String) {
+			return "\"" + value.toString() + "\"";
+		}
 		return value.toString();
 	}
 	

@@ -41,6 +41,9 @@ public class BinaryExpression extends AtsASTNode {
 		return m_operator;
 	}
 
+	public String getOperatorAsString() {
+		return operatorToString(m_operator);
+	}
 	@Override
 	public String toString() {
 		return "BinaryExpression [Operator: " + operatorToString(m_operator) + "]";
@@ -59,8 +62,8 @@ public class BinaryExpression extends AtsASTNode {
 	@Override
 	public String getAsString() {
 		if (m_children.size() == 2) {
-			return m_children.get(0).getAsString() + " " + 
-		           operatorToString(m_operator) + " " + 
+			return m_children.get(0).getAsString() + 
+		           operatorToString(m_operator) + 
 				   m_children.get(1).getAsString();
 		} else {
 			return "";
