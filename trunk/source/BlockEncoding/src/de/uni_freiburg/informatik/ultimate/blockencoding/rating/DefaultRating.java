@@ -44,7 +44,8 @@ public class DefaultRating implements IRating {
 			}
 			DefaultRating leftRating = (DefaultRating) left.getRating();
 			DefaultRating rightRating = (DefaultRating) right.getRating();
-			countOfStatements.setValue(leftRating.getRatingValueContainer().getValue()
+			countOfStatements.setValue(leftRating.getRatingValueContainer()
+					.getValue()
 					+ rightRating.getRatingValueContainer().getValue());
 		}
 	}
@@ -53,10 +54,13 @@ public class DefaultRating implements IRating {
 	 * Constructor to create a rating for a heuristic, should be used only for
 	 * this operation. To protect it from misuse the visibility is default.
 	 * 
-	 * @param value the boundary value
+	 * @param value
+	 *            the preference value
 	 */
-	DefaultRating(RatingValueContainer<Integer> value) {
-		this.countOfStatements = value;
+	DefaultRating(String prefValue) {
+		// Here we interpret the preference string
+		this.countOfStatements = new RatingValueContainer<Integer>(
+				Integer.parseInt(prefValue));
 	}
 
 	/*

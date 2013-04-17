@@ -34,6 +34,13 @@ public class DisjunctionEdge extends AbstractCompositeEdge {
 		this.payload.setName(leftEdge + " V " + rightEdge);
 		this.rating = RatingFactory.getInstance().createRating(this);
 	}
+	
+	/**
+	 * Empty constructor, is needed to create edges for rating boundary
+	 */
+	public DisjunctionEdge() {
+		
+	}
 
 	@Override
 	public IRating getRating() {

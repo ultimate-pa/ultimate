@@ -13,7 +13,11 @@ import de.uni_freiburg.informatik.ultimate.blockencoding.rating.interfaces.IRati
 
 /**
  * Here we store the amount of disjunctions on one edge and additionally store
- * for each disjunction the amount of statements inside.
+ * for each disjunction the amount of statements inside. <br>
+ * We can compare these ratings, since we implement Comparable. The logic is
+ * that we do not count disjunctions, which have an amount of elements which
+ * under a certain boundary. In addition we rate disjunctions which are over a
+ * certain amount twice as high.
  * 
  * @author Stefan Wissert
  * 
@@ -27,7 +31,15 @@ public class DisjunctiveStatementsRating implements IRating {
 	 */
 	private RatingValueContainer<Map<DisjunctionEdge, Integer>> value;
 
-	private int statementBoundary;
+	/**
+	 * the under bound.
+	 */
+	private int underStmtBound;
+
+	/**
+	 * the higher bound.
+	 */
+	private int upperStmtBound;
 
 	/**
 	 * @param edge
@@ -67,6 +79,35 @@ public class DisjunctiveStatementsRating implements IRating {
 		}
 	}
 
+	/**
+	 * Constructor which is used to create an boundary rating for the heuristic.
+	 * 
+	 * @param prefValue
+	 *            the preference value
+	 */
+	DisjunctiveStatementsRating(String prefValue) {
+		// Here the preference string should have the following format
+		// #Disjunctions|underBoundary|upperBoundary
+		String[] prefs = prefValue.split("-");
+		if (prefs.length != 3) {
+			throw new IllegalArgumentException("Preference String should"
+					+ " contain exactly three items!");
+		}
+		int countOfDisjunctions = Integer.parseInt(prefs[0]);
+		this.underStmtBound = Integer.parseInt(prefs[1]);
+		this.upperStmtBound = Integer.parseInt(prefs[2]);
+		// we initialize the map with the amount of disjunctions, we specified
+		// before in the preferences, for statement counts, we take
+		// (underStmtBound + upperStmtBound) / 2
+		HashMap<DisjunctionEdge, Integer> fakeMap = new HashMap<DisjunctionEdge, Integer>();
+		for (int i = 0; i < countOfDisjunctions; i++) {
+			fakeMap.put(new DisjunctionEdge(),
+					((underStmtBound + upperStmtBound) / 2));
+		}
+		this.value = new RatingValueContainer<Map<DisjunctionEdge, Integer>>(
+				fakeMap);
+	}
+
 	/*
 	 * (non-Javadoc)
 	 * 
@@ -83,20 +124,26 @@ public class DisjunctiveStatementsRating implements IRating {
 		int thisDisjunctions = value.getValue().size();
 		int otherDisjunctions = otherRating.getRatingValueContainer()
 				.getValue().size();
-		// now subtract the amount of statements, which is want
-		// (-> statementBoundary)
+		// value - 1, if stmtCount <= underStmtBound
+		// value + 1, if stmtCount > upperStmtBound
 		for (DisjunctionEdge edge : value.getValue().keySet()) {
-			if (value.getValue().get(edge) <= statementBoundary) {
+			if (value.getValue().get(edge) <= underStmtBound) {
 				thisDisjunctions--;
+			} else if (value.getValue().get(edge) > upperStmtBound) {
+				thisDisjunctions++;
 			}
 		}
 		// now the same for the other side
 		for (DisjunctionEdge edge : otherRating.getRatingValueContainer()
 				.getValue().keySet()) {
-			if (otherRating.getRatingValueContainer().getValue().get(edge) <= statementBoundary) {
+			if (otherRating.getRatingValueContainer().getValue().get(edge) <= underStmtBound) {
 				otherDisjunctions--;
+			} else if (otherRating.getRatingValueContainer().getValue()
+					.get(edge) > upperStmtBound) {
+				otherDisjunctions++;
 			}
 		}
+		// we compare simply the count of disjunctions, according our logic
 		return Integer.valueOf(thisDisjunctions).compareTo(
 				Integer.valueOf(otherDisjunctions));
 	}
@@ -114,18 +161,33 @@ public class DisjunctiveStatementsRating implements IRating {
 	}
 
 	/**
-	 * @return the statementBoundary
+	 * @return the undertStmtBound
 	 */
-	public int getStatementBoundary() {
-		return statementBoundary;
+	public int getUnderStmtBound() {
+		return underStmtBound;
 	}
 
 	/**
-	 * @param statementBoundary
-	 *            the statementBoundary to set
+	 * @param underStmtBound
+	 *            the underStmtBound to set
 	 */
-	public void setStatementBoundary(int statementBoundary) {
-		this.statementBoundary = statementBoundary;
+	public void setUnderStmtBound(int underStmtBound) {
+		this.underStmtBound = underStmtBound;
+	}
+
+	/**
+	 * @return the upperStmtBound
+	 */
+	public int getUpperStmtBound() {
+		return upperStmtBound;
+	}
+
+	/**
+	 * @param upperStmtBound
+	 *            the upperStmtBound to set
+	 */
+	public void setUpperStmtBound(int upperStmtBound) {
+		this.upperStmtBound = upperStmtBound;
 	}
 
 }

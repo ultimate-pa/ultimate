@@ -43,12 +43,13 @@ public class ConfigurableHeuristic implements IRatingHeuristic {
 			throw new IllegalArgumentException(
 					"For Large Block Encoding, there is no heuristic needed");
 		case DEFAULT:
-			boundary = new DefaultRating(new RatingValueContainer<Integer>(
-					Integer.parseInt(givenPref)));
+			boundary = new DefaultRating(givenPref);
 			break;
 		case DISJUNCTIVE_RATING:
-			boundary = new DisjunctiveRating(new RatingValueContainer<Integer>(
-					Integer.parseInt(givenPref)));
+			boundary = new DisjunctiveRating(givenPref);
+			break;
+		case DISJUNCTIVE_STMTCOUNT:
+			boundary = new DisjunctiveStatementsRating(givenPref);
 			break;
 		default:
 			throw new IllegalArgumentException(

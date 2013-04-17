@@ -32,7 +32,12 @@ public class RatingFactory {
 		/**
 		 * This strategy counts the amount of disjunctions.
 		 */
-		DISJUNCTIVE_RATING
+		DISJUNCTIVE_RATING,
+		/**
+		 * Here we count the disjunctive in context of the amount of statements
+		 * which is inherited inside the disjunctions.
+		 */
+		DISJUNCTIVE_STMTCOUNT
 	}
 
 	/**
@@ -67,7 +72,8 @@ public class RatingFactory {
 	/**
 	 * Setting up the strategy for rating of the edges.
 	 * 
-	 * @param value the preference value
+	 * @param value
+	 *            the preference value
 	 */
 	public void setRatingStrategy(String value) {
 		try {
@@ -93,6 +99,8 @@ public class RatingFactory {
 			return new DefaultRating(edge);
 		case DISJUNCTIVE_RATING:
 			return new DisjunctiveRating(edge);
+		case DISJUNCTIVE_STMTCOUNT:
+			return new DisjunctiveStatementsRating(edge);
 		default:
 			throw new IllegalArgumentException("No valid strategy choosen!");
 		}

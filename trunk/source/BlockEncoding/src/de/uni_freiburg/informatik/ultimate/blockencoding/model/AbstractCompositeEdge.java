@@ -63,6 +63,13 @@ public abstract class AbstractCompositeEdge implements ICompositeEdge {
 		counter = counter + right.getElementCount();
 		this.payload = new Payload();
 	}
+	
+	/**
+	 * This empty constructor is needed to create some edges
+	 */
+	protected AbstractCompositeEdge() {
+		
+	}
 
 	/**
 	 * @param left
