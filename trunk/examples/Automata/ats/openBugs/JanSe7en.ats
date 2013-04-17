@@ -1,5 +1,5 @@
 // Author: heizmann@tf.uni-freiburg.de 30.3.2011
-print(se7en)
+print(se7en);
 
 PetriNet se7en = (
   alphabet = {a b c},
