@@ -119,43 +119,43 @@ public class AutomataDefinitionInterpreter {
 	
 	public <T> Object interpret(PetriNetAutomaton pna) throws IllegalArgumentException {
 		m_errorLocation = pna.getLocation();
-		if (pna.isPetriNetJulianDefinition()) {
-			PetriNetJulian<String, String> net = new PetriNetJulian<String, String>(
-												Collections.unmodifiableCollection(pna.getAlphabet()), 
-												new StringFactory(), false);
-			Map<String, Place<String, String>> name2places = new HashMap<String, Place<String, String>>();
-			// Add the places
-			for (String p : pna.getPlaces()) {
-				Place<String, String> place = net.addPlace(p, pna.getInitialMarkings().containsPlace(p), pna.getAcceptingPlaces().contains(p));
-				name2places.put(p, place);
-			}
-			
-			Collection<Place<String,String>> preds = new ArrayList<Place<String,String>>();
-			Collection<Place<String,String>> succs = new ArrayList<Place<String,String>>();
-			// Add the transitions
-			for (PetriNetTransition ptrans : pna.getTransitions()) {
-				preds.clear();
-				succs.clear();
-				for (String pred : ptrans.getPreds()) {
-					if (!name2places.containsKey(pred)) {
-						throw new IllegalArgumentException("undefined place:" + pred);
-					} else {
-						preds.add(name2places.get(pred));
-					}
-				}
-				for (String succ : ptrans.getSuccs()) {
-					if (!name2places.containsKey(succ)) {
-						throw new IllegalArgumentException("undefined place:" + succ);
-					} else {
-						preds.add(name2places.get(succ));
-					}
-				}
-				net.addTransition(ptrans.getSymbol(), preds, succs);
-			}
-			
-			m_Automata.put(pna.getName(), net);
+		PetriNetJulian<String, String> net = new PetriNetJulian<String, String>(
+				pna.getAlphabet(), 
+				new StringFactory(), false);
+		Map<String, Place<String, String>> name2places = new HashMap<String, Place<String, String>>();
+		// Add the places
+		for (String p : pna.getPlaces()) {
+			Place<String, String> place = net.addPlace(p, 
+					pna.getInitialMarkings().containsPlace(p), 
+					pna.getAcceptingPlaces().contains(p));
+			name2places.put(p, place);
 		}
-		
+
+		Collection<Place<String,String>> preds = new ArrayList<Place<String,String>>();
+		Collection<Place<String,String>> succs = new ArrayList<Place<String,String>>();
+		// Add the transitions
+		for (PetriNetTransition ptrans : pna.getTransitions()) {
+			preds.clear();
+			succs.clear();
+			for (String pred : ptrans.getPreds()) {
+				if (!name2places.containsKey(pred)) {
+					throw new IllegalArgumentException("undefined place:" + pred);
+				} else {
+					preds.add(name2places.get(pred));
+				}
+			}
+			for (String succ : ptrans.getSuccs()) {
+				if (!name2places.containsKey(succ)) {
+					throw new IllegalArgumentException("undefined place:" + succ);
+				} else {
+					preds.add(name2places.get(succ));
+				}
+			}
+			net.addTransition(ptrans.getSymbol(), preds, succs);
+		}
+
+		m_Automata.put(pna.getName(), net);
+
 		return null;
 	}
 	
@@ -180,8 +180,4 @@ public class AutomataDefinitionInterpreter {
 		return m_errorLocation;
 	}
 	
-	
-	
-	
-
 }

@@ -21,15 +21,12 @@ public class PetriNetAutomaton extends Automaton {
 	
 	private List<PetriNetTransition> m_transitions;
 	private PetriNetMarkingList m_initialMarkings;
-	private PetriNetMarkingList m_acceptingMarkings;
 	private List<String> m_acceptingPlaces;
-	private boolean m_isPetriNetJulianDefinition;
 	
 	
 	public PetriNetAutomaton() {
 		m_transitions = new ArrayList<PetriNetTransition>();
 		m_initialMarkings = new PetriNetMarkingList();
-		m_acceptingMarkings = new PetriNetMarkingList();
 		m_acceptingPlaces = new ArrayList<String>();
 	}
 	
@@ -37,12 +34,7 @@ public class PetriNetAutomaton extends Automaton {
 		this();
 		m_Name = name;
 	}
-	
-	public PetriNetAutomaton(String name, boolean isPetriNetJulian) {
-		this(name);
-		m_isPetriNetJulianDefinition  = isPetriNetJulian;
-	}
-	
+
 
 	public List<String> getAlphabet() {
 		return m_alphabet;
@@ -76,14 +68,6 @@ public class PetriNetAutomaton extends Automaton {
 		this.m_initialMarkings = m_initialMarkings;
 	}
 
-	public PetriNetMarkingList getAcceptingMarkings() {
-		return m_acceptingMarkings;
-	}
-
-	public void setAcceptingMarkings(PetriNetMarkingList m_acceptingMarkings) {
-		this.m_acceptingMarkings = m_acceptingMarkings;
-	}
-
 	public List<String> getAcceptingPlaces() {
 		return m_acceptingPlaces;
 	}
@@ -103,10 +87,6 @@ public class PetriNetAutomaton extends Automaton {
 		builder.append(m_transitions.size());
 		builder.append("]");
 		return builder.toString();
-	}
-
-	public boolean isPetriNetJulianDefinition() {
-		return m_isPetriNetJulianDefinition;
 	}
 
 }

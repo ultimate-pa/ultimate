@@ -76,6 +76,12 @@ public class TestFileInterpreter {
 		private String m_shortDescription = "Typecheck error";
 		private String m_longDescription = "";
 		
+		/**
+		 * Checks the testfile for type errors and for
+		 * undeclared variables.
+		 * @param n the root node of the AST 
+		 * @throws IllegalArgumentException
+		 */
 		public void checkTestFile(AtsASTNode n) throws IllegalArgumentException {
 			for (Map.Entry<String, Object > entry : m_variables.entrySet()) {
 				m_localVariables.put(entry.getKey(), entry.getValue().getClass());
@@ -1041,6 +1047,10 @@ public class TestFileInterpreter {
 		return null;
 	}
 
+	/**
+	 * Reports the results of assert statements to the Logger and to Ultimate 
+	 * as a GenericResult.
+	 */
 	private void reportResult() {
 		String testCasesSummary = "All testcases passed.";
 		s_Logger.info("----------------- Test Summary -----------------");
@@ -1147,6 +1157,12 @@ public class TestFileInterpreter {
 	}
 	
 	
+	/**
+	 * Checks if all arguments have the correct type. 
+	 * @param c The constructor of the operation class.
+	 * @param arguments The arguments to check 
+	 * @return true if and only if all arguments have the correct type. Otherwise false.
+	 */
 	private boolean allArgumentsHaveCorrectTypeForThisConstructor(Constructor<?> c, List<Object> arguments) {
 		int i = 0;
 		int minArgSize = (c.getParameterTypes().length > arguments.size() ? arguments.size() : c.getParameterTypes().length);
@@ -1161,8 +1177,10 @@ public class TestFileInterpreter {
 	
 
 	/**
-	 * 
-	 * @return Returns a map from String to class objects from the classes found in the directories.
+	 * Finds all automata operations implementing the IOperation interface. It maps the operation names
+	 * to set of class objects, because there may exist different classes for the same operation.
+	 * E.g. accepts-operation for NestedWordAutomata and accepts-operations for PetriNets
+	 * @return A map from class names to set of class objects from classes found in the directories.
  	 */
 	private static Map<String, Set<Class<?>>> getOperationClasses() {
 		Map<String, Set<Class<?>>> result = new HashMap<String, Set<Class<?>>>();
@@ -1225,6 +1243,7 @@ public class TestFileInterpreter {
 		}
 		return result;
 	}
+	
 	
 	private static boolean classImplementsIOperationInterface(Class<?> c) {
 		Class<?>[] implementedInterfaces = c.getInterfaces();

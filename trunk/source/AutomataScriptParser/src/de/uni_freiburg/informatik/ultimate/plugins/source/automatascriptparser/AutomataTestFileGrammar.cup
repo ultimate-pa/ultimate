@@ -1103,14 +1103,14 @@ petrinetJulian_definition ::= variable_identifier:id EQ LPAREN
                               net_transitions:net_trans COMMA
                               initial_markings:init_mark COMMA
                               accepting_places:acc_places RPAREN
-                              {: PetriNetAutomaton petri = new PetriNetAutomaton(id, true);
+                              {: PetriNetAutomaton petri = new PetriNetAutomaton(id);
                                  petri.setAlphabet(alpha.getIdentifierList());
                                  petri.setPlaces(p.getIdentifierList());
                                  petri.setTransitions(net_trans.getNetTransitions());
                                  petri.setInitialMarkings(init_mark);
                                  petri.setAcceptingPlaces(acc_places.getIdentifierList());
                                  m_varDeclarations.put(id, PetriNetJulian.class);
-                            	  RESULT = petri; :}
+                            	 RESULT = petri; :}
                               ;
 
 petrinet_alphabet ::= ALPHABET EQ LBRACE:l identifier_list_opt:idList RBRACE:r
@@ -1150,13 +1150,13 @@ initial_markings ::= INITIAL_MARKINGS EQ marking:m {:RESULT = new PetriNetMarkin
 
 marking ::= LBRACE:l identifier_list:idList RBRACE:r
             {: String place = idList.getIdentifier(0);
-			   String token = null;
-			   if (idList.isPair()) {
-				   token = idList.getIdentifier(1);
-			   }
-            	PetriNetMarking pm = new PetriNetMarking(place, token);
-            	pm.setLocation(getLocation(l$, r$)); 
-            	RESULT = pm; :} ;
+              String token = null;
+              if (idList.isPair()) {
+                token = idList.getIdentifier(1);
+              }
+              PetriNetMarking pm = new PetriNetMarking(place, token);
+              pm.setLocation(getLocation(l$, r$)); 
+              RESULT = pm; :} ;
 
 accepting_places ::= ACCEPTING_PLACES EQ LBRACE:l identifier_list:idList RBRACE:r 
 {: idList.setLocation(getLocation(l$, r$)); 
