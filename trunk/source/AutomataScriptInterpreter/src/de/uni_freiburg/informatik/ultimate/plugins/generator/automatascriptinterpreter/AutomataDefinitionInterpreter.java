@@ -27,6 +27,7 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.PetriNetJuli
 import java.util.Collections;
 
 /**
+ * 
  * @author musab@informatik.uni-freiburg.de
  *
  */
@@ -40,6 +41,11 @@ public class AutomataDefinitionInterpreter {
 		m_Automata = new HashMap<String, Object>();
 	}
 	
+	/**
+	 * 
+	 * @param automata the definitions of automata
+	 * @return null in all cases
+	 */
 	public <T> Object interpret(AutomataDefinitions automata) {
 		List<? extends AtsASTNode> children = automata.getListOfAutomataDefinitions();
 		for (AtsASTNode n : children) {

@@ -7,7 +7,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * 
+ * Handles assignable tests for type checks. It is mainly used in the type checker
+ * for automatascript test files. 
  * @author musab@informatik.uni-freiburg.de
  *
  */
@@ -21,6 +22,15 @@ public class AssignableTest {
 		m_primitiveToClassTypes.put(boolean.class, Boolean.class);
 	}
 	
+	
+	/**
+	 * Performs an assignable test on two types. Can also handle
+	 * primitive types. 
+	 * @param left the type of the operand on the left-side of the assignment
+	 * @param right the type of the operand on the right-side of the assignment
+	 * @return true if and only if the right operand is equal to or a sub-type of the left operand,
+	 * otherwise false.
+	 */
 	public static boolean isAssignableFrom(Class<?> left, Class<?> right) {
 		Class<?> leftSide = left;
 		Class<?> rightSide = right;

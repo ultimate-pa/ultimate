@@ -68,6 +68,7 @@ enum Flow {
 
 
 /**
+ * 
  * @author musab@informatik.uni-freiburg.de
  *
  */
@@ -329,8 +330,6 @@ public class TestFileInterpreter {
 				for (AtsASTNode n : oe.getOutgoingNodes().get(0).getOutgoingNodes()) {
 					checkType(n);
 				}
-
-				// TODO: Check if parameters has correct type
 			}
 			
 		}
@@ -517,6 +516,7 @@ public class TestFileInterpreter {
 	private boolean m_printAutomataToFile = false;
 	private PrintWriter m_printWriter;
 	private String m_path = ".";
+	private ILocation m_errorLocation;
 	public enum LoggerSeverity {INFO, WARNING, ERROR, DEBUG};
 	
 	
@@ -529,6 +529,7 @@ public class TestFileInterpreter {
 		m_tChecker = new AutomataScriptTypeChecker();
 		m_existingOperations = getOperationClasses();
 		m_LastPrintedAutomaton = null;
+		m_errorLocation = getPseudoLocation();
 		AssignableTest.initPrimitiveTypes();
 		UltimateServices.getInstance().setDeadline(System.currentTimeMillis() + (m_timeout * 1000));
 		if (m_printAutomataToFile) {
@@ -608,7 +609,7 @@ public class TestFileInterpreter {
 				result = interpret(ats.getStatementList());
 			} catch (Exception e) {
 				reportToLogger(LoggerSeverity.DEBUG, e.getMessage());
-				reportToUltimate(Severity.ERROR, e.getMessage(), "Error", getPseudoLocation());
+				reportToUltimate(Severity.ERROR, e.getMessage(), "Error", m_errorLocation);
 				return null;
 			}
 		}
@@ -672,6 +673,7 @@ public class TestFileInterpreter {
 	}
 		
 	private <T> Object interpret(AtsASTNode node) throws NoSuchFieldException {
+		m_errorLocation = node.getLocation();
 		Object result = null;
 		if (node instanceof AssignmentExpression) {
 			result = interpret((AssignmentExpression) node);
@@ -1031,6 +1033,11 @@ public class TestFileInterpreter {
     	}
     	
     	for (String id : vd.getIdentifiers()) {
+    		if (value == null) {
+        		String longDescr = "Var \"" + id + "\" is assigned \"null\".";
+    			String shortDescr = "Null assignment";
+    			printMessage(Severity.WARNING, LoggerSeverity.DEBUG, longDescr, shortDescr, vd.getLocation());
+        	}
     		m_variables.put(id, value);
     	}
     	return null;
@@ -1135,6 +1142,15 @@ public class TestFileInterpreter {
 		}
 	}
 
+	/**
+	 * Gets an object of an automata operation indicated by OperationInvocationExpression, if the operation exists
+	 * and all arguments have correct type. Otherwise it returns null.
+	 * @param oe the automata operation
+	 * @param arguments the given arguments for this operation
+	 * @return an object of the automata operation or null
+	 * @throws Exception if there couldn't construct an object of the operation
+	 * @throws UnsupportedOperationException if the operation does not exist
+	 */
 	private IOperation getAutomataOperation(OperationInvocationExpression oe, ArrayList<Object> arguments) throws Exception  {
 		String operationName = oe.getOperationName().toLowerCase();
 		IOperation result = null;
