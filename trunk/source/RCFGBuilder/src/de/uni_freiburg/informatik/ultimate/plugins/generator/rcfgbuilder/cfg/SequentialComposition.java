@@ -75,14 +75,13 @@ public class SequentialComposition extends CodeBlock {
 				m_TransitionFormulaWithBranchEncoders = 
 						codeBlocks[0].getTransitionFormulaWithBranchEncoders();
 			} else {
-				m_TransitionFormula = TransFormula.sequentialComposition(
+				m_TransitionFormula = TransFormula.sequentialComposition(this.getSerialNumer(),boogie2smt,
 						m_TransitionFormula, 
-						codeBlocks[i].getTransitionFormula(),
-						boogie2smt, this.getSerialNumer());
-				m_TransitionFormulaWithBranchEncoders = TransFormula.sequentialComposition(
+						codeBlocks[i].getTransitionFormula()
+						);
+				m_TransitionFormulaWithBranchEncoders = TransFormula.sequentialComposition(this.getSerialNumer(),boogie2smt,
 						m_TransitionFormulaWithBranchEncoders, 
-						codeBlocks[i].getTransitionFormulaWithBranchEncoders(),
-						boogie2smt, this.getSerialNumer());
+						codeBlocks[i].getTransitionFormulaWithBranchEncoders());
 			}
 		}
 		m_PrettyPrinted = prettyPrinted.toString();

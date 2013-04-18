@@ -204,8 +204,8 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 		for (int i=0; i<loop.length(); i++) {
 			loopTFs[i] = loop.getSymbol(i).getTransitionFormula();
 		}
-		TransFormula stemTF = sequentialComposition(1000, rootAnnot.getBoogie2SMT(), stemTFs);
-		TransFormula loopTF = sequentialComposition(1000+stemTFs.length, rootAnnot.getBoogie2SMT(), loopTFs);
+		TransFormula stemTF = TransFormula.sequentialComposition(1000, rootAnnot.getBoogie2SMT(), stemTFs);
+		TransFormula loopTF = TransFormula.sequentialComposition(1000+stemTFs.length, rootAnnot.getBoogie2SMT(), loopTFs);
 		RankingFunctionsSynthesizer synthesizer = null;
 		try {
 			synthesizer = new RankingFunctionsSynthesizer(smtManager.getScript(), smtManager.getScript(), stemTF, loopTF);
@@ -288,13 +288,13 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 		return false;
 	}
 	
-	public static TransFormula sequentialComposition(int serialNumber, 
-			Boogie2SMT boogie2smt, TransFormula... transFormulas) {
-		TransFormula result = transFormulas[0];
-		for (int i=1; i<transFormulas.length; i++) {
-			result = TransFormula.sequentialComposition(result, transFormulas[i],  boogie2smt, serialNumber++);
-		}
-		return result;
-	}
+//	public static TransFormula sequentialComposition(int serialNumber, 
+//			Boogie2SMT boogie2smt, TransFormula... transFormulas) {
+//		TransFormula result = transFormulas[0];
+//		for (int i=1; i<transFormulas.length; i++) {
+//			result = TransFormula.sequentialComposition(result, transFormulas[i],  boogie2smt, serialNumber++);
+//		}
+//		return result;
+//	}
 
 }

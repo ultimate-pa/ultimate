@@ -20,6 +20,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
+import de.uni_freiburg.informatik.ultimate.logic.simplification.SimplifyDDA;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.Activator;
@@ -346,100 +347,287 @@ public class TransFormula implements Serializable {
 	}
 	
 	
+	/**
+	 * @return the relational composition (concatenation) of transformula1 und
+	 * transformula2 
+	 */
+	public static TransFormula sequentialComposition(int serialNumber, Boogie2SMT boogie2smt, TransFormula... transFormula) {
+		Script script = boogie2smt.getScript();
+		Map<BoogieVar, TermVariable> inVars = new HashMap<BoogieVar, TermVariable>();
+		Map<BoogieVar, TermVariable> outVars = new HashMap<BoogieVar, TermVariable>();
+		Set<TermVariable> allVars = new HashSet<TermVariable>();
+		Set<TermVariable> auxVars = new HashSet<TermVariable>();
+		Set<TermVariable> newBranchEncoders = new HashSet<TermVariable>();
+		Term formula = boogie2smt.getScript().term("true");
+
+		for (int i = transFormula.length-1; i>=0; i--) {
+			ArrayList<TermVariable> replacees = new ArrayList<TermVariable>();
+			ArrayList<Term> replacers = new ArrayList<Term>();
+			for (BoogieVar var : transFormula[i].getOutVars().keySet()) {
+				TermVariable outVar = transFormula[i].getOutVars().get(var);
+				TermVariable newOutVar;
+				if (inVars.containsKey(var)) {
+					newOutVar = inVars.get(var);
+				} else {
+					Sort sort = outVar.getSort();
+					newOutVar = getFreshTermVariable(boogie2smt, var.getIdentifier(), "out", sort, serialNumber, i); 
+				}
+				replacees.add(outVar);
+				replacers.add(newOutVar);
+				// add to outvars if var is not outvar
+				if (!outVars.containsKey(var)) {
+					outVars.put(var, newOutVar);
+				}
+				TermVariable inVar = transFormula[i].getInVars().get(var);
+				if (inVar == null) {
+					// case: var is assigned without reading or havoced
+					if (outVars.get(var) != newOutVar) {
+						//add to auxVars if not already outVar
+						auxVars.add(newOutVar);
+					}
+					inVars.remove(var);
+				} else if (inVar == outVar) {
+					// case: var is not modified
+					inVars.put(var, newOutVar);
+				} else {
+					// case: var is read and written
+					Sort sort = outVar.getSort();
+					TermVariable newInVar = getFreshTermVariable(boogie2smt, var.getIdentifier(), "in", sort, serialNumber, i);
+					replacees.add(inVar);
+					replacers.add(newInVar);
+					inVars.put(var, newInVar);
+					if (outVars.get(var) != newOutVar) {
+						//add to auxVars if not already outVar
+						auxVars.add(newOutVar);
+					}
+				}
+			}
+			for (TermVariable auxVar : transFormula[i].getAuxVars()) {
+				TermVariable newAuxVar = getFreshTermVariable(boogie2smt, auxVar.getName(), "aux", auxVar.getSort(), serialNumber, i);
+				replacees.add(auxVar);
+				replacers.add(newAuxVar);
+				auxVars.add(newAuxVar);
+			}
+			newBranchEncoders.addAll(transFormula[i].getBranchEncoders());
+
+
+			for (BoogieVar var : transFormula[i].getInVars().keySet()) {
+				if (transFormula[i].getOutVars().containsKey(var)) {
+					// nothing do to, this var was already considered above 
+				} else {
+					// case var occurs only as inVar: var is not modfied.
+					TermVariable inVar = transFormula[i].getInVars().get(var);
+					TermVariable newInVar;
+					if (inVars.containsKey(var)) {
+						newInVar = inVars.get(var);
+					} else {
+						Sort sort = inVar.getSort();
+						newInVar = getFreshTermVariable(boogie2smt, var.getIdentifier(), "in", sort, serialNumber, i);
+						inVars.put(var, newInVar);
+					}
+					replacees.add(inVar);
+					replacers.add(newInVar);
+				}
+			}
+			TermVariable[] vars = replacees.toArray(new TermVariable[replacees.size()]);
+			Term[] values = replacers.toArray(new Term[replacers.size()]);
+			Term updatedFormula = script.let( vars , values, transFormula[i].getFormula());
+			formula = Util.and(script, formula, updatedFormula);
+			//formula = new FormulaUnLet().unlet(formula);
+		
+		}
+		
+		formula = new FormulaUnLet().unlet(formula);
+		formula = (new SimplifyDDA(script, s_Logger)).getSimplifiedTerm(formula);
+		removesuperfluousVariables(inVars, auxVars, formula);
+		
+		NaiveDestructiveEqualityResolution der = 
+								new NaiveDestructiveEqualityResolution(script);
+		formula = der.eliminate(auxVars, formula);
+		formula = (new SimplifyDDA(script, s_Logger)).getSimplifiedTerm(formula);
+		removesuperfluousVariables(inVars, auxVars, formula);
+		
+		LBool isSat = Util.checkSat(script, formula);
+		if (isSat == LBool.UNSAT) {
+			s_Logger.warn("CodeBlock already infeasible");
+			formula = script.term("false");
+		}
+		Infeasibility infeasibility;
+		if (formula == script.term("false")) {
+			infeasibility = Infeasibility.INFEASIBLE;
+		} else {
+			infeasibility = Infeasibility.UNPROVEABLE;
+		}
+
+		Term closedFormula = computeClosedFormula(formula, 
+				inVars, outVars, auxVars, boogie2smt);
+		TransFormula result = new TransFormula(formula, inVars, outVars,
+				auxVars, newBranchEncoders, infeasibility, closedFormula);
+
+//		assert allVarsContainsFreeVars(allVars, formula);
+		assert freeVarsSubsetInOutAuxBranch(formula, inVars, outVars, auxVars, newBranchEncoders);
+		return result;
+	 
+ }
+	
+	private static void removesuperfluousVariables(Map<BoogieVar,TermVariable> inVars, Set<TermVariable> auxVars, Term formula) {
+		Set<TermVariable> occuringVars = new HashSet<TermVariable>(
+				Arrays.asList(formula.getFreeVars()));
+		{
+			List<BoogieVar> superfluousInVars = new ArrayList<BoogieVar>();
+			for (Entry<BoogieVar, TermVariable> entry : inVars.entrySet()) {
+				if (!occuringVars.contains(entry.getValue())) {
+					superfluousInVars.add(entry.getKey());
+				}
+			}
+			for (BoogieVar bv : superfluousInVars) {
+				inVars.remove(bv);
+			}
+		}
+		// we may not remove outVars e.g., if x is outvar and formula is true
+		// this means that x is havoced.
+		{
+			List<TermVariable> superfluousAuxVars = new ArrayList<TermVariable>();
+			for (TermVariable tv : auxVars) {
+				if (!occuringVars.contains(tv)) {
+					superfluousAuxVars.add(tv);
+				}
+			}
+			for (TermVariable tv : superfluousAuxVars) {
+				auxVars.remove(tv);
+			}
+		}
+	}
+
+	
 //	/**
 //	 * @return the relational composition (concatenation) of transformula1 und
 //	 * transformula2 
 //	 */
-//	public static TransFormula sequentialCompositionN(Boogie2SMT boogie2smt, int serialNumber, TransFormula... transFormula) {
+//	public static TransFormula sequentialComposition(TransFormula transFormula1, 
+//				TransFormula transFormula2, Boogie2SMT boogie2smt, int serialNumber) {
+//		Script script = boogie2smt.getScript();
+//	 	Term formula1 = transFormula1.getFormula();
+//		Map<BoogieVar, TermVariable> inVars1 = transFormula1.getInVars();
+//		Map<BoogieVar, TermVariable> outVars1 = transFormula1.getOutVars();
+//		Set<TermVariable> vars1 = transFormula1.getVars();
+//
+//	 	Term formula2 = transFormula2.getFormula();
+//		Map<BoogieVar, TermVariable> inVars2 = transFormula2.getInVars();
+//		Map<BoogieVar, TermVariable> outVars2 = transFormula2.getOutVars();
+//		Set<TermVariable> vars2 = transFormula2.getVars();
+//	 	
 //		Map<BoogieVar, TermVariable> inVars = new HashMap<BoogieVar, TermVariable>();
 //		Map<BoogieVar, TermVariable> outVars = new HashMap<BoogieVar, TermVariable>();
 //		Set<TermVariable> allVars = new HashSet<TermVariable>();
 //		Set<TermVariable> newAuxVars = new HashSet<TermVariable>();
 //		Set<TermVariable> newBranchEncoders = new HashSet<TermVariable>();
-//		Term formula = boogie2smt.getScript().term("true");
-//
-//		for (int i = transFormula.length-1; i>=0; i--) {
-//			ArrayList<TermVariable> replacees = new ArrayList<TermVariable>();
-//			ArrayList<Term> replacers = new ArrayList<Term>();
-//			for (BoogieVar var : transFormula[i].getOutVars().keySet()) {
-//				TermVariable outVar = transFormula[i].getOutVars().get(var);
-//				TermVariable newOutVar;
-//				if (inVars.containsKey(var)) {
-//					newOutVar = inVars.get(var);
-//				} else {
-//					Sort sort = outVar.getSort();
-//					newOutVar = getFreshTermVariable(boogie2smt, var.getIdentifier(), "out", sort, serialNumber, i); 
-//				}
-//				replacees.add(outVar);
-//				replacers.add(newOutVar);
-//				// add to outvars if var is not outvar
-//				if (!outVars.containsKey(var)) {
-//					outVars.put(var, newOutVar);
-//				}
-//				TermVariable inVar = transFormula[i].getInVars().get(var);
-//				if (inVar == null) {
-//					// case: var is assigned without reading or havoced
-//					if (outVars.get(var) != newOutVar) {
-//						//add to auxVars if not already outVar
-//						newAuxVars.add(newOutVar);
+//		
+//		inVars.putAll(inVars2);
+//		outVars.putAll(outVars2);
+//		newAuxVars.addAll(transFormula1.getAuxVars());
+//		newAuxVars.addAll(transFormula2.getAuxVars());
+//		newBranchEncoders.addAll(transFormula1.getBranchEncoders());
+//		newBranchEncoders.addAll(transFormula2.getBranchEncoders());
+//		allVars.addAll(vars1);
+//		allVars.addAll(vars2);
+//		ArrayList<TermVariable> replacees = new ArrayList<TermVariable>();
+//		ArrayList<Term> replacers = new ArrayList<Term>();
+//		
+//		for (BoogieVar var :outVars1.keySet()) {
+//			TermVariable outVar2 = outVars2.get(var);
+//			TermVariable inVar2 = inVars2.get(var);
+//			TermVariable outVar1 = outVars1.get(var);
+//			TermVariable inVar1 = inVars1.get(var);
+//			
+//			if (inVar2 == null) {
+//				if (outVar2 == null) {
+//					//var does not occur in transFormula2
+//					if (outVar1 != null) {
+//						outVars.put(var, outVar1);
 //					}
+//					if (inVar1 != null) {
+//						inVars.put(var, inVar1);
+//					}
+//				} else {
+//					assert (outVar1 != outVar2 && inVar1 != outVar2) : 
+//						"accidently same tv is used twice, ask Matthias" +
+//						"to implement this case";
+//					//var is written but not read in transFormula2
+//					if (inVar1 != null) {
+//						inVars.put(var, inVar1);
+//					}
+//					if (inVar1 != outVar1) {
+//						newAuxVars.add(outVar1);
+//					}
+//				}
+//			} else {
+//				TermVariable newOutVar1 = inVar2;
+//				inVars.put(var, newOutVar1);
+//				replacees.add(outVar1);
+//				replacers.add(newOutVar1);
+//				if (inVar1 == null) {
+//					//var is written but not read in transFormula1
 //					inVars.remove(var);
-//				} else if (inVar == outVar) {
-//					// case: var is not modified
-//					inVars.put(var, newOutVar);
-//				} else {
-//					// case: var is read and written
-//					Sort sort = outVar.getSort();
-//					TermVariable newInVar = getFreshTermVariable(boogie2smt, var.getIdentifier(), "in", sort, serialNumber, i);
-//					replacees.add(inVar);
-//					replacers.add(newInVar);
-//					inVars.put(var, newInVar);
-//					if (outVars.get(var) != newOutVar) {
-//						//add to auxVars if not already outVar
-//						newAuxVars.add(newOutVar);
+//					if (outVar2 != inVar2) {
+//						//var modified by both formulas
+//						newAuxVars.add(newOutVar1);
 //					}
-//				}
-//			}
-//			for (TermVariable auxVar : transFormula[i].getAuxVars()) {
-//				TermVariable newAuxVar = getFreshTermVariable(boogie2smt, auxVar.getName(), "aux", auxVar.getSort(), serialNumber, i);
-//				replacees.add(auxVar);
-//				replacers.add(newAuxVar);
-//				newAuxVars.add(newAuxVar);
-//			}
-//			newBranchEncoders.addAll(transFormula[i].getBranchEncoders());
-//
-//
-//			for (BoogieVar var : transFormula[i].getInVars().keySet()) {
-//				if (transFormula[i].getOutVars().containsKey(var)) {
-//					// nothing do to, this var was already considered above 
+//					assert (outVar1 != inVar2 && outVar1 != outVar2) : 
+//						"accidently same tv is used twice, ask Matthias" +
+//						"to implement this case";
+//				} else if (inVar1 == outVar1) {
+//					//var not modified in transFormula1
+//					assert (outVar1 != inVar2 && outVar1 != outVar2) : 
+//						"accidently same tv is used twice, ask Matthias" +
+//						"to implement this case";
 //				} else {
-//					TermVariable
-//					TermVariable outVar2 = outVars2.get(var);
-//					TermVariable inVar2 = inVars2.get(var);
-//					TermVariable inVar1 = inVars1.get(var);
-//					assert (inVar1 != inVar2) : 
-//						"accidently same tv is used twice, ask Matthias" +
-//						"to implement this case";
-//					assert (inVar1 != outVar2) : 
-//						"accidently same tv is used twice, ask Matthias" +
-//						"to implement this case";
-//					if (inVar2 == null) {
-//						if (outVar2 == null) {
-//							//var does not occur in transFormula2
-//							inVars.put(var, inVar1);
-//						} else {
-//							//var is written but not read in transFormula2
-//							inVars.put(var, inVar1);
-//						}
+//					if (outVar2 != inVar2) {
+//						//var modified by both formulas
+//						newAuxVars.add(newOutVar1);
+//					}
+//					String name = var.getIdentifier() + "_In" + serialNumber;
+//					TermVariable newInVar = script.variable(
+//										name, outVar1.getSort());
+//					allVars.add(newInVar);
+//					allVars.add(newInVar);
+//					inVars.put(var, newInVar);
+//					replacees.add(inVar1);
+//					replacers.add(newInVar);
+//				}
+//				
+//			}
+//		}
+//		
+//		for (BoogieVar var : inVars1.keySet()) {
+//			if (outVars1.containsKey(var)) {
+//				// nothing do to, this var was already considered above 
+//			} else {
+//				TermVariable outVar2 = outVars2.get(var);
+//				TermVariable inVar2 = inVars2.get(var);
+//				TermVariable inVar1 = inVars1.get(var);
+//				assert (inVar1 != inVar2) : 
+//					"accidently same tv is used twice, ask Matthias" +
+//					"to implement this case";
+//				assert (inVar1 != outVar2) : 
+//					"accidently same tv is used twice, ask Matthias" +
+//					"to implement this case";
+//				if (inVar2 == null) {
+//					if (outVar2 == null) {
+//						//var does not occur in transFormula2
+//						inVars.put(var, inVar1);
 //					} else {
-//						if (outVar2 == inVar2) {
-//							//var not modified in transFormula2
-//							inVars.put(var, inVar1);
-//						} else {
-//							//var modified in transFormula2
-//							inVars.put(var, inVar1);
-//							newAuxVars.add(inVar2);
-//						}
+//						//var is written but not read in transFormula2
+//						inVars.put(var, inVar1);
+//					}
+//				} else {
+//					if (outVar2 == inVar2) {
+//						//var not modified in transFormula2
+//						inVars.put(var, inVar1);
+//					} else {
+//						//var modified in transFormula2
+//						inVars.put(var, inVar1);
+//						newAuxVars.add(inVar2);
 //					}
 //				}
 //			}
@@ -514,212 +702,6 @@ public class TransFormula implements Serializable {
 //		return result;
 //	 
 // }
-	
-	
-
-	
-	/**
-	 * @return the relational composition (concatenation) of transformula1 und
-	 * transformula2 
-	 */
-	public static TransFormula sequentialComposition(TransFormula transFormula1, 
-				TransFormula transFormula2, Boogie2SMT boogie2smt, int serialNumber) {
-		Script script = boogie2smt.getScript();
-	 	Term formula1 = transFormula1.getFormula();
-		Map<BoogieVar, TermVariable> inVars1 = transFormula1.getInVars();
-		Map<BoogieVar, TermVariable> outVars1 = transFormula1.getOutVars();
-		Set<TermVariable> vars1 = transFormula1.getVars();
-
-	 	Term formula2 = transFormula2.getFormula();
-		Map<BoogieVar, TermVariable> inVars2 = transFormula2.getInVars();
-		Map<BoogieVar, TermVariable> outVars2 = transFormula2.getOutVars();
-		Set<TermVariable> vars2 = transFormula2.getVars();
-	 	
-		Map<BoogieVar, TermVariable> inVars = new HashMap<BoogieVar, TermVariable>();
-		Map<BoogieVar, TermVariable> outVars = new HashMap<BoogieVar, TermVariable>();
-		Set<TermVariable> allVars = new HashSet<TermVariable>();
-		Set<TermVariable> newAuxVars = new HashSet<TermVariable>();
-		Set<TermVariable> newBranchEncoders = new HashSet<TermVariable>();
-		
-		inVars.putAll(inVars2);
-		outVars.putAll(outVars2);
-		newAuxVars.addAll(transFormula1.getAuxVars());
-		newAuxVars.addAll(transFormula2.getAuxVars());
-		newBranchEncoders.addAll(transFormula1.getBranchEncoders());
-		newBranchEncoders.addAll(transFormula2.getBranchEncoders());
-		allVars.addAll(vars1);
-		allVars.addAll(vars2);
-		ArrayList<TermVariable> replacees = new ArrayList<TermVariable>();
-		ArrayList<Term> replacers = new ArrayList<Term>();
-		
-		for (BoogieVar var :outVars1.keySet()) {
-			TermVariable outVar2 = outVars2.get(var);
-			TermVariable inVar2 = inVars2.get(var);
-			TermVariable outVar1 = outVars1.get(var);
-			TermVariable inVar1 = inVars1.get(var);
-			
-			if (inVar2 == null) {
-				if (outVar2 == null) {
-					//var does not occur in transFormula2
-					if (outVar1 != null) {
-						outVars.put(var, outVar1);
-					}
-					if (inVar1 != null) {
-						inVars.put(var, inVar1);
-					}
-				} else {
-					assert (outVar1 != outVar2 && inVar1 != outVar2) : 
-						"accidently same tv is used twice, ask Matthias" +
-						"to implement this case";
-					//var is written but not read in transFormula2
-					if (inVar1 != null) {
-						inVars.put(var, inVar1);
-					}
-					if (inVar1 != outVar1) {
-						newAuxVars.add(outVar1);
-					}
-				}
-			} else {
-				TermVariable newOutVar1 = inVar2;
-				inVars.put(var, newOutVar1);
-				replacees.add(outVar1);
-				replacers.add(newOutVar1);
-				if (inVar1 == null) {
-					//var is written but not read in transFormula1
-					inVars.remove(var);
-					if (outVar2 != inVar2) {
-						//var modified by both formulas
-						newAuxVars.add(newOutVar1);
-					}
-					assert (outVar1 != inVar2 && outVar1 != outVar2) : 
-						"accidently same tv is used twice, ask Matthias" +
-						"to implement this case";
-				} else if (inVar1 == outVar1) {
-					//var not modified in transFormula1
-					assert (outVar1 != inVar2 && outVar1 != outVar2) : 
-						"accidently same tv is used twice, ask Matthias" +
-						"to implement this case";
-				} else {
-					if (outVar2 != inVar2) {
-						//var modified by both formulas
-						newAuxVars.add(newOutVar1);
-					}
-					String name = var.getIdentifier() + "_In" + serialNumber;
-					TermVariable newInVar = script.variable(
-										name, outVar1.getSort());
-					allVars.add(newInVar);
-					allVars.add(newInVar);
-					inVars.put(var, newInVar);
-					replacees.add(inVar1);
-					replacers.add(newInVar);
-				}
-				
-			}
-		}
-		
-		for (BoogieVar var : inVars1.keySet()) {
-			if (outVars1.containsKey(var)) {
-				// nothing do to, this var was already considered above 
-			} else {
-				TermVariable outVar2 = outVars2.get(var);
-				TermVariable inVar2 = inVars2.get(var);
-				TermVariable inVar1 = inVars1.get(var);
-				assert (inVar1 != inVar2) : 
-					"accidently same tv is used twice, ask Matthias" +
-					"to implement this case";
-				assert (inVar1 != outVar2) : 
-					"accidently same tv is used twice, ask Matthias" +
-					"to implement this case";
-				if (inVar2 == null) {
-					if (outVar2 == null) {
-						//var does not occur in transFormula2
-						inVars.put(var, inVar1);
-					} else {
-						//var is written but not read in transFormula2
-						inVars.put(var, inVar1);
-					}
-				} else {
-					if (outVar2 == inVar2) {
-						//var not modified in transFormula2
-						inVars.put(var, inVar1);
-					} else {
-						//var modified in transFormula2
-						inVars.put(var, inVar1);
-						newAuxVars.add(inVar2);
-					}
-				}
-			}
-		}
-		
-		TermVariable[] vars = replacees.toArray(new TermVariable[replacees.size()]);
-		Term[] values = replacers.toArray(new Term[replacers.size()]);
-		Term formula = script.let( vars , values, formula1);
-
-		formula = Util.and(script, formula, formula2);
-		formula = new FormulaUnLet().unlet(formula);
-		NaiveDestructiveEqualityResolution der = 
-								new NaiveDestructiveEqualityResolution(script);
-		//remove auxVars that do not occur in the formula
-		{
-			Set<TermVariable> varsOccurInTerm = new HashSet<TermVariable>(
-										Arrays.asList(formula.getFreeVars()));
-			List<TermVariable> superfluousAuxVars = new ArrayList<TermVariable>();
-			for (TermVariable tv : newAuxVars) {
-				if (!varsOccurInTerm.contains(tv)) {
-					superfluousAuxVars.add(tv);
-				}
-			}
-			newAuxVars.removeAll(superfluousAuxVars);
-		}
-		formula = der.eliminate(newAuxVars, formula);
-//		formula = (new SimplifyDDA(script, s_Logger)).getSimplifiedTerm(formula);
-		LBool isSat = Util.checkSat(script, formula);
-		if (isSat == LBool.UNSAT) {
-			s_Logger.warn("CodeBlock already infeasible");
-			formula = script.term("false");
-		}
-		Infeasibility infeasibility;
-		if (formula == script.term("false")) {
-			infeasibility = Infeasibility.INFEASIBLE;
-		} else {
-			infeasibility = Infeasibility.UNPROVEABLE;
-		}
-		Set<TermVariable> occuringVars = new HashSet<TermVariable>(
-										Arrays.asList(formula.getFreeVars()));
-		{
-			List<BoogieVar> superfluousInVars = new ArrayList<BoogieVar>();
-			for (Entry<BoogieVar, TermVariable> entry  : inVars.entrySet()) {
-				if (!occuringVars.contains(entry.getValue())) {
-					superfluousInVars.add(entry.getKey());
-				}
-			}
-			for (BoogieVar bv : superfluousInVars) {
-				inVars.remove(bv);
-			}
-		}
-		// we may not remove outVars e.g., if x is outvar and formula is true
-		// this means that x is havoced.
-		{
-			List<TermVariable> superfluousAuxVars = new ArrayList<TermVariable>();
-			for (TermVariable tv  : newAuxVars) {
-				if (!occuringVars.contains(tv)) {
-					superfluousAuxVars.add(tv);
-				}
-			}
-			for (TermVariable tv : superfluousAuxVars) {
-				newAuxVars.remove(tv);
-			}
-		}
-		Term closedFormula = computeClosedFormula(formula, 
-				inVars, outVars, newAuxVars, boogie2smt);
-		TransFormula result = new TransFormula(formula, inVars, outVars,
-				newAuxVars, newBranchEncoders, infeasibility, closedFormula);
-		result.getAuxVars().addAll(newAuxVars);
-		assert allVarsContainsFreeVars(allVars, formula);
-		assert freeVarsSubsetInOutAuxBranch(formula, inVars, outVars, newAuxVars, newBranchEncoders);
-		return result;
-	 
- }
  
 	
 	
