@@ -30,26 +30,31 @@ public class PreferencePage extends FieldEditorPreferencePage implements
 	 * Logger instance.
 	 */
 	public static final Logger logger = Logger.getLogger(PreferencePage.class);
+
 	/**
 	 * Holds the preference object.
 	 */
 	private final ScopedPreferenceStore preferences;
 
-	public static String NAME_CALLMINIMIZE = "MinimizeCall";
+	public static final String NAME_CALLMINIMIZE = "MinimizeCall";
 
-	public static String LABEL_CALLMINIMIZE = "Minimize Call and Return Edges";
+	public static final String LABEL_CALLMINIMIZE = "Minimize Call and Return Edges";
 
-	public static String NAME_EXECUTETESTS = "ExecuteUnitTests";
+	public static final String NAME_EXECUTETESTS = "ExecuteUnitTests";
 
-	public static String LABEL_EXECUTETESTS = "Execute Unit-Tests, with special Observer";
+	public static final String LABEL_EXECUTETESTS = "Execute Unit-Tests, with special Observer";
 
-	public static String NAME_STRATEGY = "RatingStrategy";
+	public static final String NAME_STRATEGY = "RatingStrategy";
 
-	public static String LABEL_STRATEGY = "Choose the strategy for the edge rating:";
+	public static final String LABEL_STRATEGY = "Choose the strategy for the edge rating:";
 
-	public static String NAME_RATINGBOUND = "RatingBoundary";
+	public static final String NAME_RATINGBOUND = "RatingBoundary";
 
-	public static String LABEL_RATINGBOUND = "Enter Rating-Boundary (empty for LBE):";
+	public static final String LABEL_RATINGBOUND = "Enter Rating-Boundary (empty for LBE):";
+	
+	public static final String NAME_USESTATHEURISTIC = "UseStatisticBasedHeuristic";
+	
+	public static final String LABEL_USESTATHEURISTIC = "Enable Statistic-Based Heuristic: ";
 
 	public PreferencePage() {
 		super(GRID);
@@ -91,6 +96,11 @@ public class PreferencePage extends FieldEditorPreferencePage implements
 				getFieldEditorParent());
 		addField(ratingStrategy);
 		preferences.setDefault(NAME_STRATEGY, "0");
+		// Boolean field, to use the statistic based heuristic
+		BooleanFieldEditor useStatisticBasedHeuristic = new BooleanFieldEditor(
+				NAME_USESTATHEURISTIC, LABEL_USESTATHEURISTIC, getFieldEditorParent());
+		addField(useStatisticBasedHeuristic);
+		preferences.setDefault(NAME_USESTATHEURISTIC, false);
 
 		// Text-Field for entering max rating value
 		StringFieldEditor ratingBound = new StringFieldEditor(NAME_RATINGBOUND,

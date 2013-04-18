@@ -16,9 +16,9 @@ import de.uni_freiburg.informatik.ultimate.blockencoding.rating.interfaces.IRati
  */
 public class ConfigurableHeuristic implements IRatingHeuristic {
 
-	private RatingStrategy strategy;
+	protected RatingStrategy strategy;
 
-	private IRating boundary;
+	protected IRating boundary;
 
 	/**
 	 * Public constructor needs the used strategy to interpret the given values.

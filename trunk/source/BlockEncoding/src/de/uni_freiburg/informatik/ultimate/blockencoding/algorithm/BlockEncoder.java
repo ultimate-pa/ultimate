@@ -152,6 +152,8 @@ public class BlockEncoder {
 				+ EncodingStatistics.countOfBasicEdges);
 		s_Logger.info("Amount of created disjunctions: "
 				+ EncodingStatistics.countOfDisjunctions);
+		s_Logger.info("Max. amount of disjunctions in one edge: "
+				+ EncodingStatistics.maxDisjunctionsInOneEdge);
 		return root;
 	}
 

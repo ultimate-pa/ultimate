@@ -3,6 +3,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.blockencoding.rating.util;
 
+
 /**
  * To create an rating heuristic, which can decide on basis of the underlying
  * program, we need to store some statistical properties, which we can use for
@@ -29,25 +30,41 @@ public class EncodingStatistics {
 	public static int countOfDisjunctions;
 
 	/**
+	 * stores the maximum number of disjunctions, which are contained in one
+	 * composite edge
+	 */
+	public static int maxDisjunctionsInOneEdge;
+
+	/**
 	 * Initializes, all stored statistics. This have to be done, before we start
 	 * a new run of block encoding.
 	 */
 	public static void init() {
 		countOfBasicEdges = 0;
 		countOfDisjunctions = 0;
+		maxDisjunctionsInOneEdge = 0;
 	}
-	
+
 	/**
 	 * 
 	 */
 	public static void incCountOfBasicEdges() {
 		countOfBasicEdges++;
 	}
-	
+
 	/**
 	 * 
 	 */
 	public static void incCountOfDisjunctions() {
 		countOfDisjunctions++;
+	}
+	
+	/**
+	 * @param value
+	 */
+	public static void setMaxDisjunctionsInOneEdge(int value) {
+		if (value > maxDisjunctionsInOneEdge) {
+			maxDisjunctionsInOneEdge = value;
+		}
 	}
 }

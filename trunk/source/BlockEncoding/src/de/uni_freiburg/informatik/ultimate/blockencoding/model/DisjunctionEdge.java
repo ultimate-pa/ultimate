@@ -32,16 +32,19 @@ public class DisjunctionEdge extends AbstractCompositeEdge {
 	 */
 	public DisjunctionEdge(IMinimizedEdge left, IMinimizedEdge right) {
 		super(left, right);
+		this.containedDisjunctions++;
 		this.payload.setName(leftEdge + " V " + rightEdge);
 		this.rating = RatingFactory.getInstance().createRating(this);
 		EncodingStatistics.incCountOfDisjunctions();
+		EncodingStatistics
+				.setMaxDisjunctionsInOneEdge(this.containedDisjunctions);
 	}
-	
+
 	/**
 	 * Empty constructor, is needed to create edges for rating boundary
 	 */
 	public DisjunctionEdge() {
-		
+
 	}
 
 	@Override

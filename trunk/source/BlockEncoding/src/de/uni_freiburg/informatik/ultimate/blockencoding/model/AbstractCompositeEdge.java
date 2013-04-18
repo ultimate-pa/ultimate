@@ -40,6 +40,8 @@ public abstract class AbstractCompositeEdge implements ICompositeEdge {
 	 */
 	protected IMinimizedEdge rightEdge;
 
+	protected int containedDisjunctions;
+
 	protected Payload payload;
 
 	private int counter;
@@ -62,13 +64,22 @@ public abstract class AbstractCompositeEdge implements ICompositeEdge {
 		this.rightEdge = right;
 		counter = counter + right.getElementCount();
 		this.payload = new Payload();
+		// update the contained disjunctions
+		if (left instanceof AbstractCompositeEdge) {
+			containedDisjunctions = ((AbstractCompositeEdge) left)
+					.getContainedDisjunctions();
+		}
+		if (right instanceof AbstractCompositeEdge) {
+			containedDisjunctions += ((AbstractCompositeEdge) right)
+					.getContainedDisjunctions();
+		}
 	}
-	
+
 	/**
 	 * This empty constructor is needed to create some edges
 	 */
 	protected AbstractCompositeEdge() {
-		
+
 	}
 
 	/**
@@ -101,7 +112,6 @@ public abstract class AbstractCompositeEdge implements ICompositeEdge {
 		return this.containedEdges;
 	}
 
-	
 	/**
 	 * Old and recursive variant of duplicationOfFormula
 	 * 
@@ -208,7 +218,7 @@ public abstract class AbstractCompositeEdge implements ICompositeEdge {
 		// sb.append(" /\\ ");
 		// sb.append(rightEdge.toString());
 		// return sb.toString();
-		return "conjunction";
+		return "CompositeEdge";
 	}
 
 	@Override
@@ -272,6 +282,13 @@ public abstract class AbstractCompositeEdge implements ICompositeEdge {
 	@Override
 	public boolean isOldVarInvolved() {
 		return leftEdge.isOldVarInvolved() || rightEdge.isOldVarInvolved();
+	}
+
+	/**
+	 * @return the containedDisjunctions
+	 */
+	public int getContainedDisjunctions() {
+		return containedDisjunctions;
 	}
 
 }
