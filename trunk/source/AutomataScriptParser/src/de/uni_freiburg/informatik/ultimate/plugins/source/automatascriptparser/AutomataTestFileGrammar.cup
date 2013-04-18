@@ -849,7 +849,7 @@ primary ::=
 	|	operation_invocation:oi {: RESULT = oi; :}
 	;
 
-argument_list_opt ::= argument_list:args {: RESULT = args; :} | {:RESULT = null; :} ;
+argument_list_opt ::= argument_list:args {: RESULT = args; :} | {:RESULT = new ArgumentList(); :} ;
 
 argument_list ::=
 		expression:e
@@ -874,10 +874,6 @@ operation_invocation ::=
                   } else {
                     OperationInvocationExpression op = new OperationInvocationExpression(opName, args);
                     op.setLocation(getLocation(opName$, r$));
-                    if ((args != null) && !(args instanceof ArgumentList)) {
-                      reportError(false, args.getLocation());
-                      reportError(true, "Parser_OperationInvocation: Got wrong arguments " + args.getClass().getSimpleName());
-                    }
                     RESULT = op; 
                   }
             :}

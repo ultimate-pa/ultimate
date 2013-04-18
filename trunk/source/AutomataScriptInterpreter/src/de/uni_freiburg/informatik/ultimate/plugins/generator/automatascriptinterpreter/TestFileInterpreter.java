@@ -65,19 +65,32 @@ import de.uni_freiburg.informatik.ultimate.result.GenericResult.Severity;
 enum Flow {
 	NORMAL, BREAK, CONTINUE, RETURN;
 }
+
+
+/**
+ * @author musab@informatik.uni-freiburg.de
+ *
+ */
 public class TestFileInterpreter {
 	
 	private static String UNKNOWN_OPERATION = "UNKNOWN_OPERATION";
 	
+	
+	
+	
+	/**
+	 * This class implements a static type checker for the automatascript files.
+	 * @author musab@informatik.uni-freiburg.de
+	 *
+	 */
 	class AutomataScriptTypeChecker {
-		
 		private Map<String, Class<?>> m_localVariables = new HashMap<String, Class<?>>();
 		private ILocation m_errorLocation = null;
 		private String m_shortDescription = "Typecheck error";
 		private String m_longDescription = "";
 		
 		/**
-		 * Checks the testfile for type errors and for
+		 * Checks the test file for type errors and for
 		 * undeclared variables.
 		 * @param n the root node of the AST 
 		 * @throws IllegalArgumentException
@@ -312,12 +325,13 @@ public class TestFileInterpreter {
 					throw new UnsupportedOperationException(shortDescr);
 				}
 			}
-			
-			for (AtsASTNode n : oe.getOutgoingNodes().get(0).getOutgoingNodes()) {
-				checkType(n);
+			if ((oe.getOutgoingNodes() != null) && (oe.getOutgoingNodes().get(0) != null)) {
+				for (AtsASTNode n : oe.getOutgoingNodes().get(0).getOutgoingNodes()) {
+					checkType(n);
+				}
+
+				// TODO: Check if parameters has correct type
 			}
-			
-			// TODO: Check if parameters has correct type
 			
 		}
 		
@@ -547,6 +561,11 @@ public class TestFileInterpreter {
         return dateFormat.format(date);
     }
 	
+	/**
+	 * Method to interpret an automatascript test file.
+	 * @param node the root node of the AST
+	 * @return the result of the automatascript test file, which is either an automaton or null.
+	 */
 	public Object interpretTestFile(AtsASTNode node) {
 		AutomataTestFile ats = null;
 		if (node instanceof AutomataTestFile) {
@@ -601,6 +620,10 @@ public class TestFileInterpreter {
 		return result;
 	}
 	
+	/**
+	 * Gets the automaton which was lastly printed by a print-statement.
+	 * @return
+	 */
 	public IAutomaton<?, ?> getLastPrintedAutomaton() {
 		return m_LastPrintedAutomaton;
 	}
@@ -814,6 +837,7 @@ public class TestFileInterpreter {
 		}
 		return null;
 	}
+	
 	private <T> Object interpret(IfElseStatement is) throws NoSuchFieldException {
 		List<AtsASTNode> children = is.getOutgoingNodes();
 		
@@ -1164,6 +1188,7 @@ public class TestFileInterpreter {
 	 * @return true if and only if all arguments have the correct type. Otherwise false.
 	 */
 	private boolean allArgumentsHaveCorrectTypeForThisConstructor(Constructor<?> c, List<Object> arguments) {
+		if (arguments == null && c.getParameterTypes().length != 0) return false;
 		int i = 0;
 		int minArgSize = (c.getParameterTypes().length > arguments.size() ? arguments.size() : c.getParameterTypes().length);
 		for (Class<?> type : c.getParameterTypes()) {
@@ -1245,6 +1270,11 @@ public class TestFileInterpreter {
 	}
 	
 	
+	/**
+	 * Checks if the given class object implements the IOperation interface.
+	 * @param c the class object to check
+	 * @return true if and only if the class object c implements the IOperation interface. Otherwise false.
+	 */
 	private static boolean classImplementsIOperationInterface(Class<?> c) {
 		Class<?>[] implementedInterfaces = c.getInterfaces();
 		for (Class<?> interFace : implementedInterfaces) {

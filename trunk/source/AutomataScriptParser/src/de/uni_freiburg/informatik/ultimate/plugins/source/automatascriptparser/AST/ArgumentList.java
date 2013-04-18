@@ -20,8 +20,11 @@ public class ArgumentList extends AtsASTNode {
 	private static final long serialVersionUID = -7834789712780583991L;
 	private ArrayList<Object> m_arguments;
 	
-	public ArgumentList(AtsASTNode e) {
+	public ArgumentList() {
 		m_arguments = new ArrayList<Object>();
+	}
+	public ArgumentList(AtsASTNode e) {
+		this();
 		m_arguments.add(e);
 		addOutgoingNode(e);
 	}
