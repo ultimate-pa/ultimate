@@ -12,6 +12,7 @@ import org.eclipse.core.runtime.preferences.IEclipsePreferences;
 import de.uni_freiburg.informatik.ultimate.blockencoding.model.BlockEncodingAnnotation;
 import de.uni_freiburg.informatik.ultimate.blockencoding.model.MinimizedNode;
 import de.uni_freiburg.informatik.ultimate.blockencoding.rating.RatingFactory;
+import de.uni_freiburg.informatik.ultimate.blockencoding.rating.util.EncodingStatistics;
 import de.uni_freiburg.informatik.ultimate.blockencoding.test.visitor.TestMinimizationVisitor;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.blockendcoding.Activator;
@@ -63,6 +64,8 @@ public class BlockEncoder {
 	 */
 	public RootNode startMinimization(RootNode root) {
 		s_Logger.info("Start BlockEncoding on RCFG");
+		// initialize the statistics
+		EncodingStatistics.init();
 		// We need to know, which rating strategy should be chosen
 		IEclipsePreferences prefs = ConfigurationScope.INSTANCE
 				.getNode(Activator.s_PLUGIN_ID);
@@ -143,6 +146,12 @@ public class BlockEncoder {
 				}
 			} while (!methodNodes.isEmpty());
 		}
+		// print collected statistics
+		s_Logger.info("---- Collected Statistics ----");
+		s_Logger.info("Amount of basic edges: "
+				+ EncodingStatistics.countOfBasicEdges);
+		s_Logger.info("Amount of created disjunctions: "
+				+ EncodingStatistics.countOfDisjunctions);
 		return root;
 	}
 

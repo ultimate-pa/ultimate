@@ -45,6 +45,8 @@ public class DisjunctiveStatementsRating implements IRating {
 	 * @param edge
 	 */
 	DisjunctiveStatementsRating(IMinimizedEdge edge) {
+		this.underStmtBound = Integer.MIN_VALUE;
+		this.upperStmtBound = Integer.MAX_VALUE;
 		// For Basic-Edges we first initialize our map
 		if (edge.isBasicEdge()) {
 			value = new RatingValueContainer<Map<DisjunctionEdge, Integer>>(
@@ -120,6 +122,13 @@ public class DisjunctiveStatementsRating implements IRating {
 					"Comparison of different Ratings is forbidden!");
 		}
 		DisjunctiveStatementsRating otherRating = (DisjunctiveStatementsRating) other;
+		// first we have to set under and upper boundary for contained statements
+		if (otherRating.getUnderStmtBound() != Integer.MIN_VALUE) {
+			this.underStmtBound = otherRating.getUnderStmtBound();
+		}
+		if (otherRating.getUpperStmtBound() != Integer.MAX_VALUE) {
+			this.upperStmtBound = otherRating.getUpperStmtBound();
+		}
 		// to compare we count the disjunctions
 		int thisDisjunctions = value.getValue().size();
 		int otherDisjunctions = otherRating.getRatingValueContainer()

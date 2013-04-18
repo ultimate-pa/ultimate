@@ -3,6 +3,7 @@ package de.uni_freiburg.informatik.ultimate.blockencoding.model;
 import de.uni_freiburg.informatik.ultimate.blockencoding.model.interfaces.IMinimizedEdge;
 import de.uni_freiburg.informatik.ultimate.blockencoding.rating.RatingFactory;
 import de.uni_freiburg.informatik.ultimate.blockencoding.rating.interfaces.IRating;
+import de.uni_freiburg.informatik.ultimate.blockencoding.rating.util.EncodingStatistics;
 
 /**
  * This edge represents a disjunction of the formulas of two edges. This is here
@@ -33,6 +34,7 @@ public class DisjunctionEdge extends AbstractCompositeEdge {
 		super(left, right);
 		this.payload.setName(leftEdge + " V " + rightEdge);
 		this.rating = RatingFactory.getInstance().createRating(this);
+		EncodingStatistics.incCountOfDisjunctions();
 	}
 	
 	/**

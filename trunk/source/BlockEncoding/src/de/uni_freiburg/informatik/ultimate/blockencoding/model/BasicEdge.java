@@ -9,6 +9,7 @@ import de.uni_freiburg.informatik.ultimate.blockencoding.model.interfaces.IBasic
 import de.uni_freiburg.informatik.ultimate.blockencoding.model.interfaces.IMinimizedEdge;
 import de.uni_freiburg.informatik.ultimate.blockencoding.rating.RatingFactory;
 import de.uni_freiburg.informatik.ultimate.blockencoding.rating.interfaces.IRating;
+import de.uni_freiburg.informatik.ultimate.blockencoding.rating.util.EncodingStatistics;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.model.structure.ModifiableMultigraphEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CfgBuilder.GotoEdge;
@@ -50,6 +51,7 @@ public class BasicEdge extends
 		super(source, target);
 		this.originalEdge = originalEdge;
 		this.rating = RatingFactory.getInstance().createRating(this);
+		EncodingStatistics.incCountOfBasicEdges();
 	}
 
 	@Override
