@@ -274,7 +274,7 @@ non terminal TransitionList return_transitions_opt, return_transitions, transiti
 non terminal IdentifierList transition;
 non terminal TransitionList net_transitions, net_transition_list_opt, net_transition_list; 
 non terminal PetriNetTransition  net_transition;
-non terminal PetriNetMarking marking;
+non terminal IdentifierList marking;
 non terminal PetriNetMarkingList initial_markings;
 
 
@@ -1090,7 +1090,7 @@ transition_list ::= transition:idList
 
 transition ::= LPAREN:l identifier_list_opt:idList RPAREN:r
                {: idList.setLocation(getLocation(l$, r$));
-				  RESULT = idList; :} ;                 
+                 RESULT = idList; :} ;                 
 
 
 petrinetJulian_definition ::= variable_identifier:id EQ LPAREN
@@ -1127,9 +1127,9 @@ net_transitions ::= NET_TRANSITIONS EQ LBRACE net_transition_list_opt:net_trans 
 net_transition_list_opt ::= net_transition_list:trans {: RESULT = trans; :}  | {: RESULT = new TransitionList(); :} ;
 
 net_transition_list ::= net_transition:net_trans 
-						{: TransitionList tList = new TransitionList();
-						   tList.addNetTransition(net_trans);
-							RESULT = tList; :} 
+			{: TransitionList tList = new TransitionList();
+                          tList.addNetTransition(net_trans);
+                          RESULT = tList; :} 
                       | net_transition_list:tList net_transition:net_trans
                         {: tList.addNetTransition(net_trans);
                         	RESULT = tList; :} 
@@ -1138,21 +1138,15 @@ net_transition_list ::= net_transition:net_trans
 
 net_transition ::= LPAREN:l marking:m1 IDENTIFIER:id marking:m2 RPAREN:r
                    {: PetriNetTransition net_trans = new PetriNetTransition(m1, id, m2);
-					  net_trans.setLocation(getLocation(l$, r$));
-					  RESULT = net_trans;
+                     net_trans.setLocation(getLocation(l$, r$));
+                     RESULT = net_trans;
                       :} ; 
 
 initial_markings ::= INITIAL_MARKINGS EQ marking:m {:RESULT = new PetriNetMarkingList(m); :}  ;
 
 marking ::= LBRACE:l identifier_list:idList RBRACE:r
-            {: String place = idList.getIdentifier(0);
-              String token = null;
-              if (idList.isPair()) {
-                token = idList.getIdentifier(1);
-              }
-              PetriNetMarking pm = new PetriNetMarking(place, token);
-              pm.setLocation(getLocation(l$, r$)); 
-              RESULT = pm; :} ;
+            {: idList.setLocation(getLocation(l$, r$));
+              RESULT = idList; :} ;
 
 accepting_places ::= ACCEPTING_PLACES EQ LBRACE:l identifier_list:idList RBRACE:r 
 {: idList.setLocation(getLocation(l$, r$)); 

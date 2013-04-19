@@ -3,7 +3,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AtsASTNode;
@@ -23,24 +22,24 @@ public class PetriNetTransition extends AtsASTNode {
 	private String m_symbol;
 
 	
-	private PetriNetMarking m_previousMarking;
-	private PetriNetMarking m_nextMarking;
+	private IdentifierList m_predeccesors;
+	private IdentifierList m_successors;
 	
 
-	public PetriNetTransition(PetriNetMarking from, String symbol, PetriNetMarking to) {
-		m_previousMarking = from;
+	public PetriNetTransition(IdentifierList from, String symbol, IdentifierList to) {
+		m_predeccesors = from;
 		m_symbol = symbol;
-		m_nextMarking = to;
+		m_successors = to;
 	}
 	
 
-	public PetriNetMarking getPreviousMarking() {
-		return m_previousMarking;
+	public IdentifierList getPreviousMarking() {
+		return m_predeccesors;
 	}
 
 
-	public PetriNetMarking getNextMarking() {
-		return m_nextMarking;
+	public IdentifierList getNextMarking() {
+		return m_successors;
 	}
 
 
@@ -53,14 +52,7 @@ public class PetriNetTransition extends AtsASTNode {
 	 * @return
 	 */
 	public List<String> getPreds() {
-		List<String> result = new ArrayList<String>();
-		if (m_previousMarking.getPlace() != null) {
-			result.add(m_previousMarking.getPlace());
-		}
-		if (m_previousMarking.getToken() != null) {
-			result.add(m_previousMarking.getToken());
-		}
-		return result;
+		return m_predeccesors.getIdentifierList();
 	}
 	
 	/**
@@ -68,14 +60,25 @@ public class PetriNetTransition extends AtsASTNode {
 	 * @return
 	 */
 	public List<String> getSuccs() {
-		List<String> result = new ArrayList<String>();
-		if (m_nextMarking.getPlace() != null) {
-			result.add(m_nextMarking.getPlace());
+		return m_successors.getIdentifierList();
+	}
+
+
+	@Override
+	public String toString() {
+		StringBuilder builder = new StringBuilder();
+		builder.append("{");
+		for (String pred : m_predeccesors.getIdentifierList()) {
+			builder.append(pred + " ");
 		}
-		if (m_nextMarking.getToken() != null) {
-			result.add(m_nextMarking.getToken());
+		builder.deleteCharAt(builder.length() - 1);
+		builder.append("}" + m_symbol + "{");
+		for (String succ : m_successors.getIdentifierList()) {
+			builder.append(succ + " ");
 		}
-		return result;
+		builder.deleteCharAt(builder.length() - 1);
+		builder.append("}");
+		return builder.toString();
 	}
 
 

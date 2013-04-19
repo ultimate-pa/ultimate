@@ -147,6 +147,7 @@ public class AutomataDefinitionInterpreter {
 				if (!name2places.containsKey(pred)) {
 					throw new IllegalArgumentException("undefined place:" + pred);
 				} else {
+					Place<String, String> predPlace = name2places.get(pred);
 					preds.add(name2places.get(pred));
 				}
 			}
@@ -154,7 +155,8 @@ public class AutomataDefinitionInterpreter {
 				if (!name2places.containsKey(succ)) {
 					throw new IllegalArgumentException("undefined place:" + succ);
 				} else {
-					preds.add(name2places.get(succ));
+					Place<String, String> succPlace = name2places.get(succ);
+					succs.add(name2places.get(succ));
 				}
 			}
 			net.addTransition(ptrans.getSymbol(), preds, succs);
