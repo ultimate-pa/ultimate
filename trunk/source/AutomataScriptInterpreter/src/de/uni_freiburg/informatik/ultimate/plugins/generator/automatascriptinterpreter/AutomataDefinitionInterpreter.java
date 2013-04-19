@@ -137,17 +137,15 @@ public class AutomataDefinitionInterpreter {
 			name2places.put(p, place);
 		}
 
-		Collection<Place<String,String>> preds = new ArrayList<Place<String,String>>();
-		Collection<Place<String,String>> succs = new ArrayList<Place<String,String>>();
+
 		// Add the transitions
 		for (PetriNetTransition ptrans : pna.getTransitions()) {
-			preds.clear();
-			succs.clear();
+			Collection<Place<String,String>> preds = new ArrayList<Place<String,String>>();
+			Collection<Place<String,String>> succs = new ArrayList<Place<String,String>>();
 			for (String pred : ptrans.getPreds()) {
 				if (!name2places.containsKey(pred)) {
 					throw new IllegalArgumentException("undefined place:" + pred);
 				} else {
-					Place<String, String> predPlace = name2places.get(pred);
 					preds.add(name2places.get(pred));
 				}
 			}
@@ -155,7 +153,6 @@ public class AutomataDefinitionInterpreter {
 				if (!name2places.containsKey(succ)) {
 					throw new IllegalArgumentException("undefined place:" + succ);
 				} else {
-					Place<String, String> succPlace = name2places.get(succ);
 					succs.add(name2places.get(succ));
 				}
 			}

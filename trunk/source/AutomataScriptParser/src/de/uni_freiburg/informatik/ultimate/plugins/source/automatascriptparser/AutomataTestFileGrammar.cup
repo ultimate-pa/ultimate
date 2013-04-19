@@ -1002,7 +1002,6 @@ nwa_definition ::=      variable_identifier:id EQ
                           nwa.setCallTransitions(call_trans);
                           nwa.setReturnTransitions(ret_trans);
                           nwa.setLocation(getLocation(l$, r$));
-                          // TODO: Error handling, e.g. if alphabet is null, or states are null, ..etc.
                           m_varDeclarations.put(id, NestedwordAutomaton.class);
                           RESULT = nwa; :} ;
 
@@ -1093,18 +1092,19 @@ transition ::= LPAREN:l identifier_list_opt:idList RPAREN:r
                  RESULT = idList; :} ;                 
 
 
-petrinetJulian_definition ::= variable_identifier:id EQ LPAREN
+petrinetJulian_definition ::= variable_identifier:id EQ LPAREN:l
                               alphabet_opt:alpha COMMA
                               places:p COMMA
                               net_transitions:net_trans COMMA
                               initial_markings:init_mark COMMA
-                              accepting_places:acc_places RPAREN
+                              accepting_places:acc_places RPAREN:r
                               {: PetriNetAutomaton petri = new PetriNetAutomaton(id);
                                  petri.setAlphabet(alpha.getIdentifierList());
                                  petri.setPlaces(p.getIdentifierList());
                                  petri.setTransitions(net_trans.getNetTransitions());
                                  petri.setInitialMarkings(init_mark);
                                  petri.setAcceptingPlaces(acc_places.getIdentifierList());
+                                 petri.setLocation(getLocation(l$, r$));
                                  m_varDeclarations.put(id, PetriNetJulian.class);
                             	 RESULT = petri; :}
                               ;
