@@ -341,7 +341,7 @@ public class TransFormula implements Serializable {
 	
 	
 	public static TermVariable getFreshTermVariable(Boogie2SMT boogie2smt, String id, String suffix, Sort sort, int serialNumber, int minor) {
-		String name = id + "_" + suffix + "_" + serialNumber + "_" + serialNumber;
+		String name = id + "_" + suffix + "_" + serialNumber + "_" + minor;
 		TermVariable newVar = boogie2smt.getScript().variable(name, sort);
 		return newVar;
 	}
