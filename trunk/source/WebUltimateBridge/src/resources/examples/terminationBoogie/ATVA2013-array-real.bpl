@@ -1,5 +1,5 @@
 /*
- * Lasso program depicted in Figure 7 of our CAV2013 submission.
+ * Lasso program depicted in Figure 7 of our ATVA2013 submission.
  * 
  * Has linear Ranking function f(offset, i, a_i, a.length)=a.length-i
  * with linear supporting invariant offset>=1.

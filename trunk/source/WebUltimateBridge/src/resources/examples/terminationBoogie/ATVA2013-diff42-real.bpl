@@ -1,5 +1,5 @@
 /*
- * Example depicted in Figure 2 of our CAV2013 submission.
+ * Example depicted in Figure 2 of our ATVA2013 submission.
  * 
  * Has linear Ranking function f(x,y)=x 
  * with non-decreasing linear supporting invariant x-y>=1
