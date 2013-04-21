@@ -93,6 +93,8 @@ public class Example {
 		addAllFilesInExamplesSubfolder(list, "terminationBoogie/", terminatonBoogie);
 		Tasks.TaskNames[] verifyC =  { Tasks.TaskNames.VerifyC };
 		addAllFilesInExamplesSubfolder(list, "verifyC/", verifyC);
+		Tasks.TaskNames[] automataScript =  { Tasks.TaskNames.AUTOMATA_SCRIPT };
+		addAllFilesInExamplesSubfolder(list, "AUTOMATA_SCRIPT/", automataScript);
 		// TODO : add more/new examples here
 		for (Example e : list) {
 			try {
