@@ -189,7 +189,7 @@ terminal Object NESTED_WORD, NESTED_LASSO_WORD;
 terminal java.lang.Integer INTEGER_LITERAL;
 terminal java.lang.Boolean BOOLEAN_LITERAL;
 terminal java.lang.String STRING_LITERAL;
-terminal java.lang.String IDENTIFIER; 
+terminal java.lang.String SIMPLE_IDENTIFIER; 
 
 
  /* -------------------- Specification of non-terminal symbols -----------*/
@@ -197,6 +197,7 @@ terminal java.lang.String IDENTIFIER;
 non terminal AtsASTNode automata_test_file;
 // 2. Lexical Structure
 non terminal AtsASTNode literal;
+non terminal String identifier;
 // 3. Types
 non terminal Class<?> type;
 // 5. Variable Declarations
@@ -293,7 +294,7 @@ literal ::=	INTEGER_LITERAL:i
                 {: ConstantExpression c = new ConstantExpression(i);
                    c.setLocation(getLocation(i$, i$));
                    RESULT = c;:}
-	|	BOOLEAN_LITERAL:b
+    	|	BOOLEAN_LITERAL:b
                 {: ConstantExpression c = new ConstantExpression(b);
                    c.setLocation(getLocation(b$, b$));
                    RESULT = c;:}
@@ -303,7 +304,11 @@ literal ::=	INTEGER_LITERAL:i
                    RESULT = c; :}
         |       word_literal:w
                 {: RESULT = w; :}
-	;
+	   ;
+	   
+	   
+identifier ::= SIMPLE_IDENTIFIER:i {: RESULT = i; :}
+            |   STRING_LITERAL:s {: RESULT = s; :}; 
 
 word_literal ::= LBRACK:l nested_word:nw RBRACK:r /* Parse a nested word */
                  {: nw.setLocation(getLocation(l$, r$));
@@ -340,18 +345,12 @@ nested_word_symbols ::= nested_word_symbol:sym
 						  RESULT = nsw; :}
                       ;
 
-nested_word_symbol ::= IDENTIFIER:i        /* This is an internal symbol */ 
+nested_word_symbol ::= identifier:i        /* This is an internal symbol */ 
                        {: RESULT = new InternalSymbol(i); :}
-        |              STRING_LITERAL:s 
-                       {: RESULT = new InternalSymbol((String) s); :}
-        |              IDENTIFIER:i LT  /* This is a call symbol */
+        |              identifier:i LT  /* This is a call symbol */
                        {: RESULT = new CallSymbol(i); :}
-        |              STRING:s LT  /* This is a call symbol */
-                       {: RESULT = new CallSymbol((String) s); :}
-        |              GT IDENTIFIER:i    /* This is a return symbol */
+        |              GT identifier:i    /* This is a return symbol */
                        {: RESULT = new ReturnSymbol(i); :}
-        |              GT STRING:s    /* This is a return symbol */
-                       {: RESULT = new ReturnSymbol((String) s); :}
         ;
           
 // 3. Types
@@ -421,7 +420,7 @@ variable_declarator ::=
                    RESULT = var;
 	               } :}
 	         ;
-variable_identifier ::= IDENTIFIER:v {: RESULT = v; :} ;
+variable_identifier ::= SIMPLE_IDENTIFIER:v {: RESULT = v; :} ;
 
 // 6. Blocks and Statements
 test_statement_block ::= test_statements_opt:stmts
@@ -1018,20 +1017,14 @@ call_alphabet ::=  CALL_ALPHABET EQ LBRACE:l identifier_list_opt:idList  RBRACE:
 
 identifier_list_opt ::= identifier_list:idList {:RESULT = idList; :} | {:RESULT = new IdentifierList(); :};
 
-identifier_list ::= IDENTIFIER:id
+identifier_list ::= identifier:id
                     {: IdentifierList idList = new IdentifierList();
                       idList.addId(id);
                       RESULT = idList; :} 
-                    | STRING_LITERAL:s
-                    {: IdentifierList idList = new IdentifierList();
-                      idList.addId((String) s);
-                      RESULT = idList; :} 
-                    | identifier_list:idList IDENTIFIER:id
+                    | identifier_list:idList identifier:id
                       {:idList.addId(id);
-                    	RESULT = idList; :}
-                    | identifier_list:idList STRING_LITERAL:s
-                      {:idList.addId((String) s);
-                        RESULT = idList; :} ;
+                    	RESULT = idList; :};
+
 alphabet_opt ::= call_alphabet:a {:RESULT = a; :} | petrinet_alphabet:a {:RESULT = a; :} | {:RESULT = null; :} ;
 
 internal_alphabet_opt ::= internal_alphabet:intern {:RESULT = intern; :} | {: RESULT = new IdentifierList(); :};
@@ -1149,7 +1142,7 @@ net_transition_list ::= net_transition:net_trans
                       ;
 
 
-net_transition ::= LPAREN:l marking:m1 IDENTIFIER:id marking:m2 RPAREN:r
+net_transition ::= LPAREN:l marking:m1 identifier:id marking:m2 RPAREN:r
                    {: PetriNetTransition net_trans = new PetriNetTransition(m1, id, m2);
                      net_trans.setLocation(getLocation(l$, r$));
                      RESULT = net_trans;

@@ -61,7 +61,7 @@ TraditionalComment = "/*" [^*] ~"*/" | "/*" "*"+ "/"
 EndOfLineComment = "//" {InputCharacter}* {LineTerminator}?
 
 /* identifiers */
-Identifier = [a-zA-Z_][a-zA-Z0-9]*
+SimpleIdentifier = [a-zA-Z_][a-zA-Z0-9]*
 
 /* integer literals */
 IntegerLiteral = 0 | [1-9][0-9]*
@@ -167,7 +167,7 @@ StringCharacter = [^\r\n\"\\]
   {WhiteSpace}                   { /* ignore */ }
 
   /* identifiers */ 
-  {Identifier}                   { m_LastToken = m_CurToken; m_CurToken = yytext(); return symbol(sym.IDENTIFIER, yytext()); }  
+  {SimpleIdentifier}                   { m_LastToken = m_CurToken; m_CurToken = yytext(); return symbol(sym.SIMPLE_IDENTIFIER, yytext()); }  
 
 }
 <STRING> {
