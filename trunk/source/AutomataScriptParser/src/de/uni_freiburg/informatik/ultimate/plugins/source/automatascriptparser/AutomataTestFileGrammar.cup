@@ -342,10 +342,16 @@ nested_word_symbols ::= nested_word_symbol:sym
 
 nested_word_symbol ::= IDENTIFIER:i        /* This is an internal symbol */ 
                        {: RESULT = new InternalSymbol(i); :}
+        |              STRING_LITERAL:s 
+                       {: RESULT = new InternalSymbol((String) s); :}
         |              IDENTIFIER:i LT  /* This is a call symbol */
                        {: RESULT = new CallSymbol(i); :}
+        |              STRING:s LT  /* This is a call symbol */
+                       {: RESULT = new CallSymbol((String) s); :}
         |              GT IDENTIFIER:i    /* This is a return symbol */
                        {: RESULT = new ReturnSymbol(i); :}
+        |              GT STRING:s    /* This is a return symbol */
+                       {: RESULT = new ReturnSymbol((String) s); :}
         ;
           
 // 3. Types
@@ -1016,9 +1022,16 @@ identifier_list ::= IDENTIFIER:id
                     {: IdentifierList idList = new IdentifierList();
                       idList.addId(id);
                       RESULT = idList; :} 
+                    | STRING_LITERAL:s
+                    {: IdentifierList idList = new IdentifierList();
+                      idList.addId((String) s);
+                      RESULT = idList; :} 
                     | identifier_list:idList IDENTIFIER:id
                       {:idList.addId(id);
-                    	RESULT = idList; :} ;
+                    	RESULT = idList; :}
+                    | identifier_list:idList STRING_LITERAL:s
+                      {:idList.addId((String) s);
+                        RESULT = idList; :} ;
 alphabet_opt ::= call_alphabet:a {:RESULT = a; :} | petrinet_alphabet:a {:RESULT = a; :} | {:RESULT = null; :} ;
 
 internal_alphabet_opt ::= internal_alphabet:intern {:RESULT = intern; :} | {: RESULT = new IdentifierList(); :};

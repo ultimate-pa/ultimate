@@ -69,11 +69,7 @@ IntegerLiteral = 0 | [1-9][0-9]*
 /* string and character literals */
 StringCharacter = [^\r\n\"\\]
 
-/* Identifier Character */
-/* Which chars may occur in ' ' */
-IdentiferCharacter = [^\r\n\'\\]
-
-%state STRING, IDENTIFIER_IN_QUOTES
+%state STRING
 %%
 
 /* ------------------------Lexical Rules Section---------------------- */
@@ -160,8 +156,6 @@ IdentiferCharacter = [^\r\n\'\\]
   /* string literal */
   \"                             { yybegin(STRING); stringBuffer.setLength(0); }
 
-  /* Identifier in Quotes */
-  \'                             { yybegin(IDENTIFIER_IN_QUOTES); idBuffer.setLength(0); }
   /* numeric literals */
   {IntegerLiteral}               { m_LastToken = m_CurToken; m_CurToken = yytext(); return symbol(sym.INTEGER_LITERAL, new Integer(yytext())); }
 
@@ -192,21 +186,6 @@ IdentiferCharacter = [^\r\n\'\\]
   "\\\\"                         { stringBuffer.append( '\\' ); }
   
   {LineTerminator}               { throw new RuntimeException("Unterminated string at end of line"); }
-}
-
-<IDENTIFIER_IN_QUOTES> {
-  "\'"                             { yybegin(YYINITIAL); m_LastToken = m_CurToken; m_CurToken = idBuffer.toString(); return symbol(sym.IDENTIFIER, idBuffer.toString()); }
-  {IdentiferCharacter}+            { idBuffer.append(yytext()); }
-  /* escape sequences */
-  "\\b"                          { idBuffer.append( '\b' ); }
-  "\\t"                          { idBuffer.append( '\t' ); }
-  "\\n"                          { idBuffer.append( '\n' ); }
-  "\\f"                          { idBuffer.append( '\f' ); }
-  "\\r"                          { idBuffer.append( '\r' ); }
-  "\\\""                         { idBuffer.append( '\"' ); }
-  "\\'"                          { idBuffer.append( '\'' ); }
-  "\\\\"                         { idBuffer.append( '\\' ); }
-  {LineTerminator}               { throw new RuntimeException("Unterminated identifier at end of line"); }
 }
 
 /* error fallback */
