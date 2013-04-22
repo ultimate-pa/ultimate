@@ -33,20 +33,35 @@ public final class VisualizationEdge extends
 
 	@Override
 	public String toString() {
-		return mBacking.toString();
+		if(mBacking == null){
+			return super.toString();
+		} else {
+			return mBacking.toString();
+		}
 	}
 
 	@Override
 	public boolean equals(Object obj) {
 		if (obj instanceof VisualizationEdge) {
-			return mBacking.equals(((VisualizationEdge) obj).mBacking);
+			VisualizationEdge other = (VisualizationEdge) obj;
+			if(mBacking == null && other.mBacking == null){
+				return super.equals(obj);
+			} else if (mBacking == null){
+				return false;
+			} else {
+				return mBacking.equals(other.mBacking);	
+			}	
 		}
 		return super.equals(obj);
 	}
 
 	@Override
 	public int hashCode() {
-		return mBacking.hashCode();
+		if(mBacking == null){
+			return super.hashCode();
+		} else {
+			return mBacking.hashCode();
+		}
 	}
 
 }

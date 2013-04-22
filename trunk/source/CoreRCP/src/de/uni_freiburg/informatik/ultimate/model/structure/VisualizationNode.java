@@ -97,6 +97,19 @@ public final class VisualizationNode implements
 	public <T extends ILabeledEdgesMultigraph<T, L>, L> VisualizationNode(
 			final ILabeledEdgesMultigraph<T, L> node) {
 		mBacking = new WrapperNode(node) {
+			
+			private IPayload extractPayload(L label){
+				IPayload pay = null;
+				if(label instanceof IPayload){
+					pay = (IPayload)label;
+				} else if (label instanceof IElement){
+					IElement ele = (IElement) label;
+					if(ele.hasPayload()){
+						pay = ele.getPayload();
+					}
+				}
+				return pay;
+			}
 
 			@SuppressWarnings("unchecked")
 			@Override
@@ -104,12 +117,13 @@ public final class VisualizationNode implements
 				for (ILabeledEdgesMultigraph<T, L> pred : node
 						.getIncomingNodes()) {
 					VisualizationEdge ve;
-					L possiblePayload = node.getIncomingEdgeLabel((T) pred);
-					if (possiblePayload instanceof IPayload) {
+					IPayload pay = extractPayload(node.getIncomingEdgeLabel((T) pred));
+						
+					if (pay != null) {
 						ve = new VisualizationEdge(
 								pred.getVisualizationGraph(),
 								VisualizationNode.this,
-								(IPayload) possiblePayload, null);
+								pay, null);
 					} else {
 						ve = new VisualizationEdge(
 								pred.getVisualizationGraph(),
@@ -126,18 +140,19 @@ public final class VisualizationNode implements
 				for (ILabeledEdgesMultigraph<T, L> succ : node
 						.getOutgoingNodes()) {
 					VisualizationEdge ve;
-					L possiblePayload = node.getOutgoingEdgeLabel((T) succ);
-					if (possiblePayload instanceof IPayload) {
+					IPayload pay = extractPayload(node.getOutgoingEdgeLabel((T) succ));
+
+					if (pay != null ) {
 						ve = new VisualizationEdge(VisualizationNode.this,
 								succ.getVisualizationGraph(),
-								(IPayload) possiblePayload, null);
+								pay, null);
 					} else {
 						ve = new VisualizationEdge(
 
 						VisualizationNode.this, succ.getVisualizationGraph(),
 								null);
 					}
-					mIncoming.add(ve);
+						mOutgoing.add(ve);
 				}
 
 			}
@@ -155,18 +170,13 @@ public final class VisualizationNode implements
 						@SuppressWarnings("unchecked")
 						@Override
 						public boolean hasPayload() {
-							return (node.getOutgoingEdgeLabel((T) child) instanceof IPayload);
+							return extractPayload(node.getOutgoingEdgeLabel((T) child)) !=null;
 						}
 
 						@SuppressWarnings("unchecked")
 						@Override
 						public IPayload getPayload() {
-							L possiblePayload = node
-									.getOutgoingEdgeLabel((T) child);
-							if (possiblePayload instanceof IPayload) {
-								return (IPayload) possiblePayload;
-							}
-							return null;
+							return extractPayload(node.getOutgoingEdgeLabel((T) child));
 						}
 
 						@Override
