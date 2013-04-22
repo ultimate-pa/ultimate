@@ -96,6 +96,7 @@ public final class VisualizationNode implements
 
 	public <T extends ILabeledEdgesMultigraph<T, L>, L> VisualizationNode(
 			final ILabeledEdgesMultigraph<T, L> node) {
+		// TODO: We need to handle the case where L is an instance of an collection (i.e. multigraph) 
 		mBacking = new WrapperNode(node) {
 			
 			private IPayload extractPayload(L label){
