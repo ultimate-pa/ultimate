@@ -76,6 +76,40 @@ extends BaseDirectedGraph<T> implements IModifiableDirectedGraph<T> {
 	protected ModifiableDirectedGraph(T parent, IPayload payload) {
 		super(parent, payload);
 	}
+	
+
+	@Override
+	public boolean connectIncoming(T predecessor) {
+		boolean thisIncomingChanged = addIncoming(predecessor);
+		boolean predecessorOutgoingChanged = predecessor.addOutgoing((T) this);
+		assert (thisIncomingChanged == predecessorOutgoingChanged);
+		return thisIncomingChanged;
+	}
+
+	@Override
+	public boolean disconnectIncoming(T predecessor) {
+		boolean thisIncomingChanged = removeIncoming(predecessor);
+		boolean predecessorOutgoingChanged = predecessor.removeOutgoing((T) this);
+		assert (thisIncomingChanged == predecessorOutgoingChanged);
+		return thisIncomingChanged;
+	}
+
+	@Override
+	public boolean connectOutgoing(T successor) {
+		boolean thisOutgoingChanged = addOutgoing(successor);
+		boolean predecessorIncomingChanged = successor.addIncoming((T) this);
+		assert (thisOutgoingChanged == predecessorIncomingChanged);
+		return thisOutgoingChanged;
+	}
+
+	@Override
+	public boolean disconnectOutgoing(T successor) {
+		boolean thisOutgoingChanged = removeOutgoing(successor);
+		boolean predecessorIncomingChanged = successor.removeIncoming((T) this);
+		assert (thisOutgoingChanged == predecessorIncomingChanged);
+		return thisOutgoingChanged;
+	}
+	
 
 	/* ---------- IModifiableOutgoing<IMultigraphEdge> implementation ---------- */
 
