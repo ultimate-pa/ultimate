@@ -167,7 +167,7 @@ public class TraceChecker {
 	
 	
 	
-	/**
+	/**b
 	 * Like three-argument-checkTrace-Method above but for traces which contain
 	 * pending returns. The pendingContext maps the positions of pending returns
 	 * to predicates which define possible variable valuations in the context to

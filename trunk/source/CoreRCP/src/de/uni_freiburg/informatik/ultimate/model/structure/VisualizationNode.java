@@ -153,7 +153,7 @@ public final class VisualizationNode implements
 						VisualizationNode.this, succ.getVisualizationGraph(),
 								null);
 					}
-						mOutgoing.add(ve);
+					mOutgoing.add(ve);
 				}
 
 			}
