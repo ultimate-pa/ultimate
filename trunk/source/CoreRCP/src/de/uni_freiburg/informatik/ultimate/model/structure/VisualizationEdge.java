@@ -49,18 +49,20 @@ public final class VisualizationEdge extends
 			} else if (mBacking == null){
 				return false;
 			} else {
-				return mBacking.equals(other.mBacking);	
+				return mBacking.equals(other.mBacking) && super.equals(obj);	
 			}	
 		}
 		return super.equals(obj);
 	}
 
+	
+	
 	@Override
 	public int hashCode() {
 		if(mBacking == null){
 			return super.hashCode();
 		} else {
-			return mBacking.hashCode();
+			return super.hashCode() * 31 + mBacking.hashCode();
 		}
 	}
 
