@@ -62,7 +62,11 @@ public class TransFormula implements Serializable {
 	private static final long serialVersionUID = 7058102586141801399L;
 	
 	static Logger s_Logger = 
-			UltimateServices.getInstance().getLogger(Activator.PLUGIN_ID); 
+			UltimateServices.getInstance().getLogger(Activator.PLUGIN_ID);
+
+	private static int s_FreshNumber = 10000;
+
+	private static int s_FreshVarNumber; 
 	
 	private final Term m_Formula;
 	private final Set<TermVariable> m_Vars;
@@ -340,12 +344,26 @@ public class TransFormula implements Serializable {
 	}
 	
 	
-	public static TermVariable getFreshTermVariable(Boogie2SMT boogie2smt, String id, String suffix, Sort sort, int serialNumber, int minor) {
-		String name = id + "_" + suffix + "_" + serialNumber + "_" + minor;
+	public static TermVariable getFreshAuxVariable(Boogie2SMT boogie2smt, String id, Sort sort) {
+		String name = id + "_" + s_FreshVarNumber++;
 		TermVariable newVar = boogie2smt.getScript().variable(name, sort);
 		return newVar;
 	}
 	
+	public static TermVariable getFreshVariable(Boogie2SMT boogie2smt, BoogieVar var, Sort sort) {
+		String name;
+		if (var.isGlobal()) {
+			if (var.isOldvar()) {
+				name = "old(" + var.getIdentifier() + ")";
+			} else {
+				name = var.getIdentifier();
+			}
+		} else {
+			name = var.getProcedure() + "_" + var.getIdentifier();
+		}
+		name += "_" + s_FreshVarNumber++;
+		return boogie2smt.getScript().variable(name, sort);
+	}
 	
 	/**
 	 * @return the relational composition (concatenation) of transformula1 und
@@ -370,7 +388,7 @@ public class TransFormula implements Serializable {
 					newOutVar = inVars.get(var);
 				} else {
 					Sort sort = outVar.getSort();
-					newOutVar = getFreshTermVariable(boogie2smt, var.getIdentifier(), "out", sort, serialNumber, i); 
+					newOutVar = getFreshVariable(boogie2smt,var, sort); 
 				}
 				replacees.add(outVar);
 				replacers.add(newOutVar);
@@ -392,7 +410,7 @@ public class TransFormula implements Serializable {
 				} else {
 					// case: var is read and written
 					Sort sort = outVar.getSort();
-					TermVariable newInVar = getFreshTermVariable(boogie2smt, var.getIdentifier(), "in", sort, serialNumber, i);
+					TermVariable newInVar = getFreshVariable(boogie2smt,var, sort); 
 					replacees.add(inVar);
 					replacers.add(newInVar);
 					inVars.put(var, newInVar);
@@ -403,7 +421,7 @@ public class TransFormula implements Serializable {
 				}
 			}
 			for (TermVariable auxVar : transFormula[i].getAuxVars()) {
-				TermVariable newAuxVar = getFreshTermVariable(boogie2smt, auxVar.getName(), "aux", auxVar.getSort(), serialNumber, i);
+				TermVariable newAuxVar = getFreshAuxVariable(boogie2smt, auxVar.getName(), auxVar.getSort());
 				replacees.add(auxVar);
 				replacers.add(newAuxVar);
 				auxVars.add(newAuxVar);
@@ -422,7 +440,7 @@ public class TransFormula implements Serializable {
 						newInVar = inVars.get(var);
 					} else {
 						Sort sort = inVar.getSort();
-						newInVar = getFreshTermVariable(boogie2smt, var.getIdentifier(), "in", sort, serialNumber, i);
+						newInVar = getFreshVariable(boogie2smt,var, sort); 
 						inVars.put(var, newInVar);
 					}
 					replacees.add(inVar);
@@ -439,13 +457,13 @@ public class TransFormula implements Serializable {
 		
 		formula = new FormulaUnLet().unlet(formula);
 		formula = (new SimplifyDDA(script, s_Logger)).getSimplifiedTerm(formula);
-		removesuperfluousVariables(inVars, auxVars, formula);
+		removesuperfluousVariables(inVars, outVars, auxVars, formula);
 		
 		NaiveDestructiveEqualityResolution der = 
 								new NaiveDestructiveEqualityResolution(script);
 		formula = der.eliminate(auxVars, formula);
 		formula = (new SimplifyDDA(script, s_Logger)).getSimplifiedTerm(formula);
-		removesuperfluousVariables(inVars, auxVars, formula);
+		removesuperfluousVariables(inVars, outVars, auxVars, formula);
 		
 		LBool isSat = Util.checkSat(script, formula);
 		if (isSat == LBool.UNSAT) {
@@ -470,7 +488,7 @@ public class TransFormula implements Serializable {
 	 
  }
 	
-	private static void removesuperfluousVariables(Map<BoogieVar,TermVariable> inVars, Set<TermVariable> auxVars, Term formula) {
+	private static void removesuperfluousVariables(Map<BoogieVar,TermVariable> inVars, Map<BoogieVar,TermVariable> outVars, Set<TermVariable> auxVars, Term formula) {
 		Set<TermVariable> occuringVars = new HashSet<TermVariable>(
 				Arrays.asList(formula.getFreeVars()));
 		{
@@ -481,6 +499,12 @@ public class TransFormula implements Serializable {
 				}
 			}
 			for (BoogieVar bv : superfluousInVars) {
+				TermVariable inVar = inVars.get(bv);
+				TermVariable outVar = outVars.get(bv);
+				if (inVar == outVar) {
+					assert inVar != null;
+					outVars.remove(bv);
+				}
 				inVars.remove(bv);
 			}
 		}
