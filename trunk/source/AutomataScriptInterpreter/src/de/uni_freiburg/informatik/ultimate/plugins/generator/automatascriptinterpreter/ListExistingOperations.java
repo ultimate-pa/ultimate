@@ -52,7 +52,7 @@ public class ListExistingOperations {
 		StringBuilder result = new StringBuilder();
 		String[] sorted = m_OperationList.toArray(new String[0]);
 		Arrays.sort(sorted);
-		for(String op : m_OperationList) {
+		for(String op : sorted) {
 			result.append(op);
 			result.append(System.getProperty("line.separator"));
 		}
