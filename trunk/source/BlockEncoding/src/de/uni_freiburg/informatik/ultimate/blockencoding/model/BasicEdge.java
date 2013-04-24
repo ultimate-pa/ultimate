@@ -15,6 +15,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.model.structure.ModifiableMultigraphEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CfgBuilder.GotoEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.TransFormula;
 
 /**
@@ -56,7 +57,8 @@ public class BasicEdge extends
 			MinimizedNode target) {
 		super(source, target);
 		this.originalEdge = originalEdge;
-		if (originalEdge.getTransitionFormula() != null) {
+		if (originalEdge.getTransitionFormula() != null
+				&& !(originalEdge instanceof Summary)) {
 			this.usedVariables = new HashSet<BoogieVar>();
 			this.usedVariables.addAll(originalEdge.getTransitionFormula()
 					.getAssignedVars());

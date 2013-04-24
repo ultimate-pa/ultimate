@@ -92,8 +92,8 @@ public class StatisticBasedHeuristic extends ConfigurableHeuristic {
 	 */
 	private String computeUsedVarBoundary() {
 		// Basically we take here the arithmetic mean of min and max
-		int meanValue = EncodingStatistics.minDiffVariablesInOneEdge
-				+ EncodingStatistics.maxDiffVariablesInOneEdge;
+		int meanValue = (EncodingStatistics.minDiffVariablesInOneEdge
+				+ EncodingStatistics.maxDiffVariablesInOneEdge) / 2;
 		return Integer.toString(meanValue);
 	}
 }
