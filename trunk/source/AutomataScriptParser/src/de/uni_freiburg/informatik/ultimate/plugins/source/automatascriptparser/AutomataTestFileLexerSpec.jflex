@@ -61,7 +61,7 @@ TraditionalComment = "/*" [^*] ~"*/" | "/*" "*"+ "/"
 EndOfLineComment = "//" {InputCharacter}* {LineTerminator}?
 
 /* identifiers */
-SimpleIdentifier = [a-zA-Z_][a-zA-Z0-9]*
+SimpleIdentifier = [a-zA-Z_][a-zA-Z_0-9]*
 
 /* integer literals */
 IntegerLiteral = 0 | [1-9][0-9]*
