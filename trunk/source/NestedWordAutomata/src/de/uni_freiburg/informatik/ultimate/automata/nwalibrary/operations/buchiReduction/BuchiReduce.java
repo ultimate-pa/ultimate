@@ -21,7 +21,7 @@ import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
  * @author Oleksii Saukh (saukho@informatik.uni-freiburg.de)
  * @date 10.12.2011
  */
-public class ReduceBuchi<LETTER,STATE> implements IOperation {
+public class BuchiReduce<LETTER,STATE> implements IOperation {
     private static Logger s_Logger = UltimateServices.getInstance().getLogger(
             Activator.PLUGIN_ID);
     /**
@@ -40,10 +40,10 @@ public class ReduceBuchi<LETTER,STATE> implements IOperation {
      *            the automaton to reduce
      * @throws OperationCanceledException 
      */
-    public ReduceBuchi(INestedWordAutomaton<LETTER,STATE> operand)
+    public BuchiReduce(INestedWordAutomaton<LETTER,STATE> operand)
             throws OperationCanceledException {
     	m_Operand = operand;
-        ReduceBuchi.s_Logger.info(startMessage());
+        BuchiReduce.s_Logger.info(startMessage());
         
         // Remove dead ends. 
         // Removal of dead ends is no optimization but a requirement for

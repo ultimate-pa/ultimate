@@ -30,7 +30,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.Inters
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IntersectNodd;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.MinimizeDfa;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.PowersetDeterminizer;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.ReduceBuchi;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.BuchiReduce;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNet2FiniteAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetRun;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.PetriNetJulian;
@@ -586,7 +586,7 @@ public class ResultChecker<LETTER,STATE> {
 		if (m_InvariantCheck_DetComplementBuchi) {
 			s_Logger.debug("Start additional invariant checks.");
 			if (nwa.getCallAlphabet().isEmpty()) {
-				new ReduceBuchi(nwa).getResult();
+				new BuchiReduce(nwa).getResult();
 			}
 //			if (nwa.isDeterministic()) {
 //				INestedWordAutomaton complement = new BuchiComplementDeterministic(nwa).getResult();

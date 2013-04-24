@@ -39,7 +39,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.Powers
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.ReachableStatesCopy;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.SenwaBuilder;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.SuperDifference;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.ReduceBuchi;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.BuchiReduce;
 import de.uni_freiburg.informatik.ultimate.automata.parser.astAnnotations.AutomatonNameExpression;
 import de.uni_freiburg.informatik.ultimate.automata.parser.astAnnotations.NestedLassoWordTestCase;
 import de.uni_freiburg.informatik.ultimate.automata.parser.astAnnotations.NestedWordTestCase;
@@ -742,7 +742,7 @@ public class TestFileExecutor {
 		if (operation.equals("buchiReduce")) {
 			checkOperands(operation, operands, -100);
 			INestedWordAutomaton op0 = (INestedWordAutomaton) operands.get(0);
-			return (new ReduceBuchi(op0)).getResult();
+			return (new BuchiReduce(op0)).getResult();
 		}
 		
 		if (operation.equals("buchiIntersect")){

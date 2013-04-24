@@ -19,7 +19,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.BuchiCom
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.BuchiComplementSVW;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.MinimizeSevpa;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.ReachableStatesCopy;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.ReduceBuchi;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.BuchiReduce;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.automatalibraryrandomizedtests.preferences.PreferenceConstants;
@@ -80,7 +80,7 @@ public class AutomataLibraryRandomizedTestsObserver implements IUnmanagedObserve
 					if (bcre.applicable()) {
 						INestedWordAutomaton<String, String> resultRE = bcre.getResult();
 						s_Logger.info("ResultRE states: " + resultRE.size());
-						resultRE =(new ReduceBuchi<String, String>(resultRE)).getResult();
+						resultRE =(new BuchiReduce<String, String>(resultRE)).getResult();
 						s_Logger.info("ResultRE states after size reduction: " + resultRE.size());
 					} else {
 						s_Logger.info("buchiComplementRE not applicable");
@@ -90,14 +90,14 @@ public class AutomataLibraryRandomizedTestsObserver implements IUnmanagedObserve
 					s_Logger.info("ResultFKV states: " + resultFKV.size());
 					resultFKV =(new ReachableStatesCopy<String, String>(resultFKV, false, false, false, true)).getResult();
 					s_Logger.info("ResultFKV states after remove of non-live states: " + resultFKV.size());
-					resultFKV =(new ReduceBuchi<String, String>(resultFKV)).getResult();
+					resultFKV =(new BuchiReduce<String, String>(resultFKV)).getResult();
 					s_Logger.info("ResultFKV states after size reduction: " + resultFKV.size());
 
 					INestedWordAutomaton<String, String> resultSVW = (new BuchiComplementSVW<String, String>(auto)).getResult();
 					s_Logger.warn("ResultSVW states: " + resultSVW.size());
 					resultSVW =(new ReachableStatesCopy<String, String>(resultSVW, false, false, false, true)).getResult();
 					s_Logger.info("ResultSVW states after remove of non-live states: " + resultSVW.size());
-					resultSVW =(new ReduceBuchi<String, String>(resultSVW)).getResult();
+					resultSVW =(new BuchiReduce<String, String>(resultSVW)).getResult();
 					s_Logger.info("ResultSVW states after size reduction: " + resultSVW.size());
 
 				} else {
