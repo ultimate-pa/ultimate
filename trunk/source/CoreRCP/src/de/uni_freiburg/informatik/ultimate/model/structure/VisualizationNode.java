@@ -2,6 +2,7 @@ package de.uni_freiburg.informatik.ultimate.model.structure;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 
 import org.apache.log4j.Logger;
@@ -44,6 +45,7 @@ public final class VisualizationNode implements
 
 	private final WrapperNode mBacking;
 	private List<VisualizationNode> mOutgoing;
+	
 
 	public VisualizationNode(final IExplicitEdgesMultigraph<?, ?> node) {
 		mBacking = new WrapperNode(node) {
@@ -92,7 +94,10 @@ public final class VisualizationNode implements
 				return (List<IWalkable>) (List) getOutgoingEdges();
 			}
 		};
+
 	}
+	
+
 
 	public <T extends ILabeledEdgesMultigraph<T, L>, L> VisualizationNode(
 			final ILabeledEdgesMultigraph<T, L> node) {
@@ -190,6 +195,8 @@ public final class VisualizationNode implements
 			}
 		};
 	}
+	
+
 
 	public VisualizationNode(final ISimpleAST<?> node) {
 		mBacking = new WrapperNode(node) {
@@ -234,31 +241,43 @@ public final class VisualizationNode implements
 	}
 
 	public VisualizationNode(final IDirectedGraph<?> node) {
-		mBacking = new WrapperNode(node) {
+		this(node, new HashMap<IElement, WrapperNode>());
+	}
+	
+	private VisualizationNode(final IDirectedGraph<?> node,
+			final HashMap<IElement, WrapperNode> backingDirectory) {
+		if (backingDirectory.containsKey(node)) {
+			mBacking = backingDirectory.get(node);
+		} else {
 
-			@SuppressWarnings({ "unchecked", "rawtypes" })
-			@Override
-			protected List<IWalkable> getSuccessors() {
-				return (List<IWalkable>) (List) getOutgoingEdges();
-			}
+			mBacking = new WrapperNode(node) {
 
-			@Override
-			protected void createOutgoing() {
-				for (IDirectedGraph<?> succ : node.getOutgoingNodes()) {
-					mOutgoing.add(new VisualizationEdge(VisualizationNode.this,
-							succ.getVisualizationGraph(), null));
+				@SuppressWarnings({ "unchecked", "rawtypes" })
+				@Override
+				protected List<IWalkable> getSuccessors() {
+					return (List<IWalkable>) (List) getOutgoingEdges();
 				}
-			}
 
-			@Override
-			protected void createIncoming() {
-				for (IDirectedGraph<?> pred : node.getOutgoingNodes()) {
-					mIncoming.add(new VisualizationEdge(pred
-							.getVisualizationGraph(), VisualizationNode.this,
-							null));
+				@Override
+				protected void createOutgoing() {
+					for (IDirectedGraph<?> succ : node.getOutgoingNodes()) {
+						mOutgoing.add(new VisualizationEdge(
+								VisualizationNode.this, new VisualizationNode(
+										succ, backingDirectory), null));
+					}
 				}
-			}
-		};
+
+				@Override
+				protected void createIncoming() {
+					for (IDirectedGraph<?> pred : node.getOutgoingNodes()) {
+						mIncoming.add(new VisualizationEdge(
+								new VisualizationNode(pred, backingDirectory),
+								VisualizationNode.this, null));
+					}
+				}
+			};
+			backingDirectory.put(node, mBacking);
+		}
 	}
 
 	/**
@@ -329,7 +348,7 @@ public final class VisualizationNode implements
 	/* ------------------- WrapperNode ------------------ */
 
 	private abstract class WrapperNode {
-
+		
 		private final IElement mBackingNode;
 
 		protected List<VisualizationEdge> mOutgoing;
@@ -338,7 +357,7 @@ public final class VisualizationNode implements
 		protected WrapperNode(IElement backing) {
 			mBackingNode = backing;
 		}
-
+		
 		protected IPayload getPayload() {
 			return mBackingNode.getPayload();
 		}
