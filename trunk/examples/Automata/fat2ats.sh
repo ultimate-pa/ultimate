@@ -16,6 +16,16 @@ perl -i -pe "s/#finalStates/finalStates/" $1
 perl -i -pe "s/#callTransitions/callTransitions/" $1
 perl -i -pe "s/#internalTransitions/internalTransitions/" $1
 perl -i -pe "s/#returnTransitions/returnTransitions/" $1
+
+perl -i -pe "s/#net/PetriNet/" $1
+perl -i -pe "s/#alphabet/alphabet/" $1
+perl -i -pe "s/#places/places/" $1
+perl -i -pe "s/#transitions/transitions/" $1
+perl -i -pe "s/#initialMarking/initialMarking/" $1
+perl -i -pe "s/#acceptingPlaces/acceptingPlaces/" $1
+
+
+
 perl -i -pe 's/^\)\s*$/\);\n/' $1
 perl -i -pe 's/#Print ([^\r\n]*)/print\($1\);/' $1
 
