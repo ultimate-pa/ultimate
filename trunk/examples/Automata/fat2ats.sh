@@ -17,9 +17,14 @@ perl -i -pe "s/#callTransitions/callTransitions/" $1
 perl -i -pe "s/#internalTransitions/internalTransitions/" $1
 perl -i -pe "s/#returnTransitions/returnTransitions/" $1
 perl -i -pe 's/^\)\s*$/\);\n/' $1
-perl -i -pe 's/#Print ([^\r\n]*)/Print\($1\);/' $1
+perl -i -pe 's/#Print ([^\r\n]*)/print\($1\);/' $1
+
+perl -i -pe 's/#AcceptsBuchi\ ([^\ ]*)\ ([^\r\n]*)/assert\(buchiAccepts\($1,$2\)\);/' $1
+perl -i -pe 's/#NotAcceptsBuchi\ ([^\ ]*)\ ([^\r\n]*)/assert\(!buchiAccepts\($1,$2\)\);/' $1
+perl -i -pe 's/#IsNotEmptyBuchi\ *([^\r\n]*)/assert\(!buchiIsEmpty\($1\)\);/' $1
+perl -i -pe 's/#IsEmptyBuchi\ *([^\r\n]*)/assert\(buchiIsEmpty\($1\)\);/' $1
+
 perl -i -pe 's/#Accepts\ ([^\ ]*)\ ([^\r\n]*)/assert\(accepts\($1,$2\)\);/' $1
 perl -i -pe 's/#NotAccepts\ ([^\ ]*)\ ([^\r\n]*)/assert\(!accepts\($1,$2\)\);/' $1
-
 perl -i -pe 's/#IsNotEmpty\ *([^\r\n]*)/assert\(!isEmpty\($1\)\);/' $1
 perl -i -pe 's/#IsEmpty\ *([^\r\n]*)/assert\(isEmpty\($1\)\);/' $1
