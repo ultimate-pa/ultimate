@@ -246,7 +246,7 @@ public final class VisualizationNode implements
 			protected void createOutgoing() {
 				for (IDirectedGraph<?> succ : node.getOutgoingNodes()) {
 					mOutgoing.add(new VisualizationEdge(VisualizationNode.this,
-							succ.getVisualizationGraph(), succ));
+							succ.getVisualizationGraph(), null));
 				}
 			}
 
@@ -255,7 +255,7 @@ public final class VisualizationNode implements
 				for (IDirectedGraph<?> pred : node.getOutgoingNodes()) {
 					mIncoming.add(new VisualizationEdge(pred
 							.getVisualizationGraph(), VisualizationNode.this,
-							pred));
+							null));
 				}
 			}
 		};

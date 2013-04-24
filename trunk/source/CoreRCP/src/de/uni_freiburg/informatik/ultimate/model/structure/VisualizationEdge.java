@@ -34,7 +34,7 @@ public final class VisualizationEdge extends
 	@Override
 	public String toString() {
 		if(mBacking == null){
-			return super.toString();
+			return "";
 		} else {
 			return mBacking.toString();
 		}
@@ -49,7 +49,7 @@ public final class VisualizationEdge extends
 			} else if (mBacking == null){
 				return false;
 			} else {
-				return mBacking.equals(other.mBacking) && super.equals(obj);	
+				return mBacking.equals(other.mBacking);	
 			}	
 		}
 		return super.equals(obj);
@@ -62,7 +62,7 @@ public final class VisualizationEdge extends
 		if(mBacking == null){
 			return super.hashCode();
 		} else {
-			return super.hashCode() * 31 + mBacking.hashCode();
+			return mBacking.hashCode();
 		}
 	}
 

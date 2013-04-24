@@ -67,8 +67,8 @@ public class Payload implements IPayload {
 	}
 
 	public String getName() {
-		if (m_Name == null || m_Name == ""){
-			this.m_Name = "NOT INITIALIZED";
+		if (m_Name == null){
+			return "";
 		}
 		return this.m_Name;
 	}
