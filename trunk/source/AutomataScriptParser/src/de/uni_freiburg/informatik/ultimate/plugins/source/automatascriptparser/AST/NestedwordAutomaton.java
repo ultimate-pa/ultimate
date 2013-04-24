@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.TransitionList.Pair;
@@ -32,9 +33,9 @@ public class NestedwordAutomaton extends Automaton {
 	private List<String> m_InitialStates;
 	private List<String> m_FinalStates;
 	
-	private Map<Pair<String, String>, String> m_InternalTransitions;
-	private Map<Pair<String, String>, String> m_CallTransitions;
-	private Map<Pair<String, String>, Pair<String, String>> m_ReturnTransitions;
+	private Map<Pair<String, String>, Set<String>> m_InternalTransitions;
+	private Map<Pair<String, String>, Set<String>> m_CallTransitions;
+	private Map<Pair<String, String>, Pair<String, Set<String>>> m_ReturnTransitions;
 	
 	public NestedwordAutomaton(String name) {
 		m_CallAlphabet = new ArrayList<String>();
@@ -43,9 +44,9 @@ public class NestedwordAutomaton extends Automaton {
 		m_States = new ArrayList<String>();
 		m_InitialStates = new ArrayList<String>();
 		m_FinalStates = new ArrayList<String>();
-		m_InternalTransitions = new HashMap<Pair<String,String>, String>();
-		m_CallTransitions = new HashMap<Pair<String,String>, String>();
-		m_ReturnTransitions = new HashMap<Pair<String, String>, Pair<String, String>>();
+		m_InternalTransitions = new HashMap<Pair<String,String>, Set<String>>();
+		m_CallTransitions = new HashMap<Pair<String,String>, Set<String>>();
+		m_ReturnTransitions = new HashMap<Pair<String, String>, Pair<String, Set<String>>>();
 		m_Name = name;
 		
 	}
@@ -104,7 +105,7 @@ public class NestedwordAutomaton extends Automaton {
 	}
 
 	
-	public Map<Pair<String, String>, String> getInternalTransitions() {
+	public Map<Pair<String, String>, Set<String>> getInternalTransitions() {
 		return m_InternalTransitions;
 	}
 
@@ -113,7 +114,7 @@ public class NestedwordAutomaton extends Automaton {
 			this.m_InternalTransitions = internalTransitions.getTransitions();
 	}
 
-	public Map<Pair<String, String>, String> getCallTransitions() {
+	public Map<Pair<String, String>, Set<String>> getCallTransitions() {
 		return m_CallTransitions;
 	}
 
@@ -122,7 +123,7 @@ public class NestedwordAutomaton extends Automaton {
 			this.m_CallTransitions = callTransitions.getTransitions();
 	}
 
-	public Map<Pair<String, String>, Pair<String, String>> getReturnTransitions() {
+	public Map<Pair<String, String>, Pair<String, Set<String>>> getReturnTransitions() {
 		return m_ReturnTransitions;
 	}
 

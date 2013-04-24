@@ -6,8 +6,10 @@ package de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AtsASTNode;
 
@@ -72,23 +74,57 @@ public class TransitionList extends AtsASTNode {
 	 * 
 	 */
 	private static final long serialVersionUID = 4468320445354864058L;
-	private Map<Pair<String, String> , String> m_Transitions;
-	private Map<Pair<String, String>, Pair<String, String>> m_ReturnTransitions;
+	private Map<Pair<String, String> , Set<String>> m_Transitions;
+	private Map<Pair<String, String>, Pair<String, Set<String>>> m_ReturnTransitions;
 	private List<PetriNetTransition> m_netTransitions;
 	
 	
 	public TransitionList() {
-		m_Transitions = new HashMap<Pair<String,String>, String>();
-		m_ReturnTransitions = new HashMap<Pair<String, String>, Pair<String, String>>();
+		m_Transitions = new HashMap<Pair<String,String>, Set<String>>();
+		m_ReturnTransitions = new HashMap<Pair<String, String>, Pair<String, Set<String>>>();
 		m_netTransitions = new ArrayList<PetriNetTransition>();
 	}
 	
+	
+	/**
+	 * Method to add an internal or call transition for nested word automaton.
+	 * @param fromState
+	 * @param label
+	 * @param toState
+	 */
 	public void addTransition(String fromState, String label, String toState) {
-		m_Transitions.put(new Pair<String, String>(fromState, label), toState);
+		Pair<String, String> stateSymbolPair = new Pair<String, String>(fromState, label);
+		if (m_Transitions.containsKey(stateSymbolPair)) {
+			Set<String> succs = m_Transitions.get(stateSymbolPair);
+			succs.add(toState);
+			m_Transitions.put(stateSymbolPair, succs);
+		} else {
+			Set<String> succs = new HashSet<String>();
+			succs.add(toState);
+			m_Transitions.put(stateSymbolPair, succs);
+		}
 	}
 	
+	/**
+	 * Method to add a return transition for a nested word automaton.
+	 * @param fromState
+	 * @param returnState
+	 * @param label
+	 * @param toState
+	 */
 	public void addTransition(String fromState, String returnState, String label, String toState) {
-		m_ReturnTransitions.put(new Pair<String, String>(fromState, returnState), new Pair<String, String>(label, toState));
+		Pair<String, String> predHierPair = new Pair<String, String>(fromState, returnState);
+		if (m_ReturnTransitions.containsKey(predHierPair)) {
+			Pair<String, Set<String>> letter2succs = m_ReturnTransitions.get(predHierPair);
+			letter2succs.right.add(toState);
+			m_ReturnTransitions.put(predHierPair, letter2succs);
+		} else {
+			Set<String> succs = new HashSet<String>();
+			succs.add(toState);
+			Pair<String, Set<String>> letter2succs = new Pair<String, Set<String>>(label, succs);
+			m_ReturnTransitions.put(predHierPair, letter2succs);
+		}
+		
 	}
 	
 	public void addTransition(IdentifierList idList) {
@@ -100,14 +136,18 @@ public class TransitionList extends AtsASTNode {
 		}
 	}
 
-	public Map<Pair<String, String>, String> getTransitions() {
+	public Map<Pair<String, String>, Set<String>> getTransitions() {
 		return m_Transitions;
 	}
 	
-	public Map<Pair<String, String>, Pair<String, String>> getReturnTransitions() {
+	public Map<Pair<String, String>, Pair<String, Set<String>>> getReturnTransitions() {
 		return m_ReturnTransitions;
 	}
 	
+	/**
+	 * Method to add a transition for Petri nets.
+	 * @param nt the transition of a Petri net
+	 */
 	public void addNetTransition(PetriNetTransition nt) {
 		m_netTransitions.add(nt);
 	}

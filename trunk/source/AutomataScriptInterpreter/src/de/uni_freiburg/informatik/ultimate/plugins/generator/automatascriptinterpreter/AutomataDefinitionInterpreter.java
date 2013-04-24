@@ -9,6 +9,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.model.ILocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.automatascriptinterpreter.TestFileInterpreter.LoggerSeverity;
@@ -46,7 +47,7 @@ public class AutomataDefinitionInterpreter {
 	 * @param automata the definitions of automata
 	 * @return null in all cases
 	 */
-	public <T> Object interpret(AutomataDefinitions automata) {
+	public void interpret(AutomataDefinitions automata) {
 		List<? extends AtsASTNode> children = automata.getListOfAutomataDefinitions();
 		for (AtsASTNode n : children) {
 			if (n instanceof NestedwordAutomaton) {
@@ -68,12 +69,10 @@ public class AutomataDefinitionInterpreter {
 				}
 			}
 		}
-		return null;
 		
 	}
 	
-	public <T> Object interpret(NestedwordAutomaton nwa) throws IllegalArgumentException {
-		
+	public void interpret(NestedwordAutomaton nwa) throws IllegalArgumentException {
 		m_errorLocation = nwa.getLocation();
 		NestedWordAutomaton<String, String> nw = new NestedWordAutomaton<String, String>(
 				                                     Collections.unmodifiableCollection(nwa.getInternalAlphabet()), 
@@ -104,26 +103,30 @@ public class AutomataDefinitionInterpreter {
 		/*
 		 * Now add the transitions to the NestedWordAutomaton
 		 */
-		for (Entry<Pair<String, String>, String> entry : nwa.getInternalTransitions().entrySet()) {
-			nw.addInternalTransition(entry.getKey().left, entry.getKey().right, entry.getValue());
+		for (Entry<Pair<String, String>, Set<String>> entry : nwa.getInternalTransitions().entrySet()) {
+			for (String succ : entry.getValue()) {
+				nw.addInternalTransition(entry.getKey().left, entry.getKey().right, succ);
+			}
+			
 		}
 		
-		for (Entry<Pair<String, String>, String> entry : nwa.getCallTransitions().entrySet()) {
-			nw.addCallTransition(entry.getKey().left, entry.getKey().right, entry.getValue());
+		for (Entry<Pair<String, String>, Set<String>> entry : nwa.getCallTransitions().entrySet()) {
+			for (String succ : entry.getValue()) { 
+				nw.addCallTransition(entry.getKey().left, entry.getKey().right, succ);
+			}
 		}
 		
-		for (Entry<Pair<String, String>, Pair<String, String>> entry : nwa.getReturnTransitions().entrySet()) {
-			nw.addReturnTransition(entry.getKey().left, entry.getKey().right, entry.getValue().left, entry.getValue().right);
+		for (Entry<Pair<String, String>, Pair<String, Set<String>>> entry : nwa.getReturnTransitions().entrySet()) {
+			for (String succ : entry.getValue().right) {
+				nw.addReturnTransition(entry.getKey().left, entry.getKey().right, entry.getValue().left, succ);
+			}
+			
 		}
-		
-		
 		m_Automata.put(nwa.getName(), nw);
-		
-		return null;
 		
 	}
 	
-	public <T> Object interpret(PetriNetAutomaton pna) throws IllegalArgumentException {
+	public void interpret(PetriNetAutomaton pna) throws IllegalArgumentException {
 		m_errorLocation = pna.getLocation();
 		PetriNetJulian<String, String> net = new PetriNetJulian<String, String>(
 				pna.getAlphabet(), 
@@ -160,8 +163,6 @@ public class AutomataDefinitionInterpreter {
 		}
 
 		m_Automata.put(pna.getName(), net);
-
-		return null;
 	}
 	
 	public Map<String, Object> getAutomata() {
