@@ -577,9 +577,9 @@ public class TestFileInterpreter {
 		try {
 			m_automInterpreter.interpret(ats.getAutomataDefinitions());
 		} catch (Exception e) {
-			reportToLogger(LoggerSeverity.DEBUG, "Error during interpreting automata definitions.");
-			reportToLogger(LoggerSeverity.DEBUG, "Error: " + e.getMessage());
-			reportToLogger(LoggerSeverity.DEBUG, "Interpretation of testfile cancelled.");
+			reportToLogger(LoggerSeverity.INFO, "Error during interpreting automata definitions.");
+			reportToLogger(LoggerSeverity.INFO, "Error: " + e.getMessage());
+			reportToLogger(LoggerSeverity.INFO, "Interpretation of testfile cancelled.");
 			reportToUltimate(Severity.ERROR, e.getMessage() + " Interpretation of testfile cancelled.", "Error", m_automInterpreter.getErrorLocation());
 		}
 		
@@ -591,8 +591,8 @@ public class TestFileInterpreter {
 		try {
 			m_tChecker.checkTestFile(ats.getStatementList());
 		} catch (Exception e) {
-			reportToLogger(LoggerSeverity.DEBUG, "Error: " + e.getMessage());
-			reportToLogger(LoggerSeverity.DEBUG, "Interpretation of testfile cancelled.");
+			reportToLogger(LoggerSeverity.INFO, "Error: " + e.getMessage());
+			reportToLogger(LoggerSeverity.INFO, "Interpretation of testfile cancelled.");
 			reportToUltimate(Severity.ERROR, m_tChecker.getLongDescription(), m_tChecker.getShortDescription(), m_tChecker.getErrorLocation());
 			return null;
 		}
@@ -1092,7 +1092,7 @@ public class TestFileInterpreter {
 		}
 		// Report summary of the testcases/
 		if (m_testCases.isEmpty()) {
-			printMessage(Severity.WARNING, LoggerSeverity.DEBUG, "No testcases defined!", "Warning" ,  getPseudoLocation());
+			printMessage(Severity.WARNING, LoggerSeverity.INFO, "No testcases defined!", "Warning" ,  getPseudoLocation());
 		} else {
 			reportToLogger(LoggerSeverity.INFO, testCasesSummary);
 		}	
