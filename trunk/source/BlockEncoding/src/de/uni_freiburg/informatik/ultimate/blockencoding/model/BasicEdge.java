@@ -3,6 +3,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.blockencoding.model;
 
+import java.util.HashSet;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.blockencoding.model.interfaces.IBasicEdge;
@@ -35,11 +36,16 @@ public class BasicEdge extends
 	 * the underlying original edge (of type "CodeBlock")
 	 */
 	private CodeBlock originalEdge;
-	
+
 	/**
 	 * the rating of this edge
 	 */
 	private IRating rating;
+
+	/**
+	 * 
+	 */
+	private HashSet<BoogieVar> usedVariables;
 
 	/**
 	 * @param originalEdge
@@ -50,8 +56,21 @@ public class BasicEdge extends
 			MinimizedNode target) {
 		super(source, target);
 		this.originalEdge = originalEdge;
+		if (originalEdge.getTransitionFormula() != null) {
+			this.usedVariables = new HashSet<BoogieVar>();
+			this.usedVariables.addAll(originalEdge.getTransitionFormula()
+					.getAssignedVars());
+			this.usedVariables.addAll(originalEdge.getTransitionFormula()
+					.getInVars().keySet());
+			this.usedVariables.addAll(originalEdge.getTransitionFormula()
+					.getOutVars().keySet());
+		} else {
+			this.usedVariables = new HashSet<BoogieVar>();
+		}
 		this.rating = RatingFactory.getInstance().createRating(this);
 		EncodingStatistics.incCountOfBasicEdges();
+		EncodingStatistics.setMaxMinDiffVariablesInOneEdge(this.usedVariables
+				.size());
 	}
 
 	@Override
@@ -107,6 +126,11 @@ public class BasicEdge extends
 	@Override
 	public IRating getRating() {
 		return rating;
+	}
+
+	@Override
+	public Set<BoogieVar> getDifferentVariables() {
+		return this.usedVariables;
 	}
 
 }

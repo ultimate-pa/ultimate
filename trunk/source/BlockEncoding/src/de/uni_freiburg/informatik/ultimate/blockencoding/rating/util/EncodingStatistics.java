@@ -34,6 +34,21 @@ public class EncodingStatistics {
 	 * composite edge
 	 */
 	public static int maxDisjunctionsInOneEdge;
+	
+	/**
+	 * stores the maximum number of elements in one single disjunction
+	 */
+	public static int maxElementsInOneDisjunction;
+	
+	/**
+	 * stores the max. number of variables used in one edge
+	 */
+	public static int maxDiffVariablesInOneEdge;
+	
+	/**
+	 * stores the min. number of variables used in one edge
+	 */
+	public static int minDiffVariablesInOneEdge;
 
 	/**
 	 * Initializes, all stored statistics. This have to be done, before we start
@@ -43,6 +58,9 @@ public class EncodingStatistics {
 		countOfBasicEdges = 0;
 		countOfDisjunctions = 0;
 		maxDisjunctionsInOneEdge = 0;
+		maxElementsInOneDisjunction = 0;
+		maxDiffVariablesInOneEdge = 0;
+		minDiffVariablesInOneEdge = Integer.MAX_VALUE;
 	}
 
 	/**
@@ -67,4 +85,30 @@ public class EncodingStatistics {
 			maxDisjunctionsInOneEdge = value;
 		}
 	}
+	
+	/**
+	 * @param value
+	 */
+	public static void setMaxElementsInOneDisjunction(int value) {
+		if (value > maxElementsInOneDisjunction) {
+			maxElementsInOneDisjunction = value;
+		}
+	}
+	
+	/**
+	 * @param value
+	 */
+	public static void setMaxMinDiffVariablesInOneEdge(int value) {
+		// we ignore zero
+		if (value == 0) {
+			return;
+		}
+		if (value > maxDiffVariablesInOneEdge) {
+			maxDiffVariablesInOneEdge = value;
+		}
+		if (value < minDiffVariablesInOneEdge) {
+			minDiffVariablesInOneEdge = value;
+		}
+	}
+	
 }

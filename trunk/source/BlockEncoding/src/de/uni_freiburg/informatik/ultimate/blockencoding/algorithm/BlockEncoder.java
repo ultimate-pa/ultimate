@@ -154,6 +154,10 @@ public class BlockEncoder {
 				+ EncodingStatistics.countOfDisjunctions);
 		s_Logger.info("Max. amount of disjunctions in one edge: "
 				+ EncodingStatistics.maxDisjunctionsInOneEdge);
+		s_Logger.info("Max. different variables in one edge: "
+				+ EncodingStatistics.maxDiffVariablesInOneEdge);
+		s_Logger.info("Min. different variables in one edge: "
+				+ EncodingStatistics.minDiffVariablesInOneEdge);
 		return root;
 	}
 

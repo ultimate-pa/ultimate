@@ -51,6 +51,9 @@ public class ConfigurableHeuristic implements IRatingHeuristic {
 		case DISJUNCTIVE_STMTCOUNT:
 			boundary = new DisjunctiveStatementsRating(givenPref);
 			break;
+		case USED_VARIABLES_RATING:
+			boundary = new UsedVariablesRating(givenPref);
+			break;
 		default:
 			throw new IllegalArgumentException(
 					"Unkown state of the enum RatingStrategy,"

@@ -31,6 +31,7 @@ public class StatisticBasedHeuristic extends ConfigurableHeuristic {
 		super(strategy);
 		supportedStrategies = new ArrayList<RatingStrategy>();
 		supportedStrategies.add(RatingStrategy.DISJUNCTIVE_STMTCOUNT);
+		supportedStrategies.add(RatingStrategy.USED_VARIABLES_RATING);
 	}
 
 	/*
@@ -44,6 +45,9 @@ public class StatisticBasedHeuristic extends ConfigurableHeuristic {
 		switch (this.strategy) {
 		case DISJUNCTIVE_STMTCOUNT:
 			givenPref = computeDisStmtBoundary();
+			break;
+		case USED_VARIABLES_RATING:
+			givenPref = computeUsedVarBoundary();
 			break;
 		default:
 			throw new IllegalArgumentException(
@@ -59,7 +63,7 @@ public class StatisticBasedHeuristic extends ConfigurableHeuristic {
 	public boolean isRatingStrategySupported(RatingStrategy strategy) {
 		return supportedStrategies.contains(strategy);
 	}
-	
+
 	/**
 	 * @return
 	 */
@@ -69,9 +73,27 @@ public class StatisticBasedHeuristic extends ConfigurableHeuristic {
 		// we take half of the maximum disjunctions in the graph
 		sb.append(EncodingStatistics.maxDisjunctionsInOneEdge / 2);
 		sb.append("-");
-		// TODO: determine good under/upper bounds here based on data!
-		sb.append("5-30");
+		// as a upper bound we take 80% of the value
+		// maxElementesInOneDisjunction
+		double onePercent = EncodingStatistics.maxElementsInOneDisjunction / 100;
+		sb.append((int) (onePercent * 80));
+		sb.append("-");
+		// as lower bound we take 10% but at least 5 elements
+		if (onePercent * 10 < 5) {
+			sb.append(5);
+		} else {
+			sb.append((int) (onePercent * 10));
+		}
 		return sb.toString();
 	}
 
+	/**
+	 * @return
+	 */
+	private String computeUsedVarBoundary() {
+		// Basically we take here the arithmetic mean of min and max
+		int meanValue = EncodingStatistics.minDiffVariablesInOneEdge
+				+ EncodingStatistics.maxDiffVariablesInOneEdge;
+		return Integer.toString(meanValue);
+	}
 }

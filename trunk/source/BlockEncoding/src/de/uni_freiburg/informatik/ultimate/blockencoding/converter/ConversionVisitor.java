@@ -68,7 +68,7 @@ public class ConversionVisitor implements IMinimizationVisitor {
 	private HashMap<IMinimizedEdge, Integer> checkForMultipleFormula;
 
 	private IRatingHeuristic heuristic;
-	
+
 	private boolean lbe;
 
 	/**
@@ -364,6 +364,11 @@ public class ConversionVisitor implements IMinimizationVisitor {
 				} else if (rightSide instanceof GotoEdge) {
 					return leftSide;
 				}
+				s_Logger.debug("New Sequential Composition of : "
+						+ leftSide.getPrettyPrintedStatements() + " / "
+						+ rightSide.getPrettyPrintedStatements());
+				s_Logger.debug("Left-Formula: " + leftSide.getTransitionFormula());
+				s_Logger.debug("Right Formula: " + rightSide.getTransitionFormula());
 				return new SequentialComposition(null, null, boogie2smt,
 						leftSide, rightSide);
 			}
@@ -383,6 +388,7 @@ public class ConversionVisitor implements IMinimizationVisitor {
 		return null;
 	}
 
+	
 	/**
 	 * This method replaces an Goto-Edge with the statement "assume true". <br>
 	 * TODO: Need to be clarified if this is correct.

@@ -38,6 +38,8 @@ public class DisjunctionEdge extends AbstractCompositeEdge {
 		EncodingStatistics.incCountOfDisjunctions();
 		EncodingStatistics
 				.setMaxDisjunctionsInOneEdge(this.containedDisjunctions);
+		EncodingStatistics.setMaxElementsInOneDisjunction(this
+				.getElementCount());
 	}
 
 	/**

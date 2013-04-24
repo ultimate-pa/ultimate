@@ -1,7 +1,10 @@
 package de.uni_freiburg.informatik.ultimate.blockencoding.model.interfaces;
 
+import java.util.Set;
+
 import de.uni_freiburg.informatik.ultimate.blockencoding.model.MinimizedNode;
 import de.uni_freiburg.informatik.ultimate.blockencoding.rating.interfaces.IRating;
+import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.model.structure.IModifiableMultigraphEdge;
 
 /**
@@ -42,6 +45,22 @@ public interface IMinimizedEdge extends
 	 */
 	public IRating getRating();
 
+	/**
+	 * Every edge can return a set of the variables, which are used here.
+	 * Basically this information is used to set up a rating and a corresponding
+	 * Heuristic. We use a set here, since BoogieVars are unique and we count
+	 * every variable only once.
+	 * 
+	 * @return the set of used boogie vars
+	 */
+	public Set<BoogieVar> getDifferentVariables();
+
+	/**
+	 * Returns the number of IMinimizedEdges inside, so basic edges return here
+	 * 1 and composite edges the number of edges inside.
+	 * 
+	 * @return the number of minimized edges contained
+	 */
 	public int getElementCount();
 
 }

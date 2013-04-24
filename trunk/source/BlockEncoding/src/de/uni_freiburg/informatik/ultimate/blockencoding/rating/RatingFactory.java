@@ -37,7 +37,12 @@ public class RatingFactory {
 		 * Here we count the disjunctive in context of the amount of statements
 		 * which is inherited inside the disjunctions.
 		 */
-		DISJUNCTIVE_STMTCOUNT
+		DISJUNCTIVE_STMTCOUNT,
+		/**
+		 * Here we count the number of used variables in one edge, this maybe a
+		 * good value to measure the complexity of one edge.
+		 */
+		USED_VARIABLES_RATING
 	}
 
 	/**
@@ -101,6 +106,8 @@ public class RatingFactory {
 			return new DisjunctiveRating(edge);
 		case DISJUNCTIVE_STMTCOUNT:
 			return new DisjunctiveStatementsRating(edge);
+		case USED_VARIABLES_RATING:
+			return new UsedVariablesRating(edge);
 		default:
 			throw new IllegalArgumentException("No valid strategy choosen!");
 		}
