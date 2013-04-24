@@ -4,7 +4,6 @@
 package de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser;
 
 import de.uni_freiburg.informatik.ultimate.model.ILocation;
-
 import de.uni_freiburg.informatik.ultimate.result.Check;
 
 /**
@@ -28,10 +27,6 @@ public class AutomataScriptLocation implements ILocation {
 		this.m_EndColumn = m_EndColumn;
 		this.m_FileName = m_FileName;
 	}
-
-	
-	
-
 
 	public AutomataScriptLocation(String m_FileName) {
 		this.m_FileName = m_FileName;

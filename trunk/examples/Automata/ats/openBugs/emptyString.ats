@@ -4,8 +4,8 @@
 // Empty String is not parsed.
 
 NestedWord emptyString = [];
-NestedLassoWord infiniteA = [, a]
-NestedLassoWord emptyOmega = [,]
+NestedLassoWord infiniteA = [, a];
+NestedLassoWord emptyOmega = [,];
 
 assert(accepts(a0,emptyString));
 assert(!accepts(a1,emptyString));

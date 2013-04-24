@@ -322,7 +322,7 @@ word_literal ::= LBRACK:l nested_word:nw RBRACK:r /* Parse a nested word */
 
 nested_word ::= nested_word_symbols_opt:nw {: RESULT = nw; :};
 
-nested_word_symbols_opt ::= nested_word_symbols:nw {: RESULT = nw; :} | {: RESULT = null; :};
+nested_word_symbols_opt ::= nested_word_symbols:nw {: RESULT = nw; :} | {: RESULT = new Nestedword(); :};
 
 nested_word_symbols ::= nested_word_symbol:sym
 						{: Nestedword nw = new Nestedword();
