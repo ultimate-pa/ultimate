@@ -1,7 +1,7 @@
 #!/bin/bash
 Ultimate_PATH=`pwd`;
 
-timeout=20;
+timeout=10;
 
 
 examplesFolder=$1;
@@ -52,6 +52,7 @@ ERROR_OCCURRED=`echo "$Ultimate_OUTPUT" | grep "ERROR"`
 EXCEPTION=`echo "$Ultimate_OUTPUT" | grep "has thrown an Exception!"`
 RESULT_CORRECT=`echo "$Ultimate_OUTPUT" | grep "All testcases passed"`
 RESULT_INCORRECT=`echo "$Ultimate_OUTPUT" | grep "Some testcases failed"`
+RESULT_NOTESTCASE=`echo "$Ultimate_OUTPUT" | grep "No testcases defined!"`
 RUNTIME=`echo "$Ultimate_OUTPUT" | grep "NestedWordAutomata took" | cut -c76-`
 
 if [ "$RESULT_CORRECT" ]; then
@@ -59,6 +60,7 @@ if [ "$RESULT_CORRECT" ]; then
    printf "$RUNTIME"
    printf " ***** "
    printf "result correct"
+   printf "\n"
 fi
 
 if [ "$RESULT_INCORRECT" ]; then
@@ -66,17 +68,30 @@ if [ "$RESULT_INCORRECT" ]; then
    printf "$RUNTIME"
    printf " !!!!! "
    printf "result incorrect !!!!!"
+   printf "\n"
 fi
 
 if [ "$ERROR_OCCURRED" ]; then
    printf "!!!!! ERROR !!!!!"
+   printf "\n"
+   echo "$ERROR_OCCURRED"
 fi
 
 if [ "$EXCEPTION" ]; then
    printf "!!!!! EXCEPTION THROWN !!!!!"
+   printf "\n"
+   echo "$EXCEPTION"
 fi
 
-printf "\n"
+if [ "$RESULT_NOTESTCASE" ]; then
+   printf "successful termination after "
+   printf "$RUNTIME"
+   printf " !!!!! "
+   printf "No testcases defined!"
+   printf "\n"
+fi
+
+
 
 
 done;
