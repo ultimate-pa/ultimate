@@ -42,7 +42,7 @@ public class AutomataScriptParser implements ISource {
 			reportToUltimate(Severity.ERROR, parser.getLongErrorMessage(),
 					         parser.getShortErrorMessage(), 
 					         parser.getErrorLocation());
-			s_Logger.debug("Parsing aborted.");
+			s_Logger.info("Parsing aborted.");
 			return null;
 		}
 
@@ -193,6 +193,7 @@ public class AutomataScriptParser implements ISource {
 		    		                     shortMessage, longMessage, 
 		    		                     sev);
 			UltimateServices.getInstance().reportResult(Activator.s_PLUGIN_ID, res);
+			s_Logger.info(shortMessage + " " + longMessage);
 	}
 	
 	
