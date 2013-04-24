@@ -36,9 +36,7 @@ public class PetriNetToUltimateModel<S, C> {
 			PlaceNode placeNode = new PlaceNode(place,
 					participatedAcceptingMarkings(place, acceptingMarkings));
 			place2placeNode.put(place,placeNode);
-			graphroot.addOutgoing(placeNode);
-			placeNode.addIncoming(graphroot);
-			
+			graphroot.connectOutgoing(placeNode);
 		}
 		
 		while (!queue.isEmpty()) {
@@ -55,8 +53,7 @@ public class PetriNetToUltimateModel<S, C> {
 						transition2transitionNode.put(transition, transNode);
 						queue.add(transition);
 					}
-					placeNode.addOutgoing(transNode);
-					transNode.addIncoming(placeNode);
+					placeNode.connectOutgoing(transNode);
 				}
 			}
 			else if (node instanceof ITransition) {
@@ -73,8 +70,7 @@ public class PetriNetToUltimateModel<S, C> {
 						place2placeNode.put(place, placeNode);
 						queue.add(place);
 					}
-					transitionNode.addOutgoing(placeNode);
-					placeNode.addIncoming(transitionNode);
+					transitionNode.connectOutgoing(placeNode);
 				}
 			}
 		}
