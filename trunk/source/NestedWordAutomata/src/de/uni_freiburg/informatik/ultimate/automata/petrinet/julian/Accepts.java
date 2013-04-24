@@ -47,7 +47,7 @@ public class Accepts<S, C> implements IOperation {
 	
 	
 
-	Accepts(PetriNetJulian<S, C> net, Word<S> nWord) {
+	public Accepts(PetriNetJulian<S, C> net, Word<S> nWord) {
 		this.net = net;
 		this.nWord = nWord;
 		s_Logger.info(startMessage());
