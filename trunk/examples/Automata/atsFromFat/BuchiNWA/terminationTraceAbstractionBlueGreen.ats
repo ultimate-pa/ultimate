@@ -14,9 +14,9 @@
 // Date: 19.7.2011
 
 
-// assert(buchiIsEmpty(buchiIntersect(controlAutomaton));
-//                                 buchiIntersect(buchiComplementFKV(manualIA1)
-//                                                buchiComplementFKV(manualIA2)))
+assert(buchiIsEmpty(buchiIntersect(controlAutomaton,
+                                buchiIntersect(buchiComplementFKV(manualIA1),
+                                               buchiComplementFKV(manualIA2)))));
 
 assert(!buchiIsEmpty(controlAutomaton));
 assert(buchiAccepts(controlAutomaton, [blue, blue]));
@@ -57,25 +57,28 @@ assert(buchiAccepts(interpolantAutomaton4, [blue green, blue blue ]));
 
 
 assert(!buchiIsEmpty(buchiIntersect(
+                     buchiIntersect(
                          buchiIntersect(
                              buchiIntersect(controlAutomaton,
                                  buchiComplementFKV(interpolantAutomaton1)),
                              buchiComplementFKV(interpolantAutomaton2)),
                          buchiComplementFKV(interpolantAutomaton3)),
-                     buchiComplementFKV(interpolantAutomaton4)));
-assert(!buchiIsEmpty(buchiIntersect(
+                     buchiComplementFKV(interpolantAutomaton4))));
+assert(!buchiAccepts(buchiIntersect(
+                     buchiIntersect(
                          buchiIntersect(
                              buchiIntersect(controlAutomaton, 
                                  buchiComplementFKV(interpolantAutomaton1)),
                              buchiComplementFKV(interpolantAutomaton2)),
                          buchiComplementFKV(interpolantAutomaton3)),
                      buchiComplementFKV(interpolantAutomaton4)),
-              [blue blue green, green blue green green ]);
+              [blue blue green, green blue green green ]));
 assert(buchiAccepts(interpolantAutomaton5, [blue blue green, green blue green green ]));
 
 
 
 assert(!buchiIsEmpty(buchiIntersect(
+                     buchiIntersect(
                          buchiIntersect(
                              buchiIntersect(
                                  buchiIntersect(controlAutomaton, 
@@ -83,8 +86,9 @@ assert(!buchiIsEmpty(buchiIntersect(
                                  buchiComplementFKV(interpolantAutomaton2)),
                              buchiComplementFKV(interpolantAutomaton3)),
                          buchiComplementFKV(interpolantAutomaton4)),
-                      buchiComplementFKV(interpolantAutomaton5)));
-assert(!buchiIsEmpty(buchiIntersect(
+                      buchiComplementFKV(interpolantAutomaton5))));
+assert(!buchiAccepts(buchiIntersect(
+                     buchiIntersect(
                          buchiIntersect(
                              buchiIntersect(
                                  buchiIntersect(controlAutomaton,
@@ -93,13 +97,13 @@ assert(!buchiIsEmpty(buchiIntersect(
                              buchiComplementFKV(interpolantAutomaton3)),
                          buchiComplementFKV(interpolantAutomaton4)),
                       buchiComplementFKV(interpolantAutomaton5)),
-              [blue blue green, blue blue blue green ]);
+              [blue blue green, blue blue blue green ]));
 assert(buchiAccepts(interpolantAutomaton6, [blue blue green, blue blue blue green ]));
               
               
               
 assert(buchiIsEmpty(buchiIntersect(
-//                      buchiIntersect(
+                       buchiIntersect(
                          buchiIntersect(
                              buchiIntersect(
                                  buchiIntersect(
@@ -109,7 +113,7 @@ assert(buchiIsEmpty(buchiIntersect(
                                  buchiComplementFKV(interpolantAutomaton3)),
                              buchiComplementFKV(interpolantAutomaton4)),
                           buchiComplementFKV(interpolantAutomaton5)),          
-                      buchiComplementFKV(interpolantAutomaton6)));         
+                      buchiComplementFKV(interpolantAutomaton6))));         
               
               
               
