@@ -37,39 +37,39 @@ assert(!buchiIsEmpty(buchiReduce(buchiComplementFKV(interpolantAutomaton6))));
 
 NestedWordAutomaton infeasible = (
   callAlphabet = { },
-  internalAlphabet = { 1 2 3},
+  internalAlphabet = { "1" "2" "3"},
   returnAlphabet = { },
   states = {init m mStrict n nStrict},
   initialStates = {init},
   finalStates = {mStrict nStrict},
   callTransitions = { },
   internalTransitions = { 
-    (init 1 init) (init 2 init) (init 3 init) 
-    (init 1 m) (init 2 m) (init 3 m) 
-    (init 1 n) (init 2 n) (init 3 n) 
-    (m 3 m)
-    (m 1 mStrict) (m 2 mStrict)
-    (mStrict 1 mStrict) (mStrict 2 mStrict)
-    (mStrict 3 m)
-    (n 3 nStrict)
-    (nStrict 3 n)
+    (init "1" init) (init "2" init) (init "3" init) 
+    (init "1" m) (init "2" m) (init "3" m) 
+    (init "1" n) (init "2" n) (init "3" n) 
+    (m "3" m)
+    (m "1" mStrict) (m "2" mStrict)
+    (mStrict "1" mStrict) (mStrict "2" mStrict)
+    (mStrict "3" m)
+    (n "3" nStrict)
+    (nStrict "3" n)
   }, 
   returnTransitions = { }
 );
 
 NestedWordAutomaton infeasibleN = (
   callAlphabet = { },
-  internalAlphabet = { 1 2 3},
+  internalAlphabet = { "1" "2" "3"},
   returnAlphabet = { },
   states = {init n nStrict},
   initialStates = {init},
   finalStates = {nStrict},
   callTransitions = { },
   internalTransitions = { 
-    (init 1 init) (init 2 init) (init 3 init) 
-    (init 1 n) (init 2 n) (init 3 n) 
-    (n 3 nStrict)
-    (nStrict 3 n)
+    (init "1" init) (init "2" init) (init "3" init) 
+    (init "1" n) (init "2" n) (init "3" n) 
+    (n "3" nStrict)
+    (nStrict "3" n)
   }, 
   returnTransitions = { }
 );

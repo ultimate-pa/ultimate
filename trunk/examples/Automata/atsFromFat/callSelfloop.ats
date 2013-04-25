@@ -17,7 +17,7 @@ print(minimizeSevpa(nwa));
 NestedWordAutomaton nwa = (
 	callAlphabet = { call },
 	internalAlphabet = { },
-	returnAlphabet = { return },
+	returnAlphabet = { ret },
 	states = {q0 q1 q2 },
 	initialStates = { q0 },
 	finalStates = { q2 },
@@ -27,7 +27,7 @@ NestedWordAutomaton nwa = (
 	internalTransitions = {
 	},
 	returnTransitions = {
-		 (q0 q0 return q1)
-		 (q1 q0 return q2)
+		 (q0 q0 ret q1)
+		 (q1 q0 ret q2)
 	}
 );

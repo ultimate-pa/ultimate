@@ -10,7 +10,7 @@ assert(!isEmpty(a1));
 assert(!isEmpty(determinize(a1)));
 assert(!isEmpty(difference(all, a1)));
 assert(!isEmpty(intersect(all, complement(a1))));
-assert(!isEmpty(difference(all, difference(all a1))));
+assert(!isEmpty(difference(all, difference(all, a1))));
 assert(!isEmpty(intersect(all, complement(intersect(all, complement(a1))))));
 
 assert(!accepts(a1, [a a<]));

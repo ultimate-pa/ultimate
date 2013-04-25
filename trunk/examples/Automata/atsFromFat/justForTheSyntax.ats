@@ -1,12 +1,12 @@
 // heizmann@informatik.uni-freiburg.de 2010
 // example withour further meaning
 
-assert(!accepts(intersect(a1 complement(a1)), [a< a< b<]));
-assert(!accepts(intersect(a1 a1), [aaa< >a b]));
+assert(!accepts(intersect(a1, complement(a1)), [a< a< b<]));
+assert(!accepts(intersect(a1, a1), [aaa< >a b]));
 assert(!buchiAccepts(a1, [aaa a b<, a b<]));
-assert(!isEmpty(intersect(a1 a1)));
-assert(isEmpty(intersect(a1 complement(a1))));
-assert(!isEmpty(intersect(a1 a2)));
+assert(!isEmpty(intersect(a1, a1)));
+assert(isEmpty(intersect(a1, complement(a1))));
+assert(!isEmpty(intersect(a1, a2)));
 assert(!buchiIsEmpty(a2));
 print(a2);
 

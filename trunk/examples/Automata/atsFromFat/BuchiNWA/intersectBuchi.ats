@@ -8,28 +8,28 @@
 
 assert(buchiAccepts(nonNestedBuchi1, [a , a ]));
 assert(buchiAccepts(nonNestedBuchi2, [a , a ]));
-assert(buchiAccepts(buchiIntersect(nonNestedBuchi1 nonNestedBuchi2), [a , a ]));
-assert(!buchiIsEmpty(buchiIntersect(nonNestedBuchi1 nonNestedBuchi2)));
+assert(buchiAccepts(buchiIntersect(nonNestedBuchi1, nonNestedBuchi2), [a , a ]));
+assert(!buchiIsEmpty(buchiIntersect(nonNestedBuchi1, nonNestedBuchi2)));
 
 assert(buchiAccepts(cKistner, [, c<  c<  a >r >r ]));
 assert(buchiAccepts(cKistnerSelfLoopFree, [, c<  c<  a >r >r ]));
-assert(!buchiIsEmpty(buchiIntersect(cKistner cKistnerSelfLoopFree)));
+assert(!buchiIsEmpty(buchiIntersect(cKistner, cKistnerSelfLoopFree)));
 
 assert(buchiAccepts(finitelyManyA, [ a a b a, b ]));
 assert(!buchiIsEmpty(finitelyManyA));
 
 assert(!buchiAccepts(finitelyManyB, [ a a a a a a , b ]));
 assert(!buchiIsEmpty(finitelyManyB));
-assert(buchiIsEmpty(buchiIntersect(finitelyManyA finitelyManyB)));
+assert(buchiIsEmpty(buchiIntersect(finitelyManyA ,finitelyManyB)));
 
 
 assert(buchiAccepts(infinitelyManyA, [ , a b b b ]));
 assert(!buchiAccepts(infinitelyManyA, [ , b ]));
-assert(!buchiAccepts(buchiIntersect(infinitelyManyA infinitelyManyB), [ , b]));
-assert(buchiAccepts(buchiIntersect(infinitelyManyA infinitelyManyB), [ , a b]));
+assert(!buchiAccepts(buchiIntersect(infinitelyManyA, infinitelyManyB), [ , b]));
+assert(buchiAccepts(buchiIntersect(infinitelyManyA, infinitelyManyB), [ , a b]));
 
 
-print(buchiIntersect(infinitelyManyA infinitelyManyB));
+print(buchiIntersect(infinitelyManyA, infinitelyManyB));
 
 
 NestedWordAutomaton nonNestedBuchi1 = (

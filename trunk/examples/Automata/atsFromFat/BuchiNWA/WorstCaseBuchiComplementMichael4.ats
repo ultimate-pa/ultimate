@@ -5,11 +5,11 @@
 // Author: heizmann@informatik.uni-freiburg.de
 // Date: 17.6.2011
 
-assert(buchiAccepts(Michael4, [ 1, 1 2 3 4 1 hash]));
-assert(!buchiAccepts(Michael4, [ 1, 1 2 3 4 hash]));
+assert(buchiAccepts(Michael4, [ "1", "1" "2" "3" "4" "1" hash]));
+assert(!buchiAccepts(Michael4, [ "1", "1" "2" "3" "4" hash]));
 
-assert(!buchiAccepts(buchiComplementFKV(Michael4), [ 1, 1 2 3 4 1 hash]));
-#AcceptsBuchi buchiComplementFKV(Michael4)[ 1, 1 2 3 4 hash]
+assert(!buchiAccepts(buchiComplementFKV(Michael4), [ "1", "1" "2" "3" "4" "1" hash]));
+assert(buchiAccepts(buchiComplementFKV(Michael4), [ "1", "1" "2" "3" "4" hash]));
 
 //print(buchiComplementFKV(Michael4));
 print(Michael4);
@@ -17,21 +17,21 @@ print(Michael4);
 
 NestedWordAutomaton Michael4 = (
   callAlphabet = { },
-  internalAlphabet = { hash 1 2 3 4 },
+  internalAlphabet = { hash "1" "2" "3" "4" },
   returnAlphabet = { },
   states = {q0 q1 q2 q3 q4},
   initialStates = { q1 q2 q3 q4 },
   finalStates = { q0 },
   callTransitions = { },
   internalTransitions = { 
-    (q0 1 q1) (q1 1 q0)
-    (q1 hash q1) (q1 1 q1) (q1 2 q1) (q1 3 q1) (q1 4 q1)
-    (q0 2 q2) (q2 2 q0)
-    (q2 hash q2) (q2 1 q2) (q2 2 q2) (q2 3 q2) (q2 4 q2)
-    (q0 3 q3) (q3 3 q0)
-    (q3 hash q3) (q3 1 q3) (q3 2 q3) (q3 3 q3) (q3 4 q3)
-    (q0 4 q4) (q4 4 q0)
-    (q4 hash q4) (q4 1 q4) (q4 2 q4) (q4 3 q4) (q4 4 q4)
+    (q0 "1" q1) (q1 "1" q0)
+    (q1 hash q1) (q1 "1" q1) (q1 "2" q1) (q1 "3" q1) (q1 "4" q1)
+    (q0 "2" q2) (q2 "2" q0)
+    (q2 hash q2) (q2 "1" q2) (q2 "2" q2) (q2 "3" q2) (q2 "4" q2)
+    (q0 "3" q3) (q3 "3" q0)
+    (q3 hash q3) (q3 "1" q3) (q3 "2" q3) (q3 "3" q3) (q3 "4" q3)
+    (q0 "4" q4) (q4 "4" q0)
+    (q4 hash q4) (q4 "1" q4) (q4 "2" q4) (q4 "3" q4) (q4 "4" q4)
 
   }, 
   returnTransitions = { }
