@@ -28,7 +28,7 @@ import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 public class BuchiIsEmpty<LETTER,STATE> implements IOperation {
 	
 	
-	public BuchiIsEmpty(INestedWordAutomaton<LETTER, STATE> nwa) {
+	public BuchiIsEmpty(INestedWordAutomaton<LETTER, STATE> nwa) throws OperationCanceledException {
 		m_nwa = nwa;
 		s_Logger.info(startMessage());
 		m_Result = checkEmptiness();
@@ -310,9 +310,10 @@ public class BuchiIsEmpty<LETTER,STATE> implements IOperation {
 	 * @param nwa NestedWordAutomaton which is interpreted as Buchi nested word
 	 * automaton here
 	 * @return true iff nwa does not accept any nested lasso word.
+	 * @throws OperationCanceledException 
 	 */
 	// Requires collections of transitions to be final. 
-	public boolean checkEmptiness() {
+	public boolean checkEmptiness() throws OperationCanceledException {
 		Worklist worklist = new Worklist();
 		Set<STATE> allStates = new HashSet<STATE>();
 		Set<STATE> acceptingStates = new HashSet<STATE>();
@@ -383,6 +384,10 @@ public class BuchiIsEmpty<LETTER,STATE> implements IOperation {
 			// line17-19
 			extendPathBeyondOrigin(workPair.source, workPair.target, 
 					reachabilityBridge, worklist);
+			
+			if (!UltimateServices.getInstance().continueProcessing()) {
+				throw new OperationCanceledException();
+			}
 		}
 
 		 
@@ -405,6 +410,9 @@ public class BuchiIsEmpty<LETTER,STATE> implements IOperation {
 			extendAcceptingPathCallReturn(workPair.source, workPair.target, 
 					callAlphabet, returnAlphabet, reachabilityBridge, 
 					reachabilityBridgeA, worklist);
+			if (!UltimateServices.getInstance().continueProcessing()) {
+				throw new OperationCanceledException();
+			}
 		}
 		
 		
@@ -439,6 +447,9 @@ public class BuchiIsEmpty<LETTER,STATE> implements IOperation {
 					reachabilityBridgeC, worklist);
 			extendPathBeyondOrigin(workPair.source,workPair.target, 
 					reachabilityBridgeC, worklist);
+			if (!UltimateServices.getInstance().continueProcessing()) {
+				throw new OperationCanceledException();
+			}
 		}
 		
 		
