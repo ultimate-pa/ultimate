@@ -1,0 +1,69 @@
+// lots of states which are not connected
+// Author: heizmann@informatik.uni-freiburg.de
+// Date: 19.1.2012
+
+// Infinity is 1
+// Number of vertices in game graph: 7500
+// Number of vertices in v0: 5000
+// Number of vertices in v1: 2500
+// Number of edges in game graph: 7500
+// Finished reduceBuchi Result  has 1 states, 1 internal transition
+
+// This example was once difficult the time where we had forgotten to remove deas ends
+// NestedWordAutomata took 703891ms in revision 4698 on laptop (while emerge was running)
+
+
+print(buchiReduce(nwa));
+
+NestedWordAutomaton nwa = (
+	callAlphabet = {},
+	internalAlphabet = {a b c },
+	returnAlphabet = {},
+	states = {
+	  s00 s01 s02 s03 s04 s05 s06 s07 s08 s09
+	  s10 s11 s12 s13 s14 s15 s16 s17 s18 s19
+	  s20 s21 s22 s23 s24 s25 s26 s27 s28 s29
+	  s30 s31 s32 s33 s34 s35 s36 s37 s38 s39
+	  s40 s41 s42 s43 s44 s45 s46 s47 s48 s49
+	  s50 s51 s52 s53 s54 s55 s56 s57 s58 s59
+	  s60 s61 s62 s63 s64 s65 s66 s67 s68 s69
+  	  s70 s71 s72 s73 s74 s75 s76 s77 s78 s79
+	  s80 s81 s82 s83 s84 s85 s86 s87 s88 s89
+	  s90 s91 s92 s93 s94 s95 s96 s97 s98 s99
+	},
+	initialStates = {
+	  s00 s01 s02 s03 s04 s05 s06 s07 s08 s09
+	  s10 s11 s12 s13 s14 s15 s16 s17 s18 s19
+	  s20 s21 s22 s23 s24 s25 s26 s27 s28 s29
+	  s30 s31 s32 s33 s34 s35 s36 s37 s38 s39
+	  s40 s41 s42 s43 s44 s45 s46 s47 s48 s49
+	  s50 s51 s52 s53 s54 s55 s56 s57 s58 s59
+	  s60 s61 s62 s63 s64 s65 s66 s67 s68 s69
+  	  s70 s71 s72 s73 s74 s75 s76 s77 s78 s79
+	  s80 s81 s82 s83 s84 s85 s86 s87 s88 s89
+	  s90 s91 s92 s93 s94 s95 s96 s97 s98 s99
+	},
+	finalStates = {
+	  s00 s01 s02 s03 s04 s05 s06 s07 s08 s09
+	  s10 s11 s12 s13 s14 s15 s16 s17 s18 s19
+	  s20 s21 s22 s23 s24 s25 s26 s27 s28 s29
+	  s30 s31 s32 s33 s34 s35 s36 s37 s38 s39
+	  s40 s41 s42 s43 s44 s45 s46 s47 s48 s49
+	},
+	callTransitions = {
+	},
+	internalTransitions = {
+	  (s00 a s00) (s01 a s01) (s02 a s02) (s03 a s03) (s04 a s04) (s05 a s05) (s06 a s06) (s07 a s07) (s08 a s08) (s09 a s09)
+	  (s10 a s10) (s11 a s11) (s12 a s12) (s13 a s13) (s14 a s14) (s15 a s15) (s16 a s16) (s17 a s17) (s18 a s18) (s19 a s19)
+	  (s20 a s20) (s21 a s21) (s22 a s22) (s23 a s23) (s24 a s24) (s25 a s25) (s26 a s26) (s27 a s27) (s28 a s28) (s29 a s29)
+	  (s30 a s30) (s31 a s31) (s32 a s32) (s33 a s33) (s34 a s34) (s35 a s35) (s36 a s36) (s37 a s37) (s38 a s38) (s39 a s39)
+	  (s40 a s40) (s41 a s41) (s42 a s42) (s43 a s43) (s44 a s44) (s45 a s45) (s46 a s46) (s47 a s47) (s48 a s48) (s49 a s49)
+  	  (s50 a s50) (s51 a s51) (s52 a s52) (s53 a s53) (s54 a s54) (s55 a s55) (s56 a s56) (s57 a s57) (s58 a s58) (s59 a s59)
+	  (s60 a s60) (s61 a s61) (s62 a s62) (s63 a s63) (s64 a s64) (s65 a s65) (s66 a s66) (s67 a s67) (s68 a s68) (s69 a s69)
+	  (s70 a s70) (s71 a s71) (s72 a s72) (s73 a s73) (s74 a s74) (s75 a s75) (s76 a s76) (s77 a s77) (s78 a s78) (s79 a s79)
+	  (s80 a s80) (s81 a s81) (s82 a s82) (s83 a s83) (s84 a s84) (s85 a s85) (s86 a s86) (s87 a s87) (s88 a s88) (s89 a s89)
+	  (s90 a s90) (s91 a s91) (s92 a s92) (s93 a s93) (s94 a s94) (s95 a s95) (s96 a s96) (s97 a s97) (s98 a s98) (s99 a s99)
+	},
+	returnTransitions = {
+	}
+);

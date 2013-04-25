@@ -1,0 +1,39 @@
+// Testfile dumped by Ultimate at 2012/09/20 13:01:11
+
+// Problem with run fibonacciENTRY call< fibonacciENTRY PARALLELres = 0;PAR... L20' assume res >= 0;assu... fibonacciEXIT > returnL24 call< fibonacciENTRY PARALLELres = 0;PAR... L20' assume res >= 0;assu... fibonacciEXIT > returnL25 res = tmpA + tmpB; L20' assume !(res >= 0); fibonacciErr0AssertViolation 
+
+print(senwa(nwa));
+
+NestedWordAutomaton nwa = (
+	callAlphabet = {"call213" "call215" },
+	internalAlphabet = {"assume res >= 0;assu...217" "PARALLELres = 0;PAR...218" "res = tmpA + tmpB;208" "assume !(res >= 0);210" },
+	returnAlphabet = {"return216" "return214" },
+	states = {"L251582" "fibonacciENTRY1567" "L251580" "L20'1581" "L241578" "L241579" "L20'1576" "fibonacciEXIT1577" "fibonacciErr0AssertViolation1587" "fibonacciEXIT1586" "fibonacciENTRY1571" "L20'1585" "fibonacciErr0AssertViolation1584" },
+	initialStates = {"fibonacciENTRY1567" },
+	finalStates = {"fibonacciErr0AssertViolation1587" "fibonacciErr0AssertViolation1584" },
+	callTransitions = {
+		 ("L241578" "call215" "fibonacciENTRY1571")
+		 ("L241579" "call215" "fibonacciENTRY1571")
+		 ("fibonacciENTRY1571" "call213" "fibonacciENTRY1571")
+		 ("fibonacciENTRY1567" "call213" "fibonacciENTRY1571")
+	},
+	internalTransitions = {
+		 ("L251582" "res = tmpA + tmpB;208" "L20'1585")
+		 ("L251580" "res = tmpA + tmpB;208" "L20'1581")
+		 ("L20'1581" "assume !(res >= 0);210" "fibonacciErr0AssertViolation1584")
+		 ("L20'1576" "assume res >= 0;assu...217" "fibonacciEXIT1577")
+		 ("fibonacciENTRY1571" "PARALLELres = 0;PAR...218" "L20'1576")
+		 ("L20'1585" "assume res >= 0;assu...217" "fibonacciEXIT1586")
+		 ("L20'1585" "assume !(res >= 0);210" "fibonacciErr0AssertViolation1587")
+	},
+	returnTransitions = {
+		 ("fibonacciEXIT1577" "L241578" "return216" "L251580")
+		 ("fibonacciEXIT1577" "L241579" "return216" "L251582")
+		 ("fibonacciEXIT1577" "fibonacciENTRY1567" "return214" "L241578")
+		 ("fibonacciEXIT1577" "fibonacciENTRY1571" "return214" "L241579")
+		 ("fibonacciEXIT1586" "L241578" "return216" "L251580")
+		 ("fibonacciEXIT1586" "L241579" "return216" "L251582")
+		 ("fibonacciEXIT1586" "fibonacciENTRY1567" "return214" "L241578")
+		 ("fibonacciEXIT1586" "fibonacciENTRY1571" "return214" "L241579")
+	}
+);

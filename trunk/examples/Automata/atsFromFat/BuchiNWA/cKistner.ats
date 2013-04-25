@@ -1,0 +1,24 @@
+// Example, where in each accepting run the same call transition has to be
+// taken twice.
+
+// Author: heizmann@informatik.uni-freiburg.de
+// Date: 16.5.2011
+
+
+assert(buchiAccepts(cKistner, [, c<  c<  a >r >r ]));
+assert(!buchiIsEmpty(cKistner));
+
+print(cKistner);
+
+NestedWordAutomaton cKistner = (
+  callAlphabet = { c },
+  internalAlphabet = {a b},
+  returnAlphabet = { r },
+  states = {s0 s1 s2},
+  initialStates = {s0},
+  finalStates = {s1},
+  callTransitions = { (s0 c s0) },
+  internalTransitions = {(s0 a s1) }, 
+  returnTransitions = { (s1 s0 r s2) (s2 s0 r s0) }
+);
+

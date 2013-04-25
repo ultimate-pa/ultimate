@@ -1,0 +1,32 @@
+// Testfile dumped by Ultimate at 2012/09/20 02:21:27
+
+// Problem with run unknown assume a >= 0;assume... unknown call< unknown assume x >= 0;assume... unknown assume y == 0;res :=... unknown assume true; unknown > returnunknown assume !(c == a + b)... unknown 
+
+print(minimizeSevpa(reachableStatesCopy(nwa)));
+
+NestedWordAutomaton nwa = (
+	callAlphabet = {"call13" "call15" },
+	internalAlphabet = {"assume a >= 0;assume...0" "assume c == a + b;2" "assume !(c == a + b)...3" "assume x >= 0;assume...4" "assume y == 0;res :=...7" "assume !(y == 0);9" "assume true;12" },
+	returnAlphabet = {"return16" "return14" },
+	states = {"#34#additionEXIT34" "#39#L36'39" "#23#MainENTRY23" "#22#additionENTRY22" "#52#MainErr0EnsuresViolation52" "#25#$Ultimate##025" "#27#$Ultimate##027" "#29#L36'29" "#47#MainFINAL47" "#31#L3631" "#45#additionEXIT45" },
+	initialStates = {"#23#MainENTRY23" },
+	finalStates = {"#52#MainErr0EnsuresViolation52" },
+	callTransitions = {
+		 ("#27#$Ultimate##027" "call13" "#22#additionENTRY22")
+		 ("#31#L3631" "call15" "#22#additionENTRY22")
+	},
+	internalTransitions = {
+		 ("#39#L36'39" "assume true;12" "#45#additionEXIT45")
+		 ("#47#MainFINAL47" "assume !(c == a + b)...3" "#52#MainErr0EnsuresViolation52")
+		 ("#23#MainENTRY23" "assume a >= 0;assume...0" "#27#$Ultimate##027")
+		 ("#22#additionENTRY22" "assume x >= 0;assume...4" "#25#$Ultimate##025")
+		 ("#25#$Ultimate##025" "assume y == 0;res :=...7" "#29#L36'29")
+//		 ("#25#$Ultimate##025" "assume !(y == 0);9" "#31#L3631")
+		 ("#29#L36'29" "assume true;12" "#34#additionEXIT34")
+	},
+	returnTransitions = {
+		 ("#34#additionEXIT34" "#31#L3631" "return16" "#39#L36'39")
+		 ("#45#additionEXIT45" "#31#L3631" "return16" "#39#L36'39")
+		 ("#45#additionEXIT45" "#27#$Ultimate##027" "return14" "#47#MainFINAL47")
+	}
+);

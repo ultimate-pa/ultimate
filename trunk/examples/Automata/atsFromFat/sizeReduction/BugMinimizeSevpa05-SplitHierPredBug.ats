@@ -1,0 +1,27 @@
+// Example that shows that we may not only split partitions along linear
+// predecessors but also along hierarchical predecessors.
+// changed: Christian
+// Date: 22.09.2012
+// Author: Matthias
+
+print(minimizeSevpa( reachableStatesCopy(nwa)));
+
+NestedWordAutomaton nwa = (
+	callAlphabet = {"call" },
+	internalAlphabet = {"a" "b" },
+	returnAlphabet = { "return" },
+	states = {"q2" "qEntry" "q1" "q3" },
+	initialStates = {"qEntry" },
+	finalStates = {"qEntry" },
+	callTransitions = {
+		 ("q1" "call" "qEntry")
+ 		 ("q3" "call" "qEntry")
+	},
+	internalTransitions = {
+		 ("qEntry" "a" "q2")
+		 ("qEntry" "b" "q1")
+	},
+	returnTransitions = {
+		 ("q2" "q1" "return" "q3")
+	}
+);

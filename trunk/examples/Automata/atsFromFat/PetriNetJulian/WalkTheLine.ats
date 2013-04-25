@@ -1,0 +1,19 @@
+// Date:  31.10.2011
+// Author: heizmann@informatik.uni-freiburg.de
+
+// Reveals bug in unfolding.
+
+assert(!isEmpty(WalkTheLine));
+print(finitePrefix( WalkTheLine ));
+
+
+PetriNet WalkTheLine = (
+  alphabet = {a},
+  places = {p0 p1 p2},
+  transitions = {
+    ({p0} a {p1}) 
+    ({p1} a {p2})
+  },
+  initialMarking = { p0 },
+  acceptingPlaces = { p2 }
+);

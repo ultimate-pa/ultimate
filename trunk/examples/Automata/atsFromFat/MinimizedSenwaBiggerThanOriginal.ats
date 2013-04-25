@@ -1,0 +1,53 @@
+// Automaton where minimizeSevpa(senwa(nwa)) has more states than the original
+// automaton.
+// 
+// Reason: The senwa operation splits spExit to sExit and pExit (in fact, to
+// one copy of spExit with entry sEntry and one copy of pExit with entry 
+// pEntry).
+// Both states sExit and pExit are not merged again in the minimization. Why?
+// The senwa operation splits the return transition
+// ("spExit" "sEntry" "returnVonPNachS" "spExit")
+// into the following four return transitions.
+// ("sExit" "sEntry" "returnVonPNachS" "sExit")
+// ("sExit" "sEntry" "returnVonPNachS" "pExit")
+// ("pExit" "sEntry" "returnVonPNachS" "sExit")
+// ("pExit" "sEntry" "returnVonPNachS" "pExit")
+//
+// However two one of them
+// ("sExit" "sEntry" "returnVonPNachS" "sExit")
+// ("sExit" "sEntry" "returnVonPNachS" "pExit")
+// are never reachable/executable, the senwa operation removes both. When the
+// (Hopcroft) minimization algorithm searches for predecessors along 
+// "returnVonPNachS" for an equivalence class containing {sExit, pExit} it will
+// only find pExit and split equivalence classes such that one contains sExit 
+// and the other contains pExit.
+// 
+// Since is seems (1.10.2012) that we can apply the Hopcroft algorihtm without 
+// a lot of modification only to Senwas, there is no need to solve this
+// problem. E.g. modify the senwa operation such that it preserves the dead 
+// return transitions.
+//
+// Author: heizmann@informatik.uni-freiburg.de
+// Date: 1.10.2012
+
+print(senwa( reachableStatesCopy(nwa)));
+
+NestedWordAutomaton nwa = (
+	callAlphabet = {"callVonSNachP" "callVonQNachS" },
+	internalAlphabet = {"b"},
+	returnAlphabet = {"returnVonSNachQ" "returnVonPNachS" },
+	states = {"p1" "sEntry" "spExit" "pEntry" "qFin" "s2" "qInit" },
+	initialStates = {"qInit" },
+	finalStates = {"qFin" },
+	callTransitions = {
+		 ("sEntry" "callVonSNachP" "pEntry")
+		 ("qInit" "callVonQNachS" "sEntry")
+	},
+	internalTransitions = {
+		 ("pEntry" "b" "spExit")
+	},
+	returnTransitions = {
+		 ("spExit" "qInit" "returnVonSNachQ" "qFin")
+		 ("spExit" "sEntry" "returnVonPNachS" "spExit")
+	}
+);

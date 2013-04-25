@@ -1,0 +1,48 @@
+// Testfile dumped by Ultimate at 2011/04/14 16:23:18
+// Revision r3493
+//java.lang.AssertionError
+//	at de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.BfsEmptiness.constructRun(BfsEmptiness.java:561)
+//	at de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.BfsEmptiness.constructRun(BfsEmptiness.java:512)
+//	at de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.BfsEmptiness.constructRun(BfsEmptiness.java:556)
+//	at de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.BfsEmptiness.constructRun(BfsEmptiness.java:512)
+//	at de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.BfsEmptiness.constructRun(BfsEmptiness.java:556)
+//	at de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.BfsEmptiness.constructRun(BfsEmptiness.java:512)
+//	at de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.BfsEmptiness.getAcceptingRun(BfsEmptiness.java:259)
+//	at de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton.getAcceptingNestedRun(NestedWordAutomaton.java:499)
+
+// Problem:
+// While processing the DoubleDecker (m1,emptyStack) we add (gInit,m1) to the 
+// call queue and to visited DoubleDeckers.
+// The call queue has a lower priority than the normal queue.
+// Since (gInit,m1) is marked visited reachability of mLast is detected.
+// The algorithm starts the construction of an accepted run, (gInit,m1) was not
+// yet processed. The information that (gInit,m1) is predecessor of (gInit,gInit)
+// is missing.
+
+// Fixed in revision r3556
+
+
+
+assert(!isEmpty(nwa));
+print(nwa);
+
+NestedWordAutomaton nwa = (
+	callAlphabet = {m1_call_gInit gInitCallSelfloop },
+	internalAlphabet = {mInit_To_m1 _2_gExit mLast_2_fin },
+	returnAlphabet = {gExit_m1_return_mLast gExit_gInit_return_m2 },
+	states = {gInit gExit mLast m1 m2 },
+	initialStates = {gInit m1 },
+	finalStates = {mLast },
+	callTransitions = {
+		 (gInit gInitCallSelfloop gInit)
+		 (m1 m1_call_gInit gInit)
+	},
+	internalTransitions = {
+		 (m2 _2_gExit gExit)
+		 (gInit _2_gExit gExit)
+	},
+	returnTransitions = {
+		 (gExit gInit gExit_gInit_return_m2 m2)
+		 (gExit m1 gExit_m1_return_mLast mLast)
+	}
+);

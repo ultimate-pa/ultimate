@@ -1,0 +1,14 @@
+print(buchiComplementSVW(finitelyManyAs));
+
+NestedWordAutomaton finitelyManyAs = (
+  callAlphabet = { },
+  internalAlphabet = {a b},
+  returnAlphabet = { },
+  states = {p q},
+  initialStates = {p},
+  finalStates = {q},
+  callTransitions = { },
+  internalTransitions = {(p a p) (p b p) (p b q) (q b q)}, 
+  returnTransitions = { }
+);
+

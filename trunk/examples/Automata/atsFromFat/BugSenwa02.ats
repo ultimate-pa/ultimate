@@ -1,0 +1,38 @@
+// Testfile dumped by Ultimate at 2012/09/28 23:52:39
+
+// Problem with run ackermannENTRY assume m >= 0;assume... $Ultimate##0 assume !(m == 0); L25 assume !(n == 0); L29 call< ackermannENTRY assume m >= 0;assume... $Ultimate##0 assume m == 0;res :=... #4534#ackermannFINAL assume res >= 0; #4541#ackermannEXIT > return#4605#L29' assume !(tmp >= 0); #4612#ackermannErr5RequiresViolation 
+
+print(senwa(nwa));
+
+NestedWordAutomaton nwa = (
+	callAlphabet = {"call238" "call236" "call240" },
+	internalAlphabet = {"assume !(res >= 0);235" "assume res >= 0;234" "assume !(tmp >= 0);233" "assume !(m - 1 >= 0)...232" "assume !(n - 1 >= 0)...230" "assume !(m >= 0);229" "assume !(n == 0);227" "assume !(1 >= 0);226" "assume !(m - 1 >= 0)...225" "assume !(m == 0);220" "assume n == 0;223" "assume m >= 0;assume...216" "assume m == 0;res :=...219" },
+	returnAlphabet = {"return239" "return237" "return241" },
+	states = {"#4499#L29'4499" "#4498#ackermannErr2RequiresViolation4498" "#4497#ackermannErr3RequiresViolation4497" "#4496#ackermannENTRY4496" "#4501#ackermannErr4RequiresViolation4501" "#4500#ackermannErr5RequiresViolation4500" "#4490#L294490" "#4488#ackermannFINAL4488" "#4489#L264489" "#4495#ackermannErr0RequiresViolation4495" "#4493#ackermannEXIT4493" "#4483#ackermannENTRY4483" "#4486#L254486" "#4485#$Ultimate##04485" },
+	initialStates = {"#4483#ackermannENTRY4483" },
+	finalStates = {"#4498#ackermannErr2RequiresViolation4498" "#4497#ackermannErr3RequiresViolation4497" "#4501#ackermannErr4RequiresViolation4501" "#4500#ackermannErr5RequiresViolation4500" "#4495#ackermannErr0RequiresViolation4495" },
+	callTransitions = {
+		 ("#4499#L29'4499" "call240" "#4483#ackermannENTRY4483")
+		 ("#4490#L294490" "call238" "#4483#ackermannENTRY4483")
+		 ("#4489#L264489" "call236" "#4496#ackermannENTRY4496")
+	},
+	internalTransitions = {
+		 ("#4499#L29'4499" "assume !(tmp >= 0);233" "#4500#ackermannErr5RequiresViolation4500")
+		 ("#4499#L29'4499" "assume !(m - 1 >= 0)...232" "#4501#ackermannErr4RequiresViolation4501")
+		 ("#4496#ackermannENTRY4496" "assume m >= 0;assume...216" "#4485#$Ultimate##04485")
+		 ("#4490#L294490" "assume !(n - 1 >= 0)...230" "#4497#ackermannErr3RequiresViolation4497")
+		 ("#4490#L294490" "assume !(m >= 0);229" "#4498#ackermannErr2RequiresViolation4498")
+		 ("#4488#ackermannFINAL4488" "assume res >= 0;234" "#4493#ackermannEXIT4493")
+		 ("#4489#L264489" "assume !(m - 1 >= 0)...225" "#4495#ackermannErr0RequiresViolation4495")
+		 ("#4483#ackermannENTRY4483" "assume m >= 0;assume...216" "#4485#$Ultimate##04485")
+		 ("#4486#L254486" "assume n == 0;223" "#4489#L264489")
+		 ("#4486#L254486" "assume !(n == 0);227" "#4490#L294490")
+		 ("#4485#$Ultimate##04485" "assume !(m == 0);220" "#4486#L254486")
+		 ("#4485#$Ultimate##04485" "assume m == 0;res :=...219" "#4488#ackermannFINAL4488")
+	},
+	returnTransitions = {
+		 ("#4493#ackermannEXIT4493" "#4490#L294490" "return239" "#4499#L29'4499")
+		 ("#4493#ackermannEXIT4493" "#4489#L264489" "return237" "#4488#ackermannFINAL4488")
+		 ("#4493#ackermannEXIT4493" "#4499#L29'4499" "return241" "#4488#ackermannFINAL4488")
+	}
+);

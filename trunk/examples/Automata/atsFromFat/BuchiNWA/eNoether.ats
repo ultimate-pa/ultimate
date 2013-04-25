@@ -1,0 +1,30 @@
+// Example where only lasso has the following property. Accepting state occurs
+// before call and after return, but is not the only state between call and
+// return.
+// Matthias used this example in his email to Xiao-Lin on 2010-10-23
+// Author: heizmann@informatik.uni-freiburg.de
+// Date: 23.10.2010
+
+assert(buchiAccepts(eNoether, [ ,b c< a >r]));
+assert(buchiAccepts(eNoether, [b , c< a >r b]));
+assert(!buchiAccepts(eNoether, [, c< a >r b]));
+assert(buchiAccepts(eNoether, [b, c< a >r b]));
+assert(!buchiAccepts(eNoether, [b, c< a >r]));
+assert(!buchiAccepts(eNoether, [b, c a r]));
+assert(!buchiIsEmpty(eNoether));
+
+print(eNoether);
+
+
+NestedWordAutomaton eNoether = (
+  callAlphabet = {c},
+  internalAlphabet = {a b},
+  returnAlphabet = {r},
+  states = {s0 s1 p1 p2},
+  initialStates = {s0},
+  finalStates = {s0},
+  callTransitions = {(s1 c p1)},
+  internalTransitions = {(s0 b s1) (p1 a p2)}, 
+  returnTransitions = {(p2 s1 r s0)}
+);
+

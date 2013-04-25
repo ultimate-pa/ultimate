@@ -1,0 +1,102 @@
+// Models a system of two processes p1,p1 that want to access the four
+// ressources a,b.
+// If we say the system is correct if both can not access ressources a at the
+// same time, the system is correct iff the language accepted by the following
+// concurrent product(s) is empty.
+// 
+// 20.1.2011 heizmann@informatik.uni-freiburg.de
+
+assert(isEmpty(concurrentProductAutomaton(p1));
+      concurrentProductAutomaton(p2
+      concurrentProductAutomaton(aRessourceManager
+      bRessourceManager)))
+
+
+print(concurrentProductAutomaton(p1);
+      concurrentProductAutomaton(p2
+      concurrentProductAutomaton(aRessourceManager
+      bRessourceManager)))
+
+NestedWordAutomaton p1 = (
+  callAlphabet = {},
+  internalAlphabet = {p1REQa p1RELa p1REQb p1RELb},
+  returnAlphabet = {},
+  states = {p1init p1a p1b},
+  initialStates = {p1init},
+  finalStates = {p1a p1b},
+  callTransitions = {},
+  internalTransitions = {
+    (p1init p1REQa p1a) (p1a p1RELa p1init)
+    (p1init p1REQb p1b) (p1b p1RELb p1init)
+}, 
+  returnTransitions = {}
+);
+
+NestedWordAutomaton p2 = (
+  callAlphabet = {},
+  internalAlphabet = {p2REQa p2RELa p2REQb p2RELb},
+  returnAlphabet = {},
+  states = {p2init p2a p2b},
+  initialStates = {p2init},
+  finalStates = {p2a p2b},
+  callTransitions = {},
+  internalTransitions = {
+    (p2init p2REQa p2a) (p2a p2RELa p2init)
+    (p2init p2REQb p2b) (p2b p2RELb p2init)
+}, 
+  returnTransitions = {}
+);
+
+
+
+
+NestedWordAutomaton aRessourceManager = (
+  callAlphabet = {},
+  internalAlphabet = {
+	p1REQa p1RELa 
+	p1REQb p1RELb 
+	p2REQa p2RELa 
+	p2REQb p2RELb 
+      },
+  returnAlphabet = {},
+  states = {aFree aLocked},
+  initialStates = {aFree},
+  finalStates = {aFree aLocked},
+  callTransitions = {},
+  internalTransitions = {
+    (aFree p1REQa aLocked) (aLocked p1RELa aFree)
+    (aFree p2REQa aLocked) (aLocked p2RELa aFree)
+    (aFree p1REQb aFree) (aLocked p1REQb aLocked)
+    (aFree p1RELb aFree) (aLocked p1RELb aLocked)
+    (aFree p2REQb aFree) (aLocked p2REQb aLocked)
+    (aFree p2RELb aFree) (aLocked p2RELb aLocked)
+}, 
+  returnTransitions = {}
+);
+
+
+NestedWordAutomaton bRessourceManager = (
+  callAlphabet = {},
+  internalAlphabet = {
+	p1REQa p1RELa 
+	p1REQb p1RELb 
+	p2REQa p2RELa 
+	p2REQb p2RELb 
+      },
+  returnAlphabet = {},
+  states = {bFree bLocked},
+  initialStates = {bFree},
+  finalStates = {aFree aLocked},
+  callTransitions = {},
+  internalTransitions = {
+    (bFree p1REQb bLocked) (bLocked p1RELb bFree)
+    (bFree p2REQb bLocked) (bLocked p2RELb bFree)
+    (bFree p1REQa bFree) (bLocked p1REQa bLocked)
+    (bFree p1RELa bFree) (bLocked p1RELa bLocked)
+    (bFree p2REQa bFree) (bLocked p2REQa bLocked)
+    (bFree p2RELa bFree) (bLocked p2RELa bLocked)
+}, 
+  returnTransitions = {}
+);
+
+

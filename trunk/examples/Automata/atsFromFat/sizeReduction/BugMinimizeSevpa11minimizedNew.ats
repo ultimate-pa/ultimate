@@ -1,0 +1,25 @@
+//reveals bug in revision 7244
+print(reachableStatesCopy(nwa));
+
+NestedWordAutomaton nwa = (
+	callAlphabet = {"c"},
+	internalAlphabet = {"i1" "i1" "i2" "i4"},
+	returnAlphabet = {"r"},
+	states = {"q0" "q1" "q2" "qE" "t0" "t1" "t2"},
+	initialStates = {"q0"},
+	finalStates = {"qE"},
+	callTransitions = {
+		 ("q1" "c" "t0")
+		 ("q2" "c" "t0")
+	},
+	internalTransitions = {
+		 ("q0" "i1" "q1")
+		 ("q0" "i2" "q2")
+		 ("t0" "i1" "t1")
+		 ("t0" "i2" "t2")
+	},
+	returnTransitions = {
+		 ("t1" "q1" "r" "qE")
+		 ("t2" "q2" "r" "qE")
+	}
+);
