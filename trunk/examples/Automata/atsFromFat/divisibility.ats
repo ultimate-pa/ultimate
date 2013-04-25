@@ -10,22 +10,22 @@ assert(accepts(Amod3, [ 1 0 0 1 ]));
 assert(!accepts(Amod3, [ 1 0 0 0 ]));
 assert(!accepts(Amod3, [ 1 0 1 0 ]));
 assert(!accepts(Amod3, [ 1 1 0 0 1 0 1 ]));
-assert(isEmpty(difference(difference(Amod2 complement(Amod3)) intersect(Amod2 Amod3))));
-assert(isEmpty(difference(intersect(Amod2 Amod3) difference(Amod2 complement(Amod3)) )));
+assert(isEmpty(difference(difference(Amod2, complement(Amod3)), intersect(Amod2 Amod3))));
+assert(isEmpty(difference(intersect(Amod2, Amod3), difference(Amod2, complement(Amod3)) )));
 
-assert(isEmpty(intersect());
-  intersect(Amod2 Amod3)
-  complement(difference(Amod2 complement(Amod3)))
+assert(isEmpty(intersect(
+  intersect(Amod2, Amod3),
+  complement(difference(Amod2, complement(Amod3)))
 );
 
-assert(isEmpty(intersect());
-  complement(difference(Amod2 complement(Amod3)))
-  intersect(Amod2 Amod3)
+assert(isEmpty(intersect(
+  complement(difference(Amod2, complement(Amod3))),
+  intersect(Amod2, Amod3)
 );
 
 
 //print(intersect(Amod2 Amod3));
-print(difference(Amod2 complement(Amod3)));
+print(difference(Amod2, complement(Amod3)));
 
 NestedWordAutomaton Amod3 = (
   callAlphabet = { },

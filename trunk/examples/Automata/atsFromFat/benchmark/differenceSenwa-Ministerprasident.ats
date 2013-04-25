@@ -19,12 +19,12 @@
 //Ackermann_Abstraction24
 //Ackermann_InterpolantAutomaton_Iteration39
 
-assert(!accepts(differenceSenwa (McCarthyInterpolantAutomaton_Iteration16 McCarthyInterpolantAutomaton_Iteration12), []));
-assert(!accepts(differenceSenwa (McCarthyAbstraction16 McCarthyInterpolantAutomaton_Iteration12), []));
-assert(!accepts(differenceSenwa (McCarthyAbstraction16 McCarthyInterpolantAutomaton_Iteration16), []));
+assert(!accepts(differenceSenwa (McCarthyInterpolantAutomaton_Iteration16, McCarthyInterpolantAutomaton_Iteration12), []));
+assert(!accepts(differenceSenwa (McCarthyAbstraction16, McCarthyInterpolantAutomaton_Iteration12), []));
+assert(!accepts(differenceSenwa (McCarthyAbstraction16, McCarthyInterpolantAutomaton_Iteration16), []));
 
-assert(!accepts(differenceSenwa (Ackermann_Abstraction24 Ackermann_InterpolantAutomaton_Iteration39), []));
-assert(!accepts(differenceSenwa (Ackermann_Abstraction19 Ackermann_InterpolantAutomaton_Iteration39), []));
+assert(!accepts(differenceSenwa (Ackermann_Abstraction24, Ackermann_InterpolantAutomaton_Iteration39), []));
+assert(!accepts(differenceSenwa (Ackermann_Abstraction19, Ackermann_InterpolantAutomaton_Iteration39), []));
 
 
 

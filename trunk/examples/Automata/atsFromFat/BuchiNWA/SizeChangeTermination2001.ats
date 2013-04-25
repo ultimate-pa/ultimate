@@ -28,8 +28,8 @@ assert(buchiIsEmpty(buchiComplementFKV(infeasible)));
 assert(buchiAccepts(infeasible, [1 1, 1 1]));
 assert(!buchiAccepts(buchiComplementFKV(infeasible), [1 1, 1 1]));
 assert(buchiIsEmpty(buchiComplementFKV(infeasible)));
-assert(!buchiAccepts(buchiIntersect(callGraph buchiComplementFKV(infeasible)), [1 1, 1 1]));
-assert(buchiIsEmpty(buchiIntersect(callGraph buchiComplementFKV(infeasible))));
+assert(!buchiAccepts(buchiIntersect(callGraph, buchiComplementFKV(infeasible)), [1 1, 1 1]));
+assert(buchiIsEmpty(buchiIntersect(callGraph, buchiComplementFKV(infeasible))));
 
 //print(buchiComplementFKV(callGraph));
 print(buchiComplementFKV(infeasibleN));

@@ -8,22 +8,22 @@ assert(!accepts(a1, [a a a b]));
 assert(!accepts(determinize(a1), [a a a b]));
 assert(!isEmpty(a1));
 assert(!isEmpty(determinize(a1)));
-assert(!isEmpty(difference(all a1)));
-assert(!isEmpty(intersect(all complement(a1))));
-assert(!isEmpty(difference(all difference(all a1))));
-assert(!isEmpty(intersect(all complement(intersect(all complement(a1))))));
+assert(!isEmpty(difference(all, a1)));
+assert(!isEmpty(intersect(all, complement(a1))));
+assert(!isEmpty(difference(all, difference(all a1))));
+assert(!isEmpty(intersect(all, complement(intersect(all, complement(a1))))));
 
 assert(!accepts(a1, [a a<]));
 assert(!accepts(complement(a1), [a a<]));
 assert(accepts(all, [a a<]));
-assert(!accepts(intersect(all complement(a1)), [a a<]));
-assert(!accepts(complement(intersect(all complement(a1))), [a a<]));
-assert(!accepts(intersect(all complement(intersect(all complement(a1)))), [a a<]));
-assert(accepts(difference(all difference(all a1)), [a a<]));
+assert(!accepts(intersect(all, complement(a1)), [a a<]));
+assert(!accepts(complement(intersect(all, complement(a1))), [a a<]));
+assert(!accepts(intersect(all, complement(intersect(all, complement(a1)))), [a a<]));
+assert(accepts(difference(all, difference(all, a1)), [a a<]));
 
-assert(isEmpty(difference(callRet callRet)));
+assert(isEmpty(difference(callRet, callRet)));
 
-print(difference(all difference(all a1)));
+print(difference(all, difference(all, a1)));
 
 NestedWordAutomaton all = (
   callAlphabet = {a b},

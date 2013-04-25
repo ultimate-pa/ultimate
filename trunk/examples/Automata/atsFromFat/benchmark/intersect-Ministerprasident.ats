@@ -19,15 +19,15 @@
 //Ackermann_Abstraction24
 //Ackermann_InterpolantAutomaton_Iteration39
 
-assert(!accepts(intersect (McCarthyInterpolantAutomaton_Iteration12 McCarthyInterpolantAutomaton_Iteration16), []));
-assert(!accepts(intersect (McCarthyAbstraction16 McCarthyInterpolantAutomaton_Iteration16), []));
-assert(!accepts(intersect (McCarthyInterpolantAutomaton_Iteration12 McCarthyAbstraction16), []));
+assert(!accepts(intersect (McCarthyInterpolantAutomaton_Iteration12, McCarthyInterpolantAutomaton_Iteration16), []));
+assert(!accepts(intersect (McCarthyAbstraction16, McCarthyInterpolantAutomaton_Iteration16), []));
+assert(!accepts(intersect (McCarthyInterpolantAutomaton_Iteration12, McCarthyAbstraction16), []));
 
-assert(!accepts(intersect (Ackermann_Abstraction19 Ackermann_Abstraction24), []));
-assert(!accepts(intersect (Ackermann_InterpolantAutomaton_Iteration39 Ackermann_Abstraction24), []));
-assert(!accepts(intersect (Ackermann_Abstraction19 Ackermann_InterpolantAutomaton_Iteration39), []));
+assert(!accepts(intersect (Ackermann_Abstraction19, Ackermann_Abstraction24), []));
+assert(!accepts(intersect (Ackermann_InterpolantAutomaton_Iteration39, Ackermann_Abstraction24), []));
+assert(!accepts(intersect (Ackermann_Abstraction19, Ackermann_InterpolantAutomaton_Iteration39), []));
 
-assert(!accepts(intersect (McCarthyAbstraction16 Ackermann_Abstraction24), []));
+assert(!accepts(intersect (McCarthyAbstraction16, Ackermann_Abstraction24), []));
 
 
 

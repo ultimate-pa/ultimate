@@ -1,27 +1,27 @@
 // Author: heizmann@informatik.uni-freiburg.de,  Date: 5.4.2011
 
 //assert(isEmpty(intersect(t1 t2)));
-assert(!isEmpty(prefixProduct(petriNetJulian(t1) t2)));
-assert(!isEmpty(differenceBlackAndWhite(prefixProduct(petriNetJulian(t1) t2) access2Model)));
+assert(!isEmpty(prefixProduct(petriNetJulian(t1), t2)));
+assert(!isEmpty(differenceBlackAndWhite(prefixProduct(petriNetJulian(t1), t2), access2Model)));
 
-assert(!isEmpty(differenceBlackAndWhite());
+assert(!isEmpty(differenceBlackAndWhite(
     differenceBlackAndWhite(
-        prefixProduct(petriNetJulian(t1) t2) 
-        access1Model)
+        prefixProduct(petriNetJulian(t1), t2), 
+        access1Model),
     access2Model
 );
 
-assert(isEmpty(differenceBlackAndWhite());
+assert(isEmpty(differenceBlackAndWhite(
     differenceBlackAndWhite(
         differenceBlackAndWhite(
-            prefixProduct(petriNetJulian(t1) t2) 
-            access1Model)
-        access2Model)
+            prefixProduct(petriNetJulian(t1), t2) ,
+            access1Model),
+        access2Model),
     lockModel)
 
 
-//print(differenceBlackAndWhite(prefixProduct(petriNetJulian(t1) t2) access1Model));
-print(differenceBlackAndWhite(prefixProduct(petriNetJulian(t1) t2) access2Model));
+//print(differenceBlackAndWhite(prefixProduct(petriNetJulian(t1), t2), access1Model));
+print(differenceBlackAndWhite(prefixProduct(petriNetJulian(t1), t2), access2Model));
 
 NestedWordAutomaton t1 = (
   callAlphabet = {},

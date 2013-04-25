@@ -6,21 +6,21 @@
 
 assert(!isEmpty(prefixProduct(petriNetJulian(t1) t2)));
 
-assert(!isEmpty(prefixProduct(prefixProduct(petriNetJulian(t1) t2) access2Model)));
+assert(!isEmpty(prefixProduct(prefixProduct(petriNetJulian(t1), t2), access2Model)));
 
-assert(!isEmpty(prefixProduct());
+assert(!isEmpty(prefixProduct(
     prefixProduct(
-        prefixProduct(petriNetJulian(t1) t2) 
-        access1Model)
+        prefixProduct(petriNetJulian(t1) t2),
+        access1Model),
     access2Model
 );
 
-assert(isEmpty(prefixProduct());
+assert(isEmpty(prefixProduct(
     prefixProduct(
         prefixProduct(
-            prefixProduct(petriNetJulian(t1) t2) 
-            access1Model)
-        access2Model)
+            prefixProduct(petriNetJulian(t1) t2),
+            access1Model),
+        access2Model),
     lockModel)
 
 

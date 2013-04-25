@@ -3,10 +3,10 @@
 // Date: 27.12.2010
 
 assert(!isEmpty(Acontrol));
-assert(!isEmpty(intersect(complement(A1) Acontrol)));
-assert(!isEmpty(difference(Acontrol A1)));
+assert(!isEmpty(intersect(complement(A1), Acontrol)));
+assert(!isEmpty(difference(Acontrol, A1)));
 
-print(difference(Acontrol A1));
+print(difference(Acontrol, A1));
 
 NestedWordAutomaton Acontrol = (
   callAlphabet = { },

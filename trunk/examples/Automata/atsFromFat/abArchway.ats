@@ -11,7 +11,7 @@
 // The answer of the second test should be no, e.g. the nested word aa is 
 // accepted.
 assert(!accepts(a1, [a a b b]));
-assert(!isEmpty(intersect(complement(a1) a2)));
+assert(!isEmpty(intersect(complement(a1), a2)));
 
 // The visulization should depict a1
 print(a1);

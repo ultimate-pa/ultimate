@@ -12,10 +12,10 @@
 // other files on 16.05.2011. (At his day Space Shuttle Endeavour started for
 // its final mission)
 
-assert(!buchiAccepts(buchiIntersect(nonNestedBuchi1 nonNestedBuchi2), [  ,  ]));
-assert(!buchiAccepts(buchiIntersect(cKistner cKistnerSelfLoopFree), [  ,  ]));
-assert(!buchiAccepts(buchiIntersect(finitelyManyA finitelyManyB), [  ,  ]));
-assert(!buchiAccepts(buchiIntersect(infinitelyManyA infinitelyManyB), [  ,  ]));
+assert(!buchiAccepts(buchiIntersect(nonNestedBuchi1, nonNestedBuchi2), [  ,  ]));
+assert(!buchiAccepts(buchiIntersect(cKistner, cKistnerSelfLoopFree), [  ,  ]));
+assert(!buchiAccepts(buchiIntersect(finitelyManyA, finitelyManyB), [  ,  ]));
+assert(!buchiAccepts(buchiIntersect(infinitelyManyA, infinitelyManyB), [  ,  ]));
 
 
 

@@ -7,7 +7,7 @@ print(beverageVendingMachine);
 //assert(!buchiAccepts(alwaysDispenceSpecification, [, select paidInsufficient]));
 //assert(buchiAccepts(buchiComplementFKV(alwaysDispenceSpecification), [, select paidInsufficient]));
 
-assert(!buchiIsEmpty(buchiIntersect(beverageVendingMachine buchiComplementFKV(alwaysDispenceSpecification))));
+assert(!buchiIsEmpty(buchiIntersect(beverageVendingMachine, buchiComplementFKV(alwaysDispenceSpecification))));
 
 NestedWordAutomaton beverageVendingMachine = (
   callAlphabet = {},

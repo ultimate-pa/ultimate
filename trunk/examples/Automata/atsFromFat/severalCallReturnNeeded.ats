@@ -11,10 +11,10 @@ assert(!accepts(a1, [a a a b]));
 assert(!accepts(determinize(a1), [a a a b]));
 assert(!isEmpty(a1));
 assert(!isEmpty(determinize(a1)));
-assert(!isEmpty(difference(all a1)));
-assert(accepts(difference(all difference(all a1)), [a<  a  a  a  a  a  a<  a<  a<  > a > a > a > a]));
-assert(isEmpty(intersect(a1 difference(all a1))));
-assert(!accepts(difference(all difference(all a1)), [a a<]));
+assert(!isEmpty(difference(all, a1)));
+assert(accepts(difference(all, difference(all a1)), [a<  a  a  a  a  a  a<  a<  a<  > a > a > a > a]));
+assert(isEmpty(intersect(a1, difference(all a1))));
+assert(!accepts(difference(all, difference(all a1)), [a a<]));
 assert(!accepts(a1, [a a<]));
 
 print(a1);

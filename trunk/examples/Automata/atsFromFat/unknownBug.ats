@@ -15,7 +15,7 @@
 //	at de.uni_freiburg.informatik.ultimate.automata.TestFileExecutor.parseExpression(TestFileExecutor.java:552)
 //	at de.uni_freiburg.informatik.ultimate.automata.TestFileExecutor.parseTestCase(TestFileExecutor.java:198)
 
-assert(!accepts(difference (McCarthyAbstraction16 Ackermann_Abstraction24), []));
+assert(!accepts(difference (McCarthyAbstraction16, Ackermann_Abstraction24), []));
 
 
 
