@@ -2317,15 +2317,7 @@ public class MinimizeSevpa<LETTER,STATE> implements IOperation {
 		 * @return true iff equivalence class is empty
 		 */
 		boolean isEmpty() {
-			int size = 0;
-			
-			Iterator<STATE> iterator = iterator();
-			while (iterator.hasNext()) {
-				iterator.next();
-				size++;
-			}
-			
-			return (size == 0);
+			return ! iterator().hasNext();
 		}
 		
 		/**
