@@ -154,7 +154,13 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 		m_Abstraction = cFG2NestedWordAutomaton.getNestedWordAutomaton(
 				((RootNode) root), defaultStateFactory, allpp);
 		
-		BuchiIsEmpty<CodeBlock, IPredicate> ec = new BuchiIsEmpty<CodeBlock, IPredicate>(m_Abstraction);
+		BuchiIsEmpty<CodeBlock, IPredicate> ec;
+		try {
+			ec = new BuchiIsEmpty<CodeBlock, IPredicate>(m_Abstraction);
+		} catch (OperationCanceledException e2) {
+			e2.printStackTrace();
+			throw new AssertionError();
+		}
 		NestedLassoRun<CodeBlock, IPredicate> ctx = ec.getAcceptingNestedLassoRun();
 		NestedWord<CodeBlock> stem = ctx.getStem().getWord();
 		s_Logger.info("Stem: " + stem);
@@ -184,7 +190,12 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
-			ec = new BuchiIsEmpty<CodeBlock, IPredicate>(m_Abstraction);
+			try {
+				ec = new BuchiIsEmpty<CodeBlock, IPredicate>(m_Abstraction);
+			} catch (OperationCanceledException e) {
+				e.printStackTrace();
+				throw new AssertionError();
+			}
 			ctx = ec.getAcceptingNestedLassoRun();
 			stem = ctx.getStem().getWord();
 			s_Logger.info("Stem: " + stem);
