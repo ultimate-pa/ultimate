@@ -39,7 +39,7 @@ do
 
 
 echo ""
-echo  "$Ultimate_PATH/$UltimateEXE --console $Ultimate_PATH/trunk/examples/toolchains/AutomataScriptInterpreter.xml $f"
+#echo  "$Ultimate_PATH/$UltimateEXE --console $Ultimate_PATH/trunk/examples/toolchains/AutomataScriptInterpreter.xml $f"
 
 printf "Testing " 
 printf $f
@@ -53,7 +53,7 @@ EXCEPTION=`echo "$Ultimate_OUTPUT" | grep "has thrown an Exception!"`
 RESULT_CORRECT=`echo "$Ultimate_OUTPUT" | grep "All testcases passed"`
 RESULT_INCORRECT=`echo "$Ultimate_OUTPUT" | grep "Some testcases failed"`
 RESULT_NOTESTCASE=`echo "$Ultimate_OUTPUT" | grep "No testcases defined!"`
-RUNTIME=`echo "$Ultimate_OUTPUT" | grep "NestedWordAutomata took" | cut -c76-`
+RUNTIME=`echo "$Ultimate_OUTPUT" | grep "AutomataScriptInterpreter took" | cut -c82-`
 
 if [ "$RESULT_CORRECT" ]; then
    printf "successful termination after "
