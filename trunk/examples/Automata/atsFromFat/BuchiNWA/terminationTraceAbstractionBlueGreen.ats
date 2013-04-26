@@ -64,7 +64,7 @@ assert(!buchiIsEmpty(buchiIntersect(
                              buchiComplementFKV(interpolantAutomaton2)),
                          buchiComplementFKV(interpolantAutomaton3)),
                      buchiComplementFKV(interpolantAutomaton4))));
-assert(!buchiAccepts(buchiIntersect(
+assert(buchiAccepts(buchiIntersect(
                      buchiIntersect(
                          buchiIntersect(
                              buchiIntersect(controlAutomaton, 
@@ -87,7 +87,7 @@ assert(!buchiIsEmpty(buchiIntersect(
                              buchiComplementFKV(interpolantAutomaton3)),
                          buchiComplementFKV(interpolantAutomaton4)),
                       buchiComplementFKV(interpolantAutomaton5))));
-assert(!buchiAccepts(buchiIntersect(
+assert(buchiAccepts(buchiIntersect(
                      buchiIntersect(
                          buchiIntersect(
                              buchiIntersect(
