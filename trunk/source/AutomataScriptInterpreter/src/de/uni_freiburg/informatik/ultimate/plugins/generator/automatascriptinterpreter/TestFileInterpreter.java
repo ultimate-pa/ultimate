@@ -1191,6 +1191,11 @@ public class TestFileInterpreter {
 			String shortDescr = "Operation error";
 			String longDescr = "Operation \"" + oe.getOperationName() + "\" is not defined for " + 
 			                   (arguments.size() == 1? "this type of argument." : "these types of arguments.");
+			longDescr += " (";
+			for (Object argument : arguments) {
+				longDescr += argument.getClass().getSimpleName() + " ";
+			}
+			longDescr += ")";
 			printMessage(Severity.ERROR, LoggerSeverity.DEBUG, longDescr, shortDescr, oe.getLocation());
 		}
 		return result;
