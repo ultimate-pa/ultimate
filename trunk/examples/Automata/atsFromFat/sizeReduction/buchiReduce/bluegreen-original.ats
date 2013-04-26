@@ -7,10 +7,10 @@
 // After buchiIntersect and buchiComplementFKV no state space reduction was used.
 
 
-assert(!buchiAccepts(buchiReduce("bluegreen-4"), [,]));
+assert(!buchiAccepts(buchiReduce(bluegreen4), [,]));
 
 
-NestedWordAutomaton "bluegreen-1" = (
+NestedWordAutomaton bluegreen1 = (
 	callAlphabet = {},
 	internalAlphabet = {a0 a1 },
 	returnAlphabet = {},
@@ -41,7 +41,7 @@ NestedWordAutomaton "bluegreen-1" = (
 	}
 );
 
-NestedWordAutomaton "bluegreen-2" = (
+NestedWordAutomaton bluegreen2 = (
 	callAlphabet = {},
 	internalAlphabet = {a0 a1 },
 	returnAlphabet = {},
@@ -110,7 +110,7 @@ NestedWordAutomaton "bluegreen-2" = (
 	}
 );
 
-NestedWordAutomaton "bluegreen-3" = (
+NestedWordAutomaton bluegreen3 = (
 	callAlphabet = {},
 	internalAlphabet = {a0 a1 },
 	returnAlphabet = {},
@@ -338,7 +338,7 @@ NestedWordAutomaton "bluegreen-3" = (
 	}
 );
 
-NestedWordAutomaton "bluegreen-4" = (
+NestedWordAutomaton bluegreen4 = (
 	callAlphabet = {},
 	internalAlphabet = {a0 a1 },
 	returnAlphabet = {},
@@ -1541,7 +1541,7 @@ s243 s242 s241 s240 s247 s246 s245 s244 s251 s250 s249 s248 s255 s254 s253 s252 
 	}
 );
 
-NestedWordAutomaton "bluegreen-5" = (
+NestedWordAutomaton bluegreen5 = (
 	callAlphabet = {},
 	internalAlphabet = {a0 a1 },
 	returnAlphabet = {},

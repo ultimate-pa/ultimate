@@ -6,7 +6,7 @@
 // 
 // After buchiIntersect and buchiComplementFKV removeNon-Live was used.
 
-assert(!buchiAccepts(buchiReduce("bluegreen-RemovedNonLive-4"), [,]));
+assert(!buchiAccepts(buchiReduce(bluegreen_RemovedNonLive4), [,]));
 // W/O dead ends  has 183 states, 681 internal transitions
 // Infinity is 32209
 // Number of vertices in game graph: 132309
@@ -16,9 +16,9 @@ assert(!buchiAccepts(buchiReduce("bluegreen-RemovedNonLive-4"), [,]));
 // Finished reduceBuchi Result  has 38 states, 115 internal transitions
 
 
-//assert(!buchiAccepts(minimizeDFA("bluegreen-RemovedNonLive-4"), [,]));
+//assert(!buchiAccepts(minimizeDFA(bluegreen_RemovedNonLive4), [,]));
 
-NestedWordAutomaton "bluegreen-RemovedNonLive-1" = (
+NestedWordAutomaton bluegreen_RemovedNonLive1 = (
 	callAlphabet = {},
 	internalAlphabet = {a0 a1 },
 	returnAlphabet = {},
@@ -49,7 +49,7 @@ NestedWordAutomaton "bluegreen-RemovedNonLive-1" = (
 	}
 );
 
-NestedWordAutomaton "bluegreen-RemovedNonLive-2" = (
+NestedWordAutomaton bluegreen_RemovedNonLive2 = (
 	callAlphabet = {},
 	internalAlphabet = {a0 a1 },
 	returnAlphabet = {},
@@ -118,7 +118,7 @@ NestedWordAutomaton "bluegreen-RemovedNonLive-2" = (
 	}
 );
 
-NestedWordAutomaton "bluegreen-RemovedNonLive-3" = (
+NestedWordAutomaton bluegreen_RemovedNonLive3 = (
 	callAlphabet = {},
 	internalAlphabet = {a0 a1 },
 	returnAlphabet = {},
@@ -240,7 +240,7 @@ NestedWordAutomaton "bluegreen-RemovedNonLive-3" = (
 	}
 );
 
-NestedWordAutomaton "bluegreen-RemovedNonLive-4" = (
+NestedWordAutomaton bluegreen_RemovedNonLive4 = (
 	callAlphabet = {},
 	internalAlphabet = {a0 a1 },
 	returnAlphabet = {},
@@ -936,7 +936,7 @@ NestedWordAutomaton "bluegreen-RemovedNonLive-4" = (
 	}
 );
 
-NestedWordAutomaton "bluegreen-RemovedNonLive-5" = (
+NestedWordAutomaton bluegreen_RemovedNonLive5 = (
 	callAlphabet = {},
 	internalAlphabet = {a0 a1 },
 	returnAlphabet = {},
@@ -8868,7 +8868,7 @@ s1140 s1141 s1142 s1143 s1144 s1145 s1146 s1147 s1148 s1149 s1150 s1151 s1155 s1
 	}
 );
 
-NestedWordAutomaton "bluegreen-RemovedNonLive-6" = (
+NestedWordAutomaton bluegreen_RemovedNonLive6 = (
 	callAlphabet = {},
 	internalAlphabet = {a0 a1 },
 	returnAlphabet = {},

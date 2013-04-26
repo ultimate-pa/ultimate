@@ -4,9 +4,9 @@
 // reduce version of bluegreen-RemovedNonLive-1
 // revealed bug in revisions < r4764.
 
-assert(!buchiAccepts(buchiReduce("bluegreen-RemovedNonLive-1"), [,]));
+assert(!buchiAccepts(buchiReduce(bluegreen_RemovedNonLive1), [,]));
 
-NestedWordAutomaton "bluegreen-RemovedNonLive-1" = (
+NestedWordAutomaton bluegreen_RemovedNonLive1 = (
 	callAlphabet = {},
 	internalAlphabet = {a0 a1 },
 	returnAlphabet = {},

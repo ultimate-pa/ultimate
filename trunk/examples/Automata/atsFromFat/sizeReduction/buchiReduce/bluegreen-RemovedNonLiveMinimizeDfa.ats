@@ -8,11 +8,11 @@
 // was used.
 
 
-assert(!buchiAccepts(buchiReduce("bluegreen-RemovedNonLiveMinimizeDfa-5"), [,]));
-//assert(!buchiAccepts(minimizeDFA("bluegreen-RemovedNonLiveMinimizeDfa-5"), [,]));
+assert(!buchiAccepts(buchiReduce(bluegreen_RemovedNonLiveMinimizeDfa5), [,]));
+//assert(!buchiAccepts(minimizeDFA(bluegreen_RemovedNonLiveMinimizeDfa5"), [,]));
 
 
-NestedWordAutomaton "bluegreen-RemovedNonLiveMinimizeDfa-1" = (
+NestedWordAutomaton bluegreen_RemovedNonLiveMinimizeDfa1 = (
 	callAlphabet = {},
 	internalAlphabet = {a0 a1 },
 	returnAlphabet = {},
@@ -43,7 +43,7 @@ NestedWordAutomaton "bluegreen-RemovedNonLiveMinimizeDfa-1" = (
 	}
 );
 
-NestedWordAutomaton "bluegreen-RemovedNonLiveMinimizeDfa-2" = (
+NestedWordAutomaton bluegreen_RemovedNonLiveMinimizeDfa2 = (
 	callAlphabet = {},
 	internalAlphabet = {a0 a1 },
 	returnAlphabet = {},
@@ -103,7 +103,7 @@ NestedWordAutomaton "bluegreen-RemovedNonLiveMinimizeDfa-2" = (
 	}
 );
 
-NestedWordAutomaton "bluegreen-RemovedNonLiveMinimizeDfa-3" = (
+NestedWordAutomaton bluegreen_RemovedNonLiveMinimizeDfa3 = (
 	callAlphabet = {},
 	internalAlphabet = {a0 a1 },
 	returnAlphabet = {},
@@ -154,7 +154,7 @@ NestedWordAutomaton "bluegreen-RemovedNonLiveMinimizeDfa-3" = (
 	}
 );
 
-NestedWordAutomaton "bluegreen-RemovedNonLiveMinimizeDfa-4" = (
+NestedWordAutomaton bluegreen_RemovedNonLiveMinimizeDfa4 = (
 	callAlphabet = {},
 	internalAlphabet = {a0 a1 },
 	returnAlphabet = {},
@@ -288,7 +288,7 @@ NestedWordAutomaton "bluegreen-RemovedNonLiveMinimizeDfa-4" = (
 	}
 );
 
-NestedWordAutomaton "bluegreen-RemovedNonLiveMinimizeDfa-5" = (
+NestedWordAutomaton bluegreen_RemovedNonLiveMinimizeDfa5 = (
 	callAlphabet = {},
 	internalAlphabet = {a0 a1 },
 	returnAlphabet = {},
@@ -858,7 +858,7 @@ NestedWordAutomaton "bluegreen-RemovedNonLiveMinimizeDfa-5" = (
 	}
 );
 
-NestedWordAutomaton "bluegreen-RemovedNonLiveMinimizeDfa-6" = (
+NestedWordAutomaton bluegreen_RemovedNonLiveMinimizeDfa6 = (
 	callAlphabet = {},
 	internalAlphabet = {a0 a1 },
 	returnAlphabet = {},

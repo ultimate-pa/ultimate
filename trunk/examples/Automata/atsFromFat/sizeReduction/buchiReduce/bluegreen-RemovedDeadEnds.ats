@@ -7,9 +7,9 @@
 // After buchiIntersect and buchiComplementFKV removeDeadEnds was used.
 
 
-assert(!buchiAccepts(buchiReduce("bluegreen-RemovedDeadEnds-4"), [,]));
+assert(!buchiAccepts(buchiReduce(bluegreen_RemovedDeadEnds4), [,]));
 
-NestedWordAutomaton "bluegreen-RemovedDeadEnds-1" = (
+NestedWordAutomaton bluegreen_RemovedDeadEnds1 = (
 	callAlphabet = {},
 	internalAlphabet = {a0 a1 },
 	returnAlphabet = {},
@@ -40,7 +40,7 @@ NestedWordAutomaton "bluegreen-RemovedDeadEnds-1" = (
 	}
 );
 
-NestedWordAutomaton "bluegreen-RemovedDeadEnds-2" = (
+NestedWordAutomaton bluegreen_RemovedDeadEnds2 = (
 	callAlphabet = {},
 	internalAlphabet = {a0 a1 },
 	returnAlphabet = {},
@@ -109,7 +109,7 @@ NestedWordAutomaton "bluegreen-RemovedDeadEnds-2" = (
 	}
 );
 
-NestedWordAutomaton "bluegreen-RemovedDeadEnds-3" = (
+NestedWordAutomaton bluegreen_RemovedDeadEnds3 = (
 	callAlphabet = {},
 	internalAlphabet = {a0 a1 },
 	returnAlphabet = {},
@@ -325,7 +325,7 @@ NestedWordAutomaton "bluegreen-RemovedDeadEnds-3" = (
 	}
 );
 
-NestedWordAutomaton "bluegreen-RemovedDeadEnds-4" = (
+NestedWordAutomaton bluegreen_RemovedDeadEnds4 = (
 	callAlphabet = {},
 	internalAlphabet = {a0 a1 },
 	returnAlphabet = {},
@@ -1408,7 +1408,7 @@ s237 s211 s212 s209 s210 s215 s216 s213 s214 s219 s220 s217 s218 s223 s224 s221 
 	}
 );
 
-NestedWordAutomaton "bluegreen-RemovedDeadEnds-5" = (
+NestedWordAutomaton bluegreen_RemovedDeadEnds5 = (
 	callAlphabet = {},
 	internalAlphabet = {a0 a1 },
 	returnAlphabet = {},
@@ -9917,7 +9917,7 @@ s1277 s1276 s1279 s1278 s1273 s1272 s1275 s1274 s1268 s1269 s1270 s1271 s1264 s1
 	}
 );
 
-NestedWordAutomaton "bluegreen-RemovedDeadEnds-6" = (
+NestedWordAutomaton bluegreen_RemovedDeadEnds6 = (
 	callAlphabet = {},
 	internalAlphabet = {a0 a1 },
 	returnAlphabet = {},

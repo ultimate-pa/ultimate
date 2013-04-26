@@ -2,16 +2,17 @@
 // Author: heizmann@informatik.uni-freiburg.de
 
 // Problem:
-// DeterminizeJM uses initial state as hierarchical Predecessor.
+// DeterminizeJM used initial state as hierarchical Predecessor.
 // I don't know yet if this can lead to a real bug.
+// Anyway, this might be a useful test.
 
 
 assert(!accepts(nwa, [ >r ]));
-assert(!accepts(determinizeJM(nwa), [ >r ]));
-print(determinizeJM(nwa));
+assert(!accepts(determinize(nwa), [ >r ]));
+print(determinize(nwa));
 
 NestedWordAutomaton nwa = (
-	callAlphabet = {_},
+	callAlphabet = { c },
 	internalAlphabet = { a },
 	returnAlphabet = { r },
 	states = { q0 q1 },

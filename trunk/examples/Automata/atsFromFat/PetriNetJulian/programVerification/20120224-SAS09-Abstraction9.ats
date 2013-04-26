@@ -1,6 +1,6 @@
 // Testfile dumped by Ultimate at 2012/02/24 13:12:39
 
-print(finitePrefix(net) //0,5sec);
+print(finitePrefix(net)); //0,5sec
 
 PetriNet net = (
 	alphabet = {a0 a1 a2 a3 a4 a5 a6 a7 a8 a9 a10 a13 a11 a12 a14 a16 a15 a18 a17 a20 a19 a21 a22 },
