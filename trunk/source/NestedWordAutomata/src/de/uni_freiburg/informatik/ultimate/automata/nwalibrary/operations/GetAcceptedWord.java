@@ -31,13 +31,13 @@ public class GetAcceptedWord<LETTER, STATE> implements IOperation {
 	}
 
 	@Override
-	public Object getResult() throws OperationCanceledException {
+	public NestedWord<LETTER> getResult() throws OperationCanceledException {
 		return m_AcceptedWord;
 	}
 
 	@Override
 	public String operationName() {
-		return "bfsEmptiness";
+		return "getAcceptedWord";
 	}
 
 	@Override
