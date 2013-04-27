@@ -31,7 +31,7 @@ public class Automaton2Net<LETTER, STATE> implements IOperation {
 
 	@Override
 	public String operationName() {
-		return "bfsEmptiness";
+		return "automaton2net";
 	}
 
 	@Override
