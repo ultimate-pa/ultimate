@@ -48,6 +48,10 @@ public class Place<S,C> implements Serializable {
 	
 	@Override
 	public String toString() {
+		return String.valueOf(m_Content);
+	}
+	
+	public String toStringWithSerial() {
 		return "#"+ m_SerialNumber + "#" + String.valueOf(m_Content);
 	}
 
