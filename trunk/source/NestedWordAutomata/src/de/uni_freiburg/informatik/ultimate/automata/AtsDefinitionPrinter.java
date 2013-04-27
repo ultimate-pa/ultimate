@@ -98,7 +98,7 @@ public class AtsDefinitionPrinter<LETTER,STATE> {
 					new NwaTestFileWriterToString(nwa);
 				}
 				else if (labels == Labeling.QUOTED) {
-					new NwaTestFileWriterToStringQuote(nwa);
+					new NwaTestFileWriterToStringWithHash(nwa);
 				
 				}
 				else if (labels == Labeling.NUMERATE) {
@@ -111,7 +111,7 @@ public class AtsDefinitionPrinter<LETTER,STATE> {
 					new NetTestFileWriterToString(net);
 				}
 				else if (labels == Labeling.QUOTED) {
-					new NetTestFileWriterToStringQuote(net);
+					new NetTestFileWriterToStringWithUniqueNumber(net);
 				
 				}
 				else if (labels == Labeling.NUMERATE) {
@@ -312,7 +312,7 @@ public class AtsDefinitionPrinter<LETTER,STATE> {
 					String symbol) {
 				Map<LETTER,String> alphabetMapping = new HashMap<LETTER,String>();
 				for (LETTER letter : alphabet) {
-					alphabetMapping.put(letter, "\'" + letter.toString().replaceAll("'", "\'") + "\'");
+					alphabetMapping.put(letter, "\"" + letter.toString().replaceAll("\"", "\\\"") + "\"");
 				}
 				return alphabetMapping;
 			}
@@ -322,7 +322,7 @@ public class AtsDefinitionPrinter<LETTER,STATE> {
 					Collection<STATE> states) {
 				Map<STATE,String> stateMapping = new HashMap<STATE,String>();
 				for (STATE state : states) {
-					stateMapping.put(state, "\'" + state.toString().replaceAll("'", "\'") + "\'");
+					stateMapping.put(state, "\"" + state.toString().replaceAll("\"", "\\\"") + "\"");
 				}
 				return stateMapping;
 			}
@@ -333,9 +333,9 @@ public class AtsDefinitionPrinter<LETTER,STATE> {
 		 * Takes NestedWordAutomaton writes it to testfile. In this version
 		 * letters and states are represented by their toString method.
 		 */
-		private class NwaTestFileWriterToStringQuote extends NwaTestFileWriter{
+		private class NwaTestFileWriterToStringWithHash extends NwaTestFileWriter{
 
-			public NwaTestFileWriterToStringQuote(INestedWordAutomaton<LETTER,STATE> nwa) {
+			public NwaTestFileWriterToStringWithHash(INestedWordAutomaton<LETTER,STATE> nwa) {
 				super(nwa);
 			}
 
@@ -344,7 +344,7 @@ public class AtsDefinitionPrinter<LETTER,STATE> {
 					String symbol) {
 				Map<LETTER,String> alphabetMapping = new HashMap<LETTER,String>();
 				for (LETTER letter : alphabet) {
-					alphabetMapping.put(letter, "\'" + letter.toString().replaceAll("'", "\'") + (letter.hashCode()/m_HashDivisor) + "\'");
+					alphabetMapping.put(letter, "\"" + letter.toString().replaceAll("\"", "\\\"") + (letter.hashCode()/m_HashDivisor) + "\"");
 				}
 				return alphabetMapping;
 			}
@@ -354,7 +354,7 @@ public class AtsDefinitionPrinter<LETTER,STATE> {
 					Collection<STATE> states) {
 				Map<STATE,String> stateMapping = new HashMap<STATE,String>();
 				for (STATE state : states) {
-					stateMapping.put(state, "\'" + state.toString().replaceAll("'", "\'") + (state.hashCode()/m_HashDivisor) + "\'");
+					stateMapping.put(state, "\"" + state.toString().replaceAll("\"", "\\\"") + (state.hashCode()/m_HashDivisor) + "\"");
 				}
 				return stateMapping;
 			}
@@ -383,7 +383,7 @@ public class AtsDefinitionPrinter<LETTER,STATE> {
 				printInternalTransitions(net.getTransitions());
 				printInitialMarking(net.getInitialMarking());
 				if (net instanceof PetriNetJulian) {
-					printAcceptingPlaces(((PetriNetJulian) net).getAcceptingPlaces());
+					printAcceptingPlaces(((PetriNetJulian<LETTER,STATE>) net).getAcceptingPlaces());
 				}
 				else {
 					throw new IllegalArgumentException("unknown kinde of net");
@@ -403,7 +403,7 @@ public class AtsDefinitionPrinter<LETTER,STATE> {
 				return alphabetMapping;
 			}
 			
-			protected HashMap<Place<LETTER,STATE>, String> getPlacesMapping(Collection<Place<LETTER,STATE>> places) {
+			protected Map<Place<LETTER, STATE>, String> getPlacesMapping(Collection<Place<LETTER,STATE>> places) {
 				Integer counter = 0;
 				HashMap<Place<LETTER,STATE>, String> placesMapping = new HashMap<Place<LETTER,STATE>,String>();
 				for (Place<LETTER,STATE> place : places) {
@@ -414,7 +414,7 @@ public class AtsDefinitionPrinter<LETTER,STATE> {
 			}
 			
 			private void printAlphabet() {
-				m_printWriter.print('\t' + "#alphabet := {");
+				m_printWriter.print('\t' + "alphabet = {");
 				printAlphabet(alphabet);
 				m_printWriter.print("},\n");
 			}
@@ -426,7 +426,7 @@ public class AtsDefinitionPrinter<LETTER,STATE> {
 			}
 			
 			private void printPlaces() {
-				m_printWriter.print('\t' + "#places := {");
+				m_printWriter.print('\t' + "places = {");
 				for (Place<LETTER,STATE> place : placesMapping.keySet()) {
 					m_printWriter.print(placesMapping.get(place) + " ");		
 				}
@@ -435,7 +435,7 @@ public class AtsDefinitionPrinter<LETTER,STATE> {
 			
 			private void printInternalTransitions(
 					Collection<ITransition<LETTER,STATE>> transitions) {
-				m_printWriter.println('\t' + "#transitions := {");
+				m_printWriter.println('\t' + "transitions = {");
 				for (ITransition<LETTER,STATE> transition : transitions) {
 					printTransition(transition);
 				}
@@ -468,31 +468,19 @@ public class AtsDefinitionPrinter<LETTER,STATE> {
 				m_printWriter.print("}" );
 			}
 
-
 			private void printInitialMarking(Marking<LETTER,STATE> initialMarking) {
-				m_printWriter.print('\t' + "#initialMarking := ");
+				m_printWriter.print('\t' + "initialMarking = ");
 				printMarking(initialMarking);
 				m_printWriter.print(",\n");
 			}
 			
-			
 			private void printAcceptingPlaces(Collection<Place<LETTER,STATE>> acceptingPlaces) {
-				m_printWriter.print('\t' + "#acceptingPlaces := ");
+				m_printWriter.print('\t' + "acceptingPlaces = ");
 				printMarking(acceptingPlaces);
 				m_printWriter.print("\n");
 			}
 
 
-			private void printAcceptingMarkings(
-					Collection<Collection<Place<LETTER,STATE>>> acceptingMarkings) {
-				m_printWriter.println('\t' + "#acceptingMarkings := {");
-				for (Collection<Place<LETTER,STATE>> marking : acceptingMarkings) {
-					m_printWriter.print("\t\t");
-					printMarking(marking);
-					m_printWriter.print("\n");
-				}
-				m_printWriter.println("\t}");
-			}
 		}
 		
 		private class NetTestFileWriterToString extends NetTestFileWriter{
@@ -506,17 +494,17 @@ public class AtsDefinitionPrinter<LETTER,STATE> {
 			protected Map<LETTER, String> getAlphabetMapping(Collection<LETTER> alphabet) {
 				Map<LETTER,String> alphabetMapping = new HashMap<LETTER,String>();
 				for (LETTER letter : alphabet) {
-					alphabetMapping.put(letter, "\"" + letter.toString() + "\"");
+					alphabetMapping.put(letter, "\"" + letter.toString().replaceAll("\"", "\\\"") + "\"");
 				}
 				return alphabetMapping;
 			}
 			
 			@Override
-			protected HashMap<Place<LETTER,STATE>, String> getPlacesMapping(Collection<Place<LETTER,STATE>> places) {
+			protected Map<Place<LETTER,STATE>, String> getPlacesMapping(Collection<Place<LETTER,STATE>> places) {
 				Integer counter = 0;
 				HashMap<Place<LETTER,STATE>, String> placesMapping = new HashMap<Place<LETTER,STATE>,String>();
 				for (Place<LETTER,STATE> place : places) {
-					placesMapping.put(place, "\"" +place.toString() + "\"");
+					placesMapping.put(place, "\"" +place.toString().replaceAll("\"", "\\\"") + "\"");
 					counter++;
 				}
 				return placesMapping;
@@ -526,30 +514,29 @@ public class AtsDefinitionPrinter<LETTER,STATE> {
 		
 		
 		
-		private class NetTestFileWriterToStringQuote extends NetTestFileWriter{
+		private class NetTestFileWriterToStringWithUniqueNumber extends NetTestFileWriter{
 
-			public NetTestFileWriterToStringQuote(IPetriNet<LETTER,STATE> net) {
+			public NetTestFileWriterToStringWithUniqueNumber(IPetriNet<LETTER,STATE> net) {
 				super(net);
 
 			}
 			
 			@Override
 			protected Map<LETTER, String> getAlphabetMapping(Collection<LETTER> alphabet) {
+				int counter = 0;
 				Map<LETTER,String> alphabetMapping = new HashMap<LETTER,String>();
 				for (LETTER letter : alphabet) {
-					alphabetMapping.put(letter, "\"" + letter.toString() + 
-							(letter.hashCode()/100000) + "\"");
+					alphabetMapping.put(letter, "\"" + letter.toString().replaceAll("\"", "\\\"") + (counter++));
 				}
 				return alphabetMapping;
 			}
 			
 			@Override
-			protected HashMap<Place<LETTER,STATE>, String> getPlacesMapping(Collection<Place<LETTER,STATE>> places) {
-				Integer counter = 0;
+			protected Map<Place<LETTER,STATE>, String> getPlacesMapping(Collection<Place<LETTER,STATE>> places) {
+				int counter = 0;
 				HashMap<Place<LETTER,STATE>, String> placesMapping = new HashMap<Place<LETTER,STATE>,String>();
 				for (Place<LETTER,STATE> place : places) {
-					placesMapping.put(place, "\"" +place.toString() + (place.hashCode()/100000)+"\"");
-					counter++;
+					placesMapping.put(place, "\"" +place.toString().replaceAll("\"", "\\\"") + (counter++));
 				}
 				return placesMapping;
 			}
