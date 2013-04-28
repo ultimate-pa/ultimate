@@ -1,0 +1,4 @@
+<toolchain>
+	<plugin id="AutomataScriptInterpreter"/>
+	<plugin id="JungVisualization"/>
+</toolchain>
