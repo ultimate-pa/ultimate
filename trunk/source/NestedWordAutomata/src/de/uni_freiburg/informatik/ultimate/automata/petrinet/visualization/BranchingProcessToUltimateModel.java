@@ -8,14 +8,14 @@ import java.util.Map;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.BranchingProcess;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.Condition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.Event;
-import de.uni_freiburg.informatik.ultimate.model.INode;
+import de.uni_freiburg.informatik.ultimate.model.IElement;
 
 public class BranchingProcessToUltimateModel<S, C> {
 	
 	
 	
 	@SuppressWarnings("unchecked")
-	public INode getUltimateModelOfBranchingProcess(BranchingProcess<S, C> branchingProcess) {
+	public IElement getUltimateModelOfBranchingProcess(BranchingProcess<S, C> branchingProcess) {
 		BranchingProcessInitialNode<S, C> graphroot = new BranchingProcessInitialNode<S, C>(branchingProcess);
 		
 		Collection<Condition<S, C>> initialStates = branchingProcess.initialConditions();
@@ -33,8 +33,7 @@ public class BranchingProcessToUltimateModel<S, C> {
 		for (Condition<S, C> place : initialStates) {
 			ConditionNode<S,C> ConditionNode = new ConditionNode<S,C>(place,branchingProcess);
 			place2ConditionNode.put(place,ConditionNode);
-			graphroot.addOutgoingNode(ConditionNode);
-			ConditionNode.addIncomingNode(graphroot);
+			graphroot.connectOutgoing(ConditionNode);
 			
 		}
 		
@@ -52,8 +51,7 @@ public class BranchingProcessToUltimateModel<S, C> {
 						transition2EventNode.put(transition, transNode);
 						queue.add(transition);
 					}
-					ConditionNode.addOutgoingNode(transNode);
-					transNode.addIncomingNode(ConditionNode);
+					ConditionNode.connectOutgoing(transNode);
 				}
 			}
 			else if (node instanceof Event) {
@@ -68,8 +66,7 @@ public class BranchingProcessToUltimateModel<S, C> {
 						place2ConditionNode.put(place, ConditionNode);
 						queue.add(place);
 					}
-					EventNode.addOutgoingNode(ConditionNode);
-					ConditionNode.addIncomingNode(EventNode);
+					EventNode.connectOutgoing(ConditionNode);
 				}
 			}
 		}
