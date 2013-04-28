@@ -1,0 +1,31 @@
+// In r8655 I get type error while assigning NestedWord and
+// NestedLassoWord.
+// Author: heizmann@informatik.uni-freiburg.de
+// Date: 28.4.2013
+
+print(getAcceptedWord(doubleR));
+print(getAcceptedLassoWord(doubleR));
+
+NestedWord word = getAcceptedWord(doubleR);
+NestedLassoWord lassoword = getAcceptedLassoWord(doubleR);
+NestedLassoWord lassoword1 = [ , c< c< >r >r ];
+
+NestedWordAutomaton doubleR = (
+    callAlphabet = { a c r },    
+	internalAlphabet = { a c r},
+	returnAlphabet = { a c r },
+	states = {q0 q1},
+	initialStates = {q0},
+	finalStates = {q1},
+	callTransitions = {
+		(q0 c q0)
+	},
+	internalTransitions = { 
+		(q0 a q0)
+		(q1 a q1)
+	}, 
+	returnTransitions = {
+		(q0 q0 r q1)
+		(q1 q0 r q0)
+	}
+);
