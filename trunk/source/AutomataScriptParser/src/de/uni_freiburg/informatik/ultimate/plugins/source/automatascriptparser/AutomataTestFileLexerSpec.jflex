@@ -97,6 +97,7 @@ StringCharacter = [^\r\n\"\\]
   /* NestedWordAutomaton */
   "NestedWordAutomaton"          { m_LastToken = m_CurToken; m_CurToken = "NestedWordAutomaton"; return symbol(sym.NESTEDWORD_AUTOMATA); }
   "PetriNet"   { m_LastToken = m_CurToken; m_CurToken = "PetriNet"; return symbol(sym.PETRINET_AUTOMATA); }
+  "BranchingProcess"   { m_LastToken = m_CurToken; m_CurToken = "PetriNet"; return symbol(sym.BRANCHINGPROCESS_AUTOMATA); }
   "alphabet"                    { m_LastToken = m_CurToken; m_CurToken = "alphabet"; return symbol(sym.ALPHABET); }
   "callAlphabet"                { m_LastToken = m_CurToken; m_CurToken = "callAlphabet"; return symbol(sym.CALL_ALPHABET); }
   "internalAlphabet"            { m_LastToken = m_CurToken; m_CurToken = "internalAlphabet"; return symbol(sym.INTERNAL_ALPHABET); }
