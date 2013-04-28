@@ -10,10 +10,15 @@ import java.util.Set;
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.automata.Activator;
+import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.IRun;
+import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
+import de.uni_freiburg.informatik.ultimate.automata.Word;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Place;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 
-public class BranchingProcess<S, C> {
+public class BranchingProcess<S, C> implements IAutomaton<S, C> {
 	private static Logger s_Logger = UltimateServices.getInstance().getLogger(
 			Activator.PLUGIN_ID);
 	
@@ -370,6 +375,31 @@ public class BranchingProcess<S, C> {
 
 	public Order<S,C> getOrder() {
 		return m_Order;
+	}
+
+	@Override
+	public IRun<S, C> acceptingRun() throws OperationCanceledException {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public boolean accepts(Word<S> word) {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public int size() {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public Collection<S> getAlphabet() {
+		return net.getAlphabet();
+	}
+
+	@Override
+	public StateFactory<C> getStateFactory() {
+		throw new UnsupportedOperationException();
 	}
 
 }
