@@ -51,8 +51,9 @@ function toggleEditor() {
     toggleEditorHeight = !toggleEditorHeight;
 }
 <%-- encode arbitrary string to html string --%>
+<%-- additionally all linebreaks are replaced by <br /> and all tabulators are replaced by 4 html spaces --%>
 function htmlEncode(value){
-  return $('<div />').text(value).html().replace(/(\r\n|\n|\r)/gm,"<br />");
+  return $('<div />').text(value).html().replace(/(\r\n|\n|\r)/gm,"<br />").replace(/\t/g,"&nbsp;&nbsp;&nbsp;&nbsp;");
 }
 <%--decode html string to decoded string --%>
 function htmlDecode(value){
