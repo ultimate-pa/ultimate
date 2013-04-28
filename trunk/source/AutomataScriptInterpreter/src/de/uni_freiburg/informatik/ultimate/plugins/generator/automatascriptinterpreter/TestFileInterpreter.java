@@ -324,12 +324,20 @@ public class TestFileInterpreter {
 					String longDescr = "We support only the following operations " + System.getProperty("line.separator") + allOperations;
 					m_longDescription = longDescr;
 					throw new UnsupportedOperationException(shortDescr);
-				}
+				} 
 			}
 			if ((oe.getOutgoingNodes() != null) && (oe.getOutgoingNodes().get(0) != null)) {
 				for (AtsASTNode n : oe.getOutgoingNodes().get(0).getOutgoingNodes()) {
 					checkType(n);
 				}
+			}
+			if (opName.equals("print")) return;
+			
+			Set<Class<?>> types = getTypes(oe);
+			if (!types.isEmpty()) {
+				Class<?>[] arr = new Class<?>[1];
+				arr = types.toArray(arr);
+				oe.setType(arr[0]);
 			}
 			
 		}
