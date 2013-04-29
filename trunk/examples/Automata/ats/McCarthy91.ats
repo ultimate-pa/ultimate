@@ -126,21 +126,11 @@ NestedWordAutomaton AControlMinusA4MinusA3 = difference(AControlMinusA4, A3);
 // The result does not accept any nested word
 assert(IsEmpty(AControlMinusA4MinusA3));
 
-NestedWord ctx = [Xleq100 XM2Xplus11 callM< Xg100 RES2Xminus10 >returnM XM2RESM callM< Xg100 RES2Xminus10 Xleq101andRESneq91]
-
-
-//print(ControlAutomaton);
-// assert(accepts(ControlAutomaton,[ callM]));
-
-
-// NestedWordAutomaton test = A3;
-// assert(!IsEmpty(A3));
-// assert(!IsEmpty(A4));
-// assert(!IsEmpty(ControlAutomaton));
-// assert(!IsEmpty(intersect(intersect(ControlAutomaton, complement(A4)), complement(A3))));
-// assert(!IsEmpty(difference(difference(ControlAutomaton, A4), A3)));
-
-//print(difference(difference(ControlAutomaton, A4), A3));
+// We took the set of all labelings of path from initial location to the error 
+// location of a program (represented by automaton ControlAutomaton).
+// We removed from this language sequences of statements that are infeasible
+// (automata A3 and A4).
+// Hence the program is correct.
 
 
 
