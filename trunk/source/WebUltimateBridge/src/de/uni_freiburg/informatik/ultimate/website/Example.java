@@ -75,8 +75,6 @@ public class Example {
 	private static void init() {
 		System.out.println("Initializing Examples.");
 		ArrayList<Example> list = new ArrayList<Example>();
-		list.add(new Example("Blue Green", "blueGreen", "Asterix.fat",
-				new Tasks.TaskNames[] { Tasks.TaskNames.AUTOMATA_SCRIPT }));
 		list.add(new Example("Example C File", "exampleCFile", "exampleFile.c",
 				new Tasks.TaskNames[] { Tasks.TaskNames.VerifyC }));
 		list.add(new Example("F-91", "f91", "f91.c",
