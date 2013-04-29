@@ -124,8 +124,8 @@ public class Tasks {
 			TaskNames name = TaskNames.valueOf(taskName);
 			// TODO : check if the js file exists...
 			switch (name) {
-			// case RunAutomataTestFile:
-			// return "fat";
+//			case AUTOMATA_SCRIPT:
+//			return "ats";
 			// case RunSmt2Script:
 			// return "smt2";
 			case VerifyBoogie:
