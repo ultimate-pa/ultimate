@@ -1000,6 +1000,7 @@ public class TestFileInterpreter {
 					TestFileInterpreter.printMessage(Severity.ERROR, LoggerSeverity.DEBUG, e.toString() 
 							+ System.getProperty("line.separator") + e.getStackTrace(), 
 							"Exception thrown.", stmt.getLocation());
+					return null;
 				}
 			}
 		}
