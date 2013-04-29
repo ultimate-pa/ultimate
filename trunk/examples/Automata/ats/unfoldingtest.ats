@@ -1,0 +1,50 @@
+// Date:  18.12.2011
+// Author: heizmann@informatik.uni-freiburg.de
+// Example from TACAS 1996 paper Figure 3
+
+
+//assert(!isEmpty(se7en));
+PetriNet n1 = finitePrefix2PetriNet(finitePrefix( se7en));
+print(finitePrefix( se7en));
+print(numberOfPlaces(n1));
+print(n1);
+PetriNet n2 = finitePrefix2PetriNet(finitePrefix( n1));
+print(numberOfPlaces(n2));
+print(n1);
+
+PetriNet javier = (
+  alphabet = {t1 t2 t3 t4 t5 t6 t7 t8 t9 },
+  places = {s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 s12},
+  transitions = {
+    ({s1} t1 {s2 s3})
+    ({s1} t2 {s4 s5})
+    ({s2} t3 {s6 s7})
+    ({s4} t4 {s6 s7})
+    ({s3} t5 {s8 s9})
+    ({s5} t6 {s8 s9})
+    ({s6 s8} t7 {s10})
+    ({s7 s9} t8 {s11})
+    ({s10 s11} t9 {s12})
+  },
+  initialMarking = {s1},
+  acceptingPlaces = {s12}
+);
+
+
+PetriNet se7en = (
+  alphabet = {a1 a2 a3  b1 b2 b3 b4 c},
+  places = {p0 p1 p2 q0 q1 q2 q3},
+  transitions = {
+    ({p0 q0} c {p0 q0}) 
+//    ({p0} a1 {p0}) 
+//    ({p1} a2 {p0}) 
+//    ({p2} a3 {p0}) 
+//    ({q0} b1 {q0}) 
+//    ({q1} b2 {q0}) 
+//    ({q2} b3 {q0}) 
+//    ({q3} b4 {q0})
+    
+  },
+  initialMarking = {p0 q0},
+  acceptingPlaces = {p0 q0}
+);
