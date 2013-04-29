@@ -343,6 +343,10 @@ public class TransFormula implements Serializable {
 				"  AssignedVars" + m_AssignedVars;
 	}
 	
+	public Infeasibility isInfeasible() {
+		return m_Infeasibility;
+	}
+	
 	
 	public static TermVariable getFreshAuxVariable(Boogie2SMT boogie2smt, String id, Sort sort) {
 		String name = id + "_" + s_FreshVarNumber++;
@@ -905,10 +909,133 @@ public class TransFormula implements Serializable {
 
 
 
+	 // Compute Transformula that represents input as procedure summary.
+	
+	public static TransFormula procedureSummary(int serialNumber, Boogie2SMT boogie2smt, TransFormula transFormula, Set<BoogieVar> inParams, Set<BoogieVar> outParams) {
+		Script script = boogie2smt.getScript();
+		Map<BoogieVar, TermVariable> inVars = new HashMap<BoogieVar, TermVariable>();
+		Map<BoogieVar, TermVariable> outVars = new HashMap<BoogieVar, TermVariable>();
+		Set<TermVariable> allVars = new HashSet<TermVariable>();
+		Set<TermVariable> auxVars = new HashSet<TermVariable>();
+		Set<TermVariable> newBranchEncoders = new HashSet<TermVariable>();
 
-	public Infeasibility isInfeasible() {
-		return m_Infeasibility;
-	}
+		ArrayList<TermVariable> replacees = new ArrayList<TermVariable>();
+		ArrayList<Term> replacers = new ArrayList<Term>();
+		
+		Set<BoogieVar> inAndOutVars = new HashSet<BoogieVar>();
+		inAndOutVars.addAll(transFormula.getOutVars().keySet());
+		inAndOutVars.addAll(transFormula.getInVars().keySet());
+		
+		for (BoogieVar var : inAndOutVars) {
+			TermVariable outVar = transFormula.getOutVars().get(var);
+			TermVariable inVar = transFormula.getInVars().get(var);
+			
+			if (outParams.contains(var)) {
+				assert (!var.isGlobal()) : "globalVar can not be outParam";
+				assert (!inParams.contains(var)) : "var can not be inParam and outParam";
+				outVars.put(var, outVar);
+			} else if (inParams.contains(var)) {
+				assert (!var.isGlobal()) : "globalVar can not be outParam";
+				assert (inVar == null || inVar == outVar) : "modification of inParam not allowed";
+
+			} else if (var.isGlobal()) {
+				if (var.isOldvar()) {
+					BoogieVar nonOldVar = boogie2smt.getSmt2Boogie().
+							getGlobals().get(var.getIdentifier());
+					TermVariable nonOldVarTv;
+					// We use the TermVariable of the nonOld invar.
+					// If the nonOld BoogieVar does not occur we use a fresh
+					// TermVariable
+					if (inVars.containsKey(nonOldVar)) {
+						nonOldVarTv = inVar;
+					} else {
+						nonOldVarTv = getFreshVariable(boogie2smt,var, outVar.getSort()); 
+					}
+					if (transFormula.getInVars().containsKey(var)) {
+						replacees.add(inVar);
+						replacers.add(nonOldVarTv);
+						assert (outVar == null || outVar == inVar) : "oldvar can not be modified";
+					} else {
+						assert transFormula.getOutVars().containsKey(var);
+						replacees.add(outVar);
+						replacers.add(nonOldVarTv);
+					}
+					// Since oldvars may not be modified it is safe to add the
+					// TermVariable only as inVar.
+					assert (!inVars.containsKey(nonOldVar) || 
+							inVars.get(nonOldVarTv) == nonOldVarTv) : 
+								"oldVar should have been replaced by nonOldVar"; 
+					inVars.put(var, nonOldVarTv);
+				} else {
+					if (transFormula.getInVars().containsKey(var)) {
+						inVars.put(var, inVar);
+					}
+					if (transFormula.getOutVars().containsKey(var)) {
+						outVars.put(var, outVar);
+					}
+				}
+			} else {
+				if (transFormula.getInVars().containsKey(var)) {
+					auxVars.add(inVar);
+				}
+				if (transFormula.getOutVars().containsKey(var)) {
+					auxVars.add(outVar);
+				}
+			}
+		}
+
+		for (TermVariable auxVar : transFormula.getAuxVars()) {
+			TermVariable newAuxVar = getFreshAuxVariable(boogie2smt, auxVar.getName(), auxVar.getSort());
+			replacees.add(auxVar);
+			replacers.add(newAuxVar);
+			auxVars.add(newAuxVar);
+		}
+		//TODO: These have to be renamed?!?
+		//newBranchEncoders.addAll(transFormula.getBranchEncoders());
+
+
+		TermVariable[] vars = replacees.toArray(new TermVariable[replacees.size()]);
+		Term[] values = replacers.toArray(new Term[replacers.size()]);
+		Term formula = script.let( vars , values, transFormula.getFormula());
+		//formula = new FormulaUnLet().unlet(formula);
+		
+		
+		formula = new FormulaUnLet().unlet(formula);
+		formula = (new SimplifyDDA(script, s_Logger)).getSimplifiedTerm(formula);
+		removesuperfluousVariables(inVars, outVars, auxVars, formula);
+		
+		NaiveDestructiveEqualityResolution der = 
+								new NaiveDestructiveEqualityResolution(script);
+		formula = der.eliminate(auxVars, formula);
+		formula = (new SimplifyDDA(script, s_Logger)).getSimplifiedTerm(formula);
+		removesuperfluousVariables(inVars, outVars, auxVars, formula);
+		
+		LBool isSat = Util.checkSat(script, formula);
+		if (isSat == LBool.UNSAT) {
+			s_Logger.warn("CodeBlock already infeasible");
+			formula = script.term("false");
+		}
+		Infeasibility infeasibility;
+		if (formula == script.term("false")) {
+			infeasibility = Infeasibility.INFEASIBLE;
+		} else {
+			infeasibility = Infeasibility.UNPROVEABLE;
+		}
+
+		Term closedFormula = computeClosedFormula(formula, 
+				inVars, outVars, auxVars, boogie2smt);
+		TransFormula result = new TransFormula(formula, inVars, outVars,
+				auxVars, newBranchEncoders, infeasibility, closedFormula);
+
+//		assert allVarsContainsFreeVars(allVars, formula);
+		assert freeVarsSubsetInOutAuxBranch(formula, inVars, outVars, auxVars, newBranchEncoders);
+		return result;
+	 
+ }
+
+	
+	
+	
 	 
 
 }
