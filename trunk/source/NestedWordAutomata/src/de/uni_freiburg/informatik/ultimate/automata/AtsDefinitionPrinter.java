@@ -375,9 +375,7 @@ public class AtsDefinitionPrinter<LETTER,STATE> {
 				alphabet = getAlphabetMapping(net.getAlphabet());
 				placesMapping = getPlacesMapping(net.getPlaces());
 
-				m_printWriter.println("#Print net");
-				m_printWriter.println("");
-				m_printWriter.println("#net net := (");
+				m_printWriter.println("PetriNet net = (");
 				printAlphabet();
 				printPlaces();
 				printInternalTransitions(net.getTransitions());
