@@ -1,11 +1,9 @@
 package de.uni_freiburg.informatik.ultimate.automata.petrinet.julian;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -142,18 +140,20 @@ public class FinitePrefix2PetriNet<L, C> implements IOperation {
 		
 		for (Condition c : bp.getConditions()) {
 			assert representatives.find(c) != null;
-			
-			Place<L, C> place = m_Net.addPlace(old_net.getStateFactory()
-					.finitePrefix2net(c), bp.initialConditions()
-					.contains(c), bp.isAccepting(c));
-			placeMap.put(c, place);
+			if (c == representatives.find(c)) {
+				Place<L, C> place = m_Net.addPlace(old_net.getStateFactory()
+						.finitePrefix2net(c), bp.initialConditions()
+						.contains(c), bp.isAccepting(c));
+				placeMap.put(c, place);
+			}
 		}
+		TransitionSet transitionSet = new TransitionSet();
 		for (Event<L,C> e : events) {
 			if (e == bp.getDummyRoot()) {
 				continue;
 			}
-			ArrayList<Place<L, C>> preds = new ArrayList<Place<L, C>>();
-			ArrayList<Place<L, C>> succs = new ArrayList<Place<L, C>>();
+			Set<Place<L, C>> preds = new HashSet<Place<L, C>>();
+			Set<Place<L, C>> succs = new HashSet<Place<L, C>>();
 			
 			for (Condition<L, C> c : e.getPredecessorConditions()) {
 				Condition<L, C> representative = representatives.find(c);
@@ -163,9 +163,11 @@ public class FinitePrefix2PetriNet<L, C> implements IOperation {
 			for (Condition<L, C> c : e.getSuccessorConditions()) {
 				Condition<L, C> representative = representatives.find(c);
 				succs.add(placeMap.get(representative));
-			}			
-			m_Net.addTransition(e.getTransition().getSymbol(), preds, succs);
+			}
+			transitionSet.addTransition(e.getTransition().getSymbol(), preds, succs);
+			//	m_Net.addTransition(e.getTransition().getSymbol(), preds, succs);
 		}
+		transitionSet.addAllTransitionsToNet(m_Net);
 		
 		
 		
@@ -265,6 +267,45 @@ public class FinitePrefix2PetriNet<L, C> implements IOperation {
 				m_Element2Set.put(e, set1);
 			}
 			m_CanonicalElement.put(set1, set1rep);
+		}
+		
+		@Override
+		public String toString() {
+			return m_CanonicalElement.toString();
+		}
+	}
+	
+	
+	class TransitionSet {
+		Map<L, Map< Set<Place<L, C>>, Set<Set<Place<L, C>>>>> m_Letter2Predset2Succsets = 
+				new HashMap<L, Map< Set<Place<L, C>>, Set<Set<Place<L, C>>>>>();
+		
+		void addTransition(L letter, Set<Place<L, C>> predset, Set<Place<L, C>> succset) {
+			Map<Set<Place<L, C>>, Set<Set<Place<L, C>>>> predsets2succsets = m_Letter2Predset2Succsets.get(letter);
+			if (predsets2succsets == null) {
+				predsets2succsets = new HashMap<Set<Place<L, C>>, Set<Set<Place<L, C>>>>();
+				m_Letter2Predset2Succsets.put(letter, predsets2succsets);
+			}
+			Set<Set<Place<L, C>>> succsets = predsets2succsets.get(predset);
+			if (succsets == null) {
+				succsets = new HashSet<Set<Place<L, C>>>();
+				predsets2succsets.put(predset, succsets);
+			}
+			succsets.add(succset);
+		}
+		
+		void addAllTransitionsToNet(PetriNetJulian<L,C> net) {
+			for (L letter : m_Letter2Predset2Succsets.keySet()) {
+				Map<Set<Place<L, C>>, Set<Set<Place<L, C>>>> predsets2succsets = m_Letter2Predset2Succsets.get(letter);
+				for (Set<Place<L,C>> predset : predsets2succsets.keySet()) {
+					Set<Set<Place<L, C>>> succsets = predsets2succsets.get(predset);
+					for (Set<Place<L, C>> succset : succsets) {
+						List<Place<L,C>> predList = new ArrayList<Place<L,C>>(predset);
+						List<Place<L,C>> succList = new ArrayList<Place<L,C>>(succset);
+						net.addTransition(letter, predList, succList);
+					}
+				}
+			}
 		}
 	}
 }
