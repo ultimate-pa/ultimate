@@ -470,6 +470,9 @@ public class TestFileInterpreter {
 				OperationInvocationExpression oe = (OperationInvocationExpression) n;
 				String opName = oe.getOperationName().toLowerCase();
 				Set<Class<?>> returnTypes = new HashSet<Class<?>>();
+				if (opName.equals("print") || opName.equals("assert")) {
+					return returnTypes;
+				}
 				if (m_existingOperations.containsKey(opName)) {
 					Set<Class<?>> operationClasses = m_existingOperations.get(opName);
 					for (Class<?> operationClass : operationClasses) {
@@ -1240,7 +1243,8 @@ public class TestFileInterpreter {
 		Map<String, Set<Class<?>>> result = new HashMap<String, Set<Class<?>>>();
 		String[] baseDirs = {"/de/uni_freiburg/informatik/ultimate/automata/nwalibrary/operations",
 				              "/de/uni_freiburg/informatik/ultimate/automata/nwalibrary/buchiNwa",
-				              "/de/uni_freiburg/informatik/ultimate/automata/petrinet/julian"};
+				              "/de/uni_freiburg/informatik/ultimate/automata/petrinet/julian",
+				              "/de/uni_freiburg/informatik/ultimate/automata/petrinet"};
 		for (String baseDir : baseDirs) {
 			ArrayDeque<String> dirs = new ArrayDeque<String>();
 			dirs.add("");
