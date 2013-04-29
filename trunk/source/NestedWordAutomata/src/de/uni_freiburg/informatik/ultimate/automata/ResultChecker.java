@@ -396,7 +396,7 @@ public class ResultChecker<LETTER,STATE> {
 		resultCheckStackHeight++;
 		s_Logger.info("Testing correctness of PetriNetJulian constructor");
 
-		NestedWordAutomaton resultAutomata = 
+		INestedWordAutomaton resultAutomata = 
 							(new PetriNet2FiniteAutomaton(result)).getResult();
 		boolean correct = true;
 		correct &= (resultAutomata.included(op) == null);
@@ -435,7 +435,7 @@ public class ResultChecker<LETTER,STATE> {
 
 		boolean correct = true;
 		if (result == null) {
-			NestedRun automataRun = (new PetriNet2FiniteAutomaton(net)).getResult().getAcceptingNestedRun();
+			NestedRun automataRun = (new IsEmpty((new PetriNet2FiniteAutomaton(net)).getResult())).getNestedRun();
 			correct = (automataRun == null);
 		} else {
 			correct =  net.accepts(result.getWord());
@@ -454,7 +454,7 @@ public class ResultChecker<LETTER,STATE> {
 
 		boolean correct = true;
 		if (result == null) {
-			NestedRun automataRun = (new PetriNet2FiniteAutomaton(net)).getResult().getAcceptingNestedRun();
+			NestedRun automataRun = (new IsEmpty((new PetriNet2FiniteAutomaton(net)).getResult())).getNestedRun();
 			if (automataRun != null) {
 				correct = false;
 				s_Logger.error("EmptinessCheck says empty, but net accepts: " + automataRun.getWord());
@@ -484,8 +484,8 @@ public class ResultChecker<LETTER,STATE> {
 		resultCheckStackHeight++;
 		s_Logger.info("Testing correctness of prefixProduct");
 
-		NestedWordAutomaton op1AsNwa = (new PetriNet2FiniteAutomaton(operand1)).getResult();
-		NestedWordAutomaton resultAsNwa = (new PetriNet2FiniteAutomaton(result)).getResult();
+		INestedWordAutomaton op1AsNwa = (new PetriNet2FiniteAutomaton(operand1)).getResult();
+		INestedWordAutomaton resultAsNwa = (new PetriNet2FiniteAutomaton(result)).getResult();
 		INestedWordAutomaton nwaResult = (new ConcurrentProduct(op1AsNwa, operand2, true)).getResult();
 		boolean correct = true;
 		correct &= (resultAsNwa.included(nwaResult) == null);
@@ -522,8 +522,8 @@ public class ResultChecker<LETTER,STATE> {
 		if (resultCheckStackHeight >= maxResultCheckStackHeight) return true;
 		resultCheckStackHeight++;
 		s_Logger.info("Testing Petri net language equivalence");
-		NestedWordAutomaton finAuto1 = (new PetriNet2FiniteAutomaton(net1)).getResult();
-		NestedWordAutomaton finAuto2 = (new PetriNet2FiniteAutomaton(net2)).getResult();
+		INestedWordAutomaton finAuto1 = (new PetriNet2FiniteAutomaton(net1)).getResult();
+		INestedWordAutomaton finAuto2 = (new PetriNet2FiniteAutomaton(net2)).getResult();
 		NestedRun subsetCounterex = nwaLanguageInclusion(finAuto1, finAuto2);
 		boolean subset = subsetCounterex == null;
 		if (!subset) {

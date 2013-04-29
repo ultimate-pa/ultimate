@@ -9,8 +9,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.apache.log4j.Logger;
+
+import de.uni_freiburg.informatik.ultimate.automata.Activator;
+import de.uni_freiburg.informatik.ultimate.automata.IOperation;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
+import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 
 
 /**
@@ -21,10 +27,50 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
  * @param <S> Symbol
  * @param <C> Content
  */
-public class PetriNet2FiniteAutomaton<S,C> {
+public class PetriNet2FiniteAutomaton<S,C> implements IOperation {
+	
+    private static Logger s_Logger = UltimateServices.getInstance().getLogger(
+            Activator.PLUGIN_ID);
 	
 	private final IPetriNet<S, C> m_Net;
 	private final NestedWordAutomaton<S,C> m_Result;
+
+	
+	@Override
+	public String operationName() {
+		return "petriNet2FiniteAutomaton";
+	}
+	
+	@Override
+	public String startMessage() {
+		return "Start " + operationName() +
+			"Operand " + m_Net.sizeInformation();
+	}
+	
+	public String exitMessage() {
+		return "Finished " + operationName() + " Result " + 
+				m_Result.sizeInformation();
+	}
+	
+	
+	public PetriNet2FiniteAutomaton(IPetriNet<S,C> net) {
+		m_Net = net;
+		s_Logger.info(startMessage());
+		m_ContentFactory = net.getStateFactory();
+		Set<S> alphabet = new HashSet<S>(net.getAlphabet());
+		m_Result = new NestedWordAutomaton<S,C>(alphabet,
+									 new HashSet<S>(0),
+									 new HashSet<S>(0),
+									 net.getStateFactory());
+		getState(net.getInitialMarking(),true);
+		while (!m_Worklist.isEmpty()) {
+			Marking<S,C> marking = m_Worklist.remove(0);
+			constructOutgoingTransitions(marking);
+		}
+		s_Logger.info(exitMessage());
+	}
+	
+	
 	
 	/**
 	 * List of markings for which
@@ -115,24 +161,14 @@ public class PetriNet2FiniteAutomaton<S,C> {
 
 	
 	
-	public PetriNet2FiniteAutomaton(IPetriNet<S,C> net) {
-		m_Net = net;
-		m_ContentFactory = net.getStateFactory();
-		Set<S> alphabet = new HashSet<S>(net.getAlphabet());
-		m_Result = new NestedWordAutomaton<S,C>(alphabet,
-									 new HashSet<S>(0),
-									 new HashSet<S>(0),
-									 net.getStateFactory());
-		getState(net.getInitialMarking(),true);
-		while (!m_Worklist.isEmpty()) {
-			Marking<S,C> marking = m_Worklist.remove(0);
-			constructOutgoingTransitions(marking);
-		}
-	}
+
 	
-	public NestedWordAutomaton<S,C> getResult() {
+	public INestedWordAutomaton<S,C> getResult() {
 		return m_Result;
 	}
+
+
+
 	
 	
 	
