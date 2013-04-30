@@ -113,7 +113,11 @@ public class LinearRankingFunction implements RankingFunction {
 			summands.add(summand);
 		}
 		summands.add(script.numeral(m_constant));
-		return script.term("+", summands.toArray(new Term[0]));
+		if (summands.size() == 1) {
+			return summands.get(0);
+		} else {
+			return script.term("+", summands.toArray(new Term[0]));
+		}
 	}
 	
 	public Expression asExpression(Script script, Smt2Boogie smt2boogie) {
