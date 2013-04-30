@@ -16,6 +16,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomat
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.BuchiIsEmpty;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.NestedLassoRun;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.Difference;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.visualization.AutomatonTransition.Transition;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
@@ -34,7 +35,9 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootAnnot;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.SequentialComposition;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.TransFormula;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.TransFormula.Infeasibility;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CFG2NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.InterpolantAutomataBuilder;
@@ -207,16 +210,22 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 
 
 		
-		TransFormula[] stemTFs = new TransFormula[stem.length()];
+		CodeBlock[] stemCBs = new CodeBlock[stem.length()];
 		for (int i=0; i<stem.length(); i++) {
-			stemTFs[i] = stem.getSymbol(i).getTransitionFormula();
+			stemCBs[i] = stem.getSymbol(i);
 		}
-		TransFormula[] loopTFs = new TransFormula[loop.length()];
+		CodeBlock[] loopCBs = new CodeBlock[loop.length()];
 		for (int i=0; i<loop.length(); i++) {
-			loopTFs[i] = loop.getSymbol(i).getTransitionFormula();
+			loopCBs[i] = loop.getSymbol(i);
 		}
-		TransFormula stemTF = TransFormula.sequentialComposition(1000, rootAnnot.getBoogie2SMT(), stemTFs);
-		TransFormula loopTF = TransFormula.sequentialComposition(1000+stemTFs.length, rootAnnot.getBoogie2SMT(), loopTFs);
+		TransFormula stemTF = SequentialComposition.getInterproceduralTransFormula(rootAnnot.getBoogie2SMT(), stemCBs);
+		TransFormula loopTF = SequentialComposition.getInterproceduralTransFormula(rootAnnot.getBoogie2SMT(), loopCBs);
+		{
+			TransFormula composed = TransFormula.sequentialComposition(10000, rootAnnot.getBoogie2SMT(), stemTF, loopTF);
+			if (composed.isInfeasible() == Infeasibility.INFEASIBLE) {
+				throw new AssertionError("suddently infeasible");
+			}
+		}
 		RankingFunctionsSynthesizer synthesizer = null;
 		try {
 			synthesizer = new RankingFunctionsSynthesizer(smtManager.getScript(), smtManager.getScript(), stemTF, loopTF);
