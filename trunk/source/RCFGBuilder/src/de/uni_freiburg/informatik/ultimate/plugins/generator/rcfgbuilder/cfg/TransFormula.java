@@ -64,9 +64,7 @@ public class TransFormula implements Serializable {
 	static Logger s_Logger = 
 			UltimateServices.getInstance().getLogger(Activator.PLUGIN_ID);
 
-	private static int s_FreshNumber = 10000;
-
-	private static int s_FreshVarNumber; 
+	private static int s_FreshVarNumber = 10000; 
 	
 	private final Term m_Formula;
 	private final Set<TermVariable> m_Vars;
@@ -909,9 +907,16 @@ public class TransFormula implements Serializable {
 
 
 
-	 // Compute Transformula that represents input as procedure summary.
-	
-	public static TransFormula procedureSummary(int serialNumber, Boogie2SMT boogie2smt, TransFormula transFormula, Set<BoogieVar> inParams, Set<BoogieVar> outParams) {
+	/**
+	 * Returns a Transformula that can be seen as procedure summary of the input
+	 * transformula with respect to inParams and outParams.
+	 * We obtain the result by
+	 * - removing all inVars that are not global or not in inParams
+	 * - removing all outVars that are not global or not in outParams
+	 * - considering all oldVars as non-old inVars.
+	 */
+	public static TransFormula procedureSummary(Boogie2SMT boogie2smt, 
+			TransFormula transFormula, Set<BoogieVar> inParams, Set<BoogieVar> outParams) {
 		Script script = boogie2smt.getScript();
 		Map<BoogieVar, TermVariable> inVars = new HashMap<BoogieVar, TermVariable>();
 		Map<BoogieVar, TermVariable> outVars = new HashMap<BoogieVar, TermVariable>();
@@ -937,6 +942,7 @@ public class TransFormula implements Serializable {
 			} else if (inParams.contains(var)) {
 				assert (!var.isGlobal()) : "globalVar can not be outParam";
 				assert (inVar == null || inVar == outVar) : "modification of inParam not allowed";
+				inVars.put(var, inVar);
 
 			} else if (var.isGlobal()) {
 				if (var.isOldvar()) {
