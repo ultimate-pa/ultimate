@@ -411,7 +411,9 @@ public class RankingFunctionsSynthesizer {
 				throw new TermIsNotAffineException(
 						"Unfamiliar application term.", appt);
 			}
-		} else {
+		} else if (term instanceof TermVariable)
+			s_Logger.warn("Ignored boolean TermVariable " + term);
+		else {
 			throw new TermIsNotAffineException("Expected application term.",
 					term);
 		}
