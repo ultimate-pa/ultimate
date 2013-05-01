@@ -248,13 +248,6 @@
          unpack="false"/>
 
    <plugin
-         id="AutomataScriptParser"
-         download-size="0"
-         install-size="0"
-         version="0.0.0"
-         unpack="false"/>
-
-   <plugin
          id="BlockEncoding"
          download-size="0"
          install-size="0"
@@ -270,6 +263,13 @@
 
    <plugin
          id="Library-junit"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="BuchiAutomizer"
          download-size="0"
          install-size="0"
          version="0.0.0"
