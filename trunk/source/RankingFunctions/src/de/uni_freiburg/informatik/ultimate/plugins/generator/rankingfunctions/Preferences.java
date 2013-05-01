@@ -64,7 +64,7 @@ public class Preferences {
 	/**
 	 * Are disjunctions allowed in the stem and loop transition?
 	 */
-	public static boolean enable_disjunction = false; // Default: true
+	public static boolean enable_disjunction = !false; // Default: true
 	
 	public enum UseDivision {
 		C_STYLE,    // C style division: x := a / k  -->  k*x <= a < (k+1)*x
