@@ -907,138 +907,383 @@ public class TransFormula implements Serializable {
 
 
 
+//	/**
+//	 * Returns a Transformula that can be seen as procedure summary of the input
+//	 * transformula with respect to inParams and outParams.
+//	 * We obtain the result by
+//	 * - removing all inVars that are not global or not in inParams
+//	 * - removing all outVars that are not global or not in outParams
+//	 * - considering all oldVars as non-old inVars.
+//	 */
+//	public static TransFormula procedureSummary(Boogie2SMT boogie2smt, 
+//			TransFormula transFormula, Set<BoogieVar> inArgument, Set<BoogieVar> outResult) {
+//		Script script = boogie2smt.getScript();
+//		Map<BoogieVar, TermVariable> inVars = new HashMap<BoogieVar, TermVariable>();
+//		Map<BoogieVar, TermVariable> outVars = new HashMap<BoogieVar, TermVariable>();
+//		Set<TermVariable> allVars = new HashSet<TermVariable>();
+//		Set<TermVariable> auxVars = new HashSet<TermVariable>();
+//		Set<TermVariable> newBranchEncoders = new HashSet<TermVariable>();
+//
+//		ArrayList<TermVariable> replacees = new ArrayList<TermVariable>();
+//		ArrayList<Term> replacers = new ArrayList<Term>();
+//		
+//		Set<BoogieVar> inAndOutVars = new HashSet<BoogieVar>();
+//		inAndOutVars.addAll(transFormula.getOutVars().keySet());
+//		inAndOutVars.addAll(transFormula.getInVars().keySet());
+//		
+//		for (BoogieVar var : inAndOutVars) {
+//			TermVariable outVar = transFormula.getOutVars().get(var);
+//			TermVariable inVar = transFormula.getInVars().get(var);
+//			
+//			if (var.isGlobal()) {
+//				if (var.isOldvar()) {
+//					BoogieVar nonOldVar = boogie2smt.getSmt2Boogie().
+//							getGlobals().get(var.getIdentifier());
+//					TermVariable nonOldVarTv;
+//					// We use the TermVariable of the nonOld invar.
+//					// If the nonOld BoogieVar does not occur we use a fresh
+//					// TermVariable
+//					if (inVars.containsKey(nonOldVar)) {
+//						nonOldVarTv = inVar;
+//					} else {
+//						nonOldVarTv = getFreshVariable(boogie2smt,var, outVar.getSort()); 
+//					}
+//					if (transFormula.getInVars().containsKey(var)) {
+//						replacees.add(inVar);
+//						replacers.add(nonOldVarTv);
+//						assert (outVar == null || outVar == inVar) : "oldvar can not be modified";
+//					} else {
+//						assert transFormula.getOutVars().containsKey(var);
+//						replacees.add(outVar);
+//						replacers.add(nonOldVarTv);
+//					}
+//					// Since oldvars may not be modified it is safe to add the
+//					// TermVariable only as inVar.
+//					assert (!inVars.containsKey(nonOldVar) || 
+//							inVars.get(nonOldVarTv) == nonOldVarTv) : 
+//								"oldVar should have been replaced by nonOldVar"; 
+//					inVars.put(var, nonOldVarTv);
+//				} else {
+//					if (transFormula.getInVars().containsKey(var)) {
+//						inVars.put(var, inVar);
+//					}
+//					if (transFormula.getOutVars().containsKey(var)) {
+//						outVars.put(var, outVar);
+//					}
+//				}
+//			} else {
+//				if (outVar != null) {
+//					if (outResult.contains(var)) {
+//						assert (transFormula.getOutVars().containsKey(var));
+//						outVars.put(var, outVar);
+//					} else {
+//						if (outVar == inVar && inArgument.contains(var)) {
+//							// do nothing. special case where outVar does not
+//							// become auxVar
+//						} else {
+//							auxVars.add(outVar);
+//						}
+//					}
+//				}
+//				if (inVar != null) {
+//					if (inArgument.contains(var) && inVar != null) {
+//						assert (transFormula.getInVars().containsKey(var));
+//						inVars.put(var, inVar);
+//					} else {
+//						if (inVar == outVar && outResult.contains(var)) {
+//							// do nothing. special case where inVar does not
+//							// become
+//							// auxVar
+//						} else {
+//							auxVars.add(inVar);
+//						}
+//					}
+//				}
+//			}
+//		}
+//
+//		for (TermVariable auxVar : transFormula.getAuxVars()) {
+//			TermVariable newAuxVar = getFreshAuxVariable(boogie2smt, auxVar.getName(), auxVar.getSort());
+//			replacees.add(auxVar);
+//			replacers.add(newAuxVar);
+//			auxVars.add(newAuxVar);
+//		}
+//		//TODO: These have to be renamed?!?
+//		//newBranchEncoders.addAll(transFormula.getBranchEncoders());
+//
+//
+//		TermVariable[] vars = replacees.toArray(new TermVariable[replacees.size()]);
+//		Term[] values = replacers.toArray(new Term[replacers.size()]);
+//		Term formula = script.let( vars , values, transFormula.getFormula());
+//		//formula = new FormulaUnLet().unlet(formula);
+//		
+//		
+//		formula = new FormulaUnLet().unlet(formula);
+//		formula = (new SimplifyDDA(script, s_Logger)).getSimplifiedTerm(formula);
+//		removesuperfluousVariables(inVars, outVars, auxVars, formula);
+//		
+//		NaiveDestructiveEqualityResolution der = 
+//								new NaiveDestructiveEqualityResolution(script);
+//		formula = der.eliminate(auxVars, formula);
+//		formula = (new SimplifyDDA(script, s_Logger)).getSimplifiedTerm(formula);
+//		removesuperfluousVariables(inVars, outVars, auxVars, formula);
+//		
+//		LBool isSat = Util.checkSat(script, formula);
+//		if (isSat == LBool.UNSAT) {
+//			s_Logger.warn("CodeBlock already infeasible");
+//			formula = script.term("false");
+//		}
+//		Infeasibility infeasibility;
+//		if (formula == script.term("false")) {
+//			infeasibility = Infeasibility.INFEASIBLE;
+//		} else {
+//			infeasibility = Infeasibility.UNPROVEABLE;
+//		}
+//
+//		Term closedFormula = computeClosedFormula(formula, 
+//				inVars, outVars, auxVars, boogie2smt);
+//		TransFormula result = new TransFormula(formula, inVars, outVars,
+//				auxVars, newBranchEncoders, infeasibility, closedFormula);
+//
+////		assert allVarsContainsFreeVars(allVars, formula);
+//		assert freeVarsSubsetInOutAuxBranch(formula, inVars, outVars, auxVars, newBranchEncoders);
+//		return result;
+//	 
+// }
+//	
+
+	
+	
+	
+	private void removeOutVar(BoogieVar var) {
+		assert this.m_OutVars.containsKey(var) : "illegal to remove variable not that is contained"; 
+		TermVariable inVar = m_InVars.get(var);
+		TermVariable outVar = m_OutVars.get(var);
+		m_OutVars.remove(var);
+		if (inVar != outVar) {
+			// outVar does not occurs already as inVar, we have to add outVar
+			// to auxVars
+			m_auxVars.add(outVar);
+			boolean removed = m_AssignedVars.remove(var);
+			assert (removed);
+		} else {
+			assert !m_AssignedVars.contains(var);
+		}
+	}
+	
+	private void removeInVar(BoogieVar var) {
+		assert this.m_InVars.containsKey(var) : "illegal to remove variable not that is contained"; 
+		TermVariable inVar = m_InVars.get(var);
+		TermVariable outVar = m_OutVars.get(var);
+		m_InVars.remove(var);
+		if (inVar != outVar) {
+			// inVar does not occurs already as outVar, we have to add inVar
+			// to auxVars
+			m_auxVars.add(inVar);
+			assert outVar == null || m_AssignedVars.contains(var);
+		} else {
+			assert !m_AssignedVars.contains(var);
+			if (outVar != null) {
+				m_AssignedVars.add(var);
+			}
+		}
+	}
+
+	
+	
+	
+//	/**
+//	 * Replace all oldVars that occur in inVars or outVars by corresponding
+//	 * non-old global Var. The corresponding non-old Var is the one that
+//	 * occurs in the inVars. If inVars does not contain such a variable
+//	 * we construct it.
+//	 */
+//	private static Term replaceOldVarsByInVars(Boogie2SMT boogie2smt, 
+//			Map<BoogieVar,TermVariable> inVars, Map<BoogieVar,TermVariable> outVars, Term formula) {
+//		ArrayList<TermVariable> replacees = new ArrayList<TermVariable>();
+//		ArrayList<Term> replacers = new ArrayList<Term>();
+//		
+//		Set<BoogieVar> inAndOutVars = new HashSet<BoogieVar>();
+//		inAndOutVars.addAll(outVars.keySet());
+//		inAndOutVars.addAll(inVars.keySet());
+//		
+//		for (BoogieVar var : inAndOutVars) {
+//			if (var.isGlobal()) {
+//				if (var.isOldvar()) {
+//					TermVariable outVar = outVars.get(var);
+//					TermVariable inVar = inVars.get(var);
+//					BoogieVar nonOldVar = boogie2smt.getSmt2Boogie()
+//							.getGlobals().get(var.getIdentifier());
+//					TermVariable nonOldVarTv;
+//					// We use the TermVariable of the nonOld invar.
+//					// If the nonOld BoogieVar does not occur we use a fresh
+//					// TermVariable
+//					if (inVars.containsKey(nonOldVar)) {
+//						nonOldVarTv = inVar;
+//					} else {
+//						nonOldVarTv = getFreshVariable(boogie2smt, var,
+//								outVar.getSort());
+//					}
+//					if (inVars.containsKey(var)) {
+//						replacees.add(inVar);
+//						replacers.add(nonOldVarTv);
+//						assert (outVar == null || outVar == inVar) : "oldvar can not be modified";
+//					} else {
+//						assert outVars.containsKey(var);
+//						replacees.add(outVar);
+//						replacers.add(nonOldVarTv);
+//					}
+//				}
+//			}
+//		}
+//		TermVariable[] vars = replacees.toArray(new TermVariable[replacees.size()]);
+//		Term[] values = replacers.toArray(new Term[replacers.size()]);
+//		Term result = boogie2smt.getScript().let( vars , values, formula);
+//		return result;
+//	}
+	
+
 	/**
-	 * Returns a Transformula that can be seen as procedure summary of the input
-	 * transformula with respect to inParams and outParams.
-	 * We obtain the result by
-	 * - removing all inVars that are not global or not in inParams
-	 * - removing all outVars that are not global or not in outParams
-	 * - considering all oldVars as non-old inVars.
+	 * Returns TransFormula that describes a sequence of code blocks that 
+	 * contains a pending call.
+	 * Note the the scope of inVars and outVars is different. Do not compose
+	 * the result with the default/intraprocedural composition.
+	 * @param beforeCall TransFormula that describes transition relation 
+	 * before the call.
+	 * @param callTf TransFormula that describes parameter assignment of call.
+	 * @param oldVarsAssignment TransFormula that assigns to oldVars of 
+	 * 	modifiable globals the value of the global var.
+	 * @param bfterCall TransFormula that describes the transition relation
+	 * after the call.
 	 */
-	public static TransFormula procedureSummary(Boogie2SMT boogie2smt, 
-			TransFormula transFormula, Set<BoogieVar> inParams, Set<BoogieVar> outParams) {
-		Script script = boogie2smt.getScript();
-		Map<BoogieVar, TermVariable> inVars = new HashMap<BoogieVar, TermVariable>();
-		Map<BoogieVar, TermVariable> outVars = new HashMap<BoogieVar, TermVariable>();
-		Set<TermVariable> allVars = new HashSet<TermVariable>();
-		Set<TermVariable> auxVars = new HashSet<TermVariable>();
-		Set<TermVariable> newBranchEncoders = new HashSet<TermVariable>();
+	public static TransFormula sequentialCompositionWithPendingCall(
+			Boogie2SMT boogie2smt, TransFormula[] beforeCall,
+			TransFormula callTf, TransFormula oldVarsAssignment,
+			TransFormula bfterCall) {
 
-		ArrayList<TermVariable> replacees = new ArrayList<TermVariable>();
-		ArrayList<Term> replacers = new ArrayList<Term>();
-		
-		Set<BoogieVar> inAndOutVars = new HashSet<BoogieVar>();
-		inAndOutVars.addAll(transFormula.getOutVars().keySet());
-		inAndOutVars.addAll(transFormula.getInVars().keySet());
-		
-		for (BoogieVar var : inAndOutVars) {
-			TermVariable outVar = transFormula.getOutVars().get(var);
-			TermVariable inVar = transFormula.getInVars().get(var);
-			
-			if (outParams.contains(var)) {
-				assert (!var.isGlobal()) : "globalVar can not be outParam";
-				assert (!inParams.contains(var)) : "var can not be inParam and outParam";
-				outVars.put(var, outVar);
-			} else if (inParams.contains(var)) {
-				assert (!var.isGlobal()) : "globalVar can not be outParam";
-				assert (inVar == null || inVar == outVar) : "modification of inParam not allowed";
-				inVars.put(var, inVar);
+		TransFormula callAndBeforeTF;
+		{
+			List<TransFormula> callAndBeforeList =  new ArrayList<TransFormula>(Arrays.asList(beforeCall));
+			callAndBeforeList.add(callTf);
+			TransFormula[] callAndBeforeArray = 
+					callAndBeforeList.toArray(new TransFormula[0]);
+			callAndBeforeTF = sequentialComposition(32349, boogie2smt,
+					callAndBeforeArray);
 
-			} else if (var.isGlobal()) {
-				if (var.isOldvar()) {
-					BoogieVar nonOldVar = boogie2smt.getSmt2Boogie().
-							getGlobals().get(var.getIdentifier());
-					TermVariable nonOldVarTv;
-					// We use the TermVariable of the nonOld invar.
-					// If the nonOld BoogieVar does not occur we use a fresh
-					// TermVariable
-					if (inVars.containsKey(nonOldVar)) {
-						nonOldVarTv = inVar;
-					} else {
-						nonOldVarTv = getFreshVariable(boogie2smt,var, outVar.getSort()); 
+			// remove outVars that relate to scope of caller
+			// - local vars that are no inParams of callee
+			// - oldVars of variables that can be modified by callee
+			List<BoogieVar> varsToRemove = new ArrayList<BoogieVar>();
+			for (BoogieVar bv : callAndBeforeTF.getOutVars().keySet()) {
+				if (bv.isGlobal()) {
+					if (bv.isOldvar()
+							&& oldVarsAssignment.getOutVars().containsKey(bv)) {
+						varsToRemove.add(bv);
 					}
-					if (transFormula.getInVars().containsKey(var)) {
-						replacees.add(inVar);
-						replacers.add(nonOldVarTv);
-						assert (outVar == null || outVar == inVar) : "oldvar can not be modified";
-					} else {
-						assert transFormula.getOutVars().containsKey(var);
-						replacees.add(outVar);
-						replacers.add(nonOldVarTv);
-					}
-					// Since oldvars may not be modified it is safe to add the
-					// TermVariable only as inVar.
-					assert (!inVars.containsKey(nonOldVar) || 
-							inVars.get(nonOldVarTv) == nonOldVarTv) : 
-								"oldVar should have been replaced by nonOldVar"; 
-					inVars.put(var, nonOldVarTv);
 				} else {
-					if (transFormula.getInVars().containsKey(var)) {
-						inVars.put(var, inVar);
-					}
-					if (transFormula.getOutVars().containsKey(var)) {
-						outVars.put(var, outVar);
+					if (!callTf.getOutVars().containsKey(bv)) {
+						// bv is local but not inParam of called procedure
+						varsToRemove.add(bv);
 					}
 				}
-			} else {
-				if (transFormula.getInVars().containsKey(var)) {
-					auxVars.add(inVar);
-				}
-				if (transFormula.getOutVars().containsKey(var)) {
-					auxVars.add(outVar);
-				}
+			}
+			for (BoogieVar bv : varsToRemove) {
+				callAndBeforeTF.removeOutVar(bv);
 			}
 		}
 
-		for (TermVariable auxVar : transFormula.getAuxVars()) {
-			TermVariable newAuxVar = getFreshAuxVariable(boogie2smt, auxVar.getName(), auxVar.getSort());
-			replacees.add(auxVar);
-			replacers.add(newAuxVar);
-			auxVars.add(newAuxVar);
-		}
-		//TODO: These have to be renamed?!?
-		//newBranchEncoders.addAll(transFormula.getBranchEncoders());
+		TransFormula oldAssignAndAfterTF;
+		{
+			List<TransFormula> oldAssignAndAfterList = new ArrayList<TransFormula>(Arrays.asList(bfterCall));
+			oldAssignAndAfterList.add(0, oldVarsAssignment);
+			TransFormula[] oldAssignAndAfterArray = 
+					oldAssignAndAfterList.toArray(new TransFormula[0]);
+			oldAssignAndAfterTF = sequentialComposition(32349, boogie2smt,
+					oldAssignAndAfterArray);
 
-
-		TermVariable[] vars = replacees.toArray(new TermVariable[replacees.size()]);
-		Term[] values = replacers.toArray(new Term[replacers.size()]);
-		Term formula = script.let( vars , values, transFormula.getFormula());
-		//formula = new FormulaUnLet().unlet(formula);
-		
-		
-		formula = new FormulaUnLet().unlet(formula);
-		formula = (new SimplifyDDA(script, s_Logger)).getSimplifiedTerm(formula);
-		removesuperfluousVariables(inVars, outVars, auxVars, formula);
-		
-		NaiveDestructiveEqualityResolution der = 
-								new NaiveDestructiveEqualityResolution(script);
-		formula = der.eliminate(auxVars, formula);
-		formula = (new SimplifyDDA(script, s_Logger)).getSimplifiedTerm(formula);
-		removesuperfluousVariables(inVars, outVars, auxVars, formula);
-		
-		LBool isSat = Util.checkSat(script, formula);
-		if (isSat == LBool.UNSAT) {
-			s_Logger.warn("CodeBlock already infeasible");
-			formula = script.term("false");
-		}
-		Infeasibility infeasibility;
-		if (formula == script.term("false")) {
-			infeasibility = Infeasibility.INFEASIBLE;
-		} else {
-			infeasibility = Infeasibility.UNPROVEABLE;
+			// remove inVars that relate to scope of callee
+			// - local vars that are no inParams of callee
+			// - oldVars of variables that can be modified by callee
+			List<BoogieVar> varsToRemove = new ArrayList<BoogieVar>();
+			for (BoogieVar bv : oldAssignAndAfterTF.getInVars().keySet()) {
+				if (bv.isGlobal()) {
+					if (bv.isOldvar()
+							&& oldVarsAssignment.getOutVars().containsKey(bv)) {
+						varsToRemove.add(bv);
+					}
+				} else {
+					if (!callTf.getOutVars().containsKey(bv)) {
+						// bv is local but not inParam of called procedure
+						varsToRemove.add(bv);
+					}
+				}
+			}
+			for (BoogieVar bv : varsToRemove) {
+				oldAssignAndAfterTF.removeInVar(bv);
+			}
 		}
 
-		Term closedFormula = computeClosedFormula(formula, 
-				inVars, outVars, auxVars, boogie2smt);
-		TransFormula result = new TransFormula(formula, inVars, outVars,
-				auxVars, newBranchEncoders, infeasibility, closedFormula);
-
-//		assert allVarsContainsFreeVars(allVars, formula);
-		assert freeVarsSubsetInOutAuxBranch(formula, inVars, outVars, auxVars, newBranchEncoders);
+		TransFormula result = sequentialComposition(20344, boogie2smt,
+				callAndBeforeTF, oldAssignAndAfterTF);
 		return result;
-	 
- }
+	}
+	
+	
 
+	/**
+	 * Returns a Transformula that can be seen as procedure summary.
+	 * @param callTf TransFormula that describes parameter assignment of call.
+	 * @param oldVarsAssignment TransFormula that assigns to oldVars of 
+	 * 	modifiable globals the value of the global var.
+	 * @param procedureTf TransFormula that describes the procdure.
+	 * @param returnTf TransFormula that assigns the result of the procedure call.
+	 */
+	public static TransFormula sequentialCompositionWithCallAndReturn(
+			Boogie2SMT boogie2smt, TransFormula callTf,
+			TransFormula oldVarsAssignment, TransFormula procedureTf,
+			TransFormula returnTf) {
+		TransFormula result = sequentialComposition(32405, boogie2smt, callTf,
+				oldVarsAssignment, procedureTf, returnTf);
+		{
+			List<BoogieVar> inVarsToRemove = new ArrayList<BoogieVar>();
+			for (BoogieVar bv : result.getInVars().keySet()) {
+				if (bv.isGlobal()) {
+					if (bv.isOldvar()
+							&& oldVarsAssignment.getOutVars().containsKey(bv)) {
+						inVarsToRemove.add(bv);
+					}
+				} else {
+					if (!callTf.getInVars().containsKey(bv)) {
+						// bv is local but not argument of procedure call
+						inVarsToRemove.add(bv);
+					}
+				}
+			}
+			for (BoogieVar bv : inVarsToRemove) {
+				result.removeInVar(bv);
+			}
+		}
+		{
+			List<BoogieVar> outVarsToRemove = new ArrayList<BoogieVar>();
+			for (BoogieVar bv : result.getOutVars().keySet()) {
+				if (bv.isGlobal()) {
+					if (bv.isOldvar()
+							&& oldVarsAssignment.getOutVars().containsKey(bv)) {
+						outVarsToRemove.add(bv);
+					}
+				} else {
+					if (!returnTf.getInVars().containsKey(bv)) {
+						// bv is local but not result of procedure call
+						outVarsToRemove.add(bv);
+					}
+				}
+			}
+			for (BoogieVar bv : outVarsToRemove) {
+				result.removeOutVar(bv);
+			}
+		}
+		return result;
+	}
 	
 	
 	
