@@ -1,10 +1,13 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 
 import org.apache.log4j.Logger;
+import org.omg.PortableInterceptor.SUCCESSFUL;
 
 import de.uni_freiburg.informatik.ultimate.access.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.access.WalkerOptions;
@@ -55,6 +58,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
 public class BuchiAutomizerObserver implements IUnmanagedObserver {
 
 	private static Logger s_Logger = UltimateServices.getInstance().getLogger(Activator.s_PLUGIN_ID);
+	private IElement m_graphroot;
 	private SmtManager smtManager;
 	private IPredicate[] m_Interpolants;
 	private IRun<CodeBlock, IPredicate> m_Counterexample;
@@ -112,6 +116,7 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 	public boolean process(IElement root) {
 		RootAnnot rootAnnot = ((RootNode) root).getRootAnnot();
 		TAPreferences taPrefs = rootAnnot.getTaPrefs();
+		m_graphroot = root;
 		
 		String settings = "Automizer settings:";
 		settings += " Hoare:"+ taPrefs.computeHoareAnnotation();
@@ -165,6 +170,10 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 			throw new AssertionError();
 		}
 		NestedLassoRun<CodeBlock, IPredicate> ctx = ec.getAcceptingNestedLassoRun();
+		if (ctx == null) {
+			s_Logger.warn("Statistics: Trivially terminating");
+			return false;
+		}
 		NestedWord<CodeBlock> stem = ctx.getStem().getWord();
 		s_Logger.info("Stem: " + stem);
 		NestedWord<CodeBlock> loop = ctx.getLoop().getWord();
@@ -200,6 +209,10 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 				throw new AssertionError();
 			}
 			ctx = ec.getAcceptingNestedLassoRun();
+			if (ctx == null) {
+				s_Logger.warn("Statistics: Trivially terminating");
+				return false;
+			}
 			stem = ctx.getStem().getWord();
 			s_Logger.info("Stem: " + stem);
 			loop = ctx.getLoop().getWord();
@@ -218,10 +231,17 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 		for (int i=0; i<loop.length(); i++) {
 			loopCBs[i] = loop.getSymbol(i);
 		}
+		@SuppressWarnings("deprecation")
 		TransFormula stemTF = SequentialComposition.getInterproceduralTransFormula(rootAnnot.getBoogie2SMT(), stemCBs);
+		@SuppressWarnings("deprecation")
 		TransFormula loopTF = SequentialComposition.getInterproceduralTransFormula(rootAnnot.getBoogie2SMT(), loopCBs);
 		{
-			TransFormula composed = TransFormula.sequentialComposition(10000, rootAnnot.getBoogie2SMT(), stemTF, loopTF);
+			List<CodeBlock> composedCB = new ArrayList<CodeBlock>();
+			composedCB.addAll(Arrays.asList(stemCBs));
+			composedCB.addAll(Arrays.asList(loopCBs));
+			composedCB.addAll(Arrays.asList(loopCBs));
+			TransFormula composed = SequentialComposition.getInterproceduralTransFormula(rootAnnot.getBoogie2SMT(), composedCB.toArray(new CodeBlock[0])); 
+					//TransFormula.sequentialComposition(10000, rootAnnot.getBoogie2SMT(), stemTF, loopTF);
 			if (composed.isInfeasible() == Infeasibility.INFEASIBLE) {
 				throw new AssertionError("suddently infeasible");
 			}
@@ -247,20 +267,25 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 					Expression rfExp = linRf.asExpression(smtManager.getScript(), rootAnnot.getBoogie2Smt());
 					String rfString = RankingFunctionsObserver.backtranslateExprWorkaround(rfExp);
 					String siString;
-					if (si_list.size() <= 2) {
-						SupportingInvariant si = si_list.iterator().next();
+					
+//					if (si_list.size() <= 2) {
+//						SupportingInvariant si = si_list.iterator().next();
+//						Expression siExp = si.asExpression(smtManager.getScript(), rootAnnot.getBoogie2Smt());
+//						siString = RankingFunctionsObserver.backtranslateExprWorkaround(siExp);
+//					} else {
+//						throw new AssertionError("The linear template should not have more than two supporting invariants.");
+//					}
+					longMessage.append("Statistics: Found linear ranking function ");
+					longMessage.append(rfString);
+					longMessage.append(" with linear supporting invariant");
+					for (SupportingInvariant si : si_list) {
 						Expression siExp = si.asExpression(smtManager.getScript(), rootAnnot.getBoogie2Smt());
 						siString = RankingFunctionsObserver.backtranslateExprWorkaround(siExp);
-					} else {
-						throw new AssertionError("The linear template should not have more than two supporting invariants.");
+						longMessage.append(" " + siString);
 					}
-					longMessage.append("Found linear ranking function ");
-					longMessage.append(rfString);
-					longMessage.append(" with linear supporting invariant ");
-					longMessage.append(siString);
 					s_Logger.info(longMessage);
 				} else {
-					s_Logger.info("No ranking function has been found " +
+					s_Logger.info("Statistics: No ranking function has been found " +
 							"with this template.");
 				}
 			} catch (SMTLIBException e) {
@@ -306,6 +331,11 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 	public boolean performedChanges() {
 		// TODO Auto-generated method stub
 		return false;
+	}
+
+
+	public IElement getModel() {
+		return m_graphroot;
 	}
 	
 //	public static TransFormula sequentialComposition(int serialNumber, 

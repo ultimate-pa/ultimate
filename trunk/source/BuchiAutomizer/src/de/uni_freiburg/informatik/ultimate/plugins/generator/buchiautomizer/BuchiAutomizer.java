@@ -115,8 +115,7 @@ public class BuchiAutomizer implements IGenerator {
 	 */
 	@Override
 	public IElement getModel() {
-		// TODO Auto-generated method stub
-		return null;
+		return m_Observer.getModel();
 	}
 	
 	/* (non-Javadoc)
