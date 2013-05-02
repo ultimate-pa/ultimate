@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Stack;
 
 import org.apache.log4j.Logger;
 
@@ -71,6 +72,10 @@ public class ConversionVisitor implements IMinimizationVisitor {
 
 	private boolean lbe;
 
+	private Stack<ArrayList<CodeBlock>> seqComposedBlocks;
+
+	private HashSet<IMinimizedEdge> hasConjunctionAsParent;
+
 	/**
 	 * @param boogie2smt
 	 * @param root
@@ -85,6 +90,8 @@ public class ConversionVisitor implements IMinimizationVisitor {
 		this.checkForMultipleFormula = new HashMap<IMinimizedEdge, Integer>();
 		this.transFormBuilder = new TransFormulaBuilder(boogie2smt,
 				root.getRootAnnot());
+		this.seqComposedBlocks = new Stack<ArrayList<CodeBlock>>();
+		this.hasConjunctionAsParent = new HashSet<IMinimizedEdge>();
 		if (heuristic == null) {
 			lbe = true;
 		} else {
@@ -157,10 +164,14 @@ public class ConversionVisitor implements IMinimizationVisitor {
 				// CodeBlock-Edge
 				CodeBlock cb = null;
 				checkForMultipleFormula.clear();
+				hasConjunctionAsParent.clear();
+				seqComposedBlocks.clear();
 				s_Logger.debug("New Converted Edge: " + edge + " Source: "
 						+ edge.getSource() + " / Target: " + edge.getTarget());
 				s_Logger.debug("Size of Formula: " + edge.getElementCount());
 				// Now we create a converted CodeBlock-edge
+				// We add one first sequential composed list level
+				seqComposedBlocks.push(new ArrayList<CodeBlock>());
 				cb = convertMinimizedEdge(edge);
 				if (cb instanceof GotoEdge) {
 					// it is possible that the found replacement, is Goto-Edge,
@@ -296,91 +307,104 @@ public class ConversionVisitor implements IMinimizationVisitor {
 		// We build a CodeBlock using Recursion
 		// We reach one end if we have an BasicEdge
 		if (edge.isBasicEdge()) {
-			CodeBlock cb = ((IBasicEdge) edge).getOriginalEdge();
-			CodeBlock copyOfCodeBlock = null;
-			// We need to convert the basic edges, into new ones
-			// -> so basically we create a new instance of the CodeBlock,
-			// this is necessary to avoid mixing of the models
-			if (cb instanceof StatementSequence) {
-				copyOfCodeBlock = new StatementSequence(null, null,
-						((StatementSequence) cb).getStatements(),
-						((StatementSequence) cb).getOrigin());
-			}
-			if (cb instanceof Call) {
-				copyOfCodeBlock = new Call(null, null,
-						((Call) cb).getCallStatement(),
-						((Call) cb).getOldVarsAssignment(),
-						((Call) cb).getGlobalVarsAssignment());
-			}
-			if (cb instanceof Return) {
-				// TODO: Problem because we use here, old instance of CallAnnot?
-				copyOfCodeBlock = new Return(null, null,
-						((Return) cb).getCorrespondingCallAnnot(),
-						((Return) cb).getCallerNode());
-			}
-			if (cb instanceof Summary) {
-				copyOfCodeBlock = cb;
-			}
-			if (cb instanceof GotoEdge) {
-				copyOfCodeBlock = cb;
-			}
-			if (copyOfCodeBlock == null) {
-				throw new IllegalArgumentException("Failure while converting a"
-						+ "CodeBlock, maybe there is a new type,"
-						+ "which should be added");
-			} else {
-				copyOfCodeBlock.setTransitionFormula(cb.getTransitionFormula());
-				return copyOfCodeBlock;
-			}
+			return convertBasicEdge(edge);
 		}
 
 		if (edge instanceof ICompositeEdge) {
 			IMinimizedEdge[] edges = ((ICompositeEdge) edge)
 					.getCompositeEdges();
-			CodeBlock leftSide = convertMinimizedEdge(edges[0]);
-			CodeBlock rightSide = convertMinimizedEdge(edges[1]);
-			if (leftSide == null && rightSide == null) {
+			if (edge instanceof ConjunctionEdge) {
+				// Since we want to compose sequential edges complete we
+				// remember which sub-Edges has a conjunction as parent
+				hasConjunctionAsParent.add(edges[0]);
+				hasConjunctionAsParent.add(edges[1]);
+			}
+			if (edge instanceof DisjunctionEdge) {
+				// When we have a disjunction we have possible two conjunctions
+				// at both branches of this. So we have to create two new lists
+				// on the stack. FIXME: We have to remove them right, not only
+				// for conjunctions?
+				seqComposedBlocks.push(new ArrayList<CodeBlock>());
+				seqComposedBlocks.push(new ArrayList<CodeBlock>());
+			}
+			ArrayList<CodeBlock> recConvEdges = new ArrayList<CodeBlock>();
+			for (IMinimizedEdge compEdge : edges) {
+				CodeBlock convEdge = convertMinimizedEdge(compEdge);
+				if (edge instanceof ConjunctionEdge && convEdge != null) {
+					// add on the actual list of the stack
+					seqComposedBlocks.peek().add(convEdge);
+				}
+				if (convEdge instanceof Summary) {
+					// we ignore Summary-Edges
+					continue;
+				}
+				if (convEdge != null) {
+					// we simply ignore null edges
+					recConvEdges.add(convEdge);
+				}
+			}
+			// some controlling here, if there are no converted edges, there
+			// should be edges to compose sequentially
+			if (recConvEdges.isEmpty() && seqComposedBlocks.isEmpty()) {
 				s_Logger.error("Conversion fails, both sides are null ("
 						+ edges[0] + " -- " + edges[1] + ")");
 				throw new IllegalStateException(
-						"Conversion failure, both sides are null");
-			}
-			// This situation can happen, if a Call/Return/Summary-Edges are
-			// involved, they are not part of the formula and are ignored
-			if (leftSide instanceof Summary) {
-				return rightSide;
-			}
-			if (rightSide instanceof Summary) {
-				return leftSide;
+						"Conversion failure, both sides are null"
+								+ " / and there are no seq. edges to compose!");
 			}
 			if (edge instanceof ConjunctionEdge) {
-				// In a conjunction, we can ignore GotoEdges
-				if (leftSide instanceof GotoEdge
-						&& rightSide instanceof GotoEdge) {
-					// Special case, we construct an "assume true"
-					return replaceGotoEdge(leftSide, rightSide);
-				} else if (leftSide instanceof GotoEdge) {
-					return rightSide;
-				} else if (rightSide instanceof GotoEdge) {
-					return leftSide;
+				// if the parent of this conjunction is also a conjunction we do
+				// not create a sequential composition here
+				// seqComposedBlocks.addAll(recConvEdges);
+				if (hasConjunctionAsParent.contains(edge)) {
+					return null;
 				}
-				s_Logger.debug("New Sequential Composition of : "
-						+ leftSide.getPrettyPrintedStatements() + " / "
-						+ rightSide.getPrettyPrintedStatements());
-				s_Logger.debug("Left-Formula: " + leftSide.getTransitionFormula());
-				s_Logger.debug("Right Formula: " + rightSide.getTransitionFormula());
+				// In a conjunction, we can ignore GotoEdges
+				ArrayList<CodeBlock> composeEdges = new ArrayList<CodeBlock>();
+				ArrayList<CodeBlock> gotoEdges = new ArrayList<CodeBlock>();
+				// we take the actual list from the stack...
+				for (CodeBlock cb : seqComposedBlocks.pop()) {
+					if (cb instanceof GotoEdge) {
+						gotoEdges.add(cb);
+						continue;
+					}
+					composeEdges.add(cb);
+				}
+				// Special case: only Goto's we to transpose it to assume true
+				if (composeEdges.isEmpty()) {
+					if (gotoEdges.isEmpty()) {
+						throw new IllegalArgumentException(
+								"No compose edges, there should be goto-Edges!");
+					}
+					return replaceGotoEdge(gotoEdges.get(0), gotoEdges.get(1));
+				}
 				return new SequentialComposition(null, null, boogie2smt,
-						leftSide, rightSide);
+						composeEdges.toArray(new CodeBlock[0]));
 			}
 			if (edge instanceof DisjunctionEdge) {
-				if (leftSide instanceof GotoEdge) {
-					leftSide = replaceGotoEdge(leftSide, null);
+				ArrayList<CodeBlock> composeEdges = new ArrayList<CodeBlock>();
+				for (CodeBlock cb : recConvEdges) {
+					if (cb instanceof GotoEdge) {
+						composeEdges.add(replaceGotoEdge(cb, null));
+						continue;
+					}
+					composeEdges.add(cb);
 				}
-				if (rightSide instanceof GotoEdge) {
-					rightSide = replaceGotoEdge(rightSide, null);
+				// TODO: For non composite edges we have to remove one thing
+				// from the stack? Is this case applicable?
+				if (composeEdges.size() == 1) {
+					// If we have only one composedEdge we return it, because a
+					// parallel composition is not needed
+					seqComposedBlocks.pop();
+					return composeEdges.get(0);
+				}
+				if (composeEdges.size() != 2) {
+					throw new IllegalArgumentException(
+							"For DisjunctionEdges there should always"
+									+ " be exactly two edges, to compose!");
 				}
 				return new ParallelComposition(null, null, boogie2smt,
-						leftSide, rightSide);
+						composeEdges.get(0), composeEdges.get(1));
 			}
 		}
 		// should never reach this end here?
@@ -388,7 +412,55 @@ public class ConversionVisitor implements IMinimizationVisitor {
 		return null;
 	}
 
-	
+	/**
+	 * This method converts a basic edge into one basic code block. It is
+	 * copied, because we create new instances, since we do not want to change
+	 * the original RCFG.
+	 * 
+	 * @param edge IMinimizedEdge which is a basic edge
+	 * @return corresponding CodeBlock
+	 */
+	private CodeBlock convertBasicEdge(IMinimizedEdge edge) {
+		CodeBlock cb = ((IBasicEdge) edge).getOriginalEdge();
+		CodeBlock copyOfCodeBlock = null;
+		// We need to convert the basic edges, into new ones
+		// -> so basically we create a new instance of the CodeBlock,
+		// this is necessary to avoid mixing of the models
+		if (cb instanceof StatementSequence) {
+			copyOfCodeBlock = new StatementSequence(null, null,
+					((StatementSequence) cb).getStatements(),
+					((StatementSequence) cb).getOrigin());
+		}
+		if (cb instanceof Call) {
+			copyOfCodeBlock = new Call(null, null,
+					((Call) cb).getCallStatement(),
+					((Call) cb).getOldVarsAssignment(),
+					((Call) cb).getGlobalVarsAssignment());
+		}
+		if (cb instanceof Return) {
+			// TODO: Problem because we use here, old instance of CallAnnot?
+			copyOfCodeBlock = new Return(null, null,
+					((Return) cb).getCorrespondingCallAnnot(),
+					((Return) cb).getCallerNode());
+		}
+		if (cb instanceof Summary) {
+			// This situation can happen, if a Call/Return/Summary-Edges are
+			// involved, they are not part of the formula and are ignored
+			copyOfCodeBlock = cb;
+		}
+		if (cb instanceof GotoEdge) {
+			copyOfCodeBlock = cb;
+		}
+		if (copyOfCodeBlock == null) {
+			throw new IllegalArgumentException("Failure while converting a"
+					+ "CodeBlock, maybe there is a new type,"
+					+ "which should be added");
+		} else {
+			copyOfCodeBlock.setTransitionFormula(cb.getTransitionFormula());
+			return copyOfCodeBlock;
+		}
+	}
+
 	/**
 	 * This method replaces an Goto-Edge with the statement "assume true". <br>
 	 * TODO: Need to be clarified if this is correct.

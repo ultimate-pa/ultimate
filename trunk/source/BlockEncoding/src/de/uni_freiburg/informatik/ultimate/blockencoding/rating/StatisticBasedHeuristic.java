@@ -71,7 +71,8 @@ public class StatisticBasedHeuristic extends ConfigurableHeuristic {
 		StringBuilder sb = new StringBuilder();
 		// TODO: validate that
 		// we take half of the maximum disjunctions in the graph
-		sb.append(EncodingStatistics.maxDisjunctionsInOneEdge / 2);
+		int disjunctions = (int)(1.5 *(EncodingStatistics.maxDisjunctionsInOneEdge / 2));
+		sb.append(disjunctions);
 		sb.append("-");
 		// as a upper bound we take 80% of the value
 		// maxElementesInOneDisjunction
@@ -92,8 +93,8 @@ public class StatisticBasedHeuristic extends ConfigurableHeuristic {
 	 */
 	private String computeUsedVarBoundary() {
 		// Basically we take here the arithmetic mean of min and max
-		int meanValue = (EncodingStatistics.minDiffVariablesInOneEdge
-				+ EncodingStatistics.maxDiffVariablesInOneEdge) / 2;
+		int meanValue = (int)(1.5 * ((EncodingStatistics.minDiffVariablesInOneEdge
+				+ EncodingStatistics.maxDiffVariablesInOneEdge) / 2));
 		return Integer.toString(meanValue);
 	}
 }
