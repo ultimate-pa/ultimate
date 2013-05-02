@@ -232,15 +232,15 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 			loopCBs[i] = loop.getSymbol(i);
 		}
 		@SuppressWarnings("deprecation")
-		TransFormula stemTF = SequentialComposition.getInterproceduralTransFormula(rootAnnot.getBoogie2SMT(), stemCBs);
+		TransFormula stemTF = SequentialComposition.getInterproceduralTransFormula(rootAnnot.getBoogie2SMT(), false, stemCBs);
 		@SuppressWarnings("deprecation")
-		TransFormula loopTF = SequentialComposition.getInterproceduralTransFormula(rootAnnot.getBoogie2SMT(), loopCBs);
+		TransFormula loopTF = SequentialComposition.getInterproceduralTransFormula(rootAnnot.getBoogie2SMT(), false, loopCBs);
 		{
 			List<CodeBlock> composedCB = new ArrayList<CodeBlock>();
 			composedCB.addAll(Arrays.asList(stemCBs));
 			composedCB.addAll(Arrays.asList(loopCBs));
 			composedCB.addAll(Arrays.asList(loopCBs));
-			TransFormula composed = SequentialComposition.getInterproceduralTransFormula(rootAnnot.getBoogie2SMT(), composedCB.toArray(new CodeBlock[0])); 
+			TransFormula composed = SequentialComposition.getInterproceduralTransFormula(rootAnnot.getBoogie2SMT(), false, composedCB.toArray(new CodeBlock[0])); 
 					//TransFormula.sequentialComposition(10000, rootAnnot.getBoogie2SMT(), stemTF, loopTF);
 			if (composed.isInfeasible() == Infeasibility.INFEASIBLE) {
 				throw new AssertionError("suddently infeasible");

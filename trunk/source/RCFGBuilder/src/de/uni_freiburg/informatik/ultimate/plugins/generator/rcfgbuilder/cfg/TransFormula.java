@@ -371,7 +371,7 @@ public class TransFormula implements Serializable {
 	 * @return the relational composition (concatenation) of transformula1 und
 	 * transformula2 
 	 */
-	public static TransFormula sequentialComposition(int serialNumber, Boogie2SMT boogie2smt, TransFormula... transFormula) {
+	public static TransFormula sequentialComposition(Boogie2SMT boogie2smt, TransFormula... transFormula) {
 		Script script = boogie2smt.getScript();
 		Map<BoogieVar, TermVariable> inVars = new HashMap<BoogieVar, TermVariable>();
 		Map<BoogieVar, TermVariable> outVars = new HashMap<BoogieVar, TermVariable>();
@@ -1167,8 +1167,7 @@ public class TransFormula implements Serializable {
 			callAndBeforeList.add(callTf);
 			TransFormula[] callAndBeforeArray = 
 					callAndBeforeList.toArray(new TransFormula[0]);
-			callAndBeforeTF = sequentialComposition(32349, boogie2smt,
-					callAndBeforeArray);
+			callAndBeforeTF = sequentialComposition(boogie2smt,	callAndBeforeArray);
 
 			// remove outVars that relate to scope of caller
 			// - local vars that are no inParams of callee
@@ -1198,7 +1197,7 @@ public class TransFormula implements Serializable {
 			oldAssignAndAfterList.add(0, oldVarsAssignment);
 			TransFormula[] oldAssignAndAfterArray = 
 					oldAssignAndAfterList.toArray(new TransFormula[0]);
-			oldAssignAndAfterTF = sequentialComposition(32349, boogie2smt,
+			oldAssignAndAfterTF = sequentialComposition(boogie2smt,
 					oldAssignAndAfterArray);
 
 			// remove inVars that relate to scope of callee
@@ -1223,7 +1222,7 @@ public class TransFormula implements Serializable {
 			}
 		}
 
-		TransFormula result = sequentialComposition(20344, boogie2smt,
+		TransFormula result = sequentialComposition(boogie2smt,
 				callAndBeforeTF, oldAssignAndAfterTF);
 		return result;
 	}
@@ -1242,7 +1241,7 @@ public class TransFormula implements Serializable {
 			Boogie2SMT boogie2smt, TransFormula callTf,
 			TransFormula oldVarsAssignment, TransFormula procedureTf,
 			TransFormula returnTf) {
-		TransFormula result = sequentialComposition(32405, boogie2smt, callTf,
+		TransFormula result = sequentialComposition(boogie2smt, callTf,
 				oldVarsAssignment, procedureTf, returnTf);
 		{
 			List<BoogieVar> inVarsToRemove = new ArrayList<BoogieVar>();

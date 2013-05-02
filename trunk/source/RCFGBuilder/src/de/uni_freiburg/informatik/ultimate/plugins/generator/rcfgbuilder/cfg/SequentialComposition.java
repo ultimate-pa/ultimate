@@ -58,35 +58,32 @@ public class SequentialComposition extends CodeBlock {
 		this.m_CodeBlocks = codeBlocks;
 		
 		StringBuilder prettyPrinted = new StringBuilder();
-		
+
+		int numberCalls = 0;
+		int numberReturns = 0;
 		for (int i=0; i<codeBlocks.length; i++) {
-			if (! (codeBlocks[i] instanceof StatementSequence 
+			if (codeBlocks[i] instanceof Call) {
+				numberCalls++;
+			} else if (codeBlocks[i] instanceof Return) {
+				numberReturns++;
+			} else if (codeBlocks[i] instanceof StatementSequence 
 					|| codeBlocks[i] instanceof SequentialComposition
 					|| codeBlocks[i] instanceof ParallelComposition
-					|| codeBlocks[i] instanceof Call
-					|| codeBlocks[i] instanceof Return
-					|| codeBlocks[i] instanceof Summary)) {
-				throw new IllegalArgumentException("Only StatementSequence," +
-						" SequentialComposition, and ParallelComposition supported");
+					|| codeBlocks[i] instanceof Summary) {
+				//do nothing
+			} else {
+				throw new IllegalArgumentException("unknown CodeBlock");
 			}
 			codeBlocks[i].disconnectSource();
 			codeBlocks[i].disconnectTarget();
 			prettyPrinted.append(codeBlocks[i].getPrettyPrintedStatements());
-			
-			if (i==0) {
-				m_TransitionFormula = codeBlocks[0].getTransitionFormula();
-				m_TransitionFormulaWithBranchEncoders = 
-						codeBlocks[0].getTransitionFormulaWithBranchEncoders();
-			} else {
-				m_TransitionFormula = TransFormula.sequentialComposition(this.getSerialNumer(),boogie2smt,
-						m_TransitionFormula, 
-						codeBlocks[i].getTransitionFormula()
-						);
-				m_TransitionFormulaWithBranchEncoders = TransFormula.sequentialComposition(this.getSerialNumer(),boogie2smt,
-						m_TransitionFormulaWithBranchEncoders, 
-						codeBlocks[i].getTransitionFormulaWithBranchEncoders());
-			}
 		}
+		if (numberCalls != numberReturns) {
+			throw new IllegalArgumentException("wrong number of calls and returns");
+		}
+		m_TransitionFormula = getInterproceduralTransFormula(boogie2smt, false, codeBlocks);
+		m_TransitionFormulaWithBranchEncoders = getInterproceduralTransFormula(boogie2smt, true, codeBlocks);
+		
 		m_PrettyPrinted = prettyPrinted.toString();
 		updatePayloadName();
 	}
@@ -118,12 +115,13 @@ public class SequentialComposition extends CodeBlock {
 	 * the method sequentialComposition) contain also Call and Return.
 	 */
 	public static TransFormula getInterproceduralTransFormula(
-			Boogie2SMT boogie2smt, CodeBlock... codeBlocks) {
-		return getInterproceduralTransFormula(boogie2smt, null, null, null, codeBlocks);
+			Boogie2SMT boogie2smt, boolean withBranchEncoders, CodeBlock... codeBlocks) {
+		return getInterproceduralTransFormula(
+				boogie2smt, withBranchEncoders, null, null, null, codeBlocks);
 	}
 	
 	private static TransFormula getInterproceduralTransFormula(
-			Boogie2SMT boogie2smt, TransFormula[] beforeCall,
+			Boogie2SMT boogie2smt, boolean withBranchEncoders, TransFormula[] beforeCall,
 			Call call, Return ret, CodeBlock... codeBlocks) {
 		List<TransFormula> beforeFirstPendingCall = new ArrayList<TransFormula>();
 		Call lastUnmatchedCall = null;
@@ -136,7 +134,12 @@ public class SequentialComposition extends CodeBlock {
 					lastUnmatchedCall = (Call) codeBlocks[i];
 				} else {
 					assert !(codeBlocks[i] instanceof Return);
-					beforeFirstPendingCall.add(codeBlocks[i].getTransitionFormula());
+					if (withBranchEncoders) {
+						beforeFirstPendingCall.add(codeBlocks[i].getTransitionFormulaWithBranchEncoders());
+					} else {
+						beforeFirstPendingCall.add(codeBlocks[i].getTransitionFormula());
+					}
+					
 				}
 			} else {
 				if (codeBlocks[i] instanceof Return) {
@@ -145,7 +148,8 @@ public class SequentialComposition extends CodeBlock {
 						CodeBlock[] codeBlocksBetween = 
 								afterLastUnmatchedCall.toArray(new CodeBlock[0]); 
 						TransFormula localTransFormula = getInterproceduralTransFormula(
-								boogie2smt, null, lastUnmatchedCall, correspondingReturn, codeBlocksBetween);
+								boogie2smt, withBranchEncoders, null, lastUnmatchedCall, 
+								correspondingReturn, codeBlocksBetween);
 						beforeFirstPendingCall.add(localTransFormula);
 						lastUnmatchedCall = null;
 						callsSinceLastUnmatchedCall = 0;
@@ -170,13 +174,14 @@ public class SequentialComposition extends CodeBlock {
 			assert afterLastUnmatchedCall.isEmpty();
 			// no pending call in codeBlocks
 			tfForCodeBlocks = TransFormula.sequentialComposition(
-					20000, boogie2smt, beforeFirstPendingCall.toArray(new TransFormula[0]));
+					boogie2smt, beforeFirstPendingCall.toArray(new TransFormula[0]));
 		} else {
 			// there is a pending call in codeBlocks		
 			assert (ret == null) : "no pending call between call and return possible!";
 			CodeBlock[] codeBlocksBetween = afterLastUnmatchedCall.toArray(new CodeBlock[0]); 
-			tfForCodeBlocks = getInterproceduralTransFormula(
-					boogie2smt, beforeFirstPendingCall.toArray(new TransFormula[0]), lastUnmatchedCall, null, codeBlocksBetween);
+			tfForCodeBlocks = getInterproceduralTransFormula(boogie2smt, 
+					withBranchEncoders, beforeFirstPendingCall.toArray(new TransFormula[0]), 
+					lastUnmatchedCall, null, codeBlocksBetween);
 		}
 		
 		TransFormula result;
@@ -186,12 +191,15 @@ public class SequentialComposition extends CodeBlock {
 			result = tfForCodeBlocks;
 		} else {
 			if (ret == null) {
-				result = TransFormula.sequentialCompositionWithPendingCall(boogie2smt, 
-						beforeCall, call.getTransitionFormula(), call.getOldVarsAssignment(), tfForCodeBlocks);
+				result = TransFormula.sequentialCompositionWithPendingCall(
+						boogie2smt,	beforeCall, call.getTransitionFormula(), 
+						call.getOldVarsAssignment(), tfForCodeBlocks);
 			} else {
 				assert (beforeCall == null);
-				result = TransFormula.sequentialCompositionWithCallAndReturn(boogie2smt, 
-						call.getTransitionFormula(), call.getOldVarsAssignment(), tfForCodeBlocks, ret.getTransitionFormula());
+				result = TransFormula.sequentialCompositionWithCallAndReturn(
+						boogie2smt, call.getTransitionFormula(), 
+						call.getOldVarsAssignment(), tfForCodeBlocks, 
+						ret.getTransitionFormula());
 			}
 			
 		}
