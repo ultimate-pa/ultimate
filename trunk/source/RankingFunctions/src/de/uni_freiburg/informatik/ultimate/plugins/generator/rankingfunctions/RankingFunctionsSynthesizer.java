@@ -404,7 +404,18 @@ public class RankingFunctionsSynthesizer {
 				}
 			} else if (fname == "true") {
 				// Add nothing
-			} else if (fname == "<" || fname == "=" || fname == ">"
+			} else if (fname == "=")  {
+				Term param0 = appt.getParameters()[0];
+				Sort param0sort = param0.getSort();
+				if (param0sort.isNumericSort()) {
+					convertIE(appt, terms);
+				} else if (param0sort.getName().equals("Bool")) {
+					s_Logger.warn("ignoring term: " + term);
+				} else {
+					throw new TermIsNotAffineException(
+							"Unknown sort in equality", appt);
+				}
+			} else if (fname == "<" || fname == ">"
 					|| fname == "<=" || fname == ">=") {
 				convertIE(appt, terms);
 			} else {
