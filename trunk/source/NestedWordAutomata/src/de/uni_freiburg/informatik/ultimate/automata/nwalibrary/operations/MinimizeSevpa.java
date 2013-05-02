@@ -122,9 +122,6 @@ public class MinimizeSevpa<LETTER,STATE> implements IOperation {
 		minimize(equivalenceClasses);
 		m_MinimizationFinished = true;
 		s_Logger.info(exitMessage());
-		Map<STATE, STATE> test = this.getOldState2newState();
-		test.keySet();
-		
 	}
 	
 	/**
@@ -188,33 +185,6 @@ public class MinimizeSevpa<LETTER,STATE> implements IOperation {
 		m_nwa = mergeStates(states, equivalenceClasses);
 		s_Logger.debug("Size after merging identical states: " +
 				m_nwa.size());
-	}
-	
-	/**
-	 * constructs a nested word automaton with only one (non-final) state
-	 * - case 1: input automaton was empty:
-	 *    creates a new state
-	 * - case 2: input automaton had at least one initial state:
-	 *    merges all reachable non-final states
-	 * 
-	 * @param states container with reachable states
-	 */
-	private NestedWordAutomaton<LETTER, STATE> constructTrivialAutomaton(
-			final StatesContainer states) {
-		// result automaton
-		NestedWordAutomaton<LETTER, STATE> result =
-				new NestedWordAutomaton<LETTER, STATE>(
-						m_operand.getInternalAlphabet(),
-						m_operand.getCallAlphabet(),
-						m_operand.getReturnAlphabet(),
-						m_operand.getStateFactory());
-		
-		// (only) state for the automaton
-		STATE state = m_StateFactoryConstruction.minimize(
-						states.getTrivialAutomatonStates());
-		result.addState(true, false, state);
-		
-		return result;
 	}
 	
 	/**
