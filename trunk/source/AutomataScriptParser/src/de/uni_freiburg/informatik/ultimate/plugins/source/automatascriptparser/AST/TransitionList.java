@@ -14,6 +14,10 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AtsASTNode;
 
 /**
+ * Is used to hold transitions for nestedword automata (internal-, call-, and
+ * return-transitions) and for Petri nets.
+ * 
+ * 
  * @author musab@informatik.uni-freiburg.de
  *
  */

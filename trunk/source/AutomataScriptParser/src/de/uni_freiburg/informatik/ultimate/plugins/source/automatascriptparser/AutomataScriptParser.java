@@ -35,13 +35,14 @@ public class AutomataScriptParser implements ISource {
 		Parser parser = new Parser(lexer);
 		parser.setFileName(file.getName());
 		parser.setFilePath(file.getAbsolutePath());
+		
 		Object result = null;
 		try {
 			result = parser.parse().value;
 		} catch (Exception e) {
 			ILocation location = parser.getErrorLocation();
 			if (location == null) {
-				s_Logger.warn("Error without location");
+				s_Logger.debug("Error without location");
 				location = getPseudoLocation();
 			}
 			String shortErrorMessage = parser.getShortErrorMessage();
@@ -59,22 +60,24 @@ public class AutomataScriptParser implements ISource {
 			return null;
 		}
 
+		
 		s_Logger.debug("'" + file.getName() + "' successfully parsed");
 		if (result instanceof AutomataTestFile) {
 			AutomataTestFile ats = (AutomataTestFile)result;
 			AutomataDefinitions autDefs = ats.getAutomataDefinitions();
-			
+			// parser contains files to parse, if the operation parseAutomata(pathToFile) was called at least
+			// once.
 			if (parser.containsOtherAutomataFilesToParse()) {
 				String baseDir = parser.getFilePath().substring(0, parser.getFilePath().lastIndexOf(File.separator) + 1);
 				List<Automaton> automataDefinitionsFromOtherFiles = parseAutomataDefinitions(parser.getFilesToParse(), baseDir);
+				// Check if automata from other files, were already defined in current file.
 				for (Automaton a : automataDefinitionsFromOtherFiles) {
 					if (autDefs.hasAutomaton(a)) {
 						s_Logger.debug("Automaton \"" + a.getName() + "\" was already declared in file \"" + file.getName() + "\".");
 					} else {
 						autDefs.addAutomaton(a);
 					}
-				}
-				
+				}	
 			}
 			ats.setAutomataDefinitions(autDefs);
 			return (AtsASTNode) result;
@@ -85,15 +88,16 @@ public class AutomataScriptParser implements ISource {
 	}
 
 	/**
-	 * 
-	 * @param filesToParse
-	 * @param baseDir
-	 * @return
+	 * Parses automata definitions from given files. This is usually required, if
+	 * in a automata test file (.ats file) the parseAutomata(pathToAutomataDefinitions) is called.
+	 * @param filesToParse the files from which to parse automata.
+	 * @param baseDir 
+	 * @return list of automata, which are parsed from given files.
 	 */
 	private List<Automaton> parseAutomataDefinitions(List<String> filesToParse, String baseDir) {
 		List<Automaton> parsedAutomata = new ArrayList<Automaton>();
 		for (String fileToParse : filesToParse) {
-			Lexer l = null;
+			Lexer lexer = null;
 			String fileSeparatorOfFileToParse = getFileSeparator(fileToParse);
 			File file = null;
 			if (fileSeparatorOfFileToParse != null) {
@@ -101,16 +105,17 @@ public class AutomataScriptParser implements ISource {
 			} else {
 				file = openFile(fileToParse, baseDir);
 			}
+			// if the file doesn't exist or couldn't open, then just skip parsing of it.
 			if (file == null) {
 				continue;
 			}
 			try {
-				l = new Lexer(new FileReader(file));
+				lexer = new Lexer(new FileReader(file));
 			} catch (FileNotFoundException e) {
 				s_Logger.debug("File \"" + fileToParse + "\" doesn't exist or couldn't open!");
 				continue;
 			}
-			Parser p = new Parser(l);
+			Parser p = new Parser(lexer);
 			p.setFileName(fileToParse);
 			p.setFilePath(fileToParse);
 			Object result = null;
@@ -139,42 +144,52 @@ public class AutomataScriptParser implements ISource {
 		return parsedAutomata;
 	}
 	
+	
+	/**
+	 * Opens a file, if the file exists and can be opened, and returns a file object,
+	 * which is ready to read.
+	 * @param fileName the file to open
+	 * @param baseDir the base directory of the file, which is currently parsed.
+	 * @return null if the file doesn't exist or can't be opened, otherwise the file object.
+	 */
 	private File openFile(String fileName, String baseDir) {
-		File f = new File(fileName);
-		if (!f.exists() || !f.canRead()) {
+		File file = new File(fileName);
+		if (!file.exists() || !file.canRead()) {
+			// In automata script files, the path for the "parseAutomata"-operation
+			// is allowed to contain ".." to reference the parent directory.
 			if (fileName.startsWith(".." + File.separator)) {
 				baseDir = baseDir.substring(0, baseDir.lastIndexOf(File.separator));
 				baseDir = baseDir.substring(0, baseDir.lastIndexOf(File.separator) + 1);
-				f = new File(baseDir + fileName.substring(3));
-				if (!f.exists() || !f.canRead()) {
+				file = new File(baseDir + fileName.substring(3));
+				if (!file.exists() || !file.canRead()) {
 					s_Logger.debug("File \"" + fileName + "\" doesn't exist or couldn't open!");
 					return null;
 				} else {
-					return f;
+					return file;
 				}
 			} else {
-				f = new File(baseDir + fileName);
-				if (!f.exists() || !f.canRead()) {
+				file = new File(baseDir + fileName);
+				if (!file.exists() || !file.canRead()) {
 					s_Logger.debug("File \"" + fileName + "\" doesn't exist or couldn't open!");
 					return null;
 				} else {
-					return f;
+					return file;
 				}
 			}
 		}
-		return f;
+		return file;
 	}
 		
 	/**
-	 * Checks if the given file name contains file separators and returns
+	 * Checks if the given path contains file separators and returns
 	 * the file separator in case it contains any.
-	 * @param fileName
-	 * @return null if the fileName doesn't contain any file separator, otherwise it returns found file separator
+	 * @param path the path, it may also be just a file name, like "example.ats".
+	 * @return null if the path doesn't contain any file separator, otherwise it returns found file separator.
 	 */
-	private String getFileSeparator(String fileName) {
-		if (fileName.contains("\\")) {
+	private String getFileSeparator(String path) {
+		if (path.contains("\\")) {
 			return "\\";
-		} else if (fileName.contains("/")) {
+		} else if (path.contains("/")) {
 			return "/";
 		} else {
 			return null;
@@ -182,11 +197,18 @@ public class AutomataScriptParser implements ISource {
 	}
 	
 	
-	private String adaptFileSeparators(String fileName, String containingFileSep) {
-		if (!containingFileSep.equals(File.separator)) {
-			return fileName.replace(containingFileSep, File.separator);
+	/**
+	 * Adapts file separators of the given path, if they are different to current
+	 * OS file separator. It maintains platform-independence. 
+	 * @param path the path to a file
+	 * @param containingFileSep file separator contained in fileName.
+	 * @return a path, where the file separators are conform to the OS file separator. 
+	 */
+	private String adaptFileSeparators(String path, String containingFileSep) {
+		if (!containingFileSep.equals(System.getProperty("file.separator"))) {
+			return path.replace(containingFileSep, System.getProperty("file.separator"));
 		}
-		return fileName;
+		return path;
 	}
 	
 	

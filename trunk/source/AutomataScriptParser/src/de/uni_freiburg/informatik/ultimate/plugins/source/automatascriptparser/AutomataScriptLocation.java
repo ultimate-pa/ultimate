@@ -7,6 +7,8 @@ import de.uni_freiburg.informatik.ultimate.model.ILocation;
 import de.uni_freiburg.informatik.ultimate.result.Check;
 
 /**
+ * 
+ * Location for AutomataScript files.
  * @author musab@informatik.uni-freiburg.de
  *
  */

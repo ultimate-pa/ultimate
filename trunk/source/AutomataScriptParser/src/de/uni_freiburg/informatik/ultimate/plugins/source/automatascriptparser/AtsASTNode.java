@@ -15,6 +15,7 @@ import de.uni_freiburg.informatik.ultimate.model.structure.BaseAST;
 
 
 /***
+ * AST Node for AutomataScript parser.
  * @author musab@informatik.uni-freiburg.de
  */
 
