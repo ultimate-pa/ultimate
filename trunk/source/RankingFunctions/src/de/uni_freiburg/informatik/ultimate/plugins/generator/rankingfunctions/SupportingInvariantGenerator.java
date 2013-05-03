@@ -59,7 +59,7 @@ public class SupportingInvariantGenerator extends InstanceCounting {
 		m_coefficients = new HashMap<BoogieVar, Term>();
 		for (BoogieVar var : variables) {
 			m_coefficients.put(var, AuxiliaryMethods.newRealConstant(m_script,
-					s_prefix + m_instance + "_" + var.getIdentifier()));
+					s_prefix + m_instance + "_" + var.getGloballyUniqueId()));
 		}
 		if (Preferences.not_nondecreasing) {
 			m_notNonDecreasingCoefficient =
