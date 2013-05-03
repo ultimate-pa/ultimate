@@ -106,14 +106,28 @@ public class BoogieVar implements Serializable {
 	public ApplicationTerm getPrimedConstant() {
 		return m_PrimedConstant;
 	}
-
-
+	
+	
+	/**
+	 * Returns an identifier that is globally unique. If this is global non-old
+	 * we return the identifier, if this is global oldvar we add old(.), if
+	 * this is local we add the procedure name as prefix.
+	 */
+	public String getGloballyUniqueId() {
+		if (isGlobal()) {
+			if (isOldvar()) {
+				return "old(" + m_Identifier+")";
+			} else {
+				return m_Identifier;
+			}
+		} else {
+			return m_Procedure + "_" + m_Identifier;
+		}
+	}
+	
 	@Override
 	public String toString() {
-		if (isOldvar()) {
-			return "old(" + m_Identifier+")";
-		}
-		return m_Identifier;
+		return getGloballyUniqueId();
 	}
 
 	private int computeHashCode() {
