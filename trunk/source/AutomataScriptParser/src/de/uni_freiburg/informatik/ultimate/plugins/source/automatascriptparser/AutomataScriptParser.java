@@ -39,9 +39,22 @@ public class AutomataScriptParser implements ISource {
 		try {
 			result = parser.parse().value;
 		} catch (Exception e) {
-			reportToUltimate(Severity.ERROR, parser.getLongErrorMessage(),
-					         parser.getShortErrorMessage(), 
-					         parser.getErrorLocation());
+			ILocation location = parser.getErrorLocation();
+			if (location == null) {
+				s_Logger.warn("Error without location");
+				location = getPseudoLocation();
+			}
+			String shortErrorMessage = parser.getShortErrorMessage();
+			if (shortErrorMessage == null) {
+				shortErrorMessage = e.getMessage();
+			}
+			String longErrorMessage = parser.getShortErrorMessage();
+			if (longErrorMessage == null) {
+				longErrorMessage = e.getMessage();
+			}
+			reportToUltimate(Severity.ERROR, longErrorMessage,
+					shortErrorMessage, 
+					location);
 			s_Logger.info("Parsing aborted.");
 			return null;
 		}
@@ -312,6 +325,10 @@ public class AutomataScriptParser implements ISource {
 	@Override
 	public int init(Object params) {
 		return 0;
+	}
+	
+	private static ILocation getPseudoLocation() {
+		return new AutomataScriptLocation("", 0, 0, 0, 0);
 	}
 
 }
