@@ -210,7 +210,7 @@ public class CFG2NestedWordAutomaton {
 					if (m_Pref.interprocedural()) {
 						Return returnEdge = (Return) edge;
 						CodeBlock symbol = returnEdge;
-						ProgramPoint callerLocNode = returnEdge.getCallerNode();
+						ProgramPoint callerLocNode = returnEdge.getCallerProgramPoint();
 						nwa.addReturnTransition(state,
 								nodes2States.get(callerLocNode), symbol, succState);
 					}

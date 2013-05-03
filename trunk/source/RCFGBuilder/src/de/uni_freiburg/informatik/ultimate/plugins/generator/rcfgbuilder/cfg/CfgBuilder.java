@@ -470,14 +470,13 @@ public class CfgBuilder {
 		TransFormula arguments2InParams = tfb.inParamAssignment(st, callerImpl);
 		TransFormula outParams2CallerVars = tfb.resultAssignment(st, caller);
 		
-		Call callAnnot = new Call(callerNode, calleeEntryLoc, st,
+		Call call = new Call(callerNode, calleeEntryLoc, st,
 								globalVarAssignmets[0], globalVarAssignmets[1]);
-		callAnnot.setTransitionFormula(arguments2InParams);
+		call.setTransitionFormula(arguments2InParams);
 
 		ProgramPoint returnNode = (ProgramPoint) edge.getTarget();
 		ProgramPoint calleeExitLoc = m_RootAnnot.m_exitNode.get(callee);
-		Return returnAnnot = 
-				new Return(calleeExitLoc, returnNode, callAnnot, callerNode);
+		Return returnAnnot = new Return(calleeExitLoc, returnNode, call);
 		returnAnnot.setTransitionFormula(outParams2CallerVars);
 	}
 	

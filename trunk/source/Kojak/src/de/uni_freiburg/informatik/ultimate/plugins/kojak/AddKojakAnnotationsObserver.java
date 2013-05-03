@@ -47,7 +47,7 @@ public class AddKojakAnnotationsObserver implements IUnmanagedObserver{
 			substituteProgramPoint(rootEdge, returnSet);
 		}
 		for (Return returnEdge: returnSet) {
-			Call call = returnEdge.getCorrespondingCallAnnot();
+			Call call = returnEdge.getCorrespondingCall();
 			Return newReturn = new Return(
 					(ProgramPoint)returnEdge.getSource(),
 					(ProgramPoint)returnEdge.getTarget(),

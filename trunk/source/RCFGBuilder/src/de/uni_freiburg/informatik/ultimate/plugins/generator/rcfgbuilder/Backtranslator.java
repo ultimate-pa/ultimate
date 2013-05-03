@@ -70,7 +70,7 @@ public class Backtranslator extends DefaultTranslator<
 			resultTrace.add(call.getCallStatement());
 		} else if (cb instanceof Return) {
 			Return ret = (Return) cb;
-			Call correspondingCall = ret.getCorrespondingCallAnnot();
+			Call correspondingCall = ret.getCorrespondingCall();
 			assert correspondingCall.getCallStatement() != null;
 			resultTrace.add(correspondingCall.getCallStatement());
 		} else if (cb instanceof ParallelComposition) {

@@ -515,7 +515,7 @@ public class ReImpactObserver implements IUnmanagedObserver {
 				if(node.getPreCallNode() == null) {//do not unwind return edges when we have not seen a call
 					setPreCallNodeImportantFlags(path.getFirst(), 0, path.getFirst().length);
 					continue;
-				} else if (!((Return) outEdge).getCallerNode().equals(node.getPreCallNode().getProgramPoint())) {
+				} else if (!((Return) outEdge).getCallerProgramPoint().equals(node.getPreCallNode().getProgramPoint())) {
 					int matchingPreCallIndex = 
 							getIndexOfPreCallOnPath(path.getFirst(), node.getPreCallNode());
 					setPreCallNodeImportantFlags(path.getFirst(), matchingPreCallIndex + 1,
@@ -749,7 +749,7 @@ public class ReImpactObserver implements IUnmanagedObserver {
 					break;
 				}
 				Call matchingCall = callStack.pop();
-				if (((Return) errorPath[i]).getCorrespondingCallAnnot().equals(matchingCall)) {
+				if (((Return) errorPath[i]).getCorrespondingCall().equals(matchingCall)) {
 					nr[i] = callStackIndizes.pop();
 					nr[nr[i]] = i;	
 				} else {

@@ -133,7 +133,7 @@ public class NestedSsaBuilder {
 			for (int i=numberPendingContexts-1; i>=0; i--) {
 				int pendingReturnPosition = pendingReturns.get(i);
 				Return ret = (Return) m_Ssa.getCounterexample().getSymbol(pendingReturnPosition);
-				Call correspondingCall = ret.getCorrespondingCallAnnot();
+				Call correspondingCall = ret.getCorrespondingCall();
 				{
 					ProgramPoint callPredecessor = (ProgramPoint) correspondingCall.getSource();
 					m_currentProcedure = callPredecessor.getProcedure();
@@ -217,7 +217,7 @@ public class NestedSsaBuilder {
 			}
 			if (m_Ssa.getCounterexample().isReturnPosition(i)) {
 				Return ret = (Return) symbol;
-				m_currentProcedure = ret.getCallerNode().getProcedure();
+				m_currentProcedure = ret.getCallerProgramPoint().getProcedure();
 				if (m_Ssa.getCounterexample().isPendingReturn(i)) {
 					// start new context. here local variables get negative numbers
 					assert currentVersionStack.isEmpty();

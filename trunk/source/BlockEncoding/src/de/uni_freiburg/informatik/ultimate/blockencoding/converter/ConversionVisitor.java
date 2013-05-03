@@ -460,8 +460,7 @@ public class ConversionVisitor implements IMinimizationVisitor {
 		if (cb instanceof Return) {
 			// TODO: Problem because we use here, old instance of CallAnnot?
 			copyOfCodeBlock = new Return(null, null,
-					((Return) cb).getCorrespondingCallAnnot(),
-					((Return) cb).getCallerNode());
+					((Return) cb).getCorrespondingCall());
 		}
 		if (cb instanceof Summary) {
 			// This situation can happen, if a Call/Return/Summary-Edges are

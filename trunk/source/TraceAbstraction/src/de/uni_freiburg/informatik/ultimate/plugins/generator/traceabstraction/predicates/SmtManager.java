@@ -912,7 +912,7 @@ public class SmtManager {
 		
 		m_Script.push(1);
 		m_IndexedConstants = new ScopedHashMap<String, Term>();
-		Call ca = ta.getCorrespondingCallAnnot();
+		Call ca = ta.getCorrespondingCall();
 		Set<BoogieVar> modifiableGlobals = 
 			 					ca.getOldVarsAssignment().getInVars().keySet();
 		
@@ -1543,7 +1543,7 @@ public class SmtManager {
 					inductivity = isInductiveCall(sf1, (Call) transAnnot, sf2);
 				}
 				else if (iEdge instanceof Return) {
-					ProgramPoint callerNode = ((Return) iEdge).getCallerNode();
+					ProgramPoint callerNode = ((Return) iEdge).getCallerProgramPoint();
 					IPredicate sfk = getHoareAnnotation(callerNode);
 					if (sfk == null) {
 						s_Logger.warn(callerNode + " has no Hoare annotation");
@@ -1787,7 +1787,7 @@ public class SmtManager {
 				for (BoogieVar bv : p.getVars()) {
 					if (bv.isOldvar()) {
 						Return ret = (Return) m_CodeBlock;
-						Call call = ret.getCorrespondingCallAnnot();
+						Call call = ret.getCorrespondingCall();
 						Set<BoogieVar> oldVarsOfModifiable = 
 								call.getOldVarsAssignment().getAssignedVars();
 						if (!oldVarsOfModifiable.contains(bv)) {
@@ -1841,7 +1841,7 @@ public class SmtManager {
 			if (cb instanceof Return) {
 				m_HierConstants = new ScopedHashMap<BoogieVar,Term>();
 				Return ret = (Return) cb;
-				Call call = ret.getCorrespondingCallAnnot();
+				Call call = ret.getCorrespondingCall();
 				
 				
 				TransFormula ovaTF = call.getOldVarsAssignment();
@@ -1914,7 +1914,7 @@ public class SmtManager {
 			
 			//rename non-modifiable globals to default constants
 			Return ret = (Return) m_CodeBlock;
-			Call call = ret.getCorrespondingCallAnnot();
+			Call call = ret.getCorrespondingCall();
 			TransFormula oldVarAssignment = call.getOldVarsAssignment();
 			Set<BoogieVar> modifiableGlobals = oldVarAssignment.getInVars().keySet();
 			TransFormula globalVarAssignment = call.getGlobalVarsAssignment();
@@ -2044,7 +2044,7 @@ public class SmtManager {
 			Term renamedFormula = renameVarsToPrimedConstants(assignedVars, p.getFormula());
 			//rename modifiable globals to primed vars
 			Return ret = (Return) m_CodeBlock;
-			Call call = ret.getCorrespondingCallAnnot();
+			Call call = ret.getCorrespondingCall();
 			TransFormula oldVarAssignment = call.getOldVarsAssignment();
 			Set<BoogieVar> modifiableGlobals = oldVarAssignment.getInVars().keySet();
 			renamedFormula = renameVarsToDefaultConstants(modifiableGlobals, renamedFormula);
@@ -2396,7 +2396,7 @@ public class SmtManager {
 		
 		public LBool sdecReturn(IPredicate pre, IPredicate hier, CodeBlock cb, IPredicate post) {
 			Return ret = (Return) cb;
-			Call call = ret.getCorrespondingCallAnnot();
+			Call call = ret.getCorrespondingCall();
 			if (hierPostIndependent(hier, ret, post) 
 					&& preHierIndependent(pre, hier, call)
 					&& prePostIndependent(pre, ret, post)) {
@@ -2412,7 +2412,7 @@ public class SmtManager {
 			if (isOrIteFormula(post)) {
 				return sdecReturn(pre, hier, cb, post);
 			}
-			Call call = cb.getCorrespondingCallAnnot();
+			Call call = cb.getCorrespondingCall();
 			Set<BoogieVar> assignedVars = cb.getTransitionFormula().getAssignedVars();
 			
 			/*
@@ -2535,7 +2535,7 @@ public class SmtManager {
 					&& !varSetDisjoint(returnAssignTf.getAssignedVars(), post.getVars())) {
 				return false;
 			}
-			Call call = ret.getCorrespondingCallAnnot();
+			Call call = ret.getCorrespondingCall();
 			TransFormula locVarAssignTf = call.getTransitionFormula();
 			if (!varSetDisjoint(post.getVars(), locVarAssignTf.getInVars().keySet())
 					&& !varSetDisjoint(locVarAssignTf.getAssignedVars(), pre.getVars())) {
@@ -2553,7 +2553,7 @@ public class SmtManager {
 		
 		
 		private boolean hierPostIndependent(IPredicate hier, Return ret, IPredicate post) {
-			Call call = ret.getCorrespondingCallAnnot();
+			Call call = ret.getCorrespondingCall();
 			Set<BoogieVar> assignedVars = ret.getTransitionFormula().getAssignedVars();
 			
 			Set<BoogieVar> modifiableGlobals = 
@@ -2635,7 +2635,7 @@ public class SmtManager {
 		
 		public LBool sdecReturnSelfloopHier(IPredicate p, Return ret) {
 			Set<BoogieVar> assignedVars = ret.getTransitionFormula().getAssignedVars();
-			Set<BoogieVar> modifiableGlobals = ret.getCorrespondingCallAnnot()
+			Set<BoogieVar> modifiableGlobals = ret.getCorrespondingCall()
 								.getOldVarsAssignment().getInVars().keySet();  
 			for (BoogieVar bv : p.getVars()) {
 				if (modifiableGlobals.contains(bv)) {

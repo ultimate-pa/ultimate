@@ -74,7 +74,7 @@ public class ErrorPathBuilder {
 					newCallPoint = currentBFSState;
 				} else if (edge instanceof Return) {
 					Return redge = (Return) edge;
-					Call caller = redge.getCorrespondingCallAnnot();
+					Call caller = redge.getCorrespondingCall();
 					if(caller.equals(currentCall)) {
 						newCall = currentCallPoint.getCall();
 						newCallPoint = currentCallPoint.getCallState();
