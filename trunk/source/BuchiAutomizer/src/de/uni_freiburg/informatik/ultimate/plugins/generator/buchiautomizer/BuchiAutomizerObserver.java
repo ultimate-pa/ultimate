@@ -283,6 +283,7 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 						siString = RankingFunctionsObserver.backtranslateExprWorkaround(siExp);
 						longMessage.append(" " + siString);
 					}
+					longMessage.append("  length stem: " + stem.length() + " length loop: " + loop.length());
 					s_Logger.info(longMessage);
 				} else {
 					s_Logger.info("Statistics: No ranking function has been found " +
