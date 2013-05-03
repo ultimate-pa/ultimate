@@ -472,8 +472,10 @@ public class RankingFunctionsSynthesizer {
 		List<Term> conj = new ArrayList<Term>();
 		
 		// All variables relevant for supporting invariants
+		// Variables that are not read by the loop are not relevant for 
+		// supporting invariants.
 		Collection<BoogieVar> siVars = m_stem.getOutVars().keySet();
-		siVars.retainAll(m_loop.getOutVars().keySet());
+		siVars.retainAll(m_loop.getInVars().keySet());
 		
 		// Collect all loop variables
 		Collection<TermVariable> loop_vars = new HashSet<TermVariable>();
