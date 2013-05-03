@@ -50,7 +50,7 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 	 * should be passed to the next plugin. The Successors of this node exactly
 	 * the initial nodes of procedures.
 	 */
-	private static IElement m_graphroot = null;
+	private IElement m_graphroot = null;
 	private int m_OverallIterations;
 	private int OverallBiggestAbstraction;
 	private long m_OverallDeadEndRemovalTime;
@@ -423,7 +423,7 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 	 * @return the root of the CFG.
 	 */
 	public IElement getRoot() {
-		return TraceAbstractionObserver.m_graphroot;
+		return m_graphroot;
 	}
 
 	@Override
