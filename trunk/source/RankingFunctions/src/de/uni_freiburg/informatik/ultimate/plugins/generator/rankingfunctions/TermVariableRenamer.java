@@ -3,9 +3,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.rankingfunctions;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.FormulaUnLet;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
@@ -38,13 +36,11 @@ public class TermVariableRenamer {
 		Term formula = transFormula.getFormula();
 		Map<BoogieVar, TermVariable> inVars = transFormula.getInVars();
 		Map<BoogieVar, TermVariable> outVars = transFormula.getOutVars();
-		Set<TermVariable> allVars = transFormula.getVars();
 		
 		Map<BoogieVar, TermVariable> newInVars = 
 				new HashMap<BoogieVar, TermVariable>();
 		Map<BoogieVar, TermVariable> newOutVars = 
 				new HashMap<BoogieVar, TermVariable>();
-		Set<TermVariable> newAllVars = new HashSet<TermVariable>(allVars);
 		
 		Collection<BoogieVar> hasInOnlyVar = new ArrayList<BoogieVar>();
 		Collection<BoogieVar> hasOutOnlyVar = new ArrayList<BoogieVar>();
@@ -67,10 +63,10 @@ public class TermVariableRenamer {
 				hasOutOnlyVar.add(var);
 			}
 		}
-		formula = renameVars(hasInOnlyVar, formula, inVars, newInVars, newAllVars,  prefix+"In");
-		formula = renameVars(commonInOutVar, formula, inVars, newInVars, newAllVars, prefix+"InOut");
-		formula = renameVars(commonInOutVar, formula, outVars, newOutVars, newAllVars, prefix+"InOut");
-		formula = renameVars(hasOutOnlyVar, formula, outVars, newOutVars, newAllVars, prefix+"Out");
+		formula = renameVars(hasInOnlyVar, formula, inVars, newInVars, prefix+"In");
+		formula = renameVars(commonInOutVar, formula, inVars, newInVars, prefix+"InOut");
+		formula = renameVars(commonInOutVar, formula, outVars, newOutVars, prefix+"InOut");
+		formula = renameVars(hasOutOnlyVar, formula, outVars, newOutVars, prefix+"Out");
 		formula = new FormulaUnLet().unlet(formula);
 		return new TransFormula(formula, newInVars, newOutVars,
 				transFormula.getAuxVars(), transFormula.getBranchEncoders(), 
@@ -92,7 +88,6 @@ public class TermVariableRenamer {
 						Term formula,
 						Map<BoogieVar, TermVariable> variableMapping, 
 						Map<BoogieVar, TermVariable> newVariableMapping, 
-						Set<TermVariable> allVars, 
 						String prefix) {
 		TermVariable[] vars = new TermVariable[boogieVars.size()];
 		TermVariable[] newVars= new TermVariable[boogieVars.size()];
@@ -101,8 +96,6 @@ public class TermVariableRenamer {
 			vars[i] = variableMapping.get(var);
 			newVars[i] = getNewTermVariable(var, vars[i], prefix);
 			newVariableMapping.put(var,newVars[i]);
-			allVars.remove(vars[i]);
-			allVars.add(newVars[i]);
 			i++;
 		}
 		try {

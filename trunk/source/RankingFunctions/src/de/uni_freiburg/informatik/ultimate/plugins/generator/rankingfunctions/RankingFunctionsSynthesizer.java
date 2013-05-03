@@ -146,7 +146,19 @@ public class RankingFunctionsSynthesizer {
 		VariableDomain domain = VariableDomain.INTEGERS;
 		
 		// Check the stem variables
-		for (TermVariable var : m_stem.getVars()) {
+		for (TermVariable var : m_stem.getInVars().values()) {
+			if (var.getSort().getName() != "Int") {
+				domain = VariableDomain.REALS;
+				break;
+			}
+		}
+		for (TermVariable var : m_stem.getOutVars().values()) {
+			if (var.getSort().getName() != "Int") {
+				domain = VariableDomain.REALS;
+				break;
+			}
+		}
+		for (TermVariable var : m_stem.getAuxVars()) {
 			if (var.getSort().getName() != "Int") {
 				domain = VariableDomain.REALS;
 				break;
@@ -154,7 +166,19 @@ public class RankingFunctionsSynthesizer {
 		}
 		
 		// Check the loop variables
-		for (TermVariable var : m_loop.getVars()) {
+		for (TermVariable var : m_loop.getInVars().values()) {
+			if (var.getSort().getName() != "Int") {
+				domain = VariableDomain.REALS;
+				break;
+			}
+		}
+		for (TermVariable var : m_loop.getOutVars().values()) {
+			if (var.getSort().getName() != "Int") {
+				domain = VariableDomain.REALS;
+				break;
+			}
+		}
+		for (TermVariable var : m_loop.getAuxVars()) {
 			if (var.getSort().getName() != "Int") {
 				domain = VariableDomain.REALS;
 				break;
@@ -479,7 +503,7 @@ public class RankingFunctionsSynthesizer {
 		
 		// Collect all loop variables
 		Collection<TermVariable> loop_vars = new HashSet<TermVariable>();
-		loop_vars.addAll(m_loop.getVars());
+		loop_vars.addAll(Arrays.asList(m_loop.getFormula().getFreeVars()));
 		loop_vars.addAll(m_auxVars);
 		
 		// Farkas' Lemma applications, iterate over the loop disjunction
@@ -551,7 +575,7 @@ public class RankingFunctionsSynthesizer {
 					FarkasApplication stem0 = new FarkasApplication(m_script);
 					stem0.terms = stem_conj;
 					stem0.transitionVariables = new HashSet<TermVariable>();
-					stem0.transitionVariables.addAll(m_stem.getVars());
+					stem0.transitionVariables.addAll(Arrays.asList(m_stem.getFormula().getFreeVars()));
 					stem0.transitionVariables.addAll(m_auxVars);
 					stem0.ieqsymb =
 							FarkasApplication.Inequality.LESS_THAN_OR_EQUAL;

@@ -1070,7 +1070,7 @@ public class SmtManager {
 			int idxInVar, int idxOutVar, Set<BoogieVar> assignedVars) {
 		assert (assignedVars != null && assignedVars.isEmpty());
 		Set<TermVariable> notYetSubst = new HashSet<TermVariable>();
-		notYetSubst.addAll(tf.getVars());
+		notYetSubst.addAll(Arrays.asList(tf.getFormula().getFreeVars()));
 		Term fTrans = tf.getFormula();
 		String t = fTrans.toString();
 		for (BoogieVar inVar : tf.getInVars().keySet()) {

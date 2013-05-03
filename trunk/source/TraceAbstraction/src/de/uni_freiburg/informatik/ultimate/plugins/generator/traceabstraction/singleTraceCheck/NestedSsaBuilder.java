@@ -359,7 +359,6 @@ public class NestedSsaBuilder {
 		private final Map<BoogieVar,TermVariable> m_inVars;
 		private final Map<BoogieVar,TermVariable> m_outVars;
 		private final Set<BoogieVar> m_assignedVars;
-		private final Set<TermVariable> m_vars;
 		private final Set<TermVariable> m_BranchEncoders;
 		private Term m_formula;
 		private Set<TermVariable> letedVars = new HashSet<TermVariable>();
@@ -368,7 +367,6 @@ public class NestedSsaBuilder {
 			m_inVars = tf.getInVars();
 			m_outVars = tf.getOutVars();
 			m_assignedVars = tf.getAssignedVars();
-			m_vars = tf.getVars();
 			m_BranchEncoders = tf.getBranchEncoders();
 			m_formula = tf.getFormula();
 		}

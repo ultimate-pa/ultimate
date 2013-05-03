@@ -301,10 +301,6 @@ public class TransFormula implements Serializable {
 		return m_Formula;
 	}
 
-	public Set<TermVariable> getVars() {
-		return m_Vars;
-	}
-
 	public Map<BoogieVar, TermVariable> getInVars() {
 		return m_InVars;
 	}
