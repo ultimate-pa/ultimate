@@ -239,7 +239,7 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 			List<CodeBlock> composedCB = new ArrayList<CodeBlock>();
 			composedCB.addAll(Arrays.asList(stemCBs));
 			composedCB.addAll(Arrays.asList(loopCBs));
-			composedCB.addAll(Arrays.asList(loopCBs));
+//			composedCB.addAll(Arrays.asList(loopCBs));
 			TransFormula composed = SequentialComposition.getInterproceduralTransFormula(rootAnnot.getBoogie2SMT(), false, composedCB.toArray(new CodeBlock[0])); 
 					//TransFormula.sequentialComposition(10000, rootAnnot.getBoogie2SMT(), stemTF, loopTF);
 			if (composed.isInfeasible() == Infeasibility.INFEASIBLE) {
