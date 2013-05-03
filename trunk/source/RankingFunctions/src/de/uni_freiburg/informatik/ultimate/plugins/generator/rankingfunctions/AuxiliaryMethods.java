@@ -11,6 +11,7 @@ import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
 public class AuxiliaryMethods {
 	/**
@@ -190,8 +191,12 @@ public class AuxiliaryMethods {
 			} else if (appt.getFunction().getName() == "not") {
 				assert (appt.getParameters().length == 1);
 				Term notTerm = appt.getParameters()[0];
-				clauses.add(negateAtom(script, notTerm));
-				// TODO: case where notTerm is not an atom
+				if ((notTerm instanceof TermVariable)) {
+					// do nothing TODO: logger output?
+				} else {
+					clauses.add(negateAtom(script, notTerm));
+					// TODO: case where notTerm is not an atom
+				}
 			} else if (appt.getFunction().getName() == "=>") {
 				clauses.addAll(toDNF(script, script.term("not", appt.getParameters()[0])));
 				clauses.addAll(toDNF(script, appt.getParameters()[1]));
