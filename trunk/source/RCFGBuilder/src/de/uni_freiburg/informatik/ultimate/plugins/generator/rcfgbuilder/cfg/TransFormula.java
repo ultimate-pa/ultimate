@@ -1267,7 +1267,7 @@ public class TransFormula implements Serializable {
 						outVarsToRemove.add(bv);
 					}
 				} else {
-					if (!returnTf.getInVars().containsKey(bv)) {
+					if (!returnTf.getOutVars().containsKey(bv)) {
 						// bv is local but not result of procedure call
 						outVarsToRemove.add(bv);
 					}
@@ -1277,7 +1277,26 @@ public class TransFormula implements Serializable {
 				result.removeOutVar(bv);
 			}
 		}
+		assert(isIntraprocedural(result));
 		return result;
+	}
+	
+	/**
+	 * Returns true iff all local variables in tf belong to a single procedure.
+	 */
+	static boolean isIntraprocedural(final TransFormula tf) {
+		final Set<String> procedures = new HashSet<String>();
+		for (BoogieVar bv : tf.getInVars().keySet()) {
+			if (!bv.isGlobal()) {
+				procedures.add(bv.getProcedure());
+			}
+		}
+		for (BoogieVar bv : tf.getOutVars().keySet()) {
+			if (!bv.isGlobal()) {
+				procedures.add(bv.getProcedure());
+			}
+		}
+		return procedures.size() <= 1;
 	}
 	
 	
