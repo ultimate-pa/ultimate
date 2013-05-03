@@ -376,7 +376,12 @@ public class ConversionVisitor implements IMinimizationVisitor {
 						throw new IllegalArgumentException(
 								"No compose edges, there should be goto-Edges!");
 					}
-					return replaceGotoEdge(gotoEdges.get(0), gotoEdges.get(1));
+					// We add here a SequentialComposition with only one
+					// element, because we have to remove later a list from the
+					// stack whereas this is only done for not
+					// SequentialCompositons
+					return new SequentialComposition(null, null, boogie2smt,
+							replaceGotoEdge(gotoEdges.get(0), gotoEdges.get(1)));
 				}
 				return new SequentialComposition(null, null, boogie2smt,
 						composeEdges.toArray(new CodeBlock[0]));
@@ -384,6 +389,15 @@ public class ConversionVisitor implements IMinimizationVisitor {
 			if (edge instanceof DisjunctionEdge) {
 				ArrayList<CodeBlock> composeEdges = new ArrayList<CodeBlock>();
 				for (CodeBlock cb : recConvEdges) {
+					if (!(cb instanceof SequentialComposition)) {
+						// if we have no code block, we have to remove the
+						// created lists on the stack
+						if (!seqComposedBlocks.pop().isEmpty()) {
+							throw new IllegalArgumentException(
+									"It is not allowed to pop "
+											+ "non empty lists, from the stack");
+						}
+					}
 					if (cb instanceof GotoEdge) {
 						composeEdges.add(replaceGotoEdge(cb, null));
 						continue;
@@ -395,7 +409,12 @@ public class ConversionVisitor implements IMinimizationVisitor {
 				if (composeEdges.size() == 1) {
 					// If we have only one composedEdge we return it, because a
 					// parallel composition is not needed
-					seqComposedBlocks.pop();
+					if (composeEdges.get(0) instanceof SequentialComposition) {
+						// -> we only pop() if the one edge is an
+						// SequentialComposition, otherwise this has already
+						// done
+						seqComposedBlocks.pop();
+					}
 					return composeEdges.get(0);
 				}
 				if (composeEdges.size() != 2) {
@@ -417,7 +436,8 @@ public class ConversionVisitor implements IMinimizationVisitor {
 	 * copied, because we create new instances, since we do not want to change
 	 * the original RCFG.
 	 * 
-	 * @param edge IMinimizedEdge which is a basic edge
+	 * @param edge
+	 *            IMinimizedEdge which is a basic edge
 	 * @return corresponding CodeBlock
 	 */
 	private CodeBlock convertBasicEdge(IMinimizedEdge edge) {
