@@ -319,8 +319,13 @@ public class TraceChecker {
 	private IPredicate[] getInterpolants_Recursive(Set<Integer> interpolatedPositions) {
 		assert interpolatedPositions != null : "no interpolatedPositions";
 		if (m_IsSafe != LBool.UNSAT) {
-			throw new IllegalArgumentException(
-				"Interpolants only available if trace fulfills specification");
+			if (m_IsSafe == null) {
+				throw new AssertionError(
+						"No trace check at the moment - no interpolants!");
+			} else {
+				throw new AssertionError(
+						"Interpolants only available if trace fulfills specification");
+			}
 		}
 		if (m_Interpolants != null){
 			throw new AssertionError("You already computed interpolants");
