@@ -211,9 +211,13 @@ public class CFG2NestedWordAutomaton {
 						Return returnEdge = (Return) edge;
 						CodeBlock symbol = returnEdge;
 						ProgramPoint callerLocNode = returnEdge.getCallerProgramPoint();
-						assert nodes2States.containsKey(callerLocNode) : "missing ProgramPoint";
-						nwa.addReturnTransition(state,
+						if (nodes2States.containsKey(callerLocNode)) {
+							nwa.addReturnTransition(state,
 								nodes2States.get(callerLocNode), symbol, succState);
+						} else {
+							s_Logger.debug("Ommited insertion of " + symbol + 
+									" because callerNode" + callerLocNode + " is deadcode");
+						}
 					}
 				} else if (edge instanceof Summary) {
 					Summary summaryEdge = (Summary) edge;
