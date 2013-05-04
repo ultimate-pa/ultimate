@@ -192,7 +192,7 @@ public class AuxiliaryMethods {
 				assert (appt.getParameters().length == 1);
 				Term notTerm = appt.getParameters()[0];
 				if ((notTerm instanceof TermVariable)) {
-					// do nothing TODO: logger output?
+					clauses.add(notTerm);
 				} else {
 					clauses.add(negateAtom(script, notTerm));
 					// TODO: case where notTerm is not an atom
