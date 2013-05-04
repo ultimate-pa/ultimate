@@ -91,7 +91,6 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 
 		LBool feasibility = m_TraceChecker.checkTrace(
 				m_TruePredicate, m_FalsePredicate, m_Counterexample.getWord());
-		m_TraceChecker.forgetTrace();
 		return feasibility;
 	}
 	
@@ -224,6 +223,7 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 			m_Iteration++;
 			feasibility = checkFeasibility(ctx, rootAnnot);
 		}
+		m_TraceChecker.forgetTrace();
 
 
 		
@@ -237,8 +237,12 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 		}
 		@SuppressWarnings("deprecation")
 		TransFormula stemTF = SequentialComposition.getInterproceduralTransFormula(rootAnnot.getBoogie2SMT(), false, stemCBs);
+		int stemVars = stemTF.getFormula().getFreeVars().length;
+		s_Logger.info("stemVars: " + stemVars);
 		@SuppressWarnings("deprecation")
 		TransFormula loopTF = SequentialComposition.getInterproceduralTransFormula(rootAnnot.getBoogie2SMT(), false, loopCBs);
+		int loopVars = loopTF.getFormula().getFreeVars().length;
+		s_Logger.info("loopVars: " + loopVars);
 		{
 			List<CodeBlock> composedCB = new ArrayList<CodeBlock>();
 			composedCB.addAll(Arrays.asList(stemCBs));
