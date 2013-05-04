@@ -49,6 +49,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.InterpolantAutomataTransitionAppender.StrongestPostDeterminizer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager.TermVarsProc;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceChecker.AllIntegers;
 
@@ -70,6 +71,7 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 	private NestedWordAutomaton<CodeBlock, IPredicate> m_Abstraction;
 	private TraceChecker m_TraceChecker;
 	private PredicateFactoryRefinement m_StateFactoryForRefinement;
+	private BinaryStatePredicateManager m_Binarizer;
 	
 	
 	
@@ -89,6 +91,7 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 
 		LBool feasibility = m_TraceChecker.checkTrace(
 				m_TruePredicate, m_FalsePredicate, m_Counterexample.getWord());
+		m_TraceChecker.forgetTrace();
 		return feasibility;
 	}
 	
@@ -130,6 +133,7 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 		smtManager = new SmtManager(rootAnnot.getBoogie2Smt(),
 				taPrefs.solver(), rootAnnot.getGlobalVars(), rootAnnot.getModifiedVars(),
 				taPrefs.dumpFormulas(), taPrefs.dumpPath());
+		m_Binarizer = new BinaryStatePredicateManager(smtManager);
 		m_Pref = rootAnnot.getTaPrefs();
 		
 		m_StateFactoryForRefinement = new PredicateFactoryRefinement(
@@ -285,6 +289,18 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 					}
 					longMessage.append("  length stem: " + stem.length() + " length loop: " + loop.length());
 					s_Logger.info(longMessage);
+					
+					for (SupportingInvariant si : si_list) {
+						assert checkResult(si, stem, loop) : "Wrong supporting invariant " + si;
+					}
+					boolean correctWithoutSi = checkResult(linRf, loop);
+					if (correctWithoutSi) {
+						s_Logger.info("Statistics: For this ranking function no si needed");
+					} else {
+						s_Logger.info("Statistics: We need si for this ranking function");
+					}
+					assert checkResult(linRf, si_list, loop) : "Wrong ranking function " + rf;
+
 				} else {
 					s_Logger.info("Statistics: No ranking function has been found " +
 							"with this template.");
@@ -309,6 +325,68 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 //		m_Artifact = null;
 		return false;
 	}
+	
+	
+	private boolean checkResult(SupportingInvariant si, NestedWord<CodeBlock> stem, NestedWord<CodeBlock> loop) {
+		boolean result = true;
+		IPredicate siPred = m_Binarizer.supportingInvariant2Predicate(si);
+		LBool stemCheck = m_TraceChecker.checkTrace(m_TruePredicate, siPred, stem);
+		m_TraceChecker.forgetTrace();
+		if (stemCheck != LBool.UNSAT) {
+			result = false;
+		}
+		LBool loopCheck = m_TraceChecker.checkTrace(siPred, siPred, stem);
+		m_TraceChecker.forgetTrace();
+		if (loopCheck != LBool.UNSAT) {
+			result = false;
+		}
+		return result;
+	}
+	
+	private boolean checkResult(RankingFunction rf, NestedWord<CodeBlock> loop) {
+		boolean result = true;
+		IPredicate seedEquality = m_Binarizer.getSeedVarEquality(rf);
+		IPredicate rkDecrease = m_Binarizer.getRankDecrease(rf);
+		
+		LBool stemCheck = m_TraceChecker.checkTrace(seedEquality, rkDecrease, loop);
+		m_TraceChecker.forgetTrace();
+		if (stemCheck != LBool.UNSAT) {
+			result = false;
+		}
+		return result;
+	}
+
+	
+	private boolean checkResult(RankingFunction rf,  Iterable<SupportingInvariant> siList, NestedWord<CodeBlock> loop) {
+		boolean result = true;
+		List<IPredicate> siPreds = new ArrayList<IPredicate>();
+		for (SupportingInvariant si : siList) {
+			IPredicate siPred = m_Binarizer.supportingInvariant2Predicate(si);
+			siPreds.add(siPred);
+		}
+		TermVarsProc tvp = smtManager.and(siPreds.toArray(new IPredicate[0]));
+		IPredicate siConjunction = smtManager.newPredicate(tvp.getFormula(), 
+				tvp.getProcedures(), tvp.getVars(), tvp.getClosedFormula()); 
+		
+		IPredicate seedEquality = m_Binarizer.getSeedVarEquality(rf);
+		IPredicate rkDecrease = m_Binarizer.getRankDecrease(rf);
+		
+		final IPredicate siConjunctionAndSeedEquality;
+		{
+			tvp = smtManager.and(siConjunction, seedEquality);
+			siConjunctionAndSeedEquality = smtManager.newPredicate(tvp.getFormula(), 
+					tvp.getProcedures(), tvp.getVars(), tvp.getClosedFormula());
+		}
+		
+		LBool stemCheck = m_TraceChecker.checkTrace(siConjunctionAndSeedEquality, rkDecrease, loop);
+		m_TraceChecker.forgetTrace();
+		if (stemCheck != LBool.UNSAT) {
+			result = false;
+		}
+		return result;
+	}
+
+	
 
 	@Override
 	public void finish() {
