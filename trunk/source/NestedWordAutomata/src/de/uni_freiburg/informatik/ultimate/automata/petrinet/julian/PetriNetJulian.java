@@ -119,7 +119,7 @@ public class PetriNetJulian<S, C> implements IPetriNet<S, C> {
 	public Transition<S, C> addTransition(S symbol,
 			Collection<Place<S, C>> preds, Collection<Place<S, C>> succs) {
 		if (!alphabet.contains(symbol)) {
-			throw new IllegalArgumentException("unknown symbol");
+			throw new IllegalArgumentException("unknown letter: " + symbol);
 		}
 		Transition<S, C> transition = new Transition<S, C>(symbol, preds,
 				succs, transitions.size());
