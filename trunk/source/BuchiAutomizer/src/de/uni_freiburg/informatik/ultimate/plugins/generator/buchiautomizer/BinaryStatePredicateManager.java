@@ -137,7 +137,7 @@ public class BinaryStatePredicateManager {
 				primedConstant = (ApplicationTerm) m_Script.term(primedConstantName);
 			}
 			BoogieVar seeded = new BoogieVar(name,
-					bv.getProcedure(), bv.getIType(), bv.isOldvar(), 
+					null, bv.getIType(), bv.isOldvar(), 
 					termVariable, defaultConstant, primedConstant);
 			m_BoogieVar2SeededBoogieVar.put(bv, seeded);
 			return seeded;
