@@ -599,7 +599,13 @@ public class RankingFunctionsSynthesizer {
 					nondecr.transitionVariables = loop_vars;
 					nondecr.ieqsymb =
 							FarkasApplication.Inequality.LESS_THAN_OR_EQUAL;
-					sig.setSINonDecreasing(nondecr, m_loop.getInVars(),
+					Map<BoogieVar, TermVariable> relevantInVars = new HashMap<BoogieVar, TermVariable>();
+					for (BoogieVar bv : m_loop.getInVars().keySet()) {
+						if (m_stem.getOutVars().containsKey(bv))  {
+							relevantInVars.put(bv, m_loop.getInVars().get(bv));
+						}
+					}
+					sig.setSINonDecreasing(nondecr, relevantInVars,
 							m_loop.getOutVars());
 					conj.addAll(nondecr.transform());
 				}
