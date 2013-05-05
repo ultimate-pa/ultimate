@@ -269,7 +269,7 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 		boolean withoutStem = synthesize(emptyWord, loop, getDummyTF(), loopTF);
 		boolean witStem = synthesize(stem, loop, stemTF, loopTF);
 		if (witStem && !withoutStem) {
-			s_Logger.info("Statistics: NONTRIVIAL LASSO PROGRAM !!!");
+			s_Logger.info("Statistics: SI IS NECESSARY !!!");
 		}
 
 		return false;
@@ -329,8 +329,10 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 				s_Logger.info(longMessage);
 
 				for (SupportingInvariant si : si_list) {
-					assert checkResult(si, stem, loop) : "Wrong supporting invariant "
+					if (stem.length() > 0) {
+						assert checkResult(si, stem, loop) : "Wrong supporting invariant "
 							+ si;
+					}
 				}
 				boolean correctWithoutSi = checkResult(linRf, loop);
 				if (correctWithoutSi) {
