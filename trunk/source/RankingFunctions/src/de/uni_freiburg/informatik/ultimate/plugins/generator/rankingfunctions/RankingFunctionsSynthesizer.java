@@ -498,8 +498,9 @@ public class RankingFunctionsSynthesizer {
 		// All variables relevant for supporting invariants
 		// Variables that are not read by the loop are not relevant for 
 		// supporting invariants.
-		Collection<BoogieVar> siVars = m_stem.getOutVars().keySet();
-		siVars.retainAll(m_loop.getInVars().keySet());
+		Collection<BoogieVar> siVars = new HashSet<BoogieVar>(); 
+		siVars = m_stem.getOutVars().keySet();
+//		siVars.retainAll(m_loop.getInVars().keySet());
 		
 		// Collect all loop variables
 		Collection<TermVariable> loop_vars = new HashSet<TermVariable>();
@@ -581,7 +582,14 @@ public class RankingFunctionsSynthesizer {
 					stem0.transitionVariables.addAll(m_auxVars);
 					stem0.ieqsymb =
 							FarkasApplication.Inequality.LESS_THAN_OR_EQUAL;
-					sig.setStemEntailment(stem0, m_stem.getOutVars());
+					// consider only vars that occur as inVars of loop
+					Map<BoogieVar, TermVariable> relevantOutVars = new HashMap<BoogieVar, TermVariable>();
+					for (BoogieVar bv : m_loop.getInVars().keySet()) {
+						if (m_stem.getOutVars().containsKey(bv))  {
+							relevantOutVars.put(bv, m_stem.getOutVars().get(bv));
+						}
+					}
+					sig.setStemEntailment(stem0, relevantOutVars);
 					conj.addAll(stem0.transform());
 				}
 				for (List<AffineTerm> loop_conj : loop_terms) {
