@@ -238,11 +238,10 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 		@SuppressWarnings("deprecation")
 		TransFormula stemTF = SequentialComposition.getInterproceduralTransFormula(rootAnnot.getBoogie2SMT(), false, stemCBs);
 		int stemVars = stemTF.getFormula().getFreeVars().length;
-		s_Logger.info("stemVars: " + stemVars);
 		@SuppressWarnings("deprecation")
 		TransFormula loopTF = SequentialComposition.getInterproceduralTransFormula(rootAnnot.getBoogie2SMT(), false, loopCBs);
 		int loopVars = loopTF.getFormula().getFreeVars().length;
-		s_Logger.info("loopVars: " + loopVars);
+		s_Logger.info("Statistics: stemVars: " + stemVars + "loopVars: " + loopVars);
 		{
 			List<CodeBlock> composedCB = new ArrayList<CodeBlock>();
 			composedCB.addAll(Arrays.asList(stemCBs));
