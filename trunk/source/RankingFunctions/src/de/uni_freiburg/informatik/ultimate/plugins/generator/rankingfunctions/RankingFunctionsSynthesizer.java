@@ -9,6 +9,7 @@ import org.apache.log4j.Logger;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.logic.*;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
+import de.uni_freiburg.informatik.ultimate.logic.simplification.SimplifyDDA;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rankingfunctions.Preferences.UseDivision;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rankingfunctions.functions.*;
@@ -427,7 +428,10 @@ public class RankingFunctionsSynthesizer {
 					terms.addAll(generateAffineTerms(t));
 				}
 			} else if (fname == "true") {
-				// Add nothing
+				// add trivial affine term 0>=0
+				AffineTerm at = new AffineTerm();
+				at.add(Rational.ZERO);
+				terms.add(at);
 			} else if (fname == "=")  {
 				Term param0 = appt.getParameters()[0];
 				Sort param0sort = param0.getSort();
