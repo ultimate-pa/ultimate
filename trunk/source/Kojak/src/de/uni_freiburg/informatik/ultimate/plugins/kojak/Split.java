@@ -66,8 +66,7 @@ public class Split {
 						Return newReturn = new Return(
 								(KojakProgramPoint)returnStatement.getSource(),
 								(KojakProgramPoint)returnStatement.getTarget(),
-								(Call)splitCB,
-								splitPP);
+								(Call)splitCB);
 						slicableEdges.add(newReturn);
 					} catch (IllegalArgumentException e){
 						
@@ -103,8 +102,15 @@ public class Split {
 					
 			currentPP.setPredicateInKojakAnnotation(newPosPredicate);
 			
+			TermVarsProc negtvpInterpolant = mSmtManager.not(interpolant);
+			IPredicate negInterpolant = mSmtManager.newPredicate(
+					negtvpInterpolant.getFormula(), 
+					negtvpInterpolant.getProcedures(),
+					negtvpInterpolant.getVars(),
+					negtvpInterpolant.getClosedFormula());
+			
 			TermVarsProc negtvp = mSmtManager.and(
-					predicate, mSmtManager.not(interpolant));
+					predicate, negInterpolant);
 			IPredicate newNegPredicate = mSmtManager.newPredicate(negtvp.getFormula(), 
 					negtvp.getProcedures(), negtvp.getVars(), negtvp.getClosedFormula());
 			

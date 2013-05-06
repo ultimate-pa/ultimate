@@ -51,8 +51,7 @@ public class AddKojakAnnotationsObserver implements IUnmanagedObserver{
 			Return newReturn = new Return(
 					(ProgramPoint)returnEdge.getSource(),
 					(ProgramPoint)returnEdge.getTarget(),
-					call,
-					(ProgramPoint)call.getSource());
+					call);
 			newReturn.setTransitionFormula(returnEdge.getTransitionFormula());
 			returnEdge.disconnectSource();
 			returnEdge.disconnectTarget();
