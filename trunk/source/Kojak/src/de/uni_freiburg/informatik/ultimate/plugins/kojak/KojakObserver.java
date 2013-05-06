@@ -23,7 +23,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Roo
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.PreferenceValues.Solver;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.SmtManager;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.result.CounterExampleResult;
 import de.uni_freiburg.informatik.ultimate.result.IResult;
 import de.uni_freiburg.informatik.ultimate.result.PositiveResult;
@@ -65,7 +65,8 @@ public class KojakObserver implements IUnmanagedObserver {
 		}
 		// 2nd, 4th and 5th parameter of SmtManager Constructor have no effect.
 		SmtManager smtManager = new SmtManager(rootAnnot.getBoogie2Smt(), 
-				Solver.SMTInterpol, rootAnnot.getGlobalVars(), false, "");
+				Solver.SMTInterpol, rootAnnot.getGlobalVars(), rootAnnot.getModifiedVars(),
+				false, "");
 		
 		Map<String, Collection<ProgramPoint>> proc2errNodes = 
 				rootAnnot.getErrorNodes();

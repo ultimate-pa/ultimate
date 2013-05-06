@@ -8,8 +8,9 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cal
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.SmtManager;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.Predicate;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager.TermVarsProc;
 
 public class Split {
 
@@ -20,14 +21,14 @@ public class Split {
 	}
 	
 	//splits all inner nodes on the path and extends their assertions with corresponding interpolants
-	public HashSet<CodeBlock> split(Pair<KojakProgramPoint[], NestedWord<CodeBlock>> errorPath, Predicate[] interpolants){
+	public HashSet<CodeBlock> split(Pair<KojakProgramPoint[], NestedWord<CodeBlock>> errorPath, IPredicate[] interpolants){
 		HashSet<CodeBlock>  slicableEdges = new HashSet<CodeBlock>();
 		KojakProgramPoint[] pathPoints = errorPath.getEntry1();
-		ArrayDeque<Predicate> interpolantStack = fixInterpolantArray(errorPath.getEntry2(), interpolants);
+		ArrayDeque<IPredicate> interpolantStack = fixInterpolantArray(errorPath.getEntry2(), interpolants);
 		for(KojakProgramPoint currentPP: pathPoints) {
 			if(interpolantStack.isEmpty())
 				break;
-			Predicate interpolant = interpolantStack.removeLast();
+			IPredicate interpolant = interpolantStack.removeLast();
 			KojakProgramPoint splitPP =createSplitPP(currentPP, interpolant);
 			if(splitPP == null) {
 				continue;
@@ -86,29 +87,35 @@ public class Split {
 		return -1;
 	}
 	
-	private KojakProgramPoint createSplitPP(KojakProgramPoint currentPP, Predicate interpolant) {
+	private KojakProgramPoint createSplitPP(KojakProgramPoint currentPP, IPredicate interpolant) {
 		if (interpolant.equals(KojakEngine.getTruePredicate())) {
 			return null;
 		} else if (interpolant.equals(KojakEngine.getFalsePredicate())) {
 			return null;
 		} else {
 			KojakProgramPoint splitPP = newPPFrom(currentPP);
-			Predicate predicate = currentPP.getPredicate();
+			IPredicate predicate = currentPP.getPredicate();
 			
-			Predicate newPosPredicate =	mSmtManager.and(
+			TermVarsProc postvp = mSmtManager.and(
 					predicate, interpolant);
+			IPredicate newPosPredicate = mSmtManager.newPredicate(postvp.getFormula(), 
+					postvp.getProcedures(), postvp.getVars(), postvp.getClosedFormula());
+					
 			currentPP.setPredicateInKojakAnnotation(newPosPredicate);
 			
-			Predicate newNegPredicate = mSmtManager.and(
+			TermVarsProc negtvp = mSmtManager.and(
 					predicate, mSmtManager.not(interpolant));
+			IPredicate newNegPredicate = mSmtManager.newPredicate(negtvp.getFormula(), 
+					negtvp.getProcedures(), negtvp.getVars(), negtvp.getClosedFormula());
+			
 			splitPP.initKojakAnnotation(newNegPredicate);
 			return splitPP;
 		}
 	}
 	
-	private ArrayDeque<Predicate> fixInterpolantArray(NestedWord<CodeBlock> nestedWord, Predicate[] interpolants) {
-		ArrayDeque<Predicate> interpolantStack =
-				new ArrayDeque<Predicate>();
+	private ArrayDeque<IPredicate> fixInterpolantArray(NestedWord<CodeBlock> nestedWord, IPredicate[] interpolants) {
+		ArrayDeque<IPredicate> interpolantStack =
+				new ArrayDeque<IPredicate>();
 
 		for (int i = 0; i < nestedWord.length()-1; i++) {
 			CodeBlock codeBlock = nestedWord.getSymbolAt(i);

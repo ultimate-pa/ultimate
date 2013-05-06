@@ -3,7 +3,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.kojak;
 import de.uni_freiburg.informatik.ultimate.model.IAnnotations;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.wrapper.ASTNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.Predicate;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IPredicate;
 
 public class KojakProgramPoint extends ProgramPoint{
 
@@ -31,9 +31,9 @@ public class KojakProgramPoint extends ProgramPoint{
 		return this.getPayload().hashCode();
 	}
 	
-	public Predicate getPredicate() {
+	public IPredicate getPredicate() {
 		IAnnotations annotation = this.getPayload().getAnnotations().get("kojak");
-		Predicate predicate = annotation!=null?
+		IPredicate predicate = annotation!=null?
 				((KojakAnnotations)annotation).getPredicate():null;
 		if(predicate == null) {
 			if (this.isErrorLocation()) {
@@ -47,13 +47,13 @@ public class KojakProgramPoint extends ProgramPoint{
 		return predicate;
 	}
 	
-	public void initKojakAnnotation(Predicate predicate) {
+	public void initKojakAnnotation(IPredicate predicate) {
 		KojakAnnotations kojakAnnotations = new KojakAnnotations();
 		kojakAnnotations.setPredicate(predicate);
 		this.getPayload().getAnnotations().put("kojak", kojakAnnotations);
 	}
 	
-	public void setPredicateInKojakAnnotation(Predicate predicate) {
+	public void setPredicateInKojakAnnotation(IPredicate predicate) {
 		KojakAnnotations kojakAnnotations =
 				(KojakAnnotations)this.getPayload().getAnnotations().get("kojak");
 		if(kojakAnnotations == null) {

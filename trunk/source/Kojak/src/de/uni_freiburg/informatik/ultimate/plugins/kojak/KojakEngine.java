@@ -22,8 +22,9 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCF
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.TAPreferences;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.SmtManager;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.Predicate;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.BasicPredicate;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 
@@ -33,8 +34,8 @@ public class KojakEngine {
 	private SmtManager mSmtManager;
 	private Logger mLogger;
 	private TAPreferences mTAPrefs;
-	private static Predicate mTruePredicate;
-	private static Predicate mFalsePredicate;
+	private static IPredicate mTruePredicate;
+	private static IPredicate mFalsePredicate;
 	
 	public KojakEngine(RootNode rootNode,
 			SmtManager smtManager, TAPreferences taPrefs) {
@@ -43,8 +44,8 @@ public class KojakEngine {
 		mSmtManager = smtManager;
 		mLogger =  UltimateServices.getInstance().getLogger(Activator.PLUGIN_ID);
 		mTAPrefs = taPrefs;
-		mTruePredicate = mSmtManager.newTruePredicate(null);
-		mFalsePredicate = mSmtManager.newFalsePredicate(null);
+		mTruePredicate = mSmtManager.newTruePredicate();
+		mFalsePredicate = mSmtManager.newFalsePredicate();
 	}
 	
 	public Pair<Result, IErrorTrace> run(int maxIterations, boolean libmode) {
@@ -90,7 +91,7 @@ public class KojakEngine {
 				}
 				
 				if(errorNW != null) {
-					Predicate[] interpolants = getInterpolants(errorNW.getEntry2());
+					IPredicate[] interpolants = getInterpolants(errorNW.getEntry2());
 					if (interpolants != null) {
 						Split splitter = new Split(mSmtManager);
 						HashSet<CodeBlock> slicableEdges = splitter.split(errorNW, interpolants);
@@ -108,7 +109,7 @@ public class KojakEngine {
 				Result.MAXEDITERATIONS, errorTrace);
 	}
 	
-	private Predicate[] getInterpolants(NestedWord<CodeBlock> errorPathNW) {
+	private IPredicate[] getInterpolants(NestedWord<CodeBlock> errorPathNW) {
 		TraceChecker traceChecker = new TraceChecker(mSmtManager, 
 				mOriginalRoot.getRootAnnot().getModifiedVars(), 
 				mOriginalRoot.getRootAnnot().getEntryNodes(),
@@ -117,7 +118,7 @@ public class KojakEngine {
 		LBool isSafe = traceChecker.checkTrace(mTruePredicate, 
 				mFalsePredicate, errorPathNW);
 		if(isSafe == LBool.UNSAT) {
-			Predicate[] interpolants = traceChecker.getInterpolants(
+			IPredicate[] interpolants = traceChecker.getInterpolants(
 					new TraceChecker.AllIntegers());
 			return interpolants;
 		}
@@ -125,11 +126,11 @@ public class KojakEngine {
 		return null;
 	}
 	
-	public static Predicate getTruePredicate() {
+	public static IPredicate getTruePredicate() {
 		return mTruePredicate;
 	}
 	
-	public static Predicate getFalsePredicate() {
+	public static IPredicate getFalsePredicate() {
 		return mFalsePredicate;
 	}
 	

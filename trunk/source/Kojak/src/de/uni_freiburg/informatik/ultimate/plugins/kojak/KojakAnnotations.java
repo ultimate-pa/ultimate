@@ -1,7 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.kojak;
 
 import de.uni_freiburg.informatik.ultimate.model.AbstractAnnotations;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.Predicate;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IPredicate;
 
 public class KojakAnnotations extends AbstractAnnotations{
 
@@ -10,7 +10,7 @@ public class KojakAnnotations extends AbstractAnnotations{
 	 */
 	private static final long serialVersionUID = 9102324719771924437L;
 
-	private Predicate m_predicate = null;
+	private IPredicate m_predicate = null;
 	
 	private final static String[] s_AttribFields = {
 		"predicate"
@@ -29,11 +29,11 @@ public class KojakAnnotations extends AbstractAnnotations{
 			throw new UnsupportedOperationException("Unknown field "+field);
 	}
 
-	public Predicate getPredicate() {
+	public IPredicate getPredicate() {
 		return m_predicate;
 	}
 	
-	public void setPredicate(Predicate predicate) {
+	public void setPredicate(IPredicate predicate) {
 		m_predicate = predicate;
 	}
 	
