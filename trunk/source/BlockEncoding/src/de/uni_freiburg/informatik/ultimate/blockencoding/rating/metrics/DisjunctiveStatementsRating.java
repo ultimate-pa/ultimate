@@ -1,7 +1,7 @@
 /**
  * 
  */
-package de.uni_freiburg.informatik.ultimate.blockencoding.rating;
+package de.uni_freiburg.informatik.ultimate.blockencoding.rating.metrics;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -9,6 +9,7 @@ import java.util.Map;
 import de.uni_freiburg.informatik.ultimate.blockencoding.model.DisjunctionEdge;
 import de.uni_freiburg.informatik.ultimate.blockencoding.model.interfaces.ICompositeEdge;
 import de.uni_freiburg.informatik.ultimate.blockencoding.model.interfaces.IMinimizedEdge;
+import de.uni_freiburg.informatik.ultimate.blockencoding.rating.RatingValueContainer;
 import de.uni_freiburg.informatik.ultimate.blockencoding.rating.interfaces.IRating;
 
 /**
@@ -87,7 +88,7 @@ public class DisjunctiveStatementsRating implements IRating {
 	 * @param prefValue
 	 *            the preference value
 	 */
-	DisjunctiveStatementsRating(String prefValue) {
+	public DisjunctiveStatementsRating(String prefValue) {
 		// Here the preference string should have the following format
 		// #Disjunctions|underBoundary|upperBoundary
 		String[] prefs = prefValue.split("-");

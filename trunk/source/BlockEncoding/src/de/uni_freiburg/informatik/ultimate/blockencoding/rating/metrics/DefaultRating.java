@@ -1,11 +1,12 @@
 /**
  * 
  */
-package de.uni_freiburg.informatik.ultimate.blockencoding.rating;
+package de.uni_freiburg.informatik.ultimate.blockencoding.rating.metrics;
 
 import de.uni_freiburg.informatik.ultimate.blockencoding.model.interfaces.IBasicEdge;
 import de.uni_freiburg.informatik.ultimate.blockencoding.model.interfaces.ICompositeEdge;
 import de.uni_freiburg.informatik.ultimate.blockencoding.model.interfaces.IMinimizedEdge;
+import de.uni_freiburg.informatik.ultimate.blockencoding.rating.RatingValueContainer;
 import de.uni_freiburg.informatik.ultimate.blockencoding.rating.interfaces.IRating;
 
 /**
@@ -57,7 +58,7 @@ public class DefaultRating implements IRating {
 	 * @param value
 	 *            the preference value
 	 */
-	DefaultRating(String prefValue) {
+	public DefaultRating(String prefValue) {
 		// Here we interpret the preference string
 		this.countOfStatements = new RatingValueContainer<Integer>(
 				Integer.parseInt(prefValue));

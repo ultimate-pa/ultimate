@@ -1,9 +1,10 @@
 /**
  * 
  */
-package de.uni_freiburg.informatik.ultimate.blockencoding.rating;
+package de.uni_freiburg.informatik.ultimate.blockencoding.rating.metrics;
 
 import de.uni_freiburg.informatik.ultimate.blockencoding.model.interfaces.IMinimizedEdge;
+import de.uni_freiburg.informatik.ultimate.blockencoding.rating.RatingValueContainer;
 import de.uni_freiburg.informatik.ultimate.blockencoding.rating.interfaces.IRating;
 
 /**
@@ -35,7 +36,7 @@ public class UsedVariablesRating implements IRating {
 	 * @param value
 	 *            the preference value
 	 */
-	UsedVariablesRating(String prefValue) {
+	public UsedVariablesRating(String prefValue) {
 		countUsedVariables = new RatingValueContainer<Integer>(
 				Integer.parseInt(prefValue));
 	}

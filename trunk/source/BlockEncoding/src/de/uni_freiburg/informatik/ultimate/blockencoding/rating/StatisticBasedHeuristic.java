@@ -5,7 +5,7 @@ package de.uni_freiburg.informatik.ultimate.blockencoding.rating;
 
 import java.util.ArrayList;
 
-import de.uni_freiburg.informatik.ultimate.blockencoding.rating.RatingFactory.RatingStrategy;
+import de.uni_freiburg.informatik.ultimate.blockencoding.rating.metrics.RatingFactory.RatingStrategy;
 import de.uni_freiburg.informatik.ultimate.blockencoding.rating.util.EncodingStatistics;
 
 /**
@@ -71,7 +71,7 @@ public class StatisticBasedHeuristic extends ConfigurableHeuristic {
 		StringBuilder sb = new StringBuilder();
 		// TODO: validate that
 		// we take half of the maximum disjunctions in the graph
-		int disjunctions = (int)(1.5 *(EncodingStatistics.maxDisjunctionsInOneEdge / 2));
+		int disjunctions = (int)(2 *(EncodingStatistics.maxDisjunctionsInOneEdge / 3));
 		sb.append(disjunctions);
 		sb.append("-");
 		// as a upper bound we take 80% of the value

@@ -11,7 +11,7 @@ import org.eclipse.core.runtime.preferences.IEclipsePreferences;
 
 import de.uni_freiburg.informatik.ultimate.blockencoding.model.BlockEncodingAnnotation;
 import de.uni_freiburg.informatik.ultimate.blockencoding.model.MinimizedNode;
-import de.uni_freiburg.informatik.ultimate.blockencoding.rating.RatingFactory;
+import de.uni_freiburg.informatik.ultimate.blockencoding.rating.metrics.RatingFactory;
 import de.uni_freiburg.informatik.ultimate.blockencoding.rating.util.EncodingStatistics;
 import de.uni_freiburg.informatik.ultimate.blockencoding.test.visitor.TestMinimizationVisitor;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;

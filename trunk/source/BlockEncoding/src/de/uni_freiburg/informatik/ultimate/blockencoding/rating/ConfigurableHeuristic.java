@@ -3,9 +3,14 @@
  */
 package de.uni_freiburg.informatik.ultimate.blockencoding.rating;
 
-import de.uni_freiburg.informatik.ultimate.blockencoding.rating.RatingFactory.RatingStrategy;
 import de.uni_freiburg.informatik.ultimate.blockencoding.rating.interfaces.IRating;
 import de.uni_freiburg.informatik.ultimate.blockencoding.rating.interfaces.IRatingHeuristic;
+import de.uni_freiburg.informatik.ultimate.blockencoding.rating.metrics.DefaultRating;
+import de.uni_freiburg.informatik.ultimate.blockencoding.rating.metrics.DisjunctVariablesRating;
+import de.uni_freiburg.informatik.ultimate.blockencoding.rating.metrics.DisjunctiveRating;
+import de.uni_freiburg.informatik.ultimate.blockencoding.rating.metrics.DisjunctiveStatementsRating;
+import de.uni_freiburg.informatik.ultimate.blockencoding.rating.metrics.UsedVariablesRating;
+import de.uni_freiburg.informatik.ultimate.blockencoding.rating.metrics.RatingFactory.RatingStrategy;
 
 /**
  * Basically this "heuristic" takes the values, which are specified on the
@@ -54,6 +59,8 @@ public class ConfigurableHeuristic implements IRatingHeuristic {
 		case USED_VARIABLES_RATING:
 			boundary = new UsedVariablesRating(givenPref);
 			break;
+		case DISJUNCTIVE_VARIABLES_RATING:
+			boundary = new DisjunctVariablesRating(givenPref);
 		default:
 			throw new IllegalArgumentException(
 					"Unkown state of the enum RatingStrategy,"

@@ -1,11 +1,12 @@
 /**
  * 
  */
-package de.uni_freiburg.informatik.ultimate.blockencoding.rating;
+package de.uni_freiburg.informatik.ultimate.blockencoding.rating.metrics;
 
 import de.uni_freiburg.informatik.ultimate.blockencoding.model.DisjunctionEdge;
 import de.uni_freiburg.informatik.ultimate.blockencoding.model.interfaces.ICompositeEdge;
 import de.uni_freiburg.informatik.ultimate.blockencoding.model.interfaces.IMinimizedEdge;
+import de.uni_freiburg.informatik.ultimate.blockencoding.rating.RatingValueContainer;
 import de.uni_freiburg.informatik.ultimate.blockencoding.rating.interfaces.IRating;
 
 /**
@@ -67,7 +68,7 @@ public class DisjunctiveRating implements IRating {
 	 * @param value
 	 *            the preference value
 	 */
-	DisjunctiveRating(String prefValue) {
+	public DisjunctiveRating(String prefValue) {
 		this.countOfDisjunctions = new RatingValueContainer<Integer>(
 				Integer.parseInt(prefValue));
 	}

@@ -1,7 +1,7 @@
 /**
  * 
  */
-package de.uni_freiburg.informatik.ultimate.blockencoding.rating;
+package de.uni_freiburg.informatik.ultimate.blockencoding.rating.metrics;
 
 import de.uni_freiburg.informatik.ultimate.blockencoding.model.interfaces.IMinimizedEdge;
 import de.uni_freiburg.informatik.ultimate.blockencoding.rating.interfaces.IRating;
@@ -42,7 +42,12 @@ public class RatingFactory {
 		 * Here we count the number of used variables in one edge, this maybe a
 		 * good value to measure the complexity of one edge.
 		 */
-		USED_VARIABLES_RATING
+		USED_VARIABLES_RATING,
+		/**
+		 * Here we count the disjunctions and multiply the results with the
+		 * number of used variables.
+		 */
+		DISJUNCTIVE_VARIABLES_RATING
 	}
 
 	/**
@@ -108,6 +113,8 @@ public class RatingFactory {
 			return new DisjunctiveStatementsRating(edge);
 		case USED_VARIABLES_RATING:
 			return new UsedVariablesRating(edge);
+		case DISJUNCTIVE_VARIABLES_RATING:
+			return new DisjunctVariablesRating(edge);
 		default:
 			throw new IllegalArgumentException("No valid strategy choosen!");
 		}
