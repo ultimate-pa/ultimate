@@ -43,7 +43,6 @@ public class ArgumentList extends AtsASTNode {
 		return "ArgumentList [#Arguments: " + getOutgoingNodes().size() + "]";
 	}
 
-
 	/**
 	 * Returns this list as an array list.
 	 * @return

@@ -13,11 +13,18 @@ import java.util.Map;
  *
  */
 public class AssignableTest {
-	
+	/** 
+	 * A map from primitive types to reference types.
+	 * e.g. (int -> Integer)
+	 */
 	private static Map<Class<?>, Class<?>> m_primitiveToClassTypes;
 	
 	public static void initPrimitiveTypes() {
 		m_primitiveToClassTypes = new HashMap<Class<?>, Class<?>>();
+		/* 
+		 * In automata script test files, currently only two primitive types
+		 * are in use, namely int and boolean.
+		 */
 		m_primitiveToClassTypes.put(int.class, Integer.class);
 		m_primitiveToClassTypes.put(boolean.class, Boolean.class);
 	}

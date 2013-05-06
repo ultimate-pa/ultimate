@@ -30,13 +30,21 @@ import java.util.Collections;
 /**
  * 
  * @author musab@informatik.uni-freiburg.de
+ * 
+ * Responsible for interpretation of automata definitions.
  *
  */
 public class AutomataDefinitionInterpreter {
 	
-	
-	Map<String,Object> m_Automata;
-	ILocation m_errorLocation;
+	/**
+	 * A map from automaton name to automaton object, which contains for each automaton, that was defined in the automata
+	 * definitions an entry. 
+	 */
+	private Map<String,Object> m_Automata;
+	/**
+	 * Contains the location of current interpreting automaton.
+	 */
+	private ILocation m_errorLocation;
 	
 	public AutomataDefinitionInterpreter() {
 		m_Automata = new HashMap<String, Object>();
@@ -45,7 +53,6 @@ public class AutomataDefinitionInterpreter {
 	/**
 	 * 
 	 * @param automata the definitions of automata
-	 * @return null in all cases
 	 */
 	public void interpret(AutomataDefinitions automata) {
 		List<? extends AtsASTNode> children = automata.getListOfAutomataDefinitions();

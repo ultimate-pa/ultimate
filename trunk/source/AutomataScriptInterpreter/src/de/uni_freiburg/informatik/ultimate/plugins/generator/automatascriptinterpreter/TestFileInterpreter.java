@@ -62,13 +62,26 @@ import de.uni_freiburg.informatik.ultimate.result.GenericResult;
 import de.uni_freiburg.informatik.ultimate.result.GenericResult.Severity;
 
 
+/**
+ * This enum represents the current flow of the program.
+ * It could have the values "NORMAL", "BREAK", "CONTINUE", and
+ * "RETURN". It is necessary to implement the "continue" and "break"
+ * function for loops.
+ * @author musab@informatik.uni-freiburg.de
+ *
+ */
 enum Flow {
 	NORMAL, BREAK, CONTINUE, RETURN;
 }
 
 
 /**
- * 
+ * This is the main class for interpreting automata script test files.
+ * It fulfills the following tasks:
+ * - Interpreting automata definitions
+ * - Type checking the automata script test file
+ * - Interpreting the automata script test file
+ * - Generation and output of the results
  * @author musab@informatik.uni-freiburg.de
  *
  */
@@ -76,16 +89,21 @@ public class TestFileInterpreter {
 	
 	private static String UNKNOWN_OPERATION = "UNKNOWN_OPERATION";
 	
-	
-	
-	
 	/**
 	 * This class implements a static type checker for the automatascript files.
 	 * @author musab@informatik.uni-freiburg.de
 	 *
 	 */
 	class AutomataScriptTypeChecker {
+		/**
+		 * A map from variable names to the type they represent. This is needed to check
+		 * for type conformity, e.g. variable assignment.
+		 */
 		private Map<String, Class<?>> m_localVariables = new HashMap<String, Class<?>>();
+		/**
+		 * Location of the current AtsAST node. It is helpful to locate the place, where
+		 * the error happened.
+		 */
 		private ILocation m_errorLocation = null;
 		private String m_shortDescription = "Typecheck error";
 		private String m_longDescription = "";
@@ -152,12 +170,13 @@ public class TestFileInterpreter {
 			checkType(children.get(1));
 			
 			VariableExpression var = (VariableExpression) children.get(0);
+			// Check whether the right-hand side has expected type.
 			for (Class<?> c : getTypes(children.get(1))) {
+				children.get(1).setType(c);
 				// Check for correct types
 				if (AssignableTest.isAssignableFrom(var.getReturnType(), c)) {
 					return;
 				}
-				children.get(1).setType(c);
 			}
 			String message = "Right side has incorrect type." + System.getProperty("line.separator");
 			message = message.concat("Expected: " + var.getReturnType().getSimpleName() + "\tGot: " +
@@ -181,7 +200,7 @@ public class TestFileInterpreter {
 			checkType(children.get(0));
 			checkType(children.get(1));
 			
-			// Check type of the 1st children
+			// Check whether first child has expected type.
 			boolean firstChildHasCorrectType = false;
 			for (Class<?> c : getTypes(children.get(0))) {
 				if (AssignableTest.isAssignableFrom(be.getReturnType(), c)) {
@@ -195,7 +214,7 @@ public class TestFileInterpreter {
 				throw new IllegalArgumentException(message);
 			}
 			
-			// Check type of the 2nd children
+			// Check whether second child has expected type.
 			for (Class<?> c : getTypes(children.get(1))) {
 				if (AssignableTest.isAssignableFrom(be.getReturnType(), c)) {
 					return;
@@ -230,6 +249,7 @@ public class TestFileInterpreter {
 			// Check children for correct type
 			checkType(children.get(0));
 			if (children.size() == 2) checkType(children.get(1));
+			// Check whether first child has type 'int'
 			boolean firstChildHasCorrectType = false;
 			for (Class<?> c : getTypes(children.get(0))) {
 				if (AssignableTest.isAssignableFrom(cbe.getReturnType(), c)) {
@@ -242,6 +262,7 @@ public class TestFileInterpreter {
 				m_longDescription = message;
 				throw new IllegalArgumentException(message);
 			}
+			// Check whether second child has type 'int'
 			if (children.size() == 2) {
 				for (Class<?> c : getTypes(children.get(1))) {
 					if (AssignableTest.isAssignableFrom(cbe.getReturnType(), c)) {
@@ -265,6 +286,7 @@ public class TestFileInterpreter {
 				m_longDescription = message;
 				throw new IllegalArgumentException(message);
 			}
+			// First child is the loop condition.
 			if ((children.get(0) != null) && (children.get(0).getReturnType() != Boolean.class)) {
 				String message = "Loopcondition has incorrect type." + System.getProperty("line.separator");
 				message = message.concat("Expected: " + Boolean.class.getSimpleName() + "\tGot: " + children.get(0).getReturnType().getSimpleName());
@@ -282,9 +304,9 @@ public class TestFileInterpreter {
 				message = message.concat("Num of operands: " + children.size());
 				throw new IllegalArgumentException(message);
 			}
-			// Check the if-condition for correct type
+			// Check the children for correct type.
 			checkType(children.get(0));
-			// Check for correct types
+			// Check if the if-condition has type Boolean.
 			if (children.get(0).getReturnType() != Boolean.class) {
 				String message = "Condition has incorrect type." + System.getProperty("line.separator");
 				message = message.concat("Expected: " + Boolean.class.getSimpleName() + "\tGot: " + children.get(0).getReturnType().getSimpleName());
@@ -303,8 +325,9 @@ public class TestFileInterpreter {
 				m_longDescription = message;
 				throw new IllegalArgumentException(message);
 			}
-			// Check the if-condition for correct type
+			// Check the first child for correct type
 			checkType(children.get(0));
+			// Check if the if-condition has type Boolean.
 			if (children.get(0).getReturnType() != Boolean.class) {
 				String message = "Condition has incorrect type." + System.getProperty("line.separator");
 				message = message.concat("Expected: " + Boolean.class.getSimpleName() + "\tGot: " + children.get(0).getReturnType().getSimpleName());
@@ -326,13 +349,18 @@ public class TestFileInterpreter {
 					throw new UnsupportedOperationException(shortDescr);
 				} 
 			}
+			// Check the arguments of this operation for correct type.
 			if ((oe.getOutgoingNodes() != null) && (oe.getOutgoingNodes().get(0) != null)) {
 				for (AtsASTNode n : oe.getOutgoingNodes().get(0).getOutgoingNodes()) {
 					checkType(n);
 				}
 			}
 			if (opName.equals("print")) return;
-			
+			/*
+			 * Set type of this operation, because until now, it
+			 * didn't have any type. It is not relevant for further
+			 * type checking results, but it avoids NullPointerExceptions. 
+			 */
 			Set<Class<?>> types = getTypes(oe);
 			if (!types.isEmpty()) {
 				Class<?>[] arr = new Class<?>[1];
@@ -355,7 +383,7 @@ public class TestFileInterpreter {
 			// Check children for correct type
 			checkType(children.get(0));
 			checkType(children.get(1));
-			
+			// Check whether first child has expected type.
 			boolean firstChildHasCorrectType = false;
 			for (Class<?> c : getTypes(children.get(0))) {
 				if (c.isAssignableFrom(re.getExpectingType())) {
@@ -368,7 +396,7 @@ public class TestFileInterpreter {
 				m_longDescription = message;
 				throw new IllegalArgumentException(message);
 			}
-			
+			// Check whether second child has expected type.
 			for (Class<?> c : getTypes(children.get(1))) {
 				if (c.isAssignableFrom(re.getExpectingType())) {
 					return;
@@ -398,7 +426,8 @@ public class TestFileInterpreter {
 				m_longDescription = message;
 				throw new IllegalArgumentException(message);
 			}
-			// Check for correct types
+			// Check if variable has expected type, namely
+			// type 'int'
 			for (Class<?> c : getTypes(children.get(0))) {
 				if (c.isAssignableFrom(ue.getReturnType())) {
 					return;
@@ -434,7 +463,10 @@ public class TestFileInterpreter {
 	    	for (String id : vd.getIdentifiers()) {
 	    		m_localVariables.put(id, vd.getExpectingType());
 	    	}
+	    	// if the variable doesn't get assigned a value, then return.
 	    	if (children.size() == 0) return;
+	    	
+	    	// Check type of the right-hand side of the variable assignment.
 	    	checkType(children.get(0));
 	    	for (Class<?> c : getTypes(children.get(0))) {
 	    		if (AssignableTest.isAssignableFrom(vd.getReturnType(), c)) {
@@ -465,6 +497,18 @@ public class TestFileInterpreter {
 			}
 		}
 		
+		
+		/**
+		 * Returns the possible types for the given AST node. Only operations can
+		 * potentially have more return types, because there could operations with
+		 * different return types, but with the same name. 
+		 * @param n the AtsAST node
+		 * @return a set of types, where the set could contain more than 1 element
+		 * if the given node represents an operation invocation, otherwise it contains
+		 * only 1 element. 
+		 * @throws UnsupportedOperationException if the operation was not found, or if the operation
+		 * has no declared method called "getResult".
+		 */
 		private Set<Class<?>> getTypes(AtsASTNode n) throws UnsupportedOperationException {
 			if (n instanceof OperationInvocationExpression) {
 				OperationInvocationExpression oe = (OperationInvocationExpression) n;
@@ -502,7 +546,6 @@ public class TestFileInterpreter {
 			return m_errorLocation;
 		}
 
-		
 		public String getShortDescription() {
 			return m_shortDescription;
 		}
@@ -510,20 +553,51 @@ public class TestFileInterpreter {
 		public String getLongDescription() {
 			return m_longDescription;
 		}
-		
-		
-		
+
 	}
 	
+	/**
+	 * Contains the declared variables, automata variables too. It is a map from
+	 * variable name to the object it represents.
+	 */
 	private Map<String, Object> m_variables;
+	/**
+	 * Contains current existing automata operations. It is a map from
+	 * operation name to a set of class types, because there might be operations
+	 * with the same name, but with different parameter types and in different packages.
+	 * e.g. Accepts for NestedWord automata and Accepts for Petri nets.
+	 */
 	private Map<String, Set<Class<?>>> m_existingOperations;
+	/**
+	 * The current flow of the program.
+	 */
 	private Flow m_flow;
+	/**
+	 * Our interpreter for automata definitions. 
+	 */
 	private AutomataDefinitionInterpreter m_automInterpreter;
+	/**
+	 * Our type checker for the automatascript file.
+	 */
 	private AutomataScriptTypeChecker m_tChecker;
 	private static Logger s_Logger = UltimateServices.getInstance().getLogger(Activator.s_PLUGIN_ID);
+	/**
+	 * Contains the test cases defined in the current automatascript test file.
+	 * Each assert-operation forms a test case.
+	 */
 	private List<GenericResult<Integer>> m_testCases;
+	/**
+	 * The automaton, which was lastly printed by a print operation. 
+	 */
 	private IAutomaton<?, ?> m_LastPrintedAutomaton;
+	/**
+	 * 
+	 */
 	private int m_timeout = 60;
+	/**
+	 * Indicates whether the automaton, which is output by a print operation, should
+	 * also be printed to a .ats-file.
+	 */
 	private boolean m_printAutomataToFile = false;
 	private PrintWriter m_printWriter;
 	private String m_path = ".";
@@ -574,7 +648,11 @@ public class TestFileInterpreter {
     }
 	
 	/**
-	 * Method to interpret an automatascript test file.
+	 * Method to interpret an automatascript test file. The interpretation is done in 4 steps.
+	 * Step 1: Interpret automata defintions.
+	 * Step 2: Check the automatascript test file for correct types and undeclared variables. (Type checking)
+	 * Step 3: Interpret the automatascript test file.
+	 * Step 4: Report the results to the Logger and to the web interface.
 	 * @param node the root node of the AST
 	 * @return the result of the automatascript test file, which is either an automaton or null.
 	 */
@@ -633,7 +711,7 @@ public class TestFileInterpreter {
 	}
 	
 	/**
-	 * Gets the automaton which was lastly printed by a print-statement.
+	 * Gets the automaton which was lastly printed by a print-operation.
 	 * @return
 	 */
 	public IAutomaton<?, ?> getLastPrintedAutomaton() {

@@ -60,7 +60,6 @@ public class AutomataScriptInterpreterObserver implements IUnmanagedObserver {
 		return m_GraphrootOfUltimateModelOfLastPrintedAutomaton;
 	}
 
-	
 	public IAutomaton<String,String> getDummyAutomatonWithMessage() {
 		NestedWordAutomaton<String,String> dummyAutomaton = 
 			new NestedWordAutomaton<String,String>(
