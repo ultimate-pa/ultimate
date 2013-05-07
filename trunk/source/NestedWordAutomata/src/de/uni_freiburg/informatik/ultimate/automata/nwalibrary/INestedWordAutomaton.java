@@ -157,50 +157,50 @@ public interface INestedWordAutomaton<LETTER,STATE>
 	 * @return All states succ such that state has an outgoing 
 	 * internal transition (state, letter, succ)
 	 */
-	public Collection<STATE> succInternal(STATE state, LETTER letter);
+	public Iterable<STATE> succInternal(STATE state, LETTER letter);
 	
 	/**
 	 * @return All states succ such that state has an outgoing 
 	 * call transition (state, letter, succ)
 	 */
-	public Collection<STATE> succCall(STATE state, LETTER letter);
+	public Iterable<STATE> succCall(STATE state, LETTER letter);
 	
 	/**
 	 * @return All states hier such that state has an outgoing 
 	 * return transition (state, hier, letter, succ)
 	 */
-	public Collection<STATE> hierPred(STATE state, LETTER letter);		
+	public Iterable<STATE> hierPred(STATE state, LETTER letter);		
 	
 	/**
 	 * @return All states succ such that state has an outgoing 
 	 * return transition (state, hier, letter, succ)
 	 */
-	public Collection<STATE> succReturn(STATE state, STATE hier, LETTER letter);
+	public Iterable<STATE> succReturn(STATE state, STATE hier, LETTER letter);
 
 	/**
 	 * @return All states pred such that there is an incoming 
 	 * internal transition (pred, letter, state)
 	 */
-	public Collection<STATE> predInternal(STATE state, LETTER letter);
+	public Iterable<STATE> predInternal(STATE state, LETTER letter);
 
 	/**
 	 * @return All states pred such that there is an incoming 
 	 * call transition (pred, letter, state)
 	 */
-	public Collection<STATE> predCall(STATE state, LETTER letter);
+	public Iterable<STATE> predCall(STATE state, LETTER letter);
 	
 	
 	/**
 	 * @return All states pred such that there is an incoming 
 	 * return transition (pred, hier, letter, state)
 	 */
-	public Collection<STATE> predReturnLin(STATE state, LETTER letter, STATE hier);
+	public Iterable<STATE> predReturnLin(STATE state, LETTER letter, STATE hier);
 
 	/**
 	 * @return All states hier such that there is a state pred such that there 
 	 * is an incoming return transition (pred, hier, letter, state)
 	 */
-	public Collection<STATE> predReturnHier(STATE state, LETTER letter);
+	public Iterable<STATE> predReturnHier(STATE state, LETTER letter);
 	
 	
 	

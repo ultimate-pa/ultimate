@@ -148,7 +148,7 @@ public class DelayedSimulation<LETTER,STATE> {
         for (STATE q0 : ba.getStates()) {
             for (STATE q1 : ba.getStates()) {
                 for (LETTER s : ba.lettersInternalIncoming(q0)) {
-                    if (!ba.predInternal(q0, s).isEmpty()) {
+                    if (ba.predInternal(q0, s).iterator().hasNext()) {
                         Player0Vertex<LETTER,STATE> v0e = new Player0Vertex<LETTER, STATE>(
                                 (byte) 2, false, q0, q1, s);
                         v0.add(v0e);

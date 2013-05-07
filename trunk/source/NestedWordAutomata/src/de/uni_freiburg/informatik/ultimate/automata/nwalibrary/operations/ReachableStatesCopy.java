@@ -69,18 +69,18 @@ public class ReachableStatesCopy<LETTER,STATE> extends DoubleDeckerBuilder<LETTE
 		
 		for (STATE state : m_TraversedNwa.getStates()) {
 			for (LETTER letter : m_TraversedNwa.getInternalAlphabet()) {				
-				if (m_TraversedNwa.succInternal(state,letter).isEmpty()) {
+				if (!m_TraversedNwa.succInternal(state,letter).iterator().hasNext()) {
 					m_TraversedNwa.addInternalTransition(state, letter, sinkState);
 				}
 			}
 			for (LETTER letter : m_TraversedNwa.getCallAlphabet()) {				
-				if (m_TraversedNwa.succCall(state,letter).isEmpty()) {
+				if (!m_TraversedNwa.succCall(state,letter).iterator().hasNext()) {
 					m_TraversedNwa.addCallTransition(state, letter, sinkState);
 				}
 			}
 			for (LETTER symbol : m_TraversedNwa.getReturnAlphabet()) {
 				for (STATE hier : m_TraversedNwa.getStates()) {
-					if (m_TraversedNwa.succReturn(state,hier,symbol).isEmpty()) {
+					if (!m_TraversedNwa.succReturn(state,hier,symbol).iterator().hasNext()) {
 						m_TraversedNwa.addReturnTransition(state, hier, symbol, sinkState);
 					}
 				}

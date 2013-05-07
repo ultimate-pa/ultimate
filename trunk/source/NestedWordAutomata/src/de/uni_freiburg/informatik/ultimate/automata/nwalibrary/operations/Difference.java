@@ -482,10 +482,10 @@ public class Difference<LETTER,STATE> extends DoubleDeckerBuilder<LETTER,STATE>
 		
 		for (LETTER symbol : minuend.lettersReturn(minuState)) {
 			
-			Collection<STATE> minuSuccs = minuend.succReturn(minuState, minuLinPred, symbol);
+			Iterable<STATE> minuSuccs = minuend.succReturn(minuState, minuLinPred, symbol);
 			
 			// do nothing if there will be no successor difference state
-			if (minuSuccs.isEmpty()) continue;
+			if (!minuSuccs.iterator().hasNext()) continue;
 			
 			if (!subtrahend.getReturnAlphabet().contains(symbol)) continue;
 			

@@ -320,7 +320,7 @@ public class DifferenceSadd<LETTER,STATE> implements IOperation {
 			DeterminizedState<LETTER,STATE> detLinPred = 
 					diffLinPred.getSubtrahendDeterminizedState();
 			
-			Collection<STATE> minuSuccs = 
+			Iterable<STATE> minuSuccs = 
 					minuend.succReturn(minuState, minuLinPred, symbol);
 //			if (minuSuccs.isEmpty()) continue;
 			DeterminizedState<LETTER,STATE> detSucc = 

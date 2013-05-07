@@ -173,7 +173,7 @@ public class BuchiAcceptsRecursive<LETTER,STATE> implements IOperation {
 		else {
 			LETTER currentSymbol = m_Stem.getSymbolAt(currentPosition);
 
-			Collection<STATE> succStatesCollection;
+			Iterable<STATE> succStatesCollection;
 			if (m_Stem.isInternalPosition(currentPosition)) {
 				succStatesCollection = m_Nwa.succInternal(currentState, currentSymbol);
 			}
@@ -191,12 +191,15 @@ public class BuchiAcceptsRecursive<LETTER,STATE> implements IOperation {
 				throw new IllegalArgumentException();
 			}
 
-			if (succStatesCollection.isEmpty()) {
+			if (!succStatesCollection.iterator().hasNext()) {
 				return new HashSet<STATE>();
 			}
 
 			else{
-				List<STATE> succStates = new ArrayList<STATE>(succStatesCollection);
+				List<STATE> succStates = new ArrayList<STATE>();
+				for (STATE succ : succStatesCollection) {
+					succStates.add(succ);
+				}
 				Set<STATE> result = new HashSet<STATE>();
 				for (int i=0; i<succStates.size(); i++) {
 					// in case of nondeterminism, i.e. several successor states for 
@@ -274,7 +277,7 @@ public class BuchiAcceptsRecursive<LETTER,STATE> implements IOperation {
 
 		LETTER currentSymbol = m_Loop.getSymbolAt(currentPosition);
 
-		Collection<STATE> succStatesCollection;
+		Iterable<STATE> succStatesCollection;
 		if (m_Loop.isInternalPosition(currentPosition)) {
 			succStatesCollection = m_Nwa.succInternal(currentState, currentSymbol);
 		}
@@ -292,12 +295,15 @@ public class BuchiAcceptsRecursive<LETTER,STATE> implements IOperation {
 			throw new IllegalArgumentException();
 		}
 
-		if (succStatesCollection.isEmpty()) {
+		if (!succStatesCollection.iterator().hasNext()) {
 			return false;
 		}
 		else{
 			@SuppressWarnings("unchecked")
-			List<STATE> succStates = new ArrayList<STATE>(succStatesCollection);
+			List<STATE> succStates = new ArrayList<STATE>();
+			for (STATE succ : succStatesCollection) {
+				succStates.add(succ);
+			}
 			boolean result = false;
 			for (int i=0; i<succStates.size(); i++) {
 				// in case of nondeterminism, i.e. several successor states for 

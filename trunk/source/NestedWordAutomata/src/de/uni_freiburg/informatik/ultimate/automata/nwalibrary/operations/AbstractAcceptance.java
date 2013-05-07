@@ -80,14 +80,14 @@ public abstract class AbstractAcceptance<LETTER,STATE> {
 			STATE state = config.pop();
 			LETTER symbol = nw.getSymbol(position);
 			if (nw.isInternalPosition(position)) {
-				Collection<STATE> succs = nwa.succInternal(state, symbol);
+				Iterable<STATE> succs = nwa.succInternal(state, symbol);
 				for (STATE succ : succs) {
 					Stack<STATE> succConfig = (Stack<STATE>) config.clone();
 					succConfig.push(succ);
 					succConfigs.add(succConfig);
 				}
 			} else if (nw.isCallPosition(position)) {
-				Collection<STATE> succs = nwa.succCall(state, symbol);
+				Iterable<STATE> succs = nwa.succCall(state, symbol);
 				for (STATE succ : succs) {
 					Stack<STATE> succConfig = (Stack<STATE>) config.clone();
 					succConfig.push(state);
@@ -100,7 +100,7 @@ public abstract class AbstractAcceptance<LETTER,STATE> {
 				}
 				else {
 					STATE callPred = config.pop();
-					Collection<STATE> succs = nwa.succReturn(state, callPred, symbol);
+					Iterable<STATE> succs = nwa.succReturn(state, callPred, symbol);
 					for (STATE succ : succs) {
 						Stack<STATE> succConfig = (Stack<STATE>) config.clone();
 						succConfig.push(succ);

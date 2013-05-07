@@ -790,7 +790,9 @@ private Set<STATE> m_DeadEnds;
 		Set<STATE> callSuccs = new HashSet<STATE>();
 		if (state != m_TraversedNwa.getEmptyStackState()) {
 			for (LETTER letter : m_TraversedNwa.lettersCall(state)) {
-				callSuccs.addAll(m_TraversedNwa.succCall(state, letter));
+				for (STATE succ : m_TraversedNwa.succCall(state, letter)) {
+					callSuccs.add(succ);
+				}
 			}
 		}
 		return callSuccs;
@@ -807,18 +809,18 @@ private Set<STATE> m_DeadEnds;
 	 */
 	private boolean hasSuccessors(STATE state) {
 		for (LETTER symbol : m_TraversedNwa.lettersInternal(state)) {
-			if (!m_TraversedNwa.succInternal(state, symbol).isEmpty()) {
+			if (m_TraversedNwa.succInternal(state, symbol).iterator().hasNext()) {
 				return true;
 			}
 		}
 		for (LETTER symbol : m_TraversedNwa.lettersCall(state)) {
-			if (!m_TraversedNwa.succCall(state, symbol).isEmpty()) {
+			if (m_TraversedNwa.succCall(state, symbol).iterator().hasNext()) {
 				return true;
 			}
 		}
 		for (LETTER symbol : m_TraversedNwa.lettersReturn(state)) {
 			for (STATE hier : m_TraversedNwa.hierPred(state, symbol)) {
-				if (!m_TraversedNwa.succReturn(state, hier, symbol).isEmpty()) {
+				if (m_TraversedNwa.succReturn(state, hier, symbol).iterator().hasNext()) {
 					return true;
 				}
 			}
@@ -1031,7 +1033,9 @@ private Set<STATE> m_DeadEnds;
 				Set<STATE> callSuccs = new HashSet<STATE>();
 				if (state != m_TraversedNwa.getEmptyStackState()) {
 					for (LETTER letter : m_TraversedNwa.lettersCall(state)) {
-						callSuccs.addAll(m_TraversedNwa.succCall(state, letter));
+						for (STATE succ : m_TraversedNwa.succCall(state, letter)) {
+							callSuccs.add(succ);
+						}
 					}
 				}
 				return callSuccs;

@@ -98,7 +98,9 @@ public class StrongestPostDeterminizer
 		//Add states that we may add because the automaton says so
 		for (IPredicate state :detState.getUpStates(
 								m_Ia.getEmptyStackState())) {
-			succs.addAll(m_Ia.succInternal(state, symbol));
+			for (IPredicate succ : m_Ia.succInternal(state, symbol)) {
+				succs.add(succ);
+			}
 		}
 		//If final state is contained, we are done
 		if (succs.contains(m_IaFalseState)) {
@@ -167,7 +169,9 @@ public class StrongestPostDeterminizer
 		//Add states that we may add because the automaton says so
 		for (IPredicate state :detState.getUpStates(
 								m_Ia.getEmptyStackState())) {
-			succs.addAll(m_Ia.succCall(state, symbol));
+			for (IPredicate succ : m_Ia.succCall(state, symbol)) {
+				succs.add(succ);
+			}
 		}
 		//If final state is contained, we are done
 		if (succs.contains(m_IaFalseState)) {
@@ -231,7 +235,9 @@ public class StrongestPostDeterminizer
 								m_Ia.getEmptyStackState())) {
 			for (IPredicate hier : m_Ia.hierPred(state, symbol)) {
 				if (hierStates.contains(hier)) {
-					succs.addAll(m_Ia.succReturn(state,hier,symbol));
+					for (IPredicate succ : m_Ia.succReturn(state,hier,symbol)) {
+						succs.add(succ);
+					}
 				}
 			}
 		}

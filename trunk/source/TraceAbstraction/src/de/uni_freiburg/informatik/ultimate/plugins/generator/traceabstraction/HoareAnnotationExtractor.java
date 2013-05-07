@@ -3,6 +3,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Set;
 
 import org.apache.log4j.Logger;
@@ -100,8 +101,10 @@ public class HoareAnnotationExtractor extends
 			throw new UnsupportedOperationException("Several outgoing calls not supported");
 		}
 		for (CodeBlock symbol : symbolsCall) {
-			Collection<IPredicate> succCall = m_TraversedNwa.succCall(state,symbol);
-			if (succCall.size() > 1) {
+			Iterable<IPredicate> succCall = m_TraversedNwa.succCall(state,symbol);
+			Iterator<IPredicate> calls = succCall.iterator();
+			calls.next();
+			if (calls.hasNext()) {
 				throw new UnsupportedOperationException("Several outgoing calls not supported");
 			}
 			for (IPredicate succ : succCall) {

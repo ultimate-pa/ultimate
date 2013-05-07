@@ -159,7 +159,7 @@ public class PostDeterminizer
 			Set<IPredicate> upStates = detState.getUpStates(downState);
 			for (IPredicate  upState : upStates) {
 				//Add states that we may add because the automaton says so
-				Collection<IPredicate> internalSuccs = m_Ia.succInternal(upState,symbol);
+				Iterable<IPredicate> internalSuccs = m_Ia.succInternal(upState,symbol);
 				for (IPredicate  upSucc : internalSuccs) {
 					detSucc.addPair(downState,upSucc, m_Ia);
 				}
@@ -175,7 +175,7 @@ public class PostDeterminizer
 				
 				//Add selfloop if automaton says "no successors!" and upState
 				// is not "true"
-				if (internalSuccs.isEmpty() && upState != m_IaTrueState) {
+				if (!internalSuccs.iterator().hasNext() && upState != m_IaTrueState) {
 					if (inductiveInternal(upState,symbol,upState)) {
 						detSucc.addPair(downState, upState, m_Ia);
 					}
@@ -229,7 +229,7 @@ public class PostDeterminizer
 		for (IPredicate  downState : detState.getDownStates()) {
 			Set<IPredicate> upStates = detState.getUpStates(downState);
 			for (IPredicate  upState : upStates) {
-				Collection<IPredicate> callSuccs = m_Ia.succCall(upState,symbol);
+				Iterable<IPredicate> callSuccs = m_Ia.succCall(upState,symbol);
 				//Add states that we may add because the automaton says so
 				for (IPredicate  upSucc : callSuccs) {
 					if (m_UseDoubleDeckers) {
@@ -241,7 +241,7 @@ public class PostDeterminizer
 
 				//Add selfloop if automaton says "no successors!" and upState
 				// is not "true"
-				if (callSuccs.isEmpty() && upState != m_IaTrueState) {
+				if (!callSuccs.iterator().hasNext() && upState != m_IaTrueState) {
 					if (inductiveCall(upState,(Call) symbol,upState)) {
 						if (m_UseDoubleDeckers) {
 							detSucc.addPair(upState,upState, m_Ia);
@@ -332,14 +332,14 @@ public class PostDeterminizer
 				if (upStates == null) continue;
 				for (IPredicate  upState : upStates) {
 					//Add states that we may add because the automaton says so
-					Collection<IPredicate> returnSuccs = m_Ia.succReturn(upState,upLinPred,symbol);
+					Iterable<IPredicate> returnSuccs = m_Ia.succReturn(upState,upLinPred,symbol);
 					for (IPredicate  upSucc : returnSuccs) {
 						detSucc.addPair(downLinPred,upSucc, m_Ia);
 					}
 
 					//Add selfloop at hier if automaton says 
 					// "no successors!" and upState and hier ist not "true"
-					if (returnSuccs.isEmpty() && upLinPred != m_IaTrueState) {
+					if (!returnSuccs.iterator().hasNext() && upLinPred != m_IaTrueState) {
 						if (inductiveReturn(upState, upLinPred, (Return) symbol, upLinPred)) {
 							detSucc.addPair(downLinPred, upLinPred, m_Ia);
 						}
@@ -347,7 +347,7 @@ public class PostDeterminizer
 
 					//Add selfloop at upState if automaton says
 					// "no successors!" and upState is not "true"
-					if (returnSuccs.isEmpty() && upState != m_IaTrueState) {
+					if (!returnSuccs.iterator().hasNext() && upState != m_IaTrueState) {
 						if (inductiveReturn(upState, upLinPred, (Return) symbol, upState)) {
 							detSucc.addPair(downLinPred, upState, m_Ia);
 						}

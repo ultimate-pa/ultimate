@@ -109,8 +109,8 @@ public class ConcurrentProduct<LETTER,STATE> {
 		state2OnlySymbols.removeAll(m_SynchronizationAlphabet);
 		
 		for (LETTER symbol : commonOutSymbols) {
-			Collection<STATE> succ1s = M_Nwa1.succInternal(state1, symbol);
-			Collection<STATE> succ2s = M_Nwa2.succInternal(state2, symbol);
+			Iterable<STATE> succ1s = M_Nwa1.succInternal(state1, symbol);
+			Iterable<STATE> succ2s = M_Nwa2.succInternal(state2, symbol);
 			for (STATE succ1 : succ1s) {
 				for (STATE succ2 : succ2s) {
 					STATE succ = getState(succ1, succ2, false);
@@ -120,7 +120,7 @@ public class ConcurrentProduct<LETTER,STATE> {
 		}
 		
 		for (LETTER symbol : state1OnlySymbols) {
-			Collection<STATE> succ1s = M_Nwa1.succInternal(state1, symbol);
+			Iterable<STATE> succ1s = M_Nwa1.succInternal(state1, symbol);
 			for (STATE succ1 : succ1s) {
 					STATE succ = getState(succ1, state2, false);
 					m_Result.addInternalTransition(state, symbol, succ);
@@ -128,7 +128,7 @@ public class ConcurrentProduct<LETTER,STATE> {
 		}
 		
 		for (LETTER symbol : state2OnlySymbols) {
-			Collection<STATE> succ2s = M_Nwa2.succInternal(state2, symbol);
+			Iterable<STATE> succ2s = M_Nwa2.succInternal(state2, symbol);
 			for (STATE succ2 : succ2s) {
 					STATE succ = getState(state1, succ2, false);
 					m_Result.addInternalTransition(state, symbol, succ);

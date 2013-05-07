@@ -1,5 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations;
 
+import java.awt.Component;
 import java.awt.List;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -167,7 +168,7 @@ public class SuperDifference<LETTER, STATE> implements IOperation {
 					// check if there exists a mapping to r2 in the epimorphism
 					STATE h_r2 = m_epimorphism.GetMapping(r2);
 					if (h_r2 != null
-							&& m_subtrahend.succInternal(h_r, label).contains(
+							&& ((Collection) m_subtrahend.succInternal(h_r, label)).contains(
 									h_r2)) {
 						q2 = AddState(r2, h_r2);
 					} else {

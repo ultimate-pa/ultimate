@@ -300,10 +300,11 @@ public class BestApproximationDeterminizer
 			IPredicate  state,
 			CodeBlock symbol,
 			IPredicate  succ) {
-		
-		if (m_Nwa.succInternal(state, symbol).contains(succ)) {
-			m_AnswerInternalAutomaton++;
-			return true;
+		for (IPredicate succInt : m_Nwa.succInternal(state, symbol)) {
+			if (succInt.equals(succ)) {
+				m_AnswerInternalAutomaton++;
+				return true;
+			}
 		}
 		IPredicate presentPs = state;
 		IPredicate succPs = succ;
@@ -333,9 +334,11 @@ public class BestApproximationDeterminizer
 			IPredicate  state,
 			Call symbol,
 			IPredicate  succ) {
-		if (m_Nwa.succCall(state,symbol).contains(succ)) {
-			m_AnswerCallAutomaton++;
-			return true;
+		for (IPredicate succCall : m_Nwa.succCall(state,symbol)) {
+			if (succCall.equals(succ)) {
+				m_AnswerCallAutomaton++;
+				return true;
+			}
 		}
 		IPredicate presentPs = state;
 		IPredicate succPs = succ;
@@ -442,9 +445,11 @@ public class BestApproximationDeterminizer
 			IPredicate  callerState,
 			Return symbol,
 			IPredicate  succ) {
-		if (m_Nwa.succReturn(state,callerState, symbol).contains(succ)) {
-			m_AnswerReturnAutomaton++;
-			return true;
+		for (IPredicate succRet : m_Nwa.succReturn(state,callerState, symbol)) {
+			if (succRet.equals(succ)) {
+				m_AnswerReturnAutomaton++;
+				return true;
+			}
 		}
 		IPredicate presentPs = state;
 		IPredicate callerPs = callerState;

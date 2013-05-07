@@ -496,7 +496,9 @@ public class BuchiIsEmpty<LETTER,STATE> implements IOperation {
 		
 		Collection<STATE> callPredStates = new HashSet<STATE>();	
 		for (LETTER symbol : callAlphabet) {
-			callPredStates.addAll(m_nwa.predCall(callSuccState, symbol));
+			for (STATE pred : m_nwa.predCall(callSuccState, symbol)) {
+				callPredStates.add(pred);
+			}
 			}
 		return callPredStates;
 	}
@@ -513,9 +515,11 @@ public class BuchiIsEmpty<LETTER,STATE> implements IOperation {
 		
 		Collection<STATE> returnSuccStates= new HashSet<STATE>();	
 		for (LETTER symbol : returnAlphabet) {
-			Collection<STATE> succs = m_nwa.succReturn(hierarcReturnPredState, 
+			Iterable<STATE> succs = m_nwa.succReturn(hierarcReturnPredState, 
 					linearReturnPredState, symbol);
-			returnSuccStates.addAll(succs);
+			for (STATE succ : succs) {
+				returnSuccStates.add(succ);
+			}
 			}
 		return returnSuccStates;
 	}
@@ -527,9 +531,11 @@ public class BuchiIsEmpty<LETTER,STATE> implements IOperation {
 	LETTER getFirstInternalSymbol(STATE internalPred, 
 			STATE internalSucc) {
 		for (LETTER internalSymbol : m_nwa.lettersInternal(internalPred)) {
-			Collection<STATE> succs = m_nwa.succInternal(internalPred,internalSymbol);
-			if (succs. contains(internalSucc)) {
-				return internalSymbol;
+			Iterable<STATE> succs = m_nwa.succInternal(internalPred,internalSymbol);
+			for (STATE succ : succs) {
+				if (succ.equals(internalSucc)) {
+					return internalSymbol;
+				}
 			}
 		}
 		return null;
@@ -541,9 +547,11 @@ public class BuchiIsEmpty<LETTER,STATE> implements IOperation {
 	LETTER getFirstCallSymbol(STATE callPred, 
 			STATE callSucc) {
 		for (LETTER callSymbol : m_nwa.lettersCall(callPred)) {
-			Collection<STATE> succs = m_nwa.succCall(callPred, callSymbol);
-			if (succs.contains(callSucc)) {
-				return callSymbol;
+			Iterable<STATE> succs = m_nwa.succCall(callPred, callSymbol);
+			for (STATE succ : succs) {
+				if (succ.equals(callSucc)) {
+					return callSymbol;
+				}
 			}
 		}
 		return null;
@@ -557,10 +565,12 @@ public class BuchiIsEmpty<LETTER,STATE> implements IOperation {
 			STATE returnPredLinear,  
 			STATE returnSucc) {
 		for (LETTER returnSymbol : m_nwa.lettersReturn(returnPredHierarc)) {
-			Collection<STATE> succs = m_nwa.succReturn(returnPredHierarc, 
+			Iterable<STATE> succs = m_nwa.succReturn(returnPredHierarc, 
 					returnPredLinear, returnSymbol);
-			if (succs.contains(returnSucc)) {
-				return returnSymbol;
+			for (STATE succ : succs) {
+				if (succ.equals(returnSucc)) {
+					return returnSymbol;
+				}
 			}
 		}
 		return null;

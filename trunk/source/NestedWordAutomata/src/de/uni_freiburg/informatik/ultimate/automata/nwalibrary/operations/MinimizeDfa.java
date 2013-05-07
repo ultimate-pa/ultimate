@@ -150,7 +150,9 @@ public class MinimizeDfa<LETTER,STATE> implements IOperation {
 		// check successor pairs (i', j') for each k
 		// all successors of i for symbol k
 		ArrayList<STATE> first = new ArrayList<STATE>();
-		first.addAll(m_Operand.succInternal(states.get(i), s));
+		for(STATE state : m_Operand.succInternal(states.get(i), s)) {
+			first.add(state);
+		}
 		return first;
 	}
 

@@ -671,7 +671,7 @@ public class MinimizeSevpa<LETTER,STATE> implements IOperation {
 				Iterator<STATE> iterator = a.iterator();
 				while (iterator.hasNext()) {
 					STATE state = iterator.next();
-					Collection<STATE> hierPreds =
+					Iterable<STATE> hierPreds =
 							partition.hierPredIncoming(state, letter);
 					for (STATE hier : hierPreds) {
 						EquivalenceClass ec =
@@ -681,8 +681,9 @@ public class MinimizeSevpa<LETTER,STATE> implements IOperation {
 							linSet = new HashSet<STATE>();
 							ec2linSet.put(ec, linSet);
 						}
-						linSet.addAll(partition.linPredIncoming(
-								state, hier, letter));
+						for (STATE pred : partition.linPredIncoming(
+								state, hier, letter))
+						linSet.add(pred);
 					}
 				}
 				
@@ -716,8 +717,10 @@ public class MinimizeSevpa<LETTER,STATE> implements IOperation {
 				Iterator<STATE> iterator = a.iterator();
 				Collection<STATE> hierPreds = new HashSet<STATE>();
 				while (iterator.hasNext()) {
-					hierPreds.addAll(partition.hierPredIncoming(
-													iterator.next(), letter));
+					for (STATE pred : partition.hierPredIncoming(
+							iterator.next(), letter)) {
+						hierPreds.add(pred);
+					}
 				}
 				
 				for (STATE hier : hierPreds) {
@@ -742,7 +745,7 @@ public class MinimizeSevpa<LETTER,STATE> implements IOperation {
 					STATE state = iterator.next();
 					for (STATE hier : 
 							partition.hierPredIncoming(state, letter)) {
-						Collection<STATE> linPreds =
+						Iterable<STATE> linPreds =
 								partition.linPredIncoming(state, hier, letter);
 						for (STATE lin : linPreds) {
 							EquivalenceClass ec =
@@ -1258,7 +1261,7 @@ public class MinimizeSevpa<LETTER,STATE> implements IOperation {
 		 */
 		private boolean checkExistenceOfSimilarTransition(
 				Partition partition,
-				Collection<STATE> successors,
+				Iterable<STATE> successors,
 				EquivalenceClass equivalenceClass) {
 			for (STATE candidate : successors) {
 				if (partition.getEquivalenceClass(candidate).equals(
@@ -1918,9 +1921,9 @@ public class MinimizeSevpa<LETTER,STATE> implements IOperation {
 				
 				// successors via linear edge
 				for (LETTER letter : m_parentOperand.lettersReturn(state)) {
-					Collection<STATE> hierPreds = hierPred(state, letter);
+					Iterable<STATE> hierPreds = hierPred(state, letter);
 					for (STATE hier : hierPreds) {
-						Collection<STATE> succStates =
+						Iterable<STATE> succStates =
 								succReturn(state, hier, letter);
 						for (STATE succ : succStates) { 
 							EquivalenceClass ec = getEquivalenceClass(succ);
@@ -2011,11 +2014,11 @@ public class MinimizeSevpa<LETTER,STATE> implements IOperation {
 		 * 
 		 * @param states set of target states
 		 */
-		private Collection<STATE> neighborsEfficient(
-												Collection<STATE> states) {
+		private Iterable<STATE> neighborsEfficient(
+				Iterable<STATE> states) {
 			return states;
 		}
-		Collection<STATE> succInternal(STATE state, LETTER letter) {
+		Iterable<STATE> succInternal(STATE state, LETTER letter) {
 			if (m_noStatesRemoved) {
 				return neighborsEfficient(
 								m_parentOperand.succInternal(state, letter));
@@ -2024,7 +2027,7 @@ public class MinimizeSevpa<LETTER,STATE> implements IOperation {
 				return neighbors(m_parentOperand.succInternal(state, letter));
 			}
 		}
-		Collection<STATE> succCall(STATE state, LETTER letter) {
+		Iterable<STATE> succCall(STATE state, LETTER letter) {
 			if (m_noStatesRemoved) {
 				return neighborsEfficient(m_parentOperand.succCall(state,
 																	letter));
@@ -2033,7 +2036,7 @@ public class MinimizeSevpa<LETTER,STATE> implements IOperation {
 				return neighbors(m_parentOperand.succCall(state, letter));
 			}
 		}
-		Collection<STATE> succReturn(STATE state, STATE hier, LETTER letter) {
+		Iterable<STATE> succReturn(STATE state, STATE hier, LETTER letter) {
 			if (m_noStatesRemoved) {
 				return neighborsEfficient(
 								m_parentOperand.succReturn(state, hier,
@@ -2044,7 +2047,7 @@ public class MinimizeSevpa<LETTER,STATE> implements IOperation {
 															letter));
 			}
 		}
-		Collection<STATE> hierPred(STATE state, LETTER letter) {
+		Iterable<STATE> hierPred(STATE state, LETTER letter) {
 			if (m_noStatesRemoved) {
 				return neighborsEfficient(m_parentOperand.hierPred(state,
 																	letter));
@@ -2053,7 +2056,7 @@ public class MinimizeSevpa<LETTER,STATE> implements IOperation {
 				return neighbors(m_parentOperand.hierPred(state, letter));
 			}
 		}
-		Collection<STATE> linPredIncoming(STATE state, STATE hier,
+		Iterable<STATE> linPredIncoming(STATE state, STATE hier,
 											LETTER letter) {
 			if (m_noStatesRemoved) {
 				return neighborsEfficient(m_parentOperand.predReturnLin(
@@ -2064,7 +2067,7 @@ public class MinimizeSevpa<LETTER,STATE> implements IOperation {
 						state, letter, hier));
 			}
 		}
-		Collection<STATE> hierPredIncoming(STATE state, LETTER letter) {
+		Iterable<STATE> hierPredIncoming(STATE state, LETTER letter) {
 			if (m_noStatesRemoved) {
 				return neighborsEfficient(m_parentOperand.predReturnHier(
 						state, letter));
