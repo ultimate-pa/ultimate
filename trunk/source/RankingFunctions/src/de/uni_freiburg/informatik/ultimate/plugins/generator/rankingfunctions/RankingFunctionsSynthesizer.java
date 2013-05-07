@@ -510,6 +510,7 @@ public class RankingFunctionsSynthesizer {
 		Collection<TermVariable> loop_vars = new HashSet<TermVariable>();
 		loop_vars.addAll(m_loop.getInVars().values());
 		loop_vars.addAll(m_loop.getOutVars().values());
+		loop_vars.addAll(m_loop.getAuxVars());
 		loop_vars.addAll(m_auxVars);
 		
 		// Farkas' Lemma applications, iterate over the loop disjunction
@@ -583,6 +584,7 @@ public class RankingFunctionsSynthesizer {
 					stem0.transitionVariables = new HashSet<TermVariable>();
 					stem0.transitionVariables.addAll(m_stem.getInVars().values());
 					stem0.transitionVariables.addAll(m_stem.getOutVars().values());
+					stem0.transitionVariables.addAll(m_stem.getAuxVars());
 					stem0.transitionVariables.addAll(m_auxVars);
 					stem0.ieqsymb =
 							FarkasApplication.Inequality.LESS_THAN_OR_EQUAL;
