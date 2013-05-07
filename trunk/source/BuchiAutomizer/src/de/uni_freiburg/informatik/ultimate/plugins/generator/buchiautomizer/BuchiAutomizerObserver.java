@@ -219,8 +219,8 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 			try {
 				ec = new BuchiIsEmpty<CodeBlock, IPredicate>(m_Abstraction);
 			} catch (OperationCanceledException e) {
-				e.printStackTrace();
-				throw new AssertionError();
+				s_Logger.info("Statistics: Timout");
+				return false;
 			}
 			ctx = ec.getAcceptingNestedLassoRun();
 			if (ctx == null) {
