@@ -470,7 +470,7 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 			}
 		}
 		
-//		script.setOption(":produce-unsat-cores", true);
+		script.setOption(":produce-unsat-cores", true);
 		script.setOption(":produce-models", true);
 		if (taPref.solver() == Solver.SMTInterpol) {
 			script.setLogic(nonlinear ? "QF_NRA" : "QF_LRA");
