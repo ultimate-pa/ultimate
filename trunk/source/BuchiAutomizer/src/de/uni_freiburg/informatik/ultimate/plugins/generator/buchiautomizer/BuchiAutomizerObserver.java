@@ -180,8 +180,8 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 		try {
 			ec = new BuchiIsEmpty<CodeBlock, IPredicate>(m_Abstraction);
 		} catch (OperationCanceledException e2) {
-			e2.printStackTrace();
-			throw new AssertionError();
+			s_Logger.info("Statistics: Timout");
+			return false;
 		}
 		NestedLassoRun<CodeBlock, IPredicate> ctx = ec.getAcceptingNestedLassoRun();
 		if (ctx == null) {
