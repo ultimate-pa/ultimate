@@ -20,9 +20,9 @@ public class BuchiIntersect<LETTER, STATE> extends
 		super(true, false, fstNwa, sndNwa);
 	}
 
-	public BuchiIntersect(boolean minimizeResult,
-			INestedWordAutomaton<LETTER, STATE> fstNwa,
-			INestedWordAutomaton<LETTER, STATE> sndNwa)
+	public BuchiIntersect(INestedWordAutomaton<LETTER, STATE> fstNwa,
+			INestedWordAutomaton<LETTER, STATE> sndNwa,
+			boolean minimizeResult)
 			throws OperationCanceledException {
 		super(true, minimizeResult, fstNwa, sndNwa);
 	}

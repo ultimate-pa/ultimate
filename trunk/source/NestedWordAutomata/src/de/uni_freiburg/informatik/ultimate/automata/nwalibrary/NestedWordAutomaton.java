@@ -2432,50 +2432,6 @@ public class NestedWordAutomaton<LETTER,STATE> implements INestedWordAutomaton<L
 	
 	
 	
-	/**
-	 * Is the language recognized by nwa1 a subset of the language recognized by
-	 * nwa2? If yes, the result is null. Otherwise an accepting run of nwa1 for
-	 * a word that is not accepted by nwa2 is returned.
-	 * @throws OperationCanceledException 
-	 */
-//	public NestedRun<S,C> included(INestedWordAutomaton<S,C> nwa1,
-//			INestedWordAutomaton<S,C> nwa2) {
-//		return nwa1.intersect(nwa2.complement()).getAcceptingNestedRun();
-//	}
-	
-	@Deprecated
-	public NestedRun<LETTER,STATE> included(INestedWordAutomaton<LETTER,STATE> nwa1,
-			INestedWordAutomaton<LETTER,STATE> nwa2) throws OperationCanceledException {
-	return new IsEmpty<LETTER, STATE>(
-			(new Difference<LETTER,STATE>(nwa1, nwa2)).getResult()
-			).getNestedRun();
-	}
-	
-	public NestedRun<LETTER,STATE> included(INestedWordAutomaton<LETTER,STATE> nwa2) throws OperationCanceledException {
-	return new IsEmpty<LETTER, STATE>(
-			(new Difference<LETTER,STATE>(this, nwa2)).getResult()
-			).getNestedRun();
-	}
-	
-	
-
-	public NestedLassoRun<LETTER,STATE> buchiIncluded(INestedWordAutomaton<LETTER,STATE> snd) 
-		throws OperationCanceledException {
-		INestedWordAutomaton<LETTER, STATE> sndComplement =
-//				(new BuchiComplementRE<S,C>(snd)).getResult();
-				(new BuchiComplementFKV<LETTER,STATE>(snd)).getResult();
-		INestedWordAutomaton<LETTER, STATE> difference = 
-				(new Intersect<LETTER, STATE>(true, this, sndComplement)).getResult();
-		NestedLassoRun<LETTER, STATE> ctx = new BuchiIsEmpty<LETTER, STATE>((INestedWordAutomaton<LETTER,STATE>) difference).
-				getAcceptingNestedLassoRun();
-		return ctx;
-	}
-	
-	
-	
-
-
-
 	
 
 	

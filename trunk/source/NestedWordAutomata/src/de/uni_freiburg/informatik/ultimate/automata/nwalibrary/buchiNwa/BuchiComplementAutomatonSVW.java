@@ -411,19 +411,6 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE>
 		// —————————————————————————————————————————————————————————————————————
 	}
 
-	@Override
-	public NestedRun<LETTER, STATE> included(
-				INestedWordAutomaton<LETTER, STATE> nwa)
-											throws OperationCanceledException {
-		throw new UnsupportedOperationException(UnsupportedOperationMessage);
-	}
-
-	@Override
-	public NestedLassoRun<LETTER, STATE> buchiIncluded(
-				INestedWordAutomaton<LETTER, STATE> nwa)
-											throws OperationCanceledException {
-		throw new UnsupportedOperationException(UnsupportedOperationMessage);
-	}
 
 	@Override
 	public IRun<LETTER, STATE> acceptingRun() throws OperationCanceledException {

@@ -264,12 +264,7 @@ public interface INestedWordAutomaton<LETTER,STATE>
 	boolean isTotal();
 	
 	
-	@Deprecated
-	public NestedRun<LETTER,STATE> included(INestedWordAutomaton<LETTER, STATE> nwa) throws OperationCanceledException;
-	
-	@Deprecated
-	public NestedLassoRun<LETTER,STATE> buchiIncluded(INestedWordAutomaton<LETTER, STATE> nwa) throws OperationCanceledException;
-	
+
 	
 	
 	public Iterable<SummaryReturnTransition<LETTER, STATE>> getSummaryReturnTransitions(

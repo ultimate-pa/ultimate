@@ -286,20 +286,6 @@ public class Det<LETTER, STATE> implements INestedWordAutomaton<LETTER, STATE>, 
 	}
 
 	@Override
-	public NestedRun<LETTER, STATE> included(
-			INestedWordAutomaton<LETTER, STATE> nwa)
-			throws OperationCanceledException {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
-	public NestedLassoRun<LETTER, STATE> buchiIncluded(
-			INestedWordAutomaton<LETTER, STATE> nwa)
-			throws OperationCanceledException {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
 	public Iterable<SummaryReturnTransition<LETTER, STATE>> getSummaryReturnTransitions(
 			LETTER letter, STATE hier) {
 		throw new UnsupportedOperationException();

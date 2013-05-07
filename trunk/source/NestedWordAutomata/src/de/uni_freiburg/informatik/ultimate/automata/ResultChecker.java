@@ -16,6 +16,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordGenerator;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.BuchiAccepts;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.BuchiIsIncluded;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.NestedLassoRun;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.NestedLassoWord;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IsEmpty;
@@ -28,6 +29,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.Differ
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.DifferenceSadd;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.Intersect;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IntersectNodd;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IsIncluded;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.MinimizeDfa;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.PowersetDeterminizer;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.BuchiReduce;
@@ -87,11 +89,11 @@ public class ResultChecker<LETTER,STATE> {
 //		correct &= (resultJM.included(result) == null);
 //		correct &= (result.included(resultJM) == null);
 		INestedWordAutomaton resultSadd = (new DeterminizeSadd<String,String>(op)).getResult();
-		correct &= (resultSadd.included(result) == null);
-		correct &= (result.included(resultSadd) == null);
+		correct &= (nwaLanguageInclusion(resultSadd,result) == null);
+		correct &= (nwaLanguageInclusion(result,resultSadd) == null);
 		INestedWordAutomaton resultDD = (new Determinize<String,String>(op)).getResult();
-		correct &= (resultDD.included(result) == null);
-		correct &= (result.included(resultDD) == null);
+		correct &= (nwaLanguageInclusion(resultDD,result) == null);
+		correct &= (nwaLanguageInclusion(result,resultDD) == null);
 	
 		s_Logger.debug("Finished testing correctness of determinization");
 		resultCheckStackHeight--;
@@ -139,18 +141,18 @@ public class ResultChecker<LETTER,STATE> {
 		INestedWordAutomaton resultDD = 
 			(new IntersectNodd(fst,sndComplementDD)).getResult();
 		boolean correct = true;
-		correct &= (result.included(resultDD) == null);
+		correct &= (nwaLanguageInclusion(result,resultDD) == null);
 		assert correct;
-		correct &= (resultDD.included(result) == null);
+		correct &= (nwaLanguageInclusion(resultDD,result) == null);
 		assert correct;
 		
 		INestedWordAutomaton sndComplementSadd = 
 			(new ComplementSadd(snd)).getResult();
 		INestedWordAutomaton resultSadd = 
 			(new IntersectNodd(fst,sndComplementSadd)).getResult();
-		correct &= (result.included(resultSadd) == null);
+		correct &= (nwaLanguageInclusion(result,resultSadd) == null);
 		assert correct;
-		correct &= (resultSadd.included(result) == null);
+		correct &= (nwaLanguageInclusion(resultSadd,result) == null);
 		assert correct;
 		
 		s_Logger.info("Finished testing correctness of difference");
@@ -253,13 +255,13 @@ public class ResultChecker<LETTER,STATE> {
 		INestedWordAutomaton minimizedOperand = (new MinimizeDfa(operand)).getResult();
 
 		boolean correct = true;
-		NestedLassoRun inOperandButNotInResultBuchi = minimizedOperand.buchiIncluded(result);
+		NestedLassoRun inOperandButNotInResultBuchi = nwaBuchiLanguageInclusion(minimizedOperand,result);
 		if (inOperandButNotInResultBuchi != null) {
 			s_Logger.error("Lasso word accepted by operand, but not by result: " + 
 					inOperandButNotInResultBuchi.getNestedLassoWord());
 			correct = false;
 		}
-		NestedLassoRun inResultButNotInOperatndBuchi = result.buchiIncluded(minimizedOperand);
+		NestedLassoRun inResultButNotInOperatndBuchi = nwaBuchiLanguageInclusion(result,minimizedOperand);
 		if (inResultButNotInOperatndBuchi != null) {
 			s_Logger.error("Lasso word accepted by result, but not by operand: " + 
 					inResultButNotInOperatndBuchi.getNestedLassoWord());
@@ -399,8 +401,8 @@ public class ResultChecker<LETTER,STATE> {
 		INestedWordAutomaton resultAutomata = 
 							(new PetriNet2FiniteAutomaton(result)).getResult();
 		boolean correct = true;
-		correct &= (resultAutomata.included(op) == null);
-		correct &= (op.included(resultAutomata) == null);
+		correct &= (nwaLanguageInclusion(resultAutomata,op) == null);
+		correct &= (nwaLanguageInclusion(op,resultAutomata) == null);
 
 		s_Logger.info("Finished testing correctness of PetriNetJulian constructor");
 		netInvarintChecks(result);
@@ -488,8 +490,8 @@ public class ResultChecker<LETTER,STATE> {
 		INestedWordAutomaton resultAsNwa = (new PetriNet2FiniteAutomaton(result)).getResult();
 		INestedWordAutomaton nwaResult = (new ConcurrentProduct(op1AsNwa, operand2, true)).getResult();
 		boolean correct = true;
-		correct &= (resultAsNwa.included(nwaResult) == null);
-		correct &= (nwaResult.included(resultAsNwa) == null);
+		correct &= (new IsIncluded(resultAsNwa,nwaResult)).getResult();
+		correct &= (new IsIncluded(nwaResult,resultAsNwa)).getResult();
 
 		s_Logger.info("Finished testing correctness of prefixProduct");
 		netInvarintChecks(result);
@@ -509,8 +511,8 @@ public class ResultChecker<LETTER,STATE> {
 		INestedWordAutomaton rcResult = (new Difference(op1AsNwa, operand2)).getResult();
 		INestedWordAutomaton resultAsNwa = (new PetriNet2FiniteAutomaton(result)).getResult();
 		boolean correct = true;
-		correct &= (resultAsNwa.included(rcResult) == null);
-		correct &= (rcResult.included(resultAsNwa) == null);
+		correct &= (nwaLanguageInclusion(resultAsNwa,rcResult) == null);
+		correct &= (nwaLanguageInclusion(rcResult,resultAsNwa) == null);
 
 		s_Logger.info("Finished testing correctness of differenceBlackAndWhite");
 		netInvarintChecks(operand1);
@@ -575,6 +577,9 @@ public class ResultChecker<LETTER,STATE> {
 //		}
 	}
 	
+	private static NestedLassoRun nwaBuchiLanguageInclusion(INestedWordAutomaton nwa1, INestedWordAutomaton nwa2) throws OperationCanceledException {
+		return (new BuchiIsIncluded(nwa1, nwa2)).getCounterexample();
+	}
 	
 	
 	
