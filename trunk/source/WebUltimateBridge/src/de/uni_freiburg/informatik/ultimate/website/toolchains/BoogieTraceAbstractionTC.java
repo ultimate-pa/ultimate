@@ -78,31 +78,10 @@ public class BoogieTraceAbstractionTC extends Toolchain {
 		List<Setting> oRCFGB = new ArrayList<Setting>();
 		List<Setting> mRCFGB = new ArrayList<Setting>();
 		tools.add(new Tool("RCFGBuilder", oRCFGB, mRCFGB, LoggingLevel.WARN));
-		
-		List<Setting> oTrAbs = new ArrayList<Setting>();
-		oRCFGB.add(new Setting("/HoareAnnotation", Setting.SettingType.BOOLEAN,
+        oRCFGB.add(new Setting("/HoareAnnotation", Setting.SettingType.BOOLEAN,
                 "Compute Hoare Annotation", "true", true));
-		oTrAbs.add(new Setting("", Setting.SettingType.STRING, "Mode",
-				"StrongestPost", true));
-		oTrAbs.add(new Setting("/Solver", Setting.SettingType.STRING,
-				"Solver", "GROUNDIFY", true));
-		oTrAbs.add(new Setting("/Minimize", Setting.SettingType.BOOLEAN,
-				"Use Minimization", "true", true));
-		oTrAbs.add(new Setting("/AdditionalEdges", Setting.SettingType.STRING,
-				"Additional Edges", "None", true));
-		oTrAbs.add(new Setting("/Edges2True", Setting.SettingType.BOOLEAN,
-				"Edges to true", "true", true));
-		oTrAbs.add(new Setting("/Interpolants", Setting.SettingType.STRING,
-				"Which locations", "All locations", true));
-		oTrAbs.add(new Setting("/Determinization", "Type of Determinization",
-				new String[] { "Best Approximation" }, false, new String[] {
-						"LazyPost", "EagerPost", "Best Approximation",
-						"Add as many selfloops as possible" }, true));
-		List<Setting> mTrAbs = new ArrayList<Setting>();
-		mTrAbs.add(new Setting("/DumpPath", Setting.SettingType.STRING,
-				"Where to dump", "C:\\Code\\log\\dump", false));
-		tools.add(new Tool("TraceAbstraction", oTrAbs, mTrAbs,
-				LoggingLevel.WARN));
+        oRCFGB.add(new Setting("/Timeout", Setting.SettingType.INTEGER,
+                "Timeout", "60", false));
 		return tools;
 	}
 

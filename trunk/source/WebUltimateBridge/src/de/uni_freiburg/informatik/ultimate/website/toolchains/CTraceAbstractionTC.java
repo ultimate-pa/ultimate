@@ -98,7 +98,7 @@ public class CTraceAbstractionTC extends Toolchain {
         oRCFGB.add(new Setting("/HoareAnnotation", Setting.SettingType.BOOLEAN,
                 "Compute Hoare Annotation", "true", true));
         oRCFGB.add(new Setting("/Timeout", Setting.SettingType.INTEGER,
-                "Timeout", "300", false));
+                "Timeout", "60", false));
 //        oTrAbs.add(new Setting("/Edges2True", Setting.SettingType.BOOLEAN,
 //                "Edges to true", "true", true));
 //        oTrAbs.add(new Setting("/Interpolants", Setting.SettingType.STRING,

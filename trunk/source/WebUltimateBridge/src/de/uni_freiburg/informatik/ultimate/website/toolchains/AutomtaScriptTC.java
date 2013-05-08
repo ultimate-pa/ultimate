@@ -66,8 +66,8 @@ public class AutomtaScriptTC extends Toolchain {
     protected List<Tool> setTools() {
         List<Tool> tools = new ArrayList<Tool>();
         List<Setting> oCACSL = new ArrayList<Setting>();
-        oCACSL.add(new Setting("/CheckedMethod", Setting.SettingType.STRING,
-                "Starting procedure: ", "main", true));
+        oCACSL.add(new Setting("/AutomataScriptInterpreter", Setting.SettingType.INTEGER,
+                "Timeout", "10", true));
         List<Setting> mCACSL = new ArrayList<Setting>();
         tools.add(new Tool("AutomataScriptInterpreter", oCACSL, mCACSL,
                 LoggingLevel.WARN));
