@@ -20,6 +20,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Roo
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.TAPreferences.Concurrency;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbstractCegarLoop;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.TimingStatistics;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbstractCegarLoop.Result;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
@@ -59,6 +60,7 @@ public class TraceAbstractionConcurrentObserver implements IUnmanagedObserver {
 					rootNode.getRootAnnot().getModifiedVars(),
 					false,
 					taPrefs.dumpPath());
+		TimingStatistics timingStatistics = new TimingStatistics(smtManager);
 		
 		Map<String, Collection<ProgramPoint>> proc2errNodes = rootAnnot.getErrorNodes();
 		Collection<ProgramPoint> errNodesOfAllProc = new ArrayList<ProgramPoint>();
@@ -78,12 +80,14 @@ public class TraceAbstractionConcurrentObserver implements IUnmanagedObserver {
 			abstractCegarLoop = new CegarLoopJulian(name,
 					rootNode, 
 					smtManager,
+					timingStatistics,
 					taPrefs,errNodesOfAllProc);
 		}
 		else if(taPrefs.getConcurrency() == Concurrency.FINITE_AUTOMATA) {
 			abstractCegarLoop = new CegarLoopConcurrentAutomata(name,
 					rootNode, 
 					smtManager,
+					timingStatistics,
 					taPrefs,errNodesOfAllProc);
 		}
 		else {

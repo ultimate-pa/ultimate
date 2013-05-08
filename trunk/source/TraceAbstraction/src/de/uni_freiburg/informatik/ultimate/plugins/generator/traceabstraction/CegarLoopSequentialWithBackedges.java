@@ -20,9 +20,9 @@ public class CegarLoopSequentialWithBackedges extends BasicCegarLoop {
 	AutomatonEpimorphism<String> m_epimorphism;
 	
 	public CegarLoopSequentialWithBackedges(String name, RootNode rootNode, SmtManager smtManager,
-			TAPreferences taPrefs, Collection<ProgramPoint> errorLocs) {
+			TimingStatistics timingStatistics, TAPreferences taPrefs, Collection<ProgramPoint> errorLocs) {
 
-		super(name, rootNode, smtManager, taPrefs, errorLocs);
+		super(name, rootNode, smtManager, timingStatistics, taPrefs, errorLocs);
 	}
 
 //	/**

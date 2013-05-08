@@ -80,6 +80,7 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 				taPrefs.solver(), rootAnnot.getGlobalVars(),
 				rootAnnot.getModifiedVars(),
 				taPrefs.dumpFormulas(), taPrefs.dumpPath());
+		TimingStatistics timingStatistics = new TimingStatistics(smtManager);
 
 		Map<String, Collection<ProgramPoint>> proc2errNodes = rootAnnot.getErrorNodes();
 		Collection<ProgramPoint> errNodesOfAllProc = new ArrayList<ProgramPoint>();
@@ -97,14 +98,14 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 
 		if (taPrefs.allErrorLocsAtOnce()) {
 			String name = "AllErrorsAtOnce";
-			iterate(name, (RootNode) root, taPrefs, smtManager, errNodesOfAllProc);
+			iterate(name, (RootNode) root, taPrefs, smtManager, timingStatistics, errNodesOfAllProc);
 		} else {
 			for (ProgramPoint errorLoc : errNodesOfAllProc) {
 				String name = errorLoc.getLocationName();
 				ArrayList<ProgramPoint> errorLocs = new ArrayList<ProgramPoint>(1);
 				errorLocs.add(errorLoc);
 				UltimateServices.getInstance().setSubtask(errorLoc.toString());
-				iterate(name, (RootNode) root, taPrefs, smtManager, errorLocs);
+				iterate(name, (RootNode) root, taPrefs, smtManager, timingStatistics, errorLocs);
 			}
 		}
 
@@ -229,17 +230,18 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 	}
 
 	private void iterate(String name, RootNode root, TAPreferences taPrefs,
-			SmtManager smtManager, Collection<ProgramPoint> errorLocs) {
+			SmtManager smtManager, TimingStatistics timingStatistics,
+			Collection<ProgramPoint> errorLocs) {
 		AbstractCegarLoop abstractCegarLoop;
 		if (taPrefs.interpolantAutomaton() == InterpolantAutomaton.TOTALINTERPOLATION) {
 			abstractCegarLoop = new CegarLoopSequentialWithBackedges(name, 
-					root, smtManager, taPrefs, errorLocs);
+					root, smtManager, timingStatistics,taPrefs, errorLocs);
 		} else if (taPrefs.interpolatedLocs() == InterpolatedLocs.GUESS) {
 			abstractCegarLoop = new PredicateAbstractionCegarLoop(name, 
-					root, smtManager, taPrefs, errorLocs);
+					root, smtManager, timingStatistics,taPrefs, errorLocs);
 		} else {
 			abstractCegarLoop = new BasicCegarLoop(name, 
-					root, smtManager, taPrefs, errorLocs);
+					root, smtManager, timingStatistics,taPrefs, errorLocs);
 		}
 
 		Result result = abstractCegarLoop.iterate();

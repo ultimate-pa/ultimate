@@ -11,6 +11,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.prefere
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.TAPreferences.Artifact;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.BasicCegarLoop;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactory;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.TimingStatistics;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 
@@ -20,9 +21,9 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 public class CegarLoopConcurrentAutomata extends BasicCegarLoop {
 
 	public CegarLoopConcurrentAutomata(String name, RootNode rootNode, 
-			SmtManager smtManager,
+			SmtManager smtManager, TimingStatistics timingStatistics,
 			TAPreferences taPrefs, Collection<ProgramPoint> errorLocs) {
-		super(name, rootNode, smtManager, taPrefs, errorLocs);
+		super(name, rootNode, smtManager, timingStatistics, taPrefs, errorLocs);
 //		m_ContentFactory = new TaConcurContentFactory(
 //				rootNode.getRootAnnot().getLocNodes(),
 //				this,

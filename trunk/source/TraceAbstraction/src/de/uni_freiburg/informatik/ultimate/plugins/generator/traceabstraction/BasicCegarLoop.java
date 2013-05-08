@@ -63,16 +63,20 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 	private IPredicate[] m_Interpolants;
 
 	private PredicateFactoryRefinement m_StateFactoryForRefinement;
+	
+	private final TimingStatistics m_TimingStatistics;
 
 
 	
 	
 	public BasicCegarLoop(String name, RootNode rootNode,
 			SmtManager smtManager,
+			TimingStatistics timingStatistics,
 			TAPreferences taPrefs,
 			Collection<ProgramPoint> errorLocs) {
 	
 		super(name, rootNode, smtManager, taPrefs, errorLocs);
+		m_TimingStatistics = timingStatistics;
 		m_Haf = new HoareAnnotationFragments(rootNode.getRootAnnot(),super.m_SmtManager);
 		m_StateFactoryForRefinement = new PredicateFactoryRefinement(
 				m_RootNode.getRootAnnot().getProgramPoints(),
