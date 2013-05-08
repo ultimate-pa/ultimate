@@ -386,7 +386,7 @@ public class TestFileInterpreter {
 			// Check whether first child has expected type.
 			boolean firstChildHasCorrectType = false;
 			for (Class<?> c : getTypes(children.get(0))) {
-				if (c.isAssignableFrom(re.getExpectingType())) {
+				if (AssignableTest.isAssignableFrom(re.getExpectingType(), c)) {
 					firstChildHasCorrectType = true;
 				}
 			}
@@ -398,7 +398,7 @@ public class TestFileInterpreter {
 			}
 			// Check whether second child has expected type.
 			for (Class<?> c : getTypes(children.get(1))) {
-				if (c.isAssignableFrom(re.getExpectingType())) {
+				if (AssignableTest.isAssignableFrom(re.getExpectingType(), c)) {
 					return;
 				}
 			}
@@ -429,7 +429,7 @@ public class TestFileInterpreter {
 			// Check if variable has expected type, namely
 			// type 'int'
 			for (Class<?> c : getTypes(children.get(0))) {
-				if (c.isAssignableFrom(ue.getReturnType())) {
+				if (AssignableTest.isAssignableFrom(ue.getExpectingType(), c)) {
 					return;
 				}
 			}
@@ -1318,7 +1318,7 @@ public class TestFileInterpreter {
 		int i = 0;
 		int minArgSize = (c.getParameterTypes().length > arguments.size() ? arguments.size() : c.getParameterTypes().length);
 		for (Class<?> type : c.getParameterTypes()) {
-			if ((i >= minArgSize) || !(type.isAssignableFrom(arguments.get(i).getClass()))) {
+			if ((i >= minArgSize) || !(AssignableTest.isAssignableFrom(type, arguments.get(i).getClass()))) {
 				return false;
 			}
 			++i;
