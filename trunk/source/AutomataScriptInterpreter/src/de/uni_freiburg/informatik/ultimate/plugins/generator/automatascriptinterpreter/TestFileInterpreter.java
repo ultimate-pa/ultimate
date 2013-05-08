@@ -702,7 +702,7 @@ public class TestFileInterpreter {
 			try {
 				result = interpret(ats.getStatementList());
 			} catch (Exception e) {
-				reportToLogger(LoggerSeverity.DEBUG, e.getMessage());
+				reportToLogger(LoggerSeverity.INFO, e.getMessage());
 				reportToUltimate(Severity.ERROR, e.getMessage(), "Error", m_errorLocation);
 				return null;
 			}
