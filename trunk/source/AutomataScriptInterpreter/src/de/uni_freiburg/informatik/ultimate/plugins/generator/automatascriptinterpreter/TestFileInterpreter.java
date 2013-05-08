@@ -603,6 +603,11 @@ public class TestFileInterpreter {
 	private String m_path = ".";
 	private ILocation m_errorLocation;
 	public enum LoggerSeverity {INFO, WARNING, ERROR, DEBUG};
+	/**
+	 * If an error occurred during the interpretation this is set to true
+	 * and further interpretation is aborted.
+	 */
+	private boolean m_ErrorOccured = false;
 	
 	
 	public TestFileInterpreter() {
@@ -1069,9 +1074,13 @@ public class TestFileInterpreter {
 	
 	private <T> Object interpret(StatementList stmtList) {
 		for (AtsASTNode stmt : stmtList.getOutgoingNodes()) {
+			if (m_ErrorOccured) {
+				return null;
+			}
 			try {
 				interpret(stmt);
 			} catch (Exception e) {
+				m_ErrorOccured = true;
 				if (e.getMessage() != null && e.getMessage().equals(UNKNOWN_OPERATION)) {
 					// do nothing - result was already reported
 				} else {
@@ -1173,19 +1182,25 @@ public class TestFileInterpreter {
 	 * as a GenericResult.
 	 */
 	private void reportResult() {
-		String testCasesSummary = "All testcases passed.";
 		s_Logger.info("----------------- Test Summary -----------------");
-		for (GenericResult<Integer> test : m_testCases) {
-			UltimateServices.getInstance().reportResult(Activator.s_PLUGIN_ID, test);
-			if (test.getSeverity() == Severity.ERROR) testCasesSummary = "Some testcases failed.";
-			reportToLogger(LoggerSeverity.INFO, "Line " + test.getLocation().getStartLine() + ": " + test.getShortDescription());
-		}
-		// Report summary of the testcases/
-		if (m_testCases.isEmpty()) {
-			printMessage(Severity.WARNING, LoggerSeverity.INFO, "No testcases defined!", "Warning" ,  getPseudoLocation());
+		if (m_ErrorOccured) {
+			printMessage(Severity.ERROR, LoggerSeverity.INFO, 
+					" ERROR: Interpretation of automata script file was aborted", 
+					"Unable to interpret automata script file", getPseudoLocation());
 		} else {
+			String testCasesSummary = "All testcases passed.";
+			for (GenericResult<Integer> test : m_testCases) {
+				UltimateServices.getInstance().reportResult(Activator.s_PLUGIN_ID, test);
+				if (test.getSeverity() == Severity.ERROR) testCasesSummary = "Some testcases failed.";
+				reportToLogger(LoggerSeverity.INFO, "Line " + test.getLocation().getStartLine() + ": " + test.getShortDescription());
+			}
+			// Report summary of the testcases/
+			if (m_testCases.isEmpty()) {
+				printMessage(Severity.WARNING, LoggerSeverity.INFO, "No testcases defined!", "Warning" ,  getPseudoLocation());
+			} else {
 			reportToLogger(LoggerSeverity.INFO, testCasesSummary);
-		}	
+			}
+		}
 	}
 	
 	
