@@ -8,6 +8,7 @@ import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.website.Setting;
 import de.uni_freiburg.informatik.ultimate.website.Tasks.TaskNames;
+import de.uni_freiburg.informatik.ultimate.website.Toolchain.LoggingLevel;
 import de.uni_freiburg.informatik.ultimate.website.Tool;
 import de.uni_freiburg.informatik.ultimate.website.Toolchain;
 
@@ -82,6 +83,12 @@ public class BoogieTraceAbstractionTC extends Toolchain {
                 "Compute Hoare Annotation", "true", true));
         oRCFGB.add(new Setting("/Timeout", Setting.SettingType.INTEGER,
                 "Timeout", "60", false));
+        List<Setting> oTrAbs = new ArrayList<Setting>();
+        List<Setting> mTrAbs = new ArrayList<Setting>();
+        mTrAbs.add(new Setting("/DumpPath", Setting.SettingType.STRING,
+                "Where to dump", "C:\\Code\\log\\dump", false));
+        tools.add(new Tool("TraceAbstraction", oTrAbs, mTrAbs,
+                LoggingLevel.WARN));
 		return tools;
 	}
 
