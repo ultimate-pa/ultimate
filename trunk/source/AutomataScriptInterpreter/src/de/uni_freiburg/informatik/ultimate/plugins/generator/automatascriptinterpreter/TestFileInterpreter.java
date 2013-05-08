@@ -723,7 +723,7 @@ public class TestFileInterpreter {
 		return m_LastPrintedAutomaton;
 	}
 	
-	private <T> Object interpret(AssignmentExpression as) throws NoSuchFieldException {
+	private <T> Object interpret(AssignmentExpression as) throws Exception {
 		List<AtsASTNode> children = as.getOutgoingNodes();
 		VariableExpression var = (VariableExpression) children.get(0);
 		if (!m_variables.containsKey(var.getIdentifier())) {
@@ -766,7 +766,7 @@ public class TestFileInterpreter {
 		return oldValue;
 	}
 		
-	private <T> Object interpret(AtsASTNode node) throws NoSuchFieldException {
+	private <T> Object interpret(AtsASTNode node) throws Exception {
 		m_errorLocation = node.getLocation();
 		Object result = null;
 		if (node instanceof AssignmentExpression) {
@@ -792,11 +792,7 @@ public class TestFileInterpreter {
 		} else if (node instanceof NestedLassoword) {
 			result = interpret((NestedLassoword) node);
 		} else if (node instanceof OperationInvocationExpression) {
-			try {
-				result = interpret((OperationInvocationExpression) node);
-			} catch (Exception e) {
-				throw new RuntimeException(e.getMessage());
-			}
+			result = interpret((OperationInvocationExpression) node);
 		} else if (node instanceof RelationalExpression) {
 			result = interpret((RelationalExpression) node);
 		} else if (node instanceof ReturnStatement) {
@@ -815,7 +811,7 @@ public class TestFileInterpreter {
 		return result;
 	}
 
-	private <T> Integer interpret(BinaryExpression be) throws NoSuchFieldException {
+	private <T> Integer interpret(BinaryExpression be) throws Exception {
 		List<AtsASTNode> children = be.getOutgoingNodes();
 		Integer v1 = (Integer) interpret(children.get(0));
 		Integer v2 = (Integer) interpret(children.get(1));
@@ -835,7 +831,7 @@ public class TestFileInterpreter {
 		return null;
 	}
 	
-	private <T> Boolean interpret(ConditionalBooleanExpression cbe) throws NoSuchFieldException {
+	private <T> Boolean interpret(ConditionalBooleanExpression cbe) throws Exception {
 		List<AtsASTNode> children = cbe.getOutgoingNodes();
 		switch (cbe.getOperator()) {
 		case NOT: return !((Boolean) interpret(children.get(0)));
@@ -868,7 +864,7 @@ public class TestFileInterpreter {
 		return null;
 	}
 	
-	private <T> Object interpret(ForStatement fs) throws NoSuchFieldException {
+	private <T> Object interpret(ForStatement fs) throws Exception {
 		List<AtsASTNode> children = fs.getOutgoingNodes();
 		
 		Boolean loopCondition = false;
@@ -934,7 +930,7 @@ public class TestFileInterpreter {
 		return null;
 	}
 	
-	private <T> Object interpret(IfElseStatement is) throws NoSuchFieldException {
+	private <T> Object interpret(IfElseStatement is) throws Exception {
 		List<AtsASTNode> children = is.getOutgoingNodes();
 		
 		// children(0) is the condition
@@ -946,7 +942,7 @@ public class TestFileInterpreter {
 		return null;
 	}
 	
-	private <T> Object interpret(IfStatement is) throws NoSuchFieldException {
+	private <T> Object interpret(IfStatement is) throws Exception {
 		List<AtsASTNode> children = is.getOutgoingNodes();
 		if ((Boolean) interpret(children.get(0))) {
 			for (int i = 1; i < children.size(); i++) {
@@ -1043,7 +1039,7 @@ public class TestFileInterpreter {
 		return result;
 	}
 	
-	private <T> Boolean interpret(RelationalExpression re) throws NoSuchFieldException {
+	private <T> Boolean interpret(RelationalExpression re) throws Exception {
 		List<AtsASTNode> children = re.getOutgoingNodes();
 		if (re.getExpectingType() == Integer.class) {
 			int v1 = (Integer) interpret(children.get(0));
@@ -1061,7 +1057,7 @@ public class TestFileInterpreter {
 		return null;
 	}
 	
-	private <T> Object interpret(ReturnStatement rst) throws NoSuchFieldException {
+	private <T> Object interpret(ReturnStatement rst) throws Exception {
 		List<AtsASTNode> children = rst.getOutgoingNodes();
 		// Change the flow
 		m_flow = Flow.RETURN;
@@ -1084,7 +1080,7 @@ public class TestFileInterpreter {
 				if (e.getMessage() != null && e.getMessage().equals(UNKNOWN_OPERATION)) {
 					// do nothing - result was already reported
 				} else {
-					TestFileInterpreter.printMessage(Severity.ERROR, LoggerSeverity.DEBUG, e.toString() 
+					TestFileInterpreter.printMessage(Severity.ERROR, LoggerSeverity.INFO, e.toString() 
 							+ System.getProperty("line.separator") + e.getStackTrace(), 
 							"Exception thrown.", stmt.getLocation());
 					return null;
@@ -1124,7 +1120,7 @@ public class TestFileInterpreter {
 	      }
 		}
 	
-    private <T> Object interpret(VariableDeclaration vd) throws NoSuchFieldException {
+    private <T> Object interpret(VariableDeclaration vd) throws Exception {
     	List<AtsASTNode> children = vd.getOutgoingNodes();
     	Object value = null;
     	if (children.size() == 1) {
@@ -1149,7 +1145,7 @@ public class TestFileInterpreter {
 		return m_variables.get(v.getIdentifier());
 	}
 	
-	private <T> Object interpret(WhileStatement ws) throws NoSuchFieldException {
+	private <T> Object interpret(WhileStatement ws) throws Exception {
 		List<AtsASTNode> children = ws.getOutgoingNodes();
 		Boolean loopCondition = (Boolean) interpret(children.get(0));
 		while (loopCondition) {
@@ -1292,7 +1288,8 @@ public class TestFileInterpreter {
 			reportToLogger(LoggerSeverity.DEBUG, shortDescr);
 			throw new UnsupportedOperationException(UNKNOWN_OPERATION);
 		}
-		if (result == null) {
+		assert (result == null);
+		{
 			String shortDescr = "Operation error";
 			String longDescr = "Operation \"" + oe.getOperationName() + "\" is not defined for " + 
 			                   (arguments.size() == 1? "this type of argument." : "these types of arguments.");
@@ -1302,8 +1299,8 @@ public class TestFileInterpreter {
 			}
 			longDescr += ")";
 			printMessage(Severity.ERROR, LoggerSeverity.DEBUG, longDescr, shortDescr, oe.getLocation());
+			throw new IllegalArgumentException(longDescr);
 		}
-		return result;
 	}
 	
 	
