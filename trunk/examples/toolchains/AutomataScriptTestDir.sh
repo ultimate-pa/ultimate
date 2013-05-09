@@ -54,8 +54,16 @@ EXCEPTION=`echo "$Ultimate_OUTPUT" | grep "Exception"`
 RESULT_CORRECT=`echo "$Ultimate_OUTPUT" | grep "All assert statements have been evaluated to true"`
 RESULT_INCORRECT=`echo "$Ultimate_OUTPUT" | grep "Some assert statements have been evaluated to false"`
 RESULT_NOTESTCASES=`echo "$Ultimate_OUTPUT" | grep "not used any assert statement in your automata"`
+RESULT_TIMEOUT=`echo "$Ultimate_OUTPUT" | grep "Timeout during interpretation of automata script"`
 RUNTIME=`echo "$Ultimate_OUTPUT" | grep "AutomataScriptInterpreter took" | cut -c82-`
 
+
+if [ "$RESULT_TIMEOUT" ]; then
+   printf "timeout after "
+   printf "$RUNTIME"
+   printf " ____________ "
+   printf "\n"
+fi
 
 if [ "$RESULT_CORRECT" ]; then
    printf "successful termination after "
