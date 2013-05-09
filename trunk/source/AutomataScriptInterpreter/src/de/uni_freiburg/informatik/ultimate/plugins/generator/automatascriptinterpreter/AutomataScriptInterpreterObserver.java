@@ -20,6 +20,7 @@ public class AutomataScriptInterpreterObserver implements IUnmanagedObserver {
 	
 	@Override
 	public boolean process(IElement root) {
+		AssignableTest.initPrimitiveTypes();
 		TestFileInterpreter ti = new TestFileInterpreter();
 		ti.interpretTestFile((AtsASTNode)root);
 		

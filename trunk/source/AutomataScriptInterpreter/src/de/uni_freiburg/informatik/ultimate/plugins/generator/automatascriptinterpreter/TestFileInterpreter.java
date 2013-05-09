@@ -28,8 +28,10 @@ import org.eclipse.core.runtime.preferences.IEclipsePreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.automatascriptinterpreter.preferences.PreferenceConstants;
 
 import de.uni_freiburg.informatik.ultimate.automata.AtsDefinitionPrinter;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
+import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.NestedLassoWord;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
@@ -86,8 +88,6 @@ enum Flow {
  *
  */
 public class TestFileInterpreter {
-	
-	private static String UNKNOWN_OPERATION = "UNKNOWN_OPERATION";
 	
 	/**
 	 * This class implements a static type checker for the automatascript files.
@@ -582,11 +582,6 @@ public class TestFileInterpreter {
 	private AutomataScriptTypeChecker m_tChecker;
 	private static Logger s_Logger = UltimateServices.getInstance().getLogger(Activator.s_PLUGIN_ID);
 	/**
-	 * Contains the test cases defined in the current automatascript test file.
-	 * Each assert-operation forms a test case.
-	 */
-	private List<GenericResult<Integer>> m_testCases;
-	/**
 	 * The automaton, which was lastly printed by a print operation. 
 	 */
 	private IAutomaton<?, ?> m_LastPrintedAutomaton;
@@ -601,13 +596,13 @@ public class TestFileInterpreter {
 	private boolean m_printAutomataToFile = false;
 	private PrintWriter m_printWriter;
 	private String m_path = ".";
-	private ILocation m_errorLocation;
 	public enum LoggerSeverity {INFO, WARNING, ERROR, DEBUG};
 	/**
 	 * If an error occurred during the interpretation this is set to true
 	 * and further interpretation is aborted.
 	 */
-	private boolean m_ErrorOccured = false;
+	private final List<GenericResult<ILocation>> m_ResultOfAssertStatements;
+//	private boolean m_ErrorOccured = false;
 	
 	
 	public TestFileInterpreter() {
@@ -615,12 +610,10 @@ public class TestFileInterpreter {
 		m_variables = new HashMap<String, Object>();
 		m_flow = Flow.NORMAL;
 		m_automInterpreter = new AutomataDefinitionInterpreter();
-		m_testCases = new ArrayList<GenericResult<Integer>>();
 		m_tChecker = new AutomataScriptTypeChecker();
 		m_existingOperations = getOperationClasses();
 		m_LastPrintedAutomaton = null;
-		m_errorLocation = getPseudoLocation();
-		AssignableTest.initPrimitiveTypes();
+		m_ResultOfAssertStatements = new ArrayList<GenericResult<ILocation>>();
 		UltimateServices.getInstance().setDeadline(System.currentTimeMillis() + (m_timeout * 1000));
 		if (m_printAutomataToFile) {
 			String path = m_path + File.separator + "automatascriptOutput" + getDateTime() + ".ats";
@@ -666,6 +659,7 @@ public class TestFileInterpreter {
 		if (node instanceof AutomataTestFile) {
 			ats = (AutomataTestFile) node;
 		}
+		boolean abortInterpretation = false;
 		reportToLogger(LoggerSeverity.DEBUG, "Interpreting automata definitions...");
 		// Interpret automata definitions
 		try {
@@ -675,40 +669,45 @@ public class TestFileInterpreter {
 			reportToLogger(LoggerSeverity.INFO, "Error: " + e.getMessage());
 			reportToLogger(LoggerSeverity.INFO, "Interpretation of testfile cancelled.");
 			reportToUltimate(Severity.ERROR, e.getMessage() + " Interpretation of testfile cancelled.", "Error", m_automInterpreter.getErrorLocation());
+			abortInterpretation = true;
 		}
 		
-
-		// Put all defined automata into variables map
-		m_variables.putAll(m_automInterpreter.getAutomata());
-		reportToLogger(LoggerSeverity.DEBUG, "Typechecking of test file...");
-		// Type checking
-		try {
-			m_tChecker.checkTestFile(ats.getStatementList());
-		} catch (Exception e) {
-			reportToLogger(LoggerSeverity.INFO, "Error: " + e.getMessage());
-			reportToLogger(LoggerSeverity.INFO, "Interpretation of testfile cancelled.");
-			reportToUltimate(Severity.ERROR, m_tChecker.getLongDescription(), m_tChecker.getShortDescription(), m_tChecker.getErrorLocation());
-			return null;
-		}
-		
-		
-		// Interpreting test file
-		Object result = null;
-		reportToLogger(LoggerSeverity.DEBUG, "Interpreting test file...");
-		if (ats.getStatementList() == null) {
-			// File contains only automata definitions no testcases.
-			result = null;
-		} else {
+		if (!abortInterpretation) {
+			// Put all defined automata into variables map
+			m_variables.putAll(m_automInterpreter.getAutomata());
+			reportToLogger(LoggerSeverity.DEBUG, "Typechecking of test file...");
+			// Type checking
 			try {
-				result = interpret(ats.getStatementList());
-			} catch (Exception e) {
-				reportToLogger(LoggerSeverity.INFO, e.getMessage());
-				reportToUltimate(Severity.ERROR, e.getMessage(), "Error", m_errorLocation);
-				return null;
+				m_tChecker.checkTestFile(ats.getStatementList());
+			} catch (IllegalArgumentException e) {
+				reportToLogger(LoggerSeverity.INFO, "Error: " + e.getMessage());
+				reportToLogger(LoggerSeverity.INFO,	"Interpretation of testfile cancelled.");
+				reportToUltimate(Severity.ERROR, m_tChecker.getLongDescription(), m_tChecker.getShortDescription(),	m_tChecker.getErrorLocation());
+				abortInterpretation = true;;
+			}
+		}
+
+		Object result = null;
+		if (!abortInterpretation) {
+			// Interpreting test file
+			reportToLogger(LoggerSeverity.DEBUG, "Interpreting test file...");
+			if (ats.getStatementList() == null) {
+				// File contains only automata definitions no testcases.
+				result = null;
+			} else {
+				try {
+					result = interpret(ats.getStatementList());
+				} catch (InterpreterException e) {
+					abortInterpretation = true;
+					printMessage(Severity.ERROR, LoggerSeverity.INFO,
+							e.getLongDescription(),
+							"Interpretation of ats file failed",
+							e.getLocation());
+				}
 			}
 		}
 		reportToLogger(LoggerSeverity.DEBUG, "Reporting results...");
-		reportResult();
+		reportResult(abortInterpretation);
 		if (m_printAutomataToFile) {
 			m_printWriter.close();
 		}
@@ -723,20 +722,19 @@ public class TestFileInterpreter {
 		return m_LastPrintedAutomaton;
 	}
 	
-	private <T> Object interpret(AssignmentExpression as) throws Exception {
+	private <T> Object interpret(AssignmentExpression as) throws InterpreterException {
 		List<AtsASTNode> children = as.getOutgoingNodes();
 		VariableExpression var = (VariableExpression) children.get(0);
 		if (!m_variables.containsKey(var.getIdentifier())) {
 			String message = as.getLocation().getStartLine() + ": Variable \"" + var.getIdentifier() + "\" was not declared before.";
-			throw new NoSuchFieldException(message);
+			throw new InterpreterException(as.getLocation(), message);
 		}
 		Object oldValue = m_variables.get(var.getIdentifier());
 		Object newValue = interpret(children.get(1));
 		
 		if (newValue == null) {
 			String longDescr = "Var \"" + var.getIdentifier() + "\" is assigned \"null\".";
-			String shortDescr = "Null assignment";
-			printMessage(Severity.WARNING, LoggerSeverity.DEBUG, longDescr, shortDescr, as.getLocation());
+			throw new InterpreterException(as.getLocation(),longDescr);
 		}
 		
 		switch(as.getOperator()) {
@@ -758,16 +756,15 @@ public class TestFileInterpreter {
 			m_variables.put(var.getIdentifier(), assignValue); break;
 		}
 		default: {
-			throw new UnsupportedOperationException("AssignmentExpression: This type of operator is not supported: " + as.getOperator());
+			throw new InterpreterException(as.getLocation(), 
+					"AssignmentExpression: This type of operator is not supported: " + as.getOperator());
 		}
 			
 		}
-		
 		return oldValue;
 	}
 		
-	private <T> Object interpret(AtsASTNode node) throws Exception {
-		m_errorLocation = node.getLocation();
+	private <T> Object interpret(AtsASTNode node) throws InterpreterException {
 		Object result = null;
 		if (node instanceof AssignmentExpression) {
 			result = interpret((AssignmentExpression) node);
@@ -811,7 +808,7 @@ public class TestFileInterpreter {
 		return result;
 	}
 
-	private <T> Integer interpret(BinaryExpression be) throws Exception {
+	private <T> Integer interpret(BinaryExpression be) throws InterpreterException {
 		List<AtsASTNode> children = be.getOutgoingNodes();
 		Integer v1 = (Integer) interpret(children.get(0));
 		Integer v2 = (Integer) interpret(children.get(1));
@@ -821,7 +818,7 @@ public class TestFileInterpreter {
 		case MINUS: return v1 - v2;
 		case MULTIPLICATION: return v1 * v2;
 		case DIVISION: return v1 / v2;
-		default: throw new UnsupportedOperationException(be.getLocation().getStartLine() + ": BinaryExpression: This type of operator is not supported: " + be.getOperator());
+		default: throw new InterpreterException(be.getLocation(), " BinaryExpression: This type of operator is not supported: " + be.getOperator());
 		}
 	}
 	
@@ -831,7 +828,7 @@ public class TestFileInterpreter {
 		return null;
 	}
 	
-	private <T> Boolean interpret(ConditionalBooleanExpression cbe) throws Exception {
+	private <T> Boolean interpret(ConditionalBooleanExpression cbe) throws InterpreterException {
 		List<AtsASTNode> children = cbe.getOutgoingNodes();
 		switch (cbe.getOperator()) {
 		case NOT: return !((Boolean) interpret(children.get(0)));
@@ -848,8 +845,8 @@ public class TestFileInterpreter {
 			return v2;
 		} 
 		default: {
-			String message = cbe.getLocation().getStartLine() + ": ConditionalBooleanExpression: This type of operator is not supported: " + cbe.getOperator();
-	    	throw new UnsupportedOperationException(message);  
+			String message = "ConditionalBooleanExpression: This type of operator is not supported: " + cbe.getOperator();
+	    	throw new InterpreterException(cbe.getLocation(), message);  
 	      }
 		}
 	}
@@ -864,7 +861,7 @@ public class TestFileInterpreter {
 		return null;
 	}
 	
-	private <T> Object interpret(ForStatement fs) throws Exception {
+	private <T> Object interpret(ForStatement fs) throws InterpreterException {
 		List<AtsASTNode> children = fs.getOutgoingNodes();
 		
 		Boolean loopCondition = false;
@@ -930,7 +927,7 @@ public class TestFileInterpreter {
 		return null;
 	}
 	
-	private <T> Object interpret(IfElseStatement is) throws Exception {
+	private <T> Object interpret(IfElseStatement is) throws InterpreterException {
 		List<AtsASTNode> children = is.getOutgoingNodes();
 		
 		// children(0) is the condition
@@ -942,7 +939,7 @@ public class TestFileInterpreter {
 		return null;
 	}
 	
-	private <T> Object interpret(IfStatement is) throws Exception {
+	private <T> Object interpret(IfStatement is) throws InterpreterException {
 		List<AtsASTNode> children = is.getOutgoingNodes();
 		if ((Boolean) interpret(children.get(0))) {
 			for (int i = 1; i < children.size(); i++) {
@@ -962,12 +959,12 @@ public class TestFileInterpreter {
 		return new NestedLassoWord<String>(stem, loop);
 	}
 	
-	private <T> Object interpret(OperationInvocationExpression oe) throws Exception {
+	private <T> Object interpret(OperationInvocationExpression oe) throws InterpreterException {
 		List<AtsASTNode> children = oe.getOutgoingNodes();
 		if (children.size() != 1) {
-			String message ="Line "  + oe.getLocation().getStartLine() + ": OperationExpression should have only 1 child (ArgumentList)";
+			String message = "OperationExpression should have only 1 child (ArgumentList)";
 			message = message.concat("Num of children: " + children.size());
-			throw new IllegalArgumentException(message);
+			throw new InterpreterException(oe.getLocation(), message);
 		}
 		
 		ArrayList<Object> arguments = null;
@@ -987,7 +984,7 @@ public class TestFileInterpreter {
 			result = arguments.get(0);
 			if (result instanceof Boolean) {
 				if ((Boolean) result) {
-					m_testCases.add(new GenericResult<Integer>(oe.getLocation().getStartLine(), 
+					m_ResultOfAssertStatements.add(new GenericResult<ILocation>(oe.getLocation(), 
 									Activator.s_PLUGIN_ID, 
 							        null,
 							        oe.getLocation(), 
@@ -995,7 +992,7 @@ public class TestFileInterpreter {
 							        oe.getAsString(), 
 							        Severity.INFO));
 				} else {
-					m_testCases.add(new GenericResult<Integer>(oe.getLocation().getStartLine(), 
+					m_ResultOfAssertStatements.add(new GenericResult<ILocation>(oe.getLocation(), 
 									Activator.s_PLUGIN_ID, 
 									null,
 									oe.getLocation(), 
@@ -1003,43 +1000,46 @@ public class TestFileInterpreter {
 									oe.getAsString(), 
 									Severity.ERROR));
 				}
+			} else {
+				throw new AssertionError("assert expects boolean result, type checker should have found this");
 			}
 		} else if (oe.getOperationName().equalsIgnoreCase("print")) {
 			String argsAsString = children.get(0).getAsString();
 			ILocation loc = children.get(0).getLocation();
 			reportToLogger(LoggerSeverity.INFO, "Printing " + argsAsString);
 			for (Object o : arguments) {
+				final String text;
 				if (o instanceof IAutomaton) {
 					m_LastPrintedAutomaton = (IAutomaton<?, ?>) o;
-					String automatonAsString = (new AtsDefinitionPrinter(o)).getDefinitionAsString();
-					printMessage(Severity.INFO, LoggerSeverity.INFO, automatonAsString, oe.getAsString(), loc);
-					if (m_printAutomataToFile) {
-						String comment = "/* " + oe.getAsString() + " */";
-						m_printWriter.println(comment);
-						m_printWriter.println(automatonAsString);
-					}
-					
+					text = (new AtsDefinitionPrinter<String, String>(o)).getDefinitionAsString();
 				} else {
-					printMessage(Severity.INFO, LoggerSeverity.INFO, o.toString(), oe.getAsString(), loc);
-					if (m_printAutomataToFile) {
-						String comment = "/* " + oe.getAsString() + " */";
-						m_printWriter.println(comment);
-						m_printWriter.println(o.toString());
-					}
+					text = String.valueOf(o);
 				}
+				printMessage(Severity.INFO, LoggerSeverity.INFO, text, oe.getAsString(), loc);
+				if (m_printAutomataToFile) {
+					String comment = "/* " + oe.getAsString() + " */";
+					m_printWriter.println(comment);
+					m_printWriter.println(text);
+				}
+
 				
 			}
 			
 		} else {
 			IOperation op = getAutomataOperation(oe, arguments);
 			if (op != null) {
-				result = op.getResult();
+				try {
+					result = op.getResult();
+				} catch (OperationCanceledException e) {
+					throw new InterpreterException(oe.getLocation(),"Operation "
+							+ oe.getOperationName() + " cancelled. Probably there was a timout.");
+				}
 			} 
 		}
 		return result;
 	}
 	
-	private <T> Boolean interpret(RelationalExpression re) throws Exception {
+	private <T> Boolean interpret(RelationalExpression re) throws InterpreterException {
 		List<AtsASTNode> children = re.getOutgoingNodes();
 		if (re.getExpectingType() == Integer.class) {
 			int v1 = (Integer) interpret(children.get(0));
@@ -1051,13 +1051,14 @@ public class TestFileInterpreter {
 			case LESS_EQ_THAN: return v1 <= v2;
 			case EQ: return v1 == v2;
 			case NOT_EQ: return v1 != v2;
-			default: throw new UnsupportedOperationException("This type of operator is not supported: " + re.getOperator());
+			default: throw new InterpreterException(re.getLocation(), 
+					"This type of operator is not supported: " + re.getOperator());
 			}
 		}
 		return null;
 	}
 	
-	private <T> Object interpret(ReturnStatement rst) throws Exception {
+	private <T> Object interpret(ReturnStatement rst) throws InterpreterException {
 		List<AtsASTNode> children = rst.getOutgoingNodes();
 		// Change the flow
 		m_flow = Flow.RETURN;
@@ -1068,29 +1069,14 @@ public class TestFileInterpreter {
 		}
 	}
 	
-	private <T> Object interpret(StatementList stmtList) {
+	private <T> Object interpret(StatementList stmtList) throws InterpreterException {
 		for (AtsASTNode stmt : stmtList.getOutgoingNodes()) {
-			if (m_ErrorOccured) {
-				return null;
-			}
-			try {
 				interpret(stmt);
-			} catch (Exception e) {
-				m_ErrorOccured = true;
-				if (e.getMessage() != null && e.getMessage().equals(UNKNOWN_OPERATION)) {
-					// do nothing - result was already reported
-				} else {
-					TestFileInterpreter.printMessage(Severity.ERROR, LoggerSeverity.INFO, e.toString() 
-							+ System.getProperty("line.separator") + e.getStackTrace(), 
-							"Exception thrown.", stmt.getLocation());
-					return null;
-				}
-			}
 		}
 		return null;
 	}
 	
-    private <T> Integer interpret(UnaryExpression ue) {
+    private <T> Integer interpret(UnaryExpression ue) throws InterpreterException {
 		  List<AtsASTNode> children = ue.getOutgoingNodes();
 		  
 		  VariableExpression var = (VariableExpression) children.get(0);
@@ -1115,12 +1101,12 @@ public class TestFileInterpreter {
 	      }
 	      default: {
 	    	String message =  ue.getLocation().getStartLine() + ": UnaryExpression: This type of operator is not supported: " + ue.getOperator(); 
-	    	throw new UnsupportedOperationException(message);  
+	    	throw new InterpreterException(ue.getLocation(), message);  
 	      }
 	      }
 		}
 	
-    private <T> Object interpret(VariableDeclaration vd) throws Exception {
+    private <T> Object interpret(VariableDeclaration vd) throws InterpreterException {
     	List<AtsASTNode> children = vd.getOutgoingNodes();
     	Object value = null;
     	if (children.size() == 1) {
@@ -1130,22 +1116,22 @@ public class TestFileInterpreter {
     	for (String id : vd.getIdentifiers()) {
     		if (value == null) {
         		String longDescr = "Var \"" + id + "\" is assigned \"null\".";
-    			String shortDescr = "Null assignment";
-    			printMessage(Severity.WARNING, LoggerSeverity.DEBUG, longDescr, shortDescr, vd.getLocation());
+    			throw new InterpreterException(vd.getLocation(), longDescr);    			
         	}
     		m_variables.put(id, value);
     	}
     	return null;
     }
     
-	private <T> Object interpret(VariableExpression v) {
+	private <T> Object interpret(VariableExpression v) throws InterpreterException {
 		if (!m_variables.containsKey(v.getIdentifier())) {
-			throw new IllegalArgumentException("Variable \"" + v.getIdentifier() + "\" was not declared before.");
+			String longDescr = "Variable \"" + v.getIdentifier() + "\" was not declared before.";
+			throw new InterpreterException(v.getLocation(), longDescr);
 		}
 		return m_variables.get(v.getIdentifier());
 	}
 	
-	private <T> Object interpret(WhileStatement ws) throws Exception {
+	private <T> Object interpret(WhileStatement ws) throws InterpreterException {
 		List<AtsASTNode> children = ws.getOutgoingNodes();
 		Boolean loopCondition = (Boolean) interpret(children.get(0));
 		while (loopCondition) {
@@ -1169,7 +1155,6 @@ public class TestFileInterpreter {
 				}
 			loopCondition = (Boolean) interpret(children.get(0));
 		}
-		
 		return null;
 	}
 
@@ -1177,25 +1162,32 @@ public class TestFileInterpreter {
 	 * Reports the results of assert statements to the Logger and to Ultimate 
 	 * as a GenericResult.
 	 */
-	private void reportResult() {
+	private void reportResult(boolean interpretationAborted) {
 		s_Logger.info("----------------- Test Summary -----------------");
-		if (m_ErrorOccured) {
+		boolean oneOrMoreAssertionsFailed = false;
+		for (GenericResult<ILocation> test : m_ResultOfAssertStatements) {
+			UltimateServices.getInstance().reportResult(Activator.s_PLUGIN_ID, test);
+			if (test.getSeverity() == Severity.ERROR) {
+				oneOrMoreAssertionsFailed = true; 
+			}
+			reportToLogger(LoggerSeverity.INFO, "Line " + test.getLocation().getStartLine() + ": " + test.getShortDescription());
+		}
+		if (interpretationAborted) {
 			printMessage(Severity.ERROR, LoggerSeverity.INFO, 
 					" ERROR: Interpretation of automata script file was aborted", 
 					"Unable to interpret automata script file", getPseudoLocation());
+		} else if (m_ResultOfAssertStatements.isEmpty()) {
+			printMessage(Severity.WARNING, LoggerSeverity.INFO, 
+					" You have not used any assert statement in your automata" +
+					" script.", "Assert statements can be used to check Boolean results.", getPseudoLocation());
+		} else if (oneOrMoreAssertionsFailed)  {
+			String shortDescr = "Some assertions failed";
+			String longDescr = "Some assert statements have been evaluated to false.";
+			printMessage(Severity.ERROR, LoggerSeverity.INFO, longDescr, shortDescr, getPseudoLocation());
 		} else {
-			String testCasesSummary = "All testcases passed.";
-			for (GenericResult<Integer> test : m_testCases) {
-				UltimateServices.getInstance().reportResult(Activator.s_PLUGIN_ID, test);
-				if (test.getSeverity() == Severity.ERROR) testCasesSummary = "Some testcases failed.";
-				reportToLogger(LoggerSeverity.INFO, "Line " + test.getLocation().getStartLine() + ": " + test.getShortDescription());
-			}
-			// Report summary of the testcases/
-			if (m_testCases.isEmpty()) {
-				printMessage(Severity.WARNING, LoggerSeverity.INFO, "No testcases defined!", "Warning" ,  getPseudoLocation());
-			} else {
-			reportToLogger(LoggerSeverity.INFO, testCasesSummary);
-			}
+			String shortDescr = "All assertions held";
+			String longDescr = "All assert statements have been evaluated to true.";
+			printMessage(Severity.INFO, LoggerSeverity.INFO, longDescr, shortDescr, getPseudoLocation());
 		}
 	}
 	
@@ -1249,10 +1241,10 @@ public class TestFileInterpreter {
 	 * @param oe the automata operation
 	 * @param arguments the given arguments for this operation
 	 * @return an object of the automata operation or null
-	 * @throws Exception if there couldn't construct an object of the operation
+	 * @throws InterpreterException if there couldn't construct an object of the operation
 	 * @throws UnsupportedOperationException if the operation does not exist
 	 */
-	private IOperation getAutomataOperation(OperationInvocationExpression oe, ArrayList<Object> arguments) throws Exception  {
+	private IOperation getAutomataOperation(OperationInvocationExpression oe, ArrayList<Object> arguments) throws InterpreterException  {
 		String operationName = oe.getOperationName().toLowerCase();
 		IOperation result = null;
 		if (m_existingOperations.containsKey(operationName)) {
@@ -1268,25 +1260,35 @@ public class TestFileInterpreter {
 						} catch (InstantiationException e) {
 							e.printStackTrace();
 							throw new AssertionError(e);
-						} catch (IllegalAccessException e) {
-							e.printStackTrace();
-							throw new AssertionError(e);
 						} catch (IllegalArgumentException e) {
 							e.printStackTrace();
 							throw new AssertionError(e);
+						} catch (IllegalAccessException e) {
+							e.printStackTrace();
+							throw new AssertionError(e);
 						} catch (InvocationTargetException e) {
-							throw (Exception) e.getCause();
-						}
+							Throwable targetException = e.getTargetException();
+							if (targetException instanceof RuntimeException) {
+								throw (RuntimeException) targetException;
+							} else if (targetException instanceof InterpreterException) {
+								throw (InterpreterException) targetException;
+							} else if (targetException instanceof AutomataLibraryException) {
+								throw new InterpreterException(oe.getLocation(), targetException.getMessage());
+							} else if (targetException instanceof Error) {
+								throw (Error) targetException;
+							} else {
+								String message = "Non runtime Exception" + targetException.getMessage();
+								throw new AssertionError(message);
+							}
+						} 
 					}
 				}					
 			}
 		} else {
-			String shortDescr = "Unsupported operation \"" + operationName + "\"";
 			String allOperations = (new ListExistingOperations(m_existingOperations)).prettyPrint();
-			String longDescr = "We support only the following operations " + System.getProperty("line.separator") + allOperations;
-			reportToUltimate(Severity.ERROR, longDescr, shortDescr, oe.getLocation());
-			reportToLogger(LoggerSeverity.DEBUG, shortDescr);
-			throw new UnsupportedOperationException(UNKNOWN_OPERATION);
+			String longDescr = "Unsupported operation \"" + operationName + "\"" + System.getProperty("line.separator") +
+					"We support only the following operations " + System.getProperty("line.separator") + allOperations;
+			throw new InterpreterException(oe.getLocation(), longDescr);
 		}
 		assert (result == null);
 		{
@@ -1299,7 +1301,7 @@ public class TestFileInterpreter {
 			}
 			longDescr += ")";
 			printMessage(Severity.ERROR, LoggerSeverity.DEBUG, longDescr, shortDescr, oe.getLocation());
-			throw new IllegalArgumentException(longDescr);
+			throw new InterpreterException(oe.getLocation(), longDescr);
 		}
 	}
 	
@@ -1460,6 +1462,27 @@ public class TestFileInterpreter {
 	
 	private static ILocation getPseudoLocation() {
 		return new AutomataScriptLocation("", 0, 0, 0, 0);
+	}
+	
+	
+	private class InterpreterException extends Exception {
+		private static final long serialVersionUID = -7514869048479460179L;
+		private final ILocation m_Location;
+		private final String m_LongDescription;
+		public InterpreterException(ILocation m_Location,
+				String m_LongDescription) {
+			super();
+			this.m_Location = m_Location;
+			this.m_LongDescription = m_LongDescription;
+		}
+		public ILocation getLocation() {
+			return m_Location;
+		}
+		public String getLongDescription() {
+			return m_LongDescription;
+		}
+		
+		
 	}
 	
 }
