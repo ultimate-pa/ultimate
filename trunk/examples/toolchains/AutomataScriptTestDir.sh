@@ -49,12 +49,13 @@ printf "*** "
 Ultimate_OUTPUT=`bash -c "ulimit -t $TimeLimit; $Ultimate_PATH/$UltimateEXE --console $Ultimate_PATH/trunk/examples/toolchains/AutomataScriptInterpreter.xml "$f" 2>&1"`
 
 ERROR_OCCURRED=`echo "$Ultimate_OUTPUT" | grep "ERROR"`
-EXCEPTION=`echo "$Ultimate_OUTPUT" | grep "Exception"`
 #EXCEPTION=`echo "$Ultimate_OUTPUT" | grep "has thrown an Exception!"`
-RESULT_CORRECT=`echo "$Ultimate_OUTPUT" | grep "All testcases passed"`
-RESULT_INCORRECT=`echo "$Ultimate_OUTPUT" | grep "Some testcases failed"`
-RESULT_NOTESTCASE=`echo "$Ultimate_OUTPUT" | grep "No testcases defined!"`
+EXCEPTION=`echo "$Ultimate_OUTPUT" | grep "Exception"`
+RESULT_CORRECT=`echo "$Ultimate_OUTPUT" | grep "All assert statements have been evaluated to true"`
+RESULT_INCORRECT=`echo "$Ultimate_OUTPUT" | grep "Some assert statements have been evaluated to false"`
+RESULT_NOTESTCASES=`echo "$Ultimate_OUTPUT" | grep "not used any assert statement in your automata"`
 RUNTIME=`echo "$Ultimate_OUTPUT" | grep "AutomataScriptInterpreter took" | cut -c82-`
+
 
 if [ "$RESULT_CORRECT" ]; then
    printf "successful termination after "
