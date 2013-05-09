@@ -84,7 +84,7 @@ public class AnnotateAndAsserter {
 				}
 				Annotation annot = new Annotation(":named", name);
 				Term annotTerm = m_Script.annotate(term, annot);
-				m_Script.assertTerm(annotTerm);
+				m_SmtManager.assertTerm(annotTerm);
 				Term constantRepresentingAnnotatedTerm = m_Script.term(name);
 				annotatedTerms[i] = constantRepresentingAnnotatedTerm;
 			}
@@ -102,7 +102,7 @@ public class AnnotateAndAsserter {
 				String name = "ssa_" + position + "_calllocVarAssign";
 				Annotation annot = new Annotation(":named", name);
 				Term annotTerm = m_Script.annotate(term, annot);
-				m_Script.assertTerm(annotTerm);
+				m_SmtManager.assertTerm(annotTerm);
 				Term constantRepresentingAnnotatedTerm = m_Script.term(name);
 				annotatedLocalVarAssignmentAtCall.put(position, constantRepresentingAnnotatedTerm);			
 			}
@@ -120,7 +120,7 @@ public class AnnotateAndAsserter {
 				String name = "ssa_" + position + "_calloldVarAssign";
 				Annotation annot = new Annotation(":named", name);
 				Term annotTerm = m_Script.annotate(term, annot);
-				m_Script.assertTerm(annotTerm);
+				m_SmtManager.assertTerm(annotTerm);
 				Term constantRepresentingAnnotatedTerm = m_Script.term(name);
 				annotatedGlobalOldVarAssignmentAtCall.put(position, constantRepresentingAnnotatedTerm);			
 			}
@@ -136,7 +136,7 @@ public class AnnotateAndAsserter {
 					String name = "ssa_pendingContext"+pendingReturnCode;
 					Annotation annot = new Annotation(":named", name);
 					Term annotTerm = m_Script.annotate(term, annot);
-					m_Script.assertTerm(annotTerm);
+					m_SmtManager.assertTerm(annotTerm);
 					Term constantRepresentingAnnotatedTerm = m_Script.term(name);
 					annotatedPendingContexts.put(position, constantRepresentingAnnotatedTerm);
 				}
@@ -146,7 +146,7 @@ public class AnnotateAndAsserter {
 					String name = "ssa_" + position + "pendingCalllocalVarAssig";
 					Annotation annot = new Annotation(":named", name);
 					Term annotTerm = m_Script.annotate(term, annot);
-					m_Script.assertTerm(annotTerm);
+					m_SmtManager.assertTerm(annotTerm);
 					Term constantRepresentingAnnotatedTerm = m_Script.term(name);
 					annotatedLocalVarAssignmentAtCall.put(position, constantRepresentingAnnotatedTerm);
 				}
@@ -156,7 +156,7 @@ public class AnnotateAndAsserter {
 					String name = "ssa_" + position + "pendingCalloldVarAssign";
 					Annotation annot = new Annotation(":named", name);
 					Term annotTerm = m_Script.annotate(term, annot);
-					m_Script.assertTerm(annotTerm);
+					m_SmtManager.assertTerm(annotTerm);
 					Term constantRepresentingAnnotatedTerm = m_Script.term(name);
 					annotatedGlobalOldVarAssignmentAtCall.put(position, constantRepresentingAnnotatedTerm);
 				}
@@ -181,7 +181,7 @@ public class AnnotateAndAsserter {
 				String name = "ssa_precond";
 				Annotation annot = new Annotation(":named", name);
 				Term annotTerm = m_Script.annotate(term, annot);
-				m_Script.assertTerm(annotTerm);
+				m_SmtManager.assertTerm(annotTerm);
 				Term constantRepresentingAnnotatedTerm = m_Script.term(name);
 				annotatedNestedSSA.setPrecondition(constantRepresentingAnnotatedTerm);
 			}
@@ -193,7 +193,7 @@ public class AnnotateAndAsserter {
 				String name = "ssa_negPostcond";
 				Annotation annot = new Annotation(":named", name);
 				Term annotTerm = m_Script.annotate(term, annot);
-				m_Script.assertTerm(annotTerm);
+				m_SmtManager.assertTerm(annotTerm);
 				Term constantRepresentingAnnotatedTerm = m_Script.term(name);
 				annotatedNestedSSA.setPostcondition(constantRepresentingAnnotatedTerm);
 			}

@@ -157,9 +157,9 @@ public class TraceAbstractionConcurrentObserver implements IUnmanagedObserver {
 		s_Logger.warn("PC#: " + smtManager.getInterpolQueries());
 		s_Logger.warn("TIME#: " + smtManager.getInterpolQuriesTime());
 		s_Logger.warn("EC#: " + smtManager.getNontrivialSatQueries());
-		s_Logger.warn("TIME#: " + smtManager.getSatQuriesTime());
+		s_Logger.warn("TIME#: " + smtManager.getSatCheckSolverTime());
 		s_Logger.warn("ManipulationTIME#: "
-				+ smtManager.getCodeBlockCheckTime());
+				+ smtManager.getSatCheckTime());
 		switch (result) {
 		case SAFE:
 			s_Logger.warn("Program is correct");

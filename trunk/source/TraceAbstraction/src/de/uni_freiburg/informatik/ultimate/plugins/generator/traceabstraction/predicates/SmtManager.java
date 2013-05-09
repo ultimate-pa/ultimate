@@ -83,9 +83,8 @@ public class SmtManager {
 	private int m_VarSetMinimalSolverQueries = 0;
 	private long m_VarSetMinimalComputationTime = 0;
 	
-	private long m_CodeBlockCheckTime = 0;
-	private long m_CodeBlockAssertTime = 0;
-	private long m_SatQuriesTime = 0;
+	private long m_SatCheckTime = 0;
+	private long m_SatCheckSolverTime = 0;
 	private long m_TraceCheckTime = 0;
 	private long m_InterpolQuriesTime = 0;
 	private int m_InterpolQueries = 0;
@@ -161,8 +160,8 @@ public class SmtManager {
 		return m_TrivialSatQueries;
 	}
 	
-	public long getSatQuriesTime() {
-		return m_SatQuriesTime;
+	public long getSatCheckSolverTime() {
+		return m_SatCheckSolverTime;
 	}
 	
 	public long getInterpolQuriesTime() {
@@ -177,12 +176,8 @@ public class SmtManager {
 		return m_TraceCheckTime;
 	}
 	
-	public long getCodeBlockCheckTime() {
-		return m_CodeBlockCheckTime;
-	}
-	
-	public long getCodeBlockAssertTime() {
-		return m_CodeBlockAssertTime;
+	public long getSatCheckTime() {
+		return m_SatCheckTime;
 	}
 	
 	public int getTrivialEdgeCheckQueries() {
@@ -305,7 +300,7 @@ public class SmtManager {
 		long startTime = System.nanoTime();
 		m_Script.push(1);
 		Term negated = m_Script.term("not", closedFormula);
-		m_Script.assertTerm(negated);
+		assertTerm(negated);
 		for (BoogieVar bv : boogieVars) {
 			TermVariable[] vars = new TermVariable[1];
 			vars[0] = bv.getTermVariable();
@@ -315,7 +310,7 @@ public class SmtManager {
 			formula = renameVarsToDefaultConstants(boogieVars, formula);
 		
 			m_Script.push(1);
-			m_Script.assertTerm(formula);
+			assertTerm(formula);
 			LBool sat = m_Script.checkSat();
 			m_VarSetMinimalSolverQueries++;
 			if (sat == LBool.UNSAT) {
@@ -393,7 +388,7 @@ public class SmtManager {
         long startTime = System.nanoTime();
         LBool result = null;
         try {
-        	m_Script.assertTerm(f);
+        	assertTerm(f);
         } catch (SMTLIBException e) {
 			if (e.getMessage().equals("Unsupported non-linear arithmetic")) {
 				return LBool.UNKNOWN;
@@ -403,7 +398,7 @@ public class SmtManager {
 			}
         }
         result = m_Script.checkSat();
-		m_SatQuriesTime += (System.nanoTime() - startTime);
+		m_SatCheckSolverTime += (System.nanoTime() - startTime);
 		m_NontrivialSatQueries++;
 		if (result == LBool.UNKNOWN) {
 			Object info = m_Script.getInfo(":reason-unknown");
@@ -423,6 +418,14 @@ public class SmtManager {
 			}
 		} 
 		return result;
+	}
+	
+	public LBool assertTerm(Term term) {
+        long startTime = System.nanoTime();
+        LBool result = null;
+        result = m_Script.assertTerm(term);
+        m_SatCheckSolverTime += (System.nanoTime() - startTime);
+        return result;
 	}
 	
 	
@@ -576,7 +579,7 @@ public class SmtManager {
 			m_IndexedConstants = null;
 			m_Script.pop(1);
 		}
-		m_CodeBlockCheckTime += (System.nanoTime() - startTime);
+		m_SatCheckTime += (System.nanoTime() - startTime);
 		return result;
 	}
 	
@@ -593,14 +596,14 @@ public class SmtManager {
 		}
 		else {
 			m_Script.push(1);
-			m_Script.assertTerm(formula1);
+			assertTerm(formula1);
 			Term negFormula2 = m_Script.term("not", formula2);
-			m_Script.assertTerm(negFormula2);
+			assertTerm(negFormula2);
 			result = m_Script.checkSat();
 			m_NontrivialCoverQueries++;
 			m_Script.pop(1);
 		}
-		m_CodeBlockCheckTime += (System.nanoTime() - startTime);
+		m_SatCheckTime += (System.nanoTime() - startTime);
 		return result;
 	}
 	
@@ -684,7 +687,7 @@ public class SmtManager {
 		}
 		m_IndexedConstants = null;
 		m_Script.pop(1);
-		m_CodeBlockCheckTime += (System.nanoTime() - startTime);
+		m_SatCheckTime += (System.nanoTime() - startTime);
 		testMyInternalDataflowCheck(ps1, ta, ps2, result);
 		return result;
 	}
@@ -717,7 +720,7 @@ public class SmtManager {
 //		//All variables get index 0 
 //		Term ps1renamed = formulaWithIndexedVars(p, new HashSet<BoogieVar>(0),
 //				4, 0, Integer.MIN_VALUE,null,-5,0);
-//		LBool quickCheck = m_Script.assertTerm(ps1renamed);
+//		LBool quickCheck = assertTerm(ps1renamed);
 //		if (quickCheck == LBool.UNSAT) {
 //			m_IndexedConstants = null;
 //			m_Script.pop(1);
@@ -740,7 +743,7 @@ public class SmtManager {
 //		m_AssignedVars = new HashSet<BoogieVar>();
 //		Term fTrans = formulaWithIndexedVars(tf, 0, 1, m_AssignedVars);
 //		m_AssignedVars = Collections.unmodifiableSet(m_AssignedVars);
-//		LBool quickCheck = m_Script.assertTerm(fTrans);
+//		LBool quickCheck = assertTerm(fTrans);
 ////		if (quickCheck == LBool.UNSAT) {
 ////			m_IndexedConstants = null;
 ////			m_AssignedVars = null;
@@ -787,7 +790,7 @@ public class SmtManager {
 //		m_IndexedConstants.beginScope();
 //		Term ps2renamed = formulaWithIndexedVars(p, m_AssignedVars,
 //				1, 0, Integer.MIN_VALUE,m_AssignedVars,1,0);
-//		LBool quickCheck = m_Script.assertTerm(m_Script.term("not",ps2renamed));
+//		LBool quickCheck = assertTerm(m_Script.term("not",ps2renamed));
 //		LBool result;
 //		if (quickCheck == LBool.UNSAT) {
 //			result = quickCheck;
@@ -869,7 +872,7 @@ public class SmtManager {
 			assert (result == Script.LBool.UNSAT || result == Script.LBool.UNKNOWN) 
 				: "call statement not inductive";
 		}
-		m_CodeBlockCheckTime += (System.nanoTime() - startTime);
+		m_SatCheckTime += (System.nanoTime() - startTime);
 		testMyCallDataflowCheck(ps1, ta, ps2, result);
 		return result;
 	}
@@ -966,7 +969,7 @@ public class SmtManager {
 			assert (result == Script.LBool.UNSAT ||	result == Script.LBool.UNKNOWN)
 				: "return statement not inductive";
 		}
-		m_CodeBlockCheckTime += (System.nanoTime() - startTime);
+		m_SatCheckTime += (System.nanoTime() - startTime);
 		
 		testMyReturnDataflowCheck(ps1,psk,ta,ps2,result);
 		return result;
@@ -1774,7 +1777,7 @@ public class SmtManager {
 				Annotation annot = new Annotation(":named", name);
 				predcondition = m_Script.annotate(predcondition, annot);
 			}
-			LBool quickCheck = m_Script.assertTerm(predcondition);
+			LBool quickCheck = assertTerm(predcondition);
 			if (m_CodeBlock instanceof Return) {
 				for (BoogieVar bv : p.getVars()) {
 					if (bv.isOldvar()) {
@@ -1794,7 +1797,7 @@ public class SmtManager {
 					}
 				}
 			}
-			m_CodeBlockAssertTime += (System.nanoTime() - startTime);
+			m_SatCheckTime += (System.nanoTime() - startTime);
 			return quickCheck;
 		}
 		
@@ -1829,7 +1832,7 @@ public class SmtManager {
 				Annotation annot = new Annotation(":named", name);
 				cbFormula = m_Script.annotate(cbFormula, annot);
 			}
-			LBool quickCheck = m_Script.assertTerm(cbFormula);
+			LBool quickCheck = assertTerm(cbFormula);
 			if (cb instanceof Return) {
 				m_HierConstants = new ScopedHashMap<BoogieVar,Term>();
 				Return ret = (Return) cb;
@@ -1852,7 +1855,7 @@ public class SmtManager {
 					Annotation annot = new Annotation(":named", name);
 					ovaFormula = m_Script.annotate(ovaFormula, annot);
 				}
-				quickCheck = m_Script.assertTerm(ovaFormula);
+				quickCheck = assertTerm(ovaFormula);
 				
 				Set<BoogieVar> modifiableGlobals = ovaTF.getInVars().keySet();
 				TransFormula callTf = call.getTransitionFormula();
@@ -1874,9 +1877,9 @@ public class SmtManager {
 					Annotation annot = new Annotation(":named", name);
 					locVarAssign = m_Script.annotate(locVarAssign, annot);
 				}
-				quickCheck = m_Script.assertTerm(locVarAssign);
+				quickCheck = assertTerm(locVarAssign);
 			}
-			m_CodeBlockAssertTime += (System.nanoTime() - startTime);
+			m_SatCheckTime += (System.nanoTime() - startTime);
 			return quickCheck;
 		}
 
@@ -1927,8 +1930,8 @@ public class SmtManager {
 				Annotation annot = new Annotation(":named", name);
 				hierFormula = m_Script.annotate(hierFormula, annot);
 			}
-			LBool quickCheck = m_Script.assertTerm(hierFormula);
-			m_CodeBlockAssertTime += (System.nanoTime() - startTime);
+			LBool quickCheck = assertTerm(hierFormula);
+			m_SatCheckTime += (System.nanoTime() - startTime);
 			return quickCheck;
 		}
 		
@@ -1967,17 +1970,16 @@ public class SmtManager {
 				Annotation annot = new Annotation(":named", name);
 				negation = m_Script.annotate(negation, annot);
 			}
-			LBool isSat = m_Script.assertTerm(negation);
-			m_CodeBlockAssertTime += (System.nanoTime() - startTime);
+			LBool isSat = assertTerm(negation);
 			
 			if (isSat == LBool.UNKNOWN) {
 				// quickcheck failed
 				startTime = System.nanoTime();
 				isSat = m_Script.checkSat();
-				m_CodeBlockCheckTime += (System.nanoTime() - startTime);
 			}
 			m_NontrivialEdgeCheckQueries++;
 			m_Script.pop(1);
+			m_SatCheckTime += (System.nanoTime() - startTime);
 			return isSat;
 		}
 		
@@ -2006,17 +2008,16 @@ public class SmtManager {
 				Annotation annot = new Annotation(":named", name);
 				negation = m_Script.annotate(negation, annot);
 			}
-			LBool isSat = m_Script.assertTerm(negation);
-			m_CodeBlockAssertTime += (System.nanoTime() - startTime);
+			LBool isSat = assertTerm(negation);
 			
 			if (isSat == LBool.UNKNOWN) {
 				// quickcheck failed
 				startTime = System.nanoTime();
 				isSat = m_Script.checkSat();
-				m_CodeBlockCheckTime += (System.nanoTime() - startTime);
 			}
 			m_NontrivialEdgeCheckQueries++;
 			m_Script.pop(1);
+			m_SatCheckTime += (System.nanoTime() - startTime);
 			return isSat;
 		}
 
@@ -2059,18 +2060,17 @@ public class SmtManager {
 				Annotation annot = new Annotation(":named", name);
 				negation = m_Script.annotate(negation, annot);
 			}
-			LBool isSat = m_Script.assertTerm(negation);
-			m_CodeBlockAssertTime += (System.nanoTime() - startTime);
+			LBool isSat = assertTerm(negation);
 			
 			if (isSat == LBool.UNKNOWN) {
 				// quickcheck failed
 				startTime = System.nanoTime();
 				isSat = m_Script.checkSat();
-				m_CodeBlockCheckTime += (System.nanoTime() - startTime);
 			}
 			m_NontrivialEdgeCheckQueries++;
 			m_Script.pop(1);
 			m_HierConstants.endScope();
+			m_SatCheckTime += (System.nanoTime() - startTime);
 			return isSat;
 		}
 		

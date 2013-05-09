@@ -201,8 +201,9 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 		s_Logger.warn("TIME#: " + smtManager.getInterpolQuriesTime());
 		s_Logger.warn("ManipulationTIME#: " + smtManager.getTraceCheckTime());
 		s_Logger.warn("EC#: " + smtManager.getNontrivialEdgeCheckQueries());
-		s_Logger.warn("TIME#: " + smtManager.getCodeBlockCheckTime());
-		s_Logger.warn("ManipulationTIME#: "	+ smtManager.getCodeBlockAssertTime());
+		s_Logger.warn("TIME#: " + smtManager.getSatCheckTime());
+		s_Logger.warn("ManipulationTIME#: "	+ smtManager.getSatCheckTime());
+		s_Logger.warn(timingStatistics.printTimingStatistics());
 		switch (m_OverallResult) {
 		case SAFE:
 //			s_Logger.warn("Program is correct");

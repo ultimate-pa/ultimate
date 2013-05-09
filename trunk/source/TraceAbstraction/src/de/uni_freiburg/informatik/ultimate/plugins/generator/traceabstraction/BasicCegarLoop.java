@@ -136,6 +136,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 	
 	@Override
 	protected LBool isCounterexampleFeasible() {
+		m_TimingStatistics.startTraceCheck();
 		m_TraceChecker = new TraceChecker(m_SmtManager,
 				m_RootNode.getRootAnnot().getModifiedVars(),
 				m_RootNode.getRootAnnot().getEntryNodes(),
@@ -166,6 +167,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 			AllIntegers allInt = new TraceChecker.AllIntegers();
 			m_Interpolants = m_TraceChecker.getInterpolants(allInt);
 		}
+		m_TimingStatistics.finishTraceCheck();
 		return feasibility;
 	}
 	
@@ -175,6 +177,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 	
 	@Override
 	protected void constructInterpolantAutomaton() {
+		m_TimingStatistics.startBasicInterpolantAutomaton();
 		InterpolantAutomataBuilder iab = new InterpolantAutomataBuilder(
 						m_Counterexample,
 						m_TruePredicate,
@@ -185,7 +188,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 						m_Iteration, m_IterationPW);
 		m_InterpolAutomaton = iab.buildInterpolantAutomaton(
 				m_Abstraction, m_Abstraction.getStateFactory());
-		
+		m_TimingStatistics.finishBasicInterpolantAutomaton();		
 		assert(m_InterpolAutomaton.accepts(m_Counterexample.getWord())) :
 			"Interpolant automaton broken!";
 		assert (m_SmtManager.checkInductivity(m_InterpolAutomaton, false, true));
@@ -198,8 +201,9 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 	
 	@Override
 	protected boolean refineAbstraction() throws OperationCanceledException {
-		howDifferentAreInterpolants(m_InterpolAutomaton.getStates());
+//		howDifferentAreInterpolants(m_InterpolAutomaton.getStates());
 		
+		m_TimingStatistics.startDifference();
 		boolean explointSigmaStarConcatOfIA = !m_Pref.computeHoareAnnotation();
 		
 		PredicateFactory predicateFactory = (PredicateFactory) m_Abstraction.getStateFactory();
@@ -396,8 +400,10 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 //		}
 
 		
+		m_TimingStatistics.finishDifference();
 		
 		if (m_Pref.minimize()) {
+			m_TimingStatistics.startAutomataMinimization();
 			long startTime = System.currentTimeMillis();
 			int oldSize = m_Abstraction.size();
 			INestedWordAutomaton<CodeBlock, IPredicate> newAbstraction = (INestedWordAutomaton<CodeBlock, IPredicate>) m_Abstraction;
@@ -415,6 +421,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 				throw new AssertionError("Minimization increased state space");
 			}
 			m_StatesRemovedByMinimization += (oldSize - newSize);
+			m_TimingStatistics.finishAutomataMinimization();
 		}
 		
 		
