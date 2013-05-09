@@ -1,29 +1,34 @@
-#Mon Oct 15 03:19:25 CEST 2012
+#Tue Jul 24 22:01:47 CEST 2012
 file_export_version=3.0
-/instance/UltimateCore/ultimate.logging.tools=info
+/instance/UltimateCore/ultimate.logging.tools=warn
 \!/instance/UltimateCore=
 /instance/UltimateCore/ultimate.logging.tooldetails=SmtInterpol\=Warn;SMTInterface\=Warn;Groundifier\=Warn;
 @UltimateCore=0.0.1
 /instance/UltimateCore/ultimate.logging.plugins=info
-#Mon Oct 15 03:19:25 CEST 2012
+#Tue Jul 24 22:01:47 CEST 2012
 file_export_version=3.0
 /configuration/JungVisualization/shapeForNodePreference=RoundRectangle
 /configuration/JungVisualization/annotatedEdgesPreference=true
 \!/configuration/JungVisualization=
-#Mon Oct 15 03:19:25 CEST 2012
+#Tue Jul 24 22:01:47 CEST 2012
 file_export_version=3.0
-/configuration/CACSL2BoogieTranslator/CheckedMethod=main
 /configuration/CACSL2BoogieTranslator/Translation-Mode=SV_COMP
+/configuration/CACSL2BoogieTranslator/CheckedMethod=main
 \!/configuration/CACSL2BoogieTranslator=
-#Mon Oct 15 03:19:25 CEST 2012
+#Tue Jul 24 22:01:47 CEST 2012
 file_export_version=3.0
 \!/configuration/CFGReducer=
 /configuration/CFGReducer/SelectedSolver=0
-#Mon Oct 15 03:19:25 CEST 2012
-file_export_version=3.0
-/configuration/RCFGBuilder/AllErrorsAtOnce=true
+#Tue Jul 24 22:01:47 CEST 2012
+/configuration/RCFGBuilder/DumpPath=dump
 /configuration/RCFGBuilder/BlockSize=loop free block
-/configuration/RCFGBuilder/Timeout=900
+/configuration/RCFGBuilder/AdditionalEdges=None
 \!/configuration/RCFGBuilder=
-/configuration/RCFGBuilder/Minimize=false
+/configuration/RCFGBuilder/Iterations=10000
+/configuration/RCFGBuilder/MainProcedure=main
+/configuration/RCFGBuilder/Timeout=900
+file_export_version=3.0
+/configuration/RCFGBuilder/Concurrency=Finite Automata
 /configuration/RCFGBuilder/HoareAnnotation=false
+/configuration/RCFGBuilder/AllErrorsAtOnce=true
+/configuration/RCFGBuilder/Determinization=LazyPost
