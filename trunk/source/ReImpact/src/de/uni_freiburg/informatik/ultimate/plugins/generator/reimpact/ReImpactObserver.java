@@ -133,8 +133,8 @@ public class ReImpactObserver implements IUnmanagedObserver {
 		s_Logger.info("TIME#: " + m_smtManager.getInterpolQuriesTime());
 		s_Logger.info("ManipulationTIME#: " + m_smtManager.getTraceCheckTime());
 		s_Logger.info("EC#: " + m_smtManager.getNontrivialSatQueries());
-		s_Logger.info("TIME#: " + m_smtManager.getSatQuriesTime());
-		s_Logger.info("ManipulationTIME#: "	+ m_smtManager.getCodeBlockCheckTime());
+		s_Logger.info("TIME#: " + m_smtManager.getSatCheckSolverTime());
+		s_Logger.info("ManipulationTIME#: "	+ m_smtManager.getSatCheckTime());
 		
 		if (m_currentResult == Result.CORRECT) {
 			PositiveResult<CodeBlock> result = new PositiveResult<CodeBlock>(null,
