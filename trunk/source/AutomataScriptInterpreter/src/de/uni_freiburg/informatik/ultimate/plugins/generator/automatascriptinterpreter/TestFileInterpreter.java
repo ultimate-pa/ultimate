@@ -597,6 +597,8 @@ public class TestFileInterpreter {
 	private PrintWriter m_printWriter;
 	private String m_path = ".";
 	public enum LoggerSeverity {INFO, WARNING, ERROR, DEBUG};
+	
+	private enum Finished {FINISHED, TIMEOUT, ERROR};
 	/**
 	 * If an error occurred during the interpretation this is set to true
 	 * and further interpretation is aborted.
@@ -659,7 +661,7 @@ public class TestFileInterpreter {
 		if (node instanceof AutomataTestFile) {
 			ats = (AutomataTestFile) node;
 		}
-		boolean abortInterpretation = false;
+		Finished interpretationFinished = Finished.FINISHED;
 		reportToLogger(LoggerSeverity.DEBUG, "Interpreting automata definitions...");
 		// Interpret automata definitions
 		try {
@@ -669,10 +671,10 @@ public class TestFileInterpreter {
 			reportToLogger(LoggerSeverity.INFO, "Error: " + e.getMessage());
 			reportToLogger(LoggerSeverity.INFO, "Interpretation of testfile cancelled.");
 			reportToUltimate(Severity.ERROR, e.getMessage() + " Interpretation of testfile cancelled.", "Error", m_automInterpreter.getErrorLocation());
-			abortInterpretation = true;
+			interpretationFinished = Finished.ERROR;
 		}
 		
-		if (!abortInterpretation) {
+		if (interpretationFinished == Finished.FINISHED) {
 			// Put all defined automata into variables map
 			m_variables.putAll(m_automInterpreter.getAutomata());
 			reportToLogger(LoggerSeverity.DEBUG, "Typechecking of test file...");
@@ -683,12 +685,12 @@ public class TestFileInterpreter {
 				reportToLogger(LoggerSeverity.INFO, "Error: " + e.getMessage());
 				reportToLogger(LoggerSeverity.INFO,	"Interpretation of testfile cancelled.");
 				reportToUltimate(Severity.ERROR, m_tChecker.getLongDescription(), m_tChecker.getShortDescription(),	m_tChecker.getErrorLocation());
-				abortInterpretation = true;;
+				interpretationFinished = Finished.ERROR;
 			}
 		}
 
 		Object result = null;
-		if (!abortInterpretation) {
+		if (interpretationFinished == Finished.FINISHED) {
 			// Interpreting test file
 			reportToLogger(LoggerSeverity.DEBUG, "Interpreting test file...");
 			if (ats.getStatementList() == null) {
@@ -698,7 +700,11 @@ public class TestFileInterpreter {
 				try {
 					result = interpret(ats.getStatementList());
 				} catch (InterpreterException e) {
-					abortInterpretation = true;
+					if (e.getLongDescription().equals("Timeout")) {
+						interpretationFinished = Finished.TIMEOUT;
+					} else {
+						interpretationFinished = Finished.ERROR;
+					}
 					printMessage(Severity.ERROR, LoggerSeverity.INFO,
 							e.getLongDescription(),
 							"Interpretation of ats file failed",
@@ -707,7 +713,7 @@ public class TestFileInterpreter {
 			}
 		}
 		reportToLogger(LoggerSeverity.DEBUG, "Reporting results...");
-		reportResult(abortInterpretation);
+		reportResult(interpretationFinished);
 		if (m_printAutomataToFile) {
 			m_printWriter.close();
 		}
@@ -1162,7 +1168,7 @@ public class TestFileInterpreter {
 	 * Reports the results of assert statements to the Logger and to Ultimate 
 	 * as a GenericResult.
 	 */
-	private void reportResult(boolean interpretationAborted) {
+	private void reportResult(Finished finished) {
 		s_Logger.info("----------------- Test Summary -----------------");
 		boolean oneOrMoreAssertionsFailed = false;
 		for (GenericResult<ILocation> test : m_ResultOfAssertStatements) {
@@ -1172,23 +1178,39 @@ public class TestFileInterpreter {
 			}
 			reportToLogger(LoggerSeverity.INFO, "Line " + test.getLocation().getStartLine() + ": " + test.getShortDescription());
 		}
-		if (interpretationAborted) {
-			printMessage(Severity.ERROR, LoggerSeverity.INFO, 
-					" ERROR: Interpretation of automata script file was aborted", 
-					"Unable to interpret automata script file", getPseudoLocation());
-		} else if (m_ResultOfAssertStatements.isEmpty()) {
-			printMessage(Severity.WARNING, LoggerSeverity.INFO, 
-					" You have not used any assert statement in your automata" +
-					" script.", "Assert statements can be used to check Boolean results.", getPseudoLocation());
-		} else if (oneOrMoreAssertionsFailed)  {
-			String shortDescr = "Some assertions failed";
-			String longDescr = "Some assert statements have been evaluated to false.";
-			printMessage(Severity.ERROR, LoggerSeverity.INFO, longDescr, shortDescr, getPseudoLocation());
+		Severity userSeverity;
+		final LoggerSeverity loggerSeverity;
+		final String shortDescr;
+		String longDescr;
+		if (finished == Finished.FINISHED) {
+			userSeverity = Severity.INFO;
+			loggerSeverity = LoggerSeverity.INFO;
+			shortDescr = "Finished interpretation of automata script.";
+			longDescr = shortDescr;
+			if (m_ResultOfAssertStatements.isEmpty()) {
+				longDescr += " You have not used any assert statement in your automata" +
+						" script. Assert statements can be used to check Boolean results.";
+			} else if (!oneOrMoreAssertionsFailed) {
+				longDescr += "All assert statements have been evaluated to true.";
+			}
+		} else if (finished == Finished.TIMEOUT) {
+			userSeverity = Severity.WARNING;
+			loggerSeverity = LoggerSeverity.INFO;
+			shortDescr = "Timeout during interpretation of automata script.";
+			longDescr = shortDescr;
+		} else if (finished == Finished.ERROR) {
+			userSeverity = Severity.ERROR;
+			loggerSeverity = LoggerSeverity.ERROR;
+			shortDescr = "Interpretation of automata script failed.";
+			longDescr = shortDescr;
 		} else {
-			String shortDescr = "All assertions held";
-			String longDescr = "All assert statements have been evaluated to true.";
-			printMessage(Severity.INFO, LoggerSeverity.INFO, longDescr, shortDescr, getPseudoLocation());
+			throw new AssertionError();
 		}
+		if (oneOrMoreAssertionsFailed) {
+			userSeverity = Severity.ERROR;
+			longDescr += "Some assert statements have been evaluated to false.";
+		}
+		printMessage(userSeverity, loggerSeverity, longDescr, shortDescr, getPseudoLocation());
 	}
 	
 	
