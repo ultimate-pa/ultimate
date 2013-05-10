@@ -68,7 +68,7 @@ fi
 if [ "$RESULT_CORRECT" ]; then
    printf "successful termination after "
    printf "$RUNTIME"
-   printf " ***** "
+   printf " ******* "
    printf "result correct"
    printf "\n"
 fi
@@ -93,10 +93,10 @@ if [ "$EXCEPTION" ]; then
    echo "$EXCEPTION"
 fi
 
-if [ "$RESULT_NOTESTCASE" ]; then
+if [ "$RESULT_NOTESTCASES" ]; then
    printf "successful termination after "
    printf "$RUNTIME"
-   printf " !!!!! "
+   printf " ****** "
    printf "No testcases defined!"
    printf "\n"
 fi
