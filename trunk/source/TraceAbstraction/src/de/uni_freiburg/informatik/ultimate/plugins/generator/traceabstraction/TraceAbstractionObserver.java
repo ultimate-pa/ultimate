@@ -292,7 +292,7 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 			
 		}
 		m_Artifact = abstractCegarLoop.getArtifact();
-		reportTimingStatistics(root);	
+		reportTimingStatistics(root, timingStatistics);	
 	}
 	
 	private String backtranslateExprWorkaround(Expression expr) {
@@ -386,10 +386,11 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 		s_Logger.warn(uknMessage);
 	}
 	
-	private void reportTimingStatistics(RootNode root) {
+	private void reportTimingStatistics(RootNode root, TimingStatistics timingStatistics) {
 		String shortDescription = "Ultimate Automizer runtime statistics";
 		long time = System.currentTimeMillis() - m_StartingTime;
 		String longDescription = "Ultimate Automizer took " + time + "ms";
+		longDescription += timingStatistics.printTimingStatistics();
 		s_Logger.warn(longDescription);
 		RCFGNode someNode = root.getOutgoingNodes().iterator().next();
 		GenericResult<RcfgElement> res = new GenericResult<RcfgElement>(
