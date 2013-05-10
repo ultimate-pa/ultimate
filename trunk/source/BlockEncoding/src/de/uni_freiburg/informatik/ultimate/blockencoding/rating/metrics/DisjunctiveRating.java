@@ -101,4 +101,9 @@ public class DisjunctiveRating implements IRating {
 		return countOfDisjunctions;
 	}
 
+	@Override
+	public int getRatingValueAsInteger() {
+		return countOfDisjunctions.getValue();
+	}
+
 }

@@ -49,6 +49,21 @@ public class EncodingStatistics {
 	 * stores the min. number of variables used in one edge
 	 */
 	public static int minDiffVariablesInOneEdge;
+	
+	/**
+	 * stores the computed rating value of the total converted graph.
+	 */
+	public static int totalRCFGRating;
+	
+	/**
+	 * counts the remaining edges in the RCFG.
+	 */
+	public static int edgesInRCFG;
+	
+	/**
+	 * counts the remaining nodes in the RCFG.
+	 */
+	public static int nodesInRCFG;
 
 	/**
 	 * Initializes, all stored statistics. This have to be done, before we start
@@ -61,6 +76,9 @@ public class EncodingStatistics {
 		maxElementsInOneDisjunction = 0;
 		maxDiffVariablesInOneEdge = 0;
 		minDiffVariablesInOneEdge = Integer.MAX_VALUE;
+		totalRCFGRating = 0;
+		edgesInRCFG = 0;
+		nodesInRCFG = 0;
 	}
 
 	/**
@@ -111,4 +129,32 @@ public class EncodingStatistics {
 		}
 	}
 	
+	/**
+	 * @param ratingValue
+	 */
+	public static void addToTotalRating(int ratingValue) {
+		totalRCFGRating = totalRCFGRating + ratingValue;
+	}
+	
+	/**
+	 * 
+	 */
+	public static void incTotalEdges() {
+		edgesInRCFG++;
+	}
+	
+	/**
+	 * @param nodeCount
+	 */
+	public static void setTotalNodes(int nodeCount) {
+		nodesInRCFG = nodeCount;
+	}
+	
+	public static String reportStatistics() {
+		StringBuilder sb = new StringBuilder();
+		sb.append("Total Rating Value: " + totalRCFGRating + "\n");
+		sb.append("Number of Edges in the RCFG: " + edgesInRCFG + "\n");
+		sb.append("Number of Nodes in the RCFG: " + nodesInRCFG + "\n");
+		return sb.toString();
+	}
 }

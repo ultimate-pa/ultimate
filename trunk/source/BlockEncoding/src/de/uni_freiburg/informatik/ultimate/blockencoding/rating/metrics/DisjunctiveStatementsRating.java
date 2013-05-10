@@ -200,4 +200,9 @@ public class DisjunctiveStatementsRating implements IRating {
 		this.upperStmtBound = upperStmtBound;
 	}
 
+	@Override
+	public int getRatingValueAsInteger() {
+		return value.getValue().size();
+	}
+
 }

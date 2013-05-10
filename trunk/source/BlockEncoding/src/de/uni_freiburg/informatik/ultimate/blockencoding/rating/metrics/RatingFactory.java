@@ -47,7 +47,12 @@ public class RatingFactory {
 		 * Here we count the disjunctions and multiply the results with the
 		 * number of used variables.
 		 */
-		DISJUNCTIVE_VARIABLES_RATING
+		DISJUNCTIVE_VARIABLES_RATING,
+		/**
+		 * Here we count the disjunctions and multiply the results with the
+		 * amount of statements.
+		 */
+		DISJUNCTIVE_MULTI_STATEMENT_RATING
 	}
 
 	/**
@@ -115,6 +120,8 @@ public class RatingFactory {
 			return new UsedVariablesRating(edge);
 		case DISJUNCTIVE_VARIABLES_RATING:
 			return new DisjunctVariablesRating(edge);
+		case DISJUNCTIVE_MULTI_STATEMENT_RATING:
+			return new DisjunctMultiStatementRating(edge);
 		default:
 			throw new IllegalArgumentException("No valid strategy choosen!");
 		}

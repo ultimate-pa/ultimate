@@ -69,4 +69,9 @@ public class UsedVariablesRating implements IRating {
 		return countUsedVariables;
 	}
 
+	@Override
+	public int getRatingValueAsInteger() {
+		return countUsedVariables.getValue();
+	}
+
 }

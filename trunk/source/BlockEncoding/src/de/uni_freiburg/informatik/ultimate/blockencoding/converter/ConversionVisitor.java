@@ -21,6 +21,9 @@ import de.uni_freiburg.informatik.ultimate.blockencoding.model.interfaces.ICompo
 import de.uni_freiburg.informatik.ultimate.blockencoding.model.interfaces.IMinimizedEdge;
 import de.uni_freiburg.informatik.ultimate.blockencoding.rating.interfaces.IRating;
 import de.uni_freiburg.informatik.ultimate.blockencoding.rating.interfaces.IRatingHeuristic;
+import de.uni_freiburg.informatik.ultimate.blockencoding.rating.metrics.DisjunctMultiStatementRating;
+import de.uni_freiburg.informatik.ultimate.blockencoding.rating.metrics.DisjunctVariablesRating;
+import de.uni_freiburg.informatik.ultimate.blockencoding.rating.util.EncodingStatistics;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.Activator;
 import de.uni_freiburg.informatik.ultimate.model.BoogieLocation;
@@ -172,6 +175,20 @@ public class ConversionVisitor implements IMinimizationVisitor {
 				// Now we create a converted CodeBlock-edge
 				// We add one first sequential composed list level
 				seqComposedBlocks.push(new ArrayList<CodeBlock>());
+				s_Logger.info("Start Conversion of new minimized edge:");
+				if (edge.getRating() instanceof DisjunctVariablesRating
+						|| edge.getRating() instanceof DisjunctMultiStatementRating) {
+					Integer[] ratingValues = (Integer[]) edge.getRating()
+							.getRatingValueContainer().getValue();
+					s_Logger.warn("Disjunctions: " + ratingValues[0]
+							+ " UsedVars: " + ratingValues[1]
+							+ " ComputedValue: " + ratingValues[2]);
+				}
+				// add statistical information
+				EncodingStatistics.addToTotalRating(edge.getRating()
+						.getRatingValueAsInteger());
+				EncodingStatistics.incTotalEdges();
+				// Convert IMinimizedEdge to valid RCFGEdge
 				cb = convertMinimizedEdge(edge);
 				if (cb instanceof GotoEdge) {
 					// it is possible that the found replacement, is Goto-Edge,
@@ -322,8 +339,7 @@ public class ConversionVisitor implements IMinimizationVisitor {
 			if (edge instanceof DisjunctionEdge) {
 				// When we have a disjunction we have possible two conjunctions
 				// at both branches of this. So we have to create two new lists
-				// on the stack. FIXME: We have to remove them right, not only
-				// for conjunctions?
+				// on the stack.
 				seqComposedBlocks.push(new ArrayList<CodeBlock>());
 				seqComposedBlocks.push(new ArrayList<CodeBlock>());
 			}
@@ -380,8 +396,26 @@ public class ConversionVisitor implements IMinimizationVisitor {
 					// element, because we have to remove later a list from the
 					// stack whereas this is only done for not
 					// SequentialCompositons
+					if (edge.getRating() instanceof DisjunctVariablesRating
+							|| edge.getRating() instanceof DisjunctMultiStatementRating) {
+						s_Logger.info("New Sequential Composition");
+						Integer[] ratingValues = (Integer[]) edge.getRating()
+								.getRatingValueContainer().getValue();
+						s_Logger.info("Disjunctions: " + ratingValues[0]
+								+ " UsedVars: " + ratingValues[1]
+								+ " ComputedValue: " + ratingValues[2]);
+					}
 					return new SequentialComposition(null, null, boogie2smt,
 							replaceGotoEdge(gotoEdges.get(0), gotoEdges.get(1)));
+				}
+				if (edge.getRating() instanceof DisjunctVariablesRating
+						|| edge.getRating() instanceof DisjunctMultiStatementRating) {
+					s_Logger.info("New Sequential Composition");
+					Integer[] ratingValues = (Integer[]) edge.getRating()
+							.getRatingValueContainer().getValue();
+					s_Logger.info("Disjunctions: " + ratingValues[0]
+							+ " UsedVars: " + ratingValues[1]
+							+ " ComputedValue: " + ratingValues[2]);
 				}
 				return new SequentialComposition(null, null, boogie2smt,
 						composeEdges.toArray(new CodeBlock[0]));
@@ -421,6 +455,15 @@ public class ConversionVisitor implements IMinimizationVisitor {
 					throw new IllegalArgumentException(
 							"For DisjunctionEdges there should always"
 									+ " be exactly two edges, to compose!");
+				}
+				if (edge.getRating() instanceof DisjunctVariablesRating
+						|| edge.getRating() instanceof DisjunctMultiStatementRating) {
+					s_Logger.info("New Parallel Composition");
+					Integer[] ratingValues = (Integer[]) edge.getRating()
+							.getRatingValueContainer().getValue();
+					s_Logger.info("Disjunctions: " + ratingValues[0]
+							+ " UsedVars: " + ratingValues[1]
+							+ " ComputedValue: " + ratingValues[2]);
 				}
 				return new ParallelComposition(null, null, boogie2smt,
 						composeEdges.get(0), composeEdges.get(1));

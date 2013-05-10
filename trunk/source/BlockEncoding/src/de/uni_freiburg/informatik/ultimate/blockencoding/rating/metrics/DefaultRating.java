@@ -87,4 +87,9 @@ public class DefaultRating implements IRating {
 				otherRating.getRatingValueContainer().getValue());
 	}
 
+	@Override
+	public int getRatingValueAsInteger() {
+		return countOfStatements.getValue();
+	}
+
 }

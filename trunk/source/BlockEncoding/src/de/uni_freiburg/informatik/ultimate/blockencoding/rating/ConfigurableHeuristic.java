@@ -6,6 +6,7 @@ package de.uni_freiburg.informatik.ultimate.blockencoding.rating;
 import de.uni_freiburg.informatik.ultimate.blockencoding.rating.interfaces.IRating;
 import de.uni_freiburg.informatik.ultimate.blockencoding.rating.interfaces.IRatingHeuristic;
 import de.uni_freiburg.informatik.ultimate.blockencoding.rating.metrics.DefaultRating;
+import de.uni_freiburg.informatik.ultimate.blockencoding.rating.metrics.DisjunctMultiStatementRating;
 import de.uni_freiburg.informatik.ultimate.blockencoding.rating.metrics.DisjunctVariablesRating;
 import de.uni_freiburg.informatik.ultimate.blockencoding.rating.metrics.DisjunctiveRating;
 import de.uni_freiburg.informatik.ultimate.blockencoding.rating.metrics.DisjunctiveStatementsRating;
@@ -61,6 +62,10 @@ public class ConfigurableHeuristic implements IRatingHeuristic {
 			break;
 		case DISJUNCTIVE_VARIABLES_RATING:
 			boundary = new DisjunctVariablesRating(givenPref);
+			break;
+		case DISJUNCTIVE_MULTI_STATEMENT_RATING:
+			boundary = new DisjunctMultiStatementRating(givenPref);
+			break;
 		default:
 			throw new IllegalArgumentException(
 					"Unkown state of the enum RatingStrategy,"

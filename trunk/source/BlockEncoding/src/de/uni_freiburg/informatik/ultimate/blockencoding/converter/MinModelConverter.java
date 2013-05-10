@@ -17,6 +17,7 @@ import de.uni_freiburg.informatik.ultimate.blockencoding.rating.ConfigurableHeur
 import de.uni_freiburg.informatik.ultimate.blockencoding.rating.StatisticBasedHeuristic;
 import de.uni_freiburg.informatik.ultimate.blockencoding.rating.interfaces.IRatingHeuristic;
 import de.uni_freiburg.informatik.ultimate.blockencoding.rating.metrics.RatingFactory.RatingStrategy;
+import de.uni_freiburg.informatik.ultimate.blockencoding.rating.util.EncodingStatistics;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.blockendcoding.Activator;
@@ -89,7 +90,10 @@ public class MinModelConverter {
 		// Now we have to update the RootAnnot, which is created while executing
 		// the RCFGBuilder (this is needed for example for the
 		// HoareAnnotations)
+		EncodingStatistics.setTotalNodes(convertVisitor.getLocNodesForAnnot()
+				.size());
 		updateRootAnnot(newRoot.getRootAnnot());
+		s_Logger.info(EncodingStatistics.reportStatistics());
 		return newRoot;
 	}
 

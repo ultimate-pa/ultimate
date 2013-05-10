@@ -22,4 +22,12 @@ public interface IRating extends Comparable<IRating> {
 	 * @return a rating value container
 	 */
 	public RatingValueContainer<?> getRatingValueContainer();
+
+	/**
+	 * Sometimes (for statistical reasons) we need to get the rated value, as
+	 * integer.
+	 * 
+	 * @return the rated value as integer
+	 */
+	public int getRatingValueAsInteger();
 }
