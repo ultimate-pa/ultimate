@@ -1,7 +1,7 @@
 #!/bin/bash
 Ultimate_PATH=`pwd`;
 
-timeout=10;
+Timeout=60;
 
 
 examplesFolder=$1;
@@ -46,7 +46,7 @@ printf $f
 printf "    "
 printf "*** "
 
-Ultimate_OUTPUT=`bash -c "ulimit -t $TimeLimit; $Ultimate_PATH/$UltimateEXE --console $Ultimate_PATH/trunk/examples/toolchains/AutomataScriptInterpreter.xml "$f" 2>&1"`
+Ultimate_OUTPUT=`bash -c "ulimit -t $Timeout; $Ultimate_PATH/$UltimateEXE --console $Ultimate_PATH/trunk/examples/toolchains/AutomataScriptInterpreter.xml "$f" 2>&1"`
 
 ERROR_OCCURRED=`echo "$Ultimate_OUTPUT" | grep "ERROR"`
 #EXCEPTION=`echo "$Ultimate_OUTPUT" | grep "has thrown an Exception!"`
