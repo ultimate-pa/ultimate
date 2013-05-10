@@ -61,6 +61,22 @@ public class ReachableStatesCopy<LETTER,STATE> extends DoubleDeckerBuilder<LETTE
 		s_Logger.info(exitMessage());
 	}
 	
+	
+	public ReachableStatesCopy(INestedWordAutomaton<LETTER,STATE> nwa)
+			throws OperationCanceledException {
+		m_Input = nwa;
+		s_Logger.info(startMessage());
+		m_TraversedNwa = new DoubleDeckerAutomaton<LETTER,STATE>(
+				nwa.getInternalAlphabet(), nwa.getCallAlphabet(),
+				nwa.getReturnAlphabet(), nwa.getStateFactory());
+		super.m_RemoveDeadEnds = false;
+		super.m_RemoveNonLiveStates = false;
+		m_Complement = false;
+		traverseDoubleDeckerGraph();
+		((DoubleDeckerAutomaton<LETTER,STATE>) super.m_TraversedNwa).setUp2Down(getUp2DownMapping());
+		s_Logger.info(exitMessage());
+	}
+	
 	private void makeAutomatonTotal() {
 		STATE sinkState = m_TraversedNwa.getStateFactory().createSinkStateContent();
 		boolean isInitial = false; //m_Input.getInitial().isEmpty();
