@@ -1,5 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -14,11 +15,8 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.Word;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.ReachableStatesAutomaton.CommonEntriesComponent;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.ReachableStatesAutomaton.Entry;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.ReachableStatesAutomaton.StateContainer;
 
-public class ReachableStatesAutomaton<LETTER,STATE> implements INestedWordAutomaton<LETTER,STATE> {
+public class ReachableStatesAutomaton<LETTER,STATE> implements INestedWordAutomaton<LETTER,STATE>, INWA<LETTER,STATE> {
 
 	
 	private final NestedWordAutomaton<LETTER,STATE> m_Operand;
@@ -35,6 +33,26 @@ public class ReachableStatesAutomaton<LETTER,STATE> implements INestedWordAutoma
 	private final Set<STATE> m_initialStates = new HashSet<STATE>();
 	
 	private final DoubleDeckerWorklist doubleDeckerWorklist = new DoubleDeckerWorklist();
+	private final CecSplitWorklist cecSplitWorklist = new CecSplitWorklist();
+	
+	private final Map<STATE,Entry> m_State2Entry = new HashMap<STATE,Entry>();
+
+	private LinkedList<StateContainer> worklist;
+
+	private HashSet<STATE> visited; 
+	
+	private Map<STATE,Set<STATE>> m_Summaries = new HashMap<STATE,Set<STATE>>();
+	
+	private List<CommonEntriesComponent> m_AllCECs = new ArrayList<CommonEntriesComponent>();
+	
+	public void addSummary(STATE callPred, STATE returnSucc) {
+		Set<STATE> returnSuccs = m_Summaries.get(callPred);
+		if (returnSucc == null) {
+			returnSuccs = new HashSet<STATE>();
+			m_Summaries.put(callPred, returnSuccs);
+		}
+		returnSuccs.add(returnSucc);
+	}
 	
 	public ReachableStatesAutomaton(NestedWordAutomaton<LETTER,STATE> operand) {
 		this.m_Operand = operand;
@@ -42,6 +60,16 @@ public class ReachableStatesAutomaton<LETTER,STATE> implements INestedWordAutoma
 		m_CallAlphabet = operand.getCallAlphabet();
 		m_ReturnAlphabet = operand.getReturnAlphabet();
 		m_StateFactory = operand.getStateFactory();
+		addInitialStates(m_Operand.getInitialStates());
+		buildAllStates();
+		assert(worklist.isEmpty());
+		assert(doubleDeckerWorklist.isEmpty());
+		assert(cecSplitWorklist.isEmtpy());
+		assert(allStatesAreInTheirCec());
+		assert(cecSumConsistent());
+		for (CommonEntriesComponent cec : m_AllCECs) {
+			assert (occuringStatesAreConsistent(cec));
+		}
 	}
 	
 	public class DoubleDeckerWorklist {
@@ -68,6 +96,11 @@ public class ReachableStatesAutomaton<LETTER,STATE> implements INestedWordAutoma
 		
 		public Entry(STATE state) {
 			this.m_State = state;
+			m_State2Entry.put(state, this);
+		}
+		
+		public STATE getState() {
+			return m_State;
 		}
 	}
 	
@@ -78,33 +111,13 @@ public class ReachableStatesAutomaton<LETTER,STATE> implements INestedWordAutoma
 		final Set<STATE> m_ReturnOutCandidates;
 		final Map<STATE,Set<STATE>> m_BorderOut;
 		
-		public CommonEntriesComponent(Set<Entry> entries) {
+				
+		public CommonEntriesComponent(HashSet<Entry> entries, HashSet<STATE> downStates) {
 			this.m_Entries = entries;
-			this.m_DownStates = new HashSet<STATE>();
+			this.m_DownStates = downStates;
 			this.m_ReturnOutCandidates = new HashSet<STATE>();
 			this.m_BorderOut = new HashMap<STATE,Set<STATE>>();
-		}
-		
-		public CommonEntriesComponent(STATE state) {
-			Entry entry = new Entry(state);
-			this.m_Entries = new HashSet<Entry>(1);
-			this.m_Entries.add(entry);
-			this.m_DownStates = new HashSet<STATE>();
-			this.m_ReturnOutCandidates = new HashSet<STATE>();
-			this.m_BorderOut = new HashMap<STATE,Set<STATE>>();
-		}
-		
-		public CommonEntriesComponent(CommonEntriesComponent succCEC,
-				CommonEntriesComponent stateCec) {
-			this.m_Entries = new HashSet<Entry>();
-			this.m_Entries.addAll(succCEC.getEntries());
-			this.m_Entries.addAll(stateCec.getEntries());
-			this.m_DownStates = new HashSet<STATE>();
-			this.m_DownStates.addAll(succCEC.getDownStates());
-			this.m_DownStates.addAll(stateCec.getDownStates());
-			this.m_ReturnOutCandidates = new HashSet<STATE>();
-			this.m_BorderOut = new HashMap<STATE,Set<STATE>>();
-
+			m_AllCECs.add(this);
 		}
 
 		public Set<Entry> getEntries() {
@@ -160,72 +173,94 @@ public class ReachableStatesAutomaton<LETTER,STATE> implements INestedWordAutoma
 		}
 	}
 	
-	private void addState(STATE state) {
-		
-	}
-	
 	private void addInitialStates(Iterable<STATE> initialStates) {
 		for (STATE state : initialStates) {
 			this.m_initialStates.add(state);
-			CommonEntriesComponent cec = new CommonEntriesComponent(state);
+			Entry entry = new Entry(state);
+			HashSet<Entry> entries = new HashSet<Entry>(1);
+			entries.add(entry);
+			HashSet<STATE> downStates = new HashSet<STATE>();
+			downStates.add(getEmptyStackState());
+			CommonEntriesComponent cec = new CommonEntriesComponent(entries,downStates);
 			StateContainer sc = new StateContainer(state, cec);
 			m_States.put(state, sc);
 		}
 		
 	}
 	
-	private StateContainer addToCecOrConstructNewCEC(STATE state, CommonEntriesComponent cec) {
-		StateContainer sc = m_States.get(state);
-		if (sc == null) {
-			sc = new StateContainer(state, cec);
-			m_States.put(state, sc);
-		} else {
-			if (sc.getCommonEntriesComponent() != cec) {
-				updateCECs(state, cec, sc.getCommonEntriesComponent());
-			}
-		}
-		return sc;
-	}
 	
-	private StateContainer getStateContainerForEntry(STATE callSucc, STATE callPred) {
-		StateContainer sc = m_States.get(callSucc);
-		final CommonEntriesComponent resultCec;
-		if (sc == null) {
-			resultCec = new CommonEntriesComponent(callSucc);
-			sc = new StateContainer(callSucc, resultCec);
-			m_States.put(callSucc, sc);
-		} else {
-			if (true) { //cec contains entry TODO
-				resultCec = sc.getCommonEntriesComponent();
-			} else {
-				CommonEntriesComponent oldCec = sc.getCommonEntriesComponent();
-				Set<Entry> entries = oldCec.getEntries();
-				Set<Entry> newEntries = new HashSet<Entry>(entries);
-				newEntries.add(new Entry(callSucc));
-				resultCec = new CommonEntriesComponent(newEntries);
-				updateCECs(callSucc, resultCec, oldCec);
-			}
-		}
-		resultCec.addDownState(callPred);
-		return sc;
-	}
-	
-	private boolean stateCanNotHaveOutgoingCall(STATE state) {
+	private boolean candidateForOutgoingReturn(STATE state) {
 		return false;
 	}
 	
 	
+	private class CecSplitWorklist {
+		List<Object[]> m_worklist = new LinkedList<Object[]>();
+		
+		private boolean isEmtpy() {
+			return m_worklist.isEmpty();
+		}
+		
+		public void add(STATE state, CommonEntriesComponent cec, Set<Entry> entries, Set<STATE> downStates) {
+			Object[] elem = new Object[] { state, cec, entries, downStates };
+			m_worklist.add(elem);
+		}
+		
+		private void processFirst() {
+			Object[] elem = m_worklist.remove(0);
+			STATE state = (STATE) elem[0];
+			CommonEntriesComponent cec = (CommonEntriesComponent) elem[1]; 
+			Set<Entry> entries = (Set<Entry>) elem[2];
+			Set<STATE> downStates = (Set<STATE>) elem[3];
+			HashSet<STATE> splitStates = new HashSet<STATE>();
+			splitStates.add(state);
+			updateCECs(splitStates, cec, entries, downStates);
+		}
+		
+		public void processAll() {
+			while (!isEmtpy()) {
+				processFirst();
+			}
+		}
+	}
+
 	
 	
-	private void updateCECs(STATE splitStart, CommonEntriesComponent newCec, CommonEntriesComponent oldCec, Set<STATE> newDownStates) {
+	public static <E> boolean isSubset(Set<E> lhs, Set<E> rhs) {
+		for (E elem : lhs) {
+			if (!rhs.contains(elem)) {
+				return false;
+			}
+		}
+		return true;
+	}
+	
+	private CommonEntriesComponent updateCECs(Set<STATE> splitStarts, 
+			CommonEntriesComponent oldCec, Set<Entry> newEntries, Set<STATE> newDownStates) {
+		if (isSubset(newEntries, oldCec.getEntries())) {
+			assert (isSubset(newDownStates, oldCec.getDownStates()));
+			return oldCec;
+		}
+		
+		HashSet<Entry> entries = new HashSet<Entry>();
+		entries.addAll(oldCec.getEntries());
+		entries.addAll(newEntries);
+		HashSet<STATE> downStates = new HashSet<STATE>();
+		downStates.addAll(oldCec.getDownStates());
+		downStates.addAll(newDownStates);
+		CommonEntriesComponent result = new CommonEntriesComponent(entries, downStates);
+		
 		Set<STATE> visited = new HashSet<STATE>();
 		List<STATE> worklist = new LinkedList<STATE>();
-		worklist.add(splitStart);
+		for (STATE splitStart : splitStarts) {
+			assert(m_States.get(splitStart).getCommonEntriesComponent() == oldCec);
+			worklist.add(splitStart);
+		}
 		while (!worklist.isEmpty()) {
 			STATE state = worklist.get(0);
 			visited.add(state);
 			if (oldCec.getReturnOutCandidates().contains(state)) {
-				newCec.addReturnOutCandicate(state);
+				result.addReturnOutCandicate(state);
 				oldCec.removeReturnOutCandicate(state);
 				for(STATE down : newDownStates) {
 					doubleDeckerWorklist.enqueue(state, down);
@@ -233,13 +268,18 @@ public class ReachableStatesAutomaton<LETTER,STATE> implements INestedWordAutoma
 			}
 			if (oldCec.isBorderState(state)) {
 				Set<STATE> foreigners = oldCec.getForeigners(state);
-				newCec.m_BorderOut.put(state, foreigners);
+				result.m_BorderOut.put(state, foreigners);
 				oldCec.m_BorderOut.remove(state);
+				for (STATE foreigner : foreigners) {
+					StateContainer foreignerSC = m_States.get(foreigner);
+					CommonEntriesComponent foreignerCec = foreignerSC.getCommonEntriesComponent();
+					cecSplitWorklist.add(foreigner, foreignerCec, entries, downStates);
+				}
 			}
 			StateContainer stateSc = m_States.get(state);
-			stateSc.setCommonEntriesComponent(newCec);
+			stateSc.setCommonEntriesComponent(result);
 			oldCec.m_Size--;
-			newCec.m_Size++;
+			result.m_Size++;
 			
 			for (OutgoingInternalTransition<LETTER, STATE> trans : stateSc.internalSuccessors()) {
 				STATE succ = trans.getSucc();
@@ -277,6 +317,7 @@ public class ReachableStatesAutomaton<LETTER,STATE> implements INestedWordAutoma
 				}
 			}
 		}
+		return result;
 	}
 	
 	private Set<STATE> summarySuccs(STATE state) {
@@ -284,8 +325,8 @@ public class ReachableStatesAutomaton<LETTER,STATE> implements INestedWordAutoma
 	}
 	
 	private void buildAllStates() {
-		List<StateContainer> worklist = new LinkedList<StateContainer>();
-		Set<STATE> visited = new HashSet<STATE>();
+		worklist = new LinkedList<StateContainer>();
+		visited = new HashSet<STATE>();
 		
 		for (STATE state : this.getInitialStates()) {
 			worklist.add(m_States.get(state));
@@ -302,11 +343,23 @@ public class ReachableStatesAutomaton<LETTER,STATE> implements INestedWordAutoma
 				if (succSC == null) {
 					succSC = new StateContainer(succ, stateCec);
 					m_States.put(succ, succSC);
+					if (candidateForOutgoingReturn(succ)) {
+						stateCec.addReturnOutCandicate(succ);
+					}
 				} else {
 					CommonEntriesComponent succCEC = succSC.getCommonEntriesComponent();
 					if (stateCec != succCEC) {
-						succCEC = computeCec(state, stateCec, succ, succCEC);
-						
+						Set<Entry> newEntries = new HashSet<Entry>();
+						newEntries.addAll(stateCec.getEntries());
+						newEntries.removeAll(succCEC.getEntries());						
+						Set<STATE> newDownStates = new HashSet<STATE>();
+						newDownStates.addAll(stateCec.getDownStates());
+						newDownStates.removeAll(succCEC.getDownStates());
+						Set<STATE> splitStates = new HashSet<STATE>();
+						splitStates.add(succ);
+						updateCECs(splitStates, succCEC, newEntries, newDownStates);
+						stateCec.addBorderCrossing(state, succ);
+						cecSplitWorklist.processAll();
 					}
 				}
 				sc.addInternalOutgoing(trans);
@@ -318,129 +371,211 @@ public class ReachableStatesAutomaton<LETTER,STATE> implements INestedWordAutoma
 			
 			for (OutgoingCallTransition<LETTER, STATE> trans : m_Operand.callSuccessors(state)) {
 				STATE succ = trans.getSucc();
-				StateContainer succSC = getStateContainerForEntry(succ, state);
-				CommonEntriesComponent succCEC = succSC.getCommonEntriesComponent();
-				sc.addCallOutgoing(trans);
-				succSC.addCallIncoming(new IncomingCallTransition<LETTER, STATE>(state, trans.getLetter()));
-				addNewlyEnabledReturnTransitions(succCEC, state);
-				if (!visited.contains(succ)) {
-					worklist.add(succSC);
+				StateContainer succSC = m_States.get(succ);
+				HashSet<STATE> downStates = new HashSet<STATE>();
+				downStates.add(state);
+				if (succSC == null) {
+					Entry entry = new Entry(succ);
+					HashSet<Entry> entries = new HashSet<Entry>();
+					entries.add(entry);
+					CommonEntriesComponent succCEC = new CommonEntriesComponent(entries, downStates);
+					succSC = new StateContainer(succ, succCEC);
+					m_States.put(succ, succSC);
+					if (candidateForOutgoingReturn(succ)) {
+						stateCec.addReturnOutCandicate(succ);
+					}
+				} else {
+					CommonEntriesComponent succCEC = succSC.getCommonEntriesComponent();
+					Entry entry = m_State2Entry.get(succ);
+					if (succCEC.getEntries().contains(entry)) {
+						updateCECs(succCEC, downStates);
+					} else {
+						HashSet<Entry> entries = new HashSet<Entry>();
+						entries.add(entry);
+						downStates.removeAll(succCEC.getDownStates());
+						Set<STATE> splitStarts = new HashSet<STATE>();
+						splitStarts.add(succ);
+						updateCECs(splitStarts, succCEC, entries, downStates);
+						cecSplitWorklist.processAll();
+					}
+					sc.addCallOutgoing(trans);
+					succSC.addCallIncoming(new IncomingCallTransition<LETTER, STATE>(state, trans.getLetter()));
+					if (!visited.contains(succ)) {
+						worklist.add(succSC);
+					}
 				}
 			}
 
 			StateContainer stateSc = m_States.get(state);
 			CommonEntriesComponent stateCEC = stateSc.getCommonEntriesComponent();
-			//TODO: need copy to avoid concurModExcpetion
+			//TODO: need copy to avoid concurModExcpetion ???
 			for (STATE down : stateCEC.getDownStates()) {
 				StateContainer downSC = m_States.get(down);
-				CommonEntriesComponent downCec = downSC.getCommonEntriesComponent(); 
-				for (OutgoingReturnTransition<LETTER, STATE> trans : m_Operand.returnSuccessorsGivenHier(state, down)) {
-					STATE succ = trans.getSucc();
-					StateContainer succSC = addToCecOrConstructNewCEC(succ, downCec);
-					sc.addReturnOutgoing(trans);
-					succSC.addReturnIncoming(new IncomingReturnTransition<LETTER, STATE>(state, down, trans.getLetter()));
-					if (!visited.contains(succ)) {
-						worklist.add(succSC);
+				addReturnAndSuccessor(stateSc, downSC);
+			}
+			
+			while (!doubleDeckerWorklist.isEmpty()) {
+				DoubleDecker<STATE> doubleDecker = doubleDeckerWorklist.dequeue();
+				StateContainer upSC  = m_States.get(doubleDecker.getUp());
+				StateContainer downSC  = m_States.get(doubleDecker.getDown());
+				addReturnAndSuccessor(upSC, downSC);
+			}
+		}
+	}
+	
+	
+	
+	
+	private void updateCECs(CommonEntriesComponent startCec,
+			HashSet<STATE> downStates) {
+		List<CommonEntriesComponent> worklist = new LinkedList<CommonEntriesComponent>(); 
+		Set<CommonEntriesComponent> visitedCECs = new HashSet<CommonEntriesComponent>();
+		worklist.add(startCec);
+		while(!worklist.isEmpty()) {
+			CommonEntriesComponent cec = worklist.remove(0);
+			visitedCECs.add(cec);
+			HashSet<STATE> newdownStates = new HashSet<STATE>();
+			for (STATE down : newdownStates) {
+				if (!cec.getDownStates().contains(down)) {
+					newdownStates.add(down);
+				}
+			}
+			if(!newdownStates.isEmpty()) {
+				for (STATE state : cec.getReturnOutCandidates()) {
+					for (STATE down : newdownStates) {
+						doubleDeckerWorklist.enqueue(state, down);
 					}
 				}
-				
+				for (STATE resident : cec.m_BorderOut.keySet()) {
+					for (STATE foreigner : cec.m_BorderOut.get(resident)) {
+						CommonEntriesComponent foreignerCec = 
+								m_States.get(foreigner).getCommonEntriesComponent();
+						if (!visitedCECs.contains(foreignerCec)) {
+							worklist.add(foreignerCec);
+						}
+					}
+				}
 
 			}
-
-
 		}
-		
+	}
+
+	private void addReturnAndSuccessor(StateContainer stateSc, StateContainer downSc) {
+		STATE down = downSc.getState();
+		CommonEntriesComponent downCec = downSc.getCommonEntriesComponent();
+		for (OutgoingReturnTransition<LETTER, STATE> trans : stateSc.returnSuccessorsGivenHier(down)) {
+			STATE succ = trans.getSucc();
+			StateContainer succSC = m_States.get(succ);
+			if (succSC == null) {
+				succSC = new StateContainer(succ, downCec);
+				m_States.put(succ, succSC);
+				if (candidateForOutgoingReturn(succ)) {
+					downCec.addReturnOutCandicate(succ);
+				}
+			} else {
+				CommonEntriesComponent succCEC = succSC.getCommonEntriesComponent();
+				if (downCec != succCEC) {
+					Set<Entry> newEntries = new HashSet<Entry>();
+					newEntries.addAll(downCec.getEntries());
+					newEntries.removeAll(succCEC.getEntries());						
+					Set<STATE> newDownStates = new HashSet<STATE>();
+					newDownStates.addAll(downCec.getDownStates());
+					newDownStates.removeAll(succCEC.getDownStates());
+					Set<STATE> splitStates = new HashSet<STATE>();
+					splitStates.add(succ);
+					updateCECs(splitStates, succCEC, newEntries, newDownStates);
+					downCec.addBorderCrossing(down, succ);
+					cecSplitWorklist.processAll();
+				}
+			}
+			stateSc.addReturnOutgoing(trans);
+			succSC.addReturnIncoming(new IncomingReturnTransition<LETTER, STATE>(stateSc.getState(), down, trans.getLetter()));
+			if (!visited.contains(succ)) {
+				worklist.add(succSC);
+			}
+		}
 	}
 	
 
-	private void addNewlyEnabledReturnTransitions(
-			CommonEntriesComponent cec, STATE state) {
-		List<CommonEntriesComponent> worklist = new LinkedList<CommonEntriesComponent>(); 
-		Set<CommonEntriesComponent> visitedCECs = new HashSet<CommonEntriesComponent>();
-		
-		
-	}
+//	private void addNewlyEnabledReturnTransitions(
+//			CommonEntriesComponent cec, STATE state) {
+//		List<CommonEntriesComponent> worklist = new LinkedList<CommonEntriesComponent>(); 
+//		Set<CommonEntriesComponent> visitedCECs = new HashSet<CommonEntriesComponent>();
+//		
+//		
+//	}
 
-	private CommonEntriesComponent computeCec(STATE state, CommonEntriesComponent stateCec,
-			STATE succ, CommonEntriesComponent succCEC) {
-		if (succCEC == null) {
-			return stateCec;
-		} else if (succCEC == stateCec) {
-			return stateCec;
-		} else {
-			CommonEntriesComponent result = new CommonEntriesComponent(succCEC, stateCec);
-			Set<STATE> newDownStates = stateCec.getDownStates();
-			newDownStates.removeAll(succCEC.getDownStates());
-			updateCECs(succ, result, stateCec, newDownStates);
-			stateCec.addBorderCrossing(state, succ);
-			return result;
-		}
-	}
+//	private CommonEntriesComponent computeCec(STATE state, CommonEntriesComponent stateCec,
+//			STATE succ, CommonEntriesComponent succCEC) {
+//		if (succCEC == null) {
+//			return stateCec;
+//		} else if (succCEC == stateCec) {
+//			return stateCec;
+//		} else {
+//			CommonEntriesComponent result = new CommonEntriesComponent(succCEC, stateCec);
+//			Set<STATE> newDownStates = stateCec.getDownStates();
+//			newDownStates.removeAll(succCEC.getDownStates());
+//			updateCECs(succ, result, stateCec, newDownStates);
+//			stateCec.addBorderCrossing(state, succ);
+//			return result;
+//		}
+//	}
 
+	
 	@Override
 	public IRun<LETTER, STATE> acceptingRun() throws OperationCanceledException {
-		// TODO Auto-generated method stub
-		return null;
+		throw new UnsupportedOperationException();
 	}
 
 	@Override
 	public boolean accepts(Word<LETTER> word) {
-		// TODO Auto-generated method stub
-		return false;
+		throw new UnsupportedOperationException();
 	}
 
 	@Override
 	public int size() {
-		// TODO Auto-generated method stub
-		return 0;
+		return m_States.size();
 	}
 
 	@Override
 	public Collection<LETTER> getAlphabet() {
-		// TODO Auto-generated method stub
-		return null;
+		return m_InternalAlphabet;
 	}
 
 	@Override
 	public String sizeInformation() {
-		// TODO Auto-generated method stub
-		return null;
+		int states = m_States.size();
+		return states + " states.";
 	}
 
 	@Override
 	public Collection<LETTER> getInternalAlphabet() {
-		// TODO Auto-generated method stub
-		return null;
+		return m_InternalAlphabet;
 	}
 
 	@Override
 	public Collection<LETTER> getCallAlphabet() {
-		// TODO Auto-generated method stub
-		return null;
+		return m_CallAlphabet;
 	}
 
 	@Override
 	public Collection<LETTER> getReturnAlphabet() {
-		// TODO Auto-generated method stub
-		return null;
+		return m_ReturnAlphabet;
 	}
 
 	@Override
 	public StateFactory<STATE> getStateFactory() {
-		// TODO Auto-generated method stub
-		return null;
+		return m_StateFactory;
 	}
 
 	@Override
 	public Collection<STATE> getStates() {
-		// TODO Auto-generated method stub
-		return null;
+		return m_States.keySet();
 	}
 
 	@Override
 	public Collection<STATE> getInitialStates() {
-		// TODO Auto-generated method stub
-		return null;
+		return m_initialStates;
 	}
 
 	@Override
@@ -457,171 +592,232 @@ public class ReachableStatesAutomaton<LETTER,STATE> implements INestedWordAutoma
 
 	@Override
 	public boolean isFinal(STATE state) {
-		// TODO Auto-generated method stub
-		return false;
+		throw new UnsupportedOperationException();
 	}
 
 	@Override
 	public void addState(boolean isInitial, boolean isFinal, STATE state) {
-		// TODO Auto-generated method stub
-		
+		throw new UnsupportedOperationException();
 	}
 
 	@Override
 	public void removeState(STATE state) {
-		// TODO Auto-generated method stub
-		
+		throw new UnsupportedOperationException();
 	}
 
 	@Override
 	public STATE getEmptyStackState() {
-		// TODO Auto-generated method stub
-		return null;
+		return m_Operand.getEmptyStackState();
 	}
 
 	@Override
 	public Collection<LETTER> lettersInternal(STATE state) {
-		// TODO Auto-generated method stub
-		return null;
+		return m_States.get(state).lettersInternal();
 	}
 
 	@Override
 	public Collection<LETTER> lettersCall(STATE state) {
-		// TODO Auto-generated method stub
-		return null;
+		return m_States.get(state).lettersCall();
 	}
 
 	@Override
 	public Collection<LETTER> lettersReturn(STATE state) {
-		// TODO Auto-generated method stub
-		return null;
+		return m_States.get(state).lettersReturn();
 	}
 
 	@Override
 	public Collection<LETTER> lettersInternalIncoming(STATE state) {
-		// TODO Auto-generated method stub
-		return null;
+		return m_States.get(state).lettersInternalIncoming();
 	}
 
 	@Override
 	public Collection<LETTER> lettersCallIncoming(STATE state) {
-		// TODO Auto-generated method stub
-		return null;
+		return m_States.get(state).lettersCallIncoming();
 	}
 
 	@Override
 	public Collection<LETTER> lettersReturnIncoming(STATE state) {
-		// TODO Auto-generated method stub
-		return null;
+		return m_States.get(state).lettersReturnIncoming();
 	}
 
 	@Override
 	public Collection<LETTER> lettersReturnSummary(STATE state) {
-		// TODO Auto-generated method stub
-		return null;
+		throw new UnsupportedOperationException();
 	}
 
 	@Override
 	public Iterable<STATE> succInternal(STATE state, LETTER letter) {
-		// TODO Auto-generated method stub
-		return null;
+		return m_States.get(state).succInternal(letter);
 	}
 
 	@Override
 	public Iterable<STATE> succCall(STATE state, LETTER letter) {
-		// TODO Auto-generated method stub
-		return null;
+		return m_States.get(state).succCall(letter);
 	}
 
 	@Override
 	public Iterable<STATE> hierPred(STATE state, LETTER letter) {
-		// TODO Auto-generated method stub
-		return null;
+		return m_States.get(state).hierPred(letter);
 	}
 
 	@Override
 	public Iterable<STATE> succReturn(STATE state, STATE hier, LETTER letter) {
-		// TODO Auto-generated method stub
-		return null;
+		return m_States.get(state).succReturn(hier, letter);
 	}
 
 	@Override
 	public Iterable<STATE> predInternal(STATE state, LETTER letter) {
-		// TODO Auto-generated method stub
-		return null;
+		return m_States.get(state).predInternal(letter);
 	}
 
 	@Override
 	public Iterable<STATE> predCall(STATE state, LETTER letter) {
-		// TODO Auto-generated method stub
-		return null;
+		return m_States.get(state).predCall(letter);
 	}
 
 	@Override
 	public Iterable<STATE> predReturnLin(STATE state, LETTER letter, STATE hier) {
-		// TODO Auto-generated method stub
-		return null;
+		return m_States.get(state).predReturnLin(letter, hier);
 	}
 
 	@Override
 	public Iterable<STATE> predReturnHier(STATE state, LETTER letter) {
-		// TODO Auto-generated method stub
-		return null;
+		return m_States.get(state).predReturnHier(letter);
 	}
 
 	@Override
 	public void addInternalTransition(STATE pred, LETTER letter, STATE succ) {
-		// TODO Auto-generated method stub
-		
+		throw new UnsupportedOperationException();
 	}
 
 	@Override
 	public void addCallTransition(STATE pred, LETTER letter, STATE succ) {
-		// TODO Auto-generated method stub
-		
+		throw new UnsupportedOperationException();
 	}
 
 	@Override
 	public void addReturnTransition(STATE pred, STATE hier, LETTER letter,
 			STATE succ) {
-		// TODO Auto-generated method stub
-		
+		throw new UnsupportedOperationException();
 	}
 
 	@Override
 	public boolean finalIsTrap() {
-		// TODO Auto-generated method stub
-		return false;
+		throw new UnsupportedOperationException();
 	}
 
 	@Override
 	public boolean isDeterministic() {
-		// TODO Auto-generated method stub
-		return false;
+		throw new UnsupportedOperationException();
 	}
 
 	@Override
 	public boolean isTotal() {
-		// TODO Auto-generated method stub
-		return false;
+		throw new UnsupportedOperationException();
 	}
 
 	@Override
 	public Iterable<SummaryReturnTransition<LETTER, STATE>> getSummaryReturnTransitions(
 			LETTER letter, STATE hier) {
-		// TODO Auto-generated method stub
-		return null;
+		throw new UnsupportedOperationException();
 	}
 
 	@Override
 	public Iterable<IncomingReturnTransition<LETTER, STATE>> getIncomingReturnTransitions(
 			LETTER letter, STATE hier) {
-		// TODO Auto-generated method stub
-		return null;
+		return m_States.get(hier).getIncomingReturnTransitions(letter);
 	}
 	
 	
-	
+	@Override
+	public Iterable<IncomingInternalTransition<LETTER, STATE>> internalPredecessors(
+			LETTER letter, STATE succ) {
+		return m_States.get(succ).internalPredecessors(letter);
+	}
+
+	@Override
+	public Iterable<IncomingInternalTransition<LETTER, STATE>> internalPredecessors(
+			STATE succ) {
+		return m_States.get(succ).internalPredecessors();
+	}
+
+	@Override
+	public Iterable<IncomingCallTransition<LETTER, STATE>> callPredecessors(
+			LETTER letter, STATE succ) {
+		return m_States.get(succ).callPredecessors(letter);
+	}
+
+	@Override
+	public Iterable<IncomingCallTransition<LETTER, STATE>> callPredecessors(
+			STATE succ) {
+		return m_States.get(succ).callPredecessors();
+	}
+
+	@Override
+	public Iterable<OutgoingInternalTransition<LETTER, STATE>> internalSuccessors(
+			STATE state, LETTER letter) {
+		return m_States.get(state).internalSuccessors(letter);
+	}
+
+	@Override
+	public Iterable<OutgoingInternalTransition<LETTER, STATE>> internalSuccessors(
+			STATE state) {
+		return m_States.get(state).internalSuccessors();
+	}
+
+	@Override
+	public Iterable<OutgoingCallTransition<LETTER, STATE>> callSuccessors(
+			STATE state, LETTER letter) {
+		return m_States.get(state).callSuccessors(letter);
+	}
+
+	@Override
+	public Iterable<OutgoingCallTransition<LETTER, STATE>> callSuccessors(
+			STATE state) {
+		return m_States.get(state).callSuccessors();
+	}
+
+	@Override
+	public Iterable<IncomingReturnTransition<LETTER, STATE>> returnPredecessors(
+			STATE hier, LETTER letter, STATE succ) {
+		return m_States.get(succ).returnPredecessors(hier, letter);
+	}
+
+	@Override
+	public Iterable<IncomingReturnTransition<LETTER, STATE>> returnPredecessors(
+			LETTER letter, STATE succ) {
+		return m_States.get(succ).getIncomingReturnTransitions(letter);
+	}
+
+	@Override
+	public Iterable<IncomingReturnTransition<LETTER, STATE>> returnPredecessors(
+			STATE succ) {
+		return m_States.get(succ).returnPredecessors();
+	}
+
+	@Override
+	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSucccessors(
+			STATE state, STATE hier, LETTER letter) {
+		return m_States.get(state).returnSucccessors(hier, letter);
+	}
+
+	@Override
+	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessors(
+			STATE state, LETTER letter) {
+		return m_States.get(state).returnSuccessors(letter);
+	}
+
+	@Override
+	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessors(
+			STATE state) {
+		return m_States.get(state).returnSuccessors();
+	}
+
+	@Override
+	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessorsGivenHier(
+			STATE state, STATE hier) {
+		return m_States.get(state).returnSuccessorsGivenHier(hier);
+	}
 	
 	
 	
@@ -633,6 +829,8 @@ public class ReachableStatesAutomaton<LETTER,STATE> implements INestedWordAutoma
 	 * @param <STATE>
 	 */
 	public class StateContainer {
+		
+		
 		private final STATE m_State;
 		
 		private CommonEntriesComponent cec;
@@ -711,31 +909,147 @@ public class ReachableStatesAutomaton<LETTER,STATE> implements INestedWordAutoma
 			return m_State;
 		}
 		
+		boolean isEntry() {
+			for (Entry entry : this.cec.getEntries()) {
+				if (entry.getState().equals(this)) {
+					return true;
+				}
+			}
+			return false;
+		}
+		
 		
 		
 		public void addInternalOutgoing(OutgoingInternalTransition<LETTER, STATE> internalOutgoing) {
-			
+			LETTER letter = internalOutgoing.getLetter();
+			STATE succ = internalOutgoing.getSucc();
+			if (m_InternalOut == null) {
+				m_InternalOut = new HashMap<LETTER, Set<STATE>>();
+			}
+			Set<STATE> succs = m_InternalOut.get(letter);
+			if (succs == null) {
+				succs = new HashSet<STATE>();
+				m_InternalOut.put(letter, succs);
+			}
+			succs.add(succ);
 		}
 		
 		public void addInternalIncoming(IncomingInternalTransition<LETTER, STATE> internalIncoming) {
-			
+			LETTER letter = internalIncoming.getLetter();
+			STATE pred = internalIncoming.getPred();
+			if (m_InternalIn == null) {
+				m_InternalIn = new HashMap<LETTER, Set<STATE>>();
+			}
+			Set<STATE> preds = m_InternalIn.get(letter);
+			if (preds == null) {
+				preds = new HashSet<STATE>();
+				m_InternalIn.put(letter,preds);
+			}
+			preds.add(pred);
 		}
 		
 		public void addCallOutgoing(OutgoingCallTransition<LETTER, STATE> callOutgoing) {
-			
+			LETTER letter = callOutgoing.getLetter();
+			STATE succ = callOutgoing.getSucc();
+			if (m_CallOut == null) {
+				m_CallOut = new HashMap<LETTER, Set<STATE>>();
+			}
+			Set<STATE> succs = m_CallOut.get(letter);
+			if (succs == null) {
+				succs = new HashSet<STATE>();
+				m_CallOut.put(letter,succs);
+			}
+			succs.add(succ);
 		}
 		
 		public void addCallIncoming(IncomingCallTransition<LETTER, STATE> callIncoming) {
-			
+			LETTER letter = callIncoming.getLetter();
+			STATE pred = callIncoming.getPred();
+			if (m_CallIn == null) {
+				m_CallIn = new HashMap<LETTER, Set<STATE>>();
+			}
+			Set<STATE> preds = m_CallIn.get(letter);
+			if (preds == null) {
+				preds = new HashSet<STATE>();
+				m_CallIn.put(letter,preds);
+			}
+			preds.add(pred);
 		}
 		
 		public void addReturnOutgoing(OutgoingReturnTransition<LETTER, STATE> returnOutgoing) {
-			
+			LETTER letter = returnOutgoing.getLetter();
+			STATE hier = returnOutgoing.getHierPred();
+			STATE succ = returnOutgoing.getSucc();
+			if (m_ReturnOut == null) {
+				m_ReturnOut = new HashMap<LETTER, Map<STATE, Set<STATE>>>();
+			}
+			Map<STATE, Set<STATE>> hier2succs = m_ReturnOut.get(letter);
+			if (hier2succs == null) {
+				hier2succs = new HashMap<STATE, Set<STATE>>();
+				m_ReturnOut.put(letter, hier2succs);
+			}
+			Set<STATE> succs = hier2succs.get(hier);
+			if (succs == null) {
+				succs = new HashSet<STATE>();
+				hier2succs.put(hier, succs);
+			}
+			succs.add(succ);
 		}
 		
 		public void addReturnIncoming(IncomingReturnTransition<LETTER, STATE> returnIncoming) {
-			
+			LETTER letter = returnIncoming.getLetter();
+			STATE hier = returnIncoming.getHierPred();
+			STATE pred = returnIncoming.getLinPred();
+			if (m_ReturnIn == null) {
+				m_ReturnIn = new HashMap<LETTER, Map<STATE, Set<STATE>>>();
+			}
+			Map<STATE, Set<STATE>> hier2preds = m_ReturnIn.get(letter);
+			if (hier2preds == null) {
+				hier2preds = new HashMap<STATE, Set<STATE>>();
+				m_ReturnIn.put(letter, hier2preds);
+			}
+			Set<STATE> preds = hier2preds.get(hier);
+			if (preds == null) {
+				preds = new HashSet<STATE>();
+				hier2preds.put(hier, preds);
+			}
+			preds.add(pred);
 		}
+		
+
+//		@Override
+//		public void addReturnTransition(STATE pred, STATE hier, LETTER letter, STATE succ) {
+//			assert contains(pred);
+//			assert contains(hier);
+//			assert contains(succ);
+//
+//			
+//			Map<LETTER, Map<STATE, Set<STATE>>> letter2pred2succs = m_ReturnSummary.get(hier);
+//			if (letter2pred2succs == null) {
+//				letter2pred2succs = new HashMap<LETTER, Map<STATE, Set<STATE>>>();
+//				m_ReturnSummary.put(hier, letter2pred2succs);
+//			}
+//			Map<STATE, Set<STATE>> pred2succs = letter2pred2succs.get(letter);
+//			if (pred2succs == null) {
+//				pred2succs = new HashMap<STATE, Set<STATE>>();
+//				letter2pred2succs.put(letter, pred2succs);
+//			}
+//			Set<STATE> succS = pred2succs.get(pred);
+//			if (succS == null) {
+//				succS = new HashSet<STATE>();
+//				pred2succs.put(pred, succS);
+//			}
+//			succS.add(succ);
+//			// assert checkTransitionsStoredConsistent();
+//		}
+		
+		
+		
+
+		
+
+		
+
 
 		
 		
@@ -780,96 +1094,79 @@ public class ReachableStatesAutomaton<LETTER,STATE> implements INestedWordAutoma
 //			 Map<LETTER, Map<STATE, Set<STATE>>> map = m_ReturnSummary.get(state);
 //			return map == null ? m_EmptySetOfLetters : map.keySet();
 //		}
-	//	
-	//	
-//		@Override
-//		public Collection<STATE> succInternal(STATE state, LETTER letter) {
-//			assert contains(state);
-//			Map<LETTER, Set<STATE>> map = m_InternalOut.get(state);
-//			if (map == null) {
-//				return m_EmptySetOfStates;
-//			}
-//			Set<STATE> result = map.get(letter);
-//			return result == null ? m_EmptySetOfStates : result;
-//		}
-	//	
-//		@Override
-//		public Collection<STATE> predInternal(STATE state, LETTER letter) {
-//			assert contains(state);
-//			Map<LETTER, Set<STATE>> map = m_InternalIn.get(state);
-//			if (map == null) {
-//				return m_EmptySetOfStates;
-//			}
-//			Set<STATE> result = map.get(letter);
-//			return result == null ? m_EmptySetOfStates : result;
-//		}
-	//	
-//		@Override
-//		public Collection<STATE> succCall(STATE state, LETTER letter) {
-//			assert contains(state);
-//			Map<LETTER, Set<STATE>> map = m_CallOut.get(state);
-//			if (map == null) {
-//				return m_EmptySetOfStates;
-//			}
-//			Set<STATE> result = map.get(letter);
-//			return result == null ? m_EmptySetOfStates : result;
-//		}
-	//	
-//		@Override
-//		public Collection<STATE> predCall(STATE state, LETTER letter) {
-//			assert contains(state);
-//			Map<LETTER, Set<STATE>> map = m_CallIn.get(state);
-//			if (map == null) {
-//				return m_EmptySetOfStates;
-//			}
-//			Set<STATE> result = map.get(letter);
-//			return result == null ? m_EmptySetOfStates : result;
-//		}
-	//	
-//		@Override
-//		public Collection<STATE> hierPred(STATE state, LETTER letter) {
-//			assert contains(state);
-//			Map<LETTER, Map<STATE, Set<STATE>>> map = m_ReturnOut.get(state);
-//			if (map == null) {
-//				return m_EmptySetOfStates;
-//			}
-//			 Map<STATE, Set<STATE>> hier2succs = map.get(letter);
-//			return hier2succs == null ? m_EmptySetOfStates : hier2succs.keySet();
-//		}
-	//	
-//		@Override
-//		public Collection<STATE> succReturn(STATE state, STATE hier, LETTER letter) {
-//			assert contains(state);
-//			assert contains(hier);
-//			Map<LETTER, Map<STATE, Set<STATE>>> map = m_ReturnOut.get(state);
-//			if (map == null) {
-//				return m_EmptySetOfStates;
-//			}
-//			Map<STATE, Set<STATE>> hier2succs = map.get(letter);
-//			if (hier2succs == null) {
-//				return m_EmptySetOfStates;
-//			}
-//			Set<STATE> result = hier2succs.get(hier);
-//			return result == null ? m_EmptySetOfStates : result;
-//		}
-	//	
-//		@Override
-//		public Collection<STATE> predReturnLin(STATE state, LETTER letter, STATE hier) {
-//			assert contains(state);
-//			assert contains(hier);
-//			Map<LETTER, Map<STATE, Set<STATE>>> letter2hier2preds  = m_ReturnIn.get(state);
-//			if (letter2hier2preds == null) {
-//				return m_EmptySetOfStates;
-//			}
-//			Map<STATE, Set<STATE>> hier2preds = letter2hier2preds.get(letter);
-//			if (hier2preds == null) {
-//				return m_EmptySetOfStates;
-//			}
-//			Set<STATE> result = hier2preds.get(hier);
-//			return result == null ? m_EmptySetOfStates : result;
-//		}
-	//	
-//		@Override
+		
+		
+		public Collection<STATE> succInternal(LETTER letter) {
+			Map<LETTER, Set<STATE>> map = m_InternalOut;
+			if (map == null) {
+				return m_EmptySetOfStates;
+			}
+			Set<STATE> result = map.get(letter);
+			return result == null ? m_EmptySetOfStates : result;
+		}
+		
+		public Collection<STATE> predInternal(LETTER letter) {
+			Map<LETTER, Set<STATE>> map = m_InternalIn;
+			if (map == null) {
+				return m_EmptySetOfStates;
+			}
+			Set<STATE> result = map.get(letter);
+			return result == null ? m_EmptySetOfStates : result;
+		}
+		
+		public Collection<STATE> succCall(LETTER letter) {
+			Map<LETTER, Set<STATE>> map = m_CallOut;
+			if (map == null) {
+				return m_EmptySetOfStates;
+			}
+			Set<STATE> result = map.get(letter);
+			return result == null ? m_EmptySetOfStates : result;
+		}
+		
+		public Collection<STATE> predCall(LETTER letter) {
+			Map<LETTER, Set<STATE>> map = m_CallIn;
+			if (map == null) {
+				return m_EmptySetOfStates;
+			}
+			Set<STATE> result = map.get(letter);
+			return result == null ? m_EmptySetOfStates : result;
+		}
+		
+		public Collection<STATE> hierPred(LETTER letter) {
+			Map<LETTER, Map<STATE, Set<STATE>>> map = m_ReturnOut;
+			if (map == null) {
+				return m_EmptySetOfStates;
+			}
+			 Map<STATE, Set<STATE>> hier2succs = map.get(letter);
+			return hier2succs == null ? m_EmptySetOfStates : hier2succs.keySet();
+		}
+		
+		public Collection<STATE> succReturn(STATE hier, LETTER letter) {
+			Map<LETTER, Map<STATE, Set<STATE>>> map = m_ReturnOut;
+			if (map == null) {
+				return m_EmptySetOfStates;
+			}
+			Map<STATE, Set<STATE>> hier2succs = map.get(letter);
+			if (hier2succs == null) {
+				return m_EmptySetOfStates;
+			}
+			Set<STATE> result = hier2succs.get(hier);
+			return result == null ? m_EmptySetOfStates : result;
+		}
+		
+		public Collection<STATE> predReturnLin(LETTER letter, STATE hier) {
+			Map<LETTER, Map<STATE, Set<STATE>>> letter2hier2preds  = m_ReturnIn;
+			if (letter2hier2preds == null) {
+				return m_EmptySetOfStates;
+			}
+			Map<STATE, Set<STATE>> hier2preds = letter2hier2preds.get(letter);
+			if (hier2preds == null) {
+				return m_EmptySetOfStates;
+			}
+			Set<STATE> result = hier2preds.get(hier);
+			return result == null ? m_EmptySetOfStates : result;
+		}
+		
 		public Collection<STATE> predReturnHier(LETTER letter) {
 			Map<LETTER, Map<STATE, Set<STATE>>> letter2hier2preds  = m_ReturnIn;
 			if (letter2hier2preds == null) {
@@ -909,31 +1206,31 @@ public class ReachableStatesAutomaton<LETTER,STATE> implements INestedWordAutoma
 //		}
 	//	
 	//	
-//		@Override
-//		public Iterable<IncomingReturnTransition<LETTER, STATE>> 
-//							getIncomingReturnTransitions(LETTER letter, STATE succ) {
-//			Set<IncomingReturnTransition<LETTER, STATE>> result = 
-//					new HashSet<IncomingReturnTransition<LETTER, STATE>>();
-//			Map<LETTER, Map<STATE, Set<STATE>>> letter2hier2pred = 
-//					m_ReturnIn.get(succ);
-//			if (letter2hier2pred == null) {
-//				return result;
-//			}
-//			Map<STATE, Set<STATE>> hier2pred = letter2hier2pred.get(letter);
-//			if (hier2pred == null) {
-//				return result;
-//			}
-//			for (STATE hier : hier2pred.keySet()) {
-//				if (hier2pred.get(hier) != null) {
-//					for (STATE pred : hier2pred.get(hier)) {
-//						IncomingReturnTransition<LETTER, STATE> srt = 
-//						new IncomingReturnTransition<LETTER, STATE>(pred, hier, letter);
-//					result.add(srt);
-//					}
-//				}
-//			}
-//			return result;
-//		}
+
+		public Iterable<IncomingReturnTransition<LETTER, STATE>> 
+							getIncomingReturnTransitions(LETTER letter) {
+			Set<IncomingReturnTransition<LETTER, STATE>> result = 
+					new HashSet<IncomingReturnTransition<LETTER, STATE>>();
+			Map<LETTER, Map<STATE, Set<STATE>>> letter2hier2pred = 
+					m_ReturnIn;
+			if (letter2hier2pred == null) {
+				return result;
+			}
+			Map<STATE, Set<STATE>> hier2pred = letter2hier2pred.get(letter);
+			if (hier2pred == null) {
+				return result;
+			}
+			for (STATE hier : hier2pred.keySet()) {
+				if (hier2pred.get(hier) != null) {
+					for (STATE pred : hier2pred.get(hier)) {
+						IncomingReturnTransition<LETTER, STATE> srt = 
+						new IncomingReturnTransition<LETTER, STATE>(pred, hier, letter);
+					result.add(srt);
+					}
+				}
+			}
+			return result;
+		}
 		
 		
 		
@@ -1055,120 +1352,119 @@ public class ReachableStatesAutomaton<LETTER,STATE> implements INestedWordAutoma
 		
 		
 		
-//		public Iterable<IncomingCallTransition<LETTER, STATE>> callPredecessors(
-//				final LETTER letter, final STATE succ) {
-//			return new Iterable<IncomingCallTransition<LETTER, STATE>>() {
-//				@Override
-//				public Iterator<IncomingCallTransition<LETTER, STATE>> iterator() {
-//					Iterator<IncomingCallTransition<LETTER, STATE>> iterator = 
-//							new Iterator<IncomingCallTransition<LETTER, STATE>>() {
-//						Iterator<STATE> m_Iterator;
-//						{
-//							Map<LETTER, Set<STATE>> letter2pred = m_CallIn.get(succ);
-//							if (letter2pred != null) {
-//								if (letter2pred.get(letter) != null) {
-//									m_Iterator = letter2pred.get(letter).iterator();
-//								} else {
-//									m_Iterator = null;
-//								}
-//							} else {
-//								m_Iterator = null;
-//							}
-//						}
-	//
-//						@Override
-//						public boolean hasNext() {
-//							return m_Iterator == null || m_Iterator.hasNext();
-//						}
-	//
-//						@Override
-//						public IncomingCallTransition<LETTER, STATE> next() {
-//							if (m_Iterator == null) {
-//								throw new NoSuchElementException();
-//							} else {
-//								STATE pred = m_Iterator.next(); 
-//								return new IncomingCallTransition<LETTER, STATE>(pred, letter);
-//							}
-//						}
-	//
-//						@Override
-//						public void remove() {
-//							throw new UnsupportedOperationException();
-//						}
-//					};
-//					return iterator;
-//				}
-//			};
-//		}
-	//	
-	//	
-	//	
-//		public Iterable<IncomingCallTransition<LETTER, STATE>> callPredecessors(
-//				final STATE succ) {
-//			return new Iterable<IncomingCallTransition<LETTER, STATE>>() {
-//				/**
-//				 * Iterates over all IncomingCallTransition of succ.
-//				 * Iterates over all incoming call letters and uses the 
-//				 * iterators returned by callPredecessors(letter, succ)
-//				 */
-//				@Override
-//				public Iterator<IncomingCallTransition<LETTER, STATE>> iterator() {
-//					Iterator<IncomingCallTransition<LETTER, STATE>> iterator = 
-//							new Iterator<IncomingCallTransition<LETTER, STATE>>() {
-//						Iterator<LETTER> m_LetterIterator;
-//						LETTER m_CurrentLetter;
-//						Iterator<IncomingCallTransition<LETTER, STATE>> m_CurrentIterator;
-//						{
-//							m_LetterIterator = lettersCallIncoming(succ).iterator();
-//							nextLetter();
-//						}
-	//
-//						private void nextLetter() {
-//							if (m_LetterIterator.hasNext()) {
-//								do {
-//									m_CurrentLetter = m_LetterIterator.next();
-//									m_CurrentIterator = callPredecessors(
-//											m_CurrentLetter, succ).iterator();
-//								} while (!m_CurrentIterator.hasNext()
-//										&& m_LetterIterator.hasNext());
-//								if (!m_CurrentIterator.hasNext()) {
-//									m_CurrentLetter = null;
-//									m_CurrentIterator = null;
-//								}
-//							} else {
-//								m_CurrentLetter = null;
-//								m_CurrentIterator = null;
-//							}
-//						}
-	//
-//						@Override
-//						public boolean hasNext() {
-//							return m_CurrentLetter != null;
-//						}
-	//
-//						@Override
-//						public IncomingCallTransition<LETTER, STATE> next() {
-//							if (m_CurrentLetter == null) {
-//								throw new NoSuchElementException();
-//							} else {
-//								IncomingCallTransition<LETTER, STATE> result = 
-//										m_CurrentIterator.next();
-//								if (!m_CurrentIterator.hasNext()) {
-//									nextLetter();
-//								}
-//								return result;
-//							}
-//						}
-	//
-//						@Override
-//						public void remove() {
-//							throw new UnsupportedOperationException();
-//						}
-//					};
-//					return iterator;
-//				}
-//			};
-//		}
+		public Iterable<IncomingCallTransition<LETTER, STATE>> callPredecessors(
+				final LETTER letter) {
+			return new Iterable<IncomingCallTransition<LETTER, STATE>>() {
+				@Override
+				public Iterator<IncomingCallTransition<LETTER, STATE>> iterator() {
+					Iterator<IncomingCallTransition<LETTER, STATE>> iterator = 
+							new Iterator<IncomingCallTransition<LETTER, STATE>>() {
+						Iterator<STATE> m_Iterator;
+						{
+							Map<LETTER, Set<STATE>> letter2pred = m_CallIn;
+							if (letter2pred != null) {
+								if (letter2pred.get(letter) != null) {
+									m_Iterator = letter2pred.get(letter).iterator();
+								} else {
+									m_Iterator = null;
+								}
+							} else {
+								m_Iterator = null;
+							}
+						}
+	
+						@Override
+						public boolean hasNext() {
+							return m_Iterator == null || m_Iterator.hasNext();
+						}
+	
+						@Override
+						public IncomingCallTransition<LETTER, STATE> next() {
+							if (m_Iterator == null) {
+								throw new NoSuchElementException();
+							} else {
+								STATE pred = m_Iterator.next(); 
+								return new IncomingCallTransition<LETTER, STATE>(pred, letter);
+							}
+						}
+	
+						@Override
+						public void remove() {
+							throw new UnsupportedOperationException();
+						}
+					};
+					return iterator;
+				}
+			};
+		}
+		
+		
+		
+		public Iterable<IncomingCallTransition<LETTER, STATE>> callPredecessors() {
+			return new Iterable<IncomingCallTransition<LETTER, STATE>>() {
+				/**
+				 * Iterates over all IncomingCallTransition of succ.
+				 * Iterates over all incoming call letters and uses the 
+				 * iterators returned by callPredecessors(letter, succ)
+				 */
+				@Override
+				public Iterator<IncomingCallTransition<LETTER, STATE>> iterator() {
+					Iterator<IncomingCallTransition<LETTER, STATE>> iterator = 
+							new Iterator<IncomingCallTransition<LETTER, STATE>>() {
+						Iterator<LETTER> m_LetterIterator;
+						LETTER m_CurrentLetter;
+						Iterator<IncomingCallTransition<LETTER, STATE>> m_CurrentIterator;
+						{
+							m_LetterIterator = lettersCallIncoming().iterator();
+							nextLetter();
+						}
+	
+						private void nextLetter() {
+							if (m_LetterIterator.hasNext()) {
+								do {
+									m_CurrentLetter = m_LetterIterator.next();
+									m_CurrentIterator = callPredecessors(
+											m_CurrentLetter).iterator();
+								} while (!m_CurrentIterator.hasNext()
+										&& m_LetterIterator.hasNext());
+								if (!m_CurrentIterator.hasNext()) {
+									m_CurrentLetter = null;
+									m_CurrentIterator = null;
+								}
+							} else {
+								m_CurrentLetter = null;
+								m_CurrentIterator = null;
+							}
+						}
+	
+						@Override
+						public boolean hasNext() {
+							return m_CurrentLetter != null;
+						}
+	
+						@Override
+						public IncomingCallTransition<LETTER, STATE> next() {
+							if (m_CurrentLetter == null) {
+								throw new NoSuchElementException();
+							} else {
+								IncomingCallTransition<LETTER, STATE> result = 
+										m_CurrentIterator.next();
+								if (!m_CurrentIterator.hasNext()) {
+									nextLetter();
+								}
+								return result;
+							}
+						}
+	
+						@Override
+						public void remove() {
+							throw new UnsupportedOperationException();
+						}
+					};
+					return iterator;
+				}
+			};
+		}
 		
 		
 		
@@ -1477,380 +1773,542 @@ public class ReachableStatesAutomaton<LETTER,STATE> implements INestedWordAutoma
 		
 		
 		
-//		public Iterable<OutgoingCallTransition<LETTER, STATE>> callSuccessors(
-//				final STATE state, final LETTER letter) {
-//			return new Iterable<OutgoingCallTransition<LETTER, STATE>>() {
-//				@Override
-//				public Iterator<OutgoingCallTransition<LETTER, STATE>> iterator() {
-//					Iterator<OutgoingCallTransition<LETTER, STATE>> iterator = 
-//							new Iterator<OutgoingCallTransition<LETTER, STATE>>() {
-//						Iterator<STATE> m_Iterator;
-//						{
-//							Map<LETTER, Set<STATE>> letter2succ = m_CallOut.get(state);
-//							if (letter2succ != null) {
-//								if (letter2succ.get(letter) != null) {
-//									m_Iterator = letter2succ.get(letter).iterator();
-//								} else {
-//									m_Iterator = null;
-//								}
-//							} else {
-//								m_Iterator = null;
-//							}
-//						}
-	//
-//						@Override
-//						public boolean hasNext() {
-//							return m_Iterator == null || m_Iterator.hasNext();
-//						}
-	//
-//						@Override
-//						public OutgoingCallTransition<LETTER, STATE> next() {
-//							if (m_Iterator == null) {
-//								throw new NoSuchElementException();
-//							} else {
-//								STATE succ = m_Iterator.next(); 
-//								return new OutgoingCallTransition<LETTER, STATE>(letter, succ);
-//							}
-//						}
-	//
-//						@Override
-//						public void remove() {
-//							throw new UnsupportedOperationException();
-//						}
-//					};
-//					return iterator;
-//				}
-//			};
-//		}
-	//	
-//		public Iterable<OutgoingCallTransition<LETTER, STATE>> callSuccessors(
-//				final STATE state) {
-//			return new Iterable<OutgoingCallTransition<LETTER, STATE>>() {
-//				/**
-//				 * Iterates over all OutgoingCallTransition of state.
-//				 * Iterates over all outgoing call letters and uses the 
-//				 * iterators returned by callSuccessors(state, letter)
-//				 */
-//				@Override
-//				public Iterator<OutgoingCallTransition<LETTER, STATE>> iterator() {
-//					Iterator<OutgoingCallTransition<LETTER, STATE>> iterator = 
-//							new Iterator<OutgoingCallTransition<LETTER, STATE>>() {
-//						Iterator<LETTER> m_LetterIterator;
-//						LETTER m_CurrentLetter;
-//						Iterator<OutgoingCallTransition<LETTER, STATE>> m_CurrentIterator;
-//						{
-//							m_LetterIterator = lettersCall(state).iterator();
-//							nextLetter();
-//						}
-	//
-//						private void nextLetter() {
-//							if (m_LetterIterator.hasNext()) {
-//								do {
-//									m_CurrentLetter = m_LetterIterator.next();
-//									m_CurrentIterator = callSuccessors(state,
-//											m_CurrentLetter).iterator();
-//								} while (!m_CurrentIterator.hasNext()
-//										&& m_LetterIterator.hasNext());
-//								if (!m_CurrentIterator.hasNext()) {
-//									m_CurrentLetter = null;
-//									m_CurrentIterator = null;
-//								}
-//							} else {
-//								m_CurrentLetter = null;
-//								m_CurrentIterator = null;
-//							}
-//						}
-	//
-//						@Override
-//						public boolean hasNext() {
-//							return m_CurrentLetter != null;
-//						}
-	//
-//						@Override
-//						public OutgoingCallTransition<LETTER, STATE> next() {
-//							if (m_CurrentLetter == null) {
-//								throw new NoSuchElementException();
-//							} else {
-//								OutgoingCallTransition<LETTER, STATE> result = 
-//										m_CurrentIterator.next();
-//								if (!m_CurrentIterator.hasNext()) {
-//									nextLetter();
-//								}
-//								return result;
-//							}
-//						}
-	//
-//						@Override
-//						public void remove() {
-//							throw new UnsupportedOperationException();
-//						}
-//					};
-//					return iterator;
-//				}
-//			};
-//		}
-	//	
-	//	
-	//	
-	//	
-	//	
-	//	
-	//	
-	//	
-//		public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSucccessors(
-//				final STATE state, final STATE hier, final LETTER letter) {
-//			return new Iterable<OutgoingReturnTransition<LETTER, STATE>>() {
-//				@Override
-//				public Iterator<OutgoingReturnTransition<LETTER, STATE>> iterator() {
-//					Iterator<OutgoingReturnTransition<LETTER, STATE>> iterator = 
-//							new Iterator<OutgoingReturnTransition<LETTER, STATE>>() {
-//						Iterator<STATE> m_Iterator;
-//						{
-//							Map<LETTER, Map<STATE, Set<STATE>>> letter2hier2succ = m_ReturnOut.get(state);
-//							if (letter2hier2succ != null) {
-//								Map<STATE, Set<STATE>> hier2succ = letter2hier2succ.get(letter);
-//								if (hier2succ != null) {
-//									if (hier2succ.get(hier) != null) {
-//										m_Iterator = hier2succ.get(hier).iterator();
-//									} else {
-//										m_Iterator = null;
-//									}
-//								} else {
-//									m_Iterator = null;
-//								}
-//							} else {
-//								m_Iterator = null;
-//							}
-//						}
-	//
-//						@Override
-//						public boolean hasNext() {
-//							return m_Iterator == null || m_Iterator.hasNext();
-//						}
-	//
-//						@Override
-//						public OutgoingReturnTransition<LETTER, STATE> next() {
-//							if (m_Iterator == null) {
-//								throw new NoSuchElementException();
-//							} else {
-//								STATE succ = m_Iterator.next(); 
-//								return new OutgoingReturnTransition<LETTER, STATE>(hier, letter, succ);
-//							}
-//						}
-	//
-//						@Override
-//						public void remove() {
-//							throw new UnsupportedOperationException();
-//						}
-//					};
-//					return iterator;
-//				}
-//			};
-//		}
-	//	
-	//	
-//		public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessors(
-//				final STATE state, final LETTER letter) {
-//			return new Iterable<OutgoingReturnTransition<LETTER, STATE>>() {
-//				/**
-//				 * Iterates over all OutgoingReturnTransition of state.
-//				 * Iterates over all outgoing return letters and uses the 
-//				 * iterators returned by returnSuccecessors(state, letter)
-//				 */
-//				@Override
-//				public Iterator<OutgoingReturnTransition<LETTER, STATE>> iterator() {
-//					Iterator<OutgoingReturnTransition<LETTER, STATE>> iterator = 
-//							new Iterator<OutgoingReturnTransition<LETTER, STATE>>() {
-//						Iterator<STATE> m_HierIterator;
-//						STATE m_CurrentHier;
-//						Iterator<OutgoingReturnTransition<LETTER, STATE>> m_CurrentIterator;
-//						{
-//							m_HierIterator = hierPred(state, letter).iterator();
-//							nextHier();
-//						}
-	//
-//						private void nextHier() {
-//							if (m_HierIterator.hasNext()) {
-//								do {
-//									m_CurrentHier = m_HierIterator.next();
-//									m_CurrentIterator = returnSucccessors(
-//											state, m_CurrentHier, letter).iterator();
-//								} while (!m_CurrentIterator.hasNext()
-//										&& m_HierIterator.hasNext());
-//								if (!m_CurrentIterator.hasNext()) {
-//									m_CurrentHier = null;
-//									m_CurrentIterator = null;
-//								}
-//							} else {
-//								m_CurrentHier = null;
-//								m_CurrentIterator = null;
-//							}
-//						}
-	//
-//						@Override
-//						public boolean hasNext() {
-//							return m_CurrentHier != null;
-//						}
-	//
-//						@Override
-//						public OutgoingReturnTransition<LETTER, STATE> next() {
-//							if (m_CurrentHier == null) {
-//								throw new NoSuchElementException();
-//							} else {
-//								OutgoingReturnTransition<LETTER, STATE> result = 
-//										m_CurrentIterator.next();
-//								if (!m_CurrentIterator.hasNext()) {
-//									nextHier();
-//								}
-//								return result;
-//							}
-//						}
-	//
-//						@Override
-//						public void remove() {
-//							throw new UnsupportedOperationException();
-//						}
-//					};
-//					return iterator;
-//				}
-//			};
-//		}
-	//	
-//		public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessorsGivenHier(
-//				final STATE state, final STATE hier) {
-//			return new Iterable<OutgoingReturnTransition<LETTER, STATE>>() {
-//				/**
-//				 * Iterates over all OutgoingReturnTransition of state with 
-//				 * hierarchical successor hier. 
-//				 * Iterates over all outgoing return letters and uses the 
-//				 * iterators returned by returnSuccecessors(state, hier, letter)
-//				 */
-//				@Override
-//				public Iterator<OutgoingReturnTransition<LETTER, STATE>> iterator() {
-//					Iterator<OutgoingReturnTransition<LETTER, STATE>> iterator = 
-//							new Iterator<OutgoingReturnTransition<LETTER, STATE>>() {
-//						Iterator<LETTER> m_LetterIterator;
-//						LETTER m_CurrentLetter;
-//						Iterator<OutgoingReturnTransition<LETTER, STATE>> m_CurrentIterator;
-//						{
-//							m_LetterIterator = lettersReturn(state).iterator();
-//							nextLetter();
-//						}
-	//
-//						private void nextLetter() {
-//							if (m_LetterIterator.hasNext()) {
-//								do {
-//									m_CurrentLetter = m_LetterIterator.next();
-//									m_CurrentIterator = returnSucccessors(
-//											state, hier, m_CurrentLetter).iterator();
-//								} while (!m_CurrentIterator.hasNext()
-//										&& m_LetterIterator.hasNext());
-//								if (!m_CurrentIterator.hasNext()) {
-//									m_CurrentLetter = null;
-//									m_CurrentIterator = null;
-//								}
-//							} else {
-//								m_CurrentLetter = null;
-//								m_CurrentIterator = null;
-//							}
-//						}
-	//
-//						@Override
-//						public boolean hasNext() {
-//							return m_CurrentLetter != null;
-//						}
-	//
-//						@Override
-//						public OutgoingReturnTransition<LETTER, STATE> next() {
-//							if (m_CurrentLetter == null) {
-//								throw new NoSuchElementException();
-//							} else {
-//								OutgoingReturnTransition<LETTER, STATE> result = 
-//										m_CurrentIterator.next();
-//								if (!m_CurrentIterator.hasNext()) {
-//									nextLetter();
-//								}
-//								return result;
-//							}
-//						}
-	//
-//						@Override
-//						public void remove() {
-//							throw new UnsupportedOperationException();
-//						}
-//					};
-//					return iterator;
-//				}
-//			};
-//		}
-	//	
-	//	
-//		public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessors(
-//				final STATE state) {
-//			return new Iterable<OutgoingReturnTransition<LETTER, STATE>>() {
-//				/**
-//				 * Iterates over all OutgoingReturnTransition of state.
-//				 * Iterates over all outgoing return letters and uses the 
-//				 * iterators returned by returnSuccessors(state, letter)
-//				 */
-//				@Override
-//				public Iterator<OutgoingReturnTransition<LETTER, STATE>> iterator() {
-//					Iterator<OutgoingReturnTransition<LETTER, STATE>> iterator = 
-//							new Iterator<OutgoingReturnTransition<LETTER, STATE>>() {
-//						Iterator<LETTER> m_LetterIterator;
-//						LETTER m_CurrentLetter;
-//						Iterator<OutgoingReturnTransition<LETTER, STATE>> m_CurrentIterator;
-//						{
-//							m_LetterIterator = lettersReturn(state).iterator();
-//							nextLetter();
-//						}
-	//
-//						private void nextLetter() {
-//							if (m_LetterIterator.hasNext()) {
-//								do {
-//									m_CurrentLetter = m_LetterIterator.next();
-//									m_CurrentIterator = returnSuccessors(state,
-//											m_CurrentLetter).iterator();
-//								} while (!m_CurrentIterator.hasNext()
-//										&& m_LetterIterator.hasNext());
-//								if (!m_CurrentIterator.hasNext()) {
-//									m_CurrentLetter = null;
-//									m_CurrentIterator = null;
-//								}
-//							} else {
-//								m_CurrentLetter = null;
-//								m_CurrentIterator = null;
-//							}
-//						}
-	//
-//						@Override
-//						public boolean hasNext() {
-//							return m_CurrentLetter != null;
-//						}
-	//
-//						@Override
-//						public OutgoingReturnTransition<LETTER, STATE> next() {
-//							if (m_CurrentLetter == null) {
-//								throw new NoSuchElementException();
-//							} else {
-//								OutgoingReturnTransition<LETTER, STATE> result = 
-//										m_CurrentIterator.next();
-//								if (!m_CurrentIterator.hasNext()) {
-//									nextLetter();
-//								}
-//								return result;
-//							}
-//						}
-	//
-//						@Override
-//						public void remove() {
-//							throw new UnsupportedOperationException();
-//						}
-//					};
-//					return iterator;
-//				}
-//			};
-//		}
+		public Iterable<OutgoingCallTransition<LETTER, STATE>> callSuccessors(
+				final LETTER letter) {
+			return new Iterable<OutgoingCallTransition<LETTER, STATE>>() {
+				@Override
+				public Iterator<OutgoingCallTransition<LETTER, STATE>> iterator() {
+					Iterator<OutgoingCallTransition<LETTER, STATE>> iterator = 
+							new Iterator<OutgoingCallTransition<LETTER, STATE>>() {
+						Iterator<STATE> m_Iterator;
+						{
+							Map<LETTER, Set<STATE>> letter2succ = m_CallOut;
+							if (letter2succ != null) {
+								if (letter2succ.get(letter) != null) {
+									m_Iterator = letter2succ.get(letter).iterator();
+								} else {
+									m_Iterator = null;
+								}
+							} else {
+								m_Iterator = null;
+							}
+						}
+	
+						@Override
+						public boolean hasNext() {
+							return m_Iterator == null || m_Iterator.hasNext();
+						}
+	
+						@Override
+						public OutgoingCallTransition<LETTER, STATE> next() {
+							if (m_Iterator == null) {
+								throw new NoSuchElementException();
+							} else {
+								STATE succ = m_Iterator.next(); 
+								return new OutgoingCallTransition<LETTER, STATE>(letter, succ);
+							}
+						}
+	
+						@Override
+						public void remove() {
+							throw new UnsupportedOperationException();
+						}
+					};
+					return iterator;
+				}
+			};
+		}
+		
+		public Iterable<OutgoingCallTransition<LETTER, STATE>> callSuccessors() {
+			return new Iterable<OutgoingCallTransition<LETTER, STATE>>() {
+				/**
+				 * Iterates over all OutgoingCallTransition of state.
+				 * Iterates over all outgoing call letters and uses the 
+				 * iterators returned by callSuccessors(state, letter)
+				 */
+				@Override
+				public Iterator<OutgoingCallTransition<LETTER, STATE>> iterator() {
+					Iterator<OutgoingCallTransition<LETTER, STATE>> iterator = 
+							new Iterator<OutgoingCallTransition<LETTER, STATE>>() {
+						Iterator<LETTER> m_LetterIterator;
+						LETTER m_CurrentLetter;
+						Iterator<OutgoingCallTransition<LETTER, STATE>> m_CurrentIterator;
+						{
+							m_LetterIterator = lettersCall().iterator();
+							nextLetter();
+						}
+	
+						private void nextLetter() {
+							if (m_LetterIterator.hasNext()) {
+								do {
+									m_CurrentLetter = m_LetterIterator.next();
+									m_CurrentIterator = callSuccessors(m_CurrentLetter).iterator();
+								} while (!m_CurrentIterator.hasNext()
+										&& m_LetterIterator.hasNext());
+								if (!m_CurrentIterator.hasNext()) {
+									m_CurrentLetter = null;
+									m_CurrentIterator = null;
+								}
+							} else {
+								m_CurrentLetter = null;
+								m_CurrentIterator = null;
+							}
+						}
+	
+						@Override
+						public boolean hasNext() {
+							return m_CurrentLetter != null;
+						}
+	
+						@Override
+						public OutgoingCallTransition<LETTER, STATE> next() {
+							if (m_CurrentLetter == null) {
+								throw new NoSuchElementException();
+							} else {
+								OutgoingCallTransition<LETTER, STATE> result = 
+										m_CurrentIterator.next();
+								if (!m_CurrentIterator.hasNext()) {
+									nextLetter();
+								}
+								return result;
+							}
+						}
+	
+						@Override
+						public void remove() {
+							throw new UnsupportedOperationException();
+						}
+					};
+					return iterator;
+				}
+			};
+		}
+		
+		
+		
+		
+		
+		
+		
+		
+		public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSucccessors(
+				final STATE hier, final LETTER letter) {
+			return new Iterable<OutgoingReturnTransition<LETTER, STATE>>() {
+				@Override
+				public Iterator<OutgoingReturnTransition<LETTER, STATE>> iterator() {
+					Iterator<OutgoingReturnTransition<LETTER, STATE>> iterator = 
+							new Iterator<OutgoingReturnTransition<LETTER, STATE>>() {
+						Iterator<STATE> m_Iterator;
+						{
+							Map<LETTER, Map<STATE, Set<STATE>>> letter2hier2succ = m_ReturnOut;
+							if (letter2hier2succ != null) {
+								Map<STATE, Set<STATE>> hier2succ = letter2hier2succ.get(letter);
+								if (hier2succ != null) {
+									if (hier2succ.get(hier) != null) {
+										m_Iterator = hier2succ.get(hier).iterator();
+									} else {
+										m_Iterator = null;
+									}
+								} else {
+									m_Iterator = null;
+								}
+							} else {
+								m_Iterator = null;
+							}
+						}
+	
+						@Override
+						public boolean hasNext() {
+							return m_Iterator == null || m_Iterator.hasNext();
+						}
+	
+						@Override
+						public OutgoingReturnTransition<LETTER, STATE> next() {
+							if (m_Iterator == null) {
+								throw new NoSuchElementException();
+							} else {
+								STATE succ = m_Iterator.next(); 
+								return new OutgoingReturnTransition<LETTER, STATE>(hier, letter, succ);
+							}
+						}
+	
+						@Override
+						public void remove() {
+							throw new UnsupportedOperationException();
+						}
+					};
+					return iterator;
+				}
+			};
+		}
+		
+		
+		public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessors(
+				final LETTER letter) {
+			return new Iterable<OutgoingReturnTransition<LETTER, STATE>>() {
+				/**
+				 * Iterates over all OutgoingReturnTransition of state.
+				 * Iterates over all outgoing return letters and uses the 
+				 * iterators returned by returnSuccecessors(state, letter)
+				 */
+				@Override
+				public Iterator<OutgoingReturnTransition<LETTER, STATE>> iterator() {
+					Iterator<OutgoingReturnTransition<LETTER, STATE>> iterator = 
+							new Iterator<OutgoingReturnTransition<LETTER, STATE>>() {
+						Iterator<STATE> m_HierIterator;
+						STATE m_CurrentHier;
+						Iterator<OutgoingReturnTransition<LETTER, STATE>> m_CurrentIterator;
+						{
+							m_HierIterator = hierPred(letter).iterator();
+							nextHier();
+						}
+	
+						private void nextHier() {
+							if (m_HierIterator.hasNext()) {
+								do {
+									m_CurrentHier = m_HierIterator.next();
+									m_CurrentIterator = returnSucccessors(
+											m_CurrentHier, letter).iterator();
+								} while (!m_CurrentIterator.hasNext()
+										&& m_HierIterator.hasNext());
+								if (!m_CurrentIterator.hasNext()) {
+									m_CurrentHier = null;
+									m_CurrentIterator = null;
+								}
+							} else {
+								m_CurrentHier = null;
+								m_CurrentIterator = null;
+							}
+						}
+	
+						@Override
+						public boolean hasNext() {
+							return m_CurrentHier != null;
+						}
+	
+						@Override
+						public OutgoingReturnTransition<LETTER, STATE> next() {
+							if (m_CurrentHier == null) {
+								throw new NoSuchElementException();
+							} else {
+								OutgoingReturnTransition<LETTER, STATE> result = 
+										m_CurrentIterator.next();
+								if (!m_CurrentIterator.hasNext()) {
+									nextHier();
+								}
+								return result;
+							}
+						}
+	
+						@Override
+						public void remove() {
+							throw new UnsupportedOperationException();
+						}
+					};
+					return iterator;
+				}
+			};
+		}
+		
+		public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessorsGivenHier(
+				final STATE hier) {
+			return new Iterable<OutgoingReturnTransition<LETTER, STATE>>() {
+				/**
+				 * Iterates over all OutgoingReturnTransition of state with 
+				 * hierarchical successor hier. 
+				 * Iterates over all outgoing return letters and uses the 
+				 * iterators returned by returnSuccecessors(state, hier, letter)
+				 */
+				@Override
+				public Iterator<OutgoingReturnTransition<LETTER, STATE>> iterator() {
+					Iterator<OutgoingReturnTransition<LETTER, STATE>> iterator = 
+							new Iterator<OutgoingReturnTransition<LETTER, STATE>>() {
+						Iterator<LETTER> m_LetterIterator;
+						LETTER m_CurrentLetter;
+						Iterator<OutgoingReturnTransition<LETTER, STATE>> m_CurrentIterator;
+						{
+							m_LetterIterator = lettersReturn().iterator();
+							nextLetter();
+						}
+	
+						private void nextLetter() {
+							if (m_LetterIterator.hasNext()) {
+								do {
+									m_CurrentLetter = m_LetterIterator.next();
+									m_CurrentIterator = returnSucccessors(
+											hier, m_CurrentLetter).iterator();
+								} while (!m_CurrentIterator.hasNext()
+										&& m_LetterIterator.hasNext());
+								if (!m_CurrentIterator.hasNext()) {
+									m_CurrentLetter = null;
+									m_CurrentIterator = null;
+								}
+							} else {
+								m_CurrentLetter = null;
+								m_CurrentIterator = null;
+							}
+						}
+	
+						@Override
+						public boolean hasNext() {
+							return m_CurrentLetter != null;
+						}
+	
+						@Override
+						public OutgoingReturnTransition<LETTER, STATE> next() {
+							if (m_CurrentLetter == null) {
+								throw new NoSuchElementException();
+							} else {
+								OutgoingReturnTransition<LETTER, STATE> result = 
+										m_CurrentIterator.next();
+								if (!m_CurrentIterator.hasNext()) {
+									nextLetter();
+								}
+								return result;
+							}
+						}
+	
+						@Override
+						public void remove() {
+							throw new UnsupportedOperationException();
+						}
+					};
+					return iterator;
+				}
+			};
+		}
+		
+		
+		public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessors(
+				) {
+			return new Iterable<OutgoingReturnTransition<LETTER, STATE>>() {
+				/**
+				 * Iterates over all OutgoingReturnTransition of state.
+				 * Iterates over all outgoing return letters and uses the 
+				 * iterators returned by returnSuccessors(state, letter)
+				 */
+				@Override
+				public Iterator<OutgoingReturnTransition<LETTER, STATE>> iterator() {
+					Iterator<OutgoingReturnTransition<LETTER, STATE>> iterator = 
+							new Iterator<OutgoingReturnTransition<LETTER, STATE>>() {
+						Iterator<LETTER> m_LetterIterator;
+						LETTER m_CurrentLetter;
+						Iterator<OutgoingReturnTransition<LETTER, STATE>> m_CurrentIterator;
+						{
+							m_LetterIterator = lettersReturn().iterator();
+							nextLetter();
+						}
+	
+						private void nextLetter() {
+							if (m_LetterIterator.hasNext()) {
+								do {
+									m_CurrentLetter = m_LetterIterator.next();
+									m_CurrentIterator = returnSuccessors(m_CurrentLetter).iterator();
+								} while (!m_CurrentIterator.hasNext()
+										&& m_LetterIterator.hasNext());
+								if (!m_CurrentIterator.hasNext()) {
+									m_CurrentLetter = null;
+									m_CurrentIterator = null;
+								}
+							} else {
+								m_CurrentLetter = null;
+								m_CurrentIterator = null;
+							}
+						}
+	
+						@Override
+						public boolean hasNext() {
+							return m_CurrentLetter != null;
+						}
+	
+						@Override
+						public OutgoingReturnTransition<LETTER, STATE> next() {
+							if (m_CurrentLetter == null) {
+								throw new NoSuchElementException();
+							} else {
+								OutgoingReturnTransition<LETTER, STATE> result = 
+										m_CurrentIterator.next();
+								if (!m_CurrentIterator.hasNext()) {
+									nextLetter();
+								}
+								return result;
+							}
+						}
+	
+						@Override
+						public void remove() {
+							throw new UnsupportedOperationException();
+						}
+					};
+					return iterator;
+				}
+			};
+		}
+		
+		
+		private boolean containsInternalTransition(LETTER letter, STATE succ) {
+			Map<LETTER, Set<STATE>> map = m_InternalOut;
+			if (map == null) {
+				return false;
+			}
+			Set<STATE> result = map.get(letter);
+			return result == null ? false : result.contains(succ);
+		}
+		
+		private boolean containsCallTransition(LETTER letter, STATE succ) {
+			Map<LETTER, Set<STATE>> map = m_CallOut;
+			if (map == null) {
+				return false;
+			}
+			Set<STATE> result = map.get(letter);
+			return result == null ? false : result.contains(succ);
+		}
+		
+		private boolean containsReturnTransition(STATE hier, LETTER letter, STATE succ) {
+			Map<LETTER, Map<STATE, Set<STATE>>> map = m_ReturnOut;
+			if (map == null) {
+				return false;
+			}
+			Map<STATE, Set<STATE>> hier2succs = map.get(letter);
+			if (hier2succs == null) {
+				return false;
+			}
+			Set<STATE> result = hier2succs.get(hier);
+			return result == null ? false : result.contains(succ);
+		}
 	}
+	
+	private boolean containsInternalTransition(STATE state, LETTER letter, STATE succ) {
+		return m_States.get(state).containsInternalTransition(letter, succ);
+	}
+	
+	private boolean containsCallTransition(STATE state, LETTER letter, STATE succ) {
+		return m_States.get(state).containsCallTransition(letter, succ);
+	}
+	
+	private boolean containsReturnTransition(STATE state, STATE hier, LETTER letter, STATE succ) {
+		return m_States.get(state).containsReturnTransition(hier, letter, succ);
+	}
+	
+	private boolean checkTransitionsReturnedConsistent() {
+		boolean result = true;
+		for (STATE state : getStates()) {
+			for (IncomingInternalTransition<LETTER, STATE> inTrans : internalPredecessors(state)) {
+				result &= containsInternalTransition(inTrans.getPred(), inTrans.getLetter(), state);
+				assert result;
+			}
+			for (OutgoingInternalTransition<LETTER, STATE> outTrans : internalSuccessors(state)) {
+				result &= containsInternalTransition(state, outTrans.getLetter(), outTrans.getSucc());
+				assert result;
+			}
+			for (IncomingCallTransition<LETTER, STATE> inTrans : callPredecessors(state)) {
+				result &= containsCallTransition(inTrans.getPred(), inTrans.getLetter(), state);
+				assert result;
+			}
+			for (OutgoingCallTransition<LETTER, STATE> outTrans : callSuccessors(state)) {
+				result &= containsCallTransition(state, outTrans.getLetter(), outTrans.getSucc());
+				assert result;
+			}
+			for (IncomingReturnTransition<LETTER, STATE> inTrans : returnPredecessors(state)) {
+				result &= containsReturnTransition(inTrans.getLinPred(), inTrans.getHierPred(), inTrans.getLetter(), state);
+				assert result;
+			}
+			for (OutgoingReturnTransition<LETTER, STATE> outTrans : returnSuccessors(state)) {
+				result &= containsReturnTransition(state, outTrans.getHierPred(), outTrans.getLetter(), outTrans.getSucc());
+				assert result;
+			}
+		}
+
+		return result;
+	}
+	
+	private boolean cecSumConsistent() {
+		int sum = 0;
+		for (CommonEntriesComponent cec : m_AllCECs) {
+			sum += cec.m_Size;
+		}
+		int allStates = m_States.keySet().size();
+		return sum == allStates;
+	}
+	
+	private boolean allStatesAreInTheirCec() {
+		boolean result = true;
+		for (STATE state : m_States.keySet()) {
+			StateContainer sc = m_States.get(state);
+			CommonEntriesComponent cec = sc.getCommonEntriesComponent();
+			if (!cec.m_BorderOut.keySet().contains(state)) {
+				Set<STATE> empty = new HashSet<STATE>();
+				result &= internalOutSummaryOutInCecOrForeigners(state, empty, cec);
+			}
+		}
+		return result;
+	}
+	
+	private boolean occuringStatesAreConsistent(CommonEntriesComponent cec) {
+		boolean result = true;
+		Set<STATE> downStates = cec.m_DownStates;
+		Set<Entry> entries = cec.m_Entries;
+		result &= downStatesAreCallPredsOfEntries(downStates, entries);
+		result &= eachStateHasThisCec(cec.getReturnOutCandidates(), cec);
+		for (STATE resident : cec.m_BorderOut.keySet()) {
+			Set<STATE> foreigners = cec.m_BorderOut.get(resident);
+			result &= internalOutSummaryOutInCecOrForeigners(resident, foreigners, cec);
+		}
+		return result;
+	}
+	
+	private boolean internalOutSummaryOutInCecOrForeigners(STATE state, Set<STATE> foreigners, CommonEntriesComponent cec) {
+		StateContainer sc = m_States.get(state);
+		Set<STATE> statesWithDifferntCEC = new HashSet<STATE>();
+		
+		for (OutgoingInternalTransition<LETTER, STATE> trans : sc.internalSuccessors()) {
+			STATE succ = trans.getSucc();
+			StateContainer succSc = m_States.get(succ);
+			if (succSc.getCommonEntriesComponent() == cec) {
+				// do nothing
+			} else {
+				statesWithDifferntCEC.add(state);
+			}
+		}
+		if (m_Summaries.containsKey(state)) {
+			for (STATE succ : m_Summaries.get(state)) {
+				StateContainer succSc = m_States.get(succ);
+				if (succSc.getCommonEntriesComponent() == cec) {
+					// do nothing
+				} else {
+					statesWithDifferntCEC.add(succ);
+				}
+			}
+		}
+		boolean allDifferentAreForeigners = isSubset(statesWithDifferntCEC, foreigners);
+		boolean allForeignersAreDifferent = isSubset(foreigners, statesWithDifferntCEC);
+		return allDifferentAreForeigners && allForeignersAreDifferent;
+	}
+	
+	private boolean eachStateHasThisCec(Set<STATE> states, CommonEntriesComponent cec) {
+		boolean result = true;
+		for (STATE state : states) {
+			StateContainer sc = m_States.get(state);
+			if (sc.getCommonEntriesComponent() != cec) {
+				result = false;
+			}
+		}
+		return result;
+	}
+	
+	private boolean downStatesAreCallPredsOfEntries(Set<STATE> downStates, Set<Entry> entries) {
+		Set<STATE> callPreds = new HashSet<STATE>();
+		for (Entry entry : entries) {
+			STATE entryState = entry.getState();
+			for (IncomingCallTransition<LETTER, STATE> trans : callPredecessors(entryState)) {
+				callPreds.add(trans.getPred());
+			}
+		}
+		boolean callPredsIndownStates = isSubset(callPreds, downStates);
+		boolean downStatesInCallPreds = isSubset(downStates, callPreds);
+		return callPredsIndownStates && downStatesInCallPreds;
+	}
+
+
 
 }
