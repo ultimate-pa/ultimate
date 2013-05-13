@@ -12,12 +12,19 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
 
+import org.apache.log4j.Logger;
+
+import de.uni_freiburg.informatik.ultimate.automata.Activator;
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
+import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.Word;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.ReachableStatesAutomaton.StateContainer;
+import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 
 public class ReachableStatesAutomaton<LETTER,STATE> implements INestedWordAutomaton<LETTER,STATE>, INWA<LETTER,STATE> {
 
+	private static Logger s_Logger = UltimateServices.getInstance().getLogger(Activator.PLUGIN_ID);
 	
 	private final NestedWordAutomaton<LETTER,STATE> m_Operand;
 	
@@ -47,14 +54,14 @@ public class ReachableStatesAutomaton<LETTER,STATE> implements INestedWordAutoma
 	
 	public void addSummary(STATE callPred, STATE returnSucc) {
 		Set<STATE> returnSuccs = m_Summaries.get(callPred);
-		if (returnSucc == null) {
+		if (returnSuccs == null) {
 			returnSuccs = new HashSet<STATE>();
 			m_Summaries.put(callPred, returnSuccs);
 		}
 		returnSuccs.add(returnSucc);
 	}
 	
-	public ReachableStatesAutomaton(INestedWordAutomaton<LETTER,STATE> operand) {
+	public ReachableStatesAutomaton(INestedWordAutomaton<LETTER,STATE> operand) throws OperationCanceledException {
 		this.m_Operand = (NestedWordAutomaton<LETTER, STATE>) operand;
 		m_InternalAlphabet = operand.getAlphabet();
 		m_CallAlphabet = operand.getCallAlphabet();
@@ -62,6 +69,7 @@ public class ReachableStatesAutomaton<LETTER,STATE> implements INestedWordAutoma
 		m_StateFactory = operand.getStateFactory();
 		addInitialStates(m_Operand.getInitialStates());
 		buildAllStates();
+		s_Logger.info(componentInformation());
 		assert(checkTransitionsReturnedConsistent());
 		assert(worklist.isEmpty());
 		assert(doubleDeckerWorklist.isEmpty());
@@ -71,6 +79,17 @@ public class ReachableStatesAutomaton<LETTER,STATE> implements INestedWordAutoma
 		for (CommonEntriesComponent cec : m_AllCECs) {
 			assert (occuringStatesAreConsistent(cec));
 		}
+		assert ResultChecker.removeUnreachable(this, operand);
+	}
+	
+	public String componentInformation() {
+		int withoutStates = 0;
+		for (CommonEntriesComponent cec : m_AllCECs) {
+			if (cec.m_Size == 0) {
+				withoutStates++;
+			}
+		}
+		return m_AllCECs.size() + " components " + withoutStates + " without states";
 	}
 	
 	public class DoubleDeckerWorklist {
@@ -213,6 +232,12 @@ public class ReachableStatesAutomaton<LETTER,STATE> implements INestedWordAutoma
 		
 	}
 	
+	public Set<STATE> getDownStates(STATE state) {
+		StateContainer stateContainer = m_States.get(state);
+		CommonEntriesComponent cec = stateContainer.getCommonEntriesComponent();
+		return cec.getDownStates();
+	}
+	
 	
 	private boolean candidateForOutgoingReturn(STATE state) {
 		return true;
@@ -288,7 +313,9 @@ public class ReachableStatesAutomaton<LETTER,STATE> implements INestedWordAutoma
 				result.addReturnOutCandicate(state);
 				oldCec.removeReturnOutCandicate(state);
 				for(STATE down : newDownStates) {
-					doubleDeckerWorklist.enqueue(state, down);
+					if (down != getEmptyStackState()) {
+						doubleDeckerWorklist.enqueue(state, down);
+					}
 				}
 			}
 			if (oldCec.isBorderState(state)) {
@@ -423,11 +450,11 @@ public class ReachableStatesAutomaton<LETTER,STATE> implements INestedWordAutoma
 						updateCECs(splitStarts, succCEC, entries, downStates);
 						cecSplitWorklist.processAll();
 					}
-					sc.addCallOutgoing(trans);
-					succSC.addCallIncoming(new IncomingCallTransition<LETTER, STATE>(state, trans.getLetter()));
-					if (!visited.contains(succ)) {
-						worklist.add(succSC);
-					}
+				}
+				sc.addCallOutgoing(trans);
+				succSC.addCallIncoming(new IncomingCallTransition<LETTER, STATE>(state, trans.getLetter()));
+				if (!visited.contains(succ)) {
+					worklist.add(succSC);
 				}
 			}
 
@@ -470,7 +497,9 @@ public class ReachableStatesAutomaton<LETTER,STATE> implements INestedWordAutoma
 			if(!newdownStates.isEmpty()) {
 				for (STATE state : cec.getReturnOutCandidates()) {
 					for (STATE down : newdownStates) {
-						doubleDeckerWorklist.enqueue(state, down);
+						if (down != getEmptyStackState()) {
+							doubleDeckerWorklist.enqueue(state, down);
+						}
 						cec.addDownState(down);
 					}
 				}
@@ -489,9 +518,10 @@ public class ReachableStatesAutomaton<LETTER,STATE> implements INestedWordAutoma
 	}
 
 	private void addReturnAndSuccessor(StateContainer stateSc, StateContainer downSc) {
+		STATE state = stateSc.getState();
 		STATE down = downSc.getState();
 		CommonEntriesComponent downCec = downSc.getCommonEntriesComponent();
-		for (OutgoingReturnTransition<LETTER, STATE> trans : stateSc.returnSuccessorsGivenHier(down)) {
+		for (OutgoingReturnTransition<LETTER, STATE> trans : m_Operand.returnSuccessorsGivenHier(state,down)) {
 			STATE succ = trans.getSucc();
 			StateContainer succSC = m_States.get(succ);
 			if (succSC == null) {
@@ -515,6 +545,7 @@ public class ReachableStatesAutomaton<LETTER,STATE> implements INestedWordAutoma
 			}
 			stateSc.addReturnOutgoing(trans);
 			succSC.addReturnIncoming(new IncomingReturnTransition<LETTER, STATE>(stateSc.getState(), down, trans.getLetter()));
+			addSummary(down, succ);
 			if (!visited.contains(succ)) {
 				worklist.add(succSC);
 			}
@@ -858,7 +889,34 @@ public class ReachableStatesAutomaton<LETTER,STATE> implements INestedWordAutoma
 		private final STATE m_State;
 		
 		public String toString() {
-			return m_State.toString();
+			StringBuilder sb = new StringBuilder();
+			sb.append(m_State.toString());
+			sb.append(System.getProperty("line.separator"));
+			for (OutgoingInternalTransition<LETTER, STATE> trans : internalSuccessors()) {
+				sb.append(trans).append("  ");
+			}
+			sb.append(System.getProperty("line.separator"));
+			for (IncomingInternalTransition<LETTER, STATE> trans : internalPredecessors()) {
+				sb.append(trans).append("  ");
+			}
+			sb.append(System.getProperty("line.separator"));
+			for (OutgoingCallTransition<LETTER, STATE> trans : callSuccessors()) {
+				sb.append(trans).append("  ");
+			}
+			sb.append(System.getProperty("line.separator"));
+			for (IncomingCallTransition<LETTER, STATE> trans : callPredecessors()) {
+				sb.append(trans).append("  ");
+			}
+			sb.append(System.getProperty("line.separator"));
+			for (OutgoingReturnTransition<LETTER, STATE> trans : returnSuccessors()) {
+				sb.append(trans).append("  ");
+			}
+			sb.append(System.getProperty("line.separator"));
+			for (IncomingReturnTransition<LETTER, STATE> trans : returnPredecessors()) {
+				sb.append(trans).append("  ");
+			}
+			sb.append(System.getProperty("line.separator"));
+			return sb.toString();
 		}
 		
 		private CommonEntriesComponent cec;

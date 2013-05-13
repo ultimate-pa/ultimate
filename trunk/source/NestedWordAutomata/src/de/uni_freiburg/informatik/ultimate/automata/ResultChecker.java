@@ -3,18 +3,23 @@ package de.uni_freiburg.informatik.ultimate.automata;
 import java.io.File;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
+import java.util.Set;
 
 import org.apache.log4j.Logger;
 import org.eclipse.core.runtime.preferences.ConfigurationScope;
 import org.eclipse.core.runtime.preferences.IEclipsePreferences;
 
 import de.uni_freiburg.informatik.ultimate.automata.AtsDefinitionPrinter.Labeling;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.DoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordGenerator;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.ReachableStatesAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.BuchiAccepts;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.BuchiIsIncluded;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.NestedLassoRun;
@@ -32,6 +37,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.Inters
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IsIncluded;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.MinimizeDfa;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.PowersetDeterminizer;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.ReachableStatesCopy;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.BuchiReduce;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNet2FiniteAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetRun;
@@ -540,6 +546,44 @@ public class ResultChecker<LETTER,STATE> {
 		s_Logger.info("Finished Petri net language equivalence");
 		resultCheckStackHeight--;
 		return result;
+	}
+	
+	public static <LETTER, STATE> boolean removeUnreachable(ReachableStatesAutomaton<LETTER, STATE> result, INestedWordAutomaton<LETTER, STATE> operand) throws OperationCanceledException {
+		if (resultCheckStackHeight >= maxResultCheckStackHeight) return true;
+		resultCheckStackHeight++;
+		boolean correct = true;
+		s_Logger.info("Testing removeUnreachable");
+		{
+			NestedRun subsetCounterex = nwaLanguageInclusion(result, operand);
+			correct &= (subsetCounterex == null);
+			NestedRun supersetCounterex = nwaLanguageInclusion(operand, result);
+			correct &= (subsetCounterex == null);
+		}
+		DoubleDeckerAutomaton<LETTER, STATE> reachalbeStatesCopy = (DoubleDeckerAutomaton<LETTER, STATE>) (new ReachableStatesCopy(operand)).getResult();
+		correct &= isSubset(reachalbeStatesCopy.getStates(),result.getStates());
+		correct &= isSubset(result.getStates(),reachalbeStatesCopy.getStates());
+		for (STATE state : reachalbeStatesCopy.getStates()) {
+			Set<STATE> rCSdownStates = reachalbeStatesCopy.getDownStates(state);
+			Set<STATE> rCAdownStates = result.getDownStates(state);
+			correct &= isSubset(rCAdownStates, rCSdownStates);
+			correct &= isSubset(rCSdownStates, rCAdownStates);
+		}
+		if (!correct) {
+			String message = "// Problem with  removeUnreachable";
+			writeToFileIfPreferred(operand, "FailedremoveUnreachable", message);
+		}
+		s_Logger.info("Finished removeUnreachable");
+		resultCheckStackHeight--;
+		return correct;
+	}
+	
+	public static <E> boolean isSubset(Collection<E> lhs, Collection<E> rhs) {
+		for (E elem : lhs) {
+			if (!rhs.contains(elem)) {
+				return false;
+			}
+		}
+		return true;
 	}
 
 

@@ -1,5 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary;
 
+import java.text.MessageFormat;
+
 
 /**
  * Return Transition of a successor state.
@@ -32,6 +34,11 @@ public class IncomingReturnTransition<LETTER,STATE> {
 	
 	public LETTER getLetter() {
 		return m_Letter;
+	}
+	
+	
+	public String toString() {
+		return MessageFormat.format("( {0} , {1} , {2} , _ )",getLinPred(), getHierPred(), getLetter());
 	}
 	
 }

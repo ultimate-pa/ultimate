@@ -1,5 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary;
 
+import java.text.MessageFormat;
+
 
 /**
  * Call Transition of a successor state.
@@ -25,6 +27,10 @@ public class IncomingCallTransition<LETTER,STATE> {
 	
 	public STATE getPred() {
 		return m_Pred;
+	}
+	
+	public String toString() {
+		return MessageFormat.format("( {0} , {1} , _ )",getPred(), getLetter());
 	}
 	
 }

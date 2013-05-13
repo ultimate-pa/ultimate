@@ -1,5 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary;
 
+import java.text.MessageFormat;
+
 
 /**
  * Internal Transition of a successor state.
@@ -27,4 +29,8 @@ public class IncomingInternalTransition<LETTER,STATE> {
 		return m_Pred;
 	}
 	
+	
+	public String toString() {
+		return MessageFormat.format("( {0} , {1} , _ )",getPred(), getLetter());
+	}
 }

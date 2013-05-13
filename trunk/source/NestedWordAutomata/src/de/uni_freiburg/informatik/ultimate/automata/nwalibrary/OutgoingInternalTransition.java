@@ -1,5 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary;
 
+import java.text.MessageFormat;
+
 
 /**
  * Outgoing internal transition of a state.
@@ -25,6 +27,10 @@ public class OutgoingInternalTransition<LETTER,STATE> {
 	
 	public STATE getSucc() {
 		return m_Succ;
+	}
+	
+	public String toString() {
+		return MessageFormat.format("( _ , {0} , {1} )", getLetter(), getSucc());
 	}
 	
 }

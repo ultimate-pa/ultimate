@@ -1,5 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary;
 
+import java.text.MessageFormat;
+
 
 /**
  * Return transition outgoing of some state.
@@ -34,5 +36,8 @@ public class OutgoingReturnTransition<LETTER,STATE> {
 		return m_Succ;
 	}
 
+	public String toString() {
+		return MessageFormat.format("( _ , {0} , {1} , {2} )", getHierPred(), getLetter(), getSucc());
+	}
 	
 }
