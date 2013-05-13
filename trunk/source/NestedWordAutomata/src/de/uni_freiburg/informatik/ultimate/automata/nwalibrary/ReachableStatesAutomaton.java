@@ -19,10 +19,9 @@ import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.Word;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.ReachableStatesAutomaton.StateContainer;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 
-public class ReachableStatesAutomaton<LETTER,STATE> implements INestedWordAutomaton<LETTER,STATE>, INWA<LETTER,STATE> {
+public class ReachableStatesAutomaton<LETTER,STATE> implements INestedWordAutomaton<LETTER,STATE>, INWA<LETTER,STATE>, IDoubleDeckerAutomaton<LETTER, STATE> {
 
 	private static Logger s_Logger = UltimateServices.getInstance().getLogger(Activator.PLUGIN_ID);
 	
@@ -38,6 +37,7 @@ public class ReachableStatesAutomaton<LETTER,STATE> implements INestedWordAutoma
 			new HashMap<STATE,StateContainer>();
 	
 	private final Set<STATE> m_initialStates = new HashSet<STATE>();
+	private final Set<STATE> m_finalStates = new HashSet<STATE>();
 	
 	private final DoubleDeckerWorklist doubleDeckerWorklist = new DoubleDeckerWorklist();
 	private final CecSplitWorklist cecSplitWorklist = new CecSplitWorklist();
@@ -208,8 +208,12 @@ public class ReachableStatesAutomaton<LETTER,STATE> implements INestedWordAutoma
 	}
 	
 	
-	private StateContainer constructStateContainer(STATE state, CommonEntriesComponent cec) {
+	private StateContainer addState(STATE state, CommonEntriesComponent cec) {
+		if (m_Operand.isFinal(state)) {
+			m_finalStates.add(state);
+		}
 		StateContainer result = new StateContainer(state, cec);
+		m_States.put(state, result);
 		cec.m_Size++;
 		if (candidateForOutgoingReturn(state)) {
 			cec.addReturnOutCandicate(state);
@@ -226,7 +230,7 @@ public class ReachableStatesAutomaton<LETTER,STATE> implements INestedWordAutoma
 			HashSet<STATE> downStates = new HashSet<STATE>();
 			downStates.add(getEmptyStackState());
 			CommonEntriesComponent cec = new CommonEntriesComponent(entries,downStates);
-			StateContainer sc = constructStateContainer(state, cec);
+			StateContainer sc = addState(state, cec);
 			m_States.put(state, sc);
 		}
 		
@@ -236,6 +240,10 @@ public class ReachableStatesAutomaton<LETTER,STATE> implements INestedWordAutoma
 		StateContainer stateContainer = m_States.get(state);
 		CommonEntriesComponent cec = stateContainer.getCommonEntriesComponent();
 		return cec.getDownStates();
+	}
+	
+	public boolean isDoubleDecker(STATE up, STATE down) {
+		return getDownStates(up).contains(down);
 	}
 	
 	
@@ -399,8 +407,7 @@ public class ReachableStatesAutomaton<LETTER,STATE> implements INestedWordAutoma
 				STATE succ = trans.getSucc();
 				StateContainer succSC = m_States.get(succ);
 				if (succSC == null) {
-					succSC = constructStateContainer(succ, stateCec);
-					m_States.put(succ, succSC);
+					succSC = addState(succ, stateCec);
 				} else {
 					CommonEntriesComponent succCEC = succSC.getCommonEntriesComponent();
 					if (stateCec != succCEC) {
@@ -434,8 +441,7 @@ public class ReachableStatesAutomaton<LETTER,STATE> implements INestedWordAutoma
 					HashSet<Entry> entries = new HashSet<Entry>();
 					entries.add(entry);
 					CommonEntriesComponent succCEC = new CommonEntriesComponent(entries, downStates);
-					succSC = constructStateContainer(succ, succCEC);
-					m_States.put(succ, succSC);
+					succSC = addState(succ, succCEC);
 				} else {
 					CommonEntriesComponent succCEC = succSC.getCommonEntriesComponent();
 					Entry entry = m_State2Entry.get(succ);
@@ -525,8 +531,7 @@ public class ReachableStatesAutomaton<LETTER,STATE> implements INestedWordAutoma
 			STATE succ = trans.getSucc();
 			StateContainer succSC = m_States.get(succ);
 			if (succSC == null) {
-				succSC = constructStateContainer(succ, downCec);
-				m_States.put(succ, succSC);
+				succSC = addState(succ, downCec);
 			} else {
 				CommonEntriesComponent succCEC = succSC.getCommonEntriesComponent();
 				if (downCec != succCEC) {
@@ -545,6 +550,7 @@ public class ReachableStatesAutomaton<LETTER,STATE> implements INestedWordAutoma
 			}
 			stateSc.addReturnOutgoing(trans);
 			succSC.addReturnIncoming(new IncomingReturnTransition<LETTER, STATE>(stateSc.getState(), down, trans.getLetter()));
+			downSc.addReturnTransition(state, trans.getLetter(), succ);
 			addSummary(down, succ);
 			if (!visited.contains(succ)) {
 				worklist.add(succSC);
@@ -631,13 +637,12 @@ public class ReachableStatesAutomaton<LETTER,STATE> implements INestedWordAutoma
 
 	@Override
 	public Collection<STATE> getInitialStates() {
-		return m_initialStates;
+		return Collections.unmodifiableSet(m_initialStates);
 	}
 
 	@Override
 	public Collection<STATE> getFinalStates() {
-		// TODO Auto-generated method stub
-		return null;
+		return Collections.unmodifiableSet(m_finalStates);
 	}
 
 	@Override
@@ -696,8 +701,9 @@ public class ReachableStatesAutomaton<LETTER,STATE> implements INestedWordAutoma
 	}
 
 	@Override
+	@Deprecated
 	public Collection<LETTER> lettersReturnSummary(STATE state) {
-		throw new UnsupportedOperationException();
+		return m_States.get(state).lettersReturnSummary();
 	}
 
 	@Override
@@ -774,7 +780,7 @@ public class ReachableStatesAutomaton<LETTER,STATE> implements INestedWordAutoma
 	@Override
 	public Iterable<SummaryReturnTransition<LETTER, STATE>> getSummaryReturnTransitions(
 			LETTER letter, STATE hier) {
-		throw new UnsupportedOperationException();
+		return m_States.get(hier).getSummaryReturnTransitions(letter);
 	}
 
 	@Override
@@ -962,8 +968,8 @@ public class ReachableStatesAutomaton<LETTER,STATE> implements INestedWordAutoma
 		 * map HierPREs -> LETTERs -> LinPREs -> SUCCs
 		 * 
 		 */
-		private Map<STATE,Map<LETTER,Map<STATE,Set<STATE>>>> m_ReturnSummary =
-				new HashMap<STATE,Map<LETTER,Map<STATE,Set<STATE>>>>();
+		private Map<LETTER,Map<STATE,Set<STATE>>> m_ReturnSummary =
+				new HashMap<LETTER,Map<STATE,Set<STATE>>>();
 		
 		/**
 		 * Set of return transitions LinPREs x HierPREs x LETTERs x SUCCs stored as 
@@ -1103,31 +1109,23 @@ public class ReachableStatesAutomaton<LETTER,STATE> implements INestedWordAutoma
 		}
 		
 
-//		@Override
-//		public void addReturnTransition(STATE pred, STATE hier, LETTER letter, STATE succ) {
-//			assert contains(pred);
-//			assert contains(hier);
-//			assert contains(succ);
-//
-//			
-//			Map<LETTER, Map<STATE, Set<STATE>>> letter2pred2succs = m_ReturnSummary.get(hier);
-//			if (letter2pred2succs == null) {
-//				letter2pred2succs = new HashMap<LETTER, Map<STATE, Set<STATE>>>();
-//				m_ReturnSummary.put(hier, letter2pred2succs);
-//			}
-//			Map<STATE, Set<STATE>> pred2succs = letter2pred2succs.get(letter);
-//			if (pred2succs == null) {
-//				pred2succs = new HashMap<STATE, Set<STATE>>();
-//				letter2pred2succs.put(letter, pred2succs);
-//			}
-//			Set<STATE> succS = pred2succs.get(pred);
-//			if (succS == null) {
-//				succS = new HashSet<STATE>();
-//				pred2succs.put(pred, succS);
-//			}
-//			succS.add(succ);
-//			// assert checkTransitionsStoredConsistent();
-//		}
+		public void addReturnTransition(STATE pred, LETTER letter, STATE succ) {
+			if (m_ReturnSummary == null) {
+				m_ReturnSummary = new HashMap<LETTER, Map<STATE, Set<STATE>>>();
+			}
+			Map<STATE, Set<STATE>> pred2succs = m_ReturnSummary.get(letter);
+			if (pred2succs == null) {
+				pred2succs = new HashMap<STATE, Set<STATE>>();
+				m_ReturnSummary.put(letter, pred2succs);
+			}
+			Set<STATE> succS = pred2succs.get(pred);
+			if (succS == null) {
+				succS = new HashSet<STATE>();
+				pred2succs.put(pred, succS);
+			}
+			succS.add(succ);
+			// assert checkTransitionsStoredConsistent();
+		}
 		
 		
 		
@@ -1172,14 +1170,10 @@ public class ReachableStatesAutomaton<LETTER,STATE> implements INestedWordAutoma
 		}
 		
 		
-//		@Override
-//		public Collection<LETTER> lettersReturnSummary(STATE state) {
-//			if (!contains(state)) {
-//				throw new IllegalArgumentException("State " + state + " unknown");
-//			}
-//			 Map<LETTER, Map<STATE, Set<STATE>>> map = m_ReturnSummary.get(state);
-//			return map == null ? m_EmptySetOfLetters : map.keySet();
-//		}
+		public Collection<LETTER> lettersReturnSummary() {
+			 Map<LETTER, Map<STATE, Set<STATE>>> map = m_ReturnSummary;
+			return map == null ? m_EmptySetOfLetters : map.keySet();
+		}
 		
 		
 		public Collection<STATE> succInternal(LETTER letter) {
@@ -1265,33 +1259,32 @@ public class ReachableStatesAutomaton<LETTER,STATE> implements INestedWordAutoma
 			return hier2preds.keySet();
 		}
 		
-//		@Override
-//		public Iterable<SummaryReturnTransition<LETTER, STATE>> 
-//							getSummaryReturnTransitions(LETTER letter, STATE hier) {
-//			Set<SummaryReturnTransition<LETTER, STATE>> result = 
-//					new HashSet<SummaryReturnTransition<LETTER, STATE>>();
-//			Map<LETTER, Map<STATE, Set<STATE>>> letter2pred2succ = 
-//					m_ReturnSummary.get(hier);
-//			if (letter2pred2succ == null) {
-//				return result;
-//			}
-//			Map<STATE, Set<STATE>> pred2succ = letter2pred2succ.get(letter);
-//			if (pred2succ == null) {
-//				return result;
-//			}
-//			for (STATE pred : pred2succ.keySet()) {
-//				if (pred2succ.get(pred) != null) {
-//					for (STATE succ : pred2succ.get(pred)) {
-//					SummaryReturnTransition<LETTER, STATE> srt = 
-//						new SummaryReturnTransition<LETTER, STATE>(pred, letter, succ);
-//					result.add(srt);
-//					}
-//				}
-//			}
-//			return result;
-//		}
-	//	
-	//	
+		public Iterable<SummaryReturnTransition<LETTER, STATE>> 
+							getSummaryReturnTransitions(LETTER letter) {
+			Set<SummaryReturnTransition<LETTER, STATE>> result = 
+					new HashSet<SummaryReturnTransition<LETTER, STATE>>();
+			Map<LETTER, Map<STATE, Set<STATE>>> letter2pred2succ = 
+					m_ReturnSummary;
+			if (letter2pred2succ == null) {
+				return result;
+			}
+			Map<STATE, Set<STATE>> pred2succ = letter2pred2succ.get(letter);
+			if (pred2succ == null) {
+				return result;
+			}
+			for (STATE pred : pred2succ.keySet()) {
+				if (pred2succ.get(pred) != null) {
+					for (STATE succ : pred2succ.get(pred)) {
+					SummaryReturnTransition<LETTER, STATE> srt = 
+						new SummaryReturnTransition<LETTER, STATE>(pred, letter, succ);
+					result.add(srt);
+					}
+				}
+			}
+			return result;
+		}
+		
+		
 
 		public Iterable<IncomingReturnTransition<LETTER, STATE>> 
 							getIncomingReturnTransitions(LETTER letter) {
@@ -1343,7 +1336,7 @@ public class ReachableStatesAutomaton<LETTER,STATE> implements INestedWordAutoma
 	
 						@Override
 						public boolean hasNext() {
-							return m_Iterator == null || m_Iterator.hasNext();
+							return m_Iterator != null && m_Iterator.hasNext();
 						}
 	
 						@Override
@@ -1461,7 +1454,7 @@ public class ReachableStatesAutomaton<LETTER,STATE> implements INestedWordAutoma
 	
 						@Override
 						public boolean hasNext() {
-							return m_Iterator == null || m_Iterator.hasNext();
+							return m_Iterator != null && m_Iterator.hasNext();
 						}
 	
 						@Override
@@ -1582,7 +1575,7 @@ public class ReachableStatesAutomaton<LETTER,STATE> implements INestedWordAutoma
 	
 						@Override
 						public boolean hasNext() {
-							return m_Iterator == null || m_Iterator.hasNext();
+							return m_Iterator != null && m_Iterator.hasNext();
 						}
 	
 						@Override
@@ -1765,7 +1758,7 @@ public class ReachableStatesAutomaton<LETTER,STATE> implements INestedWordAutoma
 	
 						@Override
 						public boolean hasNext() {
-							return m_Iterator == null || m_Iterator.hasNext();
+							return m_Iterator != null && m_Iterator.hasNext();
 						}
 	
 						@Override
@@ -1882,7 +1875,7 @@ public class ReachableStatesAutomaton<LETTER,STATE> implements INestedWordAutoma
 	
 						@Override
 						public boolean hasNext() {
-							return m_Iterator == null || m_Iterator.hasNext();
+							return m_Iterator != null && m_Iterator.hasNext();
 						}
 	
 						@Override
@@ -2005,7 +1998,7 @@ public class ReachableStatesAutomaton<LETTER,STATE> implements INestedWordAutoma
 	
 						@Override
 						public boolean hasNext() {
-							return m_Iterator == null || m_Iterator.hasNext();
+							return m_Iterator != null && m_Iterator.hasNext();
 						}
 	
 						@Override

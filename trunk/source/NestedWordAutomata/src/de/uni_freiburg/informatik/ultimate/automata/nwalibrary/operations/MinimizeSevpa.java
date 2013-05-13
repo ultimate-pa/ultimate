@@ -18,7 +18,7 @@ import de.uni_freiburg.informatik.ultimate.automata.Activator;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.DoubleDeckerAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.IDoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
@@ -1238,7 +1238,7 @@ public class MinimizeSevpa<LETTER,STATE> implements IOperation {
 		 */
 		private boolean isSimilarHelper(Partition partition, LETTER letter,
 				STATE lin, STATE hier, EquivalenceClass equivalenceClass) {
-			if (((DoubleDeckerAutomaton<LETTER,STATE>) m_operand).
+			if (((IDoubleDeckerAutomaton<LETTER, STATE>) m_operand).
 						isDoubleDecker(lin, hier)) {
 				if (!checkExistenceOfSimilarTransition(
 						partition,
