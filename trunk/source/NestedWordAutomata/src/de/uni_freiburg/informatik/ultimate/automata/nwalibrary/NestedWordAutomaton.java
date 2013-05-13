@@ -470,7 +470,7 @@ public class NestedWordAutomaton<LETTER,STATE> implements INestedWordAutomaton<L
 
 					@Override
 					public boolean hasNext() {
-						return m_Iterator == null || m_Iterator.hasNext();
+						return m_Iterator != null && m_Iterator.hasNext();
 					}
 
 					@Override
@@ -589,7 +589,7 @@ public class NestedWordAutomaton<LETTER,STATE> implements INestedWordAutomaton<L
 
 					@Override
 					public boolean hasNext() {
-						return m_Iterator == null || m_Iterator.hasNext();
+						return m_Iterator != null && m_Iterator.hasNext();
 					}
 
 					@Override
@@ -711,7 +711,7 @@ public class NestedWordAutomaton<LETTER,STATE> implements INestedWordAutomaton<L
 
 					@Override
 					public boolean hasNext() {
-						return m_Iterator == null || m_Iterator.hasNext();
+						return m_Iterator != null && m_Iterator.hasNext();
 					}
 
 					@Override
@@ -895,7 +895,7 @@ public class NestedWordAutomaton<LETTER,STATE> implements INestedWordAutomaton<L
 
 					@Override
 					public boolean hasNext() {
-						return m_Iterator == null || m_Iterator.hasNext();
+						return m_Iterator != null && m_Iterator.hasNext();
 					}
 
 					@Override
@@ -1013,7 +1013,7 @@ public class NestedWordAutomaton<LETTER,STATE> implements INestedWordAutomaton<L
 
 					@Override
 					public boolean hasNext() {
-						return m_Iterator == null || m_Iterator.hasNext();
+						return m_Iterator != null && m_Iterator.hasNext();
 					}
 
 					@Override
@@ -1138,7 +1138,7 @@ public class NestedWordAutomaton<LETTER,STATE> implements INestedWordAutomaton<L
 
 					@Override
 					public boolean hasNext() {
-						return m_Iterator == null || m_Iterator.hasNext();
+						return m_Iterator != null && m_Iterator.hasNext();
 					}
 
 					@Override
