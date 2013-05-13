@@ -3,12 +3,56 @@
 
 //parseAutomata("sas09.ats");
 
-print(removeUnreachable(a1));
-//print(removeUnreachable(Amod2));
-//print(removeUnreachable(joiningComponents2));
+removeUnreachable(minimizeSmall);
+removeUnreachable(noFinalStates);
+removeUnreachable(Amod2);
+removeUnreachable(joiningComponents2);
+removeUnreachable(repeatedlyjoiningComponents);
+removeUnreachable(joiningComponents);
 
-//print(reachableStatesCopy(a1));
-//print(reachableStatesCopy(A1));
+
+
+
+print(removeUnreachable(minimizeSmall));
+
+NestedWordAutomaton minimizeSmall = (
+	callAlphabet = {"c_1" "c_2"},
+	internalAlphabet = {"i_1" "i_2"},
+	returnAlphabet = {"r_1"},
+	states = {"q0" "q1" "qE" "t0" "t1" "t2"},
+	initialStates = {"q0" "q1"},
+	finalStates = {"qE"},
+	callTransitions = {
+		 ("q0" "c_1" "t0")
+		 ("q1" "c_2" "t0")
+	},
+	internalTransitions = {
+		 ("t0" "i_1" "t1")
+		 ("t0" "i_2" "t2")
+	},
+	returnTransitions = {
+		 ("t1" "q0"  "r_1" "qE")
+		 ("t2" "q1"  "r_1" "qE")
+	}
+);
+
+
+NestedWordAutomaton noFinalStates = (
+	callAlphabet = {},
+	internalAlphabet = {a1 a0 },
+	returnAlphabet = {},
+	states = {s2 s0 s1 },
+	initialStates = {s0 },
+	finalStates = { },
+	callTransitions = {
+	},
+	internalTransitions = {
+		 (s0 a0 s1)
+		 (s1 a1 s2)
+	},
+	returnTransitions = {
+	}
+);
 
 
 NestedWordAutomaton repeatedlyjoiningComponents = (
@@ -69,35 +113,4 @@ NestedWordAutomaton joiningComponents = (
 	(p3 d p4)
   },
   returnTransitions = {}
-);
-
-
-
-
-NestedWordAutomaton Amod2 = (
-  callAlphabet = { },
-  internalAlphabet = { "0" "1"},
-  returnAlphabet = { },
-  states = {p0 p1},
-  initialStates = {p0},
-  finalStates = {p0},
-  callTransitions = {},
-  internalTransitions = {
-	(p0 "0" p0)
-	(p0 "1" p1)
-	(p1 "0" p0)
-	(p1 "1" p1)},
-  returnTransitions = {}
-);
-
-NestedWordAutomaton a1 = (
-  callAlphabet = {a b},
-  internalAlphabet = {a b},
-  returnAlphabet = {a b},
-  states = {q0 q1},
-  initialStates = {q0},
-  finalStates = {q1},
-  callTransitions = {(q0 a q0) (q0 a q1)},
-  internalTransitions = {}, 
-  returnTransitions = {(q1 q0 b q1)}
 );
