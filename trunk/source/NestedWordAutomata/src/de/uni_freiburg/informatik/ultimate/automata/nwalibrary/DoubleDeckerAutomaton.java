@@ -25,7 +25,7 @@ public class DoubleDeckerAutomaton<LETTER, STATE> extends NestedWordAutomaton<LE
 	
 	@Deprecated
 	public Set<STATE> getDownStates(STATE up) {
-		return null;
+		return m_Up2Down.get(up).keySet();
 	}
 	
 	public void setUp2Down(Map<STATE,Map<STATE,ReachFinal>> up2Down) {
