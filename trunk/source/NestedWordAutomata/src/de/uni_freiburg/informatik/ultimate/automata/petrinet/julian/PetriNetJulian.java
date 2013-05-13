@@ -217,16 +217,7 @@ public class PetriNetJulian<S, C> implements IPetriNet<S, C> {
 		return false;
 	}
 
-	/**
-	 * Uses the acceptance check based on Julians implementation
-	 * 
-	 * @param nw
-	 * @return
-	 */
-	@Deprecated
-	public boolean acceptsJJ(Word<S> word) {
-		return (new Accepts<S, C>(this, word)).getResult();
-	}
+
 
 	/**
 	 * Uses the acceptance check based on translation to finite automata
@@ -242,11 +233,6 @@ public class PetriNetJulian<S, C> implements IPetriNet<S, C> {
 
 	}
 
-	@SuppressWarnings("deprecation")
-	public boolean accepts(Word<S> word) {
-		return acceptsJJ(word);
-		// return acceptsFA(word);
-	}
 
 	public PetriNetRun<S, C> acceptingRun() throws OperationCanceledException {
 		// NestedRun<S, C> test = getAcceptingNestedRun();
@@ -281,5 +267,10 @@ public class PetriNetJulian<S, C> implements IPetriNet<S, C> {
 	public String sizeInformation() {
 		return "has " + places.size() + "places, " + transitions.size()
 				+ " transitions";
+	}
+
+	@Override
+	public boolean accepts(Word<S> word) {
+		throw new UnsupportedOperationException();
 	}
 }

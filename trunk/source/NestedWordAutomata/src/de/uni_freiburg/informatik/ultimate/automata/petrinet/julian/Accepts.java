@@ -6,6 +6,7 @@ import java.util.HashSet;
 
 import de.uni_freiburg.informatik.ultimate.automata.Activator;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
+import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
@@ -47,7 +48,7 @@ public class Accepts<S, C> implements IOperation {
 	
 	
 
-	public Accepts(PetriNetJulian<S, C> net, Word<S> nWord) {
+	public Accepts(PetriNetJulian<S, C> net, Word<S> nWord) throws OperationCanceledException {
 		this.net = net;
 		this.nWord = nWord;
 		s_Logger.info(startMessage());
@@ -63,9 +64,14 @@ public class Accepts<S, C> implements IOperation {
 	}
 
 	private boolean getResultHelper(int position,
-	        Marking<S, C> marking) {
+	        Marking<S, C> marking) throws OperationCanceledException {
 		if (position >= nWord.length())
 			return net.isAccepting(marking);
+		
+		
+		if (!UltimateServices.getInstance().continueProcessing()) {
+			throw new OperationCanceledException();
+		}
 
 		S symbol = nWord.getSymbol(position);
 		if (!net.getAlphabet().contains(symbol)) {
