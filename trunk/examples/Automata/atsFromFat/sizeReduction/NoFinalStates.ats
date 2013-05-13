@@ -1,7 +1,7 @@
 
-print(minimizeSevpa(nwa));
+print(minimizeSevpa(noFinalStates));
 
-NestedWordAutomaton nwa = (
+NestedWordAutomaton noFinalStates = (
 	callAlphabet = {},
 	internalAlphabet = {a1 a0 },
 	returnAlphabet = {},

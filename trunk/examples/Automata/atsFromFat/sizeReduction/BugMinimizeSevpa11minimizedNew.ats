@@ -1,5 +1,5 @@
 //reveals bug in revision 7244
-print(reachableStatesCopy(nwa));
+print(removeUnreachable(nwa));
 
 NestedWordAutomaton nwa = (
 	callAlphabet = {"c"},

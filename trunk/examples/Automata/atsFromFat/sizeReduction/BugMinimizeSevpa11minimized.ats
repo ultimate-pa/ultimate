@@ -2,7 +2,7 @@
 
 // problem: t1 and t2 are merged
 
-print(minimizeSevpa( reachableStatesCopy(nwa)));
+print(minimizeSevpa( removeUnreachable(nwa)));
 
 NestedWordAutomaton nwa = (
 	callAlphabet = {"c_1" "c_2"},

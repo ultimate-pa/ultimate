@@ -1,4 +1,4 @@
-print(minimizeSevpa(reachableStatesCopy(nwa)));
+print(minimizeSevpa(removeUnreachable(nwa)));
 
 NestedWordAutomaton nwa = (
 	callAlphabet = {"c1" "c2"},

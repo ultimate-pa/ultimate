@@ -1,6 +1,6 @@
 // Problem with run [{q0}, {(€,q0)}] c1< [{q1}, {(q0,q1)}] i2 [{q2, q3}, {(q0,q2)}] > r1[{qE}, {}]
 
-print(minimizeSevpa(reachableStatesCopy(nwa)));
+print(minimizeSevpa(removeUnreachable(nwa)));
 //print(reachableStatesCopy(nwa));
 
 NestedWordAutomaton nwa = (
