@@ -54,14 +54,15 @@ public class ReachableStatesAutomaton<LETTER,STATE> implements INestedWordAutoma
 		returnSuccs.add(returnSucc);
 	}
 	
-	public ReachableStatesAutomaton(NestedWordAutomaton<LETTER,STATE> operand) {
-		this.m_Operand = operand;
+	public ReachableStatesAutomaton(INestedWordAutomaton<LETTER,STATE> operand) {
+		this.m_Operand = (NestedWordAutomaton<LETTER, STATE>) operand;
 		m_InternalAlphabet = operand.getAlphabet();
 		m_CallAlphabet = operand.getCallAlphabet();
 		m_ReturnAlphabet = operand.getReturnAlphabet();
 		m_StateFactory = operand.getStateFactory();
 		addInitialStates(m_Operand.getInitialStates());
 		buildAllStates();
+		assert(checkTransitionsReturnedConsistent());
 		assert(worklist.isEmpty());
 		assert(doubleDeckerWorklist.isEmpty());
 		assert(cecSplitWorklist.isEmtpy());
@@ -102,6 +103,10 @@ public class ReachableStatesAutomaton<LETTER,STATE> implements INestedWordAutoma
 		public STATE getState() {
 			return m_State;
 		}
+		
+		public String toString() {
+			return m_State.toString();
+		}
 	}
 	
 	public class CommonEntriesComponent {
@@ -118,6 +123,16 @@ public class ReachableStatesAutomaton<LETTER,STATE> implements INestedWordAutoma
 			this.m_ReturnOutCandidates = new HashSet<STATE>();
 			this.m_BorderOut = new HashMap<STATE,Set<STATE>>();
 			m_AllCECs.add(this);
+		}
+		
+		public String toString() {
+			StringBuilder sb = new StringBuilder();
+			sb.append("Entries: ").append(m_Entries).append("\n");
+			sb.append("DownStates: ").append(m_DownStates).append("\n");
+			sb.append("Size: ").append(m_Size).append("\n");
+			sb.append("ReturnOutCandiates: ").append(m_ReturnOutCandidates).append("\n");
+			sb.append("BorderOut: ").append(m_BorderOut).append("\n");
+			return sb.toString();
 		}
 
 		public Set<Entry> getEntries() {
@@ -173,6 +188,16 @@ public class ReachableStatesAutomaton<LETTER,STATE> implements INestedWordAutoma
 		}
 	}
 	
+	
+	private StateContainer constructStateContainer(STATE state, CommonEntriesComponent cec) {
+		StateContainer result = new StateContainer(state, cec);
+		cec.m_Size++;
+		if (candidateForOutgoingReturn(state)) {
+			cec.addReturnOutCandicate(state);
+		}
+		return result;
+	}
+	
 	private void addInitialStates(Iterable<STATE> initialStates) {
 		for (STATE state : initialStates) {
 			this.m_initialStates.add(state);
@@ -182,7 +207,7 @@ public class ReachableStatesAutomaton<LETTER,STATE> implements INestedWordAutoma
 			HashSet<STATE> downStates = new HashSet<STATE>();
 			downStates.add(getEmptyStackState());
 			CommonEntriesComponent cec = new CommonEntriesComponent(entries,downStates);
-			StateContainer sc = new StateContainer(state, cec);
+			StateContainer sc = constructStateContainer(state, cec);
 			m_States.put(state, sc);
 		}
 		
@@ -190,7 +215,7 @@ public class ReachableStatesAutomaton<LETTER,STATE> implements INestedWordAutoma
 	
 	
 	private boolean candidateForOutgoingReturn(STATE state) {
-		return false;
+		return true;
 	}
 	
 	
@@ -257,7 +282,7 @@ public class ReachableStatesAutomaton<LETTER,STATE> implements INestedWordAutoma
 			worklist.add(splitStart);
 		}
 		while (!worklist.isEmpty()) {
-			STATE state = worklist.get(0);
+			STATE state = worklist.remove(0);
 			visited.add(state);
 			if (oldCec.getReturnOutCandidates().contains(state)) {
 				result.addReturnOutCandicate(state);
@@ -278,18 +303,27 @@ public class ReachableStatesAutomaton<LETTER,STATE> implements INestedWordAutoma
 			}
 			StateContainer stateSc = m_States.get(state);
 			stateSc.setCommonEntriesComponent(result);
+			assert oldCec.m_Size > 0;
 			oldCec.m_Size--;
 			result.m_Size++;
 			
 			for (OutgoingInternalTransition<LETTER, STATE> trans : stateSc.internalSuccessors()) {
 				STATE succ = trans.getSucc();
-				if (!visited.contains(succ)) {
-					worklist.add(succ);
+				StateContainer succSc = m_States.get(succ);
+				if (succSc.getCommonEntriesComponent() == oldCec) {
+					if (!visited.contains(succ)) {
+						worklist.add(succ);
+					}
 				}
 			}
-			for (STATE succ : summarySuccs(state)) {
-				if (!visited.contains(succ)) {
-					worklist.add(succ);
+			if (m_Summaries.containsKey(state)) {
+				for (STATE succ : m_Summaries.get(state)) {
+					StateContainer succSc = m_States.get(succ);
+					if (succSc.getCommonEntriesComponent() == oldCec) {
+						if (!visited.contains(succ)) {
+							worklist.add(succ);
+						}
+					}
 				}
 			}
 		}
@@ -320,9 +354,6 @@ public class ReachableStatesAutomaton<LETTER,STATE> implements INestedWordAutoma
 		return result;
 	}
 	
-	private Set<STATE> summarySuccs(STATE state) {
-		return null;
-	}
 	
 	private void buildAllStates() {
 		worklist = new LinkedList<StateContainer>();
@@ -339,13 +370,10 @@ public class ReachableStatesAutomaton<LETTER,STATE> implements INestedWordAutoma
 			CommonEntriesComponent stateCec = sc.getCommonEntriesComponent(); 
 			for (OutgoingInternalTransition<LETTER, STATE> trans : m_Operand.internalSuccessors(state)) {
 				STATE succ = trans.getSucc();
-				StateContainer succSC = m_States.get(state);
+				StateContainer succSC = m_States.get(succ);
 				if (succSC == null) {
-					succSC = new StateContainer(succ, stateCec);
+					succSC = constructStateContainer(succ, stateCec);
 					m_States.put(succ, succSC);
-					if (candidateForOutgoingReturn(succ)) {
-						stateCec.addReturnOutCandicate(succ);
-					}
 				} else {
 					CommonEntriesComponent succCEC = succSC.getCommonEntriesComponent();
 					if (stateCec != succCEC) {
@@ -379,11 +407,8 @@ public class ReachableStatesAutomaton<LETTER,STATE> implements INestedWordAutoma
 					HashSet<Entry> entries = new HashSet<Entry>();
 					entries.add(entry);
 					CommonEntriesComponent succCEC = new CommonEntriesComponent(entries, downStates);
-					succSC = new StateContainer(succ, succCEC);
+					succSC = constructStateContainer(succ, succCEC);
 					m_States.put(succ, succSC);
-					if (candidateForOutgoingReturn(succ)) {
-						stateCec.addReturnOutCandicate(succ);
-					}
 				} else {
 					CommonEntriesComponent succCEC = succSC.getCommonEntriesComponent();
 					Entry entry = m_State2Entry.get(succ);
@@ -410,8 +435,10 @@ public class ReachableStatesAutomaton<LETTER,STATE> implements INestedWordAutoma
 			CommonEntriesComponent stateCEC = stateSc.getCommonEntriesComponent();
 			//TODO: need copy to avoid concurModExcpetion ???
 			for (STATE down : stateCEC.getDownStates()) {
-				StateContainer downSC = m_States.get(down);
-				addReturnAndSuccessor(stateSc, downSC);
+				if (down != getEmptyStackState()) {
+					StateContainer downSC = m_States.get(down);
+					addReturnAndSuccessor(stateSc, downSC);
+				}
 			}
 			
 			while (!doubleDeckerWorklist.isEmpty()) {
@@ -435,7 +462,7 @@ public class ReachableStatesAutomaton<LETTER,STATE> implements INestedWordAutoma
 			CommonEntriesComponent cec = worklist.remove(0);
 			visitedCECs.add(cec);
 			HashSet<STATE> newdownStates = new HashSet<STATE>();
-			for (STATE down : newdownStates) {
+			for (STATE down : downStates) {
 				if (!cec.getDownStates().contains(down)) {
 					newdownStates.add(down);
 				}
@@ -444,6 +471,7 @@ public class ReachableStatesAutomaton<LETTER,STATE> implements INestedWordAutoma
 				for (STATE state : cec.getReturnOutCandidates()) {
 					for (STATE down : newdownStates) {
 						doubleDeckerWorklist.enqueue(state, down);
+						cec.addDownState(down);
 					}
 				}
 				for (STATE resident : cec.m_BorderOut.keySet()) {
@@ -467,11 +495,8 @@ public class ReachableStatesAutomaton<LETTER,STATE> implements INestedWordAutoma
 			STATE succ = trans.getSucc();
 			StateContainer succSC = m_States.get(succ);
 			if (succSC == null) {
-				succSC = new StateContainer(succ, downCec);
+				succSC = constructStateContainer(succ, downCec);
 				m_States.put(succ, succSC);
-				if (candidateForOutgoingReturn(succ)) {
-					downCec.addReturnOutCandicate(succ);
-				}
 			} else {
 				CommonEntriesComponent succCEC = succSC.getCommonEntriesComponent();
 				if (downCec != succCEC) {
@@ -586,13 +611,12 @@ public class ReachableStatesAutomaton<LETTER,STATE> implements INestedWordAutoma
 
 	@Override
 	public boolean isInitial(STATE state) {
-		// TODO Auto-generated method stub
-		return false;
+		return m_Operand.isInitial(state);
 	}
 
 	@Override
 	public boolean isFinal(STATE state) {
-		throw new UnsupportedOperationException();
+		return m_Operand.isFinal(state);
 	}
 
 	@Override
@@ -832,6 +856,10 @@ public class ReachableStatesAutomaton<LETTER,STATE> implements INestedWordAutoma
 		
 		
 		private final STATE m_State;
+		
+		public String toString() {
+			return m_State.toString();
+		}
 		
 		private CommonEntriesComponent cec;
 		/**
@@ -2249,17 +2277,20 @@ public class ReachableStatesAutomaton<LETTER,STATE> implements INestedWordAutoma
 		Set<STATE> downStates = cec.m_DownStates;
 		Set<Entry> entries = cec.m_Entries;
 		result &= downStatesAreCallPredsOfEntries(downStates, entries);
+		assert (result);
 		result &= eachStateHasThisCec(cec.getReturnOutCandidates(), cec);
+		assert (result);
 		for (STATE resident : cec.m_BorderOut.keySet()) {
 			Set<STATE> foreigners = cec.m_BorderOut.get(resident);
 			result &= internalOutSummaryOutInCecOrForeigners(resident, foreigners, cec);
+			assert (result);
 		}
 		return result;
 	}
 	
 	private boolean internalOutSummaryOutInCecOrForeigners(STATE state, Set<STATE> foreigners, CommonEntriesComponent cec) {
 		StateContainer sc = m_States.get(state);
-		Set<STATE> statesWithDifferntCEC = new HashSet<STATE>();
+		Set<STATE> neighbors = new HashSet<STATE>();
 		
 		for (OutgoingInternalTransition<LETTER, STATE> trans : sc.internalSuccessors()) {
 			STATE succ = trans.getSucc();
@@ -2267,7 +2298,7 @@ public class ReachableStatesAutomaton<LETTER,STATE> implements INestedWordAutoma
 			if (succSc.getCommonEntriesComponent() == cec) {
 				// do nothing
 			} else {
-				statesWithDifferntCEC.add(state);
+				neighbors.add(succ);
 			}
 		}
 		if (m_Summaries.containsKey(state)) {
@@ -2276,13 +2307,13 @@ public class ReachableStatesAutomaton<LETTER,STATE> implements INestedWordAutoma
 				if (succSc.getCommonEntriesComponent() == cec) {
 					// do nothing
 				} else {
-					statesWithDifferntCEC.add(succ);
+					neighbors.add(succ);
 				}
 			}
 		}
-		boolean allDifferentAreForeigners = isSubset(statesWithDifferntCEC, foreigners);
-		boolean allForeignersAreDifferent = isSubset(foreigners, statesWithDifferntCEC);
-		return allDifferentAreForeigners && allForeignersAreDifferent;
+		boolean allNeighborAreForeigners = isSubset(neighbors, foreigners);
+		boolean allForeignersAreNeighbor = isSubset(foreigners, neighbors);
+		return allNeighborAreForeigners && allForeignersAreNeighbor;
 	}
 	
 	private boolean eachStateHasThisCec(Set<STATE> states, CommonEntriesComponent cec) {
@@ -2300,6 +2331,9 @@ public class ReachableStatesAutomaton<LETTER,STATE> implements INestedWordAutoma
 		Set<STATE> callPreds = new HashSet<STATE>();
 		for (Entry entry : entries) {
 			STATE entryState = entry.getState();
+			if (isInitial(entryState)) {
+				callPreds.add(getEmptyStackState());
+			}
 			for (IncomingCallTransition<LETTER, STATE> trans : callPredecessors(entryState)) {
 				callPreds.add(trans.getPred());
 			}
