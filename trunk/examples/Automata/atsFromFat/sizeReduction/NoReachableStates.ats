@@ -1,5 +1,5 @@
 
-print(minimizeSevpa(nwa));
+print(minimizeSevpa(removeUnreachable(nwa)));
 
 NestedWordAutomaton nwa = (
 	callAlphabet = {},

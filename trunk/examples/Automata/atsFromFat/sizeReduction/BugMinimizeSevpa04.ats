@@ -2,7 +2,7 @@
 
 // Problem with run unknown assume a >= 0;assume... unknown call< unknown assume x >= 0;assume... unknown assume y == 0;res :=... unknown assume true; unknown > returnunknown assume !(c == a + b)... unknown 
 
-print(minimizeSevpa(reachableStatesCopy(nwa)));
+print(minimizeSevpa(removeUnreachable(nwa)));
 
 NestedWordAutomaton nwa = (
 	callAlphabet = {"call13" "call15" },

@@ -4,7 +4,7 @@
 // Date: 22.09.2012
 // Author: Matthias
 
-print(minimizeSevpa( reachableStatesCopy(nwa)));
+print(minimizeSevpa( removeUnreachable(nwa)));
 
 NestedWordAutomaton nwa = (
 	callAlphabet = {"call" },

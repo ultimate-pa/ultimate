@@ -3,7 +3,7 @@
 // Problem with run #12005#TestENTRY x = 1;havoc n; #12007#L22 call< #12009#encTENTRY x_local = x;n_local... #12011#L38loopEntry' assume star; #12015#L41 call< #12019#encLTENTRY x_local = x;n_local... #12023#L107 call< #12027#encLLTENTRY assume !(x == 0);ret... #12031#L120' assume true; #12035#encLLTEXIT > return#12039#L107' assume !CallRet; #12047#L113 call< #12055#encRLTENTRY assume !(x != 0);ret... #12061#L129' assume true; #12069#encRLTEXIT > return#12077#L113' assume true; #12087#encLTEXIT > return#12099#L41' assume !blockCall;re... #12106#encTFINAL assume true; #12111#encTEXIT > return#12116#L22' assume !(ret != fals... #12125#TestErr0AssertViolation 
 
 //reveals bug in revision 7230
-print(minimizeSevpa(reachableStatesCopy(nwa)));
+print(minimizeSevpa(removeUnreachable(nwa)));
 
 NestedWordAutomaton nwa = (
 	callAlphabet = {"call652" "call654" "call648" "call650" "call644" "call646" "call656" "call640" "call642" },

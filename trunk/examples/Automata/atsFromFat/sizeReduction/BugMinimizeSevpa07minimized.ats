@@ -13,7 +13,7 @@
 // 8. r_2_: go to q3 -> q5 from stack
 // from here see 4.
 
-print(minimizeSevpa(reachableStatesCopy(nwa)));
+print(minimizeSevpa(removeUnreachable(nwa)));
 
 NestedWordAutomaton nwa = (
 	callAlphabet = {"c_0" "c_1" "c_2" "c_3"},

@@ -1,7 +1,7 @@
 // Testfile dumped by Ultimate at 2012/09/21 12:42:11
 
 
-assert(accepts(minimizeSevpa(reachableStatesCopy(nwa)), [ ]));
+assert(accepts(minimizeSevpa(removeUnreachable(nwa)), [ ]));
 
 NestedWordAutomaton nwa = (
 	callAlphabet = {"call763" "call761" "call751" "call767" "call765" "call769" "call755" "call753" "call759" "call757" },

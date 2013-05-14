@@ -2,7 +2,7 @@
 // still needed even if splitting hierarchical predecessors of outgoing returns
 // is used
 
-print(minimizeSevpa(reachableStatesCopy(nwa)));
+print(minimizeSevpa(removeUnreachable(nwa)));
 
 NestedWordAutomaton nwa = (
 	callAlphabet = {"c"},
