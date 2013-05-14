@@ -271,6 +271,7 @@ public class ReachableStatesAutomaton<LETTER,STATE> implements INestedWordAutoma
 		}
 		
 		public void add(StateContainer state, Set<Entry> entries, Set<STATE> downStates) {
+			assert state.getCommonEntriesComponent().m_Size == state.getCommonEntriesComponent().m_ReturnOutCandidates.size();
 			Object[] elem = new Object[] { state, entries, downStates };
 			m_worklist.add(elem);
 		}
@@ -2356,10 +2357,9 @@ public class ReachableStatesAutomaton<LETTER,STATE> implements INestedWordAutoma
 	}
 	
 	private boolean internalOutSummaryOutInCecOrForeigners(StateContainer state, Set<StateContainer> foreigners, CommonEntriesComponent cec) {
-		StateContainer sc = m_States.get(state);
 		Set<StateContainer> neighbors = new HashSet<StateContainer>();
 		
-		for (OutgoingInternalTransition<LETTER, STATE> trans : sc.internalSuccessors()) {
+		for (OutgoingInternalTransition<LETTER, STATE> trans : state.internalSuccessors()) {
 			STATE succ = trans.getSucc();
 			StateContainer succSc = m_States.get(succ);
 			if (succSc.getCommonEntriesComponent() == cec) {
