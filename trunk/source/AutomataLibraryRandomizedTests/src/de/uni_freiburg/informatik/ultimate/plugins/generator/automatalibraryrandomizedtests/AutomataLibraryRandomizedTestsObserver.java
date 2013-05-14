@@ -12,11 +12,11 @@ import de.uni_freiburg.informatik.ultimate.access.WalkerOptions;
 import de.uni_freiburg.informatik.ultimate.automata.AtsDefinitionPrinter;
 import de.uni_freiburg.informatik.ultimate.automata.AtsDefinitionPrinter.Labeling;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomatonGenerator;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.BuchiComplementFKV;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.BuchiComplementRE;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.BuchiComplementSVW;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.GetRandomNwa;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.MinimizeSevpa;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.ReachableStatesCopy;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.BuchiReduce;
@@ -39,7 +39,6 @@ public class AutomataLibraryRandomizedTestsObserver implements IUnmanagedObserve
 		// TODO Auto-generated method stub
 		s_Logger.warn("Starting randomized automat tests. Press cancel to stop the tests.");
 		
-		NestedWordAutomatonGenerator gen = new NestedWordAutomatonGenerator();
 		ConfigurationScope scope = new ConfigurationScope();
 		IEclipsePreferences prefs = scope.getNode(Activator.s_PLUGIN_ID);
 		boolean writeToFile = prefs.getBoolean(PreferenceConstants.Name_WriteToFile, PreferenceConstants.Default_WriteToFile);
@@ -63,7 +62,7 @@ public class AutomataLibraryRandomizedTestsObserver implements IUnmanagedObserve
 			
 			int i = 0;
 			while (UltimateServices.getInstance().continueProcessing()) {
-				INestedWordAutomaton<String, String> auto = gen.generateAutomaton(numberLetters, numberStates, probInternal, probCall, probReturn, probFinal);
+				INestedWordAutomaton<String, String> auto = (new GetRandomNwa(numberLetters, numberStates, probInternal, probCall, probReturn, probFinal)).getResult();
 				s_Logger.info("Generated an automaton which has " + auto.sizeInformation());
 				if (writeToFile) {
 					String directory = getDirectory();

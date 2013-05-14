@@ -1,4 +1,4 @@
-package de.uni_freiburg.informatik.ultimate.automata.nwalibrary;
+package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -7,6 +7,11 @@ import java.util.List;
 import java.util.Random;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.automata.IOperation;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StringFactory;
+
 /**
  * Class that provides the method {@code generateAutomaton()} for randomly
  * generating connected NFAs. Here connected means that every state is reachable
@@ -14,33 +19,104 @@ import java.util.Set;
  * 
  * @author Fabian Reiter
  */
-public class NestedWordAutomatonGenerator {
+public class GetRandomNwa implements IOperation {
 	
-	private Random m_Random;
+	private final Random m_Random;
+	private final NestedWordAutomaton<String,String> m_Result;
 	
-	public NestedWordAutomatonGenerator() {
+	int m_alphabetSize; 
+	int m_size;
+	double m_internalTransitionDensity;
+	double m_callTransitionProbability;
+	double m_returnTransitionProbability;
+	double m_acceptanceDensity;
+	
+	/**
+	 * See generateAutomaton.
+	 * @param alphabetSize
+	 * @param size
+	 * @param internalTransitionDensity
+	 * @param callTransitionProbability
+	 * @param returnTransitionProbability
+	 * @param acceptanceDensity
+	 */
+	public GetRandomNwa(int alphabetSize, int size, 
+			double internalTransitionDensity,
+			double callTransitionProbability,
+			double returnTransitionProbability,
+			double acceptanceDensity) {
 		m_Random = new Random();
+		m_alphabetSize = alphabetSize;
+		m_size = size;
+		m_internalTransitionDensity = internalTransitionDensity;
+		m_callTransitionProbability = callTransitionProbability;
+		m_returnTransitionProbability = returnTransitionProbability;
+		m_acceptanceDensity = acceptanceDensity;
+		m_Result = generateAutomaton(m_alphabetSize, m_size, 
+				m_internalTransitionDensity, 
+				m_callTransitionProbability, 
+				m_returnTransitionProbability, 
+				m_acceptanceDensity);
 	}
 	
 	/**
-	 * @param seed
-	 *            initial seed for the internal random number generator
+	 * See generateAutomaton. But since the parser does not support double the
+	 * inputs are values in per mille (divided by 1000).
+	 * @param alphabetSize
+	 * @param size
+	 * @param internalTransitionDensity
+	 * @param callTransitionProbability
+	 * @param returnTransitionProbability
+	 * @param acceptanceDensity
 	 */
-	public NestedWordAutomatonGenerator(long seed) {
-		m_Random = new Random(seed);
+	public GetRandomNwa(int alphabetSize, int size, 
+			int internalTransitionDensity,
+			int callTransitionProbability,
+			int returnTransitionProbability,
+			int acceptanceDensity) {
+		m_Random = new Random();
+		m_alphabetSize = alphabetSize;
+		m_size = size;
+		m_internalTransitionDensity = ((double) internalTransitionDensity) / 1000.0;
+		m_callTransitionProbability = ((double) callTransitionProbability) / 1000.0;
+		m_returnTransitionProbability = ((double) returnTransitionProbability) / 1000.0;
+		m_acceptanceDensity = ((double) acceptanceDensity) / 1000.0;
+		m_Result = generateAutomaton(m_alphabetSize, m_size, 
+				m_internalTransitionDensity, 
+				m_callTransitionProbability, 
+				m_returnTransitionProbability, 
+				m_acceptanceDensity);
 	}
 	
-	/**
-	 * @param random
-	 *            random number generator to be used by the automaton generator
-	 */
-	public NestedWordAutomatonGenerator(Random random) {
-		m_Random = random;
+	
+	
+	@Override
+	public String operationName() {
+		return "GetRandomNwa";
 	}
 	
-	public void setRandomSeed(long seed) {
-		m_Random.setSeed(seed);
+	@Override
+	public String startMessage() {
+		return String.format("Start {0}. Alphabet size {1} Number of states {2} " +
+				"Density internal transition {3} Probability call transition {4} " +
+				"Probability return transition {5} Acceptance density {6}", 
+				operationName(), m_alphabetSize, m_size, m_internalTransitionDensity,
+				m_callTransitionProbability, m_returnTransitionProbability, 
+				m_acceptanceDensity);
 	}
+
+	@Override
+	public String exitMessage() {
+		return "Finished " + operationName() + " Result " + 
+				m_Result.sizeInformation() + ".";
+	}
+	
+	@Override
+	public NestedWordAutomaton<String, String> getResult() {
+		return m_Result;
+	}
+	
+	
 	
 	/**
 	 * @param alphabetSize
@@ -54,7 +130,7 @@ public class NestedWordAutomatonGenerator {
 	 *            fraction of states that are accepting (number between 0 and 1)
 	 * @return a randomly generated NFA that fulfills the given specification
 	 */
-	public INestedWordAutomaton<String,String> generateAutomaton(
+	public NestedWordAutomaton<String,String> generateAutomaton(
 							int alphabetSize, int size, 
 							double internalTransitionDensity,
 							double callTransitionProbability,
@@ -109,7 +185,7 @@ public class NestedWordAutomatonGenerator {
 		// are 0 we set callAlphabet and returnAlphabet to null.
 		//
 		StateFactory<String> stateFactory = new StringFactory();
-		INestedWordAutomaton<String,String> result;
+		NestedWordAutomaton<String,String> result;
 		if (isFiniteAutomaton) {
 			result = new NestedWordAutomaton<String,String>(
 					num2Letter, null, null,	stateFactory);			
@@ -126,7 +202,7 @@ public class NestedWordAutomatonGenerator {
 		// • Accepting states:
 		for (int i = 0; i < numOfAccStates; ++i) {
 			String state = shuffledStateList.get(i);
-			if (state == initialState)
+			if (state.equals(initialState))
 				result.addState(true, true, state);
 			else
 				result.addState(false, true, state);
@@ -134,7 +210,7 @@ public class NestedWordAutomatonGenerator {
 		// • Non-accepting states:
 		for (int i = numOfAccStates; i < size; ++i) {
 			String state = shuffledStateList.get(i);
-			if (state == initialState)
+			if (state.equals(initialState))
 				result.addState(true, false, state);
 			else
 				result.addState(false, false, state);
