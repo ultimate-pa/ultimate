@@ -1,5 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations;
 
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
@@ -97,7 +98,7 @@ public class GetRandomNwa implements IOperation {
 	
 	@Override
 	public String startMessage() {
-		return String.format("Start {0}. Alphabet size {1} Number of states {2} " +
+		return MessageFormat.format("Start {0}. Alphabet size {1} Number of states {2} " +
 				"Density internal transition {3} Probability call transition {4} " +
 				"Probability return transition {5} Acceptance density {6}", 
 				operationName(), m_alphabetSize, m_size, m_internalTransitionDensity,

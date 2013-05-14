@@ -345,15 +345,16 @@ public class ReachableStatesAutomaton<LETTER,STATE> implements INestedWordAutoma
 		downStates.addAll(newDownStates);
 		CommonEntriesComponent result = new CommonEntriesComponent(entries, downStates);
 		
-		Set<STATE> visited = new HashSet<STATE>();
+		Set<StateContainer> visited = new HashSet<StateContainer>();
 		List<StateContainer> worklist = new LinkedList<StateContainer>();
 		for (StateContainer splitStart : splitStarts) {
 			assert(splitStart.getCommonEntriesComponent() == oldCec);
 			worklist.add(splitStart);
+			visited.add(splitStart);
 		}
 		while (!worklist.isEmpty()) {
 			StateContainer stateSc = worklist.remove(0);
-			visited.add(stateSc.getState());
+			assert stateSc.getCommonEntriesComponent() == oldCec;
 			
 			oldCec.moveWithoutBorderUpdate(stateSc, result);
 			if (result.getReturnOutCandidates().contains(stateSc)) {
@@ -369,8 +370,9 @@ public class ReachableStatesAutomaton<LETTER,STATE> implements INestedWordAutoma
 				STATE succ = trans.getSucc();
 				StateContainer succSc = m_States.get(succ);
 				if (succSc.getCommonEntriesComponent() == oldCec) {
-					if (!visited.contains(succ)) {
+					if (!visited.contains(succSc)) {
 						worklist.add(succSc);
+						visited.add(succSc);
 					}
 				} else if (succSc.getCommonEntriesComponent() != result) {
 					if (foreigners == null) {
@@ -383,8 +385,9 @@ public class ReachableStatesAutomaton<LETTER,STATE> implements INestedWordAutoma
 			if (m_Summaries.containsKey(stateSc)) {
 				for (StateContainer succSc : m_Summaries.get(stateSc)) {
 					if (succSc.getCommonEntriesComponent() == oldCec) {
-						if (!visited.contains(succSc.getState())) {
+						if (!visited.contains(succSc)) {
 							worklist.add(succSc);
+							visited.add(succSc);
 						}
 					} else if (succSc.getCommonEntriesComponent() != result) {
 						if (foreigners == null) {
@@ -407,8 +410,7 @@ public class ReachableStatesAutomaton<LETTER,STATE> implements INestedWordAutoma
 			// we have to check all states of the newCec if they have an
 			// incoming transition from the oldCec and set m_BorderOut of
 			// oldCec accordingly
-			for (STATE state : visited) {
-				StateContainer sc = m_States.get(state);
+			for (StateContainer sc : visited) {
 				
 //				if (oldCec.isBorderState(sc)) {
 //					Set<StateContainer> foreigners = oldCec.getForeigners(sc);
@@ -2390,7 +2392,9 @@ public class ReachableStatesAutomaton<LETTER,STATE> implements INestedWordAutoma
 		boolean result = true;
 		Set<STATE> downStates = cec.m_DownStates;
 		Set<Entry> entries = cec.m_Entries;
-		result &= downStatesAreCallPredsOfEntries(downStates, entries);
+		if (cec.m_Size > 0) {
+			result &= downStatesAreCallPredsOfEntries(downStates, entries);
+		}
 		assert (result);
 		result &= eachStateHasThisCec(cec.getReturnOutCandidates(), cec);
 		assert (result);

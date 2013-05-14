@@ -556,8 +556,10 @@ public class ResultChecker<LETTER,STATE> {
 		{
 			NestedRun subsetCounterex = nwaLanguageInclusion(result, operand);
 			correct &= (subsetCounterex == null);
+			assert correct;
 			NestedRun supersetCounterex = nwaLanguageInclusion(operand, result);
 			correct &= (subsetCounterex == null);
+			assert correct;
 		}
 		DoubleDeckerAutomaton<LETTER, STATE> reachalbeStatesCopy = (DoubleDeckerAutomaton<LETTER, STATE>) (new ReachableStatesCopy(operand)).getResult();
 		correct &= isSubset(reachalbeStatesCopy.getStates(),result.getStates());
@@ -566,7 +568,9 @@ public class ResultChecker<LETTER,STATE> {
 			Set<STATE> rCSdownStates = reachalbeStatesCopy.getDownStates(state);
 			Set<STATE> rCAdownStates = result.getDownStates(state);
 			correct &= isSubset(rCAdownStates, rCSdownStates);
+			assert correct;
 			correct &= isSubset(rCSdownStates, rCAdownStates);
+			assert correct;
 		}
 		if (!correct) {
 			String message = "// Problem with  removeUnreachable";
