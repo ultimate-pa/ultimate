@@ -172,13 +172,13 @@ public class ReachableStatesAutomaton<LETTER,STATE> implements INestedWordAutoma
 		public void addReturnOutCandicate(STATE returnCandidate) {
 			m_ReturnOutCandidates.add(returnCandidate);
 		}
-		
-		public void removeReturnOutCandicate(STATE returnCandidate) {
-			boolean modified = m_ReturnOutCandidates.remove(returnCandidate);
-			if (!modified) {
-				throw new AssertionError("state not contained");
-			}
-		}
+//		
+//		public void removeReturnOutCandicate(STATE returnCandidate) {
+//			boolean modified = m_ReturnOutCandidates.remove(returnCandidate);
+//			if (!modified) {
+//				throw new AssertionError("state not contained");
+//			}
+//		}
 		
 		public Set<STATE> getReturnOutCandidates() {
 			assert m_ReturnOutCandidates.size() == m_Size;
@@ -234,6 +234,7 @@ public class ReachableStatesAutomaton<LETTER,STATE> implements INestedWordAutoma
 	
 	
 	private StateContainer addState(STATE state, CommonEntriesComponent cec) {
+		assert !m_States.containsKey(state);
 		if (m_Operand.isFinal(state)) {
 			m_finalStates.add(state);
 		}

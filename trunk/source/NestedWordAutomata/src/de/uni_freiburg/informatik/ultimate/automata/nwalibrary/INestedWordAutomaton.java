@@ -265,15 +265,60 @@ public interface INestedWordAutomaton<LETTER,STATE>
 	
 	
 
-	
-	
-	public Iterable<SummaryReturnTransition<LETTER, STATE>> getSummaryReturnTransitions(
-			LETTER letter, STATE hier);
-	
-	public Iterable<IncomingReturnTransition<LETTER, STATE>> getIncomingReturnTransitions(
-			LETTER letter, STATE hier);
 
 	
+	public abstract Iterable<SummaryReturnTransition<LETTER, STATE>> getSummaryReturnTransitions(
+			LETTER letter, STATE hier);
 
+	public abstract Iterable<IncomingReturnTransition<LETTER, STATE>> getIncomingReturnTransitions(
+			LETTER letter, STATE succ);
+
+	public abstract Iterable<IncomingInternalTransition<LETTER, STATE>> internalPredecessors(
+			final LETTER letter, final STATE succ);
+
+	public abstract Iterable<IncomingInternalTransition<LETTER, STATE>> internalPredecessors(
+			final STATE succ);
+
+	public abstract Iterable<IncomingCallTransition<LETTER, STATE>> callPredecessors(
+			final LETTER letter, final STATE succ);
+
+	public abstract Iterable<IncomingCallTransition<LETTER, STATE>> callPredecessors(
+			final STATE succ);
+
+	public abstract Iterable<OutgoingInternalTransition<LETTER, STATE>> internalSuccessors(
+			final STATE state, final LETTER letter);
+
+	public abstract Iterable<OutgoingInternalTransition<LETTER, STATE>> internalSuccessors(
+			final STATE state);
+
+	public abstract Iterable<OutgoingCallTransition<LETTER, STATE>> callSuccessors(
+			final STATE state, final LETTER letter);
+
+	public abstract Iterable<OutgoingCallTransition<LETTER, STATE>> callSuccessors(
+			final STATE state);
+	
+	public Iterable<IncomingReturnTransition<LETTER, STATE>> returnPredecessors(
+			final STATE hier, final LETTER letter, final STATE succ);
+	
+	public Iterable<IncomingReturnTransition<LETTER, STATE>> returnPredecessors(
+			final LETTER letter, final STATE succ);
+	
+	public Iterable<IncomingReturnTransition<LETTER, STATE>> returnPredecessors(
+			final STATE succ);
+	
+	
+	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSucccessors(
+			final STATE state, final STATE hier, final LETTER letter);
+	
+	
+	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessors(
+			final STATE state, final LETTER letter);
+	
+	
+	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessors(
+			final STATE state);
+	
+	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessorsGivenHier(
+			STATE state, STATE hier);
 
 }

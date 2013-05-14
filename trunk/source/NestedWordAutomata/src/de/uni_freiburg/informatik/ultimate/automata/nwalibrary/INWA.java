@@ -94,10 +94,12 @@ public interface INWA<LETTER, STATE> {
 	
 	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessors(
 			final STATE state);
+	
+	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessorsGivenHier(
+			STATE state, STATE hier);
 
 	public abstract String sizeInformation();
 
-	Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessorsGivenHier(
-			STATE state, STATE hier);
+
 
 }

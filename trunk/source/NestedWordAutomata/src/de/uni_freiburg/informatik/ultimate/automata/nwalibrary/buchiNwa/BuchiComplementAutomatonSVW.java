@@ -18,9 +18,14 @@ import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.IncomingCallTransition;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.IncomingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.IncomingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingCallTransition;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingInternalTransition;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.SummaryReturnTransition;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
@@ -927,6 +932,111 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE>
 				return q1.equals(other.q1) && q2.equals(other.q2);
 			}
 		}
+	}
+
+	@Override
+	public Iterable<IncomingInternalTransition<LETTER, STATE>> internalPredecessors(
+			LETTER letter, STATE succ) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public Iterable<IncomingInternalTransition<LETTER, STATE>> internalPredecessors(
+			STATE succ) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public Iterable<IncomingCallTransition<LETTER, STATE>> callPredecessors(
+			LETTER letter, STATE succ) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public Iterable<IncomingCallTransition<LETTER, STATE>> callPredecessors(
+			STATE succ) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public Iterable<OutgoingInternalTransition<LETTER, STATE>> internalSuccessors(
+			STATE state, LETTER letter) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public Iterable<OutgoingInternalTransition<LETTER, STATE>> internalSuccessors(
+			STATE state) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public Iterable<OutgoingCallTransition<LETTER, STATE>> callSuccessors(
+			STATE state, LETTER letter) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public Iterable<OutgoingCallTransition<LETTER, STATE>> callSuccessors(
+			STATE state) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public Iterable<IncomingReturnTransition<LETTER, STATE>> returnPredecessors(
+			STATE hier, LETTER letter, STATE succ) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public Iterable<IncomingReturnTransition<LETTER, STATE>> returnPredecessors(
+			LETTER letter, STATE succ) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public Iterable<IncomingReturnTransition<LETTER, STATE>> returnPredecessors(
+			STATE succ) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSucccessors(
+			STATE state, STATE hier, LETTER letter) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessors(
+			STATE state, LETTER letter) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessors(
+			STATE state) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessorsGivenHier(
+			STATE state, STATE hier) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 }
