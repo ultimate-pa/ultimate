@@ -4,4 +4,8 @@ file_export_version=3.0
 /configuration/RCFGBuilder/Timeout=10
 /configuration/RCFGBuilder/Determinization=EagerPost
 /configuration/RCFGBuilder/HoareAnnotation=true
-
+#Wed May 15 11:07:55 CEST 2013
+file_export_version=3.0
+\!/configuration/NestedWordAutomata=
+/configuration/NestedWordAutomata/writeToFile=true
+/configuration/NestedWordAutomata/path=dump
