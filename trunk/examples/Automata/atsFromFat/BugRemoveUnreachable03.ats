@@ -1,0 +1,27 @@
+// Author: heizmann@informatik.uni-freiburg.de
+// Date: 14.5.2013
+// Reveals Bug in r8787
+
+print(nwa);
+print(removeUnreachable(nwa));
+
+NestedWordAutomaton nwa = (
+	callAlphabet = {"a0" },
+	internalAlphabet = {"a0" },
+	returnAlphabet = {"a0" },
+	states = {"q2" "q1" "q0" },
+	initialStates = {"q0" },
+	finalStates = {},
+	callTransitions = {
+		 ("q2" "a0" "q1")
+		 ("q1" "a0" "q0")
+	},
+	internalTransitions = {
+		 ("q1" "a0" "q2")
+		 ("q0" "a0" "q1")
+	},
+	returnTransitions = {
+//		 ("q2" "q2" "a0" "q2")
+		 ("q2" "q1" "a0" "q2")
+	}
+);
