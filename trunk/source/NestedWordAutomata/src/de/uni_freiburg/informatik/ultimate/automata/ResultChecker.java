@@ -553,6 +553,7 @@ public class ResultChecker<LETTER,STATE> {
 		resultCheckStackHeight++;
 		boolean correct = true;
 		s_Logger.info("Testing removeUnreachable");
+		try {
 		{
 			NestedRun subsetCounterex = nwaLanguageInclusion(result, operand);
 			correct &= (subsetCounterex == null);
@@ -572,12 +573,18 @@ public class ResultChecker<LETTER,STATE> {
 			correct &= isSubset(rCSdownStates, rCAdownStates);
 			assert correct;
 		}
-		if (!correct) {
+		} catch (Error e) {
 			String message = "// Problem with  removeUnreachable";
 			writeToFileIfPreferred(operand, "FailedremoveUnreachable", message);
+			throw e;
+		} catch (RuntimeException e) {
+			String message = "// Problem with  removeUnreachable";
+			writeToFileIfPreferred(operand, "FailedremoveUnreachable", message);
+			throw e;
+		} finally {
+			s_Logger.info("Finished removeUnreachable");
+			resultCheckStackHeight--;
 		}
-		s_Logger.info("Finished removeUnreachable");
-		resultCheckStackHeight--;
 		return correct;
 	}
 	
@@ -667,7 +674,7 @@ public class ResultChecker<LETTER,STATE> {
         return dateFormat.format(date);
     }
     
-    private static void writeToFileIfPreferred(IAutomaton automaton, String filenamePrefix, String message) {
+    public static void writeToFileIfPreferred(IAutomaton automaton, String filenamePrefix, String message) {
 		ConfigurationScope scope = new ConfigurationScope();
 		IEclipsePreferences prefs = scope.getNode(Activator.PLUGIN_ID);
 		boolean writeToFile = prefs.getBoolean(PreferenceConstants.Name_Write, PreferenceConstants.Default_Write);

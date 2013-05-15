@@ -68,6 +68,7 @@ public class ReachableStatesAutomaton<LETTER,STATE> implements INestedWordAutoma
 		m_CallAlphabet = operand.getCallAlphabet();
 		m_ReturnAlphabet = operand.getReturnAlphabet();
 		m_StateFactory = operand.getStateFactory();
+		try {
 		addInitialStates(m_Operand.getInitialStates());
 		buildAllStates();
 		s_Logger.info(componentInformation());
@@ -81,6 +82,17 @@ public class ReachableStatesAutomaton<LETTER,STATE> implements INestedWordAutoma
 			assert (occuringStatesAreConsistent(cec));
 		}
 		assert ResultChecker.removeUnreachable(this, operand);
+		} catch (Error e) {
+			String message = "// Problem with  removeUnreachable";
+			ResultChecker.writeToFileIfPreferred(operand,
+					"FailedremoveUnreachable", message);
+			throw e;
+		} catch (RuntimeException e) {
+			String message = "// Problem with  removeUnreachable";
+			ResultChecker.writeToFileIfPreferred(operand,
+					"FailedremoveUnreachable", message);
+			throw e;
+		}
 	}
 	
 	public String componentInformation() {
@@ -835,7 +847,7 @@ public class ReachableStatesAutomaton<LETTER,STATE> implements INestedWordAutoma
 
 	@Override
 	public boolean isDeterministic() {
-		throw new UnsupportedOperationException();
+		return false;
 	}
 
 	@Override
