@@ -90,8 +90,9 @@ public class MinimizeDfa<LETTER,STATE> implements IOperation {
 	 *            the alphabet
 	 * @param table
 	 *            the table
+     * @throws OperationCanceledException 
 	 */
-	private void calculateTable(ArrayList<STATE> states, boolean[][] table) {
+	private void calculateTable(ArrayList<STATE> states, boolean[][] table) throws OperationCanceledException {
 		// we iterate on the table to get all the equivalent states
 		boolean makeNextIteration = true;
 		while (makeNextIteration) {
@@ -118,6 +119,9 @@ public class MinimizeDfa<LETTER,STATE> implements IOperation {
 							}
 						}
 					}
+				}
+				if (!UltimateServices.getInstance().continueProcessing()) {
+					throw new OperationCanceledException();
 				}
 			}
 		}
