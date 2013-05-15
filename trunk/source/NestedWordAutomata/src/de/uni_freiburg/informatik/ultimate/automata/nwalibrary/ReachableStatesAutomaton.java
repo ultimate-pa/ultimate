@@ -69,19 +69,19 @@ public class ReachableStatesAutomaton<LETTER,STATE> implements INestedWordAutoma
 		m_ReturnAlphabet = operand.getReturnAlphabet();
 		m_StateFactory = operand.getStateFactory();
 		try {
-		addInitialStates(m_Operand.getInitialStates());
-		buildAllStates();
-		s_Logger.info(componentInformation());
-		assert(checkTransitionsReturnedConsistent());
-		assert(worklist.isEmpty());
-		assert(doubleDeckerWorklist.isEmpty());
-		assert(cecSplitWorklist.isEmtpy());
-		assert(allStatesAreInTheirCec());
-		assert(cecSumConsistent());
-		for (CommonEntriesComponent cec : m_AllCECs) {
-			assert (occuringStatesAreConsistent(cec));
-		}
-		assert ResultChecker.removeUnreachable(this, operand);
+			addInitialStates(m_Operand.getInitialStates());
+			buildAllStates();
+			s_Logger.info(componentInformation());
+			assert (checkTransitionsReturnedConsistent());
+			assert (worklist.isEmpty());
+			assert (doubleDeckerWorklist.isEmpty());
+			assert (cecSplitWorklist.isEmtpy());
+			assert (allStatesAreInTheirCec());
+			assert (cecSumConsistent());
+			for (CommonEntriesComponent cec : m_AllCECs) {
+				assert (occuringStatesAreConsistent(cec));
+			}
+			assert ResultChecker.removeUnreachable(this, operand);
 		} catch (Error e) {
 			String message = "// Problem with  removeUnreachable";
 			ResultChecker.writeToFileIfPreferred(operand,
