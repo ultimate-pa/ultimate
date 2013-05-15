@@ -128,6 +128,7 @@ public class ReachableStatesAutomaton<LETTER,STATE> implements INestedWordAutoma
 		public String toString() {
 			return m_State.toString();
 		}
+		
 	}
 	
 	public static <E> boolean noElementIsNull(Collection<E> collection) {
@@ -357,7 +358,7 @@ public class ReachableStatesAutomaton<LETTER,STATE> implements INestedWordAutoma
 			assert stateSc.getCommonEntriesComponent() == oldCec;
 			
 			oldCec.moveWithoutBorderUpdate(stateSc, result);
-			if (result.getReturnOutCandidates().contains(stateSc)) {
+			if (result.getReturnOutCandidates().contains(stateSc.getState())) {
 				for(STATE down : newDownStates) {
 					if (down != getEmptyStackState()) {
 						doubleDeckerWorklist.enqueue(stateSc.getState(), down);
@@ -1059,6 +1060,11 @@ public class ReachableStatesAutomaton<LETTER,STATE> implements INestedWordAutoma
 		
 		void setCommonEntriesComponent(CommonEntriesComponent cec) {
 			this.cec = cec;
+		}
+		
+		@Override
+		public int hashCode() {
+			return m_State.hashCode();
 		}
 
 		
