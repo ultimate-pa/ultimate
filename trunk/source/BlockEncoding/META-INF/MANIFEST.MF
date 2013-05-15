@@ -11,4 +11,6 @@ Require-Bundle: UltimateCore,
  RCFGBuilder;bundle-version="0.0.1"
 Bundle-ActivationPolicy: lazy
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
-Export-Package: de.uni_freiburg.informatik.ultimate.blockencoding.rating.util
+Export-Package: de.uni_freiburg.informatik.ultimate.blockencoding.model,
+ de.uni_freiburg.informatik.ultimate.blockencoding.model.interfaces,
+ de.uni_freiburg.informatik.ultimate.blockencoding.rating.util

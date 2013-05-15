@@ -14,6 +14,7 @@ import org.eclipse.core.runtime.preferences.IEclipsePreferences;
 import de.uni_freiburg.informatik.ultimate.blockencoding.model.BlockEncodingAnnotation;
 import de.uni_freiburg.informatik.ultimate.blockencoding.model.MinimizedNode;
 import de.uni_freiburg.informatik.ultimate.blockencoding.rating.ConfigurableHeuristic;
+import de.uni_freiburg.informatik.ultimate.blockencoding.rating.DynamicHeuristic;
 import de.uni_freiburg.informatik.ultimate.blockencoding.rating.StatisticBasedHeuristic;
 import de.uni_freiburg.informatik.ultimate.blockencoding.rating.interfaces.IRatingHeuristic;
 import de.uni_freiburg.informatik.ultimate.blockencoding.rating.metrics.RatingFactory.RatingStrategy;
@@ -90,8 +91,6 @@ public class MinModelConverter {
 		// Now we have to update the RootAnnot, which is created while executing
 		// the RCFGBuilder (this is needed for example for the
 		// HoareAnnotations)
-		EncodingStatistics.setTotalNodes(convertVisitor.getLocNodesForAnnot()
-				.size());
 		updateRootAnnot(newRoot.getRootAnnot());
 		s_Logger.info(EncodingStatistics.reportStatistics());
 		return newRoot;
@@ -116,6 +115,16 @@ public class MinModelConverter {
 		if (prefs.getBoolean(PreferencePage.NAME_USESTATHEURISTIC, false)) {
 			StatisticBasedHeuristic heuristic = new StatisticBasedHeuristic(
 					strategy);
+			// maybe the case that there is no supported heuristic, then we use
+			// Large Block Encoding
+			if (!heuristic.isRatingStrategySupported(strategy)) {
+				return null;
+			}
+			heuristic.init(prefValue);
+			return heuristic;
+		} else if (prefs.getBoolean(PreferencePage.NAME_USEDYNAMICHEURISTIC,
+				false)) {
+			DynamicHeuristic heuristic = new DynamicHeuristic(strategy);
 			// maybe the case that there is no supported heuristic, then we use
 			// Large Block Encoding
 			if (!heuristic.isRatingStrategySupported(strategy)) {

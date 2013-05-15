@@ -180,7 +180,7 @@ public class ConversionVisitor implements IMinimizationVisitor {
 						|| edge.getRating() instanceof DisjunctMultiStatementRating) {
 					Integer[] ratingValues = (Integer[]) edge.getRating()
 							.getRatingValueContainer().getValue();
-					s_Logger.warn("Disjunctions: " + ratingValues[0]
+					s_Logger.info("Disjunctions: " + ratingValues[0]
 							+ " UsedVars: " + ratingValues[1]
 							+ " ComputedValue: " + ratingValues[2]);
 				}
@@ -246,7 +246,7 @@ public class ConversionVisitor implements IMinimizationVisitor {
 			}
 			// we check if the rated value is okay, for a certain edge level, if
 			// not we can use this level
-			if (heuristic.isRatingBoundReached(entry.getKey())) {
+			if (heuristic.isRatingBoundReached(entry.getKey(), entry.getValue())) {
 				return new ArrayList<IMinimizedEdge>(entry.getValue());
 			}
 		}

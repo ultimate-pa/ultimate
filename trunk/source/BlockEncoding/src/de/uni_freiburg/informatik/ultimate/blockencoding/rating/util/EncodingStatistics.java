@@ -3,6 +3,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.blockencoding.rating.util;
 
+import de.uni_freiburg.informatik.ultimate.blockencoding.model.interfaces.IMinimizedEdge;
+
 
 /**
  * To create an rating heuristic, which can decide on basis of the underlying
@@ -61,10 +63,12 @@ public class EncodingStatistics {
 	public static int edgesInRCFG;
 	
 	/**
-	 * counts the remaining nodes in the RCFG.
+	 * stores the max. rating value computed for one edge
 	 */
-	public static int nodesInRCFG;
-
+	public static int maxRatingInOneEdge;
+	
+	public static IMinimizedEdge maxRatedEdge;
+	
 	/**
 	 * Initializes, all stored statistics. This have to be done, before we start
 	 * a new run of block encoding.
@@ -78,7 +82,8 @@ public class EncodingStatistics {
 		minDiffVariablesInOneEdge = Integer.MAX_VALUE;
 		totalRCFGRating = 0;
 		edgesInRCFG = 0;
-		nodesInRCFG = 0;
+		maxRatedEdge = null;
+		maxRatingInOneEdge = 0;
 	}
 
 	/**
@@ -143,18 +148,17 @@ public class EncodingStatistics {
 		edgesInRCFG++;
 	}
 	
-	/**
-	 * @param nodeCount
-	 */
-	public static void setTotalNodes(int nodeCount) {
-		nodesInRCFG = nodeCount;
+	public static void setMaxRatingOneEdge(int val, IMinimizedEdge edge) {
+		if (val > maxRatingInOneEdge) {
+			maxRatedEdge = edge;
+			maxRatingInOneEdge = val;
+		}
 	}
 	
 	public static String reportStatistics() {
 		StringBuilder sb = new StringBuilder();
 		sb.append("Total Rating Value: " + totalRCFGRating + "\n");
 		sb.append("Number of Edges in the RCFG: " + edgesInRCFG + "\n");
-		sb.append("Number of Nodes in the RCFG: " + nodesInRCFG + "\n");
 		return sb.toString();
 	}
 }

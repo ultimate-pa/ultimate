@@ -34,12 +34,6 @@ public class StatisticBasedHeuristic extends ConfigurableHeuristic {
 		supportedStrategies.add(RatingStrategy.USED_VARIABLES_RATING);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.blockencoding.rating.
-	 * ConfigurableHeuristic#init(java.lang.String)
-	 */
 	@Override
 	public void init(String givenPref) {
 		switch (this.strategy) {
@@ -56,10 +50,7 @@ public class StatisticBasedHeuristic extends ConfigurableHeuristic {
 		super.init(givenPref);
 	}
 
-	/**
-	 * @param strategy
-	 * @return
-	 */
+	@Override
 	public boolean isRatingStrategySupported(RatingStrategy strategy) {
 		return supportedStrategies.contains(strategy);
 	}

@@ -55,6 +55,10 @@ public class PreferencePage extends FieldEditorPreferencePage implements
 	public static final String NAME_USESTATHEURISTIC = "UseStatisticBasedHeuristic";
 	
 	public static final String LABEL_USESTATHEURISTIC = "Enable Statistic-Based Heuristic: ";
+	
+	public static final String NAME_USEDYNAMICHEURISTIC = "UseDynamicHeuristic";
+	
+	public static final String LABEL_USEDYNAMICHEURISTIC = "Enable Dynamic-Based Heuristic: ";
 
 	public PreferencePage() {
 		super(GRID);
@@ -101,6 +105,12 @@ public class PreferencePage extends FieldEditorPreferencePage implements
 				NAME_USESTATHEURISTIC, LABEL_USESTATHEURISTIC, getFieldEditorParent());
 		addField(useStatisticBasedHeuristic);
 		preferences.setDefault(NAME_USESTATHEURISTIC, false);
+		
+		// Boolean field, to use the statistic based heuristic
+		BooleanFieldEditor useDynamicHeuristic = new BooleanFieldEditor(
+				NAME_USEDYNAMICHEURISTIC, LABEL_USEDYNAMICHEURISTIC, getFieldEditorParent());
+		addField(useDynamicHeuristic);
+		preferences.setDefault(NAME_USEDYNAMICHEURISTIC, false);
 
 		// Text-Field for entering max rating value
 		StringFieldEditor ratingBound = new StringFieldEditor(NAME_RATINGBOUND,

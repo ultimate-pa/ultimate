@@ -5,6 +5,7 @@ package de.uni_freiburg.informatik.ultimate.blockencoding.rating.metrics;
 
 import de.uni_freiburg.informatik.ultimate.blockencoding.model.interfaces.IMinimizedEdge;
 import de.uni_freiburg.informatik.ultimate.blockencoding.rating.interfaces.IRating;
+import de.uni_freiburg.informatik.ultimate.blockencoding.rating.util.EncodingStatistics;
 
 /**
  * Factory class to create ratings for the edges in the minimized CFG. There
@@ -108,22 +109,32 @@ public class RatingFactory {
 	 * @return the created rating for the minimized edge
 	 */
 	public IRating createRating(IMinimizedEdge edge) {
+		IRating computedRating = null;
 		switch (strategy) {
 		case LARGE_BLOCK:
 		case DEFAULT:
-			return new DefaultRating(edge);
+			computedRating = new DefaultRating(edge);
+			break;
 		case DISJUNCTIVE_RATING:
-			return new DisjunctiveRating(edge);
+			computedRating = new DisjunctiveRating(edge);
+			break;
 		case DISJUNCTIVE_STMTCOUNT:
-			return new DisjunctiveStatementsRating(edge);
+			computedRating = new DisjunctiveStatementsRating(edge);
+			break;
 		case USED_VARIABLES_RATING:
-			return new UsedVariablesRating(edge);
+			computedRating = new UsedVariablesRating(edge);
+			break;
 		case DISJUNCTIVE_VARIABLES_RATING:
-			return new DisjunctVariablesRating(edge);
+			computedRating = new DisjunctVariablesRating(edge);
+			break;
 		case DISJUNCTIVE_MULTI_STATEMENT_RATING:
-			return new DisjunctMultiStatementRating(edge);
+			computedRating = new DisjunctMultiStatementRating(edge);
+			break;
 		default:
 			throw new IllegalArgumentException("No valid strategy choosen!");
 		}
+		EncodingStatistics.setMaxRatingOneEdge(
+				computedRating.getRatingValueAsInteger(), edge);
+		return computedRating;
 	}
 }

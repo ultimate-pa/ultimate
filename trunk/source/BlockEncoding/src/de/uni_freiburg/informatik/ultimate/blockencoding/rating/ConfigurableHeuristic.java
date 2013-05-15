@@ -3,6 +3,9 @@
  */
 package de.uni_freiburg.informatik.ultimate.blockencoding.rating;
 
+import java.util.List;
+
+import de.uni_freiburg.informatik.ultimate.blockencoding.model.interfaces.IMinimizedEdge;
 import de.uni_freiburg.informatik.ultimate.blockencoding.rating.interfaces.IRating;
 import de.uni_freiburg.informatik.ultimate.blockencoding.rating.interfaces.IRatingHeuristic;
 import de.uni_freiburg.informatik.ultimate.blockencoding.rating.metrics.DefaultRating;
@@ -36,12 +39,7 @@ public class ConfigurableHeuristic implements IRatingHeuristic {
 		this.strategy = strategy;
 	}
 
-	/**
-	 * This init-Method should be called before, this heuristic is used!
-	 * 
-	 * @param givenPref
-	 *            the given preference string
-	 */
+	@Override
 	public void init(String givenPref) {
 		// Determine the used strategy
 		switch (strategy) {
@@ -82,11 +80,17 @@ public class ConfigurableHeuristic implements IRatingHeuristic {
 	 * blockencoding.rating.interfaces.IRating)
 	 */
 	@Override
-	public boolean isRatingBoundReached(IRating rating) {
+	public boolean isRatingBoundReached(IRating rating, List<IMinimizedEdge> edgeLevel) {
 		if (boundary == null) {
 			throw new IllegalArgumentException("No boundary rating specified");
 		}
 		return rating.compareTo(boundary) <= 0;
+	}
+
+	@Override
+	public boolean isRatingStrategySupported(RatingStrategy strategy) {
+		// here every strategy should be supported!
+		return true;
 	}
 
 }
