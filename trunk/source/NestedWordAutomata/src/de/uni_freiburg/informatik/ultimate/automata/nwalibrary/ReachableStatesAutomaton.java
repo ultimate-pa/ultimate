@@ -33,22 +33,26 @@ public class ReachableStatesAutomaton<LETTER,STATE> implements INestedWordAutoma
 	
 	protected final StateFactory<STATE> m_StateFactory;
 	
-	private final Map<STATE,StateContainer> m_States = 
-			new HashMap<STATE,StateContainer>();
-	
 	private final Set<STATE> m_initialStates = new HashSet<STATE>();
 	private final Set<STATE> m_finalStates = new HashSet<STATE>();
 	
-	private final DoubleDeckerWorklist doubleDeckerWorklist = new DoubleDeckerWorklist();
-	private final CecSplitWorklist cecSplitWorklist = new CecSplitWorklist();
-	
+	private final Map<STATE,StateContainer> m_States = new HashMap<STATE,StateContainer>();
 	private final Map<STATE,Entry> m_State2Entry = new HashMap<STATE,Entry>();
+	
+	public static enum ReachProp { REACHABLE, NODEADEND, LIVE };
+	
+	private List<CommonEntriesComponent> m_AllCECs = new ArrayList<CommonEntriesComponent>();
+	
+	private LinkedList<StateContainer> m_BackwardWorklist;
+	
 
-	private LinkedList<StateContainer> m_ForwardWorklist;
+	
+	
+
 
 	private Map<StateContainer,Set<StateContainer>> m_Summaries = new HashMap<StateContainer,Set<StateContainer>>();
 	
-	private List<CommonEntriesComponent> m_AllCECs = new ArrayList<CommonEntriesComponent>();
+
 	
 	private void addSummary(StateContainer callPred, StateContainer returnSucc) {
 		Set<StateContainer> returnSuccs = m_Summaries.get(callPred);
@@ -66,13 +70,10 @@ public class ReachableStatesAutomaton<LETTER,STATE> implements INestedWordAutoma
 		m_ReturnAlphabet = operand.getReturnAlphabet();
 		m_StateFactory = operand.getStateFactory();
 		try {
-			addInitialStates(m_Operand.getInitialStates());
-			buildAllStates();
+			new ReachableStatesComputation();
 			s_Logger.info(componentInformation());
 			assert (checkTransitionsReturnedConsistent());
-			assert (m_ForwardWorklist.isEmpty());
-			assert (doubleDeckerWorklist.isEmpty());
-			assert (cecSplitWorklist.isEmtpy());
+
 			assert (allStatesAreInTheirCec());
 			assert (cecSumConsistent());
 			for (CommonEntriesComponent cec : m_AllCECs) {
@@ -109,558 +110,7 @@ public class ReachableStatesAutomaton<LETTER,STATE> implements INestedWordAutoma
 		return m_AllCECs.size() + " components " + withoutStates + " without states ____" + occurrence.values();
 	}
 	
-	private class DoubleDeckerWorklist {
-		LinkedList<STATE> m_UpStates = new LinkedList<STATE>();
-		LinkedList<STATE> m_DownStates = new LinkedList<STATE>();
-		
-		private void enqueue(STATE up, STATE down) {
-			m_UpStates.add(up);
-			m_DownStates.add(down);
-		}
-		
-		private boolean isEmpty() {
-			return m_UpStates.isEmpty();
-		}
-		
-		private DoubleDecker<STATE> dequeue() {
-			return new DoubleDecker<STATE>(
-					m_DownStates.remove(0), m_UpStates.remove(0));
-		}
-	}
 	
-	private class Entry {
-		final STATE m_State;
-		
-		private Entry(STATE state) {
-			assert state != null;
-			this.m_State = state;
-			m_State2Entry.put(state, this);
-		}
-		
-		private STATE getState() {
-			return m_State;
-		}
-		
-		public String toString() {
-			return m_State.toString();
-		}
-		
-	}
-	
-	public static <E> boolean noElementIsNull(Collection<E> collection) {
-		for (E elem : collection) {
-			if (elem == null) return false;
-		}
-		return true;
-	}
-	
-	private class CommonEntriesComponent {
-		int m_Size = 0;
-		final Set<Entry> m_Entries;
-		final Set<STATE> m_DownStates;
-		final Set<STATE> m_ReturnOutCandidates;
-		final Map<StateContainer,Set<StateContainer>> m_BorderOut;
-		
-				
-		private CommonEntriesComponent(HashSet<Entry> entries, HashSet<STATE> downStates) {
-			assert noElementIsNull(entries);
-			this.m_Entries = entries;
-			this.m_DownStates = downStates;
-			this.m_ReturnOutCandidates = new HashSet<STATE>();
-			this.m_BorderOut = new HashMap<StateContainer,Set<StateContainer>>();
-			m_AllCECs.add(this);
-		}
-		
-
-		
-		public String toString() {
-			StringBuilder sb = new StringBuilder();
-			sb.append("Entries: ").append(m_Entries).append("\n");
-			sb.append("DownStates: ").append(m_DownStates).append("\n");
-			sb.append("Size: ").append(m_Size).append("\n");
-			sb.append("ReturnOutCandiates: ").append(m_ReturnOutCandidates).append("\n");
-			sb.append("BorderOut: ").append(m_BorderOut).append("\n");
-			return sb.toString();
-		}
-
-		private Set<Entry> getEntries() {
-			return Collections.unmodifiableSet(this.m_Entries);
-		}
-		
-		private void addReturnOutCandicate(STATE returnCandidate) {
-			m_ReturnOutCandidates.add(returnCandidate);
-		}
-//		
-//		private void removeReturnOutCandicate(STATE returnCandidate) {
-//			boolean modified = m_ReturnOutCandidates.remove(returnCandidate);
-//			if (!modified) {
-//				throw new AssertionError("state not contained");
-//			}
-//		}
-		
-		private Set<STATE> getReturnOutCandidates() {
-			assert m_ReturnOutCandidates.size() == m_Size;
-			return m_ReturnOutCandidates;
-		}
-		
-		private Set<STATE> getDownStates() {
-			assert m_ReturnOutCandidates.size() == m_Size;
-			return Collections.unmodifiableSet(this.m_DownStates);
-		}
-		
-		private boolean isBorderState(StateContainer state) {
-			assert m_ReturnOutCandidates.size() == m_Size;
-			return m_BorderOut.containsKey(state);
-		}
-		
-		private void removeBorderState(StateContainer resident) {
-			Set<StateContainer> foreigners = m_BorderOut.remove(resident);
-			if (foreigners == null) {
-				throw new AssertionError("state not contained");
-			}
-		}
-		
-		private Set<StateContainer> getForeigners(StateContainer resident) {
-			assert m_ReturnOutCandidates.size() == m_Size;
-			return m_BorderOut.get(resident);
-		}
-		
-		private void addBorderCrossing(StateContainer resident, StateContainer foreigner) {
-			Set<StateContainer> foreigners = m_BorderOut.get(resident);
-			if (foreigners == null) {
-				foreigners = new HashSet<StateContainer>();
-				m_BorderOut.put(resident, foreigners);
-			}
-			foreigners.add(foreigner);
-		}
-		
-		
-		private void addDownState(STATE down) {
-			m_DownStates.add(down);
-		}
-		
-		private void moveWithoutBorderUpdate(StateContainer sc, CommonEntriesComponent targetCec) {
-			sc.setCommonEntriesComponent(targetCec);
-			m_Size--;
-			targetCec.m_Size++;
-			if (m_ReturnOutCandidates.contains(sc.getState())) {
-				targetCec.m_ReturnOutCandidates.add(sc.getState());
-				this.m_ReturnOutCandidates.remove(sc.getState());
-			}
-		}
-	}
-	
-	
-	/**
-	 * Construct State Container. Add to CommonEntriesComponent. Add to
-	 * ForwardWorklist.
-	 * @param state
-	 * @param cec
-	 * @return
-	 */
-	private StateContainer addState(STATE state, CommonEntriesComponent cec) {
-		assert !m_States.containsKey(state);
-		if (m_Operand.isFinal(state)) {
-			m_finalStates.add(state);
-		}
-		StateContainer result = new StateContainer(state, cec);
-		m_States.put(state, result);
-		cec.m_Size++;
-		if (candidateForOutgoingReturn(state)) {
-			cec.addReturnOutCandicate(state);
-		}
-		m_ForwardWorklist.add(result);
-		return result;
-	}
-	
-	private void addInitialStates(Iterable<STATE> initialStates) {
-		for (STATE state : initialStates) {
-			this.m_initialStates.add(state);
-			Entry entry = new Entry(state);
-			HashSet<Entry> entries = new HashSet<Entry>(1);
-			entries.add(entry);
-			HashSet<STATE> downStates = new HashSet<STATE>();
-			downStates.add(getEmptyStackState());
-			CommonEntriesComponent cec = new CommonEntriesComponent(entries,downStates);
-			StateContainer sc = addState(state, cec);
-			m_States.put(state, sc);
-		}
-		
-	}
-	
-	public Set<STATE> getDownStates(STATE state) {
-		StateContainer stateContainer = m_States.get(state);
-		CommonEntriesComponent cec = stateContainer.getCommonEntriesComponent();
-		return cec.getDownStates();
-	}
-	
-	public boolean isDoubleDecker(STATE up, STATE down) {
-		return getDownStates(up).contains(down);
-	}
-	
-	
-	private boolean candidateForOutgoingReturn(STATE state) {
-		return true;
-	}
-	
-	
-	private class CecSplitWorklist {
-		List<Object[]> m_worklist = new LinkedList<Object[]>();
-		
-		private boolean isEmtpy() {
-			return m_worklist.isEmpty();
-		}
-		
-		private void add(StateContainer state, Set<Entry> entries, Set<STATE> downStates) {
-			assert state.getCommonEntriesComponent().m_Size == state.getCommonEntriesComponent().m_ReturnOutCandidates.size();
-			Object[] elem = new Object[] { state, entries, downStates };
-			m_worklist.add(elem);
-		}
-		
-		private void processFirst() {
-			Object[] elem = m_worklist.remove(0);
-			StateContainer stateC = (StateContainer) elem[0];
-			Set<Entry> entries = (Set<Entry>) elem[1];
-			Set<STATE> downStates = (Set<STATE>) elem[2];
-			HashSet<StateContainer> splitStates = new HashSet<StateContainer>();
-			splitStates.add(stateC);
-			updateCECs(splitStates, entries, downStates);
-		}
-		
-		private void processAll() {
-			while (!isEmtpy()) {
-				processFirst();
-			}
-		}
-	}
-
-	
-	
-	private static <E> boolean isSubset(Set<E> lhs, Set<E> rhs) {
-		for (E elem : lhs) {
-			if (!rhs.contains(elem)) {
-				return false;
-			}
-		}
-		return true;
-	}
-	
-	private CommonEntriesComponent updateCECs(Set<StateContainer> splitStarts, 
-			Set<Entry> newEntries, Set<STATE> newDownStates) {
-		CommonEntriesComponent oldCec;
-		{
-			Iterator<StateContainer> it = splitStarts.iterator();
-			StateContainer sc = it.next();
-			oldCec = sc.getCommonEntriesComponent();
-			for (; it.hasNext(); sc = it.next()) {
-				assert (oldCec == sc.getCommonEntriesComponent());
-			}
-		}
-		assert oldCec.m_Size == oldCec.m_ReturnOutCandidates.size();
-		if (isSubset(newEntries, oldCec.getEntries())) {
-			assert (isSubset(newDownStates, oldCec.getDownStates()));
-			return oldCec;
-		}
-		
-		HashSet<Entry> entries = new HashSet<Entry>();
-		entries.addAll(oldCec.getEntries());
-		entries.addAll(newEntries);
-		HashSet<STATE> downStates = new HashSet<STATE>();
-		downStates.addAll(oldCec.getDownStates());
-		downStates.addAll(newDownStates);
-		CommonEntriesComponent result = new CommonEntriesComponent(entries, downStates);
-		
-		Set<StateContainer> visited = new HashSet<StateContainer>();
-		List<StateContainer> worklist = new LinkedList<StateContainer>();
-		for (StateContainer splitStart : splitStarts) {
-			assert(splitStart.getCommonEntriesComponent() == oldCec);
-			worklist.add(splitStart);
-			visited.add(splitStart);
-		}
-		while (!worklist.isEmpty()) {
-			StateContainer stateSc = worklist.remove(0);
-			assert stateSc.getCommonEntriesComponent() == oldCec;
-			
-			oldCec.moveWithoutBorderUpdate(stateSc, result);
-			if (result.getReturnOutCandidates().contains(stateSc.getState())) {
-				for(STATE down : newDownStates) {
-					if (down != getEmptyStackState()) {
-						doubleDeckerWorklist.enqueue(stateSc.getState(), down);
-					}
-				}
-			}
-			oldCec.m_BorderOut.remove(stateSc);
-			Set<StateContainer> foreigners = null;
-			for (OutgoingInternalTransition<LETTER, STATE> trans : stateSc.internalSuccessors()) {
-				STATE succ = trans.getSucc();
-				StateContainer succSc = m_States.get(succ);
-				if (succSc.getCommonEntriesComponent() == oldCec) {
-					if (!visited.contains(succSc)) {
-						worklist.add(succSc);
-						visited.add(succSc);
-					}
-				} else if (succSc.getCommonEntriesComponent() != result) {
-					if (foreigners == null) {
-						foreigners = new HashSet<StateContainer>();
-					}
-					foreigners.add(succSc);
-					cecSplitWorklist.add(succSc, entries, downStates);
-				}
-			}
-			if (m_Summaries.containsKey(stateSc)) {
-				for (StateContainer succSc : m_Summaries.get(stateSc)) {
-					if (succSc.getCommonEntriesComponent() == oldCec) {
-						if (!visited.contains(succSc)) {
-							worklist.add(succSc);
-							visited.add(succSc);
-						}
-					} else if (succSc.getCommonEntriesComponent() != result) {
-						if (foreigners == null) {
-							foreigners = new HashSet<StateContainer>();
-						}
-						foreigners.add(succSc);
-						cecSplitWorklist.add(succSc, entries, downStates);
-					}
-				}
-			}
-			if (foreigners != null) {
-				result.m_BorderOut.put(stateSc, foreigners);
-			}
-		}
-		
-		
-		
-		if (oldCec.m_Size != 0) {
-			assert (oldCec.m_Size > 0);
-			// we have to check all states of the newCec if they have an
-			// incoming transition from the oldCec and set m_BorderOut of
-			// oldCec accordingly
-			for (StateContainer sc : visited) {
-				
-//				if (oldCec.isBorderState(sc)) {
-//					Set<StateContainer> foreigners = oldCec.getForeigners(sc);
-//					result.m_BorderOut.put(sc, foreigners);
-//					oldCec.m_BorderOut.remove(sc);
-//					Iterator<StateContainer> it = foreigners.iterator();
-//					for (StateContainer foreigner = it.next(); it.hasNext(); foreigner = it.next()) {
-//						if (foreigner.getCommonEntriesComponent() == result) {
-//							it.remove();
-//						} else {
-//							cecSplitWorklist.add(foreigner, entries, downStates);
-//						}
-//					}
-//				}
-				
-				//TODO: move this upwards. no second iteration required
-				for (IncomingInternalTransition<LETTER, STATE> inTrans : sc.internalPredecessors()) {
-					STATE pred = inTrans.getPred();
-					StateContainer predSc = m_States.get(pred);
-					if (predSc.getCommonEntriesComponent() == oldCec) {
-						oldCec.addBorderCrossing(predSc, sc);
-					}
-				}
-				for (IncomingReturnTransition<LETTER, STATE> inTrans : sc.returnPredecessors()) {
-					STATE hierPred = inTrans.getHierPred();
-					StateContainer predSc = m_States.get(hierPred);
-					if (predSc.getCommonEntriesComponent() == oldCec) {
-						oldCec.addBorderCrossing(predSc, sc);
-					}
-				}
-			}
-		} else {
-			assert oldCec.m_BorderOut.isEmpty();
-		}
-		assert oldCec.m_Size == oldCec.m_ReturnOutCandidates.size();
-		assert result.m_Size == result.m_ReturnOutCandidates.size();
-		return result;
-	}
-	
-	
-	private void buildAllStates() {
-		m_ForwardWorklist = new LinkedList<StateContainer>();
-		
-		for (STATE state : this.getInitialStates()) {
-			m_ForwardWorklist.add(m_States.get(state));
-		}
-		
-		while (!m_ForwardWorklist.isEmpty()) {
-			StateContainer cont = m_ForwardWorklist.remove(0);
-			addInternalsAndSuccessors(cont);
-			addCallsAndSuccessors(cont);
-
-			CommonEntriesComponent stateCEC = cont.getCommonEntriesComponent();
-			//TODO: need copy to avoid concurModExcpetion ???
-			for (STATE down : stateCEC.getDownStates()) {
-				if (down != getEmptyStackState()) {
-					StateContainer downSC = m_States.get(down);
-					addReturnsAndSuccessors(cont, downSC);
-				}
-			}
-			
-			while (!doubleDeckerWorklist.isEmpty()) {
-				DoubleDecker<STATE> doubleDecker = doubleDeckerWorklist.dequeue();
-				StateContainer upCont  = m_States.get(doubleDecker.getUp());
-				StateContainer downCont  = m_States.get(doubleDecker.getDown());
-				addReturnsAndSuccessors(upCont, downCont);
-			}
-		}
-	}
-	
-	
-	
-	
-	private void updateCECs(CommonEntriesComponent startCec,
-			HashSet<STATE> downStates) {
-		List<CommonEntriesComponent> worklist = new LinkedList<CommonEntriesComponent>(); 
-		Set<CommonEntriesComponent> visitedCECs = new HashSet<CommonEntriesComponent>();
-		worklist.add(startCec);
-		while(!worklist.isEmpty()) {
-			CommonEntriesComponent cec = worklist.remove(0);
-			visitedCECs.add(cec);
-			HashSet<STATE> newdownStates = new HashSet<STATE>();
-			for (STATE down : downStates) {
-				if (!cec.getDownStates().contains(down)) {
-					newdownStates.add(down);
-				}
-			}
-			if(!newdownStates.isEmpty()) {
-				for (STATE state : cec.getReturnOutCandidates()) {
-					for (STATE down : newdownStates) {
-						if (down != getEmptyStackState()) {
-							doubleDeckerWorklist.enqueue(state, down);
-						}
-						cec.addDownState(down);
-					}
-				}
-				for (StateContainer resident : cec.m_BorderOut.keySet()) {
-					for (StateContainer foreigner : cec.m_BorderOut.get(resident)) {
-						CommonEntriesComponent foreignerCec = 
-								foreigner.getCommonEntriesComponent();
-						if (!visitedCECs.contains(foreignerCec)) {
-							worklist.add(foreignerCec);
-						}
-					}
-				}
-
-			}
-		}
-	}
-	
-	private void addInternalsAndSuccessors(StateContainer cont) {
-		STATE state = cont.getState();
-		CommonEntriesComponent stateCec = cont.getCommonEntriesComponent(); 
-		for (OutgoingInternalTransition<LETTER, STATE> trans : 
-										m_Operand.internalSuccessors(state)) {
-			STATE succ = trans.getSucc();
-			StateContainer succSC = m_States.get(succ);
-			if (succSC == null) {
-				succSC = addState(succ, stateCec);
-			} else {
-				CommonEntriesComponent succCEC = succSC.getCommonEntriesComponent();
-				if (stateCec != succCEC) {
-					Set<Entry> newEntries = new HashSet<Entry>();
-					for (Entry entry : stateCec.getEntries()) {
-						if (!succCEC.getEntries().contains(entry)) {
-							newEntries.add(entry);
-						}
-					}
-					Set<STATE> newDownStates = new HashSet<STATE>();
-					for (STATE down : stateCec.getDownStates()) {
-						if (!succCEC.getDownStates().contains(down)) {
-							newDownStates.add(down);
-						}
-					}
-					Set<StateContainer> splitStates = new HashSet<StateContainer>();
-					splitStates.add(succSC);
-					updateCECs(splitStates, newEntries, newDownStates);
-					stateCec.addBorderCrossing(cont, succSC);
-					cecSplitWorklist.processAll();
-				}
-			}
-			cont.addInternalOutgoing(trans);
-			succSC.addInternalIncoming(new IncomingInternalTransition<LETTER, STATE>(state, trans.getLetter()));
-		}
-	}
-	
-	
-	private void addCallsAndSuccessors(StateContainer cont) {
-		STATE state = cont.getState();
-		for (OutgoingCallTransition<LETTER, STATE> trans : 
-									m_Operand.callSuccessors(cont.getState())) {
-			STATE succ = trans.getSucc();
-			StateContainer succCont = m_States.get(succ);
-			HashSet<STATE> downStates = new HashSet<STATE>();
-			downStates.add(state);
-			if (succCont == null) {
-				Entry entry = new Entry(succ);
-				HashSet<Entry> entries = new HashSet<Entry>();
-				entries.add(entry);
-				CommonEntriesComponent succCEC = new CommonEntriesComponent(
-						entries, downStates);
-				succCont = addState(succ, succCEC);
-			} else {
-				CommonEntriesComponent succCEC = succCont
-						.getCommonEntriesComponent();
-				Entry entry = m_State2Entry.get(succ);
-				if (entry == null) {
-					entry = new Entry(succ);
-					m_State2Entry.put(succ, entry);
-				}
-				if (succCEC.getEntries().contains(entry)) {
-					updateCECs(succCEC, downStates);
-				} else {
-					HashSet<Entry> entries = new HashSet<Entry>();
-					entries.add(entry);
-					downStates.removeAll(succCEC.getDownStates());
-					Set<StateContainer> splitStarts = new HashSet<StateContainer>();
-					splitStarts.add(succCont);
-					updateCECs(splitStarts, entries, downStates);
-					cecSplitWorklist.processAll();
-				}
-			}
-			cont.addCallOutgoing(trans);
-			succCont.addCallIncoming(
-					new IncomingCallTransition<LETTER, STATE>(state, trans.getLetter()));
-		}
-	}
-	
-	
-
-	private void addReturnsAndSuccessors(StateContainer stateSc, StateContainer downSc) {
-		STATE state = stateSc.getState();
-		STATE down = downSc.getState();
-		CommonEntriesComponent downCec = downSc.getCommonEntriesComponent();
-		for (OutgoingReturnTransition<LETTER, STATE> trans : 
-								m_Operand.returnSuccessorsGivenHier(state,down)) {
-			STATE succ = trans.getSucc();
-			StateContainer succSC = m_States.get(succ);
-			if (succSC == null) {
-				succSC = addState(succ, downCec);
-			} else {
-				CommonEntriesComponent succCEC = succSC.getCommonEntriesComponent();
-				if (downCec != succCEC) {
-					Set<Entry> newEntries = new HashSet<Entry>();
-					newEntries.addAll(downCec.getEntries());
-					newEntries.removeAll(succCEC.getEntries());						
-					Set<STATE> newDownStates = new HashSet<STATE>();
-					newDownStates.addAll(downCec.getDownStates());
-					newDownStates.removeAll(succCEC.getDownStates());
-					Set<StateContainer> splitStates = new HashSet<StateContainer>();
-					splitStates.add(succSC);
-					updateCECs(splitStates, newEntries, newDownStates);
-					downCec.addBorderCrossing(downSc, succSC);
-					cecSplitWorklist.processAll();
-				}
-			}
-			stateSc.addReturnOutgoing(trans);
-			succSC.addReturnIncoming(
-					new IncomingReturnTransition<LETTER, STATE>(stateSc.getState(), down, trans.getLetter()));
-			downSc.addReturnTransition(state, trans.getLetter(), succ);
-			addSummary(downSc, succSC);
-		}
-	}
-	
-
 	@Override
 	public IRun<LETTER, STATE> acceptingRun() throws OperationCanceledException {
 		throw new UnsupportedOperationException();
@@ -959,7 +409,670 @@ public class ReachableStatesAutomaton<LETTER,STATE> implements INestedWordAutoma
 	
 	
 	
+
+	public Set<STATE> getDownStates(STATE state) {
+		StateContainer stateContainer = m_States.get(state);
+		CommonEntriesComponent cec = stateContainer.getCommonEntriesComponent();
+		return cec.getDownStates();
+	}
 	
+	public boolean isDoubleDecker(STATE up, STATE down) {
+		return getDownStates(up).contains(down);
+	}
+	
+	
+
+	
+	
+	
+	
+	
+	
+	
+	////////////////////////////////////////////////////////////////////////////
+	
+	private class ReachableStatesComputation {
+		private final DoubleDeckerWorklist doubleDeckerWorklist = 
+				new DoubleDeckerWorklist();
+		private final CecSplitWorklist cecSplitWorklist = 
+				new CecSplitWorklist();
+		private final LinkedList<StateContainer> m_ForwardWorklist = 
+				new LinkedList<StateContainer>();
+
+		ReachableStatesComputation() {
+			addInitialStates(m_Operand.getInitialStates());
+
+			while (!m_ForwardWorklist.isEmpty()) {
+				StateContainer cont = m_ForwardWorklist.remove(0);
+				addInternalsAndSuccessors(cont);
+				addCallsAndSuccessors(cont);
+
+				CommonEntriesComponent stateCEC = cont.getCommonEntriesComponent();
+				// TODO: need copy to avoid concurModExcpetion ???
+				for (STATE down : stateCEC.getDownStates()) {
+					if (down != getEmptyStackState()) {
+						StateContainer downSC = m_States.get(down);
+						addReturnsAndSuccessors(cont, downSC);
+					}
+				}
+
+				while (!doubleDeckerWorklist.isEmpty()) {
+					DoubleDecker<STATE> doubleDecker = doubleDeckerWorklist
+							.dequeue();
+					StateContainer upCont = m_States.get(doubleDecker.getUp());
+					StateContainer downCont = m_States.get(doubleDecker
+							.getDown());
+					addReturnsAndSuccessors(upCont, downCont);
+				}
+			}
+			assert (m_ForwardWorklist.isEmpty());
+			assert (doubleDeckerWorklist.isEmpty());
+			assert (cecSplitWorklist.isEmtpy());
+		}
+		
+		
+		private void addInitialStates(Iterable<STATE> initialStates) {
+			for (STATE state : initialStates) {
+				m_initialStates.add(state);
+				Entry entry = new Entry(state);
+				HashSet<Entry> entries = new HashSet<Entry>(1);
+				entries.add(entry);
+				HashSet<STATE> downStates = new HashSet<STATE>();
+				downStates.add(getEmptyStackState());
+				CommonEntriesComponent cec = new CommonEntriesComponent(entries,downStates);
+				StateContainer sc = addState(state, cec);
+				m_States.put(state, sc);
+			}
+		}
+		
+		
+		
+		/**
+		 * Construct State Container. Add to CommonEntriesComponent. Add to
+		 * ForwardWorklist.
+		 * @param state
+		 * @param cec
+		 * @return
+		 */
+		private StateContainer addState(STATE state, CommonEntriesComponent cec) {
+			assert !m_States.containsKey(state);
+			if (m_Operand.isFinal(state)) {
+				m_finalStates.add(state);
+			}
+			StateContainer result = new StateContainer(state, cec);
+			m_States.put(state, result);
+			cec.m_Size++;
+			if (candidateForOutgoingReturn(state)) {
+				cec.addReturnOutCandicate(state);
+			}
+			m_ForwardWorklist.add(result);
+			return result;
+		}
+		
+		private boolean candidateForOutgoingReturn(STATE state) {
+			return true;
+		}
+		
+
+		
+		
+		private void updateCECs(CommonEntriesComponent startCec,
+				HashSet<STATE> downStates) {
+			List<CommonEntriesComponent> worklist = new LinkedList<CommonEntriesComponent>(); 
+			Set<CommonEntriesComponent> visitedCECs = new HashSet<CommonEntriesComponent>();
+			worklist.add(startCec);
+			while(!worklist.isEmpty()) {
+				CommonEntriesComponent cec = worklist.remove(0);
+				visitedCECs.add(cec);
+				HashSet<STATE> newdownStates = new HashSet<STATE>();
+				for (STATE down : downStates) {
+					if (!cec.getDownStates().contains(down)) {
+						newdownStates.add(down);
+					}
+				}
+				if(!newdownStates.isEmpty()) {
+					for (STATE state : cec.getReturnOutCandidates()) {
+						for (STATE down : newdownStates) {
+							if (down != getEmptyStackState()) {
+								doubleDeckerWorklist.enqueue(state, down);
+							}
+							cec.addDownState(down);
+						}
+					}
+					for (StateContainer resident : cec.m_BorderOut.keySet()) {
+						for (StateContainer foreigner : cec.m_BorderOut.get(resident)) {
+							CommonEntriesComponent foreignerCec = 
+									foreigner.getCommonEntriesComponent();
+							if (!visitedCECs.contains(foreignerCec)) {
+								worklist.add(foreignerCec);
+							}
+						}
+					}
+
+				}
+			}
+		}
+		
+		private void addInternalsAndSuccessors(StateContainer cont) {
+			STATE state = cont.getState();
+			CommonEntriesComponent stateCec = cont.getCommonEntriesComponent(); 
+			for (OutgoingInternalTransition<LETTER, STATE> trans : 
+											m_Operand.internalSuccessors(state)) {
+				STATE succ = trans.getSucc();
+				StateContainer succSC = m_States.get(succ);
+				if (succSC == null) {
+					succSC = addState(succ, stateCec);
+				} else {
+					CommonEntriesComponent succCEC = succSC.getCommonEntriesComponent();
+					if (stateCec != succCEC) {
+						Set<Entry> newEntries = new HashSet<Entry>();
+						for (Entry entry : stateCec.getEntries()) {
+							if (!succCEC.getEntries().contains(entry)) {
+								newEntries.add(entry);
+							}
+						}
+						Set<STATE> newDownStates = new HashSet<STATE>();
+						for (STATE down : stateCec.getDownStates()) {
+							if (!succCEC.getDownStates().contains(down)) {
+								newDownStates.add(down);
+							}
+						}
+						Set<StateContainer> splitStates = new HashSet<StateContainer>();
+						splitStates.add(succSC);
+						updateCECs(splitStates, newEntries, newDownStates);
+						stateCec.addBorderCrossing(cont, succSC);
+						cecSplitWorklist.processAll();
+					}
+				}
+				cont.addInternalOutgoing(trans);
+				succSC.addInternalIncoming(new IncomingInternalTransition<LETTER, STATE>(state, trans.getLetter()));
+			}
+		}
+		
+		
+		private void addCallsAndSuccessors(StateContainer cont) {
+			STATE state = cont.getState();
+			for (OutgoingCallTransition<LETTER, STATE> trans : 
+										m_Operand.callSuccessors(cont.getState())) {
+				STATE succ = trans.getSucc();
+				StateContainer succCont = m_States.get(succ);
+				HashSet<STATE> downStates = new HashSet<STATE>();
+				downStates.add(state);
+				if (succCont == null) {
+					Entry entry = new Entry(succ);
+					HashSet<Entry> entries = new HashSet<Entry>();
+					entries.add(entry);
+					CommonEntriesComponent succCEC = new CommonEntriesComponent(
+							entries, downStates);
+					succCont = addState(succ, succCEC);
+				} else {
+					CommonEntriesComponent succCEC = succCont
+							.getCommonEntriesComponent();
+					Entry entry = m_State2Entry.get(succ);
+					if (entry == null) {
+						entry = new Entry(succ);
+						m_State2Entry.put(succ, entry);
+					}
+					if (succCEC.getEntries().contains(entry)) {
+						updateCECs(succCEC, downStates);
+					} else {
+						HashSet<Entry> entries = new HashSet<Entry>();
+						entries.add(entry);
+						downStates.removeAll(succCEC.getDownStates());
+						Set<StateContainer> splitStarts = new HashSet<StateContainer>();
+						splitStarts.add(succCont);
+						updateCECs(splitStarts, entries, downStates);
+						cecSplitWorklist.processAll();
+					}
+				}
+				cont.addCallOutgoing(trans);
+				succCont.addCallIncoming(
+						new IncomingCallTransition<LETTER, STATE>(state, trans.getLetter()));
+			}
+		}
+		
+		
+
+		private void addReturnsAndSuccessors(StateContainer stateSc, StateContainer downSc) {
+			STATE state = stateSc.getState();
+			STATE down = downSc.getState();
+			CommonEntriesComponent downCec = downSc.getCommonEntriesComponent();
+			for (OutgoingReturnTransition<LETTER, STATE> trans : 
+									m_Operand.returnSuccessorsGivenHier(state,down)) {
+				STATE succ = trans.getSucc();
+				StateContainer succSC = m_States.get(succ);
+				if (succSC == null) {
+					succSC = addState(succ, downCec);
+				} else {
+					CommonEntriesComponent succCEC = succSC.getCommonEntriesComponent();
+					if (downCec != succCEC) {
+						Set<Entry> newEntries = new HashSet<Entry>();
+						newEntries.addAll(downCec.getEntries());
+						newEntries.removeAll(succCEC.getEntries());						
+						Set<STATE> newDownStates = new HashSet<STATE>();
+						newDownStates.addAll(downCec.getDownStates());
+						newDownStates.removeAll(succCEC.getDownStates());
+						Set<StateContainer> splitStates = new HashSet<StateContainer>();
+						splitStates.add(succSC);
+						updateCECs(splitStates, newEntries, newDownStates);
+						downCec.addBorderCrossing(downSc, succSC);
+						cecSplitWorklist.processAll();
+					}
+				}
+				stateSc.addReturnOutgoing(trans);
+				succSC.addReturnIncoming(
+						new IncomingReturnTransition<LETTER, STATE>(stateSc.getState(), down, trans.getLetter()));
+				downSc.addReturnTransition(state, trans.getLetter(), succ);
+				addSummary(downSc, succSC);
+			}
+		}
+		
+		private CommonEntriesComponent updateCECs(Set<StateContainer> splitStarts, 
+				Set<Entry> newEntries, Set<STATE> newDownStates) {
+			CommonEntriesComponent oldCec;
+			{
+				Iterator<StateContainer> it = splitStarts.iterator();
+				StateContainer sc = it.next();
+				oldCec = sc.getCommonEntriesComponent();
+				for (; it.hasNext(); sc = it.next()) {
+					assert (oldCec == sc.getCommonEntriesComponent());
+				}
+			}
+			assert oldCec.m_Size == oldCec.m_ReturnOutCandidates.size();
+			if (isSubset(newEntries, oldCec.getEntries())) {
+				assert (isSubset(newDownStates, oldCec.getDownStates()));
+				return oldCec;
+			}
+			
+			HashSet<Entry> entries = new HashSet<Entry>();
+			entries.addAll(oldCec.getEntries());
+			entries.addAll(newEntries);
+			HashSet<STATE> downStates = new HashSet<STATE>();
+			downStates.addAll(oldCec.getDownStates());
+			downStates.addAll(newDownStates);
+			CommonEntriesComponent result = new CommonEntriesComponent(entries, downStates);
+			
+			Set<StateContainer> visited = new HashSet<StateContainer>();
+			List<StateContainer> worklist = new LinkedList<StateContainer>();
+			for (StateContainer splitStart : splitStarts) {
+				assert(splitStart.getCommonEntriesComponent() == oldCec);
+				worklist.add(splitStart);
+				visited.add(splitStart);
+			}
+			while (!worklist.isEmpty()) {
+				StateContainer stateSc = worklist.remove(0);
+				assert stateSc.getCommonEntriesComponent() == oldCec;
+				
+				oldCec.moveWithoutBorderUpdate(stateSc, result);
+				if (result.getReturnOutCandidates().contains(stateSc.getState())) {
+					for(STATE down : newDownStates) {
+						if (down != getEmptyStackState()) {
+							doubleDeckerWorklist.enqueue(stateSc.getState(), down);
+						}
+					}
+				}
+				oldCec.m_BorderOut.remove(stateSc);
+				Set<StateContainer> foreigners = null;
+				for (OutgoingInternalTransition<LETTER, STATE> trans : stateSc.internalSuccessors()) {
+					STATE succ = trans.getSucc();
+					StateContainer succSc = m_States.get(succ);
+					if (succSc.getCommonEntriesComponent() == oldCec) {
+						if (!visited.contains(succSc)) {
+							worklist.add(succSc);
+							visited.add(succSc);
+						}
+					} else if (succSc.getCommonEntriesComponent() != result) {
+						if (foreigners == null) {
+							foreigners = new HashSet<StateContainer>();
+						}
+						foreigners.add(succSc);
+						cecSplitWorklist.add(succSc, entries, downStates);
+					}
+				}
+				if (m_Summaries.containsKey(stateSc)) {
+					for (StateContainer succSc : m_Summaries.get(stateSc)) {
+						if (succSc.getCommonEntriesComponent() == oldCec) {
+							if (!visited.contains(succSc)) {
+								worklist.add(succSc);
+								visited.add(succSc);
+							}
+						} else if (succSc.getCommonEntriesComponent() != result) {
+							if (foreigners == null) {
+								foreigners = new HashSet<StateContainer>();
+							}
+							foreigners.add(succSc);
+							cecSplitWorklist.add(succSc, entries, downStates);
+						}
+					}
+				}
+				if (foreigners != null) {
+					result.m_BorderOut.put(stateSc, foreigners);
+				}
+			}
+			
+			
+			
+			if (oldCec.m_Size != 0) {
+				assert (oldCec.m_Size > 0);
+				// we have to check all states of the newCec if they have an
+				// incoming transition from the oldCec and set m_BorderOut of
+				// oldCec accordingly
+				for (StateContainer sc : visited) {
+					
+//					if (oldCec.isBorderState(sc)) {
+//						Set<StateContainer> foreigners = oldCec.getForeigners(sc);
+//						result.m_BorderOut.put(sc, foreigners);
+//						oldCec.m_BorderOut.remove(sc);
+//						Iterator<StateContainer> it = foreigners.iterator();
+//						for (StateContainer foreigner = it.next(); it.hasNext(); foreigner = it.next()) {
+//							if (foreigner.getCommonEntriesComponent() == result) {
+//								it.remove();
+//							} else {
+//								cecSplitWorklist.add(foreigner, entries, downStates);
+//							}
+//						}
+//					}
+					
+					//TODO: move this upwards. no second iteration required
+					for (IncomingInternalTransition<LETTER, STATE> inTrans : sc.internalPredecessors()) {
+						STATE pred = inTrans.getPred();
+						StateContainer predSc = m_States.get(pred);
+						if (predSc.getCommonEntriesComponent() == oldCec) {
+							oldCec.addBorderCrossing(predSc, sc);
+						}
+					}
+					for (IncomingReturnTransition<LETTER, STATE> inTrans : sc.returnPredecessors()) {
+						STATE hierPred = inTrans.getHierPred();
+						StateContainer predSc = m_States.get(hierPred);
+						if (predSc.getCommonEntriesComponent() == oldCec) {
+							oldCec.addBorderCrossing(predSc, sc);
+						}
+					}
+				}
+			} else {
+				assert oldCec.m_BorderOut.isEmpty();
+			}
+			assert oldCec.m_Size == oldCec.m_ReturnOutCandidates.size();
+			assert result.m_Size == result.m_ReturnOutCandidates.size();
+			return result;
+		}
+		
+		class DoubleDeckerWorklist {
+			LinkedList<STATE> m_UpStates = new LinkedList<STATE>();
+			LinkedList<STATE> m_DownStates = new LinkedList<STATE>();
+			
+			private void enqueue(STATE up, STATE down) {
+				m_UpStates.add(up);
+				m_DownStates.add(down);
+			}
+			
+			private boolean isEmpty() {
+				return m_UpStates.isEmpty();
+			}
+			
+			private DoubleDecker<STATE> dequeue() {
+				return new DoubleDecker<STATE>(
+						m_DownStates.remove(0), m_UpStates.remove(0));
+			}
+		}
+		
+		
+		
+		private class CecSplitWorklist {
+			List<Object[]> m_worklist = new LinkedList<Object[]>();
+			
+			private boolean isEmtpy() {
+				return m_worklist.isEmpty();
+			}
+			
+			private void add(StateContainer state, Set<Entry> entries, Set<STATE> downStates) {
+				assert state.getCommonEntriesComponent().m_Size == state.getCommonEntriesComponent().m_ReturnOutCandidates.size();
+				Object[] elem = new Object[] { state, entries, downStates };
+				m_worklist.add(elem);
+			}
+			
+			private void processFirst() {
+				Object[] elem = m_worklist.remove(0);
+				StateContainer stateC = (StateContainer) elem[0];
+				Set<Entry> entries = (Set<Entry>) elem[1];
+				Set<STATE> downStates = (Set<STATE>) elem[2];
+				HashSet<StateContainer> splitStates = new HashSet<StateContainer>();
+				splitStates.add(stateC);
+				updateCECs(splitStates, entries, downStates);
+			}
+			
+			private void processAll() {
+				while (!isEmtpy()) {
+					processFirst();
+				}
+			}
+		}
+	}
+
+		
+
+	
+	
+
+////////////////////////////////////////////////////////////////////////////////
+	private class DeadEndComputation {
+		
+		private Map<Entry,Set<STATE>> m_Entry2DownWorklist;
+
+		DeadEndComputation() {
+			for (STATE fin : getFinalStates()) {
+				StateContainer cont = m_States.get(fin);
+				assert cont.getReachProp() == ReachProp.REACHABLE;
+				cont.setReachProp(ReachProp.NODEADEND);
+				m_BackwardWorklist.add(cont);
+			}
+
+			while (m_BackwardWorklist.isEmpty()) {
+				StateContainer cont = m_BackwardWorklist.remove(0);
+				for (IncomingInternalTransition<LETTER, STATE> inTrans : cont
+						.internalPredecessors()) {
+					STATE pred = inTrans.getPred();
+					StateContainer predCont = m_States.get(pred);
+					if (predCont.getReachProp() != ReachProp.NODEADEND) {
+						predCont.setReachProp(ReachProp.NODEADEND);
+						m_BackwardWorklist.add(predCont);
+					}
+				}
+				for (IncomingReturnTransition<LETTER, STATE> inTrans : cont
+						.returnPredecessors()) {
+					STATE pred = inTrans.getHierPred();
+					StateContainer predCont = m_States.get(pred);
+					if (predCont.getReachProp() != ReachProp.NODEADEND) {
+						predCont.setReachProp(ReachProp.NODEADEND);
+						m_BackwardWorklist.add(predCont);
+					}
+				}
+				for (IncomingCallTransition<LETTER, STATE> inTrans : cont
+						.callPredecessors()) {
+					STATE pred = inTrans.getPred();
+					StateContainer predCont = m_States.get(pred);
+					if (predCont.getReachProp() != ReachProp.NODEADEND) {
+						predCont.setReachProp(ReachProp.NODEADEND);
+						m_BackwardWorklist.add(predCont);
+					}
+				}
+			}
+		}
+		
+		private void enqueue(Entry entry, STATE downState) {
+			Set<STATE> downs = m_Entry2DownWorklist.get(entry);
+			if (downs == null) {
+				downs = new HashSet<STATE>();
+			}
+			downs.add(downState);
+		}
+		
+	
+}
+
+
+	
+	
+	
+////////////////////////////////////////////////////////////////////////////////
+	
+	private class Entry {
+		final STATE m_State;
+		
+		private Entry(STATE state) {
+			assert state != null;
+			this.m_State = state;
+			m_State2Entry.put(state, this);
+		}
+		
+		private STATE getState() {
+			return m_State;
+		}
+		
+		public String toString() {
+			return m_State.toString();
+		}
+	}
+	
+
+	
+	
+	
+	
+	
+	
+	
+////////////////////////////////////////////////////////////////////////////////
+
+	private class CommonEntriesComponent {
+		int m_Size = 0;
+		final Set<Entry> m_Entries;
+		final Set<STATE> m_DownStates;
+		final Set<STATE> m_ReturnOutCandidates;
+		final Map<StateContainer,Set<StateContainer>> m_BorderOut;
+		
+				
+		private CommonEntriesComponent(HashSet<Entry> entries, HashSet<STATE> downStates) {
+			assert noElementIsNull(entries);
+			this.m_Entries = entries;
+			this.m_DownStates = downStates;
+			this.m_ReturnOutCandidates = new HashSet<STATE>();
+			this.m_BorderOut = new HashMap<StateContainer,Set<StateContainer>>();
+			m_AllCECs.add(this);
+		}
+		
+
+		
+		public String toString() {
+			StringBuilder sb = new StringBuilder();
+			sb.append("Entries: ").append(m_Entries).append("\n");
+			sb.append("DownStates: ").append(m_DownStates).append("\n");
+			sb.append("Size: ").append(m_Size).append("\n");
+			sb.append("ReturnOutCandiates: ").append(m_ReturnOutCandidates).append("\n");
+			sb.append("BorderOut: ").append(m_BorderOut).append("\n");
+			return sb.toString();
+		}
+
+		private Set<Entry> getEntries() {
+			return Collections.unmodifiableSet(this.m_Entries);
+		}
+		
+		private void addReturnOutCandicate(STATE returnCandidate) {
+			m_ReturnOutCandidates.add(returnCandidate);
+		}
+//		
+//		private void removeReturnOutCandicate(STATE returnCandidate) {
+//			boolean modified = m_ReturnOutCandidates.remove(returnCandidate);
+//			if (!modified) {
+//				throw new AssertionError("state not contained");
+//			}
+//		}
+		
+		private Set<STATE> getReturnOutCandidates() {
+			assert m_ReturnOutCandidates.size() == m_Size;
+			return m_ReturnOutCandidates;
+		}
+		
+		private Set<STATE> getDownStates() {
+			assert m_ReturnOutCandidates.size() == m_Size;
+			return Collections.unmodifiableSet(this.m_DownStates);
+		}
+		
+		private boolean isBorderState(StateContainer state) {
+			assert m_ReturnOutCandidates.size() == m_Size;
+			return m_BorderOut.containsKey(state);
+		}
+		
+		private void removeBorderState(StateContainer resident) {
+			Set<StateContainer> foreigners = m_BorderOut.remove(resident);
+			if (foreigners == null) {
+				throw new AssertionError("state not contained");
+			}
+		}
+		
+		private Set<StateContainer> getForeigners(StateContainer resident) {
+			assert m_ReturnOutCandidates.size() == m_Size;
+			return m_BorderOut.get(resident);
+		}
+		
+		private void addBorderCrossing(StateContainer resident, StateContainer foreigner) {
+			Set<StateContainer> foreigners = m_BorderOut.get(resident);
+			if (foreigners == null) {
+				foreigners = new HashSet<StateContainer>();
+				m_BorderOut.put(resident, foreigners);
+			}
+			foreigners.add(foreigner);
+		}
+		
+		
+		private void addDownState(STATE down) {
+			m_DownStates.add(down);
+		}
+		
+		private void moveWithoutBorderUpdate(StateContainer sc, CommonEntriesComponent targetCec) {
+			sc.setCommonEntriesComponent(targetCec);
+			m_Size--;
+			targetCec.m_Size++;
+			if (m_ReturnOutCandidates.contains(sc.getState())) {
+				targetCec.m_ReturnOutCandidates.add(sc.getState());
+				this.m_ReturnOutCandidates.remove(sc.getState());
+			}
+		}
+	}
+	
+	
+
+	
+
+	
+	
+
+
+	
+	
+
+	
+
+	
+	
+	
+
+	
+	
+	
+
+	
+	
+
+
+	
+	
+
+	
+	
+	
+	
+////////////////////////////////////////////////////////////////////////////////	
 	/**
 	 * Contains STATES and information of transitions.
 	 *
@@ -968,8 +1081,9 @@ public class ReachableStatesAutomaton<LETTER,STATE> implements INestedWordAutoma
 	 */
 	private class StateContainer {
 		
-		
 		private final STATE m_State;
+		
+		private ReachProp m_ReachProp;
 		
 		public String toString() {
 			StringBuilder sb = new StringBuilder();
@@ -1063,8 +1177,23 @@ public class ReachableStatesAutomaton<LETTER,STATE> implements INestedWordAutoma
 		private StateContainer(STATE state, CommonEntriesComponent cec) {
 			this.cec = cec;
 			m_State = state;
+			m_ReachProp = ReachProp.REACHABLE;
 		}
 		
+		
+		
+		public ReachProp getReachProp() {
+			return m_ReachProp;
+		}
+
+
+
+		public void setReachProp(ReachProp reachProp) {
+			m_ReachProp = reachProp;
+		}
+
+
+
 		CommonEntriesComponent getCommonEntriesComponent() {
 			return cec;
 		}
@@ -1212,14 +1341,6 @@ public class ReachableStatesAutomaton<LETTER,STATE> implements INestedWordAutoma
 		
 		
 
-		
-
-		
-
-
-		
-		
-		
 		public Collection<LETTER> lettersInternal() {
 			Map<LETTER, Set<STATE>> map = m_InternalOut;
 			return map == null ? m_EmptySetOfLetters : map.keySet();
@@ -2339,6 +2460,18 @@ public class ReachableStatesAutomaton<LETTER,STATE> implements INestedWordAutoma
 		}
 	}
 	
+	
+	
+	
+	
+	
+	
+	
+	
+
+	////////////////////////////////////////////////////////////////////////////
+	// Methods to check correctness
+	
 	private boolean containsInternalTransition(STATE state, LETTER letter, STATE succ) {
 		return m_States.get(state).containsInternalTransition(letter, succ);
 	}
@@ -2478,7 +2611,29 @@ public class ReachableStatesAutomaton<LETTER,STATE> implements INestedWordAutoma
 		boolean downStatesInCallPreds = isSubset(downStates, callPreds);
 		return callPredsIndownStates && downStatesInCallPreds;
 	}
+	
+	
+	
+	
+	
 
+	////////////////////////////////////////////////////////////////////////////
+	// Auxilliary Methods
 
+	public static <E> boolean noElementIsNull(Collection<E> collection) {
+		for (E elem : collection) {
+			if (elem == null) return false;
+		}
+		return true;
+	}
+	
+	private static <E> boolean isSubset(Set<E> lhs, Set<E> rhs) {
+		for (E elem : lhs) {
+			if (!rhs.contains(elem)) {
+				return false;
+			}
+		}
+		return true;
+	}
 
 }
