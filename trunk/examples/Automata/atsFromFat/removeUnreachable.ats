@@ -5,7 +5,6 @@
 
 removeUnreachable(minimizeSmall);
 removeUnreachable(noFinalStates);
-removeUnreachable(Amod2);
 removeUnreachable(joiningComponents2);
 removeUnreachable(repeatedlyjoiningComponents);
 removeUnreachable(joiningComponents);
