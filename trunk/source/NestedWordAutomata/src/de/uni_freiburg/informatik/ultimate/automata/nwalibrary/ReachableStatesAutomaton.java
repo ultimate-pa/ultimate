@@ -59,7 +59,7 @@ public class ReachableStatesAutomaton<LETTER,STATE> implements INestedWordAutoma
 		returnSuccs.add(returnSucc);
 	}
 	
-	private ReachableStatesAutomaton(INestedWordAutomaton<LETTER,STATE> operand) throws OperationCanceledException {
+	public ReachableStatesAutomaton(INestedWordAutomaton<LETTER,STATE> operand) throws OperationCanceledException {
 		this.m_Operand = (NestedWordAutomaton<LETTER, STATE>) operand;
 		m_InternalAlphabet = operand.getAlphabet();
 		m_CallAlphabet = operand.getCallAlphabet();
