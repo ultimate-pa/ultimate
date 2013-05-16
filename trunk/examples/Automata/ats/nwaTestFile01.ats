@@ -6,7 +6,7 @@
 // stores them internally. Thus, you can use the automata from that file, as if
 // they'd have been defined in this file. 
 // Other than automata definitions are ignored.
-parseAutomata('nwaDefinitions01.ats');
+parseAutomata("nwaDefinitions01.ats");
 // Declares a nested word
 NestedWord firstNW = [b b a b b b a];
 assert(accepts(a2, firstNW));
