@@ -76,8 +76,9 @@ public class ReachableStatesAutomaton<LETTER,STATE> implements INestedWordAutoma
 			new ReachableStatesComputation();
 			new DeadEndComputation();
 			s_Logger.info(componentInformation());
+			assert (new TransitionConsitenceCheck<LETTER, STATE>(this)).consistentForAll();
+
 			assert (checkTransitionsReturnedConsistent());
-			
 			assert (allStatesAreInTheirCec());
 			assert (cecSumConsistent());
 			for (CommonEntriesComponent cec : m_AllCECs) {
@@ -86,7 +87,7 @@ public class ReachableStatesAutomaton<LETTER,STATE> implements INestedWordAutoma
 					assert (downStatesConsistentwithEntriesDownStates(cec));
 				}
 			}
-			assert ResultChecker.removeUnreachable(this, operand);
+//			assert ResultChecker.removeUnreachable(this, operand);
 		} catch (Error e) {
 			String message = "// Problem with  removeUnreachable";
 			ResultChecker.writeToFileIfPreferred(operand,
@@ -118,7 +119,8 @@ public class ReachableStatesAutomaton<LETTER,STATE> implements INestedWordAutoma
 	}
 	
 	public boolean isDeadEnd(STATE state) {
-		return m_States.get(state).getReachProp() != ReachProp.REACHABLE;
+		ReachProp reachProp = m_States.get(state).getReachProp();
+		return  reachProp == ReachProp.REACHABLE;
 	}
 	
 	public boolean isInitialAfterDeadEndRemoval(STATE state) {
@@ -1252,7 +1254,7 @@ public class ReachableStatesAutomaton<LETTER,STATE> implements INestedWordAutoma
 		
 		boolean isEntry() {
 			for (Entry entry : this.cec.getEntries()) {
-				if (entry.getState().equals(this)) {
+				if (entry.getState().equals(this.getState())) {
 					return true;
 				}
 			}
