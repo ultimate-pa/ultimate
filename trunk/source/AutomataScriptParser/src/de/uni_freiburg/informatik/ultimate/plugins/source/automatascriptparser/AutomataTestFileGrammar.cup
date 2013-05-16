@@ -877,6 +877,8 @@ operation_invocation ::=
                     for (Object arg : args.getArguments()) {
                       if (arg instanceof VariableExpression) {
                         m_filesToParse.add(((VariableExpression) arg).getIdentifier());
+                      } else if (arg instanceof ConstantExpression) {
+                        m_filesToParse.add(((ConstantExpression) arg).getValue().toString());
                       }
                     }
                     RESULT = null;

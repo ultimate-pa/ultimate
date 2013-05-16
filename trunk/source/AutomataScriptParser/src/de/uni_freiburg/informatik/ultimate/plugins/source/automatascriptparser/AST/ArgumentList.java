@@ -44,12 +44,23 @@ public class ArgumentList extends AtsASTNode {
 	}
 
 	/**
-	 * Returns this list as an array list.
+	 * Returns arguments as an array list.
 	 * @return
 	 */
 	public List<Object> getArguments() {
 		return m_arguments;
 	}
+	
+	@Override
+	public String getAsString() {
+        StringBuilder builder = new StringBuilder();
+        for (AtsASTNode arg : m_children) {
+        	builder.append(arg.getAsString() + ", ");
+        }
+        builder.delete(builder.length() - 2, builder.length());
+		return builder.toString();
+	}
 
+	
 
 }
