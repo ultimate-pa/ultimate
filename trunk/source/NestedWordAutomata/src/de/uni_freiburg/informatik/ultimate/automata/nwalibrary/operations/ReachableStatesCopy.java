@@ -81,23 +81,23 @@ public class ReachableStatesCopy<LETTER,STATE> extends DoubleDeckerBuilder<LETTE
 		STATE sinkState = m_TraversedNwa.getStateFactory().createSinkStateContent();
 		boolean isInitial = false; //m_Input.getInitial().isEmpty();
 		boolean isFinal = m_Complement;
-		m_TraversedNwa.addState(isInitial, isFinal, sinkState);
+		((NestedWordAutomaton<LETTER, STATE>) m_TraversedNwa).addState(isInitial, isFinal, sinkState);
 		
 		for (STATE state : m_TraversedNwa.getStates()) {
 			for (LETTER letter : m_TraversedNwa.getInternalAlphabet()) {				
 				if (!m_TraversedNwa.succInternal(state,letter).iterator().hasNext()) {
-					m_TraversedNwa.addInternalTransition(state, letter, sinkState);
+					((NestedWordAutomaton<LETTER, STATE>) m_TraversedNwa).addInternalTransition(state, letter, sinkState);
 				}
 			}
 			for (LETTER letter : m_TraversedNwa.getCallAlphabet()) {				
 				if (!m_TraversedNwa.succCall(state,letter).iterator().hasNext()) {
-					m_TraversedNwa.addCallTransition(state, letter, sinkState);
+					((NestedWordAutomaton<LETTER, STATE>) m_TraversedNwa).addCallTransition(state, letter, sinkState);
 				}
 			}
 			for (LETTER symbol : m_TraversedNwa.getReturnAlphabet()) {
 				for (STATE hier : m_TraversedNwa.getStates()) {
 					if (!m_TraversedNwa.succReturn(state,hier,symbol).iterator().hasNext()) {
-						m_TraversedNwa.addReturnTransition(state, hier, symbol, sinkState);
+						((NestedWordAutomaton<LETTER, STATE>) m_TraversedNwa).addReturnTransition(state, hier, symbol, sinkState);
 					}
 				}
 			}
@@ -139,7 +139,7 @@ public class ReachableStatesCopy<LETTER,STATE> extends DoubleDeckerBuilder<LETTE
 		if (newState == null) {
 			newState = oldUp;
 			boolean isAccepting = m_Input.isFinal(oldUp) ^ m_Complement;
-			m_TraversedNwa.addState(isInitial, isAccepting, newState);
+			((NestedWordAutomaton<LETTER, STATE>) m_TraversedNwa).addState(isInitial, isAccepting, newState);
 			m_old2new.put(oldUp, newState);
 			m_new2old.put(newState, oldUp);
 		}
@@ -155,7 +155,7 @@ public class ReachableStatesCopy<LETTER,STATE> extends DoubleDeckerBuilder<LETTE
 		for (LETTER symbol : m_Input.lettersInternal(oldUpState)) {
 			for (STATE oldSucc : m_Input.succInternal(oldUpState, symbol)) {
 				STATE newSucc = constructOrGetResState(oldSucc, false);
-				m_TraversedNwa.addInternalTransition(newUpState, symbol, newSucc);
+				((NestedWordAutomaton<LETTER, STATE>) m_TraversedNwa).addInternalTransition(newUpState, symbol, newSucc);
 				succs.add(newSucc);
 			}
 		}
@@ -176,7 +176,7 @@ public class ReachableStatesCopy<LETTER,STATE> extends DoubleDeckerBuilder<LETTE
 		for (LETTER symbol : m_Input.lettersReturn(oldUpState)) {
 			for (STATE oldSucc : m_Input.succReturn(oldUpState, oldDownState, symbol)) {
 				STATE newSucc = constructOrGetResState(oldSucc, false);
-				m_TraversedNwa.addReturnTransition(newUpState, newDownState, symbol, newSucc);
+				((NestedWordAutomaton<LETTER, STATE>) m_TraversedNwa).addReturnTransition(newUpState, newDownState, symbol, newSucc);
 				succs.add(newSucc);
 			}
 		}
@@ -191,7 +191,7 @@ public class ReachableStatesCopy<LETTER,STATE> extends DoubleDeckerBuilder<LETTE
 		for (LETTER symbol : m_Input.lettersCall(oldUpState)) {
 			for (STATE oldSucc : m_Input.succCall(oldUpState, symbol)) {
 				STATE newSucc = constructOrGetResState(oldSucc, false);
-				m_TraversedNwa.addCallTransition(newUpState, symbol, newSucc);
+				((NestedWordAutomaton<LETTER, STATE>) m_TraversedNwa).addCallTransition(newUpState, symbol, newSucc);
 				succs.add(newSucc);
 			}
 		}

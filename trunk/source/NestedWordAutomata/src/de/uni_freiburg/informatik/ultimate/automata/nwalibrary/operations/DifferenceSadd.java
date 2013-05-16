@@ -45,7 +45,7 @@ public class DifferenceSadd<LETTER,STATE> implements IOperation {
 	
 	private final INestedWordAutomaton<LETTER,STATE> minuend;
 	private final INestedWordAutomaton<LETTER,STATE> subtrahend;
-	private final INestedWordAutomaton<LETTER,STATE> difference;
+	private final NestedWordAutomaton<LETTER,STATE> difference;
 	
 	private final IStateDeterminizer<LETTER,STATE> stateDeterminizer;
 	

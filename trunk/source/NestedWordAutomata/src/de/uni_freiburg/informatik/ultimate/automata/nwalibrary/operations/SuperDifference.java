@@ -149,7 +149,7 @@ public class SuperDifference<LETTER, STATE> implements IOperation {
 		s_Logger.debug("Add state: " + qLabel);
 		STATE q = m_stateFactory.intersection(r, s);
 		m_containedStatesHashMap.put(qLabel, q);
-		m_Result.addState(m_minuend.isInitial(r) && m_subtrahend.isInitial(s),
+		((NestedWordAutomaton<LETTER, STATE>) m_Result).addState(m_minuend.isInitial(r) && m_subtrahend.isInitial(s),
 				m_minuend.isFinal(r) && !m_subtrahend.isFinal(s), q);
 
 		// get the epimorph state
@@ -177,7 +177,7 @@ public class SuperDifference<LETTER, STATE> implements IOperation {
 
 					s_Logger.debug("Adding the edge from " + q.toString()
 							+ " with " + label + " to " + q2.toString());
-					m_Result.addInternalTransition(q, label, q2);
+					((NestedWordAutomaton<LETTER, STATE>) m_Result).addInternalTransition(q, label, q2);
 				}
 			}
 		} else {
@@ -190,7 +190,7 @@ public class SuperDifference<LETTER, STATE> implements IOperation {
 					STATE q2 = AddState(r2, m_sinkState);
 					s_Logger.debug("Adding the edge from " + q.toString()
 							+ " with " + label + " to " + q2.toString());
-					m_Result.addInternalTransition(q, label, q2);
+					((NestedWordAutomaton<LETTER, STATE>) m_Result).addInternalTransition(q, label, q2);
 				}
 			}
 		}

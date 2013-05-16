@@ -85,16 +85,6 @@ public interface INestedWordAutomaton<LETTER,STATE>
 	public boolean isFinal(STATE state);
 	
 	
-
-	public void addState(boolean isInitial, boolean isFinal, STATE state);
-
-	
-	/**
-	 * Remove state and all its incoming and outgoing transitions. 
-	 */
-	void removeState(STATE state);
-	
-	
 	/**
 	 * Auxiliary state used to model the hierarchical predecessor of a pending
 	 * return in some operations. Recall that we generally do not accept nested
@@ -201,28 +191,6 @@ public interface INestedWordAutomaton<LETTER,STATE>
 	 * is an incoming return transition (pred, hier, letter, state)
 	 */
 	public Iterable<STATE> predReturnHier(STATE state, LETTER letter);
-	
-	
-	
-	/**
-	 * Add internal transition (pred, letter, succ) to automaton.
-	 */
-	void addInternalTransition(STATE pred, LETTER letter, STATE succ);
-	
-	/**
-	 * Add call transition (pred, letter, succ) to automaton.
-	 */	
-	void addCallTransition(STATE pred, LETTER letter, STATE succ);
-
-	/**
-	 * Add return transition (pred, hier, letter, succ) to automaton.
-	 * State pred is called linear predecessor.
-	 * State hier is called hierarchical predecessor.
-	 */	
-	void addReturnTransition(STATE pred, STATE hier, LETTER letter, STATE succ);	
-	
-	
-
 	
 	
 	

@@ -33,7 +33,7 @@ public class ConcurrentProduct<LETTER,STATE> {
 
 	private final INestedWordAutomaton<LETTER,STATE> M_Nwa1;
 	private final INestedWordAutomaton<LETTER,STATE> M_Nwa2;
-	private final INestedWordAutomaton<LETTER,STATE> m_Result;
+	private final NestedWordAutomaton<LETTER,STATE> m_Result;
 	
 	/**
 	 * List of state pairs from the input automata for which

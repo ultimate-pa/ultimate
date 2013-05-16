@@ -39,7 +39,7 @@ public class MinimizeDfa<LETTER,STATE> implements IOperation {
     /**
      * The resulting automaton.
      */
-    private INestedWordAutomaton<LETTER,STATE> m_Result;
+    private NestedWordAutomaton<LETTER,STATE> m_Result;
     /**
      * The input automaton.
      */

@@ -134,15 +134,7 @@ public class Det<LETTER, STATE> implements INestedWordAutomaton<LETTER, STATE>, 
 		return m_Cache.isFinal(state);
 	}
 
-	@Override
-	public void addState(boolean isInitial, boolean isFinal, STATE state) {
-		throw new UnsupportedOperationException();
-	}
 
-	@Override
-	public void removeState(STATE state) {
-		throw new UnsupportedOperationException();
-	}
 
 	@Override
 	public STATE getEmptyStackState() {
@@ -254,21 +246,6 @@ public class Det<LETTER, STATE> implements INestedWordAutomaton<LETTER, STATE>, 
 		throw new UnsupportedOperationException();
 	}
 
-	@Override
-	public void addInternalTransition(STATE pred, LETTER letter, STATE succ) {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
-	public void addCallTransition(STATE pred, LETTER letter, STATE succ) {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
-	public void addReturnTransition(STATE pred, STATE hier, LETTER letter,
-			STATE succ) {
-		throw new UnsupportedOperationException();
-	}
 
 	@Override
 	public boolean finalIsTrap() {

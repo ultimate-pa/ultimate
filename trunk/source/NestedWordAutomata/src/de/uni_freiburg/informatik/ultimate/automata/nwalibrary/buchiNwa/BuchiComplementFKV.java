@@ -164,7 +164,7 @@ public class BuchiComplementFKV<LETTER,STATE> extends DoubleDeckerBuilder<LETTER
 					m_PowersetDeterminizer.internalSuccessor(detUp, symbol);
 				if (!detSucc.isEmpty()) {
 					STATE resSucc = getOrAdd(detSucc, false);
-					m_TraversedNwa.addInternalTransition(resUp, symbol, resSucc);
+					((NestedWordAutomaton<LETTER, STATE>) m_TraversedNwa).addInternalTransition(resUp, symbol, resSucc);
 					resSuccs.add(resSucc);
 				}
 			}
@@ -175,7 +175,7 @@ public class BuchiComplementFKV<LETTER,STATE> extends DoubleDeckerBuilder<LETTER
 			Collection<LevelRankingState> result = gen.computeResult();
 			for (LevelRankingState complSucc : result) {
 				STATE resSucc = getOrAdd(complSucc);
-				m_TraversedNwa.addInternalTransition(resUp, symbol, resSucc);
+				((NestedWordAutomaton<LETTER, STATE>) m_TraversedNwa).addInternalTransition(resUp, symbol, resSucc);
 				resSuccs.add(resSucc);
 			}
 		}
@@ -189,7 +189,7 @@ public class BuchiComplementFKV<LETTER,STATE> extends DoubleDeckerBuilder<LETTER
 			Collection<LevelRankingState> result = gen.computeResult();
 			for (LevelRankingState complSucc : result) {
 				STATE resSucc = getOrAdd(complSucc);
-				m_TraversedNwa.addInternalTransition(resUp, symbol, resSucc);
+				((NestedWordAutomaton<LETTER, STATE>) m_TraversedNwa).addInternalTransition(resUp, symbol, resSucc);
 				resSuccs.add(resSucc);
 			}
 		}
@@ -220,7 +220,7 @@ public class BuchiComplementFKV<LETTER,STATE> extends DoubleDeckerBuilder<LETTER
 		STATE resSucc = m_lrk2res.get(lrkState);
 		if (resSucc == null) {
 			resSucc = lrkState.getContent();
-			m_TraversedNwa.addState(false, lrkState.isOempty(), resSucc);
+			((NestedWordAutomaton<LETTER, STATE>) m_TraversedNwa).addState(false, lrkState.isOempty(), resSucc);
 			m_lrk2res.put(lrkState, resSucc);
 			m_res2lrk.put(resSucc, lrkState);
 			if (this.m_HighestRank < lrkState.m_HighestRank) {
@@ -239,7 +239,7 @@ public class BuchiComplementFKV<LETTER,STATE> extends DoubleDeckerBuilder<LETTER
 		STATE resSucc = m_det2res.get(detState);
 		if (resSucc == null) {
 			resSucc = detState.getContent(m_ContentFactory);
-			m_TraversedNwa.addState(isInitial, false, resSucc);
+			((NestedWordAutomaton<LETTER, STATE>) m_TraversedNwa).addState(isInitial, false, resSucc);
 			m_det2res.put(detState, resSucc);
 			m_res2det.put(resSucc, detState);
 		}

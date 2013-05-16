@@ -7,6 +7,7 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.DeterminizedState;
@@ -24,7 +25,7 @@ public class BestApproximationDeterminizer
 	SmtManager m_SmtManager;
 	TAPreferences m_TaPreferences;
 	StateFactory<IPredicate> m_StateFactory;
-	INestedWordAutomaton<CodeBlock, IPredicate> m_Nwa;
+	NestedWordAutomaton<CodeBlock, IPredicate> m_Nwa;
 	public int m_AnswerInternalSolver = 0;
 	public int m_AnswerInternalAutomaton = 0;
 	public int m_AnswerInternalCache = 0;
@@ -48,7 +49,7 @@ public class BestApproximationDeterminizer
 
 	public BestApproximationDeterminizer(SmtManager mSmtManager,
 			TAPreferences taPreferences,
-			INestedWordAutomaton<CodeBlock, IPredicate> mNwa) {
+			NestedWordAutomaton<CodeBlock, IPredicate> mNwa) {
 		super();
 		m_SmtManager = mSmtManager;
 		m_TaPreferences = taPreferences;

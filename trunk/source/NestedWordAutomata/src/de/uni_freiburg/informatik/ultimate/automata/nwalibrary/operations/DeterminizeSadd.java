@@ -30,7 +30,7 @@ public class DeterminizeSadd<LETTER,STATE> implements IOperation {
 		new HashMap<STATE, Set<STATE>>();
 	private final STATE auxilliaryEmptyStackState;
 	private final INestedWordAutomaton<LETTER,STATE> m_Operand;
-	private final INestedWordAutomaton<LETTER,STATE> result;
+	private final NestedWordAutomaton<LETTER,STATE> result;
 	
 	private final List<StatePair> queue = new LinkedList<StatePair>();
 	

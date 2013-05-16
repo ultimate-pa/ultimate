@@ -4,26 +4,23 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.NoSuchElementException;
 import java.util.Set;
+
+import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.automata.Activator;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.DoubleDeckerAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.DoubleDecker;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.DoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.DoubleDeckerVisitor.ReachFinal;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
-
-import org.apache.log4j.Logger;
 
 
 
@@ -339,7 +336,7 @@ public class Difference<LETTER,STATE> extends DoubleDeckerBuilder<LETTER,STATE>
 			STATE resState = m_StateFactoryConstruction.intersection(
 					diffState.getMinuendState(), 
 					diffState.getSubtrahendDeterminizedState().getContent(minuend.getStateFactory()));
-			m_TraversedNwa.addState(true, diffState.isFinal(), resState);
+			((NestedWordAutomaton<LETTER, STATE>) m_TraversedNwa).addState(true, diffState.isFinal(), resState);
 			diff2res.put(diffState,resState);
 			res2diff.put(resState, diffState);
 			resInitials.add(resState);
@@ -387,7 +384,7 @@ public class Difference<LETTER,STATE> extends DoubleDeckerBuilder<LETTER,STATE>
 				DifferenceState<LETTER,STATE> diffSucc = 
 						new DifferenceState<LETTER,STATE>(minuSucc, detSucc, isFinal);
 				STATE resSucc = getResState(diffSucc);
-				m_TraversedNwa.addInternalTransition(resState, symbol, resSucc);
+				((NestedWordAutomaton<LETTER, STATE>) m_TraversedNwa).addInternalTransition(resState, symbol, resSucc);
 				resInternalSuccessors.add(resSucc);
 			}
 		}
@@ -441,7 +438,7 @@ public class Difference<LETTER,STATE> extends DoubleDeckerBuilder<LETTER,STATE>
 				DifferenceState<LETTER,STATE> diffSucc = 
 						new DifferenceState<LETTER,STATE>(minuSucc, detSucc, isFinal);
 				STATE resSucc = getResState(diffSucc);
-				m_TraversedNwa.addCallTransition(resState, symbol, resSucc);
+				((NestedWordAutomaton<LETTER, STATE>) m_TraversedNwa).addCallTransition(resState, symbol, resSucc);
 				resCallSuccessors.add(resSucc);
 			}
 		}
@@ -517,7 +514,7 @@ public class Difference<LETTER,STATE> extends DoubleDeckerBuilder<LETTER,STATE>
 				DifferenceState<LETTER,STATE> diffSucc = 
 					new DifferenceState<LETTER,STATE>(minuSucc, detSucc, isFinal);
 				STATE resSucc = getResState(diffSucc);
-				m_TraversedNwa.addReturnTransition(
+				((NestedWordAutomaton<LETTER, STATE>) m_TraversedNwa).addReturnTransition(
 										resState, resLinPred, symbol, resSucc);
 				resReturnSuccessors.add(resSucc);
 			}
@@ -543,7 +540,7 @@ public class Difference<LETTER,STATE> extends DoubleDeckerBuilder<LETTER,STATE>
 			STATE resState = m_StateFactoryConstruction.intersection(
 					diffState.getMinuendState(), 
 					diffState.getSubtrahendDeterminizedState().getContent(minuend.getStateFactory()));
-			m_TraversedNwa.addState(false, diffState.isFinal(), resState);
+			((NestedWordAutomaton<LETTER, STATE>) m_TraversedNwa).addState(false, diffState.isFinal(), resState);
 			diff2res.put(diffState,resState);
 			res2diff.put(resState,diffState);
 			return resState;

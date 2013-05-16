@@ -197,7 +197,6 @@ public class NestedWordAutomaton<LETTER,STATE> implements INestedWordAutomaton<L
 	}
 	
 
-	@Override
 	public void addState(boolean isInitial, boolean isFinal, STATE state) {
 		assert (state != null);
 		if (m_InternalOut.containsKey(state)) {
@@ -1457,7 +1456,6 @@ public class NestedWordAutomaton<LETTER,STATE> implements INestedWordAutomaton<L
 	
 	
 
-	@Override
 	public void removeState(STATE state) {
 		if (!contains(state)) {
 			throw new IllegalArgumentException("State " + state + " unknown");
@@ -1932,7 +1930,6 @@ public class NestedWordAutomaton<LETTER,STATE> implements INestedWordAutomaton<L
 	}
 
 	
-	@Override
 	public void addInternalTransition(STATE pred, LETTER letter, STATE succ) {
 		if (!contains(pred)) {
 			throw new IllegalArgumentException();
@@ -1966,7 +1963,6 @@ public class NestedWordAutomaton<LETTER,STATE> implements INestedWordAutomaton<L
 	}
 	
 
-	@Override
 	public void addCallTransition(STATE pred, LETTER letter, STATE succ) {
 		assert contains(pred);
 		assert contains(succ);
@@ -1997,7 +1993,6 @@ public class NestedWordAutomaton<LETTER,STATE> implements INestedWordAutomaton<L
 	}
 	
 
-	@Override
 	public void addReturnTransition(STATE pred, STATE hier, LETTER letter, STATE succ) {
 		assert contains(pred);
 		assert contains(hier);

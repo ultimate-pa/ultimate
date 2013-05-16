@@ -991,7 +991,7 @@ public class TestFileExecutor {
 
 
 	private void addTransition(INode transitionNode, 
-			                   INestedWordAutomaton<String, String> nwa,
+			                   NestedWordAutomaton<String, String> nwa,
 			                   Map<String,String> name2state) {
 		IAnnotations transition = 
 			transitionNode.getPayload().getAnnotations().get("Automata Parser");

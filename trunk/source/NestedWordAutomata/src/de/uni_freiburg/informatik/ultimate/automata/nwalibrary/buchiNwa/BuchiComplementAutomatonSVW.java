@@ -440,16 +440,6 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE>
 	}
 
 	@Override
-	public void addState(boolean isInitial, boolean isFinal, STATE state) {
-		throw new UnsupportedOperationException(UnsupportedOperationMessage);
-	}
-
-	@Override
-	public void removeState(STATE state) {
-		throw new UnsupportedOperationException(UnsupportedOperationMessage);
-	}
-
-	@Override
 	public Collection<LETTER> lettersCall(STATE state) {
 //		s_Logger.warn("No nwa. Has no call alphabet.");
 		return new HashSet<LETTER>(0);
@@ -507,22 +497,6 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE>
 		throw new UnsupportedOperationException(UnsupportedOperationMessage);
 	}
 
-	@Override
-	public void addInternalTransition(STATE pred, LETTER letter, STATE succ) {
-		throw new UnsupportedOperationException(UnsupportedOperationMessage);
-	}
-
-	@Override
-	public void addCallTransition(STATE pred, LETTER letter, STATE succ) {
-		throw new UnsupportedOperationException(UnsupportedOperationMessage);
-	}
-
-	@Override
-	public void addReturnTransition(STATE pred, STATE hier, LETTER letter,
-			STATE succ) {
-		throw new UnsupportedOperationException(UnsupportedOperationMessage);
-	}
-	
 	@Override
 	public Iterable<SummaryReturnTransition<LETTER, STATE>> getSummaryReturnTransitions(
 			LETTER letter, STATE hier) {

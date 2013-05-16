@@ -112,7 +112,7 @@ public class Determinize<LETTER,STATE> extends DoubleDeckerBuilder<LETTER,STATE>
 			new ArrayList<STATE>(m_Operand.getInitialStates().size());
 		DeterminizedState<LETTER,STATE> detState = stateDeterminizer.initialState();
 		STATE resState = detState.getContent(contentFactory);
-		m_TraversedNwa.addState(true, detState.containsFinal(), resState);
+		((NestedWordAutomaton<LETTER, STATE>) m_TraversedNwa).addState(true, detState.containsFinal(), resState);
 		det2res.put(detState,resState);
 		res2det.put(resState, detState);
 		resInitials.add(resState);
@@ -136,7 +136,7 @@ public class Determinize<LETTER,STATE> extends DoubleDeckerBuilder<LETTER,STATE>
 			DeterminizedState<LETTER,STATE> detSucc = 
 				stateDeterminizer.internalSuccessor(detState, symbol);
 			STATE resSucc = getResState(detSucc);
-			m_TraversedNwa.addInternalTransition(resState, symbol, resSucc);
+			((NestedWordAutomaton<LETTER, STATE>) m_TraversedNwa).addInternalTransition(resState, symbol, resSucc);
 			resInternalSuccessors.add(resSucc);
 		}
 		return resInternalSuccessors;
@@ -155,7 +155,7 @@ public class Determinize<LETTER,STATE> extends DoubleDeckerBuilder<LETTER,STATE>
 			DeterminizedState<LETTER,STATE> detSucc = 
 				stateDeterminizer.callSuccessor(detState, symbol);
 			STATE resSucc = getResState(detSucc);
-			m_TraversedNwa.addCallTransition(resState, symbol, resSucc);
+			((NestedWordAutomaton<LETTER, STATE>) m_TraversedNwa).addCallTransition(resState, symbol, resSucc);
 			resCallSuccessors.add(resSucc);
 		}
 		return resCallSuccessors;
@@ -178,7 +178,7 @@ public class Determinize<LETTER,STATE> extends DoubleDeckerBuilder<LETTER,STATE>
 			DeterminizedState<LETTER,STATE> detSucc = 
 				stateDeterminizer.returnSuccessor(detState, detLinPred, symbol);
 			STATE resSucc = getResState(detSucc);
-			m_TraversedNwa.addReturnTransition(resState, resLinPred, symbol, resSucc);
+			((NestedWordAutomaton<LETTER, STATE>) m_TraversedNwa).addReturnTransition(resState, resLinPred, symbol, resSucc);
 			resReturnSuccessors.add(resSucc);
 		}
 		return resReturnSuccessors;
@@ -197,7 +197,7 @@ public class Determinize<LETTER,STATE> extends DoubleDeckerBuilder<LETTER,STATE>
 		}
 		else {
 			STATE resState = detState.getContent(contentFactory);
-			m_TraversedNwa.addState(false, detState.containsFinal(), resState);
+			((NestedWordAutomaton<LETTER, STATE>) m_TraversedNwa).addState(false, detState.containsFinal(), resState);
 			det2res.put(detState,resState);
 			res2det.put(resState,detState);
 			return resState;

@@ -10,12 +10,21 @@ import de.uni_freiburg.informatik.ultimate.automata.Word;
 
 public class DeletedStatesAutomaton<LETTER, STATE> implements
 		INestedWordAutomaton<LETTER, STATE> {
-	INestedWordAutomaton<LETTER, STATE> m_Automaton;
-	Set<STATE> m_States;
+	INestedWordAutomaton<LETTER, STATE> m_Nwa;
+	Predicate<STATE> m_RemainingStates;
+	Predicate<STATE> m_RemainingInitials;
 	
-	DeletedStatesAutomaton(INestedWordAutomaton<LETTER, STATE> automaton, Set<STATE> states) {
-		m_Automaton = automaton;
-		m_States = states;
+	DeletedStatesAutomaton(INestedWordAutomaton<LETTER, STATE> automaton, 
+			Predicate<STATE> remainingStates, Predicate<STATE> remainingInitials) {
+		m_Nwa = automaton;
+		m_RemainingStates = remainingStates;
+		m_RemainingInitials = remainingInitials;
+	}
+	
+	DeletedStatesAutomaton(ReachableStatesAutomaton<LETTER, STATE> automaton) {
+		m_Nwa = automaton;
+		m_RemainingStates = new NoDeadEnd(automaton);
+		m_RemainingInitials = new InitialAfterDeadEndRemoval(automaton);
 	}
 
 	@Override
@@ -36,7 +45,7 @@ public class DeletedStatesAutomaton<LETTER, STATE> implements
 
 	@Override
 	public Collection<LETTER> getAlphabet() {
-		return m_Automaton.getAlphabet();
+		return m_Nwa.getAlphabet();
 	}
 
 	@Override
@@ -47,7 +56,7 @@ public class DeletedStatesAutomaton<LETTER, STATE> implements
 
 	@Override
 	public Collection<LETTER> getInternalAlphabet() {
-		return m_Automaton.getInternalAlphabet();
+		return m_Nwa.getInternalAlphabet();
 	}
 
 	@Override
@@ -99,18 +108,8 @@ public class DeletedStatesAutomaton<LETTER, STATE> implements
 	}
 
 	@Override
-	public void addState(boolean isInitial, boolean isFinal, STATE state) {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
-	public void removeState(STATE state) {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
 	public STATE getEmptyStackState() {
-		return m_Automaton.getEmptyStackState();
+		return m_Nwa.getEmptyStackState();
 	}
 
 	@Override
@@ -157,61 +156,42 @@ public class DeletedStatesAutomaton<LETTER, STATE> implements
 
 	@Override
 	public Iterable<STATE> succInternal(final STATE state, final LETTER letter) {
-		return new FilteredIterable<STATE>(m_Automaton.succInternal(state, letter), m_States);
+		return new FilteredIterable<STATE>(m_Nwa.succInternal(state, letter), m_RemainingStates);
 	}
 
 	@Override
 	public Iterable<STATE> succCall(STATE state, LETTER letter) {
-		return new FilteredIterable<STATE>(m_Automaton.succCall(state, letter), m_States);
+		return new FilteredIterable<STATE>(m_Nwa.succCall(state, letter), m_RemainingStates);
 	}
 
 	@Override
 	public Iterable<STATE> hierPred(STATE state, LETTER letter) {
-		return new FilteredIterable<STATE>(m_Automaton.succCall(state, letter), m_States);
+		return new FilteredIterable<STATE>(m_Nwa.succCall(state, letter), m_RemainingStates);
 	}
 
 	@Override
 	public Iterable<STATE> succReturn(STATE state, STATE hier, LETTER letter) {
-		return new FilteredIterable<STATE>(m_Automaton.succCall(state, letter), m_States);
+		return new FilteredIterable<STATE>(m_Nwa.succCall(state, letter), m_RemainingStates);
 	}
 
 	@Override
 	public Iterable<STATE> predInternal(STATE state, LETTER letter) {
-		return new FilteredIterable<STATE>(m_Automaton.succCall(state, letter), m_States);
+		return new FilteredIterable<STATE>(m_Nwa.succCall(state, letter), m_RemainingStates);
 	}
 
 	@Override
 	public Iterable<STATE> predCall(STATE state, LETTER letter) {
-		return new FilteredIterable<STATE>(m_Automaton.succCall(state, letter), m_States);
+		return new FilteredIterable<STATE>(m_Nwa.succCall(state, letter), m_RemainingStates);
 	}
 
 	@Override
 	public Iterable<STATE> predReturnLin(STATE state, LETTER letter, STATE hier) {
-		return new FilteredIterable<STATE>(m_Automaton.succCall(state, letter), m_States);
+		return new FilteredIterable<STATE>(m_Nwa.succCall(state, letter), m_RemainingStates);
 	}
 
 	@Override
 	public Iterable<STATE> predReturnHier(STATE state, LETTER letter) {
-		return new FilteredIterable<STATE>(m_Automaton.succCall(state, letter), m_States);
-	}
-
-	@Override
-	public void addInternalTransition(STATE pred, LETTER letter, STATE succ) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void addCallTransition(STATE pred, LETTER letter, STATE succ) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void addReturnTransition(STATE pred, STATE hier, LETTER letter,
-			STATE succ) {
-		// TODO Auto-generated method stub
-		
+		return new FilteredIterable<STATE>(m_Nwa.succCall(state, letter), m_RemainingStates);
 	}
 
 	@Override
@@ -258,126 +238,70 @@ public class DeletedStatesAutomaton<LETTER, STATE> implements
 	}
 
 	@Override
-	public Iterable<IncomingCallTransition<LETTER, STATE>> callPredecessors(
-			LETTER letter, STATE succ) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public Iterable<IncomingCallTransition<LETTER, STATE>> callPredecessors(
-			STATE succ) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public Iterable<OutgoingInternalTransition<LETTER, STATE>> internalSuccessors(
-			STATE state, LETTER letter) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public Iterable<OutgoingInternalTransition<LETTER, STATE>> internalSuccessors(
-			STATE state) {
-		Set<OutgoingInternalTransition<LETTER, STATE>> filter = new Set<OutgoingInternalTransition<LETTER,STATE>>() {
-
+	public Iterable<IncomingCallTransition<LETTER, STATE>> callPredecessors(LETTER letter, STATE succ) {
+		Predicate<IncomingCallTransition<LETTER, STATE>> predicate = new Predicate<IncomingCallTransition<LETTER,STATE>>() {
 			@Override
-			public boolean add(OutgoingInternalTransition<LETTER, STATE> e) {
-				// TODO Auto-generated method stub
-				return false;
+			public boolean evaluate(IncomingCallTransition<LETTER, STATE> trans) {
+				return m_RemainingStates.evaluate(trans.getPred());
 			}
-
-			@Override
-			public boolean addAll(
-					Collection<? extends OutgoingInternalTransition<LETTER, STATE>> c) {
-				// TODO Auto-generated method stub
-				return false;
-			}
-
-			@Override
-			public void clear() {
-				// TODO Auto-generated method stub
-				
-			}
-
-			@Override
-			public boolean contains(Object o) {
-				// TODO Auto-generated method stub
-				return false;
-			}
-
-			@Override
-			public boolean containsAll(Collection<?> c) {
-				// TODO Auto-generated method stub
-				return false;
-			}
-
-			@Override
-			public boolean isEmpty() {
-				// TODO Auto-generated method stub
-				return false;
-			}
-
-			@Override
-			public Iterator<OutgoingInternalTransition<LETTER, STATE>> iterator() {
-				// TODO Auto-generated method stub
-				return null;
-			}
-
-			@Override
-			public boolean remove(Object o) {
-				// TODO Auto-generated method stub
-				return false;
-			}
-
-			@Override
-			public boolean removeAll(Collection<?> c) {
-				// TODO Auto-generated method stub
-				return false;
-			}
-
-			@Override
-			public boolean retainAll(Collection<?> c) {
-				// TODO Auto-generated method stub
-				return false;
-			}
-
-			@Override
-			public int size() {
-				// TODO Auto-generated method stub
-				return 0;
-			}
-
-			@Override
-			public Object[] toArray() {
-				// TODO Auto-generated method stub
-				return null;
-			}
-
-			@Override
-			public <T> T[] toArray(T[] a) {
-				// TODO Auto-generated method stub
-				return null;
-			}
-			
 		};
-		return new FilteredIterable<OutgoingInternalTransition<LETTER, STATE>>(m_Automaton.internalSuccessors(state), filter);
+		return new FilteredIterable<IncomingCallTransition<LETTER, STATE>>(m_Nwa.callPredecessors(letter,succ), predicate);
 	}
 
 	@Override
-	public Iterable<OutgoingCallTransition<LETTER, STATE>> callSuccessors(
+	public Iterable<IncomingCallTransition<LETTER, STATE>> callPredecessors(STATE succ) {
+		Predicate<IncomingCallTransition<LETTER, STATE>> predicate = new Predicate<IncomingCallTransition<LETTER,STATE>>() {
+			@Override
+			public boolean evaluate(IncomingCallTransition<LETTER, STATE> trans) {
+				return m_RemainingStates.evaluate(trans.getPred());
+			}
+		};
+		return new FilteredIterable<IncomingCallTransition<LETTER, STATE>>(m_Nwa.callPredecessors(succ), predicate);
+	}
+
+	@Override
+	public Iterable<OutgoingInternalTransition<LETTER, STATE>> internalSuccessors(
 			STATE state, LETTER letter) {
-		// TODO Auto-generated method stub
-		return null;
+		Predicate<OutgoingInternalTransition<LETTER, STATE>> predicate = new Predicate<OutgoingInternalTransition<LETTER,STATE>>() {
+			@Override
+			public boolean evaluate(OutgoingInternalTransition<LETTER, STATE> trans) {
+				return m_RemainingStates.evaluate(trans.getSucc());
+			}
+		};
+		return new FilteredIterable<OutgoingInternalTransition<LETTER, STATE>>(m_Nwa.internalSuccessors(state,letter), predicate);
 	}
 
 	@Override
-	public Iterable<OutgoingCallTransition<LETTER, STATE>> callSuccessors(
-			STATE state) {
-		// TODO Auto-generated method stub
-		return null;
+	public Iterable<OutgoingInternalTransition<LETTER, STATE>> internalSuccessors(STATE state) {
+		Predicate<OutgoingInternalTransition<LETTER, STATE>> predicate = new Predicate<OutgoingInternalTransition<LETTER,STATE>>() {
+			@Override
+			public boolean evaluate(OutgoingInternalTransition<LETTER, STATE> trans) {
+				return m_RemainingStates.evaluate(trans.getSucc());
+			}
+		};
+		return new FilteredIterable<OutgoingInternalTransition<LETTER, STATE>>(m_Nwa.internalSuccessors(state), predicate);
+	}
+
+	@Override
+	public Iterable<OutgoingCallTransition<LETTER, STATE>> callSuccessors(STATE state, LETTER letter) {
+		Predicate<OutgoingCallTransition<LETTER, STATE>> predicate = new Predicate<OutgoingCallTransition<LETTER,STATE>>() {
+			@Override
+			public boolean evaluate(OutgoingCallTransition<LETTER, STATE> trans) {
+				return m_RemainingStates.evaluate(trans.getSucc());
+			}
+		};
+		return new FilteredIterable<OutgoingCallTransition<LETTER, STATE>>(m_Nwa.callSuccessors(state,letter), predicate);
+	}
+
+	@Override
+	public Iterable<OutgoingCallTransition<LETTER, STATE>> callSuccessors(STATE state) {
+		Predicate<OutgoingCallTransition<LETTER, STATE>> predicate = new Predicate<OutgoingCallTransition<LETTER,STATE>>() {
+			@Override
+			public boolean evaluate(OutgoingCallTransition<LETTER, STATE> trans) {
+				return m_RemainingStates.evaluate(trans.getSucc());
+			}
+		};
+		return new FilteredIterable<OutgoingCallTransition<LETTER, STATE>>(m_Nwa.callSuccessors(state), predicate);
 	}
 
 	@Override
@@ -427,6 +351,95 @@ public class DeletedStatesAutomaton<LETTER, STATE> implements
 			STATE state, STATE hier) {
 		// TODO Auto-generated method stub
 		return null;
+	}
+	
+	
+	
+	
+	
+	public interface Predicate<T> {
+		public boolean evaluate(T elem);
+	}
+	
+	public class TruePredicate implements Predicate<STATE> {
+		@Override
+		public boolean evaluate(STATE state) {
+			return true;
+		}
+	}
+	
+	public class NoDeadEnd implements Predicate<STATE> {
+		final ReachableStatesAutomaton<LETTER, STATE> m_Nwa;
+		NoDeadEnd(ReachableStatesAutomaton<LETTER, STATE> nwa) {
+			m_Nwa = nwa;
+		}
+		@Override
+		public boolean evaluate(STATE state) {
+			return !m_Nwa.isDeadEnd(state);
+		}
+	}
+	
+	public class InitialAfterDeadEndRemoval implements Predicate<STATE> {
+		final ReachableStatesAutomaton<LETTER, STATE> m_Nwa;
+		InitialAfterDeadEndRemoval(ReachableStatesAutomaton<LETTER, STATE> nwa) {
+			m_Nwa = nwa;
+		}
+		@Override
+		public boolean evaluate(STATE state) {
+			return m_Nwa.isInitialAfterDeadEndRemoval(state);
+		}
+	}
+
+
+	
+	
+	
+	public class FilteredIterable<T> implements Iterable<T> {
+		final Iterable<T> m_Iterable;
+		final Predicate<T> m_Predicate;
+		
+		public FilteredIterable(Iterable<T> iterable, Predicate<T> predicate) {
+			m_Iterable = iterable;
+			m_Predicate = predicate;
+		}
+		
+		@Override
+		public Iterator<T> iterator() {
+			return new Iterator<T>() {
+				final Iterator<T> m_Iterator;
+				T m_next;
+				{
+					m_Iterator = m_Iterable.iterator();
+					computeNext();
+				}
+				private void computeNext() {
+					while (m_next != null && m_Iterator.hasNext() && 
+												!m_Predicate.evaluate(m_next)) {
+						m_next = m_Iterator.next();
+					}
+						
+				}
+
+				@Override
+				public boolean hasNext() {
+					return m_next != null;
+				}
+
+				@Override
+				public T next() {
+					T result = m_next;
+					computeNext();
+					return result;
+				}
+
+				@Override
+				public void remove() {
+					throw new UnsupportedOperationException();
+				}
+
+			};
+		}
+
 	}
 
 }

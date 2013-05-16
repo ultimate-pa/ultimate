@@ -32,7 +32,7 @@ public class PostDeterminizer
 	
 	protected final SmtManager m_SmtManager;
 	private final TAPreferences m_TaPreferences;
-	protected final INestedWordAutomaton<CodeBlock, IPredicate> m_Ia;
+	protected final NestedWordAutomaton<CodeBlock, IPredicate> m_Ia;
 	private final StateFactory<IPredicate> m_StateFactory;
 	private final boolean m_Eager;
 	public int m_AnswerInternalSolver = 0;
@@ -61,7 +61,7 @@ public class PostDeterminizer
 
 	public PostDeterminizer(SmtManager mSmtManager,
 			TAPreferences taPreferences,
-			INestedWordAutomaton<CodeBlock, IPredicate> mNwa,
+			NestedWordAutomaton<CodeBlock, IPredicate> mNwa,
 			boolean eager) {
 		super();
 		m_SmtManager = mSmtManager;

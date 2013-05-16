@@ -30,7 +30,7 @@ public abstract class AbstractIntersect<LETTER,STATE> extends DoubleDeckerBuilde
 	
 	private final INestedWordAutomaton<LETTER,STATE> m_FstNwa;
 	private final INestedWordAutomaton<LETTER,STATE> m_SndNwa;
-	private final INestedWordAutomaton<LETTER,STATE> m_ResultNwa;
+	private final NestedWordAutomaton<LETTER,STATE> m_ResultNwa;
 	private final StateFactory<STATE> m_ContentFactory;
 	
 	private final boolean m_Buchi;

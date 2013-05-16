@@ -193,16 +193,6 @@ public class INWA2INestedWordAutomaton<LETTER, STATE> implements
 	}
 
 	@Override
-	public void addState(boolean isInitial, boolean isFinal, STATE state) {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
-	public void removeState(STATE state) {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
 	public Iterable<STATE> succInternal(final STATE state, final LETTER letter) {
 		return new Iterable<STATE>() {
 			Iterable<OutgoingInternalTransition<LETTER,STATE>> m_Iterable;
@@ -334,21 +324,6 @@ public class INWA2INestedWordAutomaton<LETTER, STATE> implements
 		return null;
 	}
 
-	@Override
-	public void addInternalTransition(STATE pred, LETTER letter, STATE succ) {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
-	public void addCallTransition(STATE pred, LETTER letter, STATE succ) {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
-	public void addReturnTransition(STATE pred, STATE hier, LETTER letter,
-			STATE succ) {
-		throw new UnsupportedOperationException();
-	}
 
 	@Override
 	public boolean finalIsTrap() {

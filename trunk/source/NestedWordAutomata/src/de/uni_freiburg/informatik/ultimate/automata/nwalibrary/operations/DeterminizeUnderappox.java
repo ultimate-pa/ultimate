@@ -4,8 +4,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
-import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 
 
 /**
@@ -42,7 +42,7 @@ public class DeterminizeUnderappox<LETTER,STATE> extends Determinize<LETTER, STA
 			new ArrayList<STATE>(m_Operand.getInitialStates().size());
 		DeterminizedState<LETTER,STATE> detState = stateDeterminizer.initialState();
 		STATE resState = detState.getContent(contentFactory);
-		m_TraversedNwa.addState(true, detState.allFinal(m_Operand), resState);
+		((NestedWordAutomaton<LETTER,STATE>) m_TraversedNwa).addState(true, detState.allFinal(m_Operand), resState);
 		det2res.put(detState,resState);
 		res2det.put(resState, detState);
 		resInitials.add(resState);
@@ -65,7 +65,7 @@ public class DeterminizeUnderappox<LETTER,STATE> extends Determinize<LETTER, STA
 		}
 		else {
 			STATE resState = detState.getContent(contentFactory);
-			m_TraversedNwa.addState(false, detState.allFinal(m_Operand), resState);
+			((NestedWordAutomaton<LETTER,STATE>) m_TraversedNwa).addState(false, detState.allFinal(m_Operand), resState);
 			det2res.put(detState,resState);
 			res2det.put(resState,detState);
 			return resState;

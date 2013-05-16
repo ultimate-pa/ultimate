@@ -731,7 +731,7 @@ private Set<STATE> m_DeadEnds;
 		}
 		
 		for (STATE state : m_DeadEnds) {
-			m_TraversedNwa.removeState(state);
+			((NestedWordAutomaton<LETTER, STATE>) m_TraversedNwa).removeState(state);
 		}
 		
 		boolean atLeastOneStateRemoved = !m_DeadEnds.isEmpty();
@@ -843,7 +843,7 @@ private Set<STATE> m_DeadEnds;
 		}
 		boolean atLeastOneStateRemoved = !finalStatesWithoutSuccessor.isEmpty();
 		for (STATE finalStateWithoutSuccessor : finalStatesWithoutSuccessor) {
-			m_TraversedNwa.removeState(finalStateWithoutSuccessor);	
+			((NestedWordAutomaton<LETTER, STATE>) m_TraversedNwa).removeState(finalStateWithoutSuccessor);	
 		}		
 		return atLeastOneStateRemoved;
 	}

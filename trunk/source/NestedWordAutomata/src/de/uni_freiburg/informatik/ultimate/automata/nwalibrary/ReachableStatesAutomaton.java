@@ -117,6 +117,17 @@ public class ReachableStatesAutomaton<LETTER,STATE> implements INestedWordAutoma
 		return m_State2Entry.size() + "entries. " + m_AllCECs.size() + " components " + withoutStates + " without states ____" + occurrence.values();
 	}
 	
+	public boolean isDeadEnd(STATE state) {
+		return m_States.get(state).getReachProp() != ReachProp.REACHABLE;
+	}
+	
+	public boolean isInitialAfterDeadEndRemoval(STATE state) {
+		if (!m_initialStates.contains(state)) {
+			throw new IllegalArgumentException("Not initial state");
+		}
+		return (m_State2Entry.get(state).m_Down.get(getEmptyStackState()) != ReachProp.REACHABLE);
+	}
+	
 	
 	@Override
 	public IRun<LETTER, STATE> acceptingRun() throws OperationCanceledException {
@@ -187,16 +198,6 @@ public class ReachableStatesAutomaton<LETTER,STATE> implements INestedWordAutoma
 	@Override
 	public boolean isFinal(STATE state) {
 		return m_Operand.isFinal(state);
-	}
-
-	@Override
-	public void addState(boolean isInitial, boolean isFinal, STATE state) {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
-	public void removeState(STATE state) {
-		throw new UnsupportedOperationException();
 	}
 
 	@Override
@@ -278,22 +279,6 @@ public class ReachableStatesAutomaton<LETTER,STATE> implements INestedWordAutoma
 	@Override
 	public Iterable<STATE> predReturnHier(STATE state, LETTER letter) {
 		return m_States.get(state).predReturnHier(letter);
-	}
-
-	@Override
-	public void addInternalTransition(STATE pred, LETTER letter, STATE succ) {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
-	public void addCallTransition(STATE pred, LETTER letter, STATE succ) {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
-	public void addReturnTransition(STATE pred, STATE hier, LETTER letter,
-			STATE succ) {
-		throw new UnsupportedOperationException();
 	}
 
 	@Override
