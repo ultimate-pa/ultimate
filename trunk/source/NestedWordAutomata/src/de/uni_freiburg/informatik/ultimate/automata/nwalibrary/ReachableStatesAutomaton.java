@@ -14,11 +14,14 @@ import java.util.Set;
 
 import org.apache.log4j.Logger;
 
+import petruchio.pn.reductors.DeadElementRemover;
+
 import de.uni_freiburg.informatik.ultimate.automata.Activator;
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.Word;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.RemoveUnreachable;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 
 public class ReachableStatesAutomaton<LETTER,STATE> implements INestedWordAutomaton<LETTER,STATE>, INWA<LETTER,STATE>, IDoubleDeckerAutomaton<LETTER, STATE> {
@@ -71,13 +74,17 @@ public class ReachableStatesAutomaton<LETTER,STATE> implements INestedWordAutoma
 		m_StateFactory = operand.getStateFactory();
 		try {
 			new ReachableStatesComputation();
+			new DeadEndComputation();
 			s_Logger.info(componentInformation());
 			assert (checkTransitionsReturnedConsistent());
-
+			
 			assert (allStatesAreInTheirCec());
 			assert (cecSumConsistent());
 			for (CommonEntriesComponent cec : m_AllCECs) {
 				assert (occuringStatesAreConsistent(cec));
+				if (cec.m_Size > 0) {
+					assert (downStatesConsistentwithEntriesDownStates(cec));
+				}
 			}
 			assert ResultChecker.removeUnreachable(this, operand);
 		} catch (Error e) {
@@ -107,7 +114,7 @@ public class ReachableStatesAutomaton<LETTER,STATE> implements INestedWordAutoma
 				withoutStates++;
 			}
 		}
-		return m_AllCECs.size() + " components " + withoutStates + " without states ____" + occurrence.values();
+		return m_State2Entry.size() + "entries. " + m_AllCECs.size() + " components " + withoutStates + " without states ____" + occurrence.values();
 	}
 	
 	
@@ -475,6 +482,7 @@ public class ReachableStatesAutomaton<LETTER,STATE> implements INestedWordAutoma
 			for (STATE state : initialStates) {
 				m_initialStates.add(state);
 				Entry entry = new Entry(state);
+				entry.m_Down.put(getEmptyStackState(), ReachProp.REACHABLE);
 				HashSet<Entry> entries = new HashSet<Entry>(1);
 				entries.add(entry);
 				HashSet<STATE> downStates = new HashSet<STATE>();
@@ -598,8 +606,9 @@ public class ReachableStatesAutomaton<LETTER,STATE> implements INestedWordAutoma
 				StateContainer succCont = m_States.get(succ);
 				HashSet<STATE> downStates = new HashSet<STATE>();
 				downStates.add(state);
+				Entry entry;
 				if (succCont == null) {
-					Entry entry = new Entry(succ);
+					entry = new Entry(succ);
 					HashSet<Entry> entries = new HashSet<Entry>();
 					entries.add(entry);
 					CommonEntriesComponent succCEC = new CommonEntriesComponent(
@@ -608,7 +617,7 @@ public class ReachableStatesAutomaton<LETTER,STATE> implements INestedWordAutoma
 				} else {
 					CommonEntriesComponent succCEC = succCont
 							.getCommonEntriesComponent();
-					Entry entry = m_State2Entry.get(succ);
+					entry = m_State2Entry.get(succ);
 					if (entry == null) {
 						entry = new Entry(succ);
 						m_State2Entry.put(succ, entry);
@@ -625,6 +634,7 @@ public class ReachableStatesAutomaton<LETTER,STATE> implements INestedWordAutoma
 						cecSplitWorklist.processAll();
 					}
 				}
+				entry.m_Down.put(state, ReachProp.REACHABLE);
 				cont.addCallOutgoing(trans);
 				succCont.addCallIncoming(
 						new IncomingCallTransition<LETTER, STATE>(state, trans.getLetter()));
@@ -857,8 +867,6 @@ public class ReachableStatesAutomaton<LETTER,STATE> implements INestedWordAutoma
 ////////////////////////////////////////////////////////////////////////////////
 	private class DeadEndComputation {
 		
-		private Map<Entry,Set<STATE>> m_Entry2DownWorklist;
-		
 		private LinkedList<StateContainer> m_NonReturnBackwardWorklist =
 				new LinkedList<StateContainer>();
 		private Set<StateContainer> m_HasIncomingReturn = 
@@ -874,7 +882,7 @@ public class ReachableStatesAutomaton<LETTER,STATE> implements INestedWordAutoma
 				m_NonReturnBackwardWorklist.add(cont);
 			}
 
-			while (m_NonReturnBackwardWorklist.isEmpty()) {
+			while (!m_NonReturnBackwardWorklist.isEmpty()) {
 				StateContainer cont = m_NonReturnBackwardWorklist.remove(0);
 				if (cont.isEntry()) {
 					Entry entry = m_State2Entry.get(cont.getState());
@@ -917,7 +925,7 @@ public class ReachableStatesAutomaton<LETTER,STATE> implements INestedWordAutoma
 			
 			m_NonCallBackwardWorklist.addAll(m_HasIncomingReturn);
 			
-			while (m_NonCallBackwardWorklist.isEmpty()) {
+			while (!m_NonCallBackwardWorklist.isEmpty()) {
 				StateContainer cont = m_NonCallBackwardWorklist.remove(0);
 				for (IncomingInternalTransition<LETTER, STATE> inTrans : cont
 						.internalPredecessors()) {
@@ -2598,6 +2606,22 @@ public class ReachableStatesAutomaton<LETTER,STATE> implements INestedWordAutoma
 			result &= internalOutSummaryOutInCecOrForeigners(resident, foreignerSCs, cec);
 			assert (result);
 		}
+		return result;
+	}
+	
+	
+	private boolean downStatesConsistentwithEntriesDownStates(CommonEntriesComponent cec) {
+		boolean result = true;
+		Set<STATE> downStates = cec.m_DownStates;
+		Set<Entry> entries = cec.m_Entries;
+		Set<STATE> downStatesofEntries = new HashSet<STATE>();
+		for (Entry entry : entries) {
+			downStatesofEntries.addAll(entry.m_Down.keySet());
+		}
+		result &= isSubset(downStates, downStatesofEntries);
+		assert (result);
+		result &= isSubset(downStatesofEntries, downStates);
+		assert (result);
 		return result;
 	}
 	
