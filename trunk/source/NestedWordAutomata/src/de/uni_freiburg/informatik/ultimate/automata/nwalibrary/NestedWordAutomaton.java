@@ -393,7 +393,7 @@ public class NestedWordAutomaton<LETTER,STATE> implements INestedWordAutomaton<L
 	
 	@Override
 	public Iterable<SummaryReturnTransition<LETTER, STATE>> 
-						getSummaryReturnTransitions(LETTER letter, STATE hier) {
+						returnSummarySuccessor(LETTER letter, STATE hier) {
 		Set<SummaryReturnTransition<LETTER, STATE>> result = 
 				new HashSet<SummaryReturnTransition<LETTER, STATE>>();
 		Map<LETTER, Map<STATE, Set<STATE>>> letter2pred2succ = 
@@ -418,33 +418,7 @@ public class NestedWordAutomaton<LETTER,STATE> implements INestedWordAutomaton<L
 	}
 	
 	
-	@Override
-	public Iterable<IncomingReturnTransition<LETTER, STATE>> 
-						getIncomingReturnTransitions(LETTER letter, STATE succ) {
-		Set<IncomingReturnTransition<LETTER, STATE>> result = 
-				new HashSet<IncomingReturnTransition<LETTER, STATE>>();
-		Map<LETTER, Map<STATE, Set<STATE>>> letter2hier2pred = 
-				m_ReturnIn.get(succ);
-		if (letter2hier2pred == null) {
-			return result;
-		}
-		Map<STATE, Set<STATE>> hier2pred = letter2hier2pred.get(letter);
-		if (hier2pred == null) {
-			return result;
-		}
-		for (STATE hier : hier2pred.keySet()) {
-			if (hier2pred.get(hier) != null) {
-				for (STATE pred : hier2pred.get(hier)) {
-					IncomingReturnTransition<LETTER, STATE> srt = 
-					new IncomingReturnTransition<LETTER, STATE>(pred, hier, letter);
-				result.add(srt);
-				}
-			}
-		}
-		return result;
-	}
-	
-	
+
 	
 	public Iterable<IncomingInternalTransition<LETTER, STATE>> internalPredecessors(
 			final LETTER letter, final STATE succ) {

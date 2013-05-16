@@ -210,31 +210,32 @@ public class DeletedStatesAutomaton<LETTER, STATE> implements
 	}
 
 	@Override
-	public Iterable<SummaryReturnTransition<LETTER, STATE>> getSummaryReturnTransitions(
+	public Iterable<SummaryReturnTransition<LETTER, STATE>> returnSummarySuccessor(
 			LETTER letter, STATE hier) {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
-	public Iterable<IncomingReturnTransition<LETTER, STATE>> getIncomingReturnTransitions(
-			LETTER letter, STATE succ) {
-		// TODO Auto-generated method stub
-		return null;
+	public Iterable<IncomingInternalTransition<LETTER, STATE>> internalPredecessors(LETTER letter, STATE succ) {
+		Predicate<IncomingInternalTransition<LETTER, STATE>> predicate = new Predicate<IncomingInternalTransition<LETTER,STATE>>() {
+			@Override
+			public boolean evaluate(IncomingInternalTransition<LETTER, STATE> trans) {
+				return m_RemainingStates.evaluate(trans.getPred());
+			}
+		};
+		return new FilteredIterable<IncomingInternalTransition<LETTER, STATE>>(m_Nwa.internalPredecessors(letter,succ), predicate);
 	}
 
 	@Override
-	public Iterable<IncomingInternalTransition<LETTER, STATE>> internalPredecessors(
-			LETTER letter, STATE succ) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public Iterable<IncomingInternalTransition<LETTER, STATE>> internalPredecessors(
-			STATE succ) {
-		// TODO Auto-generated method stub
-		return null;
+	public Iterable<IncomingInternalTransition<LETTER, STATE>> internalPredecessors(STATE succ) {
+		Predicate<IncomingInternalTransition<LETTER, STATE>> predicate = new Predicate<IncomingInternalTransition<LETTER,STATE>>() {
+			@Override
+			public boolean evaluate(IncomingInternalTransition<LETTER, STATE> trans) {
+				return m_RemainingStates.evaluate(trans.getPred());
+			}
+		};
+		return new FilteredIterable<IncomingInternalTransition<LETTER, STATE>>(m_Nwa.internalPredecessors(succ), predicate);
 	}
 
 	@Override

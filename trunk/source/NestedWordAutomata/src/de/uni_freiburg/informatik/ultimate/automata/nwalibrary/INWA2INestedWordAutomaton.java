@@ -88,9 +88,9 @@ public class INWA2INestedWordAutomaton<LETTER, STATE> implements
 		return m_Nwa.lettersReturnSummary(state);
 	}
 
-	public Iterable<SummaryReturnTransition<LETTER, STATE>> getSummaryReturnTransitions(
+	public Iterable<SummaryReturnTransition<LETTER, STATE>> returnSummarySuccessor(
 			LETTER letter, STATE hier) {
-		return m_Nwa.getSummaryReturnTransitions(letter, hier);
+		return m_Nwa.returnSummarySuccessor(letter, hier);
 	}
 
 	public Iterable<IncomingReturnTransition<LETTER, STATE>> getIncomingReturnTransitions(

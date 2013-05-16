@@ -235,11 +235,7 @@ public interface INestedWordAutomaton<LETTER,STATE>
 
 
 	
-	public abstract Iterable<SummaryReturnTransition<LETTER, STATE>> getSummaryReturnTransitions(
-			LETTER letter, STATE hier);
 
-	public abstract Iterable<IncomingReturnTransition<LETTER, STATE>> getIncomingReturnTransitions(
-			LETTER letter, STATE succ);
 
 	public abstract Iterable<IncomingInternalTransition<LETTER, STATE>> internalPredecessors(
 			final LETTER letter, final STATE succ);
@@ -288,5 +284,8 @@ public interface INestedWordAutomaton<LETTER,STATE>
 	
 	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessorsGivenHier(
 			STATE state, STATE hier);
+	
+	public abstract Iterable<SummaryReturnTransition<LETTER, STATE>> returnSummarySuccessor(
+			LETTER letter, STATE hier);
 
 }

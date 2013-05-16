@@ -263,7 +263,7 @@ public class Det<LETTER, STATE> implements INestedWordAutomaton<LETTER, STATE>, 
 	}
 
 	@Override
-	public Iterable<SummaryReturnTransition<LETTER, STATE>> getSummaryReturnTransitions(
+	public Iterable<SummaryReturnTransition<LETTER, STATE>> returnSummarySuccessor(
 			LETTER letter, STATE hier) {
 		throw new UnsupportedOperationException();
 	}

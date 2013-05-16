@@ -44,7 +44,7 @@ public interface INWA<LETTER, STATE> {
 
 	public abstract Collection<LETTER> lettersReturnSummary(STATE state);
 
-	public abstract Iterable<SummaryReturnTransition<LETTER, STATE>> getSummaryReturnTransitions(
+	public abstract Iterable<SummaryReturnTransition<LETTER, STATE>> returnSummarySuccessor(
 			LETTER letter, STATE hier);
 
 	public abstract Iterable<IncomingReturnTransition<LETTER, STATE>> getIncomingReturnTransitions(

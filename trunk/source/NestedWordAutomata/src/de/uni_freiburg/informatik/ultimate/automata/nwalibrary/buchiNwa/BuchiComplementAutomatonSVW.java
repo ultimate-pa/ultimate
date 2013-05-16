@@ -498,13 +498,7 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE>
 	}
 
 	@Override
-	public Iterable<SummaryReturnTransition<LETTER, STATE>> getSummaryReturnTransitions(
-			LETTER letter, STATE hier) {
-		throw new UnsupportedOperationException(UnsupportedOperationMessage);
-	}
-	
-	@Override
-	public Iterable<IncomingReturnTransition<LETTER, STATE>> getIncomingReturnTransitions(
+	public Iterable<SummaryReturnTransition<LETTER, STATE>> returnSummarySuccessor(
 			LETTER letter, STATE hier) {
 		throw new UnsupportedOperationException(UnsupportedOperationMessage);
 	}

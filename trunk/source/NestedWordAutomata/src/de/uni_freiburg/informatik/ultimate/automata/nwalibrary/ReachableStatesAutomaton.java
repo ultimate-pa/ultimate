@@ -297,7 +297,7 @@ public class ReachableStatesAutomaton<LETTER,STATE> implements INestedWordAutoma
 	}
 
 	@Override
-	public Iterable<SummaryReturnTransition<LETTER, STATE>> getSummaryReturnTransitions(
+	public Iterable<SummaryReturnTransition<LETTER, STATE>> returnSummarySuccessor(
 			LETTER letter, STATE hier) {
 		return m_States.get(hier).getSummaryReturnTransitions(letter);
 	}

@@ -1940,7 +1940,7 @@ public class MinimizeSevpa<LETTER,STATE> implements IOperation {
 							m_parentOperand.lettersReturnSummary(state)) {
 						Iterable<SummaryReturnTransition<LETTER, STATE>>
 							succs =
-								m_parentOperand.getSummaryReturnTransitions(
+								m_parentOperand.returnSummarySuccessor(
 										letter, state);
 						for (SummaryReturnTransition<LETTER, STATE> t :
 								succs) {
@@ -1957,7 +1957,7 @@ public class MinimizeSevpa<LETTER,STATE> implements IOperation {
 							m_parentOperand.lettersReturnSummary(state)) {
 						Iterable<SummaryReturnTransition<LETTER, STATE>>
 							succs =
-								m_parentOperand.getSummaryReturnTransitions(
+								m_parentOperand.returnSummarySuccessor(
 										letter, state);
 						for (SummaryReturnTransition<LETTER, STATE> t :
 								succs) {
