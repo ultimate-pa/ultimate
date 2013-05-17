@@ -1033,6 +1033,7 @@ public class TestFileInterpreter {
 			
 		} else {
 			IOperation op = getAutomataOperation(oe, arguments);
+//			assert op.checkResult();
 			if (op != null) {
 				try {
 					result = op.getResult();
