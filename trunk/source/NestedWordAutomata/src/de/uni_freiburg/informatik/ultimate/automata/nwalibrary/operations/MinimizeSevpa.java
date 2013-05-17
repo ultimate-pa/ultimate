@@ -1272,6 +1272,19 @@ public class MinimizeSevpa<LETTER,STATE> implements IOperation {
 			
 			return false;
 		}
+		
+		@Override
+		public String toString() {
+			final StringBuilder builder = new StringBuilder();
+			builder.append("(");
+			builder.append(m_lin.toString());
+			builder.append(", ");
+			builder.append(m_hier.toString());
+			builder.append(", ");
+			builder.append(m_succ.toString());
+			builder.append(")");
+			return builder.toString();
+		}
 	}
 	
 	/**
