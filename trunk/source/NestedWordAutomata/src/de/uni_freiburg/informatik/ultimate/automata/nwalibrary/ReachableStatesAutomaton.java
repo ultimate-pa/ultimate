@@ -87,7 +87,7 @@ public class ReachableStatesAutomaton<LETTER,STATE> implements INestedWordAutoma
 					assert (downStatesConsistentwithEntriesDownStates(cec));
 				}
 			}
-//			assert ResultChecker.removeUnreachable(this, operand);
+			assert ResultChecker.removeUnreachable(this, operand);
 		} catch (Error e) {
 			String message = "// Problem with  removeUnreachable";
 			ResultChecker.writeToFileIfPreferred(operand,
@@ -416,7 +416,17 @@ public class ReachableStatesAutomaton<LETTER,STATE> implements INestedWordAutoma
 	
 	
 
-	
+	public Set<STATE> getDownStatesAfterDeadEndRemoval(STATE up) {
+		HashSet<STATE> states = new HashSet<STATE>();
+		for(Entry entry : m_States.get(up).getCommonEntriesComponent().getEntries()) {
+			for (STATE down : entry.m_Down.keySet()) {
+				if (entry.m_Down.get(down) != ReachProp.REACHABLE) {
+					states.add(down);
+				}
+			}
+		}
+		return states;
+	}
 	
 	
 	

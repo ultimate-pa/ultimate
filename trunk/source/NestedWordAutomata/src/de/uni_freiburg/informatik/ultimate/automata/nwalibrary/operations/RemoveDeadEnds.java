@@ -1,5 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations;
 
+import java.util.Set;
+
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.automata.Activator;
@@ -7,8 +9,11 @@ import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.DeletedStatesAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.DoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.ReachableStatesAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.TransitionConsitenceCheck;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 
 public class RemoveDeadEnds<LETTER,STATE> implements IOperation {
@@ -38,6 +43,7 @@ public class RemoveDeadEnds<LETTER,STATE> implements IOperation {
 		m_Reach = new ReachableStatesAutomaton<LETTER, STATE>(m_Input);
 		m_Result = new DeletedStatesAutomaton<LETTER, STATE>(m_Reach);
 		s_Logger.info(exitMessage());
+		assert (new TransitionConsitenceCheck<LETTER, STATE>(m_Result)).consistentForAll();
 		assert (checkResult());
 	}
 	
@@ -66,10 +72,29 @@ public class RemoveDeadEnds<LETTER,STATE> implements IOperation {
 	}
 	
 	public boolean checkResult() throws OperationCanceledException {
+		s_Logger.info("Testing removeUnreachable");
 		boolean correct = true;
-		correct &= ResultChecker.minimize(m_Input, m_Result); 
+//		correct &= ResultChecker.minimize(m_Input, m_Result); 
 //		correct &= (new IsIncluded<LETTER, STATE>(m_Input, m_Result)).getResult();
 //		correct &= (new IsIncluded<LETTER, STATE>(m_Result, m_Input)).getResult();
+		assert correct;
+		DoubleDeckerAutomaton<LETTER, STATE> reachalbeStatesCopy = (DoubleDeckerAutomaton<LETTER, STATE>) (new ReachableStatesCopy(m_Input, false, false, true, false)).getResult();
+//		correct &= ResultChecker.isSubset(reachalbeStatesCopy.getStates(),m_Result.getStates());
+		assert correct;
+//		correct &= ResultChecker.isSubset(m_Result.getStates(),reachalbeStatesCopy.getStates());
+		assert correct;
+		for (STATE state : reachalbeStatesCopy.getStates()) {
+			Set<STATE> rCSdownStates = reachalbeStatesCopy.getDownStates(state);
+			Set<STATE> rCAdownStates = m_Reach.getDownStatesAfterDeadEndRemoval(state);
+			correct &= ResultChecker.isSubset(rCAdownStates, rCSdownStates);
+			assert correct;
+			correct &= ResultChecker.isSubset(rCSdownStates, rCAdownStates);
+			assert correct;
+		}
+		if (!correct) {
+			String message = "// Problem with  removeUnreachable";
+			ResultChecker.writeToFileIfPreferred(m_Input, "FailedremoveUnreachable", message);
+		}
 		return correct;
 	}
 

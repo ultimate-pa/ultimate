@@ -98,7 +98,7 @@ public class TransitionConsitenceCheck<LETTER, STATE> {
 	
 	private boolean returnOut(STATE state, STATE hier, LETTER letter, STATE succ) {
 		for (OutgoingReturnTransition<LETTER, STATE> t : m_Nwa.returnSuccessors(state)) {
-			boolean contains = state.equals(t.getHierPred()) && letter.equals(t.getLetter()) && succ.equals(t.getSucc());
+			boolean contains = hier.equals(t.getHierPred()) && letter.equals(t.getLetter()) && succ.equals(t.getSucc());
 			if (contains) return true;
 		}
 		return false;

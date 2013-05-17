@@ -3,6 +3,7 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AtsDefinitionPrinter;
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
@@ -28,9 +29,17 @@ public class DeletedStatesAutomaton<LETTER, STATE> implements
 		m_Nwa = automaton;
 		m_RemainingStates = new NoDeadEnd(automaton);
 		m_RemainingInitials = new InitialAfterDeadEndRemoval(automaton);
-		m_RemainingStates = new TruePredicate();
-		m_RemainingInitials = new TruePredicate();
+//		m_RemainingStates = new TruePredicate();
+//		m_RemainingInitials = new TruePredicate();
 
+	}
+	
+	public Set<STATE> getDownStates(STATE up) {
+		if (m_Nwa instanceof ReachableStatesAutomaton) {
+			ReachableStatesAutomaton<LETTER, STATE> rsa = (ReachableStatesAutomaton<LETTER, STATE>) m_Nwa;
+			return rsa.getDownStatesAfterDeadEndRemoval(up);
+		}
+		throw new UnsupportedOperationException();
 	}
 
 	@Override
@@ -168,32 +177,32 @@ public class DeletedStatesAutomaton<LETTER, STATE> implements
 
 	@Override
 	public Iterable<STATE> hierPred(STATE state, LETTER letter) {
-		return new FilteredIterable<STATE>(m_Nwa.succCall(state, letter), m_RemainingStates);
+		return new FilteredIterable<STATE>(m_Nwa.hierPred(state, letter), m_RemainingStates);
 	}
 
 	@Override
 	public Iterable<STATE> succReturn(STATE state, STATE hier, LETTER letter) {
-		return new FilteredIterable<STATE>(m_Nwa.succCall(state, letter), m_RemainingStates);
+		return new FilteredIterable<STATE>(m_Nwa.succReturn(state, hier, letter), m_RemainingStates);
 	}
 
 	@Override
 	public Iterable<STATE> predInternal(STATE state, LETTER letter) {
-		return new FilteredIterable<STATE>(m_Nwa.succCall(state, letter), m_RemainingStates);
+		return new FilteredIterable<STATE>(m_Nwa.predInternal(state, letter), m_RemainingStates);
 	}
 
 	@Override
 	public Iterable<STATE> predCall(STATE state, LETTER letter) {
-		return new FilteredIterable<STATE>(m_Nwa.succCall(state, letter), m_RemainingStates);
+		return new FilteredIterable<STATE>(m_Nwa.predCall(state, letter), m_RemainingStates);
 	}
 
 	@Override
 	public Iterable<STATE> predReturnLin(STATE state, LETTER letter, STATE hier) {
-		return new FilteredIterable<STATE>(m_Nwa.succCall(state, letter), m_RemainingStates);
+		return new FilteredIterable<STATE>(m_Nwa.predReturnLin(state, letter, hier), m_RemainingStates);
 	}
 
 	@Override
 	public Iterable<STATE> predReturnHier(STATE state, LETTER letter) {
-		return new FilteredIterable<STATE>(m_Nwa.succCall(state, letter), m_RemainingStates);
+		return new FilteredIterable<STATE>(m_Nwa.predReturnHier(state, letter), m_RemainingStates);
 	}
 
 	@Override
