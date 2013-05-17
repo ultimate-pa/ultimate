@@ -44,6 +44,9 @@ public class ReachableStatesAutomaton<LETTER,STATE> implements INestedWordAutoma
 	
 	public static enum ReachProp { REACHABLE, NODEADEND, LIVE };
 	
+	private final Set<STATE> m_initialStatesAfterDeadEndRemoval = new HashSet<STATE>();
+	private final Set<STATE> m_StatesAfterDeadEndRemoval = new HashSet<STATE>();
+	
 	private List<CommonEntriesComponent> m_AllCECs = new ArrayList<CommonEntriesComponent>();
 	
 
@@ -417,15 +420,21 @@ public class ReachableStatesAutomaton<LETTER,STATE> implements INestedWordAutoma
 	
 
 	public Set<STATE> getDownStatesAfterDeadEndRemoval(STATE up) {
-		HashSet<STATE> states = new HashSet<STATE>();
+		HashSet<STATE> downStates = new HashSet<STATE>();
 		for(Entry entry : m_States.get(up).getCommonEntriesComponent().getEntries()) {
-			for (STATE down : entry.m_Down.keySet()) {
-				if (entry.m_Down.get(down) != ReachProp.REACHABLE) {
-					states.add(down);
+			STATE entryState = entry.getState();
+			for (IncomingCallTransition<LETTER, STATE> trans : callPredecessors(entryState)) {
+				STATE callPred = trans.getPred();
+				StateContainer callPredCont = m_States.get(callPred);
+				if (callPredCont.getReachProp() != ReachProp.REACHABLE) {
+					downStates.add(callPred);
 				}
 			}
+			if (m_initialStatesAfterDeadEndRemoval.contains(entryState)) {
+				downStates.add(getEmptyStackState());
+			}
 		}
-		return states;
+		return downStates;
 	}
 	
 	
@@ -838,6 +847,7 @@ public class ReachableStatesAutomaton<LETTER,STATE> implements INestedWordAutoma
 				m_worklist.add(elem);
 			}
 			
+			@SuppressWarnings("unchecked")
 			private void processFirst() {
 				Object[] elem = m_worklist.remove(0);
 				StateContainer stateC = (StateContainer) elem[0];
@@ -876,6 +886,7 @@ public class ReachableStatesAutomaton<LETTER,STATE> implements INestedWordAutoma
 				StateContainer cont = m_States.get(fin);
 				assert cont.getReachProp() == ReachProp.REACHABLE;
 				cont.setReachProp(ReachProp.NODEADEND);
+				m_StatesAfterDeadEndRemoval.add(fin);
 				m_NonReturnBackwardWorklist.add(cont);
 			}
 
@@ -888,6 +899,7 @@ public class ReachableStatesAutomaton<LETTER,STATE> implements INestedWordAutoma
 					for (STATE down : entry.m_Down.keySet()) {
 						entry.m_Down.put(down, ReachProp.NODEADEND);
 					}
+					m_initialStatesAfterDeadEndRemoval.add(entry.getState());
 				}
 				
 				for (IncomingInternalTransition<LETTER, STATE> inTrans : cont
@@ -896,6 +908,7 @@ public class ReachableStatesAutomaton<LETTER,STATE> implements INestedWordAutoma
 					StateContainer predCont = m_States.get(pred);
 					if (predCont.getReachProp() != ReachProp.NODEADEND) {
 						predCont.setReachProp(ReachProp.NODEADEND);
+						m_StatesAfterDeadEndRemoval.add(pred);
 						m_NonReturnBackwardWorklist.add(predCont);
 					}
 				}
@@ -905,6 +918,7 @@ public class ReachableStatesAutomaton<LETTER,STATE> implements INestedWordAutoma
 					StateContainer hierCont = m_States.get(hier);
 					if (hierCont.getReachProp() != ReachProp.NODEADEND) {
 						hierCont.setReachProp(ReachProp.NODEADEND);
+						m_StatesAfterDeadEndRemoval.add(hier);
 						m_NonReturnBackwardWorklist.add(hierCont);
 					}
 					m_HasIncomingReturn.add(cont);
@@ -915,6 +929,7 @@ public class ReachableStatesAutomaton<LETTER,STATE> implements INestedWordAutoma
 					StateContainer predCont = m_States.get(pred);
 					if (predCont.getReachProp() != ReachProp.NODEADEND) {
 						predCont.setReachProp(ReachProp.NODEADEND);
+						m_StatesAfterDeadEndRemoval.add(pred);
 						m_NonReturnBackwardWorklist.add(predCont);
 					}
 				}
@@ -930,6 +945,7 @@ public class ReachableStatesAutomaton<LETTER,STATE> implements INestedWordAutoma
 					StateContainer predCont = m_States.get(pred);
 					if (predCont.getReachProp() != ReachProp.NODEADEND) {
 						predCont.setReachProp(ReachProp.NODEADEND);
+						m_StatesAfterDeadEndRemoval.add(pred);
 						m_NonCallBackwardWorklist.add(predCont);
 					}
 				}
@@ -939,12 +955,14 @@ public class ReachableStatesAutomaton<LETTER,STATE> implements INestedWordAutoma
 					StateContainer hierCont = m_States.get(hier);
 					if (hierCont.getReachProp() != ReachProp.NODEADEND) {
 						hierCont.setReachProp(ReachProp.NODEADEND);
+						m_StatesAfterDeadEndRemoval.add(hier);
 						m_NonCallBackwardWorklist.add(hierCont);
 					}
 					STATE lin = inTrans.getLinPred();
 					StateContainer linCont = m_States.get(lin);
 					if (linCont.getReachProp() != ReachProp.NODEADEND) {
 						linCont.setReachProp(ReachProp.NODEADEND);
+						m_StatesAfterDeadEndRemoval.add(lin);
 						m_NonCallBackwardWorklist.add(linCont);
 					}
 					for (Entry entry : linCont.getCommonEntriesComponent().getEntries()) {
