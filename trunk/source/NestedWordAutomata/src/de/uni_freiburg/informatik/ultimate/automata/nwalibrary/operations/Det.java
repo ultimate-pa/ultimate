@@ -236,7 +236,7 @@ public class Det<LETTER, STATE> implements INestedWordAutomatonSimple<LETTER, ST
 	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessorsGivenHier(
 			STATE state, STATE hier) {
 		for (LETTER letter : getReturnAlphabet()) {
-			callSuccessors(state, letter);
+			returnSucccessors(state, hier, letter);
 		}
 		return m_Cache.returnSuccessorsGivenHier(state, hier);
 	}

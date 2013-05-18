@@ -15,6 +15,7 @@ import java.util.Set;
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.automata.Activator;
+import de.uni_freiburg.informatik.ultimate.automata.AtsDefinitionPrinter;
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
@@ -442,7 +443,7 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 		private final LinkedList<StateContainer> m_ForwardWorklist = 
 				new LinkedList<StateContainer>();
 
-		ReachableStatesComputation() {
+		ReachableStatesComputation() throws OperationCanceledException {
 			addInitialStates(m_Operand.getInitialStates());
 
 			while (!m_ForwardWorklist.isEmpty()) {
@@ -471,6 +472,10 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 			assert (m_ForwardWorklist.isEmpty());
 			assert (doubleDeckerWorklist.isEmpty());
 			assert (cecSplitWorklist.isEmtpy());
+			
+			if (!UltimateServices.getInstance().continueProcessing()) {
+				throw new OperationCanceledException();
+			}
 		}
 		
 		
@@ -2708,6 +2713,11 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 			}
 		}
 		return true;
+	}
+	
+	@Override
+	public String toString() {
+		return (new AtsDefinitionPrinter<LETTER,STATE>(this)).getDefinitionAsString();
 	}
 
 }
