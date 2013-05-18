@@ -14,7 +14,7 @@ import de.uni_freiburg.informatik.ultimate.automata.Activator;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
@@ -43,8 +43,8 @@ public class DifferenceSadd<LETTER,STATE> implements IOperation {
 	private static Logger s_Logger = 
 		UltimateServices.getInstance().getLogger(Activator.PLUGIN_ID);
 	
-	private final INestedWordAutomaton<LETTER,STATE> minuend;
-	private final INestedWordAutomaton<LETTER,STATE> subtrahend;
+	private final INestedWordAutomatonOldApi<LETTER,STATE> minuend;
+	private final INestedWordAutomatonOldApi<LETTER,STATE> subtrahend;
 	private final NestedWordAutomaton<LETTER,STATE> difference;
 	
 	private final IStateDeterminizer<LETTER,STATE> stateDeterminizer;
@@ -110,13 +110,13 @@ public class DifferenceSadd<LETTER,STATE> implements IOperation {
 		difference.sizeInformation();
 	}
 	
-	public INestedWordAutomaton<LETTER,STATE> getResult() {
+	public INestedWordAutomatonOldApi<LETTER,STATE> getResult() {
 		return difference;
 	}
 	
 	public DifferenceSadd(
-			INestedWordAutomaton<LETTER,STATE> minuend,
-			INestedWordAutomaton<LETTER,STATE> subtrahend,
+			INestedWordAutomatonOldApi<LETTER,STATE> minuend,
+			INestedWordAutomatonOldApi<LETTER,STATE> subtrahend,
 			IStateDeterminizer<LETTER,STATE> stateDeterminizer) throws OperationCanceledException {
 		contentFactory = minuend.getStateFactory();
 		this.minuend = minuend;
@@ -143,8 +143,8 @@ public class DifferenceSadd<LETTER,STATE> implements IOperation {
 	 * @throws OperationCanceledException 
 	 */	
 	public DifferenceSadd(
-			INestedWordAutomaton<LETTER,STATE> minuend,
-			INestedWordAutomaton<LETTER,STATE> subtrahend) throws OperationCanceledException {
+			INestedWordAutomatonOldApi<LETTER,STATE> minuend,
+			INestedWordAutomatonOldApi<LETTER,STATE> subtrahend) throws OperationCanceledException {
 		contentFactory = minuend.getStateFactory();
 		this.minuend = minuend;
 		this.subtrahend = subtrahend;

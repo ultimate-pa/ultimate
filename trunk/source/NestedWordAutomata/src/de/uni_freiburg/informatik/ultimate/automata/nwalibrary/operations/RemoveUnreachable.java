@@ -6,14 +6,14 @@ import de.uni_freiburg.informatik.ultimate.automata.Activator;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.ReachableStatesAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomatonReachableStates;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 
 public class RemoveUnreachable<LETTER,STATE> implements IOperation {
 	
-	private final INestedWordAutomaton<LETTER,STATE> m_Input;
-	private final ReachableStatesAutomaton<LETTER,STATE> m_Result;
+	private final INestedWordAutomatonOldApi<LETTER,STATE> m_Input;
+	private final NestedWordAutomatonReachableStates<LETTER,STATE> m_Result;
 
 	private static Logger s_Logger = UltimateServices.getInstance().getLogger(
 			Activator.PLUGIN_ID);
@@ -27,11 +27,11 @@ public class RemoveUnreachable<LETTER,STATE> implements IOperation {
 	 * @param nwa
 	 * @throws OperationCanceledException
 	 */
-	public RemoveUnreachable(INestedWordAutomaton<LETTER,STATE> nwa)
+	public RemoveUnreachable(INestedWordAutomatonOldApi<LETTER,STATE> nwa)
 			throws OperationCanceledException {
 		m_Input = nwa;
 		s_Logger.info(startMessage());
-		m_Result = new ReachableStatesAutomaton<LETTER, STATE>(m_Input);
+		m_Result = new NestedWordAutomatonReachableStates<LETTER, STATE>(m_Input);
 		s_Logger.info(exitMessage());
 	}
 	

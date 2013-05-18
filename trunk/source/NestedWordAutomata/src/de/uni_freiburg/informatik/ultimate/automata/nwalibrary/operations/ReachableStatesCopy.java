@@ -13,7 +13,7 @@ import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.DoubleDecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.DoubleDeckerAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 
@@ -23,7 +23,7 @@ public class ReachableStatesCopy<LETTER,STATE> extends DoubleDeckerBuilder<LETTE
 	private final Map<STATE,STATE> m_old2new = new HashMap<STATE,STATE>();
 	private final Map<STATE,STATE> m_new2old = new HashMap<STATE,STATE>();
 
-	private final INestedWordAutomaton<LETTER,STATE> m_Input;
+	private final INestedWordAutomatonOldApi<LETTER,STATE> m_Input;
 	private final boolean m_Complement;
 
 	private static Logger s_Logger = UltimateServices.getInstance().getLogger(
@@ -38,7 +38,7 @@ public class ReachableStatesCopy<LETTER,STATE> extends DoubleDeckerBuilder<LETTE
 	 * @param nwa
 	 * @throws OperationCanceledException
 	 */
-	public ReachableStatesCopy(INestedWordAutomaton<LETTER,STATE> nwa,
+	public ReachableStatesCopy(INestedWordAutomatonOldApi<LETTER,STATE> nwa,
 			boolean totalize, boolean complement,
 			boolean removeDeadEnds, boolean removeNonLiveStates)
 			throws OperationCanceledException {
@@ -62,7 +62,7 @@ public class ReachableStatesCopy<LETTER,STATE> extends DoubleDeckerBuilder<LETTE
 	}
 	
 	
-	public ReachableStatesCopy(INestedWordAutomaton<LETTER,STATE> nwa)
+	public ReachableStatesCopy(INestedWordAutomatonOldApi<LETTER,STATE> nwa)
 			throws OperationCanceledException {
 		m_Input = nwa;
 		s_Logger.info(startMessage());
@@ -199,7 +199,7 @@ public class ReachableStatesCopy<LETTER,STATE> extends DoubleDeckerBuilder<LETTE
 	}
 	
 	
-	public final INestedWordAutomaton<LETTER,STATE> getResult() throws OperationCanceledException {
+	public final INestedWordAutomatonOldApi<LETTER,STATE> getResult() throws OperationCanceledException {
 		if (!m_RemoveNonLiveStates) {
 			if (!m_Complement) {
 				assert (ResultChecker.minimize(m_Input, m_TraversedNwa));

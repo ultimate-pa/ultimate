@@ -1,6 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstractionconcurrent;
 
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
@@ -10,7 +10,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 
 public class Cfg2Nwa extends CFG2Automaton {
 	
-	private INestedWordAutomaton<CodeBlock,IPredicate> m_Result;
+	private INestedWordAutomatonOldApi<CodeBlock,IPredicate> m_Result;
 
 	public Cfg2Nwa(RootNode rootNode,
 			StateFactory<IPredicate> contentFactory, SmtManager smtManager) {
@@ -26,7 +26,7 @@ public class Cfg2Nwa extends CFG2Automaton {
 	}
 	
 	@Override
-	public INestedWordAutomaton<CodeBlock,IPredicate> getResult() {
+	public INestedWordAutomatonOldApi<CodeBlock,IPredicate> getResult() {
 		return m_Result;
 	}
 	

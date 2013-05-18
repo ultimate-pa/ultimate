@@ -11,7 +11,7 @@ import de.uni_freiburg.informatik.ultimate.automata.Activator;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.Senwa;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.SenwaWalker.ISuccessorVisitor;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
@@ -19,7 +19,7 @@ import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 public class SenwaBuilder<LETTER, STATE> implements ISuccessorVisitor<LETTER, STATE>, IOperation {
 	
 	Senwa<LETTER, STATE> m_Senwa;
-	INestedWordAutomaton<LETTER, STATE> m_Nwa;
+	INestedWordAutomatonOldApi<LETTER, STATE> m_Nwa;
 	Set<STATE> m_Added = new HashSet<STATE>();
 	
 	Map<STATE,STATE> m_Result2Operand = new HashMap<STATE,STATE>();
@@ -51,7 +51,7 @@ public class SenwaBuilder<LETTER, STATE> implements ISuccessorVisitor<LETTER, ST
 	
 	
 	
-	public SenwaBuilder(INestedWordAutomaton<LETTER, STATE> nwa) throws OperationCanceledException {
+	public SenwaBuilder(INestedWordAutomatonOldApi<LETTER, STATE> nwa) throws OperationCanceledException {
 		m_Nwa = nwa;
 		s_Logger.info(startMessage());
 		m_Senwa = new Senwa<LETTER, STATE>(m_Nwa.getInternalAlphabet(), m_Nwa.getCallAlphabet(), 

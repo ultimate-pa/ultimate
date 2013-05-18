@@ -3,7 +3,7 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 
 
 /**
@@ -21,10 +21,10 @@ public class PowersetDeterminizer<LETTER,STATE>
 			implements IStateDeterminizer<LETTER,STATE> {
 
 	StateFactory<STATE> m_ContentFactory;
-	INestedWordAutomaton<LETTER,STATE> m_Nwa;
+	INestedWordAutomatonOldApi<LETTER,STATE> m_Nwa;
 	int maxDegreeOfNondeterminism = 0;
 	
-	public PowersetDeterminizer(INestedWordAutomaton<LETTER,STATE> nwa) { 
+	public PowersetDeterminizer(INestedWordAutomatonOldApi<LETTER,STATE> nwa) { 
 		m_Nwa = nwa;
 		this.m_ContentFactory = nwa.getStateFactory();
 	}

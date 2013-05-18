@@ -10,22 +10,22 @@ import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.Word;
 
-public class DeletedStatesAutomaton<LETTER, STATE> implements
-		INestedWordAutomaton<LETTER, STATE> {
-	INestedWordAutomaton<LETTER, STATE> m_Nwa;
+public class NestedWordAutomatonFilteredStates<LETTER, STATE> implements
+		INestedWordAutomatonOldApi<LETTER, STATE>, INestedWordAutomaton<LETTER, STATE> {
+	INestedWordAutomatonOldApi<LETTER, STATE> m_Nwa;
 	Predicate<STATE> m_RemainingStates;
 	Predicate<STATE> m_RemainingInitials;
 	private HashSet<STATE> m_Initials;
 	private HashSet<STATE> m_States;
 	
-	DeletedStatesAutomaton(INestedWordAutomaton<LETTER, STATE> automaton, 
+	NestedWordAutomatonFilteredStates(INestedWordAutomatonOldApi<LETTER, STATE> automaton, 
 			Predicate<STATE> remainingStates, Predicate<STATE> remainingInitials) {
 		m_Nwa = automaton;
 		m_RemainingStates = remainingStates;
 		m_RemainingInitials = remainingInitials;
 	}
 	
-	public DeletedStatesAutomaton(ReachableStatesAutomaton<LETTER, STATE> automaton) {
+	public NestedWordAutomatonFilteredStates(NestedWordAutomatonReachableStates<LETTER, STATE> automaton) {
 		m_Nwa = automaton;
 		m_RemainingStates = new NoDeadEnd(automaton);
 		m_RemainingInitials = new InitialAfterDeadEndRemoval(automaton);
@@ -35,8 +35,8 @@ public class DeletedStatesAutomaton<LETTER, STATE> implements
 	}
 	
 	public Set<STATE> getDownStates(STATE up) {
-		if (m_Nwa instanceof ReachableStatesAutomaton) {
-			ReachableStatesAutomaton<LETTER, STATE> rsa = (ReachableStatesAutomaton<LETTER, STATE>) m_Nwa;
+		if (m_Nwa instanceof NestedWordAutomatonReachableStates) {
+			NestedWordAutomatonReachableStates<LETTER, STATE> rsa = (NestedWordAutomatonReachableStates<LETTER, STATE>) m_Nwa;
 			return rsa.getDownStatesAfterDeadEndRemoval(up);
 		}
 		throw new UnsupportedOperationException();
@@ -417,8 +417,8 @@ public class DeletedStatesAutomaton<LETTER, STATE> implements
 	}
 	
 	public class NoDeadEnd implements Predicate<STATE> {
-		final ReachableStatesAutomaton<LETTER, STATE> m_Nwa;
-		NoDeadEnd(ReachableStatesAutomaton<LETTER, STATE> nwa) {
+		final NestedWordAutomatonReachableStates<LETTER, STATE> m_Nwa;
+		NoDeadEnd(NestedWordAutomatonReachableStates<LETTER, STATE> nwa) {
 			m_Nwa = nwa;
 		}
 		@Override
@@ -428,8 +428,8 @@ public class DeletedStatesAutomaton<LETTER, STATE> implements
 	}
 	
 	public class InitialAfterDeadEndRemoval implements Predicate<STATE> {
-		final ReachableStatesAutomaton<LETTER, STATE> m_Nwa;
-		InitialAfterDeadEndRemoval(ReachableStatesAutomaton<LETTER, STATE> nwa) {
+		final NestedWordAutomatonReachableStates<LETTER, STATE> m_Nwa;
+		InitialAfterDeadEndRemoval(NestedWordAutomatonReachableStates<LETTER, STATE> nwa) {
 			m_Nwa = nwa;
 		}
 		@Override
@@ -498,5 +498,4 @@ public class DeletedStatesAutomaton<LETTER, STATE> implements
 		}
 
 	}
-
 }

@@ -11,7 +11,7 @@ import de.uni_freiburg.informatik.ultimate.automata.Activator;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.ReachableStatesCopy;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
@@ -27,11 +27,11 @@ public class BuchiReduce<LETTER,STATE> implements IOperation {
     /**
      * The resulting Buchi automaton.
      */
-    private INestedWordAutomaton<LETTER,STATE> m_Result;
+    private INestedWordAutomatonOldApi<LETTER,STATE> m_Result;
     /**
      * The input automaton.
      */
-    private INestedWordAutomaton<LETTER,STATE> m_Operand;
+    private INestedWordAutomatonOldApi<LETTER,STATE> m_Operand;
 
     /**
      * Constructor.
@@ -40,7 +40,7 @@ public class BuchiReduce<LETTER,STATE> implements IOperation {
      *            the automaton to reduce
      * @throws OperationCanceledException 
      */
-    public BuchiReduce(INestedWordAutomaton<LETTER,STATE> operand)
+    public BuchiReduce(INestedWordAutomatonOldApi<LETTER,STATE> operand)
             throws OperationCanceledException {
     	m_Operand = operand;
         BuchiReduce.s_Logger.info(startMessage());
@@ -87,7 +87,7 @@ public class BuchiReduce<LETTER,STATE> implements IOperation {
     }
 
     @Override
-    public INestedWordAutomaton<LETTER,STATE> getResult() {
+    public INestedWordAutomatonOldApi<LETTER,STATE> getResult() {
         return m_Result;
     }
 }

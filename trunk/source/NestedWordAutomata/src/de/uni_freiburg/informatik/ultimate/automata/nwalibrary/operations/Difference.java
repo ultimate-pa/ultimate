@@ -17,7 +17,7 @@ import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.DoubleDecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.DoubleDeckerAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
@@ -59,8 +59,8 @@ public class Difference<LETTER,STATE> extends DoubleDeckerBuilder<LETTER,STATE>
 	 */
 	private final boolean m_subtrahendSigmaStarClosed;
 	
-	private final INestedWordAutomaton<LETTER,STATE> minuend;
-	private final INestedWordAutomaton<LETTER,STATE> subtrahend;
+	private final INestedWordAutomatonOldApi<LETTER,STATE> minuend;
+	private final INestedWordAutomatonOldApi<LETTER,STATE> subtrahend;
 	
 	private final IStateDeterminizer<LETTER,STATE> stateDeterminizer;
 	
@@ -231,8 +231,8 @@ public class Difference<LETTER,STATE> extends DoubleDeckerBuilder<LETTER,STATE>
 	
 	
 	public Difference(
-			INestedWordAutomaton<LETTER,STATE> minuend,
-			INestedWordAutomaton<LETTER,STATE> subtrahend,
+			INestedWordAutomatonOldApi<LETTER,STATE> minuend,
+			INestedWordAutomatonOldApi<LETTER,STATE> subtrahend,
 			IStateDeterminizer<LETTER,STATE> stateDeterminizer,
 			StateFactory<STATE> stateFactory,
 			boolean removeDeadEnds,
@@ -275,8 +275,8 @@ public class Difference<LETTER,STATE> extends DoubleDeckerBuilder<LETTER,STATE>
 	}
 	
 	public Difference(
-			INestedWordAutomaton<LETTER,STATE> minuend,
-			INestedWordAutomaton<LETTER,STATE> subtrahend) throws OperationCanceledException {
+			INestedWordAutomatonOldApi<LETTER,STATE> minuend,
+			INestedWordAutomatonOldApi<LETTER,STATE> subtrahend) throws OperationCanceledException {
 		this.m_subtrahendSigmaStarClosed = false;
 		m_StateFactoryConstruction = minuend.getStateFactory();
 		this.minuend = minuend;

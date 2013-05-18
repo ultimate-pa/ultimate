@@ -13,7 +13,7 @@ import de.uni_freiburg.informatik.ultimate.automata.Activator;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 
@@ -29,7 +29,7 @@ public class DeterminizeSadd<LETTER,STATE> implements IOperation {
 	private Map<STATE,Set<STATE>> summary = 
 		new HashMap<STATE, Set<STATE>>();
 	private final STATE auxilliaryEmptyStackState;
-	private final INestedWordAutomaton<LETTER,STATE> m_Operand;
+	private final INestedWordAutomatonOldApi<LETTER,STATE> m_Operand;
 	private final NestedWordAutomaton<LETTER,STATE> result;
 	
 	private final List<StatePair> queue = new LinkedList<StatePair>();
@@ -61,7 +61,7 @@ public class DeterminizeSadd<LETTER,STATE> implements IOperation {
 	
 	
 	
-	public DeterminizeSadd(INestedWordAutomaton<LETTER,STATE> nwa) {
+	public DeterminizeSadd(INestedWordAutomatonOldApi<LETTER,STATE> nwa) {
 		m_Operand = nwa;
 		s_Logger.info(startMessage());
 		result = new NestedWordAutomaton<LETTER,STATE>(
@@ -74,7 +74,7 @@ public class DeterminizeSadd<LETTER,STATE> implements IOperation {
 		s_Logger.info(exitMessage());
 	}
 	
-	public INestedWordAutomaton<LETTER,STATE> getResult() throws OperationCanceledException {
+	public INestedWordAutomatonOldApi<LETTER,STATE> getResult() throws OperationCanceledException {
 		assert (ResultChecker.determinize(m_Operand, result));
 		return result;
 	}

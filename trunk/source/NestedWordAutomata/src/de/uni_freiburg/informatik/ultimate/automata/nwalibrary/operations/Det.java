@@ -7,17 +7,17 @@ import java.util.Map;
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.Word;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.IOutTransitionNwa;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 
-public class Det<LETTER, STATE> implements IOutTransitionNwa<LETTER, STATE> {
+public class Det<LETTER, STATE> implements INestedWordAutomatonSimple<LETTER, STATE> {
 	
-	private final INestedWordAutomaton<LETTER, STATE> m_Operand;
+	private final INestedWordAutomatonOldApi<LETTER, STATE> m_Operand;
 	private final NestedWordAutomaton<LETTER, STATE> m_Cache;
 	private final IStateDeterminizer<LETTER, STATE> m_StateDeterminizer;
 	private final StateFactory<STATE> m_StateFactory;
@@ -27,7 +27,7 @@ public class Det<LETTER, STATE> implements IOutTransitionNwa<LETTER, STATE> {
 	private final Map<DeterminizedState<LETTER, STATE>, STATE> m_det2res =
 			new HashMap<DeterminizedState<LETTER, STATE>, STATE>();
 	
-	public Det(INestedWordAutomaton<LETTER, STATE> operand, 
+	public Det(INestedWordAutomatonOldApi<LETTER, STATE> operand, 
 			IStateDeterminizer<LETTER, STATE> stateDeterminizer, 
 			StateFactory<STATE> sf) {
 		m_Operand = operand;

@@ -2,7 +2,7 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations;
 
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 
 /**
  * Operation that returns the number of states of a nested word automaton.
@@ -13,9 +13,9 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutoma
  */
 public class NumberOfStates<LETTER, STATE> implements IOperation {
 	
-	INestedWordAutomaton<LETTER, STATE> m_Nwa;
+	INestedWordAutomatonOldApi<LETTER, STATE> m_Nwa;
 	
-	public NumberOfStates(INestedWordAutomaton<LETTER, STATE> nwa) {
+	public NumberOfStates(INestedWordAutomatonOldApi<LETTER, STATE> nwa) {
 		m_Nwa = nwa;
 	}
 

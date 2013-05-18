@@ -3,7 +3,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.I
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.DeterminizedState;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IStateDeterminizer;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.PowersetDeterminizer;
@@ -29,7 +29,7 @@ public class SelfloopDeterminizer
 	SmtManager m_SmtManager;
 	PowersetDeterminizer<CodeBlock, IPredicate> m_PowersetDeterminizer;
 	
-	INestedWordAutomaton<CodeBlock, IPredicate> m_InterpolantAutomaton;
+	INestedWordAutomatonOldApi<CodeBlock, IPredicate> m_InterpolantAutomaton;
 	private final StateFactory<IPredicate> m_StateFactory;
 	IPredicate m_InterpolantAutomatonFinalState;
 	
@@ -46,7 +46,7 @@ public class SelfloopDeterminizer
 	
 	public SelfloopDeterminizer(SmtManager mSmtManager,
 			TAPreferences taPreferences,
-			INestedWordAutomaton<CodeBlock, IPredicate> interpolantAutom) {
+			INestedWordAutomatonOldApi<CodeBlock, IPredicate> interpolantAutom) {
 		super();
 		m_SmtManager = mSmtManager;
 		m_InterpolantAutomaton = interpolantAutom;

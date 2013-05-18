@@ -5,7 +5,7 @@ import org.apache.log4j.Logger;
 import de.uni_freiburg.informatik.ultimate.automata.Activator;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 
@@ -14,10 +14,10 @@ public class GetAcceptedWord<LETTER, STATE> implements IOperation {
 	private static Logger s_Logger = UltimateServices.getInstance().getLogger(
 			Activator.PLUGIN_ID);
 
-	INestedWordAutomaton<LETTER, STATE> m_Operand;
+	INestedWordAutomatonOldApi<LETTER, STATE> m_Operand;
 	NestedWord<LETTER> m_AcceptedWord;
 
-	public GetAcceptedWord(INestedWordAutomaton<LETTER, STATE> operand) {
+	public GetAcceptedWord(INestedWordAutomatonOldApi<LETTER, STATE> operand) {
 		m_Operand = operand;
 		s_Logger.info(startMessage());
 		IsEmpty<LETTER, STATE> isEmpty = new IsEmpty<LETTER, STATE>(operand);

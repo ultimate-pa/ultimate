@@ -10,7 +10,7 @@ import java.util.Map;
 
 import org.apache.log4j.Logger;
 
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
@@ -258,7 +258,7 @@ public class TestFileExecutor {
 		
 
 		else if (operation.equals("IsEmpty")) {
-			if (autom.getAutomaton() instanceof INestedWordAutomaton) {
+			if (autom.getAutomaton() instanceof INestedWordAutomatonOldApi) {
 				NestedWordAutomaton<String,String> nwa = 
 					(NestedWordAutomaton<String,String>) autom.getAutomaton();
 				NestedRun<String, String> nr = nwa.getAcceptingNestedRun();
@@ -330,7 +330,7 @@ public class TestFileExecutor {
 		
 
 		else if (operation.equals("IsEmptyBuchi")) {
-			if (autom.getAutomaton() instanceof INestedWordAutomaton) {
+			if (autom.getAutomaton() instanceof INestedWordAutomatonOldApi) {
 				NestedWordAutomaton<String,String> nwa = 
 					(NestedWordAutomaton<String,String>) autom.getAutomaton();
 				NestedLassoRun<String, String> nlr = 
@@ -383,7 +383,7 @@ public class TestFileExecutor {
 			AutomatonWithExpression autom, NestedWord<String> nw) 
 	{
 		if (operation.equals("Accepts")) {
-			if (autom.getAutomaton() instanceof INestedWordAutomaton) {
+			if (autom.getAutomaton() instanceof INestedWordAutomatonOldApi) {
 				NestedWordAutomaton<String,String> nwa = 
 					(NestedWordAutomaton<String,String>) autom.getAutomaton();
 				if(nwa.accepts(nw))
@@ -495,9 +495,9 @@ public class TestFileExecutor {
 	{
 		NestedLassoWord<String> nlw = new NestedLassoWord<String>(stem, loop);
 		if (operation.equals("AcceptsBuchi")) {
-			if (autom.getAutomaton() instanceof INestedWordAutomaton) {
-				INestedWordAutomaton<String,String> nwa = 
-					(INestedWordAutomaton<String,String>) autom.getAutomaton();
+			if (autom.getAutomaton() instanceof INestedWordAutomatonOldApi) {
+				INestedWordAutomatonOldApi<String,String> nwa = 
+					(INestedWordAutomatonOldApi<String,String>) autom.getAutomaton();
 				if(new BuchiAccepts<String,String>(nwa,nlw).getResult())
 				{
 					s_Logger.info("The NWA " + autom.getExpression() +
@@ -635,33 +635,33 @@ public class TestFileExecutor {
 			List<Object> operands) throws OperationCanceledException {
 		
 		for (Object o : operands) {
-			if (o instanceof INestedWordAutomaton) {
-				INestedWordAutomaton auto = (INestedWordAutomaton) o;
+			if (o instanceof INestedWordAutomatonOldApi) {
+				INestedWordAutomatonOldApi auto = (INestedWordAutomatonOldApi) o;
 				ResultChecker.nwaInvarintChecks(auto);
 			}
 		}
 		
 		if (operation.equals("reachableStatesCopy")){
 			checkOperands(operation, operands, -100);
-			INestedWordAutomaton op0 = (INestedWordAutomaton) operands.get(0);
+			INestedWordAutomatonOldApi op0 = (INestedWordAutomatonOldApi) operands.get(0);
 			return new ReachableStatesCopy(op0, false, false, false, false).getResult();
 		}
 		
 		if (operation.equals("senwa")){
 			checkOperands(operation, operands, -100);
-			INestedWordAutomaton op0 = (INestedWordAutomaton) operands.get(0);
+			INestedWordAutomatonOldApi op0 = (INestedWordAutomatonOldApi) operands.get(0);
 			return new SenwaBuilder(op0).getResult();
 		}
 		
 		if (operation.equals("determinize")){
 			checkOperands(operation, operands, -100);
-			INestedWordAutomaton op0 = (INestedWordAutomaton) operands.get(0);
+			INestedWordAutomatonOldApi op0 = (INestedWordAutomatonOldApi) operands.get(0);
 			return (new Determinize<String,String>(op0)).getResult();
 		}
 		
 		if (operation.equals("determinizeSadd")){
 			checkOperands(operation, operands, -100);
-			INestedWordAutomaton op0 = (INestedWordAutomaton) operands.get(0);
+			INestedWordAutomatonOldApi op0 = (INestedWordAutomatonOldApi) operands.get(0);
 			return (new DeterminizeSadd<String,String>(op0)).getResult();
 		}
 		
@@ -673,48 +673,48 @@ public class TestFileExecutor {
 
 		if (operation.equals("complement")){
 			checkOperands(operation, operands, -100);
-			INestedWordAutomaton op0 = (INestedWordAutomaton) operands.get(0);
+			INestedWordAutomatonOldApi op0 = (INestedWordAutomatonOldApi) operands.get(0);
 			return (new Complement(op0)).getResult();
 		}
 		
 		if (operation.equals("complementSadd")){
 			checkOperands(operation, operands, -100);
-			INestedWordAutomaton op0 = (INestedWordAutomaton) operands.get(0);
+			INestedWordAutomatonOldApi op0 = (INestedWordAutomatonOldApi) operands.get(0);
 			return (new ComplementSadd(op0)).getResult();
 		}
 
 		if (operation.equals("intersect")){
 			checkOperands(operation, operands, -100, -100);
-			INestedWordAutomaton op0 = (INestedWordAutomaton) operands.get(0);
-			INestedWordAutomaton op1 = (INestedWordAutomaton) operands.get(1);
+			INestedWordAutomatonOldApi op0 = (INestedWordAutomatonOldApi) operands.get(0);
+			INestedWordAutomatonOldApi op1 = (INestedWordAutomatonOldApi) operands.get(1);
 			return (new Intersect<String,String>(true, op0, op1)).getResult();
 		}
 		
 		if (operation.equals("intersectNodd")){
 			checkOperands(operation, operands, -100, -100);
-			INestedWordAutomaton op0 = (INestedWordAutomaton) operands.get(0);
-			INestedWordAutomaton op1 = (INestedWordAutomaton) operands.get(1);
+			INestedWordAutomatonOldApi op0 = (INestedWordAutomatonOldApi) operands.get(0);
+			INestedWordAutomatonOldApi op1 = (INestedWordAutomatonOldApi) operands.get(1);
 			return (new IntersectNodd<String,String>(op0, op1)).getResult();
 		}
 		
 		if (operation.equals("difference")){
 			checkOperands(operation, operands, -100, -100);
-			INestedWordAutomaton op0 = (INestedWordAutomaton) operands.get(0);
-			INestedWordAutomaton op1 = (INestedWordAutomaton) operands.get(1);
+			INestedWordAutomatonOldApi op0 = (INestedWordAutomatonOldApi) operands.get(0);
+			INestedWordAutomatonOldApi op1 = (INestedWordAutomatonOldApi) operands.get(1);
 			return (new Difference(op0, op1)).getResult();
 		}
 		
 		if (operation.equals("differenceSenwa")){
 			checkOperands(operation, operands, -100, -100);
-			INestedWordAutomaton op0 = (INestedWordAutomaton) operands.get(0);
-			INestedWordAutomaton op1 = (INestedWordAutomaton) operands.get(1);
+			INestedWordAutomatonOldApi op0 = (INestedWordAutomatonOldApi) operands.get(0);
+			INestedWordAutomatonOldApi op1 = (INestedWordAutomatonOldApi) operands.get(1);
 			return (new DifferenceSenwa(op0, op1)).getResult();
 		}
 		
 		if (operation.equals("superDifference")){
 			checkOperands(operation, operands, -100, -100);
-			INestedWordAutomaton op0 = (INestedWordAutomaton) operands.get(0);
-			INestedWordAutomaton op1 = (INestedWordAutomaton) operands.get(1);
+			INestedWordAutomatonOldApi op0 = (INestedWordAutomatonOldApi) operands.get(0);
+			INestedWordAutomatonOldApi op1 = (INestedWordAutomatonOldApi) operands.get(1);
 			AutomatonEpimorphism<String> epi =
 					AutomatonEpimorphism.GetFromAutomatonLabels(op0, op1);
 			return (new SuperDifference(op0, op1, epi, false)).getResult();
@@ -722,57 +722,57 @@ public class TestFileExecutor {
 		
 		if (operation.equals("differenceSadd")){
 			checkOperands(operation, operands, -100, -100);
-			INestedWordAutomaton op0 = (INestedWordAutomaton) operands.get(0);
-			INestedWordAutomaton op1 = (INestedWordAutomaton) operands.get(1);
+			INestedWordAutomatonOldApi op0 = (INestedWordAutomatonOldApi) operands.get(0);
+			INestedWordAutomatonOldApi op1 = (INestedWordAutomatonOldApi) operands.get(1);
 			return (new DifferenceSadd(op0, op1)).getResult();
 		}
 		
 		if (operation.equals("minimizeDFA")){
 			checkOperands(operation, operands, -100);
-			INestedWordAutomaton op0 = (INestedWordAutomaton) operands.get(0);
+			INestedWordAutomatonOldApi op0 = (INestedWordAutomatonOldApi) operands.get(0);
 			return (new MinimizeDfa(op0)).getResult();
 		}
 		
 		if (operation.equals("minimizeSevpa")){
 			checkOperands(operation, operands, -100);
-			INestedWordAutomaton op0 = (INestedWordAutomaton) operands.get(0);
+			INestedWordAutomatonOldApi op0 = (INestedWordAutomatonOldApi) operands.get(0);
 			return (new MinimizeSevpa(op0)).getResult();
 		}
 		
 		if (operation.equals("buchiReduce")) {
 			checkOperands(operation, operands, -100);
-			INestedWordAutomaton op0 = (INestedWordAutomaton) operands.get(0);
+			INestedWordAutomatonOldApi op0 = (INestedWordAutomatonOldApi) operands.get(0);
 			return (new BuchiReduce(op0)).getResult();
 		}
 		
 		if (operation.equals("buchiIntersect")){
 			checkOperands(operation, operands, -100, -100);
-			INestedWordAutomaton op0 = (INestedWordAutomaton) operands.get(0);
-			INestedWordAutomaton op1 = (INestedWordAutomaton) operands.get(1);
+			INestedWordAutomatonOldApi op0 = (INestedWordAutomatonOldApi) operands.get(0);
+			INestedWordAutomatonOldApi op1 = (INestedWordAutomatonOldApi) operands.get(1);
 			return (new Intersect(true, op0, op1)).getResult();
 		}
 		
 		else if (operation.equals("buchiComplementFKV")){
 			checkOperands(operation, operands, -100);
-			INestedWordAutomaton op = (INestedWordAutomaton) operands.get(0);
+			INestedWordAutomatonOldApi op = (INestedWordAutomatonOldApi) operands.get(0);
 			return (new BuchiComplementFKV<String, String>(op)).getResult();
 		}
 		
 		else if (operation.equals("buchiComplementSVW")){
 			checkOperands(operation, operands, -100);
-			INestedWordAutomaton op = (INestedWordAutomaton) operands.get(0);
+			INestedWordAutomatonOldApi op = (INestedWordAutomatonOldApi) operands.get(0);
 			return (new BuchiComplementSVW<String, String>(op)).getResult();
 		}
 		
 		else if (operation.equals("buchiComplementDeterministic")){
 			checkOperands(operation, operands, -100);
-			INestedWordAutomaton op = (INestedWordAutomaton) operands.get(0);
+			INestedWordAutomatonOldApi op = (INestedWordAutomatonOldApi) operands.get(0);
 			return (new BuchiComplementDeterministic<String, String>(op)).getResult();
 		}
 		
 		else if (operation.equals("buchiComplementRE")){
 			checkOperands(operation, operands, -100);
-			INestedWordAutomaton op = (INestedWordAutomaton) operands.get(0);
+			INestedWordAutomatonOldApi op = (INestedWordAutomatonOldApi) operands.get(0);
 			return (new BuchiComplementRE<String, String>(op)).getResult();
 		}
 		
@@ -886,7 +886,7 @@ public class TestFileExecutor {
 		for (int i=0; i<desiredOperands.length; i++) {
 			switch (desiredOperands[i]) {
 			case -100:
-				if (!(givenOperands.get(i) instanceof INestedWordAutomaton)) {
+				if (!(givenOperands.get(i) instanceof INestedWordAutomatonOldApi)) {
 					throw new IllegalArgumentException("Operand "+ i + 
 							" of operation " + operation +
 							"has to be an INestedWordAutomaton");
@@ -1032,7 +1032,7 @@ public class TestFileExecutor {
 	}
 	
 	private boolean isInCallAlphabet(String symbol,
-			INestedWordAutomaton<String,String>nwa) {
+			INestedWordAutomatonOldApi<String,String>nwa) {
 		if (nwa.getCallAlphabet().contains(symbol)) {
 			return true;
 		}
@@ -1044,7 +1044,7 @@ public class TestFileExecutor {
 	}
 	
 	private boolean isInInternalAlphabet(String symbol,
-			INestedWordAutomaton<String,String>nwa) {
+			INestedWordAutomatonOldApi<String,String>nwa) {
 		if (nwa.getInternalAlphabet().contains(symbol)) {
 			return true;
 		}
@@ -1056,7 +1056,7 @@ public class TestFileExecutor {
 	}
 	
 	private boolean isInReturnAlphabet(String symbol,
-			INestedWordAutomaton<String,String>nwa) {
+			INestedWordAutomatonOldApi<String,String>nwa) {
 		if (nwa.getReturnAlphabet().contains(symbol)) {
 			return true;
 		}

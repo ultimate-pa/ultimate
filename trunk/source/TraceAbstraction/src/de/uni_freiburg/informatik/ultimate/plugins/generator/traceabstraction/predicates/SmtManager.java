@@ -14,7 +14,7 @@ import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.logic.Annotation;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
@@ -1300,11 +1300,11 @@ public class SmtManager {
 	 */
 	public boolean checkInductivity(IAutomaton<CodeBlock, IPredicate> automaton, 
 							boolean antiInductivity, boolean assertInductivity) {
-		if (!(automaton instanceof INestedWordAutomaton)) {
+		if (!(automaton instanceof INestedWordAutomatonOldApi)) {
 			s_Logger.warn("unable to verify inductivity for this kind of automaton");
 			return true;
 		}
-		INestedWordAutomaton<CodeBlock, IPredicate> nwa = (INestedWordAutomaton<CodeBlock, IPredicate>) automaton;
+		INestedWordAutomatonOldApi<CodeBlock, IPredicate> nwa = (INestedWordAutomatonOldApi<CodeBlock, IPredicate>) automaton;
 		if (antiInductivity) {
 			s_Logger.debug("Start checking anti-inductivity of automaton");
 		} else {

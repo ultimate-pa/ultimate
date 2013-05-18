@@ -8,7 +8,7 @@ import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.Activator;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
@@ -31,8 +31,8 @@ public class ConcurrentProduct<LETTER,STATE> {
 	
 	private final boolean m_ConcurrentPrefixProduct;
 
-	private final INestedWordAutomaton<LETTER,STATE> M_Nwa1;
-	private final INestedWordAutomaton<LETTER,STATE> M_Nwa2;
+	private final INestedWordAutomatonOldApi<LETTER,STATE> M_Nwa1;
+	private final INestedWordAutomatonOldApi<LETTER,STATE> M_Nwa2;
 	private final NestedWordAutomaton<LETTER,STATE> m_Result;
 	
 	/**
@@ -147,8 +147,8 @@ public class ConcurrentProduct<LETTER,STATE> {
 	}
 	
 	
-	public ConcurrentProduct(INestedWordAutomaton<LETTER,STATE> nwa1,
-			INestedWordAutomaton<LETTER,STATE> nwa2, boolean concurrentPrefixProduct) {
+	public ConcurrentProduct(INestedWordAutomatonOldApi<LETTER,STATE> nwa1,
+			INestedWordAutomatonOldApi<LETTER,STATE> nwa2, boolean concurrentPrefixProduct) {
 		m_ConcurrentPrefixProduct = concurrentPrefixProduct;
 		M_Nwa1 = nwa1;
 		M_Nwa2 = nwa2;
@@ -182,7 +182,7 @@ public class ConcurrentProduct<LETTER,STATE> {
 		}
 	}
 
-	public INestedWordAutomaton<LETTER,STATE> getResult() {
+	public INestedWordAutomatonOldApi<LETTER,STATE> getResult() {
 		return m_Result;
 	}
 	

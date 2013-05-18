@@ -8,19 +8,19 @@ import de.uni_freiburg.informatik.ultimate.automata.Activator;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.DeletedStatesAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomatonFilteredStates;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.DoubleDeckerAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.ReachableStatesAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomatonReachableStates;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.TransitionConsitenceCheck;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 
 public class RemoveDeadEnds<LETTER,STATE> implements IOperation {
 	
-	private final INestedWordAutomaton<LETTER,STATE> m_Input;
-	private final ReachableStatesAutomaton<LETTER,STATE> m_Reach;
-	private final INestedWordAutomaton<LETTER,STATE> m_Result;
+	private final INestedWordAutomatonOldApi<LETTER,STATE> m_Input;
+	private final NestedWordAutomatonReachableStates<LETTER,STATE> m_Reach;
+	private final INestedWordAutomatonOldApi<LETTER,STATE> m_Result;
 
 	private static Logger s_Logger = UltimateServices.getInstance().getLogger(
 			Activator.PLUGIN_ID);
@@ -36,12 +36,12 @@ public class RemoveDeadEnds<LETTER,STATE> implements IOperation {
 	 * @param nwa
 	 * @throws OperationCanceledException
 	 */
-	public RemoveDeadEnds(INestedWordAutomaton<LETTER,STATE> nwa)
+	public RemoveDeadEnds(INestedWordAutomatonOldApi<LETTER,STATE> nwa)
 			throws OperationCanceledException {
 		m_Input = nwa;
 		s_Logger.info(startMessage());
-		m_Reach = new ReachableStatesAutomaton<LETTER, STATE>(m_Input);
-		m_Result = new DeletedStatesAutomaton<LETTER, STATE>(m_Reach);
+		m_Reach = new NestedWordAutomatonReachableStates<LETTER, STATE>(m_Input);
+		m_Result = new NestedWordAutomatonFilteredStates<LETTER, STATE>(m_Reach);
 		s_Logger.info(exitMessage());
 		assert (new TransitionConsitenceCheck<LETTER, STATE>(m_Result)).consistentForAll();
 		assert (checkResult());
@@ -67,7 +67,7 @@ public class RemoveDeadEnds<LETTER,STATE> implements IOperation {
 
 
 	@Override
-	public INestedWordAutomaton<LETTER, STATE> getResult() throws OperationCanceledException {
+	public INestedWordAutomatonOldApi<LETTER, STATE> getResult() throws OperationCanceledException {
 		return m_Result;
 	}
 	

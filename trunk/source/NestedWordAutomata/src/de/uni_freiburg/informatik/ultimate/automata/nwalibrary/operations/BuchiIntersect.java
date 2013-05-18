@@ -5,7 +5,7 @@ import org.apache.log4j.Logger;
 import de.uni_freiburg.informatik.ultimate.automata.Activator;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 
 public class BuchiIntersect<LETTER, STATE> extends
@@ -14,14 +14,14 @@ public class BuchiIntersect<LETTER, STATE> extends
 	private static Logger s_Logger = UltimateServices.getInstance().getLogger(
 			Activator.PLUGIN_ID);
 
-	public BuchiIntersect(INestedWordAutomaton<LETTER, STATE> fstNwa,
-			INestedWordAutomaton<LETTER, STATE> sndNwa)
+	public BuchiIntersect(INestedWordAutomatonOldApi<LETTER, STATE> fstNwa,
+			INestedWordAutomatonOldApi<LETTER, STATE> sndNwa)
 			throws OperationCanceledException {
 		super(true, false, fstNwa, sndNwa);
 	}
 
-	public BuchiIntersect(INestedWordAutomaton<LETTER, STATE> fstNwa,
-			INestedWordAutomaton<LETTER, STATE> sndNwa,
+	public BuchiIntersect(INestedWordAutomatonOldApi<LETTER, STATE> fstNwa,
+			INestedWordAutomatonOldApi<LETTER, STATE> sndNwa,
 			boolean minimizeResult)
 			throws OperationCanceledException {
 		super(true, minimizeResult, fstNwa, sndNwa);

@@ -8,9 +8,9 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary;
  */
 public class TransitionConsitenceCheck<LETTER, STATE> {
 	
-	INestedWordAutomaton<LETTER, STATE> m_Nwa;
+	INestedWordAutomatonOldApi<LETTER, STATE> m_Nwa;
 	
-	public TransitionConsitenceCheck(INestedWordAutomaton<LETTER, STATE> nwa) {
+	public TransitionConsitenceCheck(INestedWordAutomatonOldApi<LETTER, STATE> nwa) {
 		m_Nwa = nwa;
 	}
 	

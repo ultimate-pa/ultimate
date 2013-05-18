@@ -8,11 +8,11 @@ import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.Word;
 
 public class INWA2INestedWordAutomaton<LETTER, STATE> implements
-		INestedWordAutomaton<LETTER, STATE> {
+		INestedWordAutomatonOldApi<LETTER, STATE> {
 	
-	private final INWA<LETTER, STATE> m_Nwa;
+	private final INestedWordAutomaton<LETTER, STATE> m_Nwa;
 	
-	public INWA2INestedWordAutomaton(INWA<LETTER, STATE> inwa) {
+	public INWA2INestedWordAutomaton(INestedWordAutomaton<LETTER, STATE> inwa) {
 		m_Nwa = inwa;
 	}
 
@@ -91,11 +91,6 @@ public class INWA2INestedWordAutomaton<LETTER, STATE> implements
 	public Iterable<SummaryReturnTransition<LETTER, STATE>> returnSummarySuccessor(
 			LETTER letter, STATE hier) {
 		return m_Nwa.returnSummarySuccessor(letter, hier);
-	}
-
-	public Iterable<IncomingReturnTransition<LETTER, STATE>> getIncomingReturnTransitions(
-			LETTER letter, STATE succ) {
-		return m_Nwa.getIncomingReturnTransitions(letter, succ);
 	}
 
 	public Iterable<IncomingInternalTransition<LETTER, STATE>> internalPredecessors(

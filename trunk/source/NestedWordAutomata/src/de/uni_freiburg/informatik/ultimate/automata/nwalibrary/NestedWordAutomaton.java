@@ -40,7 +40,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.CallStatement;
  * @param <LETTER>
  * @param <STATE>
  */
-public class NestedWordAutomaton<LETTER,STATE> implements INestedWordAutomaton<LETTER,STATE> {
+public class NestedWordAutomaton<LETTER,STATE> implements INestedWordAutomatonOldApi<LETTER,STATE>, INestedWordAutomaton<LETTER, STATE> {
 	
 	private static Logger s_Logger = 
 		UltimateServices.getInstance().getLogger(Activator.PLUGIN_ID);
@@ -419,7 +419,7 @@ public class NestedWordAutomaton<LETTER,STATE> implements INestedWordAutomaton<L
 	
 	
 
-	
+	@Override
 	public Iterable<IncomingInternalTransition<LETTER, STATE>> internalPredecessors(
 			final LETTER letter, final STATE succ) {
 		return new Iterable<IncomingInternalTransition<LETTER, STATE>>() {
@@ -467,7 +467,7 @@ public class NestedWordAutomaton<LETTER,STATE> implements INestedWordAutomaton<L
 	}
 	
 	
-	
+	@Override
 	public Iterable<IncomingInternalTransition<LETTER, STATE>> internalPredecessors(
 			final STATE succ) {
 		return new Iterable<IncomingInternalTransition<LETTER, STATE>>() {
@@ -538,7 +538,7 @@ public class NestedWordAutomaton<LETTER,STATE> implements INestedWordAutomaton<L
 	
 	
 	
-	
+	@Override
 	public Iterable<IncomingCallTransition<LETTER, STATE>> callPredecessors(
 			final LETTER letter, final STATE succ) {
 		return new Iterable<IncomingCallTransition<LETTER, STATE>>() {
@@ -586,7 +586,7 @@ public class NestedWordAutomaton<LETTER,STATE> implements INestedWordAutomaton<L
 	}
 	
 	
-	
+	@Override
 	public Iterable<IncomingCallTransition<LETTER, STATE>> callPredecessors(
 			final STATE succ) {
 		return new Iterable<IncomingCallTransition<LETTER, STATE>>() {
@@ -655,7 +655,7 @@ public class NestedWordAutomaton<LETTER,STATE> implements INestedWordAutomaton<L
 	}
 	
 	
-	
+	@Override
 	public Iterable<IncomingReturnTransition<LETTER, STATE>> returnPredecessors(
 			final STATE hier, final LETTER letter, final STATE succ) {
 		return new Iterable<IncomingReturnTransition<LETTER, STATE>>() {
@@ -707,7 +707,7 @@ public class NestedWordAutomaton<LETTER,STATE> implements INestedWordAutomaton<L
 		};
 	}
 	
-	
+	@Override
 	public Iterable<IncomingReturnTransition<LETTER, STATE>> returnPredecessors(
 			final LETTER letter, final STATE succ) {
 		return new Iterable<IncomingReturnTransition<LETTER, STATE>>() {
@@ -775,7 +775,7 @@ public class NestedWordAutomaton<LETTER,STATE> implements INestedWordAutomaton<L
 		};
 	}
 	
-	
+	@Override
 	public Iterable<IncomingReturnTransition<LETTER, STATE>> returnPredecessors(
 			final STATE succ) {
 		return new Iterable<IncomingReturnTransition<LETTER, STATE>>() {
@@ -844,7 +844,7 @@ public class NestedWordAutomaton<LETTER,STATE> implements INestedWordAutomaton<L
 	}
 	
 	
-	
+	@Override
 	public Iterable<OutgoingInternalTransition<LETTER, STATE>> internalSuccessors(
 			final STATE state, final LETTER letter) {
 		return new Iterable<OutgoingInternalTransition<LETTER, STATE>>() {
@@ -891,6 +891,7 @@ public class NestedWordAutomaton<LETTER,STATE> implements INestedWordAutomaton<L
 		};
 	}
 	
+	@Override
 	public Iterable<OutgoingInternalTransition<LETTER, STATE>> internalSuccessors(
 			final STATE state) {
 		return new Iterable<OutgoingInternalTransition<LETTER, STATE>>() {
@@ -962,7 +963,7 @@ public class NestedWordAutomaton<LETTER,STATE> implements INestedWordAutomaton<L
 	
 	
 	
-	
+	@Override
 	public Iterable<OutgoingCallTransition<LETTER, STATE>> callSuccessors(
 			final STATE state, final LETTER letter) {
 		return new Iterable<OutgoingCallTransition<LETTER, STATE>>() {
@@ -1009,6 +1010,8 @@ public class NestedWordAutomaton<LETTER,STATE> implements INestedWordAutomaton<L
 		};
 	}
 	
+	
+	@Override
 	public Iterable<OutgoingCallTransition<LETTER, STATE>> callSuccessors(
 			final STATE state) {
 		return new Iterable<OutgoingCallTransition<LETTER, STATE>>() {
@@ -1082,7 +1085,7 @@ public class NestedWordAutomaton<LETTER,STATE> implements INestedWordAutomaton<L
 	
 	
 	
-	
+	@Override
 	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSucccessors(
 			final STATE state, final STATE hier, final LETTER letter) {
 		return new Iterable<OutgoingReturnTransition<LETTER, STATE>>() {
@@ -1135,6 +1138,7 @@ public class NestedWordAutomaton<LETTER,STATE> implements INestedWordAutomaton<L
 	}
 	
 	
+	@Override
 	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessors(
 			final STATE state, final LETTER letter) {
 		return new Iterable<OutgoingReturnTransition<LETTER, STATE>>() {
@@ -1202,6 +1206,7 @@ public class NestedWordAutomaton<LETTER,STATE> implements INestedWordAutomaton<L
 		};
 	}
 	
+	@Override
 	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessorsGivenHier(
 			final STATE state, final STATE hier) {
 		return new Iterable<OutgoingReturnTransition<LETTER, STATE>>() {
@@ -1271,6 +1276,7 @@ public class NestedWordAutomaton<LETTER,STATE> implements INestedWordAutomaton<L
 	}
 	
 	
+	@Override
 	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessors(
 			final STATE state) {
 		return new Iterable<OutgoingReturnTransition<LETTER, STATE>>() {
@@ -2258,11 +2264,11 @@ public class NestedWordAutomaton<LETTER,STATE> implements INestedWordAutomaton<L
 	
 	
 	
-	public INestedWordAutomaton<LETTER,STATE> intersectBuchi(
-												INestedWordAutomaton<LETTER,STATE> nwa,
+	public INestedWordAutomatonOldApi<LETTER,STATE> intersectBuchi(
+												INestedWordAutomatonOldApi<LETTER,STATE> nwa,
 												boolean minimizeResult) 
 												throws OperationCanceledException{
-		INestedWordAutomaton<LETTER,STATE> result = 
+		INestedWordAutomatonOldApi<LETTER,STATE> result = 
 			(new Intersect(minimizeResult, this, nwa)).getResult();
 		s_Logger.info("Result of IntersectionBuchi" + 
 				((NestedWordAutomaton<LETTER, STATE>) result).sizeInformation());
@@ -2386,14 +2392,14 @@ public class NestedWordAutomaton<LETTER,STATE> implements INestedWordAutomaton<L
 	
 
 	
-	public INestedWordAutomaton<LETTER,STATE> concurrentProduct(
-											INestedWordAutomaton<LETTER,STATE> nwa) {
+	public INestedWordAutomatonOldApi<LETTER,STATE> concurrentProduct(
+											INestedWordAutomatonOldApi<LETTER,STATE> nwa) {
 		return (new ConcurrentProduct<LETTER,STATE>(this, nwa, false)).getResult();
 	}
 
 	
-	public INestedWordAutomaton<LETTER,STATE> concurrentPrefixProduct(
-			INestedWordAutomaton<LETTER,STATE> nwa) {
+	public INestedWordAutomatonOldApi<LETTER,STATE> concurrentPrefixProduct(
+			INestedWordAutomatonOldApi<LETTER,STATE> nwa) {
 		return (new ConcurrentProduct<LETTER,STATE>(this, nwa, true)).getResult();
 	}
 	

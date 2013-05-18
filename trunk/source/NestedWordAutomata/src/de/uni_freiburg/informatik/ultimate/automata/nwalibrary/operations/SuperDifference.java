@@ -13,7 +13,7 @@ import de.uni_freiburg.informatik.ultimate.automata.Activator;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonEpimorphism;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
@@ -47,10 +47,10 @@ public class SuperDifference<LETTER, STATE> implements IOperation {
 			Activator.PLUGIN_ID);
 
 	// Automatons
-	private final INestedWordAutomaton<LETTER, STATE> m_minuend;
-	private final INestedWordAutomaton<LETTER, STATE> m_subtrahend;
+	private final INestedWordAutomatonOldApi<LETTER, STATE> m_minuend;
+	private final INestedWordAutomatonOldApi<LETTER, STATE> m_subtrahend;
 	private final AutomatonEpimorphism<STATE> m_epimorphism;
-	private final INestedWordAutomaton<LETTER, STATE> m_Result;
+	private final INestedWordAutomatonOldApi<LETTER, STATE> m_Result;
 	private final STATE m_sinkState;
 	private final HashMap<String, STATE> m_containedStatesHashMap;
 	private final StateFactory<STATE> m_stateFactory;
@@ -75,7 +75,7 @@ public class SuperDifference<LETTER, STATE> implements IOperation {
 	}
 
 	@Override
-	public INestedWordAutomaton<LETTER, STATE> getResult()
+	public INestedWordAutomatonOldApi<LETTER, STATE> getResult()
 			throws OperationCanceledException {
 		return m_Result;
 	}
@@ -96,8 +96,8 @@ public class SuperDifference<LETTER, STATE> implements IOperation {
 	 *            if true, the resulting automaton will be reduced
 	 * @throws OperationCanceledException
 	 */
-	public SuperDifference(INestedWordAutomaton<LETTER, STATE> minuend,
-			INestedWordAutomaton<LETTER, STATE> subtrahend,
+	public SuperDifference(INestedWordAutomatonOldApi<LETTER, STATE> minuend,
+			INestedWordAutomatonOldApi<LETTER, STATE> subtrahend,
 			AutomatonEpimorphism<STATE> automataEpimorhpism, boolean minimize)
 			throws OperationCanceledException {
 		m_minuend = minuend;

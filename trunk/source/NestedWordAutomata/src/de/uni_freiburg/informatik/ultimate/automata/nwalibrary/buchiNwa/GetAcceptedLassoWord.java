@@ -5,7 +5,7 @@ import org.apache.log4j.Logger;
 import de.uni_freiburg.informatik.ultimate.automata.Activator;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 
 public class GetAcceptedLassoWord<LETTER, STATE> implements IOperation {
@@ -13,10 +13,10 @@ public class GetAcceptedLassoWord<LETTER, STATE> implements IOperation {
 	private static Logger s_Logger = UltimateServices.getInstance().getLogger(
 			Activator.PLUGIN_ID);
 
-	INestedWordAutomaton<LETTER, STATE> m_Operand;
+	INestedWordAutomatonOldApi<LETTER, STATE> m_Operand;
 	NestedLassoWord<LETTER> m_AcceptedWord;
 
-	public GetAcceptedLassoWord(INestedWordAutomaton<LETTER, STATE> operand) throws OperationCanceledException {
+	public GetAcceptedLassoWord(INestedWordAutomatonOldApi<LETTER, STATE> operand) throws OperationCanceledException {
 		m_Operand = operand;
 		s_Logger.info(startMessage());
 		BuchiIsEmpty<LETTER, STATE> isEmpty = new BuchiIsEmpty<LETTER, STATE>(operand);

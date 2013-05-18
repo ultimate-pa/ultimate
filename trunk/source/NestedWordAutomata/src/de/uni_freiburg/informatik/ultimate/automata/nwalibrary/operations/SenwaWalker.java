@@ -13,7 +13,7 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.automata.Activator;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.DoubleDecker;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.Senwa;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
@@ -84,7 +84,7 @@ public class SenwaWalker<LETTER,STATE> {
 	
 
 	
-	public INestedWordAutomaton<LETTER,STATE> getResult() throws OperationCanceledException {
+	public INestedWordAutomatonOldApi<LETTER,STATE> getResult() throws OperationCanceledException {
 		return m_TraversedSenwa;
 	}
 	

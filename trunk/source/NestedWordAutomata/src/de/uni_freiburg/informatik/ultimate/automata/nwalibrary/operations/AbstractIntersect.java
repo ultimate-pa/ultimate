@@ -13,7 +13,7 @@ import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.DoubleDecker;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
@@ -28,8 +28,8 @@ public abstract class AbstractIntersect<LETTER,STATE> extends DoubleDeckerBuilde
 	private static Logger s_Logger = 
 		UltimateServices.getInstance().getLogger(Activator.PLUGIN_ID);
 	
-	private final INestedWordAutomaton<LETTER,STATE> m_FstNwa;
-	private final INestedWordAutomaton<LETTER,STATE> m_SndNwa;
+	private final INestedWordAutomatonOldApi<LETTER,STATE> m_FstNwa;
+	private final INestedWordAutomatonOldApi<LETTER,STATE> m_SndNwa;
 	private final NestedWordAutomaton<LETTER,STATE> m_ResultNwa;
 	private final StateFactory<STATE> m_ContentFactory;
 	
@@ -82,8 +82,8 @@ public abstract class AbstractIntersect<LETTER,STATE> extends DoubleDeckerBuilde
 	
 
 	public AbstractIntersect(boolean buchiIntersection, boolean minimizeResult,
-					 INestedWordAutomaton<LETTER,STATE> fstNwa,
-					 INestedWordAutomaton<LETTER,STATE> sndNwa) throws OperationCanceledException {
+					 INestedWordAutomatonOldApi<LETTER,STATE> fstNwa,
+					 INestedWordAutomatonOldApi<LETTER,STATE> sndNwa) throws OperationCanceledException {
 	
 		m_Buchi = buchiIntersection;
 		m_RemoveDeadEnds = minimizeResult;

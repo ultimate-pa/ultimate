@@ -14,7 +14,7 @@ import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.automata.Activator;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.AbstractAcceptance;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
@@ -45,7 +45,7 @@ public class BuchiAccepts<LETTER,STATE> extends AbstractAcceptance<LETTER,STATE>
 	NestedWord<LETTER> m_Loop;
 	
 	
-	private final INestedWordAutomaton<LETTER,STATE> m_Nwa;
+	private final INestedWordAutomatonOldApi<LETTER,STATE> m_Nwa;
 	private boolean m_Accepted;
 
 	
@@ -88,7 +88,7 @@ public class BuchiAccepts<LETTER,STATE> extends AbstractAcceptance<LETTER,STATE>
 	 * @return true iff nlw is accepted by nwa. Note that here a nested lasso word is
 	 *  always rejected its loop contains pending returns.  
 	 */
-	public BuchiAccepts(INestedWordAutomaton<LETTER,STATE> nwa, NestedLassoWord<LETTER> nlw){
+	public BuchiAccepts(INestedWordAutomatonOldApi<LETTER,STATE> nwa, NestedLassoWord<LETTER> nlw){
 		m_Nwa = nwa;
 		
 		m_Stem = nlw.getStem();
@@ -240,7 +240,7 @@ public class BuchiAccepts<LETTER,STATE> extends AbstractAcceptance<LETTER,STATE>
 	 * configurations which were accepting.
 	 */
 	private Set<Stack<STATE>> removeAcceptingConfigurations(Set<Stack<STATE>> configurations,
-			INestedWordAutomaton<LETTER,STATE> nwa) {
+			INestedWordAutomatonOldApi<LETTER,STATE> nwa) {
 		Set<Stack<STATE>> acceptingConfigurations = new HashSet<Stack<STATE>>();
 		for (Stack<STATE> config : configurations) {
 			STATE state = config.peek();

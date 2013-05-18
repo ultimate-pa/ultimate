@@ -13,7 +13,7 @@ import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.automata.Activator;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
@@ -163,7 +163,7 @@ public class PetriNet2FiniteAutomaton<S,C> implements IOperation {
 	
 
 	
-	public INestedWordAutomaton<S,C> getResult() {
+	public INestedWordAutomatonOldApi<S,C> getResult() {
 		return m_Result;
 	}
 

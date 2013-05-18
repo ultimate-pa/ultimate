@@ -5,7 +5,7 @@ import org.apache.log4j.Logger;
 import de.uni_freiburg.informatik.ultimate.automata.Activator;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 
@@ -22,14 +22,14 @@ public class IsIncluded<LETTER, STATE> implements IOperation {
 	private static Logger s_Logger = 
 			UltimateServices.getInstance().getLogger(Activator.PLUGIN_ID);
 	
-	private final INestedWordAutomaton<LETTER, STATE> m_Operand1;
-	private final INestedWordAutomaton<LETTER, STATE> m_Operand2;
+	private final INestedWordAutomatonOldApi<LETTER, STATE> m_Operand1;
+	private final INestedWordAutomatonOldApi<LETTER, STATE> m_Operand2;
 	
 	private final Boolean m_Result;
 	private final NestedRun<LETTER, STATE> m_Counterexample;
 	
 	
-	public IsIncluded(INestedWordAutomaton<LETTER, STATE> nwa1, INestedWordAutomaton<LETTER, STATE> nwa2) throws OperationCanceledException {
+	public IsIncluded(INestedWordAutomatonOldApi<LETTER, STATE> nwa1, INestedWordAutomatonOldApi<LETTER, STATE> nwa2) throws OperationCanceledException {
 		m_Operand1 = nwa1;
 		m_Operand2 = nwa2;
 		s_Logger.info(startMessage());

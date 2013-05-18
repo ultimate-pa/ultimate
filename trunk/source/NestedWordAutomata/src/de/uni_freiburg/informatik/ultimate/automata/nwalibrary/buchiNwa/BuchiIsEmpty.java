@@ -12,7 +12,7 @@ import org.apache.log4j.Logger;
 import de.uni_freiburg.informatik.ultimate.automata.Activator;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
@@ -28,7 +28,7 @@ import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 public class BuchiIsEmpty<LETTER,STATE> implements IOperation {
 	
 	
-	public BuchiIsEmpty(INestedWordAutomaton<LETTER, STATE> nwa) throws OperationCanceledException {
+	public BuchiIsEmpty(INestedWordAutomatonOldApi<LETTER, STATE> nwa) throws OperationCanceledException {
 		m_nwa = nwa;
 		s_Logger.info(startMessage());
 		m_Result = checkEmptiness();
@@ -56,7 +56,7 @@ public class BuchiIsEmpty<LETTER,STATE> implements IOperation {
 		return m_Result;
 	}
 	
-	INestedWordAutomaton<LETTER, STATE> m_nwa;
+	INestedWordAutomatonOldApi<LETTER, STATE> m_nwa;
 	Boolean m_Result;
 
 	Bridge reachabilityBridge = new Bridge();

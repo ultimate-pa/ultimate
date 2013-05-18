@@ -6,7 +6,7 @@ import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.access.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.access.WalkerOptions;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StringFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.visualization.NwaToUltimateModel;
@@ -53,9 +53,9 @@ public class NestedWordAutomataObserver implements IUnmanagedObserver {
 		
 //		new TestFileWriter<String, String>(printedAutomaton);
 		
-		if (printedAutomaton instanceof INestedWordAutomaton) {
-			INestedWordAutomaton<String,String> nwa =
-				(INestedWordAutomaton<String,String>) printedAutomaton;
+		if (printedAutomaton instanceof INestedWordAutomatonOldApi) {
+			INestedWordAutomatonOldApi<String,String> nwa =
+				(INestedWordAutomatonOldApi<String,String>) printedAutomaton;
 			
 			NwaToUltimateModel<String, String> transformer = 
 				new NwaToUltimateModel<String, String>();

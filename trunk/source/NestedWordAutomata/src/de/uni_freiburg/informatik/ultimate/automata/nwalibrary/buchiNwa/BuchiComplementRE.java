@@ -5,7 +5,7 @@ import org.apache.log4j.Logger;
 import de.uni_freiburg.informatik.ultimate.automata.Activator;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.BuchiIntersect;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.Determinize;
@@ -21,8 +21,8 @@ public class BuchiComplementRE<LETTER,STATE> implements IOperation {
 	private static Logger s_Logger = 
 			UltimateServices.getInstance().getLogger(Activator.PLUGIN_ID);
 
-	private INestedWordAutomaton<LETTER,STATE> m_Operand;
-	private INestedWordAutomaton<LETTER,STATE> m_Result;
+	private INestedWordAutomatonOldApi<LETTER,STATE> m_Operand;
+	private INestedWordAutomatonOldApi<LETTER,STATE> m_Result;
 	
 	private boolean m_buchiComplementREApplicable;
 	
@@ -48,7 +48,7 @@ public class BuchiComplementRE<LETTER,STATE> implements IOperation {
 	}
 
 	@Override
-	public INestedWordAutomaton<LETTER,STATE> getResult() throws OperationCanceledException {
+	public INestedWordAutomatonOldApi<LETTER,STATE> getResult() throws OperationCanceledException {
 		if (m_buchiComplementREApplicable) {
 			return m_Result;
 		} else {
@@ -58,10 +58,10 @@ public class BuchiComplementRE<LETTER,STATE> implements IOperation {
 	}
 	
 	
-	public BuchiComplementRE(INestedWordAutomaton<LETTER,STATE> operand) throws OperationCanceledException {
+	public BuchiComplementRE(INestedWordAutomatonOldApi<LETTER,STATE> operand) throws OperationCanceledException {
 		m_Operand = operand;
 		s_Logger.info(startMessage());
-		INestedWordAutomaton<LETTER,STATE> operandWithoutNonLiveStates = 
+		INestedWordAutomatonOldApi<LETTER,STATE> operandWithoutNonLiveStates = 
 				(new ReachableStatesCopy<LETTER,STATE>(operand, false, false, false, true)).getResult();
 		if (operandWithoutNonLiveStates.isDeterministic()) {
 			s_Logger.info("Rüdigers determinization knack not necessary, already deterministic");
@@ -70,11 +70,11 @@ public class BuchiComplementRE<LETTER,STATE> implements IOperation {
 		else {
 			PowersetDeterminizer<LETTER,STATE> pd = 
 					new PowersetDeterminizer<LETTER,STATE>(operandWithoutNonLiveStates);
-			INestedWordAutomaton<LETTER,STATE> determinized = 
+			INestedWordAutomatonOldApi<LETTER,STATE> determinized = 
 					(new DeterminizeUnderappox<LETTER,STATE>(operandWithoutNonLiveStates,pd)).getResult();
-			INestedWordAutomaton<LETTER,STATE> determinizedComplement =
+			INestedWordAutomatonOldApi<LETTER,STATE> determinizedComplement =
 					(new BuchiComplementDeterministic<LETTER,STATE>(determinized)).getResult();
-			INestedWordAutomaton<LETTER,STATE> intersectionWithOperand =
+			INestedWordAutomatonOldApi<LETTER,STATE> intersectionWithOperand =
 					(new BuchiIntersect<LETTER,STATE>(operandWithoutNonLiveStates, determinizedComplement, true)).getResult();
 			NestedLassoRun<LETTER,STATE> run = (new BuchiIsEmpty<LETTER,STATE>(intersectionWithOperand)).getAcceptingNestedLassoRun();
 			if (run == null) {

@@ -13,7 +13,7 @@ import de.uni_freiburg.informatik.ultimate.automata.Activator;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.DoubleDecker;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
@@ -66,7 +66,7 @@ public class IsEmpty<LETTER,STATE> implements IOperation {
 	/**
 	 * INestedWordAutomaton for which we check emptiness.
 	 */
-	INestedWordAutomaton<LETTER,STATE> m_nwa;
+	INestedWordAutomatonOldApi<LETTER,STATE> m_nwa;
 	
 	NestedRun<LETTER,STATE> m_acceptingRun;
 	
@@ -189,7 +189,7 @@ public class IsEmpty<LETTER,STATE> implements IOperation {
 	private STATE m_ReconstructionPredK;
 	
 	
-	public IsEmpty(INestedWordAutomaton<LETTER,STATE> nwa) {
+	public IsEmpty(INestedWordAutomatonOldApi<LETTER,STATE> nwa) {
 		m_nwa = nwa;
 		dummyEmptyStackState = m_nwa.getEmptyStackState();
 		s_Logger.info(startMessage());

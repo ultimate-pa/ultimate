@@ -10,7 +10,7 @@ import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.DoubleDecker;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.DoubleDeckerVisitor;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
@@ -35,7 +35,7 @@ public class HoareAnnotationExtractor extends
 	private final HoareAnnotationFragments m_HoareAnnotation;
 	
 	public HoareAnnotationExtractor(
-			INestedWordAutomaton<CodeBlock,IPredicate> abstraction, 
+			INestedWordAutomatonOldApi<CodeBlock,IPredicate> abstraction, 
 			HoareAnnotationFragments haf) {
 		m_TraversedNwa = (NestedWordAutomaton<CodeBlock, IPredicate>) abstraction;
 		m_HoareAnnotation = haf;		

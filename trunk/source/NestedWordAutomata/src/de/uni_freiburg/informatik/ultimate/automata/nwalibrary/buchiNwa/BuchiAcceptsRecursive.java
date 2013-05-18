@@ -13,7 +13,7 @@ import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.automata.Activator;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 
@@ -42,7 +42,7 @@ public class BuchiAcceptsRecursive<LETTER,STATE> implements IOperation {
 	NestedWord<LETTER> m_Loop;
 	
 	
-	private final INestedWordAutomaton<LETTER,STATE> m_Nwa;
+	private final INestedWordAutomatonOldApi<LETTER,STATE> m_Nwa;
 	private final NestedLassoWord<LETTER> m_Nlw;
 	private boolean m_Accepted;
 
@@ -85,7 +85,7 @@ public class BuchiAcceptsRecursive<LETTER,STATE> implements IOperation {
 	 * @return true iff nlw is accepted by nwa. Note that here a nested lasso word is
 	 *  always rejected its loop contains pending returns.  
 	 */
-	public BuchiAcceptsRecursive(INestedWordAutomaton<LETTER,STATE> nwa, NestedLassoWord<LETTER> nlw){
+	public BuchiAcceptsRecursive(INestedWordAutomatonOldApi<LETTER,STATE> nwa, NestedLassoWord<LETTER> nlw){
 		m_Nwa = nwa;
 		m_Nlw = nlw;
 		s_Logger.info(startMessage());

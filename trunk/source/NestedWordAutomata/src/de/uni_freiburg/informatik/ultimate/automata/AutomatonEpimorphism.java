@@ -4,7 +4,7 @@ import java.util.HashMap;
 
 import org.apache.log4j.Logger;
 
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 
 /**
@@ -46,8 +46,8 @@ public class AutomatonEpimorphism<STATE> {
 	 * @return an epimorphism structure from a1 to a2
 	 */
 	public static AutomatonEpimorphism<String> GetFromAutomatonLabels(
-			INestedWordAutomaton<String, String> a1,
-			INestedWordAutomaton<String, String> a2) {
+			INestedWordAutomatonOldApi<String, String> a1,
+			INestedWordAutomatonOldApi<String, String> a2) {
 		AutomatonEpimorphism<String> epimorphism = new AutomatonEpimorphism<String>();
 
 		// traversing the states

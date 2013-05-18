@@ -15,7 +15,7 @@ import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.DoubleDecker;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.DeterminizedState;
@@ -44,7 +44,7 @@ public class BuchiComplementFKV<LETTER,STATE> extends DoubleDeckerBuilder<LETTER
 	 */
 	int m_UserDefinedMaxRank = Integer.MAX_VALUE;
 	
-	private INestedWordAutomaton<LETTER,STATE> m_Operand;
+	private INestedWordAutomatonOldApi<LETTER,STATE> m_Operand;
 	
 	StateFactory<STATE> m_ContentFactory;
 	
@@ -110,7 +110,7 @@ public class BuchiComplementFKV<LETTER,STATE> extends DoubleDeckerBuilder<LETTER
 	
 	
 	
-	public BuchiComplementFKV(INestedWordAutomaton<LETTER,STATE> operand) throws OperationCanceledException {
+	public BuchiComplementFKV(INestedWordAutomatonOldApi<LETTER,STATE> operand) throws OperationCanceledException {
 		m_Operand = operand;
 		s_Logger.info(startMessage());
 //		((NestedWordAutomaton<LETTER,STATE>) m_Operand).buchiClosure();
@@ -132,7 +132,7 @@ public class BuchiComplementFKV<LETTER,STATE> extends DoubleDeckerBuilder<LETTER
 	
 
 	@Override
-	public INestedWordAutomaton<LETTER,STATE> getResult()
+	public INestedWordAutomatonOldApi<LETTER,STATE> getResult()
 			throws OperationCanceledException {
 		assert ResultChecker.buchiComplement(m_Operand, m_TraversedNwa);
 		return m_TraversedNwa;

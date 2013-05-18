@@ -12,7 +12,7 @@ import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.DoubleDecker;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.DoubleDeckerVisitor;
@@ -32,8 +32,8 @@ public class BuchiComplementDeterministic<LETTER,STATE> extends DoubleDeckerVisi
 	private static Logger s_Logger = 
 		UltimateServices.getInstance().getLogger(Activator.PLUGIN_ID);
 	
-	private final INestedWordAutomaton<LETTER,STATE> m_Operand;
-	private final INestedWordAutomaton<LETTER,STATE> m_TotalizedOperand;
+	private final INestedWordAutomatonOldApi<LETTER,STATE> m_Operand;
+	private final INestedWordAutomatonOldApi<LETTER,STATE> m_TotalizedOperand;
 	private final StateFactory<STATE> m_ContentFactory;
 	
 	private final HashMap<STATE,STATE> m_New2Old = new HashMap<STATE,STATE>();
@@ -64,7 +64,7 @@ public class BuchiComplementDeterministic<LETTER,STATE> extends DoubleDeckerVisi
 			m_TraversedNwa.sizeInformation();
 	}
 	
-	public BuchiComplementDeterministic(INestedWordAutomaton<LETTER,STATE> nwa) throws OperationCanceledException {
+	public BuchiComplementDeterministic(INestedWordAutomatonOldApi<LETTER,STATE> nwa) throws OperationCanceledException {
 		m_Operand = nwa;
 		m_ContentFactory = m_Operand.getStateFactory();
 		s_Logger.info(startMessage());
@@ -89,7 +89,7 @@ public class BuchiComplementDeterministic<LETTER,STATE> extends DoubleDeckerVisi
 	
 	
 	@Override
-	public INestedWordAutomaton<LETTER, STATE> getResult()
+	public INestedWordAutomatonOldApi<LETTER, STATE> getResult()
 			throws OperationCanceledException {
 		assert ResultChecker.buchiComplement(m_Operand, m_TraversedNwa);
 		return m_TraversedNwa;

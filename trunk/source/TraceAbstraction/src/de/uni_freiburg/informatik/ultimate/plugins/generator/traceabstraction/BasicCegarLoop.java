@@ -11,7 +11,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AtsDefinitionPrinter;
 import de.uni_freiburg.informatik.ultimate.automata.Automaton2UltimateModel;
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.Complement;
@@ -22,6 +22,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IOpWit
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.Intersect;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.MinimizeSevpa;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.PowersetDeterminizer;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.RemoveDeadEnds;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
@@ -366,11 +367,11 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		}
 		else {//complement and intersection instead of difference
 
-			INestedWordAutomaton<CodeBlock, IPredicate> dia = 
+			INestedWordAutomatonOldApi<CodeBlock, IPredicate> dia = 
 											determinizeInterpolantAutomaton();			
 
 			s_Logger.debug("Start complementation");
-			INestedWordAutomaton<CodeBlock, IPredicate> nia = 
+			INestedWordAutomatonOldApi<CodeBlock, IPredicate> nia = 
 				(new Complement<CodeBlock, IPredicate>(dia)).getResult();
 			assert(!nia.accepts(m_Counterexample.getWord()));
 			s_Logger.info("Complemented interpolant automaton has "+nia.size() +" states");
@@ -399,17 +400,17 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 //			m_Haf.addContext2Entry(context2entry);
 //		}
 
-		
+		(new RemoveDeadEnds<CodeBlock, IPredicate>((INestedWordAutomatonOldApi<CodeBlock, IPredicate>) m_Abstraction)).getResult();
 		m_TimingStatistics.finishDifference();
 		
 		if (m_Pref.minimize()) {
 			m_TimingStatistics.startAutomataMinimization();
 			long startTime = System.currentTimeMillis();
 			int oldSize = m_Abstraction.size();
-			INestedWordAutomaton<CodeBlock, IPredicate> newAbstraction = (INestedWordAutomaton<CodeBlock, IPredicate>) m_Abstraction;
+			INestedWordAutomatonOldApi<CodeBlock, IPredicate> newAbstraction = (INestedWordAutomatonOldApi<CodeBlock, IPredicate>) m_Abstraction;
 			Collection<Set<IPredicate>> partition = computePartition(newAbstraction);
 			MinimizeSevpa<CodeBlock, IPredicate> minimizeOp = new MinimizeSevpa<CodeBlock, IPredicate>(newAbstraction, partition, false, false, m_StateFactoryForRefinement);
-			INestedWordAutomaton<CodeBlock, IPredicate> minimized = minimizeOp.getResult();
+			INestedWordAutomatonOldApi<CodeBlock, IPredicate> minimized = minimizeOp.getResult();
 			if (m_Pref.computeHoareAnnotation()) {
 				Map<IPredicate, IPredicate> oldState2newState = minimizeOp.getOldState2newState();
 				m_Haf.updateContexts(oldState2newState);
@@ -444,7 +445,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 	
 	
 	
-	private Collection<Set<IPredicate>> computePartition(INestedWordAutomaton<CodeBlock, IPredicate> automaton) {
+	private Collection<Set<IPredicate>> computePartition(INestedWordAutomatonOldApi<CodeBlock, IPredicate> automaton) {
 		s_Logger.info("Start computation of initial partition.");
 		Collection<IPredicate> states = automaton.getStates();
 		Map<ProgramPoint, Set<IPredicate>> pp2p = new HashMap<ProgramPoint, Set<IPredicate>>();
@@ -466,7 +467,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		return partition;
 	}
 	
-	private boolean eachStateIsFinal(Collection<IPredicate> states, INestedWordAutomaton<CodeBlock, IPredicate> automaton) {
+	private boolean eachStateIsFinal(Collection<IPredicate> states, INestedWordAutomatonOldApi<CodeBlock, IPredicate> automaton) {
 		boolean result = true;
 		for (IPredicate p : states) {
 			result &= automaton.isFinal(p);
@@ -475,10 +476,10 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 	}
 	
 	
-	protected INestedWordAutomaton<CodeBlock, IPredicate> 
+	protected INestedWordAutomatonOldApi<CodeBlock, IPredicate> 
 											determinizeInterpolantAutomaton() throws OperationCanceledException {
 		s_Logger.debug("Start determinization");
-		INestedWordAutomaton<CodeBlock, IPredicate> dia;
+		INestedWordAutomatonOldApi<CodeBlock, IPredicate> dia;
 		switch (m_Pref.determinization()) {
 		case POWERSET: 
 			PowersetDeterminizer<CodeBlock, IPredicate> psd = 
@@ -555,8 +556,8 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 	
 	@Override
 	protected void computeCFGHoareAnnotation() {
-		INestedWordAutomaton<CodeBlock, IPredicate> abstraction = 
-				(INestedWordAutomaton<CodeBlock, IPredicate>) m_Abstraction;
+		INestedWordAutomatonOldApi<CodeBlock, IPredicate> abstraction = 
+				(INestedWordAutomatonOldApi<CodeBlock, IPredicate>) m_Abstraction;
 		new HoareAnnotationExtractor(abstraction, m_Haf);
 		m_Haf.addHoareAnnotationToCFG(m_SmtManager);
 	}

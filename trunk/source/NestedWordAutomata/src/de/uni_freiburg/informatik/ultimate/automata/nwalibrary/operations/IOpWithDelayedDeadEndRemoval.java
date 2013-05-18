@@ -1,7 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations;
 
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 
 public interface IOpWithDelayedDeadEndRemoval<LETTER, STATE> {
 	
@@ -9,7 +9,7 @@ public interface IOpWithDelayedDeadEndRemoval<LETTER, STATE> {
 	
 	public boolean removeDeadEnds();
 	
-	public INestedWordAutomaton<LETTER,STATE> getResult() throws OperationCanceledException;
+	public INestedWordAutomatonOldApi<LETTER,STATE> getResult() throws OperationCanceledException;
 	
 	public long getDeadEndRemovalTime();
 	

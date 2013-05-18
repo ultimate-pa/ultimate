@@ -12,7 +12,7 @@ import de.uni_freiburg.informatik.ultimate.access.WalkerOptions;
 import de.uni_freiburg.informatik.ultimate.automata.AtsDefinitionPrinter;
 import de.uni_freiburg.informatik.ultimate.automata.AtsDefinitionPrinter.Labeling;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.BuchiComplementFKV;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.BuchiComplementRE;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.BuchiComplementSVW;
@@ -62,7 +62,7 @@ public class AutomataLibraryRandomizedTestsObserver implements IUnmanagedObserve
 			
 			int i = 0;
 			while (UltimateServices.getInstance().continueProcessing()) {
-				INestedWordAutomaton<String, String> auto = (new GetRandomNwa(numberLetters, numberStates, probInternal, probCall, probReturn, probFinal)).getResult();
+				INestedWordAutomatonOldApi<String, String> auto = (new GetRandomNwa(numberLetters, numberStates, probInternal, probCall, probReturn, probFinal)).getResult();
 				s_Logger.info("Generated an automaton which has " + auto.sizeInformation());
 				if (writeToFile) {
 					String directory = getDirectory();
@@ -71,13 +71,13 @@ public class AutomataLibraryRandomizedTestsObserver implements IUnmanagedObserve
 				}
 				
 				if (operation.equals("buchiComplementSVW")) {
-					INestedWordAutomaton<String, String> resultSVW = (new BuchiComplementSVW<String, String>(auto)).getResult();					
+					INestedWordAutomatonOldApi<String, String> resultSVW = (new BuchiComplementSVW<String, String>(auto)).getResult();					
 				} else if (operation.equals("minimizeSevpa")) {
 					(new MinimizeSevpa<String, String>(auto)).getResult();
 				} else if (operation.equals("buchiComplementComparison")) {
 					BuchiComplementRE<String, String> bcre = new BuchiComplementRE<String, String>(auto);
 					if (bcre.applicable()) {
-						INestedWordAutomaton<String, String> resultRE = bcre.getResult();
+						INestedWordAutomatonOldApi<String, String> resultRE = bcre.getResult();
 						s_Logger.info("ResultRE states: " + resultRE.size());
 						resultRE =(new BuchiReduce<String, String>(resultRE)).getResult();
 						s_Logger.info("ResultRE states after size reduction: " + resultRE.size());
@@ -85,14 +85,14 @@ public class AutomataLibraryRandomizedTestsObserver implements IUnmanagedObserve
 						s_Logger.info("buchiComplementRE not applicable");
 					}
 
-					INestedWordAutomaton<String, String> resultFKV = (new BuchiComplementFKV<String, String>(auto)).getResult();
+					INestedWordAutomatonOldApi<String, String> resultFKV = (new BuchiComplementFKV<String, String>(auto)).getResult();
 					s_Logger.info("ResultFKV states: " + resultFKV.size());
 					resultFKV =(new ReachableStatesCopy<String, String>(resultFKV, false, false, false, true)).getResult();
 					s_Logger.info("ResultFKV states after remove of non-live states: " + resultFKV.size());
 					resultFKV =(new BuchiReduce<String, String>(resultFKV)).getResult();
 					s_Logger.info("ResultFKV states after size reduction: " + resultFKV.size());
 
-					INestedWordAutomaton<String, String> resultSVW = (new BuchiComplementSVW<String, String>(auto)).getResult();
+					INestedWordAutomatonOldApi<String, String> resultSVW = (new BuchiComplementSVW<String, String>(auto)).getResult();
 					s_Logger.warn("ResultSVW states: " + resultSVW.size());
 					resultSVW =(new ReachableStatesCopy<String, String>(resultSVW, false, false, false, true)).getResult();
 					s_Logger.info("ResultSVW states after remove of non-live states: " + resultSVW.size());

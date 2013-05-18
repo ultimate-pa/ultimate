@@ -2,7 +2,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.I
 
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.DeterminizedState;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IStateDeterminizer;
@@ -39,7 +39,7 @@ public class StrongestPostDeterminizer
 	private final SmtManager m_SmtManager;
 	private final SmtManager.EdgeChecker m_EdgeChecker;
 	private StateFactory<IPredicate> m_ConFac;
-	private INestedWordAutomaton<CodeBlock, IPredicate> m_Ia;
+	private INestedWordAutomatonOldApi<CodeBlock, IPredicate> m_Ia;
 	private final IPredicate m_IaFalseState;
 	private final IPredicate m_IaTrueState;
 	
@@ -51,7 +51,7 @@ public class StrongestPostDeterminizer
 
 	public StrongestPostDeterminizer(SmtManager mSmtManager,
 			TAPreferences taPreferences,
-			INestedWordAutomaton<CodeBlock, IPredicate> mNwa) {
+			INestedWordAutomatonOldApi<CodeBlock, IPredicate> mNwa) {
 		super();
 		m_SmtManager = mSmtManager;
 		m_EdgeChecker = m_SmtManager.new EdgeChecker();

@@ -14,12 +14,12 @@ import org.eclipse.core.runtime.preferences.IEclipsePreferences;
 
 import de.uni_freiburg.informatik.ultimate.automata.AtsDefinitionPrinter.Labeling;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.DoubleDeckerAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordGenerator;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.ReachableStatesAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomatonReachableStates;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.BuchiAccepts;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.BuchiIsIncluded;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.NestedLassoRun;
@@ -62,7 +62,7 @@ public class ResultChecker<LETTER,STATE> {
 		return resultCheckStackHeight > 0;
 	}
 
-	public static boolean isEmpty(INestedWordAutomaton op,
+	public static boolean isEmpty(INestedWordAutomatonOldApi op,
 								  NestedRun result) {
 		if (resultCheckStackHeight >= maxResultCheckStackHeight) return true;
 		resultCheckStackHeight++;
@@ -83,8 +83,8 @@ public class ResultChecker<LETTER,STATE> {
 
 	
 	
-	public static boolean determinize(INestedWordAutomaton op,
-									INestedWordAutomaton result) throws OperationCanceledException {
+	public static boolean determinize(INestedWordAutomatonOldApi op,
+									INestedWordAutomatonOldApi result) throws OperationCanceledException {
 		if (resultCheckStackHeight >= maxResultCheckStackHeight) return true;
 		resultCheckStackHeight++;
 		s_Logger.debug("Testing correctness of determinization");
@@ -94,10 +94,10 @@ public class ResultChecker<LETTER,STATE> {
 //		INestedWordAutomaton resultJM = nbo.determinizeJM();
 //		correct &= (resultJM.included(result) == null);
 //		correct &= (result.included(resultJM) == null);
-		INestedWordAutomaton resultSadd = (new DeterminizeSadd<String,String>(op)).getResult();
+		INestedWordAutomatonOldApi resultSadd = (new DeterminizeSadd<String,String>(op)).getResult();
 		correct &= (nwaLanguageInclusion(resultSadd,result) == null);
 		correct &= (nwaLanguageInclusion(result,resultSadd) == null);
-		INestedWordAutomaton resultDD = (new Determinize<String,String>(op)).getResult();
+		INestedWordAutomatonOldApi resultDD = (new Determinize<String,String>(op)).getResult();
 		correct &= (nwaLanguageInclusion(resultDD,result) == null);
 		correct &= (nwaLanguageInclusion(result,resultDD) == null);
 	
@@ -106,8 +106,8 @@ public class ResultChecker<LETTER,STATE> {
 		return correct;
 	}
 	
-	public static boolean complement(INestedWordAutomaton op,
-									  INestedWordAutomaton result) throws OperationCanceledException {
+	public static boolean complement(INestedWordAutomatonOldApi op,
+									  INestedWordAutomatonOldApi result) throws OperationCanceledException {
 		if (resultCheckStackHeight >= maxResultCheckStackHeight) return true;
 		resultCheckStackHeight++;
 		s_Logger.debug("Testing correctness of complement");
@@ -115,11 +115,11 @@ public class ResultChecker<LETTER,STATE> {
 		boolean correct = true;
 //		INestedWordAutomaton complementJM = (new Complement()).new ComplementJM(op).getResult();
 //		correct &=  ((new Intersect(false, false, op, complementJM)).getNwa().getAcceptingNestedRun() == null);
-		INestedWordAutomaton complementSadd = (new ComplementSadd(op)).getResult();
-		INestedWordAutomaton intersectionWithSadd = (new Intersect(false, op, complementSadd)).getResult();
+		INestedWordAutomatonOldApi complementSadd = (new ComplementSadd(op)).getResult();
+		INestedWordAutomatonOldApi intersectionWithSadd = (new Intersect(false, op, complementSadd)).getResult();
 		correct &=  ((new IsEmpty(intersectionWithSadd)).getResult() == true);
-		INestedWordAutomaton complementDD = (new Complement(op)).getResult();
-		INestedWordAutomaton intersectionWithDD = (new Intersect(false, op, complementDD)).getResult();
+		INestedWordAutomatonOldApi complementDD = (new Complement(op)).getResult();
+		INestedWordAutomatonOldApi intersectionWithDD = (new Intersect(false, op, complementDD)).getResult();
 		correct &= (new IsEmpty(intersectionWithDD).getResult() == true);
 
 		s_Logger.debug("Finished testing correctness of complement");
@@ -128,23 +128,23 @@ public class ResultChecker<LETTER,STATE> {
 	}
 	
 	
-	public static boolean intersect(INestedWordAutomaton operand1,
-									INestedWordAutomaton operand2,
-									INestedWordAutomaton result) throws OperationCanceledException {
+	public static boolean intersect(INestedWordAutomatonOldApi operand1,
+									INestedWordAutomatonOldApi operand2,
+									INestedWordAutomatonOldApi result) throws OperationCanceledException {
 		s_Logger.warn("Correctness of Intersection not checked at the moment.");
 		return true;
 	}
 	
-	public static boolean difference(INestedWordAutomaton fst,
-									 INestedWordAutomaton snd,
-									 INestedWordAutomaton result) throws OperationCanceledException {
+	public static boolean difference(INestedWordAutomatonOldApi fst,
+									 INestedWordAutomatonOldApi snd,
+									 INestedWordAutomatonOldApi result) throws OperationCanceledException {
 		if (resultCheckStackHeight >= maxResultCheckStackHeight) return true;
 		resultCheckStackHeight++;
 		s_Logger.info("Testing correctness of difference");
 
-		INestedWordAutomaton sndComplementDD = 
+		INestedWordAutomatonOldApi sndComplementDD = 
 			(new Complement(snd)).getResult();
-		INestedWordAutomaton resultDD = 
+		INestedWordAutomatonOldApi resultDD = 
 			(new IntersectNodd(fst,sndComplementDD)).getResult();
 		boolean correct = true;
 		correct &= (nwaLanguageInclusion(result,resultDD) == null);
@@ -152,9 +152,9 @@ public class ResultChecker<LETTER,STATE> {
 		correct &= (nwaLanguageInclusion(resultDD,result) == null);
 		assert correct;
 		
-		INestedWordAutomaton sndComplementSadd = 
+		INestedWordAutomatonOldApi sndComplementSadd = 
 			(new ComplementSadd(snd)).getResult();
-		INestedWordAutomaton resultSadd = 
+		INestedWordAutomatonOldApi resultSadd = 
 			(new IntersectNodd(fst,sndComplementSadd)).getResult();
 		correct &= (nwaLanguageInclusion(result,resultSadd) == null);
 		assert correct;
@@ -167,14 +167,14 @@ public class ResultChecker<LETTER,STATE> {
 	}
 	
 	
-	public static boolean differenceCheckWithSadd(INestedWordAutomaton fst,
-			 INestedWordAutomaton snd,
-			 INestedWordAutomaton result) throws OperationCanceledException {
+	public static boolean differenceCheckWithSadd(INestedWordAutomatonOldApi fst,
+			 INestedWordAutomatonOldApi snd,
+			 INestedWordAutomatonOldApi result) throws OperationCanceledException {
 		if (resultCheckStackHeight >= maxResultCheckStackHeight) return true;
 		resultCheckStackHeight++;
 		s_Logger.debug("Testing correctness of difference");
 		
-		INestedWordAutomaton resultSadd = (new DifferenceSadd(fst, snd)).getResult();
+		INestedWordAutomatonOldApi resultSadd = (new DifferenceSadd(fst, snd)).getResult();
 
 		boolean correct = true;
 		try {
@@ -205,8 +205,8 @@ public class ResultChecker<LETTER,STATE> {
 	
 	
 	
-	public static boolean minimize(INestedWordAutomaton operand,
-									  INestedWordAutomaton result) throws OperationCanceledException {
+	public static boolean minimize(INestedWordAutomatonOldApi operand,
+									  INestedWordAutomatonOldApi result) throws OperationCanceledException {
 		if (resultCheckStackHeight >= maxResultCheckStackHeight) return true;
 		resultCheckStackHeight++;
 		s_Logger.debug("Testing correctness of minimizeDfa");
@@ -251,14 +251,14 @@ public class ResultChecker<LETTER,STATE> {
 		return correct;
 	}
 	
-	public static boolean reduceBuchi(INestedWordAutomaton operand,
-			INestedWordAutomaton result) throws OperationCanceledException {
+	public static boolean reduceBuchi(INestedWordAutomatonOldApi operand,
+			INestedWordAutomatonOldApi result) throws OperationCanceledException {
 		if (resultCheckStackHeight >= maxResultCheckStackHeight)
 			return true;
 		resultCheckStackHeight++;
 		s_Logger.debug("Testing correctness of reduceBuchi");
 		
-		INestedWordAutomaton minimizedOperand = (new MinimizeDfa(operand)).getResult();
+		INestedWordAutomatonOldApi minimizedOperand = (new MinimizeDfa(operand)).getResult();
 
 		boolean correct = true;
 		NestedLassoRun inOperandButNotInResultBuchi = nwaBuchiLanguageInclusion(minimizedOperand,result);
@@ -279,7 +279,7 @@ public class ResultChecker<LETTER,STATE> {
 		return correct;
 	}
 	
-	public static boolean buchiEmptiness(INestedWordAutomaton operand,
+	public static boolean buchiEmptiness(INestedWordAutomatonOldApi operand,
 										 NestedLassoRun result) {
 		if (resultCheckStackHeight >= maxResultCheckStackHeight) return true;
 		resultCheckStackHeight++;
@@ -298,9 +298,9 @@ public class ResultChecker<LETTER,STATE> {
 	}
 	
 	
-	public static boolean buchiIntersect(INestedWordAutomaton operand1,
-			INestedWordAutomaton operand2,
-			INestedWordAutomaton result) {
+	public static boolean buchiIntersect(INestedWordAutomatonOldApi operand1,
+			INestedWordAutomatonOldApi operand2,
+			INestedWordAutomatonOldApi result) {
 		if (resultCheckStackHeight >= maxResultCheckStackHeight) return true;
 		resultCheckStackHeight++;
 		s_Logger.info("Testing correctness of buchiIntersect");
@@ -315,8 +315,8 @@ public class ResultChecker<LETTER,STATE> {
 	
 
 	
-	public static boolean buchiComplement(INestedWordAutomaton operand,
-										  INestedWordAutomaton result) throws OperationCanceledException {
+	public static boolean buchiComplement(INestedWordAutomatonOldApi operand,
+										  INestedWordAutomatonOldApi result) throws OperationCanceledException {
 		if (resultCheckStackHeight >= maxResultCheckStackHeight) return true;
 		resultCheckStackHeight++;
 		s_Logger.info("Testing correctness of complementBuchi");
@@ -351,8 +351,8 @@ public class ResultChecker<LETTER,STATE> {
 	}
 	
 	
-	public static boolean buchiComplementSVW(INestedWordAutomaton operand,
-			INestedWordAutomaton result) throws OperationCanceledException {
+	public static boolean buchiComplementSVW(INestedWordAutomatonOldApi operand,
+			INestedWordAutomatonOldApi result) throws OperationCanceledException {
 		if (resultCheckStackHeight >= maxResultCheckStackHeight) return true;
 		resultCheckStackHeight++;
 		s_Logger.info("Testing correctness of complementBuchiSVW");
@@ -398,13 +398,13 @@ public class ResultChecker<LETTER,STATE> {
 	
 	
 	
-	public static boolean petriNetJulian(INestedWordAutomaton op,
+	public static boolean petriNetJulian(INestedWordAutomatonOldApi op,
 										 PetriNetJulian result) throws OperationCanceledException {
 		if (resultCheckStackHeight >= maxResultCheckStackHeight) return true;
 		resultCheckStackHeight++;
 		s_Logger.info("Testing correctness of PetriNetJulian constructor");
 
-		INestedWordAutomaton resultAutomata = 
+		INestedWordAutomatonOldApi resultAutomata = 
 							(new PetriNet2FiniteAutomaton(result)).getResult();
 		boolean correct = true;
 		correct &= (nwaLanguageInclusion(resultAutomata,op) == null);
@@ -492,9 +492,9 @@ public class ResultChecker<LETTER,STATE> {
 		resultCheckStackHeight++;
 		s_Logger.info("Testing correctness of prefixProduct");
 
-		INestedWordAutomaton op1AsNwa = (new PetriNet2FiniteAutomaton(operand1)).getResult();
-		INestedWordAutomaton resultAsNwa = (new PetriNet2FiniteAutomaton(result)).getResult();
-		INestedWordAutomaton nwaResult = (new ConcurrentProduct(op1AsNwa, operand2, true)).getResult();
+		INestedWordAutomatonOldApi op1AsNwa = (new PetriNet2FiniteAutomaton(operand1)).getResult();
+		INestedWordAutomatonOldApi resultAsNwa = (new PetriNet2FiniteAutomaton(result)).getResult();
+		INestedWordAutomatonOldApi nwaResult = (new ConcurrentProduct(op1AsNwa, operand2, true)).getResult();
 		boolean correct = true;
 		correct &= (new IsIncluded(resultAsNwa,nwaResult)).getResult();
 		correct &= (new IsIncluded(nwaResult,resultAsNwa)).getResult();
@@ -513,9 +513,9 @@ public class ResultChecker<LETTER,STATE> {
 		resultCheckStackHeight++;
 		s_Logger.info("Testing correctness of differenceBlackAndWhite");
 
-		INestedWordAutomaton op1AsNwa = (new PetriNet2FiniteAutomaton(operand1)).getResult();
-		INestedWordAutomaton rcResult = (new Difference(op1AsNwa, operand2)).getResult();
-		INestedWordAutomaton resultAsNwa = (new PetriNet2FiniteAutomaton(result)).getResult();
+		INestedWordAutomatonOldApi op1AsNwa = (new PetriNet2FiniteAutomaton(operand1)).getResult();
+		INestedWordAutomatonOldApi rcResult = (new Difference(op1AsNwa, operand2)).getResult();
+		INestedWordAutomatonOldApi resultAsNwa = (new PetriNet2FiniteAutomaton(result)).getResult();
 		boolean correct = true;
 		correct &= (nwaLanguageInclusion(resultAsNwa,rcResult) == null);
 		correct &= (nwaLanguageInclusion(rcResult,resultAsNwa) == null);
@@ -530,8 +530,8 @@ public class ResultChecker<LETTER,STATE> {
 		if (resultCheckStackHeight >= maxResultCheckStackHeight) return true;
 		resultCheckStackHeight++;
 		s_Logger.info("Testing Petri net language equivalence");
-		INestedWordAutomaton finAuto1 = (new PetriNet2FiniteAutomaton(net1)).getResult();
-		INestedWordAutomaton finAuto2 = (new PetriNet2FiniteAutomaton(net2)).getResult();
+		INestedWordAutomatonOldApi finAuto1 = (new PetriNet2FiniteAutomaton(net1)).getResult();
+		INestedWordAutomatonOldApi finAuto2 = (new PetriNet2FiniteAutomaton(net2)).getResult();
 		NestedRun subsetCounterex = nwaLanguageInclusion(finAuto1, finAuto2);
 		boolean subset = subsetCounterex == null;
 		if (!subset) {
@@ -548,7 +548,7 @@ public class ResultChecker<LETTER,STATE> {
 		return result;
 	}
 	
-	public static <LETTER, STATE> boolean removeUnreachable(ReachableStatesAutomaton<LETTER, STATE> result, INestedWordAutomaton<LETTER, STATE> operand) throws OperationCanceledException {
+	public static <LETTER, STATE> boolean removeUnreachable(NestedWordAutomatonReachableStates<LETTER, STATE> result, INestedWordAutomatonOldApi<LETTER, STATE> operand) throws OperationCanceledException {
 		if (resultCheckStackHeight >= maxResultCheckStackHeight) return true;
 		resultCheckStackHeight++;
 		boolean correct = true;
@@ -621,8 +621,8 @@ public class ResultChecker<LETTER,STATE> {
 //		return correct;
 //	}
 	
-	private static NestedRun nwaLanguageInclusion(INestedWordAutomaton nwa1, INestedWordAutomaton nwa2) throws OperationCanceledException {
-		INestedWordAutomaton nwa1MinusNwa2 = (new Difference(nwa1, nwa2)).getResult();
+	private static NestedRun nwaLanguageInclusion(INestedWordAutomatonOldApi nwa1, INestedWordAutomatonOldApi nwa2) throws OperationCanceledException {
+		INestedWordAutomatonOldApi nwa1MinusNwa2 = (new Difference(nwa1, nwa2)).getResult();
 		NestedRun inNwa1ButNotInNwa2 = (new IsEmpty(nwa1MinusNwa2)).getNestedRun();
 		return inNwa1ButNotInNwa2;
 //		if (inNwa1ButNotInNwa2 != null) {
@@ -632,13 +632,13 @@ public class ResultChecker<LETTER,STATE> {
 //		}
 	}
 	
-	private static NestedLassoRun nwaBuchiLanguageInclusion(INestedWordAutomaton nwa1, INestedWordAutomaton nwa2) throws OperationCanceledException {
+	private static NestedLassoRun nwaBuchiLanguageInclusion(INestedWordAutomatonOldApi nwa1, INestedWordAutomatonOldApi nwa2) throws OperationCanceledException {
 		return (new BuchiIsIncluded(nwa1, nwa2)).getCounterexample();
 	}
 	
 	
 	
-	public static void nwaInvarintChecks(INestedWordAutomaton nwa) throws OperationCanceledException {
+	public static void nwaInvarintChecks(INestedWordAutomatonOldApi nwa) throws OperationCanceledException {
 		if (m_AlreadyDoingInvariantCheck) {
 			return;
 		}

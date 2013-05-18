@@ -17,7 +17,7 @@ import org.apache.log4j.Logger;
 import de.uni_freiburg.informatik.ultimate.automata.Activator;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.DoubleDecker;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.IncomingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.IncomingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.IncomingReturnTransition;
@@ -47,7 +47,7 @@ public abstract class DoubleDeckerVisitor<LETTER,STATE> implements
 	public enum ReachFinal { UNKNOWN, AT_LEAST_ONCE  }
 	
 	
-	protected INestedWordAutomaton<LETTER,STATE> m_TraversedNwa;
+	protected INestedWordAutomatonOldApi<LETTER,STATE> m_TraversedNwa;
 
 
 	/**
@@ -147,7 +147,7 @@ private Set<STATE> m_DeadEnds;
 	
 
 	
-	public INestedWordAutomaton<LETTER,STATE> getResult() throws OperationCanceledException {
+	public INestedWordAutomatonOldApi<LETTER,STATE> getResult() throws OperationCanceledException {
 		return m_TraversedNwa;
 	}
 	

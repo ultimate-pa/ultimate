@@ -14,7 +14,7 @@ import java.util.Map;
 
 import org.apache.log4j.Logger;
 
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
@@ -92,8 +92,8 @@ public class AtsDefinitionPrinter<LETTER,STATE> {
 		
 		@SuppressWarnings("unchecked")
 		private void printAutomaton(Object automaton, Labeling labels) {
-			if (automaton instanceof INestedWordAutomaton) {
-				INestedWordAutomaton<LETTER,STATE> nwa = (INestedWordAutomaton<LETTER,STATE>) automaton;
+			if (automaton instanceof INestedWordAutomatonOldApi) {
+				INestedWordAutomatonOldApi<LETTER,STATE> nwa = (INestedWordAutomatonOldApi<LETTER,STATE>) automaton;
 				if (labels == Labeling.TOSTRING) {
 					new NwaTestFileWriterToString(nwa);
 				}
@@ -135,13 +135,13 @@ public class AtsDefinitionPrinter<LETTER,STATE> {
 		 */
 		private class NwaTestFileWriter {
 
-			INestedWordAutomaton<LETTER,STATE> m_Nwa;
+			INestedWordAutomatonOldApi<LETTER,STATE> m_Nwa;
 			Map<LETTER, String> internalAlphabet;
 			Map<LETTER, String> callAlphabet;
 			Map<LETTER, String> returnAlphabet;
 			Map<STATE, String> stateMapping;
 
-			public NwaTestFileWriter(INestedWordAutomaton<LETTER,STATE> nwa) {
+			public NwaTestFileWriter(INestedWordAutomatonOldApi<LETTER,STATE> nwa) {
 				m_Nwa = nwa;
 				internalAlphabet = getAlphabetMapping(nwa.getInternalAlphabet(), "a");
 				callAlphabet = getAlphabetMapping(nwa.getCallAlphabet(), "c");
@@ -303,7 +303,7 @@ public class AtsDefinitionPrinter<LETTER,STATE> {
 		 */
 		private class NwaTestFileWriterToString extends NwaTestFileWriter{
 
-			public NwaTestFileWriterToString(INestedWordAutomaton<LETTER,STATE> nwa) {
+			public NwaTestFileWriterToString(INestedWordAutomatonOldApi<LETTER,STATE> nwa) {
 				super(nwa);
 			}
 
@@ -335,7 +335,7 @@ public class AtsDefinitionPrinter<LETTER,STATE> {
 		 */
 		private class NwaTestFileWriterToStringWithHash extends NwaTestFileWriter{
 
-			public NwaTestFileWriterToStringWithHash(INestedWordAutomaton<LETTER,STATE> nwa) {
+			public NwaTestFileWriterToStringWithHash(INestedWordAutomatonOldApi<LETTER,STATE> nwa) {
 				super(nwa);
 			}
 

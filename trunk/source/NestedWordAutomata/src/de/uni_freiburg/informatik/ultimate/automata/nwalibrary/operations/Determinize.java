@@ -15,7 +15,7 @@ import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.DoubleDecker;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
@@ -27,7 +27,7 @@ public class Determinize<LETTER,STATE> extends DoubleDeckerBuilder<LETTER,STATE>
 	protected static Logger s_Logger = 
 		UltimateServices.getInstance().getLogger(Activator.PLUGIN_ID);
 	
-	protected INestedWordAutomaton<LETTER,STATE> m_Operand;
+	protected INestedWordAutomatonOldApi<LETTER,STATE> m_Operand;
 	protected IStateDeterminizer<LETTER,STATE> stateDeterminizer;
 	protected StateFactory<STATE> contentFactory;
 	
@@ -68,7 +68,7 @@ public class Determinize<LETTER,STATE> extends DoubleDeckerBuilder<LETTER,STATE>
 	
 	
 	
-	public Determinize(INestedWordAutomaton<LETTER,STATE> input, 
+	public Determinize(INestedWordAutomatonOldApi<LETTER,STATE> input, 
 			IStateDeterminizer<LETTER,STATE> stateDeterminizer) 
 											throws OperationCanceledException {
 		this.contentFactory = input.getStateFactory();
@@ -86,7 +86,7 @@ public class Determinize<LETTER,STATE> extends DoubleDeckerBuilder<LETTER,STATE>
 		s_Logger.debug(exitMessage());
 	}
 	
-	public Determinize(INestedWordAutomaton<LETTER,STATE> input) 
+	public Determinize(INestedWordAutomatonOldApi<LETTER,STATE> input) 
 											throws OperationCanceledException {
 		this.contentFactory = input.getStateFactory();
 		this.m_Operand = input;
@@ -206,7 +206,7 @@ public class Determinize<LETTER,STATE> extends DoubleDeckerBuilder<LETTER,STATE>
 
 
 	@Override
-	public INestedWordAutomaton<LETTER, STATE> getResult()
+	public INestedWordAutomatonOldApi<LETTER, STATE> getResult()
 			throws OperationCanceledException {
 		if (stateDeterminizer instanceof PowersetDeterminizer) {
 			assert (ResultChecker.determinize(m_Operand, m_TraversedNwa));

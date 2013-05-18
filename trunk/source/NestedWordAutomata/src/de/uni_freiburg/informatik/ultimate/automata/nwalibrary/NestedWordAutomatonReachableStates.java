@@ -21,11 +21,11 @@ import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 
-public class ReachableStatesAutomaton<LETTER,STATE> implements INestedWordAutomaton<LETTER,STATE>, INWA<LETTER,STATE>, IDoubleDeckerAutomaton<LETTER, STATE> {
+public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INestedWordAutomatonOldApi<LETTER,STATE>, INestedWordAutomaton<LETTER,STATE>, IDoubleDeckerAutomaton<LETTER, STATE> {
 
 	private static Logger s_Logger = UltimateServices.getInstance().getLogger(Activator.PLUGIN_ID);
 	
-	private final IOutTransitionNwa<LETTER,STATE> m_Operand;
+	private final INestedWordAutomatonSimple<LETTER,STATE> m_Operand;
 	
 	private final Collection<LETTER> m_InternalAlphabet;
 	private final Collection<LETTER> m_CallAlphabet;
@@ -66,7 +66,7 @@ public class ReachableStatesAutomaton<LETTER,STATE> implements INestedWordAutoma
 		returnSuccs.add(returnSucc);
 	}
 	
-	public ReachableStatesAutomaton(IOutTransitionNwa<LETTER,STATE> operand) throws OperationCanceledException {
+	public NestedWordAutomatonReachableStates(INestedWordAutomatonSimple<LETTER,STATE> operand) throws OperationCanceledException {
 		this.m_Operand = operand;
 		m_InternalAlphabet = operand.getInternalAlphabet();
 		m_CallAlphabet = operand.getCallAlphabet();
@@ -304,13 +304,6 @@ public class ReachableStatesAutomaton<LETTER,STATE> implements INestedWordAutoma
 		return m_States.get(hier).getSummaryReturnTransitions(letter);
 	}
 
-	@Override
-	public Iterable<IncomingReturnTransition<LETTER, STATE>> getIncomingReturnTransitions(
-			LETTER letter, STATE hier) {
-		return m_States.get(hier).getIncomingReturnTransitions(letter);
-	}
-	
-	
 	@Override
 	public Iterable<IncomingInternalTransition<LETTER, STATE>> internalPredecessors(
 			LETTER letter, STATE succ) {

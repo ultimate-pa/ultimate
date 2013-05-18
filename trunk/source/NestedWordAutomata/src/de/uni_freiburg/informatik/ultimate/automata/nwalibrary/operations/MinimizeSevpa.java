@@ -19,7 +19,7 @@ import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.IDoubleDeckerAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.SummaryReturnTransition;
@@ -42,7 +42,7 @@ public class MinimizeSevpa<LETTER,STATE> implements IOperation {
 	private static Logger s_Logger = 
 			UltimateServices.getInstance().getLogger(Activator.PLUGIN_ID);
 	// old automaton
-	private final INestedWordAutomaton<LETTER,STATE> m_operand;
+	private final INestedWordAutomatonOldApi<LETTER,STATE> m_operand;
 	// new (minimized) automaton
 	private NestedWordAutomaton<LETTER,STATE> m_nwa;
 	// enables/disables detection of unnecessary states
@@ -87,7 +87,7 @@ public class MinimizeSevpa<LETTER,STATE> implements IOperation {
 	 * @param operand nested word automaton to minimize
 	 * @throws OperationCanceledException iff cancel signal is received
 	 */
-	public MinimizeSevpa(INestedWordAutomaton<LETTER,STATE> operand)
+	public MinimizeSevpa(INestedWordAutomatonOldApi<LETTER,STATE> operand)
 			throws OperationCanceledException {
 		this(operand, null, true, false, operand.getStateFactory());
 	}
@@ -102,7 +102,7 @@ public class MinimizeSevpa<LETTER,STATE> implements IOperation {
 	 * @throws OperationCanceledException iff cancel signal is received
 	 */
 	public MinimizeSevpa(
-			final INestedWordAutomaton<LETTER,STATE> operand,
+			final INestedWordAutomatonOldApi<LETTER,STATE> operand,
 			Collection<Set<STATE>> equivalenceClasses,
 			final boolean removeUnreachables,
 			final boolean removeDeadEnds,
@@ -1808,7 +1808,7 @@ public class MinimizeSevpa<LETTER,STATE> implements IOperation {
 	 */
 	public class Partition {
 		// original nested word automaton
-		private INestedWordAutomaton<LETTER, STATE> m_parentOperand;
+		private INestedWordAutomatonOldApi<LETTER, STATE> m_parentOperand;
 		// equivalence classes
 		private LinkedList<EquivalenceClass> m_equivalenceClasses;
 		// work list (W) with equivalence classes still to refine
@@ -1820,7 +1820,7 @@ public class MinimizeSevpa<LETTER,STATE> implements IOperation {
 		 * @param operand original nested word automaton
 		 * @param states number of states (avoids rehashing)
 		 */
-		Partition(INestedWordAutomaton<LETTER, STATE> operand, int states) {
+		Partition(INestedWordAutomatonOldApi<LETTER, STATE> operand, int states) {
 			this.m_parentOperand = operand;
 			this.m_equivalenceClasses = new LinkedList<EquivalenceClass>();
 			this.m_workList = new WorkList(m_parentOperand.size() / 2);
@@ -2470,7 +2470,7 @@ public class MinimizeSevpa<LETTER,STATE> implements IOperation {
 	 */
 	class StatesContainer {
 		// original nested word automaton
-		private INestedWordAutomaton<LETTER, STATE> m_parentOperand;
+		private INestedWordAutomatonOldApi<LETTER, STATE> m_parentOperand;
 		// states
 		private HashSet<STATE> m_finals;
 		private HashSet<STATE> m_nonfinals;
@@ -2480,7 +2480,7 @@ public class MinimizeSevpa<LETTER,STATE> implements IOperation {
 		/**
 		 * constructor
 		 */
-		StatesContainer(INestedWordAutomaton<LETTER, STATE> operand) {
+		StatesContainer(INestedWordAutomatonOldApi<LETTER, STATE> operand) {
 			this.m_parentOperand = operand;
 			if (m_removeUnreachables) {
 				this.m_mode = StatesContainerMode.makeCopy;
@@ -3008,7 +3008,7 @@ public class MinimizeSevpa<LETTER,STATE> implements IOperation {
 	}
 	
 	@Override
-	public INestedWordAutomaton<LETTER,STATE> getResult()
+	public INestedWordAutomatonOldApi<LETTER,STATE> getResult()
 			throws OperationCanceledException {
 		if (m_operand == null)
 			throw new OperationCanceledException();

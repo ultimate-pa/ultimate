@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 
 
@@ -21,7 +21,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomat
 
 public class DeterminizeUnderappox<LETTER,STATE> extends Determinize<LETTER, STATE> {
 
-	public DeterminizeUnderappox(INestedWordAutomaton<LETTER,STATE> input,
+	public DeterminizeUnderappox(INestedWordAutomatonOldApi<LETTER,STATE> input,
 			IStateDeterminizer<LETTER,STATE> stateDeterminizer)
 			throws OperationCanceledException {
 		super(input, stateDeterminizer);
@@ -73,7 +73,7 @@ public class DeterminizeUnderappox<LETTER,STATE> extends Determinize<LETTER, STA
 	}
 	
 	@Override
-	public INestedWordAutomaton<LETTER, STATE> getResult()
+	public INestedWordAutomatonOldApi<LETTER, STATE> getResult()
 			throws OperationCanceledException {
 		return m_TraversedNwa;
 	}

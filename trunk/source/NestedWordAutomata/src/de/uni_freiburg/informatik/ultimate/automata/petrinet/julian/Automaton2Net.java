@@ -5,7 +5,7 @@ import org.apache.log4j.Logger;
 import de.uni_freiburg.informatik.ultimate.automata.Activator;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 
@@ -14,10 +14,10 @@ public class Automaton2Net<LETTER, STATE> implements IOperation {
 	private static Logger s_Logger = UltimateServices.getInstance().getLogger(
 			Activator.PLUGIN_ID);
 
-	INestedWordAutomaton<LETTER, STATE> m_Operand;
+	INestedWordAutomatonOldApi<LETTER, STATE> m_Operand;
 	IPetriNet<LETTER, STATE> m_Net;
 
-	public Automaton2Net(INestedWordAutomaton<LETTER, STATE> operand) throws OperationCanceledException {
+	public Automaton2Net(INestedWordAutomatonOldApi<LETTER, STATE> operand) throws OperationCanceledException {
 		m_Operand = operand;
 		s_Logger.info(startMessage());
 		m_Net = new PetriNetJulian<LETTER, STATE>(m_Operand);

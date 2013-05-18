@@ -17,7 +17,7 @@ import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StringFactory;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
@@ -43,7 +43,7 @@ public class MinimizeDfa<LETTER,STATE> implements IOperation {
     /**
      * The input automaton.
      */
-    private INestedWordAutomaton<LETTER,STATE> m_Operand;
+    private INestedWordAutomatonOldApi<LETTER,STATE> m_Operand;
 
     /*_______________________________________________________________________*\
     \* CONSTRUCTORS                                                          */
@@ -55,7 +55,7 @@ public class MinimizeDfa<LETTER,STATE> implements IOperation {
 	 *            the input automaton
 	 * @throws OperationCanceledException 
 	 */
-    public MinimizeDfa(INestedWordAutomaton<LETTER,STATE> operand)
+    public MinimizeDfa(INestedWordAutomatonOldApi<LETTER,STATE> operand)
             throws OperationCanceledException {
         if (new HasUnreachableStates<LETTER,STATE>(operand)
 				.result()) {
@@ -272,7 +272,7 @@ public class MinimizeDfa<LETTER,STATE> implements IOperation {
 	 * Print transitions of this nwa.
 	 * @param nwa
 	 */
-	private void printTransitions(INestedWordAutomaton<LETTER,STATE> nwa) {
+	private void printTransitions(INestedWordAutomatonOldApi<LETTER,STATE> nwa) {
 		StringBuilder msg;
 		for (STATE c : nwa.getStates())
 		    for (LETTER s : nwa.getInternalAlphabet())
@@ -358,7 +358,7 @@ public class MinimizeDfa<LETTER,STATE> implements IOperation {
     }
 
     @Override
-    public  INestedWordAutomaton<LETTER,STATE> getResult() {
+    public  INestedWordAutomatonOldApi<LETTER,STATE> getResult() {
         return m_Result;
     }
     

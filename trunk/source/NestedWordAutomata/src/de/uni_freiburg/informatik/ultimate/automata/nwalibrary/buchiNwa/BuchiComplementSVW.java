@@ -5,7 +5,7 @@ import de.uni_freiburg.informatik.ultimate.automata.Activator;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 
 /**
@@ -25,7 +25,7 @@ public class BuchiComplementSVW<LETTER,STATE> implements IOperation {
 	private static Logger s_Logger = 
 		UltimateServices.getInstance().getLogger(Activator.PLUGIN_ID);
 	
-	private INestedWordAutomaton<LETTER,STATE> m_Operand;
+	private INestedWordAutomatonOldApi<LETTER,STATE> m_Operand;
 	private BuchiComplementAutomatonSVW<LETTER,STATE> m_Result;
 
 	
@@ -46,7 +46,7 @@ public class BuchiComplementSVW<LETTER,STATE> implements IOperation {
 				m_Result.sizeInformation();
 	}
 		
-	public BuchiComplementSVW(INestedWordAutomaton<LETTER,STATE> operand)
+	public BuchiComplementSVW(INestedWordAutomatonOldApi<LETTER,STATE> operand)
 			throws OperationCanceledException {
 		m_Operand = operand;
 		s_Logger.info(startMessage());
@@ -55,7 +55,7 @@ public class BuchiComplementSVW<LETTER,STATE> implements IOperation {
 	}
 
 	@Override
-	public INestedWordAutomaton<LETTER,STATE> getResult()
+	public INestedWordAutomatonOldApi<LETTER,STATE> getResult()
 			throws OperationCanceledException {
 		assert ResultChecker.buchiComplement(m_Operand, m_Result);
 		return m_Result;

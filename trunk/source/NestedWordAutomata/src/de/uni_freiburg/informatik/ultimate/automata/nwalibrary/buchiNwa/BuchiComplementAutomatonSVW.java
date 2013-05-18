@@ -17,7 +17,7 @@ import de.uni_freiburg.informatik.ultimate.automata.Activator;
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.Word;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.IncomingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.IncomingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.IncomingReturnTransition;
@@ -42,7 +42,7 @@ import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
  * 
  */
 public class BuchiComplementAutomatonSVW<LETTER, STATE>
-								implements INestedWordAutomaton<LETTER, STATE> {
+								implements INestedWordAutomatonOldApi<LETTER, STATE> {
 	private TransitionMonoidAutomaton m_TMA;
 	private Collection<LETTER> m_Alphabet;
 	private SizeInfoContainer m_sizeInfo = null;
@@ -64,7 +64,7 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE>
 						"Transform to NestedWordAutomaton to get full support.";
 
 	public BuchiComplementAutomatonSVW(
-			INestedWordAutomaton<LETTER, STATE> origAutomaton)
+			INestedWordAutomatonOldApi<LETTER, STATE> origAutomaton)
 											throws OperationCanceledException {
 		m_TMA = new TransitionMonoidAutomaton(origAutomaton);
 		m_Alphabet = origAutomaton.getAlphabet();
@@ -577,7 +577,7 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE>
 		public Integer initialState = 0; // number assigned to copy of τ(ε)
 		public Integer initialTMA = initialState;
 
-		private INestedWordAutomaton<LETTER, STATE> m_OrigAutomaton;
+		private INestedWordAutomatonOldApi<LETTER, STATE> m_OrigAutomaton;
 
 		// Transitions
 		private Map<Integer, Map<LETTER, Integer>> m_TransitionsOut =
@@ -597,7 +597,7 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE>
 		 * are simply represented by Integer objects.
 		 */
 		public TransitionMonoidAutomaton(
-				INestedWordAutomaton<LETTER, STATE> origAutomaton)
+				INestedWordAutomatonOldApi<LETTER, STATE> origAutomaton)
 											throws OperationCanceledException {
 			m_OrigAutomaton = origAutomaton;
 			Collection<LETTER> alphabet = origAutomaton.getInternalAlphabet();

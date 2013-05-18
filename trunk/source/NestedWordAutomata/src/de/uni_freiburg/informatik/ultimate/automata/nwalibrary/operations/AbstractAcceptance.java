@@ -8,7 +8,7 @@ import java.util.Stack;
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.automata.Activator;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 
@@ -41,7 +41,7 @@ public abstract class AbstractAcceptance<LETTER,STATE> {
 	 * Returns true iff the topmost stack element is an accepting state.
 	 */
 	public boolean isAcceptingConfiguration(Stack<STATE> configuration,
-			INestedWordAutomaton<LETTER,STATE> nwa) {
+			INestedWordAutomatonOldApi<LETTER,STATE> nwa) {
 			STATE state = configuration.peek();
 			if (nwa.isFinal(state)) {
 				return true;
@@ -70,7 +70,7 @@ public abstract class AbstractAcceptance<LETTER,STATE> {
 	 * 
 	 */
 	public Set<Stack<STATE>> successorConfigurations(Set<Stack<STATE>> configurations,
-			NestedWord<LETTER> nw, int position, INestedWordAutomaton<LETTER,STATE> nwa,
+			NestedWord<LETTER> nw, int position, INestedWordAutomatonOldApi<LETTER,STATE> nwa,
 			boolean addInitial) {
 		Set<Stack<STATE>> succConfigs = new HashSet<Stack<STATE>>();
 		if (addInitial) {

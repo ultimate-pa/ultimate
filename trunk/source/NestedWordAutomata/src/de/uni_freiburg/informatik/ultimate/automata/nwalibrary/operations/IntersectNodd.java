@@ -13,7 +13,7 @@ import de.uni_freiburg.informatik.ultimate.automata.Activator;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 
@@ -50,9 +50,9 @@ public class IntersectNodd<LETTER,STATE> implements IOperation {
 	}
 	
 	
-	private INestedWordAutomaton<LETTER,STATE> fstOperand;
+	private INestedWordAutomatonOldApi<LETTER,STATE> fstOperand;
 
-	public IntersectNodd (INestedWordAutomaton<LETTER,STATE> nwa, INestedWordAutomaton<LETTER,STATE> nwa2) {
+	public IntersectNodd (INestedWordAutomatonOldApi<LETTER,STATE> nwa, INestedWordAutomatonOldApi<LETTER,STATE> nwa2) {
 		this.fstOperand = nwa;
 		this.sndOperand = nwa2;
 		s_Logger.info(startMessage());
@@ -60,7 +60,7 @@ public class IntersectNodd<LETTER,STATE> implements IOperation {
 		s_Logger.info(exitMessage());
 	}
 	
-	public INestedWordAutomaton<LETTER,STATE> getResult() throws OperationCanceledException {
+	public INestedWordAutomatonOldApi<LETTER,STATE> getResult() throws OperationCanceledException {
 		assert(ResultChecker.intersect(fstOperand, sndOperand, m_result));
 		return m_result;
 	}
@@ -88,7 +88,7 @@ public class IntersectNodd<LETTER,STATE> implements IOperation {
 	LinkedList<STATE> m_toprocess = new LinkedList<STATE>();
 	Set<STATE> m_visited = new HashSet<STATE>();
 	
-	INestedWordAutomaton<LETTER,STATE> sndOperand;
+	INestedWordAutomatonOldApi<LETTER,STATE> sndOperand;
 	NestedWordAutomaton<LETTER,STATE> m_result;
 	
 	private void buildProduct() {

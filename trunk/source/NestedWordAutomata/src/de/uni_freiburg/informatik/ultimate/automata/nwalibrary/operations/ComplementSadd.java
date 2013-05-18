@@ -6,7 +6,7 @@ import de.uni_freiburg.informatik.ultimate.automata.Activator;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 
 public class ComplementSadd<LETTER, STATE> implements IOperation {
@@ -14,9 +14,9 @@ public class ComplementSadd<LETTER, STATE> implements IOperation {
 	private static Logger s_Logger = UltimateServices.getInstance().getLogger(
 			Activator.PLUGIN_ID);
 
-	protected INestedWordAutomaton<LETTER, STATE> m_Operand;
-	protected INestedWordAutomaton<LETTER, STATE> m_DeterminizedOperand;
-	protected INestedWordAutomaton<LETTER, STATE> m_Result;
+	protected INestedWordAutomatonOldApi<LETTER, STATE> m_Operand;
+	protected INestedWordAutomatonOldApi<LETTER, STATE> m_DeterminizedOperand;
+	protected INestedWordAutomatonOldApi<LETTER, STATE> m_Result;
 
 	@Override
 	public String operationName() {
@@ -35,13 +35,13 @@ public class ComplementSadd<LETTER, STATE> implements IOperation {
 				+ m_Result.sizeInformation();
 	}
 
-	public INestedWordAutomaton<LETTER, STATE> getResult()
+	public INestedWordAutomatonOldApi<LETTER, STATE> getResult()
 											throws OperationCanceledException {
 		assert (ResultChecker.complement(m_Operand, m_Result));
 		return m_Result;
 	}
 
-	public ComplementSadd(INestedWordAutomaton<LETTER, STATE> operand)
+	public ComplementSadd(INestedWordAutomatonOldApi<LETTER, STATE> operand)
 											throws OperationCanceledException {
 		m_Operand = operand;
 

@@ -12,7 +12,7 @@ import de.uni_freiburg.informatik.ultimate.automata.Activator;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.Senwa;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.SenwaWalker.ISuccessorVisitor;
@@ -27,8 +27,8 @@ public class DifferenceSenwa<LETTER, STATE> implements
 	private static Logger s_Logger = 
 			UltimateServices.getInstance().getLogger(Activator.PLUGIN_ID);
 		
-	private final INestedWordAutomaton<LETTER,STATE> minuend;
-	private final INestedWordAutomaton<LETTER,STATE> subtrahend;
+	private final INestedWordAutomatonOldApi<LETTER,STATE> minuend;
+	private final INestedWordAutomatonOldApi<LETTER,STATE> subtrahend;
 	
 	private final IStateDeterminizer<LETTER,STATE> stateDeterminizer;
 	
@@ -82,8 +82,8 @@ public class DifferenceSenwa<LETTER, STATE> implements
 	
 	
 	public DifferenceSenwa(
-			INestedWordAutomaton<LETTER,STATE> minuend,
-			INestedWordAutomaton<LETTER,STATE> subtrahend)
+			INestedWordAutomatonOldApi<LETTER,STATE> minuend,
+			INestedWordAutomatonOldApi<LETTER,STATE> subtrahend)
 					throws OperationCanceledException {
 		contentFactory = minuend.getStateFactory();
 		this.minuend = minuend;
@@ -102,8 +102,8 @@ public class DifferenceSenwa<LETTER, STATE> implements
 	
 	
 	public DifferenceSenwa(
-			INestedWordAutomaton<LETTER,STATE> minuend,
-			INestedWordAutomaton<LETTER,STATE> subtrahend,
+			INestedWordAutomatonOldApi<LETTER,STATE> minuend,
+			INestedWordAutomatonOldApi<LETTER,STATE> subtrahend,
 			IStateDeterminizer<LETTER,STATE> stateDeterminizer,
 			boolean removeDeadEndsImmediately)
 					throws OperationCanceledException {

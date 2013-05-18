@@ -13,7 +13,7 @@ import de.uni_freiburg.informatik.ultimate.automata.Activator;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.Word;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
@@ -56,7 +56,7 @@ public class PetriNetJulian<S, C> implements IPetriNet<S, C> {
 		assert (!constantTokenAmount() || transitionsPreserveTokenAmount());
 	}
 
-	public PetriNetJulian(INestedWordAutomaton<S, C> nwa)
+	public PetriNetJulian(INestedWordAutomatonOldApi<S, C> nwa)
 			throws OperationCanceledException {
 		alphabet = nwa.getInternalAlphabet();
 		stateFactory = nwa.getStateFactory();

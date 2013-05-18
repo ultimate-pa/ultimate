@@ -24,7 +24,7 @@ import org.apache.log4j.Logger;
 import de.uni_freiburg.informatik.ultimate.automata.Activator;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StringFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.vertices.Player0Vertex;
@@ -85,7 +85,7 @@ public class DelayedSimulation<LETTER,STATE> {
      *            whether to use strongly connected components
      * @throws OperationCanceledException
      */
-    public DelayedSimulation(INestedWordAutomaton<LETTER,STATE> ba, boolean useSCCs)
+    public DelayedSimulation(INestedWordAutomatonOldApi<LETTER,STATE> ba, boolean useSCCs)
             throws OperationCanceledException {
     	long startTime = System.currentTimeMillis();
         this.v0 = new HashSet<Player0Vertex<LETTER,STATE>>();
@@ -119,7 +119,7 @@ public class DelayedSimulation<LETTER,STATE> {
      *            a Buchi automaton <b>without</b> dead ends
      * @throws OperationCanceledException
      */
-    private void generateGameGraph(INestedWordAutomaton<LETTER,STATE> ba)
+    private void generateGameGraph(INestedWordAutomatonOldApi<LETTER,STATE> ba)
             throws OperationCanceledException {
         HashMap<STATE, HashMap<STATE, ArrayList<Player1Vertex<LETTER,STATE>>>> edgeH =
                 new HashMap<STATE, HashMap<STATE, ArrayList<Player1Vertex<LETTER,STATE>>>>();
@@ -421,7 +421,7 @@ public class DelayedSimulation<LETTER,STATE> {
      * @return a Buchi automaton with reduced state space
      * @throws OperationCanceledException
      */
-    private void generateBuchiAutomaton(INestedWordAutomaton<LETTER,STATE> m_Operand)
+    private void generateBuchiAutomaton(INestedWordAutomatonOldApi<LETTER,STATE> m_Operand)
             throws OperationCanceledException {
         // determine which states to merge
         ArrayList<STATE> states = new ArrayList<STATE>();
