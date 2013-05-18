@@ -67,7 +67,7 @@ public class DeterminizeLazyTest<LETTER,STATE> implements IOperation {
 	public INestedWordAutomaton<LETTER, STATE> getResult()
 			throws OperationCanceledException {
 		if (stateDeterminizer instanceof PowersetDeterminizer) {
-//			assert (ResultChecker.determinize(m_Operand, m_Result));
+			assert (ResultChecker.determinize(m_Operand, m_Result));
 		}
 		return m_Result;
 	}

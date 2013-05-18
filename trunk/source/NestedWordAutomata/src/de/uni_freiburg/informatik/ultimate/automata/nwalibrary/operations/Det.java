@@ -43,6 +43,7 @@ public class Det<LETTER, STATE> implements IOutTransitionNwa<LETTER, STATE> {
 				m_StateDeterminizer.initialState();
 		STATE initialState = initialDet.getContent(m_StateFactory);
 		m_det2res.put(initialDet, initialState);
+		m_res2det.put(initialState, initialDet);
 		m_Cache.addState(true, initialDet.containsFinal(), initialState);
 	}
 	
@@ -168,7 +169,7 @@ public class Det<LETTER, STATE> implements IOutTransitionNwa<LETTER, STATE> {
 	public Iterable<OutgoingInternalTransition<LETTER, STATE>> internalSuccessors(
 			STATE state, LETTER letter) {
 		Collection<STATE> succs = m_Cache.succInternal(state, letter);
-		if (succs == null) {
+		if (succs == null || succs.isEmpty()) {
 			DeterminizedState<LETTER, STATE> detState = m_res2det.get(state);
 			assert (detState != null);
 			DeterminizedState<LETTER, STATE> detSucc = 
@@ -192,7 +193,7 @@ public class Det<LETTER, STATE> implements IOutTransitionNwa<LETTER, STATE> {
 	public Iterable<OutgoingCallTransition<LETTER, STATE>> callSuccessors(
 			STATE state, LETTER letter) {
 		Collection<STATE> succs = m_Cache.succCall(state, letter);
-		if (succs == null) {
+		if (succs == null || succs.isEmpty()) {
 			DeterminizedState<LETTER, STATE> detState = m_res2det.get(state);
 			assert (detState != null);
 			DeterminizedState<LETTER, STATE> detSucc = 
@@ -218,7 +219,7 @@ public class Det<LETTER, STATE> implements IOutTransitionNwa<LETTER, STATE> {
 	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSucccessors(
 			STATE state, STATE hier, LETTER letter) {
 		Collection<STATE> succs = m_Cache.succReturn(state, hier, letter);
-		if (succs == null) {
+		if (succs == null || succs.isEmpty()) {
 			DeterminizedState<LETTER, STATE> detState = m_res2det.get(state);
 			assert (detState != null);
 			DeterminizedState<LETTER, STATE> detHier = m_res2det.get(hier);
