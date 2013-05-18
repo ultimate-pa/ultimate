@@ -5,7 +5,6 @@
    <plugins>
       <plugin id="ACSLParser"/>
       <plugin id="ASTBuilder"/>
-      <plugin id="AutomataParser"/>
       <plugin id="AutomataScriptInterpreter"/>
       <plugin id="AutomataScriptParser"/>
       <plugin id="BoogieParser"/>
@@ -86,7 +85,6 @@
    <configurations>
       <plugin id="ACSLParser" autoStart="true" startLevel="0" />
       <plugin id="ASTBuilder" autoStart="true" startLevel="0" />
-      <plugin id="AutomataParser" autoStart="true" startLevel="0" />
       <plugin id="AutomataScriptInterpreter" autoStart="true" startLevel="0" />
       <plugin id="AutomataScriptParser" autoStart="true" startLevel="0" />
       <plugin id="BoogieParser" autoStart="true" startLevel="0" />

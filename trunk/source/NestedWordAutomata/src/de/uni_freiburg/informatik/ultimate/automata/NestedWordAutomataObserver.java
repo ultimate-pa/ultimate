@@ -10,13 +10,11 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StringFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.visualization.NwaToUltimateModel;
-import de.uni_freiburg.informatik.ultimate.automata.parser.astAnnotations.StartNode;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.BranchingProcess;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.visualization.BranchingProcessToUltimateModel;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.visualization.PetriNetToUltimateModel;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
-import de.uni_freiburg.informatik.ultimate.model.IAnnotations;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.INode;
 
@@ -101,11 +99,7 @@ public class NestedWordAutomataObserver implements IUnmanagedObserver {
 	 * Test File. Returns null if there is no print test case.
 	 */
 	private Object parseAst(INode node) {
-		IAnnotations annot = 
-			node.getPayload().getAnnotations().get("Automata Parser");
-		assert (annot instanceof StartNode);
-		TestFileExecutor tfe = new TestFileExecutor(node);
-		return tfe.getPrintAutomaton();
+		return node;
 	}
 
 	@Override
