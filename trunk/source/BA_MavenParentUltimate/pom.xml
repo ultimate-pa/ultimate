@@ -120,18 +120,18 @@
 		<module>../BoogiePLParser</module>
 		<module>../BoogiePreprocessor</module>
 		<module>../BoogiePrinter</module>
-		<module>../CFG2SMT</module>
+		
 		<module>../PrefuseVisualization</module>
 		<module>../SmtInterpol</module>
 		<module>../TraceAbstraction</module>
 		<module>../TraceAbstractionConcurrent</module>
 		<module>../JavaCup</module>
-		<module>../CFGBuilder</module>
+		
 		<module>../RCFGBuilder</module>
-		<module>../SafetyChecker</module>
+		
 		<module>../NestedWordAutomata</module>
 		
-		<module>../CFGReducer</module>
+		
 		<module>../Library-log4j</module>
 		<module>../Library-prefuse</module>
 		<module>../BA_FeatureUltimate</module>
@@ -148,7 +148,7 @@
 		<module>../CDTPlugin</module>
 		<module>../InteractiveConsole</module>
 		<module>../CACSL2BoogieTranslator</module>
-		<module>../ErrorLocationGenerator</module>
+		
 		<module>../ASTBuilder</module>
 		<module>../JungVisualization</module>
 		<module>../RankingFunctions</module>

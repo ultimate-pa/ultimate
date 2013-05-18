@@ -46,35 +46,7 @@
          unpack="false"/>
 
    <plugin
-         id="CFG2SMT"
-         download-size="0"
-         install-size="0"
-         version="0.0.0"
-         unpack="false"/>
-
-   <plugin
-         id="CFGBuilder"
-         download-size="0"
-         install-size="0"
-         version="0.0.0"
-         unpack="false"/>
-
-   <plugin
-         id="CFGReducer"
-         download-size="0"
-         install-size="0"
-         version="0.0.0"
-         unpack="false"/>
-
-   <plugin
          id="ConsoleOut"
-         download-size="0"
-         install-size="0"
-         version="0.0.0"
-         unpack="false"/>
-
-   <plugin
-         id="ErrorLocationGenerator"
          download-size="0"
          install-size="0"
          version="0.0.0"
@@ -103,13 +75,6 @@
 
    <plugin
          id="RCFGBuilder"
-         download-size="0"
-         install-size="0"
-         version="0.0.0"
-         unpack="false"/>
-
-   <plugin
-         id="SafetyChecker"
          download-size="0"
          install-size="0"
          version="0.0.0"
