@@ -665,11 +665,11 @@ public class TestFileExecutor {
 			return (new DeterminizeSadd<String,String>(op0)).getResult();
 		}
 		
-		if (operation.equals("determinizeLazyTest")){
-			checkOperands(operation, operands, -100);
-			INestedWordAutomaton op0 = (INestedWordAutomaton) operands.get(0);
-			return (new DeterminizeLazyTest<String,String>(op0, new PowersetDeterminizer<String, String>(op0))).getResult();
-		}
+//		if (operation.equals("determinizeLazyTest")){
+//			checkOperands(operation, operands, -100);
+//			INestedWordAutomaton op0 = (INestedWordAutomaton) operands.get(0);
+//			return (new DeterminizeLazyTest<String,String>(op0, new PowersetDeterminizer<String, String>(op0))).getResult();
+//		}
 
 		if (operation.equals("complement")){
 			checkOperands(operation, operands, -100);

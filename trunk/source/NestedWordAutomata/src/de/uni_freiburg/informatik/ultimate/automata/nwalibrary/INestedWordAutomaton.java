@@ -36,7 +36,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.NestedLa
  */
 
 public interface INestedWordAutomaton<LETTER,STATE> 
-										extends IAutomaton<LETTER,STATE> {
+										extends IAutomaton<LETTER,STATE>, IOutTransitionNwa<LETTER, STATE> {
 	/**
 	 * Letters allowed at internal positions of nested words accepted by this
 	 * automaton. If you use an nested word automaton as finite automaton this

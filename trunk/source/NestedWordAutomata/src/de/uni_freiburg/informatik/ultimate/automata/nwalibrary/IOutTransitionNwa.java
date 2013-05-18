@@ -1,9 +1,10 @@
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary;
 
 import java.util.Collection;
-import java.util.Iterator;
 
-public interface IOutTransitionNwa<LETTER, STATE> {
+import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
+
+public interface IOutTransitionNwa<LETTER, STATE> extends IAutomaton<LETTER, STATE> {
 	
 	public abstract Collection<LETTER> getInternalAlphabet();
 
@@ -15,7 +16,9 @@ public interface IOutTransitionNwa<LETTER, STATE> {
 
 	public abstract StateFactory<STATE> getStateFactory();
 	
-	public abstract Iterator<STATE> getInitialStates();
+	public abstract Iterable<STATE> getInitialStates();
+	
+	public abstract boolean isInitial(STATE state);
 
 	public abstract boolean isFinal(STATE state);
 
@@ -39,12 +42,6 @@ public interface IOutTransitionNwa<LETTER, STATE> {
 	
 	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSucccessors(
 			final STATE state, final STATE hier, final LETTER letter);
-	
-	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessors(
-			final STATE state, final LETTER letter);
-	
-	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessors(
-			final STATE state);
 	
 	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessorsGivenHier(
 			STATE state, STATE hier);

@@ -14,21 +14,18 @@ import java.util.Set;
 
 import org.apache.log4j.Logger;
 
-import petruchio.pn.reductors.DeadElementRemover;
-
 import de.uni_freiburg.informatik.ultimate.automata.Activator;
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.Word;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.RemoveUnreachable;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 
 public class ReachableStatesAutomaton<LETTER,STATE> implements INestedWordAutomaton<LETTER,STATE>, INWA<LETTER,STATE>, IDoubleDeckerAutomaton<LETTER, STATE> {
 
 	private static Logger s_Logger = UltimateServices.getInstance().getLogger(Activator.PLUGIN_ID);
 	
-	private final NestedWordAutomaton<LETTER,STATE> m_Operand;
+	private final IOutTransitionNwa<LETTER,STATE> m_Operand;
 	
 	private final Collection<LETTER> m_InternalAlphabet;
 	private final Collection<LETTER> m_CallAlphabet;
@@ -69,9 +66,9 @@ public class ReachableStatesAutomaton<LETTER,STATE> implements INestedWordAutoma
 		returnSuccs.add(returnSucc);
 	}
 	
-	public ReachableStatesAutomaton(INestedWordAutomaton<LETTER,STATE> operand) throws OperationCanceledException {
-		this.m_Operand = (NestedWordAutomaton<LETTER, STATE>) operand;
-		m_InternalAlphabet = operand.getAlphabet();
+	public ReachableStatesAutomaton(IOutTransitionNwa<LETTER,STATE> operand) throws OperationCanceledException {
+		this.m_Operand = operand;
+		m_InternalAlphabet = operand.getInternalAlphabet();
 		m_CallAlphabet = operand.getCallAlphabet();
 		m_ReturnAlphabet = operand.getReturnAlphabet();
 		m_StateFactory = operand.getStateFactory();
@@ -90,7 +87,7 @@ public class ReachableStatesAutomaton<LETTER,STATE> implements INestedWordAutoma
 					assert (downStatesConsistentwithEntriesDownStates(cec));
 				}
 			}
-			assert ResultChecker.removeUnreachable(this, operand);
+			
 		} catch (Error e) {
 			String message = "// Problem with  removeUnreachable";
 			ResultChecker.writeToFileIfPreferred(operand,

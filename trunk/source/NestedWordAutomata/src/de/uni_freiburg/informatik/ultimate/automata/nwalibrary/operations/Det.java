@@ -7,21 +7,15 @@ import java.util.Map;
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.Word;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INWA;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.IncomingCallTransition;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.IncomingInternalTransition;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.IncomingReturnTransition;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.IOutTransitionNwa;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.SummaryReturnTransition;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.NestedLassoRun;
 
-public class Det<LETTER, STATE> implements INestedWordAutomaton<LETTER, STATE>, INWA<LETTER, STATE> {
+public class Det<LETTER, STATE> implements IOutTransitionNwa<LETTER, STATE> {
 	
 	private final INestedWordAutomaton<LETTER, STATE> m_Operand;
 	private final NestedWordAutomaton<LETTER, STATE> m_Cache;
@@ -41,7 +35,7 @@ public class Det<LETTER, STATE> implements INestedWordAutomaton<LETTER, STATE>, 
 		m_StateFactory = sf;
 		m_Cache = new NestedWordAutomaton<LETTER, STATE>(operand.getAlphabet(), 
 				operand.getCallAlphabet(), operand.getReturnAlphabet(), sf);
-		constructInitialState();
+
 	}
 	
 	private void constructInitialState() {
@@ -63,31 +57,59 @@ public class Det<LETTER, STATE> implements INestedWordAutomaton<LETTER, STATE>, 
 		return state;
 	}
 	
-
-	@Override
-	public IRun<LETTER, STATE> acceptingRun() throws OperationCanceledException {
-		throw new UnsupportedOperationException();
+	
+	
+	public Collection<STATE> succInternal(STATE state, LETTER letter) {
+		Collection<STATE> succs = m_Cache.succInternal(state, letter);
+		if (succs == null) {
+			DeterminizedState<LETTER, STATE> detState = m_res2det.get(state);
+			assert (detState != null);
+			DeterminizedState<LETTER, STATE> detSucc = 
+					m_StateDeterminizer.internalSuccessor(detState, letter);
+			STATE succ = getOrConstructState(detSucc);
+			m_Cache.addInternalTransition(state, letter, succ);
+		}
+		return m_Cache.succInternal(state, letter);
 	}
 
-	@Override
-	public boolean accepts(Word<LETTER> word) {
-		throw new UnsupportedOperationException();
+	public Collection<STATE> succCall(STATE state, LETTER letter) {
+		Collection<STATE> succs = m_Cache.succCall(state, letter);
+		if (succs == null) {
+			DeterminizedState<LETTER, STATE> detState = m_res2det.get(state);
+			assert (detState != null);
+			DeterminizedState<LETTER, STATE> detSucc = 
+					m_StateDeterminizer.callSuccessor(detState, letter);
+			STATE succ = getOrConstructState(detSucc);
+			m_Cache.addCallTransition(state, letter, succ);
+		}
+		return m_Cache.succCall(state, letter);
 	}
 
+	public Collection<STATE> succReturn(STATE state, STATE hier, LETTER letter) {
+		Collection<STATE> succs = m_Cache.succReturn(state, hier, letter);
+		if (succs == null) {
+			DeterminizedState<LETTER, STATE> detState = m_res2det.get(state);
+			assert (detState != null);
+			DeterminizedState<LETTER, STATE> detHier = m_res2det.get(hier);
+			assert (detHier != null);
+			DeterminizedState<LETTER, STATE> detSucc = 
+					m_StateDeterminizer.returnSuccessor(detState, detHier, letter);
+			STATE succ = getOrConstructState(detSucc);
+			m_Cache.addReturnTransition(state, hier, letter, succ);
+		}
+		return m_Cache.succReturn(state, hier, letter);
+	}
+	
+	
+	
+	
+	
 	@Override
-	public int size() {
-		throw new UnsupportedOperationException();
+	public Iterable<STATE> getInitialStates() {
+		constructInitialState();
+		return m_Cache.getInitialStates();
 	}
 
-	@Override
-	public Collection<LETTER> getAlphabet() {
-		return m_Operand.getAlphabet();
-	}
-
-	@Override
-	public String sizeInformation() {
-		throw new UnsupportedOperationException();
-	}
 
 	@Override
 	public Collection<LETTER> getInternalAlphabet() {
@@ -108,22 +130,7 @@ public class Det<LETTER, STATE> implements INestedWordAutomaton<LETTER, STATE>, 
 	public StateFactory<STATE> getStateFactory() {
 		return m_Operand.getStateFactory();
 	}
-
-	@Override
-	public Collection<STATE> getStates() {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
-	public Collection<STATE> getInitialStates() {
-		return m_Cache.getInitialStates();
-	}
-
-	@Override
-	public Collection<STATE> getFinalStates() {
-		throw new UnsupportedOperationException();
-	}
-
+	
 	@Override
 	public boolean isInitial(STATE state) {
 		return m_Cache.isInitial(state);
@@ -143,160 +150,19 @@ public class Det<LETTER, STATE> implements INestedWordAutomaton<LETTER, STATE>, 
 
 	@Override
 	public Collection<LETTER> lettersInternal(STATE state) {
-		throw new UnsupportedOperationException();
+		return m_Operand.getInternalAlphabet();
 	}
 
 	@Override
 	public Collection<LETTER> lettersCall(STATE state) {
-		throw new UnsupportedOperationException();
+		return m_Operand.getCallAlphabet();
 	}
 
 	@Override
 	public Collection<LETTER> lettersReturn(STATE state) {
-		throw new UnsupportedOperationException();
+		return m_Operand.getReturnAlphabet();
 	}
 
-	@Override
-	public Collection<LETTER> lettersInternalIncoming(STATE state) {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
-	public Collection<LETTER> lettersCallIncoming(STATE state) {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
-	public Collection<LETTER> lettersReturnIncoming(STATE state) {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
-	public Collection<LETTER> lettersReturnSummary(STATE state) {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
-	public Collection<STATE> succInternal(STATE state, LETTER letter) {
-		Collection<STATE> succs = m_Cache.succInternal(state, letter);
-		if (succs == null) {
-			DeterminizedState<LETTER, STATE> detState = m_res2det.get(state);
-			assert (detState != null);
-			DeterminizedState<LETTER, STATE> detSucc = 
-					m_StateDeterminizer.internalSuccessor(detState, letter);
-			STATE succ = getOrConstructState(detSucc);
-			m_Cache.addInternalTransition(state, letter, succ);
-		}
-		return m_Cache.succInternal(state, letter);
-	}
-
-	@Override
-	public Collection<STATE> succCall(STATE state, LETTER letter) {
-		Collection<STATE> succs = m_Cache.succCall(state, letter);
-		if (succs == null) {
-			DeterminizedState<LETTER, STATE> detState = m_res2det.get(state);
-			assert (detState != null);
-			DeterminizedState<LETTER, STATE> detSucc = 
-					m_StateDeterminizer.callSuccessor(detState, letter);
-			STATE succ = getOrConstructState(detSucc);
-			m_Cache.addCallTransition(state, letter, succ);
-		}
-		return m_Cache.succCall(state, letter);
-	}
-
-	@Override
-	public Collection<STATE> hierPred(STATE state, LETTER letter) {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
-	public Collection<STATE> succReturn(STATE state, STATE hier, LETTER letter) {
-		Collection<STATE> succs = m_Cache.succReturn(state, hier, letter);
-		if (succs == null) {
-			DeterminizedState<LETTER, STATE> detState = m_res2det.get(state);
-			assert (detState != null);
-			DeterminizedState<LETTER, STATE> detHier = m_res2det.get(hier);
-			assert (detHier != null);
-			DeterminizedState<LETTER, STATE> detSucc = 
-					m_StateDeterminizer.returnSuccessor(detState, detHier, letter);
-			STATE succ = getOrConstructState(detSucc);
-			m_Cache.addReturnTransition(state, hier, letter, succ);
-		}
-		return m_Cache.succReturn(state, hier, letter);
-	}
-
-	@Override
-	public Collection<STATE> predInternal(STATE state, LETTER letter) {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
-	public Collection<STATE> predCall(STATE state, LETTER letter) {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
-	public Collection<STATE> predReturnLin(STATE state, LETTER letter,
-			STATE hier) {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
-	public Collection<STATE> predReturnHier(STATE state, LETTER letter) {
-		throw new UnsupportedOperationException();
-	}
-
-
-	@Override
-	public boolean finalIsTrap() {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
-	public boolean isDeterministic() {
-		return true;
-	}
-
-	@Override
-	public boolean isTotal() {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
-	public Iterable<SummaryReturnTransition<LETTER, STATE>> returnSummarySuccessor(
-			LETTER letter, STATE hier) {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
-	public Iterable<IncomingReturnTransition<LETTER, STATE>> getIncomingReturnTransitions(
-			LETTER letter, STATE hier) {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
-	public Iterable<IncomingInternalTransition<LETTER, STATE>> internalPredecessors(
-			LETTER letter, STATE succ) {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
-	public Iterable<IncomingInternalTransition<LETTER, STATE>> internalPredecessors(
-			STATE succ) {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
-	public Iterable<IncomingCallTransition<LETTER, STATE>> callPredecessors(
-			LETTER letter, STATE succ) {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
-	public Iterable<IncomingCallTransition<LETTER, STATE>> callPredecessors(
-			STATE succ) {
-		throw new UnsupportedOperationException();
-	}
 
 	@Override
 	public Iterable<OutgoingInternalTransition<LETTER, STATE>> internalSuccessors(
@@ -346,23 +212,7 @@ public class Det<LETTER, STATE> implements INestedWordAutomaton<LETTER, STATE>, 
 		return m_Cache.callSuccessors(state);
 	}
 
-	@Override
-	public Iterable<IncomingReturnTransition<LETTER, STATE>> returnPredecessors(
-			STATE hier, LETTER letter, STATE succ) {
-		throw new UnsupportedOperationException();
-	}
 
-	@Override
-	public Iterable<IncomingReturnTransition<LETTER, STATE>> returnPredecessors(
-			LETTER letter, STATE succ) {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
-	public Iterable<IncomingReturnTransition<LETTER, STATE>> returnPredecessors(
-			STATE succ) {
-		throw new UnsupportedOperationException();
-	}
 
 	@Override
 	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSucccessors(
@@ -391,15 +241,34 @@ public class Det<LETTER, STATE> implements INestedWordAutomaton<LETTER, STATE>, 
 	}
 
 	@Override
-	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessors(
-			STATE state) {
-		throw new UnsupportedOperationException();
+	public IRun<LETTER, STATE> acceptingRun() throws OperationCanceledException {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 	@Override
-	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessors(
-			STATE state, LETTER letter) {
-		throw new UnsupportedOperationException();
+	public boolean accepts(Word<LETTER> word) {
+		// TODO Auto-generated method stub
+		return false;
 	}
+
+	@Override
+	public int size() {
+		// TODO Auto-generated method stub
+		return 0;
+	}
+
+	@Override
+	public Collection<LETTER> getAlphabet() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public String sizeInformation() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
 
 }

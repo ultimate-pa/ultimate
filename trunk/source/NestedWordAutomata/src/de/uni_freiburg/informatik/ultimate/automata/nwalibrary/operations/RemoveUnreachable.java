@@ -5,6 +5,7 @@ import org.apache.log4j.Logger;
 import de.uni_freiburg.informatik.ultimate.automata.Activator;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
+import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.ReachableStatesAutomaton;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
@@ -12,7 +13,7 @@ import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 public class RemoveUnreachable<LETTER,STATE> implements IOperation {
 	
 	private final INestedWordAutomaton<LETTER,STATE> m_Input;
-	private final INestedWordAutomaton<LETTER,STATE> m_Result;
+	private final ReachableStatesAutomaton<LETTER,STATE> m_Result;
 
 	private static Logger s_Logger = UltimateServices.getInstance().getLogger(
 			Activator.PLUGIN_ID);
@@ -55,6 +56,7 @@ public class RemoveUnreachable<LETTER,STATE> implements IOperation {
 
 	@Override
 	public Object getResult() throws OperationCanceledException {
+		assert ResultChecker.removeUnreachable(m_Result, m_Input);
 		return m_Result;
 	}
 
