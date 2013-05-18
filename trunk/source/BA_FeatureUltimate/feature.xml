@@ -150,13 +150,6 @@
          unpack="false"/>
 
    <plugin
-         id="AutomataParser"
-         download-size="0"
-         install-size="0"
-         version="0.0.0"
-         unpack="false"/>
-
-   <plugin
          id="CDTParser"
          download-size="0"
          install-size="0"
@@ -228,13 +221,6 @@
 
    <plugin
          id="ErrorLocationGenerator"
-         download-size="0"
-         install-size="0"
-         version="0.0.0"
-         unpack="false"/>
-
-   <plugin
-         id="AutomataLibraryRandomizedTests"
          download-size="0"
          install-size="0"
          version="0.0.0"

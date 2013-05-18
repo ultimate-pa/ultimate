@@ -130,7 +130,7 @@
 		<module>../RCFGBuilder</module>
 		<module>../SafetyChecker</module>
 		<module>../NestedWordAutomata</module>
-		<module>../AutomataParser</module>
+		
 		<module>../CFGReducer</module>
 		<module>../Library-log4j</module>
 		<module>../Library-prefuse</module>
@@ -154,7 +154,7 @@
 		<module>../RankingFunctions</module>
 		<module>../WebUltimateBridge</module>
 		<module>../Library-ModelCheckerUtils</module>
-		<module>../AutomataLibraryRandomizedTests</module>
+		
 		<module>../AutomataScriptParser</module>
 		<module>../AutomataScriptInterpreter</module>
 		<module>../Library-hamcrest</module>
