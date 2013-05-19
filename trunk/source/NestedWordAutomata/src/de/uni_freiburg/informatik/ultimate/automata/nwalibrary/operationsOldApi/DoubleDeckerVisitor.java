@@ -1,4 +1,4 @@
-package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations;
+package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -22,7 +22,9 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.IncomingCallTrans
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.IncomingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.IncomingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.DoubleDeckerVisitor.ReachFinal;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IOpWithDelayedDeadEndRemoval;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IOpWithDelayedDeadEndRemoval.UpDownEntry;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.DoubleDeckerVisitor.ReachFinal;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 
 /**

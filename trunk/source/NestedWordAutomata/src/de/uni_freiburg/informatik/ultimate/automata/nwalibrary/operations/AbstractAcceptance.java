@@ -1,6 +1,5 @@
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations;
 
-import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.Stack;

@@ -52,7 +52,7 @@ public class DeterminizeLazyTest<LETTER,STATE> implements IOperation {
 		this.contentFactory = input.getStateFactory();
 		this.m_Operand = input;
 		s_Logger.debug(startMessage());
-		Det<LETTER, STATE> det = new Det<LETTER, STATE>(input, stateDeterminizer, input.getStateFactory());
+		DeterminizeNwa<LETTER, STATE> det = new DeterminizeNwa<LETTER, STATE>(input, stateDeterminizer, input.getStateFactory());
 		m_Result = new NestedWordAutomatonReachableStates<LETTER, STATE>(det);
 		s_Logger.debug(exitMessage());
 	}

@@ -14,8 +14,9 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingCallTrans
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.DeterminizedState;
 
-public class Det<LETTER, STATE> implements INestedWordAutomatonSimple<LETTER, STATE> {
+public class DeterminizeNwa<LETTER, STATE> implements INestedWordAutomatonSimple<LETTER, STATE> {
 	
 	private final INestedWordAutomatonOldApi<LETTER, STATE> m_Operand;
 	private final NestedWordAutomaton<LETTER, STATE> m_Cache;
@@ -27,7 +28,7 @@ public class Det<LETTER, STATE> implements INestedWordAutomatonSimple<LETTER, ST
 	private final Map<DeterminizedState<LETTER, STATE>, STATE> m_det2res =
 			new HashMap<DeterminizedState<LETTER, STATE>, STATE>();
 	
-	public Det(INestedWordAutomatonOldApi<LETTER, STATE> operand, 
+	public DeterminizeNwa(INestedWordAutomatonOldApi<LETTER, STATE> operand, 
 			IStateDeterminizer<LETTER, STATE> stateDeterminizer, 
 			StateFactory<STATE> sf) {
 		m_Operand = operand;

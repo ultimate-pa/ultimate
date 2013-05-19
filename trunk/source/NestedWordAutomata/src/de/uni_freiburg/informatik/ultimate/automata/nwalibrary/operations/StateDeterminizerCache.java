@@ -3,6 +3,8 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations;
 import java.util.HashMap;
 import java.util.Map;
 
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.DeterminizedState;
+
 public class StateDeterminizerCache<LETTER, STATE> implements
 		IStateDeterminizer<LETTER, STATE> {
 	

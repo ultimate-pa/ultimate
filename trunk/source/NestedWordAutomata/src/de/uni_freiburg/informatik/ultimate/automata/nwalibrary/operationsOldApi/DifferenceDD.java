@@ -1,4 +1,4 @@
-package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations;
+package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -20,6 +20,8 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.DoubleDeckerAutom
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IStateDeterminizer;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.PowersetDeterminizer;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 
 
@@ -45,7 +47,7 @@ import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 //TODO: Optimization for special case where subtrahend is closed under
 // concatenation with Sigma^*. Use only one DeterminizedState detFin state that
 // represents all final states. Each successor of detFin is detFin itself.
-public class Difference<LETTER,STATE> extends DoubleDeckerBuilder<LETTER,STATE> 
+public class DifferenceDD<LETTER,STATE> extends DoubleDeckerBuilder<LETTER,STATE> 
 							 implements IOperation {
 	
 	private static Logger s_Logger = 
@@ -230,7 +232,7 @@ public class Difference<LETTER,STATE> extends DoubleDeckerBuilder<LETTER,STATE>
 	
 	
 	
-	public Difference(
+	public DifferenceDD(
 			INestedWordAutomatonOldApi<LETTER,STATE> minuend,
 			INestedWordAutomatonOldApi<LETTER,STATE> subtrahend,
 			IStateDeterminizer<LETTER,STATE> stateDeterminizer,
@@ -274,7 +276,7 @@ public class Difference<LETTER,STATE> extends DoubleDeckerBuilder<LETTER,STATE>
 		}
 	}
 	
-	public Difference(
+	public DifferenceDD(
 			INestedWordAutomatonOldApi<LETTER,STATE> minuend,
 			INestedWordAutomatonOldApi<LETTER,STATE> subtrahend) throws OperationCanceledException {
 		this.m_subtrahendSigmaStarClosed = false;

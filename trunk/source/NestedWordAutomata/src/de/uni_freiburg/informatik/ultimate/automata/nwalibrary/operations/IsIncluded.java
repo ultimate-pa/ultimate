@@ -7,6 +7,7 @@ import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.DifferenceDD;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 
 /**
@@ -34,7 +35,7 @@ public class IsIncluded<LETTER, STATE> implements IOperation {
 		m_Operand2 = nwa2;
 		s_Logger.info(startMessage());
 		IsEmpty<LETTER, STATE> emptinessCheck = new IsEmpty<LETTER, STATE>(
-				(new Difference<LETTER, STATE>(nwa1, nwa2)).getResult());
+				(new DifferenceDD<LETTER, STATE>(nwa1, nwa2)).getResult());
 		m_Result = emptinessCheck.getResult();
 		m_Counterexample = emptinessCheck.getNestedRun();
 		s_Logger.info(exitMessage());

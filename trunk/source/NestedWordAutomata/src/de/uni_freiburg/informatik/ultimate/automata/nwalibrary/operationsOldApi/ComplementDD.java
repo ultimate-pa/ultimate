@@ -1,4 +1,4 @@
-package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations;
+package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi;
 
 import org.apache.log4j.Logger;
 
@@ -9,7 +9,7 @@ import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 
-public class Complement<LETTER, STATE> implements IOperation {
+public class ComplementDD<LETTER, STATE> implements IOperation {
 
 	private static Logger s_Logger = UltimateServices.getInstance().getLogger(
 			Activator.PLUGIN_ID);
@@ -41,14 +41,14 @@ public class Complement<LETTER, STATE> implements IOperation {
 		return m_Result;
 	}
 
-	public Complement(INestedWordAutomatonOldApi<LETTER, STATE> operand)
+	public ComplementDD(INestedWordAutomatonOldApi<LETTER, STATE> operand)
 			throws OperationCanceledException {
 		m_Operand = operand;
 
 		s_Logger.info(startMessage());
 		if (!m_Operand.isDeterministic()) {
 			m_DeterminizedOperand = 
-				   (new Determinize<LETTER, STATE>(m_Operand)).getResult();
+				   (new DeterminizeDD<LETTER, STATE>(m_Operand)).getResult();
 		} else {
 			m_DeterminizedOperand = m_Operand;
 			s_Logger.debug("Operand is already deterministic");

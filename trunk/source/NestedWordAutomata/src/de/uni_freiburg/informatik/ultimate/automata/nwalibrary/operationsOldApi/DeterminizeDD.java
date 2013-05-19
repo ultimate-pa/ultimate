@@ -1,4 +1,4 @@
-package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations;
+package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -18,10 +18,12 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.DoubleDecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IStateDeterminizer;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.PowersetDeterminizer;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 
 
-public class Determinize<LETTER,STATE> extends DoubleDeckerBuilder<LETTER,STATE> 
+public class DeterminizeDD<LETTER,STATE> extends DoubleDeckerBuilder<LETTER,STATE> 
 							  implements IOperation {
 
 	protected static Logger s_Logger = 
@@ -68,7 +70,7 @@ public class Determinize<LETTER,STATE> extends DoubleDeckerBuilder<LETTER,STATE>
 	
 	
 	
-	public Determinize(INestedWordAutomatonOldApi<LETTER,STATE> input, 
+	public DeterminizeDD(INestedWordAutomatonOldApi<LETTER,STATE> input, 
 			IStateDeterminizer<LETTER,STATE> stateDeterminizer) 
 											throws OperationCanceledException {
 		this.contentFactory = input.getStateFactory();
@@ -86,7 +88,7 @@ public class Determinize<LETTER,STATE> extends DoubleDeckerBuilder<LETTER,STATE>
 		s_Logger.debug(exitMessage());
 	}
 	
-	public Determinize(INestedWordAutomatonOldApi<LETTER,STATE> input) 
+	public DeterminizeDD(INestedWordAutomatonOldApi<LETTER,STATE> input) 
 											throws OperationCanceledException {
 		this.contentFactory = input.getStateFactory();
 		this.m_Operand = input;

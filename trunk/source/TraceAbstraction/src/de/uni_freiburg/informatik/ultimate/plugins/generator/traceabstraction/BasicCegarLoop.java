@@ -14,15 +14,15 @@ import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.Complement;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.Determinize;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.Difference;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.DifferenceSenwa;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IOpWithDelayedDeadEndRemoval;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.Intersect;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.MinimizeSevpa;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.PowersetDeterminizer;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.RemoveDeadEnds;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.ComplementDD;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.DeterminizeDD;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.DifferenceDD;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.IntersectDD;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.senwa.DifferenceSenwa;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
@@ -227,7 +227,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 					diff = new DifferenceSenwa<CodeBlock, IPredicate>(
 								oldAbstraction, m_InterpolAutomaton, psd, false);
 				} else {
-					diff = new Difference<CodeBlock, IPredicate>(
+					diff = new DifferenceDD<CodeBlock, IPredicate>(
 							oldAbstraction, m_InterpolAutomaton, psd, 
 							m_StateFactoryForRefinement,
 							false,
@@ -238,7 +238,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 				BestApproximationDeterminizer bed = 
 					new BestApproximationDeterminizer(m_SmtManager,	m_Pref, 
 											m_InterpolAutomaton);
-				diff = new Difference<CodeBlock, IPredicate>(
+				diff = new DifferenceDD<CodeBlock, IPredicate>(
 							oldAbstraction, m_InterpolAutomaton, bed,
 							m_StateFactoryForRefinement,
 							false, explointSigmaStarConcatOfIA);
@@ -264,7 +264,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 					diff = new DifferenceSenwa<CodeBlock, IPredicate>(
 							oldAbstraction, m_InterpolAutomaton, epd, false);
 				} else {
-					diff = new Difference<CodeBlock, IPredicate>(
+					diff = new DifferenceDD<CodeBlock, IPredicate>(
 							oldAbstraction, m_InterpolAutomaton, epd, 
 							m_StateFactoryForRefinement,
 							false, explointSigmaStarConcatOfIA);
@@ -294,7 +294,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 					diff = new DifferenceSenwa<CodeBlock, IPredicate>(
 							oldAbstraction, m_InterpolAutomaton, lpd, false);
 				} else {
-					diff = new Difference<CodeBlock, IPredicate>(
+					diff = new DifferenceDD<CodeBlock, IPredicate>(
 							oldAbstraction, m_InterpolAutomaton, lpd, 
 							m_StateFactoryForRefinement,
 							false, explointSigmaStarConcatOfIA);
@@ -325,7 +325,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 					diff = new DifferenceSenwa<CodeBlock, IPredicate>(
 							oldAbstraction, m_InterpolAutomaton, sed, false);
 				} else {
-					diff = new Difference<CodeBlock, IPredicate>(
+					diff = new DifferenceDD<CodeBlock, IPredicate>(
 							oldAbstraction, m_InterpolAutomaton, sed, 
 							m_StateFactoryForRefinement,
 							false, explointSigmaStarConcatOfIA);
@@ -344,7 +344,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 					diff = new DifferenceSenwa<CodeBlock, IPredicate>(
 							oldAbstraction, m_InterpolAutomaton, spd, false);
 				} else {
-					diff = new Difference<CodeBlock, IPredicate>(
+					diff = new DifferenceDD<CodeBlock, IPredicate>(
 							oldAbstraction, m_InterpolAutomaton, spd, 
 							m_StateFactoryForRefinement,
 							false, explointSigmaStarConcatOfIA);
@@ -372,7 +372,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 
 			s_Logger.debug("Start complementation");
 			INestedWordAutomatonOldApi<CodeBlock, IPredicate> nia = 
-				(new Complement<CodeBlock, IPredicate>(dia)).getResult();
+				(new ComplementDD<CodeBlock, IPredicate>(dia)).getResult();
 			assert(!nia.accepts(m_Counterexample.getWord()));
 			s_Logger.info("Complemented interpolant automaton has "+nia.size() +" states");
 			
@@ -381,8 +381,8 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 			}
 			assert(oldAbstraction.getStateFactory() == m_InterpolAutomaton.getStateFactory());
 			s_Logger.debug("Start intersection");
-			Intersect<CodeBlock, IPredicate> intersect =
-					new Intersect<CodeBlock, IPredicate>(
+			IntersectDD<CodeBlock, IPredicate> intersect =
+					new IntersectDD<CodeBlock, IPredicate>(
 							false, oldAbstraction, nia);
 			if (m_RemoveDeadEnds && m_Pref.computeHoareAnnotation()) {
 				m_Haf.wipeReplacedContexts();
@@ -484,8 +484,8 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		case POWERSET: 
 			PowersetDeterminizer<CodeBlock, IPredicate> psd = 
 				new PowersetDeterminizer<CodeBlock, IPredicate>(m_InterpolAutomaton);
-			Determinize<CodeBlock, IPredicate> dabps = 
-				new Determinize<CodeBlock, IPredicate>(
+			DeterminizeDD<CodeBlock, IPredicate> dabps = 
+				new DeterminizeDD<CodeBlock, IPredicate>(
 												m_InterpolAutomaton, psd);
 			dia = dabps.getResult();
 		break;
@@ -493,8 +493,8 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 			BestApproximationDeterminizer bed = 
 				new BestApproximationDeterminizer(m_SmtManager,	m_Pref, 
 									m_InterpolAutomaton);
-			Determinize<CodeBlock, IPredicate> dab = 
-				new Determinize<CodeBlock, IPredicate>(
+			DeterminizeDD<CodeBlock, IPredicate> dab = 
+				new DeterminizeDD<CodeBlock, IPredicate>(
 												m_InterpolAutomaton, bed);
 			dia = dab.getResult();
 		break;
@@ -502,8 +502,8 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 			SelfloopDeterminizer sed = 
 				new SelfloopDeterminizer(m_SmtManager,	m_Pref, 
 										m_InterpolAutomaton);
-			Determinize<CodeBlock, IPredicate> dabsl = 
-				new Determinize<CodeBlock, IPredicate>(
+			DeterminizeDD<CodeBlock, IPredicate> dabsl = 
+				new DeterminizeDD<CodeBlock, IPredicate>(
 												m_InterpolAutomaton, sed);
 			dia = dabsl.getResult();
 		break;
@@ -511,8 +511,8 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 			StrongestPostDeterminizer spd = 
 				new StrongestPostDeterminizer(m_SmtManager,	m_Pref, 
 										m_InterpolAutomaton);
-			Determinize<CodeBlock, IPredicate> dabsp = 
-				new Determinize<CodeBlock, IPredicate>(
+			DeterminizeDD<CodeBlock, IPredicate> dabsp = 
+				new DeterminizeDD<CodeBlock, IPredicate>(
 												m_InterpolAutomaton, spd);
 			dia = dabsp.getResult();
 		break;
@@ -520,8 +520,8 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 			PostDeterminizer epd = 
 				new PostDeterminizer(m_SmtManager,	m_Pref, 
 									m_InterpolAutomaton,true);
-			Determinize<CodeBlock, IPredicate> dep = 
-				new Determinize<CodeBlock, IPredicate>(
+			DeterminizeDD<CodeBlock, IPredicate> dep = 
+				new DeterminizeDD<CodeBlock, IPredicate>(
 												m_InterpolAutomaton, epd);
 			dia = dep.getResult();
 		break;
@@ -529,8 +529,8 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 			PostDeterminizer lpd = 
 				new PostDeterminizer(m_SmtManager,	m_Pref, 
 									m_InterpolAutomaton,true);
-			Determinize<CodeBlock, IPredicate> dlpd = 
-				new Determinize<CodeBlock, IPredicate>(
+			DeterminizeDD<CodeBlock, IPredicate> dlpd = 
+				new DeterminizeDD<CodeBlock, IPredicate>(
 												m_InterpolAutomaton, lpd);
 			dia = dlpd.getResult();
 		break;

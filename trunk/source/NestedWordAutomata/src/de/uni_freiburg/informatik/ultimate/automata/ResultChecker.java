@@ -25,20 +25,20 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.BuchiIsI
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.NestedLassoRun;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.NestedLassoWord;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IsEmpty;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.Complement;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.ComplementSadd;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.ConcurrentProduct;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.Determinize;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.DeterminizeSadd;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.Difference;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.DifferenceSadd;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.Intersect;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IntersectNodd;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IsIncluded;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.MinimizeDfa;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.PowersetDeterminizer;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.ReachableStatesCopy;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.BuchiReduce;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.ComplementDD;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.ComplementSadd;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.DeterminizeDD;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.DeterminizeSadd;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.DifferenceDD;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.DifferenceSadd;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.IntersectDD;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.IntersectNodd;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.ReachableStatesCopy;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNet2FiniteAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetRun;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.PetriNetJulian;
@@ -97,7 +97,7 @@ public class ResultChecker<LETTER,STATE> {
 		INestedWordAutomatonOldApi resultSadd = (new DeterminizeSadd<String,String>(op)).getResult();
 		correct &= (nwaLanguageInclusion(resultSadd,result) == null);
 		correct &= (nwaLanguageInclusion(result,resultSadd) == null);
-		INestedWordAutomatonOldApi resultDD = (new Determinize<String,String>(op)).getResult();
+		INestedWordAutomatonOldApi resultDD = (new DeterminizeDD<String,String>(op)).getResult();
 		correct &= (nwaLanguageInclusion(resultDD,result) == null);
 		correct &= (nwaLanguageInclusion(result,resultDD) == null);
 	
@@ -116,10 +116,10 @@ public class ResultChecker<LETTER,STATE> {
 //		INestedWordAutomaton complementJM = (new Complement()).new ComplementJM(op).getResult();
 //		correct &=  ((new Intersect(false, false, op, complementJM)).getNwa().getAcceptingNestedRun() == null);
 		INestedWordAutomatonOldApi complementSadd = (new ComplementSadd(op)).getResult();
-		INestedWordAutomatonOldApi intersectionWithSadd = (new Intersect(false, op, complementSadd)).getResult();
+		INestedWordAutomatonOldApi intersectionWithSadd = (new IntersectDD(false, op, complementSadd)).getResult();
 		correct &=  ((new IsEmpty(intersectionWithSadd)).getResult() == true);
-		INestedWordAutomatonOldApi complementDD = (new Complement(op)).getResult();
-		INestedWordAutomatonOldApi intersectionWithDD = (new Intersect(false, op, complementDD)).getResult();
+		INestedWordAutomatonOldApi complementDD = (new ComplementDD(op)).getResult();
+		INestedWordAutomatonOldApi intersectionWithDD = (new IntersectDD(false, op, complementDD)).getResult();
 		correct &= (new IsEmpty(intersectionWithDD).getResult() == true);
 
 		s_Logger.debug("Finished testing correctness of complement");
@@ -143,7 +143,7 @@ public class ResultChecker<LETTER,STATE> {
 		s_Logger.info("Testing correctness of difference");
 
 		INestedWordAutomatonOldApi sndComplementDD = 
-			(new Complement(snd)).getResult();
+			(new ComplementDD(snd)).getResult();
 		INestedWordAutomatonOldApi resultDD = 
 			(new IntersectNodd(fst,sndComplementDD)).getResult();
 		boolean correct = true;
@@ -514,7 +514,7 @@ public class ResultChecker<LETTER,STATE> {
 		s_Logger.info("Testing correctness of differenceBlackAndWhite");
 
 		INestedWordAutomatonOldApi op1AsNwa = (new PetriNet2FiniteAutomaton(operand1)).getResult();
-		INestedWordAutomatonOldApi rcResult = (new Difference(op1AsNwa, operand2)).getResult();
+		INestedWordAutomatonOldApi rcResult = (new DifferenceDD(op1AsNwa, operand2)).getResult();
 		INestedWordAutomatonOldApi resultAsNwa = (new PetriNet2FiniteAutomaton(result)).getResult();
 		boolean correct = true;
 		correct &= (nwaLanguageInclusion(resultAsNwa,rcResult) == null);
@@ -622,7 +622,7 @@ public class ResultChecker<LETTER,STATE> {
 //	}
 	
 	private static NestedRun nwaLanguageInclusion(INestedWordAutomatonOldApi nwa1, INestedWordAutomatonOldApi nwa2) throws OperationCanceledException {
-		INestedWordAutomatonOldApi nwa1MinusNwa2 = (new Difference(nwa1, nwa2)).getResult();
+		INestedWordAutomatonOldApi nwa1MinusNwa2 = (new DifferenceDD(nwa1, nwa2)).getResult();
 		NestedRun inNwa1ButNotInNwa2 = (new IsEmpty(nwa1MinusNwa2)).getNestedRun();
 		return inNwa1ButNotInNwa2;
 //		if (inNwa1ButNotInNwa2 != null) {

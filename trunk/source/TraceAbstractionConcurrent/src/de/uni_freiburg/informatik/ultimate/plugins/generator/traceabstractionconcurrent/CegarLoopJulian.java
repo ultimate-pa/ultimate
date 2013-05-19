@@ -6,7 +6,7 @@ import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.AtsDefinitionPrinter;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.Complement;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.ComplementDD;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.BranchingProcess;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.DifferenceBlackAndWhite;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.FinitePrefix2PetriNet;
@@ -122,7 +122,7 @@ public class CegarLoopJulian extends BasicCegarLoop {
 
 		//Complement the interpolant automaton
 		INestedWordAutomatonOldApi<CodeBlock, IPredicate> nia = 
-				(new Complement<CodeBlock, IPredicate>(dia)).getResult();
+				(new ComplementDD<CodeBlock, IPredicate>(dia)).getResult();
 		assert(!nia.accepts(m_Counterexample.getWord())) : 
 			"Complementation broken!";
 		s_Logger.info("Complemented interpolant automaton has "+nia.getStates().size() +" states");

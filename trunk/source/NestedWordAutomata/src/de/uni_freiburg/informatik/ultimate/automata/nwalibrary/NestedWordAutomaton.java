@@ -19,8 +19,8 @@ import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.Accepts;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.ConcurrentProduct;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.Intersect;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IsEmpty;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.IntersectDD;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 
 
@@ -2262,7 +2262,7 @@ public class NestedWordAutomaton<LETTER,STATE> implements INestedWordAutomatonOl
 												boolean minimizeResult) 
 												throws OperationCanceledException{
 		INestedWordAutomatonOldApi<LETTER,STATE> result = 
-			(new Intersect(minimizeResult, this, nwa)).getResult();
+			(new IntersectDD(minimizeResult, this, nwa)).getResult();
 		s_Logger.info("Result of IntersectionBuchi" + 
 				((NestedWordAutomaton<LETTER, STATE>) result).sizeInformation());
 

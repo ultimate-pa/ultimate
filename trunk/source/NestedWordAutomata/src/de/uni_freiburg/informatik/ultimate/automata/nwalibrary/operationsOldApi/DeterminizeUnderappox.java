@@ -1,4 +1,4 @@
-package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations;
+package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -6,6 +6,7 @@ import java.util.Collection;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IStateDeterminizer;
 
 
 /**
@@ -19,7 +20,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomat
  * @param <STATE>
  */
 
-public class DeterminizeUnderappox<LETTER,STATE> extends Determinize<LETTER, STATE> {
+public class DeterminizeUnderappox<LETTER,STATE> extends DeterminizeDD<LETTER, STATE> {
 
 	public DeterminizeUnderappox(INestedWordAutomatonOldApi<LETTER,STATE> input,
 			IStateDeterminizer<LETTER,STATE> stateDeterminizer)

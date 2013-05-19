@@ -21,7 +21,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.BuchiIsEmpty;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.NestedLassoRun;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.Difference;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.DifferenceDD;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.visualization.AutomatonTransition.Transition;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.logic.LoggingScript;
@@ -200,9 +200,9 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 			constructInterpolantAutomaton();
 			StrongestPostDeterminizer spd = new StrongestPostDeterminizer(
 					smtManager, m_Pref, m_InterpolAutomaton);
-			Difference<CodeBlock, IPredicate> diff = null;
+			DifferenceDD<CodeBlock, IPredicate> diff = null;
 			try {
-				diff = new Difference<CodeBlock, IPredicate>(
+				diff = new DifferenceDD<CodeBlock, IPredicate>(
 						m_Abstraction, m_InterpolAutomaton, spd, 
 						m_StateFactoryForRefinement,
 						false, true);
