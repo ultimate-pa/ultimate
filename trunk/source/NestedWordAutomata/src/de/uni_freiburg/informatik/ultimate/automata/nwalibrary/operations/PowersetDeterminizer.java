@@ -2,8 +2,11 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations;
 
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingCallTransition;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingInternalTransition;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.DeterminizedState;
 
 
@@ -22,10 +25,10 @@ public class PowersetDeterminizer<LETTER,STATE>
 			implements IStateDeterminizer<LETTER,STATE> {
 
 	StateFactory<STATE> m_ContentFactory;
-	INestedWordAutomatonOldApi<LETTER,STATE> m_Nwa;
+	INestedWordAutomatonSimple<LETTER,STATE> m_Nwa;
 	int maxDegreeOfNondeterminism = 0;
 	
-	public PowersetDeterminizer(INestedWordAutomatonOldApi<LETTER,STATE> nwa) { 
+	public PowersetDeterminizer(INestedWordAutomatonSimple<LETTER,STATE> nwa) { 
 		m_Nwa = nwa;
 		this.m_ContentFactory = nwa.getStateFactory();
 	}
@@ -52,8 +55,8 @@ public class PowersetDeterminizer<LETTER,STATE>
 				new DeterminizedState<LETTER,STATE>(m_Nwa);
 		for (STATE downState : detState.getDownStates()) {
 			for (STATE upState : detState.getUpStates(downState)) {
-				for (STATE upSucc : m_Nwa.succInternal(upState, symbol)) {
-					succDetState.addPair(downState,upSucc, m_Nwa);
+				for (OutgoingInternalTransition<LETTER, STATE> upSucc : m_Nwa.internalSuccessors(upState, symbol)) {
+					succDetState.addPair(downState,upSucc.getSucc(), m_Nwa);
 				}
 			}
 		}
@@ -72,8 +75,8 @@ public class PowersetDeterminizer<LETTER,STATE>
 				new DeterminizedState<LETTER,STATE>(m_Nwa);
 		for (STATE downState : detState.getDownStates()) {
 			for (STATE upState : detState.getUpStates(downState)) {
-				for (STATE upSucc : m_Nwa.succCall(upState, symbol)) {
-					succDetState.addPair(upState,upSucc, m_Nwa);
+				for (OutgoingCallTransition<LETTER, STATE> upSucc : m_Nwa.callSuccessors(upState, symbol)) {
+					succDetState.addPair(upState,upSucc.getSucc(), m_Nwa);
 				}
 			}
 		}
@@ -97,8 +100,8 @@ public class PowersetDeterminizer<LETTER,STATE>
 				Set<STATE> upStates = detState.getUpStates(upLinPred);
 				if (upStates == null) continue;
 				for (STATE upState : upStates) {
-					for (STATE upSucc : m_Nwa.succReturn(upState, upLinPred, symbol)) {
-						succDetState.addPair(downLinPred, upSucc, m_Nwa);
+					for (OutgoingReturnTransition<LETTER, STATE> upSucc : m_Nwa.returnSucccessors(upState, upLinPred, symbol)) {
+						succDetState.addPair(downLinPred, upSucc.getSucc(), m_Nwa);
 					}
 				}
 			}

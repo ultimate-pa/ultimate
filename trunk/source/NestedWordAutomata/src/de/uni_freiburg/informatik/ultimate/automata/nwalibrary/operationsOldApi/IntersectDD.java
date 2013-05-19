@@ -29,7 +29,7 @@ public class IntersectDD<LETTER, STATE> extends AbstractIntersect<LETTER, STATE>
 
 	@Override
 	public String operationName() {
-		return "intersect";
+		return "intersectDD";
 	}
 
 }

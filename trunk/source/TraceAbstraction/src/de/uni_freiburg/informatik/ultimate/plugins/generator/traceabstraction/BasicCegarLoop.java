@@ -544,7 +544,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		}
 		if (m_Pref.dumpAutomata()) {
 			String filename = m_Pref.dumpPath() + "/InterpolantAutomatonDeterminized_Iteration" + m_Iteration; 
-			new AtsDefinitionPrinter<String,String>(dia, filename, m_PrintAutomataLabeling,"");
+			new AtsDefinitionPrinter<String,String>(filename, m_PrintAutomataLabeling, "",dia);
 		}
 		assert(dia.accepts(m_Counterexample.getWord()));
 		s_Logger.debug("Sucessfully determinized");

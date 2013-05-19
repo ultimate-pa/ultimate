@@ -183,16 +183,16 @@ public class ResultChecker<LETTER,STATE> {
 				s_Logger.error("Word accepted by resultSadd, but not by result: " + subsetCounterexample.getWord());
 				correct = false;
 				String message = "// Problem with run " + subsetCounterexample.toString();
-				writeToFileIfPreferred(fst, "FailedDifferenceCheck-Minuend-", message);
-				writeToFileIfPreferred(snd, "FailedDifferenceCheck-Subtrahend-", message);
+				writeToFileIfPreferred("FailedDifferenceCheck-Minuend-", message, fst);
+				writeToFileIfPreferred("FailedDifferenceCheck-Subtrahend-", message, snd);
 			}
 			NestedRun supersetCounterexample = nwaLanguageInclusion(result, resultSadd);
 			if (supersetCounterexample != null) {
 				s_Logger.error("Word accepted by result, but not by resultSadd: " + supersetCounterexample.getWord());
 				correct = false;
 				String message = "// Problem with run " + supersetCounterexample.toString();
-				writeToFileIfPreferred(fst, "FailedDifferenceCheck-Minuend-", message);
-				writeToFileIfPreferred(snd, "FailedDifferenceCheck-Subtrahend-", message);
+				writeToFileIfPreferred("FailedDifferenceCheck-Minuend-", message, fst);
+				writeToFileIfPreferred("FailedDifferenceCheck-Subtrahend-", message, snd);
 			}
 		} catch (OperationCanceledException e) {
 			s_Logger.warn("ResultChecker canceled");
@@ -218,14 +218,14 @@ public class ResultChecker<LETTER,STATE> {
 				s_Logger.error("Word accepted by operand, but not by result: " + subsetCounterexample.getWord());
 				correct = false;
 				String message = "// Problem with run " + subsetCounterexample.toString();
-				writeToFileIfPreferred(operand, "FailedNwaEquivalenceCheck", message);
+				writeToFileIfPreferred("FailedNwaEquivalenceCheck", message, operand);
 			}
 			NestedRun supersetCounterexample = nwaLanguageInclusion(result, operand);
 			if (supersetCounterexample != null) {
 				s_Logger.error("Word accepted by result, but not by operand: " + supersetCounterexample.getWord());
 				correct = false;
 				String message = "// Problem with run " + supersetCounterexample.toString();
-				writeToFileIfPreferred(operand, "FailedNwaEquivalenceCheck", message);
+				writeToFileIfPreferred("FailedNwaEquivalenceCheck", message, operand);
 			}
 
 		
@@ -334,7 +334,7 @@ public class ResultChecker<LETTER,STATE> {
 			} else {
 				correct = false;
 				String message = "// Problem with lasso " + lasso.toString();
-				writeToFileIfPreferred(operand, "FailedBuchiComplementCheck", message);
+				writeToFileIfPreferred("FailedBuchiComplementCheck", message, operand);
 				break;
 			}
 		}
@@ -575,11 +575,11 @@ public class ResultChecker<LETTER,STATE> {
 		}
 		} catch (Error e) {
 			String message = "// Problem with  removeUnreachable";
-			writeToFileIfPreferred(operand, "FailedremoveUnreachable", message);
+			writeToFileIfPreferred("FailedremoveUnreachable", message, operand);
 			throw e;
 		} catch (RuntimeException e) {
 			String message = "// Problem with  removeUnreachable";
-			writeToFileIfPreferred(operand, "FailedremoveUnreachable", message);
+			writeToFileIfPreferred("FailedremoveUnreachable", message, operand);
 			throw e;
 		} finally {
 			s_Logger.info("Finished removeUnreachable");
@@ -674,14 +674,14 @@ public class ResultChecker<LETTER,STATE> {
         return dateFormat.format(date);
     }
     
-    public static void writeToFileIfPreferred(IAutomaton automaton, String filenamePrefix, String message) {
+    public static void writeToFileIfPreferred(String filenamePrefix, String message, IAutomaton automata) {
 		ConfigurationScope scope = new ConfigurationScope();
 		IEclipsePreferences prefs = scope.getNode(Activator.PLUGIN_ID);
 		boolean writeToFile = prefs.getBoolean(PreferenceConstants.Name_Write, PreferenceConstants.Default_Write);
 		if (writeToFile) {
 			String directory = prefs.get(PreferenceConstants.Name_Path, PreferenceConstants.Default_Path); 
 			String filename = directory + File.separator+filenamePrefix + getDateTime() + ".fat";
-			new AtsDefinitionPrinter(automaton, filename, Labeling.QUOTED, message);
+			new AtsDefinitionPrinter(filename, Labeling.QUOTED, message, automata);
 		}
     }
 	

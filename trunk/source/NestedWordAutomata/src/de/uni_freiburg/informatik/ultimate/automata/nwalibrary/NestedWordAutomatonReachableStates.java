@@ -91,13 +91,13 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 			
 		} catch (Error e) {
 			String message = "// Problem with  removeUnreachable";
-			ResultChecker.writeToFileIfPreferred(operand,
-					"FailedremoveUnreachable", message);
+			ResultChecker.writeToFileIfPreferred("FailedremoveUnreachable",
+					message, operand);
 			throw e;
 		} catch (RuntimeException e) {
 			String message = "// Problem with  removeUnreachable";
-			ResultChecker.writeToFileIfPreferred(operand,
-					"FailedremoveUnreachable", message);
+			ResultChecker.writeToFileIfPreferred("FailedremoveUnreachable",
+					message, operand);
 			throw e;
 		}
 	}

@@ -50,7 +50,7 @@ public class DeterminizeDD<LETTER,STATE> extends DoubleDeckerBuilder<LETTER,STAT
 	
 	@Override
 	public String operationName() {
-		return "determinize";
+		return "determinizeDD";
 	}
 	
 	

@@ -94,7 +94,7 @@ public class RemoveDeadEnds<LETTER,STATE> implements IOperation {
 		}
 		if (!correct) {
 			String message = "// Problem with  removeUnreachable";
-			ResultChecker.writeToFileIfPreferred(m_Input, "FailedremoveUnreachable", message);
+			ResultChecker.writeToFileIfPreferred("FailedremoveUnreachable", message, m_Input);
 		}
 		return correct;
 	}

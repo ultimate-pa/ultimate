@@ -20,7 +20,7 @@ public class ComplementDD<LETTER, STATE> implements IOperation {
 
 	@Override
 	public String operationName() {
-		return "complement";
+		return "complementDD";
 	}
 
 	@Override

@@ -5,7 +5,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 
 /**
@@ -35,7 +35,7 @@ public class DeterminizedState<LETTER,STATE> {
 	private boolean containsFinal = false;
 	private STATE m_CachedResultingState = null;
 	
-	public DeterminizedState(INestedWordAutomatonOldApi<LETTER,STATE> nwa) {
+	public DeterminizedState(INestedWordAutomatonSimple<LETTER,STATE> nwa) {
 		caller2presents = new HashMap<STATE,Set<STATE>>();
 	}
 	
@@ -61,7 +61,7 @@ public class DeterminizedState<LETTER,STATE> {
 	 * @return true iff for all pair in the set, the first entry is an
 	 * accepting state and the set is not empty
 	 */
-	public boolean allFinal(INestedWordAutomatonOldApi<LETTER,STATE> nwa) {
+	public boolean allFinal(INestedWordAutomatonSimple<LETTER,STATE> nwa) {
 		if (caller2presents.isEmpty()) {
 			return false;
 		}
@@ -90,7 +90,7 @@ public class DeterminizedState<LETTER,STATE> {
 	/**
 	 * Add the pair (caller,present) to the set. 
 	 */
-	public void addPair(STATE caller, STATE present, INestedWordAutomatonOldApi<LETTER,STATE> nwa) {
+	public void addPair(STATE caller, STATE present, INestedWordAutomatonSimple<LETTER,STATE> nwa) {
 		if (m_ConstructionFinished) {
 			throw new IllegalArgumentException("Construction finished must not add pairs.");
 		}

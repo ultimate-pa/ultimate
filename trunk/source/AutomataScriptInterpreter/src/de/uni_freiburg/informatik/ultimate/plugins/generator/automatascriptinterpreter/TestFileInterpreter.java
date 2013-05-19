@@ -1358,6 +1358,7 @@ public class TestFileInterpreter {
 	private static Map<String, Set<Class<?>>> getOperationClasses() {
 		Map<String, Set<Class<?>>> result = new HashMap<String, Set<Class<?>>>();
 		String[] baseDirs = {"/de/uni_freiburg/informatik/ultimate/automata/nwalibrary/operations",
+							"/de/uni_freiburg/informatik/ultimate/automata/nwalibrary/operationsOldApi",
 				              "/de/uni_freiburg/informatik/ultimate/automata/nwalibrary/buchiNwa",
 				              "/de/uni_freiburg/informatik/ultimate/automata/petrinet/julian",
 				              "/de/uni_freiburg/informatik/ultimate/automata/petrinet"};

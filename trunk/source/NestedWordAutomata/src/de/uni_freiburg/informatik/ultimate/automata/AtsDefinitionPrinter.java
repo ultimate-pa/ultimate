@@ -15,6 +15,8 @@ import java.util.Map;
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomatonReachableStates;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
@@ -64,14 +66,16 @@ public class AtsDefinitionPrinter<LETTER,STATE> {
 		}
 		
 		
-		public AtsDefinitionPrinter(Object automaton, String filename, Labeling labels, String message) {
+		public AtsDefinitionPrinter(String filename, Labeling labels, String message, Object... automata) {
 			s_Logger.warn("Dumping Testfile");
 			initializePrintWriter(filename);
 			m_printWriter.println("// Testfile dumped by Ultimate at "+getDateTime());
 			m_printWriter.println("");
 			m_printWriter.println(message);
 			m_printWriter.println("");
-			printAutomaton(automaton, labels);
+			for (Object automaton : automata) {
+				printAutomaton(automaton, labels);
+			}
 		}
 		
 		
@@ -92,8 +96,18 @@ public class AtsDefinitionPrinter<LETTER,STATE> {
 		
 		@SuppressWarnings("unchecked")
 		private void printAutomaton(Object automaton, Labeling labels) {
-			if (automaton instanceof INestedWordAutomatonOldApi) {
-				INestedWordAutomatonOldApi<LETTER,STATE> nwa = (INestedWordAutomatonOldApi<LETTER,STATE>) automaton;
+			if (automaton instanceof INestedWordAutomatonSimple) {
+				INestedWordAutomatonOldApi<LETTER,STATE> nwa;
+				if (automaton instanceof INestedWordAutomatonOldApi) {
+					nwa = (INestedWordAutomatonOldApi<LETTER, STATE>) automaton;
+				} else {
+					try {
+						nwa = new NestedWordAutomatonReachableStates<LETTER, STATE>((INestedWordAutomatonSimple<LETTER, STATE>) automaton);
+					} catch (OperationCanceledException e) {
+						throw new AssertionError("Timeout while preparing automaton for printing.");
+					}
+				}
+					
 				if (labels == Labeling.TOSTRING) {
 					new NwaTestFileWriterToString(nwa);
 				}
@@ -146,16 +160,16 @@ public class AtsDefinitionPrinter<LETTER,STATE> {
 				internalAlphabet = getAlphabetMapping(nwa.getInternalAlphabet(), "a");
 				callAlphabet = getAlphabetMapping(nwa.getCallAlphabet(), "c");
 				returnAlphabet = getAlphabetMapping(nwa.getReturnAlphabet(), "r");
-				stateMapping = getStateMapping(nwa.getStates());
+				stateMapping = getStateMapping(m_Nwa.getStates());
 
 				m_printWriter.println("NestedWordAutomaton nwa = (");
 				printAlphabetes();
 				printStates();
-				printInitialStates(nwa.getInitialStates());
-				printFinalStates(nwa.getStates());
-				printCallTransitions(nwa.getStates());
-				printInternalTransitions(nwa.getStates());
-				printReturnTransitions(nwa.getStates());
+				printInitialStates(m_Nwa.getInitialStates());
+				printFinalStates(m_Nwa.getStates());
+				printCallTransitions(m_Nwa.getStates());
+				printInternalTransitions(m_Nwa.getStates());
+				printReturnTransitions(m_Nwa.getStates());
 				m_printWriter.println(");");
 				m_printWriter.close();
 			}

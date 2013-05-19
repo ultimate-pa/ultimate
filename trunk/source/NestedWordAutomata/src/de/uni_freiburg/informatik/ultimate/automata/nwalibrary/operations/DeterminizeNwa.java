@@ -7,7 +7,6 @@ import java.util.Map;
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.Word;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingCallTransition;
@@ -18,7 +17,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.
 
 public class DeterminizeNwa<LETTER, STATE> implements INestedWordAutomatonSimple<LETTER, STATE> {
 	
-	private final INestedWordAutomatonOldApi<LETTER, STATE> m_Operand;
+	private final INestedWordAutomatonSimple<LETTER, STATE> m_Operand;
 	private final NestedWordAutomaton<LETTER, STATE> m_Cache;
 	private final IStateDeterminizer<LETTER, STATE> m_StateDeterminizer;
 	private final StateFactory<STATE> m_StateFactory;
@@ -28,7 +27,7 @@ public class DeterminizeNwa<LETTER, STATE> implements INestedWordAutomatonSimple
 	private final Map<DeterminizedState<LETTER, STATE>, STATE> m_det2res =
 			new HashMap<DeterminizedState<LETTER, STATE>, STATE>();
 	
-	public DeterminizeNwa(INestedWordAutomatonOldApi<LETTER, STATE> operand, 
+	public DeterminizeNwa(INestedWordAutomatonSimple<LETTER, STATE> operand, 
 			IStateDeterminizer<LETTER, STATE> stateDeterminizer, 
 			StateFactory<STATE> sf) {
 		m_Operand = operand;
@@ -130,7 +129,7 @@ public class DeterminizeNwa<LETTER, STATE> implements INestedWordAutomatonSimple
 
 	@Override
 	public StateFactory<STATE> getStateFactory() {
-		return m_Operand.getStateFactory();
+		return m_StateFactory;
 	}
 	
 	@Override

@@ -7,25 +7,27 @@ import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomatonReachableStates;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 
 
-public class DeterminizeLazyTest<LETTER,STATE> implements IOperation {
+public class Determinize<LETTER,STATE> implements IOperation {
 
 	protected static Logger s_Logger = 
 		UltimateServices.getInstance().getLogger(Activator.PLUGIN_ID);
 	
-	protected INestedWordAutomatonOldApi<LETTER,STATE> m_Operand;
-	protected INestedWordAutomatonOldApi<LETTER,STATE> m_Result;
-	protected IStateDeterminizer<LETTER,STATE> stateDeterminizer;
-	protected StateFactory<STATE> contentFactory;
+	private final INestedWordAutomatonSimple<LETTER,STATE> m_Operand;
+	private final DeterminizeNwa<LETTER, STATE> m_Determinized;
+	private final NestedWordAutomatonReachableStates<LETTER,STATE> m_Result;
+	private final IStateDeterminizer<LETTER,STATE> stateDeterminizer;
+	private final StateFactory<STATE> m_StateFactory;
 	
 	
 	@Override
 	public String operationName() {
-		return "determinizeLazy";
+		return "determinize";
 	}
 	
 	
@@ -46,15 +48,14 @@ public class DeterminizeLazyTest<LETTER,STATE> implements IOperation {
 	
 	
 	
-	public DeterminizeLazyTest(
-			INestedWordAutomatonOldApi<LETTER,STATE> input) throws OperationCanceledException {
+	public Determinize(INestedWordAutomatonSimple<LETTER,STATE> input) throws OperationCanceledException {
 		this.stateDeterminizer = new PowersetDeterminizer<LETTER, STATE>(input);
-		this.contentFactory = input.getStateFactory();
+		this.m_StateFactory = input.getStateFactory();
 		this.m_Operand = input;
-		s_Logger.debug(startMessage());
-		DeterminizeNwa<LETTER, STATE> det = new DeterminizeNwa<LETTER, STATE>(input, stateDeterminizer, input.getStateFactory());
-		m_Result = new NestedWordAutomatonReachableStates<LETTER, STATE>(det);
-		s_Logger.debug(exitMessage());
+		s_Logger.info(startMessage());
+		m_Determinized = new DeterminizeNwa<LETTER, STATE>(input, stateDeterminizer, m_StateFactory);
+		m_Result = new NestedWordAutomatonReachableStates<LETTER, STATE>(m_Determinized);
+		s_Logger.info(exitMessage());
 	}
 	
 
@@ -67,7 +68,7 @@ public class DeterminizeLazyTest<LETTER,STATE> implements IOperation {
 	public INestedWordAutomatonOldApi<LETTER, STATE> getResult()
 			throws OperationCanceledException {
 		if (stateDeterminizer instanceof PowersetDeterminizer) {
-			assert (ResultChecker.determinize(m_Operand, m_Result));
+			assert (ResultChecker.determinize((INestedWordAutomatonOldApi) m_Operand, m_Result));
 		}
 		return m_Result;
 	}
