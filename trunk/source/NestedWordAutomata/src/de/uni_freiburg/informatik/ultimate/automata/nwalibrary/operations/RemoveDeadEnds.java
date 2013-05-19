@@ -8,10 +8,9 @@ import de.uni_freiburg.informatik.ultimate.automata.Activator;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomatonFilteredStates;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.DoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomatonFilteredStates;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomatonReachableStates;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.TransitionConsitenceCheck;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.ReachableStatesCopy;
@@ -73,11 +72,10 @@ public class RemoveDeadEnds<LETTER,STATE> implements IOperation {
 	}
 	
 	public boolean checkResult() throws OperationCanceledException {
-		s_Logger.info("Testing removeUnreachable");
+		s_Logger.info("Start testing correctness of " + operationName());
 		boolean correct = true;
-//		correct &= ResultChecker.minimize(m_Input, m_Result); 
-//		correct &= (new IsIncluded<LETTER, STATE>(m_Input, m_Result)).getResult();
-//		correct &= (new IsIncluded<LETTER, STATE>(m_Result, m_Input)).getResult();
+//		correct &= (ResultChecker.nwaLanguageInclusion(m_Input, m_Result) == null);
+//		correct &= (ResultChecker.nwaLanguageInclusion(m_Result, m_Input) == null);
 		assert correct;
 		DoubleDeckerAutomaton<LETTER, STATE> reachalbeStatesCopy = (DoubleDeckerAutomaton<LETTER, STATE>) (new ReachableStatesCopy(m_Input, false, false, true, false)).getResult();
 //		correct &= ResultChecker.isSubset(reachalbeStatesCopy.getStates(),m_Result.getStates());
@@ -93,9 +91,9 @@ public class RemoveDeadEnds<LETTER,STATE> implements IOperation {
 			assert correct;
 		}
 		if (!correct) {
-			String message = "// Problem with  removeUnreachable";
-			ResultChecker.writeToFileIfPreferred("FailedremoveUnreachable", message, m_Input);
+			ResultChecker.writeToFileIfPreferred(operationName() + "Failed", "", m_Input);
 		}
+		s_Logger.info("Finished testing correctness of " + operationName());
 		return correct;
 	}
 

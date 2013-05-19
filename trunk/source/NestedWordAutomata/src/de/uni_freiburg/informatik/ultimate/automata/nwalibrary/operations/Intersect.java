@@ -5,10 +5,12 @@ import org.apache.log4j.Logger;
 import de.uni_freiburg.informatik.ultimate.automata.Activator;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
+import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomatonReachableStates;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.IntersectDD;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 
 
@@ -68,12 +70,27 @@ public class Intersect<LETTER,STATE> implements IOperation {
 	@Override
 	public INestedWordAutomatonOldApi<LETTER, STATE> getResult()
 			throws OperationCanceledException {
-//		assert (ResultChecker.determinize((INestedWordAutomatonOldApi) m_Operand, m_Result));
+		assert (checkResult(m_StateFactory));
 		return m_Result;
 	}
 
 
 	
+	public boolean checkResult(StateFactory<STATE> sf) throws OperationCanceledException {
+		s_Logger.info("Start testing correctness of " + operationName());
+		INestedWordAutomatonOldApi<LETTER, STATE> fstOperandOldApi = ResultChecker.getOldApiNwa(m_FstOperand);
+		INestedWordAutomatonOldApi<LETTER, STATE> sndOperandOldApi = ResultChecker.getOldApiNwa(m_SndOperand);
+		INestedWordAutomatonOldApi<LETTER, STATE> resultDD = (new IntersectDD<LETTER, STATE>(fstOperandOldApi,sndOperandOldApi)).getResult();
+		boolean correct = true;
+		correct &= (resultDD.size() == m_Result.size());
+		correct &= (ResultChecker.nwaLanguageInclusion(resultDD, m_Result, sf) == null);
+		correct &= (ResultChecker.nwaLanguageInclusion(m_Result, resultDD, sf) == null);
+		if (!correct) {
+			ResultChecker.writeToFileIfPreferred(operationName() + "Failed", "", m_FstOperand,m_SndOperand);
+		}
+		s_Logger.info("Finished testing correctness of " + operationName());
+		return correct;
+	}
 	
 	
 	

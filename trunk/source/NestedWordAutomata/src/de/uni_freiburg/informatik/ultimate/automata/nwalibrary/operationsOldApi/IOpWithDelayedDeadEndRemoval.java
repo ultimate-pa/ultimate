@@ -1,4 +1,4 @@
-package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations;
+package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi;
 
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;

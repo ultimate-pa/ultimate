@@ -10,6 +10,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomatonReachableStates;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.ComplementDD;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.IntersectDD;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 
@@ -95,16 +96,19 @@ public class Complement<LETTER,STATE> implements IOperation {
 	
 	public boolean checkResult(StateFactory<STATE> sf) throws OperationCanceledException {
 		s_Logger.info("Start testing correctness of " + operationName());
-		INestedWordAutomatonOldApi<LETTER, STATE> operandINWA;
-		if (m_Operand instanceof INestedWordAutomatonOldApi) {
-			operandINWA = (INestedWordAutomatonOldApi<LETTER, STATE>) m_Operand;
-		} else {
-			operandINWA = (new RemoveUnreachable<LETTER, STATE>(m_Operand)).getResult();
-		}
-		INestedWordAutomatonOldApi<LETTER, STATE> intersectionOperandResult = 
-				(new IntersectDD<LETTER, STATE>(operandINWA, m_Result)).getResult();
+		INestedWordAutomatonOldApi<LETTER, STATE> operandOldApi = ResultChecker.getOldApiNwa(m_Operand);
+		
 		boolean correct = true;
+		// intersection of operand and result should be empty
+		INestedWordAutomatonOldApi<LETTER, STATE> intersectionOperandResult = 
+				(new IntersectDD<LETTER, STATE>(operandOldApi, m_Result)).getResult();
 		correct &= (new IsEmpty<LETTER, STATE>(intersectionOperandResult)).getResult();
+		// should have same number of states as old complementation
+		INestedWordAutomatonOldApi<LETTER, STATE> resultDD = (new ComplementDD<LETTER, STATE>(operandOldApi)).getResult();
+		correct &= (resultDD.size() == m_Result.size());
+		// should recognize same language as old computation
+		correct &= (ResultChecker.nwaLanguageInclusion(resultDD, m_Result, sf) == null);
+		correct &= (ResultChecker.nwaLanguageInclusion(m_Result, resultDD, sf) == null);
 		if (!correct) {
 			ResultChecker.writeToFileIfPreferred(operationName() + "Failed", "", m_Operand);
 		}
