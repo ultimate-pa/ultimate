@@ -1,7 +1,7 @@
 // Author: heizmann@informatik.uni-freiburg.de
 // Date: 18.05.2013
 
-print(determinizeLazyTest(nwa));
+print(determinize(nwa));
 
 
 NestedWordAutomaton nwa = (
