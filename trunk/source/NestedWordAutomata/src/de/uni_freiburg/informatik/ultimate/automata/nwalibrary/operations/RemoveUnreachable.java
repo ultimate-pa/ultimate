@@ -82,7 +82,7 @@ public class RemoveUnreachable<LETTER,STATE> implements IOperation {
 		assert correct;
 		for (STATE state : reachalbeStatesCopy.getStates()) {
 			Set<STATE> rCSdownStates = reachalbeStatesCopy.getDownStates(state);
-			Set<STATE> rCAdownStates = m_Result.getDownStatesAfterDeadEndRemoval(state);
+			Set<STATE> rCAdownStates = m_Result.getDownStates(state);
 			correct &= ResultChecker.isSubset(rCAdownStates, rCSdownStates);
 			assert correct;
 			correct &= ResultChecker.isSubset(rCSdownStates, rCAdownStates);
