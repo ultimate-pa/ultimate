@@ -1,7 +1,7 @@
 // Author: heizmann@informatik.uni-freiburg.de
 // Date: 12.05.2013
 
-//parseAutomata("sas09.ats");
+parseAutomata("../nwa/crafted.ats");
 
 removeUnreachable(minimizeSmall);
 removeUnreachable(noFinalStates);
@@ -9,7 +9,10 @@ removeUnreachable(joiningComponents2);
 removeUnreachable(repeatedlyjoiningComponents);
 removeUnreachable(joiningComponents);
 
-
+removeUnreachable(sameCalldifferentReturns);
+removeUnreachable(wBenjamin);
+removeUnreachable(pendingReturnNwa);
+removeUnreachable(bugBfsEmptinessLowPriorityCallQueue);
 
 
 print(removeUnreachable(minimizeSmall));
