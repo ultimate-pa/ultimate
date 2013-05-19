@@ -3,13 +3,15 @@
 
 // Typical example for exponential blowup while determinizing
 // finite automata.
-assert(!accepts(nwa, [b a a a a a a a a]));
-assert(accepts(nwa, [a a a a a a a a a]));
-assert(!accepts(nwa, [b b b b b a a a a a a a a]));
-assert(!isEmpty(nwa));
-assert(!isEmpty(complement(nwa)));
+// assert(!accepts(nwa, [b a a a a a a a a]));
+// assert(accepts(nwa, [a a a a a a a a a]));
+// assert(!accepts(nwa, [b b b b b a a a a a a a a]));
+// assert(!isEmpty(nwa));
+// assert(!isEmpty(complement(nwa)));
 
-//print(complement(nwa));
+//print(removeDeadEnds(determinizeLazyTest(nwa)));
+
+print(numberOfStates(determinize(nwa)));
 
 
 NestedWordAutomaton nwa = (

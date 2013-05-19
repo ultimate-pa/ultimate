@@ -3,7 +3,7 @@
 // Reveals Bug in r8787
 
 print(nwa);
-print(removeUnreachable(nwa));
+print(removeDeadEnds(nwa));
 
 NestedWordAutomaton nwa = (
 	callAlphabet = {"a0" "a1" },
