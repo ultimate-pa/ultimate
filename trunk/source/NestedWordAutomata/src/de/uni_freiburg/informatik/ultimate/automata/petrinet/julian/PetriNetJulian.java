@@ -241,7 +241,7 @@ public class PetriNetJulian<S, C> implements IPetriNet<S, C> {
 				false, true)).getAcceptingRun();
 	}
 
-	public NestedRun<S, C> getAcceptingNestedRun() {
+	public NestedRun<S, C> getAcceptingNestedRun() throws OperationCanceledException {
 		EmptinessPetruchio<S, C> ep = new EmptinessPetruchio<S, C>(this);
 		NestedRun<S, C> result = ep.getResult();
 

@@ -11,6 +11,7 @@ import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.automata.Activator;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
+import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.DoubleDecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
@@ -648,13 +649,13 @@ public class IsEmpty<LETTER,STATE> implements IOperation {
 	}
 	
 	@Override
-	public Boolean getResult() {
+	public Boolean getResult() throws OperationCanceledException {
 		assert (ResultChecker.isEmpty(m_nwa, m_acceptingRun));
 		return m_acceptingRun == null;
 	}
 
 
-	public NestedRun<LETTER,STATE> getNestedRun() {
+	public NestedRun<LETTER,STATE> getNestedRun() throws OperationCanceledException {
 		assert (ResultChecker.isEmpty(m_nwa, m_acceptingRun));
 		return m_acceptingRun;
 	}

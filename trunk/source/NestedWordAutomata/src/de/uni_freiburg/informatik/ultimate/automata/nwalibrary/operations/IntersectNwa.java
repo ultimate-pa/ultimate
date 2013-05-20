@@ -183,7 +183,7 @@ public class IntersectNwa<LETTER, STATE> implements INestedWordAutomatonSimple<L
 		STATE fst = prod.getFst();
 		STATE snd = prod.getSnd();
 		for (OutgoingInternalTransition<LETTER, STATE> fstTrans : m_FstOperand.internalSuccessors(fst, letter)) {
-			for (OutgoingInternalTransition<LETTER, STATE> sndTrans : m_FstOperand.internalSuccessors(snd, letter)) {
+			for (OutgoingInternalTransition<LETTER, STATE> sndTrans : m_SndOperand.internalSuccessors(snd, letter)) {
 				STATE fstSucc = fstTrans.getSucc();
 				STATE sndSucc = sndTrans.getSucc();
 				if (m_AssumeInSndNonFinalIsTrap && !m_SndOperand.isFinal(sndSucc)) {
@@ -207,7 +207,7 @@ public class IntersectNwa<LETTER, STATE> implements INestedWordAutomatonSimple<L
 		STATE snd = prod.getSnd();
 		for (OutgoingInternalTransition<LETTER, STATE> fstTrans : m_FstOperand.internalSuccessors(fst)) {
 			LETTER letter = fstTrans.getLetter();
-			for (OutgoingInternalTransition<LETTER, STATE> sndTrans : m_FstOperand.internalSuccessors(snd, letter)) {
+			for (OutgoingInternalTransition<LETTER, STATE> sndTrans : m_SndOperand.internalSuccessors(snd, letter)) {
 				STATE fstSucc = fstTrans.getSucc();
 				STATE sndSucc = sndTrans.getSucc();
 				if (m_AssumeInSndNonFinalIsTrap && !m_SndOperand.isFinal(sndSucc)) {
@@ -230,7 +230,7 @@ public class IntersectNwa<LETTER, STATE> implements INestedWordAutomatonSimple<L
 		STATE fst = prod.getFst();
 		STATE snd = prod.getSnd();
 		for (OutgoingCallTransition<LETTER, STATE> fstTrans : m_FstOperand.callSuccessors(fst, letter)) {
-			for (OutgoingCallTransition<LETTER, STATE> sndTrans : m_FstOperand.callSuccessors(snd, letter)) {
+			for (OutgoingCallTransition<LETTER, STATE> sndTrans : m_SndOperand.callSuccessors(snd, letter)) {
 				STATE fstSucc = fstTrans.getSucc();
 				STATE sndSucc = sndTrans.getSucc();
 				if (m_AssumeInSndNonFinalIsTrap && !m_SndOperand.isFinal(sndSucc)) {
@@ -254,7 +254,7 @@ public class IntersectNwa<LETTER, STATE> implements INestedWordAutomatonSimple<L
 		STATE snd = prod.getSnd();
 		for (OutgoingCallTransition<LETTER, STATE> fstTrans : m_FstOperand.callSuccessors(fst)) {
 			LETTER letter = fstTrans.getLetter();
-			for (OutgoingCallTransition<LETTER, STATE> sndTrans : m_FstOperand.callSuccessors(snd, letter)) {
+			for (OutgoingCallTransition<LETTER, STATE> sndTrans : m_SndOperand.callSuccessors(snd, letter)) {
 				STATE fstSucc = fstTrans.getSucc();
 				STATE sndSucc = sndTrans.getSucc();
 				if (m_AssumeInSndNonFinalIsTrap && !m_SndOperand.isFinal(sndSucc)) {
@@ -282,7 +282,7 @@ public class IntersectNwa<LETTER, STATE> implements INestedWordAutomatonSimple<L
 		STATE fstHier = prodHier.getFst();
 		STATE sndHier = prodHier.getSnd();
 		for (OutgoingReturnTransition<LETTER, STATE> fstTrans : m_FstOperand.returnSucccessors(fstState, fstHier, letter)) {
-			for (OutgoingReturnTransition<LETTER, STATE> sndTrans : m_FstOperand.returnSucccessors(sndState, sndHier,  letter)) {
+			for (OutgoingReturnTransition<LETTER, STATE> sndTrans : m_SndOperand.returnSucccessors(sndState, sndHier,  letter)) {
 				STATE fstSucc = fstTrans.getSucc();
 				STATE sndSucc = sndTrans.getSucc();
 				if (m_AssumeInSndNonFinalIsTrap && !m_SndOperand.isFinal(sndSucc)) {
@@ -309,7 +309,7 @@ public class IntersectNwa<LETTER, STATE> implements INestedWordAutomatonSimple<L
 		STATE sndHier = prodHier.getSnd();
 		for (OutgoingReturnTransition<LETTER, STATE> fstTrans : m_FstOperand.returnSuccessorsGivenHier(fstState, fstHier)) {
 			LETTER letter = fstTrans.getLetter();
-			for (OutgoingReturnTransition<LETTER, STATE> sndTrans : m_FstOperand.returnSucccessors(sndState, sndHier,  letter)) {
+			for (OutgoingReturnTransition<LETTER, STATE> sndTrans : m_SndOperand.returnSucccessors(sndState, sndHier,  letter)) {
 				STATE fstSucc = fstTrans.getSucc();
 				STATE sndSucc = sndTrans.getSucc();
 				if (m_AssumeInSndNonFinalIsTrap && !m_SndOperand.isFinal(sndSucc)) {

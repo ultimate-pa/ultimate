@@ -285,8 +285,10 @@ public class PetriNetUnfolder<S, C> implements IOperation {
 	/**
 	 * Return some accepting run of PetriNet net, return null if net does not
 	 * have an accepting run.
+	 * @throws AssertionError 
+	 * @throws OperationCanceledException 
 	 */
-	public PetriNetRun<S, C> getAcceptingRun() {
+	public PetriNetRun<S, C> getAcceptingRun() throws OperationCanceledException, AssertionError {
 		if (!ResultChecker.isEmpty(m_Net, m_Run)) {
 			throw new AssertionError();
 		}
@@ -297,8 +299,9 @@ public class PetriNetUnfolder<S, C> implements IOperation {
 	/**
 	 * Return the occurrence net which is the finite prefix of the unfolding of
 	 * net.
+	 * @throws OperationCanceledException 
 	 */
-	public BranchingProcess<S, C> getFinitePrefix() {
+	public BranchingProcess<S, C> getFinitePrefix() throws OperationCanceledException {
 		assert (ResultChecker.isEmpty(m_Net, m_Run));
 		return m_Unfolding;
 	}

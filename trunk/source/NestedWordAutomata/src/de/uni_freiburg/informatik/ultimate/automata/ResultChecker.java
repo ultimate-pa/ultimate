@@ -4,31 +4,28 @@ import java.io.File;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Date;
-import java.util.Set;
 
 import org.apache.log4j.Logger;
 import org.eclipse.core.runtime.preferences.ConfigurationScope;
 import org.eclipse.core.runtime.preferences.IEclipsePreferences;
 
 import de.uni_freiburg.informatik.ultimate.automata.AtsDefinitionPrinter.Labeling;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.DoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordGenerator;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomatonReachableStates;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.BuchiAccepts;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.BuchiIsIncluded;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.NestedLassoRun;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.NestedLassoWord;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.Accepts;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.ConcurrentProduct;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IStateDeterminizer;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IsEmpty;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.ConcurrentProduct;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IsIncluded;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.MinimizeDfa;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.PowersetDeterminizer;
@@ -42,7 +39,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.DifferenceSadd;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.IntersectDD;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.IntersectNodd;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.ReachableStatesCopy;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNet2FiniteAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetRun;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.PetriNetJulian;
@@ -66,8 +62,8 @@ public class ResultChecker<LETTER,STATE> {
 		return resultCheckStackHeight > 0;
 	}
 
-	public static boolean isEmpty(INestedWordAutomatonOldApi op,
-								  NestedRun result) {
+	public static <LETTER, STATE> boolean isEmpty(INestedWordAutomatonOldApi<LETTER, STATE> op,
+								  NestedRun<LETTER, STATE> result) throws OperationCanceledException {
 		if (resultCheckStackHeight >= maxResultCheckStackHeight) return true;
 		resultCheckStackHeight++;
 		s_Logger.debug("Testing correctness of emptinessCheck");
@@ -77,7 +73,7 @@ public class ResultChecker<LETTER,STATE> {
 			s_Logger.warn("Emptiness not double checked ");
 		}
 		else {
-			correct = op.accepts(result.getWord());
+			correct = (new Accepts<LETTER, STATE>(op, result.getWord())).getResult(); 
 		}
 
 		s_Logger.debug("Finished testing correctness of emptinessCheck");
@@ -443,7 +439,7 @@ public class ResultChecker<LETTER,STATE> {
 	
 	@Deprecated
 	public static boolean isEmpty(PetriNetJulian net,
-								  NestedRun result) {
+								  NestedRun result) throws OperationCanceledException {
 		if (resultCheckStackHeight >= maxResultCheckStackHeight) return true;
 		resultCheckStackHeight++;
 		s_Logger.info("Testing correctness of emptinessCheck");
@@ -462,7 +458,7 @@ public class ResultChecker<LETTER,STATE> {
 	}
 	
 	public static boolean isEmpty(PetriNetJulian net,
-									PetriNetRun result) {
+									PetriNetRun result) throws OperationCanceledException {
 		if (resultCheckStackHeight >= maxResultCheckStackHeight) return true;
 		resultCheckStackHeight++;
 		s_Logger.info("Testing correctness of emptinessCheck");

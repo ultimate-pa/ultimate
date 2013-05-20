@@ -17,7 +17,7 @@ public class GetAcceptedWord<LETTER, STATE> implements IOperation {
 	INestedWordAutomatonOldApi<LETTER, STATE> m_Operand;
 	NestedWord<LETTER> m_AcceptedWord;
 
-	public GetAcceptedWord(INestedWordAutomatonOldApi<LETTER, STATE> operand) {
+	public GetAcceptedWord(INestedWordAutomatonOldApi<LETTER, STATE> operand) throws OperationCanceledException {
 		m_Operand = operand;
 		s_Logger.info(startMessage());
 		IsEmpty<LETTER, STATE> isEmpty = new IsEmpty<LETTER, STATE>(operand);

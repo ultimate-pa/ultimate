@@ -107,7 +107,7 @@ public class Difference<LETTER,STATE> implements IOperation {
 		INestedWordAutomatonOldApi<LETTER, STATE> sndOperandOldApi = ResultChecker.getOldApiNwa(m_SndOperand);
 		INestedWordAutomatonOldApi<LETTER, STATE> resultDD = 
 				(new DifferenceDD<LETTER, STATE>(fstOperandOldApi,sndOperandOldApi, 
-						new PowersetDeterminizer<LETTER, STATE>(fstOperandOldApi),sf,false,false)).getResult();
+						new PowersetDeterminizer<LETTER, STATE>(sndOperandOldApi),sf,false,false)).getResult();
 		boolean correct = true;
 		correct &= (resultDD.size() == m_Result.size());
 		assert correct;

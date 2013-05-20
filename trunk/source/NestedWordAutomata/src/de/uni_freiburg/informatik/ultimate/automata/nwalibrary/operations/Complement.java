@@ -103,9 +103,10 @@ public class Complement<LETTER,STATE> implements IOperation {
 		INestedWordAutomatonOldApi<LETTER, STATE> intersectionOperandResult = 
 				(new IntersectDD<LETTER, STATE>(operandOldApi, m_Result)).getResult();
 		correct &= (new IsEmpty<LETTER, STATE>(intersectionOperandResult)).getResult();
-		// should have same number of states as old complementation
 		INestedWordAutomatonOldApi<LETTER, STATE> resultDD = (new ComplementDD<LETTER, STATE>(operandOldApi)).getResult();
-		correct &= (resultDD.size() == m_Result.size());
+		// should have same number of states as old complementation
+		// does not hold, resultDD sometimes has additional sink state
+//		correct &= (resultDD.size() == m_Result.size());
 		// should recognize same language as old computation
 		correct &= (ResultChecker.nwaLanguageInclusion(resultDD, m_Result, sf) == null);
 		correct &= (ResultChecker.nwaLanguageInclusion(m_Result, resultDD, sf) == null);

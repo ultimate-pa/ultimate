@@ -13,6 +13,7 @@ import petruchio.interfaces.petrinet.Place;
 import petruchio.interfaces.petrinet.Transition;
 import de.uni_freiburg.informatik.ultimate.automata.Activator;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
+import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
@@ -145,7 +146,7 @@ public class EmptinessPetruchio<S,C> implements IOperation {
 	}
 	
 	
-	public NestedRun<S,C> getResult() {
+	public NestedRun<S,C> getResult() throws OperationCanceledException {
 		assert ResultChecker.isEmpty(m_NetJulian, m_AcceptedRun);
 		return m_AcceptedRun;
 	}

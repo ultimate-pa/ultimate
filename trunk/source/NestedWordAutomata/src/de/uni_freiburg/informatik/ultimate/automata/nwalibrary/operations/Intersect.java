@@ -83,8 +83,11 @@ public class Intersect<LETTER,STATE> implements IOperation {
 		INestedWordAutomatonOldApi<LETTER, STATE> resultDD = (new IntersectDD<LETTER, STATE>(fstOperandOldApi,sndOperandOldApi)).getResult();
 		boolean correct = true;
 		correct &= (resultDD.size() == m_Result.size());
+		assert correct;
 		correct &= (ResultChecker.nwaLanguageInclusion(resultDD, m_Result, sf) == null);
+		assert correct;
 		correct &= (ResultChecker.nwaLanguageInclusion(m_Result, resultDD, sf) == null);
+		assert correct;
 		if (!correct) {
 			ResultChecker.writeToFileIfPreferred(operationName() + "Failed", "", m_FstOperand,m_SndOperand);
 		}

@@ -150,7 +150,7 @@ public class NestedWordAutomaton<LETTER,STATE> implements INestedWordAutomatonOl
 	
 	
 	@Override
-	public IRun<LETTER, STATE> acceptingRun() {
+	public IRun<LETTER, STATE> acceptingRun() throws OperationCanceledException {
 		return getAcceptingNestedRun();
 	}
 
@@ -2283,7 +2283,7 @@ public class NestedWordAutomaton<LETTER,STATE> implements INestedWordAutomatonOl
 	
 	
 	@Deprecated
-	public NestedRun<LETTER,STATE> getAcceptingNestedRun() {
+	public NestedRun<LETTER,STATE> getAcceptingNestedRun() throws OperationCanceledException {
 		NestedRun<LETTER,STATE> result = (new IsEmpty<LETTER,STATE>(this).getNestedRun());
 		return result;
 	}
