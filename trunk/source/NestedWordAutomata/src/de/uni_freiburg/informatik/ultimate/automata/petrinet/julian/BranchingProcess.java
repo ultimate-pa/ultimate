@@ -378,11 +378,6 @@ public class BranchingProcess<S, C> implements IAutomaton<S, C> {
 	}
 
 	@Override
-	public IRun<S, C> acceptingRun() throws OperationCanceledException {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
 	public boolean accepts(Word<S> word) {
 		throw new UnsupportedOperationException();
 	}

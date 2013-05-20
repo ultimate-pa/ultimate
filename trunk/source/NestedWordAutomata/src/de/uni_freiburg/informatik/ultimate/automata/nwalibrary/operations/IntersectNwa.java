@@ -324,12 +324,6 @@ public class IntersectNwa<LETTER, STATE> implements INestedWordAutomatonSimple<L
 	}
 
 	@Override
-	public IRun<LETTER, STATE> acceptingRun() throws OperationCanceledException {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
 	public boolean accepts(Word<LETTER> word) {
 		// TODO Auto-generated method stub
 		return false;

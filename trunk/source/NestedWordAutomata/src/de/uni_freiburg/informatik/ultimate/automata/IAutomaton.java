@@ -6,7 +6,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 
 public interface IAutomaton<S,C> {
 	
-	public IRun<S,C> acceptingRun() throws OperationCanceledException;
 	public boolean accepts(Word<S> word);
 	public int size();
 	public Collection<S> getAlphabet();

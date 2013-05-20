@@ -14,6 +14,7 @@ import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IsEmpty;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.MinimizeSevpa;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.PowersetDeterminizer;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.RemoveDeadEnds;
@@ -112,7 +113,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 	@Override
 	protected boolean isAbstractionCorrect() throws OperationCanceledException {			
 		try {
-			m_Counterexample = m_Abstraction.acceptingRun();
+			m_Counterexample = (new IsEmpty<CodeBlock,IPredicate>((INestedWordAutomatonOldApi) m_Abstraction)).getNestedRun();
 		} catch (OperationCanceledException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

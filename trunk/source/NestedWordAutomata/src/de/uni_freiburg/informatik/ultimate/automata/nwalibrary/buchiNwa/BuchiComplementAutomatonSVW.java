@@ -418,11 +418,6 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE>
 
 
 	@Override
-	public IRun<LETTER, STATE> acceptingRun() throws OperationCanceledException {
-		throw new UnsupportedOperationException(UnsupportedOperationMessage);
-	}
-
-	@Override
 	public boolean accepts(Word<LETTER> word) {
 		throw new UnsupportedOperationException(UnsupportedOperationMessage);
 	}

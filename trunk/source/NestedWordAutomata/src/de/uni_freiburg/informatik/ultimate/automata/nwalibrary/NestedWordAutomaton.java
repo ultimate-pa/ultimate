@@ -150,12 +150,6 @@ public class NestedWordAutomaton<LETTER,STATE> implements INestedWordAutomatonOl
 	
 	
 	@Override
-	public IRun<LETTER, STATE> acceptingRun() throws OperationCanceledException {
-		return getAcceptingNestedRun();
-	}
-
-
-	@Override
 	public int size() {
 		return m_InternalOut.size();
 	}

@@ -133,12 +133,6 @@ public class ComplementDeterministicNwa<LETTER, STATE> implements INestedWordAut
 	}
 
 	@Override
-	public IRun<LETTER, STATE> acceptingRun() throws OperationCanceledException {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
 	public boolean accepts(Word<LETTER> word) {
 		// TODO Auto-generated method stub
 		return false;

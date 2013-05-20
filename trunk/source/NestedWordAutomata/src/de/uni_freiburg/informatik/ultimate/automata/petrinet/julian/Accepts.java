@@ -58,7 +58,7 @@ public class Accepts<S, C> implements IOperation {
 		s_Logger.info(exitMessage());
 	}
 
-	public Boolean getResult() {
+	public Boolean getResult() throws OperationCanceledException {
 		assert (ResultChecker.accepts(net, nWord, m_Result));
 		return m_Result;
 	}

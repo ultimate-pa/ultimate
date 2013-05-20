@@ -43,11 +43,6 @@ public class NestedWordAutomatonFilteredStates<LETTER, STATE> implements
 	}
 
 	@Override
-	public IRun<LETTER, STATE> acceptingRun() throws OperationCanceledException {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
 	public boolean accepts(Word<LETTER> word) {
 		throw new UnsupportedOperationException();
 	}

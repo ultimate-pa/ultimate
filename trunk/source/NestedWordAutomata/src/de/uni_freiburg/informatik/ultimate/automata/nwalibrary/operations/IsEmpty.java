@@ -43,7 +43,7 @@ public class IsEmpty<LETTER,STATE> implements IOperation {
 	
 	@Override
 	public String operationName() {
-		return "bfsEmptiness";
+		return "isEmpty";
 	}
 	
 	@Override

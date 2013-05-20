@@ -422,13 +422,13 @@ public class ResultChecker<LETTER,STATE> {
 	
 	public static boolean accepts(PetriNetJulian net,
 								  Word word,
-								  boolean result) {
+								  boolean result) throws OperationCanceledException {
 		if (resultCheckStackHeight >= maxResultCheckStackHeight) return true;
 		resultCheckStackHeight++;
 		s_Logger.info("Testing correctness of accepts");
 		
 		NestedWord nw = new NestedWord(word);
-		boolean resultAutomata = (new PetriNet2FiniteAutomaton(net)).getResult().accepts(nw);
+		boolean resultAutomata = (new Accepts((new PetriNet2FiniteAutomaton(net)).getResult(), nw)).getResult();
 		boolean correct = (result == resultAutomata);
 
 		s_Logger.info("Finished testing correctness of accepts");
