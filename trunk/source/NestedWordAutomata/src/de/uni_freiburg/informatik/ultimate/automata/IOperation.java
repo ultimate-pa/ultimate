@@ -1,5 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.automata;
 
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
+
 
 /**
  * Interface for operations for automata.
@@ -20,7 +22,7 @@ package de.uni_freiburg.informatik.ultimate.automata;
  * @author heizmann@informatik.uni-freiburg.de
  *
  */
-public interface IOperation {
+public interface IOperation<STATE> {
 	
 	/**
 	 * Name of the operation..
@@ -47,5 +49,13 @@ public interface IOperation {
 	 * @throws OperationCanceledException 
 	 */
 	Object getResult() throws OperationCanceledException;
+	
+	
+	/**
+	 * Run some checks to test correctness of the result. If therefore new
+	 * automata have to be build use stateFactory.
+	 * @return true iff all tests succeeded.
+	 */
+//	boolean checkResult(StateFactory<STATE> stateFactory);
 
 }

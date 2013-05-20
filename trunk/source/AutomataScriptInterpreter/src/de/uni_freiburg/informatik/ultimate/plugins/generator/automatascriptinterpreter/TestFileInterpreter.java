@@ -1038,8 +1038,7 @@ public class TestFileInterpreter {
 				try {
 					result = op.getResult();
 				} catch (OperationCanceledException e) {
-					throw new InterpreterException(oe.getLocation(),"Operation "
-							+ oe.getOperationName() + " cancelled. Probably there was a timout.");
+					throw new InterpreterException(oe.getLocation(),e.getMessage());
 				}
 			} 
 		}
