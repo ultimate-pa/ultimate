@@ -1,7 +1,7 @@
 // collection of some small and interesting nested word automata
 // Author: heizmann@informatik.uni-freiburg.de
  
- NestedWordAutomaton sameCalldifferentReturns = (
+NestedWordAutomaton sameCalldifferentReturns = (
 	callAlphabet = { call },
 	internalAlphabet = { },
 	returnAlphabet = { ret },

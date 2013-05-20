@@ -4,10 +4,6 @@
 // Contains applications of in filename mentioned operation on several
 // automata.
 //
-// Correctness of these operations is not tested here. But you can use this
-// file to test correctness of intersection by enabling the automatic
-// correctness test for automaton operations is Ultimate.
-//
 // This file contains the following six automaton definitions which I obtained
 // during program verification via TraceAbstraction on 16.05.2011. (At his day
 // Winfried Kretschmann was elected as Ministerpräsident of Baden-Württemberg.)
@@ -18,16 +14,6 @@
 //Ackermann_Abstraction19
 //Ackermann_Abstraction24
 //Ackermann_InterpolantAutomaton_Iteration39
-
-assert(accepts(complement (McCarthyInterpolantAutomaton_Iteration12), []));
-assert(accepts(complement (McCarthyInterpolantAutomaton_Iteration16), []));
-//assert(accepts(complement (McCarthyAbstraction16), []));
-
-assert(accepts(complement (Ackermann_InterpolantAutomaton_Iteration39), []));
-assert(accepts(complement (Ackermann_Abstraction19), []));
-assert(accepts(complement (Ackermann_Abstraction24), []));
-
-
 
 
 NestedWordAutomaton McCarthyInterpolantAutomaton_Iteration16 = (
