@@ -365,6 +365,10 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 				
 			m_Abstraction = (IAutomaton<CodeBlock, IPredicate>) diff.getResult();
 			m_DeadEndRemovalTime = diff.getDeadEndRemovalTime();
+			if (m_Pref.dumpAutomata()) {
+				String filename = m_Pref.dumpPath() + "/InterpolantAutomaton_Iteration" + m_Iteration; 
+				new AtsDefinitionPrinter<String,String>(filename, m_PrintAutomataLabeling, "",m_InterpolAutomaton);
+			}
 		}
 		else {//complement and intersection instead of difference
 
