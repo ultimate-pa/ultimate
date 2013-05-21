@@ -2640,7 +2640,7 @@ public class NestedWordAutomaton<LETTER,STATE> implements INestedWordAutomatonOl
 	
 	@Override
 	public String toString() {
-		return (new AtsDefinitionPrinter(this)).getDefinitionAsString();
+		return (new AtsDefinitionPrinter<String,String>("nwa", this)).getDefinitionAsString();
 	}
 
 

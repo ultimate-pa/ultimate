@@ -395,7 +395,7 @@ public class NestedWordAutomatonFilteredStates<LETTER, STATE> implements
 	
 	@Override
 	public String toString() {
-		return (new AtsDefinitionPrinter(this)).getDefinitionAsString();
+		return (new AtsDefinitionPrinter<String,String>("nwa", this)).getDefinitionAsString();
 	}
 	
 	

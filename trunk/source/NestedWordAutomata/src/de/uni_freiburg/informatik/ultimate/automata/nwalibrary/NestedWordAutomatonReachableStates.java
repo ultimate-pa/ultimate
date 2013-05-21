@@ -2712,7 +2712,7 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 	
 	@Override
 	public String toString() {
-		return (new AtsDefinitionPrinter<LETTER,STATE>(this)).getDefinitionAsString();
+		return (new AtsDefinitionPrinter<String,String>("nwa", this)).getDefinitionAsString();
 	}
 
 }

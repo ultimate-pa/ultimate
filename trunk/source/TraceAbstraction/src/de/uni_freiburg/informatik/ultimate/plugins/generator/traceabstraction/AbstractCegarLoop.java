@@ -297,8 +297,8 @@ public abstract class AbstractCegarLoop {
 			m_ArtifactAutomaton = m_Abstraction;
 		}
 		if (m_Pref.dumpAutomata()) {
-			new AtsDefinitionPrinter<String,String>(m_Pref.dumpPath()+"/"+m_Name+"_Abstraction"+m_Iteration,
-					m_PrintAutomataLabeling,"",m_Abstraction);
+			String filename = m_Name+"Abstraction"+m_Iteration;
+			writeAutomatonToFile(m_Abstraction, filename);
 		}
 		m_InitialAbstractionSize = m_Abstraction.size();
 		m_BiggestAbstractionSize = m_Abstraction.size();
@@ -380,9 +380,8 @@ public abstract class AbstractCegarLoop {
 			}
 			
 			if (m_Pref.dumpAutomata()) {
-				writeAutomatonToFile(m_Abstraction, "Abstraction_Iteration"+m_Iteration);
-				String filename = m_Pref.dumpPath()+"/Abstraction"+m_Iteration;
-				new AtsDefinitionPrinter<String,String>(filename,m_PrintAutomataLabeling,"",m_Abstraction);
+				String filename = "Abstraction"+m_Iteration;
+				writeAutomatonToFile(m_Abstraction, filename);
 			}
 			
 			if (m_BiggestAbstractionSize < m_Abstraction.size()){
@@ -414,9 +413,9 @@ public abstract class AbstractCegarLoop {
 	
 	
 	
-	private void writeAutomatonToFile(
+	protected void writeAutomatonToFile(
 			IAutomaton<CodeBlock, IPredicate> automaton, String filename) {
-		new AtsDefinitionPrinter<String,String>(m_Pref.dumpPath()+"/"+filename, m_PrintAutomataLabeling,
+		new AtsDefinitionPrinter<String,String>(filename, m_Pref.dumpPath()+"/"+filename, m_PrintAutomataLabeling,
 													"",automaton);
 	}
 	

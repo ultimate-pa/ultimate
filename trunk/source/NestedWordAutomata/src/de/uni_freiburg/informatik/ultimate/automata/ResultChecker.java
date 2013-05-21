@@ -305,7 +305,7 @@ public class ResultChecker<LETTER,STATE> {
 		if (writeToFile) {
 			String directory = prefs.get(PreferenceConstants.Name_Path, PreferenceConstants.Default_Path); 
 			String filename = directory + File.separator+filenamePrefix + getDateTime() + ".fat";
-			new AtsDefinitionPrinter(filename, Labeling.QUOTED, message, automata);
+			new AtsDefinitionPrinter(filenamePrefix, filename, Labeling.QUOTED, message, automata);
 		}
     }
 	

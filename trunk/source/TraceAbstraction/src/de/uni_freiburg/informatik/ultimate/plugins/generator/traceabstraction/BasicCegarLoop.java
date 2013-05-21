@@ -366,8 +366,8 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 			m_Abstraction = (IAutomaton<CodeBlock, IPredicate>) diff.getResult();
 			m_DeadEndRemovalTime = diff.getDeadEndRemovalTime();
 			if (m_Pref.dumpAutomata()) {
-				String filename = m_Pref.dumpPath() + "/InterpolantAutomaton_Iteration" + m_Iteration; 
-				new AtsDefinitionPrinter<String,String>(filename, m_PrintAutomataLabeling, "",m_InterpolAutomaton);
+				String filename = "InterpolantAutomaton_Iteration" + m_Iteration; 
+				super.writeAutomatonToFile(m_InterpolAutomaton, filename);
 			}
 		}
 		else {//complement and intersection instead of difference
@@ -548,8 +548,8 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 			assert (m_SmtManager.checkInductivity(dia, false, true)) : "Not inductive";
 		}
 		if (m_Pref.dumpAutomata()) {
-			String filename = m_Pref.dumpPath() + "/InterpolantAutomatonDeterminized_Iteration" + m_Iteration; 
-			new AtsDefinitionPrinter<String,String>(filename, m_PrintAutomataLabeling, "",dia);
+			String filename = "InterpolantAutomatonDeterminized_Iteration" + m_Iteration; 
+			writeAutomatonToFile(dia, filename);
 		}
 		assert(dia.accepts(m_Counterexample.getWord()));
 		s_Logger.debug("Sucessfully determinized");

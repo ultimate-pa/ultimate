@@ -1018,7 +1018,7 @@ public class TestFileInterpreter {
 				final String text;
 				if (o instanceof IAutomaton) {
 					m_LastPrintedAutomaton = (IAutomaton<?, ?>) o;
-					text = (new AtsDefinitionPrinter<String, String>(o)).getDefinitionAsString();
+					text = (new AtsDefinitionPrinter<String, String>("automaton", o)).getDefinitionAsString();
 				} else {
 					text = String.valueOf(o);
 				}

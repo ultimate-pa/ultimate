@@ -66,23 +66,26 @@ public class AtsDefinitionPrinter<LETTER,STATE> {
 		}
 		
 		
-		public AtsDefinitionPrinter(String filename, Labeling labels, String message, Object... automata) {
+		public AtsDefinitionPrinter(String automatonName, String filename, Labeling labels, String message, Object... automata) {
 			s_Logger.warn("Dumping Testfile");
 			initializePrintWriter(filename);
 			m_printWriter.println("// Testfile dumped by Ultimate at "+getDateTime());
 			m_printWriter.println("");
 			m_printWriter.println(message);
 			m_printWriter.println("");
-			for (Object automaton : automata) {
-				printAutomaton(automaton, labels);
+			if (automata.length == 1) {
+				printAutomaton(automatonName, automata[0], labels);
+			}
+			for (int i=0; i< automata.length; i++) {
+				printAutomaton(automatonName + String.valueOf(i), automata[i], labels);
 			}
 		}
 		
 		
-		public AtsDefinitionPrinter(Object automaton) {
+		public AtsDefinitionPrinter(String name, Object automaton) {
 			m_StringWriter = new StringWriter();
 			m_printWriter = new PrintWriter(m_StringWriter);
-			printAutomaton(automaton, Labeling.TOSTRING);
+			printAutomaton(name, automaton, Labeling.TOSTRING);
 		}
 		
 		public String getDefinitionAsString() {
@@ -95,7 +98,7 @@ public class AtsDefinitionPrinter<LETTER,STATE> {
 		
 		
 		@SuppressWarnings("unchecked")
-		private void printAutomaton(Object automaton, Labeling labels) {
+		private void printAutomaton(String name, Object automaton, Labeling labels) {
 			if (automaton instanceof INestedWordAutomatonSimple) {
 				INestedWordAutomatonOldApi<LETTER,STATE> nwa;
 				if (automaton instanceof INestedWordAutomatonOldApi) {
@@ -109,14 +112,14 @@ public class AtsDefinitionPrinter<LETTER,STATE> {
 				}
 					
 				if (labels == Labeling.TOSTRING) {
-					new NwaTestFileWriterToString(nwa);
+					new NwaTestFileWriterToString(name, nwa);
 				}
 				else if (labels == Labeling.QUOTED) {
-					new NwaTestFileWriterToStringWithHash(nwa);
+					new NwaTestFileWriterToStringWithHash(name, nwa);
 				
 				}
 				else if (labels == Labeling.NUMERATE) {
-					new NwaTestFileWriter(nwa);
+					new NwaTestFileWriter(name, nwa);
 				}
 			}
 			else if (automaton instanceof IPetriNet) {
@@ -155,14 +158,14 @@ public class AtsDefinitionPrinter<LETTER,STATE> {
 			Map<LETTER, String> returnAlphabet;
 			Map<STATE, String> stateMapping;
 
-			public NwaTestFileWriter(INestedWordAutomatonOldApi<LETTER,STATE> nwa) {
+			public NwaTestFileWriter(String name, INestedWordAutomatonOldApi<LETTER,STATE> nwa) {
 				m_Nwa = nwa;
 				internalAlphabet = getAlphabetMapping(nwa.getInternalAlphabet(), "a");
 				callAlphabet = getAlphabetMapping(nwa.getCallAlphabet(), "c");
 				returnAlphabet = getAlphabetMapping(nwa.getReturnAlphabet(), "r");
 				stateMapping = getStateMapping(m_Nwa.getStates());
 
-				m_printWriter.println("NestedWordAutomaton nwa = (");
+				m_printWriter.println("NestedWordAutomaton " + name + " = (");
 				printAlphabetes();
 				printStates();
 				printInitialStates(m_Nwa.getInitialStates());
@@ -317,8 +320,8 @@ public class AtsDefinitionPrinter<LETTER,STATE> {
 		 */
 		private class NwaTestFileWriterToString extends NwaTestFileWriter{
 
-			public NwaTestFileWriterToString(INestedWordAutomatonOldApi<LETTER,STATE> nwa) {
-				super(nwa);
+			public NwaTestFileWriterToString(String name, INestedWordAutomatonOldApi<LETTER,STATE> nwa) {
+				super(name, nwa);
 			}
 
 			@Override
@@ -349,8 +352,8 @@ public class AtsDefinitionPrinter<LETTER,STATE> {
 		 */
 		private class NwaTestFileWriterToStringWithHash extends NwaTestFileWriter{
 
-			public NwaTestFileWriterToStringWithHash(INestedWordAutomatonOldApi<LETTER,STATE> nwa) {
-				super(nwa);
+			public NwaTestFileWriterToStringWithHash(String name, INestedWordAutomatonOldApi<LETTER,STATE> nwa) {
+				super(name, nwa);
 			}
 
 			@Override

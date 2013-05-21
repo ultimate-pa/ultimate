@@ -58,8 +58,8 @@ public class CegarLoopJulian extends BasicCegarLoop {
 			m_ArtifactAutomaton = m_Abstraction;
 		}
 		if (m_Pref.dumpAutomata()) {
-			new AtsDefinitionPrinter<String,String>(m_Pref.dumpPath()+"/Abstraction"+m_Iteration,
-					m_PrintAutomataLabeling,"",m_Abstraction);
+			String filename = "Abstraction"+m_Iteration;
+			writeAutomatonToFile(m_Abstraction, filename);
 		}
 	}
 	
@@ -156,8 +156,8 @@ public class CegarLoopJulian extends BasicCegarLoop {
 			m_ArtifactAutomaton = m_Abstraction;
 		}
 		if (m_Pref.dumpAutomata()) {
-			String filename = m_Pref.dumpPath()+"/Abstraction"+m_Iteration;
-			new AtsDefinitionPrinter<String,String>(filename,m_PrintAutomataLabeling,"", m_Abstraction);
+			String filename = "Abstraction"+m_Iteration;
+			writeAutomatonToFile(m_Abstraction, filename);
 		}
 		return true;
 	}	
