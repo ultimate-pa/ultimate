@@ -1,13 +1,16 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.TAPreferences;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.TAPreferences.Determinization;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.ISLPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateWithHistory;
@@ -76,7 +79,29 @@ public class PredicateFactoryRefinement extends PredicateFactory {
 
 	@Override
 	public IPredicate determinize(Map<IPredicate, Set<IPredicate>> down2up) {
-		throw new AssertionError("not directly used while refining abstraction");
+		if (!m_Pref.computeHoareAnnotation() && 
+				m_Pref.determinization() != Determinization.STRONGESTPOST) {
+			return m_SmtManager.newDontCarePredicate(null);
+		}
+
+		assert ((m_Pref.interprocedural() && 
+				m_Pref.determinization() != Determinization.STRONGESTPOST)
+				|| down2up.keySet().size() <= 1) : "more than one down state";
+
+		List<IPredicate> upPredicates = new ArrayList<IPredicate>();
+		for (IPredicate caller : down2up.keySet()) {
+			for (IPredicate current : down2up.get(caller)) {
+				if (SmtManager.isDontCare(current)) {
+					return m_SmtManager.newDontCarePredicate(null);
+				}
+				upPredicates.add(current);
+			}
+		}
+		TermVarsProc tvp = m_SmtManager.and(
+									upPredicates.toArray(new IPredicate[0]));
+		IPredicate result = m_SmtManager.newPredicate(tvp.getFormula(), 
+				tvp.getProcedures(), tvp.getVars(), tvp.getClosedFormula());
+		return result;
 	}
 
 	@Override

@@ -103,7 +103,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 				m_Pref);
 		
 		m_Abstraction = cFG2NestedWordAutomaton.getNestedWordAutomaton(
-						super.m_RootNode, defaultStateFactory, super.m_ErrorLocs);
+						super.m_RootNode, m_StateFactoryForRefinement, super.m_ErrorLocs);
 	}
 	
 	
