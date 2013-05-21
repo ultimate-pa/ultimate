@@ -1,6 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg;
 
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.BoogieStatementPrettyPrinter;
 
 /**
  * Edge in a recursive control flow graph that represents the return from a
@@ -36,7 +37,7 @@ public class Return extends CodeBlock {
 
 	@Override
 	public void updatePayloadName() {
-		super.getPayload().setName("return");
+		super.getPayload().setName("return " + BoogieStatementPrettyPrinter.print(getCallStatement()));
 	}
 
 	public Call getCorrespondingCall() {

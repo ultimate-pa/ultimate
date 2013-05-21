@@ -62,7 +62,7 @@ public class Call extends CodeBlock {
 	
 	@Override
 	public void updatePayloadName() {
-		super.getPayload().setName("call");
+		super.getPayload().setName(BoogieStatementPrettyPrinter.print(m_CallStatement));
 	}
 
 	@Override
