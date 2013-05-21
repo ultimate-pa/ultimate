@@ -729,7 +729,7 @@ public class TestFileInterpreter {
 		return m_LastPrintedAutomaton;
 	}
 	
-	private <T> Object interpret(AssignmentExpression as) throws InterpreterException {
+	private Object interpret(AssignmentExpression as) throws InterpreterException {
 		List<AtsASTNode> children = as.getOutgoingNodes();
 		VariableExpression var = (VariableExpression) children.get(0);
 		if (!m_variables.containsKey(var.getIdentifier())) {
@@ -771,7 +771,7 @@ public class TestFileInterpreter {
 		return oldValue;
 	}
 		
-	private <T> Object interpret(AtsASTNode node) throws InterpreterException {
+	private Object interpret(AtsASTNode node) throws InterpreterException {
 		Object result = null;
 		if (node instanceof AssignmentExpression) {
 			result = interpret((AssignmentExpression) node);
@@ -815,7 +815,7 @@ public class TestFileInterpreter {
 		return result;
 	}
 
-	private <T> Integer interpret(BinaryExpression be) throws InterpreterException {
+	private Integer interpret(BinaryExpression be) throws InterpreterException {
 		List<AtsASTNode> children = be.getOutgoingNodes();
 		Integer v1 = (Integer) interpret(children.get(0));
 		Integer v2 = (Integer) interpret(children.get(1));
@@ -829,13 +829,13 @@ public class TestFileInterpreter {
 		}
 	}
 	
-	private <T> Object interpret(BreakStatement bst) {
+	private Object interpret(BreakStatement bst) {
 		// Change the flow
 		m_flow = Flow.BREAK;
 		return null;
 	}
 	
-	private <T> Boolean interpret(ConditionalBooleanExpression cbe) throws InterpreterException {
+	private Boolean interpret(ConditionalBooleanExpression cbe) throws InterpreterException {
 		List<AtsASTNode> children = cbe.getOutgoingNodes();
 		switch (cbe.getOperator()) {
 		case NOT: return !((Boolean) interpret(children.get(0)));
@@ -858,17 +858,17 @@ public class TestFileInterpreter {
 		}
 	}
 
-	private <T> Object interpret(ConstantExpression ce) {
+	private Object interpret(ConstantExpression ce) {
 		return ce.getValue();
 	}
 	
-	private <T> Object interpret(ContinueStatement cst) {
+	private Object interpret(ContinueStatement cst) {
 		// Change the flow
 		m_flow  =  Flow.CONTINUE;
 		return null;
 	}
 	
-	private <T> Object interpret(ForStatement fs) throws InterpreterException {
+	private Object interpret(ForStatement fs) throws InterpreterException {
 		List<AtsASTNode> children = fs.getOutgoingNodes();
 		
 		Boolean loopCondition = false;
@@ -934,7 +934,7 @@ public class TestFileInterpreter {
 		return null;
 	}
 	
-	private <T> Object interpret(IfElseStatement is) throws InterpreterException {
+	private Object interpret(IfElseStatement is) throws InterpreterException {
 		List<AtsASTNode> children = is.getOutgoingNodes();
 		
 		// children(0) is the condition
@@ -946,7 +946,7 @@ public class TestFileInterpreter {
 		return null;
 	}
 	
-	private <T> Object interpret(IfStatement is) throws InterpreterException {
+	private Object interpret(IfStatement is) throws InterpreterException {
 		List<AtsASTNode> children = is.getOutgoingNodes();
 		if ((Boolean) interpret(children.get(0))) {
 			for (int i = 1; i < children.size(); i++) {
@@ -956,17 +956,17 @@ public class TestFileInterpreter {
 		return null;
 	}
 	
-	private <T> NestedWord<String> interpret(Nestedword nw) {
+	private NestedWord<String> interpret(Nestedword nw) {
 		return new NestedWord<String>(nw.getWordSymbols(), nw.getNestingRelation());
 	}
 	
-	private <T> NestedLassoWord<String> interpret(NestedLassoword nw) {
+	private NestedLassoWord<String> interpret(NestedLassoword nw) {
 		NestedWord<String> stem = interpret(nw.getStem());
 		NestedWord<String> loop = interpret(nw.getLoop());
 		return new NestedLassoWord<String>(stem, loop);
 	}
 	
-	private <T> Object interpret(OperationInvocationExpression oe) throws InterpreterException {
+	private Object interpret(OperationInvocationExpression oe) throws InterpreterException {
 		List<AtsASTNode> children = oe.getOutgoingNodes();
 		if (children.size() != 1) {
 			String message = "OperationExpression should have only 1 child (ArgumentList)";
@@ -1033,7 +1033,7 @@ public class TestFileInterpreter {
 			}
 			
 		} else {
-			IOperation op = getAutomataOperation(oe, arguments);
+			IOperation<String,String> op = getAutomataOperation(oe, arguments);
 			if (op != null) {
 				try {
 					assert op.checkResult(new StringFactory());
@@ -1046,7 +1046,7 @@ public class TestFileInterpreter {
 		return result;
 	}
 	
-	private <T> Boolean interpret(RelationalExpression re) throws InterpreterException {
+	private Boolean interpret(RelationalExpression re) throws InterpreterException {
 		List<AtsASTNode> children = re.getOutgoingNodes();
 		if (re.getExpectingType() == Integer.class) {
 			int v1 = (Integer) interpret(children.get(0));
@@ -1065,7 +1065,7 @@ public class TestFileInterpreter {
 		return null;
 	}
 	
-	private <T> Object interpret(ReturnStatement rst) throws InterpreterException {
+	private Object interpret(ReturnStatement rst) throws InterpreterException {
 		List<AtsASTNode> children = rst.getOutgoingNodes();
 		// Change the flow
 		m_flow = Flow.RETURN;
@@ -1076,14 +1076,14 @@ public class TestFileInterpreter {
 		}
 	}
 	
-	private <T> Object interpret(StatementList stmtList) throws InterpreterException {
+	private Object interpret(StatementList stmtList) throws InterpreterException {
 		for (AtsASTNode stmt : stmtList.getOutgoingNodes()) {
 				interpret(stmt);
 		}
 		return null;
 	}
 	
-    private <T> Integer interpret(UnaryExpression ue) throws InterpreterException {
+    private Integer interpret(UnaryExpression ue) throws InterpreterException {
 		  List<AtsASTNode> children = ue.getOutgoingNodes();
 		  
 		  VariableExpression var = (VariableExpression) children.get(0);
@@ -1113,7 +1113,7 @@ public class TestFileInterpreter {
 	      }
 		}
 	
-    private <T> Object interpret(VariableDeclaration vd) throws InterpreterException {
+    private Object interpret(VariableDeclaration vd) throws InterpreterException {
     	List<AtsASTNode> children = vd.getOutgoingNodes();
     	Object value = null;
     	if (children.size() == 1) {
@@ -1130,7 +1130,7 @@ public class TestFileInterpreter {
     	return null;
     }
     
-	private <T> Object interpret(VariableExpression v) throws InterpreterException {
+	private Object interpret(VariableExpression v) throws InterpreterException {
 		if (!m_variables.containsKey(v.getIdentifier())) {
 			String longDescr = "Variable \"" + v.getIdentifier() + "\" was not declared before.";
 			throw new InterpreterException(v.getLocation(), longDescr);
@@ -1138,7 +1138,7 @@ public class TestFileInterpreter {
 		return m_variables.get(v.getIdentifier());
 	}
 	
-	private <T> Object interpret(WhileStatement ws) throws InterpreterException {
+	private Object interpret(WhileStatement ws) throws InterpreterException {
 		List<AtsASTNode> children = ws.getOutgoingNodes();
 		Boolean loopCondition = (Boolean) interpret(children.get(0));
 		while (loopCondition) {
@@ -1267,9 +1267,10 @@ public class TestFileInterpreter {
 	 * @throws InterpreterException if there couldn't construct an object of the operation
 	 * @throws UnsupportedOperationException if the operation does not exist
 	 */
-	private IOperation getAutomataOperation(OperationInvocationExpression oe, ArrayList<Object> arguments) throws InterpreterException  {
+	
+	private IOperation<String,String> getAutomataOperation(OperationInvocationExpression oe, ArrayList<Object> arguments) throws InterpreterException  {
 		String operationName = oe.getOperationName().toLowerCase();
-		IOperation result = null;
+		IOperation<String,String> result = null;
 		if (m_existingOperations.containsKey(operationName)) {
 			Set<Class<?>> operationClasses = m_existingOperations.get(operationName);
 			for (Class<?> operationClass : operationClasses) {
@@ -1278,7 +1279,7 @@ public class TestFileInterpreter {
 				for (Constructor<?> c : operationConstructors) {
 					if (allArgumentsHaveCorrectTypeForThisConstructor(c, arguments)) {
 						try {
-							result = (IOperation) c.newInstance(arguments.toArray());
+							result = (IOperation<String,String>) c.newInstance(arguments.toArray());
 							return result;
 						} catch (InstantiationException e) {
 							e.printStackTrace();
