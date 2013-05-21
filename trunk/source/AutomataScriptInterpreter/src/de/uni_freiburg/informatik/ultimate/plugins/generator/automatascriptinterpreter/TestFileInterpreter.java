@@ -1038,7 +1038,7 @@ public class TestFileInterpreter {
 				try {
 					assert op.checkResult(new StringFactory());
 					result = op.getResult();
-				} catch (OperationCanceledException e) {
+				} catch (AutomataLibraryException e) {
 					throw new InterpreterException(oe.getLocation(),e.getMessage());
 				}
 			} 

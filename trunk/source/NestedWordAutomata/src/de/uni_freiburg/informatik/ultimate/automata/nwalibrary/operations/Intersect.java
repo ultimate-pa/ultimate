@@ -3,6 +3,7 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations;
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.automata.Activator;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
@@ -51,7 +52,7 @@ public class Intersect<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	
 	public Intersect(INestedWordAutomatonOldApi<LETTER,STATE> fstOperand,
 			INestedWordAutomatonOldApi<LETTER,STATE> sndOperand
-			) throws OperationCanceledException {
+			) throws AutomataLibraryException {
 		m_FstOperand = fstOperand;
 		m_SndOperand = sndOperand;
 		m_StateFactory = m_FstOperand.getStateFactory();
@@ -70,13 +71,12 @@ public class Intersect<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	@Override
 	public INestedWordAutomatonOldApi<LETTER, STATE> getResult()
 			throws OperationCanceledException {
-		assert (checkResult(m_StateFactory));
 		return m_Result;
 	}
 
 
 	
-	public boolean checkResult(StateFactory<STATE> sf) throws OperationCanceledException {
+	public boolean checkResult(StateFactory<STATE> sf) throws AutomataLibraryException {
 		s_Logger.info("Start testing correctness of " + operationName());
 		INestedWordAutomatonOldApi<LETTER, STATE> fstOperandOldApi = ResultChecker.getOldApiNwa(m_FstOperand);
 		INestedWordAutomatonOldApi<LETTER, STATE> sndOperandOldApi = ResultChecker.getOldApiNwa(m_SndOperand);

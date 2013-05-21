@@ -10,6 +10,7 @@ import java.util.Set;
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.automata.Activator;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.Word;
@@ -57,7 +58,7 @@ public class PetriNetJulian<S, C> implements IPetriNet<S, C> {
 	}
 
 	public PetriNetJulian(INestedWordAutomatonOldApi<S, C> nwa)
-			throws OperationCanceledException {
+			throws AutomataLibraryException {
 		alphabet = nwa.getInternalAlphabet();
 		stateFactory = nwa.getStateFactory();
 		this.m_ConstantTokenAmount = true;

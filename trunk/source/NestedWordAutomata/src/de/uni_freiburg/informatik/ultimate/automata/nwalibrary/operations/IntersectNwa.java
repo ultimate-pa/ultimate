@@ -7,10 +7,12 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingReturnTransition;
@@ -72,9 +74,13 @@ public class IntersectNwa<LETTER, STATE> implements INestedWordAutomatonSimple<L
 	
 	public IntersectNwa(INestedWordAutomatonSimple<LETTER, STATE> fstOperand,
 			INestedWordAutomatonSimple<LETTER, STATE> sndOperand, 
-			StateFactory<STATE> sf, boolean assumeInSndNonFinalIsTrap) {
+			StateFactory<STATE> sf, boolean assumeInSndNonFinalIsTrap) throws AutomataLibraryException {
 		m_FstOperand = fstOperand;
 		m_SndOperand = sndOperand;
+		if (!NestedWordAutomaton.sameAlphabet(m_FstOperand, m_SndOperand)) {
+			throw new AutomataLibraryException("Unable to apply operation to automata with different alphabets.");
+		}
+
 		m_StateFactory = sf;
 		m_AssumeInSndNonFinalIsTrap = assumeInSndNonFinalIsTrap;
 		m_EmptyStackState = m_StateFactory.createEmptyStackState();

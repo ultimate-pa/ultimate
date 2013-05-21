@@ -3,6 +3,7 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.automata.Activator;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
@@ -60,7 +61,7 @@ public class ComplementDD<LETTER, STATE> implements IOperation<LETTER, STATE> {
 
 	@Override
 	public boolean checkResult(StateFactory<STATE> stateFactory)
-			throws OperationCanceledException {
+			throws AutomataLibraryException {
 		s_Logger.debug("Testing correctness of complement");
 		boolean correct = true;
 		INestedWordAutomatonOldApi intersectionOperandResult = (new IntersectDD(false, m_Operand, m_Result)).getResult();

@@ -10,6 +10,7 @@ import java.util.Map;
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.automata.Activator;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
@@ -260,7 +261,7 @@ public class PrefixProduct<S,C> implements IOperation<S,C> {
 
 	@Override
 	public boolean checkResult(StateFactory<C> stateFactory)
-			throws OperationCanceledException {
+			throws AutomataLibraryException {
 		s_Logger.info("Testing correctness of prefixProduct");
 
 		INestedWordAutomatonOldApi op1AsNwa = (new PetriNet2FiniteAutomaton(m_Net)).getResult();

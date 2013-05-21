@@ -14,6 +14,7 @@ import org.omg.PortableInterceptor.SUCCESSFUL;
 
 import de.uni_freiburg.informatik.ultimate.access.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.access.WalkerOptions;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
@@ -206,7 +207,7 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 						m_Abstraction, m_InterpolAutomaton, spd, 
 						m_StateFactoryForRefinement,
 						false, true);
-			} catch (OperationCanceledException e) {
+			} catch (AutomataLibraryException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}

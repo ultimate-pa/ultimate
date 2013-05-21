@@ -12,6 +12,7 @@ import java.util.Set;
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.automata.Activator;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
@@ -238,11 +239,14 @@ public class DifferenceDD<LETTER,STATE> extends DoubleDeckerBuilder<LETTER,STATE
 			IStateDeterminizer<LETTER,STATE> stateDeterminizer,
 			StateFactory<STATE> stateFactory,
 			boolean removeDeadEnds,
-			boolean subtrahendSigmaStarClosed) throws OperationCanceledException {
+			boolean subtrahendSigmaStarClosed) throws AutomataLibraryException {
 		this.m_subtrahendSigmaStarClosed = subtrahendSigmaStarClosed;
 		m_StateFactoryConstruction = stateFactory;
 		this.minuend = minuend;
 		this.subtrahend = subtrahend;
+		if (!NestedWordAutomaton.sameAlphabet(this.minuend, this.subtrahend)) {
+			throw new AutomataLibraryException("Unable to apply operation to automata with different alphabets.");
+		}
 		s_Logger.info(startMessage());
 		this.subtrahendAuxilliaryEmptyStackState = 
 			subtrahend.getEmptyStackState();
@@ -275,11 +279,14 @@ public class DifferenceDD<LETTER,STATE> extends DoubleDeckerBuilder<LETTER,STATE
 	
 	public DifferenceDD(
 			INestedWordAutomatonOldApi<LETTER,STATE> minuend,
-			INestedWordAutomatonOldApi<LETTER,STATE> subtrahend) throws OperationCanceledException {
+			INestedWordAutomatonOldApi<LETTER,STATE> subtrahend) throws AutomataLibraryException {
 		this.m_subtrahendSigmaStarClosed = false;
 		m_StateFactoryConstruction = minuend.getStateFactory();
 		this.minuend = minuend;
 		this.subtrahend = subtrahend;
+		if (!NestedWordAutomaton.sameAlphabet(this.minuend, this.subtrahend)) {
+			throw new AutomataLibraryException("Unable to apply operation to automata with different alphabets.");
+		}
 		s_Logger.info(startMessage());
 		this.subtrahendAuxilliaryEmptyStackState = 
 			subtrahend.getEmptyStackState();
@@ -547,7 +554,7 @@ public class DifferenceDD<LETTER,STATE> extends DoubleDeckerBuilder<LETTER,STATE
 
 	@Override
 	public boolean checkResult(StateFactory<STATE> stateFactory)
-			throws OperationCanceledException {
+			throws AutomataLibraryException {
 		boolean correct = true;
 		if (stateDeterminizer instanceof PowersetDeterminizer) {
 			s_Logger.info("Start testing correctness of " + operationName());

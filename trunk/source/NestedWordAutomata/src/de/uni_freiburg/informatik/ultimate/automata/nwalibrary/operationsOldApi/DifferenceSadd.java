@@ -10,6 +10,7 @@ import java.util.Set;
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.automata.Activator;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
@@ -118,10 +119,13 @@ public class DifferenceSadd<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	public DifferenceSadd(
 			INestedWordAutomatonOldApi<LETTER,STATE> minuend,
 			INestedWordAutomatonOldApi<LETTER,STATE> subtrahend,
-			IStateDeterminizer<LETTER,STATE> stateDeterminizer) throws OperationCanceledException {
+			IStateDeterminizer<LETTER,STATE> stateDeterminizer) throws AutomataLibraryException {
 		contentFactory = minuend.getStateFactory();
 		this.minuend = minuend;
 		this.subtrahend = subtrahend;
+		if (!NestedWordAutomaton.sameAlphabet(this.minuend, this.subtrahend)) {
+			throw new AutomataLibraryException("Unable to apply operation to automata with different alphabets.");
+		}
 		this.stateDeterminizer = stateDeterminizer;
 		s_Logger.info(startMessage());
 		difference = new NestedWordAutomaton<LETTER,STATE>(
@@ -138,14 +142,17 @@ public class DifferenceSadd<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	 * Constructor where powerset determinizer is used.
 	 * @param minuend
 	 * @param subtrahend
-	 * @throws OperationCanceledException 
+	 * @throws AutomataLibraryException 
 	 */	
 	public DifferenceSadd(
 			INestedWordAutomatonOldApi<LETTER,STATE> minuend,
-			INestedWordAutomatonOldApi<LETTER,STATE> subtrahend) throws OperationCanceledException {
+			INestedWordAutomatonOldApi<LETTER,STATE> subtrahend) throws AutomataLibraryException {
 		contentFactory = minuend.getStateFactory();
 		this.minuend = minuend;
 		this.subtrahend = subtrahend;
+		if (!NestedWordAutomaton.sameAlphabet(this.minuend, this.subtrahend)) {
+			throw new AutomataLibraryException("Unable to apply operation to automata with different alphabets.");
+		}
 		this.stateDeterminizer = new PowersetDeterminizer<LETTER,STATE>(subtrahend);
 		s_Logger.info(startMessage());
 		difference = new NestedWordAutomaton<LETTER,STATE>(
@@ -509,7 +516,7 @@ public class DifferenceSadd<LETTER,STATE> implements IOperation<LETTER,STATE> {
 
 	@Override
 	public boolean checkResult(StateFactory<STATE> stateFactory)
-			throws OperationCanceledException {
+			throws AutomataLibraryException {
 		boolean correct = true;
 		if (stateDeterminizer instanceof PowersetDeterminizer) {
 			s_Logger.info("Start testing correctness of " + operationName());

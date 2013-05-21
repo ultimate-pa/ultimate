@@ -3,6 +3,7 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations;
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.automata.Activator;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
@@ -86,34 +87,35 @@ public class Complement<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	@Override
 	public INestedWordAutomatonOldApi<LETTER, STATE> getResult()
 			throws OperationCanceledException {
-		if (m_StateDeterminizer instanceof PowersetDeterminizer) {
-			assert (checkResult(m_StateFactory));
-		}
 		return m_Result;
 	}
 	
 	
 	
-	public boolean checkResult(StateFactory<STATE> sf) throws OperationCanceledException {
-		s_Logger.info("Start testing correctness of " + operationName());
-		INestedWordAutomatonOldApi<LETTER, STATE> operandOldApi = ResultChecker.getOldApiNwa(m_Operand);
-		
+	public boolean checkResult(StateFactory<STATE> sf) throws AutomataLibraryException {
 		boolean correct = true;
-		// intersection of operand and result should be empty
-		INestedWordAutomatonOldApi<LETTER, STATE> intersectionOperandResult = 
-				(new IntersectDD<LETTER, STATE>(operandOldApi, m_Result)).getResult();
-		correct &= (new IsEmpty<LETTER, STATE>(intersectionOperandResult)).getResult();
-		INestedWordAutomatonOldApi<LETTER, STATE> resultDD = (new ComplementDD<LETTER, STATE>(operandOldApi)).getResult();
-		// should have same number of states as old complementation
-		// does not hold, resultDD sometimes has additional sink state
-//		correct &= (resultDD.size() == m_Result.size());
-		// should recognize same language as old computation
-		correct &= (ResultChecker.nwaLanguageInclusion(resultDD, m_Result, sf) == null);
-		correct &= (ResultChecker.nwaLanguageInclusion(m_Result, resultDD, sf) == null);
-		if (!correct) {
-			ResultChecker.writeToFileIfPreferred(operationName() + "Failed", "", m_Operand);
+		if (m_StateDeterminizer instanceof PowersetDeterminizer) {
+			s_Logger.info("Start testing correctness of " + operationName());
+			INestedWordAutomatonOldApi<LETTER, STATE> operandOldApi = ResultChecker.getOldApiNwa(m_Operand);
+
+			// intersection of operand and result should be empty
+			INestedWordAutomatonOldApi<LETTER, STATE> intersectionOperandResult = 
+					(new IntersectDD<LETTER, STATE>(operandOldApi, m_Result)).getResult();
+			correct &= (new IsEmpty<LETTER, STATE>(intersectionOperandResult)).getResult();
+			INestedWordAutomatonOldApi<LETTER, STATE> resultDD = (new ComplementDD<LETTER, STATE>(operandOldApi)).getResult();
+			// should have same number of states as old complementation
+			// does not hold, resultDD sometimes has additional sink state
+			//		correct &= (resultDD.size() == m_Result.size());
+			// should recognize same language as old computation
+			correct &= (ResultChecker.nwaLanguageInclusion(resultDD, m_Result, sf) == null);
+			correct &= (ResultChecker.nwaLanguageInclusion(m_Result, resultDD, sf) == null);
+			if (!correct) {
+				ResultChecker.writeToFileIfPreferred(operationName() + "Failed", "", m_Operand);
+			}
+			s_Logger.info("Finished testing correctness of " + operationName());
+		} else {
+			s_Logger.warn("operation not tested");
 		}
-		s_Logger.info("Finished testing correctness of " + operationName());
 		return correct;
 	}
 	

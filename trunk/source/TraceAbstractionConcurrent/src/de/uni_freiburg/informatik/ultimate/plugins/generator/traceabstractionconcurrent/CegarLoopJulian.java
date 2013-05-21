@@ -2,6 +2,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstractionco
 
 import java.util.Collection;
 
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.AtsDefinitionPrinter;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
@@ -41,7 +42,7 @@ public class CegarLoopJulian extends BasicCegarLoop {
 	}
 
 	@Override
-	protected void getInitialAbstraction() throws OperationCanceledException {
+	protected void getInitialAbstraction() throws AutomataLibraryException {
 		TaConcurContentFactory contentFactory = new TaConcurContentFactory(
 				m_RootNode.getRootAnnot().getProgramPoints(),
 				this,
@@ -109,7 +110,7 @@ public class CegarLoopJulian extends BasicCegarLoop {
 	
 	
 	@Override
-	protected boolean refineAbstraction() throws OperationCanceledException {
+	protected boolean refineAbstraction() throws AutomataLibraryException {
 		PetriNetJulian<CodeBlock, IPredicate> abstraction =
 				(PetriNetJulian<CodeBlock, IPredicate>) m_Abstraction;
 		if (m_Pref.unfoldingToNet()) {

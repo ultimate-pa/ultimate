@@ -3,6 +3,7 @@ package de.uni_freiburg.informatik.ultimate.automata.petrinet.julian;
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.automata.Activator;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
@@ -18,7 +19,7 @@ public class Automaton2Net<LETTER, STATE> implements IOperation<LETTER,STATE> {
 	INestedWordAutomatonOldApi<LETTER, STATE> m_Operand;
 	IPetriNet<LETTER, STATE> m_Net;
 
-	public Automaton2Net(INestedWordAutomatonOldApi<LETTER, STATE> operand) throws OperationCanceledException {
+	public Automaton2Net(INestedWordAutomatonOldApi<LETTER, STATE> operand) throws AutomataLibraryException {
 		m_Operand = operand;
 		s_Logger.info(startMessage());
 		m_Net = new PetriNetJulian<LETTER, STATE>(m_Operand);

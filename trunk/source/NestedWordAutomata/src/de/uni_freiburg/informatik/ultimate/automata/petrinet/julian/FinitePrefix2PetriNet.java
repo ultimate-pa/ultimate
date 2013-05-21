@@ -12,6 +12,7 @@ import java.util.TreeSet;
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.automata.Activator;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
@@ -58,7 +59,7 @@ public class FinitePrefix2PetriNet<L, C> implements IOperation<L, C> {
 //		return result;
 //	}
 
-	public FinitePrefix2PetriNet(BranchingProcess<L, C> bp) {
+	public FinitePrefix2PetriNet(BranchingProcess<L, C> bp) throws AutomataLibraryException {
 		// TODO implement merging for markings?
 		m_Input = bp;
 		s_Logger.info(startMessage());

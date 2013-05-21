@@ -3,6 +3,7 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa;
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.automata.Activator;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
@@ -18,14 +19,14 @@ public class BuchiIntersect<LETTER, STATE> extends
 
 	public BuchiIntersect(INestedWordAutomatonOldApi<LETTER, STATE> fstNwa,
 			INestedWordAutomatonOldApi<LETTER, STATE> sndNwa)
-			throws OperationCanceledException {
+			throws AutomataLibraryException {
 		super(true, false, fstNwa, sndNwa);
 	}
 
 	public BuchiIntersect(INestedWordAutomatonOldApi<LETTER, STATE> fstNwa,
 			INestedWordAutomatonOldApi<LETTER, STATE> sndNwa,
 			boolean minimizeResult)
-			throws OperationCanceledException {
+			throws AutomataLibraryException {
 		super(true, minimizeResult, fstNwa, sndNwa);
 	}
 

@@ -8,6 +8,7 @@ import java.util.Map;
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.automata.Activator;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
@@ -208,7 +209,7 @@ public class ReachableStatesCopy<LETTER,STATE> extends DoubleDeckerBuilder<LETTE
 
 	@Override
 	public boolean checkResult(StateFactory<STATE> stateFactory)
-			throws OperationCanceledException {
+			throws AutomataLibraryException {
 		
 		boolean correct = true;
 		if (!m_RemoveNonLiveStates) {

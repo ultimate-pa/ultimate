@@ -1,5 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstractionconcurrent;
 
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.PetriNetJulian;
@@ -15,7 +16,7 @@ public class Cfg2NetJulian extends CFG2Automaton {
 	
 	public Cfg2NetJulian(RootNode rootNode,
 			StateFactory<IPredicate> contentFactory, SmtManager smtManager)
-					throws OperationCanceledException {
+					throws AutomataLibraryException {
 		super(rootNode, contentFactory, smtManager);
 		
 		constructProcedureAutomata();

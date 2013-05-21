@@ -2251,29 +2251,7 @@ public class NestedWordAutomaton<LETTER,STATE> implements INestedWordAutomatonOl
 	
 	
 	
-	public INestedWordAutomatonOldApi<LETTER,STATE> intersectBuchi(
-												INestedWordAutomatonOldApi<LETTER,STATE> nwa,
-												boolean minimizeResult) 
-												throws OperationCanceledException{
-		INestedWordAutomatonOldApi<LETTER,STATE> result = 
-			(new IntersectDD(minimizeResult, this, nwa)).getResult();
-		s_Logger.info("Result of IntersectionBuchi" + 
-				((NestedWordAutomaton<LETTER, STATE>) result).sizeInformation());
 
-//		if (NestedWordAutomata.TEST) {
-//			s_Logger.debug("Testing correctness of intersection");
-//			NwaBasicOperations<S,C> nbo = new NwaBasicOperations<S,C>(this);
-//			INestedWordAutomaton<S,C> resultFP = nbo.intersectFullProduct(nwa);
-//			assert (included(result, resultFP) == null);
-//			assert (included(resultFP, result) == null);
-//			s_Logger.debug("Finished testing correctness of intersection");
-//		}
-		return result;		
-	}
-	
-	
-	
-	
 	
 	
 	@Deprecated
@@ -2451,6 +2429,16 @@ public class NestedWordAutomaton<LETTER,STATE> implements INestedWordAutomatonOl
 				result++;
 			}
 		}
+		return result;
+	}
+	
+	public static <LETTER, STATE> boolean sameAlphabet(
+			INestedWordAutomatonSimple<LETTER, STATE> nwa1, 
+			INestedWordAutomatonSimple<LETTER, STATE> nwa2) {
+		boolean result = true;
+		result &= nwa1.getInternalAlphabet().equals(nwa2.getInternalAlphabet());
+		result &= nwa1.getCallAlphabet().equals(nwa2.getCallAlphabet());
+		result &= nwa1.getReturnAlphabet().equals(nwa2.getReturnAlphabet());
 		return result;
 	}
 	

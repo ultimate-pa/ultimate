@@ -55,7 +55,8 @@ public interface IOperation<LETTER,STATE> {
 	 * Run some checks to test correctness of the result. If therefore new
 	 * automata have to be build use stateFactory.
 	 * @return true iff all tests succeeded.
+	 * @throws AutomataLibraryException 
 	 */
-	boolean checkResult(StateFactory<STATE> stateFactory) throws OperationCanceledException;
+	boolean checkResult(StateFactory<STATE> stateFactory) throws OperationCanceledException, AutomataLibraryException;
 
 }

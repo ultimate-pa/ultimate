@@ -3,6 +3,7 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.automata.Activator;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
@@ -17,14 +18,14 @@ public class IntersectDD<LETTER, STATE> extends AbstractIntersect<LETTER, STATE>
 
 	public IntersectDD(INestedWordAutomatonOldApi<LETTER, STATE> fstNwa,
 			INestedWordAutomatonOldApi<LETTER, STATE> sndNwa)
-			throws OperationCanceledException {
+			throws AutomataLibraryException {
 		super(false, false, fstNwa, sndNwa);
 	}
 
 	public IntersectDD(boolean minimizeResult,
 			INestedWordAutomatonOldApi<LETTER, STATE> fstNwa,
 			INestedWordAutomatonOldApi<LETTER, STATE> sndNwa)
-			throws OperationCanceledException {
+			throws AutomataLibraryException {
 		super(false, minimizeResult, fstNwa, sndNwa);
 	}
 

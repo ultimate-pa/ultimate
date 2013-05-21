@@ -10,6 +10,7 @@ import java.util.List;
 
 import org.apache.log4j.Logger;
 
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
@@ -182,8 +183,9 @@ public abstract class AbstractCegarLoop {
 	 * by m_Abstation is a superset of the language of the program.
 	 * The initial abstraction in our implementations will usually be an
 	 * automaton that has the same graph as the program.
+	 * @throws AutomataLibraryException 
 	 */
-	protected abstract void getInitialAbstraction() throws OperationCanceledException;
+	protected abstract void getInitialAbstraction() throws OperationCanceledException, AutomataLibraryException;
 	
 	
 	/**
@@ -222,8 +224,9 @@ public abstract class AbstractCegarLoop {
 	 * <ul>
 	 * @return true iff the trace of m_Counterexample (which was accepted by the
 	 * old m_Abstraction) is not accepted by the m_Abstraction.
+	 * @throws AutomataLibraryException 
 	 */
-	protected abstract boolean refineAbstraction() throws OperationCanceledException;
+	protected abstract boolean refineAbstraction() throws OperationCanceledException, AutomataLibraryException;
 	
 	
 	/**
@@ -289,6 +292,8 @@ public abstract class AbstractCegarLoop {
 		} catch (OperationCanceledException e1) {
 			s_Logger.warn("Verification cancelled");
 			return Result.TIMEOUT;
+		} catch (AutomataLibraryException e) {
+			throw new AssertionError(e.getMessage());
 		}
 		
 		
@@ -365,6 +370,8 @@ public abstract class AbstractCegarLoop {
 			} catch (OperationCanceledException e) {
 				s_Logger.warn("Verification cancelled");
 				return Result.TIMEOUT;
+			} catch (AutomataLibraryException e) {
+				throw new AssertionError("Automata Operation failed" + e.getMessage());
 			}
 			
 			s_Logger.info("Abstraction has " + m_Abstraction.sizeInformation());

@@ -3,6 +3,7 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa;
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.automata.Activator;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
@@ -59,7 +60,7 @@ public class BuchiComplementRE<LETTER,STATE> implements IOperation<LETTER,STATE>
 	}
 	
 	
-	public BuchiComplementRE(INestedWordAutomatonOldApi<LETTER,STATE> operand) throws OperationCanceledException {
+	public BuchiComplementRE(INestedWordAutomatonOldApi<LETTER,STATE> operand) throws AutomataLibraryException {
 		m_Operand = operand;
 		s_Logger.info(startMessage());
 		INestedWordAutomatonOldApi<LETTER,STATE> operandWithoutNonLiveStates = 

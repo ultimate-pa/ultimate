@@ -2,6 +2,10 @@ package de.uni_freiburg.informatik.ultimate.automata;
 
 public class OperationCanceledException extends AutomataLibraryException {
 
+	public OperationCanceledException() {
+		super("Timeout");
+	}
+
 	/**
 	 * 
 	 */
@@ -9,7 +13,7 @@ public class OperationCanceledException extends AutomataLibraryException {
 
 	@Override
 	public String getMessage() {
-		return "Timeout";
+		return super.getMessage();
 	}
 
 	

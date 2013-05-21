@@ -67,7 +67,7 @@ public class ResultChecker<LETTER,STATE> {
 	
 	
 	public static boolean reduceBuchi(INestedWordAutomatonOldApi operand,
-			INestedWordAutomatonOldApi result) throws OperationCanceledException {
+			INestedWordAutomatonOldApi result) throws AutomataLibraryException {
 		if (resultCheckStackHeight >= maxResultCheckStackHeight)
 			return true;
 		resultCheckStackHeight++;
@@ -212,7 +212,7 @@ public class ResultChecker<LETTER,STATE> {
 	
 	
 	public static boolean petriNetJulian(INestedWordAutomatonOldApi op,
-										 PetriNetJulian result) throws OperationCanceledException {
+										 PetriNetJulian result) throws AutomataLibraryException {
 		if (resultCheckStackHeight >= maxResultCheckStackHeight) return true;
 		resultCheckStackHeight++;
 		s_Logger.info("Testing correctness of PetriNetJulian constructor");
@@ -232,7 +232,7 @@ public class ResultChecker<LETTER,STATE> {
 
 	
 
-	public static boolean petriNetLanguageEquivalence(PetriNetJulian net1, PetriNetJulian net2) throws OperationCanceledException {
+	public static boolean petriNetLanguageEquivalence(PetriNetJulian net1, PetriNetJulian net2) throws AutomataLibraryException {
 		if (resultCheckStackHeight >= maxResultCheckStackHeight) return true;
 		resultCheckStackHeight++;
 		s_Logger.info("Testing Petri net language equivalence");
@@ -265,7 +265,7 @@ public class ResultChecker<LETTER,STATE> {
 	}
 
 
-	public static <LETTER,STATE> NestedRun nwaLanguageInclusion(INestedWordAutomatonOldApi nwa1, INestedWordAutomatonOldApi nwa2, StateFactory stateFactory) throws OperationCanceledException {
+	public static <LETTER,STATE> NestedRun nwaLanguageInclusion(INestedWordAutomatonOldApi nwa1, INestedWordAutomatonOldApi nwa2, StateFactory stateFactory) throws AutomataLibraryException {
 		IStateDeterminizer stateDeterminizer = new PowersetDeterminizer<LETTER,STATE>(nwa2);
 		INestedWordAutomatonOldApi nwa1MinusNwa2 = (new DifferenceDD(nwa1, nwa2, stateDeterminizer, stateFactory, false, false)).getResult();
 		NestedRun inNwa1ButNotInNwa2 = (new IsEmpty(nwa1MinusNwa2)).getNestedRun();
@@ -287,7 +287,7 @@ public class ResultChecker<LETTER,STATE> {
 		}
 	}
 	
-	private static NestedLassoRun nwaBuchiLanguageInclusion(INestedWordAutomatonOldApi nwa1, INestedWordAutomatonOldApi nwa2) throws OperationCanceledException {
+	private static NestedLassoRun nwaBuchiLanguageInclusion(INestedWordAutomatonOldApi nwa1, INestedWordAutomatonOldApi nwa2) throws AutomataLibraryException {
 		return (new BuchiIsIncluded(nwa1, nwa2)).getCounterexample();
 	}
 	

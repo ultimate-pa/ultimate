@@ -3,11 +3,13 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations;
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.automata.Activator;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomatonReachableStates;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.DifferenceDD;
@@ -55,7 +57,7 @@ public class Difference<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	
 	public Difference(INestedWordAutomatonOldApi<LETTER,STATE> fstOperand,
 			INestedWordAutomatonOldApi<LETTER,STATE> sndOperand
-			) throws OperationCanceledException {
+			) throws AutomataLibraryException {
 		m_FstOperand = fstOperand;
 		m_SndOperand = sndOperand;
 		m_StateFactory = m_FstOperand.getStateFactory();
@@ -73,7 +75,7 @@ public class Difference<LETTER,STATE> implements IOperation<LETTER,STATE> {
 			IStateDeterminizer<LETTER, STATE> stateDeterminizer,
 			boolean nonFinalInSndIsTrap,
 			StateFactory<STATE> sf
-			) throws OperationCanceledException {
+			) throws AutomataLibraryException {
 		m_FstOperand = fstOperand;
 		m_SndOperand = sndOperand;
 		m_StateFactory = sf;
@@ -95,13 +97,12 @@ public class Difference<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	@Override
 	public INestedWordAutomatonOldApi<LETTER, STATE> getResult()
 			throws OperationCanceledException {
-		assert (checkResult(m_StateFactory));
 		return m_Result;
 	}
 
 
 	
-	public boolean checkResult(StateFactory<STATE> sf) throws OperationCanceledException {
+	public boolean checkResult(StateFactory<STATE> sf) throws AutomataLibraryException {
 		s_Logger.info("Start testing correctness of " + operationName());
 		INestedWordAutomatonOldApi<LETTER, STATE> fstOperandOldApi = ResultChecker.getOldApiNwa(m_FstOperand);
 		INestedWordAutomatonOldApi<LETTER, STATE> sndOperandOldApi = ResultChecker.getOldApiNwa(m_SndOperand);

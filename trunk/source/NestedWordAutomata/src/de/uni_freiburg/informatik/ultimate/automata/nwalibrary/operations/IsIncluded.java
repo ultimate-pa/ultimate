@@ -3,6 +3,7 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations;
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.automata.Activator;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
@@ -31,7 +32,7 @@ public class IsIncluded<LETTER, STATE> implements IOperation<LETTER,STATE> {
 	private final NestedRun<LETTER, STATE> m_Counterexample;
 	
 	
-	public IsIncluded(INestedWordAutomatonOldApi<LETTER, STATE> nwa1, INestedWordAutomatonOldApi<LETTER, STATE> nwa2) throws OperationCanceledException {
+	public IsIncluded(INestedWordAutomatonOldApi<LETTER, STATE> nwa1, INestedWordAutomatonOldApi<LETTER, STATE> nwa2) throws AutomataLibraryException {
 		m_Operand1 = nwa1;
 		m_Operand2 = nwa2;
 		s_Logger.info(startMessage());

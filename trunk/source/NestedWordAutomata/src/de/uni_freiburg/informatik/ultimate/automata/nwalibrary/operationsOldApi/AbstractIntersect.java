@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.Activator;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
@@ -83,12 +84,16 @@ public abstract class AbstractIntersect<LETTER,STATE> extends DoubleDeckerBuilde
 
 	public AbstractIntersect(boolean buchiIntersection, boolean minimizeResult,
 					 INestedWordAutomatonOldApi<LETTER,STATE> fstNwa,
-					 INestedWordAutomatonOldApi<LETTER,STATE> sndNwa) throws OperationCanceledException {
+					 INestedWordAutomatonOldApi<LETTER,STATE> sndNwa) throws AutomataLibraryException {
 	
 		m_Buchi = buchiIntersection;
 		m_RemoveDeadEnds = minimizeResult;
 		m_FstNwa = fstNwa;
 		m_SndNwa = sndNwa;
+		if (!NestedWordAutomaton.sameAlphabet(m_FstNwa, m_SndNwa)) {
+			throw new AutomataLibraryException("Unable to apply operation to automata with different alphabets.");
+		}
+
 		m_ContentFactory = m_FstNwa.getStateFactory();
 		s_Logger.info(startMessage());
 		

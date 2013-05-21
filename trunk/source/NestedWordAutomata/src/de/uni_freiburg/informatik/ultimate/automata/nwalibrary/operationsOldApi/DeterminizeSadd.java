@@ -10,6 +10,7 @@ import java.util.Set;
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.automata.Activator;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
@@ -388,7 +389,7 @@ public class DeterminizeSadd<LETTER,STATE> implements IOperation<LETTER,STATE> {
 
 	@Override
 	public boolean checkResult(StateFactory<STATE> stateFactory)
-			throws OperationCanceledException {
+			throws AutomataLibraryException {
 		s_Logger.info("Testing correctness of determinization");
 		boolean correct = true;
 		INestedWordAutomatonOldApi<LETTER,STATE> resultDD = (new DeterminizeDD<LETTER,STATE>(m_Operand)).getResult();

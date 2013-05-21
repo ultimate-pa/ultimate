@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AtsDefinitionPrinter;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.Automaton2UltimateModel;
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
@@ -95,7 +96,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 
 
 	@Override
-	protected void getInitialAbstraction() throws OperationCanceledException {
+	protected void getInitialAbstraction() throws AutomataLibraryException {
 		CFG2NestedWordAutomaton cFG2NestedWordAutomaton = 
 			new CFG2NestedWordAutomaton(m_Pref, super.m_SmtManager);
 		PredicateFactory defaultStateFactory = new PredicateFactory(
@@ -202,7 +203,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 	
 	
 	@Override
-	protected boolean refineAbstraction() throws OperationCanceledException {
+	protected boolean refineAbstraction() throws AutomataLibraryException {
 //		howDifferentAreInterpolants(m_InterpolAutomaton.getStates());
 		
 		m_TimingStatistics.startDifference();

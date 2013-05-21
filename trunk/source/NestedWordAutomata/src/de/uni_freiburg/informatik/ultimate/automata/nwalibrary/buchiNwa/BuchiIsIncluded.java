@@ -3,6 +3,7 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa;
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.automata.Activator;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
@@ -32,7 +33,7 @@ public class BuchiIsIncluded<LETTER, STATE> implements IOperation<LETTER,STATE> 
 
 	public BuchiIsIncluded(INestedWordAutomatonOldApi<LETTER, STATE> nwa1,
 			INestedWordAutomatonOldApi<LETTER, STATE> nwa2)
-			throws OperationCanceledException {
+			throws AutomataLibraryException {
 		m_Operand1 = nwa1;
 		m_Operand2 = nwa2;
 		s_Logger.info(startMessage());
