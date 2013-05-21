@@ -12,6 +12,7 @@ import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.DoubleDecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.DoubleDeckerVisitor;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 
@@ -25,7 +26,7 @@ import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
  * @param <STATE>
  */
 public class HasUnreachableStates<LETTER,STATE> extends DoubleDeckerVisitor<LETTER,STATE>
-										   implements IOperation {
+										   implements IOperation<LETTER,STATE> {
 	
 	private static Logger s_Logger = 
 			UltimateServices.getInstance().getLogger(Activator.PLUGIN_ID);
@@ -121,6 +122,12 @@ public class HasUnreachableStates<LETTER,STATE> extends DoubleDeckerVisitor<LETT
 	
 	public boolean result() {
 		return m_UnreachalbeStates != 0;
+	}
+
+	@Override
+	public boolean checkResult(StateFactory<STATE> stateFactory)
+			throws OperationCanceledException {
+		return true;
 	}
 	
 

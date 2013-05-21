@@ -12,11 +12,12 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.DoubleDeckerAutom
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomatonFilteredStates;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomatonReachableStates;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.TransitionConsitenceCheck;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.ReachableStatesCopy;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 
-public class RemoveDeadEnds<LETTER,STATE> implements IOperation {
+public class RemoveDeadEnds<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	
 	private final INestedWordAutomatonOldApi<LETTER,STATE> m_Input;
 	private final NestedWordAutomatonReachableStates<LETTER,STATE> m_Reach;
@@ -44,7 +45,6 @@ public class RemoveDeadEnds<LETTER,STATE> implements IOperation {
 		m_Result = new NestedWordAutomatonFilteredStates<LETTER, STATE>(m_Reach);
 		s_Logger.info(exitMessage());
 		assert (new TransitionConsitenceCheck<LETTER, STATE>(m_Result)).consistentForAll();
-		assert (checkResult());
 	}
 	
 
@@ -71,7 +71,8 @@ public class RemoveDeadEnds<LETTER,STATE> implements IOperation {
 		return m_Result;
 	}
 	
-	public boolean checkResult() throws OperationCanceledException {
+	@Override
+	public boolean checkResult(StateFactory<STATE> stateFactory) throws OperationCanceledException {
 		s_Logger.info("Start testing correctness of " + operationName());
 		boolean correct = true;
 //		correct &= (ResultChecker.nwaLanguageInclusion(m_Input, m_Result) == null);
@@ -96,7 +97,6 @@ public class RemoveDeadEnds<LETTER,STATE> implements IOperation {
 		s_Logger.info("Finished testing correctness of " + operationName());
 		return correct;
 	}
-
 
 
 }

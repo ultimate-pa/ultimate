@@ -7,6 +7,7 @@ import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.DifferenceDD;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 
@@ -18,7 +19,7 @@ import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
  * @param <LETTER>
  * @param <STATE>
  */
-public class IsIncluded<LETTER, STATE> implements IOperation {
+public class IsIncluded<LETTER, STATE> implements IOperation<LETTER,STATE> {
 	
 	private static Logger s_Logger = 
 			UltimateServices.getInstance().getLogger(Activator.PLUGIN_ID);
@@ -66,6 +67,12 @@ public class IsIncluded<LETTER, STATE> implements IOperation {
 
 	public NestedRun<LETTER, STATE> getCounterexample() {
 		return m_Counterexample;
+	}
+
+	@Override
+	public boolean checkResult(StateFactory<STATE> stateFactory)
+			throws OperationCanceledException {
+		return true;
 	}
 	
 

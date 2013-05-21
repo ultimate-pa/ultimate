@@ -33,6 +33,7 @@ import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StringFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.NestedLassoWord;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.model.ILocation;
@@ -1033,9 +1034,9 @@ public class TestFileInterpreter {
 			
 		} else {
 			IOperation op = getAutomataOperation(oe, arguments);
-//			assert op.checkResult();
 			if (op != null) {
 				try {
+					assert op.checkResult(new StringFactory());
 					result = op.getResult();
 				} catch (OperationCanceledException e) {
 					throw new InterpreterException(oe.getLocation(),e.getMessage());

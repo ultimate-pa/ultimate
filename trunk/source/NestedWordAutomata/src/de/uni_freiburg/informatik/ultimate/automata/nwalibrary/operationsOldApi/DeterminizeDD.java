@@ -24,7 +24,7 @@ import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 
 
 public class DeterminizeDD<LETTER,STATE> extends DoubleDeckerBuilder<LETTER,STATE> 
-							  implements IOperation {
+							  implements IOperation<LETTER,STATE>  {
 
 	protected static Logger s_Logger = 
 		UltimateServices.getInstance().getLogger(Activator.PLUGIN_ID);
@@ -210,10 +210,23 @@ public class DeterminizeDD<LETTER,STATE> extends DoubleDeckerBuilder<LETTER,STAT
 	@Override
 	public INestedWordAutomatonOldApi<LETTER, STATE> getResult()
 			throws OperationCanceledException {
-		if (stateDeterminizer instanceof PowersetDeterminizer) {
-			assert (ResultChecker.determinize(m_Operand, m_TraversedNwa));
-		}
 		return super.getResult();
+	}
+
+
+	@Override
+	public boolean checkResult(StateFactory<STATE> stateFactory)
+			throws OperationCanceledException {
+		boolean correct = true;
+		if (stateDeterminizer instanceof PowersetDeterminizer) {
+			s_Logger.info("Testing correctness of determinization");
+			INestedWordAutomatonOldApi<LETTER,STATE> resultSadd = (new DeterminizeSadd<LETTER,STATE>(m_Operand)).getResult();
+			correct &= (ResultChecker.nwaLanguageInclusion(resultSadd,m_TraversedNwa, stateFactory) == null);
+			correct &= (ResultChecker.nwaLanguageInclusion(m_TraversedNwa,resultSadd, stateFactory) == null);
+			s_Logger.info("Finished testing correctness of determinization");
+		
+		}
+		return correct;
 	}
 
 

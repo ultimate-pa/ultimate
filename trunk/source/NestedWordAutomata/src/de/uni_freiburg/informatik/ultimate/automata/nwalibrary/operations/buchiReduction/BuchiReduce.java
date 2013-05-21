@@ -13,6 +13,7 @@ import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.ReachableStatesCopy;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 
@@ -21,7 +22,7 @@ import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
  * @author Oleksii Saukh (saukho@informatik.uni-freiburg.de)
  * @date 10.12.2011
  */
-public class BuchiReduce<LETTER,STATE> implements IOperation {
+public class BuchiReduce<LETTER,STATE> implements IOperation<LETTER,STATE> {
     private static Logger s_Logger = UltimateServices.getInstance().getLogger(
             Activator.PLUGIN_ID);
     /**
@@ -65,7 +66,6 @@ public class BuchiReduce<LETTER,STATE> implements IOperation {
         	}
         }
     	
-    	//assert (ResultChecker.reduceBuchi(m_Operand, m_Result));
         s_Logger.info(exitMessage());
     }
     
@@ -90,4 +90,10 @@ public class BuchiReduce<LETTER,STATE> implements IOperation {
     public INestedWordAutomatonOldApi<LETTER,STATE> getResult() {
         return m_Result;
     }
+
+	@Override
+	public boolean checkResult(StateFactory<STATE> stateFactory)
+			throws OperationCanceledException {
+		return ResultChecker.reduceBuchi(m_Operand, m_Result);
+	}
 }

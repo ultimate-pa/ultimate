@@ -27,7 +27,7 @@ import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
  * @author Oleksii Saukh
  * @date 13.11.2011
  */
-public class MinimizeDfa<LETTER,STATE> implements IOperation {
+public class MinimizeDfa<LETTER,STATE> implements IOperation<LETTER,STATE> {
     /*_______________________________________________________________________*\
     \* FIELDS / ATTRIBUTES                                                   */
     
@@ -75,7 +75,6 @@ public class MinimizeDfa<LETTER,STATE> implements IOperation {
 		generateResultAutomaton(states, table);
 
 		s_Logger.info(exitMessage());
-		assert (ResultChecker.minimize(m_Operand, m_Result));
 	}
 
 	/*_______________________________________________________________________*\
@@ -361,6 +360,20 @@ public class MinimizeDfa<LETTER,STATE> implements IOperation {
     public  INestedWordAutomatonOldApi<LETTER,STATE> getResult() {
         return m_Result;
     }
+
+	@Override
+	public boolean checkResult(StateFactory<STATE> stateFactory)
+			throws OperationCanceledException {
+		s_Logger.info("Start testing correctness of " + operationName());
+		boolean correct = true;
+		correct &= (ResultChecker.nwaLanguageInclusion(m_Operand, m_Result, stateFactory) == null);
+		correct &= (ResultChecker.nwaLanguageInclusion(m_Result, m_Operand, stateFactory) == null);
+		if (!correct) {
+			ResultChecker.writeToFileIfPreferred(operationName() + "Failed", "", m_Operand);
+		}
+		s_Logger.info("Finished testing correctness of " + operationName());
+		return correct;
+	}
     
     /*_______________________________________________________________________*\
     \* GETTERS AND SETTERS                                                   */

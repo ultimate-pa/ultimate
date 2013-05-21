@@ -38,7 +38,7 @@ import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
  * 
  * @author Christian Schilling <schillic@informatik.uni-freiburg.de>
  */
-public class MinimizeSevpa<LETTER,STATE> implements IOperation {
+public class MinimizeSevpa<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	private static Logger s_Logger = 
 			UltimateServices.getInstance().getLogger(Activator.PLUGIN_ID);
 	// old automaton
@@ -3010,12 +3010,20 @@ public class MinimizeSevpa<LETTER,STATE> implements IOperation {
 	@Override
 	public INestedWordAutomatonOldApi<LETTER,STATE> getResult()
 			throws OperationCanceledException {
-		if (m_operand == null)
-			throw new OperationCanceledException();
-		else {
-			assert ResultChecker.minimize(m_operand, m_nwa) :  
-			 		"Recognized language not preserved under minimization.";
-			return m_nwa;
+		return m_nwa;
+	}
+
+	@Override
+	public boolean checkResult(StateFactory<STATE> stateFactory)
+			throws OperationCanceledException {
+		s_Logger.info("Start testing correctness of " + operationName());
+		boolean correct = true;
+		correct &= (ResultChecker.nwaLanguageInclusion(m_operand, m_nwa, stateFactory) == null);
+		correct &= (ResultChecker.nwaLanguageInclusion(m_nwa, m_operand, stateFactory) == null);
+		if (!correct) {
+			ResultChecker.writeToFileIfPreferred(operationName() + "Failed", "", m_operand);
 		}
+		s_Logger.info("Finished testing correctness of " + operationName());
+		return correct;
 	}
 }

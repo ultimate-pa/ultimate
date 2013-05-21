@@ -39,7 +39,7 @@ import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
  * automata. In many cases you want to use String as STATE and your states are
  * labeled e.g. with "q0", "q1", ... 
  */
-public class DifferenceSadd<LETTER,STATE> implements IOperation {
+public class DifferenceSadd<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	
 	private static Logger s_Logger = 
 		UltimateServices.getInstance().getLogger(Activator.PLUGIN_ID);
@@ -132,9 +132,6 @@ public class DifferenceSadd<LETTER,STATE> implements IOperation {
 		auxilliaryEmptyStackState = difference.getEmptyStackState();
 		computeDifference();
 		s_Logger.info(exitMessage());
-		if (stateDeterminizer instanceof PowersetDeterminizer) {
-			assert (ResultChecker.difference(minuend, subtrahend, difference));
-		}
 	}
 	
 	/**
@@ -159,7 +156,6 @@ public class DifferenceSadd<LETTER,STATE> implements IOperation {
 		auxilliaryEmptyStackState = difference.getEmptyStackState();
 		computeDifference();
 		s_Logger.info(exitMessage());
-		assert (ResultChecker.difference(minuend, subtrahend, difference));
 	}
 	
 	
@@ -503,6 +499,32 @@ public class DifferenceSadd<LETTER,STATE> implements IOperation {
 			return "CallerState: " + callerState + "  State: "+ presentState;
 		}
 		
+	}
+
+
+
+
+
+
+
+	@Override
+	public boolean checkResult(StateFactory<STATE> stateFactory)
+			throws OperationCanceledException {
+		boolean correct = true;
+		if (stateDeterminizer instanceof PowersetDeterminizer) {
+			s_Logger.info("Start testing correctness of " + operationName());
+
+			INestedWordAutomatonOldApi<LETTER,STATE> resultDD = (new DifferenceDD<LETTER,STATE>(minuend, subtrahend)).getResult();
+			correct &= (ResultChecker.nwaLanguageInclusion(resultDD, difference, stateFactory) == null);
+			correct &= (ResultChecker.nwaLanguageInclusion(difference, resultDD, stateFactory) == null);
+			if (!correct) {
+			ResultChecker.writeToFileIfPreferred(operationName() + "Failed", "", minuend,subtrahend);
+			}
+			s_Logger.info("Finished testing correctness of " + operationName());
+		} else {
+			s_Logger.warn("Unable to test correctness if state determinzier is not the PowersetDeterminizer.");
+		}
+		return correct;
 	}
 	
 	

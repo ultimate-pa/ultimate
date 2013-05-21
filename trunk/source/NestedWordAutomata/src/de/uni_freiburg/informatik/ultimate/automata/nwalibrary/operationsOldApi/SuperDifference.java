@@ -1,11 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi;
 
-import java.awt.Component;
-import java.awt.List;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.Map;
 
 import org.apache.log4j.Logger;
 
@@ -38,7 +34,7 @@ import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
  *            states are labeled e.g. with "q0", "q1", ...
  */
 
-public class SuperDifference<LETTER, STATE> implements IOperation {
+public class SuperDifference<LETTER, STATE> implements IOperation<LETTER, STATE> {
 
 	/* *** *** *** Fields *** *** *** */
 
@@ -196,5 +192,12 @@ public class SuperDifference<LETTER, STATE> implements IOperation {
 		}
 
 		return q;
+	}
+
+	@Override
+	public boolean checkResult(StateFactory stateFactory)
+			throws OperationCanceledException {
+		// TODO Auto-generated method stub
+		return false;
 	}
 }

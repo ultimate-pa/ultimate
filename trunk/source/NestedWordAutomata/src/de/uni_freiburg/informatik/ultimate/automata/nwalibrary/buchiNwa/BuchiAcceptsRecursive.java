@@ -13,8 +13,10 @@ import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.automata.Activator;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
+import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 
 
@@ -26,7 +28,7 @@ import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
  * @param <LETTER> Symbol. Type of the symbols used as alphabet.
  * @param <STATE> Content. Type of the labels ("the content") of the automata states. 
  */
-public class BuchiAcceptsRecursive<LETTER,STATE> implements IOperation {
+public class BuchiAcceptsRecursive<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	
 	
 	private static Logger s_Logger = 
@@ -330,6 +332,14 @@ public class BuchiAcceptsRecursive<LETTER,STATE> implements IOperation {
 			}
 			return result;
 		}
+	}
+
+
+
+	@Override
+	public boolean checkResult(StateFactory<STATE> stateFactory)
+			throws OperationCanceledException {
+		return true;
 	}
 
 

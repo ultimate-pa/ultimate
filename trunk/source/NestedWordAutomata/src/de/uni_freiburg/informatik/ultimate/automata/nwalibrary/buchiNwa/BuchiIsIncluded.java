@@ -6,6 +6,7 @@ import de.uni_freiburg.informatik.ultimate.automata.Activator;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 
 /**
@@ -17,7 +18,7 @@ import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
  * @param <LETTER>
  * @param <STATE>
  */
-public class BuchiIsIncluded<LETTER, STATE> implements IOperation {
+public class BuchiIsIncluded<LETTER, STATE> implements IOperation<LETTER,STATE> {
 
 	private static Logger s_Logger = UltimateServices.getInstance().getLogger(
 			Activator.PLUGIN_ID);
@@ -73,6 +74,12 @@ public class BuchiIsIncluded<LETTER, STATE> implements IOperation {
 
 	public NestedLassoRun<LETTER, STATE> getCounterexample() {
 		return m_Counterexample;
+	}
+
+	@Override
+	public boolean checkResult(StateFactory<STATE> stateFactory)
+			throws OperationCanceledException {
+		return true;
 	}
 
 }

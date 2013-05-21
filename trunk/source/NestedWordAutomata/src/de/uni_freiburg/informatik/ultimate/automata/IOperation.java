@@ -22,7 +22,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
  * @author heizmann@informatik.uni-freiburg.de
  *
  */
-public interface IOperation<STATE> {
+public interface IOperation<LETTER,STATE> {
 	
 	/**
 	 * Name of the operation..
@@ -56,6 +56,6 @@ public interface IOperation<STATE> {
 	 * automata have to be build use stateFactory.
 	 * @return true iff all tests succeeded.
 	 */
-//	boolean checkResult(StateFactory<STATE> stateFactory);
+	boolean checkResult(StateFactory<STATE> stateFactory) throws OperationCanceledException;
 
 }

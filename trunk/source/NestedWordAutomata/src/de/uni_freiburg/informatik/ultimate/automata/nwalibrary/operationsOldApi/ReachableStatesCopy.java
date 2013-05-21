@@ -15,10 +15,12 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.DoubleDecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.DoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IsEmpty;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 
 public class ReachableStatesCopy<LETTER,STATE> extends DoubleDeckerBuilder<LETTER, STATE>
-		implements IOperation {
+		implements IOperation<LETTER,STATE> {
 	
 	private final Map<STATE,STATE> m_old2new = new HashMap<STATE,STATE>();
 	private final Map<STATE,STATE> m_new2old = new HashMap<STATE,STATE>();
@@ -200,14 +202,40 @@ public class ReachableStatesCopy<LETTER,STATE> extends DoubleDeckerBuilder<LETTE
 	
 	
 	public final INestedWordAutomatonOldApi<LETTER,STATE> getResult() throws OperationCanceledException {
-		if (!m_RemoveNonLiveStates) {
-			if (!m_Complement) {
-				assert (ResultChecker.minimize(m_Input, m_TraversedNwa));
-			} else {
-				assert (ResultChecker.complement(m_Input, m_TraversedNwa));
-			}
-		}
 		return m_TraversedNwa;
+	}
+
+
+	@Override
+	public boolean checkResult(StateFactory<STATE> stateFactory)
+			throws OperationCanceledException {
+		
+		boolean correct = true;
+		if (!m_RemoveNonLiveStates) {
+			s_Logger.info("Start testing correctness of " + operationName());
+			if (!m_Complement) {
+				
+				correct &= (ResultChecker.nwaLanguageInclusion(m_Input, m_TraversedNwa, stateFactory) == null);
+				correct &= (ResultChecker.nwaLanguageInclusion(m_TraversedNwa, m_Input, stateFactory) == null);
+				if (!correct) {
+					ResultChecker.writeToFileIfPreferred(operationName() + "Failed", "", m_TraversedNwa);
+				}
+			} else {
+				// intersection of operand and result should be empty
+				INestedWordAutomatonOldApi<LETTER, STATE> intersectionOperandResult = 
+						(new IntersectDD<LETTER, STATE>(m_Input, m_TraversedNwa)).getResult();
+				correct &= (new IsEmpty<LETTER, STATE>(intersectionOperandResult)).getResult();
+				INestedWordAutomatonOldApi<LETTER, STATE> resultSadd = (new ComplementDD<LETTER, STATE>(m_Input)).getResult();
+				// should recognize same language as old computation
+				correct &= (ResultChecker.nwaLanguageInclusion(resultSadd, m_TraversedNwa, stateFactory) == null);
+				correct &= (ResultChecker.nwaLanguageInclusion(m_TraversedNwa, resultSadd, stateFactory) == null);
+				if (!correct) {
+					ResultChecker.writeToFileIfPreferred(operationName() + "Failed", "", m_TraversedNwa);
+				}
+			}
+			s_Logger.info("Finished testing correctness of " + operationName());
+		}
+		return false;
 	}
 
 

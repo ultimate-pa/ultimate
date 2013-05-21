@@ -14,8 +14,10 @@ import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.automata.Activator;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
+import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.AbstractAcceptance;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 
@@ -29,7 +31,7 @@ import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
  * @param <STATE> Content. Type of the labels ("the content") of the automata states. 
  */
 public class BuchiAccepts<LETTER,STATE> extends AbstractAcceptance<LETTER,STATE>
-									    implements IOperation {
+									    implements IOperation<LETTER,STATE> {
 	
 	
 	private static Logger s_Logger = 
@@ -252,6 +254,14 @@ public class BuchiAccepts<LETTER,STATE> extends AbstractAcceptance<LETTER,STATE>
 			configurations.remove(config);
 		}
 		return acceptingConfigurations;
+	}
+
+
+
+	@Override
+	public boolean checkResult(StateFactory<STATE> stateFactory)
+			throws OperationCanceledException {
+		return true;
 	}
 	
 	

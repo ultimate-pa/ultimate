@@ -13,10 +13,12 @@ import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.Senwa;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.DeterminizeDD;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.senwa.SenwaWalker.ISuccessorVisitor;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 
-public class SenwaBuilder<LETTER, STATE> implements ISuccessorVisitor<LETTER, STATE>, IOperation {
+public class SenwaBuilder<LETTER, STATE> implements ISuccessorVisitor<LETTER, STATE>, IOperation<LETTER, STATE> {
 	
 	Senwa<LETTER, STATE> m_Senwa;
 	INestedWordAutomatonOldApi<LETTER, STATE> m_Nwa;
@@ -149,9 +151,21 @@ public class SenwaBuilder<LETTER, STATE> implements ISuccessorVisitor<LETTER, ST
 	}
 	
 	public Senwa<LETTER,STATE> getResult() throws OperationCanceledException {
-		assert ResultChecker.minimize(m_Nwa, m_Senwa) : 
-			"Result recognizes differnt language";
 		return m_Senwa;
+	}
+
+	@Override
+	public boolean checkResult(StateFactory<STATE> stateFactory)
+			throws OperationCanceledException {
+		s_Logger.info("Start testing correctness of " + operationName());
+		boolean correct = true;
+		correct &= (ResultChecker.nwaLanguageInclusion(m_Nwa, m_Senwa, stateFactory) == null);
+		correct &= (ResultChecker.nwaLanguageInclusion(m_Senwa, m_Nwa, stateFactory) == null);
+		if (!correct) {
+			ResultChecker.writeToFileIfPreferred(operationName() + "Failed", "", m_Nwa);
+		}
+		s_Logger.info("Finished testing correctness of " + operationName());
+		return correct;
 	}
 
 }

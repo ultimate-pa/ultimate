@@ -15,9 +15,10 @@ import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 
-public class DeterminizeSadd<LETTER,STATE> implements IOperation {
+public class DeterminizeSadd<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	
 	private static Logger s_Logger = 
 		UltimateServices.getInstance().getLogger(Activator.PLUGIN_ID);
@@ -75,7 +76,6 @@ public class DeterminizeSadd<LETTER,STATE> implements IOperation {
 	}
 	
 	public INestedWordAutomatonOldApi<LETTER,STATE> getResult() throws OperationCanceledException {
-		assert (ResultChecker.determinize(m_Operand, result));
 		return result;
 	}
 	
@@ -384,6 +384,18 @@ public class DeterminizeSadd<LETTER,STATE> implements IOperation {
 		public String toString() {
 			return pairList.toString();
 		}		
+	}
+
+	@Override
+	public boolean checkResult(StateFactory<STATE> stateFactory)
+			throws OperationCanceledException {
+		s_Logger.info("Testing correctness of determinization");
+		boolean correct = true;
+		INestedWordAutomatonOldApi<LETTER,STATE> resultDD = (new DeterminizeDD<LETTER,STATE>(m_Operand)).getResult();
+		correct &= (ResultChecker.nwaLanguageInclusion(resultDD,result, stateFactory) == null);
+		correct &= (ResultChecker.nwaLanguageInclusion(result,resultDD, stateFactory) == null);
+		s_Logger.info("Finished testing correctness of determinization");
+		return correct;
 	}
 	
 

@@ -14,7 +14,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 
 
-public class Determinize<LETTER,STATE> implements IOperation {
+public class Determinize<LETTER,STATE> implements IOperation<LETTER,STATE> {
 
 	protected static Logger s_Logger = 
 		UltimateServices.getInstance().getLogger(Activator.PLUGIN_ID);
@@ -68,7 +68,7 @@ public class Determinize<LETTER,STATE> implements IOperation {
 	}
 
 
-	
+	@Override
 	public boolean checkResult(StateFactory<STATE> sf) throws OperationCanceledException {
 		s_Logger.info("Start testing correctness of " + operationName());
 		INestedWordAutomatonOldApi<LETTER, STATE> operandOldApi = ResultChecker.getOldApiNwa(m_Operand);

@@ -2,6 +2,7 @@ package de.uni_freiburg.informatik.ultimate.automata.petrinet.julian;
 
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 
 /**
@@ -11,7 +12,7 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
  * @param <LETTER>
  * @param <STATE>
  */
-public class NumberOfPlaces<LETTER, STATE> implements IOperation {
+public class NumberOfPlaces<LETTER, STATE> implements IOperation<LETTER,STATE> {
 	
 	IPetriNet<LETTER, STATE> m_Net;
 	
@@ -37,6 +38,12 @@ public class NumberOfPlaces<LETTER, STATE> implements IOperation {
 	@Override
 	public Integer getResult() throws OperationCanceledException {
 		return m_Net.getPlaces().size();
+	}
+
+	@Override
+	public boolean checkResult(StateFactory<STATE> stateFactory)
+			throws OperationCanceledException {
+		return true;
 	}
 
 }

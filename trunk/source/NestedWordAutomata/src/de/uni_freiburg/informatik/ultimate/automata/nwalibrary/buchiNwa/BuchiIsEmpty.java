@@ -15,6 +15,7 @@ import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 
 
@@ -25,7 +26,7 @@ import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
  * @param <STATE> Content. Type of the labels (the content) of the automata states. 
  * @version 2010-12-18
  */
-public class BuchiIsEmpty<LETTER,STATE> implements IOperation {
+public class BuchiIsEmpty<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	
 	
 	public BuchiIsEmpty(INestedWordAutomatonOldApi<LETTER, STATE> nwa) throws OperationCanceledException {
@@ -887,6 +888,12 @@ public class BuchiIsEmpty<LETTER,STATE> implements IOperation {
 		}
 		// TODO: xw: style: throw exception or change last else if to else?
 		return null;	
+	}
+
+	@Override
+	public boolean checkResult(StateFactory<STATE> stateFactory)
+			throws OperationCanceledException {
+		return true;
 	}
 
 

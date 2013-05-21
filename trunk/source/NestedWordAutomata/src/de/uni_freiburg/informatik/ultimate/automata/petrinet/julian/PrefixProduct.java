@@ -7,14 +7,26 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Map;
 
+import org.apache.log4j.Logger;
+
+import de.uni_freiburg.informatik.ultimate.automata.Activator;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.ConcurrentProduct;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IsIncluded;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNet2FiniteAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Place;
+import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 
-public class PrefixProduct<S,C> implements IOperation {
+public class PrefixProduct<S,C> implements IOperation<S,C> {
+	
+	private static Logger s_Logger = 
+			UltimateServices.getInstance().getLogger(Activator.PLUGIN_ID);
 	
 	private final PetriNetJulian<S,C> m_Net;
 	private final NestedWordAutomaton<S,C> m_Nwa;
@@ -93,7 +105,6 @@ public class PrefixProduct<S,C> implements IOperation {
 	}
 	
 	public PetriNetJulian<S,C> getResult() throws OperationCanceledException {
-		assert(ResultChecker.prefixProduct(m_Net, m_Nwa, m_Result));
 		return this.m_Result;
 	}
 	
@@ -245,6 +256,22 @@ public class PrefixProduct<S,C> implements IOperation {
 		}
 		
 		
+	}
+
+	@Override
+	public boolean checkResult(StateFactory<C> stateFactory)
+			throws OperationCanceledException {
+		s_Logger.info("Testing correctness of prefixProduct");
+
+		INestedWordAutomatonOldApi op1AsNwa = (new PetriNet2FiniteAutomaton(m_Net)).getResult();
+		INestedWordAutomatonOldApi resultAsNwa = (new PetriNet2FiniteAutomaton(m_Result)).getResult();
+		INestedWordAutomatonOldApi nwaResult = (new ConcurrentProduct(op1AsNwa, m_Nwa, true)).getResult();
+		boolean correct = true;
+		correct &= (new IsIncluded(resultAsNwa,nwaResult)).getResult();
+		correct &= (new IsIncluded(nwaResult,resultAsNwa)).getResult();
+
+		s_Logger.info("Finished testing correctness of prefixProduct");
+		return correct;
 	}
 	
 }

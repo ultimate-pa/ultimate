@@ -12,6 +12,7 @@ import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 
 /**
@@ -28,7 +29,7 @@ import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
  * @author heizmann@informatik.uni-freiburg.de
  */
 public class Accepts<LETTER,STATE> extends AbstractAcceptance<LETTER,STATE>
-									  implements IOperation {
+									  implements IOperation<LETTER,STATE> {
 
 	private final INestedWordAutomatonOldApi<LETTER,STATE> m_Automaton;
 	private final NestedWord<LETTER> m_Word;
@@ -130,6 +131,11 @@ public class Accepts<LETTER,STATE> extends AbstractAcceptance<LETTER,STATE>
 			}
 		}
 		return false;
+	}
+	
+	@Override
+	public boolean checkResult(StateFactory<STATE> stateFactory) {
+		return true;
 	}
 
 

@@ -13,12 +13,14 @@ import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.Senwa;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IStateDeterminizer;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.PowersetDeterminizer;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.StateDeterminizerCache;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.DeterminizedState;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.DifferenceSadd;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.DifferenceState;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.IOpWithDelayedDeadEndRemoval;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.IOpWithDelayedDeadEndRemoval.UpDownEntry;
@@ -27,7 +29,7 @@ import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 
 public class DifferenceSenwa<LETTER, STATE> implements 
 								ISuccessorVisitor<LETTER, STATE>,
-								IOperation,
+								IOperation<LETTER, STATE>,
 								IOpWithDelayedDeadEndRemoval<LETTER, STATE>{
 	
 	
@@ -261,9 +263,6 @@ public class DifferenceSenwa<LETTER, STATE> implements
 	}
 	
 	public Senwa<LETTER,STATE> getResult() throws OperationCanceledException {
-		if (stateDeterminizer instanceof PowersetDeterminizer) {
-			assert (ResultChecker.differenceCheckWithSadd(minuend, subtrahend, m_Senwa));
-		}
 		return m_Senwa;
 	}
 	
@@ -290,6 +289,26 @@ public class DifferenceSenwa<LETTER, STATE> implements
 	public boolean removeDeadEnds() {
 		// TODO Auto-generated method stub
 		return false;
+	}
+
+	@Override
+	public boolean checkResult(StateFactory<STATE> stateFactory)
+			throws OperationCanceledException {
+		boolean correct = true;
+		if (stateDeterminizer instanceof PowersetDeterminizer) {
+			s_Logger.info("Start testing correctness of " + operationName());
+
+			INestedWordAutomatonOldApi<LETTER,STATE> resultSadd = (new DifferenceSadd<LETTER,STATE>(minuend, subtrahend)).getResult();
+			correct &= (ResultChecker.nwaLanguageInclusion(resultSadd, m_Senwa, stateFactory) == null);
+			correct &= (ResultChecker.nwaLanguageInclusion(m_Senwa, resultSadd, stateFactory) == null);
+			if (!correct) {
+			ResultChecker.writeToFileIfPreferred(operationName() + "Failed", "", minuend,subtrahend);
+			}
+			s_Logger.info("Finished testing correctness of " + operationName());
+		} else {
+			s_Logger.warn("Unable to test correctness if state determinzier is not the PowersetDeterminizer.");
+		}
+		return correct;
 	}
 
 }

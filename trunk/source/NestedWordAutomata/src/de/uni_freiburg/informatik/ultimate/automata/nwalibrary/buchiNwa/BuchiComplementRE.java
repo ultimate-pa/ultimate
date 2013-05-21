@@ -5,8 +5,10 @@ import org.apache.log4j.Logger;
 import de.uni_freiburg.informatik.ultimate.automata.Activator;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
+import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.PowersetDeterminizer;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.AbstractIntersect;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.DeterminizeDD;
@@ -14,7 +16,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.ReachableStatesCopy;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 
-public class BuchiComplementRE<LETTER,STATE> implements IOperation {
+public class BuchiComplementRE<LETTER,STATE> implements IOperation<LETTER,STATE> {
 
 	
 	private static Logger s_Logger = 
@@ -91,7 +93,6 @@ public class BuchiComplementRE<LETTER,STATE> implements IOperation {
 
 		
 		s_Logger.info(exitMessage());
-		//assert (ResultChecker.buchiComplement(m_Operand, m_TraversedNwa));
 	}
 	
 	
@@ -100,6 +101,12 @@ public class BuchiComplementRE<LETTER,STATE> implements IOperation {
 	 */
 	public boolean applicable() {
 		return m_buchiComplementREApplicable;
+	}
+
+	@Override
+	public boolean checkResult(StateFactory<STATE> stateFactory)
+			throws OperationCanceledException {
+		return ResultChecker.buchiComplement(m_Operand, m_Result);
 	}
 
 }

@@ -11,12 +11,17 @@ import de.uni_freiburg.informatik.ultimate.automata.Activator;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
+import de.uni_freiburg.informatik.ultimate.automata.Word;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IsEmpty;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNet2FiniteAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetRun;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 
-public class PetriNetUnfolder<S, C> implements IOperation {
+public class PetriNetUnfolder<S, C> implements IOperation<S, C> {
 
 	private static Logger s_Logger = UltimateServices.getInstance().getLogger(
 			Activator.PLUGIN_ID);
@@ -289,10 +294,6 @@ public class PetriNetUnfolder<S, C> implements IOperation {
 	 * @throws OperationCanceledException 
 	 */
 	public PetriNetRun<S, C> getAcceptingRun() throws OperationCanceledException, AssertionError {
-		if (!ResultChecker.isEmpty(m_Net, m_Run)) {
-			throw new AssertionError();
-		}
-		// assert (ResultChecker.isEmpty(net, m_Run));
 		return m_Run;
 	}
 
@@ -302,7 +303,6 @@ public class PetriNetUnfolder<S, C> implements IOperation {
 	 * @throws OperationCanceledException 
 	 */
 	public BranchingProcess<S, C> getFinitePrefix() throws OperationCanceledException {
-		assert (ResultChecker.isEmpty(m_Net, m_Run));
 		return m_Unfolding;
 	}
 
@@ -390,6 +390,33 @@ public class PetriNetUnfolder<S, C> implements IOperation {
 	@Override
 	public BranchingProcess<S, C> getResult() throws OperationCanceledException {
 		return m_Unfolding;
+	}
+
+	@Override
+	public boolean checkResult(StateFactory<C> stateFactory)
+			throws OperationCanceledException {
+		s_Logger.info("Testing correctness of emptinessCheck");
+
+		boolean correct = true;
+		if (m_Run == null) {
+			NestedRun automataRun = (new IsEmpty((new PetriNet2FiniteAutomaton(m_Net)).getResult())).getNestedRun();
+			if (automataRun != null) {
+				correct = false;
+				s_Logger.error("EmptinessCheck says empty, but net accepts: " + automataRun.getWord());
+			}
+			correct = (automataRun == null);
+		} else {
+			Word word = m_Run.getWord();
+			if (m_Net.accepts(word)) {
+				correct = true;
+			}
+			else {
+				s_Logger.error("Result of EmptinessCheck, but not accepted: " + word);
+				correct = false;
+			}
+		}
+		s_Logger.info("Finished testing correctness of emptinessCheck");
+		return false;
 	}
 
 }

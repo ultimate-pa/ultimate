@@ -23,7 +23,7 @@ import org.apache.log4j.Logger;
 
 
 public abstract class AbstractIntersect<LETTER,STATE> extends DoubleDeckerBuilder<LETTER,STATE>
-							implements IOperation {
+							implements IOperation<LETTER, STATE> {
 
 	private static Logger s_Logger = 
 		UltimateServices.getInstance().getLogger(Activator.PLUGIN_ID);
@@ -112,7 +112,6 @@ public abstract class AbstractIntersect<LETTER,STATE> extends DoubleDeckerBuilde
 			assert (ResultChecker.buchiIntersect(m_FstNwa, m_SndNwa, m_ResultNwa));
 		}
 		else {
-			assert (ResultChecker.intersect(m_FstNwa, m_SndNwa, m_ResultNwa));
 		}
 	}
 	

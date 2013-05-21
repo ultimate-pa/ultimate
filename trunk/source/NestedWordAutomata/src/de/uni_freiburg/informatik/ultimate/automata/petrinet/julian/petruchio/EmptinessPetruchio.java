@@ -17,6 +17,9 @@ import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IsEmpty;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNet2FiniteAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.PetriNetJulian;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 
@@ -34,7 +37,7 @@ import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
  * @param <C> Type of place labeling
  */
 
-public class EmptinessPetruchio<S,C> implements IOperation {
+public class EmptinessPetruchio<S,C> implements IOperation<S,C> {
 	
 	private static Logger s_Logger = 
 		UltimateServices.getInstance().getLogger(Activator.PLUGIN_ID);
@@ -147,8 +150,23 @@ public class EmptinessPetruchio<S,C> implements IOperation {
 	
 	
 	public NestedRun<S,C> getResult() throws OperationCanceledException {
-		assert ResultChecker.isEmpty(m_NetJulian, m_AcceptedRun);
 		return m_AcceptedRun;
+	}
+
+	@Override
+	public boolean checkResult(StateFactory<C> stateFactory)
+			throws OperationCanceledException {
+		s_Logger.info("Testing correctness of emptinessCheck");
+
+		boolean correct = true;
+		if (m_AcceptedRun == null) {
+			NestedRun automataRun = (new IsEmpty((new PetriNet2FiniteAutomaton(m_NetJulian)).getResult())).getNestedRun();
+			correct = (automataRun == null);
+		} else {
+			correct =  m_NetJulian.accepts(m_AcceptedRun.getWord());
+		}
+		s_Logger.info("Finished testing correctness of emptinessCheck");
+		return correct;
 	}
 
 

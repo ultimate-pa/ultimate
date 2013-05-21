@@ -32,7 +32,7 @@ import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
  *
  */
 public class BuchiComplementFKV<LETTER,STATE> extends DoubleDeckerBuilder<LETTER,STATE> 
-									 implements IOperation {
+									 implements IOperation<LETTER,STATE> {
 	
 	private static Logger s_Logger = 
 		UltimateServices.getInstance().getLogger(Activator.PLUGIN_ID);
@@ -127,7 +127,6 @@ public class BuchiComplementFKV<LETTER,STATE> extends DoubleDeckerBuilder<LETTER
 
 		traverseDoubleDeckerGraph();
 		s_Logger.info(exitMessage());
-		assert (ResultChecker.buchiComplement(m_Operand, m_TraversedNwa));
 	}
 	
 
@@ -800,6 +799,16 @@ public class BuchiComplementFKV<LETTER,STATE> extends DoubleDeckerBuilder<LETTER
 				m_UnrestrictedRank[i] = 1;
 			}
 		}
+	}
+
+
+
+
+
+	@Override
+	public boolean checkResult(StateFactory<STATE> stateFactory)
+			throws OperationCanceledException {
+		return (ResultChecker.buchiComplement(m_Operand, m_TraversedNwa));
 	}
 
 

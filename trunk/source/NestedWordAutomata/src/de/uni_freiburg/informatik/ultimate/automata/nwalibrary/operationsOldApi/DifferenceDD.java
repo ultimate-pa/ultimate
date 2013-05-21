@@ -48,7 +48,7 @@ import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 // concatenation with Sigma^*. Use only one DeterminizedState detFin state that
 // represents all final states. Each successor of detFin is detFin itself.
 public class DifferenceDD<LETTER,STATE> extends DoubleDeckerBuilder<LETTER,STATE> 
-							 implements IOperation {
+							 implements IOperation<LETTER,STATE> {
 	
 	private static Logger s_Logger = 
 		UltimateServices.getInstance().getLogger(Activator.PLUGIN_ID);
@@ -271,9 +271,6 @@ public class DifferenceDD<LETTER,STATE> extends DoubleDeckerBuilder<LETTER,STATE
 		s_Logger.info("Return successors via cache:" + m_ReturnSuccsCache);
 		s_Logger.info(m_Unnecessary + " times subtrahend state of successor " +
 				"was accepting (use sigma star concat closure?)");
-		if (stateDeterminizer instanceof PowersetDeterminizer) {
-			assert (ResultChecker.differenceCheckWithSadd(minuend, subtrahend, m_TraversedNwa));
-		}
 	}
 	
 	public DifferenceDD(
@@ -314,7 +311,6 @@ public class DifferenceDD<LETTER,STATE> extends DoubleDeckerBuilder<LETTER,STATE
 		traverseDoubleDeckerGraph();
 		((DoubleDeckerAutomaton<LETTER,STATE>) super.m_TraversedNwa).setUp2Down(getUp2DownMapping());
 		s_Logger.info(exitMessage());
-		assert (ResultChecker.difference(minuend, subtrahend, m_TraversedNwa));
 	}
 
 	
@@ -547,6 +543,26 @@ public class DifferenceDD<LETTER,STATE> extends DoubleDeckerBuilder<LETTER,STATE
 			res2diff.put(resState,diffState);
 			return resState;
 		}
+	}
+
+	@Override
+	public boolean checkResult(StateFactory<STATE> stateFactory)
+			throws OperationCanceledException {
+		boolean correct = true;
+		if (stateDeterminizer instanceof PowersetDeterminizer) {
+			s_Logger.info("Start testing correctness of " + operationName());
+
+			INestedWordAutomatonOldApi<LETTER,STATE> resultSadd = (new DifferenceSadd<LETTER,STATE>(minuend, subtrahend)).getResult();
+			correct &= (ResultChecker.nwaLanguageInclusion(resultSadd, m_TraversedNwa, stateFactory) == null);
+			correct &= (ResultChecker.nwaLanguageInclusion(m_TraversedNwa, resultSadd, stateFactory) == null);
+			if (!correct) {
+			ResultChecker.writeToFileIfPreferred(operationName() + "Failed", "", minuend,subtrahend);
+			}
+			s_Logger.info("Finished testing correctness of " + operationName());
+		} else {
+			s_Logger.warn("Unable to test correctness if state determinzier is not the PowersetDeterminizer.");
+		}
+		return correct;
 	}
 
 

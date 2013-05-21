@@ -5,11 +5,12 @@ import org.apache.log4j.Logger;
 import de.uni_freiburg.informatik.ultimate.automata.Activator;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
-import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IsEmpty;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 
-public class ComplementDD<LETTER, STATE> implements IOperation {
+public class ComplementDD<LETTER, STATE> implements IOperation<LETTER, STATE> {
 
 	private static Logger s_Logger = UltimateServices.getInstance().getLogger(
 			Activator.PLUGIN_ID);
@@ -37,7 +38,6 @@ public class ComplementDD<LETTER, STATE> implements IOperation {
 
 	public INestedWordAutomatonOldApi<LETTER, STATE> getResult()
 			throws OperationCanceledException {
-		assert (ResultChecker.complement(m_Operand, m_Result));
 		return m_Result;
 	}
 
@@ -56,6 +56,17 @@ public class ComplementDD<LETTER, STATE> implements IOperation {
 		m_Result = new ReachableStatesCopy<LETTER, STATE>(
 				m_DeterminizedOperand, true, true, false, false).getResult();
 		s_Logger.info(exitMessage());
+	}
+
+	@Override
+	public boolean checkResult(StateFactory<STATE> stateFactory)
+			throws OperationCanceledException {
+		s_Logger.debug("Testing correctness of complement");
+		boolean correct = true;
+		INestedWordAutomatonOldApi intersectionOperandResult = (new IntersectDD(false, m_Operand, m_Result)).getResult();
+		correct &=  ((new IsEmpty(intersectionOperandResult)).getResult() == true);
+		s_Logger.debug("Finished testing correctness of complement");
+		return correct;
 	}
 
 }

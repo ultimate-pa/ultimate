@@ -27,7 +27,7 @@ import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 //FIXME: return in final part may take nonfinal state from stack
 
 public class BuchiComplementDeterministic<LETTER,STATE> extends DoubleDeckerVisitor<LETTER,STATE>
-											   implements IOperation {
+											   implements IOperation<LETTER,STATE> {
 	
 	private static Logger s_Logger = 
 		UltimateServices.getInstance().getLogger(Activator.PLUGIN_ID);
@@ -91,7 +91,6 @@ public class BuchiComplementDeterministic<LETTER,STATE> extends DoubleDeckerVisi
 	@Override
 	public INestedWordAutomatonOldApi<LETTER, STATE> getResult()
 			throws OperationCanceledException {
-		assert ResultChecker.buchiComplement(m_Operand, m_TraversedNwa);
 		return m_TraversedNwa;
 	}
 
@@ -215,6 +214,12 @@ public class BuchiComplementDeterministic<LETTER,STATE> extends DoubleDeckerVisi
 			}
 		}
 		return newSuccs;
+	}
+
+	@Override
+	public boolean checkResult(StateFactory<STATE> stateFactory)
+			throws OperationCanceledException {
+		return ResultChecker.buchiComplement(m_Operand, m_TraversedNwa);
 	}
 
 

@@ -9,6 +9,7 @@ import java.util.Random;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
+import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StringFactory;
@@ -20,7 +21,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StringFactory;
  * 
  * @author Fabian Reiter
  */
-public class GetRandomNwa implements IOperation {
+public class GetRandomNwa implements IOperation<String,String> {
 	
 	private final Random m_Random;
 	private final NestedWordAutomaton<String,String> m_Result;
@@ -325,5 +326,11 @@ public class GetRandomNwa implements IOperation {
 		}
 		
 		return result;
+	}
+
+	@Override
+	public boolean checkResult(StateFactory<String> stateFactory)
+			throws OperationCanceledException {
+		return true;
 	}	
 }

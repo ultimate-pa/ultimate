@@ -12,10 +12,11 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.DoubleDeckerAutom
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomatonReachableStates;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.ReachableStatesCopy;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 
-public class RemoveUnreachable<LETTER,STATE> implements IOperation {
+public class RemoveUnreachable<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	
 	private final INestedWordAutomatonSimple<LETTER,STATE> m_Input;
 	private final NestedWordAutomatonReachableStates<LETTER,STATE> m_Result;
@@ -61,37 +62,44 @@ public class RemoveUnreachable<LETTER,STATE> implements IOperation {
 
 	@Override
 	public NestedWordAutomatonReachableStates<LETTER,STATE> getResult() throws OperationCanceledException {
-		if (m_Input instanceof INestedWordAutomatonOldApi) {
-			assert checkResult();
-		}
 		return m_Result;
 	}
 
-	public boolean checkResult() throws OperationCanceledException {
-		s_Logger.info("Start testing correctness of " + operationName());
+	
+	@Override
+	public boolean checkResult(StateFactory<STATE> stateFactory) throws OperationCanceledException {
 		boolean correct = true;
-//		correct &= (ResultChecker.nwaLanguageInclusion(m_Input, m_Result) == null);
-//		correct &= (ResultChecker.nwaLanguageInclusion(m_Result, m_Input) == null);
-		assert correct;
-		DoubleDeckerAutomaton<LETTER, STATE> reachalbeStatesCopy = 
-				(DoubleDeckerAutomaton<LETTER, STATE>) (new ReachableStatesCopy(
-						(INestedWordAutomatonOldApi) m_Input, false, false, false, false)).getResult();
-//		correct &= ResultChecker.isSubset(reachalbeStatesCopy.getStates(),m_Result.getStates());
-		assert correct;
-//		correct &= ResultChecker.isSubset(m_Result.getStates(),reachalbeStatesCopy.getStates());
-		assert correct;
-		for (STATE state : reachalbeStatesCopy.getStates()) {
-			Set<STATE> rCSdownStates = reachalbeStatesCopy.getDownStates(state);
-			Set<STATE> rCAdownStates = m_Result.getDownStates(state);
-			correct &= ResultChecker.isSubset(rCAdownStates, rCSdownStates);
+		if (m_Input instanceof INestedWordAutomatonOldApi) {
+			s_Logger.info("Start testing correctness of " + operationName());
+			// correct &= (ResultChecker.nwaLanguageInclusion(m_Input, m_Result)
+			// == null);
+			// correct &= (ResultChecker.nwaLanguageInclusion(m_Result, m_Input)
+			// == null);
 			assert correct;
-			correct &= ResultChecker.isSubset(rCSdownStates, rCAdownStates);
+			DoubleDeckerAutomaton<LETTER, STATE> reachalbeStatesCopy = (DoubleDeckerAutomaton<LETTER, STATE>) (new ReachableStatesCopy(
+					(INestedWordAutomatonOldApi) m_Input, false, false, false,
+					false)).getResult();
+			// correct &=
+			// ResultChecker.isSubset(reachalbeStatesCopy.getStates(),m_Result.getStates());
 			assert correct;
+			// correct &=
+			// ResultChecker.isSubset(m_Result.getStates(),reachalbeStatesCopy.getStates());
+			assert correct;
+			for (STATE state : reachalbeStatesCopy.getStates()) {
+				Set<STATE> rCSdownStates = reachalbeStatesCopy
+						.getDownStates(state);
+				Set<STATE> rCAdownStates = m_Result.getDownStates(state);
+				correct &= ResultChecker.isSubset(rCAdownStates, rCSdownStates);
+				assert correct;
+				correct &= ResultChecker.isSubset(rCSdownStates, rCAdownStates);
+				assert correct;
+			}
+			if (!correct) {
+				ResultChecker.writeToFileIfPreferred(
+						operationName() + "Failed", "", m_Input);
+			}
+			s_Logger.info("Finished testing correctness of " + operationName());
 		}
-		if (!correct) {
-			ResultChecker.writeToFileIfPreferred(operationName() + "Failed", "", m_Input);
-		}
-		s_Logger.info("Finished testing correctness of " + operationName());
 		return correct;
 	}
 

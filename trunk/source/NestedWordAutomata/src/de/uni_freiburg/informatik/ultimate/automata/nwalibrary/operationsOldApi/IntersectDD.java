@@ -6,10 +6,11 @@ import de.uni_freiburg.informatik.ultimate.automata.Activator;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 
 public class IntersectDD<LETTER, STATE> extends AbstractIntersect<LETTER, STATE>
-		implements IOperation {
+		implements IOperation<LETTER, STATE> {
 
 	private static Logger s_Logger = UltimateServices.getInstance().getLogger(
 			Activator.PLUGIN_ID);
@@ -30,6 +31,13 @@ public class IntersectDD<LETTER, STATE> extends AbstractIntersect<LETTER, STATE>
 	@Override
 	public String operationName() {
 		return "intersectDD";
+	}
+
+	@Override
+	public boolean checkResult(StateFactory<STATE> stateFactory)
+			throws OperationCanceledException {
+		s_Logger.warn("Correctness of result was not tested");
+		return true;
 	}
 
 }

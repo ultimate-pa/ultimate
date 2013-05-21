@@ -12,11 +12,11 @@ import org.apache.log4j.Logger;
 import de.uni_freiburg.informatik.ultimate.automata.Activator;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
-import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.DoubleDecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 
 
@@ -36,7 +36,7 @@ import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
  *
  */
 
-public class IsEmpty<LETTER,STATE> implements IOperation {
+public class IsEmpty<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	
 	private static Logger s_Logger = 
 		UltimateServices.getInstance().getLogger(Activator.PLUGIN_ID);
@@ -650,14 +650,27 @@ public class IsEmpty<LETTER,STATE> implements IOperation {
 	
 	@Override
 	public Boolean getResult() throws OperationCanceledException {
-		assert (ResultChecker.isEmpty(m_nwa, m_acceptingRun));
 		return m_acceptingRun == null;
 	}
 
 
 	public NestedRun<LETTER,STATE> getNestedRun() throws OperationCanceledException {
-		assert (ResultChecker.isEmpty(m_nwa, m_acceptingRun));
 		return m_acceptingRun;
+	}
+
+	@Override
+	public boolean checkResult(StateFactory<STATE> stateFactory)
+			throws OperationCanceledException {
+		boolean correct = true;
+		if (m_acceptingRun == null) {
+			s_Logger.warn("Emptiness not double checked ");
+		}
+		else {
+			s_Logger.info("Correctness of emptinessCheck not tested.");
+			correct = (new Accepts<LETTER, STATE>(m_nwa, m_acceptingRun.getWord())).getResult();
+			s_Logger.info("Finished testing correctness of emptinessCheck");
+		}
+		return correct;
 	}
 
 	

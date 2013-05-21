@@ -13,13 +13,16 @@ import de.uni_freiburg.informatik.ultimate.automata.Activator;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.DifferenceDD;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNet2FiniteAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Place;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 
-public class DifferenceBlackAndWhite<S,C> implements IOperation {
+public class DifferenceBlackAndWhite<S,C> implements IOperation<S,C> {
 	
 	@Override
 	public String operationName() {
@@ -306,7 +309,6 @@ public class DifferenceBlackAndWhite<S,C> implements IOperation {
 	public PetriNetJulian<S,C> getResult() throws OperationCanceledException {
 		assert (isPreSuccPlaceInNet(m_Result));
 		assert (isPreSuccTransitionInNet(m_Result));
-		assert ResultChecker.differenceBlackAndWhite(m_Net,m_Nwa,m_Result);
 		return m_Result;
 	}
 	
@@ -344,6 +346,22 @@ public class DifferenceBlackAndWhite<S,C> implements IOperation {
 			}
 		}
 		return true;
+	}
+
+	@Override
+	public boolean checkResult(StateFactory<C> stateFactory)
+			throws OperationCanceledException {
+		s_Logger.info("Testing correctness of differenceBlackAndWhite");
+
+		INestedWordAutomatonOldApi op1AsNwa = (new PetriNet2FiniteAutomaton(m_Net)).getResult();
+		INestedWordAutomatonOldApi rcResult = (new DifferenceDD(op1AsNwa, m_Nwa)).getResult();
+		INestedWordAutomatonOldApi resultAsNwa = (new PetriNet2FiniteAutomaton(m_Result)).getResult();
+		boolean correct = true;
+		correct &= (ResultChecker.nwaLanguageInclusion(resultAsNwa,rcResult,stateFactory) == null);
+		correct &= (ResultChecker.nwaLanguageInclusion(rcResult,resultAsNwa,stateFactory) == null);
+
+		s_Logger.info("Finished testing correctness of differenceBlackAndWhite");
+		return correct;
 	}
 
 }

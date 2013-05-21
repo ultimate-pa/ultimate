@@ -62,197 +62,9 @@ public class ResultChecker<LETTER,STATE> {
 		return resultCheckStackHeight > 0;
 	}
 
-	public static <LETTER, STATE> boolean isEmpty(INestedWordAutomatonOldApi<LETTER, STATE> op,
-								  NestedRun<LETTER, STATE> result) throws OperationCanceledException {
-		if (resultCheckStackHeight >= maxResultCheckStackHeight) return true;
-		resultCheckStackHeight++;
-		s_Logger.debug("Testing correctness of emptinessCheck");
-
-		boolean correct = true;
-		if (result == null) {
-			s_Logger.warn("Emptiness not double checked ");
-		}
-		else {
-			correct = (new Accepts<LETTER, STATE>(op, result.getWord())).getResult(); 
-		}
-
-		s_Logger.debug("Finished testing correctness of emptinessCheck");
-		resultCheckStackHeight--;
-		return correct;
-	}
 
 	
 	
-	public static boolean determinize(INestedWordAutomatonOldApi op,
-									INestedWordAutomatonOldApi result) throws OperationCanceledException {
-		StateFactory stateFactory = op.getStateFactory();
-		if (resultCheckStackHeight >= maxResultCheckStackHeight) return true;
-		resultCheckStackHeight++;
-		s_Logger.debug("Testing correctness of determinization");
-
-		boolean correct = true;
-//		NwaBasicOperations nbo = new NwaBasicOperations((NestedWordAutomaton) op);
-//		INestedWordAutomaton resultJM = nbo.determinizeJM();
-//		correct &= (resultJM.included(result) == null);
-//		correct &= (result.included(resultJM) == null);
-		INestedWordAutomatonOldApi resultSadd = (new DeterminizeSadd<String,String>(op)).getResult();
-		correct &= (nwaLanguageInclusion(resultSadd,result, stateFactory) == null);
-		correct &= (nwaLanguageInclusion(result,resultSadd, stateFactory) == null);
-		INestedWordAutomatonOldApi resultDD = (new DeterminizeDD<String,String>(op)).getResult();
-		correct &= (nwaLanguageInclusion(resultDD,result, stateFactory) == null);
-		correct &= (nwaLanguageInclusion(result,resultDD, stateFactory) == null);
-	
-		s_Logger.debug("Finished testing correctness of determinization");
-		resultCheckStackHeight--;
-		return correct;
-	}
-	
-	public static boolean complement(INestedWordAutomatonOldApi op,
-									  INestedWordAutomatonOldApi result) throws OperationCanceledException {
-		if (resultCheckStackHeight >= maxResultCheckStackHeight) return true;
-		resultCheckStackHeight++;
-		s_Logger.debug("Testing correctness of complement");
-
-		boolean correct = true;
-//		INestedWordAutomaton complementJM = (new Complement()).new ComplementJM(op).getResult();
-//		correct &=  ((new Intersect(false, false, op, complementJM)).getNwa().getAcceptingNestedRun() == null);
-		INestedWordAutomatonOldApi complementSadd = (new ComplementSadd(op)).getResult();
-		INestedWordAutomatonOldApi intersectionWithSadd = (new IntersectDD(false, op, complementSadd)).getResult();
-		correct &=  ((new IsEmpty(intersectionWithSadd)).getResult() == true);
-		INestedWordAutomatonOldApi complementDD = (new ComplementDD(op)).getResult();
-		INestedWordAutomatonOldApi intersectionWithDD = (new IntersectDD(false, op, complementDD)).getResult();
-		correct &= (new IsEmpty(intersectionWithDD).getResult() == true);
-
-		s_Logger.debug("Finished testing correctness of complement");
-		resultCheckStackHeight--;
-		return correct;
-	}
-	
-	
-	public static boolean intersect(INestedWordAutomatonOldApi operand1,
-									INestedWordAutomatonOldApi operand2,
-									INestedWordAutomatonOldApi result) throws OperationCanceledException {
-		s_Logger.warn("Correctness of Intersection not checked at the moment.");
-		return true;
-	}
-	
-	public static boolean difference(INestedWordAutomatonOldApi fst,
-									 INestedWordAutomatonOldApi snd,
-									 INestedWordAutomatonOldApi result) throws OperationCanceledException {
-		StateFactory stateFactory = fst.getStateFactory();
-		if (resultCheckStackHeight >= maxResultCheckStackHeight) return true;
-		resultCheckStackHeight++;
-		s_Logger.info("Testing correctness of difference");
-
-		INestedWordAutomatonOldApi sndComplementDD = 
-			(new ComplementDD(snd)).getResult();
-		INestedWordAutomatonOldApi resultDD = 
-			(new IntersectNodd(fst,sndComplementDD)).getResult();
-		boolean correct = true;
-		correct &= (nwaLanguageInclusion(result,resultDD, stateFactory) == null);
-		assert correct;
-		correct &= (nwaLanguageInclusion(resultDD,result, stateFactory) == null);
-		assert correct;
-		
-		INestedWordAutomatonOldApi sndComplementSadd = 
-			(new ComplementSadd(snd)).getResult();
-		INestedWordAutomatonOldApi resultSadd = 
-			(new IntersectNodd(fst,sndComplementSadd)).getResult();
-		correct &= (nwaLanguageInclusion(result,resultSadd, stateFactory) == null);
-		assert correct;
-		correct &= (nwaLanguageInclusion(resultSadd,result, stateFactory) == null);
-		assert correct;
-		
-		s_Logger.info("Finished testing correctness of difference");
-		resultCheckStackHeight--;
-		return correct;
-	}
-	
-	
-	public static boolean differenceCheckWithSadd(INestedWordAutomatonOldApi fst,
-			 INestedWordAutomatonOldApi snd,
-			 INestedWordAutomatonOldApi result) throws OperationCanceledException {
-		StateFactory stateFactory = fst.getStateFactory();
-		if (resultCheckStackHeight >= maxResultCheckStackHeight) return true;
-		resultCheckStackHeight++;
-		s_Logger.debug("Testing correctness of difference");
-		
-		INestedWordAutomatonOldApi resultSadd = (new DifferenceSadd(fst, snd)).getResult();
-
-		boolean correct = true;
-		try {
-			NestedRun subsetCounterexample = nwaLanguageInclusion(resultSadd, result, stateFactory);
-			if (subsetCounterexample != null) {
-				s_Logger.error("Word accepted by resultSadd, but not by result: " + subsetCounterexample.getWord());
-				correct = false;
-				String message = "// Problem with run " + subsetCounterexample.toString();
-				writeToFileIfPreferred("FailedDifferenceCheck-Minuend-", message, fst);
-				writeToFileIfPreferred("FailedDifferenceCheck-Subtrahend-", message, snd);
-			}
-			NestedRun supersetCounterexample = nwaLanguageInclusion(result, resultSadd, stateFactory);
-			if (supersetCounterexample != null) {
-				s_Logger.error("Word accepted by result, but not by resultSadd: " + supersetCounterexample.getWord());
-				correct = false;
-				String message = "// Problem with run " + supersetCounterexample.toString();
-				writeToFileIfPreferred("FailedDifferenceCheck-Minuend-", message, fst);
-				writeToFileIfPreferred("FailedDifferenceCheck-Subtrahend-", message, snd);
-			}
-		} catch (OperationCanceledException e) {
-			s_Logger.warn("ResultChecker canceled");
-		}
-
-		s_Logger.debug("Finished testing correctness of minimizeDfa");
-		resultCheckStackHeight--;
-		return correct;
-	}
-	
-	
-	
-	public static boolean minimize(INestedWordAutomatonOldApi operand,
-									  INestedWordAutomatonOldApi result) throws OperationCanceledException {
-		if (resultCheckStackHeight >= maxResultCheckStackHeight) return true;
-		resultCheckStackHeight++;
-		s_Logger.debug("Testing correctness of minimizeDfa");
-
-		boolean correct = true;
-		try {
-			NestedRun subsetCounterexample = nwaLanguageInclusion(operand, result,operand.getStateFactory());
-			if (subsetCounterexample != null) {
-				s_Logger.error("Word accepted by operand, but not by result: " + subsetCounterexample.getWord());
-				correct = false;
-				String message = "// Problem with run " + subsetCounterexample.toString();
-				writeToFileIfPreferred("FailedNwaEquivalenceCheck", message, operand);
-			}
-			NestedRun supersetCounterexample = nwaLanguageInclusion(result, operand,operand.getStateFactory());
-			if (supersetCounterexample != null) {
-				s_Logger.error("Word accepted by result, but not by operand: " + supersetCounterexample.getWord());
-				correct = false;
-				String message = "// Problem with run " + supersetCounterexample.toString();
-				writeToFileIfPreferred("FailedNwaEquivalenceCheck", message, operand);
-			}
-
-		
-//		NestedLassoRun inOperandButNotInResultBuchi = operand.buchiIncluded(result);
-//		if (inOperandButNotInResult != null) {
-//			s_Logger.error("Lasso word accepted by operand, but not by result: " + 
-//					inOperandButNotInResultBuchi.getNestedLassoWord());
-//			correct = false;
-//		}
-//		NestedLassoRun inResultButNotInOperatndBuchi = result.buchiIncluded(operand);
-//		if (inResultButNotInOperatnd != null) {
-//			s_Logger.error("Lasso word accepted by result, but not by operand: " + 
-//					inResultButNotInOperatndBuchi.getNestedLassoWord());
-//			correct = false;
-//		}
-		
-		} catch (OperationCanceledException e) {
-			s_Logger.warn("ResultChecker canceled");
-		}
-
-		s_Logger.debug("Finished testing correctness of minimizeDfa");
-		resultCheckStackHeight--;
-		return correct;
-	}
 	
 	public static boolean reduceBuchi(INestedWordAutomatonOldApi operand,
 			INestedWordAutomatonOldApi result) throws OperationCanceledException {
@@ -348,7 +160,6 @@ public class ResultChecker<LETTER,STATE> {
 //		assert (correct);
 		
 		s_Logger.info("Finished testing correctness of complementBuchi");
-		nwaInvarintChecks(result);
 		resultCheckStackHeight--;
 		return correct;
 	}
@@ -394,7 +205,6 @@ public class ResultChecker<LETTER,STATE> {
 //		}
 
 		s_Logger.info("Finished testing correctness of complementBuchiSVW");
-		nwaInvarintChecks(result);
 		resultCheckStackHeight--;
 		return correct;
 	}
@@ -414,121 +224,14 @@ public class ResultChecker<LETTER,STATE> {
 		correct &= (nwaLanguageInclusion(op,resultAutomata,op.getStateFactory()) == null);
 
 		s_Logger.info("Finished testing correctness of PetriNetJulian constructor");
-		netInvarintChecks(result);
 		resultCheckStackHeight--;
 		return correct;
 	}
 	
 	
-	public static boolean accepts(PetriNetJulian net,
-								  Word word,
-								  boolean result) throws OperationCanceledException {
-		if (resultCheckStackHeight >= maxResultCheckStackHeight) return true;
-		resultCheckStackHeight++;
-		s_Logger.info("Testing correctness of accepts");
-		
-		NestedWord nw = new NestedWord(word);
-		boolean resultAutomata = (new Accepts((new PetriNet2FiniteAutomaton(net)).getResult(), nw)).getResult();
-		boolean correct = (result == resultAutomata);
 
-		s_Logger.info("Finished testing correctness of accepts");
-		netInvarintChecks(net);
-		resultCheckStackHeight--;
-		return correct;
-	}
 	
-	@Deprecated
-	public static boolean isEmpty(PetriNetJulian net,
-								  NestedRun result) throws OperationCanceledException {
-		if (resultCheckStackHeight >= maxResultCheckStackHeight) return true;
-		resultCheckStackHeight++;
-		s_Logger.info("Testing correctness of emptinessCheck");
 
-		boolean correct = true;
-		if (result == null) {
-			NestedRun automataRun = (new IsEmpty((new PetriNet2FiniteAutomaton(net)).getResult())).getNestedRun();
-			correct = (automataRun == null);
-		} else {
-			correct =  net.accepts(result.getWord());
-		}
-		s_Logger.info("Finished testing correctness of emptinessCheck");
-		netInvarintChecks(net);
-		resultCheckStackHeight--;
-		return correct;
-	}
-	
-	public static boolean isEmpty(PetriNetJulian net,
-									PetriNetRun result) throws OperationCanceledException {
-		if (resultCheckStackHeight >= maxResultCheckStackHeight) return true;
-		resultCheckStackHeight++;
-		s_Logger.info("Testing correctness of emptinessCheck");
-
-		boolean correct = true;
-		if (result == null) {
-			NestedRun automataRun = (new IsEmpty((new PetriNet2FiniteAutomaton(net)).getResult())).getNestedRun();
-			if (automataRun != null) {
-				correct = false;
-				s_Logger.error("EmptinessCheck says empty, but net accepts: " + automataRun.getWord());
-			}
-			correct = (automataRun == null);
-		} else {
-			Word word = result.getWord();
-			if (net.accepts(word)) {
-				correct = true;
-			}
-			else {
-				s_Logger.error("Result of EmptinessCheck, but not accepted: " + word);
-				correct = false;
-			}
-		}
-		s_Logger.info("Finished testing correctness of emptinessCheck");
-		netInvarintChecks(net);
-		resultCheckStackHeight--;
-		return correct;
-	}
-	
-	
-	public static boolean prefixProduct(PetriNetJulian operand1,
-										NestedWordAutomaton operand2,
-										PetriNetJulian result) throws OperationCanceledException {
-		if (resultCheckStackHeight >= maxResultCheckStackHeight) return true;
-		resultCheckStackHeight++;
-		s_Logger.info("Testing correctness of prefixProduct");
-
-		INestedWordAutomatonOldApi op1AsNwa = (new PetriNet2FiniteAutomaton(operand1)).getResult();
-		INestedWordAutomatonOldApi resultAsNwa = (new PetriNet2FiniteAutomaton(result)).getResult();
-		INestedWordAutomatonOldApi nwaResult = (new ConcurrentProduct(op1AsNwa, operand2, true)).getResult();
-		boolean correct = true;
-		correct &= (new IsIncluded(resultAsNwa,nwaResult)).getResult();
-		correct &= (new IsIncluded(nwaResult,resultAsNwa)).getResult();
-
-		s_Logger.info("Finished testing correctness of prefixProduct");
-		netInvarintChecks(result);
-		resultCheckStackHeight--;
-		return correct;
-	}
-	
-	
-	public static boolean differenceBlackAndWhite(PetriNetJulian operand1,
-								  				  NestedWordAutomaton operand2,
-								  				  PetriNetJulian result) throws OperationCanceledException {
-		if (resultCheckStackHeight >= maxResultCheckStackHeight) return true;
-		resultCheckStackHeight++;
-		s_Logger.info("Testing correctness of differenceBlackAndWhite");
-
-		INestedWordAutomatonOldApi op1AsNwa = (new PetriNet2FiniteAutomaton(operand1)).getResult();
-		INestedWordAutomatonOldApi rcResult = (new DifferenceDD(op1AsNwa, operand2)).getResult();
-		INestedWordAutomatonOldApi resultAsNwa = (new PetriNet2FiniteAutomaton(result)).getResult();
-		boolean correct = true;
-		correct &= (nwaLanguageInclusion(resultAsNwa,rcResult,operand1.getStateFactory()) == null);
-		correct &= (nwaLanguageInclusion(rcResult,resultAsNwa,operand1.getStateFactory()) == null);
-
-		s_Logger.info("Finished testing correctness of differenceBlackAndWhite");
-		netInvarintChecks(operand1);
-		resultCheckStackHeight--;
-		return correct;
-	}
-	
 	public static boolean petriNetLanguageEquivalence(PetriNetJulian net1, PetriNetJulian net2) throws OperationCanceledException {
 		if (resultCheckStackHeight >= maxResultCheckStackHeight) return true;
 		resultCheckStackHeight++;
@@ -562,29 +265,6 @@ public class ResultChecker<LETTER,STATE> {
 	}
 
 
-//	private static boolean nwaLanguageEquivalence(INestedWordAutomaton nwa1, INestedWordAutomaton nwa2) throws OperationCanceledException {
-//		s_Logger.info("Testing nwa equivalence");
-//		
-//		boolean correct = true;
-//		INestedWordAutomaton nwa1MinusNwa2 = (new Difference(nwa1, nwa2)).getResult();
-//		NestedRun inNwa1ButNotInNwa2 = (new BfsEmptiness(nwa1MinusNwa2)).getResult();
-//		if (inNwa1ButNotInNwa2 != null) {
-//			s_Logger.error("Word accepted by nwa1, but not by nwa2: " + 
-//					inNwa1ButNotInNwa2.getWord());
-//			correct = false;
-//		}
-//		INestedWordAutomaton nwa2MinusNwa1 = (new Difference(nwa2, nwa1)).getResult();
-//		NestedRun inNwa2ButNotInNwa1 = (new BfsEmptiness(nwa2MinusNwa1)).getResult();
-//		if (inNwa2ButNotInNwa1 != null) {
-//			s_Logger.error("Word accepted by nwa2, but not by nwa1: " + 
-//					inNwa2ButNotInNwa1.getWord());
-//			correct = false;
-//		}
-//		
-//		s_Logger.info("Finished testing nwa equivalence");
-//		return correct;
-//	}
-	
 	public static <LETTER,STATE> NestedRun nwaLanguageInclusion(INestedWordAutomatonOldApi nwa1, INestedWordAutomatonOldApi nwa2, StateFactory stateFactory) throws OperationCanceledException {
 		IStateDeterminizer stateDeterminizer = new PowersetDeterminizer<LETTER,STATE>(nwa2);
 		INestedWordAutomatonOldApi nwa1MinusNwa2 = (new DifferenceDD(nwa1, nwa2, stateDeterminizer, stateFactory, false, false)).getResult();
@@ -611,37 +291,6 @@ public class ResultChecker<LETTER,STATE> {
 		return (new BuchiIsIncluded(nwa1, nwa2)).getCounterexample();
 	}
 	
-	
-	
-	public static void nwaInvarintChecks(INestedWordAutomatonOldApi nwa) throws OperationCanceledException {
-		if (m_AlreadyDoingInvariantCheck) {
-			return;
-		}
-		m_AlreadyDoingInvariantCheck = true;
-		if (m_InvariantCheck_DetComplementBuchi) {
-			s_Logger.debug("Start additional invariant checks.");
-			if (nwa.getCallAlphabet().isEmpty()) {
-				new BuchiReduce(nwa).getResult();
-			}
-//			if (nwa.isDeterministic()) {
-//				INestedWordAutomaton complement = new BuchiComplementDeterministic(nwa).getResult();
-//				assert (buchiComplement(nwa, complement));
-//			}
-		}
-		m_AlreadyDoingInvariantCheck = false;
-	}
-	
-	
-	public static void netInvarintChecks(PetriNetJulian net) {
-		if (m_AlreadyDoingInvariantCheck) {
-			return;
-		}
-		m_AlreadyDoingInvariantCheck = true;
-
-		// enter checks here.
-		
-		m_AlreadyDoingInvariantCheck = false;
-	}
 	
     private static String getDateTime() {
         DateFormat dateFormat = new SimpleDateFormat("yyyyMMddHHmmss");

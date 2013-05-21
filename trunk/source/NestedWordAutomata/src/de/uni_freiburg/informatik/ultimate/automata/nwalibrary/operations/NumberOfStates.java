@@ -3,6 +3,7 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 
 /**
  * Operation that returns the number of states of a nested word automaton.
@@ -11,7 +12,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutoma
  * @param <LETTER>
  * @param <STATE>
  */
-public class NumberOfStates<LETTER, STATE> implements IOperation {
+public class NumberOfStates<LETTER, STATE> implements IOperation<LETTER,STATE> {
 	
 	INestedWordAutomatonOldApi<LETTER, STATE> m_Nwa;
 	
@@ -37,6 +38,12 @@ public class NumberOfStates<LETTER, STATE> implements IOperation {
 	@Override
 	public Integer getResult() throws OperationCanceledException {
 		return m_Nwa.size();
+	}
+
+	@Override
+	public boolean checkResult(StateFactory<STATE> stateFactory)
+			throws OperationCanceledException {
+		return true;
 	}
 
 }

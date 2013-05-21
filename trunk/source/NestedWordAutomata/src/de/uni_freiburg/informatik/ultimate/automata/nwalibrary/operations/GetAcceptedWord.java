@@ -7,9 +7,10 @@ import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 
-public class GetAcceptedWord<LETTER, STATE> implements IOperation {
+public class GetAcceptedWord<LETTER, STATE> implements IOperation<LETTER,STATE> {
 
 	private static Logger s_Logger = UltimateServices.getInstance().getLogger(
 			Activator.PLUGIN_ID);
@@ -50,6 +51,12 @@ public class GetAcceptedWord<LETTER, STATE> implements IOperation {
 	public String exitMessage() {
 		return "Finished " + operationName() + ". Found word of length "
 				+ m_AcceptedWord.length();
+	}
+
+	@Override
+	public boolean checkResult(StateFactory<STATE> stateFactory)
+			throws OperationCanceledException {
+		return true;
 	}
 
 }

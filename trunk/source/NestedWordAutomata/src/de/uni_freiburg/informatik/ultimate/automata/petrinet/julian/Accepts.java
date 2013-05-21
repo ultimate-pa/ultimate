@@ -4,19 +4,22 @@ package de.uni_freiburg.informatik.ultimate.automata.petrinet.julian;
 
 import java.util.HashSet;
 
+import org.apache.log4j.Logger;
+
 import de.uni_freiburg.informatik.ultimate.automata.Activator;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.Word;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNet2FiniteAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Place;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 
-import org.apache.log4j.Logger;
-
-public class Accepts<S, C> implements IOperation {
+public class Accepts<S, C> implements IOperation<S, C> {
 	
 	private static Logger s_Logger = 
 		UltimateServices.getInstance().getLogger(Activator.PLUGIN_ID);
@@ -59,7 +62,6 @@ public class Accepts<S, C> implements IOperation {
 	}
 
 	public Boolean getResult() throws OperationCanceledException {
-		assert (ResultChecker.accepts(net, nWord, m_Result));
 		return m_Result;
 	}
 
@@ -98,6 +100,24 @@ public class Accepts<S, C> implements IOperation {
 				result = true;
 		}
 		return result;
+	}
+
+	@Override
+	public boolean checkResult(StateFactory<C> stateFactory)
+			throws OperationCanceledException {
+
+		s_Logger.info("Testing correctness of accepts");
+
+		NestedWord nw = new NestedWord(nWord);
+		boolean resultAutomata = (new de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.Accepts(
+				(new PetriNet2FiniteAutomaton(net)).getResult(), nw))
+				.getResult();
+		boolean correct = (m_Result == resultAutomata);
+
+		s_Logger.info("Finished testing correctness of accepts");
+
+		return correct;
+
 	}
 
 

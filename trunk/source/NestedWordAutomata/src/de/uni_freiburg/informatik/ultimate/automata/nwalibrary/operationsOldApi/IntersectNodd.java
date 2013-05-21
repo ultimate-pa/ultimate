@@ -14,6 +14,7 @@ import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 
 
@@ -24,7 +25,7 @@ import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
  * satisfy the stack discipline.
  * @author heizmann@informatik.uni-freiburg.de
  */
-public class IntersectNodd<LETTER,STATE> implements IOperation {
+public class IntersectNodd<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	
 	private static Logger s_Logger = 
 		UltimateServices.getInstance().getLogger(Activator.PLUGIN_ID);
@@ -60,7 +61,6 @@ public class IntersectNodd<LETTER,STATE> implements IOperation {
 	}
 	
 	public INestedWordAutomatonOldApi<LETTER,STATE> getResult() throws OperationCanceledException {
-		assert(ResultChecker.intersect(fstOperand, sndOperand, m_result));
 		return m_result;
 	}
 	
@@ -296,5 +296,12 @@ public class IntersectNodd<LETTER,STATE> implements IOperation {
 		}
 		
 
+	}
+
+	@Override
+	public boolean checkResult(StateFactory<STATE> stateFactory)
+			throws OperationCanceledException {
+		s_Logger.warn("Correctness of IntersectNodd not checked at the moment.");
+		return true;
 	}
 }

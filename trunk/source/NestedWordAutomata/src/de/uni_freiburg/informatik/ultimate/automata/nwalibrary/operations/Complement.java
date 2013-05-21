@@ -15,7 +15,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 
 
-public class Complement<LETTER,STATE> implements IOperation {
+public class Complement<LETTER,STATE> implements IOperation<LETTER,STATE> {
 
 	protected static Logger s_Logger = 
 		UltimateServices.getInstance().getLogger(Activator.PLUGIN_ID);
