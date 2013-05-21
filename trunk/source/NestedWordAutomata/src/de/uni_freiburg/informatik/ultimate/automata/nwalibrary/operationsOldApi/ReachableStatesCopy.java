@@ -235,7 +235,7 @@ public class ReachableStatesCopy<LETTER,STATE> extends DoubleDeckerBuilder<LETTE
 			}
 			s_Logger.info("Finished testing correctness of " + operationName());
 		}
-		return false;
+		return correct;
 	}
 
 
