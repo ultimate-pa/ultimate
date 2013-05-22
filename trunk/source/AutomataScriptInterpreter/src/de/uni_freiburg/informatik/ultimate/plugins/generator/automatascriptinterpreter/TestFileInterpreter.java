@@ -1337,7 +1337,7 @@ public class TestFileInterpreter {
 	 * @return true if and only if all arguments have the correct type. Otherwise false.
 	 */
 	private boolean allArgumentsHaveCorrectTypeForThisConstructor(Constructor<?> c, List<Object> arguments) {
-		if (arguments == null && c.getParameterTypes().length != 0) return false;
+		if (arguments.size() != c.getParameterTypes().length) return false;
 		int i = 0;
 		int minArgSize = (c.getParameterTypes().length > arguments.size() ? arguments.size() : c.getParameterTypes().length);
 		for (Class<?> type : c.getParameterTypes()) {
