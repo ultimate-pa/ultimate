@@ -5,8 +5,6 @@ import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.NestedWordAutomatonReachableStates.ReachProp;
 
-////////////////////////////////////////////////////////////////////////////////
-
 class Entry<LETTER,STATE> {
 	private final STATE m_State;
 	private final Map<STATE,ReachProp> m_Down;

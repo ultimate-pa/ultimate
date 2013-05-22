@@ -1,6 +1,5 @@
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -14,13 +13,11 @@ import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.automata.Activator;
 import de.uni_freiburg.informatik.ultimate.automata.AtsDefinitionPrinter;
-import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.Accepts;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.ConcurrentProduct;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IsEmpty;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.IntersectDD;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 
 

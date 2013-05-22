@@ -60,19 +60,19 @@ class CommonEntriesComponent<LETTER,STATE> {
 		return Collections.unmodifiableSet(this.m_DownStates);
 	}
 
-	private boolean isBorderState(StateContainer<LETTER,STATE> state) {
+	private boolean isBorderState(StateContainer<LETTER, STATE> state) {
 		assert m_ReturnOutCandidates.size() == m_Size;
 		return m_BorderOut.containsKey(state);
 	}
 
-	private void removeBorderState(StateContainer<LETTER,STATE> resident) {
+	private void removeBorderState(StateContainer<LETTER, STATE> resident) {
 		Set<StateContainer<LETTER,STATE>> foreigners = m_BorderOut.remove(resident);
 		if (foreigners == null) {
 			throw new AssertionError("state not contained");
 		}
 	}
 
-	private Set<StateContainer<LETTER,STATE>> getForeigners(StateContainer<LETTER,STATE> resident) {
+	private Set<StateContainer<LETTER,STATE>> getForeigners(StateContainer<LETTER, STATE> resident) {
 		assert m_ReturnOutCandidates.size() == m_Size;
 		return m_BorderOut.get(resident);
 	}
@@ -91,7 +91,7 @@ class CommonEntriesComponent<LETTER,STATE> {
 		m_DownStates.add(down);
 	}
 
-	void moveWithoutBorderUpdate(StateContainer<LETTER,STATE> sc, CommonEntriesComponent targetCec) {
+	void moveWithoutBorderUpdate(StateContainer<LETTER, STATE> sc, CommonEntriesComponent targetCec) {
 		sc.setCommonEntriesComponent(targetCec);
 		m_Size--;
 		targetCec.m_Size++;

@@ -9,14 +9,12 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.NoSuchElementException;
 import java.util.Set;
 
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.automata.Activator;
 import de.uni_freiburg.informatik.ultimate.automata.AtsDefinitionPrinter;
-import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.Word;
@@ -408,7 +406,7 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 	
 
 	public Set<STATE> getDownStates(STATE state) {
-		StateContainer<LETTER,STATE> stateContainer = m_States.get(state);
+		StateContainer<LETTER, STATE> stateContainer = m_States.get(state);
 		CommonEntriesComponent<LETTER,STATE> cec = stateContainer.getCommonEntriesComponent();
 		return cec.getDownStates();
 	}
@@ -425,7 +423,7 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 			STATE entryState = entry.getState();
 			for (IncomingCallTransition<LETTER, STATE> trans : callPredecessors(entryState)) {
 				STATE callPred = trans.getPred();
-				StateContainer<LETTER,STATE> callPredCont = m_States.get(callPred);
+				StateContainer<LETTER, STATE> callPredCont = m_States.get(callPred);
 				if (callPredCont.getReachProp() != ReachProp.REACHABLE) {
 					downStates.add(callPred);
 				}
@@ -515,12 +513,12 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 		 * @param cec
 		 * @return
 		 */
-		private StateContainer<LETTER,STATE> addState(STATE state, CommonEntriesComponent<LETTER,STATE> cec) {
+		private StateContainer<LETTER, STATE> addState(STATE state, CommonEntriesComponent<LETTER,STATE> cec) {
 			assert !m_States.containsKey(state);
 			if (m_Operand.isFinal(state)) {
 				m_finalStates.add(state);
 			}
-			StateContainer<LETTER,STATE> result = new StateContainer<LETTER,STATE>(state, cec);
+			StateContainer<LETTER,STATE> result = new StateContainerMapOnly<LETTER,STATE>(state, cec);
 			m_States.put(state, result);
 			cec.m_Size++;
 			if (candidateForOutgoingReturn(state)) {
@@ -560,8 +558,8 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 							cec.addDownState(down);
 						}
 					}
-					for (StateContainer<LETTER,STATE> resident : cec.m_BorderOut.keySet()) {
-						for (StateContainer<LETTER,STATE> foreigner : cec.m_BorderOut.get(resident)) {
+					for (StateContainer<LETTER, STATE> resident : cec.m_BorderOut.keySet()) {
+						for (StateContainer<LETTER, STATE> foreigner : cec.m_BorderOut.get(resident)) {
 							CommonEntriesComponent<LETTER,STATE> foreignerCec = 
 									foreigner.getCommonEntriesComponent();
 							if (!visitedCECs.contains(foreignerCec)) {
@@ -697,7 +695,7 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 			CommonEntriesComponent<LETTER,STATE> oldCec;
 			{
 				Iterator<StateContainer<LETTER,STATE>> it = splitStarts.iterator();
-				StateContainer<LETTER,STATE> sc = it.next();
+				StateContainer<LETTER, STATE> sc = it.next();
 				oldCec = sc.getCommonEntriesComponent();
 				for (; it.hasNext(); sc = it.next()) {
 					assert (oldCec == sc.getCommonEntriesComponent());
@@ -852,7 +850,7 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 				return m_worklist.isEmpty();
 			}
 			
-			private void add(StateContainer<LETTER,STATE> state, Set<Entry<LETTER,STATE>> entries, Set<STATE> downStates) {
+			private void add(StateContainer<LETTER, STATE> state, Set<Entry<LETTER,STATE>> entries, Set<STATE> downStates) {
 				assert state.getCommonEntriesComponent().m_Size == state.getCommonEntriesComponent().m_ReturnOutCandidates.size();
 				Object[] elem = new Object[] { state, entries, downStates };
 				m_worklist.add(elem);
@@ -949,7 +947,7 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 			m_NonCallBackwardWorklist.addAll(m_HasIncomingReturn);
 			
 			while (!m_NonCallBackwardWorklist.isEmpty()) {
-				StateContainer<LETTER,STATE> cont = m_NonCallBackwardWorklist.remove(0);
+				StateContainer<LETTER, STATE> cont = m_NonCallBackwardWorklist.remove(0);
 				for (IncomingInternalTransition<LETTER, STATE> inTrans : cont
 						.internalPredecessors()) {
 					STATE pred = inTrans.getPred();
@@ -1122,7 +1120,7 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 		assert (result);
 		result &= eachStateHasThisCec(cec.getReturnOutCandidates(), cec);
 		assert (result);
-		for (StateContainer<LETTER,STATE> resident : cec.m_BorderOut.keySet()) {
+		for (StateContainer<LETTER, STATE> resident : cec.m_BorderOut.keySet()) {
 			Set<StateContainer<LETTER,STATE>> foreignerSCs = cec.m_BorderOut.get(resident);
 			result &= internalOutSummaryOutInCecOrForeigners(resident, foreignerSCs, cec);
 			assert (result);
@@ -1146,7 +1144,7 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 		return result;
 	}
 	
-	private boolean internalOutSummaryOutInCecOrForeigners(StateContainer<LETTER,STATE> state, Set<StateContainer<LETTER,STATE>> foreigners, CommonEntriesComponent<LETTER,STATE> cec) {
+	private boolean internalOutSummaryOutInCecOrForeigners(StateContainer<LETTER, STATE> state, Set<StateContainer<LETTER,STATE>> foreigners, CommonEntriesComponent<LETTER,STATE> cec) {
 		Set<StateContainer<LETTER,STATE>> neighbors = new HashSet<StateContainer<LETTER,STATE>>();
 		
 		for (OutgoingInternalTransition<LETTER, STATE> trans : state.internalSuccessors()) {
@@ -1177,7 +1175,7 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 	private boolean eachStateHasThisCec(Set<STATE> states, CommonEntriesComponent<LETTER,STATE> cec) {
 		boolean result = true;
 		for (STATE state : states) {
-			StateContainer<LETTER,STATE> sc = m_States.get(state);
+			StateContainer<LETTER, STATE> sc = m_States.get(state);
 			if (sc.getCommonEntriesComponent() != cec) {
 				result = false;
 				assert result;
