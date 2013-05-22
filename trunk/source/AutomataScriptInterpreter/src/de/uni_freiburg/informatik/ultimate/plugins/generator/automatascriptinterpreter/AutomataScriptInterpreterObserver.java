@@ -1,12 +1,17 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.automatascriptinterpreter;
 import java.util.HashSet;
 
+import org.apache.log4j.Logger;
+
 import de.uni_freiburg.informatik.ultimate.access.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.access.WalkerOptions;
+import de.uni_freiburg.informatik.ultimate.automata.Activator;
 import de.uni_freiburg.informatik.ultimate.automata.Automaton2UltimateModel;
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StringFactory;
+import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AtsASTNode;
 
@@ -15,6 +20,9 @@ import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.A
  * Auto-Generated Stub for the plug-in's Observer
  */
 public class AutomataScriptInterpreterObserver implements IUnmanagedObserver {
+	
+	private static Logger s_Logger = 
+			UltimateServices.getInstance().getLogger(Activator.PLUGIN_ID);
 
 	IElement m_GraphrootOfUltimateModelOfLastPrintedAutomaton;
 	
@@ -22,14 +30,18 @@ public class AutomataScriptInterpreterObserver implements IUnmanagedObserver {
 	public boolean process(IElement root) {
 		AssignableTest.initPrimitiveTypes();
 		TestFileInterpreter ti = new TestFileInterpreter();
-		ti.interpretTestFile((AtsASTNode)root);
-		
-		IAutomaton<?,?> printAutomaton = ti.getLastPrintedAutomaton();
+		ti.interpretTestFile((AtsASTNode) root);
+
+		IAutomaton<?, ?> printAutomaton = ti.getLastPrintedAutomaton();
 		if (printAutomaton == null) {
 			printAutomaton = getDummyAutomatonWithMessage();
 		}
-		m_GraphrootOfUltimateModelOfLastPrintedAutomaton = 
-				Automaton2UltimateModel.ultimateModel(printAutomaton);
+		try {
+			m_GraphrootOfUltimateModelOfLastPrintedAutomaton = 
+					Automaton2UltimateModel.ultimateModel(printAutomaton);
+		} catch (OperationCanceledException e) {
+			s_Logger.warn("Nothing visualized because of timeout");
+		}
 		return false;
 	}
 

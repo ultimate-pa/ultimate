@@ -7,7 +7,10 @@ import java.util.Map;
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.automata.Activator;
+import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomatonReachableStates;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingReturnTransition;
@@ -19,7 +22,13 @@ public class NwaToUltimateModel<LETTER,STATE> {
 	private static Logger s_Logger = 
 		UltimateServices.getInstance().getLogger(Activator.PLUGIN_ID);
 	
-	public IElement getUltimateModelOfNwa(INestedWordAutomaton<LETTER,STATE> nwa) {
+	public IElement getUltimateModelOfNwa(INestedWordAutomatonSimple<LETTER,STATE> nwaSimple) throws OperationCanceledException {
+		final INestedWordAutomaton<LETTER,STATE> nwa;
+		if (nwaSimple instanceof INestedWordAutomaton) {
+			nwa = (INestedWordAutomaton<LETTER, STATE>) nwaSimple;
+		} else {
+			nwa = new NestedWordAutomatonReachableStates<LETTER, STATE>(nwaSimple);
+		}
 		AutomatonState graphroot = new AutomatonState("Sucessors of this node are the" +
 					" initial states",false);	
 		Map<STATE,AutomatonState> constructed =	new HashMap<STATE,AutomatonState>();

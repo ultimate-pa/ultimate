@@ -7,7 +7,6 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.automata.AtsDefinitionPrinter;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.Automaton2UltimateModel;
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
@@ -580,7 +579,11 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 				return m_RootNode;
 			}
 			else {
-				return Automaton2UltimateModel.ultimateModel(m_ArtifactAutomaton);
+				try {
+					return Automaton2UltimateModel.ultimateModel(m_ArtifactAutomaton);
+				} catch (OperationCanceledException e) {
+					return null;
+				}
 			}
 		}
 		else if (m_Pref.artifact() == Artifact.RCFG) {

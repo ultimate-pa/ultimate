@@ -12,7 +12,7 @@ import de.uni_freiburg.informatik.ultimate.model.IElement;
 public class Automaton2UltimateModel<LETTER,STATE> {
 	
 	@SuppressWarnings({ "rawtypes", "unchecked" })
-	public static IElement ultimateModel(IAutomaton automaton) {
+	public static IElement ultimateModel(IAutomaton automaton) throws OperationCanceledException {
 		if (automaton instanceof INestedWordAutomatonOldApi) {
 			INestedWordAutomatonOldApi nwa = (INestedWordAutomatonOldApi) automaton;
 			NwaToUltimateModel transformer = new NwaToUltimateModel();

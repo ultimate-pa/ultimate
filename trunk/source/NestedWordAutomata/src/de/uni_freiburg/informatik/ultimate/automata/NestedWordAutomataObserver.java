@@ -49,39 +49,41 @@ public class NestedWordAutomataObserver implements IUnmanagedObserver {
 			printedAutomaton = dummyAutomaton;
 		}
 		
-//		new TestFileWriter<String, String>(printedAutomaton);
-		
-		if (printedAutomaton instanceof INestedWordAutomatonOldApi) {
-			INestedWordAutomatonOldApi<String,String> nwa =
-				(INestedWordAutomatonOldApi<String,String>) printedAutomaton;
-			
-			NwaToUltimateModel<String, String> transformer = 
-				new NwaToUltimateModel<String, String>();
-			NestedWordAutomataObserver.graphroot = 
-				transformer.getUltimateModelOfNwa(nwa);
-		}
-		
-		else if (printedAutomaton instanceof IPetriNet) {
-			IPetriNet<String,String> nwa =
-				(IPetriNet<String,String>) printedAutomaton;
-			PetriNetToUltimateModel<String, String> transformer = 
-				new PetriNetToUltimateModel<String, String>();
-			NestedWordAutomataObserver.graphroot = 
-				transformer.getUltimateModelOfPetriNet(nwa);
-		}
-		
-		else if (printedAutomaton instanceof BranchingProcess) {
-			BranchingProcess<String,String> net =
-				(BranchingProcess<String,String>) printedAutomaton;
-			BranchingProcessToUltimateModel<String, String> transformer = 
-				new BranchingProcessToUltimateModel<String, String>();
-			NestedWordAutomataObserver.graphroot = 
-				transformer.getUltimateModelOfBranchingProcess(net);
-		}
-		
-		else {
-			throw new UnsupportedOperationException("Only visualization of" +
-					" NWAs and PetriNet supported.");
+		try {
+			if (printedAutomaton instanceof INestedWordAutomatonOldApi) {
+				INestedWordAutomatonOldApi<String, String> nwa = 
+						(INestedWordAutomatonOldApi<String, String>) printedAutomaton;
+				NwaToUltimateModel<String, String> transformer = 
+						new NwaToUltimateModel<String, String>();
+				NestedWordAutomataObserver.graphroot = 
+						transformer.getUltimateModelOfNwa(nwa);
+
+			}
+
+			else if (printedAutomaton instanceof IPetriNet) {
+				IPetriNet<String, String> nwa = 
+						(IPetriNet<String, String>) printedAutomaton;
+				PetriNetToUltimateModel<String, String> transformer = 
+						new PetriNetToUltimateModel<String, String>();
+				NestedWordAutomataObserver.graphroot = 
+						transformer.getUltimateModelOfPetriNet(nwa);
+			}
+
+			else if (printedAutomaton instanceof BranchingProcess) {
+				BranchingProcess<String, String> net = 
+						(BranchingProcess<String, String>) printedAutomaton;
+				BranchingProcessToUltimateModel<String, String> transformer = 
+						new BranchingProcessToUltimateModel<String, String>();
+				NestedWordAutomataObserver.graphroot = 
+						transformer.getUltimateModelOfBranchingProcess(net);
+			}
+
+			else {
+				throw new UnsupportedOperationException("Only visualization of"
+						+ " NWAs and PetriNet supported.");
+			}
+		} catch (OperationCanceledException e) {
+			s_Logger.warn("Nothing visualized because of timeout");
 		}
 		return false;
 	}
