@@ -2,17 +2,17 @@
 // Date:  16.04.2013
 // A file to explain the syntax
 
-parseAutomata('nwaDefinitions01.ats');
-parseAutomata('nwaDefinitions02.ats');
+parseAutomata("nwaDefinitions01.ats");
+parseAutomata("nwaDefinitions02.ats");
 
 // Define some words
-NestedWord nw1 = [a< b< >c >d];
-NestedLassoWord nlw1 = [a< b< c<, >k >l];
+NestedWord nw1 = [a b c ];
+NestedLassoWord nlw1 = [a b c, a b];
 // Define some testcases
-assert(Accepts(acceptsWithC, nw1));
-assert(BuchiAccepts(acceptsWithC, nlw1));
+assert(accepts(acceptsWithC, nw1));
+assert(!buchiAccepts(acceptsWithC, nlw1));
 // Define some new words
-NestedWord nw2 = [a< b< >c >d];
+NestedWord nw2 = [a< >r c<];
 NestedLassoWord nlw2 = [a< b< c<, i< m< j< >o >k >l];
 // Define a new nestedword automaton
 NestedWordAutomaton nwa2 = complement(nwa1);
@@ -20,7 +20,7 @@ NestedWordAutomaton nwa2 = complement(nwa1);
 assert(Accepts(nwa1, nw2));
 assert(!Accepts(nwa2, nw2));
 assert(!Accepts(nwa2, nw1));
-assert(BuchiAccepts(accepts2Bs, nlw2));
+assert(!buchiAccepts(accepts2Bs, nlw2));
 assert(!BuchiAccepts(nwa2, nlw2));
 
 NestedWordAutomaton nwa3 = (
@@ -43,6 +43,6 @@ NestedWordAutomaton nwa3 = (
 
 // Define further test cases
 assert(!IsEmpty(nwa3));
-assert(accepts(nwa3, nw1));
-assert(BuchiAccepts(nwa3, nlw2));
+assert(!accepts(nwa3, nw1));
+assert(!buchiAccepts(nwa3, nlw2));
 
