@@ -1,6 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.automata;
 
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.visualization.NwaToUltimateModel;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.BranchingProcess;
@@ -13,8 +13,8 @@ public class Automaton2UltimateModel<LETTER,STATE> {
 	
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	public static IElement ultimateModel(IAutomaton automaton) throws OperationCanceledException {
-		if (automaton instanceof INestedWordAutomatonOldApi) {
-			INestedWordAutomatonOldApi nwa = (INestedWordAutomatonOldApi) automaton;
+		if (automaton instanceof INestedWordAutomatonSimple) {
+			INestedWordAutomatonSimple nwa = (INestedWordAutomatonSimple) automaton;
 			NwaToUltimateModel transformer = new NwaToUltimateModel();
 				return transformer.getUltimateModelOfNwa(nwa);
 		}
