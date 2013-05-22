@@ -1,6 +1,5 @@
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.visualization;
 
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
@@ -8,7 +7,10 @@ import java.util.Map;
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.automata.Activator;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingCallTransition;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingInternalTransition;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.visualization.AutomatonTransition.Transition;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
@@ -17,86 +19,78 @@ public class NwaToUltimateModel<LETTER,STATE> {
 	private static Logger s_Logger = 
 		UltimateServices.getInstance().getLogger(Activator.PLUGIN_ID);
 	
-	public IElement getUltimateModelOfNwa(INestedWordAutomatonOldApi<LETTER,STATE> nwa) {
+	public IElement getUltimateModelOfNwa(INestedWordAutomaton<LETTER,STATE> nwa) {
 		AutomatonState graphroot = new AutomatonState("Sucessors of this node are the" +
 					" initial states",false);	
-		Collection<STATE> initialStates = nwa.getInitialStates();
-		Map<STATE,AutomatonState> visited = 
-			new HashMap<STATE,AutomatonState>();
-		LinkedList<STATE> queue = 
-			new LinkedList<STATE>(initialStates);
+		Map<STATE,AutomatonState> constructed =	new HashMap<STATE,AutomatonState>();
+		LinkedList<STATE> queue = new LinkedList<STATE>();
 	
 		// add all initial states to model - all are successors of the graphroot
-		for (STATE state : initialStates) {
+		for (STATE state : nwa.getInitialStates()) {
+			queue.add(state);
 			AutomatonState vsn = new AutomatonState(state,
 									nwa.isFinal(state));
-			visited.put(state,vsn);
+			constructed.put(state,vsn);
 			new AutomatonTransition((AutomatonState) graphroot,
 											Transition.INTERNAL,"", null, vsn);
 		}
 		
 		while (!queue.isEmpty()) {
 			STATE state = queue.removeFirst();
-			AutomatonState vsn = visited.get(state);
+			AutomatonState vsn = constructed.get(state);
 			
-			for( LETTER symbol : nwa.lettersInternal(state)) {
-				for( STATE succState : nwa.succInternal(state, symbol)) {
-					AutomatonState succVSN;
-					if (visited.containsKey(succState)) {
-						succVSN = visited.get(succState);
-					}
-					else {
-						succVSN = new AutomatonState(succState,
-								nwa.isFinal(succState));
-						s_Logger.debug("Creating Node: " 
-								+ succVSN.toString());
-						visited.put(succState,succVSN);
-						queue.add(succState);
-					}
-					new AutomatonTransition(
-								vsn,Transition.INTERNAL,symbol,null,succVSN);
+			for (OutgoingInternalTransition<LETTER, STATE> trans : 
+												nwa.internalSuccessors(state)) {
+				LETTER symbol = trans.getLetter();
+				STATE succState = trans.getSucc();
+				AutomatonState succVSN;
+				if (constructed.containsKey(succState)) {
+					succVSN = constructed.get(succState);
 				}
-			}
-			
-			for( LETTER symbol : nwa.lettersCall(state)) {
-				for( STATE succState : nwa.succCall(state, symbol)) {
-					AutomatonState succVSN;
-					if (visited.containsKey(succState)) {
-						succVSN = visited.get(succState);
-					}
-					else {
-						succVSN = new AutomatonState(succState,
+				else {
+					succVSN = new AutomatonState(succState,
 							nwa.isFinal(succState));
-						s_Logger.debug("Creating Node: " + succVSN.toString());
-						visited.put(succState,succVSN);
-						queue.add(succState);
-					}
-					new AutomatonTransition(vsn,
-										Transition.CALL,symbol,null,succVSN);
+					s_Logger.debug("Creating Node: " + succVSN.toString());
+					constructed.put(succState,succVSN);
+					queue.add(succState);
 				}
-			}
-
-			for( LETTER symbol : nwa.lettersReturn(state)) {
-				for(STATE linPredState : nwa.getStates()) {					
-					for( STATE succState : 
-									nwa.succReturn(state, linPredState, symbol)) {
-						AutomatonState succVSN;
-						if (visited.containsKey(succState)) {
-							succVSN = visited.get(succState);
-						}
-						else {
-							succVSN = new AutomatonState(succState,
-								nwa.isFinal(succState));
-							s_Logger.debug("Creating Node: " + succVSN.toString());
-							visited.put(succState,succVSN);
-							queue.add(succState);
-						}
-						new AutomatonTransition(vsn,Transition.RETURN,symbol,
-											linPredState.toString(),succVSN);
-					}
-				}
+				new AutomatonTransition(vsn,Transition.INTERNAL,symbol,null,succVSN);
 			}
 			
+			for (OutgoingCallTransition<LETTER, STATE> trans : 
+													nwa.callSuccessors(state)) {
+				LETTER symbol = trans.getLetter();
+				STATE succState = trans.getSucc();
+				AutomatonState succVSN;
+				if (constructed.containsKey(succState)) {
+					succVSN = constructed.get(succState);
+				} else {
+					succVSN = new AutomatonState(succState,
+							nwa.isFinal(succState));
+					s_Logger.debug("Creating Node: " + succVSN.toString());
+					constructed.put(succState, succVSN);
+					queue.add(succState);
+				}
+				new AutomatonTransition(vsn, Transition.CALL, symbol, null,	succVSN);
+			}
+			for(STATE hierPredState : nwa.getStates()) {
+				for (OutgoingReturnTransition<LETTER, STATE> trans : 
+							nwa.returnSuccessorsGivenHier(hierPredState, state)) {
+					LETTER symbol = trans.getLetter();
+					STATE succState = trans.getSucc();
+					AutomatonState succVSN;
+					if (constructed.containsKey(succState)) {
+						succVSN = constructed.get(succState);
+					} else {
+						succVSN = new AutomatonState(succState,nwa.isFinal(succState));
+						s_Logger.debug("Creating Node: " + succVSN.toString());
+						constructed.put(succState, succVSN);
+						queue.add(succState);
+					}
+					new AutomatonTransition(vsn, Transition.RETURN, symbol,
+							hierPredState.toString(), succVSN);
+				}
+			}
 		}
 		return graphroot;
 	}
