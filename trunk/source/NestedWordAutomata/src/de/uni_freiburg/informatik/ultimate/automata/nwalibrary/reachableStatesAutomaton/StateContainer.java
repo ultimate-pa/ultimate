@@ -107,7 +107,7 @@ public abstract class StateContainer<LETTER, STATE> {
 	}
 
 	protected boolean containsReturnTransition(STATE hier, LETTER letter, STATE succ) {
-		for (OutgoingReturnTransition<LETTER, STATE> trans : returnSucccessors(hier, letter)) {
+		for (OutgoingReturnTransition<LETTER, STATE> trans : returnSuccessors(hier, letter)) {
 			if (succ.equals(trans.getSucc())) {
 				return true;
 			}
@@ -146,50 +146,42 @@ public abstract class StateContainer<LETTER, STATE> {
 
 	public abstract Collection<STATE> predReturnHier(LETTER letter);
 
-	public abstract Iterable<SummaryReturnTransition<LETTER, STATE>> getSummaryReturnTransitions(
-			LETTER letter);
 
-	public abstract Iterable<IncomingReturnTransition<LETTER, STATE>> getIncomingReturnTransitions(
-			LETTER letter);
-
-	public abstract Iterable<IncomingInternalTransition<LETTER, STATE>> internalPredecessors(
-			final LETTER letter);
-
-	public abstract Iterable<IncomingInternalTransition<LETTER, STATE>> internalPredecessors();
-
-	public abstract Iterable<IncomingCallTransition<LETTER, STATE>> callPredecessors(
-			final LETTER letter);
-
-	public abstract Iterable<IncomingCallTransition<LETTER, STATE>> callPredecessors();
-
-	public abstract Iterable<IncomingReturnTransition<LETTER, STATE>> returnPredecessors(
-			final STATE hier, final LETTER letter);
-
-	public abstract Iterable<IncomingReturnTransition<LETTER, STATE>> returnPredecessors(
-			final LETTER letter);
-
-	public abstract Iterable<IncomingReturnTransition<LETTER, STATE>> returnPredecessors();
-
-	public abstract Iterable<OutgoingInternalTransition<LETTER, STATE>> internalSuccessors(
-			final LETTER letter);
+	public abstract Iterable<OutgoingInternalTransition<LETTER, STATE>> internalSuccessors(final LETTER letter);
 
 	public abstract Iterable<OutgoingInternalTransition<LETTER, STATE>> internalSuccessors();
 
-	public abstract Iterable<OutgoingCallTransition<LETTER, STATE>> callSuccessors(
-			final LETTER letter);
+	public abstract Iterable<IncomingInternalTransition<LETTER, STATE>> internalPredecessors(final LETTER letter);
+
+	public abstract Iterable<IncomingInternalTransition<LETTER, STATE>> internalPredecessors();
+	
+	public abstract Iterable<OutgoingCallTransition<LETTER, STATE>> callSuccessors(final LETTER letter);
 
 	public abstract Iterable<OutgoingCallTransition<LETTER, STATE>> callSuccessors();
 
-	public abstract Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSucccessors(
-			final STATE hier, final LETTER letter);
+	public abstract Iterable<IncomingCallTransition<LETTER, STATE>> callPredecessors(final LETTER letter);
 
-	public abstract Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessors(
-			final LETTER letter);
+	public abstract Iterable<IncomingCallTransition<LETTER, STATE>> callPredecessors();
+	
+	public abstract Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessors(final STATE hier, final LETTER letter);
 
-	public abstract Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessorsGivenHier(
-			final STATE hier);
+	public abstract Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessors(final LETTER letter);
+
+	public abstract Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessorsGivenHier(final STATE hier);
 
 	public abstract Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessors();
+
+	public abstract Iterable<IncomingReturnTransition<LETTER, STATE>> returnPredecessors(final STATE hier, final LETTER letter);
+
+	public abstract Iterable<IncomingReturnTransition<LETTER, STATE>> returnPredecessors(final LETTER letter);
+
+	public abstract Iterable<IncomingReturnTransition<LETTER, STATE>> returnPredecessors();
+
+
+	public abstract Iterable<SummaryReturnTransition<LETTER, STATE>> getSummaryReturnTransitions(LETTER letter);
+	
+	
+	
 	
 	abstract void addInternalOutgoing(OutgoingInternalTransition<LETTER, STATE> internalOutgoing);
 
