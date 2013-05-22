@@ -1,6 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.automata.petrinet;
 
 import java.util.Collection;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.Word;
@@ -8,7 +9,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 
 public interface IPetriNet<S,C> extends IAutomaton<S,C> {
 	
-	public Collection<S> getAlphabet(); 
+	public Set<S> getAlphabet(); 
 	public StateFactory<C> getStateFactory();
 	
 	public Collection<Place<S,C>> getPlaces();

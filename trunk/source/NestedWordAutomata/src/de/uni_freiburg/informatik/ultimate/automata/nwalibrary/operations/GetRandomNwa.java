@@ -190,10 +190,12 @@ public class GetRandomNwa implements IOperation<String,String> {
 		NestedWordAutomaton<String,String> result;
 		if (isFiniteAutomaton) {
 			result = new NestedWordAutomaton<String,String>(
-					num2Letter, null, null,	stateFactory);			
+					new HashSet<String>(num2Letter), null, null,	stateFactory);			
 		} else {
 			result = new NestedWordAutomaton<String,String>(
-					num2Letter, num2Letter, num2Letter,	stateFactory);						
+					new HashSet<String>(num2Letter),
+					new HashSet<String>(num2Letter), 
+					new HashSet<String>(num2Letter),	stateFactory);						
 		}
 		
 		// ────────────────────────────────────────────────────────────────────

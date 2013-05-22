@@ -3,6 +3,7 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
@@ -33,7 +34,7 @@ public class DeterminizeNwa<LETTER, STATE> implements INestedWordAutomatonSimple
 		m_Operand = operand;
 		m_StateDeterminizer = stateDeterminizer;
 		m_StateFactory = sf;
-		m_Cache = new NestedWordAutomaton<LETTER, STATE>(operand.getAlphabet(), 
+		m_Cache = new NestedWordAutomaton<LETTER, STATE>(operand.getInternalAlphabet(), 
 				operand.getCallAlphabet(), operand.getReturnAlphabet(), sf);
 
 	}
@@ -113,17 +114,17 @@ public class DeterminizeNwa<LETTER, STATE> implements INestedWordAutomatonSimple
 
 
 	@Override
-	public Collection<LETTER> getInternalAlphabet() {
+	public Set<LETTER> getInternalAlphabet() {
 		return m_Operand.getInternalAlphabet();
 	}
 
 	@Override
-	public Collection<LETTER> getCallAlphabet() {
+	public Set<LETTER> getCallAlphabet() {
 		return m_Operand.getCallAlphabet();
 	}
 
 	@Override
-	public Collection<LETTER> getReturnAlphabet() {
+	public Set<LETTER> getReturnAlphabet() {
 		return m_Operand.getReturnAlphabet();
 	}
 
@@ -254,7 +255,7 @@ public class DeterminizeNwa<LETTER, STATE> implements INestedWordAutomatonSimple
 	}
 
 	@Override
-	public Collection<LETTER> getAlphabet() {
+	public Set<LETTER> getAlphabet() {
 		// TODO Auto-generated method stub
 		return null;
 	}

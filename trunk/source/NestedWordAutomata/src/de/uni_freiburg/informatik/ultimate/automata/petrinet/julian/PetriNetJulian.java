@@ -34,7 +34,7 @@ public class PetriNetJulian<S, C> implements IPetriNet<S, C> {
 	private static Logger s_Logger = UltimateServices.getInstance().getLogger(
 			Activator.PLUGIN_ID);
 
-	private final Collection<S> alphabet;
+	private final Set<S> alphabet;
 	private final StateFactory<C> stateFactory;
 
 	private final Collection<Place<S, C>> places = new HashSet<Place<S, C>>();
@@ -49,7 +49,7 @@ public class PetriNetJulian<S, C> implements IPetriNet<S, C> {
 	 */
 	private final boolean m_ConstantTokenAmount;
 
-	public PetriNetJulian(Collection<S> alphabet,
+	public PetriNetJulian(Set<S> alphabet,
 			StateFactory<C> stateFactory, boolean constantTokenAmount) {
 		this.alphabet = alphabet;
 		this.stateFactory = stateFactory;
@@ -175,7 +175,7 @@ public class PetriNetJulian<S, C> implements IPetriNet<S, C> {
 		return marking;
 	}
 
-	public Collection<S> getAlphabet() {
+	public Set<S> getAlphabet() {
 		return alphabet;
 	}
 

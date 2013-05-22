@@ -28,9 +28,9 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 	
 	private final INestedWordAutomatonSimple<LETTER,STATE> m_Operand;
 	
-	private final Collection<LETTER> m_InternalAlphabet;
-	private final Collection<LETTER> m_CallAlphabet;
-	private final Collection<LETTER> m_ReturnAlphabet;
+	private final Set<LETTER> m_InternalAlphabet;
+	private final Set<LETTER> m_CallAlphabet;
+	private final Set<LETTER> m_ReturnAlphabet;
 	
 	protected final StateFactory<STATE> m_StateFactory;
 	
@@ -143,7 +143,7 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 	}
 
 	@Override
-	public Collection<LETTER> getAlphabet() {
+	public Set<LETTER> getAlphabet() {
 		return m_InternalAlphabet;
 	}
 
@@ -154,17 +154,17 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 	}
 
 	@Override
-	public Collection<LETTER> getInternalAlphabet() {
+	public Set<LETTER> getInternalAlphabet() {
 		return m_InternalAlphabet;
 	}
 
 	@Override
-	public Collection<LETTER> getCallAlphabet() {
+	public Set<LETTER> getCallAlphabet() {
 		return m_CallAlphabet;
 	}
 
 	@Override
-	public Collection<LETTER> getReturnAlphabet() {
+	public Set<LETTER> getReturnAlphabet() {
 		return m_ReturnAlphabet;
 	}
 

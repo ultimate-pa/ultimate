@@ -53,7 +53,7 @@ public class NestedWordAutomatonFilteredStates<LETTER, STATE> implements
 	}
 
 	@Override
-	public Collection<LETTER> getAlphabet() {
+	public Set<LETTER> getAlphabet() {
 		return m_Nwa.getAlphabet();
 	}
 
@@ -63,17 +63,17 @@ public class NestedWordAutomatonFilteredStates<LETTER, STATE> implements
 	}
 
 	@Override
-	public Collection<LETTER> getInternalAlphabet() {
+	public Set<LETTER> getInternalAlphabet() {
 		return m_Nwa.getInternalAlphabet();
 	}
 
 	@Override
-	public Collection<LETTER> getCallAlphabet() {
+	public Set<LETTER> getCallAlphabet() {
 		return m_Nwa.getCallAlphabet();
 	}
 
 	@Override
-	public Collection<LETTER> getReturnAlphabet() {
+	public Set<LETTER> getReturnAlphabet() {
 		return m_Nwa.getReturnAlphabet();
 	}
 

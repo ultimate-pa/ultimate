@@ -6,6 +6,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.automatascriptinte
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -81,10 +82,14 @@ public class AutomataDefinitionInterpreter {
 	
 	public void interpret(NestedwordAutomaton nwa) throws IllegalArgumentException {
 		m_errorLocation = nwa.getLocation();
+		Set<String> internalAlphabet = new HashSet<String>(nwa.getInternalAlphabet());
+		Set<String> callAlphabet = new HashSet<String>(nwa.getCallAlphabet());
+		Set<String> returnAlphabet = new HashSet<String>(nwa.getReturnAlphabet());
+		
 		NestedWordAutomaton<String, String> nw = new NestedWordAutomaton<String, String>(
-				                                     Collections.unmodifiableCollection(nwa.getInternalAlphabet()), 
-				                                     Collections.unmodifiableCollection(nwa.getCallAlphabet()), 
-				                                     Collections.unmodifiableCollection(nwa.getReturnAlphabet()), 
+				                                     Collections.unmodifiableSet(internalAlphabet), 
+				                                     Collections.unmodifiableSet(callAlphabet), 
+				                                     Collections.unmodifiableSet(returnAlphabet), 
 				                                     new StringFactory());
 		
 		/*
@@ -136,7 +141,7 @@ public class AutomataDefinitionInterpreter {
 	public void interpret(PetriNetAutomaton pna) throws IllegalArgumentException {
 		m_errorLocation = pna.getLocation();
 		PetriNetJulian<String, String> net = new PetriNetJulian<String, String>(
-				pna.getAlphabet(), 
+				new HashSet<String>(pna.getAlphabet()), 
 				new StringFactory(), false);
 		Map<String, Place<String, String>> name2places = new HashMap<String, Place<String, String>>();
 		// Add the places

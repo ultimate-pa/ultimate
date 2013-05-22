@@ -127,17 +127,17 @@ public class IntersectNwa<LETTER, STATE> implements INestedWordAutomatonSimple<L
 
 
 	@Override
-	public Collection<LETTER> getInternalAlphabet() {
+	public Set<LETTER> getInternalAlphabet() {
 		return m_FstOperand.getInternalAlphabet();
 	}
 
 	@Override
-	public Collection<LETTER> getCallAlphabet() {
+	public Set<LETTER> getCallAlphabet() {
 		return m_FstOperand.getCallAlphabet();
 	}
 
 	@Override
-	public Collection<LETTER> getReturnAlphabet() {
+	public Set<LETTER> getReturnAlphabet() {
 		return m_FstOperand.getReturnAlphabet();
 	}
 
@@ -342,9 +342,8 @@ public class IntersectNwa<LETTER, STATE> implements INestedWordAutomatonSimple<L
 	}
 
 	@Override
-	public Collection<LETTER> getAlphabet() {
-		// TODO Auto-generated method stub
-		return null;
+	public Set<LETTER> getAlphabet() {
+		return getInternalAlphabet();
 	}
 
 	@Override

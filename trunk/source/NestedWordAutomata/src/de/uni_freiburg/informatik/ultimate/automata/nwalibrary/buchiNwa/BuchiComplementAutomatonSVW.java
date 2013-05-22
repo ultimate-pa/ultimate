@@ -44,7 +44,7 @@ import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 public class BuchiComplementAutomatonSVW<LETTER, STATE>
 								implements INestedWordAutomatonOldApi<LETTER, STATE> {
 	private TransitionMonoidAutomaton m_TMA;
-	private Collection<LETTER> m_Alphabet;
+	private Set<LETTER> m_Alphabet;
 	private SizeInfoContainer m_sizeInfo = null;
 	boolean m_BuildCompleted = false;  // not all transitions have been computed
 	protected final StateFactory<STATE> m_StateFactory;
@@ -67,7 +67,7 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE>
 			INestedWordAutomatonOldApi<LETTER, STATE> origAutomaton)
 											throws OperationCanceledException {
 		m_TMA = new TransitionMonoidAutomaton(origAutomaton);
-		m_Alphabet = origAutomaton.getAlphabet();
+		m_Alphabet = origAutomaton.getInternalAlphabet();
 		m_StateFactory = origAutomaton.getStateFactory();
 		m_emptyStackState = m_StateFactory.createEmptyStackState();
 		MetaState metaInitialState =
@@ -142,7 +142,7 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE>
 	}
 
 	@Override
-	public Collection<LETTER> getAlphabet() {
+	public Set<LETTER> getAlphabet() {
 		return m_Alphabet;
 	}
 
@@ -163,7 +163,7 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE>
 	}
 
 	@Override
-	public Collection<LETTER> getInternalAlphabet() {
+	public Set<LETTER> getInternalAlphabet() {
 		return m_Alphabet;
 	}
 
@@ -423,13 +423,13 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE>
 	}
 
 	@Override
-	public Collection<LETTER> getCallAlphabet() {
+	public Set<LETTER> getCallAlphabet() {
 		s_Logger.warn("No nwa. Has no call alphabet.");
 		return new HashSet<LETTER>(0);
 	}
 
 	@Override
-	public Collection<LETTER> getReturnAlphabet() {
+	public Set<LETTER> getReturnAlphabet() {
 		s_Logger.warn("No nwa. Has no return alphabet.");
 		return new HashSet<LETTER>(0);
 	}

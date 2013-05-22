@@ -31,8 +31,8 @@ public class Senwa<LETTER, STATE> extends DoubleDeckerAutomaton<LETTER, STATE> {
 	@Deprecated
 	Map<STATE,Set<STATE>> m_Entry2CallPredecessors = new HashMap<STATE,Set<STATE>>();
 
-	public Senwa(Collection<LETTER> internalAlphabet,
-			Collection<LETTER> callAlphabet, Collection<LETTER> returnAlphabet,
+	public Senwa(Set<LETTER> internalAlphabet,
+			Set<LETTER> callAlphabet, Set<LETTER> returnAlphabet,
 			StateFactory<STATE> stateFactory) {
 		super(internalAlphabet, callAlphabet, returnAlphabet, stateFactory);
 		assert isModuleInformationConsistent();

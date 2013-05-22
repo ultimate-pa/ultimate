@@ -66,7 +66,7 @@ public class PredicateAbstractionCegarLoop extends BasicCegarLoop {
 		NestedWordAutomaton<CodeBlock, IPredicate> abstraction = (NestedWordAutomaton<CodeBlock, IPredicate>) m_Abstraction;
 		m_InterpolAutomaton = 
 				new NestedWordAutomaton<CodeBlock, IPredicate>(
-						abstraction.getAlphabet(),
+						abstraction.getInternalAlphabet(),
 						abstraction.getCallAlphabet(),
 						abstraction.getReturnAlphabet(),
 						abstraction.getStateFactory());

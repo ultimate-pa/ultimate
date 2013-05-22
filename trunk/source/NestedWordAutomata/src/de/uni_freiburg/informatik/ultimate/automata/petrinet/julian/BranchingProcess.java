@@ -388,7 +388,7 @@ public class BranchingProcess<S, C> implements IAutomaton<S, C> {
 	}
 
 	@Override
-	public Collection<S> getAlphabet() {
+	public Set<S> getAlphabet() {
 		return net.getAlphabet();
 	}
 

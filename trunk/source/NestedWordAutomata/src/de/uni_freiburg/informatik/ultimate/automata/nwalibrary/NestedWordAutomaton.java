@@ -39,9 +39,9 @@ public class NestedWordAutomaton<LETTER,STATE> implements INestedWordAutomatonOl
 		UltimateServices.getInstance().getLogger(Activator.PLUGIN_ID);
 	
 	
-	private Collection<LETTER> m_InternalAlphabet;
-	private Collection<LETTER> m_CallAlphabet;
-	private Collection<LETTER> m_ReturnAlphabet;
+	private Set<LETTER> m_InternalAlphabet;
+	private Set<LETTER> m_CallAlphabet;
+	private Set<LETTER> m_ReturnAlphabet;
 	
 	protected final StateFactory<STATE> m_StateFactory;
 	
@@ -115,18 +115,18 @@ public class NestedWordAutomaton<LETTER,STATE> implements INestedWordAutomatonOl
 	
 	
 	@Override
-	public Collection<LETTER> getInternalAlphabet() {
+	public Set<LETTER> getInternalAlphabet() {
 		return m_InternalAlphabet;
 	}	
 	
 	@Override
-	public Collection<LETTER> getCallAlphabet() {
-		return m_CallAlphabet == null ? new ArrayList<LETTER>(0) : m_CallAlphabet;
+	public Set<LETTER> getCallAlphabet() {
+		return m_CallAlphabet == null ? new HashSet<LETTER>(0) : m_CallAlphabet;
 	}
 	
 	@Override
-	public Collection<LETTER> getReturnAlphabet() {
-		return m_ReturnAlphabet == null ? new ArrayList<LETTER>(0) : m_ReturnAlphabet;
+	public Set<LETTER> getReturnAlphabet() {
+		return m_ReturnAlphabet == null ? new HashSet<LETTER>(0) : m_ReturnAlphabet;
 	}
 	
 	@Override
@@ -156,7 +156,7 @@ public class NestedWordAutomaton<LETTER,STATE> implements INestedWordAutomatonOl
 
 
 	@Override
-	public Collection<LETTER> getAlphabet() {
+	public Set<LETTER> getAlphabet() {
 		return getInternalAlphabet();
 	}
 
@@ -2028,9 +2028,9 @@ public class NestedWordAutomaton<LETTER,STATE> implements INestedWordAutomatonOl
 	
 
 	
-	public NestedWordAutomaton(Collection<LETTER> internalAlphabet,
-			   Collection<LETTER> callAlphabet,
-			   Collection<LETTER> returnAlphabet,
+	public NestedWordAutomaton(Set<LETTER> internalAlphabet,
+				Set<LETTER> callAlphabet,
+				Set<LETTER> returnAlphabet,
 			   StateFactory<STATE> stateFactory) {
 		if (internalAlphabet == null) {
 			throw new IllegalArgumentException("nwa must have internal alphabet");
@@ -2436,6 +2436,9 @@ public class NestedWordAutomaton<LETTER,STATE> implements INestedWordAutomatonOl
 			INestedWordAutomatonSimple<LETTER, STATE> nwa1, 
 			INestedWordAutomatonSimple<LETTER, STATE> nwa2) {
 		boolean result = true;
+		Collection<LETTER> in1 = nwa1.getInternalAlphabet();
+		Collection<LETTER> in2 = nwa2.getInternalAlphabet();
+		result &= in1.equals(in2);
 		result &= nwa1.getInternalAlphabet().equals(nwa2.getInternalAlphabet());
 		result &= nwa1.getCallAlphabet().equals(nwa2.getCallAlphabet());
 		result &= nwa1.getReturnAlphabet().equals(nwa2.getReturnAlphabet());

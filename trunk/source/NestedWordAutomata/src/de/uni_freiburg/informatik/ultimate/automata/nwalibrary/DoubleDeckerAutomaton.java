@@ -1,6 +1,5 @@
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary;
 
-import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
 
@@ -12,9 +11,9 @@ public class DoubleDeckerAutomaton<LETTER, STATE> extends NestedWordAutomaton<LE
 	
 	private Map<STATE,Map<STATE,ReachFinal>> m_Up2Down;
 	
-	public DoubleDeckerAutomaton(Collection<LETTER> internalAlphabet,
-			   Collection<LETTER> callAlphabet,
-			   Collection<LETTER> returnAlphabet,
+	public DoubleDeckerAutomaton(Set<LETTER> internalAlphabet,
+			Set<LETTER> callAlphabet,
+			Set<LETTER> returnAlphabet,
 			   StateFactory<STATE> stateFactory) {
 		super(internalAlphabet, callAlphabet, returnAlphabet, stateFactory);
 	}

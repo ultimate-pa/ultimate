@@ -1,6 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary;
 
 import java.util.Collection;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 /**
@@ -41,7 +42,7 @@ public interface INestedWordAutomatonSimple<LETTER, STATE> extends IAutomaton<LE
 	 * We deviate from both definitions. We allow separate alphabets but do not
 	 * require that they are disjoint.
 	 */
-	public Collection<LETTER> getInternalAlphabet();
+	public Set<LETTER> getInternalAlphabet();
 
 
 	/**
@@ -52,7 +53,7 @@ public interface INestedWordAutomatonSimple<LETTER, STATE> extends IAutomaton<LE
 	 * We deviate from both definitions. We allow separate alphabets but do not
 	 * require that they are disjoint.
 	 */
-	public Collection<LETTER> getCallAlphabet();
+	public Set<LETTER> getCallAlphabet();
 
 
 	/**
@@ -63,7 +64,7 @@ public interface INestedWordAutomatonSimple<LETTER, STATE> extends IAutomaton<LE
 	 * We deviate from both definitions. We allow separate alphabets but do not
 	 * require that they are disjoint.
 	 */
-	public Collection<LETTER> getReturnAlphabet();
+	public Set<LETTER> getReturnAlphabet();
 	
 	
 	/**

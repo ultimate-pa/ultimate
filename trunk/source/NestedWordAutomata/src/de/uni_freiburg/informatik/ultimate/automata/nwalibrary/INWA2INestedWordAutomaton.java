@@ -2,6 +2,7 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary;
 
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
@@ -16,15 +17,15 @@ public class INWA2INestedWordAutomaton<LETTER, STATE> implements
 		m_Nwa = inwa;
 	}
 
-	public Collection<LETTER> getInternalAlphabet() {
+	public Set<LETTER> getInternalAlphabet() {
 		return m_Nwa.getInternalAlphabet();
 	}
 
-	public Collection<LETTER> getCallAlphabet() {
+	public Set<LETTER> getCallAlphabet() {
 		return m_Nwa.getCallAlphabet();
 	}
 
-	public Collection<LETTER> getReturnAlphabet() {
+	public Set<LETTER> getReturnAlphabet() {
 		return m_Nwa.getReturnAlphabet();
 	}
 
@@ -44,7 +45,7 @@ public class INWA2INestedWordAutomaton<LETTER, STATE> implements
 		return m_Nwa.size();
 	}
 
-	public Collection<LETTER> getAlphabet() {
+	public Set<LETTER> getAlphabet() {
 		return m_Nwa.getAlphabet();
 	}
 

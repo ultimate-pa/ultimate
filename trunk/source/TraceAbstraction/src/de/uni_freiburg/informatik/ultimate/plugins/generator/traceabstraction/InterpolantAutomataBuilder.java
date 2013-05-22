@@ -111,9 +111,9 @@ public class InterpolantAutomataBuilder {
 	buildInterpolantAutomaton(IAutomaton<CodeBlock, IPredicate> abstraction,
 			StateFactory<IPredicate> tAContentFactory) {
 
-		Collection<CodeBlock> internalAlphabet = abstraction.getAlphabet();
-		Collection<CodeBlock> callAlphabet = new ArrayList<CodeBlock>(0);
-		Collection<CodeBlock> returnAlphabet = new ArrayList<CodeBlock>(0);
+		Set<CodeBlock> internalAlphabet = abstraction.getAlphabet();
+		Set<CodeBlock> callAlphabet = new HashSet<CodeBlock>(0);
+		Set<CodeBlock> returnAlphabet = new HashSet<CodeBlock>(0);
 
 		if (abstraction instanceof NestedWordAutomaton) {
 			NestedWordAutomaton<CodeBlock, IPredicate> nwa = (NestedWordAutomaton<CodeBlock, IPredicate>) abstraction;

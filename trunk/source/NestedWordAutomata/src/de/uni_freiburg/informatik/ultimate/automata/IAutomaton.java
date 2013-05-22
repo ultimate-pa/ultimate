@@ -1,6 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.automata;
 
-import java.util.Collection;
+
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 
@@ -8,7 +9,7 @@ public interface IAutomaton<S,C> {
 	
 	public boolean accepts(Word<S> word);
 	public int size();
-	public Collection<S> getAlphabet();
+	public Set<S> getAlphabet();
 	public StateFactory<C> getStateFactory();
 
 	
