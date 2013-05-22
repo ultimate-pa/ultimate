@@ -3,7 +3,7 @@
 // Author: heizmann@informatik.uni-freiburg.de
 // Date: 3.8.2010
 
-assert(accepts(determinize(a1), [b c< a >r]));
+assert(accepts(determinize(a1), [b a< a >b]));
 assert(!accepts(a1, [a a a b]));
 assert(!accepts(determinize(a1), [a a a b]));
 assert(!isEmpty(a1));
@@ -14,12 +14,12 @@ assert(!isEmpty(difference(all, difference(all, a1))));
 assert(!isEmpty(intersect(all, complement(intersect(all, complement(a1))))));
 
 assert(!accepts(a1, [a a<]));
-assert(!accepts(complement(a1), [a a<]));
+assert(!accepts(complement(a1), [b a< a >b]));
 assert(accepts(all, [a a<]));
-assert(!accepts(intersect(all, complement(a1)), [a a<]));
+assert(!accepts(intersect(all, complement(a1)), [b a< a >b]));
 assert(!accepts(complement(intersect(all, complement(a1))), [a a<]));
 assert(!accepts(intersect(all, complement(intersect(all, complement(a1)))), [a a<]));
-assert(accepts(difference(all, difference(all, a1)), [a a<]));
+assert(accepts(difference(all, difference(all, a1)), []));
 
 assert(isEmpty(difference(callRet, callRet)));
 
@@ -39,20 +39,20 @@ NestedWordAutomaton all = (
 
 
 NestedWordAutomaton a1 = (
-  callAlphabet = {c},
+  callAlphabet = {a b},
   internalAlphabet = {a b},
-  returnAlphabet = {r},
+  returnAlphabet = {a b},
   states = {s0 s1 p1 p2},
   initialStates = {s0},
   finalStates = {s0},
   callTransitions = {
-    (s1 c p1)
+    (s1 a p1)
   },
   internalTransitions = {
     (s0 b s1) (p1 a p2)
   }, 
   returnTransitions = {
-    (p2 s1 r s0)
+    (p2 s1 b s0)
   }
 );
 
