@@ -19,6 +19,7 @@ public class StateContainerFieldMap<LETTER, STATE> {
 	private Object mOut1;
 	private Object mOut2;
 	private Object mOut3;
+	private Object mOut4;
 	
 	public StateContainerFieldMap(STATE state) {
 		m_State = state;
@@ -29,7 +30,8 @@ public class StateContainerFieldMap<LETTER, STATE> {
 	}
 	
 	private boolean inOutMapMode() {
-		return (mOut1 instanceof Map);
+		return (mOut1 instanceof Map) || (mOut2 instanceof Map) || 
+				(mOut3 instanceof Map) || (mOut4 instanceof Map);
 	}
 	
 	private void addOutgoingInternal(LETTER letter, STATE succ) {
@@ -88,7 +90,7 @@ public class StateContainerFieldMap<LETTER, STATE> {
 					/**
 					 * Points to next field that has OutgoingInternalTransition.
 					 */
-					int mPosition;
+					short mPosition;
 					{
 						mPosition = 0;
 						updatePosition();
