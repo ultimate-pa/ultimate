@@ -5,6 +5,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
@@ -46,6 +47,143 @@ class StateContainerFieldAndMap<LETTER,STATE> extends StateContainer<LETTER, STA
 	
 	private boolean mapModeIncoming() {
 		return (mIn1 instanceof Map) ||(mIn2 instanceof Map) || (mIn3 instanceof Map); 
+	}
+	
+	
+	private void switchOutgoingToMapMode() {
+		assert(!mapModeOutgoing());
+		List<Object> transitions = new ArrayList<Object>(3);
+		if (mOut1 != null) {
+			transitions.add(mOut1);
+			mOut1 = null;
+		}
+		if (mOut2 != null) {
+			transitions.add(mOut2);
+			mOut2 = null;
+		}
+		if (mOut3 != null) {
+			transitions.add(mOut3);
+			mOut3 = null;
+		}
+		for (Object trans : transitions) {
+			if (trans instanceof OutgoingInternalTransition) {
+				addInternalOutgoingMap((OutgoingInternalTransition<LETTER, STATE>) trans);
+			} else if (trans instanceof OutgoingCallTransition) {
+				addCallOutgoingMap((OutgoingCallTransition<LETTER, STATE>) trans);
+			} else if (trans instanceof OutgoingReturnTransition) {
+				addReturnOutgoingMap((OutgoingReturnTransition<LETTER, STATE>) trans);
+			} else {
+				throw new AssertionError();
+			}
+		}
+		assert (mapModeOutgoing());
+	}
+	
+	private void switchIncomingToMapMode() {
+		assert(!mapModeIncoming());
+		List<Object> transitions = new ArrayList<Object>(3);
+		if (mIn1 != null) {
+			transitions.add(mIn1);
+			mIn1 = null;
+		}
+		if (mIn2 != null) {
+			transitions.add(mIn2);
+			mIn2 = null;
+		}
+		if (mIn3 != null) {
+			transitions.add(mIn3);
+			mIn3 = null;
+		}
+		for (Object trans : transitions) {
+			if (trans instanceof IncomingInternalTransition) {
+				addInternalIncomingMap((IncomingInternalTransition<LETTER, STATE>) trans);
+			} else if (trans instanceof IncomingCallTransition) {
+				addCallIncomingMap((IncomingCallTransition<LETTER, STATE>) trans);
+			} else if (trans instanceof IncomingReturnTransition) {
+				addReturnIncomingMap((IncomingReturnTransition<LETTER, STATE>) trans);
+			} else {
+				throw new AssertionError();
+			}
+		}
+		assert (mapModeIncoming());
+	}
+	
+	
+	
+	@Override
+	void addInternalOutgoing(
+			OutgoingInternalTransition<LETTER, STATE> trans) {
+		if (mapModeOutgoing()) {
+			addInternalOutgoingMap(trans);
+		} else {
+			if (mOut1 == null) {
+				mOut1 = trans;
+			} else if (mOut2 == null) {
+				mOut2 = trans;
+			} else if (mOut3 == null) {
+				mOut3 = trans;
+			} else {
+				switchOutgoingToMapMode();
+				addInternalOutgoingMap(trans);
+			}
+		}
+	}
+
+
+	@Override
+	void addInternalIncoming(
+			IncomingInternalTransition<LETTER, STATE> trans) {
+		if (mapModeIncoming()) {
+			addInternalIncomingMap(trans);
+		} else {
+			if (mIn1 == null) {
+				mIn1 = trans;
+			} else if (mIn2 == null) {
+				mIn2 = trans;
+			} else if (mIn3 == null) {
+				mIn3 = trans;
+			} else {
+				switchIncomingToMapMode();
+				addInternalIncomingMap(trans);
+			}
+		}
+	}
+
+
+	@Override
+	void addCallOutgoing(OutgoingCallTransition<LETTER, STATE> callOutgoing) {
+		// TODO Auto-generated method stub
+		
+	}
+
+
+	@Override
+	void addCallIncoming(IncomingCallTransition<LETTER, STATE> callIncoming) {
+		// TODO Auto-generated method stub
+		
+	}
+
+
+	@Override
+	void addReturnOutgoing(
+			OutgoingReturnTransition<LETTER, STATE> returnOutgoing) {
+		// TODO Auto-generated method stub
+		
+	}
+
+
+	@Override
+	void addReturnIncoming(
+			IncomingReturnTransition<LETTER, STATE> returnIncoming) {
+		// TODO Auto-generated method stub
+		
+	}
+
+
+	@Override
+	void addReturnTransition(STATE pred, LETTER letter, STATE succ) {
+		// TODO Auto-generated method stub
+		
 	}
 
 	
@@ -200,16 +338,16 @@ class StateContainerFieldAndMap<LETTER,STATE> extends StateContainer<LETTER, STA
 			return map == null ? m_EmptySetOfLetters : map.keySet();
 		} else {
 			Collection<LETTER> result = new ArrayList<LETTER>(3);
-			if (mIn1 instanceof OutgoingInternalTransition) {
-				LETTER letter = ((OutgoingInternalTransition<LETTER, STATE>) mIn1).getLetter();
+			if (mIn1 instanceof IncomingInternalTransition) {
+				LETTER letter = ((IncomingInternalTransition<LETTER, STATE>) mIn1).getLetter();
 				result.add(letter);
-				if (mIn2 instanceof OutgoingInternalTransition) {
-					letter = ((OutgoingInternalTransition<LETTER, STATE>) mIn2).getLetter();
+				if (mIn2 instanceof IncomingInternalTransition) {
+					letter = ((IncomingInternalTransition<LETTER, STATE>) mIn2).getLetter();
 					if (!result.contains(letter)) {
 						result.add(letter);
 					}
-					if (mIn3 instanceof OutgoingInternalTransition) {
-						letter = ((OutgoingInternalTransition<LETTER, STATE>) mIn3).getLetter();
+					if (mIn3 instanceof IncomingInternalTransition) {
+						letter = ((IncomingInternalTransition<LETTER, STATE>) mIn3).getLetter();
 						if (!result.contains(letter)) {
 							result.add(letter);
 							
@@ -1175,7 +1313,7 @@ class StateContainerFieldAndMap<LETTER,STATE> extends StateContainer<LETTER, STA
 
 
 
-	private Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSucccessorsMap(
+	private Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessorsMap(
 			final STATE hier, final LETTER letter) {
 		assert (mapModeOutgoing());
 		return new Iterable<OutgoingReturnTransition<LETTER, STATE>>() {
@@ -1253,7 +1391,7 @@ class StateContainerFieldAndMap<LETTER,STATE> extends StateContainer<LETTER, STA
 						if (m_HierIterator.hasNext()) {
 							do {
 								m_CurrentHier = m_HierIterator.next();
-								m_CurrentIterator = returnSucccessorsMap(
+								m_CurrentIterator = returnSuccessorsMap(
 										m_CurrentHier, letter).iterator();
 							} while (!m_CurrentIterator.hasNext()
 									&& m_HierIterator.hasNext());
@@ -1322,7 +1460,7 @@ class StateContainerFieldAndMap<LETTER,STATE> extends StateContainer<LETTER, STA
 						if (m_LetterIterator.hasNext()) {
 							do {
 								m_CurrentLetter = m_LetterIterator.next();
-								m_CurrentIterator = returnSucccessorsMap(
+								m_CurrentIterator = returnSuccessorsMap(
 										hier, m_CurrentLetter).iterator();
 							} while (!m_CurrentIterator.hasNext()
 									&& m_LetterIterator.hasNext());
@@ -1476,7 +1614,7 @@ class StateContainerFieldAndMap<LETTER,STATE> extends StateContainer<LETTER, STA
 							} else if (mPosition == 3 && properOutgoingInternalTransitionAtPosition3(letter)) {
 								return;
 							} else {
-								throw new AssertionError();
+								mPosition++;
 							}
 						}
 					}
@@ -1554,7 +1692,7 @@ class StateContainerFieldAndMap<LETTER,STATE> extends StateContainer<LETTER, STA
 							} else if (mPosition == 3 && properIncomingInternalTransitionAtPosition3(letter)) {
 								return;
 							} else {
-								throw new AssertionError();
+								mPosition++;
 							}
 						}
 					}
@@ -1615,167 +1753,217 @@ class StateContainerFieldAndMap<LETTER,STATE> extends StateContainer<LETTER, STA
 	@Override
 	public Iterable<OutgoingCallTransition<LETTER, STATE>> callSuccessors(
 			LETTER letter) {
-		// TODO Auto-generated method stub
-		return null;
+		if (mapModeOutgoing()) {
+			return callSuccessorsMap(letter);
+		} else {
+			ArrayList<OutgoingCallTransition<LETTER, STATE>> result = 
+					new ArrayList<OutgoingCallTransition<LETTER, STATE>>(1);
+			if (properOutgoingCallTransitionAtPosition2(letter)) {
+				result.add((OutgoingCallTransition<LETTER, STATE>) mOut2);
+			}
+			return result;
+		}
 	}
 
 
 	@Override
 	public Iterable<OutgoingCallTransition<LETTER, STATE>> callSuccessors() {
-		// TODO Auto-generated method stub
-		return null;
+		if (mapModeOutgoing()) {
+			return callSuccessorsMap();
+		} else {
+			ArrayList<OutgoingCallTransition<LETTER, STATE>> result = 
+					new ArrayList<OutgoingCallTransition<LETTER, STATE>>(1);
+			if (properOutgoingCallTransitionAtPosition2(null)) {
+				result.add((OutgoingCallTransition<LETTER, STATE>) mOut2);
+			}
+			return result;
+		}
 	}
 
 
 	@Override
 	public Iterable<IncomingCallTransition<LETTER, STATE>> callPredecessors(
 			LETTER letter) {
-		// TODO Auto-generated method stub
-		return null;
+		if (mapModeIncoming()) {
+			return callPredecessorsMap(letter);
+		} else {
+			ArrayList<IncomingCallTransition<LETTER, STATE>> result = 
+					new ArrayList<IncomingCallTransition<LETTER, STATE>>(1);
+			if (properIncomingCallTransitionAtPosition2(letter)) {
+				result.add((IncomingCallTransition<LETTER, STATE>) mIn2);
+			}
+			return result;
+		}
 	}
 
 
 	@Override
 	public Iterable<IncomingCallTransition<LETTER, STATE>> callPredecessors() {
-		// TODO Auto-generated method stub
-		return null;
+		if (mapModeIncoming()) {
+			return callPredecessorsMap();
+		} else {
+			ArrayList<IncomingCallTransition<LETTER, STATE>> result = 
+					new ArrayList<IncomingCallTransition<LETTER, STATE>>(1);
+			if (properIncomingCallTransitionAtPosition2(null)) {
+				result.add((IncomingCallTransition<LETTER, STATE>) mIn2);
+			}
+			return result;
+		}
 	}
 
 
 	@Override
 	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessors(
 			STATE hier, LETTER letter) {
-		// TODO Auto-generated method stub
-		return null;
+		if (mapModeOutgoing()) {
+			return returnSuccessorsMap(hier,letter);
+		} else {
+			ArrayList<OutgoingReturnTransition<LETTER, STATE>> result = 
+					new ArrayList<OutgoingReturnTransition<LETTER, STATE>>(1);
+			if (properOutgoingReturnTransitionAtPosition3(hier,letter)) {
+				result.add((OutgoingReturnTransition<LETTER, STATE>) mOut3);
+			}
+			return result;
+		}
 	}
 
 
 	@Override
 	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessors(
 			LETTER letter) {
-		// TODO Auto-generated method stub
-		return null;
+		if (mapModeOutgoing()) {
+			return returnSuccessorsMap(letter);
+		} else {
+			ArrayList<OutgoingReturnTransition<LETTER, STATE>> result = 
+					new ArrayList<OutgoingReturnTransition<LETTER, STATE>>(1);
+			if (properOutgoingReturnTransitionAtPosition3(null,letter)) {
+				result.add((OutgoingReturnTransition<LETTER, STATE>) mOut3);
+			}
+			return result;
+		}
 	}
 
 
 	@Override
 	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessorsGivenHier(
 			STATE hier) {
-		// TODO Auto-generated method stub
-		return null;
+		if (mapModeOutgoing()) {
+			return returnSuccessorsGivenHierMap(hier);
+		} else {
+			ArrayList<OutgoingReturnTransition<LETTER, STATE>> result = 
+					new ArrayList<OutgoingReturnTransition<LETTER, STATE>>(1);
+			if (properOutgoingReturnTransitionAtPosition3(hier,null)) {
+				result.add((OutgoingReturnTransition<LETTER, STATE>) mOut3);
+			}
+			return result;
+		}
 	}
 
 
 	@Override
 	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessors() {
-		// TODO Auto-generated method stub
-		return null;
+		if (mapModeOutgoing()) {
+			return returnSuccessorsMap();
+		} else {
+			ArrayList<OutgoingReturnTransition<LETTER, STATE>> result = 
+					new ArrayList<OutgoingReturnTransition<LETTER, STATE>>(1);
+			if (properOutgoingReturnTransitionAtPosition3(null,null)) {
+				result.add((OutgoingReturnTransition<LETTER, STATE>) mOut3);
+			}
+			return result;
+		}
 	}
 
 
 	@Override
 	public Iterable<IncomingReturnTransition<LETTER, STATE>> returnPredecessors(
 			STATE hier, LETTER letter) {
-		// TODO Auto-generated method stub
-		return null;
+		if (mapModeIncoming()) {
+			return returnPredecessorsMap(hier,letter);
+		} else {
+			ArrayList<IncomingReturnTransition<LETTER, STATE>> result = 
+					new ArrayList<IncomingReturnTransition<LETTER, STATE>>(1);
+			if (properIncomingReturnTransitionAtPosition3(hier,letter)) {
+				result.add((IncomingReturnTransition<LETTER, STATE>) mIn3);
+			}
+			return result;
+		}
 	}
 
 
 	@Override
 	public Iterable<IncomingReturnTransition<LETTER, STATE>> returnPredecessors(
 			LETTER letter) {
-		// TODO Auto-generated method stub
-		return null;
+		if (mapModeIncoming()) {
+			return returnPredecessorsMap(letter);
+		} else {
+			ArrayList<IncomingReturnTransition<LETTER, STATE>> result = 
+					new ArrayList<IncomingReturnTransition<LETTER, STATE>>(1);
+			if (properIncomingReturnTransitionAtPosition3(null,letter)) {
+				result.add((IncomingReturnTransition<LETTER, STATE>) mIn3);
+			}
+			return result;
+		}
 	}
 
 
 	@Override
 	public Iterable<IncomingReturnTransition<LETTER, STATE>> returnPredecessors() {
-		// TODO Auto-generated method stub
-		return null;
+		if (mapModeIncoming()) {
+			return returnPredecessorsMap();
+		} else {
+			ArrayList<IncomingReturnTransition<LETTER, STATE>> result = 
+					new ArrayList<IncomingReturnTransition<LETTER, STATE>>(1);
+			if (properIncomingReturnTransitionAtPosition3(null,null)) {
+				result.add((IncomingReturnTransition<LETTER, STATE>) mIn3);
+			}
+			return result;
+		}
 	}
 
 
-	@Override
-	void addInternalOutgoing(
-			OutgoingInternalTransition<LETTER, STATE> internalOutgoing) {
-		// TODO Auto-generated method stub
-		
-	}
 
-
-	@Override
-	void addInternalIncoming(
-			IncomingInternalTransition<LETTER, STATE> internalIncoming) {
-		// TODO Auto-generated method stub
-		
-	}
-
-
-	@Override
-	void addCallOutgoing(OutgoingCallTransition<LETTER, STATE> callOutgoing) {
-		// TODO Auto-generated method stub
-		
-	}
-
-
-	@Override
-	void addCallIncoming(IncomingCallTransition<LETTER, STATE> callIncoming) {
-		// TODO Auto-generated method stub
-		
-	}
-
-
-	@Override
-	void addReturnOutgoing(
-			OutgoingReturnTransition<LETTER, STATE> returnOutgoing) {
-		// TODO Auto-generated method stub
-		
-	}
-
-
-	@Override
-	void addReturnIncoming(
-			IncomingReturnTransition<LETTER, STATE> returnIncoming) {
-		// TODO Auto-generated method stub
-		
-	}
-
-
-	@Override
-	void addReturnTransition(STATE pred, LETTER letter, STATE succ) {
-		// TODO Auto-generated method stub
-		
-	}
 
 
 	@Override
 	public Iterable<OutgoingInternalTransition<LETTER, STATE>> internalSuccessors(
 			LETTER letter) {
-		// TODO Auto-generated method stub
-		return null;
+		if(mapModeOutgoing()) {
+			return internalSuccessorsMap(letter);
+		} else {
+			return internalSuccessorsField(letter);
+		}
 	}
 
 
 	@Override
 	public Iterable<OutgoingInternalTransition<LETTER, STATE>> internalSuccessors() {
-		// TODO Auto-generated method stub
-		return null;
+		if(mapModeOutgoing()) {
+			return internalSuccessorsMap();
+		} else {
+			return internalSuccessorsField(null);
+		}
 	}
 
 
 	@Override
 	public Iterable<IncomingInternalTransition<LETTER, STATE>> internalPredecessors(
 			LETTER letter) {
-		// TODO Auto-generated method stub
-		return null;
+		if(mapModeIncoming()) {
+			return internalPredecessorsMap(letter);
+		} else {
+			return internalPredecessorsField(letter);
+		}
 	}
 
 
 	@Override
 	public Iterable<IncomingInternalTransition<LETTER, STATE>> internalPredecessors() {
-		// TODO Auto-generated method stub
-		return null;
+		if(mapModeIncoming()) {
+			return internalPredecessorsMap();
+		} else {
+			return internalPredecessorsField(null);
+		}
 	}
 }
 
