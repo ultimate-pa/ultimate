@@ -1,5 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations;
 
+import java.util.ArrayList;
+
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.automata.Activator;
@@ -12,12 +14,13 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.DifferenceDD;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.IOpWithDelayedDeadEndRemoval;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.IntersectDD;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.NestedWordAutomatonReachableStates;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 
 
-public class Difference<LETTER,STATE> implements IOperation<LETTER,STATE> {
+public class Difference<LETTER,STATE> implements IOperation<LETTER,STATE>, IOpWithDelayedDeadEndRemoval<LETTER, STATE> {
 
 	protected static Logger s_Logger = 
 		UltimateServices.getInstance().getLogger(Activator.PLUGIN_ID);
@@ -73,7 +76,7 @@ public class Difference<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	public Difference(INestedWordAutomatonOldApi<LETTER,STATE> fstOperand,
 			INestedWordAutomatonOldApi<LETTER,STATE> sndOperand,
 			IStateDeterminizer<LETTER, STATE> stateDeterminizer,
-			boolean nonFinalInSndIsTrap,
+			boolean finalIsTrap,
 			StateFactory<STATE> sf
 			) throws AutomataLibraryException {
 		m_FstOperand = fstOperand;
@@ -83,7 +86,7 @@ public class Difference<LETTER,STATE> implements IOperation<LETTER,STATE> {
 		s_Logger.info(startMessage());
 		m_SndDeterminized = new DeterminizeNwa<LETTER,STATE>(m_SndOperand,m_StateDeterminizer,m_StateFactory);
 		m_SndComplemented = new ComplementDeterministicNwa<LETTER, STATE>(m_SndDeterminized);
-		m_Intersect = new IntersectNwa<LETTER, STATE>(m_FstOperand, m_SndComplemented, m_StateFactory, nonFinalInSndIsTrap);
+		m_Intersect = new IntersectNwa<LETTER, STATE>(m_FstOperand, m_SndComplemented, m_StateFactory, finalIsTrap);
 		m_Result = new NestedWordAutomatonReachableStates<LETTER, STATE>(m_Intersect);
 		s_Logger.info(exitMessage());
 	}
@@ -121,6 +124,26 @@ public class Difference<LETTER,STATE> implements IOperation<LETTER,STATE> {
 		}
 		s_Logger.info("Finished testing correctness of " + operationName());
 		return correct;
+	}
+
+
+	@Override
+	public Iterable<UpDownEntry<STATE>> getRemovedUpDownEntry() {
+		return new ArrayList<UpDownEntry<STATE>>();
+	}
+
+
+	@Override
+	public boolean removeDeadEnds() {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+
+	@Override
+	public long getDeadEndRemovalTime() {
+		// TODO Auto-generated method stub
+		return 0;
 	}
 	
 	
