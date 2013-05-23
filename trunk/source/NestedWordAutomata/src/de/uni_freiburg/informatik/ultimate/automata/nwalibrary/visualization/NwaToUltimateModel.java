@@ -84,7 +84,7 @@ public class NwaToUltimateModel<LETTER,STATE> {
 			}
 			for(STATE hierPredState : nwa.getStates()) {
 				for (OutgoingReturnTransition<LETTER, STATE> trans : 
-							nwa.returnSuccessorsGivenHier(hierPredState, state)) {
+							nwa.returnSuccessorsGivenHier(state, hierPredState)) {
 					LETTER symbol = trans.getLetter();
 					STATE succState = trans.getSucc();
 					AutomatonState succVSN;
