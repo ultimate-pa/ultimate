@@ -405,7 +405,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 //			m_Haf.addContext2Entry(context2entry);
 //		}
 
-		(new RemoveDeadEnds<CodeBlock, IPredicate>((INestedWordAutomatonOldApi<CodeBlock, IPredicate>) m_Abstraction)).getResult();
+//		(new RemoveDeadEnds<CodeBlock, IPredicate>((INestedWordAutomatonOldApi<CodeBlock, IPredicate>) m_Abstraction)).getResult();
 		m_TimingStatistics.finishDifference();
 		
 		if (m_Pref.minimize()) {
