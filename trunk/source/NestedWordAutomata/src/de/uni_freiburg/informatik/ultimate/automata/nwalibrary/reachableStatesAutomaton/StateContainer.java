@@ -128,8 +128,6 @@ public abstract class StateContainer<LETTER, STATE> {
 
 	public abstract Collection<LETTER> lettersReturnIncoming();
 
-	public abstract Collection<LETTER> lettersReturnSummary();
-
 	public abstract Collection<STATE> succInternal(LETTER letter);
 
 	public abstract Collection<STATE> predInternal(LETTER letter);
@@ -177,9 +175,6 @@ public abstract class StateContainer<LETTER, STATE> {
 
 	public abstract Iterable<IncomingReturnTransition<LETTER, STATE>> returnPredecessors();
 
-
-	public abstract Iterable<SummaryReturnTransition<LETTER, STATE>> getSummaryReturnTransitions(LETTER letter);
-	
 	
 	
 	
@@ -195,6 +190,4 @@ public abstract class StateContainer<LETTER, STATE> {
 
 	abstract void addReturnIncoming(IncomingReturnTransition<LETTER, STATE> returnIncoming);
 
-	abstract void addReturnTransition(STATE pred, LETTER letter, STATE succ);
 }
-

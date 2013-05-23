@@ -60,7 +60,13 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 	private List<CommonEntriesComponent<LETTER,STATE>> m_AllCECs = new ArrayList<CommonEntriesComponent<LETTER,STATE>>();
 	
 
-	
+	/**
+	 * Set of return transitions LinPREs x HierPREs x LETTERs x SUCCs stored as 
+	 * map HierPREs -> LETTERs -> LinPREs -> SUCCs
+	 * 
+	 */
+	private Map<STATE,Map<LETTER,Map<STATE,Set<STATE>>>> m_ReturnSummary =
+			new HashMap<STATE,Map<LETTER,Map<STATE,Set<STATE>>>>();
 
 	
 	
@@ -246,9 +252,12 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 	}
 
 	@Override
-	@Deprecated
 	public Collection<LETTER> lettersReturnSummary(STATE state) {
-		return m_States.get(state).lettersReturnSummary();
+		if (!m_States.containsKey(state)) {
+			throw new IllegalArgumentException("State " + state + " unknown");
+		}
+		 Map<LETTER, Map<STATE, Set<STATE>>> map = m_ReturnSummary.get(state);
+		return map == null ? new ArrayList<LETTER>(0) : map.keySet();
 	}
 
 	@Override
@@ -305,11 +314,50 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 	public boolean isTotal() {
 		throw new UnsupportedOperationException();
 	}
+	
+	private void addReturnSummary(STATE pred, STATE hier, LETTER letter, STATE succ) {
+		Map<LETTER, Map<STATE, Set<STATE>>> letter2pred2succs = m_ReturnSummary.get(hier);
+		if (letter2pred2succs == null) {
+			letter2pred2succs = new HashMap<LETTER, Map<STATE, Set<STATE>>>();
+			m_ReturnSummary.put(hier, letter2pred2succs);
+		}
+		Map<STATE, Set<STATE>> pred2succs = letter2pred2succs.get(letter);
+		if (pred2succs == null) {
+			pred2succs = new HashMap<STATE, Set<STATE>>();
+			letter2pred2succs.put(letter, pred2succs);
+		}
+		Set<STATE> succS = pred2succs.get(pred);
+		if (succS == null) {
+			succS = new HashSet<STATE>();
+			pred2succs.put(pred, succS);
+		}
+		succS.add(succ);
+	}
 
 	@Override
-	public Iterable<SummaryReturnTransition<LETTER, STATE>> returnSummarySuccessor(
-			LETTER letter, STATE hier) {
-		return m_States.get(hier).getSummaryReturnTransitions(letter);
+	public Iterable<SummaryReturnTransition<LETTER, STATE>> 
+						returnSummarySuccessor(LETTER letter, STATE hier) {
+		Set<SummaryReturnTransition<LETTER, STATE>> result = 
+				new HashSet<SummaryReturnTransition<LETTER, STATE>>();
+		Map<LETTER, Map<STATE, Set<STATE>>> letter2pred2succ = 
+				m_ReturnSummary.get(hier);
+		if (letter2pred2succ == null) {
+			return result;
+		}
+		Map<STATE, Set<STATE>> pred2succ = letter2pred2succ.get(letter);
+		if (pred2succ == null) {
+			return result;
+		}
+		for (STATE pred : pred2succ.keySet()) {
+			if (pred2succ.get(pred) != null) {
+				for (STATE succ : pred2succ.get(pred)) {
+				SummaryReturnTransition<LETTER, STATE> srt = 
+					new SummaryReturnTransition<LETTER, STATE>(pred, letter, succ);
+				result.add(srt);
+				}
+			}
+		}
+		return result;
 	}
 
 	@Override
@@ -455,6 +503,7 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 
 			while (!m_ForwardWorklist.isEmpty()) {
 				StateContainer<LETTER,STATE> cont = m_ForwardWorklist.remove(0);
+				cont.toString();
 				addInternalsAndSuccessors(cont);
 				addCallsAndSuccessors(cont);
 
@@ -685,9 +734,10 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 				stateSc.addReturnOutgoing(trans);
 				succSC.addReturnIncoming(
 						new IncomingReturnTransition<LETTER, STATE>(stateSc.getState(), down, trans.getLetter()));
-				downSc.addReturnTransition(state, trans.getLetter(), succ);
+				addReturnSummary(state, down, trans.getLetter(), succ);
 				addSummary(downSc, succSC);
 			}
+			assert checkTransitionsReturnedConsistent();
 		}
 		
 		private CommonEntriesComponent<LETTER,STATE> updateCECs(Set<StateContainer<LETTER,STATE>> splitStarts, 
@@ -1061,40 +1111,60 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 		for (STATE state : getStates()) {
 			for (IncomingInternalTransition<LETTER, STATE> inTrans : internalPredecessors(state)) {
 				result &= containsInternalTransition(inTrans.getPred(), inTrans.getLetter(), state);
-				result &= m_States.get(state).lettersInternalIncoming().contains(inTrans.getLetter());
-				result &= m_States.get(state).predInternal(inTrans.getLetter()).contains(inTrans.getPred());
+				assert result;
+				StateContainer<LETTER, STATE> cont  = m_States.get(state); 
+				result &= cont.lettersInternalIncoming().contains(inTrans.getLetter());
+				assert result;
+				result &= cont.predInternal(inTrans.getLetter()).contains(inTrans.getPred());
 				assert result;
 			}
 			for (OutgoingInternalTransition<LETTER, STATE> outTrans : internalSuccessors(state)) {
 				result &= containsInternalTransition(state, outTrans.getLetter(), outTrans.getSucc());
-				result &= m_States.get(state).lettersInternal().contains(outTrans.getLetter());
-				result &= m_States.get(state).succInternal(outTrans.getLetter()).contains(outTrans.getSucc());
+				assert result;
+				StateContainer<LETTER, STATE> cont  = m_States.get(state);
+				result &= cont.lettersInternal().contains(outTrans.getLetter());
+				assert result;
+				result &= cont.succInternal(outTrans.getLetter()).contains(outTrans.getSucc());
 				assert result;
 			}
 			for (IncomingCallTransition<LETTER, STATE> inTrans : callPredecessors(state)) {
 				result &= containsCallTransition(inTrans.getPred(), inTrans.getLetter(), state);
-				result &= m_States.get(state).lettersCallIncoming().contains(inTrans.getLetter());
-				result &= m_States.get(state).predCall(inTrans.getLetter()).contains(inTrans.getPred());
+				assert result;
+				StateContainer<LETTER, STATE> cont  = m_States.get(state);
+				result &= cont.lettersCallIncoming().contains(inTrans.getLetter());
+				assert result;
+				result &= cont.predCall(inTrans.getLetter()).contains(inTrans.getPred());
 				assert result;
 			}
 			for (OutgoingCallTransition<LETTER, STATE> outTrans : callSuccessors(state)) {
 				result &= containsCallTransition(state, outTrans.getLetter(), outTrans.getSucc());
-				result &= m_States.get(state).lettersCall().contains(outTrans.getLetter());
-				result &= m_States.get(state).succCall(outTrans.getLetter()).contains(outTrans.getSucc());
+				assert result;
+				StateContainer<LETTER, STATE> cont  = m_States.get(state);
+				result &= cont.lettersCall().contains(outTrans.getLetter());
+				assert result;
+				result &= cont.succCall(outTrans.getLetter()).contains(outTrans.getSucc());
 				assert result;
 			}
 			for (IncomingReturnTransition<LETTER, STATE> inTrans : returnPredecessors(state)) {
 				result &= containsReturnTransition(inTrans.getLinPred(), inTrans.getHierPred(), inTrans.getLetter(), state);
-				result &= m_States.get(state).lettersReturnIncoming().contains(inTrans.getLetter());
-				result &= m_States.get(state).predReturnHier(inTrans.getLetter()).contains(inTrans.getHierPred());
-				result &= m_States.get(state).predReturnLin(inTrans.getLetter(),inTrans.getHierPred()).contains(inTrans.getLinPred());
+				assert result;
+				StateContainer<LETTER, STATE> cont  = m_States.get(state);
+				result &= cont.lettersReturnIncoming().contains(inTrans.getLetter());
+				assert result;
+				result &= cont.predReturnHier(inTrans.getLetter()).contains(inTrans.getHierPred());
+				assert result;
+				result &= cont.predReturnLin(inTrans.getLetter(),inTrans.getHierPred()).contains(inTrans.getLinPred());
 				assert result;
 			}
 			for (OutgoingReturnTransition<LETTER, STATE> outTrans : returnSuccessors(state)) {
 				result &= containsReturnTransition(state, outTrans.getHierPred(), outTrans.getLetter(), outTrans.getSucc());
-				result &= m_States.get(state).lettersReturn().contains(outTrans.getLetter());
-				result &= m_States.get(state).hierPred(outTrans.getLetter()).contains(outTrans.getHierPred());
-				result &= m_States.get(state).succReturn(outTrans.getHierPred(),outTrans.getLetter()).contains(outTrans.getSucc());
+				assert result;
+				StateContainer<LETTER, STATE> cont  = m_States.get(state);
+				result &= cont.lettersReturn().contains(outTrans.getLetter());
+				assert result;
+				result &= cont.hierPred(outTrans.getLetter()).contains(outTrans.getHierPred());
+				assert result;
+				result &= cont.succReturn(outTrans.getHierPred(),outTrans.getLetter()).contains(outTrans.getSucc());
 				assert result;
 			}
 		}

@@ -185,26 +185,6 @@ class StateContainerMapOnly<LETTER,STATE> extends StateContainer<LETTER, STATE> 
 		preds.add(pred);
 	}
 
-	@Override
-	void addReturnTransition(STATE pred, LETTER letter, STATE succ) {
-		if (m_ReturnSummary == null) {
-			m_ReturnSummary = new HashMap<LETTER, Map<STATE, Set<STATE>>>();
-		}
-		Map<STATE, Set<STATE>> pred2succs = m_ReturnSummary.get(letter);
-		if (pred2succs == null) {
-			pred2succs = new HashMap<STATE, Set<STATE>>();
-			m_ReturnSummary.put(letter, pred2succs);
-		}
-		Set<STATE> succS = pred2succs.get(pred);
-		if (succS == null) {
-			succS = new HashSet<STATE>();
-			pred2succs.put(pred, succS);
-		}
-		succS.add(succ);
-		// assert checkTransitionsStoredConsistent();
-	}
-
-
 
 
 	@Override
@@ -241,13 +221,6 @@ class StateContainerMapOnly<LETTER,STATE> extends StateContainer<LETTER, STATE> 
 	@Override
 	public Collection<LETTER> lettersReturnIncoming() {
 		Map<LETTER, Map<STATE, Set<STATE>>> map = m_ReturnIn;
-		return map == null ? m_EmptySetOfLetters : map.keySet();
-	}
-
-
-	@Override
-	public Collection<LETTER> lettersReturnSummary() {
-		Map<LETTER, Map<STATE, Set<STATE>>> map = m_ReturnSummary;
 		return map == null ? m_EmptySetOfLetters : map.keySet();
 	}
 
@@ -342,33 +315,6 @@ class StateContainerMapOnly<LETTER,STATE> extends StateContainer<LETTER, STATE> 
 		}
 		return hier2preds.keySet();
 	}
-
-	@Override
-	public Iterable<SummaryReturnTransition<LETTER, STATE>> 
-	getSummaryReturnTransitions(LETTER letter) {
-		Set<SummaryReturnTransition<LETTER, STATE>> result = 
-				new HashSet<SummaryReturnTransition<LETTER, STATE>>();
-		Map<LETTER, Map<STATE, Set<STATE>>> letter2pred2succ = 
-				m_ReturnSummary;
-		if (letter2pred2succ == null) {
-			return result;
-		}
-		Map<STATE, Set<STATE>> pred2succ = letter2pred2succ.get(letter);
-		if (pred2succ == null) {
-			return result;
-		}
-		for (STATE pred : pred2succ.keySet()) {
-			if (pred2succ.get(pred) != null) {
-				for (STATE succ : pred2succ.get(pred)) {
-					SummaryReturnTransition<LETTER, STATE> srt = 
-							new SummaryReturnTransition<LETTER, STATE>(pred, letter, succ);
-					result.add(srt);
-				}
-			}
-		}
-		return result;
-	}
-
 
 
 

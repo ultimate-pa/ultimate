@@ -16,7 +16,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.IncomingReturnTra
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingReturnTransition;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.SummaryReturnTransition;
 
 /**
  * Contains STATES and information of transitions.
@@ -36,7 +35,7 @@ class StateContainerFieldAndMap<LETTER,STATE> extends StateContainer<LETTER, STA
 	private Object mIn2;
 	private Object mIn3;
 
-	StateContainerFieldAndMap(STATE state, CommonEntriesComponent<LETTER,STATE> cec) {
+	private StateContainerFieldAndMap(STATE state, CommonEntriesComponent<LETTER,STATE> cec) {
 		super(state,cec);
 	}
 
@@ -111,8 +110,7 @@ class StateContainerFieldAndMap<LETTER,STATE> extends StateContainer<LETTER, STA
 	
 	
 	@Override
-	void addInternalOutgoing(
-			OutgoingInternalTransition<LETTER, STATE> trans) {
+	void addInternalOutgoing(OutgoingInternalTransition<LETTER, STATE> trans) {
 		if (mapModeOutgoing()) {
 			addInternalOutgoingMap(trans);
 		} else {
@@ -131,8 +129,7 @@ class StateContainerFieldAndMap<LETTER,STATE> extends StateContainer<LETTER, STA
 
 
 	@Override
-	void addInternalIncoming(
-			IncomingInternalTransition<LETTER, STATE> trans) {
+	void addInternalIncoming(IncomingInternalTransition<LETTER, STATE> trans) {
 		if (mapModeIncoming()) {
 			addInternalIncomingMap(trans);
 		} else {
@@ -151,42 +148,65 @@ class StateContainerFieldAndMap<LETTER,STATE> extends StateContainer<LETTER, STA
 
 
 	@Override
-	void addCallOutgoing(OutgoingCallTransition<LETTER, STATE> callOutgoing) {
-		// TODO Auto-generated method stub
-		
+	void addCallOutgoing(OutgoingCallTransition<LETTER, STATE> trans) {
+		if (mapModeOutgoing()) {
+			addCallOutgoingMap(trans);
+		} else {
+			if (mOut2 == null) {
+				mOut2 = trans;
+			} else {
+				switchOutgoingToMapMode();
+				addCallOutgoingMap(trans);
+			}
+		}
 	}
 
 
 	@Override
-	void addCallIncoming(IncomingCallTransition<LETTER, STATE> callIncoming) {
-		// TODO Auto-generated method stub
-		
+	void addCallIncoming(IncomingCallTransition<LETTER, STATE> trans) {
+		if (mapModeIncoming()) {
+			addCallIncomingMap(trans);
+		} else {
+			if (mIn2 == null) {
+				mIn2 = trans;
+			} else {
+				switchIncomingToMapMode();
+				addCallIncomingMap(trans);
+			}
+		}
 	}
 
 
 	@Override
-	void addReturnOutgoing(
-			OutgoingReturnTransition<LETTER, STATE> returnOutgoing) {
-		// TODO Auto-generated method stub
-		
+	void addReturnOutgoing(OutgoingReturnTransition<LETTER, STATE> trans) {
+		if (mapModeOutgoing()) {
+			addReturnOutgoingMap(trans);
+		} else {
+			if (mOut3 == null) {
+				mOut3 = trans;
+			} else {
+				switchOutgoingToMapMode();
+				addReturnOutgoingMap(trans);
+			}
+		}
 	}
 
 
 	@Override
-	void addReturnIncoming(
-			IncomingReturnTransition<LETTER, STATE> returnIncoming) {
-		// TODO Auto-generated method stub
-		
+	void addReturnIncoming(IncomingReturnTransition<LETTER, STATE> trans) {
+		if (mapModeIncoming()) {
+			addReturnIncomingMap(trans);
+		} else {
+			if (mIn3 == null) {
+				mIn3 = trans;
+			} else {
+				switchIncomingToMapMode();
+				addReturnIncomingMap(trans);
+			}
+		}
 	}
 
 
-	@Override
-	void addReturnTransition(STATE pred, LETTER letter, STATE succ) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	
 	
 	void addInternalOutgoingMap(OutgoingInternalTransition<LETTER, STATE> internalOutgoing) {
 		LETTER letter = internalOutgoing.getLetter();
@@ -281,26 +301,6 @@ class StateContainerFieldAndMap<LETTER,STATE> extends StateContainer<LETTER, STA
 		preds.add(pred);
 	}
 
-	void addReturnTransitionMap(STATE pred, LETTER letter, STATE succ) {
-//		if (m_ReturnSummary == null) {
-//			m_ReturnSummary = new HashMap<LETTER, Map<STATE, Set<STATE>>>();
-//		}
-//		Map<STATE, Set<STATE>> pred2succs = m_ReturnSummary.get(letter);
-//		if (pred2succs == null) {
-//			pred2succs = new HashMap<STATE, Set<STATE>>();
-//			m_ReturnSummary.put(letter, pred2succs);
-//		}
-//		Set<STATE> succS = pred2succs.get(pred);
-//		if (succS == null) {
-//			succS = new HashSet<STATE>();
-//			pred2succs.put(pred, succS);
-//		}
-//		succS.add(succ);
-		// assert checkTransitionsStoredConsistent();
-	}
-
-
-
 
 	@Override
 	public Collection<LETTER> lettersInternal() {
@@ -381,7 +381,7 @@ class StateContainerFieldAndMap<LETTER,STATE> extends StateContainer<LETTER, STA
 			return map == null ? m_EmptySetOfLetters : map.keySet();
 		} else {
 			Collection<LETTER> result = new ArrayList<LETTER>(1);
-			if (mOut2 instanceof IncomingCallTransition) {
+			if (mIn2 instanceof IncomingCallTransition) {
 				LETTER letter = ((IncomingCallTransition<LETTER, STATE>) mIn2).getLetter();
 				result.add(letter);
 			}
@@ -419,14 +419,6 @@ class StateContainerFieldAndMap<LETTER,STATE> extends StateContainer<LETTER, STA
 		}
 	}
 
-
-	@Override
-	public Collection<LETTER> lettersReturnSummary() {
-		return null;
-//		Map<LETTER, Map<STATE, Set<STATE>>> map = m_ReturnSummary;
-//		return map == null ? m_EmptySetOfLetters : map.keySet();
-//		
-	}
 
 	@Override
 	public Collection<STATE> succInternal(LETTER letter) {
@@ -613,35 +605,6 @@ class StateContainerFieldAndMap<LETTER,STATE> extends StateContainer<LETTER, STA
 			return result;
 		}
 	}
-
-	@Override
-	public Iterable<SummaryReturnTransition<LETTER, STATE>> 
-	getSummaryReturnTransitions(LETTER letter) {
-		return null;
-//		Set<SummaryReturnTransition<LETTER, STATE>> result = 
-//				new HashSet<SummaryReturnTransition<LETTER, STATE>>();
-//		Map<LETTER, Map<STATE, Set<STATE>>> letter2pred2succ = 
-//				m_ReturnSummary;
-//		if (letter2pred2succ == null) {
-//			return result;
-//		}
-//		Map<STATE, Set<STATE>> pred2succ = letter2pred2succ.get(letter);
-//		if (pred2succ == null) {
-//			return result;
-//		}
-//		for (STATE pred : pred2succ.keySet()) {
-//			if (pred2succ.get(pred) != null) {
-//				for (STATE succ : pred2succ.get(pred)) {
-//					SummaryReturnTransition<LETTER, STATE> srt = 
-//							new SummaryReturnTransition<LETTER, STATE>(pred, letter, succ);
-//					result.add(srt);
-//				}
-//			}
-//		}
-//		return result;
-	}
-
-
 
 
 
