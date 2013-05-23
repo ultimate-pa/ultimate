@@ -35,7 +35,7 @@ class StateContainerFieldAndMap<LETTER,STATE> extends StateContainer<LETTER, STA
 	private Object mIn2;
 	private Object mIn3;
 
-	private StateContainerFieldAndMap(STATE state, CommonEntriesComponent<LETTER,STATE> cec) {
+	StateContainerFieldAndMap(STATE state, CommonEntriesComponent<LETTER,STATE> cec) {
 		super(state,cec);
 	}
 
@@ -118,7 +118,7 @@ class StateContainerFieldAndMap<LETTER,STATE> extends StateContainer<LETTER, STA
 				mOut1 = trans;
 			} else if (mOut2 == null) {
 				mOut2 = trans;
-			} else if (mOut3 == null) {
+			} else if (mOut3 == null && (mOut2 instanceof OutgoingInternalTransition)) {
 				mOut3 = trans;
 			} else {
 				switchOutgoingToMapMode();
@@ -137,7 +137,7 @@ class StateContainerFieldAndMap<LETTER,STATE> extends StateContainer<LETTER, STA
 				mIn1 = trans;
 			} else if (mIn2 == null) {
 				mIn2 = trans;
-			} else if (mIn3 == null) {
+			} else if (mIn3 == null && (mIn2 instanceof IncomingInternalTransition)) {
 				mIn3 = trans;
 			} else {
 				switchIncomingToMapMode();
@@ -411,8 +411,8 @@ class StateContainerFieldAndMap<LETTER,STATE> extends StateContainer<LETTER, STA
 			return map == null ? m_EmptySetOfLetters : map.keySet();
 		} else {
 			Collection<LETTER> result = new ArrayList<LETTER>(1);
-			if (mIn3 instanceof OutgoingReturnTransition) {
-				LETTER letter = ((OutgoingReturnTransition<LETTER, STATE>) mIn3).getLetter();
+			if (mIn3 instanceof IncomingReturnTransition) {
+				LETTER letter = ((IncomingReturnTransition<LETTER, STATE>) mIn3).getLetter();
 				result.add(letter);
 			}
 			return result;
