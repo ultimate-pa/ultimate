@@ -88,6 +88,7 @@ class CommonEntriesComponent<LETTER,STATE> {
 
 
 	void addDownState(STATE down) {
+		assert !m_DownStates.contains(down) : "added down state twice";
 		m_DownStates.add(down);
 	}
 
