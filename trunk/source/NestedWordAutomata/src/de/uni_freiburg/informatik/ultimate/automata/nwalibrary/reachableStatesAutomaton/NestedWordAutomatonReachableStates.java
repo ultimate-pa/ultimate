@@ -59,6 +59,9 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 	
 	private List<CommonEntriesComponent<LETTER,STATE>> m_AllCECs = new ArrayList<CommonEntriesComponent<LETTER,STATE>>();
 	
+	private Map<Set<Entry<LETTER,STATE>>,CommonEntriesComponent<LETTER,STATE>> m_Entries2Cec = 
+			new HashMap<Set<Entry<LETTER,STATE>>,CommonEntriesComponent<LETTER,STATE>>();
+	
 
 	/**
 	 * Set of return transitions LinPREs x HierPREs x LETTERs x SUCCs stored as 
@@ -516,6 +519,13 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 				new CecSplitWorklist();
 		private final LinkedList<StateContainer<LETTER,STATE>> m_ForwardWorklist = 
 				new LinkedList<StateContainer<LETTER,STATE>>();
+		/**
+		 * Contains states that are in the worklist or processed at the moment.
+		 * Used to avoid insertion of elements to doubleDecker worklist whose
+		 * up state will be processed anyway.
+		 */
+		private final Set<STATE> m_WorklistAndCurrentState = 
+				new HashSet<STATE>();
 
 		ReachableStatesComputation() throws OperationCanceledException {
 			addInitialStates(m_Operand.getInitialStates());
@@ -525,14 +535,16 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 				addInternalsAndSuccessors(cont);
 				addCallsAndSuccessors(cont);
 
-				CommonEntriesComponent<LETTER,STATE> stateCEC = cont.getCommonEntriesComponent();
-				// TODO: need copy to avoid concurModExcpetion ???
-				for (STATE down : stateCEC.getDownStates()) {
-					if (down != getEmptyStackState()) {
-						StateContainer<LETTER,STATE> downSC = m_States.get(down);
-						addReturnsAndSuccessors(cont, downSC);
+				if (candidateForOutgoingReturn(cont.getState())) {
+					CommonEntriesComponent<LETTER,STATE> stateCEC = cont.getCommonEntriesComponent();
+					for (STATE down : stateCEC.getDownStates()) {
+						if (down != getEmptyStackState()) {
+							StateContainer<LETTER,STATE> downSC = m_States.get(down);
+							addReturnsAndSuccessors(cont, downSC);
+						}
 					}
 				}
+				m_WorklistAndCurrentState.remove(cont.getState());
 
 				while (!doubleDeckerWorklist.isEmpty()) {
 					DoubleDecker<STATE> doubleDecker = doubleDeckerWorklist
@@ -564,13 +576,24 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 				HashSet<STATE> downStates = new HashSet<STATE>();
 				downStates.add(getEmptyStackState());
 				CommonEntriesComponent<LETTER,STATE> cec = 
-						new CommonEntriesComponent<LETTER,STATE>(entries,downStates);
-				m_AllCECs.add(cec);
+						getOrConstructCec(entries,downStates);
 				StateContainer<LETTER,STATE> sc = addState(state, cec);
 				m_States.put(state, sc);
 			}
 		}
 		
+		
+		private CommonEntriesComponent<LETTER, STATE> getOrConstructCec(HashSet<Entry<LETTER,STATE>> entries, HashSet<STATE> downStates) {
+			CommonEntriesComponent<LETTER, STATE> result = m_Entries2Cec.get(entries);
+			if (result == null) {
+				result = new CommonEntriesComponent<LETTER, STATE>(entries, downStates);
+				m_Entries2Cec.put(entries,result);
+				m_AllCECs.add(result);
+			} else {
+				assert (isSubset(downStates, result.getDownStates()) && isSubset(result.getDownStates(), downStates));
+			}
+			return result;
+		}
 		
 		
 		/**
@@ -592,6 +615,7 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 				cec.addReturnOutCandicate(state);
 			}
 			m_ForwardWorklist.add(result);
+			m_WorklistAndCurrentState.add(state);
 			return result;
 		}
 		
@@ -625,12 +649,18 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 					}
 				}
 				if(!newdownStates.isEmpty()) {
-					for (STATE state : cec.getReturnOutCandidates()) {
-						for (STATE down : newdownStates) {
-							if (down != getEmptyStackState()) {
-								doubleDeckerWorklist.enqueue(state, down);
+					for (STATE down : newdownStates) {
+						cec.addDownState(down);
+					}
+					for (STATE state : cec.getReturnOutCandidates()	) {
+						if (!m_WorklistAndCurrentState.contains(state)) {
+							// if m_ForwardWorklist contains this state it return 
+							// transitions will be added anyway.
+							for (STATE down : newdownStates) {
+								if (down != getEmptyStackState()) {
+									doubleDeckerWorklist.enqueue(state, down);
+								}
 							}
-							cec.addDownState(down);
 						}
 					}
 					for (StateContainer<LETTER, STATE> resident : cec.m_BorderOut.keySet()) {
@@ -662,14 +692,23 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 					if (stateCec != succCEC) {
 						Set<Entry<LETTER,STATE>> newEntries = 
 								differenceSet(stateCec.getEntries(), succCEC.getEntries());
-						Set<STATE> newDownStates = 
-								differenceSet(stateCec.getDownStates(), succCEC.getDownStates()); 
-						Set<StateContainer<LETTER,STATE>> splitStates = 
-								new HashSet<StateContainer<LETTER,STATE>>();
-						splitStates.add(succSC);
-						updateCECs(splitStates, newEntries, newDownStates);
-						stateCec.addBorderCrossing(cont, succSC);
-						cecSplitWorklist.processAll();
+						if(newEntries.isEmpty()) {
+							stateCec.addBorderCrossing(cont, succSC);
+						} else {
+							Set<STATE> newDownStates = 
+									differenceSet(stateCec.getDownStates(), succCEC.getDownStates()); 
+							Set<StateContainer<LETTER,STATE>> splitStates = 
+									new HashSet<StateContainer<LETTER,STATE>>();
+							splitStates.add(succSC);
+							updateCECs(splitStates, newEntries, newDownStates);
+							if (stateCec != succSC.getCommonEntriesComponent()) {
+								// succs CEC might have been updated. We add a
+								// new border it is meanwhile not the same as 
+								// downCec
+								stateCec.addBorderCrossing(cont, succSC);
+							}
+							cecSplitWorklist.processAll();
+						}
 					}
 				}
 				assert (!containsCallTransition(state, trans.getLetter(), succ));
@@ -694,8 +733,7 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 					HashSet<Entry<LETTER,STATE>> entries = new HashSet<Entry<LETTER,STATE>>();
 					entries.add(entry);
 					CommonEntriesComponent<LETTER,STATE> succCEC = 
-							new CommonEntriesComponent<LETTER,STATE>(entries, downStates);
-					m_AllCECs.add(succCEC);
+							getOrConstructCec(entries, downStates);
 					succCont = addState(succ, succCEC);
 				} else {
 					CommonEntriesComponent<LETTER,STATE> succCEC = succCont
@@ -739,18 +777,27 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 				if (succSC == null) {
 					succSC = addState(succ, downCec);
 				} else {
-					CommonEntriesComponent<LETTER,STATE> succCEC = succSC.getCommonEntriesComponent();
-					if (downCec != succCEC) {
+					CommonEntriesComponent<LETTER,STATE> currentSuccCEC = succSC.getCommonEntriesComponent();
+					if (downCec != currentSuccCEC) {
 						Set<Entry<LETTER,STATE>> newEntries = 
-								differenceSet(downCec.getEntries(), succCEC.getEntries());
-						Set<STATE> newDownStates = 
-								differenceSet(downCec.getDownStates(), succCEC.getDownStates()); 
-						Set<StateContainer<LETTER,STATE>> splitStates = 
-								new HashSet<StateContainer<LETTER,STATE>>();
-						splitStates.add(succSC);
-						updateCECs(splitStates, newEntries, newDownStates);
-						downCec.addBorderCrossing(downSc, succSC);
-						cecSplitWorklist.processAll();
+								differenceSet(downCec.getEntries(), currentSuccCEC.getEntries());
+						if (newEntries.isEmpty()) {
+							downCec.addBorderCrossing(downSc, succSC);
+						} else {
+							Set<STATE> newDownStates = 
+									differenceSet(downCec.getDownStates(), currentSuccCEC.getDownStates()); 
+							Set<StateContainer<LETTER,STATE>> splitStates = 
+									new HashSet<StateContainer<LETTER,STATE>>();
+							splitStates.add(succSC);
+							updateCECs(splitStates, newEntries, newDownStates);
+							if (downCec != succSC.getCommonEntriesComponent()) {
+								// succs CEC might have been updated. We add a
+								// new border it is meanwhile not the same as 
+								// downCec
+								downCec.addBorderCrossing(downSc, succSC);
+							}
+							cecSplitWorklist.processAll();
+						}
 					}
 				}
 				assert (!containsReturnTransition(state, down, trans.getLetter(), succ));
@@ -775,20 +822,47 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 				}
 			}
 			assert oldCec.m_Size == oldCec.m_ReturnOutCandidates.size();
-			if (isSubset(newEntries, oldCec.getEntries())) {
+			
+			assert (!newEntries.isEmpty());
+			// Remove from newEntries the ones that are already in the entries 
+			// of the oldCec (since this update has been added to the worklist 
+			// the set of entries of the splitStates CECs might have increased)
+			HashSet<Entry<LETTER,STATE>> entries = new HashSet<Entry<LETTER,STATE>>();
+			{
+				Iterator<Entry<LETTER,STATE>> it = newEntries.iterator();
+				Entry<LETTER,STATE> entry = null;
+				while (it.hasNext()) {
+					entry = it.next();
+					entries.add(entry);
+					if (oldCec.getEntries().contains(entry)) {
+						it.remove();
+					}
+				}
+			}
+			if (newEntries.isEmpty()) {
 				assert (isSubset(newDownStates, oldCec.getDownStates()));
 				return oldCec;
 			}
-			
-			HashSet<Entry<LETTER,STATE>> entries = new HashSet<Entry<LETTER,STATE>>();
 			entries.addAll(oldCec.getEntries());
-			entries.addAll(newEntries);
+			
+			// Also remove downStates that are not new any more
 			HashSet<STATE> downStates = new HashSet<STATE>();
+			{
+				Iterator<STATE> it = newDownStates.iterator();
+				STATE down = null;
+				while (it.hasNext()) {
+					down = it.next();
+					downStates.add(down);
+					if (oldCec.getEntries().contains(down)) {
+						it.remove();
+					}
+				}
+			}
 			downStates.addAll(oldCec.getDownStates());
-			downStates.addAll(newDownStates);
+			
 			CommonEntriesComponent<LETTER,STATE> result = 
-					new CommonEntriesComponent<LETTER,STATE>(entries, downStates);
-			m_AllCECs.add(result);
+					getOrConstructCec(entries, downStates);
+			boolean joinExistingCec = (result.m_Size != 0);
 			
 			Set<StateContainer<LETTER,STATE>> visited = new HashSet<StateContainer<LETTER,STATE>>();
 			List<StateContainer<LETTER,STATE>> worklist = new LinkedList<StateContainer<LETTER,STATE>>();
@@ -802,7 +876,10 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 				assert stateSc.getCommonEntriesComponent() == oldCec;
 				
 				oldCec.moveWithoutBorderUpdate(stateSc, result);
-				if (result.getReturnOutCandidates().contains(stateSc.getState())) {
+				if (result.getReturnOutCandidates().contains(stateSc.getState()) 
+						&& !m_WorklistAndCurrentState.contains(stateSc.getState())) {
+					// if m_ForwardWorklist contains this state it return 
+					// transitions will be added anyway.
 					for(STATE down : newDownStates) {
 						if (down != getEmptyStackState()) {
 							doubleDeckerWorklist.enqueue(stateSc.getState(), down);
@@ -810,48 +887,27 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 					}
 				}
 				oldCec.m_BorderOut.remove(stateSc);
-				Set<StateContainer<LETTER,STATE>> foreigners = null;
+				Set<StateContainer<LETTER,STATE>> foreigners = new HashSet<StateContainer<LETTER,STATE>>();
 				for (OutgoingInternalTransition<LETTER, STATE> trans : stateSc.internalSuccessors()) {
 					STATE succ = trans.getSucc();
 					StateContainer<LETTER,STATE> succSc = m_States.get(succ);
-					if (succSc.getCommonEntriesComponent() == oldCec) {
-						if (!visited.contains(succSc)) {
-							worklist.add(succSc);
-							visited.add(succSc);
-						}
-					} else if (succSc.getCommonEntriesComponent() != result) {
-						if (foreigners == null) {
-							foreigners = new HashSet<StateContainer<LETTER,STATE>>();
-						}
-						foreigners.add(succSc);
-						cecSplitWorklist.add(succSc, entries, downStates);
-					}
+					processSuccessorOnCecUpdate(oldCec, result, visited, 
+							worklist, foreigners, stateSc, succSc);
 				}
 				if (m_Summaries.containsKey(stateSc)) {
 					for (StateContainer<LETTER,STATE> succSc : m_Summaries.get(stateSc)) {
-						if (succSc.getCommonEntriesComponent() == oldCec) {
-							if (!visited.contains(succSc)) {
-								worklist.add(succSc);
-								visited.add(succSc);
-							}
-						} else if (succSc.getCommonEntriesComponent() != result) {
-							if (foreigners == null) {
-								foreigners = new HashSet<StateContainer<LETTER,STATE>>();
-							}
-							foreigners.add(succSc);
-							cecSplitWorklist.add(succSc, entries, downStates);
-						}
+						processSuccessorOnCecUpdate(oldCec, result, visited, 
+								worklist, foreigners, stateSc, succSc);
 					}
 				}
-				if (foreigners != null) {
+				if (!foreigners.isEmpty()) {
 					result.m_BorderOut.put(stateSc, foreigners);
 				}
 			}
 			
 			
 			
-			if (oldCec.m_Size != 0) {
-				assert (oldCec.m_Size > 0);
+			if (oldCec.m_Size != 0 || joinExistingCec) {
 				// we have to check all states of the newCec if they have an
 				// incoming transition from the oldCec and set m_BorderOut of
 				// oldCec accordingly
@@ -875,6 +931,15 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 					for (IncomingInternalTransition<LETTER, STATE> inTrans : sc.internalPredecessors()) {
 						STATE pred = inTrans.getPred();
 						StateContainer<LETTER,STATE> predSc = m_States.get(pred);
+						// predecessor might have already been in this CEC and
+						// stored that sc is foreigner (because in oldCEC)
+						// we remove this foreigner information since
+						// since both are in same CEC
+						if (predSc.getCommonEntriesComponent() == result) {
+							if (result.m_BorderOut.containsKey(predSc)) {
+								result.m_BorderOut.get(predSc).remove(sc);
+							}
+						}
 						if (predSc.getCommonEntriesComponent() == oldCec) {
 							oldCec.addBorderCrossing(predSc, sc);
 						}
@@ -882,6 +947,11 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 					for (IncomingReturnTransition<LETTER, STATE> inTrans : sc.returnPredecessors()) {
 						STATE hierPred = inTrans.getHierPred();
 						StateContainer<LETTER,STATE> predSc = m_States.get(hierPred);
+						if (predSc.getCommonEntriesComponent() == result) {
+							if (result.m_BorderOut.containsKey(predSc)) {
+								result.m_BorderOut.get(predSc).remove(sc);
+							}
+						}
 						if (predSc.getCommonEntriesComponent() == oldCec) {
 							oldCec.addBorderCrossing(predSc, sc);
 						}
@@ -894,6 +964,49 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 			assert result.m_Size == result.m_ReturnOutCandidates.size();
 			return result;
 		}
+
+
+		/**
+		 * Process successor succSc of stateSc during an update of CECs 
+		 * @param oldCec oldCec of stateSc
+		 * @param result newCec of stateSc
+		 * @param visited states visited during this cec update
+		 * @param worklist states that have to be processes for this cec update 
+		 * @param foreigners successors of stateSc that are neither in oldCec
+		 * nor in the newCec
+		 * @param stateSc
+		 * @param succSc
+		 * @return
+		 */
+		private void processSuccessorOnCecUpdate(
+				CommonEntriesComponent<LETTER, STATE> oldCec,
+				CommonEntriesComponent<LETTER, STATE> result,
+				Set<StateContainer<LETTER, STATE>> visited,
+				List<StateContainer<LETTER, STATE>> worklist,
+				Set<StateContainer<LETTER, STATE>> foreigners,
+				StateContainer<LETTER, STATE> stateSc,
+				StateContainer<LETTER, STATE> succSc) {
+			if (succSc.getCommonEntriesComponent() == oldCec) {
+				if (!visited.contains(succSc)) {
+					worklist.add(succSc);
+					visited.add(succSc);
+				}
+			} else if (succSc.getCommonEntriesComponent() != result) {
+				foreigners.add(succSc);
+				Set<Entry<LETTER,STATE>> succNewEntries = differenceSet(
+						stateSc.getCommonEntriesComponent().getEntries(), 
+						succSc.getCommonEntriesComponent().getEntries());
+				if(!succNewEntries.isEmpty()) {
+					Set<STATE> succNewDownStates = differenceSet(
+							stateSc.getCommonEntriesComponent().getDownStates(), 
+							succSc.getCommonEntriesComponent().getDownStates()); 
+					cecSplitWorklist.add(succSc, succNewEntries, succNewDownStates);
+				}
+			}
+		}
+		
+		
+		
 		
 		class DoubleDeckerWorklist {
 			LinkedList<STATE> m_UpStates = new LinkedList<STATE>();
@@ -1372,7 +1485,9 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 			}
 		}
 		boolean callPredsIndownStates = isSubset(callPreds, downStates);
+		assert (callPredsIndownStates);
 		boolean downStatesInCallPreds = isSubset(downStates, callPreds);
+		assert (downStatesInCallPreds);
 		return callPredsIndownStates && downStatesInCallPreds;
 	}
 	
