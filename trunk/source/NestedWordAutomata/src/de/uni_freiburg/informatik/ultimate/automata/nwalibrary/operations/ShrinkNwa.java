@@ -1368,7 +1368,8 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 					new HashSet<OutgoingReturnTransition<LETTER,STATE>>();
 			for (final OutgoingReturnTransition<LETTER, STATE> edge :
 					m_outRet.get(state)) {
-				if (edge.getLetter().equals(letter)) {
+				if (edge.getLetter().equals(letter) &&
+						edge.getHierPred().equals(hier)) {
 					result.add(edge);
 				}
 			}
@@ -1381,7 +1382,9 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 					new HashSet<OutgoingReturnTransition<LETTER,STATE>>();
 			for (final OutgoingReturnTransition<LETTER, STATE> edge :
 					m_outRet.get(state)) {
-				result.add(edge);
+				if (edge.getHierPred().equals(hier)) {
+					result.add(edge);
+				}
 			}
 			return result;
 		}
