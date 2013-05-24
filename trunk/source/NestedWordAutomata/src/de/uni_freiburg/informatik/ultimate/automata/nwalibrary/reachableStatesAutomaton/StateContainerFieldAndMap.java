@@ -40,11 +40,11 @@ class StateContainerFieldAndMap<LETTER,STATE> extends StateContainer<LETTER, STA
 	}
 
 
-	private boolean mapModeOutgoing() {
+	boolean mapModeOutgoing() {
 		return (mOut1 instanceof Map) ||(mOut2 instanceof Map) || (mOut3 instanceof Map); 
 	}
 	
-	private boolean mapModeIncoming() {
+	boolean mapModeIncoming() {
 		return (mIn1 instanceof Map) ||(mIn2 instanceof Map) || (mIn3 instanceof Map); 
 	}
 	

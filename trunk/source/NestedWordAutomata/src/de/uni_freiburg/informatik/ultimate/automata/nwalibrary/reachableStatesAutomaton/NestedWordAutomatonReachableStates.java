@@ -95,6 +95,7 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 			new ReachableStatesComputation();
 			new DeadEndComputation();
 			s_Logger.info(componentInformation());
+			s_Logger.info(stateContainerInformation());
 			assert (new TransitionConsitenceCheck<LETTER, STATE>(this)).consistentForAll();
 
 			assert (checkTransitionsReturnedConsistent());
@@ -120,18 +121,36 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 		}
 	}
 	
+	private String stateContainerInformation() {
+		int inMap = 0;
+		int outMap = 0;
+		for(STATE state : m_States.keySet()) {
+			StateContainer<LETTER, STATE> cont = m_States.get(state);
+			if (cont instanceof StateContainerFieldAndMap) {
+				if (((StateContainerFieldAndMap) cont).mapModeIncoming()) {
+					inMap++;
+				}
+				if (((StateContainerFieldAndMap) cont).mapModeOutgoing()) {
+					outMap++;
+				}
+			}
+		}
+		return m_States.size() + " StateContainers " + inMap + " in inMapMode" + outMap + " in outMapMode";
+	}
+	
 	private String componentInformation() {
 		int withoutStates = 0;
 		Map<Set<Entry<LETTER,STATE>>, Integer> occurrence = new HashMap<Set<Entry<LETTER,STATE>>, Integer>();
 		for (CommonEntriesComponent<LETTER,STATE> cec : m_AllCECs) {
 			Set<Entry<LETTER,STATE>> entries = cec.getEntries();
-			if (occurrence.containsKey(entries)) {
-				occurrence.put(entries,occurrence.get(entries) + 1);
-			} else {
-				occurrence.put(entries, 1);
-			}
 			if (cec.m_Size == 0) {
 				withoutStates++;
+			} else {
+				if (occurrence.containsKey(entries)) {
+					occurrence.put(entries,occurrence.get(entries) + 1);
+				} else {
+					occurrence.put(entries, 1);
+				}
 			}
 		}
 		return m_State2Entry.size() + "entries. " + m_AllCECs.size() + " components " + withoutStates + " without states ____" + occurrence.values();
@@ -582,16 +601,24 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 		}
 		
 
-		
+		private <E> Set<E> differenceSet(Set<E> minuend, Set<E> subtrahend) {
+			Set<E> result = new HashSet<E>();
+			for (E elem : minuend) {
+				if (!subtrahend.contains(elem)) {
+					result.add(elem);
+				}
+			}
+			return result;
+		}
 		
 		private void updateCECs(CommonEntriesComponent<LETTER,STATE> startCec,
 				HashSet<STATE> downStates) {
 			List<CommonEntriesComponent<LETTER,STATE>> worklist = new LinkedList<CommonEntriesComponent<LETTER,STATE>>(); 
 			Set<CommonEntriesComponent<LETTER,STATE>> visitedCECs = new HashSet<CommonEntriesComponent<LETTER,STATE>>();
 			worklist.add(startCec);
+			visitedCECs.add(startCec);
 			while(!worklist.isEmpty()) {
 				CommonEntriesComponent<LETTER,STATE> cec = worklist.remove(0);
-				visitedCECs.add(cec);
 				HashSet<STATE> newdownStates = new HashSet<STATE>();
 				for (STATE down : downStates) {
 					if (!cec.getDownStates().contains(down)) {
@@ -613,6 +640,7 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 									foreigner.getCommonEntriesComponent();
 							if (!visitedCECs.contains(foreignerCec)) {
 								worklist.add(foreignerCec);
+								visitedCECs.add(cec);
 							}
 						}
 					}
@@ -633,19 +661,12 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 				} else {
 					CommonEntriesComponent<LETTER,STATE> succCEC = succSC.getCommonEntriesComponent();
 					if (stateCec != succCEC) {
-						Set<Entry<LETTER,STATE>> newEntries = new HashSet<Entry<LETTER,STATE>>();
-						for (Entry<LETTER,STATE> entry : stateCec.getEntries()) {
-							if (!succCEC.getEntries().contains(entry)) {
-								newEntries.add(entry);
-							}
-						}
-						Set<STATE> newDownStates = new HashSet<STATE>();
-						for (STATE down : stateCec.getDownStates()) {
-							if (!succCEC.getDownStates().contains(down)) {
-								newDownStates.add(down);
-							}
-						}
-						Set<StateContainer<LETTER,STATE>> splitStates = new HashSet<StateContainer<LETTER,STATE>>();
+						Set<Entry<LETTER,STATE>> newEntries = 
+								differenceSet(stateCec.getEntries(), succCEC.getEntries());
+						Set<STATE> newDownStates = 
+								differenceSet(stateCec.getDownStates(), succCEC.getDownStates()); 
+						Set<StateContainer<LETTER,STATE>> splitStates = 
+								new HashSet<StateContainer<LETTER,STATE>>();
 						splitStates.add(succSC);
 						updateCECs(splitStates, newEntries, newDownStates);
 						stateCec.addBorderCrossing(cont, succSC);
@@ -718,13 +739,12 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 				} else {
 					CommonEntriesComponent<LETTER,STATE> succCEC = succSC.getCommonEntriesComponent();
 					if (downCec != succCEC) {
-						Set<Entry<LETTER,STATE>> newEntries = new HashSet<Entry<LETTER,STATE>>();
-						newEntries.addAll(downCec.getEntries());
-						newEntries.removeAll(succCEC.getEntries());						
-						Set<STATE> newDownStates = new HashSet<STATE>();
-						newDownStates.addAll(downCec.getDownStates());
-						newDownStates.removeAll(succCEC.getDownStates());
-						Set<StateContainer<LETTER,STATE>> splitStates = new HashSet<StateContainer<LETTER,STATE>>();
+						Set<Entry<LETTER,STATE>> newEntries = 
+								differenceSet(downCec.getEntries(), succCEC.getEntries());
+						Set<STATE> newDownStates = 
+								differenceSet(downCec.getDownStates(), succCEC.getDownStates()); 
+						Set<StateContainer<LETTER,STATE>> splitStates = 
+								new HashSet<StateContainer<LETTER,STATE>>();
 						splitStates.add(succSC);
 						updateCECs(splitStates, newEntries, newDownStates);
 						downCec.addBorderCrossing(downSc, succSC);
