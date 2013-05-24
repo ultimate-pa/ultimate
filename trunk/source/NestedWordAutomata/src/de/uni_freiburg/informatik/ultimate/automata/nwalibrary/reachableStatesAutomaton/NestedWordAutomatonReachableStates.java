@@ -522,7 +522,6 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 
 			while (!m_ForwardWorklist.isEmpty()) {
 				StateContainer<LETTER,STATE> cont = m_ForwardWorklist.remove(0);
-				cont.toString();
 				addInternalsAndSuccessors(cont);
 				addCallsAndSuccessors(cont);
 
@@ -673,6 +672,7 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 						cecSplitWorklist.processAll();
 					}
 				}
+				assert (!containsCallTransition(state, trans.getLetter(), succ));
 				cont.addInternalOutgoing(trans);
 				succSC.addInternalIncoming(new IncomingInternalTransition<LETTER, STATE>(state, trans.getLetter()));
 			}
@@ -718,6 +718,7 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 					}
 				}
 				entry.getDownStates().put(state, ReachProp.REACHABLE);
+				assert (!containsCallTransition(state, trans.getLetter(), succ));
 				cont.addCallOutgoing(trans);
 				succCont.addCallIncoming(
 						new IncomingCallTransition<LETTER, STATE>(state, trans.getLetter()));
@@ -732,6 +733,7 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 			CommonEntriesComponent<LETTER,STATE> downCec = downSc.getCommonEntriesComponent();
 			for (OutgoingReturnTransition<LETTER, STATE> trans : 
 									m_Operand.returnSuccessorsGivenHier(state,down)) {
+				assert (down.equals(trans.getHierPred()));
 				STATE succ = trans.getSucc();
 				StateContainer<LETTER,STATE> succSC = m_States.get(succ);
 				if (succSC == null) {
@@ -751,6 +753,7 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 						cecSplitWorklist.processAll();
 					}
 				}
+				assert (!containsReturnTransition(state, down, trans.getLetter(), succ));
 				stateSc.addReturnOutgoing(trans);
 				succSC.addReturnIncoming(
 						new IncomingReturnTransition<LETTER, STATE>(stateSc.getState(), down, trans.getLetter()));
