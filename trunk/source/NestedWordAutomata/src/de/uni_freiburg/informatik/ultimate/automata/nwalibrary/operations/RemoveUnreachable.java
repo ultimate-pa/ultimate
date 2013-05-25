@@ -11,6 +11,9 @@ import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.DoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingCallTransition;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingInternalTransition;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.ReachableStatesCopy;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.NestedWordAutomatonReachableStates;
@@ -86,6 +89,30 @@ public class RemoveUnreachable<LETTER,STATE> implements IOperation<LETTER,STATE>
 			// ResultChecker.isSubset(m_Result.getStates(),reachalbeStatesCopy.getStates());
 			assert correct;
 			for (STATE state : reachalbeStatesCopy.getStates()) {
+				for (OutgoingInternalTransition<LETTER, STATE> outTrans : reachalbeStatesCopy.internalSuccessors(state)) {
+					correct &= m_Result.containsInternalTransition(state, outTrans.getLetter(), outTrans.getSucc());
+					assert correct;
+				}
+				for (OutgoingCallTransition<LETTER, STATE> outTrans : reachalbeStatesCopy.callSuccessors(state)) {
+					correct &= m_Result.containsCallTransition(state, outTrans.getLetter(), outTrans.getSucc());
+					assert correct;
+				}
+				for (OutgoingReturnTransition<LETTER, STATE> outTrans : reachalbeStatesCopy.returnSuccessors(state)) {
+					correct &= m_Result.containsReturnTransition(state, outTrans.getHierPred(), outTrans.getLetter(), outTrans.getSucc());
+					assert correct;
+				}
+				for (OutgoingInternalTransition<LETTER, STATE> outTrans : m_Result.internalSuccessors(state)) {
+					correct &= reachalbeStatesCopy.containsInternalTransition(state, outTrans.getLetter(), outTrans.getSucc());
+					assert correct;
+				}
+				for (OutgoingCallTransition<LETTER, STATE> outTrans : m_Result.callSuccessors(state)) {
+					correct &= reachalbeStatesCopy.containsCallTransition(state, outTrans.getLetter(), outTrans.getSucc());
+					assert correct;
+				}
+				for (OutgoingReturnTransition<LETTER, STATE> outTrans : m_Result.returnSuccessors(state)) {
+					correct &= reachalbeStatesCopy.containsReturnTransition(state, outTrans.getHierPred(), outTrans.getLetter(), outTrans.getSucc());
+					assert correct;
+				}
 				Set<STATE> rCSdownStates = reachalbeStatesCopy
 						.getDownStates(state);
 				Set<STATE> rCAdownStates = m_Result.getDownStates(state);
