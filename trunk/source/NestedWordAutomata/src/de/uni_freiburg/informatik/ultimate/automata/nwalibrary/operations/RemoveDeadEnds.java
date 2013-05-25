@@ -1,5 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations;
 
+import java.util.Collection;
 import java.util.Set;
 
 import org.apache.log4j.Logger;
@@ -86,6 +87,12 @@ public class RemoveDeadEnds<LETTER,STATE> implements IOperation<LETTER,STATE> {
 //		correct &= ResultChecker.isSubset(reachalbeStatesCopy.getStates(),m_Result.getStates());
 		assert correct;
 //		correct &= ResultChecker.isSubset(m_Result.getStates(),reachalbeStatesCopy.getStates());
+		assert correct;
+		Collection<STATE> rsaStates = m_Result.getStates();
+		Collection<STATE> rscStates = reachalbeStatesCopy.getStates();
+		correct &= ResultChecker.isSubset(rsaStates,rscStates);
+		assert correct;
+		correct &= ResultChecker.isSubset(rscStates,rsaStates);
 		assert correct;
 		for (STATE state : reachalbeStatesCopy.getStates()) {
 			for (OutgoingInternalTransition<LETTER, STATE> outTrans : reachalbeStatesCopy.internalSuccessors(state)) {
