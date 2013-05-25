@@ -198,7 +198,7 @@ public class NestedWordAutomaton<LETTER,STATE> implements INestedWordAutomatonOl
 		}
 		//FIXME remove this
 //		return state;
-		assert checkTransitionsReturnedConsistent();
+//		assert checkTransitionsReturnedConsistent();
 	}
 	
 	Set<LETTER> m_EmptySetOfLetters = 
