@@ -62,7 +62,11 @@ public class SequentialComposition extends CodeBlock {
 		int numberCalls = 0;
 		int numberReturns = 0;
 		for (int i=0; i<codeBlocks.length; i++) {
-			if (codeBlocks[i] instanceof Call) {
+			if (codeBlocks[i] instanceof InterproceduralSequentialComposition) {
+				throw new IllegalArgumentException("InterproceduralSequentialComposition " +
+						"must not participate in sequential compositions");
+			}
+			else if (codeBlocks[i] instanceof Call) {
 				numberCalls++;
 			} else if (codeBlocks[i] instanceof Return) {
 				numberReturns++;
@@ -78,14 +82,18 @@ public class SequentialComposition extends CodeBlock {
 			codeBlocks[i].disconnectTarget();
 			prettyPrinted.append(codeBlocks[i].getPrettyPrintedStatements());
 		}
-		if (numberCalls != numberReturns) {
-			throw new IllegalArgumentException("wrong number of calls and returns");
-		}
+		checkNumberOfCallsAndReturns(numberCalls, numberReturns);
 		m_TransitionFormula = getInterproceduralTransFormula(boogie2smt, false, codeBlocks);
 		m_TransitionFormulaWithBranchEncoders = getInterproceduralTransFormula(boogie2smt, true, codeBlocks);
 		
 		m_PrettyPrinted = prettyPrinted.toString();
 		updatePayloadName();
+	}
+	
+	protected void checkNumberOfCallsAndReturns(int numberCalls, int  numberReturns) {
+		if(numberCalls != numberReturns) {
+			throw new IllegalArgumentException("same number of calls and returns required");
+		}
 	}
 
 	@Override
@@ -139,7 +147,6 @@ public class SequentialComposition extends CodeBlock {
 					} else {
 						beforeFirstPendingCall.add(codeBlocks[i].getTransitionFormula());
 					}
-					
 				}
 			} else {
 				if (codeBlocks[i] instanceof Return) {
