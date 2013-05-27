@@ -2,7 +2,9 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesA
 
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.IncomingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.IncomingInternalTransition;
@@ -17,6 +19,7 @@ public abstract class StateContainer<LETTER, STATE> {
 	protected final STATE m_State;
 	protected ReachProp m_ReachProp;
 	protected final Map<STATE, ReachProp> m_DownStates;
+	protected Set<STATE> m_UnpropagatedDownStates;
 	protected final boolean m_CanHaveOutgoingReturn;
 
 	public String toString() {
@@ -76,6 +79,26 @@ public abstract class StateContainer<LETTER, STATE> {
 
 	protected STATE getState() {
 		return m_State;
+	}
+	
+	ReachProp addDownState(STATE down) {
+		ReachProp oldValue = m_DownStates.put(down, ReachProp.REACHABLE);
+		if (oldValue == null) {
+			if (m_UnpropagatedDownStates == null) {
+				m_UnpropagatedDownStates = new HashSet<STATE>();
+			}
+			m_UnpropagatedDownStates.add(down);
+		}
+		return oldValue;
+	}
+	
+	
+	Set<STATE> getUnpropagatedDownStates() {
+		return m_UnpropagatedDownStates;
+	}
+	
+	void eraseUnpropagatedDownStates() {
+		m_UnpropagatedDownStates = null;
 	}
 
 	protected boolean containsInternalTransition(LETTER letter, STATE succ) {

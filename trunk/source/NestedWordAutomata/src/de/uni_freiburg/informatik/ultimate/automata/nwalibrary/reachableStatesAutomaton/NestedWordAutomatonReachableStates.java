@@ -9,6 +9,7 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.Set;
 
 import org.apache.log4j.Logger;
@@ -71,6 +72,8 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 
 
 	private Map<StateContainer<LETTER,STATE>,Set<StateContainer<LETTER,STATE>>> m_Summaries = new HashMap<StateContainer<LETTER,STATE>,Set<StateContainer<LETTER,STATE>>>();
+
+	private Set<LETTER> m_EmptySetOfLetters = new HashSet<LETTER>(0);
 	
 
 	
@@ -325,6 +328,12 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 		}
 		succS.add(succ);
 	}
+	
+	
+	public Collection<LETTER> lettersSummary(STATE hier) {
+		Map<LETTER, Map<STATE, Set<STATE>>> map = m_ReturnSummary.get(hier);
+		return map == null ? m_EmptySetOfLetters  : map.keySet();
+	}
 
 	@Override
 	public Iterable<SummaryReturnTransition<LETTER, STATE>> 
@@ -351,6 +360,76 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 		}
 		return result;
 	}
+	
+	
+
+
+	public Iterable<SummaryReturnTransition<LETTER, STATE>> returnSummarySuccessor(final STATE hier) {
+		return new Iterable<SummaryReturnTransition<LETTER, STATE>>() {
+			/**
+			 * Iterates over all IncomingReturnTransition of succ.
+			 * Iterates over all incoming return letters and uses the 
+			 * iterators returned by returnPredecessors(letter, succ)
+			 */
+			@Override
+			public Iterator<SummaryReturnTransition<LETTER, STATE>> iterator() {
+				Iterator<SummaryReturnTransition<LETTER, STATE>> iterator = 
+						new Iterator<SummaryReturnTransition<LETTER, STATE>>() {
+					Iterator<LETTER> m_LetterIterator;
+					LETTER m_CurrentLetter;
+					Iterator<SummaryReturnTransition<LETTER, STATE>> m_CurrentIterator;
+					{
+						m_LetterIterator = lettersSummary(hier).iterator();
+						nextLetter();
+					}
+
+					private void nextLetter() {
+						if (m_LetterIterator.hasNext()) {
+							do {
+								m_CurrentLetter = m_LetterIterator.next();
+								m_CurrentIterator = returnSummarySuccessor(
+										m_CurrentLetter, hier).iterator();
+							} while (!m_CurrentIterator.hasNext()
+									&& m_LetterIterator.hasNext());
+							if (!m_CurrentIterator.hasNext()) {
+								m_CurrentLetter = null;
+								m_CurrentIterator = null;
+							}
+						} else {
+							m_CurrentLetter = null;
+							m_CurrentIterator = null;
+						}
+					}
+
+					@Override
+					public boolean hasNext() {
+						return m_CurrentLetter != null;
+					}
+
+					@Override
+					public SummaryReturnTransition<LETTER, STATE> next() {
+						if (m_CurrentLetter == null) {
+							throw new NoSuchElementException();
+						} else {
+							SummaryReturnTransition<LETTER, STATE> result = 
+									m_CurrentIterator.next();
+							if (!m_CurrentIterator.hasNext()) {
+								nextLetter();
+							}
+							return result;
+						}
+					}
+
+					@Override
+					public void remove() {
+						throw new UnsupportedOperationException();
+					}
+				};
+				return iterator;
+			}
+		};
+	}
+	
 
 	@Override
 	public Iterable<IncomingInternalTransition<LETTER, STATE>> internalPredecessors(
@@ -484,10 +563,12 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 	////////////////////////////////////////////////////////////////////////////
 	
 	private class ReachableStatesComputation {
-		private final DoubleDeckerWorklist doubleDeckerWorklist = 
-				new DoubleDeckerWorklist();
 		private final LinkedList<StateContainer<LETTER,STATE>> m_ForwardWorklist = 
 				new LinkedList<StateContainer<LETTER,STATE>>();
+		private final LinkedList<StateContainer<LETTER,STATE>> m_DownPropagationWorklist =
+				new LinkedList<StateContainer<LETTER,STATE>>();
+		
+		
 //		/**
 //		 * Contains states that are in the worklist or processed at the moment.
 //		 * Used to avoid insertion of elements to doubleDecker worklist whose
@@ -499,35 +580,61 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 		ReachableStatesComputation() throws OperationCanceledException {
 			addInitialStates(m_Operand.getInitialStates());
 
-			while (!m_ForwardWorklist.isEmpty()) {
-				StateContainer<LETTER,STATE> cont = m_ForwardWorklist.remove(0);
-				
-				if (candidateForOutgoingReturn(cont.getState())) {
-					Set<STATE> downStatesAtBeginningOfIteration = 
-							cont.getDownStates().keySet();
-					for (STATE down : downStatesAtBeginningOfIteration) {
-						if (down != getEmptyStackState()) {
-							doubleDeckerWorklist.enqueue(cont, down);
+			do {
+				while (!m_ForwardWorklist.isEmpty()) {
+					StateContainer<LETTER,STATE> cont = m_ForwardWorklist.remove(0);
+					cont.eraseUnpropagatedDownStates();
+					Set<STATE> newDownStatesFormSelfloops = null;
+					
+					if (candidateForOutgoingReturn(cont.getState())) {
+						for (STATE down : cont.getDownStates().keySet()) {
+							if (down != getEmptyStackState()) {
+								Set<STATE> newDownStates = 
+										addReturnsAndSuccessors(cont, down);
+								if (newDownStates != null) {
+									if (newDownStatesFormSelfloops == null) {
+										newDownStatesFormSelfloops = new HashSet<STATE>();
+									}
+									newDownStatesFormSelfloops.addAll(newDownStates);
+								}
+							}
 						}
+					}
+
+					addInternalsAndSuccessors(cont);
+					{
+						Set<STATE> newDownStates = addCallsAndSuccessors(cont);
+						if (newDownStates != null) {
+							if (newDownStatesFormSelfloops == null) {
+								newDownStatesFormSelfloops = new HashSet<STATE>();
+							}
+							newDownStatesFormSelfloops.addAll(newDownStates);
+						}
+					}
+					
+					if (newDownStatesFormSelfloops != null) {
+						assert !newDownStatesFormSelfloops.isEmpty();
+						for (STATE down : newDownStatesFormSelfloops) {
+							cont.addDownState(down);
+						}
+						m_DownPropagationWorklist.add(cont);
+					}
+
+					if (!UltimateServices.getInstance().continueProcessing()) {
+						throw new OperationCanceledException();
 					}
 				}
 				
-				addInternalsAndSuccessors(cont);
-				addCallsAndSuccessors(cont);
-
-
-
-				while (!doubleDeckerWorklist.isEmpty()) {
-					Object[] doubleDecker = doubleDeckerWorklist.dequeue();
-					addReturnsAndSuccessors((StateContainer)doubleDecker[0], (STATE) doubleDecker[1]);
+				while(m_ForwardWorklist.isEmpty()) {
+					StateContainer<LETTER,STATE> cont = 
+							m_DownPropagationWorklist.remove(0);
+					propagateNewDownStates(cont);
 				}
 				
-				if (!UltimateServices.getInstance().continueProcessing()) {
-					throw new OperationCanceledException();
-				}
-			}
+				
+			} while (!m_DownPropagationWorklist.isEmpty());
 			assert (m_ForwardWorklist.isEmpty());
-			assert (doubleDeckerWorklist.isEmpty());
+			assert (m_DownPropagationWorklist.isEmpty());
 			assert checkTransitionsReturnedConsistent();
 		}
 		
@@ -588,7 +695,7 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 				if (succSC == null) {
 					succSC = addState(succ, new HashMap(cont.getDownStates()));
 				} else {
-					propagateNewDownStates(succSC, cont.getDownStates());
+					addNewDownStates(cont, succSC, cont.getDownStates().keySet());
 				}
 				assert (!containsCallTransition(state, trans.getLetter(), succ));
 				cont.addInternalOutgoing(trans);
@@ -600,7 +707,8 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 
 
 
-		private void addCallsAndSuccessors(StateContainer<LETTER,STATE> cont) {
+		private Set<STATE> addCallsAndSuccessors(StateContainer<LETTER,STATE> cont) {
+			boolean addedSelfloop = false;
 			STATE state = cont.getState();
 			for (OutgoingCallTransition<LETTER, STATE> trans : 
 										m_Operand.callSuccessors(cont.getState())) {
@@ -611,19 +719,31 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 				if (succCont == null) {
 					succCont = addState(succ, succDownStates);
 				} else {
-					propagateNewDownStates(succCont, succDownStates);
+					addNewDownStates(cont, succCont, succDownStates.keySet());
+					if (cont == succCont) {
+						addedSelfloop = true;
+					}
+				}
 				assert (!containsCallTransition(state, trans.getLetter(), succ));
 				cont.addCallOutgoing(trans);
 				succCont.addCallIncoming(
 						new IncomingCallTransition<LETTER, STATE>(state, trans.getLetter()));
-				}
 			}
+			if (addedSelfloop) {
+				HashSet<STATE> newDownStates = new HashSet<STATE>(1);
+				newDownStates.add(state);
+				return newDownStatesSelfloop(cont, newDownStates);
+			} else {
+				return null;
+			}
+
 		}
 		
 		
 
-		private void addReturnsAndSuccessors(StateContainer<LETTER,STATE> stateSc, STATE down) {
-			STATE state = stateSc.getState();
+		private Set<STATE> addReturnsAndSuccessors(StateContainer<LETTER,STATE> cont, STATE down) {
+			boolean addedSelfloop = false;
+			STATE state = cont.getState();
 			StateContainer<LETTER,STATE> downCont = null;
 			for (OutgoingReturnTransition<LETTER, STATE> trans : 
 									m_Operand.returnSuccessorsGivenHier(state,down)) {
@@ -632,79 +752,107 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 					downCont = m_States.get(down);
 				}
 				STATE succ = trans.getSucc();
-				StateContainer<LETTER,STATE> succSC = m_States.get(succ);
-				if (succSC == null) {
-					succSC = addState(succ, new HashMap(downCont.getDownStates()));
+				StateContainer<LETTER,STATE> succCont = m_States.get(succ);
+				if (succCont == null) {
+					succCont = addState(succ, new HashMap(downCont.getDownStates()));
 				} else {
-					propagateNewDownStates(succSC, downCont.getDownStates());
+					addNewDownStates(cont, succCont, downCont.getDownStates().keySet());
+					if (cont == succCont) {
+						addedSelfloop = true;
+					}
 				}
 				assert (!containsReturnTransition(state, down, trans.getLetter(), succ));
-				stateSc.addReturnOutgoing(trans);
-				succSC.addReturnIncoming(
-						new IncomingReturnTransition<LETTER, STATE>(stateSc.getState(), down, trans.getLetter()));
+				cont.addReturnOutgoing(trans);
+				succCont.addReturnIncoming(
+						new IncomingReturnTransition<LETTER, STATE>(cont.getState(), down, trans.getLetter()));
 				addReturnSummary(state, down, trans.getLetter(), succ);
-				addSummary(downCont, succSC);
+				addSummary(downCont, succCont);
 			}
-
-		}
-
-		
-		private void propagateNewDownStates(
-				StateContainer<LETTER, STATE> succSC,
-				Map<STATE, ReachProp> downStates) {
-			// TODO Auto-generated method stub
-			
+			if (addedSelfloop) {
+				return newDownStatesSelfloop(cont, downCont.getDownStates().keySet());
+			} else {
+				return null;
+			}
 		}
 
 
-		private void propagateNewDownStates(StateContainer<LETTER, STATE> stateSC,
-				HashSet<STATE> newDownStates) {
-			{
-				Iterator<STATE> it = newDownStates.iterator();
-				STATE down;
-				do {
-					down = it.next();
-					if (!stateSC.getDownStates().keySet().contains(down)) {
-						it.remove();
+		/**
+		 * @param cont
+		 * @param newDownStatesSelfloop
+		 * @param downCont
+		 * @return
+		 */
+		private Set<STATE> newDownStatesSelfloop(StateContainer<LETTER, STATE> cont,
+				Set<STATE> propagatedDownStates) {
+			Set<STATE> newDownStates = null;
+			for (STATE downs : propagatedDownStates) {
+				if (!cont.getDownStates().keySet().contains(downs)) {
+					if (newDownStates == null) {
+						newDownStates = new HashSet<STATE>();
 					}
-				} while (it.hasNext());
-			}
-			if (!newDownStates.isEmpty()) {
-				for (OutgoingInternalTransition<LETTER, STATE> succ : stateSC.internalSuccessors()) {
-					StateContainer<LETTER, STATE> succCont = m_States.get(succ.getSucc());
-					Collection<STATE> succNewDown;
-					Map<STATE, ReachProp> succDownStates = succCont.getDownStates();
-					for (STATE down : newDownStates) {
-					}
+					newDownStates.add(downs);
 				}
 				
 			}
-
-
-			
+			return newDownStates;
 		}
+
 		
-		
-		
-		class DoubleDeckerWorklist {
-			LinkedList<StateContainer<LETTER,STATE>> m_UpStates = new LinkedList<StateContainer<LETTER,STATE>>();
-			LinkedList<STATE> m_DownStates = new LinkedList<STATE>();
-			
-			private void enqueue(StateContainer<LETTER,STATE> up, STATE down) {
-				m_UpStates.add(up);
-				m_DownStates.add(down);
-			}
-			
-			private boolean isEmpty() {
-				return m_UpStates.isEmpty();
-			}
-			
-			private Object[] dequeue() {
-				return new Object[] { m_UpStates.remove(0), m_DownStates.remove(0) }; 
+		private void addNewDownStates(StateContainer<LETTER, STATE> cont,
+				StateContainer<LETTER, STATE> succCont,
+				Set<STATE> potentiallyNewDownStates) {
+			if (cont == succCont) {
+				return;
+			} else {
+				boolean newDownStateWasPropagated = false;
+				for (STATE down : potentiallyNewDownStates) {
+					ReachProp oldValue = succCont.addDownState(down);
+					if (oldValue == null) {
+						newDownStateWasPropagated = true;
+					}
+				}
+				if (newDownStateWasPropagated) {
+					m_DownPropagationWorklist.add(succCont);
+				}
 			}
 		}
-		
-		
+
+
+		private void propagateNewDownStates(StateContainer<LETTER, STATE> cont) {
+			boolean newStatesAdded = false;
+			Set<STATE> unpropagatedDownStates = cont.getUnpropagatedDownStates();
+			for (OutgoingInternalTransition<LETTER, STATE> trans : cont.internalSuccessors()) {
+				StateContainer<LETTER, STATE> succCont = m_States.get(trans.getSucc());
+				addNewDownStates(cont, succCont, unpropagatedDownStates);
+			}
+			for (SummaryReturnTransition<LETTER, STATE> trans : returnSummarySuccessor(cont.getState())) {
+				StateContainer<LETTER, STATE> succCont = m_States.get(trans.getSucc());
+				addNewDownStates(cont, succCont, unpropagatedDownStates);
+			}
+			if(candidateForOutgoingReturn(cont.getState())) {
+				HashSet<STATE> newDownStatesFormSelfloops = new HashSet<STATE>();
+				for (STATE down : cont.getDownStates().keySet()) {
+					if (down != getEmptyStackState()) {
+						Set<STATE> newDownStates = 
+								addReturnsAndSuccessors(cont, down);
+						if (newDownStates != null) {
+							if (newDownStatesFormSelfloops == null) {
+								newDownStatesFormSelfloops = new HashSet<STATE>();
+							}
+							newDownStatesFormSelfloops.addAll(newDownStates);
+						}
+					}
+				}
+				if (newDownStatesFormSelfloops != null) {
+					assert !newDownStatesFormSelfloops.isEmpty();
+					for (STATE down : newDownStatesFormSelfloops) {
+						cont.addDownState(down);
+					}
+					m_DownPropagationWorklist.add(cont);
+				}
+			}
+			
+		}
 	}
 
 		
