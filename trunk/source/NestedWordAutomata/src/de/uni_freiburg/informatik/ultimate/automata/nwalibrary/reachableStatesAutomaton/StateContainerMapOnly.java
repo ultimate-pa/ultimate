@@ -15,6 +15,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingCallTrans
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.SummaryReturnTransition;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.NestedWordAutomatonReachableStates.ReachProp;
 
 /**
  * Contains STATES and information of transitions.
@@ -81,8 +82,8 @@ class StateContainerMapOnly<LETTER,STATE> extends StateContainer<LETTER, STATE> 
 
 	private Collection<STATE> m_EmptySetOfStates = new HashSet<STATE>(0);
 
-	StateContainerMapOnly(STATE state, CommonEntriesComponent<LETTER,STATE> cec) {
-		super(state,cec);
+	StateContainerMapOnly(STATE state, HashMap<STATE,ReachProp> downStates, boolean canHaveOutgoingReturn) {
+		super(state,downStates, canHaveOutgoingReturn);
 	}
 
 

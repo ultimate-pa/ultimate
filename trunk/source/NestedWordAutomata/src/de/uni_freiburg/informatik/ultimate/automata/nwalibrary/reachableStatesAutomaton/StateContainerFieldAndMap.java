@@ -16,6 +16,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.IncomingReturnTra
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingReturnTransition;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.NestedWordAutomatonReachableStates.ReachProp;
 
 /**
  * Contains STATES and information of transitions.
@@ -35,8 +36,8 @@ class StateContainerFieldAndMap<LETTER,STATE> extends StateContainer<LETTER, STA
 	private Object mIn2;
 	private Object mIn3;
 
-	StateContainerFieldAndMap(STATE state, CommonEntriesComponent<LETTER,STATE> cec) {
-		super(state,cec);
+	StateContainerFieldAndMap(STATE state, HashMap<STATE,ReachProp> downStates, boolean canHaveOutgoingReturn) {
+		super(state,downStates,canHaveOutgoingReturn);
 	}
 
 

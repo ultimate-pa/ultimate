@@ -1,6 +1,8 @@
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton;
 
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.IncomingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.IncomingInternalTransition;
@@ -8,14 +10,14 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.IncomingReturnTra
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingReturnTransition;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.SummaryReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.NestedWordAutomatonReachableStates.ReachProp;
 
 public abstract class StateContainer<LETTER, STATE> {
 
 	protected final STATE m_State;
 	protected ReachProp m_ReachProp;
-	protected CommonEntriesComponent<LETTER,STATE> cec;
+	protected final Map<STATE, ReachProp> m_DownStates;
+	protected final boolean m_CanHaveOutgoingReturn;
 
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
@@ -48,10 +50,11 @@ public abstract class StateContainer<LETTER, STATE> {
 		return sb.toString();
 	}
 
-	public StateContainer(STATE state, CommonEntriesComponent<LETTER,STATE> cec) {
+	public StateContainer(STATE state, HashMap<STATE,ReachProp> downStates, boolean canHaveOutgoingReturn) {
 		m_State = state;
-		this.cec = cec;
+		m_DownStates = downStates;
 		m_ReachProp = ReachProp.REACHABLE;
+		m_CanHaveOutgoingReturn = canHaveOutgoingReturn;
 	}
 
 	public ReachProp getReachProp() {
@@ -62,12 +65,8 @@ public abstract class StateContainer<LETTER, STATE> {
 		m_ReachProp = reachProp;
 	}
 
-	protected CommonEntriesComponent<LETTER,STATE> getCommonEntriesComponent() {
-		return cec;
-	}
-
-	protected void setCommonEntriesComponent(CommonEntriesComponent<LETTER,STATE> cec) {
-		this.cec = cec;
+	protected  Map<STATE, ReachProp> getDownStates() {
+		return m_DownStates;
 	}
 
 	@Override
@@ -77,15 +76,6 @@ public abstract class StateContainer<LETTER, STATE> {
 
 	protected STATE getState() {
 		return m_State;
-	}
-
-	protected boolean isEntry() {
-		for (Entry<LETTER,STATE> entry : this.cec.getEntries()) {
-			if (entry.getState().equals(this.getState())) {
-				return true;
-			}
-		}
-		return false;
 	}
 
 	protected boolean containsInternalTransition(LETTER letter, STATE succ) {
