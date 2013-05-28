@@ -981,19 +981,21 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 				STATE lin = inTrans.getLinPred();
 				StateContainer<LETTER,STATE> linCont = m_States.get(lin);
 				if (linCont.getReachProp() != ReachProp.NODEADEND_AD) {
-					if (linCont == cont) {
-						boolean hierAlreadyPropagated = 
-								(cont.getDownStates().get(hier) == ReachProp.NODEADEND_SD);
-						if (!hierAlreadyPropagated) {
-							if (newUnpropagatedDownStatesSelfloop == null) {
-								newUnpropagatedDownStatesSelfloop = new HashSet<STATE>();
+					if (atLeastOneOccursAsDownState(hierCont, unpropagatedDownStates)) {
+						if (linCont == cont) {
+							boolean hierAlreadyPropagated = 
+									(cont.getDownStates().get(hier) == ReachProp.NODEADEND_SD);
+							if (!hierAlreadyPropagated) {
+								if (newUnpropagatedDownStatesSelfloop == null) {
+									newUnpropagatedDownStatesSelfloop = new HashSet<STATE>();
+								}
+								newUnpropagatedDownStatesSelfloop.add(hier);
 							}
-							newUnpropagatedDownStatesSelfloop.add(hier);
+						} else {
+							HashSet<STATE> potentiallyNewDownState = new HashSet<STATE>(1);
+							potentiallyNewDownState.add(hier);
+							addNewDownStates(cont, linCont, potentiallyNewDownState);
 						}
-					} else {
-						HashSet<STATE> potentiallyNewDownState = new HashSet<STATE>(1);
-						potentiallyNewDownState.add(hier);
-						addNewDownStates(cont, linCont, potentiallyNewDownState);
 					}
 
 				}
@@ -1008,6 +1010,17 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 		}
 		
 	
+		private boolean atLeastOneOccursAsDownState(
+				StateContainer<LETTER, STATE> hierCont,
+				Set<STATE> unpropagatedDownStates) {
+			for (STATE state : unpropagatedDownStates) {
+				if (hierCont.getDownStates().containsKey(state)) {
+					return true;
+				}
+			}
+			return false;
+		}
+
 		private void addNewDownStates(StateContainer<LETTER, STATE> cont,
 				StateContainer<LETTER, STATE> predCont,
 				Set<STATE> potentiallyNewDownStates) {
@@ -1017,9 +1030,6 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 				boolean isAlreadyInWorklist = 
 						(predCont.getUnpropagatedDownStates() != null);
 				assert (isAlreadyInWorklist == m_PropagationWorklist.contains(predCont));
-				if (!isAlreadyInWorklist) {
-					assert !m_PropagationWorklist.contains(predCont);
-				}
 				assert (!isAlreadyInWorklist || predCont.getReachProp() == ReachProp.NODEADEND_SD);
 				boolean newDownStateWasPropagated = false;
 				for (STATE down : potentiallyNewDownStates) {
@@ -1028,6 +1038,7 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 						predCont.addNonDeadEndDownState(down);
 						newDownStateWasPropagated = true;
 					}
+				}
 				if (newDownStateWasPropagated) {
 					if (!isAlreadyInWorklist) {
 						assert !m_PropagationWorklist.contains(predCont);
@@ -1042,14 +1053,7 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 				}
 			}
 		}
-		
 	}
-			
-		
-			
-		
-		
-}
 
 
 	
