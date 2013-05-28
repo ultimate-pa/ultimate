@@ -629,7 +629,7 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 				}
 				
 				
-			} while (!m_DownPropagationWorklist.isEmpty());
+			} while (!m_DownPropagationWorklist.isEmpty() || !m_ForwardWorklist.isEmpty());
 			assert (m_ForwardWorklist.isEmpty());
 			assert (m_DownPropagationWorklist.isEmpty());
 			assert checkTransitionsReturnedConsistent();
