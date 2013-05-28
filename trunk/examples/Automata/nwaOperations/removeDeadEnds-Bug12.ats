@@ -16,23 +16,13 @@ NestedWordAutomaton nwa = (
 		 ("q3" "a0" "q0")
 	},
 	internalTransitions = {
-		 ("q2" "a1" "q2")
 		 ("q2" "a1" "q1")
-		 ("q4" "a0" "q3")
-		 ("q4" "a0" "q0")
-		 ("q4" "a1" "q2")
-		 ("q4" "a1" "q4")
-		 ("q3" "a1" "q1")
 		 ("q0" "a0" "q3")
 		 ("q0" "a1" "q1")
 		 ("q0" "a1" "q4")
 	},
 	returnTransitions = {
-		 ("q2" "q2" "a0" "q2")
 		 ("q1" "q4" "a1" "q0")
 		 ("q1" "q3" "a1" "q4")
-		 ("q4" "q1" "a0" "q1")
-		 ("q4" "q2" "a1" "q1")
-		 ("q3" "q1" "a0" "q2")
 	}
 );
