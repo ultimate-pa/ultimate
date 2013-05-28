@@ -50,6 +50,8 @@ public abstract class StateContainer<LETTER, STATE> {
 			sb.append(trans).append("  ");
 		}
 		sb.append(System.getProperty("line.separator"));
+		sb.append(m_DownStates.toString());
+		sb.append(System.getProperty("line.separator"));
 		return sb.toString();
 	}
 
@@ -81,7 +83,7 @@ public abstract class StateContainer<LETTER, STATE> {
 		return m_State;
 	}
 	
-	ReachProp addDownState(STATE down) {
+	ReachProp addReachableDownState(STATE down) {
 		ReachProp oldValue = m_DownStates.put(down, ReachProp.REACHABLE);
 		if (oldValue == null) {
 			if (m_UnpropagatedDownStates == null) {
