@@ -83,7 +83,7 @@ public class RCFG2AnnotatedRCFG {
 //				annotatedTarget.addIncomingNode(
 //						entry.getValue(), (CodeBlock) outEdge);
 				if (outEdge instanceof Return) {//add annotation needed for return edge duplication
-					AnnotatedProgramPoint callPredApp = m_oldPpTonew.get(((Return) outEdge).getCallerNode());
+					AnnotatedProgramPoint callPredApp = m_oldPpTonew.get(((Return) outEdge).getCallerProgramPoint());
 					entry.getValue().addOutGoingReturnCallPred(annotatedTarget, callPredApp);
 					updateCallPredToReturnPreds(callPredApp, entry.getValue());
 				}

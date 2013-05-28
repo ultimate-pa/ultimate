@@ -252,7 +252,7 @@ public class EmptinessCheck {
 					break;
 				}
 				Call matchingCall = callStack.pop();
-				if (((Return) errorPath[i]).getCorrespondingCallAnnot().equals(matchingCall)) {
+				if (((Return) errorPath[i]).getCorrespondingCall().equals(matchingCall)) {
 					nr[i] = callStackIndizes.pop();
 					nr[nr[i]] = i;	
 				} else {

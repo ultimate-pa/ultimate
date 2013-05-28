@@ -4,10 +4,13 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Stack;
 
 import de.uni_freiburg.informatik.ultimate.access.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.access.WalkerOptions;
@@ -65,38 +68,6 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 		return true;
 	}
 
-	public boolean BreadthFirstSearch() {
-
-		LinkedList<AnnotatedProgramPoint> queue = new LinkedList<AnnotatedProgramPoint>();
-		HashSet<AnnotatedProgramPoint> visited = new HashSet<AnnotatedProgramPoint>();
-		
-		boolean found = false;
-
-		queue.add(m_graphRoot);
-		while (!queue.isEmpty()) {
-			AnnotatedProgramPoint top = queue.poll();
-			System.out.printf("Node = %s; pred = %s\n", top, top.getPredicate());
-
-			if (!visited.contains(top)) {
-				visited.add(top);
-				found |= top.isErrorLocation();
-				if (found) {
-					System.out.println("Found!!!");
-					// return found;
-				}
-				List<IWalkable> adj = top.getSuccessors();
-				for (Iterator<IWalkable> it = adj.iterator(); it.hasNext();) {
-					AnnotatedProgramPoint nextNode = (AnnotatedProgramPoint) it
-							.next();
-					if (!visited.contains(nextNode)) {
-						queue.add(nextNode);
-					}
-				}
-			}
-		}
-		return found;
-	}
-	
 	private PrintWriter dumpInitialize() { // copied from Impulse, needed for trace checker
 		File file = 
 				new File(m_taPrefs.dumpPath() + "/" + ".txt");
@@ -110,7 +81,6 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 		return null;
 	}
 
-	
 	private IPredicate conjugatePredicates(IPredicate a, IPredicate b) {
 		TermVarsProc tvp = m_smtManager.and(a, b);
 		return m_smtManager.newPredicate(tvp.getFormula(), tvp.getProcedures(), tvp.getVars(), tvp.getClosedFormula());
@@ -121,43 +91,94 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 		return m_smtManager.newPredicate(tvp.getFormula(), tvp.getProcedures(), tvp.getVars(), tvp.getClosedFormula());
 	}
 	
+	private ImpRootNode copyGraph(ImpRootNode root) {
+		HashMap <AnnotatedProgramPoint, AnnotatedProgramPoint> copy = new HashMap<AnnotatedProgramPoint, AnnotatedProgramPoint>();
+		
+		ImpRootNode newRoot = new ImpRootNode(root.getRootAnnot());
+		copy.put(root, newRoot);
+		Stack <AnnotatedProgramPoint> stack = new Stack<AnnotatedProgramPoint>();
+		for (AnnotatedProgramPoint child : root.getOutgoingNodes()) {
+			stack.add(child);
+		}
+		while (!stack.isEmpty()) {
+			AnnotatedProgramPoint current = stack.pop();
+			if (copy.containsKey(current))
+				continue;
+			copy.put(current, new AnnotatedProgramPoint(current));
+			List <AnnotatedProgramPoint> nextNodes = current.getOutgoingNodes();
+			for (Iterator <AnnotatedProgramPoint> iterator = nextNodes.iterator(); iterator.hasNext(); ) {
+				AnnotatedProgramPoint nextNode = iterator.next();
+				if (!copy.containsKey(nextNode)) {
+					stack.add(nextNode);
+				}
+			}
+		}
+		for (Iterator <AnnotatedProgramPoint> nodes = copy.keySet().iterator(); nodes.hasNext(); ) {
+			AnnotatedProgramPoint node = nodes.next(), newNode = copy.get(node);
+			List <AnnotatedProgramPoint> nextNodes = node.getOutgoingNodes();
+			for (AnnotatedProgramPoint nextNode : nextNodes) {
+				AnnotatedProgramPoint nextNewNode = copy.get(nextNode);
+				newNode.addOutgoingNode(nextNewNode, node.getOutgoingEdgeLabel(nextNode));
+				nextNewNode.addIncomingNode(newNode);
+			}
+		}
+		return newRoot;
+	}
+	
 	@Override
 	public boolean process(IElement root) {
 		
-		final boolean loop_forever = false; // for DEBUG
+		final boolean loop_forever = true; // for DEBUG
 		final int iterationsLimit = 100; // for DEBUG
 		
 		initialize(root);
 		
-		for (AnnotatedProgramPoint procRoot : m_graphRoot.getOutgoingNodes()) {
+		ImpRootNode originalGraphCopy = copyGraph(m_graphRoot);
+		
+		int noOfProcedures = originalGraphCopy.getOutgoingNodes().size();
+		
+		//for (AnnotatedProgramPoint procRoot : m_graphRoot.getOutgoingNodes()) {
+		for (int procID = 0; procID < noOfProcedures; ++procID) {
+			AnnotatedProgramPoint procRoot = m_graphRoot.getOutgoingNodes().get(procID);
+			Stack <AnnotatedProgramPoint> stack = new Stack <AnnotatedProgramPoint>();
+			stack.add(procRoot);
 			EmptinessCheck emptinessCheck = new EmptinessCheck();
 			int iterationsCount = 0; // for DEBUG
-			while (loop_forever || iterationsCount++ < iterationsLimit) {
+			while (loop_forever | iterationsCount++ < iterationsLimit) {
 				System.out.printf("Iterations = %d\n", iterationsCount);
+				if (stack.isEmpty()) {
+					System.out.println("This Program is SAFE.");
+					break;
+				}
+				AnnotatedProgramPoint procedureRoot = stack.peek();
 				Pair<AnnotatedProgramPoint[], NestedWord<CodeBlock>> errorNWP = 
-						emptinessCheck.checkForEmptiness(procRoot);
+						emptinessCheck.checkForEmptiness(procedureRoot);
 				
 				if (errorNWP == null) {
 					// if an error trace doesn't exist, return safe
-					System.out.println("This Program is SAFE.");
+					stack.pop();
 					break;
 				} else {
 					System.out.println("Error Path is FOUND.");
 					TraceChecker traceChecker = new TraceChecker(m_smtManager, 
 							m_originalRoot.getRootAnnot().getModifiedVars(), 
 							m_originalRoot.getRootAnnot().getEntryNodes(),
-							dumpInitialize()); 
+							dumpInitialize());
 					LBool isSafe = traceChecker.checkTrace(m_truePredicate, // checks whether the trace is feasible, i.e. the formula is satisfiable
 														   m_falsePredicate,  //return LBool.UNSAT if trace is infeasible
 														   errorNWP.getSecond());
-
+					
 					if(isSafe == LBool.UNSAT) { //trace is infeasible
-						IPredicate[] interpolants = traceChecker.getInterpolants(new TraceChecker.AllIntegers());
-						AnnotatedProgramPoint[] trace = errorNWP.getFirst();
 						
-						System.out.printf("Trace INFEASIBLE.\n Interpolants = %d, Trace = %d\n", interpolants.length, trace.length);
+						IPredicate[] interpolants = traceChecker.getInterpolants(new TraceChecker.AllIntegers());
+						
+						AnnotatedProgramPoint[] trace = errorNWP.getFirst();
+						/*
 						for (int i = 0; i < interpolants.length; i++)
 							splitNode(trace[i + 1], interpolants[i]);
+						*/
+						splitGraph(trace, interpolants);
+						System.out.println();
 						
 					} else { 
 						System.out.println("This program is UNSAFE.");
@@ -167,30 +188,53 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 					}
 				}
 			}
+			m_graphRoot = copyGraph(originalGraphCopy);
 		}
 		
 		return false;
-		
 	}
-
-	private boolean splitNode(AnnotatedProgramPoint oldNode, IPredicate interpolant) {
-		AnnotatedProgramPoint[] newNodes = new AnnotatedProgramPoint[2];
-		newNodes[0] = new AnnotatedProgramPoint(oldNode, conjugatePredicates(oldNode.getPredicate(), interpolant));	
-		newNodes[1] = new AnnotatedProgramPoint(oldNode, conjugatePredicates(oldNode.getPredicate(), negatePredicate(interpolant)));
+	
+	private boolean splitGraph(AnnotatedProgramPoint[] nodes, IPredicate[] interpolants) {
+		HashMap <AnnotatedProgramPoint, ArrayList <IPredicate>> map = new HashMap <AnnotatedProgramPoint, ArrayList <IPredicate>>();
+		for (int i = 1; i < nodes.length; ++i) {
+			if (!map.containsKey(nodes[i])) {
+				map.put(nodes[i], new ArrayList <IPredicate>());
+			}
+		}
+		for (int i = 0; i < interpolants.length; ++i) {
+			map.get(nodes[i + 1]).add(interpolants[i]);
+		}
+		for (Iterator <AnnotatedProgramPoint> it = map.keySet().iterator(); it.hasNext(); ) {
+			AnnotatedProgramPoint node = it.next();
+			splitNode(node, map.get(node).toArray(new IPredicate[]{}));
+		}
+		return true;
+	}
+	
+	private boolean splitNode(AnnotatedProgramPoint oldNode, IPredicate[] interpolant) {
 		
+		int interpolantsCount = interpolant.length;
+		AnnotatedProgramPoint[][] newNodes = new AnnotatedProgramPoint[interpolantsCount][2];
+		for (int i = 0; i < interpolantsCount; ++i) {
+			newNodes[i][0] = new AnnotatedProgramPoint(oldNode, conjugatePredicates(oldNode.getPredicate(), interpolant[i]));	
+			newNodes[i][1] = new AnnotatedProgramPoint(oldNode, conjugatePredicates(oldNode.getPredicate(), negatePredicate(interpolant[i])));
+		}
 		List<AnnotatedProgramPoint> predecessorNodes = oldNode.getIncomingNodes();
 		List<AnnotatedProgramPoint> successorNodes = oldNode.getOutgoingNodes();
 
-		
 		for (AnnotatedProgramPoint predecessorNode : predecessorNodes) {
 			if (predecessorNode != oldNode) {
 				CodeBlock label = predecessorNode.getOutgoingEdgeLabel(oldNode);
-				for (AnnotatedProgramPoint newNode : newNodes) {
-					if (isValidEdge(predecessorNode, label, newNode)) {
-						predecessorNode.addOutgoingNode(newNode, label);
-						newNode.addIncomingNode(predecessorNode);
+				System.out.println("Adding Edge: " + label);
+				for (int i = 0; i < interpolantsCount; ++i) {
+					for (AnnotatedProgramPoint newNode : newNodes[i]) {
+						if (isValidEdge(predecessorNode, label, newNode)) {
+							predecessorNode.addOutgoingNode(newNode, label);
+							newNode.addIncomingNode(predecessorNode);
+						}
 					}
 				}
+				System.out.println("Added Edge: " + label);
 				predecessorNode.removeOutgoingNode(oldNode);
 			}
 		}
@@ -198,12 +242,16 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 		for (AnnotatedProgramPoint successorNode : successorNodes) {
 			if (successorNode != oldNode) {
 				CodeBlock label = oldNode.getOutgoingEdgeLabel(successorNode);
-				for (AnnotatedProgramPoint newNode : newNodes) {
-					if (isValidEdge(newNode, label, successorNode)) {
-						newNode.addOutgoingNode(successorNode, label);
-						successorNode.addIncomingNode(newNode);
+				System.out.println("Adding Edge: " + label);
+				for (int i = 0; i < interpolantsCount; ++i) {
+					for (AnnotatedProgramPoint newNode : newNodes[i]) {
+						if (isValidEdge(newNode, label, successorNode)) {
+							newNode.addOutgoingNode(successorNode, label);
+							successorNode.addIncomingNode(newNode);
+						}
 					}
 				}
+				System.out.println("Added Edge: " + label);
 				successorNode.removeIncomingNode(oldNode);
 			}
 		}
@@ -212,21 +260,35 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 		
 		if (selfLoop) {
 			CodeBlock label = oldNode.getOutgoingEdgeLabel(oldNode);
-			for (AnnotatedProgramPoint source : newNodes) {
-				for (AnnotatedProgramPoint destination : newNodes) {
-					if (isValidEdge(source, label, destination)) {
-						source.addOutgoingNode(destination, label);
-						destination.addIncomingNode(source);
+			for (int i = 0; i < interpolantsCount; ++i) {
+				for (int j = 0; j < interpolantsCount; ++j) {
+					// FIXME: Check if complete association required.
+					for (AnnotatedProgramPoint source : newNodes[i]) {
+						for (AnnotatedProgramPoint destination : newNodes[j]) {
+							if (isValidEdge(source, label, destination)) {
+								source.addOutgoingNode(destination, label);
+								destination.addIncomingNode(source);
+							}
+						}
 					}
 				}
 			}
 		}
+		System.out.println("Splitted node : " + oldNode.toString());
 		
 		//System.out.printf("\n\nOld Node:\n%s\nSplit into:\nNode #%d:\n%s\nNode #%d:\n%s\n\n\n", oldNode, 0, newNodes[0], 1, newNodes[1]);
 		return true;
 	}
+	
+	private boolean splitNode(AnnotatedProgramPoint oldNode, IPredicate interpolant) {
+		return splitNode(oldNode, new IPredicate[]{interpolant});
+	}
+	
 	private boolean isValidEdge(AnnotatedProgramPoint sourceNode, CodeBlock edgeLabel,
 			AnnotatedProgramPoint destinationNode) {
+		if (edgeLabel instanceof DummyCodeBlock)
+			return false;
+		System.out.print(".");
 		return m_smtManager.isInductive(sourceNode.getPredicate(), edgeLabel, negatePredicate(destinationNode.getPredicate())) != LBool.UNSAT;
 		//System.out.printf("\n\nSource Predicate = %s; Destination Predicate = %s; Edge = %s;\nEvaluates to %s\n\n\n", sourceNode.getPredicate(), destinationNode.getPredicate(), edgeLabel.getPrettyPrintedStatements(), r);
 	}
@@ -258,5 +320,4 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 		// TODO Auto-generated method stub
 		return false;
 	}
-
 }
