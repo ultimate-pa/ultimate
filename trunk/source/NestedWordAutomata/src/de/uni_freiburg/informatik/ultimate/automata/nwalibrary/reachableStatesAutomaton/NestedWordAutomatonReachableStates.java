@@ -525,10 +525,10 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 	
 
 	public Set<STATE> getDownStates(STATE state) {
-		StateContainer<LETTER, STATE> stateContainer = m_States.get(state);
+		StateContainer<LETTER, STATE> cont = m_States.get(state);
 //		CommonEntriesComponent<LETTER,STATE> cec = stateContainer.getCommonEntriesComponent();
 //		return cec.getDownStates();
-		return m_StatesAfterDeadEndRemoval;
+		return cont.getDownStates().keySet();
 	}
 	
 	public boolean isDoubleDecker(STATE up, STATE down) {
@@ -554,9 +554,6 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 //		}
 		return downStates;
 	}
-	
-	
-	
 	
 	
 	
@@ -625,7 +622,7 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 					}
 				}
 				
-				while(m_ForwardWorklist.isEmpty()) {
+				while(m_ForwardWorklist.isEmpty() && !m_DownPropagationWorklist.isEmpty()) {
 					StateContainer<LETTER,STATE> cont = 
 							m_DownPropagationWorklist.remove(0);
 					propagateNewDownStates(cont);
@@ -672,7 +669,8 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 		}
 		
 		private boolean candidateForOutgoingReturn(STATE state) {
-			return true;
+			return !m_Operand.lettersReturn(state).isEmpty();
+//			return true;
 		}
 		
 
@@ -821,6 +819,9 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 		private void propagateNewDownStates(StateContainer<LETTER, STATE> cont) {
 			boolean newStatesAdded = false;
 			Set<STATE> unpropagatedDownStates = cont.getUnpropagatedDownStates();
+			if (unpropagatedDownStates  == null) {
+				return;
+			}
 			for (OutgoingInternalTransition<LETTER, STATE> trans : cont.internalSuccessors()) {
 				StateContainer<LETTER, STATE> succCont = m_States.get(trans.getSucc());
 				addNewDownStates(cont, succCont, unpropagatedDownStates);
@@ -830,8 +831,8 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 				addNewDownStates(cont, succCont, unpropagatedDownStates);
 			}
 			if(candidateForOutgoingReturn(cont.getState())) {
-				HashSet<STATE> newDownStatesFormSelfloops = new HashSet<STATE>();
-				for (STATE down : cont.getDownStates().keySet()) {
+				HashSet<STATE> newDownStatesFormSelfloops = null;
+				for (STATE down : cont.getUnpropagatedDownStates()) {
 					if (down != getEmptyStackState()) {
 						Set<STATE> newDownStates = 
 								addReturnsAndSuccessors(cont, down);
@@ -843,6 +844,7 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 						}
 					}
 				}
+				cont.eraseUnpropagatedDownStates();
 				if (newDownStatesFormSelfloops != null) {
 					assert !newDownStatesFormSelfloops.isEmpty();
 					for (STATE down : newDownStatesFormSelfloops) {
@@ -850,6 +852,8 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 					}
 					m_DownPropagationWorklist.add(cont);
 				}
+			} else {
+				cont.eraseUnpropagatedDownStates();
 			}
 			
 		}
