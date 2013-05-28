@@ -1,5 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -9,6 +10,7 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.NoSuchElementException;
 import java.util.Set;
 
@@ -526,8 +528,6 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 
 	public Set<STATE> getDownStates(STATE state) {
 		StateContainer<LETTER, STATE> cont = m_States.get(state);
-//		CommonEntriesComponent<LETTER,STATE> cec = stateContainer.getCommonEntriesComponent();
-//		return cec.getDownStates();
 		return cont.getDownStates().keySet();
 	}
 	
@@ -537,8 +537,22 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 	
 	
 
-	public Set<STATE> getDownStatesAfterDeadEndRemoval(STATE up) {
-		HashSet<STATE> downStates = new HashSet<STATE>();
+	public Set<STATE> getDownStatesAfterDeadEndRemoval(STATE state) {
+		Set<STATE> downStates;
+		StateContainer<LETTER, STATE> cont = m_States.get(state);
+//		if (cont.getReachProp() == ReachProp.NODEADEND_AD) {
+			downStates = cont.getDownStates().keySet();
+//		} else {
+//			assert cont.getReachProp() == ReachProp.NODEADEND_SD;
+//			downStates = new HashSet<STATE>();
+//			for (Entry<STATE, ReachProp> down : cont.getDownStates().entrySet()) {
+//				if (down.getValue() == ReachProp.NODEADEND_SD) {
+//					downStates.add(down.getKey());
+//				} else {
+//					assert down.getValue() == ReachProp.REACHABLE;
+//				}
+//			}
+//		}
 //		for(Entry<LETTER,STATE> entry : m_States.get(up).getCommonEntriesComponent().getEntries()) {
 //			STATE entryState = entry.getState();
 //			for (IncomingCallTransition<LETTER, STATE> trans : callPredecessors(entryState)) {
@@ -867,108 +881,173 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 ////////////////////////////////////////////////////////////////////////////////
 	private class DeadEndComputation {
 		
-		private LinkedList<StateContainer<LETTER,STATE>> m_NonReturnBackwardWorklist =
-				new LinkedList<StateContainer<LETTER,STATE>>();
+		private ArrayDeque<StateContainer<LETTER,STATE>> m_NonReturnBackwardWorklist =
+				new ArrayDeque<StateContainer<LETTER,STATE>>();
 		private Set<StateContainer<LETTER,STATE>> m_HasIncomingReturn = 
 				new HashSet<StateContainer<LETTER,STATE>>();
-		private LinkedList<StateContainer<LETTER,STATE>> m_NonCallBackwardWorklist =
-				new LinkedList<StateContainer<LETTER,STATE>>();
+		private ArrayDeque<StateContainer<LETTER,STATE>> m_PropagationWorklist =
+				new ArrayDeque<StateContainer<LETTER,STATE>>();
 
 		DeadEndComputation() {
-//			for (STATE fin : getFinalStates()) {
-//				StateContainer<LETTER,STATE> cont = m_States.get(fin);
-//				assert cont.getReachProp() == ReachProp.REACHABLE;
-//				cont.setReachProp(ReachProp.NODEADEND_AD);
-//				m_StatesAfterDeadEndRemoval.add(fin);
-//				m_NonReturnBackwardWorklist.add(cont);
-//			}
-//
-//			while (!m_NonReturnBackwardWorklist.isEmpty()) {
-//				StateContainer<LETTER,STATE> cont = m_NonReturnBackwardWorklist.remove(0);
-//				if (m_initialStates.contains(cont.getState())) {
-//					m_initialStatesAfterDeadEndRemoval.add(cont.getState());
-//				}
-//				
-//				for (IncomingInternalTransition<LETTER, STATE> inTrans : cont
-//						.internalPredecessors()) {
-//					STATE pred = inTrans.getPred();
-//					StateContainer<LETTER,STATE> predCont = m_States.get(pred);
-//					if (predCont.getReachProp() != ReachProp.NODEADEND_AD) {
-//						predCont.setReachProp(ReachProp.NODEADEND_AD);
-//						m_StatesAfterDeadEndRemoval.add(pred);
-//						m_NonReturnBackwardWorklist.add(predCont);
-//					}
-//				}
-//				for (IncomingReturnTransition<LETTER, STATE> inTrans : cont
-//						.returnPredecessors()) {
-//					STATE hier = inTrans.getHierPred();
-//					StateContainer<LETTER,STATE> hierCont = m_States.get(hier);
-//					if (hierCont.getReachProp() != ReachProp.NODEADEND_AD) {
-//						hierCont.setReachProp(ReachProp.NODEADEND_AD);
-//						m_StatesAfterDeadEndRemoval.add(hier);
-//						m_NonReturnBackwardWorklist.add(hierCont);
-//					}
-//					m_HasIncomingReturn.add(cont);
-//				}
-//				for (IncomingCallTransition<LETTER, STATE> inTrans : cont
-//						.callPredecessors()) {
-//					STATE pred = inTrans.getPred();
-//					StateContainer<LETTER,STATE> predCont = m_States.get(pred);
-//					if (predCont.getReachProp() != ReachProp.NODEADEND_AD) {
-//						predCont.setReachProp(ReachProp.NODEADEND_AD);
-//						m_StatesAfterDeadEndRemoval.add(pred);
-//						m_NonReturnBackwardWorklist.add(predCont);
-//					}
-//				}
-//			}
-//			
-//			m_NonCallBackwardWorklist.addAll(m_HasIncomingReturn);
-//			
-//			while (!m_NonCallBackwardWorklist.isEmpty()) {
-//				StateContainer<LETTER, STATE> cont = m_NonCallBackwardWorklist.remove(0);
-//				for (IncomingInternalTransition<LETTER, STATE> inTrans : cont
-//						.internalPredecessors()) {
-//					STATE pred = inTrans.getPred();
-//					StateContainer<LETTER,STATE> predCont = m_States.get(pred);
-//					if (predCont.getReachProp() != ReachProp.NODEADEND_AD) {
-//						predCont.setReachProp(ReachProp.NODEADEND_AD);
-//						m_StatesAfterDeadEndRemoval.add(pred);
-//						m_NonCallBackwardWorklist.add(predCont);
-//					}
-//				}
-//				for (IncomingReturnTransition<LETTER, STATE> inTrans : cont
-//						.returnPredecessors()) {
-//					STATE hier = inTrans.getHierPred();
-//					StateContainer<LETTER,STATE> hierCont = m_States.get(hier);
-//					if (hierCont.getReachProp() != ReachProp.NODEADEND_AD) {
-//						hierCont.setReachProp(ReachProp.NODEADEND_AD);
-//						m_StatesAfterDeadEndRemoval.add(hier);
-//						m_NonCallBackwardWorklist.add(hierCont);
-//					}
-//					STATE lin = inTrans.getLinPred();
-//					StateContainer<LETTER,STATE> linCont = m_States.get(lin);
-//					if (linCont.getReachProp() != ReachProp.NODEADEND_AD) {
-//						linCont.setReachProp(ReachProp.NODEADEND_AD);
-//						m_StatesAfterDeadEndRemoval.add(lin);
-//						m_NonCallBackwardWorklist.add(linCont);
-//					}
-//					for (Entry<LETTER,STATE> entry : linCont.getCommonEntriesComponent().getEntries()) {
-//						if (entry.getDownStates().containsKey(hier)) {
-//							entry.getDownStates().put(hier, ReachProp.NODEADEND_AD);
-//						}
-//					}
-//				}
-//			}
-//		}
-//		
-//		private boolean someDownIsEntryNonDeadDown(StateContainer<LETTER,STATE> cont) {
-//			Set<Entry<LETTER, STATE>> entries = cont.getCommonEntriesComponent().getEntries();
-//			Set<STATE> downStates = cont.getCommonEntriesComponent().getDownStates();
-//			
-//			for (STATE down : downStates) {
-//				
-//			}
+			for (STATE fin : getFinalStates()) {
+				StateContainer<LETTER,STATE> cont = m_States.get(fin);
+				assert cont.getReachProp() == ReachProp.REACHABLE;
+				cont.setReachProp(ReachProp.NODEADEND_AD);
+				m_StatesAfterDeadEndRemoval.add(fin);
+				m_NonReturnBackwardWorklist.add(cont);
+			}
+
+			while (!m_NonReturnBackwardWorklist.isEmpty()) {
+				StateContainer<LETTER,STATE> cont = m_NonReturnBackwardWorklist.removeFirst();
+				if (m_initialStates.contains(cont.getState())) {
+					m_initialStatesAfterDeadEndRemoval.add(cont.getState());
+				}
+				
+				for (IncomingInternalTransition<LETTER, STATE> inTrans : cont
+						.internalPredecessors()) {
+					STATE pred = inTrans.getPred();
+					StateContainer<LETTER,STATE> predCont = m_States.get(pred);
+					if (predCont.getReachProp() != ReachProp.NODEADEND_AD) {
+						predCont.setReachProp(ReachProp.NODEADEND_AD);
+						m_StatesAfterDeadEndRemoval.add(pred);
+						m_NonReturnBackwardWorklist.add(predCont);
+					}
+				}
+				for (IncomingReturnTransition<LETTER, STATE> inTrans : cont
+						.returnPredecessors()) {
+					STATE hier = inTrans.getHierPred();
+					StateContainer<LETTER,STATE> hierCont = m_States.get(hier);
+					if (hierCont.getReachProp() != ReachProp.NODEADEND_AD) {
+						hierCont.setReachProp(ReachProp.NODEADEND_AD);
+						m_StatesAfterDeadEndRemoval.add(hier);
+						m_NonReturnBackwardWorklist.add(hierCont);
+					}
+					m_HasIncomingReturn.add(cont);
+				}
+				for (IncomingCallTransition<LETTER, STATE> inTrans : cont
+						.callPredecessors()) {
+					STATE pred = inTrans.getPred();
+					StateContainer<LETTER,STATE> predCont = m_States.get(pred);
+					if (predCont.getReachProp() != ReachProp.NODEADEND_AD) {
+						predCont.setReachProp(ReachProp.NODEADEND_AD);
+						m_StatesAfterDeadEndRemoval.add(pred);
+						m_NonReturnBackwardWorklist.add(predCont);
+					}
+				}
+			}
+			
+			for (StateContainer<LETTER,STATE> cont : m_HasIncomingReturn) {
+				for (IncomingReturnTransition<LETTER, STATE> inTrans : cont
+						.returnPredecessors()) {
+					STATE lin = inTrans.getLinPred();
+					StateContainer<LETTER,STATE> linCont = m_States.get(lin);
+					if (linCont.getReachProp() != ReachProp.NODEADEND_AD) {
+						linCont.setReachProp(ReachProp.NODEADEND_SD);
+						if (linCont.getUnpropagatedDownStates() == null) {
+							assert !m_PropagationWorklist.contains(linCont);
+							m_PropagationWorklist.addLast(linCont);
+						}
+						linCont.addNonDeadEndDownState(inTrans.getHierPred());
+					}
+				}
+			}
+			
+			while (!m_PropagationWorklist.isEmpty()) {
+				StateContainer<LETTER,STATE> cont = m_PropagationWorklist.removeFirst();
+				propagateBackward(cont);
+			}
+			
 		}
+
+		private void propagateBackward(StateContainer<LETTER, STATE> cont) {
+			Set<STATE> unpropagatedDownStates = cont.getUnpropagatedDownStates();
+			cont.eraseUnpropagatedDownStates();
+			Set<STATE> newUnpropagatedDownStatesSelfloop = null;
+			for (IncomingInternalTransition<LETTER, STATE> inTrans : cont
+					.internalPredecessors()) {
+				STATE pred = inTrans.getPred();
+				StateContainer<LETTER,STATE> predCont = m_States.get(pred);
+				if (predCont.getReachProp() != ReachProp.NODEADEND_AD) {
+					addNewDownStates(cont, predCont, unpropagatedDownStates);
+				}
+			}
+			for (IncomingReturnTransition<LETTER, STATE> inTrans : cont
+					.returnPredecessors()) {
+				STATE hier = inTrans.getHierPred();
+				StateContainer<LETTER,STATE> hierCont = m_States.get(hier);
+				if (hierCont.getReachProp() != ReachProp.NODEADEND_AD) {
+					addNewDownStates(cont, hierCont, unpropagatedDownStates);
+				}
+				STATE lin = inTrans.getLinPred();
+				StateContainer<LETTER,STATE> linCont = m_States.get(lin);
+				if (linCont.getReachProp() != ReachProp.NODEADEND_AD) {
+					if (linCont == cont) {
+						boolean hierAlreadyPropagated = 
+								(cont.getDownStates().get(hier) == ReachProp.NODEADEND_SD);
+						if (!hierAlreadyPropagated) {
+							if (newUnpropagatedDownStatesSelfloop == null) {
+								newUnpropagatedDownStatesSelfloop = new HashSet<STATE>();
+							}
+							newUnpropagatedDownStatesSelfloop.add(hier);
+						}
+					} else {
+						HashSet<STATE> potentiallyNewDownState = new HashSet<STATE>(1);
+						potentiallyNewDownState.add(hier);
+						addNewDownStates(cont, linCont, potentiallyNewDownState);
+					}
+
+				}
+			}
+			if (newUnpropagatedDownStatesSelfloop != null) {
+				for (STATE down : newUnpropagatedDownStatesSelfloop) {
+					cont.addNonDeadEndDownState(down);
+				}
+				assert !m_PropagationWorklist.contains(cont);
+				m_PropagationWorklist.add(cont);
+			}
+		}
+		
+	
+		private void addNewDownStates(StateContainer<LETTER, STATE> cont,
+				StateContainer<LETTER, STATE> predCont,
+				Set<STATE> potentiallyNewDownStates) {
+			if (cont == predCont) {
+				return ;
+			} else {
+				boolean isAlreadyInWorklist = 
+						(predCont.getUnpropagatedDownStates() != null);
+				assert (isAlreadyInWorklist == m_PropagationWorklist.contains(predCont));
+				if (!isAlreadyInWorklist) {
+					assert !m_PropagationWorklist.contains(predCont);
+				}
+				assert (!isAlreadyInWorklist || predCont.getReachProp() == ReachProp.NODEADEND_SD);
+				boolean newDownStateWasPropagated = false;
+				for (STATE down : potentiallyNewDownStates) {
+					ReachProp oldValue = predCont.getDownStates().get(down);
+					if (oldValue == ReachProp.REACHABLE) {
+						predCont.addNonDeadEndDownState(down);
+						newDownStateWasPropagated = true;
+					}
+				if (newDownStateWasPropagated) {
+					if (!isAlreadyInWorklist) {
+						assert !m_PropagationWorklist.contains(predCont);
+						m_PropagationWorklist.add(predCont);
+					}
+					if (predCont.getReachProp() != ReachProp.NODEADEND_SD) {
+						assert predCont.getReachProp() == ReachProp.REACHABLE;
+						predCont.setReachProp(ReachProp.NODEADEND_SD);
+						assert !m_StatesAfterDeadEndRemoval.contains(predCont.getState());
+						m_StatesAfterDeadEndRemoval.add(predCont.getState());
+					}
+				}
+			}
+		}
+		
+	}
+			
+		
+			
+		
 		
 }
 

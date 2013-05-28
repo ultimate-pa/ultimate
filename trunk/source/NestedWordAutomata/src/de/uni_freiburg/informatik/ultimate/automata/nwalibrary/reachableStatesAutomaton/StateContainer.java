@@ -95,8 +95,8 @@ public abstract class StateContainer<LETTER, STATE> {
 	}
 	
 	ReachProp addNonDeadEndDownState(STATE down) {
-		assert m_ReachProp == ReachProp.NODEADEND_AD;
-		ReachProp oldValue = m_DownStates.put(down, ReachProp.NODEADEND_AD);
+		assert m_ReachProp == ReachProp.NODEADEND_SD || m_ReachProp == ReachProp.REACHABLE;
+		ReachProp oldValue = m_DownStates.put(down, ReachProp.NODEADEND_SD);
 		if (oldValue == ReachProp.REACHABLE) {
 			if (m_UnpropagatedDownStates == null) {
 				m_UnpropagatedDownStates = new HashSet<STATE>();
