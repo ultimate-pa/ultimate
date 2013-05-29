@@ -40,7 +40,7 @@ public class BuchiIsIncluded<LETTER, STATE> implements IOperation<LETTER,STATE> 
 
 		INestedWordAutomatonOldApi<LETTER, STATE> sndComplement = (new BuchiComplementFKV<LETTER, STATE>(
 				m_Operand2)).getResult();
-		INestedWordAutomatonOldApi<LETTER, STATE> difference = (new BuchiIntersect<LETTER, STATE>(
+		INestedWordAutomatonOldApi<LETTER, STATE> difference = (new BuchiIntersectDD<LETTER, STATE>(
 				m_Operand1, sndComplement, true)).getResult();
 		BuchiIsEmpty<LETTER, STATE> emptinessCheck = new BuchiIsEmpty<LETTER, STATE>(
 				(INestedWordAutomatonOldApi<LETTER, STATE>) difference);
