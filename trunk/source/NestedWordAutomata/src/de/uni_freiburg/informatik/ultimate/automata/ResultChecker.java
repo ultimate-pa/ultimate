@@ -16,7 +16,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordGenerator;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.BuchiAccepts;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.BuchiIsIncluded;
@@ -28,6 +27,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IState
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IsEmpty;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IsIncluded;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.MinimizeDfa;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.GetRandomNestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.PowersetDeterminizer;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.RemoveUnreachable;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.BuchiReduce;
@@ -137,11 +137,11 @@ public class ResultChecker<LETTER,STATE> {
 		s_Logger.info("Testing correctness of complementBuchi");
 		
 		int maxNumberOfStates = Math.max(operand.size(), result.size());
-		NestedWordGenerator gen = new NestedWordGenerator(
-				operand.getInternalAlphabet(), operand.getCallAlphabet(), operand.getReturnAlphabet());
 		boolean correct = true;
 		for (int i=0; i<10; i++) {
-						NestedLassoWord lasso = gen.generateNestedLassoWord(maxNumberOfStates, 0, 0);
+			NestedWord stem = (new GetRandomNestedWord(operand, maxNumberOfStates)).getResult();
+			NestedWord loop = (new GetRandomNestedWord(operand, maxNumberOfStates)).getResult();
+			NestedLassoWord lasso = new NestedLassoWord(stem, loop);
 			boolean operandAccepts = (new BuchiAccepts(operand, lasso)).getResult();
 			boolean resultAccepts = (new BuchiAccepts(result, lasso)).getResult();
 			if (operandAccepts ^ resultAccepts) {
@@ -172,11 +172,12 @@ public class ResultChecker<LETTER,STATE> {
 		s_Logger.info("Testing correctness of complementBuchiSVW");
 		
 		int maxNumberOfStates = Math.max(operand.size(), result.size());
-		NestedWordGenerator gen = new NestedWordGenerator(
-				operand.getInternalAlphabet(), operand.getCallAlphabet(), operand.getReturnAlphabet());
 		boolean correct = true;
 		for (int i=0; i<10; i++) {
-						NestedLassoWord lasso = gen.generateNestedLassoWord(maxNumberOfStates, maxNumberOfStates, 0, 0);
+			NestedWord stem = (new GetRandomNestedWord(operand, maxNumberOfStates)).getResult();
+			NestedWord loop = (new GetRandomNestedWord(operand, maxNumberOfStates)).getResult();
+			NestedLassoWord lasso = new NestedLassoWord(stem, loop);
+
 			boolean operandAccepts = (new BuchiAccepts(operand, lasso)).getResult();
 			boolean resultAccepts = (new BuchiAccepts(operand, lasso)).getResult();
 			if (operandAccepts ^ resultAccepts) {
