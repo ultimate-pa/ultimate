@@ -87,7 +87,7 @@ public class BuchiIntersect<LETTER,STATE> implements IOperation<LETTER,STATE> {
 		INestedWordAutomatonOldApi<LETTER, STATE> sndOperandOldApi = ResultChecker.getOldApiNwa(m_SndOperand);
 		INestedWordAutomatonOldApi<LETTER, STATE> resultDD = (new BuchiIntersectDD<LETTER, STATE>(fstOperandOldApi,sndOperandOldApi)).getResult();
 		boolean correct = true;
-		correct &= (resultDD.size() >= m_Result.size());
+//		correct &= (resultDD.size() <= m_Result.size());
 		assert correct;
 		correct &= resultCheckWithRandomWords();
 		assert correct;
