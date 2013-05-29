@@ -60,7 +60,7 @@ public class NestedWordAutomatonFilteredStates<LETTER, STATE> implements
 
 	@Override
 	public String sizeInformation() {
-		return "unknown hello";
+		return "sizeInformation of NestedWordAutomatonFilteredStates";
 	}
 
 	@Override
