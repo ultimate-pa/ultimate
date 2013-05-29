@@ -1,0 +1,41 @@
+// old intersection has less states than new intersection
+// Author: heizmann@informatik.uni-freiburg.de
+// Date: 29.05.2013
+
+print(buchiIntersect(nwa1, nwa2));
+
+NestedWordAutomaton nwa1 = (
+	callAlphabet = {},
+	internalAlphabet = {"a0" "a1" },
+	returnAlphabet = {},
+	states = {"q2" "q1" "q0" },
+	initialStates = {"q0" },
+	finalStates = {"q2" "q1" },
+	callTransitions = {
+	},
+	internalTransitions = {
+		 ("q2" "a0" "q1")
+		 ("q0" "a0" "q2")
+	},
+	returnTransitions = {
+	}
+);
+
+NestedWordAutomaton nwa2 = (
+	callAlphabet = {},
+	internalAlphabet = {"a0" "a1" },
+	returnAlphabet = {},
+	states = {"q2" "q1" "q0" },
+	initialStates = {"q0" },
+	finalStates = {"q2" "q1" },
+	callTransitions = {
+	},
+	internalTransitions = {
+		 ("q1" "a0" "q2")
+		 ("q0" "a0" "q2")
+		 ("q0" "a0" "q1")
+		 ("q0" "a0" "q0")
+	},
+	returnTransitions = {
+	}
+);
