@@ -139,11 +139,21 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 	}
 	
 	public boolean isInitialAfterDeadEndRemoval(STATE state) {
-		return false;
-//		if (!m_initialStates.contains(state)) {
-//			throw new IllegalArgumentException("Not initial state");
-//		}
-//		return (m_State2Entry.get(state).getDownStates().get(getEmptyStackState()) != ReachProp.REACHABLE);
+		if (!m_initialStates.contains(state)) {
+			throw new IllegalArgumentException("Not initial state");
+		}
+		StateContainer<LETTER, STATE> cont = m_States.get(state);
+		if (cont.getReachProp() == ReachProp.NODEADEND_AD) {
+			assert cont.getDownStates().get(getEmptyStackState()) == ReachProp.REACHABLE;
+			return true;
+		} else {
+			if (cont.getDownStates().get(getEmptyStackState()) == ReachProp.NODEADEND_SD) {
+				return true;
+			} else {
+				assert cont.getDownStates().get(getEmptyStackState()) == ReachProp.REACHABLE;
+				return false;
+			}
+		}
 	}
 	
 	
