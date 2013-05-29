@@ -82,11 +82,11 @@ public class RemoveUnreachable<LETTER,STATE> implements IOperation<LETTER,STATE>
 			DoubleDeckerAutomaton<LETTER, STATE> reachalbeStatesCopy = (DoubleDeckerAutomaton<LETTER, STATE>) (new ReachableStatesCopy(
 					(INestedWordAutomatonOldApi) m_Input, false, false, false,
 					false)).getResult();
-			// correct &=
-			// ResultChecker.isSubset(reachalbeStatesCopy.getStates(),m_Result.getStates());
+			correct &=
+			ResultChecker.isSubset(reachalbeStatesCopy.getStates(),m_Result.getStates());
 			assert correct;
-			// correct &=
-			// ResultChecker.isSubset(m_Result.getStates(),reachalbeStatesCopy.getStates());
+			correct &=
+			ResultChecker.isSubset(m_Result.getStates(),reachalbeStatesCopy.getStates());
 			assert correct;
 			for (STATE state : reachalbeStatesCopy.getStates()) {
 				for (OutgoingInternalTransition<LETTER, STATE> outTrans : reachalbeStatesCopy.internalSuccessors(state)) {
