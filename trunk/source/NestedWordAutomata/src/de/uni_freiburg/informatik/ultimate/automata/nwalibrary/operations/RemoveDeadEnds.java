@@ -1,6 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations;
 
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Set;
 
 import org.apache.log4j.Logger;
@@ -17,6 +18,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingInternalT
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.TransitionConsitenceCheck;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.IOpWithDelayedDeadEndRemoval.UpDownEntry;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.ReachableStatesCopy;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.NestedWordAutomatonReachableStates;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.StateContainer;
@@ -83,10 +85,24 @@ public class RemoveDeadEnds<LETTER,STATE> implements IOperation<LETTER,STATE> {
 //		correct &= (ResultChecker.nwaLanguageInclusion(m_Input, m_Result) == null);
 //		correct &= (ResultChecker.nwaLanguageInclusion(m_Result, m_Input) == null);
 		assert correct;
-		DoubleDeckerAutomaton<LETTER, STATE> reachalbeStatesCopy = (DoubleDeckerAutomaton<LETTER, STATE>) (new ReachableStatesCopy(m_Input, false, false, true, false)).getResult();
-//		correct &= ResultChecker.isSubset(reachalbeStatesCopy.getStates(),m_Result.getStates());
+		ReachableStatesCopy<LETTER, STATE> rsc = (new ReachableStatesCopy(m_Input, false, false, false, false));
+//		Set<UpDownEntry<STATE>> rsaEntries = new HashSet<UpDownEntry<STATE>>();
+//		for (UpDownEntry<STATE> rde : m_Reach.getRemovedUpDownEntry()) {
+//			rsaEntries.add(rde);
+//		}
+//		Set<UpDownEntry<STATE>> rscEntries = new HashSet<UpDownEntry<STATE>>();
+//		for (UpDownEntry<STATE> rde : rsc.getRemovedUpDownEntry()) {
+//			rscEntries.add(rde);
+//		}
+//		correct &= ResultChecker.isSubset(rsaEntries,rscEntries);
+//		assert correct;
+//		correct &= ResultChecker.isSubset(rscEntries,rsaEntries);
+//		assert correct;
+		rsc.removeDeadEnds();
+		DoubleDeckerAutomaton<LETTER, STATE> reachalbeStatesCopy = (DoubleDeckerAutomaton<LETTER, STATE>) rsc.getResult();
+		correct &= m_Result.getStates().isEmpty() || ResultChecker.isSubset(reachalbeStatesCopy.getStates(),m_Result.getStates());
 		assert correct;
-//		correct &= ResultChecker.isSubset(m_Result.getStates(),reachalbeStatesCopy.getStates());
+		correct &= ResultChecker.isSubset(m_Result.getStates(),reachalbeStatesCopy.getStates());
 		assert correct;
 		Collection<STATE> rsaStates = m_Result.getStates();
 		Collection<STATE> rscStates = reachalbeStatesCopy.getStates();
