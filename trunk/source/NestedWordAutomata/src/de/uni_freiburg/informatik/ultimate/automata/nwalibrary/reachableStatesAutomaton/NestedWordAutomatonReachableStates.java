@@ -35,6 +35,8 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingReturnTra
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.SummaryReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.TransitionConsitenceCheck;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.DoubleDeckerVisitor.ReachFinal;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.IOpWithDelayedDeadEndRemoval.UpDownEntry;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.NestedWordAutomatonReachableStates.ReachProp;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 
@@ -545,6 +547,21 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 		return getDownStates(up).contains(down);
 	}
 	
+	public boolean isDownStateAfterDeadEndRemoval(STATE up, STATE down) {
+		StateContainer<LETTER, STATE> cont = m_States.get(up);
+		if (cont.getReachProp() == ReachProp.NODEADEND_AD) {
+			assert (cont.getDownStates().containsKey(down));
+			return true;
+		} else {
+			assert cont.getReachProp() == ReachProp.NODEADEND_SD;
+			ReachProp reach = cont.getDownStates().get(up);
+			if (reach == ReachProp.NODEADEND_SD) {
+				return true;
+			} else {
+				return false;
+			}
+		}
+	}
 	
 
 	public Set<STATE> getDownStatesAfterDeadEndRemoval(STATE state) {
@@ -1068,7 +1085,116 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 
 	
 	
-	
+	public Iterable<UpDownEntry<STATE>> getRemovedUpDownEntry() {
+		
+		return new Iterable<UpDownEntry<STATE>>() {
+
+			@Override
+			public Iterator<UpDownEntry<STATE>> iterator() {
+				return new Iterator<UpDownEntry<STATE>>() {
+					private Iterator<STATE> m_UpIterator;
+					private STATE m_Up;
+					private Iterator<STATE> m_DownIterator;
+					private STATE m_Down;
+					boolean m_hasNext = true;
+					private StateContainer<LETTER, STATE> m_StateContainer;
+
+					{
+						m_UpIterator = m_States.keySet().iterator();
+						if (m_UpIterator.hasNext()) {
+							m_Up = m_UpIterator.next();
+							m_StateContainer = m_States.get(m_Up);
+							m_DownIterator = m_StateContainer.getDownStates().keySet().iterator();
+						} else {
+							m_hasNext = false;
+						}
+						computeNextElement();
+						
+					}
+					
+					private void computeNextElement() {
+						m_Down = null;
+						while (m_Down == null && m_hasNext) {
+							if (m_StateContainer.getReachProp() != ReachProp.NODEADEND_AD && m_DownIterator.hasNext()) {
+								STATE downCandidate = m_DownIterator.next();
+								if (m_StateContainer.getReachProp() == ReachProp.REACHABLE) {
+									m_Down = downCandidate;
+								} else {
+									assert m_StateContainer.getReachProp() == ReachProp.NODEADEND_SD;
+									ReachProp reach = m_StateContainer.getDownStates().get(downCandidate);
+									if (reach == ReachProp.REACHABLE) {
+										m_Down = downCandidate;
+									} else {
+										assert reach == ReachProp.NODEADEND_SD;
+									}
+								}
+							} else {
+								if (m_UpIterator.hasNext()) {
+									m_Up = m_UpIterator.next();
+									m_StateContainer = m_States.get(m_Up);
+									m_DownIterator = m_StateContainer.getDownStates().keySet().iterator();
+								} else {
+									m_hasNext = false;
+								}
+							}
+							
+						}
+					}
+
+					@Override
+					public boolean hasNext() {
+						return m_hasNext;
+					}
+
+					@Override
+					public UpDownEntry<STATE> next() {
+						if (!hasNext()) {
+							throw new NoSuchElementException();
+						}
+						STATE entry;
+						Set<STATE> callSuccs = computeState2CallSuccs(m_Down);
+						if (callSuccs.size() > 1 ) {
+							throw new UnsupportedOperationException("State has more than one call successor");
+						} else if (callSuccs.size() == 1 ) {
+							entry = callSuccs.iterator().next();
+						} else {
+							entry = null;
+							assert m_Down == getEmptyStackState();
+						}
+						UpDownEntry<STATE> result  = new UpDownEntry<STATE>(m_Up, m_Down, entry);
+						computeNextElement();
+						return result;
+					}
+
+					@Override
+					public void remove() {
+						throw new UnsupportedOperationException();
+					}
+				
+					
+				};
+				
+			}
+			
+			/**
+			 * Compute call successors for a given set of states.
+			 */
+			private Set<STATE> computeState2CallSuccs(STATE state) {
+				Set<STATE> callSuccs = new HashSet<STATE>();
+				if (state != getEmptyStackState()) {
+					for (LETTER letter : lettersCall(state)) {
+						for (STATE succ : succCall(state, letter)) {
+							callSuccs.add(succ);
+						}
+					}
+				}
+				return callSuccs;
+			}
+			
+			
+		};
+
+	}
 
 	
 
