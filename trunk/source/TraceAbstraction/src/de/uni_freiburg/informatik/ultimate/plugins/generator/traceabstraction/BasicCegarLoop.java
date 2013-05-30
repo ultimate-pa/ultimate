@@ -18,10 +18,8 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.Differ
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IsEmpty;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.MinimizeSevpa;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.PowersetDeterminizer;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.RemoveDeadEnds;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.ComplementDD;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.DeterminizeDD;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.DifferenceDD;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.IOpWithDelayedDeadEndRemoval;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.IntersectDD;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.senwa.DifferenceSenwa;
@@ -229,10 +227,9 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 					diff = new DifferenceSenwa<CodeBlock, IPredicate>(
 								oldAbstraction, m_InterpolAutomaton, psd, false);
 				} else {
-					diff = new DifferenceDD<CodeBlock, IPredicate>(
+					diff = new Difference<CodeBlock, IPredicate>(
 							oldAbstraction, m_InterpolAutomaton, psd, 
 							m_StateFactoryForRefinement,
-							false,
 							explointSigmaStarConcatOfIA);
 				}
 			break;
@@ -240,10 +237,10 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 				BestApproximationDeterminizer bed = 
 					new BestApproximationDeterminizer(m_SmtManager,	m_Pref, 
 											m_InterpolAutomaton);
-				diff = new DifferenceDD<CodeBlock, IPredicate>(
+				diff = new Difference<CodeBlock, IPredicate>(
 							oldAbstraction, m_InterpolAutomaton, bed,
 							m_StateFactoryForRefinement,
-							false, explointSigmaStarConcatOfIA);
+							explointSigmaStarConcatOfIA);
 				
 				s_Logger.info("Internal Transitions: " 
 						+ bed.m_AnswerInternalAutomaton + " answers given by automaton "
@@ -266,10 +263,10 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 					diff = new DifferenceSenwa<CodeBlock, IPredicate>(
 							oldAbstraction, m_InterpolAutomaton, epd, false);
 				} else {
-					diff = new DifferenceDD<CodeBlock, IPredicate>(
+					diff = new Difference<CodeBlock, IPredicate>(
 							oldAbstraction, m_InterpolAutomaton, epd, 
 							m_StateFactoryForRefinement,
-							false, explointSigmaStarConcatOfIA);
+							explointSigmaStarConcatOfIA);
 				}
 					s_Logger.info("Internal Transitions: " 
 							+ epd.m_AnswerInternalAutomaton + " answers given by automaton " 
@@ -296,10 +293,10 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 					diff = new DifferenceSenwa<CodeBlock, IPredicate>(
 							oldAbstraction, m_InterpolAutomaton, lpd, false);
 				} else {
-					diff = new DifferenceDD<CodeBlock, IPredicate>(
+					diff = new Difference<CodeBlock, IPredicate>(
 							oldAbstraction, m_InterpolAutomaton, lpd, 
 							m_StateFactoryForRefinement,
-							false, explointSigmaStarConcatOfIA);
+							explointSigmaStarConcatOfIA);
 				}
 				
 					s_Logger.info("Internal Transitions: " 
@@ -327,10 +324,10 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 					diff = new DifferenceSenwa<CodeBlock, IPredicate>(
 							oldAbstraction, m_InterpolAutomaton, sed, false);
 				} else {
-					diff = new DifferenceDD<CodeBlock, IPredicate>(
+					diff = new Difference<CodeBlock, IPredicate>(
 							oldAbstraction, m_InterpolAutomaton, sed, 
 							m_StateFactoryForRefinement,
-							false, explointSigmaStarConcatOfIA);
+							explointSigmaStarConcatOfIA);
 				}
 				s_Logger.info("Internal Selfloops: "+ sed.m_InternalSelfloop 
 						+ " Internal NonSelfloops " + sed.m_InternalNonSelfloop);
