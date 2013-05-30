@@ -12,7 +12,7 @@ import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.NestedWordAutomatonReachableStates;
 
 public class NestedWordAutomatonFilteredStates<LETTER, STATE> implements
-		INestedWordAutomatonOldApi<LETTER, STATE>, INestedWordAutomaton<LETTER, STATE> {
+		INestedWordAutomatonOldApi<LETTER, STATE>, INestedWordAutomaton<LETTER, STATE>, IDoubleDeckerAutomaton<LETTER, STATE> {
 	INestedWordAutomatonOldApi<LETTER, STATE> m_Nwa;
 	Predicate<STATE> m_RemainingStates;
 	Predicate<STATE> m_RemainingInitials;
@@ -493,5 +493,14 @@ public class NestedWordAutomatonFilteredStates<LETTER, STATE> implements
 			};
 		}
 
+	}
+
+
+
+
+
+	@Override
+	public boolean isDoubleDecker(STATE up, STATE down) {
+		return ((NestedWordAutomatonReachableStates<LETTER, STATE>) m_Nwa).isDownStateAfterDeadEndRemoval(up, down);
 	}
 }
