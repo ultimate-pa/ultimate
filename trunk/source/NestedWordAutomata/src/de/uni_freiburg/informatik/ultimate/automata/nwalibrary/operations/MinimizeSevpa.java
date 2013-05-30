@@ -467,7 +467,7 @@ public class MinimizeSevpa<LETTER,STATE> implements IOperation<LETTER,STATE> {
 		// non-final states (initially not in work list)
 		if (nonfinals.size() > 0) {
 			EquivalenceClass nonfinalsP =
-								new EquivalenceClass(nonfinals, false, false);
+								new EquivalenceClass(nonfinals, false, true);
 			partition.addEquivalenceClass(nonfinalsP);
 		}
 		
