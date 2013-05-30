@@ -1,6 +1,10 @@
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations;
 
 import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.NoSuchElementException;
+import java.util.Set;
 
 import org.apache.log4j.Logger;
 
@@ -12,10 +16,13 @@ import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomatonFilteredStates;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.DifferenceDD;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.IOpWithDelayedDeadEndRemoval;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.IntersectDD;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.DoubleDeckerVisitor.ReachFinal;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.IOpWithDelayedDeadEndRemoval.UpDownEntry;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.NestedWordAutomatonReachableStates;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 
@@ -32,6 +39,7 @@ public class Difference<LETTER,STATE> implements IOperation<LETTER,STATE>, IOpWi
 	private final ComplementDeterministicNwa<LETTER,STATE> m_SndComplemented;
 	private final IntersectNwa<LETTER, STATE> m_Intersect;
 	private final NestedWordAutomatonReachableStates<LETTER,STATE> m_Result;
+	private NestedWordAutomatonFilteredStates<LETTER, STATE> m_ResultWOdeadEnds;
 	private final StateFactory<STATE> m_StateFactory;
 	
 	
@@ -73,12 +81,12 @@ public class Difference<LETTER,STATE> implements IOperation<LETTER,STATE>, IOpWi
 		s_Logger.info(exitMessage());
 	}
 	
+	
 	public Difference(INestedWordAutomatonOldApi<LETTER,STATE> fstOperand,
 			INestedWordAutomatonOldApi<LETTER,STATE> sndOperand,
 			IStateDeterminizer<LETTER, STATE> stateDeterminizer,
-			boolean finalIsTrap,
-			StateFactory<STATE> sf
-			) throws AutomataLibraryException {
+			StateFactory<STATE> sf,
+			boolean finalIsTrap) throws AutomataLibraryException {
 		m_FstOperand = fstOperand;
 		m_SndOperand = sndOperand;
 		m_StateFactory = sf;
@@ -100,7 +108,11 @@ public class Difference<LETTER,STATE> implements IOperation<LETTER,STATE>, IOpWi
 	@Override
 	public INestedWordAutomatonOldApi<LETTER, STATE> getResult()
 			throws OperationCanceledException {
-		return m_Result;
+		if (m_ResultWOdeadEnds == null) {
+			return m_Result;
+		} else {
+			return m_ResultWOdeadEnds;
+		}
 	}
 
 
@@ -127,16 +139,15 @@ public class Difference<LETTER,STATE> implements IOperation<LETTER,STATE>, IOpWi
 	}
 
 
-	@Override
-	public Iterable<UpDownEntry<STATE>> getRemovedUpDownEntry() {
-		return new ArrayList<UpDownEntry<STATE>>();
-	}
+
 
 
 	@Override
 	public boolean removeDeadEnds() {
-		// TODO Auto-generated method stub
-		return false;
+		m_ResultWOdeadEnds = new NestedWordAutomatonFilteredStates<LETTER, STATE>(m_Result);
+		s_Logger.info("With dead ends: " + m_Result.getStates().size());
+		s_Logger.info("Without dead ends: " + m_ResultWOdeadEnds.getStates().size());
+		return m_Result.getStates().size() != m_ResultWOdeadEnds.getStates().size();
 	}
 
 
@@ -144,6 +155,12 @@ public class Difference<LETTER,STATE> implements IOperation<LETTER,STATE>, IOpWi
 	public long getDeadEndRemovalTime() {
 		// TODO Auto-generated method stub
 		return 0;
+	}
+
+
+	@Override
+	public Iterable<UpDownEntry<STATE>> getRemovedUpDownEntry() {
+		return m_Result.getRemovedUpDownEntry();
 	}
 	
 	
