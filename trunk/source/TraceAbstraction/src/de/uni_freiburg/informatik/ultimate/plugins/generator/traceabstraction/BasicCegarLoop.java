@@ -14,6 +14,7 @@ import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.Difference;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IsEmpty;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.MinimizeSevpa;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.PowersetDeterminizer;
@@ -345,10 +346,10 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 					diff = new DifferenceSenwa<CodeBlock, IPredicate>(
 							oldAbstraction, m_InterpolAutomaton, spd, false);
 				} else {
-					diff = new DifferenceDD<CodeBlock, IPredicate>(
+					diff = new Difference<CodeBlock, IPredicate>(
 							oldAbstraction, m_InterpolAutomaton, spd, 
 							m_StateFactoryForRefinement,
-							false, explointSigmaStarConcatOfIA);
+							explointSigmaStarConcatOfIA);
 				}
 			break;
 			default:
