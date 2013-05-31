@@ -106,7 +106,7 @@ public class StringFactory extends StateFactory<String> {
 	}
 	
 	@Override
-	public String complementBuchi(BuchiComplementFKV<?,String>.LevelRankingState compl) {
+	public String buchiComplementFKV(BuchiComplementFKV<?,String>.LevelRankingState compl) {
 		
 		StringBuilder sb = new StringBuilder();
 		sb.append("{");

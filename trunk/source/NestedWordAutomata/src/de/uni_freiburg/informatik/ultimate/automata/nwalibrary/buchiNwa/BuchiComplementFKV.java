@@ -335,7 +335,7 @@ public class BuchiComplementFKV<LETTER,STATE> extends DoubleDeckerBuilder<LETTER
 		}
 		
 		STATE getContent() {
-			return m_ContentFactory.complementBuchi((LevelRankingState) this);
+			return m_ContentFactory.buchiComplementFKV((LevelRankingState) this);
 		}
 		
 		@Override

@@ -47,7 +47,7 @@ public abstract class StateFactory<STATE> {
 		return c;
 	}
 	
-	public STATE complementBuchi(BuchiComplementFKV<?, STATE>.LevelRankingState compl) {
+	public STATE buchiComplementFKV(BuchiComplementFKV<?, STATE>.LevelRankingState compl) {
 		return null;
 	}
 	
