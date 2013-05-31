@@ -93,7 +93,8 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	private Partition m_partition;
 	// work lists
 	private WorkListIntCall m_workListIntCall;
-	private WorkListRet m_workListRet;
+	private WorkListRetNaive m_workListRetNaive;
+	private WorkListRetDetailed m_workListRetDetailed;
 	// simulates the output automaton
 	private ShrinkNwaResult m_result;
 	
@@ -146,7 +147,8 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 //		m_stateFactoryConstruction = stateFactoryConstruction;
 		m_partition = new Partition();
 		m_workListIntCall = new WorkListIntCall();
-		m_workListRet = new WorkListRet();
+		m_workListRetNaive = new WorkListRetNaive();
+		m_workListRetDetailed = new WorkListRetDetailed();
 		
 		// must be the last part of the constructor
 		s_Logger.info(startMessage());
@@ -172,6 +174,9 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 		// initialize the partition object
 		initialize(modules);
 		
+		final InternalTransitionIterator internalIterator =
+				new InternalTransitionIterator();
+		
 		// for DFAs only the internal split is both necessary and sufficient
 		if (isFiniteAutomaton) {
 			// iterative refinement
@@ -184,19 +189,13 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 				EquivalenceClass a = m_workListIntCall.next();
 				
 				// internal split
-				splitInternalOrCallPredecessors(a,
-						new InternalTransitionIterator());
+				splitInternalOrCallPredecessors(a, internalIterator);
 			}
 		}
 		// more complicated splitting 
 		else {
-			// global down states split
-			if (DEBUG)
-				System.out.println("-- down states split");
-			splitDownStates();
-			
-			if (DEBUG)
-				System.out.println("\n-- normal splitting");
+			final CallTransitionIterator callIterator =
+					new CallTransitionIterator();
 			
 			// iterative refinement
 			outer: while (true) {
@@ -218,26 +217,34 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 					// internal split
 					if (DEBUG)
 						System.out.println("\n-- internal search");
-					splitInternalOrCallPredecessors(a,
-							new InternalTransitionIterator());
+					splitInternalOrCallPredecessors(a, internalIterator);
 					
 					// call split
 					if (DEBUG)
 						System.out.println("\n-- call search");
-					splitInternalOrCallPredecessors(a,
-							new CallTransitionIterator());
+					splitInternalOrCallPredecessors(a, callIterator);
 				}
 				
 				// return predecessors
-				if (m_workListRet.hasNext()) {
+				if (m_workListRetNaive.hasNext()) {
 					if (DEBUG)
-						System.out.println("\n-- return search");
-					EquivalenceClass a = m_workListRet.next();
+						System.out.println("\n-- naive return search");
+					EquivalenceClass a = m_workListRetNaive.next();
 					
-					splitReturnPredecessors(a);
+					splitReturnPredecessorsNaive(a);
 				}
 				else {
-					break outer;
+					// return predecessors
+					if (m_workListRetDetailed.hasNext()) {
+						if (DEBUG)
+							System.out.println("\n-- detailed return search");
+						EquivalenceClass a = m_workListRetDetailed.next();
+						
+						splitReturnPredecessorsDetailed(a);
+					}
+					else {
+						break outer;
+					}
 				}
 			}
 			
@@ -296,93 +303,6 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	}
 	
 	/**
-	 * Globally for each state with outgoing return transitions get the
-	 * respective
-	 * 1) down states and
-	 * 2) hierarchical predecessors.
-	 * 
-	 * Note that 2) is always a subset of 1), since other transitions have
-	 * been removed in the input automaton.
-	 * 
-	 * If 2) is a PROPER subset of 1) and not the empty set, split the
-	 * difference 1) - 2).
-	 * TODO<DownStates> this split is not correct:
-	 *                  negative states could be combined
-	 *                  probably this split is not needed, but a more
-	 *                  complicated return split instead
-	 * 
-	 * As a cheap byproduct also split states with no outgoing return edges.
-	 */
-	private void splitDownStates() {
-		// states with no outgoing return edges can be split as byproduct
-		final HashSet<STATE> noOutgoingReturnStates = new HashSet<STATE>(
-				computeHashSetCapacity(m_operand.size()));
-		
-		for (final STATE state : m_operand.getStates()) {
-			final Iterator<OutgoingReturnTransition<LETTER, STATE>>
-					returnEdges = m_operand.returnSuccessors(state).iterator();
-			if (returnEdges.hasNext()) {
-				if (DEBUG)
-					System.out.println("considering state " + state);
-				
-				final HashMap<LETTER, HashSet<STATE>> letter2positiveStates =
-						new HashMap<LETTER, HashSet<STATE>>();
-				final HashSet<LETTER> candidates = new HashSet<LETTER>();
-				
-				// collect all outgoing return edges for the state
-				do {
-					final OutgoingReturnTransition<LETTER, STATE> edge =
-							returnEdges.next();
-					final LETTER letter = edge.getLetter();
-					if (m_doubleDecker.isDoubleDecker(state,
-							edge.getHierPred())) {
-						HashSet<STATE> set = letter2positiveStates.get(letter);
-						if (set == null) {
-							set = new HashSet<STATE>();
-							letter2positiveStates.put(letter, set);
-						}
-						set.add(edge.getSucc());
-					}
-					// possibly split with respect to this letter
-					else {
-						candidates.add(letter);
-					}
-				} while (returnEdges.hasNext());
-				
-				// check for splits
-				for (final LETTER letter : letter2positiveStates.keySet()) {
-					if (candidates.contains(letter)) {
-						final HashSet<STATE> candidateSet =
-								letter2positiveStates.get(letter);
-						assert (! candidateSet.isEmpty());
-						
-						// do a split
-						if (DEBUG)
-							System.out.println("split due to down state: " +
-									candidateSet);
-						m_partition.splitEquivalenceClasses(candidateSet);
-					}
-				}
-			}
-			// state has no outgoing return edges, definite split
-			else {
-				if (DEBUG)
-					System.out.println("ignoring state " + state);
-				noOutgoingReturnStates.add(state);
-			}
-		}
-		
-		// split states with no outgoing return edges
-		if (DEBUG)
-			System.out.println("split no out ret: " + noOutgoingReturnStates);
-		m_partition.splitEquivalenceClasses(noOutgoingReturnStates);
-		
-		if (DEBUG)
-			System.out.println("DownStates split: " +
-					m_partition.m_equivalenceClasses.size());
-	}
-	
-	/**
 	 * For each state and internal or call symbol respectively do the usual
 	 * Hopcroft backwards split.
 	 * 
@@ -420,17 +340,11 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	}
 	
 	/**
-	 * For each state and return symbol split the linear predecessors
-	 * with respect to the successor equivalence classes.
-	 * 
-	 * To avoid concurrent modifications of the iterator, the method is stopped
-	 * here whenever the splitter set itself was split. This could be avoided
-	 * by storing the states, but the method will be called with the new
-	 * splitter set anyway, so this is not considered necessary.
+	 * For each state and return symbol split the linear predecessors.
 	 * 
 	 * @param a splitter equivalence class
 	 */
-	private void splitReturnPredecessors(final EquivalenceClass a) {
+	private void splitReturnPredecessorsNaive(final EquivalenceClass a) {
 		// recognize when the splitter set was split itself
 		assert (! a.m_isInWorkListIntCall);
 		
@@ -454,9 +368,37 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 		for (final HashSet<STATE> lins : letter2lin.values()) {
 			m_partition.splitEquivalenceClasses(lins);
 		}
-		// splitter set was split, stop
-		if (a.m_isInWorkListIntCall) {
-			return;
+	}
+	
+	/**
+	 * For each state and return symbol split the linear predecessors
+	 * with respect to the successor equivalence classes.
+	 * 
+	 * To avoid concurrent modifications of the iterator, the method is stopped
+	 * here whenever the splitter set itself was split. This could be avoided
+	 * by storing the states, but the method will be called with the new
+	 * splitter set anyway, so this is not considered necessary.
+	 * 
+	 * @param a splitter equivalence class
+	 */
+	private void splitReturnPredecessorsDetailed(final EquivalenceClass a) {
+		// recognize when the splitter set was split itself
+		assert (! a.m_isInWorkListIntCall);
+		
+		// collect incoming return transitions
+		HashMap<LETTER, HashSet<STATE>> letter2lin =
+				new HashMap<LETTER, HashSet<STATE>>();
+		for (final STATE succ : a.m_states) {
+			for (final IncomingReturnTransition<LETTER, STATE> edge :
+					m_operand.returnPredecessors(succ)) {
+				final LETTER letter = edge.getLetter();
+				HashSet<STATE> lins = letter2lin.get(letter);
+				if (lins == null) {
+					lins = new HashSet<STATE>();
+					letter2lin.put(letter, lins);
+				}
+				lins.add(edge.getLinPred());
+			}
 		}
 		
 		/*
@@ -699,7 +641,8 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 		}
 		m_partition = null;
 		m_workListIntCall = null;
-		m_workListRet = null;
+		m_workListRetNaive = null;
+		m_workListRetDetailed = null;
 	}
 	
 	// --- [end] main methods --- //
@@ -1000,9 +943,13 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 						ec.m_isInWorkListIntCall = true;
 						m_workListIntCall.add(ec);
 					}
-					if (! ec.m_isInWorkListRetPred) {
-						ec.m_isInWorkListRetPred = true;
-						m_workListRet.add(ec);
+					if (! ec.m_isInWorkListRetNaive) {
+						ec.m_isInWorkListRetNaive = true;
+						m_workListRetNaive.add(ec);
+					}
+					if (! ec.m_isInWorkListRetDetailed) {
+						ec.m_isInWorkListRetDetailed = true;
+						m_workListRetDetailed.add(ec);
 					}
 					
 					// reset equivalence class (before 
@@ -1046,7 +993,8 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 		private Set<STATE> m_states;
 		// true iff equivalence class is in the respective work list
 		private boolean m_isInWorkListIntCall;
-		private boolean m_isInWorkListRetPred;
+		private boolean m_isInWorkListRetNaive;
+		private boolean m_isInWorkListRetDetailed;
 		// intersection set that finally becomes a new equivalence class
 		private Set<STATE> m_intersection;
 		
@@ -1058,8 +1006,10 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 			reset();
 			m_isInWorkListIntCall = true;
 			m_workListIntCall.add(this);
-			m_isInWorkListRetPred = true;
-			m_workListRet.add(this);
+			m_isInWorkListRetNaive = true;
+			m_workListRetNaive.add(this);
+			m_isInWorkListRetDetailed = true;
+			m_workListRetDetailed.add(this);
 		}
 		
 		/**
@@ -1074,7 +1024,7 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 		public String toString() {
 			final StringBuilder builder = new StringBuilder();
 			String append = "";
-			if (! m_isInWorkListIntCall && ! m_isInWorkListRetPred &&
+			if (! m_isInWorkListIntCall && ! m_isInWorkListRetNaive &&
 					m_intersection.isEmpty()) {
 				builder.append("<");
 				for (final STATE state : m_states) {
@@ -1089,7 +1039,7 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 			builder.append("<[");
 			builder.append(m_isInWorkListIntCall ? "IC" : "-");
 			builder.append(",");
-			builder.append(m_isInWorkListRetPred ? "R" : "-");
+			builder.append(m_isInWorkListRetNaive ? "R" : "-");
 			builder.append("], [");
 			for (final STATE state : m_states) {
 				builder.append(append);
@@ -1203,23 +1153,49 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	}
 	
 	/**
-	 * This class implements the work list for predecessor return splits.
+	 * This class implements the work list for naive predecessor return splits.
 	 */
-	private class WorkListRet extends AWorkList {
+	private class WorkListRetNaive extends AWorkList {
 		@Override
 		public EquivalenceClass next() {
 			final EquivalenceClass ec = m_queue.poll();
-			ec.m_isInWorkListRetPred = false;
+			ec.m_isInWorkListRetNaive = false;
 			if (DEBUG)
-				System.out.println("\npopping from RetPred WL: " + ec);
+				System.out.println("\npopping from naive return WL: " + ec);
 			return ec;
 		}
 		
 		@Override
 		public void add(final EquivalenceClass ec) {
-			assert (ec.m_isInWorkListRetPred);
+			assert (ec.m_isInWorkListRetNaive);
 			if (DEBUG)
-				System.out.println("adding of RetPred WL: " + ec);
+				System.out.println("adding of naive return WL: " + ec);
+			super.add(ec);
+		}
+	}
+	
+	/**
+	 * This class implements the work list for detailed predecessor return
+	 * splits.
+	 * 
+	 * TODO<detailedReturnSplit> could be improved:
+	 *                           only classes with returns must be inserted
+	 */
+	private class WorkListRetDetailed extends AWorkList {
+		@Override
+		public EquivalenceClass next() {
+			final EquivalenceClass ec = m_queue.poll();
+			ec.m_isInWorkListRetDetailed = false;
+			if (DEBUG)
+				System.out.println("\npopping from detailed return WL: " + ec);
+			return ec;
+		}
+		
+		@Override
+		public void add(final EquivalenceClass ec) {
+			assert (ec.m_isInWorkListRetDetailed);
+			if (DEBUG)
+				System.out.println("adding of detailed return WL: " + ec);
 			super.add(ec);
 		}
 	}
