@@ -11,6 +11,7 @@ import de.uni_freiburg.informatik.ultimate.access.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.access.WalkerOptions;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.model.BoogieLocation;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.ILocation;
 import de.uni_freiburg.informatik.ultimate.model.ITranslator;
@@ -319,18 +320,32 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 	
 
 	private void reportPositiveResult(Collection<ProgramPoint> errorLocs) {
-		for (ProgramPoint errorLoc : errorLocs) {
-			ILocation origin = errorLoc.getAstNode().getLocation().getOrigin();
-			PositiveResult<RcfgElement> pResult = new PositiveResult<RcfgElement>(
-					errorLoc,
-					Activator.s_PLUGIN_NAME,
-					UltimateServices.getInstance().getTranslatorSequence(),
-					origin);
-			String pMessage = origin.checkedSpecification().getPositiveMessage();
-			pResult.setShortDescription(pMessage);
-			pMessage += " (line " + origin.getStartLine() + ")";			
-			reportResult(pResult);
-			s_Logger.warn(pMessage);
+		if (errorLocs.isEmpty()) {
+			String shortDescription = "No specification checked";
+			String longDescription = "We were not able to verify any" +
+					" specifiation because the program does not contain any specification.";
+			GenericResult<RcfgElement> gr = new GenericResult<RcfgElement>(
+					null, Activator.s_PLUGIN_NAME, 
+					UltimateServices.getInstance().getTranslatorSequence(), 
+					new BoogieLocation("unknown", 0, 0, 0, 0, false),
+					shortDescription,
+					longDescription,
+					GenericResult.Severity.WARNING);
+			s_Logger.warn(shortDescription + " " + longDescription); 
+		} else {
+			for (ProgramPoint errorLoc : errorLocs) {
+				ILocation origin = errorLoc.getAstNode().getLocation().getOrigin();
+				PositiveResult<RcfgElement> pResult = new PositiveResult<RcfgElement>(
+						errorLoc,
+						Activator.s_PLUGIN_NAME,
+						UltimateServices.getInstance().getTranslatorSequence(),
+						origin);
+				String pMessage = origin.checkedSpecification().getPositiveMessage();
+				pResult.setShortDescription(pMessage);
+				pMessage += " (line " + origin.getStartLine() + ")";			
+				reportResult(pResult);
+				s_Logger.warn(pMessage);
+			}
 		}
 	}
 	
