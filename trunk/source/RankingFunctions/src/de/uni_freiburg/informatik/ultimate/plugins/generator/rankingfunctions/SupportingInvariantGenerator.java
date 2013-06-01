@@ -162,7 +162,7 @@ public class SupportingInvariantGenerator extends InstanceCounting {
 	 * @return supporting invariant
 	 * @throws SMTLIBException
 	 */
-	public SupportingInvariant extractSupportingInvariant(Valuation val)
+	public SupportingInvariant extractSupportingInvariant(Map<Term, Term> val)
 			throws SMTLIBException {
 		// Extract coefficients from the model and convert them to Rational
 		Rational coeff0 = AuxiliaryMethods.const2Rational(val.get(m_constant));

@@ -183,7 +183,7 @@ public class Interpolator {
 		}
 	}
 
-	private static final boolean DEEP_CHECK_INTERPOLANTS = false;
+	private static final boolean DEEP_CHECK_INTERPOLANTS = true;
 	SMTInterpol m_SmtSolver;
 
 	Logger m_Logger;
@@ -272,7 +272,7 @@ public class Interpolator {
 
 		m_SmtSolver.push(1);
 		
-		/* initialize auxMaps, which maps for each partion the auxiliary
+		/* initialize auxMaps, which maps for each partition the auxiliary
 		 * variables for mixed literals to a new fresh constant.
 		 */
 		@SuppressWarnings("unchecked") // because Java Generics are broken :(
@@ -1095,7 +1095,15 @@ public class Interpolator {
 			c1s2c2s1.add(c2.abs(), s1);
 
 			Term newF;
-			if (la1.m_k.less(InfinitNumber.ZERO)) {
+			if (s1.getConstant().meps > 0
+				|| s2.getConstant().meps > 0) {
+				// One of the inequalities is strict.  In this case
+				// c1s2c2s1 must also be a strict inequality and it is not
+				// possible that c1s2c2s1 == 0 holds. Hence, we do not need
+				// to substitute a shared term.
+				newF = c1s2c2s1.toLeq0(m_Theory);
+				newK = InfinitNumber.EPSILON.negate();
+			} else if (la1.m_k.less(InfinitNumber.ZERO)) {
 				//compute -s1/c1
 				InterpolatorAffineTerm s1divc1 = new InterpolatorAffineTerm(s1);
 				s1divc1.mul(c1.inverse().negate());

@@ -69,13 +69,13 @@ public class NoopProofTracker implements IProofTracker {
 	public void desugar(ApplicationTerm orig, Term[] origArgs, Term[] newArgs) {}
 
 	@Override
-	public void divisible(Term div, Term res) {}
+	public void divisible(FunctionSymbol divn, Term div, Term res) {}
 
 	@Override
 	public void expandDef(Term orig, Term res) {}
 
 	@Override
-	public Term getRewriteProof(Term asserted, Term result) {
+	public Term getRewriteProof(Term asserted) {
 		return null;
 	}
 
@@ -174,5 +174,20 @@ public class NoopProofTracker implements IProofTracker {
 
 	@Override
 	public void normalized(ConstantTerm term, SMTAffineTerm res) {}
+
+	@Override
+	public boolean notifyLiteral(Literal lit, Term t) {
+		// Never return false => Never restore this tracker...
+		return true;
+	}
+
+	@Override
+	public void notifyFalseLiteral(Term t) {}
+
+	@Override
+	public void storeRewrite(ApplicationTerm store, Term result, boolean arrayFirst) {}
+
+	@Override
+	public void toReal(SMTAffineTerm arg, SMTAffineTerm res) {}
 
 }

@@ -27,6 +27,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.DPLLAtom;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.NamedAtom;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.cclosure.CCEquality;
 import de.uni_freiburg.informatik.ultimate.util.HashUtils;
 
@@ -35,7 +36,6 @@ public class LAEquality extends DPLLAtom {
 	private LinVar m_Var;
 	private Rational m_Bound;
 	private ArrayList<CCEquality> m_dependentEqualities;
-	int m_StackDepth;
 	
 	public LAEquality(int stackLevel, LinVar var, Rational bound) {
 		super(HashUtils.hashJenkins(~var.hashCode(), bound), stackLevel);
@@ -74,7 +74,7 @@ public class LAEquality extends DPLLAtom {
 				at.toSMTLib(smtTheory, m_Var.misint, quoted),
 				m_Var.misint ? smtTheory.numeral(BigInteger.ZERO) :
 					smtTheory.rational(BigInteger.ZERO,BigInteger.ONE));
-		return res;
+		return quoted ? smtTheory.annotatedTerm(NamedAtom.g_quoted, res) : res;
 	}
 
 	public void addDependentAtom(CCEquality eq) {

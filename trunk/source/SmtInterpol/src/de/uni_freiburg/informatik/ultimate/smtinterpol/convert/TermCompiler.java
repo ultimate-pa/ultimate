@@ -33,6 +33,7 @@ import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.NonRecursive;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
+import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
@@ -138,8 +139,7 @@ public class TermCompiler extends TermTransformer {
 			m_Tracker.normalized((ConstantTerm) term, res);
 			setResult(res);
 			return;
-		} else if (term instanceof AnnotatedTerm)
-			m_Tracker.strip((AnnotatedTerm) term);
+		}
 		super.convert(term);
 	}
 	
@@ -320,8 +320,11 @@ public class TermCompiler extends TermTransformer {
 					if (arg1.getConstant().equals(Rational.ZERO)) {
 						m_By0Seen = true;
 						setResult(theory.term("@/0", arg0));
-					} else
-						setResult(arg0.mul(arg1.getConstant().inverse()));
+					} else {
+						SMTAffineTerm res = arg0.mul(arg1.getConstant().inverse());
+						m_Tracker.sum(fsym, args, res);
+						setResult(res);
+					}
 					return;
 				} else {
 					throw new UnsupportedOperationException("Unsupported non-linear arithmetic");
@@ -405,10 +408,15 @@ public class TermCompiler extends TermTransformer {
 					throw new UnsupportedOperationException("Unsupported non-linear arithmetic");
 				}
 			} else if (fsym.getName().equals("-") && fsym.getParameterCount() == 1) {
-				setResult(SMTAffineTerm.create(args[0]).negate());
+				SMTAffineTerm res = SMTAffineTerm.create(args[0]).negate();
+				m_Tracker.sum(fsym, args, res);
+				setResult(res);
 				return;
 			} else if (fsym.getName().equals("to_real") && fsym.getParameterCount() == 1) {
-				setResult(SMTAffineTerm.create(args[0]).toReal(fsym.getReturnSort()));
+				SMTAffineTerm arg = SMTAffineTerm.create(args[0]);
+				SMTAffineTerm res = arg.toReal(fsym.getReturnSort());
+				setResult(res);
+				m_Tracker.toReal(arg, res);
 				return;
 			} else if (fsym.getName().equals("to_int") && fsym.getParameterCount() == 1) {
 				// We don't convert to_int here but defer it to the clausifier
@@ -440,7 +448,7 @@ public class TermCompiler extends TermTransformer {
 					res = theory.term("=", arg0, SMTAffineTerm.create(
 						theory.term("div", arg0, arg1)).mul(arg1.getConstant()));
 				setResult(res);
-				m_Tracker.divisible(appTerm, res);
+				m_Tracker.divisible(appTerm.getFunction(), arg0, res);
 				return;
 			} else if (fsym.getName().equals("store")) {
 				Term array = args[0];
@@ -470,18 +478,29 @@ public class TermCompiler extends TermTransformer {
 					// Check for select-over-store
 					SMTAffineTerm diff = SMTAffineTerm.create(idx).add(
 							SMTAffineTerm.create(nestedIdx).negate());
-					if (diff.isConstant() && 
-							diff.getConstant().equals(Rational.ZERO)) {
-						// Found select-over-store => transform into value
+					if (diff.isConstant()) { 
+						// Found select-over-store
 						ApplicationTerm appArray = (ApplicationTerm) array;
-						Term result = appArray.getParameters()[2];
-						m_Tracker.arrayRewrite(args, result,
-								ProofConstants.RW_SELECT_OVER_STORE);
-						setResult(result);
-						return;
+						if (diff.getConstant().equals(Rational.ZERO)) {
+							// => transform into value
+							Term result = appArray.getParameters()[2];
+							m_Tracker.arrayRewrite(args, result,
+									ProofConstants.RW_SELECT_OVER_STORE);
+							setResult(result);
+							return;
+						}else { // Both indices are numerical and distinct.
+							// => transform into (select a idx)
+							Term result = theory.term("select",
+									appArray.getParameters()[0], idx);
+							m_Tracker.arrayRewrite(args, result,
+									ProofConstants.RW_SELECT_OVER_STORE);
+							setResult(result);
+							return;
+						}
 					}
 				}
-			}
+			} else if (fsym.getName().equals("@undefined"))
+				throw new SMTLIBException("Undefined value in input");
 		}// intern function symbols
 		super.convertApplicationTerm(appTerm, args);
 	}
@@ -535,6 +554,7 @@ public class TermCompiler extends TermTransformer {
 				}
 			}
 		}
+		m_Tracker.strip(old);
 		setResult(newBody);
 	}
 	/**

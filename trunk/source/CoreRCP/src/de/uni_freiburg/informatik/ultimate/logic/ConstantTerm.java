@@ -57,8 +57,8 @@ public class ConstantTerm extends Term {
 		if (m_Value instanceof BigDecimal) {
 			BigDecimal decimal = (BigDecimal)m_Value; 
 			String str = decimal.toPlainString();
-			if (decimal.scale() <= 0)
-				str += ".0";
+//			if (decimal.scale() <= 0)
+//				str += ".0";
 			return str;
 		}
 		if (m_Value instanceof Rational)

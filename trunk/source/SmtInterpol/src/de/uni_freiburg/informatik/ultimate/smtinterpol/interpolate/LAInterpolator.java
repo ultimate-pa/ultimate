@@ -34,7 +34,6 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.linar.BoundConstra
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.linar.InfinitNumber;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.linar.LAAnnotation;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.linar.LAEquality;
-import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.linar.LAReason;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.linar.LinVar;
 
 public class LAInterpolator {
@@ -42,8 +41,6 @@ public class LAInterpolator {
 	Interpolator m_Interpolator;
 	LAAnnotation m_Annotation;
 
-	HashMap<LAAnnotation, LAReason> subAnnotToReason;
-	
 	HashMap<LAAnnotation, AnnotInfo> m_AuxInfos 
 	= new HashMap<LAAnnotation, AnnotInfo>();
 
@@ -69,11 +66,10 @@ public class LAInterpolator {
 		}
 		
 		void computeSum() {
-			LAReason reason = subAnnotToReason.get(m_myAnnotation);
 			m_Sum = new MutableAffinTerm();
-			m_Sum.add(reason.isUpper() ? Rational.ONE : Rational.MONE, reason.getVar());
-			m_Sum.add(reason.isUpper() ? reason.getBound().negate() : reason.getBound());
-			m_Epsilon = reason.getVar().getEpsilon();
+			m_Sum.add(Rational.ONE, m_myAnnotation.getLinVar());
+			m_Sum.add(m_myAnnotation.getBound().negate());
+			m_Epsilon = m_myAnnotation.getLinVar().getEpsilon();
 		}
 		private void color() {
 			boolean isFirst = true;
@@ -108,8 +104,7 @@ public class LAInterpolator {
 				if (isMixed(part)) {
 					InterpolatorAffineTerm sumApart = new InterpolatorAffineTerm();
 
-					LAReason reason = subAnnotToReason.get(m_myAnnotation);
-					LinVar lv = reason.getVar();
+					LinVar lv = m_myAnnotation.getLinVar();
 
 					for(Entry<LinVar, BigInteger> en : lv.getLinTerm().entrySet()) {
 						Occurrence occ = 
@@ -124,9 +119,6 @@ public class LAInterpolator {
 					}
 					sumApart.add(Rational.MONE, m_AuxVar); 
 				
-					if (!reason.isUpper())
-						sumApart.negate();
-
 					m_mixedSums[part] = sumApart;
 				}
 			}
@@ -153,12 +145,6 @@ public class LAInterpolator {
 			LAAnnotation theoryAnnotation) {
 		m_Interpolator = interpolator;
 		m_Annotation = theoryAnnotation;
-		
-		subAnnotToReason = new HashMap<LAAnnotation, LAReason>();
-		for (Entry<LAReason, LAAnnotation> en : 
-			m_Annotation.getSubReasons().entrySet()) 
-			subAnnotToReason.put(en.getValue(), en.getKey());
-		
 	}
 
 	/**
@@ -228,14 +214,15 @@ public class LAInterpolator {
 			// Sum A parts of negated auxAnnot.
 			int part = result.m_inB.nextClearBit(0);
 			while (part < ipl.length) {
+				Rational coeff = auxAnnot.isUpper() ? Rational.MONE : Rational.ONE;
 				if (result.isMixed(part)) {
-					ipl[part].add(Rational.MONE, result.getMixedSum(part));
+					ipl[part].add(coeff, result.getMixedSum(part));
 					if (auxVars[part] == null)
 						auxVars[part] = new ArrayList<TermVariable>();
 					auxVars[part].add(result.m_AuxVar);
 				}
 				if (result.isALocal(part)) {
-					ipl[part].add(Rational.MONE, result.getSum());
+					ipl[part].add(coeff, result.getSum());
 					ipl[part].add(result.getEpsilon());
 				}	
 				part++;
@@ -413,9 +400,12 @@ public class LAInterpolator {
 							result.m_Interpolants[part], subInfo.m_Interpolants[part], mixedVar);
 				} else if (subInfo.isAB(part)) {
 					/* Literal is shared: ite */
+					MutableAffinTerm mat = new MutableAffinTerm();
+					Rational coeff = annot.isUpper() ? Rational.ONE : Rational.MONE;
+					mat.add(coeff, subInfo.getSum());
 					result.m_Interpolants[part].m_term = 
 						m_Interpolator.m_Theory.ifthenelse
-								(subInfo.getSum().toSMTLibLeq0(m_Interpolator.m_Theory, false), 
+								(mat.toSMTLibLeq0(m_Interpolator.m_Theory, false), 
 								result.m_Interpolants[part].m_term, 
 								subInfo.m_Interpolants[part].m_term);
 				} else {

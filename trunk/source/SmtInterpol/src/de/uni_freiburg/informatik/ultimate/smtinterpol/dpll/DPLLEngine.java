@@ -29,7 +29,6 @@ import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 
-
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.logic.Assignments;
@@ -38,6 +37,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.Config;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.Clause.WatchList;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.DPLLAtom.TrueAtom;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.ProofNode;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.ResolutionNode;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.ResolutionNode.Antecedent;
@@ -167,12 +167,12 @@ public class DPLLEngine {
 		atom.stackPosition = stackptr;
 		atom.decideStatus = lit;
 		atom.lastStatus = atom.decideStatus;
+		atom.explanation = t;
 		if (decideLevel == 0) {
 			/* This atom is now decided once and for all. */
 			num_solvedatoms++;
 			generateLevel0Proof(lit);
-		} else
-			atom.explanation = t;
+		}
 		assert checkDecideLevel();
 	}
 	
@@ -204,12 +204,12 @@ public class DPLLEngine {
 		atom.stackPosition = stackptr;
 		atom.decideStatus = lit;
 		atom.lastStatus = atom.decideStatus;
+		atom.explanation = t;
 		if (level == 0) {
 			/* This atom is now decided once and for all. */
 			num_solvedatoms++;
 			generateLevel0Proof(lit);
-		} else
-			atom.explanation = t;
+		}
 		assert checkDecideLevel();
 	}
 	/**
@@ -1595,4 +1595,54 @@ public class DPLLEngine {
 		}
 		return res;
 	}
+	
+	public class AllSatIterator implements Iterator<Term[]> {
+
+		private Literal[] m_Preds;
+		private Term[] m_Terms;
+		private Literal[] m_Blocker;
+		private int m_BlockerSize;
+		
+		public AllSatIterator(Literal[] preds, Term[] terms) {
+			m_Preds = preds;
+			m_Terms = terms;
+			assert (m_Preds.length == m_Terms.length);
+			for (Literal l : preds)
+				if (!(l.getAtom() instanceof TrueAtom))
+					++m_BlockerSize;
+		}
+		
+		@Override
+		public boolean hasNext() {
+			if (m_Blocker != null) {
+				Clause resolvedBlocker =
+						explainConflict(new Clause(m_Blocker, stacklevel));
+				learnClause(resolvedBlocker);
+			}
+			if (solve() && hasModel())
+				return true;
+			return false;
+		}
+
+		@Override
+		public Term[] next() {
+			Term[] res = new Term[m_Preds.length];
+			m_Blocker = new Literal[m_BlockerSize];
+			for (int i = 0; i < m_Preds.length; ++i) {
+				Literal l = m_Preds[i];
+				if (!(l.getAtom() instanceof TrueAtom))
+					m_Blocker[i] = l.getAtom().decideStatus.negate();
+				res[i] = l.getAtom().decideStatus == l ? 
+						m_Terms[i] : getSMTTheory().term("not", m_Terms[i]);
+			}
+			return res;
+		}
+
+		@Override
+		public void remove() {
+			throw new UnsupportedOperationException("Cannot remove model!");
+		}
+		
+	}
+
 }

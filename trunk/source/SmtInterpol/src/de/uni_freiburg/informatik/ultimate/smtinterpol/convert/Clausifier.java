@@ -44,6 +44,7 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.BooleanVarAtom;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.Clause;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.ClauseDeletionHook;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.DPLLAtom;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.DPLLAtom.TrueAtom;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.DPLLEngine;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.IAnnotation;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.Literal;
@@ -103,8 +104,10 @@ public class Clausifier {
 				if (m_Term instanceof ApplicationTerm) {
 					ApplicationTerm at = (ApplicationTerm) m_Term;
 					FunctionSymbol fs = at.getFunction();
-					// Don't descend into interpreted function symbols
-					if (!fs.isInterpreted())
+					// Don't descend into interpreted function symbols unless
+					// it is a select or store
+					if (!fs.isInterpreted() || fs.getName() == "select" ||
+							fs.getName() == "store")
 						return fs;
 				}
 				return null;
@@ -418,9 +421,9 @@ public class Clausifier {
 				flag = ClausifierInfo.POS_AXIOMS_ADDED;
 				auxflag = ClausifierInfo.POS_AUX_AXIOMS_ADDED;
 				negflag = ClausifierInfo.NEG_AXIOMS_ADDED;
-				if (m_Negated)
-					// Here, we have !m_Term gets rewritten into idx
-					m_Tracker.negation(m_Term, idx, ProofConstants.RW_NOT_SIMP);
+//				if (m_Negated)
+//					// Here, we have !m_Term gets rewritten into idx
+//					m_Tracker.negation(m_Term, idx, ProofConstants.RW_NOT_SIMP);
 			} else {
 				flag = ClausifierInfo.NEG_AXIOMS_ADDED;
 				auxflag = ClausifierInfo.NEG_AUX_AXIOMS_ADDED;
@@ -940,6 +943,7 @@ public class Clausifier {
 				pushOperation(bc);
 				pushOperation(new CollectLiterals(
 						t = new Utils(bc.getTracker()).createNot(disj), bc));
+				bc.getTracker().markPosition();
 				bc.setOrigArgs(m_Tracker.produceAuxAxiom(
 						m_AuxLit, t));
 			}
@@ -1012,7 +1016,7 @@ public class Clausifier {
 						m_Collector.getTracker().save();
 						Literal lit = getLiteral(idx);
 						m_Collector.getTracker().quoted(idx, lit.getAtom());
-						m_Collector.addLiteral(lit);
+						m_Collector.addLiteral(lit, m_Term);
 						m_Collector.getTracker().cleanSave();
 					} else {
 						m_Collector.setFlatten();
@@ -1024,7 +1028,7 @@ public class Clausifier {
 					m_Collector.getTracker().save();
 					Literal lit = createBooleanLit(at);
 					m_Collector.getTracker().intern(idx, lit);
-					m_Collector.addLiteral(positive ? lit : lit.negate());
+					m_Collector.addLiteral(positive ? lit : lit.negate(), m_Term);
 					m_Collector.getTracker().cleanSave();
 //				} else if (at.getFunction().getName().equals("ite")) {
 //					Term cond = at.getParameters()[0];
@@ -1055,6 +1059,7 @@ public class Clausifier {
 						m_Collector.getTracker().negation(m_Theory.TRUE,
 								m_Theory.FALSE,
 								ProofConstants.RW_NOT_SIMP);
+						m_Collector.getTracker().notifyFalseLiteral(at);
 						m_Collector.setSimpOr();
 						return;
 					}
@@ -1062,26 +1067,29 @@ public class Clausifier {
 						if (!positive)
 							m_Collector.setTrue();
 						m_Collector.getTracker().eq(lhs, rhs, m_Theory.FALSE);
+						m_Collector.getTracker().notifyFalseLiteral(at);
 						m_Collector.setSimpOr();
 						return;
 					}
 					m_Collector.getTracker().save();
 					DPLLAtom eqAtom = eq.getLiteral();
 					m_Collector.getTracker().eq(lhs, rhs, eqAtom);
-					m_Collector.addLiteral(positive ? eqAtom : eqAtom.negate());
+					m_Collector.addLiteral(positive ? eqAtom : eqAtom.negate(), m_Term);
 					m_Collector.getTracker().cleanSave();
 				} else if (at.getFunction().getName().equals("<=")) {
 					// (<= SMTAffineTerm 0)
 					m_Collector.getTracker().save();
 					Literal lit = createLeq0(at);
 					m_Collector.getTracker().intern(at, lit);
-					m_Collector.addLiteral(positive ? lit : lit.negate());
+					if (!positive && lit.getSign() == -1)
+						m_Collector.getTracker().negateLit(lit, m_Theory);
+					m_Collector.addLiteral(positive ? lit : lit.negate(), m_Term);
 					m_Collector.getTracker().cleanSave();
 				} else {
 					m_Collector.getTracker().save();
 					Literal lit = getLiteral(m_Term);
 					m_Collector.getTracker().quoted(m_Term, lit);
-					m_Collector.addLiteral(lit);
+					m_Collector.addLiteral(lit, m_Term);
 					m_Collector.getTracker().cleanSave();
 				}
 			} else {
@@ -1089,7 +1097,7 @@ public class Clausifier {
 					assert (idx instanceof QuantifiedFormula);
 					Literal lit = getLiteral(idx);
 					// TODO: Proof
-					m_Collector.addLiteral(lit);
+					m_Collector.addLiteral(lit, m_Term);
 				} else {
 					// TODO Skolemize and recurse
 				}
@@ -1126,11 +1134,35 @@ public class Clausifier {
 		public void setOrigArgs(Term... args) {
 			m_OrigArgs = args;
 		}
-		public void addLiteral(Literal lit) {
+		/**
+		 * Add a literal to the clause.  Use this version if merges on this
+		 * literal are possible.  This version notifies the proof tracker and
+		 * then delegates to the non-merge function {@link #addLiteral(Literal)}
+		 * to do the real work.
+		 * @param lit The literal to add to the clause.
+		 * @param t   The term for which this literal has been created.
+		 */
+		public void addLiteral(Literal lit, Term t) {
+			if (m_SubTracker.notifyLiteral(lit, t))
+				addLiteral(lit);
+			else {
+				m_SimpOr = true;
+				m_SubTracker.restore();
+			}
+		}
+		/**
+		 * Add a literal to the clause.  This version should only be used if
+		 * merges on the literal are impossible or already taken care of.  This
+		 * function records trivial satisfiability of the clause and takes care
+		 * or the proof tracker to restore duplicated intern-steps on merges of
+		 * the literal.  Furthermore, it remembers to perform delayed clause
+		 * simplification.
+		 * @param lit The literal to add to the clause.
+		 */
+		public void addLiteral(Literal lit) {	
 			if (m_Lits.add(lit)) {
 				m_IsTrue |= m_Lits.contains(lit.negate());
 			} else {
-				m_SubTracker.restore();
 				m_SimpOr = true;
 			}
 		}
@@ -1188,16 +1220,18 @@ public class Clausifier {
 			addClause(new Literal[] {lit1}, null,
 					getProofNewSource(
 							ProofConstants.AUX_DIV_LOW, sub.clause(prf)));
-			// (not (<= (+ d (- x) (* d (div x d))) 0))
+			// (not (<= (+ |d| (- x) (* d (div x d))) 0))
 			sub = m_Tracker.getDescendent();
 			tmp = new Utils(sub);
 			SMTAffineTerm diffhigh = arg.negate().add(div.mul(m_Divident)).add(
-					m_Divident);
+					m_Divident.abs());
 			prf = sub.auxAxiom(
 					ProofConstants.AUX_DIV_HIGH, null, diffhigh, null, null);
 			Literal lit2 = createLeq0(
 					(ApplicationTerm) tmp.createLeq0(diffhigh));
 			sub.leq0(diffhigh, lit2);
+			if (lit2.getSign() == -1)
+				sub.negateLit(lit2, m_Theory);
 			addClause(new Literal[] {lit2.negate()}, null,
 					getProofNewSource(
 							ProofConstants.AUX_DIV_HIGH, sub.clause(prf)));
@@ -1246,6 +1280,8 @@ public class Clausifier {
 			Literal lit2 = createLeq0(
 					(ApplicationTerm) tmp.createLeq0(diffhigh));
 			sub.leq0(diffhigh, lit2);
+			if (lit2.getSign() == -1)
+				sub.negateLit(lit2, m_Theory);
 			addClause(new Literal[] {lit2.negate()}, null,
 					getProofNewSource(
 							ProofConstants.AUX_TO_INT_HIGH, sub.clause(prf)));
@@ -1359,6 +1395,10 @@ public class Clausifier {
 				assert eqproxy != EqualityProxy.getFalseProxy();
 				assert eqproxy != EqualityProxy.getTrueProxy();
 				DPLLAtom eq = eqproxy.getLiteral();
+				/* We don't track merges here since there cannot be any merges
+				 * on this equality.  Otherwise we have an infinite term (since
+				 * the termITE is a sub-term of itself).
+				 */
 				bc.addLiteral(eq);
 				bc.getTracker().eq(m_Ite.getTerm(), m_Term, eq);
 				ConditionChain walk = m_Conds;
@@ -1410,8 +1450,7 @@ public class Clausifier {
 			SharedTerm shared = getSharedTerm(summand.getKey());
 			Rational coeff = summand.getValue();
 			shared.shareWithLinAr();
-//			if (shared.m_linvar != null) // TODO check whether this is dead code
-				res.add(shared.m_factor.mul(coeff), shared);
+			res.add(shared.m_factor.mul(coeff), shared);
 			res.add(shared.m_offset.mul(coeff));
 		}
 		return res;
@@ -1619,10 +1658,6 @@ public class Clausifier {
 
 	BooleanVarAtom createBooleanVar(Term smtFormula) {
 		BooleanVarAtom atom = new BooleanVarAtom(smtFormula, m_StackLevel);
-		// TODO Do we want this cache?
-		// It prevents dynamic model creation, but speeds it up.
-//		if (m_BooleanVars != null)
-//			m_BooleanVars.add(atom);
 		m_UndoTrail = new RemoveAtom(m_UndoTrail, smtFormula);
 		m_Engine.addAtom(atom);
 		numAtoms++;
@@ -1809,7 +1844,7 @@ public class Clausifier {
 					getProofNewSource(ProofConstants.AUX_TRUE_NOT_FALSE, 
 							m_Tracker.auxAxiom(
 									ProofConstants.AUX_TRUE_NOT_FALSE,
-									null, m_Theory.TRUE, null, null)));
+									lits[0], m_Theory.TRUE, null, null)));
 		}
 	}
 	
@@ -1838,6 +1873,9 @@ public class Clausifier {
 //	}
 	
 	public void setLogic(Logics logic) {
+		if (m_Engine.isProofGenerationEnabled())
+			setSourceAnnotation(LeafNode.NO_THEORY,
+					SourceAnnotation.EMPTY_SOURCE_ANNOT);
 		switch (logic) {
 		case CORE:
 			break;
@@ -1943,7 +1981,7 @@ public class Clausifier {
 		}
 		if (m_Engine.isProofGenerationEnabled()) {
 			setSourceAnnotation(LeafNode.NO_THEORY,
-					new SourceAnnotation("", null));
+					SourceAnnotation.EMPTY_SOURCE_ANNOT);
 			if (f instanceof AnnotatedTerm) {
 				AnnotatedTerm at = (AnnotatedTerm)f;
 				Annotation[] annots = at.getAnnotations();
@@ -1960,11 +1998,16 @@ public class Clausifier {
 		Term tmp = m_Unlet.unlet(f);
 //		f = null;
 //		System.err.println(tmp.toStringDirect());
-		Term tmp2 = m_Compiler.transform(tmp);
+		Term tmp2;
+		try {
+			tmp2 = m_Compiler.transform(tmp);
+		} finally {
+			m_Compiler.reset();
+		}
 		tmp = null;
 //		System.err.println("Transformed");
 //		System.err.println(SMTAffineTerm.cleanup(tmp2).toStringDirect());
-		Term proof = m_Tracker.getRewriteProof(f, tmp2);
+		Term proof = m_Tracker.getRewriteProof(f);
 		m_Tracker.reset();
 		
 		m_OccCounter.count(tmp2);
@@ -1984,7 +2027,8 @@ public class Clausifier {
 //		logger.info("Added " + numClauses + " clauses, " + numAtoms
 //				+ " auxiliary atoms.");
 		if (m_Engine.isProofGenerationEnabled())
-			setSourceAnnotation(LeafNode.NO_THEORY, null);
+			setSourceAnnotation(LeafNode.NO_THEORY,
+					SourceAnnotation.EMPTY_SOURCE_ANNOT);
 	}
 	
 	// TODO need an instantiation mode here to add clauses to DPLL as deletable instantiations
@@ -2034,12 +2078,8 @@ public class Clausifier {
 			m_Engine.push();
 			++m_StackLevel;
 			m_Equalities.beginScope();
-//			m_arraySorts.beginScope();
-//			m_RemoveLit.beginScope();
 			m_UnshareCC.beginScope();
 			m_UnshareLA.beginScope();
-//			if (m_BooleanVars != null)
-//				m_BooleanVars.beginScope();
 			m_SharedTerms.beginScope();
 			pushUndoTrail();
 		}
@@ -2054,18 +2094,12 @@ public class Clausifier {
 		m_NumFailedPushes = 0;
 		m_Engine.pop(numpops);
 		for (int i = 0; i < numpops; ++i) {
-//			if (m_BooleanVars != null)
-//				m_BooleanVars.endScope();
-//			m_arraySorts.endScope();
 			for (SharedTerm t : m_UnshareCC.currentScope())
 				t.unshareCC();
 			m_UnshareCC.endScope();
 			for (SharedTerm t : m_UnshareLA.currentScope())
 				t.unshareLA();
 			m_UnshareLA.endScope();
-//			for (FlatFormula f : m_RemoveLit.currentScope())
-//				f.literalRemoved();
-//			m_RemoveLit.endScope();
 			m_Equalities.endScope();
 			popUndoTrail();
 			m_SharedTerms.endScope();
@@ -2186,6 +2220,59 @@ public class Clausifier {
 
 	public IProofTracker getTracker() {
 		return m_Tracker;
+	}
+	
+	public Literal getCreateLiteral(Term f) {
+		Term tmp = m_Unlet.unlet(f);
+		Term tmp2;
+		try {
+			tmp2 = m_Compiler.transform(tmp);
+		} finally {
+			m_Compiler.reset();
+		}
+		tmp = null;		
+		m_OccCounter.count(tmp2);
+		
+		ApplicationTerm at = (ApplicationTerm) tmp2;
+		boolean negated = false;
+		FunctionSymbol fs = at.getFunction();
+		if (fs == m_Theory.m_Not) {
+			at = (ApplicationTerm) at.getParameters()[0];
+			fs = at.getFunction();
+			negated = true;
+		}
+
+		Literal res;
+		if (!fs.isIntern())
+			res = createBooleanLit(at);
+		else if (at == m_Theory.TRUE)
+			res = new TrueAtom();
+		else if (at == m_Theory.FALSE)
+			res = new TrueAtom().negate();
+		else if (fs.getName().equals("=")) {
+			if (at.getParameters()[0].getSort() == m_Theory.getBooleanSort())
+				res = getLiteralTseitin(at);
+			else {
+				EqualityProxy ep = createEqualityProxy(
+						getSharedTerm(at.getParameters()[0]),
+						getSharedTerm(at.getParameters()[1]));
+				if (ep == EqualityProxy.getFalseProxy())
+					res = new TrueAtom().negate();
+				else if (ep == EqualityProxy.getTrueProxy())
+					res = new TrueAtom();
+				else
+					res = ep.getLiteral();
+			}
+		} else if (fs.getName().equals("<="))
+			res = createLeq0(at);
+		else
+			res = getLiteralTseitin(at);
+		
+		m_InstantiationMode = false;
+		run();
+		m_OccCounter.reset(tmp2);
+		tmp2 = null;
+		return negated ? res.negate() : res;
 	}
 	
 }

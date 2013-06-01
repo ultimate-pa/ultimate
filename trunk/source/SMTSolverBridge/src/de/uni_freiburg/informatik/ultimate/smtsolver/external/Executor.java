@@ -8,6 +8,7 @@ import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.log4j.Logger;
 
@@ -17,8 +18,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Assignments;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.logic.Valuation;
-import de.uni_freiburg.informatik.ultimate.smtinterpol.util.MapValuation;
 
 /**
  * This class runs an external SMT solver.  The main methods are 
@@ -46,6 +45,7 @@ public class Executor {
 	
 	public void createProcess()
 	{
+//		m_Logger = Logger.getRootLogger();
 		try {
 			m_Process = Runtime.getRuntime().exec(m_Solver);
 		} catch (IOException e) {
@@ -146,8 +146,9 @@ public class Executor {
 		return (Term[]) parse(LexerSymbols.GETUNSATCORE).value;
 	}
 	
-	public Valuation parseGetValueResult() {
-		return (MapValuation) parse(LexerSymbols.GETVALUE).value;
+	@SuppressWarnings("unchecked")
+	public Map<Term,Term> parseGetValueResult() {
+		return (Map<Term,Term>) parse(LexerSymbols.GETVALUE).value;
 	}
 	
 	public Assignments parseGetAssignmentResult() {

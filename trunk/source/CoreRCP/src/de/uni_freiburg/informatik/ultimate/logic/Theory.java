@@ -366,6 +366,9 @@ public class Theory {
 	}
 
 	public Term decimal(BigDecimal value) {
+		// Fix for 1 vs 1.0: Normalize to .0 for constants.
+		if (value.scale() == 0)
+			value = value.setScale(1);
 		Term result = constant(value.abs(), m_RealSort);
 		if (value.signum() < 0) {
 			FunctionSymbol neg = getFunction("-", m_RealSort);

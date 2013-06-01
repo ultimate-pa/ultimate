@@ -101,7 +101,7 @@ public class MultiPhaseTemplate extends RankingTemplate {
 	}
 	
 	@Override
-	public RankingFunction extractRankingFunction(Valuation val)
+	public RankingFunction extractRankingFunction(Map<Term, Term> val)
 			throws SMTLIBException {
 		MultiPhaseRankingFunction mprf = new MultiPhaseRankingFunction();
 		for (AffineFunction af : m_functions) {

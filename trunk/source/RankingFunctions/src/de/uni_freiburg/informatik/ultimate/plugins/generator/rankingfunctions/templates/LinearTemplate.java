@@ -62,7 +62,7 @@ public class LinearTemplate extends RankingTemplate {
 	}
 	
 	@Override
-	public RankingFunction extractRankingFunction(Valuation val)
+	public RankingFunction extractRankingFunction(Map<Term, Term> val)
 			throws SMTLIBException {
 		// Extract coefficients from the model and convert them to Rational
 		Map<BoogieVar, Rational> coeff_val =

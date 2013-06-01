@@ -31,7 +31,7 @@ public class CompositeReason extends LAReason {
 
 	public CompositeReason(LinVar var, InfinitNumber bound, boolean isUpper,
 			LAReason[] reasons, Rational[] coeffs, LiteralReason lastLiteral) {
-		super(var, bound, lastLiteral.getStackDepth(), isUpper, lastLiteral);
+		super(var, bound, isUpper, lastLiteral);
 		assert (lastLiteral != null);
 		m_reasons = reasons;
 		m_coeffs = coeffs;
@@ -48,20 +48,22 @@ public class CompositeReason extends LAReason {
 	}
 		
 	public InfinitNumber getExactBound() {
-		// TODO: remove evil hack
-		LinVar var = getVar();
-		if (var.misint) {
-			if (isUpper()
-				? getVar().mconstraints.containsKey(getBound())
-				: getVar().mconstraints.containsKey(getBound().sub(var.getEpsilon())))
-				return getBound();
-		}
 		return m_exactBound;
 	}
 	
 	@Override
-	InfinitNumber explain(LAAnnotation annot,
-			InfinitNumber slack, Rational factor, LinArSolve solver) {
+	InfinitNumber explain(Explainer explainer,
+			InfinitNumber slack, Rational factor) {
+		// First check, if there is already a literal with a weaker bound
+		// that is strong enough to explain the conflict/unit clause.  
+		// However, make sure that this literal was set before the literal
+		// for which we want to generate a unit clause.
+		//
+		// needToExplain is set to true, if there is a weaker literal
+		// that was not set before the current conflict/unit clause.  Usually,
+		// this means that we want to generate a unit clause for such a 
+		// weaker literal.  Therefore, it does not make sense to create a
+		// composite literal.
 		boolean needToExplain = false;
 		if (isUpper()) {
 			Entry<InfinitNumber, BoundConstraint> nextEntry = 
@@ -69,10 +71,10 @@ public class CompositeReason extends LAReason {
 			if (nextEntry != null) {
 				BoundConstraint nextBound = nextEntry.getValue();
 				if (nextBound.getDecideStatus() == nextBound
-					&& annot.canExplainWith(nextBound)) {
+					&& explainer.canExplainWith(nextBound)) {
 					InfinitNumber diff = nextBound.getBound().sub(getBound());
 					if (slack.compareTo(diff) > 0) {
-						annot.addLiteral(nextBound.negate(), factor);
+						explainer.addLiteral(nextBound.negate(), factor);
 						return slack.sub(diff);
 					}
 				} else {
@@ -85,10 +87,10 @@ public class CompositeReason extends LAReason {
 			if (nextEntry != null) {
 				BoundConstraint nextBound = nextEntry.getValue();
 				if (nextBound.getDecideStatus() == nextBound.negate()
-					&& annot.canExplainWith(nextBound)) {
+					&& explainer.canExplainWith(nextBound)) {
 					InfinitNumber diff = getBound().sub(nextBound.getInverseBound());
 					if (slack.compareTo(diff) > 0) {
-						annot.addLiteral(nextBound, factor);
+						explainer.addLiteral(nextBound, factor);
 						return slack.sub(diff);
 					}
 				} else {
@@ -96,36 +98,44 @@ public class CompositeReason extends LAReason {
 				}
 			}
 		}
+		
 		InfinitNumber diff = !getVar().misint ? InfinitNumber.ZERO 
 				: isUpper()
 				? m_exactBound.sub(getBound())
 				: getBound().sub(m_exactBound);
-		int decideLevel = annot.getExplainedLiteral() == null
-			? solver.mengine.getDecideLevel()
-			: annot.getExplainedLiteral().getAtom().getDecideLevel();
+		int decideLevel = explainer.getDecideLevel();
+		// Should we create a composite literal?  We do this only, if there
+		// is not already a weaker usable bound (needToExplain is true), and
+		// if we do not have enough slack to avoid the composite literal 
+		// completely or if the composite literal would appear on the same
+		// decideLevel (and therefore would be immediately removed anyway).
 		if (needToExplain || 
 			(slack.compareTo(diff) > 0
 			 && getLastLiteral().getDecideLevel() >= decideLevel)) {
+			// Here, we do not create a composite literal.
 			boolean enoughSlack = slack.compareTo(diff) > 0;
 			if (!enoughSlack) {
-				annot.addAnnotation(this, factor, solver);
+				// we have not have enough slack to just use the proof of 
+				// the exact bound. Create a sub-annotation.
+				explainer.addAnnotation(this, factor);
 				return slack;
 			}
+			// Just explain the exact bound using the reason array.
 			slack = slack.sub(diff);
 			assert (slack.compareTo(InfinitNumber.ZERO) > 0);
 			for (int i = 0; i < m_reasons.length; i++) {
 				Rational coeff = m_coeffs[i];
 				slack = slack.div(coeff.abs());
-				slack = m_reasons[i].explain(annot, 
-						slack, factor.mul(coeff), solver);
+				slack = m_reasons[i].explain(explainer, 
+						slack, factor.mul(coeff));
 				slack = slack.mul(coeff.abs());
 				assert (slack.compareTo(InfinitNumber.ZERO) > 0);
 			}
 			return slack;
 		}
-		Literal lit = solver.createCompositeLiteral(this, annot.getExplainedLiteral());
+		Literal lit = explainer.createComposite(this);
 		assert (lit.getAtom().getDecideStatus() == lit);
-		annot.addLiteral(lit.negate(), factor);
+		explainer.addLiteral(lit.negate(), factor);
 		return slack;
 	}
 }

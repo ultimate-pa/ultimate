@@ -45,7 +45,6 @@ public abstract class LAReason {
 	
 	private LinVar m_var;
 	protected InfinitNumber m_bound;
-	int m_stackdepth;
 	private LAReason m_oldReason;
 	private boolean m_isUpper;
 	/**
@@ -55,11 +54,9 @@ public abstract class LAReason {
 	 */
 	private LiteralReason m_lastlit;
 	
-	public LAReason(LinVar var, InfinitNumber bound, int depth, boolean isUpper,
-			        LiteralReason lastLit) {
+	public LAReason(LinVar var, InfinitNumber bound, boolean isUpper, LiteralReason lastLit) {
 		m_var = var;
 		m_bound = bound;
-		m_stackdepth = depth;
 		m_isUpper = isUpper;
 		m_lastlit = lastLit == null ? (LiteralReason) this : lastLit;
 	}
@@ -87,10 +84,6 @@ public abstract class LAReason {
 		return m_isUpper;
 	}
 
-	public int getStackDepth() {
-		return m_stackdepth;
-	}
-
 	public LAReason getOldReason() {
 		return m_oldReason;
 	}
@@ -112,19 +105,20 @@ public abstract class LAReason {
 	/**
 	 * Explain this reason.  This may also explain a similar weaker formula
 	 * weakened by a value less than slack and returns the slack minus the
-	 * amount the formula was weakened.  The explanation of a upper bound  
+	 * amount the formula was weakened.  The explanation of an upper bound  
 	 * poly(x,y,z) <= bound is a set of literals  p_1(x,y,z) <= b_1,...,
 	 * p_n(x,y,z) <= bn, with coefficient c_1,...,c_n >= 0, such that 
 	 *  sum c_i p_i(x,y,z) = p(x,y,z)   and   sum c_i b_i = bound - eps, where
 	 * eps < slack.  The return value of the function is slack - eps.
 	 * The explanation is added to the annotation which contains a map that 
 	 * assigns each literal p_i(x,y,z) <= b_i the coefficient c_i.
+	 * @param explainer the explainer object that helps explaining.
 	 * @param slack a positive amount by which the formula may be weakened.
 	 * @param literals the set of literals.
 	 * @return the new positive slack that may be reduced. 
 	 */
-	abstract InfinitNumber explain(LAAnnotation annot, 
-		InfinitNumber slack, Rational factor, LinArSolve solver);
+	abstract InfinitNumber explain(Explainer explainer, 
+		InfinitNumber slack, Rational factor);
 
 	public String toString() {
 		return m_var + (m_isUpper ? "<=" : ">=") + m_bound;
@@ -138,7 +132,8 @@ public abstract class LAReason {
 		at.add(Rational.ONE, m_var);
 		at.add(m_bound.negate());
 		if (!m_isUpper)
-			at.negate();
-		return at.toSMTLibLeq0(smtTheory, useAuxVars);
+			at.add(m_var.getEpsilon());
+		Term posTerm = at.toSMTLibLeq0(smtTheory, useAuxVars);
+		return (m_isUpper ? posTerm : smtTheory.term("not", posTerm));
 	}
 }

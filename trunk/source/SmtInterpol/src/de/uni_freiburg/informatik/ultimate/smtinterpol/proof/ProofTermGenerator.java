@@ -155,6 +155,7 @@ public class ProofTermGenerator {
 	}
 	
 	void pushConverted(Term res) {
+		assert(res.getSort().getName().equals("@Proof"));
 		m_Converted.push(res);
 	}
 	

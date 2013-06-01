@@ -30,21 +30,24 @@ import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.model.ExecTerm;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.model.Model;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.model.SharedTermEvaluator;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.model.Value;
 
 public class ModelBuilder {
 	
 	private static class Delay {
 		CCTerm m_Term;
-		Term m_Value;
-		public Delay(CCTerm term, Term value) {
+		ExecTerm m_Value;
+		public Delay(CCTerm term, ExecTerm value) {
 			m_Term = term;
 			m_Value = value;
 		}
 	}
 	
-	private HashMap<CCTerm, Term> m_Produced = new HashMap<CCTerm, Term>();
+	private HashMap<CCTerm, ExecTerm> m_Produced =
+			new HashMap<CCTerm, ExecTerm>();
 	
 	private HashMap<CCTerm, Delay> m_Delayed = new HashMap<CCTerm, Delay>();
 	
@@ -79,8 +82,9 @@ public class ModelBuilder {
 					// is not equal to TRUE but Boolean, we have to adjust the
 					// model and set it to false.
 					value = t.FALSE;
+				ExecTerm et = new Value(value);
 				for (CCTerm mem : term.members)
-					add(model, mem, value, t);
+					add(model, mem, et, t);
 			}
 		}
 		// Handle all delayed elements
@@ -88,15 +92,16 @@ public class ModelBuilder {
 		biggest = biggest.add(Rational.ONE).floor();
 		for (CCTerm term : delayed) {
 			Term value = biggest.toTerm(term.getFlatTerm().getSort());
+			ExecTerm et = new Value(value);
 			for (CCTerm mem : term.members)
-				add(model, mem, value, t);
+				add(model, mem, et, t);
 			biggest = biggest.add(Rational.ONE);
 		}
 		finishModel(model, t);
 		// no cleanup here since this whole object gets garbage collected anyway
 	}
 	
-	private void add(Model model, CCTerm term, Term value, Theory t) {
+	private void add(Model model, CCTerm term, ExecTerm value, Theory t) {
 		if (term instanceof CCBaseTerm) {
 			CCBaseTerm bt = (CCBaseTerm) term;
 			if (!bt.isFunctionSymbol()) {
@@ -117,13 +122,13 @@ public class ModelBuilder {
 		}
 	}
 	
-	private void addApp(Model model, CCAppTerm app, Term value, Theory t) {
-		Deque<Term> args = new ArrayDeque<Term>();
+	private void addApp(Model model, CCAppTerm app, ExecTerm value, Theory t) {
+		Deque<ExecTerm> args = new ArrayDeque<ExecTerm>();
 		CCTerm walk = app;
 		boolean enqueued = false;
 		while (walk instanceof CCAppTerm) {
 			CCAppTerm appwalk = (CCAppTerm) walk;
-			Term val = m_Produced.get(appwalk.getArg());
+			ExecTerm val = m_Produced.get(appwalk.getArg());
 			if (val == null) {
 				if (!enqueued) {
 					Delay delay = m_Delayed.get(app);
@@ -149,7 +154,7 @@ public class ModelBuilder {
 		// If we did not enqueue an argument, we can extend the model.
 		if (!enqueued) {
 			FunctionSymbol fs = ((CCBaseTerm) walk).getFunctionSymbol();
-			model.extend(fs, args.toArray(new Term[args.size()]), value);
+			model.extend(fs, args.toArray(new ExecTerm[args.size()]), value);
 			m_Produced.put(app, value);
 		}
 	}

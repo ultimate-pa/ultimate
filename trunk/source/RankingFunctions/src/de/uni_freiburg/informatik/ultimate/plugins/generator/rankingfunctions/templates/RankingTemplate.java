@@ -81,7 +81,7 @@ public abstract class RankingTemplate {
 	 * @return ranking function
 	 * @throws SMTLIBException
 	 */
-	public abstract RankingFunction extractRankingFunction(Valuation val)
+	public abstract RankingFunction extractRankingFunction(Map<Term, Term> val)
 			throws SMTLIBException;
 	
 	/**

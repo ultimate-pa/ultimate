@@ -43,7 +43,7 @@ public class ExactInfinitNumber {
 	public boolean equals(Object o) {
 		if (o instanceof ExactInfinitNumber) {
 			ExactInfinitNumber n = (ExactInfinitNumber) o;
-			return m_Real.equals(n.m_Real) && m_Eps == n.m_Eps;
+			return m_Real.equals(n.m_Real) && m_Eps.equals(n.m_Eps);
 		}
 		return false;
 	}

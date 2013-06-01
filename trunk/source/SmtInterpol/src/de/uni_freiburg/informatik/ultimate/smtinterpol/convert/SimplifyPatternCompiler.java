@@ -46,7 +46,7 @@ public class SimplifyPatternCompiler implements IPatternCompiler {
 	
 	@Override
 	public TriggerData compile(Set<TermVariable> vars, Term[] triggers,
-			ConvertFormula converter) {
+			Clausifier converter) {
 		InsnSequence sequence = new InsnSequence();
 		Map<TermVariable,Integer> subst = new HashMap<TermVariable, Integer>();
 		TermDAG dag = new TermDAG();
@@ -58,13 +58,13 @@ public class SimplifyPatternCompiler implements IPatternCompiler {
 			createFind(tn,sequence,allocator,subst,converter);
 		}
 		sequence.append(new YieldTrigger(subst));
-		converter.dpllEngine.getLogger().debug(sequence);
+		converter.getEngine().getLogger().debug(sequence);
 		return sequence.finish(initregs);
 	}
 
 	private void createFind(TermNode tn, InsnSequence sequence,
 			IntAllocator allocator, Map<TermVariable, Integer> subst, 
-			ConvertFormula converter) {
+			Clausifier converter) {
 		HashMap<TermNode, Integer> compares = new HashMap<TermNode, Integer>();
 		AppTermNode atn = (AppTermNode)tn;
 		FunctionSymbol fs = atn.getSymbol();
@@ -94,7 +94,7 @@ public class SimplifyPatternCompiler implements IPatternCompiler {
 
 	private void append(Edge child, InsnSequence sequence,
 			IntAllocator allocator, Map<TermVariable, Integer> subst,
-			ConvertFormula converter, Map<TermNode, Integer> compares) {
+			Clausifier converter, Map<TermNode, Integer> compares) {
 		child.mark();
 		TermNode dest = child.getTo();
 		Integer comp = compares.get(dest);

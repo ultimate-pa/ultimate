@@ -1,6 +1,8 @@
 package de.uni_freiburg.informatik.ultimate.smtsolver.external;
 
 
+import java.util.Map;
+
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.logic.Assignments;
@@ -12,7 +14,6 @@ import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.logic.Valuation;
 
 /**
  * Create a script that connects to an external SMT solver.  The solver 
@@ -232,7 +233,7 @@ public class Scriptor extends NoopScript {
 	}
 
 	@Override
-	public Valuation getValue(Term[] terms) throws SMTLIBException,
+	public Map<Term, Term> getValue(Term[] terms) throws SMTLIBException,
 			UnsupportedOperationException {
 		for (Term t : terms) {
 			if (!t.getSort().isNumericSort() &&

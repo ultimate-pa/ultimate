@@ -41,8 +41,8 @@ import de.uni_freiburg.informatik.ultimate.util.ScopedHashMap;
  * @author Jochen Hoenicke, Juergen Christ
  */
 public class YieldTrigger extends CCTrigger {
-	protected ConvertFormula converter;
-	private ScopedHashMap<TermVariable,FlatTerm> m_LetTable;
+	protected Clausifier converter;
+	private ScopedHashMap<TermVariable,Term> m_LetTable;
 	// Quantifier proxy literal
 	private Literal quantlit;
 	// subform of the quantifier
@@ -66,13 +66,13 @@ public class YieldTrigger extends CCTrigger {
 	/**
 	 * Called by the converter to set some final properties.
 	 */
-	public void postInit(ConvertFormula converter,
-			Map<TermVariable, FlatTerm> letTable,Term sub,
+	public void postInit(Clausifier converter,
+			Map<TermVariable, Term> letTable,Term sub,
 			InstantiationUnifier unifier) {
 		assert sub.getSort() == converter.getTheory().getBooleanSort() : 
 			"Non-Boolean sub formula in quantifier";
 		this.converter = converter;
-		this.m_LetTable = new ScopedHashMap<TermVariable, FlatTerm>();
+		this.m_LetTable = new ScopedHashMap<TermVariable, Term>();
 		this.m_LetTable.putAll(letTable);
 		quantsub = sub;
 		assert(checkSubstitution());
@@ -92,35 +92,36 @@ public class YieldTrigger extends CCTrigger {
 	}
 	
 	protected void instantiate(CCTerm[] regs) {
-		converter.letTable.beginScope();
-		try {
-			for (Entry<TermVariable, Integer> me : substitution.entrySet()) {
-				assert (regs[me.getValue()].getFlatTerm() != null);
-//				converter.letTable.put(me.getKey(),regs[me.getValue()].getFlatTerm());
-			}
-			FlatFormula ff = converter.convertFormula(quantsub);
-			// Guard against true
-			if (ff == converter.TRUE)
-				return;
-			converter.cclosure.instantiation();
-			if (quantlit == null) {
-				// Match at the top level ==> add ff at top level
-				// TODO: Proof production for interpolation
-				converter.dpllEngine.topLevelMatch();
-				ff.addAsAxiom(null);
-			} else {
-				Collection<FlatFormula> subs = ff.getSubFormulas();
-				Literal[] lits = new Literal[subs.size()+1];
-				int i = 0;
-				lits[i] = quantlit.negate();
-				for (FlatFormula sub : ff.getSubFormulas()) {
-					lits[++i] = sub.getLiteral();
-				}
-//				converter.dpllEngine.addInstantiationClause(lits);
-			}
-		} finally {
-			converter.letTable.endScope();
-		}
+		//FIXME
+//		converter.letTable.beginScope();
+//		try {
+//			for (Entry<TermVariable, Integer> me : substitution.entrySet()) {
+//				assert (regs[me.getValue()].getFlatTerm() != null);
+////				converter.letTable.put(me.getKey(),regs[me.getValue()].getFlatTerm());
+//			}
+//			FlatFormula ff = converter.convertFormula(quantsub);
+//			// Guard against true
+//			if (ff == converter.TRUE)
+//				return;
+////			converter.cclosure.instantiation();
+//			if (quantlit == null) {
+//				// Match at the top level ==> add ff at top level
+//				// TODO: Proof production for interpolation
+//				converter.dpllEngine.topLevelMatch();
+//				ff.addAsAxiom(null);
+//			} else {
+//				Collection<FlatFormula> subs = ff.getSubFormulas();
+//				Literal[] lits = new Literal[subs.size()+1];
+//				int i = 0;
+//				lits[i] = quantlit.negate();
+//				for (FlatFormula sub : ff.getSubFormulas()) {
+//					lits[++i] = sub.getLiteral();
+//				}
+////				converter.dpllEngine.addInstantiationClause(lits);
+//			}
+//		} finally {
+//			converter.letTable.endScope();
+//		}
 	}
 	
 	@Override
@@ -131,9 +132,9 @@ public class YieldTrigger extends CCTrigger {
 		if (tec.isPassive())
 			return;
 		tec.passivate();
-		engine.yieldDone(tec);
+//		engine.yieldDone(tec);
 		if (!knownSubsts.createInstantiation(regs, substitution,
-				converter.dpllEngine.getLogger(),quantsub))
+				converter.getEngine().getLogger(),quantsub))
 			return;
 		instantiate(regs);
 	}

@@ -408,4 +408,10 @@ public class TermTransformer extends NonRecursive {
 			return "annotate";
 		}
 	}
+	
+	public void reset() {
+		super.reset();
+		m_Converted.clear();
+		m_Cache.clear();
+	}
 }

@@ -22,7 +22,9 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.math.BigInteger;
+import java.util.Collections;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.Timer;
@@ -50,11 +52,11 @@ import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
-import de.uni_freiburg.informatik.ultimate.logic.Valuation;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.Config;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.Clausifier;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.Clause;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.DPLLEngine;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.Literal;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.interpolate.Interpolator;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.interpolate.SymbolChecker;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.interpolate.SymbolCollector;
@@ -77,6 +79,7 @@ public class SMTInterpol extends NoopScript {
 				m_ProofSort = proofSort;
 			}
 
+			@Override
 			public int getFlags(
 					BigInteger[] indices, Sort[] paramSorts, Sort resultSort) {
 				return paramSorts.length == 1 ?  FunctionSymbol.INTERNAL
@@ -134,7 +137,22 @@ public class SMTInterpol extends NoopScript {
 				declareInternalFunction(theory, "@rewrite", bool1, proof, 0);
 				declareInternalFunction(
 						theory, "@clause", new Sort[] {proof, bool}, proof, 0);
-			}	
+			}
+			defineFunction(theory, new FunctionSymbolFactory("@undefined") {
+				
+				@Override
+				public int getFlags(
+						BigInteger[] indices, Sort[] paramSorts, Sort resultSort) {
+					return FunctionSymbol.INTERNAL | FunctionSymbol.RETURNOVERLOAD;
+				}
+				@Override
+				public Sort getResultSort(BigInteger[] indices, Sort[] paramSorts,
+						Sort resultSort) {
+					if (indices != null || paramSorts.length != 0)
+						return null;
+					return resultSort;
+				}
+			});
 			switch (logic) {
 			case QF_AUFLIA:
 			case AUFLIA:
@@ -387,6 +405,7 @@ public class SMTInterpol extends NoopScript {
 	private int m_ProofMode;
 	
 	de.uni_freiburg.informatik.ultimate.smtinterpol.model.Model m_Model = null;
+	private boolean m_PartialModels = false;
 	
 	private final static Object NAME = new QuotedObject("SMTInterpol");
 	private final static Object VERSION = new QuotedObject("2.0");
@@ -432,6 +451,7 @@ public class SMTInterpol extends NoopScript {
 	private final static int OPT_PRINT_TERMS_CSE = 14;
 	private final static int OPT_MODEL_CHECK_MODE = 15;
 	private final static int OPT_PROOF_TRANSFORMATION = 16;
+	private final static int OPT_MODELS_PARTIAL = 17;
 	//// Add a new option number for every new option
 	
 	// The Options Map
@@ -480,6 +500,8 @@ public class SMTInterpol extends NoopScript {
 				OPT_PROOF_TRANSFORMATION);
 		new BoolOption(":produce-interpolants", "Enable interpolant production",
 				false, OPT_PRODUCE_INTERPOLANTS);
+		new BoolOption(":partial-models", "Don't totalize models", true,
+				OPT_MODELS_PARTIAL);
 		//// Create new option object for every new option
 	}
 	
@@ -503,17 +525,24 @@ public class SMTInterpol extends NoopScript {
         reset();
 	}
 	/**
-	 * Constructor for temporary contexts. These contexts should neither declare
-	 * new function symbols nor pop more elements from the stack than they
-	 * pushed.  Otherwise, the main context will run into problems!  Furthermore
-	 * these contexts should not change any option present in the main context.
-	 * @param other The benchmark to clone.
+	 * Copy the current context and modify some pre-theory options.  The copy
+	 * shares the push/pop stack on the symbols but not on the assertions.
+	 * Users should be careful not to mess up the push/pop stack, i.e., not to
+	 * push on one context and pop on another one.
+	 * 
+	 * Note that this cloning does not clone the assertion stack and should not
+	 * be used in multi-threaded contexts since users cannot guarantee correct
+	 * push/pop-stack treatment.
+	 * @param other   The context to clone.
+	 * @param options The options to set before setting the logic.
 	 */
-	private SMTInterpol(SMTInterpol other) {
+	private SMTInterpol(SMTInterpol other, Map<String, Object> options) {
 		super(other.getTheory());
 		m_Logger = other.m_Logger;
 		m_Timeout = other.m_Timeout;
-		setOption(":interactive-mode", true);
+		if (options != null)
+			for (Map.Entry<String, Object> me : options.entrySet())
+				setOption(me.getKey(), me.getValue());
 		m_Engine = new DPLLEngine(getTheory(), m_Logger);
         m_Clausifier = new Clausifier(m_Engine, 0);
 		m_Clausifier.setLogic(getTheory().getLogic());
@@ -581,10 +610,11 @@ public class SMTInterpol extends NoopScript {
 			if (m_Engine.solve()) {
 				if (m_Engine.hasModel()) {
 					result = LBool.SAT;
-					if (m_ModelCheckMode && m_ProduceModels) {
+					if (m_ModelCheckMode/* && m_ProduceModels*/) {
 						// Damn coding conventions!  There is no way to format
 						// this nicely!!!
-						m_Model = new de.uni_freiburg.informatik.ultimate.smtinterpol.model.Model(m_Clausifier, getTheory());
+						m_Model = new de.uni_freiburg.informatik.ultimate.smtinterpol.model.Model(
+								m_Clausifier, getTheory(), m_PartialModels);
 						for (Term asserted : m_Assertions) {
 							Term checkedResult = m_Model.evaluate(asserted);
 							if (checkedResult != getTheory().TRUE)
@@ -665,13 +695,13 @@ public class SMTInterpol extends NoopScript {
 		try {
 			m_Engine = new DPLLEngine(getTheory(), m_Logger);
 	        m_Clausifier = new Clausifier(m_Engine, m_ProofMode);
-	        // TODO Do we support online model production???
-//	        m_Clausifier.setProduceModels(m_ProduceModels);
+	        // This has to be before set-logic since we need to capture
+	        // initialization of CClosure.
+	        m_Engine.setProofGeneration(
+					m_ProduceProofs || m_ProduceUnsatCores || m_ProduceInterpolants);
 			m_Clausifier.setLogic(logic);
 			m_Clausifier.setAssignmentProduction(m_ProduceAssignment);
 			m_Engine.setProduceAssignments(m_ProduceAssignment);
-			m_Engine.setProofGeneration(
-					m_ProduceProofs || m_ProduceUnsatCores || m_ProduceInterpolants);
 			m_Engine.setRandomSeed(m_RandomSeed);
 		} catch (UnsupportedOperationException logicUnsupported) {
 			super.reset();
@@ -836,6 +866,8 @@ public class SMTInterpol extends NoopScript {
 			return m_ProofTransformation.name();
 		case OPT_PRODUCE_INTERPOLANTS:
 			return m_ProduceInterpolants;
+		case OPT_MODELS_PARTIAL:
+			return m_PartialModels;
 		default:
 			throw new InternalError("This should be implemented!!!");
 		}
@@ -938,7 +970,9 @@ public class SMTInterpol extends NoopScript {
 			HashSet<String> usedParts = new HashSet<String>();
 			for (Set<String> part : parts)
 				usedParts.addAll(part);
-			tmpBench = new SMTInterpol(this);
+			tmpBench = new SMTInterpol(this,
+					Collections.singletonMap(":interactive-mode",
+							(Object)Boolean.TRUE));
 			Level old = tmpBench.m_Logger.getLevel();
 			try {
 				tmpBench.m_Logger.setLevel(Level.ERROR);
@@ -1072,7 +1106,7 @@ public class SMTInterpol extends NoopScript {
 			HashSet<String> usedParts = new HashSet<String>();
 			for (Term t : core)
 				usedParts.add(((ApplicationTerm)t).getFunction().getName());
-			SMTInterpol tmpBench = new SMTInterpol(this);
+			SMTInterpol tmpBench = new SMTInterpol(this, null);
 			Level old = tmpBench.m_Logger.getLevel();
 			try {
 				tmpBench.m_Logger.setLevel(Level.ERROR);
@@ -1107,13 +1141,10 @@ public class SMTInterpol extends NoopScript {
 	}
 
 	@Override
-	public Valuation getValue(Term[] terms)
+	public Map<Term, Term> getValue(Term[] terms)
 	throws SMTLIBException, UnsupportedOperationException {
 		if (m_Engine == null)
 			throw new SMTLIBException("No logic set!");
-		if (!m_ProduceModels)
-			throw new SMTLIBException(
-				"Set option :produce-models to true before using get-value");
 		buildModel();
 		return m_Model.evaluate(terms);
 	}
@@ -1123,9 +1154,6 @@ public class SMTInterpol extends NoopScript {
 			UnsupportedOperationException {
 		if (m_Engine == null)
 			throw new SMTLIBException("No logic set!");
-		if (!m_ProduceModels)
-			throw new SMTLIBException(
-				"Set option :produce-models to true before using get-model");
 		buildModel();
 		return m_Model;
 	}
@@ -1299,6 +1327,10 @@ public class SMTInterpol extends NoopScript {
 				&& m_ProofMode == 0)
 				m_ProofMode = 1;
 			break;
+		case OPT_MODELS_PARTIAL:
+			m_PartialModels = o.checkArg(value, m_PartialModels);
+			m_Model = null;
+			break;
 		default:
 			throw new InternalError("This should be implemented!!!");
 		}
@@ -1367,7 +1399,7 @@ public class SMTInterpol extends NoopScript {
 		if (m_Model == null) {
 			m_Model = new
 				de.uni_freiburg.informatik.ultimate.smtinterpol.model.Model(
-					m_Clausifier, getTheory());
+					m_Clausifier, getTheory(), m_PartialModels);
 		}
 	}
 	
@@ -1422,6 +1454,22 @@ public class SMTInterpol extends NoopScript {
 			ioe.printStackTrace();
 			return false;
 		}
+	}
+	
+	public Iterable<Term[]> checkAllsat(final Term[] input) {
+		final Literal[] lits = new Literal[input.length];
+		for (int i = 0; i < input.length; ++i) {
+			if (input[i].getSort() != getTheory().getBooleanSort())
+				throw new SMTLIBException("AllSAT over non-Boolean");
+			lits[i] = m_Clausifier.getCreateLiteral(input[i]);
+		}
+		return new Iterable<Term[]>() {
+			
+			@Override
+			public Iterator<Term[]> iterator() {
+				return m_Engine.new AllSatIterator(lits, input);
+			}
+		};
 	}
 
 }

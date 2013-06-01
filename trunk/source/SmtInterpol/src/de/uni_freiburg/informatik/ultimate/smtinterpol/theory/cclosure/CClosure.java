@@ -41,7 +41,6 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.LeafNode;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.cclosure.CCTermPairHash.Info.Entry;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.linar.LAEquality;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.util.ArrayQueue;
-import de.uni_freiburg.informatik.ultimate.smtinterpol.util.ListSet;
 import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
 import de.uni_freiburg.informatik.ultimate.util.ScopedHashMap;
 
@@ -78,22 +77,12 @@ public class CClosure implements ITheory {
 	ArrayDeque<CCTerm> merges = new ArrayDeque<CCTerm>();
 	ArrayDeque<CCAppTermPair> pendingCongruences =
 		new ArrayDeque<CCAppTermPair>();
-	// E-Matching Support
-//	boolean ematchingActive = false;
-	TriggerExecutionContext root;
-	TriggerExecutionContext.ReactivationContext lastRC;
-	TriggerExecutionContext doneYields = null;
 	
-	// Array Support
-	ListSet<CCTerm> m_foreignarrays = new ListSet<CCTerm>();
 	Clausifier clausifier;
-	int curinsts = 0;
 
 	public CClosure(DPLLEngine engine, Clausifier clausifier) {
 		this.engine = engine;
 		this.clausifier = clausifier;
-		root = new TriggerExecutionContext();
-		lastRC = root.new ReactivationContext();
 	}
 	
 	public CCTerm createAnonTerm(SharedTerm flat) {
@@ -143,9 +132,7 @@ public class CClosure implements ITheory {
 	}
 	
 	/**
-	 * Function to retrieve the CCTerm representing a function symbol. This
-	 * function should be used by the pattern compiler to retrieve the correct
-	 * number of the function symbol.
+	 * Function to retrieve the CCTerm representing a function symbol.
 	 * @param sym Function symbol.
 	 * @return CCTerm representing this function symbol in the egraph.
 	 */
@@ -272,23 +259,6 @@ public class CClosure implements ITheory {
 		return res;
 	}
 	
-	boolean processTriggers(int maxnum) {
-//		System.err.println("Processing triggers for " + maxnum + " insts");
-		curinsts = 0;
-		// Do all trigger instructions
-		while (root.next != root && curinsts < maxnum) {
-			// Remove from front of the list list
-			TriggerExecutionContext tec = root.next;
-			root.next = tec.next;
-			root.next.prev = root;
-			// Re-execute
-			tec.reexecute(this);
-			// Clear in list status
-			tec.next = tec.prev = null;
-		}
-		return root.next != root;
-	}
-
 	public Literal getPropagatedLiteral() {
 		Literal lit = pendingLits.poll();
 		assert (lit == null || checkPending(lit));
@@ -648,48 +618,11 @@ public class CClosure implements ITheory {
 			}
 		}
 	}
-	public void appendRC(TriggerExecutionContext.ReactivationContext rc) {
-		rc.prevRC = lastRC;
-		lastRC = rc;
-	}
-	
-	void addPendingInsn(TriggerExecutionContext tec) {
-		if (tec.next == null) {
-			root.prev.next = tec;
-			tec.prev = root.prev;
-			root.prev = tec;
-			tec.next = root;
-		}
-	}
-	
-	public void addForeignArray(CCTerm foreign) {
-		m_foreignarrays.add(foreign);
-	}
-	
+
 	public int getStackDepth() {
 		return merges.size();
 	}
 	
-	public TriggerExecutionContext getRoot() {
-		return root;
-	}
-
-	public void yieldDone(TriggerExecutionContext tec) {
-		if (doneYields == null) {
-			doneYields = tec;
-			tec.next = tec.prev = tec;
-		} else {
-			tec.next = doneYields;
-			tec.prev = doneYields.prev;
-			doneYields.prev.next = tec;
-			doneYields.prev = tec;
-		}
-	}
-
-	public void instantiation() {
-		++curinsts;
-	}
-
 	@Override
 	public void removeAtom(DPLLAtom atom) {
 		if (atom instanceof CCEquality) {
@@ -756,13 +689,11 @@ public class CClosure implements ITheory {
 			allTerms.remove(i);
 		}
 		numFunctionPositions = sd.numFuncPositions;
-		m_foreignarrays.endScope();
 		symbolicTerms.endScope();
 	}
 
 	@Override
 	public Object push() {
-		m_foreignarrays.beginScope();
 		symbolicTerms.beginScope();
 		return new StackData(this);
 	}

@@ -189,7 +189,7 @@ public class TriggerExecutionContext {
 			new ReactivationContext(engine.getStackDepth(),match);
 //		System.err.println("Registering " + res + " for Literal " + engine.lastLit);
 		rcset.add(res);
-		engine.appendRC(res);
+//		engine.appendRC(res);
 		return res;
 	}
 	

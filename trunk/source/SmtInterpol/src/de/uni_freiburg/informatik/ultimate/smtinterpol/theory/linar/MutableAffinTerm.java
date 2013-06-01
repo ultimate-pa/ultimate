@@ -33,6 +33,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.SMTAffineTerm;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.SharedTerm;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.NamedAtom;
 
 
 
@@ -272,6 +273,7 @@ public class MutableAffinTerm {
 		String comp = m_constant.meps == 0 ? "<=" : "<";
 		Term zero = isInt ? smtTheory.numeral(BigInteger.ZERO)
 				: smtTheory.decimal(BigDecimal.ZERO);
-		return smtTheory.term(comp, toSMTLib(smtTheory, isInt, quoted), zero);
+		Term res = smtTheory.term(comp, toSMTLib(smtTheory, isInt, quoted), zero);
+		return quoted ? smtTheory.annotatedTerm(NamedAtom.g_quoted, res) : res;
 	}
 }

@@ -28,15 +28,15 @@ import java.math.BigInteger;
  *
  */
 public class FunctionSymbol {
-	public static int INTERNAL   = 1;
-	public static int LEFTASSOC  = (1) << 1;
-	public static int RIGHTASSOC = (2) << 1;
-	public static int CHAINABLE  = (3) << 1;
-	public static int PAIRWISE   = (4) << 1;
-	public static int ASSOCMASK  = (7) << 1;
+	public static final int INTERNAL   = 1;
+	public static final int LEFTASSOC  = (1) << 1;
+	public static final int RIGHTASSOC = (2) << 1;
+	public static final int CHAINABLE  = (3) << 1;
+	public static final int PAIRWISE   = (4) << 1;
+	public static final int ASSOCMASK  = (7) << 1;
 
-	public static int RETURNOVERLOAD = 16;
-	
+	public static final int RETURNOVERLOAD = 16;
+
 	final String m_Name;
 	final BigInteger[] m_Indices;
 	final Sort[] m_ParamSort;

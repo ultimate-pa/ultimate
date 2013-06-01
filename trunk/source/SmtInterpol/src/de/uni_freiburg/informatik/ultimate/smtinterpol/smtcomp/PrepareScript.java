@@ -30,7 +30,6 @@ import de.uni_freiburg.informatik.ultimate.logic.LoggingScript;
 import de.uni_freiburg.informatik.ultimate.logic.Model;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.logic.Valuation;
 
 /**
  * This script does the main work of the preparation.  It also checks for
@@ -101,16 +100,10 @@ public class PrepareScript extends LoggingScript {
 	}
 
 	@Override
-	public Valuation getValue(Term[] terms) throws SMTLIBException,
+	public Map<Term, Term> getValue(Term[] terms) throws SMTLIBException,
 			UnsupportedOperationException {
 		// Do nothing since no track allows this command
-		return new Valuation() {
-			
-			@Override
-			public Term get(Term t) {
-				return t;
-			}
-		};
+		return Collections.emptyMap();
 	}
 
 	@Override
@@ -168,15 +161,8 @@ public class PrepareScript extends LoggingScript {
 			}
 
 			@Override
-			public Valuation evaluate(Term[] input) {
-				return new Valuation() {
-
-					@Override
-					public Term get(Term t) {
-						return t;
-					}
-					
-				};
+			public Map<Term, Term> evaluate(Term[] input) {
+				return Collections.emptyMap();
 			}
 
 			@Override

@@ -23,8 +23,6 @@ import java.util.Collection;
 import java.util.IdentityHashMap;
 import java.util.Iterator;
 
-import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.FlatTerm;
-
 public class IdentityHashSet<E> extends AbstractSet<E> {
 
 	private IdentityHashMap<E, Object> m_Backing;
@@ -33,11 +31,6 @@ public class IdentityHashSet<E> extends AbstractSet<E> {
 		m_Backing = new IdentityHashMap<E, Object>();
 	}
 	
-	@SuppressWarnings({ "unchecked", "rawtypes" })
-	public IdentityHashSet(IdentityHashSet<FlatTerm> other) {
-		m_Backing = new IdentityHashMap(other.m_Backing);
-	}
-
 	@Override
 	public Iterator<E> iterator() {
 		return m_Backing.keySet().iterator();

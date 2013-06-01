@@ -269,9 +269,9 @@ public class ArrayYieldTrigger extends YieldTrigger {
 		if (tec.isPassive())
 			return;
 		tec.passivate();
-		engine.yieldDone(tec);
+//		engine.yieldDone(tec);
 		if (!knownSubsts.createInstantiation(regs, substitution,
-				converter.dpllEngine.getLogger(),quantsub))
+				converter.getEngine().getLogger(),quantsub))
 			return;
 //		converter.getCClosure().addArrayInst(regs[m_map.getArrayIdx()],
 //				regs[m_map.getValueIdx()], regs[m_map.getIdx1Idx()],

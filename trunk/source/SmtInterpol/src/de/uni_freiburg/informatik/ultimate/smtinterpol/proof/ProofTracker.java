@@ -34,6 +34,7 @@ import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.Config;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.SMTAffineTerm;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.Clausifier.ConditionChain;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.Utils;
@@ -208,10 +209,10 @@ public class ProofTracker implements IProofTracker {
 	
 	private Map<Term, Term> m_Lits;
 	
-	private void addToLits(Term orig, Term lit) {
+	private boolean addToLits(Term orig, Term lit) {
 		if (m_Lits == null)
 			m_Lits = new HashMap<Term, Term>();
-		m_Lits.put(orig, lit);
+		return m_Lits.put(orig, lit) == null;
 	}
 
 	private void prepend(Rewrite rw) {
@@ -284,9 +285,10 @@ public class ProofTracker implements IProofTracker {
 			else if (resArgs.length == 1)
 				tres = rule == ProofConstants.RW_EQ_FALSE ? 
 						t.term(t.m_Not, resArgs[0]) : resArgs[0];
-			else if (rule == ProofConstants.RW_EQ_TRUE)
-				tres = t.term(t.m_And, resArgs);
-			else if (rule == ProofConstants.RW_EQ_FALSE)
+			else if (rule == ProofConstants.RW_EQ_TRUE) {
+				// We use inplace algorithms.  So clone the array.
+				tres = t.term(t.m_And, resArgs.clone());
+			} else if (rule == ProofConstants.RW_EQ_FALSE)
 				tres = t.term(t.m_Not, t.term(t.m_Or, resArgs));
 			else if (rule == ProofConstants.RW_EQ_SIMP)
 				tres = t.term("=", resArgs);
@@ -353,7 +355,7 @@ public class ProofTracker implements IProofTracker {
 
 	@Override
 	public void strip(AnnotatedTerm orig) {
-		append(new ResultRewrite(
+		prepend(new ResultRewrite(
 				orig, orig.getSubterm(), ProofConstants.RW_STRIP));
 	}
 
@@ -399,23 +401,27 @@ public class ProofTracker implements IProofTracker {
 	}
 
 	@Override
-	public void divisible(Term div, Term res) {
-		append(new ResultRewrite(div, res, ProofConstants.RW_DIVISIBLE));
+	public void divisible(FunctionSymbol divn, Term div, Term res) {
+		Term divisible = res.getTheory().term(divn, SMTAffineTerm.cleanup(div));
+		append(new ResultRewrite(divisible, res, ProofConstants.RW_DIVISIBLE));
 	}
 
 	@Override
-	public Term getRewriteProof(Term asserted, Term result) {
+	public Term getRewriteProof(Term asserted) {
 		assert(invNumRewrites());
 		Theory t = asserted.getTheory();
+		return getEqProof(t.term("@asserted", asserted));
+	}
+	
+	private Term getEqProof(Term proofPart) {
 		if (m_NumRewrites == 0)
-			// No @eq proof if no rewrites
-			return t.term("@asserted", asserted);
+			return proofPart;
 		Term[] args = new Term[m_NumRewrites + 1];
-		args[0] = t.term("@asserted", asserted);
+		args[0] = proofPart;
 		int i = 1;
 		for (Rewrite rw = m_First.m_Next; rw != null; rw = rw.m_Next)
 			args[i++] = rw.toTerm();
-		Term eq = t.term("@eq", args);
+		Term eq = proofPart.getTheory().term("@eq", args);
 		return eq;
 	}
 
@@ -449,7 +455,6 @@ public class ProofTracker implements IProofTracker {
 	public void quoted(Term orig, Literal quote) {
 		Term t = quote.getSMTFormula(orig.getTheory(), true);
 		append(new InternRewrite(orig, t));
-		addToLits(orig, t);
 	}
 
 	@Override
@@ -461,17 +466,15 @@ public class ProofTracker implements IProofTracker {
 			orig = res.getTheory().term("not", orig);
 			res = res.getTheory().FALSE;
 		}
-		addToLits(orig, res);
 	}
 
 	@Override
 	public void eq(Term lhs, Term rhs, DPLLAtom eqAtom) {
 		Theory t = lhs.getTheory();
 		Term res = SMTAffineTerm.cleanup(eqAtom.getSMTFormula(t, true));
-		Term orig = t.term("=", lhs, rhs);
+		Term orig = SMTAffineTerm.cleanup(t.term("=", lhs, rhs));
 		if (orig != res)
 			append(new InternRewrite(orig, res));
-		addToLits(orig, res);
 		
 	}
 
@@ -484,7 +487,6 @@ public class ProofTracker implements IProofTracker {
 		Term res = lit.getSMTFormula(t, true);
 		if (orig != res)
 			append(new InternRewrite(orig, res));
-		addToLits(orig, res);
 	}
 
 	@Override
@@ -494,7 +496,6 @@ public class ProofTracker implements IProofTracker {
 		Term res = lit.getSMTFormula(t, true);
 		if (orig != res)
 			append(new InternRewrite(orig, res));
-		addToLits(orig, res);
 	}
 	
 	@Override
@@ -566,25 +567,15 @@ public class ProofTracker implements IProofTracker {
 			default:
 				throw new InternalError("BUG in ProofTracker: Split");
 		}
-		return t.term("@split", t.annotatedTerm(
+		return getEqProof(t.term("@split", t.annotatedTerm(
 				new Annotation[] {ProofConstants.SPLITANNOTS[splitKind]},
-				proof), res);
+				proof), res));
 	}
 
 	@Override
 	public Term clause(Term proof) {
 		assert(invNumRewrites());
-		Theory t = proof.getTheory();
-		if (m_NumRewrites != 0) {
-			// First do the rewrites
-			Term[] args = new Term[m_NumRewrites + 1];
-			args[0] = proof;
-			int i = 1;
-			for (Rewrite rw = m_First.m_Next; rw != null; rw = rw.m_Next)
-				args[i++] = rw.toTerm();
-			proof = t.term("@eq", args);
-		}
-		return proof;
+		return getEqProof(proof);
 	}
 
 	@Override
@@ -594,13 +585,17 @@ public class ProofTracker implements IProofTracker {
 		Term axiom;
 		switch (auxKind) {
 		case ProofConstants.AUX_TRUE_NOT_FALSE:
-			axiom = t.term(t.m_Not, t.term("=", t.TRUE, t.FALSE));
+			// auxLit is (not (= true false)), i.e., it has negative polarity
+			axiom = auxLit.getSMTFormula(t, true);
 			break;
-		case ProofConstants.AUX_OR_POS:
-			axiom = t.term(t.m_Or, t.term(t.m_Not,
-					auxLit.getSMTFormula(t, true)),
-					data);
+		case ProofConstants.AUX_OR_POS: {
+			Term[] args = ((ApplicationTerm) data).getParameters();
+			Term[] nargs = new Term[args.length + 1];
+			nargs[0] = t.term(t.m_Not, auxLit.getSMTFormula(t, true));
+			System.arraycopy(args, 0, nargs, 1, args.length);
+			axiom = t.term(t.m_Or, nargs);
 			break;
+		}
 		case ProofConstants.AUX_OR_NEG:
 			axiom = t.term(t.m_Or, auxLit.getSMTFormula(t, true),
 						t.term(t.m_Not, data));
@@ -661,7 +656,9 @@ public class ProofTracker implements IProofTracker {
 					t.term(t.m_Not, params[0]), t.term(t.m_Not, params[1]));
 			break;
 		case ProofConstants.AUX_EXCLUDED_MIDDLE_1:
-			// Fall through since they only differ in the literal. 
+			axiom = t.term(t.m_Or, t.term(t.m_Not, data),
+					auxLit.getSMTFormula(t, true));
+			break;
 		case ProofConstants.AUX_EXCLUDED_MIDDLE_2:
 			axiom = t.term(t.m_Or, data, auxLit.getSMTFormula(t, true));
 			break;
@@ -677,21 +674,31 @@ public class ProofTracker implements IProofTracker {
 			Term[] nparams = new Term[size];
 			walk = tmp;
 			for (int i = size - 2; i >= 0; --i) {
-				nparams[i] = walk.getTerm();
+				nparams[i] = t.term(t.m_Not, walk.getTerm());
+				if (Utils.isNegation(walk.getTerm()))
+					negation(walk.getTerm(),
+							Utils.createNotUntracked(walk.getTerm()),
+							ProofConstants.RW_NOT_SIMP);
 				walk = walk.getPrevious();
 			}
 			nparams[size - 1] = t.term("=", base, data);
 			axiom = t.term(t.m_Or, nparams);
 			break;
 		case ProofConstants.AUX_DIV_LOW:
-		case ProofConstants.AUX_TO_INT_LOW:
 			axiom = t.term("<=", SMTAffineTerm.cleanup(data),
 					t.numeral(BigInteger.ZERO));
 			break;
+		case ProofConstants.AUX_TO_INT_LOW:
+			axiom = t.term("<=", SMTAffineTerm.cleanup(data),
+					t.rational(BigInteger.ZERO, BigInteger.ONE));
+			break;
 		case ProofConstants.AUX_DIV_HIGH:
-		case ProofConstants.AUX_TO_INT_HIGH:
 			axiom = t.term(t.m_Not, t.term("<=", SMTAffineTerm.cleanup(data),
 					t.numeral(BigInteger.ZERO)));
+			break;
+		case ProofConstants.AUX_TO_INT_HIGH:
+			axiom = t.term(t.m_Not, t.term("<=", SMTAffineTerm.cleanup(data),
+					t.rational(BigInteger.ZERO, BigInteger.ONE)));
 			break;
 			default:
 				throw new InternalError("BUG in ProofTracker: AUX");
@@ -771,7 +778,8 @@ public class ProofTracker implements IProofTracker {
 			for (int i = m_Offset; i < m_Args.length; ++i) {
 				if (m_Args[i] instanceof ApplicationTerm) {
 					ApplicationTerm tst = (ApplicationTerm) m_Args[i];
-					if (tst.getFunction() == tst.getTheory().m_Or) {
+					if (tst.getFunction() == tst.getTheory().m_Or &&
+							tst.tmpCtr <= Config.OCC_INLINE_THRESHOLD) {
 						m_Offset = i + 1;
 						if (m_Offset < m_Args.length)
 							todo.addFirst(this);
@@ -810,8 +818,14 @@ public class ProofTracker implements IProofTracker {
 		Term[] newArgs = args.clone();
 		LinkedHashSet<Term> clause = new LinkedHashSet<Term>();
 		for (int i = 0; i < newArgs.length; ++i) {
-			Term newDisj = m_Lits.get(newArgs[i]);
-			assert (newDisj != null);
+			Term tmp = SMTAffineTerm.cleanup(newArgs[i]);
+			Term newDisj = m_Lits.get(tmp);
+			/* This is the case for proxy literals in aux-clauses.  They cannot
+			 * merge since otherwise the term would be infinite because the term
+			 * would be its own proper subterm.
+			 */
+			if (newDisj == null)
+				newDisj = tmp;
 			newArgs[i] = newDisj;
 			if (newDisj != t.FALSE)
 				clause.add(newDisj);
@@ -868,9 +882,39 @@ public class ProofTracker implements IProofTracker {
 	@Override
 	public void normalized(ConstantTerm term, SMTAffineTerm res) {
 		Term rhs = SMTAffineTerm.cleanup(res);
-		if (rhs != term)
+		if (term != rhs)
 			append(new ResultRewrite(
 					term, rhs, ProofConstants.RW_CANONICAL_SUM));
+	}
+
+	@Override
+	public boolean notifyLiteral(Literal lit, Term t) {
+		return addToLits(SMTAffineTerm.cleanup(t),
+				SMTAffineTerm.cleanup(lit.getSMTFormula(t.getTheory(), true)));
+	}
+
+	@Override
+	public void notifyFalseLiteral(Term t) {
+		addToLits(SMTAffineTerm.cleanup(t), t.getTheory().FALSE);
+	}
+
+	@Override
+	public void storeRewrite(ApplicationTerm store, Term result, boolean arrayFirst) {
+		Term array = store.getParameters()[0];
+		Term orig = arrayFirst ? store.getTheory().term("=", array, store) :
+			store.getTheory().term("=", store, array);
+		append(new ResultRewrite(
+				orig, result, ProofConstants.RW_STORE_REWRITE));
+	}
+
+	@Override
+	public void toReal(SMTAffineTerm arg, SMTAffineTerm res) {
+		if (res.isConstant()) {
+			Term orig = arg.getTheory().term(
+					"to_real", SMTAffineTerm.cleanup(arg));
+			append(new ResultRewrite(orig, SMTAffineTerm.cleanup(res),
+					ProofConstants.RW_TO_REAL));
+		}
 	}
 	
 }

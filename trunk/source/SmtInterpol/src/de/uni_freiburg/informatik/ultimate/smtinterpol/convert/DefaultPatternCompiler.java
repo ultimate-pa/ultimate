@@ -49,7 +49,7 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.util.IntAllocator;
 public class DefaultPatternCompiler implements IPatternCompiler {
 
 	@Override
-	public TriggerData compile(Set<TermVariable> vars,Term[] triggers, ConvertFormula converter) {
+	public TriggerData compile(Set<TermVariable> vars,Term[] triggers, Clausifier converter) {
 		InsnSequence sequence = new InsnSequence();
 		Map<TermVariable,Integer> subst = new HashMap<TermVariable, Integer>();
 		TermDAG dag = new TermDAG();
@@ -304,7 +304,7 @@ public class DefaultPatternCompiler implements IPatternCompiler {
 		return sequence.finish(initregs);
 	}
 	
-	private void compile(ConvertFormula converter, AppTermNode trigger, InsnSequence sequence, 
+	private void compile(Clausifier converter, AppTermNode trigger, InsnSequence sequence, 
 			Map<TermVariable, Integer> subst, IntAllocator allocator, Map<TermNode, Deque<Edge>> trajectorie,
 			TermDAG dag, Set<TermNode> newConstants) {
 		Set<TermNode> constants = new HashSet<TermNode>();
@@ -347,7 +347,7 @@ public class DefaultPatternCompiler implements IPatternCompiler {
 		}
 	}
 	
-	private void createFindTrigger(ConvertFormula converter, Deque<Edge> trajectorie, InsnSequence sequence, IntAllocator allocator,
+	private void createFindTrigger(Clausifier converter, Deque<Edge> trajectorie, InsnSequence sequence, IntAllocator allocator,
 			Map<TermVariable, Integer> subst, Map<Edge, Integer> edgesToBind, Set<TermNode> newConstants) {
 		Edge edge = trajectorie.poll();
 		AppTermNode find = (AppTermNode)edge.m_From;
@@ -364,14 +364,14 @@ public class DefaultPatternCompiler implements IPatternCompiler {
 				for(int i = 1; i < reg.length; i++) 
 					reg[i] = allocReg[i - 1];
 			}
-			FindTrigger trig = new FindTrigger(converter.cclosure, find.getSymbol(), reg);
+			FindTrigger trig = new FindTrigger(converter.getCClosure(), find.getSymbol(), reg);
 			sequence.append(trig);
 			createCompares(converter, find, reg, -1, allocator, sequence, subst, edgesToBind);
 		}
 		createReverseTrigger(converter, trajectorie, sequence, allocator, subst, edgesToBind, newConstants);
 	}
 	
-	private void createReverseTrigger(ConvertFormula converter, Deque<Edge> trajectorie, InsnSequence sequence, 
+	private void createReverseTrigger(Clausifier converter, Deque<Edge> trajectorie, InsnSequence sequence, 
 			IntAllocator allocator, Map<TermVariable, Integer> subst, Map<Edge, Integer> edgesToBind, 
 			Set<TermNode> newConstants) {
 
@@ -405,7 +405,7 @@ public class DefaultPatternCompiler implements IPatternCompiler {
 			}
 			for(int i = j; i < allocReg.length; i++)
 				allocator.free(allocReg[i]);
-			ReverseTrigger revTrig = new ReverseTrigger(converter.cclosure, parent.getSymbol(),
+			ReverseTrigger revTrig = new ReverseTrigger(converter.getCClosure(), parent.getSymbol(),
 					reverseEdge.m_Num, constant.getRegPos(), reg, null);
 			sequence.append(revTrig);
 			createCompares(converter, parent, reg, reverseEdge.m_Num, allocator, sequence, subst, edgesToBind);
@@ -413,7 +413,7 @@ public class DefaultPatternCompiler implements IPatternCompiler {
 		createReverseTrigger(converter, trajectorie, sequence, allocator, subst, edgesToBind, newConstants);
 	}
 	
-	private void createCompares(ConvertFormula converter, TermNode currentNode, int[] reg, int skippedReg,
+	private void createCompares(Clausifier converter, TermNode currentNode, int[] reg, int skippedReg,
 			IntAllocator allocator, InsnSequence sequence, Map<TermVariable, Integer> subst, 
 			Map<Edge, Integer> edgesToBind){
 		currentNode.setRegPos(reg[0]);
@@ -517,12 +517,12 @@ public class DefaultPatternCompiler implements IPatternCompiler {
 		return longestPaths;
 	}
 	
-	private Map<Edge, Integer> bindEdge(ConvertFormula converter, AppTermNode trigger, Map<TermVariable, Integer> subst, 
+	private Map<Edge, Integer> bindEdge(Clausifier converter, AppTermNode trigger, Map<TermVariable, Integer> subst, 
 			InsnSequence sequence, IntAllocator allocator, int reg) {
 		int[] allocReg = allocator.alloc(trigger.getChildCount() + 1);
 		
 		Map<Edge, Integer> edgesToBind = new HashMap<Edge, Integer>();
-		BindTrigger trig = new BindTrigger(converter.cclosure, reg, trigger.getSymbol(), allocReg);
+		BindTrigger trig = new BindTrigger(converter.getCClosure(), reg, trigger.getSymbol(), allocReg);
 		sequence.append(trig);
 		createCompares(converter, trigger, allocReg, -1, allocator, sequence, subst, edgesToBind);
 		

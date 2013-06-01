@@ -79,6 +79,15 @@ public class NonRecursive {
 		 */
 		public void walk(NonRecursive engine);
 	}
+	/**
+	 * Manually reset this walker.  This function can be used to clear the
+	 * todo stack when an exception is raised by a walker.  This exception will
+	 * terminate the non-recursive walk but will leave some walker in the todo
+	 * stack.
+	 */
+	protected void reset() {
+		m_Todo.clear();
+	}
 	
 	public void enqueueWalker(Walker item) {
 		m_Todo.addLast(item);

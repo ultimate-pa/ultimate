@@ -65,14 +65,22 @@ public class InfinitNumber implements Comparable<InfinitNumber> {
 	 * Returns this + other.
 	 */
 	public InfinitNumber add(InfinitNumber other) {
-		//if (meps * other.meps < 0) throw new AssertionError(); // TODO make assert
+		// Unfortunately, in many places we add "incompatible" InfinitNumbers.
+		// Sometimes, because we are only interested in the ma part, sometimes
+		// intentionally, for example to get rid of the epsilon by adding it.
+		// TODO: check these places more carefully
+		// assert (meps * other.meps < 0);
 		return new InfinitNumber(ma.add(other.ma), normEpsilon(meps+other.meps));
 	}
 	/**
 	 * Returns this - other.
 	 */
 	public InfinitNumber sub(InfinitNumber other) {
-		//if (meps * other.meps > 0) throw new AssertionError(); // TODO make assert
+		// Unfortunately, in many places we add "incompatible" InfinitNumbers.
+		// Sometimes, because we are only interested in the ma part, sometimes
+		// intentionally, for example to get rid of the epsilon by adding it.
+		// TODO: check these places more carefully
+		// assert (meps * other.meps > 0);
 		return new InfinitNumber(ma.sub(other.ma), normEpsilon(meps-other.meps));
 	}
 	/**

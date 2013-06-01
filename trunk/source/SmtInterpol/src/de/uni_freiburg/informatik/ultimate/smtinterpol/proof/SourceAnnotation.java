@@ -31,6 +31,8 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.IAnnotation;
  * @author Juergen Christ
  */
 public class SourceAnnotation implements IAnnotation {
+	public static final SourceAnnotation EMPTY_SOURCE_ANNOT =
+			new SourceAnnotation("", null);
 	private final String m_annot;
 	private final Term m_Source;
 	public SourceAnnotation(String annot, Term source) {

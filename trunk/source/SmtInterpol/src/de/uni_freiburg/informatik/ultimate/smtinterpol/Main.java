@@ -38,9 +38,10 @@ public class Main {
 	private static void usage() {
 		System.err.println("USAGE:");
 		System.err.println(
-"smtinterpol [-transform <output>] [-script <class>] [-q] [-v] [-t <num>] [-r <num>] [-smt2] [-smt] [-d] [inputfile]");
+"smtinterpol [-transform <output>] [-script <class>] [-no-success] [-q] [-v] [-t <num>] [-r <num>] [-smt2] [-smt] [-d] [inputfile]");
 		System.err.println("\t-transform <output>\t\tTransform to smtlib2 file.");
 		System.err.println("\t-script <class>\t\tUse different script.");
+		System.err.println("\t-no-success\t\tDon't print success messages.");
 		System.err.println("\t-q\t\tRun in quiet mode");
 		System.err.println("\t-v\t\tRun in verbose mode");
 		System.err.println("\t-t <num>\tSet timeout to <num> seconds");
@@ -59,6 +60,7 @@ public class Main {
 		BigInteger seed = null;
 		IParser parser = new SMTLIB2Parser();
 		Script solver = null;
+		boolean printSuccess = true;
 		int paramctr = 0;
         while (paramctr < param.length
         		&& param[paramctr].startsWith("-")) {
@@ -74,6 +76,8 @@ public class Main {
      			paramctr++;
      			Class<?> scriptClass = Class.forName(param[paramctr]);
      			solver = (Script) scriptClass.newInstance();
+        	} else if (param[paramctr].equals("-no-success")) {
+        		printSuccess = false;
         	} else if (param[paramctr].equals("-v")) {
         		verbosity = BigInteger.valueOf(5);
         	} else if (param[paramctr].equals("-q")) {
@@ -129,7 +133,8 @@ public class Main {
 			return;
 		}
 		if (solver == null)
-			 solver = new SMTInterpol();
+			solver = new SMTInterpol();
+		solver.setOption(":print-success", printSuccess);
 		if (verbosity != null)
 			solver.setOption(":verbosity", verbosity);
 		if (timeout != null)

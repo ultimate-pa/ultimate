@@ -29,6 +29,7 @@ import java.io.Reader;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.Locale;
+import java.util.Map;
 
 import org.apache.log4j.Logger;
 
@@ -161,6 +162,25 @@ public class ParseEnvironment {
 			System.exit(1);
 	}
 	
+	public void printValues(Map<Term, Term> values) {
+		PrintTerm pt = new PrintTerm();
+		m_Out.print('(');
+		String sep = "";
+		String itemSep = Config.RESULTS_ONE_PER_LINE ? 
+				System.getProperty("line.separator") + " " : " "; 
+		for (Map.Entry<Term, Term> me : values.entrySet()) {
+			m_Out.print(sep);
+			m_Out.print('(');
+			pt.append(m_Out, me.getKey());
+			m_Out.print(' ');
+			pt.append(m_Out, me.getValue());
+			m_Out.print(')');
+			sep = itemSep;
+		}
+		m_Out.println(')');
+		m_Out.flush();
+	}
+	
 	public void printResponse(Object response) {
 		if (!m_PrintTermCSE) {
 			if (response instanceof Term) {
@@ -178,6 +198,12 @@ public class ParseEnvironment {
 			StringBuilder sb = new StringBuilder();
 			convertSexp(sb, response, 0);
 			m_Out.println(sb.toString());
+		} else if (response instanceof Iterable) {
+			Iterable<?> it = (Iterable<?>) response;
+			m_Out.print("(");
+			for (Object o : it)
+				printResponse(o);
+			m_Out.println(")");
 		} else
 			m_Out.println(response.toString());
 		m_Out.flush();
@@ -258,7 +284,7 @@ public class ParseEnvironment {
 		if (info.equals(":error-behavior")) {
 			if ("immediate-exit".equals(value))
 				m_ContinueOnError = false;
-			else if ("continue-execution".equals(value))
+			else if ("continued-execution".equals(value))
 				m_ContinueOnError = true;
 		}
 		m_Script.setInfo(info, value);
@@ -266,7 +292,7 @@ public class ParseEnvironment {
 	
 	public Object getInfo(String info) {
 		if (info.equals(":error-behavior"))
-			return m_ContinueOnError ? "continue-execution" : "immediate-exit";
+			return m_ContinueOnError ? "continued-execution" : "immediate-exit";
 		return m_Script.getInfo(info);
 	}
 

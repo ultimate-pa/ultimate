@@ -209,7 +209,7 @@ public class TraceChecker {
 					terms.add(t);
 			Term[] allTerms = terms.toArray(new Term[terms.size()]);
 			try {
-				Valuation val = m_SmtManager.getScript().getValue(allTerms);
+				Map<Term, Term> val = m_SmtManager.getScript().getValue(allTerms);
 				for (Term term : allTerms) {
 					s_Logger.debug(new DebugMessage("Value of {0}: {1}", term, val.get(term)));
 				}

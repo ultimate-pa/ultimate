@@ -49,6 +49,7 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.ITheory;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.Literal;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.model.Model;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.model.SharedTermEvaluator;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.model.Value;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.LeafNode;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.cclosure.CCEquality;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.util.ArrayMap;
@@ -134,14 +135,6 @@ public class LinArSolve implements ITheory {
 	long cutGenTime;
 	ScopedArrayList<SharedTerm> m_sharedVars =
 		new ScopedArrayList<SharedTerm>();
-	
-	/**
-	 * Current stack depth of reason objects.
-	 * Every reason can be though to reside on a virtual stack.
-	 * When it is created it is pushed on the stack and on
-	 * backtracking it is removed.
-	 */
-	int m_reasonDepth;
 	
 	/** The next suggested literals */
 	ArrayDeque<Literal> m_suggestions;
@@ -486,10 +479,6 @@ public class LinArSolve implements ITheory {
 			if (laeq == literal.negate()) {
 				// disequality: remove from diseq map
 				var.removeDiseq(laeq);
-				if (laeq.m_StackDepth != 0) {
-					laeq.m_StackDepth = 0;
-					m_reasonDepth--;
-				}
 			}
 		} else if (atom instanceof BoundConstraint) {
 			BoundConstraint bc = (BoundConstraint) atom;
@@ -504,8 +493,6 @@ public class LinArSolve implements ITheory {
 					&& ((LiteralReason)reason).getLiteral() == literal
 					&& reason.getLastLiteral() == reason) {
 				removeLiteralReason((LiteralReason)reason);
-				if (!(literal.negate() instanceof LAEquality))
-					m_reasonDepth--;
 				break;
 			}
 			reason = reason.getOldReason();
@@ -516,8 +503,6 @@ public class LinArSolve implements ITheory {
 					&& ((LiteralReason)reason).getLiteral() == literal
 					&& reason.getLastLiteral() == reason) {
 				removeLiteralReason((LiteralReason)reason);
-				if (!(literal.negate() instanceof LAEquality))
-					m_reasonDepth--;
 				break;
 			}
 			reason = reason.getOldReason();
@@ -531,11 +516,11 @@ public class LinArSolve implements ITheory {
 		LinVar var = m_conflictVar;
 		if (var != null && var.getUpperBound().less(var.getLowerBound())) {
 			// we still have a conflict
-			LAAnnotation annot = new LAAnnotation(mengine.isProofGenerationEnabled(), null);
+			Explainer explainer = new Explainer(this, mengine.isProofGenerationEnabled(), null);
 			InfinitNumber slack = var.getLowerBound().sub(var.getUpperBound());
-			slack = var.m_upper.explain(annot, slack, Rational.ONE, this);
-			slack = var.m_lower.explain(annot, slack, Rational.MONE, this);
-			return annot.createClause(mengine);
+			slack = var.m_upper.explain(explainer, slack, Rational.ONE);
+			slack = var.m_lower.explain(explainer, slack, Rational.MONE);
+			return explainer.createClause(mengine);
 		}
 		m_conflictVar = null;
 		return null;
@@ -643,31 +628,31 @@ public class LinArSolve implements ITheory {
 	
 	private Clause createUnitClause(Literal literal, boolean isUpper,
 			InfinitNumber bound, LinVar var) {
-		LAAnnotation annot = new LAAnnotation(mengine.isProofGenerationEnabled(), literal);
+		Explainer explainer = new Explainer(this, mengine.isProofGenerationEnabled(), literal);
 		if (isUpper) {
 			assert(var.getUpperBound().less(bound));
-			annot.addLiteral(literal, Rational.MONE);
+			explainer.addLiteral(literal, Rational.MONE);
 			LAReason reason = var.m_upper;
 			// Find the first oldest reason that explains the bound
 			while (reason.getOldReason() != null
 					&& reason.getOldReason().getBound().less(bound))
 				reason = reason.getOldReason();
-			reason.explain(annot, 
+			reason.explain(explainer, 
 					bound.sub(reason.getBound()), 
-					Rational.ONE, this);
+					Rational.ONE);
 		} else {
 			assert bound.less(var.getLowerBound());
-			annot.addLiteral(literal, Rational.ONE);
+			explainer.addLiteral(literal, Rational.ONE);
 			LAReason reason = var.m_lower;
 			// Find the first oldest reason that explains the bound
 			while (reason.getOldReason() != null
 					&& bound.less(reason.getOldReason().getBound()))
 				reason = reason.getOldReason();
-			reason.explain(annot, 
+			reason.explain(explainer, 
 					reason.getBound().sub(bound), 
-					Rational.MONE, this);
+					Rational.MONE);
 		}
-		return annot.createClause(mengine);
+		return explainer.createClause(mengine);
 	}
 
 	@Override
@@ -687,17 +672,25 @@ public class LinArSolve implements ITheory {
 				assert upperReason.getBound().equals(bound) && 
 						lowerReason.getBound().equals(bound) :
 						"Bounds on variable do not match propagated equality bound";
-				LAAnnotation annot = new LAAnnotation(mengine.isProofGenerationEnabled(), literal);
+				Explainer explainer = new Explainer(this, mengine.isProofGenerationEnabled(), literal);
 				LiteralReason uppereq = new LiteralReason(var, var.getUpperBound().sub(var.getEpsilon()), 
-						m_reasonDepth, true, laeq.negate());
+					true, laeq.negate());
 				uppereq.setOldReason(upperReason);
-				lowerReason.explain(annot, var.getEpsilon(), Rational.MONE, this);
-				annot.addEQAnnotation(uppereq, Rational.ONE, this);
+				lowerReason.explain(explainer, var.getEpsilon(), Rational.MONE);
+				explainer.addEQAnnotation(uppereq, Rational.ONE);
 
-				return annot.createClause(mengine);
+				return explainer.createClause(mengine);
 			} else  {
 				InfinitNumber bound = new InfinitNumber(laeq.getBound(), 0);
-				return createUnitClause(literal, var.getUpperBound().less(bound), bound, var);
+				// Check if this was propagated due to an upper bound.
+				// We also need to make sure that the upper bound does not
+				// depend on the inequality literal.
+				LAReason upper = var.m_upper;
+				while (laeq.getStackPosition() >= 0
+						&& upper != null 
+						&& upper.getLastLiteral().getStackPosition() >= laeq.getStackPosition())
+					upper = upper.getOldReason();
+				return createUnitClause(literal, upper != null && upper.getBound().less(bound), bound, var);
 			}
 		} else if (atom instanceof CCEquality) {
 			return generateEqualityClause(literal);
@@ -727,7 +720,7 @@ public class LinArSolve implements ITheory {
 		if (reason.isUpper()) {
 			// check if bound is stronger
 			InfinitNumber oldBound = var.getUpperBound();
-			assert (bound.less(var.getUpperBound()));
+			assert (reason.getExactBound().less(var.getExactUpperBound()));
 			reason.setOldReason(var.m_upper);
 			var.m_upper = reason;
 
@@ -735,15 +728,14 @@ public class LinArSolve implements ITheory {
 			LAEquality ea;
 			while (bound.meps == 0 && (ea = var.getDiseq(bound.ma)) != null) {
 				bound = bound.sub(epsilon);				
-				if (ea.m_StackDepth > lastLiteral.m_stackdepth) {
+				if (ea.getStackPosition() > lastLiteral.getStackPosition()) {
 					lastLiteral = new LiteralReason(var, bound, 
-							ea.m_StackDepth, true, 
-							ea.negate());
+							true, ea.negate());
 					var.m_upper = lastLiteral;
 				} else  {
 					var.m_upper = new LiteralReason(var, bound, 
-							reason.getStackDepth(), true, 
-							ea.negate(), lastLiteral);
+							true, ea.negate(), 
+							lastLiteral);
 					lastLiteral.addDependent(var.m_upper);
 				}
 				var.m_upper.setOldReason(reason);
@@ -762,19 +754,16 @@ public class LinArSolve implements ITheory {
 				assert var.getUpperBound().lesseq(bc.getBound());
 				mproplist.add(bc);
 			}
-			Map<InfinitNumber, LAEquality> toPropagateEqs = reason.isUpper() ?
-					var.mequalities.tailMap(bound, false) :
-						var.mequalities.headMap(bound, false);
-			for (LAEquality laeq : toPropagateEqs.values()) {
-				//FIXME: this assertion failed on my first test case.
-				//assert laeq.getDecideStatus() == null;
+			for (LAEquality laeq : 
+					var.mequalities.subMap(bound.add(var.getEpsilon()), 
+							oldBound.add(var.getEpsilon())).values()) {
 				mproplist.add(laeq.negate());
 			}
 		} else {
 			// lower
 			// check if bound is stronger
 			InfinitNumber oldBound = var.getLowerBound();
-			assert (var.getLowerBound().less(bound));
+			assert (var.getExactLowerBound().less(reason.getExactBound()));
 			reason.setOldReason(var.m_lower);
 			var.m_lower = reason;
 
@@ -782,15 +771,14 @@ public class LinArSolve implements ITheory {
 			LAEquality ea;
 			while (bound.meps == 0 && (ea = var.getDiseq(bound.ma)) != null) {
 				bound = bound.add(epsilon);
-				if (ea.m_StackDepth > lastLiteral.m_stackdepth) {
+				if (ea.getStackPosition() > lastLiteral.getStackPosition()) {
 					lastLiteral = new LiteralReason(var, bound, 
-							ea.m_StackDepth, false, 
-							ea.negate());
+							false, ea.negate());
 					var.m_lower = lastLiteral;
 				} else  {
 					var.m_lower = new LiteralReason(var, bound, 
-							reason.getStackDepth(), false, 
-							ea.negate(), lastLiteral);
+							false, ea.negate(), 
+							lastLiteral);
 					lastLiteral.addDependent(var.m_lower);
 				}
 				var.m_lower.setOldReason(reason);
@@ -809,6 +797,10 @@ public class LinArSolve implements ITheory {
 				assert bc.getInverseBound().lesseq(var.getLowerBound());
 				mproplist.add(bc.negate());
 			}			
+			for (LAEquality laeq : 
+					var.mequalities.subMap(oldBound, bound).values()) {
+				mproplist.add(laeq.negate());
+			}
 		}
 		InfinitNumber ubound = var.getUpperBound();
 		InfinitNumber lbound = var.getLowerBound();
@@ -856,37 +848,41 @@ public class LinArSolve implements ITheory {
 							lasd.getVar()+" to "+lasd.getBound());
 				if (bound.less(var.getUpperBound()))
 					conflict = setBound(new LiteralReason(var, bound, 
-							m_reasonDepth++, true, literal));
+							true, literal));
 				if (conflict != null)
 					return conflict;
 				if (var.getLowerBound().less(bound))
 					conflict = setBound(new LiteralReason(var, bound, 
-							m_reasonDepth++, false, literal));
+							false, literal));
 			} else {
 				// Disequality constraint
 				var.addDiseq(lasd);
-				lasd.m_StackDepth = m_reasonDepth++;
 				if (var.getUpperBound().equals(bound)) {
 					conflict = setBound(new LiteralReason(var, 
 							bound.sub(var.getEpsilon()), 
-							lasd.m_StackDepth, true, literal));
+							true, literal));
 				} else if (var.getLowerBound().equals(bound)) {
 					conflict = setBound(new LiteralReason(var, 
 							bound.add(var.getEpsilon()), 
-							lasd.m_StackDepth, false, literal));
+							false, literal));
 				}
 			}
 		} else if (atom instanceof BoundConstraint) {
 			BoundConstraint bc = (BoundConstraint) atom;
 			LinVar var = bc.getVar();
+			// Check if the *exact* bound is refined and add this 
+			// literal as reason.  This is even done, if we propagated the
+			// literal.  If there is already a composite with the
+			// same bound, we still may use it later to explain the literal,
+			// see LiteralReason.explain.
 			if (literal == bc) {
-				if (bc.getBound().less(var.getUpperBound()))
+				if (bc.getBound().less(var.getExactUpperBound()))
 					conflict = setBound(new LiteralReason(var, bc.getBound(), 
-							m_reasonDepth++, true, literal));
+							true, literal));
 			} else {
-				if (var.getLowerBound().less(bc.getInverseBound()))
+				if (var.getExactLowerBound().less(bc.getInverseBound()))
 					conflict = setBound(new LiteralReason(var, bc.getInverseBound(), 
-							m_reasonDepth++, false, literal));
+							false, literal));
 			}
 		}
 		assert (conflict != null || checkClean());
@@ -1294,7 +1290,7 @@ public class LinArSolve implements ITheory {
 					coeffs[i] = coeff;
 					LiteralReason lastOfThis = reasons[i].getLastLiteral();
 					if (lastLiteral == null 
-						|| lastOfThis.getStackDepth() > lastLiteral.getStackDepth()) {
+						|| lastOfThis.getStackPosition() > lastLiteral.getStackPosition()) {
 						lastLiteral = lastOfThis;
 					}
 					i++;
@@ -1310,7 +1306,7 @@ public class LinArSolve implements ITheory {
 						? rowVars[i].m_upper : rowVars[i].m_lower;
 					LiteralReason lastOfThis = reasons[i].getLastLiteral();
 					if (lastLiteral == null 
-						|| lastOfThis.getStackDepth() > lastLiteral.getStackDepth()) {
+						|| lastOfThis.getStackPosition() > lastLiteral.getStackPosition()) {
 						lastLiteral = lastOfThis;
 					}
 				}
@@ -2063,17 +2059,6 @@ public class LinArSolve implements ITheory {
 			bound = bound.sub(var.getEpsilon());
 		BoundConstraint bc = new BoundConstraint(bound, var, mengine.getAssertionStackLevel());
 		Literal lit = comp.isUpper() ? bc : bc.negate();
-		if (comp.getLastLiteral().getLiteral().getAtom().getDecideLevel() == 0)  {
-			LAAnnotation annot = new LAAnnotation(true, lit);
-			if (comp.isUpper()) {
-				annot.addLiteral(lit, Rational.MONE);
-				comp.explain(annot, var.getEpsilon(), Rational.ONE, this);
-			} else {
-				annot.addLiteral(lit, Rational.ONE);
-				comp.explain(annot, var.getEpsilon(), Rational.MONE, this);
-			}
-			lit.getAtom().explanation = annot.createClause(mengine);
-		}
 		int decideLevel = comp.getLastLiteral().getDecideLevel();
 		if (beforeLit != null 
 			&& beforeLit.getAtom().getDecideLevel() == decideLevel)
@@ -2294,7 +2279,8 @@ public class LinArSolve implements ITheory {
 				FunctionSymbol fsym = getsValueFromLA(term);
 				if (fsym != null) {
 					Rational val = realValue(var);
-					model.extend(fsym, val.toTerm(fsym.getReturnSort()));
+					model.extend(fsym,
+							new Value(val.toTerm(fsym.getReturnSort())));
 				}
 			}
 		}
@@ -2308,7 +2294,8 @@ public class LinArSolve implements ITheory {
 						Rational val = Rational.ZERO;
 						for (Entry<LinVar,Rational> chain : me.getValue().entrySet())
 							val = val.add(realValue(chain.getKey()).mul(chain.getValue()));
-						model.extend(fsym, val.toTerm(fsym.getReturnSort()));
+						model.extend(fsym,
+								new Value(val.toTerm(fsym.getReturnSort())));
 					}
 				}
 			}

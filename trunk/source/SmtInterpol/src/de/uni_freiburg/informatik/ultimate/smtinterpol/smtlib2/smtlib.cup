@@ -26,6 +26,7 @@ import java.math.BigDecimal;
 import java.util.Arrays;
 import java_cup.runtime.Symbol;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.util.MySymbolFactory;
+import java.util.Map;
 
 parser Parser;
 option symbols = LexerSymbols;
@@ -71,6 +72,7 @@ action code {:
 	ScopedHashMap<String,TermVariable> localVars = 
 		new ScopedHashMap<String, TermVariable>(); 
 	Sort[] sortParams = null;
+	static Sort[] emptySortArray = new Sort[0];
 	
 	static class Binding {
 	    TermVariable mVar;
@@ -229,7 +231,7 @@ terminal String UNDERSCORE, BANG,
          INCOMPLETE, LET, LOGIC, NONE, NUMERALSYM, MEMOUT, PAR, POP, PUSH,
          DECIMALSYM, SAT, SUCCESS, SETLOGIC, SETINFO, SETOPTION, STRINGSYM,
          THEORY, TRUE, UNKNOWN, UNSUPPORTED, UNSAT,
-         INCLUDE, RESET, SIMPLIFY, TIMED;
+         INCLUDE, RESET, SIMPLIFY, TIMED, ALLSAT, ECHO;
 
 /* Predefined Keywords */
 terminal String /* attribute */
@@ -331,7 +333,7 @@ identifierIndexed ::= LPAR UNDERSCORE symbol:id NUMERAL+:indices RPAR
 identifier ::= symbol:s {: RESULT = new IndexedIdentifier(s, null); :}
            | identifierIndexed;
 
-sort ::= identifier:id {: RESULT = lookupSort(id$, id, new Sort[0]); :} 
+sort ::= identifier:id {: RESULT = lookupSort(id$, id, emptySortArray); :} 
        | LPAR identifier:id sort+:sorts RPAR
          {: RESULT = lookupSort(id$, id, sorts); :};
 attribute ::= keywordNoAttr:k attributeValue?:v {: RESULT = new Annotation(k, v); :}
@@ -380,20 +382,26 @@ term ::= constantTerm
             	RESULT = null;
             else
             	RESULT = parser.env.getScript().let(vars, terms, t); :}
-       | LPAR FORALL {: localVars.beginScope(); :}
+       | LPAR FORALL:sym {: localVars.beginScope(); :}
               LPAR sortedVar+:vars RPAR term:t RPAR
          {: localVars.endScope();
-            if (hasError())
-            	RESULT = null;
-            else
-            	RESULT = parser.env.getScript().quantifier(Script.FORALL, vars, t); :}
-       | LPAR EXISTS {: localVars.beginScope(); :}
+           	RESULT = null;
+			try {
+            	if (!hasError())
+            		RESULT = parser.env.getScript().quantifier(Script.FORALL, vars, t);
+			} catch (SMTLIBException se) {
+				parser.report_error(se.getMessage(), sym$);
+			} :}
+       | LPAR EXISTS:sym {: localVars.beginScope(); :}
               LPAR sortedVar+:vars RPAR term:t RPAR
          {: localVars.endScope();
-            if (hasError())
-            	RESULT = null;
-            else
-            	RESULT = parser.env.getScript().quantifier(Script.EXISTS, vars, t); :}
+           	RESULT = null;
+			try {
+            	if (!hasError())
+            		RESULT = parser.env.getScript().quantifier(Script.EXISTS, vars, t);
+			} catch (SMTLIBException se) {
+				parser.report_error(se.getMessage(), sym$);
+			} :}
        | LPAR BANG term:t attribute+:attr RPAR
          {: RESULT = annotateTerm(t, attr); :};
 
@@ -670,8 +678,8 @@ command ::= SETLOGIC symbol:logic
             	   parser.env.printError(getError());
                else {
                	try {
-                   Valuation val = parser.env.getScript().getValue(t);
-                   parser.env.printResponse(val);
+                   Map<Term, Term> val = parser.env.getScript().getValue(t);
+                   parser.env.printValues(val);
                 } catch (SMTLIBException se) {
                 	parser.env.printError(se.getMessage());
                 }
@@ -718,6 +726,19 @@ command ::= SETLOGIC symbol:logic
             {: parser.env.startTiming(); :}
             commandPar*
             {: parser.env.endTiming(); :}
+          | ALLSAT LPAR term+:p RPAR
+          	{: if (hasError())
+            	  parser.env.printError(getError());
+              else {
+                try {
+          			parser.env.printResponse(parser.env.getScript().checkAllsat(p));
+          	   	} catch (SMTLIBException se) {
+          	   		parser.env.printError(se.getMessage());
+          	   	}
+          	  }
+          	 :}
+           | ECHO STRING:msg
+             {: parser.env.printResponse(new QuotedObject(msg)); :}
           ;
 commandPar ::= LPAR command RPAR
              | error;

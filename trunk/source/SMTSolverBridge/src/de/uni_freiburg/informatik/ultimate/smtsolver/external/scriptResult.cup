@@ -8,6 +8,7 @@ import de.uni_freiburg.informatik.ultimate.util.ScopedHashMap;
 import java.math.BigInteger;
 import java.math.BigDecimal;
 import java.util.Arrays;
+import java.util.Map;
 import java.util.HashMap;
 import java_cup.runtime.Symbol;
 import java.util.Iterator;
@@ -203,19 +204,6 @@ action code {:
   		}
   		return null;
   	}
-
-    private Object[] mergeArrays(Object[][] arrs) {
-    	int len = 0;
-    	for (int i = 0; i < arrs.length; i++)
-    		len += arrs[i].length;
-    	Object[] result = new Object[len];
-    	int offset = 0;
-    	for (int i = 0; i < arrs.length; i++) {		  
-    		System.arraycopy(arrs[i], 0, result, offset, arrs[i].length);
-    		offset += arrs[i].length;
-    	}
-    	return result;
-    }
 :}
 
 /*init with {: getScanner().init(); :} */
@@ -306,7 +294,7 @@ non terminal Object gpResponse;
 non terminal Object goResponse;
 non terminal Term[] gucResponse;
 non terminal HashMap valuationPair;
-non terminal Valuation gvResponse;
+non terminal Map<Term,Term> gvResponse;
 non terminal HashMap tValuationPair;
 non terminal Assignments gtaResponse;
 
@@ -526,8 +514,7 @@ gvResponse ::= LPAR valuationPair+:p RPAR
 {:  HashMap<Term, Term> all = new HashMap<Term, Term>();
 	for (int i=0; i<p.length; i++)
 		all.putAll(p[i]);
-	MapValuation val = new MapValuation(all);
-	RESULT = val;
+	RESULT = all;
 :}
 			 | errorResponse;
 

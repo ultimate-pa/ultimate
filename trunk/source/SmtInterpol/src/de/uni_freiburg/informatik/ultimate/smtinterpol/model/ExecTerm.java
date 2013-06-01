@@ -35,7 +35,7 @@ public interface ExecTerm {
 	 * @return Result of the evaluation or <code>null</code> if the default
 	 *         value should be used.
 	 */
-	Term evaluate(Term... args);
+	ExecTerm evaluate(ExecTerm... args);
 	/**
 	 * Transform this executable term into SMTLIB format.  For function symbols,
 	 * variables {@code @0} to {@code @n-1} are introduced (where {@code n} is
@@ -45,4 +45,10 @@ public interface ExecTerm {
 	 * @return SMTLIB representation of this term.
 	 */
 	Term toSMTLIB(Theory t, TermVariable[] vars);
+	/**
+	 * Check whether this executable term is undefined.  Note that this should
+	 * only be true if partial models are produced.
+	 * @return <code>true</code> if and only if this exec term is undefined.
+	 */
+	boolean isUndefined();
 }

@@ -21,6 +21,7 @@ package de.uni_freiburg.informatik.ultimate.logic;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.logic.Theory.SolverSetup;
 
@@ -183,7 +184,7 @@ public class NoopScript implements Script {
 	}
 
 	@Override
-	public Valuation getValue(Term[] terms) throws SMTLIBException,
+	public Map<Term, Term> getValue(Term[] terms) throws SMTLIBException,
 			UnsupportedOperationException {
 		throw new UnsupportedOperationException();
 	}
@@ -448,6 +449,12 @@ public class NoopScript implements Script {
 	
 	@Override
 	public Model getModel() throws SMTLIBException,
+			UnsupportedOperationException {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public Iterable<Term[]> checkAllsat(Term[] predicates) throws SMTLIBException,
 			UnsupportedOperationException {
 		throw new UnsupportedOperationException();
 	}		

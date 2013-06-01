@@ -34,9 +34,9 @@ import de.uni_freiburg.informatik.ultimate.logic.Theory;
 public class HashExecTerm implements ExecTerm {
 	
 	static class Index {
-		private Term[] m_Args;
+		private ExecTerm[] m_Args;
 		private int m_Hash;
-		public Index(Term[] args) {
+		public Index(ExecTerm[] args) {
 			m_Args = args;
 			m_Hash = Arrays.hashCode(args);
 		}
@@ -54,52 +54,57 @@ public class HashExecTerm implements ExecTerm {
 			assert(vars.length == m_Args.length);
 			Term[] conj = new Term[vars.length];
 			for (int i = 0; i < vars.length; ++i)
-				conj[i] = t.equals(vars[i], m_Args[i]);
+				conj[i] = t.equals(vars[i], m_Args[i].toSMTLIB(t, null));
 			return t.and(conj);
 		}
 	}
 	
-	private HashMap<Index, Term> m_Values;
-	private Term m_Default;
+	private HashMap<Index, ExecTerm> m_Values;
+	private ExecTerm m_Default;
 	
-	public HashExecTerm(Term defaultValue) {
+	public HashExecTerm(ExecTerm defaultValue) {
 		m_Default = defaultValue;
 	}
 	
-	void extend(Term[] args, Term value) {
+	void extend(ExecTerm[] args, ExecTerm value) {
 		if (m_Values == null)
-			m_Values = new HashMap<Index, Term>();
-		Term old = m_Values.put(new Index(args), value);
-		assert(old == null || old == value);
+			m_Values = new HashMap<Index, ExecTerm>();
+		ExecTerm old = m_Values.put(new Index(args), value);
+		assert(old == null || old.equals(value));
 	}
 
 	@Override
-	public Term evaluate(Term... args) {
+	public ExecTerm evaluate(ExecTerm... args) {
 		if (m_Values == null)
 			return m_Default;
-		Term res = m_Values.get(new Index(args));
+		ExecTerm res = m_Values.get(new Index(args));
 		return res != null ? res : m_Default;
 	}
 
 	@Override
 	public Term toSMTLIB(Theory t, TermVariable[] vars) {
 		if (m_Values == null)
-			return m_Default;
-		Term val = m_Default;
-		for (Map.Entry<Index, Term> me : m_Values.entrySet()) {
+			return m_Default.toSMTLIB(t, null);
+		Term val = m_Default.toSMTLIB(t, null);
+		for (Map.Entry<Index, ExecTerm> me : m_Values.entrySet()) {
 			// create (ite index value val)
 			Term indexform = me.getKey().toSMTLIB(t, vars);
-			val = t.ifthenelse(indexform, me.getValue(), val);
+			val = t.ifthenelse(indexform, me.getValue().toSMTLIB(t, null), val);
 		}
 		return val;
 	}
 	
-	Map<Index, Term> values() {
+	Map<Index, ExecTerm> values() {
 		return m_Values;
 	}
 	
-	Term getDefaultValue() {
+	ExecTerm getDefaultValue() {
 		return m_Default;
+	}
+
+	@Override
+	public boolean isUndefined() {
+		return false;
 	}
 
 }

@@ -20,6 +20,7 @@ package de.uni_freiburg.informatik.ultimate.logic;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.util.Map;
 
 /**
  * Basic interface for the interaction with an SMTLIB version 2 compliant
@@ -244,7 +245,7 @@ public interface Script {
 	 * @throws UnsupportedOperationException If model computation is
 	 *                                       unsupported
 	 */
-	public Valuation getValue(Term[] terms)
+	public Map<Term, Term> getValue(Term[] terms)
 		throws SMTLIBException, UnsupportedOperationException;
 	/**
 	 * Get values for all named boolean terms in the model.  Note that this
@@ -271,7 +272,7 @@ public interface Script {
 	/**
 	 * Get information from the solver.  Note that the solver only has to
 	 * implement the info values described in the standard.
-	 * @param info Name of the info.  Note that is has to start with
+	 * @param info Name of the info.  Note that it has to start with
 	 *             <pre>:</pre>.
 	 * @return Value of the option.
 	 * @throws UnsupportedOperationException If the info is unsupported.
@@ -496,5 +497,14 @@ public interface Script {
 	 * 				The solver does not support this operation.
 	 */
 	public Model getModel()
+		throws SMTLIBException, UnsupportedOperationException;
+	/**
+	 * Perform an AllSAT computation over some important predicates.
+	 * @param predicates The important predicates.  Must be Boolean.
+	 * @return Iterator over minterms found during iteration.
+	 * @throws SMTLIBException If a predicate is non-Boolean.
+	 * @throws UnsupportedOperationException If the operation is unsupported.
+	 */
+	public Iterable<Term[]> checkAllsat(Term[] predicates)
 		throws SMTLIBException, UnsupportedOperationException;
 }

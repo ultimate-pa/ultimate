@@ -18,6 +18,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.smtinterpol.convert;
 
+import de.uni_freiburg.informatik.ultimate.logic.PrintTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.Clausifier.CCTermBuilder;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.DPLLAtom;
@@ -206,8 +207,16 @@ public class EqualityProxy {
 			if (m_Clausifier.getLogger().isDebugEnabled())
 				m_Clausifier.getLogger().debug("Created Equality: " + m_eqAtom);
 		}
-		m_Clausifier.getTracker().eq(mLhs.getTerm(), mRhs.getTerm(), m_eqAtom);
 		return m_eqAtom;
+	}
+	
+	public String toString() {
+		PrintTerm pt = new PrintTerm();
+		StringBuilder sb = new StringBuilder();
+		pt.append(sb, mLhs.getRealTerm());
+		sb.append(" == ");
+		pt.append(sb, mRhs.getRealTerm());
+		return sb.toString();
 	}
 
 }

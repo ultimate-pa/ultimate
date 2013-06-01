@@ -143,6 +143,8 @@ Keyword = ":" {SMTLetterDigit}+
   "simplify"             { return symbol(LexerSymbols.SIMPLIFY, yytext()); }
   "reset"                { return symbol(LexerSymbols.RESET, yytext()); }
   "timed"                { return symbol(LexerSymbols.TIMED, yytext()); }
+  "check-allsat"         { return symbol(LexerSymbols.ALLSAT, yytext()); }
+  "echo"                 { return symbol(LexerSymbols.ECHO, yytext()); }
 
   /* Predefined Keywords */
   ":named"               { return symbol(LexerSymbols.CNAMED, yytext()); }

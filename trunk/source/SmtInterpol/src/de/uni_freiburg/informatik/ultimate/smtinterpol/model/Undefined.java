@@ -16,29 +16,37 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with SMTInterpol.  If not, see <http://www.gnu.org/licenses/>.
  */
-package de.uni_freiburg.informatik.ultimate.smtinterpol.convert;
+package de.uni_freiburg.informatik.ultimate.smtinterpol.model;
 
-import java.util.Set;
-
+import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
+import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.logic.Theory;
 
+public class Undefined implements ExecTerm {
 
-/**
- * Basic interface for trigger compilers. Reimplement this interface and set the
- * system property <code>de.uni_freiburg.informatik.ultimate.smt.convert.patterncompiler</code> to the
- * fully qualified class name of your pattern compiler to make SmtInterpol load
- * your compiler instead of its default version.
- * @author Juergen Christ
- */
-public interface IPatternCompiler {
-	/**
-	 * Convert one trigger into an instruction sequence.
-	 * @param vars			Bound variables.
-	 * @param trigger		The trigger. This might be a multi trigger (i.e.,
-	 * 						<code>trigger.length > 1</code>) or a unit trigger.
-	 * @param converter		The CNF-converter.
-	 * @return				Matching instruction sequence data.
-	 */
-	TriggerData compile(Set<TermVariable> vars,Term[] trigger, Clausifier converter);
+	private Sort m_Sort;
+	
+	public Undefined(Sort sort) {
+		m_Sort = sort;
+	}
+	
+	@Override
+	public ExecTerm evaluate(ExecTerm... args) {
+		return this;
+	}
+
+	@Override
+	public Term toSMTLIB(Theory t, TermVariable[] vars) {
+		FunctionSymbol fsym = t.getFunctionWithResult(
+				"@undefined", null, m_Sort);
+		return t.term(fsym);
+	}
+
+	@Override
+	public boolean isUndefined() {
+		return true;
+	}
+
 }

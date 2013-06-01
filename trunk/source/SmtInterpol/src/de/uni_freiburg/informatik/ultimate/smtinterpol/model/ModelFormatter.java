@@ -85,14 +85,14 @@ public class ModelFormatter {
 		}
 		else if (et instanceof HashExecTerm) {
 			HashExecTerm het = (HashExecTerm) et;
-			Term defaultVal = het.getDefaultValue();
+			Term defaultVal = het.getDefaultValue().toSMTLIB(t, null);
 			int closing = 0;
-			for (Map.Entry<Index, Term> me : het.values().entrySet()) {
+			for (Map.Entry<Index, ExecTerm> me : het.values().entrySet()) {
 				if (me.getValue() != defaultVal) {
 					newline();
 					m_String.append("(ite ").append(
 							me.getKey().toSMTLIB(t, vars)).append(' ').append(
-									me.getValue());
+									me.getValue().toSMTLIB(t, null));
 					// We have to close one parenthesis;
 					++closing;
 				}

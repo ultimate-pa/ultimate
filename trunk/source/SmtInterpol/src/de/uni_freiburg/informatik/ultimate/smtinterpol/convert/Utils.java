@@ -22,6 +22,7 @@ import java.util.LinkedHashSet;
 
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
+import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
@@ -65,7 +66,7 @@ public class Utils {
 		return theory.term("not", arg);
 	}
 	
-	private Term createNotUntracked(Term arg) {
+	public static Term createNotUntracked(Term arg) {
 		Theory theory = arg.getTheory();
 		if (arg == theory.FALSE)
 			return theory.TRUE;
@@ -289,14 +290,57 @@ public class Utils {
 		if (args != tmpArray)
 			m_Tracker.equality(args, tmpArray, ProofConstants.RW_EQ_SIMP);
 		if (tmpArray.length == 2)
-			return theory.term("=", tmpArray);
+			return makeBinaryEq(tmpArray);
 		Term[] conj = new Term[tmpArray.length - 1];
 		for (int i = 0; i < conj.length; ++i)
 			conj[i] = theory.term("not",
-					theory.term("=", tmpArray[i], tmpArray[i+1]));
+					makeBinaryEq(tmpArray[i], tmpArray[i+1]));
 		Term res = theory.term("not", theory.term("or", conj));
 		m_Tracker.equality(tmpArray, res, ProofConstants.RW_EQ_BINARY);
 		return res;
+	}
+	
+	private Term storeRewrite(ApplicationTerm store, boolean arrayFirst) {
+		assert isStore(store) : "Not a store in storeRewrite";
+		Theory t = store.getTheory();
+		// have (store a i v)
+		// produce (select a i) = v
+		Term[] args = store.getParameters();
+		Term result = t.term("=", t.term("select", args[0], args[1]), args[2]);
+		m_Tracker.storeRewrite(store, result, arrayFirst);
+		return result;
+	}
+	private boolean isStore(Term t) {
+		if (t instanceof ApplicationTerm) {
+			FunctionSymbol fs = ((ApplicationTerm) t).getFunction();
+			return fs.isIntern() && fs.getName().equals("store");
+		}
+		return false;
+	}
+	/**
+	 * Make a binary equality.  Note that the precondition of this function
+	 * requires the caller to ensure that the argument array contains only two
+	 * terms.  
+	 * 
+	 * This function is used to detect store-idempotencies.
+	 * @return A binary equality.
+	 */
+	private Term makeBinaryEq(Term... args) {
+		assert args.length == 2 : "Non-binary equality in makeBinaryEq";
+		if (args[0].getSort().isArraySort()) {
+			// Check store-rewrite
+			if (isStore(args[0])) {
+				Term array = ((ApplicationTerm) args[0]).getParameters()[0];
+				if (args[1] == array)
+					return storeRewrite((ApplicationTerm) args[0], false);
+			}
+			if (isStore(args[1])) {
+				Term array = ((ApplicationTerm) args[1]).getParameters()[0];
+				if (args[0] == array)
+					return storeRewrite((ApplicationTerm) args[1], true);
+			}
+		}
+		return args[0].getTheory().term("=", args);
 	}
 	/**
 	 * Simplify distincts.  At the moment, we remove distinct constructs and
@@ -340,7 +384,7 @@ public class Utils {
 				return createNot(t0);
 			}
 			if (t1 == theory.FALSE) {
-				m_Tracker.distinct(args, t1, ProofConstants.RW_DISTINCT_FALSE);
+				m_Tracker.distinct(args, t0, ProofConstants.RW_DISTINCT_FALSE);
 				return t0;
 			}
 			// Heuristics: Try to find an already negated term

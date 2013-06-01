@@ -35,8 +35,7 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.ArrayInstantiationUnifier;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.ArrayYieldTrigger;
-import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.ConvertFormula;
-import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.FlatTerm;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.Clausifier;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.TriggerData;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.YieldTrigger;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.Clause;
@@ -88,10 +87,10 @@ public class QuantifierTheory implements ITheory {
 
 	@Override
 	public Clause checkpoint() {
-		boolean goon = true;
-		while (goon && mengine.curinsts == 0)
-			goon = mengine.processTriggers(MAX_INSTS_PER_ROUND);
-		mengine.curinsts = 0;
+//		boolean goon = true;
+//		while (goon && mengine.curinsts == 0)
+//			goon = mengine.processTriggers(MAX_INSTS_PER_ROUND);
+//		mengine.curinsts = 0;
 		return null;
 	}
 
@@ -218,31 +217,31 @@ public class QuantifierTheory implements ITheory {
 		if (known == null) {
 			m_TriggerTrees.put(initregs, first);
 			// No goto, so we do not need to specify a path...
-			TriggerExecutionContext tec =
-				mengine.getRoot().successor(initregs, first);
-			first.match(mengine, initregs, null, 0, tec, tec.getCandidates());
+//			TriggerExecutionContext tec =
+//				mengine.getRoot().successor(initregs, first);
+//			first.match(mengine, initregs, null, 0, tec, tec.getCandidates());
 		} else {
 			CCTrigger what = first;
 			CCTrigger where = known;
 			List<CCTrigger> insertionPath = new ArrayList<CCTrigger>();
 			CCTrigger inserted = insert(initregs, what, where, insertionPath);
 			// This was the old tec...
-			TriggerExecutionContext tec = 
-				mengine.getRoot().successor(initregs, known);
+//			TriggerExecutionContext tec = 
+//				mengine.getRoot().successor(initregs, known);
 			if (inserted != known) {
 				assert (inserted instanceof GotoTrigger);
 				m_TriggerTrees.put(initregs, inserted);
-				TriggerExecutionContext tmp = tec;
-				// This is the tec we should use from now on
-				tec = mengine.getRoot().successor(initregs, inserted);
-				// Share root successor set
-				tec.addSuccessor(tmp);
+//				TriggerExecutionContext tmp = tec;
+//				// This is the tec we should use from now on
+//				tec = mengine.getRoot().successor(initregs, inserted);
+//				// Share root successor set
+//				tec.addSuccessor(tmp);
 			}
 			// TODO Should this also be delayed into CClosure.checkpoint?
 			// Might be better for reverse triggers since we then have a
 			// complete congruence graph.
-			inserted.match(mengine, initregs, insertionPath, 0, tec,
-					tec.getCandidates());
+//			inserted.match(mengine, initregs, insertionPath, 0, tec,
+//					tec.getCandidates());
 		}
 	}
 
@@ -314,12 +313,12 @@ public class QuantifierTheory implements ITheory {
 	
 	private final static CCTerm[] EMPTY_REGS = {};
 	
-	public void createArrayAxioms(ConvertFormula converter,Term sub1,Term sub2,
+	public void createArrayAxioms(Clausifier converter,Term sub1,Term sub2,
 			FunctionSymbol select,FunctionSymbol store,TermVariable array,
 			TermVariable i1,TermVariable i2,TermVariable elem) {
 		ArrayInstantiationUnifier aiu =
 			new ArrayInstantiationUnifier(array,i1,i2,elem);
-		Map<TermVariable,FlatTerm> empty = Collections.emptyMap();
+		Map<TermVariable,Term> empty = Collections.emptyMap();
 		LinkedHashMap<TermVariable,Integer> subst =
 			new LinkedHashMap<TermVariable, Integer>(3,1);
 		// forall a,i,v select(store(a,i,v),i) == v

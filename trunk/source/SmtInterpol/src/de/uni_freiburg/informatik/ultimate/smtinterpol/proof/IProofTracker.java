@@ -167,10 +167,11 @@ public interface IProofTracker {
 	public void div(SMTAffineTerm x, SMTAffineTerm y, SMTAffineTerm res, int rule);
 	/**
 	 * Track a divisible-rewrite.  ((_ divisible n) x) ==> (= x (* n (div x n))).
-	 * @param div The divisible term.
-	 * @param res The rewritten result.
+	 * @param divn The divisible-by-n symbol.
+	 * @param div  The divisible term.
+	 * @param res  The rewritten result.
 	 */
-	public void divisible(Term div, Term res);
+	public void divisible(FunctionSymbol divn, Term div, Term res);
 	/**
 	 * Track a to_int simplification where the argument is constant.
 	 * @param arg The argument.
@@ -178,12 +179,25 @@ public interface IProofTracker {
 	 */
 	public void toInt(SMTAffineTerm arg, SMTAffineTerm res);
 	/**
+	 * Track a to_real simplification where the argument is constant.
+	 * @param arg The argument.
+	 * @param res The result.
+	 */
+	public void toReal(SMTAffineTerm arg, SMTAffineTerm res);
+	/**
 	 * Track an array rewrite.
 	 * @param args   The arguments of the original array.
 	 * @param result The result of the rewrite.
 	 * @param rule   The rule used.
 	 */
 	public void arrayRewrite(Term[] args, Term result, int rule);
+	/**
+	 * Rewrite for "useless store": (= a (store a i v)).
+	 * @param store      The store term.
+	 * @param result     The result of the rewrite.
+	 * @param arrayFirst Is the array the lhs?
+	 */
+	public void storeRewrite(ApplicationTerm store, Term result, boolean arrayFirst);
 	
 	//// ==== Tracking of clausification ====
 	
@@ -230,19 +244,18 @@ public interface IProofTracker {
 	public void negateLit(Literal lit, Theory theory);
 	/**
 	 * Apply disjunction flattening.
-	 * @param args     The term to flatten.
-	 * @param simpOr TODO
+	 * @param args   The term to flatten.
+	 * @param simpOr Apply disjunction simplification on the flattened and
+	 *               interned clause. 
 	 */
 	public void flatten(Term[] args, boolean simpOr);
 	/**
 	 * Prepend a disjunction simplification step.
-	 * @param args    The disjunction to simplify.
+	 * @param args The disjunction to simplify.
 	 */
 	public void orSimpClause(Term[] args);
 	/**
-	 * Create a clause-creation proof.  Note that this tracker does not yet
-	 * apply the @clause-rule which might be needed.  This will be done by the
-	 * source annotation when converting the clause into a proof term.
+	 * Create a clause-creation proof.
 	 * @param proof The proof whose result is transformed into a clause.
 	 * @return The clause conversion proof.
 	 */
@@ -277,11 +290,10 @@ public interface IProofTracker {
 	 * <code>@asserted</code> function.  The <code>result</code> might contain
 	 * SMTAffineTerms. 
 	 * @param asserted The input term.
-	 * @param result   The result of the rewrite.
 	 * @return The rewrite proof or <code>null</code> if proof-production is
 	 *         disabled.
 	 */
-	public Term getRewriteProof(Term asserted, Term result);
+	public Term getRewriteProof(Term asserted);
 	
 	//// ==== Incrementality ====
 	/**
@@ -330,5 +342,19 @@ public interface IProofTracker {
 	 * Remove all saved information.
 	 */
 	public void cleanSave();
-	
+	/**
+	 * Notification about the creation of a literal.  This function is only
+	 * used to compute the correct delayed clause simplification axiom.
+	 * @param lit The created literal (in correct polarity.
+	 * @param t   The term for which the literal has been created.
+	 * @return Was <code>lit</code> the first literal for <code>t</code>? 
+	 */
+	public boolean notifyLiteral(Literal lit, Term t);
+	/**
+	 * Notification about the simplification of a literal to false.  This
+	 * function is only used to compute the correct delayed clause
+	 * simplification axiom.
+	 * @param t The term that simplified to false.
+	 */
+	public void notifyFalseLiteral(Term t);
 }

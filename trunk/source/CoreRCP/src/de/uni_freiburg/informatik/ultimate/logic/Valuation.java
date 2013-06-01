@@ -22,6 +22,7 @@ package de.uni_freiburg.informatik.ultimate.logic;
  * Representation of the response to a get-value command.
  * @author Juergen Christ
  */
+@Deprecated
 public interface Valuation {
 	/**
 	 * Get the value for a term.  This function returns <code>null</code> if and

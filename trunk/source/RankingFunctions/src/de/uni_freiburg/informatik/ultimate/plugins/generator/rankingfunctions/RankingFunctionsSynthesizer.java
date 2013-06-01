@@ -735,13 +735,13 @@ public class RankingFunctionsSynthesizer {
 					"proceeding to extract ranking function.");
 			
 			// Extract ranking function
-			Valuation val_rf = m_script.getValue(
+			 Map<Term, Term> val_rf = m_script.getValue(
 					template.getVariables().toArray(new Term[0]));
 			m_ranking_function = template.extractRankingFunction(val_rf);
 			
 			// Extract supporting invariants
 			for (SupportingInvariantGenerator sig : si_generators) {
-				Valuation val_si = m_script.getValue(
+				Map<Term, Term> val_si = m_script.getValue(
 						sig.getVariables().toArray(new Term[0]));
 				m_supporting_invariants.add(sig.extractSupportingInvariant(
 						val_si));

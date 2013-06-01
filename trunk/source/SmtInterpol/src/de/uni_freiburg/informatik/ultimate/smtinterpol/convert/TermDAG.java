@@ -204,11 +204,11 @@ public class TermDAG {
 			m_Roots.add(insert(trig));
 		return m_Roots.toArray(new TermNode[m_Roots.size()]);
 	}
-	public CCTerm[] getConstants(ConvertFormula converter) {
+	public CCTerm[] getConstants(Clausifier converter) {
 		CCTerm[] res = new CCTerm[m_Consts.size()];
 		int i = -1;
 		for (ConstTermNode ctn : m_Consts) {
-			res[++i] = converter.convertTerm(ctn.getConstant()).toCCTerm();
+			res[++i] = converter.getSharedTerm(ctn.getConstant()).getCCTerm();
 			ctn.setRegPos(i);
 		}
 		return res;

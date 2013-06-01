@@ -267,7 +267,7 @@ public class AnnotateAndAsserter {
 						String constantName = tv.getName()+"_"+pos;
 						Term constant = smtManager.getScript().term(constantName);
 						Term[] terms = { constant };
-						Valuation valuation = smtManager.getScript().getValue(terms);
+						Map<Term, Term> valuation = smtManager.getScript().getValue(terms);
 						Term value = valuation.get(constant);
 						if (value == smtManager.getScript().term("true")) {
 							taken = tv;

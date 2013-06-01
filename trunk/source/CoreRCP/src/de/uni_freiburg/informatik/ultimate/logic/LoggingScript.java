@@ -26,6 +26,7 @@ import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.util.Map;
 
 /**
  * A logging script variant.  This is actually a wrapper around a concrete
@@ -233,7 +234,7 @@ public class LoggingScript implements Script {
 	}
 
 	@Override
-	public Valuation getValue(Term[] terms) throws SMTLIBException,
+	public Map<Term, Term> getValue(Term[] terms) throws SMTLIBException,
 			UnsupportedOperationException {
 		m_Pw.print("(get-value (");
 		String sep = "";
@@ -413,5 +414,20 @@ public class LoggingScript implements Script {
 			UnsupportedOperationException {
 		m_Pw.println("(get-model)");
 		return m_Script.getModel();
+	}
+
+	@Override
+	public Iterable<Term[]> checkAllsat(Term[] predicates) throws SMTLIBException,
+			UnsupportedOperationException {
+		PrintTerm pt = new PrintTerm();
+		m_Pw.print("(check-allsat (");
+		String spacer = "";
+		for (Term p : predicates) {
+			m_Pw.print(spacer);
+			pt.append(m_Pw, p);
+			spacer = " ";
+		}
+		m_Pw.println("))");
+		return m_Script.checkAllsat(predicates);
 	}
 }

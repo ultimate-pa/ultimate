@@ -43,6 +43,8 @@ public class Annotation {
 	Object m_Value;
 	
 	public Annotation(String key, Object value) {
+		if (key == null)
+			throw new SMTLIBException("Empty annotations not allowed!");
 		m_Key = key;
 		m_Value = value;
 	}

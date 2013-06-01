@@ -18,6 +18,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.smtinterpol.model;
 
+import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
@@ -31,13 +32,33 @@ public class Value implements ExecTerm {
 	}
 	
 	@Override
-	public Term evaluate(Term... args) {
-		return m_Val;
+	public ExecTerm evaluate(ExecTerm... args) {
+		return this;
 	}
 
 	@Override
 	public Term toSMTLIB(Theory t, TermVariable[] vars) {
 		return m_Val;
+	}
+	
+	public int hashCode() {
+		return m_Val.hashCode();
+	}
+	
+	public boolean equals(Object other) {
+		if (other instanceof Value) {
+			Value o = (Value) other;
+			if (m_Val instanceof ConstantTerm && o.m_Val instanceof ConstantTerm)
+				return ((ConstantTerm) m_Val).getValue().equals(
+						((ConstantTerm) o.m_Val).getValue());
+			return m_Val == ((Value) other).m_Val;
+		}
+		return false;
+	}
+
+	@Override
+	public boolean isUndefined() {
+		return false;
 	}
 
 }

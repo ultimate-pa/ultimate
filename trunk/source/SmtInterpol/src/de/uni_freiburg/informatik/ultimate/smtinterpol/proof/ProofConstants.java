@@ -78,6 +78,8 @@ public interface ProofConstants {
 	public final static int RW_STORE_OVER_STORE  = 48;
 	public final static int RW_SELECT_OVER_STORE = 49;
 	public final static int RW_FLATTEN           = 50;
+	public final static int RW_STORE_REWRITE     = 51;
+	public final static int RW_TO_REAL           = 52;
 	
 	public final static Annotation[] REWRITEANNOTS = {
 		new Annotation(":expand", null),
@@ -130,7 +132,9 @@ public interface ProofConstants {
 		new Annotation(":eqSame", null),
 		new Annotation(":storeOverStore", null),
 		new Annotation(":selectOverStore", null),
-		new Annotation(":flatten", null)
+		new Annotation(":flatten", null),
+		new Annotation(":storeRewrite", null),
+		new Annotation(":toReal", null)
 	};
 	
 	//// ==== Aux ids and names ====

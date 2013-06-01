@@ -18,7 +18,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.logic;
 
-import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -116,64 +115,17 @@ public class Util {
 		Term[] arrforms = formulas.toArray(new Term[formulas.size()]);
 		return script.term(connector, arrforms);
 	}
-	
-	
-	
-	public static Term ite(Script script, Term cond, Term thenPart, Term elsePart) {
-		if (cond == script.term("true") || thenPart == elsePart) 
-			return thenPart;
-		else if (cond == script.term("false")) 
-			return elsePart;
-		else if (thenPart == script.term("true")) 
-			return Util.or(script, cond, elsePart);
-		else if (elsePart == script.term("false")) 
-			return Util.and(script, cond, thenPart);
-		else if (thenPart == script.term("false")) 
-			return Util.and(script, Util.not(script, cond), elsePart);
-		else if (elsePart == script.term("true")) 
-			return Util.or(script, Util.not(script, cond), thenPart);
-		return script.term("ite", cond, thenPart, elsePart);
-	}
-	
 
-//	/**
-//	 * Return slightly simplified version of an implication.
-//	 */
-//	public static Term implies(Script script, Term f, Term g)
-//	{ 
-//		if (g == script.term("true") || f == script.term("true")) return g;
-//		if (f == script.term("false")) return script.term("true");
-//		if (g == script.term("false")) return not(script, f);
-//		if( f == g ) return script.term("true");
-//		return script.term("=>", f, g);
-//	}
-	
-	
-	public static Term implies(Script script, Term... subforms)
+	/**
+	 * Return slightly simplified version of an implication.
+	 */
+	public static Term implies(Script script, Term f, Term g)
 	{ 
-		Term lastFormula = subforms[subforms.length-1];
-		if (lastFormula == script.term("true")) {
-			return script.term("true");
-		}
-		if (lastFormula == script.term("false")) {
-			Term[] allButLast = new Term[subforms.length-1];
-			System.arraycopy(subforms, 0, allButLast, 0, subforms.length-1);
-			return Util.not(script, Util.and(script, allButLast));
-		}
-		ArrayList<Term> newSubforms = new ArrayList<Term>();
-		for (int i=0; i<subforms.length-1; i++) {
-			if (subforms[i] == script.term("false")) {
-				return script.term("true");
-			}
-			if (subforms[i] != script.term("true")) {
-				newSubforms.add(subforms[i]);
-			}
-		}
-		if (newSubforms.isEmpty()) {
-			return lastFormula;
-		}
-		newSubforms.add(lastFormula);
-		return script.term("=>", newSubforms.toArray(new Term[0]));
+		if (g == script.term("true") || f == script.term("true")) return g;
+		if (f == script.term("false")) return script.term("true");
+		if (g == script.term("false")) return not(script, f);
+		if( f == g ) return script.term("true");
+		return script.term("=>", f, g);
 	}
 
 }

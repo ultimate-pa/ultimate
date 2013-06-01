@@ -87,11 +87,11 @@ public class PatternCompilerUtils {
 		}
 	}
 	private static void recursiveGetConstant(HashMap<Term, CCTerm> consts,
-			Term t,ConvertFormula converter) {
+			Term t,Clausifier converter) {
 		// I assume only universally bound variables in patterns
 		if (t.getFreeVars().length == 0) {
 			if (!consts.containsKey(t))
-				consts.put(t, converter.convertTerm(t).toCCTerm());
+				consts.put(t, converter.getSharedTerm(t).getCCTerm());
 		} else {
 			assert(t instanceof ApplicationTerm);
 			ApplicationTerm at = (ApplicationTerm)t;
@@ -106,7 +106,7 @@ public class PatternCompilerUtils {
 	 * @return All constants that appear in <code>triggers</code>.
 	 */
 	public static HashMap<Term,CCTerm> getConstants(Term[] triggers,
-			ConvertFormula converter) {
+			Clausifier converter) {
 		HashMap<Term, CCTerm> res = new HashMap<Term, CCTerm>();
 		for (Term t : triggers)
 			recursiveGetConstant(res, t, converter);
