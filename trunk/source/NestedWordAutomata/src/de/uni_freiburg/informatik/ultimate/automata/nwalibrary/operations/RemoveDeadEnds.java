@@ -69,7 +69,7 @@ public class RemoveDeadEnds<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	@Override
 	public String exitMessage() {
 		return "Finished " + operationName() + " Result "
-				+ m_Reach.sizeInformation();
+				+ m_Result.sizeInformation();
 	}
 
 
