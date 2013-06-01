@@ -8,11 +8,15 @@ import java.util.List;
 import java.util.Random;
 import java.util.Set;
 
+import org.apache.log4j.Logger;
+
+import de.uni_freiburg.informatik.ultimate.automata.Activator;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StringFactory;
+import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 
 /**
  * Class that provides the method {@code generateAutomaton()} for randomly
@@ -22,6 +26,9 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StringFactory;
  * @author Fabian Reiter
  */
 public class GetRandomNwa implements IOperation<String,String> {
+	
+	protected static Logger s_Logger = 
+			UltimateServices.getInstance().getLogger(Activator.PLUGIN_ID);
 	
 	private final Random m_Random;
 	private final NestedWordAutomaton<String,String> m_Result;
@@ -161,10 +168,12 @@ public class GetRandomNwa implements IOperation<String,String> {
 		int maxNumOfTransitions = size * alphabetSize * size;
 		int numOfTransitions =
 					(int) Math.round(internalTransitionDensity * maxNumOfTransitions);
-		if (numOfTransitions < size - 1)
-			throw new IllegalArgumentException(
-					"Not all states reachable with given transition density.");
-		
+		if (numOfTransitions < size - 1) {
+			s_Logger.warn("You specified density " + internalTransitionDensity 
+					+ " for internal transition. This is not sufficient to" +
+					" connect all states with internal transitions.");
+		}
+	
 		int numOfAccStates = (int) Math.round(acceptanceDensity * size);
 		
 		// ────────────────────────────────────────────────────────────────────
