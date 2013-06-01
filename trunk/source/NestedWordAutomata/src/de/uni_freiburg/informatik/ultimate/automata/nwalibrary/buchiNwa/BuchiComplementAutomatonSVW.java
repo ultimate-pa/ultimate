@@ -14,14 +14,12 @@ import java.util.Set;
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.automata.Activator;
-import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.IncomingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.IncomingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.IncomingReturnTransition;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingInternalTransition;
@@ -68,6 +66,9 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE>
 											throws OperationCanceledException {
 		m_TMA = new TransitionMonoidAutomaton(origAutomaton);
 		m_Alphabet = origAutomaton.getInternalAlphabet();
+		if (!origAutomaton.getCallAlphabet().isEmpty() || !origAutomaton.getReturnAlphabet().isEmpty()) {
+			throw new IllegalArgumentException("only applicable to Buchi automata (not BuchiNWA)");
+		}
 		m_StateFactory = origAutomaton.getStateFactory();
 		m_emptyStackState = m_StateFactory.createEmptyStackState();
 		MetaState metaInitialState =
@@ -952,13 +953,13 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE>
 	@Override
 	public Iterable<OutgoingCallTransition<LETTER, STATE>> callSuccessors(
 			STATE state, LETTER letter) {
-		return new ArrayList();
+		return new ArrayList<OutgoingCallTransition<LETTER, STATE>>();
 	}
 
 	@Override
 	public Iterable<OutgoingCallTransition<LETTER, STATE>> callSuccessors(
 			STATE state) {
-		return new ArrayList();
+		return new ArrayList<OutgoingCallTransition<LETTER, STATE>>();
 	}
 
 	@Override
@@ -985,25 +986,25 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE>
 	@Override
 	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSucccessors(
 			STATE state, STATE hier, LETTER letter) {
-		return new ArrayList();
+		return new ArrayList<OutgoingReturnTransition<LETTER, STATE>>();
 	}
 
 	@Override
 	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessors(
 			STATE state, LETTER letter) {
-		return new ArrayList();
+		return new ArrayList<OutgoingReturnTransition<LETTER, STATE>>();
 	}
 
 	@Override
 	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessors(
 			STATE state) {
-		return new ArrayList();
+		return new ArrayList<OutgoingReturnTransition<LETTER, STATE>>();
 	}
 
 	@Override
 	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessorsGivenHier(
 			STATE state, STATE hier) {
-		return new ArrayList();
+		return new ArrayList<OutgoingReturnTransition<LETTER, STATE>>();
 	}
 
 }
