@@ -448,17 +448,17 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE>
 
 	@Override
 	public Collection<LETTER> lettersCallIncoming(STATE state) {
-		throw new UnsupportedOperationException(UnsupportedOperationMessage);
+		return new HashSet<LETTER>(0);
 	}
 
 	@Override
 	public Collection<LETTER> lettersReturnIncoming(STATE state) {
-		throw new UnsupportedOperationException(UnsupportedOperationMessage);
+		return new HashSet<LETTER>(0);
 	}
 	
 	@Override
 	public Collection<LETTER> lettersReturnSummary(STATE state) {
-		throw new UnsupportedOperationException(UnsupportedOperationMessage);
+		return new HashSet<LETTER>(0);
 	}
 
 	@Override
@@ -928,29 +928,37 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE>
 	@Override
 	public Iterable<OutgoingInternalTransition<LETTER, STATE>> internalSuccessors(
 			STATE state, LETTER letter) {
-		// TODO Auto-generated method stub
-		return null;
+		ArrayList<OutgoingInternalTransition<LETTER, STATE>> result = 
+				new ArrayList<OutgoingInternalTransition<LETTER, STATE>>();
+		for (STATE succ : succInternal(state, letter)) {
+			result.add(new OutgoingInternalTransition<LETTER, STATE>(letter, succ));
+		}
+		return result;
 	}
 
 	@Override
 	public Iterable<OutgoingInternalTransition<LETTER, STATE>> internalSuccessors(
 			STATE state) {
-		// TODO Auto-generated method stub
-		return null;
+		ArrayList<OutgoingInternalTransition<LETTER, STATE>> result = 
+				new ArrayList<OutgoingInternalTransition<LETTER, STATE>>();
+		for (LETTER letter : lettersInternal(state)) {
+			for (STATE succ : succInternal(state, letter)) {
+				result.add(new OutgoingInternalTransition<LETTER, STATE>(letter, succ));
+			}
+		}
+		return result;	
 	}
 
 	@Override
 	public Iterable<OutgoingCallTransition<LETTER, STATE>> callSuccessors(
 			STATE state, LETTER letter) {
-		// TODO Auto-generated method stub
-		return null;
+		return new ArrayList();
 	}
 
 	@Override
 	public Iterable<OutgoingCallTransition<LETTER, STATE>> callSuccessors(
 			STATE state) {
-		// TODO Auto-generated method stub
-		return null;
+		return new ArrayList();
 	}
 
 	@Override
@@ -977,29 +985,25 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE>
 	@Override
 	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSucccessors(
 			STATE state, STATE hier, LETTER letter) {
-		// TODO Auto-generated method stub
-		return null;
+		return new ArrayList();
 	}
 
 	@Override
 	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessors(
 			STATE state, LETTER letter) {
-		// TODO Auto-generated method stub
-		return null;
+		return new ArrayList();
 	}
 
 	@Override
 	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessors(
 			STATE state) {
-		// TODO Auto-generated method stub
-		return null;
+		return new ArrayList();
 	}
 
 	@Override
 	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessorsGivenHier(
 			STATE state, STATE hier) {
-		// TODO Auto-generated method stub
-		return null;
+		return new ArrayList();
 	}
 
 }
