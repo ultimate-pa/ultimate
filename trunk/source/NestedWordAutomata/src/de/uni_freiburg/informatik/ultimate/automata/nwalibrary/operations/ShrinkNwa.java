@@ -365,36 +365,41 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 		 * 
 		 * TODO<returnSplit> prefer or defer splitter set A?
 		 */
-		final HashMap<LETTER, HashSet<ArrayList<STATE>>> letter2linSet =
-				new HashMap<LETTER, HashSet<ArrayList<STATE>>>();
-		HashMap<EquivalenceClass, ArrayList<STATE>> ec2lin =
+		final HashMap<LETTER, LinkedList<ArrayList<STATE>>> letter2linList =
+				new HashMap<LETTER, LinkedList<ArrayList<STATE>>>();
+		HashMap<EquivalenceClass, ArrayList<STATE>> ec2list =
 				new HashMap<EquivalenceClass, ArrayList<STATE>>();
 		for (final Entry<LETTER, HashSet<STATE>> entry :
 				letter2lin.entrySet()) {
 			final LETTER letter = entry.getKey();
-			final HashSet<ArrayList<STATE>> linSet =
-					new HashSet<ArrayList<STATE>>();
-			letter2linSet.put(letter, linSet);
-			final Iterable<STATE> lins = entry.getValue();
-			for (final STATE lin : lins) {
+			final LinkedList<ArrayList<STATE>> linList =
+					new LinkedList<ArrayList<STATE>>();
+			letter2linList.put(letter, linList);
+			
+			final HashSet<EquivalenceClass> ecs =
+					new HashSet<EquivalenceClass>();
+			
+			for (final STATE lin : entry.getValue()) {
 				final EquivalenceClass ec =
 						m_partition.m_state2EquivalenceClass.get(lin);
-				ArrayList<STATE> linList = ec2lin.get(ec);
-				if (linList == null) {
-					linList = new ArrayList<STATE>(ec.m_states.size());
-					ec2lin.put(ec, linList);
+				if (ecs.add(ec)) {
+					ArrayList<STATE> ecList = ec2list.get(ec);
+					if (ecList == null) {
+						ecList = new ArrayList<STATE>(ec.m_states.size());
+						ecList.addAll(ec.m_states);
+						ec2list.put(ec, ecList);
+					}
+					linList.add(ecList);
 				}
-				linSet.add(linList);
-				linList.add(lin);
 			}
 		}
 		// delete temporary mapping
-		ec2lin = null;
+		ec2list = null;
 		letter2lin = null;
 		
 		// splits
-		for (final Entry<LETTER, HashSet<ArrayList<STATE>>> entry :
-				letter2linSet.entrySet()) {
+		for (final Entry<LETTER, LinkedList<ArrayList<STATE>>> entry :
+				letter2linList.entrySet()) {
 			final LETTER letter = entry.getKey();
 			for (final ArrayList<STATE> lins : entry.getValue()) {
 				// split linear predecessors
