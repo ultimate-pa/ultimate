@@ -1019,7 +1019,8 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 		protected final PriorityQueue<EquivalenceClass> m_queue;
 		
 		public AWorkList() {
-			m_queue = new PriorityQueue<EquivalenceClass>(m_operand.size(),
+			m_queue = new PriorityQueue<EquivalenceClass>(
+					Math.max(m_operand.size(), 1),
 					new Comparator<EquivalenceClass>() {
 						@Override
 						public int compare(EquivalenceClass ec1,
