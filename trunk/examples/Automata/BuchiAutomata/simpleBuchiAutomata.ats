@@ -1,0 +1,80 @@
+// Examples for testing correctness of buchiIntersect operation
+// Author: heizmann@informatik.uni-freiburg.de
+// Date: 15.5.2011
+
+
+assert(buchiAccepts(finitelyManyA, [ a a b a, b ]));
+assert(!buchiIsEmpty(finitelyManyA));
+
+assert(!buchiAccepts(finitelyManyB, [ a a a a a a , b ]));
+assert(!buchiIsEmpty(finitelyManyB));
+
+assert(buchiAccepts(infinitelyManyA, [ , a b b b ]));
+assert(!buchiAccepts(infinitelyManyA, [ , b ]));
+
+assert(buchiAccepts(AfollowedByB, [ b b b , a b b b a b ]));
+assert(!buchiAccepts(AfollowedByB, [ b b b , a a b b a b ]));
+
+NestedWordAutomaton finitelyManyA = (
+  callAlphabet = { },
+  internalAlphabet = {a b},
+  returnAlphabet = { },
+  states = {q0 q1},
+  initialStates = {q0},
+  finalStates = {q1},
+  callTransitions = { },
+  internalTransitions = { (q0 a q0) (q0 b q0) (q0 b q1) (q1 b q1) }, 
+  returnTransitions = { }
+);
+
+NestedWordAutomaton finitelyManyB = (
+  callAlphabet = { },
+  internalAlphabet = {a b},
+  returnAlphabet = { },
+  states = {q0 q1},
+  initialStates = {q0},
+  finalStates = {q1},
+  callTransitions = { },
+  internalTransitions = { (q0 b q0) (q0 a q0) (q0 a q1) (q1 a q1) }, 
+  returnTransitions = { }
+);
+
+
+
+
+NestedWordAutomaton infinitelyManyA = (
+  callAlphabet = { },
+  internalAlphabet = {a b},
+  returnAlphabet = { },
+  states = {q0 q1},
+  initialStates = {q0},
+  finalStates = {q1},
+  callTransitions = { },
+  internalTransitions = { (q0 a q1) (q0 b q0) (q1 a q1) (q1 b q0) }, 
+  returnTransitions = { }
+);
+
+NestedWordAutomaton infinitelyManyB = (
+  callAlphabet = { },
+  internalAlphabet = {a b},
+  returnAlphabet = { },
+  states = {q0 q1},
+  initialStates = {q0},
+  finalStates = {q1},
+  callTransitions = { },
+  internalTransitions = { (q0 b q1) (q0 a q0) (q1 b q1) (q1 a q0) }, 
+  returnTransitions = { }
+);
+
+
+NestedWordAutomaton AfollowedByB = (
+  callAlphabet = { },
+  internalAlphabet = {a b},
+  returnAlphabet = { },
+  states = {q0 q1},
+  initialStates = {q0},
+  finalStates = {q1},
+  callTransitions = { },
+  internalTransitions = { (q0 b q0) (q0 a q1) (q1 b q0) }, 
+  returnTransitions = { }
+);
