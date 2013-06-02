@@ -5,23 +5,6 @@
 // other files on 26.12.2011. (The night before the hack of Stratfor was in the
 // news.)
 
-assert(!buchiIsEmpty(buchiComplementFKV(nonNestedBuchi1)));
-assert(!buchiIsEmpty(buchiComplementFKV(someSCT2001result)));
-assert(!buchiIsEmpty(buchiComplementFKV(someTerminationBlueGreenResult)));
-
-
-NestedWordAutomaton nonNestedBuchi1 = (
-  callAlphabet = { },
-  internalAlphabet = {a b},
-  returnAlphabet = { },
-  states = {s0 s1},
-  initialStates = {s0},
-  finalStates = {s0},
-  callTransitions = { },
-  internalTransitions = {(s0 a s1) (s1 a s0)}, 
-  returnTransitions = { }
-);
-
 
 
 NestedWordAutomaton someSCT2001result = (

@@ -95,3 +95,18 @@ NestedWordAutomaton totalOneStateAutomaton = (
 	returnTransitions = {
 	}
 );
+
+
+NestedWordAutomaton emptyAutomaton = (
+  callAlphabet = { },
+  internalAlphabet = {a b},
+  returnAlphabet = { },
+  states = { },
+  initialStates = { },
+  finalStates = { },
+  callTransitions = { },
+  internalTransitions = { }, 
+  returnTransitions = { }
+);
+
+assert(isEmpty(emptyAutomaton));
