@@ -1305,36 +1305,36 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 					for (final OutgoingReturnTransition<LETTER, STATE> edge :
 							m_oldNwa.returnSuccessors(state)) {
 						final LETTER letter = edge.getLetter();
-						HashMap<STATE, HashSet<STATE>> lin2succs =
+						HashMap<STATE, HashSet<STATE>> hier2succs =
 								returns.get(letter);
-						if (lin2succs == null) {
-							lin2succs = new HashMap<STATE, HashSet<STATE>>();
-							returns.put(letter, lin2succs);
+						if (hier2succs == null) {
+							hier2succs = new HashMap<STATE, HashSet<STATE>>();
+							returns.put(letter, hier2succs);
 						}
 						final STATE hier = ec2state.get(
 								m_partition.m_state2EquivalenceClass.get(
 										edge.getHierPred()));
-						HashSet<STATE> succs = lin2succs.get(hier);
+						HashSet<STATE> succs = hier2succs.get(hier);
 						if (succs == null) {
 							succs = new HashSet<STATE>();
-							lin2succs.put(hier, succs);
+							hier2succs.put(hier, succs);
 						}
 						succs.add(ec2state.get(m_partition.
 								m_state2EquivalenceClass.get(edge.getSucc())));
 					}
-					for (final Entry<LETTER, HashMap<STATE, HashSet<STATE>>>
-							entry : returns.entrySet()) {
-						for (final Entry<STATE, HashSet<STATE>>
-								entry2 : entry.getValue().entrySet()) {
-							for (final STATE succ : entry2.getValue()) {
-								final OutgoingReturnTransition<LETTER, STATE>
-										newEdge = new OutgoingReturnTransition
-										<LETTER, STATE> (entry2.getKey(),
-										entry.getKey(), succ);
-								if (DEBUG)
-									System.out.println("   return " + newEdge);
-								outRet.add(newEdge);
-							}
+				}
+				for (final Entry<LETTER, HashMap<STATE, HashSet<STATE>>>
+						entry : returns.entrySet()) {
+					for (final Entry<STATE, HashSet<STATE>>
+							entry2 : entry.getValue().entrySet()) {
+						for (final STATE succ : entry2.getValue()) {
+							final OutgoingReturnTransition<LETTER, STATE>
+									newEdge = new OutgoingReturnTransition
+									<LETTER, STATE> (entry2.getKey(),
+									entry.getKey(), succ);
+							if (DEBUG)
+								System.out.println("   return " + newEdge);
+							outRet.add(newEdge);
 						}
 					}
 				}
