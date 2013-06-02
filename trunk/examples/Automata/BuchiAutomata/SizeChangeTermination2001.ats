@@ -13,27 +13,50 @@
 // Date: 19.5.2011
 
 
+NestedWordAutomaton infeasibleComplementFKV = buchiComplementFKV(infeasible);
+assert(numberOfStates(infeasibleComplementFKV) == 145);
+NestedWordAutomaton infeasibleNComplementFKV = buchiComplementFKV(infeasibleN);
+assert(numberOfStates(infeasibleNComplementFKV) == 15);
 
+NestedWordAutomaton infeasibleComplementSVW = buchiComplementSVW(infeasible);
+assert(numberOfStates(infeasibleComplementSVW) == 11);
+NestedWordAutomaton infeasibleNComplementSVW = buchiComplementSVW(infeasibleN);
+assert(numberOfStates(infeasibleNComplementSVW) == 32);
 
 assert(buchiAccepts(infeasibleN, [ "3" , "3"  "3" ]));
-assert(!buchiAccepts(buchiComplementFKV(infeasibleN), [ "3" , "3" "3" ]));
+assert(!buchiAccepts(infeasibleNComplementFKV, [ "3" , "3" "3" ]));
+assert(!buchiAccepts(infeasibleNComplementSVW, [ "3" , "3" "3" ]));
 
 
 assert(buchiAccepts(infeasible, [ "1" "3" "3", "3" "3" ]));
 assert(buchiAccepts(infeasible, [ "1" , "3" "3" ]));
-assert(!buchiAccepts(buchiComplementFKV(infeasible), [ "1" , "3" "3" ]));
-assert(!buchiAccepts(buchiComplementFKV(infeasible), [ "1" "3" "3" , "3" "3" ]));
-assert(buchiIsEmpty(buchiComplementFKV(infeasible)));
+assert(!buchiAccepts(infeasibleComplementFKV, [ "1" , "3" "3" ]));
+assert(!buchiAccepts(infeasibleComplementSVW, [ "1" , "3" "3" ]));
+assert(!buchiAccepts(infeasibleComplementFKV, [ "1" "3" "3" , "3" "3" ]));
+assert(!buchiAccepts(infeasibleComplementSVW, [ "1" "3" "3" , "3" "3" ]));
+assert(buchiIsEmpty(infeasibleComplementFKV));
+assert(buchiIsEmpty(infeasibleComplementSVW));
 
 assert(buchiAccepts(infeasible, [ "1" "1" , "1" "1" ]));
-assert(!buchiAccepts(buchiComplementFKV(infeasible), [ "1" "1" , "1" "1" ]));
-assert(buchiIsEmpty(buchiComplementFKV(infeasible)));
-assert(!buchiAccepts(buchiIntersect(callGraph, buchiComplementFKV(infeasible)), [ "1" "1" , "1" "1" ]));
-assert(buchiIsEmpty(buchiIntersect(callGraph, buchiComplementFKV(infeasible))));
+assert(!buchiAccepts(infeasibleComplementFKV, [ "1" "1" , "1" "1" ]));
+assert(!buchiAccepts(infeasibleComplementSVW, [ "1" "1" , "1" "1" ]));
+assert(buchiIsEmpty(infeasibleComplementFKV));
+assert(buchiIsEmpty(infeasibleComplementSVW));
+assert(!buchiAccepts(buchiIntersect(callGraph, infeasibleComplementFKV), [ "1" "1" , "1" "1" ]));
+assert(!buchiAccepts(buchiIntersect(callGraph, infeasibleComplementSVW), [ "1" "1" , "1" "1" ]));
+assert(buchiIsEmpty(buchiIntersect(callGraph, infeasibleComplementFKV)));
+assert(buchiIsEmpty(buchiIntersect(callGraph, infeasibleComplementSVW)));
+
+
+
+
+
 
 //print(buchiComplementFKV(callGraph));
-print(buchiComplementFKV(infeasibleN));
-
+print(numberOfStates(infeasibleComplementSVW));
+print(numberOfStates(infeasibleNComplementSVW));
+// print(numberOfStates());
+// print(numberOfStates());
 
 NestedWordAutomaton callGraph = (
   callAlphabet = { },
