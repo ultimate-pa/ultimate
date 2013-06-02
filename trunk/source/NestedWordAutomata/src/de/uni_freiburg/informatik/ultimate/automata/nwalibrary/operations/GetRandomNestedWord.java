@@ -105,12 +105,15 @@ public class GetRandomNestedWord<LETTER, STATE> implements IOperation<LETTER, ST
 		}
 
 		NestedWord<LETTER> result = new NestedWord<LETTER>();
+		int pendingCalls = 0;
 		for (int i=0; i<length; i++) {
 			NestedWord<LETTER> singletonAtPosi;
 			double inORcaORre = m_Random.nextDouble();
 			if (inORcaORre < probabilityCall) {
+				pendingCalls++;
 				singletonAtPosi = pendingCallSingleton();
-			} else if (inORcaORre < probabilityCall + probabilityReturn ) {
+			} else if (pendingCalls > 0 && inORcaORre < probabilityCall + probabilityReturn ) {
+				pendingCalls--;
 				singletonAtPosi = pendingReturnSingleton();
 			} else {
 				singletonAtPosi = internalSingleton();
