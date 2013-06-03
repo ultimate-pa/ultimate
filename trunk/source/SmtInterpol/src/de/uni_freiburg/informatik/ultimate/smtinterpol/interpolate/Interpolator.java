@@ -42,6 +42,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.Config;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.Clausifier;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.SMTAffineTerm;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.SharedTerm;
@@ -183,7 +184,6 @@ public class Interpolator {
 		}
 	}
 
-	private static final boolean DEEP_CHECK_INTERPOLANTS = true;
 	SMTInterpol m_SmtSolver;
 
 	Logger m_Logger;
@@ -462,7 +462,7 @@ public class Interpolator {
 			Interpolant[] primInterpolants = interpolate(prim);
 			interpolants = new Interpolant[m_NumInterpolants];
 			HashSet<Literal> lits = null;
-			if (DEEP_CHECK_INTERPOLANTS && m_SmtSolver != null) {
+			if (Config.DEEP_CHECK_INTERPOLANTS && m_SmtSolver != null) {
 				lits = new HashSet<Literal>();
 				for (int i = 0; i < prim.getSize(); i++)
 					lits.add(prim.getLiteral(i));
@@ -519,7 +519,7 @@ public class Interpolator {
 					}
 					m_Logger.debug(interpolants[i]);
 				}
-				if (DEEP_CHECK_INTERPOLANTS && m_SmtSolver != null) {
+				if (Config.DEEP_CHECK_INTERPOLANTS && m_SmtSolver != null) {
 					lits.remove(pivot.negate());
 					for (int i = 0; i < assump.antecedent.getSize(); i++) {
 						if (assump.antecedent.getLiteral(i) != pivot)
@@ -570,7 +570,7 @@ public class Interpolator {
 				throw new UnsupportedOperationException("Cannot interpolate "+proof);
 			}
 		}
-		if (DEEP_CHECK_INTERPOLANTS && m_SmtSolver != null) {
+		if (Config.DEEP_CHECK_INTERPOLANTS && m_SmtSolver != null) {
 			HashSet<Literal> lits = new HashSet<Literal>();
 			for (int i = 0; i < cl.getSize(); i++)
 				lits.add(cl.getLiteral(i));

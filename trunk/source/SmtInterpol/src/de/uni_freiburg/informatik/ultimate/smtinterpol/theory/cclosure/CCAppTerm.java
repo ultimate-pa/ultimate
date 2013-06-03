@@ -25,6 +25,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.SharedTerm;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.SimpleListable;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.util.Coercion;
 import de.uni_freiburg.informatik.ultimate.util.HashUtils;
 
 
@@ -198,6 +199,6 @@ public class CCAppTerm extends CCTerm {
 			args[--dest] = ((CCAppTerm)t).arg.toSMTTerm(theory, useAuxVars);
 			t = ((CCAppTerm) t).func;
 		}
-		return theory.term(sym, args);
+		return Coercion.buildApp(sym, args);
 	}
 }

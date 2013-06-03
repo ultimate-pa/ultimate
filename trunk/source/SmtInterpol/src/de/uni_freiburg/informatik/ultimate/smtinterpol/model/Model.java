@@ -38,6 +38,7 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.ITheory;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.cclosure.CClosure;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.cclosure.QuantifierTheory;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.linar.LinArSolve;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.util.Coercion;
 
 public class Model implements de.uni_freiburg.informatik.ultimate.logic.Model {
 	
@@ -140,14 +141,30 @@ public class Model implements de.uni_freiburg.informatik.ultimate.logic.Model {
 		if (symb.getParameterCount() == 0)
 			extend(symb, value);
 		else {
+			value = coerce(value, symb.getReturnSort());
 			extendSortInterpretation(symb.getReturnSort(), value);
 			HashExecTerm het = (HashExecTerm) m_FuncVals.get(symb);
 			if (het == null) {
 				het = new HashExecTerm(getDefault(value));
 				m_FuncVals.put(symb, het);
 			}
-			het.extend(args, value);
+			het.extend(coerce(symb, args), value);
 		}
+	}
+	
+	private ExecTerm coerce(ExecTerm et, Sort expectedSort) {
+		Term t = et.toSMTLIB(m_Theory, null);
+		if (t.getSort() != expectedSort) {
+			assert m_Theory.getLogic().isIRA();
+			return new Value(Coercion.coerce(t, expectedSort));
+		}
+		return et;
+	}
+	
+	private ExecTerm[] coerce(FunctionSymbol fs, ExecTerm[] args) {
+		for (int i = 0; i < args.length; ++i)
+			args[i] = coerce(args[i], fs.getParameterSort(i));
+		return args;
 	}
 
 	private void extendSortInterpretation(Sort sort, ExecTerm et) {

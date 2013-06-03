@@ -52,6 +52,7 @@ import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
+import de.uni_freiburg.informatik.ultimate.logic.simplification.SimplifyDDA;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.Config;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.Clausifier;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.Clause;
@@ -1337,10 +1338,14 @@ public class SMTInterpol extends NoopScript {
 	}
 	
 	public Term simplifyTerm(Term term) throws SMTLIBException {
+		SimplifyDDA simplifyDDA = new SimplifyDDA(this, this.getLogger());
+		Term simp = simplifyDDA.getSimplifiedTerm(term);
+		return simp;
+		
 //		if (m_Engine == null)
 //			throw new SMTLIBException("No logic set!");
 //		return m_Converter.simplify(term);
-		throw new UnsupportedOperationException();
+//		throw new UnsupportedOperationException();
 	}
 
 	/**

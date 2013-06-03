@@ -108,4 +108,8 @@ public interface Config {
 	 */
 	public static final boolean EXPENSIVE_ASSERTS = false;
 
+	////// Interpolator Configuration
+	/// Should we check partial interpolants in interpolant-check-mode?
+	public static final boolean DEEP_CHECK_INTERPOLANTS = false;
+
 }

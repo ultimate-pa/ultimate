@@ -504,18 +504,6 @@ public class DPLLEngine {
 //		}
 //	}
 	
-	public Term orFormula(Term f1, Term f2) {
-		return smtTheory.or(f1, f2);
-	}
-	
-	public Term andFormula(Term f1, Term f2) {
-		return smtTheory.and(f1, f2);
-	}
-	
-	public Term implFormula(Term f1, Term f2) {
-		return smtTheory.implies(f1, f2);
-	}
-	
 	private boolean checkDecideLevel() {
 		int decision = 0;
 		int i = 0;
@@ -715,7 +703,7 @@ public class DPLLEngine {
 			newlits[i++] = l.negate();
 		}
 		assert newlits[newlits.length-1] != null;
-		Clause resolution = new Clause(newlits, /*stacklevel*/expstacklevel);
+		Clause resolution = new Clause(newlits, expstacklevel);
 		if (isProofGenerationEnabled()) {
 			for (Literal l0: level0Ants)
 				antecedents.add(new Antecedent(l0, getLevel0(l0)));

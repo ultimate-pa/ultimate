@@ -120,6 +120,10 @@ public class SMTAffineTerm extends Term {
 	
 	public SMTAffineTerm add(SMTAffineTerm a2) {
 		assert this.getSort().equals(a2.getSort());
+		return addUnchecked(a2);
+	}
+	
+	public SMTAffineTerm addUnchecked(SMTAffineTerm a2) {
 		Map<Term, Rational> summands = new HashMap<Term, Rational>();
 		summands.putAll(this.m_summands);
 		for (Map.Entry<Term,Rational> entry : a2.m_summands.entrySet()) {
@@ -314,5 +318,23 @@ public class SMTAffineTerm extends Term {
 				return me.getKey();
 		}
 		return unifier.unify(this);
+	}
+	
+	public Term internalize() {
+		SMTAffineTerm res = this;
+		if (getTheory().getLogic().isIRA() && m_sort.getName().equals("Real") &&
+				isAllInt())
+			res = create(m_summands, m_constant, getTheory().getSort("Int"));
+		return res.normalize();
+	}
+	
+	private boolean isAllInt() {
+		for (Map.Entry<Term, Rational> me : m_summands.entrySet()) {
+			if (!me.getKey().getSort().getName().equals("Int"))
+				return false;
+			if (!me.getValue().isIntegral())
+				return false;
+		}
+		return m_constant.isIntegral();
 	}
 }

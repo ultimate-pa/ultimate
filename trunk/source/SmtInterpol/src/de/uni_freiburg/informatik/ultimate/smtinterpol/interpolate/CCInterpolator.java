@@ -34,6 +34,7 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.cclosure.CCAppTerm
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.cclosure.CCBaseTerm;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.cclosure.CCEquality;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.cclosure.CCTerm;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.util.Coercion;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.util.SymmetricPair;
 
 
@@ -133,7 +134,7 @@ public class CCInterpolator {
 			
 			public void closeSingleAPath(PathEnd other, Term boundaryTerm, int color) {
 				if (color < m_MaxColor) {
-					addPre(color, m_Theory.equals(boundaryTerm, m_Term[color]));
+					addPre(color, Coercion.buildEq(boundaryTerm, m_Term[color]));
 					addInterpolantClause(color, m_Pre[color]);
 					m_Pre[color] = null;
 					m_Term[color] = null;
@@ -258,7 +259,7 @@ public class CCInterpolator {
 						boundaryParams[i] = head[i].getBoundTerm(m_Color);
 						addAllPre(m_Color, tail[i]);
 					}
-					Term boundaryTerm = m_Theory.term(func, boundaryParams);
+					Term boundaryTerm = Coercion.buildApp(func, boundaryParams);
 					closeSingleAPath(other, boundaryTerm, m_Color);
 					m_Color = getParent(m_Color);
 				}
@@ -274,7 +275,7 @@ public class CCInterpolator {
 						boundaryParams[i] = tail[i].getBoundTerm(m_Color);
 						addAllPre(m_Color, tail[i]);
 					}
-					Term boundaryTerm = m_Theory.term(func, boundaryParams);
+					Term boundaryTerm = Coercion.buildApp(func, boundaryParams);
 					m_Term[m_Color] = boundaryTerm;
 				}
 				assert (m_Color == rightColor);
@@ -282,7 +283,8 @@ public class CCInterpolator {
 						color < m_numInterpolants; color = getParent(color)) {
 					for (int i = 0; i < numArgs; i++) {
 						if (color < argPaths[i].m_MaxColor)
-							addPre(color, m_Theory.distinct(head[i].getBoundTerm(color),
+							addPre(color, Coercion.buildDistinct(
+									head[i].getBoundTerm(color),
 									tail[i].getBoundTerm(color)));
 						addAllPre(color, head[i]);
 						addAllPre(color, tail[i]);
@@ -435,7 +437,7 @@ public class CCInterpolator {
 			while (m_Head.m_Color < m_numInterpolants ||
 					m_Tail.m_Color < m_numInterpolants) {
 				if (m_Head.m_Color < m_Tail.m_Color) {
-					m_Head.addPre(m_Head.m_Color, m_Theory.distinct
+					m_Head.addPre(m_Head.m_Color, Coercion.buildDistinct
 							(m_Head.getBoundTerm(m_Head.m_Color), m_Tail.getBoundTerm(m_Head.m_Color)));
 					addInterpolantClause(m_Head.m_Color, m_Head.m_Pre[m_Head.m_Color]);
 					int parent = m_Head.m_Color + 1;
@@ -446,7 +448,7 @@ public class CCInterpolator {
 					m_Head.addAllPre(m_Head.m_Color, m_Tail);
 					m_Tail.m_Pre[m_Tail.m_Color] = null;
 					if (m_Head.m_Color < m_MaxColor) {
-						m_Head.addPre(m_Head.m_Color, m_Theory.distinct
+						m_Head.addPre(m_Head.m_Color, Coercion.buildDistinct
 								(m_Head.getBoundTerm(m_Head.m_Color), m_Tail.getBoundTerm(m_Head.m_Color)));
 					}
 					addInterpolantClause(m_Head.m_Color, m_Head.m_Pre[m_Head.m_Color]);
@@ -456,7 +458,7 @@ public class CCInterpolator {
 					m_Head.m_Color = parent;
 					m_Tail.m_Color = parent;
 				} else {
-					m_Tail.addPre(m_Tail.m_Color, m_Theory.distinct
+					m_Tail.addPre(m_Tail.m_Color, Coercion.buildDistinct
 							(m_Head.getBoundTerm(m_Tail.m_Color), m_Tail.getBoundTerm(m_Tail.m_Color)));
 					addInterpolantClause(m_Tail.m_Color, m_Tail.m_Pre[m_Tail.m_Color]);
 					int parent = m_Tail.m_Color + 1;

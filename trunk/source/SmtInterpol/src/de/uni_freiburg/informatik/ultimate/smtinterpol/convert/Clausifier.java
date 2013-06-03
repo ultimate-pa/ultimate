@@ -101,6 +101,8 @@ public class Clausifier {
 				}
 			}
 			private FunctionSymbol getSymbol() {
+				if (m_Term instanceof SMTAffineTerm)
+					m_Term = ((SMTAffineTerm) m_Term).internalize();
 				if (m_Term instanceof ApplicationTerm) {
 					ApplicationTerm at = (ApplicationTerm) m_Term;
 					FunctionSymbol fs = at.getFunction();
@@ -1474,7 +1476,7 @@ public class Clausifier {
 	 */
 	public SharedTerm getSharedTerm(Term t, boolean inCCTermBuilder) {
 		if (t instanceof SMTAffineTerm)
-			t = ((SMTAffineTerm) t).normalize();
+			t = ((SMTAffineTerm) t).internalize();//normalize();
 		SharedTerm res = m_SharedTerms.get(t);
 		if (res == null) {
 			// if we reach here, t is neither true nor false
@@ -1675,7 +1677,7 @@ public class Clausifier {
 //	}
 	
 	public EqualityProxy createEqualityProxy(SharedTerm lhs, SharedTerm rhs) {
-		SMTAffineTerm diff = SMTAffineTerm.create(lhs.getTerm()).add(
+		SMTAffineTerm diff = SMTAffineTerm.create(lhs.getTerm()).addUnchecked(
 				SMTAffineTerm.create(rhs.getTerm()).negate());
 		if (diff.isConstant()) {
 			if (diff.getConstant().equals(Rational.ZERO)) {

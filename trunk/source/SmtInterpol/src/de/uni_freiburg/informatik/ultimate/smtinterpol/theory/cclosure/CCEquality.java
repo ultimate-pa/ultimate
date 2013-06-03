@@ -25,6 +25,7 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.DPLLAtom;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.NamedAtom;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.SimpleListable;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.linar.LAEquality;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.util.Coercion;
 import de.uni_freiburg.informatik.ultimate.util.HashUtils;
 
 public class CCEquality extends DPLLAtom {
@@ -86,7 +87,7 @@ public class CCEquality extends DPLLAtom {
 	public Term getSMTFormula(Theory smtTheory, boolean quoted) {
 		Term lhs = m_lhs.toSMTTerm(smtTheory, quoted);
 		Term rhs = m_rhs.toSMTTerm(smtTheory, quoted);
-		Term res = smtTheory.term("=", lhs, rhs);
+		Term res = Coercion.buildEq(lhs, rhs);
 		return quoted ? smtTheory.annotatedTerm(NamedAtom.g_quoted, res) : res;
 	}
 
