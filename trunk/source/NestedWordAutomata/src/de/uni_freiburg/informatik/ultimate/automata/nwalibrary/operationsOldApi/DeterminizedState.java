@@ -23,7 +23,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
  * @param <LETTER> Symbol
  * @param <STATE> Content
  */
-public class DeterminizedState<LETTER,STATE> {
+public class DeterminizedState<LETTER,STATE> implements IDeterminizedState<LETTER, STATE> {
 	
 	/**
 	 * Set of ordered pairs. The pair (present,caller) is in this set iff 
