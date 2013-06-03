@@ -244,26 +244,21 @@ public class DeterminizeNwa<LETTER, STATE> implements INestedWordAutomatonSimple
 
 	@Override
 	public boolean accepts(Word<LETTER> word) {
-		// TODO Auto-generated method stub
-		return false;
+		throw new UnsupportedOperationException();
 	}
 
 	@Override
 	public int size() {
-		// TODO Auto-generated method stub
-		return 0;
+		throw new UnsupportedOperationException();
 	}
 
 	@Override
 	public Set<LETTER> getAlphabet() {
-		// TODO Auto-generated method stub
-		return null;
-	}
+		throw new UnsupportedOperationException();	}
 
 	@Override
 	public String sizeInformation() {
-		// TODO Auto-generated method stub
-		return null;
+		return "size Information not available";
 	}
 
 
