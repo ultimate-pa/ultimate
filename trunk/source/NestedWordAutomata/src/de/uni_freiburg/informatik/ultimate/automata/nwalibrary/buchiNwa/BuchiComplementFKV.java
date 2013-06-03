@@ -1,14 +1,19 @@
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.automata.Activator;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.PowersetDeterminizer;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.DifferenceSadd;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.NestedWordAutomatonReachableStates;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 
@@ -81,7 +86,51 @@ public class BuchiComplementFKV<LETTER,STATE> implements IOperation<LETTER,STATE
 	@Override
 	public boolean checkResult(StateFactory<STATE> stateFactory)
 			throws OperationCanceledException {
-		return (ResultChecker.buchiComplement(ResultChecker.getOldApiNwa(m_Operand), m_Result));
+		boolean correct = true;
+		if (stateDeterminizer instanceof PowersetDeterminizer) {
+			s_Logger.info("Start testing correctness of " + operationName());
+			INestedWordAutomatonOldApi<LETTER, STATE> operandOldApi = 
+					ResultChecker.getOldApiNwa(m_Operand);
+			List<NestedLassoWord<LETTER>> lassoWords = new ArrayList<NestedLassoWord<LETTER>>();
+			BuchiIsEmpty<LETTER, STATE> operandEmptiness = new BuchiIsEmpty<LETTER, STATE>(operandOldApi);
+			boolean operandEmpty = operandEmptiness.getResult();
+			if (!operandEmpty) {
+				lassoWords.add(operandEmptiness.getAcceptingNestedLassoRun().getNestedLassoWord());
+			}
+			BuchiIsEmpty<LETTER, STATE> resultEmptiness = new BuchiIsEmpty<LETTER, STATE>(m_Result);
+			boolean resultEmpty = resultEmptiness.getResult();
+			if (!resultEmpty) {
+				lassoWords.add(resultEmptiness.getAcceptingNestedLassoRun().getNestedLassoWord());
+			}
+			correct &= !(operandEmpty && resultEmpty);
+			assert correct;
+			lassoWords.add(ResultChecker.getRandomNestedLassoWord(m_Result, m_Result.size()));
+			lassoWords.add(ResultChecker.getRandomNestedLassoWord(m_Result, m_Result.size()));
+			lassoWords.add(ResultChecker.getRandomNestedLassoWord(m_Result, operandOldApi.size()));
+			lassoWords.add(ResultChecker.getRandomNestedLassoWord(m_Result, operandOldApi.size()));
+
+			for (NestedLassoWord<LETTER> nlw : lassoWords) {
+				correct &= checkAcceptance(nlw, operandOldApi);
+				assert correct;
+			}
+			
+			if (!correct) {
+				ResultChecker.writeToFileIfPreferred(operationName() + "Failed", "", m_Operand);
+			}
+			s_Logger.info("Finished testing correctness of " + operationName());
+		} else {
+			s_Logger.warn("Unable to test correctness if state determinzier is not the PowersetDeterminizer.");
+		}
+		return correct;
+	}
+	
+	
+	private boolean checkAcceptance(NestedLassoWord<LETTER> nlw,
+			INestedWordAutomatonOldApi<LETTER, STATE> operand) {
+		boolean op = (new BuchiAccepts<LETTER, STATE>(operand, nlw)).getResult();
+		boolean res = (new BuchiAccepts<LETTER, STATE>(m_Result, nlw)).getResult();
+		assert op ^ res;
+		return (op ^ res);
 	}
 
 

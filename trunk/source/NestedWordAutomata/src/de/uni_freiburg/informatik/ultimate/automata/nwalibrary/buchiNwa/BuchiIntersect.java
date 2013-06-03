@@ -124,9 +124,9 @@ public class BuchiIntersect<LETTER,STATE> implements IOperation<LETTER,STATE> {
 		} else 	{
 			lassoWords.add(sndOperandEmptiness.getAcceptingNestedLassoRun().getNestedLassoWord());
 		}
-		lassoWords.add(getRandomNestedLassoWord(m_Result, m_Result.size()));
-		lassoWords.add(getRandomNestedLassoWord(m_Result, fstOperandOldApi.size()));
-		lassoWords.add(getRandomNestedLassoWord(m_Result, sndOperandOldApi.size()));
+		lassoWords.add(ResultChecker.getRandomNestedLassoWord(m_Result, m_Result.size()));
+		lassoWords.add(ResultChecker.getRandomNestedLassoWord(m_Result, fstOperandOldApi.size()));
+		lassoWords.add(ResultChecker.getRandomNestedLassoWord(m_Result, sndOperandOldApi.size()));
 		boolean correct = true;
 		for (NestedLassoWord<LETTER> nlw : lassoWords) {
 			correct &= checkAcceptance(nlw, fstOperandOldApi, sndOperandOldApi);
@@ -137,11 +137,7 @@ public class BuchiIntersect<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	
 	
 	
-	private NestedLassoWord<LETTER> getRandomNestedLassoWord(INestedWordAutomatonSimple<LETTER, STATE> automaton, int size) throws OperationCanceledException {
-		NestedWord<LETTER> stem = (new GetRandomNestedWord<LETTER, STATE>(automaton, size)).getResult();
-		NestedWord<LETTER> loop = (new GetRandomNestedWord<LETTER, STATE>(automaton, size)).getResult();
-		return new NestedLassoWord<LETTER>(stem, loop);
-	}
+
 	
 	private boolean checkAcceptance(NestedLassoWord<LETTER> nlw,
 			INestedWordAutomatonOldApi<LETTER, STATE> operand1,

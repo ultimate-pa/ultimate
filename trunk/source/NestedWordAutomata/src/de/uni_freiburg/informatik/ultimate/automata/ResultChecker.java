@@ -309,5 +309,12 @@ public class ResultChecker<LETTER,STATE> {
 			new AtsDefinitionPrinter(filenamePrefix, filename, Labeling.QUOTED, message, automata);
 		}
     }
+    
+	public static <LETTER,STATE> NestedLassoWord<LETTER> getRandomNestedLassoWord(INestedWordAutomatonSimple<LETTER, STATE> automaton, int size) throws OperationCanceledException {
+		NestedWord<LETTER> stem = (new GetRandomNestedWord<LETTER, STATE>(automaton, size)).getResult();
+		NestedWord<LETTER> loop = (new GetRandomNestedWord<LETTER, STATE>(automaton, size)).getResult();
+		return new NestedLassoWord<LETTER>(stem, loop);
+	}
+    
 	
 }
