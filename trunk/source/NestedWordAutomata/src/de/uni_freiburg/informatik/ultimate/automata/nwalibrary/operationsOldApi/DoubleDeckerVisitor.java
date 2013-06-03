@@ -446,7 +446,7 @@ private Set<STATE> m_DeadEnds;
 	private void enqueueInternalPred(STATE up, Collection<STATE> downStates, 
 												DoubleDeckerWorkList worklist) {
 		for (IncomingInternalTransition<LETTER, STATE> inTrans : 
-			((NestedWordAutomaton<LETTER, STATE>) m_TraversedNwa).internalPredecessors(up)) {
+			m_TraversedNwa.internalPredecessors(up)) {
 			STATE predUp = inTrans.getPred();
 			for (STATE down : downStates) {
 				ReachFinal doubleDeckerReach = m_Marked_Up2Down.get(predUp).get(down);
@@ -464,8 +464,7 @@ private Set<STATE> m_DeadEnds;
 												DoubleDeckerWorkList worklist) {
 		// we for call transitions we may use all of predecessors
 		// down states (use only when considering only non ret ancestors!)
-		for (IncomingCallTransition<LETTER, STATE> inTrans : 
-			((NestedWordAutomaton<LETTER, STATE>) m_TraversedNwa).callPredecessors(up)) {
+		for (IncomingCallTransition<LETTER, STATE> inTrans : m_TraversedNwa.callPredecessors(up)) {
 			STATE predUp = inTrans.getPred();
 			for (STATE predDown : m_Marked_Up2Down.get(predUp).keySet()) {
 				ReachFinal doubleDeckerReach = m_Marked_Up2Down.get(predUp).get(predDown);
@@ -483,8 +482,7 @@ private Set<STATE> m_DeadEnds;
 	private void enqueueReturnPred(STATE up, Collection<STATE> downStates, 
 										DoubleDeckerWorkList summaryWorklist, 
 										DoubleDeckerWorkList linPredworklist) {
-		for (IncomingReturnTransition<LETTER, STATE> inTrans : 
-			((NestedWordAutomaton<LETTER, STATE>) m_TraversedNwa).returnPredecessors(up)) {
+		for (IncomingReturnTransition<LETTER, STATE> inTrans : m_TraversedNwa.returnPredecessors(up)) {
 			STATE hier = inTrans.getHierPred();
 			// We have to check if there is some double decker (hier,down) with
 			// down∈downStates. Only in that case we may add (lin,hier) to the
