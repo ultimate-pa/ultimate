@@ -120,7 +120,7 @@ public class NestedWord<LETTER> extends Word<LETTER> {
 		ArrayList<LETTER> al = new ArrayList<LETTER>(1);
 		al.add(letter);
 		this.m_Word = (LETTER[]) al.toArray();
-		int[] nr = { INTERNAL_POSITION };
+		int[] nr = { internalORcallORreturn };
 		this.m_NestingRelation = nr;
 	}
 	
