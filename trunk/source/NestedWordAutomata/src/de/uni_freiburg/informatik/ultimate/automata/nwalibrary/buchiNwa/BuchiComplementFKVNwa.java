@@ -264,8 +264,45 @@ public class BuchiComplementFKVNwa<LETTER,STATE> implements INestedWordAutomaton
 	@Override
 	public Iterable<OutgoingCallTransition<LETTER, STATE>> callSuccessors(
 			STATE state, LETTER letter) {
-		
-		//TODO
+		Collection<STATE> succs = m_Cache.succCall(state, letter);
+		if (succs == null) {
+			Collection<STATE> resSuccs = new ArrayList<STATE>();
+			DeterminizedState<LETTER,STATE> detUp = m_res2det.get(state);
+			if (detUp != null) {
+				{
+					DeterminizedState<LETTER,STATE> detSucc = 
+						m_StateDeterminizer.callSuccessor(detUp, letter);
+					if (!detSucc.isEmpty()) {
+						STATE resSucc = getOrAdd(detSucc, false);
+						m_Cache.addCallTransition(state, letter, resSucc);
+						resSuccs.add(resSucc);
+					}
+				}
+				LevelRankingConstraint constraints = new LevelRankingConstraint();
+				constraints.callSuccessorConstraints(detUp, letter);
+				TightLevelRankingStateGenerator gen = 
+					new MatthiasTightLevelRankingStateGenerator(constraints);
+				Collection<LevelRankingState> result = gen.computeResult();
+				for (LevelRankingState complSucc : result) {
+					STATE resSucc = getOrAdd(complSucc);
+					m_Cache.addCallTransition(state, letter, resSucc);
+					resSuccs.add(resSucc);
+				}
+			}
+			LevelRankingState complUp = m_res2lrk.get(state);
+			if (complUp != null) {
+				LevelRankingConstraint constraints = new LevelRankingConstraint();
+				constraints.callSuccessorConstraints(complUp, letter);
+				MatthiasTightLevelRankingStateGenerator gen = 
+					new MatthiasTightLevelRankingStateGenerator(constraints);
+				Collection<LevelRankingState> result = gen.computeResult();
+				for (LevelRankingState complSucc : result) {
+					STATE resSucc = getOrAdd(complSucc);
+					m_Cache.addCallTransition(state, letter, resSucc);
+					resSuccs.add(resSucc);
+				}
+			}
+		}
 		return m_Cache.callSuccessors(state, letter);
 	}
 
@@ -494,6 +531,34 @@ public class BuchiComplementFKVNwa<LETTER,STATE> implements INestedWordAutomaton
 				}
 			}
 		}
+		
+		void callSuccessorConstraints(DeterminizedState<LETTER,STATE> state, LETTER symbol) {
+			boolean oCandidate = false;
+			Integer upRank = Integer.MAX_VALUE;
+			for (STATE down : state.getDownStates()) {
+				for (STATE up : state.getUpStates(down)) {
+					for (OutgoingCallTransition<LETTER, STATE> trans : 
+									m_Operand.callSuccessors(up,symbol)) {
+						addConstaint(up, trans.getSucc(), upRank, oCandidate);
+					}
+				}
+			}
+		}
+		
+		void callSuccessorConstraints(LevelRankingState state, LETTER symbol) {
+			for (STATE down : state.getDownStates()) {
+				for (STATE up : state.getUpStates(down)) {
+					boolean oCandidate = state.isOempty() || state.inO(down,up);
+					Integer upRank = state.getRank(down, up);
+					for (OutgoingCallTransition<LETTER, STATE> trans : 
+									m_Operand.callSuccessors(up,symbol)) {
+						addConstaint(up, trans.getSucc(), upRank, oCandidate);
+					}
+				}
+			}
+		}
+		
+		
 
 		private void addConstaint(STATE down, STATE up, 
 											Integer rank, boolean oCandidate) {
