@@ -58,7 +58,7 @@ public class BuchiIsEmpty<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	}
 	
 	INestedWordAutomatonOldApi<LETTER, STATE> m_nwa;
-	Boolean m_Result;
+	final Boolean m_Result;
 
 	Bridge reachabilityBridge = new Bridge();
 	Bridge reachabilityBridgeA = new Bridge();
