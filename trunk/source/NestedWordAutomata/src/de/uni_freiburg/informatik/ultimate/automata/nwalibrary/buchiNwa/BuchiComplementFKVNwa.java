@@ -14,15 +14,13 @@ import de.uni_freiburg.informatik.ultimate.automata.Activator;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.DoubleDecker;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomatonCache;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IStateDeterminizer;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.PowersetDeterminizer;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.DeterminizedState;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 
@@ -48,7 +46,7 @@ public class BuchiComplementFKVNwa<LETTER,STATE> implements INestedWordAutomaton
 	
 	private final INestedWordAutomatonSimple<LETTER,STATE> m_Operand;
 	
-	private final NestedWordAutomaton<LETTER, STATE> m_Cache;
+	private final NestedWordAutomatonCache<LETTER, STATE> m_Cache;
 	
 	StateFactory<STATE> m_StateFactory;
 	
@@ -78,8 +76,6 @@ public class BuchiComplementFKVNwa<LETTER,STATE> implements INestedWordAutomaton
 	private final Map<STATE,LevelRankingState> m_res2lrk =
 		new HashMap<STATE, LevelRankingState>();
 	
-	private STATE m_SinkState;
-	
 	private final IStateDeterminizer<LETTER,STATE> m_StateDeterminizer;
 	
 	/**
@@ -96,7 +92,7 @@ public class BuchiComplementFKVNwa<LETTER,STATE> implements INestedWordAutomaton
 			StateFactory<STATE> stateFactory) throws OperationCanceledException {
 		m_Operand = operand;
 		m_StateFactory = stateFactory;
-		m_Cache = new NestedWordAutomaton<LETTER, STATE>(
+		m_Cache = new NestedWordAutomatonCache<LETTER, STATE>(
 				operand.getInternalAlphabet(), operand.getCallAlphabet(), 
 				operand.getReturnAlphabet(), m_StateFactory);
 		m_StateDeterminizer = stateDeterminizer;
@@ -143,15 +139,6 @@ public class BuchiComplementFKVNwa<LETTER,STATE> implements INestedWordAutomaton
 		return resSucc;
 	}
 	
-	private STATE getOrAddSinkState() {
-		if (m_SinkState == null) {
-			m_SinkState = m_StateFactory.createSinkStateContent();
-			m_Cache.addState(false, false, m_SinkState);
-		}
-		return m_SinkState;
-	}
-	
-
 	public int getHighesRank() {
 		return m_HighestRank;
 	}
@@ -224,11 +211,7 @@ public class BuchiComplementFKVNwa<LETTER,STATE> implements INestedWordAutomaton
 	public Iterable<OutgoingInternalTransition<LETTER, STATE>> internalSuccessors(
 			STATE state, LETTER letter) {
 		Collection<STATE> succs = m_Cache.succInternal(state, letter);
-		if (succs == null || succs.isEmpty()) {
-			if (state == m_SinkState) {
-				m_Cache.addInternalTransition(m_SinkState, letter, m_SinkState);
-				return m_Cache.internalSuccessors(m_SinkState, letter);
-			}
+		if (succs == null) {
 			Collection<STATE> resSuccs = new ArrayList<STATE>();
 			DeterminizedState<LETTER,STATE> detUp = m_res2det.get(state);
 			if (detUp != null) {
@@ -264,10 +247,6 @@ public class BuchiComplementFKVNwa<LETTER,STATE> implements INestedWordAutomaton
 					m_Cache.addInternalTransition(state, letter, resSucc);
 					resSuccs.add(resSucc);
 				}
-			}
-			if (resSuccs.isEmpty()) {
-				STATE sink = getOrAddSinkState();
-				m_Cache.addInternalTransition(state, letter, sink);
 			}
 		}
 		return m_Cache.internalSuccessors(state, letter);
