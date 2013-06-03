@@ -14,6 +14,8 @@ import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomatonFilteredStates.Predicate;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.Accepts;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.Difference;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IsEmpty;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.MinimizeSevpa;
@@ -209,8 +211,8 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		
 		PredicateFactory predicateFactory = (PredicateFactory) m_Abstraction.getStateFactory();
 		
-		NestedWordAutomaton<CodeBlock, IPredicate> oldAbstraction = 
-				(NestedWordAutomaton<CodeBlock, IPredicate>) m_Abstraction;
+		INestedWordAutomatonOldApi<CodeBlock, IPredicate> oldAbstraction = 
+				(INestedWordAutomatonOldApi<CodeBlock, IPredicate>) m_Abstraction;
 		Map<IPredicate, Set<IPredicate>> removedDoubleDeckers = null;
 		Map<IPredicate, IPredicate> context2entry = null;
 		if (differenceInsteadOfIntersection) {
@@ -437,8 +439,10 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 //			 assert a.numberOfOutgoingInternalTransitions(p) <= 2 : p + " has " +a.numberOfOutgoingInternalTransitions(p);
 //			 assert a.numberOfIncomingInternalTransitions(p) <= 25 : p + " has " +a.numberOfIncomingInternalTransitions(p);
 //		 }
-		
-		if(m_Abstraction.accepts(m_Counterexample.getWord())) {
+		boolean stillAccepted = (new Accepts<CodeBlock, IPredicate>(
+				(INestedWordAutomatonOldApi<CodeBlock, IPredicate>) m_Abstraction, 
+				(NestedWord<CodeBlock>) m_Counterexample.getWord())).getResult();
+		if(stillAccepted) {
 			return false;
 		}else {
 			return true;

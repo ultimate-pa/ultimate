@@ -156,6 +156,9 @@ public class CfgBuilder {
 		   m_Script.setOption(":produce-unsat-cores", true);
 		   m_Script.setOption(":interpolant-check-mode", true);
 		   m_Script.setOption(":proof-transformation", "LU");
+//		   m_Script.setOption(":proof-transformation", "RPI");
+//		   m_Script.setOption(":proof-transformation", "LURPI");
+//		   m_Script.setOption(":proof-transformation", "RPILU");
 		   m_Script.setLogic("QF_UFLIRA");
 //		   m_Script.setOption(":verbosity", 0);
 		   blackHolesArrays = false;
@@ -1473,8 +1476,8 @@ public class CfgBuilder {
 			CodeBlock outgoing = (CodeBlock) pp.getOutgoingEdges().get(0);
 			ProgramPoint predecessor = (ProgramPoint) incoming.getSource();
 			ProgramPoint successor = (ProgramPoint) outgoing.getTarget();
-			new SequentialComposition(predecessor, successor,
-													m_Boogie2smt, incoming, outgoing);
+			new SequentialComposition(predecessor, successor, m_Boogie2smt, 
+					m_RootAnnot.getTaPrefs().SimplifyCodeBlocks(), incoming, outgoing);
 			if (!sequentialQueue.contains(predecessor)) {
 				List<CodeBlock> outEdges = superfluousParallel(predecessor);
 				if (outEdges != null) {

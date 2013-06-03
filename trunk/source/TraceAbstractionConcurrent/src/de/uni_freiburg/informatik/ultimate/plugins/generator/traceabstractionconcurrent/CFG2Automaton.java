@@ -113,7 +113,7 @@ public abstract class CFG2Automaton {
 			current = (ProgramPoint) succSS.getTarget();
 		}
 		return new SequentialComposition(entry, exit, 
-				m_RootAnnot.getBoogie2SMT(), codeBlocks.toArray(new CodeBlock[0]));
+				m_RootAnnot.getBoogie2SMT(), m_RootAnnot.getTaPrefs().SimplifyCodeBlocks(), codeBlocks.toArray(new CodeBlock[0]));
 	}
 	
 	

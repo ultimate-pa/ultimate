@@ -107,8 +107,8 @@ public class NestedWordAutomatonFilteredStates<LETTER, STATE> implements
 
 	@Override
 	public Collection<STATE> getFinalStates() {
-		// TODO Auto-generated method stub
-		return null;
+		//TODO only correct when removing dead ends
+		return m_Nwa.getFinalStates();
 	}
 
 	@Override

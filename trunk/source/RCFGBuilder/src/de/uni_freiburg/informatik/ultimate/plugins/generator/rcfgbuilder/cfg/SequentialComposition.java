@@ -53,6 +53,7 @@ public class SequentialComposition extends CodeBlock {
 	
 	public SequentialComposition(ProgramPoint source, ProgramPoint target,
 			Boogie2SMT boogie2smt,
+			boolean simplify,
 			CodeBlock... codeBlocks) {
 		super(source, target);
 		this.m_CodeBlocks = codeBlocks;
@@ -83,8 +84,8 @@ public class SequentialComposition extends CodeBlock {
 			prettyPrinted.append(codeBlocks[i].getPrettyPrintedStatements());
 		}
 		checkNumberOfCallsAndReturns(numberCalls, numberReturns);
-		m_TransitionFormula = getInterproceduralTransFormula(boogie2smt, false, codeBlocks);
-		m_TransitionFormulaWithBranchEncoders = getInterproceduralTransFormula(boogie2smt, true, codeBlocks);
+		m_TransitionFormula = getInterproceduralTransFormula(boogie2smt, simplify, false, codeBlocks);
+		m_TransitionFormulaWithBranchEncoders = getInterproceduralTransFormula(boogie2smt, simplify, true, codeBlocks);
 		
 		m_PrettyPrinted = prettyPrinted.toString();
 		updatePayloadName();
@@ -123,13 +124,13 @@ public class SequentialComposition extends CodeBlock {
 	 * the method sequentialComposition) contain also Call and Return.
 	 */
 	public static TransFormula getInterproceduralTransFormula(
-			Boogie2SMT boogie2smt, boolean withBranchEncoders, CodeBlock... codeBlocks) {
+			Boogie2SMT boogie2smt, boolean simplify, boolean withBranchEncoders, CodeBlock... codeBlocks) {
 		return getInterproceduralTransFormula(
-				boogie2smt, withBranchEncoders, null, null, null, codeBlocks);
+				boogie2smt, simplify, withBranchEncoders, null, null, null, codeBlocks);
 	}
 	
 	private static TransFormula getInterproceduralTransFormula(
-			Boogie2SMT boogie2smt, boolean withBranchEncoders, TransFormula[] beforeCall,
+			Boogie2SMT boogie2smt, boolean simplify, boolean withBranchEncoders, TransFormula[] beforeCall,
 			Call call, Return ret, CodeBlock... codeBlocks) {
 		List<TransFormula> beforeFirstPendingCall = new ArrayList<TransFormula>();
 		Call lastUnmatchedCall = null;
@@ -155,7 +156,7 @@ public class SequentialComposition extends CodeBlock {
 						CodeBlock[] codeBlocksBetween = 
 								afterLastUnmatchedCall.toArray(new CodeBlock[0]); 
 						TransFormula localTransFormula = getInterproceduralTransFormula(
-								boogie2smt, withBranchEncoders, null, lastUnmatchedCall, 
+								boogie2smt, simplify, withBranchEncoders, null, lastUnmatchedCall, 
 								correspondingReturn, codeBlocksBetween);
 						beforeFirstPendingCall.add(localTransFormula);
 						lastUnmatchedCall = null;
@@ -181,12 +182,12 @@ public class SequentialComposition extends CodeBlock {
 			assert afterLastUnmatchedCall.isEmpty();
 			// no pending call in codeBlocks
 			tfForCodeBlocks = TransFormula.sequentialComposition(
-					boogie2smt, beforeFirstPendingCall.toArray(new TransFormula[0]));
+					boogie2smt, simplify, beforeFirstPendingCall.toArray(new TransFormula[0]));
 		} else {
 			// there is a pending call in codeBlocks		
 			assert (ret == null) : "no pending call between call and return possible!";
 			CodeBlock[] codeBlocksBetween = afterLastUnmatchedCall.toArray(new CodeBlock[0]); 
-			tfForCodeBlocks = getInterproceduralTransFormula(boogie2smt, 
+			tfForCodeBlocks = getInterproceduralTransFormula(boogie2smt, simplify, 
 					withBranchEncoders, beforeFirstPendingCall.toArray(new TransFormula[0]), 
 					lastUnmatchedCall, null, codeBlocksBetween);
 		}
@@ -199,12 +200,12 @@ public class SequentialComposition extends CodeBlock {
 		} else {
 			if (ret == null) {
 				result = TransFormula.sequentialCompositionWithPendingCall(
-						boogie2smt,	beforeCall, call.getTransitionFormula(), 
+						boogie2smt, simplify, beforeCall, call.getTransitionFormula(), 
 						call.getOldVarsAssignment(), tfForCodeBlocks);
 			} else {
 				assert (beforeCall == null);
 				result = TransFormula.sequentialCompositionWithCallAndReturn(
-						boogie2smt, call.getTransitionFormula(), 
+						boogie2smt, simplify,call.getTransitionFormula(), 
 						call.getOldVarsAssignment(), tfForCodeBlocks, 
 						ret.getTransitionFormula());
 			}

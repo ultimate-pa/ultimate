@@ -405,7 +405,7 @@ public class ConversionVisitor implements IMinimizationVisitor {
 								+ " UsedVars: " + ratingValues[1]
 								+ " ComputedValue: " + ratingValues[2]);
 					}
-					return new SequentialComposition(null, null, boogie2smt,
+					return new SequentialComposition(null, null, boogie2smt, false,
 							replaceGotoEdge(gotoEdges.get(0), gotoEdges.get(1)));
 				}
 				if (edge.getRating() instanceof DisjunctVariablesRating
@@ -417,7 +417,7 @@ public class ConversionVisitor implements IMinimizationVisitor {
 							+ " UsedVars: " + ratingValues[1]
 							+ " ComputedValue: " + ratingValues[2]);
 				}
-				return new SequentialComposition(null, null, boogie2smt,
+				return new SequentialComposition(null, null, boogie2smt, false,
 						composeEdges.toArray(new CodeBlock[0]));
 			}
 			if (edge instanceof DisjunctionEdge) {

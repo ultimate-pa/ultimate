@@ -37,7 +37,7 @@ public class HoareAnnotationExtractor extends
 	public HoareAnnotationExtractor(
 			INestedWordAutomatonOldApi<CodeBlock,IPredicate> abstraction, 
 			HoareAnnotationFragments haf) {
-		m_TraversedNwa = (NestedWordAutomaton<CodeBlock, IPredicate>) abstraction;
+		m_TraversedNwa = (INestedWordAutomatonOldApi<CodeBlock, IPredicate>) abstraction;
 		m_HoareAnnotation = haf;		
 		
 		try {

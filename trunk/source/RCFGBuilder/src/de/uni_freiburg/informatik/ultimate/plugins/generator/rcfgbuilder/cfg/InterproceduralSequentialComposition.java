@@ -7,8 +7,8 @@ public class InterproceduralSequentialComposition extends SequentialComposition 
 	private static final long serialVersionUID = -1637790156358220366L;
 
 	public InterproceduralSequentialComposition(ProgramPoint source,
-			ProgramPoint target, Boogie2SMT boogie2smt, CodeBlock[] codeBlocks) {
-		super(source, target, boogie2smt, codeBlocks);
+			ProgramPoint target, Boogie2SMT boogie2smt, boolean simplify, CodeBlock[] codeBlocks) {
+		super(source, target, boogie2smt, simplify, codeBlocks);
 	}
 
 	@Override

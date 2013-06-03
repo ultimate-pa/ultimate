@@ -367,7 +367,8 @@ public class TransFormula implements Serializable {
 	 * @return the relational composition (concatenation) of transformula1 und
 	 * transformula2 
 	 */
-	public static TransFormula sequentialComposition(Boogie2SMT boogie2smt, TransFormula... transFormula) {
+	public static TransFormula sequentialComposition(Boogie2SMT boogie2smt, 
+			boolean simplify, TransFormula... transFormula) {
 		Script script = boogie2smt.getScript();
 		Map<BoogieVar, TermVariable> inVars = new HashMap<BoogieVar, TermVariable>();
 		Map<BoogieVar, TermVariable> outVars = new HashMap<BoogieVar, TermVariable>();
@@ -454,14 +455,19 @@ public class TransFormula implements Serializable {
 		}
 		
 		formula = new FormulaUnLet().unlet(formula);
-		formula = (new SimplifyDDA(script, s_Logger)).getSimplifiedTerm(formula);
+		if (simplify) {
+			formula = (new SimplifyDDA(script, s_Logger)).getSimplifiedTerm(formula);
+		}
 		removesuperfluousVariables(inVars, outVars, auxVars, formula);
 		
 		NaiveDestructiveEqualityResolution der = 
 								new NaiveDestructiveEqualityResolution(script);
 		formula = der.eliminate(auxVars, formula);
-		formula = (new SimplifyDDA(script, s_Logger)).getSimplifiedTerm(formula);
+		if (simplify) {
+			formula = (new SimplifyDDA(script, s_Logger)).getSimplifiedTerm(formula);
+		}
 		removesuperfluousVariables(inVars, outVars, auxVars, formula);
+
 		
 		LBool isSat = Util.checkSat(script, formula);
 		if (isSat == LBool.UNSAT) {
@@ -1153,7 +1159,7 @@ public class TransFormula implements Serializable {
 	 * after the call.
 	 */
 	public static TransFormula sequentialCompositionWithPendingCall(
-			Boogie2SMT boogie2smt, TransFormula[] beforeCall,
+			Boogie2SMT boogie2smt, boolean simplify, TransFormula[] beforeCall,
 			TransFormula callTf, TransFormula oldVarsAssignment,
 			TransFormula bfterCall) {
 
@@ -1163,7 +1169,7 @@ public class TransFormula implements Serializable {
 			callAndBeforeList.add(callTf);
 			TransFormula[] callAndBeforeArray = 
 					callAndBeforeList.toArray(new TransFormula[0]);
-			callAndBeforeTF = sequentialComposition(boogie2smt,	callAndBeforeArray);
+			callAndBeforeTF = sequentialComposition(boogie2smt, simplify, callAndBeforeArray);
 
 			// remove outVars that relate to scope of caller
 			// - local vars that are no inParams of callee
@@ -1193,7 +1199,7 @@ public class TransFormula implements Serializable {
 			oldAssignAndAfterList.add(0, oldVarsAssignment);
 			TransFormula[] oldAssignAndAfterArray = 
 					oldAssignAndAfterList.toArray(new TransFormula[0]);
-			oldAssignAndAfterTF = sequentialComposition(boogie2smt,
+			oldAssignAndAfterTF = sequentialComposition(boogie2smt, simplify, 
 					oldAssignAndAfterArray);
 
 			// remove inVars that relate to scope of callee
@@ -1218,7 +1224,7 @@ public class TransFormula implements Serializable {
 			}
 		}
 
-		TransFormula result = sequentialComposition(boogie2smt,
+		TransFormula result = sequentialComposition(boogie2smt, simplify,
 				callAndBeforeTF, oldAssignAndAfterTF);
 		return result;
 	}
@@ -1234,10 +1240,10 @@ public class TransFormula implements Serializable {
 	 * @param returnTf TransFormula that assigns the result of the procedure call.
 	 */
 	public static TransFormula sequentialCompositionWithCallAndReturn(
-			Boogie2SMT boogie2smt, TransFormula callTf,
+			Boogie2SMT boogie2smt, boolean simplify, TransFormula callTf,
 			TransFormula oldVarsAssignment, TransFormula procedureTf,
 			TransFormula returnTf) {
-		TransFormula result = sequentialComposition(boogie2smt, callTf,
+		TransFormula result = sequentialComposition(boogie2smt, simplify, callTf,
 				oldVarsAssignment, procedureTf, returnTf);
 		{
 			List<BoogieVar> inVarsToRemove = new ArrayList<BoogieVar>();

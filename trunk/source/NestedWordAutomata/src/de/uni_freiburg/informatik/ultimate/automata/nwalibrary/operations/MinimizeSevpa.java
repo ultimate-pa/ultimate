@@ -3020,7 +3020,9 @@ public class MinimizeSevpa<LETTER,STATE> implements IOperation<LETTER,STATE> {
 		s_Logger.info("Start testing correctness of " + operationName());
 		boolean correct = true;
 		correct &= (ResultChecker.nwaLanguageInclusion(m_operand, m_nwa, stateFactory) == null);
+		assert correct;
 		correct &= (ResultChecker.nwaLanguageInclusion(m_nwa, m_operand, stateFactory) == null);
+		assert correct;
 		if (!correct) {
 			ResultChecker.writeToFileIfPreferred(operationName() + "Failed", "", m_operand);
 		}
