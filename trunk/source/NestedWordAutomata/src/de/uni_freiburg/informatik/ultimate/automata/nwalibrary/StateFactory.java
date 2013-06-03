@@ -4,7 +4,7 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.BuchiComplementFKV;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.BuchiComplementFKVNwa;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.Condition;
 
@@ -47,7 +47,7 @@ public abstract class StateFactory<STATE> {
 		return c;
 	}
 	
-	public STATE buchiComplementFKV(BuchiComplementFKV<?, STATE>.LevelRankingState compl) {
+	public STATE buchiComplementFKV(BuchiComplementFKVNwa<?, STATE>.LevelRankingState compl) {
 		return null;
 	}
 	

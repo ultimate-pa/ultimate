@@ -5,7 +5,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.BuchiComplementFKV;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.BuchiComplementFKVNwa;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Place;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.Condition;
@@ -106,7 +106,7 @@ public class StringFactory extends StateFactory<String> {
 	}
 	
 	@Override
-	public String buchiComplementFKV(BuchiComplementFKV<?,String>.LevelRankingState compl) {
+	public String buchiComplementFKV(BuchiComplementFKVNwa<?,String>.LevelRankingState compl) {
 		
 		StringBuilder sb = new StringBuilder();
 		sb.append("{");
