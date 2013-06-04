@@ -17,6 +17,7 @@ import de.uni_freiburg.informatik.ultimate.access.WalkerOptions;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
@@ -461,7 +462,20 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 		}
 		return result;
 	}
-
+	
+	
+	private NestedWordAutomaton<CodeBlock, IPredicate> constructBuchiInterpolantAutomaton(
+			IPredicate precondition, NestedWord<CodeBlock> stem, IPredicate[] stemInterpolants, 
+			IPredicate honda, NestedWord<CodeBlock> loop, IPredicate[] loopInterpolants,
+			INestedWordAutomatonSimple<CodeBlock, IPredicate> abstraction) {
+		NestedWordAutomaton<CodeBlock, IPredicate> result =	
+				new NestedWordAutomaton<CodeBlock, IPredicate>(abstraction.getInternalAlphabet(), 
+						abstraction.getCallAlphabet(), abstraction.getReturnAlphabet(), 
+						abstraction.getStateFactory());
+		
+		return null;
+	}
+	
 	
 	Script new_Script(boolean nonlinear) {
 		// This code is essentially copied from 
