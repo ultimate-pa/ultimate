@@ -13,6 +13,7 @@ import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
@@ -115,8 +116,8 @@ public class InterpolantAutomataBuilder {
 		Set<CodeBlock> callAlphabet = new HashSet<CodeBlock>(0);
 		Set<CodeBlock> returnAlphabet = new HashSet<CodeBlock>(0);
 
-		if (abstraction instanceof NestedWordAutomaton) {
-			NestedWordAutomaton<CodeBlock, IPredicate> nwa = (NestedWordAutomaton<CodeBlock, IPredicate>) abstraction;
+		if (abstraction instanceof INestedWordAutomatonSimple) {
+			INestedWordAutomatonSimple<CodeBlock, IPredicate> nwa = (INestedWordAutomatonSimple<CodeBlock, IPredicate>) abstraction;
 			callAlphabet = nwa.getCallAlphabet();
 			returnAlphabet = nwa.getReturnAlphabet();
 		}
