@@ -87,7 +87,7 @@ function getResult() {
         values += "&" + settings;
         $.post(server, values, function (json) {
             if (json.error != null) {
-                alert("Error:\n\n"+decodeURIComponent(json.error));
+                alert("Error:\n\n"+json.error);
                 return;
             } else if(json.status == "success") {
                 var annot = new Array();
@@ -280,7 +280,7 @@ function selectExample() {
     }
     $.get(server, "example=" + encodeURIComponent(selExample), function (json) {
         if (json.exampleContent !== null) {
-            editor.getSession().setValue(decodeURIComponent(json.exampleContent));
+            editor.getSession().setValue(json.exampleContent);
             return;
         }
     }, "json");
