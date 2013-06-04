@@ -344,6 +344,7 @@ public class TraceChecker {
 						m_PredicateBuilder, newInterpolatedPositions, false);
 		m_Interpolants = nib.getNestedInterpolants();
 		IPredicate oldPrecondition = m_Precondition;
+		IPredicate oldPostcondition = m_Postcondition;
 		
 		if (!(m_Trace instanceof NestedWord)) {
 
@@ -405,12 +406,14 @@ public class TraceChecker {
 			IPredicate interpolantAtReturnPosition;
 			if (returnPosition == nestedTrace.length()-1) {
 				// special case: last position of trace is return
-				// interpolant at this position is false and not necessarily
-				// contained in m_Interpolants
-				interpolantAtReturnPosition = m_PredicateBuilder.getOrConstructPredicate(
-						m_SmtManager.getScript().term("false"), new HashSet<BoogieVar>(0), new HashSet<String>(0));
+				// interpolant at this position is the postcondition
+				// (which is stored in oldPostcondition, since m_Postcondition
+				// is already set to null.
+				interpolantAtReturnPosition = oldPostcondition;
+				assert interpolantAtReturnPosition != null;
 			} else {
-				interpolantAtReturnPosition = m_Interpolants[returnPosition]; 
+				interpolantAtReturnPosition = m_Interpolants[returnPosition];
+				assert interpolantAtReturnPosition != null;
 			}
 			LBool isSafe = tc.checkTrace(precondition, interpolantAtReturnPosition 
 					, pendingContexts, subtrace);
@@ -427,8 +430,9 @@ public class TraceChecker {
 				m_Interpolants[nonPendingCall+1+i] = interpolantSubsequence[i];
 			}			
 		}
-		
-		return m_Interpolants;
+		IPredicate[] result = m_Interpolants;
+		m_Interpolants = null;
+		return result;
 	}
 	
 	
@@ -642,10 +646,16 @@ public class TraceChecker {
 			if (equivalentToTrue(term)) {
 				Term trueTerm = m_SmtManager.getScript().term("true");
 				predicate = m_Term2Predicates.get(trueTerm);
+				if (predicate == null) {
+					predicate = m_SmtManager.newTruePredicate();
+				}
 				s_Logger.warn("Interpolant was equivalent to true");
 			} else if (equivalentToFalse(term)){
 				Term falseTerm = m_SmtManager.getScript().term("false");
 				predicate = m_Term2Predicates.get(falseTerm);
+				if (predicate == null) {
+					predicate = m_SmtManager.newFalsePredicate();
+				}
 				s_Logger.warn("Interpolant was equivalent to false");
 			} else {
 				String[] procedures = procs.toArray(new String [0]);
@@ -660,6 +670,7 @@ public class TraceChecker {
 										term, procedures, vars, closedTerm);
 			}
 			m_Term2Predicates.put(term, predicate);
+			assert predicate != null;
 			return predicate;
 		}
 		
