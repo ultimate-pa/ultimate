@@ -549,18 +549,20 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 	
 	public boolean isDownStateAfterDeadEndRemoval(STATE up, STATE down) {
 		StateContainer<LETTER, STATE> cont = m_States.get(up);
-		if (cont.getReachProp() == ReachProp.NODEADEND_AD) {
-			assert (cont.getDownStates().containsKey(down));
-			return true;
-		} else {
-			assert cont.getReachProp() == ReachProp.NODEADEND_SD;
-			ReachProp reach = cont.getDownStates().get(up);
-			if (reach == ReachProp.NODEADEND_SD) {
-				return true;
-			} else {
-				return false;
-			}
-		}
+		assert (cont.getReachProp() == ReachProp.NODEADEND_AD || cont.getReachProp() == ReachProp.NODEADEND_SD);
+		return cont.getDownStates().containsKey(down);
+//		if (cont.getReachProp() == ReachProp.NODEADEND_AD) {
+//			assert (cont.getDownStates().containsKey(down));
+//			return true;
+//		} else {
+//			assert cont.getReachProp() == ReachProp.NODEADEND_SD;
+//			ReachProp reach = cont.getDownStates().get(up);
+//			if (reach == ReachProp.NODEADEND_SD) {
+//				return true;
+//			} else {
+//				return false;
+//			}
+//		}
 	}
 	
 
