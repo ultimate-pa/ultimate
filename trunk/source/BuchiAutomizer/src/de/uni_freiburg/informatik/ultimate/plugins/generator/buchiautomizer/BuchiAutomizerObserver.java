@@ -85,6 +85,7 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 	private TraceChecker m_TraceChecker;
 	private PredicateFactoryRefinement m_StateFactoryForRefinement;
 	private BinaryStatePredicateManager m_Binarizer;
+	private RootAnnot rootAnnot;
 	
 	
 	
@@ -129,7 +130,7 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 	
 	@Override
 	public boolean process(IElement root) {
-		RootAnnot rootAnnot = ((RootNode) root).getRootAnnot();
+		rootAnnot = ((RootNode) root).getRootAnnot();
 		TAPreferences taPrefs = rootAnnot.getTaPrefs();
 		m_graphroot = root;
 		
@@ -393,6 +394,10 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 	
 	private boolean checkResult(SupportingInvariant si, NestedWord<CodeBlock> stem, NestedWord<CodeBlock> loop) {
 		boolean result = true;
+		m_TraceChecker = new TraceChecker(smtManager,
+				rootAnnot.getModifiedVars(),
+				rootAnnot.getEntryNodes(),
+				null);
 		IPredicate siPred = m_Binarizer.supportingInvariant2Predicate(si);
 		if (isTrue(siPred)) {
 			siPred = m_TruePredicate;
