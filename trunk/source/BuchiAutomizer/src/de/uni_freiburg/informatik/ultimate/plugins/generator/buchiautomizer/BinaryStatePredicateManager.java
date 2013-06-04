@@ -7,6 +7,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.apache.log4j.Logger;
+
+import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.FormulaUnLet;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -14,14 +17,19 @@ import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
+import de.uni_freiburg.informatik.ultimate.logic.simplification.SimplifyDDA;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rankingfunctions.SupportingInvariant;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rankingfunctions.functions.RankingFunction;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager.TermVarsProc;
 
 public class BinaryStatePredicateManager {
+	
+	private static Logger s_Logger = 
+			UltimateServices.getInstance().getLogger(Activator.s_PLUGIN_ID);
 	
 	public final static String s_SeedSuffix = "_seed";
 	
@@ -39,6 +47,7 @@ public class BinaryStatePredicateManager {
 	public IPredicate supportingInvariant2Predicate(SupportingInvariant si) {
 		Set<BoogieVar> coefficients = si.getCoefficients().keySet();
 		Term formula = si.asTerm(m_SmtManager.getScript(), m_SmtManager.getBoogieVar2SmtVar());
+		formula = (new SimplifyDDA(m_Script, s_Logger)).getSimplifiedTerm(formula);
 		TermVarsProc termVarsProc = m_SmtManager.computeTermVarsProc(formula);
 		assert termVarsProc.getVars().equals(coefficients);
 		

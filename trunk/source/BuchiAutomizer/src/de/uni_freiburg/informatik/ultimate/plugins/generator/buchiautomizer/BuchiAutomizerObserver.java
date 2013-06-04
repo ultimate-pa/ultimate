@@ -25,6 +25,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.NestedLa
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.DifferenceDD;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.visualization.AutomatonTransition.Transition;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
+import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.LoggingScript;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -379,19 +380,35 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 	}
 			
 			
-	
+	private static boolean isTrue(IPredicate pred) {
+		Term term = pred.getFormula();
+		if (term instanceof ApplicationTerm) {
+			ApplicationTerm appTerm = (ApplicationTerm) term;
+			if (appTerm.getFunction().getName().equals("true")) {
+				return true;
+			}
+		}
+		return false;
+	}
 	
 	private boolean checkResult(SupportingInvariant si, NestedWord<CodeBlock> stem, NestedWord<CodeBlock> loop) {
 		boolean result = true;
 		IPredicate siPred = m_Binarizer.supportingInvariant2Predicate(si);
+		if (isTrue(siPred)) {
+			siPred = m_TruePredicate;
+		}
 		LBool stemCheck = m_TraceChecker.checkTrace(m_TruePredicate, siPred, stem);
-		m_TraceChecker.forgetTrace();
-		if (stemCheck != LBool.UNSAT) {
-			result = false;
+		if (stemCheck == LBool.UNSAT) {
+			IPredicate[] interpolants = m_TraceChecker.getInterpolants(new TraceChecker.AllIntegers());
+			interpolants.toString();
+		} else {
+			result = false;			
 		}
 		LBool loopCheck = m_TraceChecker.checkTrace(siPred, siPred, stem);
-		m_TraceChecker.forgetTrace();
-		if (loopCheck != LBool.UNSAT) {
+		if (loopCheck == LBool.UNSAT) {
+			IPredicate[] interpolants = m_TraceChecker.getInterpolants(new TraceChecker.AllIntegers());
+			interpolants.toString();
+		} else {
 			result = false;
 		}
 		return result;
