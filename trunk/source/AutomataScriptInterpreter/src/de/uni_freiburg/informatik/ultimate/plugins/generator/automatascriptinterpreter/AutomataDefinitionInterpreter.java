@@ -128,11 +128,14 @@ public class AutomataDefinitionInterpreter {
 			}
 		}
 		
-		for (Entry<Pair<String, String>, Pair<String, Set<String>>> entry : nwa.getReturnTransitions().entrySet()) {
-			for (String succ : entry.getValue().right) {
-				nw.addReturnTransition(entry.getKey().left, entry.getKey().right, entry.getValue().left, succ);
+		for ( String linPred  : nwa.getReturnTransitions().keySet()) {
+			for (String hierPred : nwa.getReturnTransitions().get(linPred).keySet()) {
+				for (String letter : nwa.getReturnTransitions().get(linPred).get(hierPred).keySet()) {
+					for (String succ : nwa.getReturnTransitions().get(linPred).get(hierPred).get(letter)) {
+						nw.addReturnTransition(linPred, hierPred, letter, succ);
+					}
+				}
 			}
-			
 		}
 		m_Automata.put(nwa.getName(), nw);
 		

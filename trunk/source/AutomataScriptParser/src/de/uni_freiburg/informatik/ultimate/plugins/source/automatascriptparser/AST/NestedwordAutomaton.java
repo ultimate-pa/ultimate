@@ -35,7 +35,7 @@ public class NestedwordAutomaton extends Automaton {
 	
 	private Map<Pair<String, String>, Set<String>> m_InternalTransitions;
 	private Map<Pair<String, String>, Set<String>> m_CallTransitions;
-	private Map<Pair<String, String>, Pair<String, Set<String>>> m_ReturnTransitions;
+	private Map<String, Map<String, Map<String, Set<String>>>> m_ReturnTransitions;
 	
 	public NestedwordAutomaton(String name) {
 		m_CallAlphabet = new ArrayList<String>();
@@ -46,7 +46,7 @@ public class NestedwordAutomaton extends Automaton {
 		m_FinalStates = new ArrayList<String>();
 		m_InternalTransitions = new HashMap<Pair<String,String>, Set<String>>();
 		m_CallTransitions = new HashMap<Pair<String,String>, Set<String>>();
-		m_ReturnTransitions = new HashMap<Pair<String, String>, Pair<String, Set<String>>>();
+		m_ReturnTransitions = new HashMap<String, Map<String, Map<String, Set<String>>>>();
 		m_Name = name;
 		
 	}
@@ -123,7 +123,7 @@ public class NestedwordAutomaton extends Automaton {
 			this.m_CallTransitions = callTransitions.getTransitions();
 	}
 
-	public Map<Pair<String, String>, Pair<String, Set<String>>> getReturnTransitions() {
+	public Map<String, Map<String, Map<String, Set<String>>>> getReturnTransitions() {
 		return m_ReturnTransitions;
 	}
 

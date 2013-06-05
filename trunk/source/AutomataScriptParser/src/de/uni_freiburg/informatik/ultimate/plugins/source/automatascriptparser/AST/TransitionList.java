@@ -71,6 +71,11 @@ public class TransitionList extends AtsASTNode {
 			return TransitionList.this;
 		}
 		
+		@Override
+		public String toString() {
+			return "(" + this.left + "," + this.right + ")";
+		}
+		
 		
 	}
 
@@ -79,13 +84,13 @@ public class TransitionList extends AtsASTNode {
 	 */
 	private static final long serialVersionUID = 4468320445354864058L;
 	private Map<Pair<String, String> , Set<String>> m_Transitions;
-	private Map<Pair<String, String>, Pair<String, Set<String>>> m_ReturnTransitions;
+	private Map<String, Map<String, Map<String, Set<String>>>> m_ReturnTransitions;
 	private List<PetriNetTransition> m_netTransitions;
 	
 	
 	public TransitionList() {
 		m_Transitions = new HashMap<Pair<String,String>, Set<String>>();
-		m_ReturnTransitions = new HashMap<Pair<String, String>, Pair<String, Set<String>>>();
+		m_ReturnTransitions = new HashMap<String, Map<String, Map<String, Set<String>>>>();
 		m_netTransitions = new ArrayList<PetriNetTransition>();
 	}
 	
@@ -117,18 +122,22 @@ public class TransitionList extends AtsASTNode {
 	 * @param toState
 	 */
 	public void addTransition(String fromState, String returnState, String label, String toState) {
-		Pair<String, String> predHierPair = new Pair<String, String>(fromState, returnState);
-		if (m_ReturnTransitions.containsKey(predHierPair)) {
-			Pair<String, Set<String>> letter2succs = m_ReturnTransitions.get(predHierPair);
-			letter2succs.right.add(toState);
-			m_ReturnTransitions.put(predHierPair, letter2succs);
-		} else {
-			Set<String> succs = new HashSet<String>();
-			succs.add(toState);
-			Pair<String, Set<String>> letter2succs = new Pair<String, Set<String>>(label, succs);
-			m_ReturnTransitions.put(predHierPair, letter2succs);
+		Map<String, Map<String, Set<String>>> hier2letter2succs = m_ReturnTransitions.get(fromState);
+		if (hier2letter2succs == null) {
+			hier2letter2succs = new HashMap<String, Map<String, Set<String>>>();
+			m_ReturnTransitions.put(fromState, hier2letter2succs);
 		}
-		
+		Map<String, Set<String>> letter2succs = hier2letter2succs.get(returnState);
+		if (letter2succs == null) {
+			letter2succs = new HashMap<String, Set<String>>();
+			hier2letter2succs.put(returnState, letter2succs);
+		}
+		Set<String> succs = letter2succs.get(label);
+		if (succs == null) {
+			succs = new HashSet<String>();
+			letter2succs.put(label, succs);
+		}
+		succs.add(toState);
 	}
 	
 	public void addTransition(IdentifierList idList) {
@@ -144,7 +153,7 @@ public class TransitionList extends AtsASTNode {
 		return m_Transitions;
 	}
 	
-	public Map<Pair<String, String>, Pair<String, Set<String>>> getReturnTransitions() {
+	public Map<String, Map<String, Map<String, Set<String>>>> getReturnTransitions() {
 		return m_ReturnTransitions;
 	}
 	
