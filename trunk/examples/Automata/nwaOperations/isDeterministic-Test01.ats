@@ -1,0 +1,11 @@
+// Date: 05.06.2013
+// Author: heizmann@informatik.uni-freiburg.de
+
+
+parseAutomata("../nwa/crafted.ats");
+
+//print(isDeterministic(sameCalldifferentReturns));
+ assert(isDeterministic(sameCalldifferentReturns));
+ assert(isDeterministic(wBenjamin));
+ assert(isDeterministic(pendingReturnNwa));
+ assert(isDeterministic(bugBfsEmptinessLowPriorityCallQueue));
