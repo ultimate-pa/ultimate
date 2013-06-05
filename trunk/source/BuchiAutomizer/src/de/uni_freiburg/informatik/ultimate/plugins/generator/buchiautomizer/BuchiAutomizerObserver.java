@@ -23,6 +23,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.BuchiIsEmpty;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.NestedLassoRun;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.NestedLassoWord;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.DifferenceDD;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.visualization.AutomatonTransition.Transition;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
@@ -90,24 +91,7 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 	
 	
 	
-	private LBool checkFeasibility(NestedLassoRun<CodeBlock, IPredicate> ctx, RootAnnot rootAnnot) {
-		NestedRun<CodeBlock, IPredicate> stem = ctx.getStem();
-		s_Logger.info("Stem: " + stem);
-		NestedRun<CodeBlock, IPredicate> loop = ctx.getLoop();
-		s_Logger.info("Loop: " + loop);
-		m_Counterexample = stem.concatenate(loop);
 
-		m_TraceChecker = new TraceChecker(smtManager,
-				rootAnnot.getModifiedVars(),
-				rootAnnot.getEntryNodes(),
-				null);
-		m_TruePredicate = smtManager.newTruePredicate();
-		m_FalsePredicate = smtManager.newFalsePredicate();
-
-		LBool feasibility = m_TraceChecker.checkTrace(
-				m_TruePredicate, m_FalsePredicate, m_Counterexample.getWord());
-		return feasibility;
-	}
 	
 	
 	protected void constructInterpolantAutomaton() {
@@ -168,36 +152,16 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 		UltimateServices.getInstance().setDeadline(
 				System.currentTimeMillis() + timoutMilliseconds);
 		
-		CFG2NestedWordAutomaton cFG2NestedWordAutomaton = 
-				new CFG2NestedWordAutomaton(rootAnnot.getTaPrefs(),smtManager);
-			PredicateFactory defaultStateFactory = new PredicateFactory(
-					smtManager,
-					rootAnnot.getTaPrefs());
-		Collection<ProgramPoint> allpp = new HashSet<ProgramPoint>();
-		for (Map<String, ProgramPoint> test : rootAnnot.getProgramPoints().values()) {
-			allpp.addAll(test.values());
-		}
-		m_Abstraction = cFG2NestedWordAutomaton.getNestedWordAutomaton(
-				((RootNode) root), defaultStateFactory, allpp);
-		
-		BuchiIsEmpty<CodeBlock, IPredicate> ec;
-		try {
-			ec = new BuchiIsEmpty<CodeBlock, IPredicate>(m_Abstraction);
-		} catch (OperationCanceledException e2) {
-			s_Logger.info("Statistics: Timout");
-			return false;
-		}
-		NestedLassoRun<CodeBlock, IPredicate> ctx = ec.getAcceptingNestedLassoRun();
-		if (ctx == null) {
-			s_Logger.warn("Statistics: Trivially terminating");
-			return false;
-		}
+
+		BuchiIsEmpty<CodeBlock, IPredicate> ec = null;
+
+		NestedLassoRun<CodeBlock, IPredicate> ctx = null;
 		NestedWord<CodeBlock> stem = ctx.getStem().getWord();
 		s_Logger.info("Stem: " + stem);
 		NestedWord<CodeBlock> loop = ctx.getLoop().getWord();
 		s_Logger.info("Loop: " + loop);
 		m_Iteration = 0;
-		LBool feasibility = checkFeasibility(ctx, rootAnnot);
+		LBool feasibility = null;
 		while (feasibility == LBool.UNSAT) {
 			AllIntegers allInt = new TraceChecker.AllIntegers();
 			m_Interpolants = m_TraceChecker.getInterpolants(allInt);
@@ -236,7 +200,7 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 			loop = ctx.getLoop().getWord();
 			s_Logger.info("Loop: " + loop);
 			m_Iteration++;
-			feasibility = checkFeasibility(ctx, rootAnnot);
+//			feasibility = checkFeasibility(ctx, rootAnnot);
 		}
 		m_TraceChecker.forgetTrace();
 
