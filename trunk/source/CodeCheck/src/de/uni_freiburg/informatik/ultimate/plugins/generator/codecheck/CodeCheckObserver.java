@@ -140,6 +140,15 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 		
 		ImpRootNode originalGraphCopy = copyGraph(m_graphRoot);
 		
+		 /* testing copy graph
+		
+		m_graphRoot.addOutgoingNode(originalGraphCopy, new DummyCodeBlock());
+		originalGraphCopy.addIncomingNode(m_graphRoot);
+		
+		if(true)
+			return false;
+		
+		// */
 		int noOfProcedures = originalGraphCopy.getOutgoingNodes().size();
 		
 		for (int procID = 0; procID < noOfProcedures; ++procID) {
@@ -230,10 +239,10 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 			newNodes[i][0] = new AnnotatedProgramPoint(oldNode, conjugatePredicates(oldNode.getPredicate(), interpolant[i]));	
 			newNodes[i][1] = new AnnotatedProgramPoint(oldNode, conjugatePredicates(oldNode.getPredicate(), negatePredicate(interpolant[i])));
 		}
-		List<AnnotatedProgramPoint> predecessorNodes = oldNode.getIncomingNodes();
-		List<AnnotatedProgramPoint> successorNodes = oldNode.getOutgoingNodes();
-
-        // {{{
+		//List<AnnotatedProgramPoint> predecessorNodes = oldNode.getIncomingNodes();
+		AnnotatedProgramPoint[] predecessorNodes = oldNode.getIncomingNodes().toArray(new AnnotatedProgramPoint[]{});
+		
+		System.out.println(predecessorNodes);
 		for (AnnotatedProgramPoint predecessorNode : predecessorNodes) {
 			if (predecessorNode != oldNode) {
 				CodeBlock label = predecessorNode.getOutgoingEdgeLabel(oldNode);
@@ -248,13 +257,18 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 				}
 				System.out.println("Added Edge: " + label);
 				predecessorNode.removeOutgoingNode(oldNode);
+				oldNode.removeIncomingNode(predecessorNode);
 			}
 		}
-        // }}}
 		
-        // {{{
+		//List<AnnotatedProgramPoint> successorNodes = oldNode.getOutgoingNodes();
+		
+		AnnotatedProgramPoint[] successorNodes = oldNode.getOutgoingNodes().toArray(new AnnotatedProgramPoint[]{});
+		
+		System.err.println(successorNodes);
 		for (AnnotatedProgramPoint successorNode : successorNodes) {
 			if (successorNode != oldNode) {
+				System.err.println("Vor : " + successorNode.getIncomingNodes());
 				CodeBlock label = oldNode.getOutgoingEdgeLabel(successorNode);
 				boolean isReturn = label instanceof Return;
 				System.out.println("Adding Edge: " + label);
@@ -266,31 +280,32 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 							if (isReturn) {
 								HashSet <AnnotatedProgramPoint> hyper = successorNode.getCallPredsOfOutgoingReturnTarget(oldNode);
 								for (Iterator <AnnotatedProgramPoint> it = hyper.iterator(); it.hasNext(); ) {
-									AnnotatedProgramPoint src = it.next();
-									if (nodesClones.containsKey(src)) {
-										for (Iterator <AnnotatedProgramPoint> clone = nodesClones.get(src).iterator(); clone.hasNext(); ) {
-											successorNode.addOutGoingReturnCallPred(oldNode, clone.next());
+									AnnotatedProgramPoint callPoint = it.next();
+									if (nodesClones.containsKey(callPoint)) {
+										for (Iterator <AnnotatedProgramPoint> clone = nodesClones.get(callPoint).iterator(); clone.hasNext(); ) {
+											successorNode.addOutGoingReturnCallPred(newNode, clone.next());
 										}
-										successorNode.removeIncomingNode(src);
+										successorNode.removeOutgoingReturnCallPred(callPoint, oldNode);
 									}
 								}
 							}
 						}
 					}
 				}
+				System.err.println("Nach : " + successorNode.getIncomingNodes());
 				System.out.println("Added Edge: " + label);
 				successorNode.removeIncomingNode(oldNode);
+				oldNode.removeOutgoingNode(successorNode);
 			}
 		}
-        // }}}
 		
 		boolean selfLoop = oldNode.getSuccessors().contains(oldNode);
 		
-        // {{{
 		if (selfLoop) {
 			CodeBlock label = oldNode.getOutgoingEdgeLabel(oldNode);
 			for (int i = 0; i < interpolantsCount; ++i) {
-				for (int j = 0; j < interpolantsCount; ++j) {
+				for (int j = 0; j < interpolantsCount; ++j)
+				//int j = i;
 					// FIXME: Check if complete association required.
 					for (AnnotatedProgramPoint source : newNodes[i]) {
 						for (AnnotatedProgramPoint destination : newNodes[j]) {
@@ -300,10 +315,9 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 							}
 						}
 					}
-				}
+				
 			}
 		}
-        // }}}
 		System.out.println("Splitted node : " + oldNode.toString());
 		
 		nodesClones.put(oldNode, new ArrayList <AnnotatedProgramPoint>());
