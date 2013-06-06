@@ -84,20 +84,21 @@ public class Difference<LETTER,STATE> implements IOperation<LETTER,STATE>, IOpWi
 	}
 	
 	private void computateDifference(boolean finalIsTrap) throws AutomataLibraryException {
-//		if (m_StateDeterminizer instanceof PowersetDeterminizer) {
-//			TotalizeNwa<LETTER, STATE> sndTotalized = new TotalizeNwa<LETTER, STATE>(m_SndOperand, m_StateFactory);
-//			ComplementDeterministicNwa<LETTER,STATE> sndComplemented = new ComplementDeterministicNwa<LETTER, STATE>(sndTotalized);
-//			IntersectNwa<LETTER, STATE> intersect = new IntersectNwa<LETTER, STATE>(m_FstOperand, sndComplemented, m_StateFactory, finalIsTrap);
-//			NestedWordAutomatonReachableStates<LETTER, STATE> result = new NestedWordAutomatonReachableStates<LETTER, STATE>(intersect);
-//			if (!sndTotalized.nonDeterminismInInputDetected()) {
-//				m_SndComplemented = sndComplemented;
-//				m_Intersect = intersect;
-//				m_Result = result;
-//				return;
-//			} else {
-//			s_Logger.warn("Subtrahend was not deterministic. Recomputing result with determinization");
-//			}
-//		}
+		if (m_StateDeterminizer instanceof PowersetDeterminizer) {
+			TotalizeNwa<LETTER, STATE> sndTotalized = new TotalizeNwa<LETTER, STATE>(m_SndOperand, m_StateFactory);
+			ComplementDeterministicNwa<LETTER,STATE> sndComplemented = new ComplementDeterministicNwa<LETTER, STATE>(sndTotalized);
+			IntersectNwa<LETTER, STATE> intersect = new IntersectNwa<LETTER, STATE>(m_FstOperand, sndComplemented, m_StateFactory, finalIsTrap);
+			NestedWordAutomatonReachableStates<LETTER, STATE> result = new NestedWordAutomatonReachableStates<LETTER, STATE>(intersect);
+			if (!sndTotalized.nonDeterminismInInputDetected()) {
+				m_SndComplemented = sndComplemented;
+				m_Intersect = intersect;
+				m_Result = result;
+				s_Logger.warn("Subtrahend was deterministic. Have not used determinization.");
+				return;
+			} else {
+			s_Logger.warn("Subtrahend was not deterministic. Recomputing result with determinization.");
+			}
+		}
 		m_SndDeterminized = new DeterminizeNwa<LETTER,STATE>(m_SndOperand,m_StateDeterminizer,m_StateFactory);
 		m_SndComplemented = new ComplementDeterministicNwa<LETTER, STATE>(m_SndDeterminized);
 		m_Intersect = new IntersectNwa<LETTER, STATE>(m_FstOperand, m_SndComplemented, m_StateFactory, finalIsTrap);
