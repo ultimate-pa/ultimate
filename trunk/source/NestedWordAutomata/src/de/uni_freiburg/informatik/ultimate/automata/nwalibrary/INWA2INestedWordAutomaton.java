@@ -93,6 +93,11 @@ public class INWA2INestedWordAutomaton<LETTER, STATE> implements
 			LETTER letter, STATE hier) {
 		return m_Nwa.returnSummarySuccessor(letter, hier);
 	}
+	
+	public Iterable<SummaryReturnTransition<LETTER, STATE>> returnSummarySuccessor(
+			STATE hier) {
+		return m_Nwa.returnSummarySuccessor(hier);
+	}
 
 	public Iterable<IncomingInternalTransition<LETTER, STATE>> internalPredecessors(
 			LETTER letter, STATE succ) {

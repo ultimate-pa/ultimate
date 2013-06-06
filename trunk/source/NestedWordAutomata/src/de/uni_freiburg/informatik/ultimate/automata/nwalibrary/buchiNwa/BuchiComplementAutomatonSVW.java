@@ -1007,4 +1007,11 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE>
 		return new ArrayList<OutgoingReturnTransition<LETTER, STATE>>();
 	}
 
+	@Override
+	public Iterable<SummaryReturnTransition<LETTER, STATE>> returnSummarySuccessor(
+			STATE hier) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
 }

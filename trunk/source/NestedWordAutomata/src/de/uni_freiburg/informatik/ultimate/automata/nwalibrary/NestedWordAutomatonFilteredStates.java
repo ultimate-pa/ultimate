@@ -1,5 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -128,37 +129,65 @@ public class NestedWordAutomatonFilteredStates<LETTER, STATE> implements
 
 	@Override
 	public Collection<LETTER> lettersInternal(STATE state) {
-		return m_Nwa.lettersInternal(state);
+		Collection<LETTER> letters = new ArrayList<LETTER>();
+		for (OutgoingInternalTransition<LETTER, STATE> outTrans : internalSuccessors(state)) {
+			letters.add(outTrans.getLetter());
+		}
+		return letters;
 	}
 
 	@Override
 	public Collection<LETTER> lettersCall(STATE state) {
-		return m_Nwa.lettersCall(state);
+		Collection<LETTER> letters = new ArrayList<LETTER>();
+		for (OutgoingCallTransition<LETTER, STATE> outTrans : callSuccessors(state)) {
+			letters.add(outTrans.getLetter());
+		}
+		return letters;
 	}
 
 	@Override
 	public Collection<LETTER> lettersReturn(STATE state) {
-		return m_Nwa.lettersReturn(state);
+		Collection<LETTER> letters = new ArrayList<LETTER>();
+		for (OutgoingReturnTransition<LETTER, STATE> outTrans : returnSuccessors(state)) {
+			letters.add(outTrans.getLetter());
+		}
+		return letters;
 	}
 
 	@Override
 	public Collection<LETTER> lettersInternalIncoming(STATE state) {
-		return m_Nwa.lettersInternalIncoming(state);
+		Collection<LETTER> letters = new ArrayList<LETTER>();
+		for (IncomingInternalTransition<LETTER, STATE> outTrans : internalPredecessors(state)) {
+			letters.add(outTrans.getLetter());
+		}
+		return letters;
 	}
 
 	@Override
 	public Collection<LETTER> lettersCallIncoming(STATE state) {
-		return m_Nwa.lettersCallIncoming(state);
+		Collection<LETTER> letters = new ArrayList<LETTER>();
+		for (IncomingCallTransition<LETTER, STATE> outTrans : callPredecessors(state)) {
+			letters.add(outTrans.getLetter());
+		}
+		return letters;
 	}
 
 	@Override
 	public Collection<LETTER> lettersReturnIncoming(STATE state) {
-		return m_Nwa.lettersReturnIncoming(state);
+		Collection<LETTER> letters = new ArrayList<LETTER>();
+		for (IncomingReturnTransition<LETTER, STATE> outTrans : returnPredecessors(state)) {
+			letters.add(outTrans.getLetter());
+		}
+		return letters;
 	}
 
 	@Override
 	public Collection<LETTER> lettersReturnSummary(STATE state) {
-		return m_Nwa.lettersReturnSummary(state);
+		Collection<LETTER> letters = new ArrayList<LETTER>();
+		for (SummaryReturnTransition<LETTER, STATE> outTrans : returnSummarySuccessor(state)) {
+			letters.add(outTrans.getLetter());
+		}
+		return letters;
 	}
 
 	@Override
@@ -392,6 +421,17 @@ public class NestedWordAutomatonFilteredStates<LETTER, STATE> implements
 			}
 		};
 		return new FilteredIterable<SummaryReturnTransition<LETTER, STATE>>(m_Nwa.returnSummarySuccessor(letter, hier), predicate);
+	}
+	
+	@Override
+	public Iterable<SummaryReturnTransition<LETTER, STATE>> returnSummarySuccessor(STATE hier) {
+		Predicate<SummaryReturnTransition<LETTER, STATE>> predicate = new Predicate<SummaryReturnTransition<LETTER,STATE>>() {
+			@Override
+			public boolean evaluate(SummaryReturnTransition<LETTER, STATE> trans) {
+				return m_RemainingStates.evaluate(trans.getSucc()) && m_RemainingStates.evaluate(trans.getLinPred());
+			}
+		};
+		return new FilteredIterable<SummaryReturnTransition<LETTER, STATE>>(m_Nwa.returnSummarySuccessor(hier), predicate);
 	}
 	
 	@Override

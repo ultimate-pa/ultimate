@@ -381,9 +381,7 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 	public Iterable<SummaryReturnTransition<LETTER, STATE>> returnSummarySuccessor(final STATE hier) {
 		return new Iterable<SummaryReturnTransition<LETTER, STATE>>() {
 			/**
-			 * Iterates over all IncomingReturnTransition of succ.
-			 * Iterates over all incoming return letters and uses the 
-			 * iterators returned by returnPredecessors(letter, succ)
+			 * Iterates over all SummaryReturnTransition of hier.
 			 */
 			@Override
 			public Iterator<SummaryReturnTransition<LETTER, STATE>> iterator() {

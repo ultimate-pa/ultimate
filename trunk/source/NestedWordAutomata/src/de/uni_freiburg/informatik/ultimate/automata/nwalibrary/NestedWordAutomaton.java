@@ -1,5 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -273,7 +274,6 @@ public class NestedWordAutomaton<LETTER,STATE> implements INestedWordAutomatonOl
 		return map == null ? m_EmptySetOfLetters : map.keySet();
 	}
 	
-	
 	@Override
 	public Collection<STATE> succInternal(STATE state, LETTER letter) {
 		assert contains(state);
@@ -399,6 +399,71 @@ public class NestedWordAutomaton<LETTER,STATE> implements INestedWordAutomatonOl
 			}
 		}
 		return result;
+	}
+	
+	@Override
+	public Iterable<SummaryReturnTransition<LETTER, STATE>> returnSummarySuccessor(final STATE hier) {
+		return new Iterable<SummaryReturnTransition<LETTER, STATE>>() {
+			/**
+			 * Iterates over all SummaryReturnTransition of hier.
+			 */
+			@Override
+			public Iterator<SummaryReturnTransition<LETTER, STATE>> iterator() {
+				Iterator<SummaryReturnTransition<LETTER, STATE>> iterator = 
+						new Iterator<SummaryReturnTransition<LETTER, STATE>>() {
+					Iterator<LETTER> m_LetterIterator;
+					LETTER m_CurrentLetter;
+					Iterator<SummaryReturnTransition<LETTER, STATE>> m_CurrentIterator;
+					{
+						m_LetterIterator = lettersReturnSummary(hier).iterator();
+						nextLetter();
+					}
+
+					private void nextLetter() {
+						if (m_LetterIterator.hasNext()) {
+							do {
+								m_CurrentLetter = m_LetterIterator.next();
+								m_CurrentIterator = returnSummarySuccessor(
+										m_CurrentLetter, hier).iterator();
+							} while (!m_CurrentIterator.hasNext()
+									&& m_LetterIterator.hasNext());
+							if (!m_CurrentIterator.hasNext()) {
+								m_CurrentLetter = null;
+								m_CurrentIterator = null;
+							}
+						} else {
+							m_CurrentLetter = null;
+							m_CurrentIterator = null;
+						}
+					}
+
+					@Override
+					public boolean hasNext() {
+						return m_CurrentLetter != null;
+					}
+
+					@Override
+					public SummaryReturnTransition<LETTER, STATE> next() {
+						if (m_CurrentLetter == null) {
+							throw new NoSuchElementException();
+						} else {
+							SummaryReturnTransition<LETTER, STATE> result = 
+									m_CurrentIterator.next();
+							if (!m_CurrentIterator.hasNext()) {
+								nextLetter();
+							}
+							return result;
+						}
+					}
+
+					@Override
+					public void remove() {
+						throw new UnsupportedOperationException();
+					}
+				};
+				return iterator;
+			}
+		};
 	}
 	
 	
@@ -2630,7 +2695,6 @@ public class NestedWordAutomaton<LETTER,STATE> implements INestedWordAutomatonOl
 	public String toString() {
 		return (new AtsDefinitionPrinter<String,String>("nwa", this)).getDefinitionAsString();
 	}
-
 
 
 
