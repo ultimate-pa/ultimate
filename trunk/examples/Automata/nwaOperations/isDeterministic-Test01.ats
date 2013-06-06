@@ -4,8 +4,38 @@
 
 parseAutomata("../nwa/crafted.ats");
 
-//print(isDeterministic(sameCalldifferentReturns));
- assert(isDeterministic(sameCalldifferentReturns));
- assert(isDeterministic(wBenjamin));
- assert(isDeterministic(pendingReturnNwa));
- assert(isDeterministic(bugBfsEmptinessLowPriorityCallQueue));
+assert(isDeterministic(sameCalldifferentReturns));
+assert(!isDeterministic(wBenjamin));
+assert(isDeterministic(pendingReturnNwa));
+assert(!isDeterministic(bugBfsEmptinessLowPriorityCallQueue));
+
+
+parseAutomata("../BuchiAutomata/simpleBuchiAutomata.ats");
+
+assert(!isDeterministic(finitelyManyA));
+assert(!isDeterministic(finitelyManyB));
+assert(isDeterministic(infinitelyManyA));
+assert(isDeterministic(infinitelyManyB));
+assert(isDeterministic(AfollowedByB));
+assert(isDeterministic(all));
+assert(!isDeterministic(allTwoState));
+
+
+parseAutomata("../BuchiNwa/simpleBuchiNwa.ats");
+
+assert(!isDeterministic(finitelyManyAInEachContext));
+assert(isDeterministic(infinitelyManyAWithCallReturn));
+
+
+parseAutomata("../nwa/severalCallReturnNeeded.ats");
+
+assert(isDeterministic(all));
+assert(isDeterministic(a1));
+assert(!isDeterministic(callRet));
+
+
+parseAutomata("../nwa/ProgramVerification.ats");
+
+assert(isDeterministic(controlAutomaton));
+assert(isDeterministic(interpolantAutomaton1));
+
