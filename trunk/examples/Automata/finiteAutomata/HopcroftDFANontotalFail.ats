@@ -8,7 +8,7 @@
 // For non-total automaton we therefor use a modification where we put not
 // only the smaller of two sets into the worklist but both.
 
-print(minimizeSevpa(nwa));
+print(minimizeSevpa(removeUnreachable(nwa)));
 
 NestedWordAutomaton nwa = (
 	callAlphabet = {},
