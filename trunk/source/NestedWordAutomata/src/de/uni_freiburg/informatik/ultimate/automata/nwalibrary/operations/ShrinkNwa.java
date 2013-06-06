@@ -68,6 +68,8 @@ import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
  * <hashCode> overwrite for EquivalenceClass?
  * 
  * <finalize> remove all unnecessary objects in the end
+ * 
+ * <statistics> remove in the end
  */
 
 /**
@@ -99,6 +101,11 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	
 	// TODO<debug>
 	private final boolean DEBUG = false;
+	
+	// TODO<statistics>
+	private final boolean STATISTICS = false;
+	private int m_splitsWithChange = 0;
+	private int m_splitsWithoutChange = 0;
 	
 	/**
 	 * StateFactory used for the construction of new states. This is _NOT_ the
@@ -152,6 +159,13 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 		s_Logger.info(startMessage());
 		minimize(isFiniteAutomaton, equivalenceClasses);
 		s_Logger.info(exitMessage());
+		
+		if (STATISTICS) {
+			System.out.println("positive splits: " + m_splitsWithChange);
+			System.out.println("negative splits: " + m_splitsWithoutChange);
+			System.out.println("quote (p/n): " +
+					(m_splitsWithChange / Math.max(m_splitsWithoutChange, 1)));
+		}
 	}
 	
 	// --- [start] main methods --- //
@@ -226,7 +240,7 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 				// return predecessors
 				if (m_workListRet.hasNext()) {
 					if (DEBUG)
-						System.out.println("\n-- detailed return search");
+						System.out.println("\n-- return search");
 					EquivalenceClass a = m_workListRet.next();
 					
 					splitReturnPredecessors(a);
@@ -885,12 +899,17 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 					ec.m_states = ec.m_intersection;
 					if (DEBUG)
 						System.out.println("EC was skipped " + ec);
+					++m_splitsWithoutChange;
 					
 					// reset equivalence class
 					ec.reset();
 				}
 				// do a split
 				else {
+					if (DEBUG)
+						System.out.println("EC was split " + ec);
+					++m_splitsWithChange;
+					
 					splitOccurred = true;
 					final Set<STATE> intersection = ec.m_intersection;
 					final EquivalenceClass newEc =
@@ -911,9 +930,6 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 					
 					// reset equivalence class (before 
 					ec.reset();
-					
-					if (DEBUG)
-						System.out.println("EC was split " + ec);
 				}
 			}
 			
@@ -1108,10 +1124,9 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	}
 	
 	/**
-	 * This class implements the work list for detailed predecessor return
-	 * splits.
+	 * This class implements the work list for predecessor return splits.
 	 * 
-	 * TODO<detailedReturnSplit> could be improved:
+	 * TODO<returnSplit> could be improved:
 	 *                           only classes with returns must be inserted
 	 */
 	private class WorkListRet extends AWorkList {
@@ -1120,7 +1135,7 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 			final EquivalenceClass ec = m_queue.poll();
 			ec.m_isInWorkListRet = false;
 			if (DEBUG)
-				System.out.println("\npopping from detailed return WL: " + ec);
+				System.out.println("\npopping from return WL: " + ec);
 			return ec;
 		}
 		
@@ -1128,7 +1143,7 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 		public void add(final EquivalenceClass ec) {
 			assert (ec.m_isInWorkListRet);
 			if (DEBUG)
-				System.out.println("adding of detailed return WL: " + ec);
+				System.out.println("adding of return WL: " + ec);
 			super.add(ec);
 		}
 	}

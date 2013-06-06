@@ -44,6 +44,7 @@ public class MinimizeSevpa<LETTER,STATE> implements IOperation<LETTER,STATE> {
 			UltimateServices.getInstance().getLogger(Activator.PLUGIN_ID);
 	// old automaton
 	private final INestedWordAutomatonOldApi<LETTER,STATE> m_operand;
+	private final IDoubleDeckerAutomaton<LETTER, STATE> m_doubleDecker;
 	// new (minimized) automaton
 	private NestedWordAutomaton<LETTER,STATE> m_nwa;
 	// enables/disables detection of unnecessary states
@@ -71,6 +72,11 @@ public class MinimizeSevpa<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	private final boolean m_splitAllReturnsLin = false;
 	// use sound but expensive hierarchical return split
 	private final boolean m_splitAllReturnsHier = false;
+	
+	private final boolean STATISTICS = false;
+	private int m_splitsWithChange = 0;
+	private int m_splitsWithoutChange = 0;
+	
 	/* EXPERIMENTAL END */
 	
 	
@@ -102,6 +108,7 @@ public class MinimizeSevpa<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	 * @param removeDeadEnds true iff removal of dead-end states is used
 	 * @throws OperationCanceledException iff cancel signal is received
 	 */
+	@SuppressWarnings("unchecked")
 	public MinimizeSevpa(
 			final INestedWordAutomatonOldApi<LETTER,STATE> operand,
 			Collection<Set<STATE>> equivalenceClasses,
@@ -109,13 +116,19 @@ public class MinimizeSevpa<LETTER,STATE> implements IOperation<LETTER,STATE> {
 			final boolean removeDeadEnds,
 			StateFactory<STATE> stateFactoryConstruction)
 					throws OperationCanceledException {
-		this.m_operand = operand;
-		this.m_removeUnreachables = removeUnreachables;
-		this.m_removeDeadEnds = removeDeadEnds;
-		this.m_StateFactoryConstruction = stateFactoryConstruction;
+		m_operand = operand;
+		if (operand instanceof IDoubleDeckerAutomaton<?, ?>) {
+			m_doubleDecker = (IDoubleDeckerAutomaton<LETTER, STATE>)operand;
+		}
+		else {
+			throw new IllegalArgumentException();
+		}
+		m_removeUnreachables = removeUnreachables;
+		m_removeDeadEnds = removeDeadEnds;
+		m_StateFactoryConstruction = stateFactoryConstruction;
 		
 		// if no preprocessing is considered, no states can be removed there
-		this.m_noStatesRemoved = 
+		m_noStatesRemoved = 
 				! (this.m_removeUnreachables || this.m_removeDeadEnds);
 		
 		// must be the last part of the constructor
@@ -123,6 +136,13 @@ public class MinimizeSevpa<LETTER,STATE> implements IOperation<LETTER,STATE> {
 		minimize(equivalenceClasses);
 		m_MinimizationFinished = true;
 		s_Logger.info(exitMessage());
+		
+		if (STATISTICS) {
+			System.out.println("positive splits: " + m_splitsWithChange);
+			System.out.println("negative splits: " + m_splitsWithoutChange);
+			System.out.println("quote (p/n): " +
+					(m_splitsWithChange / Math.max(m_splitsWithoutChange, 1)));
+		}
 	}
 	
 	/**
@@ -1005,6 +1025,8 @@ public class MinimizeSevpa<LETTER,STATE> implements IOperation<LETTER,STATE> {
 			 * and the states can be restored 
 			 */
 			if (!ec.isEmpty()) {
+				++m_splitsWithChange;
+				
 				// create new equivalence class
 				EquivalenceClass intersection = ec.split(partition);
 				
@@ -1047,6 +1069,9 @@ public class MinimizeSevpa<LETTER,STATE> implements IOperation<LETTER,STATE> {
 				
 				// add return successors to work list
 				partition.addReturnsToWorkList(intersection);
+			}
+			else {
+				++m_splitsWithoutChange;
 			}
 			
 			// reset information about the intersection equivalence class
@@ -1239,8 +1264,7 @@ public class MinimizeSevpa<LETTER,STATE> implements IOperation<LETTER,STATE> {
 		 */
 		private boolean isSimilarHelper(Partition partition, LETTER letter,
 				STATE lin, STATE hier, EquivalenceClass equivalenceClass) {
-			if (((IDoubleDeckerAutomaton<LETTER, STATE>) m_operand).
-						isDoubleDecker(lin, hier)) {
+			if (m_doubleDecker.isDoubleDecker(lin, hier)) {
 				if (!checkExistenceOfSimilarTransition(
 						partition,
 						partition.succReturn(lin, hier, letter),
