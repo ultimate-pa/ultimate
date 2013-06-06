@@ -357,6 +357,7 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 		assert (! a.m_isInWorkListIntCall);
 		
 		// collect incoming return transitions
+		final HashSet<STATE> hiers = new HashSet<STATE>();
 		HashMap<LETTER, HashSet<STATE>> letter2lin =
 				new HashMap<LETTER, HashSet<STATE>>();
 		for (final STATE succ : a.m_states) {
@@ -369,6 +370,7 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 					letter2lin.put(letter, lins);
 				}
 				lins.add(edge.getLinPred());
+				hiers.add(edge.getHierPred());
 			}
 		}
 		
@@ -417,7 +419,7 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 			final LETTER letter = entry.getKey();
 			for (final ArrayList<STATE> lins : entry.getValue()) {
 				// split linear predecessors
-				splitLinPred(lins, a, letter);
+				splitLinPred(lins, hiers, a, letter);
 				
 				// splitter set was split, stop
 				if (a.m_isInWorkListIntCall) {
@@ -425,7 +427,7 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 				}
 				
 				// split hierarchical predecessors
-				splitHierPred(lins, a, letter);
+				splitHierPred(lins, hiers, a, letter);
 				
 				// splitter set was split, stop
 				if (a.m_isInWorkListIntCall) {
@@ -445,27 +447,21 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	 * The latter is the case if there is no respective outgoing transition,
 	 * but the hierarchical predecessor is a possible down state.
 	 *
-	 * @param lins the linear predecessor equivalence class
+	 * @param lins the linear predecessor states
+	 * @param hiers the hierarchical predecessor states
 	 * @param succEc the successor equivalence class
 	 * @param letter the letter
 	 */
 	private void splitLinPred(final Collection<STATE> lins,
-			final EquivalenceClass succEc, final LETTER letter) {
-		// find hierarchical predecessors
-		final HashSet<STATE> hiers = new HashSet<STATE>();
-		for (final STATE lin : lins) {
-			for (final OutgoingReturnTransition<LETTER, STATE> edge :
-				m_operand.returnSuccessors(lin, letter)) {
-				hiers.add(edge.getHierPred());
-			}
-		}
-		
+			final Collection<STATE> hiers, final EquivalenceClass succEc,
+			final LETTER letter) {
 		// split by successor equivalence class wrt. hierarchical predecessor
 		final int sizeOfLin = lins.size();
+		final HashSet<STATE> negativeStates = new HashSet<STATE>();
 		for (final STATE hier : hiers) {
 			final HashMap<EquivalenceClass, HashSet<STATE>> succ2lin =
 					new HashMap<EquivalenceClass, HashSet<STATE>>();
-			final LinkedList<STATE> neutralStates = new LinkedList<STATE>();
+			final HashSet<STATE> neutralStates = new HashSet<STATE>();
 			for (final STATE lin : lins) {
 				final Iterator<OutgoingReturnTransition<LETTER, STATE>> edges =
 						m_operand.returnSucccessors(lin, hier, letter).iterator();
@@ -487,28 +483,50 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 				else {
 					// if the return edge is not possible, ignore state
 					if (! m_doubleDecker.isDoubleDecker(lin, hier)) {
-						neutralStates.add(lin);
+						if (! negativeStates.contains(lin)) {
+							neutralStates.add(lin);
+						}
+					}
+					else {
+						negativeStates.add(lin);
+						neutralStates.remove(lin);
 					}
 				}
 			}
 			
 			// split
-			for (final HashSet<STATE> linSplits : succ2lin.values()) {
-				/*
-				 * TODO<TIEBREAK> what to do?
-				 *                Currently neutral states are seen positive.
-				 */
-				final SplitCombinator combinator =
-						new SplitCombinator(linSplits, neutralStates);
-				
-				// ignore unaffecting splits
-				if (combinator.size() < sizeOfLin) {
-					m_partition.splitEquivalenceClasses(combinator);
-				}
-				else {
+			final Iterator<HashSet<STATE>> positives =
+					succ2lin.values().iterator();
+			// positive states
+			if (positives.hasNext()) {
+				do {
+					final HashSet<STATE> positiveStates = positives.next();
+					/*
+					 * TODO<TIEBREAK> what to do?
+					 *                Currently neutral states are seen positive.
+					 */
+					final SplitCombinator combinator =
+							new SplitCombinator(positiveStates, neutralStates);
+					
+					// ignore unaffecting splits
+					if (combinator.size() < sizeOfLin) {
+						m_partition.splitEquivalenceClasses(combinator);
+					}
+					else {
+						if (DEBUG)
+							System.out.println("combinator " + combinator +
+									" was ignored");
+					}
+				} while (positives.hasNext());
+			}
+			// no positive states, split negative states
+			else {
+				if (! negativeStates.isEmpty()) {
+					m_partition.splitEquivalenceClasses(negativeStates);
 					if (DEBUG)
-						System.out.println("combinator " + combinator +
-								" was ignored");
+						System.out.println(
+								"splitting negative states only: " +
+										negativeStates);
 				}
 			}
 		}
@@ -525,25 +543,27 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	 * The latter is the case if there is no respective outgoing transition,
 	 * but the hierarchical predecessor is a possible down state.
 	 *
-	 * @param lins the linear predecessor equivalence class
+	 * @param lins the linear predecessor states
+	 * @param hiers the hierarchical predecessor states
 	 * @param succEc the successor equivalence class
 	 * @param letter the letter
 	 */
 	private void splitHierPred(final Iterable<STATE> lins,
-			final EquivalenceClass succEc, final LETTER letter) {
+			final Collection<STATE> hiers, final EquivalenceClass succEc,
+			final LETTER letter) {
+		// find hierarchical predecessor equivalence classes
+		final HashSet<EquivalenceClass> hierEcs =
+				new HashSet<EquivalenceClass>();
+		for (final STATE hier : hiers) {
+			hierEcs.add(m_partition.m_state2EquivalenceClass.get(hier));
+		}
+		
+		final HashSet<STATE> negativeStates = new HashSet<STATE>();
 		for (final STATE lin : lins) {
-			// find hierarchical predecessor equivalence classes
-			final HashSet<EquivalenceClass> hiers = new HashSet<EquivalenceClass>();
-			for (final OutgoingReturnTransition<LETTER, STATE> edge :
-				m_operand.returnSuccessors(lin, letter)) {
-				hiers.add(m_partition.m_state2EquivalenceClass.get(
-						edge.getHierPred()));
-			}
-			
-			final LinkedList<STATE> neutralStates = new LinkedList<STATE>();
+			final HashSet<STATE> neutralStates = new HashSet<STATE>();
 			
 			// check each hierarchical predecessor
-			for (final EquivalenceClass hierEc : hiers) {
+			for (final EquivalenceClass hierEc : hierEcs) {
 				final int sizeOfHier = hierEc.m_states.size();
 				
 				final HashMap<HashSet<EquivalenceClass>, HashSet<STATE>>
@@ -551,14 +571,15 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 						HashSet<STATE>>();
 				for (final STATE hier : hierEc.m_states) {
 					// collect all reached equivalence classes
-					final Iterator<OutgoingReturnTransition<LETTER, STATE>> edges =
-							m_operand.returnSucccessors(lin, hier, letter).iterator();
+					final Iterator<OutgoingReturnTransition<LETTER, STATE>>
+							edges = m_operand.returnSucccessors(lin, hier,
+									letter).iterator();
 					if (edges.hasNext()) {
 						final HashSet<EquivalenceClass> reached =
 								new HashSet<EquivalenceClass>();
 						do {
-							reached.add(m_partition.m_state2EquivalenceClass.get(
-									edges.next().getSucc()));
+							reached.add(m_partition.m_state2EquivalenceClass.
+									get(edges.next().getSucc()));
 						} while (edges.hasNext());
 						
 						HashSet<STATE> hierList = reachedEc2hier.get(reached);
@@ -571,28 +592,52 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 					else {
 						// if the return edge is not possible, ignore state
 						if (! m_doubleDecker.isDoubleDecker(lin, hier)) {
-							neutralStates.add(hier);
+							if (! negativeStates.contains(hier)) {
+								neutralStates.add(hier);
+							}
+						}
+						else {
+							negativeStates.add(hier);
+							neutralStates.remove(hier);
 						}
 					}
 				}
 				
 				// split
-				for (final HashSet<STATE> hierSplits : reachedEc2hier.values()) {
-					/*
-					 * TODO<TIEBREAK> what to do?
-					 *                Currently neutral states are seen positive.
-					 */
-					final SplitCombinator combinator =
-							new SplitCombinator(hierSplits, neutralStates);
-					
-					// ignore unaffecting splits
-					if (combinator.size() < sizeOfHier) {
-						m_partition.splitEquivalenceClasses(combinator);
-					}
-					else {
+				final Iterator<HashSet<STATE>> positives =
+						reachedEc2hier.values().iterator();
+				// positive states
+				if (positives.hasNext()) {
+					do {
+						final HashSet<STATE> positiveStates = positives.next();
+						/*
+						 * TODO<TIEBREAK> what to do?
+						 *                Currently neutral states are seen
+						 *                positive.
+						 */
+						final SplitCombinator combinator =
+								new SplitCombinator(positiveStates,
+										neutralStates);
+						
+						// ignore unaffecting splits
+						if (combinator.size() < sizeOfHier) {
+							m_partition.splitEquivalenceClasses(combinator);
+						}
+						else {
+							if (DEBUG)
+								System.out.println("combinator " + combinator +
+										" was ignored");
+						}
+					} while (positives.hasNext());
+				}
+				// no positive states, split negative states
+				else {
+					if (! negativeStates.isEmpty()) {
+						m_partition.splitEquivalenceClasses(negativeStates);
 						if (DEBUG)
-							System.out.println("combinator " + combinator +
-									" was ignored");
+							System.out.println(
+									"splitting negative states only: " +
+											negativeStates);
 					}
 				}
 			}
@@ -834,7 +879,7 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 		 *
 		 * @param module the states in the equivalence class
 		 */
-		private void addEc(Set<STATE> module) {
+		private void addEc(final Set<STATE> module) {
 			final EquivalenceClass ec = addEcHelper(module);
 			for (STATE state : module) {
 				m_state2EquivalenceClass.put(state, ec);
