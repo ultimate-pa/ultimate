@@ -3,7 +3,6 @@
 
 // Date: 20.05.2013
 // Author: heizmann@informatik.uni-freiburg.de
-
 NestedWordAutomaton abstraction1 = difference(controlAutomaton,interpolantAutomaton1);
 print(numberOfStates(abstraction1));
 assert(!isEmpty(abstraction1));
@@ -27,10 +26,18 @@ print(numberOfStates(abstraction7));
 assert(!isEmpty(abstraction7));
 NestedWordAutomaton abstraction8 = difference(abstraction7,interpolantAutomaton8);
 print(numberOfStates(abstraction8));
-assert(!isEmpty(abstraction8));
-NestedWord counterexample = getAcceptedWord(abstraction8);
-print(counterexample);
-//assert(accepts(interpolantAutomaton8,counterexample));
+assert(isEmpty(abstraction8));
+
+assert(isDeterministic(controlAutomaton));
+assert(isDeterministic(interpolantAutomaton1));
+assert(!isDeterministic(interpolantAutomaton2));
+assert(!isDeterministic(interpolantAutomaton3));
+assert(!isDeterministic(interpolantAutomaton4));
+assert(!isDeterministic(interpolantAutomaton5));
+assert(!isDeterministic(interpolantAutomaton6));
+assert(!isDeterministic(interpolantAutomaton7));
+assert(!isDeterministic(interpolantAutomaton8));
+
 
 NestedWordAutomaton controlAutomaton = (
 	callAlphabet = {"call res := McCarthy(x + 11);" "call res := McCarthy(res);" },
