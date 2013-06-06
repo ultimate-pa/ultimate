@@ -11,6 +11,7 @@ import org.apache.log4j.Logger;
 import de.uni_freiburg.informatik.ultimate.blockencoding.model.ConjunctionEdge;
 import de.uni_freiburg.informatik.ultimate.blockencoding.model.DisjunctionEdge;
 import de.uni_freiburg.informatik.ultimate.blockencoding.model.MinimizedNode;
+import de.uni_freiburg.informatik.ultimate.blockencoding.model.ShortcutErrEdge;
 import de.uni_freiburg.informatik.ultimate.blockencoding.model.interfaces.IBasicEdge;
 import de.uni_freiburg.informatik.ultimate.blockencoding.model.interfaces.ICompositeEdge;
 import de.uni_freiburg.informatik.ultimate.blockencoding.model.interfaces.IMinimizedEdge;
@@ -237,7 +238,12 @@ public class MinimizeBranchVisitor extends AbstractMinimizationVisitor {
 	 */
 	protected MinimizedNode[] mergeSequential(IMinimizedEdge edge1,
 			IMinimizedEdge edge2) {
-		ConjunctionEdge conjunction = new ConjunctionEdge(edge1, edge2);
+		ConjunctionEdge conjunction;
+		if (edge1 instanceof ShortcutErrEdge || edge2 instanceof ShortcutErrEdge) {
+			conjunction = new ShortcutErrEdge(edge1, edge2);
+		} else {
+			conjunction = new ConjunctionEdge(edge1, edge2);
+		}
 		// We have to compute the new outgoing edge level list
 		ArrayList<IMinimizedEdge> outgoingList = new ArrayList<IMinimizedEdge>();
 		outgoingList.add(conjunction);

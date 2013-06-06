@@ -12,6 +12,7 @@ import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.blockencoding.model.ConjunctionEdge;
 import de.uni_freiburg.informatik.ultimate.blockencoding.model.MinimizedNode;
+import de.uni_freiburg.informatik.ultimate.blockencoding.model.ShortcutErrEdge;
 import de.uni_freiburg.informatik.ultimate.blockencoding.model.interfaces.IBasicEdge;
 import de.uni_freiburg.informatik.ultimate.blockencoding.model.interfaces.IMinimizedEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
@@ -103,8 +104,13 @@ public class MinimizeLoopVisitor extends MinimizeBranchVisitor {
 		ArrayList<IMinimizedEdge> outgoingList = new ArrayList<IMinimizedEdge>();
 		ArrayList<MinimizedNode> reVisitNodes = new ArrayList<MinimizedNode>();
 		for (IMinimizedEdge outgoingEdge : outgoing) {
-			ConjunctionEdge conjunction = new ConjunctionEdge(incoming,
-					outgoingEdge);
+			ConjunctionEdge conjunction;
+			if (incoming instanceof ShortcutErrEdge
+					|| outgoingEdge instanceof ShortcutErrEdge) {
+				conjunction = new ShortcutErrEdge(incoming, outgoingEdge);
+			} else {
+				conjunction = new ConjunctionEdge(incoming, outgoingEdge);
+			}
 			outgoingList.add(conjunction);
 			// We have to compute a new incoming list, for the target node of
 			// this conjunction
@@ -164,7 +170,7 @@ public class MinimizeLoopVisitor extends MinimizeBranchVisitor {
 				}
 				targetNodes.add(edge.getTarget());
 			}
-			
+
 			// Second condition: edges are of type CodeBlock
 			// In order to do this for many edges we use a list here
 			ArrayList<IMinimizedEdge> listToCheck = new ArrayList<IMinimizedEdge>();

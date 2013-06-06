@@ -12,8 +12,8 @@ import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.blockencoding.algorithm.visitor.IMinimizationVisitor;
 import de.uni_freiburg.informatik.ultimate.blockencoding.model.ConjunctionEdge;
-import de.uni_freiburg.informatik.ultimate.blockencoding.model.DisjunctionEdge;
 import de.uni_freiburg.informatik.ultimate.blockencoding.model.MinimizedNode;
+import de.uni_freiburg.informatik.ultimate.blockencoding.model.ShortcutErrEdge;
 import de.uni_freiburg.informatik.ultimate.blockencoding.model.interfaces.IBasicEdge;
 import de.uni_freiburg.informatik.ultimate.blockencoding.model.interfaces.IMinimizedEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
@@ -138,8 +138,9 @@ public class MinimizeCallReturnVisitor implements IMinimizationVisitor {
 				}
 				// We build the edge Call + Substitute,
 				// the Return is still missing!
-				substituteEdge = new ConjunctionEdge(edge, substituteEdge);
-				minimizeCallReturnEdge(((IBasicEdge) edge), substituteEdge);
+				// Remark 06.06.2013: Call + Substitute builds a new edge!
+				ConjunctionEdge callAndSubstitute = new ConjunctionEdge(edge, substituteEdge);
+				minimizeCallReturnEdge(((IBasicEdge) edge), callAndSubstitute);
 				// so we replaced an call here, so we may have to revisit this node
 				nodesForReVisit.add(amVisitor.getCorrespondingStartNode(edge.getSource()));
 				// Since we have replaced the call-edge, we create a new
@@ -170,7 +171,7 @@ public class MinimizeCallReturnVisitor implements IMinimizationVisitor {
 				callEdge.getSource().getOutgoingEdges());
 		ArrayList<IMinimizedEdge> shortcuts = new ArrayList<IMinimizedEdge>();
 		for (int i = 1; i < subEdges.length; i++) {
-			ConjunctionEdge shortcut = new ConjunctionEdge(callEdge,
+			ShortcutErrEdge shortcut = new ShortcutErrEdge(callEdge,
 					subEdges[i]);
 			newOutEdgeLevel.add(shortcut);
 			shortcuts.add(shortcut);
@@ -315,7 +316,7 @@ public class MinimizeCallReturnVisitor implements IMinimizationVisitor {
 		substitute = new ConjunctionEdge(substitute, returnEdge);
 		// now we add the Summary to the substitution (to false)!
 		s_Logger.debug("Handle Summary: " + summaryEdge + " / " + substitute);
-		substitute = new DisjunctionEdge(summaryEdge, substitute);
+		//substitute = new DisjunctionEdge(summaryEdge, substitute);
 		// Now substitute the Call / Return / Summary edges
 		callNodeOutEdges.add(substitute);
 		callingNode.addNewOutgoingEdgeLevel(callNodeOutEdges, null);

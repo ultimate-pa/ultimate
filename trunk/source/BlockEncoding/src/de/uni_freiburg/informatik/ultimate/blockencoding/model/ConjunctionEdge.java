@@ -27,7 +27,7 @@ public class ConjunctionEdge extends AbstractCompositeEdge {
 	/**
 	 * the rating for this Conjunction-Edge
 	 */
-	private IRating rating;
+	protected IRating rating;
 
 	/**
 	 * @param left

@@ -16,6 +16,7 @@ import de.uni_freiburg.informatik.ultimate.blockencoding.algorithm.visitor.IMini
 import de.uni_freiburg.informatik.ultimate.blockencoding.model.ConjunctionEdge;
 import de.uni_freiburg.informatik.ultimate.blockencoding.model.DisjunctionEdge;
 import de.uni_freiburg.informatik.ultimate.blockencoding.model.MinimizedNode;
+import de.uni_freiburg.informatik.ultimate.blockencoding.model.ShortcutErrEdge;
 import de.uni_freiburg.informatik.ultimate.blockencoding.model.interfaces.IBasicEdge;
 import de.uni_freiburg.informatik.ultimate.blockencoding.model.interfaces.ICompositeEdge;
 import de.uni_freiburg.informatik.ultimate.blockencoding.model.interfaces.IMinimizedEdge;
@@ -36,6 +37,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.TransFo
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CfgBuilder.GotoEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.InterproceduralSequentialComposition;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ParallelComposition;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
@@ -194,6 +196,16 @@ public class ConversionVisitor implements IMinimizationVisitor {
 					// it is possible that the found replacement, is Goto-Edge,
 					// which we have to convert in a valid edge
 					cb = replaceGotoEdge(cb, null);
+				} else if (edge instanceof ShortcutErrEdge) {
+					if (cb instanceof ShortcutCodeBlock) {
+						cb = new InterproceduralSequentialComposition(null,
+								null, boogie2smt, false,
+								((ShortcutCodeBlock) cb).getCodeBlocks());
+					} else {
+						throw new IllegalArgumentException(
+								"Converted CodeBlock for ShortcutErrEdge"
+										+ " is no ShortcutCodeBlock");
+					}
 				}
 				s_Logger.debug("<-Converted Formula->: "
 						+ cb.getTransitionFormula());
@@ -246,7 +258,8 @@ public class ConversionVisitor implements IMinimizationVisitor {
 			}
 			// we check if the rated value is okay, for a certain edge level, if
 			// not we can use this level
-			if (heuristic.isRatingBoundReached(entry.getKey(), entry.getValue())) {
+			if (heuristic
+					.isRatingBoundReached(entry.getKey(), entry.getValue())) {
 				return new ArrayList<IMinimizedEdge>(entry.getValue());
 			}
 		}
@@ -396,26 +409,18 @@ public class ConversionVisitor implements IMinimizationVisitor {
 					// element, because we have to remove later a list from the
 					// stack whereas this is only done for not
 					// SequentialCompositons
-					if (edge.getRating() instanceof DisjunctVariablesRating
-							|| edge.getRating() instanceof DisjunctMultiStatementRating) {
-						s_Logger.info("New Sequential Composition");
-						Integer[] ratingValues = (Integer[]) edge.getRating()
-								.getRatingValueContainer().getValue();
-						s_Logger.info("Disjunctions: " + ratingValues[0]
-								+ " UsedVars: " + ratingValues[1]
-								+ " ComputedValue: " + ratingValues[2]);
+					if (edge instanceof ShortcutErrEdge) {
+						return new ShortcutCodeBlock(null, null,
+								new CodeBlock[] { replaceGotoEdge(
+										gotoEdges.get(0), gotoEdges.get(1)) });
 					}
-					return new SequentialComposition(null, null, boogie2smt, false,
-							replaceGotoEdge(gotoEdges.get(0), gotoEdges.get(1)));
+					return new SequentialComposition(null, null, boogie2smt,
+							false, replaceGotoEdge(gotoEdges.get(0),
+									gotoEdges.get(1)));
 				}
-				if (edge.getRating() instanceof DisjunctVariablesRating
-						|| edge.getRating() instanceof DisjunctMultiStatementRating) {
-					s_Logger.info("New Sequential Composition");
-					Integer[] ratingValues = (Integer[]) edge.getRating()
-							.getRatingValueContainer().getValue();
-					s_Logger.info("Disjunctions: " + ratingValues[0]
-							+ " UsedVars: " + ratingValues[1]
-							+ " ComputedValue: " + ratingValues[2]);
+				if (edge instanceof ShortcutErrEdge) {
+					return new ShortcutCodeBlock(null, null,
+							composeEdges.toArray(new CodeBlock[0]));
 				}
 				return new SequentialComposition(null, null, boogie2smt, false,
 						composeEdges.toArray(new CodeBlock[0]));
@@ -456,14 +461,10 @@ public class ConversionVisitor implements IMinimizationVisitor {
 							"For DisjunctionEdges there should always"
 									+ " be exactly two edges, to compose!");
 				}
-				if (edge.getRating() instanceof DisjunctVariablesRating
-						|| edge.getRating() instanceof DisjunctMultiStatementRating) {
-					s_Logger.info("New Parallel Composition");
-					Integer[] ratingValues = (Integer[]) edge.getRating()
-							.getRatingValueContainer().getValue();
-					s_Logger.info("Disjunctions: " + ratingValues[0]
-							+ " UsedVars: " + ratingValues[1]
-							+ " ComputedValue: " + ratingValues[2]);
+				if (composeEdges.get(0) instanceof ShortcutCodeBlock
+						|| composeEdges.get(1) instanceof ShortcutCodeBlock) {
+					throw new IllegalArgumentException(
+							"Shortcut is contained in ParallelComposition?");
 				}
 				return new ParallelComposition(null, null, boogie2smt,
 						composeEdges.get(0), composeEdges.get(1));
