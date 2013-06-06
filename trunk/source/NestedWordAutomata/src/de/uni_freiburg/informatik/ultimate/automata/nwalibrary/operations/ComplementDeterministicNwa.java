@@ -28,6 +28,8 @@ public class ComplementDeterministicNwa<LETTER, STATE> implements INestedWordAut
 	public ComplementDeterministicNwa(INestedWordAutomatonSimple<LETTER, STATE> operand) {
 		if (operand instanceof DeterminizeNwa) {
 			m_Operand = operand;
+		} else if (operand instanceof TotalizeNwa) {
+			m_Operand = operand;
 		} else if ((operand instanceof NestedWordAutomaton) 
 				&& ((NestedWordAutomaton<LETTER, STATE>) operand).isDeterministic() 
 				&& ((NestedWordAutomaton<LETTER, STATE>) operand).isTotal()) {

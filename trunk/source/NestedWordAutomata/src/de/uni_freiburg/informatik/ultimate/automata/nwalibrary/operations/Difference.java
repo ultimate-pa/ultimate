@@ -1,11 +1,5 @@
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.NoSuchElementException;
-import java.util.Set;
-
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.automata.Activator;
@@ -15,14 +9,10 @@ import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomatonFilteredStates;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.DifferenceDD;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.IOpWithDelayedDeadEndRemoval;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.IntersectDD;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.DoubleDeckerVisitor.ReachFinal;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.IOpWithDelayedDeadEndRemoval.UpDownEntry;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.NestedWordAutomatonReachableStates;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 
@@ -34,11 +24,11 @@ public class Difference<LETTER,STATE> implements IOperation<LETTER,STATE>, IOpWi
 	
 	private final INestedWordAutomatonSimple<LETTER,STATE> m_FstOperand;
 	private final INestedWordAutomatonSimple<LETTER,STATE> m_SndOperand;
-	private final DeterminizeNwa<LETTER,STATE> m_SndDeterminized;
+	private DeterminizeNwa<LETTER,STATE> m_SndDeterminized;
 	private final IStateDeterminizer<LETTER, STATE> m_StateDeterminizer;
-	private final ComplementDeterministicNwa<LETTER,STATE> m_SndComplemented;
-	private final IntersectNwa<LETTER, STATE> m_Intersect;
-	private final NestedWordAutomatonReachableStates<LETTER,STATE> m_Result;
+	private ComplementDeterministicNwa<LETTER,STATE> m_SndComplemented;
+	private IntersectNwa<LETTER, STATE> m_Intersect;
+	private NestedWordAutomatonReachableStates<LETTER,STATE> m_Result;
 	private NestedWordAutomatonFilteredStates<LETTER, STATE> m_ResultWOdeadEnds;
 	private final StateFactory<STATE> m_StateFactory;
 	
@@ -74,10 +64,7 @@ public class Difference<LETTER,STATE> implements IOperation<LETTER,STATE>, IOpWi
 		m_StateFactory = m_FstOperand.getStateFactory();
 		m_StateDeterminizer = new PowersetDeterminizer<LETTER,STATE>(sndOperand);
 		s_Logger.info(startMessage());
-		m_SndDeterminized = new DeterminizeNwa<LETTER,STATE>(m_SndOperand,m_StateDeterminizer,m_StateFactory);
-		m_SndComplemented = new ComplementDeterministicNwa<LETTER, STATE>(m_SndDeterminized);
-		m_Intersect = new IntersectNwa<LETTER, STATE>(m_FstOperand, m_SndComplemented, m_StateFactory, false);
-		m_Result = new NestedWordAutomatonReachableStates<LETTER, STATE>(m_Intersect);
+		computateDifference(false);
 		s_Logger.info(exitMessage());
 	}
 	
@@ -92,11 +79,29 @@ public class Difference<LETTER,STATE> implements IOperation<LETTER,STATE>, IOpWi
 		m_StateFactory = sf;
 		m_StateDeterminizer = stateDeterminizer;
 		s_Logger.info(startMessage());
+		computateDifference(finalIsTrap);
+		s_Logger.info(exitMessage());
+	}
+	
+	private void computateDifference(boolean finalIsTrap) throws AutomataLibraryException {
+//		if (m_StateDeterminizer instanceof PowersetDeterminizer) {
+//			TotalizeNwa<LETTER, STATE> sndTotalized = new TotalizeNwa<LETTER, STATE>(m_SndOperand, m_StateFactory);
+//			ComplementDeterministicNwa<LETTER,STATE> sndComplemented = new ComplementDeterministicNwa<LETTER, STATE>(sndTotalized);
+//			IntersectNwa<LETTER, STATE> intersect = new IntersectNwa<LETTER, STATE>(m_FstOperand, sndComplemented, m_StateFactory, finalIsTrap);
+//			NestedWordAutomatonReachableStates<LETTER, STATE> result = new NestedWordAutomatonReachableStates<LETTER, STATE>(intersect);
+//			if (!sndTotalized.nonDeterminismInInputDetected()) {
+//				m_SndComplemented = sndComplemented;
+//				m_Intersect = intersect;
+//				m_Result = result;
+//				return;
+//			} else {
+//			s_Logger.warn("Subtrahend was not deterministic. Recomputing result with determinization");
+//			}
+//		}
 		m_SndDeterminized = new DeterminizeNwa<LETTER,STATE>(m_SndOperand,m_StateDeterminizer,m_StateFactory);
 		m_SndComplemented = new ComplementDeterministicNwa<LETTER, STATE>(m_SndDeterminized);
 		m_Intersect = new IntersectNwa<LETTER, STATE>(m_FstOperand, m_SndComplemented, m_StateFactory, finalIsTrap);
 		m_Result = new NestedWordAutomatonReachableStates<LETTER, STATE>(m_Intersect);
-		s_Logger.info(exitMessage());
 	}
 	
 
