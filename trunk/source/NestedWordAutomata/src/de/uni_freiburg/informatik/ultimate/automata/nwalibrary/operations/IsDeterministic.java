@@ -51,16 +51,8 @@ public class IsDeterministic<LETTER,STATE> implements IOperation<LETTER,STATE> {
 		this.m_Operand = input;
 		s_Logger.info(startMessage());
 		m_Totalized = new TotalizeNwa<LETTER, STATE>(input, m_StateFactory);
-		boolean inputIsDeterministic = false;
-		try {
-			m_Reach = new NestedWordAutomatonReachableStates<LETTER, STATE>(m_Totalized);
-			inputIsDeterministic = true;
-		} catch (IllegalArgumentException e) {
-			if (e.getMessage().equals(TotalizeNwa.OPERAND_NOT_DETERMINISTIC)) {
-				inputIsDeterministic = false;
-			}
-		}
-		m_Result = inputIsDeterministic;
+		m_Reach = new NestedWordAutomatonReachableStates<LETTER, STATE>(m_Totalized);
+		m_Result = !m_Totalized.nonDeterminismInInputDetected();
 		s_Logger.info(exitMessage());
 	}
 	

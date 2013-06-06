@@ -15,7 +15,8 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 
 /**
  * Totalized automaton of input. Expects that input is deterministic.
- * Throws Illegal ArgumentException as soon as nondeterminism in input is detected.
+ * If a transition is nondeterminisic an empty transition set is returned and
+ * m_NondeterminismInInputDetected is set to true.
  * @author heizmann@informatik.uni-freiburg.de
  *
  * @param <LETTER>
@@ -26,19 +27,17 @@ public class TotalizeNwa<LETTER, STATE> implements INestedWordAutomatonSimple<LE
 	private final INestedWordAutomatonSimple<LETTER, STATE> m_Operand;
 	private final StateFactory<STATE> m_StateFactory;
 	private final STATE m_SinkState;
-	public final static String OPERAND_NOT_DETERMINISTIC = "OperandIsNotDeterministic";
-	
+	private boolean m_NondeterminismInInputDetected = false;
+
+	public boolean nonDeterminismInInputDetected() {
+		return m_NondeterminismInInputDetected;
+	}
 	
 	public TotalizeNwa(INestedWordAutomatonSimple<LETTER, STATE> operand, 
 			StateFactory<STATE> sf) {
 		m_Operand = operand;
 		m_StateFactory = sf;
 		m_SinkState = sf.createSinkStateContent();
-	}
-	
-	
-	private void throwOperandNotDeterministicException() {
-		throw new IllegalArgumentException(OPERAND_NOT_DETERMINISTIC);
 	}
 	
 	
@@ -52,7 +51,7 @@ public class TotalizeNwa<LETTER, STATE> implements INestedWordAutomatonSimple<LE
 			initial = m_SinkState;
 		}
 		if (it.hasNext()) {
-			throwOperandNotDeterministicException();
+			m_NondeterminismInInputDetected = true;
 		}
 		HashSet<STATE> result = new HashSet<STATE>(1);
 		result.add(initial);
@@ -121,15 +120,19 @@ public class TotalizeNwa<LETTER, STATE> implements INestedWordAutomatonSimple<LE
 	@Override
 	public Iterable<OutgoingInternalTransition<LETTER, STATE>> internalSuccessors(
 			STATE state, LETTER letter) {
+		if (m_NondeterminismInInputDetected) {
+			return new HashSet(0);
+		}
 		if (state != m_SinkState) {
 			Iterator<OutgoingInternalTransition<LETTER, STATE>> it = 
-					m_Operand.internalSuccessors(state).iterator();
+					m_Operand.internalSuccessors(state, letter).iterator();
 			if (it.hasNext()) {
 				it.next();
 				if (it.hasNext()) {
-					throwOperandNotDeterministicException();
+					m_NondeterminismInInputDetected = true;
+					return new HashSet(0);
 				} else {
-					return m_Operand.internalSuccessors(state);
+					return m_Operand.internalSuccessors(state, letter);
 				}
 			}
 		}
@@ -144,11 +147,17 @@ public class TotalizeNwa<LETTER, STATE> implements INestedWordAutomatonSimple<LE
 	@Override
 	public Iterable<OutgoingInternalTransition<LETTER, STATE>> internalSuccessors(
 			STATE state) {
+		if (m_NondeterminismInInputDetected) {
+			return new HashSet(0);
+		}
 		ArrayList<OutgoingInternalTransition<LETTER, STATE>> result = 
 				new ArrayList<OutgoingInternalTransition<LETTER, STATE>>();
 		for (LETTER letter : getInternalAlphabet()) {
 			Iterator<OutgoingInternalTransition<LETTER, STATE>> it = 
 					internalSuccessors(state, letter).iterator();
+			if (m_NondeterminismInInputDetected) {
+				return new HashSet(0);
+			}
 			result.add(it.next());
 			assert !it.hasNext();
 		}
@@ -158,15 +167,19 @@ public class TotalizeNwa<LETTER, STATE> implements INestedWordAutomatonSimple<LE
 	@Override
 	public Iterable<OutgoingCallTransition<LETTER, STATE>> callSuccessors(
 			STATE state, LETTER letter) {
+		if (m_NondeterminismInInputDetected) {
+			return new HashSet(0);
+		}
 		if (state != m_SinkState) {
 			Iterator<OutgoingCallTransition<LETTER, STATE>> it = 
-					m_Operand.callSuccessors(state).iterator();
+					m_Operand.callSuccessors(state, letter).iterator();
 			if (it.hasNext()) {
 				it.next();
 				if (it.hasNext()) {
-					throwOperandNotDeterministicException();
+					m_NondeterminismInInputDetected = true;
+					return new HashSet(0);
 				} else {
-					return m_Operand.callSuccessors(state);
+					return m_Operand.callSuccessors(state, letter);
 				}
 			}
 		}
@@ -181,11 +194,17 @@ public class TotalizeNwa<LETTER, STATE> implements INestedWordAutomatonSimple<LE
 	@Override
 	public Iterable<OutgoingCallTransition<LETTER, STATE>> callSuccessors(
 			STATE state) {
+		if (m_NondeterminismInInputDetected) {
+			return new HashSet(0);
+		}
 		ArrayList<OutgoingCallTransition<LETTER, STATE>> result = 
 				new ArrayList<OutgoingCallTransition<LETTER, STATE>>();
 		for (LETTER letter : getCallAlphabet()) {
 			Iterator<OutgoingCallTransition<LETTER, STATE>> it = 
 					callSuccessors(state, letter).iterator();
+			if (m_NondeterminismInInputDetected) {
+				return new HashSet(0);
+			}
 			result.add(it.next());
 			assert !it.hasNext();
 		}
@@ -197,13 +216,17 @@ public class TotalizeNwa<LETTER, STATE> implements INestedWordAutomatonSimple<LE
 	@Override
 	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSucccessors(
 			STATE state, STATE hier, LETTER letter) {
+		if (m_NondeterminismInInputDetected) {
+			return new HashSet(0);
+		}
 		if (state != m_SinkState) {
 			Iterator<OutgoingReturnTransition<LETTER, STATE>> it = 
 					m_Operand.returnSucccessors(state, hier, letter).iterator();
 			if (it.hasNext()) {
 				it.next();
 				if (it.hasNext()) {
-					throwOperandNotDeterministicException();
+					m_NondeterminismInInputDetected = true;
+					return new HashSet(0);
 				} else {
 					return m_Operand.returnSucccessors(state, hier, letter);
 				}
@@ -220,11 +243,17 @@ public class TotalizeNwa<LETTER, STATE> implements INestedWordAutomatonSimple<LE
 	@Override
 	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessorsGivenHier(
 			STATE state, STATE hier) {
+		if (m_NondeterminismInInputDetected) {
+			return new HashSet(0);
+		}
 		ArrayList<OutgoingReturnTransition<LETTER, STATE>> result = 
 				new ArrayList<OutgoingReturnTransition<LETTER, STATE>>();
 		for (LETTER letter : getReturnAlphabet()) {
 			Iterator<OutgoingReturnTransition<LETTER, STATE>> it = 
 					returnSucccessors(state, hier, letter).iterator();
+			if (m_NondeterminismInInputDetected) {
+				return new HashSet(0);
+			}
 			result.add(it.next());
 			assert !it.hasNext();
 		}
