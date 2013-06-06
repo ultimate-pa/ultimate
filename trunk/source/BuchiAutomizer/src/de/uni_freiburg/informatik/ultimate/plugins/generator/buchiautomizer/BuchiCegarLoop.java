@@ -16,9 +16,12 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.BuchiAccepts;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.BuchiIsEmpty;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.NestedLassoRun;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.NestedLassoWord;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.Accepts;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.DifferenceDD;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
@@ -31,12 +34,15 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.prefere
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.TAPreferences.InterpolatedLocs;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CFG2NestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.InterpolantAutomataBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbstractCegarLoop.Result;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.InterpolantAutomataTransitionAppender.StrongestPostDeterminizer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.AnnotateAndAsserter;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceChecker;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceChecker.AllIntegers;
 
 public class BuchiCegarLoop {
 	protected final static Logger s_Logger = 
@@ -316,7 +322,48 @@ public class BuchiCegarLoop {
 			return feasibility;
 		}
 		
+		private void refineFinite() throws OperationCanceledException {
+			AllIntegers allInt = new TraceChecker.AllIntegers();
+			IPredicate[] interpolants = m_TraceChecker.getInterpolants(allInt);
+			constructInterpolantAutomaton(interpolants);
+			StrongestPostDeterminizer spd = new StrongestPostDeterminizer(
+					m_SmtManager, m_Pref, m_InterpolAutomaton);
+			DifferenceDD<CodeBlock, IPredicate> diff = null;
+			try {
+				diff = new DifferenceDD<CodeBlock, IPredicate>(
+						m_Abstraction, m_InterpolAutomaton, spd, 
+						m_Abstraction.getStateFactory(),
+						false, true);
+			} catch (AutomataLibraryException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			try {
+				m_Abstraction = (NestedWordAutomaton<CodeBlock, IPredicate>) diff.getResult();
+			} catch (OperationCanceledException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
 		
+		protected void constructInterpolantAutomaton(IPredicate[] interpolants) throws OperationCanceledException {
+			InterpolantAutomataBuilder iab = new InterpolantAutomataBuilder(
+							m_ConcatenatedCounterexample,
+							m_TruePredicate,
+							m_FalsePredicate,
+							interpolants,
+							m_Pref.interpolantAutomaton(), m_Pref.edges2True(),
+							m_SmtManager, m_Pref,
+							m_Iteration, null);
+			m_InterpolAutomaton = iab.buildInterpolantAutomaton(
+					m_Abstraction, m_Abstraction.getStateFactory());
+			
+			assert((new Accepts<CodeBlock, IPredicate>(m_InterpolAutomaton, m_ConcatenatedCounterexample.getWord())).getResult()) :
+				"Interpolant automaton broken!";
+			assert((new BuchiAccepts<CodeBlock, IPredicate>(m_InterpolAutomaton, m_Counterexample.getNestedLassoWord())).getResult()) :
+				"Interpolant automaton broken!";
+			assert (m_SmtManager.checkInductivity(m_InterpolAutomaton, false, true));
+		}
 		
 		
 		

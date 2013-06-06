@@ -94,22 +94,7 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 
 	
 	
-	protected void constructInterpolantAutomaton() {
-		InterpolantAutomataBuilder iab = new InterpolantAutomataBuilder(
-						m_Counterexample,
-						m_TruePredicate,
-						m_FalsePredicate,
-						m_Interpolants,
-						m_Pref.interpolantAutomaton(), m_Pref.edges2True(),
-						smtManager, m_Pref,
-						m_Iteration, null);
-		m_InterpolAutomaton = iab.buildInterpolantAutomaton(
-				m_Abstraction, m_Abstraction.getStateFactory());
-		
-		assert(m_InterpolAutomaton.accepts(m_Counterexample.getWord())) :
-			"Interpolant automaton broken!";
-		assert (smtManager.checkInductivity(m_InterpolAutomaton, false, true));
-	}
+
 	
 	
 	
@@ -163,27 +148,7 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 		m_Iteration = 0;
 		LBool feasibility = null;
 		while (feasibility == LBool.UNSAT) {
-			AllIntegers allInt = new TraceChecker.AllIntegers();
-			m_Interpolants = m_TraceChecker.getInterpolants(allInt);
-			constructInterpolantAutomaton();
-			StrongestPostDeterminizer spd = new StrongestPostDeterminizer(
-					smtManager, m_Pref, m_InterpolAutomaton);
-			DifferenceDD<CodeBlock, IPredicate> diff = null;
-			try {
-				diff = new DifferenceDD<CodeBlock, IPredicate>(
-						m_Abstraction, m_InterpolAutomaton, spd, 
-						m_StateFactoryForRefinement,
-						false, true);
-			} catch (AutomataLibraryException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-			try {
-				m_Abstraction = (NestedWordAutomaton<CodeBlock, IPredicate>) diff.getResult();
-			} catch (OperationCanceledException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
+
 			try {
 				ec = new BuchiIsEmpty<CodeBlock, IPredicate>(m_Abstraction);
 			} catch (OperationCanceledException e) {
