@@ -12,10 +12,7 @@ import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.GetRandomNestedWord;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.IntersectDD;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.NestedWordAutomatonReachableStates;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 
@@ -55,8 +52,8 @@ public class BuchiIntersect<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	
 	
 	
-	public BuchiIntersect(INestedWordAutomatonOldApi<LETTER,STATE> fstOperand,
-			INestedWordAutomatonOldApi<LETTER,STATE> sndOperand
+	public BuchiIntersect(INestedWordAutomatonSimple<LETTER,STATE> fstOperand,
+			INestedWordAutomatonSimple<LETTER,STATE> sndOperand
 			) throws AutomataLibraryException {
 		m_FstOperand = fstOperand;
 		m_SndOperand = sndOperand;
@@ -74,7 +71,7 @@ public class BuchiIntersect<LETTER,STATE> implements IOperation<LETTER,STATE> {
 
 
 	@Override
-	public INestedWordAutomatonOldApi<LETTER, STATE> getResult()
+	public NestedWordAutomatonReachableStates<LETTER, STATE> getResult()
 			throws OperationCanceledException {
 		return m_Result;
 	}
