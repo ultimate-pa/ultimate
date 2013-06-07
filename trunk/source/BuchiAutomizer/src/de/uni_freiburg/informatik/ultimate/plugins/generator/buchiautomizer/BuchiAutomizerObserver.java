@@ -86,7 +86,7 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 	private NestedWordAutomaton<CodeBlock, IPredicate> m_Abstraction;
 	private TraceChecker m_TraceChecker;
 	private PredicateFactoryRefinement m_StateFactoryForRefinement;
-	private BinaryStatePredicateManager m_Binarizer;
+
 	private RootAnnot rootAnnot;
 	
 	
@@ -116,7 +116,7 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 		smtManager = new SmtManager(rootAnnot.getBoogie2Smt(),
 				taPrefs.solver(), rootAnnot.getGlobalVars(), rootAnnot.getModifiedVars(),
 				taPrefs.dumpFormulas(), taPrefs.dumpPath());
-		m_Binarizer = new BinaryStatePredicateManager(smtManager);
+
 		m_Pref = rootAnnot.getTaPrefs();
 		
 		m_StateFactoryForRefinement = new PredicateFactoryRefinement(
@@ -171,226 +171,22 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 
 
 		
-		CodeBlock[] stemCBs = new CodeBlock[stem.length()];
-		for (int i=0; i<stem.length(); i++) {
-			stemCBs[i] = stem.getSymbol(i);
-		}
-		CodeBlock[] loopCBs = new CodeBlock[loop.length()];
-		for (int i=0; i<loop.length(); i++) {
-			loopCBs[i] = loop.getSymbol(i);
-		}
-		@SuppressWarnings("deprecation")
-		TransFormula stemTF = SequentialComposition.getInterproceduralTransFormula(rootAnnot.getBoogie2SMT(), rootAnnot.getTaPrefs().SimplifyCodeBlocks(), false, stemCBs);
-		int stemVars = stemTF.getFormula().getFreeVars().length;
 
-		@SuppressWarnings("deprecation")
-		TransFormula loopTF = SequentialComposition.getInterproceduralTransFormula(rootAnnot.getBoogie2SMT(), rootAnnot.getTaPrefs().SimplifyCodeBlocks(),false, loopCBs);
-		int loopVars = loopTF.getFormula().getFreeVars().length;
-		s_Logger.info("Statistics: stemVars: " + stemVars + "loopVars: " + loopVars);
-		{
-			List<CodeBlock> composedCB = new ArrayList<CodeBlock>();
-			composedCB.addAll(Arrays.asList(stemCBs));
-			composedCB.addAll(Arrays.asList(loopCBs));
-//			composedCB.addAll(Arrays.asList(loopCBs));
-			TransFormula composed = SequentialComposition.getInterproceduralTransFormula(rootAnnot.getBoogie2SMT(), false, rootAnnot.getTaPrefs().SimplifyCodeBlocks(), composedCB.toArray(new CodeBlock[0])); 
-					//TransFormula.sequentialComposition(10000, rootAnnot.getBoogie2SMT(), stemTF, loopTF);
-			if (composed.isInfeasible() == Infeasibility.INFEASIBLE) {
-				throw new AssertionError("suddently infeasible");
-			}
-		}
-		NestedWord<CodeBlock> emptyWord = new NestedWord<CodeBlock>();
-		boolean withoutStem = synthesize(emptyWord, loop, getDummyTF(), loopTF);
-		boolean witStem = synthesize(stem, loop, stemTF, loopTF);
-		if (witStem && !withoutStem) {
-			s_Logger.info("Statistics: SI IS NECESSARY !!!");
-		}
 
 		return false;
 	}
 	
 	
-	private boolean synthesize(NestedWord<CodeBlock> stem, NestedWord<CodeBlock> loop, TransFormula stemTF, TransFormula loopTF) {
-		RankingFunctionsSynthesizer synthesizer = null;
-		try {
-			synthesizer = new RankingFunctionsSynthesizer(
-					smtManager.getScript(), new_Script(false), stemTF,
-					loopTF);
-		} catch (Exception e1) {
-			e1.printStackTrace();
-			throw new AssertionError(e1);
-		}
-		boolean found = false;
-		try {
-			found = synthesizer.synthesize(LinearTemplate.class);
-			if (found) {
-				RankingFunction rf = synthesizer.getRankingFunction();
-				assert (rf != null);
-				Collection<SupportingInvariant> si_list = synthesizer
-						.getSupportingInvariants();
-				assert (si_list != null);
 
-				StringBuilder longMessage = new StringBuilder();
-				LinearRankingFunction linRf = (LinearRankingFunction) rf;
-				Expression rfExp = linRf.asExpression(smtManager.getScript(),
-						smtManager.getBoogieVar2SmtVar());
-				String rfString = RankingFunctionsObserver
-						.backtranslateExprWorkaround(rfExp);
-				String siString;
-
-				// if (si_list.size() <= 2) {
-				// SupportingInvariant si = si_list.iterator().next();
-				// Expression siExp = si.asExpression(smtManager.getScript(),
-				// rootAnnot.getBoogie2Smt());
-				// siString =
-				// RankingFunctionsObserver.backtranslateExprWorkaround(siExp);
-				// } else {
-				// throw new
-				// AssertionError("The linear template should not have more than two supporting invariants.");
-				// }
-				longMessage.append("Statistics: Found linear ranking function ");
-				longMessage.append(rfString);
-				longMessage.append(" with linear supporting invariant");
-				for (SupportingInvariant si : si_list) {
-					Expression siExp = si.asExpression(smtManager.getScript(),
-							smtManager.getBoogieVar2SmtVar());
-					siString = RankingFunctionsObserver
-							.backtranslateExprWorkaround(siExp);
-					longMessage.append(" " + siString);
-				}
-				longMessage.append("  length stem: " + stem.length()
-						+ " length loop: " + loop.length());
-				s_Logger.info(longMessage);
-
-				for (SupportingInvariant si : si_list) {
-					if (stem.length() > 0) {
-						assert checkResult(si, stem, loop) : "Wrong supporting invariant "
-							+ si;
-					}
-				}
-				boolean correctWithoutSi = checkResult(linRf, loop);
-				if (correctWithoutSi) {
-					s_Logger.info("Statistics: For this ranking function no si needed");
-				} else {
-					s_Logger.info("Statistics: We need si for this ranking function");
-				}
-				assert checkResult(linRf, si_list, loop) : "Wrong ranking function "
-						+ rf;
-
-			} else {
-				s_Logger.info("Statistics: No ranking function has been found "
-						+ "with this template.");
-			}
-		} catch (SMTLIBException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (TermIsNotAffineException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (InstantiationException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (AssertionError e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		return found;
-	}
 	
 	
 	
-	private	TransFormula getDummyTF() {
-		Term term = smtManager.getScript().term("true");
-		Map<BoogieVar,TermVariable> inVars = new HashMap<BoogieVar,TermVariable>();
-		Map<BoogieVar,TermVariable> outVars = new HashMap<BoogieVar,TermVariable>();
-		Set<TermVariable> auxVars = new HashSet<TermVariable>();
-		Set<TermVariable> branchEncoders = new HashSet<TermVariable>();
-		Infeasibility infeasibility = Infeasibility.UNPROVEABLE;
-		Term closedFormula = term;
-		return new TransFormula(term, inVars, outVars, auxVars, branchEncoders, 
-				infeasibility, closedFormula);
-	}
+
 			
 			
-	private static boolean isTrue(IPredicate pred) {
-		Term term = pred.getFormula();
-		if (term instanceof ApplicationTerm) {
-			ApplicationTerm appTerm = (ApplicationTerm) term;
-			if (appTerm.getFunction().getName().equals("true")) {
-				return true;
-			}
-		}
-		return false;
-	}
-	
-	private boolean checkResult(SupportingInvariant si, NestedWord<CodeBlock> stem, NestedWord<CodeBlock> loop) {
-		boolean result = true;
-		m_TraceChecker = new TraceChecker(smtManager,
-				rootAnnot.getModifiedVars(),
-				rootAnnot.getEntryNodes(),
-				null);
-		IPredicate siPred = m_Binarizer.supportingInvariant2Predicate(si);
-		if (isTrue(siPred)) {
-			siPred = m_TruePredicate;
-		}
-		LBool stemCheck = m_TraceChecker.checkTrace(m_TruePredicate, siPred, stem);
-		if (stemCheck == LBool.UNSAT) {
-			IPredicate[] interpolants = m_TraceChecker.getInterpolants(new TraceChecker.AllIntegers());
-			interpolants.toString();
-		} else {
-			result = false;			
-		}
-		LBool loopCheck = m_TraceChecker.checkTrace(siPred, siPred, stem);
-		if (loopCheck == LBool.UNSAT) {
-			IPredicate[] interpolants = m_TraceChecker.getInterpolants(new TraceChecker.AllIntegers());
-			interpolants.toString();
-		} else {
-			result = false;
-		}
-		return result;
-	}
-	
-	private boolean checkResult(RankingFunction rf, NestedWord<CodeBlock> loop) {
-		boolean result = true;
-		IPredicate seedEquality = m_Binarizer.getSeedVarEquality(rf);
-		IPredicate rkDecrease = m_Binarizer.getRankDecrease(rf);
-		
-		LBool stemCheck = m_TraceChecker.checkTrace(seedEquality, rkDecrease, loop);
-		m_TraceChecker.forgetTrace();
-		if (stemCheck != LBool.UNSAT) {
-			result = false;
-		}
-		return result;
-	}
 
 	
-	private boolean checkResult(RankingFunction rf,  Iterable<SupportingInvariant> siList, NestedWord<CodeBlock> loop) {
-		boolean result = true;
-		List<IPredicate> siPreds = new ArrayList<IPredicate>();
-		for (SupportingInvariant si : siList) {
-			IPredicate siPred = m_Binarizer.supportingInvariant2Predicate(si);
-			siPreds.add(siPred);
-		}
-		TermVarsProc tvp = smtManager.and(siPreds.toArray(new IPredicate[0]));
-		IPredicate siConjunction = smtManager.newPredicate(tvp.getFormula(), 
-				tvp.getProcedures(), tvp.getVars(), tvp.getClosedFormula()); 
-		
-		IPredicate seedEquality = m_Binarizer.getSeedVarEquality(rf);
-		IPredicate rkDecrease = m_Binarizer.getRankDecrease(rf);
-		
-		final IPredicate siConjunctionAndSeedEquality;
-		{
-			tvp = smtManager.and(siConjunction, seedEquality);
-			siConjunctionAndSeedEquality = smtManager.newPredicate(tvp.getFormula(), 
-					tvp.getProcedures(), tvp.getVars(), tvp.getClosedFormula());
-		}
-		
-		LBool stemCheck = m_TraceChecker.checkTrace(siConjunctionAndSeedEquality, rkDecrease, loop);
-		m_TraceChecker.forgetTrace();
-		if (stemCheck != LBool.UNSAT) {
-			result = false;
-		}
-		return result;
-	}
+
 	
 	
 	private NestedWordAutomaton<CodeBlock, IPredicate> constructBuchiInterpolantAutomaton(
@@ -449,47 +245,7 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 	}
 	
 	
-	Script new_Script(boolean nonlinear) {
-		// This code is essentially copied from 
-		// de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CfgBuilder
-		// since there is no obvious way to implement it as shared code.
-		
-		TAPreferences taPref = new TAPreferences();
-		Logger solverLogger = Logger.getLogger("interpolLogger");
-		Script script;
-		
-		if (taPref.solver() == Solver.SMTInterpol) {
-			script = new SMTInterpol(solverLogger,false);
-		} else if (taPref.solver() == Solver.Z3) {
-			script = new Scriptor("z3 -smt2 -in", solverLogger);
-		} else {
-			throw new AssertionError();
-		}
-		
-		if (taPref.dumpScript()) {
-			String dumpFileName = taPref.dumpPath();
-			String fileSep = System.getProperty("file.separator");
-			dumpFileName += (dumpFileName.endsWith(fileSep) ? "" : fileSep);
-			dumpFileName = dumpFileName + "rankingFunctions.smt2";
-			// FIXME: add file name
-			try {
-				script = new LoggingScript(script, dumpFileName, true);
-			} catch (FileNotFoundException e) {
-				throw new AssertionError(e);
-			}
-		}
-		
-		script.setOption(":produce-unsat-cores", true);
-		script.setOption(":produce-models", true);
-		if (taPref.solver() == Solver.SMTInterpol) {
-			script.setLogic(nonlinear ? "QF_NRA" : "QF_LRA");
-		} else if (taPref.solver() == Solver.Z3) {
-			script.setLogic(nonlinear ? "QF_NRA" : "QF_LRA");
-		} else {
-			throw new AssertionError();
-		}
-		return script;
-	}
+
 	
 
 	@Override
