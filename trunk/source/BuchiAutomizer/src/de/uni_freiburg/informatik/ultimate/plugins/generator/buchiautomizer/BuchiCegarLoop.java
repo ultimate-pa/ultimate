@@ -18,12 +18,15 @@ import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.AtsDefinitionPrinter.Labeling;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.BuchiAccepts;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.BuchiComplementFKV;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.BuchiIntersect;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.BuchiIsEmpty;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.NestedLassoRun;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.NestedLassoWord;
@@ -153,10 +156,20 @@ public class BuchiCegarLoop {
 		public int m_InitialAbstractionSize = 0;
 
 		private NestedRun<CodeBlock, IPredicate> m_ConcatenatedCounterexample;
+		
+		private LinearRankingFunction m_LinRf;
 
 		private IPredicate m_TruePredicate;
 
 		private IPredicate m_FalsePredicate;
+
+		private Collection<SupportingInvariant> m_SiList;
+
+		private IPredicate m_SiConjunction;
+
+		private IPredicate m_HondaPredicate;
+
+		private IPredicate m_RkDecrease;
 		
 		public BuchiCegarLoop(RootNode rootNode,
 				SmtManager smtManager,
@@ -432,9 +445,13 @@ public class BuchiCegarLoop {
 			}
 			NestedWord<CodeBlock> emptyWord = new NestedWord<CodeBlock>();
 			boolean withoutStem = synthesize(emptyWord, m_Counterexample.getLoop().getWord(), getDummyTF(), loopTF);
+			if (withoutStem) {
+				return true;
+			}
 			boolean witStem = synthesize(m_Counterexample.getStem().getWord(), m_Counterexample.getLoop().getWord(), stemTF, loopTF);
-			if (witStem && !withoutStem) {
+			if (witStem) {
 				s_Logger.info("Statistics: SI IS NECESSARY !!!");
+				return true;
 			}
 			return false;
 		}
@@ -467,13 +484,14 @@ public class BuchiCegarLoop {
 				if (found) {
 					RankingFunction rf = synthesizer.getRankingFunction();
 					assert (rf != null);
-					Collection<SupportingInvariant> si_list = synthesizer
-							.getSupportingInvariants();
-					assert (si_list != null);
+					m_SiList = synthesizer.getSupportingInvariants();
+					assert (m_SiList != null);
+					m_SiConjunction = computeSiConjunction(m_SiList);
 
 					StringBuilder longMessage = new StringBuilder();
-					LinearRankingFunction linRf = (LinearRankingFunction) rf;
-					Expression rfExp = linRf.asExpression(m_SmtManager.getScript(),
+					m_LinRf = (LinearRankingFunction) rf;
+					computeHondaPredicates(m_LinRf);
+					Expression rfExp = m_LinRf.asExpression(m_SmtManager.getScript(),
 							m_SmtManager.getBoogieVar2SmtVar());
 					String rfString = RankingFunctionsObserver
 							.backtranslateExprWorkaround(rfExp);
@@ -492,7 +510,7 @@ public class BuchiCegarLoop {
 					longMessage.append("Statistics: Found linear ranking function ");
 					longMessage.append(rfString);
 					longMessage.append(" with linear supporting invariant");
-					for (SupportingInvariant si : si_list) {
+					for (SupportingInvariant si : m_SiList) {
 						Expression siExp = si.asExpression(m_SmtManager.getScript(),
 								m_SmtManager.getBoogieVar2SmtVar());
 						siString = RankingFunctionsObserver
@@ -503,19 +521,19 @@ public class BuchiCegarLoop {
 							+ " length loop: " + loop.length());
 					s_Logger.info(longMessage);
 
-					for (SupportingInvariant si : si_list) {
+					for (SupportingInvariant si : m_SiList) {
 						if (stem.length() > 0) {
-							assert checkResult(si, stem, loop) : "Wrong supporting invariant "
+							assert checkSupportingInvariant(si, stem, loop) : "Wrong supporting invariant "
 								+ si;
 						}
 					}
-					boolean correctWithoutSi = checkResult(linRf, loop);
+					boolean correctWithoutSi = checkRankDecrease();
 					if (correctWithoutSi) {
 						s_Logger.info("Statistics: For this ranking function no si needed");
 					} else {
 						s_Logger.info("Statistics: We need si for this ranking function");
 					}
-					assert checkResult(linRf, si_list, loop) : "Wrong ranking function "
+					assert checkRankDecrease() : "Wrong ranking function "
 							+ rf;
 
 				} else {
@@ -591,7 +609,7 @@ public class BuchiCegarLoop {
 			return false;
 		}
 		
-		private boolean checkResult(SupportingInvariant si, NestedWord<CodeBlock> stem, NestedWord<CodeBlock> loop) {
+		private boolean checkSupportingInvariant(SupportingInvariant si, NestedWord<CodeBlock> stem, NestedWord<CodeBlock> loop) {
 			boolean result = true;
 			m_TraceChecker = new TraceChecker(m_SmtManager,
 					m_RootNode.getRootAnnot().getModifiedVars(),
@@ -618,22 +636,18 @@ public class BuchiCegarLoop {
 			return result;
 		}
 		
-		private boolean checkResult(RankingFunction rf, NestedWord<CodeBlock> loop) {
+		private boolean checkRankDecrease() {
 			boolean result = true;
-			IPredicate seedEquality = m_Binarizer.getSeedVarEquality(rf);
-			IPredicate rkDecrease = m_Binarizer.getRankDecrease(rf);
-			
-			LBool stemCheck = m_TraceChecker.checkTrace(seedEquality, rkDecrease, loop);
+			NestedWord<CodeBlock> loop = m_Counterexample.getLoop().getWord();
+			LBool loopCheck = m_TraceChecker.checkTrace(m_HondaPredicate, m_RkDecrease, loop);
 			m_TraceChecker.forgetTrace();
-			if (stemCheck != LBool.UNSAT) {
+			if (loopCheck != LBool.UNSAT) {
 				result = false;
 			}
 			return result;
 		}
-
 		
-		private boolean checkResult(RankingFunction rf,  Iterable<SupportingInvariant> siList, NestedWord<CodeBlock> loop) {
-			boolean result = true;
+		private IPredicate computeSiConjunction(Iterable<SupportingInvariant> siList) {
 			List<IPredicate> siPreds = new ArrayList<IPredicate>();
 			for (SupportingInvariant si : siList) {
 				IPredicate siPred = m_Binarizer.supportingInvariant2Predicate(si);
@@ -642,25 +656,117 @@ public class BuchiCegarLoop {
 			TermVarsProc tvp = m_SmtManager.and(siPreds.toArray(new IPredicate[0]));
 			IPredicate siConjunction = m_SmtManager.newPredicate(tvp.getFormula(), 
 					tvp.getProcedures(), tvp.getVars(), tvp.getClosedFormula()); 
-			
+			return siConjunction;
+		}
+		
+		private void computeHondaPredicates(RankingFunction rf) {
+			m_RkDecrease = m_Binarizer.getRankDecrease(rf);
 			IPredicate seedEquality = m_Binarizer.getSeedVarEquality(rf);
-			IPredicate rkDecrease = m_Binarizer.getRankDecrease(rf);
-			
 			final IPredicate siConjunctionAndSeedEquality;
 			{
-				tvp = m_SmtManager.and(siConjunction, seedEquality);
+				TermVarsProc tvp;
+				tvp = m_SmtManager.and(m_SiConjunction, seedEquality);
 				siConjunctionAndSeedEquality = m_SmtManager.newPredicate(tvp.getFormula(), 
 						tvp.getProcedures(), tvp.getVars(), tvp.getClosedFormula());
 			}
+			m_HondaPredicate = siConjunctionAndSeedEquality;
+		}
+
+		
+		private void refineBuchi() throws AutomataLibraryException {
+			assert m_InterpolAutomaton == null;
+			NestedWord<CodeBlock> stem = m_Counterexample.getStem().getWord();
+			NestedWord<CodeBlock> loop = m_Counterexample.getLoop().getWord();
 			
-			LBool stemCheck = m_TraceChecker.checkTrace(siConjunctionAndSeedEquality, rkDecrease, loop);
-			m_TraceChecker.forgetTrace();
-			if (stemCheck != LBool.UNSAT) {
-				result = false;
+			assert m_TraceChecker == null;
+			m_TraceChecker = new TraceChecker(m_SmtManager,
+					m_RootNode.getRootAnnot().getModifiedVars(),
+					m_RootNode.getRootAnnot().getEntryNodes(),
+					null);
+			LBool stemCheck = m_TraceChecker.checkTrace(m_TruePredicate, m_SiConjunction, stem);
+			IPredicate[] stemInterpolants;
+			if (stemCheck == LBool.UNSAT) {
+				stemInterpolants = m_TraceChecker.getInterpolants(new TraceChecker.AllIntegers());
+			} else {
+				throw new AssertionError();
+			}
+			m_TraceChecker = new TraceChecker(m_SmtManager,
+					m_RootNode.getRootAnnot().getModifiedVars(),
+					m_RootNode.getRootAnnot().getEntryNodes(),
+					null);
+			LBool loopCheck = m_TraceChecker.checkTrace(m_HondaPredicate, m_RkDecrease, loop);
+			IPredicate[] loopInterpolants;
+			if (loopCheck == LBool.UNSAT) {
+				loopInterpolants = m_TraceChecker.getInterpolants(new TraceChecker.AllIntegers());
+			} else {
+				throw new AssertionError();
+			}
+			
+			m_InterpolAutomaton = constructBuchiInterpolantAutomaton(
+					m_TruePredicate, stem, stemInterpolants, m_HondaPredicate, 
+					loop, loopInterpolants, m_Abstraction);
+			INestedWordAutomaton<CodeBlock, IPredicate>  complement =
+					(new BuchiComplementFKV<CodeBlock, IPredicate>(m_InterpolAutomaton)).getResult();
+			INestedWordAutomatonOldApi<CodeBlock, IPredicate> newAbstraction =
+					(new BuchiIntersect<CodeBlock, IPredicate>(m_Abstraction, complement)).getResult();
+			m_Abstraction = newAbstraction;
+		}
+		
+	
+		private NestedWordAutomaton<CodeBlock, IPredicate> constructBuchiInterpolantAutomaton(
+				IPredicate precondition, NestedWord<CodeBlock> stem, IPredicate[] stemInterpolants, 
+				IPredicate honda, NestedWord<CodeBlock> loop, IPredicate[] loopInterpolants,
+				INestedWordAutomatonSimple<CodeBlock, IPredicate> abstraction) {
+			NestedWordAutomaton<CodeBlock, IPredicate> result =	
+					new NestedWordAutomaton<CodeBlock, IPredicate>(abstraction.getInternalAlphabet(), 
+							abstraction.getCallAlphabet(), abstraction.getReturnAlphabet(), 
+							abstraction.getStateFactory());
+			result.addState(true, false, precondition);
+			for (int i=0; i<=stemInterpolants.length-1; i++) {
+				addState(stemInterpolants[i], result);
+				addTransition(i, precondition, stemInterpolants, honda, stem, result);
+			}
+			result.addState(false, true, honda);
+			for (int i=0; i<=stemInterpolants.length-1; i++) {
+				addState(loopInterpolants[i], result);
+				addTransition(i, honda, loopInterpolants, honda, loop, result);
 			}
 			return result;
 		}
 		
+		private void addState(IPredicate pred, NestedWordAutomaton<CodeBlock, IPredicate> nwa) {
+			if (!nwa.getStates().contains(pred)) {
+				nwa.addState(false,false,pred);
+			}
+		}
+		
+		private void addTransition(int pos, IPredicate pre, IPredicate[] predicates, IPredicate post, NestedWord<CodeBlock> nw, NestedWordAutomaton<CodeBlock, IPredicate> nwa) {
+			IPredicate pred = getPredicateAtPosition(pos-1, pre, predicates, post);
+			IPredicate succ = getPredicateAtPosition(pos, pre, predicates, post);
+			CodeBlock cb = nw.getSymbol(pos);
+			if (nw.isInternalPosition(pos)) {
+				nwa.addInternalTransition(pred, cb, succ);
+			} else if (nw.isCallPosition(pos)) {
+				nwa.addCallTransition(pred, cb, succ);
+			} else if (nw.isReturnPosition(pos)) {
+				assert !nw.isPendingReturn(pos);
+				int k = nw.getCallPosition(pos);
+				IPredicate hier = getPredicateAtPosition(k, pre, predicates, post);
+				nwa.addReturnTransition(pred, hier, cb, succ);
+			}
+		}
+		
+		private IPredicate getPredicateAtPosition(int pos, IPredicate before, IPredicate[] predicates, IPredicate after) {
+			assert pos >= -1;
+			assert pos <= predicates.length;
+			if (pos < 0) {
+				return before;
+			} else if (pos >= predicates.length) {
+				return after;
+			} else {
+				return predicates[pos];
+			}
+		}
 		
 		
 		

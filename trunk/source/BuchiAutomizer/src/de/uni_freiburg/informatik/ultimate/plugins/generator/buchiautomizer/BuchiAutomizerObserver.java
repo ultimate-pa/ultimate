@@ -189,60 +189,7 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 
 	
 	
-	private NestedWordAutomaton<CodeBlock, IPredicate> constructBuchiInterpolantAutomaton(
-			IPredicate precondition, NestedWord<CodeBlock> stem, IPredicate[] stemInterpolants, 
-			IPredicate honda, NestedWord<CodeBlock> loop, IPredicate[] loopInterpolants,
-			INestedWordAutomatonSimple<CodeBlock, IPredicate> abstraction) {
-		NestedWordAutomaton<CodeBlock, IPredicate> result =	
-				new NestedWordAutomaton<CodeBlock, IPredicate>(abstraction.getInternalAlphabet(), 
-						abstraction.getCallAlphabet(), abstraction.getReturnAlphabet(), 
-						abstraction.getStateFactory());
-		result.addState(true, false, precondition);
-		for (int i=0; i<=stemInterpolants.length-1; i++) {
-			addState(stemInterpolants[i], result);
-			addTransition(i, precondition, stemInterpolants, honda, stem, result);
-		}
-		result.addState(false, true, honda);
-		for (int i=0; i<=stemInterpolants.length-1; i++) {
-			addState(loopInterpolants[i], result);
-			addTransition(i, honda, loopInterpolants, honda, loop, result);
-		}
-		return result;
-	}
-	
-	private void addState(IPredicate pred, NestedWordAutomaton<CodeBlock, IPredicate> nwa) {
-		if (!nwa.getStates().contains(pred)) {
-			nwa.addState(false,false,pred);
-		}
-	}
-	
-	private void addTransition(int pos, IPredicate pre, IPredicate[] predicates, IPredicate post, NestedWord<CodeBlock> nw, NestedWordAutomaton<CodeBlock, IPredicate> nwa) {
-		IPredicate pred = getPredicateAtPosition(pos-1, pre, predicates, post);
-		IPredicate succ = getPredicateAtPosition(pos, pre, predicates, post);
-		CodeBlock cb = nw.getSymbol(pos);
-		if (nw.isInternalPosition(pos)) {
-			nwa.addInternalTransition(pred, cb, succ);
-		} else if (nw.isCallPosition(pos)) {
-			nwa.addCallTransition(pred, cb, succ);
-		} else if (nw.isReturnPosition(pos)) {
-			assert !nw.isPendingReturn(pos);
-			int k = nw.getCallPosition(pos);
-			IPredicate hier = getPredicateAtPosition(k, pre, predicates, post);
-			nwa.addReturnTransition(pred, hier, cb, succ);
-		}
-	}
-	
-	private IPredicate getPredicateAtPosition(int pos, IPredicate before, IPredicate[] predicates, IPredicate after) {
-		assert pos >= -1;
-		assert pos <= predicates.length;
-		if (pos < 0) {
-			return before;
-		} else if (pos >= predicates.length) {
-			return after;
-		} else {
-			return predicates[pos];
-		}
-	}
+
 	
 	
 
