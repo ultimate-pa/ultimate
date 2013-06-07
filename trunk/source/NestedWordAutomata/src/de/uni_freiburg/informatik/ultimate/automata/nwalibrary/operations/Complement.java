@@ -22,9 +22,9 @@ public class Complement<LETTER,STATE> implements IOperation<LETTER,STATE> {
 		UltimateServices.getInstance().getLogger(Activator.PLUGIN_ID);
 	
 	private final INestedWordAutomatonSimple<LETTER,STATE> m_Operand;
-	private final DeterminizeNwa<LETTER,STATE> m_Determinized;
-	private final ComplementDeterministicNwa<LETTER,STATE> m_Complement;
-	private final NestedWordAutomatonReachableStates<LETTER,STATE> m_Result;
+	private DeterminizeNwa<LETTER,STATE> m_Determinized;
+	private ComplementDeterministicNwa<LETTER,STATE> m_Complement;
+	private NestedWordAutomatonReachableStates<LETTER,STATE> m_Result;
 	private final IStateDeterminizer<LETTER, STATE> m_StateDeterminizer;
 	private final StateFactory<STATE> m_StateFactory;
 	
@@ -55,14 +55,8 @@ public class Complement<LETTER,STATE> implements IOperation<LETTER,STATE> {
 		m_Operand = operand;
 		m_StateDeterminizer = stateDeterminizer;
 		m_StateFactory = sf;
-		if (operand instanceof DeterminizeNwa) {
-			m_Determinized = (DeterminizeNwa<LETTER, STATE>) operand;
-		} else {
-			m_Determinized = new DeterminizeNwa<LETTER, STATE>(operand, m_StateDeterminizer, m_StateFactory);
-		}
 		s_Logger.info(startMessage());
-		m_Complement = new ComplementDeterministicNwa<LETTER, STATE>(m_Determinized);
-		m_Result = new NestedWordAutomatonReachableStates<LETTER, STATE>(m_Complement);
+		computeComplement();
 		s_Logger.info(exitMessage());
 	}
 	
@@ -70,15 +64,43 @@ public class Complement<LETTER,STATE> implements IOperation<LETTER,STATE> {
 		m_Operand = operand;
 		m_StateDeterminizer = new PowersetDeterminizer<LETTER, STATE>(operand);
 		m_StateFactory = operand.getStateFactory();
-		if (operand instanceof DeterminizeNwa) {
-			m_Determinized = (DeterminizeNwa<LETTER, STATE>) operand;
-		} else {
-			m_Determinized = new DeterminizeNwa<LETTER, STATE>(operand, m_StateDeterminizer, m_StateFactory);
-		}
 		s_Logger.info(startMessage());
+		computeComplement();
+		s_Logger.info(exitMessage());
+	}
+	
+	private void computeComplement() throws OperationCanceledException {
+		if (m_Operand instanceof DeterminizeNwa) {
+			m_Determinized = (DeterminizeNwa<LETTER, STATE>) m_Operand;
+			m_Complement = new ComplementDeterministicNwa<LETTER, STATE>(m_Determinized);
+			m_Result = new NestedWordAutomatonReachableStates<LETTER, STATE>(m_Complement);
+			return;
+		} 
+		if (m_StateDeterminizer instanceof PowersetDeterminizer) {
+			boolean success = tryWithoutDeterminization();
+			if (success) {
+				return;
+			}
+		}
+		m_Determinized = new DeterminizeNwa<LETTER, STATE>(m_Operand, m_StateDeterminizer, m_StateFactory);
 		m_Complement = new ComplementDeterministicNwa<LETTER, STATE>(m_Determinized);
 		m_Result = new NestedWordAutomatonReachableStates<LETTER, STATE>(m_Complement);
-		s_Logger.info(exitMessage());
+	}
+	
+	private boolean tryWithoutDeterminization() throws OperationCanceledException {
+		assert (m_StateDeterminizer instanceof PowersetDeterminizer);
+		TotalizeNwa<LETTER, STATE> totalized = new TotalizeNwa<LETTER, STATE>(m_Operand, m_StateFactory);
+		ComplementDeterministicNwa<LETTER,STATE> complemented = new ComplementDeterministicNwa<LETTER, STATE>(totalized);
+		NestedWordAutomatonReachableStates<LETTER, STATE> result = new NestedWordAutomatonReachableStates<LETTER, STATE>(complemented);
+		if (!totalized.nonDeterminismInInputDetected()) {
+			m_Complement = complemented;
+			m_Result = result;
+			s_Logger.info("Operand was deterministic. Have not used determinization.");
+			return true;
+		} else {
+			s_Logger.info("Operand was not deterministic. Recomputing result with determinization.");
+			return false;
+		}
 	}
 	
 

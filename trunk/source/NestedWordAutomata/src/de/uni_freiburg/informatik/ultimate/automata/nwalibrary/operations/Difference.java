@@ -93,10 +93,10 @@ public class Difference<LETTER,STATE> implements IOperation<LETTER,STATE>, IOpWi
 				m_SndComplemented = sndComplemented;
 				m_Intersect = intersect;
 				m_Result = result;
-				s_Logger.warn("Subtrahend was deterministic. Have not used determinization.");
+				s_Logger.info("Subtrahend was deterministic. Have not used determinization.");
 				return;
 			} else {
-			s_Logger.warn("Subtrahend was not deterministic. Recomputing result with determinization.");
+			s_Logger.info("Subtrahend was not deterministic. Recomputing result with determinization.");
 			}
 		}
 		m_SndDeterminized = new DeterminizeNwa<LETTER,STATE>(m_SndOperand,m_StateDeterminizer,m_StateFactory);
