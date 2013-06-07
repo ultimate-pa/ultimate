@@ -8,5 +8,5 @@ assert(isEmpty(intersectNodd(McCarthyInterpolantAutomaton_Iteration12, McCarthyI
 assert(isEmpty(intersectNodd(McCarthyAbstraction16, McCarthyInterpolantAutomaton_Iteration16)));
 assert(isEmpty(intersectNodd(McCarthyInterpolantAutomaton_Iteration12, McCarthyAbstraction16)));
 assert(!isEmpty(intersectNodd(Ackermann_Abstraction19, Ackermann_Abstraction24)));
-assert(isEmpty(intersectNodd(Ackermann_InterpolantAutomaton_Iteration39, Ackermann_Abstraction24)));
-assert(isEmpty(intersectNodd(Ackermann_Abstraction19, Ackermann_InterpolantAutomaton_Iteration39)));
+assert(!isEmpty(intersectNodd(Ackermann_InterpolantAutomaton_Iteration39, Ackermann_Abstraction24)));
+assert(!isEmpty(intersectNodd(Ackermann_Abstraction19, Ackermann_InterpolantAutomaton_Iteration39)));

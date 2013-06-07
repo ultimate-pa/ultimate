@@ -5,8 +5,8 @@
 parseAutomata("../nwa/ProgramVerification-Ministerprasident.ats");
 
 assert(numberOfStates(intersect(McCarthyInterpolantAutomaton_Iteration12, McCarthyInterpolantAutomaton_Iteration16)) == 40);
-assert(numberOfStates(intersect(McCarthyAbstraction16, McCarthyInterpolantAutomaton_Iteration16)) == 355);
-assert(numberOfStates(intersect(McCarthyInterpolantAutomaton_Iteration12, McCarthyAbstraction16)) == 312);
+assert(numberOfStates(intersect(McCarthyAbstraction16, McCarthyInterpolantAutomaton_Iteration16)) == 380);
+assert(numberOfStates(intersect(McCarthyInterpolantAutomaton_Iteration12, McCarthyAbstraction16)) == 338);
 assert(numberOfStates(intersect(Ackermann_Abstraction19, Ackermann_Abstraction24)) == 544);
-assert(numberOfStates(intersect(Ackermann_InterpolantAutomaton_Iteration39, Ackermann_Abstraction24)) == 49);
-assert(numberOfStates(intersect(Ackermann_Abstraction19, Ackermann_InterpolantAutomaton_Iteration39)) == 48);
+assert(numberOfStates(intersect(Ackermann_InterpolantAutomaton_Iteration39, Ackermann_Abstraction24)) == 571);
+assert(numberOfStates(intersect(Ackermann_Abstraction19, Ackermann_InterpolantAutomaton_Iteration39)) == 154);
