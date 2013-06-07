@@ -8,5 +8,5 @@ assert(numberOfStates(difference(McCarthyInterpolantAutomaton_Iteration16, McCar
 assert(numberOfStates(difference(McCarthyAbstraction16, McCarthyInterpolantAutomaton_Iteration12)) == 377);
 assert(numberOfStates(difference(McCarthyAbstraction16, McCarthyInterpolantAutomaton_Iteration16)) == 377);
 
-assert(numberOfStates(difference(Ackermann_Abstraction24, Ackermann_InterpolantAutomaton_Iteration39)) == 544);
-assert(numberOfStates(difference(Ackermann_Abstraction19, Ackermann_InterpolantAutomaton_Iteration39)) == 123);
+assert(numberOfStates(difference(Ackermann_Abstraction24, Ackermann_InterpolantAutomaton_Iteration39)) == 861);
+assert(numberOfStates(difference(Ackermann_Abstraction19, Ackermann_InterpolantAutomaton_Iteration39)) == 295);
