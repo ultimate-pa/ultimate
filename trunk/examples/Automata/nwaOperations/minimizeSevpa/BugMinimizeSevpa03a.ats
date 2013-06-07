@@ -8,7 +8,7 @@
 // into the worklist.
 // This is disproved for NFAs by this example.
 
-print(minimizeSevpa(nwa));
+print(minimizeSevpa(removeUnreachable(nwa)));
 
 NestedWordAutomaton nwa = (
 	callAlphabet = {},
