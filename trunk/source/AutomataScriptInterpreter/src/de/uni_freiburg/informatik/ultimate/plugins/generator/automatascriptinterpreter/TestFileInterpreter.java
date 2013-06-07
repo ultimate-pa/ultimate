@@ -599,7 +599,7 @@ public class TestFileInterpreter {
 	private String m_path = ".";
 	public enum LoggerSeverity {INFO, WARNING, ERROR, DEBUG};
 	
-	private enum Finished {FINISHED, TIMEOUT, ERROR};
+	private enum Finished {FINISHED, TIMEOUT, ERROR, OUTOFMEMORY};
 	/**
 	 * If an error occurred during the interpretation this is set to true
 	 * and further interpretation is aborted.
@@ -703,6 +703,8 @@ public class TestFileInterpreter {
 				} catch (InterpreterException e) {
 					if (e.getLongDescription().equals("Timeout")) {
 						interpretationFinished = Finished.TIMEOUT;
+					} else if (e.getLongDescription().equals("OutOfMemoryError")) {
+						interpretationFinished = Finished.OUTOFMEMORY;
 					} else {
 						interpretationFinished = Finished.ERROR;
 					}
@@ -1040,6 +1042,8 @@ public class TestFileInterpreter {
 					result = op.getResult();
 				} catch (AutomataLibraryException e) {
 					throw new InterpreterException(oe.getLocation(),e.getMessage());
+				} catch (OutOfMemoryError e) {
+					throw new InterpreterException(oe.getLocation(), "OutOfMemoryError");
 				}
 			} 
 		}
@@ -1199,6 +1203,11 @@ public class TestFileInterpreter {
 			loggerSeverity = LoggerSeverity.INFO;
 			shortDescr = "Timeout during interpretation of automata script.";
 			longDescr = shortDescr;
+		} else if (finished == Finished.OUTOFMEMORY) {
+			userSeverity = Severity.WARNING;
+			loggerSeverity = LoggerSeverity.INFO;
+			shortDescr = "Run out of memory during interpretation of automata script.";
+			longDescr = shortDescr;
 		} else if (finished == Finished.ERROR) {
 			userSeverity = Severity.ERROR;
 			loggerSeverity = LoggerSeverity.ERROR;
@@ -1304,7 +1313,9 @@ public class TestFileInterpreter {
 								String message = "Non runtime Exception" + targetException.getMessage();
 								throw new AssertionError(message);
 							}
-						} 
+						} catch (OutOfMemoryError e) {
+							throw new InterpreterException(oe.getLocation(), "OutOfMemoryError");
+						}
 					}
 				}					
 			}
