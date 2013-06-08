@@ -96,11 +96,14 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	// work lists
 	private WorkListIntCall m_workListIntCall;
 	private WorkListRet m_workListRet;
+	// placeholder equivalence class
+	private final EquivalenceClass m_negativesClass;
 	// simulates the output automaton
 	private ShrinkNwaResult m_result;
 	
 	// TODO<debug>
 	private final boolean DEBUG = false;
+	private final boolean DEBUG2 = true;
 	
 	// TODO<statistics>
 	private final boolean STATISTICS = false;
@@ -156,6 +159,7 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 		m_partition = new Partition();
 		m_workListIntCall = new WorkListIntCall();
 		m_workListRet = new WorkListRet();
+		m_negativesClass = new EquivalenceClass();
 		
 		// must be the last part of the constructor
 		s_Logger.info(startMessage());
@@ -253,7 +257,7 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 						System.out.println("\n-- return search");
 					EquivalenceClass a = m_workListRet.next();
 					
-					splitReturnPredecessors(a);
+					splitReturnPredecessorsOld(a);
 				}
 				else {
 					break outer;
@@ -329,6 +333,11 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	private void splitInternalOrCallPredecessors(final EquivalenceClass a,
 			final ITransitionIterator<LETTER, STATE> iterator,
 			final boolean isInternal) {
+		assert ((iterator instanceof ShrinkNwa.InternalTransitionIterator) &&
+				(a.m_incomingInt != EIncomingStatus.inWL) ||
+				(iterator instanceof ShrinkNwa.CallTransitionIterator) &&
+				(a.m_incomingCall != EIncomingStatus.inWL));
+		
 		// create a hash map from letter to respective predecessor states
 		final HashMap<LETTER, HashSet<STATE>> letter2states =
 				new HashMap<LETTER, HashSet<STATE>>();
@@ -371,6 +380,210 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	}
 	
 	/**
+	 * TODO<comment>
+	 * 
+	 * TODO<iteration> possibly make a copy of hierarchical equivalence classes
+	 *                 for fast iteration (only if more than once)
+	 *
+	 * @param a splitter equivalence class
+	 */
+	private void splitReturnPredecessorsNew(final EquivalenceClass a) {
+		assert (a.m_incomingRet != EIncomingStatus.inWL);
+		
+		// collect incoming return transitions
+		HashMap<LETTER, HashMap<EquivalenceClass, HashSet<EquivalenceClass>>>
+				letter2lin2hier = new HashMap<LETTER, HashMap<EquivalenceClass,
+				HashSet<EquivalenceClass>>>();
+		for (final STATE succ : a.m_states) {
+			for (final IncomingReturnTransition<LETTER, STATE> edge :
+					m_operand.returnPredecessors(succ)) {
+				final LETTER letter = edge.getLetter();
+				HashMap<EquivalenceClass, HashSet<EquivalenceClass>> lin2hier =
+						letter2lin2hier.get(letter);
+				if (lin2hier == null) {
+					lin2hier = new HashMap<EquivalenceClass,
+							HashSet<EquivalenceClass>>();
+					letter2lin2hier.put(letter, lin2hier);
+				}
+				final EquivalenceClass linEc = m_partition.
+						m_state2EquivalenceClass.get(edge.getLinPred());
+				HashSet<EquivalenceClass> hier = lin2hier.get(linEc);
+				if (hier == null) {
+					hier = new HashSet<EquivalenceClass>();
+					lin2hier.put(linEc, hier);
+				}
+				hier.add(m_partition.m_state2EquivalenceClass.get(
+						edge.getHierPred()));
+			}
+		}
+		
+		// remember that this equivalence class has no incoming transitions
+		if (letter2lin2hier.isEmpty()) {
+			a.m_incomingRet = EIncomingStatus.none;
+			if (STATISTICS)
+				++m_noIncomingTransitionts;
+			
+			return;
+		}
+		
+		if (STATISTICS)
+			++m_incomingTransitionts;
+		
+		if (DEBUG2) {
+			System.err.println("-- new return mapping: from A = " + a);
+			System.err.println(letter2lin2hier);
+		}
+		
+		final LinkedList<HashMap<STATE, HashMap<Set<EquivalenceClass>,
+			Set<STATE>>>> listLin2succ2hier = new LinkedList<HashMap<STATE,
+			HashMap<Set<EquivalenceClass>,Set<STATE>>>>();
+		final LinkedList<HashMap<STATE, HashMap<Set<EquivalenceClass>,
+		Set<STATE>>>> listHier2succ2lin = new LinkedList<HashMap<STATE,
+		HashMap<Set<EquivalenceClass>,Set<STATE>>>>();
+		final HashSet<EquivalenceClass> negativeSet =
+				new HashSet<EquivalenceClass>();
+		negativeSet.add(m_negativesClass);
+		
+		for (final Entry<LETTER, HashMap<EquivalenceClass,
+				HashSet<EquivalenceClass>>> outerEntry :
+					letter2lin2hier.entrySet()) {
+			final HashMap<STATE, HashMap<Set<EquivalenceClass>, Set<STATE>>>
+				lin2succ2hier = new HashMap<STATE,
+				HashMap<Set<EquivalenceClass>,Set<STATE>>>();
+			final LETTER letter = outerEntry.getKey();
+			
+			if (DEBUG2)
+				System.err.println("next letter: " + letter);
+			
+			for (final Entry<EquivalenceClass, HashSet<EquivalenceClass>>
+					innerEntry : outerEntry.getValue().entrySet()) {
+				final EquivalenceClass linEc = innerEntry.getKey();
+				
+				if (DEBUG2)
+					System.err.println("-next linEc: " + linEc);
+				
+				final HashMap<STATE, HashMap<Set<EquivalenceClass>,
+					Set<STATE>>> hier2succ2lin = new HashMap<STATE,
+					HashMap<Set<EquivalenceClass>,Set<STATE>>>();
+				listHier2succ2lin.add(hier2succ2lin);
+				
+				for (final STATE lin : linEc.m_states) {
+					if (DEBUG2)
+						System.err.println("--next lin : " + lin);
+					
+					final HashMap<Set<EquivalenceClass>, Set<STATE>>
+						succ2hier = new HashMap<Set<EquivalenceClass>,
+						Set<STATE>>();
+					lin2succ2hier.put(lin, succ2hier);
+					
+					for (final EquivalenceClass hierEc :
+							innerEntry.getValue()) {
+						if (DEBUG2)
+							System.err.println("next hierEc: " + hierEc);
+						
+						for (final STATE hier : hierEc.m_states) {
+							
+							HashMap<Set<EquivalenceClass>, Set<STATE>>
+								succ2lin = hier2succ2lin.get(hier);
+							if (succ2lin == null) {
+								succ2lin = new HashMap<Set<EquivalenceClass>,
+										Set<STATE>>();
+								hier2succ2lin.put(hier, succ2lin);
+							}
+							
+							if (DEBUG2)
+								System.err.println("next hier  : " + hier);
+							
+							final Iterator<OutgoingReturnTransition<
+								LETTER, STATE>> edges = m_operand.
+								returnSucccessors(lin, hier, letter).
+								iterator();
+							
+							if (edges.hasNext()) {
+								final HashSet<EquivalenceClass> succEcs =
+										new HashSet<EquivalenceClass>();
+								do {
+									final OutgoingReturnTransition
+										<LETTER, STATE> edge = edges.next();
+									if (DEBUG2)
+										System.err.println("next trans : " +
+												edge);
+									
+									final EquivalenceClass succEc =
+											m_partition.
+											m_state2EquivalenceClass.get(
+													edge.getSucc());
+									if (DEBUG2)
+										System.err.println("this succEc: " +
+												succEc);
+									
+									succEcs.add(succEc);
+								} while (edges.hasNext());
+								if (DEBUG2)
+									System.err.println("all succEcs: " +
+											succEcs);
+								
+								Set<STATE> hierSet = succ2hier.get(succEcs);
+								if (hierSet == null) {
+									hierSet = new HashSet<STATE>();
+									succ2hier.put(succEcs, hierSet);
+								}
+								hierSet.add(hier);
+								Set<STATE> linSet = succ2lin.get(succEcs);
+								if (linSet == null) {
+									linSet = new HashSet<STATE>();
+									succ2lin.put(succEcs, linSet);
+								}
+								linSet.add(lin);
+							}
+							else {
+								if (m_doubleDecker.isDoubleDecker(lin, hier)) {
+									if (DEBUG2)
+										System.err.println("no trans, but DS");
+									
+									Set<STATE> hierSet =
+											succ2hier.get(negativeSet);
+									if (hierSet == null) {
+										hierSet = new HashSet<STATE>();
+										succ2hier.put(negativeSet, hierSet);
+									}
+									hierSet.add(hier);
+									Set<STATE> linSet =
+											succ2lin.get(negativeSet);
+									if (linSet == null) {
+										linSet = new HashSet<STATE>();
+										succ2lin.put(negativeSet, linSet);
+									}
+									linSet.add(lin);
+								}
+								else {
+									if (DEBUG2)
+										System.err.println("no trans, no DS");
+								}
+							}
+						}
+					}
+					
+					if (DEBUG2)
+						System.err.println("succ2hier: " + succ2hier);
+				}
+				if (DEBUG2)
+					System.err.println("hier2succ2lin: " + hier2succ2lin);
+			}
+			listLin2succ2hier.add(lin2succ2hier);
+			
+			if (DEBUG2)
+				System.err.println("lin2succ2hier: " + lin2succ2hier);
+		}
+		
+		// FIXME split
+		if (DEBUG2) {
+			System.err.println("listLin2succ2hier: " + listLin2succ2hier);
+			System.err.println("listHier2succ2lin: " + listHier2succ2lin);
+		}
+	}
+	
+	/**
 	 * For each state and return symbol split the linear predecessors
 	 * with respect to the successor equivalence classes.
 	 * 
@@ -381,7 +594,7 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	 * 
 	 * @param a splitter equivalence class
 	 */
-	private void splitReturnPredecessors(final EquivalenceClass a) {
+	private void splitReturnPredecessorsOld(final EquivalenceClass a) {
 		// recognize when the splitter set was split itself
 		assert (a.m_incomingRet != EIncomingStatus.inWL);
 		
@@ -1143,6 +1356,14 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 		}
 		
 		/**
+		 * This constructor is reserved for the placeholder equivalence class.
+		 */
+		private EquivalenceClass() {
+			m_states = null;
+			m_intersection = null;
+		}
+		
+		/**
 		 * This method resets the intersection set.
 		 */
 		private void reset() {
@@ -1152,21 +1373,12 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 		
 		@Override
 		public String toString() {
+			if (m_states == null) {
+				return "negative equivalence class";
+			}
+			
 			final StringBuilder builder = new StringBuilder();
 			String append = "";
-			if (m_incomingInt != EIncomingStatus.inWL &&
-					m_incomingCall != EIncomingStatus.inWL &&
-					m_incomingRet != EIncomingStatus.inWL &&
-					m_intersection.isEmpty()) {
-				builder.append("<");
-				for (final STATE state : m_states) {
-					builder.append(append);
-					append = ", ";
-					builder.append(state);
-				}
-				builder.append(">");
-				return builder.toString();
-			}
 			
 			builder.append("<[");
 			builder.append(m_incomingInt);
