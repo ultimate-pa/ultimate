@@ -38,6 +38,7 @@ import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.BuchiCegarLoop.Result;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rankingfunctions.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rankingfunctions.RankingFunctionsObserver;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rankingfunctions.RankingFunctionsSynthesizer;
@@ -121,53 +122,64 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 		
 		m_StateFactoryForRefinement = new PredicateFactoryRefinement(
 				rootAnnot.getProgramPoints(),
-				null,
 				smtManager,
 				m_Pref,
 				false,
 				null);
-
-		Map<String, Collection<ProgramPoint>> proc2errNodes = rootAnnot.getErrorNodes();
-		Collection<ProgramPoint> errNodesOfAllProc = new ArrayList<ProgramPoint>();
-		for (Collection<ProgramPoint> errNodeOfProc : proc2errNodes.values()) {
-			errNodesOfAllProc.addAll(errNodeOfProc);
-		}
-
-		long timoutMilliseconds = taPrefs.timeout() * 1000;
-		UltimateServices.getInstance().setDeadline(
-				System.currentTimeMillis() + timoutMilliseconds);
+		BuchiCegarLoop bcl = new BuchiCegarLoop((RootNode) root, smtManager, m_Pref);
+		Result result = bcl.iterate();
 		
-
-		BuchiIsEmpty<CodeBlock, IPredicate> ec = null;
-
-		NestedLassoRun<CodeBlock, IPredicate> ctx = null;
-		NestedWord<CodeBlock> stem = ctx.getStem().getWord();
-		s_Logger.info("Stem: " + stem);
-		NestedWord<CodeBlock> loop = ctx.getLoop().getWord();
-		s_Logger.info("Loop: " + loop);
-		m_Iteration = 0;
-		LBool feasibility = null;
-		while (feasibility == LBool.UNSAT) {
-
-			try {
-				ec = new BuchiIsEmpty<CodeBlock, IPredicate>(m_Abstraction);
-			} catch (OperationCanceledException e) {
-				s_Logger.info("Statistics: Timout");
-				return false;
-			}
-			ctx = ec.getAcceptingNestedLassoRun();
-			if (ctx == null) {
-				s_Logger.warn("Statistics: Trivially terminating");
-				return false;
-			}
-			stem = ctx.getStem().getWord();
-			s_Logger.info("Stem: " + stem);
-			loop = ctx.getLoop().getWord();
-			s_Logger.info("Loop: " + loop);
-			m_Iteration++;
-//			feasibility = checkFeasibility(ctx, rootAnnot);
+		if (result == Result.TERMINATING) {
+			s_Logger.info("Terminating");
+		} else if (result == Result.UNKNOWN) {
+			s_Logger.info("might not terminate");
+		} else if (result == Result.TIMEOUT) {
+			s_Logger.info("timeout");
+		} else {
+			throw new AssertionError();
 		}
-		m_TraceChecker.forgetTrace();
+
+//		Map<String, Collection<ProgramPoint>> proc2errNodes = rootAnnot.getErrorNodes();
+//		Collection<ProgramPoint> errNodesOfAllProc = new ArrayList<ProgramPoint>();
+//		for (Collection<ProgramPoint> errNodeOfProc : proc2errNodes.values()) {
+//			errNodesOfAllProc.addAll(errNodeOfProc);
+//		}
+//
+//		long timoutMilliseconds = taPrefs.timeout() * 1000;
+//		UltimateServices.getInstance().setDeadline(
+//				System.currentTimeMillis() + timoutMilliseconds);
+//		
+//
+//		BuchiIsEmpty<CodeBlock, IPredicate> ec = null;
+//
+//		NestedLassoRun<CodeBlock, IPredicate> ctx = null;
+//		NestedWord<CodeBlock> stem = ctx.getStem().getWord();
+//		s_Logger.info("Stem: " + stem);
+//		NestedWord<CodeBlock> loop = ctx.getLoop().getWord();
+//		s_Logger.info("Loop: " + loop);
+//		m_Iteration = 0;
+//		LBool feasibility = null;
+//		while (feasibility == LBool.UNSAT) {
+//
+//			try {
+//				ec = new BuchiIsEmpty<CodeBlock, IPredicate>(m_Abstraction);
+//			} catch (OperationCanceledException e) {
+//				s_Logger.info("Statistics: Timout");
+//				return false;
+//			}
+//			ctx = ec.getAcceptingNestedLassoRun();
+//			if (ctx == null) {
+//				s_Logger.warn("Statistics: Trivially terminating");
+//				return false;
+//			}
+//			stem = ctx.getStem().getWord();
+//			s_Logger.info("Stem: " + stem);
+//			loop = ctx.getLoop().getWord();
+//			s_Logger.info("Loop: " + loop);
+//			m_Iteration++;
+////			feasibility = checkFeasibility(ctx, rootAnnot);
+//		}
+//		m_TraceChecker.forgetTrace();
 
 
 		

@@ -13,11 +13,10 @@ import java.util.Set;
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.automata.AtsDefinitionPrinter;
+import de.uni_freiburg.informatik.ultimate.automata.AtsDefinitionPrinter.Labeling;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
-import de.uni_freiburg.informatik.ultimate.automata.AtsDefinitionPrinter.Labeling;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
@@ -29,7 +28,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.BuchiCom
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.BuchiIntersect;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.BuchiIsEmpty;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.NestedLassoRun;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.NestedLassoWord;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.Accepts;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.DifferenceDD;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
@@ -37,9 +35,9 @@ import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.LoggingScript;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
+import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rankingfunctions.RankingFunctionsObserver;
@@ -51,25 +49,23 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rankingfunctions.fu
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rankingfunctions.templates.LinearTemplate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootAnnot;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.SequentialComposition;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.TransFormula;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.TransFormula.Infeasibility;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.PreferenceValues.Solver;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.TAPreferences.Artifact;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.TAPreferences.InterpolatedLocs;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CFG2NestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.HoareAnnotationFragments;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.InterpolantAutomataBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactory;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbstractCegarLoop.Result;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryRefinement;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.InterpolantAutomataTransitionAppender.StrongestPostDeterminizer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager.TermVarsProc;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.AnnotateAndAsserter;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceChecker.AllIntegers;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.SMTInterpol;
@@ -170,17 +166,34 @@ public class BuchiCegarLoop {
 		private IPredicate m_HondaPredicate;
 
 		private IPredicate m_RkDecrease;
+
+		private PredicateFactory defaultStateFactory;
+
+		private HoareAnnotationFragments m_Haf;
+
+		private PredicateFactoryRefinement m_StateFactoryForRefinement;
 		
 		public BuchiCegarLoop(RootNode rootNode,
 				SmtManager smtManager,
-				TAPreferences taPrefs,
-				Collection<ProgramPoint> errorLocs) {
+				TAPreferences taPrefs) {
 			this.m_Name = "BuchiCegarLoop";
 			this.m_RootNode = rootNode;
 			this.m_SmtManager = smtManager;
 			this.m_Binarizer = new BinaryStatePredicateManager(smtManager);
 			this.m_Pref = taPrefs;
+			defaultStateFactory = new PredicateFactory(
+					m_SmtManager,
+					m_Pref);
+			
+			m_Haf = new HoareAnnotationFragments(rootNode.getRootAnnot(),m_SmtManager);
+			m_StateFactoryForRefinement = new PredicateFactoryRefinement(
+					m_RootNode.getRootAnnot().getProgramPoints(),
+					m_SmtManager,
+					m_Pref,
+					false && m_Pref.computeHoareAnnotation(),
+					m_Haf);
 		}
+		
 		
 		
 		public final Result iterate() {
@@ -232,90 +245,69 @@ public class BuchiCegarLoop {
 			
 			
 			
-//			for (m_Iteration=1; m_Iteration<=m_Pref.maxIterations(); m_Iteration++){
-//				s_Logger.info("======== Iteration " + m_Iteration + "============");
-//				m_SmtManager.setIteration(m_Iteration);
-//
-//				
-//				
-//				LBool isCounterexampleFeasible = isCounterexampleFeasible();
-//				if (isCounterexampleFeasible == Script.LBool.SAT) {
-//					return Result.UNSAFE;
-//				}
-//				if (isCounterexampleFeasible == Script.LBool.UNKNOWN) {
-//					return Result.UNKNOWN;
-//				}
-//				
-//
-//				
-//				
-//				constructInterpolantAutomaton();
-//				
-//				s_Logger.info("Interpolant Automaton has "+m_InterpolAutomaton.getStates().size() +" states");
-//				
-//				if (m_Iteration <= m_Pref.watchIteration() && m_Pref.artifact() == Artifact.INTERPOLANT_AUTOMATON) {
-//					m_ArtifactAutomaton = m_InterpolAutomaton;
-//				}
-//				if (m_Pref.dumpAutomata()) {
-//					writeAutomatonToFile(m_InterpolAutomaton, "InterpolantAutomaton_Iteration"+m_Iteration);
-//				}
-//				
-//				
-//				
-//				
-//				try {
-//					boolean progress = refineAbstraction();
-//					if (!progress) {
-//						s_Logger.warn("No progress! Counterexample is still accepted by refined abstraction.");
-//						assert (m_Pref.interpolatedLocs() == InterpolatedLocs.GUESS) :
-//								"Craig interpolation && no progress   ==>   bug!";
-//						m_FailurePath = AnnotateAndAsserter.constructFailureTrace(m_Counterexample.getWord(), null);
-//						return Result.UNKNOWN;
-//					}
-//				} catch (OperationCanceledException e) {
-//					s_Logger.warn("Verification cancelled");
-//					return Result.TIMEOUT;
-//				} catch (AutomataLibraryException e) {
-//					throw new AssertionError("Automata Operation failed" + e.getMessage());
-//				}
-//				
-//				s_Logger.info("Abstraction has " + m_Abstraction.sizeInformation());
-//				s_Logger.info("Interpolant automaton has " + m_InterpolAutomaton.sizeInformation());
-//				
-//
-//				if (m_Pref.computeHoareAnnotation()) {
-//					assert (m_SmtManager.checkInductivity(m_Abstraction, false, true));
-//				}
-//
-//				if (m_Iteration <= m_Pref.watchIteration() && m_Pref.artifact() == Artifact.ABSTRACTION) {
-//					m_ArtifactAutomaton = m_Abstraction;
-//				}
-//				
-//				if (m_Pref.dumpAutomata()) {
-//					String filename = "Abstraction"+m_Iteration;
-//					writeAutomatonToFile(m_Abstraction, filename);
-//				}
-//				
-//				if (m_BiggestAbstractionSize < m_Abstraction.size()){
-//					m_BiggestAbstractionSize = m_Abstraction.size();
-//					m_BiggestAbstractionIteration = m_Iteration;
-//				}
-//				
-//				
-//				
-//				
-//				
-//				boolean isAbstractionCorrect;
-//				try {
-//					isAbstractionCorrect = isAbstractionCorrect();
-//				} catch (OperationCanceledException e) {
-//					s_Logger.warn("Verification cancelled");
-//					return Result.TIMEOUT;
-//				}
-//				if (isAbstractionCorrect) {
-//					return Result.SAFE;
-//				}
-//			}
+			for (m_Iteration=1; m_Iteration<=m_Pref.maxIterations(); m_Iteration++){
+				s_Logger.info("======== Iteration " + m_Iteration + "============");
+				m_SmtManager.setIteration(m_Iteration);
+
+				boolean abstractionCorrect;
+				try {
+					abstractionCorrect = isAbstractionCorrect();
+				} catch (OperationCanceledException e1) {
+					s_Logger.warn("Verification cancelled");
+					return Result.TIMEOUT;
+				}
+				if (abstractionCorrect) {
+					return Result.TERMINATING;
+				}
+				
+				try {
+					LBool isCounterexampleFeasible = isCounterexampleFeasible();
+					if (isCounterexampleFeasible == Script.LBool.UNSAT) {
+						refineFinite();
+						m_TraceChecker.forgetTrace();
+						m_TraceChecker = null;
+					} else if (isCounterexampleFeasible == Script.LBool.SAT) {
+						m_TraceChecker.forgetTrace();
+						m_TraceChecker = null;
+						boolean terminating = isCounterexampleTerminating(
+								m_Counterexample.getStem().getWord(), m_Counterexample.getLoop().getWord());
+						m_TraceChecker = null;
+						if (!terminating) {
+							return Result.UNKNOWN;
+						} else {
+							refineBuchi();
+						}
+					} else {
+						throw new AssertionError();
+					}
+
+					s_Logger.info("Abstraction has " + m_Abstraction.sizeInformation());
+					s_Logger.info("Interpolant automaton has " + m_InterpolAutomaton.sizeInformation());
+
+
+					if (m_Pref.computeHoareAnnotation()) {
+						assert (m_SmtManager.checkInductivity(m_Abstraction, false, true));
+					}
+
+					if (m_Iteration <= m_Pref.watchIteration() && m_Pref.artifact() == Artifact.ABSTRACTION) {
+						m_ArtifactAutomaton = m_Abstraction;
+					}
+
+					if (m_Pref.dumpAutomata()) {
+						String filename = "Abstraction"+m_Iteration;
+						writeAutomatonToFile(m_Abstraction, filename);
+					}
+
+					if (m_BiggestAbstractionSize < m_Abstraction.size()){
+						m_BiggestAbstractionSize = m_Abstraction.size();
+						m_BiggestAbstractionIteration = m_Iteration;
+					}
+				
+				} catch (AutomataLibraryException e) {
+					return Result.TIMEOUT;
+				}
+				
+			}
 			return Result.TIMEOUT;
 		}
 
@@ -334,9 +326,6 @@ public class BuchiCegarLoop {
 		private void getInitialAbstraction() {
 			CFG2NestedWordAutomaton cFG2NestedWordAutomaton = 
 					new CFG2NestedWordAutomaton(m_Pref,m_SmtManager);
-				PredicateFactory defaultStateFactory = new PredicateFactory(
-						m_SmtManager,
-						m_Pref);
 			Collection<ProgramPoint> allpp = new HashSet<ProgramPoint>();
 			for (Map<String, ProgramPoint> test : m_RootNode.getRootAnnot().getProgramPoints().values()) {
 				allpp.addAll(test.values());
@@ -348,6 +337,7 @@ public class BuchiCegarLoop {
 		
 		private LBool isCounterexampleFeasible() {
 			assert m_ConcatenatedCounterexample == null;
+			assert m_TraceChecker == null;
 			NestedRun<CodeBlock, IPredicate> stem = m_Counterexample.getStem();
 			s_Logger.info("Stem: " + stem);
 			NestedRun<CodeBlock, IPredicate> loop = m_Counterexample.getLoop();
@@ -376,7 +366,7 @@ public class BuchiCegarLoop {
 			try {
 				diff = new DifferenceDD<CodeBlock, IPredicate>(
 						m_Abstraction, m_InterpolAutomaton, spd, 
-						m_Abstraction.getStateFactory(),
+						m_StateFactoryForRefinement,
 						false, true);
 			} catch (AutomataLibraryException e) {
 				if (e instanceof OperationCanceledException) {
@@ -412,14 +402,14 @@ public class BuchiCegarLoop {
 		
 		
 		
-		boolean isCounterexampleTerminating() {
-			CodeBlock[] stemCBs = new CodeBlock[m_Counterexample.getStem().getLength()];
-			for (int i=0; i<m_Counterexample.getStem().getLength(); i++) {
-				stemCBs[i] = m_Counterexample.getStem().getSymbol(i);
+		boolean isCounterexampleTerminating(NestedWord<CodeBlock> stem, NestedWord<CodeBlock> loop) {
+			CodeBlock[] stemCBs = new CodeBlock[stem.length()];
+			for (int i=0; i<stem.length(); i++) {
+				stemCBs[i] = stem.getSymbol(i);
 			}
-			CodeBlock[] loopCBs = new CodeBlock[m_Counterexample.getLoop().getLength()];
-			for (int i=0; i<m_Counterexample.getLoop().getLength(); i++) {
-				loopCBs[i] = m_Counterexample.getLoop().getSymbol(i);
+			CodeBlock[] loopCBs = new CodeBlock[loop.length()];
+			for (int i=0; i<loop.length(); i++) {
+				loopCBs[i] = loop.getSymbol(i);
 			}
 			@SuppressWarnings("deprecation")
 			TransFormula stemTF = SequentialComposition.getInterproceduralTransFormula(
@@ -444,11 +434,11 @@ public class BuchiCegarLoop {
 				}
 			}
 			NestedWord<CodeBlock> emptyWord = new NestedWord<CodeBlock>();
-			boolean withoutStem = synthesize(emptyWord, m_Counterexample.getLoop().getWord(), getDummyTF(), loopTF);
+			boolean withoutStem = synthesize(emptyWord, loop, getDummyTF(), loopTF);
 			if (withoutStem) {
 				return true;
 			}
-			boolean witStem = synthesize(m_Counterexample.getStem().getWord(), m_Counterexample.getLoop().getWord(), stemTF, loopTF);
+			boolean witStem = synthesize(stem, loop, stemTF, loopTF);
 			if (witStem) {
 				s_Logger.info("Statistics: SI IS NECESSARY !!!");
 				return true;
@@ -705,10 +695,13 @@ public class BuchiCegarLoop {
 			m_InterpolAutomaton = constructBuchiInterpolantAutomaton(
 					m_TruePredicate, stem, stemInterpolants, m_HondaPredicate, 
 					loop, loopInterpolants, m_Abstraction);
-			INestedWordAutomaton<CodeBlock, IPredicate>  complement =
+			assert (new BuchiAccepts<CodeBlock, IPredicate>(m_InterpolAutomaton,m_Counterexample.getNestedLassoWord())).getResult();
+			INestedWordAutomatonOldApi<CodeBlock, IPredicate>  complement =
 					(new BuchiComplementFKV<CodeBlock, IPredicate>(m_InterpolAutomaton)).getResult();
+			assert !(new BuchiAccepts<CodeBlock, IPredicate>(complement,m_Counterexample.getNestedLassoWord())).getResult();
 			INestedWordAutomatonOldApi<CodeBlock, IPredicate> newAbstraction =
-					(new BuchiIntersect<CodeBlock, IPredicate>(m_Abstraction, complement)).getResult();
+					(new BuchiIntersect<CodeBlock, IPredicate>(m_Abstraction, complement,m_StateFactoryForRefinement)).getResult();
+			assert !(new BuchiAccepts<CodeBlock, IPredicate>(newAbstraction,m_Counterexample.getNestedLassoWord())).getResult();
 			m_Abstraction = newAbstraction;
 		}
 		
@@ -722,15 +715,17 @@ public class BuchiCegarLoop {
 							abstraction.getCallAlphabet(), abstraction.getReturnAlphabet(), 
 							abstraction.getStateFactory());
 			result.addState(true, false, precondition);
-			for (int i=0; i<=stemInterpolants.length-1; i++) {
+			for (int i=0; i<stemInterpolants.length; i++) {
 				addState(stemInterpolants[i], result);
 				addTransition(i, precondition, stemInterpolants, honda, stem, result);
 			}
 			result.addState(false, true, honda);
-			for (int i=0; i<=stemInterpolants.length-1; i++) {
+			addTransition(stemInterpolants.length, precondition, stemInterpolants, honda, stem, result);
+			for (int i=0; i<loopInterpolants.length; i++) {
 				addState(loopInterpolants[i], result);
 				addTransition(i, honda, loopInterpolants, honda, loop, result);
 			}
+			addTransition(loopInterpolants.length, honda, loopInterpolants, honda, loop, result);
 			return result;
 		}
 		
