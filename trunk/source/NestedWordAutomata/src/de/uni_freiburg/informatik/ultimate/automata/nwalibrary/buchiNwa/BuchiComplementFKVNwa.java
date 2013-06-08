@@ -114,6 +114,7 @@ public class BuchiComplementFKVNwa<LETTER,STATE> implements INestedWordAutomaton
 		STATE resSucc = m_lrk2res.get(lrkState);
 		if (resSucc == null) {
 			resSucc = lrkState.getContent();
+			assert resSucc != null;
 			m_Cache.addState(false, lrkState.isOempty(), resSucc);
 			m_lrk2res.put(lrkState, resSucc);
 			m_res2lrk.put(resSucc, lrkState);
@@ -133,6 +134,7 @@ public class BuchiComplementFKVNwa<LETTER,STATE> implements INestedWordAutomaton
 		STATE resSucc = m_det2res.get(detState);
 		if (resSucc == null) {
 			resSucc = detState.getContent(m_StateFactory);
+			assert resSucc != null;
 			m_Cache.addState(isInitial, false, resSucc);
 			m_det2res.put(detState, resSucc);
 			m_res2det.put(resSucc, detState);

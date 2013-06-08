@@ -24,8 +24,8 @@ public class BuchiIntersect<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	
 	private final INestedWordAutomatonSimple<LETTER,STATE> m_FstOperand;
 	private final INestedWordAutomatonSimple<LETTER,STATE> m_SndOperand;
-	private final BuchiIntersectNwa<LETTER, STATE> m_Intersect;
-	private final NestedWordAutomatonReachableStates<LETTER,STATE> m_Result;
+	private BuchiIntersectNwa<LETTER, STATE> m_Intersect;
+	private NestedWordAutomatonReachableStates<LETTER,STATE> m_Result;
 	private final StateFactory<STATE> m_StateFactory;
 	
 	
@@ -58,6 +58,19 @@ public class BuchiIntersect<LETTER,STATE> implements IOperation<LETTER,STATE> {
 		m_FstOperand = fstOperand;
 		m_SndOperand = sndOperand;
 		m_StateFactory = m_FstOperand.getStateFactory();
+		doIntersect();
+	}
+	
+	public BuchiIntersect(INestedWordAutomatonSimple<LETTER,STATE> fstOperand,
+			INestedWordAutomatonSimple<LETTER,STATE> sndOperand,
+			StateFactory<STATE> sf) throws AutomataLibraryException {
+		m_FstOperand = fstOperand;
+		m_SndOperand = sndOperand;
+		m_StateFactory = sf;
+		doIntersect();
+	}
+	
+	private void doIntersect() throws AutomataLibraryException {
 		s_Logger.info(startMessage());
 		m_Intersect = new BuchiIntersectNwa<LETTER, STATE>(m_FstOperand, m_SndOperand, m_StateFactory);
 		m_Result = new NestedWordAutomatonReachableStates<LETTER, STATE>(m_Intersect);
