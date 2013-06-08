@@ -23,20 +23,18 @@ public class PredicateFactoryRefinement extends PredicateFactory {
 	private static final boolean s_DebugComputeHistory = false;
 	
 	protected final Map<String,Map<String,ProgramPoint>> m_locNodes;
-	protected final  AbstractCegarLoop m_AbstractCegarLoop;
+	protected int m_Iteration;
 	protected final HoareAnnotationFragments m_HoareAnnotationFragments;
 	private final boolean m_MaintainHoareAnnotationFragments;
 	
 	
 	public PredicateFactoryRefinement(Map<String,Map<String,ProgramPoint>> locNodes,
-							AbstractCegarLoop abstractCegarLoop,
 							SmtManager smtManager,
 							TAPreferences taPrefs, 
 							boolean maintainHoareAnnotationFragments, 
 							HoareAnnotationFragments haf) {
 		super(smtManager, taPrefs);
 		m_locNodes = locNodes;
-		m_AbstractCegarLoop = abstractCegarLoop;
 		m_MaintainHoareAnnotationFragments = maintainHoareAnnotationFragments;
 		m_HoareAnnotationFragments = haf;
 	}
@@ -56,7 +54,7 @@ public class PredicateFactoryRefinement extends PredicateFactory {
 			assert (p1 instanceof PredicateWithHistory);
 			Map<Integer, Term> history = 
 					((PredicateWithHistory) p1).getCopyOfHistory();
-				history.put(m_AbstractCegarLoop.getIteration(),p2.getFormula());
+				history.put(m_Iteration,p2.getFormula());
 			result = m_SmtManager.newPredicateWithHistory(
 					pp,
 					tvp.getFormula(),
@@ -141,5 +139,15 @@ public class PredicateFactoryRefinement extends PredicateFactory {
 	@Override
 	public IPredicate senwa(IPredicate entry, IPredicate state) {
 		return m_SmtManager.newDontCarePredicate(((SPredicate) state).getProgramPoint());
+	}
+	
+	@Override
+	public IPredicate intersectBuchi(IPredicate s1, IPredicate s2, int track) {
+		return intersection(s1, s2);
+	}
+
+
+	public void setIteration(int i) {
+		m_Iteration = i;
 	}
 }

@@ -83,7 +83,6 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		m_Haf = new HoareAnnotationFragments(rootNode.getRootAnnot(),super.m_SmtManager);
 		m_StateFactoryForRefinement = new PredicateFactoryRefinement(
 				m_RootNode.getRootAnnot().getProgramPoints(),
-				this,
 				super.m_SmtManager,
 				m_Pref,
 				m_RemoveDeadEnds && m_Pref.computeHoareAnnotation(),
@@ -204,6 +203,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 	
 	@Override
 	protected boolean refineAbstraction() throws AutomataLibraryException {
+		m_StateFactoryForRefinement.setIteration(super.m_Iteration);
 //		howDifferentAreInterpolants(m_InterpolAutomaton.getStates());
 		
 		m_TimingStatistics.startDifference();

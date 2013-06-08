@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.BuchiComplementFKVNwa.LevelRankingState;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.TAPreferences.Determinization;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IPredicate;
@@ -98,4 +99,22 @@ public class PredicateFactory extends StateFactory<IPredicate> {
 		assert false : "still used?";
 		return m_SmtManager.newDontCarePredicate(((SPredicate) state).getProgramPoint());
 	}
+
+
+	@Override
+	public IPredicate buchiComplementFKV(LevelRankingState compl) {
+		return m_SmtManager.newDontCarePredicate(null);
+	}
+
+
+	@Override
+	public IPredicate intersectBuchi(IPredicate s1, IPredicate s2, int track) {
+		return intersection(s1, s2);
+	}
+	
+	
+	
+	
+	
+	
 }
