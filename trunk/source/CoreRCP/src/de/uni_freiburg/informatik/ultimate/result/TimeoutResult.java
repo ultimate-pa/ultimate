@@ -8,17 +8,16 @@ import de.uni_freiburg.informatik.ultimate.model.ITranslator;
 public class TimeoutResult<P> extends AbstractResult<P> implements IResult{
 	
 	
-	private ILocation m_Location;
-	private String m_shortDescription;
-	private String m_longDescription;
+	private final ILocation m_Location;
+	private final String m_longDescription;
 
 
 	public TimeoutResult(P position, String plugin, 
-			List<ITranslator<?,?,?,?>> translatorSequence, ILocation location) {
+			List<ITranslator<?,?,?,?>> translatorSequence, ILocation location, 
+			String longDescription) {
 		super(position, plugin, translatorSequence);
 		this.m_Location = location;
-		this.m_shortDescription = new String();
-		this.m_longDescription = new String();
+		this.m_longDescription = longDescription;
 	}
 	
 	@Override
@@ -28,29 +27,12 @@ public class TimeoutResult<P> extends AbstractResult<P> implements IResult{
 
 	@Override
 	public String getShortDescription() {
-		return m_shortDescription;
+		return "Timeout";
 	}
 
 	@Override
 	public String getLongDescription() {
 		return m_longDescription;
-	}
-	
-	
-	/**
-	 * Setter for the short description.
-	 * @param shortDescription the shortDescription to set
-	 */
-	public void setShortDescription(String shortDescription) {
-		this.m_shortDescription = shortDescription;
-	}
-
-	/**
-	 * Setter for long description.
-	 * @param longDescription the longDescription to set
-	 */
-	public void setLongDescription(String longDescription) {
-		this.m_longDescription = longDescription;
 	}
 
 	

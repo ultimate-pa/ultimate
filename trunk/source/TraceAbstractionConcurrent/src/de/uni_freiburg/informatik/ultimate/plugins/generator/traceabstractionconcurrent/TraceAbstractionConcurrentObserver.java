@@ -225,15 +225,15 @@ public class TraceAbstractionConcurrentObserver implements IUnmanagedObserver {
 	private void reportTimoutResult(Collection<ProgramPoint> errorLocs, int timeout) {
 		for (ProgramPoint errorLoc : errorLocs) {
 			ILocation origin = errorLoc.getAstNode().getLocation().getOrigin();
+			String timeOutMessage = "Timout! (" + timeout + "s) Unable to prove that " +
+					origin.checkedSpecification().getPositiveMessage();
+			timeOutMessage += " (line " + origin.getStartLine() + ")";
 			TimeoutResult<RcfgElement> timeOutRes = new TimeoutResult<RcfgElement>(
 					errorLoc,
 					Activator.s_PLUGIN_NAME,
 					UltimateServices.getInstance().getTranslatorSequence(),
-					origin);
-			String timeOutMessage = "Timout! (" + timeout + "s) Unable to prove that " +
-					origin.checkedSpecification().getPositiveMessage();
-			timeOutMessage += " (line " + origin.getStartLine() + ")";
-			timeOutRes.setShortDescription(timeOutMessage);
+					origin,
+					timeOutMessage);
 			reportResult(timeOutRes);
 			s_Logger.warn(timeOutMessage);
 		}

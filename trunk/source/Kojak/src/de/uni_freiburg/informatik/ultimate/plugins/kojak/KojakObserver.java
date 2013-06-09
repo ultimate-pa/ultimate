@@ -126,9 +126,8 @@ public class KojakObserver implements IUnmanagedObserver {
 						null,
 						Activator.PLUGIN_ID,
 						UltimateServices.getInstance().getTranslatorSequence(),
-						null);
-			timeOutRes.setShortDescription("Program could not be checked.");
-			timeOutRes.setLongDescription("Kojak timed out.");
+						null,
+						"Program could not be checked. Kojak timed out.");
 			reportResult(timeOutRes);
 			if (overallResult != Result.INCORRECT) {
 				overallResult = result;
@@ -159,9 +158,8 @@ public class KojakObserver implements IUnmanagedObserver {
 						null,
 						Activator.PLUGIN_ID,
 						UltimateServices.getInstance().getTranslatorSequence(),
-						null);
-			maxedIterationsRes.setShortDescription("Program could not be checked.");
-			maxedIterationsRes.setLongDescription("Kojak reached max iteration steps " + maxStepNumber + ".");
+						null,
+						"Program could not be checked. Kojak timed out.");
 			reportResult(maxedIterationsRes);
 			if (overallResult != Result.INCORRECT) {
 				overallResult = result;
