@@ -51,6 +51,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rankingfunctions.fu
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rankingfunctions.templates.LinearTemplate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RcfgElement;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.SequentialComposition;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.TransFormula;
@@ -68,10 +69,15 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.InterpolantAutomataTransitionAppender.PostDeterminizer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.InterpolantAutomataTransitionAppender.StrongestPostDeterminizer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.ISLPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager.TermVarsProc;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceChecker.AllIntegers;
+import de.uni_freiburg.informatik.ultimate.result.GenericResult;
+import de.uni_freiburg.informatik.ultimate.result.IResult;
+import de.uni_freiburg.informatik.ultimate.result.GenericResult.Severity;
+import de.uni_freiburg.informatik.ultimate.result.RankingFunctionResult;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.SMTInterpol;
 import de.uni_freiburg.informatik.ultimate.smtsolver.external.Scriptor;
 
@@ -178,7 +184,7 @@ public class BuchiCegarLoop {
 		private PredicateFactoryRefinement m_StateFactoryForRefinement;
 
 		private boolean m_ReduceAbstractionSize = true;
-		
+
 		public BuchiCegarLoop(RootNode rootNode,
 				SmtManager smtManager,
 				TAPreferences taPrefs) {
@@ -198,6 +204,10 @@ public class BuchiCegarLoop {
 					m_Pref,
 					false && m_Pref.computeHoareAnnotation(),
 					m_Haf);
+		}
+		
+		NestedLassoRun<CodeBlock, IPredicate> getCounterexample() {
+			return m_Counterexample;
 		}
 		
 		
@@ -451,18 +461,23 @@ public class BuchiCegarLoop {
 				}
 			}
 			NestedWord<CodeBlock> emptyWord = new NestedWord<CodeBlock>();
+			IPredicate hondaPredicate = m_Counterexample.getLoop().getStateAtPosition(0);
+			ProgramPoint honda = ((ISLPredicate) hondaPredicate).getProgramPoint();
 			boolean withoutStem = synthesize(emptyWord, loop, getDummyTF(), loopTF);
 			if (withoutStem) {
+				reportRankingFunction(m_LinRf, honda, stem, loop);
 				return true;
 			}
 			boolean witStem = synthesize(stem, loop, stemTF, loopTF);
 			if (witStem) {
+				reportRankingFunction(m_LinRf, honda, stem, loop);
 				s_Logger.info("Statistics: SI IS NECESSARY !!!");
 				return true;
 			}
 			return false;
 		}
-		
+
+
 		private	TransFormula getDummyTF() {
 			Term term = m_SmtManager.getScript().term("true");
 			Map<BoogieVar,TermVariable> inVars = new HashMap<BoogieVar,TermVariable>();
@@ -473,6 +488,47 @@ public class BuchiCegarLoop {
 			Term closedFormula = term;
 			return new TransFormula(term, inVars, outVars, auxVars, branchEncoders, 
 					infeasibility, closedFormula);
+		}
+		
+		
+		private void reportRankingFunction(LinearRankingFunction m_LinRf2,
+				ProgramPoint honda, NestedWord<CodeBlock> stem,
+				NestedWord<CodeBlock> loop) {
+			Expression rfExp = m_LinRf.asExpression(m_SmtManager.getScript(),
+					m_SmtManager.getBoogieVar2SmtVar());
+			String rfString = RankingFunctionsObserver
+					.backtranslateExprWorkaround(rfExp);
+			StringBuilder longDescr = new StringBuilder();
+			longDescr.append("Derived linear ranking function ");
+			longDescr.append(rfString);
+			longDescr.append(System.getProperty("line.separator"));
+			longDescr.append(" with linear supporting invariants");
+			for (SupportingInvariant si : m_SiList) {
+				Expression siExp = si.asExpression(m_SmtManager.getScript(),
+						m_SmtManager.getBoogieVar2SmtVar());
+				String siString = RankingFunctionsObserver
+						.backtranslateExprWorkaround(siExp);
+				longDescr.append(" " + siString);
+			}
+			longDescr.append(System.getProperty("line.separator"));
+			longDescr.append("For the following lasso. ");
+			longDescr.append(System.getProperty("line.separator"));
+			longDescr.append("Stem: ");
+			longDescr.append(stem);
+			longDescr.append(System.getProperty("line.separator"));
+			longDescr.append("Loop: ");
+			longDescr.append(loop);
+			longDescr.append(System.getProperty("line.separator"));
+			longDescr.append("length stem: " + stem.length()
+					+ " length loop: " + loop.length());
+			s_Logger.info(longDescr);
+			IResult reportRes= new RankingFunctionResult<RcfgElement>(honda, 
+					Activator.s_PLUGIN_ID, 
+					UltimateServices.getInstance().getTranslatorSequence(), 
+					honda.getPayload().getLocation(), 
+					"Derived linear ranking function", 
+					longDescr.toString());
+			BuchiAutomizerObserver.reportResult(reportRes);
 		}
 		
 		private boolean synthesize(NestedWord<CodeBlock> stem, NestedWord<CodeBlock> loop, TransFormula stemTF, TransFormula loopTF) {
@@ -495,38 +551,9 @@ public class BuchiCegarLoop {
 					assert (m_SiList != null);
 					m_SiConjunction = computeSiConjunction(m_SiList);
 
-					StringBuilder longMessage = new StringBuilder();
+
 					m_LinRf = (LinearRankingFunction) rf;
 					computeHondaPredicates(m_LinRf);
-					Expression rfExp = m_LinRf.asExpression(m_SmtManager.getScript(),
-							m_SmtManager.getBoogieVar2SmtVar());
-					String rfString = RankingFunctionsObserver
-							.backtranslateExprWorkaround(rfExp);
-					String siString;
-
-					// if (si_list.size() <= 2) {
-					// SupportingInvariant si = si_list.iterator().next();
-					// Expression siExp = si.asExpression(smtManager.getScript(),
-					// rootAnnot.getBoogie2Smt());
-					// siString =
-					// RankingFunctionsObserver.backtranslateExprWorkaround(siExp);
-					// } else {
-					// throw new
-					// AssertionError("The linear template should not have more than two supporting invariants.");
-					// }
-					longMessage.append("Statistics: Found linear ranking function ");
-					longMessage.append(rfString);
-					longMessage.append(" with linear supporting invariant");
-					for (SupportingInvariant si : m_SiList) {
-						Expression siExp = si.asExpression(m_SmtManager.getScript(),
-								m_SmtManager.getBoogieVar2SmtVar());
-						siString = RankingFunctionsObserver
-								.backtranslateExprWorkaround(siExp);
-						longMessage.append(" " + siString);
-					}
-					longMessage.append("  length stem: " + stem.length()
-							+ " length loop: " + loop.length());
-					s_Logger.info(longMessage);
 
 					for (SupportingInvariant si : m_SiList) {
 						if (stem.length() > 0) {

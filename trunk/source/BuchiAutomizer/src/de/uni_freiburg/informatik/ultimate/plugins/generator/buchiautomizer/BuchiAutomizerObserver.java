@@ -1,73 +1,27 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer;
-import java.io.FileNotFoundException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
 import org.apache.log4j.Logger;
-import org.omg.PortableInterceptor.SUCCESSFUL;
 
 import de.uni_freiburg.informatik.ultimate.access.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.access.WalkerOptions;
-import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
-import de.uni_freiburg.informatik.ultimate.automata.IRun;
-import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.BuchiIsEmpty;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.NestedLassoRun;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.NestedLassoWord;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.DifferenceDD;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.visualization.AutomatonTransition.Transition;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
-import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
-import de.uni_freiburg.informatik.ultimate.logic.LoggingScript;
-import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
-import de.uni_freiburg.informatik.ultimate.logic.Script;
-import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
-import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
-import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
+import de.uni_freiburg.informatik.ultimate.model.ILocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.BuchiCegarLoop.Result;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rankingfunctions.Activator;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rankingfunctions.RankingFunctionsObserver;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rankingfunctions.RankingFunctionsSynthesizer;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rankingfunctions.SupportingInvariant;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rankingfunctions.TermIsNotAffineException;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rankingfunctions.functions.LinearRankingFunction;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rankingfunctions.functions.RankingFunction;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rankingfunctions.templates.LinearTemplate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RcfgElement;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootAnnot;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.SequentialComposition;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.TransFormula;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.TransFormula.Infeasibility;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.TAPreferences;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.PreferenceValues.Solver;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CFG2NestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.InterpolantAutomataBuilder;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactory;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryRefinement;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.InterpolantAutomataTransitionAppender.StrongestPostDeterminizer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.ISLPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager.TermVarsProc;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceChecker;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceChecker.AllIntegers;
-import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.SMTInterpol;
-import de.uni_freiburg.informatik.ultimate.smtsolver.external.Scriptor;
+import de.uni_freiburg.informatik.ultimate.result.GenericResult;
+import de.uni_freiburg.informatik.ultimate.result.GenericResult.Severity;
+import de.uni_freiburg.informatik.ultimate.result.IResult;
+import de.uni_freiburg.informatik.ultimate.result.TimeoutResult;
 
 /**
  * Auto-Generated Stub for the plug-in's Observer
@@ -77,16 +31,7 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 	private static Logger s_Logger = UltimateServices.getInstance().getLogger(Activator.s_PLUGIN_ID);
 	private IElement m_graphroot;
 	private SmtManager smtManager;
-	private IPredicate[] m_Interpolants;
-	private IRun<CodeBlock, IPredicate> m_Counterexample;
-	private IPredicate m_TruePredicate;
-	private IPredicate m_FalsePredicate;
 	private TAPreferences m_Pref;
-	private int m_Iteration;
-	private NestedWordAutomaton<CodeBlock, IPredicate> m_InterpolAutomaton;
-	private NestedWordAutomaton<CodeBlock, IPredicate> m_Abstraction;
-	private TraceChecker m_TraceChecker;
-	private PredicateFactoryRefinement m_StateFactoryForRefinement;
 
 	private RootAnnot rootAnnot;
 	
@@ -120,21 +65,63 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 
 		m_Pref = rootAnnot.getTaPrefs();
 		
-		m_StateFactoryForRefinement = new PredicateFactoryRefinement(
-				rootAnnot.getProgramPoints(),
-				smtManager,
-				m_Pref,
-				false,
-				null);
 		BuchiCegarLoop bcl = new BuchiCegarLoop((RootNode) root, smtManager, m_Pref);
 		Result result = bcl.iterate();
 		
 		if (result == Result.TERMINATING) {
+			for (String proc : rootAnnot.getEntryNodes().keySet()) {
+				ProgramPoint position = rootAnnot.getEntryNodes().get(proc);
+				String shortDescr = "Terminating procedure";
+				String longDescr = "Procedure " + proc + " is terminating";
+				ILocation loc = position.getPayload().getLocation();
+				IResult reportRes= new GenericResult<RcfgElement>(position, 
+						Activator.s_PLUGIN_ID, 
+						UltimateServices.getInstance().getTranslatorSequence(), 
+						loc, 
+						shortDescr, 
+						longDescr, Severity.INFO);
+				s_Logger.info(shortDescr + longDescr + " line" + loc.getStartLine());
+				reportResult(reportRes);
+			}
 			s_Logger.info("Terminating");
 		} else if (result == Result.UNKNOWN) {
+			NestedLassoRun<CodeBlock, IPredicate> counterexample = bcl.getCounterexample();
+			IPredicate hondaPredicate = counterexample.getLoop().getStateAtPosition(0);
+			ProgramPoint honda = ((ISLPredicate) hondaPredicate).getProgramPoint();
+			String shortDescr = "Program might not terminate.";
+			StringBuilder longDescr = new StringBuilder();
+			longDescr.append("Maybe this program point can be visited infinitely often. ");
+			longDescr.append("Unable to synthesize ranking function for the following lasso. ");
+			longDescr.append(System.getProperty("line.separator"));
+			longDescr.append("Stem: ");
+			longDescr.append(counterexample.getStem().getWord());
+			longDescr.append(System.getProperty("line.separator"));
+			longDescr.append("Loop: ");
+			longDescr.append(counterexample.getLoop().getWord());			
+			ILocation loc = honda.getPayload().getLocation();
+			IResult reportRes= new GenericResult<RcfgElement>(honda, 
+					Activator.s_PLUGIN_ID, 
+					UltimateServices.getInstance().getTranslatorSequence(), 
+					loc, 
+					shortDescr, 
+					longDescr.toString(), Severity.ERROR);
+			s_Logger.info(shortDescr + longDescr + " line" + loc.getStartLine());
+			reportResult(reportRes);
+			
 			s_Logger.info("might not terminate");
 		} else if (result == Result.TIMEOUT) {
-			s_Logger.info("timeout");
+			for (String proc : rootAnnot.getEntryNodes().keySet()) {
+				ProgramPoint position = rootAnnot.getEntryNodes().get(proc);
+				String longDescr = "Unable to prove termination of procedure" + proc;
+				ILocation loc = position.getPayload().getLocation();
+				IResult reportRes= new TimeoutResult<RcfgElement>(position, 
+						Activator.s_PLUGIN_ID, 
+						UltimateServices.getInstance().getTranslatorSequence(), 
+						loc, 
+						longDescr);
+				s_Logger.info(longDescr + " line" + loc.getStartLine());
+				reportResult(reportRes);
+			}
 		} else {
 			throw new AssertionError();
 		}
@@ -191,7 +178,9 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 	
 
 	
-	
+	static void reportResult(IResult res) {
+		UltimateServices.getInstance().reportResult(Activator.s_PLUGIN_ID, res);
+	}
 	
 
 			
