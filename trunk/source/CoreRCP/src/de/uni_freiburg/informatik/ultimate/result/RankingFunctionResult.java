@@ -7,9 +7,9 @@ import de.uni_freiburg.informatik.ultimate.model.ITranslator;
 
 
 public class RankingFunctionResult<P> extends AbstractResult<P> implements IResult {
-	private ILocation m_Location;
-	private String m_ShortDescription;
-	private String m_LongDescription;
+	private final ILocation m_Location;
+	private final String m_ShortDescription;
+	private final  String m_LongDescription;
 
 	/**
 	 * Constructor.
@@ -18,11 +18,12 @@ public class RankingFunctionResult<P> extends AbstractResult<P> implements IResu
 	 *            the location
 	 */
 	public RankingFunctionResult(P position, String plugin, 
-			List<ITranslator<?,?,?,?>> translatorSequence, ILocation location) {
+			List<ITranslator<?,?,?,?>> translatorSequence, ILocation location, 
+			String shortDescription, String longDescription) {
 		super(position, plugin, translatorSequence);
 		this.m_Location = location;
-		this.m_ShortDescription = new String();
-		this.m_LongDescription = new String();
+		this.m_ShortDescription = shortDescription;
+		this.m_LongDescription = longDescription;
 	}
 
 	/*
@@ -59,33 +60,4 @@ public class RankingFunctionResult<P> extends AbstractResult<P> implements IResu
 		return m_LongDescription;
 	}
 
-	/**
-	 * Setter for Location.
-	 * 
-	 * @param location
-	 *            the Location to set
-	 */
-	public void setLocation(ILocation location) {
-		this.m_Location = location;
-	}
-
-	/**
-	 * Setter for short description.
-	 * 
-	 * @param shortDescription
-	 *            the shortDescription to set
-	 */
-	public void setShortDescription(String shortDescription) {
-		this.m_ShortDescription = shortDescription;
-	}
-
-	/**
-	 * Setter for long description.
-	 * 
-	 * @param longDescription
-	 *            the longDescription to set
-	 */
-	public void setLongDescription(String longDescription) {
-		this.m_LongDescription = longDescription;
-	}
 }

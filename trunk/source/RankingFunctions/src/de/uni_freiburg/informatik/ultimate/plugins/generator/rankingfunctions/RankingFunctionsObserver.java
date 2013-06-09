@@ -238,9 +238,9 @@ public class RankingFunctionsObserver implements IUnmanagedObserver {
 								honda,
 								Activator.s_PLUGIN_NAME,
 								UltimateServices.getInstance().getTranslatorSequence(),
-								honda.getAstNode().getLocation().getOrigin());
-						rankRes.setShortDescription(shortMessage);
-						rankRes.setLongDescription(longMessage.toString());
+								honda.getAstNode().getLocation().getOrigin(),
+								shortMessage,
+								longMessage.toString());
 						reportResult(rankRes);
 						return false;
 					}
