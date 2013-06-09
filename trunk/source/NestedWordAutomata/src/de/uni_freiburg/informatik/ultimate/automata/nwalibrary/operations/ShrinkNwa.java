@@ -97,7 +97,7 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	private WorkListIntCall m_workListIntCall;
 	private WorkListRet m_workListRet;
 	// placeholder equivalence class
-	private final EquivalenceClass m_negativesClass;
+	final HashSet<EquivalenceClass> m_negativeSet;
 	// simulates the output automaton
 	private ShrinkNwaResult m_result;
 	
@@ -106,7 +106,7 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	private final boolean DEBUG2 = false;
 	
 	// TODO<statistics>
-	private final boolean STATISTICS = false;
+	private final boolean STATISTICS = true;
 	private int m_splitsWithChange = 0;
 	private int m_splitsWithoutChange = 0;
 	private int m_incomingTransitionts = 0;
@@ -159,7 +159,8 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 		m_partition = new Partition();
 		m_workListIntCall = new WorkListIntCall();
 		m_workListRet = new WorkListRet();
-		m_negativesClass = new EquivalenceClass();
+		m_negativeSet = new HashSet<EquivalenceClass>();
+		m_negativeSet.add(new EquivalenceClass());
 		
 		// must be the last part of the constructor
 		s_Logger.info(startMessage());
@@ -401,6 +402,8 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	 * 
 	 * TODO<iteration> possibly make a copy of hierarchical equivalence classes
 	 *                 for fast iteration (only if more than once)
+	 * TODO<singletons> detect singleton equivalence classes and do not add
+	 *                  them to the splitting lists
 	 *
 	 * @param a splitter equivalence class
 	 */
@@ -460,9 +463,7 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 		final ArrayList<HashMap<STATE, HashMap<Set<EquivalenceClass>,
 			Set<STATE>>>> listHier2succ2lin = new ArrayList<HashMap<STATE,
 			HashMap<Set<EquivalenceClass>,Set<STATE>>>>(numberOfLinearEcs);
-		final HashSet<EquivalenceClass> negativeSet =
-				new HashSet<EquivalenceClass>();
-		negativeSet.add(m_negativesClass);
+		
 		
 		for (final Entry<LETTER, HashMap<EquivalenceClass,
 				HashSet<EquivalenceClass>>> outerEntry :
@@ -563,17 +564,17 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 										System.err.println("no trans, but DS");
 									
 									Set<STATE> hierSet =
-											succ2hier.get(negativeSet);
+											succ2hier.get(m_negativeSet);
 									if (hierSet == null) {
 										hierSet = new HashSet<STATE>();
-										succ2hier.put(negativeSet, hierSet);
+										succ2hier.put(m_negativeSet, hierSet);
 									}
 									hierSet.add(hier);
 									Set<STATE> linSet =
-											succ2lin.get(negativeSet);
+											succ2lin.get(m_negativeSet);
 									if (linSet == null) {
 										linSet = new HashSet<STATE>();
-										succ2lin.put(negativeSet, linSet);
+										succ2lin.put(m_negativeSet, linSet);
 									}
 									linSet.add(lin);
 								}
@@ -604,12 +605,23 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	}
 	
 	/**
-	 * This method analyses the given information and does the splitting for
+	 * This method analyzes the given information and does the splitting for
 	 * return edges.
-	 * TODO<comment>
+	 * Beforehand all the necessary information of which states have to be
+	 * separated has been collected. Here this is extracted from the data
+	 * structures and the splitting is invoked.
+	 * 
+	 * The problem here are the neutral states: The idea is to keep as many of
+	 * them as possible without a split. In general, this is hard.
+	 * 
 	 * TODO<returnSplit> currently this is a naive split that separates each
 	 *                   set and does not consider better sharing of neutral
 	 *                   states
+	 * 
+	 * TODO<returnSplit> use more efficient split that exploits that the
+	 *                   equivalence class is always the same
+	 * 
+	 * TODO<returnSplit> stop when A has been split?
 	 *
 	 * @param listLin2succ2hier list of linears to successors to hierarchicals
 	 * @param listHier2succ2lin list of hierarchicals to successors to linears
@@ -623,36 +635,109 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 			System.err.println("listHier2succ2lin: " + listHier2succ2lin);
 		}
 		
+		HashMap<HashSet<Set<EquivalenceClass>>, Set<STATE>> gSucc2states =
+				new HashMap<HashSet<Set<EquivalenceClass>>, Set<STATE>>();
+		
+		// local hierarchical split and global linear split
 		for (final HashMap<STATE, HashMap<Set<EquivalenceClass>, Set<STATE>>>
 				lin2succ2hier : listLin2succ2hier) {
-			// local hierarchical split
-			for (final HashMap<Set<EquivalenceClass>, Set<STATE>> succ2hier :
-					lin2succ2hier.values()) {
-				if (succ2hier.size() > 1) {
-					for (final Set<STATE> hiers : succ2hier.values()) {
-						m_partition.splitEquivalenceClasses(hiers);
+			final HashSet<Set<EquivalenceClass>> succs =
+					new HashSet<Set<EquivalenceClass>>();
+			
+			for (final Entry<STATE, HashMap<Set<EquivalenceClass>, Set<STATE>>>
+					entry : lin2succ2hier.entrySet()) {
+				final HashMap<Set<EquivalenceClass>, Set<STATE>> succ2hier =
+						entry.getValue();
+				final int size = succ2hier.size();
+				if (size > 0) {
+					if (size > 1) {
+						for (final Entry<Set<EquivalenceClass>, Set<STATE>>
+								innerEntry : succ2hier.entrySet()) {
+							// local hierarchical split
+							m_partition.splitEquivalenceClasses(
+									innerEntry.getValue());
+							if (DEBUG2)
+								System.err.println(
+										"local hierarchical split: " +
+										innerEntry.getValue());
+							
+							// global linear split collection
+							succs.add(innerEntry.getKey());
+						}
 					}
+					else {
+						assert (succ2hier.keySet().iterator().hasNext());
+						succs.add(succ2hier.keySet().iterator().next());
+					}
+					
+					// global linear split collection
+					Set<STATE> gLins = gSucc2states.get(succs);
+					if (gLins == null) {
+						gLins = new HashSet<STATE>();
+						gSucc2states.put(succs, gLins);
+					}
+					gLins.add(entry.getKey());
 				}
 			}
 			
 			// global linear split
-			// FIXME split
+			for (final Set<STATE> gLins : gSucc2states.values()) {
+				if (DEBUG2)
+					System.err.println("global linear split: " + gLins);
+				m_partition.splitEquivalenceClasses(gLins);
+			}
 		}
 		
+		gSucc2states =
+				new HashMap<HashSet<Set<EquivalenceClass>>, Set<STATE>>();
+		
+		// local linear split and global hierarchical split
 		for (final HashMap<STATE, HashMap<Set<EquivalenceClass>, Set<STATE>>>
 				hier2succ2lin : listHier2succ2lin) {
-			// local linear split
-			for (final HashMap<Set<EquivalenceClass>, Set<STATE>> succ2lin :
-					hier2succ2lin.values()) {
-				if (succ2lin.size() > 1) {
-					for (final Set<STATE> lins : succ2lin.values()) {
-						m_partition.splitEquivalenceClasses(lins);
+			final HashSet<Set<EquivalenceClass>> succs =
+					new HashSet<Set<EquivalenceClass>>();
+			
+			for (final Entry<STATE, HashMap<Set<EquivalenceClass>, Set<STATE>>>
+					entry : hier2succ2lin.entrySet()) {
+				final HashMap<Set<EquivalenceClass>, Set<STATE>> succ2lin =
+						entry.getValue();
+				final int size = succ2lin.size();
+				if (size > 0) {
+					if (size > 1) {
+						for (final Entry<Set<EquivalenceClass>, Set<STATE>>
+								innerEntry : succ2lin.entrySet()) {
+							// local linear split
+							m_partition.splitEquivalenceClasses(
+									innerEntry.getValue());
+							if (DEBUG2)
+								System.err.println("local linear split: " +
+										innerEntry.getValue());
+							
+							// global hierarchical split collection
+							succs.add(innerEntry.getKey());
+						}
 					}
+					else {
+						assert (succ2lin.keySet().iterator().hasNext());
+						succs.add(succ2lin.keySet().iterator().next());
+					}
+					
+					// global hierarchical split collection
+					Set<STATE> gHiers = gSucc2states.get(succs);
+					if (gHiers == null) {
+						gHiers = new HashSet<STATE>();
+						gSucc2states.put(succs, gHiers);
+					}
+					gHiers.add(entry.getKey());
 				}
 			}
 			
 			// global hierarchical split
-			// FIXME split
+			for (final Set<STATE> gHiers : gSucc2states.values()) {
+				if (DEBUG2)
+					System.err.println("global hierarchical split: " + gHiers);
+				m_partition.splitEquivalenceClasses(gHiers);
+			}
 		}
 	}
 	
