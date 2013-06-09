@@ -452,7 +452,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 	
 	
 	
-	private Collection<Set<IPredicate>> computePartition(INestedWordAutomatonOldApi<CodeBlock, IPredicate> automaton) {
+	public static Collection<Set<IPredicate>> computePartition(INestedWordAutomatonOldApi<CodeBlock, IPredicate> automaton) {
 		s_Logger.info("Start computation of initial partition.");
 		Collection<IPredicate> states = automaton.getStates();
 		Map<ProgramPoint, Set<IPredicate>> pp2p = new HashMap<ProgramPoint, Set<IPredicate>>();
