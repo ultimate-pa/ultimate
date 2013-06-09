@@ -630,7 +630,7 @@ public class BuchiComplementFKVNwa<LETTER,STATE> implements INestedWordAutomaton
 				IDeterminizedState<LETTER, STATE> hier, LETTER symbol) {
 			for (STATE hierDown : hier.getDownStates()) {
 				for (STATE hierUp : hier.getUpStates(hierDown)) {
-					if (!state.getDownStates().isEmpty() && state.getUpStates(hierUp) != null) {
+					if (!state.getDownStates().isEmpty() && state.getDownStates().contains(hierUp)) {
 						for (STATE stateUp : state.getUpStates(hierUp)) {
 							boolean oCandidate = state.isOempty() || state.inO(hierUp,stateUp);
 							Integer upRank = state.getRank(hierUp, stateUp);
