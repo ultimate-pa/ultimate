@@ -108,7 +108,9 @@ public class DeterminizeNwa<LETTER, STATE> implements INestedWordAutomatonSimple
 	
 	@Override
 	public Iterable<STATE> getInitialStates() {
-		constructInitialState();
+		if (m_Cache.getInitialStates().isEmpty()) {
+			constructInitialState();
+		}
 		return m_Cache.getInitialStates();
 	}
 
