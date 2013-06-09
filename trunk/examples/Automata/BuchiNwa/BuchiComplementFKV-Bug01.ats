@@ -1,0 +1,45 @@
+// Testfile dumped by Ultimate at 2013/06/09 13:32:55
+
+buchiComplementFKV(InterpolantAutomatonBuchi4);
+
+NestedWordAutomaton InterpolantAutomatonBuchi4 = (
+	callAlphabet = {"call #t~ret3 := main();" "call ULTIMATE.init();" "call #t~ret2 := nondet();" "call #t~ret1 := nondet();" },
+	internalAlphabet = {"#res := ~x~1;" "assume true;" "assume true;" "assume true;" "assume true;" "assume true;#t~short..." "assume ~x~2 > 0;#t~s..." "assume !(~x~2 > 0);" "assume !#t~short0;ha..." "assume !!#t~short0;h..." "assume 0 != #t~ret1;" "assume !(0 != #t~ret..." "~x~2 := #t~ret2;havo..." "assume !true;" },
+	returnAlphabet = {"return call ULTIMATE.init();" "return call #t~ret1 := nondet();" "return call #t~ret3 := main();" "return call #t~ret2 := nondet();" },
+	states = {"442#(< (+ (* 1 main_~y~2) 0) (+ (* 1 main_~y~2_seed) 0))" "460#true" "444#(= main_~y~2 main_~y~2_seed)" "453#(<= main_~y~2 main_~y~2_seed)" "437#true" },
+	initialStates = {"437#true" },
+	finalStates = {"444#(= main_~y~2 main_~y~2_seed)" },
+	callTransitions = {
+		 ("453#(<= main_~y~2 main_~y~2_seed)" "call #t~ret2 := nondet();" "460#true")
+		 ("453#(<= main_~y~2 main_~y~2_seed)" "call #t~ret1 := nondet();" "460#true")
+		 ("437#true" "call #t~ret3 := main();" "437#true")
+		 ("437#true" "call ULTIMATE.init();" "437#true")
+		 ("437#true" "call #t~ret2 := nondet();" "437#true")
+		 ("437#true" "call #t~ret1 := nondet();" "437#true")
+	},
+	internalTransitions = {
+		 ("442#(< (+ (* 1 main_~y~2) 0) (+ (* 1 main_~y~2_seed) 0))" "assume true;#t~short..." "444#(= main_~y~2 main_~y~2_seed)")
+		 ("460#true" "#res := ~x~1;" "460#true")
+		 ("460#true" "assume true;" "460#true")
+		 ("444#(= main_~y~2 main_~y~2_seed)" "assume ~x~2 > 0;#t~s..." "453#(<= main_~y~2 main_~y~2_seed)")
+		 ("453#(<= main_~y~2 main_~y~2_seed)" "assume !!#t~short0;h..." "453#(<= main_~y~2 main_~y~2_seed)")
+		 ("453#(<= main_~y~2 main_~y~2_seed)" "assume !(0 != #t~ret..." "453#(<= main_~y~2 main_~y~2_seed)")
+		 ("453#(<= main_~y~2 main_~y~2_seed)" "~x~2 := #t~ret2;havo..." "442#(< (+ (* 1 main_~y~2) 0) (+ (* 1 main_~y~2_seed) 0))")
+		 ("437#true" "#res := ~x~1;" "437#true")
+		 ("437#true" "assume true;" "437#true")
+		 ("437#true" "assume !!#t~short0;h..." "437#true")
+		 ("437#true" "assume true;" "437#true")
+		 ("437#true" "assume !(0 != #t~ret..." "437#true")
+		 ("437#true" "assume true;#t~short..." "444#(= main_~y~2 main_~y~2_seed)")
+		 ("437#true" "assume true;#t~short..." "437#true")
+		 ("437#true" "~x~2 := #t~ret2;havo..." "437#true")
+		 ("437#true" "assume ~x~2 > 0;#t~s..." "437#true")
+	},
+	returnTransitions = {
+		 ("460#true" "453#(<= main_~y~2 main_~y~2_seed)" "return call #t~ret1 := nondet();" "453#(<= main_~y~2 main_~y~2_seed)")
+		 ("460#true" "453#(<= main_~y~2 main_~y~2_seed)" "return call #t~ret2 := nondet();" "453#(<= main_~y~2 main_~y~2_seed)")
+		 ("437#true" "437#true" "return call ULTIMATE.init();" "437#true")
+		 ("437#true" "437#true" "return call #t~ret1 := nondet();" "437#true")
+		 ("437#true" "437#true" "return call #t~ret2 := nondet();" "437#true")
+	}
+);
