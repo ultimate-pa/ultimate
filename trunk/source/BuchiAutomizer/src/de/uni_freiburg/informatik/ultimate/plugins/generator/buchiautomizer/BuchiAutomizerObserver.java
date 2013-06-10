@@ -127,7 +127,7 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 		} else {
 			throw new AssertionError();
 		}
-		s_Logger.info(MessageFormat.format("Counterexamples: {0} infeasible" +
+		s_Logger.info(MessageFormat.format("Statistics: Counterexamples: {0} infeasible" +
 				"  {1} rank without si  {2} rank only with si", 
 				bcl.m_Infeasible, bcl.m_RankWithoutSi, bcl.m_RankWithSi));;
 
