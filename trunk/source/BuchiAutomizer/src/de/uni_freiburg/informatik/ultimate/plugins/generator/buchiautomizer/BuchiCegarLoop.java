@@ -422,8 +422,8 @@ public class BuchiCegarLoop {
 			
 			assert((new Accepts<CodeBlock, IPredicate>(m_InterpolAutomaton, m_ConcatenatedCounterexample.getWord())).getResult()) :
 				"Interpolant automaton broken!";
-			assert((new BuchiAccepts<CodeBlock, IPredicate>(m_InterpolAutomaton, m_Counterexample.getNestedLassoWord())).getResult()) :
-				"Interpolant automaton broken!";
+//			assert((new BuchiAccepts<CodeBlock, IPredicate>(m_InterpolAutomaton, m_Counterexample.getNestedLassoWord())).getResult()) :
+//				"Interpolant automaton broken!";
 			assert (m_SmtManager.checkInductivity(m_InterpolAutomaton, false, true));
 		}
 		
