@@ -35,6 +35,7 @@ import de.uni_freiburg.informatik.ultimate.result.InvariantResult;
 import de.uni_freiburg.informatik.ultimate.result.NoResult;
 import de.uni_freiburg.informatik.ultimate.result.PositiveResult;
 import de.uni_freiburg.informatik.ultimate.result.ProcedureContractResult;
+import de.uni_freiburg.informatik.ultimate.result.RankingFunctionResult;
 import de.uni_freiburg.informatik.ultimate.result.SyntaxErrorResult;
 import de.uni_freiburg.informatik.ultimate.result.TimeoutResult;
 import de.uni_freiburg.informatik.ultimate.result.UnprovableResult;
@@ -322,6 +323,10 @@ public class UltimateInterface extends HttpServlet {
 					fileExtension = ".c";
 				} else if (taskId.equals("TERMINATION_BOOGIE")) {
 					fileExtension = ".bpl";
+				} else if (taskId.equals("RANK_SYNTHESIS_C")) {
+					fileExtension = ".c";
+				} else if (taskId.equals("RANK_SYNTHESIS_BOOGIE")) {
+					fileExtension = ".bpl";
 				} else {
 					throw new IllegalArgumentException(
 							"The given taskId is unknown to UltimateInterface: "
@@ -383,6 +388,9 @@ public class UltimateInterface extends HttpServlet {
 							packagedResult.logLvl = "info";
 						} else if (r instanceof PositiveResult) {
 							type = "positive";
+							packagedResult.logLvl = "info";
+						} else if (r instanceof RankingFunctionResult) {
+							type = "invariant";
 							packagedResult.logLvl = "info";
 						} else if (r instanceof UnprovableResult) {
 							type = "unprovable";
