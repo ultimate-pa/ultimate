@@ -36,6 +36,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.In
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.InterpolantAutomataTransitionAppender.PostDeterminizer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.InterpolantAutomataTransitionAppender.SelfloopDeterminizer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.InterpolantAutomataTransitionAppender.StrongestPostDeterminizer;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.EdgeChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.ISLPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
@@ -215,6 +216,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 				(INestedWordAutomatonOldApi<CodeBlock, IPredicate>) m_Abstraction;
 		Map<IPredicate, Set<IPredicate>> removedDoubleDeckers = null;
 		Map<IPredicate, IPredicate> context2entry = null;
+		EdgeChecker edgeChecker = new EdgeChecker(m_SmtManager);
 		if (differenceInsteadOfIntersection) {
 			s_Logger.debug("Start constructing difference");
 			assert(oldAbstraction.getStateFactory() == m_InterpolAutomaton.getStateFactory());
@@ -259,7 +261,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 			break;
 			
 			case EAGERPOST:	
-				PostDeterminizer epd = new PostDeterminizer(m_SmtManager, m_Pref, 
+				PostDeterminizer epd = new PostDeterminizer(edgeChecker, m_Pref, 
 									m_InterpolAutomaton,true);
 				if (m_Pref.differenceSenwa()) {
 					diff = new DifferenceSenwa<CodeBlock, IPredicate>(
@@ -289,7 +291,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 			break;
 			
 			case LAZYPOST:	
-				PostDeterminizer lpd = new PostDeterminizer(m_SmtManager,	m_Pref, 
+				PostDeterminizer lpd = new PostDeterminizer(edgeChecker,	m_Pref, 
 									m_InterpolAutomaton,false);
 				if (m_Pref.differenceSenwa()) {
 					diff = new DifferenceSenwa<CodeBlock, IPredicate>(
@@ -340,7 +342,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 			break;
 			case STRONGESTPOST:
 				StrongestPostDeterminizer spd = new StrongestPostDeterminizer(
-						m_SmtManager, m_Pref, m_InterpolAutomaton);
+						edgeChecker, m_Pref, m_InterpolAutomaton);
 				if (m_Pref.differenceSenwa()) {
 					diff = new DifferenceSenwa<CodeBlock, IPredicate>(
 							oldAbstraction, m_InterpolAutomaton, spd, false);
@@ -485,6 +487,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 	
 	protected INestedWordAutomatonOldApi<CodeBlock, IPredicate> 
 											determinizeInterpolantAutomaton() throws OperationCanceledException {
+		EdgeChecker edgeChecker = new EdgeChecker(m_SmtManager);
 		s_Logger.debug("Start determinization");
 		INestedWordAutomatonOldApi<CodeBlock, IPredicate> dia;
 		switch (m_Pref.determinization()) {
@@ -516,7 +519,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		break;
 		case STRONGESTPOST:
 			StrongestPostDeterminizer spd = 
-				new StrongestPostDeterminizer(m_SmtManager,	m_Pref, 
+				new StrongestPostDeterminizer(edgeChecker,	m_Pref, 
 										m_InterpolAutomaton);
 			DeterminizeDD<CodeBlock, IPredicate> dabsp = 
 				new DeterminizeDD<CodeBlock, IPredicate>(
@@ -525,7 +528,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		break;
 		case EAGERPOST:
 			PostDeterminizer epd = 
-				new PostDeterminizer(m_SmtManager,	m_Pref, 
+				new PostDeterminizer(edgeChecker,	m_Pref, 
 									m_InterpolAutomaton,true);
 			DeterminizeDD<CodeBlock, IPredicate> dep = 
 				new DeterminizeDD<CodeBlock, IPredicate>(
@@ -534,7 +537,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		break;
 		case LAZYPOST:
 			PostDeterminizer lpd = 
-				new PostDeterminizer(m_SmtManager,	m_Pref, 
+				new PostDeterminizer(edgeChecker,	m_Pref, 
 									m_InterpolAutomaton,true);
 			DeterminizeDD<CodeBlock, IPredicate> dlpd = 
 				new DeterminizeDD<CodeBlock, IPredicate>(

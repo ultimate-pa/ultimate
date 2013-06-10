@@ -2,15 +2,8 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.I
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 
-import org.eclipse.osgi.framework.internal.core.Msg;
-
-import de.uni_freiburg.informatik.ultimate.automata.NestedWordAutomata;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IStateDeterminizer;
@@ -21,16 +14,14 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.TransFormula;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.TransFormula.Infeasibility;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.TAPreferences;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.EdgeChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 
 public class PostDeterminizer 
 		implements IStateDeterminizer<CodeBlock, IPredicate> {
 	
-	protected final SmtManager m_SmtManager;
 	private final TAPreferences m_TaPreferences;
 	protected final NestedWordAutomaton<CodeBlock, IPredicate> m_Ia;
 	private final StateFactory<IPredicate> m_StateFactory;
@@ -56,16 +47,14 @@ public class PostDeterminizer
 	private IPredicate m_AssertedState;
 	private IPredicate m_AssertedHier;
 	
-	protected final SmtManager.EdgeChecker m_EdgeChecker;
+	protected final EdgeChecker m_EdgeChecker;
 	
 
-	public PostDeterminizer(SmtManager mSmtManager,
+	public PostDeterminizer(EdgeChecker edgeChecker,
 			TAPreferences taPreferences,
 			NestedWordAutomaton<CodeBlock, IPredicate> mNwa,
 			boolean eager) {
-		super();
-		m_SmtManager = mSmtManager;
-		m_EdgeChecker = mSmtManager.new EdgeChecker();
+		m_EdgeChecker = edgeChecker;
 		m_TaPreferences = taPreferences;
 		m_Ia = mNwa;
 		m_StateFactory = mNwa.getStateFactory();
@@ -205,10 +194,10 @@ public class PostDeterminizer
 
 		clearAssertionStack();
 		if (m_TaPreferences.computeHoareAnnotation()) {
-			assert(m_SmtManager.isInductive(detState.getContent(m_StateFactory), 
+			assert(m_EdgeChecker.getSmtManager().isInductive(detState.getContent(m_StateFactory), 
 						symbol, 
 						detSucc.getContent(m_StateFactory)) == Script.LBool.UNSAT ||
-					m_SmtManager.isInductive(detState.getContent(m_StateFactory), 
+					m_EdgeChecker.getSmtManager().isInductive(detState.getContent(m_StateFactory), 
 						symbol, 
 						detSucc.getContent(m_StateFactory)) == Script.LBool.UNKNOWN);
 		}
@@ -293,10 +282,10 @@ public class PostDeterminizer
 		}
 		clearAssertionStack();
 		if (m_TaPreferences.computeHoareAnnotation()) {
-			assert(m_SmtManager.isInductiveCall(detState.getContent(m_StateFactory), 
+			assert(m_EdgeChecker.getSmtManager().isInductiveCall(detState.getContent(m_StateFactory), 
 						(Call) symbol, 
 						detSucc.getContent(m_StateFactory)) == Script.LBool.UNSAT ||
-					m_SmtManager.isInductiveCall(detState.getContent(m_StateFactory), 
+					m_EdgeChecker.getSmtManager().isInductiveCall(detState.getContent(m_StateFactory), 
 						(Call) symbol, 
 						detSucc.getContent(m_StateFactory)) == Script.LBool.UNKNOWN);
 		}
@@ -382,11 +371,11 @@ public class PostDeterminizer
 		}
 		clearAssertionStack();
 		if (m_TaPreferences.computeHoareAnnotation()) {
-			assert(m_SmtManager.isInductiveReturn(detState.getContent(m_StateFactory),
+			assert(m_EdgeChecker.getSmtManager().isInductiveReturn(detState.getContent(m_StateFactory),
 					detHier.getContent(m_StateFactory),
 					(Return) symbol, 
 					detSucc.getContent(m_StateFactory)) == Script.LBool.UNSAT ||
-					m_SmtManager.isInductiveReturn(detState.getContent(m_StateFactory),
+					m_EdgeChecker.getSmtManager().isInductiveReturn(detState.getContent(m_StateFactory),
 						detHier.getContent(m_StateFactory),
 						(Return) symbol, 
 						detSucc.getContent(m_StateFactory)) == Script.LBool.UNKNOWN);
@@ -511,7 +500,7 @@ public class PostDeterminizer
 			sat = m_EdgeChecker.sdLazyEcInteral(state, symbol, succ);
 		}		
 		if (sat == null) {
-			//		LBool sat = m_SmtManager.isInductive(state, symbol, succ);
+			//		LBool sat = m_EdgeChecker.getSmtManager().isInductive(state, symbol, succ);
 			if (m_AssertedCodeBlock == null) {
 				m_EdgeChecker.assertCodeBlock(symbol);
 				m_AssertedCodeBlock = symbol;
@@ -584,7 +573,7 @@ public class PostDeterminizer
 			sat = m_EdgeChecker.sdLazyEcCall(state, symbol, succ);
 		}
 		if (sat == null) {
-			// sat = m_SmtManager.isInductiveCall(state, symbol, succ);
+			// sat = m_EdgeChecker.getSmtManager().isInductiveCall(state, symbol, succ);
 			if (m_AssertedCodeBlock == null) {
 				m_EdgeChecker.assertCodeBlock(symbol);
 				m_AssertedCodeBlock = symbol;
@@ -635,7 +624,7 @@ public class PostDeterminizer
 			sat = m_EdgeChecker.sdLazyEcReturn(state, hier, symbol, succ);
 		}
 		if (sat == null) {
-//			sat = m_SmtManager.isInductiveReturn(state, hier, symbol, succ);
+//			sat = m_EdgeChecker.getSmtManager().isInductiveReturn(state, hier, symbol, succ);
 			if (m_AssertedCodeBlock == null) {
 				m_EdgeChecker.assertCodeBlock(symbol);
 				m_AssertedCodeBlock = symbol;

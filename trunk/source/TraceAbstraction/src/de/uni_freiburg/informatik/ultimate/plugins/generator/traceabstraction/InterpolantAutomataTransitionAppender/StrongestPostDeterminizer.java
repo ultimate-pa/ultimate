@@ -13,8 +13,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.TAPreferences;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.EdgeChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 
 //TODO: Add cache for rejected queries.
 //TODO: Implement another variant, LazyStrongestPost. Get most information from
@@ -36,10 +36,9 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 public class StrongestPostDeterminizer 
 					implements IStateDeterminizer<CodeBlock, IPredicate> {
 
-	private final SmtManager m_SmtManager;
-	private final SmtManager.EdgeChecker m_EdgeChecker;
-	private StateFactory<IPredicate> m_ConFac;
-	private INestedWordAutomatonOldApi<CodeBlock, IPredicate> m_Ia;
+	private final EdgeChecker m_EdgeChecker;
+	private final StateFactory<IPredicate> m_ConFac;
+	private final INestedWordAutomatonOldApi<CodeBlock, IPredicate> m_Ia;
 	private final IPredicate m_IaFalseState;
 	private final IPredicate m_IaTrueState;
 	
@@ -49,12 +48,10 @@ public class StrongestPostDeterminizer
 	
 	DeterminizedState<CodeBlock, IPredicate> m_ResultFinalState;
 
-	public StrongestPostDeterminizer(SmtManager mSmtManager,
+	public StrongestPostDeterminizer(EdgeChecker edgeChecker,
 			TAPreferences taPreferences,
 			INestedWordAutomatonOldApi<CodeBlock, IPredicate> mNwa) {
-		super();
-		m_SmtManager = mSmtManager;
-		m_EdgeChecker = m_SmtManager.new EdgeChecker();
+		m_EdgeChecker = edgeChecker;
 		m_ConFac = mNwa.getStateFactory();
 		m_Ia = mNwa;
 		
@@ -111,10 +108,10 @@ public class StrongestPostDeterminizer
 		IPredicate detStateConjunction = detState.getContent(m_ConFac);
 		//Check if edge to final is already inductive
 		LBool leadsToFinal = inductiveInternal(detStateConjunction, symbol, m_IaFalseState);
-//		assert leadsToFinal == m_SmtManager.isInductive(detStateConjunction, 
+//		assert leadsToFinal == m_EdgeChecker.getSmtManager().isInductive(detStateConjunction, 
 //					symbol, m_IaFalseState);
 		
-//		LBool leadsToFinal = m_SmtManager.isInductive(detStateConjunction, 
+//		LBool leadsToFinal = m_EdgeChecker.getSmtManager().isInductive(detStateConjunction, 
 //				symbol, m_IaFalseState);
 		if (leadsToFinal == Script.LBool.UNSAT) {
 			clearAssertionStack();
@@ -133,9 +130,9 @@ public class StrongestPostDeterminizer
 			String succCandProc = getProcedure(succCand);
 			if (succCandProc == null || succCandProc.equals(targetProc)) {
 				LBool isInductive = inductiveInternal(detStateConjunction, symbol, succCand);
-				//			assert isInductive == m_SmtManager.isInductive(detStateConjunction, 
+				//			assert isInductive == m_EdgeChecker.getSmtManager().isInductive(detStateConjunction, 
 				//					symbol, succCand);
-				//			LBool isInductive = m_SmtManager.isInductive(detStateConjunction, 
+				//			LBool isInductive = m_EdgeChecker.getSmtManager().isInductive(detStateConjunction, 
 				//					symbol, succCand);
 				if (isInductive == Script.LBool.UNSAT) {
 					succs.add(succCand);
@@ -404,7 +401,7 @@ public class StrongestPostDeterminizer
 	
 	private boolean reviewInductiveInternal(IPredicate state, CodeBlock cb, IPredicate succ, LBool result) {
 		clearAssertionStack();
-		LBool reviewResult = m_SmtManager.isInductive(state, cb, succ);
+		LBool reviewResult = m_EdgeChecker.getSmtManager().isInductive(state, cb, succ);
 		if (satCompatible(result, reviewResult)) {
 			return true;
 		} else {
@@ -415,7 +412,7 @@ public class StrongestPostDeterminizer
 	
 	private boolean reviewInductiveCall(IPredicate state, Call cb, IPredicate succ, LBool result) {
 		clearAssertionStack();
-		LBool reviewResult = m_SmtManager.isInductiveCall(state, cb, succ);
+		LBool reviewResult = m_EdgeChecker.getSmtManager().isInductiveCall(state, cb, succ);
 		if (satCompatible(result, reviewResult)) {
 			return true;
 		} else {
@@ -427,7 +424,7 @@ public class StrongestPostDeterminizer
 	
 	private boolean reviewInductiveReturn(IPredicate state, Call cb, IPredicate succ, LBool result) {
 		clearAssertionStack();
-		LBool reviewResult = m_SmtManager.isInductiveCall(state, cb, succ);
+		LBool reviewResult = m_EdgeChecker.getSmtManager().isInductiveCall(state, cb, succ);
 		if (satCompatible(result, reviewResult)) {
 			return true;
 		} else {
