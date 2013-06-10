@@ -87,10 +87,12 @@ public class Example {
 				new Tasks.TaskNames[] { Tasks.TaskNames.RANK_SYNTHESIS_BOOGIE }));
 		list.add(new Example("Bangalore.c", "BangaloreC", "Bangalore.c",
 				new Tasks.TaskNames[] { Tasks.TaskNames.RANK_SYNTHESIS_C }));
-		Tasks.TaskNames[] terminatonBoogie =  { Tasks.TaskNames.RANK_SYNTHESIS_BOOGIE };
-		addAllFilesInExamplesSubfolder(list, "rankBoogie/", terminatonBoogie);
+		Tasks.TaskNames[] rankBoogie =  { Tasks.TaskNames.RANK_SYNTHESIS_BOOGIE };
+		addAllFilesInExamplesSubfolder(list, "rankBoogie/", rankBoogie);
 		Tasks.TaskNames[] terminatonC =  { Tasks.TaskNames.TERMINATION_C };
 		addAllFilesInExamplesSubfolder(list, "terminationC/", terminatonC);
+		Tasks.TaskNames[] terminationBoogie =  { Tasks.TaskNames.TERMINATION_BOOGIE };
+		addAllFilesInExamplesSubfolder(list, "terminationBoogie/", terminationBoogie);
 		Tasks.TaskNames[] verifyC =  { Tasks.TaskNames.VerifyC };
 		addAllFilesInExamplesSubfolder(list, "verifyC/", verifyC);
 		Tasks.TaskNames[] automataScript =  { Tasks.TaskNames.AUTOMATA_SCRIPT };
