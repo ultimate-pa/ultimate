@@ -221,6 +221,8 @@ public class InterpolantAutomataBuilder {
 				m_IA.addCallTransition(m_FalsePredicate, symbol, m_FalsePredicate);
 			}
 			for (CodeBlock symbol : returnAlphabet) {
+				m_IA.addReturnTransition(
+						m_FalsePredicate, m_FalsePredicate, symbol, m_FalsePredicate);
 				for (Integer pos : m_AlternativeCallPredecessors.keySet()) {
 					for (IPredicate hier : 
 									m_AlternativeCallPredecessors.get(pos)) {

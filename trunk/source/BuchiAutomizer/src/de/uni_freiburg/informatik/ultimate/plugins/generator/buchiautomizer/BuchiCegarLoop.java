@@ -389,8 +389,8 @@ public class BuchiCegarLoop {
 			AllIntegers allInt = new TraceChecker.AllIntegers();
 			IPredicate[] interpolants = m_TraceChecker.getInterpolants(allInt);
 			constructInterpolantAutomaton(interpolants);
-			PostDeterminizer spd = new PostDeterminizer(
-					m_SmtManager, m_Pref, m_InterpolAutomaton, true);
+			StrongestPostDeterminizer spd = new StrongestPostDeterminizer(
+					m_SmtManager, m_Pref, m_InterpolAutomaton);
 			DifferenceDD<CodeBlock, IPredicate> diff = null;
 			try {
 				diff = new DifferenceDD<CodeBlock, IPredicate>(
@@ -422,8 +422,8 @@ public class BuchiCegarLoop {
 			
 			assert((new Accepts<CodeBlock, IPredicate>(m_InterpolAutomaton, m_ConcatenatedCounterexample.getWord())).getResult()) :
 				"Interpolant automaton broken!";
-//			assert((new BuchiAccepts<CodeBlock, IPredicate>(m_InterpolAutomaton, m_Counterexample.getNestedLassoWord())).getResult()) :
-//				"Interpolant automaton broken!";
+			assert((new BuchiAccepts<CodeBlock, IPredicate>(m_InterpolAutomaton, m_Counterexample.getNestedLassoWord())).getResult()) :
+				"Interpolant automaton broken!";
 			assert (m_SmtManager.checkInductivity(m_InterpolAutomaton, false, true));
 		}
 		
