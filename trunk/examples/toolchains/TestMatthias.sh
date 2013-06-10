@@ -1,14 +1,12 @@
 #!/bin/bash
 
-#trunk/examples/toolchains/TraceAbstractionTestDir.sh 20 trunk/examples/programs \
-#"TraceAbstraction.xml;TraceAbstractionC.xml;TraceAbstraction-LargeStatements-EagerPost-Hoare" \
-#"TraceAbstraction.xml;TraceAbstractionC.xml;TraceAbstraction-svcomp-StrongestMinimize" \
-#"TraceAbstraction.xml;TraceAbstractionC.xml;TraceAbstraction-svcomp-LargeStrongest"
-
-#trunk/examples/toolchains/TraceAbstractionTestDir.sh 20 trunk/examples/programs \
-#"TraceAbstraction.xml;TraceAbstractionC.xml;TraceAbstraction-LargeStatements-EagerPost-Hoare" \
-#"TraceAbstraction.xml;TraceAbstractionC.xml;TraceAbstraction-LargeStatements-Lazypost-Hoare" \
-#"TraceAbstraction.xml;TraceAbstractionC.xml;TraceAbstraction-LargeStatements-StrongestPost-Hoare"
+trunk/examples/toolchains/TraceAbstractionTestDir.sh 20 trunk/examples/programs \
+"TraceAbstraction.xml;TraceAbstractionC.xml;TraceAbstraction-LargeStatements-EagerPost-Hoare" \
+"TraceAbstractionWithBlockEncoding.xml;TraceAbstractionCWithBlockEncoding.xml;TraceAbstraction-BlockEncoding-EagerPost-Hoare" \
+"TraceAbstraction.xml;TraceAbstractionC.xml;TraceAbstraction-LargeStatements-Lazypost-Hoare" \
+"TraceAbstractionWithBlockEncoding.xml;TraceAbstractionCWithBlockEncoding.xml;TraceAbstraction-BlockEncoding-Lazypost-Hoare" \
+"TraceAbstraction.xml;TraceAbstractionC.xml;TraceAbstraction-LargeStatements-StrongestPost-Hoare"
+"TraceAbstractionWithBlockEncoding.xml;TraceAbstractionCWithBlockEncoding.xml;TraceAbstraction-BlockEncoding-StrongestPost-Hoare"
 
 # trunk/examples/toolchains/TraceAbstractionTestDir.sh 20 trunk/examples/programs \
 #  "TraceAbstraction.xml;TraceAbstractionC.xml;TraceAbstraction-LargeStatements-EagerPost-Hoare" \
@@ -54,11 +52,11 @@
 # "TraceAbstraction.xml;TraceAbstractionC.xml;TraceAbstraction-svcomp-LargeLazy" \
 # "TraceAbstractionWithBlockEncoding.xml;TraceAbstractionCWithBlockEncoding.xml;TraceAbstraction-svcomp-BlockEncodingLazy" 
 
-trunk/examples/toolchains/TraceAbstractionTestDir.sh 20 trunk/examples/rank \
- "BuchiAutomizer.xml;BuchiAutomizerC.xml;BuchiAutomizer"
-trunk/examples/toolchains/TraceAbstractionTestDir.sh 20 trunk/examples/programs \
- "BuchiAutomizer.xml;BuchiAutomizerC.xml;BuchiAutomizer"
-trunk/examples/toolchains/TraceAbstractionTestDir.sh 20 trunk/examples/terminator \
- "BuchiAutomizer.xml;BuchiAutomizerC.xml;BuchiAutomizer"
-trunk/examples/toolchains/TraceAbstractionTestDir.sh 20 trunk/examples/svcomp13 \
- "BuchiAutomizer.xml;BuchiAutomizerC.xml;BuchiAutomizer"
+# trunk/examples/toolchains/TraceAbstractionTestDir.sh 20 trunk/examples/rank \
+#  "BuchiAutomizer.xml;BuchiAutomizerC.xml;BuchiAutomizer"
+# trunk/examples/toolchains/TraceAbstractionTestDir.sh 20 trunk/examples/programs \
+#  "BuchiAutomizer.xml;BuchiAutomizerC.xml;BuchiAutomizer"
+# trunk/examples/toolchains/TraceAbstractionTestDir.sh 20 trunk/examples/terminator \
+#  "BuchiAutomizer.xml;BuchiAutomizerC.xml;BuchiAutomizer"
+# trunk/examples/toolchains/TraceAbstractionTestDir.sh 20 trunk/examples/svcomp13 \
+#  "BuchiAutomizer.xml;BuchiAutomizerC.xml;BuchiAutomizer"
