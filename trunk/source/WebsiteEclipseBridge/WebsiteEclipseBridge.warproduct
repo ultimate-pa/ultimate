@@ -10,6 +10,7 @@
       <plugin id="BoogieParser"/>
       <plugin id="BoogiePreprocessor"/>
       <plugin id="BoogiePrinter"/>
+      <plugin id="BuchiAutomizer"/>
       <plugin id="CACSL2BoogieTranslator"/>
       <plugin id="CDTParser"/>
       <plugin id="JavaCup"/>
@@ -86,6 +87,7 @@
       <plugin id="BoogieParser" autoStart="true" startLevel="0" />
       <plugin id="BoogiePreprocessor" autoStart="true" startLevel="0" />
       <plugin id="BoogiePrinter" autoStart="true" startLevel="0" />
+      <plugin id="BuchiAutomizer" autoStart="true" startLevel="0" />
       <plugin id="CACSL2BoogieTranslator" autoStart="true" startLevel="0" />
       <plugin id="CDTParser" autoStart="true" startLevel="0" />
       <plugin id="JavaCup" autoStart="true" startLevel="0" />
