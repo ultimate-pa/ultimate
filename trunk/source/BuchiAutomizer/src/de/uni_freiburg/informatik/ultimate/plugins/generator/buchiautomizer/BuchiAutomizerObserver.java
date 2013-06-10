@@ -1,4 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer;
+import java.text.MessageFormat;
+
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.access.IUnmanagedObserver;
@@ -125,6 +127,9 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 		} else {
 			throw new AssertionError();
 		}
+		s_Logger.info(MessageFormat.format("Counterexamples: {0} infeasible" +
+				"  {1} rank without si  {2} rank only with si", 
+				bcl.m_Infeasible, bcl.m_RankWithoutSi, bcl.m_RankWithSi));;
 
 //		Map<String, Collection<ProgramPoint>> proc2errNodes = rootAnnot.getErrorNodes();
 //		Collection<ProgramPoint> errNodesOfAllProc = new ArrayList<ProgramPoint>();

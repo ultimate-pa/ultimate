@@ -156,6 +156,10 @@ public class BuchiCegarLoop {
 		public int m_BiggestAbstractionIteration = 0;
 		public int m_BiggestAbstractionSize = 0;
 		public int m_InitialAbstractionSize = 0;
+		
+		int m_Infeasible = 0;
+		int m_RankWithoutSi = 0;
+		int m_RankWithSi = 0;
 
 		private NestedRun<CodeBlock, IPredicate> m_ConcatenatedCounterexample;
 		
@@ -270,6 +274,7 @@ public class BuchiCegarLoop {
 					LBool isCounterexampleFeasible = isCounterexampleFeasible();
 					if (isCounterexampleFeasible == Script.LBool.UNSAT) {
 						refineFinite();
+						m_Infeasible++;
 					} else if (isCounterexampleFeasible == Script.LBool.SAT) {
 						m_TraceChecker.forgetTrace();
 						boolean terminating = isCounterexampleTerminating(
@@ -455,13 +460,14 @@ public class BuchiCegarLoop {
 			ProgramPoint honda = ((ISLPredicate) hondaPredicate).getProgramPoint();
 			boolean withoutStem = synthesize(emptyWord, loop, getDummyTF(), loopTF);
 			if (withoutStem) {
+				m_RankWithoutSi++;
 				reportRankingFunction(m_LinRf, honda, stem, loop);
 				return true;
 			}
 			boolean witStem = synthesize(stem, loop, stemTF, loopTF);
 			if (witStem) {
 				reportRankingFunction(m_LinRf, honda, stem, loop);
-				s_Logger.info("Statistics: SI IS NECESSARY !!!");
+				m_RankWithSi++;
 				return true;
 			}
 			return false;
@@ -559,8 +565,8 @@ public class BuchiCegarLoop {
 						"Wrong ranking function " + rf;
 
 				} else {
-					s_Logger.info("Statistics: No ranking function has been found "
-							+ "with this template.");
+//					s_Logger.info("Statistics: No ranking function has been found "
+//							+ "with this template.");
 				}
 			} catch (SMTLIBException e) {
 				throw new AssertionError(e.getMessage());
