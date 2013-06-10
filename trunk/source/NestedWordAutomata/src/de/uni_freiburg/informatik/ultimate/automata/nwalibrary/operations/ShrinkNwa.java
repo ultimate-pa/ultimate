@@ -63,6 +63,8 @@ import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
  * 
  * <returnSplit> prefer or defer splitter set A?
  * 
+ * <threading> identify possibilities for threading and implement it
+ * 
  * 
  * misc:
  * <hashCode> overwrite for EquivalenceClass?
@@ -106,11 +108,11 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	private final boolean DEBUG2 = false;
 	
 	// TODO<statistics>
-	private final boolean STATISTICS = true;
+	private final boolean STATISTICS = false;
 	private int m_splitsWithChange = 0;
 	private int m_splitsWithoutChange = 0;
-	private int m_incomingTransitionts = 0;
-	private int m_noIncomingTransitionts = 0;
+	private int m_incomingTransitions = 0;
+	private int m_noIncomingTransitions = 0;
 	
 	/**
 	 * StateFactory used for the construction of new states. This is _NOT_ the
@@ -174,12 +176,12 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 					(((float)m_splitsWithChange) /
 							((float)Math.max(m_splitsWithoutChange, 1))));
 			System.out.println("incoming transition checks : " +
-					m_incomingTransitionts);
+					m_incomingTransitions);
 			System.out.println("no incoming transitions found : " +
-					m_noIncomingTransitionts);
+					m_noIncomingTransitions);
 			System.out.println("quota (p/n): " +
-					(((float)m_incomingTransitionts) /
-							((float)Math.max(m_noIncomingTransitionts, 1))));
+					(((float)m_incomingTransitions) /
+							((float)Math.max(m_noIncomingTransitions, 1))));
 		}
 	}
 	
@@ -375,11 +377,11 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 				a.m_incomingCall = EIncomingStatus.none;
 			}
 			if (STATISTICS)
-				++m_noIncomingTransitionts;
+				++m_noIncomingTransitions;
 		}
 		else {
 			if (STATISTICS)
-				++m_incomingTransitionts;
+				++m_incomingTransitions;
 			
 			// split each map value (set of predecessor states)
 			for (final HashSet<STATE> predecessorSet :
@@ -443,13 +445,13 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 		if (letter2lin2hier.isEmpty()) {
 			a.m_incomingRet = EIncomingStatus.none;
 			if (STATISTICS)
-				++m_noIncomingTransitionts;
+				++m_noIncomingTransitions;
 			
 			return;
 		}
 		
 		if (STATISTICS)
-			++m_incomingTransitionts;
+			++m_incomingTransitions;
 		
 		if (DEBUG2) {
 			System.err.println("-- new return mapping: from A = " + a);
@@ -463,7 +465,6 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 		final ArrayList<HashMap<STATE, HashMap<Set<EquivalenceClass>,
 			Set<STATE>>>> listHier2succ2lin = new ArrayList<HashMap<STATE,
 			HashMap<Set<EquivalenceClass>,Set<STATE>>>>(numberOfLinearEcs);
-		
 		
 		for (final Entry<LETTER, HashMap<EquivalenceClass,
 				HashSet<EquivalenceClass>>> outerEntry :
@@ -601,7 +602,228 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 		}
 		
 		// split
-		splitReturnHelper(listLin2succ2hier, listHier2succ2lin);
+		splitReturnHelperNaive(listLin2succ2hier, listHier2succ2lin);
+	}
+	
+	/**
+	 * TODO<comment>
+	 *
+	 * @param listLin2succ2hier
+	 * @param listHier2succ2lin
+	 */
+	private void splitReturnHelper(final List<HashMap<STATE,
+			HashMap<Set<EquivalenceClass>, Set<STATE>>>> listLin2succ2hier,
+			final List<HashMap<STATE, HashMap<Set<EquivalenceClass>,
+			Set<STATE>>>> listHier2succ2lin) {
+		if (DEBUG2) {
+			System.err.println("listLin2succ2hier: " + listLin2succ2hier);
+			System.err.println("listHier2succ2lin: " + listHier2succ2lin);
+		}
+		
+		// construct graphs
+		// TODO<findEcs> find equivalence classes in previous method
+		final HashMap<EquivalenceClass, SplittingGraph> ec2graph =
+				new HashMap<EquivalenceClass, SplittingGraph>();
+		for (final HashMap<STATE, HashMap<Set<EquivalenceClass>, Set<STATE>>>
+				lin2succ2hier : listLin2succ2hier) {
+			for (final STATE lin : lin2succ2hier.keySet()) {
+				final EquivalenceClass ec = m_partition.
+						m_state2EquivalenceClass.get(lin);
+				if (ec2graph.get(ec) == null) {
+					if (DEBUG2)
+						System.err.println("adding lin. EC graph: " + ec);
+					ec2graph.put(ec, new SplittingGraph(ec.m_states));
+				}
+				else {
+					if (DEBUG2)
+						System.err.println("ignoring lin. EC graph: " + ec);
+				}
+			}
+		}
+		for (final HashMap<STATE, HashMap<Set<EquivalenceClass>, Set<STATE>>>
+				hier2succ2lin : listHier2succ2lin) {
+			for (final STATE hier : hier2succ2lin.keySet()) {
+				final EquivalenceClass ec = m_partition.
+						m_state2EquivalenceClass.get(hier);
+				if (ec2graph.get(ec) == null) {
+					if (DEBUG2)
+						System.err.println("adding hier. EC graph: " + ec);
+					ec2graph.put(ec, new SplittingGraph(ec.m_states));
+				}
+				else {
+					if (DEBUG2)
+						System.err.println("ignoring hier. EC graph: " + ec);
+				}
+			}
+		}
+		final HashSet<SplittingGraph> visitedGraphs =
+				new HashSet<SplittingGraph>();
+		
+		HashMap<HashSet<Set<EquivalenceClass>>, Set<STATE>> gSucc2states =
+				new HashMap<HashSet<Set<EquivalenceClass>>, Set<STATE>>();
+		
+		// local hierarchical split and global linear split
+		for (final HashMap<STATE, HashMap<Set<EquivalenceClass>, Set<STATE>>>
+				lin2succ2hier : listLin2succ2hier) {
+			final HashSet<Set<EquivalenceClass>> succs =
+					new HashSet<Set<EquivalenceClass>>();
+			
+			for (final Entry<STATE, HashMap<Set<EquivalenceClass>, Set<STATE>>>
+					entry : lin2succ2hier.entrySet()) {
+				final HashMap<Set<EquivalenceClass>, Set<STATE>> succ2hier =
+						entry.getValue();
+				final int size = succ2hier.size();
+				if (size > 0) {
+					if (size > 1) {
+						for (final Entry<Set<EquivalenceClass>, Set<STATE>>
+								innerEntry : succ2hier.entrySet()) {
+							final Set<STATE> hiers = innerEntry.getValue();
+							
+							// local hierarchical split
+							if (DEBUG2)
+								System.err.println(
+										"local hierarchical split: " + hiers);
+							
+							assert hiers.iterator().hasNext();
+							final SplittingGraph graph = ec2graph.get(
+									m_partition.m_state2EquivalenceClass.
+									get(hiers.iterator().next()));
+							visitedGraphs.add(graph);
+							graph.split(hiers);
+							
+							// global linear split collection
+							succs.add(innerEntry.getKey());
+						}
+					}
+					else {
+						assert (succ2hier.keySet().iterator().hasNext());
+						succs.add(succ2hier.keySet().iterator().next());
+					}
+					
+					// global linear split collection
+					Set<STATE> gLins = gSucc2states.get(succs);
+					if (gLins == null) {
+						gLins = new HashSet<STATE>();
+						gSucc2states.put(succs, gLins);
+					}
+					gLins.add(entry.getKey());
+				}
+			}
+			
+			resetGraphSets(visitedGraphs);
+			
+			// global linear split
+			/*
+			 * TODO<globalLinearSplit> this specific split is probably not
+			 *                         necessary
+			 *                         there are strange results, look at this
+			 */
+			if (gSucc2states.size() > 1) {
+				for (final Set<STATE> gLins : gSucc2states.values()) {
+					if (DEBUG2)
+						System.err.println("global linear split: " + gLins);
+					
+					assert gLins.iterator().hasNext();
+					final SplittingGraph graph = ec2graph.get(
+							m_partition.m_state2EquivalenceClass.
+							get(gLins.iterator().next()));
+					visitedGraphs.add(graph);
+					graph.split(gLins);
+				}
+			}
+			
+			gSucc2states =
+					new HashMap<HashSet<Set<EquivalenceClass>>, Set<STATE>>();
+			resetGraphSets(visitedGraphs);
+		}
+		
+		// local linear split and global hierarchical split
+		for (final HashMap<STATE, HashMap<Set<EquivalenceClass>, Set<STATE>>>
+				hier2succ2lin : listHier2succ2lin) {
+			final HashSet<Set<EquivalenceClass>> succs =
+					new HashSet<Set<EquivalenceClass>>();
+			
+			for (final Entry<STATE, HashMap<Set<EquivalenceClass>, Set<STATE>>>
+					entry : hier2succ2lin.entrySet()) {
+				final HashMap<Set<EquivalenceClass>, Set<STATE>> succ2lin =
+						entry.getValue();
+				final int size = succ2lin.size();
+				if (size > 0) {
+					if (size > 1) {
+						for (final Entry<Set<EquivalenceClass>, Set<STATE>>
+								innerEntry : succ2lin.entrySet()) {
+							final Set<STATE> lins = innerEntry.getValue();
+							
+							// local linear split
+							if (DEBUG2)
+								System.err.println("local linear split: " +
+										lins);
+							
+							assert lins.iterator().hasNext();
+							final SplittingGraph graph = ec2graph.get(
+									m_partition.m_state2EquivalenceClass.
+									get(lins.iterator().next()));
+							visitedGraphs.add(graph);
+							graph.split(lins);
+							
+							// global hierarchical split collection
+							succs.add(innerEntry.getKey());
+						}
+					}
+					else {
+						assert (succ2lin.keySet().iterator().hasNext());
+						succs.add(succ2lin.keySet().iterator().next());
+					}
+					
+					// global hierarchical split collection
+					Set<STATE> gHiers = gSucc2states.get(succs);
+					if (gHiers == null) {
+						gHiers = new HashSet<STATE>();
+						gSucc2states.put(succs, gHiers);
+					}
+					gHiers.add(entry.getKey());
+				}
+			}
+			
+			resetGraphSets(visitedGraphs);
+			
+			// global hierarchical split
+			if (gSucc2states.size() > 1) {
+				for (final Set<STATE> gHiers : gSucc2states.values()) {
+					if (DEBUG2)
+						System.err.println("global hierarchical split: " +
+								gHiers);
+					
+					assert gHiers.iterator().hasNext();
+					final SplittingGraph graph = ec2graph.get(
+							m_partition.m_state2EquivalenceClass.
+							get(gHiers.iterator().next()));
+					visitedGraphs.add(graph);
+					graph.split(gHiers);
+				}
+			}
+			
+			gSucc2states =
+					new HashMap<HashSet<Set<EquivalenceClass>>, Set<STATE>>();
+			resetGraphSets(visitedGraphs);
+		}
+		
+		if (DEBUG2) {
+			System.err.println("final graphs:");
+			System.err.println(ec2graph.values());
+		}
+		
+		splitGraphs(ec2graph.values());
+	}
+	
+	/**
+	 * TODO<comment>
+	 *
+	 * @param values
+	 */
+	private void splitGraphs(Collection<SplittingGraph> values) {
+		// TODO Auto-generated method stub
+		
 	}
 	
 	/**
@@ -626,7 +848,7 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	 * @param listLin2succ2hier list of linears to successors to hierarchicals
 	 * @param listHier2succ2lin list of hierarchicals to successors to linears
 	 */
-	private void splitReturnHelper(final List<HashMap<STATE,
+	private void splitReturnHelperNaive(final List<HashMap<STATE,
 			HashMap<Set<EquivalenceClass>, Set<STATE>>>> listLin2succ2hier,
 			final List<HashMap<STATE, HashMap<Set<EquivalenceClass>,
 			Set<STATE>>>> listHier2succ2lin) {
@@ -681,10 +903,13 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 			}
 			
 			// global linear split
-			for (final Set<STATE> gLins : gSucc2states.values()) {
-				if (DEBUG2)
-					System.err.println("global linear split: " + gLins);
-				m_partition.splitEquivalenceClasses(gLins);
+			// TODO<returnSplit> this specific split is probably not necessary
+			if (gSucc2states.size() > 1) {
+				for (final Set<STATE> gLins : gSucc2states.values()) {
+					if (DEBUG2)
+						System.err.println("global linear split: " + gLins);
+					m_partition.splitEquivalenceClasses(gLins);
+				}
 			}
 		}
 		
@@ -733,10 +958,12 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 			}
 			
 			// global hierarchical split
-			for (final Set<STATE> gHiers : gSucc2states.values()) {
-				if (DEBUG2)
-					System.err.println("global hierarchical split: " + gHiers);
-				m_partition.splitEquivalenceClasses(gHiers);
+			if (gSucc2states.size() > 1) {
+				for (final Set<STATE> gHiers : gSucc2states.values()) {
+					if (DEBUG2)
+						System.err.println("global hierarchical split: " + gHiers);
+					m_partition.splitEquivalenceClasses(gHiers);
+				}
 			}
 		}
 	}
@@ -778,11 +1005,11 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 		if (letter2lin.isEmpty()) {
 			a.m_incomingRet = EIncomingStatus.none;
 			if (STATISTICS)
-				++m_noIncomingTransitionts;
+				++m_noIncomingTransitions;
 		}
 		else {
 			if (STATISTICS)
-				++m_incomingTransitionts;
+				++m_incomingTransitions;
 			
 			/*
 			 * Find the predecessor equivalence classes.
@@ -1281,6 +1508,186 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 			builder.append("}");
 			return builder.toString();
 		}
+	}
+	
+	/**
+	 * TODO<comment>
+	 */
+	private class SplittingGraph {
+		private ArrayList<Set<STATE>> m_sets; // TODO<remove> remove later
+		private final HashMap<STATE, Integer> m_state2index;
+		private final ArrayList<StateInformation> m_stateInformations;
+		private boolean[][] m_graph;
+		
+		private class StateInformation {
+			private final int m_index;
+			private boolean m_visited;
+
+			public StateInformation(final int index) {
+				m_index = index;
+			}
+			
+			@Override
+			public String toString() {
+				return "[" + m_index + ", " + m_visited + "]";
+			}
+		}
+		
+		public SplittingGraph(final Set<STATE> states) {
+			final int size = states.size();
+			m_sets = new ArrayList<Set<STATE>>(size);
+			m_state2index = new HashMap<STATE, Integer>(
+					computeHashSetCapacity(size));
+			m_stateInformations =
+					new ArrayList<StateInformation>(size);
+			
+			int index = -1;
+			for (final STATE state : states) {
+				m_state2index.put(state, ++index);
+				m_stateInformations.add(index, new StateInformation(index));
+			}
+			
+			m_graph = new boolean[size][];
+			for (int i = 0; i < size; ++i) {
+				m_graph[i] = new boolean[i];
+			}
+		}
+		
+		public void split(final Set<STATE> states) {
+			if (m_sets.size() > 0) {
+				final Iterator<STATE> it = iterator();
+				while (it.hasNext()) {
+					final int oldStateIndex = m_state2index.get(it.next());
+					for (final STATE state : states) {
+						setConnected(oldStateIndex, m_state2index.get(state));
+					}
+				}
+			}
+			m_sets.add(states);
+			
+			if (DEBUG2) {
+				final StringBuilder builder = new StringBuilder();
+				builder.append("added new set: ");
+				builder.append(states);
+				builder.append("\ngraph so far:");
+				for (int i = 0; i < m_graph.length; ++i) {
+					final boolean[] row = m_graph[i];
+					for (int j = 0; j < i; ++j) {
+						builder.append(row[j] ? 1 : 0);
+						builder.append(" ");
+					}
+					if (i < m_graph.length - 1) {
+						builder.append("\n");
+					}
+				}
+				System.err.println(builder.toString());
+			}
+		}
+		
+		private boolean isConnected(final int i, final int j) {
+			assert (i >= 0) && (j >= 0) && (i != j) &&
+					(i < m_graph.length) && (j < m_graph.length);
+			
+			if (i < j) {
+				return m_graph[j][i];
+			}
+			else {
+				return m_graph[i][j];
+			}
+		}
+		
+		private void setConnected(final int i, final int j) {
+			assert (i >= 0) && (j >= 0) && (i != j) &&
+					(i < m_graph.length) && (j < m_graph.length);
+			
+			if (i < j) {
+				m_graph[j][i] = true;
+			}
+			else {
+				m_graph[i][j] = true;
+			}
+		}
+		
+		private Iterator<STATE> iterator() {
+			assert (m_sets.size() > 0) &&
+					(m_sets.get(m_sets.size() - 1) != null) &&
+					(m_sets.get(m_sets.size() - 1).iterator().hasNext());
+			
+			return new Iterator<STATE>() {
+				private int m_index = m_sets.size() - 1;
+				private Iterator<STATE> m_iterator =
+						m_sets.get(m_index).iterator();
+				private STATE m_next;
+
+				@Override
+				public boolean hasNext() {
+					if (m_iterator.hasNext()) {
+						m_next = m_iterator.next();
+					}
+					else if (m_index > 0) {
+						--m_index;
+						m_iterator = m_sets.get(m_index).iterator();
+					}
+					else {
+						m_next = null;
+						return false;
+					}
+					return true;
+				}
+
+				@Override
+				public STATE next() {
+					assert (m_next != null) : "hasNext() must be used.";
+					return m_next;
+				}
+
+				@Override
+				public void remove() {
+					throw new UnsupportedOperationException(
+							"Removing is not allowed.");
+				}
+			};
+		}
+		
+		@Override
+		public String toString() {
+			final StringBuilder builder = new StringBuilder();
+			
+			builder.append("mapping: ");
+			builder.append(m_state2index);
+			builder.append("\nstateInfos: ");
+			builder.append(m_stateInformations);
+			builder.append("\nsets: ");
+			builder.append(m_sets);
+			builder.append("\ngraph:");
+			for (int i = 0; i < m_graph.length; ++i) {
+				final boolean[] row = m_graph[i];
+				for (int j = 0; j < i; ++j) {
+					builder.append(row[j] ? 1 : 0);
+					builder.append(" ");
+				}
+				if (i < m_graph.length - 1) {
+					builder.append("\n");
+				}
+			}
+			
+			return builder.toString();
+		}
+	}
+	
+	/**
+	 * This method resets the state sets in the graphs.
+	 *
+	 * @param graphs the graphs to reset
+	 */
+	private void resetGraphSets(HashSet<SplittingGraph> graphs) {
+		for (final SplittingGraph graph : graphs) {
+			graph.m_sets.clear();
+			
+			if (DEBUG2)
+				System.err.println("  resetting graph " + graph);
+		}
+		graphs.clear();
 	}
 	
 	// --- [end] helper methods and classes --- //
