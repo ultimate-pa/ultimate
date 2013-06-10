@@ -85,7 +85,7 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 				s_Logger.info(shortDescr + longDescr + " line" + loc.getStartLine());
 				reportResult(reportRes);
 			}
-			s_Logger.info("Terminating");
+			s_Logger.info("Ultimate Buchi Automizer: Termination proven.");
 		} else if (result == Result.UNKNOWN) {
 			NestedLassoRun<CodeBlock, IPredicate> counterexample = bcl.getCounterexample();
 			IPredicate hondaPredicate = counterexample.getLoop().getStateAtPosition(0);
@@ -110,7 +110,7 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 			s_Logger.info(shortDescr + longDescr + " line" + loc.getStartLine());
 			reportResult(reportRes);
 			
-			s_Logger.info("might not terminate");
+			s_Logger.info("Ultimate Buchi Automizer: Unable to prove termination. Nonterminating?");
 		} else if (result == Result.TIMEOUT) {
 			for (String proc : rootAnnot.getEntryNodes().keySet()) {
 				ProgramPoint position = rootAnnot.getEntryNodes().get(proc);
