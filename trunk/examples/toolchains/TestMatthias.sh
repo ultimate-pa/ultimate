@@ -5,7 +5,7 @@ trunk/examples/toolchains/TraceAbstractionTestDir.sh 20 trunk/examples/programs 
 "TraceAbstractionWithBlockEncoding.xml;TraceAbstractionCWithBlockEncoding.xml;TraceAbstraction-BlockEncoding-EagerPost-Hoare" \
 "TraceAbstraction.xml;TraceAbstractionC.xml;TraceAbstraction-LargeStatements-Lazypost-Hoare" \
 "TraceAbstractionWithBlockEncoding.xml;TraceAbstractionCWithBlockEncoding.xml;TraceAbstraction-BlockEncoding-Lazypost-Hoare" \
-"TraceAbstraction.xml;TraceAbstractionC.xml;TraceAbstraction-LargeStatements-StrongestPost-Hoare"
+"TraceAbstraction.xml;TraceAbstractionC.xml;TraceAbstraction-LargeStatements-StrongestPost-Hoare" \
 "TraceAbstractionWithBlockEncoding.xml;TraceAbstractionCWithBlockEncoding.xml;TraceAbstraction-BlockEncoding-StrongestPost-Hoare"
 
 # trunk/examples/toolchains/TraceAbstractionTestDir.sh 20 trunk/examples/programs \
