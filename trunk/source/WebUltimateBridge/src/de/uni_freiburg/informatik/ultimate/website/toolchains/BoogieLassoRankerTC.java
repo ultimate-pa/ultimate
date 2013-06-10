@@ -5,7 +5,6 @@ import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.website.Setting;
 import de.uni_freiburg.informatik.ultimate.website.Tasks.TaskNames;
-import de.uni_freiburg.informatik.ultimate.website.Toolchain.LoggingLevel;
 import de.uni_freiburg.informatik.ultimate.website.Tool;
 import de.uni_freiburg.informatik.ultimate.website.Toolchain;
 
@@ -50,7 +49,7 @@ public class BoogieLassoRankerTC extends Toolchain {
 	 */
 	@Override
 	protected TaskNames[] setTaskName() {
-		return new TaskNames[] { TaskNames.TERMINATION_BOOGIE };
+		return new TaskNames[] { TaskNames.RANK_SYNTHESIS_BOOGIE };
 	}
 
 	/*

@@ -84,11 +84,13 @@ public class Example {
 		list.add(new Example("addition incorrect", "additionIncorrect", "additionIncorrect.bpl",
 				new Tasks.TaskNames[] { Tasks.TaskNames.VerifyBoogie }));
 		list.add(new Example("Moscow.bpl", "Moscow", "Moscow.bpl",
-				new Tasks.TaskNames[] { Tasks.TaskNames.TERMINATION_BOOGIE }));
+				new Tasks.TaskNames[] { Tasks.TaskNames.RANK_SYNTHESIS_BOOGIE }));
 		list.add(new Example("Bangalore.c", "BangaloreC", "Bangalore.c",
-				new Tasks.TaskNames[] { Tasks.TaskNames.TERMINATION_C }));
-		Tasks.TaskNames[] terminatonBoogie =  { Tasks.TaskNames.TERMINATION_BOOGIE };
-		addAllFilesInExamplesSubfolder(list, "terminationBoogie/", terminatonBoogie);
+				new Tasks.TaskNames[] { Tasks.TaskNames.RANK_SYNTHESIS_C }));
+		Tasks.TaskNames[] terminatonBoogie =  { Tasks.TaskNames.RANK_SYNTHESIS_BOOGIE };
+		addAllFilesInExamplesSubfolder(list, "rankBoogie/", terminatonBoogie);
+		Tasks.TaskNames[] terminatonC =  { Tasks.TaskNames.TERMINATION_C };
+		addAllFilesInExamplesSubfolder(list, "terminationC/", terminatonC);
 		Tasks.TaskNames[] verifyC =  { Tasks.TaskNames.VerifyC };
 		addAllFilesInExamplesSubfolder(list, "verifyC/", verifyC);
 		Tasks.TaskNames[] automataScript =  { Tasks.TaskNames.AUTOMATA_SCRIPT };

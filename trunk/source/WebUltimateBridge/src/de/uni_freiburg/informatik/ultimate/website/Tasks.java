@@ -10,6 +10,7 @@ import java.util.Map;
 import de.uni_freiburg.informatik.ultimate.website.toolchains.AutomtaScriptTC;
 import de.uni_freiburg.informatik.ultimate.website.toolchains.BoogieLassoRankerTC;
 import de.uni_freiburg.informatik.ultimate.website.toolchains.BoogieTraceAbstractionTC;
+import de.uni_freiburg.informatik.ultimate.website.toolchains.CBuchiAutomizerTC;
 import de.uni_freiburg.informatik.ultimate.website.toolchains.CLassoRankerTC;
 import de.uni_freiburg.informatik.ultimate.website.toolchains.CTraceAbstractionTC;
 
@@ -27,7 +28,8 @@ public class Tasks {
 	@SuppressWarnings("rawtypes")
 	private static final Class[] actTCs = {AutomtaScriptTC.class, 
 		BoogieTraceAbstractionTC.class,
-		CTraceAbstractionTC.class, BoogieLassoRankerTC.class, CLassoRankerTC.class};
+		CTraceAbstractionTC.class, BoogieLassoRankerTC.class, 
+		CLassoRankerTC.class, CBuchiAutomizerTC.class, BoogieLassoRankerTC.class};
 	/**
 	 * The String representations of TaskNames.
 	 */
@@ -57,6 +59,10 @@ public class Tasks {
 		
 		TERMINATION_C,
 		
+		RANK_SYNTHESIS_BOOGIE,
+		
+		RANK_SYNTHESIS_C,
+		
 		/**
 		 * Run automata test file.
 		 */
@@ -80,6 +86,9 @@ public class Tasks {
 		taskString.put(TaskNames.VerifyC, "Verify C");
 		taskString.put(TaskNames.TERMINATION_BOOGIE, "Analyze Termination Boogie");
 		taskString.put(TaskNames.TERMINATION_C, "Analyze Termination C");
+		taskString.put(TaskNames.RANK_SYNTHESIS_BOOGIE, "Synthesize ranking function Boogie");
+		taskString.put(TaskNames.RANK_SYNTHESIS_C, "Synthesize ranking function C");
+
 	}
 
 	/**
@@ -135,6 +144,10 @@ public class Tasks {
 			case TERMINATION_BOOGIE:
 				return "boogie";
 			case TERMINATION_C:
+				return "c_cpp";
+			case RANK_SYNTHESIS_BOOGIE:
+				return "boogie";
+			case RANK_SYNTHESIS_C:
 				return "c_cpp";
 			default:
 				return "text";

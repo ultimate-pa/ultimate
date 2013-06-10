@@ -9,7 +9,7 @@ import de.uni_freiburg.informatik.ultimate.website.Tool;
 import de.uni_freiburg.informatik.ultimate.website.Toolchain;
 
 
-public class CLassoRankerTC extends Toolchain {
+public class CBuchiAutomizerTC extends Toolchain {
 
 	/*
 	 * (non-Javadoc)
@@ -19,7 +19,7 @@ public class CLassoRankerTC extends Toolchain {
 	 */
 	@Override
 	protected String setDescription() {
-		return "Lasso Ranker toolchain";
+		return "Büchi Automizer toolchain";
 	}
 
 	/*
@@ -29,7 +29,7 @@ public class CLassoRankerTC extends Toolchain {
 	 */
 	@Override
 	protected String setName() {
-		return "LassoRanker";
+		return "BüchiAutomizer";
 	}
 
 	/*
@@ -39,7 +39,7 @@ public class CLassoRankerTC extends Toolchain {
 	 */
 	@Override
 	protected String setId() {
-		return "cLassoRanker";
+		return "cBuchiAutomizer";
 	}
 
 	/*
@@ -49,7 +49,7 @@ public class CLassoRankerTC extends Toolchain {
 	 */
 	@Override
 	protected TaskNames[] setTaskName() {
-		return new TaskNames[] { TaskNames.RANK_SYNTHESIS_C };
+		return new TaskNames[] { TaskNames.TERMINATION_C };
 	}
 
 	/*
@@ -78,7 +78,17 @@ public class CLassoRankerTC extends Toolchain {
 		tools.add(new Tool("RCFGBuilder", oRCFGB, mRCFGB, LoggingLevel.WARN));
 		List<Setting> oRank = new ArrayList<Setting>();
 		List<Setting> mRank = new ArrayList<Setting>();
-		tools.add(new Tool("RankingFunctions", oRank, mRank,
+        oRCFGB.add(new Setting("/HoareAnnotation", Setting.SettingType.BOOLEAN,
+                "Compute Hoare Annotation", "false", true));
+        oRCFGB.add(new Setting("/Timeout", Setting.SettingType.INTEGER,
+                "Timeout", "20", false));
+        oRCFGB.add(new Setting("/Determinization", "Type of Determinization",
+        		new String[] { "EagerPost" }, false, new String[] {
+              "LazyPost", "EagerPost", "Best Approximation" }, false));
+        oRCFGB.add(new Setting("/BlockSize", "Type of Determinization",
+        		new String[] { "sequence of program statements" }, false, new String[] {
+              "sequence of program statements", "single program statement", "loop free block" }, false));
+		tools.add(new Tool("BuchiAutomizer", oRank, mRank,
 				LoggingLevel.WARN));
 		return tools;
 	}
