@@ -1,7 +1,7 @@
 #!/bin/bash
 Ultimate_PATH=`pwd`;
 
-Timeout=60;
+Timeout=80;
 
 
 examplesFolder=$1;
@@ -38,7 +38,7 @@ for f in $files;
 do
 
 
-echo ""
+#echo ""
 #echo  "$Ultimate_PATH/$UltimateEXE --console $Ultimate_PATH/trunk/examples/toolchains/AutomataScriptInterpreter.xml $f"
 
 printf "Testing " 
