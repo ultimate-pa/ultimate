@@ -155,6 +155,8 @@ do
 	RESULT_UNKNOWN=`echo "$Ultimate_OUTPUT" | grep "Program might be incorrect, check conterexample."`
 	RESULT_INSUFFICIENT_ITERATIONS=`echo "$Ultimate_OUTPUT" | grep -c "RESULT: Ultimate could not prove your program: Insufficient iterations to proof correctness"`
 	RESULT_NORESULT=`echo "$Ultimate_OUTPUT" | grep -c "RESULT: Ultimate could not prove your program: Toolchain returned no Result."`
+	RESULT_PROVEN_TERMINATION=`echo "$Ultimate_OUTPUT" | grep "Ultimate Buchi Automizer: Termination proven."`
+	RESULT_NOTPROVEN_TERMINATION=`echo "$Ultimate_OUTPUT" | grep "Ultimate Buchi Automizer: Unable to prove termination. Nonterminating?"`
 	BUG_24=`echo "$Ultimate_OUTPUT" | grep "at de.uni_freiburg.informatik.ultimate.smtinterpol.convert.ConvertFormula.addClause(ConvertFormula.java:349)"`
 	BUG_14=`echo "$Ultimate_OUTPUT" | grep "at de.uni_freiburg.informatik.ultimate.smtinterpol.convert.ConvertFormula.convertFormula(ConvertFormula.java:"`
 	BUG_22=`echo "$Ultimate_OUTPUT" | grep "java.lang.AssertionError: Z3 says unsat, SmtInterpol says sat!"`
@@ -387,6 +389,15 @@ do
 	if [ "$RESULT_NORESULT" ]; then
 	    printf "!Warning! "
 	    printf "Ultimate Automizer terminated after $RUNTIME and says: No Result."
+	    
+	    if [ "$RESULT_PROVEN_TERMINATION" ]; then
+			printf "Termination proven"
+	    fi
+	    
+	    if [ "$RESULT_NOTPROVEN_TERMINATION" ]; then
+			printf "Unable to prove termination"
+	    fi
+	    
 	    continue;
 	fi
 
