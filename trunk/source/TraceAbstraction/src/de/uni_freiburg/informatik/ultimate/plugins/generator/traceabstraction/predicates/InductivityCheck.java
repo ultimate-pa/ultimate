@@ -67,7 +67,6 @@ public class InductivityCheck {
 		// yield[3] is the number of edges whose inductiveness could be
 		// neither proven nor refuted because there were no interpolants
 		
-		int[] yield = new int[4]; 
 		for(IPredicate state : nwa.getStates()) {
 			for (CodeBlock cb : nwa.lettersInternal(state)) {
 				m_EdgeChecker.assertCodeBlock(cb);
@@ -106,11 +105,10 @@ public class InductivityCheck {
 
 			
 		}
-		s_Logger.info("Interpolant automaton has " + (yield[0]+yield[1]+yield[2]+yield[3]) + 
+		s_Logger.info("Interpolant automaton has " + (yield[0]+yield[1]+yield[2]) + 
 				" edges. " + yield[0] + " inductive. " + yield[1] +
 				" not inductive. " +	yield[2]+ " times theorem prover too" +
-				" weak to decide inductivity. " + yield[3]+ " times interpolants"
-				+ " missing.");
+				" weak to decide inductivity. ");
 		return result;
 	}
 
