@@ -75,11 +75,7 @@ public interface INestedWordAutomatonOldApi<LETTER,STATE>
 	 */
 	public Iterable<STATE> succCall(STATE state, LETTER letter);
 	
-	/**
-	 * @return All states hier such that state has an outgoing 
-	 * return transition (state, hier, letter, succ)
-	 */
-	public Iterable<STATE> hierPred(STATE state, LETTER letter);		
+	
 	
 	/**
 	 * @return All states succ such that state has an outgoing 

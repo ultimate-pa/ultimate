@@ -15,6 +15,12 @@ public interface INestedWordAutomaton<LETTER, STATE> extends INestedWordAutomato
 	public abstract Collection<LETTER> lettersReturnIncoming(STATE state);
 
 	public abstract Collection<LETTER> lettersReturnSummary(STATE state);
+	
+	/**
+	 * @return All states hier such that state has an outgoing 
+	 * return transition (state, hier, letter, succ)
+	 */
+	public abstract Iterable<STATE> hierPred(STATE state, LETTER letter);
 
 	public abstract Iterable<SummaryReturnTransition<LETTER, STATE>> returnSummarySuccessor(
 			final LETTER letter, final STATE hier);
