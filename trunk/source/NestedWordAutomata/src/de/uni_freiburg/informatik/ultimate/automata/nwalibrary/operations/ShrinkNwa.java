@@ -61,8 +61,6 @@ import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
  * 
  * <TIEBREAK> what to do with states that do not need to be split?
  * 
- * <returnSplit> prefer or defer splitter set A?
- * 
  * <threading> identify possibilities for threading and implement it
  * 
  * 
@@ -602,14 +600,25 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 		}
 		
 		// split
-		splitReturnHelperNaive(listLin2succ2hier, listHier2succ2lin);
+		splitReturnHelper(listLin2succ2hier, listHier2succ2lin);
 	}
 	
 	/**
-	 * TODO<comment>
+	 * This method constructs the graphs with the information collected before
+	 * and calls the splitting method.
+	 * Beforehand all the necessary information of which states have to be
+	 * separated has been collected.
+	 * 
+	 * The problem here are the neutral states: The idea is to keep as many of
+	 * them as possible without a split. In general, this is hard.
+	 * 
+	 * TODO<returnSplit> use more efficient split that exploits that the
+	 *                   equivalence class is always the same
+	 * 
+	 * TODO<returnSplit> stop when A has been split?
 	 *
-	 * @param listLin2succ2hier
-	 * @param listHier2succ2lin
+	 * @param listLin2succ2hier list of linears to successors to hierarchicals
+	 * @param listHier2succ2lin list of hierarchicals to successors to linears
 	 */
 	private void splitReturnHelper(final List<HashMap<STATE,
 			HashMap<Set<EquivalenceClass>, Set<STATE>>>> listLin2succ2hier,
@@ -659,12 +668,12 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 		final HashSet<SplittingGraph> visitedGraphs =
 				new HashSet<SplittingGraph>();
 		
-		HashMap<HashSet<Set<EquivalenceClass>>, Set<STATE>> gSucc2states =
-				new HashMap<HashSet<Set<EquivalenceClass>>, Set<STATE>>();
-		
 		// local hierarchical split and global linear split
 		for (final HashMap<STATE, HashMap<Set<EquivalenceClass>, Set<STATE>>>
 				lin2succ2hier : listLin2succ2hier) {
+			final HashMap<HashSet<Set<EquivalenceClass>>, Set<STATE>>
+					gSucc2states =
+					new HashMap<HashSet<Set<EquivalenceClass>>, Set<STATE>>();
 			final HashSet<Set<EquivalenceClass>> succs =
 					new HashSet<Set<EquivalenceClass>>();
 			
@@ -689,7 +698,17 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 									m_partition.m_state2EquivalenceClass.
 									get(hiers.iterator().next()));
 							visitedGraphs.add(graph);
-							graph.split(hiers);
+							
+							/*
+							 * TODO<nondeterministism> this is not correct for
+							 *                         nondeterministic
+							 *                         automata
+							 */
+							try {
+								graph.split(hiers);
+							} catch (AssertionError e) {
+								System.err.println("bug here!");
+							}
 							
 							// global linear split collection
 							succs.add(innerEntry.getKey());
@@ -708,9 +727,9 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 					}
 					gLins.add(entry.getKey());
 				}
+				
+				resetGraphSets(visitedGraphs, ec2graph);
 			}
-			
-			resetGraphSets(visitedGraphs);
 			
 			// global linear split
 			/*
@@ -732,14 +751,15 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 				}
 			}
 			
-			gSucc2states =
-					new HashMap<HashSet<Set<EquivalenceClass>>, Set<STATE>>();
-			resetGraphSets(visitedGraphs);
+			resetGraphSets(visitedGraphs, ec2graph);
 		}
 		
 		// local linear split and global hierarchical split
 		for (final HashMap<STATE, HashMap<Set<EquivalenceClass>, Set<STATE>>>
 				hier2succ2lin : listHier2succ2lin) {
+			final HashMap<HashSet<Set<EquivalenceClass>>, Set<STATE>>
+					gSucc2states =
+					new HashMap<HashSet<Set<EquivalenceClass>>, Set<STATE>>();
 			final HashSet<Set<EquivalenceClass>> succs =
 					new HashSet<Set<EquivalenceClass>>();
 			
@@ -783,9 +803,9 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 					}
 					gHiers.add(entry.getKey());
 				}
+				
+				resetGraphSets(visitedGraphs, ec2graph);
 			}
-			
-			resetGraphSets(visitedGraphs);
 			
 			// global hierarchical split
 			if (gSucc2states.size() > 1) {
@@ -803,9 +823,7 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 				}
 			}
 			
-			gSucc2states =
-					new HashMap<HashSet<Set<EquivalenceClass>>, Set<STATE>>();
-			resetGraphSets(visitedGraphs);
+			resetGraphSets(visitedGraphs, ec2graph);
 		}
 		
 		if (DEBUG2) {
@@ -817,13 +835,116 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	}
 	
 	/**
-	 * TODO<comment>
+	 * This method splits states according to the graph coloring.
+	 * 
+	 * This is a naive split, but solving this problem optimally is NP-hard.
+	 * However, even with the optimal solution it is not guaranteed that the
+	 * split is the best, since neutral states can turn out to behave badly in
+	 * the assigned equivalence class.
 	 *
-	 * @param values
+	 * @param graphs the graphs
 	 */
-	private void splitGraphs(Collection<SplittingGraph> values) {
-		// TODO Auto-generated method stub
+	private void splitGraphs(Collection<SplittingGraph> graphs) {
+		if (DEBUG2)
+			System.err.println("  starting the coloring");
 		
+		for (final SplittingGraph graph : graphs) {
+			if (DEBUG2)
+				System.err.println("next graph: " + graph);
+			final int size = graph.m_graph.length;
+			assert (size > 0);
+			
+			// ignore singleton equivalence classes
+			if (size == 1) {
+				continue;
+			}
+			
+			final ArrayList<HashSet<Integer>> colors =
+					new ArrayList<HashSet<Integer>>(size);
+			
+			// assign first color to first state
+			graph.m_colors[0] = 1;
+			HashSet<Integer> color0 = new HashSet<Integer>();
+			color0.add(0);
+			colors.add(color0);
+			color0 = null;
+			
+			for (int state = 1; state < size; ++state) {
+				// take the next state
+				if (DEBUG2)
+					System.err.println("next state: " + state +
+							" = " + graph.m_index2state.get(state));
+				
+				// find blocked colors
+				final HashSet<Integer> neighborColors = new HashSet<Integer>(
+						computeHashSetCapacity(colors.size()));
+				final Iterator<Integer> neighbors =
+						graph.neighborsIterator(state);
+				while (neighbors.hasNext()) {
+					final int neighbor = neighbors.next();
+					assert (neighbor != state);
+					
+					if (DEBUG2)
+						System.err.println("next neighbor: " + neighbor +
+								" = " + graph.m_index2state.get(neighbor));
+					
+					// not yet assigned, ignore it
+					if (neighbor > state) {
+						continue;
+					}
+					
+					assert (graph.m_colors[neighbor] > 0) &&
+							graph.m_colors[neighbor] <= colors.size();
+					neighborColors.add(graph.m_colors[neighbor]);
+				}
+				
+				// no color fit, create a new color
+				if (neighborColors.size() == colors.size()) {
+					final int newColorValue = colors.size() + 1;
+					graph.m_colors[state] = newColorValue;
+					HashSet<Integer> newColor = new HashSet<Integer>();
+					newColor.add(state);
+					colors.add(newColorValue - 1, newColor);
+				}
+				// find appropriate color (must exist)
+				else {
+					int color = 0;
+					while (true) {
+						// try current color
+						if (neighborColors.contains(++color)) {
+							continue;
+						}
+						
+						// no conflict, use the current color
+						assert (color <= colors.size());
+						graph.m_colors[state] = color;
+						colors.get(color - 1).add(state);
+						break;
+					}
+				}
+			}
+			
+			if (DEBUG2)
+				System.err.println("all colors are set: " + colors);
+			
+			// split according to the colors (last color not necessary)
+			for (int i = 0; i < colors.size() - 1; ++i) {
+				final HashSet<Integer> color = colors.get(i);
+				final ArrayList<STATE> states =
+						new ArrayList<STATE>(color.size());
+				int index = -1;
+				for (final int state : color) {
+					states.add(++index, graph.m_index2state.get(state));
+				}
+				
+				m_partition.splitEquivalenceClasses(states);
+				if (DEBUG2)
+					System.err.println("splitting states: " + states);
+			}
+		}
+		
+		if (DEBUG2)
+			System.err.println("finished return split");
 	}
 	
 	/**
@@ -836,9 +957,8 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	 * The problem here are the neutral states: The idea is to keep as many of
 	 * them as possible without a split. In general, this is hard.
 	 * 
-	 * TODO<returnSplit> currently this is a naive split that separates each
-	 *                   set and does not consider better sharing of neutral
-	 *                   states
+	 * This is a naive version that separates each set and does not consider
+	 * better sharing of neutral states.
 	 * 
 	 * TODO<returnSplit> use more efficient split that exploits that the
 	 *                   equivalence class is always the same
@@ -848,6 +968,7 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	 * @param listLin2succ2hier list of linears to successors to hierarchicals
 	 * @param listHier2succ2lin list of hierarchicals to successors to linears
 	 */
+	// TODO<remove>
 	private void splitReturnHelperNaive(final List<HashMap<STATE,
 			HashMap<Set<EquivalenceClass>, Set<STATE>>>> listLin2succ2hier,
 			final List<HashMap<STATE, HashMap<Set<EquivalenceClass>,
@@ -979,6 +1100,7 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	 * 
 	 * @param a splitter equivalence class
 	 */
+	// TODO<remove>
 	private void splitReturnPredecessorsOld(final EquivalenceClass a) {
 		// recognize when the splitter set was split itself
 		assert (a.m_incomingRet != EIncomingStatus.inWL);
@@ -1015,8 +1137,6 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 			 * Find the predecessor equivalence classes.
 			 * Since the equivalence classes can be split, create immutable
 			 * data structures here.
-			 * 
-			 * TODO<returnSplit> prefer or defer splitter set A?
 			 */
 			final HashMap<LETTER, LinkedList<ArrayList<STATE>>> letter2linList
 					= new HashMap<LETTER, LinkedList<ArrayList<STATE>>>();
@@ -1143,7 +1263,8 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 					final HashSet<STATE> positiveStates = positives.next();
 					/*
 					 * TODO<TIEBREAK> what to do?
-					 *                Currently neutral states are seen positive.
+					 *                Currently neutral states are seen
+					 *                positive.
 					 */
 					final SplitCombinator combinator =
 							new SplitCombinator(positiveStates, neutralStates);
@@ -1516,35 +1637,23 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	private class SplittingGraph {
 		private ArrayList<Set<STATE>> m_sets; // TODO<remove> remove later
 		private final HashMap<STATE, Integer> m_state2index;
-		private final ArrayList<StateInformation> m_stateInformations;
+		private final HashMap<Integer, STATE> m_index2state;
+		private final int[] m_colors;
 		private boolean[][] m_graph;
-		
-		private class StateInformation {
-			private final int m_index;
-			private boolean m_visited;
-
-			public StateInformation(final int index) {
-				m_index = index;
-			}
-			
-			@Override
-			public String toString() {
-				return "[" + m_index + ", " + m_visited + "]";
-			}
-		}
 		
 		public SplittingGraph(final Set<STATE> states) {
 			final int size = states.size();
 			m_sets = new ArrayList<Set<STATE>>(size);
 			m_state2index = new HashMap<STATE, Integer>(
 					computeHashSetCapacity(size));
-			m_stateInformations =
-					new ArrayList<StateInformation>(size);
+			m_index2state = new HashMap<Integer, STATE>(
+					computeHashSetCapacity(size));
+			m_colors = new int[size];
 			
 			int index = -1;
 			for (final STATE state : states) {
 				m_state2index.put(state, ++index);
-				m_stateInformations.add(index, new StateInformation(index));
+				m_index2state.put(index, state);
 			}
 			
 			m_graph = new boolean[size][];
@@ -1553,12 +1662,27 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 			}
 		}
 		
-		public void split(final Set<STATE> states) {
+		private void split(final Set<STATE> states) {
 			if (m_sets.size() > 0) {
-				final Iterator<STATE> it = iterator();
+				final Iterator<STATE> it = setsIterator();
 				while (it.hasNext()) {
-					final int oldStateIndex = m_state2index.get(it.next());
+					final STATE oldState = it.next();
+					final int oldStateIndex = m_state2index.get(oldState);
 					for (final STATE state : states) {
+						/*
+						 * TODO<nondeterministism> this is not correct for
+						 *                         nondeterministic
+						 *                         automata
+						 */
+						try{
+							assert (! oldState.equals(state)) &&
+								(m_state2index.containsKey(state)) &&
+								(oldStateIndex != m_state2index.get(state));
+						} catch (AssertionError e) {
+							throw new AssertionError("oldState vs. state: " +
+									oldState + state);
+						}
+						
 						setConnected(oldStateIndex, m_state2index.get(state));
 					}
 				}
@@ -1584,18 +1708,6 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 			}
 		}
 		
-		private boolean isConnected(final int i, final int j) {
-			assert (i >= 0) && (j >= 0) && (i != j) &&
-					(i < m_graph.length) && (j < m_graph.length);
-			
-			if (i < j) {
-				return m_graph[j][i];
-			}
-			else {
-				return m_graph[i][j];
-			}
-		}
-		
 		private void setConnected(final int i, final int j) {
 			assert (i >= 0) && (j >= 0) && (i != j) &&
 					(i < m_graph.length) && (j < m_graph.length);
@@ -1608,7 +1720,50 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 			}
 		}
 		
-		private Iterator<STATE> iterator() {
+		private Iterator<Integer> neighborsIterator(final int i) {
+			assert (i >= 0) && (i < m_graph.length);
+			return new Iterator<Integer>() {
+				private int m_i = (i == 0) ? 1 : i;
+				private int m_j = -1;
+				private boolean m_inColumn = (i == 0);
+				private int m_next;
+				
+				@Override
+				public boolean hasNext() {
+					if (! m_inColumn) {
+						while (++m_j < m_i) {
+							if (m_graph[m_i][m_j]) {
+								m_next = m_j;
+								return true;
+							}
+						}
+						m_inColumn = true;
+					}
+					while (++m_i < m_graph.length) {
+						if (m_graph[m_i][m_j]) {
+							m_next = m_i;
+							return true;
+						}
+					}
+					return false;
+				}
+				
+				@Override
+				public Integer next() {
+					assert (m_next >= 0) && (m_next < m_graph.length) :
+						"hasNext() must be used.";
+					return m_next;
+				}
+				
+				@Override
+				public void remove() {
+					throw new UnsupportedOperationException(
+							"Removing is not allowed.");
+				}
+			};
+		}
+		
+		private Iterator<STATE> setsIterator() {
 			assert (m_sets.size() > 0) &&
 					(m_sets.get(m_sets.size() - 1) != null) &&
 					(m_sets.get(m_sets.size() - 1).iterator().hasNext());
@@ -1618,7 +1773,7 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 				private Iterator<STATE> m_iterator =
 						m_sets.get(m_index).iterator();
 				private STATE m_next;
-
+				
 				@Override
 				public boolean hasNext() {
 					if (m_iterator.hasNext()) {
@@ -1634,13 +1789,13 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 					}
 					return true;
 				}
-
+				
 				@Override
 				public STATE next() {
 					assert (m_next != null) : "hasNext() must be used.";
 					return m_next;
 				}
-
+				
 				@Override
 				public void remove() {
 					throw new UnsupportedOperationException(
@@ -1655,9 +1810,12 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 			
 			builder.append("mapping: ");
 			builder.append(m_state2index);
-			builder.append("\nstateInfos: ");
-			builder.append(m_stateInformations);
-			builder.append("\nsets: ");
+			builder.append("\ncolors: [");
+			for (int i = 0; i < m_colors.length; ++i) {
+				builder.append(m_colors[i]);
+				builder.append(", ");
+			}
+			builder.append("]\nsets: ");
 			builder.append(m_sets);
 			builder.append("\ngraph:");
 			for (int i = 0; i < m_graph.length; ++i) {
@@ -1679,8 +1837,10 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	 * This method resets the state sets in the graphs.
 	 *
 	 * @param graphs the graphs to reset
+	 * @param ec2graph all graphs for assertion checking
 	 */
-	private void resetGraphSets(HashSet<SplittingGraph> graphs) {
+	private void resetGraphSets(final HashSet<SplittingGraph> graphs,
+			final HashMap<EquivalenceClass, SplittingGraph> ec2graph) {
 		for (final SplittingGraph graph : graphs) {
 			graph.m_sets.clear();
 			
@@ -1688,6 +1848,24 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 				System.err.println("  resetting graph " + graph);
 		}
 		graphs.clear();
+		
+		assert (allGraphsCleared(ec2graph.values()));
+	}
+	
+	/**
+	 * This method checks that all graphs have their sets cleared.
+	 *
+	 * @param allGraphs all graphs for assertion checking
+	 * @return true iff all sets are cleared
+	 */
+	private boolean allGraphsCleared(
+			final Collection<SplittingGraph> allGraphs) {
+		for (final SplittingGraph graph : allGraphs) {
+			if (graph.m_sets.size() > 0) {
+				return false;
+			}
+		}
+		return true;
 	}
 	
 	// --- [end] helper methods and classes --- //
@@ -2066,9 +2244,6 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	
 	/**
 	 * This class implements the work list for predecessor return splits.
-	 * 
-	 * TODO<returnSplit> could be improved:
-	 *                           only classes with returns must be inserted
 	 */
 	private class WorkListRet extends AWorkList {
 		@Override
