@@ -69,6 +69,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.In
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.EdgeChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.ISLPredicate;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.InductivityCheck;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceChecker.AllIntegers;
@@ -293,7 +294,7 @@ public class BuchiCegarLoop {
 					s_Logger.info("Interpolant automaton has " + m_InterpolAutomaton.sizeInformation());
 					
 					if (m_ReduceAbstractionSize ) {
-						m_Abstraction = (new RemoveDeadEnds(m_Abstraction)).getResult();
+						m_Abstraction = (new RemoveDeadEnds<CodeBlock, IPredicate>(m_Abstraction)).getResult();
 						s_Logger.info("Abstraction has " + m_Abstraction.sizeInformation());
 						Collection<Set<IPredicate>> partition = BasicCegarLoop.computePartition(m_Abstraction);
 						MinimizeSevpa<CodeBlock, IPredicate> minimizeOp = new MinimizeSevpa<CodeBlock, IPredicate>(m_Abstraction, partition, false, false, m_StateFactoryForRefinement);
@@ -384,8 +385,9 @@ public class BuchiCegarLoop {
 			AllIntegers allInt = new TraceChecker.AllIntegers();
 			IPredicate[] interpolants = m_TraceChecker.getInterpolants(allInt);
 			constructInterpolantAutomaton(interpolants);
+			EdgeChecker ec = new EdgeChecker(m_SmtManager);
 			PostDeterminizer spd = new PostDeterminizer(
-					new EdgeChecker(m_SmtManager), m_Pref, m_InterpolAutomaton, false);
+					ec, m_Pref, m_InterpolAutomaton, false);
 			DifferenceDD<CodeBlock, IPredicate> diff = null;
 			try {
 				diff = new DifferenceDD<CodeBlock, IPredicate>(
@@ -399,6 +401,7 @@ public class BuchiCegarLoop {
 					throw new AssertionError();
 				}
 			}
+			assert (new InductivityCheck(m_InterpolAutomaton, ec, false, true)).getResult();
 			m_Abstraction = diff.getResult();
 			m_ConcatenatedCounterexample = null;
 		}
@@ -663,6 +666,8 @@ public class BuchiCegarLoop {
 				String filename = "InterpolantAutomatonBuchi"+m_Iteration;
 				writeAutomatonToFile(m_InterpolAutomaton, filename);
 			}
+			EdgeChecker ec = new BuchiEdgeChecker(m_SmtManager, m_Bspm.getHondaPredicate(), m_Bspm.getRankDecreaseAndSi());
+			assert (new InductivityCheck(m_InterpolAutomaton, ec, false, true)).getResult();
 			assert (new BuchiAccepts<CodeBlock, IPredicate>(m_InterpolAutomaton,m_Counterexample.getNestedLassoWord())).getResult();
 			INestedWordAutomatonOldApi<CodeBlock, IPredicate>  complement =
 					(new BuchiComplementFKV<CodeBlock, IPredicate>(m_InterpolAutomaton)).getResult();
