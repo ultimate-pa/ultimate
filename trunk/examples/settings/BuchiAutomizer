@@ -17,9 +17,10 @@ file_export_version=3.0
 file_export_version=3.0
 /configuration/RCFGBuilder/BlockSize=sequence of program statements
 /configuration/RCFGBuilder/Timeout=10
+/configuration/RCFGBuilder/Determinization=LazyPost
 \!/configuration/RCFGBuilder=
 #Thu May 02 01:28:34 CEST 2013
-/configuration/AutomataScriptInterpreter/Timeout=10
+/configuration/AutomataScriptInterpreter/Timeout=60
 file_export_version=3.0
 /configuration/AutomataScriptInterpreter/writeToFile=true
 /configuration/AutomataScriptInterpreter/Path=dump
