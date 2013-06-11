@@ -41,7 +41,7 @@ public class Difference<LETTER,STATE> implements IOperation<LETTER,STATE>, IOpWi
 	
 	@Override
 	public String startMessage() {
-		return "Start intersect. First operand " + 
+		return "Start " + operationName() + ". First operand " + 
 				m_FstOperand.sizeInformation() + ". Second operand " + 
 				m_SndOperand.sizeInformation();	
 	}
