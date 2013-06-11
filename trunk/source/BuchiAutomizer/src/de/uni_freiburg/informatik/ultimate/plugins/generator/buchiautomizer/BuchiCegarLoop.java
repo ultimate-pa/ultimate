@@ -178,7 +178,7 @@ public class BuchiCegarLoop {
 
 		private PredicateFactoryRefinement m_StateFactoryForRefinement;
 
-		private boolean m_ReduceAbstractionSize = true;
+		private boolean m_ReduceAbstractionSize = !true;
 
 		public BuchiCegarLoop(RootNode rootNode,
 				SmtManager smtManager,
@@ -367,17 +367,34 @@ public class BuchiCegarLoop {
 			s_Logger.info("Stem: " + stem);
 			NestedRun<CodeBlock, IPredicate> loop = m_Counterexample.getLoop();
 			s_Logger.info("Loop: " + loop);
-			m_ConcatenatedCounterexample = stem.concatenate(loop);
-
 			m_TraceChecker = new TraceChecker(m_SmtManager,
 					m_RootNode.getRootAnnot().getModifiedVars(),
 					m_RootNode.getRootAnnot().getEntryNodes(),
 					null);
 			m_TruePredicate = m_SmtManager.newTruePredicate();
 			m_FalsePredicate = m_SmtManager.newFalsePredicate();
+			
+			LBool feasibility;
+			m_ConcatenatedCounterexample = stem;
+			feasibility = m_TraceChecker.checkTrace(m_TruePredicate, 
+					m_FalsePredicate, m_ConcatenatedCounterexample.getWord());
+			if (feasibility == LBool.UNSAT) {
+				s_Logger.info("stem already infeasible");
+			} else {
+				m_TraceChecker.forgetTrace();
+				m_ConcatenatedCounterexample = loop;
+				feasibility = m_TraceChecker.checkTrace(m_TruePredicate, 
+						m_FalsePredicate, m_ConcatenatedCounterexample.getWord());
+				if (feasibility == LBool.UNSAT) {
+					s_Logger.info("loop already infeasible");
+				} else {
+					m_TraceChecker.forgetTrace();
+					m_ConcatenatedCounterexample = stem.concatenate(loop);
+					feasibility = m_TraceChecker.checkTrace(m_TruePredicate, 
+							m_FalsePredicate, m_ConcatenatedCounterexample.getWord());
 
-			LBool feasibility = m_TraceChecker.checkTrace(
-					m_TruePredicate, m_FalsePredicate, m_ConcatenatedCounterexample.getWord());
+				}
+			}
 			return feasibility;
 		}
 		
@@ -741,7 +758,7 @@ public class BuchiCegarLoop {
 		protected void writeAutomatonToFile(
 				IAutomaton<CodeBlock, IPredicate> automaton, String filename) {
 			new AtsDefinitionPrinter<String,String>(filename, 
-					m_Pref.dumpPath()+"/"+filename, Labeling.TOSTRING,"",automaton);
+					m_Pref.dumpPath()+"/"+filename, Labeling.NUMERATE,"",automaton);
 		}
 		
 }
