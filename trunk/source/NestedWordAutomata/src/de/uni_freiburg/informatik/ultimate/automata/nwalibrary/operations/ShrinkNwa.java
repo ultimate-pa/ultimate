@@ -103,7 +103,7 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	
 	// TODO<debug>
 	private final boolean DEBUG = false;
-	private final boolean DEBUG2 = false;
+	private final boolean DEBUG2 = true;
 	
 	// TODO<statistics>
 	private final boolean STATISTICS = false;
@@ -616,6 +616,11 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	 *                   equivalence class is always the same
 	 * 
 	 * TODO<returnSplit> stop when A has been split?
+	 * 
+	 * TODO<graphs> the graphs are usually big, but sparse
+	 *              this is both memory and runtime inefficient, since finding
+	 *              neighbors is expensive
+	 *              probably keep lists of neighbors instead
 	 *
 	 * @param listLin2succ2hier list of linears to successors to hierarchicals
 	 * @param listHier2succ2lin list of hierarchicals to successors to linears
@@ -665,24 +670,31 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 				}
 			}
 		}
+		
 		final HashSet<SplittingGraph> visitedGraphs =
 				new HashSet<SplittingGraph>();
 		
 		// local hierarchical split and global linear split
 		for (final HashMap<STATE, HashMap<Set<EquivalenceClass>, Set<STATE>>>
 				lin2succ2hier : listLin2succ2hier) {
+			if (DEBUG2)
+				System.err.println("\n\nconsider lin2succ2hier " +
+						lin2succ2hier);
 			final HashMap<HashSet<Set<EquivalenceClass>>, Set<STATE>>
 					gSucc2states =
 					new HashMap<HashSet<Set<EquivalenceClass>>, Set<STATE>>();
-			final HashSet<Set<EquivalenceClass>> succs =
-					new HashSet<Set<EquivalenceClass>>();
 			
 			for (final Entry<STATE, HashMap<Set<EquivalenceClass>, Set<STATE>>>
 					entry : lin2succ2hier.entrySet()) {
+				final HashSet<Set<EquivalenceClass>> succs =
+						new HashSet<Set<EquivalenceClass>>();
+				if (DEBUG2)
+					System.err.println("\nnext entry: " + entry);
 				final HashMap<Set<EquivalenceClass>, Set<STATE>> succ2hier =
 						entry.getValue();
 				final int size = succ2hier.size();
 				if (size > 0) {
+					// linear split only sensible with more than one set
 					if (size > 1) {
 						for (final Entry<Set<EquivalenceClass>, Set<STATE>>
 								innerEntry : succ2hier.entrySet()) {
@@ -714,7 +726,12 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 							succs.add(innerEntry.getKey());
 						}
 					}
+					// singleton sets are ignored
 					else {
+						if (DEBUG2)
+							System.err.println("ignoring, only one");
+						
+						// global linear split collection
 						assert (succ2hier.keySet().iterator().hasNext());
 						succs.add(succ2hier.keySet().iterator().next());
 					}
@@ -726,6 +743,14 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 						gSucc2states.put(succs, gLins);
 					}
 					gLins.add(entry.getKey());
+					if (DEBUG2) {
+						System.err.println("succs: " + succs);
+						System.err.println("gLins: " + gLins);
+					}
+				}
+				else {
+					if (DEBUG2)
+						System.err.println("ignoring, none");
 				}
 				
 				resetGraphSets(visitedGraphs, ec2graph);
@@ -737,6 +762,8 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 			 *                         necessary
 			 *                         there are strange results, look at this
 			 */
+			if (DEBUG2)
+				System.err.println("\nglobal linear splits: " + gSucc2states);
 			if (gSucc2states.size() > 1) {
 				for (final Set<STATE> gLins : gSucc2states.values()) {
 					if (DEBUG2)
@@ -750,6 +777,10 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 					graph.split(gLins);
 				}
 			}
+			else {
+				if (DEBUG2)
+					System.err.println("ignoring, none");
+			}
 			
 			resetGraphSets(visitedGraphs, ec2graph);
 		}
@@ -757,18 +788,24 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 		// local linear split and global hierarchical split
 		for (final HashMap<STATE, HashMap<Set<EquivalenceClass>, Set<STATE>>>
 				hier2succ2lin : listHier2succ2lin) {
+			if (DEBUG2)
+				System.err.println("\n\nconsider hier2succ2lin " +
+						hier2succ2lin);
 			final HashMap<HashSet<Set<EquivalenceClass>>, Set<STATE>>
 					gSucc2states =
 					new HashMap<HashSet<Set<EquivalenceClass>>, Set<STATE>>();
-			final HashSet<Set<EquivalenceClass>> succs =
-					new HashSet<Set<EquivalenceClass>>();
 			
 			for (final Entry<STATE, HashMap<Set<EquivalenceClass>, Set<STATE>>>
 					entry : hier2succ2lin.entrySet()) {
+				final HashSet<Set<EquivalenceClass>> succs =
+						new HashSet<Set<EquivalenceClass>>();
+				if (DEBUG2)
+					System.err.println("\nnext entry: " + entry);
 				final HashMap<Set<EquivalenceClass>, Set<STATE>> succ2lin =
 						entry.getValue();
 				final int size = succ2lin.size();
 				if (size > 0) {
+					// linear split only sensible with more than one set
 					if (size > 1) {
 						for (final Entry<Set<EquivalenceClass>, Set<STATE>>
 								innerEntry : succ2lin.entrySet()) {
@@ -790,7 +827,12 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 							succs.add(innerEntry.getKey());
 						}
 					}
+					// singleton sets are ignored
 					else {
+						if (DEBUG2)
+							System.err.println("ignoring, only one");
+						
+						// global hierarchical split collection
 						assert (succ2lin.keySet().iterator().hasNext());
 						succs.add(succ2lin.keySet().iterator().next());
 					}
@@ -802,12 +844,23 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 						gSucc2states.put(succs, gHiers);
 					}
 					gHiers.add(entry.getKey());
+					if (DEBUG2) {
+						System.err.println("succs: " + succs);
+						System.err.println("gHiers: " + gHiers);
+					}
+				}
+				else {
+					if (DEBUG2)
+						System.err.println("ignoring, none");
 				}
 				
 				resetGraphSets(visitedGraphs, ec2graph);
 			}
 			
 			// global hierarchical split
+			if (DEBUG2)
+				System.err.println("\nglobal hierarchical splits: " +
+						gSucc2states);
 			if (gSucc2states.size() > 1) {
 				for (final Set<STATE> gHiers : gSucc2states.values()) {
 					if (DEBUG2)
@@ -821,6 +874,10 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 					visitedGraphs.add(graph);
 					graph.split(gHiers);
 				}
+			}
+			else {
+				if (DEBUG2)
+					System.err.println("ignoring, none");
 			}
 			
 			resetGraphSets(visitedGraphs, ec2graph);
@@ -2120,6 +2177,10 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 				return "negative equivalence class";
 			}
 			
+			if (!DEBUG && DEBUG2) {
+				return toStringShort();
+			}
+			
 			final StringBuilder builder = new StringBuilder();
 			String append = "";
 			
@@ -2143,6 +2204,32 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 				builder.append(state);
 			}
 			builder.append("]>");
+			return builder.toString();
+		}
+		
+		/**
+		 * This method returns a short representation of the equivalence class
+		 * with only the states.
+		 * States in the intersection are not visible.
+		 *
+		 * @return a short string representation of the states
+		 */
+		public String toStringShort() {
+			if (m_states == null) {
+				return "negative equivalence class";
+			}
+			
+			final StringBuilder builder = new StringBuilder();
+			String append = "";
+			
+			builder.append("<");
+			for (final STATE state : m_states) {
+				builder.append(append);
+				append = ", ";
+				builder.append(state);
+			}
+			builder.append(">");
+			
 			return builder.toString();
 		}
 	}
