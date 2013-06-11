@@ -103,7 +103,7 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	
 	// TODO<debug>
 	private final boolean DEBUG = false;
-	private final boolean DEBUG2 = true;
+	private final boolean DEBUG2 = false;
 	
 	// TODO<statistics>
 	private final boolean STATISTICS = false;
@@ -757,11 +757,6 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 			}
 			
 			// global linear split
-			/*
-			 * TODO<globalLinearSplit> this specific split is probably not
-			 *                         necessary
-			 *                         there are strange results, look at this
-			 */
 			if (DEBUG2)
 				System.err.println("\nglobal linear splits: " + gSucc2states);
 			if (gSucc2states.size() > 1) {
@@ -858,6 +853,7 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 			}
 			
 			// global hierarchical split
+			// TODO<globalLinearSplit> this specific split may not be necessary
 			if (DEBUG2)
 				System.err.println("\nglobal hierarchical splits: " +
 						gSucc2states);
@@ -884,8 +880,10 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 		}
 		
 		if (DEBUG2) {
-			System.err.println("final graphs:");
-			System.err.println(ec2graph.values());
+			System.err.println("\n\nfinal graphs:");
+			for (SplittingGraph graph : ec2graph.values()) {
+				System.err.println(graph);
+			}
 		}
 		
 		splitGraphs(ec2graph.values());
@@ -903,11 +901,11 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	 */
 	private void splitGraphs(Collection<SplittingGraph> graphs) {
 		if (DEBUG2)
-			System.err.println("  starting the coloring");
+			System.err.println("\n\nstarting the coloring");
 		
 		for (final SplittingGraph graph : graphs) {
 			if (DEBUG2)
-				System.err.println("next graph: " + graph);
+				System.err.println("\nnext graph: " + graph);
 			final int size = graph.m_graph.length;
 			assert (size > 0);
 			
@@ -984,8 +982,8 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 			if (DEBUG2)
 				System.err.println("all colors are set: " + colors);
 			
-			// split according to the colors (last color not necessary)
-			for (int i = 0; i < colors.size() - 1; ++i) {
+			// split according to the colors (first color not necessary)
+			for (int i = colors.size() - 1; i > 0; --i) {
 				final HashSet<Integer> color = colors.get(i);
 				final ArrayList<STATE> states =
 						new ArrayList<STATE>(color.size());
