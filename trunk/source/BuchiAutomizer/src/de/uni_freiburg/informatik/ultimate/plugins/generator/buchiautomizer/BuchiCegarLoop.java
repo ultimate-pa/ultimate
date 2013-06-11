@@ -24,11 +24,13 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.BuchiAccepts;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.BuchiComplementFKV;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.BuchiDifferenceFKV;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.BuchiIntersect;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.BuchiIsEmpty;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.NestedLassoRun;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.Accepts;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.MinimizeSevpa;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.PowersetDeterminizer;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.RemoveDeadEnds;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.DifferenceDD;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
@@ -686,11 +688,19 @@ public class BuchiCegarLoop {
 			EdgeChecker ec = new BuchiEdgeChecker(m_SmtManager, m_Bspm.getHondaPredicate(), m_Bspm.getRankDecreaseAndSi());
 			assert (new InductivityCheck(m_InterpolAutomaton, ec, false, true)).getResult();
 			assert (new BuchiAccepts<CodeBlock, IPredicate>(m_InterpolAutomaton,m_Counterexample.getNestedLassoWord())).getResult();
-			INestedWordAutomatonOldApi<CodeBlock, IPredicate>  complement =
-					(new BuchiComplementFKV<CodeBlock, IPredicate>(m_InterpolAutomaton)).getResult();
-			assert !(new BuchiAccepts<CodeBlock, IPredicate>(complement,m_Counterexample.getNestedLassoWord())).getResult();
-			INestedWordAutomatonOldApi<CodeBlock, IPredicate> newAbstraction =
-					(new BuchiIntersect<CodeBlock, IPredicate>(m_Abstraction, complement,m_StateFactoryForRefinement)).getResult();
+			
+//			INestedWordAutomatonOldApi<CodeBlock, IPredicate>  complement =
+//					(new BuchiComplementFKV<CodeBlock, IPredicate>(m_InterpolAutomaton)).getResult();
+//			assert !(new BuchiAccepts<CodeBlock, IPredicate>(complement,m_Counterexample.getNestedLassoWord())).getResult();
+//			INestedWordAutomatonOldApi<CodeBlock, IPredicate> newAbstraction =
+//					(new BuchiIntersect<CodeBlock, IPredicate>(m_Abstraction, complement,m_StateFactoryForRefinement)).getResult();
+			new PowersetDeterminizer<CodeBlock, IPredicate>(m_InterpolAutomaton);
+			
+			BuchiDifferenceFKV<CodeBlock, IPredicate> diff = new BuchiDifferenceFKV<CodeBlock, IPredicate>(m_Abstraction,m_InterpolAutomaton);
+			
+			INestedWordAutomatonOldApi<CodeBlock, IPredicate> newAbstraction = diff.getResult();
+			assert diff.checkResult(defaultStateFactory);
+
 			assert !(new BuchiAccepts<CodeBlock, IPredicate>(newAbstraction,m_Counterexample.getNestedLassoWord())).getResult();
 			m_Abstraction = newAbstraction;
 		}

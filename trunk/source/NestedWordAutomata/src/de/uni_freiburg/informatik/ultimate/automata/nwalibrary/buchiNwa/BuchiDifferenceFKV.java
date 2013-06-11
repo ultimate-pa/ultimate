@@ -56,34 +56,33 @@ public class BuchiDifferenceFKV<LETTER,STATE> implements IOperation<LETTER,STATE
 	
 	
 	
-	public BuchiDifferenceFKV(INestedWordAutomatonOldApi<LETTER,STATE> fstOperand,
-			INestedWordAutomatonOldApi<LETTER,STATE> sndOperand
+	public BuchiDifferenceFKV(INestedWordAutomatonSimple<LETTER,STATE> fstOperand,
+			INestedWordAutomatonSimple<LETTER,STATE> sndOperand
 			) throws AutomataLibraryException {
 		m_FstOperand = fstOperand;
 		m_SndOperand = sndOperand;
 		m_StateFactory = m_FstOperand.getStateFactory();
 		m_StateDeterminizer = new PowersetDeterminizer<LETTER,STATE>(sndOperand);
 		s_Logger.info(startMessage());
-		computateDifference(false);
+		computateDifference();
 		s_Logger.info(exitMessage());
 	}
 	
 	
-	public BuchiDifferenceFKV(INestedWordAutomatonOldApi<LETTER,STATE> fstOperand,
-			INestedWordAutomatonOldApi<LETTER,STATE> sndOperand,
+	public BuchiDifferenceFKV(INestedWordAutomatonSimple<LETTER,STATE> fstOperand,
+			INestedWordAutomatonSimple<LETTER,STATE> sndOperand,
 			IStateDeterminizer<LETTER, STATE> stateDeterminizer,
-			StateFactory<STATE> sf,
-			boolean finalIsTrap) throws AutomataLibraryException {
+			StateFactory<STATE> sf) throws AutomataLibraryException {
 		m_FstOperand = fstOperand;
 		m_SndOperand = sndOperand;
 		m_StateFactory = sf;
 		m_StateDeterminizer = stateDeterminizer;
 		s_Logger.info(startMessage());
-		computateDifference(finalIsTrap);
+		computateDifference();
 		s_Logger.info(exitMessage());
 	}
 	
-	private void computateDifference(boolean finalIsTrap) throws AutomataLibraryException {
+	private void computateDifference() throws AutomataLibraryException {
 		m_SndComplemented = new BuchiComplementFKVNwa<LETTER, STATE>(m_SndOperand, m_StateDeterminizer, m_StateFactory);
 		m_Intersect = new BuchiIntersectNwa<LETTER, STATE>(m_FstOperand, m_SndComplemented, m_StateFactory);
 		m_Result = new NestedWordAutomatonReachableStates<LETTER, STATE>(m_Intersect);
