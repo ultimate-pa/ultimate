@@ -31,7 +31,7 @@ public class BuchiIntersect<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	
 	@Override
 	public String operationName() {
-		return "intersect";
+		return "buchiIntersect";
 	}
 	
 	
