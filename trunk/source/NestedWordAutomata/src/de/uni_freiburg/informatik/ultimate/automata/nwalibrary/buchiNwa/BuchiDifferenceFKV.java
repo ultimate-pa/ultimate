@@ -154,7 +154,7 @@ public class BuchiDifferenceFKV<LETTER,STATE> implements IOperation<LETTER,STATE
 		} else {
 			correct = !(!underApproximationOfComplement && op1 && !op2);
 		}
-		assert correct;
+		assert correct : operationName() + " wrong result!";
 		return correct;
 	}
 
