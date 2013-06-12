@@ -1,5 +1,10 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.InterpolantAutomataTransitionAppender;
 
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomatonCache;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingCallTransition;
@@ -25,7 +30,76 @@ public class PostDeterminizerNoFrills implements
 	private IPredicate m_AssertedState;
 	private IPredicate m_AssertedHier;
 	
+	private final Map<IPredicate,Set<CodeBlock>> m_CachedInternal = new HashMap<IPredicate,Set<CodeBlock>>();
+	private final Map<IPredicate,Set<Call>> m_CachedCall = new HashMap<IPredicate,Set<Call>>();
+	private final Map<IPredicate,Map<IPredicate,Set<Return>>> m_CachedReturn = new HashMap<IPredicate,Map<IPredicate,Set<Return>>>();
 	
+	private boolean isCachedInternal(IPredicate state, CodeBlock cb) {
+		Set<CodeBlock> cbs = m_CachedInternal.get(state);
+		if (cbs == null) {
+			return false;
+		} else {
+			return cbs.contains(cbs);
+		}
+	}
+	
+	private boolean isCachedCall(IPredicate state, Call cb) {
+		Set<Call> cbs = m_CachedCall.get(state);
+		if (cbs == null) {
+			return false;
+		} else {
+			return cbs.contains(cbs);
+		}
+	}
+	
+	private boolean isCachedReturn(IPredicate state, IPredicate hier, Return cb) {
+		Map<IPredicate, Set<Return>> hier2cbs = m_CachedReturn.get(state);
+		if (hier2cbs == null) {
+			return false;
+		} else {
+			Set<Return> cbs = hier2cbs.get(hier);
+			if (cbs == null) {
+				return false;
+			} else {
+				return cbs.contains(cbs);
+			}
+		}
+	}
+	
+	private void reportCachedInternal(IPredicate state, CodeBlock cb) {
+		Set<CodeBlock> cbs = m_CachedInternal.get(state);
+		if (cbs == null) {
+			cbs = new HashSet<CodeBlock>();
+			m_CachedInternal.put(state, cbs);
+		}
+		boolean modified = cbs.add(cb);
+		assert modified : "added to cache twice";
+	}
+	
+	private void reportCachedCall(IPredicate state, Call cb) {
+		Set<Call> cbs = m_CachedCall.get(state);
+		if (cbs == null) {
+			cbs = new HashSet<Call>();
+			m_CachedCall.put(state, cbs);
+		}
+		boolean modified = cbs.add(cb);
+		assert modified : "added to cache twice";
+	}
+	
+	private void reportCachedReturn(IPredicate state, IPredicate hier, Return cb) {
+		Map<IPredicate, Set<Return>> hier2cbs = m_CachedReturn.get(state);
+		if (hier2cbs == null) {
+			hier2cbs = new HashMap<IPredicate, Set<Return>>();
+			m_CachedReturn.put(state, hier2cbs);
+		}
+		Set<Return> cbs = hier2cbs.get(hier);
+		if (cbs == null) {
+			cbs = new HashSet<Return>();
+			hier2cbs.put(hier, cbs);
+		}
+		boolean modified = cbs.add(cb);
+		assert modified : "added to cache twice";
+	}
 	
 
 	public PostDeterminizerNoFrills(EdgeChecker edgeChecker,
@@ -62,9 +136,9 @@ public class PostDeterminizerNoFrills implements
 		for (IPredicate down : detState.getDownStates()) {
 			assert m_UseDoubleDecker || down == m_Ia.getEmptyStackState();
 			for (IPredicate up : detState.getUpStates(down)) {
-				if (m_RejectionCache.succInternal(up, symbol) == null) {
+				if (isCachedInternal(up, symbol)) {
 					computeSuccInternal(up, symbol);
-					assert m_RejectionCache.succInternal(up, symbol) != null;
+					reportCachedInternal(up, symbol);
 				}
 				for (OutgoingInternalTransition<CodeBlock, IPredicate> trans : 
 					m_Ia.internalSuccessors(up)) {
@@ -81,13 +155,14 @@ public class PostDeterminizerNoFrills implements
 	@Override
 	public DeterminizedState<CodeBlock, IPredicate> callSuccessor(
 			DeterminizedState<CodeBlock, IPredicate> detState, CodeBlock symbol) {
+		Call call = (Call) symbol;
 		DeterminizedState<CodeBlock, IPredicate> result = new DeterminizedState<CodeBlock, IPredicate>(m_Ia);
 		for (IPredicate down : detState.getDownStates()) {
 			assert m_UseDoubleDecker || down == m_Ia.getEmptyStackState();
 			for (IPredicate up : detState.getUpStates(down)) {
-				if (m_RejectionCache.succCall(up, symbol) == null) {
-					computeSuccCall(up, symbol);
-					assert m_RejectionCache.succCall(up, symbol) != null;
+				if (isCachedCall(up, call)) {
+					computeSuccCall(up, call);
+					reportCachedCall(up, call);
 				}
 				for (OutgoingCallTransition<CodeBlock, IPredicate> trans : 
 					m_Ia.callSuccessors(up)) {
@@ -107,6 +182,7 @@ public class PostDeterminizerNoFrills implements
 	public DeterminizedState<CodeBlock, IPredicate> returnSuccessor(
 			DeterminizedState<CodeBlock, IPredicate> detState,
 			DeterminizedState<CodeBlock, IPredicate> detHier, CodeBlock symbol) {
+		Return ret = (Return) symbol;
 		DeterminizedState<CodeBlock, IPredicate> result = new DeterminizedState<CodeBlock, IPredicate>(m_Ia);
 		for (IPredicate hierDown : detHier.getDownStates()) {
 			assert m_UseDoubleDecker || hierDown == m_Ia.getEmptyStackState();
@@ -114,13 +190,13 @@ public class PostDeterminizerNoFrills implements
 				if (m_UseDoubleDecker) {
 					assert detState.getDownStates().contains(hierUp);
 					for (IPredicate up : detState.getUpStates(hierUp)) {
-						addReturnSuccessorsGivenHier(up, hierUp, symbol, result, hierDown);
+						addReturnSuccessorsGivenHier(up, hierUp, ret, result, hierDown);
 					}
 				} else {
 					for (IPredicate down : detState.getDownStates()) {
 						assert down == m_Ia.getEmptyStackState();
 						for (IPredicate up : detState.getUpStates(down)) {
-							addReturnSuccessorsGivenHier(up, hierUp, symbol, result, hierDown);
+							addReturnSuccessorsGivenHier(up, hierUp, ret, result, hierDown);
 						}
 					}
 					
@@ -132,13 +208,13 @@ public class PostDeterminizerNoFrills implements
 	}
 
 	private void addReturnSuccessorsGivenHier(IPredicate up, IPredicate hier,
-			CodeBlock symbol, DeterminizedState<CodeBlock, IPredicate> result, IPredicate hierDown) {
-		if (m_RejectionCache.succReturn(up, hier, symbol) == null) {
-			computeSuccReturn(up, hier, (Return) symbol);
-			assert m_RejectionCache.succReturn(up, hier, symbol) != null;
+			Return ret, DeterminizedState<CodeBlock, IPredicate> result, IPredicate hierDown) {
+		if (isCachedReturn(up, hier, ret)) {
+			computeSuccReturn(up, hier, ret);
+			reportCachedReturn(up, hier, ret);
 		}
 		for (OutgoingReturnTransition<CodeBlock, IPredicate> trans : 
-			m_Ia.returnSucccessors(up, hier, symbol)) {
+			m_Ia.returnSucccessors(up, hier, ret)) {
 			result.addPair(hierDown, trans.getSucc(), m_Ia);
 		}
 		
