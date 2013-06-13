@@ -412,7 +412,7 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 		
 		// collect incoming return transitions
 		HashMap<LETTER, HashMap<EquivalenceClass, HashSet<EquivalenceClass>>>
-				letter2lin2hier = new HashMap<LETTER, HashMap<EquivalenceClass,
+				letter2linEc2hierEc = new HashMap<LETTER, HashMap<EquivalenceClass,
 				HashSet<EquivalenceClass>>>();
 		int numberOfLinearEcs = 0;
 		for (final STATE succ : a.m_states) {
@@ -420,11 +420,11 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 					m_operand.returnPredecessors(succ)) {
 				final LETTER letter = edge.getLetter();
 				HashMap<EquivalenceClass, HashSet<EquivalenceClass>> lin2hier =
-						letter2lin2hier.get(letter);
+						letter2linEc2hierEc.get(letter);
 				if (lin2hier == null) {
 					lin2hier = new HashMap<EquivalenceClass,
 							HashSet<EquivalenceClass>>();
-					letter2lin2hier.put(letter, lin2hier);
+					letter2linEc2hierEc.put(letter, lin2hier);
 					++numberOfLinearEcs;
 				}
 				final EquivalenceClass linEc = m_partition.
@@ -440,7 +440,7 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 		}
 		
 		// remember that this equivalence class has no incoming transitions
-		if (letter2lin2hier.isEmpty()) {
+		if (letter2linEc2hierEc.isEmpty()) {
 			a.m_incomingRet = EIncomingStatus.none;
 			if (STATISTICS)
 				++m_noIncomingTransitions;
@@ -454,7 +454,7 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 		if (DEBUG2) {
 			System.err.println(m_partition.m_equivalenceClasses);
 			System.err.println("-- new return mapping: from A = " + a);
-			System.err.println(letter2lin2hier);
+			System.err.println(letter2linEc2hierEc);
 		}
 		
 		// set up mappings with information for splitting
@@ -463,20 +463,22 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 			Set<STATE>>>>> listLin2hierEc2succ2hier =
 			new LinkedList<HashMap<STATE, HashMap<EquivalenceClass,
 			HashMap<Set<EquivalenceClass>,Set<STATE>>>>>();
-		final ArrayList<HashMap<STATE, HashMap<Set<EquivalenceClass>,
-			Set<STATE>>>> listHier2succ2lin = new ArrayList<HashMap<STATE,
-			HashMap<Set<EquivalenceClass>,Set<STATE>>>>(numberOfLinearEcs);
+		final ArrayList<HashMap<STATE, HashMap<EquivalenceClass, HashMap<
+			Set<EquivalenceClass>, Set<STATE>>>>> listHier2linEc2succ2lin =
+			new ArrayList<HashMap<STATE, HashMap<EquivalenceClass,
+			HashMap<Set<EquivalenceClass>,Set<STATE>>>>>(numberOfLinearEcs);
 		
 		for (final Entry<LETTER, HashMap<EquivalenceClass,
-				HashSet<EquivalenceClass>>> outerEntry :
-					letter2lin2hier.entrySet()) {
-			final LETTER letter = outerEntry.getKey();
+				HashSet<EquivalenceClass>>> letter2linEc2hierEcEntry :
+					letter2linEc2hierEc.entrySet()) {
+			final LETTER letter = letter2linEc2hierEcEntry.getKey();
 			
 			if (DEBUG2)
 				System.err.println("next letter: " + letter);
 			
 			for (final Entry<EquivalenceClass, HashSet<EquivalenceClass>>
-					innerEntry : outerEntry.getValue().entrySet()) {
+					innerEntry :
+						letter2linEc2hierEcEntry.getValue().entrySet()) {
 				final EquivalenceClass linEc = innerEntry.getKey();
 				final HashMap<STATE, HashMap<EquivalenceClass,
 					HashMap<Set<EquivalenceClass>, Set<STATE>>>>
@@ -487,11 +489,13 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 				if (DEBUG2)
 					System.err.println("-next linEc: " + linEc);
 				
-				final HashMap<STATE, HashMap<Set<EquivalenceClass>,
-					Set<STATE>>> hier2succ2lin = new HashMap<STATE,
-					HashMap<Set<EquivalenceClass>,Set<STATE>>>(
-							computeHashSetCapacity(linEc.m_states.size()));
-				listHier2succ2lin.add(hier2succ2lin);
+				final HashMap<STATE, HashMap<EquivalenceClass,
+					HashMap<Set<EquivalenceClass>, Set<STATE>>>>
+					hier2linEc2succ2lin = new HashMap<STATE,
+					HashMap<EquivalenceClass, HashMap<Set<EquivalenceClass>,
+					Set<STATE>>>>();
+							//;
+				
 				
 				for (final STATE lin : linEc.m_states) {
 					if (DEBUG2)
@@ -513,12 +517,22 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 						
 						for (final STATE hier : hierEc.m_states) {
 							
+							HashMap<EquivalenceClass,
+								HashMap<Set<EquivalenceClass>, Set<STATE>>>
+								linEc2succ2lin = hier2linEc2succ2lin.get(hier);
+							if (linEc2succ2lin == null) {
+								linEc2succ2lin = new HashMap<EquivalenceClass,
+										HashMap<Set<EquivalenceClass>,
+										Set<STATE>>>(computeHashSetCapacity(
+												linEc.m_states.size()));
+								hier2linEc2succ2lin.put(hier, linEc2succ2lin);
+							}
 							HashMap<Set<EquivalenceClass>, Set<STATE>>
-								succ2lin = hier2succ2lin.get(hier);
+								succ2lin = linEc2succ2lin.get(linEc);
 							if (succ2lin == null) {
 								succ2lin = new HashMap<Set<EquivalenceClass>,
 										Set<STATE>>();
-								hier2succ2lin.put(hier, succ2lin);
+								linEc2succ2lin.put(linEc, succ2lin);
 							}
 							
 							if (DEBUG2)
@@ -604,12 +618,15 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 						lin2hierEc2succ2hier.put(lin, hierEc2succ2hier);
 					}
 				}
+				if (! hier2linEc2succ2lin.isEmpty()) {
+					listHier2linEc2succ2lin.add(hier2linEc2succ2lin);
+				}
 				if (! lin2hierEc2succ2hier.isEmpty()) {
 					listLin2hierEc2succ2hier.add(lin2hierEc2succ2hier);
 				}
 				
 				if (DEBUG2) {
-					System.err.println("hier2succ2lin: " + hier2succ2lin);
+					System.err.println("hier2succ2lin: " + hier2linEc2succ2lin);
 					System.err.println("lin2hierEc2succ2hier: " +
 							lin2hierEc2succ2hier);
 				}
@@ -617,7 +634,7 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 		}
 		
 		// split
-		splitReturnHelper(listLin2hierEc2succ2hier, listHier2succ2lin);
+		splitReturnHelper(listLin2hierEc2succ2hier, listHier2linEc2succ2lin);
 	}
 	
 	/**
@@ -641,18 +658,20 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	 *
 	 * @param listLin2hierEc2succ2hier list of linears to hierarchical
 	 *        equivalence classes to successors to hierarchicals
-	 * @param listHier2succ2lin list of hierarchicals to successors to linears
+	 * @param listHier2linEc2succ2lin list of hierarchicals to linear
+	 *        equivalence classes to successors to linears
 	 */
 	private void splitReturnHelper(final LinkedList<HashMap<STATE,
 			HashMap<EquivalenceClass, HashMap<Set<EquivalenceClass>,
 			Set<STATE>>>>> listLin2hierEc2succ2hier,
-			final List<HashMap<STATE, HashMap<Set<EquivalenceClass>,
-			Set<STATE>>>> listHier2succ2lin) {
+			final List<HashMap<STATE, HashMap<EquivalenceClass,
+			HashMap<Set<EquivalenceClass>, Set<STATE>>>>>
+			listHier2linEc2succ2lin) {
 		if (DEBUG2) {
 			System.err.println("\nlistLin2hierEc2succ2hier: " +
 					listLin2hierEc2succ2hier);
-			System.err.println("listHier2succ2lin: " + listHier2succ2lin +
-					"\n");
+			System.err.println("listHier2linEc2succ2lin: " +
+					listHier2linEc2succ2lin + "\n");
 		}
 		
 		// construct graphs
@@ -676,9 +695,10 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 				}
 			}
 		}
-		for (final HashMap<STATE, HashMap<Set<EquivalenceClass>, Set<STATE>>>
-				hier2succ2lin : listHier2succ2lin) {
-			for (final STATE hier : hier2succ2lin.keySet()) {
+		for (final HashMap<STATE, HashMap<EquivalenceClass,
+				HashMap<Set<EquivalenceClass>, Set<STATE>>>>
+				hier2linEc2succ2lin : listHier2linEc2succ2lin) {
+			for (final STATE hier : hier2linEc2succ2lin.keySet()) {
 				final EquivalenceClass ec = m_partition.
 						m_state2EquivalenceClass.get(hier);
 				if (ec2graph.get(ec) == null) {
@@ -710,40 +730,44 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 					HashMap<Set<EquivalenceClass>, Set<STATE>>>>
 					lin2hierEc2succ2hierEntry :
 						lin2hierEc2succ2hier.entrySet()) {
-				final STATE lin = lin2hierEc2succ2hierEntry.getKey();
-				final HashMap<EquivalenceClass, HashMap<Set<EquivalenceClass>,
-					Set<STATE>>> hierEc2succ2hier =
-					lin2hierEc2succ2hierEntry.getValue();
+				
 				if (DEBUG2)
 					System.err.println(
 							"\n\nconsider lin2hierEc2succ2hierEntry " +
 							lin2hierEc2succ2hierEntry);
 				
+				final STATE lin = lin2hierEc2succ2hierEntry.getKey();
+				final HashMap<EquivalenceClass, HashMap<Set<EquivalenceClass>,
+					Set<STATE>>> hierEc2succ2hier =
+					lin2hierEc2succ2hierEntry.getValue();
+				
 				final HashMap<EquivalenceClass,
 					HashMap<HashSet<Set<EquivalenceClass>>, Set<STATE>>>
-					gHierEc2Succ2states = new HashMap<EquivalenceClass,
+					gHierEc2Succ2lin = new HashMap<EquivalenceClass,
 					HashMap<HashSet<Set<EquivalenceClass>>,Set<STATE>>>();
 				
 				for (final Entry<EquivalenceClass,
 						HashMap<Set<EquivalenceClass>, Set<STATE>>>
 						hierEc2succ2hierEntry : hierEc2succ2hier.entrySet()) {
+					
+					if (DEBUG2)
+						System.err.println(
+								"\n\nconsider hierEc2succ2hierEntry " +
+										hierEc2succ2hierEntry);
+					
 					final EquivalenceClass hierEc =
 							hierEc2succ2hierEntry.getKey();
 					final HashMap<Set<EquivalenceClass>, Set<STATE>>
 						succ2hier = hierEc2succ2hierEntry.getValue();
 					
 					HashMap<HashSet<Set<EquivalenceClass>>, Set<STATE>>
-						gSucc2states = gHierEc2Succ2states.get(hierEc);
-					if (gSucc2states == null) {
-						gSucc2states = new HashMap<HashSet<
+						gSucc2lin = gHierEc2Succ2lin.get(hierEc);
+					if (gSucc2lin == null) {
+						gSucc2lin = new HashMap<HashSet<
 								Set<EquivalenceClass>>, Set<STATE>>();
-						gHierEc2Succ2states.put(hierEc, gSucc2states);
+						gHierEc2Succ2lin.put(hierEc, gSucc2lin);
 					}
 					
-					if (DEBUG2)
-						System.err.println(
-								"\n\nconsider hierEc2succ2hierEntry " +
-										hierEc2succ2hierEntry);
 					final HashSet<Set<EquivalenceClass>> succs =
 							new HashSet<Set<EquivalenceClass>>();
 					if (DEBUG2)
@@ -767,7 +791,6 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 										m_partition.m_state2EquivalenceClass.
 										get(hiers.iterator().next()));
 								visitedGraphs.add(graph);
-								
 								graph.split(hiers);
 								
 								// global linear split collection
@@ -785,10 +808,10 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 						}
 						
 						// global linear split collection
-						Set<STATE> gLins = gSucc2states.get(succs);
+						Set<STATE> gLins = gSucc2lin.get(succs);
 						if (gLins == null) {
 							gLins = new HashSet<STATE>();
-							gSucc2states.put(succs, gLins);
+							gSucc2lin.put(succs, gLins);
 						}
 						gLins.add(lin);
 						if (DEBUG2) {
@@ -805,14 +828,17 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 				}
 				
 				// global linear split
+				/*
+				 * TODO<globalLinearSplit> this specific split may be
+				 *                         unnecessary
+				 */
 				if (DEBUG2)
 					System.err.println("\nglobal linear splits: " +
-							gHierEc2Succ2states);
+							gHierEc2Succ2lin);
 				for (final HashMap<HashSet<Set<EquivalenceClass>>,
-						Set<STATE>> succ2gLins :
-						gHierEc2Succ2states.values()) {
-					if (succ2gLins.size() > 1) {
-						for (final Set<STATE> gLins : succ2gLins.values()) {
+						Set<STATE>> succ2gLin : gHierEc2Succ2lin.values()) {
+					if (succ2gLin.size() > 1) {
+						for (final Set<STATE> gLins : succ2gLin.values()) {
 							if (DEBUG2)
 								System.err.println("global linear split: " +
 										gLins);
@@ -830,120 +856,163 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 					else {
 						if (DEBUG2)
 							System.err.println("ignoring, only " +
-									succ2gLins.size());
+									succ2gLin.size());
 					}
 				}
 			}
 		}
 		
 		// local linear split and global hierarchical split
-		for (final HashMap<STATE, HashMap<Set<EquivalenceClass>, Set<STATE>>>
-				hier2succ2lin : listHier2succ2lin) {
-			if (DEBUG2)
-				System.err.println("\n\nconsider hier2succ2lin " +
-						hier2succ2lin);
-			final HashMap<HashSet<Set<EquivalenceClass>>, Set<STATE>>
-					gSucc2states =
-					new HashMap<HashSet<Set<EquivalenceClass>>, Set<STATE>>();
+		for (final HashMap<STATE, HashMap<EquivalenceClass,
+				HashMap<Set<EquivalenceClass>, Set<STATE>>>>
+				hier2linEc2succ2lin : listHier2linEc2succ2lin) {
 			
-			for (final Entry<STATE, HashMap<Set<EquivalenceClass>, Set<STATE>>>
-					entry : hier2succ2lin.entrySet()) {
-				final HashSet<Set<EquivalenceClass>> succs =
-						new HashSet<Set<EquivalenceClass>>();
+			if (DEBUG2)
+				System.err.println("\n\nconsider hier2linEc2succ2lin " +
+						hier2linEc2succ2lin);
+			
+			for (final Entry<STATE, HashMap<EquivalenceClass,
+					HashMap<Set<EquivalenceClass>, Set<STATE>>>>
+					hier2linEc2succ2linEntry :
+						hier2linEc2succ2lin.entrySet()) {
+				
 				if (DEBUG2)
-					System.err.println("\nnext entry: " + entry);
-				final HashMap<Set<EquivalenceClass>, Set<STATE>> succ2lin =
-						entry.getValue();
-				final int size = succ2lin.size();
-				if (size > 0) {
-					// linear split only sensible with more than one set
-					if (size > 1) {
-						for (final Entry<Set<EquivalenceClass>, Set<STATE>>
-								innerEntry : succ2lin.entrySet()) {
-							final Set<STATE> lins = innerEntry.getValue();
-							
-							// local linear split
+					System.err.println(
+							"\n\nconsider hier2linEc2succ2linEntry " +
+									hier2linEc2succ2linEntry);
+				
+				final STATE hier = hier2linEc2succ2linEntry.getKey();
+				final HashMap<EquivalenceClass, HashMap<Set<EquivalenceClass>,
+					Set<STATE>>> linEc2succ2lin =
+							hier2linEc2succ2linEntry.getValue();
+				
+				final HashMap<EquivalenceClass,
+					HashMap<HashSet<Set<EquivalenceClass>>, Set<STATE>>>
+					gLinEc2Succ2hier = new HashMap<EquivalenceClass,
+					HashMap<HashSet<Set<EquivalenceClass>>,Set<STATE>>>();
+				
+				for (final Entry<EquivalenceClass,
+						HashMap<Set<EquivalenceClass>, Set<STATE>>>
+						linEc2succ2linEntry : linEc2succ2lin.entrySet()) {
+					
+					if (DEBUG2)
+						System.err.println(
+								"\n\nconsider linEc2succ2linEntry " +
+										linEc2succ2linEntry);
+					
+					final EquivalenceClass linEc =
+							linEc2succ2linEntry.getKey();
+					final HashMap<Set<EquivalenceClass>, Set<STATE>>
+						succ2lin = linEc2succ2linEntry.getValue();
+					
+					HashMap<HashSet<Set<EquivalenceClass>>, Set<STATE>>
+						gSucc2hier = gLinEc2Succ2hier.get(linEc);
+					if (gSucc2hier == null) {
+						gSucc2hier = new HashMap<HashSet<
+								Set<EquivalenceClass>>, Set<STATE>>();
+						gLinEc2Succ2hier.put(linEc, gSucc2hier);
+					}
+					
+					final HashSet<Set<EquivalenceClass>> succs =
+							new HashSet<Set<EquivalenceClass>>();
+					
+					if (DEBUG2)
+						System.err.println("\nnext succ2lin: " + succ2lin);
+					final int size = succ2lin.size();
+					
+					if (size > 0) {
+						// linear split only sensible with more than one set
+						if (size > 1) {
+							for (final Entry<Set<EquivalenceClass>, Set<STATE>>
+									innerEntry : succ2lin.entrySet()) {
+								final Set<STATE> lins = innerEntry.getValue();
+								
+								// local linear split
+								if (DEBUG2)
+									System.err.println("local linear split: " +
+											lins);
+								
+								assert lins.iterator().hasNext();
+								final SplittingGraph graph = ec2graph.get(
+										m_partition.m_state2EquivalenceClass.
+										get(lins.iterator().next()));
+								visitedGraphs.add(graph);
+								graph.split(lins);
+								
+								// global hierarchical split collection
+								succs.add(innerEntry.getKey());
+							}
+						}
+						// singleton sets are ignored
+						else {
 							if (DEBUG2)
-								System.err.println("local linear split: " +
-										lins);
-							
-							assert lins.iterator().hasNext();
-							final SplittingGraph graph = ec2graph.get(
-									m_partition.m_state2EquivalenceClass.
-									get(lins.iterator().next()));
-							visitedGraphs.add(graph);
-							graph.split(lins);
+								System.err.println("ignoring, only one");
 							
 							// global hierarchical split collection
-							succs.add(innerEntry.getKey());
+							assert (succ2lin.keySet().iterator().hasNext());
+							succs.add(succ2lin.keySet().iterator().next());
 						}
-					}
-					// singleton sets are ignored
-					else {
-						if (DEBUG2)
-							System.err.println("ignoring, only one");
 						
 						// global hierarchical split collection
-						assert (succ2lin.keySet().iterator().hasNext());
-						succs.add(succ2lin.keySet().iterator().next());
+						Set<STATE> gHiers = gSucc2hier.get(succs);
+						if (gHiers == null) {
+							gHiers = new HashSet<STATE>();
+							gSucc2hier.put(succs, gHiers);
+						}
+						gHiers.add(hier);
+						if (DEBUG2) {
+							System.err.println("succs: " + succs);
+							System.err.println("gHiers: " + gHiers);
+						}
+					}
+					else {
+						if (DEBUG2)
+							System.err.println("ignoring, none");
 					}
 					
-					// global hierarchical split collection
-					Set<STATE> gHiers = gSucc2states.get(succs);
-					if (gHiers == null) {
-						gHiers = new HashSet<STATE>();
-						gSucc2states.put(succs, gHiers);
-					}
-					gHiers.add(entry.getKey());
-					if (DEBUG2) {
-						System.err.println("succs: " + succs);
-						System.err.println("gHiers: " + gHiers);
-					}
-				}
-				else {
-					if (DEBUG2)
-						System.err.println("ignoring, none");
+					resetGraphSets(visitedGraphs, ec2graph);
 				}
 				
-				resetGraphSets(visitedGraphs, ec2graph);
-			}
-			
-			// global hierarchical split
-			// TODO<globalLinearSplit> this specific split may not be necessary
-			if (DEBUG2)
-				System.err.println("\nglobal hierarchical splits: " +
-						gSucc2states);
-			if (gSucc2states.size() > 1) {
-				for (final Set<STATE> gHiers : gSucc2states.values()) {
-					if (DEBUG2)
-						System.err.println("global hierarchical split: " +
-								gHiers);
-					
-					assert gHiers.iterator().hasNext();
-					final SplittingGraph graph = ec2graph.get(
-							m_partition.m_state2EquivalenceClass.
-							get(gHiers.iterator().next()));
-					visitedGraphs.add(graph);
-					graph.split(gHiers);
+				// global hierarchical split
+				if (DEBUG2)
+					System.err.println("\nglobal hierarchical splits: " +
+							gLinEc2Succ2hier);
+				for (final HashMap<HashSet<Set<EquivalenceClass>>,
+						Set<STATE>> succ2gHier : gLinEc2Succ2hier.values()) {
+					if (succ2gHier.size() > 1) {
+						for (final Set<STATE> gHiers : succ2gHier.values()) {
+							if (DEBUG2)
+								System.err.println(
+										"global hierarchical split: " +
+												gHiers);
+							
+							assert gHiers.iterator().hasNext();
+							final SplittingGraph graph = ec2graph.get(
+									m_partition.m_state2EquivalenceClass.
+									get(gHiers.iterator().next()));
+							visitedGraphs.add(graph);
+							graph.split(gHiers);
+							
+							resetGraphSets(visitedGraphs, ec2graph);
+						}
+					}
+					else {
+						if (DEBUG2)
+							System.err.println("ignoring, only " +
+									succ2gHier.size());
+					}
 				}
 			}
-			else {
-				if (DEBUG2)
-					System.err.println("ignoring, only " +
-							gSucc2states.size());
+			
+			if (DEBUG2) {
+				System.err.println("\n\nfinal graphs:");
+				for (SplittingGraph graph : ec2graph.values()) {
+					System.err.println(graph);
+				}
 			}
 			
-			resetGraphSets(visitedGraphs, ec2graph);
+			splitGraphs(ec2graph.values());
 		}
-		
-		if (DEBUG2) {
-			System.err.println("\n\nfinal graphs:");
-			for (SplittingGraph graph : ec2graph.values()) {
-				System.err.println(graph);
-			}
-		}
-		
-		splitGraphs(ec2graph.values());
 	}
 	
 	/**
