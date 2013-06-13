@@ -1923,6 +1923,11 @@ public class SmtManager {
 		return pred;
 	}
 	
+	public DebugPredicate newDebugPredicate(String debugMessage) {
+		DebugPredicate pred = new DebugPredicate(debugMessage, m_SerialNumber++);
+		return pred;
+	}
+	
 	public ISLPredicate newEmptyStackPredicate() {
 		ProgramPoint pp = new ProgramPoint("noCaller", "noCaller", false, 
 				null, null, getScript());

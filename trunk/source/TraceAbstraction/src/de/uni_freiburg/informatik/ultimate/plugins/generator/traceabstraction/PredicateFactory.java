@@ -103,7 +103,7 @@ public class PredicateFactory extends StateFactory<IPredicate> {
 
 	@Override
 	public IPredicate buchiComplementFKV(LevelRankingState compl) {
-		return m_SmtManager.newDontCarePredicate(null);
+		return m_SmtManager.newDebugPredicate(compl.toString());
 	}
 
 

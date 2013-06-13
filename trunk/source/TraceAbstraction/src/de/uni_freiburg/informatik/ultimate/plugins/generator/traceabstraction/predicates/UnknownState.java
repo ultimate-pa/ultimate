@@ -75,14 +75,12 @@ public class UnknownState implements ISLPredicate {
 
 	@Override
 	public String[] getProcedures() {
-		// TODO Auto-generated method stub
-		return null;
+		throw new UnsupportedOperationException();
 	}
 
 	@Override
 	public Term getClosedFormula() {
-		// TODO Auto-generated method stub
-		return null;
+		throw new UnsupportedOperationException();
 	}
 
 
