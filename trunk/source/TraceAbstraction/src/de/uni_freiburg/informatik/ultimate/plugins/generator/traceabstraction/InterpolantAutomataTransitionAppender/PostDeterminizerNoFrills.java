@@ -39,7 +39,7 @@ public class PostDeterminizerNoFrills implements
 		if (cbs == null) {
 			return false;
 		} else {
-			return cbs.contains(cbs);
+			return cbs.contains(cb);
 		}
 	}
 	
@@ -48,7 +48,7 @@ public class PostDeterminizerNoFrills implements
 		if (cbs == null) {
 			return false;
 		} else {
-			return cbs.contains(cbs);
+			return cbs.contains(cb);
 		}
 	}
 	
@@ -61,7 +61,7 @@ public class PostDeterminizerNoFrills implements
 			if (cbs == null) {
 				return false;
 			} else {
-				return cbs.contains(cbs);
+				return cbs.contains(cb);
 			}
 		}
 	}
@@ -136,7 +136,7 @@ public class PostDeterminizerNoFrills implements
 		for (IPredicate down : detState.getDownStates()) {
 			assert m_UseDoubleDecker || down == m_Ia.getEmptyStackState();
 			for (IPredicate up : detState.getUpStates(down)) {
-				if (isCachedInternal(up, symbol)) {
+				if (!isCachedInternal(up, symbol)) {
 					computeSuccInternal(up, symbol);
 					reportCachedInternal(up, symbol);
 				}
@@ -160,7 +160,7 @@ public class PostDeterminizerNoFrills implements
 		for (IPredicate down : detState.getDownStates()) {
 			assert m_UseDoubleDecker || down == m_Ia.getEmptyStackState();
 			for (IPredicate up : detState.getUpStates(down)) {
-				if (isCachedCall(up, call)) {
+				if (!isCachedCall(up, call)) {
 					computeSuccCall(up, call);
 					reportCachedCall(up, call);
 				}
@@ -209,7 +209,7 @@ public class PostDeterminizerNoFrills implements
 
 	private void addReturnSuccessorsGivenHier(IPredicate up, IPredicate hier,
 			Return ret, DeterminizedState<CodeBlock, IPredicate> result, IPredicate hierDown) {
-		if (isCachedReturn(up, hier, ret)) {
+		if (!isCachedReturn(up, hier, ret)) {
 			computeSuccReturn(up, hier, ret);
 			reportCachedReturn(up, hier, ret);
 		}
