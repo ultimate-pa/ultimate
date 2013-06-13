@@ -721,6 +721,11 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 				HashMap<Set<EquivalenceClass>, Set<STATE>>>>
 				lin2hierEc2succ2hier : listLin2hierEc2succ2hier) {
 			
+			final HashMap<EquivalenceClass,
+				HashMap<HashSet<Set<EquivalenceClass>>, Set<STATE>>>
+				gHierEc2Succ2lin = new HashMap<EquivalenceClass,
+				HashMap<HashSet<Set<EquivalenceClass>>,Set<STATE>>>();
+			
 			if (DEBUG2)
 				System.err.println(
 						"\n\nconsider lin2hierEc2succ2hier " +
@@ -740,11 +745,6 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 				final HashMap<EquivalenceClass, HashMap<Set<EquivalenceClass>,
 					Set<STATE>>> hierEc2succ2hier =
 					lin2hierEc2succ2hierEntry.getValue();
-				
-				final HashMap<EquivalenceClass,
-					HashMap<HashSet<Set<EquivalenceClass>>, Set<STATE>>>
-					gHierEc2Succ2lin = new HashMap<EquivalenceClass,
-					HashMap<HashSet<Set<EquivalenceClass>>,Set<STATE>>>();
 				
 				for (final Entry<EquivalenceClass,
 						HashMap<Set<EquivalenceClass>, Set<STATE>>>
@@ -826,38 +826,38 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 					
 					resetGraphSets(visitedGraphs, ec2graph);
 				}
-				
-				// global linear split
-				/*
-				 * TODO<globalLinearSplit> this specific split may be
-				 *                         unnecessary
-				 */
-				if (DEBUG2)
-					System.err.println("\nglobal linear splits: " +
-							gHierEc2Succ2lin);
-				for (final HashMap<HashSet<Set<EquivalenceClass>>,
-						Set<STATE>> succ2gLin : gHierEc2Succ2lin.values()) {
-					if (succ2gLin.size() > 1) {
-						for (final Set<STATE> gLins : succ2gLin.values()) {
-							if (DEBUG2)
-								System.err.println("global linear split: " +
-										gLins);
-							
-							assert gLins.iterator().hasNext();
-							final SplittingGraph graph = ec2graph.get(
-									m_partition.m_state2EquivalenceClass.
-									get(gLins.iterator().next()));
-							visitedGraphs.add(graph);
-							graph.split(gLins);
-						}
-						
-						resetGraphSets(visitedGraphs, ec2graph);
-					}
-					else {
+			}
+			
+			// global linear split
+			/*
+			 * TODO<globalLinearSplit> this specific split may be
+			 *                         unnecessary
+			 */
+			if (DEBUG2)
+				System.err.println("\nglobal linear splits: " +
+						gHierEc2Succ2lin);
+			for (final HashMap<HashSet<Set<EquivalenceClass>>,
+					Set<STATE>> succ2gLin : gHierEc2Succ2lin.values()) {
+				if (succ2gLin.size() > 1) {
+					for (final Set<STATE> gLins : succ2gLin.values()) {
 						if (DEBUG2)
-							System.err.println("ignoring, only " +
-									succ2gLin.size());
+							System.err.println("global linear split: " +
+									gLins);
+						
+						assert gLins.iterator().hasNext();
+						final SplittingGraph graph = ec2graph.get(
+								m_partition.m_state2EquivalenceClass.
+								get(gLins.iterator().next()));
+						visitedGraphs.add(graph);
+						graph.split(gLins);
 					}
+					
+					resetGraphSets(visitedGraphs, ec2graph);
+				}
+				else {
+					if (DEBUG2)
+						System.err.println("ignoring, only " +
+								succ2gLin.size());
 				}
 			}
 		}
@@ -870,6 +870,11 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 			if (DEBUG2)
 				System.err.println("\n\nconsider hier2linEc2succ2lin " +
 						hier2linEc2succ2lin);
+			
+			final HashMap<EquivalenceClass,
+				HashMap<HashSet<Set<EquivalenceClass>>, Set<STATE>>>
+				gLinEc2Succ2hier = new HashMap<EquivalenceClass,
+				HashMap<HashSet<Set<EquivalenceClass>>,Set<STATE>>>();
 			
 			for (final Entry<STATE, HashMap<EquivalenceClass,
 					HashMap<Set<EquivalenceClass>, Set<STATE>>>>
@@ -885,11 +890,6 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 				final HashMap<EquivalenceClass, HashMap<Set<EquivalenceClass>,
 					Set<STATE>>> linEc2succ2lin =
 							hier2linEc2succ2linEntry.getValue();
-				
-				final HashMap<EquivalenceClass,
-					HashMap<HashSet<Set<EquivalenceClass>>, Set<STATE>>>
-					gLinEc2Succ2hier = new HashMap<EquivalenceClass,
-					HashMap<HashSet<Set<EquivalenceClass>>,Set<STATE>>>();
 				
 				for (final Entry<EquivalenceClass,
 						HashMap<Set<EquivalenceClass>, Set<STATE>>>
@@ -972,47 +972,48 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 					
 					resetGraphSets(visitedGraphs, ec2graph);
 				}
-				
-				// global hierarchical split
-				if (DEBUG2)
-					System.err.println("\nglobal hierarchical splits: " +
-							gLinEc2Succ2hier);
-				for (final HashMap<HashSet<Set<EquivalenceClass>>,
-						Set<STATE>> succ2gHier : gLinEc2Succ2hier.values()) {
-					if (succ2gHier.size() > 1) {
-						for (final Set<STATE> gHiers : succ2gHier.values()) {
-							if (DEBUG2)
-								System.err.println(
-										"global hierarchical split: " +
-												gHiers);
-							
-							assert gHiers.iterator().hasNext();
-							final SplittingGraph graph = ec2graph.get(
-									m_partition.m_state2EquivalenceClass.
-									get(gHiers.iterator().next()));
-							visitedGraphs.add(graph);
-							graph.split(gHiers);
-							
-							resetGraphSets(visitedGraphs, ec2graph);
-						}
-					}
-					else {
+			}
+
+			
+			// global hierarchical split
+			if (DEBUG2)
+				System.err.println("\nglobal hierarchical splits: " +
+						gLinEc2Succ2hier);
+			for (final HashMap<HashSet<Set<EquivalenceClass>>,
+					Set<STATE>> succ2gHier : gLinEc2Succ2hier.values()) {
+				if (succ2gHier.size() > 1) {
+					for (final Set<STATE> gHiers : succ2gHier.values()) {
 						if (DEBUG2)
-							System.err.println("ignoring, only " +
-									succ2gHier.size());
+							System.err.println(
+									"global hierarchical split: " +
+											gHiers);
+						
+						assert gHiers.iterator().hasNext();
+						final SplittingGraph graph = ec2graph.get(
+								m_partition.m_state2EquivalenceClass.
+								get(gHiers.iterator().next()));
+						visitedGraphs.add(graph);
+						graph.split(gHiers);
+						
+						resetGraphSets(visitedGraphs, ec2graph);
 					}
 				}
-			}
-			
-			if (DEBUG2) {
-				System.err.println("\n\nfinal graphs:");
-				for (SplittingGraph graph : ec2graph.values()) {
-					System.err.println(graph);
+				else {
+					if (DEBUG2)
+						System.err.println("ignoring, only " +
+								succ2gHier.size());
 				}
 			}
-			
-			splitGraphs(ec2graph.values());
 		}
+		
+		if (DEBUG2) {
+			System.err.println("\n\nfinal graphs:");
+			for (SplittingGraph graph : ec2graph.values()) {
+				System.err.println(graph);
+			}
+		}
+		
+		splitGraphs(ec2graph.values());
 	}
 	
 	/**
