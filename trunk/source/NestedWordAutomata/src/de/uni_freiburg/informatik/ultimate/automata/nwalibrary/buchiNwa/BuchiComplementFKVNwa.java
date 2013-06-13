@@ -494,7 +494,7 @@ public class BuchiComplementFKVNwa<LETTER,STATE> implements INestedWordAutomaton
 		
 		@Override
 		public String toString() {
-			return String.valueOf(getContent());
+			return m_LevelRanking.toString() +" O"+m_O;
 		}
 
 		/* (non-Javadoc)
