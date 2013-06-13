@@ -121,7 +121,8 @@ public class MinimizeSevpa<LETTER,STATE> implements IOperation<LETTER,STATE> {
 			m_doubleDecker = (IDoubleDeckerAutomaton<LETTER, STATE>)operand;
 		}
 		else {
-			throw new IllegalArgumentException();
+			throw new IllegalArgumentException(
+					"Operand must be an IDoubleDeckerAutomaton.");
 		}
 		m_removeUnreachables = removeUnreachables;
 		m_removeDeadEnds = removeDeadEnds;
@@ -364,7 +365,8 @@ public class MinimizeSevpa<LETTER,STATE> implements IOperation<LETTER,STATE> {
 		}
 		// construct initial partition using collections from constructor
 		else {
-			assert (m_Partition == null);
+			assert (m_Partition == null &&
+					assertStatesSeparation(equivalenceClasses));
 			m_Partition = new Partition(m_operand, states.size());
 			
 			if (m_noStatesRemoved) {
@@ -420,6 +422,28 @@ public class MinimizeSevpa<LETTER,STATE> implements IOperation<LETTER,STATE> {
 		
 		// merge states from partition
 		return merge();
+	}
+	
+	/**
+	 * checks that the states in each equivalence class are all either final
+	 * or non-final
+	 *
+	 * @param equivalenceClasses partition passed in constructor
+	 * @return true iff equivalence classes respect final status of states
+	 */
+	private boolean assertStatesSeparation(
+			final Collection<Set<STATE>> equivalenceClasses) {
+		for (final Set<STATE> equivalenceClass : equivalenceClasses) {
+			final Iterator<STATE> it = equivalenceClass.iterator();
+			assert (it.hasNext());
+			final boolean isFinal = m_operand.isFinal(it.next());
+			while (it.hasNext()) {
+				if (isFinal != m_operand.isFinal(it.next())) {
+					return false;
+				}
+			}
+		}
+		return true;
 	}
 	
 	/**
