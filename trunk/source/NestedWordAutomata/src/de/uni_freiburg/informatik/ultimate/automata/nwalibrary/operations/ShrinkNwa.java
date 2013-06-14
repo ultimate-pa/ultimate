@@ -795,8 +795,8 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	/**
 	 * TODO<comment>
 	 * 
-	 * @param involvedClasses
-	 * @param splitEquivalenceClasses 
+	 * @param involvedClasses linear and hierarchical equivalence classes
+	 * @param splitEquivalenceClasses split equivalence classes
 	 */
 	private void splitReturnMixed(final HashSet<EquivalenceClass>
 			involvedClasses,
@@ -806,23 +806,111 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	}
 	
 	/**
-	 * TODO<comment>
+	 * This method executes the return splits for all passed equivalence
+	 * classes.
+	 * 
+	 * There are decision points for states that can be assigned to at least
+	 * two equivalence classes.
 	 *
-	 * @param splitEquivalenceClasses
+	 * @param splitEquivalenceClasses split equivalence classes
 	 */
+	@SuppressWarnings("unchecked")
 	private void splitReturnExecute(
 			final HashSet<EquivalenceClass> splitEquivalenceClasses) {
-		if (DEBUG3) {
+		if (DEBUG3)
 			System.err.println("\n-- executing return splits");
-			for (final EquivalenceClass ec : splitEquivalenceClasses) {
+		
+		for (final EquivalenceClass ec : splitEquivalenceClasses) {
+			final HashMap<STATE, HashSet<STATE>> state2separatedSet =
+					ec.m_state2separatedSet;
+			assert (state2separatedSet != null);
+			
+			if (DEBUG3) {
 				System.err.print(ec);
 				System.err.print(" : ");
-				System.err.println(ec.m_splitInfo);
+				System.err.println(state2separatedSet);
+			}
+
+			// mapping: state to associated color
+			final HashMap<STATE, Integer> state2color =
+					new HashMap<STATE, Integer>(
+							computeHashSetCapacity(ec.m_states.size()));
+			// current number of colors
+			int colors = 0;
+			
+			/*
+			 * TODO<returnSplit> this is not very efficient, rather a proof of
+			 *                   concept
+			 */
+			final Set<STATE> states = ec.m_states;
+			for (final Entry<STATE, HashSet<STATE>> entry :
+					state2separatedSet.entrySet()) {
+				final STATE state = entry.getKey();
+				
+				final HashSet<Integer> blockedColors =
+						new HashSet<Integer>(computeHashSetCapacity(colors));
+				final HashSet<STATE> separatedSet =
+						state2separatedSet.get(state);
+				assert (separatedSet != null);
+				
+				for (final STATE separated : separatedSet) {
+					final Integer color = state2color.get(separated);
+					if (color != null) {
+						blockedColors.add(color);
+					}
+				}
+				
+				// no color available, create a new one
+				if (blockedColors.size() == colors) {
+					state2color.put(state, colors++);
+					if (colors > 1) {
+						states.remove(state);
+					}
+				}
+				// at least one color available
+				else {
+					assert (blockedColors.size() < colors);
+					int color = 0;
+					while (true) {
+						assert (color <= colors);
+						if (! blockedColors.contains(color)) {
+							state2color.put(state, color);
+							if (color > 1) {
+								states.remove(state);
+							}
+							break;
+						}
+						++color;
+					}
+				}
+			}
+			
+			// index 0 is ignored
+			final HashSet<STATE>[] newEcs = new HashSet[colors];
+			for (int i = colors - 1; i > 0; --i) {
+				newEcs[i] = new HashSet<STATE>();
+			}
+			for (final Entry<STATE, Integer> entry : state2color.entrySet()) {
+				final int color = entry.getValue();
+				if (color > 0) {
+					newEcs[color].add(entry.getKey());
+				}
+			}
+			
+			if (DEBUG3)
+				System.err.println("state2color: " + state2color);
+			
+			// finally split the equivalence class
+			for (int i = newEcs.length - 1; i > 0; --i) {
+				final HashSet<STATE> newStates = newEcs[i];
+				final EquivalenceClass newEc =
+						m_partition.addEcHelper(newStates, ec);
+				
+				if (DEBUG3)
+					System.err.println("new equivalence class: " +
+							newEc.toStringShort());
 			}
 		}
-		
-		// TODO Auto-generated method stub
-		
 	}
 	
 	/**
@@ -2462,43 +2550,6 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	}
 	
 	/**
-	 * This class is used in an equivalence class during the return split.
-	 * It keeps a mapping for states that have to be separated and the
-	 * coloring information.
-	 */
-	private class SplittingInfo {
-		// mapping: state to states that are separated
-		private final HashMap<STATE, HashSet<STATE>> m_state2separatedSet;
-		// mapping: state to associated color
-		private final HashMap<STATE, Integer> m_state2color;
-		// current number of colors
-		private int m_colors;
-		
-		/**
-		 * @param numberOfStates number of states
-		 */
-		public SplittingInfo(final int numberOfStates) {
-			final int size = computeHashSetCapacity(numberOfStates);
-			m_state2separatedSet = new HashMap<STATE, HashSet<STATE>>(size);
-			m_state2color = new HashMap<STATE, Integer>(size);
-			m_colors = 0;
-		}
-		
-		@Override
-		public String toString() {
-			final StringBuilder builder = new StringBuilder();
-			builder.append("(separation: ");
-			builder.append(m_state2separatedSet);
-			builder.append(", coloring: ");
-			builder.append(m_state2color);
-			builder.append(", ");
-			builder.append(m_colors);
-			builder.append(" colors)");
-			return builder.toString();
-		}
-	}
-	
-	/**
 	 * This method resets the state sets in the graphs.
 	 *
 	 * @param graphs the graphs to reset
@@ -2591,6 +2642,21 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 		 */
 		private EquivalenceClass addEcHelper(final EquivalenceClass parent) {
 			final EquivalenceClass ec = new EquivalenceClass(parent);
+			m_equivalenceClasses.add(ec);
+			return ec;
+		}
+		
+		/**
+		 * This method adds an equivalence class to the partition that resulted
+		 * from a split.
+		 *
+		 * @param parent the parent equivalence class
+		 * @param states the states
+		 * @return the equivalence class
+		 */
+		private EquivalenceClass addEcHelper(final Set<STATE> states,
+				final EquivalenceClass parent) {
+			final EquivalenceClass ec = new EquivalenceClass(states, parent);
 			m_equivalenceClasses.add(ec);
 			return ec;
 		}
@@ -2714,8 +2780,8 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 		private Set<STATE> m_intersection;
 		// status regarding incoming transitions
 		private EIncomingStatus m_incomingInt, m_incomingCall, m_incomingRet;
-		// splitting information for return splits
-		private SplittingInfo m_splitInfo;
+		// mapping: state to states that are separated
+		private HashMap<STATE, HashSet<STATE>> m_state2separatedSet;
 		
 		/**
 		 * @param states the set of states for the equivalence class
@@ -2731,60 +2797,30 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 		}
 		
 		/**
-		 * This method marks the pairs of splits necessary for given sets of
-		 * states, but does not invoke the splits yet.
-		 *
-		 * @param splitSets sets of states to be marked for split
+		 * @param parent the parent equivalence class
 		 */
-		public void markSplit(Collection<HashSet<STATE>> splitSets) {
-			assert (splitSets.size() > 1) : "Splits with " + splitSets.size() +
-					" set are not sensible and should be caught beforehand.";
-			
-			if (m_splitInfo == null) {
-				m_splitInfo = new SplittingInfo(m_states.size());
-			}
-			
-			final HashSet<Iterable<STATE>> visited =
-					new HashSet<Iterable<STATE>>();
-			
-			for (final Iterable<STATE> set : splitSets) {
-				for (final Iterable<STATE> oldSet : visited) {
-					for (final STATE oldState : oldSet) {
-						for (final STATE newState : set) {
-							markPair(oldState, newState);
-						}
-					}
-				}
-				visited.add(set);
-			}
-		}
-		
-		private void markPair(final STATE oldState, final STATE newState) {
-			if (DEBUG3)
-				System.err.println("separate " + oldState + " " + newState);
-			
-			assert (oldState != newState);
-			
-			final HashMap<STATE, HashSet<STATE>> state2separatedSet =
-					m_splitInfo.m_state2separatedSet;
-			
-			HashSet<STATE> separated = state2separatedSet.get(oldState);
-			if (separated == null) {
-				separated = new HashSet<STATE>();
-				state2separatedSet.put(oldState, separated);
-			}
-			separated.add(newState);
-			
-			separated = state2separatedSet.get(newState);
-			if (separated == null) {
-				separated = new HashSet<STATE>();
-				state2separatedSet.put(newState, separated);
-			}
-			separated.add(oldState);
-		}
-		
 		public EquivalenceClass(final EquivalenceClass parent) {
-			m_states = parent.m_intersection;
+			this(parent.m_intersection, parent);
+		}
+		
+		/**
+		 * This constructor is reserved for the placeholder equivalence class.
+		 */
+		private EquivalenceClass() {
+			m_states = null;
+			m_intersection = null;
+		}
+		
+		/**
+		 * This constructor is used during the return split, when an
+		 * equivalence class can be split into more than two new objects.
+		 * 
+		 * @param states the set of states for the equivalence class
+		 * @param parent the parent equivalence class
+		 */
+		public EquivalenceClass(final Set<STATE> states,
+				final EquivalenceClass parent) {
+			m_states = states;
 			reset();
 			switch (parent.m_incomingInt) {
 				case unknown:
@@ -2819,20 +2855,70 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 		}
 		
 		/**
-		 * This constructor is reserved for the placeholder equivalence class.
+		 * This method marks the pairs of splits necessary for given sets of
+		 * states, but does not invoke the splits yet.
+		 *
+		 * @param splitSets sets of states to be marked for split
 		 */
-		private EquivalenceClass() {
-			m_states = null;
-			m_intersection = null;
+		public void markSplit(Collection<HashSet<STATE>> splitSets) {
+			assert (splitSets.size() > 1) : "Splits with " + splitSets.size() +
+					" set are not sensible and should be caught beforehand.";
+			
+			if (m_state2separatedSet == null) {
+				m_state2separatedSet = new HashMap<STATE, HashSet<STATE>>(
+						computeHashSetCapacity(m_states.size()));
+			}
+			
+			final HashSet<Iterable<STATE>> visited =
+					new HashSet<Iterable<STATE>>();
+			
+			for (final Iterable<STATE> set : splitSets) {
+				for (final Iterable<STATE> oldSet : visited) {
+					for (final STATE oldState : oldSet) {
+						for (final STATE newState : set) {
+							markPair(oldState, newState);
+						}
+					}
+				}
+				visited.add(set);
+			}
 		}
 		
+		/**
+		 * This method marks a pair of states to be separated.
+		 *
+		 * @param state1 one state
+		 * @param state2 another state
+		 */
+		private void markPair(final STATE state1, final STATE state2) {
+			if (DEBUG3)
+				System.err.println("separate " + state1 + " " + state2);
+			
+			assert (state1 != state2);
+			
+			HashSet<STATE> separated = m_state2separatedSet.get(state1);
+			if (separated == null) {
+				separated = new HashSet<STATE>();
+				m_state2separatedSet.put(state1, separated);
+			}
+			separated.add(state2);
+			
+			separated = m_state2separatedSet.get(state2);
+			if (separated == null) {
+				separated = new HashSet<STATE>();
+				m_state2separatedSet.put(state2, separated);
+			}
+			separated.add(state1);
+		}
+		
+
 		/**
 		 * This method resets the intersection set.
 		 */
 		private void reset() {
 			m_intersection = new HashSet<STATE>(
 					computeHashSetCapacity(m_states.size()));
-			m_splitInfo = null;
+			m_state2separatedSet = null;
 		}
 		
 		@Override
