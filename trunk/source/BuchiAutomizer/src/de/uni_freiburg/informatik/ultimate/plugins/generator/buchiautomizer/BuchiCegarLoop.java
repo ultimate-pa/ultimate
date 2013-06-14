@@ -68,7 +68,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.In
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryRefinement;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.InterpolantAutomataTransitionAppender.PostDeterminizer;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.InterpolantAutomataTransitionAppender.PostDeterminizerNoFrills;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.InterpolantAutomataTransitionAppender.EagerInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.InterpolantAutomataTransitionAppender.StrongestPostDeterminizer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.EdgeChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IPredicate;
@@ -182,8 +182,8 @@ public class BuchiCegarLoop {
 
 		private PredicateFactoryRefinement m_StateFactoryForRefinement;
 
-		private static final boolean m_ReduceAbstractionSize = !true;
-		private static final boolean m_Powerset = !true;
+		private static final boolean m_ReduceAbstractionSize = true;
+		private static final boolean m_Eager = true;
 		private static final boolean m_Difference = !true;
 
 		public BuchiCegarLoop(RootNode rootNode,
@@ -302,8 +302,8 @@ public class BuchiCegarLoop {
 					if (m_ReduceAbstractionSize ) {
 						m_Abstraction = (new RemoveDeadEnds<CodeBlock, IPredicate>(m_Abstraction)).getResult();
 						s_Logger.info("Abstraction has " + m_Abstraction.sizeInformation());
-						Collection<Set<IPredicate>> partition = BasicCegarLoop.computePartition(m_Abstraction);
-						MinimizeSevpa<CodeBlock, IPredicate> minimizeOp = new MinimizeSevpa<CodeBlock, IPredicate>(m_Abstraction, null, false, false, m_StateFactoryForRefinement);
+						Collection<Set<IPredicate>> partition = BuchiCegarLoop.computePartition(m_Abstraction);
+						MinimizeSevpa<CodeBlock, IPredicate> minimizeOp = new MinimizeSevpa<CodeBlock, IPredicate>(m_Abstraction, partition, false, false, m_StateFactoryForRefinement);
 						minimizeOp.checkResult(defaultStateFactory);
 						INestedWordAutomatonOldApi<CodeBlock, IPredicate> minimized = minimizeOp.getResult();
 						if (m_Pref.computeHoareAnnotation()) {
@@ -694,23 +694,26 @@ public class BuchiCegarLoop {
 			assert (new InductivityCheck(m_InterpolAutomaton, ec, false, true)).getResult();
 			assert (new BuchiAccepts<CodeBlock, IPredicate>(m_InterpolAutomaton,m_Counterexample.getNestedLassoWord())).getResult();
 			
-			IStateDeterminizer<CodeBlock, IPredicate> stateDeterminizer;
-			if (m_Powerset) {
-				stateDeterminizer = new PowersetDeterminizer<CodeBlock, IPredicate>(m_InterpolAutomaton);
+
+			INestedWordAutomatonSimple<CodeBlock, IPredicate> interpolAutomatonUsedInRefinement;
+			if (m_Eager) {
+				interpolAutomatonUsedInRefinement = new EagerInterpolantAutomaton(ec, m_InterpolAutomaton);
 			} else {
-				stateDeterminizer = new PostDeterminizerNoFrills(ec, true, m_InterpolAutomaton);
+				interpolAutomatonUsedInRefinement = m_InterpolAutomaton;
 			}
+			IStateDeterminizer<CodeBlock, IPredicate> stateDeterminizer = 
+					new PowersetDeterminizer<CodeBlock, IPredicate>(interpolAutomatonUsedInRefinement);
 			INestedWordAutomatonOldApi<CodeBlock, IPredicate> newAbstraction;
 			if (m_Difference) {
 				BuchiDifferenceFKV<CodeBlock, IPredicate> diff = 
 						new BuchiDifferenceFKV<CodeBlock, IPredicate>(
-								m_Abstraction, m_InterpolAutomaton, 
+								m_Abstraction, interpolAutomatonUsedInRefinement, 
 								stateDeterminizer, m_StateFactoryForRefinement);
 				assert diff.checkResult(defaultStateFactory);
 				newAbstraction = diff.getResult();
 			} else {
 				BuchiComplementFKV<CodeBlock, IPredicate> complNwa = 
-						new BuchiComplementFKV<CodeBlock, IPredicate>(m_InterpolAutomaton, stateDeterminizer);
+						new BuchiComplementFKV<CodeBlock, IPredicate>(interpolAutomatonUsedInRefinement, stateDeterminizer);
 				assert(complNwa.checkResult(defaultStateFactory));
 				INestedWordAutomatonOldApi<CodeBlock, IPredicate>  complement = 
 						complNwa.getResult();
@@ -719,6 +722,9 @@ public class BuchiCegarLoop {
 						new BuchiIntersect<CodeBlock, IPredicate>(m_Abstraction, complement,m_StateFactoryForRefinement);
 				assert(interNwa.checkResult(defaultStateFactory));
 				newAbstraction = interNwa.getResult();
+			}
+			if (interpolAutomatonUsedInRefinement instanceof EagerInterpolantAutomaton) {
+				((EagerInterpolantAutomaton) interpolAutomatonUsedInRefinement).clearAssertionStack();
 			}
 			assert !(new BuchiAccepts<CodeBlock, IPredicate>(newAbstraction,m_Counterexample.getNestedLassoWord())).getResult();
 			m_Abstraction = newAbstraction;
@@ -781,6 +787,42 @@ public class BuchiCegarLoop {
 			} else {
 				return predicates[pos];
 			}
+		}
+		
+		public static Collection<Set<IPredicate>> computePartition(INestedWordAutomatonOldApi<CodeBlock, IPredicate> automaton) {
+			s_Logger.info("Start computation of initial partition.");
+			Collection<IPredicate> states = automaton.getStates();
+			Map<ProgramPoint, Set<IPredicate>> accepting = new HashMap<ProgramPoint, Set<IPredicate>>();
+			Map<ProgramPoint, Set<IPredicate>> nonAccepting = new HashMap<ProgramPoint, Set<IPredicate>>();
+			for (IPredicate p : states) {
+				ISLPredicate sp = (ISLPredicate) p;
+				if (automaton.isFinal(p)) {
+					Set<IPredicate> statesWithSamePP = accepting.get(sp.getProgramPoint());
+					if (statesWithSamePP == null) {
+						statesWithSamePP = new HashSet<IPredicate>();
+						accepting.put(sp.getProgramPoint(), statesWithSamePP);
+					}
+					statesWithSamePP.add(p);
+				} else {
+					Set<IPredicate> statesWithSamePP = nonAccepting.get(sp.getProgramPoint());
+					if (statesWithSamePP == null) {
+						statesWithSamePP = new HashSet<IPredicate>();
+						nonAccepting.put(sp.getProgramPoint(), statesWithSamePP);
+					}
+					statesWithSamePP.add(p);
+				}
+			}
+			Collection<Set<IPredicate>> partition = new ArrayList<Set<IPredicate>>();
+			for (ProgramPoint pp : accepting.keySet()) {
+				Set<IPredicate> statesWithSamePP = accepting.get(pp);
+				partition.add(statesWithSamePP);
+			}
+			for (ProgramPoint pp : nonAccepting.keySet()) {
+				Set<IPredicate> statesWithSamePP = nonAccepting.get(pp);
+				partition.add(statesWithSamePP);
+			}
+			s_Logger.info("Finished computation of initial partition.");
+			return partition;
 		}
 		
 		
