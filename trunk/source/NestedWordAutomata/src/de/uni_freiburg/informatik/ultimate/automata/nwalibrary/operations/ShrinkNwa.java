@@ -527,15 +527,133 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	}
 	
 	/**
-	 * TODO<comment>
+	 * This method performs necessary linear return splits.
+	 * 
+	 * For a fixed hierarchical predecessor, check all linear predecessors.
+	 * Distinguish these with the reached successor equivalence classes and
+	 * mark them to be split later.
+	 * 
+	 * For the linear predecessors only look at states in equivalence classes
+	 * of which at least one state indeed is a linear predecessor leading to
+	 * any state. This means down states leading to a sink state without an
+	 * explicit transition are of interest iff their equivalence class is
+	 * considered.
+	 * 
+	 * TODO<duplicateCode> this method is nearly the same as splitReturnHier().
+	 *                     create abstract method and call with algorithm
+	 *                     pattern object for transitions and DownStates.
 	 *
 	 * @param letter2hier2linEcSet mapping: letter to hierarchical state to
 	 *                             set of linear equivalence classes
 	 */
 	private void splitReturnLin(final HashMap<LETTER, HashMap<STATE,
 			HashSet<EquivalenceClass>>> letter2hier2linEcSet) {
-		// TODO Auto-generated method stub
+		if (DEBUG3)
+			System.err.println("\n- starting linear split: " +
+					letter2hier2linEcSet);
 		
+		for (final Entry<LETTER, HashMap<STATE, HashSet<EquivalenceClass>>>
+				outerEntry : letter2hier2linEcSet.entrySet()) {
+			final LETTER letter = outerEntry.getKey();
+			final HashMap<STATE, HashSet<EquivalenceClass>> hier2linEcSet =
+					outerEntry.getValue();
+			
+			if (DEBUG3)
+				System.err.println("\nouter entry: " + outerEntry);
+			
+			for (final Entry<STATE, HashSet<EquivalenceClass>> innerEntry :
+					hier2linEcSet.entrySet()) {
+				final STATE hier = innerEntry.getKey();
+				final HashSet<EquivalenceClass> linEcSet =
+						innerEntry.getValue();
+				
+				if (DEBUG3)
+					System.err.println("\n consider hier: " + hier);
+				
+				for (final EquivalenceClass linEc : linEcSet) {
+					if (DEBUG3)
+						System.err.println("\nnext linEc: " +
+								linEc.toStringShort());
+					
+					final HashMap<HashSet<EquivalenceClass>, HashSet<STATE>>
+						succEc2linSet = new HashMap<HashSet<EquivalenceClass>,
+						HashSet<STATE>>();
+					
+					for (final STATE lin : linEc.m_states) {
+						if (DEBUG3)
+							System.err.println("consider " + lin);
+						
+						final Iterator<OutgoingReturnTransition<LETTER, STATE>>
+							edges = m_operand.returnSucccessors(
+									lin, hier, letter).iterator();
+						/*
+						 * TODO<nondeterminism> at most one transition for
+						 *                      deterministic automata,
+						 *                      offer improved version?
+						 */
+						final HashSet<EquivalenceClass> succEcs;
+						if (edges.hasNext()) {
+							succEcs = new HashSet<EquivalenceClass>();
+							do {
+								final STATE succ = edges.next().getSucc();
+								final EquivalenceClass succEc = m_partition.
+										m_state2EquivalenceClass.get(succ);
+								succEcs.add(succEc);
+								
+								if (DEBUG3)
+									System.err.println(" reaching " + succ +
+											" in " + succEc.toStringShort());
+							} while (edges.hasNext());
+						}
+						else {
+							if (DEBUG3)
+								System.err.print(" no transition, ");
+							
+							if (m_doubleDecker.isDoubleDecker(lin, hier)) {
+								if (DEBUG3)
+									System.err.println("but DS");
+								
+								succEcs = m_negativeSet;
+							}
+							else {
+								if (DEBUG3)
+									System.err.println("no DS");
+								
+								continue;
+							}
+						}
+						
+						HashSet<STATE> linSet = succEc2linSet.get(succEcs);
+						if (linSet == null) {
+							linSet = new HashSet<STATE>(
+									computeHashSetCapacity(
+											linEc.m_states.size()));
+							succEc2linSet.put(succEcs, linSet);
+						}
+						linSet.add(lin);
+						
+						if (DEBUG3)
+							System.err.println(" -> altogether reached " +
+									succEcs);
+					}
+					
+					if (succEc2linSet.size() > 1) {
+						if (DEBUG3)
+							System.err.println("\n! mark split of " +
+									linEc.toStringShort() + ": " +
+									succEc2linSet);
+						
+						linEc.markSplit(succEc2linSet.values());
+					}
+					else {
+						assert (succEc2linSet.size() == 1);
+						if (DEBUG3)
+							System.err.println("ignore marking: " +
+									succEc2linSet);
+					}
+				}
+			}
+		}
 	}
 	
 	/**
@@ -545,7 +663,7 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	 * Distinguish these with the reached successor equivalence classes and
 	 * mark them to be split later.
 	 * 
-	 * As for the hierarchical predecessors, only look at states in equivalence
+	 * For the hierarchical predecessors only look at states in equivalence
 	 * classes of which at least one state indeed is a hierarchical predecessor
 	 * leading to any state. This means down states leading to a sink state
 	 * without an explicit transition are of interest iff their equivalence
@@ -563,14 +681,14 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 		for (final Entry<LETTER, HashMap<STATE, HashSet<EquivalenceClass>>>
 				outerEntry : letter2lin2hierEcSet.entrySet()) {
 			final LETTER letter = outerEntry.getKey();
-			final HashMap<STATE, HashSet<EquivalenceClass>> hier2linEcSet =
+			final HashMap<STATE, HashSet<EquivalenceClass>> lin2hierEcSet =
 					outerEntry.getValue();
 			
 			if (DEBUG3)
 				System.err.println("\nouter entry: " + outerEntry);
 			
 			for (final Entry<STATE, HashSet<EquivalenceClass>> innerEntry :
-					hier2linEcSet.entrySet()) {
+					lin2hierEcSet.entrySet()) {
 				final STATE lin = innerEntry.getKey();
 				final HashSet<EquivalenceClass> hierEcSet =
 						innerEntry.getValue();
