@@ -1,6 +1,10 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
+import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
@@ -18,11 +22,16 @@ public class BuchiEdgeChecker extends EdgeChecker {
 
 	private final IPredicate m_HondaPredicate;
 	private final IPredicate m_RankDecrease;
+	private final BoogieVar m_Unseeded;
+	private final BoogieVar m_OldRank;
+
 	public BuchiEdgeChecker(SmtManager smtManager, IPredicate hondaPredicate,
-			IPredicate rankDecrease) {
+			IPredicate rankDecrease, BoogieVar unseeded, BoogieVar oldRank) {
 		super(smtManager);
 		m_HondaPredicate = hondaPredicate;
 		m_RankDecrease = rankDecrease;
+		m_Unseeded = unseeded;
+		m_OldRank = oldRank;
 	}
 	@Override
 	public LBool postInternalImplies(IPredicate p) {
@@ -88,6 +97,13 @@ public class BuchiEdgeChecker extends EdgeChecker {
 	public LBool sdLazyEcReturn(IPredicate pre, IPredicate hier, Return cb,
 			IPredicate post) {
 		return null;
+	}
+	@Override
+	protected Set<BoogieVar> getModifiableGlobals(Call call) {
+		Set<BoogieVar> result = new HashSet<BoogieVar>(super.getModifiableGlobals(call));
+		result.add(m_Unseeded);
+		result.add(m_OldRank);
+		return result;
 	}
 	
 	
