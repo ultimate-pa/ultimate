@@ -446,17 +446,21 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 			System.err.println(builder.toString());
 		}
 		
+		final HashSet<EquivalenceClass> splitEquivalenceClasses =
+				new HashSet<EquivalenceClass>(
+						computeHashSetCapacity(involvedClasses.size()));
+		
 		// collect trivial linear splits
-		splitReturnLin(letter2hier2linEcSet);
+		splitReturnLin(letter2hier2linEcSet, splitEquivalenceClasses);
 		
 		// collect trivial hierarchical splits
-		splitReturnHier(letter2lin2hierEcSet);
+		splitReturnHier(letter2lin2hierEcSet, splitEquivalenceClasses);
 		
 		// collect complicated mixed splits
-		splitReturnMixed(involvedClasses);
+		splitReturnMixed(involvedClasses, splitEquivalenceClasses);
 		
 		// really execute the splits
-		splitReturnExecute(involvedClasses);
+		splitReturnExecute(splitEquivalenceClasses);
 	}
 	
 	/**
@@ -545,9 +549,11 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	 *
 	 * @param letter2hier2linEcSet mapping: letter to hierarchical state to
 	 *                             set of linear equivalence classes
+	 * @param splitEquivalenceClasses split equivalence classes
 	 */
 	private void splitReturnLin(final HashMap<LETTER, HashMap<STATE,
-			HashSet<EquivalenceClass>>> letter2hier2linEcSet) {
+			HashSet<EquivalenceClass>>> letter2hier2linEcSet,
+			final HashSet<EquivalenceClass> splitEquivalenceClasses) {
 		if (DEBUG3)
 			System.err.println("\n- starting linear split: " +
 					letter2hier2linEcSet);
@@ -644,6 +650,7 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 									succEc2linSet);
 						
 						linEc.markSplit(succEc2linSet.values());
+						splitEquivalenceClasses.add(linEc);
 					}
 					else {
 						assert (succEc2linSet.size() == 1);
@@ -671,9 +678,11 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	 *
 	 * @param letter2lin2hierEcSet mapping: letter to linear state to set of
 	 *                             hierarchical equivalence classes
+	 * @param splitEquivalenceClasses split equivalence classes
 	 */
 	private void splitReturnHier(final HashMap<LETTER, HashMap<STATE,
-			HashSet<EquivalenceClass>>> letter2lin2hierEcSet) {
+			HashSet<EquivalenceClass>>> letter2lin2hierEcSet,
+			final HashSet<EquivalenceClass> splitEquivalenceClasses) {
 		if (DEBUG3)
 			System.err.println("\n- starting hierarchical split: " +
 					letter2lin2hierEcSet);
@@ -770,6 +779,7 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 									succEc2hierSet);
 						
 						hierEc.markSplit(succEc2hierSet.values());
+						splitEquivalenceClasses.add(hierEc);
 					}
 					else {
 						assert (succEc2hierSet.size() == 1);
@@ -786,9 +796,11 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	 * TODO<comment>
 	 * 
 	 * @param involvedClasses
+	 * @param splitEquivalenceClasses 
 	 */
 	private void splitReturnMixed(final HashSet<EquivalenceClass>
-			involvedClasses) {
+			involvedClasses,
+			final HashSet<EquivalenceClass> splitEquivalenceClasses) {
 		// TODO Auto-generated method stub
 		
 	}
@@ -796,10 +808,19 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	/**
 	 * TODO<comment>
 	 *
-	 * @param involvedClasses
+	 * @param splitEquivalenceClasses
 	 */
 	private void splitReturnExecute(
-			final HashSet<EquivalenceClass> involvedClasses) {
+			final HashSet<EquivalenceClass> splitEquivalenceClasses) {
+		if (DEBUG3) {
+			System.err.println("\n-- executing return splits");
+			for (final EquivalenceClass ec : splitEquivalenceClasses) {
+				System.err.print(ec);
+				System.err.print(" : ");
+				System.err.println(ec.m_splitInfo);
+			}
+		}
+		
 		// TODO Auto-generated method stub
 		
 	}
@@ -1442,13 +1463,11 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	 *
 	 * @param graphs the graphs
 	 */
-	private void splitGraphs(Collection<? extends SplittingInfo> uncastGraphs)
+	private void splitGraphs(Collection<SplittingGraph> graphs)
 			{
 		if (DEBUG2)
 			System.err.println("\n\nstarting the coloring");
 		
-		Collection<SplittingGraph> graphs =
-				(Collection<SplittingGraph>)uncastGraphs;
 		for (final SplittingGraph graph : graphs) {
 			if (DEBUG2)
 				System.err.println("\nnext graph: " + graph);
@@ -2237,7 +2256,7 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	/**
 	 * TODO<comment>
 	 */
-	private class SplittingGraph extends SplittingInfo {
+	private class SplittingGraph {
 		private ArrayList<Set<STATE>> m_sets; // TODO<remove> remove later
 		private final HashMap<STATE, Integer> m_state2index;
 		private final HashMap<Integer, STATE> m_index2state;
@@ -2442,8 +2461,41 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 		}
 	}
 	
+	/**
+	 * This class is used in an equivalence class during the return split.
+	 * It keeps a mapping for states that have to be separated and the
+	 * coloring information.
+	 */
 	private class SplittingInfo {
+		// mapping: state to states that are separated
+		private final HashMap<STATE, HashSet<STATE>> m_state2separatedSet;
+		// mapping: state to associated color
+		private final HashMap<STATE, Integer> m_state2color;
+		// current number of colors
+		private int m_colors;
 		
+		/**
+		 * @param numberOfStates number of states
+		 */
+		public SplittingInfo(final int numberOfStates) {
+			final int size = computeHashSetCapacity(numberOfStates);
+			m_state2separatedSet = new HashMap<STATE, HashSet<STATE>>(size);
+			m_state2color = new HashMap<STATE, Integer>(size);
+			m_colors = 0;
+		}
+		
+		@Override
+		public String toString() {
+			final StringBuilder builder = new StringBuilder();
+			builder.append("(separation: ");
+			builder.append(m_state2separatedSet);
+			builder.append(", coloring: ");
+			builder.append(m_state2color);
+			builder.append(", ");
+			builder.append(m_colors);
+			builder.append(" colors)");
+			return builder.toString();
+		}
 	}
 	
 	/**
@@ -2689,7 +2741,7 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 					" set are not sensible and should be caught beforehand.";
 			
 			if (m_splitInfo == null) {
-				m_splitInfo = new SplittingGraph(m_states);
+				m_splitInfo = new SplittingInfo(m_states.size());
 			}
 			
 			final HashSet<Iterable<STATE>> visited =
@@ -2707,14 +2759,28 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 			}
 		}
 		
-		private void markPair(STATE oldState, STATE newState) {
+		private void markPair(final STATE oldState, final STATE newState) {
 			if (DEBUG3)
 				System.err.println("separate " + oldState + " " + newState);
 			
 			assert (oldState != newState);
 			
-			// TODO Auto-generated method stub
+			final HashMap<STATE, HashSet<STATE>> state2separatedSet =
+					m_splitInfo.m_state2separatedSet;
 			
+			HashSet<STATE> separated = state2separatedSet.get(oldState);
+			if (separated == null) {
+				separated = new HashSet<STATE>();
+				state2separatedSet.put(oldState, separated);
+			}
+			separated.add(newState);
+			
+			separated = state2separatedSet.get(newState);
+			if (separated == null) {
+				separated = new HashSet<STATE>();
+				state2separatedSet.put(newState, separated);
+			}
+			separated.add(oldState);
 		}
 		
 		public EquivalenceClass(final EquivalenceClass parent) {
