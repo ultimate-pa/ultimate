@@ -70,6 +70,14 @@ public class BinaryStatePredicateManager {
 	public IPredicate getRankDecreaseAndSi() {
 		return m_RankDecreaseAndSi;
 	}
+	
+	public BoogieVar getUnseededVariable() {
+		return m_UnseededVariable;
+	}
+	
+	public BoogieVar getOldRankVariable() {
+		return m_OldRankVariable;
+	}
 
 	public void computePredicates(LinearRankingFunction rf, Iterable<SupportingInvariant> siList) {
 		IPredicate unseededPredicate = unseededPredicate();

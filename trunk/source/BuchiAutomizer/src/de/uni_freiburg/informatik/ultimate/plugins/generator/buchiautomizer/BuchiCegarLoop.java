@@ -184,7 +184,7 @@ public class BuchiCegarLoop {
 
 		private static final boolean m_ReduceAbstractionSize = true;
 		private static final boolean m_Eager = true;
-		private static final boolean m_Difference = !true;
+		private static final boolean m_Difference = true;
 
 		public BuchiCegarLoop(RootNode rootNode,
 				SmtManager smtManager,
@@ -690,7 +690,9 @@ public class BuchiCegarLoop {
 				String filename = "InterpolantAutomatonBuchi"+m_Iteration;
 				writeAutomatonToFile(m_InterpolAutomaton, filename);
 			}
-			EdgeChecker ec = new BuchiEdgeChecker(m_SmtManager, m_Bspm.getHondaPredicate(), m_Bspm.getRankDecreaseAndSi());
+			EdgeChecker ec = new BuchiEdgeChecker(m_SmtManager, 
+					m_Bspm.getHondaPredicate(), m_Bspm.getRankDecreaseAndSi(), 
+					m_Bspm.getUnseededVariable(), m_Bspm.getOldRankVariable());
 			assert (new InductivityCheck(m_InterpolAutomaton, ec, false, true)).getResult();
 			assert (new BuchiAccepts<CodeBlock, IPredicate>(m_InterpolAutomaton,m_Counterexample.getNestedLassoWord())).getResult();
 			
