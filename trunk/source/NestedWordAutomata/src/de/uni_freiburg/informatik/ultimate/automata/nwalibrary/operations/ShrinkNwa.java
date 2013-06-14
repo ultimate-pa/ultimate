@@ -104,6 +104,7 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	// TODO<debug>
 	private final boolean DEBUG = false;
 	private final boolean DEBUG2 = false;
+	private final boolean DEBUG3 = true;
 	
 	// TODO<statistics>
 	private final boolean STATISTICS = false;
@@ -388,6 +389,184 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 				m_partition.splitEquivalenceClasses(predecessorSet);
 			}
 		}
+	}
+	
+	/**
+	 * TODO<comment>
+	 * 
+	 * TODO<mixedSplit> several options:
+	 *                  - directly after linear and hierarchical split (local)
+	 *                  - globally execute local splits first
+	 *                  - globally collect local splits first, then execute
+	 *                  - globally collect local splits first, then collect
+	 *                    mixed splits, then execute all
+	 *
+	 * @param a
+	 */
+	private void splitReturnPredecessorsNew2(final EquivalenceClass a) {
+		assert (a.m_incomingRet != EIncomingStatus.inWL);
+		
+		// data structures for preprocessing
+		final HashMap<LETTER, HashMap<STATE, HashSet<EquivalenceClass>>>
+			letter2lin2hierEcSet = new HashMap<LETTER, HashMap<STATE,
+			HashSet<EquivalenceClass>>>();
+		final HashMap<LETTER, HashMap<STATE, HashSet<EquivalenceClass>>>
+			letter2hier2linEcSet = new HashMap<LETTER, HashMap<STATE,
+			HashSet<EquivalenceClass>>>();
+		HashSet<EquivalenceClass> involvedClasses =
+				new HashSet<EquivalenceClass>();
+		
+		// collect incoming return transitions and update data structures
+		splitReturnFindTransitions(a, letter2lin2hierEcSet,
+				letter2hier2linEcSet, involvedClasses);
+		
+		assert ((letter2lin2hierEcSet.isEmpty() &&
+					letter2hier2linEcSet.isEmpty()) ||
+				(! letter2lin2hierEcSet.isEmpty() &&
+						! letter2hier2linEcSet.isEmpty()));
+		// no return transitions found, remember that
+		if (letter2lin2hierEcSet.isEmpty()) {
+			a.m_incomingRet = EIncomingStatus.none;
+			if (STATISTICS)
+				++m_noIncomingTransitions;
+			
+			return;
+		}
+		
+		if (DEBUG3) {
+			final StringBuilder builder = new StringBuilder();
+			builder.append("\n--- new return split from A: ");
+			builder.append(a);
+			builder.append("\n letter2lin2hierEcSet: ");
+			builder.append(letter2lin2hierEcSet);
+			builder.append("\n letter2hier2linEcSet: ");
+			builder.append(letter2hier2linEcSet);
+			builder.append("\n involved ECs: ");
+			builder.append(involvedClasses);
+			System.err.println(builder.toString());
+		}
+		
+		// collect trivial linear splits
+		splitReturnLin(letter2hier2linEcSet);
+		
+		// collect trivial hierarchical splits
+		splitReturnHier(letter2hier2linEcSet);
+		
+		// collect complicated mixed splits
+		splitReturnMixed(involvedClasses);
+		
+		// really execute the splits
+		splitReturnExecute(involvedClasses);
+	}
+	
+	/**
+	 * This method finds all incoming return transitions given a splitter and
+	 * updates the data structures accordingly.
+	 *
+	 * @param a splitter equivalence class
+	 * @param letter2lin2hierEcSet mapping for hierarchical split
+	 * @param letter2hier2linEcSet mapping for linear split
+	 * @param involvedClasses set for linear & hierarchical equivalence classes
+	 */
+	private void splitReturnFindTransitions(final EquivalenceClass a,
+			final HashMap<LETTER, HashMap<STATE, HashSet<EquivalenceClass>>>
+			letter2lin2hierEcSet,
+			final HashMap<LETTER, HashMap<STATE, HashSet<EquivalenceClass>>>
+			letter2hier2linEcSet,
+			final HashSet<EquivalenceClass> involvedClasses) {
+		for (final STATE succ : a.m_states) {
+			for (final IncomingReturnTransition<LETTER, STATE> edge :
+					m_operand.returnPredecessors(succ)) {
+				final LETTER letter = edge.getLetter();
+				final STATE lin = edge.getLinPred();
+				final STATE hier = edge.getHierPred();
+				final EquivalenceClass linEc =
+						m_partition.m_state2EquivalenceClass.get(lin);
+				final EquivalenceClass hierEc =
+						m_partition.m_state2EquivalenceClass.get(hier);
+				
+				HashMap<STATE, HashSet<EquivalenceClass>> lin2hierEcSet =
+						letter2lin2hierEcSet.get(letter);
+				if (lin2hierEcSet == null) {
+					lin2hierEcSet =
+							new HashMap<STATE, HashSet<EquivalenceClass>>();
+					letter2lin2hierEcSet.put(letter, lin2hierEcSet);
+				}
+				HashSet<EquivalenceClass> hierEcSet = lin2hierEcSet.get(lin);
+				if (hierEcSet == null) {
+					hierEcSet = new HashSet<EquivalenceClass>();
+					lin2hierEcSet.put(lin, hierEcSet);
+				}
+				if (hierEcSet.add(hierEc)) {
+					involvedClasses.add(hierEc);
+				}
+				else {
+					assert (involvedClasses.contains(hierEc));
+				}
+				
+				HashMap<STATE, HashSet<EquivalenceClass>> hier2linEcSet =
+						letter2hier2linEcSet.get(letter);
+				if (hier2linEcSet == null) {
+					hier2linEcSet =
+							new HashMap<STATE, HashSet<EquivalenceClass>>();
+					letter2hier2linEcSet.put(letter, hier2linEcSet);
+				}
+				HashSet<EquivalenceClass> linEcSet = hier2linEcSet.get(hier);
+				if (linEcSet == null) {
+					linEcSet = new HashSet<EquivalenceClass>();
+					hier2linEcSet.put(hier, linEcSet);
+				}
+				if (linEcSet.add(linEc)) {
+					involvedClasses.add(linEc);
+				}
+				else {
+					assert (involvedClasses.contains(linEc));
+				}
+			}
+		}
+	}
+	
+	/**
+	 * TODO<comment>
+	 *
+	 * @param letter2hier2linEcSet
+	 */
+	private void splitReturnLin(final HashMap<LETTER, HashMap<STATE,
+			HashSet<EquivalenceClass>>> letter2hier2linEcSet) {
+		// TODO Auto-generated method stub
+		
+	}
+	
+	/**
+	 * TODO<comment>
+	 *
+	 * @param letter2hier2linEcSet
+	 */
+	private void splitReturnHier(final HashMap<LETTER, HashMap<STATE,
+			HashSet<EquivalenceClass>>> letter2hier2linEcSet) {
+		// TODO Auto-generated method stub
+		
+	}
+	
+	/**
+	 * TODO<comment>
+	 * 
+	 * @param involvedClasses
+	 */
+	private void splitReturnMixed(final HashSet<EquivalenceClass>
+			involvedClasses) {
+		// TODO Auto-generated method stub
+		
+	}
+	
+	/**
+	 * TODO<comment>
+	 *
+	 * @param involvedClasses
+	 */
+	private void splitReturnExecute(HashSet<EquivalenceClass> involvedClasses) {
+		// TODO Auto-generated method stub
+		
 	}
 	
 	/**
@@ -1026,10 +1205,13 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	 *
 	 * @param graphs the graphs
 	 */
-	private void splitGraphs(Collection<SplittingGraph> graphs) {
+	private void splitGraphs(Collection<? extends SplittingInfo> uncastGraphs)
+			{
 		if (DEBUG2)
 			System.err.println("\n\nstarting the coloring");
 		
+		Collection<SplittingGraph> graphs =
+				(Collection<SplittingGraph>)uncastGraphs;
 		for (final SplittingGraph graph : graphs) {
 			if (DEBUG2)
 				System.err.println("\nnext graph: " + graph);
@@ -1394,6 +1576,7 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	 * @param succEc the successor equivalence class
 	 * @param letter the letter
 	 */
+	// TODO<remove>
 	private void splitLinPred(final Collection<STATE> lins,
 			final Collection<STATE> hiers, final EquivalenceClass succEc,
 			final LETTER letter) {
@@ -1491,6 +1674,7 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	 * @param succEc the successor equivalence class
 	 * @param letter the letter
 	 */
+	// TODO<remove>
 	private void splitHierPred(final Iterable<STATE> lins,
 			final Collection<STATE> hiers, final EquivalenceClass succEc,
 			final LETTER letter) {
@@ -1816,7 +2000,7 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	/**
 	 * TODO<comment>
 	 */
-	private class SplittingGraph {
+	private class SplittingGraph extends SplittingInfo {
 		private ArrayList<Set<STATE>> m_sets; // TODO<remove> remove later
 		private final HashMap<STATE, Integer> m_state2index;
 		private final HashMap<Integer, STATE> m_index2state;
@@ -2019,6 +2203,10 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 			
 			return builder.toString();
 		}
+	}
+	
+	private class SplittingInfo {
+		
 	}
 	
 	/**
@@ -2308,7 +2496,7 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 				return "negative equivalence class";
 			}
 			
-			if (!DEBUG && DEBUG2) {
+			if (!DEBUG && (DEBUG2 || DEBUG3)) {
 				return toStringShort();
 			}
 			
