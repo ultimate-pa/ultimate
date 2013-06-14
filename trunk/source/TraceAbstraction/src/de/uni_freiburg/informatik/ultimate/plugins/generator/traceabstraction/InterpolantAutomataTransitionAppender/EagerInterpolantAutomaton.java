@@ -141,6 +141,10 @@ public class EagerInterpolantAutomaton implements
 	}
 	
 	private LBool computeSuccInternalSolver(IPredicate state, CodeBlock symbol, IPredicate succCand) {
+		if (m_AssertedHier != null) {
+			m_EdgeChecker.unAssertHierPred();
+			m_AssertedHier = null;
+		}
 		if (m_AssertedState != state || m_AssertedCodeBlock != symbol) {
 			if (m_AssertedState != null) {
 				m_EdgeChecker.unAssertPrecondition();
@@ -182,6 +186,10 @@ public class EagerInterpolantAutomaton implements
 	}
 	
 	private LBool computeSuccCallSolver(IPredicate state, CodeBlock symbol, IPredicate succCand) {
+		if (m_AssertedHier != null) {
+			m_EdgeChecker.unAssertHierPred();
+			m_AssertedHier = null;
+		}
 		if (m_AssertedState != state || m_AssertedCodeBlock != symbol) {
 			if (m_AssertedState != null) {
 				m_EdgeChecker.unAssertPrecondition();
