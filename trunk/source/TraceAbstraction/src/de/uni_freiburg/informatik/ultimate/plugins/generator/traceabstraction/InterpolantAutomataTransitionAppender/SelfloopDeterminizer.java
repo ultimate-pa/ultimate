@@ -52,7 +52,7 @@ public class SelfloopDeterminizer
 		m_InterpolantAutomaton = interpolantAutom;
 		m_StateFactory = interpolantAutom.getStateFactory();
 		m_PowersetDeterminizer = 
-			new PowersetDeterminizer<CodeBlock, IPredicate>(m_InterpolantAutomaton);
+			new PowersetDeterminizer<CodeBlock, IPredicate>(m_InterpolantAutomaton, true);
 		for (IPredicate state : m_InterpolantAutomaton.getFinalStates()) {
 			if (m_InterpolantAutomatonFinalState == null) {
 				m_InterpolantAutomatonFinalState = state;
@@ -181,6 +181,11 @@ public class SelfloopDeterminizer
 	public int getMaxDegreeOfNondeterminism() {
 		// TODO Auto-generated method stub
 		return 0;
+	}
+
+	@Override
+	public boolean useDoubleDeckers() {
+		return true;
 	}
 
 }

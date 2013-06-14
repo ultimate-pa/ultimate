@@ -62,7 +62,7 @@ public class Complement<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	
 	public Complement(INestedWordAutomatonSimple<LETTER,STATE> operand) throws OperationCanceledException {
 		m_Operand = operand;
-		m_StateDeterminizer = new PowersetDeterminizer<LETTER, STATE>(operand);
+		m_StateDeterminizer = new PowersetDeterminizer<LETTER, STATE>(operand, true);
 		m_StateFactory = operand.getStateFactory();
 		s_Logger.info(startMessage());
 		computeComplement();

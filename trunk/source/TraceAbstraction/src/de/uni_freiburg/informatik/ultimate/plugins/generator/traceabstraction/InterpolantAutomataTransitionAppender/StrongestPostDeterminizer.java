@@ -457,6 +457,12 @@ public class StrongestPostDeterminizer
 			throw new UnsupportedOperationException();
 		}
 	}
+
+
+	@Override
+	public boolean useDoubleDeckers() {
+		return false;
+	}
 	
 
 }

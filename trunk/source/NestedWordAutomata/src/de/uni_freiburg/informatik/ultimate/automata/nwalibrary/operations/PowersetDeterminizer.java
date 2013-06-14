@@ -26,10 +26,13 @@ public class PowersetDeterminizer<LETTER,STATE>
 
 	StateFactory<STATE> m_ContentFactory;
 	INestedWordAutomatonSimple<LETTER,STATE> m_Nwa;
+	private final boolean m_UseDoubleDeckers;
 	int maxDegreeOfNondeterminism = 0;
 	
-	public PowersetDeterminizer(INestedWordAutomatonSimple<LETTER,STATE> nwa) { 
+	public PowersetDeterminizer(INestedWordAutomatonSimple<LETTER,STATE> nwa, 
+			boolean useDoubleDeckers) { 
 		m_Nwa = nwa;
+		m_UseDoubleDeckers = useDoubleDeckers;
 		this.m_ContentFactory = nwa.getStateFactory();
 	}
 
@@ -76,7 +79,16 @@ public class PowersetDeterminizer<LETTER,STATE>
 		for (STATE downState : detState.getDownStates()) {
 			for (STATE upState : detState.getUpStates(downState)) {
 				for (OutgoingCallTransition<LETTER, STATE> upSucc : m_Nwa.callSuccessors(upState, symbol)) {
-					succDetState.addPair(upState,upSucc.getSucc(), m_Nwa);
+					STATE succDownState;
+					// if !m_UseDoubleDeckers we always use getEmptyStackState()
+					// as down state to obtain sets of states instead of
+					// sets of DoubleDeckers.
+					if (m_UseDoubleDeckers) {
+						succDownState = upState;
+					} else {
+						succDownState = m_Nwa.getEmptyStackState();
+					}
+					succDetState.addPair(succDownState,upSucc.getSucc(), m_Nwa);
 				}
 			}
 		}
@@ -119,6 +131,12 @@ public class PowersetDeterminizer<LETTER,STATE>
 	@Override
 	public int getMaxDegreeOfNondeterminism() {
 		return maxDegreeOfNondeterminism;
+	}
+
+
+	@Override
+	public boolean useDoubleDeckers() {
+		return m_UseDoubleDeckers;
 	}
 	
 	

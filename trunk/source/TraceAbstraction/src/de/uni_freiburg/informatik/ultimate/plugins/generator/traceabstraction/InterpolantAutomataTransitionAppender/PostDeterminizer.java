@@ -691,6 +691,14 @@ public class PostDeterminizer
 
 
 
+	@Override
+	public boolean useDoubleDeckers() {
+		return m_UseDoubleDeckers;
+	}
+
+
+
+
 
 
 

@@ -182,9 +182,12 @@ public class BuchiCegarLoop {
 
 		private PredicateFactoryRefinement m_StateFactoryForRefinement;
 
+		
+
 		private static final boolean m_ReduceAbstractionSize = true;
 		private static final boolean m_Eager = true;
 		private static final boolean m_Difference = true;
+		private static final boolean m_UseDoubleDeckers = true;
 
 		public BuchiCegarLoop(RootNode rootNode,
 				SmtManager smtManager,
@@ -704,7 +707,7 @@ public class BuchiCegarLoop {
 				interpolAutomatonUsedInRefinement = m_InterpolAutomaton;
 			}
 			IStateDeterminizer<CodeBlock, IPredicate> stateDeterminizer = 
-					new PowersetDeterminizer<CodeBlock, IPredicate>(interpolAutomatonUsedInRefinement);
+					new PowersetDeterminizer<CodeBlock, IPredicate>(interpolAutomatonUsedInRefinement, m_UseDoubleDeckers);
 			INestedWordAutomatonOldApi<CodeBlock, IPredicate> newAbstraction;
 			if (m_Difference) {
 				BuchiDifferenceFKV<CodeBlock, IPredicate> diff = 

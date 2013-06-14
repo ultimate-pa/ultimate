@@ -184,4 +184,9 @@ public class StateDeterminizerCache<LETTER, STATE> implements
 		symbol2succ.put(symbol, succ);	
 	}
 
+	@Override
+	public boolean useDoubleDeckers() {
+		return m_StateDeterminizer.useDoubleDeckers();
+	}
+
 }

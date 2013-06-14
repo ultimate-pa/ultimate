@@ -94,7 +94,7 @@ public class DeterminizeDD<LETTER,STATE> extends DoubleDeckerBuilder<LETTER,STAT
 		this.contentFactory = input.getStateFactory();
 		this.m_Operand = input;
 		s_Logger.debug(startMessage());
-		this.stateDeterminizer = new PowersetDeterminizer<LETTER, STATE>(input);
+		this.stateDeterminizer = new PowersetDeterminizer<LETTER, STATE>(input, true);
 		super.m_TraversedNwa = new NestedWordAutomaton<LETTER,STATE>(
 				input.getInternalAlphabet(),
 				input.getCallAlphabet(),

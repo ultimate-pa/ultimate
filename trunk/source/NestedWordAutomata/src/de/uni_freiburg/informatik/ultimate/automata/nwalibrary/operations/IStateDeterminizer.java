@@ -33,4 +33,14 @@ public interface IStateDeterminizer<LETTER,STATE> {
 
 	int getMaxDegreeOfNondeterminism();
 	
+	/**
+	 * If true, the constructed DeterminizedStates are sets of DoubleDecker,
+	 * needed, e.g. for exact determinization of nested word automata.
+	 * If false, the constructed DeterminziedStates are sets of States. This
+	 * is sufficient for exact determinization of finite automata. We also use
+	 * these DeterminziedStates for determinizations where the resulting
+	 * automaton recognizes a superset of the input automatons language.
+	 */
+	boolean useDoubleDeckers();
+	
 }

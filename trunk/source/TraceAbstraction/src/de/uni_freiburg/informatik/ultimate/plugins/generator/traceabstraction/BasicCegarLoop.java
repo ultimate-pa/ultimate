@@ -226,7 +226,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 			switch (m_Pref.determinization()) {
 			case POWERSET:
 				PowersetDeterminizer<CodeBlock, IPredicate> psd = 
-					new PowersetDeterminizer<CodeBlock, IPredicate>(m_InterpolAutomaton);
+					new PowersetDeterminizer<CodeBlock, IPredicate>(m_InterpolAutomaton, true);
 				if (m_Pref.differenceSenwa()) {
 					diff = new DifferenceSenwa<CodeBlock, IPredicate>(
 								oldAbstraction, m_InterpolAutomaton, psd, false);
@@ -493,7 +493,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		switch (m_Pref.determinization()) {
 		case POWERSET: 
 			PowersetDeterminizer<CodeBlock, IPredicate> psd = 
-				new PowersetDeterminizer<CodeBlock, IPredicate>(m_InterpolAutomaton);
+				new PowersetDeterminizer<CodeBlock, IPredicate>(m_InterpolAutomaton, true);
 			DeterminizeDD<CodeBlock, IPredicate> dabps = 
 				new DeterminizeDD<CodeBlock, IPredicate>(
 												m_InterpolAutomaton, psd);

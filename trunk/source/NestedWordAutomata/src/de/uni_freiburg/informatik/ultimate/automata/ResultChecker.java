@@ -267,7 +267,7 @@ public class ResultChecker<LETTER,STATE> {
 
 
 	public static <LETTER,STATE> NestedRun nwaLanguageInclusion(INestedWordAutomatonOldApi nwa1, INestedWordAutomatonOldApi nwa2, StateFactory stateFactory) throws AutomataLibraryException {
-		IStateDeterminizer stateDeterminizer = new PowersetDeterminizer<LETTER,STATE>(nwa2);
+		IStateDeterminizer stateDeterminizer = new PowersetDeterminizer<LETTER,STATE>(nwa2, true);
 		INestedWordAutomatonOldApi nwa1MinusNwa2 = (new DifferenceDD(nwa1, nwa2, stateDeterminizer, stateFactory, false, false)).getResult();
 		NestedRun inNwa1ButNotInNwa2 = (new IsEmpty(nwa1MinusNwa2)).getNestedRun();
 		return inNwa1ButNotInNwa2;

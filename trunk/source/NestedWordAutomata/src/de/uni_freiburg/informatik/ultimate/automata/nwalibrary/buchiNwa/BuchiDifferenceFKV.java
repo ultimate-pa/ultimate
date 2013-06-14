@@ -62,7 +62,7 @@ public class BuchiDifferenceFKV<LETTER,STATE> implements IOperation<LETTER,STATE
 		m_FstOperand = fstOperand;
 		m_SndOperand = sndOperand;
 		m_StateFactory = m_FstOperand.getStateFactory();
-		m_StateDeterminizer = new PowersetDeterminizer<LETTER,STATE>(sndOperand);
+		m_StateDeterminizer = new PowersetDeterminizer<LETTER,STATE>(sndOperand, true);
 		s_Logger.info(startMessage());
 		computateDifference();
 		s_Logger.info(exitMessage());

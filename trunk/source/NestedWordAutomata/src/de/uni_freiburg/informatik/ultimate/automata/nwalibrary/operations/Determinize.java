@@ -48,7 +48,7 @@ public class Determinize<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	
 	
 	public Determinize(INestedWordAutomatonSimple<LETTER,STATE> input) throws OperationCanceledException {
-		this.stateDeterminizer = new PowersetDeterminizer<LETTER, STATE>(input);
+		this.stateDeterminizer = new PowersetDeterminizer<LETTER, STATE>(input, true);
 		this.m_StateFactory = input.getStateFactory();
 		this.m_Operand = input;
 		s_Logger.info(startMessage());

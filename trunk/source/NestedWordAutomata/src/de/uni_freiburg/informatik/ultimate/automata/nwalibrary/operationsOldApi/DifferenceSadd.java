@@ -153,7 +153,7 @@ public class DifferenceSadd<LETTER,STATE> implements IOperation<LETTER,STATE> {
 		if (!NestedWordAutomaton.sameAlphabet(this.minuend, this.subtrahend)) {
 			throw new AutomataLibraryException("Unable to apply operation to automata with different alphabets.");
 		}
-		this.stateDeterminizer = new PowersetDeterminizer<LETTER,STATE>(subtrahend);
+		this.stateDeterminizer = new PowersetDeterminizer<LETTER,STATE>(subtrahend, true);
 		s_Logger.info(startMessage());
 		difference = new NestedWordAutomaton<LETTER,STATE>(
 				minuend.getInternalAlphabet(),

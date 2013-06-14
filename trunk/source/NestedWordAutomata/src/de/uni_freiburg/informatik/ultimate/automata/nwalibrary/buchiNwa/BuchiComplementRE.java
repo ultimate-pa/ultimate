@@ -71,7 +71,7 @@ public class BuchiComplementRE<LETTER,STATE> implements IOperation<LETTER,STATE>
 		}
 		else {
 			PowersetDeterminizer<LETTER,STATE> pd = 
-					new PowersetDeterminizer<LETTER,STATE>(operandWithoutNonLiveStates);
+					new PowersetDeterminizer<LETTER,STATE>(operandWithoutNonLiveStates, true);
 			INestedWordAutomatonOldApi<LETTER,STATE> determinized = 
 					(new DeterminizeUnderappox<LETTER,STATE>(operandWithoutNonLiveStates,pd)).getResult();
 			INestedWordAutomatonOldApi<LETTER,STATE> determinizedComplement =

@@ -589,7 +589,16 @@ public class BuchiComplementFKVNwa<LETTER,STATE> implements INestedWordAutomaton
 				for (STATE up : state.getUpStates(down)) {
 					for (OutgoingCallTransition<LETTER, STATE> trans : 
 									m_Operand.callSuccessors(up,symbol)) {
-						addConstaint(up, trans.getSucc(), upRank, oCandidate);
+						STATE succDownState;
+						// if !m_UseDoubleDeckers we always use getEmptyStackState()
+						// as down state to obtain sets of states instead of
+						// sets of DoubleDeckers.
+						if (m_StateDeterminizer.useDoubleDeckers()) {
+							succDownState = up;
+						} else {
+							succDownState = m_Operand.getEmptyStackState();
+						}
+						addConstaint(succDownState, trans.getSucc(), upRank, oCandidate);
 					}
 				}
 			}
@@ -602,7 +611,16 @@ public class BuchiComplementFKVNwa<LETTER,STATE> implements INestedWordAutomaton
 					Integer upRank = state.getRank(down, up);
 					for (OutgoingCallTransition<LETTER, STATE> trans : 
 									m_Operand.callSuccessors(up,symbol)) {
-						addConstaint(up, trans.getSucc(), upRank, oCandidate);
+						STATE succDownState;
+						// if !m_UseDoubleDeckers we always use getEmptyStackState()
+						// as down state to obtain sets of states instead of
+						// sets of DoubleDeckers.
+						if (m_StateDeterminizer.useDoubleDeckers()) {
+							succDownState = up;
+						} else {
+							succDownState = m_Operand.getEmptyStackState();
+						}
+						addConstaint(succDownState, trans.getSucc(), upRank, oCandidate);
 					}
 				}
 			}

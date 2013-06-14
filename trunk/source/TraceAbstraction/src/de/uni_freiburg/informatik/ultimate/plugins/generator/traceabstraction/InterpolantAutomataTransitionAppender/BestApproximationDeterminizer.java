@@ -469,6 +469,11 @@ public class BestApproximationDeterminizer
 		return 0;
 	}
 
+	@Override
+	public boolean useDoubleDeckers() {
+		throw new AssertionError("Matthias has to check which result is correct");
+	}
+
 
 	
 

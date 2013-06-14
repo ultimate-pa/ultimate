@@ -102,7 +102,7 @@ public class DifferenceSenwa<LETTER, STATE> implements
 		
 		
 		this.stateDeterminizer = new StateDeterminizerCache<LETTER, STATE>(
-							new PowersetDeterminizer<LETTER,STATE>(subtrahend)); 
+							new PowersetDeterminizer<LETTER,STATE>(subtrahend, true)); 
 		
 		m_Senwa = new Senwa<LETTER, STATE>(minuend.getInternalAlphabet(), minuend.getCallAlphabet(), 
 				minuend.getReturnAlphabet(), minuend.getStateFactory());

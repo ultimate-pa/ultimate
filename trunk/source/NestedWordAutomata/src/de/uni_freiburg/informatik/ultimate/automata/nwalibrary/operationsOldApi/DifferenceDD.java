@@ -291,7 +291,7 @@ public class DifferenceDD<LETTER,STATE> extends DoubleDeckerBuilder<LETTER,STATE
 		this.subtrahendAuxilliaryEmptyStackState = 
 			subtrahend.getEmptyStackState();
 		this.stateDeterminizer =
-			new PowersetDeterminizer<LETTER,STATE>(subtrahend);
+			new PowersetDeterminizer<LETTER,STATE>(subtrahend, true);
 		super.m_TraversedNwa = new DoubleDeckerAutomaton<LETTER,STATE>(
 				minuend.getInternalAlphabet(),
 				minuend.getCallAlphabet(),
