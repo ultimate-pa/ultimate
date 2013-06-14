@@ -1,17 +1,19 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.InterpolantAutomataTransitionAppender;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.automata.Word;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomatonCache;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingReturnTransition;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IStateDeterminizer;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.DeterminizedState;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
@@ -19,10 +21,9 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Ret
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.EdgeChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IPredicate;
 
-public class PostDeterminizerNoFrills implements
-		IStateDeterminizer<CodeBlock, IPredicate> {
+public class EagerInterpolantAutomaton implements
+		INestedWordAutomatonSimple<CodeBlock, IPredicate> {
 	private final EdgeChecker m_EdgeChecker;
-	private final boolean m_UseDoubleDecker;
 	private final NestedWordAutomaton<CodeBlock, IPredicate> m_Ia;
 	private final NestedWordAutomatonCache<CodeBlock, IPredicate> m_RejectionCache;
 	
@@ -102,12 +103,10 @@ public class PostDeterminizerNoFrills implements
 	}
 	
 
-	public PostDeterminizerNoFrills(EdgeChecker edgeChecker,
-			boolean useDoubleDecker,
+	public EagerInterpolantAutomaton(EdgeChecker edgeChecker,
 			NestedWordAutomaton<CodeBlock, IPredicate> nwa) {
 		super();
 		m_EdgeChecker = edgeChecker;
-		m_UseDoubleDecker = useDoubleDecker;
 		m_Ia = nwa;
 		m_RejectionCache = new NestedWordAutomatonCache<CodeBlock, IPredicate>(
 				m_Ia.getInternalAlphabet(), 
@@ -119,113 +118,7 @@ public class PostDeterminizerNoFrills implements
 		}
 	}
 
-	@Override
-	public DeterminizedState<CodeBlock, IPredicate> initialState() {
-		DeterminizedState<CodeBlock, IPredicate> detState = 
-			new DeterminizedState<CodeBlock, IPredicate>(m_Ia);
-		for (IPredicate initialState : m_Ia.getInitialStates()) {
-			detState.addPair(m_Ia.getEmptyStackState(), initialState, m_Ia);
-		}
-		return detState;
-	}
 
-	@Override
-	public DeterminizedState<CodeBlock, IPredicate> internalSuccessor(
-			DeterminizedState<CodeBlock, IPredicate> detState, CodeBlock symbol) {
-		DeterminizedState<CodeBlock, IPredicate> result = new DeterminizedState<CodeBlock, IPredicate>(m_Ia);
-		for (IPredicate down : detState.getDownStates()) {
-			assert m_UseDoubleDecker || down == m_Ia.getEmptyStackState();
-			for (IPredicate up : detState.getUpStates(down)) {
-				if (!isCachedInternal(up, symbol)) {
-					computeSuccInternal(up, symbol);
-					reportCachedInternal(up, symbol);
-				}
-				for (OutgoingInternalTransition<CodeBlock, IPredicate> trans : 
-					m_Ia.internalSuccessors(up)) {
-					result.addPair(down, trans.getSucc(), m_Ia);
-				}
-			}
-		}
-		clearAssertionStack();
-		return result;
-	}
-
-
-
-	@Override
-	public DeterminizedState<CodeBlock, IPredicate> callSuccessor(
-			DeterminizedState<CodeBlock, IPredicate> detState, CodeBlock symbol) {
-		Call call = (Call) symbol;
-		DeterminizedState<CodeBlock, IPredicate> result = new DeterminizedState<CodeBlock, IPredicate>(m_Ia);
-		for (IPredicate down : detState.getDownStates()) {
-			assert m_UseDoubleDecker || down == m_Ia.getEmptyStackState();
-			for (IPredicate up : detState.getUpStates(down)) {
-				if (!isCachedCall(up, call)) {
-					computeSuccCall(up, call);
-					reportCachedCall(up, call);
-				}
-				for (OutgoingCallTransition<CodeBlock, IPredicate> trans : 
-					m_Ia.callSuccessors(up)) {
-					if (m_UseDoubleDecker) {
-						result.addPair(up, trans.getSucc(), m_Ia);
-					} else {
-						result.addPair(m_Ia.getEmptyStackState(), trans.getSucc(), m_Ia);
-					}
-				}
-			}
-		}
-		clearAssertionStack();
-		return result;
-	}
-
-	@Override
-	public DeterminizedState<CodeBlock, IPredicate> returnSuccessor(
-			DeterminizedState<CodeBlock, IPredicate> detState,
-			DeterminizedState<CodeBlock, IPredicate> detHier, CodeBlock symbol) {
-		Return ret = (Return) symbol;
-		DeterminizedState<CodeBlock, IPredicate> result = new DeterminizedState<CodeBlock, IPredicate>(m_Ia);
-		for (IPredicate hierDown : detHier.getDownStates()) {
-			assert m_UseDoubleDecker || hierDown == m_Ia.getEmptyStackState();
-			for (IPredicate hierUp : detHier.getUpStates(hierDown)) {
-				if (m_UseDoubleDecker) {
-					assert detState.getDownStates().contains(hierUp);
-					for (IPredicate up : detState.getUpStates(hierUp)) {
-						addReturnSuccessorsGivenHier(up, hierUp, ret, result, hierDown);
-					}
-				} else {
-					for (IPredicate down : detState.getDownStates()) {
-						assert down == m_Ia.getEmptyStackState();
-						for (IPredicate up : detState.getUpStates(down)) {
-							addReturnSuccessorsGivenHier(up, hierUp, ret, result, hierDown);
-						}
-					}
-					
-				}
-			}
-		}
-		clearAssertionStack();
-		return result;
-	}
-
-	private void addReturnSuccessorsGivenHier(IPredicate up, IPredicate hier,
-			Return ret, DeterminizedState<CodeBlock, IPredicate> result, IPredicate hierDown) {
-		if (!isCachedReturn(up, hier, ret)) {
-			computeSuccReturn(up, hier, ret);
-			reportCachedReturn(up, hier, ret);
-		}
-		for (OutgoingReturnTransition<CodeBlock, IPredicate> trans : 
-			m_Ia.returnSucccessors(up, hier, ret)) {
-			result.addPair(hierDown, trans.getSucc(), m_Ia);
-		}
-		
-	}
-
-	@Override
-	public int getMaxDegreeOfNondeterminism() {
-		// TODO Auto-generated method stub
-		return 0;
-	}
-	
 	
 	private void computeSuccInternal(IPredicate state, CodeBlock symbol) {
 		for (IPredicate succCand : m_Ia.getStates()) {
@@ -369,7 +262,7 @@ public class PostDeterminizerNoFrills implements
 	
 	
 	
-	private void clearAssertionStack() {
+	public void clearAssertionStack() {
 		if (m_AssertedState != null) {
 			m_EdgeChecker.unAssertPrecondition();
 			m_AssertedState = null;
@@ -382,6 +275,151 @@ public class PostDeterminizerNoFrills implements
 			m_EdgeChecker.unAssertCodeBlock();
 			m_AssertedCodeBlock = null;
 		}
+	}
+
+	@Override
+	public boolean accepts(Word<CodeBlock> word) {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public int size() {
+		return m_Ia.size();
+	}
+
+	@Override
+	public Set<CodeBlock> getAlphabet() {
+		return m_Ia.getAlphabet();
+	}
+
+	@Override
+	public String sizeInformation() {
+		return m_Ia.sizeInformation();
+	}
+
+	@Override
+	public Set<CodeBlock> getInternalAlphabet() {
+		return m_Ia.getInternalAlphabet();
+	}
+
+	@Override
+	public Set<CodeBlock> getCallAlphabet() {
+		return m_Ia.getCallAlphabet();
+	}
+
+	@Override
+	public Set<CodeBlock> getReturnAlphabet() {
+		return m_Ia.getReturnAlphabet();
+	}
+
+	@Override
+	public StateFactory<IPredicate> getStateFactory() {
+		return m_Ia.getStateFactory();
+	}
+
+	@Override
+	public IPredicate getEmptyStackState() {
+		return m_Ia.getEmptyStackState();
+	}
+
+	@Override
+	public Iterable<IPredicate> getInitialStates() {
+		return m_Ia.getInitialStates();
+	}
+
+	@Override
+	public boolean isInitial(IPredicate state) {
+		return m_Ia.isInitial(state);
+	}
+
+	@Override
+	public boolean isFinal(IPredicate state) {
+		return m_Ia.isFinal(state);
+	}
+
+	@Override
+	public Collection<CodeBlock> lettersInternal(IPredicate state) {
+		return getInternalAlphabet();
+	}
+
+	@Override
+	public Collection<CodeBlock> lettersCall(IPredicate state) {
+		return getCallAlphabet();
+	}
+
+	@Override
+	public Collection<CodeBlock> lettersReturn(IPredicate state) {
+		return getReturnAlphabet();
+	}
+
+	@Override
+	public Iterable<OutgoingInternalTransition<CodeBlock, IPredicate>> internalSuccessors(
+			IPredicate state, CodeBlock letter) {
+		if (!isCachedInternal(state, letter)) {
+			computeSuccInternal(state, letter);
+			reportCachedInternal(state, letter);
+		}
+		return m_Ia.internalSuccessors(state, letter);
+	}
+
+	@Override
+	public Iterable<OutgoingInternalTransition<CodeBlock, IPredicate>> internalSuccessors(
+			IPredicate state) {
+		for (CodeBlock letter : lettersInternal(state)) {
+			if (!isCachedInternal(state, letter)) {
+				computeSuccInternal(state, letter);
+				reportCachedInternal(state, letter);
+			}
+		}
+		return m_Ia.internalSuccessors(state);
+	}
+
+	@Override
+	public Iterable<OutgoingCallTransition<CodeBlock, IPredicate>> callSuccessors(
+			IPredicate state, CodeBlock letter) {
+		Call call = (Call) letter;
+		if (!isCachedCall(state, call)) {
+			computeSuccCall(state, call);
+			reportCachedCall(state, call);
+		}
+		return m_Ia.callSuccessors(state, call);
+	}
+
+	@Override
+	public Iterable<OutgoingCallTransition<CodeBlock, IPredicate>> callSuccessors(
+			IPredicate state) {
+		for (CodeBlock letter : lettersCall(state)) {
+			Call call = (Call) letter;
+			if (!isCachedCall(state, call)) {
+				computeSuccCall(state, call);
+				reportCachedCall(state, call);
+			}
+		}
+		return m_Ia.callSuccessors(state);
+	}
+
+	@Override
+	public Iterable<OutgoingReturnTransition<CodeBlock, IPredicate>> returnSucccessors(
+			IPredicate state, IPredicate hier, CodeBlock letter) {
+		Return ret = (Return) letter;
+		if (!isCachedReturn(state, hier, ret)) {
+			computeSuccReturn(state, hier, ret);
+			reportCachedReturn(state, hier, ret);
+		}
+		return m_Ia.returnSucccessors(state, hier, ret);
+	}
+
+	@Override
+	public Iterable<OutgoingReturnTransition<CodeBlock, IPredicate>> returnSuccessorsGivenHier(
+			IPredicate state, IPredicate hier) {
+		for (CodeBlock letter : lettersReturn(state)) {
+			Return ret = (Return) letter;
+			if (!isCachedReturn(state, hier, ret)) {
+				computeSuccReturn(state, hier, ret);
+				reportCachedReturn(state, hier, ret);
+			}
+		}
+		return m_Ia.returnSuccessorsGivenHier(state, hier);
 	}
 
 }
