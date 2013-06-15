@@ -253,9 +253,9 @@ public class SmtManager {
 	 * substitute the oldVar by the corresponding globalVar in term and
 	 * remove the oldvar from vars.
 	 */
-	public Term substituteOldVarsOfNonModifiableGlobals(String procedure, Set<BoogieVar> vars,  Term term) {
-		final Set<BoogieVar> modifiableGlobals = 
-				m_ModifiableGlobals.getModifiedBoogieVars(procedure);
+	public Term substituteOldVarsOfNonModifiableGlobals(String proc, Set<BoogieVar> vars,  Term term) {
+		final Set<BoogieVar> oldVarsOfmodifiableGlobals = 
+				m_ModifiableGlobals.getOldVarsAssignment(proc).getAssignedVars();
 		List<BoogieVar> replacedOldVars = new ArrayList<BoogieVar>();
 		
 		ArrayList<TermVariable> replacees = new ArrayList<TermVariable>();
@@ -263,7 +263,7 @@ public class SmtManager {
 		
 		for (BoogieVar bv : vars) {
 			if (bv.isOldvar()) {
-				if (!modifiableGlobals.contains(bv)) {
+				if (!oldVarsOfmodifiableGlobals.contains(bv)) {
 					replacees.add(bv.getTermVariable());
 					replacers.add(getNonOldVar(bv).getTermVariable());
 					replacedOldVars.add(bv);
