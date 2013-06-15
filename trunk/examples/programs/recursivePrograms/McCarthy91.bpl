@@ -14,7 +14,7 @@ procedure McCarthy(x: int) returns (res: int);
 implementation McCarthy(x: int) returns (res: int)
 {
   if (x > 100) {
-    res := x + 10;
+    res := x - 10;
   }
   else {
     call res := McCarthy(x + 11);
