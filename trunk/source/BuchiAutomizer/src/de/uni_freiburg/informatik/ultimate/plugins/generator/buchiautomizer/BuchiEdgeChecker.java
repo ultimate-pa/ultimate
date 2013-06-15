@@ -98,15 +98,7 @@ public class BuchiEdgeChecker extends EdgeChecker {
 			IPredicate post) {
 		return null;
 	}
-	@Override
-	protected Set<BoogieVar> getModifiableGlobals(Call call) {
-		Set<BoogieVar> result = new HashSet<BoogieVar>(super.getModifiableGlobals(call));
-		result.add(m_Unseeded);
-		result.add(m_OldRank);
-		return result;
-	}
-	
-	
+
 	
 
 }
