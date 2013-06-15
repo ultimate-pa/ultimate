@@ -26,6 +26,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Smt2Boogie;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.TransFormula;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
@@ -39,11 +40,13 @@ public class PredicateGuesser {
 	static final boolean NON_STRICT_EQUALITIES = true; 
 	private final Smt2Boogie m_BoogieVar2SmtVar;
 	private final SmtManager m_SmtManager;
+	private final ModifiableGlobalVariableManager m_ModGlobVarManager;
 	private PredicateExtractor m_pe;
-	public PredicateGuesser(SmtManager m_SmtManager) {
+	public PredicateGuesser(SmtManager m_SmtManager, ModifiableGlobalVariableManager modGlobVarManager) {
 		super();
 		this.m_SmtManager = m_SmtManager;
 		this.m_BoogieVar2SmtVar = m_SmtManager.getBoogieVar2SmtVar();
+		this.m_ModGlobVarManager = modGlobVarManager;
 	}
 	
 	public IPredicate[] extractPredicates(NestedWord<CodeBlock> m_NestedWord){
@@ -54,7 +57,10 @@ public class PredicateGuesser {
 			m_pe.extractPredicates(block.getTransitionFormula());
 			if (m_NestedWord.isCallPosition(i)) {
 				Call call = (Call) m_NestedWord.getSymbol(i);
-				m_pe.extractPredicates(call.getOldVarsAssignment());
+				String proc = call.getCallStatement().getMethodName();
+				TransFormula oldVarsAssignment = 
+						m_ModGlobVarManager.getOldVarsAssignment(proc);
+				m_pe.extractPredicates(oldVarsAssignment);
 			}
 		}
 		

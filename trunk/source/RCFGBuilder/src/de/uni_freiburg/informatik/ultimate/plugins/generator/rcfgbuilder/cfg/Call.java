@@ -21,8 +21,6 @@ public class Call extends CodeBlock {
 
 	private static final long serialVersionUID = 5047439633229508126L;
 
-	protected TransFormula m_OldVarsAssignment;
-	protected TransFormula m_GlobalVarsAssignment;
 	protected CallStatement m_CallStatement;
 	protected String m_PrettyPrintedStatements;
 	
@@ -32,18 +30,15 @@ public class Call extends CodeBlock {
 	 */
 	private final static String[] s_AttribFields = {
 		"CallStatement", "PrettyPrintedStatements", "TransitionFormula",
-		"GlobalVarsAssignment", "OldVarsAssignment", "OccurenceInCounterexamples"
+		"OccurenceInCounterexamples"
 	};
 	
 	
 	public Call(ProgramPoint source, ProgramPoint target,
-			CallStatement st, 
-			TransFormula oldVarsAssignment, TransFormula globalVarsAssignment) {
+			CallStatement st) {
 		super(source, target);
 		m_CallStatement = st;
 		m_PrettyPrintedStatements = BoogieStatementPrettyPrinter.print(st);
-		m_OldVarsAssignment = oldVarsAssignment;
-		m_GlobalVarsAssignment = globalVarsAssignment;
 		updatePayloadName();
 	}
 	
@@ -53,7 +48,7 @@ public class Call extends CodeBlock {
 	public CodeBlock getCopy(ProgramPoint source, ProgramPoint target) {
 		CodeBlock copy;
 		copy = new Call(source, target, 
-				m_CallStatement, m_OldVarsAssignment, m_GlobalVarsAssignment);
+				m_CallStatement);
 		copy.setTransitionFormula(getTransitionFormula());
 		return copy;
 	}
@@ -78,12 +73,6 @@ public class Call extends CodeBlock {
 		else if (field == "PrettyPrintedStatements") {
 			return m_PrettyPrintedStatements;
 		}
-		else if (field == "OldVarsAssignment") {
-			return m_OldVarsAssignment;
-		}
-		else if (field == "GlobalVarsAssignment") {
-			return m_GlobalVarsAssignment;
-		}
 		else {
 			return super.getFieldValue(field);
 		}
@@ -97,15 +86,4 @@ public class Call extends CodeBlock {
 		return m_PrettyPrintedStatements;
 	}
 	
-	public TransFormula getOldVarsAssignment() {
-		return m_OldVarsAssignment;
-	}
-
-	public TransFormula getGlobalVarsAssignment() {
-		return m_GlobalVarsAssignment;
-	}
-
-
-
-
 }

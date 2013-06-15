@@ -111,7 +111,7 @@ public class ReImpactObserver implements IUnmanagedObserver {
 		m_taPrefs = m_rootAnnot.getTaPrefs();
 		m_smtManager = new SmtManager(m_rootAnnot.getBoogie2Smt(), 
 				Solver.SMTInterpol, m_rootAnnot.getGlobalVars(), 
-				m_rootAnnot.getModifiedVars(), false, "");
+				m_rootAnnot.getModGlobVarManager(), false, "");
 		
 		m_truePredicate = m_smtManager.newTruePredicate();
 		m_falsePredicate = m_smtManager.newFalsePredicate();
@@ -272,7 +272,7 @@ public class ReImpactObserver implements IUnmanagedObserver {
 						errorPath.getFirst(), errorPathAsNestedWord);
 
 		TraceChecker traceChecker = new TraceChecker(m_smtManager, 
-				m_rootAnnot.getModifiedVars(),
+				m_rootAnnot.getModGlobVarManager(),
 				m_rootAnnot.getEntryNodes(),				
 				dumpInitialize());
 		LBool isSafe = traceChecker.checkTrace(m_truePredicate, 
@@ -600,7 +600,7 @@ public class ReImpactObserver implements IUnmanagedObserver {
 				prolongNestedWordUnwNodePair(v, x);
 		
 		TraceChecker traceChecker = new TraceChecker(m_smtManager, 
-				m_rootAnnot.getModifiedVars(),
+				m_rootAnnot.getModGlobVarManager(),
 				m_rootAnnot.getEntryNodes(),
 				dumpInitialize());
 		

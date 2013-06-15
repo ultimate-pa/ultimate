@@ -154,7 +154,7 @@ public class RootAnnot extends AbstractAnnotations {
 	 */
 	private Smt2Boogie m_BoogieVar2SmtVar;
 	private Boogie2SMT m_Boogie2SMT;
-
+	ModifiableGlobalVariableManager m_ModifiableGlobalVariableManager;
 
 
 	private TAPreferences m_TaPrefs;
@@ -162,6 +162,10 @@ public class RootAnnot extends AbstractAnnotations {
 
 
 	private Backtranslator m_Backtranslator;
+
+
+
+
 	
 	
 	
@@ -240,8 +244,8 @@ public class RootAnnot extends AbstractAnnotations {
 		return m_ErrorNodes;
 	}
 	
-	public Map<String, Map<String, ASTType>> getModifiedVars() {
-		return m_ModifiedVars;
+	public ModifiableGlobalVariableManager getModGlobVarManager() {
+		return m_ModifiableGlobalVariableManager;
 	}
 	
 	public Map<String, ASTType> getGlobalVars() {

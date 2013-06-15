@@ -61,15 +61,13 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.prefere
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.TAPreferences.Artifact;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.BasicCegarLoop;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CFG2NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.HoareAnnotationFragments;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.InterpolantAutomataBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryRefinement;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.InterpolantAutomataTransitionAppender.PostDeterminizer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.InterpolantAutomataTransitionAppender.EagerInterpolantAutomaton;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.InterpolantAutomataTransitionAppender.StrongestPostDeterminizer;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.InterpolantAutomataTransitionAppender.PostDeterminizer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.EdgeChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.ISLPredicate;
@@ -182,6 +180,8 @@ public class BuchiCegarLoop {
 
 		private PredicateFactoryRefinement m_StateFactoryForRefinement;
 
+		private BuchiModGlobalVarManager buchiModGlobalVarManager;
+
 		
 
 		private static final boolean m_ReduceAbstractionSize = true;
@@ -195,6 +195,8 @@ public class BuchiCegarLoop {
 			this.m_Name = "BuchiCegarLoop";
 			this.m_RootNode = rootNode;
 			this.m_SmtManager = smtManager;
+			this.buchiModGlobalVarManager = 
+					new BuchiModGlobalVarManager(null, m_RootNode.getRootAnnot().getBoogie2SMT());
 			this.m_Bspm = new BinaryStatePredicateManager(smtManager);
 			this.m_Pref = taPrefs;
 			defaultStateFactory = new PredicateFactory(
@@ -378,7 +380,7 @@ public class BuchiCegarLoop {
 			NestedRun<CodeBlock, IPredicate> loop = m_Counterexample.getLoop();
 			s_Logger.info("Loop: " + loop);
 			m_TraceChecker = new TraceChecker(m_SmtManager,
-					m_RootNode.getRootAnnot().getModifiedVars(),
+					m_RootNode.getRootAnnot().getModGlobVarManager(),
 					m_RootNode.getRootAnnot().getEntryNodes(),
 					null);
 			m_TruePredicate = m_SmtManager.newTruePredicate();
@@ -412,7 +414,7 @@ public class BuchiCegarLoop {
 			AllIntegers allInt = new TraceChecker.AllIntegers();
 			IPredicate[] interpolants = m_TraceChecker.getInterpolants(allInt);
 			constructInterpolantAutomaton(interpolants);
-			EdgeChecker ec = new EdgeChecker(m_SmtManager);
+			EdgeChecker ec = new EdgeChecker(m_SmtManager, buchiModGlobalVarManager);
 			PostDeterminizer spd = new PostDeterminizer(
 					ec, m_Pref, m_InterpolAutomaton, false);
 			DifferenceDD<CodeBlock, IPredicate> diff = null;
@@ -465,12 +467,16 @@ public class BuchiCegarLoop {
 			}
 			@SuppressWarnings("deprecation")
 			TransFormula stemTF = SequentialComposition.getInterproceduralTransFormula(
-					m_RootNode.getRootAnnot().getBoogie2SMT(), m_RootNode.getRootAnnot().getTaPrefs().SimplifyCodeBlocks(), false, stemCBs);
+					m_RootNode.getRootAnnot().getBoogie2SMT(),
+					m_RootNode.getRootAnnot().getModGlobVarManager(),
+					m_RootNode.getRootAnnot().getTaPrefs().SimplifyCodeBlocks(), false, stemCBs);
 			int stemVars = stemTF.getFormula().getFreeVars().length;
 
 			@SuppressWarnings("deprecation")
 			TransFormula loopTF = SequentialComposition.getInterproceduralTransFormula(
-					m_RootNode.getRootAnnot().getBoogie2SMT(), m_RootNode.getRootAnnot().getTaPrefs().SimplifyCodeBlocks(),false, loopCBs);
+					m_RootNode.getRootAnnot().getBoogie2SMT(),
+					m_RootNode.getRootAnnot().getModGlobVarManager(),
+					m_RootNode.getRootAnnot().getTaPrefs().SimplifyCodeBlocks(),false, loopCBs);
 			int loopVars = loopTF.getFormula().getFreeVars().length;
 			s_Logger.info("Statistics: stemVars: " + stemVars + "loopVars: " + loopVars);
 			{
@@ -479,7 +485,9 @@ public class BuchiCegarLoop {
 				composedCB.addAll(Arrays.asList(loopCBs));
 //				composedCB.addAll(Arrays.asList(loopCBs));
 				TransFormula composed = SequentialComposition.getInterproceduralTransFormula(
-						m_RootNode.getRootAnnot().getBoogie2SMT(), false, m_RootNode.getRootAnnot().getTaPrefs().SimplifyCodeBlocks(), composedCB.toArray(new CodeBlock[0])); 
+						m_RootNode.getRootAnnot().getBoogie2SMT(),
+						m_RootNode.getRootAnnot().getModGlobVarManager(),
+						false, m_RootNode.getRootAnnot().getTaPrefs().SimplifyCodeBlocks(), composedCB.toArray(new CodeBlock[0])); 
 						//TransFormula.sequentialComposition(10000, rootAnnot.getBoogie2SMT(), stemTF, loopTF);
 				if (composed.isInfeasible() == Infeasibility.INFEASIBLE) {
 					throw new AssertionError("suddently infeasible");
@@ -675,7 +683,7 @@ public class BuchiCegarLoop {
 				throw new AssertionError();
 			}
 			m_TraceChecker = new TraceChecker(m_SmtManager,
-					m_RootNode.getRootAnnot().getModifiedVars(),
+					m_RootNode.getRootAnnot().getModGlobVarManager(),
 					m_RootNode.getRootAnnot().getEntryNodes(),
 					null);
 			LBool loopCheck = m_TraceChecker.checkTrace(m_Bspm.getHondaPredicate(), m_Bspm.getRankDecreaseAndSi(), loop);
@@ -693,7 +701,7 @@ public class BuchiCegarLoop {
 				String filename = "InterpolantAutomatonBuchi"+m_Iteration;
 				writeAutomatonToFile(m_InterpolAutomaton, filename);
 			}
-			EdgeChecker ec = new BuchiEdgeChecker(m_SmtManager, 
+			EdgeChecker ec = new BuchiEdgeChecker(m_SmtManager, buchiModGlobalVarManager,
 					m_Bspm.getHondaPredicate(), m_Bspm.getRankDecreaseAndSi(), 
 					m_Bspm.getUnseededVariable(), m_Bspm.getOldRankVariable());
 			assert (new InductivityCheck(m_InterpolAutomaton, ec, false, true)).getResult();

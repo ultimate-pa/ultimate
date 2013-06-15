@@ -1,8 +1,5 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer;
 
-import java.util.HashSet;
-import java.util.Set;
-
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
@@ -25,9 +22,11 @@ public class BuchiEdgeChecker extends EdgeChecker {
 	private final BoogieVar m_Unseeded;
 	private final BoogieVar m_OldRank;
 
-	public BuchiEdgeChecker(SmtManager smtManager, IPredicate hondaPredicate,
+	public BuchiEdgeChecker(SmtManager smtManager, 
+			BuchiModGlobalVarManager buchiModGlobalVarManager,
+			IPredicate hondaPredicate,
 			IPredicate rankDecrease, BoogieVar unseeded, BoogieVar oldRank) {
-		super(smtManager);
+		super(smtManager, buchiModGlobalVarManager);
 		m_HondaPredicate = hondaPredicate;
 		m_RankDecrease = rankDecrease;
 		m_Unseeded = unseeded;

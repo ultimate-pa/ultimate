@@ -16,6 +16,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.TransFormula;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.TransFormula.Infeasibility;
@@ -26,6 +27,7 @@ public class EdgeChecker {
 	
 	private final SmtManager m_SmtManager;
 	private final Script m_Script;
+	private final ModifiableGlobalVariableManager m_ModifiableGlobalVariableManager;
 	
 	private IPredicate m_PrePred;
 	private IPredicate m_HierPred;
@@ -36,8 +38,9 @@ public class EdgeChecker {
 	public final static boolean m_UnletTerms = true; 
 	
 	
-	public EdgeChecker(SmtManager smtManager) {
+	public EdgeChecker(SmtManager smtManager, ModifiableGlobalVariableManager modGlobVarManager) {
 		m_SmtManager = smtManager;
+		m_ModifiableGlobalVariableManager = modGlobVarManager;
 		m_Script = smtManager.getScript();
 	}
 	
@@ -70,8 +73,9 @@ public class EdgeChecker {
 				if (bv.isOldvar()) {
 					Return ret = (Return) m_CodeBlock;
 					Call call = ret.getCorrespondingCall();
-					Set<BoogieVar> oldVarsOfModifiable = 
-							call.getOldVarsAssignment().getAssignedVars();
+					String proc = call.getCallStatement().getMethodName();
+					Set<BoogieVar> oldVarsOfModifiable = m_ModifiableGlobalVariableManager.
+							getOldVarsAssignment(proc).getAssignedVars();
 					if (!oldVarsOfModifiable.contains(bv)) {
 						//bv is oldvar of non-modifiable global
 						Term oldVarsEquality = oldVarsEquality(bv);
@@ -124,9 +128,9 @@ public class EdgeChecker {
 			m_HierConstants = new ScopedHashMap<BoogieVar,Term>();
 			Return ret = (Return) cb;
 			Call call = ret.getCorrespondingCall();
-			
-			
-			TransFormula ovaTF = call.getOldVarsAssignment();
+			String proc = call.getCallStatement().getMethodName();
+			TransFormula ovaTF = m_ModifiableGlobalVariableManager.
+					getOldVarsAssignment(proc);
 			Term ovaFormula = ovaTF.getFormula();
 
 			//rename modifiable globals to Hier vars
@@ -197,7 +201,9 @@ public class EdgeChecker {
 		//rename non-modifiable globals to default constants
 		Return ret = (Return) m_CodeBlock;
 		Call call = ret.getCorrespondingCall();
-		TransFormula oldVarAssignment = call.getOldVarsAssignment();
+		String proc = call.getCallStatement().getMethodName();
+		TransFormula oldVarAssignment = m_ModifiableGlobalVariableManager.
+				getOldVarsAssignment(proc);
 		Set<BoogieVar> modifiableGlobals = oldVarAssignment.getInVars().keySet();
 		
 		hierFormula = renameNonModifiableGlobalsToDefaultConstants(
@@ -324,7 +330,9 @@ public class EdgeChecker {
 		//rename modifiable globals to primed vars
 		Return ret = (Return) m_CodeBlock;
 		Call call = ret.getCorrespondingCall();
-		TransFormula oldVarAssignment = call.getOldVarsAssignment();
+		String proc = call.getCallStatement().getMethodName();
+		TransFormula oldVarAssignment = m_ModifiableGlobalVariableManager.
+				getOldVarsAssignment(proc);
 		Set<BoogieVar> modifiableGlobals = oldVarAssignment.getInVars().keySet();
 		renamedFormula = renameVarsToDefaultConstants(modifiableGlobals, renamedFormula);
 		
@@ -772,9 +780,9 @@ public class EdgeChecker {
 			return null;
 		}
 
-		
+		String proc = call.getCallStatement().getMethodName();
 		Set<BoogieVar> modifiableGlobals = 
-				call.getOldVarsAssignment().getInVars().keySet();
+				m_ModifiableGlobalVariableManager.getModifiedBoogieVars(proc);
 		boolean assignedVarsRestrictedByPre = 
 				!varSetDisjoint(cb.getTransitionFormula().getInVars().keySet(), pre.getVars());
 		for (BoogieVar bv : post.getVars()) {
@@ -842,8 +850,10 @@ public class EdgeChecker {
 		
 		// cases where pre and hier share non-modifiable var g, or
 		// g occurs in hier, and old(g) occurs in pre.
+		String proc = call.getCallStatement().getMethodName();
 		Set<BoogieVar> modifiableGlobals = 
-				call.getOldVarsAssignment().getInVars().keySet();
+				m_ModifiableGlobalVariableManager.getModifiedBoogieVars(proc);
+
 		
 		for (BoogieVar bv : pre.getVars()) {
 			if (bv.isGlobal()) {
@@ -890,8 +900,9 @@ public class EdgeChecker {
 		Call call = ret.getCorrespondingCall();
 		Set<BoogieVar> assignedVars = ret.getTransitionFormula().getAssignedVars();
 		
+		String proc = call.getCallStatement().getMethodName();
 		Set<BoogieVar> modifiableGlobals = 
-				call.getOldVarsAssignment().getInVars().keySet();
+				m_ModifiableGlobalVariableManager.getModifiedBoogieVars(proc);
 		
 		for (BoogieVar bv : post.getVars()) {
 			if (modifiableGlobals.contains(bv)) {
@@ -969,8 +980,10 @@ public class EdgeChecker {
 	
 	public LBool sdecReturnSelfloopHier(IPredicate p, Return ret) {
 		Set<BoogieVar> assignedVars = ret.getTransitionFormula().getAssignedVars();
-		Set<BoogieVar> modifiableGlobals = ret.getCorrespondingCall()
-							.getOldVarsAssignment().getInVars().keySet();  
+		String proc = ret.getCorrespondingCall().getCallStatement().getMethodName();
+		Set<BoogieVar> modifiableGlobals = 
+				m_ModifiableGlobalVariableManager.getModifiedBoogieVars(proc);
+
 		for (BoogieVar bv : p.getVars()) {
 			if (modifiableGlobals.contains(bv)) {
 				return null;

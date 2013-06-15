@@ -76,7 +76,6 @@ public class Smt2Boogie implements Serializable {
 	private final Map<IType, Sort> m_type2sort = new HashMap<IType, Sort>();
 	private final Map<Sort, IType> m_sort2type = new HashMap<Sort, IType>();
 	
-	private final Map<BoogieVar,TermVariable> m_BoogieVar2SmtVar;
 	final Map<TermVariable,BoogieVar> m_SmtVar2SmtBoogieVar;
 	
 	final Map<String,String> m_BoogieFunction2SmtFunction
@@ -102,7 +101,6 @@ public class Smt2Boogie implements Serializable {
 		m_Script = script;
 		m_Globals = globals;
 		m_OldGlobals = oldGlobals;
-		m_BoogieVar2SmtVar = new HashMap<BoogieVar,TermVariable>();
 		m_SmtVar2SmtBoogieVar = new HashMap<TermVariable,BoogieVar>();
 		m_SmtTerm2Const = new HashMap<Term, IdentifierExpression>();
 		

@@ -141,7 +141,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 	protected LBool isCounterexampleFeasible() {
 		m_TimingStatistics.startTraceCheck();
 		m_TraceChecker = new TraceChecker(m_SmtManager,
-				m_RootNode.getRootAnnot().getModifiedVars(),
+				m_RootNode.getRootAnnot().getModGlobVarManager(),
 				m_RootNode.getRootAnnot().getEntryNodes(),
 				m_IterationPW);
 		m_TruePredicate = m_SmtManager.newTruePredicate();
@@ -216,7 +216,8 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 				(INestedWordAutomatonOldApi<CodeBlock, IPredicate>) m_Abstraction;
 		Map<IPredicate, Set<IPredicate>> removedDoubleDeckers = null;
 		Map<IPredicate, IPredicate> context2entry = null;
-		EdgeChecker edgeChecker = new EdgeChecker(m_SmtManager);
+		EdgeChecker edgeChecker = new EdgeChecker(m_SmtManager, 
+				m_RootNode.getRootAnnot().getModGlobVarManager());
 		if (differenceInsteadOfIntersection) {
 			s_Logger.debug("Start constructing difference");
 			assert(oldAbstraction.getStateFactory() == m_InterpolAutomaton.getStateFactory());
@@ -487,7 +488,8 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 	
 	protected INestedWordAutomatonOldApi<CodeBlock, IPredicate> 
 											determinizeInterpolantAutomaton() throws OperationCanceledException {
-		EdgeChecker edgeChecker = new EdgeChecker(m_SmtManager);
+		EdgeChecker edgeChecker = new EdgeChecker(m_SmtManager, 
+				m_RootNode.getRootAnnot().getModGlobVarManager());
 		s_Logger.debug("Start determinization");
 		INestedWordAutomatonOldApi<CodeBlock, IPredicate> dia;
 		switch (m_Pref.determinization()) {

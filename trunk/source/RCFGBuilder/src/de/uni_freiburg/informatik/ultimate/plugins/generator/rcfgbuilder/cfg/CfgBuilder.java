@@ -318,6 +318,8 @@ public class CfgBuilder {
 		for (Summary se : m_ImplementationSummarys) {
 			addCallTransitionAndReturnTransition(se);
 		}
+		m_RootAnnot.m_ModifiableGlobalVariableManager = 
+				new ModifiableGlobalVariableManager(m_RootAnnot.m_ModifiedVars, m_Boogie2smt);
 		
 		if (m_RootAnnot.getTaPrefs().letter() == Letter.BLOCK) {
 			new LargeBlockEncoding();
@@ -469,12 +471,10 @@ public class CfgBuilder {
 		
 		String caller = callerNode.getProcedure();
 		Procedure callerImpl = m_RootAnnot.m_Implementation.get(caller);
-		TransFormula[] globalVarAssignmets = tfb.globalVarAssignments(st);
 		TransFormula arguments2InParams = tfb.inParamAssignment(st, callerImpl);
 		TransFormula outParams2CallerVars = tfb.resultAssignment(st, caller);
 		
-		Call call = new Call(callerNode, calleeEntryLoc, st,
-								globalVarAssignmets[0], globalVarAssignmets[1]);
+		Call call = new Call(callerNode, calleeEntryLoc, st);
 		call.setTransitionFormula(arguments2InParams);
 
 		ProgramPoint returnNode = (ProgramPoint) edge.getTarget();
@@ -1477,6 +1477,7 @@ public class CfgBuilder {
 			ProgramPoint predecessor = (ProgramPoint) incoming.getSource();
 			ProgramPoint successor = (ProgramPoint) outgoing.getTarget();
 			new SequentialComposition(predecessor, successor, m_Boogie2smt, 
+					m_RootAnnot.getModGlobVarManager(),
 					m_RootAnnot.getTaPrefs().SimplifyCodeBlocks(), incoming, outgoing);
 			if (!sequentialQueue.contains(predecessor)) {
 				List<CodeBlock> outEdges = superfluousParallel(predecessor);

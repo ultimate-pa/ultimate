@@ -1,7 +1,5 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder;
 
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -19,10 +17,9 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.logic.simplification.SimplifyDDA;
 import de.uni_freiburg.informatik.ultimate.model.BoogieLocation;
-import de.uni_freiburg.informatik.ultimate.model.IType;
 import de.uni_freiburg.informatik.ultimate.model.ILocation;
+import de.uni_freiburg.informatik.ultimate.model.IType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssignmentStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.CallStatement;
@@ -32,6 +29,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CfgBuilder.GotoEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdgeAnnotation;
@@ -40,7 +38,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Roo
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.TransFormula;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CfgBuilder.GotoEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.TransFormula.Infeasibility;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.NaiveDestructiveEqualityResolution;
 import de.uni_freiburg.informatik.ultimate.result.SyntaxErrorResult;
@@ -324,88 +321,8 @@ public class TransFormulaBuilder {
 				TransFormula.Infeasibility.UNPROVEABLE,closedFormula);
 	}
 	
-	/**
-	 * Construct auxilliary assignment of global vars needed by our 
-	 * implementation trace abstraction.
-	 * Return an array of two TransFormulas, for a procedure call st.
-	 * For each global variable g which is modified by the called procedure
-	 * <ul>
-	 *  <li> the first TransFormula assigns to old(g) the value of g
-	 *  <li> the second TransFormula assigns to g the value of old(g)
-	 * </ul>
-	 */
-	public TransFormula[] globalVarAssignments(CallStatement st) {
-		Map<String, ASTType> vars = m_RootAnnot.getModifiedVars().get(st.getMethodName());
-		if (vars == null) {
-			//no global var modified
-			vars = new HashMap<String, ASTType>(0);
-		}
 
-		Map<BoogieVar,TermVariable> glob2oldInVars = new HashMap<BoogieVar,TermVariable>();
-		Map<BoogieVar,TermVariable> glob2oldOutVars = new HashMap<BoogieVar,TermVariable>();
-		Set<TermVariable> glob2oldAllVars = new HashSet<TermVariable>();
-		Term glob2oldFormula = m_Boogie2smt.getScript().term("true");
-		
-		Map<BoogieVar,TermVariable> old2globInVars = new HashMap<BoogieVar,TermVariable>();
-		Map<BoogieVar,TermVariable> old2globOutVars = new HashMap<BoogieVar,TermVariable>();
-		Set<TermVariable> old2globAllVars = new HashSet<TermVariable>();
-		Term old2globFormula = m_Boogie2smt.getScript().term("true");
-		
-		Map<String, BoogieVar> globals = m_Boogie2smt.getSmt2Boogie().getGlobals();
-		for (String modVar : vars.keySet()) {
-			BoogieVar boogieVar = globals.get(modVar);
-			BoogieVar boogieOldVar = m_Boogie2smt.getSmt2Boogie().getOldGlobals().get(boogieVar.getIdentifier());
-			Sort sort = m_Boogie2smt.getSmt2Boogie().getSort(boogieVar.getIType(), st);
-			{
-				String nameIn = modVar + "_In";
-				TermVariable tvIn = m_Boogie2smt.getScript().variable(nameIn, sort);
-				String nameOut = "old(" + modVar + ")" + "_Out";
-				TermVariable tvOut = m_Boogie2smt.getScript().variable(nameOut, sort);
-				glob2oldInVars.put(boogieVar, tvIn);
-				glob2oldOutVars.put(boogieOldVar, tvOut);
-				glob2oldAllVars.add(tvIn);
-				glob2oldAllVars.add(tvOut);
-				Term assignment = m_Boogie2smt.getScript().term("=", tvOut, tvIn);
-				glob2oldFormula = Util.and(m_Boogie2smt.getScript(), glob2oldFormula, assignment);
-			}
-			{
-				String nameIn = "old(" + modVar + ")" + "_In";
-				TermVariable tvIn = m_Boogie2smt.getScript().variable(nameIn, sort);
-				String nameOut = modVar + "_Out";
-				TermVariable tvOut = m_Boogie2smt.getScript().variable(nameOut, sort);
-				old2globInVars.put(boogieOldVar, tvIn);
-				old2globOutVars.put(boogieVar, tvOut);
-				old2globAllVars.add(tvIn);
-				old2globAllVars.add(tvOut);
-				Term assignment = m_Boogie2smt.getScript().term("=", tvOut, tvIn);
-				old2globFormula = Util.and(m_Boogie2smt.getScript(), old2globFormula, assignment);
-			}			
-		}
-		TransFormula[] result = new TransFormula[2];
-		{
-			HashSet<TermVariable> auxVars = new HashSet<TermVariable>(0);
-			HashSet<TermVariable> branchEncoders = new HashSet<TermVariable>(0);
-			Term closedFormula = TransFormula.computeClosedFormula(
-					glob2oldFormula, glob2oldInVars, glob2oldOutVars, auxVars, m_Boogie2smt);
-			result[0] = new TransFormula(glob2oldFormula, glob2oldInVars,glob2oldOutVars,
-					auxVars, branchEncoders,
-					TransFormula.Infeasibility.UNPROVEABLE, closedFormula);
-		}
-		
-		{
-			HashSet<TermVariable> auxVars = new HashSet<TermVariable>(0);
-			HashSet<TermVariable> branchEncoders = new HashSet<TermVariable>(0);
-			Term closedFormula = TransFormula.computeClosedFormula(
-					old2globFormula, old2globInVars, old2globOutVars, auxVars, m_Boogie2smt);
-			result[1] = new TransFormula(old2globFormula, old2globInVars, old2globOutVars,
-				auxVars, branchEncoders,
-				TransFormula.Infeasibility.UNPROVEABLE,closedFormula);
-		}
-		return result;
-	}
-	
 
-	
 	void reportUnsupportedSyntax(CodeBlock cb, ILocation loc, String longDescription) {
 		SyntaxErrorResult result = new SyntaxErrorResult(cb,
 				Activator.PLUGIN_NAME,

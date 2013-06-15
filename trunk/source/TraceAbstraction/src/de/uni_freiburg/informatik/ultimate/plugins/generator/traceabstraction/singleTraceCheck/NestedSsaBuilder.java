@@ -20,11 +20,10 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.model.IType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.TransFormula;
@@ -64,11 +63,9 @@ public class NestedSsaBuilder {
 	
 	/**
 	 * Maps a procedure name to the set of global variables which may be
-	 * modified by the procedure. The set of variables is represented as a map
-	 * where the identifier of the variable is mapped to the type of the
-	 * variable. 
+	 * modified by the procedure.
 	 */
-	private final Map<String,Map<String,ASTType>> m_ModifiedGlobals;
+	private final ModifiableGlobalVariableManager m_ModifiedGlobals;
 
 	@SuppressWarnings("unchecked")
 	public NestedSsaBuilder(Word<CodeBlock> counterexample,
@@ -76,7 +73,7 @@ public class NestedSsaBuilder {
 							IPredicate postcondition,
 							Map<Integer, IPredicate> pendingContexts,
 							SmtManager smtManager,
-							Map<String,Map<String,ASTType>> modifiedGlobals,
+							ModifiableGlobalVariableManager modifiedGlobals,
 						 	PrintWriter iterationPW) {
 		m_Script = smtManager.getScript();
 		m_SmtManager = smtManager;
@@ -146,23 +143,20 @@ public class NestedSsaBuilder {
 				VariableVersioneer initLocalVarsVV = new VariableVersioneer(localVarAssignment);
 				initLocalVarsVV.versionInVars();
 				
-				TransFormula oldVarAssignment = correspondingCall.getOldVarsAssignment();
+				String calledProcedure = correspondingCall.getCallStatement().getMethodName();
+				TransFormula oldVarAssignment = m_ModifiedGlobals.getOldVarsAssignment(calledProcedure);
 				VariableVersioneer initOldVarsVV = new VariableVersioneer(oldVarAssignment);
 				initOldVarsVV.versionInVars();
 				
 				startOfCallingContext++;
-				m_currentProcedure = correspondingCall.getCallStatement().getMethodName();
+				m_currentProcedure = calledProcedure;
 				
 				{
 					//set var version for all modifiable globals
 					// (for context switches by call this is done by the global variable assignment
-					Map<String, ASTType> modifiedByProc = m_ModifiedGlobals.get(m_currentProcedure);
-					if (modifiedByProc != null) {
-						for (String id : modifiedByProc.keySet()) {
-							IType iType = modifiedByProc.get(id).getBoogieType();
-							BoogieVar bv = m_SmtManager.getBoogieVar2SmtVar().getGlobals().get(id); 
-							setCurrentVarVersion(bv, startOfCallingContext);
-						}
+					Set<BoogieVar> modifiable = m_ModifiedGlobals.getModifiedBoogieVars(m_currentProcedure);
+					for (BoogieVar bv : modifiable) {
+						setCurrentVarVersion(bv, startOfCallingContext);
 					}
 				}
 		
@@ -196,8 +190,9 @@ public class NestedSsaBuilder {
 			
 			if (m_Ssa.getCounterexample().isCallPosition(i)) {
 				Call call = (Call) symbol;
-				m_currentProcedure = call.getCallStatement().getMethodName();
-				TransFormula oldVarAssignment = call.getOldVarsAssignment();
+				String calledProcedure = call.getCallStatement().getMethodName();
+				m_currentProcedure = calledProcedure;
+				TransFormula oldVarAssignment = m_ModifiedGlobals.getOldVarsAssignment(calledProcedure);
 				VariableVersioneer initOldVarsVV = 
 											new VariableVersioneer(oldVarAssignment);
 				initOldVarsVV.versionInVars();
@@ -206,7 +201,7 @@ public class NestedSsaBuilder {
 				initOldVarsVV.versionAssignedVars(i);
 				m_Ssa.getGlobalOldVarAssignmentAtCall().put(i, initOldVarsVV.getVersioneeredTerm());
 
-				TransFormula globalVarAssignment = call.getGlobalVarsAssignment();
+				TransFormula globalVarAssignment = m_ModifiedGlobals.getGlobalVarsAssignment(calledProcedure);
 				VariableVersioneer initGlobalVarsVV = 
 						new VariableVersioneer(globalVarAssignment);
 				initGlobalVarsVV.versionInVars();
@@ -461,7 +456,7 @@ public class NestedSsaBuilder {
 				throw new IllegalArgumentException(bv + " no global var");
 			}
 			assert (bv.isOldvar());
-			boolean isModified = m_ModifiedGlobals.get(m_currentProcedure).containsKey(bv.getIdentifier());
+			boolean isModified = m_ModifiedGlobals.getModifiedBoogieVars(m_currentProcedure).contains(bv); 
 //			CodeBlock symbol = m_Ssa.getCounterexample().getSymbol(startOfCallingContext);
 //			Call callSymbol = (Call) symbol;
 //			// assignment of all global vars modified by this procedure

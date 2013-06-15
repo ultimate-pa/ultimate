@@ -16,10 +16,7 @@ import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
-import de.uni_freiburg.informatik.ultimate.logic.Annotation;
-import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.FormulaUnLet;
-import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.ReasonUnknown;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -35,6 +32,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Smt2Boogie;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGNode;
@@ -61,7 +59,7 @@ public class SmtManager {
 	final Smt2Boogie m_Smt2Boogie;
 	private final Script m_Script;
 	private final Map<String,ASTType> m_GlobalVars;
-	private final Map<String, Map<String, ASTType>> m_ModifiableGlobals;
+	private final ModifiableGlobalVariableManager m_ModifiableGlobals;
 	private final boolean m_DumpFormulaToFile;
 	private final String m_DumpPath;
 	private int m_Iteration;
@@ -108,7 +106,7 @@ public class SmtManager {
 	public SmtManager(Smt2Boogie smt2Boogie,
 					Solver solver, 
 					Map<String,ASTType> globalVars,
-					Map<String, Map<String, ASTType>> modifiableGlobals, 
+					ModifiableGlobalVariableManager modifiableGlobals, 
 					boolean dumpFormulaToFile,
 					String dumpPath) {
 		m_DontCareTerm = new AuxilliaryTerm("don't care");
@@ -256,7 +254,8 @@ public class SmtManager {
 	 * remove the oldvar from vars.
 	 */
 	public Term substituteOldVarsOfNonModifiableGlobals(String procedure, Set<BoogieVar> vars,  Term term) {
-		final Map<String, ASTType> modifiableByProc = m_ModifiableGlobals.get(procedure);
+		final Set<BoogieVar> modifiableGlobals = 
+				m_ModifiableGlobals.getModifiedBoogieVars(procedure);
 		List<BoogieVar> replacedOldVars = new ArrayList<BoogieVar>();
 		
 		ArrayList<TermVariable> replacees = new ArrayList<TermVariable>();
@@ -264,8 +263,7 @@ public class SmtManager {
 		
 		for (BoogieVar bv : vars) {
 			if (bv.isOldvar()) {
-				String identifier = bv.getIdentifier();
-				if (modifiableByProc == null || !modifiableByProc.containsKey(identifier)) {
+				if (!modifiableGlobals.contains(bv)) {
 					replacees.add(bv.getTermVariable());
 					replacers.add(getNonOldVar(bv).getTermVariable());
 					replacedOldVars.add(bv);
@@ -908,9 +906,8 @@ public class SmtManager {
 		m_Script.push(1);
 		m_IndexedConstants = new ScopedHashMap<String, Term>();
 		Call ca = ta.getCorrespondingCall();
-		Set<BoogieVar> modifiableGlobals = 
-			 					ca.getOldVarsAssignment().getInVars().keySet();
-		
+		Set<BoogieVar> modifiableGlobals = m_ModifiableGlobals.
+				getModifiedBoogieVars(ca.getCallStatement().getMethodName());
 		
 		TransFormula tfReturn = ta.getTransitionFormula();
 		Set<BoogieVar> assignedVarsOnReturn = new HashSet<BoogieVar>();
@@ -1729,7 +1726,7 @@ public class SmtManager {
 		if (ps2.getFormula() == m_Script.term("false")) {
 			return;
 		}
-		EdgeChecker edgeChecker = new EdgeChecker(this);
+		EdgeChecker edgeChecker = new EdgeChecker(this, m_ModifiableGlobals);
 		LBool testRes = edgeChecker.sdecReturn(ps1, psk, ta, ps2);
 		if (testRes != null) {
 //			assert testRes == result : "my return dataflow check failed";
@@ -1746,7 +1743,7 @@ public class SmtManager {
 		if (ps2.getFormula() == m_Script.term("false")) {
 			return;
 		}
-		EdgeChecker edgeChecker = new EdgeChecker(this);
+		EdgeChecker edgeChecker = new EdgeChecker(this, m_ModifiableGlobals);
 		LBool testRes = edgeChecker.sdecCall(ps1, ta, ps2);
 		if (testRes != null) {
 			assert testRes == result : "my call dataflow check failed";
@@ -1761,7 +1758,7 @@ public class SmtManager {
 	private void testMyInternalDataflowCheck(IPredicate ps1,
 			CodeBlock ta, IPredicate ps2, LBool result) {
 		if (ps2.getFormula() == m_Script.term("false")) {
-			EdgeChecker edgeChecker = new EdgeChecker(this);
+			EdgeChecker edgeChecker = new EdgeChecker(this, m_ModifiableGlobals);
 			LBool testRes = edgeChecker.sdecInternalToFalse(ps1, ta);
 			if (testRes != null) {
 				assert testRes == result || 
@@ -1774,7 +1771,7 @@ public class SmtManager {
 			return;
 		}
 		if (ps1 == ps2) {
-			EdgeChecker edgeChecker = new EdgeChecker(this);
+			EdgeChecker edgeChecker = new EdgeChecker(this, m_ModifiableGlobals);
 			LBool testRes = edgeChecker.sdecInternalSelfloop(ps1, ta);
 			if (testRes != null) {
 				assert testRes == result : "my internal dataflow check failed";
@@ -1786,7 +1783,7 @@ public class SmtManager {
 		if (ta.getTransitionFormula().isInfeasible() == Infeasibility.INFEASIBLE) {
 			return;
 		}
-		EdgeChecker edgeChecker = new EdgeChecker(this);
+		EdgeChecker edgeChecker = new EdgeChecker(this, m_ModifiableGlobals);
 		LBool testRes = edgeChecker.sdecInteral(ps1, ta, ps2);
 		if (testRes != null) {
 			assert testRes == result : "my internal dataflow check failed";

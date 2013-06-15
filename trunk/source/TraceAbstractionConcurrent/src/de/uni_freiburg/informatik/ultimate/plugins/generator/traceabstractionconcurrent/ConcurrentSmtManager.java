@@ -7,6 +7,7 @@ import java.util.Map;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Smt2Boogie;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.PreferenceValues.Solver;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
@@ -15,7 +16,7 @@ public class ConcurrentSmtManager extends SmtManager {
 
 	
 	public ConcurrentSmtManager(Smt2Boogie smt2Boogie, Solver solver,
-			Map<String, ASTType> globalVars, Map<String, Map<String, ASTType>> modifiableGlobals, boolean dumpFormulaToFile,
+			Map<String, ASTType> globalVars, ModifiableGlobalVariableManager modifiableGlobals, boolean dumpFormulaToFile,
 			String dumpPath) {
 		super(smt2Boogie, solver, globalVars, modifiableGlobals, dumpFormulaToFile, dumpPath);
 		// TODO Auto-generated constructor stub

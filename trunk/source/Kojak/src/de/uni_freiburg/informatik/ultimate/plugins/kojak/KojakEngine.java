@@ -111,7 +111,7 @@ public class KojakEngine {
 	
 	private IPredicate[] getInterpolants(NestedWord<CodeBlock> errorPathNW) {
 		TraceChecker traceChecker = new TraceChecker(mSmtManager, 
-				mOriginalRoot.getRootAnnot().getModifiedVars(), 
+				mOriginalRoot.getRootAnnot().getModGlobVarManager(), 
 				mOriginalRoot.getRootAnnot().getEntryNodes(),
 				dumpInitialize());
 		

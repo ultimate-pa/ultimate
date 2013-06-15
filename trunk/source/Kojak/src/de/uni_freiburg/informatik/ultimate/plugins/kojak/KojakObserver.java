@@ -65,7 +65,7 @@ public class KojakObserver implements IUnmanagedObserver {
 		}
 		// 2nd, 4th and 5th parameter of SmtManager Constructor have no effect.
 		SmtManager smtManager = new SmtManager(rootAnnot.getBoogie2Smt(), 
-				Solver.SMTInterpol, rootAnnot.getGlobalVars(), rootAnnot.getModifiedVars(),
+				Solver.SMTInterpol, rootAnnot.getGlobalVars(), rootAnnot.getModGlobVarManager(),
 				false, "");
 		
 		Map<String, Collection<ProgramPoint>> proc2errNodes = 

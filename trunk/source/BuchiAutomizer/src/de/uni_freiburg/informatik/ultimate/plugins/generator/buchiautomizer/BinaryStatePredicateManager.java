@@ -233,7 +233,7 @@ public class BinaryStatePredicateManager {
 			RootAnnot rootAnnot) {
 		boolean result = true;
 		TraceChecker traceChecker = new TraceChecker(m_SmtManager,
-				rootAnnot.getModifiedVars(),
+				rootAnnot.getModGlobVarManager(),
 				rootAnnot.getEntryNodes(),
 				null);
 		IPredicate truePredicate = m_SmtManager.newTruePredicate();
@@ -262,7 +262,7 @@ public class BinaryStatePredicateManager {
 	
 	public boolean checkRankDecrease(NestedWord<CodeBlock> loop, RootAnnot rootAnnot) {
 		TraceChecker traceChecker = new TraceChecker(m_SmtManager,
-				rootAnnot.getModifiedVars(),
+				rootAnnot.getModGlobVarManager(),
 				rootAnnot.getEntryNodes(),
 				null);
 		LBool loopCheck = traceChecker.checkTrace(m_HondaPredicate, m_RankDecrease, loop);

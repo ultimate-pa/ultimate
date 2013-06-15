@@ -28,6 +28,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
@@ -103,7 +104,7 @@ public class TraceChecker {
 	 * where the identifier of the variable is mapped to the type of the
 	 * variable. 
 	 */
-	private final Map<String,Map<String,ASTType>> m_ModifiedGlobals;
+	private final ModifiableGlobalVariableManager m_ModifiedGlobals;
 	
 	
 	/**
@@ -125,7 +126,7 @@ public class TraceChecker {
 	
 	
 	public TraceChecker(SmtManager smtManager,
-		 				Map<String,Map<String,ASTType>> modifiedGlobals,
+						ModifiableGlobalVariableManager modifiedGlobals,
 		 				Map<String,ProgramPoint> proc2entry,
 		 				PrintWriter debugPW) {
 		m_SmtManager = smtManager;
@@ -135,7 +136,7 @@ public class TraceChecker {
 	}
 	
 	private TraceChecker(SmtManager smtManager,
-		 				 Map<String,Map<String,ASTType>> modifiedGlobals, 
+						 ModifiableGlobalVariableManager modifiedGlobals, 
 		 				 PrintWriter debugPW, PredicateBuilder 
 		 				 predicateBuilder) {
 		m_SmtManager = smtManager;
@@ -228,23 +229,20 @@ public class TraceChecker {
 	 * g that are modified by procedure proc. 
 	 */
 	public IPredicate getOldVarsEquality(String proc) {
-		Map<String, ASTType> modifiedByProc = m_ModifiedGlobals.get(proc);
+		Set<BoogieVar> modifiableGlobals = m_ModifiedGlobals.getModifiedBoogieVars(proc);
 		Set<BoogieVar> vars = new HashSet<BoogieVar>();
 		Term term = m_SmtManager.getScript().term("true");
-		if (modifiedByProc != null) {
-			for (String id : modifiedByProc.keySet()) {
-				BoogieVar bv = m_SmtManager.getBoogieVar2SmtVar()
-						.getGlobals().get(id); 
+			for (BoogieVar bv : modifiableGlobals) {
 				vars.add(bv);
 				BoogieVar bvOld = m_SmtManager.getBoogieVar2SmtVar()
-						.getOldGlobals().get(id);
+						.getOldGlobals().get(bv.getIdentifier());
 				vars.add(bvOld);
 				TermVariable tv = bv.getTermVariable();
 				TermVariable tvOld = bvOld.getTermVariable();
 				Term equality = m_SmtManager.getScript().term("=", tv, tvOld);
 				term = Util.and(m_SmtManager.getScript(), term, equality);
 			}
-		}
+
 		IPredicate result = m_PredicateBuilder.getOrConstructPredicate(
 											term, vars, new HashSet<String>(0));
 		return result;

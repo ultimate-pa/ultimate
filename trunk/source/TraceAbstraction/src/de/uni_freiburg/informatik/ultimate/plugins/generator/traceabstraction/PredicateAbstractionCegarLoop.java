@@ -35,7 +35,7 @@ public class PredicateAbstractionCegarLoop extends BasicCegarLoop {
 	@Override
 	protected LBool isCounterexampleFeasible() {
 		m_TraceChecker = new TraceChecker(m_SmtManager,
-				m_RootNode.getRootAnnot().getModifiedVars(),
+				m_RootNode.getRootAnnot().getModGlobVarManager(),
 				m_RootNode.getRootAnnot().getEntryNodes(), m_IterationPW);
 		
 		
@@ -60,7 +60,7 @@ public class PredicateAbstractionCegarLoop extends BasicCegarLoop {
 	
 	@Override
 	protected void constructInterpolantAutomaton() {
-		PredicateGuesser pg = new PredicateGuesser(m_SmtManager);
+		PredicateGuesser pg = new PredicateGuesser(m_SmtManager, m_RootNode.getRootAnnot().getModGlobVarManager());
 		IPredicate[] predicates = pg.extractPredicates((NestedWord<CodeBlock>) m_Counterexample.getWord());
 
 		NestedWordAutomaton<CodeBlock, IPredicate> abstraction = (NestedWordAutomaton<CodeBlock, IPredicate>) m_Abstraction;

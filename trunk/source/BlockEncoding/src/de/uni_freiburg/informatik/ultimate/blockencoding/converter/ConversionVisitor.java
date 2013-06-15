@@ -38,6 +38,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cal
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CfgBuilder.GotoEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.InterproceduralSequentialComposition;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ParallelComposition;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
@@ -70,6 +71,8 @@ public class ConversionVisitor implements IMinimizationVisitor {
 	private Boogie2SMT boogie2smt;
 
 	private TransFormulaBuilder transFormBuilder;
+	
+	private ModifiableGlobalVariableManager modGlobalVarManager;
 
 	private HashMap<IMinimizedEdge, Integer> checkForMultipleFormula;
 
@@ -80,6 +83,8 @@ public class ConversionVisitor implements IMinimizationVisitor {
 	private Stack<ArrayList<CodeBlock>> seqComposedBlocks;
 
 	private HashSet<IMinimizedEdge> hasConjunctionAsParent;
+
+
 
 	/**
 	 * @param boogie2smt
@@ -95,6 +100,7 @@ public class ConversionVisitor implements IMinimizationVisitor {
 		this.checkForMultipleFormula = new HashMap<IMinimizedEdge, Integer>();
 		this.transFormBuilder = new TransFormulaBuilder(boogie2smt,
 				root.getRootAnnot());
+		this.modGlobalVarManager = root.getRootAnnot().getModGlobVarManager();
 		this.seqComposedBlocks = new Stack<ArrayList<CodeBlock>>();
 		this.hasConjunctionAsParent = new HashSet<IMinimizedEdge>();
 		if (heuristic == null) {
@@ -199,7 +205,7 @@ public class ConversionVisitor implements IMinimizationVisitor {
 				} else if (edge instanceof ShortcutErrEdge) {
 					if (cb instanceof ShortcutCodeBlock) {
 						cb = new InterproceduralSequentialComposition(null,
-								null, boogie2smt, false,
+								null, boogie2smt, modGlobalVarManager, false,
 								((ShortcutCodeBlock) cb).getCodeBlocks());
 					} else {
 						throw new IllegalArgumentException(
@@ -415,14 +421,15 @@ public class ConversionVisitor implements IMinimizationVisitor {
 										gotoEdges.get(0), gotoEdges.get(1)) });
 					}
 					return new SequentialComposition(null, null, boogie2smt,
-							false, replaceGotoEdge(gotoEdges.get(0),
-									gotoEdges.get(1)));
+							modGlobalVarManager, false, 
+							replaceGotoEdge(gotoEdges.get(0), gotoEdges.get(1)));
 				}
 				if (edge instanceof ShortcutErrEdge) {
 					return new ShortcutCodeBlock(null, null,
 							composeEdges.toArray(new CodeBlock[0]));
 				}
-				return new SequentialComposition(null, null, boogie2smt, false,
+				return new SequentialComposition(null, null, boogie2smt,
+						modGlobalVarManager, false,
 						composeEdges.toArray(new CodeBlock[0]));
 			}
 			if (edge instanceof DisjunctionEdge) {
@@ -497,9 +504,7 @@ public class ConversionVisitor implements IMinimizationVisitor {
 		}
 		if (cb instanceof Call) {
 			copyOfCodeBlock = new Call(null, null,
-					((Call) cb).getCallStatement(),
-					((Call) cb).getOldVarsAssignment(),
-					((Call) cb).getGlobalVarsAssignment());
+					((Call) cb).getCallStatement());
 		}
 		if (cb instanceof Return) {
 			// TODO: Problem because we use here, old instance of CallAnnot?
