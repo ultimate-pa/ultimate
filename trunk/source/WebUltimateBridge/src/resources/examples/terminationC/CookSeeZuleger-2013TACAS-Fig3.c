@@ -19,7 +19,7 @@ int main() {
             x = x - 1;
         } else {
             x = nondet();
-            y = y + 1;
+            y = y - 1;
         }
     }
 }
