@@ -448,20 +448,16 @@ public class NestedSsaBuilder {
 		
 
 		/**
-		 * May {@code varName} be modified in the current calling context 
-		 * (according to modifies clauses?) 
+		 * May the corresponding global var of the oldvar bv be modified in
+		 * in the current calling context (according to modifies clauses?) 
 		 */
 		private boolean modifiedInCurrentCallingContext(BoogieVar bv) {
 			if (!bv.isGlobal()) {
 				throw new IllegalArgumentException(bv + " no global var");
 			}
 			assert (bv.isOldvar());
-			boolean isModified = m_ModifiedGlobals.getModifiedBoogieVars(m_currentProcedure).contains(bv); 
-//			CodeBlock symbol = m_Ssa.getCounterexample().getSymbol(startOfCallingContext);
-//			Call callSymbol = (Call) symbol;
-//			// assignment of all global vars modified by this procedure
-//			TransFormula oldVarsAssignment = callSymbol.getOldVarsAssignment();
-//			boolean isModified = oldVarsAssignment.getOutVars().containsKey(var);
+			boolean isModified = m_ModifiedGlobals.
+					getOldVarsAssignment(m_currentProcedure).getAssignedVars().contains(bv);
 			return isModified;
 		}
 
