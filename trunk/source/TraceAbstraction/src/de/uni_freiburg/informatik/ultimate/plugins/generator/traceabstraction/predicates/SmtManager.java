@@ -44,6 +44,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Tra
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.PreferenceValues.Solver;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.HoareAnnotation;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager.TermVarsProc;
 import de.uni_freiburg.informatik.ultimate.util.ScopedHashMap;
 
 public class SmtManager {
@@ -1951,6 +1952,13 @@ public class SmtManager {
 		return new HoareAnnotation(pp, m_SerialNumber++, this);
 	}
 	
+	public IPredicate newBuchiPredicate(Set<IPredicate> inputPreds) {
+		TermVarsProc tvp = and(inputPreds.toArray(new IPredicate[0]));
+		BuchiPredicate buchi = new BuchiPredicate(m_SerialNumber++,	tvp.getProcedures(), 
+				tvp.getFormula(), tvp.getVars(), tvp.getClosedFormula(), inputPreds);
+		return buchi;
+	}
+	
 	public class TermVarsProc {
 		private final Term m_Term;
 		private final Set<BoogieVar> m_Vars;
@@ -2035,6 +2043,10 @@ public class SmtManager {
 					"Auxilliary term must not be contained in any collection");
 		}
 	}
+
+
+
+
 
 
 
