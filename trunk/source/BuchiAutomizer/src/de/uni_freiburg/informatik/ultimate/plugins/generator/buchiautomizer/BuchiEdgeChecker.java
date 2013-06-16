@@ -18,41 +18,35 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 public class BuchiEdgeChecker extends EdgeChecker {
 
 	private final IPredicate m_HondaPredicate;
-	private final IPredicate m_RankDecrease;
+	private final IPredicate m_RankEqAndSi;
 	private final BoogieVar m_Unseeded;
 	private final BoogieVar m_OldRank;
 
 	public BuchiEdgeChecker(SmtManager smtManager, 
 			BuchiModGlobalVarManager buchiModGlobalVarManager,
 			IPredicate hondaPredicate,
-			IPredicate rankDecrease, BoogieVar unseeded, BoogieVar oldRank) {
+			IPredicate rankEqAndSi, BoogieVar unseeded, BoogieVar oldRank) {
 		super(smtManager, buchiModGlobalVarManager);
 		m_HondaPredicate = hondaPredicate;
-		m_RankDecrease = rankDecrease;
+		m_RankEqAndSi = rankEqAndSi;
 		m_Unseeded = unseeded;
 		m_OldRank = oldRank;
 	}
+
+	
+	
+	
 	@Override
-	public LBool postInternalImplies(IPredicate p) {
+	public LBool assertPrecondition(IPredicate p) {
 		if (p == m_HondaPredicate) {
-			p = m_RankDecrease;
+			p  = m_RankEqAndSi;
 		}
-		return super.postInternalImplies(p);
+		return super.assertPrecondition(p);
 	}
-	@Override
-	public LBool postCallImplies(IPredicate p) {
-		if (p == m_HondaPredicate) {
-			p = m_RankDecrease;
-		}
-		return super.postCallImplies(p);
-	}
-	@Override
-	public LBool postReturnImplies(IPredicate p) {
-		if (p == m_HondaPredicate) {
-			p = m_RankDecrease;
-		}
-		return super.postReturnImplies(p);
-	}
+
+
+
+
 	@Override
 	public LBool sdecInternalSelfloop(IPredicate p, CodeBlock cb) {
 		return null; 

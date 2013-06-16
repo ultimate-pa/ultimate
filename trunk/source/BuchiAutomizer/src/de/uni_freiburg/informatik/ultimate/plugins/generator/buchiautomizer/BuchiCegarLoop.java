@@ -187,7 +187,7 @@ public class BuchiCegarLoop {
 		private static final boolean m_ReduceAbstractionSize = true;
 		private static final boolean m_Eager = true;
 		private static final boolean m_Difference = true;
-		private static final boolean m_UseDoubleDeckers = true;
+		private static final boolean m_UseDoubleDeckers = !true;
 
 		public BuchiCegarLoop(RootNode rootNode,
 				SmtManager smtManager,
@@ -195,9 +195,13 @@ public class BuchiCegarLoop {
 			this.m_Name = "BuchiCegarLoop";
 			this.m_RootNode = rootNode;
 			this.m_SmtManager = smtManager;
-			this.buchiModGlobalVarManager = 
-					new BuchiModGlobalVarManager(null, m_RootNode.getRootAnnot().getBoogie2SMT());
-			this.m_Bspm = new BinaryStatePredicateManager(smtManager);
+			this.m_Bspm = new BinaryStatePredicateManager(smtManager, 
+					m_RootNode.getRootAnnot().getBoogie2SMT());
+			this.buchiModGlobalVarManager = new BuchiModGlobalVarManager(
+					m_Bspm.getUnseededVariable(), m_Bspm.getOldRankVariable(), 
+					m_RootNode.getRootAnnot().getModGlobVarManager(),
+					m_RootNode.getRootAnnot().getBoogie2SMT());
+
 			this.m_Pref = taPrefs;
 			defaultStateFactory = new PredicateFactory(
 					m_SmtManager,
@@ -308,7 +312,8 @@ public class BuchiCegarLoop {
 						m_Abstraction = (new RemoveDeadEnds<CodeBlock, IPredicate>(m_Abstraction)).getResult();
 						s_Logger.info("Abstraction has " + m_Abstraction.sizeInformation());
 						Collection<Set<IPredicate>> partition = BuchiCegarLoop.computePartition(m_Abstraction);
-						MinimizeSevpa<CodeBlock, IPredicate> minimizeOp = new MinimizeSevpa<CodeBlock, IPredicate>(m_Abstraction, partition, false, false, m_StateFactoryForRefinement);
+						MinimizeSevpa<CodeBlock, IPredicate> minimizeOp = 
+								new MinimizeSevpa<CodeBlock, IPredicate>(m_Abstraction, partition, false, false, m_StateFactoryForRefinement);
 						minimizeOp.checkResult(defaultStateFactory);
 						INestedWordAutomatonOldApi<CodeBlock, IPredicate> minimized = minimizeOp.getResult();
 						if (m_Pref.computeHoareAnnotation()) {
@@ -675,6 +680,10 @@ public class BuchiCegarLoop {
 //					m_RootNode.getRootAnnot().getModifiedVars(),
 //					m_RootNode.getRootAnnot().getEntryNodes(),
 //					null);
+			m_TraceChecker = new TraceChecker(m_SmtManager,
+					buchiModGlobalVarManager,
+					m_RootNode.getRootAnnot().getEntryNodes(),
+					null);
 			LBool stemCheck = m_TraceChecker.checkTrace(m_Bspm.getStemPrecondition(), m_Bspm.getStemPostcondition(), stem);
 			IPredicate[] stemInterpolants;
 			if (stemCheck == LBool.UNSAT) {
@@ -683,10 +692,10 @@ public class BuchiCegarLoop {
 				throw new AssertionError();
 			}
 			m_TraceChecker = new TraceChecker(m_SmtManager,
-					m_RootNode.getRootAnnot().getModGlobVarManager(),
+					buchiModGlobalVarManager,
 					m_RootNode.getRootAnnot().getEntryNodes(),
 					null);
-			LBool loopCheck = m_TraceChecker.checkTrace(m_Bspm.getHondaPredicate(), m_Bspm.getRankDecreaseAndSi(), loop);
+			LBool loopCheck = m_TraceChecker.checkTrace(m_Bspm.getRankEqAndSi(), m_Bspm.getHondaPredicate(), loop);
 			IPredicate[] loopInterpolants;
 			if (loopCheck == LBool.UNSAT) {
 				loopInterpolants = m_TraceChecker.getInterpolants(new TraceChecker.AllIntegers());
@@ -702,7 +711,7 @@ public class BuchiCegarLoop {
 				writeAutomatonToFile(m_InterpolAutomaton, filename);
 			}
 			EdgeChecker ec = new BuchiEdgeChecker(m_SmtManager, buchiModGlobalVarManager,
-					m_Bspm.getHondaPredicate(), m_Bspm.getRankDecreaseAndSi(), 
+					m_Bspm.getHondaPredicate(), m_Bspm.getRankEqAndSi(), 
 					m_Bspm.getUnseededVariable(), m_Bspm.getOldRankVariable());
 			assert (new InductivityCheck(m_InterpolAutomaton, ec, false, true)).getResult();
 			assert (new BuchiAccepts<CodeBlock, IPredicate>(m_InterpolAutomaton,m_Counterexample.getNestedLassoWord())).getResult();

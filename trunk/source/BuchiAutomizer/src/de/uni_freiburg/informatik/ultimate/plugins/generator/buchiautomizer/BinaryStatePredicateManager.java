@@ -16,8 +16,10 @@ import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
+import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.logic.simplification.SimplifyDDA;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rankingfunctions.SupportingInvariant;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rankingfunctions.functions.LinearRankingFunction;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rankingfunctions.functions.RankingFunction;
@@ -43,16 +45,23 @@ public class BinaryStatePredicateManager {
 	
 	private IPredicate m_StemPrecondition;
 	private IPredicate m_StemPostcondition;
-	private IPredicate m_HondaPredicate;
-	private IPredicate m_RankDecreaseAndSi;
+//	private IPredicate m_HondaPredicate;
+//	private IPredicate m_RankDecreaseAndSi;
+	private IPredicate m_Honda;
+	private IPredicate m_RankEqualityAndSi;
 
 	private IPredicate m_RankDecrease;
+
+	private Boogie2SMT m_Boogie2Smt;
 	
-	public BinaryStatePredicateManager(SmtManager smtManager) {
+	public BinaryStatePredicateManager(SmtManager smtManager, Boogie2SMT boogie2Smt) {
 		m_Script = smtManager.getScript();
 		m_SmtManager = smtManager;
-		m_OldRankVariable = constructOldRankVariable();
-		m_UnseededVariable = constructUnseededVariable();
+		m_Boogie2Smt = boogie2Smt;
+		m_OldRankVariable = boogie2Smt.constructBoogieVar("oldRank", null, BoogieType.intType, false, null);
+		boogie2Smt.constructBoogieVar("oldRank", null, BoogieType.intType, true, null);
+		m_UnseededVariable = boogie2Smt.constructBoogieVar("unseeded", null, BoogieType.boolType, false, null);
+		boogie2Smt.constructBoogieVar("unseeded", null, BoogieType.boolType, true, null);
 	}
 	
 	public IPredicate getStemPrecondition() {
@@ -64,11 +73,11 @@ public class BinaryStatePredicateManager {
 	}
 
 	public IPredicate getHondaPredicate() {
-		return m_HondaPredicate;
+		return m_Honda;
 	}
 
-	public IPredicate getRankDecreaseAndSi() {
-		return m_RankDecreaseAndSi;
+	public IPredicate getRankEqAndSi() {
+		return m_RankEqualityAndSi;
 	}
 	
 	public BoogieVar getUnseededVariable() {
@@ -93,10 +102,10 @@ public class BinaryStatePredicateManager {
 		}
 		IPredicate rankEquality = getRankEquality(rf);
 		if (siConjunctionIsTrue) {
-			m_HondaPredicate = rankEquality;
+			m_RankEqualityAndSi = rankEquality;
 		} else {
 			TermVarsProc tvp = m_SmtManager.and(rankEquality, siConjunction);
-			m_HondaPredicate = m_SmtManager.newPredicate(tvp.getFormula(), 
+			m_RankEqualityAndSi = m_SmtManager.newPredicate(tvp.getFormula(), 
 					tvp.getProcedures(), tvp.getVars(), tvp.getClosedFormula()); 
 		}
 		m_RankDecrease = getRankDecrease(rf);
@@ -107,61 +116,61 @@ public class BinaryStatePredicateManager {
 					tvp.getProcedures(), tvp.getVars(), tvp.getClosedFormula());
 		}
 		if (siConjunctionIsTrue) {
-			m_RankDecreaseAndSi = unseededOrRankDecrease;
+			m_Honda = unseededOrRankDecrease;
 		} else {
 			TermVarsProc tvp = m_SmtManager.and(siConjunction, unseededOrRankDecrease);
-			m_RankDecreaseAndSi = m_SmtManager.newPredicate(tvp.getFormula(), 
+			m_Honda = m_SmtManager.newPredicate(tvp.getFormula(), 
 					tvp.getProcedures(), tvp.getVars(), tvp.getClosedFormula());
 		}
 
 	}
 
 
-	private BoogieVar constructOldRankVariable() {
-		Sort sort = m_Script.sort("Int");
-		String name = "oldRank";
-		TermVariable termVariable = m_Script.variable(name, sort);
-		
-		ApplicationTerm defaultConstant;
-		{
-			String defaultConstantName = "c_" + name;
-			m_Script.declareFun(defaultConstantName, new Sort[0], sort);
-			defaultConstant = (ApplicationTerm) m_Script.term(defaultConstantName);
-		}
-		ApplicationTerm primedConstant;
-		{
-			String primedConstantName = "c_" + name + "_primed";
-			m_Script.declareFun(primedConstantName, new Sort[0], sort);
-			primedConstant = (ApplicationTerm) m_Script.term(primedConstantName);
-		}
-		BoogieVar oldRank = new BoogieVar(name,
-				null, BoogieType.intType, false, 
-				termVariable, defaultConstant, primedConstant);
-		return oldRank;
-	}
-	
-	private BoogieVar constructUnseededVariable() {
-		Sort sort = m_Script.sort("Bool");
-		String name = "unseeded";
-		TermVariable termVariable = m_Script.variable(name, sort);
-		
-		ApplicationTerm defaultConstant;
-		{
-			String defaultConstantName = "c_" + name;
-			m_Script.declareFun(defaultConstantName, new Sort[0], sort);
-			defaultConstant = (ApplicationTerm) m_Script.term(defaultConstantName);
-		}
-		ApplicationTerm primedConstant;
-		{
-			String primedConstantName = "c_" + name + "_primed";
-			m_Script.declareFun(primedConstantName, new Sort[0], sort);
-			primedConstant = (ApplicationTerm) m_Script.term(primedConstantName);
-		}
-		BoogieVar oldRank = new BoogieVar(name,
-				null, BoogieType.boolType, false, 
-				termVariable, defaultConstant, primedConstant);
-		return oldRank;
-	}
+//	private BoogieVar constructOldRankVariable() {
+//		Sort sort = m_Script.sort("Int");
+//		String name = "oldRank";
+//		TermVariable termVariable = m_Script.variable(name, sort);
+//		
+//		ApplicationTerm defaultConstant;
+//		{
+//			String defaultConstantName = "c_" + name;
+//			m_Script.declareFun(defaultConstantName, new Sort[0], sort);
+//			defaultConstant = (ApplicationTerm) m_Script.term(defaultConstantName);
+//		}
+//		ApplicationTerm primedConstant;
+//		{
+//			String primedConstantName = "c_" + name + "_primed";
+//			m_Script.declareFun(primedConstantName, new Sort[0], sort);
+//			primedConstant = (ApplicationTerm) m_Script.term(primedConstantName);
+//		}
+//		BoogieVar oldRank = new BoogieVar(name,
+//				null, BoogieType.intType, false, 
+//				termVariable, defaultConstant, primedConstant);
+//		return oldRank;
+//	}
+//	
+//	private BoogieVar constructUnseededVariable() {
+//		Sort sort = m_Script.sort("Bool");
+//		String name = "unseeded";
+//		TermVariable termVariable = m_Script.variable(name, sort);
+//		
+//		ApplicationTerm defaultConstant;
+//		{
+//			String defaultConstantName = "c_" + name;
+//			m_Script.declareFun(defaultConstantName, new Sort[0], sort);
+//			defaultConstant = (ApplicationTerm) m_Script.term(defaultConstantName);
+//		}
+//		ApplicationTerm primedConstant;
+//		{
+//			String primedConstantName = "c_" + name + "_primed";
+//			m_Script.declareFun(primedConstantName, new Sort[0], sort);
+//			primedConstant = (ApplicationTerm) m_Script.term(primedConstantName);
+//		}
+//		BoogieVar oldRank = new BoogieVar(name,
+//				null, BoogieType.boolType, false, 
+//				termVariable, defaultConstant, primedConstant);
+//		return oldRank;
+//	}
 
 	
 	private IPredicate unseededPredicate() {
@@ -199,21 +208,24 @@ public class BinaryStatePredicateManager {
 	}
 	
 	private IPredicate getRankEquality(RankingFunction rf) {
-		return getRankInEquality(rf, "=");
+		return getRankInEquality(rf, "=", false);
 	}
 	
 	private IPredicate getRankDecrease(RankingFunction rf) {
-		return getRankInEquality(rf, ">");
+		return getRankInEquality(rf, ">", true);
 	}
 
 	
 	
-	private IPredicate getRankInEquality(RankingFunction rf, String symbol) {
+	private IPredicate getRankInEquality(RankingFunction rf, String symbol, boolean addGeq0) {
 		assert symbol.equals("=") || symbol.equals(">");
 		Term rfTerm = rf.asFormula(m_Script, m_SmtManager.getBoogieVar2SmtVar());
 		TermVarsProc termVarsProc = m_SmtManager.computeTermVarsProc(rfTerm);
 		
 		Term equality = m_Script.term(symbol, m_OldRankVariable.getTermVariable(), rfTerm);
+		if (addGeq0) {
+			equality = Util.and(m_Script, equality, getRankGeq0());
+		}
 		
 		Set<BoogieVar> vars = new HashSet<BoogieVar>();
 		vars.add(m_OldRankVariable);
@@ -224,6 +236,12 @@ public class BinaryStatePredicateManager {
 		IPredicate result = m_SmtManager.newPredicate(equality,
 				termVarsProc.getProcedures(), vars, closedFormula);
 		return result;
+	}
+	
+	
+	private Term getRankGeq0() {
+		Term geq = m_Script.term(">=", m_OldRankVariable.getTermVariable(), m_Script.decimal("0"));
+		return geq;
 	}
 	
 	
@@ -265,7 +283,7 @@ public class BinaryStatePredicateManager {
 				rootAnnot.getModGlobVarManager(),
 				rootAnnot.getEntryNodes(),
 				null);
-		LBool loopCheck = traceChecker.checkTrace(m_HondaPredicate, m_RankDecrease, loop);
+		LBool loopCheck = traceChecker.checkTrace(m_RankEqualityAndSi, m_RankDecrease, loop);
 		traceChecker.forgetTrace();
 		if (loopCheck == LBool.UNSAT) {
 			return true;
