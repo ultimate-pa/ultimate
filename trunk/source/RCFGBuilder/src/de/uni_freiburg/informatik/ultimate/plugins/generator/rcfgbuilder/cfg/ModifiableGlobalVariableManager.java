@@ -29,10 +29,8 @@ public class ModifiableGlobalVariableManager {
 	private final Map<String,Map<String,ASTType>> m_ModifiedVars;
 	private final Boogie2SMT m_Boogie2smt;
 	
-	private final Map<String, TransFormula> m_Proc2OldVarsAssignment = 
-			new HashMap<String, TransFormula>();
-	private final Map<String, TransFormula> m_Proc2GlobalVarsAssignment = 
-			new HashMap<String, TransFormula>();
+	private final Map<String, TransFormula> m_Proc2OldVarsAssignment;
+	private final Map<String, TransFormula> m_Proc2GlobalVarsAssignment;
 	private final Map<String,Set<BoogieVar>> m_ModifiedBoogieVars = 
 			new HashMap<String,Set<BoogieVar>>();
 	
@@ -40,10 +38,19 @@ public class ModifiableGlobalVariableManager {
 	
 	
 	public ModifiableGlobalVariableManager(
-			Map<String, Map<String, ASTType>> m_ModifiedVars,
-			Boogie2SMT m_Boogie2smt) {
-		this.m_ModifiedVars = m_ModifiedVars;
-		this.m_Boogie2smt = m_Boogie2smt;
+			Map<String, Map<String, ASTType>> modifiedVars,
+			Boogie2SMT boogie2smt) {
+		m_ModifiedVars = modifiedVars;
+		m_Boogie2smt = boogie2smt;
+		m_Proc2OldVarsAssignment = new HashMap<String, TransFormula>();
+		m_Proc2GlobalVarsAssignment = new HashMap<String, TransFormula>();
+	}
+	
+	protected ModifiableGlobalVariableManager(ModifiableGlobalVariableManager modifiableGlobalVariableManager) {
+		m_ModifiedVars = modifiableGlobalVariableManager.m_ModifiedVars;
+		m_Boogie2smt = modifiableGlobalVariableManager.m_Boogie2smt;
+		m_Proc2OldVarsAssignment = modifiableGlobalVariableManager.m_Proc2OldVarsAssignment;
+		m_Proc2GlobalVarsAssignment = modifiableGlobalVariableManager.m_Proc2GlobalVarsAssignment;
 	}
 	
 	/**

@@ -183,12 +183,21 @@ public class Boogie2SMT {
 		return id;
 	}
 	
+	/**
+	 * Construct BoogieVar and store it. Expects that no BoogieVar with the
+	 * same identifier has already been constructed.
+	 * @param identifier
+	 * @param procedure
+	 * @param iType
+	 * @param isOldvar
+	 * @param astNode astNode for which errors (e.g., unsupported syntax) are
+	 * reported
+	 */
 	public BoogieVar constructBoogieVar(String identifier, String procedure, 
-			VarList varList, boolean isOldvar) {
+			IType iType, boolean isOldvar, ASTNode astNode) {
 		assert (!isOldvar || procedure == null);
 	
-		IType iType = varList.getType().getBoogieType();
-		Sort sort = m_Smt2Boogie.getSort(iType, varList);
+		Sort sort = m_Smt2Boogie.getSort(iType, astNode);
 		String name;
 		if (isOldvar) {
 			name = "old(" + identifier + ")";
@@ -453,8 +462,8 @@ public class Boogie2SMT {
 		for (VarList vl : vardecl.getVariables()) {
 			for (String id: vl.getIdentifiers()) {
 				IType type = vl.getType().getBoogieType();
-				constructBoogieVar(id, null, vl, false);
-				constructBoogieVar(id, null, vl, true);
+				constructBoogieVar(id, null, type, false, vl);
+				constructBoogieVar(id, null, type, true, vl);
 			}
 		}
 	}
@@ -466,7 +475,7 @@ public class Boogie2SMT {
 				IType type = vl.getType().getBoogieType();
 				BoogieVar boogieVar = getLocalBoogieVar(proc.getIdentifier(), id);
 				if (boogieVar == null) {
-					boogieVar =constructBoogieVar(id, proc.getIdentifier(), vl, false);
+					boogieVar =constructBoogieVar(id, proc.getIdentifier(), type, false, vl);
 				}
 				m_CurrentLocals.put(id, boogieVar);
 			}
@@ -476,7 +485,7 @@ public class Boogie2SMT {
 				IType type = vl.getType().getBoogieType();
 				BoogieVar boogieVar = getLocalBoogieVar(proc.getIdentifier(), id);
 				if (boogieVar == null) {
-					boogieVar =constructBoogieVar(id, proc.getIdentifier(), vl, false);
+					boogieVar =constructBoogieVar(id, proc.getIdentifier(), type, false, vl);
 				}
 				m_CurrentLocals.put(id, boogieVar);
 			}
@@ -488,7 +497,7 @@ public class Boogie2SMT {
 						IType type = vl.getType().getBoogieType();
 						BoogieVar boogieVar = getLocalBoogieVar(proc.getIdentifier(), id);
 						if (boogieVar == null) {
-							boogieVar = constructBoogieVar(id, proc.getIdentifier(), vl, false);
+							boogieVar = constructBoogieVar(id, proc.getIdentifier(), type, false, vl);
 						}
 						m_CurrentLocals.put(id, boogieVar);
 					}
