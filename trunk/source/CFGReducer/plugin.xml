@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.2"?>
+<plugin>
+   <extension
+         point="de.uni_freiburg.informatik.ultimate.ep.generator">
+      <impl
+            class="de.uni_freiburg.informatik.ultimate.boogie.cfgreducer.CFGReducer"></impl>
+   </extension>
+   <extension
+         point="org.eclipse.ui.preferencePages">
+      <page
+            category="de.uni_freiburg.informatik.ultimate.core.coreplugin.preferences.ToolsPreferencePage"
+            class="de.uni_freiburg.informatik.ultimate.boogie.cfgreducer.preferences.PreferencePage"
+            id="de.uni_freiburg.informatik.ultimate.boogie.cfgreducer.preferences.PreferencePage"
+            name="CFG Reducer">
+      </page>
+   </extension>
+</plugin>
