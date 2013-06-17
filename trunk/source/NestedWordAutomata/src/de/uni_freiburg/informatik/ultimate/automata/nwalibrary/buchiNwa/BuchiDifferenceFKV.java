@@ -49,7 +49,9 @@ public class BuchiDifferenceFKV<LETTER,STATE> implements IOperation<LETTER,STATE
 	
 	@Override
 	public String exitMessage() {
-		return "Finished " + operationName() + " Result " + 
+		return "Finished " + operationName() + ". First operand " + 
+				m_FstOperand.sizeInformation() + ". Second operand " + 
+				m_SndOperand.sizeInformation() + " Result " + 
 				m_Result.sizeInformation() + 
 			"the highest rank that occured is " + m_SndComplemented.getHighesRank();
 	}

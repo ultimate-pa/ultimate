@@ -60,7 +60,8 @@ public class BuchiComplementFKV<LETTER,STATE> implements IOperation<LETTER,STATE
 	
 	@Override
 	public String exitMessage() {
-		return "Finished " + operationName() + " Result " + 
+		return "Finished " + operationName() + " Operand " + 
+				m_Operand.sizeInformation() + " Result " + 
 				m_Result.sizeInformation() + 
 			"the highest rank that occured is " + m_Complemented.getHighesRank();
 	}
