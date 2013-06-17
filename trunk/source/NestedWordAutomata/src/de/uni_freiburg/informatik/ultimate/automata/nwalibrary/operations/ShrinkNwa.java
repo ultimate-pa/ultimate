@@ -7,6 +7,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.PriorityQueue;
 import java.util.Set;
@@ -40,9 +41,6 @@ import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
  * <trivialCases> finals.size() = 0 => empty automaton
  *                nonfinals.size() = 0 => possibly MR(Sigma)*, easy to check
  * 
- * <Matthias'Stuff> m_stateFactoryConstruction
- *                   mapping for Hoare annotation
- * 
  * <DoubleDecker> check this?
  * 
  * <splittingPolicy> currently all internal and call splits consider the
@@ -51,7 +49,6 @@ import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
  *                   splitter set itself is split
  *                   but this somehow counters the automata implementation,
  *                   since finding the predecessors is expensive...
- *                   for return splits this is already the case
  * 
  * <splitOutgoing> possible improvement: at the beginning split all states
  *                 with respect to outgoing symbols -> necessary condition
@@ -116,7 +113,7 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	 * Necessary because the Automizer needs a special StateFactory during
 	 * abstraction refinement (for computation of HoareAnnotation).
 	 */
-//	private final StateFactory<STATE> m_stateFactoryConstruction;
+	private final StateFactory<STATE> m_stateFactoryConstruction;
 	
 	/**
 	 * creates a copy of operand
@@ -127,7 +124,7 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	 */
 	public ShrinkNwa(final INestedWordAutomaton<LETTER,STATE> operand)
 			throws OperationCanceledException {
-		this(operand, null, operand.getStateFactory(), false);
+		this(operand, null, operand.getStateFactory(), false, false);
 	}
 	
 	/**
@@ -140,6 +137,7 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	 * preprocessing: dead end and unreachable states/transitions removed
 	 * @param equivalenceClasses represent initial equivalence classes
 	 * @param stateFactoryConstruction used for Hoare annotation
+	 * @param includeMapping true iff mapping old to new state is needed
 	 * @param isFiniteAutomaton true iff automaton is a finite automaton
 	 * @throws OperationCanceledException if cancel signal is received
 	 */
@@ -148,12 +146,13 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 			final INestedWordAutomaton<LETTER,STATE> operand,
 			final Collection<Set<STATE>> equivalenceClasses,
 			final StateFactory<STATE> stateFactoryConstruction,
+			final boolean includeMapping,
 			final boolean isFiniteAutomaton)
 					throws OperationCanceledException {
 		m_operand = operand;
 		// TODO<DoubleDecker> check this?
 		m_doubleDecker = (IDoubleDeckerAutomaton<LETTER, STATE>)m_operand;
-//		m_stateFactoryConstruction = stateFactoryConstruction;
+		m_stateFactoryConstruction = stateFactoryConstruction;
 		m_partition = new Partition();
 		m_workListIntCall = new WorkListIntCall();
 		m_workListRet = new WorkListRet();
@@ -163,7 +162,7 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 		
 		// must be the last part of the constructor
 		s_Logger.info(startMessage());
-		minimize(isFiniteAutomaton, equivalenceClasses);
+		minimize(isFiniteAutomaton, equivalenceClasses, includeMapping);
 		s_Logger.info(exitMessage());
 		
 		if (STATISTICS) {
@@ -190,10 +189,11 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	 * 
 	 * @param isFiniteAutomaton true iff automaton is a finite automaton
 	 * @param modules predefined modules that must be split
+	 * @param includeMapping true iff mapping old to new state is needed
 	 * @throws OperationCanceledException if cancel signal is received
 	 */
 	private void minimize(final boolean isFiniteAutomaton,
-			final Iterable<Set<STATE>> modules)
+			final Iterable<Set<STATE>> modules, final boolean includeMapping)
 			throws OperationCanceledException {
 		if (DEBUG)
 			System.err.println("---------------START---------------");
@@ -265,7 +265,7 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 						System.out.println("\n-- return search");
 					EquivalenceClass a = m_workListRet.next();
 					
-					splitReturnPredecessorsNew2(a);
+					splitReturnPredecessors(a);
 				}
 				else {
 					break outer;
@@ -273,7 +273,7 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 			}
 			
 			// automaton construction
-			constructAutomaton();
+			constructAutomaton(includeMapping);
 		}
 		if (DEBUG)
 			System.err.println("----------------END----------------");
@@ -320,6 +320,9 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 		}
 		// predefined modules are already split with respect to final states 
 		else {
+			assert assertStatesSeparation(modules) :
+				"The states in the initial modules are not separated with " +
+				"respect to their final status.";
 			for (Set<STATE> module : modules) {
 				m_partition.addEc(module);
 			}
@@ -390,14 +393,20 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	}
 	
 	/**
-	 * TODO<comment>
+	 * This method implements the return split.
+	 * 
+	 * For each return symbol respectively first find the predecessor states
+	 * (both linear and hierarchical). With this mark the simple splits for
+	 * linear and hierarchical states. Then find violations due to the neutral
+	 * states and break ties on which states to split there. In the end execute
+	 * the whole splits.
 	 *
 	 * @param a the splitter equivalence class
 	 */
-	private void splitReturnPredecessorsNew2(final EquivalenceClass a) {
+	private void splitReturnPredecessors(final EquivalenceClass a) {
 		assert (a.m_incomingRet != EIncomingStatus.inWL);
 		
-		// data structures for preprocessing
+		// data structures for the linear and hierarchical predecessors
 		final HashMap<LETTER, HashMap<STATE, HashSet<EquivalenceClass>>>
 			letter2lin2hierEcSet = new HashMap<LETTER, HashMap<STATE,
 			HashSet<EquivalenceClass>>>();
@@ -413,6 +422,7 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 					letter2hier2linEcSet.isEmpty()) ||
 				(! letter2lin2hierEcSet.isEmpty() &&
 						! letter2hier2linEcSet.isEmpty()));
+		
 		// no return transitions found, remember that
 		if (letter2lin2hierEcSet.isEmpty()) {
 			a.m_incomingRet = EIncomingStatus.none;
@@ -433,6 +443,7 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 			System.err.println(builder.toString());
 		}
 		
+		// remember all equivalence classes marked for splitting
 		final HashSet<EquivalenceClass> splitEquivalenceClasses =
 				new HashSet<EquivalenceClass>();
 		
@@ -445,7 +456,7 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 		// collect complicated mixed splits
 		splitReturnMixed(letter2hier2linEcSet, splitEquivalenceClasses);
 		
-		// really execute the splits
+		// execute the splits
 		splitReturnExecute(splitEquivalenceClasses);
 	}
 	
@@ -770,7 +781,9 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	}
 	
 	/**
-	 * TODO<comment>
+	 * For each pair of hierarchical and linear predecessors that is currently
+	 * possible find transitions not possible in the original automaton and
+	 * disable them.
 	 * 
 	 * TODO<mixedSplit> several options: (1) then (2)
 	 * (1) linear and hierarchical splits
@@ -839,7 +852,9 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	}
 	
 	/**
-	 * TODO<comment>
+	 * If a return transition is found that was not possible in the original
+	 * automaton, break ties on whether to split the hierarchical or the linear
+	 * predecessors.
 	 * 
 	 * TODO<mixedSplit> choice: split hierarchical or linear predecessors
 	 *                  currently: split hierarchical predecessors
@@ -1051,16 +1066,22 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	/**
 	 * For each remaining equivalence class create a new state.
 	 * Also remove all other objects references.
+	 * 
+	 * @param includeMapping true iff mapping old to new state is needed
 	 */
-	private void constructAutomaton() {
+	private void constructAutomaton(final boolean includeMapping) {
+		if (DEBUG)
+			System.out.println("finished splitting, constructing result");
+		
 //		TODO<noReduction> return old automaton?!
 //		if (m_operand.size() == m_partition.m_equivalenceClasses.size()) {
 //			return m_operand;
 //		}
-		m_result = new ShrinkNwaResult();
+		m_result = new ShrinkNwaResult(includeMapping);
 		
 		// clean up
 		if (DEBUG) {
+			System.out.println("finished construction");
 			System.out.println(m_partition);
 			System.out.println(m_result);
 		}
@@ -1204,6 +1225,39 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 		public boolean hasNext() {
 			return m_iterator.hasNext();
 		}
+	}
+	
+	/**
+	 * This method checks that the states in each equivalence class initially
+	 * passed in the constructor are all either final or non-final.
+	 *
+	 * @param equivalenceClasses partition passed in constructor
+	 * @return true iff equivalence classes respect final status of states
+	 */
+	private boolean assertStatesSeparation(
+			final Iterable<Set<STATE>> equivalenceClasses) {
+		for (final Set<STATE> equivalenceClass : equivalenceClasses) {
+			final Iterator<STATE> it = equivalenceClass.iterator();
+			assert (it.hasNext()) :
+				"Empty equivalence classes should be avoided.";
+			final boolean isFinal = m_operand.isFinal(it.next());
+			while (it.hasNext()) {
+				if (isFinal != m_operand.isFinal(it.next())) {
+					return false;
+				}
+			}
+		}
+		return true;
+	}
+	
+	/**
+	 * Returns a Map from states of the input automaton to states of the output
+	 * automaton. The image of a state oldState is the representative of 
+	 * oldStates equivalence class.
+	 * This method can only be used if the minimization is finished.
+	 */
+	public Map<STATE,STATE> getOldState2newState() {
+		return m_result.m_oldState2newState;
 	}
 	
 	// --- [end] helper methods and classes --- //
@@ -1741,6 +1795,7 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	 */
 	public class ShrinkNwaResult implements
 			INestedWordAutomatonSimple<LETTER, STATE> {
+		private final Map<STATE, STATE> m_oldState2newState;
 		// old automaton
 		private final INestedWordAutomaton<LETTER, STATE> m_oldNwa;
 		// states
@@ -1757,15 +1812,25 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 			HashSet<OutgoingReturnTransition<LETTER, STATE>>> m_outRet;
 		
 		// TODO<correctness> check that all states have the same edges!
-		public ShrinkNwaResult() {
+		/**
+		 * @param includeMapping true iff mapping old to new state is needed
+		 */
+		public ShrinkNwaResult(final boolean includeMapping) {
 			if (DEBUG)
 				System.out.println("\n---- constructing result...");
 			m_oldNwa = m_operand;
 			m_finals = new HashSet<STATE>();
 			m_nonfinals = new HashSet<STATE>();
 			m_initialStates = new HashSet<STATE>();
+			m_oldState2newState = includeMapping
+					? new HashMap<STATE, STATE>(computeHashSetCapacity(
+							m_oldNwa.size()))
+					: null;
 			
-			final StateFactory<STATE> factory = m_oldNwa.getStateFactory();
+			final StateFactory<STATE> factory =
+					(m_stateFactoryConstruction == null)
+					? m_oldNwa.getStateFactory()
+					: m_stateFactoryConstruction;
 			final HashMap<EquivalenceClass, STATE> ec2state =
 					new HashMap<EquivalenceClass, STATE>(
 							computeHashSetCapacity(
@@ -1792,6 +1857,11 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 				// new state
 				final STATE newState = factory.minimize(ecStates);
 				ec2state.put(ec, newState);
+				if (includeMapping) {
+					for (final STATE oldState : ecStates) {
+						m_oldState2newState.put(oldState, newState);
+					}
+				}
 				
 				// states
 				if (m_oldNwa.isFinal(ecStates.iterator().next())) {
