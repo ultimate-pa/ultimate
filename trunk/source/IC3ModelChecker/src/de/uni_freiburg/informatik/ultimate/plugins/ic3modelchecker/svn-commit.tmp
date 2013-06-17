@@ -1,6 +1,0 @@
-Renamed to IC3ModelChecker, so these files aren't needed anymore.
-
---This line, and those below, will be ignored--
-
-D    SafetyCheckerObserver.java
-D    SafetyChecker.java
