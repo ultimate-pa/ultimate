@@ -29,14 +29,14 @@ public class BuchiInterpolantAutomaton implements
 		INestedWordAutomatonSimple<CodeBlock, IPredicate> {
 	private final SmtManager m_SmtManager;
 	private final EdgeChecker m_EdgeChecker;
-	private final NestedWordAutomatonCache<CodeBlock, IPredicate> m_Ia;
+	private final NestedWordAutomatonCache<CodeBlock, IPredicate> m_InputSuccessorCache;
 	private final NestedWordAutomatonCache<CodeBlock, IPredicate> m_RejectionCache;
 	private final NwaCacheBookkeeping<CodeBlock, IPredicate> m_InputBookkeeping;
 	private final NestedWordAutomatonCache<CodeBlock, IPredicate> m_Result;
 	private final NwaCacheBookkeeping<CodeBlock, IPredicate> m_ResultBookkeeping;
 	
-	private final Set<IPredicate> m_StemPredicates;
-	private final Set<IPredicate> m_LoopPredicates;
+	private final Set<IPredicate> m_InputStemPredicates;
+	private final Set<IPredicate> m_InputLoopPredicates;
 	private final IPredicate m_HondaPredicate;
 	
 	private final Set<IPredicate> m_ResultStemPredicates;
@@ -61,7 +61,7 @@ public class BuchiInterpolantAutomaton implements
 		super();
 		m_SmtManager = smtManager;
 		m_EdgeChecker = edgeChecker;
-		m_Ia = new NestedWordAutomatonCache<CodeBlock, IPredicate>(
+		m_InputSuccessorCache = new NestedWordAutomatonCache<CodeBlock, IPredicate>(
 				abstraction.getInternalAlphabet(), 
 				abstraction.getCallAlphabet(), 
 				abstraction.getReturnAlphabet(), 
@@ -76,30 +76,37 @@ public class BuchiInterpolantAutomaton implements
 				abstraction.getCallAlphabet(), 
 				abstraction.getReturnAlphabet(), 
 				abstraction.getStateFactory());
-		m_StemPredicates = new HashSet<IPredicate>();
-		m_LoopPredicates = new HashSet<IPredicate>();
-		m_StemPredicates.add(precondition);
+		m_InputStemPredicates = new HashSet<IPredicate>();
+		m_InputLoopPredicates = new HashSet<IPredicate>();
+		m_ResultStemPredicates = new HashSet<IPredicate>();
+		m_ResultLoopPredicates = new HashSet<IPredicate>();
+		m_InputStemPredicates.add(precondition);
+		m_ResultStemPredicates.add(precondition);
 		m_Result.addState(true, false, precondition);
-		m_Ia.addState(true, false, precondition);
+		m_InputSuccessorCache.addState(true, false, precondition);
 		m_RejectionCache.addState(true, false, precondition);
 		for (IPredicate stemPredicate : stemInterpolants) {
-			m_StemPredicates.add(stemPredicate);
-			m_Ia.addState(false, false, precondition);
-			m_RejectionCache.addState(false, false, precondition);
+			if (!m_InputStemPredicates.contains(stemPredicate)) {
+				m_InputStemPredicates.add(stemPredicate);
+				m_InputSuccessorCache.addState(false, false, stemPredicate);
+				m_RejectionCache.addState(false, false, stemPredicate);
+			}
 		}
 		m_HondaPredicate = hondaPredicate;
+		m_InputStemPredicates.add(hondaPredicate);
+		m_InputLoopPredicates.add(hondaPredicate);
 		m_Result.addState(false, true, hondaPredicate);
-		m_Ia.addState(false, true, hondaPredicate);
+		m_InputSuccessorCache.addState(false, true, hondaPredicate);
 		m_RejectionCache.addState(false, true, hondaPredicate);
 		for (IPredicate loopPredicate : loopInterpolants) {
-			m_LoopPredicates.add(loopPredicate);
-			m_Ia.addState(false, false, loopPredicate);
-			m_RejectionCache.addState(false, false, loopPredicate);
+			if (!m_InputLoopPredicates.contains(loopPredicate)) {
+				m_InputLoopPredicates.add(loopPredicate);
+				m_InputSuccessorCache.addState(false, false, loopPredicate);
+				m_RejectionCache.addState(false, false, loopPredicate);
+			}
 		}
 		m_InputBookkeeping = new NwaCacheBookkeeping<CodeBlock, IPredicate>();
 		m_ResultBookkeeping = new NwaCacheBookkeeping<CodeBlock, IPredicate>();
-		m_ResultStemPredicates = new HashSet<IPredicate>();
-		m_ResultLoopPredicates = new HashSet<IPredicate>();
 	}
 
 
@@ -116,7 +123,7 @@ public class BuchiInterpolantAutomaton implements
 				sat = computeSuccInternalSolver(state, symbol, succCand);
 			}
 			if (sat == LBool.UNSAT) {
-				m_Ia.addInternalTransition(state, symbol, succCand);
+				m_InputSuccessorCache.addInternalTransition(state, symbol, succCand);
 			} else {
 				m_RejectionCache.addInternalTransition(state, symbol, succCand);
 			}
@@ -161,7 +168,7 @@ public class BuchiInterpolantAutomaton implements
 				sat = computeSuccCallSolver(state, symbol, succCand);
 			}
 			if (sat == LBool.UNSAT) {
-				m_Ia.addCallTransition(state, symbol, succCand);
+				m_InputSuccessorCache.addCallTransition(state, symbol, succCand);
 			} else {
 				m_RejectionCache.addCallTransition(state, symbol, succCand);
 			}
@@ -212,7 +219,7 @@ public class BuchiInterpolantAutomaton implements
 				sat = computeSuccReturnSolver(state, hier, symbol, succCand);
 			}
 			if (sat == LBool.UNSAT) {
-				m_Ia.addReturnTransition(state, hier, symbol, succCand);
+				m_InputSuccessorCache.addReturnTransition(state, hier, symbol, succCand);
 			} else {
 				m_RejectionCache.addReturnTransition(state, hier, symbol, succCand);
 			}
@@ -349,17 +356,22 @@ public class BuchiInterpolantAutomaton implements
 		assert !inputPreds.isEmpty();
 		if (inputPreds.size() == 1) {
 			resultPred = inputPreds.iterator().next();
-			assert resultPred != m_HondaPredicate;
-			if (!equivalenceClass.contains(resultPred)) {
-				equivalenceClass.add(resultPred);
-				m_Result.addState(false, false, resultPred);
-			}
+
 		} else {
 			resultPred = m_InputPreds2ResultPreds.get(inputPreds);
 			if (resultPred == null) {
 				resultPred = m_SmtManager.newBuchiPredicate(inputPreds);
 				m_InputPreds2ResultPreds.put(inputPreds,resultPred);
 			}
+			for (IPredicate pred : inputPreds) {
+				assert m_InputStemPredicates.contains(pred) || 
+						m_InputLoopPredicates.contains(pred);
+			}
+		}
+		assert resultPred != m_HondaPredicate;
+		if (!equivalenceClass.contains(resultPred)) {
+			equivalenceClass.add(resultPred);
+			m_Result.addState(false, false, resultPred);
 		}
 		return resultPred;
 	}
@@ -423,7 +435,7 @@ public class BuchiInterpolantAutomaton implements
 			IPredicate state, IPredicate hier, CodeBlock letter) {
 		Return ret = (Return) letter;
 		if (!m_ResultBookkeeping.isCachedReturn(state, hier, ret)) {
-//			computeSuccReturn(state, hier, ret);
+			computeSuccReturn(state, hier, ret);
 			m_ResultBookkeeping.reportCachedReturn(state, hier, ret);
 		}
 		return m_Result.returnSucccessors(state, hier, ret);
@@ -435,7 +447,7 @@ public class BuchiInterpolantAutomaton implements
 		for (CodeBlock letter : lettersReturn(state)) {
 			Return ret = (Return) letter;
 			if (!m_ResultBookkeeping.isCachedReturn(state, hier, ret)) {
-//				computeSuccReturn(state, hier, ret);
+				computeSuccReturn(state, hier, ret);
 				m_ResultBookkeeping.reportCachedReturn(state, hier, ret);
 			}
 		}
@@ -446,7 +458,7 @@ public class BuchiInterpolantAutomaton implements
 	private void computeSuccInternal(IPredicate resPred, CodeBlock letter) {
 		if (m_ResultStemPredicates.contains(resPred)) {
 			HashSet<IPredicate> succs = new HashSet<IPredicate>();
-			boolean hondaIsSuccessor = addSuccInternal(resPred, letter, m_StemPredicates, succs);
+			boolean hondaIsSuccessor = addSuccInternal(resPred, letter, m_InputStemPredicates, succs);
 			if (!succs.isEmpty()) {
 				IPredicate stemSucc = getOrConstructPredicate(succs, m_ResultStemPredicates);
 				m_Result.addInternalTransition(resPred, letter, stemSucc);
@@ -457,14 +469,16 @@ public class BuchiInterpolantAutomaton implements
 		} else {
 			assert (m_ResultLoopPredicates.contains(resPred) || resPred == m_HondaPredicate);
 			HashSet<IPredicate> succs = new HashSet<IPredicate>();
-			boolean hondaIsSuccessor = addSuccInternal(resPred, letter, m_LoopPredicates, succs);
-			if (!succs.isEmpty()) {
-				IPredicate stemSucc = getOrConstructPredicate(succs, m_ResultLoopPredicates);
-				m_Result.addInternalTransition(resPred, letter, stemSucc);
-			}
+			boolean hondaIsSuccessor = addSuccInternal(resPred, letter, m_InputLoopPredicates, succs);
 			if (hondaIsSuccessor) {
 				m_Result.addInternalTransition(resPred, letter, m_HondaPredicate);
+			} else if (!succs.isEmpty()) {
+				IPredicate stemSucc = getOrConstructPredicate(succs, m_ResultLoopPredicates);
+				m_Result.addInternalTransition(resPred, letter, stemSucc);
+			} else {
+				//there is no successor
 			}
+
 		}
 
 	}
@@ -481,14 +495,17 @@ public class BuchiInterpolantAutomaton implements
 		}
 		for (IPredicate inputPred : inputPredicates) {
 			if (!m_InputBookkeeping.isCachedInternal(inputPred, letter)) {
-				computeSuccInternalInput(resPred, letter, succCand);
+				computeSuccInternalInput(inputPred, letter, succCand);
 				m_InputBookkeeping.reportCachedInternal(inputPred, letter);
 			}
-			for (IPredicate succ : m_Ia.succInternal(inputPred, letter)) {
-				if (succ == m_HondaPredicate) {
-					hondaIsSuccessor = true;
-				} else {
-					succs.add(succ);
+			Collection<IPredicate> inputPredSuccs = m_InputSuccessorCache.succInternal(inputPred, letter);
+			if (inputPredSuccs != null) {
+				for (IPredicate succ : inputPredSuccs) {
+					if (succ == m_HondaPredicate) {
+						hondaIsSuccessor = true;
+					} else {
+						succs.add(succ);
+					}
 				}
 			}
 		}
@@ -499,7 +516,7 @@ public class BuchiInterpolantAutomaton implements
 	private void computeSuccCall(IPredicate resPred, CodeBlock letter) {
 		if (m_ResultStemPredicates.contains(resPred)) {
 			HashSet<IPredicate> succs = new HashSet<IPredicate>();
-			boolean hondaIsSuccessor = addSuccCall(resPred, letter, m_StemPredicates, succs);
+			boolean hondaIsSuccessor = addSuccCall(resPred, letter, m_InputStemPredicates, succs);
 			if (!succs.isEmpty()) {
 				IPredicate stemSucc = getOrConstructPredicate(succs, m_ResultStemPredicates);
 				m_Result.addCallTransition(resPred, letter, stemSucc);
@@ -510,14 +527,16 @@ public class BuchiInterpolantAutomaton implements
 		} else {
 			assert (m_ResultLoopPredicates.contains(resPred) || resPred == m_HondaPredicate);
 			HashSet<IPredicate> succs = new HashSet<IPredicate>();
-			boolean hondaIsSuccessor = addSuccCall(resPred, letter, m_LoopPredicates, succs);
-			if (!succs.isEmpty()) {
-				IPredicate stemSucc = getOrConstructPredicate(succs, m_ResultLoopPredicates);
-				m_Result.addCallTransition(resPred, letter, stemSucc);
-			}
+			boolean hondaIsSuccessor = addSuccCall(resPred, letter, m_InputLoopPredicates, succs);
 			if (hondaIsSuccessor) {
 				m_Result.addCallTransition(resPred, letter, m_HondaPredicate);
+			} else if (!succs.isEmpty()) {
+				IPredicate stemSucc = getOrConstructPredicate(succs, m_ResultLoopPredicates);
+				m_Result.addCallTransition(resPred, letter, stemSucc);
+			} else {
+				// there is no successor
 			}
+
 		}
 
 	}
@@ -534,18 +553,98 @@ public class BuchiInterpolantAutomaton implements
 		}
 		for (IPredicate inputPred : inputPredicates) {
 			if (!m_InputBookkeeping.isCachedCall(inputPred, letter)) {
-				computeSuccCallInput(resPred, letter, succCand);
+				computeSuccCallInput(inputPred, letter, succCand);
 				m_InputBookkeeping.reportCachedCall(inputPred, letter);
 			}
-			for (IPredicate succ : m_Ia.succCall(inputPred, letter)) {
-				if (succ == m_HondaPredicate) {
-					hondaIsSuccessor = true;
-				} else {
-					succs.add(succ);
+			Collection<IPredicate> inputPredSuccs = m_InputSuccessorCache.succCall(inputPred, letter);
+			if (inputPredSuccs != null) {
+				for (IPredicate succ : inputPredSuccs) {
+					if (succ == m_HondaPredicate) {
+						hondaIsSuccessor = true;
+					} else {
+						succs.add(succ);
+					}
 				}
 			}
 		}
 		return hondaIsSuccessor;
+	}
+	
+	
+	
+	private void computeSuccReturn(IPredicate resPred, IPredicate resHier, CodeBlock letter) {
+		if (m_ResultStemPredicates.contains(resPred)) {
+			HashSet<IPredicate> succs = new HashSet<IPredicate>();
+			boolean hondaIsSuccessor = addSuccReturn(resPred, resHier, letter, m_InputStemPredicates, succs);
+			if (!succs.isEmpty()) {
+				IPredicate stemSucc = getOrConstructPredicate(succs, m_ResultStemPredicates);
+				m_Result.addInternalTransition(resPred, letter, stemSucc);
+			}
+			if (hondaIsSuccessor) {
+				m_Result.addInternalTransition(resPred, letter, m_HondaPredicate);
+			}
+		} else {
+			assert (m_ResultLoopPredicates.contains(resPred) || resPred == m_HondaPredicate);
+			HashSet<IPredicate> succs = new HashSet<IPredicate>();
+			boolean hondaIsSuccessor = addSuccInternal(resPred, letter, m_InputLoopPredicates, succs);
+			if (hondaIsSuccessor) {
+				m_Result.addReturnTransition(resPred, resHier, letter, m_HondaPredicate);
+			} else if (!succs.isEmpty()) {
+				IPredicate stemSucc = getOrConstructPredicate(succs, m_ResultLoopPredicates);
+				m_Result.addReturnTransition(resPred, resHier, letter, stemSucc);
+			} else {
+				//there is no successor
+			}
+
+		}
+
+	}
+	
+	private boolean addSuccReturn(IPredicate resPred, IPredicate resHier, 
+			CodeBlock letter, Iterable<IPredicate> succCand, HashSet<IPredicate> succs) {
+		boolean hondaIsSuccessor = false;
+		Collection<IPredicate> inputPredicates;
+		if (resPred instanceof BuchiPredicate) {
+			inputPredicates = ((BuchiPredicate) resPred).getConjuncts();
+		} else {
+			assert (resPred instanceof BasicPredicate);
+			inputPredicates = new ArrayList<IPredicate>(1);
+			inputPredicates.add(resPred);
+		}
+		Collection<IPredicate> inputHiers;
+		if (resHier instanceof BuchiPredicate) {
+			inputHiers = ((BuchiPredicate) resHier).getConjuncts();
+		} else {
+			assert (resHier instanceof BasicPredicate);
+			inputHiers = new ArrayList<IPredicate>(1);
+			inputHiers.add(resHier);
+		}
+		for (IPredicate inputPred : inputPredicates) {
+			for (IPredicate inputHier : inputHiers) {
+				if (!m_InputBookkeeping.isCachedReturn(inputPred, inputHier, letter)) {
+					computeSuccReturnInput(inputPred, inputHier, (Return) letter, succCand);
+					m_InputBookkeeping.reportCachedReturn(inputPred, inputHier, letter);
+				}
+				Collection<IPredicate> inputPredSuccs = 
+						m_InputSuccessorCache.succReturn(inputPred, inputHier, letter);
+				if (inputPredSuccs != null) {
+					for (IPredicate succ : inputPredSuccs) {
+						if (succ == m_HondaPredicate) {
+							hondaIsSuccessor = true;
+						} else {
+							succs.add(succ);
+						}
+					}
+				}
+			}
+		}
+		return hondaIsSuccessor;
+	}
+
+
+
+	public NestedWordAutomatonCache<CodeBlock, IPredicate> getAugmentedInputAutomaton() {
+		return m_InputSuccessorCache;
 	}
 
 }

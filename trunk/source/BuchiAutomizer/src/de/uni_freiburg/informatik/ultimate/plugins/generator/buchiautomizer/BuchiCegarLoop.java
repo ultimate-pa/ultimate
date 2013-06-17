@@ -33,6 +33,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IState
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.MinimizeSevpa;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.PowersetDeterminizer;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.RemoveDeadEnds;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.RemoveUnreachable;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.DifferenceDD;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.logic.LoggingScript;
@@ -66,7 +67,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Ho
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.InterpolantAutomataBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryRefinement;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.InterpolantAutomataTransitionAppender.EagerInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.InterpolantAutomataTransitionAppender.PostDeterminizer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.EdgeChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IPredicate;
@@ -186,7 +186,7 @@ public class BuchiCegarLoop {
 
 		private static final boolean m_ReduceAbstractionSize = true;
 		private static final boolean m_Eager = true;
-		private static final boolean m_Difference = true;
+		private static final boolean m_Difference = !true;
 		private static final boolean m_UseDoubleDeckers = !true;
 
 		public BuchiCegarLoop(RootNode rootNode,
@@ -719,7 +719,10 @@ public class BuchiCegarLoop {
 
 			INestedWordAutomatonSimple<CodeBlock, IPredicate> interpolAutomatonUsedInRefinement;
 			if (m_Eager) {
-				interpolAutomatonUsedInRefinement = new EagerInterpolantAutomaton(ec, m_InterpolAutomaton);
+				interpolAutomatonUsedInRefinement = new BuchiInterpolantAutomaton(
+						m_SmtManager, ec, m_Bspm.getStemPrecondition(), 
+						stemInterpolants, m_Bspm.getHondaPredicate(), loopInterpolants, m_Abstraction); 
+						//new EagerInterpolantAutomaton(ec, m_InterpolAutomaton);
 			} else {
 				interpolAutomatonUsedInRefinement = m_InterpolAutomaton;
 			}
@@ -739,14 +742,22 @@ public class BuchiCegarLoop {
 				assert(complNwa.checkResult(defaultStateFactory));
 				INestedWordAutomatonOldApi<CodeBlock, IPredicate>  complement = 
 						complNwa.getResult();
+				if (interpolAutomatonUsedInRefinement instanceof BuchiInterpolantAutomaton) {
+					BuchiInterpolantAutomaton bia = ((BuchiInterpolantAutomaton) interpolAutomatonUsedInRefinement);
+					INestedWordAutomatonOldApi<CodeBlock, IPredicate> oldApi = (new RemoveUnreachable<CodeBlock, IPredicate>(bia)).getResult();
+					assert (new BuchiAccepts<CodeBlock, IPredicate>(oldApi,m_Counterexample.getNestedLassoWord())).getResult();
+				}
 				assert !(new BuchiAccepts<CodeBlock, IPredicate>(complement,m_Counterexample.getNestedLassoWord())).getResult();
 				BuchiIntersect<CodeBlock, IPredicate> interNwa = 
 						new BuchiIntersect<CodeBlock, IPredicate>(m_Abstraction, complement,m_StateFactoryForRefinement);
 				assert(interNwa.checkResult(defaultStateFactory));
 				newAbstraction = interNwa.getResult();
 			}
-			if (interpolAutomatonUsedInRefinement instanceof EagerInterpolantAutomaton) {
-				((EagerInterpolantAutomaton) interpolAutomatonUsedInRefinement).clearAssertionStack();
+			if (interpolAutomatonUsedInRefinement instanceof BuchiInterpolantAutomaton) {
+				BuchiInterpolantAutomaton bia = ((BuchiInterpolantAutomaton) interpolAutomatonUsedInRefinement);
+				bia.clearAssertionStack();
+				INestedWordAutomatonOldApi<CodeBlock, IPredicate> oldApi = (new RemoveUnreachable<CodeBlock, IPredicate>(bia)).getResult();
+				assert (new BuchiAccepts<CodeBlock, IPredicate>(oldApi,m_Counterexample.getNestedLassoWord())).getResult();
 			}
 			assert !(new BuchiAccepts<CodeBlock, IPredicate>(newAbstraction,m_Counterexample.getNestedLassoWord())).getResult();
 			m_Abstraction = newAbstraction;
