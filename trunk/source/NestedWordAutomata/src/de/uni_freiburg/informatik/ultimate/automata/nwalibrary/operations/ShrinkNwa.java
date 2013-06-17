@@ -989,37 +989,47 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 			for (final Entry<STATE, HashSet<STATE>> entry :
 					state2separatedSet.entrySet()) {
 				final STATE state = entry.getKey();
+				final HashSet<STATE> separatedSet = entry.getValue();
 				
-				assert (states.contains(state));
+				assert (states.contains(state)) && (separatedSet != null);
 				
-				final HashSet<Integer> blockedColors =
-						new HashSet<Integer>(computeHashSetCapacity(colors));
-				final HashSet<STATE> separatedSet =
-						state2separatedSet.get(state);
-				assert (separatedSet != null);
-				
-				for (final STATE separated : separatedSet) {
-					final Integer color = state2color.get(separated);
-					if (color != null) {
-						blockedColors.add(color);
-					}
+				// first color can be directly assigned
+				if (colors == 0) {
+					state2color.put(state, 0);
+					++colors;
 				}
-				
-				// no color available, create a new one
-				if (blockedColors.size() == colors) {
-					state2color.put(state, colors++);
-				}
-				// at least one color available
+				// find fitting color or use a new one
 				else {
-					assert (blockedColors.size() < colors);
-					int color = 0;
-					while (true) {
-						assert (color <= colors);
-						if (! blockedColors.contains(color)) {
-							state2color.put(state, color);
-							break;
+					final HashSet<Integer> blockedColors =
+							new HashSet<Integer>(
+									computeHashSetCapacity(colors));
+					
+					for (final STATE separated : separatedSet) {
+						final Integer color = state2color.get(separated);
+						if (color != null) {
+							blockedColors.add(color);
+							if (blockedColors.size() == colors) {
+								break;
+							}
 						}
-						++color;
+					}
+					
+					// no color available, use a new one
+					if (blockedColors.size() == colors) {
+						state2color.put(state, colors++);
+					}
+					// at least one color available
+					else {
+						assert (blockedColors.size() < colors);
+						int color = 0;
+						while (true) {
+							assert (color <= colors);
+							if (! blockedColors.contains(color)) {
+								state2color.put(state, color);
+								break;
+							}
+							++color;
+						}
 					}
 				}
 			}
