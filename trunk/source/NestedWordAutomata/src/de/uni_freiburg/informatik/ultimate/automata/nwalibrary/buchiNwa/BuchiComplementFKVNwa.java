@@ -442,6 +442,7 @@ public class BuchiComplementFKVNwa<LETTER,STATE> implements INestedWordAutomaton
 		
 		private void addRank(STATE down, STATE up, 
 												Integer rank, boolean addToO) {
+			assert rank != null;
 			HashMap<STATE, Integer> up2rank = m_LevelRanking.get(down);
 			if (up2rank == null) {
 				up2rank = new HashMap<STATE,Integer>();
@@ -648,16 +649,43 @@ public class BuchiComplementFKVNwa<LETTER,STATE> implements INestedWordAutomaton
 				IDeterminizedState<LETTER, STATE> hier, LETTER symbol) {
 			for (STATE hierDown : hier.getDownStates()) {
 				for (STATE hierUp : hier.getUpStates(hierDown)) {
-					if (!state.getDownStates().isEmpty() && state.getDownStates().contains(hierUp)) {
-						for (STATE stateUp : state.getUpStates(hierUp)) {
-							boolean oCandidate = state.isOempty() || state.inO(hierUp,stateUp);
-							Integer upRank = state.getRank(hierUp, stateUp);
-							for (OutgoingReturnTransition<LETTER, STATE> trans : 
-											m_Operand.returnSucccessors(stateUp,hierUp,symbol)) {
-								addConstaint(hierDown, trans.getSucc(), upRank, oCandidate);
-							}
-						}
+					if (state.getDownStates().isEmpty()) {
+						continue;
+						//throw new AssertionError();
 					}
+					STATE downState;
+					if (m_StateDeterminizer.useDoubleDeckers()) {
+						if (!state.getDownStates().contains(hierUp)) {
+							continue;
+						}
+						downState = hierUp;
+					} else {
+						assert state.getDownStates().size() == 1;
+						assert state.getDownStates().iterator().next() == 
+												m_Operand.getEmptyStackState();
+						// if !m_UseDoubleDeckers we always use getEmptyStackState()
+						// as down state to obtain sets of states instead of
+						// sets of DoubleDeckers.
+						downState = m_Operand.getEmptyStackState();
+
+					}
+					Set<STATE> upStates = state.getUpStates(downState);
+					addReturnSuccessorConstraintsGivenDownState(state,
+							downState, upStates, hierDown, hierUp, symbol);
+				}
+			}
+		}
+
+		private void addReturnSuccessorConstraintsGivenDownState(
+				LevelRankingState state, STATE downState, Set<STATE> upStates,
+				STATE hierDown, STATE hierUp, LETTER symbol) {
+			for (STATE stateUp : upStates) {
+				boolean oCandidate = state.isOempty() || state.inO(downState,stateUp);
+				Integer upRank = state.getRank(downState, stateUp);
+				for (OutgoingReturnTransition<LETTER, STATE> trans : 
+								m_Operand.returnSucccessors(stateUp,hierUp,symbol)) {
+					assert m_StateDeterminizer.useDoubleDeckers() || hierDown == m_Operand.getEmptyStackState();
+					addConstaint(hierDown, trans.getSucc(), upRank, oCandidate);
 				}
 			}
 		}

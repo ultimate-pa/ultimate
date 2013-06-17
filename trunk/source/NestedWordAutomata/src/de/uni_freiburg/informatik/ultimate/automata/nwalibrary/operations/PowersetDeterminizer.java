@@ -109,10 +109,22 @@ public class PowersetDeterminizer<LETTER,STATE>
 		
 		for (STATE downLinPred : detLinPred.getDownStates()) {
 			for (STATE upLinPred : detLinPred.getUpStates(downLinPred)) {
-				Set<STATE> upStates = detState.getUpStates(upLinPred);
-				if (upStates == null) continue;
+				Set<STATE> upStates;
+				if (m_UseDoubleDeckers) {
+					upStates = detState.getUpStates(upLinPred);
+					if (upStates == null) continue;
+				} else {
+					assert detState.getDownStates().size() == 1;
+					assert detState.getDownStates().iterator().next() == 
+													m_Nwa.getEmptyStackState();
+					// if !m_UseDoubleDeckers we always use getEmptyStackState()
+					// as down state to obtain sets of states instead of
+					// sets of DoubleDeckers.
+					upStates = detState.getUpStates(m_Nwa.getEmptyStackState());
+				}
 				for (STATE upState : upStates) {
 					for (OutgoingReturnTransition<LETTER, STATE> upSucc : m_Nwa.returnSucccessors(upState, upLinPred, symbol)) {
+						assert m_UseDoubleDeckers || downLinPred == m_Nwa.getEmptyStackState();
 						succDetState.addPair(downLinPred, upSucc.getSucc(), m_Nwa);
 					}
 				}
