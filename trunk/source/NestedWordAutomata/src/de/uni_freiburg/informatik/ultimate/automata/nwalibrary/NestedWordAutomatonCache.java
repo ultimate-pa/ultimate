@@ -846,6 +846,7 @@ public class NestedWordAutomatonCache<LETTER,STATE> implements INestedWordAutoma
 		}
 		assert contains(pred);
 		assert contains(succ);
+		assert getInternalAlphabet().contains(letter);
 		Map<LETTER, Set<STATE>> letter2succs = m_InternalOut.get(pred);
 		if (letter2succs == null) {
 			letter2succs = new HashMap<LETTER, Set<STATE>>();
@@ -863,6 +864,7 @@ public class NestedWordAutomatonCache<LETTER,STATE> implements INestedWordAutoma
 	public void addCallTransition(STATE pred, LETTER letter, STATE succ) {
 		assert contains(pred);
 		assert contains(succ);
+		assert getCallAlphabet().contains(letter);
 		Map<LETTER, Set<STATE>> letter2succs = m_CallOut.get(pred);
 		if (letter2succs == null) {
 			letter2succs = new HashMap<LETTER, Set<STATE>>();
@@ -881,6 +883,7 @@ public class NestedWordAutomatonCache<LETTER,STATE> implements INestedWordAutoma
 		assert contains(pred);
 		assert contains(hier);
 		assert contains(succ);
+		assert getReturnAlphabet().contains(letter);
 		Map<LETTER, Map<STATE, Set<STATE>>> letter2hier2succs = m_ReturnOut.get(pred);
 		if (letter2hier2succs == null) {
 			letter2hier2succs = new HashMap<LETTER, Map<STATE, Set<STATE>>>();
