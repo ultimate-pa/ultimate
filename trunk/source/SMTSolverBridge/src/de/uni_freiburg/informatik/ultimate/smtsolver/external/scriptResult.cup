@@ -170,6 +170,10 @@ action code {:
 	}
 	
 	public Term createTerm(Symbol fsym, String name, BigInteger[] indices, Sort resultSort, Term[] param) {
+		for (Term p : param) {
+			if (p == null)
+				return null;
+		}
 		try {
 			return parser.getScript().term(name, indices, resultSort, param);
 		} catch (SMTLIBException se) {
@@ -222,7 +226,7 @@ terminal String UNDERSCORE, BANG,
          DECIMALSYM, SAT, SUCCESS, SETLOGIC, SETINFO, SETOPTION, STRINGSYM,
          THEORY, TRUE, UNKNOWN, UNSUPPORTED, UNSAT,
          INCLUDE, RESET, SIMPLIFY, TIMED, TERM,
-         /* Oday (not in standard) */ TIMEOUT, ASSERTED, STDOUT, STDERR;
+         /* Oday (not in standard) */ TIMEOUT, ASSERTED, STDOUT, STDERR, GETTERM;
 
 /* Predefined Keywords */
 terminal String /* attribute */
@@ -306,7 +310,8 @@ goal ::= SUCCESS genResponse {: RESULT = null; :}
        | GETVALUE gvResponse:v {: RESULT = v; :}
        | GETASSIGNMENT gtaResponse:a {: RESULT = a; :}
        | GETOPTION goResponse:o {: RESULT = o; :}
-       | TERM term:t {: RESULT = t; :};
+       | GETTERM term:t {: if (t == null) System.err.println(getError());
+       							RESULT = t; :};
 
 specConstant ::= NUMERAL:n {: RESULT = n; :}
              | DECIMAL:n {: RESULT = n; :}

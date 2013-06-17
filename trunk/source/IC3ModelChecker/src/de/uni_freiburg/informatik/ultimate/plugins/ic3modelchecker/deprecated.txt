@@ -1,0 +1,265 @@
+part of ApproxPreimageCalculator.preimage():
+
+		ConstSubstResult constSubstResult = SubstitutionManager.substituteFreeVarsToConst(script, term);
+		HashMap<Term, Term> substMap = constSubstResult.getMap();
+		Term substTerm = constSubstResult.getSubstTerm();
+		script.assertTerm(substTerm);
+		LBool sat = script.checkSat();
+		assert(sat == LBool.SAT);
+		Model model = script.getModel();
+		// create formula from model which expresses the inVar assignment
+		ArrayList<Term> assignments = new ArrayList<Term>();
+		for (TermVariable inVar : inVars) {
+			Term constantFunction = substMap.get(inVar);
+			assert(constantFunction != null);
+			Term result = model.evaluate(constantFunction);
+			assignments.add(script.term("=", constantFunction, result));
+		}
+		Term assignmentTerm;
+		if (assignments.size() > 1) {
+			 assignmentTerm = script.term("and", assignments.toArray(new Term[assignments.size()]));
+		} else {
+			assignmentTerm = assignments.get(0);
+		}
+		// now determine interpolant between assignmentTerm and
+		// "not term"
+		Term[] partition = new Term[] {assignmentTerm, script.term("not", substTerm)};
+		Term[] interpolants = script.getInterpolants(partition);
+
+		assert(interpolants != null && interpolants.length == 1);
+		Term interpolant = interpolants[0];
+		// resubstitute constants by inVars in interpolant
+		HashMap<Term, Term> mirrorMap = HelperMethods.mirrorMap(substMap);
+		SubstituteTermTransformer subst = new SubstituteTermTransformer();
+		Term resubstInterpolant = subst.substitute(interpolant, mirrorMap);
+
+
+
+SubstitutionManager:
+
+	/** Priming / Shifting variables in formula:<br/>
+	 * Shifts variable names in given formula according to given level and returns the formula with
+	 * the renamings.<br/>
+	 * For level 0, nothing happens. For level one, shifting is as follows: _in -> _out -> _out2 -> ...<br/>
+	 * Note that only variables with given root name are shifted. Example: If "x" is given, then
+	 * x_in, x_out, x_out2 ... will be shifted. */
+	@Deprecated
+	public static Term substituteInToOut(Script script, Term formula, HashSet<String> varRootNamesToChange, int level) {
+		assert(level >= 0);
+		if (level == 0)
+			return formula;
+		SubstituteTermTransformer subst = new SubstituteTermTransformer();
+		HashMap<Term, Term> substMap = new HashMap<Term, Term>();
+		for (TermVariable varToChange : formula.getFreeVars()) {
+			String varName = varToChange.getName();
+			String varRootName = (String) determineVarRootNameAndLevel(varName)[0];
+			if (varRootNamesToChange.contains(varRootName)) {
+				String newVarName = shiftSuffix(varName, level);
+				TermVariable newVar = script.variable(newVarName, varToChange.getSort());
+				substMap.put(varToChange, newVar);
+			}
+		}
+		//TreeIC3.logger().debug("substituteInToOut() Substitution Map:");
+		//printSubstMap(substMap);
+		return subst.substitute(formula, substMap);
+	}
+	/** Overload: Shifts ALL free variables in the formula instead of only certain ones. */
+	@Deprecated
+	public static Term substituteInToOut(Script script, Term formula, int level) {
+		TermVariable[] freeVars = formula.getFreeVars();
+		HashSet<String> varRootNames = new HashSet<>();
+		for (TermVariable freeVar : freeVars) {
+			String rootName = (String) determineVarRootNameAndLevel(freeVar.getName())[0];
+			varRootNames.add(rootName);
+		}
+		return substituteInToOut(script, formula, varRootNames, level);
+	}
+
+
+
+	@Deprecated
+	public static String shiftSuffixOld(String varname, int level) {
+		String resultVarname;
+		assert(level >= 0);
+		if (level == 0) {
+			resultVarname = varname;
+		} else if (varname.endsWith(Settings.inVarSuffix)) {
+			String rootVarname = varname.substring(0, varname.length()-Settings.inVarSuffix.length());
+			if (level == 1)
+				resultVarname = rootVarname+Settings.outVarSuffix;
+			else
+				resultVarname = rootVarname+Settings.outVarSuffix+level;
+		} else if (varname.endsWith(Settings.outVarSuffix)) {
+			String rootVarname = varname.substring(0, varname.length()-Settings.outVarSuffix.length());
+			resultVarname = rootVarname+Settings.outVarSuffix+(level+1);
+		} else if (varname.matches(".*"+Settings.outVarSuffix+"\\d+")) {
+			Object[] result = determineVarRootNameAndLevel(varname);
+			String rootVarname = (String) result[0];
+			int oldLevel = (int) result[1];
+			resultVarname = rootVarname+Settings.outVarSuffix+(oldLevel+level);
+		} else {
+			TreeIC3.logger().debug("WARNING: Variable name "+varname+" could not be classified!");
+			if (level == 1)
+				resultVarname = varname+Settings.outVarSuffix;
+			else
+				resultVarname = varname+Settings.outVarSuffix+(level+1);
+		}
+		//TreeIC3.logger().debug("shiftSuffix("+varname+", "+level+") = "+resultVarname);
+		return resultVarname;
+	}
+	
+	
+	
+	/** Removes suffixes like _in, _out, _out2 etc. from given variable name, thus returning
+	 * its root name. Result is {String varRootName, int level}. _in equals level 0, _out level 1, _out2 level 2 etc.*/
+	@Deprecated
+	public static Object[] determineVarRootNameAndLevel(String varName) {
+		// TODO: These string operations are dirty and tedious. I'm sure that
+		// the root name can somehow be fetched from corresponding BoogieVar.
+		if (varName.endsWith(Settings.inVarSuffix)) {
+			return new Object[]{
+					varName.substring(0, varName.length()-Settings.inVarSuffix.length()),
+					0
+			};
+		} else if (varName.endsWith(Settings.outVarSuffix)) {
+			return new Object[] {
+					varName.substring(0, varName.length()-Settings.outVarSuffix.length()),
+					1
+			};
+		} else if (varName.matches(".*"+Settings.outVarSuffix+"\\d+")) {
+			// Determine where the root ends and the suffix begins
+			int numberIndex = varName.length()-1;
+			char numberChar = varName.charAt(numberIndex); 
+			while (numberChar >= 48 && numberChar <= 57) {
+				numberIndex--;
+				numberChar = varName.charAt(numberIndex);
+			}
+			assert(numberIndex < varName.length()-1);
+			String oldLevelString = varName.substring(numberIndex+1, varName.length());
+			int oldLevel = Integer.valueOf(oldLevelString);
+			assert(oldLevel > 1);
+			int index = numberIndex - Settings.outVarSuffix.length();
+			// now index should point to the last char before the suffix begins
+			return new Object[] {
+					varName.substring(0, index+1),
+					oldLevel
+			};
+		} else {
+			throw new RuntimeException("determineVarRootName(): Variable name "+varName+" could not be classified!");
+		}
+	}
+	
+	
+	
+	@Deprecated
+	@SuppressWarnings("unchecked")
+	public static FormulaAndSMTAnnotation removeUnderscores(Script script, FormulaAndSMTAnnotation formulaAndSmt) {
+		Term formula = formulaAndSmt.getFormula();
+		SMTAnnotations smtAnnotation = formulaAndSmt.getSmtAnnotation();
+		TermVariable[] freeVars = formula.getFreeVars();
+		@SuppressWarnings("rawtypes")
+		HashMap substMap = new HashMap<TermVariable, TermVariable>();
+		for (TermVariable freeVar : freeVars) {
+			String newName = freeVar.getName().replaceAll("_", "");
+			TermVariable renamedVar = script.variable(newName, freeVar.getSort()); 
+			substMap.put(freeVar, renamedVar);
+		}
+		//TreeIC3.logger().debug("removeUnderscores() Substitution Map:");
+		//printSubstMap(substMap);
+		SubstituteTermTransformer subst = new SubstituteTermTransformer();
+		Term substFormula = subst.substitute(formula, substMap);
+		SMTAnnotations substSmtAnnotation = substSmt(smtAnnotation, substMap);
+		return new FormulaAndSMTAnnotation(substFormula, substSmtAnnotation);
+	}
+	
+	
+	
+	/** Performs substitution on the smt annotations. */
+	@Deprecated
+	private static SMTAnnotations substSmt(SMTAnnotations smtAnnotation, HashMap<TermVariable, TermVariable> substMap) {
+		SMTAnnotations clonedSmtAnnotation = smtAnnotation.clone();
+		HashSet<TermVariable> allVars = clonedSmtAnnotation.getVars();
+		for (TermVariable key : substMap.keySet()) {
+			allVars.remove(key);
+			allVars.add(substMap.get(key));
+		}
+		for (Integer level : clonedSmtAnnotation.getAvailableLevels()) {
+			HashMap<BoogieVar, TermVariable> varsOfLevel = clonedSmtAnnotation.getLevel(level);
+			for (Entry<BoogieVar, TermVariable> entry : varsOfLevel.entrySet()) {
+				TermVariable replacement = substMap.get(entry.getValue());
+				if (replacement != null)
+					varsOfLevel.put(entry.getKey(), replacement);
+			}
+		}
+		return clonedSmtAnnotation;
+	}
+
+
+
+
+
+NNFTransformer:
+	/*@Override
+	public void convertApplicationTerm(ApplicationTerm appTerm, Term[] newArgs) {
+		// bottom up: The given newArgs are already in Negation Normal Form
+		String functionName = appTerm.getFunction().getName();
+		Theory theory = appTerm.getTheory();
+		if (functionName.equals("not")) {
+			if (newArgs[0] instanceof ApplicationTerm) {
+				ApplicationTerm contentAppTerm = (ApplicationTerm) newArgs[0];
+				Term[] contentParams = contentAppTerm.getParameters();
+				String contentFunctionName = contentAppTerm.getFunction().getName();
+				if (contentFunctionName.equals("not")) {
+					// double negation
+					setResult(contentParams[0]);
+				} else if (contentFunctionName.equals("and")) {
+					// de Morgan: Negate every argument, convert it to NNF
+					BuildApplicationTerm or = new BuildApplicationTerm
+							(theory.term("or", theory.TRUE, theory.TRUE));
+					enqueueWalker(or);
+					// and build disjunction
+					Term[] negatedArgs = new Term[newArgs.length];
+					for (int i = 0; i < newArgs.length; i++) {
+						negatedArgs[i] = theory.term("not", newArgs[i]);
+					}
+					pushTerms(negatedArgs);
+					Term[] nnfArgs = ...;
+					
+					Term newTerm = theory.term("or", nnfArgs);
+					pushTerm(newTerm);
+					//setResult(newTerm);
+				} else if (contentFunctionName.equals("or")) {
+					// de Morgan
+					Term[] negatedArgs = new Term[newArgs.length];
+					for (int i = 0; i < newArgs.length; i++) {
+						negatedArgs[i] = theory.term("not", newArgs[i]);
+					}
+					pushTerms(negatedArgs);
+					Term[] nnfArgs = ...;
+					
+					Term newTerm = theory.term("or", nnfArgs);
+					pushTerm(newTerm);
+					//setResult(newTerm);
+				}
+			}
+		} else if (functionName.equals("and") || functionName.equals("or")) {
+			super.convertApplicationTerm(appTerm, newArgs);
+		}
+	}*/
+
+
+
+TreeIC3:
+	private static LinkedList<UnwindingNode> findPath(UnwindingNode ancestor, UnwindingNode descendant) {
+		LinkedList<UnwindingNode> result = new LinkedList<UnwindingNode>();
+		result.add(descendant);
+		UnwindingNode currentNode = descendant;
+		while (currentNode != ancestor) {
+			currentNode = HelperMethods.getParentArtNode(currentNode);
+			if (currentNode == null) {
+				throw new RuntimeException("Error: Couldn't find path between nodes!");
+			}
+			result.addFirst(currentNode);
+		}
+		return result;
+	}

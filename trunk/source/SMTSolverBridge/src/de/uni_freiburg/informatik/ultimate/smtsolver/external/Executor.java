@@ -16,6 +16,7 @@ import java_cup.runtime.Symbol;
 
 import de.uni_freiburg.informatik.ultimate.logic.Assignments;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
+import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
@@ -33,9 +34,9 @@ public class Executor {
 	private Lexer m_Lexer;
 	private BufferedWriter m_Writer;
 	private Logger m_Logger;
-	private Scriptor m_Script;
+	private Script m_Script;
 	
-	public Executor(String solverCommand, Scriptor script, Logger logger)
+	public Executor(String solverCommand, Script script, Logger logger)
 	{
 		m_Solver = solverCommand;
 		m_Script = script;
