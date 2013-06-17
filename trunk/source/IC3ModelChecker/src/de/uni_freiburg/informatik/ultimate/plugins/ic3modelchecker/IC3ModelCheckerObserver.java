@@ -51,9 +51,9 @@ public class IC3ModelCheckerObserver implements IUnmanagedObserver {
 											new InterpolantGeneralizer(), true);
 			boolean result = treeIC3.start();
 			if (result)
-				reportResult(new PositiveResult(null));
+				reportResult(new PositiveResult<CFGExplicitNode>(cfgFunctionRoot, Activator.PLUGIN_ID, null, cfgFunctionRoot.getPayload().getLocation()));
 			else
-				reportResult(new CounterExampleResult(null, null));
+				reportResult(new CounterExampleResult<CFGExplicitNode>(cfgFunctionRoot, Activator.PLUGIN_ID, null, cfgFunctionRoot.getPayload().getLocation(), null));
 		}
 
 	}
