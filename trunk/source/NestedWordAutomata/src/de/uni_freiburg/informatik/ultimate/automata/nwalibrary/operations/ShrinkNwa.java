@@ -93,6 +93,9 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	// placeholder equivalence class
 	final HashSet<EquivalenceClass> m_negativeSet;
 	final EquivalenceClass m_negativeClass;
+	// return transition helper objects
+	final LinHelper m_linHelper;
+	final HierHelper m_hierHelper;
 	// simulates the output automaton
 	private ShrinkNwaResult m_result;
 	
@@ -161,6 +164,8 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 		m_negativeSet = new HashSet<EquivalenceClass>();
 		m_negativeClass = new EquivalenceClass();
 		m_negativeSet.add(m_negativeClass);
+		m_linHelper = new LinHelper();
+		m_hierHelper = new HierHelper();
 		
 		// must be the last part of the constructor
 		s_Logger.info(startMessage());
@@ -450,10 +455,10 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 				new HashSet<EquivalenceClass>();
 		
 		// collect trivial linear splits
-		splitReturnLin(letter2hier2linEcSet, splitEquivalenceClasses);
+		splitReturnLocal(letter2hier2linEcSet, splitEquivalenceClasses, m_linHelper);
 		
 		// collect trivial hierarchical splits
-		splitReturnHier(letter2lin2hierEcSet, splitEquivalenceClasses);
+		splitReturnLocal(letter2lin2hierEcSet, splitEquivalenceClasses, m_hierHelper);
 		
 		// collect complicated mixed splits
 		splitReturnMixed(letter2hier2linEcSet, splitEquivalenceClasses);
@@ -521,67 +526,68 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	}
 	
 	/**
-	 * This method performs necessary linear return splits.
+	 * This method performs necessary local return splits.
 	 * 
-	 * For a fixed hierarchical predecessor, check all linear predecessors.
-	 * Distinguish these with the reached successor equivalence classes and
-	 * mark them to be split later.
+	 * In order to abstract from linear and hierarchical states (since the
+	 * split is complementary and the method is nearly the same), an algorithm
+	 * pattern is used. That is why the explanation is rather unsatisfying.
+	 * Let exactly one of A and B be the linear and the hierarchical states.
 	 * 
-	 * For the linear predecessors only look at states in equivalence classes
-	 * of which at least one state indeed is a linear predecessor leading to
+	 * For a fixed A predecessor, check all B predecessors. Distinguish these
+	 * with the reached successor equivalence classes and mark them to be split
+	 * later.
+	 * 
+	 * For the A predecessors only look at states in equivalence classes
+	 * of which at least one state indeed is an A predecessor leading to
 	 * any state. This means down states leading to a sink state without an
 	 * explicit transition are of interest iff their equivalence class is
 	 * considered.
-	 * 
-	 * TODO<duplicateCode> this method is nearly the same as splitReturnHier().
-	 *                     create abstract method and call with algorithm
-	 *                     pattern object for transitions and DownStates.
 	 *
-	 * @param letter2hier2linEcSet mapping: letter to hierarchical state to
-	 *                             set of linear equivalence classes
+	 * @param letter2state2ecSet mapping: letter to state to set of equivalence
+	 *                           classes
 	 * @param splitEquivalenceClasses split equivalence classes
+	 * @param returnHelper abstract from linear and hierarchical states
 	 */
-	private void splitReturnLin(final HashMap<LETTER, HashMap<STATE,
-			HashSet<EquivalenceClass>>> letter2hier2linEcSet,
-			final HashSet<EquivalenceClass> splitEquivalenceClasses) {
+	private void splitReturnLocal(final HashMap<LETTER, HashMap<STATE,
+			HashSet<EquivalenceClass>>> letter2state2ecSet,
+			final HashSet<EquivalenceClass> splitEquivalenceClasses,
+			final IReturnHelper<LETTER, STATE> returnHelper) {
 		if (DEBUG3)
-			System.err.println("\n- starting linear split: " +
-					letter2hier2linEcSet);
+			System.err.println("\n- starting local split: " +
+					letter2state2ecSet);
 		
 		for (final Entry<LETTER, HashMap<STATE, HashSet<EquivalenceClass>>>
-				outerEntry : letter2hier2linEcSet.entrySet()) {
+				outerEntry : letter2state2ecSet.entrySet()) {
 			final LETTER letter = outerEntry.getKey();
-			final HashMap<STATE, HashSet<EquivalenceClass>> hier2linEcSet =
+			final HashMap<STATE, HashSet<EquivalenceClass>> state2ecSet =
 					outerEntry.getValue();
 			
 			if (DEBUG3)
 				System.err.println("\nouter entry: " + outerEntry);
 			
 			for (final Entry<STATE, HashSet<EquivalenceClass>> innerEntry :
-					hier2linEcSet.entrySet()) {
-				final STATE hier = innerEntry.getKey();
-				final HashSet<EquivalenceClass> linEcSet =
-						innerEntry.getValue();
+					state2ecSet.entrySet()) {
+				final STATE first = innerEntry.getKey();
+				final HashSet<EquivalenceClass> ecSet = innerEntry.getValue();
 				
 				if (DEBUG3)
-					System.err.println("\n consider hier: " + hier);
+					System.err.println("\n consider: " + first);
 				
-				for (final EquivalenceClass linEc : linEcSet) {
+				for (final EquivalenceClass ec : ecSet) {
 					if (DEBUG3)
-						System.err.println("\nnext linEc: " +
-								linEc.toStringShort());
+						System.err.println("\nnext ec: " +
+								ec.toStringShort());
 					
 					final HashMap<HashSet<EquivalenceClass>, HashSet<STATE>>
-						succEc2linSet = new HashMap<HashSet<EquivalenceClass>,
-						HashSet<STATE>>();
+						succEcSet2stateSet = new HashMap<
+							HashSet<EquivalenceClass>, HashSet<STATE>>();
 					
-					for (final STATE lin : linEc.m_states) {
+					for (final STATE second : ec.m_states) {
 						if (DEBUG3)
-							System.err.println("consider " + lin);
+							System.err.println("consider " + second);
 						
 						final Iterator<OutgoingReturnTransition<LETTER, STATE>>
-							edges = m_operand.returnSucccessors(
-									lin, hier, letter).iterator();
+							edges = returnHelper.get(first, second, letter);
 						/*
 						 * TODO<nondeterminism> at most one transition for
 						 *                      deterministic automata,
@@ -605,7 +611,7 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 							if (DEBUG3)
 								System.err.print(" no transition, ");
 							
-							if (m_doubleDecker.isDoubleDecker(lin, hier)) {
+							if (returnHelper.isDoubleDecker(first, second)) {
 								if (DEBUG3)
 									System.err.println("but DS");
 								
@@ -619,163 +625,35 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 							}
 						}
 						
-						HashSet<STATE> linSet = succEc2linSet.get(succEcs);
+						HashSet<STATE> linSet =
+								succEcSet2stateSet.get(succEcs);
 						if (linSet == null) {
 							linSet = new HashSet<STATE>(
 									computeHashSetCapacity(
-											linEc.m_states.size()));
-							succEc2linSet.put(succEcs, linSet);
+											ec.m_states.size()));
+							succEcSet2stateSet.put(succEcs, linSet);
 						}
-						linSet.add(lin);
+						linSet.add(second);
 						
 						if (DEBUG3)
 							System.err.println(" -> altogether reached " +
 									succEcs);
 					}
 					
-					if (succEc2linSet.size() > 1) {
+					if (succEcSet2stateSet.size() > 1) {
 						if (DEBUG3)
 							System.err.println("\n! mark split of " +
-									linEc.toStringShort() + ": " +
-									succEc2linSet);
+									ec.toStringShort() + ": " +
+									succEcSet2stateSet);
 						
-						linEc.markSplit(succEc2linSet.values());
-						splitEquivalenceClasses.add(linEc);
+						ec.markSplit(succEcSet2stateSet.values());
+						splitEquivalenceClasses.add(ec);
 					}
 					else {
-						assert (succEc2linSet.size() == 1);
+						assert (succEcSet2stateSet.size() == 1);
 						if (DEBUG3)
 							System.err.println("ignore marking: " +
-									succEc2linSet);
-					}
-				}
-			}
-		}
-	}
-	
-	/**
-	 * This method performs necessary hierarchical return splits.
-	 * 
-	 * For a fixed linear predecessor, check all hierarchical predecessors.
-	 * Distinguish these with the reached successor equivalence classes and
-	 * mark them to be split later.
-	 * 
-	 * For the hierarchical predecessors only look at states in equivalence
-	 * classes of which at least one state indeed is a hierarchical predecessor
-	 * leading to any state. This means down states leading to a sink state
-	 * without an explicit transition are of interest iff their equivalence
-	 * class is considered.
-	 *
-	 * @param letter2lin2hierEcSet mapping: letter to linear state to set of
-	 *                             hierarchical equivalence classes
-	 * @param splitEquivalenceClasses split equivalence classes
-	 */
-	private void splitReturnHier(final HashMap<LETTER, HashMap<STATE,
-			HashSet<EquivalenceClass>>> letter2lin2hierEcSet,
-			final HashSet<EquivalenceClass> splitEquivalenceClasses) {
-		if (DEBUG3)
-			System.err.println("\n- starting hierarchical split: " +
-					letter2lin2hierEcSet);
-		
-		for (final Entry<LETTER, HashMap<STATE, HashSet<EquivalenceClass>>>
-				outerEntry : letter2lin2hierEcSet.entrySet()) {
-			final LETTER letter = outerEntry.getKey();
-			final HashMap<STATE, HashSet<EquivalenceClass>> lin2hierEcSet =
-					outerEntry.getValue();
-			
-			if (DEBUG3)
-				System.err.println("\nouter entry: " + outerEntry);
-			
-			for (final Entry<STATE, HashSet<EquivalenceClass>> innerEntry :
-					lin2hierEcSet.entrySet()) {
-				final STATE lin = innerEntry.getKey();
-				final HashSet<EquivalenceClass> hierEcSet =
-						innerEntry.getValue();
-				
-				if (DEBUG3)
-					System.err.println("\n consider lin: " + lin);
-				
-				for (final EquivalenceClass hierEc : hierEcSet) {
-					if (DEBUG3)
-						System.err.println("\nnext hierEc: " +
-								hierEc.toStringShort());
-					
-					final HashMap<HashSet<EquivalenceClass>, HashSet<STATE>>
-						succEc2hierSet = new HashMap<HashSet<EquivalenceClass>,
-						HashSet<STATE>>();
-					
-					for (final STATE hier : hierEc.m_states) {
-						if (DEBUG3)
-							System.err.println("consider " + hier);
-						
-						final Iterator<OutgoingReturnTransition<LETTER, STATE>>
-							edges = m_operand.returnSucccessors(
-									lin, hier, letter).iterator();
-						/*
-						 * TODO<nondeterminism> at most one transition for
-						 *                      deterministic automata,
-						 *                      offer improved version?
-						 */
-						final HashSet<EquivalenceClass> succEcs;
-						if (edges.hasNext()) {
-							succEcs = new HashSet<EquivalenceClass>();
-							do {
-								final STATE succ = edges.next().getSucc();
-								final EquivalenceClass succEc = m_partition.
-										m_state2EquivalenceClass.get(succ);
-								succEcs.add(succEc);
-								
-								if (DEBUG3)
-									System.err.println(" reaching " + succ +
-											" in " + succEc.toStringShort());
-							} while (edges.hasNext());
-						}
-						else {
-							if (DEBUG3)
-								System.err.print(" no transition, ");
-							
-							if (m_doubleDecker.isDoubleDecker(lin, hier)) {
-								if (DEBUG3)
-									System.err.println("but DS");
-								
-								succEcs = m_negativeSet;
-							}
-							else {
-								if (DEBUG3)
-									System.err.println("no DS");
-								
-								continue;
-							}
-						}
-						
-						HashSet<STATE> hierSet = succEc2hierSet.get(succEcs);
-						if (hierSet == null) {
-							hierSet = new HashSet<STATE>(
-									computeHashSetCapacity(
-											hierEc.m_states.size()));
-							succEc2hierSet.put(succEcs, hierSet);
-						}
-						hierSet.add(hier);
-						
-						if (DEBUG3)
-							System.err.println(" -> altogether reached " +
-									succEcs);
-					}
-					
-					if (succEc2hierSet.size() > 1) {
-						if (DEBUG3)
-							System.err.println("\n! mark split of " +
-									hierEc.toStringShort() + ": " +
-									succEc2hierSet);
-						
-						hierEc.markSplit(succEc2hierSet.values());
-						splitEquivalenceClasses.add(hierEc);
-					}
-					else {
-						assert (succEc2hierSet.size() == 1);
-						if (DEBUG3)
-							System.err.println("ignore marking: " +
-									succEc2hierSet);
+									succEcSet2stateSet);
 					}
 				}
 			}
@@ -1260,6 +1138,65 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 			}
 		}
 		return true;
+	}
+	
+	/**
+	 * This interface is used as algorithm pattern for the local return split.
+	 */
+	interface IReturnHelper<LETTER, STATE> {
+		/**
+		 * This method gives all outgoing return transitions with respect to
+		 * states and letters.
+		 *
+		 * @param first the first state
+		 * @param second the second state
+		 * @param letter the letter
+		 * @return all respective outgoing return transitions
+		 */
+		Iterator<OutgoingReturnTransition<LETTER, STATE>> get(
+				final STATE first, final STATE second, final LETTER letter);
+		
+		/**
+		 * This method determines whether one state is the down state of
+		 * another state.
+		 *
+		 * @param first the first state
+		 * @param second the second state
+		 * @return true iff the one state is a down state of the other one
+		 */
+		boolean isDoubleDecker(final STATE first, final STATE second);
+	}
+	
+	/**
+	 * This is the implementation for the local linear return split.
+	 */
+	private class LinHelper implements IReturnHelper<LETTER, STATE> {
+		@Override
+		public Iterator<OutgoingReturnTransition<LETTER, STATE>> get(
+				final STATE hier, final STATE lin, final LETTER letter) {
+			return m_operand.returnSucccessors(lin, hier, letter).iterator();
+		}
+		
+		@Override
+		public boolean isDoubleDecker(final STATE hier, final STATE lin) {
+			return m_doubleDecker.isDoubleDecker(lin, hier);
+		}
+	}
+	
+	/**
+	 * This is the implementation for the local hierarchical return split.
+	 */
+	private class HierHelper implements IReturnHelper<LETTER, STATE> {
+		@Override
+		public Iterator<OutgoingReturnTransition<LETTER, STATE>> get(
+				final STATE lin, final STATE hier, final LETTER letter) {
+			return m_operand.returnSucccessors(lin, hier, letter).iterator();
+		}
+		
+		@Override
+		public boolean isDoubleDecker(final STATE lin, final STATE hier) {
+			return m_doubleDecker.isDoubleDecker(lin, hier);
+		}
 	}
 	
 	/**
