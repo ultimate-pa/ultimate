@@ -1,5 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -57,6 +58,11 @@ import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
  * 
  * <threading> identify possibilities for threading and implement it
  * 
+ * possible improvements:
+ * - global return split analysis
+ * 
+ * - separate set of states in EC for states with no return (internal/call?)
+ *   transitions
  * 
  * misc:
  * <hashCode> overwrite for EquivalenceClass?
@@ -1207,6 +1213,167 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	 */
 	public Map<STATE,STATE> getOldState2newState() {
 		return m_result.m_oldState2newState;
+	}
+	
+	/**
+	 * This interface is used for an alternative internal and call split to
+	 * abstract from whether internal or call symbols are considered.
+	 */
+	private interface IInternalCallHelper<LETTER, STATE> {
+		/**
+		 * This method returns all incoming letters for a states
+		 *
+		 * @param state the successor state
+		 * @return all incoming letters
+		 */
+		Collection<LETTER> getLetter(final STATE state);
+		
+		/**
+		 * This method returns an iterator of all predecessor states.
+		 *
+		 * @param succ the successor state
+		 * @param letter the letter
+		 * @return iterator of all predecessor states
+		 */
+		Iterator<STATE> getPred(final STATE succ, final LETTER letter);
+	}
+	
+	/**
+	 * This is the implementation for the alternative internal split helper.
+	 */
+	private class InternalHelper implements IInternalCallHelper<LETTER, STATE>
+			{
+		@Override
+		public Collection<LETTER> getLetter(STATE state) {
+			return m_operand.lettersInternalIncoming(state);
+		}
+		
+		@Override
+		public Iterator<STATE> getPred(final STATE succ, final LETTER letter) {
+			return new Iterator<STATE>() {
+				final Iterator<IncomingInternalTransition<LETTER, STATE>> it =
+						m_operand.internalPredecessors(letter, succ).
+						iterator();
+				
+				@Override
+				public boolean hasNext() {
+					return it.hasNext();
+				}
+
+				@Override
+				public STATE next() {
+					return it.next().getPred();
+				}
+
+				@Override
+				public void remove() {
+					throw new UnsupportedOperationException(
+							"Removing is not allowed.");
+				}
+			};
+		}
+	}
+	
+	/**
+	 * This is the implementation for the alternative call split helper.
+	 */
+	private class CallHelper implements IInternalCallHelper<LETTER, STATE> {
+		@Override
+		public Collection<LETTER> getLetter(STATE state) {
+			return m_operand.lettersCallIncoming(state);
+		}
+		
+		@Override
+		public Iterator<STATE> getPred(final STATE succ, final LETTER letter) {
+			return new Iterator<STATE>() {
+				final Iterator<IncomingCallTransition<LETTER, STATE>> it =
+						m_operand.callPredecessors(letter, succ).iterator();
+				
+				@Override
+				public boolean hasNext() {
+					return it.hasNext();
+				}
+
+				@Override
+				public STATE next() {
+					return it.next().getPred();
+				}
+
+				@Override
+				public void remove() {
+					throw new UnsupportedOperationException(
+							"Removing is not allowed.");
+				}
+			};
+		}
+	}
+	
+	/**
+	 * This is an alternative internal and call split that first collects all
+	 * incoming letters and then for each letter does the respective split.
+	 * 
+	 * Advantage:
+	 * - No mapping for the transitions is needed.
+	 * 
+	 * Disadvantage:
+	 * - It needs a further iteration for collecting the letters.
+	 * - If the splitter set is split, the method must be stopped.
+	 *   In practice this drastically increases runtime, since this happens
+	 *   very often.
+	 *   This can be avoided by making a copy of the states, which can be much
+	 *   overhead, though.
+	 * 
+	 * Practice results: This split behaves much worse than the other one.
+	 * Even the resulting size differs, which I do not understand, but I do not
+	 * want to investigate this any further.
+	 *
+	 * @param a the splitter equivalence class
+	 * @param iterator the iterator abstracting from the letter type
+	 * @param isInternal true iff split is internal
+	 * @param helper the helper abstracting from the letter type
+	 */
+	private void splitInternalOrCallNoMap(final EquivalenceClass a,
+			final ITransitionIterator<LETTER, STATE> iterator,
+			final boolean isInternal,
+			final IInternalCallHelper<LETTER, STATE> helper) {
+		assert ((isInternal &&
+				(iterator instanceof ShrinkNwa.InternalTransitionIterator) &&
+				(a.m_incomingInt != EIncomingStatus.inWL)) ||
+				(! isInternal) &&
+				((iterator instanceof ShrinkNwa.CallTransitionIterator) &&
+				(a.m_incomingCall != EIncomingStatus.inWL)));
+		
+		// copy splitter set for not having to stop when split
+		final ArrayList<STATE> aStates =
+				new ArrayList<STATE>(a.m_states.size());
+		for (final STATE state : a.m_states) {
+			aStates.add(state);
+		}
+		
+		// create a hash set for visited letters
+		final HashSet<LETTER> letters = new HashSet<LETTER>();
+		for (final STATE state : aStates) {
+			letters.addAll(helper.getLetter(state));
+		}
+		
+		// split states
+//		final int size = a.m_states.size();
+		for (final LETTER  letter : letters) {
+			final HashSet<STATE> states = new HashSet<STATE>();
+			for (final STATE succ : aStates) {
+				final Iterator<STATE> preds = helper.getPred(succ, letter);
+				while (preds.hasNext()) {
+					states.add(preds.next());
+				}
+				
+				if (states.size() > 0) {
+					m_partition.splitEquivalenceClasses(states);
+//					if (a.m_states.size() < size) {
+//						return;
+//					}
+				}
+			}
+		}
 	}
 	
 	// --- [end] helper methods and classes --- //
