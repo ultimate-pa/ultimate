@@ -113,7 +113,7 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	 * Necessary because the Automizer needs a special StateFactory during
 	 * abstraction refinement (for computation of HoareAnnotation).
 	 */
-	private final StateFactory<STATE> m_stateFactoryConstruction;
+	private final StateFactory<STATE> m_stateFactory;
 	
 	/**
 	 * creates a copy of operand
@@ -124,7 +124,7 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	 */
 	public ShrinkNwa(final INestedWordAutomaton<LETTER,STATE> operand)
 			throws OperationCanceledException {
-		this(operand, null, operand.getStateFactory(), false, false);
+		this(operand, null, null, false, false);
 	}
 	
 	/**
@@ -136,7 +136,7 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	 * @param operand preprocessed nested word automaton
 	 * preprocessing: dead end and unreachable states/transitions removed
 	 * @param equivalenceClasses represent initial equivalence classes
-	 * @param stateFactoryConstruction used for Hoare annotation
+	 * @param stateFactory used for Hoare annotation
 	 * @param includeMapping true iff mapping old to new state is needed
 	 * @param isFiniteAutomaton true iff automaton is a finite automaton
 	 * @throws OperationCanceledException if cancel signal is received
@@ -145,14 +145,16 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	public ShrinkNwa(
 			final INestedWordAutomaton<LETTER,STATE> operand,
 			final Collection<Set<STATE>> equivalenceClasses,
-			final StateFactory<STATE> stateFactoryConstruction,
+			final StateFactory<STATE> stateFactory,
 			final boolean includeMapping,
 			final boolean isFiniteAutomaton)
 					throws OperationCanceledException {
 		m_operand = operand;
 		// TODO<DoubleDecker> check this?
 		m_doubleDecker = (IDoubleDeckerAutomaton<LETTER, STATE>)m_operand;
-		m_stateFactoryConstruction = stateFactoryConstruction;
+		m_stateFactory = (stateFactory == null)
+				? m_operand.getStateFactory()
+				: stateFactory;
 		m_partition = new Partition();
 		m_workListIntCall = new WorkListIntCall();
 		m_workListRet = new WorkListRet();
@@ -1827,10 +1829,7 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 							m_oldNwa.size()))
 					: null;
 			
-			final StateFactory<STATE> factory =
-					(m_stateFactoryConstruction == null)
-					? m_oldNwa.getStateFactory()
-					: m_stateFactoryConstruction;
+			assert (m_stateFactory != null);
 			final HashMap<EquivalenceClass, STATE> ec2state =
 					new HashMap<EquivalenceClass, STATE>(
 							computeHashSetCapacity(
@@ -1855,7 +1854,7 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 				final Set<STATE> ecStates = ec.m_states;
 				
 				// new state
-				final STATE newState = factory.minimize(ecStates);
+				final STATE newState = m_stateFactory.minimize(ecStates);
 				ec2state.put(ec, newState);
 				if (includeMapping) {
 					for (final STATE oldState : ecStates) {
