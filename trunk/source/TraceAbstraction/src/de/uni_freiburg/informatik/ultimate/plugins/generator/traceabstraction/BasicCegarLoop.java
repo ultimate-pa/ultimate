@@ -412,6 +412,10 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		m_TimingStatistics.finishDifference();
 		
 		if (m_Pref.minimize()) {
+			if (m_Pref.dumpAutomata()) {
+				String filename = "AbstractionBeforeMinimization_Iteration" + m_Iteration; 
+				super.writeAutomatonToFile(m_Abstraction, filename);
+			}
 			m_TimingStatistics.startAutomataMinimization();
 			long startTime = System.currentTimeMillis();
 			int oldSize = m_Abstraction.size();
