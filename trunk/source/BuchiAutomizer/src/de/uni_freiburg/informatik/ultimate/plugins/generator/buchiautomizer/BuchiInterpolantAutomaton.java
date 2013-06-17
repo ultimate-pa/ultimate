@@ -56,7 +56,8 @@ public class BuchiInterpolantAutomaton implements
 
 	public BuchiInterpolantAutomaton(SmtManager smtManager, EdgeChecker edgeChecker,
 			IPredicate precondition, IPredicate[] stemInterpolants, 
-			IPredicate hondaPredicate, IPredicate[] loopInterpolants, 
+			IPredicate hondaPredicate, IPredicate rankEqAndSi, 
+			IPredicate[] loopInterpolants, 
 			INestedWordAutomatonSimple<CodeBlock, IPredicate> abstraction) {
 		super();
 		m_SmtManager = smtManager;
@@ -98,6 +99,9 @@ public class BuchiInterpolantAutomaton implements
 		m_Result.addState(false, true, hondaPredicate);
 		m_InputSuccessorCache.addState(false, true, hondaPredicate);
 		m_RejectionCache.addState(false, true, hondaPredicate);
+		m_InputLoopPredicates.add(rankEqAndSi);
+		m_InputSuccessorCache.addState(false, true, rankEqAndSi);
+		m_RejectionCache.addState(false, true, rankEqAndSi);
 		for (IPredicate loopPredicate : loopInterpolants) {
 			if (!m_InputLoopPredicates.contains(loopPredicate)) {
 				m_InputLoopPredicates.add(loopPredicate);
@@ -578,15 +582,15 @@ public class BuchiInterpolantAutomaton implements
 			boolean hondaIsSuccessor = addSuccReturn(resPred, resHier, letter, m_InputStemPredicates, succs);
 			if (!succs.isEmpty()) {
 				IPredicate stemSucc = getOrConstructPredicate(succs, m_ResultStemPredicates);
-				m_Result.addInternalTransition(resPred, letter, stemSucc);
+				m_Result.addReturnTransition(resPred, resHier, letter, stemSucc);
 			}
 			if (hondaIsSuccessor) {
-				m_Result.addInternalTransition(resPred, letter, m_HondaPredicate);
+				m_Result.addReturnTransition(resPred, resHier, letter, m_HondaPredicate);
 			}
 		} else {
 			assert (m_ResultLoopPredicates.contains(resPred) || resPred == m_HondaPredicate);
 			HashSet<IPredicate> succs = new HashSet<IPredicate>();
-			boolean hondaIsSuccessor = addSuccInternal(resPred, letter, m_InputLoopPredicates, succs);
+			boolean hondaIsSuccessor = addSuccReturn(resPred, resHier, letter, m_InputLoopPredicates, succs);
 			if (hondaIsSuccessor) {
 				m_Result.addReturnTransition(resPred, resHier, letter, m_HondaPredicate);
 			} else if (!succs.isEmpty()) {
