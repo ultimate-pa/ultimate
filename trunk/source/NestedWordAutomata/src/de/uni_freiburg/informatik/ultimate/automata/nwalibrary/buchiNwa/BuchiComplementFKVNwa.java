@@ -8,6 +8,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import javax.swing.plaf.basic.BasicInternalFrameTitlePane.MaximizeAction;
+
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.automata.Activator;
@@ -490,6 +492,7 @@ public class BuchiComplementFKVNwa<LETTER,STATE> implements INestedWordAutomaton
 		}
 		
 		STATE getContent() {
+			assert !m_LevelRanking.isEmpty();
 			return m_StateFactory.buchiComplementFKV((LevelRankingState) this);
 		}
 		
@@ -558,23 +561,18 @@ public class BuchiComplementFKVNwa<LETTER,STATE> implements INestedWordAutomaton
 	public class LevelRankingConstraint extends LevelRankingState {
 		
 		void internalSuccessorConstraints(IDeterminizedState<LETTER, STATE> state, LETTER symbol) {
-			boolean oCandidate = false;
-			Integer upRank = Integer.MAX_VALUE;
 			for (STATE down : state.getDownStates()) {
 				for (STATE up : state.getUpStates(down)) {
-					for (OutgoingInternalTransition<LETTER, STATE> trans : 
-									m_Operand.internalSuccessors(up,symbol)) {
-						addConstaint(down, trans.getSucc(), upRank, oCandidate);
+					boolean oCandidate;
+					Integer upRank;
+					if (state instanceof BuchiComplementFKVNwa.LevelRankingState) {
+						LevelRankingState lvlRkState = (LevelRankingState) state;
+						oCandidate = lvlRkState.isOempty() || lvlRkState.inO(down,up);
+						upRank = lvlRkState.getRank(down, up);
+					} else {
+						oCandidate = false;
+						upRank = Integer.MAX_VALUE;
 					}
-				}
-			}
-		}
-		
-		void internalSuccessorConstraints(LevelRankingState state, LETTER symbol) {
-			for (STATE down : state.getDownStates()) {
-				for (STATE up : state.getUpStates(down)) {
-					boolean oCandidate = state.isOempty() || state.inO(down,up);
-					Integer upRank = state.getRank(down, up);
 					for (OutgoingInternalTransition<LETTER, STATE> trans : 
 									m_Operand.internalSuccessors(up,symbol)) {
 						addConstaint(down, trans.getSucc(), upRank, oCandidate);
@@ -584,32 +582,18 @@ public class BuchiComplementFKVNwa<LETTER,STATE> implements INestedWordAutomaton
 		}
 		
 		void callSuccessorConstraints(IDeterminizedState<LETTER, STATE> state, LETTER symbol) {
-			boolean oCandidate = false;
-			Integer upRank = Integer.MAX_VALUE;
 			for (STATE down : state.getDownStates()) {
 				for (STATE up : state.getUpStates(down)) {
-					for (OutgoingCallTransition<LETTER, STATE> trans : 
-									m_Operand.callSuccessors(up,symbol)) {
-						STATE succDownState;
-						// if !m_UseDoubleDeckers we always use getEmptyStackState()
-						// as down state to obtain sets of states instead of
-						// sets of DoubleDeckers.
-						if (m_StateDeterminizer.useDoubleDeckers()) {
-							succDownState = up;
-						} else {
-							succDownState = m_Operand.getEmptyStackState();
-						}
-						addConstaint(succDownState, trans.getSucc(), upRank, oCandidate);
+					boolean oCandidate;
+					Integer upRank;
+					if (state instanceof BuchiComplementFKVNwa.LevelRankingState) {
+						LevelRankingState lvlRkState = (LevelRankingState) state;
+						oCandidate = lvlRkState.isOempty() || lvlRkState.inO(down,up);
+						upRank = lvlRkState.getRank(down, up);
+					} else {
+						oCandidate = false;
+						upRank = Integer.MAX_VALUE;
 					}
-				}
-			}
-		}
-		
-		void callSuccessorConstraints(LevelRankingState state, LETTER symbol) {
-			for (STATE down : state.getDownStates()) {
-				for (STATE up : state.getUpStates(down)) {
-					boolean oCandidate = state.isOempty() || state.inO(down,up);
-					Integer upRank = state.getRank(down, up);
 					for (OutgoingCallTransition<LETTER, STATE> trans : 
 									m_Operand.callSuccessors(up,symbol)) {
 						STATE succDownState;
@@ -628,24 +612,6 @@ public class BuchiComplementFKVNwa<LETTER,STATE> implements INestedWordAutomaton
 		}
 		
 		void returnSuccessorConstraints(IDeterminizedState<LETTER, STATE> state, 
-				IDeterminizedState<LETTER, STATE> hier, LETTER symbol) {
-			boolean oCandidate = false;
-			Integer upRank = Integer.MAX_VALUE;
-			for (STATE hierDown : hier.getDownStates()) {
-				for (STATE hierUp : hier.getUpStates(hierDown)) {
-					if (state.getUpStates(hierUp) != null) {
-						for (STATE stateUp : state.getUpStates(hierUp)) {
-							for (OutgoingReturnTransition<LETTER, STATE> trans : 
-								m_Operand.returnSucccessors(stateUp, hierUp, symbol)) {
-								addConstaint(hierDown, trans.getSucc(), upRank, oCandidate);
-							}
-						}
-					}
-				}
-			}
-		}
-		
-		void returnSuccessorConstraints(LevelRankingState state, 
 				IDeterminizedState<LETTER, STATE> hier, LETTER symbol) {
 			for (STATE hierDown : hier.getDownStates()) {
 				for (STATE hierUp : hier.getUpStates(hierDown)) {
@@ -677,11 +643,19 @@ public class BuchiComplementFKVNwa<LETTER,STATE> implements INestedWordAutomaton
 		}
 
 		private void addReturnSuccessorConstraintsGivenDownState(
-				LevelRankingState state, STATE downState, Set<STATE> upStates,
+				IDeterminizedState<LETTER, STATE> state, STATE downState, Set<STATE> upStates,
 				STATE hierDown, STATE hierUp, LETTER symbol) {
 			for (STATE stateUp : upStates) {
-				boolean oCandidate = state.isOempty() || state.inO(downState,stateUp);
-				Integer upRank = state.getRank(downState, stateUp);
+				boolean oCandidate;
+				Integer upRank;
+				if (state instanceof BuchiComplementFKVNwa.LevelRankingState) {
+					LevelRankingState lvlRkState = (LevelRankingState) state;
+					oCandidate = lvlRkState.isOempty() || lvlRkState.inO(downState,stateUp);
+					upRank = lvlRkState.getRank(downState, stateUp);
+				} else {
+					oCandidate = false;
+					upRank = Integer.MAX_VALUE;
+				}
 				for (OutgoingReturnTransition<LETTER, STATE> trans : 
 								m_Operand.returnSucccessors(stateUp,hierUp,symbol)) {
 					assert m_StateDeterminizer.useDoubleDeckers() || hierDown == m_Operand.getEmptyStackState();
