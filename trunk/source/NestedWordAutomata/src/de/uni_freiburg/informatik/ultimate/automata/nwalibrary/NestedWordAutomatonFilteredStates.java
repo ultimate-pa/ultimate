@@ -129,7 +129,7 @@ public class NestedWordAutomatonFilteredStates<LETTER, STATE> implements
 
 	@Override
 	public Collection<LETTER> lettersInternal(STATE state) {
-		Collection<LETTER> letters = new ArrayList<LETTER>();
+		Collection<LETTER> letters = new HashSet<LETTER>();
 		for (OutgoingInternalTransition<LETTER, STATE> outTrans : internalSuccessors(state)) {
 			letters.add(outTrans.getLetter());
 		}
@@ -138,7 +138,7 @@ public class NestedWordAutomatonFilteredStates<LETTER, STATE> implements
 
 	@Override
 	public Collection<LETTER> lettersCall(STATE state) {
-		Collection<LETTER> letters = new ArrayList<LETTER>();
+		Collection<LETTER> letters = new HashSet<LETTER>();
 		for (OutgoingCallTransition<LETTER, STATE> outTrans : callSuccessors(state)) {
 			letters.add(outTrans.getLetter());
 		}
@@ -147,7 +147,7 @@ public class NestedWordAutomatonFilteredStates<LETTER, STATE> implements
 
 	@Override
 	public Collection<LETTER> lettersReturn(STATE state) {
-		Collection<LETTER> letters = new ArrayList<LETTER>();
+		Collection<LETTER> letters = new HashSet<LETTER>();
 		for (OutgoingReturnTransition<LETTER, STATE> outTrans : returnSuccessors(state)) {
 			letters.add(outTrans.getLetter());
 		}
@@ -156,7 +156,7 @@ public class NestedWordAutomatonFilteredStates<LETTER, STATE> implements
 
 	@Override
 	public Collection<LETTER> lettersInternalIncoming(STATE state) {
-		Collection<LETTER> letters = new ArrayList<LETTER>();
+		Collection<LETTER> letters = new HashSet<LETTER>();
 		for (IncomingInternalTransition<LETTER, STATE> outTrans : internalPredecessors(state)) {
 			letters.add(outTrans.getLetter());
 		}
@@ -165,7 +165,7 @@ public class NestedWordAutomatonFilteredStates<LETTER, STATE> implements
 
 	@Override
 	public Collection<LETTER> lettersCallIncoming(STATE state) {
-		Collection<LETTER> letters = new ArrayList<LETTER>();
+		Collection<LETTER> letters = new HashSet<LETTER>();
 		for (IncomingCallTransition<LETTER, STATE> outTrans : callPredecessors(state)) {
 			letters.add(outTrans.getLetter());
 		}
@@ -174,7 +174,7 @@ public class NestedWordAutomatonFilteredStates<LETTER, STATE> implements
 
 	@Override
 	public Collection<LETTER> lettersReturnIncoming(STATE state) {
-		Collection<LETTER> letters = new ArrayList<LETTER>();
+		Collection<LETTER> letters = new HashSet<LETTER>();
 		for (IncomingReturnTransition<LETTER, STATE> outTrans : returnPredecessors(state)) {
 			letters.add(outTrans.getLetter());
 		}
@@ -183,7 +183,7 @@ public class NestedWordAutomatonFilteredStates<LETTER, STATE> implements
 
 	@Override
 	public Collection<LETTER> lettersReturnSummary(STATE state) {
-		Collection<LETTER> letters = new ArrayList<LETTER>();
+		Collection<LETTER> letters = new HashSet<LETTER>();
 		for (SummaryReturnTransition<LETTER, STATE> outTrans : returnSummarySuccessor(state)) {
 			letters.add(outTrans.getLetter());
 		}
