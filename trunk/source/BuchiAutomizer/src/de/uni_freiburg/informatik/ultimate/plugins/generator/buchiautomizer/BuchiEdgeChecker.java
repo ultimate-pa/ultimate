@@ -48,6 +48,17 @@ public class BuchiEdgeChecker extends EdgeChecker {
 
 
 	@Override
+	public LBool assertHierPred(IPredicate p) {
+		if (p == m_HondaPredicate) {
+			p  = m_RankEqAndSi;
+		}
+		return super.assertHierPred(p);
+	}
+
+
+
+
+	@Override
 	public LBool sdecInternalSelfloop(IPredicate p, CodeBlock cb) {
 		return null; 
 	}
