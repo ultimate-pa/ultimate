@@ -59,10 +59,14 @@ import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
  * <threading> identify possibilities for threading and implement it
  * 
  * possible improvements:
- * - global return split analysis
+ * <onlyOneWL> put only the poisitve EC via int/call split in work list
  * 
- * - separate set of states in EC for states with no return (internal/call?)
- *   transitions
+ * <localSplit> local return splits must be done at most once (boolean in EC)
+ * 
+ * <globalSplit> global return split analysis
+ * 
+ * <stateAnalysis> separate set of states in EC for states with no return
+ *                 (internal/call?) transitions
  * 
  * misc:
  * <hashCode> overwrite for EquivalenceClass?
@@ -105,9 +109,18 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	// simulates the output automaton
 	private ShrinkNwaResult m_result;
 	
+	// TODO<experiments>
+	// global split
+	private HashSet<EquivalenceClass> m_splitEcs;
+	// initial outgoing split (internal and call)
+	private final boolean m_splitOutgoing;
+	private final OutgoingHelperInternal m_outInternal;
+	private final OutgoingHelperCall m_outCall;
+	
 	// TODO<debug>
 	private final boolean DEBUG = false;
 	private final boolean DEBUG3 = false;
+	private final boolean DEBUG4 = false;
 	
 	// TODO<statistics>
 	private final boolean STATISTICS = false;
@@ -133,7 +146,22 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	 */
 	public ShrinkNwa(final INestedWordAutomaton<LETTER,STATE> operand)
 			throws OperationCanceledException {
-		this(operand, null, null, false, false);
+		this(operand, false);
+	}
+	
+	/**
+	 * creates a copy of operand with options
+	 * 
+	 * @param operand preprocessed nested word automaton
+	 * preprocessing: dead end and unreachable states/transitions removed
+	 * @param splitOutgoing true iff states should be split initially by
+	 *        outgoing transitions
+	 * @throws OperationCanceledException if cancel signal is received
+	 */
+	public ShrinkNwa(final INestedWordAutomaton<LETTER,STATE> operand,
+			final boolean splitOutgoing)
+			throws OperationCanceledException {
+		this(operand, null, null, false, false, splitOutgoing);
 	}
 	
 	/**
@@ -148,6 +176,8 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	 * @param stateFactory used for Hoare annotation
 	 * @param includeMapping true iff mapping old to new state is needed
 	 * @param isFiniteAutomaton true iff automaton is a finite automaton
+	 * @param splitOutgoing true iff states should be split initially by
+	 *        outgoing transitions
 	 * @throws OperationCanceledException if cancel signal is received
 	 */
 	@SuppressWarnings("unchecked")
@@ -155,8 +185,8 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 			final INestedWordAutomaton<LETTER,STATE> operand,
 			final Collection<Set<STATE>> equivalenceClasses,
 			final StateFactory<STATE> stateFactory,
-			final boolean includeMapping,
-			final boolean isFiniteAutomaton)
+			final boolean includeMapping, final boolean isFiniteAutomaton,
+			final boolean splitOutgoing)
 					throws OperationCanceledException {
 		m_operand = operand;
 		// TODO<DoubleDecker> check this?
@@ -172,6 +202,16 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 		m_negativeSet.add(m_negativeClass);
 		m_linHelper = new LinHelper();
 		m_hierHelper = new HierHelper();
+		
+		m_splitOutgoing = splitOutgoing;
+		if (m_splitOutgoing) {
+			m_outInternal = new OutgoingHelperInternal();
+			m_outCall = new OutgoingHelperCall();
+		}
+		else {
+			m_outInternal = null;
+			m_outCall = null;
+		}
 		
 		// must be the last part of the constructor
 		s_Logger.info(startMessage());
@@ -272,13 +312,27 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 					}
 				}
 				
+				if (DEBUG4) {
+					System.err.println("return split: " +
+							m_partition.m_equivalenceClasses.size() + " ECs");
+					System.err.println(m_partition.m_equivalenceClasses);
+				}
+				
 				// return predecessors
 				if (m_workListRet.hasNext()) {
-					if (DEBUG)
-						System.out.println("\n-- return search");
-					EquivalenceClass a = m_workListRet.next();
-					
-					splitReturnPredecessors(a);
+					// TODO<globalSplit>
+//					m_splitEcs = new HashSet<EquivalenceClass>();
+//					do {
+						
+						if (DEBUG)
+							System.out.println("\n-- return search");
+						EquivalenceClass a = m_workListRet.next();
+						
+						splitReturnPredecessors(a);
+						
+//					} while (m_workListRet.hasNext());
+//					// execute the splits
+//					splitReturnExecute(m_splitEcs);
 				}
 				else {
 					break outer;
@@ -314,21 +368,28 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 				}
 			}
 			
-			/*
-			 * TODO<trivialCases>
-			 * finals.size() = 0 => empty automaton
-			 * 
-			 * nonfinals.size() = 0 => possibly MR(Sigma)*, easy to check:
-			 * all states must have all internal and call symbols outgoing
-			 * all states must have all down states as return edges outgoing
-			 * 
-			 * also possible with modules?
-			 */
-			if (finals.size() > 0) {
-				m_partition.addEc(finals);
+			if (m_splitOutgoing) {
+				splitOutgoing(finals, nonfinals);
 			}
-			if (nonfinals.size() > 0) {
-				m_partition.addEc(nonfinals);
+			// only separate final and non-final states
+			else {
+				/*
+				 * TODO<trivialCases>
+				 * finals.size() = 0 => empty automaton
+				 * 
+				 * nonfinals.size() = 0 => possibly MR(Sigma)*, easy to check:
+				 * all states must have all internal and call symbols outgoing
+				 * all states must have all down states as return transitions
+				 * outgoing
+				 * 
+				 * also possible with modules?
+				 */
+				if (finals.size() > 0) {
+					m_partition.addEc(finals);
+				}
+				if (nonfinals.size() > 0) {
+					m_partition.addEc(nonfinals);
+				}
 			}
 		}
 		// predefined modules are already split with respect to final states 
@@ -340,8 +401,15 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 				m_partition.addEc(module);
 			}
 		}
+		
+		if (DEBUG4) {
+			System.err.println("starting with " +
+					m_partition.m_equivalenceClasses.size() +
+					" equivalence classes");
+		}
 	}
 	
+
 	/**
 	 * For each state and internal or call symbol respectively do the usual
 	 * Hopcroft backwards split.
@@ -461,13 +529,19 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 				new HashSet<EquivalenceClass>();
 		
 		// collect trivial linear splits
-		splitReturnLocal(letter2hier2linEcSet, splitEquivalenceClasses, m_linHelper);
+		splitReturnLocal(letter2hier2linEcSet, splitEquivalenceClasses,
+				m_linHelper);
 		
 		// collect trivial hierarchical splits
-		splitReturnLocal(letter2lin2hierEcSet, splitEquivalenceClasses, m_hierHelper);
+		splitReturnLocal(letter2lin2hierEcSet, splitEquivalenceClasses,
+				m_hierHelper);
 		
 		// collect complicated mixed splits
 		splitReturnMixed(letter2hier2linEcSet, splitEquivalenceClasses);
+		
+		// TODO<globalSplit> replace last line below
+//		assert (m_splitEcs != null);
+//		m_splitEcs.addAll(splitEquivalenceClasses);
 		
 		// execute the splits
 		splitReturnExecute(splitEquivalenceClasses);
@@ -857,7 +931,7 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 				System.err.print(" : ");
 				System.err.println(state2separatedSet);
 			}
-
+			
 			// mapping: state to associated color
 			final HashMap<STATE, Integer> state2color =
 					new HashMap<STATE, Integer>(
@@ -1374,6 +1448,228 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 				}
 			}
 		}
+	}
+	
+	/**
+	 * This interface is used for the outgoing split at the beginning to
+	 * abstract from whether internal or call symbols are considered.
+	 */
+	private interface IOutgoingHelper<LETTER, STATE> {
+		/**
+		 * This method returns the size of the respective alphabet.
+		 *
+		 * @return size of the alphabet
+		 */
+		int size();
+		
+		/**
+		 * This method returns a set of outgoing letters for a given state.
+		 * 
+		 * @param state state to consider
+		 * @return all outgoing letters
+		 */
+		Set<LETTER> letters(final STATE state);
+		
+		/**
+		 * This method returns a new collection. This is for efficiency reasons,
+		 * since first only a list is needed, where later a set is needed.
+		 *
+		 * @return
+		 */
+		Collection<STATE> newCollection();
+		
+		/**
+		 * This method only checks that the symbols are correctly returned by
+		 * the API.
+		 *
+		 * @param state state to consider
+		 * @return true iff symbols are correct
+		 */
+		boolean assertLetters(final STATE state);
+	}
+	
+	/**
+	 * This is the implementation for the outgoing internal split helper.
+	 */
+	private class OutgoingHelperInternal implements
+			IOutgoingHelper<LETTER, STATE> {
+		@Override
+		public int size() {
+			return m_operand.getInternalAlphabet().size();
+		}
+		
+		@Override
+		public Set<LETTER> letters(STATE state) {
+			assert (assertLetters(state));
+			
+			final Collection<LETTER> letters =
+					m_operand.lettersInternal(state);
+			if (letters instanceof Set<?>) {
+				return (Set<LETTER>)letters;
+			}
+			final HashSet<LETTER> lettersSet = new HashSet<LETTER>(
+					computeHashSetCapacity(letters.size()));
+			for (final LETTER letter : letters) {
+				lettersSet.add(letter);
+			}
+			return lettersSet;
+		}
+
+		@Override
+		public Collection<STATE> newCollection() {
+			return new HashSet<STATE>();
+		}
+		
+		@Override
+		public boolean assertLetters(STATE state) {
+			final Collection<LETTER> model =
+					m_operand.lettersInternal(state);
+			
+			final HashSet<LETTER> checker = new HashSet<LETTER>(
+					computeHashSetCapacity(model.size()));
+			final Iterator<OutgoingInternalTransition<LETTER, STATE>> it =
+					m_operand.internalSuccessors(state).iterator();
+			while (it.hasNext()) {
+				checker.add(it.next().getLetter());
+			}
+			
+			if (checker.size() != model.size()) {
+				return false;
+			}
+			for (final LETTER letter : model) {
+				if (! checker.contains(letter)) {
+					return false;
+				}
+			}
+			
+			return true;
+		}
+	}
+	
+	/**
+	 * This is the implementation for the alternative call split helper.
+	 */
+	private class OutgoingHelperCall implements
+			IOutgoingHelper<LETTER, STATE> {
+		@Override
+		public int size() {
+			return m_operand.getCallAlphabet().size();
+		}
+		
+		@Override
+		public Set<LETTER> letters(STATE state) {
+			assert assertLetters(state);
+			
+			final Collection<LETTER> letters =
+					m_operand.lettersCall(state);
+			if (letters instanceof Set<?>) {
+				return (Set<LETTER>)letters;
+			}
+			final HashSet<LETTER> lettersSet = new HashSet<LETTER>(
+					computeHashSetCapacity(letters.size()));
+			for (final LETTER letter : letters) {
+				lettersSet.add(letter);
+			}
+			return lettersSet;
+		}
+		
+		@Override
+		public Collection<STATE> newCollection() {
+			return new LinkedList<STATE>();
+		}
+		
+		@Override
+		public boolean assertLetters(STATE state) {
+			final Collection<LETTER> model =
+					m_operand.lettersCall(state);
+			
+			final HashSet<LETTER> checker = new HashSet<LETTER>(
+					computeHashSetCapacity(model.size()));
+			final Iterator<OutgoingCallTransition<LETTER, STATE>> it =
+					m_operand.callSuccessors(state).iterator();
+			while (it.hasNext()) {
+				checker.add(it.next().getLetter());
+			}
+			
+			if (checker.size() != model.size()) {
+				return false;
+			}
+			for (final LETTER letter : model) {
+				if (! checker.contains(letter)) {
+					return false;
+				}
+			}
+			
+			return true;
+		}
+	}
+	
+	/**
+	 * This method does an extra split with outgoing transitions for internal
+	 * and call symbols at the beginning. This is totally fine, since these
+	 * splits would occur later anyway.
+	 * The reason for this split overhead is that the regular splitting starts
+	 * with smaller equivalence classes where less states and transitions have
+	 * to be considered.
+	 *
+	 * @param finals the final states
+	 * @param nonfinals the non-final states
+	 */
+	private void splitOutgoing(final HashSet<STATE> finals,
+			final HashSet<STATE> nonfinals) {
+		HashSet<STATE> states = finals;
+		
+		for (int i = 0; i < 2; ++i) {
+			if (states.size() == 0) {
+				continue;
+			}
+			
+			final HashMap<Collection<LETTER>, Collection<STATE>> callSplit =
+					splitOutgoingHelper(states, m_outCall);
+			for (final Collection<STATE> callStates : callSplit.values()) {
+				final HashMap<Collection<LETTER>, Collection<STATE>>
+				internalSplit = splitOutgoingHelper(callStates, m_outInternal);
+				
+				// split states
+				for (final Collection<STATE> newStates :
+						internalSplit.values()) {
+					assert (newStates.size() > 0) &&
+							(newStates instanceof HashSet<?>);
+					m_partition.addEc((HashSet<STATE>)newStates);
+				}
+			}
+			
+			states = nonfinals;
+		}
+	}
+	
+	/**
+	 * This is a helper method that sets up data structures for splits by
+	 * outgoing transitions. 
+	 *
+	 * @param states collection of states
+	 * @param helper helper object to abstract from internal and call symbols
+	 * @return map from collection of letters to states with such symbols
+	 */
+	private HashMap<Collection<LETTER>, Collection<STATE>> splitOutgoingHelper(
+			final Collection<STATE> states,
+			final IOutgoingHelper<LETTER, STATE> helper) {
+		final HashMap<Collection<LETTER>, Collection<STATE>>
+			letterSet2stateSet = new HashMap<Collection<LETTER>,
+			Collection<STATE>>(computeHashSetCapacity(helper.size()));
+		
+		// set up mapping letters to states
+		for (final STATE state : states) {
+			final Set<LETTER> letters = helper.letters(state);
+			Collection<STATE> statesSet = letterSet2stateSet.get(letters);
+			if (statesSet == null) {
+				statesSet = helper.newCollection();
+				letterSet2stateSet.put(letters, statesSet);
+			}
+			statesSet.add(state);
+		}
+		
+		return letterSet2stateSet;
 	}
 	
 	// --- [end] helper methods and classes --- //
