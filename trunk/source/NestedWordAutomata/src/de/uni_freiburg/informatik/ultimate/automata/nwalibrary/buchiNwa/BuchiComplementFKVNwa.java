@@ -197,17 +197,17 @@ public class BuchiComplementFKVNwa<LETTER,STATE> implements INestedWordAutomaton
 	}
 
 	@Override
-	public Collection<LETTER> lettersInternal(STATE state) {
+	public Set<LETTER> lettersInternal(STATE state) {
 		return m_Operand.getInternalAlphabet();
 	}
 
 	@Override
-	public Collection<LETTER> lettersCall(STATE state) {
+	public Set<LETTER> lettersCall(STATE state) {
 		return m_Operand.getCallAlphabet();
 	}
 
 	@Override
-	public Collection<LETTER> lettersReturn(STATE state) {
+	public Set<LETTER> lettersReturn(STATE state) {
 		return m_Operand.getReturnAlphabet();
 	}
 

@@ -1,6 +1,5 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.InterpolantAutomataTransitionAppender;
 
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -346,17 +345,17 @@ public class EagerInterpolantAutomaton implements
 	}
 
 	@Override
-	public Collection<CodeBlock> lettersInternal(IPredicate state) {
+	public Set<CodeBlock> lettersInternal(IPredicate state) {
 		return getInternalAlphabet();
 	}
 
 	@Override
-	public Collection<CodeBlock> lettersCall(IPredicate state) {
+	public Set<CodeBlock> lettersCall(IPredicate state) {
 		return getCallAlphabet();
 	}
 
 	@Override
-	public Collection<CodeBlock> lettersReturn(IPredicate state) {
+	public Set<CodeBlock> lettersReturn(IPredicate state) {
 		return getReturnAlphabet();
 	}
 

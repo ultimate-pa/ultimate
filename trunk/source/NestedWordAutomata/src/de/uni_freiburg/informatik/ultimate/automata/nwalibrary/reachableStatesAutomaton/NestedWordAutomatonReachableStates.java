@@ -231,42 +231,42 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 	}
 
 	@Override
-	public Collection<LETTER> lettersInternal(STATE state) {
+	public Set<LETTER> lettersInternal(STATE state) {
 		return m_States.get(state).lettersInternal();
 	}
 
 	@Override
-	public Collection<LETTER> lettersCall(STATE state) {
+	public Set<LETTER> lettersCall(STATE state) {
 		return m_States.get(state).lettersCall();
 	}
 
 	@Override
-	public Collection<LETTER> lettersReturn(STATE state) {
+	public Set<LETTER> lettersReturn(STATE state) {
 		return m_States.get(state).lettersReturn();
 	}
 
 	@Override
-	public Collection<LETTER> lettersInternalIncoming(STATE state) {
+	public Set<LETTER> lettersInternalIncoming(STATE state) {
 		return m_States.get(state).lettersInternalIncoming();
 	}
 
 	@Override
-	public Collection<LETTER> lettersCallIncoming(STATE state) {
+	public Set<LETTER> lettersCallIncoming(STATE state) {
 		return m_States.get(state).lettersCallIncoming();
 	}
 
 	@Override
-	public Collection<LETTER> lettersReturnIncoming(STATE state) {
+	public Set<LETTER> lettersReturnIncoming(STATE state) {
 		return m_States.get(state).lettersReturnIncoming();
 	}
 
 	@Override
-	public Collection<LETTER> lettersReturnSummary(STATE state) {
+	public Set<LETTER> lettersReturnSummary(STATE state) {
 		if (!m_States.containsKey(state)) {
 			throw new IllegalArgumentException("State " + state + " unknown");
 		}
 		 Map<LETTER, Map<STATE, Set<STATE>>> map = m_ReturnSummary.get(state);
-		return map == null ? new ArrayList<LETTER>(0) : map.keySet();
+		return map == null ? new HashSet<LETTER>(0) : map.keySet();
 	}
 
 	@Override
@@ -1099,49 +1099,6 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 			}
 		}
 
-		
-//		private void propagateNewDownStates(StateContainer<LETTER, STATE> cont) {
-//			boolean newStatesAdded = false;
-//			Set<STATE> unpropagatedDownStates = cont.getUnpropagatedDownStates();
-//			if (unpropagatedDownStates  == null) {
-//				return;
-//			}
-//			for (OutgoingInternalTransition<LETTER, STATE> trans : cont.internalSuccessors()) {
-//				StateContainer<LETTER, STATE> succCont = m_States.get(trans.getSucc());
-//				addNewDownStates(cont, succCont, unpropagatedDownStates);
-//			}
-//			for (SummaryReturnTransition<LETTER, STATE> trans : returnSummarySuccessor(cont.getState())) {
-//				StateContainer<LETTER, STATE> succCont = m_States.get(trans.getSucc());
-//				addNewDownStates(cont, succCont, unpropagatedDownStates);
-//			}
-//			if(candidateForOutgoingReturn(cont.getState())) {
-//				HashSet<STATE> newDownStatesFormSelfloops = null;
-//				for (STATE down : cont.getUnpropagatedDownStates()) {
-//					if (down != getEmptyStackState()) {
-//						Set<STATE> newDownStates = 
-//								addReturnsAndSuccessors(cont, down);
-//						if (newDownStates != null) {
-//							if (newDownStatesFormSelfloops == null) {
-//								newDownStatesFormSelfloops = new HashSet<STATE>();
-//							}
-//							newDownStatesFormSelfloops.addAll(newDownStates);
-//						}
-//					}
-//				}
-//				cont.eraseUnpropagatedDownStates();
-//				if (newDownStatesFormSelfloops != null) {
-//					assert !newDownStatesFormSelfloops.isEmpty();
-//					for (STATE down : newDownStatesFormSelfloops) {
-//						cont.addReachableDownState(down);
-//					}
-//					m_DownPropagationWorklist.add(cont);
-//				}
-//			} else {
-//				cont.eraseUnpropagatedDownStates();
-//			}
-//			
-//		}
-		
 		private void init() {
 			for (STATE fin : m_finalStates) {
 				StateContainer<LETTER, STATE> cont = m_States.get(fin);

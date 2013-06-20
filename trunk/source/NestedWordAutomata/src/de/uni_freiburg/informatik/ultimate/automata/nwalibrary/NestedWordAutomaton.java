@@ -211,7 +211,7 @@ public class NestedWordAutomaton<LETTER,STATE> implements INestedWordAutomatonOl
 	
 	
 	@Override
-	public Collection<LETTER> lettersInternal(STATE state) {
+	public Set<LETTER> lettersInternal(STATE state) {
 		if (!contains(state)) {
 			throw new IllegalArgumentException("State " + state + " unknown");
 		}
@@ -220,7 +220,7 @@ public class NestedWordAutomaton<LETTER,STATE> implements INestedWordAutomatonOl
 	}
 	
 	@Override
-	public Collection<LETTER> lettersInternalIncoming(STATE state) {
+	public Set<LETTER> lettersInternalIncoming(STATE state) {
 		if (!contains(state)) {
 			throw new IllegalArgumentException("State " + state + " unknown");
 		}
@@ -229,7 +229,7 @@ public class NestedWordAutomaton<LETTER,STATE> implements INestedWordAutomatonOl
 	}
 	
 	@Override
-	public Collection<LETTER> lettersCall(STATE state) {
+	public Set<LETTER> lettersCall(STATE state) {
 		if (!contains(state)) {
 			throw new IllegalArgumentException("State " + state + " unknown");
 		}
@@ -238,7 +238,7 @@ public class NestedWordAutomaton<LETTER,STATE> implements INestedWordAutomatonOl
 	}
 	
 	@Override
-	public Collection<LETTER> lettersCallIncoming(STATE state) {
+	public Set<LETTER> lettersCallIncoming(STATE state) {
 		if (!contains(state)) {
 			throw new IllegalArgumentException("State " + state + " unknown");
 		}
@@ -247,7 +247,7 @@ public class NestedWordAutomaton<LETTER,STATE> implements INestedWordAutomatonOl
 	}
 	
 	@Override
-	public Collection<LETTER> lettersReturn(STATE state) {
+	public Set<LETTER> lettersReturn(STATE state) {
 		if (!contains(state)) {
 			throw new IllegalArgumentException("State " + state + " unknown");
 		}
@@ -256,7 +256,7 @@ public class NestedWordAutomaton<LETTER,STATE> implements INestedWordAutomatonOl
 	}
 	
 	@Override
-	public Collection<LETTER> lettersReturnIncoming(STATE state) {
+	public Set<LETTER> lettersReturnIncoming(STATE state) {
 		if (!contains(state)) {
 			throw new IllegalArgumentException("State " + state + " unknown");
 		}
@@ -266,7 +266,7 @@ public class NestedWordAutomaton<LETTER,STATE> implements INestedWordAutomatonOl
 	
 	
 	@Override
-	public Collection<LETTER> lettersReturnSummary(STATE state) {
+	public Set<LETTER> lettersReturnSummary(STATE state) {
 		if (!contains(state)) {
 			throw new IllegalArgumentException("State " + state + " unknown");
 		}

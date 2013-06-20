@@ -202,19 +202,19 @@ public class BuchiIntersectNwa<LETTER, STATE> implements INestedWordAutomatonSim
 	}
 
 	@Override
-	public Collection<LETTER> lettersInternal(STATE state) {
+	public Set<LETTER> lettersInternal(STATE state) {
 		STATE fst = m_res2prod.get(state).getFst(); 
 		return m_FstOperand.lettersInternal(fst);
 	}
 
 	@Override
-	public Collection<LETTER> lettersCall(STATE state) {
+	public Set<LETTER> lettersCall(STATE state) {
 		STATE fst = m_res2prod.get(state).getFst(); 
 		return m_FstOperand.lettersCall(fst);
 	}
 
 	@Override
-	public Collection<LETTER> lettersReturn(STATE state) {
+	public Set<LETTER> lettersReturn(STATE state) {
 		STATE fst = m_res2prod.get(state).getFst(); 
 		return m_FstOperand.lettersReturn(fst);
 	}

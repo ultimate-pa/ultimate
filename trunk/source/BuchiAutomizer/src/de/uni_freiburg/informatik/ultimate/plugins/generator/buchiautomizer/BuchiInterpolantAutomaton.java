@@ -341,17 +341,17 @@ public class BuchiInterpolantAutomaton implements
 	}
 
 	@Override
-	public Collection<CodeBlock> lettersInternal(IPredicate state) {
+	public Set<CodeBlock> lettersInternal(IPredicate state) {
 		return getInternalAlphabet();
 	}
 
 	@Override
-	public Collection<CodeBlock> lettersCall(IPredicate state) {
+	public Set<CodeBlock> lettersCall(IPredicate state) {
 		return getCallAlphabet();
 	}
 
 	@Override
-	public Collection<CodeBlock> lettersReturn(IPredicate state) {
+	public Set<CodeBlock> lettersReturn(IPredicate state) {
 		return getReturnAlphabet();
 	}
 	

@@ -143,17 +143,17 @@ public abstract class StateContainer<LETTER, STATE> {
 	}
 	
 	
-	public abstract Collection<LETTER> lettersInternal();
+	public abstract Set<LETTER> lettersInternal();
 
-	public abstract Collection<LETTER> lettersInternalIncoming();
+	public abstract Set<LETTER> lettersInternalIncoming();
 
-	public abstract Collection<LETTER> lettersCall();
+	public abstract Set<LETTER> lettersCall();
 
-	public abstract Collection<LETTER> lettersCallIncoming();
+	public abstract Set<LETTER> lettersCallIncoming();
 
-	public abstract Collection<LETTER> lettersReturn();
+	public abstract Set<LETTER> lettersReturn();
 
-	public abstract Collection<LETTER> lettersReturnIncoming();
+	public abstract Set<LETTER> lettersReturnIncoming();
 
 	public abstract Collection<STATE> succInternal(LETTER letter);
 

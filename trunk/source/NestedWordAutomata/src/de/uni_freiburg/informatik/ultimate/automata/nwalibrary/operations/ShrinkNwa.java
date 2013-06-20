@@ -2485,7 +2485,7 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 			return m_oldNwa.accepts(word);
 		}
 		@Override
-		public Collection<LETTER> lettersInternal(STATE state) {
+		public Set<LETTER> lettersInternal(STATE state) {
 			final HashSet<LETTER> result = new HashSet<LETTER>();
 			for (final OutgoingInternalTransition<LETTER, STATE> edge :
 					m_outInt.get(state)) {
@@ -2494,7 +2494,7 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 			return result;
 		}
 		@Override
-		public Collection<LETTER> lettersCall(STATE state) {
+		public Set<LETTER> lettersCall(STATE state) {
 			final HashSet<LETTER> result = new HashSet<LETTER>();
 			for (final OutgoingCallTransition<LETTER, STATE> edge :
 					m_outCall.get(state)) {
@@ -2503,7 +2503,7 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 			return result;
 		}
 		@Override
-		public Collection<LETTER> lettersReturn(STATE state) {
+		public Set<LETTER> lettersReturn(STATE state) {
 			final HashSet<LETTER> result = new HashSet<LETTER>();
 			for (final OutgoingReturnTransition<LETTER, STATE> edge :
 					m_outRet.get(state)) {

@@ -304,12 +304,12 @@ class StateContainerFieldAndMap<LETTER,STATE> extends StateContainer<LETTER, STA
 
 
 	@Override
-	public Collection<LETTER> lettersInternal() {
+	public Set<LETTER> lettersInternal() {
 		if (mapModeOutgoing()) {
 			Map<LETTER, Set<STATE>> map = (Map<LETTER, Set<STATE>>) mOut1;
 			return map == null ? m_EmptySetOfLetters : map.keySet();
 		} else {
-			Collection<LETTER> result = new ArrayList<LETTER>(3);
+			Set<LETTER> result = new HashSet<LETTER>(3);
 			if (mOut1 instanceof OutgoingInternalTransition) {
 				LETTER letter = ((OutgoingInternalTransition<LETTER, STATE>) mOut1).getLetter();
 				result.add(letter);
@@ -333,12 +333,12 @@ class StateContainerFieldAndMap<LETTER,STATE> extends StateContainer<LETTER, STA
 
 
 	@Override
-	public Collection<LETTER> lettersInternalIncoming() {
+	public Set<LETTER> lettersInternalIncoming() {
 		if (mapModeIncoming()) {
 			Map<LETTER, Set<STATE>> map = (Map<LETTER, Set<STATE>>) mIn1;
 			return map == null ? m_EmptySetOfLetters : map.keySet();
 		} else {
-			Collection<LETTER> result = new ArrayList<LETTER>(3);
+			Set<LETTER> result = new HashSet<LETTER>(3);
 			if (mIn1 instanceof IncomingInternalTransition) {
 				LETTER letter = ((IncomingInternalTransition<LETTER, STATE>) mIn1).getLetter();
 				result.add(letter);
@@ -361,12 +361,12 @@ class StateContainerFieldAndMap<LETTER,STATE> extends StateContainer<LETTER, STA
 	}
 
 	@Override
-	public Collection<LETTER> lettersCall() {
+	public Set<LETTER> lettersCall() {
 		if (mapModeOutgoing()) {
 			Map<LETTER, Set<STATE>> map = (Map<LETTER, Set<STATE>>) mOut2;
 			return map == null ? m_EmptySetOfLetters : map.keySet();
 		} else {
-			Collection<LETTER> result = new ArrayList<LETTER>(1);
+			Set<LETTER> result = new HashSet<LETTER>(1);
 			if (mOut2 instanceof OutgoingCallTransition) {
 				LETTER letter = ((OutgoingCallTransition<LETTER, STATE>) mOut2).getLetter();
 				result.add(letter);
@@ -376,12 +376,12 @@ class StateContainerFieldAndMap<LETTER,STATE> extends StateContainer<LETTER, STA
 	}
 
 	@Override
-	public Collection<LETTER> lettersCallIncoming() {
+	public Set<LETTER> lettersCallIncoming() {
 		if (mapModeIncoming()) {
 			Map<LETTER, Set<STATE>> map = (Map<LETTER, Set<STATE>>) mIn2;
 			return map == null ? m_EmptySetOfLetters : map.keySet();
 		} else {
-			Collection<LETTER> result = new ArrayList<LETTER>(1);
+			Set<LETTER> result = new HashSet<LETTER>(1);
 			if (mIn2 instanceof IncomingCallTransition) {
 				LETTER letter = ((IncomingCallTransition<LETTER, STATE>) mIn2).getLetter();
 				result.add(letter);
@@ -391,12 +391,12 @@ class StateContainerFieldAndMap<LETTER,STATE> extends StateContainer<LETTER, STA
 	}
 
 	@Override
-	public Collection<LETTER> lettersReturn() {
+	public Set<LETTER> lettersReturn() {
 		if (mapModeOutgoing()) {
 			Map<LETTER, Map<STATE, Set<STATE>>> map = (Map<LETTER, Map<STATE, Set<STATE>>>) mOut3;
 			return map == null ? m_EmptySetOfLetters : map.keySet();
 		} else {
-			Collection<LETTER> result = new ArrayList<LETTER>(1);
+			Set<LETTER> result = new HashSet<LETTER>(1);
 			if (mOut3 instanceof OutgoingReturnTransition) {
 				LETTER letter = ((OutgoingReturnTransition<LETTER, STATE>) mOut3).getLetter();
 				result.add(letter);
@@ -406,12 +406,12 @@ class StateContainerFieldAndMap<LETTER,STATE> extends StateContainer<LETTER, STA
 	}
 
 	@Override
-	public Collection<LETTER> lettersReturnIncoming() {
+	public Set<LETTER> lettersReturnIncoming() {
 		if (mapModeIncoming()) {
 			Map<LETTER, Map<STATE, Set<STATE>>> map = (Map<LETTER, Map<STATE, Set<STATE>>>) mIn3;
 			return map == null ? m_EmptySetOfLetters : map.keySet();
 		} else {
-			Collection<LETTER> result = new ArrayList<LETTER>(1);
+			Set<LETTER> result = new HashSet<LETTER>(1);
 			if (mIn3 instanceof IncomingReturnTransition) {
 				LETTER letter = ((IncomingReturnTransition<LETTER, STATE>) mIn3).getLetter();
 				result.add(letter);

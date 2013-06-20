@@ -1,6 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary;
 
 import java.util.Collection;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 
@@ -41,25 +42,25 @@ public interface INestedWordAutomatonOldApi<LETTER,STATE>
 	 * @return All letters a such that state has an incoming internal 
 	 * transition labeled with letter a.
 	 */
-	public Collection<LETTER> lettersInternalIncoming(STATE state);
+	public Set<LETTER> lettersInternalIncoming(STATE state);
 	
 	/**
 	 * @return All letters a such that state has an incoming call 
 	 * transition labeled with letter a.
 	 */	
-	public Collection<LETTER> lettersCallIncoming(STATE state);
+	public Set<LETTER> lettersCallIncoming(STATE state);
 	
 	/**
 	 * @return All letters a such that state has an incoming return 
 	 * transition labeled with letter a.
 	 */		
-	public Collection<LETTER> lettersReturnIncoming(STATE state);
+	public Set<LETTER> lettersReturnIncoming(STATE state);
 	
 	/**
 	 * @return All letters a such that state occurs as hierarchical predecessor
 	 * in a return transition labeled with letter a.
 	 */
-	public Collection<LETTER> lettersReturnSummary(STATE state);
+	public Set<LETTER> lettersReturnSummary(STATE state);
 
 	
 

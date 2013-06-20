@@ -1,6 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary;
 
 import java.util.Collection;
+import java.util.Set;
 
 public interface INestedWordAutomaton<LETTER, STATE> extends INestedWordAutomatonSimple<LETTER, STATE> {
 
@@ -8,13 +9,13 @@ public interface INestedWordAutomaton<LETTER, STATE> extends INestedWordAutomato
 
 	public abstract Collection<STATE> getInitialStates();
 
-	public abstract Collection<LETTER> lettersInternalIncoming(STATE state);
+	public abstract Set<LETTER> lettersInternalIncoming(STATE state);
 
-	public abstract Collection<LETTER> lettersCallIncoming(STATE state);
+	public abstract Set<LETTER> lettersCallIncoming(STATE state);
 
-	public abstract Collection<LETTER> lettersReturnIncoming(STATE state);
+	public abstract Set<LETTER> lettersReturnIncoming(STATE state);
 
-	public abstract Collection<LETTER> lettersReturnSummary(STATE state);
+	public abstract Set<LETTER> lettersReturnSummary(STATE state);
 	
 	/**
 	 * @return All states hier such that state has an outgoing 

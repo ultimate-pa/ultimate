@@ -247,7 +247,7 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE>
 	}
 
 	@Override
-	public Collection<LETTER> lettersInternal(STATE state) {
+	public Set<LETTER> lettersInternal(STATE state) {
 		if (!knows(state))
 			throw new IllegalArgumentException("State " + state +
 														" is not (yet) known.");
@@ -255,7 +255,7 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE>
 	}
 
 	@Override
-	public Collection<LETTER> lettersInternalIncoming(STATE state) {
+	public Set<LETTER> lettersInternalIncoming(STATE state) {
 		if (!knows(state))
 			throw new IllegalArgumentException("State " + state +
 														" is not (yet) known.");
@@ -436,29 +436,29 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE>
 	}
 
 	@Override
-	public Collection<LETTER> lettersCall(STATE state) {
+	public Set<LETTER> lettersCall(STATE state) {
 //		s_Logger.warn("No nwa. Has no call alphabet.");
 		return new HashSet<LETTER>(0);
 	}
 
 	@Override
-	public Collection<LETTER> lettersReturn(STATE state) {
+	public Set<LETTER> lettersReturn(STATE state) {
 //		s_Logger.warn("No nwa. Has no return alphabet.");
 		return new HashSet<LETTER>(0);
 	}
 
 	@Override
-	public Collection<LETTER> lettersCallIncoming(STATE state) {
+	public Set<LETTER> lettersCallIncoming(STATE state) {
 		return new HashSet<LETTER>(0);
 	}
 
 	@Override
-	public Collection<LETTER> lettersReturnIncoming(STATE state) {
+	public Set<LETTER> lettersReturnIncoming(STATE state) {
 		return new HashSet<LETTER>(0);
 	}
 	
 	@Override
-	public Collection<LETTER> lettersReturnSummary(STATE state) {
+	public Set<LETTER> lettersReturnSummary(STATE state) {
 		return new HashSet<LETTER>(0);
 	}
 

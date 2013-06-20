@@ -189,38 +189,38 @@ class StateContainerMapOnly<LETTER,STATE> extends StateContainer<LETTER, STATE> 
 
 
 	@Override
-	public Collection<LETTER> lettersInternal() {
+	public Set<LETTER> lettersInternal() {
 		Map<LETTER, Set<STATE>> map = m_InternalOut;
 		return map == null ? m_EmptySetOfLetters : map.keySet();
 	}
 
 
 	@Override
-	public Collection<LETTER> lettersInternalIncoming() {
+	public Set<LETTER> lettersInternalIncoming() {
 		Map<LETTER, Set<STATE>> map = m_InternalIn;
 		return map == null ? m_EmptySetOfLetters : map.keySet();
 	}
 
 	@Override
-	public Collection<LETTER> lettersCall() {
+	public Set<LETTER> lettersCall() {
 		Map<LETTER, Set<STATE>> map = m_CallOut;
 		return map == null ? m_EmptySetOfLetters : map.keySet();
 	}
 
 	@Override
-	public Collection<LETTER> lettersCallIncoming() {
+	public Set<LETTER> lettersCallIncoming() {
 		Map<LETTER, Set<STATE>> map = m_CallIn;
 		return map == null ? m_EmptySetOfLetters : map.keySet();
 	}
 
 	@Override
-	public Collection<LETTER> lettersReturn() {
+	public Set<LETTER> lettersReturn() {
 		Map<LETTER, Map<STATE, Set<STATE>>> map = m_ReturnOut;
 		return map == null ? m_EmptySetOfLetters : map.keySet();
 	}
 
 	@Override
-	public Collection<LETTER> lettersReturnIncoming() {
+	public Set<LETTER> lettersReturnIncoming() {
 		Map<LETTER, Map<STATE, Set<STATE>>> map = m_ReturnIn;
 		return map == null ? m_EmptySetOfLetters : map.keySet();
 	}

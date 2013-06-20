@@ -186,7 +186,7 @@ public class BuchiCegarLoop {
 
 		private static final boolean m_ReduceAbstractionSize = true;
 		private static final boolean m_Eager = true;
-		private static final boolean m_Difference = !true;
+		private static final boolean m_Difference = true;
 		private static final boolean m_UseDoubleDeckers = !true;
 
 		public BuchiCegarLoop(RootNode rootNode,

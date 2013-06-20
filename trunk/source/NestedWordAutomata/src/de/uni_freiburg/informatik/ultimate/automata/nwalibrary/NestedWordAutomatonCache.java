@@ -167,7 +167,7 @@ public class NestedWordAutomatonCache<LETTER,STATE> implements INestedWordAutoma
 	
 	
 	@Override
-	public Collection<LETTER> lettersInternal(STATE state) {
+	public Set<LETTER> lettersInternal(STATE state) {
 		if (!contains(state)) {
 			throw new IllegalArgumentException("State " + state + " unknown");
 		}
@@ -176,7 +176,7 @@ public class NestedWordAutomatonCache<LETTER,STATE> implements INestedWordAutoma
 	}
 	
 	@Override
-	public Collection<LETTER> lettersCall(STATE state) {
+	public Set<LETTER> lettersCall(STATE state) {
 		if (!contains(state)) {
 			throw new IllegalArgumentException("State " + state + " unknown");
 		}
@@ -185,7 +185,7 @@ public class NestedWordAutomatonCache<LETTER,STATE> implements INestedWordAutoma
 	}
 	
 	@Override
-	public Collection<LETTER> lettersReturn(STATE state) {
+	public Set<LETTER> lettersReturn(STATE state) {
 		if (!contains(state)) {
 			throw new IllegalArgumentException("State " + state + " unknown");
 		}

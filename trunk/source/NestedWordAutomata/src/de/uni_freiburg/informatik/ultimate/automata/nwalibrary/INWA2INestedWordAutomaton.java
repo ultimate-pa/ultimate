@@ -61,31 +61,31 @@ public class INWA2INestedWordAutomaton<LETTER, STATE> implements
 		return m_Nwa.isFinal(state);
 	}
 
-	public Collection<LETTER> lettersInternal(STATE state) {
+	public Set<LETTER> lettersInternal(STATE state) {
 		return m_Nwa.lettersInternal(state);
 	}
 
-	public Collection<LETTER> lettersInternalIncoming(STATE state) {
+	public Set<LETTER> lettersInternalIncoming(STATE state) {
 		return m_Nwa.lettersInternalIncoming(state);
 	}
 
-	public Collection<LETTER> lettersCall(STATE state) {
+	public Set<LETTER> lettersCall(STATE state) {
 		return m_Nwa.lettersCall(state);
 	}
 
-	public Collection<LETTER> lettersCallIncoming(STATE state) {
+	public Set<LETTER> lettersCallIncoming(STATE state) {
 		return m_Nwa.lettersCallIncoming(state);
 	}
 
-	public Collection<LETTER> lettersReturn(STATE state) {
+	public Set<LETTER> lettersReturn(STATE state) {
 		return m_Nwa.lettersReturn(state);
 	}
 
-	public Collection<LETTER> lettersReturnIncoming(STATE state) {
+	public Set<LETTER> lettersReturnIncoming(STATE state) {
 		return m_Nwa.lettersReturnIncoming(state);
 	}
 
-	public Collection<LETTER> lettersReturnSummary(STATE state) {
+	public Set<LETTER> lettersReturnSummary(STATE state) {
 		return m_Nwa.lettersReturnSummary(state);
 	}
 

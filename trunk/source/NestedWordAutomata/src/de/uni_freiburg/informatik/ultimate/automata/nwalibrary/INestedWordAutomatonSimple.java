@@ -1,6 +1,5 @@
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary;
 
-import java.util.Collection;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
@@ -105,19 +104,19 @@ public interface INestedWordAutomatonSimple<LETTER, STATE> extends IAutomaton<LE
 	 * Superset of all letters a such that state has an outgoing internal 
 	 * transition labeled with letter a.
 	 */
-	public Collection<LETTER> lettersInternal(STATE state);
+	public Set<LETTER> lettersInternal(STATE state);
 	
 	/**
 	 * Superset of all letters a such that state has an outgoing call 
 	 * transition labeled with letter a.
 	 */	
-	public Collection<LETTER> lettersCall(STATE state);
+	public Set<LETTER> lettersCall(STATE state);
 	
 	/**
 	 * Superset of all letters a such that state has an outgoing return 
 	 * transition labeled with letter a.
 	 */		
-	public Collection<LETTER> lettersReturn(STATE state);
+	public Set<LETTER> lettersReturn(STATE state);
 
 	
 	public abstract Iterable<OutgoingInternalTransition<LETTER, STATE>> internalSuccessors(
