@@ -99,6 +99,7 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 		try {
 			new ReachableStatesComputation();
 			new DeadEndComputation();
+			new NonLiveStateComputation();
 			s_Logger.info(stateContainerInformation());
 			assert (new TransitionConsitenceCheck<LETTER, STATE>(this)).consistentForAll();
 
@@ -1102,9 +1103,7 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 		private void init() {
 			for (STATE fin : m_finalStates) {
 				StateContainer<LETTER, STATE> cont = m_States.get(fin);
-				m_FinAncWorklist.add(cont);
 				addNewDownStates(null, cont, cont.getDownStates().keySet());
-
 			}
 		}
 		
@@ -1119,7 +1118,7 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 				boolean newDownStateWasPropagated = false;
 				for (STATE down : potentiallyNewDownStates) {
 					ReachProp oldValue = succCont.modifyDownProp(down, ReachProp.FINANC);
-					if (oldValue == null) {
+					if (oldValue != ReachProp.FINANC) {
 						newDownStateWasPropagated = true;
 					}
 				}
