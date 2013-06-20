@@ -51,18 +51,11 @@ import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
  *                   but this somehow counters the automata implementation,
  *                   since finding the predecessors is expensive...
  * 
- * <splitOutgoing> possible improvement: at the beginning split all states
- *                 with respect to outgoing symbols -> necessary condition
- * 
  * <constructAutomaton> how to do this efficiently in the end?
  * 
  * <threading> identify possibilities for threading and implement it
  * 
  * possible improvements:
- * <onlyOneWL> put only the poisitve EC via int/call split in work list
- * 
- * <localSplit> local return splits must be done at most once (boolean in EC)
- * 
  * <globalSplit> global return split analysis
  * 
  * <stateAnalysis> separate set of states in EC for states with no return
@@ -1502,17 +1495,7 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 		public Set<LETTER> letters(STATE state) {
 			assert (assertLetters(state));
 			
-			final Collection<LETTER> letters =
-					m_operand.lettersInternal(state);
-			if (letters instanceof Set<?>) {
-				return (Set<LETTER>)letters;
-			}
-			final HashSet<LETTER> lettersSet = new HashSet<LETTER>(
-					computeHashSetCapacity(letters.size()));
-			for (final LETTER letter : letters) {
-				lettersSet.add(letter);
-			}
-			return lettersSet;
+			return m_operand.lettersInternal(state);
 		}
 
 		@Override
@@ -1560,17 +1543,7 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 		public Set<LETTER> letters(STATE state) {
 			assert assertLetters(state);
 			
-			final Collection<LETTER> letters =
-					m_operand.lettersCall(state);
-			if (letters instanceof Set<?>) {
-				return (Set<LETTER>)letters;
-			}
-			final HashSet<LETTER> lettersSet = new HashSet<LETTER>(
-					computeHashSetCapacity(letters.size()));
-			for (final LETTER letter : letters) {
-				lettersSet.add(letter);
-			}
-			return lettersSet;
+			return m_operand.lettersCall(state);
 		}
 		
 		@Override
@@ -1822,7 +1795,9 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 						m_state2EquivalenceClass.put(state, newEc);
 					}
 					
-					// put ec in work lists if not already in there
+					/*
+					 * put old ec in work lists if not already in there
+					 * TODO<onlyOneWL> not necessary!
 					if (ec.m_incomingInt == EIncomingStatus.unknown) {
 						ec.m_incomingInt = EIncomingStatus.inWL;
 						m_workListIntCall.add(ec);
@@ -1837,6 +1812,7 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 						ec.m_incomingRet = EIncomingStatus.inWL;
 						m_workListRet.add(ec);
 					}
+					*/
 					
 					// reset equivalence class
 					ec.reset();
