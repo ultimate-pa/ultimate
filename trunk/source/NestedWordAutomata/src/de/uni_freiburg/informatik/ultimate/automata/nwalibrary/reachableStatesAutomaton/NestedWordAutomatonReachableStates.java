@@ -147,7 +147,7 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 		}
 		StateContainer<LETTER, STATE> cont = m_States.get(state);
 		if (cont.getReachProp() == ReachProp.NODEADEND_AD) {
-			assert cont.getDownStates().get(getEmptyStackState()) == ReachProp.REACHABLE;
+//			assert cont.getDownStates().get(getEmptyStackState()) == ReachProp.REACHABLE;
 			return true;
 		} else {
 			if (cont.getDownStates().get(getEmptyStackState()) == ReachProp.NODEADEND_SD) {

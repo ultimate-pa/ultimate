@@ -492,7 +492,7 @@ public class BuchiComplementFKVNwa<LETTER,STATE> implements INestedWordAutomaton
 		}
 		
 		STATE getContent() {
-			assert !m_LevelRanking.isEmpty();
+//			assert !m_LevelRanking.isEmpty();
 			return m_StateFactory.buchiComplementFKV((LevelRankingState) this);
 		}
 		
