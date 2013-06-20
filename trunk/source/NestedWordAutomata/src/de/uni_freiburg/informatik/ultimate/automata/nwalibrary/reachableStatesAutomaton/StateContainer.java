@@ -95,9 +95,8 @@ public abstract class StateContainer<LETTER, STATE> {
 	}
 	
 	ReachProp modifyDownProp(STATE down, ReachProp prop) {
-		assert m_ReachProp == ReachProp.NODEADEND_SD || m_ReachProp == ReachProp.REACHABLE;
-		ReachProp oldValue = m_DownStates.put(down, ReachProp.NODEADEND_SD);
-		if (oldValue == ReachProp.REACHABLE) {
+		ReachProp oldValue = m_DownStates.put(down, prop);
+		if (oldValue != prop) {
 			if (m_UnpropagatedDownStates == null) {
 				m_UnpropagatedDownStates = new HashSet<STATE>();
 			}
