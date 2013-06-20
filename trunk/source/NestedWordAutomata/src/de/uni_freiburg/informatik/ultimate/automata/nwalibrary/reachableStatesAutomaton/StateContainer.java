@@ -94,7 +94,7 @@ public abstract class StateContainer<LETTER, STATE> {
 		return oldValue;
 	}
 	
-	ReachProp addNonDeadEndDownState(STATE down) {
+	ReachProp modifyDownProp(STATE down, ReachProp prop) {
 		assert m_ReachProp == ReachProp.NODEADEND_SD || m_ReachProp == ReachProp.REACHABLE;
 		ReachProp oldValue = m_DownStates.put(down, ReachProp.NODEADEND_SD);
 		if (oldValue == ReachProp.REACHABLE) {
