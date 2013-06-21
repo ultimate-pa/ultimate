@@ -49,10 +49,10 @@ import de.uni_freiburg.informatik.ultimate.logic.PrintTerm;
 import de.uni_freiburg.informatik.ultimate.logic.QuotedObject;
 import de.uni_freiburg.informatik.ultimate.logic.ReasonUnknown;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
+import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
-import de.uni_freiburg.informatik.ultimate.logic.simplification.SimplifyDDA;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.Config;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.Clausifier;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.Clause;
@@ -70,6 +70,25 @@ import de.uni_freiburg.informatik.ultimate.util.ScopedArrayList;
 
 
 public class SMTInterpol extends NoopScript {
+	
+	private static enum CheckType {
+		FULL {
+			boolean check(DPLLEngine engine) {
+				return engine.solve();
+			}
+		},
+		PROPAGATION {
+			boolean check(DPLLEngine engine) {
+				return engine.propagate();
+			}
+		},
+		QUICK {
+			boolean check(DPLLEngine engine) {
+				return engine.quickCheck();
+			}
+		};
+		abstract boolean check(DPLLEngine engine);
+	}
 	
 	private static class SMTInterpolSetup extends Theory.SolverSetup {
 		
@@ -370,6 +389,7 @@ public class SMTInterpol extends NoopScript {
 			return res;
 		}
 	}
+	private CheckType m_CheckType = CheckType.FULL;
 	private DPLLEngine m_Engine;
 	private Clausifier m_Clausifier;
 	private ScopedArrayList<Term> m_Assertions;
@@ -453,6 +473,7 @@ public class SMTInterpol extends NoopScript {
 	private final static int OPT_MODEL_CHECK_MODE = 15;
 	private final static int OPT_PROOF_TRANSFORMATION = 16;
 	private final static int OPT_MODELS_PARTIAL = 17;
+	private final static int OPT_CHECK_TYPE = 18;
 	//// Add a new option number for every new option
 	
 	// The Options Map
@@ -503,6 +524,9 @@ public class SMTInterpol extends NoopScript {
 				false, OPT_PRODUCE_INTERPOLANTS);
 		new BoolOption(":partial-models", "Don't totalize models", true,
 				OPT_MODELS_PARTIAL);
+		new StringOption(":check-type",
+				"Strength of check used in check-sat command", true,
+				OPT_CHECK_TYPE);
 		//// Create new option object for every new option
 	}
 	
@@ -608,7 +632,7 @@ public class SMTInterpol extends NoopScript {
 		m_ReasonUnknown = ReasonUnknown.INCOMPLETE;
 		m_Engine.setRandomSeed(m_RandomSeed);
 		try {
-			if (m_Engine.solve()) {
+			if (m_CheckType.check(m_Engine)) {
 				if (m_Engine.hasModel()) {
 					result = LBool.SAT;
 					if (m_ModelCheckMode/* && m_ProduceModels*/) {
@@ -627,7 +651,9 @@ public class SMTInterpol extends NoopScript {
 					result = LBool.UNKNOWN;
 					switch(m_Engine.getCompleteness()) {
 					case DPLLEngine.COMPLETE:
-						throw new InternalError("Complete but no model?");
+						if (m_CheckType == CheckType.FULL)
+							throw new InternalError("Complete but no model?");
+						m_ReasonUnknown = ReasonUnknown.INCOMPLETE;
 					case DPLLEngine.INCOMPLETE_MEMOUT:
 						m_ReasonUnknown = ReasonUnknown.MEMOUT;
 						break;
@@ -869,6 +895,8 @@ public class SMTInterpol extends NoopScript {
 			return m_ProduceInterpolants;
 		case OPT_MODELS_PARTIAL:
 			return m_PartialModels;
+		case OPT_CHECK_TYPE:
+			return m_CheckType.name().toLowerCase();
 		default:
 			throw new InternalError("This should be implemented!!!");
 		}
@@ -1332,20 +1360,34 @@ public class SMTInterpol extends NoopScript {
 			m_PartialModels = o.checkArg(value, m_PartialModels);
 			m_Model = null;
 			break;
+		case OPT_CHECK_TYPE:
+			try {
+				m_CheckType = 
+						CheckType.valueOf(
+								o.checkArg(value, ""/*dummy*/).toUpperCase());
+			} catch (IllegalArgumentException iae) {
+				// The enum constant is not present
+				StringBuilder sb = new StringBuilder();
+				sb.append("Illegal value. Only ");
+				String sep = "";
+				for (CheckType t : CheckType.values()) {
+					sb.append(sep).append(t.name().toLowerCase());
+					sep = ", ";
+				}
+				sb.append(" allowed.");
+				throw new SMTLIBException(sb.toString());
+			}
+			break;
 		default:
 			throw new InternalError("This should be implemented!!!");
 		}
 	}
 	
 	public Term simplifyTerm(Term term) throws SMTLIBException {
-		SimplifyDDA simplifyDDA = new SimplifyDDA(this, this.getLogger());
-		Term simp = simplifyDDA.getSimplifiedTerm(term);
-		return simp;
-		
 //		if (m_Engine == null)
 //			throw new SMTLIBException("No logic set!");
 //		return m_Converter.simplify(term);
-//		throw new UnsupportedOperationException();
+		throw new UnsupportedOperationException();
 	}
 
 	/**

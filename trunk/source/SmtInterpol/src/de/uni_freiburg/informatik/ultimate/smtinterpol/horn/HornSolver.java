@@ -24,6 +24,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.SMTInterpol;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.util.DAGSize;
 
 public class HornSolver extends NoopScript {
 	class HornClause {
@@ -82,6 +83,8 @@ public class HornSolver extends NoopScript {
 			System.err.print(m_Term);
 			System.err.print(" = ");
 			System.err.println((offset >= solution.length) ? "false" : solution[offset]);
+			if (offset < solution.length)
+				System.err.println("size: " + new DAGSize().size(solution[offset]));
 			return offset + 1;
 		}
 	}
