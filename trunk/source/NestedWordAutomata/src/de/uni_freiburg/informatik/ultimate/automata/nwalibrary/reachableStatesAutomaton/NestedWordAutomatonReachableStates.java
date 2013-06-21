@@ -1,16 +1,13 @@
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton;
 
 import java.util.ArrayDeque;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
-import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.NoSuchElementException;
 import java.util.Set;
 
@@ -21,7 +18,6 @@ import de.uni_freiburg.informatik.ultimate.automata.AtsDefinitionPrinter;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.Word;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.DoubleDecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.IDoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
@@ -35,9 +31,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingReturnTra
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.SummaryReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.TransitionConsitenceCheck;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.DoubleDeckerVisitor.ReachFinal;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.IOpWithDelayedDeadEndRemoval.UpDownEntry;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.NestedWordAutomatonReachableStates.ReachProp;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 
 public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INestedWordAutomatonOldApi<LETTER,STATE>, INestedWordAutomaton<LETTER,STATE>, IDoubleDeckerAutomaton<LETTER, STATE> {
@@ -1085,6 +1079,7 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 		}
 	}
 
+	////////////////////////////////////////////////////////////////////////////
 	
 	private class NonLiveStateComputation {
 		private ArrayDeque<StateContainer<LETTER,STATE>> m_FinAncWorklist =
@@ -1164,9 +1159,141 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 			}
 			returnSuccs.add(returnSucc);
 		}
+		
+		
+		
+//	    /**
+//	     * Offers a method to compute the strongly connected components (SCCs) of
+//	     * the game graph.
+//	     * Implementation of Tarjan SCC algorithm. 
+//	     * {@link http://en.wikipedia.org/wiki/Tarjan%27s_strongly_connected_components_algorithm}
+//	     * @author heizmann@informatik.uni-freiburg.de
+//	     */
+//	    private class SccComputation {
+//	    	/**
+//	    	 * Number of vertices that have been processed so far.
+//	    	 */
+//	    	int m_Index = 0;
+//	    	/**
+//	    	 * Vertices that have not yet been assigned to any SCC.
+//	    	 */
+//	    	Stack<StateContainer<LETTER, STATE>> m_NoScc = 
+//	    			new Stack<StateContainer<LETTER, STATE>>();
+//	    	
+//	    	/**
+//	    	 * Assigns to each vertex v the number of vertices that have been
+//	    	 * processed before in this algorithm. This number is called the index
+//	    	 * of v.
+//	    	 */
+//	    	Map<StateContainer<LETTER, STATE>,Integer> m_Indices = 
+//	    			new IdentityHashMap<StateContainer<LETTER, STATE>,Integer>();
+//
+//	    	Map<StateContainer<LETTER, STATE>,Integer> m_LowLinks = 
+//	    			new IdentityHashMap<StateContainer<LETTER, STATE>,Integer>();
+//	    	List<DelayedSimulation<LETTER,STATE>.SCC> m_SCCs = 
+//	    			new LinkedList<DelayedSimulation<LETTER,STATE>.SCC>();
+//	    	
+//	        public SccComputation() {
+//	        	for (STATE state : m_initialStates) {
+//	        		StateContainer<LETTER, STATE> cont = m_States.get(state);
+//	                if (!m_Indices.containsKey(cont)) {
+//	                    strongconnect(cont);
+//	                }
+//	            }
+//
+//	            s_Logger.debug("Game graph consists of " + m_SCCs.size() + " SCCs");
+//	        }
+//
+//	        private void strongconnect(StateContainer<LETTER, STATE> v) {
+//	            assert (!m_Indices.containsKey(v));
+//	            assert (!m_LowLinks.containsKey(v));
+//	            m_Indices.put(v, m_Index);
+//	            m_LowLinks.put(v, m_Index);
+//	            m_Index++;
+//	            this.m_NoScc.push(v);
+//
+//	            if(e.containsKey(v)) {
+//	                for (StateContainer<LETTER, STATE> w : e.get(v)) {
+//	                    if (!m_Indices.containsKey(w)) {
+//	                        strongconnect(w);
+//	                        int minLowLink = Math.min(m_LowLinks.get(v),
+//	                                m_LowLinks.get(w));
+//	                        m_LowLinks.put(v, minLowLink);
+//	                    } else if (m_NoScc.contains(w)) {
+//	                        int min = Math.min(m_LowLinks.get(v), m_Indices.get(w));
+//	                        m_LowLinks.put(v, min);
+//	                    }
+//	                }
+//	            }
+//	            
+//	            if (m_LowLinks.get(v).equals(m_Indices.get(v))) {
+//	                StateContainer<LETTER, STATE> w;
+//	                Set<StateContainer<LETTER, STATE>> verticesOfSCC = 
+//	                		new HashSet<StateContainer<LETTER, STATE>>();
+//	                int priorityOneVerticesOfScc = 0;
+//	                do {
+//	                    w = m_NoScc.pop();
+//	                    verticesOfSCC.add(w);
+//	                    if (w.getPriority() == 1) {
+//	                    	priorityOneVerticesOfScc++;
+//	                    }
+//	  
+//	                } while (v != w);
+//	                @SuppressWarnings({ "unchecked", "rawtypes" })
+//	    			DelayedSimulation<LETTER,STATE>.SCC scc = new DelayedSimulation.SCC(
+//	    								   verticesOfSCC, priorityOneVerticesOfScc);
+//	                m_SCCs.add(scc);
+//	            }
+//	        }
+//	        
+//	        
+//	        /**
+//	         * @return List of SCCs of the game graph in reverse topological order.
+//	         * (This means: If scc1 occurs in this list before scc2 then ss2 is not
+//	         * reachable from scc1).
+//	         */
+//	        public List<SCC> getSCCs() {
+//	        	assert(gameGraphPartitionedBySCCs());
+//	        	return m_SCCs;
+//	        }
+//	        
+//	        /**
+//	         * @return true iff the SCCS form a partition of the game graph.
+//	         */
+//	        private boolean gameGraphPartitionedBySCCs() {
+//	        	int verticesInAllSccs = 0;
+//	        	int max = 0;
+//	        	for (SCC scc : m_SCCs) {
+//	        		verticesInAllSccs += scc.getVertices().size();
+//	        	}
+//	        	s_Logger.debug("The biggest SCC has " + max + " vertices.");
+//	        	int verticesInGameGraph = v0.size() + v1.size();
+//	        	boolean sameNumberOfVertices = 
+//	        			(verticesInAllSccs == verticesInGameGraph);
+//	        	return sameNumberOfVertices;
+//	        }
+//	    }
+		
 
 	}
 
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
 	
 	
 	public Iterable<UpDownEntry<STATE>> getRemovedUpDownEntry() {
