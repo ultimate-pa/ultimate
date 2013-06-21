@@ -32,6 +32,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Smt2Boogie;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.InterproceduralSequentialComposition;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
@@ -1631,6 +1632,39 @@ public class SmtManager {
 				tvp.getVars(), tvp.getClosedFormula());
 		return result;
 	}
+	
+	
+	
+	
+	public IPredicate strongestPostcondition(IPredicate p, CodeBlock cb) {
+		if (cb instanceof Call) {
+			throw new UnsupportedOperationException();
+		} else if (cb instanceof Return) {
+			throw new UnsupportedOperationException();
+		} else if (cb instanceof InterproceduralSequentialComposition) {
+			throw new UnsupportedOperationException();
+		}
+		return null;
+	}
+	
+	public IPredicate weakestPrecondition(IPredicate p, CodeBlock cb) {
+		if (cb instanceof Call) {
+			throw new UnsupportedOperationException();
+		} else if (cb instanceof Return) {
+			throw new UnsupportedOperationException();
+		} else if (cb instanceof InterproceduralSequentialComposition) {
+			throw new UnsupportedOperationException();
+		}
+		return null;
+	}
+	
+	
+	
+	
+	
+	
+	
+	
 	
 	
 	
