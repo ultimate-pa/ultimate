@@ -18,7 +18,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.logic;
 
-import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.List;
 
