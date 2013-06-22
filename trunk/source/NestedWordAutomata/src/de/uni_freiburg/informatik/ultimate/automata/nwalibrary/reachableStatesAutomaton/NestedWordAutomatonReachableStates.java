@@ -98,7 +98,7 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 		try {
 			new ReachableStatesComputation();
 			computeDeadEnds();
-			new NonLiveStateComputation();
+//			new NonLiveStateComputation();
 			s_Logger.info(stateContainerInformation());
 			assert (new TransitionConsitenceCheck<LETTER, STATE>(this)).consistentForAll();
 
@@ -898,7 +898,7 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 			m_rpSomeDown = someDown;
 			
 			for (StateContainer<LETTER,STATE> cont : startSet) {
-				cont.setReachProp(m_rpSomeDown);
+				cont.setReachProp(m_rpAllDown);
 				m_Ancestors.add(cont.getState());
 				m_NonReturnBackwardWorklist.add(cont);
 			}
@@ -951,13 +951,15 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 					STATE lin = inTrans.getLinPred();
 					StateContainer<LETTER,STATE> linCont = m_States.get(lin);
 					if (linCont.getReachProp() != m_rpAllDown) {
-						linCont.setReachProp(m_rpSomeDown);
-						if (linCont.getUnpropagatedDownStates() == null) {
-							assert !m_PropagationWorklist.contains(linCont);
-							m_PropagationWorklist.addLast(linCont);
-						}
-						ReachProp oldValue = linCont.modifyDownProp(inTrans.getHierPred(),m_rpSomeDown);
-						assert oldValue != m_rpAllDown;
+						Set<STATE> potentiallyNewDownStates = new HashSet<STATE>(1);
+						potentiallyNewDownStates.add(inTrans.getHierPred());
+						addNewDownStates(null, linCont, potentiallyNewDownStates);
+//						if (linCont.getUnpropagatedDownStates() == null) {
+//							assert !m_PropagationWorklist.contains(linCont);
+//							m_PropagationWorklist.addLast(linCont);
+//						}
+//						ReachProp oldValue = linCont.modifyDownProp(inTrans.getHierPred(),m_rpSomeDown);
+//						assert oldValue != m_rpAllDown;
 					}
 				}
 			}
@@ -1034,6 +1036,7 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 			if (newUnpropagatedDownStatesSelfloop != null) {
 				for (STATE down : newUnpropagatedDownStatesSelfloop) {
 					ReachProp oldValue = cont.modifyDownProp(down, m_rpSomeDown);
+					assert oldValue != null;
 					assert oldValue != m_rpAllDown;
 				}
 				assert !m_PropagationWorklist.contains(cont);
@@ -1066,7 +1069,8 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 				boolean newDownStateWasPropagated = false;
 				for (STATE down : potentiallyNewDownStates) {
 					ReachProp oldValue = predCont.getDownStates().get(down);
-					if (oldValue != m_rpAllDown && oldValue != m_rpSomeDown) {
+					assert oldValue != m_rpAllDown;
+					if (oldValue != null && oldValue != m_rpSomeDown) {
 						predCont.modifyDownProp(down,m_rpSomeDown);
 						newDownStateWasPropagated = true;
 					}
@@ -1334,6 +1338,7 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 				boolean newDownStateWasPropagated = false;
 				for (STATE down : potentiallyNewDownStates) {
 					ReachProp oldValue = succCont.modifyDownProp(down, ReachProp.FINANC);
+					assert oldValue != null;
 					if (oldValue != ReachProp.FINANC) {
 						newDownStateWasPropagated = true;
 					}
@@ -1555,19 +1560,22 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 		    		if (isFinal(cont.getState())) {
 		    			m_AcceptingStates.add(cont);
 		    		}
-		    		Set<StateContainer<LETTER, STATE>> accSumSucc = 
+		    		Set<StateContainer<LETTER, STATE>> accSumSuccs = 
 		    				m_AcceptingSummaries.get(cont);
-		    		if (accSumSucc != null) {
-		    			if (m_AllStates.contains(accSumSucc)) {
-		    				m_AcceptingSumPred.add(cont);
+		    		if (accSumSuccs != null) {
+		    			if (Collections.disjoint(accSumSuccs, m_AllStates)) {
+		    				// no accSumSucc in this SCC
+		    				for (StateContainer<LETTER, STATE> accSumSucc : accSumSuccs) {
+		    					assert !m_LowLinks.get(accSumSucc).equals(m_LowLinks.get(cont));
+		    					assert !m_NoScc.contains(accSumSucc);
+		    				}
 		    			} else {
-		    				// accSumSucc will never be in this SCC
-		    				assert !m_LowLinks.get(accSumSucc).equals(m_LowLinks.get(cont));
-		    				assert !m_NoScc.contains(accSumSucc);
-		    			}
+		    				m_AcceptingSumPred.add(cont);
+		    			} 
 		    		}
 		    		m_AllStates.add(cont);
 		    	}
+		    	
 
 				public void setRootNode(StateContainer<LETTER, STATE> rootNode) {
 					this.m_RootNode = rootNode;
