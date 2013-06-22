@@ -120,7 +120,7 @@ public class TotalizeNwa<LETTER, STATE> implements INestedWordAutomatonSimple<LE
 	public Iterable<OutgoingInternalTransition<LETTER, STATE>> internalSuccessors(
 			STATE state, LETTER letter) {
 		if (m_NondeterminismInInputDetected) {
-			return new HashSet(0);
+			return new HashSet<OutgoingInternalTransition<LETTER, STATE>>(0);
 		}
 		if (state != m_SinkState) {
 			Iterator<OutgoingInternalTransition<LETTER, STATE>> it = 
@@ -129,7 +129,7 @@ public class TotalizeNwa<LETTER, STATE> implements INestedWordAutomatonSimple<LE
 				it.next();
 				if (it.hasNext()) {
 					m_NondeterminismInInputDetected = true;
-					return new HashSet(0);
+					return new HashSet<OutgoingInternalTransition<LETTER, STATE>>(0);
 				} else {
 					return m_Operand.internalSuccessors(state, letter);
 				}
@@ -147,7 +147,7 @@ public class TotalizeNwa<LETTER, STATE> implements INestedWordAutomatonSimple<LE
 	public Iterable<OutgoingInternalTransition<LETTER, STATE>> internalSuccessors(
 			STATE state) {
 		if (m_NondeterminismInInputDetected) {
-			return new HashSet(0);
+			return new HashSet<OutgoingInternalTransition<LETTER, STATE>>(0);
 		}
 		ArrayList<OutgoingInternalTransition<LETTER, STATE>> result = 
 				new ArrayList<OutgoingInternalTransition<LETTER, STATE>>();
@@ -155,7 +155,7 @@ public class TotalizeNwa<LETTER, STATE> implements INestedWordAutomatonSimple<LE
 			Iterator<OutgoingInternalTransition<LETTER, STATE>> it = 
 					internalSuccessors(state, letter).iterator();
 			if (m_NondeterminismInInputDetected) {
-				return new HashSet(0);
+				return new HashSet<OutgoingInternalTransition<LETTER, STATE>>(0);
 			}
 			result.add(it.next());
 			assert !it.hasNext();
@@ -167,7 +167,7 @@ public class TotalizeNwa<LETTER, STATE> implements INestedWordAutomatonSimple<LE
 	public Iterable<OutgoingCallTransition<LETTER, STATE>> callSuccessors(
 			STATE state, LETTER letter) {
 		if (m_NondeterminismInInputDetected) {
-			return new HashSet(0);
+			return new HashSet<OutgoingCallTransition<LETTER, STATE>>(0);
 		}
 		if (state != m_SinkState) {
 			Iterator<OutgoingCallTransition<LETTER, STATE>> it = 
@@ -176,7 +176,7 @@ public class TotalizeNwa<LETTER, STATE> implements INestedWordAutomatonSimple<LE
 				it.next();
 				if (it.hasNext()) {
 					m_NondeterminismInInputDetected = true;
-					return new HashSet(0);
+					return new HashSet<OutgoingCallTransition<LETTER, STATE>>(0);
 				} else {
 					return m_Operand.callSuccessors(state, letter);
 				}
@@ -194,7 +194,7 @@ public class TotalizeNwa<LETTER, STATE> implements INestedWordAutomatonSimple<LE
 	public Iterable<OutgoingCallTransition<LETTER, STATE>> callSuccessors(
 			STATE state) {
 		if (m_NondeterminismInInputDetected) {
-			return new HashSet(0);
+			return new HashSet<OutgoingCallTransition<LETTER, STATE>>(0);
 		}
 		ArrayList<OutgoingCallTransition<LETTER, STATE>> result = 
 				new ArrayList<OutgoingCallTransition<LETTER, STATE>>();
@@ -202,7 +202,7 @@ public class TotalizeNwa<LETTER, STATE> implements INestedWordAutomatonSimple<LE
 			Iterator<OutgoingCallTransition<LETTER, STATE>> it = 
 					callSuccessors(state, letter).iterator();
 			if (m_NondeterminismInInputDetected) {
-				return new HashSet(0);
+				return new HashSet<OutgoingCallTransition<LETTER, STATE>>(0);
 			}
 			result.add(it.next());
 			assert !it.hasNext();
@@ -216,7 +216,7 @@ public class TotalizeNwa<LETTER, STATE> implements INestedWordAutomatonSimple<LE
 	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSucccessors(
 			STATE state, STATE hier, LETTER letter) {
 		if (m_NondeterminismInInputDetected) {
-			return new HashSet(0);
+			return new HashSet<OutgoingReturnTransition<LETTER, STATE>>(0);
 		}
 		if (state != m_SinkState) {
 			Iterator<OutgoingReturnTransition<LETTER, STATE>> it = 
@@ -225,7 +225,7 @@ public class TotalizeNwa<LETTER, STATE> implements INestedWordAutomatonSimple<LE
 				it.next();
 				if (it.hasNext()) {
 					m_NondeterminismInInputDetected = true;
-					return new HashSet(0);
+					return new HashSet<OutgoingReturnTransition<LETTER, STATE>>(0);
 				} else {
 					return m_Operand.returnSucccessors(state, hier, letter);
 				}
@@ -243,7 +243,7 @@ public class TotalizeNwa<LETTER, STATE> implements INestedWordAutomatonSimple<LE
 	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessorsGivenHier(
 			STATE state, STATE hier) {
 		if (m_NondeterminismInInputDetected) {
-			return new HashSet(0);
+			return new HashSet<OutgoingReturnTransition<LETTER, STATE>>(0);
 		}
 		ArrayList<OutgoingReturnTransition<LETTER, STATE>> result = 
 				new ArrayList<OutgoingReturnTransition<LETTER, STATE>>();
@@ -251,7 +251,7 @@ public class TotalizeNwa<LETTER, STATE> implements INestedWordAutomatonSimple<LE
 			Iterator<OutgoingReturnTransition<LETTER, STATE>> it = 
 					returnSucccessors(state, hier, letter).iterator();
 			if (m_NondeterminismInInputDetected) {
-				return new HashSet(0);
+				return new HashSet<OutgoingReturnTransition<LETTER, STATE>>(0);
 			}
 			result.add(it.next());
 			assert !it.hasNext();

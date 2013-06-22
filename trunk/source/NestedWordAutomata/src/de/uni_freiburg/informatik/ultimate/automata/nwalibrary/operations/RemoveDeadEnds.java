@@ -1,7 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations;
 
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.Set;
 
 import org.apache.log4j.Logger;
@@ -18,10 +17,8 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingInternalT
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.TransitionConsitenceCheck;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.IOpWithDelayedDeadEndRemoval.UpDownEntry;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.ReachableStatesCopy;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.NestedWordAutomatonReachableStates;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.StateContainer;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 
 public class RemoveDeadEnds<LETTER,STATE> implements IOperation<LETTER,STATE> {
@@ -49,7 +46,7 @@ public class RemoveDeadEnds<LETTER,STATE> implements IOperation<LETTER,STATE> {
 		m_Input = nwa;
 		s_Logger.info(startMessage());
 		m_Reach = new NestedWordAutomatonReachableStates<LETTER, STATE>(m_Input);
-		m_Result = new NestedWordAutomatonFilteredStates<LETTER, STATE>(m_Reach);
+		m_Result = new NestedWordAutomatonFilteredStates<LETTER, STATE>(m_Reach, m_Reach.getWithOutDeadEnds());
 		s_Logger.info(exitMessage());
 		assert (new TransitionConsitenceCheck<LETTER, STATE>(m_Result)).consistentForAll();
 	}
@@ -85,7 +82,7 @@ public class RemoveDeadEnds<LETTER,STATE> implements IOperation<LETTER,STATE> {
 //		correct &= (ResultChecker.nwaLanguageInclusion(m_Input, m_Result) == null);
 //		correct &= (ResultChecker.nwaLanguageInclusion(m_Result, m_Input) == null);
 		assert correct;
-		ReachableStatesCopy<LETTER, STATE> rsc = (new ReachableStatesCopy(m_Input, false, false, false, false));
+		ReachableStatesCopy<LETTER, STATE> rsc = (new ReachableStatesCopy<LETTER, STATE>(m_Input, false, false, false, false));
 //		Set<UpDownEntry<STATE>> rsaEntries = new HashSet<UpDownEntry<STATE>>();
 //		for (UpDownEntry<STATE> rde : m_Reach.getRemovedUpDownEntry()) {
 //			rsaEntries.add(rde);
@@ -136,7 +133,7 @@ public class RemoveDeadEnds<LETTER,STATE> implements IOperation<LETTER,STATE> {
 				assert correct;
 			}
 			Set<STATE> rCSdownStates = reachalbeStatesCopy.getDownStates(state);
-			Set<STATE> rCAdownStates = m_Reach.getDownStatesAfterDeadEndRemoval(state);
+			Set<STATE> rCAdownStates = m_Reach.getWithOutDeadEnds().getDownStates(state);
 			correct &= ResultChecker.isSubset(rCAdownStates, rCSdownStates);
 			assert correct;
 			correct &= ResultChecker.isSubset(rCSdownStates, rCAdownStates);
