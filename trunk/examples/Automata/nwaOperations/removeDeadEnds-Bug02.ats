@@ -3,10 +3,10 @@
 // Author: heizmann@informatik.uni-freiburg.de
 
 assert(!isEmpty(nwa));
-assert(!isEmpty(reachableStatesCopy(nwa)));
+assert(!isEmpty(removeDeadEnds(nwa)));
 
 
-print(reachableStatesCopy(nwa));
+print(removeDeadEnds(nwa));
 
 NestedWordAutomaton nwa = (
 	callAlphabet = {"call16" "call14" },

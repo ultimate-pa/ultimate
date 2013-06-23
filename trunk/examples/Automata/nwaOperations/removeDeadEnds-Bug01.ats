@@ -3,7 +3,7 @@
 // Author: heizmann@informatik.uni-freiburg.de
 
 
-print(reachableStatesCopy(nwa));
+print(removeDeadEnds(nwa));
 
 NestedWordAutomaton nwa = (
 	callAlphabet = {"call11" "call13" },
