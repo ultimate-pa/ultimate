@@ -1,6 +1,8 @@
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.Set;
 
 import org.apache.log4j.Logger;
@@ -17,6 +19,9 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingInternalT
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.TransitionConsitenceCheck;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.BuchiAccepts;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.BuchiIsEmpty;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.NestedLassoWord;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.ReachableStatesCopy;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.NestedWordAutomatonReachableStates;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
@@ -98,16 +103,17 @@ public class RemoveNonLiveStates<LETTER,STATE> implements IOperation<LETTER,STAT
 //		assert correct;
 		rsc.removeNonLiveStates();
 		DoubleDeckerAutomaton<LETTER, STATE> reachalbeStatesCopy = (DoubleDeckerAutomaton<LETTER, STATE>) rsc.getResult();
-		correct &= m_Result.getStates().isEmpty() || ResultChecker.isSubset(reachalbeStatesCopy.getStates(),m_Result.getStates());
-		assert correct;
+//		correct &= m_Result.getStates().isEmpty() || ResultChecker.isSubset(reachalbeStatesCopy.getStates(),m_Result.getStates());
+//		assert correct;
 		correct &= ResultChecker.isSubset(m_Result.getStates(),reachalbeStatesCopy.getStates());
 		assert correct;
 		Collection<STATE> rsaStates = m_Result.getStates();
 		Collection<STATE> rscStates = reachalbeStatesCopy.getStates();
 		correct &= ResultChecker.isSubset(rsaStates,rscStates);
 		assert correct;
-		correct &= ResultChecker.isSubset(rscStates,rsaStates);
-		assert correct;
+		// does not hold. Old non-live removal has bugs, see 'removeNonLive-Bug05.ats' example
+//		correct &= ResultChecker.isSubset(rscStates,rsaStates);
+//		assert correct;
 		for (STATE state : reachalbeStatesCopy.getStates()) {
 			for (OutgoingInternalTransition<LETTER, STATE> outTrans : reachalbeStatesCopy.internalSuccessors(state)) {
 				correct &= m_Reach.containsInternalTransition(state, outTrans.getLetter(), outTrans.getSucc());
@@ -140,10 +146,48 @@ public class RemoveNonLiveStates<LETTER,STATE> implements IOperation<LETTER,STAT
 			correct &= ResultChecker.isSubset(rCSdownStates, rCAdownStates);
 			assert correct;
 		}
+		
+		
+		INestedWordAutomatonOldApi<LETTER, STATE> operandOldApi = 
+				ResultChecker.getOldApiNwa(m_Input);
+		List<NestedLassoWord<LETTER>> lassoWords = new ArrayList<NestedLassoWord<LETTER>>();
+		BuchiIsEmpty<LETTER, STATE> operandEmptiness = new BuchiIsEmpty<LETTER, STATE>(operandOldApi);
+		boolean operandEmpty = operandEmptiness.getResult();
+		if (!operandEmpty) {
+			lassoWords.add(operandEmptiness.getAcceptingNestedLassoRun().getNestedLassoWord());
+		}
+		BuchiIsEmpty<LETTER, STATE> resultEmptiness = new BuchiIsEmpty<LETTER, STATE>(m_Result);
+		boolean resultEmpty = resultEmptiness.getResult();
+		if (!resultEmpty) {
+			lassoWords.add(resultEmptiness.getAcceptingNestedLassoRun().getNestedLassoWord());
+		}
+		correct &= (operandEmpty == resultEmpty);
+		assert correct;
+		int numberLassoWords = 10;
+		for (int i=0; i<numberLassoWords; i++) {
+			lassoWords.add(ResultChecker.getRandomNestedLassoWord(m_Result, m_Result.size()));
+			lassoWords.add(ResultChecker.getRandomNestedLassoWord(m_Result, operandOldApi.size()));
+		}
+
+		for (NestedLassoWord<LETTER> nlw : lassoWords) {
+			correct &= checkAcceptance(nlw, operandOldApi);
+			assert correct;
+		}
+		
+		
 		if (!correct) {
 			ResultChecker.writeToFileIfPreferred(operationName() + "Failed", "", m_Input);
 		}
 		s_Logger.info("Finished testing correctness of " + operationName());
+		return correct;
+	}
+	
+	private boolean checkAcceptance(NestedLassoWord<LETTER> nlw,
+			INestedWordAutomatonOldApi<LETTER, STATE> operand) {
+		boolean op = (new BuchiAccepts<LETTER, STATE>(operand, nlw)).getResult();
+		boolean res = (new BuchiAccepts<LETTER, STATE>(m_Result, nlw)).getResult();
+		boolean correct = (op == res);
+		assert correct : operationName() + " wrong result!";
 		return correct;
 	}
 

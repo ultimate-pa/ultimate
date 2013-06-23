@@ -1384,8 +1384,11 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 			for (OutgoingReturnTransition<LETTER, STATE> trans : cont.returnSuccessors()) {
 				StateContainer<LETTER, STATE> hierCont = m_States.get(trans.getHierPred());
 				StateContainer<LETTER, STATE> succCont = m_States.get(trans.getSucc());
-				addNewDownStates(null, succCont, hierCont.getDownStates().keySet());
-				addAcceptingSummary(hierCont,succCont);
+				STATE hierPred = trans.getHierPred();
+				if (cont.getDownStates().get(hierPred) == ReachProp.FINANC) {
+					addNewDownStates(null, succCont, hierCont.getDownStates().keySet());
+					addAcceptingSummary(hierCont,succCont);
+				}
 			}
 		}
 
@@ -1518,17 +1521,17 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 	        	if (scc.getNumberOfStates() == 1) {
 	        		StateContainer<LETTER, STATE> cont = scc.getRootNode();
 	    			for (OutgoingInternalTransition<LETTER, STATE> trans : cont.internalSuccessors()) {
-	    				if (trans.getSucc() == cont.getState()) {
+	    				if (trans.getSucc().equals(cont.getState())) {
 	    					return true;
 	    				}
 	    			}
 	    			for (SummaryReturnTransition<LETTER, STATE> trans : returnSummarySuccessor(cont.getState())) {
-	    				if (trans.getSucc() == cont.getState()) {
+	    				if (trans.getSucc().equals(cont.getState())) {
 	    					return true;
 	    				}
 	    			}
 	    			for (OutgoingCallTransition<LETTER, STATE> trans : cont.callSuccessors()) {
-	    				if (trans.getSucc() == cont.getState()) {
+	    				if (trans.getSucc().equals(cont.getState())) {
 	    					return true;
 	    				}
 	    			}
@@ -1576,23 +1579,20 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 		    			new HashSet<StateContainer<LETTER, STATE>>();
 		    	
 		    	public void addState(StateContainer<LETTER, STATE> cont) {
+		    		m_AllStates.add(cont);
 		    		if (isFinal(cont.getState())) {
 		    			m_AcceptingStates.add(cont);
 		    		}
 		    		Set<StateContainer<LETTER, STATE>> accSumSuccs = 
 		    				m_AcceptingSummaries.get(cont);
 		    		if (accSumSuccs != null) {
-		    			if (Collections.disjoint(accSumSuccs, m_AllStates)) {
-		    				// no accSumSucc in this SCC
-		    				for (StateContainer<LETTER, STATE> accSumSucc : accSumSuccs) {
-		    					assert !m_LowLinks.get(accSumSucc).equals(m_LowLinks.get(cont));
-		    					assert !m_NoScc.contains(accSumSucc);
-		    				}
-		    			} else {
-		    				m_AcceptingSumPred.add(cont);
-		    			} 
+	    				for (StateContainer<LETTER, STATE> accSumSucc : accSumSuccs) {
+	    					if (m_LowLinks.get(accSumSucc).equals(m_LowLinks.get(cont))) {
+	    						//both are in same SCC
+	    						m_AcceptingSumPred.add(cont);
+	    					}
+	    				}
 		    		}
-		    		m_AllStates.add(cont);
 		    	}
 		    	
 
