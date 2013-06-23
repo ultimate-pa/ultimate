@@ -859,8 +859,20 @@ private Set<STATE> m_DeadEnds;
 				m_DeadEnds = computeDeadEnds();
 			}
 			stateRemovedInInteration = removeDeadEnds();
+			resetReachabilityInformation();
 			stateRemovedInInteration |= removeAcceptingStatesWithoutSuccessors();
 		} while (stateRemovedInInteration);
+	}
+
+
+
+	private void resetReachabilityInformation() {
+		for (STATE state : m_TraversedNwa.getStates()) {
+			Map<STATE, ReachFinal> down2reachProp = m_Marked_Up2Down.get(state);
+			for (STATE down : down2reachProp.keySet()) {
+				down2reachProp.put(down, ReachFinal.UNKNOWN);
+			}
+		}
 	}
 
 
