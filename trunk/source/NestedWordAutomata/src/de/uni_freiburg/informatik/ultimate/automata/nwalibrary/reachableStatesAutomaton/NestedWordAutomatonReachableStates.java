@@ -54,7 +54,7 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 	private final Map<STATE,StateContainer<LETTER,STATE>> m_States = 
 			new HashMap<STATE,StateContainer<LETTER,STATE>>();
 	
-	public static enum ReachProp { REACHABLE, NODEADEND_AD, NODEADEND_SD, FINANC };
+	public static enum ReachProp { REACHABLE, NODEADEND_AD, NODEADEND_SD, FINANC, LIVE_AD, LIVE_SD };
 	
 
 	
@@ -97,7 +97,7 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 		m_StateFactory = operand.getStateFactory();
 		try {
 			new ReachableStatesComputation();
-			computeDeadEnds();
+//			computeDeadEnds();
 //			new NonLiveStateComputation();
 			s_Logger.info(stateContainerInformation());
 			assert (new TransitionConsitenceCheck<LETTER, STATE>(this)).consistentForAll();
@@ -526,7 +526,7 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 	}
 	
 	
-	private void computeDeadEnds() {
+	public void computeDeadEnds() {
 		HashSet<StateContainer<LETTER, STATE>> acceptings = 
 				new HashSet<StateContainer<LETTER,STATE>>();
 		for (STATE fin : getFinalStates()) {
@@ -536,6 +536,15 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 		}
 		m_WithOutDeadEnds = new AncestorComputation(acceptings, 
 				ReachProp.NODEADEND_AD, ReachProp.NODEADEND_SD);
+	}
+	
+	public void computeNonLiveStates() {
+		NonLiveStateComputation nl = new NonLiveStateComputation();
+		HashSet<StateContainer<LETTER, STATE>> nonLiveStarting = 
+				new HashSet<StateContainer<LETTER,STATE>>(nl.getNonLiveStartingSet());
+
+		m_OnlyLiveStates = new AncestorComputation(nonLiveStarting, 
+				ReachProp.LIVE_AD, ReachProp.LIVE_SD);
 	}
 	
 	
@@ -1311,6 +1320,9 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 		private Map<StateContainer<LETTER, STATE>, Set<StateContainer<LETTER, STATE>>> m_AcceptingSummaries = 
 				new HashMap<StateContainer<LETTER, STATE>, Set<StateContainer<LETTER, STATE>>>();
 		
+    	Set<StateContainer<LETTER, STATE>> nonLiveStartingSet = new HashSet<StateContainer<LETTER, STATE>>(); 
+		
+		
 		public NonLiveStateComputation() {
 			init();
 			while (!m_FinAncWorklist.isEmpty()) {
@@ -1319,7 +1331,13 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 			}
 			new SccComputation();
 		}
+		
+        
+        public Set<StateContainer<LETTER, STATE>> getNonLiveStartingSet() {
+        	return nonLiveStartingSet;
+        }
 
+		
 		private void init() {
 			for (STATE fin : m_finalStates) {
 				StateContainer<LETTER, STATE> cont = m_States.get(fin);
@@ -1327,7 +1345,6 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 			}
 		}
 		
-
 		
 		private void addNewDownStates(StateContainer<LETTER, STATE> cont,
 				StateContainer<LETTER, STATE> succCont,
@@ -1349,7 +1366,7 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 			}
 		}
 
-
+		
 		private void propagateNewDownStates(StateContainer<LETTER, STATE> cont) {
 			Set<STATE> unpropagatedDownStates = cont.getUnpropagatedDownStates();
 			if (unpropagatedDownStates  == null) {
@@ -1371,7 +1388,6 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 				addAcceptingSummary(hierCont,succCont);
 			}
 		}
-
 
 
 		private void addAcceptingSummary(
@@ -1419,6 +1435,8 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 	    	final Collection<SCC> m_Balls = new ArrayList<SCC>();
 	    	int m_NumberOfNonBallSCCs = 0;
 	    	
+
+	    	
 	        public SccComputation() {
 	        	for (STATE state : m_initialStates) {
 	        		StateContainer<LETTER, STATE> cont = m_States.get(state);
@@ -1429,21 +1447,22 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 
 	            assert(automatonPartitionedBySCCs());
 	            int acceptingBalls = 0;
-		    	Set<StateContainer<LETTER, STATE>> nonLive = 
+		    	
 		    			new HashSet<StateContainer<LETTER, STATE>>();
 	            for (SCC scc : m_Balls) {
 	            	if (scc.getAcceptingStates().size() > 0 || 
 	            			scc.getAcceptingSumPred().size() > 0) {
-	            		nonLive.addAll(scc.getAllStates());
+	            		nonLiveStartingSet.addAll(scc.getAllStates());
 	            		acceptingBalls++;
 	            	} 
 	            }
 	            s_Logger.debug("Automaton consists of " + m_Balls.size() + 
 	            		" InCaSumBalls and " + m_NumberOfNonBallSCCs + 
 	            		" non ball SCCs " + acceptingBalls + 
-	            		" balls are accepting " + nonLive.size() + 
+	            		" balls are accepting " + nonLiveStartingSet.size() + 
 	            		" states are live without return ");
 	        }
+
 
 	        private void strongconnect(StateContainer<LETTER, STATE> v) {
 	            assert (!m_Indices.containsKey(v));
@@ -1600,10 +1619,6 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 				public Set<StateContainer<LETTER, STATE>> getAcceptingSumPred() {
 					return m_AcceptingSumPred;
 				}
-		    	
-		    	
-		    	
-		    	
 		    }
 	    }
 	    

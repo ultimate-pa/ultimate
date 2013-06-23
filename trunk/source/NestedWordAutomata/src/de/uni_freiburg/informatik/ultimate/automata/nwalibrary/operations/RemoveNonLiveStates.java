@@ -21,7 +21,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.NestedWordAutomatonReachableStates;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 
-public class RemoveDeadEnds<LETTER,STATE> implements IOperation<LETTER,STATE> {
+public class RemoveNonLiveStates<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	
 	private final INestedWordAutomatonOldApi<LETTER,STATE> m_Input;
 	private final NestedWordAutomatonReachableStates<LETTER,STATE> m_Reach;
@@ -41,13 +41,13 @@ public class RemoveDeadEnds<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	 * @param nwa
 	 * @throws OperationCanceledException
 	 */
-	public RemoveDeadEnds(INestedWordAutomatonOldApi<LETTER,STATE> nwa)
+	public RemoveNonLiveStates(INestedWordAutomatonOldApi<LETTER,STATE> nwa)
 			throws OperationCanceledException {
 		m_Input = nwa;
 		s_Logger.info(startMessage());
 		m_Reach = new NestedWordAutomatonReachableStates<LETTER, STATE>(m_Input);
-		m_Reach.computeDeadEnds();
-		m_Result = new NestedWordAutomatonFilteredStates<LETTER, STATE>(m_Reach, m_Reach.getWithOutDeadEnds());
+		m_Reach.computeNonLiveStates();
+		m_Result = new NestedWordAutomatonFilteredStates<LETTER, STATE>(m_Reach, m_Reach.getOnlyLiveStates());
 		s_Logger.info(exitMessage());
 		assert (new TransitionConsitenceCheck<LETTER, STATE>(m_Result)).consistentForAll();
 	}
@@ -55,7 +55,7 @@ public class RemoveDeadEnds<LETTER,STATE> implements IOperation<LETTER,STATE> {
 
 	@Override
 	public String operationName() {
-		return "removeDeadEnds";
+		return "removeNonLiveStates";
 	}
 
 	@Override
@@ -96,7 +96,7 @@ public class RemoveDeadEnds<LETTER,STATE> implements IOperation<LETTER,STATE> {
 //		assert correct;
 //		correct &= ResultChecker.isSubset(rscEntries,rsaEntries);
 //		assert correct;
-		rsc.removeDeadEnds();
+		rsc.removeNonLiveStates();
 		DoubleDeckerAutomaton<LETTER, STATE> reachalbeStatesCopy = (DoubleDeckerAutomaton<LETTER, STATE>) rsc.getResult();
 		correct &= m_Result.getStates().isEmpty() || ResultChecker.isSubset(reachalbeStatesCopy.getStates(),m_Result.getStates());
 		assert correct;
@@ -134,7 +134,7 @@ public class RemoveDeadEnds<LETTER,STATE> implements IOperation<LETTER,STATE> {
 				assert correct;
 			}
 			Set<STATE> rCSdownStates = reachalbeStatesCopy.getDownStates(state);
-			Set<STATE> rCAdownStates = m_Reach.getWithOutDeadEnds().getDownStates(state);
+			Set<STATE> rCAdownStates = m_Reach.getOnlyLiveStates().getDownStates(state);
 			correct &= ResultChecker.isSubset(rCAdownStates, rCSdownStates);
 			assert correct;
 			correct &= ResultChecker.isSubset(rCSdownStates, rCAdownStates);

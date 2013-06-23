@@ -852,7 +852,7 @@ private Set<STATE> m_DeadEnds;
 	 * Remove all states from which only finitely many accepting states are
 	 * reachable.
 	 */
-	private final void removeNonLiveStates() {
+	public final void removeNonLiveStates() {
 		boolean stateRemovedInInteration;
 		do {
 			if (m_DeadEnds == null) {
