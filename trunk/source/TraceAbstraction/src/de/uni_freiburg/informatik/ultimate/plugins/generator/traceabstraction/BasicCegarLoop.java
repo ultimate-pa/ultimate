@@ -30,6 +30,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Pro
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.TAPreferences.Artifact;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.TAPreferences.InterpolatedLocs;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.InterpolantAutomataTransitionAppender.BestApproximationDeterminizer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.InterpolantAutomataTransitionAppender.PostDeterminizer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.InterpolantAutomataTransitionAppender.SelfloopDeterminizer;
@@ -40,6 +41,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceChecker.AllIntegers;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceCheckerSpWp;
 
 /**
  * Subclass of AbstractCegarLoop which provides all algorithms for checking
@@ -138,10 +140,17 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 	@Override
 	protected LBool isCounterexampleFeasible() {
 		m_TimingStatistics.startTraceCheck();
-		m_TraceChecker = new TraceChecker(m_SmtManager,
-				m_RootNode.getRootAnnot().getModGlobVarManager(),
-				m_RootNode.getRootAnnot().getEntryNodes(),
-				m_IterationPW);
+		if (m_Pref.interpolatedLocs() == InterpolatedLocs.WP) {
+			m_TraceChecker = new TraceCheckerSpWp(m_SmtManager,
+					m_RootNode.getRootAnnot().getModGlobVarManager(),
+					m_RootNode.getRootAnnot().getEntryNodes(),
+					m_IterationPW);
+		} else {
+			m_TraceChecker = new TraceChecker(m_SmtManager,
+					m_RootNode.getRootAnnot().getModGlobVarManager(),
+					m_RootNode.getRootAnnot().getEntryNodes(),
+					m_IterationPW);
+		}
 		m_TruePredicate = m_SmtManager.newTruePredicate();
 		m_FalsePredicate = m_SmtManager.newFalsePredicate();
 		

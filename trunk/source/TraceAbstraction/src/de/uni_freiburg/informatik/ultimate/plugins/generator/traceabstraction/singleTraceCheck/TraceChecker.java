@@ -82,20 +82,20 @@ import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
  */
 public class TraceChecker {
 	
-	private static Logger s_Logger = 
+	protected static Logger s_Logger = 
 			UltimateServices.getInstance().getLogger(Activator.s_PLUGIN_ID);
 	
 
 	/**
 	 * Interface for query the SMT solver. 
 	 */
-	private final SmtManager m_SmtManager;
+	protected final SmtManager m_SmtManager;
 	
 	
 	/**
 	 * Data structure that unifies Predicates with respect to its Term.
 	 */
-	private final PredicateBuilder m_PredicateBuilder;
+	protected final PredicateBuilder m_PredicateBuilder;
 	
 	
 	/**
@@ -104,7 +104,7 @@ public class TraceChecker {
 	 * where the identifier of the variable is mapped to the type of the
 	 * variable. 
 	 */
-	private final ModifiableGlobalVariableManager m_ModifiedGlobals;
+	protected final ModifiableGlobalVariableManager m_ModifiedGlobals;
 	
 	
 	/**
@@ -114,15 +114,15 @@ public class TraceChecker {
 	private final PrintWriter m_DebugPW;
 	
 
-	private Word<CodeBlock> m_Trace;
-	private IPredicate m_Precondition;
-	private IPredicate m_Postcondition;
-	private Map<Integer,IPredicate> m_PendingContexts;
+	protected Word<CodeBlock> m_Trace;
+	protected IPredicate m_Precondition;
+	protected IPredicate m_Postcondition;
+	protected Map<Integer,IPredicate> m_PendingContexts;
 
-	private NestedSsa m_AnnotatedSsa;
+	protected NestedSsa m_AnnotatedSsa;
 	
-	private LBool m_IsSafe;
-	private IPredicate[] m_Interpolants;
+	protected LBool m_IsSafe;
+	protected IPredicate[] m_Interpolants;
 	
 	
 	public TraceChecker(SmtManager smtManager,
