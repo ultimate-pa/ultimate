@@ -9,6 +9,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.Stack;
@@ -1573,31 +1574,43 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 		    	StateContainer<LETTER, STATE> m_RootNode;
 		    	final Set<StateContainer<LETTER, STATE>> m_AcceptingStates = 
 		    			new HashSet<StateContainer<LETTER, STATE>>();
-		    	final Set<StateContainer<LETTER, STATE>> m_AcceptingSumPred = 
+		    	final Set<StateContainer<LETTER, STATE>> m_HasOutgoingAcceptingSum = 
+		    			new HashSet<StateContainer<LETTER, STATE>>();
+		    	final Set<StateContainer<LETTER, STATE>> m_HasAcceptingSumInSCC = 
 		    			new HashSet<StateContainer<LETTER, STATE>>();
 		    	final Set<StateContainer<LETTER, STATE>> m_AllStates = 
 		    			new HashSet<StateContainer<LETTER, STATE>>();
 		    	
 		    	public void addState(StateContainer<LETTER, STATE> cont) {
+		    		if (m_RootNode != null) {
+		    			throw new UnsupportedOperationException(
+		    					"If root node is set SCC may not be modified");
+		    		}
 		    		m_AllStates.add(cont);
 		    		if (isFinal(cont.getState())) {
 		    			m_AcceptingStates.add(cont);
 		    		}
-		    		Set<StateContainer<LETTER, STATE>> accSumSuccs = 
-		    				m_AcceptingSummaries.get(cont);
-		    		if (accSumSuccs != null) {
-	    				for (StateContainer<LETTER, STATE> accSumSucc : accSumSuccs) {
-	    					if (m_LowLinks.get(accSumSucc).equals(m_LowLinks.get(cont))) {
-	    						//both are in same SCC
-	    						m_AcceptingSumPred.add(cont);
-	    					}
-	    				}
+		    		if (m_AcceptingSummaries.containsKey(cont)) {
+		    			m_HasOutgoingAcceptingSum.add(cont);
 		    		}
 		    	}
 		    	
 
 				public void setRootNode(StateContainer<LETTER, STATE> rootNode) {
+		    		if (m_RootNode != null) {
+		    			throw new UnsupportedOperationException(
+		    					"If root node is set SCC may not be modified");
+		    		}
 					this.m_RootNode = rootNode;
+					//TODO compute this only if there is no accepting state in
+				    //SCC
+					for (StateContainer<LETTER, STATE> container : m_HasOutgoingAcceptingSum) {
+		    			for (StateContainer<LETTER, STATE> succ : m_AcceptingSummaries.get(container)) {
+		    				if (m_AllStates.contains(succ)) {
+		    					m_HasAcceptingSumInSCC.add(container);
+		    				}
+		    			}
+					}
 				}
 
 				public int getNumberOfStates() {
@@ -1617,7 +1630,7 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 				}
 
 				public Set<StateContainer<LETTER, STATE>> getAcceptingSumPred() {
-					return m_AcceptingSumPred;
+					return m_HasAcceptingSumInSCC;
 				}
 		    }
 	    }
