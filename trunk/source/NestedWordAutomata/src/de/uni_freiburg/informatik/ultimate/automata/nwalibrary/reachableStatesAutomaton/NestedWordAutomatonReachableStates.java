@@ -1642,7 +1642,19 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 
 	
 	
-	
+	class LassoExtractor {
+		
+		Map<Stack<StateContainer<LETTER, STATE>>, Stack<StateContainer<LETTER, STATE>>> m_Resticted
+			= new HashMap<Stack<StateContainer<LETTER, STATE>>, Stack<StateContainer<LETTER, STATE>>>();
+		
+		Map<Stack<StateContainer<LETTER, STATE>>, Stack<StateContainer<LETTER, STATE>>> m_UnResticted
+			= new HashMap<Stack<StateContainer<LETTER, STATE>>, Stack<StateContainer<LETTER, STATE>>>();
+		
+//		findPath() {
+//			
+//		}
+		
+	}
 	
 	
 	
