@@ -39,6 +39,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCF
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.TransFormula;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.TransFormula.Infeasibility;
@@ -1635,7 +1636,13 @@ public class SmtManager {
 	
 	
 	
-	
+	/**
+	 * Computes the strongest postcondition of the given predicate p and
+	 * the CodeBlock cb.
+	 * @param p
+	 * @param cb
+	 * @return
+	 */
 	public IPredicate strongestPostcondition(IPredicate p, CodeBlock cb) {
 		if (cb instanceof Call) {
 			throw new UnsupportedOperationException();
@@ -1644,9 +1651,77 @@ public class SmtManager {
 		} else if (cb instanceof InterproceduralSequentialComposition) {
 			throw new UnsupportedOperationException();
 		}
-		return null;
+		// Check if p is false, if so return it, otherwise continue
+		if (p.getFormula() == False()) {
+			return p;
+		}
+		TransFormula tf = cb.getTransitionFormula();	
+		// Rename the TermVariables of the given Predicate p into invars
+		// of the TransFormula of the given Codeblock cb.
+		ArrayList<TermVariable> replacees = new ArrayList<TermVariable>();
+		ArrayList<Term> replacers = new ArrayList<Term>();
+		for (BoogieVar bv : p.getVars()) {
+			replacees.add(bv.getTermVariable());
+			// If the var from the predicate appears in the invars of TransFormula,
+			// then rename it, otherwise leave it unchanged.
+			if (tf.getInVars().containsKey(bv)) {
+				replacers.add(tf.getInVars().get(bv));
+			} else {
+				replacers.add(bv.getTermVariable());
+			}
+		}
+		TermVariable[] vars = replacees.toArray(new TermVariable[replacees
+		                                                         .size()]);
+		Term[] values = replacers.toArray(new Term[replacers.size()]);
+		Term predicate_renamed = m_Script.let(vars, values, p.getFormula());
+		predicate_renamed = (new FormulaUnLet()).unlet(predicate_renamed);
+		
+		// Rename the outvars of the TransFormula of the given CodeBlock cb into TermVariables
+		Map<TermVariable, BoogieVar> outvars_inverse = new HashMap<TermVariable, BoogieVar>();
+		for (BoogieVar bv : tf.getOutVars().keySet()) {
+			outvars_inverse.put(tf.getOutVars().get(bv), bv);
+		}
+		Term TF_formula = tf.getFormula();
+		replacees.clear();
+		replacers.clear();
+		for (TermVariable tv : TF_formula.getFreeVars()) {
+			replacees.add(tv);
+			if(outvars_inverse.keySet().contains(tv)) {
+				replacers.add(outvars_inverse.get(tv).getTermVariable());
+			} else {
+				replacers.add(tv);
+			}
+		}
+		
+		vars = replacees.toArray(new TermVariable[replacees.size()]);
+		values = replacers.toArray(new Term[replacers.size()]);
+		Term TF_formula_outvars_renamed = m_Script.let(vars, values, TF_formula);
+		TF_formula_outvars_renamed = (new FormulaUnLet()).unlet(TF_formula_outvars_renamed);
+		
+		Term predicate_AND_TF_formula = Util.and(m_Script, predicate_renamed, TF_formula_outvars_renamed);
+		TermVariable[] invars = tf.getInVars().keySet().toArray(new TermVariable[tf.getInVars().keySet().size()]); 
+		// Existentially quantify the invars in TransFormula of the given CodeBlock cb, but only if the set of invars
+		// is not empty.
+		Term result = null;
+		if (invars.length > 0) {
+			result = m_Script.quantifier(Script.EXISTS, 
+					invars,	
+					predicate_AND_TF_formula, (Term[][]) null);
+		} else {
+			result = predicate_AND_TF_formula;
+		}
+		TermVarsProc tvp = computeTermVarsProc(result);
+		Term result_as_closed_formula = SmtManager.computeClosedFormula(result, tvp.getVars(), m_Script);
+		return newPredicate(result, tvp.getProcedures(), tvp.getVars(), result_as_closed_formula);
 	}
 	
+	/**
+	 * Computes the weakest precondition of the given predicate p and the
+	 * CodeBlock cb. 
+	 * @param p
+	 * @param cb
+	 * @return
+	 */
 	public IPredicate weakestPrecondition(IPredicate p, CodeBlock cb) {
 		if (cb instanceof Call) {
 			throw new UnsupportedOperationException();
@@ -1654,8 +1729,20 @@ public class SmtManager {
 			throw new UnsupportedOperationException();
 		} else if (cb instanceof InterproceduralSequentialComposition) {
 			throw new UnsupportedOperationException();
+		} else {
+			throw new UnsupportedOperationException("Computation of weakest precondition is not yet implemented.");
 		}
-		return null;
+		/*// Falls das Prädikat p true ist, dann ist wp(true,cb) = true, also return p;
+		if (p == newTruePredicate()) {
+			return p;
+		}
+		// IPredicate temp_wp = newPredicate(null, null, null, null);
+		TransFormula tf = cb.getTransitionFormula();
+		for (BoogieVar v : tf.getOutVars().keySet()) {
+			// Add forall v to temp_wp
+		}
+		// return or(negate(temp_wp), p)
+		return null;*/
 	}
 	
 	
