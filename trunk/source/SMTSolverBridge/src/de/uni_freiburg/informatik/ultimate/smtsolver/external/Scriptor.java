@@ -44,14 +44,6 @@ public class Scriptor extends NoopScript {
 	}
 	
 	@Override
-	public void setLogic(String logic) throws UnsupportedOperationException,
-			SMTLIBException {
-		super.setLogic(logic);
-		m_Executor.input("(set-logic " + logic + ")");
-		m_Executor.parseSuccess();
-	}
-
-	@Override
 	public void setLogic(Logics logic) throws UnsupportedOperationException,
 			SMTLIBException {
 		super.setLogic(logic);
