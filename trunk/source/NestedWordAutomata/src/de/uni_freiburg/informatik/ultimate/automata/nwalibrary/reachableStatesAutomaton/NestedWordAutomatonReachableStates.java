@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.NoSuchElementException;
@@ -1644,15 +1645,84 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 	
 	class LassoExtractor {
 		
-		Map<Stack<StateContainer<LETTER, STATE>>, Stack<StateContainer<LETTER, STATE>>> m_Resticted
-			= new HashMap<Stack<StateContainer<LETTER, STATE>>, Stack<StateContainer<LETTER, STATE>>>();
+		List<Map<Stack<StateContainer<LETTER, STATE>>,Boolean>> m_Resticted = 
+				new ArrayList<Map<Stack<StateContainer<LETTER, STATE>>,Boolean>>();
+		List<Map<Stack<StateContainer<LETTER, STATE>>,Boolean>> m_UnResticted = 
+				new ArrayList<Map<Stack<StateContainer<LETTER, STATE>>,Boolean>>();
 		
-		Map<Stack<StateContainer<LETTER, STATE>>, Stack<StateContainer<LETTER, STATE>>> m_UnResticted
-			= new HashMap<Stack<StateContainer<LETTER, STATE>>, Stack<StateContainer<LETTER, STATE>>>();
+//		Map<Stack<StateContainer<LETTER, STATE>>, Map<Stack<StateContainer<LETTER, STATE>>,Map>> m_Resticted
+//			= new HashMap<Stack<StateContainer<LETTER, STATE>>, Map<Stack<StateContainer<LETTER, STATE>>,Map>>();
+//		
+//		Map<Stack<StateContainer<LETTER, STATE>>, Map<Stack<StateContainer<LETTER, STATE>>,Map>> m_UnResticted
+//			= new HashMap<Stack<StateContainer<LETTER, STATE>>, Map<Stack<StateContainer<LETTER, STATE>>,Map>>();
 		
-//		findPath() {
-//			
-//		}
+		Stack<StateContainer<LETTER, STATE>> m_Goal;
+		
+		boolean m_GoalFound;
+		boolean m_InitFound;
+		
+		
+		void findPath() {
+			int i=0;
+			while (!m_GoalFound || !m_InitFound) {
+				Map<Stack<StateContainer<LETTER, STATE>>, Boolean> currentUnRestricted = m_UnResticted.get(i);
+				Map<Stack<StateContainer<LETTER, STATE>>, Boolean> currentRestricted = m_Resticted.get(i);
+				Map<Stack<StateContainer<LETTER, STATE>>, Boolean> nextUnRestricted = new HashMap<Stack<StateContainer<LETTER, STATE>>, Boolean>();
+				Map<Stack<StateContainer<LETTER, STATE>>, Boolean> nextRestricted = new HashMap<Stack<StateContainer<LETTER, STATE>>, Boolean>();
+				m_UnResticted.add(nextUnRestricted);
+				m_Resticted.add(nextRestricted);
+				boolean currentIsrestricted = true;
+				for (Stack<StateContainer<LETTER, STATE>> currentStack  : currentRestricted.keySet()) {
+					Stack<StateContainer<LETTER, STATE>> nextStackPrototype = new Stack<StateContainer<LETTER, STATE>>();
+					nextStackPrototype.addAll(currentStack);
+					StateContainer<LETTER, STATE> cont = nextStackPrototype.pop();
+					for (IncomingInternalTransition<LETTER, STATE> inTrans : cont.internalPredecessors()) {
+						StateContainer<LETTER, STATE> predCont = m_States.get(inTrans.getPred());
+						if (currentIsrestricted) {
+							STATE downState = nextStackPrototype.peek().getState();
+							if (predCont.getDownStates().get(downState) != ReachProp.FINANC) {
+								continue;
+							}
+						}
+						Stack<StateContainer<LETTER, STATE>> nextStack = new Stack<StateContainer<LETTER, STATE>>();
+						nextStack.addAll(nextStackPrototype);
+						nextStack.push(m_States.get(predCont));
+						if (!currentIsrestricted || isFinal(inTrans.getPred())) {
+							nextUnRestricted.put(nextStack,currentIsrestricted);
+						} else {
+							nextRestricted.put(nextStack, currentIsrestricted);
+						}
+					}
+					if (!currentIsrestricted) {
+						for (IncomingCallTransition<LETTER, STATE> inTrans : cont.callPredecessors()) {
+							if (nextStackPrototype.isEmpty()) {
+								// case of pending call
+								Stack<StateContainer<LETTER, STATE>> nextStack = new Stack<StateContainer<LETTER, STATE>>();
+								nextStack.addAll(nextStackPrototype);
+								nextStack.push(m_States.get(inTrans.getPred()));
+							} else {
+								if (nextStackPrototype.peek().getState().equals(inTrans.getPred())) {
+									// call predecessor matches element on stack
+									Stack<StateContainer<LETTER, STATE>> nextStack = new Stack<StateContainer<LETTER, STATE>>();
+									nextStack.addAll(nextStackPrototype);
+									nextStack.pop();
+									nextStack.push(m_States.get(inTrans.getPred()));
+								} else {
+									//do nothing
+								}
+							}
+						}
+					}
+					for (IncomingReturnTransition<LETTER, STATE> inTrans : cont.returnPredecessors()) {
+						Stack<StateContainer<LETTER, STATE>> nextStack = new Stack<StateContainer<LETTER, STATE>>();
+						nextStack.addAll(nextStackPrototype);
+						nextStack.push(m_States.get(inTrans.getHierPred()));
+						nextStack.push(m_States.get(inTrans.getLinPred()));
+					}
+					
+				}
+			}
+		}
 		
 	}
 	
