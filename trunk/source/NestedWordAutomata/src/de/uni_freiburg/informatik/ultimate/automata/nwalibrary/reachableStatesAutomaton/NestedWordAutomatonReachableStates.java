@@ -2,6 +2,7 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesA
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -1722,6 +1723,62 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 					
 				}
 			}
+		}
+		
+		
+		class StackOfFlaggedStates {
+			private final StateContainer<LETTER, STATE> m_TopmostState;
+			private final boolean m_TopmostFlag;
+			private final StateContainer<LETTER, STATE>[] m_StateStack;
+			boolean[] m_FlagStack;
+			
+			public StackOfFlaggedStates(StackOfFlaggedStates sofs, 
+					IncomingInternalTransition<LETTER, STATE> inTrans, boolean flag) {
+				m_StateStack = sofs.m_StateStack;
+				m_FlagStack = sofs.m_FlagStack;
+				m_TopmostState = m_States.get(inTrans.getPred());
+				m_TopmostFlag = flag;
+			}
+			
+			public StackOfFlaggedStates(StackOfFlaggedStates sofs, 
+					IncomingCallTransition<LETTER, STATE> inTrans, boolean flag) {
+				if (sofs.m_StateStack.length == 0) {
+					//call must be pending call
+					m_StateStack = sofs.m_StateStack;
+					m_FlagStack = sofs.m_FlagStack;
+					m_TopmostState = m_States.get(inTrans.getPred());
+					m_TopmostFlag = flag;
+					
+				} else {
+					m_StateStack = Arrays.copyOf(sofs.m_StateStack, sofs.m_StateStack.length-1); 
+					m_FlagStack = Arrays.copyOf(sofs.m_FlagStack, sofs.m_FlagStack.length-1);
+					m_TopmostState = sofs.m_StateStack[m_StateStack.length-1];
+					m_TopmostFlag = sofs.m_FlagStack[m_FlagStack.length-1];
+					assert m_TopmostState == m_States.get(inTrans.getPred());
+				}
+			}
+			
+			public StackOfFlaggedStates(StackOfFlaggedStates sofs, 
+					IncomingReturnTransition<LETTER, STATE> inTrans, boolean hierFlag, boolean linFlag) {
+					m_StateStack = Arrays.copyOf(sofs.m_StateStack, sofs.m_StateStack.length+1); 
+					m_FlagStack = Arrays.copyOf(sofs.m_FlagStack, sofs.m_FlagStack.length+1);
+					m_StateStack[m_StateStack.length-1] = m_States.get(inTrans.getHierPred());
+					m_FlagStack[m_StateStack.length-1] = hierFlag;
+					m_TopmostState = m_States.get(inTrans.getHierPred());
+					m_TopmostFlag = linFlag;
+			}
+
+			
+			public StackOfFlaggedStates(StackOfFlaggedStates sofs, 
+					OutgoingInternalTransition<LETTER, STATE> outTrans, boolean flag) {
+				m_StateStack = sofs.m_StateStack;
+				m_FlagStack = sofs.m_FlagStack;
+				m_TopmostState = m_States.get(outTrans.getSucc());
+				m_TopmostFlag = flag;
+			}
+			
+			
+			
 		}
 		
 	}
