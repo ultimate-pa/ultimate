@@ -37,6 +37,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.SummaryReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.TransitionConsitenceCheck;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.IOpWithDelayedDeadEndRemoval.UpDownEntry;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.NestedWordAutomatonReachableStates.LassoExtractor.StackOfFlaggedStates;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 
 public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INestedWordAutomatonOldApi<LETTER,STATE>, INestedWordAutomaton<LETTER,STATE>, IDoubleDeckerAutomaton<LETTER, STATE> {
@@ -1646,82 +1647,72 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 	
 	class LassoExtractor {
 		
-		List<Map<Stack<StateContainer<LETTER, STATE>>,Boolean>> m_Resticted = 
-				new ArrayList<Map<Stack<StateContainer<LETTER, STATE>>,Boolean>>();
-		List<Map<Stack<StateContainer<LETTER, STATE>>,Boolean>> m_UnResticted = 
-				new ArrayList<Map<Stack<StateContainer<LETTER, STATE>>,Boolean>>();
+		List<Set<StackOfFlaggedStates>> m_Iterations = new ArrayList<Set<StackOfFlaggedStates>>();
 		
-//		Map<Stack<StateContainer<LETTER, STATE>>, Map<Stack<StateContainer<LETTER, STATE>>,Map>> m_Resticted
-//			= new HashMap<Stack<StateContainer<LETTER, STATE>>, Map<Stack<StateContainer<LETTER, STATE>>,Map>>();
-//		
-//		Map<Stack<StateContainer<LETTER, STATE>>, Map<Stack<StateContainer<LETTER, STATE>>,Map>> m_UnResticted
-//			= new HashMap<Stack<StateContainer<LETTER, STATE>>, Map<Stack<StateContainer<LETTER, STATE>>,Map>>();
 		
-		Stack<StateContainer<LETTER, STATE>> m_Goal;
+		StateContainer<LETTER, STATE> m_Goal;
+		StateContainer<LETTER, STATE> m_FirstFoundInitialState;
 		
-		boolean m_GoalFound;
-		boolean m_InitFound;
+		int m_GoalFoundIteration = -1;
+		int m_InitFoundIteration = -1;
 		
 		
 		void findPath() {
 			int i=0;
-			while (!m_GoalFound || !m_InitFound) {
-				Map<Stack<StateContainer<LETTER, STATE>>, Boolean> currentUnRestricted = m_UnResticted.get(i);
-				Map<Stack<StateContainer<LETTER, STATE>>, Boolean> currentRestricted = m_Resticted.get(i);
-				Map<Stack<StateContainer<LETTER, STATE>>, Boolean> nextUnRestricted = new HashMap<Stack<StateContainer<LETTER, STATE>>, Boolean>();
-				Map<Stack<StateContainer<LETTER, STATE>>, Boolean> nextRestricted = new HashMap<Stack<StateContainer<LETTER, STATE>>, Boolean>();
-				m_UnResticted.add(nextUnRestricted);
-				m_Resticted.add(nextRestricted);
-				boolean currentIsrestricted = true;
-				for (Stack<StateContainer<LETTER, STATE>> currentStack  : currentRestricted.keySet()) {
-					Stack<StateContainer<LETTER, STATE>> nextStackPrototype = new Stack<StateContainer<LETTER, STATE>>();
-					nextStackPrototype.addAll(currentStack);
-					StateContainer<LETTER, STATE> cont = nextStackPrototype.pop();
+			while (m_GoalFoundIteration == -1 || m_InitFoundIteration == -1) {
+				Set<StackOfFlaggedStates> currentStacks = m_Iterations.get(i);
+				Set<StackOfFlaggedStates> preceedingStacks = new HashSet<StackOfFlaggedStates>();
+				for (StackOfFlaggedStates stack  : currentStacks) {
+					StateContainer<LETTER, STATE> cont = stack.getTopmostState();
 					for (IncomingInternalTransition<LETTER, STATE> inTrans : cont.internalPredecessors()) {
 						StateContainer<LETTER, STATE> predCont = m_States.get(inTrans.getPred());
-						if (currentIsrestricted) {
-							STATE downState = nextStackPrototype.peek().getState();
+						checkIfGoalOrInitReached(i, stack, predCont);
+						boolean nextStateIsRestricted = stack.getTopmostFlag() && m_finalStates.contains(inTrans.getPred());
+						if (nextStateIsRestricted) {
+							STATE downState = stack.getSecondTopmostState().getState();
 							if (predCont.getDownStates().get(downState) != ReachProp.FINANC) {
 								continue;
 							}
 						}
-						Stack<StateContainer<LETTER, STATE>> nextStack = new Stack<StateContainer<LETTER, STATE>>();
-						nextStack.addAll(nextStackPrototype);
-						nextStack.push(m_States.get(predCont));
-						if (!currentIsrestricted || isFinal(inTrans.getPred())) {
-							nextUnRestricted.put(nextStack,currentIsrestricted);
-						} else {
-							nextRestricted.put(nextStack, currentIsrestricted);
-						}
+						StackOfFlaggedStates predStack = new StackOfFlaggedStates(stack, inTrans, nextStateIsRestricted);
+						preceedingStacks.add(predStack);
 					}
-					if (!currentIsrestricted) {
+					if (!stack.getTopmostFlag()) {
+						// if current state has obligations there can be no call
 						for (IncomingCallTransition<LETTER, STATE> inTrans : cont.callPredecessors()) {
-							if (nextStackPrototype.isEmpty()) {
-								// case of pending call
-								Stack<StateContainer<LETTER, STATE>> nextStack = new Stack<StateContainer<LETTER, STATE>>();
-								nextStack.addAll(nextStackPrototype);
-								nextStack.push(m_States.get(inTrans.getPred()));
-							} else {
-								if (nextStackPrototype.peek().getState().equals(inTrans.getPred())) {
-									// call predecessor matches element on stack
-									Stack<StateContainer<LETTER, STATE>> nextStack = new Stack<StateContainer<LETTER, STATE>>();
-									nextStack.addAll(nextStackPrototype);
-									nextStack.pop();
-									nextStack.push(m_States.get(inTrans.getPred()));
-								} else {
-									//do nothing
-								}
-							}
+							StateContainer<LETTER, STATE> predCont = m_States.get(inTrans.getPred());
+							checkIfGoalOrInitReached(i, stack, predCont);
+							StackOfFlaggedStates predStack = new StackOfFlaggedStates(stack, inTrans);
+							preceedingStacks.add(predStack);
 						}
 					}
-					for (IncomingReturnTransition<LETTER, STATE> inTrans : cont.returnPredecessors()) {
-						Stack<StateContainer<LETTER, STATE>> nextStack = new Stack<StateContainer<LETTER, STATE>>();
-						nextStack.addAll(nextStackPrototype);
-						nextStack.push(m_States.get(inTrans.getHierPred()));
-						nextStack.push(m_States.get(inTrans.getLinPred()));
-					}
+//					for (IncomingReturnTransition<LETTER, STATE> inTrans : cont.returnPredecessors()) {
+//						Stack<StateContainer<LETTER, STATE>> nextStack = new Stack<StateContainer<LETTER, STATE>>();
+//						nextStack.addAll(nextStackPrototype);
+//						nextStack.push(m_States.get(inTrans.getHierPred()));
+//						nextStack.push(m_States.get(inTrans.getLinPred()));
+//					}
 					
 				}
+			}
+		}
+
+
+		/**
+		 * @param i
+		 * @param stack
+		 * @param inTrans
+		 * @param predCont
+		 */
+		private void checkIfGoalOrInitReached(int i,
+				StackOfFlaggedStates stack,
+				StateContainer<LETTER, STATE> predCont) {
+			if (predCont == m_Goal && stack.hasOnlyTopmostElement() && stack.getTopmostFlag() == false) {
+				m_GoalFoundIteration = i;
+			}
+			if (m_initialStates.contains(predCont.getState()) && stack.hasOnlyTopmostElement()) {
+				m_InitFoundIteration = i;
+				m_FirstFoundInitialState = predCont;
 			}
 		}
 		
@@ -1732,6 +1723,26 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 			private final StateContainer<LETTER, STATE>[] m_StateStack;
 			boolean[] m_FlagStack;
 			
+			/**
+			 * Returns true if there is only one element on the stack, i.e., if 
+			 * the topmost element is the only element on the stack.
+			 */
+			public boolean hasOnlyTopmostElement() {
+				return m_StateStack.length == 0;
+			}
+			
+			public StateContainer<LETTER, STATE> getSecondTopmostState() {
+				return m_StateStack[m_StateStack.length-1];
+			}
+
+			public StateContainer<LETTER, STATE> getTopmostState() {
+				return m_TopmostState;
+			}
+
+			public boolean getTopmostFlag() {
+				return m_TopmostFlag;
+			}
+
 			public StackOfFlaggedStates(StackOfFlaggedStates sofs, 
 					IncomingInternalTransition<LETTER, STATE> inTrans, boolean flag) {
 				m_StateStack = sofs.m_StateStack;
@@ -1741,13 +1752,14 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 			}
 			
 			public StackOfFlaggedStates(StackOfFlaggedStates sofs, 
-					IncomingCallTransition<LETTER, STATE> inTrans, boolean flag) {
+					IncomingCallTransition<LETTER, STATE> inTrans) {
 				if (sofs.m_StateStack.length == 0) {
-					//call must be pending call
+					// call must be pending call - in this case there may be no
+					// obligations
 					m_StateStack = sofs.m_StateStack;
 					m_FlagStack = sofs.m_FlagStack;
 					m_TopmostState = m_States.get(inTrans.getPred());
-					m_TopmostFlag = flag;
+					m_TopmostFlag = false;
 					
 				} else {
 					m_StateStack = Arrays.copyOf(sofs.m_StateStack, sofs.m_StateStack.length-1); 
@@ -1777,9 +1789,91 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 				m_TopmostFlag = flag;
 			}
 			
+			public StackOfFlaggedStates(StackOfFlaggedStates sofs, 
+					OutgoingCallTransition<LETTER, STATE> outTrans, boolean flag, boolean isPending) {
+				if (isPending) {
+					m_StateStack = sofs.m_StateStack;
+					m_FlagStack = sofs.m_FlagStack;
+					m_TopmostState = m_States.get(outTrans.getSucc());
+					m_TopmostFlag = flag;
+				} else {
+					m_StateStack = Arrays.copyOf(sofs.m_StateStack, sofs.m_StateStack.length+1); 
+					m_FlagStack = Arrays.copyOf(sofs.m_FlagStack, sofs.m_FlagStack.length+1);
+					m_StateStack[m_StateStack.length-1] = sofs.m_TopmostState;
+					m_FlagStack[m_StateStack.length-1] = sofs.m_TopmostFlag;
+					m_TopmostState = m_States.get(outTrans.getSucc());
+					m_TopmostFlag = flag;
+				}
+			}
+			
+			public StackOfFlaggedStates(StackOfFlaggedStates sofs, 
+					OutgoingReturnTransition<LETTER, STATE> outTrans) {
+					m_StateStack = Arrays.copyOf(sofs.m_StateStack, sofs.m_StateStack.length-1); 
+					m_FlagStack = Arrays.copyOf(sofs.m_FlagStack, sofs.m_FlagStack.length-1);
+					m_TopmostState = m_StateStack[m_StateStack.length-1];
+					m_TopmostFlag = m_FlagStack[m_StateStack.length-1];
+			}
+
+			@Override
+			public int hashCode() {
+				final int prime = 31;
+				int result = 1;
+				result = prime * result + getOuterType().hashCode();
+				result = prime * result + Arrays.hashCode(m_FlagStack);
+				result = prime * result + Arrays.hashCode(m_StateStack);
+				result = prime * result + (m_TopmostFlag ? 1231 : 1237);
+				result = prime
+						* result
+						+ ((m_TopmostState == null) ? 0 : m_TopmostState
+								.hashCode());
+				return result;
+			}
+
+			@Override
+			public boolean equals(Object obj) {
+				if (this == obj)
+					return true;
+				if (obj == null)
+					return false;
+				if (getClass() != obj.getClass())
+					return false;
+				StackOfFlaggedStates other = (StackOfFlaggedStates) obj;
+				if (!getOuterType().equals(other.getOuterType()))
+					return false;
+				if (!Arrays.equals(m_FlagStack, other.m_FlagStack))
+					return false;
+				if (!Arrays.equals(m_StateStack, other.m_StateStack))
+					return false;
+				if (m_TopmostFlag != other.m_TopmostFlag)
+					return false;
+				if (m_TopmostState == null) {
+					if (other.m_TopmostState != null)
+						return false;
+				} else if (!m_TopmostState.equals(other.m_TopmostState))
+					return false;
+				return true;
+			}
+
+			private LassoExtractor getOuterType() {
+				return LassoExtractor.this;
+			}
+
+			@Override
+			public String toString() {
+				StringBuilder sb = new StringBuilder();
+				for (int i=0; i<m_StateStack.length; i++) {
+					sb.append("(" + m_StateStack[i].getState() + "," + m_FlagStack[i] + ")  ");
+				}
+				sb.append("(" + m_TopmostState.getState() + "," + m_TopmostFlag + ")");
+				return sb.toString();
+			}
 			
 			
 		}
+		
+		
+		
+		
 		
 	}
 	
