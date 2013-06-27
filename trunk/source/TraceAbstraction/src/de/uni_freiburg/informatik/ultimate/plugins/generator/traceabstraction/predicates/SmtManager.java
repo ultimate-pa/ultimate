@@ -1656,7 +1656,7 @@ public class SmtManager {
 			return p;
 		}
 		TransFormula tf = cb.getTransitionFormula();	
-		// Rename the TermVariables of the given Predicate p into invars
+		// 1. Rename the TermVariables of the given Predicate p into invars
 		// of the TransFormula of the given Codeblock cb.
 		ArrayList<TermVariable> replacees = new ArrayList<TermVariable>();
 		ArrayList<Term> replacers = new ArrayList<Term>();
@@ -1676,15 +1676,15 @@ public class SmtManager {
 		Term predicate_renamed = m_Script.let(vars, values, p.getFormula());
 		predicate_renamed = (new FormulaUnLet()).unlet(predicate_renamed);
 		
-		// Rename the outvars of the TransFormula of the given CodeBlock cb into TermVariables
+		// 2. Rename the outvars of the TransFormula of the given CodeBlock cb into TermVariables
 		Map<TermVariable, BoogieVar> outvars_inverse = new HashMap<TermVariable, BoogieVar>();
 		for (BoogieVar bv : tf.getOutVars().keySet()) {
 			outvars_inverse.put(tf.getOutVars().get(bv), bv);
 		}
-		Term TF_formula = tf.getFormula();
+		Term tf_term = tf.getFormula();
 		replacees.clear();
 		replacers.clear();
-		for (TermVariable tv : TF_formula.getFreeVars()) {
+		for (TermVariable tv : tf_term.getFreeVars()) {
 			replacees.add(tv);
 			if(outvars_inverse.keySet().contains(tv)) {
 				replacers.add(outvars_inverse.get(tv).getTermVariable());
@@ -1695,22 +1695,25 @@ public class SmtManager {
 		
 		vars = replacees.toArray(new TermVariable[replacees.size()]);
 		values = replacers.toArray(new Term[replacers.size()]);
-		Term TF_formula_outvars_renamed = m_Script.let(vars, values, TF_formula);
-		TF_formula_outvars_renamed = (new FormulaUnLet()).unlet(TF_formula_outvars_renamed);
+		Term tf_term_outvars_renamed = m_Script.let(vars, values, tf_term);
+		tf_term_outvars_renamed = (new FormulaUnLet()).unlet(tf_term_outvars_renamed);
 		
-		Term predicate_AND_TF_formula = Util.and(m_Script, predicate_renamed, TF_formula_outvars_renamed);
+		// 3. Connect the renamed predicate and the renamed TransFormula by an logical and.
+		Term predicate_AND_tf_term = Util.and(m_Script, predicate_renamed, tf_term_outvars_renamed);
 		TermVariable[] invars = tf.getInVars().keySet().toArray(new TermVariable[tf.getInVars().keySet().size()]); 
-		// Existentially quantify the invars in TransFormula of the given CodeBlock cb, but only if the set of invars
+		// 4. Existentially quantify the invars in TransFormula of the given CodeBlock cb, but only if the set of invars
 		// is not empty.
 		Term result = null;
 		if (invars.length > 0) {
 			result = m_Script.quantifier(Script.EXISTS, 
 					invars,	
-					predicate_AND_TF_formula, (Term[][]) null);
+					predicate_AND_tf_term, (Term[][]) null);
 		} else {
-			result = predicate_AND_TF_formula;
+			result = predicate_AND_tf_term;
 		}
+		// Compute the set of BoogieVars, the procedures and the term
 		TermVarsProc tvp = computeTermVarsProc(result);
+		// Compute a closed formula version of result, it is needed for newPredicate.
 		Term result_as_closed_formula = SmtManager.computeClosedFormula(result, tvp.getVars(), m_Script);
 		return newPredicate(result, tvp.getProcedures(), tvp.getVars(), result_as_closed_formula);
 	}
@@ -1729,20 +1732,80 @@ public class SmtManager {
 			throw new UnsupportedOperationException();
 		} else if (cb instanceof InterproceduralSequentialComposition) {
 			throw new UnsupportedOperationException();
-		} else {
-			throw new UnsupportedOperationException("Computation of weakest precondition is not yet implemented.");
 		}
-		/*// Falls das Prädikat p true ist, dann ist wp(true,cb) = true, also return p;
-		if (p == newTruePredicate()) {
+		// If the given predicate p is true, then return true, since wp(true, st) = true for every statement st.
+		if (p == True()) {
 			return p;
 		}
-		// IPredicate temp_wp = newPredicate(null, null, null, null);
-		TransFormula tf = cb.getTransitionFormula();
-		for (BoogieVar v : tf.getOutVars().keySet()) {
-			// Add forall v to temp_wp
+		
+		TransFormula tf = cb.getTransitionFormula();	
+		// 1. Rename the TermVariables of the given Predicate p into invars
+		// of the TransFormula of the given Codeblock cb.
+		ArrayList<TermVariable> replacees = new ArrayList<TermVariable>();
+		ArrayList<Term> replacers = new ArrayList<Term>();
+		for (BoogieVar bv : p.getVars()) {
+			replacees.add(bv.getTermVariable());
+			// If the var from the predicate appears in the invars of TransFormula,
+			// then rename it, otherwise leave it unchanged.
+			if (tf.getInVars().containsKey(bv)) {
+				replacers.add(tf.getInVars().get(bv));
+			} else {
+				replacers.add(bv.getTermVariable());
+			}
 		}
-		// return or(negate(temp_wp), p)
-		return null;*/
+		TermVariable[] vars = replacees.toArray(new TermVariable[replacees
+		                                                         .size()]);
+		Term[] values = replacers.toArray(new Term[replacers.size()]);
+		Term predicate_renamed = m_Script.let(vars, values, p.getFormula());
+		predicate_renamed = (new FormulaUnLet()).unlet(predicate_renamed);
+
+		// 2. Rename the outvars of the TransFormula of the given CodeBlock cb into TermVariables
+		Map<TermVariable, BoogieVar> outvars_inverse = new HashMap<TermVariable, BoogieVar>();
+		for (BoogieVar bv : tf.getOutVars().keySet()) {
+			outvars_inverse.put(tf.getOutVars().get(bv), bv);
+		}
+		Term tf_term = tf.getFormula();
+		replacees.clear();
+		replacers.clear();
+		for (TermVariable tv : tf_term.getFreeVars()) {
+			replacees.add(tv);
+			if(outvars_inverse.keySet().contains(tv)) {
+				replacers.add(outvars_inverse.get(tv).getTermVariable());
+			} else {
+				replacers.add(tv);
+			}
+		}
+
+		vars = replacees.toArray(new TermVariable[replacees.size()]);
+		values = replacers.toArray(new Term[replacers.size()]);
+		Term tf_term_outvars_renamed = m_Script.let(vars, values, tf_term);
+		tf_term_outvars_renamed = (new FormulaUnLet()).unlet(tf_term_outvars_renamed);
+
+		// 3. Connect the renamed predicate and the renamed TransFormula by an logical implication.
+		// The implication is already simplified into "not" and "or".
+		Term NOT_tf_term_OR_predicate = Util.or(m_Script, Util.not(m_Script, tf_term_outvars_renamed), predicate_renamed);
+		TermVariable[] invars = new TermVariable[tf.getInVars().keySet().size()];
+		int i = 0;
+		for (BoogieVar bv : tf.getInVars().keySet()) {
+			invars[i] = tf.getInVars().get(bv);
+			i++;
+		}
+		 
+		// 4. Universally quantify the invars in TransFormula of the given CodeBlock cb, but only if the set of invars
+		// is not empty.
+		Term result = null;
+		if (invars.length > 0) {
+			result = m_Script.quantifier(Script.FORALL, 
+					invars,	
+					NOT_tf_term_OR_predicate, (Term[][]) null);
+		} else {
+			result = NOT_tf_term_OR_predicate;
+		}
+		// Compute the set of BoogieVars, the procedures and the term
+		TermVarsProc tvp = computeTermVarsProc(result);
+		// Compute a closed formula version of result, it is needed for newPredicate.
+		Term result_as_closed_formula = SmtManager.computeClosedFormula(result, tvp.getVars(), m_Script);
+		return newPredicate(result, tvp.getProcedures(), tvp.getVars(), result_as_closed_formula);
 	}
 	
 	

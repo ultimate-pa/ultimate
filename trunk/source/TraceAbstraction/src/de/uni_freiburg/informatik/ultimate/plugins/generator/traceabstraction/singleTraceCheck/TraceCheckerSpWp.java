@@ -50,19 +50,19 @@ public class TraceCheckerSpWp extends TraceChecker {
 					m_InterpolantsSp[i-1], trace.getSymbol(i));
 		}
 		
-		/*
+		
 		m_InterpolantsWp[m_InterpolantsWp.length-1] = m_SmtManager.weakestPrecondition(
 				tracePostcondition, trace.getSymbol(m_InterpolantsWp.length));
 		
 		for (int i=m_InterpolantsWp.length-2; i>=0; i--) {
 			m_InterpolantsWp[i] = m_SmtManager.weakestPrecondition(
 					m_InterpolantsSp[i+1], trace.getSymbol(i));
-		}*/
+		}
 		
 
 		
 		checkInterpolantsCorrect(m_InterpolantsSp, trace, tracePrecondition, tracePostcondition);
-		// checkInterpolantsCorrect(m_InterpolantsWp, trace, tracePrecondition, tracePostcondition);
+		checkInterpolantsCorrect(m_InterpolantsWp, trace, tracePrecondition, tracePostcondition);
 		
 		return m_InterpolantsSp;
 	}
