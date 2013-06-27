@@ -11,7 +11,6 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.Stack;
@@ -37,7 +36,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.SummaryReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.TransitionConsitenceCheck;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.IOpWithDelayedDeadEndRemoval.UpDownEntry;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.NestedWordAutomatonReachableStates.LassoExtractor.StackOfFlaggedStates;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 
 public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INestedWordAutomatonOldApi<LETTER,STATE>, INestedWordAutomaton<LETTER,STATE>, IDoubleDeckerAutomaton<LETTER, STATE> {
@@ -1462,6 +1460,14 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 	            		nonLiveStartingSet.addAll(scc.getAllStates());
 	            		acceptingBalls++;
 	            	} 
+	            	for (StateContainer<LETTER, STATE> fin  : scc.getAcceptingStates()) {
+	            		new LassoExtractor(fin);
+	            	}
+	            	for (StateContainer<LETTER, STATE> sumPred : scc.getAcceptingSumPred()) {
+	            		for (StateContainer<LETTER, STATE> sumSucc  : m_AcceptingSummaries.get(sumPred)) {
+	            			new LassoExtractor(sumPred, sumSucc);
+	            		}
+	            	}
 	            }
 	            s_Logger.debug("Automaton consists of " + m_Balls.size() + 
 	            		" InCaSumBalls and " + m_NumberOfNonBallSCCs + 
@@ -1650,18 +1656,51 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 		List<Set<StackOfFlaggedStates>> m_Iterations = new ArrayList<Set<StackOfFlaggedStates>>();
 		
 		
-		StateContainer<LETTER, STATE> m_Goal;
+		final StateContainer<LETTER, STATE> m_Goal;
 		StateContainer<LETTER, STATE> m_FirstFoundInitialState;
 		
 		int m_GoalFoundIteration = -1;
 		int m_InitFoundIteration = -1;
 		
+		public LassoExtractor(StateContainer<LETTER, STATE> goal) {
+			m_Goal = goal;
+			addInitialStack(goal);
+			findPath(0);
+			s_Logger.debug("Stem length: " + m_InitFoundIteration);
+			s_Logger.debug("Loop length: " + m_GoalFoundIteration);
+		}
+
+		private StackOfFlaggedStates addInitialStack(StateContainer<LETTER, STATE> goal) {
+			StackOfFlaggedStates initialStack = new StackOfFlaggedStates(goal, false);
+			Set<StackOfFlaggedStates> initialStacks = new HashSet<StackOfFlaggedStates>();
+			initialStacks.add(initialStack);
+			m_Iterations.add(initialStacks);
+			return initialStack;
+		}
 		
-		void findPath() {
-			int i=0;
+		public LassoExtractor(StateContainer<LETTER, STATE> goal, 
+							StateContainer<LETTER, STATE> acceptingSumPred) {
+			m_Goal = goal;
+			StackOfFlaggedStates initialStack = addInitialStack(goal);
+			Set<StackOfFlaggedStates> itOneStacks = new HashSet<StackOfFlaggedStates>();
+			for (IncomingReturnTransition<LETTER, STATE> inTrans : goal.returnPredecessors()) {
+				if (inTrans.getHierPred().equals(acceptingSumPred.getState())) {
+					StackOfFlaggedStates predStack = new StackOfFlaggedStates(initialStack, inTrans, false, true);
+					itOneStacks.add(predStack);
+				}
+			}
+			assert itOneStacks.size() > 0;
+			m_Iterations.add(itOneStacks);
+			findPath(1);
+		}
+		
+		
+		void findPath(final int startingIteration) {
+			int i = startingIteration;
 			while (m_GoalFoundIteration == -1 || m_InitFoundIteration == -1) {
 				Set<StackOfFlaggedStates> currentStacks = m_Iterations.get(i);
 				Set<StackOfFlaggedStates> preceedingStacks = new HashSet<StackOfFlaggedStates>();
+				m_Iterations.add(preceedingStacks);
 				for (StackOfFlaggedStates stack  : currentStacks) {
 					StateContainer<LETTER, STATE> cont = stack.getTopmostState();
 					for (IncomingInternalTransition<LETTER, STATE> inTrans : cont.internalPredecessors()) {
@@ -1686,14 +1725,36 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 							preceedingStacks.add(predStack);
 						}
 					}
-//					for (IncomingReturnTransition<LETTER, STATE> inTrans : cont.returnPredecessors()) {
-//						Stack<StateContainer<LETTER, STATE>> nextStack = new Stack<StateContainer<LETTER, STATE>>();
-//						nextStack.addAll(nextStackPrototype);
-//						nextStack.push(m_States.get(inTrans.getHierPred()));
-//						nextStack.push(m_States.get(inTrans.getLinPred()));
-//					}
-					
+					for (IncomingReturnTransition<LETTER, STATE> inTrans : cont.returnPredecessors()) {
+						// note that goal or init can never be reached 
+						// (backwards) with empty stack directly after return.
+						int oldPreceedingStackSize = preceedingStacks.size();
+						if (stack.getTopmostFlag()) {
+							if (m_finalStates.contains(inTrans.getHierPred()) || m_finalStates.contains(inTrans.getLinPred())) {
+								StackOfFlaggedStates predStack = new StackOfFlaggedStates(stack, inTrans, false, false);
+								preceedingStacks.add(predStack);
+							} else {
+								STATE currentDownState = stack.getSecondTopmostState().getState();
+								StateContainer<LETTER, STATE> hierCont = m_States.get(inTrans.getHierPred());
+								StateContainer<LETTER, STATE> linCont = m_States.get(inTrans.getLinPred());
+								if (hierCont.getDownStates().get(currentDownState) == ReachProp.FINANC) {
+									StackOfFlaggedStates predStack = new StackOfFlaggedStates(stack, inTrans, true, false);
+									preceedingStacks.add(predStack);
+								}
+								if (linCont.getDownStates().get(hierCont.getState()) == ReachProp.FINANC) {
+									StackOfFlaggedStates predStack = new StackOfFlaggedStates(stack, inTrans, false, true);
+									preceedingStacks.add(predStack);
+								}
+							}
+						} else {
+							StackOfFlaggedStates predStack = new StackOfFlaggedStates(stack, inTrans, false, false);
+							preceedingStacks.add(predStack);
+						}
+						assert preceedingStacks.size() > oldPreceedingStackSize;
+						assert oldPreceedingStackSize + 2 >= preceedingStacks.size();
+					}
 				}
+				i++;
 			}
 		}
 
@@ -1741,6 +1802,14 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 
 			public boolean getTopmostFlag() {
 				return m_TopmostFlag;
+			}
+			
+			@SuppressWarnings("unchecked")
+			public StackOfFlaggedStates(StateContainer<LETTER, STATE> cont, boolean flag) {
+				m_StateStack = new StateContainer[0];
+				m_FlagStack = new boolean[0];
+				m_TopmostState = cont;
+				m_TopmostFlag = flag;
 			}
 
 			public StackOfFlaggedStates(StackOfFlaggedStates sofs, 
