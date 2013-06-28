@@ -1700,7 +1700,14 @@ public class SmtManager {
 		
 		// 3. Connect the renamed predicate and the renamed TransFormula by an logical and.
 		Term predicate_AND_tf_term = Util.and(m_Script, predicate_renamed, tf_term_outvars_renamed);
-		TermVariable[] invars = tf.getInVars().keySet().toArray(new TermVariable[tf.getInVars().keySet().size()]); 
+		TermVariable[] invars = new TermVariable[tf.getInVars().keySet().size()];
+		{
+			int i = 0;
+			for (BoogieVar bv : tf.getInVars().keySet()) {
+				invars[i] = tf.getInVars().get(bv);
+				i++;
+			}
+		}
 		// 4. Existentially quantify the invars in TransFormula of the given CodeBlock cb, but only if the set of invars
 		// is not empty.
 		Term result = null;
@@ -1785,11 +1792,14 @@ public class SmtManager {
 		// The implication is already simplified into "not" and "or".
 		Term NOT_tf_term_OR_predicate = Util.or(m_Script, Util.not(m_Script, tf_term_outvars_renamed), predicate_renamed);
 		TermVariable[] invars = new TermVariable[tf.getInVars().keySet().size()];
-		int i = 0;
-		for (BoogieVar bv : tf.getInVars().keySet()) {
-			invars[i] = tf.getInVars().get(bv);
-			i++;
+		{
+			int i = 0;
+			for (BoogieVar bv : tf.getInVars().keySet()) {
+				invars[i] = tf.getInVars().get(bv);
+				i++;
+			}
 		}
+		
 		 
 		// 4. Universally quantify the invars in TransFormula of the given CodeBlock cb, but only if the set of invars
 		// is not empty.
