@@ -1715,59 +1715,69 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 				Set<StackOfFlaggedStates> preceedingStacks = new HashSet<StackOfFlaggedStates>();
 				m_Iterations.add(preceedingStacks);
 				for (StackOfFlaggedStates stack  : currentStacks) {
-					StateContainer<LETTER, STATE> cont = stack.getTopmostState();
-					for (IncomingInternalTransition<LETTER, STATE> inTrans : cont.internalPredecessors()) {
-						StateContainer<LETTER, STATE> predCont = m_States.get(inTrans.getPred());
-						checkIfGoalOrInitReached(i, stack, predCont);
-						boolean nextStateIsRestricted = stack.getTopmostFlag() && m_finalStates.contains(inTrans.getPred());
-						if (nextStateIsRestricted) {
-							STATE downState = stack.getSecondTopmostState().getState();
-							if (predCont.getDownStates().get(downState) != ReachProp.FINANC) {
-								continue;
-							}
-						}
-						StackOfFlaggedStates predStack = new StackOfFlaggedStates(stack, inTrans, nextStateIsRestricted);
-						preceedingStacks.add(predStack);
-					}
-					if (!stack.getTopmostFlag()) {
-						// if current state has obligations there can be no call
-						for (IncomingCallTransition<LETTER, STATE> inTrans : cont.callPredecessors()) {
-							StateContainer<LETTER, STATE> predCont = m_States.get(inTrans.getPred());
-							checkIfGoalOrInitReached(i, stack, predCont);
-							StackOfFlaggedStates predStack = new StackOfFlaggedStates(stack, inTrans);
-							preceedingStacks.add(predStack);
-						}
-					}
-					for (IncomingReturnTransition<LETTER, STATE> inTrans : cont.returnPredecessors()) {
-						// note that goal or init can never be reached 
-						// (backwards) with empty stack directly after return.
-						int oldPreceedingStackSize = preceedingStacks.size();
-						if (stack.getTopmostFlag()) {
-							if (m_finalStates.contains(inTrans.getHierPred()) || m_finalStates.contains(inTrans.getLinPred())) {
-								StackOfFlaggedStates predStack = new StackOfFlaggedStates(stack, inTrans, false, false);
-								preceedingStacks.add(predStack);
-							} else {
-								STATE currentDownState = stack.getSecondTopmostState().getState();
-								StateContainer<LETTER, STATE> hierCont = m_States.get(inTrans.getHierPred());
-								StateContainer<LETTER, STATE> linCont = m_States.get(inTrans.getLinPred());
-								if (hierCont.getDownStates().get(currentDownState) == ReachProp.FINANC) {
-									StackOfFlaggedStates predStack = new StackOfFlaggedStates(stack, inTrans, true, false);
-									preceedingStacks.add(predStack);
-								}
-								if (linCont.getDownStates().get(hierCont.getState()) == ReachProp.FINANC) {
-									StackOfFlaggedStates predStack = new StackOfFlaggedStates(stack, inTrans, false, true);
-									preceedingStacks.add(predStack);
-								}
-							}
-						} else {
-							StackOfFlaggedStates predStack = new StackOfFlaggedStates(stack, inTrans, false, false);
-							preceedingStacks.add(predStack);
-						}
-//						assert preceedingStacks.size() > oldPreceedingStackSize;
-						assert oldPreceedingStackSize + 2 >= preceedingStacks.size();
-					}
+					addPreceedingStacks(i, preceedingStacks, stack);
 				}
 				i++;
+			}
+		}
+
+		/**
+		 * @param i
+		 * @param preceedingStacks
+		 * @param stack
+		 */
+		private void addPreceedingStacks(int i,
+				Set<StackOfFlaggedStates> preceedingStacks,
+				StackOfFlaggedStates stack) {
+			StateContainer<LETTER, STATE> cont = stack.getTopmostState();
+			for (IncomingInternalTransition<LETTER, STATE> inTrans : cont.internalPredecessors()) {
+				StateContainer<LETTER, STATE> predCont = m_States.get(inTrans.getPred());
+				checkIfGoalOrInitReached(i, stack, predCont);
+				boolean nextStateIsRestricted = stack.getTopmostFlag() && m_finalStates.contains(inTrans.getPred());
+				if (nextStateIsRestricted) {
+					STATE downState = stack.getSecondTopmostState().getState();
+					if (predCont.getDownStates().get(downState) != ReachProp.FINANC) {
+						continue;
+					}
+				}
+				StackOfFlaggedStates predStack = new StackOfFlaggedStates(stack, inTrans, nextStateIsRestricted);
+				preceedingStacks.add(predStack);
+			}
+			if (!stack.getTopmostFlag()) {
+				// if current state has obligations there can be no call
+				for (IncomingCallTransition<LETTER, STATE> inTrans : cont.callPredecessors()) {
+					StateContainer<LETTER, STATE> predCont = m_States.get(inTrans.getPred());
+					checkIfGoalOrInitReached(i, stack, predCont);
+					StackOfFlaggedStates predStack = new StackOfFlaggedStates(stack, inTrans);
+					preceedingStacks.add(predStack);
+				}
+			}
+			for (IncomingReturnTransition<LETTER, STATE> inTrans : cont.returnPredecessors()) {
+				// note that goal or init can never be reached 
+				// (backwards) with empty stack directly after return.
+				int oldPreceedingStackSize = preceedingStacks.size();
+				if (stack.getTopmostFlag()) {
+					if (m_finalStates.contains(inTrans.getHierPred()) || m_finalStates.contains(inTrans.getLinPred())) {
+						StackOfFlaggedStates predStack = new StackOfFlaggedStates(stack, inTrans, false, false);
+						preceedingStacks.add(predStack);
+					} else {
+						STATE currentDownState = stack.getSecondTopmostState().getState();
+						StateContainer<LETTER, STATE> hierCont = m_States.get(inTrans.getHierPred());
+						StateContainer<LETTER, STATE> linCont = m_States.get(inTrans.getLinPred());
+						if (hierCont.getDownStates().get(currentDownState) == ReachProp.FINANC) {
+							StackOfFlaggedStates predStack = new StackOfFlaggedStates(stack, inTrans, true, false);
+							preceedingStacks.add(predStack);
+						}
+						if (linCont.getDownStates().get(hierCont.getState()) == ReachProp.FINANC) {
+							StackOfFlaggedStates predStack = new StackOfFlaggedStates(stack, inTrans, false, true);
+							preceedingStacks.add(predStack);
+						}
+					}
+				} else {
+					StackOfFlaggedStates predStack = new StackOfFlaggedStates(stack, inTrans, false, false);
+					preceedingStacks.add(predStack);
+				}
+				assert oldPreceedingStackSize + 2 >= preceedingStacks.size();
 			}
 		}
 		
@@ -1842,7 +1852,7 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 			private final StateContainer<LETTER, STATE> m_TopmostState;
 			private final boolean m_TopmostFlag;
 			private final StateContainer<LETTER, STATE>[] m_StateStack;
-			boolean[] m_FlagStack;
+			private final boolean[] m_FlagStack;
 			
 			/**
 			 * Returns true if there is only one element on the stack, i.e., if 
