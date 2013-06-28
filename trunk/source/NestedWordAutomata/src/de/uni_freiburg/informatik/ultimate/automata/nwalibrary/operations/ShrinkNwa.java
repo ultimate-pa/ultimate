@@ -60,6 +60,11 @@ import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
  * possible improvements:
  * <globalSplit> global return split analysis
  * 
+ * <stateAnalysis> separate set of states in EC for states with no return
+ *                 (internal/call?) transitions
+ *                 -> see revision 9166, works, but no real impact,
+ *                    therefore quite complicated to maintain
+ * 
  * misc:
  * <hashCode> overwrite for EquivalenceClass?
  * 
@@ -100,12 +105,6 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	final HierHelper m_hierHelper;
 	// simulates the output automaton
 	private ShrinkNwaResult m_result;
-	
-	// states indices for equivalence classes
-	private final int[] m_statesInd = {0, 1, 2, 3, 4, 5, 6, 7};
-	private final int[] m_internalInd = {4, 5, 6, 7};
-	private final int[] m_callInd = {2, 3, 6, 7};
-	private final int[] m_returnInd = {1, 3, 5, 7};
 	
 	// TODO<experiments>
 	// global split
@@ -433,7 +432,7 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 		// create a hash map from letter to respective predecessor states
 		final HashMap<LETTER, HashSet<STATE>> letter2states =
 				new HashMap<LETTER, HashSet<STATE>>();
-		for (final STATE state : iterator.iterable(a)) {
+		for (final STATE state : a.m_states) {
 			iterator.nextState(state);
 			while (iterator.hasNext()) {
 				final LETTER letter = iterator.nextAndLetter();
@@ -561,16 +560,16 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 			letter2lin2hierEcSet,
 			final HashMap<LETTER, HashMap<STATE, HashSet<EquivalenceClass>>>
 			letter2hier2linEcSet) {
-		for (final STATE succ : a.returns()) {
+		for (final STATE succ : a.m_states) {
 			for (final IncomingReturnTransition<LETTER, STATE> edge :
 					m_operand.returnPredecessors(succ)) {
 				final LETTER letter = edge.getLetter();
 				final STATE lin = edge.getLinPred();
 				final STATE hier = edge.getHierPred();
 				final EquivalenceClass linEc =
-						m_partition.m_state2EquivalenceClass.get(lin).m_ec;
+						m_partition.m_state2EquivalenceClass.get(lin);
 				final EquivalenceClass hierEc =
-						m_partition.m_state2EquivalenceClass.get(hier).m_ec;
+						m_partition.m_state2EquivalenceClass.get(hier);
 				
 				HashMap<STATE, HashSet<EquivalenceClass>> lin2hierEcSet =
 						letter2lin2hierEcSet.get(letter);
@@ -660,7 +659,7 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 						succEcSet2stateSet = new HashMap<
 							HashSet<EquivalenceClass>, HashSet<STATE>>();
 					
-					for (final STATE second : ec.states()) {
+					for (final STATE second : ec.m_states) {
 						if (DEBUG3)
 							System.err.println("consider " + second);
 						
@@ -676,9 +675,8 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 							succEcs = new HashSet<EquivalenceClass>();
 							do {
 								final STATE succ = edges.next().getSucc();
-								final EquivalenceClass succEc =
-										m_partition.m_state2EquivalenceClass.
-										get(succ).m_ec;
+								final EquivalenceClass succEc = m_partition.
+										m_state2EquivalenceClass.get(succ);
 								succEcs.add(succEc);
 								
 								if (DEBUG3)
@@ -709,7 +707,7 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 						if (linSet == null) {
 							linSet = new HashSet<STATE>(
 									computeHashSetCapacity(
-											ec.m_size));
+											ec.m_states.size()));
 							succEcSet2stateSet.put(succEcs, linSet);
 						}
 						linSet.add(second);
@@ -783,7 +781,7 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 					hier2linEcSet.entrySet()) {
 				final EquivalenceClass hierEc =
 						m_partition.m_state2EquivalenceClass.get(
-								innerEntry.getKey()).m_ec;
+								innerEntry.getKey());
 				
 				if (DEBUG3)
 					System.err.println("checking hierEc " +
@@ -827,13 +825,13 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 			final HashSet<EquivalenceClass> splitEquivalenceClasses) {
 		final HashMap<HashSet<EquivalenceClass>, HashSet<STATE>> succ2hier =
 				new HashMap<HashSet<EquivalenceClass>, HashSet<STATE>>(
-						computeHashSetCapacity(hierEc.m_size));
+						computeHashSetCapacity(hierEc.m_states.size()));
 		
-		for (final STATE hier : hierEc.states()) {
+		for (final STATE hier : hierEc.m_states) {
 			final HashSet<EquivalenceClass> succs =
 					new HashSet<EquivalenceClass>();
 			
-			for (final STATE lin : linEc.states()) {
+			for (final STATE lin : linEc.m_states) {
 				final Iterator<OutgoingReturnTransition<LETTER, STATE>>
 				edges = m_operand.returnSucccessors(
 						lin, hier, letter).iterator();
@@ -846,7 +844,7 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 					do {
 						final STATE succ = edges.next().getSucc();
 						final EquivalenceClass succEc = m_partition.
-								m_state2EquivalenceClass.get(succ).m_ec;
+								m_state2EquivalenceClass.get(succ);
 						succs.add(succEc);
 						
 						if (DEBUG3)
@@ -930,7 +928,7 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 			// mapping: state to associated color
 			final HashMap<STATE, Integer> state2color =
 					new HashMap<STATE, Integer>(
-							computeHashSetCapacity(ec.m_size));
+							computeHashSetCapacity(ec.m_states.size()));
 			// current number of colors
 			int colors = 0;
 			
@@ -938,12 +936,13 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 			 * TODO<returnSplit> this is not very efficient, rather a proof of
 			 *                   concept
 			 */
+			final Set<STATE> states = ec.m_states;
 			for (final Entry<STATE, HashSet<STATE>> entry :
 					state2separatedSet.entrySet()) {
 				final STATE state = entry.getKey();
 				final HashSet<STATE> separatedSet = entry.getValue();
 				
-				assert (separatedSet != null);
+				assert (states.contains(state)) && (separatedSet != null);
 				
 				// first color can be directly assigned
 				if (colors == 0) {
@@ -1092,27 +1091,6 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	}
 	
 	/**
-	 * This class is used for the map in the partition object. For a state both
-	 * the equivalence class and the index are available.
-	 */
-	private class EquivalenceClassIndexTuple {
-		// equivalence class
-		private final EquivalenceClass m_ec;
-		// incoming transitions index
-		private final int m_index;
-		
-		/**
-		 * @param ec the equivalence class
-		 * @param index the index
-		 */
-		public EquivalenceClassIndexTuple(final EquivalenceClass ec,
-				final int index) {
-			m_ec = ec;
-			m_index = index;
-		}
-	}
-	
-	/**
 	 * A transition iterator is used for splitting internal and call
 	 * predecessors.
 	 *
@@ -1120,15 +1098,6 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	 * @param <LETTER> letter type
 	 */
 	private interface ITransitionIterator<LETTER, STATE> {
-		/**
-		 * This method fetches the right iterable. 
-		 * 
-		 * @param ec the equivalence class
-		 * @return the iterable of the equivalence class
-		 */
-		Iterable<STATE> iterable(
-				final ShrinkNwa<LETTER, STATE>.EquivalenceClass ec);
-		
 		/**
 		 * A new successor state is considered.
 		 *
@@ -1168,12 +1137,6 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 		private IncomingInternalTransition<LETTER, STATE> m_transition;
 		
 		@Override
-		public Iterable<STATE> iterable(
-				final ShrinkNwa<LETTER, STATE>.EquivalenceClass ec) {
-			return ec.internals();
-		}
-		
-		@Override
 		public void nextState(final STATE state) {
 			m_iterator = m_operand.internalPredecessors(state).iterator();
 		}
@@ -1204,12 +1167,6 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 		private Iterator<IncomingCallTransition<LETTER, STATE>> m_iterator;
 		// current transition
 		private IncomingCallTransition<LETTER, STATE> m_transition;
-		
-		@Override
-		public Iterable<STATE> iterable(
-				final ShrinkNwa<LETTER, STATE>.EquivalenceClass ec) {
-			return ec.calls();
-		}
 		
 		@Override
 		public void nextState(final STATE state) {
@@ -1455,8 +1412,8 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 		
 		// copy splitter set for not having to stop when split
 		final ArrayList<STATE> aStates =
-				new ArrayList<STATE>(a.m_size);
-		for (final STATE state : a.states()) {
+				new ArrayList<STATE>(a.m_states.size());
+		for (final STATE state : a.m_states) {
 			aStates.add(state);
 		}
 		
@@ -1467,7 +1424,7 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 		}
 		
 		// split states
-//		final int size = a.m_size;
+//		final int size = a.m_states.size();
 		for (final LETTER  letter : letters) {
 			final HashSet<STATE> states = new HashSet<STATE>();
 			for (final STATE succ : aStates) {
@@ -1478,7 +1435,7 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 				
 				if (states.size() > 0) {
 					m_partition.splitEquivalenceClasses(states);
-//					if (a.m_size < size) {
+//					if (a.m_states.size() < size) {
 //						return;
 //					}
 				}
@@ -1507,8 +1464,9 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 		Set<LETTER> letters(final STATE state);
 		
 		/**
-		 * This method returns a new collection. This is for efficiency reasons,
-		 * since first only a list is needed, where later a set is needed.
+		 * This method returns a new collection. This is for efficiency
+		 * reasons, since first only a list is needed, where later a set is
+		 * needed.
 		 *
 		 * @return
 		 */
@@ -1701,17 +1659,28 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 		// equivalence classes
 		private final Collection<EquivalenceClass> m_equivalenceClasses;
 		// mapping 'state -> equivalence class'
-		private final HashMap<STATE, EquivalenceClassIndexTuple>
-			m_state2EquivalenceClass;
+		private final HashMap<STATE,EquivalenceClass> m_state2EquivalenceClass;
 		// storage for split equivalence classes
 		private List<EquivalenceClass> m_splitEquivalenceClasses;
 		
 		public Partition() {
 			m_equivalenceClasses = new LinkedList<EquivalenceClass>();
-			m_state2EquivalenceClass =
-					new HashMap<STATE, EquivalenceClassIndexTuple>(
+			m_state2EquivalenceClass = new HashMap<STATE, EquivalenceClass>(
 					computeHashSetCapacity(m_operand.size()));
 			m_splitEquivalenceClasses = new LinkedList<EquivalenceClass>();
+		}
+		
+		/**
+		 * This method adds an equivalence class (also to the work list).
+		 * The states mapping is updated accordingly.
+		 *
+		 * @param module the states in the equivalence class
+		 */
+		private void addEc(final Set<STATE> module) {
+			final EquivalenceClass ec = addEcHelper(module);
+			for (STATE state : module) {
+				m_state2EquivalenceClass.put(state, ec);
+			}
 		}
 		
 		/**
@@ -1720,10 +1689,10 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 		 * @param module the states in the equivalence class
 		 * @return the equivalence class
 		 */
-		private void addEc(final Set<STATE> module) {
-			final EquivalenceClass ec = new EquivalenceClass(module,
-					m_state2EquivalenceClass);
+		private EquivalenceClass addEcHelper(final Set<STATE> module) {
+			final EquivalenceClass ec = new EquivalenceClass(module);
 			m_equivalenceClasses.add(ec);
+			return ec;
 		}
 		
 		/**
@@ -1734,8 +1703,7 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 		 * @return the equivalence class
 		 */
 		private EquivalenceClass addEcHelper(final EquivalenceClass parent) {
-			final EquivalenceClass ec =
-					new EquivalenceClass(parent, m_state2EquivalenceClass);
+			final EquivalenceClass ec = new EquivalenceClass(parent);
 			m_equivalenceClasses.add(ec);
 			return ec;
 		}
@@ -1750,16 +1718,16 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 		 */
 		private EquivalenceClass addEcHelperReturn(final Set<STATE> states,
 				final EquivalenceClass parent) {
-			final EquivalenceClass ec = new EquivalenceClass(states,
-					m_state2EquivalenceClass);
+			final EquivalenceClass ec = new EquivalenceClass(states, parent);
 			m_equivalenceClasses.add(ec);
 			
-			// remove states from old equivalence class
+			// update mapping
 			for (final STATE state : states) {
-				final EquivalenceClassIndexTuple ecTuple =
-						m_state2EquivalenceClass.get(state);
-				final int index = ecTuple.m_index;
-				parent.m_sets.get(index).remove(state);
+				assert (parent.m_states.contains(state)) &&
+					(m_state2EquivalenceClass.get(state) == parent);
+				
+				parent.m_states.remove(state);
+				m_state2EquivalenceClass.put(state, ec);
 			}
 			
 			return ec;
@@ -1770,22 +1738,18 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 		 * The equivalence class is remembered 
 		 */
 		private void splitState(final STATE state) {
-			final EquivalenceClassIndexTuple tuple =
-					m_state2EquivalenceClass.get(state);
-			final EquivalenceClass ec = tuple.m_ec;
-			final int index = tuple.m_index;
+			final EquivalenceClass ec = m_state2EquivalenceClass.get(state);
 			
 			// first occurrence of the equivalence class, mark it
-			if (! ec.m_isSplit) {
-				ec.m_isSplit = true;
+			if (ec.m_intersection.size() == 0) {
 				m_splitEquivalenceClasses.add(ec);
 			}
 			
 			// move state to intersection set
-			ec.m_intersections.get(index).add(state);
+			ec.m_intersection.add(state);
 			
 			// remove state from old set
-			ec.m_sets.get(index).remove(state);
+			ec.m_states.remove(state);
 		}
 		
 		/**
@@ -1810,19 +1774,8 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 			// check and finalize splits
 			for (final EquivalenceClass ec : m_splitEquivalenceClasses) {
 				// split removed every state, restore equivalence class
-				if (ec.m_incomingN.isEmpty() && ec.m_incomingI.isEmpty() &&
-						ec.m_incomingC.isEmpty() && ec.m_incomingR.isEmpty() &&
-						ec.m_incomingIC.isEmpty() && ec.m_incomingIR.isEmpty() &&
-						ec.m_incomingCR.isEmpty() && ec.m_incomingICR.isEmpty()) {
-					ec.m_incomingN = ec.m_intersectionN;
-					ec.m_incomingI = ec.m_intersectionI;
-					ec.m_incomingC = ec.m_intersectionC;
-					ec.m_incomingR = ec.m_intersectionR;
-					ec.m_incomingIC = ec.m_intersectionIC;
-					ec.m_incomingIR = ec.m_intersectionIR;
-					ec.m_incomingCR = ec.m_intersectionCR;
-					ec.m_incomingICR = ec.m_intersectionICR;
-					ec.resetIncoming();
+				if (ec.m_states.isEmpty()) {
+					ec.m_states = ec.m_intersection;
 					if (DEBUG)
 						System.out.println("EC was skipped " + ec);
 					++m_splitsWithoutChange;
@@ -1834,10 +1787,11 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 					++m_splitsWithChange;
 					
 					splitOccurred = true;
-					addEcHelper(ec);
-					
-					if (DEBUG)
-						System.out.println("old EC: " + ec);
+					final Set<STATE> intersection = ec.m_intersection;
+					final EquivalenceClass newEc = addEcHelper(ec);
+					for (STATE state : intersection) {
+						m_state2EquivalenceClass.put(state, newEc);
+					}
 					
 					/*
 					 * put old ec in work lists if not already in there
@@ -1893,62 +1847,21 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	 */
 	private class EquivalenceClass {
 		// the states
-		private final ArrayList<Set<STATE>> m_sets;
-		private Set<STATE> m_incomingN, m_incomingI, m_incomingC, m_incomingR,
-			m_incomingIC, m_incomingIR, m_incomingCR, m_incomingICR;
-		private ArrayList<EquivalenceClassIndexTuple> m_tuples;
-		// size
-		private int m_size;
+		private Set<STATE> m_states;
 		// intersection set that finally becomes a new equivalence class
-		private final ArrayList<Set<STATE>> m_intersections;
-		private Set<STATE> m_intersectionN, m_intersectionI, m_intersectionC,
-			m_intersectionR, m_intersectionIC, m_intersectionIR,
-			m_intersectionCR, m_intersectionICR;
-		private boolean m_isSplit;
+		private Set<STATE> m_intersection;
 		// status regarding incoming transitions
 		private EIncomingStatus m_incomingInt, m_incomingCall, m_incomingRet;
 		// mapping: state to states that are separated
 		private HashMap<STATE, HashSet<STATE>> m_state2separatedSet;
 		
 		/**
-		 * This constructor is used for the initialization.
+		 * This constructor is used for the initialization. 
 		 * 
 		 * @param states the set of states for the equivalence class
 		 */
-		public EquivalenceClass(final Set<STATE> states,
-				final HashMap<STATE, EquivalenceClassIndexTuple> states2ec) {
-			m_size = states.size();
-			final int size = computeHashSetCapacity(m_size);
-			m_incomingN = new HashSet<STATE>(size);
-			m_incomingI = new HashSet<STATE>(size);
-			m_incomingC = new HashSet<STATE>(size);
-			m_incomingR = new HashSet<STATE>(size);
-			m_incomingIC = new HashSet<STATE>(size);
-			m_incomingIR = new HashSet<STATE>(size);
-			m_incomingCR = new HashSet<STATE>(size);
-			m_incomingICR = new HashSet<STATE>(size);
-			m_sets = new ArrayList<Set<STATE>>(8);
-			resetIncoming();
-			m_tuples = new ArrayList<EquivalenceClassIndexTuple>(8);
-			for (int i = 0; i < 8; ++i) {
-				m_tuples.add(i, new EquivalenceClassIndexTuple(this, i));
-			}
-			for (final STATE state : states) {
-				int index = 0;
-				if (m_operand.internalPredecessors(state).iterator().
-						hasNext()) {
-					index += 4;
-				}
-				if (m_operand.callPredecessors(state).iterator().hasNext()) {
-					index += 2;
-				}
-				if (m_operand.returnPredecessors(state).iterator().hasNext()) {
-					index += 1;
-				}
-				m_sets.get(index).add(state);
-				states2ec.put(state, m_tuples.get(index));
-			}
-			m_intersections = new ArrayList<Set<STATE>>(8);
+		public EquivalenceClass(final Set<STATE> states) {
+			m_states = states;
 			reset();
 			m_incomingInt = EIncomingStatus.inWL;
 			m_incomingCall = EIncomingStatus.inWL;
@@ -1962,41 +1875,28 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 		 * 
 		 * @param parent the parent equivalence class
 		 */
-		public EquivalenceClass(final EquivalenceClass parent,
-				final HashMap<STATE, EquivalenceClassIndexTuple> states2ec) {
-			m_incomingN = parent.m_intersectionN;
-			m_incomingI = parent.m_intersectionI;
-			m_incomingC = parent.m_intersectionC;
-			m_incomingR = parent.m_intersectionR;
-			m_incomingIC = parent.m_intersectionIC;
-			m_incomingIR = parent.m_intersectionIR;
-			m_incomingCR = parent.m_intersectionCR;
-			m_incomingICR = parent.m_intersectionICR;
-			parent.resetIntersections();
-			m_sets = new ArrayList<Set<STATE>>(8);
-			m_sets.add(0, m_incomingN);
-			m_sets.add(1, m_incomingR);
-			m_sets.add(2, m_incomingC);
-			m_sets.add(3, m_incomingCR);
-			m_sets.add(4, m_incomingI);
-			m_sets.add(5, m_incomingIR);
-			m_sets.add(6, m_incomingIC);
-			m_sets.add(7, m_incomingICR);
-			m_tuples = new ArrayList<EquivalenceClassIndexTuple>(8);
-			for (int i = 0; i < 8; ++i) {
-				m_tuples.add(i, (m_sets.get(i).size() > 0)
-							? new EquivalenceClassIndexTuple(this, i)
-							: null);
-			}
-			for (int i = 0; i < 8; ++i) {
-				final Set<STATE> set = m_sets.get(i);
-				final EquivalenceClassIndexTuple tuple =
-						new EquivalenceClassIndexTuple(this, i);
-				for (final STATE state : set) {
-					states2ec.put(state, tuple);
-				}
-			}
-			m_intersections = new ArrayList<Set<STATE>>(8);
+		public EquivalenceClass(final EquivalenceClass parent) {
+			this(parent.m_intersection, parent);
+		}
+		
+		/**
+		 * This constructor is reserved for the placeholder equivalence class.
+		 */
+		private EquivalenceClass() {
+			m_states = null;
+			m_intersection = null;
+		}
+		
+		/**
+		 * This constructor is used during the return split, when an
+		 * equivalence class can be split into more than two new objects.
+		 * 
+		 * @param states the set of states for the equivalence class
+		 * @param parent the parent equivalence class
+		 */
+		public EquivalenceClass(final Set<STATE> states,
+				final EquivalenceClass parent) {
+			m_states = states;
 			reset();
 			switch (parent.m_incomingInt) {
 				case unknown:
@@ -2031,126 +1931,6 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 		}
 		
 		/**
-		 * This constructor is reserved for the placeholder equivalence class.
-		 */
-		private EquivalenceClass() {
-			m_sets = null;
-			m_intersections = null;
-		}
-		
-		/**
-		 * This method returns an iterator of all states.
-		 * 
-		 * @return iterator of all states
-		 */
-		private Iterable<STATE> states() {
-			return new Iterable<STATE>() {
-				public Iterator<STATE> iterator() {
-					return statesIterator(m_statesInd);
-				}
-			};
-		}
-		
-		/**
-		 * This method returns an iterator of all internal states.
-		 * 
-		 * @return iterator of all internal states
-		 */
-		private Iterable<STATE> internals() {
-			return new Iterable<STATE>() {
-				public Iterator<STATE> iterator() {
-					return statesIterator(m_internalInd);
-				}
-			};
-		}
-		
-		/**
-		 * This method returns an iterator of all call states.
-		 * 
-		 * @return iterator of all call states
-		 */
-		private Iterable<STATE> calls() {
-			return new Iterable<STATE>() {
-				public Iterator<STATE> iterator() {
-					return statesIterator(m_callInd);
-				}
-			};
-		}
-		
-		/**
-		 * This method returns an iterator of all return states.
-		 * 
-		 * @return iterator of all return states
-		 */
-		private Iterable<STATE> returns() {
-			return new Iterable<STATE>() {
-				public Iterator<STATE> iterator() {
-					return statesIterator(m_returnInd);
-				}
-			};
-		}
-		
-		/**
-		 * This iterator abstracts from the positive sets passed as argument.
-		 * 
-		 * @param indices the indices of the positive sets
-		 * @return an iterator of all respective states
-		 */
-		private Iterator<STATE> statesIterator(final int[] indices) {
-			return new Iterator<STATE>() {
-				// positive indices
-				private final int[] m_indices = indices;
-				// current index
-				private int m_index = -1;
-				// iterator of the current set
-				private Iterator<STATE> m_it = init();
-				
-				private Iterator<STATE> init() {
-					Iterator<STATE> it = m_sets.get(m_indices[0]).iterator();
-					do {
-						if (++m_index == m_indices.length) {
-							return it;
-						}
-						it = m_sets.get(m_indices[m_index]).iterator();
-					} while (! it.hasNext());
-					return it;
-				}
-				
-				@Override
-				public boolean hasNext() {
-					if (m_it.hasNext()) {
-						return true;
-					}
-					
-					while (++m_index < m_indices.length) {
-						m_it = m_sets.get(m_indices[m_index]).iterator();
-						if (m_it.hasNext()) {
-							return true;
-						}
-					}
-					
-					return false;
-				}
-				
-				@Override
-				public STATE next() {
-					try {
-					return m_it.next();
-					} catch (Exception e) {
-						System.err.println("");
-					}
-					return null;
-				}
-				
-				@Override
-				public void remove() {
-					throw new UnsupportedOperationException(
-							"Removing is not allowed.");
-				}
-			};
-		}
-		
-		/**
 		 * This method marks the pairs of splits necessary for given sets of
 		 * states, but does not invoke the splits yet.
 		 *
@@ -2162,7 +1942,7 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 			
 			if (m_state2separatedSet == null) {
 				m_state2separatedSet = new HashMap<STATE, HashSet<STATE>>(
-						computeHashSetCapacity(m_size));
+						computeHashSetCapacity(m_states.size()));
 			}
 			
 			final HashSet<Iterable<STATE>> visited =
@@ -2190,7 +1970,8 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 			if (DEBUG3)
 				System.err.println("separate " + state1 + " " + state2);
 			
-			assert (state1 != state2);
+			assert ((state1 != state2) && (m_states.contains(state1)) &&
+					 (m_states.contains(state2)));
 			
 			HashSet<STATE> separated = m_state2separatedSet.get(state1);
 			if (separated == null) {
@@ -2211,58 +1992,15 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 		/**
 		 * This method resets the intersection set.
 		 */
-		private void resetIntersections() {
-			m_intersectionN = new HashSet<STATE>(
-					computeHashSetCapacity(m_incomingN.size()));
-			m_intersectionI = new HashSet<STATE>(
-					computeHashSetCapacity(m_incomingI.size()));
-			m_intersectionC = new HashSet<STATE>(
-					computeHashSetCapacity(m_incomingC.size()));
-			m_intersectionR = new HashSet<STATE>(
-					computeHashSetCapacity(m_incomingR.size()));
-			m_intersectionIC = new HashSet<STATE>(
-					computeHashSetCapacity(m_incomingIC.size()));
-			m_intersectionIR = new HashSet<STATE>(
-					computeHashSetCapacity(m_incomingIR.size()));
-			m_intersectionCR = new HashSet<STATE>(
-					computeHashSetCapacity(m_incomingCR.size()));
-			m_intersectionICR = new HashSet<STATE>(
-					computeHashSetCapacity(m_incomingICR.size()));
-			m_intersections.clear();
-			m_intersections.add(0, m_intersectionN);
-			m_intersections.add(1, m_intersectionR);
-			m_intersections.add(2, m_intersectionC);
-			m_intersections.add(3, m_intersectionCR);
-			m_intersections.add(4, m_intersectionI);
-			m_intersections.add(5, m_intersectionIR);
-			m_intersections.add(6, m_intersectionIC);
-			m_intersections.add(7, m_intersectionICR);
-		}
-		
-		private void resetIncoming() {
-			m_sets.clear();
-			m_sets.add(0, m_incomingN);
-			m_sets.add(1, m_incomingR);
-			m_sets.add(2, m_incomingC);
-			m_sets.add(3, m_incomingCR);
-			m_sets.add(4, m_incomingI);
-			m_sets.add(5, m_incomingIR);
-			m_sets.add(6, m_incomingIC);
-			m_sets.add(7, m_incomingICR);
-		}
-		
-		/**
-		 * This method resets the intersection set and some other things.
-		 */
 		private void reset() {
-			resetIntersections();
+			m_intersection = new HashSet<STATE>(
+					computeHashSetCapacity(m_states.size()));
 			m_state2separatedSet = null;
-			m_isSplit = false;
 		}
 		
 		@Override
 		public String toString() {
-			if (m_sets == null) {
+			if (m_states == null) {
 				return "negative equivalence class";
 			}
 			
@@ -2271,6 +2009,8 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 			}
 			
 			final StringBuilder builder = new StringBuilder();
+			String append = "";
+			
 			builder.append("<[");
 			builder.append(m_incomingInt);
 			builder.append(",");
@@ -2278,26 +2018,17 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 			builder.append(",");
 			builder.append(m_incomingRet);
 			builder.append("], [");
-			for (int i = 0; i < 8; ++i) {
-				String append = "";
-				
-				for (final Object state : m_sets.get(i)) {
-					builder.append(append);
-					append = ", ";
-					builder.append(state);
-				}
-				builder.append("|");
+			for (final STATE state : m_states) {
+				builder.append(append);
+				append = ", ";
+				builder.append(state);
 			}
 			builder.append("], [");
-			for (int i = 0; i < 8; ++i) {
-				String append = "";
-				
-				for (final Object state : m_intersections.get(i)) {
-					builder.append(append);
-					append = ", ";
-					builder.append(state);
-				}
-				builder.append("|");
+			append = "";
+			for (final STATE state : m_intersection) {
+				builder.append(append);
+				append = ", ";
+				builder.append(state);
 			}
 			builder.append("]>");
 			return builder.toString();
@@ -2311,21 +2042,18 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 		 * @return a short string representation of the states
 		 */
 		public String toStringShort() {
-			if (m_sets == null) {
+			if (m_states == null) {
 				return "negative equivalence class";
 			}
 			
 			final StringBuilder builder = new StringBuilder();
+			String append = "";
 			
 			builder.append("<");
-			for (int i = 0; i < 8; ++i) {
-				String append = "";
-				for (final Object state : m_sets.get(i)) {
-					builder.append(append);
-					append = ", ";
-					builder.append(state);
-				}
-				builder.append("|");
+			for (final STATE state : m_states) {
+				builder.append(append);
+				append = ", ";
+				builder.append(state);
 			}
 			builder.append(">");
 			
@@ -2351,7 +2079,7 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 						@Override
 						public int compare(EquivalenceClass ec1,
 								EquivalenceClass ec2) {
-							return ec1.m_size - ec2.m_size;
+							return ec1.m_states.size() - ec2.m_states.size();
 						}
 					});
 		}
@@ -2499,8 +2227,7 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 			final HashSet<EquivalenceClass> initials =
 					new HashSet<EquivalenceClass>();
 			for (final STATE init : m_oldNwa.getInitialStates()) {
-				initials.add(m_partition.m_state2EquivalenceClass.get(init).
-						m_ec);
+				initials.add(m_partition.m_state2EquivalenceClass.get(init));
 			}
 			
 			m_outInt = new HashMap<STATE,
@@ -2512,10 +2239,7 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 			
 			for (final EquivalenceClass ec : m_partition.m_equivalenceClasses)
 					{
-				final ArrayList<STATE> ecStates = new ArrayList<STATE>(ec.m_size);
-				for (final STATE state : ec.states()) {
-					ecStates.add(state);
-				}
+				final Set<STATE> ecStates = ec.m_states;
 				
 				// new state
 				final STATE newState = m_stateFactory.minimize(ecStates);
@@ -2547,7 +2271,7 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 					System.out.println(" from state " + newState + 
 							" have transitions:");
 				
-				final STATE representative = ec.states().iterator().next();
+				final STATE representative = ec.m_states.iterator().next();
 				
 				// internal transitions
 				HashSet<OutgoingInternalTransition<LETTER, STATE>> outInt =
@@ -2569,8 +2293,7 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 						internals.put(letter, succs);
 					}
 					succs.add(ec2state.get(m_partition.
-							m_state2EquivalenceClass.get(edge.getSucc()).
-							m_ec));
+							m_state2EquivalenceClass.get(edge.getSucc())));
 				}
 				for (final Entry<LETTER, HashSet<STATE>> entry :
 						internals.entrySet()) {
@@ -2605,8 +2328,7 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 						calls.put(letter, succs);
 					}
 					succs.add(ec2state.get(m_partition.
-							m_state2EquivalenceClass.get(edge.getSucc()).
-							m_ec));
+							m_state2EquivalenceClass.get(edge.getSucc())));
 				}
 				for (final Entry<LETTER, HashSet<STATE>> entry :
 					calls.entrySet()) {
@@ -2637,7 +2359,7 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 				HashMap<LETTER, HashMap<STATE, HashSet<STATE>>> returns =
 						new HashMap<LETTER,
 						HashMap<STATE, HashSet<STATE>>>();
-				for (final STATE state : ec.states()) {
+				for (final STATE state : ec.m_states) {
 					for (final OutgoingReturnTransition<LETTER, STATE> edge :
 							m_oldNwa.returnSuccessors(state)) {
 						final LETTER letter = edge.getLetter();
@@ -2649,15 +2371,14 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 						}
 						final STATE hier = ec2state.get(
 								m_partition.m_state2EquivalenceClass.get(
-										edge.getHierPred()).m_ec);
+										edge.getHierPred()));
 						HashSet<STATE> succs = hier2succs.get(hier);
 						if (succs == null) {
 							succs = new HashSet<STATE>();
 							hier2succs.put(hier, succs);
 						}
 						succs.add(ec2state.get(m_partition.
-								m_state2EquivalenceClass.get(edge.getSucc()).
-								m_ec));
+								m_state2EquivalenceClass.get(edge.getSucc())));
 					}
 				}
 				for (final Entry<LETTER, HashMap<STATE, HashSet<STATE>>>
