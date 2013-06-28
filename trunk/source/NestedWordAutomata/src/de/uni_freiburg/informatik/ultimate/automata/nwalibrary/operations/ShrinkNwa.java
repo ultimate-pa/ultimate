@@ -120,11 +120,18 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	private final boolean DEBUG4 = false;
 	
 	// TODO<statistics>
-	private final boolean STATISTICS = false;
+	private final boolean STATISTICS = true;
 	private int m_splitsWithChange = 0;
 	private int m_splitsWithoutChange = 0;
 	private int m_incomingTransitions = 0;
 	private int m_noIncomingTransitions = 0;
+	private int m_ignoredReturnSingletons = 0;
+	private int m_returnLocalSplits = 0;
+	private int m_returnMixedSplits = 0;
+	private int m_returnLocalIgnored = 0;
+	private int m_returnMixedIgnored = 0;
+	private int m_returnMixedIgnoredHierEc = 0;
+	private int m_returnSplitsStarted = 0;
 	
 	/**
 	 * StateFactory used for the construction of new states. This is _NOT_ the
@@ -228,6 +235,15 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 			System.out.println("quota (p/n): " +
 					(((float)m_incomingTransitions) /
 							((float)Math.max(m_noIncomingTransitions, 1))));
+			System.out.println("ignored return splits due to singletons: " +
+					m_ignoredReturnSingletons);
+			System.out.print("return splits (executed/ignored): started " +
+					m_returnSplitsStarted);
+			System.out.print(", local: (" + m_returnLocalSplits + "/" +
+					m_returnLocalIgnored);
+			System.out.println("), mixed: (" + m_returnMixedSplits + "/" +
+					m_returnMixedIgnored + "/" + m_returnMixedIgnoredHierEc +
+					")");
 		}
 	}
 	
@@ -493,16 +509,11 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 			HashSet<EquivalenceClass>>>();
 		
 		// collect incoming return transitions and update data structures
-		splitReturnFindTransitions(a, letter2lin2hierEcSet,
-				letter2hier2linEcSet);
-		
-		assert ((letter2lin2hierEcSet.isEmpty() &&
-					letter2hier2linEcSet.isEmpty()) ||
-				(! letter2lin2hierEcSet.isEmpty() &&
-						! letter2hier2linEcSet.isEmpty()));
+		final boolean hasReturns = splitReturnFindTransitions(a,
+				letter2lin2hierEcSet, letter2hier2linEcSet);
 		
 		// no return transitions found, remember that
-		if (letter2lin2hierEcSet.isEmpty()) {
+		if (! hasReturns) {
 			a.m_incomingRet = EIncomingStatus.none;
 			if (STATISTICS)
 				++m_noIncomingTransitions;
@@ -520,6 +531,9 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 			builder.append(letter2hier2linEcSet);
 			System.err.println(builder.toString());
 		}
+		
+		if (STATISTICS)
+			++m_returnSplitsStarted;
 		
 		// remember all equivalence classes marked for splitting
 		final HashSet<EquivalenceClass> splitEquivalenceClasses =
@@ -548,58 +562,79 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	 * This method finds all incoming return transitions given a splitter and
 	 * updates the data structures accordingly.
 	 * 
-	 * TODO<singletons> detect singleton equivalence classes and do not add
-	 *                  them to the splitting lists
-	 * 
 	 * @param a splitter equivalence class
 	 * @param letter2lin2hierEcSet mapping for hierarchical split
 	 * @param letter2hier2linEcSet mapping for linear split
+	 * @return true iff there are incoming return transitions
 	 */
-	private void splitReturnFindTransitions(final EquivalenceClass a,
+	private boolean splitReturnFindTransitions(final EquivalenceClass a,
 			final HashMap<LETTER, HashMap<STATE, HashSet<EquivalenceClass>>>
 			letter2lin2hierEcSet,
 			final HashMap<LETTER, HashMap<STATE, HashSet<EquivalenceClass>>>
 			letter2hier2linEcSet) {
+		boolean hasReturns = false;
 		for (final STATE succ : a.m_states) {
-			for (final IncomingReturnTransition<LETTER, STATE> edge :
-					m_operand.returnPredecessors(succ)) {
-				final LETTER letter = edge.getLetter();
-				final STATE lin = edge.getLinPred();
-				final STATE hier = edge.getHierPred();
-				final EquivalenceClass linEc =
-						m_partition.m_state2EquivalenceClass.get(lin);
-				final EquivalenceClass hierEc =
-						m_partition.m_state2EquivalenceClass.get(hier);
-				
-				HashMap<STATE, HashSet<EquivalenceClass>> lin2hierEcSet =
-						letter2lin2hierEcSet.get(letter);
-				if (lin2hierEcSet == null) {
-					lin2hierEcSet =
-							new HashMap<STATE, HashSet<EquivalenceClass>>();
-					letter2lin2hierEcSet.put(letter, lin2hierEcSet);
-				}
-				HashSet<EquivalenceClass> hierEcSet = lin2hierEcSet.get(lin);
-				if (hierEcSet == null) {
-					hierEcSet = new HashSet<EquivalenceClass>();
-					lin2hierEcSet.put(lin, hierEcSet);
-				}
-				hierEcSet.add(hierEc);
-				
-				HashMap<STATE, HashSet<EquivalenceClass>> hier2linEcSet =
-						letter2hier2linEcSet.get(letter);
-				if (hier2linEcSet == null) {
-					hier2linEcSet =
-							new HashMap<STATE, HashSet<EquivalenceClass>>();
-					letter2hier2linEcSet.put(letter, hier2linEcSet);
-				}
-				HashSet<EquivalenceClass> linEcSet = hier2linEcSet.get(hier);
-				if (linEcSet == null) {
-					linEcSet = new HashSet<EquivalenceClass>();
-					hier2linEcSet.put(hier, linEcSet);
-				}
-				linEcSet.add(linEc);
+			Iterator<IncomingReturnTransition<LETTER, STATE>> it =
+					m_operand.returnPredecessors(succ).iterator();
+			if (it.hasNext()) {
+				hasReturns = true;
+				do {
+					IncomingReturnTransition<LETTER, STATE> edge = it.next();
+					final LETTER letter = edge.getLetter();
+					final STATE lin = edge.getLinPred();
+					final STATE hier = edge.getHierPred();
+					final EquivalenceClass linEc =
+							m_partition.m_state2EquivalenceClass.get(lin);
+					final EquivalenceClass hierEc =
+							m_partition.m_state2EquivalenceClass.get(hier);
+					
+					// add to linear split map (only if no singleton)
+					if (hierEc.m_states.size() > 1) {
+						HashMap<STATE, HashSet<EquivalenceClass>>
+							lin2hierEcSet = letter2lin2hierEcSet.get(letter);
+						if (lin2hierEcSet == null) {
+							lin2hierEcSet = new HashMap<STATE,
+									HashSet<EquivalenceClass>>();
+							letter2lin2hierEcSet.put(letter, lin2hierEcSet);
+						}
+						HashSet<EquivalenceClass> hierEcSet =
+								lin2hierEcSet.get(lin);
+						if (hierEcSet == null) {
+							hierEcSet = new HashSet<EquivalenceClass>();
+							lin2hierEcSet.put(lin, hierEcSet);
+						}
+						hierEcSet.add(hierEc);
+					}
+					else {
+						if (STATISTICS)
+							++m_ignoredReturnSingletons;
+					}
+					
+					// add to hierarchical split map (only if no singleton)
+					if (linEc.m_states.size() > 1) {
+						HashMap<STATE, HashSet<EquivalenceClass>>
+							hier2linEcSet = letter2hier2linEcSet.get(letter);
+						if (hier2linEcSet == null) {
+							hier2linEcSet = new HashMap<STATE,
+									HashSet<EquivalenceClass>>();
+							letter2hier2linEcSet.put(letter, hier2linEcSet);
+						}
+						HashSet<EquivalenceClass> linEcSet =
+								hier2linEcSet.get(hier);
+						if (linEcSet == null) {
+							linEcSet = new HashSet<EquivalenceClass>();
+							hier2linEcSet.put(hier, linEcSet);
+						}
+						linEcSet.add(linEc);
+					}
+					else {
+						if (STATISTICS)
+							++m_ignoredReturnSingletons;
+					}
+				} while (it.hasNext());
 			}
 		}
+		return hasReturns;
 	}
 	
 	/**
@@ -725,12 +760,18 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 						
 						ec.markSplit(succEcSet2stateSet.values());
 						splitEquivalenceClasses.add(ec);
+						
+						if (STATISTICS)
+							++m_returnLocalSplits;
 					}
 					else {
 						assert (succEcSet2stateSet.size() == 1);
 						if (DEBUG3)
 							System.err.println("ignore marking: " +
 									succEcSet2stateSet);
+						
+						if (STATISTICS)
+							++m_returnLocalIgnored;
 					}
 				}
 			}
@@ -786,6 +827,13 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 				if (DEBUG3)
 					System.err.println("checking hierEc " +
 							hierEc.toStringShort());
+				
+				if (hierEc.m_states.size() == 1) {
+					if (STATISTICS)
+						++m_returnMixedIgnoredHierEc;
+					
+					continue;
+				}
 				
 				HashSet<EquivalenceClass> linEcSet =
 						hierEc2linEcSet.get(hierEc);
@@ -888,12 +936,18 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 			
 			hierEc.markSplit(succ2hier.values());
 			splitEquivalenceClasses.add(hierEc);
+			
+			if (STATISTICS)
+				++m_returnMixedSplits;
 		}
 		else {
 			assert (succ2hier.size() == 1);
 			if (DEBUG3)
 				System.err.println("ignore marking: " +
 						succ2hier);
+			
+			if (STATISTICS)
+				++m_returnMixedIgnored;
 		}
 	}
 	
