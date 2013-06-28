@@ -21,6 +21,7 @@ import de.uni_freiburg.informatik.ultimate.logic.ReasonUnknown;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
+import de.uni_freiburg.informatik.ultimate.logic.ComputeFreeVariables;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
@@ -1724,6 +1725,24 @@ public class SmtManager {
 		Term result_as_closed_formula = SmtManager.computeClosedFormula(result, tvp.getVars(), m_Script);
 		return newPredicate(result, tvp.getProcedures(), tvp.getVars(), result_as_closed_formula);
 	}
+	
+	
+	public IPredicate strongestPostcondition(IPredicate p, Call call) {
+		return null;
+	}
+	
+	/**
+	 * Compute strongest postcondition for a return statement, where calleePred
+	 * is the predicate that holds in the called procedure before the return 
+	 * statement and callerPred is the predicate that held in the calling 
+	 * procedure before the corresponding call. 
+	 */
+	public IPredicate strongestPostcondition(IPredicate calleePred, 
+											IPredicate callerPred, Return ret) {
+		return null;
+	}
+
+	
 	
 	/**
 	 * Computes the weakest precondition of the given predicate p and the
