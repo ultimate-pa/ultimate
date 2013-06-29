@@ -105,7 +105,8 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	// return transition helper objects
 	final LinHelper m_linHelper;
 	final HierHelper m_hierHelper;
-	HashMap<EquivalenceClass, HashSet<EquivalenceClass>> m_visitedReturnEcs;
+	HashMap<LETTER, HashMap<EquivalenceClass, HashSet<EquivalenceClass>>>
+		m_visitedReturnEcs;
 	// simulates the output automaton
 	private ShrinkNwaResult m_result;
 	
@@ -134,7 +135,6 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	private int m_returnMixedSplits = 0;
 	private int m_returnLocalIgnored = 0;
 	private int m_returnMixedIgnored = 0;
-	private int m_returnMixedIgnoredHierEc = 0;
 	private int m_returnSplitsStarted = 0;
 	
 	/**
@@ -251,8 +251,7 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 			System.out.print(", local: (" + m_returnLocalSplits + "/" +
 					m_returnLocalIgnored);
 			System.out.println("), mixed: (" + m_returnMixedSplits + "/" +
-					m_returnMixedIgnored + "/" + m_returnMixedIgnoredHierEc +
-					")");
+					m_returnMixedIgnored + ")");
 		}
 	}
 	
@@ -516,16 +515,21 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 		final HashMap<LETTER, HashMap<STATE, HashSet<EquivalenceClass>>>
 			letter2hier2linEcSet = new HashMap<LETTER, HashMap<STATE,
 			HashSet<EquivalenceClass>>>();
+		final HashMap<EquivalenceClass, HashMap<EquivalenceClass,
+			HashSet<LETTER>>> linEc2hierEc2letterSet =
+			new HashMap<EquivalenceClass, HashMap<EquivalenceClass,
+			HashSet<LETTER>>>();
 		
 		if (m_visitedReturnEcs == null) {
-			m_visitedReturnEcs = new HashMap<EquivalenceClass,
-					HashSet<EquivalenceClass>>(computeHashSetCapacity(
+			m_visitedReturnEcs = new HashMap<LETTER, HashMap<EquivalenceClass,
+					HashSet<EquivalenceClass>>>(computeHashSetCapacity(
 							m_partition.m_equivalenceClasses.size()));
 		}
 		
 		// collect incoming return transitions and update data structures
 		final boolean hasReturns = splitReturnFindTransitions(a,
-				letter2lin2hierEcSet, letter2hier2linEcSet);
+				letter2lin2hierEcSet, letter2hier2linEcSet,
+				linEc2hierEc2letterSet);
 		
 		// no return transitions found, remember that
 		if (! hasReturns) {
@@ -544,6 +548,8 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 			builder.append(letter2lin2hierEcSet);
 			builder.append("\n letter2hier2linEcSet: ");
 			builder.append(letter2hier2linEcSet);
+			builder.append("\n linEc2hierEc2letterSet: ");
+			builder.append(linEc2hierEc2letterSet);
 			System.err.println(builder.toString());
 		}
 		
@@ -563,7 +569,7 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 				m_hierHelper);
 		
 		// collect complicated mixed splits
-		splitReturnMixed(letter2hier2linEcSet, splitEquivalenceClasses);
+		splitReturnMixed(linEc2hierEc2letterSet, splitEquivalenceClasses);
 		
 		// TODO<globalSplit> replace last line below
 //		assert (m_splitEcs != null);
@@ -580,113 +586,188 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	 * @param a splitter equivalence class
 	 * @param letter2lin2hierEcSet mapping for hierarchical split
 	 * @param letter2hier2linEcSet mapping for linear split
+	 * @param linEc2hierEc2letterSet mapping for mixed split
 	 * @return true iff there are incoming return transitions
 	 */
 	private boolean splitReturnFindTransitions(final EquivalenceClass a,
 			final HashMap<LETTER, HashMap<STATE, HashSet<EquivalenceClass>>>
 			letter2lin2hierEcSet,
 			final HashMap<LETTER, HashMap<STATE, HashSet<EquivalenceClass>>>
-			letter2hier2linEcSet) {
+			letter2hier2linEcSet,
+			final HashMap<EquivalenceClass, HashMap<EquivalenceClass,
+			HashSet<LETTER>>> linEc2hierEc2letterSet) {
 		boolean hasReturns = false;
-		final HashMap<EquivalenceClass, HashSet<EquivalenceClass>>
-			newVisitedReturnEcs = new HashMap<EquivalenceClass,
-			HashSet<EquivalenceClass>>();
+		
+		final HashMap<LETTER, HashMap<EquivalenceClass,
+			HashSet<EquivalenceClass>>> newVisitedReturnEcs =
+			new HashMap<LETTER, HashMap<EquivalenceClass,
+			HashSet<EquivalenceClass>>>();
+		
 		for (final STATE succ : a.m_states) {
 			Iterator<IncomingReturnTransition<LETTER, STATE>> it =
 					m_operand.returnPredecessors(succ).iterator();
-			if (it.hasNext()) {
-				hasReturns = true;
-				do {
-					IncomingReturnTransition<LETTER, STATE> edge = it.next();
-					final LETTER letter = edge.getLetter();
-					final STATE lin = edge.getLinPred();
-					final STATE hier = edge.getHierPred();
-					final EquivalenceClass linEc =
-							m_partition.m_state2EquivalenceClass.get(lin);
-					final EquivalenceClass hierEc =
-							m_partition.m_state2EquivalenceClass.get(hier);
+			// no return transition
+			if (! it.hasNext()) {
+				continue;
+			}
+			
+			hasReturns = true;
+			do {
+				IncomingReturnTransition<LETTER, STATE> edge = it.next();
+				final LETTER letter = edge.getLetter();
+				final STATE lin = edge.getLinPred();
+				final STATE hier = edge.getHierPred();
+				final EquivalenceClass linEc =
+						m_partition.m_state2EquivalenceClass.get(lin);
+				final EquivalenceClass hierEc =
+						m_partition.m_state2EquivalenceClass.get(hier);
+				
+				final boolean considerLinEc = (linEc.m_states.size() > 1);
+				final boolean considerHierEc = (hierEc.m_states.size() > 1);
+				
+				// both linear and hierarchical EC singletons, ignore
+				if ((! considerLinEc) && (! considerHierEc)) {
+					if (STATISTICS)
+						++m_ignoredReturnSingletons;
 					
-					/*
-					 * check whether the equivalence class combination was
-					 * already checked before
-					 */
-					HashSet<EquivalenceClass> visitedEcs =
-							m_visitedReturnEcs.get(linEc);
-					if (visitedEcs == null) {
-						visitedEcs = new HashSet<EquivalenceClass>();
-						m_visitedReturnEcs.put(linEc, visitedEcs);
+					continue;
+				}
+				
+				/*
+				 * check whether the equivalence class combination was
+				 * already checked before
+				 */
+				HashMap<EquivalenceClass, HashSet<EquivalenceClass>>
+						visitedMap = m_visitedReturnEcs.get(letter);
+				HashSet<EquivalenceClass> visitedHierEcs;
+				if (visitedMap == null) {
+					visitedMap = new HashMap<EquivalenceClass,
+							HashSet<EquivalenceClass>>();
+					m_visitedReturnEcs.put(letter, visitedMap);
+					
+					visitedHierEcs = new HashSet<EquivalenceClass>();
+					visitedMap.put(linEc, visitedHierEcs);
+				}
+				else {
+					visitedHierEcs = visitedMap.get(linEc);
+					if (visitedHierEcs == null) {
+						visitedHierEcs = new HashSet<EquivalenceClass>();
+						visitedMap.put(linEc, visitedHierEcs);
 					}
-					else if (visitedEcs.contains(hierEc)) {
+					else if (visitedHierEcs.contains(hierEc)) {
 						if (STATISTICS)
 							++m_ignoredReturnDuplicates;
 						
 						continue;
 					}
+				}
+				
+				// remember equivalence class combination
+				HashMap<EquivalenceClass, HashSet<EquivalenceClass>>
+						newVisitedMap = newVisitedReturnEcs.get(letter);
+				if (newVisitedMap == null) {
+					newVisitedMap = new HashMap<EquivalenceClass,
+							HashSet<EquivalenceClass>>();
+					newVisitedReturnEcs.put(letter, newVisitedMap);
+				}
+				HashSet<EquivalenceClass> newVisitedEcs =
+						newVisitedMap.get(linEc);
+				if (newVisitedEcs == null) {
+					newVisitedEcs = new HashSet<EquivalenceClass>();
+					newVisitedMap.put(linEc, newVisitedEcs);
+				}
+				newVisitedEcs.add(hierEc);
+				
+				// add to linear split map (only if no singleton)
+				if (considerHierEc) {
+					HashMap<STATE, HashSet<EquivalenceClass>>
+						lin2hierEcSet = letter2lin2hierEcSet.get(letter);
+					if (lin2hierEcSet == null) {
+						lin2hierEcSet = new HashMap<STATE,
+								HashSet<EquivalenceClass>>();
+						letter2lin2hierEcSet.put(letter, lin2hierEcSet);
+					}
+					HashSet<EquivalenceClass> hierEcSet =
+							lin2hierEcSet.get(lin);
+					if (hierEcSet == null) {
+						hierEcSet = new HashSet<EquivalenceClass>();
+						lin2hierEcSet.put(lin, hierEcSet);
+					}
+					hierEcSet.add(hierEc);
 					
-					// remember equivalence class combination
-					HashSet<EquivalenceClass> newVisitedEcs =
-							newVisitedReturnEcs.get(linEc);
-					if (newVisitedEcs == null) {
-						newVisitedEcs = new HashSet<EquivalenceClass>();
-						newVisitedReturnEcs.put(linEc, newVisitedEcs);
-					}
-					newVisitedEcs.add(hierEc);
-					
-					// add to linear split map (only if no singleton)
-					if (hierEc.m_states.size() > 1) {
-						HashMap<STATE, HashSet<EquivalenceClass>>
-							lin2hierEcSet = letter2lin2hierEcSet.get(letter);
-						if (lin2hierEcSet == null) {
-							lin2hierEcSet = new HashMap<STATE,
-									HashSet<EquivalenceClass>>();
-							letter2lin2hierEcSet.put(letter, lin2hierEcSet);
+					// add to mixed split map (only if both no singletons)
+					if (considerLinEc) {
+						newVisitedEcs.add(hierEc);
+						
+						HashMap<EquivalenceClass, HashSet<LETTER>>
+								hierEc2letterSet =
+								linEc2hierEc2letterSet.get(linEc);
+						HashSet<LETTER> letterSet;
+						if (hierEc2letterSet == null) {
+							hierEc2letterSet = new HashMap<EquivalenceClass,
+									HashSet<LETTER>>();
+							linEc2hierEc2letterSet.put(linEc,
+									hierEc2letterSet);
+							
+							letterSet = new HashSet<LETTER>();
+							hierEc2letterSet.put(hierEc, letterSet);
 						}
-						HashSet<EquivalenceClass> hierEcSet =
-								lin2hierEcSet.get(lin);
-						if (hierEcSet == null) {
-							hierEcSet = new HashSet<EquivalenceClass>();
-							lin2hierEcSet.put(lin, hierEcSet);
+						else {
+							letterSet = hierEc2letterSet.get(hierEc);
+							if (letterSet == null) {
+								letterSet = new HashSet<LETTER>();
+								hierEc2letterSet.put(hierEc, letterSet);
+							}
 						}
-						hierEcSet.add(hierEc);
+						letterSet.add(letter);
 					}
-					else {
-						if (STATISTICS)
-							++m_ignoredReturnSingletons;
+				}
+				else {
+					if (STATISTICS)
+						++m_ignoredReturnSingletons;
+				}
+				
+				// add to hierarchical split map (only if no singleton)
+				if (considerLinEc) {
+					HashMap<STATE, HashSet<EquivalenceClass>>
+						hier2linEcSet = letter2hier2linEcSet.get(letter);
+					if (hier2linEcSet == null) {
+						hier2linEcSet = new HashMap<STATE,
+								HashSet<EquivalenceClass>>();
+						letter2hier2linEcSet.put(letter, hier2linEcSet);
 					}
-					
-					// add to hierarchical split map (only if no singleton)
-					if (linEc.m_states.size() > 1) {
-						HashMap<STATE, HashSet<EquivalenceClass>>
-							hier2linEcSet = letter2hier2linEcSet.get(letter);
-						if (hier2linEcSet == null) {
-							hier2linEcSet = new HashMap<STATE,
-									HashSet<EquivalenceClass>>();
-							letter2hier2linEcSet.put(letter, hier2linEcSet);
-						}
-						HashSet<EquivalenceClass> linEcSet =
-								hier2linEcSet.get(hier);
-						if (linEcSet == null) {
-							linEcSet = new HashSet<EquivalenceClass>();
-							hier2linEcSet.put(hier, linEcSet);
-						}
-						linEcSet.add(linEc);
+					HashSet<EquivalenceClass> linEcSet =
+							hier2linEcSet.get(hier);
+					if (linEcSet == null) {
+						linEcSet = new HashSet<EquivalenceClass>();
+						hier2linEcSet.put(hier, linEcSet);
 					}
-					else {
-						if (STATISTICS)
-							++m_ignoredReturnSingletons;
-					}
-				} while (it.hasNext());
-			}
+					linEcSet.add(linEc);
+				}
+				else {
+					if (STATISTICS)
+						++m_ignoredReturnSingletons;
+				}
+			} while (it.hasNext());
 		}
 		
 		// globally remember new equivalence class combinations
-		for (final Entry<EquivalenceClass, HashSet<EquivalenceClass>> entry :
-				newVisitedReturnEcs.entrySet()) {
-			final EquivalenceClass linEc = entry.getKey();
-			final HashSet<EquivalenceClass> set =
-					m_visitedReturnEcs.get(linEc);
-			assert (set != null) : "Set should have been created above.";
-			set.addAll(entry.getValue());
+		for (final Entry<LETTER, HashMap<EquivalenceClass,
+				HashSet<EquivalenceClass>>> outerEntry :
+					newVisitedReturnEcs.entrySet()) {
+			final LETTER letter = outerEntry.getKey();
+			final HashMap<EquivalenceClass, HashSet<EquivalenceClass>> oldMap =
+					m_visitedReturnEcs.get(letter);
+			final HashMap<EquivalenceClass, HashSet<EquivalenceClass>> newMap =
+					outerEntry.getValue();
+			
+			for (final Entry<EquivalenceClass, HashSet<EquivalenceClass>>
+					innerEntry : newMap.entrySet()) {
+				final EquivalenceClass linEc = innerEntry.getKey();
+				final HashSet<EquivalenceClass> set = oldMap.get(linEc);
+				assert (set != null) : "Set should have been created above.";
+				set.addAll(innerEntry.getValue());
+			}
 		}
 		
 		return hasReturns;
@@ -849,67 +930,41 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	 * - execute locally
 	 * - collect globally
 	 * 
-	 * @param letter2hier2linEcSet mapping: letter to hierarchical state to
-	 *                             set of linear equivalence classes
+	 * @param linEc2hierEc2letterSet mapping: linear to hierarchical
+	 *                               equivalence class to set of letters
 	 * @param splitEquivalenceClasses split equivalence classes
 	 */
 	private void splitReturnMixed(
-			final HashMap<LETTER, HashMap<STATE, HashSet<EquivalenceClass>>>
-			letter2hier2linEcSet,
+			final HashMap<EquivalenceClass, HashMap<EquivalenceClass,
+			HashSet<LETTER>>> linEc2hierEc2letterSet,
 			final HashSet<EquivalenceClass> splitEquivalenceClasses) {
 		if (DEBUG3)
 			System.err.println("\n- starting mixed split: " +
-					letter2hier2linEcSet);
+					linEc2hierEc2letterSet);
 		
-		for (final Entry<LETTER, HashMap<STATE, HashSet<EquivalenceClass>>>
-				outerEntry : letter2hier2linEcSet.entrySet()) {
-			final LETTER letter = outerEntry.getKey();
-			final HashMap<STATE, HashSet<EquivalenceClass>> hier2linEcSet =
-					outerEntry.getValue();
-			final HashMap<EquivalenceClass, HashSet<EquivalenceClass>>
-					hierEc2linEcSet =
-					new HashMap<EquivalenceClass, HashSet<EquivalenceClass>>();
+		for (final Entry<EquivalenceClass, HashMap<EquivalenceClass,
+				HashSet<LETTER>>> outerEntry :
+					linEc2hierEc2letterSet.entrySet()) {
+			final EquivalenceClass linEc = outerEntry.getKey();
 			
 			if (DEBUG3)
-				System.err.println("letter: " + letter);
+				System.err.println("linEc: " + linEc.toStringShort());
 			
-			for (final Entry<STATE, HashSet<EquivalenceClass>> innerEntry :
-					hier2linEcSet.entrySet()) {
-				final EquivalenceClass hierEc =
-						m_partition.m_state2EquivalenceClass.get(
-								innerEntry.getKey());
+			for (final Entry<EquivalenceClass, HashSet<LETTER>> innerEntry :
+					outerEntry.getValue().entrySet()) {
+				final EquivalenceClass hierEc = innerEntry.getKey();
 				
-				if (DEBUG3)
-					System.err.println("checking hierEc " +
-							hierEc.toStringShort());
-				
-				if (hierEc.m_states.size() == 1) {
-					if (STATISTICS)
-						++m_returnMixedIgnoredHierEc;
-					
-					continue;
-				}
-				
-				HashSet<EquivalenceClass> linEcSet =
-						hierEc2linEcSet.get(hierEc);
-				if (linEcSet == null) {
-					linEcSet = new HashSet<EquivalenceClass>();
-					hierEc2linEcSet.put(hierEc, linEcSet);
-				}
-				
-				for (final EquivalenceClass linEc : innerEntry.getValue()) {
-					assert (linEc.m_states.size() > 1) :
+				assert (linEc.m_states.size() > 1) &&
+						(hierEc.m_states.size() > 1) :
 						"Singleton ECs are not inserted.";
-					
-					// not checked yet, check now
-					if (linEcSet.add(linEc)) {
-						if (DEBUG3)
-							System.err.println(" with linEc " +
-									linEc.toStringShort());
-						splitReturnMixedCheck(letter, linEc, hierEc,
-								splitEquivalenceClasses);
-					}
+				
+				if (DEBUG3) {
+					System.err.println("hierEc: " + hierEc.toStringShort());
+					System.err.println("letters: " + innerEntry.getValue());
 				}
+				
+				splitReturnMixedCheck(innerEntry.getValue(), linEc, hierEc,
+							splitEquivalenceClasses);
 			}
 		}
 	}
@@ -921,91 +976,125 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	 * TODO<mixedSplit> cache results of other splits somehow? probably many
 	 *                  duplicate checks
 	 * 
-	 * @param letter return letter
+	 * @param letters return letter
 	 * @param linEc linear equivalence class
 	 * @param hierEc hierarchical equivalence class
 	 * @param splitEquivalenceClasses split equivalence classes
 	 */
-	private void splitReturnMixedCheck(final LETTER letter,
+	private void splitReturnMixedCheck(final HashSet<LETTER> letters,
 			final EquivalenceClass linEc, final EquivalenceClass hierEc,
 			final HashSet<EquivalenceClass> splitEquivalenceClasses) {
-		final HashMap<HashSet<EquivalenceClass>, HashSet<STATE>> succ2hier =
-				new HashMap<HashSet<EquivalenceClass>, HashSet<STATE>>(
-						computeHashSetCapacity(hierEc.m_states.size()));
+		final HashMap<LETTER, HashMap<HashSet<EquivalenceClass>,
+			HashSet<STATE>>> letter2succ2hier =
+			new HashMap<LETTER, HashMap<HashSet<EquivalenceClass>,
+			HashSet<STATE>>>(computeHashSetCapacity(hierEc.m_states.size()));
 		
 		for (final STATE hier : hierEc.m_states) {
-			final HashSet<EquivalenceClass> succs =
-					new HashSet<EquivalenceClass>();
+			final HashMap<LETTER, HashSet<EquivalenceClass>> letter2succ =
+					new HashMap<LETTER, HashSet<EquivalenceClass>>(
+							computeHashSetCapacity(letters.size()));
+			if (DEBUG3)
+				System.err.println("hier: " + hier);
 			
 			for (final STATE lin : linEc.m_states) {
-				final Iterator<OutgoingReturnTransition<LETTER, STATE>>
-				edges = m_operand.returnSucccessors(
-						lin, hier, letter).iterator();
-				/*
-				 * TODO<nondeterminism> at most one transition for
-				 *                      deterministic automata,
-				 *                      offer improved version?
-				 */
-				if (edges.hasNext()) {
-					do {
-						final STATE succ = edges.next().getSucc();
-						final EquivalenceClass succEc = m_partition.
-								m_state2EquivalenceClass.get(succ);
-						succs.add(succEc);
-						
-						if (DEBUG3)
-							System.err.println(" reaching " + succ +
-									" in " + succEc.toStringShort());
-					} while (edges.hasNext());
-				}
-				else {
+				if (DEBUG3)
+					System.err.println(" lin: " + lin);
+				
+				if (! m_doubleDecker.isDoubleDecker(lin, hier)) {
 					if (DEBUG3)
-						System.err.print(" no transition, ");
+						System.err.println(" no DS");
 					
-					if (m_doubleDecker.isDoubleDecker(lin, hier)) {
-						if (DEBUG3)
-							System.err.println("but DS");
-						
-						succs.add(m_negativeClass);
+					continue;
+				}
+				
+				for (final LETTER letter : letters) {
+					HashSet<EquivalenceClass> succs =
+							letter2succ.get(letter);
+					if (succs == null) {
+						succs = new HashSet<EquivalenceClass>();
+						letter2succ.put(letter, succs);
+					}
+					
+					if (DEBUG3)
+						System.err.println("  letter " + letter);
+					
+					final Iterator<OutgoingReturnTransition<LETTER, STATE>>
+					edges = m_operand.returnSucccessors(
+							lin, hier, letter).iterator();
+					/*
+					 * TODO<nondeterminism> at most one transition for
+					 *                      deterministic automata,
+					 *                      offer improved version?
+					 */
+					if (edges.hasNext()) {
+						do {
+							final STATE succ = edges.next().getSucc();
+							final EquivalenceClass succEc = m_partition.
+									m_state2EquivalenceClass.get(succ);
+							succs.add(succEc);
+							
+							if (DEBUG3)
+								System.err.println(" reaching " + succ +
+										" in " + succEc.toStringShort());
+						} while (edges.hasNext());
 					}
 					else {
 						if (DEBUG3)
-							System.err.println("no DS");
+							System.err.println(" no transition, but DS");
+						
+						succs.add(m_negativeClass);
 					}
 				}
 			}
 			
 			if (DEBUG3)
-				System.err.println(" -> altogether reached " + succs);
+				System.err.println(" -> altogether reached " + letter2succ);
 			
-			HashSet<STATE> hiers = succ2hier.get(succs);
-			if (hiers == null) {
-				hiers = new HashSet<STATE>();
-				succ2hier.put(succs, hiers);
+			for (final Entry<LETTER, HashSet<EquivalenceClass>> entry :
+					letter2succ.entrySet()) {
+				final LETTER letter = entry.getKey();
+				final HashSet<EquivalenceClass> succEcs = entry.getValue();
+				
+				HashMap<HashSet<EquivalenceClass>, HashSet<STATE>>
+					succ2hier = letter2succ2hier.get(letter);
+				if (succ2hier == null) {
+					succ2hier = new HashMap<HashSet<EquivalenceClass>,
+							HashSet<STATE>>();
+					letter2succ2hier.put(letter, succ2hier);
+				}
+				
+				HashSet<STATE> hiers = succ2hier.get(succEcs);
+				if (hiers == null) {
+					hiers = new HashSet<STATE>();
+					succ2hier.put(succEcs, hiers);
+				}
+				hiers.add(hier);
 			}
-			hiers.add(hier);
 		}
 		
-		if (succ2hier.size() > 1) {
-			if (DEBUG3)
-				System.err.println("\n! mark split of " +
-						hierEc.toStringShort() + ": " +
-						succ2hier);
-			
-			hierEc.markSplit(succ2hier.values());
-			splitEquivalenceClasses.add(hierEc);
-			
-			if (STATISTICS)
-				++m_returnMixedSplits;
-		}
-		else {
-			assert (succ2hier.size() == 1);
-			if (DEBUG3)
-				System.err.println("ignore marking: " +
-						succ2hier);
-			
-			if (STATISTICS)
-				++m_returnMixedIgnored;
+		for (final HashMap<HashSet<EquivalenceClass>, HashSet<STATE>>
+				succ2hier : letter2succ2hier.values()) {
+			if (succ2hier.size() > 1) {
+				if (DEBUG3)
+					System.err.println("\n! mark split of " +
+							hierEc.toStringShort() + ": " +
+							succ2hier);
+				
+				hierEc.markSplit(succ2hier.values());
+				splitEquivalenceClasses.add(hierEc);
+				
+				if (STATISTICS)
+					++m_returnMixedSplits;
+			}
+			else {
+				assert (succ2hier.size() == 1);
+				if (DEBUG3)
+					System.err.println("ignore marking: " +
+							succ2hier);
+				
+				if (STATISTICS)
+					++m_returnMixedIgnored;
+			}
 		}
 	}
 	
