@@ -360,6 +360,9 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 				}
 			}
 			
+			s_Logger.info("Finished analysis, constructing result of size " +
+					m_partition.m_equivalenceClasses.size());
+			
 			// automaton construction
 			constructAutomaton(includeMapping);
 		}
@@ -509,12 +512,12 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 		assert (a.m_incomingRet != EIncomingStatus.inWL);
 		
 		// data structures for the linear and hierarchical predecessors
-		final HashMap<LETTER, HashMap<STATE, HashSet<EquivalenceClass>>>
-			letter2lin2hierEcSet = new HashMap<LETTER, HashMap<STATE,
-			HashSet<EquivalenceClass>>>();
-		final HashMap<LETTER, HashMap<STATE, HashSet<EquivalenceClass>>>
-			letter2hier2linEcSet = new HashMap<LETTER, HashMap<STATE,
-			HashSet<EquivalenceClass>>>();
+		final HashMap<STATE, HashMap<EquivalenceClass, HashSet<LETTER>>>
+			lin2hierEc2letterSet =
+			new HashMap<STATE, HashMap<EquivalenceClass, HashSet<LETTER>>>();
+		final HashMap<STATE, HashMap<EquivalenceClass, HashSet<LETTER>>>
+			hier2linEc2letterSet =
+			new HashMap<STATE, HashMap<EquivalenceClass, HashSet<LETTER>>>();
 		final HashMap<EquivalenceClass, HashMap<EquivalenceClass,
 			HashSet<LETTER>>> linEc2hierEc2letterSet =
 			new HashMap<EquivalenceClass, HashMap<EquivalenceClass,
@@ -528,7 +531,7 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 		
 		// collect incoming return transitions and update data structures
 		final boolean hasReturns = splitReturnFindTransitions(a,
-				letter2lin2hierEcSet, letter2hier2linEcSet,
+				lin2hierEc2letterSet, hier2linEc2letterSet,
 				linEc2hierEc2letterSet);
 		
 		// no return transitions found, remember that
@@ -544,10 +547,10 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 			final StringBuilder builder = new StringBuilder();
 			builder.append("\n--- new return split from A: ");
 			builder.append(a);
-			builder.append("\n letter2lin2hierEcSet: ");
-			builder.append(letter2lin2hierEcSet);
-			builder.append("\n letter2hier2linEcSet: ");
-			builder.append(letter2hier2linEcSet);
+			builder.append("\n lin2hierEc2letterSet: ");
+			builder.append(lin2hierEc2letterSet);
+			builder.append("\n hier2linEc2letterSet: ");
+			builder.append(hier2linEc2letterSet);
 			builder.append("\n linEc2hierEc2letterSet: ");
 			builder.append(linEc2hierEc2letterSet);
 			System.err.println(builder.toString());
@@ -561,11 +564,11 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 				new HashSet<EquivalenceClass>();
 		
 		// collect trivial linear splits
-		splitReturnLocal(letter2hier2linEcSet, splitEquivalenceClasses,
+		splitReturnLocal(hier2linEc2letterSet, splitEquivalenceClasses,
 				m_linHelper);
 		
 		// collect trivial hierarchical splits
-		splitReturnLocal(letter2lin2hierEcSet, splitEquivalenceClasses,
+		splitReturnLocal(lin2hierEc2letterSet, splitEquivalenceClasses,
 				m_hierHelper);
 		
 		// collect complicated mixed splits
@@ -584,16 +587,16 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	 * updates the data structures accordingly.
 	 * 
 	 * @param a splitter equivalence class
-	 * @param letter2lin2hierEcSet mapping for hierarchical split
-	 * @param letter2hier2linEcSet mapping for linear split
+	 * @param lin2hierEc2letterSet mapping for hierarchical split
+	 * @param hier2linEc2letterSet mapping for linear split
 	 * @param linEc2hierEc2letterSet mapping for mixed split
 	 * @return true iff there are incoming return transitions
 	 */
 	private boolean splitReturnFindTransitions(final EquivalenceClass a,
-			final HashMap<LETTER, HashMap<STATE, HashSet<EquivalenceClass>>>
-			letter2lin2hierEcSet,
-			final HashMap<LETTER, HashMap<STATE, HashSet<EquivalenceClass>>>
-			letter2hier2linEcSet,
+			final HashMap<STATE, HashMap<EquivalenceClass, HashSet<LETTER>>>
+			lin2hierEc2letterSet,
+			final HashMap<STATE, HashMap<EquivalenceClass, HashSet<LETTER>>>
+			hier2linEc2letterSet,
 			final HashMap<EquivalenceClass, HashMap<EquivalenceClass,
 			HashSet<LETTER>>> linEc2hierEc2letterSet) {
 		boolean hasReturns = false;
@@ -680,47 +683,19 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 				
 				// add to linear split map (only if no singleton)
 				if (considerHierEc) {
-					HashMap<STATE, HashSet<EquivalenceClass>>
-						lin2hierEcSet = letter2lin2hierEcSet.get(letter);
-					if (lin2hierEcSet == null) {
-						lin2hierEcSet = new HashMap<STATE,
-								HashSet<EquivalenceClass>>();
-						letter2lin2hierEcSet.put(letter, lin2hierEcSet);
+					HashMap<EquivalenceClass, HashSet<LETTER>>
+						hierEc2letterSet = lin2hierEc2letterSet.get(lin);
+					if (hierEc2letterSet == null) {
+						hierEc2letterSet = new HashMap<EquivalenceClass,
+								HashSet<LETTER>>();
+						lin2hierEc2letterSet.put(lin, hierEc2letterSet);
 					}
-					HashSet<EquivalenceClass> hierEcSet =
-							lin2hierEcSet.get(lin);
-					if (hierEcSet == null) {
-						hierEcSet = new HashSet<EquivalenceClass>();
-						lin2hierEcSet.put(lin, hierEcSet);
+					HashSet<LETTER> letterSet = hierEc2letterSet.get(hierEc);
+					if (letterSet == null) {
+						letterSet = new HashSet<LETTER>();
+						hierEc2letterSet.put(hierEc, letterSet);
 					}
-					hierEcSet.add(hierEc);
-					
-					// add to mixed split map (only if both no singletons)
-					if (considerLinEc) {
-						newVisitedEcs.add(hierEc);
-						
-						HashMap<EquivalenceClass, HashSet<LETTER>>
-								hierEc2letterSet =
-								linEc2hierEc2letterSet.get(linEc);
-						HashSet<LETTER> letterSet;
-						if (hierEc2letterSet == null) {
-							hierEc2letterSet = new HashMap<EquivalenceClass,
-									HashSet<LETTER>>();
-							linEc2hierEc2letterSet.put(linEc,
-									hierEc2letterSet);
-							
-							letterSet = new HashSet<LETTER>();
-							hierEc2letterSet.put(hierEc, letterSet);
-						}
-						else {
-							letterSet = hierEc2letterSet.get(hierEc);
-							if (letterSet == null) {
-								letterSet = new HashSet<LETTER>();
-								hierEc2letterSet.put(hierEc, letterSet);
-							}
-						}
-						letterSet.add(letter);
-					}
+					letterSet.add(letter);
 				}
 				else {
 					if (STATISTICS)
@@ -729,20 +704,48 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 				
 				// add to hierarchical split map (only if no singleton)
 				if (considerLinEc) {
-					HashMap<STATE, HashSet<EquivalenceClass>>
-						hier2linEcSet = letter2hier2linEcSet.get(letter);
-					if (hier2linEcSet == null) {
-						hier2linEcSet = new HashMap<STATE,
-								HashSet<EquivalenceClass>>();
-						letter2hier2linEcSet.put(letter, hier2linEcSet);
+					HashMap<EquivalenceClass, HashSet<LETTER>>
+						linEc2letterSet = hier2linEc2letterSet.get(hier);
+					if (linEc2letterSet == null) {
+						linEc2letterSet = new HashMap<EquivalenceClass,
+								HashSet<LETTER>>();
+						hier2linEc2letterSet.put(hier, linEc2letterSet);
 					}
-					HashSet<EquivalenceClass> linEcSet =
-							hier2linEcSet.get(hier);
-					if (linEcSet == null) {
-						linEcSet = new HashSet<EquivalenceClass>();
-						hier2linEcSet.put(hier, linEcSet);
+					HashSet<LETTER> letterSet = linEc2letterSet.get(linEc);
+					if (letterSet == null) {
+						letterSet = new HashSet<LETTER>();
+						linEc2letterSet.put(linEc, letterSet);
 					}
-					linEcSet.add(linEc);
+					letterSet.add(letter);
+				}
+				else {
+					if (STATISTICS)
+						++m_ignoredReturnSingletons;
+				}
+				
+				// add to mixed split map (only if both no singletons)
+				if (considerLinEc && considerHierEc) {
+					HashMap<EquivalenceClass, HashSet<LETTER>>
+							hierEc2letterSet =
+							linEc2hierEc2letterSet.get(linEc);
+					HashSet<LETTER> letterSet;
+					if (hierEc2letterSet == null) {
+						hierEc2letterSet = new HashMap<EquivalenceClass,
+								HashSet<LETTER>>();
+						linEc2hierEc2letterSet.put(linEc,
+								hierEc2letterSet);
+						
+						letterSet = new HashSet<LETTER>();
+						hierEc2letterSet.put(hierEc, letterSet);
+					}
+					else {
+						letterSet = hierEc2letterSet.get(hierEc);
+						if (letterSet == null) {
+							letterSet = new HashSet<LETTER>();
+							hierEc2letterSet.put(hierEc, letterSet);
+						}
+					}
+					letterSet.add(letter);
 				}
 				else {
 					if (STATISTICS)
@@ -791,64 +794,76 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	 * explicit transition are of interest iff their equivalence class is
 	 * considered.
 	 *
-	 * @param letter2state2ecSet mapping: letter to state to set of equivalence
-	 *                           classes
+	 * @param state2ec2letterSet mapping: state to equivalence class to set of
+	 *                           letters
 	 * @param splitEquivalenceClasses split equivalence classes
 	 * @param returnHelper abstract from linear and hierarchical states
 	 */
-	private void splitReturnLocal(final HashMap<LETTER, HashMap<STATE,
-			HashSet<EquivalenceClass>>> letter2state2ecSet,
+	private void splitReturnLocal(final HashMap<STATE,
+			HashMap<EquivalenceClass, HashSet<LETTER>>> state2ec2letterSet,
 			final HashSet<EquivalenceClass> splitEquivalenceClasses,
 			final IReturnHelper<LETTER, STATE> returnHelper) {
 		if (DEBUG3)
 			System.err.println("\n- starting local split: " +
-					letter2state2ecSet);
+					state2ec2letterSet);
 		
-		for (final Entry<LETTER, HashMap<STATE, HashSet<EquivalenceClass>>>
-				outerEntry : letter2state2ecSet.entrySet()) {
-			final LETTER letter = outerEntry.getKey();
-			final HashMap<STATE, HashSet<EquivalenceClass>> state2ecSet =
+		for (final Entry<STATE, HashMap<EquivalenceClass, HashSet<LETTER>>>
+				outerEntry : state2ec2letterSet.entrySet()) {
+			final STATE first = outerEntry.getKey();
+			final HashMap<EquivalenceClass, HashSet<LETTER>> ec2letterSet =
 					outerEntry.getValue();
 			
 			if (DEBUG3)
-				System.err.println("\nouter entry: " + outerEntry);
+				System.err.println("\n consider: " + first);
 			
-			for (final Entry<STATE, HashSet<EquivalenceClass>> innerEntry :
-					state2ecSet.entrySet()) {
-				final STATE first = innerEntry.getKey();
-				final HashSet<EquivalenceClass> ecSet = innerEntry.getValue();
+			for (final Entry<EquivalenceClass, HashSet<LETTER>> innerEntry :
+					ec2letterSet.entrySet()) {
+				final EquivalenceClass ec = innerEntry.getKey();
+				final HashSet<LETTER> letters = innerEntry.getValue();
 				
 				if (DEBUG3)
-					System.err.println("\n consider: " + first);
+					System.err.println("\n next ec: " +
+							ec.toStringShort());
 				
-				for (final EquivalenceClass ec : ecSet) {
-					if (DEBUG3)
-						System.err.println("\nnext ec: " +
-								ec.toStringShort());
+				final HashMap<LETTER, HashMap<HashSet<EquivalenceClass>,
+					HashSet<STATE>>> letter2succ2state =
+					new HashMap<LETTER, HashMap<HashSet<EquivalenceClass>,
+					HashSet<STATE>>>(computeHashSetCapacity(
+							ec.m_states.size()));
+				
+				for (final STATE second : ec.m_states) {
+					if (DEBUG3) {
+						System.err.println(" consider " + second);
+						System.err.println(" with letters " + letters);
+					}
 					
-					final HashMap<HashSet<EquivalenceClass>, HashSet<STATE>>
-						succEcSet2stateSet = new HashMap<
-							HashSet<EquivalenceClass>, HashSet<STATE>>();
-					
-					for (final STATE second : ec.m_states) {
+					if (! returnHelper.isDoubleDecker(first, second)) {
 						if (DEBUG3)
-							System.err.println("consider " + second);
+							System.err.println(" no DS");
+						
+						continue;
+					}
+					
+					for (final LETTER letter : letters) {
+						HashSet<EquivalenceClass> succs =
+								new HashSet<EquivalenceClass>();
+						
+						if (DEBUG3)
+							System.err.println("  letter " + letter);
 						
 						final Iterator<OutgoingReturnTransition<LETTER, STATE>>
-							edges = returnHelper.get(first, second, letter);
+						edges = returnHelper.get(first, second, letter);
 						/*
 						 * TODO<nondeterminism> at most one transition for
 						 *                      deterministic automata,
 						 *                      offer improved version?
 						 */
-						final HashSet<EquivalenceClass> succEcs;
 						if (edges.hasNext()) {
-							succEcs = new HashSet<EquivalenceClass>();
 							do {
 								final STATE succ = edges.next().getSucc();
 								final EquivalenceClass succEc = m_partition.
 										m_state2EquivalenceClass.get(succ);
-								succEcs.add(succEc);
+								succs.add(succEc);
 								
 								if (DEBUG3)
 									System.err.println(" reaching " + succ +
@@ -857,54 +872,50 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 						}
 						else {
 							if (DEBUG3)
-								System.err.print(" no transition, ");
+								System.err.println(" no transition, but DS");
 							
-							if (returnHelper.isDoubleDecker(first, second)) {
-								if (DEBUG3)
-									System.err.println("but DS");
-								
-								succEcs = m_negativeSet;
-							}
-							else {
-								if (DEBUG3)
-									System.err.println("no DS");
-								
-								continue;
-							}
+							succs.add(m_negativeClass);
 						}
-						
-						HashSet<STATE> linSet =
-								succEcSet2stateSet.get(succEcs);
-						if (linSet == null) {
-							linSet = new HashSet<STATE>(
-									computeHashSetCapacity(
-											ec.m_states.size()));
-							succEcSet2stateSet.put(succEcs, linSet);
-						}
-						linSet.add(second);
 						
 						if (DEBUG3)
 							System.err.println(" -> altogether reached " +
-									succEcs);
+									succs);
+						
+						HashMap<HashSet<EquivalenceClass>, HashSet<STATE>>
+							succEc2states = letter2succ2state.get(letter);
+						if (succEc2states == null) {
+							succEc2states = new HashMap<HashSet
+									<EquivalenceClass>, HashSet<STATE>>();
+							letter2succ2state.put(letter, succEc2states);
+						}
+						HashSet<STATE> states = succEc2states.get(succs);
+						if (states == null) {
+							states = new HashSet<STATE>();
+							succEc2states.put(succs, states);
+						}
+						states.add(second);
 					}
-					
-					if (succEcSet2stateSet.size() > 1) {
+				}
+				
+				for (final HashMap<HashSet<EquivalenceClass>, HashSet<STATE>>
+						succ2hier : letter2succ2state.values()) {
+					if (succ2hier.size() > 1) {
 						if (DEBUG3)
 							System.err.println("\n! mark split of " +
 									ec.toStringShort() + ": " +
-									succEcSet2stateSet);
+									succ2hier);
 						
-						ec.markSplit(succEcSet2stateSet.values());
+						ec.markSplit(succ2hier.values());
 						splitEquivalenceClasses.add(ec);
 						
 						if (STATISTICS)
 							++m_returnLocalSplits;
 					}
 					else {
-						assert (succEcSet2stateSet.size() == 1);
+						assert (succ2hier.size() == 1);
 						if (DEBUG3)
 							System.err.println("ignore marking: " +
-									succEcSet2stateSet);
+									succ2hier);
 						
 						if (STATISTICS)
 							++m_returnLocalIgnored;
