@@ -1703,9 +1703,20 @@ public class SmtManager {
 		Term predicate_AND_tf_term = Util.and(m_Script, predicate_renamed, tf_term_outvars_renamed);
 		TermVariable[] invars = new TermVariable[tf.getInVars().keySet().size()];
 		{
+			ArrayList<TermVariable> freeVars = new ArrayList<TermVariable>();
+			ArrayList<TermVariable> invarsOccuringInFreeVars = new ArrayList<TermVariable>();
+			for (int j = 0; j < predicate_AND_tf_term.getFreeVars().length; j++) {
+				freeVars.add(predicate_AND_tf_term.getFreeVars()[j]);
+			}
 			int i = 0;
 			for (BoogieVar bv : tf.getInVars().keySet()) {
-				invars[i] = tf.getInVars().get(bv);
+				if (freeVars.contains(tf.getInVars().get(bv))) {
+					invarsOccuringInFreeVars.add(tf.getInVars().get(bv));
+				}
+			}
+			invars = new TermVariable[invarsOccuringInFreeVars.size()];
+			for (TermVariable tv : invarsOccuringInFreeVars) {
+				invars[i] = tv;
 				i++;
 			}
 		}
@@ -1811,10 +1822,21 @@ public class SmtManager {
 		// The implication is already simplified into "not" and "or".
 		Term NOT_tf_term_OR_predicate = Util.or(m_Script, Util.not(m_Script, tf_term_outvars_renamed), predicate_renamed);
 		TermVariable[] invars = new TermVariable[tf.getInVars().keySet().size()];
-		{
+		{		
+			ArrayList<TermVariable> freeVars = new ArrayList<TermVariable>();
+			ArrayList<TermVariable> invarsOccuringInFreeVars = new ArrayList<TermVariable>();
+			for (int j = 0; j < NOT_tf_term_OR_predicate.getFreeVars().length; j++) {
+				freeVars.add(NOT_tf_term_OR_predicate.getFreeVars()[j]);
+			}
 			int i = 0;
 			for (BoogieVar bv : tf.getInVars().keySet()) {
-				invars[i] = tf.getInVars().get(bv);
+				if (freeVars.contains(tf.getInVars().get(bv))) {
+					invarsOccuringInFreeVars.add(tf.getInVars().get(bv));
+				}
+			}
+			invars = new TermVariable[invarsOccuringInFreeVars.size()];
+			for (TermVariable tv : invarsOccuringInFreeVars) {
+				invars[i] = tv;
 				i++;
 			}
 		}
