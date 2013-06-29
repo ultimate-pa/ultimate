@@ -41,8 +41,22 @@ import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
  * 
  * <trivialCases> finals.size() = 0 => empty automaton
  *                nonfinals.size() = 0 => possibly MR(Sigma)*, easy to check
+ *                -> should work on its own
  * 
  * <DoubleDecker> check this?
+ * 
+ * <constructAutomaton> how to do this efficiently in the end?
+ * 
+ * possible improvements:
+ * <threading> identify possibilities for threading and implement it
+ * 
+ * <globalSplit> global return split analysis
+ * 
+ * refused ideas:
+ * <stateAnalysis> separate set of states in EC for states with no return
+ *                 (internal/call?) transitions
+ *                 -> see revision 9166, works, but no real impact,
+ *                    therefore quite complicated to maintain
  * 
  * <splittingPolicy> currently all internal and call splits consider the
  *                   same splitter set
@@ -52,18 +66,6 @@ import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
  *                   since finding the predecessors is expensive...
  *                   also this does not work together with the "only one to WL"
  *                   policy
- * 
- * <constructAutomaton> how to do this efficiently in the end?
- * 
- * <threading> identify possibilities for threading and implement it
- * 
- * possible improvements:
- * <globalSplit> global return split analysis
- * 
- * <stateAnalysis> separate set of states in EC for states with no return
- *                 (internal/call?) transitions
- *                 -> see revision 9166, works, but no real impact,
- *                    therefore quite complicated to maintain
  * 
  * misc:
  * <hashCode> overwrite for EquivalenceClass?
@@ -103,6 +105,7 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	// return transition helper objects
 	final LinHelper m_linHelper;
 	final HierHelper m_hierHelper;
+	HashMap<EquivalenceClass, HashSet<EquivalenceClass>> m_visitedReturnEcs;
 	// simulates the output automaton
 	private ShrinkNwaResult m_result;
 	
@@ -120,12 +123,13 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	private final boolean DEBUG4 = false;
 	
 	// TODO<statistics>
-	private final boolean STATISTICS = true;
+	private final boolean STATISTICS = false;
 	private int m_splitsWithChange = 0;
 	private int m_splitsWithoutChange = 0;
 	private int m_incomingTransitions = 0;
 	private int m_noIncomingTransitions = 0;
 	private int m_ignoredReturnSingletons = 0;
+	private int m_ignoredReturnDuplicates = 0;
 	private int m_returnLocalSplits = 0;
 	private int m_returnMixedSplits = 0;
 	private int m_returnLocalIgnored = 0;
@@ -206,6 +210,7 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 		m_negativeSet.add(m_negativeClass);
 		m_linHelper = new LinHelper();
 		m_hierHelper = new HierHelper();
+		m_visitedReturnEcs = null;
 		
 		m_splitOutgoing = splitOutgoing;
 		if (m_splitOutgoing) {
@@ -225,18 +230,22 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 		if (STATISTICS) {
 			System.out.println("positive splits: " + m_splitsWithChange);
 			System.out.println("negative splits: " + m_splitsWithoutChange);
-			System.out.println("quota (p/n): " +
-					(((float)m_splitsWithChange) /
-							((float)Math.max(m_splitsWithoutChange, 1))));
+			System.out.println("quota (p/n): " + (m_splitsWithoutChange == 0
+					? "--"
+					: (((float)m_splitsWithChange) /
+							((float)m_splitsWithoutChange))));
 			System.out.println("incoming transition checks : " +
 					m_incomingTransitions);
 			System.out.println("no incoming transitions found : " +
 					m_noIncomingTransitions);
-			System.out.println("quota (p/n): " +
-					(((float)m_incomingTransitions) /
-							((float)Math.max(m_noIncomingTransitions, 1))));
+			System.out.println("quota (p/n): " + (m_noIncomingTransitions == 0
+					? "--"
+					: (((float)m_incomingTransitions) /
+							((float)m_noIncomingTransitions))));
 			System.out.println("ignored return splits due to singletons: " +
 					m_ignoredReturnSingletons);
+			System.out.println("ignored return splits due to duplicate tests: "
+					+ m_ignoredReturnDuplicates);
 			System.out.print("return splits (executed/ignored): started " +
 					m_returnSplitsStarted);
 			System.out.print(", local: (" + m_returnLocalSplits + "/" +
@@ -508,6 +517,12 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 			letter2hier2linEcSet = new HashMap<LETTER, HashMap<STATE,
 			HashSet<EquivalenceClass>>>();
 		
+		if (m_visitedReturnEcs == null) {
+			m_visitedReturnEcs = new HashMap<EquivalenceClass,
+					HashSet<EquivalenceClass>>(computeHashSetCapacity(
+							m_partition.m_equivalenceClasses.size()));
+		}
+		
 		// collect incoming return transitions and update data structures
 		final boolean hasReturns = splitReturnFindTransitions(a,
 				letter2lin2hierEcSet, letter2hier2linEcSet);
@@ -573,6 +588,9 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 			final HashMap<LETTER, HashMap<STATE, HashSet<EquivalenceClass>>>
 			letter2hier2linEcSet) {
 		boolean hasReturns = false;
+		final HashMap<EquivalenceClass, HashSet<EquivalenceClass>>
+			newVisitedReturnEcs = new HashMap<EquivalenceClass,
+			HashSet<EquivalenceClass>>();
 		for (final STATE succ : a.m_states) {
 			Iterator<IncomingReturnTransition<LETTER, STATE>> it =
 					m_operand.returnPredecessors(succ).iterator();
@@ -587,6 +605,32 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 							m_partition.m_state2EquivalenceClass.get(lin);
 					final EquivalenceClass hierEc =
 							m_partition.m_state2EquivalenceClass.get(hier);
+					
+					/*
+					 * check whether the equivalence class combination was
+					 * already checked before
+					 */
+					HashSet<EquivalenceClass> visitedEcs =
+							m_visitedReturnEcs.get(linEc);
+					if (visitedEcs == null) {
+						visitedEcs = new HashSet<EquivalenceClass>();
+						m_visitedReturnEcs.put(linEc, visitedEcs);
+					}
+					else if (visitedEcs.contains(hierEc)) {
+						if (STATISTICS)
+							++m_ignoredReturnDuplicates;
+						
+						continue;
+					}
+					
+					// remember equivalence class combination
+					HashSet<EquivalenceClass> newVisitedEcs =
+							newVisitedReturnEcs.get(linEc);
+					if (newVisitedEcs == null) {
+						newVisitedEcs = new HashSet<EquivalenceClass>();
+						newVisitedReturnEcs.put(linEc, newVisitedEcs);
+					}
+					newVisitedEcs.add(hierEc);
 					
 					// add to linear split map (only if no singleton)
 					if (hierEc.m_states.size() > 1) {
@@ -634,6 +678,17 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 				} while (it.hasNext());
 			}
 		}
+		
+		// globally remember new equivalence class combinations
+		for (final Entry<EquivalenceClass, HashSet<EquivalenceClass>> entry :
+				newVisitedReturnEcs.entrySet()) {
+			final EquivalenceClass linEc = entry.getKey();
+			final HashSet<EquivalenceClass> set =
+					m_visitedReturnEcs.get(linEc);
+			assert (set != null) : "Set should have been created above.";
+			set.addAll(entry.getValue());
+		}
+		
 		return hasReturns;
 	}
 	
@@ -843,6 +898,9 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 				}
 				
 				for (final EquivalenceClass linEc : innerEntry.getValue()) {
+					assert (linEc.m_states.size() > 1) :
+						"Singleton ECs are not inserted.";
+					
 					// not checked yet, check now
 					if (linEcSet.add(linEc)) {
 						if (DEBUG3)
@@ -967,6 +1025,7 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 			final HashSet<EquivalenceClass> splitEquivalenceClasses) {
 		if (DEBUG3)
 			System.err.println("\n-- executing return splits");
+		boolean splitOccured = false;
 		
 		for (final EquivalenceClass ec : splitEquivalenceClasses) {
 			final HashMap<STATE, HashSet<STATE>> state2separatedSet =
@@ -1055,6 +1114,10 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 				System.err.println("state2color: " + state2color);
 			
 			// finally split the equivalence class
+			if (newEcs.length > 0) {
+				splitOccured = true;
+			}
+			
 			for (int i = newEcs.length - 1; i > 0; --i) {
 				final HashSet<STATE> newStates = newEcs[i];
 				final EquivalenceClass newEc =
@@ -1077,6 +1140,10 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 					++m_splitsWithoutChange;
 				}
 			}
+		}
+		
+		if (splitOccured) {
+			m_visitedReturnEcs = null;
 		}
 	}
 	
