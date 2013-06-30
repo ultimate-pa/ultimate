@@ -1754,6 +1754,9 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 			for (IncomingInternalTransition<LETTER, STATE> inTrans : cont.internalPredecessors()) {
 				StateContainer<LETTER, STATE> predCont = m_States.get(inTrans.getPred());
 				boolean finalOnPathToHonda = stack.getTopmostFlag() || m_finalStates.contains(inTrans.getPred());
+				if (finalOnPathToHonda && stack.height() > 1 && !stack.getSecondTopmostFlag()) {
+					continue;
+				}
 				StackOfFlaggedStates predStack = new StackOfFlaggedStates(stack, inTrans, finalOnPathToHonda);
 				preceedingStacks.add(predStack);
 				checkIfGoalOrInitReached(i, predStack, predCont);
@@ -1775,7 +1778,7 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 						// call predecessor does not match state on stack
 						continue;
 					}
-					if (finalOnPathToHonda != stack.getSecondTopmostFlag() || !m_finalStates.contains(inTrans.getPred())) {
+					if (finalOnPathToHonda != stack.getSecondTopmostFlag() && !m_finalStates.contains(inTrans.getPred())) {
 						// information about finalOnPathToHonda does not match
 						continue;
 					}
@@ -1785,6 +1788,7 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 				}
 			}
 
+			// TODO: Optimization (you can ignore stacks like (q0,false)  (q0,false)  (q1,true)
 			for (IncomingReturnTransition<LETTER, STATE> inTrans : cont.returnPredecessors()) {
 				// note that goal or init can never be reached 
 				// (backwards) with empty stack directly after return.
@@ -1798,7 +1802,7 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 						StackOfFlaggedStates predStack = new StackOfFlaggedStates(stack, inTrans, true, linPredIsFinal);
 						preceedingStacks.add(predStack);
 					}
-					if (!m_finalStates.contains(inTrans.getHierPred())) {
+					if (!m_finalStates.contains(inTrans.getHierPred()) && !linPredIsFinal) {
 						StackOfFlaggedStates predStack = new StackOfFlaggedStates(stack, inTrans, false, linPredIsFinal);
 						preceedingStacks.add(predStack);
 					}

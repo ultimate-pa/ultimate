@@ -15,6 +15,11 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingReturnTra
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.NestedWordAutomatonReachableStates.ReachProp;
 
 public abstract class StateContainer<LETTER, STATE> {
+	
+	enum DownStateProp {
+		
+	}
+	
 
 	protected final STATE m_State;
 	protected ReachProp m_ReachProp;
