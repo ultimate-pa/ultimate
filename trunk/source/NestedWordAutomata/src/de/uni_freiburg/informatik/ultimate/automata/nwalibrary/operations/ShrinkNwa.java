@@ -105,8 +105,10 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	// return transition helper objects
 	final LinHelper m_linHelper;
 	final HierHelper m_hierHelper;
+	/* TODO<duplicateTests> does not work in this way
 	HashMap<LETTER, HashMap<EquivalenceClass, HashSet<EquivalenceClass>>>
 		m_visitedReturnEcs;
+	*/
 	// simulates the output automaton
 	private ShrinkNwaResult m_result;
 	
@@ -210,7 +212,9 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 		m_negativeSet.add(m_negativeClass);
 		m_linHelper = new LinHelper();
 		m_hierHelper = new HierHelper();
+		/* TODO<duplicateTests>
 		m_visitedReturnEcs = null;
+		*/
 		
 		m_splitOutgoing = splitOutgoing;
 		if (m_splitOutgoing) {
@@ -523,11 +527,13 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 			new HashMap<EquivalenceClass, HashMap<EquivalenceClass,
 			HashSet<LETTER>>>();
 		
+		/* TODO<duplicateTests>
 		if (m_visitedReturnEcs == null) {
 			m_visitedReturnEcs = new HashMap<LETTER, HashMap<EquivalenceClass,
 					HashSet<EquivalenceClass>>>(computeHashSetCapacity(
 							m_partition.m_equivalenceClasses.size()));
 		}
+		*/
 		
 		// collect incoming return transitions and update data structures
 		final boolean hasReturns = splitReturnFindTransitions(a,
@@ -601,10 +607,12 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 			HashSet<LETTER>>> linEc2hierEc2letterSet) {
 		boolean hasReturns = false;
 		
+		/* TODO<duplicateTests>
 		final HashMap<LETTER, HashMap<EquivalenceClass,
 			HashSet<EquivalenceClass>>> newVisitedReturnEcs =
 			new HashMap<LETTER, HashMap<EquivalenceClass,
 			HashSet<EquivalenceClass>>>();
+		*/
 		
 		for (final STATE succ : a.m_states) {
 			Iterator<IncomingReturnTransition<LETTER, STATE>> it =
@@ -639,7 +647,8 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 				/*
 				 * check whether the equivalence class combination was
 				 * already checked before
-				 */
+				 * TODO<duplicateTests> not correct globally, only useful there
+				 *
 				HashMap<EquivalenceClass, HashSet<EquivalenceClass>>
 						visitedMap = m_visitedReturnEcs.get(letter);
 				HashSet<EquivalenceClass> visitedHierEcs;
@@ -668,18 +677,24 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 				// remember equivalence class combination
 				HashMap<EquivalenceClass, HashSet<EquivalenceClass>>
 						newVisitedMap = newVisitedReturnEcs.get(letter);
+				HashSet<EquivalenceClass> newVisitedEcs;
 				if (newVisitedMap == null) {
 					newVisitedMap = new HashMap<EquivalenceClass,
 							HashSet<EquivalenceClass>>();
 					newVisitedReturnEcs.put(letter, newVisitedMap);
-				}
-				HashSet<EquivalenceClass> newVisitedEcs =
-						newVisitedMap.get(linEc);
-				if (newVisitedEcs == null) {
+					
 					newVisitedEcs = new HashSet<EquivalenceClass>();
 					newVisitedMap.put(linEc, newVisitedEcs);
 				}
+				else {
+					newVisitedEcs = newVisitedMap.get(linEc);
+					if (newVisitedEcs == null) {
+						newVisitedEcs = new HashSet<EquivalenceClass>();
+						newVisitedMap.put(linEc, newVisitedEcs);
+					}
+				}
 				newVisitedEcs.add(hierEc);
+				*/
 				
 				// add to linear split map (only if no singleton)
 				if (considerHierEc) {
@@ -755,6 +770,7 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 		}
 		
 		// globally remember new equivalence class combinations
+		/* TODO<duplicateTests> s.a.
 		for (final Entry<LETTER, HashMap<EquivalenceClass,
 				HashSet<EquivalenceClass>>> outerEntry :
 					newVisitedReturnEcs.entrySet()) {
@@ -772,6 +788,7 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 				set.addAll(innerEntry.getValue());
 			}
 		}
+		*/
 		
 		return hasReturns;
 	}
@@ -1125,7 +1142,9 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 			final HashSet<EquivalenceClass> splitEquivalenceClasses) {
 		if (DEBUG3)
 			System.err.println("\n-- executing return splits");
+		/* TODO<duplicateTests>
 		boolean splitOccured = false;
+		*/
 		
 		for (final EquivalenceClass ec : splitEquivalenceClasses) {
 			final HashMap<STATE, HashSet<STATE>> state2separatedSet =
@@ -1214,9 +1233,12 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 				System.err.println("state2color: " + state2color);
 			
 			// finally split the equivalence class
+			
+			/* TODO<duplicateTests>
 			if (newEcs.length > 0) {
 				splitOccured = true;
 			}
+			*/
 			
 			for (int i = newEcs.length - 1; i > 0; --i) {
 				final HashSet<STATE> newStates = newEcs[i];
@@ -1242,9 +1264,11 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 			}
 		}
 		
+		/* TODO<duplicateTests>
 		if (splitOccured) {
 			m_visitedReturnEcs = null;
 		}
+		*/
 	}
 	
 	/**
