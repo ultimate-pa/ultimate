@@ -102,7 +102,7 @@ public class PreferenceValues {
 	public static final String VALUE_NEG_INTERPOLANT_AUTOMATON = "NegatedInterpolantAutomaton";
 	public static final String VALUE_ALL_LOC = "Craig - all locations";
 	public static final String VALUE_CUTPOINTS = "Craig - Cutpoints";
-	public static final String VALUE_ITP_WP = "Weakest Precondition";
+	public static final String VALUE_ITP_WP = "StrongestPostcondition&WeakestPrecondition";
 	public static final String VALUE_ITP_GUESS = "Guess Interpolants";
 	public static final String VALUE_InterpolantAutomaton_SingleTrace = "SingleTrace";
 	public static final String VALUE_InterpolantAutomaton_Canonical = "With backedges to repeated locations (Canonial)";
