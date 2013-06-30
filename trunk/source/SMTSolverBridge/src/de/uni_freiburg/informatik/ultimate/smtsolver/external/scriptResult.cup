@@ -476,11 +476,11 @@ errorBehavior ::= IMMEDIATEEXIT:i {: RESULT = i; :} |
 reasonUnknown ::= TIMEOUT {: RESULT = ReasonUnknown.TIMEOUT; :} |
 				  MEMOUT {: RESULT = ReasonUnknown.MEMOUT; :} |
 				  INCOMPLETE {: RESULT = ReasonUnknown.INCOMPLETE; :} | 
-                  /* The following line is not compatible to the SMT-LIB 2.0 
-                   * standard. The reason-Unknown "(incomplete <sexpr>)" is used 
-                   * by Z3 and not documented. We received this information 
-                   * from Leo via email on 2012-05-21 */ 
-                  LPAR INCOMPLETE sExpr RPAR {: RESULT = ReasonUnknown.INCOMPLETE; :} ; 
+				  /* The following line is not compatible to the SMT-LIB 2.0 
+				   * standard. The reason-Unknown "(incomplete <sexpr>)" is used 
+				   * by Z3 and not documented. We received this information 
+				   * from Leo via email on 2012-05-21 */ 
+				  LPAR INCOMPLETE sExpr RPAR {: RESULT = ReasonUnknown.INCOMPLETE; :} ; 
 
 
 infoResponse ::= CERRORBEHAVIOR:c errorBehavior:e {: RESULT = e; :} |
