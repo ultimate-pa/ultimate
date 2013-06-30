@@ -1,8 +1,9 @@
 // Author: heizmann@informatik.uni-freiburg.de
 // Date: 22.6.2013
 
-print(nwa);
-print(removeNonLiveStates(nwa));
+NestedWordAutomaton result = removeNonLiveStates(nwa);
+print(numberOfStates(result));
+assert(numberOfStates(result) == 2);
 
 NestedWordAutomaton nwa = (
 	callAlphabet = {},
