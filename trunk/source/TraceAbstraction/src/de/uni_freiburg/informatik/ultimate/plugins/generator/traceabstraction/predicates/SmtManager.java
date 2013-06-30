@@ -1646,9 +1646,9 @@ public class SmtManager {
 	 */
 	public IPredicate strongestPostcondition(IPredicate p, CodeBlock cb) {
 		if (cb instanceof Call) {
-			throw new UnsupportedOperationException();
+			throw new UnsupportedOperationException("This method is not responsible for Call-Statemtens.");
 		} else if (cb instanceof Return) {
-			throw new UnsupportedOperationException();
+			throw new UnsupportedOperationException("This method is not responsible for Call-Statemtens.");
 		} else if (cb instanceof InterproceduralSequentialComposition) {
 			throw new UnsupportedOperationException();
 		}
@@ -1671,11 +1671,12 @@ public class SmtManager {
 				replacers.add(bv.getTermVariable());
 			}
 		}
-		TermVariable[] vars = replacees.toArray(new TermVariable[replacees
-		                                                         .size()]);
-		Term[] values = replacers.toArray(new Term[replacers.size()]);
-		Term predicate_renamed = m_Script.let(vars, values, p.getFormula());
-		predicate_renamed = (new FormulaUnLet()).unlet(predicate_renamed);
+//		TermVariable[] vars = replacees.toArray(new TermVariable[replacees
+//		                                                         .size()]);
+//		Term[] values = replacers.toArray(new Term[replacers.size()]);
+//		Term predicate_renamed = m_Script.let(vars, values, p.getFormula());
+//		predicate_renamed = (new FormulaUnLet()).unlet(predicate_renamed);
+		Term predicate_renamed = substituteVars(p.getFormula(), replacees, replacers);
 		
 		// 2. Rename the outvars of the TransFormula of the given CodeBlock cb into TermVariables
 		Map<TermVariable, BoogieVar> outvars_inverse = new HashMap<TermVariable, BoogieVar>();
@@ -1694,13 +1695,16 @@ public class SmtManager {
 			}
 		}
 		
-		vars = replacees.toArray(new TermVariable[replacees.size()]);
-		values = replacers.toArray(new Term[replacers.size()]);
-		Term tf_term_outvars_renamed = m_Script.let(vars, values, tf_term);
-		tf_term_outvars_renamed = (new FormulaUnLet()).unlet(tf_term_outvars_renamed);
+//		vars = replacees.toArray(new TermVariable[replacees.size()]);
+//		values = replacers.toArray(new Term[replacers.size()]);
+//		Term tf_term_outvars_renamed = m_Script.let(vars, values, tf_term);
+//		tf_term_outvars_renamed = (new FormulaUnLet()).unlet(tf_term_outvars_renamed);
+		Term tf_term_outvars_renamed = substituteVars(tf_term, replacees, replacers);
 		
 		// 3. Connect the renamed predicate and the renamed TransFormula by an logical and.
 		Term predicate_AND_tf_term = Util.and(m_Script, predicate_renamed, tf_term_outvars_renamed);
+		// Select from the invars the freevars, and existentially quantify over them. Quantification is done
+		// in step 4 below.
 		TermVariable[] invars = new TermVariable[tf.getInVars().keySet().size()];
 		{
 			ArrayList<TermVariable> freeVars = new ArrayList<TermVariable>();
@@ -1737,9 +1741,68 @@ public class SmtManager {
 		return newPredicate(result, tvp.getProcedures(), tvp.getVars(), result_as_closed_formula);
 	}
 	
+	/**
+	 * Substitutes the replacees through replacers in the given formula.
+	 * @return formula, where replacees are substituted by replacers.
+	 */
+	private Term substituteVars(Term formula, List<TermVariable> replacees, List<Term> replacers) {
+		
+		TermVariable[] vars = replacees.toArray(new TermVariable[replacees
+		                                                         .size()]);
+		Term[] values = replacers.toArray(new Term[replacers.size()]);
+		Term predicate_renamed = m_Script.let(vars, values, formula);
+		predicate_renamed = (new FormulaUnLet()).unlet(predicate_renamed);
+		return predicate_renamed;
+	}
+	
 	
 	public IPredicate strongestPostcondition(IPredicate p, Call call) {
-		return null;
+		String calledProc = call.getCallStatement().getMethodName();
+		String procOfCallStmt = "";
+		// FIXME: Is there another way to find the procedure of the given statement??
+		for (String proc : p.getProcedures()) {
+			if (proc != calledProc) {
+				procOfCallStmt = proc;
+				break;
+			}
+		}
+		TransFormula globalVarsAssignment = m_ModifiableGlobals.getGlobalVarsAssignment(procOfCallStmt);
+		List<TermVariable> replacees = new ArrayList<TermVariable>();
+		List<Term> replacers = new ArrayList<Term>();
+		for (BoogieVar bv : globalVarsAssignment.getInVars().keySet()) {
+			replacees.add(globalVarsAssignment.getInVars().get(bv));
+			replacers.add(bv.getTermVariable());
+		}
+		Term globalVars_Invars_Renamed = substituteVars(globalVarsAssignment.getFormula(), replacees, replacers);
+		replacees.clear();
+		replacers.clear();
+		for (BoogieVar bv : globalVarsAssignment.getOutVars().keySet()) {
+			replacees.add(globalVarsAssignment.getOutVars().get(bv));
+			replacers.add(bv.getTermVariable());
+		}
+		
+		Term globalVars_InVarsRenamed_OutVarsRenamed = substituteVars(globalVars_Invars_Renamed, replacees, replacers);
+		replacees.clear();
+		replacers.clear();
+		TransFormula call_TF = call.getTransitionFormula();
+		for (BoogieVar bv : call_TF.getInVars().keySet()) {
+			replacees.add(call_TF.getInVars().get(bv));
+			replacers.add(bv.getTermVariable());
+		}
+		Term call_Term_InVarsRenamed = substituteVars(call_TF.getFormula(), replacees, replacers);
+		replacees.clear();
+		replacers.clear();
+		
+		for (BoogieVar bv : call_TF.getOutVars().keySet()) {
+			replacees.add(call_TF.getOutVars().get(bv));
+			replacers.add(bv.getTermVariable());
+		}
+		Term call_Term_InVarsRenamed_OutVarsRenamed = substituteVars(call_Term_InVarsRenamed, replacees, replacers);
+		Term callTerm_AND_globalVars = Util.and(m_Script, globalVars_InVarsRenamed_OutVarsRenamed, call_Term_InVarsRenamed_OutVarsRenamed);
+		
+		TermVarsProc tvp = computeTermVarsProc(callTerm_AND_globalVars);
+		Term callTerm_AND_globalVars_as_closed_formula = SmtManager.computeClosedFormula(callTerm_AND_globalVars, tvp.getVars(), m_Script);
+		return newPredicate(callTerm_AND_globalVars, tvp.getProcedures(), tvp.getVars(), callTerm_AND_globalVars_as_closed_formula);
 	}
 	
 	/**
@@ -1750,7 +1813,29 @@ public class SmtManager {
 	 */
 	public IPredicate strongestPostcondition(IPredicate calleePred, 
 											IPredicate callerPred, Return ret) {
-		return null;
+		List<TermVariable> replacees = new ArrayList<TermVariable>();
+		List<Term> replacers = new ArrayList<Term>();
+		TransFormula ret_TF = ret.getTransitionFormula();
+		for (BoogieVar bv : ret_TF.getInVars().keySet()) {
+			replacees.add(ret_TF.getInVars().get(bv));
+			replacers.add(bv.getTermVariable());
+		}
+		Term ret_Term_InVarsRenamed = substituteVars(ret_TF.getFormula(), replacees, replacers);
+		replacees.clear();
+		replacers.clear();
+		
+		for (BoogieVar bv : ret_TF.getOutVars().keySet()) {
+			replacees.add(ret_TF.getOutVars().get(bv));
+			replacers.add(bv.getTermVariable());
+		}
+		Term ret_Term_InVarsRenamed_OutVarsRenamed = substituteVars(ret_Term_InVarsRenamed, replacees, replacers);
+		
+		Term ret_Term_AND_callerPred = Util.and(m_Script, ret_Term_InVarsRenamed_OutVarsRenamed, callerPred.getFormula());
+		// TODO: The calleePred must somehow also be joined to the result, but I still don't know how.
+		
+		TermVarsProc tvp = computeTermVarsProc(ret_Term_AND_callerPred);
+		Term ret_Term_AND_callerPred_as_closedFormula = SmtManager.computeClosedFormula(ret_Term_AND_callerPred, tvp.getVars(), m_Script);
+		return newPredicate(ret_Term_AND_callerPred, tvp.getProcedures(), tvp.getVars(), ret_Term_AND_callerPred_as_closedFormula);
 	}
 
 	

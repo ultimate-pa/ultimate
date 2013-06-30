@@ -5,12 +5,15 @@ import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.Word;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.EdgeChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 
 public class TraceCheckerSpWp extends TraceChecker {
@@ -43,26 +46,44 @@ public class TraceCheckerSpWp extends TraceChecker {
 		m_InterpolantsSp = new IPredicate[trace.length()-1];
 		m_InterpolantsWp = new IPredicate[trace.length()-1];
 		
-		m_InterpolantsSp[0] = m_SmtManager.strongestPostcondition(
+		s_Logger.debug("Computing strongest postcondition for given trace ...");
+		
+		if (trace.getSymbol(0) instanceof Call) {
+			m_InterpolantsSp[0] = m_SmtManager.strongestPostcondition(
+					tracePrecondition, (Call) trace.getSymbol(0));
+		} else {
+			m_InterpolantsSp[0] = m_SmtManager.strongestPostcondition(
 										tracePrecondition, trace.getSymbol(0));
-		for (int i=1; i<m_InterpolantsSp.length; i++) {
-			m_InterpolantsSp[i] = m_SmtManager.strongestPostcondition(
-					m_InterpolantsSp[i-1], trace.getSymbol(i));
 		}
+		for (int i=1; i<m_InterpolantsSp.length; i++) {
+			if (trace.getSymbol(i) instanceof Call) {
+				m_InterpolantsSp[i] = m_SmtManager.strongestPostcondition(
+						m_InterpolantsSp[i-1], (Call) trace.getSymbol(i));
+			} else if (trace.getSymbol(i) instanceof Return) {
+				int call_pos = ((NestedWord<CodeBlock>)trace).getCallPosition(i);
+				assert call_pos > 0 && call_pos <= i : "Bad call position!";
+				m_InterpolantsSp[i] = m_SmtManager.strongestPostcondition(
+						m_InterpolantsSp[i-1], m_InterpolantsSp[call_pos - 1], (Return) trace.getSymbol(i));
+			} else {
+				m_InterpolantsSp[i] = m_SmtManager.strongestPostcondition(
+						m_InterpolantsSp[i-1], trace.getSymbol(i));
+			}
+		}
+
 		
-		
+		/*s_Logger.debug("Computing weakest precondition for given trace ...");
 		m_InterpolantsWp[m_InterpolantsWp.length-1] = m_SmtManager.weakestPrecondition(
 				tracePostcondition, trace.getSymbol(m_InterpolantsWp.length));
 		
 		for (int i=m_InterpolantsWp.length-2; i>=0; i--) {
 			m_InterpolantsWp[i] = m_SmtManager.weakestPrecondition(
 					m_InterpolantsSp[i+1], trace.getSymbol(i));
-		}
+		}*/
 		
 
 		
 		checkInterpolantsCorrect(m_InterpolantsSp, trace, tracePrecondition, tracePostcondition);
-		checkInterpolantsCorrect(m_InterpolantsWp, trace, tracePrecondition, tracePostcondition);
+		// checkInterpolantsCorrect(m_InterpolantsWp, trace, tracePrecondition, tracePostcondition);
 		
 		return m_InterpolantsSp;
 	}
