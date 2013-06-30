@@ -3,19 +3,46 @@
 
 parseAutomata("../nwa/crafted.ats");
 
-removeUnreachable(minimizeSmall);
-removeUnreachable(noFinalStates);
-removeUnreachable(joiningComponents2);
-removeUnreachable(repeatedlyjoiningComponents);
-removeUnreachable(joiningComponents);
+NestedWordAutomaton result = minimizeSmall;
 
-removeUnreachable(sameCalldifferentReturns);
-removeUnreachable(wBenjamin);
-removeUnreachable(pendingReturnNwa);
-removeUnreachable(bugBfsEmptinessLowPriorityCallQueue);
+result = removeUnreachable(minimizeSmall);
+print(numberOfStates(result));
+assert(numberOfStates(result) == 6);
+
+result = removeUnreachable(noFinalStates);
+print(numberOfStates(result));
+assert(numberOfStates(result) == 3);
+
+result = removeUnreachable(joiningComponents2);
+print(numberOfStates(result));
+assert(numberOfStates(result) == 8);
+
+result = removeUnreachable(repeatedlyjoiningComponents);
+print(numberOfStates(result));
+assert(numberOfStates(result) == 4);
+
+result = removeUnreachable(joiningComponents);
+print(numberOfStates(result));
+assert(numberOfStates(result) == 5);
 
 
-print(removeUnreachable(minimizeSmall));
+result = removeUnreachable(sameCalldifferentReturns);
+print(numberOfStates(result));
+assert(numberOfStates(result) == 3);
+
+result = removeUnreachable(wBenjamin);
+print(numberOfStates(result));
+assert(numberOfStates(result) == 4);
+
+result = removeUnreachable(pendingReturnNwa);
+print(numberOfStates(result));
+assert(numberOfStates(result) == 1);
+
+result = removeUnreachable(bugBfsEmptinessLowPriorityCallQueue);
+print(numberOfStates(result));
+assert(numberOfStates(result) == 5);
+
+
 
 NestedWordAutomaton minimizeSmall = (
 	callAlphabet = {"c_1" "c_2"},

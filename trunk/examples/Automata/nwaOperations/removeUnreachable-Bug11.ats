@@ -2,8 +2,9 @@
 // Date: 24.5.2013
 // Reveals Bug in r8883
 
-print(nwa);
-print(removeUnreachable(nwa));
+NestedWordAutomaton result = removeUnreachable(nwa);
+print(numberOfStates(result));
+assert(numberOfStates(result) == 4);
 
 NestedWordAutomaton nwa = (
 	callAlphabet = {"a0" "a1" },

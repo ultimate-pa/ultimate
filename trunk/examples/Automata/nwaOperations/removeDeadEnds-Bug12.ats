@@ -1,8 +1,9 @@
 // Author: heizmann@informatik.uni-freiburg.de
 // Date: 25.5.2013
 
-print(nwa);
-print(removeDeadEnds(nwa));
+NestedWordAutomaton result = removeDeadEnds(nwa);
+print(numberOfStates(result));
+assert(numberOfStates(result) == 5);
 
 NestedWordAutomaton nwa = (
 	callAlphabet = {"a0" "a1" },

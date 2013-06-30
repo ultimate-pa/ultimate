@@ -2,8 +2,9 @@
 // Date: 16.5.2013
 // Reveals Bug in r8895
 
-print(nwa);
-print(removeDeadEnds(nwa));
+NestedWordAutomaton result = removeDeadEnds(nwa);
+print(numberOfStates(result));
+assert(numberOfStates(result) == 3);
 
 NestedWordAutomaton nwa = (
 	callAlphabet = {"a0" "a1" },

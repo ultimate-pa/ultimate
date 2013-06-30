@@ -5,8 +5,8 @@
 // down states of q1: q0, EUR
 // down states of q2: q0, q1, EUR
 
-print(nwa);
-print(removeDeadEnds(nwa));
+NestedWordAutomaton result = removeDeadEnds(nwa);
+assert(numberOfStates(result) == 3);
 
 NestedWordAutomaton nwa = (
 	callAlphabet = {"a0" "a1" },

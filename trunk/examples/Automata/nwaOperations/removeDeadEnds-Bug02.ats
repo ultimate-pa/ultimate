@@ -2,11 +2,10 @@
 // Date: 27.10.2012
 // Author: heizmann@informatik.uni-freiburg.de
 
-assert(!isEmpty(nwa));
-assert(!isEmpty(removeDeadEnds(nwa)));
 
+NestedWordAutomaton result = removeDeadEnds(nwa);
+assert(numberOfStates(result) == 9);
 
-print(removeDeadEnds(nwa));
 
 NestedWordAutomaton nwa = (
 	callAlphabet = {"call16" "call14" },
