@@ -36,7 +36,7 @@ class StateContainerFieldAndMap<LETTER,STATE> extends StateContainer<LETTER, STA
 	private Object mIn2;
 	private Object mIn3;
 
-	StateContainerFieldAndMap(STATE state, HashMap<STATE,ReachProp> downStates, boolean canHaveOutgoingReturn) {
+	StateContainerFieldAndMap(STATE state, HashMap<STATE,Integer> downStates, boolean canHaveOutgoingReturn) {
 		super(state,downStates,canHaveOutgoingReturn);
 	}
 

@@ -82,7 +82,7 @@ class StateContainerMapOnly<LETTER,STATE> extends StateContainer<LETTER, STATE> 
 
 	private Collection<STATE> m_EmptySetOfStates = new HashSet<STATE>(0);
 
-	StateContainerMapOnly(STATE state, HashMap<STATE,ReachProp> downStates, boolean canHaveOutgoingReturn) {
+	StateContainerMapOnly(STATE state, HashMap<STATE,Integer> downStates, boolean canHaveOutgoingReturn) {
 		super(state,downStates, canHaveOutgoingReturn);
 	}
 

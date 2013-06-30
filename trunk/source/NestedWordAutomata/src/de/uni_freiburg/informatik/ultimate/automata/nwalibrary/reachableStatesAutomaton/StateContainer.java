@@ -17,13 +17,24 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAu
 public abstract class StateContainer<LETTER, STATE> {
 	
 	enum DownStateProp {
+		REACH_FINAL_ONCE(1),
+		REACH_FINAL_INFTY(2),
+		REACHABLE_FROM_FINAL_WITHOUT_CALL(4);
+		private final int bitcode;
 		
+		DownStateProp(int bitcode) {
+			this.bitcode = bitcode;
+		}
+		
+		public int getBitCode() {
+			return bitcode;
+		}
 	}
 	
 
 	protected final STATE m_State;
 	protected ReachProp m_ReachProp;
-	protected final Map<STATE, ReachProp> m_DownStates;
+	protected final Map<STATE, Integer> m_DownStates;
 	protected Set<STATE> m_UnpropagatedDownStates;
 	protected final boolean m_CanHaveOutgoingReturn;
 
@@ -60,7 +71,7 @@ public abstract class StateContainer<LETTER, STATE> {
 		return sb.toString();
 	}
 
-	public StateContainer(STATE state, HashMap<STATE,ReachProp> downStates, boolean canHaveOutgoingReturn) {
+	public StateContainer(STATE state, HashMap<STATE, Integer> downStates, boolean canHaveOutgoingReturn) {
 		m_State = state;
 		m_DownStates = downStates;
 		m_ReachProp = ReachProp.REACHABLE;
@@ -75,7 +86,7 @@ public abstract class StateContainer<LETTER, STATE> {
 		m_ReachProp = reachProp;
 	}
 
-	protected  Map<STATE, ReachProp> getDownStates() {
+	protected  Map<STATE, Integer> getDownStates() {
 		return m_DownStates;
 	}
 
@@ -88,27 +99,58 @@ public abstract class StateContainer<LETTER, STATE> {
 		return m_State;
 	}
 	
-	ReachProp addReachableDownState(STATE down) {
-		ReachProp oldValue = m_DownStates.put(down, ReachProp.REACHABLE);
+	/**
+	 *  Add down state. Without any properties set. Returns true iff this down
+	 *  state was not already there.
+	 *  If the down state was already there it may not have had any 
+	 *  DownStateProps
+	 */
+	boolean addReachableDownState(STATE down) {
+		assert !m_DownStates.containsKey(down) || m_DownStates.get(down) == 0;
+		Integer oldValue = m_DownStates.put(down, 0);
 		if (oldValue == null) {
 			if (m_UnpropagatedDownStates == null) {
 				m_UnpropagatedDownStates = new HashSet<STATE>();
 			}
 			m_UnpropagatedDownStates.add(down);
+			return true;
+		} else {
+			return false;
 		}
-		return oldValue;
 	}
 	
-	ReachProp modifyDownProp(STATE down, ReachProp prop) {
-		ReachProp oldValue = m_DownStates.put(down, prop);
-		if (oldValue != prop) {
+	/**
+	 * Set DownStateProp prop for down state. Returns true iff this property was
+	 * already set.
+	 */
+	boolean setDownProp(STATE down, DownStateProp prop) {
+		int currentProps = m_DownStates.get(down);
+		if ((currentProps & prop.getBitCode()) == 0) {
+			// property not yet set
+			int newProps = currentProps | prop.getBitCode();
+			m_DownStates.put(down,newProps);
 			if (m_UnpropagatedDownStates == null) {
 				m_UnpropagatedDownStates = new HashSet<STATE>();
 			}
 			m_UnpropagatedDownStates.add(down);
+			return true;
+
+		} else {
+			// property already set, nothing modified
+			return false;
+
 		}
-		return oldValue;
 	}
+	
+	boolean hasDownProp(STATE down, DownStateProp prop) {
+		int currentProps = m_DownStates.get(down);
+		if ((currentProps & prop.getBitCode()) == 0) {
+			return false;
+		} else {
+			return true;
+		}
+	}
+	
 	
 	
 	Set<STATE> getUnpropagatedDownStates() {
