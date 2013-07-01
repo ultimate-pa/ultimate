@@ -109,7 +109,8 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 			new ReachableStatesComputation();
 //			computeDeadEnds();
 //			new NonLiveStateComputation();
-			computeNonLiveStates();
+			computeStronglyConnectedComponents();
+			getStronglyConnectedComponents().computeNestedLassoRuns(false);
 			s_Logger.info(stateContainerInformation());
 			assert (new TransitionConsitenceCheck<LETTER, STATE>(this)).consistentForAll();
 
@@ -543,7 +544,8 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 	
 	public void computeDeadEnds() {
 		if (m_WithOutDeadEnds != null) {
-			throw new AssertionError("dead are already computed");
+			return;
+//			throw new AssertionError("dead are already computed");
 		}
 		HashSet<StateContainer<LETTER, STATE>> acceptings = 
 				new HashSet<StateContainer<LETTER,STATE>>();
@@ -567,7 +569,8 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 	
 	public void computeNonLiveStates() {
 		if (m_OnlyLiveStates != null) {
-			throw new AssertionError("non-live states are already computed");
+			return;
+//			throw new AssertionError("non-live states are already computed");
 		}
 		if (getStronglyConnectedComponents() == null) {
 			computeStronglyConnectedComponents();
@@ -1477,6 +1480,11 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 		
 		private final Set<StateContainer<LETTER, STATE>> m_AllStatesOfSccsWithoutCallAndReturn = 
 				new HashSet<StateContainer<LETTER, STATE>>();
+		
+		private final List<NestedLassoRun<LETTER, STATE>> m_NestedLassoRuns = 
+				new ArrayList<NestedLassoRun<LETTER, STATE>>();
+		private NestedLassoRun<LETTER, STATE> m_NestedLassoRun;
+		private int m_AcceptingBalls = 0;
 
     	
     	Collection<SCC> getBalls() {
@@ -1485,6 +1493,10 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
     	
     	Set<StateContainer<LETTER, STATE>> getStatesOfAllSCCs() {
     		return m_AllStatesOfSccsWithoutCallAndReturn;
+    	}
+    	
+    	public boolean buchiIsEmpty() {
+    		return m_AcceptingBalls > 0;
     	}
 
     	
@@ -1498,32 +1510,55 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
             }
 
             assert(automatonPartitionedBySCCs());
-            int acceptingBalls = 0;
-	    	
-					for (SCC scc : m_Balls) {
-	    		    	if (scc.getAcceptingStates().size() > 0 || 
-	    		    			scc.getAcceptingSumPred().size() > 0) {
-	    		    		m_AllStatesOfSccsWithoutCallAndReturn.addAll(scc.getAllStates());
-	    		    		acceptingBalls++;
-	    		    	} 
-	    		    	for (StateContainer<LETTER, STATE> fin  : scc.getAcceptingStates()) {
-	    		    		new LassoExtractor(fin);
-	    		    	}
-	    		    	for (StateContainer<LETTER, STATE> sumPred : scc.getAcceptingSumPred()) {
-	    		    		new LassoExtractor(sumPred);
-//	    		    		for (StateContainer<LETTER, STATE> sumSucc  : m_AcceptingSummaries.get(sumPred)) {
-//	    		    			new LassoExtractor(sumSucc);
-//	    		    		}
-	    		    	}
-	    		    }
-	    		    
-
+            for (SCC scc : m_Balls) {
+            	if (scc.getAcceptingStates().size() > 0 || 
+            			scc.getAcceptingSumPred().size() > 0) {
+            		m_AllStatesOfSccsWithoutCallAndReturn.addAll(scc.getAllStates());
+            		m_AcceptingBalls++;
+            	} 
+            }
 
             s_Logger.debug("Automaton consists of " + m_Balls.size() + 
             		" InCaSumBalls and " + m_NumberOfNonBallSCCs + 
-            		" non ball SCCs " + acceptingBalls + 
+            		" non ball SCCs " + m_AcceptingBalls + 
             		" balls are accepting. Number of states in SCCs " 
             		+ m_AllStatesOfSccsWithoutCallAndReturn.size());
+        }
+        
+        public void computeNestedLassoRuns(boolean computeOnlyOne) {
+            for (SCC scc : m_Balls) {
+            	for (StateContainer<LETTER, STATE> fin  : scc.getAcceptingStates()) {
+            		NestedLassoRun<LETTER, STATE> nlr = (new LassoExtractor(fin)).getNestedLassoRun();
+            		if (computeOnlyOne) {
+            			m_NestedLassoRun = nlr;
+            		} else {
+            			m_NestedLassoRuns.add(nlr);
+            			if (m_NestedLassoRun == null) {
+            				m_NestedLassoRun = nlr;
+            			}
+            		}
+            	}
+            	for (StateContainer<LETTER, STATE> sumPred : scc.getAcceptingSumPred()) {
+            		NestedLassoRun<LETTER, STATE> nlr = (new LassoExtractor(sumPred)).getNestedLassoRun();
+            		if (computeOnlyOne) {
+            			m_NestedLassoRun = nlr;
+            		} else {
+            			m_NestedLassoRuns.add(nlr);
+            			if (m_NestedLassoRun == null) {
+            				m_NestedLassoRun = nlr;
+            			}
+            		}
+            	}
+            }        	
+        	
+        	
+        }
+        
+        public List<NestedLassoRun<LETTER, STATE>> getAllNestedLassoRuns() {
+        	return m_NestedLassoRuns;
+        }
+        public NestedLassoRun<LETTER, STATE> getNestedLassoRun() {
+        	return m_NestedLassoRun;
         }
 
 
@@ -1743,28 +1778,9 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 			m_Iterations.add(initialStacks);
 			return initialStack;
 		}
-		
-//		public LassoExtractor(StateContainer<LETTER, STATE> goal, 
-//							StateContainer<LETTER, STATE> acceptingSumPred) {
-//			m_Goal = goal;
-//			StackOfFlaggedStates initialStack = addInitialStack(goal);
-//			Set<StackOfFlaggedStates> itOneStacks = new HashSet<StackOfFlaggedStates>();
-//			for (IncomingReturnTransition<LETTER, STATE> inTrans : goal.returnPredecessors()) {
-//				if (inTrans.getHierPred().equals(acceptingSumPred.getState())) {
-//					StackOfFlaggedStates predStack = new StackOfFlaggedStates(initialStack, inTrans, false, true);
-//					itOneStacks.add(predStack);
-//				}
-//			}
-//			assert itOneStacks.size() > 0;
-//			m_Iterations.add(itOneStacks);
-//			findPath(2);
-//			s_Logger.debug("Stem length: " + m_InitFoundIteration);
-//			s_Logger.debug("Loop length: " + m_GoalFoundIteration);
-//			constructStem();
-//			constructLoop();
-//			s_Logger.debug("Stem " + m_Stem);
-//			s_Logger.debug("Loop " + m_Loop);
-//		}
+		public NestedLassoRun<LETTER, STATE> getNestedLassoRun() {
+			return m_nlr;
+		}
 		
 		
 		void findPath(final int startingIteration) {
