@@ -364,13 +364,14 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 			default:
 				throw new UnsupportedOperationException();
 			}
+			if (m_RemoveDeadEnds) {
+				diff.removeDeadEnds();
+			}
 			if (m_RemoveDeadEnds && m_Pref.computeHoareAnnotation()) {
 				m_Haf.wipeReplacedContexts();
 				m_Haf.addDeadEndDoubleDeckers(diff);
 			}
-			if (m_RemoveDeadEnds) {
-				diff.removeDeadEnds();
-			}
+
 				
 				
 			m_Abstraction = (IAutomaton<CodeBlock, IPredicate>) diff.getResult();
