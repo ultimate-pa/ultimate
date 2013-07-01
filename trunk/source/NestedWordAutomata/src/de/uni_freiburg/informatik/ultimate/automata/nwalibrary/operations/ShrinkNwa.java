@@ -845,8 +845,7 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 				final HashMap<LETTER, HashMap<HashSet<EquivalenceClass>,
 					HashSet<STATE>>> letter2succ2state =
 					new HashMap<LETTER, HashMap<HashSet<EquivalenceClass>,
-					HashSet<STATE>>>(computeHashSetCapacity(
-							ec.m_states.size()));
+					HashSet<STATE>>>(computeHashSetCapacity(letters.size()));
 				
 				for (final STATE second : ec.m_states) {
 					if (DEBUG3) {
