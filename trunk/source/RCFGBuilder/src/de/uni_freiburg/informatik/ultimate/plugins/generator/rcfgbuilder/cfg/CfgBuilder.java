@@ -99,6 +99,10 @@ public class CfgBuilder {
 	 */
 	public static final String START_PROCEDURE = "ULTIMATE.start";
 	
+	
+	public static final String Z3_COMMAND =
+			"z3 AUTO_CONFIG=false SMTLIB2_COMPLIANT=true MBQI=false -memory:100 -smt2 -in";
+	
 	/**
      * Root Node of this Ultimate model. I use this to store information that
      * should be passed to the next plugin. The Successors of this node are
@@ -131,7 +135,7 @@ public class CfgBuilder {
 	   if (taPref.solver() == Solver.SMTInterpol) {
 		   m_Script = new SMTInterpol(solverLogger,false);
 	   } else if (taPref.solver() == Solver.Z3) {	   
-		   m_Script = new Scriptor("z3 AUTO_CONFIG=false MBQI=false -memory:100 -smt2 -in", solverLogger);
+		   m_Script = new Scriptor(Z3_COMMAND, solverLogger);
 	   }
 	   else {
 		   throw new AssertionError();
