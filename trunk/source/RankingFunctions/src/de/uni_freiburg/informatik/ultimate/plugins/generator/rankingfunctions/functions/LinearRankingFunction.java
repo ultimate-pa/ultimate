@@ -107,9 +107,14 @@ public class LinearRankingFunction implements RankingFunction {
 		ArrayList<Term> summands = new ArrayList<Term>(m_coefficients.size()+1);
 		for (Map.Entry<BoogieVar, BigInteger> entry
 				: m_coefficients.entrySet()) {
-			Term summand = script.term("*",
-					script.numeral(entry.getValue().toString()),
-					entry.getKey().getTermVariable());
+			Term summand;
+			if (entry.getValue().equals(BigInteger.ONE)) {
+				summand = entry.getKey().getTermVariable();
+			} else {
+				summand = script.term("*",
+						script.numeral(entry.getValue().toString()),
+						entry.getKey().getTermVariable());
+			}
 			summands.add(summand);
 		}
 		summands.add(script.numeral(m_constant));

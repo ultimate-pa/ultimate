@@ -2,6 +2,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.rankingfunctions;
 
 import java.io.Serializable;
 import java.math.BigInteger;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -119,15 +120,27 @@ public class SupportingInvariant implements Serializable {
 	 */
 	public Term asTerm(Script script, Smt2Boogie smt2boogie)
 			throws SMTLIBException {
-		Term t = script.numeral("0");
+		ArrayList<Term> summands = new ArrayList<Term>();
 		for (Map.Entry<BoogieVar, BigInteger> entry
 				: m_coefficients.entrySet()) {
-			t = script.term("+", t, script.term("*",
-					script.numeral(entry.getValue().toString()),
-					entry.getKey().getTermVariable()));
+			Term summand;
+			if (entry.getValue().equals(BigInteger.ONE)) {
+				summand = entry.getKey().getTermVariable();
+			} else {
+				summand = script.term("*",
+						script.numeral(entry.getValue().toString()),
+						entry.getKey().getTermVariable());
+			}
+			summands.add(summand);
 		}
-		t = script.term("+", t, script.numeral(m_constant));
-		return script.term(">=", t, script.numeral("0"));
+		summands.add(script.numeral(m_constant));
+		Term sum;
+		if (summands.size() == 1) {
+			sum = summands.get(0);
+		} else {
+			sum = script.term("+", summands.toArray(new Term[0]));
+		}
+		return script.term(">=", sum, script.numeral("0"));
 	}
 	
 	public Expression asExpression(Script script, Smt2Boogie smt2boogie) {
