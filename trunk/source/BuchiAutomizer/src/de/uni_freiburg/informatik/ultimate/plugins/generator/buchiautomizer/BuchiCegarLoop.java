@@ -33,6 +33,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IState
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.MinimizeSevpa;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.PowersetDeterminizer;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.RemoveDeadEnds;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.RemoveNonLiveStates;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.RemoveUnreachable;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.DifferenceDD;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
@@ -309,7 +310,7 @@ public class BuchiCegarLoop {
 					s_Logger.info("Interpolant automaton has " + m_InterpolAutomaton.sizeInformation());
 					
 					if (m_ReduceAbstractionSize ) {
-						m_Abstraction = (new RemoveDeadEnds<CodeBlock, IPredicate>(m_Abstraction)).getResult();
+						m_Abstraction = (new RemoveNonLiveStates<CodeBlock, IPredicate>(m_Abstraction)).getResult();
 						s_Logger.info("Abstraction has " + m_Abstraction.sizeInformation());
 						Collection<Set<IPredicate>> partition = BuchiCegarLoop.computePartition(m_Abstraction);
 						MinimizeSevpa<CodeBlock, IPredicate> minimizeOp = 
