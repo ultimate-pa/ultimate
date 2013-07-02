@@ -9,6 +9,8 @@ import java.util.Map;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Smt2Boogie;
@@ -121,26 +123,35 @@ public class SupportingInvariant implements Serializable {
 	public Term asTerm(Script script, Smt2Boogie smt2boogie)
 			throws SMTLIBException {
 		ArrayList<Term> summands = new ArrayList<Term>();
-		for (Map.Entry<BoogieVar, BigInteger> entry
-				: m_coefficients.entrySet()) {
-			Term summand;
-			if (entry.getValue().equals(BigInteger.ONE)) {
-				summand = entry.getKey().getTermVariable();
+		ArrayList<Term> lhs = new ArrayList<Term>();
+		ArrayList<Term> rhs = new ArrayList<Term>();
+		for (Map.Entry<BoogieVar, BigInteger> entry	: m_coefficients.entrySet()) {
+			if (entry.getValue().compareTo(BigInteger.ZERO) >= 0) {
+				Term summand = constructSummand(script, entry.getKey().getTermVariable(), entry.getValue());
+				lhs.add(summand);
 			} else {
-				summand = script.term("*",
-						script.numeral(entry.getValue()),
-						entry.getKey().getTermVariable());
+				BigInteger coefficient = entry.getValue().abs();
+				Term summand = constructSummand(script, entry.getKey().getTermVariable(), coefficient);
+				rhs.add(summand);
 			}
-			summands.add(summand);
+		}
+		if (m_constant.compareTo(BigInteger.ZERO) >= 0) {
+			lhs.add(script.numeral(m_constant));
+		} else {
+			rhs.add(script.numeral(m_constant.abs()));
 		}
 		summands.add(script.numeral(m_constant));
-		Term sum;
-		if (summands.size() == 1) {
-			sum = summands.get(0);
+		Term lhsTerm = Util.sum(script, lhs.toArray(new Term[0]));
+		Term rhsTerm = Util.sum(script, rhs.toArray(new Term[0]));
+		return script.term(">=", lhsTerm, rhsTerm);
+	}
+	
+	private static Term constructSummand(Script script, TermVariable tv, BigInteger coefficient ) {
+		if (coefficient.equals(BigInteger.ONE)) {
+			return tv; 
 		} else {
-			sum = script.term("+", summands.toArray(new Term[0]));
+			return script.term("*", script.numeral(coefficient), tv);
 		}
-		return script.term(">=", sum, script.numeral(BigInteger.ZERO));
 	}
 	
 	public Expression asExpression(Script script, Smt2Boogie smt2boogie) {
