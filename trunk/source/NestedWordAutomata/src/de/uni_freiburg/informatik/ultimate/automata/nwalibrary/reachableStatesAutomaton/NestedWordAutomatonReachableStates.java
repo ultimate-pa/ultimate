@@ -1451,7 +1451,7 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
      * {@link http://en.wikipedia.org/wiki/Tarjan%27s_strongly_connected_components_algorithm}
      * @author heizmann@informatik.uni-freiburg.de
      */
-    private class StronglyConnectedComponents {
+    public class StronglyConnectedComponents {
     	/**
     	 * Number of vertices that have been processed so far.
     	 */
