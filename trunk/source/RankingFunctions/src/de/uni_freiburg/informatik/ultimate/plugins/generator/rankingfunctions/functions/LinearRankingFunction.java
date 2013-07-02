@@ -112,7 +112,7 @@ public class LinearRankingFunction implements RankingFunction {
 				summand = entry.getKey().getTermVariable();
 			} else {
 				summand = script.term("*",
-						script.numeral(entry.getValue().toString()),
+						script.numeral(entry.getValue()),
 						entry.getKey().getTermVariable());
 			}
 			summands.add(summand);

@@ -128,7 +128,7 @@ public class SupportingInvariant implements Serializable {
 				summand = entry.getKey().getTermVariable();
 			} else {
 				summand = script.term("*",
-						script.numeral(entry.getValue().toString()),
+						script.numeral(entry.getValue()),
 						entry.getKey().getTermVariable());
 			}
 			summands.add(summand);
@@ -140,7 +140,7 @@ public class SupportingInvariant implements Serializable {
 		} else {
 			sum = script.term("+", summands.toArray(new Term[0]));
 		}
-		return script.term(">=", sum, script.numeral("0"));
+		return script.term(">=", sum, script.numeral(BigInteger.ZERO));
 	}
 	
 	public Expression asExpression(Script script, Smt2Boogie smt2boogie) {
