@@ -240,7 +240,7 @@ public class BinaryStatePredicateManager {
 	
 	
 	private Term getRankGeq0() {
-		Term geq = m_Script.term(">=", m_OldRankVariable.getTermVariable(), m_Script.decimal("0"));
+		Term geq = m_Script.term(">=", m_OldRankVariable.getTermVariable(), m_Script.numeral("0"));
 		return geq;
 	}
 	
