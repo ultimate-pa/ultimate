@@ -102,6 +102,9 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	// placeholder equivalence class
 	final HashSet<EquivalenceClass> m_negativeSet;
 	final EquivalenceClass m_negativeClass;
+	final Matrix m_singletonMatrix;
+	final DummyMap m_downStateMap;
+	final DummyMap m_singletonMap;
 	// return transition helper objects
 	final LinHelper m_linHelper;
 	final HierHelper m_hierHelper;
@@ -122,6 +125,7 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	
 	// TODO<debug>
 	private final boolean DEBUG = false;
+	private final boolean DEBUG2 = false;
 	private final boolean DEBUG3 = false;
 	private final boolean DEBUG4 = false;
 	
@@ -131,7 +135,8 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	private int m_splitsWithoutChange = 0;
 	private int m_incomingTransitions = 0;
 	private int m_noIncomingTransitions = 0;
-	private int m_ignoredReturnSingletons = 0;
+	private int m_ignoredReturnSingletons1x1 = 0;
+	private int m_ignoredReturnSingletonsOnly1Entry = 0;
 	private int m_ignoredReturnDuplicates = 0;
 	private int m_returnLocalSplits = 0;
 	private int m_returnMixedSplits = 0;
@@ -210,6 +215,9 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 		m_negativeSet = new HashSet<EquivalenceClass>();
 		m_negativeClass = new EquivalenceClass();
 		m_negativeSet.add(m_negativeClass);
+		m_singletonMatrix = new Matrix();
+		m_downStateMap = new DummyMap();
+		m_singletonMap = new DummyMap();
 		m_linHelper = new LinHelper();
 		m_hierHelper = new HierHelper();
 		/* TODO<duplicateTests>
@@ -247,7 +255,8 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 					: (((float)m_incomingTransitions) /
 							((float)m_noIncomingTransitions))));
 			System.out.println("ignored return splits due to singletons: " +
-					m_ignoredReturnSingletons);
+					m_ignoredReturnSingletons1x1 + ", " +
+					m_ignoredReturnSingletonsOnly1Entry);
 			System.out.println("ignored return splits due to duplicate tests: "
 					+ m_ignoredReturnDuplicates);
 			System.out.print("return splits (executed/ignored): started " +
@@ -345,16 +354,27 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 				
 				// return predecessors
 				if (m_workListRet.hasNext()) {
-					// TODO<globalSplit>
+					m_splitEcs = new HashSet<EquivalenceClass>();
+					
+					HashMap<EquivalenceClass, HashSet<EquivalenceClass>>
+							linEc2hierEc = splitReturnBackwardsAnalysis();
+					
+					splitReturnForwardsAnalysis(linEc2hierEc);
+					linEc2hierEc = null;
+					
+					// FIXME reset matrices after each split (normal or return)
+					splitReturnExecute(m_splitEcs);
+					
+//					// TODO<globalSplit>
 //					m_splitEcs = new HashSet<EquivalenceClass>();
 //					do {
-						
-						if (DEBUG)
-							System.out.println("\n-- return search");
-						EquivalenceClass a = m_workListRet.next();
-						
-						splitReturnPredecessors(a);
-						
+//						
+//						if (DEBUG)
+//							System.out.println("\n-- return search");
+//						EquivalenceClass a = m_workListRet.next();
+//						
+//						splitReturnPredecessors(a);
+//						
 //					} while (m_workListRet.hasNext());
 //					// execute the splits
 //					splitReturnExecute(m_splitEcs);
@@ -502,6 +522,358 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	}
 	
 	/**
+	 * 
+	 * TODO<comment>
+	 * 
+	 * @return
+	 */
+	private HashMap<EquivalenceClass, HashSet<EquivalenceClass>>
+			splitReturnBackwardsAnalysis() {
+		if (DEBUG2)
+			System.err.println("analyzing backwards");
+		HashMap<STATE, HashSet<STATE>> lin2hier =
+				new HashMap<STATE, HashSet<STATE>>(computeHashSetCapacity(
+						m_partition.m_equivalenceClasses.size()));
+		
+		// find all involved linear and hierarchical states
+		while (m_workListRet.hasNext()) {
+			EquivalenceClass succEc = m_workListRet.next();
+			
+			if (DEBUG2)
+				System.err.println(" succEc: " + succEc.toStringShort());
+			boolean incomingReturns = false;
+			
+			for (final STATE succ : succEc.m_states) {
+				final Iterator<IncomingReturnTransition<LETTER, STATE>> edges =
+						m_operand.returnPredecessors(succ).iterator();
+				if (edges.hasNext()) {
+					incomingReturns = true;
+					do {
+						final IncomingReturnTransition<LETTER, STATE> edge =
+								edges.next();
+						final STATE lin = edge.getLinPred();
+						HashSet<STATE> hiers = lin2hier.get(lin);
+						if (hiers == null) {
+							hiers = new HashSet<STATE>();
+							lin2hier.put(lin, hiers);
+						}
+						hiers.add(edge.getHierPred());
+					} while (edges.hasNext());
+				}
+			}
+			
+			// no return transitions found, remember that
+			if (! incomingReturns) {
+				succEc.m_incomingRet = EIncomingStatus.none;
+				if (STATISTICS)
+					++m_noIncomingTransitions;
+			}
+		}
+		
+		/*
+		 * TODO<efficiency> instead of finding states the ECs could be used in
+		 *                  the map already before
+		 */
+		// find equivalence classes for the involved states
+		final HashMap<EquivalenceClass, HashSet<STATE>> linEc2hier
+				= new HashMap<EquivalenceClass, HashSet<STATE>>(
+				computeHashSetCapacity(lin2hier.size()));
+		for (final Entry<STATE, HashSet<STATE>> entry : lin2hier.entrySet()) {
+			final EquivalenceClass linEc =
+					m_partition.m_state2EquivalenceClass.get(entry.getKey());
+			HashSet<STATE> hiers = linEc2hier.get(linEc);
+			if (hiers == null) {
+				linEc2hier.put(linEc, entry.getValue());
+			}
+			else {
+				hiers.addAll(entry.getValue());
+			}
+		}
+		lin2hier = null;
+		final HashMap<EquivalenceClass, HashSet<EquivalenceClass>> linEc2hierEc
+				= new HashMap<EquivalenceClass, HashSet<EquivalenceClass>>(
+				computeHashSetCapacity(linEc2hier.size()));
+		for (final Entry<EquivalenceClass, HashSet<STATE>> entry :
+				linEc2hier.entrySet()) {
+			final EquivalenceClass linEc = entry.getKey();
+			HashSet<EquivalenceClass> hierEcs = linEc2hierEc.get(linEc);
+			if (hierEcs == null) {
+				hierEcs = new HashSet<EquivalenceClass>();
+				linEc2hierEc.put(linEc, hierEcs);
+			}
+			
+			final HashSet<STATE> hiers = entry.getValue();
+			for (final STATE hier : hiers) {
+				hierEcs.add(m_partition.m_state2EquivalenceClass.get(hier));
+			}
+		}
+		
+		if (DEBUG2) {
+			System.err.println("resulting map: ");
+			System.err.println(linEc2hierEc);
+			System.err.println();
+		}
+		
+		return linEc2hierEc;
+	}
+	
+	/**
+	 * 
+	 * TODO<comment>
+	 * 
+	 * @param mapping
+	 */
+	private void splitReturnForwardsAnalysis(final HashMap
+			<EquivalenceClass, HashSet<EquivalenceClass>> linEc2hierEc) {
+		for (final Entry<EquivalenceClass, HashSet<EquivalenceClass>> entry :
+				linEc2hierEc.entrySet()) {
+			final EquivalenceClass linEc = entry.getKey();
+			final boolean linEcSingleton = linEc.m_states.size() == 1;
+			final HashSet<EquivalenceClass> hierEcs = entry.getValue();
+			
+			if (DEBUG2)
+				System.err.println("\nlinEc: " + linEc.toStringShort());
+			
+			// get matrix
+			Matrix matrix = linEc.m_matrix;
+			if (matrix == null) {
+				linEc.initializeMatrix(hierEcs);
+				matrix = linEc.m_matrix;
+			}
+			if (matrix == m_singletonMatrix) {
+				if (DEBUG2) {
+					System.err.println(" ignoring matrix: " + matrix);
+				}
+				
+				continue;
+			}
+			
+			if (DEBUG2) {
+				System.err.println("matrix: " + matrix);
+			}
+			
+			for (final EquivalenceClass hierEc : hierEcs) {
+				if (DEBUG2)
+					System.err.println(" hierEc: " + hierEc.toStringShort());
+				
+				if (linEcSingleton && hierEc.m_states.size() == 1) {
+					if (DEBUG2)
+						System.err.println("  ignoring singletons");
+					
+					if (STATISTICS)
+						++m_ignoredReturnSingletons1x1;
+					
+					continue;
+				}
+				
+				final HashMap<STATE, HashMap<STATE, HashMap<LETTER,
+					HashSet<STATE>>>> hier2lin2letter2succ =
+					matrix.m_hierEc2hier2lin2letter2succ.get(hierEc);
+				if (hier2lin2letter2succ == m_singletonMap) {
+					if (DEBUG2)
+						System.err.println("  singleton dummy map, ignore");
+					
+					if (STATISTICS)
+						++m_ignoredReturnSingletonsOnly1Entry;
+					
+					continue;
+				}
+				
+				if (DEBUG2)
+					System.err.println("  matrix entry: " +
+							hier2lin2letter2succ);
+				if (DEBUG2)
+					System.err.println("  analyzing (linear, hierarchical): " +
+							(! linEcSingleton) + ", " +
+							(hierEc.m_states.size() > 1));
+				
+				// linear states analysis
+				if (! linEcSingleton) {
+					SplitReturnAnalyzeLinear(hier2lin2letter2succ, linEc);
+				}
+				
+				// hierarchical states analysis
+				if (hierEc.m_states.size() > 1) {
+					SplitReturnAnalyzeHierarchical(hier2lin2letter2succ);
+				}
+			}
+		}
+	}
+	
+	/**
+	 * 
+	 * TODO<comment>
+	 *
+	 * TODO<nondeterminism> at most one successor for deterministic automata,
+	 *                      offer improved version
+	 *                      (no Set<STATE>, no Set<EquivalenceClass>)?
+	 * 
+	 * @param hier2lin2letter2succ
+	 * @param linEc
+	 */
+	private void SplitReturnAnalyzeLinear(final HashMap<STATE, HashMap<STATE,
+			HashMap<LETTER, HashSet<STATE>>>> hier2lin2letter2succ,
+			final EquivalenceClass linEc) {
+		if (DEBUG2)
+			System.err.println("linear analysis");
+		
+		for (final HashMap<STATE, HashMap<LETTER, HashSet<STATE>>>
+				lin2letter2succ : hier2lin2letter2succ.values()) {
+			if (DEBUG2)
+				System.err.println(" lin2letter2succ: " + lin2letter2succ);
+			
+			if (lin2letter2succ.size() == 1) {
+				if (DEBUG2)
+					System.err.println("  only one entry, ignore");
+				
+				continue;
+			}
+			
+			final int size = computeHashSetCapacity(lin2letter2succ.size());
+			final HashMap<HashMap<LETTER, HashSet<EquivalenceClass>>,
+				HashSet<STATE>> letter2succEc2lin =
+				new HashMap<HashMap<LETTER, HashSet<EquivalenceClass>>,
+				HashSet<STATE>>(size);
+			final HashSet<STATE> noTransitions = new HashSet<STATE>(size);
+			for (final Entry<STATE, HashMap<LETTER, HashSet<STATE>>> entry :
+					lin2letter2succ.entrySet()) {
+				final STATE lin = entry.getKey();
+				final HashMap<LETTER, HashSet<STATE>> letter2succ =
+						entry.getValue();
+				if (letter2succ == m_downStateMap) {
+					if (DEBUG2)
+						System.err.println("   no transition, but DS");
+					
+					noTransitions.add(lin);
+					continue;
+				}
+				
+				final HashMap<LETTER, HashSet<EquivalenceClass>>
+						letter2succEc = new HashMap<LETTER,
+						HashSet<EquivalenceClass>>(
+								computeHashSetCapacity(letter2succ.size()));
+				for (final Entry<LETTER, HashSet<STATE>> innerEntry :
+						letter2succ.entrySet()) {
+					final LETTER letter = innerEntry.getKey();
+					final HashSet<STATE> succs = innerEntry.getValue();
+					
+					final HashSet<EquivalenceClass> succEcs =
+							new HashSet<EquivalenceClass>(
+									computeHashSetCapacity(succs.size()));
+					
+					if (DEBUG2)
+						System.err.println("   LETTER: " + letter +
+								", succs: " + succs);
+					
+					for (final STATE succ : succs) {
+						succEcs.add(m_partition.m_state2EquivalenceClass.
+								get(succ));
+					}
+					
+					letter2succEc.put(letter, succEcs);
+				}
+				
+				HashSet<STATE> lins = letter2succEc2lin.get(letter2succEc);
+				if (lins == null) {
+					lins = new HashSet<STATE>();
+					letter2succEc2lin.put(letter2succEc, lins);
+				}
+				lins.add(lin);
+				
+				if (DEBUG2)
+					System.err.println("   adding: " + lin + " to " +
+							letter2succEc);
+			}
+			
+			if (DEBUG2)
+				System.err.println("    receiving: " + letter2succEc2lin +
+						" and {{DS}=" + noTransitions + "}");
+			
+			if (noTransitions.size() > 0) {
+				letter2succEc2lin.put(null, noTransitions);
+			}
+			
+			if (letter2succEc2lin.size() <= 1) {
+				if (DEBUG2)
+					System.err.println("    no linear split");
+				
+				continue;
+			}
+			
+			if (DEBUG2)
+				System.err.println("    linear split: " +
+						letter2succEc2lin.values());
+			
+			linEc.markSplit(letter2succEc2lin.values());
+			m_splitEcs.add(linEc);
+		}
+	}
+	
+	/**
+	 * 
+	 * TODO<comment>
+	 * 
+	 * @param hier2lin2letter2succ
+	 */
+	private void SplitReturnAnalyzeHierarchical(final HashMap<STATE,
+			HashMap<STATE, HashMap<LETTER, HashSet<STATE>>>>
+			hier2lin2letter2succ) {
+		if (DEBUG2)
+			System.err.println("hierarchical analysis");
+		
+		// FIXME write method
+	}
+	
+
+	/**
+	 * TODO<comment>
+	 *
+	 */
+	private class Matrix {
+		final HashMap<EquivalenceClass, HashMap<STATE, HashMap<STATE,
+			HashMap<LETTER, HashSet<STATE>>>>> m_hierEc2hier2lin2letter2succ;
+		
+		/**
+		 * @param size number of non-singleton 
+		 */
+		public Matrix(final int size) {
+			m_hierEc2hier2lin2letter2succ = new HashMap<EquivalenceClass,
+					HashMap<STATE, HashMap<STATE,HashMap<LETTER,
+					HashSet<STATE>>>>>(computeHashSetCapacity(size));
+		}
+		
+		/**
+		 * This constructor is only used for the useless 1x1-matrix.
+		 */
+		private Matrix() {
+			m_hierEc2hier2lin2letter2succ = null;
+		}
+
+		@Override
+		public String toString() {
+			return m_hierEc2hier2lin2letter2succ.toString();
+		}
+	}
+	
+	/**
+	 * 
+	 * TODO<comment>
+	 *
+	 */
+	@SuppressWarnings({ "serial", "rawtypes" })
+	private class DummyMap extends HashMap {
+		@Override
+		public HashSet<STATE> get(final Object key) {
+			return null;
+		}
+		
+		@Override
+		public String toString() {
+			return "{dummy map}";
+		}
+	}
+	
+	/**
 	 * This method implements the return split.
 	 * 
 	 * For each return symbol respectively first find the predecessor states
@@ -639,7 +1011,7 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 				// both linear and hierarchical EC singletons, ignore
 				if ((! considerLinEc) && (! considerHierEc)) {
 					if (STATISTICS)
-						++m_ignoredReturnSingletons;
+						++m_ignoredReturnSingletons1x1;
 					
 					continue;
 				}
@@ -714,7 +1086,7 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 				}
 				else {
 					if (STATISTICS)
-						++m_ignoredReturnSingletons;
+						++m_ignoredReturnSingletons1x1;
 				}
 				
 				// add to hierarchical split map (only if no singleton)
@@ -735,7 +1107,7 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 				}
 				else {
 					if (STATISTICS)
-						++m_ignoredReturnSingletons;
+						++m_ignoredReturnSingletons1x1;
 				}
 				
 				// add to mixed split map (only if both no singletons)
@@ -764,7 +1136,7 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 				}
 				else {
 					if (STATISTICS)
-						++m_ignoredReturnSingletons;
+						++m_ignoredReturnSingletons1x1;
 				}
 			} while (it.hasNext());
 		}
@@ -2098,6 +2470,8 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 		private EIncomingStatus m_incomingInt, m_incomingCall, m_incomingRet;
 		// mapping: state to states that are separated
 		private HashMap<STATE, HashSet<STATE>> m_state2separatedSet;
+		// matrix with return transition information
+		private Matrix m_matrix;
 		
 		/**
 		 * This constructor is used for the initialization. 
@@ -2112,6 +2486,143 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 			m_workListIntCall.add(this);
 			m_incomingRet = EIncomingStatus.inWL;
 			m_workListRet.add(this);
+			m_matrix = null;
+		}
+		
+		/**
+		 * This method initializes the matrix. This is not done at the
+		 * beginning to avoid creating a huge but sparse matrix, since other
+		 * splits can be executed first.
+		 * 
+		 * @param hierEcs hierarchical predecessor equivalence classes
+		 */
+		@SuppressWarnings("unchecked")
+		public void initializeMatrix(HashSet<EquivalenceClass> hierEcs) {
+			final Collection<EquivalenceClass> hierEcsUsed;
+			
+			// ignore singletons
+			if (m_states.size() == 1) {
+				hierEcsUsed =
+						new ArrayList<EquivalenceClass>(hierEcs.size());
+				for (final EquivalenceClass hierEc : hierEcs) {
+					if (hierEc.m_states.size() > 1) {
+						hierEcsUsed.add(hierEc);
+					}
+				}
+			}
+			// add all
+			else {
+				hierEcsUsed = hierEcs;
+			}
+			final int size = hierEcsUsed.size();
+			
+			/*
+			 * The matrix has only one column and only one-liners for each
+			 * hierarchical equivalence class - ignore that.
+			 */
+			if (size == 0) {
+				if (DEBUG2)
+					System.err.println("--creating 1x1 dummy matrix");
+				
+				m_matrix = m_singletonMatrix;
+				return;
+			}
+			
+			m_matrix = new Matrix(size);
+			final HashMap<EquivalenceClass, HashMap<STATE, HashMap<STATE,
+				HashMap<LETTER, HashSet<STATE>>>>> map =
+				m_matrix.m_hierEc2hier2lin2letter2succ;
+			
+			if (DEBUG2)
+				System.err.println("--adding entries");
+			
+			// add entries
+			final int mapSize = computeHashSetCapacity(m_states.size());
+			
+			for (final EquivalenceClass hierEc : hierEcsUsed) {
+				final HashMap<STATE, HashMap<STATE, HashMap<LETTER,
+					HashSet<STATE>>>> hier2lin2letter2succ =
+					new HashMap<STATE, HashMap<STATE, HashMap<LETTER,
+					HashSet<STATE>>>>(mapSize);
+				
+				for (final STATE hier : hierEc.m_states) {
+					final HashMap<STATE, HashMap<LETTER,
+						HashSet<STATE>>> lin2letter2succ =
+						new HashMap<STATE, HashMap<LETTER,
+						HashSet<STATE>>>(mapSize);
+					
+					if (DEBUG2)
+						System.err.println("consider hier: " + hier);
+					
+					for (final STATE lin : m_states) {
+						if (DEBUG2)
+							System.err.println(" and lin: " + lin);
+						
+						// first check whether hier is a down state
+						if (! m_doubleDecker.isDoubleDecker(lin, hier))
+								{
+							if (DEBUG2)
+								System.err.println(" no DS");
+							
+							continue;
+						}
+						
+						final Iterator<OutgoingReturnTransition
+							<LETTER, STATE>> edges = m_operand.
+							returnSuccessorsGivenHier(lin, hier).
+							iterator();
+						if (edges.hasNext()) {
+							/*
+							 * TODO<nondeterminism> at most one successor
+							 *   for deterministic automata, offer improved
+							 *   version (no Set<STATE>, no "if" in loop)?
+							 */
+							final HashMap<LETTER, HashSet<STATE>>
+								return2succ = new HashMap<LETTER,
+								HashSet<STATE>>();
+							lin2letter2succ.put(lin, return2succ);
+							do {
+								final OutgoingReturnTransition
+									<LETTER, STATE> edge = edges.next();
+								final LETTER letter = edge.getLetter();
+								HashSet<STATE> succs =
+										return2succ.get(letter);
+								if (succs == null) {
+									succs = new HashSet<STATE>();
+									return2succ.put(letter, succs);
+								}
+								succs.add(edge.getSucc());
+							} while (edges.hasNext());
+							
+							if (DEBUG2)
+								System.err.println(" transitions: " +
+										return2succ);
+						}
+						else {
+							if (DEBUG2)
+								System.err.println(" DS");
+							
+							lin2letter2succ.put(lin, m_downStateMap);
+						}
+					}
+					
+					if (lin2letter2succ.size() > 0) {
+						hier2lin2letter2succ.put(hier, lin2letter2succ);
+					}
+				}
+				
+				assert (hier2lin2letter2succ.size() > 0);
+				if ((hier2lin2letter2succ.size() == 1) &&
+						(hier2lin2letter2succ.values().iterator().next().
+								size() == 1)) {
+					map.put(hierEc, m_singletonMap);
+				}
+				else {
+					map.put(hierEc, hier2lin2letter2succ);
+				}
+			}
+			if (DEBUG2)
+				System.err.println("finished creating matrix\n");
 		}
 		
 		/**
@@ -2232,7 +2743,6 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 			separated.add(state1);
 		}
 		
-
 		/**
 		 * This method resets the intersection set.
 		 */
@@ -2248,7 +2758,7 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 				return "negative equivalence class";
 			}
 			
-			if (!DEBUG && DEBUG3) {
+			if (!DEBUG && (DEBUG2 || DEBUG3)) {
 				return toStringShort();
 			}
 			
