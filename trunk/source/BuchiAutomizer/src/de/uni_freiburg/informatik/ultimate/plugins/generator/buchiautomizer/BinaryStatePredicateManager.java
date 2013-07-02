@@ -1,5 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -240,7 +241,7 @@ public class BinaryStatePredicateManager {
 	
 	
 	private Term getRankGeq0() {
-		Term geq = m_Script.term(">=", m_OldRankVariable.getTermVariable(), m_Script.numeral("0"));
+		Term geq = m_Script.term(">=", m_OldRankVariable.getTermVariable(), m_Script.numeral(BigInteger.ZERO));
 		return geq;
 	}
 	
