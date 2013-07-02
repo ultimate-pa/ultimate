@@ -66,7 +66,8 @@ public class RemoveDeadEnds<LETTER,STATE> implements IOperation<LETTER,STATE> {
 
 	@Override
 	public String exitMessage() {
-		return "Finished " + operationName() + " Result "
+		return "Finished " + operationName() + " Reduced from " 
+				+ m_Input.sizeInformation() + " to "
 				+ m_Result.sizeInformation();
 	}
 
