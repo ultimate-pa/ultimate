@@ -18,6 +18,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.logic;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -173,6 +174,18 @@ public class Util {
 		}
 		newSubforms.add(lastFormula);
 		return script.term("=>", newSubforms.toArray(new Term[0]));
+	}
+	
+	
+	
+	public static Term sum(Script script, Term... summands) {
+		if (summands.length == 0) {
+			return script.numeral(BigInteger.ZERO);
+		} else if (summands.length == 1) {
+			return summands[0];
+		} else {
+			return script.term("+", summands);
+		}
 	}
 
 }
