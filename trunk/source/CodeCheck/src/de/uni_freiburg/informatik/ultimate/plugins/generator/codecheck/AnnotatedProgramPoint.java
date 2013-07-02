@@ -1,7 +1,9 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.model.IPayload;
 import de.uni_freiburg.informatik.ultimate.model.structure.BaseLabeledEdgesMultigraph;
@@ -19,6 +21,10 @@ public class AnnotatedProgramPoint extends ModifiableLabeledEdgesMultigraph<Anno
 	private ProgramPoint m_programPoint;
 	
 	boolean m_isPseudoErrorLocation = false;
+
+	private ArrayList<AnnotatedProgramPoint> copies;
+	private ArrayList<AnnotatedProgramPoint> newCopies;
+	private AnnotatedProgramPoint cloneSource;
 	
 	private HashMap<AnnotatedProgramPoint, HashSet<AnnotatedProgramPoint>> m_outgoingReturnAppToCallPreds;
 	
@@ -31,7 +37,11 @@ public class AnnotatedProgramPoint extends ModifiableLabeledEdgesMultigraph<Anno
 		m_programPoint = oldApp.m_programPoint;
 		m_isPseudoErrorLocation = oldApp.m_isPseudoErrorLocation;
 		m_outgoingReturnAppToCallPreds = oldApp.m_outgoingReturnAppToCallPreds;
+		copies = new ArrayList<AnnotatedProgramPoint>();
+		newCopies = new ArrayList<AnnotatedProgramPoint>();
+		cloneSource = null;
 	}
+	
 	
 	/**
 	 * copy constructor, except for a new predicate, which is given as an argument
@@ -43,19 +53,55 @@ public class AnnotatedProgramPoint extends ModifiableLabeledEdgesMultigraph<Anno
 		m_programPoint = oldApp.m_programPoint;
 		m_isPseudoErrorLocation = oldApp.m_isPseudoErrorLocation;
 		m_outgoingReturnAppToCallPreds = oldApp.m_outgoingReturnAppToCallPreds;
+		copies = new ArrayList<AnnotatedProgramPoint>();
+		newCopies = new ArrayList<AnnotatedProgramPoint>();
+		cloneSource = null;
 	}
 	
 	public AnnotatedProgramPoint(IPredicate predicate, ProgramPoint programPoint) {
 		m_predicate = predicate;
 		m_programPoint = programPoint;
+		copies = new ArrayList<AnnotatedProgramPoint>();
+		newCopies = new ArrayList<AnnotatedProgramPoint>();
+		m_outgoingReturnAppToCallPreds = new HashMap<AnnotatedProgramPoint, HashSet<AnnotatedProgramPoint>>();
+		cloneSource = null;
 	}
 	
 	public AnnotatedProgramPoint(IPredicate predicate, ProgramPoint programPoint, boolean isPEL) {
 		m_predicate = predicate;
 		m_programPoint = programPoint;
 		m_isPseudoErrorLocation = isPEL;
+		copies = new ArrayList<AnnotatedProgramPoint>();
+		newCopies = new ArrayList<AnnotatedProgramPoint>();
+		m_outgoingReturnAppToCallPreds = new HashMap<AnnotatedProgramPoint, HashSet<AnnotatedProgramPoint>>();
+		cloneSource = null;
 	}
 
+
+	public void addCopy(AnnotatedProgramPoint copy) {
+		newCopies.add(copy);		
+	}
+	
+	public void updateCopies() {
+		copies.addAll(newCopies);
+		newCopies.clear();
+	}
+	
+	public void setCloneSource(AnnotatedProgramPoint source) {
+		cloneSource = source;
+	}
+	
+	public ArrayList<AnnotatedProgramPoint> getCopies() {
+		ArrayList<AnnotatedProgramPoint> result = new ArrayList<AnnotatedProgramPoint>();
+		result.addAll(copies);
+		result.addAll(newCopies);
+		return result;
+	}
+	
+	public ArrayList<AnnotatedProgramPoint> getNewCopies() {
+		return newCopies;
+	}
+	
 	public IPredicate getPredicate() {
 		return m_predicate;
 	}
@@ -103,6 +149,8 @@ public class AnnotatedProgramPoint extends ModifiableLabeledEdgesMultigraph<Anno
 	}
 	
 	public HashSet<AnnotatedProgramPoint> getCallPredsOfOutgoingReturnTarget(AnnotatedProgramPoint returnTarget) {
+		if (m_outgoingReturnAppToCallPreds == null)
+			System.err.println("WHAHAAA!");
 		return m_outgoingReturnAppToCallPreds.get(returnTarget);
 	}
 	
