@@ -64,7 +64,7 @@ public class NestedWordAutomatonFilteredStates<LETTER, STATE> implements
 
 	@Override
 	public String sizeInformation() {
-		return "sizeInformation of NestedWordAutomatonFilteredStates";
+		return m_RemainingStates.size() + " states.";
 	}
 
 	@Override
