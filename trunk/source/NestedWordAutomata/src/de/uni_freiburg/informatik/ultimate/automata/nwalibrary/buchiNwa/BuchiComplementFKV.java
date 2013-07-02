@@ -119,6 +119,8 @@ public class BuchiComplementFKV<LETTER,STATE> implements IOperation<LETTER,STATE
 		lassoWords.add(ResultChecker.getRandomNestedLassoWord(m_Result, m_Result.size()));
 		lassoWords.add(ResultChecker.getRandomNestedLassoWord(m_Result, operandOldApi.size()));
 		lassoWords.add(ResultChecker.getRandomNestedLassoWord(m_Result, operandOldApi.size()));
+		lassoWords.addAll((new LassoExtractor<LETTER, STATE>(operandOldApi)).getResult());
+		lassoWords.addAll((new LassoExtractor<LETTER, STATE>(m_Result)).getResult());
 
 		for (NestedLassoWord<LETTER> nlw : lassoWords) {
 			correct &= checkAcceptance(nlw, operandOldApi, underApproximationOfComplement);

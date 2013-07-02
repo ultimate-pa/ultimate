@@ -132,6 +132,9 @@ public class BuchiDifferenceFKV<LETTER,STATE> implements IOperation<LETTER,STATE
 			lassoWords.add(ResultChecker.getRandomNestedLassoWord(m_Result, m_Result.size()));
 			lassoWords.add(ResultChecker.getRandomNestedLassoWord(m_Result, fstOperandOldApi.size()));
 			lassoWords.add(ResultChecker.getRandomNestedLassoWord(m_Result, sndOperandOldApi.size()));
+			lassoWords.addAll((new LassoExtractor<LETTER, STATE>(m_FstOperand)).getResult());
+			lassoWords.addAll((new LassoExtractor<LETTER, STATE>(m_SndOperand)).getResult());
+			lassoWords.addAll((new LassoExtractor<LETTER, STATE>(m_Result)).getResult());
 
 			for (NestedLassoWord<LETTER> nlw : lassoWords) {
 				correct &= checkAcceptance(nlw, fstOperandOldApi, sndOperandOldApi, underApproximationOfComplement);
