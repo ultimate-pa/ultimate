@@ -112,8 +112,7 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	
 	// TODO<debug>
 	private final boolean DEBUG = false; // general output
-	private final boolean DEBUG2 = false; // matrix-based return split
-	private final boolean DEBUG3 = false; // old return split
+	private final boolean DEBUG2 = false; // return split
 	private final boolean DEBUG4 = false; // size info before return splits
 	
 	// TODO<statistics>
@@ -1043,14 +1042,14 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	@SuppressWarnings("unchecked")
 	private void splitReturnExecute(
 			final HashSet<EquivalenceClass> splitEquivalenceClasses) {
-		if (DEBUG3)
+		if (DEBUG4)
 			System.err.println("\n-- executing return splits");
 		for (final EquivalenceClass oldEc : splitEquivalenceClasses) {
 			final HashMap<STATE, HashSet<STATE>> state2separatedSet =
 					oldEc.m_state2separatedSet;
 			assert (state2separatedSet != null);
 			
-			if (DEBUG3) {
+			if (DEBUG4) {
 				System.err.print(oldEc);
 				System.err.print(" : ");
 				System.err.println(state2separatedSet);
@@ -1128,7 +1127,7 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 				}
 			}
 			
-			if (DEBUG3)
+			if (DEBUG4)
 				System.err.println("state2color: " + state2color);
 			
 			// finally split the equivalence class
@@ -1140,7 +1139,7 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 				if (STATISTICS)
 					++m_splitsWithChange;
 				
-				if (DEBUG3)
+				if (DEBUG4)
 					System.err.println("new equivalence class: " +
 							newEc.toStringShort());
 			}
@@ -2076,7 +2075,7 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 		 * @param state2 another state
 		 */
 		private void markPair(final STATE state1, final STATE state2) {
-			if (DEBUG3)
+			if (DEBUG4)
 				System.err.println("separate " + state1 + " " + state2);
 			
 			assert ((state1 != state2) && (m_states.contains(state1)) &&
@@ -2112,7 +2111,7 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 				return "negative equivalence class";
 			}
 			
-			if (!DEBUG && (DEBUG2 || DEBUG3)) {
+			if (!DEBUG && (DEBUG2 || DEBUG4)) {
 				return toStringShort();
 			}
 			
