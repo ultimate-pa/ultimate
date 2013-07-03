@@ -110,6 +110,8 @@ public class LinearRankingFunction implements RankingFunction {
 			Term summand;
 			if (entry.getValue().equals(BigInteger.ONE)) {
 				summand = entry.getKey().getTermVariable();
+			} else if (entry.getValue().equals(BigInteger.valueOf(-1))) {
+				summand = script.term("-", entry.getKey().getTermVariable());
 			} else {
 				summand = script.term("*",
 						script.numeral(entry.getValue()),
@@ -117,7 +119,9 @@ public class LinearRankingFunction implements RankingFunction {
 			}
 			summands.add(summand);
 		}
-		summands.add(script.numeral(m_constant));
+		if (!m_constant.equals(BigInteger.ZERO) || summands.size() == 0) {
+			summands.add(script.numeral(m_constant));
+		}
 		if (summands.size() == 1) {
 			return summands.get(0);
 		} else {
