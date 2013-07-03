@@ -352,25 +352,7 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 				
 				// return predecessors
 				if (m_workListRet.hasNext()) {
-					m_splitEcs = new HashSet<EquivalenceClass>();
-					
-					HashMap<EquivalenceClass, HashSet<EquivalenceClass>>
-							linEc2hierEc = splitReturnBackwardsAnalysis();
-					
-					splitReturnForwardsAnalysis(linEc2hierEc);
-					linEc2hierEc = null;
-					
-					splitReturnExecute(m_splitEcs);
-					
-					/*
-					 * TODO<resetMatrix> reset matrices after each split
-					 *                   (normal or return)
-					 *                   currently they are deleted
-					 */
-					for (final EquivalenceClass ec :
-							m_partition.m_equivalenceClasses) {
-						ec.m_matrix = null;
-					}
+					splitReturnPredecessors();
 					
 //					// TODO<globalSplit>
 //					m_splitEcs = new HashSet<EquivalenceClass>();
@@ -529,26 +511,75 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	}
 	
 	/**
+	 * This method implements the return split.
+	 * 
+	 * For each return symbol respectively first find the predecessor states
+	 * (both linear and hierarchical). Then do the following first for the
+	 * linear and then for the hierarchical states:
+	 * Mark the simple splits, then find violations due to the neutral states
+	 * and break ties on which states to split there.
+	 */
+	private void splitReturnPredecessors() {
+		if (DEBUG2)
+			System.err.println("\nNEW RETURN SPLITTING ROUND");
+		
+		final HashMap<STATE, HashSet<STATE>> lin2hier =
+				splitReturnBackwardsAnalysis();
+		
+		HashMap<EquivalenceClass, HashSet<EquivalenceClass>>
+				linEc2hierEc =
+				splitReturnBackwardsEcTranslation(lin2hier);
+		m_splitEcs = new HashSet<EquivalenceClass>();
+		splitReturnForwardsAnalysis(linEc2hierEc, true);
+		
+		if (m_splitEcs.size() > 0) {
+			splitReturnExecute(m_splitEcs);
+			
+			/*
+			 * TODO<resetMatrix> reset matrices after each split
+			 *                   (normal or return)
+			 *                   currently they are deleted
+			 */
+			for (final EquivalenceClass ec :
+					m_partition.m_equivalenceClasses) {
+				ec.m_matrix = null;
+			}
+			
+			linEc2hierEc = splitReturnBackwardsEcTranslation(lin2hier);
+			m_splitEcs = new HashSet<EquivalenceClass>();
+		}
+		
+		splitReturnForwardsAnalysis(linEc2hierEc, false);
+		splitReturnExecute(m_splitEcs);
+		
+		/*
+		 * TODO<resetMatrix> reset matrices after each split
+		 *                   (normal or return)
+		 *                   currently they are deleted
+		 */
+		for (final EquivalenceClass ec :
+				m_partition.m_equivalenceClasses) {
+			ec.m_matrix = null;
+		}
+	}
+	
+	/**
 	 * This method finds all involved linear and hierarchical equivalence
 	 * classes for all successor equivalence classes currently in the work
 	 * list for the return split.
 	 * 
-	 * @return map linear equivalence class to hierarchical equivalence classes
+	 * @return map linear state to hierarchical states
 	 */
-	private HashMap<EquivalenceClass, HashSet<EquivalenceClass>>
-			splitReturnBackwardsAnalysis() {
+	private HashMap<STATE, HashSet<STATE>> splitReturnBackwardsAnalysis() {
 		if (DEBUG2)
 			System.err.println("analyzing backwards");
-		HashMap<STATE, HashSet<STATE>> lin2hier =
+		final HashMap<STATE, HashSet<STATE>> lin2hier =
 				new HashMap<STATE, HashSet<STATE>>(computeHashSetCapacity(
 						m_partition.m_equivalenceClasses.size()));
 		
 		// find all involved linear and hierarchical states
 		while (m_workListRet.hasNext()) {
 			EquivalenceClass succEc = m_workListRet.next();
-			
-			if (DEBUG2)
-				System.err.println(" succEc: " + succEc.toStringShort());
 			boolean incomingReturns = false;
 			
 			for (final STATE succ : succEc.m_states) {
@@ -576,8 +607,25 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 				if (STATISTICS)
 					++m_noIncomingTransitions;
 			}
+			
+			if (DEBUG2)
+				System.err.println(" succEc: " + succEc.toStringShort() +
+						" has " + (incomingReturns ? "" : "no ") + "returns");
 		}
-		
+		return lin2hier;
+	}
+	
+	/**
+	 * This method translates the mapping of linear to hiearchical states to
+	 * a mapping of linear to hierarchical equivalence classes.
+	 * 
+	 * @return map linear equivalence class to hierarchical equivalence class
+	 */
+	private HashMap<EquivalenceClass, HashSet<EquivalenceClass>>
+			splitReturnBackwardsEcTranslation(
+			final HashMap<STATE, HashSet<STATE>> lin2hier) {
+		if (DEBUG2)
+			System.err.println("\ntranslating to ECs");
 		/*
 		 * TODO<efficiency> instead of finding states the ECs could be used in
 		 *                  the map already before
@@ -599,7 +647,6 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 				hiers.addAll(entry.getValue());
 			}
 		}
-		lin2hier = null;
 		final HashMap<EquivalenceClass, HashSet<EquivalenceClass>> linEc2hierEc
 				= new HashMap<EquivalenceClass, HashSet<EquivalenceClass>>(
 				computeHashSetCapacity(linEc2hier.size()));
@@ -618,11 +665,8 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 			}
 		}
 		
-		if (DEBUG2) {
-			System.err.println("resulting map: ");
-			System.err.println(linEc2hierEc);
-			System.err.println();
-		}
+		if (DEBUG2)
+			System.err.println("resulting map: " + linEc2hierEc);
 		
 		return linEc2hierEc;
 	}
@@ -632,9 +676,11 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	 * equivalence classes the linear and the hierarchical return split.
 	 * 
 	 * @param linEc2hierEc map linear EC to hierarchical EC
+	 * @param linearAnalysis analysis: true = linear, false = hierarchical
 	 */
 	private void splitReturnForwardsAnalysis(final HashMap
-			<EquivalenceClass, HashSet<EquivalenceClass>> linEc2hierEc) {
+			<EquivalenceClass, HashSet<EquivalenceClass>> linEc2hierEc,
+			final boolean linearAnalysis) {
 		for (final Entry<EquivalenceClass, HashSet<EquivalenceClass>> entry :
 				linEc2hierEc.entrySet()) {
 			final EquivalenceClass linEc = entry.getKey();
@@ -701,15 +747,18 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 					System.err.println(" relevant rows: " + relevantRows);
 				
 				// linear states analysis
-				if (! linEcSingleton) {
-					SplitReturnAnalyzeLinear(hier2lin2letter2succ, linEc,
-							relevantRows);
+				if (linearAnalysis) {
+					if (! linEcSingleton) {
+						SplitReturnAnalyzeLinear(hier2lin2letter2succ, linEc,
+								relevantRows);
+					}
 				}
-				
 				// hierarchical states analysis
-				if (relevantRows.size() > 1) {
-					splitReturnAnalyzeHierarchical(hier2lin2letter2succ,
-							linEc, hierEc, relevantRows);
+				else {
+					if (relevantRows.size() > 1) {
+						splitReturnAnalyzeHierarchical(hier2lin2letter2succ,
+								hierEc, relevantRows);
+					}
 				}
 			}
 		}
@@ -843,81 +892,22 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	 *                    otherwise a row with two different entries triggers
 	 *                    splitting of this row from all the others
 	 * 
-	 * @param hier2lin2letter2succ 
-	 * @param linEc linear equivalence class
+	 * @param hier2lin2letter2succ map hier. to lin. to letter to succ. state
 	 * @param hierEc hierarchical equivalence class
 	 * @param rows matrix rows (hierarchical states)
 	 */
 	private void splitReturnAnalyzeHierarchical(final HashMap<STATE,
 			HashMap<STATE, HashMap<LETTER, HashSet<STATE>>>>
-			hier2lin2letter2succ, final EquivalenceClass linEc,
+			hier2lin2letter2succ,
 			final EquivalenceClass hierEc, final ArrayList<MatrixRow> rows) {
 		if (DEBUG2)
 			System.err.println("-hierarchical analysis");
 		
-		int size = rows.size();
+		final int size = rows.size();
 		
-		/*
-		 * TODO<ignoreMarked>
-		 * Currently this is a dirty job since rows with two different
-		 * entries trigger a split from all other rows.
-		 * To make things faster this written out here.
-		 * When linear splits are executed before, this can be removed.
-		 */
-		final ArrayList<Integer> noLinearSplits= new ArrayList<Integer>();
-		if (DEBUG2)
-			System.err.println(
-					" checking for linear splits (efficient, but stupid)");
-		outerLoop: for (int i = 0; i < size; ++i) {
-			final MatrixRow row = rows.get(i);
-			final HashMap<STATE, HashMap<LETTER, HashSet<STATE>>>
-					lin2letter2succ = row.m_lin2letter2succ;
-			
-			if (DEBUG2)
-				System.err.println(" hier " + row.m_hier + " -> " +
-						lin2letter2succ);
-			
-			for (final STATE lin : lin2letter2succ.keySet()) {
-				if (linEc.m_state2separatedSet != null) {
-					final HashSet<STATE> separatedSet =
-							linEc.m_state2separatedSet.get(lin);
-					if (separatedSet == null) {
-						continue;
-					}
-					assert (! separatedSet.isEmpty());
-					
-					final HashSet<STATE> otherHiers = new HashSet<STATE>(
-							computeHashSetCapacity(i));
-					for (int j = i + 1; j < size; ++j) {
-						otherHiers.add(rows.get(j).m_hier);
-					}
-					final HashSet<STATE> thisHiers = new HashSet<STATE>(2);
-					thisHiers.add(row.m_hier);
-					final LinkedList<HashSet<STATE>> splitSets =
-							new LinkedList<HashSet<STATE>>();
-					splitSets.add(otherHiers);
-					splitSets.add(thisHiers);
-					
-					if (splitSets.size() > 1) {
-						if (DEBUG2)
-							System.err.println(
-									"    mark hierarchical split of " +
-									hierEc.toStringShort() + ": " + splitSets);
-						
-						hierEc.markSplit(splitSets);
-						m_splitEcs.add(hierEc);
-					}
-					
-					continue outerLoop;
-				}
-			}
-			
-			noLinearSplits.add(i);
-		}
-		
-		size = noLinearSplits.size();
 		if (DEBUG2)
 			System.err.println("  rows remaining: " + size);
+		
 		if (size <= 1) {
 			if (DEBUG2)
 				System.err.println("   ignore");
@@ -925,7 +915,7 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 			return;
 		}
 		
-		final int modSize = computeHashSetCapacity(rows.size());
+		final int modSize = computeHashSetCapacity(size);
 		final HashMap<HashMap<LETTER, HashSet<EquivalenceClass>>,
 			HashSet<STATE>> letter2succEc2hier =
 			new HashMap<HashMap<LETTER, HashSet<EquivalenceClass>>,
@@ -934,19 +924,21 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 		final int hierEcModSize =
 				computeHashSetCapacity(hierEc.m_states.size());
 		
-		/*
-		 * go through rows (each of them behaves the same now)
-		 * 
-		 */
+		// go through rows (each entry per row behaves the same)
 		for (int i = 0; i < size; ++i) {
 			final MatrixRow row = rows.get(i);
+			final STATE hier = row.m_hier;
 			// choose the first entry in this row
 			final HashMap<LETTER, HashSet<STATE>> letter2succ =
 					row.m_lin2letter2succ.values().iterator().next();
 			
 			if (DEBUG2)
-				System.err.println(" hier " + row.m_hier + " -> " +
-						letter2succ);
+				System.err.println(" hier " + hier + " -> " + letter2succ);
+			
+			if (letter2succ == m_downStateMap) {
+				noTransitions.add(hier);
+				continue;
+			}
 			
 			/*
 			 * translate to map with equivalence class
@@ -976,11 +968,16 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 				hiers = new HashSet<STATE>(hierEcModSize);
 				letter2succEc2hier.put(letter2succEc, hiers);
 			}
-			hiers.add(row.m_hier);
+			hiers.add(hier);
 		}
 		
 		if (DEBUG2)
-			System.err.println("  letter2succEc2hier: " + letter2succEc2hier);
+			System.err.println("    receiving: " + letter2succEc2hier +
+					" and {{DS}=" + noTransitions + "}");
+		
+		if (noTransitions.size() > 0) {
+			letter2succEc2hier.put(null, noTransitions);
+		}
 		
 		if (letter2succEc2hier.size() > 1) {
 			if (DEBUG2)
@@ -1080,7 +1077,7 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	 *
 	 * @param a the splitter equivalence class
 	 */
-	private void splitReturnPredecessors(final EquivalenceClass a) {
+	private void splitReturnPredecessorsOld(final EquivalenceClass a) {
 		assert (a.m_incomingRet != EIncomingStatus.inWL);
 		
 		// data structures for the linear and hierarchical predecessors
@@ -2801,7 +2798,12 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 						hier2lin2letter2succ.put(hier, lin2letter2succ);
 					}
 				}
-				assert (hier2lin2letter2succ.size() > 0);
+				
+				/*
+				 * TODO<resetMatrix> currently this is not true when deleting
+				 *                   matrices, but with splitting it is fine
+				 */
+//				assert (hier2lin2letter2succ.size() > 0);
 			}
 			if (DEBUG2)
 				System.err.println("--finished creating matrix");
