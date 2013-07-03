@@ -723,7 +723,9 @@ public class BuchiCegarLoop {
 				interpolAutomatonUsedInRefinement = new BuchiInterpolantAutomaton(
 						m_SmtManager, ec, m_Bspm.getStemPrecondition(), 
 						stemInterpolants, m_Bspm.getHondaPredicate(), 
-						m_Bspm.getRankEqAndSi(), loopInterpolants, m_Abstraction); 
+						m_Bspm.getRankEqAndSi(), loopInterpolants, 
+						stem.getSymbol(stem.length()-1), 
+						loop.getSymbol(loop.length()-1), m_Abstraction); 
 						//new EagerInterpolantAutomaton(ec, m_InterpolAutomaton);
 			} else {
 				interpolAutomatonUsedInRefinement = m_InterpolAutomaton;

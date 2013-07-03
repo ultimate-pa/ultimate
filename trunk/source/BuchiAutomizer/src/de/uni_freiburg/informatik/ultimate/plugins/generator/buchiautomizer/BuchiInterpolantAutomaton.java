@@ -42,6 +42,9 @@ public class BuchiInterpolantAutomaton implements
 	private final Set<IPredicate> m_ResultStemPredicates;
 	private final Set<IPredicate> m_ResultLoopPredicates;
 	
+	private final CodeBlock m_HondaEntererStem;
+	private final CodeBlock m_HondaEntererLoop;
+	
 	private final Map<Set<IPredicate>, IPredicate> m_InputPreds2ResultPreds = 
 			new HashMap<Set<IPredicate>, IPredicate>();
 
@@ -57,7 +60,7 @@ public class BuchiInterpolantAutomaton implements
 	public BuchiInterpolantAutomaton(SmtManager smtManager, EdgeChecker edgeChecker,
 			IPredicate precondition, IPredicate[] stemInterpolants, 
 			IPredicate hondaPredicate, IPredicate rankEqAndSi, 
-			IPredicate[] loopInterpolants, 
+			IPredicate[] loopInterpolants, CodeBlock hondaEntererStem, CodeBlock hondaEntererLoop,
 			INestedWordAutomatonSimple<CodeBlock, IPredicate> abstraction) {
 		super();
 		m_SmtManager = smtManager;
@@ -94,8 +97,8 @@ public class BuchiInterpolantAutomaton implements
 			}
 		}
 		m_HondaPredicate = hondaPredicate;
-		m_InputStemPredicates.add(hondaPredicate);
-		m_InputLoopPredicates.add(hondaPredicate);
+//		m_InputStemPredicates.add(hondaPredicate);
+//		m_InputLoopPredicates.add(hondaPredicate);
 		m_Result.addState(false, true, hondaPredicate);
 		m_InputSuccessorCache.addState(false, true, hondaPredicate);
 		m_RejectionCache.addState(false, true, hondaPredicate);
@@ -111,6 +114,8 @@ public class BuchiInterpolantAutomaton implements
 		}
 		m_InputBookkeeping = new NwaCacheBookkeeping<CodeBlock, IPredicate>();
 		m_ResultBookkeeping = new NwaCacheBookkeeping<CodeBlock, IPredicate>();
+		m_HondaEntererStem = hondaEntererStem;
+		m_HondaEntererLoop = hondaEntererLoop;
 	}
 
 
