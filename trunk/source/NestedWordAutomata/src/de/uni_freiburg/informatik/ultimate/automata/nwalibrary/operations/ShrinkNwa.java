@@ -1,8 +1,14 @@
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations;
 
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -113,7 +119,6 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	// TODO<debug>
 	private final boolean DEBUG = false; // general output
 	private final boolean DEBUG2 = false; // return split
-	private final boolean DEBUG4 = false; // size info before return splits
 	
 	// TODO<statistics>
 	private final boolean STATISTICS = false;
@@ -122,13 +127,10 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	private int m_incomingTransitions = 0;
 	private int m_noIncomingTransitions = 0;
 	private int m_ignoredReturnSingletons1x1 = 0;
-	private int m_ignoredReturnSingletonsOnly1Entry = 0;
-	private int m_ignoredReturnDuplicates = 0;
-	private int m_returnLocalSplits = 0;
-	private int m_returnMixedSplits = 0;
-	private int m_returnLocalIgnored = 0;
-	private int m_returnMixedIgnored = 0;
-	private int m_returnSplitsStarted = 0;
+	private long m_returnTime = 0, m_wholeTime = 0;
+	 // size information before return splits
+	private final boolean STAT_RETURN_SIZE = false;
+	private final BufferedWriter m_writer1, m_writer2;
 	
 	/**
 	 * StateFactory used for the construction of new states. This is _NOT_ the
@@ -189,6 +191,21 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 			final boolean includeMapping, final boolean isFiniteAutomaton,
 			final boolean splitOutgoing)
 					throws OperationCanceledException {
+		if (STAT_RETURN_SIZE) {
+			try {
+				m_writer1 = new BufferedWriter(
+						new FileWriter(new File("DEBUG4-1.txt")));
+				m_writer2 = new BufferedWriter(
+						new FileWriter(new File("DEBUG4-2.txt")));
+			} catch (IOException e) {
+				throw new RuntimeException(e);
+			}
+		}
+		else {
+			m_writer1 = null;
+			m_writer2 = null;
+		}
+		
 		m_operand = operand;
 		// TODO<DoubleDecker> check this?
 		m_doubleDecker = (IDoubleDeckerAutomaton<LETTER, STATE>)m_operand;
@@ -222,6 +239,8 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 		s_Logger.info(exitMessage());
 		
 		if (STATISTICS) {
+			m_wholeTime += new GregorianCalendar().getTimeInMillis();
+			
 			System.out.println("positive splits: " + m_splitsWithChange);
 			System.out.println("negative splits: " + m_splitsWithoutChange);
 			System.out.println("quota (p/n): " + (m_splitsWithoutChange == 0
@@ -237,16 +256,12 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 					: (((float)m_incomingTransitions) /
 							((float)m_noIncomingTransitions))));
 			System.out.println("ignored return splits due to singletons: " +
-					m_ignoredReturnSingletons1x1 + ", " +
-					m_ignoredReturnSingletonsOnly1Entry);
-			System.out.println("ignored return splits due to duplicate tests: "
-					+ m_ignoredReturnDuplicates);
-			System.out.print("return splits (executed/ignored): started " +
-					m_returnSplitsStarted);
-			System.out.print(", local: (" + m_returnLocalSplits + "/" +
-					m_returnLocalIgnored);
-			System.out.println("), mixed: (" + m_returnMixedSplits + "/" +
-					m_returnMixedIgnored + ")");
+					m_ignoredReturnSingletons1x1);
+			System.out.println("time consumption (ms): returns: " +
+					m_returnTime + " all: " + m_wholeTime);
+			System.out.println("quota: " + (m_wholeTime == 0
+					? "--"
+					: (((float)m_returnTime) / ((float)m_wholeTime))));
 		}
 	}
 	
@@ -264,6 +279,10 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	private void minimize(final boolean isFiniteAutomaton,
 			final Iterable<Set<STATE>> modules, final boolean includeMapping)
 			throws OperationCanceledException {
+		if (STATISTICS) {
+			m_wholeTime -= new GregorianCalendar().getTimeInMillis();
+		}
+		
 		if (DEBUG)
 			System.err.println("---------------START---------------");
 		// initialize the partition object
@@ -328,14 +347,48 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 					}
 				}
 				
-				if (DEBUG4) {
-					System.err.println("return split: " +
-							m_partition.m_equivalenceClasses.size() + " ECs");
-					System.err.println(m_partition.m_equivalenceClasses);
-				}
-				
 				// return predecessors
 				if (m_workListRet.hasNext()) {
+					if (STATISTICS) {
+						m_returnTime -=
+								new GregorianCalendar().getTimeInMillis();
+					}
+					
+					if (STAT_RETURN_SIZE) {
+						try {
+							GregorianCalendar date = new GregorianCalendar();
+							m_writer1.append(
+									date.get(GregorianCalendar.MINUTE) + ":" +
+									date.get(GregorianCalendar.SECOND) + ":" +
+									date.get(GregorianCalendar.MILLISECOND) +
+									" (min:sec:ms)\n");
+							m_writer1.append(
+									m_partition.m_equivalenceClasses.size() +
+									" ECs before return split of " +
+									m_workListRet.m_queue.size() + " ECs\n");
+							final int[] sizes =
+									new int[m_workListRet.m_queue.size()];
+							m_writer2.append("\n\nnew round with " +
+									sizes.length + " ECs");
+							
+							int i = -1;
+							for (final EquivalenceClass ec :
+									m_workListRet.m_queue) {
+								sizes[++i] = ec.m_states.size();
+							}
+							Arrays.sort(sizes);
+							for (i = 0; i < sizes.length; ++i) {
+								if (i % 15 == 0) {
+									m_writer2.append("\n");
+								}
+								m_writer2.append(sizes[i] + ", ");
+							}
+						} catch (IOException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
+					}
+					
 					splitReturnPredecessors();
 					
 //					// TODO<globalSplit>/<oldReturnSplit>
@@ -351,9 +404,40 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 ////					} while (m_workListRet.hasNext());
 ////					// execute the splits
 ////					splitReturnExecute(m_splitEcs);
+					
+					if (STATISTICS) {
+						m_returnTime +=
+								new GregorianCalendar().getTimeInMillis();
+					}
+					
+					if (STAT_RETURN_SIZE) {
+						try {
+							GregorianCalendar date = new GregorianCalendar();
+							m_writer1.append(
+									date.get(GregorianCalendar.MINUTE) + ":" +
+									date.get(GregorianCalendar.SECOND) + ":" +
+									date.get(GregorianCalendar.MILLISECOND) +
+									" (min:sec:ms)\n");
+							m_writer1.append(
+									m_partition.m_equivalenceClasses.size() +
+									" ECs after return split\n");
+						} catch (IOException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
+					}
 				}
 				else {
 					break outer;
+				}
+			}
+			
+			if (STAT_RETURN_SIZE) {
+				try {
+					m_writer1.close();
+					m_writer2.close();
+				} catch (IOException eWriter) {
+					eWriter.printStackTrace();
 				}
 			}
 			
@@ -413,7 +497,7 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 			}
 		}
 		
-		if (DEBUG4) {
+		if (DEBUG) {
 			System.err.println("starting with " +
 					m_partition.m_equivalenceClasses.size() +
 					" equivalence classes");
@@ -1042,14 +1126,14 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	@SuppressWarnings("unchecked")
 	private void splitReturnExecute(
 			final HashSet<EquivalenceClass> splitEquivalenceClasses) {
-		if (DEBUG4)
+		if (DEBUG2)
 			System.err.println("\n-- executing return splits");
 		for (final EquivalenceClass oldEc : splitEquivalenceClasses) {
 			final HashMap<STATE, HashSet<STATE>> state2separatedSet =
 					oldEc.m_state2separatedSet;
 			assert (state2separatedSet != null);
 			
-			if (DEBUG4) {
+			if (DEBUG2) {
 				System.err.print(oldEc);
 				System.err.print(" : ");
 				System.err.println(state2separatedSet);
@@ -1127,7 +1211,7 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 				}
 			}
 			
-			if (DEBUG4)
+			if (DEBUG2)
 				System.err.println("state2color: " + state2color);
 			
 			// finally split the equivalence class
@@ -1139,7 +1223,7 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 				if (STATISTICS)
 					++m_splitsWithChange;
 				
-				if (DEBUG4)
+				if (DEBUG2)
 					System.err.println("new equivalence class: " +
 							newEc.toStringShort());
 			}
@@ -2075,7 +2159,7 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 		 * @param state2 another state
 		 */
 		private void markPair(final STATE state1, final STATE state2) {
-			if (DEBUG4)
+			if (DEBUG2)
 				System.err.println("separate " + state1 + " " + state2);
 			
 			assert ((state1 != state2) && (m_states.contains(state1)) &&
@@ -2111,7 +2195,7 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 				return "negative equivalence class";
 			}
 			
-			if (!DEBUG && (DEBUG2 || DEBUG4)) {
+			if (!DEBUG && DEBUG2) {
 				return toStringShort();
 			}
 			
