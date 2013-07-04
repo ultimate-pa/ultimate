@@ -82,7 +82,7 @@ public class Preferences {
 	 * Try to instantiate the linear template?
 	 */
 	public static final boolean use_linear_template = true; // Default: true
-
+	
 	/**
 	 * Try to instantiate the multiphase template?
 	 */
