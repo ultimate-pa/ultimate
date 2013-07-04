@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -42,7 +43,7 @@ enum Checker {
 }
 
 enum RedirectionMethod {
-	First, Alex
+	First, FirstStrongest, Random, RandomStrongest, Alex
 }
 
 public class CodeCheckObserver implements IUnmanagedObserver {
@@ -59,7 +60,11 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 
 	private IPredicate m_truePredicate;
 	private IPredicate m_falsePredicate;
+	
+	private HashMap <AnnotatedProgramPoint, HashMap<IPredicate, AnnotatedProgramPoint>> LocationPredicates;
 
+	
+	
 	public boolean initialize(IElement root) {
 		m_originalRoot = (RootNode) root;
 		RootAnnot rootAnnot = m_originalRoot.getRootAnnot();
@@ -76,6 +81,8 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 
 		return true;
 	}
+	
+	
 
 	private PrintWriter dumpInitialize() { // copied from Impulse, needed for trace checker
 		File file = 
@@ -134,12 +141,22 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 		return newRoot;
 	}
 	
+	private boolean initializeLocationPredicates(AnnotatedProgramPoint node) {
+		if(LocationPredicates.get(node) == null) {
+			LocationPredicates.put(node, new HashMap<IPredicate,AnnotatedProgramPoint>());
+			LocationPredicates.get(node).put(node.getPredicate(), node);
+			for (AnnotatedProgramPoint successor : node.getOutgoingNodes())
+				initializeLocationPredicates(successor);
+		}
+		return true;
+	}
+	
 	@Override
 	public boolean process(IElement root) {
 		
 		//FIXME
 		checker = Checker.IMPULSE;
-		redirectionMethod = RedirectionMethod.First; // Alex : Change that variable here
+		redirectionMethod = RedirectionMethod.RandomStrongest; // Alex : Change that variable here
 		
 		
 		final boolean loop_forever = true; // for DEBUG
@@ -148,6 +165,11 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 		initialize(root);
 		
 		ImpRootNode originalGraphCopy = copyGraph(m_graphRoot);
+		
+		if(checker == Checker.IMPULSE) {
+			LocationPredicates= new HashMap<AnnotatedProgramPoint, HashMap<IPredicate,AnnotatedProgramPoint>>();
+			initializeLocationPredicates(originalGraphCopy);
+		}
 		
 		 /* testing copy graph
 		
@@ -221,7 +243,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 				}
 			}
 			//if (procID < noOfProcedures)
-			m_graphRoot = copyGraph(originalGraphCopy);
+			//m_graphRoot = copyGraph(originalGraphCopy);
 		}
 		
 		return false;
@@ -240,7 +262,8 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 		
 		
 		HashMap <AnnotatedProgramPoint, ArrayList <AnnotatedProgramPoint>> nodesClones = new HashMap <AnnotatedProgramPoint, ArrayList <AnnotatedProgramPoint>>();
-
+		// nodesClones.clear();
+		
 		HashMap <AnnotatedProgramPoint, ArrayList <IPredicate>> map = new HashMap <AnnotatedProgramPoint, ArrayList <IPredicate>>();
 		
 		for (int i = 0; i < interpolants.length; ++i) {
@@ -262,42 +285,227 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 		}
 		return true;
 	}
+		
+	private boolean modifyHyperEdges(AnnotatedProgramPoint src, AnnotatedProgramPoint dest, HashMap <AnnotatedProgramPoint, ArrayList <AnnotatedProgramPoint>> nodesClones) {
+		HashSet <AnnotatedProgramPoint> hyperEdges = src.getCallPredsOfOutgoingReturnTarget(dest);
+		if (hyperEdges != null) {
+			for (Iterator <AnnotatedProgramPoint> it = hyperEdges.iterator(); it.hasNext(); ) {
+				AnnotatedProgramPoint callPoint = it.next();
+				if (nodesClones.containsKey(callPoint)) {
+					for (Iterator <AnnotatedProgramPoint> clone = nodesClones.get(callPoint).iterator(); clone.hasNext(); ) {
+						src.addOutGoingReturnCallPred(dest, clone.next());
+					}
+					src.removeOutgoingReturnCallPred(dest, callPoint);
+				}
+			}
+		}
+		return true;
+	}
 	
+	private boolean splitNode(AnnotatedProgramPoint oldNode, IPredicate[] interpolant, HashMap <AnnotatedProgramPoint, ArrayList <AnnotatedProgramPoint>> nodesClones) {
+		
+		int interpolantsCount = interpolant.length;
+		AnnotatedProgramPoint[][] newNodes = new AnnotatedProgramPoint[interpolantsCount][2];
+		for (int i = 0; i < interpolantsCount; ++i) {
+			newNodes[i] = new AnnotatedProgramPoint[] {
+					new AnnotatedProgramPoint(oldNode, conjugatePredicates(oldNode.getPredicate(), interpolant[i])),
+					new AnnotatedProgramPoint(oldNode, conjugatePredicates(oldNode.getPredicate(), negatePredicate(interpolant[i])))
+					};
+		}
+		
+		AnnotatedProgramPoint[] predecessorNodes = oldNode.getIncomingNodes().toArray(new AnnotatedProgramPoint[]{});
+		AnnotatedProgramPoint[] successorNodes = oldNode.getOutgoingNodes().toArray(new AnnotatedProgramPoint[]{});
+		
+		
+		for (AnnotatedProgramPoint predecessorNode : predecessorNodes) {
+			if (predecessorNode != oldNode) {
+				CodeBlock label = predecessorNode.getOutgoingEdgeLabel(oldNode);
+				HashSet <AnnotatedProgramPoint> hyperEdges = predecessorNode.getCallPredsOfOutgoingReturnTarget(oldNode);
+				boolean isReturn = label instanceof Return;
+				for (int i = 0; i < interpolantsCount; ++i) {
+					for (AnnotatedProgramPoint newNode : newNodes[i]) {
+						if (isSatEdge(predecessorNode, label, newNode)) {
+							predecessorNode.addOutgoingNode(newNode, label);
+							newNode.addIncomingNode(predecessorNode);
+							if (isReturn) {
+								/*
+								modifyHyperEdges(predecessorNode, newNode, nodesClones);
+								for (AnnotatedProgramPoint node : hyperEdges) {
+									predecessorNode.addOutGoingReturnCallPred(newNode, node);
+								}
+								*/
+							}
+						}
+					}
+				}
+				/*
+				for (AnnotatedProgramPoint node : hyperEdges)
+					predecessorNode.removeOutgoingReturnCallPred(oldNode, node);
+				*/
+				oldNode.removeIncomingNode(predecessorNode);
+				predecessorNode.removeOutgoingNode(oldNode);
+			}
+		}
+
+		for (AnnotatedProgramPoint successorNode : successorNodes) {
+			if (successorNode != oldNode) {
+				CodeBlock label = oldNode.getOutgoingEdgeLabel(successorNode);
+				boolean isReturn = label instanceof Return;
+				for (int i = 0; i < interpolantsCount; ++i) {
+					for (AnnotatedProgramPoint newNode : newNodes[i]) {
+						if (isSatEdge(newNode, label, successorNode)) {
+							newNode.addOutgoingNode(successorNode, label);
+							successorNode.addIncomingNode(newNode);
+							if (isReturn) {
+								//modifyHyperEdges(newNode, successorNode, nodesClones);
+							}
+						}
+					}
+				}
+				successorNode.removeIncomingNode(oldNode);
+				oldNode.removeOutgoingNode(successorNode);
+			}
+		}
+		
+		
+		boolean selfLoop = oldNode.getSuccessors().contains(oldNode);
+		
+		if (selfLoop) {
+			// FIXME: Check if complete association required.
+			CodeBlock label = oldNode.getOutgoingEdgeLabel(oldNode);
+			for (int i = 0; i < interpolantsCount; ++i) {
+				for (AnnotatedProgramPoint source : newNodes[i]) {
+					for (AnnotatedProgramPoint destination : newNodes[i]) {
+						if (isSatEdge(source, label, destination)) {
+							source.addOutgoingNode(destination, label);
+							destination.addIncomingNode(source);
+						}
+					}
+				}
+			}
+		}
+		//System.out.println("Splitted node : " + oldNode.toString());
+		
+		nodesClones.put(oldNode, new ArrayList <AnnotatedProgramPoint>());
+		for (int i = 0; i < interpolantsCount; ++i) {
+			for (AnnotatedProgramPoint node : newNodes[i]) {
+				if (node != null) {
+					nodesClones.get(oldNode).add(node);
+				}
+			}
+		}
+				
+		/*
+		ArrayList<AnnotatedProgramPoint> preReturn = new ArrayList<AnnotatedProgramPoint>();
+		for (Iterator <AnnotatedProgramPoint> it = oldNode.getReturnEdgesIterator(); it.hasNext(); preReturn.add(it.next()));
+
+		for (Iterator <AnnotatedProgramPoint> preRetIt = preReturn.iterator(); preRetIt.hasNext(); ) {
+			AnnotatedProgramPoint preRet = preRetIt.next(), target = oldNode.getReturnPoint(preRet);
+			
+			for (Iterator <AnnotatedProgramPoint> clones = nodesClones.get(oldNode).iterator(); clones.hasNext(); ) {
+				AnnotatedProgramPoint nodeClone = clones.next();
+				preRet.addOutGoingReturnCallPred(target, nodeClone);
+			}
+			
+			preRet.removeOutgoingReturnCallPred(target, oldNode);
+		}
+		*/
+		
+		for (HashMap<AnnotatedProgramPoint, HashSet<AnnotatedProgramPoint>> map : AnnotatedProgramPoint.m_ingoing) {
+			if (map.containsKey(oldNode)) {
+				HashSet <AnnotatedProgramPoint> hyperEdges = map.get(oldNode);
+				for (Iterator <AnnotatedProgramPoint> clones = nodesClones.get(oldNode).iterator(); clones.hasNext(); ) {
+					AnnotatedProgramPoint newNode = clones.next();
+					map.put(newNode, hyperEdges);
+				}
+				map.remove(oldNode);
+			}
+		}
+		
+		for (HashSet<AnnotatedProgramPoint> set : AnnotatedProgramPoint.m_in) {
+			if (set.contains(oldNode)) {
+				for (Iterator <AnnotatedProgramPoint> clones = nodesClones.get(oldNode).iterator(); clones.hasNext(); ) {
+					AnnotatedProgramPoint newNode = clones.next();
+					set.add(newNode);
+				}
+				set.remove(oldNode);
+			}
+		}
+		return true;
+	}
+	
+	private boolean isSatEdge(AnnotatedProgramPoint sourceNode, CodeBlock edgeLabel,
+			AnnotatedProgramPoint destinationNode) {
+		//FIXME
+		if (edgeLabel instanceof DummyCodeBlock)
+			return false;
+		System.out.print(".");
+		return m_smtManager.isInductive(sourceNode.getPredicate(), edgeLabel, negatePredicate(destinationNode.getPredicate())) != LBool.UNSAT;
+	}
+	
+	private boolean isValidEdge(AnnotatedProgramPoint sourceNode, CodeBlock edgeLabel,
+			AnnotatedProgramPoint destinationNode) {
+		//FIXME
+		if (edgeLabel instanceof DummyCodeBlock)
+			return false;
+		System.out.print(".");
+		return m_smtManager.isInductive(sourceNode.getPredicate(), edgeLabel, destinationNode.getPredicate()) == LBool.UNSAT;
+	}
+
 	private boolean impulseCheck (AnnotatedProgramPoint[] nodes, IPredicate[] interpolants, AnnotatedProgramPoint procedureRoot) {
 		
 		AnnotatedProgramPoint[] copies = new AnnotatedProgramPoint[interpolants.length + 1];
 		for(int i = 1; i < copies.length; ++i) {
 			copies[i] = copyNode(nodes[i], interpolants[i-1]);
 		}
+		
 		redirectEdges(nodes, copies);
 		
-		return true;
-	}
-	
-	private boolean defaultRedirecting(AnnotatedProgramPoint[] nodes, AnnotatedProgramPoint[] copies) {
-		
-		for(int i = 0; i < copies.length; ++i) {
-
-			AnnotatedProgramPoint source = copies[i];
-			AnnotatedProgramPoint oldDest = nodes[i+1];
-			
-			
-			if(i == 0)
-				source = nodes[0];
-			
-			CodeBlock label = source.getOutgoingEdgeLabel(oldDest);
-			source.removeOutgoingNode(oldDest);
-			oldDest.removeIncomingNode(source);
-			
-			if(i < copies.length - 1) {
-				AnnotatedProgramPoint newDest = copies[i + 1];
-				source.addOutgoingNode(newDest, label);
-				newDest.addIncomingNode(source);
-			}
-			
+		for (AnnotatedProgramPoint node : nodes) {
+			updateSets(node); 
+			node.updateCopies();
 		}
 		
 		return true;
+		
+	}
+
+	private AnnotatedProgramPoint copyNode(AnnotatedProgramPoint oldNode, IPredicate interpolant) {
+		
+		
+		/*   // Alex
+		if(interpolant == m_truePredicate) // Alex :
+			return oldNode;
+		
+		
+		AnnotatedProgramPoint nodeRoot = oldNode.getCopyRoot();
+		
+		IPredicate newPredicate = conjugatePredicates(oldNode.getPredicate(), interpolant);
+
+		if(LocationPredicates.get(nodeRoot).containsKey(newPredicate))
+			return LocationPredicates.get(nodeRoot).get(newPredicate);
+		*/
+		
+		IPredicate newPredicate = conjugatePredicates(oldNode.getPredicate(), interpolant);
+
+		AnnotatedProgramPoint newNode = new AnnotatedProgramPoint(oldNode, newPredicate);
+		
+		//LocationPredicates.get(nodeRoot).put(newPredicate, newNode);
+		
+		oldNode.addCopy(newNode);
+		newNode.setCloneSource(oldNode);
+
+		AnnotatedProgramPoint[] successorNodes = oldNode.getOutgoingNodes().toArray(new AnnotatedProgramPoint[]{});
+		
+		for (AnnotatedProgramPoint successorNode : successorNodes) {
+			
+			CodeBlock label = oldNode.getOutgoingEdgeLabel(successorNode);
+			newNode.addOutgoingNode(successorNode, label);
+			successorNode.addIncomingNode(newNode);
+			
+		}
+		
+		return newNode;
 	}
 	
 	private boolean redirectEdges(AnnotatedProgramPoint[] nodes, AnnotatedProgramPoint[] copies) {
@@ -335,35 +543,55 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 		}
 		return true;
 	}
+		
+	private boolean defaultRedirecting(AnnotatedProgramPoint[] nodes, AnnotatedProgramPoint[] copies) {
+		
+		for(int i = 0; i < copies.length; ++i) {
+
+			AnnotatedProgramPoint source = copies[i];
+			AnnotatedProgramPoint oldDest = nodes[i+1];
+			
+			
+			if(i == 0)
+				source = nodes[0];
+			
+			CodeBlock label = source.getOutgoingEdgeLabel(oldDest);
+			source.removeOutgoingNode(oldDest);
+			oldDest.removeIncomingNode(source);
+			
+			if(i < copies.length - 1) {
+				AnnotatedProgramPoint newDest = copies[i + 1];
+				source.addOutgoingNode(newDest, label);
+				newDest.addIncomingNode(source);
+			}
+			
+		}
+		
+		return true;
+	}
 	
-	private AnnotatedProgramPoint findFirstRedirectionTarget(AnnotatedProgramPoint predecessorNode, AnnotatedProgramPoint node) {
+	private boolean updateSets(AnnotatedProgramPoint copiedNode) {
 
-		CodeBlock label = predecessorNode.getOutgoingEdgeLabel(node);
-
-		if(label instanceof Return); //FIXME
-		
-		ArrayList <AnnotatedProgramPoint> candidates = node.getNewCopies();
-		ArrayList <AnnotatedProgramPoint> validCandidates = new ArrayList<AnnotatedProgramPoint>();
-		
-		boolean noValidTarget = true;
-		
-		
-		
-		for (AnnotatedProgramPoint candidate : candidates) {
-			if(isValidEdge(predecessorNode, label, candidate)) {
-				return candidate;                                   // if you want to return the first found target
-				//validCandidates.add(candidate);
-				//noValidTarget = false;
+		for (HashMap<AnnotatedProgramPoint, HashSet<AnnotatedProgramPoint>> map : AnnotatedProgramPoint.m_ingoing) {
+			if (map.containsKey(copiedNode)) {
+				HashSet <AnnotatedProgramPoint> hyperEdges = map.get(copiedNode);
+				for (Iterator <AnnotatedProgramPoint> clones = copiedNode.getNewCopies().iterator(); clones.hasNext(); ) {
+					AnnotatedProgramPoint newNode = clones.next();
+					map.put(newNode, hyperEdges);
+				}
 			}
 		}
 		
-		if(noValidTarget)
-			return null;
+		for (HashSet<AnnotatedProgramPoint> set : AnnotatedProgramPoint.m_in) {
+			if (set.contains(copiedNode)) {
+				for (Iterator <AnnotatedProgramPoint> clones = copiedNode.getNewCopies().iterator(); clones.hasNext(); ) {
+					AnnotatedProgramPoint newNode = clones.next();
+					set.add(newNode);
+				}
+			}
+		}
 		
-		double random = Math.random();
-		int randomIndex = (int)(random * validCandidates.size());
-		
-		return validCandidates.get(randomIndex);
+		return true;
 		
 	}
 	
@@ -371,174 +599,93 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 			AnnotatedProgramPoint predecessorNode, AnnotatedProgramPoint node) {
 		switch(redirectionMethod) {
 		case First: return findFirstRedirectionTarget(predecessorNode, node);
+		case FirstStrongest: return findFirstStrongestRedirectionTarget(predecessorNode, node);
+		case Random: return findRandomRedirectionTarget(predecessorNode, node);
+		case RandomStrongest: return findRandomStrongestRedirectionTarget(predecessorNode, node);
 		case Alex: return null; //FIXME // Alex : Write your redirection algorithm here.
 		default: return null;
 		}
 		//return result;
 	}
+	
+	private AnnotatedProgramPoint findFirstRedirectionTarget(AnnotatedProgramPoint predecessorNode, AnnotatedProgramPoint node) {
 
-	private AnnotatedProgramPoint copyNode(AnnotatedProgramPoint oldNode, IPredicate interpolant) {
+		CodeBlock label = predecessorNode.getOutgoingEdgeLabel(node);
 		
-		AnnotatedProgramPoint newNode = new AnnotatedProgramPoint(oldNode, conjugatePredicates(oldNode.getPredicate(), interpolant));
-		oldNode.addCopy(newNode);
-		newNode.setCloneSource(oldNode);
-
-		AnnotatedProgramPoint[] successorNodes = oldNode.getOutgoingNodes().toArray(new AnnotatedProgramPoint[]{});
-		for (AnnotatedProgramPoint successorNode : successorNodes) {
-			CodeBlock label = oldNode.getOutgoingEdgeLabel(successorNode);
-			boolean isReturn = label instanceof Return;
-			//System.out.println("Adding Edge: " + label);
-			newNode.addOutgoingNode(successorNode, label);
-			successorNode.addIncomingNode(newNode);
-			if (isReturn) {
-				//FIXME
+		ArrayList <AnnotatedProgramPoint> candidates = node.getNewCopies();
+		
+		for (AnnotatedProgramPoint candidate : candidates) {
+			if(isValidEdge(predecessorNode, label, candidate)) {
+				return candidate;
 			}
-			
 		}
 		
-		return newNode;
+		return null;
+		
 	}
 	
-	private boolean splitNode(AnnotatedProgramPoint oldNode, IPredicate[] interpolant, HashMap <AnnotatedProgramPoint, ArrayList <AnnotatedProgramPoint>> nodesClones) {
-		
-		int interpolantsCount = interpolant.length;
-		AnnotatedProgramPoint[][] newNodes = new AnnotatedProgramPoint[interpolantsCount][2];
-		for (int i = 0; i < interpolantsCount; ++i) {
-			newNodes[i] = new AnnotatedProgramPoint[] {
-					new AnnotatedProgramPoint(oldNode, conjugatePredicates(oldNode.getPredicate(), interpolant[i])),
-					new AnnotatedProgramPoint(oldNode, conjugatePredicates(oldNode.getPredicate(), negatePredicate(interpolant[i])))
-					};
-		}
-		
-		AnnotatedProgramPoint[] predecessorNodes = oldNode.getIncomingNodes().toArray(new AnnotatedProgramPoint[]{});
-		AnnotatedProgramPoint[] successorNodes = oldNode.getOutgoingNodes().toArray(new AnnotatedProgramPoint[]{});
-		
-		
-		for (AnnotatedProgramPoint predecessorNode : predecessorNodes) {
-			if (predecessorNode != oldNode) {
-				CodeBlock label = predecessorNode.getOutgoingEdgeLabel(oldNode);
-				boolean isReturn = label instanceof Return;
-				//System.out.println("Adding Edge: " + label);
-				for (int i = 0; i < interpolantsCount; ++i) {
-					for (AnnotatedProgramPoint newNode : newNodes[i]) {
-						if (isSatEdge(predecessorNode, label, newNode)) {
-							predecessorNode.addOutgoingNode(newNode, label);
-							newNode.addIncomingNode(predecessorNode);
-							if (isReturn) {
-								HashSet <AnnotatedProgramPoint> hyper = predecessorNode.getCallPredsOfOutgoingReturnTarget(newNode);
-								if (hyper != null) {
-									for (Iterator <AnnotatedProgramPoint> it = hyper.iterator(); it.hasNext(); ) {
-										AnnotatedProgramPoint callPoint = it.next();
-										if (nodesClones.containsKey(callPoint)) {
-											for (Iterator <AnnotatedProgramPoint> clone = nodesClones.get(callPoint).iterator(); clone.hasNext(); ) {
-												//successorNode.addOutGoingReturnCallPred(newNode, clone.next());
-												predecessorNode.addOutGoingReturnCallPred(newNode, clone.next());
-											}
-											predecessorNode.removeOutgoingReturnCallPred(newNode, callPoint);
-											//successorNode.removeOutgoingReturnCallPred(callPoint, oldNode);
-										}
-									}
-								} else {
-									//System.err.println("ERRRROR!");
-								}
-							}
-						}
-					}
-				}
-				//System.out.println("Added Edge: " + label);
-				oldNode.removeIncomingNode(predecessorNode);
-				predecessorNode.removeOutgoingNode(oldNode);
-			}
-		}
+	private AnnotatedProgramPoint findFirstStrongestRedirectionTarget(AnnotatedProgramPoint predecessorNode, AnnotatedProgramPoint node) {
 
-		for (AnnotatedProgramPoint successorNode : successorNodes) {
-			if (successorNode != oldNode) {
-				CodeBlock label = oldNode.getOutgoingEdgeLabel(successorNode);
-				boolean isReturn = label instanceof Return;
-				//System.out.println("Adding Edge: " + label);
-				for (int i = 0; i < interpolantsCount; ++i) {
-					for (AnnotatedProgramPoint newNode : newNodes[i]) {
-						if (isSatEdge(newNode, label, successorNode)) {
-							newNode.addOutgoingNode(successorNode, label);
-							successorNode.addIncomingNode(newNode);
-							if (isReturn) {
-								HashSet <AnnotatedProgramPoint> hyper = newNode.getCallPredsOfOutgoingReturnTarget(successorNode);
-								if (hyper != null) {
-									for (Iterator <AnnotatedProgramPoint> it = hyper.iterator(); it.hasNext(); ) {
-										AnnotatedProgramPoint callPoint = it.next();
-										if (nodesClones.containsKey(callPoint)) {
-											for (Iterator <AnnotatedProgramPoint> clone = nodesClones.get(callPoint).iterator(); clone.hasNext(); ) {
-												//successorNode.addOutGoingReturnCallPred(newNode, clone.next());
-												newNode.addOutGoingReturnCallPred(successorNode, clone.next());
-											}
-											newNode.removeOutgoingReturnCallPred(successorNode, callPoint);
-											//successorNode.removeOutgoingReturnCallPred(callPoint, oldNode);
-										}
-									}
-								} else {
-									//System.err.println("ERR!!!");
-								}
-							}
-						}
-					}
-				}
-				//System.out.println("Added Edge: " + label);
-				successorNode.removeIncomingNode(oldNode);
-				oldNode.removeOutgoingNode(successorNode);
+		CodeBlock label = predecessorNode.getOutgoingEdgeLabel(node);
+		
+		ArrayList <AnnotatedProgramPoint> candidates = node.getNewCopies();
+		
+		AnnotatedProgramPoint target = null;
+		
+		CodeBlock dummyLabel = new DummyCodeBlock();
+		
+		for (AnnotatedProgramPoint candidate : candidates) {
+			if(isValidEdge(predecessorNode, label, candidate)) {
+				if(target == null || isValidEdge(target, dummyLabel, candidate))
+					target = candidate;
 			}
 		}
 		
-		boolean selfLoop = oldNode.getSuccessors().contains(oldNode);
+		return target;
 		
-		if (selfLoop) {
-			CodeBlock label = oldNode.getOutgoingEdgeLabel(oldNode);
-			for (int i = 0; i < interpolantsCount; ++i) {
-				for (int j = 0; j < interpolantsCount; ++j)
-				//int j = i;
-					// FIXME: Check if complete association required.
-					for (AnnotatedProgramPoint source : newNodes[i]) {
-						for (AnnotatedProgramPoint destination : newNodes[j]) {
-							if (isSatEdge(source, label, destination)) {
-								source.addOutgoingNode(destination, label);
-								destination.addIncomingNode(source);
-							}
-						}
-					}
-				
-			}
-		}
-		//System.out.println("Splitted node : " + oldNode.toString());
-		
-		nodesClones.put(oldNode, new ArrayList <AnnotatedProgramPoint>());
-		for (int i = 0; i < interpolantsCount; ++i) {
-			for (AnnotatedProgramPoint node : newNodes[i]) {
-				if (node != null) {
-					nodesClones.get(oldNode).add(node);
-				}
-			}
-		}
-					
-		return true;
 	}
 	
-	private boolean isSatEdge(AnnotatedProgramPoint sourceNode, CodeBlock edgeLabel,
-			AnnotatedProgramPoint destinationNode) {
-		//FIXME
-		if (edgeLabel instanceof DummyCodeBlock)
-			return false;
-		System.out.print(".");
-		return m_smtManager.isInductive(sourceNode.getPredicate(), edgeLabel, negatePredicate(destinationNode.getPredicate())) != LBool.UNSAT;
+	private AnnotatedProgramPoint findRandomRedirectionTarget(AnnotatedProgramPoint predecessorNode, AnnotatedProgramPoint node) {
+
+		CodeBlock label = predecessorNode.getOutgoingEdgeLabel(node);
+		
+		ArrayList <AnnotatedProgramPoint> candidates = node.getNewCopies();
+		
+		Collections.shuffle(candidates);
+		
+		for (AnnotatedProgramPoint candidate : candidates) {
+			if(isValidEdge(predecessorNode, label, candidate)) {
+				return candidate;
+			}
+		}
+		
+		return null;
+		
 	}
 	
-	private boolean isValidEdge(AnnotatedProgramPoint sourceNode, CodeBlock edgeLabel,
-			AnnotatedProgramPoint destinationNode) {
-		//FIXME
-		if (edgeLabel instanceof DummyCodeBlock)
-			return false;
-		System.out.print(".");
-		return m_smtManager.isInductive(sourceNode.getPredicate(), edgeLabel, destinationNode.getPredicate()) == LBool.UNSAT;
-	}
+	private AnnotatedProgramPoint findRandomStrongestRedirectionTarget(AnnotatedProgramPoint predecessorNode, AnnotatedProgramPoint node) {
 
+		CodeBlock label = predecessorNode.getOutgoingEdgeLabel(node);
+		
+		ArrayList <AnnotatedProgramPoint> candidates = node.getNewCopies();
+		
+		Collections.shuffle(candidates);
+		
+		AnnotatedProgramPoint target = null;
+		
+		CodeBlock dummyLabel = new DummyCodeBlock();
+		
+		for (AnnotatedProgramPoint candidate : candidates) {
+			if(isValidEdge(predecessorNode, label, candidate)) {
+				if(target == null || isValidEdge(target, dummyLabel, candidate))
+					target = candidate;
+			}
+		}
+		
+		return target;
+		
+	}
+		
 	public ImpRootNode getRoot() {
 		return m_graphRoot;
 	}
