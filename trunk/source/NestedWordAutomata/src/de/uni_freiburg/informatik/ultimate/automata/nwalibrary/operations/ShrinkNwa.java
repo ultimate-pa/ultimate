@@ -127,7 +127,7 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	private int m_incomingTransitions = 0;
 	private int m_noIncomingTransitions = 0;
 	private int m_ignoredReturnSingletons1x1 = 0;
-	private long m_returnTime = 0, m_wholeTime = 0;
+	private long m_returnTime = 0, m_matrixTime = 0, m_wholeTime = 0;
 	 // size information before return splits
 	private final boolean STAT_RETURN_SIZE = false;
 	private final BufferedWriter m_writer1, m_writer2;
@@ -257,11 +257,21 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 							((float)m_noIncomingTransitions))));
 			System.out.println("ignored return splits due to singletons: " +
 					m_ignoredReturnSingletons1x1);
-			System.out.println("time consumption (ms): returns: " +
-					m_returnTime + " all: " + m_wholeTime);
-			System.out.println("quota: " + (m_wholeTime == 0
+			System.out.println("time consumption (ms): matrix time: " +
+					m_matrixTime + ", returns: " + m_returnTime +
+					", all: " + m_wholeTime);
+			System.out.println("quota (ret/all): " + (m_wholeTime == 0
 					? "--"
-					: (((float)m_returnTime) / ((float)m_wholeTime))));
+					: (((float)m_returnTime) / ((float)m_wholeTime))) +
+					", without: " + (m_wholeTime - m_returnTime) + " ms");
+			System.out.println("quota (mat/ret): " + (m_returnTime == 0
+					? "--"
+					: (((float)m_matrixTime) / ((float)m_returnTime))) +
+					", without: " + (m_returnTime - m_matrixTime) + " ms");
+			System.out.println("quota (mat/all): " + (m_wholeTime == 0
+					? "--"
+					: (((float)m_matrixTime) / ((float)m_wholeTime))) +
+					", without: " + (m_wholeTime - m_matrixTime) + " ms");
 		}
 	}
 	
@@ -1848,6 +1858,10 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 		 */
 		@SuppressWarnings("unchecked")
 		public void initializeMatrix(HashSet<EquivalenceClass> hierEcs) {
+			if (STATISTICS) {
+				m_matrixTime -= new GregorianCalendar().getTimeInMillis();
+			}
+			
 			final Collection<EquivalenceClass> hierEcsUsed;
 			
 			// ignore singletons
@@ -1957,6 +1971,10 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 				}
 				assert (hier2lin2letter2succ.size() > 0);
 			}
+			if (STATISTICS) {
+				m_matrixTime += new GregorianCalendar().getTimeInMillis();
+			}
+			
 			if (DEBUG2)
 				System.err.println("--finished creating matrix");
 		}
