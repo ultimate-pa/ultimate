@@ -51,6 +51,9 @@ import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
  * 
  * <constructAutomaton> how to do this efficiently in the end?
  * 
+ * <hashCode> overwrite for EquivalenceClass?
+ *            only additional memory, no runtime improvement
+ * 
  * possible improvements:
  * <threading> identify possibilities for threading and implement it
  * 
@@ -70,8 +73,6 @@ import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
  *                   policy
  * 
  * misc:
- * <hashCode> overwrite for EquivalenceClass?
- * 
  * <finalize> remove all unnecessary objects in the end
  * 
  * <statistics> remove in the end
@@ -399,20 +400,6 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 					}
 					
 					splitReturnPredecessors();
-					
-//					// TODO<globalSplit>/<oldReturnSplit>
-////					m_splitEcs = new HashSet<EquivalenceClass>();
-////					do {
-//						
-//						if (DEBUG)
-//							System.out.println("\n-- return search");
-//						EquivalenceClass a = m_workListRet.next();
-//						
-//						splitReturnPredecessors(a);
-//						
-////					} while (m_workListRet.hasNext());
-////					// execute the splits
-////					splitReturnExecute(m_splitEcs);
 					
 					if (STATISTICS) {
 						m_returnTime +=
@@ -1795,8 +1782,6 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	 * work list.
 	 * 
 	 * Two equivalence class objects are equal iff they share the same pointer.
-	 * 
-	 * TODO<hashCode> overwrite? it works
 	 */
 	private class EquivalenceClass {
 		// the states
@@ -1824,6 +1809,57 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 			m_incomingRet = EIncomingStatus.inWL;
 			m_workListRet.add(this);
 			m_matrix = null;
+		}
+		
+		/**
+		 * This constructor is reserved for the placeholder equivalence class.
+		 */
+		private EquivalenceClass() {
+			m_states = null;
+			m_intersection = null;
+		}
+		
+		/**
+		 * This constructor is used during a split.
+		 * 
+		 * @param states the set of states for the equivalence class
+		 * @param parent the parent equivalence class
+		 */
+		public EquivalenceClass(final Set<STATE> states,
+				final EquivalenceClass parent) {
+			m_states = states;
+			reset();
+			switch (parent.m_incomingInt) {
+				case unknown:
+				case inWL:
+					m_incomingInt = EIncomingStatus.inWL;
+					m_workListIntCall.add(this);
+					break;
+				case none:
+					m_incomingInt = EIncomingStatus.none;
+			}
+			switch (parent.m_incomingCall) {
+				case unknown:
+				case inWL:
+					m_incomingCall = EIncomingStatus.inWL;
+					if (m_incomingInt != EIncomingStatus.inWL) {
+						m_workListIntCall.add(this);
+					}
+					break;
+				case none:
+					m_incomingCall = EIncomingStatus.none;
+			}
+			switch (parent.m_incomingRet) {
+				case unknown:
+				case inWL:
+					m_incomingRet = EIncomingStatus.inWL;
+					m_workListRet.add(this);
+					break;
+				case none:
+					m_incomingRet = EIncomingStatus.none;
+					break;
+			}
+			resetMatrix(parent);
 		}
 		
 		/**
@@ -1954,57 +1990,6 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 			
 			if (DEBUG2)
 				System.err.println("--finished creating matrix");
-		}
-		
-		/**
-		 * This constructor is reserved for the placeholder equivalence class.
-		 */
-		private EquivalenceClass() {
-			m_states = null;
-			m_intersection = null;
-		}
-		
-		/**
-		 * This constructor is used during a split.
-		 * 
-		 * @param states the set of states for the equivalence class
-		 * @param parent the parent equivalence class
-		 */
-		public EquivalenceClass(final Set<STATE> states,
-				final EquivalenceClass parent) {
-			m_states = states;
-			reset();
-			switch (parent.m_incomingInt) {
-				case unknown:
-				case inWL:
-					m_incomingInt = EIncomingStatus.inWL;
-					m_workListIntCall.add(this);
-					break;
-				case none:
-					m_incomingInt = EIncomingStatus.none;
-			}
-			switch (parent.m_incomingCall) {
-				case unknown:
-				case inWL:
-					m_incomingCall = EIncomingStatus.inWL;
-					if (m_incomingInt != EIncomingStatus.inWL) {
-						m_workListIntCall.add(this);
-					}
-					break;
-				case none:
-					m_incomingCall = EIncomingStatus.none;
-			}
-			switch (parent.m_incomingRet) {
-				case unknown:
-				case inWL:
-					m_incomingRet = EIncomingStatus.inWL;
-					m_workListRet.add(this);
-					break;
-				case none:
-					m_incomingRet = EIncomingStatus.none;
-					break;
-			}
-			resetMatrix(parent);
 		}
 		
 		/**
