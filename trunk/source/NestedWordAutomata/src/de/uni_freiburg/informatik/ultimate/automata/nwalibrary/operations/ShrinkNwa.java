@@ -387,6 +387,7 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 						for (final EquivalenceClass ec : bigEcs) {
 							splitRandom(ec);
 						}
+						continue outer;
 					}
 					
 					if (STATISTICS) {
