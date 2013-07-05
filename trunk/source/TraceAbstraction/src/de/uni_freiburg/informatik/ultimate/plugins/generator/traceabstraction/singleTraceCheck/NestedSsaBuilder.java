@@ -22,6 +22,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CfgBuilder.GotoEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
@@ -182,6 +183,7 @@ public class NestedSsaBuilder {
 		
 		for (int i=0; i<m_Ssa.getCounterexample().length(); i++) {
 			CodeBlock symbol = m_Ssa.getCounterexample().getSymbolAt(i);
+			assert (!(symbol instanceof GotoEdge)) : "TraceChecker does not support GotoEdges";
 			
 			TransFormula tf = symbol.getTransitionFormulaWithBranchEncoders();
 			
