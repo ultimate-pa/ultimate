@@ -2,6 +2,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -38,6 +39,7 @@ public class BuchiInterpolantAutomaton implements
 	private final Set<IPredicate> m_InputStemPredicates;
 	private final Set<IPredicate> m_InputLoopPredicates;
 	private final IPredicate m_HondaPredicate;
+	private final Set<IPredicate> m_HondaSingleton;
 	
 	private final Set<IPredicate> m_ResultStemPredicates;
 	private final Set<IPredicate> m_ResultLoopPredicates;
@@ -97,6 +99,7 @@ public class BuchiInterpolantAutomaton implements
 			}
 		}
 		m_HondaPredicate = hondaPredicate;
+		m_HondaSingleton = Collections.singleton(m_HondaPredicate);
 //		m_InputStemPredicates.add(hondaPredicate);
 //		m_InputLoopPredicates.add(hondaPredicate);
 		m_Result.addState(false, true, hondaPredicate);
@@ -466,34 +469,42 @@ public class BuchiInterpolantAutomaton implements
 	
 	private void computeSuccInternal(IPredicate resPred, CodeBlock letter) {
 		if (m_ResultStemPredicates.contains(resPred)) {
-			HashSet<IPredicate> succs = new HashSet<IPredicate>();
-			boolean hondaIsSuccessor = addSuccInternal(resPred, letter, m_InputStemPredicates, succs);
+			Set<IPredicate> succs = addSuccInternal(resPred, letter, m_InputStemPredicates);
 			if (!succs.isEmpty()) {
 				IPredicate stemSucc = getOrConstructPredicate(succs, m_ResultStemPredicates);
 				m_Result.addInternalTransition(resPred, letter, stemSucc);
 			}
-			if (hondaIsSuccessor) {
-				m_Result.addInternalTransition(resPred, letter, m_HondaPredicate);
+			if (letter.equals(m_HondaEntererStem)) {
+				Set<IPredicate> hondaOrEmpty = addSuccInternal(resPred, letter, m_HondaSingleton);
+				if (!hondaOrEmpty.isEmpty()) {
+					m_Result.addInternalTransition(resPred, letter, m_HondaPredicate);
+				}
 			}
 		} else {
 			assert (m_ResultLoopPredicates.contains(resPred) || resPred == m_HondaPredicate);
-			HashSet<IPredicate> succs = new HashSet<IPredicate>();
-			boolean hondaIsSuccessor = addSuccInternal(resPred, letter, m_InputLoopPredicates, succs);
-			if (hondaIsSuccessor) {
-				m_Result.addInternalTransition(resPred, letter, m_HondaPredicate);
-			} else if (!succs.isEmpty()) {
+			Set<IPredicate> succs = addSuccInternal(resPred, letter, m_InputLoopPredicates);
+			if (!succs.isEmpty()) {
 				IPredicate stemSucc = getOrConstructPredicate(succs, m_ResultLoopPredicates);
 				m_Result.addInternalTransition(resPred, letter, stemSucc);
-			} else {
-				//there is no successor
+			}
+			if (letter.equals(m_HondaEntererLoop)) {
+				Set<IPredicate> hondaOrEmpty = addSuccInternal(resPred, letter, m_HondaSingleton);
+				if (!hondaOrEmpty.isEmpty()) {
+					m_Result.addInternalTransition(resPred, letter, m_HondaPredicate);
+				}
 			}
 
 		}
 
 	}
 	
-	private boolean addSuccInternal(IPredicate resPred, CodeBlock letter, Iterable<IPredicate> succCand, HashSet<IPredicate> succs) {
-		boolean hondaIsSuccessor = false;
+	/**
+	 * Returns a set of input predicates such each predicate p
+	 * - Hoare triple {resPred} letter {p} is valid
+	 * - is contained in succCand
+	 */
+	private Set<IPredicate> addSuccInternal(IPredicate resPred, CodeBlock letter, Iterable<IPredicate> succCand) {
+		HashSet<IPredicate> succs = new HashSet<IPredicate>();
 		Collection<IPredicate> inputPredicates;
 		if (resPred instanceof BuchiPredicate) {
 			inputPredicates = ((BuchiPredicate) resPred).getConjuncts();
@@ -509,49 +520,52 @@ public class BuchiInterpolantAutomaton implements
 			}
 			Collection<IPredicate> inputPredSuccs = m_InputSuccessorCache.succInternal(inputPred, letter);
 			if (inputPredSuccs != null) {
-				for (IPredicate succ : inputPredSuccs) {
-					if (succ == m_HondaPredicate) {
-						hondaIsSuccessor = true;
-					} else {
-						succs.add(succ);
-					}
-				}
+				succs.addAll(inputPredSuccs);
 			}
 		}
-		return hondaIsSuccessor;
+		return succs;
 	}
 	
 	
+
 	private void computeSuccCall(IPredicate resPred, CodeBlock letter) {
 		if (m_ResultStemPredicates.contains(resPred)) {
-			HashSet<IPredicate> succs = new HashSet<IPredicate>();
-			boolean hondaIsSuccessor = addSuccCall(resPred, letter, m_InputStemPredicates, succs);
+			Set<IPredicate> succs = addSuccCall(resPred, letter, m_InputStemPredicates);
 			if (!succs.isEmpty()) {
 				IPredicate stemSucc = getOrConstructPredicate(succs, m_ResultStemPredicates);
 				m_Result.addCallTransition(resPred, letter, stemSucc);
 			}
-			if (hondaIsSuccessor) {
-				m_Result.addCallTransition(resPred, letter, m_HondaPredicate);
+			if (letter.equals(m_HondaEntererStem)) {
+				Set<IPredicate> hondaOrEmpty = addSuccCall(resPred, letter, m_HondaSingleton);
+				if (!hondaOrEmpty.isEmpty()) {
+					m_Result.addCallTransition(resPred, letter, m_HondaPredicate);
+				}
 			}
 		} else {
 			assert (m_ResultLoopPredicates.contains(resPred) || resPred == m_HondaPredicate);
-			HashSet<IPredicate> succs = new HashSet<IPredicate>();
-			boolean hondaIsSuccessor = addSuccCall(resPred, letter, m_InputLoopPredicates, succs);
-			if (hondaIsSuccessor) {
-				m_Result.addCallTransition(resPred, letter, m_HondaPredicate);
-			} else if (!succs.isEmpty()) {
+			Set<IPredicate> succs = addSuccCall(resPred, letter, m_InputLoopPredicates);
+			if (!succs.isEmpty()) {
 				IPredicate stemSucc = getOrConstructPredicate(succs, m_ResultLoopPredicates);
 				m_Result.addCallTransition(resPred, letter, stemSucc);
-			} else {
-				// there is no successor
+			}
+			if (letter.equals(m_HondaEntererLoop)) {
+				Set<IPredicate> hondaOrEmpty = addSuccCall(resPred, letter, m_HondaSingleton);
+				if (!hondaOrEmpty.isEmpty()) {
+					m_Result.addCallTransition(resPred, letter, m_HondaPredicate);
+				}
 			}
 
 		}
 
 	}
 	
-	private boolean addSuccCall(IPredicate resPred, CodeBlock letter, Iterable<IPredicate> succCand, HashSet<IPredicate> succs) {
-		boolean hondaIsSuccessor = false;
+	/**
+	 * Returns a set of input predicates such each predicate p
+	 * - Hoare triple {resPred} letter {p} is valid
+	 * - is contained in succCand
+	 */
+	private Set<IPredicate> addSuccCall(IPredicate resPred, CodeBlock letter, Iterable<IPredicate> succCand) {
+		HashSet<IPredicate> succs = new HashSet<IPredicate>();
 		Collection<IPredicate> inputPredicates;
 		if (resPred instanceof BuchiPredicate) {
 			inputPredicates = ((BuchiPredicate) resPred).getConjuncts();
@@ -567,51 +581,48 @@ public class BuchiInterpolantAutomaton implements
 			}
 			Collection<IPredicate> inputPredSuccs = m_InputSuccessorCache.succCall(inputPred, letter);
 			if (inputPredSuccs != null) {
-				for (IPredicate succ : inputPredSuccs) {
-					if (succ == m_HondaPredicate) {
-						hondaIsSuccessor = true;
-					} else {
-						succs.add(succ);
-					}
-				}
+				succs.addAll(inputPredSuccs);
 			}
 		}
-		return hondaIsSuccessor;
+		return succs;
 	}
 	
 	
 	
 	private void computeSuccReturn(IPredicate resPred, IPredicate resHier, CodeBlock letter) {
 		if (m_ResultStemPredicates.contains(resPred)) {
-			HashSet<IPredicate> succs = new HashSet<IPredicate>();
-			boolean hondaIsSuccessor = addSuccReturn(resPred, resHier, letter, m_InputStemPredicates, succs);
+			Set<IPredicate> succs = addSuccReturn(resPred, resHier, letter, m_InputStemPredicates);
 			if (!succs.isEmpty()) {
 				IPredicate stemSucc = getOrConstructPredicate(succs, m_ResultStemPredicates);
 				m_Result.addReturnTransition(resPred, resHier, letter, stemSucc);
 			}
-			if (hondaIsSuccessor) {
-				m_Result.addReturnTransition(resPred, resHier, letter, m_HondaPredicate);
+			if (letter.equals(m_HondaEntererStem)) {
+				Set<IPredicate> hondaOrEmpty = addSuccReturn(resPred, resHier, letter, m_HondaSingleton);
+				if (!hondaOrEmpty.isEmpty()) {
+					m_Result.addReturnTransition(resPred, resHier, letter, m_HondaPredicate);
+				}
 			}
 		} else {
 			assert (m_ResultLoopPredicates.contains(resPred) || resPred == m_HondaPredicate);
-			HashSet<IPredicate> succs = new HashSet<IPredicate>();
-			boolean hondaIsSuccessor = addSuccReturn(resPred, resHier, letter, m_InputLoopPredicates, succs);
-			if (hondaIsSuccessor) {
-				m_Result.addReturnTransition(resPred, resHier, letter, m_HondaPredicate);
-			} else if (!succs.isEmpty()) {
+			Set<IPredicate> succs = addSuccReturn(resPred, resHier, letter, m_InputLoopPredicates);
+			if (!succs.isEmpty()) {
 				IPredicate stemSucc = getOrConstructPredicate(succs, m_ResultLoopPredicates);
 				m_Result.addReturnTransition(resPred, resHier, letter, stemSucc);
-			} else {
-				//there is no successor
+			}
+			if (letter.equals(m_HondaEntererLoop)) {
+				Set<IPredicate> hondaOrEmpty = addSuccReturn(resPred, resHier, letter, m_HondaSingleton);
+				if (!hondaOrEmpty.isEmpty()) {
+					m_Result.addReturnTransition(resPred, resHier, letter, m_HondaPredicate);
+				}
 			}
 
 		}
 
 	}
 	
-	private boolean addSuccReturn(IPredicate resPred, IPredicate resHier, 
-			CodeBlock letter, Iterable<IPredicate> succCand, HashSet<IPredicate> succs) {
-		boolean hondaIsSuccessor = false;
+	private Set<IPredicate> addSuccReturn(IPredicate resPred, IPredicate resHier, 
+			CodeBlock letter, Iterable<IPredicate> succCand) {
+		HashSet<IPredicate> succs = new HashSet<IPredicate>();
 		Collection<IPredicate> inputPredicates;
 		if (resPred instanceof BuchiPredicate) {
 			inputPredicates = ((BuchiPredicate) resPred).getConjuncts();
@@ -637,17 +648,11 @@ public class BuchiInterpolantAutomaton implements
 				Collection<IPredicate> inputPredSuccs = 
 						m_InputSuccessorCache.succReturn(inputPred, inputHier, letter);
 				if (inputPredSuccs != null) {
-					for (IPredicate succ : inputPredSuccs) {
-						if (succ == m_HondaPredicate) {
-							hondaIsSuccessor = true;
-						} else {
-							succs.add(succ);
-						}
-					}
+					succs.addAll(inputPredSuccs);
 				}
 			}
 		}
-		return hondaIsSuccessor;
+		return succs;
 	}
 
 
