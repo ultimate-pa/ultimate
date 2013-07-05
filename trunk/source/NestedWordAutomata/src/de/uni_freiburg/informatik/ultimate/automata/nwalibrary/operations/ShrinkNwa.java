@@ -117,6 +117,12 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	// simulates the output automaton
 	private ShrinkNwaResult m_result;
 	
+	/* optional random splits before the return split to keep matrices small */
+	// true iff before the first return split some random splits are executed
+	private boolean m_firstReturnSplit;
+	// maximum size of equivalence classes with outgoing calls/returns
+	private int g_threshold;
+	
 	// TODO<debug>
 	private final boolean DEBUG = false; // general output
 	private final boolean DEBUG2 = false; // return split
@@ -142,7 +148,7 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	private final StateFactory<STATE> m_stateFactory;
 	
 	/**
-	 * creates a copy of operand
+	 * This constructor creates a copy of the operand.
 	 * 
 	 * @param operand preprocessed nested word automaton
 	 * preprocessing: dead end and unreachable states/transitions removed
@@ -150,29 +156,30 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	 */
 	public ShrinkNwa(final INestedWordAutomaton<LETTER,STATE> operand)
 			throws OperationCanceledException {
-		this(operand, false);
+		this(operand, false, 0);
 	}
 	
 	/**
-	 * creates a copy of operand with options
+	 * This constructor creates a copy of the operand with additional options.
 	 * 
 	 * @param operand preprocessed nested word automaton
 	 * preprocessing: dead end and unreachable states/transitions removed
 	 * @param splitOutgoing true iff states should be split initially by
 	 *        outgoing transitions
+	 * @param splitRandom size of equivalence classes before first return
+	 *                    split (0 for deactivation)
 	 * @throws OperationCanceledException if cancel signal is received
 	 */
 	public ShrinkNwa(final INestedWordAutomaton<LETTER,STATE> operand,
-			final boolean splitOutgoing)
+			final boolean splitOutgoing, final int splitRandomSize)
 			throws OperationCanceledException {
-		this(operand, null, null, false, false, splitOutgoing);
+		this(operand, null, null, false, false, splitOutgoing,
+				splitRandomSize);
 	}
 	
 	/**
-	 * creates a copy of operand with an initial partition
-	 * 
-	 * minimization technique for deterministic finite automata by Hopcroft
-	 * (http://en.wikipedia.org/wiki/DFA_minimization)
+	 * This constructor creates a copy of the operand with an initial
+	 * partition.
 	 * 
 	 * @param operand preprocessed nested word automaton
 	 * preprocessing: dead end and unreachable states/transitions removed
@@ -182,6 +189,8 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	 * @param isFiniteAutomaton true iff automaton is a finite automaton
 	 * @param splitOutgoing true iff states should be split initially by
 	 *        outgoing transitions
+	 * @param splitRandom size of equivalence classes before first return
+	 *                    split (0 for deactivation)
 	 * @throws OperationCanceledException if cancel signal is received
 	 */
 	@SuppressWarnings("unchecked")
@@ -190,7 +199,7 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 			final Collection<Set<STATE>> equivalenceClasses,
 			final StateFactory<STATE> stateFactory,
 			final boolean includeMapping, final boolean isFiniteAutomaton,
-			final boolean splitOutgoing)
+			final boolean splitOutgoing, final int splitRandomSize)
 					throws OperationCanceledException {
 		if (STAT_RETURN_SIZE) {
 			try {
@@ -233,6 +242,9 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 			m_outInternal = null;
 			m_outCall = null;
 		}
+		
+		g_threshold = splitRandomSize;
+		m_firstReturnSplit = (splitRandomSize > 0);
 		
 		// must be the last part of the constructor
 		s_Logger.info(startMessage());
@@ -360,6 +372,23 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 				
 				// return predecessors
 				if (m_workListRet.hasNext()) {
+					
+					// optional random split
+					if (m_firstReturnSplit) {
+						m_firstReturnSplit = false;
+						final LinkedList<EquivalenceClass> bigEcs =
+								new LinkedList<EquivalenceClass>();
+						for (final EquivalenceClass ec :
+								m_partition.m_equivalenceClasses) {
+							if (ec.m_states.size() > g_threshold) {
+								bigEcs.add(ec);
+							}
+						}
+						for (final EquivalenceClass ec : bigEcs) {
+							splitRandom(ec);
+						}
+					}
+					
 					if (STATISTICS) {
 						m_returnTime -=
 								new GregorianCalendar().getTimeInMillis();
@@ -395,7 +424,7 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 								m_writer2.append(sizes[i] + ", ");
 							}
 						} catch (IOException e) {
-							e.printStackTrace();
+							throw new RuntimeException(e);
 						}
 					}
 					
@@ -418,7 +447,7 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 									m_partition.m_equivalenceClasses.size() +
 									" ECs after return split\n");
 						} catch (IOException e) {
-							e.printStackTrace();
+							throw new RuntimeException(e);
 						}
 					}
 				}
@@ -446,6 +475,7 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 			System.err.println("----------------END----------------");
 	}
 	
+
 	/**
 	 * The partition object is initialized.
 	 * Final states are separated from non-final states.
@@ -499,7 +529,6 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 		}
 	}
 	
-
 	/**
 	 * For each state and internal or call symbol respectively do the usual
 	 * Hopcroft backwards split.
@@ -1003,83 +1032,6 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	}
 	
 	/**
-	 * This class represents a return split matrix. The columns are the linear
-	 * and the rows are the hierarchical predecessor states.
-	 * The implementation is not really a matrix, but rather a hash map, since
-	 * the matrix would be very sparse.
-	 */
-	private class Matrix {
-		final HashMap<STATE, HashMap<STATE,
-			HashMap<LETTER, HashSet<STATE>>>> m_hier2lin2letter2succ;
-		
-		/**
-		 * @param size number of non-singleton 
-		 */
-		public Matrix(final int size) {
-			m_hier2lin2letter2succ = new HashMap<STATE, HashMap<STATE,
-					HashMap<LETTER, HashSet<STATE>>>>(
-							computeHashSetCapacity(size));
-		}
-		
-		/**
-		 * This constructor is only used for the useless 1x1-matrix.
-		 */
-		private Matrix() {
-			m_hier2lin2letter2succ = null;
-		}
-
-		@Override
-		public String toString() {
-			return (m_hier2lin2letter2succ == null)
-					? "{1x1-matrix}"
-					: m_hier2lin2letter2succ.toString();
-		}
-	}
-	
-	/**
-	 * This class represents a matrix row. It knows its associated hierarchical
-	 * predecessor state and the matrix entries of this row.
-	 */
-	private class MatrixRow {
-		private final STATE m_hier;
-		private final HashMap<STATE, HashMap<LETTER, HashSet<STATE>>>
-			m_lin2letter2succ;
-		
-		/**
-		 * @param hier the hierarchical state
-		 * @param lin2letter2succ the map (matrix row entries)
-		 */
-		public MatrixRow(final STATE hier, final HashMap<STATE, HashMap<LETTER,
-				HashSet<STATE>>> lin2letter2succ) {
-			m_hier = hier;
-			assert (! lin2letter2succ.isEmpty());
-			m_lin2letter2succ = lin2letter2succ;
-		}
-		
-		@Override
-		public String toString() {
-			return m_hier + " -> " + m_lin2letter2succ;
-		}
-	}
-	
-	/**
-	 * This class is a dummy map. It is currently used for the empty return
-	 * split matrix row.
-	 */
-	@SuppressWarnings({ "serial", "rawtypes" })
-	private class DummyMap extends HashMap {
-		@Override
-		public HashSet<STATE> get(final Object key) {
-			return null;
-		}
-		
-		@Override
-		public String toString() {
-			return "{dummy map}";
-		}
-	}
-	
-	/**
 	 * This method executes the return splits for all passed equivalence
 	 * classes.
 	 * 
@@ -1196,6 +1148,94 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 			
 			// reset separation mapping
 			oldEc.m_state2separatedSet = null;
+		}
+	}
+	
+	/**
+	 * This method randomly splits the given equivalence class.
+	 * 
+	 * If it has outgoing call transitions, it is split into equally sized
+	 * blocks of states.
+	 * 
+	 * Otherwise (without any outgoing call transitions) it keeps states with
+	 * no outgoing return transitions together, since these states will never
+	 * take part in any matrix and hence can be kept together.
+	 * 
+	 * @param ec the equivalence class
+	 */
+	private void splitRandom(EquivalenceClass ec) {
+		if (m_operand.callSuccessors(ec.m_states.iterator().next()).
+				iterator().hasNext()) {
+			splitRandomEqual(ec);
+		}
+		else {
+			splitRandomReturns(ec);
+		}
+	}
+	
+	/**
+	 * This method randomly splits an equivalence class into equally sized
+	 * blocks of states.
+	 * 
+	 * @param ec the equivalence class
+	 */
+	private void splitRandomEqual(EquivalenceClass ec) {
+		final Set<STATE> oldStates = ec.m_states;
+		final int size = computeHashSetCapacity(g_threshold);
+		while (oldStates.size() > g_threshold) {
+			final HashSet<STATE> newStates = new HashSet<STATE>(size);
+			int i = g_threshold;
+			for (final STATE state : oldStates) {
+				newStates.add(state);
+				if (--i == 0) {
+					m_partition.addEcReturn(newStates, ec);
+					break;
+				}
+			}
+		}
+	}
+	
+	/**
+	 * This method randomly splits an equivalence class into equally sized
+	 * blocks of states, with one exception: It keeps states without any
+	 * outgoing return transitions together.
+	 * 
+	 * @param ec the equivalence class
+	 */
+	private void splitRandomReturns(EquivalenceClass ec) {
+		final Set<STATE> oldStates = ec.m_states;
+		final int size = computeHashSetCapacity(g_threshold);
+		final LinkedList<HashSet<STATE>> newClasses =
+				new LinkedList<HashSet<STATE>>();
+		
+		HashSet<STATE> returns = new HashSet<STATE>(size);
+		for (final STATE state : oldStates) {
+			if (m_operand.returnSuccessors(state).iterator().hasNext()) {
+				returns.add(state);
+				if (returns.size() == g_threshold) {
+					newClasses.add(returns);
+					returns = new HashSet<STATE>(size);
+				}
+			}
+		}
+		if (returns.size() > 0) {
+			newClasses.add(returns);
+		}
+		else if (newClasses.isEmpty()) {
+			return;
+		}
+		
+		int numberOfStates = oldStates.size();
+		for (final HashSet<STATE> states : newClasses) {
+			assert (states.size() > 0);
+			numberOfStates -= states.size();
+			
+			// no state without return transitions, do not split last class
+			if (numberOfStates == 0) {
+				break;
+			}
+			
+			m_partition.addEcReturn(states, ec);
 		}
 	}
 	
@@ -1614,6 +1654,83 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 		return letterSet2stateSet;
 	}
 	
+	/**
+	 * This class represents a return split matrix. The columns are the linear
+	 * and the rows are the hierarchical predecessor states.
+	 * The implementation is not really a matrix, but rather a hash map, since
+	 * the matrix would be very sparse.
+	 */
+	private class Matrix {
+		final HashMap<STATE, HashMap<STATE,
+			HashMap<LETTER, HashSet<STATE>>>> m_hier2lin2letter2succ;
+		
+		/**
+		 * @param size number of non-singleton 
+		 */
+		public Matrix(final int size) {
+			m_hier2lin2letter2succ = new HashMap<STATE, HashMap<STATE,
+					HashMap<LETTER, HashSet<STATE>>>>(
+							computeHashSetCapacity(size));
+		}
+		
+		/**
+		 * This constructor is only used for the useless 1x1-matrix.
+		 */
+		private Matrix() {
+			m_hier2lin2letter2succ = null;
+		}
+
+		@Override
+		public String toString() {
+			return (m_hier2lin2letter2succ == null)
+					? "{1x1-matrix}"
+					: m_hier2lin2letter2succ.toString();
+		}
+	}
+	
+	/**
+	 * This class represents a matrix row. It knows its associated hierarchical
+	 * predecessor state and the matrix entries of this row.
+	 */
+	private class MatrixRow {
+		private final STATE m_hier;
+		private final HashMap<STATE, HashMap<LETTER, HashSet<STATE>>>
+			m_lin2letter2succ;
+		
+		/**
+		 * @param hier the hierarchical state
+		 * @param lin2letter2succ the map (matrix row entries)
+		 */
+		public MatrixRow(final STATE hier, final HashMap<STATE, HashMap<LETTER,
+				HashSet<STATE>>> lin2letter2succ) {
+			m_hier = hier;
+			assert (! lin2letter2succ.isEmpty());
+			m_lin2letter2succ = lin2letter2succ;
+		}
+		
+		@Override
+		public String toString() {
+			return m_hier + " -> " + m_lin2letter2succ;
+		}
+	}
+	
+	/**
+	 * This class is a dummy map. It is currently used for the empty return
+	 * split matrix row.
+	 */
+	@SuppressWarnings({ "serial", "rawtypes" })
+	private class DummyMap extends HashMap {
+		@Override
+		public HashSet<STATE> get(final Object key) {
+			return null;
+		}
+		
+		@Override
+		public String toString() {
+			return "{dummy map}";
+		}
+	}
+	
 	// --- [end] helper methods and classes --- //
 	
 	// --- [start] important inner classes --- //
@@ -1801,6 +1918,7 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 		 * @param states the set of states for the equivalence class
 		 */
 		public EquivalenceClass(final Set<STATE> states) {
+			assert (states.size() > 0);
 			m_states = states;
 			reset();
 			m_incomingInt = EIncomingStatus.inWL;
@@ -1827,6 +1945,7 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 		 */
 		public EquivalenceClass(final Set<STATE> states,
 				final EquivalenceClass parent) {
+			assert (states.size() > 0);
 			m_states = states;
 			reset();
 			switch (parent.m_incomingInt) {
