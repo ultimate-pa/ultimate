@@ -135,6 +135,7 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	private int m_noIncomingTransitions = 0;
 	private int m_ignoredReturnSingletons1x1 = 0;
 	private long m_returnTime = 0, m_matrixTime = 0, m_wholeTime = 0;
+	private long m_returnSeparateTime = 0;
 	 // size information before return splits
 	private final boolean STAT_RETURN_SIZE = false;
 	private final BufferedWriter m_writer1, m_writer2;
@@ -285,6 +286,8 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 					? "--"
 					: (((float)m_matrixTime) / ((float)m_wholeTime))) +
 					", without: " + (m_wholeTime - m_matrixTime) + " ms");
+			System.out.println("time for return separation: " + 
+					m_returnSeparateTime);
 		}
 	}
 	
@@ -1034,18 +1037,156 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	
 	/**
 	 * This method executes the return splits for all passed equivalence
-	 * classes.
+	 * classes. The input has information of which states must be separated.
+	 * The goal is to come up with a splitting that satisfies the separations.
 	 * 
-	 * There are decision points for states that can be assigned to at least
-	 * two equivalence classes.
+	 * The general solution is algorithmically hard, so here the following
+	 * heuristic is used:
+	 * The general rule is to assign a state to an existing group of states if
+	 * possible. If there is more than one possible group, the first one found
+	 * is chosen.
 	 *
 	 * @param splitEquivalenceClasses split equivalence classes
 	 */
-	@SuppressWarnings("unchecked")
 	private void splitReturnExecute(
 			final Collection<EquivalenceClass> splitEquivalenceClasses) {
 		if (DEBUG2)
 			System.err.println("\n-- executing return splits");
+		
+		if (STATISTICS) {
+			m_returnSeparateTime -= new GregorianCalendar().getTimeInMillis();
+		}
+		
+		for (final EquivalenceClass oldEc : splitEquivalenceClasses) {
+			final HashMap<STATE, HashSet<STATE>> state2separatedSet =
+					oldEc.m_state2separatedSet;
+			assert (state2separatedSet != null);
+			
+			if (DEBUG2) {
+				System.err.print(oldEc);
+				System.err.print(" : ");
+				System.err.println(state2separatedSet);
+			}
+			
+			// map: color to associated states and blocked states
+			int statesRemaining = oldEc.m_states.size();
+			final ArrayList<ColorSet> colorSets =
+					new ArrayList<ColorSet>(statesRemaining);
+			
+			// for each state find a color
+			outer: for (final Entry<STATE, HashSet<STATE>> stateEntry :
+					state2separatedSet.entrySet()) {
+				final STATE state = stateEntry.getKey();
+				final HashSet<STATE> separatedSet = stateEntry.getValue();
+				
+				assert (oldEc.m_states.contains(state)) &&
+						(separatedSet != null);
+				
+				// find fitting color
+				for (int i = 0; i < colorSets.size(); ++i) {
+					// found a fitting color
+					final ColorSet colorSet = colorSets.get(i);
+					if (! colorSet.m_blocked.contains(state)) {
+						colorSet.m_content.add(state);
+						colorSet.m_blocked.addAll(separatedSet);
+						--statesRemaining;
+						continue outer;
+					}
+				}
+				
+				// no color available, use a new one
+				colorSets.add(new ColorSet(statesRemaining, state,
+						separatedSet));
+				--statesRemaining;
+			}
+			
+			/*
+			 * States without any separation information behave like the states
+			 * in the group that remains without a split.
+			 */
+			assert (statesRemaining >= 0);
+			
+			if (DEBUG2)
+				System.err.println("colorSets: " + colorSets);
+			
+			/*
+			 * If there are no states without any group preference, keep
+			 * the biggest set from splitting.
+			 * Else keep the smallest set from splitting, since those states
+			 * will stay there.
+			 * This is to reduce the size of the equivalence classes.
+			 * 
+			 * NOTE: This typically has nearly no practical influence.
+			 */
+			int remainingColor = 0;
+			if (statesRemaining == 0) {
+				// find maximum set
+				int maxSize = colorSets.get(0).m_content.size();
+				for (int i = colorSets.size() - 1; i > 0; --i) {
+					final int size = colorSets.get(i).m_content.size();
+					if (size > maxSize) {
+						maxSize = size;
+						remainingColor = i;
+					}
+				}
+			}
+			else {
+				// find minimum set
+				int minSize = colorSets.get(0).m_content.size();
+				for (int i = colorSets.size() - 1; i > 0; --i) {
+					final int size = colorSets.get(i).m_content.size();
+					if (size < minSize) {
+						minSize = size;
+						remainingColor = i;
+					}
+				}
+			}
+			
+			// finally split the equivalence class
+			int i = colorSets.size();
+			while (true) {
+				if (--i == remainingColor) {
+					--i;
+				}
+				if (i < 0) {
+					break;
+				}
+				
+				final EquivalenceClass newEc =
+						m_partition.addEcReturn(colorSets.get(i).m_content,
+								oldEc);
+				
+				if (STATISTICS)
+					++m_splitsWithChange;
+				
+				if (DEBUG2)
+					System.err.println("new equivalence class: " +
+							newEc.toStringShort());
+			}
+			
+			// reset separation mapping
+			oldEc.m_state2separatedSet = null;
+		}
+		
+		if (STATISTICS) {
+			m_returnSeparateTime += new GregorianCalendar().getTimeInMillis();
+		}
+	}
+	
+	/**
+	 * TODO<old>
+	 */
+	@SuppressWarnings("unchecked")
+	private void splitReturnExecuteOld(
+			final Collection<EquivalenceClass> splitEquivalenceClasses) {
+		if (DEBUG2)
+			System.err.println("\n-- executing return splits");
+		
+		long time;
+		if (STATISTICS) {
+			time = new GregorianCalendar().getTimeInMillis();
+		}
+		
 		for (final EquivalenceClass oldEc : splitEquivalenceClasses) {
 			final HashMap<STATE, HashSet<STATE>> state2separatedSet =
 					oldEc.m_state2separatedSet;
@@ -1149,6 +1290,11 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 			
 			// reset separation mapping
 			oldEc.m_state2separatedSet = null;
+		}
+		
+		if (STATISTICS) {
+			time = new GregorianCalendar().getTimeInMillis() - time;
+			m_returnSeparateTime += time;
 		}
 	}
 	
@@ -1729,6 +1875,28 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 		@Override
 		public String toString() {
 			return "{dummy map}";
+		}
+	}
+	
+	/**
+	 * This class stores all states for a certain color and all states that are
+	 * blocked for this color.
+	 */
+	private class ColorSet {
+		// associated states
+		final HashSet<STATE> m_content;
+		final HashSet<STATE> m_blocked;
+		
+		/**
+		 * @param size size of the equivalence class
+		 * @param state the first state
+		 * @param blocked the set of blocked states
+		 */
+		public ColorSet(final int size, final STATE state,
+				final HashSet<STATE> blocked) {
+			m_content = new HashSet<STATE>(computeHashSetCapacity(size));
+			m_content.add(state);
+			m_blocked = blocked;
 		}
 	}
 	
