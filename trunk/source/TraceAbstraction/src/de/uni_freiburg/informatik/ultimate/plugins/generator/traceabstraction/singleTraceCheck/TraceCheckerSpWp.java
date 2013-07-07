@@ -43,6 +43,7 @@ public class TraceCheckerSpWp extends TraceChecker {
 		Word<CodeBlock> trace = m_Trace;
 		forgetTrace();
 		
+		int traceLength = trace.length();
 		m_InterpolantsSp = new IPredicate[trace.length()-1];
 		m_InterpolantsWp = new IPredicate[trace.length()-1];
 		
@@ -71,19 +72,20 @@ public class TraceCheckerSpWp extends TraceChecker {
 		}
 
 		
-		/*s_Logger.debug("Computing weakest precondition for given trace ...");
+		s_Logger.debug("Computing weakest precondition for given trace ...");
 		m_InterpolantsWp[m_InterpolantsWp.length-1] = m_SmtManager.weakestPrecondition(
 				tracePostcondition, trace.getSymbol(m_InterpolantsWp.length));
 		
 		for (int i=m_InterpolantsWp.length-2; i>=0; i--) {
 			m_InterpolantsWp[i] = m_SmtManager.weakestPrecondition(
-					m_InterpolantsSp[i+1], trace.getSymbol(i));
-		}*/
+					m_InterpolantsWp[i+1], trace.getSymbol(i+1));
+		}
 		
 
-		
+		s_Logger.debug("Checking strongest postcondition...");
 		checkInterpolantsCorrect(m_InterpolantsSp, trace, tracePrecondition, tracePostcondition);
-		// checkInterpolantsCorrect(m_InterpolantsWp, trace, tracePrecondition, tracePostcondition);
+		s_Logger.debug("Checking weakest precondition...");
+		checkInterpolantsCorrect(m_InterpolantsWp, trace, tracePrecondition, tracePostcondition);
 		
 		return m_InterpolantsSp;
 	}
@@ -114,12 +116,10 @@ public class TraceCheckerSpWp extends TraceChecker {
 		LBool result = ec.postInternalImplies(postcondition);
 		ec.unAssertPrecondition();
 		ec.unAssertCodeBlock();
-		s_Logger.debug("Hoare triple " + precondition + ", " + cb + ", " 
-											+ postcondition + " is " + result);
+		s_Logger.debug("Hoare triple {" + precondition + "}, " + cb + " {" 
+											+ postcondition + "} is " + (result == LBool.UNSAT ? "valid" : result));
 		return result;
 	}
-	
-	
-	
+		
 
 }
