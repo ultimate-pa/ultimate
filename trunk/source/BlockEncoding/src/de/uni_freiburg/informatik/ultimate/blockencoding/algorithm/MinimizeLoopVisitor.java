@@ -30,8 +30,10 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Sum
  */
 public class MinimizeLoopVisitor extends MinimizeBranchVisitor {
 
-	private int mergedNodes;
 
+	/**
+	 * @param logger
+	 */
 	public MinimizeLoopVisitor(Logger logger) {
 		super(logger);
 	}
@@ -81,7 +83,6 @@ public class MinimizeLoopVisitor extends MinimizeBranchVisitor {
 				checkForParallelMerge.addAll(mergeSequential(incoming,
 						node.getMinimalOutgoingEdgeLevel()));
 				reVisitNodes.addAll(checkForParallelMerge);
-				mergedNodes++;
 				for (MinimizedNode target : checkForParallelMerge) {
 					reVisitNodes.addAll(Arrays.asList(super
 							.applyMinimizationRules(target)));
@@ -190,12 +191,6 @@ public class MinimizeLoopVisitor extends MinimizeBranchVisitor {
 			return true;
 		}
 		return false;
-	}
-
-	public int getMergedNodes() {
-		int temp = mergedNodes;
-		mergedNodes = 0;
-		return temp;
 	}
 
 }

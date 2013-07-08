@@ -507,7 +507,6 @@ public class ConversionVisitor implements IMinimizationVisitor {
 					((Call) cb).getCallStatement());
 		}
 		if (cb instanceof Return) {
-			// TODO: Problem because we use here, old instance of CallAnnot?
 			copyOfCodeBlock = new Return(null, null,
 					((Return) cb).getCorrespondingCall());
 		}
@@ -555,39 +554,6 @@ public class ConversionVisitor implements IMinimizationVisitor {
 		}
 		transFormBuilder.addTransitionFormulas(replacement);
 		return replacement;
-	}
-
-	/**
-	 * TODO: This method exist only for debugging, can be deleted when not
-	 * needed anymore
-	 * 
-	 * @param edge
-	 * @return
-	 */
-	@SuppressWarnings("unused")
-	private void fakeConvertMinimizedEdge(IMinimizedEdge edge) {
-		if (checkForMultipleFormula.containsKey(edge)) {
-			checkForMultipleFormula.put(edge,
-					((Integer) checkForMultipleFormula.get(edge)) + 1);
-		} else {
-			checkForMultipleFormula.put(edge, 1);
-		}
-		// We build a CodeBlock using Recursion
-		// We reach one end if we have an BasicEdge
-		if (edge.isBasicEdge()) {
-			return;
-		}
-
-		if (edge instanceof ICompositeEdge) {
-			IMinimizedEdge[] edges = ((ICompositeEdge) edge)
-					.getCompositeEdges();
-			fakeConvertMinimizedEdge(edges[0]);
-			fakeConvertMinimizedEdge(edges[1]);
-			return;
-		}
-		// should never reach this end here?
-		s_Logger.error("Failure during construction of formulas... " + edge);
-		return;
 	}
 
 	/**

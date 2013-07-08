@@ -7,6 +7,8 @@ import java.util.ArrayList;
 
 import de.uni_freiburg.informatik.ultimate.blockencoding.rating.metrics.RatingFactory.RatingStrategy;
 import de.uni_freiburg.informatik.ultimate.blockencoding.rating.util.EncodingStatistics;
+import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.blockendcoding.Activator;
 
 /**
  * To determine a good boundary, which is later used to estimate a good edge
@@ -32,6 +34,7 @@ public class StatisticBasedHeuristic extends ConfigurableHeuristic {
 		supportedStrategies = new ArrayList<RatingStrategy>();
 		supportedStrategies.add(RatingStrategy.DISJUNCTIVE_STMTCOUNT);
 		supportedStrategies.add(RatingStrategy.USED_VARIABLES_RATING);
+		supportedStrategies.add(RatingStrategy.DISJUNCTIVE_VARIABLES_RATING);
 	}
 
 	@Override
@@ -42,6 +45,9 @@ public class StatisticBasedHeuristic extends ConfigurableHeuristic {
 			break;
 		case USED_VARIABLES_RATING:
 			givenPref = computeUsedVarBoundary();
+			break;
+		case DISJUNCTIVE_VARIABLES_RATING:
+			givenPref = computeMultiplicativeBoundary(givenPref);
 			break;
 		default:
 			throw new IllegalArgumentException(
@@ -62,7 +68,7 @@ public class StatisticBasedHeuristic extends ConfigurableHeuristic {
 		StringBuilder sb = new StringBuilder();
 		// TODO: validate that
 		// we take half of the maximum disjunctions in the graph
-		int disjunctions = (int)(2 *(EncodingStatistics.maxDisjunctionsInOneEdge / 3));
+		int disjunctions = (int) (2 * (EncodingStatistics.maxDisjunctionsInOneEdge / 3));
 		sb.append(disjunctions);
 		sb.append("-");
 		// as a upper bound we take 80% of the value
@@ -84,8 +90,21 @@ public class StatisticBasedHeuristic extends ConfigurableHeuristic {
 	 */
 	private String computeUsedVarBoundary() {
 		// Basically we take here the arithmetic mean of min and max
-		int meanValue = (int)(1.5 * ((EncodingStatistics.minDiffVariablesInOneEdge
-				+ EncodingStatistics.maxDiffVariablesInOneEdge) / 2));
+		int meanValue = (int) (1.5 * ((EncodingStatistics.minDiffVariablesInOneEdge + EncodingStatistics.maxDiffVariablesInOneEdge) / 2));
 		return Integer.toString(meanValue);
+	}
+
+	private String computeMultiplicativeBoundary(String pref) {
+		int value;
+		if (!pref.equals("")) {
+			int preference = Integer.parseInt(pref);
+			double onePercent = (double)EncodingStatistics.maxRatingInOneEdge / 100.00;
+			double calc = onePercent * (double)preference;
+			value = (int) calc;
+		} else {
+			value = EncodingStatistics.totalRCFGRating / EncodingStatistics.countOfBasicEdges;
+		}
+		UltimateServices.getInstance().getLogger(Activator.s_PLUGIN_ID).warn("BoundValue: " + value);
+		return new Integer(value).toString();
 	}
 }

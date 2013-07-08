@@ -82,6 +82,9 @@ public class DisjunctVariablesRating implements IRating {
 	 *            matter
 	 */
 	public DisjunctVariablesRating(String prefValue) {
+		if (prefValue.equals("")) {
+			prefValue = Integer.toString(Integer.MAX_VALUE);
+		}
 		ratingValue = new RatingValueContainer<Integer[]>(new Integer[] { 0, 0,
 				Integer.parseInt(prefValue) });
 	}
