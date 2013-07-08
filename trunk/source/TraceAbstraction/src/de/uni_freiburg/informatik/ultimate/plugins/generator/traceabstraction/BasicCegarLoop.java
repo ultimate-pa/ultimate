@@ -18,6 +18,8 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.Differ
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IsEmpty;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.MinimizeSevpa;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.PowersetDeterminizer;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.RemoveUnreachable;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.ShrinkNwa;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.ComplementDD;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.DeterminizeDD;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.IOpWithDelayedDeadEndRemoval;
@@ -429,11 +431,24 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 			int oldSize = m_Abstraction.size();
 			INestedWordAutomatonOldApi<CodeBlock, IPredicate> newAbstraction = (INestedWordAutomatonOldApi<CodeBlock, IPredicate>) m_Abstraction;
 			Collection<Set<IPredicate>> partition = computePartition(newAbstraction);
-			MinimizeSevpa<CodeBlock, IPredicate> minimizeOp = new MinimizeSevpa<CodeBlock, IPredicate>(newAbstraction, partition, false, false, m_StateFactoryForRefinement);
-			INestedWordAutomatonOldApi<CodeBlock, IPredicate> minimized = minimizeOp.getResult();
-			if (m_Pref.computeHoareAnnotation()) {
-				Map<IPredicate, IPredicate> oldState2newState = minimizeOp.getOldState2newState();
-				m_Haf.updateContexts(oldState2newState);
+			boolean shrinkNwa = m_Pref.cutOffRequiresSameTransition();
+			INestedWordAutomatonOldApi<CodeBlock, IPredicate> minimized;
+			if (shrinkNwa) {
+				ShrinkNwa<CodeBlock, IPredicate> minimizeOp = new ShrinkNwa<CodeBlock, IPredicate>(
+						newAbstraction, partition, m_StateFactoryForRefinement, false, false, false, 0, false);
+				minimized = (new RemoveUnreachable<CodeBlock, IPredicate>(minimizeOp.getResult())).getResult();
+				if (m_Pref.computeHoareAnnotation()) {
+					Map<IPredicate, IPredicate> oldState2newState = minimizeOp.getOldState2newState();
+					m_Haf.updateContexts(oldState2newState);
+				}
+			} else {
+				MinimizeSevpa<CodeBlock, IPredicate> minimizeOp = new MinimizeSevpa<CodeBlock, IPredicate>(newAbstraction, partition, false, false, m_StateFactoryForRefinement);
+				minimized = minimizeOp.getResult();
+				if (m_Pref.computeHoareAnnotation()) {
+					Map<IPredicate, IPredicate> oldState2newState = minimizeOp.getOldState2newState();
+					m_Haf.updateContexts(oldState2newState);
+				}
+
 			}
 			int newSize = minimized.size();
 			m_Abstraction = minimized;
