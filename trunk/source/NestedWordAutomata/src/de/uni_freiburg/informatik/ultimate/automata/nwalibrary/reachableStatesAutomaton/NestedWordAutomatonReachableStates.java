@@ -1496,7 +1496,7 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
     	}
     	
     	public boolean buchiIsEmpty() {
-    		return m_AcceptingBalls > 0;
+    		return m_AcceptingBalls == 0;
     	}
 
     	
