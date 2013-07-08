@@ -57,25 +57,8 @@ import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
  * possible improvements:
  * <threading> identify possibilities for threading and implement it
  * 
- * refused ideas:
- * <stateAnalysis> separate set of states in EC for states with no return
- *                 (internal/call?) transitions
- *                 -> see revision 9166, works, but no real impact,
- *                    therefore quite complicated to maintain
- * 
- * <splittingPolicy> currently all internal and call splits consider the
- *                   same splitter set
- *                   this could be improved by stopping the split whenever the
- *                   splitter set itself is split
- *                   but this somehow counters the automata implementation,
- *                   since finding the predecessors is expensive...
- *                   also this does not work together with the "only one to WL"
- *                   policy
- * 
  * misc:
- * <finalize> remove all unnecessary objects in the end
- * 
- * <statistics> remove in the end
+ * <statistics>/<debug>/<old> remove in the end
  */
 
 /**
@@ -1014,10 +997,7 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 				continue;
 			}
 			
-			/*
-			 * translate to map with equivalence class
-			 * TODO<globalTranslation> do this globally
-			 */
+			// translate to map with equivalence class
 			final HashMap<LETTER, HashSet<EquivalenceClass>> letter2succEc =
 					new HashMap<LETTER, HashSet<EquivalenceClass>>(
 							computeHashSetCapacity(letter2succ.size()));
@@ -1436,10 +1416,6 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 			// current number of colors
 			int colors = 0;
 			
-			/*
-			 * TODO<returnSplit> this is not very efficient, rather a proof of
-			 *                   concept
-			 */
 			for (final Entry<STATE, HashSet<STATE>> entry :
 					state2separatedSet.entrySet()) {
 				final STATE state = entry.getKey();
@@ -1650,14 +1626,14 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	
 	/**
 	 * This method computes the size of a hash set to avoid rehashing.
-	 * This is only sensible if the maximum size is already known.
+	 * This is only reasonable if the maximum size is already known.
 	 * Java standard sets the load factor to 0.75.
 	 * 
 	 * @param size maximum number of elements in the hash set
 	 * @return hash set size
 	 */
 	private int computeHashSetCapacity(final int size) {
-		return (int) (size / 0.75 + 1);
+		return (int) (size * 1.5 + 1);
 	}
 	
 	/**
