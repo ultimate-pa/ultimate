@@ -27,7 +27,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.exceptio
  * 
  * @author Jan Leike
  */
-public class AffineInequality {
+public class LinearInequality {
 	private static Logger s_Logger =
 			UltimateServices.getInstance().getLogger(Activator.s_PLUGIN_ID);
 	
@@ -47,58 +47,66 @@ public class AffineInequality {
 	/**
 	 * List of variables including rational coefficients
 	 */
-	private Map<TermVariable, Rational> m_summands;
+	private Map<TermVariable, Term> m_coefficients;
 	
 	/**
 	 * Affine constant
 	 */
-	private Rational m_constant;
+	private Term m_constant;
 	
 	/**
-	 * Construct an empty affine term, i.e. with value 0.
+	 * SMT script
 	 */
-	public AffineInequality() {
-		m_summands = new HashMap<TermVariable, Rational>();
-		m_constant = Rational.ZERO;
+	private Script m_script;
+	
+	/**
+	 * Construct an empty linear inequality, i.e. 0 ≤ 0.
+	 */
+	public LinearInequality(Script script) {
+		m_script = script;
+		m_coefficients = new HashMap<TermVariable, Term>();
+		m_constant = m_script.decimal("0");
 	}
 	
 	/**
-	 * Construct an affine term from a Term instance.
-	 * @throws TermIsNotAffineException if the term was not affine
-	 * @param t original term
+	 * Construct an linear inequality from a Term instance.
+	 * @throws TermIsNotAffineException if the term was not an affine-linear sum
+	 * @param term an affine-linear sum of values with termvariables
+	 * @param domain variable domain to be used during construction 
 	 */
-	public static AffineInequality fromTerm(Term term, VariableDomain domain)
+	public static LinearInequality fromTerm(Script script, Term term, VariableDomain domain)
 			throws TermException {
-		AffineInequality at;
+		LinearInequality at;
 		if (term instanceof ConstantTerm) {
-			at = new AffineInequality();
-			at.add(AuxiliaryMethods.convertCT((ConstantTerm) term));
+			at = new LinearInequality(script);
+			at.add(term);
 		} else if (term instanceof TermVariable) {
-			at = new AffineInequality();
-			at.add((TermVariable) term, Rational.ONE);
+			at = new LinearInequality(script);
+			at.add((TermVariable) term, script.decimal("1"));
 		} else if (term instanceof ApplicationTerm) {
 			ApplicationTerm appt = (ApplicationTerm) term;
 			if (appt.getFunction().getName() == "+") {
-				at = fromTerm(appt.getParameters()[0], domain);
+				at = fromTerm(script, appt.getParameters()[0], domain);
 				for (int i = 1; i < appt.getParameters().length; ++i)
-					at.add(fromTerm(appt.getParameters()[i], domain));
+					at.add(fromTerm(script, appt.getParameters()[i], domain));
 			} else if (appt.getFunction().getName() == "-") {
 				if (appt.getFunction().getParameterCount() == 1) {
 					// unary minus
-					at = fromTerm(appt.getParameters()[0], domain);
-					at.mult(Rational.MONE);
+					at = fromTerm(script, appt.getParameters()[0], domain);
+					at.mult(script.decimal("-1"));
 				} else { // binary minus (and polyary minus)
-					at = fromTerm(appt.getParameters()[0], domain);
-					at.mult(Rational.MONE);
+					at = fromTerm(script, appt.getParameters()[0], domain);
+					at.mult(script.decimal("-1"));
 					for (int i = 1; i < appt.getParameters().length; ++i)
-						at.add(fromTerm(appt.getParameters()[i], domain));
-					at.mult(Rational.MONE);
+						at.add(fromTerm(script, appt.getParameters()[i],
+								domain));
+					at.mult(script.decimal("-1"));
 				}
 			} else if (appt.getFunction().getName() == "*") {
-				at = new AffineInequality();
-				at.m_constant = Rational.ONE;
+				at = new LinearInequality(script);
+				at.m_constant = script.decimal("1");
 				for (Term u : appt.getParameters()) {
-					AffineInequality atu = fromTerm(u, domain);
+					LinearInequality atu = fromTerm(script, u, domain);
 					if (at.isConstant()) {
 						atu.mult(at.m_constant);
 						at = atu;
@@ -115,11 +123,13 @@ public class AffineInequality {
 				assert(domain == VariableDomain.REALS);
 				assert(appt.getParameters().length == 2);
 				if (Preferences.use_division == UseDivision.DISABLED) {
-					throw new TermIsNotAffineException("Division is disabled.",
+					throw new TermException("Division is disabled.",
 							appt);
 				}
-				AffineInequality divident = fromTerm(appt.getParameters()[0], domain);
-				AffineInequality divisor  = fromTerm(appt.getParameters()[1], domain);
+				LinearInequality divident = fromTerm(script,
+						appt.getParameters()[0], domain);
+				LinearInequality divisor  = fromTerm(script,
+						appt.getParameters()[1], domain);
 				if (!divisor.isConstant()) {
 					throw new TermIsNotAffineException("Non-constant divisor.",
 							appt);
@@ -128,14 +138,17 @@ public class AffineInequality {
 							appt);
 				} else {
 					at = divident;
-					at.mult(divisor.m_constant.inverse());
+					at.mult(script.term("/", script.decimal("1"),
+							divisor.m_constant));
 				}
 			} else if (appt.getFunction().getName() == "div") {
 				// integer division
 				assert(domain == VariableDomain.INTEGERS);
 				assert(appt.getParameters().length == 2);
-				AffineInequality divident = fromTerm(appt.getParameters()[0], domain);
-				AffineInequality divisor  = fromTerm(appt.getParameters()[1], domain);
+				LinearInequality divident = fromTerm(script,
+						appt.getParameters()[0], domain);
+				LinearInequality divisor  = fromTerm(script,
+						appt.getParameters()[1], domain);
 				
 				if (Preferences.use_division == UseDivision.SAFE) {
 					s_Logger.warn("The currently configured semantics of " +
@@ -160,7 +173,8 @@ public class AffineInequality {
 							appt);
 				} else {
 					at = divident;
-					at.mult(divisor.m_constant.inverse());
+					at.mult(script.term("/", script.decimal("1"),
+							divisor.m_constant));
 				}
 			} else {
 				throw new TermIsNotAffineException(
@@ -177,13 +191,13 @@ public class AffineInequality {
 	 * @return true iff the affine term is just a constant
 	 */
 	public boolean isConstant() {
-		return m_summands.isEmpty();
+		return m_coefficients.isEmpty();
 	}
 	
 	/**
 	 * @return the constant component
 	 */
-	public Rational getConstant() {
+	public Term getConstant() {
 		return m_constant;
 	}
 	
@@ -192,98 +206,85 @@ public class AffineInequality {
 	 * @param var a variable
 	 * @return zero if the variable does not occur
 	 */
-	public Rational getCoefficient(TermVariable var) {
-		Rational c = m_summands.get(var);
-		if (c == null) {
-			return Rational.ZERO;
+	public Term getCoefficient(TermVariable var) {
+		Term t = m_coefficients.get(var);
+		if (t == null) {
+			return m_script.decimal("0");
 		}
-		return c;
-	}
-	
-	/**
-	 * @return the collection of variable/coefficient pairs
-	 */
-	public Map<TermVariable, Rational> getSummands() {
-		return m_summands;
+		return t;
 	}
 	
 	/**
 	 * @return a collection of all occuring variables
 	 */
 	public Collection<TermVariable> getVariables() {
-		return m_summands.keySet();
+		return m_coefficients.keySet();
 	}
 	
 	/**
-	 * Adjoin the summands of another term
-	 * @param at another affine term
+	 * Add another linear inequality
+	 * @param li other linear inequality
 	 */
-	public void add(AffineInequality at) {
-		this.add(at.m_constant);
-		for (Map.Entry<TermVariable, Rational> entry
-				: at.m_summands.entrySet()) {
+	public void add(LinearInequality li) {
+		this.add(li.m_constant);
+		for (Map.Entry<TermVariable, Term> entry
+				: li.m_coefficients.entrySet()) {
 			this.add(entry.getKey(), entry.getValue());
 		}
 	}
 	
 	/**
-	 * Add another summand to the affine term
-	 * @param var a variable
-	 * @param r coefficient
+	 * Add another coefficients to the linear inequality
+	 * @param var variable
+	 * @param t   the variable's coefficient to be added
 	 */
-	public void add(TermVariable var, Rational r) {
-		if (m_summands.containsKey(var)) {
-			Rational c = m_summands.get(var).add(r);
-			m_summands.put(var, c);
-			if (c.equals(Rational.ZERO)) {
-				m_summands.remove(var);
-			}
+	public void add(TermVariable var, Term t) {
+		if (m_coefficients.containsKey(var)) {
+			Term t2 = Util.sum(m_script, m_coefficients.get(var), t);
+			m_coefficients.put(var, t2);
 		} else {
-			m_summands.put(var, r);
+			m_coefficients.put(var, t);
 		}
 	}
 	
 	/**
-	 * Add a constant to the affine term
-	 * @param r a constant
+	 * Add a constant to the linear inquality
+	 * @param t a constant
 	 */
-	public void add(Rational r) {
-		m_constant = m_constant.add(r);
+	public void add(Term t) {
+		m_constant = Util.sum(m_script, m_constant, t);
 	}
 	
 	/**
 	 * Multiply with a constant
-	 * @param r factor
+	 * @param t factor
 	 */
-	public void mult(Rational r) {
-		m_constant = m_constant.mul(r);
-		if (r.equals(Rational.ZERO)) {
-			m_summands.clear();
-		} else {
-			for (Map.Entry<TermVariable, Rational> entry
-					: m_summands.entrySet()) {
-				m_summands.put(entry.getKey(), entry.getValue().mul(r));
-			}
+	public void mult(Term t) {
+		m_constant = m_script.term("*", m_constant, t);
+		for (Map.Entry<TermVariable, Term> entry
+				: m_coefficients.entrySet()) {
+			Term t2 = m_script.term("*", entry.getValue(), t);
+			m_coefficients.put(entry.getKey(), t2);
 		}
 	}
 	
 	@Override
 	public String toString() {
-		String result = "";
-		for (Map.Entry<TermVariable, Rational> entry : m_summands.entrySet()) {
-			result += entry.getValue().isNegative() ? " - " : " + ";
-			result += entry.getValue().abs() + "*" + entry.getKey();
+		StringBuilder sb = new StringBuilder();
+		for (Map.Entry<TermVariable, Term> entry : m_coefficients.entrySet()) {
+			sb.append(entry.getValue());
+			sb.append("*");
+			sb.append(entry.getKey());
+			sb.append(" + ");
 		}
-		if (!m_constant.equals(Rational.ZERO) || result.isEmpty()) {
-			if (m_constant.isNegative() || !result.isEmpty()) {
-				result += m_constant.isNegative() ? " - " : " + ";
-			}
-			result += m_constant.abs();
+		sb.append(m_constant);
+		if (ieqsymb == Inequality.LESS_THAN) {
+			sb.append(" < 0");
+		} else if (ieqsymb == Inequality.LESS_THAN_OR_EQUAL) {
+			sb.append(" <= 0");
+		} else {
+			assert(false);
 		}
-		if (result.charAt(0) == ' ') {
-			result = result.substring(1); // Drop first space
-		}
-		
-		return result;
+		return sb.toString();
 	}
 }

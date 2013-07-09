@@ -1,10 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker;
 import de.uni_freiburg.informatik.ultimate.access.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.access.WalkerOptions;
-import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
-
-import org.apache.log4j.Logger;
 
 /**
  * Auto-Generated Stub for the plug-in's Observer

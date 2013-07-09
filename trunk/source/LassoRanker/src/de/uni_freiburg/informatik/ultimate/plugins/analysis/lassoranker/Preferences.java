@@ -56,15 +56,9 @@ public class Preferences {
 	public static boolean compute_integral_hull = false; // Default: true
 	
 	/**
-	 * Should the Ranking Functions Plugin create its own SMT solver
-	 * instance?
-	 */
-	public static boolean use_new_script = true; // Default: true
-	
-	/**
 	 * Are disjunctions allowed in the stem and loop transition?
 	 */
-	public static boolean enable_disjunction = !false; // Default: true
+	public static boolean enable_disjunction = true; // Default: true
 	
 	public enum UseDivision {
 		C_STYLE,    // C style division: x := a / k  -->  k*x <= a < (k+1)*x
@@ -116,8 +110,6 @@ public class Preferences {
 		sb.append(Preferences.use_variable_domain);
 		sb.append("\nCompute integeral hull: ");
 		sb.append(Preferences.compute_integral_hull);
-		sb.append("\nUse new SMT script: ");
-		sb.append(Preferences.use_new_script);
 		sb.append("\nEnable disjunction: ");
 		sb.append(Preferences.enable_disjunction);
 		sb.append("\nDivision: ");
