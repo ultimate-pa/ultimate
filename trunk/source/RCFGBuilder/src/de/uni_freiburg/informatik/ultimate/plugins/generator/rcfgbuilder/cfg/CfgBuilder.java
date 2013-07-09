@@ -169,6 +169,7 @@ public class CfgBuilder {
 	   } else if (taPref.solver() == Solver.Z3) {
 		   m_Script.setOption(":produce-models", true);
 		   m_Script.setOption(":produce-proofs", true);
+		   m_Script.setOption(":produce-unsat-cores", true);
 //		   m_Script.setOption(":interpolant-check-mode", true);
 		   m_Script.setLogic("AUFNIRA");
 //		   m_Script.setOption(":verbosity", 0);
