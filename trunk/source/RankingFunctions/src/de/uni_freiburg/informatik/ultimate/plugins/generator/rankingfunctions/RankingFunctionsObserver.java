@@ -199,13 +199,17 @@ public class RankingFunctionsObserver implements IUnmanagedObserver {
 							LinearRankingFunction linRf = (LinearRankingFunction) rf;
 							Expression rfExp = linRf.asExpression(old_script, rootNode.getRootAnnot().getBoogie2Smt());
 							String rfString = backtranslateExprWorkaround(rfExp);
-							String siString;
+							String siString = "";
 							if (si_list.size() <= 2) {
 								SupportingInvariant si = si_list.iterator().next();
 								Expression siExp = si.asExpression(old_script, rootNode.getRootAnnot().getBoogie2Smt());
 								siString = backtranslateExprWorkaround(siExp);
 							} else {
-								throw new AssertionError("The linear template should not have more than two supporting invariants.");
+								for (SupportingInvariant si : si_list) {
+									Expression siExp = si.asExpression(old_script, rootNode.getRootAnnot().getBoogie2Smt());
+									siString += backtranslateExprWorkaround(siExp) + ", ";
+								}
+//								throw new AssertionError("The linear template should not have more than two supporting invariants.");
 							}
 							longMessage.append("Found linear ranking function ");
 							longMessage.append(rfString);

@@ -24,7 +24,16 @@ public class AuxiliaryMethods {
 	 */
 	public static Term newRealConstant(Script script, String name)
 			throws SMTLIBException {
-		script.declareFun(name, new Sort[0], script.sort("Real"));
+		try {
+			script.declareFun(name, new Sort[0], script.sort("Real"));
+		} catch(SMTLIBException iae) {
+			if (!iae.getMessage().endsWith("already defined.")) {
+				throw iae;
+			} else {
+				// The function is already defined
+				// --> Silence the exception
+			}
+		}
 		return script.term(name);
 	}
 	
@@ -201,7 +210,8 @@ public class AuxiliaryMethods {
 				clauses.addAll(toDNF(script, script.term("not", appt.getParameters()[0])));
 				clauses.addAll(toDNF(script, appt.getParameters()[1]));
 				// TODO: test this!
-			} else if (appt.getFunction().getName() == "<=>") {
+			} else if (appt.getFunction().getName() == "=" &&
+					appt.getParameters()[0].getSort().getName().equals("Bool")) {
 				Term param1 = appt.getParameters()[0];
 				Term param2 = appt.getParameters()[1];
 				clauses.addAll(toDNF(script, script.term("and",

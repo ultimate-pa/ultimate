@@ -92,6 +92,11 @@ public class RankingFunctionsSynthesizer {
 		Term stem_term = stem.getFormula();
 		Term loop_term = loop.getFormula();
 		
+		if (Preferences.rewrite_booleans) {
+			stem_term = boolsToIneq(stem_term);
+			loop_term = boolsToIneq(loop_term);
+		}
+		
 		if (Preferences.use_division == UseDivision.C_STYLE) {
 			// Replace integer division
 			int i = findMinAuxName(stem.getFormula());
@@ -329,6 +334,40 @@ public class RankingFunctionsSynthesizer {
 	}
 	
 	/**
+	 * Replace boolean variables with inequalities
+	 * b = true  --> x_b >= 1
+	 * b = false --> x_b <= 0
+	 */
+	public Term boolsToIneq(Term formula) throws Exception {
+		if (formula instanceof TermVariable) {
+			if (formula.getSort().getName().equals("Bool")) {
+				TermVariable b = m_old_script.variable(((TermVariable) formula).getName() + "_bool", m_old_script.sort("Real"));
+				m_auxVars.add(b);
+				return m_old_script.term(">=", b, m_old_script.decimal("1"));
+			} else {
+				return formula; // FIXME: script inconsistency?
+			}
+		} else if (formula instanceof ConstantTerm) {
+			return formula; // FIXME: script inconsistency?
+		} else if (formula instanceof ApplicationTerm) {
+			ApplicationTerm appt = (ApplicationTerm) formula;
+			Collection<Term> params_new = new ArrayList<Term>();
+			for (Term param : appt.getParameters()) {
+				params_new.add(boolsToIneq(param));
+			}
+			if (appt.getFunction().getName().equals("=") &&
+					appt.getParameters()[0].getSort().getName().equals("Bool")) {
+				return m_old_script.term("=", params_new.toArray(new Term[0]));
+			} else {
+				return m_old_script.term(appt.getFunction().getName(),
+						params_new.toArray(new Term[0]));
+			}
+		} else {
+			throw new Exception("Unknown Term subclass");
+		}
+	}
+	
+	/**
 	 * Convert an (in-)equality into affine term(s) of the form
 	 * Σ c_i x_i + c <= 0
 	 * where the non-positivity is implicit.
@@ -371,18 +410,16 @@ public class RankingFunctionsSynthesizer {
 			at2.mult(Rational.MONE);
 			res = at1;
 			res.add(at2);
-			if (this.m_variable_domain == VariableDomain.INTEGERS) {
+//			if (this.m_variable_domain == VariableDomain.INTEGERS) {
 				res.add(Rational.ONE);
-			}
+//			}
 		} else if (fname == ">") {
 			res = at1;
 			res.mult(Rational.MONE);
 			res.add(at2);
-			if (this.m_variable_domain == VariableDomain.INTEGERS) {
+//			if (this.m_variable_domain == VariableDomain.INTEGERS) {
 				res.add(Rational.ONE);
-			}
-			// Over Reals is the method complete even if strict inequalities
-			// are replaced by non-strict inequalities.
+//			}
 		} else {
 			throw new TermIsNotAffineException("Expected an (in-)equality.",
 					appt);

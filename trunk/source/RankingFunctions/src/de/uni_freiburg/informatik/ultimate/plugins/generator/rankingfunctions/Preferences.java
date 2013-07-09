@@ -88,6 +88,14 @@ public class Preferences {
 	 */
 	public static final boolean use_multiphase_template = false; // Default: true
 	
+	/**
+	 * Rewrite occurences of booleans in the stem and loop with inequalities
+	 */
+	public static boolean rewrite_booleans = true; // Default: false
+	
+	/**
+	 * Build a string descriptions of the current preferences
+	 */
 	public static String show() {
 		StringBuilder sb = new StringBuilder();
 		sb.append("Add supporting invariants: ");
@@ -112,6 +120,8 @@ public class Preferences {
 		sb.append(Preferences.use_linear_template);
 		sb.append("\nMultiphase template enabled: ");
 		sb.append(Preferences.use_multiphase_template);
+		sb.append("\nRewrite booleans enabled: ");
+		sb.append(Preferences.rewrite_booleans);
 		return sb.toString();
 	}
 }
