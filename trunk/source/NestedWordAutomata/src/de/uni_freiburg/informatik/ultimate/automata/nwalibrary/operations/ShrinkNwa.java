@@ -629,11 +629,12 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 		
 		splitReturnForwardsAnalysis(linEc2hierEc, true);
 		
-		if (m_splitEcsReturn.size() > 0) {
+		while (m_splitEcsReturn.size() > 0) {
 			assert (assertSetProperty(m_splitEcsReturn));
 			splitReturnExecute(m_splitEcsReturn);
 			linEc2hierEc = splitReturnBackwardsEcTranslation(lin2hier);
 			m_splitEcsReturn = new LinkedList<EquivalenceClass>();
+			splitReturnForwardsAnalysis(linEc2hierEc, true);
 		}
 		
 		splitReturnForwardsAnalysis(linEc2hierEc, false);
