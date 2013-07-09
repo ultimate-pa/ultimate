@@ -10,8 +10,6 @@ import org.apache.log4j.Logger;
  * Auto-Generated Stub for the plug-in's Observer
  */
 public class LassoRankerObserver implements IUnmanagedObserver {
-
-	private static Logger s_Logger = UltimateServices.getInstance().getLogger(Activator.s_PLUGIN_ID);
 	
 	@Override
 	public boolean process(IElement root) {

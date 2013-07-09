@@ -1,10 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker;
 
-import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
-
 import org.eclipse.core.runtime.Plugin;
 import org.osgi.framework.BundleContext;
-import org.apache.log4j.Logger;
 
 
 /**
@@ -19,8 +16,6 @@ public class Activator extends Plugin {
 	public static final String s_PLUGIN_NAME = "LassoRanker";
 	// The shared instance
 	private static Activator m_Plugin;
-	
-	private static Logger s_Logger = UltimateServices.getInstance().getLogger(s_PLUGIN_ID);
 	
 	/**
 	 * The constructor

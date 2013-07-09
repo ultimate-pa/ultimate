@@ -8,9 +8,7 @@ import de.uni_freiburg.informatik.ultimate.ep.interfaces.IAnalysis;
 import de.uni_freiburg.informatik.ultimate.model.GraphType;
 import de.uni_freiburg.informatik.ultimate.model.MarkedTrace;
 import de.uni_freiburg.informatik.ultimate.model.TokenMap;
-import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 
-import org.apache.log4j.Logger;
 import org.eclipse.core.runtime.preferences.IEclipsePreferences;
 import org.eclipse.core.runtime.preferences.IScopeContext;
 
@@ -28,65 +26,51 @@ public class LassoRanker implements IAnalysis {
 	
 	private LassoRankerObserver m_Observer;
 	private GraphType m_InputDefinition;
-	
-	private static Logger s_Logger = UltimateServices.getInstance().getLogger(Activator.s_PLUGIN_ID);
-	
-	
-	
-	/* (non-Javadoc)
-	 * @see de.uni_freiburg.informatik.ultimate.ep.interfaces.IRCPPlugin#getName()
+
+	/**
+	 * @return a human readable Name for the plugin
 	 */
 	@Override
-    public String getName() {
-        return s_PLUGIN_NAME;
-    }
+	public String getName() {
+		return s_PLUGIN_NAME;
+	}
 
-	/* (non-Javadoc)
-	 * @see de.uni_freiburg.informatik.ultimate.ep.interfaces.IRCPPlugin#getPluginID()
+	/**
+	 * Method which returns ID of the Plugin.
+	 * @return String containing Plugin ID
 	 */
 	@Override
-    public String getPluginID() {
-        return s_PLUGIN_ID;
-    }
+	public String getPluginID() {
+		return s_PLUGIN_ID;
+	}
 
-	/* (non-Javadoc)
-	 * @see de.uni_freiburg.informatik.ultimate.ep.interfaces.IRCPPlugin#init(java.lang.Object)
+	/**
+	 * Initialisation
+	 * method is called by core after the plugin is loaded
 	 */
 	@Override
-    public int init(Object param) {
-    	m_Observer = new LassoRankerObserver();
-    	return 0;
-    }
+	public int init(Object param) {
+		m_Observer = new LassoRankerObserver();
+		return 0;
+	}
 
-	/* (non-Javadoc)
-	 * @see de.uni_freiburg.informatik.ultimate.ep.interfaces.ITool#getQueryKeyword()
-	 */
 	@Override
 	public QueryKeyword getQueryKeyword() {
 		return QueryKeyword.LAST;
 	}
 
-	/* (non-Javadoc)
-	 * @see de.uni_freiburg.informatik.ultimate.ep.interfaces.ITool#getDesiredToolID()
-	 */
 	@Override
 	public List<String> getDesiredToolID() {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
-	/* (non-Javadoc)
-	 * @see de.uni_freiburg.informatik.ultimate.ep.interfaces.ITool#setTokenMap(de.uni_freiburg.informatik.ultimate.model.TokenMap)
-	 */
 	@Override
 	public void setTokenMap(TokenMap tokenMap) {
 		// TODO Auto-generated method stub
 
 	}
 
-	/* (non-Javadoc)
-	 * @see de.uni_freiburg.informatik.ultimate.ep.interfaces.ITool#setInputDefinition(de.uni_freiburg.informatik.ultimate.model.GraphType)
-	 */
 	@Override
 	public void setInputDefinition(GraphType graphType) {
 		this.m_InputDefinition = graphType;
@@ -97,9 +81,6 @@ public class LassoRanker implements IAnalysis {
 		return Collections.singletonList((IObserver) m_Observer);
 	}
 	
-	/* (non-Javadoc)
-	 * @see de.uni_freiburg.informatik.ultimate.ep.interfaces.IModifyingTool#getOutputDefinition()
-	 */
 	public GraphType getOutputDefinition() {
 		/* 
 		 * TODO This generated method body only assumes a standard case.
@@ -109,9 +90,6 @@ public class LassoRanker implements IAnalysis {
 				m_InputDefinition.getType(), m_InputDefinition.getFileNames());
 	}
 	
-	/* (non-Javadoc)
-	 * @see de.uni_freiburg.informatik.ultimate.ep.interfaces.ITool#getRequireGui()
-	 */
 	@Override
 	public boolean isGuiRequired() {
 		return false;
