@@ -1230,6 +1230,11 @@ public class CHandler implements ICHandler {
                                 r.expr), decl, auxVars);
             case IASTBinaryExpression.op_logicalAnd:
                 stmt.addAll(l.stmt);
+                if (r.auxVars.isEmpty() && l.auxVars.isEmpty()) {
+                	//no need for shortcut
+                	return new ResultExpression(stmt, new BinaryExpression(loc,
+                			tBool, Operator.LOGICAND, l.expr, r.expr), decl, auxVars);
+                }
                 // create and add tmp var #t~AND~UID
                 String resName = main.nameHandler
                         .getTempVarUID(SFO.AUXVAR.SHORTCIRCUIT);
