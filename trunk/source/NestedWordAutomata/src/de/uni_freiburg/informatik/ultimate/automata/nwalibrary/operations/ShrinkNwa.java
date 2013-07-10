@@ -82,6 +82,8 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	private IDoubleDeckerAutomaton<LETTER, STATE> m_doubleDecker;
 	// partition object
 	private Partition m_partition;
+	// IDs for equivalence classes
+	private int m_ids;
 	// work lists
 	private WorkListIntCall m_workListIntCall;
 	private WorkListRet m_workListRet;
@@ -220,6 +222,7 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 				? m_operand.getStateFactory()
 				: stateFactory;
 		m_partition = new Partition();
+		m_ids = 0;
 		m_workListIntCall = new WorkListIntCall();
 		m_workListRet = new WorkListRet();
 		m_splitEcsReturn = new LinkedList<EquivalenceClass>();
@@ -2292,6 +2295,8 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	 * Two equivalence class objects are equal iff they share the same pointer.
 	 */
 	private class EquivalenceClass {
+		// unique ID (useful for hashCode and so for deterministic runs)
+		private final int m_id;
 		// the states
 		private Set<STATE> m_states;
 		// intersection set that finally becomes a new equivalence class
@@ -2304,28 +2309,42 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 		private Matrix m_matrix;
 		
 		/**
-		 * This constructor is used for the initialization. 
+		 * This is a partial constructor which is used for both initialization
+		 * and splitting.
 		 * 
 		 * @param states the set of states for the equivalence class
+		 * @param fromSplit flag currently ignored (necessary for overloading)
 		 */
-		public EquivalenceClass(final Set<STATE> states) {
+		private EquivalenceClass(final Set<STATE> states,
+				final boolean fromSplit) {
 			assert (states.size() > 0);
+			m_id = ++m_ids;
 			m_states = states;
 			reset();
-			m_incomingInt = EIncomingStatus.inWL;
-			m_incomingCall = EIncomingStatus.inWL;
-			m_workListIntCall.add(this);
-			m_incomingRet = EIncomingStatus.inWL;
-			m_workListRet.add(this);
-			m_matrix = null;
 		}
 		
 		/**
 		 * This constructor is reserved for the placeholder equivalence class.
 		 */
 		private EquivalenceClass() {
+			m_id = 0;
 			m_states = null;
 			m_intersection = null;
+		}
+		
+		/**
+		 * This constructor is used for the initialization. 
+		 * 
+		 * @param states the set of states for the equivalence class
+		 */
+		public EquivalenceClass(final Set<STATE> states) {
+			this(states, false);
+			m_incomingInt = EIncomingStatus.inWL;
+			m_incomingCall = EIncomingStatus.inWL;
+			m_workListIntCall.add(this);
+			m_incomingRet = EIncomingStatus.inWL;
+			m_workListRet.add(this);
+			m_matrix = null;
 		}
 		
 		/**
@@ -2336,9 +2355,7 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 		 */
 		public EquivalenceClass(final Set<STATE> states,
 				final EquivalenceClass parent) {
-			assert (states.size() > 0);
-			m_states = states;
-			reset();
+			this(states, true);
 			switch (parent.m_incomingInt) {
 				case unknown:
 				case inWL:
@@ -2370,6 +2387,11 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 					break;
 			}
 			resetMatrix(parent);
+		}
+		
+		@Override
+		public int hashCode() {
+			return m_id;
 		}
 		
 		/**
