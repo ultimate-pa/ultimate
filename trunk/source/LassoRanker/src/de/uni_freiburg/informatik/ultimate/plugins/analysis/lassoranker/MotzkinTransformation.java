@@ -191,6 +191,21 @@ public class MotzkinTransformation extends InstanceCounting {
 			conjunction.add(Util.or(m_script, classical, non_classical));
 		}
 		
+		// Fixed Motzkin coefficients
+		{
+			for (int i = 0; i < num_coefficients; ++i) {
+				LinearInequality li = m_inequalities.get(i);
+				if (!li.m_needs_motzkin_coefficient) {
+					Term coefficient = coefficients.get(i);
+					conjunction.add(Util.or(m_script,
+						m_script.term("=", coefficient, m_script.decimal("0")),
+						m_script.term("=", coefficient, m_script.decimal("1"))
+					));
+					// TODO: allow fixing to { 1 }.
+				}
+			}
+		}
+		
 		return Util.and(m_script, conjunction.toArray(new Term[0]));
 	}
 	

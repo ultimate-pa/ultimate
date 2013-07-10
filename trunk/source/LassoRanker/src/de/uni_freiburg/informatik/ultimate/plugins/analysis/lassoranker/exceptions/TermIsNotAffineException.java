@@ -12,11 +12,11 @@ public class TermIsNotAffineException extends TermException {
 	
 	private static final long serialVersionUID = 173432306044797947L;
 	
-	public TermIsNotAffineException(String description) {
-		super(description);
+	public TermIsNotAffineException(String message) {
+		super(message);
 	}
 	
-	public TermIsNotAffineException(String description, Term term) {
-		super(description, term);
+	public TermIsNotAffineException(String message, Term term) {
+		super(message, term);
 	}
 }

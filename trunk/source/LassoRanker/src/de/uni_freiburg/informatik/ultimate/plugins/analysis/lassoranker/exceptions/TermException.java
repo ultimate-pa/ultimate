@@ -14,13 +14,13 @@ public class TermException extends Exception {
 	
 	protected Term m_term;
 	
-	public TermException(String description) {
-		super(description);
+	public TermException(String message) {
+		super(message);
 		m_term = null;
 	}
 	
-	public TermException(String description, Term term) {
-		super(description);
+	public TermException(String message, Term term) {
+		super(message);
 		m_term = term;
 	}
 	

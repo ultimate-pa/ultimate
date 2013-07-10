@@ -45,6 +45,11 @@ public class LinearInequality {
 	public Inequality ieqsymb = Inequality.LESS_THAN_OR_EQUAL;
 	
 	/**
+	 * Whether this inequality needs its own motzkin coefficient
+	 */
+	public boolean m_needs_motzkin_coefficient = true;
+	
+	/**
 	 * List of variables including rational coefficients
 	 */
 	private Map<TermVariable, Term> m_coefficients;
@@ -74,6 +79,7 @@ public class LinearInequality {
 	 * @param term an affine-linear sum of values with termvariables
 	 * @param domain variable domain to be used during construction 
 	 */
+	@Deprecated
 	public static LinearInequality fromTerm(Script script, Term term, VariableDomain domain)
 			throws TermException {
 		LinearInequality at;
