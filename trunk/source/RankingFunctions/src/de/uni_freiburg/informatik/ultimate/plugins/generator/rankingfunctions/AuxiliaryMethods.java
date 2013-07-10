@@ -12,6 +12,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.logic.Util;
 
 public class AuxiliaryMethods {
 	/**
@@ -209,15 +210,14 @@ public class AuxiliaryMethods {
 			} else if (appt.getFunction().getName() == "=>") {
 				clauses.addAll(toDNF(script, script.term("not", appt.getParameters()[0])));
 				clauses.addAll(toDNF(script, appt.getParameters()[1]));
-				// TODO: test this!
 			} else if (appt.getFunction().getName() == "=" &&
 					appt.getParameters()[0].getSort().getName().equals("Bool")) {
 				Term param1 = appt.getParameters()[0];
 				Term param2 = appt.getParameters()[1];
-				clauses.addAll(toDNF(script, script.term("and",
-						script.term("=>", param1, param2),
-						script.term("=>", param2, param1))));
-				// TODO: test this!
+				clauses.addAll(toDNF(script, script.term("or",
+						script.term("and", param1, param2),
+						script.term("and", Util.not(script, param1),
+								Util.not(script, param2)))));
 			} else {
 				clauses.add(appt);
 			}
