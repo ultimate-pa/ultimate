@@ -2,14 +2,10 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker;
 
 import java.util.*;
 
-import org.apache.log4j.Logger;
-
-import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.logic.*;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.Preferences.UseDivision;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.Preferences.VariableDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.exceptions.TermException;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.exceptions.TermIsNotAffineException;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.exceptions.UnknownFunctionException;
 
 
 /**
@@ -28,21 +24,10 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.exceptio
  * @author Jan Leike
  */
 public class LinearInequality {
-	private static Logger s_Logger =
-			UltimateServices.getInstance().getLogger(Activator.s_PLUGIN_ID);
-	
 	/**
-	 * Whether the inequality is strict ("<" versus "≤")
+	 * Whether the inequality is strict ("<") versus non-strict ("<=")
 	 */
-	public enum Inequality {
-		LESS_THAN,         // "<"
-		LESS_THAN_OR_EQUAL // "≤"
-	}
-	
-	/**
-	 * Whether the inequality is strict ("<" versus "<=")
-	 */
-	public Inequality ieqsymb = Inequality.LESS_THAN_OR_EQUAL;
+	public boolean strict = false;
 	
 	/**
 	 * Whether this inequality needs its own motzkin coefficient
@@ -79,45 +64,43 @@ public class LinearInequality {
 	 * @param term an affine-linear sum of values with termvariables
 	 * @param domain variable domain to be used during construction 
 	 */
-	@Deprecated
-	public static LinearInequality fromTerm(Script script, Term term, VariableDomain domain)
+	public static LinearInequality fromTerm(Script script, Term term)
 			throws TermException {
-		LinearInequality at;
+		LinearInequality li;
 		if (term instanceof ConstantTerm) {
-			at = new LinearInequality(script);
-			at.add(term);
+			li = new LinearInequality(script);
+			li.add(term);
 		} else if (term instanceof TermVariable) {
-			at = new LinearInequality(script);
-			at.add((TermVariable) term, script.decimal("1"));
+			li = new LinearInequality(script);
+			li.add((TermVariable) term, script.decimal("1"));
 		} else if (term instanceof ApplicationTerm) {
 			ApplicationTerm appt = (ApplicationTerm) term;
 			if (appt.getFunction().getName() == "+") {
-				at = fromTerm(script, appt.getParameters()[0], domain);
+				li = fromTerm(script, appt.getParameters()[0]);
 				for (int i = 1; i < appt.getParameters().length; ++i)
-					at.add(fromTerm(script, appt.getParameters()[i], domain));
+					li.add(fromTerm(script, appt.getParameters()[i]));
 			} else if (appt.getFunction().getName() == "-") {
 				if (appt.getFunction().getParameterCount() == 1) {
 					// unary minus
-					at = fromTerm(script, appt.getParameters()[0], domain);
-					at.mult(script.decimal("-1"));
+					li = fromTerm(script, appt.getParameters()[0]);
+					li.mult(script.decimal("-1"));
 				} else { // binary minus (and polyary minus)
-					at = fromTerm(script, appt.getParameters()[0], domain);
-					at.mult(script.decimal("-1"));
+					li = fromTerm(script, appt.getParameters()[0]);
+					li.mult(script.decimal("-1"));
 					for (int i = 1; i < appt.getParameters().length; ++i)
-						at.add(fromTerm(script, appt.getParameters()[i],
-								domain));
-					at.mult(script.decimal("-1"));
+						li.add(fromTerm(script, appt.getParameters()[i]));
+					li.mult(script.decimal("-1"));
 				}
 			} else if (appt.getFunction().getName() == "*") {
-				at = new LinearInequality(script);
-				at.m_constant = script.decimal("1");
+				li = new LinearInequality(script);
+				li.m_constant = script.decimal("1");
 				for (Term u : appt.getParameters()) {
-					LinearInequality atu = fromTerm(script, u, domain);
-					if (at.isConstant()) {
-						atu.mult(at.m_constant);
-						at = atu;
-					} else if (atu.isConstant()) {
-						at.mult(atu.m_constant);
+					LinearInequality liu = fromTerm(script, u);
+					if (li.isConstant()) {
+						liu.mult(li.m_constant);
+						li = liu;
+					} else if (liu.isConstant()) {
+						li.mult(liu.m_constant);
 					} else {
 						throw new TermIsNotAffineException(
 								"Product with more than one non-constant " +
@@ -125,17 +108,11 @@ public class LinearInequality {
 					}
 				}
 			} else if (appt.getFunction().getName() == "/") {
-				// real division
-				assert(domain == VariableDomain.REALS);
 				assert(appt.getParameters().length == 2);
-				if (Preferences.use_division == UseDivision.DISABLED) {
-					throw new TermException("Division is disabled.",
-							appt);
-				}
 				LinearInequality divident = fromTerm(script,
-						appt.getParameters()[0], domain);
+						appt.getParameters()[0]);
 				LinearInequality divisor  = fromTerm(script,
-						appt.getParameters()[1], domain);
+						appt.getParameters()[1]);
 				if (!divisor.isConstant()) {
 					throw new TermIsNotAffineException("Non-constant divisor.",
 							appt);
@@ -143,54 +120,18 @@ public class LinearInequality {
 					throw new TermIsNotAffineException("Division by zero.",
 							appt);
 				} else {
-					at = divident;
-					at.mult(script.term("/", script.decimal("1"),
-							divisor.m_constant));
-				}
-			} else if (appt.getFunction().getName() == "div") {
-				// integer division
-				assert(domain == VariableDomain.INTEGERS);
-				assert(appt.getParameters().length == 2);
-				LinearInequality divident = fromTerm(script,
-						appt.getParameters()[0], domain);
-				LinearInequality divisor  = fromTerm(script,
-						appt.getParameters()[1], domain);
-				
-				if (Preferences.use_division == UseDivision.SAFE) {
-					s_Logger.warn("The currently configured semantics of " +
-							"integer division follows slightly unsual " +
-							"rules: the program may only proceed if the " +
-							"division has no remainder.");
-				} else if (Preferences.use_division == UseDivision.C_STYLE) {
-					throw new UnsupportedOperationException(
-							"C-style division is not implemented yet.");
-					// TODO: this requires more work; divisions must be
-					// removed and applied to tmp vars in a separate step.
-				} else {
-					throw new TermIsNotAffineException(
-							"Division is disabled for Integers.", appt);
-				}
-				
-				if (!divisor.isConstant()) {
-					throw new TermIsNotAffineException("Non-constant divisor.",
-							appt);
-				} else if (divisor.m_constant.equals(Rational.ZERO)) {
-					throw new TermIsNotAffineException("Division by zero.",
-							appt);
-				} else {
-					at = divident;
-					at.mult(script.term("/", script.decimal("1"),
+					li = divident;
+					li.mult(script.term("/", script.decimal("1"),
 							divisor.m_constant));
 				}
 			} else {
-				throw new TermIsNotAffineException(
-						"Stumbled upon an unknown function symbol.", appt);
+				throw new UnknownFunctionException(appt);
 			}
 		} else {
-			throw new TermIsNotAffineException(
+			throw new TermException(
 						"Stumbled upon a Term of unknown subclass.", term);
 		}
-		return at;
+		return li;
 	}
 	
 	/**
@@ -274,6 +215,18 @@ public class LinearInequality {
 		}
 	}
 	
+	/**
+	 * Negate the linear inequality
+	 * <pre>
+	 * a ≤ b --> b < a
+	 * a < b --> b ≤ a
+	 * </pre>
+	 */
+	public void negate() {
+		mult(m_script.decimal("-1"));
+		strict = !strict;
+	}
+	
 	@Override
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
@@ -284,13 +237,7 @@ public class LinearInequality {
 			sb.append(" + ");
 		}
 		sb.append(m_constant);
-		if (ieqsymb == Inequality.LESS_THAN) {
-			sb.append(" < 0");
-		} else if (ieqsymb == Inequality.LESS_THAN_OR_EQUAL) {
-			sb.append(" <= 0");
-		} else {
-			assert(false);
-		}
+		sb.append(strict ? " < 0" : " <= 0");
 		return sb.toString();
 	}
 }

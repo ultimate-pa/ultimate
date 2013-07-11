@@ -8,7 +8,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.LinearInequality.Inequality;
 
 
 /**
@@ -166,7 +165,7 @@ public class MotzkinTransformation extends InstanceCounting {
 			for (int i = 0; i < num_coefficients; ++i) {
 				LinearInequality li = m_inequalities.get(i);
 				Term coefficient = coefficients.get(i);
-				if (li.ieqsymb == Inequality.LESS_THAN_OR_EQUAL) {
+				if (!li.strict) {
 					// only non-strict inequalities
 					summands.add(m_script.term("*", coefficient,
 							li.getConstant()));
@@ -180,7 +179,7 @@ public class MotzkinTransformation extends InstanceCounting {
 			for (int i = 0; i < num_coefficients; ++i) {
 				LinearInequality li = m_inequalities.get(i);
 				Term coefficient = coefficients.get(i);
-				if (li.ieqsymb == Inequality.LESS_THAN) {
+				if (li.strict) {
 					// only strict inequalities
 					summands.add(coefficient);
 				}

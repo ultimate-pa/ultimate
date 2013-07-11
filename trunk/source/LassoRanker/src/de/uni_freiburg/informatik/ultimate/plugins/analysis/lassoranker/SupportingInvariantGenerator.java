@@ -7,9 +7,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import org.apache.log4j.Logger;
-
-import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -20,25 +17,22 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 
 /**
  * Creates and extracts supporting invariants.
- * This class is the counterpart of the RankingTemplate classes for supporting
- * invariants.
+ * This class is the counterpart of the RankingFunctionTemplate classes for
+ * supporting invariants.
  * 
  * @author Jan Leike
  */
 public class SupportingInvariantGenerator extends InstanceCounting {
 	
-	private static Logger s_Logger =
-			UltimateServices.getInstance().getLogger(Activator.s_PLUGIN_ID);
-	
 	private static final String s_prefix = "si_";
 	private static final String s_const  = "si0_";
-	private static final String s_notNonDecreasingCoeff = "siD_";
 	
 	private Script m_script;
 	
 	private Term m_constant;
 	private Map<BoogieVar, Term> m_coefficients;
-	private Term m_notNonDecreasingCoefficient;
+	
+	public boolean strict;
 	
 	/**
 	 * @param script The SMTLib script
@@ -49,7 +43,7 @@ public class SupportingInvariantGenerator extends InstanceCounting {
 	 *                         non-linear solver!)
 	 */
 	SupportingInvariantGenerator(Script script,
-			Collection<BoogieVar> variables) {
+			Collection<BoogieVar> variables, boolean strict) {
 		m_script = script;
 		
 		// Create variables
@@ -60,90 +54,23 @@ public class SupportingInvariantGenerator extends InstanceCounting {
 			m_coefficients.put(var, AuxiliaryMethods.newRealConstant(m_script,
 					s_prefix + m_instance + "_" + var.getGloballyUniqueId()));
 		}
-		if (Preferences.not_nondecreasing) {
-			m_notNonDecreasingCoefficient =
-					AuxiliaryMethods.newRealConstant(m_script,
-							s_notNonDecreasingCoeff + m_instance);
-			Term t = m_script.term(">=",
-					m_notNonDecreasingCoefficient, m_script.decimal("0"));
-			s_Logger.debug(t);
-			m_script.assertTerm(t);
-		}
+		this.strict = strict;
 	}
 	
 	/**
-	 * Set the right hand side of
-	 * stem(x, x0) -> si(x) >= 0
-	 * to a Farkas' Lemma application
+	 * Generate the linear inequality
+	 * @param vars a mapping from Boogie variables to TermVariables to be used
+	 * @return Linear inequality corresponding to si(x)
 	 */
-	public void setStemEntailment(FarkasApplication farkas,
-			Map<BoogieVar, TermVariable> outVars) {
-		Map<TermVariable, Term> stem_entail = new HashMap<TermVariable, Term>();
-		for (Entry<BoogieVar, TermVariable> entry : outVars.entrySet()) {
-			stem_entail.put(entry.getValue(),
-					m_script.term("-", m_coefficients.get(entry.getKey())));
+	public LinearInequality generate(Map<BoogieVar, TermVariable> vars) {
+		LinearInequality li = new LinearInequality(m_script);
+		for (Entry<BoogieVar, TermVariable> entry : vars.entrySet()) {
+			li.add(entry.getValue(), m_script.term("-",
+					m_coefficients.get(entry.getKey())));
 		}
-		farkas.entailed = stem_entail;
-		farkas.gamma = m_constant;
-	}
-	
-	/**
-	 * Set the right hand side of
-	 * loop(x, x') -> si(x') >= si(x)
-	 * to a Farkas' Lemma application
-	 */
-	public void setSINonDecreasing(FarkasApplication farkas,
-			Map<BoogieVar, TermVariable> inVars,
-			Map<BoogieVar, TermVariable> outVars) {
-		Map<TermVariable, Term> loop_entail = new HashMap<TermVariable, Term>();
-		for (Entry<BoogieVar, TermVariable> entry : inVars.entrySet()) {
-			if (!outVars.containsValue(entry.getValue()) &&
-					m_coefficients.containsKey(entry.getKey())) {
-				Term coefficient = m_coefficients.get(entry.getKey());
-				if (Preferences.not_nondecreasing) {
-					coefficient = m_script.term("*",
-							m_notNonDecreasingCoefficient, coefficient);	
-				}
-				loop_entail.put(entry.getValue(), coefficient);
-			}
-		}
-		for (Entry<BoogieVar, TermVariable> entry : outVars.entrySet()) {
-			if (!inVars.containsValue(entry.getValue()) &&
-					m_coefficients.containsKey(entry.getKey())) {
-				loop_entail.put(entry.getValue(), m_script.term("-", 
-										m_coefficients.get(entry.getKey())));
-			}
-		}
-		farkas.entailed = loop_entail;
-		if (Preferences.not_nondecreasing) {
-			Term t1 = m_script.term("*", m_notNonDecreasingCoefficient,
-					m_constant);
-			farkas.gamma = m_script.term("-", m_constant, t1);
-		} else {
-			farkas.gamma = m_script.decimal("0");
-		}
-	}
-	
-	/**
-	 * Add si(x) >= 0 to the right hand side of
-	 * loop(x, x') -> (template formula \/ si(x) < 0)
-	 * to a Farkas' Lemma application
-	 */
-	public void addSI(FarkasApplication farkas,
-			Map<BoogieVar, TermVariable> inVars) {
-		if (farkas.gamma == null) {
-			farkas.gamma = m_script.decimal("0");
-		}
-		if (farkas.entailed == null) {
-			farkas.entailed = new HashMap<TermVariable, Term>();
-		}
-		farkas.gamma = m_script.term("-", farkas.gamma, m_constant);
-		for (Entry<BoogieVar, TermVariable> entry : inVars.entrySet()) {
-			if (m_coefficients.containsKey(entry.getKey())) {
-				farkas.addToEntailed(entry.getValue(),
-						m_coefficients.get(entry.getKey()));
-			}
-		}
+		li.m_needs_motzkin_coefficient = false;
+		li.strict = this.strict;
+		return li;
 	}
 	
 	/**

@@ -7,33 +7,27 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker;
  * @author Jan Leike
  */
 public class Preferences {
-	
-	/**
-	 * If this is disabled, no supporting invariants will be created.
-	 * This is probably only useful to reduce the size of the debug output.
-	 */
-	public static boolean add_supporting_invariants = true; // Default: true
-	
-	/**
-	 * Should the lower bound of a ranking function be augmented by a
-	 * supporting invariant?  This is only useful if supporting invariants may
-	 * be not non-decreasing.
-	 */
-	public static boolean supporting_invariant_for_lower_bound = false; // Default: false
-	
 	/**
 	 * Check if the loop execution is impossible, i.e. the loop
-	 * condition contradicts the post condition of the stem?
+	 * condition contradicts the post condition of the stem
 	 */
-	public static boolean check_if_loop_impossible = true; // Default: true
+	public static boolean check_if_loop_infeasible = true; // Default: true
 	
 	/**
-	 * Search for inductive invariants that may not be non-decreasing?
-	 * Setting this option to true requires a non-linear SMT solver.
+	 * Number of supporting invariants for each Motzkin transformation.
+	 * Must be non-negative; set to 0 to disable the use of supporting
+	 * invariants.
+	 * Note that increasing this number will dramatically increase runtime!
+	 */
+	public static int num_supporting_invariants = 1; // Default: 1
+	
+	/**
+	 * Only consider non-decreasing invariants.
+	 * Setting this option to false requires a non-linear SMT solver.
 	 * (Currently z3 is the only supported solver that handles non-linear
 	 * arithmetic.)
 	 */
-	public static boolean not_nondecreasing = false; // Default: true
+	public static boolean nondecreasing_invariants = false; // Default: false
 	
 	public enum VariableDomain {
 		INTEGERS,
@@ -98,14 +92,12 @@ public class Preferences {
 	 */
 	public static String show() {
 		StringBuilder sb = new StringBuilder();
-		sb.append("Add supporting invariants: ");
-		sb.append(Preferences.add_supporting_invariants);
-		sb.append("\nSupporting invariant for lower bound: ");
-		sb.append(Preferences.supporting_invariant_for_lower_bound);
-		sb.append("\nCheck if loop impossible: ");
-		sb.append(Preferences.check_if_loop_impossible);
-		sb.append("\nSupporting invariant can be not non-decreasing: ");
-		sb.append(Preferences.not_nondecreasing);
+		sb.append("Number of added supporting invariants: ");
+		sb.append(Preferences.num_supporting_invariants);
+		sb.append("\nCheck if loop is infeasible: ");
+		sb.append(Preferences.check_if_loop_infeasible);
+		sb.append("\nConsider non-deceasing supporting invariants: ");
+		sb.append(Preferences.nondecreasing_invariants);
 		sb.append("\nVariable domain: ");
 		sb.append(Preferences.use_variable_domain);
 		sb.append("\nCompute integeral hull: ");

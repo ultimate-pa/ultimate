@@ -32,7 +32,7 @@ public class InequalityConverter {
 	 * @throws TermException if the input term cannot be reduced to a
 	 *         LinearInequality
 	 */
-	private static void convertAtom(ApplicationTerm term,
+	private static void convertAtom(Script script, ApplicationTerm term,
 			Collection<LinearInequality> list) throws TermException {
 		ApplicationTerm appt = (ApplicationTerm) term;
 		if (appt.getParameters().length != 2) {
@@ -40,11 +40,9 @@ public class InequalityConverter {
 					"Unsupported number of parameters", appt);
 		}
 		String fname = appt.getFunction().getName();
-		AffineTerm at1 = AffineTerm.fromTerm(appt.getParameters()[0],
-				m_variable_domain);
-		AffineTerm at2 = AffineTerm.fromTerm(appt.getParameters()[1],
-				m_variable_domain);
-		AffineTerm res;
+		LinearInequality li1 = LinearInequality.fromTerm(script, appt.getParameters()[0]);
+		LinearInequality li2 = LinearInequality.fromTerm(script, appt.getParameters()[1]);
+		LinearInequality res;
 		if (fname == "<=") {
 			at2.mult(Rational.MONE);
 			res = at1;
@@ -107,7 +105,7 @@ public class InequalityConverter {
 				Term param0 = appt.getParameters()[0];
 				Sort param0sort = param0.getSort();
 				if (param0sort.isNumericSort()) {
-					convertAtom(appt, terms);
+					convertAtom(script, appt, terms);
 				} else if (param0sort.getName().equals("Bool")) {
 					throw new TermException("Term is not in DNF", term);
 				} else {
@@ -115,7 +113,7 @@ public class InequalityConverter {
 				}
 			} else if (fname == "<" || fname == ">"
 					|| fname == "<=" || fname == ">=") {
-				convertAtom(appt, terms);
+				convertAtom(script, appt, terms);
 			} else {
 				throw new UnknownFunctionException(appt);
 			}

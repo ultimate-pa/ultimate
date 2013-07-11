@@ -210,7 +210,6 @@ public class AuxiliaryMethods {
 			} else if (appt.getFunction().getName() == "=>") {
 				clauses.addAll(toDNF(script, script.term("not", appt.getParameters()[0])));
 				clauses.addAll(toDNF(script, appt.getParameters()[1]));
-				// TODO: test this!
 			} else if (appt.getFunction().getName() == "=" &&
 					appt.getParameters()[0].getSort().getName().equals("Bool")) {
 				Term param1 = appt.getParameters()[0];
@@ -218,7 +217,6 @@ public class AuxiliaryMethods {
 				clauses.addAll(toDNF(script, script.term("and",
 						script.term("=>", param1, param2),
 						script.term("=>", param2, param1))));
-				// TODO: test this!
 			} else {
 				clauses.add(appt);
 			}
@@ -231,16 +229,16 @@ public class AuxiliaryMethods {
 		ApplicationTerm appNotTerm = (ApplicationTerm) term;
 		Term[] params = appNotTerm.getParameters();
 		if (appNotTerm.getFunction().getName() == "<=") {
-			assert (params.length == 2) : "chaining not supported yet";
+			assert (params.length == 2) : "chaining not supported";
 			return script.term(">", params);
 		} else if (appNotTerm.getFunction().getName() == ">=") {
-			assert (params.length == 2) : "chaining not supported yet";
+			assert (params.length == 2) : "chaining not supported";
 			return script.term("<", params);
 		} else if (appNotTerm.getFunction().getName() == "<") {
-			assert (params.length == 2) : "chaining not supported yet";
+			assert (params.length == 2) : "chaining not supported";
 			return script.term(">=", params);
 		} else if (appNotTerm.getFunction().getName() == ">") {
-			assert (params.length == 2) : "chaining not supported yet";
+			assert (params.length == 2) : "chaining not supported";
 			return script.term("<=", params);
 		} else {
 			throw new UnsupportedOperationException("Not yet implemented");

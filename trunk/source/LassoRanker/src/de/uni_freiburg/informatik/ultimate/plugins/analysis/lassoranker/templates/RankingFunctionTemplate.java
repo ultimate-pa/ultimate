@@ -11,7 +11,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.Activator;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.MotzkinTransformation;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.LinearInequality;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.rankingfunctions.RankingFunction;
 
 
@@ -32,7 +32,6 @@ public abstract class RankingFunctionTemplate {
 	
 	/**
 	 * Ranking template constructor
-	 * WARNING: the subclasses MUST contain a constructor of this type!
 	 * @param script The SMTLib script
 	 * @param variables A collection of all variables that are relevant for
 	 *                   ranking
@@ -45,6 +44,7 @@ public abstract class RankingFunctionTemplate {
 	/**
 	 * Show the underlying formula used for this template instance
 	 */
+	@Override
 	public abstract String toString();
 	
 	/**
@@ -65,7 +65,7 @@ public abstract class RankingFunctionTemplate {
 	 *          the loop transition in form of affine terms and the supporting
 	 *          invariants.
 	 */
-	public abstract Collection<Collection<MotzkinTransformation>> generateFarkas(
+	public abstract Collection<Collection<LinearInequality>> constraints(
 			Map<BoogieVar, TermVariable> inVars,
 			Map<BoogieVar, TermVariable> outVars);
 	
@@ -82,10 +82,4 @@ public abstract class RankingFunctionTemplate {
 	 */
 	public abstract RankingFunction extractRankingFunction(Map<Term, Term> val)
 			throws SMTLIBException;
-	
-	/**
-	 * Workaround by Matthias: Returns all deltas of the template. You want to
-	 * assert delta > 0 for each of these.
-	 */
-	public abstract List<Term> getDeltas();
 }

@@ -5,6 +5,7 @@ import java.util.*;
 
 import de.uni_freiburg.informatik.ultimate.logic.*;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Smt2Boogie;
 
 /**
@@ -26,10 +27,18 @@ public interface RankingFunction extends Serializable {
 	public Rational evaluate(Map<BoogieVar, Rational> assignment);
 	
 	/**
-	 * Return the ranking function in form of a SMTLib term.
+	 * Return the ranking function as a SMTLib term.
 	 * @param script the current script
 	 * @return ranking function as boolean term
 	 */
-	public Term asFormula(Script script, Smt2Boogie smt2boogie)
+	public Term asTerm(Script script)
 			throws SMTLIBException;
+	
+	/**
+	 * Return the ranking function as a Boogie AST expression
+	 * @param script the current script
+	 * @param smt2boogie the variable translation
+	 * @return ranking function as boolean term
+	 */
+	public Expression asExpression(Script script, Smt2Boogie smt2boogie);
 }
