@@ -236,14 +236,23 @@ public class LinearInequality {
 	@Override
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
+		boolean first = true;
 		for (Map.Entry<TermVariable, ParameterizedRational> entry
 				: m_coefficients.entrySet()) {
+			if (!first) {
+				sb.append(" + ");
+			}
 			sb.append(entry.getValue());
 			sb.append("*");
 			sb.append(entry.getKey());
-			sb.append(" + ");
+			first = false;
 		}
-		sb.append(m_constant);
+		if (!m_constant.isZero() || m_coefficients.isEmpty()) {
+			if (!m_coefficients.isEmpty()) {
+				sb.append(" + ");
+			}
+			sb.append(m_constant);
+		}
 		sb.append(strict ? " < 0" : " <= 0");
 		return sb.toString();
 	}

@@ -2,6 +2,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker;
 
 import java.util.*;
 
+import de.uni_freiburg.informatik.ultimate.logic.Annotation;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -59,6 +60,8 @@ public class MotzkinTransformation extends InstanceCounting {
 	 * How many supporting invariants this should be augmented with
 	 */
 	private int m_numberSIneeded = 0;
+	
+	public String annotation = null;
 	
 	/**
 	 * Construct the MotzkinApplication object with a script instance.
@@ -206,7 +209,11 @@ public class MotzkinTransformation extends InstanceCounting {
 			}
 		}
 		
-		return Util.and(m_script, conjunction.toArray(new Term[0]));
+		Term t = Util.and(m_script, conjunction.toArray(new Term[0]));
+		if (Preferences.annotate_terms) {
+			t = m_script.annotate(t, new Annotation(":named", annotation));
+		}
+		return t;
 	}
 	
 	@Override

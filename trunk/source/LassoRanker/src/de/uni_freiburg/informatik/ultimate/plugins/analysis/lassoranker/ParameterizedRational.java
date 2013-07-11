@@ -50,6 +50,13 @@ public class ParameterizedRational {
 	}
 	
 	/**
+	 * @return whether this is zero
+	 */
+	public boolean isZero() {
+		return variable == null && coefficient.equals(Rational.ZERO);
+	}
+	
+	/**
 	 * Add another parameter to this.
 	 * Note: the variables have to be the same!
 	 */

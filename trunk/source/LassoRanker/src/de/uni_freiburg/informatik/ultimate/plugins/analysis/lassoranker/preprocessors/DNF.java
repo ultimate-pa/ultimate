@@ -103,9 +103,10 @@ public class DNF implements PreProcessor {
 					appt.getParameters()[0].getSort().getName().equals("Bool")) {
 				Term param1 = appt.getParameters()[0];
 				Term param2 = appt.getParameters()[1];
-				clauses.addAll(toDNF(Util.and(m_script, 
-						m_script.term("=>", param1, param2),
-						m_script.term("=>", param2, param1))));
+				clauses.addAll(toDNF(Util.or(m_script, 
+						Util.and(m_script, param1, param2),
+						Util.and(m_script, Util.not(m_script, param1),
+								Util.not(m_script, param2)))));
 			} else {
 				clauses.add(appt);
 			}

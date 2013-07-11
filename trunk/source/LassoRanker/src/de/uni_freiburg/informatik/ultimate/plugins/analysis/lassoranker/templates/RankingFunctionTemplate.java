@@ -2,16 +2,12 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.templat
 
 import java.util.*;
 
-import org.apache.log4j.Logger;
-
-import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.AuxiliaryMethods;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.LinearInequality;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.rankingfunctions.RankingFunction;
@@ -25,10 +21,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.rankingf
  *
  */
 public abstract class RankingFunctionTemplate {
-	
-	protected static Logger s_Logger =
-			UltimateServices.getInstance().getLogger(Activator.s_PLUGIN_ID);
-	
 	protected Script m_script;
 	protected Collection<BoogieVar> m_variables;
 	
@@ -99,7 +91,6 @@ public abstract class RankingFunctionTemplate {
 	public static Term newDelta(Script script, String name) {
 		Term delta = AuxiliaryMethods.newRealConstant(script, name);
 		Term t = script.term(">", delta, script.decimal("0"));
-		s_Logger.debug(t);
 		script.assertTerm(t);
 		return delta;
 	}

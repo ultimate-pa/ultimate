@@ -83,7 +83,7 @@ public class Synthesizer {
 			dumpFileName += (dumpFileName.endsWith(fileSep) ? "" : fileSep);
 			dumpFileName = dumpFileName + "LassoRanker.smt2";
 			// FIXME: add file name
-			s_Logger.debug("Using smt2 file '" + dumpFileName + "'.");
+			s_Logger.info("Using temporary smt2 file '" + dumpFileName + "'.");
 			try {
 				script = new LoggingScript(script, dumpFileName, true);
 			} catch (FileNotFoundException e) {
@@ -121,6 +121,28 @@ public class Synthesizer {
 		s_Logger.debug("Loop: " + stem_transition);
 		
 		preprocess();
+	}
+	
+	/**
+	 * Convert a term into a list of clauses
+	 * @param term a term in disjunctive normal form
+	 * @return list of clauses
+	 */
+	private static List<Term> toClauses(Term term) {
+		List<Term> l = new ArrayList<Term>();
+		if (!(term instanceof ApplicationTerm)) {
+			l.add(term);
+			return l;
+		}
+		ApplicationTerm appt = (ApplicationTerm) term;
+		if (!appt.getFunction().getName().equals("or")) {
+			l.add(term);
+			return l;
+		}
+		for (Term t : appt.getParameters()) {
+			l.addAll(toClauses(t));
+		}
+		return l;
 	}
 	
 	/**
@@ -164,10 +186,10 @@ public class Synthesizer {
 		stem_term = (new DNF()).process(m_old_script, stem_term);
 		loop_term = (new DNF()).process(m_old_script, loop_term);
 		
-		Collection<Term> stem_clauses = Arrays.asList(
-				((ApplicationTerm) stem_term).getParameters());
-		Collection<Term> loop_clauses = Arrays.asList(
-				((ApplicationTerm) loop_term).getParameters());
+		// Extract clauses
+		Collection<Term> stem_clauses = toClauses(stem_term);
+		Collection<Term> loop_clauses = toClauses(loop_term);
+		
 		if (!Preferences.enable_disjunction &&
 				(stem_clauses.size() > 1 || loop_clauses.size() > 1)) {
 			throw new UnsupportedOperationException(
@@ -274,12 +296,17 @@ public class Synthesizer {
 				template.constraints(m_loop_transition.getInVars(),
 						m_loop_transition.getOutVars());
 		
+		s_Logger.info("We have " + m_loop.size() + " loop conjunctions and "
+				+ templateConstraints.size() + "template disjunctions.");
+		
 		// loop(x, x') /\ si(x) -> template(x, x')
 		// Iterate over the loop conjunctions and template disjunctions
 		for (List<LinearInequality> loopConj : m_loop) {
 			for (Collection<LinearInequality> templateDisj : templateConstraints) {
 				MotzkinTransformation motzkin =
 						new MotzkinTransformation(m_script);
+				motzkin.annotation = templateDisj.toString();
+				
 				// Loop inequalities
 				for (LinearInequality li : loopConj) {
 					motzkin.add_inequality(li);

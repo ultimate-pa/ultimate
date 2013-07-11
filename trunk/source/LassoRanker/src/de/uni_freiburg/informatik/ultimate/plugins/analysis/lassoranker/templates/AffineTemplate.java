@@ -51,18 +51,15 @@ public class AffineTemplate extends RankingFunctionTemplate {
 			Map<BoogieVar, TermVariable> inVars,
 			Map<BoogieVar, TermVariable> outVars) {
 		checkInitialized();
-		Collection<Collection<LinearInequality>> disjunction =
+		Collection<Collection<LinearInequality>> conjunction =
 				new ArrayList<Collection<LinearInequality>>();
-		Collection<LinearInequality> conjunction =
-				new ArrayList<LinearInequality>();
-		disjunction.add(conjunction);
 		
 		// f(x) > 0
 		{
 			LinearInequality li = m_fgen.generate(inVars);
 			li.negate();
 			li.strict = true;
-			conjunction.add(li);
+			conjunction.add(Collections.singletonList(li));
 		}
 		
 		// f(x') < f(x) - delta
@@ -73,11 +70,11 @@ public class AffineTemplate extends RankingFunctionTemplate {
 			li.add(li2);
 			li.add(new ParameterizedRational(m_delta));
 			li.strict = true;
-			conjunction.add(li);
+			conjunction.add(Collections.singletonList(li));
 		}
 		
 		// delta > 0 is assured by RankingFunctionTemplate.newDelta
-		return disjunction;
+		return conjunction;
 	}
 
 	@Override

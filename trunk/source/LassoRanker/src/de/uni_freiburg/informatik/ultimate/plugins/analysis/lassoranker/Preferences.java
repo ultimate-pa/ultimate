@@ -19,7 +19,7 @@ public class Preferences {
 	 * invariants.
 	 * Note that increasing this number will dramatically increase runtime!
 	 */
-	public static int num_supporting_invariants = 1; // Default: 1
+	public static int num_supporting_invariants = 0; // Default: 1
 	
 	/**
 	 * Only consider non-decreasing invariants.
