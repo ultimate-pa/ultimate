@@ -141,7 +141,7 @@ public class MotzkinTransformation extends InstanceCounting {
 				LinearInequality li = m_inequalities.get(i);
 				Term coefficient = coefficients.get(i);
 				summands[i] = m_script.term("*", coefficient,
-						li.getCoefficient(var));
+						li.getCoefficient(var).asTerm(m_script));
 			}
 			Term sum = Util.sum(m_script, summands);
 			conjunction.add(m_script.term("=", sum, m_script.decimal("0")));
@@ -153,7 +153,8 @@ public class MotzkinTransformation extends InstanceCounting {
 			for (int i = 0; i < num_coefficients; ++i) {
 				LinearInequality li = m_inequalities.get(i);
 				Term coefficient = coefficients.get(i);
-				summands[i] = m_script.term("*", coefficient, li.getConstant());
+				summands[i] = m_script.term("*", coefficient,
+						li.getConstant().asTerm(m_script));
 			}
 			Term sum = Util.sum(m_script, summands);
 			conjunction.add(m_script.term("<=", sum, m_script.decimal("0")));
@@ -168,7 +169,7 @@ public class MotzkinTransformation extends InstanceCounting {
 				if (!li.strict) {
 					// only non-strict inequalities
 					summands.add(m_script.term("*", coefficient,
-							li.getConstant()));
+							li.getConstant().asTerm(m_script)));
 				}
 			}
 			Term sum = Util.sum(m_script, summands.toArray(new Term[0]));

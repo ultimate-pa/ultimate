@@ -1,8 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.preprocessors;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
@@ -28,56 +26,46 @@ public class InequalityConverter {
 	 * Convert an atomary term that is an (in-)equality into an instance of
 	 * LinearInequality
 	 * @param term atomary term
-	 * @param list LinearInequality list that holds the return values
+	 * @returns the linear inequality
 	 * @throws TermException if the input term cannot be reduced to a
 	 *         LinearInequality
 	 */
-	private static void convertAtom(Script script, ApplicationTerm term,
-			Collection<LinearInequality> list) throws TermException {
-		ApplicationTerm appt = (ApplicationTerm) term;
-		if (appt.getParameters().length != 2) {
+	private static LinearInequality convertAtom(Script script,
+			ApplicationTerm term) throws TermException {
+		if (term.getParameters().length != 2) {
 			throw new TermIsNotAffineException(
-					"Unsupported number of parameters", appt);
+					"Unsupported number of parameters", term);
 		}
-		String fname = appt.getFunction().getName();
-		LinearInequality li1 = LinearInequality.fromTerm(script, appt.getParameters()[0]);
-		LinearInequality li2 = LinearInequality.fromTerm(script, appt.getParameters()[1]);
+		String fname = term.getFunction().getName();
+		LinearInequality li1 = LinearInequality.fromTerm(script,
+				term.getParameters()[0]);
+		LinearInequality li2 = LinearInequality.fromTerm(script,
+				term.getParameters()[1]);
 		LinearInequality res;
 		if (fname == "<=") {
-			at2.mult(Rational.MONE);
-			res = at1;
-			res.add(at2);
+			li2.mult(Rational.MONE);
+			res = li1;
+			res.add(li2);
+			res.strict = false;
 		} else if (fname == ">=") {
-			at1.mult(Rational.MONE);
-			res = at1;
-			res.add(at2);
-		} else if (fname == "=") {
-			at2.mult(Rational.MONE);
-			at1.add(at2);
-			res = new AffineTerm();
-			res.add(at1);
-			res.mult(Rational.MONE);
-			list.add(res);
-			res = at1;
+			li1.mult(Rational.MONE);
+			res = li1;
+			res.add(li2);
+			res.strict = false;
 		} else if (fname == "<") {
-			at2.mult(Rational.MONE);
-			res = at1;
-			res.add(at2);
-//			if (this.m_variable_domain == VariableDomain.INTEGERS) {
-				res.add(Rational.ONE);
-//			}
+			li2.mult(Rational.MONE);
+			res = li1;
+			res.add(li2);
+			res.strict = true;
 		} else if (fname == ">") {
-			res = at1;
+			res = li1;
 			res.mult(Rational.MONE);
-			res.add(at2);
-//			if (this.m_variable_domain == VariableDomain.INTEGERS) {
-				res.add(Rational.ONE);
-//			}
+			res.add(li2);
+			res.strict = true;
 		} else {
-			throw new TermIsNotAffineException("Expected an (in-)equality.",
-					appt);
+			throw new TermIsNotAffineException("Expected an inequality.", term);
 		}
-		list.add(res);
+		return res;
 	}
 	
 	/**
@@ -99,13 +87,13 @@ public class InequalityConverter {
 				}
 			} else if (fname == "true") {
 				// Add trivial linear inequality 0 ≤ 0.
-				LinearInequality li = new LinearInequality(script);
+				LinearInequality li = new LinearInequality();
 				terms.add(li);
 			} else if (fname == "=")  {
 				Term param0 = appt.getParameters()[0];
 				Sort param0sort = param0.getSort();
 				if (param0sort.isNumericSort()) {
-					convertAtom(script, appt, terms);
+					terms.add(convertAtom(script, appt));
 				} else if (param0sort.getName().equals("Bool")) {
 					throw new TermException("Term is not in DNF", term);
 				} else {
@@ -113,7 +101,7 @@ public class InequalityConverter {
 				}
 			} else if (fname == "<" || fname == ">"
 					|| fname == "<=" || fname == ">=") {
-				convertAtom(script, appt, terms);
+				terms.add(convertAtom(script, appt));
 			} else {
 				throw new UnknownFunctionException(appt);
 			}

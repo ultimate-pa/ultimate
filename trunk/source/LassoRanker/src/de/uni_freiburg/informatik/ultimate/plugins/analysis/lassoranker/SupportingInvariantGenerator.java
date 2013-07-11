@@ -63,10 +63,9 @@ public class SupportingInvariantGenerator extends InstanceCounting {
 	 * @return Linear inequality corresponding to si(x)
 	 */
 	public LinearInequality generate(Map<BoogieVar, TermVariable> vars) {
-		LinearInequality li = new LinearInequality(m_script);
+		LinearInequality li = new LinearInequality();
 		for (Entry<BoogieVar, TermVariable> entry : vars.entrySet()) {
-			li.add(entry.getValue(), m_script.term("-",
-					m_coefficients.get(entry.getKey())));
+			li.add(entry.getValue(), new LinearInequality.Parameter(m_coefficients.get(entry.getKey())));
 		}
 		li.m_needs_motzkin_coefficient = false;
 		li.strict = this.strict;
@@ -88,15 +87,14 @@ public class SupportingInvariantGenerator extends InstanceCounting {
 	 * @return supporting invariant
 	 * @throws SMTLIBException
 	 */
-	public SupportingInvariant extractSupportingInvariant(Map<Term, Term> val)
+	public SupportingInvariant extractSupportingInvariant(Map<Term, Rational> val)
 			throws SMTLIBException {
 		// Extract coefficients from the model and convert them to Rational
-		Rational coeff0 = AuxiliaryMethods.const2Rational(val.get(m_constant));
+		Rational coeff0 = val.get(m_constant);
 		Rational gcd = Rational.ONE.gcd(coeff0);
 		Map<BoogieVar, Rational> coeff_val = new HashMap<BoogieVar, Rational>();
 		for (Map.Entry<BoogieVar, Term> entry : m_coefficients.entrySet()) {
-			Rational coeff = AuxiliaryMethods.const2Rational(
-					val.get(entry.getValue()));
+			Rational coeff = val.get(entry.getValue());
 			coeff_val.put(entry.getKey(), coeff);
 			gcd = coeff.gcd(gcd);
 		}

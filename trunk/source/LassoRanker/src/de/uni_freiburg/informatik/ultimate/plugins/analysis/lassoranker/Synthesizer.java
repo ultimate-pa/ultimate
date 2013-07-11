@@ -1,6 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker;
 
 import java.util.*;
+import java.util.Map.Entry;
 import java.io.FileNotFoundException;
 
 import org.apache.log4j.Logger;
@@ -12,8 +13,10 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.Preferences.UseDivision;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.Preferences.VariableDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.exceptions.TermException;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.preprocessors.DNF;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.preprocessors.InequalityConverter;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.preprocessors.ReplaceNeq;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.preprocessors.IntegralHull;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.preprocessors.RewriteEquality;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.rankingfunctions.RankingFunction;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.templates.RankingFunctionTemplate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.TransFormula;
@@ -153,15 +156,18 @@ public class Synthesizer {
 		}
 		*/
 		
-		// Replace ≠
-		stem_term = (new ReplaceNeq()).transform(stem_term);
-		loop_term = (new ReplaceNeq()).transform(loop_term);
+		// Rewrite '='
+		stem_term = (new RewriteEquality()).process(m_old_script, stem_term);
+		loop_term = (new RewriteEquality()).process(m_old_script, loop_term);
 		
 		// Convert to DNF
-		Collection<Term> stem_clauses =
-				AuxiliaryMethods.toDNF(m_old_script, stem_term);
-		Collection<Term> loop_clauses =
-				AuxiliaryMethods.toDNF(m_old_script, loop_term);
+		stem_term = (new DNF()).process(m_old_script, stem_term);
+		loop_term = (new DNF()).process(m_old_script, loop_term);
+		
+		Collection<Term> stem_clauses = Arrays.asList(
+				((ApplicationTerm) stem_term).getParameters());
+		Collection<Term> loop_clauses = Arrays.asList(
+				((ApplicationTerm) loop_term).getParameters());
 		if (!Preferences.enable_disjunction &&
 				(stem_clauses.size() > 1 || loop_clauses.size() > 1)) {
 			throw new UnsupportedOperationException(
@@ -172,23 +178,23 @@ public class Synthesizer {
 		// Transform the stem and loop transition into linear inequalities
 		m_stem = new ArrayList<List<LinearInequality>>();
 		for (Term clause : stem_clauses) {
-			List<LinearInequality> li = InequalityConverter.convert(m_old_script, clause);
+			List<LinearInequality> lli = InequalityConverter.convert(m_old_script, clause);
 			if ((Preferences.use_variable_domain == VariableDomain.INTEGERS
 					|| Preferences.use_variable_domain == VariableDomain.AUTO_DETECT)
 					&& Preferences.compute_integral_hull) {
-//				li = this.integralHull(li);
+				lli.addAll(IntegralHull.compute(lli));
 			}
-			m_stem.add(li);
+			m_stem.add(lli);
 		}
 		m_loop = new ArrayList<List<LinearInequality>>();
 		for (Term clause : loop_clauses) {
-			List<LinearInequality> li = InequalityConverter.convert(m_old_script, clause);
+			List<LinearInequality> lli = InequalityConverter.convert(m_old_script, clause);
 			if ((Preferences.use_variable_domain == VariableDomain.INTEGERS
 					|| Preferences.use_variable_domain == VariableDomain.AUTO_DETECT)
 					&& Preferences.compute_integral_hull) {
-//				li = this.integralHull(li);
+				lli.addAll(IntegralHull.compute(lli));
 			}
-			m_loop.add(li);
+			m_loop.add(lli);
 		}
 		s_Logger.debug("Stem transition:\n" + m_stem);
 		s_Logger.debug("Loop transition:\n" + m_loop);
@@ -334,6 +340,16 @@ public class Synthesizer {
 		return conj;
 	}
 	
+	private Map<Term, Rational> preprocessValuation(Map<Term, Term> val)
+			throws TermException {
+		Map<Term, Rational> new_val = new HashMap<Term, Rational>();
+		for (Entry<Term, Term> entry : val.entrySet()) {
+			new_val.put(entry.getKey(),
+					AuxiliaryMethods.const2Rational(entry.getValue()));
+		}
+		return new_val;
+	}
+	
 	/**
 	 * Ranking function generation for lasso programs
 	 * 
@@ -417,14 +433,14 @@ public class Synthesizer {
 					"proceeding to extract ranking function.");
 			
 			// Extract ranking function
-			 Map<Term, Term> val_rf = m_script.getValue(
-					template.getVariables().toArray(new Term[0]));
+			Map<Term, Rational> val_rf = preprocessValuation(m_script.getValue(
+					template.getVariables().toArray(new Term[0])));
 			m_ranking_function = template.extractRankingFunction(val_rf);
 			
 			// Extract supporting invariants
 			for (SupportingInvariantGenerator sig : si_generators) {
-				Map<Term, Term> val_si = m_script.getValue(
-						sig.getVariables().toArray(new Term[0]));
+				Map<Term, Rational> val_si = preprocessValuation(m_script.getValue(
+						sig.getVariables().toArray(new Term[0])));
 				m_supporting_invariants.add(sig.extractSupportingInvariant(
 						val_si));
 			}

@@ -97,8 +97,9 @@ public class AuxiliaryMethods {
 	 * Convert a constant term retrieved from a model valuation to a Rational
 	 * @param t a term containing only +, -, *, / and numerals
 	 * @return the rational represented by the term
+	 * @throws TermException if an error occurred while parsing the term
 	 */
-	public static Rational const2Rational(Term t) {
+	public static Rational const2Rational(Term t) throws TermException {
 		if (t instanceof ApplicationTerm) {
 			ApplicationTerm appt = (ApplicationTerm) t;
 			if (appt.getFunction().getName() == "+") {
@@ -142,106 +143,9 @@ public class AuxiliaryMethods {
 			} else if (o instanceof Rational) {
 				return (Rational) o;
 			} else {
-				assert(false); // Unknown value class
+				throw new TermException("Unknown value class", t);
 			}
 		}
-		assert(false); // Unknown term structure
-		return null;
-	}
-	
-	/**
-	 * Convert a predicate logical formula into disjunctive normal form
-	 * @param formula a predicate logic formula
-	 * @return collection of clauses equivalent to the input formula
-	 */
-	public static Collection<Term> toDNF(Script script, Term formula) {
-		Collection<Term> clauses = new HashSet<Term>();
-		if (!(formula instanceof ApplicationTerm)) {
-			clauses.add(formula);
-		} else {
-			ApplicationTerm appt = (ApplicationTerm) formula;
-			if (appt.getFunction().getName() == "and") {
-				List<Iterator<Term>> it_list = new ArrayList<Iterator<Term>>();
-				List<Collection<Term>> dnfs = new ArrayList<Collection<Term>>();
-				List<Term> current = new ArrayList<Term>();
-				// Convert every parameter to DNF
-				for (Term param : appt.getParameters()) {
-					Collection<Term> dnf = toDNF(script, param);
-					if (dnf.isEmpty()) {
-						return clauses;
-					}
-					dnfs.add(dnf);
-					Iterator<Term> it = dnf.iterator();
-					current.add(it.next());
-					it_list.add(it);
-				}
-				while (true) {
-					clauses.add(script.term("and",
-							current.toArray(new Term[0])));
-					
-					// Advance the iterators
-					int i = 0;
-					while (i < it_list.size() && !it_list.get(i).hasNext()) {
-						// Reset the iterator
-						Iterator<Term> it = dnfs.get(i).iterator();
-						current.set(i, it.next());
-						it_list.set(i, it);
-						++i;
-					}
-					if (i >= it_list.size()) {
-						break; // All permutations have been considered
-					}
-					Term t = it_list.get(i).next();
-					current.set(i, t);
-				}
-			} else if (appt.getFunction().getName() == "or") {
-				for (Term param : appt.getParameters()) {
-					clauses.addAll(toDNF(script, param));
-				}
-			} else if (appt.getFunction().getName() == "not") {
-				assert (appt.getParameters().length == 1);
-				Term notTerm = appt.getParameters()[0];
-				if ((notTerm instanceof TermVariable)) {
-					clauses.add(notTerm);
-				} else {
-					clauses.add(negateAtom(script, notTerm));
-					// TODO: case where notTerm is not an atom
-				}
-			} else if (appt.getFunction().getName() == "=>") {
-				clauses.addAll(toDNF(script, script.term("not", appt.getParameters()[0])));
-				clauses.addAll(toDNF(script, appt.getParameters()[1]));
-			} else if (appt.getFunction().getName() == "=" &&
-					appt.getParameters()[0].getSort().getName().equals("Bool")) {
-				Term param1 = appt.getParameters()[0];
-				Term param2 = appt.getParameters()[1];
-				clauses.addAll(toDNF(script, script.term("and",
-						script.term("=>", param1, param2),
-						script.term("=>", param2, param1))));
-			} else {
-				clauses.add(appt);
-			}
-		}
-		return clauses;
-	}
-	
-	private static Term negateAtom(Script script, Term term) {
-		assert (term instanceof ApplicationTerm);
-		ApplicationTerm appNotTerm = (ApplicationTerm) term;
-		Term[] params = appNotTerm.getParameters();
-		if (appNotTerm.getFunction().getName() == "<=") {
-			assert (params.length == 2) : "chaining not supported";
-			return script.term(">", params);
-		} else if (appNotTerm.getFunction().getName() == ">=") {
-			assert (params.length == 2) : "chaining not supported";
-			return script.term("<", params);
-		} else if (appNotTerm.getFunction().getName() == "<") {
-			assert (params.length == 2) : "chaining not supported";
-			return script.term(">=", params);
-		} else if (appNotTerm.getFunction().getName() == ">") {
-			assert (params.length == 2) : "chaining not supported";
-			return script.term("<=", params);
-		} else {
-			throw new UnsupportedOperationException("Not yet implemented");
-		}
+		throw new TermException("Unkown term structure", t);
 	}
 }

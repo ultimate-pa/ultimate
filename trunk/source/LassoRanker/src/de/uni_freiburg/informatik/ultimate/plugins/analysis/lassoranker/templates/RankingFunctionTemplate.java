@@ -5,12 +5,14 @@ import java.util.*;
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
+import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.Activator;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.AuxiliaryMethods;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.LinearInequality;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.rankingfunctions.RankingFunction;
 
@@ -80,6 +82,20 @@ public abstract class RankingFunctionTemplate {
 	 * @return ranking function
 	 * @throws SMTLIBException
 	 */
-	public abstract RankingFunction extractRankingFunction(Map<Term, Term> val)
-			throws SMTLIBException;
+	public abstract RankingFunction extractRankingFunction(Map<Term,
+			Rational> val) throws SMTLIBException;
+	
+	/**
+	 * Create a new positive variable (as a nullary function symbol)
+	 * @param script current SMT script
+	 * @param name the new variable's name
+	 * @return the new variable as a term
+	 */
+	public static Term newDelta(Script script, String name) {
+		Term delta = AuxiliaryMethods.newRealConstant(script, name);
+		Term t = script.term(">", delta, script.decimal("0"));
+		s_Logger.debug(t);
+		script.assertTerm(t);
+		return delta;
+	}
 }

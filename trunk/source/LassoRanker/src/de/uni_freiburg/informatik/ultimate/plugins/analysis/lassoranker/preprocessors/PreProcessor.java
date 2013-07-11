@@ -2,6 +2,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.preproc
 
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.exceptions.TermException;
 
 
 /**
@@ -11,12 +12,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
  * @author Jan Leike
  */
 public interface PreProcessor {
-	
-	/**
-	 * @return the name of this preprocessor
-	 */
-	public String getName();
-	
 	/**
 	 * @return a description of the preprocessing
 	 */
@@ -27,6 +22,7 @@ public interface PreProcessor {
 	 * @param script the SMT script to use 
 	 * @param term   the formula to be processed
 	 * @return the processed formula
+	 * @throws TermException if an error occurred while traversing the term
 	 */
-	public Term process(Script script, Term term);
+	public Term process(Script script, Term term) throws TermException;
 }

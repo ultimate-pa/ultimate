@@ -13,26 +13,22 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Smt2Boogie;
  * 
  * @author Jan Leike
  */
-public interface RankingFunction extends Serializable {
-	/**
-	 * Return a string representation of the ranking function. 
-	 */
-	public String toString();
+public abstract class RankingFunction implements Serializable {
+	private static final long serialVersionUID = 4774387985755366720L;
 	
 	/**
 	 * Evaluate the ranking function
 	 * @param assignment the variable assignment
 	 * @return value of the function
 	 */
-	public Rational evaluate(Map<BoogieVar, Rational> assignment);
+	public abstract Rational evaluate(Map<BoogieVar, Rational> assignment);
 	
 	/**
 	 * Return the ranking function as a SMTLib term.
 	 * @param script the current script
 	 * @return ranking function as boolean term
 	 */
-	public Term asTerm(Script script)
-			throws SMTLIBException;
+	public abstract Term asTerm(Script script) throws SMTLIBException;
 	
 	/**
 	 * Return the ranking function as a Boogie AST expression
@@ -40,5 +36,8 @@ public interface RankingFunction extends Serializable {
 	 * @param smt2boogie the variable translation
 	 * @return ranking function as boolean term
 	 */
-	public Expression asExpression(Script script, Smt2Boogie smt2boogie);
+	public Expression asExpression(Script script, Smt2Boogie smt2boogie) {
+		Term term = asTerm(script);
+		return smt2boogie.translate(term);
+	}
 }

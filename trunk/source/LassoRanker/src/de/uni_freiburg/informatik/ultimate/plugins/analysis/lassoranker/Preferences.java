@@ -47,7 +47,7 @@ public class Preferences {
 	 * Should the polyhedra for stem and loop be made integral for integer
 	 * programs?
 	 */
-	public static boolean compute_integral_hull = false; // Default: true
+	public static boolean compute_integral_hull = false; // not yet implemented
 	
 	/**
 	 * Are disjunctions allowed in the stem and loop transition?
