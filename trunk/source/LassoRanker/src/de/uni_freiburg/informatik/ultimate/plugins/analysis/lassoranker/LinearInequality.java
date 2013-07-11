@@ -26,67 +26,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.exceptio
 public class LinearInequality {
 	
 	/**
-	 * A parameter in the linear inequality consists of a rational coefficient
-	 * and possibly a free variable
-	 * 
-	 * @author Jan Leike
-	 */
-	public class Parameter {
-		public Rational coefficient;
-		public Term variable;
-		
-		/**
-		 * Construct the parameter 0
-		 */
-		public Parameter() {
-			variable = null;
-			coefficient = Rational.ZERO;
-		}
-		
-		/**
-		 * Construct a parameter from a constant
-		 */
-		public Parameter(Rational r) {
-			variable = null;
-			coefficient = r;
-		}
-		
-		/**
-		 * Construct a parameter from a variable
-		 */
-		public Parameter(Term var) {
-			assert(var instanceof ApplicationTerm);
-			assert(((ApplicationTerm) var).getParameters().length == 0);
-			variable = var;
-			coefficient = Rational.ONE;
-		}
-		
-		/**
-		 * @return whether this is just a rational constant
-		 */
-		public boolean isConstant() {
-			return variable == null;
-		}
-		
-		/**
-		 * Add another parameter to this.
-		 * Note: the variables have to be the same!
-		 */
-		public void add(Parameter p) {
-			assert(p.variable == variable);
-			coefficient.add(p.coefficient);
-		}
-		
-		/**
-		 * @param script current SMT script
-		 * @return the parameter as a term
-		 */
-		public Term asTerm(Script script) {
-			return AuxiliaryMethods.rationalToDecimal(script, coefficient);
-		}
-	}
-	
-	/**
 	 * Whether the inequality is strict ("<") versus non-strict ("<=")
 	 */
 	public boolean strict = false;
@@ -99,19 +38,19 @@ public class LinearInequality {
 	/**
 	 * List of variables including rational coefficients
 	 */
-	private Map<TermVariable, Parameter> m_coefficients;
+	private Map<TermVariable, ParameterizedRational> m_coefficients;
 	
 	/**
 	 * Affine constant
 	 */
-	private Parameter m_constant;
+	private ParameterizedRational m_constant;
 	
 	/**
 	 * Construct an empty linear inequality, i.e. 0 ≤ 0.
 	 */
 	public LinearInequality() {
-		m_coefficients = new HashMap<TermVariable, Parameter>();
-		m_constant = new Parameter();
+		m_coefficients = new HashMap<TermVariable, ParameterizedRational>();
+		m_constant = new ParameterizedRational();
 	}
 	
 	/**
@@ -125,7 +64,7 @@ public class LinearInequality {
 		LinearInequality li;
 		if (term instanceof ConstantTerm) {
 			li = new LinearInequality();
-			li.add(new Parameter(AuxiliaryMethods.convertCT((ConstantTerm)
+			li.add(new ParameterizedRational(AuxiliaryMethods.convertCT((ConstantTerm)
 					term)));
 		} else if (term instanceof TermVariable) {
 			li = new LinearInequality();
@@ -150,14 +89,14 @@ public class LinearInequality {
 				}
 			} else if (appt.getFunction().getName() == "*") {
 				li = new LinearInequality();
-				li.m_constant = new Parameter(Rational.ONE);
+				li.m_constant = new ParameterizedRational(Rational.ONE);
 				for (Term u : appt.getParameters()) {
 					LinearInequality liu = fromTerm(script, u);
 					if (li.isConstant()) {
-						liu.mult(li.m_constant);
+						liu.mult(li.m_constant.coefficient);
 						li = liu;
 					} else if (liu.isConstant()) {
-						li.mult(liu.m_constant);
+						li.mult(liu.m_constant.coefficient);
 					} else {
 						throw new TermIsNotAffineException(
 								"Product with more than one non-constant " +
@@ -200,7 +139,7 @@ public class LinearInequality {
 	/**
 	 * @return the constant component
 	 */
-	public Parameter getConstant() {
+	public ParameterizedRational getConstant() {
 		return m_constant;
 	}
 	
@@ -209,10 +148,10 @@ public class LinearInequality {
 	 * @param var a variable
 	 * @return zero if the variable does not occur
 	 */
-	public Parameter getCoefficient(TermVariable var) {
-		Parameter p = m_coefficients.get(var);
+	public ParameterizedRational getCoefficient(TermVariable var) {
+		ParameterizedRational p = m_coefficients.get(var);
 		if (p == null) {
-			return new Parameter(Rational.ZERO);
+			return new ParameterizedRational(Rational.ZERO);
 		}
 		return p;
 	}
@@ -230,7 +169,7 @@ public class LinearInequality {
 	 */
 	public void add(LinearInequality li) {
 		this.add(li.m_constant);
-		for (Map.Entry<TermVariable, Parameter> entry
+		for (Map.Entry<TermVariable, ParameterizedRational> entry
 				: li.m_coefficients.entrySet()) {
 			add(entry.getKey(), entry.getValue());
 		}
@@ -243,9 +182,9 @@ public class LinearInequality {
 	 */
 	public void add(TermVariable var, Rational r) {
 		if (m_coefficients.containsKey(var)) {
-			m_coefficients.get(var).add(new Parameter(r));
+			m_coefficients.get(var).add(new ParameterizedRational(r));
 		} else {
-			m_coefficients.put(var, new Parameter(r));
+			m_coefficients.put(var, new ParameterizedRational(r));
 		}
 	}
 	
@@ -254,7 +193,7 @@ public class LinearInequality {
 	 * @param var variable
 	 * @param t   the variable's coefficient to be added
 	 */
-	public void add(TermVariable var, Parameter p) {
+	public void add(TermVariable var, ParameterizedRational p) {
 		if (m_coefficients.containsKey(var)) {
 			m_coefficients.get(var).add(p);
 		} else {
@@ -266,7 +205,7 @@ public class LinearInequality {
 	 * Add a constant to the linear inquality
 	 * @param t a constant
 	 */
-	public void add(Parameter p) {
+	public void add(ParameterizedRational p) {
 		m_constant.add(p);
 	}
 	
@@ -276,7 +215,7 @@ public class LinearInequality {
 	 */
 	public void mult(Rational r) {
 		m_constant.coefficient = m_constant.coefficient.mul(r);
-		for (Map.Entry<TermVariable, Parameter> entry
+		for (Map.Entry<TermVariable, ParameterizedRational> entry
 				: m_coefficients.entrySet()) {
 			entry.getValue().coefficient = entry.getValue().coefficient.mul(r);
 		}
@@ -297,7 +236,7 @@ public class LinearInequality {
 	@Override
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
-		for (Map.Entry<TermVariable, Parameter> entry
+		for (Map.Entry<TermVariable, ParameterizedRational> entry
 				: m_coefficients.entrySet()) {
 			sb.append(entry.getValue());
 			sb.append("*");

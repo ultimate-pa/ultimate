@@ -32,33 +32,38 @@ public abstract class RankingFunctionTemplate {
 	protected Script m_script;
 	protected Collection<BoogieVar> m_variables;
 	
-	/**
-	 * Ranking template constructor
-	 * @param script The SMTLib script
-	 * @param variables A collection of all variables that are relevant for
-	 *                   ranking
-	 */
-	RankingFunctionTemplate(Script script, Set<BoogieVar> variables) {
-		m_script = script;
-		m_variables = variables;
+	private boolean m_initialized = false;
+	
+	RankingFunctionTemplate() {
+		m_script = null;
+		m_variables = null;
 	}
 	
 	/**
-	 * Show the underlying formula used for this template instance
+	 * Initialize the template; call this before constaints()
+	 * @param script The SMTLib script
+	 * @param vars A collection of all variables that are relevant for
+	 *                   ranking
 	 */
-	@Override
-	public abstract String toString();
+	public void init(Script script, Collection<BoogieVar> vars) {
+		m_script = script;
+		m_variables = vars;
+		m_initialized = true;
+	}
 	
 	/**
-	 * Return a text corresponding to the template generated in this instance
-	 * @param inVars  Input variables for the loop transition
-	 * @param outVars Output variables for the loop transition
+	 * Check if the template was properly initialized using init()
 	 */
-	public abstract String getDetails(Map<BoogieVar, TermVariable> inVars,
-			Map<BoogieVar, TermVariable> outVars);
+	protected void checkInitialized() {
+		assert(m_initialized);
+		assert(m_script != null);
+		assert(m_variables != null);
+	}
 	
 	/**
 	 * Generate the Farkas' Lemma applications for this template
+	 * 
+	 * Must be initialized before calling this!
 	 * 
 	 * @param inVars  Input variables for the loop transition
 	 * @param outVars Output variables for the loop transition

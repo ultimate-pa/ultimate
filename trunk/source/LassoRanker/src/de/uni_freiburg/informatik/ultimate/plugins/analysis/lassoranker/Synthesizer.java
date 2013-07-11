@@ -269,8 +269,6 @@ public class Synthesizer {
 		List<Term> conj = new ArrayList<Term>(); // List of constraints
 		
 		Collection<BoogieVar> siVars = getSIVars();
-		Collection<TermVariable> loopVars = getLoopVars();
-		Collection<BoogieVar> rankVars = getRankVars();
 		
 		Collection<Collection<LinearInequality>> templateConstraints =
 				template.constraints(m_loop_transition.getInVars(),
@@ -380,6 +378,8 @@ public class Synthesizer {
 			throws SMTLIBException, TermException {
 		checkPreferences();
 		
+		template.init(m_script, getRankVars());
+		
 		// Check if the loop transition is trivial
 		if (m_loop_transition.getFormula() instanceof ApplicationTerm) {
 			ApplicationTerm loopf = (ApplicationTerm)
@@ -398,9 +398,6 @@ public class Synthesizer {
 		s_Logger.info("Using template '" + template.getClass().getSimpleName()
 				+ "'.");
 		s_Logger.debug("Template formula:\n" + template);
-		s_Logger.debug("Generated instance:\n"
-				+ template.getDetails(m_loop_transition.getInVars(),
-						m_loop_transition.getOutVars()));
 		
 		// List of all used supporting invariant generators
 		Collection<SupportingInvariantGenerator> si_generators =

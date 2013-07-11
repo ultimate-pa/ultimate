@@ -4,7 +4,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker;
 /**
  * A superclass for all classes that need to keep track of their instance number
  * 
- * Various routines of the RankingFunction package generate SMTLib variables.
+ * Various routines of the LassoRanker package generate SMTLib variables.
  * In order to make sure that the same variables are generated only once, each
  * generated variable will be annotated with the respective instance number.
  * 

@@ -167,27 +167,4 @@ public class AffineFunction implements Serializable {
 		r.add(Rational.valueOf(m_constant, BigInteger.ONE));
 		return r;
 	}
-	
-	/**
-	 * Create new variables of an affine function (as nullary function symbols)
-	 * @param script current SMT script
-	 * @param name new variables' name prefix
-	 * @param variables set of variables that need coefficients
-	 * @param coefficients output map for the generated variables as terms
-	 *        (needs to be initialized)
-	 * @return the term of the variable corresponding to the function's affine
-	 *         constant
-	 */
-	public static Term newAffineFunction(Script script, String name, Collection<BoogieVar> variables, Map<BoogieVar, Term> coefficients) {
-		Term constant = AuxiliaryMethods.newRealConstant(script, name + "0");
-		for (BoogieVar var : variables) {
-			coefficients.put(var, AuxiliaryMethods.newRealConstant(script,
-					name + "_" + var.getGloballyUniqueId()));
-		}
-		return constant;
-	}
-	
-	public static AffineFunction extractAffineFunction(Map<Term, Rational> val) {
-		// TODO
-	}
 }
