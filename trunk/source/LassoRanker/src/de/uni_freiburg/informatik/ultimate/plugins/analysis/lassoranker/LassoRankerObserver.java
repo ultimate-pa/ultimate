@@ -313,7 +313,7 @@ public class LassoRankerObserver implements IUnmanagedObserver {
 
 	@Override
 	public void init() {
-		// nothing to do
+		s_Logger.info("Preferences:\n" + Preferences.show());
 	}
 
 	@Override

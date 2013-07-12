@@ -115,7 +115,7 @@ public class Preferences implements Serializable {
 		StringBuilder sb = new StringBuilder();
 		sb.append("Number of strict supporting invariants: ");
 		sb.append(Preferences.num_strict_invariants);
-		sb.append("Number of non-strict supporting invariants: ");
+		sb.append("\nNumber of non-strict supporting invariants: ");
 		sb.append(Preferences.num_non_strict_invariants);
 		sb.append("\nConsider non-deceasing supporting invariants: ");
 		sb.append(Preferences.nondecreasing_invariants);
