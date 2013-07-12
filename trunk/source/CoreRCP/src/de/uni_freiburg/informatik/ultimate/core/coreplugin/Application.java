@@ -340,7 +340,7 @@ public class Application implements IApplication, ICore {
 		}
 		loadGuiLoggingWindow(Platform.getExtensionRegistry());
 		Object returnCode = m_Controller.init(this);
-		s_Logger.info("Preparing to exit Ultimate with returcode "+returnCode);
+		s_Logger.info("Preparing to exit Ultimate with return code "+returnCode);
 	}
 
 	/**

@@ -265,6 +265,7 @@ public class MotzkinTransformation extends InstanceCounting {
 	@Override
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
+		sb.append("MotzkinApplication\n");
 		if (annotation != null) {
 			sb.append("Annotation: ");
 			sb.append(annotation);

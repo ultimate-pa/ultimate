@@ -64,9 +64,20 @@ public abstract class RankingFunctionTemplate {
 	 *          the loop transition in form of affine terms and the supporting
 	 *          invariants.
 	 */
-	public abstract Collection<Collection<LinearInequality>> constraints(
+	public abstract List<List<LinearInequality>> constraints(
 			Map<BoogieVar, TermVariable> inVars,
 			Map<BoogieVar, TermVariable> outVars);
+	
+	/**
+	 * Returns a string for every constraint conjunct for annotating
+	 * MotzkinTransformation instances.
+	 * 
+	 * The returned list should have exactly as many elements as the list
+	 * returned by constraints()
+	 * 
+	 * @return a list of annotations
+	 */
+	public abstract List<String> getAnnotations();
 	
 	/**
 	 * Return all SMT variables used by this template

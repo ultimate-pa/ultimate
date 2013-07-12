@@ -1,9 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.preprocessors;
 
+import java.util.*;
 import java.math.BigInteger;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -11,6 +9,9 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.AuxVarGenerator;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.Preferences;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.Preferences.UseDivision;
 
 
 /**
@@ -27,9 +28,10 @@ import de.uni_freiburg.informatik.ultimate.logic.Util;
  * @author Jan Leike
  */
 public class RewriteDivision extends TermTransformer implements PreProcessor {
+	private static final String s_auxPrefix = "div_aux";
 	
 	private Script m_script;
-	private Collection<TermVariable> m_auxVars;
+	private AuxVarGenerator m_auxVarGenerator;
 	private Collection<Term> m_auxTerms;
 	
 	@Override
@@ -39,7 +41,8 @@ public class RewriteDivision extends TermTransformer implements PreProcessor {
 	@Override
 	public Term process(Script script, Term term) {
 		m_script = script;
-		m_auxVars = new ArrayList<TermVariable>();
+		m_auxVarGenerator = new AuxVarGenerator(script, term);
+		m_auxTerms = new ArrayList<Term>();
 		Term term_new = transform(term);
 		return Util.and(script, term_new,
 				Util.and(script, m_auxTerms.toArray(new Term[0])));
@@ -49,49 +52,61 @@ public class RewriteDivision extends TermTransformer implements PreProcessor {
 	 * @return the auxiliary variables generated during the process
 	 */
 	public Collection<TermVariable> getAuxVars() {
-		return m_auxVars;
+		return m_auxVarGenerator.getAuxVars();
 	}
 	
 	@Override
 	protected void convert(Term term) {
 		assert(m_script != null);
-		if (term instanceof ApplicationTerm) {
-			ApplicationTerm appt = (ApplicationTerm) term;
-			String func = appt.getFunction().getName();
-			if (func == "div") {
-				assert(appt.getParameters().length == 2);
-				Term divident = transform(appt.getParameters()[0]);
-				Term divisor  = transform(appt.getParameters()[1]);
-				String name = s_auxPrefix + m_auxNameIndex;
-				m_auxNameIndex++;
-				Term auxVar = m_script.variable(name, m_script.sort("Int"));
-				m_auxVars.add((TermVariable) auxVar);
-				
-				// x < 0 \/ (y*z ≤ x /\ x < (y + 1)*z)
-				Term conj1 = m_script.term("and",
-					m_script.term("<=", m_script.term("*",
-							divident, divisor), auxVar),
-					m_script.term("<", auxVar, m_script.term("*",
-							divident, m_script.term("+", divisor,
-									m_script.numeral(BigInteger.ONE)))));
-				m_auxTerms.add(m_script.term("or",
-						m_script.term("<", divident,
-								m_script.numeral(BigInteger.ZERO)), conj1));
-				
-				// x ≥ 0 \/ ((y + 1)*z < x /\ x ≤ y*z)
-				Term conj2 = m_script.term("and",
-						m_script.term("<", m_script.term("*",
-								divident, m_script.term("+", divisor,
-								m_script.numeral(BigInteger.ONE))), auxVar),
-						m_script.term("<=", auxVar,  m_script.term("*",
-										divident, divisor)));
-				m_auxTerms.add(m_script.term("or",
-						m_script.term(">=", divident,
-								m_script.numeral(BigInteger.ZERO)), conj2));
-				setResult(auxVar);
-				return;
-			}
+		if (!(term instanceof ApplicationTerm)) {
+			super.convert(term);
+			return;
 		}
-		super.convert(term);
+		ApplicationTerm appt = (ApplicationTerm) term;
+		String func = appt.getFunction().getName();
+		if (func != "div") {
+			super.convert(term);
+			return;
+		}
+		assert(appt.getParameters().length == 2);
+		Term divident = transform(appt.getParameters()[0]);
+		Term divisor  = transform(appt.getParameters()[1]);
+		TermVariable auxVar = m_auxVarGenerator.newAuxVar(s_auxPrefix,
+				m_script.sort("Int"));
+		
+		if (Preferences.use_division == UseDivision.C_STYLE) {
+			// x < 0 \/ (y*z ≤ x /\ x < (y + 1)*z)
+			Term conj1 = m_script.term("and",
+				m_script.term("<=", m_script.term("*", divident, divisor),
+						auxVar),
+				m_script.term("<", auxVar, m_script.term("*", divident,
+						m_script.term("+", divisor,
+								m_script.numeral(BigInteger.ONE))))
+			);
+			m_auxTerms.add(m_script.term("or", m_script.term("<", divident,
+					m_script.numeral(BigInteger.ZERO)), conj1));
+			
+			// x ≥ 0 \/ ((y + 1)*z < x /\ x ≤ y*z)
+			Term conj2 = m_script.term("and",
+					m_script.term("<", m_script.term("*", divident,
+							m_script.term("+", divisor,
+									m_script.numeral(BigInteger.ONE))), auxVar),
+					m_script.term("<=", auxVar,  m_script.term("*", divident,
+							divisor))
+			);
+			m_auxTerms.add(m_script.term("or",
+					m_script.term(">=", divident,
+							m_script.numeral(BigInteger.ZERO)), conj2)
+			);
+		} else if (Preferences.use_division == UseDivision.SAFE) {
+			m_auxTerms.add(m_script.term("=", m_script.term("*", auxVar, divisor),
+					divident));
+		} else if (Preferences.use_division == UseDivision.RATIONALS_ONLY) {
+			assert(!divident.getSort().equals(m_script.sort("Int")));
+		} else {
+			assert(false);
+		}
+		setResult(auxVar);
+		return;
 	}
 }

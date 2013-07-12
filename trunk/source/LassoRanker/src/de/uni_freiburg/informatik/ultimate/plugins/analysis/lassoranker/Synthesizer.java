@@ -10,13 +10,13 @@ import de.uni_freiburg.informatik.ultimate.logic.*;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.Preferences.UseDivision;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.Preferences.VariableDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.exceptions.TermException;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.preprocessors.DNF;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.preprocessors.InequalityConverter;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.preprocessors.IntegralHull;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.preprocessors.PreProcessor;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.preprocessors.RewriteBooleans;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.preprocessors.RewriteDivision;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.preprocessors.RewriteEquality;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.rankingfunctions.LinearRankingFunction;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.rankingfunctions.RankingFunction;
@@ -33,11 +33,6 @@ public class Synthesizer {
 	
 	private static Logger s_Logger =
 			UltimateServices.getInstance().getLogger(Activator.s_PLUGIN_ID);
-	
-	/**
-	 * Prefix for auxiliary variables introduced for integer division
-	 */
-	private static final String s_auxPrefix = "aux_";
 	
 	/**
 	 * SMT script of the transition formulae
@@ -61,9 +56,10 @@ public class Synthesizer {
 	private RankingFunction m_ranking_function = null;
 	private Collection<SupportingInvariant> m_supporting_invariants = null;
 	
-	private int m_auxNameIndex;
-	
 	private Collection<TermVariable> m_auxVars;
+	
+	public int num_strict_invariants;
+	public int num_non_strict_invariants;
 	
 	/**
 	 * Constructor for the ranking function synthesizer.
@@ -82,6 +78,9 @@ public class Synthesizer {
 		
 		m_stem_transition = stem_transition;
 		m_loop_transition = loop_transition;
+		
+		num_strict_invariants = Preferences.num_strict_invariants;
+		num_non_strict_invariants = Preferences.num_non_strict_invariants;
 		
 		s_Logger.debug("Stem: " + stem_transition);
 		s_Logger.debug("Loop: " + loop_transition);
@@ -126,36 +125,18 @@ public class Synthesizer {
 		Term stem_term = m_stem_transition.getFormula();
 		Term loop_term = m_loop_transition.getFormula();
 		
+		// Do preprocessing
 		PreProcessor[] preprocessors = {
+				new RewriteDivision(),
 				new RewriteBooleans(),
-				new RewriteEquality()
+				new RewriteEquality(),
+				new DNF()
 		};
-		
-		// TODO: refactor more preprocessors
-		// TODO: rewrite booleans, rewrite division, integral hull
-		/*
-		if (Preferences.rewrite_booleans) {
-			stem_term = boolsToIneq(stem_term);
-			loop_term = boolsToIneq(loop_term);
+		for (PreProcessor preprocessor : preprocessors) {
+			stem_term = preprocessor.process(m_old_script, stem_term);
+			loop_term = preprocessor.process(m_old_script, loop_term);
+			m_auxVars.addAll(preprocessor.getAuxVars());
 		}
-		
-		if (Preferences.use_division == UseDivision.C_STYLE) {
-			// Replace integer division
-			int i = findMinAuxName(stem.getFormula());
-			int j = findMinAuxName(loop.getFormula());
-			m_auxNameIndex = i > j ? i : j;
-			stem_term = replaceDiv(stem_term);
-			loop_term = replaceDiv(loop_term);
-		}
-		*/
-		
-		// Rewrite '='
-		stem_term = (new RewriteEquality()).process(m_old_script, stem_term);
-		loop_term = (new RewriteEquality()).process(m_old_script, loop_term);
-		
-		// Convert to DNF
-		stem_term = (new DNF()).process(m_old_script, stem_term);
-		loop_term = (new DNF()).process(m_old_script, loop_term);
 		
 		// Extract clauses
 		Collection<Term> stem_clauses = toClauses(stem_term);
@@ -172,9 +153,7 @@ public class Synthesizer {
 		m_stem = new ArrayList<List<LinearInequality>>();
 		for (Term clause : stem_clauses) {
 			List<LinearInequality> lli = InequalityConverter.convert(m_old_script, clause);
-			if ((Preferences.use_variable_domain == VariableDomain.INTEGERS
-					|| Preferences.use_variable_domain == VariableDomain.AUTO_DETECT)
-					&& Preferences.compute_integral_hull) {
+			if (Preferences.compute_integral_hull) {
 				lli.addAll(IntegralHull.compute(lli));
 			}
 			m_stem.add(lli);
@@ -182,9 +161,7 @@ public class Synthesizer {
 		m_loop = new ArrayList<List<LinearInequality>>();
 		for (Term clause : loop_clauses) {
 			List<LinearInequality> lli = InequalityConverter.convert(m_old_script, clause);
-			if ((Preferences.use_variable_domain == VariableDomain.INTEGERS
-					|| Preferences.use_variable_domain == VariableDomain.AUTO_DETECT)
-					&& Preferences.compute_integral_hull) {
+			if (Preferences.compute_integral_hull) {
 				lli.addAll(IntegralHull.compute(lli));
 			}
 			m_loop.add(lli);
@@ -200,26 +177,15 @@ public class Synthesizer {
 	 * Issues a bunch of logger infos and warnings.
 	 */
 	private void checkPreferences() {
-		assert(Preferences.num_strict_invariants >= 0);
-		assert(Preferences.num_non_strict_invariants >= 0);
-		if (Preferences.num_strict_invariants == 0 &&
-				Preferences.num_non_strict_invariants == 0) {
+		assert(num_strict_invariants >= 0);
+		assert(num_non_strict_invariants >= 0);
+		if (num_strict_invariants == 0 && num_non_strict_invariants == 0) {
 			s_Logger.warn("Generation of supporting invariants is disabled.");
-		}
-		if (!Preferences.check_if_loop_infeasible) {
-			s_Logger.warn("Check for loop infeasibility is disabled.");
 		}
 		if (Preferences.use_division == UseDivision.C_STYLE
 				&& !Preferences.enable_disjunction) {
 			s_Logger.warn("Using C-style integer division, but support for " +
 				"disjunctions is disabled.");
-		}
-		if ((Preferences.use_variable_domain == VariableDomain.INTEGERS
-				|| Preferences.use_variable_domain == VariableDomain.AUTO_DETECT)
-				&& Preferences.compute_integral_hull) {
-			s_Logger.info("Using integer or mixed integer variable domain, "
-					+ "but integral hull computation is disabled.  "
-					+ "This will reduce the solution space.");
 		}
 	}
 	
@@ -264,10 +230,10 @@ public class Synthesizer {
 		List<Term> conj = new ArrayList<Term>(); // List of constraints
 		
 		Collection<BoogieVar> siVars = getSIVars();
-		
-		Collection<Collection<LinearInequality>> templateConstraints =
+		List<List<LinearInequality>> templateConstraints =
 				template.constraints(m_loop_transition.getInVars(),
 						m_loop_transition.getOutVars());
+		List<String> annotations = template.getAnnotations();
 		
 		s_Logger.info("We have " + m_loop.size() + " loop conjunctions and "
 				+ templateConstraints.size() + " template disjunctions.");
@@ -275,19 +241,19 @@ public class Synthesizer {
 		// loop(x, x') /\ si(x) -> template(x, x')
 		// Iterate over the loop conjunctions and template disjunctions
 		for (List<LinearInequality> loopConj : m_loop) {
-			for (Collection<LinearInequality> templateDisj : templateConstraints) {
+			for (int m = 0; m < templateConstraints.size(); ++m) {
 				MotzkinTransformation motzkin =
 						new MotzkinTransformation(m_script);
-				motzkin.annotation = templateDisj.toString();
+				motzkin.annotation = annotations.get(m);
 				motzkin.add_inequalities(loopConj);
-				for (LinearInequality li : templateDisj) {
+				for (LinearInequality li : templateConstraints.get(m)) {
 					li.negate();
 					motzkin.add_inequality(li);
 				}
 				
 				// Add supporting invariants
-				assert(Preferences.num_strict_invariants >= 0);
-				for (int i = 0; i < Preferences.num_strict_invariants; ++ i) {
+				assert(num_strict_invariants >= 0);
+				for (int i = 0; i < num_strict_invariants; ++ i) {
 					SupportingInvariantGenerator sig =
 							new SupportingInvariantGenerator(m_script, siVars,
 									true);
@@ -295,8 +261,8 @@ public class Synthesizer {
 					motzkin.add_inequality(sig.generate(
 							m_loop_transition.getInVars()));
 				}
-				assert(Preferences.num_non_strict_invariants >= 0);
-				for (int i = 0; i < Preferences.num_non_strict_invariants; ++ i) {
+				assert(num_non_strict_invariants >= 0);
+				for (int i = 0; i < num_non_strict_invariants; ++ i) {
 					SupportingInvariantGenerator sig =
 							new SupportingInvariantGenerator(m_script, siVars,
 									false);
@@ -317,6 +283,7 @@ public class Synthesizer {
 			for (List<LinearInequality> stemConj : m_stem) {
 				MotzkinTransformation motzkin =
 						new MotzkinTransformation(m_script);
+				motzkin.annotation = "invariant initiation";
 				motzkin.add_inequalities(stemConj);
 				LinearInequality li =
 						sig.generate(m_stem_transition.getOutVars());
@@ -329,6 +296,7 @@ public class Synthesizer {
 			for (List<LinearInequality> loopConj : m_loop) {
 				MotzkinTransformation motzkin =
 						new MotzkinTransformation(m_script);
+				motzkin.annotation = "invariant consecution";
 				motzkin.add_inequalities(loopConj);
 				motzkin.add_inequality(sig.generate(
 						m_loop_transition.getInVars())); // si(x)
@@ -385,7 +353,17 @@ public class Synthesizer {
 			throws SMTLIBException, TermException {
 		checkPreferences();
 		
-		template.init(m_script, getRankVars());
+		Collection<BoogieVar> rankVars = getRankVars();
+		Collection<BoogieVar> siVars = getSIVars();
+		template.init(m_script, rankVars);
+		s_Logger.debug("Variables for ranking functions: " + rankVars);
+		s_Logger.debug("Variables for supporting invariants: " + siVars);
+		if (siVars.isEmpty()) {
+			s_Logger.info("There is no variables for invariants; "
+					+ "disabling supporting invariant generation.");
+			num_strict_invariants = 0;
+			num_non_strict_invariants = 0;
+		}
 		
 		// Check if the loop transition is trivial
 		if (m_loop_transition.getFormula() instanceof ApplicationTerm) {
@@ -405,7 +383,7 @@ public class Synthesizer {
 		
 		s_Logger.info("Using template '" + template.getClass().getSimpleName()
 				+ "'.");
-		s_Logger.debug("Template formula:\n" + template);
+		s_Logger.debug(template);
 		
 		// List of all used supporting invariant generators
 		Collection<SupportingInvariantGenerator> si_generators =

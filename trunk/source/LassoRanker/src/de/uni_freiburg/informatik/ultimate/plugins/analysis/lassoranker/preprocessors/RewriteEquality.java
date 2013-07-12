@@ -1,9 +1,12 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.preprocessors;
 
+import java.util.*;
+
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
+import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
 
 /**
@@ -41,5 +44,10 @@ public class RewriteEquality extends TermTransformer implements PreProcessor {
 			}
 		}
 		super.convert(term);
+	}
+	
+	@Override
+	public Collection<TermVariable> getAuxVars() {
+		return Collections.emptyList();
 	}
 }

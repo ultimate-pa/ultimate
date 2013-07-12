@@ -18,6 +18,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.exceptio
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.rankingfunctions.LinearRankingFunction;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.rankingfunctions.RankingFunction;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.templates.AffineTemplate;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.templates.MultiphaseTemplate;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.templates.RankingFunctionTemplate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.BoogieStatementPrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
@@ -62,11 +63,11 @@ public class LassoRankerObserver implements IUnmanagedObserver {
 		m_templates = new ArrayList<RankingFunctionTemplate>();
 		
 		// Fill the templates list with all relevant template classes
-		if (Preferences.use_linear_template) {
+		if (Preferences.use_affine_template) {
 			m_templates.add(new AffineTemplate());
 		}
 		if (Preferences.use_multiphase_template) {
-//			m_templates.add(MultiPhaseTemplate.class);
+			m_templates.add(new MultiphaseTemplate(Preferences.multiphase_template_phases));
 		}
 	}
 	
@@ -133,7 +134,6 @@ public class LassoRankerObserver implements IUnmanagedObserver {
 		RootNode rootNode = (RootNode) root;
 		List<RCFGNode> rootSucc = rootNode.getOutgoingNodes();
 		RCFGNode firstNode;
-		boolean cacslTranslated = false;
 		if (rootSucc.size() == 1) {
 			firstNode = rootSucc.get(0);
 		} else {
@@ -144,8 +144,6 @@ public class LassoRankerObserver implements IUnmanagedObserver {
 						reportUnuspportedSyntax((ProgramPoint) succ);
 					}
 				}
-			} else {
-				cacslTranslated = true;
 			}
 		}
 //		assert(rootSucc.size() == 1);
@@ -205,6 +203,7 @@ public class LassoRankerObserver implements IUnmanagedObserver {
 							rootNode.getRootAnnot().getBoogie2Smt());
 					s_Logger.info(longMessage);
 					
+					@SuppressWarnings("deprecation")
 					RankingFunctionResult<RcfgElement> rankRes = 
 							new RankingFunctionResult<RcfgElement>(
 							honda,
@@ -219,6 +218,8 @@ public class LassoRankerObserver implements IUnmanagedObserver {
 				if (template instanceof AffineTemplate) {
 					String shortMessage = "No ranking function found";
 					String longMessage = "No linear ranking function with linear supporting invariant found.";
+					
+					@SuppressWarnings("deprecation")
 					NoResult<RcfgElement> rankRes = 
 							new NoResult<RcfgElement>(
 							honda,
@@ -279,6 +280,8 @@ public class LassoRankerObserver implements IUnmanagedObserver {
 	private void reportUnuspportedSyntax(ProgramPoint position) {
 		String message = "This is not a lasso program (a lasso program is a single procedure with a single while loop and without branching, neither in the stem nor in the body of the while loop)";
 		s_Logger.error(message);
+		
+		@SuppressWarnings("deprecation")
 		SyntaxErrorResult<RcfgElement> unsupp = 
 				new SyntaxErrorResult<RcfgElement>(
 				position,
@@ -291,6 +294,7 @@ public class LassoRankerObserver implements IUnmanagedObserver {
 	}
 	
 	public static String backtranslateExprWorkaround(Expression expr) {
+		@SuppressWarnings("deprecation")
 		ITranslator<?, ?, Expression, ?> iback = 
 				(ITranslator<?, ?, Expression, ?>) UltimateServices.getInstance().getTranslatorSequence().get(0);
 		Object backExpr = iback.translateExpression(expr);

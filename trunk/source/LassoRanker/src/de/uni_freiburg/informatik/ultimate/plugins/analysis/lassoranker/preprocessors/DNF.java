@@ -2,6 +2,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.preproc
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -136,5 +137,10 @@ public class DNF implements PreProcessor {
 		} else {
 			throw new TermException("Unexpected atom structure", term);
 		}
+	}
+	
+	@Override
+	public Collection<TermVariable> getAuxVars() {
+		return Collections.emptyList();
 	}
 }

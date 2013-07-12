@@ -239,6 +239,9 @@ public class LinearInequality {
 		boolean first = true;
 		for (Map.Entry<TermVariable, ParameterizedRational> entry
 				: m_coefficients.entrySet()) {
+			if (entry.getValue().isZero()) {
+				continue;
+			}
 			if (!first) {
 				sb.append(" + ");
 			}

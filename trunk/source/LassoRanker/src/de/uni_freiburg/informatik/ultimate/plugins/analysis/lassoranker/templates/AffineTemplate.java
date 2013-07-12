@@ -17,11 +17,10 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.rankingf
 
 
 /**
- * The linear template finds affine-linear ranking functions of the form
- * <pre>f(x) = c^T * x + c_0</pre>
+ * The affine template finds an affine-linear ranking function.
  * 
  * Template:
- * <pre>delta > 0 /\ f(x) > 0 /\ f(x') < f(x) - delta</pre>
+ * <pre>δ > 0 /\ f(x) > 0 /\ f(x') < f(x) - δ</pre>
  * 
  * @author Jan Leike
  */
@@ -43,16 +42,16 @@ public class AffineTemplate extends RankingFunctionTemplate {
 	@Override
 	public String toString() {
 		return "Affine template:\n"
-			+ "delta > 0 /\\ f(x) >= 0 /\\ f(x) >= f(x') + delta";
+			+ "   delta > 0\n/\\ f(x) >= 0\n/\\ f(x) >= f(x') + delta";
 	}
 	
 	@Override
-	public Collection<Collection<LinearInequality>> constraints(
+	public List<List<LinearInequality>> constraints(
 			Map<BoogieVar, TermVariable> inVars,
 			Map<BoogieVar, TermVariable> outVars) {
 		checkInitialized();
-		Collection<Collection<LinearInequality>> conjunction =
-				new ArrayList<Collection<LinearInequality>>();
+		List<List<LinearInequality>> conjunction =
+				new ArrayList<List<LinearInequality>>();
 		
 		// f(x) > 0
 		{
@@ -92,5 +91,13 @@ public class AffineTemplate extends RankingFunctionTemplate {
 			throws SMTLIBException {
 		AffineFunction f = m_fgen.extractAffineFunction(val);
 		return new LinearRankingFunction(f);
+	}
+	
+	@Override
+	public List<String> getAnnotations() {
+		List<String> annotations = new ArrayList<String>();
+		annotations.add("rank bounded");
+		annotations.add("rank decreasing");
+		return annotations;
 	}
 }
