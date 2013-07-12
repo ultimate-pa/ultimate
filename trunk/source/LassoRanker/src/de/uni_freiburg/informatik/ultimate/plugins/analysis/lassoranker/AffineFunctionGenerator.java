@@ -67,8 +67,10 @@ public class AffineFunctionGenerator {
 		LinearInequality li = new LinearInequality();
 		li.add(new ParameterizedRational(m_constant));
 		for (Entry<BoogieVar, TermVariable> entry : vars.entrySet()) {
-			li.add(entry.getValue(), new ParameterizedRational(
-					m_coefficients.get(entry.getKey())));
+			if (m_coefficients.containsKey(entry.getKey())) {
+				li.add(entry.getValue(), new ParameterizedRational(
+						m_coefficients.get(entry.getKey())));
+			}
 		}
 		return li;
 	}

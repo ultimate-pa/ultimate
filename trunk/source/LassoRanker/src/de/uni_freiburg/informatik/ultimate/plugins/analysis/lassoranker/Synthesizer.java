@@ -2,7 +2,6 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker;
 
 import java.util.*;
 import java.util.Map.Entry;
-import java.io.FileNotFoundException;
 
 import org.apache.log4j.Logger;
 
@@ -17,11 +16,10 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.preproce
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.preprocessors.InequalityConverter;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.preprocessors.IntegralHull;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.preprocessors.RewriteEquality;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.rankingfunctions.LinearRankingFunction;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.rankingfunctions.RankingFunction;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.templates.RankingFunctionTemplate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.TransFormula;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.TAPreferences;
-import de.uni_freiburg.informatik.ultimate.smtsolver.external.Scriptor;
 
 
 /**
@@ -66,40 +64,6 @@ public class Synthesizer {
 	private Collection<TermVariable> m_auxVars;
 	
 	/**
-	 * Create a new SMT solver instance.
-	 * Accesses the RCFGBuilder preferences for solver settings.
-	 */
-	private Script newScript() {
-		// This code is copied from 
-		// de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CfgBuilder
-		
-		Logger solverLogger = Logger.getLogger("interpolLogger");
-		Script script = new Scriptor("z3 -smt2 -in", solverLogger);
-		
-		TAPreferences taPref = new TAPreferences();
-		if (taPref.dumpScript()) {
-			String dumpFileName = taPref.dumpPath();
-			String fileSep = System.getProperty("file.separator");
-			dumpFileName += (dumpFileName.endsWith(fileSep) ? "" : fileSep);
-			dumpFileName = dumpFileName + "LassoRanker.smt2";
-			// FIXME: add file name
-			s_Logger.info("Using temporary smt2 file '" + dumpFileName + "'.");
-			try {
-				script = new LoggingScript(script, dumpFileName, true);
-			} catch (FileNotFoundException e) {
-				throw new AssertionError(e);
-			}
-		}
-		
-		if (Preferences.annotate_terms) {
-			script.setOption(":produce-unsat-cores", true);
-		}
-		script.setOption(":produce-models", true);
-		script.setLogic("QF_NRA"); // non-linear algebraic constraint solving
-		return script;
-	}
-	
-	/**
 	 * Constructor for the ranking function synthesizer.
 	 * @param stem transition formula for the program's stem
 	 * @param loop transition formula for the program's loop
@@ -109,7 +73,7 @@ public class Synthesizer {
 	public Synthesizer(Script old_script, TransFormula stem_transition,
 			TransFormula loop_transition) throws Exception {
 		m_old_script = old_script;
-		m_script = newScript();
+		m_script = SMTSolver.newScript();
 		
 		m_auxVars = new ArrayList<TermVariable>();
 		m_supporting_invariants = new ArrayList<SupportingInvariant>();
@@ -229,8 +193,10 @@ public class Synthesizer {
 	 * Issues a bunch of logger infos and warnings.
 	 */
 	private void checkPreferences() {
-		assert(Preferences.num_supporting_invariants >= 0);
-		if (Preferences.num_supporting_invariants == 0) {
+		assert(Preferences.num_strict_invariants >= 0);
+		assert(Preferences.num_non_strict_invariants >= 0);
+		if (Preferences.num_strict_invariants == 0 &&
+				Preferences.num_non_strict_invariants == 0) {
 			s_Logger.warn("Generation of supporting invariants is disabled.");
 		}
 		if (!Preferences.check_if_loop_infeasible) {
@@ -306,22 +272,27 @@ public class Synthesizer {
 				MotzkinTransformation motzkin =
 						new MotzkinTransformation(m_script);
 				motzkin.annotation = templateDisj.toString();
-				
-				// Loop inequalities
-				for (LinearInequality li : loopConj) {
-					motzkin.add_inequality(li);
-				}
-				// Template inequalities
+				motzkin.add_inequalities(loopConj);
 				for (LinearInequality li : templateDisj) {
 					li.negate();
 					motzkin.add_inequality(li);
 				}
-				// Supporting invariants
-				assert(Preferences.num_supporting_invariants >= 0);
-				for (int i = 0; i < Preferences.num_supporting_invariants; ++ i) {
+				
+				// Add supporting invariants
+				assert(Preferences.num_strict_invariants >= 0);
+				for (int i = 0; i < Preferences.num_strict_invariants; ++ i) {
 					SupportingInvariantGenerator sig =
 							new SupportingInvariantGenerator(m_script, siVars,
-									false); // TODO: strict invariants
+									true);
+					si_generators.add(sig);
+					motzkin.add_inequality(sig.generate(
+							m_loop_transition.getInVars()));
+				}
+				assert(Preferences.num_non_strict_invariants >= 0);
+				for (int i = 0; i < Preferences.num_non_strict_invariants; ++ i) {
+					SupportingInvariantGenerator sig =
+							new SupportingInvariantGenerator(m_script, siVars,
+									false);
 					si_generators.add(sig);
 					motzkin.add_inequality(sig.generate(
 							m_loop_transition.getInVars()));
@@ -331,30 +302,27 @@ public class Synthesizer {
 			}
 		}
 		
-		
 		// Add constraints for the supporting invariants
+		s_Logger.debug("Adding the constraints for " + si_generators.size()
+				+ " supporting invariants.");
 		for (SupportingInvariantGenerator sig : si_generators) {
 			// stem(x0) -> si(x0)
 			for (List<LinearInequality> stemConj : m_stem) {
 				MotzkinTransformation motzkin =
 						new MotzkinTransformation(m_script);
-				
-				for (LinearInequality li : stemConj) {
-					motzkin.add_inequality(li);
-				}
+				motzkin.add_inequalities(stemConj);
 				LinearInequality li =
 						sig.generate(m_stem_transition.getOutVars());
 				li.negate();
 				motzkin.add_inequality(li);
+//				s_Logger.debug(motzkin);
 				conj.add(motzkin.transform());
 			}
 			// si(x) /\ loop(x, x') -> si(x')
 			for (List<LinearInequality> loopConj : m_loop) {
 				MotzkinTransformation motzkin =
 						new MotzkinTransformation(m_script);
-				for (LinearInequality li : loopConj) {
-					motzkin.add_inequality(li);
-				}
+				motzkin.add_inequalities(loopConj);
 				motzkin.add_inequality(sig.generate(
 						m_loop_transition.getInVars())); // si(x)
 				LinearInequality li = sig.generate(
@@ -363,6 +331,7 @@ public class Synthesizer {
 						!Preferences.nondecreasing_invariants;
 				li.negate();
 				motzkin.add_inequality(li);
+//				s_Logger.debug(motzkin);
 				conj.add(motzkin.transform());
 			}
 		}
@@ -417,7 +386,8 @@ public class Synthesizer {
 					m_loop_transition.getFormula();
 			if (loopf.getFunction().getName() == "false") {
 				s_Logger.info("Loop transition is equivalent to false.");
-//				m_ranking_function = new LinearRankingFunction();
+				m_ranking_function =
+						new LinearRankingFunction(new AffineFunction());
 				return true;
 			}
 			if (loopf.getFunction().getName() == "true") {
@@ -435,25 +405,16 @@ public class Synthesizer {
 				new ArrayList<SupportingInvariantGenerator>();
 		
 		// Assert all conjuncts generated from the template
-		Collection<Term> conj = buildConstraints(template, si_generators);
-		
-		StringBuilder sb = new StringBuilder();
-		sb.append("The template built the following SMT formulae:\n");
-		for (Term t : conj) {
-			if (t instanceof ApplicationTerm
-					&& ((ApplicationTerm) t).getFunction().getName() == "and") {
-				ApplicationTerm appt = (ApplicationTerm) t;
-				for (Term t2 : appt.getParameters()) {
-					sb.append(t2);
-					sb.append("\n");
-				}
-			} else {
-				sb.append(t);
-				sb.append("\n");
-			}
-			m_script.assertTerm(t);
+		Collection<Term> constraints =
+				buildConstraints(template, si_generators);
+		int num_motzkin = constraints.size();
+		s_Logger.info("We have " + num_motzkin
+				+ " Motzkin's Theorem applications.");
+		s_Logger.info("A total of " + si_generators.size()
+				+ " supporting invariants were added.");
+		for (Term constraint : constraints) {
+			m_script.assertTerm(constraint);
 		}
-		s_Logger.debug(sb.toString());
 		
 		// Check for a model
 		if (m_script.checkSat() == LBool.SAT) {

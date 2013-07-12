@@ -19,18 +19,33 @@ public class Preferences implements Serializable {
 	public static boolean check_if_loop_infeasible = true; // Default: true
 	
 	/**
-	 * Number of supporting invariants for each Motzkin transformation.
-	 * Must be non-negative; set to 0 to disable the use of supporting
-	 * invariants.
-	 * Note that increasing this number will dramatically increase runtime!
+	 * Number of strict supporting invariants for each Motzkin transformation.
+	 * Strict supporting invariants are invariants of the form
+	 * <pre>Σ c_i x_i + c > 0.</pre>
+	 * 
+	 * The value must be non-negative; set to 0 to disable the use of strict
+	 * supporting invariants.  Note that increasing this number will
+	 * dramatically increase runtime!
+	 * 
+	 * @see num_non_strict_invariants
 	 */
-	public static int num_supporting_invariants = 0; // Default: 1
+	public static int num_strict_invariants = 1; // Default: 1
+	
+	/**
+	 * Number of non-strict supporting invariants for each Motzkin
+	 * transformation.  Strict supporting invariants are invariants of the form
+	 * <pre>Σ c_i x_i + c ≥ 0.</pre>
+	 * 
+	 * The value must be non-negative; set to 0 to disable the use of strict
+	 * supporting invariants.  Note that increasing this number will
+	 * dramatically increase runtime!
+	 * 
+	 * @see num_strict_invariants
+	 */
+	public static int num_non_strict_invariants = 1; // Default: 1
 	
 	/**
 	 * Only consider non-decreasing invariants.
-	 * Setting this option to false requires a non-linear SMT solver.
-	 * (Currently z3 is the only supported solver that handles non-linear
-	 * arithmetic.)
 	 */
 	public static boolean nondecreasing_invariants = false; // Default: false
 	
@@ -97,8 +112,10 @@ public class Preferences implements Serializable {
 	 */
 	public static String show() {
 		StringBuilder sb = new StringBuilder();
-		sb.append("Number of added supporting invariants: ");
-		sb.append(Preferences.num_supporting_invariants);
+		sb.append("Number of strict supporting invariants: ");
+		sb.append(Preferences.num_strict_invariants);
+		sb.append("Number of non-strict supporting invariants: ");
+		sb.append(Preferences.num_non_strict_invariants);
 		sb.append("\nCheck if loop is infeasible: ");
 		sb.append(Preferences.check_if_loop_infeasible);
 		sb.append("\nConsider non-deceasing supporting invariants: ");

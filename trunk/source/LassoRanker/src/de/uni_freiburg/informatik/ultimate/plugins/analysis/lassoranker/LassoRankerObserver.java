@@ -1,6 +1,5 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker;
 
-import java.io.FileNotFoundException;
 import java.util.*;
 
 import org.apache.log4j.Logger;
@@ -8,7 +7,6 @@ import org.apache.log4j.Logger;
 import de.uni_freiburg.informatik.ultimate.access.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.access.WalkerOptions;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
-import de.uni_freiburg.informatik.ultimate.logic.LoggingScript;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
@@ -28,23 +26,30 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCF
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RcfgElement;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.TransFormula;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.TAPreferences;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.PreferenceValues.Solver;
 import de.uni_freiburg.informatik.ultimate.result.IResult;
 import de.uni_freiburg.informatik.ultimate.result.NoResult;
 import de.uni_freiburg.informatik.ultimate.result.RankingFunctionResult;
 import de.uni_freiburg.informatik.ultimate.result.SyntaxErrorResult;
 import de.uni_freiburg.informatik.ultimate.result.SyntaxErrorResult.SyntaxErrorType;
-import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.SMTInterpol;
-import de.uni_freiburg.informatik.ultimate.smtsolver.external.Scriptor;
+
 
 /**
- * Auto-Generated Stub for the plug-in's Observer
+ * Observer for LassoRanker.
+ * 
+ * Extract the lasso program's stem and loop transition from the RCFG builder's
+ * transition graph.  This is then passed to the Synthesizer, which tries to
+ * find a ranking function for this lasso program.
+ * 
+ * Ranking function synthesis is done via constraint solving.  The generated
+ * constraints are non-linear algebraic constraints.
+ * @see SMTSolver SMTSolver for access to the smt solver script
+ * 
+ * @author Matthias Heizmann, Jan Leike
  */
 public class LassoRankerObserver implements IUnmanagedObserver {
-	
 	private static Logger s_Logger =
 			UltimateServices.getInstance().getLogger(Activator.s_PLUGIN_ID);
+	
 	/**
 	 * Collection of ranking templates to be instantiated
 	 */
@@ -158,8 +163,9 @@ public class LassoRankerObserver implements IUnmanagedObserver {
 							for (SupportingInvariant si : si_list) {
 								if (!si.isTrue()) {
 									if (first) {
-										longMessage.append("\n" + "Provided with the supporting "
-												+ "invariants:");
+										longMessage.append(
+											"\nProvided with the supporting "
+											+ "invariants:");
 										first = false;
 									}
 									longMessage.append("\n" + si);
@@ -249,7 +255,6 @@ public class LassoRankerObserver implements IUnmanagedObserver {
 		return pp.getProcedure().equals("ULTIMATE.init");
 	}
 	
-	
 	private void reportUnuspportedSyntax(ProgramPoint position) {
 		String message = "This is not a lasso program (a lasso program is a single procedure with a single while loop and without branching, neither in the stem nor in the body of the while loop)";
 		s_Logger.error(message);
@@ -301,7 +306,6 @@ public class LassoRankerObserver implements IUnmanagedObserver {
 
 	@Override
 	public boolean performedChanges() {
-		// TODO Auto-generated method stub
 		return false;
 	}
 }
