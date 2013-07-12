@@ -313,7 +313,7 @@ public class Application implements IApplication, ICore {
 		} else if (m_Controller != null) {
 			// run previously chosen command line controller
 			Object returnCode = m_Controller.init(this);
-			s_Logger.info("Preparing to exit Ultimate with returcode "+returnCode);
+			s_Logger.info("Preparing to exit Ultimate with return code "+returnCode);
 		} 
 
 		// before we quit Ultimate, do we have to clear the model store?
