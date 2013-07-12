@@ -1,6 +1,8 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker;
 
 import java.io.FileNotFoundException;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
 
 import org.apache.log4j.Logger;
 
@@ -22,6 +24,12 @@ class SMTSolver {
 	private static Logger s_Logger =
 			UltimateServices.getInstance().getLogger(Activator.s_PLUGIN_ID);
 	
+	private static String generateFilename() {
+		String date = new SimpleDateFormat("yyyyMMdd_HHmmss").format(
+				Calendar.getInstance().getTime());
+		return "LassoRanker_" + date + ".smt2";
+	}
+	
 	/**
 	 * Create a new SMT solver instance by calling an external z3 binary
 	 */
@@ -38,8 +46,7 @@ class SMTSolver {
 			String dumpFileName = taPref.dumpPath();
 			String fileSep = System.getProperty("file.separator");
 			dumpFileName += (dumpFileName.endsWith(fileSep) ? "" : fileSep);
-			dumpFileName = dumpFileName + "LassoRanker.smt2";
-			// FIXME: add file name
+			dumpFileName += generateFilename();
 			s_Logger.info("Using temporary smt2 file '" + dumpFileName + "'.");
 			try {
 				script = new LoggingScript(script, dumpFileName, true);

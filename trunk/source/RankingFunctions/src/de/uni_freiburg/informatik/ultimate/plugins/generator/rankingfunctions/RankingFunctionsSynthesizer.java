@@ -233,7 +233,7 @@ public class RankingFunctionsSynthesizer {
 	}
 	
 	/**
-	 * Recursively find the largest i such that s_auxPrefix + i is a used
+	 * Recursively find the largest i such that s_auxPrefix + i is a unused
 	 * variable.
 	 * @param t term
 	 * @return i

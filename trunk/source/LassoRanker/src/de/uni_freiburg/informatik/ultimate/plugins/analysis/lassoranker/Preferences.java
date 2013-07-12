@@ -77,7 +77,7 @@ public class Preferences implements Serializable {
 	public enum UseDivision {
 		C_STYLE,    // C style division: x := a / k  -->  k*x <= a < (k+1)*x
 		SAFE,       // Safe division: x := a / k can be executed iff k divides a
-		RATIONALS_ONLY, // Division is only supported for Rationals
+		RATIONALS_ONLY, // Division is only supported for rational numbers
 		DISABLED    // Throw an error if division is used
 	}
 	

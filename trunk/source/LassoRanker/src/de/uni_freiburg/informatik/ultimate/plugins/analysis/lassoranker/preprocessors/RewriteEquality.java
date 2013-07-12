@@ -31,7 +31,8 @@ public class RewriteEquality extends TermTransformer implements PreProcessor {
 		assert(m_script != null);
 		if (term instanceof ApplicationTerm) {
 			ApplicationTerm appt = (ApplicationTerm) term;
-			if (appt.getFunction().getName().equals("=")) {
+			if (appt.getFunction().getName().equals("=") &&
+					!appt.getParameters()[0].getSort().equals("Bool")) {
 				assert(appt.getParameters().length == 2);
 				Term param1 = m_script.term("<=", appt.getParameters());
 				Term param2 = m_script.term(">=", appt.getParameters());

@@ -15,6 +15,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.exceptio
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.preprocessors.DNF;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.preprocessors.InequalityConverter;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.preprocessors.IntegralHull;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.preprocessors.PreProcessor;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.preprocessors.RewriteBooleans;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.preprocessors.RewriteEquality;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.rankingfunctions.LinearRankingFunction;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.rankingfunctions.RankingFunction;
@@ -123,6 +125,11 @@ public class Synthesizer {
 		
 		Term stem_term = m_stem_transition.getFormula();
 		Term loop_term = m_loop_transition.getFormula();
+		
+		PreProcessor[] preprocessors = {
+				new RewriteBooleans(),
+				new RewriteEquality()
+		};
 		
 		// TODO: refactor more preprocessors
 		// TODO: rewrite booleans, rewrite division, integral hull

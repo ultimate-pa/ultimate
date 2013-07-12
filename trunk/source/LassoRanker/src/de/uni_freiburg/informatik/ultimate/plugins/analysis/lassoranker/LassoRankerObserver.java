@@ -13,6 +13,7 @@ import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.INode;
 import de.uni_freiburg.informatik.ultimate.model.ITranslator;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Smt2Boogie;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.exceptions.TermException;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.rankingfunctions.LinearRankingFunction;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.rankingfunctions.RankingFunction;
@@ -69,6 +70,64 @@ public class LassoRankerObserver implements IUnmanagedObserver {
 		}
 	}
 	
+	/**
+	 * Create an informative message about the result of the synthesis process
+	 * @param synthesizer the synthesizer after calling .synthesize()
+	 * @return long descriptive message
+	 */
+	private String resultMessage(Synthesizer synthesizer, Script script, Smt2Boogie smt2boogie) {
+		RankingFunction rf = synthesizer.getRankingFunction();
+		Collection<SupportingInvariant> si_list =
+				synthesizer.getSupportingInvariants();
+		if (rf == null) {
+			return "No ranking function found.";
+		}
+		assert(si_list != null);
+		
+		// Check if a supporting invariant was needed
+		boolean has_si = false;
+		for (SupportingInvariant si : si_list) {
+			if (!si.isTrue()) {
+				has_si = true;
+				break;
+			}
+		}
+		
+		StringBuilder sb = new StringBuilder();
+		if (rf instanceof LinearRankingFunction) {
+			LinearRankingFunction linRf = (LinearRankingFunction) rf;
+			Expression rfExp = linRf.asExpression(script, smt2boogie);
+			String rfString = backtranslateExprWorkaround(rfExp);
+			String siString = "";
+			for (SupportingInvariant si : si_list) {
+				if (!si.isTrue()) {
+					Expression siExp = si.asExpression(script, smt2boogie);
+					siString += backtranslateExprWorkaround(siExp) + ", ";
+				}
+			}
+			sb.append("Found linear ranking function ");
+			sb.append(rfString);
+			if (has_si) {
+				sb.append(" with linear supporting invariants ");
+				sb.append(siString);
+			}
+			sb.append(".");
+		} else {
+			sb.append("A ranking function has been found:\n");
+			sb.append(rf);
+			if (has_si) {
+				sb.append("\nProvided with the supporting invariants:");
+				for (SupportingInvariant si : si_list) {
+					if (!si.isTrue()) {
+						sb.append("\n");
+						sb.append(si);
+					}
+				}
+			}
+		}
+		return sb.toString();
+	}
+	
 	@Override
 	public boolean process(IElement root) {
 		RootNode rootNode = (RootNode) root;
@@ -95,130 +154,92 @@ public class LassoRankerObserver implements IUnmanagedObserver {
 		CodeBlock stemEdge = (CodeBlock) stemEdges.get(0);
 		honda = (ProgramPoint) stemEdge.getTarget();
 		CodeBlock loopEdge = null;
-		if (honda.getOutgoingEdges().size() == 2) {
-			for (RCFGEdge hondaSucc : honda.getOutgoingEdges()) {
-				if (hondaSucc.getTarget() == honda) {
-					loopEdge = (CodeBlock) hondaSucc;
-				} else {
-					ProgramPoint interposition = (ProgramPoint) hondaSucc.getTarget();
-					for (RCFGEdge interpositionSucc : interposition.getOutgoingEdges()) {
-						if (interpositionSucc.getTarget() == honda) {
-							loopEdge = (CodeBlock) interpositionSucc;
-						}					
-					}
-				}
-			}
-			if (loopEdge == null) {
-				reportUnuspportedSyntax(honda);
-				return false;
-			}
-			
-			Script script = rootNode.getRootAnnot().getScript();
-			TransFormula stem;
-			TransFormula loop;
-			{
-				stem = stemEdge.getTransitionFormula();
-				loop = loopEdge.getTransitionFormula();
-				//			stem = stem.sequentialComposition(stem, loop, script);
-				TermVariableRenamer tvr = new TermVariableRenamer(script);
-				stem = tvr.renameVars(stem, "Stem");
-				loop = tvr.renameVars(loop, "Loop");
-			}
-			
-			// Try a number of possible templates
-			for (RankingFunctionTemplate template : m_templates) {
-				try {
-					// Call the synthesizer
-					Synthesizer synthesizer =
-							new Synthesizer(script, stem, loop);
-					
-					if (synthesizer.synthesize(template)) {
-						RankingFunction rf = synthesizer.getRankingFunction();
-						assert(rf != null);
-						Collection<SupportingInvariant> si_list =
-								synthesizer.getSupportingInvariants();
-						assert(si_list != null);
-						
-						StringBuilder longMessage = new StringBuilder();
-						if (rf instanceof LinearRankingFunction) {
-							LinearRankingFunction linRf = (LinearRankingFunction) rf;
-							Expression rfExp = linRf.asExpression(script, rootNode.getRootAnnot().getBoogie2Smt());
-							String rfString = backtranslateExprWorkaround(rfExp);
-							String siString = "";
-							for (SupportingInvariant si : si_list) {
-								Expression siExp = si.asExpression(script, rootNode.getRootAnnot().getBoogie2Smt());
-								siString += backtranslateExprWorkaround(siExp) + ", ";
-							}
-							longMessage.append("Found linear ranking function ");
-							longMessage.append(rfString);
-							if (si_list.size() > 0) {
-								longMessage.append(" with linear supporting invariants ");
-								longMessage.append(siString);
-							}
-							longMessage.append(".");
-						} else {
-							longMessage.append("A ranking function has been found:");
-							longMessage.append("\n" + rf);
-							boolean first = true;
-							for (SupportingInvariant si : si_list) {
-								if (!si.isTrue()) {
-									if (first) {
-										longMessage.append(
-											"\nProvided with the supporting "
-											+ "invariants:");
-										first = false;
-									}
-									longMessage.append("\n" + si);
-								}
-							}
-						}
-						s_Logger.info(longMessage);
-						String shortMessage;
-						if (rf instanceof LinearRankingFunction) {
-							shortMessage = "Found linear ranking function with supporting invariant";
-						} else {
-							shortMessage = rf.getClass().getName();
-						}
-						RankingFunctionResult<RcfgElement> rankRes = 
-								new RankingFunctionResult<RcfgElement>(
-								honda,
-								Activator.s_PLUGIN_NAME,
-								UltimateServices.getInstance().getTranslatorSequence(),
-								honda.getAstNode().getLocation().getOrigin(),
-								shortMessage,
-								longMessage.toString());
-						reportResult(rankRes);
-						return false;
-					}
-					if (template instanceof AffineTemplate) {
-						String shortMessage = "No ranking function found";
-						String longMessage = "No linear ranking function with linear supporting invariant found.";
-						NoResult<RcfgElement> rankRes = 
-								new NoResult<RcfgElement>(
-								honda,
-								Activator.s_PLUGIN_NAME,
-								UltimateServices.getInstance().getTranslatorSequence(),
-								honda.getAstNode().getLocation().getOrigin());
-						rankRes.setShortDescription(shortMessage);
-						rankRes.setLongDescription(longMessage.toString());
-						reportResult(rankRes);
-					}
-					s_Logger.info("No ranking function has been found " +
-							"with this template.");
-				} catch (InstantiationException e) {
-					s_Logger.error("Failed to instantiate the template.");
-				} catch (TermException e) {
-					s_Logger.error(e);
-				} catch (SMTLIBException e) {
-					s_Logger.error(e);
-				} catch (Exception e) {
-					s_Logger.error(e);
-				}
-			}
-			s_Logger.info("There are no more templates to try. I give up. :/");
-		} else {
+		if (honda.getOutgoingEdges().size() != 2) {
 			reportUnuspportedSyntax(honda);
+			return false;
 		}
+		for (RCFGEdge hondaSucc : honda.getOutgoingEdges()) {
+			if (hondaSucc.getTarget() == honda) {
+				loopEdge = (CodeBlock) hondaSucc;
+			} else {
+				ProgramPoint interposition = (ProgramPoint) hondaSucc.getTarget();
+				for (RCFGEdge interpositionSucc : interposition.getOutgoingEdges()) {
+					if (interpositionSucc.getTarget() == honda) {
+						loopEdge = (CodeBlock) interpositionSucc;
+					}					
+				}
+			}
+		}
+		if (loopEdge == null) {
+			reportUnuspportedSyntax(honda);
+			return false;
+		}
+		
+		Script script = rootNode.getRootAnnot().getScript();
+		TransFormula stem;
+		TransFormula loop;
+		{
+			stem = stemEdge.getTransitionFormula();
+			loop = loopEdge.getTransitionFormula();
+			//			stem = stem.sequentialComposition(stem, loop, script);
+			TermVariableRenamer tvr = new TermVariableRenamer(script);
+			stem = tvr.renameVars(stem, "Stem");
+			loop = tvr.renameVars(loop, "Loop");
+		}
+		
+		// Try a number of possible templates
+		for (RankingFunctionTemplate template : m_templates) {
+			try {
+				// Call the synthesizer
+				Synthesizer synthesizer =
+						new Synthesizer(script, stem, loop);
+				
+				if (synthesizer.synthesize(template)) {
+					RankingFunction rf = synthesizer.getRankingFunction();
+					Collection<SupportingInvariant> si_list =
+							synthesizer.getSupportingInvariants();
+					assert(rf != null);
+					assert(si_list != null);
+					
+					String longMessage = resultMessage(synthesizer, script,
+							rootNode.getRootAnnot().getBoogie2Smt());
+					s_Logger.info(longMessage);
+					
+					RankingFunctionResult<RcfgElement> rankRes = 
+							new RankingFunctionResult<RcfgElement>(
+							honda,
+							Activator.s_PLUGIN_NAME,
+							UltimateServices.getInstance().getTranslatorSequence(),
+							honda.getAstNode().getLocation().getOrigin(),
+							rf.getClass().getName(),
+							longMessage.toString());
+					reportResult(rankRes);
+					return false;
+				}
+				if (template instanceof AffineTemplate) {
+					String shortMessage = "No ranking function found";
+					String longMessage = "No linear ranking function with linear supporting invariant found.";
+					NoResult<RcfgElement> rankRes = 
+							new NoResult<RcfgElement>(
+							honda,
+							Activator.s_PLUGIN_NAME,
+							UltimateServices.getInstance().getTranslatorSequence(),
+							honda.getAstNode().getLocation().getOrigin());
+					rankRes.setShortDescription(shortMessage);
+					rankRes.setLongDescription(longMessage.toString());
+					reportResult(rankRes);
+				}
+				s_Logger.info("No ranking function has been found " +
+						"with this template.");
+			} catch (TermException e) {
+				s_Logger.error(e);
+			} catch (SMTLIBException e) {
+				s_Logger.error(e);
+			} catch (Exception e) {
+				s_Logger.error(e);
+			}
+		}
+		s_Logger.info("There are no more templates to try. I give up. :/");
 		return false;
 	}
 	
@@ -288,20 +309,17 @@ public class LassoRankerObserver implements IUnmanagedObserver {
 
 	@Override
 	public void init() {
-		// TODO Auto-generated method stub
-		
+		// nothing to do
 	}
 
 	@Override
 	public void finish() {
-		// TODO Auto-generated method stub
-		
+		// nothing to do
 	}
 
 	@Override
 	public WalkerOptions getWalkerOptions() {
-		// TODO Auto-generated method stub
-		return null;
+		return null; // not required
 	}
 
 	@Override
