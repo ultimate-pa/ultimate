@@ -1780,18 +1780,10 @@ public class SmtManager {
 	 * Call statements must be treated in a special way.
 	 */
 	public IPredicate strongestPostcondition(IPredicate p, Call call) {
-		String calledProc = call.getCallStatement().getMethodName();
-		String procOfCallStmt = "";
-		// FIXME: Is there another way to find the procedure of the given statement??
-		for (String proc : p.getProcedures()) {
-			if (proc != calledProc) {
-				procOfCallStmt = proc;
-				break;
-			}
-		}
+
 		// 1. Compute those global variable assignments, i.e. x_global = old(x_global) if x_global is
 		// a global variable.
-		TransFormula globalVarsAssignment = m_ModifiableGlobals.getGlobalVarsAssignment(procOfCallStmt);
+		TransFormula globalVarsAssignment = m_ModifiableGlobals.getGlobalVarsAssignment(call.getCallStatement().getMethodName());
 		// 1.1 Rename the invars in global variable assignments.
 		List<TermVariable> replacees = new ArrayList<TermVariable>();
 		List<Term> replacers = new ArrayList<Term>();
