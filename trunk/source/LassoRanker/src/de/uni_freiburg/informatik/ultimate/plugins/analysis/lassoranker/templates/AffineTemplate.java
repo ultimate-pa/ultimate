@@ -57,19 +57,22 @@ public class AffineTemplate extends RankingFunctionTemplate {
 		// f(x) > 0
 		{
 			LinearInequality li = m_fgen.generate(inVars);
-			li.negate();
 			li.strict = true;
+			li.needs_motzkin_coefficient = false;
 			conjunction.add(Collections.singletonList(li));
 		}
 		
 		// f(x') < f(x) - delta
 		{
-			LinearInequality li = m_fgen.generate(outVars);
-			LinearInequality li2 = m_fgen.generate(inVars);
+			LinearInequality li = m_fgen.generate(inVars);
+			LinearInequality li2 = m_fgen.generate(outVars);
 			li2.negate();
 			li.add(li2);
-			li.add(new ParameterizedRational(m_delta));
+			ParameterizedRational p = new ParameterizedRational(m_delta);
+			p.coefficient = Rational.MONE;
+			li.add(p);
 			li.strict = true;
+			li.needs_motzkin_coefficient = false;
 			conjunction.add(Collections.singletonList(li));
 		}
 		

@@ -9,7 +9,8 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 /**
  * This represents a linear supporting invariant of the form
- * Σ c_i x_i + c >= 0.
+ * <pre>Σ c_i x_i + c ⊳ 0</pre>
+ * where ⊳ is > or ≥.
  * 
  * @author Jan Leike
  */
@@ -17,7 +18,7 @@ public class SupportingInvariant extends AffineFunction {
 	private static final long serialVersionUID = -8409937196513651751L;
 	
 	/**
-	 * Whether the invariant is strict ("<") versus non-strict ("<=")
+	 * Whether the invariant is strict (">") versus non-strict ("≥")
 	 */
 	public boolean strict;
 	

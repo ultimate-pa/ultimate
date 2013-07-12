@@ -118,7 +118,7 @@ public class Synthesizer {
 		m_loop_transition = loop_transition;
 		
 		s_Logger.debug("Stem: " + stem_transition);
-		s_Logger.debug("Loop: " + stem_transition);
+		s_Logger.debug("Loop: " + loop_transition);
 		
 		preprocess();
 	}
@@ -297,7 +297,7 @@ public class Synthesizer {
 						m_loop_transition.getOutVars());
 		
 		s_Logger.info("We have " + m_loop.size() + " loop conjunctions and "
-				+ templateConstraints.size() + "template disjunctions.");
+				+ templateConstraints.size() + " template disjunctions.");
 		
 		// loop(x, x') /\ si(x) -> template(x, x')
 		// Iterate over the loop conjunctions and template disjunctions
@@ -326,9 +326,11 @@ public class Synthesizer {
 					motzkin.add_inequality(sig.generate(
 							m_loop_transition.getInVars()));
 				}
+				s_Logger.debug(motzkin);
 				conj.add(motzkin.transform());
 			}
 		}
+		
 		
 		// Add constraints for the supporting invariants
 		for (SupportingInvariantGenerator sig : si_generators) {
@@ -340,8 +342,10 @@ public class Synthesizer {
 				for (LinearInequality li : stemConj) {
 					motzkin.add_inequality(li);
 				}
-				motzkin.add_inequality(sig.generate(
-						m_stem_transition.getOutVars()));
+				LinearInequality li =
+						sig.generate(m_stem_transition.getOutVars());
+				li.negate();
+				motzkin.add_inequality(li);
 				conj.add(motzkin.transform());
 			}
 			// si(x) /\ loop(x, x') -> si(x')
@@ -355,7 +359,7 @@ public class Synthesizer {
 						m_loop_transition.getInVars())); // si(x)
 				LinearInequality li = sig.generate(
 						m_loop_transition.getOutVars()); // ~si(x')
-				li.m_needs_motzkin_coefficient =
+				li.needs_motzkin_coefficient =
 						!Preferences.nondecreasing_invariants;
 				li.negate();
 				motzkin.add_inequality(li);

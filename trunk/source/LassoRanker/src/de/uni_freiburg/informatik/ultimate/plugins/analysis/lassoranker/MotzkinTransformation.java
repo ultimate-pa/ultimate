@@ -3,7 +3,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker;
 import java.util.*;
 
 import de.uni_freiburg.informatik.ultimate.logic.Annotation;
-import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
+import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -20,12 +20,12 @@ import de.uni_freiburg.informatik.ultimate.logic.Util;
  * means of non-negative combinations of the equations:
  * 
  * <pre>
- * ∀x. ¬(A*x ≤ b /\ B*x < d)
+ * ∀x. ¬(A*x ≥ b /\ B*x > d)
  * 
  * if and only if
  * 
- * ∃λ, μ. λ ≥ 0 /\ μ ≥ 0 /\ λ*A + μ*B = 0 /\ λ*b + μ*d ≤ 0 /\
- *        (λ*b < 0 \/ μ ≠ 0)
+ * ∃λ, μ. λ ≥ 0 /\ μ ≥ 0 /\ λ*A + μ*B = 0 /\ λ*b + μ*d ≥ 0 /\
+ *        (λ*b > 0 \/ μ ≠ 0)
  * </pre>
  * 
  * Here A and B are matrices, x, b and d are column vectors, and
@@ -52,7 +52,7 @@ public class MotzkinTransformation extends InstanceCounting {
 	
 	/**
 	 * List of linear inequalities
-	 * Ax <= b /\ Bx < d
+	 * <pre>Ax ≥ b /\ Bx > d</pre>
 	 */
 	private List<LinearInequality> m_inequalities;
 	
@@ -103,6 +103,16 @@ public class MotzkinTransformation extends InstanceCounting {
 		m_inequalities.add(li);
 	}
 	
+	private Term product(ParameterizedRational p, Term t) {
+		if (p.isConstant() && p.coefficient.equals(Rational.ONE)) {
+			return t;
+		}
+		if (!p.isZero()) {
+			return m_script.term("*", t, p.asTerm(m_script));
+		}
+		return null;
+	}
+	
 	/**
 	 * Applies the transformation given by Motzkin's Transposition Theorem.
 	 * Call this method after adding all inequalities.
@@ -139,53 +149,54 @@ public class MotzkinTransformation extends InstanceCounting {
 		
 		// λ*A + μ*B = 0
 		for (TermVariable var : vars) {
-			Term[] summands = new Term[num_coefficients];
-			for (int i = 0; i < num_coefficients; ++i) {
-				LinearInequality li = m_inequalities.get(i);
-				Term coefficient = coefficients.get(i);
-				summands[i] = m_script.term("*", coefficient,
-						li.getCoefficient(var).asTerm(m_script));
-			}
-			Term sum = Util.sum(m_script, summands);
-			conjunction.add(m_script.term("=", sum, m_script.decimal("0")));
-		}
-		
-		// λ*b + μ*d ≤ 0
-		{
-			Term[] summands = new Term[num_coefficients];
-			for (int i = 0; i < num_coefficients; ++i) {
-				LinearInequality li = m_inequalities.get(i);
-				Term coefficient = coefficients.get(i);
-				summands[i] = m_script.term("*", coefficient,
-						li.getConstant().asTerm(m_script));
-			}
-			Term sum = Util.sum(m_script, summands);
-			conjunction.add(m_script.term("<=", sum, m_script.decimal("0")));
-		}
-		
-		{
-			// λ*b < 0 -- Farkas' Lemma (no strict inequalities)
 			List<Term> summands = new ArrayList<Term>();
 			for (int i = 0; i < num_coefficients; ++i) {
-				LinearInequality li = m_inequalities.get(i);
-				Term coefficient = coefficients.get(i);
-				if (!li.strict) {
-					// only non-strict inequalities
-					summands.add(m_script.term("*", coefficient,
-							li.getConstant().asTerm(m_script)));
+				Term s = product(m_inequalities.get(i).getCoefficient(var),
+						coefficients.get(i));
+				if (s != null) {
+					summands.add(s);
 				}
 			}
 			Term sum = Util.sum(m_script, summands.toArray(new Term[0]));
-			Term classical = m_script.term("<", sum, m_script.decimal("0"));
+			conjunction.add(m_script.term("=", sum, m_script.decimal("0")));
+		}
+		
+		// λ*b + μ*d ≥ 0
+		{
+			List<Term> summands = new ArrayList<Term>();
+			for (int i = 0; i < num_coefficients; ++i) {
+				LinearInequality li = m_inequalities.get(i);
+				Term s = product(li.getConstant(), coefficients.get(i));
+				if (s != null) {
+					summands.add(s);
+				}
+			}
+			Term sum = Util.sum(m_script, summands.toArray(new Term[0]));
+			conjunction.add(m_script.term(">=", sum, m_script.decimal("0")));
+		}
+		
+		{
+			// λ*b > 0 -- Farkas' Lemma (no strict inequalities)
+			List<Term> summands = new ArrayList<Term>();
+			for (int i = 0; i < num_coefficients; ++i) {
+				LinearInequality li = m_inequalities.get(i);
+				Term s = product(li.getConstant(), coefficients.get(i));
+				if (!li.strict && s != null) {
+					// only non-strict inequalities
+					summands.add(s);
+				}
+			}
+			Term sum = Util.sum(m_script, summands.toArray(new Term[0]));
+			Term classical = m_script.term(">", sum, m_script.decimal("0"));
 			
 			// μ ≠ 0   -- strict inequalities
 			summands = new ArrayList<Term>();
 			for (int i = 0; i < num_coefficients; ++i) {
 				LinearInequality li = m_inequalities.get(i);
-				Term coefficient = coefficients.get(i);
-				if (li.strict) {
+				Term s = product(li.getConstant(), coefficients.get(i));
+				if (li.strict && s != null) {
 					// only strict inequalities
-					summands.add(coefficient);
+					summands.add(s);
 				}
 			}
 			sum = Util.sum(m_script, summands.toArray(new Term[0]));
@@ -198,7 +209,7 @@ public class MotzkinTransformation extends InstanceCounting {
 		{
 			for (int i = 0; i < num_coefficients; ++i) {
 				LinearInequality li = m_inequalities.get(i);
-				if (!li.m_needs_motzkin_coefficient) {
+				if (!li.needs_motzkin_coefficient) {
 					Term coefficient = coefficients.get(i);
 					conjunction.add(Util.or(m_script,
 						m_script.term("=", coefficient, m_script.decimal("0")),
@@ -219,22 +230,16 @@ public class MotzkinTransformation extends InstanceCounting {
 	@Override
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
-		sb.append("Inequalities before the Motzkin transformation:\n");
+		sb.append("Inequalities:\n");
 		for (LinearInequality li : m_inequalities) {
 			sb.append("    ");
 			sb.append(li);
 			sb.append("\n");
 		}
-		sb.append("\n");
-		
-		ApplicationTerm formula = (ApplicationTerm)transform();
-		sb.append("Formula after the transformation:\n");
-		for (Term t : formula.getParameters()) {
-			sb.append("    ");
-			sb.append(t);
-			sb.append("\n");
+		if (annotation != null) {
+			sb.append("Annotation: ");
+			sb.append(annotation);
 		}
-		
 		return sb.toString();
 	}
 }

@@ -26,14 +26,14 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.exceptio
 public class LinearInequality {
 	
 	/**
-	 * Whether the inequality is strict ("<") versus non-strict ("<=")
+	 * Whether the inequality is strict (">") versus non-strict ("≥")
 	 */
 	public boolean strict = false;
 	
 	/**
 	 * Whether this inequality needs its own Motzkin coefficient
 	 */
-	public boolean m_needs_motzkin_coefficient = true;
+	public boolean needs_motzkin_coefficient = true;
 	
 	/**
 	 * List of variables including rational coefficients
@@ -46,7 +46,7 @@ public class LinearInequality {
 	private ParameterizedRational m_constant;
 	
 	/**
-	 * Construct an empty linear inequality, i.e. 0 ≤ 0.
+	 * Construct an empty linear inequality, i.e. 0 ≥ 0.
 	 */
 	public LinearInequality() {
 		m_coefficients = new HashMap<TermVariable, ParameterizedRational>();
@@ -224,8 +224,8 @@ public class LinearInequality {
 	/**
 	 * Negate the linear inequality
 	 * <pre>
-	 * a ≤ b --> b < a
-	 * a < b --> b ≤ a
+	 * a ≥ b --> b > a
+	 * a > b --> b ≥ a
 	 * </pre>
 	 */
 	public void negate() {
@@ -253,7 +253,7 @@ public class LinearInequality {
 			}
 			sb.append(m_constant);
 		}
-		sb.append(strict ? " < 0" : " <= 0");
+		sb.append(strict ? " > 0" : " >= 0");
 		return sb.toString();
 	}
 }

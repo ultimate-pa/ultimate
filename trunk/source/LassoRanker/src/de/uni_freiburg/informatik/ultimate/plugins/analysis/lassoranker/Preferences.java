@@ -1,12 +1,17 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker;
 
+import java.io.Serializable;
+
+
 /**
  * Accumulation of various settings for LassoRanker.
  * TODO: move this into a preferences page
  * 
  * @author Jan Leike
  */
-public class Preferences {
+public class Preferences implements Serializable {
+	private static final long serialVersionUID = 3253589986886574198L;
+
 	/**
 	 * Check if the loop execution is impossible, i.e. the loop
 	 * condition contradicts the post condition of the stem

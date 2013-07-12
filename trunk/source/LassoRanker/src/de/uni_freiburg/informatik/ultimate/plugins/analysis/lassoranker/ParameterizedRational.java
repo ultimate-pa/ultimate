@@ -61,8 +61,14 @@ public class ParameterizedRational {
 	 * Note: the variables have to be the same!
 	 */
 	public void add(ParameterizedRational p) {
-		assert(p.variable == variable);
-		coefficient.add(p.coefficient);
+		if (coefficient.equals(Rational.ZERO)) {
+			variable = p.variable;
+		}
+		assert(p.coefficient.equals(Rational.ZERO) || p.variable == variable);
+		coefficient = coefficient.add(p.coefficient);
+		if (coefficient.equals(Rational.ZERO)) {
+			variable = null;
+		}
 	}
 	
 	/**
@@ -70,7 +76,11 @@ public class ParameterizedRational {
 	 * @return the parameter as a term
 	 */
 	public Term asTerm(Script script) {
-		return AuxiliaryMethods.rationalToDecimal(script, coefficient);
+		Term c = AuxiliaryMethods.rationalToDecimal(script, coefficient);
+		if (variable == null) {
+			return c;
+		}
+		return script.term("*", c, variable);
 	}
 	
 	@Override

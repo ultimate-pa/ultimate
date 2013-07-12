@@ -146,8 +146,11 @@ public class LassoRankerObserver implements IUnmanagedObserver {
 							}
 							longMessage.append("Found linear ranking function ");
 							longMessage.append(rfString);
-							longMessage.append(" with linear supporting invariant ");
-							longMessage.append(siString);
+							if (si_list.size() > 0) {
+								longMessage.append(" with linear supporting invariants ");
+								longMessage.append(siString);
+							}
+							longMessage.append(".");
 						} else {
 							longMessage.append("A ranking function has been found:");
 							longMessage.append("\n" + rf);

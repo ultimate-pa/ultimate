@@ -50,7 +50,10 @@ public class AuxiliaryMethods {
 		Term denom = script.decimal(a.denominator().abs().toString());
 		boolean negative = a.numerator().signum() * a.denominator().signum()
 				== -1;
-		Term t = script.term("/", num, denom);
+		Term  t = num;
+		if (!a.isIntegral()) {
+			t = script.term("/", num, denom);
+		}
 		if (negative) {
 			t = script.term("-", t);
 		}
