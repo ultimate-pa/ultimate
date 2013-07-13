@@ -17,9 +17,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.rankingf
 
 
 /**
- * The multiphase template finds ranking functions that proceed through a
- * fixed number of phases where each phase is ranked by an affine-linear
- * function.
+ * The lexicographic template finds lexicographic ranking functions where each
+ * entry is an affine-linear function.
  * 
  * Template:
  * <pre>
