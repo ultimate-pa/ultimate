@@ -19,9 +19,9 @@ public abstract class RankingFunction implements Serializable {
 	/**
 	 * Evaluate the ranking function
 	 * @param assignment the variable assignment
-	 * @return value of the function
+	 * @return value of the function as an ordinal
 	 */
-	public abstract Rational evaluate(Map<BoogieVar, Rational> assignment);
+	public abstract Ordinal evaluate(Map<BoogieVar, Rational> assignment);
 	
 	/**
 	 * Return the ranking function as a SMTLib term.

@@ -49,14 +49,16 @@ public class MultiphaseRankingFunction extends RankingFunction {
 	}
 	
 	@Override
-	public Rational evaluate(Map<BoogieVar, Rational> assignment) {
+	public Ordinal evaluate(Map<BoogieVar, Rational> assignment) {
+		Ordinal o = Ordinal.ZERO;
 		for (int i = 0; i < phases; ++i) {
 			Rational r = m_ranking.get(i).evaluate(assignment);
 			if (r.compareTo(Rational.ZERO) > 0) {
-				return r;
+				return o.add(Ordinal.fromInteger(r.ceil().numerator()));
 			}
+			o = o.add(Ordinal.OMEGA);
 		}
 		assert(false);
-		return null;
+		return o;
 	}
 }

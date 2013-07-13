@@ -16,6 +16,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Smt2Boogie;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.exceptions.TermException;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.rankingfunctions.LinearRankingFunction;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.rankingfunctions.Ordinal;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.rankingfunctions.RankingFunction;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.templates.AffineTemplate;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.templates.LexicographicTemplate;
@@ -318,6 +319,7 @@ public class LassoRankerObserver implements IUnmanagedObserver {
 	@Override
 	public void init() {
 		s_Logger.info("Preferences:\n" + Preferences.show());
+		Ordinal.testcases();
 	}
 
 	@Override

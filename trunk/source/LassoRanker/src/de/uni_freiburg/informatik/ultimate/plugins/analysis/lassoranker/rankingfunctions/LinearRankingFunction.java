@@ -1,5 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.rankingfunctions;
 
+import java.math.BigInteger;
 import java.util.*;
 
 import de.uni_freiburg.informatik.ultimate.logic.*;
@@ -52,7 +53,11 @@ public class LinearRankingFunction extends RankingFunction {
 	}
 	
 	@Override
-	public Rational evaluate(Map<BoogieVar, Rational> assignment) {
-		return m_ranking.evaluate(assignment);
+	public Ordinal evaluate(Map<BoogieVar, Rational> assignment) {
+		BigInteger i = m_ranking.evaluate(assignment).ceil().numerator();
+		if (i.compareTo(BigInteger.ZERO) < 0) {
+			i = BigInteger.ZERO;
+		}
+		return Ordinal.fromInteger(i);
 	}
 }

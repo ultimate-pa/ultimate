@@ -1,5 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.rankingfunctions;
 
+import java.math.BigInteger;
 import java.util.*;
 
 import de.uni_freiburg.informatik.ultimate.logic.*;
@@ -58,14 +59,17 @@ public class LexicographicRankingFunction extends RankingFunction {
 	}
 	
 	@Override
-	public Rational evaluate(Map<BoogieVar, Rational> assignment) {
-/*		for (int i = 0; i < lex; ++i) {
+	public Ordinal evaluate(Map<BoogieVar, Rational> assignment) {
+		Ordinal o = Ordinal.ZERO;
+		Ordinal w_pow = Ordinal.ONE;
+		for (int i = lex - 1; i >= 0; --i) {
 			Rational r = m_ranking.get(i).evaluate(assignment);
 			if (r.compareTo(Rational.ZERO) > 0) {
-				return r;
+				BigInteger k = r.ceil().numerator();
+				o = o.add(w_pow.mult(Ordinal.fromInteger(k)));
 			}
-		} */
-		assert(false);
-		return null;
+			w_pow = w_pow.mult(Ordinal.OMEGA);
+		}
+		return o;
 	}
 }
