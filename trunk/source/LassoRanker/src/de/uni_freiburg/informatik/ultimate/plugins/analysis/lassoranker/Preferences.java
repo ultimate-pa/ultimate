@@ -91,12 +91,12 @@ public class Preferences implements Serializable {
 	/**
 	 * Try to instantiate the lexicographic template?
 	 */
-	public static final boolean use_lex_template = false; // Default: true
+	public static final boolean use_lex_template = true; // Default: true
 	
 	/**
 	 * How many lexicographic entries in the lexicographic template?
 	 */
-	public static final int lex_template_functions = 3; // Default: 3
+	public static final int lex_template_functions = 2; // Default: 3
 	
 	/**
 	 * Try to instantiate the piecewise template?

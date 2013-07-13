@@ -12,7 +12,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.AffineFu
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.AffineFunctionGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.LinearInequality;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.ParameterizedRational;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.rankingfunctions.MultiphaseRankingFunction;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.rankingfunctions.LexicographicRankingFunction;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.rankingfunctions.RankingFunction;
 
 
@@ -24,15 +24,16 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.rankingf
  * Template:
  * <pre>
  *    /\_i δ_i > 0
- * /\ ( \/_i f_i(x) > 0 )
- * /\ ( /\_i (f_i(x') < f_i(x) - δ_i \/ \/_(j<i) f_j(x) > 0 )
+ * /\ /\_i f_i(x) > 0
+ * /\ ( /\_(i < k) f_i(x') ≤ f_i(x) \/ \/_(j<i) f_j(x') < f_j(x) - δ_j )
+ * /\ ( \/_i f_i(x') < f_i(x) - δ_i )
  * </pre>
  * 
  * @author Jan Leike
  */
-public class MultiphaseTemplate extends RankingFunctionTemplate {
+public class LexicographicTemplate extends RankingFunctionTemplate {
 	
-	public final int phases;
+	public final int lex;
 	
 	private static final String s_name_delta = "delta";
 	private static final String s_name_function = "rank";
@@ -41,19 +42,19 @@ public class MultiphaseTemplate extends RankingFunctionTemplate {
 	private AffineFunctionGenerator[] m_fgens;
 	
 	/**
-	 * @param num_phases number of phases in the multiphase template
+	 * @param num_functions number of lexicographic entries
 	 */
-	public MultiphaseTemplate(int num_phases) {
-		assert(num_phases > 0);
-		phases = num_phases;
-		m_deltas = new Term[phases];
-		m_fgens = new AffineFunctionGenerator[phases];
+	public LexicographicTemplate(int num_lex) {
+		assert(num_lex > 0);
+		lex = num_lex;
+		m_deltas = new Term[lex];
+		m_fgens = new AffineFunctionGenerator[lex];
 	}
 	
 	@Override
 	public void init(Script script, Collection<BoogieVar> vars) {
 		super.init(script, vars);
-		for (int i = 0; i < phases; ++i) {
+		for (int i = 0; i < lex; ++i) {
 			m_deltas[i] = RankingFunctionTemplate.newDelta(script,
 					s_name_delta + i);
 			m_fgens[i] = new AffineFunctionGenerator(script, vars,
@@ -64,26 +65,29 @@ public class MultiphaseTemplate extends RankingFunctionTemplate {
 	@Override
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
-		sb.append(phases);
-		sb.append("-phase template:\n   ");
-		for (int i = 0; i < phases; ++i) {
+		sb.append(lex);
+		sb.append("-lex template:\n   ");
+		for (int i = 0; i < lex; ++i) {
 			sb.append("delta_" + i + " > 0\n/\\ ");
 		}
+		for (int i = 0; i < lex; ++i) {
+			sb.append("f_" + i + "(x) > 0\n/\\ ");
+		}
+		for (int i = 0; i < lex - 1; ++i) {
+			sb.append("( f_" + i + "(x') <= f_" + i + "(x)");
+			for (int j = i - 1; j >= 0; --j) {
+				sb.append(" \\/ f_" + j + "(x') < f_" + j + "(x) - delta_" + j);
+			}
+			sb.append(" )\n/\\ ");
+		}
 		sb.append("( ");
-		for (int i = 0; i < phases; ++i) {
-			sb.append("f_" + i + "(x) > 0");
-			if (i < phases - 1) {
+		for (int i = 0; i < lex; ++i) {
+			sb.append("f_" + i + "(x') < f_" + i + "(x) - delta_" + i);
+			if (i < lex - 1) {
 				sb.append(" \\/ ");
 			}
 		}
-		sb.append(" )\n");
-		for (int i = 0; i < phases; ++i) {
-			sb.append("/\\ ( f_" + i + "(x') < f_" + i + "(x) - delta_" + i);
-			for (int j = i - 1; j >= 0; --j) {
-				sb.append(" \\/ f_" + j + "(x) > 0");
-			}
-			sb.append(" )\n");
-		}
+		sb.append(" )");
 		return sb.toString();
 	}
 	
@@ -95,20 +99,45 @@ public class MultiphaseTemplate extends RankingFunctionTemplate {
 		List<List<LinearInequality>> conjunction =
 				new ArrayList<List<LinearInequality>>();
 		
-		// \/_i f_i(x) > 0
-		List<LinearInequality> disjunction =
-				new ArrayList<LinearInequality>();
-		for (int i = 0; i < phases; ++i) {
+		// /\_i f_i(x) > 0
+		for (int i = 0; i < lex; ++i) {
 			LinearInequality li = m_fgens[i].generate(inVars);
 			li.strict = true;
-			li.needs_motzkin_coefficient = i > 0;
-			disjunction.add(li);
+			li.needs_motzkin_coefficient = false;
+			conjunction.add(Collections.singletonList(li));
 		}
-		conjunction.add(disjunction);
 		
-		// /\_i ( f_i(x') < f_i(x) - δ_i \/ \/_(j<i) f_j(x) > 0 )
-		for (int i = 0; i < phases; ++i) {
-			disjunction = new ArrayList<LinearInequality>();
+		// /\_(i < k) f_i(x') ≤ f_i(x) \/ \/_(j<i) f_j(x') < f_j(x) - δ_j
+		for (int i = 0; i < lex - 1; ++i) {
+			List<LinearInequality> disjunction =
+					new ArrayList<LinearInequality>();
+			LinearInequality li = m_fgens[i].generate(inVars);
+			LinearInequality li2 = m_fgens[i].generate(outVars);
+			li2.negate();
+			li.add(li2);
+			li.strict = false;
+			li.needs_motzkin_coefficient = false;
+			disjunction.add(li);
+			
+			for (int j = i - 1; j >= 0; --j) {
+				li = m_fgens[j].generate(inVars);
+				LinearInequality li3 = m_fgens[j].generate(outVars);
+				li3.negate();
+				li.add(li3);
+				ParameterizedRational p =
+						new ParameterizedRational(m_deltas[j]);
+				p.coefficient = Rational.MONE;
+				li.add(p);
+				li.strict = true;
+				li.needs_motzkin_coefficient = j > 0;
+				disjunction.add(li);
+			}
+			conjunction.add(disjunction);
+		}
+		
+		// \/_i f_i(x') < f_i(x) - δ_i
+		List<LinearInequality> disjunction = new ArrayList<LinearInequality>();
+		for (int i = 0; i < lex; ++i) {
 			LinearInequality li = m_fgens[i].generate(inVars);
 			LinearInequality li2 = m_fgens[i].generate(outVars);
 			li2.negate();
@@ -117,17 +146,10 @@ public class MultiphaseTemplate extends RankingFunctionTemplate {
 			p.coefficient = Rational.MONE;
 			li.add(p);
 			li.strict = true;
-			li.needs_motzkin_coefficient = false;
+			li.needs_motzkin_coefficient = i > 0 && i < lex - 1;
 			disjunction.add(li);
-			
-			for (int j = i - 1; j >= 0; --j) {
-				LinearInequality li3 = m_fgens[j].generate(inVars);
-				li3.strict = true;
-				li3.needs_motzkin_coefficient = j > 0;
-				disjunction.add(li3);
-			}
-			conjunction.add(disjunction);
 		}
+		conjunction.add(disjunction);
 		
 		// delta_i > 0 is assured by RankingFunctionTemplate.newDelta
 		return conjunction;
@@ -136,7 +158,7 @@ public class MultiphaseTemplate extends RankingFunctionTemplate {
 	@Override
 	public Collection<Term> getVariables() {
 		Collection<Term> list = new ArrayList<Term>();
-		for (int i = 0; i < phases; ++i) {
+		for (int i = 0; i < lex; ++i) {
 			list.addAll(m_fgens[i].getVariables());
 			list.add(m_deltas[i]);
 		}
@@ -147,26 +169,30 @@ public class MultiphaseTemplate extends RankingFunctionTemplate {
 	public RankingFunction extractRankingFunction(Map<Term, Rational> val)
 			throws SMTLIBException {
 		List<AffineFunction> fs = new ArrayList<AffineFunction>();
-		for (int i = 0; i < phases; ++i) {
+		for (int i = 0; i < lex; ++i) {
 			AffineFunction f = m_fgens[i].extractAffineFunction(val);
 			fs.add(f);
 		}
-		return new MultiphaseRankingFunction(fs);
+		return new LexicographicRankingFunction(fs);
 	}
 	
 	@Override
 	public List<String> getAnnotations() {
 		List<String> annotations = new ArrayList<String>();
-		annotations.add("at least one rank f_i is bounded");
-		for (int i = 0; i < phases; ++i) {
-			annotations.add("rank f" + i + " is decreasing in phase " + i);
+		for (int i = 0; i < lex; ++i) {
+			annotations.add("rank f" + i + " is bounded");
 		}
+		for (int i = 0; i < lex - 1; ++i) {
+			annotations.add("rank f" + i + " is not increasing unless "
+					+ "a smaller index decreases");
+		}
+		annotations.add("at least one rank index decreases");
 		return annotations;
 	}
-	
+
 	@Override
 	public int getDegree() {
-		assert(phases > 0);
-		return phases*(phases - 1) / 2;
+		assert(lex > 0);
+		return (lex - 1)*(lex - 2) / 2;
 	}
 }

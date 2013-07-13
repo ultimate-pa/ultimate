@@ -85,6 +85,14 @@ public abstract class RankingFunctionTemplate {
 	public abstract Collection<Term> getVariables();
 	
 	/**
+	 * Returns the degree of the template, i.e, the number of Motzkin
+	 * coefficients occurring in non-linear operation in the generated
+	 * constraints
+	 * @return degree of the template
+	 */
+	public abstract int getDegree();
+	
+	/**
 	 * Extract the ranking function from a model
 	 * @param script The SMTLib interface script
 	 * @return ranking function

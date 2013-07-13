@@ -18,6 +18,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.exceptio
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.rankingfunctions.LinearRankingFunction;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.rankingfunctions.RankingFunction;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.templates.AffineTemplate;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.templates.LexicographicTemplate;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.templates.MultiphaseTemplate;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.templates.RankingFunctionTemplate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.BoogieStatementPrettyPrinter;
@@ -68,6 +69,9 @@ public class LassoRankerObserver implements IUnmanagedObserver {
 		}
 		if (Preferences.use_multiphase_template) {
 			m_templates.add(new MultiphaseTemplate(Preferences.multiphase_template_phases));
+		}
+		if (Preferences.use_lex_template) {
+			m_templates.add(new LexicographicTemplate(Preferences.lex_template_functions));
 		}
 	}
 	

@@ -100,4 +100,9 @@ public class AffineTemplate extends RankingFunctionTemplate {
 		annotations.add("rank decreasing");
 		return annotations;
 	}
+	
+	@Override
+	public int getDegree() {
+		return 0;
+	}
 }

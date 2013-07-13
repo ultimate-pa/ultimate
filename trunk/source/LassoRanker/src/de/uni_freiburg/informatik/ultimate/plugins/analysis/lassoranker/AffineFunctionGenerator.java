@@ -31,7 +31,7 @@ public class AffineFunctionGenerator {
 	 * Name of the variable for the affine function's affine constant
 	 */
 	private static String constName(String prefix) {
-		return prefix + "_0";
+		return prefix + "c";
 	}
 	
 	/**

@@ -197,18 +197,6 @@ public class Synthesizer {
 	}
 	
 	/**
-	 * @return term variables that are relevant for the loop transition
-	 */
-	private Collection<TermVariable> getLoopVars() {
-		Collection<TermVariable> vars = new HashSet<TermVariable>();
-		vars.addAll(m_loop_transition.getInVars().values());
-		vars.addAll(m_loop_transition.getOutVars().values());
-		vars.addAll(m_loop_transition.getAuxVars());
-		vars.addAll(m_auxVars);
-		return vars;
-	}
-	
-	/**
 	 * @return Boogie variables that are relevant for ranking functions
 	 */
 	private Collection<BoogieVar> getRankVars() {
@@ -235,8 +223,15 @@ public class Synthesizer {
 						m_loop_transition.getOutVars());
 		List<String> annotations = template.getAnnotations();
 		
-		s_Logger.info("We have " + m_loop.size() + " loop conjunctions and "
-				+ templateConstraints.size() + " template disjunctions.");
+		s_Logger.info("We have " + m_loop.size() + " loop conjunction(s) and "
+				+ templateConstraints.size() + " template conjuncts.");
+		
+		// Negate template inequalities
+		for (List<LinearInequality> templateDisj : templateConstraints) {
+			for (LinearInequality li : templateDisj) {
+				li.negate();
+			}
+		}
 		
 		// loop(x, x') /\ si(x) -> template(x, x')
 		// Iterate over the loop conjunctions and template disjunctions
@@ -246,10 +241,7 @@ public class Synthesizer {
 						new MotzkinTransformation(m_script);
 				motzkin.annotation = annotations.get(m);
 				motzkin.add_inequalities(loopConj);
-				for (LinearInequality li : templateConstraints.get(m)) {
-					li.negate();
-					motzkin.add_inequality(li);
-				}
+				motzkin.add_inequalities(templateConstraints.get(m));
 				
 				// Add supporting invariants
 				assert(num_strict_invariants >= 0);
@@ -383,6 +375,7 @@ public class Synthesizer {
 		
 		s_Logger.info("Using template '" + template.getClass().getSimpleName()
 				+ "'.");
+		s_Logger.info("Template has degree " + template.getDegree() + ".");
 		s_Logger.debug(template);
 		
 		// List of all used supporting invariant generators
