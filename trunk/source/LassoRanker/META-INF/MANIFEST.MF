@@ -2,7 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: LassoRanker
 Bundle-SymbolicName: LassoRanker;singleton:=true
-Bundle-Version: 2.0.0
+Bundle-Version: 0.0.1
 Bundle-Activator: de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.Activator
 Require-Bundle: org.eclipse.core.runtime,
  Library-log4j;bundle-version="1.2.15",
