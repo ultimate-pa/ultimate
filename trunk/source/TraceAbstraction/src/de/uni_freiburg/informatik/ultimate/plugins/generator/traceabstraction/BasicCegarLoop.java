@@ -435,7 +435,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 			INestedWordAutomatonOldApi<CodeBlock, IPredicate> minimized;
 			if (shrinkNwa) {
 				ShrinkNwa<CodeBlock, IPredicate> minimizeOp = new ShrinkNwa<CodeBlock, IPredicate>(
-						newAbstraction, partition, m_StateFactoryForRefinement, false, false, false, 200, false);
+						newAbstraction, partition, m_StateFactoryForRefinement, true, false, false, 200, false);
 				minimized = (new RemoveUnreachable<CodeBlock, IPredicate>(minimizeOp.getResult())).getResult();
 				if (m_Pref.computeHoareAnnotation()) {
 					Map<IPredicate, IPredicate> oldState2newState = minimizeOp.getOldState2newState();
