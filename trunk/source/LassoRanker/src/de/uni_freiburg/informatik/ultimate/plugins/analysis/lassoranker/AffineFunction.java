@@ -24,6 +24,10 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Smt2Boogie;
  * purpose.  The coefficients are restricted to integers and the variables
  * are Boogie variables.
  * 
+ * This will be generated and administered by the AffineFunctionGenerator
+ * class.  It generates parameters whose solution gives rise to this affine
+ * function instance.
+ * 
  * The purpose of this class is to serve as a foundation to ranking functions
  * and supporting invariants.
  * 
