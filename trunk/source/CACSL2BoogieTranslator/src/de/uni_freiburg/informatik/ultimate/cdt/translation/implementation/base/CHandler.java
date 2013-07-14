@@ -118,6 +118,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.GotoStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.HavocStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IfStatement;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IfThenElseExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Label;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.LeftHandSide;
@@ -883,10 +884,23 @@ public class CHandler implements ICHandler {
                         UnaryExpression.Operator.ARITHNEGATIVE, o.expr),
                         o.auxVars);
             case IASTUnaryExpression.op_not:
-                Expression opEx = main.typeHandler.checkBooleanAssignment(loc,
-                        new PrimitiveType(loc, SFO.BOOL), o.expr);
-                return new ResultExpression(new UnaryExpression(loc, tBool,
-                        UnaryExpression.Operator.LOGICNEG, opEx), o.auxVars);
+            	InferredType iType = (InferredType) o.expr.getType();
+            	
+            	if (iType.getType() == InferredType.Type.Boolean) {
+                    return new ResultExpression(new UnaryExpression(loc, tBool,
+                            UnaryExpression.Operator.LOGICNEG, o.expr), o.auxVars);
+            	} else if (iType.getType() == InferredType.Type.Integer) {
+            		IntegerLiteral zero = new IntegerLiteral(loc, SFO.NR0);
+            		IntegerLiteral one = new IntegerLiteral(loc, SFO.NR1);
+            		BinaryExpression compareToZero = new BinaryExpression(
+            				loc, tBool, BinaryExpression.Operator.COMPEQ, o.expr,
+                            zero);
+            		return new ResultExpression(new IfThenElseExpression(loc, tInt, 
+            									compareToZero, one, zero), o.auxVars);
+            	} else {
+            		throw new UnsupportedOperationException(
+            				"only bool and int at the moment");
+            	}
             case IASTUnaryExpression.op_plus:
                 return new ResultExpression(o.stmt, o.expr, o.decl, o.auxVars);
             case IASTUnaryExpression.op_postFixIncr:
