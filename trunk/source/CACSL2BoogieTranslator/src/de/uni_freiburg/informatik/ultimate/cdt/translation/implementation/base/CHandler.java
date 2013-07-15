@@ -885,18 +885,17 @@ public class CHandler implements ICHandler {
                         o.auxVars);
             case IASTUnaryExpression.op_not:
             	InferredType iType = (InferredType) o.expr.getType();
-            	
             	if (iType.getType() == InferredType.Type.Boolean) {
-                    return new ResultExpression(new UnaryExpression(loc, tBool,
-                            UnaryExpression.Operator.LOGICNEG, o.expr), o.auxVars);
+                    return new ResultExpression(o.stmt, new UnaryExpression(loc, tBool,
+                            UnaryExpression.Operator.LOGICNEG, o.expr), o.decl, o.auxVars);
             	} else if (iType.getType() == InferredType.Type.Integer) {
             		IntegerLiteral zero = new IntegerLiteral(loc, SFO.NR0);
             		IntegerLiteral one = new IntegerLiteral(loc, SFO.NR1);
             		BinaryExpression compareToZero = new BinaryExpression(
             				loc, tBool, BinaryExpression.Operator.COMPEQ, o.expr,
                             zero);
-            		return new ResultExpression(new IfThenElseExpression(loc, tInt, 
-            									compareToZero, one, zero), o.auxVars);
+            		return new ResultExpression(o.stmt, new IfThenElseExpression(
+            				loc, tInt, compareToZero, one, zero), o.decl, o.auxVars);
             	} else {
             		throw new UnsupportedOperationException(
             				"only bool and int at the moment");
