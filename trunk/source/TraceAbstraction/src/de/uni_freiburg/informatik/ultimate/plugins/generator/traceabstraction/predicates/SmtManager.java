@@ -16,7 +16,11 @@ import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
+import de.uni_freiburg.informatik.ultimate.logic.AnnotatedTerm;
+import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.FormulaUnLet;
+import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
+import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.ReasonUnknown;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -1648,7 +1652,7 @@ public class SmtManager {
 		if (cb instanceof Call) {
 			throw new UnsupportedOperationException("This method is not responsible for Call-Statemtens.");
 		} else if (cb instanceof Return) {
-			throw new UnsupportedOperationException("This method is not responsible for Call-Statemtens.");
+			throw new UnsupportedOperationException("This method is not responsible for Return-Statemtens.");
 		} else if (cb instanceof InterproceduralSequentialComposition) {
 			throw new UnsupportedOperationException();
 		}
@@ -1817,12 +1821,26 @@ public class SmtManager {
 			replacees.add(call_TF.getOutVars().get(bv));
 			replacers.add(bv.getTermVariable());
 		}
+		// Collect the local variables
+		Set<TermVariable> localVars = new HashSet<TermVariable>();
+		for (BoogieVar bv : p.getVars()) {
+			if (!globalVarsAssignment.getInVars().keySet().contains(bv)) {
+				localVars.add(bv.getTermVariable());
+			}
+		}
+		
 		Term call_Term_InVarsRenamed_OutVarsRenamed = substituteVars(call_Term_InVarsRenamed, replacees, replacers);
-		Term callTerm_AND_globalVars = Util.and(m_Script, globalVars_InVarsRenamed_OutVarsRenamed, call_Term_InVarsRenamed_OutVarsRenamed);
-		// Existential quantification of local variables is intentionally omitted, since they can simplified to "true". 
-		TermVarsProc tvp = computeTermVarsProc(callTerm_AND_globalVars);
-		Term callTerm_AND_globalVars_as_closed_formula = SmtManager.computeClosedFormula(callTerm_AND_globalVars, tvp.getVars(), m_Script);
-		return newPredicate(callTerm_AND_globalVars, tvp.getProcedures(), tvp.getVars(), callTerm_AND_globalVars_as_closed_formula);
+		Term callTerm_AND_predicate = Util.and(m_Script, call_Term_InVarsRenamed_OutVarsRenamed, p.getFormula());
+		Term callTerm_AND_predicate_quantified = callTerm_AND_predicate;
+		if (localVars.size() > 0) {
+			callTerm_AND_predicate_quantified = m_Script.quantifier(Script.EXISTS, (TermVariable[]) localVars.toArray(new TermVariable[localVars.size()]), callTerm_AND_predicate, (Term[][])null);
+		}
+		
+		Term result = Util.and(m_Script, callTerm_AND_predicate_quantified, globalVars_InVarsRenamed_OutVarsRenamed);
+		
+		TermVarsProc tvp = computeTermVarsProc(result);
+		Term result_as_closed_formula = SmtManager.computeClosedFormula(globalVars_InVarsRenamed_OutVarsRenamed, tvp.getVars(), m_Script);
+		return newPredicate(result, tvp.getProcedures(), tvp.getVars(), result_as_closed_formula);
 	}
 	
 	
@@ -1834,6 +1852,13 @@ public class SmtManager {
 	 */
 	public IPredicate strongestPostcondition(IPredicate calleePred, 
 											IPredicate callerPred, Return ret) {
+		// Unquantify variables in calleePred, which are locals to callerPred, so they occur in callerPred
+		Set<Term> callerPredVars = new HashSet<Term>();
+		for (BoogieVar bv : callerPred.getVars()) {
+			callerPredVars.add(bv.getTermVariable());
+		}
+		Term calleePredTermUnquantified = unquantifyCalleePredicate(calleePred.getFormula(), callerPredVars);
+		
 		List<TermVariable> replacees = new ArrayList<TermVariable>();
 		List<Term> replacers = new ArrayList<Term>();
 		TransFormula ret_TF = ret.getTransitionFormula();
@@ -1850,17 +1875,129 @@ public class SmtManager {
 			replacers.add(bv.getTermVariable());
 		}
 		Term ret_Term_InVarsRenamed_OutVarsRenamed = substituteVars(ret_Term_InVarsRenamed, replacees, replacers);
-		
-		Term ret_Term_AND_callerPred = Util.and(m_Script, ret_Term_InVarsRenamed_OutVarsRenamed, callerPred.getFormula());
-		// TODO: The calleePred must somehow also be joined to the result, but I still don't know how.
-		
-		TermVarsProc tvp = computeTermVarsProc(ret_Term_AND_callerPred);
-		Term ret_Term_AND_callerPred_as_closedFormula = SmtManager.computeClosedFormula(ret_Term_AND_callerPred, tvp.getVars(), m_Script);
-		return newPredicate(ret_Term_AND_callerPred, tvp.getProcedures(), tvp.getVars(), ret_Term_AND_callerPred_as_closedFormula);
+		Set<TermVariable> localVarsToCalledProc = new HashSet<TermVariable>();
+		for (BoogieVar bv : calleePred.getVars()) {
+			if (!callerPred.getVars().contains(bv)) {
+				localVarsToCalledProc.add(bv.getTermVariable());
+			}
+		}
+		Term ret_Term_AND_calleePred = Util.and(m_Script, ret_Term_InVarsRenamed_OutVarsRenamed, calleePredTermUnquantified);
+		Term ret_Term_AND_calleePred_quantified = m_Script.quantifier(Script.EXISTS, 
+				localVarsToCalledProc.toArray(new TermVariable[localVarsToCalledProc.size()]),
+				ret_Term_AND_calleePred, (Term[][])null);
+				
+		TermVarsProc tvp = computeTermVarsProc(ret_Term_AND_calleePred_quantified);
+		Term ret_Term_AND_calleePred_as_closed_formula = SmtManager.computeClosedFormula(ret_Term_AND_calleePred_quantified, tvp.getVars(), m_Script);
+		return newPredicate(ret_Term_AND_calleePred_quantified, tvp.getProcedures(), tvp.getVars(), ret_Term_AND_calleePred_as_closed_formula);
 	}
 
+	private Term unquantifyCalleePredicate(Term calleePredTerm, Set<Term> callerPredVars) {
+		if (calleePredTerm instanceof ApplicationTerm) {
+			Term[] subTerms = ((ApplicationTerm) calleePredTerm).getParameters();
+			FunctionSymbol fs = ((ApplicationTerm) calleePredTerm).getFunction();
+			Term[] subTermsUnquantified = new Term[subTerms.length];
+			for (int i = 0; i < subTerms.length; i++) {
+				subTermsUnquantified[i] = unquantifyCalleePredicate(subTerms[i], callerPredVars);
+			}
+
+			return calleePredTerm.getTheory().term(fs, subTermsUnquantified);
+			
+		} else if (calleePredTerm instanceof AnnotatedTerm) {
+			throw new UnsupportedOperationException("Don't know what to do in this case! (AnnotatedTerm)");
+		} else if (calleePredTerm instanceof QuantifiedFormula) {
+			Term[] quantifiedVars = ((QuantifiedFormula) calleePredTerm).getVariables();
+			List<TermVariable> quantifiedVarsLocalToCalledProc = new ArrayList<TermVariable>();
+			for (Term t : quantifiedVars) {
+				if (!callerPredVars.contains(t)) {
+					if (t instanceof TermVariable) {
+						quantifiedVarsLocalToCalledProc.add((TermVariable)t);
+					}
+				}
+			}
+			if (quantifiedVarsLocalToCalledProc.size() > 0) {
+			return m_Script.quantifier(((QuantifiedFormula) calleePredTerm).getQuantifier(), 
+					quantifiedVarsLocalToCalledProc.toArray(new TermVariable[quantifiedVarsLocalToCalledProc.size()]),
+					((QuantifiedFormula) calleePredTerm).getSubformula(), (Term[][])null);
+			} else {
+				return ((QuantifiedFormula) calleePredTerm).getSubformula();
+			}
+				
+		} else {
+			return calleePredTerm;
+		}
+	}
 	
 	
+	// TODO: Do we need also a special SP for call and return?
+	public IPredicate strongestPostconditionSpecial(IPredicate p, CodeBlock cb) {
+		TransFormula tf = cb.getTransitionFormula();
+		Term tf_term = tf.getFormula();		
+		ArrayList<TermVariable> replacees = new ArrayList<TermVariable>();
+		ArrayList<Term> replacers = new ArrayList<Term>();
+		// 1 Rename the invars of the TransFormula of the given CodeBlock cb into TermVariables
+		for (BoogieVar bv : tf.getInVars().keySet()) {
+			// TODO: Check if bv is a free var
+			// if not, then continue, there is nothing to do
+			TermVariable bv_term = tf.getInVars().get(bv);
+			// Case: var in InVars and var not in OutVars
+			if (!tf.getOutVars().keySet().contains(bv)) {
+				throw new UnsupportedOperationException("This case is still undefined!");
+			} 
+			// Case: var in InVars and var in OutVars and Invars(var) == OutVars(var)
+			else if (bv_term == tf.getOutVars().get(bv)) {
+				replacees.add(bv_term);
+				replacers.add(bv.getTermVariable());
+			}
+			// Case: var in InVars and var in OutVars and Invars(var) != OutVars(var)
+			else {
+				replacees.add(bv_term);
+				replacers.add(bv.getTermVariable());
+			}
+		}
+		
+		Term tf_term_invars_renamed = substituteVars(tf_term, replacees, replacers);
+		
+		// 2 Rename the outvars of the TransFormula of the given CodeBlock cb into TermVariables
+		replacees.clear();
+		replacers.clear();
+		for (BoogieVar bv : tf.getOutVars().keySet()) {
+			// TODO: Check if bv is a free var
+			// if not, then continue, there is nothing to do
+			TermVariable bv_term = tf.getOutVars().get(bv);
+			// Case: var not in InVars and var in OutVars
+			if (!tf.getInVars().keySet().contains(bv)) {
+				replacees.add(bv_term);
+				replacers.add(bv.getTermVariable());
+			} 
+			// Case: var in InVars and var in OutVars and Invars(var) == OutVars(var)
+			else if (bv_term == tf.getInVars().get(bv)) {
+				continue;
+			}
+			// Case: var in InVars and var in OutVars and Invars(var) != OutVars(var)
+			else {
+				replacees.add(bv_term);
+				replacers.add(bv.getTermVariable());
+			}
+		}
+
+		Term tf_term_outvars_renamed = substituteVars(tf_term_invars_renamed, replacees, replacers);
+		
+		Set<TermVariable> assignedVars = new HashSet<TermVariable>();
+		for (BoogieVar bv : tf.getAssignedVars()) {
+			assignedVars.add(bv.getTermVariable());
+		}
+		Term formulaAssignedVarsQuantified = tf_term_outvars_renamed;
+		if (assignedVars.size() > 0) {
+			formulaAssignedVarsQuantified = m_Script.quantifier(Script.EXISTS,
+					assignedVars.toArray(new TermVariable[assignedVars.size()]),
+					tf_term_outvars_renamed, (Term[][]) null);
+		} 
+		Term result = Util.and(m_Script, formulaAssignedVarsQuantified, p.getFormula());
+		TermVarsProc tvp = computeTermVarsProc(result);
+		Term result_as_closed_formula = SmtManager.computeClosedFormula(result, tvp.getVars(), m_Script);
+		return newPredicate(result, tvp.getProcedures(), tvp.getVars(), result_as_closed_formula);
+		
+	}
 	/**
 	 * Computes the weakest precondition of the given predicate p and the
 	 * CodeBlock cb. 
