@@ -49,7 +49,6 @@ import de.uni_freiburg.informatik.ultimate.logic.PrintTerm;
 import de.uni_freiburg.informatik.ultimate.logic.QuotedObject;
 import de.uni_freiburg.informatik.ultimate.logic.ReasonUnknown;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
-import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
@@ -561,7 +560,7 @@ public class SMTInterpol extends NoopScript {
 	 * @param other   The context to clone.
 	 * @param options The options to set before setting the logic.
 	 */
-	private SMTInterpol(SMTInterpol other, Map<String, Object> options) {
+	public SMTInterpol(SMTInterpol other, Map<String, Object> options) {
 		super(other.getTheory());
 		m_Logger = other.m_Logger;
 		m_Timeout = other.m_Timeout;
@@ -1313,7 +1312,7 @@ public class SMTInterpol extends NoopScript {
 					m_Assertions = new ScopedArrayList<Term>();
 			break;
 		case OPT_PRODUCE_UNSAT_CORES:
-			if (m_ProduceUnsatCores = o.checkArg(value, m_ProduceUnsatCores) &&
+			if ((m_ProduceUnsatCores = o.checkArg(value, m_ProduceUnsatCores)) &&
 				m_ProofMode == 0)
 				m_ProofMode = 1;
 			break;
@@ -1387,6 +1386,9 @@ public class SMTInterpol extends NoopScript {
 //		if (m_Engine == null)
 //			throw new SMTLIBException("No logic set!");
 //		return m_Converter.simplify(term);
+//		return new SimplifyDDA(new SMTInterpol(this, 
+//				Collections.<String, Object> emptyMap()), getLogger()).
+//				getSimplifiedTerm(term);
 		throw new UnsupportedOperationException();
 	}
 

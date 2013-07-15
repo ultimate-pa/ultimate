@@ -5,6 +5,7 @@ import java.math.BigInteger;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -23,6 +24,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.logic.simplification.SimplifyDDA;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.SMTInterpol;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.util.DAGSize;
 
@@ -83,8 +85,18 @@ public class HornSolver extends NoopScript {
 			System.err.print(m_Term);
 			System.err.print(" = ");
 			System.err.println((offset >= solution.length) ? "false" : solution[offset]);
-			if (offset < solution.length)
+			SMTInterpol backend = (SMTInterpol) m_Backend;
+			SimplifyDDA simp = new SimplifyDDA(
+					new SMTInterpol(backend,
+							Collections.singletonMap(
+									":check-type", (Object)"quick")),
+									backend.getLogger());
+			if (offset < solution.length) {
 				System.err.println("size: " + new DAGSize().size(solution[offset]));
+				Term simplified = simp.getSimplifiedTerm(solution[offset]);
+				System.err.println("simplified: " + simplified);
+				System.err.println("simpsize: " + new DAGSize().size(simplified));
+			}
 			return offset + 1;
 		}
 	}

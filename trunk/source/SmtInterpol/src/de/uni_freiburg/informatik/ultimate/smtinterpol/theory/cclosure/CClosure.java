@@ -271,7 +271,8 @@ public class CClosure implements ITheory {
 			LAEquality laeq = (LAEquality) lit.getAtom();
 			for (CCEquality eq : laeq.getDependentEqualities()) {
 				if (eq.getStackPosition() >= 0 
-					&& eq.getStackPosition() < laeq.getStackPosition()) {
+					&& eq.getStackPosition() < laeq.getStackPosition() && 
+					eq.getDecideStatus().getSign() == lit.getSign()) {
 					return new Clause(new Literal[] { eq.getDecideStatus().negate(), lit },
 							new LeafNode(LeafNode.EQ, null));
 				}

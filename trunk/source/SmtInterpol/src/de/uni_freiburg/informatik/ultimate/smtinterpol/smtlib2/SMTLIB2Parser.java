@@ -30,6 +30,9 @@ public class SMTLIB2Parser implements IParser {
 			filename = "<stdin>";
         ParseEnvironment parseEnv = new ParseEnvironment(solver);
         try {
+        	// Have to carry this option through
+        	parseEnv.setOption(":print-success",
+        			solver.getOption(":print-success"));
         	parseEnv.parseScript(filename);
         } catch (SMTLIBException se) {
         	parseEnv.printError(se.getMessage());

@@ -712,6 +712,58 @@ public class LinArSolve implements ITheory {
 				new LeafNode(LeafNode.EQ, null));
 	}
 
+	/**
+	 * Create a new LiteralReason for a newly created and back-propagated 
+	 * literal and add the reason to the right position in the reason chain.
+	 * 
+	 * @param var The variable that got a new literal
+	 * @param lit The newly created literal that was inserted as propagated literal.
+	 */
+	private void insertReasonOfNewComposite(LinVar var, Literal lit) {
+		BoundConstraint bc = (BoundConstraint) lit.getAtom();
+		boolean isUpper = lit == bc;
+		
+		if (isUpper) {
+			InfinitNumber bound = bc.getBound();
+			LiteralReason reason = new LiteralReason(var, bound, true, lit);
+			// insert reason into the reason chain
+			if (bound.less(var.getExactUpperBound())) {
+				reason.setOldReason(var.m_upper);
+				var.m_upper = reason;
+			} else {
+				LAReason thereason = var.m_upper;
+				while (thereason.getOldReason().getExactBound().less(bound)) {
+					thereason = thereason.getOldReason();
+				}
+				assert (thereason.getExactBound().less(bound) && 
+						bound.less(thereason.getOldReason().getExactBound()));
+				reason.setOldReason(thereason.getOldReason());
+				thereason.setOldReason(reason);
+			}
+			if (var.mbasic && var.outOfBounds())
+				moob.add(var);
+		} else {
+			InfinitNumber bound = bc.getInverseBound();
+			LiteralReason reason = new LiteralReason(var, bound, false, lit);
+			// insert reason into the reason chain
+			if (var.getExactLowerBound().less(bound)) {
+				reason.setOldReason(var.m_lower);
+				var.m_lower = reason;
+			} else {
+				LAReason thereason = var.m_lower;
+				while (bound.less(thereason.getOldReason().getExactBound())) {
+					thereason = thereason.getOldReason();
+				}
+				assert (thereason.getOldReason().getExactBound().less(bound) && 
+						bound.less(thereason.getExactBound()));
+				reason.setOldReason(thereason.getOldReason());
+				thereason.setOldReason(reason);
+			}
+			if (var.mbasic && var.outOfBounds())
+				moob.add(var);
+		}
+	}
+	
 	private Clause setBound(LAReason reason) {
 		LinVar var = reason.getVar();
 		InfinitNumber bound = reason.getBound();
@@ -2065,6 +2117,9 @@ public class LinArSolve implements ITheory {
 			mengine.insertPropagatedLiteralBefore(this, lit, beforeLit);
 		else
 			mengine.insertPropagatedLiteral(this, lit, decideLevel);
+		InfinitNumber litBound = comp.isUpper() ? bc.getBound() : bc.getInverseBound();
+		if (!comp.getExactBound().equals(litBound))
+			insertReasonOfNewComposite(var, lit);
 		
 		return lit;
 	}
