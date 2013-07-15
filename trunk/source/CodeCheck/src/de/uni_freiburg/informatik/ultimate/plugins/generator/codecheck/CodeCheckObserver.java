@@ -23,9 +23,11 @@ import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootAnnot;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.PreferenceValues.Solver;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IPredicate;
@@ -34,6 +36,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceChecker;
 
 import org.apache.log4j.Logger;
+import org.eclipse.swt.program.Program;
 
 /**
  * Auto-Generated Stub for the plug-in's Observer
@@ -61,28 +64,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 	private IPredicate m_truePredicate;
 	private IPredicate m_falsePredicate;
 	
-	private HashMap <AnnotatedProgramPoint, HashMap<IPredicate, AnnotatedProgramPoint>> LocationPredicates;
-
-	
-	
-	public boolean initialize(IElement root) {
-		m_originalRoot = (RootNode) root;
-		RootAnnot rootAnnot = m_originalRoot.getRootAnnot();
-		m_taPrefs = rootAnnot.getTaPrefs();
-		m_smtManager = new SmtManager(rootAnnot.getBoogie2Smt(),
-				Solver.SMTInterpol, rootAnnot.getGlobalVars(),
-				rootAnnot.getModifiedVars(), false, "");
-
-		m_truePredicate = m_smtManager.newTruePredicate();
-		m_falsePredicate = m_smtManager.newFalsePredicate();
-
-		RCFG2AnnotatedRCFG r2ar = new RCFG2AnnotatedRCFG(m_smtManager);
-		m_graphRoot = r2ar.convert(m_originalRoot, m_truePredicate);
-
-		return true;
-	}
-	
-	
+	private HashMap <ProgramPoint, HashMap<IPredicate, AnnotatedProgramPoint>> LocationPredicates;
 
 	private PrintWriter dumpInitialize() { // copied from Impulse, needed for trace checker
 		File file = 
@@ -96,7 +78,25 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 		} 
 		return null;
 	}
+	
+	// preliminary methods
+	public boolean initialize(IElement root) {
+		m_originalRoot = (RootNode) root;
+		RootAnnot rootAnnot = m_originalRoot.getRootAnnot();
+		m_taPrefs = rootAnnot.getTaPrefs();
+		m_smtManager = new SmtManager(rootAnnot.getBoogie2Smt(),
+				Solver.SMTInterpol, rootAnnot.getGlobalVars(),
+				rootAnnot.getModifiedVars(), false, "");
 
+		m_truePredicate = m_smtManager.newTruePredicate();
+		m_falsePredicate = m_smtManager.newFalsePredicate();
+
+		RCFG2AnnotatedRCFG r2ar = new RCFG2AnnotatedRCFG(m_smtManager);
+		m_graphRoot = r2ar.convert(m_originalRoot, m_truePredicate);
+		//dfs(m_graphRoot);
+		return true;
+	}
+	
 	private IPredicate conjugatePredicates(IPredicate a, IPredicate b) {
 		TermVarsProc tvp = m_smtManager.and(a, b);
 		return m_smtManager.newPredicate(tvp.getFormula(), tvp.getProcedures(), tvp.getVars(), tvp.getClosedFormula());
@@ -107,7 +107,26 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 		return m_smtManager.newPredicate(tvp.getFormula(), tvp.getProcedures(), tvp.getVars(), tvp.getClosedFormula());
 	}
 	
+	private boolean isSatEdge(AnnotatedProgramPoint sourceNode, CodeBlock edgeLabel,
+			AnnotatedProgramPoint destinationNode) {
+		//FIXME
+		if (edgeLabel instanceof DummyCodeBlock)
+			return false;
+		System.out.print(".");
+		return m_smtManager.isInductive(sourceNode.getPredicate(), edgeLabel, negatePredicate(destinationNode.getPredicate())) != LBool.UNSAT;
+	}
+	
+	private boolean isValidEdge(AnnotatedProgramPoint sourceNode, CodeBlock edgeLabel,
+			AnnotatedProgramPoint destinationNode) {
+		//FIXME
+		if (edgeLabel instanceof DummyCodeBlock)
+			return false;
+		System.out.print(".");
+		return m_smtManager.isInductive(sourceNode.getPredicate(), edgeLabel, destinationNode.getPredicate()) == LBool.UNSAT;
+	}
+	
 	private ImpRootNode copyGraph(ImpRootNode root) {
+		// FIXME: m_outgoingReturnAppToCallPreds
 		HashMap <AnnotatedProgramPoint, AnnotatedProgramPoint> copy = new HashMap<AnnotatedProgramPoint, AnnotatedProgramPoint>();
 		
 		ImpRootNode newRoot = new ImpRootNode(root.getRootAnnot());
@@ -140,17 +159,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 		}
 		return newRoot;
 	}
-	
-	private boolean initializeLocationPredicates(AnnotatedProgramPoint node) {
-		if(LocationPredicates.get(node) == null) {
-			LocationPredicates.put(node, new HashMap<IPredicate,AnnotatedProgramPoint>());
-			LocationPredicates.get(node).put(node.getPredicate(), node);
-			for (AnnotatedProgramPoint successor : node.getOutgoingNodes())
-				initializeLocationPredicates(successor);
-		}
-		return true;
-	}
-	
+
 	@Override
 	public boolean process(IElement root) {
 		
@@ -160,15 +169,15 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 		
 		
 		final boolean loop_forever = true; // for DEBUG
-		final int iterationsLimit = 5; // for DEBUG
+		final int iterationsLimit = 10; // for DEBUG
 		
 		initialize(root);
 		
-		ImpRootNode originalGraphCopy = copyGraph(m_graphRoot);
+		//ImpRootNode originalGraphCopy = copyGraph(m_graphRoot);
 		
 		if(checker == Checker.IMPULSE) {
-			LocationPredicates= new HashMap<AnnotatedProgramPoint, HashMap<IPredicate,AnnotatedProgramPoint>>();
-			initializeLocationPredicates(originalGraphCopy);
+			LocationPredicates = new HashMap<ProgramPoint, HashMap<IPredicate,AnnotatedProgramPoint>>();
+			initializeLocationPredicates(m_graphRoot);
 		}
 		
 		 /* testing copy graph
@@ -189,6 +198,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 			stack.add(procRoot);
 			EmptinessCheck emptinessCheck = new EmptinessCheck();
 			int iterationsCount = 0; // for DEBUG
+			debugSets();
 			while (loop_forever | iterationsCount++ < iterationsLimit) {
 				System.out.printf("Iterations = %d\n", iterationsCount);
 				if (stack.isEmpty()) {
@@ -218,10 +228,6 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 						IPredicate[] interpolants = traceChecker.getInterpolants(new TraceChecker.AllIntegers());
 						
 						AnnotatedProgramPoint[] trace = errorNWP.getFirst();
-						/*
-						for (int i = 0; i < interpolants.length; i++)
-							splitNode(trace[i + 1], interpolants[i]);
-						*/
 						switch(checker) {
 						case ULTIMATE:
 							ultimateCheck(trace, interpolants, procedureRoot);
@@ -241,6 +247,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 						// return unsafe
 					}
 				}
+				//debugSets();
 			}
 			//if (procID < noOfProcedures)
 			//m_graphRoot = copyGraph(originalGraphCopy);
@@ -248,7 +255,70 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 		
 		return false;
 	}
+	// Debug
+	HashSet <AnnotatedProgramPoint> visited = new HashSet<AnnotatedProgramPoint>(); 
+	public boolean dfs(AnnotatedProgramPoint node) {
+		if (!visited.contains(node)) {
+			visited.add(node);
+			AnnotatedProgramPoint[] adj = node.getOutgoingNodes().toArray(new AnnotatedProgramPoint[]{});
+			for (int i = 0; i < adj.length; ++i) {
+				dfs(adj[i]);
+				if (node.getOutgoingEdgeLabel(adj[i]) instanceof Summary) {
+					node.removeOutgoingNode(adj[i]);
+					adj[i].removeIncomingNode(node);
+				}
+			}
+		}
+		return false;
+	}
+
+	public void debugSets() {
+
+		
+		HashMap <HashSet <AnnotatedProgramPoint>, Integer> indexSets = new HashMap<HashSet<AnnotatedProgramPoint>, Integer>();
+		for (HashSet <AnnotatedProgramPoint> set : AnnotatedProgramPoint.m_in) {
+			if (!indexSets.containsKey(set)) {
+				indexSets.put(set, indexSets.size());
+			}
+		}
+		
+		Stack <AnnotatedProgramPoint> stk = new Stack<AnnotatedProgramPoint>();
+		HashSet <AnnotatedProgramPoint> visited = new HashSet<AnnotatedProgramPoint>();
+		stk.add(m_graphRoot);
+		
+		while (!stk.isEmpty()) {
+			AnnotatedProgramPoint tp = stk.pop();
+			if (!visited.contains(tp)) {
+				visited.add(tp);
+				System.err.printf("Node %s %s:\n", objectReference(tp.m_outgoingReturnAppToCallPreds), tp);
+				if (tp.m_outgoingReturnAppToCallPreds != null)
+					for (AnnotatedProgramPoint ret : tp.m_outgoingReturnAppToCallPreds.keySet()) {
+						System.err.printf("\tNode %s ~~~> S%d\n", ret, indexSets.get(tp.m_outgoingReturnAppToCallPreds.get(ret)));
+					}
+				System.err.println();
+				AnnotatedProgramPoint[] adj = tp.getOutgoingNodes().toArray(new AnnotatedProgramPoint[]{});
+				for (AnnotatedProgramPoint child : adj) {
+					if (!visited.contains(child))
+						stk.add(child);
+				}
+			}
+		}
+		for (HashSet <AnnotatedProgramPoint> set : AnnotatedProgramPoint.m_in) {
+			System.err.printf("Set #%d: %s\n", indexSets.get(set), set);
+		}
+		int count = 0;
+		for (HashMap <AnnotatedProgramPoint, HashSet <AnnotatedProgramPoint>> mp : AnnotatedProgramPoint.m_ingoing) {
+			System.err.printf("Map %s:#%d:\n", objectReference(mp), count);
+			for (AnnotatedProgramPoint ret : mp.keySet()) {
+				System.err.printf("\tNode %s ~~~>>> S%d\n", ret, indexSets.get(mp.get(ret)));
+			}
+			System.err.printf("\tEnd Map#%d\n", count++);
+		}
+		
+		System.err.println();
+	}
 	
+	// Ultimate
 	private boolean ultimateCheck(AnnotatedProgramPoint[] nodes, IPredicate[] interpolants, AnnotatedProgramPoint procedureRoot) {
 		
 		ArrayList <AnnotatedProgramPoint> hallo = new ArrayList<AnnotatedProgramPoint>();
@@ -285,7 +355,12 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 		}
 		return true;
 	}
+	
+	public static String objectReference(Object o) {
+		return Integer.toHexString(System.identityHashCode(o));
 		
+	}
+	
 	private boolean modifyHyperEdges(AnnotatedProgramPoint src, AnnotatedProgramPoint dest, HashMap <AnnotatedProgramPoint, ArrayList <AnnotatedProgramPoint>> nodesClones) {
 		HashSet <AnnotatedProgramPoint> hyperEdges = src.getCallPredsOfOutgoingReturnTarget(dest);
 		if (hyperEdges != null) {
@@ -303,7 +378,11 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 	}
 	
 	private boolean splitNode(AnnotatedProgramPoint oldNode, IPredicate[] interpolant, HashMap <AnnotatedProgramPoint, ArrayList <AnnotatedProgramPoint>> nodesClones) {
-		
+		/*
+		ArrayList <IPredicate> interpolants = new ArrayList<IPredicate>();
+		Collections.addAll(interpolants, interpolant);
+		System.err.printf("Node %s with %s\n", oldNode, interpolants);
+		*/
 		int interpolantsCount = interpolant.length;
 		AnnotatedProgramPoint[][] newNodes = new AnnotatedProgramPoint[interpolantsCount][2];
 		for (int i = 0; i < interpolantsCount; ++i) {
@@ -410,7 +489,6 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 			preRet.removeOutgoingReturnCallPred(target, oldNode);
 		}
 		*/
-		
 		for (HashMap<AnnotatedProgramPoint, HashSet<AnnotatedProgramPoint>> map : AnnotatedProgramPoint.m_ingoing) {
 			if (map.containsKey(oldNode)) {
 				HashSet <AnnotatedProgramPoint> hyperEdges = map.get(oldNode);
@@ -433,25 +511,47 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 		}
 		return true;
 	}
-	
-	private boolean isSatEdge(AnnotatedProgramPoint sourceNode, CodeBlock edgeLabel,
-			AnnotatedProgramPoint destinationNode) {
-		//FIXME
-		if (edgeLabel instanceof DummyCodeBlock)
-			return false;
-		System.out.print(".");
-		return m_smtManager.isInductive(sourceNode.getPredicate(), edgeLabel, negatePredicate(destinationNode.getPredicate())) != LBool.UNSAT;
-	}
-	
-	private boolean isValidEdge(AnnotatedProgramPoint sourceNode, CodeBlock edgeLabel,
-			AnnotatedProgramPoint destinationNode) {
-		//FIXME
-		if (edgeLabel instanceof DummyCodeBlock)
-			return false;
-		System.out.print(".");
-		return m_smtManager.isInductive(sourceNode.getPredicate(), edgeLabel, destinationNode.getPredicate()) == LBool.UNSAT;
-	}
 
+
+	
+	// Impulse
+
+	private boolean updateSets(AnnotatedProgramPoint oldNode) {
+		// This is assuming that a copy of a node will never be an original node.
+		for (HashMap<AnnotatedProgramPoint, HashSet<AnnotatedProgramPoint>> map : AnnotatedProgramPoint.m_ingoing) {
+			if (map.containsKey(oldNode)) {
+				HashSet <AnnotatedProgramPoint> hyperEdges = map.get(oldNode);
+				//map.remove(oldNode);
+				for (Iterator <AnnotatedProgramPoint> clones = oldNode.getNewCopies().iterator(); clones.hasNext(); ) {
+					AnnotatedProgramPoint newNode = clones.next();
+					map.put(newNode, hyperEdges);
+				}
+			}
+		}
+		
+		for (HashSet<AnnotatedProgramPoint> set : AnnotatedProgramPoint.m_in) {
+			if (set.contains(oldNode)) {
+				for (Iterator <AnnotatedProgramPoint> clones = oldNode.getNewCopies().iterator(); clones.hasNext(); ) {
+					AnnotatedProgramPoint newNode = clones.next();
+					set.add(newNode);
+				}
+			}
+		}
+		return true;
+	}
+	
+	private boolean isStrongerPredicate(AnnotatedProgramPoint strongerNode, AnnotatedProgramPoint weakerNode, CodeBlock dummyLabel) {
+		
+		if (dummyLabel == null)
+			dummyLabel = new DummyCodeBlock();
+		
+		if (isValidEdge(weakerNode, dummyLabel, strongerNode))
+			return true;
+		else
+			return false;
+		
+	}
+	
 	private boolean impulseCheck (AnnotatedProgramPoint[] nodes, IPredicate[] interpolants, AnnotatedProgramPoint procedureRoot) {
 		
 		AnnotatedProgramPoint[] copies = new AnnotatedProgramPoint[interpolants.length + 1];
@@ -470,27 +570,37 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 		
 	}
 
+	private boolean initializeLocationPredicates(AnnotatedProgramPoint node) {
+		ProgramPoint programPoint = node.getProgramPoint();
+		if(LocationPredicates.get(programPoint) == null) {
+			HashMap<IPredicate,AnnotatedProgramPoint> hashMap = new HashMap<IPredicate,AnnotatedProgramPoint>();
+			hashMap.put(node.getPredicate(), node);
+			LocationPredicates.put(programPoint, hashMap);
+			for (AnnotatedProgramPoint successor : node.getOutgoingNodes())
+				initializeLocationPredicates(successor);
+		}
+		return true;
+	}
+	
 	private AnnotatedProgramPoint copyNode(AnnotatedProgramPoint oldNode, IPredicate interpolant) {
 		
 		
-		/*   // Alex
 		if(interpolant == m_truePredicate) // Alex :
 			return oldNode;
 		
 		
-		AnnotatedProgramPoint nodeRoot = oldNode.getCopyRoot();
+		ProgramPoint programPoint = oldNode.getProgramPoint();
 		
 		IPredicate newPredicate = conjugatePredicates(oldNode.getPredicate(), interpolant);
 
-		if(LocationPredicates.get(nodeRoot).containsKey(newPredicate))
-			return LocationPredicates.get(nodeRoot).get(newPredicate);
-		*/
+		AnnotatedProgramPoint newNode = LocationPredicates.get(programPoint).get(newPredicate);
 		
-		IPredicate newPredicate = conjugatePredicates(oldNode.getPredicate(), interpolant);
-
-		AnnotatedProgramPoint newNode = new AnnotatedProgramPoint(oldNode, newPredicate);
+		if(newNode != null)
+			return newNode;
 		
-		//LocationPredicates.get(nodeRoot).put(newPredicate, newNode);
+		newNode = new AnnotatedProgramPoint(oldNode, newPredicate);
+		
+		LocationPredicates.get(programPoint).put(newPredicate, newNode);
 		
 		oldNode.addCopy(newNode);
 		newNode.setCloneSource(oldNode);
@@ -507,11 +617,10 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 		
 		return newNode;
 	}
-	
+
 	private boolean redirectEdges(AnnotatedProgramPoint[] nodes, AnnotatedProgramPoint[] copies) {
-		defaultRedirecting(nodes, copies);
 		
-		// Here you can use the tree instead, But I am now using the immediate copies
+		defaultRedirecting(nodes, copies);
 		
 		for (AnnotatedProgramPoint node : nodes) {
 			
@@ -519,82 +628,86 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 			
 			for (AnnotatedProgramPoint predecessorNode : predecessorNodes) {
 				
-				if(predecessorNode == m_graphRoot) //FIXME
+				if(predecessorNode == m_graphRoot) 
 					continue;
 				
 				AnnotatedProgramPoint bestRedirectTarget = findBestRedirectionTarget(predecessorNode, node);
 				
-				if(bestRedirectTarget == null)
-					continue;
-				
-				CodeBlock label = predecessorNode.getOutgoingEdgeLabel(node);
-				predecessorNode.removeOutgoingNode(node);
-				node.removeIncomingNode(predecessorNode);
-
-				predecessorNode.addOutgoingNode(bestRedirectTarget, label);
-				bestRedirectTarget.addIncomingNode(predecessorNode);
+				if(bestRedirectTarget != null)
+					redirect(predecessorNode, node, bestRedirectTarget);
 			}
-			
-			
 		}
-		
-		for (AnnotatedProgramPoint node : nodes) {
-			node.updateCopies();
-		}
+	
 		return true;
 	}
-		
+	
 	private boolean defaultRedirecting(AnnotatedProgramPoint[] nodes, AnnotatedProgramPoint[] copies) {
 		
-		for(int i = 0; i < copies.length; ++i) {
+		CodeBlock dummyCodeBlock = new DummyCodeBlock();
+		
+		//Redirect First Edge
+		redirect(nodes[0], nodes[1], copies[1]); 
+		
+		//redirect intermediate edges
+		for(int i = 1; i < copies.length - 1; ++i) {
 
-			AnnotatedProgramPoint source = copies[i];
-			AnnotatedProgramPoint oldDest = nodes[i+1];
 			
-			
-			if(i == 0)
-				source = nodes[0];
-			
-			CodeBlock label = source.getOutgoingEdgeLabel(oldDest);
-			source.removeOutgoingNode(oldDest);
-			oldDest.removeIncomingNode(source);
-			
-			if(i < copies.length - 1) {
-				AnnotatedProgramPoint newDest = copies[i + 1];
-				source.addOutgoingNode(newDest, label);
-				newDest.addIncomingNode(source);
+			if(nodes[i].getNewCopies().contains(copies[i]))
+				redirect(copies[i], nodes[i+1], copies[i+1]);
+			else {
+				AnnotatedProgramPoint source = copies[i];
+				AnnotatedProgramPoint oldDest = null; //FIXME
+				AnnotatedProgramPoint newDest = copies[i+1];
+				
+				
+				if (oldDest == null) 
+					; //ask alex
+				else if (isStrongerPredicate(newDest, oldDest, dummyCodeBlock))
+					redirect(source, oldDest, newDest);
+				else if (isStrongerPredicate(oldDest, newDest, dummyCodeBlock))
+					; //do nothing
+				else {
+					boolean alwaysRedirect = false;
+					boolean randomlyDecide = false;
+					
+					if(alwaysRedirect)
+						redirect(source, oldDest, newDest);
+					else if(randomlyDecide) {
+						int rand = (int)(Math.random() * 2);
+						if(rand == 1)
+							redirect(source, oldDest, newDest);
+					}
+				}
 			}
-			
+		}
+		
+		//remove Last Edge
+		AnnotatedProgramPoint lastNode = copies[copies.length - 1];
+		AnnotatedProgramPoint errorLocation = nodes[nodes.length-1];
+		if (lastNode.getOutgoingNodes().contains(errorLocation)) { //FIXME
+			lastNode.removeOutgoingNode(errorLocation);
+			errorLocation.removeIncomingNode(lastNode);
 		}
 		
 		return true;
 	}
 	
-	private boolean updateSets(AnnotatedProgramPoint copiedNode) {
-
-		for (HashMap<AnnotatedProgramPoint, HashSet<AnnotatedProgramPoint>> map : AnnotatedProgramPoint.m_ingoing) {
-			if (map.containsKey(copiedNode)) {
-				HashSet <AnnotatedProgramPoint> hyperEdges = map.get(copiedNode);
-				for (Iterator <AnnotatedProgramPoint> clones = copiedNode.getNewCopies().iterator(); clones.hasNext(); ) {
-					AnnotatedProgramPoint newNode = clones.next();
-					map.put(newNode, hyperEdges);
-				}
-			}
-		}
+	private boolean redirect(AnnotatedProgramPoint source,
+			AnnotatedProgramPoint oldDest,
+			AnnotatedProgramPoint newDest) {
 		
-		for (HashSet<AnnotatedProgramPoint> set : AnnotatedProgramPoint.m_in) {
-			if (set.contains(copiedNode)) {
-				for (Iterator <AnnotatedProgramPoint> clones = copiedNode.getNewCopies().iterator(); clones.hasNext(); ) {
-					AnnotatedProgramPoint newNode = clones.next();
-					set.add(newNode);
-				}
-			}
-		}
+		CodeBlock label = source.getOutgoingEdgeLabel(oldDest);
+		if(label == null)
+			return false;
+		source.removeOutgoingNode(oldDest);
+		oldDest.removeIncomingNode(source);
+		source.addOutgoingNode(newDest, label);
+		newDest.addIncomingNode(source);
 		
 		return true;
 		
 	}
-	
+
 	private AnnotatedProgramPoint findBestRedirectionTarget(
 			AnnotatedProgramPoint predecessorNode, AnnotatedProgramPoint node) {
 		switch(redirectionMethod) {
@@ -636,7 +749,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 		
 		for (AnnotatedProgramPoint candidate : candidates) {
 			if(isValidEdge(predecessorNode, label, candidate)) {
-				if(target == null || isValidEdge(target, dummyLabel, candidate))
+				if(target == null || isStrongerPredicate(candidate, target, dummyLabel))
 					target = candidate;
 			}
 		}
@@ -677,7 +790,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 		
 		for (AnnotatedProgramPoint candidate : candidates) {
 			if(isValidEdge(predecessorNode, label, candidate)) {
-				if(target == null || isValidEdge(target, dummyLabel, candidate))
+				if(target == null || isStrongerPredicate(candidate, target, dummyLabel))
 					target = candidate;
 			}
 		}

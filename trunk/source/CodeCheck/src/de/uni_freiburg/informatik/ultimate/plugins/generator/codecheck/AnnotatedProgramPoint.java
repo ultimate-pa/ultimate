@@ -27,9 +27,9 @@ public class AnnotatedProgramPoint extends ModifiableLabeledEdgesMultigraph<Anno
 	private ArrayList<AnnotatedProgramPoint> newCopies;
 	private AnnotatedProgramPoint cloneSource;
 	
-	private HashMap<AnnotatedProgramPoint, HashSet<AnnotatedProgramPoint>> m_outgoingReturnAppToCallPreds;
+	public HashMap<AnnotatedProgramPoint, HashSet<AnnotatedProgramPoint>> m_outgoingReturnAppToCallPreds;
 	//private HashMap<AnnotatedProgramPoint, AnnotatedProgramPoint> m_ingoingReturnAppToCallPreds;
-	public static HashSet <HashMap<AnnotatedProgramPoint, HashSet<AnnotatedProgramPoint>>> m_ingoing = new HashSet<HashMap<AnnotatedProgramPoint,HashSet<AnnotatedProgramPoint>>>();
+	public static HashSet <HashMap<AnnotatedProgramPoint, HashSet<AnnotatedProgramPoint>>> m_ingoing = new HashSet<HashMap<AnnotatedProgramPoint, HashSet<AnnotatedProgramPoint>>>();
 	public static HashSet <HashSet<AnnotatedProgramPoint>> m_in = new HashSet<HashSet<AnnotatedProgramPoint>>();
 	
 	/**
@@ -69,8 +69,9 @@ public class AnnotatedProgramPoint extends ModifiableLabeledEdgesMultigraph<Anno
 		m_programPoint = programPoint;
 		copies = new ArrayList<AnnotatedProgramPoint>();
 		newCopies = new ArrayList<AnnotatedProgramPoint>();
-		m_outgoingReturnAppToCallPreds = new HashMap<AnnotatedProgramPoint, HashSet<AnnotatedProgramPoint>>();
-		m_ingoing.add(m_outgoingReturnAppToCallPreds);
+		//m_outgoingReturnAppToCallPreds = new HashMap<AnnotatedProgramPoint, HashSet<AnnotatedProgramPoint>>();
+		//System.err.println(m_ingoing.add(m_outgoingReturnAppToCallPreds));
+		//System.err.println("Created " + CodeCheckObserver.objectReference(m_outgoingReturnAppToCallPreds) + "\n" + m_ingoing);
 		//m_ingoingReturnAppToCallPreds = new HashMap<AnnotatedProgramPoint, AnnotatedProgramPoint>();
 		cloneSource = null;
 	}
@@ -81,15 +82,16 @@ public class AnnotatedProgramPoint extends ModifiableLabeledEdgesMultigraph<Anno
 		m_isPseudoErrorLocation = isPEL;
 		copies = new ArrayList<AnnotatedProgramPoint>();
 		newCopies = new ArrayList<AnnotatedProgramPoint>();
-		m_outgoingReturnAppToCallPreds = new HashMap<AnnotatedProgramPoint, HashSet<AnnotatedProgramPoint>>();
-		m_ingoing.add(m_outgoingReturnAppToCallPreds);
+		//m_outgoingReturnAppToCallPreds = new HashMap<AnnotatedProgramPoint, HashSet<AnnotatedProgramPoint>>();
+		//System.err.println(m_ingoing.add(m_outgoingReturnAppToCallPreds));
+		//System.err.println("Created " + CodeCheckObserver.objectReference(m_outgoingReturnAppToCallPreds) + "\n" + m_ingoing);
 		//m_ingoingReturnAppToCallPreds = new HashMap<AnnotatedProgramPoint, AnnotatedProgramPoint>();
 		cloneSource = null;
 	}
 
 
 	public void addCopy(AnnotatedProgramPoint copy) {
-		newCopies.add(copy);		
+		newCopies.add(copy);
 	}
 	
 	public void updateCopies() {
@@ -102,11 +104,6 @@ public class AnnotatedProgramPoint extends ModifiableLabeledEdgesMultigraph<Anno
 	}
 	
 
-	public AnnotatedProgramPoint getCopyRoot() {
-		if(cloneSource == null)
-			return this;
-		return cloneSource.getCopyRoot();
-	}
 	
 	public ArrayList<AnnotatedProgramPoint> getCopies() {
 		ArrayList<AnnotatedProgramPoint> result = new ArrayList<AnnotatedProgramPoint>();
@@ -138,22 +135,34 @@ public class AnnotatedProgramPoint extends ModifiableLabeledEdgesMultigraph<Anno
 	public void addOutGoingReturnCallPred(AnnotatedProgramPoint target, AnnotatedProgramPoint callPred) {
 		assert mOutgoingEdgeLabels.get(target) instanceof Return;
 		
+		boolean addHashMap = false;
 		if (m_outgoingReturnAppToCallPreds == null) {
 			m_outgoingReturnAppToCallPreds = new HashMap<AnnotatedProgramPoint, HashSet<AnnotatedProgramPoint>>();
-			m_ingoing.add(m_outgoingReturnAppToCallPreds);
+			addHashMap = true;
 		}
 		
 		//if (callPred.m_ingoingReturnAppToCallPreds == null)
 			//m_ingoingReturnAppToCallPreds = new HashMap<AnnotatedProgramPoint,AnnotatedProgramPoint>();
 		
-		if (m_outgoingReturnAppToCallPreds.get(target) == null) {
-			HashSet <AnnotatedProgramPoint> hyperEdges = new HashSet<AnnotatedProgramPoint>();
+		HashSet <AnnotatedProgramPoint> hyperEdges = m_outgoingReturnAppToCallPreds.get(target);
+		boolean addSet = false;
+		if (hyperEdges == null) {
+			hyperEdges = new HashSet<AnnotatedProgramPoint>();
+			addSet = true;
+		}
+		
+		//callPred.m_ingoingReturnAppToCallPreds.put(this, target);
+		hyperEdges.add(callPred);
+		
+		if (addSet) {
 			m_in.add(hyperEdges);
 			m_outgoingReturnAppToCallPreds.put(target, hyperEdges);
 		}
 		
-		//callPred.m_ingoingReturnAppToCallPreds.put(this, target);
-		m_outgoingReturnAppToCallPreds.get(target).add(callPred);
+		if (addHashMap) {
+			m_ingoing.add(m_outgoingReturnAppToCallPreds);
+			System.err.println("Created " + CodeCheckObserver.objectReference(m_outgoingReturnAppToCallPreds) + "\n" + m_ingoing);
+		}
 	}
 	
 	public void removeOutgoingReturnCallPred(AnnotatedProgramPoint target, AnnotatedProgramPoint callPred) {
@@ -194,7 +203,8 @@ public class AnnotatedProgramPoint extends ModifiableLabeledEdgesMultigraph<Anno
 	
 	public HashSet<AnnotatedProgramPoint> getCallPredsOfOutgoingReturnTarget(AnnotatedProgramPoint returnTarget) {
 		if (m_outgoingReturnAppToCallPreds == null)
-			System.err.println("WHAHAAA!");
+			return null;
+			//System.err.println("WHAHAAA!");
 		return m_outgoingReturnAppToCallPreds.get(returnTarget);
 	}
 
