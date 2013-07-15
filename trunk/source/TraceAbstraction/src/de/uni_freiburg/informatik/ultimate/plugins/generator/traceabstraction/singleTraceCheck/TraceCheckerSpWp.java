@@ -25,7 +25,7 @@ public class TraceCheckerSpWp extends TraceChecker {
 	protected IPredicate[] m_InterpolantsSp;
 	protected IPredicate[] m_InterpolantsWp;
 	
-	private static boolean m_useUnsatCore = false;
+	private static boolean m_useUnsatCore = true;
 
 	public TraceCheckerSpWp(SmtManager smtManager,
 			ModifiableGlobalVariableManager modifiedGlobals,

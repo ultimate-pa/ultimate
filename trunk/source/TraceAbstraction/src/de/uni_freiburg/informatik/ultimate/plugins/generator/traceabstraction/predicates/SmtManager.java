@@ -1807,11 +1807,24 @@ public class SmtManager {
 		Term globalVars_InVarsRenamed_OutVarsRenamed = substituteVars(globalVars_Invars_Renamed, replacees, replacers);
 		replacees.clear();
 		replacers.clear();
+		
+		// Collect the local variables
+		Set<TermVariable> localVars = new HashSet<TermVariable>();
+		for (BoogieVar bv : p.getVars()) {
+			if (!globalVarsAssignment.getInVars().keySet().contains(bv)) {
+				localVars.add(bv.getTermVariable());
+			}
+		}
 		TransFormula call_TF = call.getTransitionFormula();
 		// 2.1 Rename the invars of the term of the Call-Statement.
 		for (BoogieVar bv : call_TF.getInVars().keySet()) {
 			replacees.add(call_TF.getInVars().get(bv));
 			replacers.add(bv.getTermVariable());
+			// Add this invar to localVars, if it is not contained in outVars, such
+			// that it is later quantified.
+			if (!call_TF.getOutVars().keySet().contains(bv)) {
+				localVars.add(bv.getTermVariable());
+			}
 		}
 		Term call_Term_InVarsRenamed = substituteVars(call_TF.getFormula(), replacees, replacers);
 		replacees.clear();
@@ -1821,25 +1834,21 @@ public class SmtManager {
 			replacees.add(call_TF.getOutVars().get(bv));
 			replacers.add(bv.getTermVariable());
 		}
-		// Collect the local variables
-		Set<TermVariable> localVars = new HashSet<TermVariable>();
-		for (BoogieVar bv : p.getVars()) {
-			if (!globalVarsAssignment.getInVars().keySet().contains(bv)) {
-				localVars.add(bv.getTermVariable());
-			}
-		}
+		
 		
 		Term call_Term_InVarsRenamed_OutVarsRenamed = substituteVars(call_Term_InVarsRenamed, replacees, replacers);
 		Term callTerm_AND_predicate = Util.and(m_Script, call_Term_InVarsRenamed_OutVarsRenamed, p.getFormula());
 		Term callTerm_AND_predicate_quantified = callTerm_AND_predicate;
 		if (localVars.size() > 0) {
-			callTerm_AND_predicate_quantified = m_Script.quantifier(Script.EXISTS, (TermVariable[]) localVars.toArray(new TermVariable[localVars.size()]), callTerm_AND_predicate, (Term[][])null);
+			callTerm_AND_predicate_quantified = m_Script.quantifier(Script.EXISTS, 
+					localVars.toArray(new TermVariable[localVars.size()]),
+					callTerm_AND_predicate, (Term[][])null);
 		}
 		
 		Term result = Util.and(m_Script, callTerm_AND_predicate_quantified, globalVars_InVarsRenamed_OutVarsRenamed);
 		
 		TermVarsProc tvp = computeTermVarsProc(result);
-		Term result_as_closed_formula = SmtManager.computeClosedFormula(globalVars_InVarsRenamed_OutVarsRenamed, tvp.getVars(), m_Script);
+		Term result_as_closed_formula = SmtManager.computeClosedFormula(result, tvp.getVars(), m_Script);
 		return newPredicate(result, tvp.getProcedures(), tvp.getVars(), result_as_closed_formula);
 	}
 	
@@ -1930,11 +1939,16 @@ public class SmtManager {
 	
 	// TODO: Do we need also a special SP for call and return?
 	public IPredicate strongestPostconditionSpecial(IPredicate p, CodeBlock cb) {
-		TransFormula tf = cb.getTransitionFormula();
+		/*TransFormula tf = cb.getTransitionFormula();
 		Term tf_term = tf.getFormula();		
 		ArrayList<TermVariable> replacees = new ArrayList<TermVariable>();
-		ArrayList<Term> replacers = new ArrayList<Term>();
-		// 1 Rename the invars of the TransFormula of the given CodeBlock cb into TermVariables
+		ArrayList<Term> replacers = new ArrayList<Term>();*/
+		Set<TermVariable> assignedVars = new HashSet<TermVariable>();
+		for (BoogieVar bv : cb.getTransitionFormula().getAssignedVars()) {
+			assignedVars.add(bv.getTermVariable());
+		}
+		
+		/*// 1 Rename the invars of the TransFormula of the given CodeBlock cb into TermVariables
 		for (BoogieVar bv : tf.getInVars().keySet()) {
 			// TODO: Check if bv is a free var
 			// if not, then continue, there is nothing to do
@@ -1961,9 +1975,8 @@ public class SmtManager {
 		replacees.clear();
 		replacers.clear();
 		for (BoogieVar bv : tf.getOutVars().keySet()) {
-			// TODO: Check if bv is a free var
-			// if not, then continue, there is nothing to do
 			TermVariable bv_term = tf.getOutVars().get(bv);
+			
 			// Case: var not in InVars and var in OutVars
 			if (!tf.getInVars().keySet().contains(bv)) {
 				replacees.add(bv_term);
@@ -1981,18 +1994,14 @@ public class SmtManager {
 		}
 
 		Term tf_term_outvars_renamed = substituteVars(tf_term_invars_renamed, replacees, replacers);
-		
-		Set<TermVariable> assignedVars = new HashSet<TermVariable>();
-		for (BoogieVar bv : tf.getAssignedVars()) {
-			assignedVars.add(bv.getTermVariable());
-		}
-		Term formulaAssignedVarsQuantified = tf_term_outvars_renamed;
+		*/
+		Term formulaAssignedVarsQuantified = p.getFormula();
 		if (assignedVars.size() > 0) {
 			formulaAssignedVarsQuantified = m_Script.quantifier(Script.EXISTS,
 					assignedVars.toArray(new TermVariable[assignedVars.size()]),
-					tf_term_outvars_renamed, (Term[][]) null);
+					p.getFormula(), (Term[][]) null);
 		} 
-		Term result = Util.and(m_Script, formulaAssignedVarsQuantified, p.getFormula());
+		Term result = formulaAssignedVarsQuantified;
 		TermVarsProc tvp = computeTermVarsProc(result);
 		Term result_as_closed_formula = SmtManager.computeClosedFormula(result, tvp.getVars(), m_Script);
 		return newPredicate(result, tvp.getProcedures(), tvp.getVars(), result_as_closed_formula);
@@ -2130,13 +2139,6 @@ public class SmtManager {
 	public IPredicate weakestPrecondition(IPredicate p, Return ret) {
 		throw new UnsupportedOperationException();
 	}
-	
-	
-	
-	
-	
-	
-	
 	
 	
 	//FIXME: does not work im SmtInterpol2
