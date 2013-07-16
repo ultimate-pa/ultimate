@@ -1656,7 +1656,7 @@ public class SmtManager {
 		} else if (cb instanceof InterproceduralSequentialComposition) {
 			throw new UnsupportedOperationException();
 		}
-		// Check if p is false, if so return it, otherwise continue
+		// Check if p is false
 		if (p.getFormula() == False()) {
 			return p;
 		}
@@ -1707,7 +1707,7 @@ public class SmtManager {
 				continue;
 			}
 			// Case: var in InVars and var in OutVars and Invars(var) != OutVars(var)
-			else {
+			else if (bv_term != tf.getInVars().get(bv)) {
 				replacees.add(bv_term);
 				replacers.add(bv.getTermVariable());
 			}
@@ -1721,8 +1721,8 @@ public class SmtManager {
 		Term predicate_AND_tf_term = Util.and(m_Script, p.getFormula(), tf_term_outvars_renamed);
 		// Select from the invars the freevars, and existentially quantify over them. Quantification is done
 		// in step 4 below.
-		TermVariable[] invarsOccuringInFreeVars_TermVariables = new TermVariable[tf.getInVars().keySet().size()];
-		Map<BoogieVar, TermVariable> invarsOccuringInFreeVars = new HashMap<BoogieVar, TermVariable>();
+		TermVariable[] invarsOccuringInFreeVarsOrAssignedVars_TermVariables = new TermVariable[tf.getInVars().keySet().size()];
+		Map<BoogieVar, TermVariable> invarsOccuringInFreeVarsOrAssignedVars = new HashMap<BoogieVar, TermVariable>();
 		{
 			ArrayList<TermVariable> freeVars = new ArrayList<TermVariable>();
 			for (int j = 0; j < predicate_AND_tf_term.getFreeVars().length; j++) {
@@ -1730,30 +1730,38 @@ public class SmtManager {
 			}
 			int i = 0;
 			for (BoogieVar bv : tf.getInVars().keySet()) {
+				Term bv_term = tf.getInVars().get(bv);
 				if (freeVars.contains(tf.getInVars().get(bv))) {
-					invarsOccuringInFreeVars.put(bv, tf.getInVars().get(bv));
+					invarsOccuringInFreeVarsOrAssignedVars.put(bv, tf.getInVars().get(bv));
 				}
 			}
-			invarsOccuringInFreeVars_TermVariables = new TermVariable[invarsOccuringInFreeVars.values().size()];
-			for (TermVariable tv : invarsOccuringInFreeVars.values()) {
-				invarsOccuringInFreeVars_TermVariables[i] = tv;
+			for (BoogieVar bv : tf.getAssignedVars()) {
+				if (p.getVars().contains(bv)) {
+					if (!invarsOccuringInFreeVarsOrAssignedVars.keySet().contains(bv)) {
+						invarsOccuringInFreeVarsOrAssignedVars.put(bv, tf.getOutVars().get(bv));
+					}
+				}
+			}
+			invarsOccuringInFreeVarsOrAssignedVars_TermVariables = new TermVariable[invarsOccuringInFreeVarsOrAssignedVars.values().size()];
+			for (TermVariable tv : invarsOccuringInFreeVarsOrAssignedVars.values()) {
+				invarsOccuringInFreeVarsOrAssignedVars_TermVariables[i] = tv;
 				i++;
 			}
 		}
 		// 4. Existentially quantify the invars in TransFormula of the given CodeBlock cb, but only if the set of invars
 		// is not empty.
 		Term result = null;
-		if (invarsOccuringInFreeVars_TermVariables.length > 0) {
+		if (invarsOccuringInFreeVarsOrAssignedVars_TermVariables.length > 0) {
 			replacees.clear(); replacers.clear();
-			for (BoogieVar bv : invarsOccuringInFreeVars.keySet()) {
+			for (BoogieVar bv : invarsOccuringInFreeVarsOrAssignedVars.keySet()) {
 				replacees.add(bv.getTermVariable());
-				replacers.add(invarsOccuringInFreeVars.get(bv));
+				replacers.add(invarsOccuringInFreeVarsOrAssignedVars.get(bv));
 			}
 			Term predicate_renamed = substituteVars(p.getFormula(), replacees, replacers);
 			predicate_AND_tf_term = Util.and(m_Script, predicate_renamed, tf_term_outvars_renamed);
 			
 			result = m_Script.quantifier(Script.EXISTS, 
-					invarsOccuringInFreeVars_TermVariables, predicate_AND_tf_term, (Term[][]) null);
+					invarsOccuringInFreeVarsOrAssignedVars_TermVariables, predicate_AND_tf_term, (Term[][]) null);
 		} else {
 			result = predicate_AND_tf_term;
 		}

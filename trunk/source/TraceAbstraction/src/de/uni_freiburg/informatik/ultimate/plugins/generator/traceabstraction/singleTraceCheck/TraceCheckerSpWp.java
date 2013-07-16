@@ -168,11 +168,15 @@ public class TraceCheckerSpWp extends TraceChecker {
 		s_Logger.debug("Computing strongest postcondition for given trace ...");
 		
 		if (trace.getSymbol(0) instanceof Call) {
-			m_InterpolantsSp[0] = m_SmtManager.strongestPostcondition(
+			IPredicate p = m_SmtManager.strongestPostcondition(
 					tracePrecondition, (Call) trace.getSymbol(0));
+			m_InterpolantsSp[0] = m_PredicateBuilder.getOrConstructPredicate(p.getFormula(), p.getVars(),
+					new HashSet<String>(Arrays.asList(p.getProcedures())));
 		} else {
-			m_InterpolantsSp[0] = m_SmtManager.strongestPostcondition(
-						tracePrecondition, trace.getSymbol(0));
+			IPredicate p = m_SmtManager.strongestPostcondition(
+					tracePrecondition, trace.getSymbol(0));
+			m_InterpolantsSp[0] = m_PredicateBuilder.getOrConstructPredicate(p.getFormula(), p.getVars(),
+					new HashSet<String>(Arrays.asList(p.getProcedures())));
 		}
 		for (int i=1; i<m_InterpolantsSp.length; i++) {
 			if (trace.getSymbol(i) instanceof Call) {
