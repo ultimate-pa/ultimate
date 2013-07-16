@@ -25,7 +25,7 @@ public class TraceCheckerSpWp extends TraceChecker {
 	protected IPredicate[] m_InterpolantsSp;
 	protected IPredicate[] m_InterpolantsWp;
 	
-	private static boolean m_useUnsatCore = true;
+	private static boolean m_useUnsatCore = false;
 
 	public TraceCheckerSpWp(SmtManager smtManager,
 			ModifiableGlobalVariableManager modifiedGlobals,
@@ -53,6 +53,8 @@ public class TraceCheckerSpWp extends TraceChecker {
 		}
 		IPredicate tracePrecondition = m_Precondition;
 		IPredicate tracePostcondition = m_Postcondition;
+		m_PredicateBuilder.declarePredicate(tracePrecondition);
+		m_PredicateBuilder.declarePredicate(tracePostcondition);
 		Word<CodeBlock> trace = m_Trace;
 		Set<CodeBlock> codeBlocksInUnsatCore = new HashSet<CodeBlock>();
 		
@@ -67,52 +69,64 @@ public class TraceCheckerSpWp extends TraceChecker {
 
 		m_InterpolantsSp = new IPredicate[trace.length()-1];
 		m_InterpolantsWp = new IPredicate[trace.length()-1];
+		IPredicate lastlyComputedPred = tracePrecondition;
+		IPredicate predOfLastStmtInUnsatCore = tracePrecondition;
 		
 		s_Logger.debug("Computing strongest postcondition for given trace ...");
-		if (trace.getSymbol(0) instanceof Call) {
-			// Case: CodeBlock is contained in unsat core
-			if (codeBlocksInUnsatCore.contains(trace.getSymbol(0))) {
-				m_InterpolantsSp[0] = m_SmtManager.strongestPostcondition(
-						tracePrecondition, (Call) trace.getSymbol(0));
-			} else {
-				// TODO: Special SP for Call and Return Statement necessary?
-				m_InterpolantsSp[0] = m_SmtManager.strongestPostconditionSpecial(tracePrecondition, trace.getSymbol(0));
-			}
-		} else {
-			if (codeBlocksInUnsatCore.contains(trace.getSymbol(0))) {
-				m_InterpolantsSp[0] = m_SmtManager.strongestPostcondition(
-						tracePrecondition, trace.getSymbol(0));
-			} else {
-				m_InterpolantsSp[0] = m_SmtManager.strongestPostconditionSpecial(tracePrecondition, trace.getSymbol(0));
-			}
-		}
-		for (int i=1; i<m_InterpolantsSp.length; i++) {
+
+		for (int i=0; i<m_InterpolantsSp.length; i++) {
 			if (trace.getSymbol(i) instanceof Call) {
 				if (codeBlocksInUnsatCore.contains(trace.getSymbol(i))) {
-					m_InterpolantsSp[i] = m_SmtManager.strongestPostcondition(
-							m_InterpolantsSp[i-1], (Call) trace.getSymbol(i));
+					IPredicate p = m_SmtManager.strongestPostcondition(
+							predOfLastStmtInUnsatCore, (Call) trace.getSymbol(i));
+					m_InterpolantsSp[i] = m_PredicateBuilder.getOrConstructPredicate(p.getFormula(), p.getVars(),
+							new HashSet<String>(Arrays.asList(p.getProcedures())));
+					predOfLastStmtInUnsatCore = m_InterpolantsSp[i];
+					lastlyComputedPred = m_InterpolantsSp[i];
 				} else {
-					m_InterpolantsSp[i] = m_SmtManager.strongestPostconditionSpecial(
-							m_InterpolantsSp[i-1], trace.getSymbol(i));
+					IPredicate p = m_SmtManager.strongestPostconditionSpecial(
+							lastlyComputedPred, trace.getSymbol(i));
+					m_InterpolantsSp[i] = m_PredicateBuilder.getOrConstructPredicate(p.getFormula(), p.getVars(),
+							new HashSet<String>(Arrays.asList(p.getProcedures())));
+					lastlyComputedPred = m_InterpolantsSp[i];
 				}
 			} else if (trace.getSymbol(i) instanceof Return) {
 				if (codeBlocksInUnsatCore.contains(trace.getSymbol(i))) {
 					int call_pos = ((NestedWord<CodeBlock>)trace).getCallPosition(i);
-					assert call_pos > 0 && call_pos <= i : "Bad call position!";
-					m_InterpolantsSp[i] = m_SmtManager.strongestPostcondition(
-							m_InterpolantsSp[i-1], m_InterpolantsSp[call_pos - 1], (Return) trace.getSymbol(i));
+					assert call_pos >= 0 && call_pos <= i : "Bad call position!";
+					IPredicate callerPred = tracePrecondition;
+					if (call_pos > 0) {
+						callerPred = m_InterpolantsSp[call_pos - 1];
+					}
+					IPredicate p = m_SmtManager.strongestPostcondition(
+							predOfLastStmtInUnsatCore, callerPred, (Return) trace.getSymbol(i));
+					m_InterpolantsSp[i] = m_PredicateBuilder.getOrConstructPredicate(p.getFormula(), p.getVars(),
+							new HashSet<String>(Arrays.asList(p.getProcedures())));
+					predOfLastStmtInUnsatCore = m_InterpolantsSp[i];
+					lastlyComputedPred = m_InterpolantsSp[i];
 				} else {
-					m_InterpolantsSp[i] = m_SmtManager.strongestPostconditionSpecial(
-							m_InterpolantsSp[i-1], trace.getSymbol(i));
+					// TODO: Probably, we also have to define a special method for Return and Call statement.
+					IPredicate p = m_SmtManager.strongestPostconditionSpecial(
+							lastlyComputedPred, trace.getSymbol(i));
+					m_InterpolantsSp[i] = m_PredicateBuilder.getOrConstructPredicate(p.getFormula(), p.getVars(),
+							new HashSet<String>(Arrays.asList(p.getProcedures())));
+					lastlyComputedPred = m_InterpolantsSp[i];
 				}
 				
 			} else {
 				if (codeBlocksInUnsatCore.contains(trace.getSymbol(i))) {
-					m_InterpolantsSp[i] = m_SmtManager.strongestPostcondition(
-							m_InterpolantsSp[i-1], trace.getSymbol(i));
+					IPredicate p = m_SmtManager.strongestPostcondition(
+							predOfLastStmtInUnsatCore, trace.getSymbol(i));
+					m_InterpolantsSp[i] = m_PredicateBuilder.getOrConstructPredicate(p.getFormula(), p.getVars(),
+							new HashSet<String>(Arrays.asList(p.getProcedures())));
+					predOfLastStmtInUnsatCore = m_InterpolantsSp[i];
+					lastlyComputedPred = m_InterpolantsSp[i];
 				} else {
-					m_InterpolantsSp[i] = m_SmtManager.strongestPostconditionSpecial(
-							m_InterpolantsSp[i-1], trace.getSymbol(i));
+					IPredicate p = m_SmtManager.strongestPostconditionSpecial(
+							lastlyComputedPred, trace.getSymbol(i));
+					m_InterpolantsSp[i] = m_PredicateBuilder.getOrConstructPredicate(p.getFormula(), p.getVars(),
+							new HashSet<String>(Arrays.asList(p.getProcedures())));
+					lastlyComputedPred = m_InterpolantsSp[i];
 				}
 			}
 		}
@@ -142,11 +156,12 @@ public class TraceCheckerSpWp extends TraceChecker {
 		}
 		IPredicate tracePrecondition = m_Precondition;
 		IPredicate tracePostcondition = m_Postcondition;
+		m_PredicateBuilder.declarePredicate(tracePrecondition);
+		m_PredicateBuilder.declarePredicate(tracePostcondition);
+		
 		Word<CodeBlock> trace = m_Trace;
 		
 		forgetTrace();
-		// TODO: If trace.length == 1, then an error happens, because 
-		// m_InterpolantsSp.length == 1
 		m_InterpolantsSp = new IPredicate[trace.length()-1];
 		m_InterpolantsWp = new IPredicate[trace.length()-1];
 		
@@ -161,21 +176,26 @@ public class TraceCheckerSpWp extends TraceChecker {
 		}
 		for (int i=1; i<m_InterpolantsSp.length; i++) {
 			if (trace.getSymbol(i) instanceof Call) {
-				m_InterpolantsSp[i] = m_SmtManager.strongestPostcondition(
+				IPredicate p = m_SmtManager.strongestPostcondition(
 						m_InterpolantsSp[i-1], (Call) trace.getSymbol(i));
+				m_InterpolantsSp[i] = m_PredicateBuilder.getOrConstructPredicate(p.getFormula(), p.getVars(),
+						new HashSet<String>(Arrays.asList(p.getProcedures())));
 			} else if (trace.getSymbol(i) instanceof Return) {
 				int call_pos = ((NestedWord<CodeBlock>)trace).getCallPosition(i);
 				assert call_pos >= 0 && call_pos <= i : "Bad call position!";
+				IPredicate callerPred = tracePrecondition;
 				if (call_pos > 0) {
-					m_InterpolantsSp[i] = m_SmtManager.strongestPostcondition(
-							m_InterpolantsSp[i-1], m_InterpolantsSp[call_pos - 1], (Return) trace.getSymbol(i));
-				} else {
-					m_InterpolantsSp[i] = m_SmtManager.strongestPostcondition(
-							m_InterpolantsSp[i-1], tracePrecondition, (Return) trace.getSymbol(i));
+					callerPred = m_InterpolantsSp[call_pos - 1];
 				}
+				IPredicate p = m_SmtManager.strongestPostcondition(
+						m_InterpolantsSp[i-1], callerPred, (Return) trace.getSymbol(i));
+				m_InterpolantsSp[i] = m_PredicateBuilder.getOrConstructPredicate(p.getFormula(), p.getVars(),
+						new HashSet<String>(Arrays.asList(p.getProcedures())));
 			} else {
-				m_InterpolantsSp[i] = m_SmtManager.strongestPostcondition(
-						m_InterpolantsSp[i-1], trace.getSymbol(i));
+				IPredicate p = m_SmtManager.strongestPostcondition(
+						m_InterpolantsSp[i-1],trace.getSymbol(i));
+				m_InterpolantsSp[i] = m_PredicateBuilder.getOrConstructPredicate(p.getFormula(), p.getVars(),
+						new HashSet<String>(Arrays.asList(p.getProcedures())));
 			}
 		}
 
