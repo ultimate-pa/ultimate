@@ -3,7 +3,6 @@
  * 
  * Author: Matthias Heizmann
  * Date: 2013-07-13
- * Licence: GPLv3 
  * 
  */
 

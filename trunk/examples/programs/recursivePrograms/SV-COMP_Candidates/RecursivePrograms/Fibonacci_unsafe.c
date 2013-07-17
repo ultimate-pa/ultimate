@@ -3,11 +3,12 @@
  * 
  * Author: Matthias Heizmann
  * Date: 2013-07-13
- * Licence: GPLv3 
  * 
  */
 
 extern int __VERIFIER_nondet_int(void);
+int fibonacci(int n);
+int main(int x);
 
 
 int fibonacci(int n) {
@@ -24,7 +25,7 @@ int fibonacci(int n) {
 int main() {
     int x = __VERIFIER_nondet_int();
     int result = fibonacci(x);
-    if (result >= 0) {
+    if (x != 5 || result == 3) {
         return 0;
     } else {
         ERROR: 

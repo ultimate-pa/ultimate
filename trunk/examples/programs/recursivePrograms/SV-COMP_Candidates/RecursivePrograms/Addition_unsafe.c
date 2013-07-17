@@ -3,7 +3,6 @@
  * 
  * Author: Matthias Heizmann
  * Date: 2013-07-13
- * Licence: GPLv3 
  * 
  */
 
@@ -26,7 +25,7 @@ int main() {
     int m = __VERIFIER_nondet_int();
     int n = __VERIFIER_nondet_int();
     int result = addition(m,n);
-    if (result == m + n) {
+    if (result == m - n) {
         return 0;
     } else {
         ERROR: 
