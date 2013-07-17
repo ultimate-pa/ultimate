@@ -734,7 +734,8 @@ public class TraceChecker {
 		case SAT:
 			return false;
 		case UNKNOWN:
-			throw new AssertionError("Expected decideable theory");
+			s_Logger.warn(new DebugMessage("assuming that {0} is not equivalent to true", term));
+			return false;
 		default:
 			throw new AssertionError();
 		}
