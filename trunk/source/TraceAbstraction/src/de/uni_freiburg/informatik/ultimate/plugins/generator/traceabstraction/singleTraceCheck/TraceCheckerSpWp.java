@@ -337,6 +337,7 @@ public class TraceCheckerSpWp extends TraceChecker {
 					tracePrecondition, tracePostcondition, interpolants);
 			ec.assertHierPred(callPredecessor);
 			result = ec.postReturnImplies(post);
+			ec.unAssertHierPred();
 		} else if (cb instanceof InterproceduralSequentialComposition) {
 			throw new UnsupportedOperationException("not yet inplemented");
 		} else {
