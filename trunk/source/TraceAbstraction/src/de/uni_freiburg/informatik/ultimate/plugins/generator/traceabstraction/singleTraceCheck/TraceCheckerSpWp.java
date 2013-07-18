@@ -13,8 +13,12 @@ import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.InterproceduralSequentialComposition;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ModifiableGlobalVariableManager;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ParallelComposition;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.SequentialComposition;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.EdgeChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
@@ -284,32 +288,70 @@ public class TraceCheckerSpWp extends TraceChecker {
 								  IPredicate tracePrecondition, 
 								  IPredicate tracePostcondition) {
 		LBool result;
-		result = isHoareTriple(tracePrecondition, trace.getSymbol(0), interpolants[0]);
+		result = isHoareTriple(0, tracePrecondition, tracePostcondition, 
+				interpolants, trace);
 		assert result == LBool.UNSAT || result == LBool.UNKNOWN;
 		for (int i=0; i<interpolants.length-1; i++) {
-			 result = isHoareTriple(interpolants[i], 
-					 trace.getSymbol(i+1), interpolants[i+1]);
+			 result = isHoareTriple(i+1, tracePrecondition, tracePostcondition, 
+						interpolants, trace);
 				assert result == LBool.UNSAT || result == LBool.UNKNOWN;
 		}
-		result = isHoareTriple(interpolants[interpolants.length-1], 
-				trace.getSymbol(interpolants.length), tracePostcondition);
+		result = isHoareTriple(interpolants.length, tracePrecondition, 
+				tracePostcondition,	interpolants, trace);
 		assert result == LBool.UNSAT || result == LBool.UNKNOWN;
+	}
+	
+	IPredicate getInterpolantAtPosition(int i, IPredicate tracePrecondition,
+			IPredicate tracePostcondition, IPredicate[] interpolants) {
+		assert (i>= -1 && i<= interpolants.length);
+		if (i == -1) {
+			return tracePrecondition;
+		} else if (i == interpolants.length) {
+			return tracePostcondition;
+		} else {
+			return interpolants[i];
+		}
 	}
 	
 	
 	
-	LBool isHoareTriple(IPredicate precondition, CodeBlock cb, IPredicate postcondition) {
+	LBool isHoareTriple(int i, IPredicate tracePrecondition, 
+			IPredicate tracePostcondition, 
+			IPredicate[] interpolants, Word<CodeBlock> trace) {
+		IPredicate pre = getInterpolantAtPosition(i-1, tracePrecondition, 
+				tracePostcondition, interpolants);
+		IPredicate post = getInterpolantAtPosition(i, tracePrecondition, 
+				tracePostcondition, interpolants);
+		CodeBlock cb = trace.getSymbol(i);
 		EdgeChecker ec = new EdgeChecker(m_SmtManager, m_ModifiedGlobals);
 		ec.assertCodeBlock(cb);
-		ec.assertPrecondition(precondition);
-		LBool result = ec.postInternalImplies(postcondition);
+		ec.assertPrecondition(pre);
+		LBool result;
+		if (cb instanceof Call) {
+			result = ec.postCallImplies(post);
+		} else if (cb instanceof Return) {
+			NestedWord<CodeBlock> nw = (NestedWord<CodeBlock>) trace;
+			assert nw.isReturnPosition(i);
+			int callPosition = nw.getCallPosition(i); 
+			IPredicate callPredecessor = getInterpolantAtPosition(callPosition, 
+					tracePrecondition, tracePostcondition, interpolants);
+			ec.assertHierPred(callPredecessor);
+			result = ec.postReturnImplies(post);
+		} else if (cb instanceof InterproceduralSequentialComposition) {
+			throw new UnsupportedOperationException("not yet inplemented");
+		} else {
+			assert (cb instanceof SequentialComposition) || 
+				(cb instanceof ParallelComposition) || 
+				(cb instanceof StatementSequence);
+			result = ec.postInternalImplies(post); 
+		}
 		ec.unAssertPrecondition();
 		ec.unAssertCodeBlock();
-		s_Logger.debug("Hoare triple {" + precondition + "}, " + cb + " {" 
-											+ postcondition + "} is " + (result == LBool.UNSAT ? "valid" :
+		s_Logger.debug("Hoare triple {" + pre + "}, " + cb + " {" 
+											+ post + "} is " + (result == LBool.UNSAT ? "valid" :
 												(result == LBool.SAT ? "not valid" : result)));
 		return result;
 	}
-		
+
 
 }
