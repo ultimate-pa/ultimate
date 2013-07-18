@@ -16,6 +16,7 @@ public class RedirectionTargetFinder {
 	
 	private CodeChecker codeChecker;
 	private RedirectionTargetFindingMethod findingStrategy;
+	private boolean random;
 	
 	protected RedirectionTargetFinder(CodeChecker codeChecker) {
 		this(codeChecker, RedirectionTargetFindingMethod.RandomStrongest);
@@ -24,31 +25,57 @@ public class RedirectionTargetFinder {
 	protected RedirectionTargetFinder(CodeChecker codeChecker, RedirectionTargetFindingMethod findingStrategy) {
 		this.codeChecker = codeChecker;
 		this.findingStrategy = findingStrategy;
+		if(findingStrategy == RedirectionTargetFindingMethod.Random || findingStrategy == RedirectionTargetFindingMethod.RandomStrongest)
+			random = true;
+		else
+			random = false;
 	}
 	
-	//FIXME
-	protected HashMap <AnnotatedProgramPoint , HashSet <AnnotatedProgramPoint>> findReturnRedirectionTarget(AnnotatedProgramPoint predecessorNode, AnnotatedProgramPoint dest) {
-		return null;
+	protected AnnotatedProgramPoint findReturnRedirectionTarget(
+			AnnotatedProgramPoint predecessorNode, 
+			AnnotatedProgramPoint callPred, 
+			AnnotatedProgramPoint dest) {
+
+		switch(findingStrategy) {
+		case First:
+		case Random:
+			return findFirstReturnRedirectionTarget(predecessorNode, callPred, dest);
+		case FirstStrongest:
+		case RandomStrongest:
+			return findStrongestReturnRedirectionTarget(predecessorNode, callPred, dest);
+		case Alex:
+			return null; // Alex : Write your redirection algorithm here.
+		default:
+			return null;
+		}
 	}
 	
-	//FIXME
 	protected AnnotatedProgramPoint findReturnRedirectionCallPred(AnnotatedProgramPoint callPred, AnnotatedProgramPoint predecessorNode, AnnotatedProgramPoint dest) {
-		return null;
+		switch(findingStrategy) {
+		case First:
+		case Random:
+			return findFirstReturnRedirectionCallPred(callPred, predecessorNode, dest);
+		case FirstStrongest:
+		case RandomStrongest:
+			return findStrongestReturnRedirectionCallPred(callPred, predecessorNode, dest);
+		case Alex:
+			return null; // Alex : Write your redirection algorithm here.
+		default:
+			return null;
+		}
 	}
 
 	protected AnnotatedProgramPoint findRedirectionTarget(
 			AnnotatedProgramPoint predecessorNode, AnnotatedProgramPoint dest) {
 		switch(findingStrategy) {
 		case First:
+		case Random:
 			return findFirstRedirectionTarget(predecessorNode, dest);
 		case FirstStrongest:
-			return findFirstStrongestRedirectionTarget(predecessorNode, dest);
-		case Random:
-			return findRandomRedirectionTarget(predecessorNode, dest);
 		case RandomStrongest:
-			return findRandomStrongestRedirectionTarget(predecessorNode, dest);
+			return findStrongestRedirectionTarget(predecessorNode, dest);
 		case Alex:
-			return null; //FIXME // Alex : Write your redirection algorithm here.
+			return null; // Alex : Write your redirection algorithm here.
 		default:
 			return null;
 		}
@@ -59,6 +86,9 @@ public class RedirectionTargetFinder {
 		CodeBlock label = predecessorNode.getOutgoingEdgeLabel(dest);
 		
 		ArrayList <AnnotatedProgramPoint> candidates = dest.getNewCopies();
+
+		if(random)
+			Collections.shuffle(candidates);
 		
 		for (AnnotatedProgramPoint candidate : candidates) {
 			if(codeChecker.isValidEdge(predecessorNode, label, candidate)) {
@@ -70,61 +100,107 @@ public class RedirectionTargetFinder {
 		
 	}
 	
-	private AnnotatedProgramPoint findFirstStrongestRedirectionTarget(AnnotatedProgramPoint predecessorNode, AnnotatedProgramPoint dest) {
+	private AnnotatedProgramPoint findStrongestRedirectionTarget(AnnotatedProgramPoint predecessorNode, AnnotatedProgramPoint dest) {
 
 		CodeBlock label = predecessorNode.getOutgoingEdgeLabel(dest);
 		
 		ArrayList <AnnotatedProgramPoint> candidates = dest.getNewCopies();
 		
-		AnnotatedProgramPoint target = null;
+		if(random)
+			Collections.shuffle(candidates);
+
+		AnnotatedProgramPoint res = null;
 		
 		for (AnnotatedProgramPoint candidate : candidates) {
 			if(codeChecker.isValidEdge(predecessorNode, label, candidate)) {
-				if(target == null || codeChecker.isStrongerPredicate(candidate, target))
-					target = candidate;
+				if(res == null || codeChecker.isStrongerPredicate(candidate, res))
+					res = candidate;
 			}
 		}
 		
-		return target;
+		return res;
 		
 	}
 	
-	private AnnotatedProgramPoint findRandomRedirectionTarget(AnnotatedProgramPoint predecessorNode, AnnotatedProgramPoint dest) {
-
+	private AnnotatedProgramPoint findFirstReturnRedirectionCallPred(AnnotatedProgramPoint callPred, AnnotatedProgramPoint predecessorNode, AnnotatedProgramPoint dest) {
 		CodeBlock label = predecessorNode.getOutgoingEdgeLabel(dest);
 		
-		ArrayList <AnnotatedProgramPoint> candidates = dest.getNewCopies();
-		
-		Collections.shuffle(candidates);
+		ArrayList <AnnotatedProgramPoint> candidates = callPred.getNewCopies();
+
+		if(random)
+			Collections.shuffle(candidates);
 		
 		for (AnnotatedProgramPoint candidate : candidates) {
-			if(codeChecker.isValidEdge(predecessorNode, label, candidate)) {
+			if(codeChecker.isValidReturnEdge(predecessorNode, label, dest, candidate)) {
 				return candidate;
 			}
 		}
 		
 		return null;
-		
 	}
-	
-	private AnnotatedProgramPoint findRandomStrongestRedirectionTarget(AnnotatedProgramPoint predecessorNode, AnnotatedProgramPoint dest) {
+
+	private AnnotatedProgramPoint findStrongestReturnRedirectionCallPred(AnnotatedProgramPoint callPred, AnnotatedProgramPoint predecessorNode, AnnotatedProgramPoint dest) {
+		CodeBlock label = predecessorNode.getOutgoingEdgeLabel(dest);
+		
+		ArrayList <AnnotatedProgramPoint> candidates = callPred.getNewCopies();
+
+		if(random)
+			Collections.shuffle(candidates);
+
+		AnnotatedProgramPoint res = null;
+		
+		for (AnnotatedProgramPoint candidate : candidates) {
+			if(codeChecker.isValidReturnEdge(predecessorNode, label, dest, candidate)) {
+				if(res == null || codeChecker.isStrongerPredicate(candidate, res))
+					res = candidate;
+			}
+		}
+		
+		return res;
+	}
+
+	private AnnotatedProgramPoint findFirstReturnRedirectionTarget(
+			AnnotatedProgramPoint predecessorNode, 
+			AnnotatedProgramPoint callPred, 
+			AnnotatedProgramPoint dest) {
 
 		CodeBlock label = predecessorNode.getOutgoingEdgeLabel(dest);
 		
 		ArrayList <AnnotatedProgramPoint> candidates = dest.getNewCopies();
-		
-		Collections.shuffle(candidates);
-		
-		AnnotatedProgramPoint target = null;
+
+		if(random)
+			Collections.shuffle(candidates);
 		
 		for (AnnotatedProgramPoint candidate : candidates) {
-			if(codeChecker.isValidEdge(predecessorNode, label, candidate)) {
-				if(target == null || codeChecker.isStrongerPredicate(candidate, target))
-					target = candidate;
+			if(codeChecker.isValidReturnEdge(predecessorNode, label, candidate, callPred)) {
+				return candidate;
 			}
 		}
 		
-		return target;
+		return null;
+	}
+
+	private AnnotatedProgramPoint findStrongestReturnRedirectionTarget(
+			AnnotatedProgramPoint predecessorNode, 
+			AnnotatedProgramPoint callPred, 
+			AnnotatedProgramPoint dest) {
+
+		CodeBlock label = predecessorNode.getOutgoingEdgeLabel(dest);
 		
+		ArrayList <AnnotatedProgramPoint> candidates = dest.getNewCopies();
+
+		if(random)
+			Collections.shuffle(candidates);
+		
+		AnnotatedProgramPoint res = null;
+
+		for (AnnotatedProgramPoint candidate : candidates) {
+			if(codeChecker.isValidReturnEdge(predecessorNode, label, candidate, callPred)) {
+				if(res == null || codeChecker.isStrongerPredicate(candidate, res))
+					res = candidate;
+			}
+		}
+		
+		return res;
 	}
 }

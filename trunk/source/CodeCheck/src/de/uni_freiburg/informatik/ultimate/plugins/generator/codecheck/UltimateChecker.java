@@ -27,8 +27,8 @@ public class UltimateChecker extends CodeChecker {
 		AnnotatedProgramPoint[][] newNodes = new AnnotatedProgramPoint[interpolantsCount][2];
 		for (int i = 0; i < interpolantsCount; ++i) {
 			newNodes[i] = new AnnotatedProgramPoint[] {
-					new AnnotatedProgramPoint(oldNode, conjugatePredicates(oldNode.getPredicate(), interpolant[i]), true),
-					new AnnotatedProgramPoint(oldNode, conjugatePredicates(oldNode.getPredicate(), negatePredicate(interpolant[i])), true)
+					new AnnotatedProgramPoint(oldNode, conjugatePredicates(oldNode.getPredicate(), interpolant[i])),
+					new AnnotatedProgramPoint(oldNode, conjugatePredicates(oldNode.getPredicate(), negatePredicate(interpolant[i])))
 					};
 		}
 		
@@ -85,7 +85,7 @@ public class UltimateChecker extends CodeChecker {
 							for (AnnotatedProgramPoint callNode : hyperEdges) {
 								if (isSatRetEdge(newNode, (Return) label, successorNode, callNode)) {
 									putEdge |= true;
-									System.err.println(newNode.addOutGoingReturnCallPred(successorNode, callNode));
+									newNode.addOutGoingReturnCallPred(successorNode, callNode);
 								}
 							}
 							if (putEdge) {
@@ -144,12 +144,12 @@ public class UltimateChecker extends CodeChecker {
 			for (AnnotatedProgramPoint ret : rets) {
 				preRet.removeOutgoingReturnCallPred(ret, oldNode);
 				for (AnnotatedProgramPoint newNode : nodesClones.get(oldNode)) {
-					preRet.addOutGoingReturnCallPred(ret, newNode);
-					/*
+					
 					CodeBlock label = preRet.getOutgoingEdgeLabel(ret);
 					if (isSatRetEdge(preRet, (Return) label, ret, newNode)) {
+						preRet.addOutGoingReturnCallPred(ret, newNode);
 					}
-					*/
+					
 				}
 			}
 		}

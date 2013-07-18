@@ -122,12 +122,13 @@ public class ImpulseChecker extends CodeChecker {
 			for (AnnotatedProgramPoint predecessorNode : predecessorNodes) {
 				if(predecessorNode != m_graphRoot) {
 					if(predecessorNode.getOutgoingEdgeLabel(node) instanceof Return) {
-						HashMap<AnnotatedProgramPoint, HashSet<AnnotatedProgramPoint>> hyperEdges;
-						hyperEdges = redirectionTargetFinder.findReturnRedirectionTarget(predecessorNode, node);
-						for (AnnotatedProgramPoint hyperEdgeTarget : hyperEdges.keySet()) {
-							HashSet<AnnotatedProgramPoint> callPreds = hyperEdges.get(hyperEdgeTarget);
+						HashSet<AnnotatedProgramPoint> callPreds;
+						callPreds = predecessorNode.getCallPredsOfOutgoingReturnTarget(node);
+						if(callPreds != null) {
 							for (AnnotatedProgramPoint callPred : callPreds) {
-								redirectHyperEdgeDestination(predecessorNode, callPred, node, hyperEdgeTarget);
+								AnnotatedProgramPoint newDest = redirectionTargetFinder.findReturnRedirectionTarget(predecessorNode, callPred, node);
+								if (newDest != null)
+									redirectHyperEdgeDestination(predecessorNode, callPred, node, newDest);
 							}
 						}
 					}
@@ -183,7 +184,7 @@ public class ImpulseChecker extends CodeChecker {
 		source.connectTo(newDest, label);
 		source.addOutGoingReturnCallPred(newDest, callPred);
 		source.removeOutgoingReturnCallPred(oldDest, callPred);
-		if(source.getCallPredsOfOutgoingReturnTarget(oldDest).isEmpty())
+		if(source.getCallPredsOfOutgoingReturnTarget(oldDest) == null)
 			source.disconnectFrom(oldDest);
 		
 		return true;
