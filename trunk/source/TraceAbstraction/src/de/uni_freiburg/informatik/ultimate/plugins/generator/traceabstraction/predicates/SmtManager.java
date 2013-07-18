@@ -1650,9 +1650,11 @@ public class SmtManager {
 	 */
 	public IPredicate strongestPostcondition(IPredicate p, CodeBlock cb) {
 		if (cb instanceof Call) {
-			throw new UnsupportedOperationException("This method is not responsible for Call-Statemtens.");
+			// throw new UnsupportedOperationException("This method is not responsible for Call-Statemtens.");
+			return p;
 		} else if (cb instanceof Return) {
-			throw new UnsupportedOperationException("This method is not responsible for Return-Statemtens.");
+			// throw new UnsupportedOperationException("This method is not responsible for Return-Statemtens.");
+			return p;
 		} else if (cb instanceof InterproceduralSequentialComposition) {
 			throw new UnsupportedOperationException();
 		}
@@ -1898,6 +1900,8 @@ public class SmtManager {
 				localVarsToCalledProc.add(bv.getTermVariable());
 			}
 		}
+		// TODO: If localVars.size == 0, then we get an error, if we try to
+		// quantify.
 		Term ret_Term_AND_calleePred = Util.and(m_Script, ret_Term_InVarsRenamed_OutVarsRenamed, calleePredTermUnquantified);
 		Term ret_Term_AND_calleePred_quantified = m_Script.quantifier(Script.EXISTS, 
 				localVarsToCalledProc.toArray(new TermVariable[localVarsToCalledProc.size()]),
