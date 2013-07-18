@@ -167,6 +167,7 @@ public class AnnotatedProgramPoint extends ModifiableLabeledEdgesMultigraph<Anno
 			m_outgoingReturnAppToCallPreds.get(target).remove(callPred);
 			callPred.m_ingoingReturnAppToCallPreds.get(this).remove(target);
 			
+			/*
 			if (m_outgoingReturnAppToCallPreds.get(target).isEmpty()) {
 				m_outgoingReturnAppToCallPreds.remove(target);
 				//disconnectFrom(target);
@@ -174,6 +175,7 @@ public class AnnotatedProgramPoint extends ModifiableLabeledEdgesMultigraph<Anno
 			if (callPred.m_ingoingReturnAppToCallPreds.get(this) != null && callPred.m_ingoingReturnAppToCallPreds.get(this).isEmpty()) {
 				callPred.m_ingoingReturnAppToCallPreds.remove(this);
 			}
+			*/
 		}
 	}
 	
