@@ -143,7 +143,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 	
 	public boolean process(IElement root) {
 		//FIXME
-		checker = Checker.ULTIMATE;
+		checker = Checker.IMPULSE;
 		
 		initialize(root);
 		

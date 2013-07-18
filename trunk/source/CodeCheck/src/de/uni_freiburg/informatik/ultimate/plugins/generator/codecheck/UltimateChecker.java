@@ -27,8 +27,8 @@ public class UltimateChecker extends CodeChecker {
 		AnnotatedProgramPoint[][] newNodes = new AnnotatedProgramPoint[interpolantsCount][2];
 		for (int i = 0; i < interpolantsCount; ++i) {
 			newNodes[i] = new AnnotatedProgramPoint[] {
-					new AnnotatedProgramPoint(oldNode, conjugatePredicates(oldNode.getPredicate(), interpolant[i])),
-					new AnnotatedProgramPoint(oldNode, conjugatePredicates(oldNode.getPredicate(), negatePredicate(interpolant[i])))
+					new AnnotatedProgramPoint(oldNode, conjugatePredicates(oldNode.getPredicate(), interpolant[i]), true),
+					new AnnotatedProgramPoint(oldNode, conjugatePredicates(oldNode.getPredicate(), negatePredicate(interpolant[i])), true)
 					};
 		}
 		
@@ -85,7 +85,7 @@ public class UltimateChecker extends CodeChecker {
 							for (AnnotatedProgramPoint callNode : hyperEdges) {
 								if (isSatRetEdge(newNode, (Return) label, successorNode, callNode)) {
 									putEdge |= true;
-									newNode.addOutGoingReturnCallPred(successorNode, callNode);
+									System.err.println(newNode.addOutGoingReturnCallPred(successorNode, callNode));
 								}
 							}
 							if (putEdge) {

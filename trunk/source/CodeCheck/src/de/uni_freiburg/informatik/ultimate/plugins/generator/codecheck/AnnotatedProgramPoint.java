@@ -31,16 +31,7 @@ public class AnnotatedProgramPoint extends ModifiableLabeledEdgesMultigraph<Anno
 	 * copy constructor
 	 * @param oldApp AnnotatedProgramPoint to copy
 	 */
-	public AnnotatedProgramPoint(AnnotatedProgramPoint oldApp) {
-		m_predicate = oldApp.m_predicate;
-		m_programPoint = oldApp.m_programPoint;
-		m_isPseudoErrorLocation = oldApp.m_isPseudoErrorLocation;
-		m_outgoingReturnAppToCallPreds = cloneMap(oldApp.m_outgoingReturnAppToCallPreds);
-		m_ingoingReturnAppToCallPreds = cloneMap(oldApp.m_ingoingReturnAppToCallPreds);
-		copies = new ArrayList<AnnotatedProgramPoint>();
-		newCopies = new ArrayList<AnnotatedProgramPoint>();
-		cloneSource = null;
-	}
+	
 	
 	
 	/**
@@ -58,26 +49,7 @@ public class AnnotatedProgramPoint extends ModifiableLabeledEdgesMultigraph<Anno
 		return ret;
 	}
 	
-	public AnnotatedProgramPoint(AnnotatedProgramPoint oldApp, IPredicate newPred) {
-		m_predicate = newPred;
-		m_programPoint = oldApp.m_programPoint;
-		m_isPseudoErrorLocation = oldApp.m_isPseudoErrorLocation;
-		m_outgoingReturnAppToCallPreds = cloneMap(oldApp.m_outgoingReturnAppToCallPreds);
-		m_ingoingReturnAppToCallPreds = cloneMap(oldApp.m_ingoingReturnAppToCallPreds);
-		copies = new ArrayList<AnnotatedProgramPoint>();
-		newCopies = new ArrayList<AnnotatedProgramPoint>();
-		cloneSource = null;
-	}
 	
-	public AnnotatedProgramPoint(IPredicate predicate, ProgramPoint programPoint) {
-		m_predicate = predicate;
-		m_programPoint = programPoint;
-		copies = new ArrayList<AnnotatedProgramPoint>();
-		newCopies = new ArrayList<AnnotatedProgramPoint>();
-		m_outgoingReturnAppToCallPreds = new HashMap<AnnotatedProgramPoint, HashSet<AnnotatedProgramPoint>>();
-		m_ingoingReturnAppToCallPreds = new HashMap<AnnotatedProgramPoint, HashSet<AnnotatedProgramPoint>>();
-		cloneSource = null;
-	}
 	
 	public AnnotatedProgramPoint(IPredicate predicate, ProgramPoint programPoint, boolean isPEL) {
 		m_predicate = predicate;
@@ -89,7 +61,26 @@ public class AnnotatedProgramPoint extends ModifiableLabeledEdgesMultigraph<Anno
 		m_ingoingReturnAppToCallPreds = new HashMap<AnnotatedProgramPoint, HashSet<AnnotatedProgramPoint>>();
 		cloneSource = null;
 	}
+	
+	public AnnotatedProgramPoint(IPredicate predicate, ProgramPoint programPoint) {
+		this(predicate, programPoint, false);
+	}
+	
+	public AnnotatedProgramPoint(AnnotatedProgramPoint oldApp, IPredicate newPred) {
+		this(newPred, oldApp.m_programPoint, oldApp.m_isPseudoErrorLocation);
+	}
+	
+	public AnnotatedProgramPoint(AnnotatedProgramPoint oldApp) {
+		this(oldApp.m_predicate, oldApp.m_programPoint, oldApp.m_isPseudoErrorLocation);
+	}
 
+	public AnnotatedProgramPoint(AnnotatedProgramPoint oldApp, IPredicate newPred, boolean copyReturnAppToCallPredsLists) {
+		this(newPred, oldApp.m_programPoint, oldApp.m_isPseudoErrorLocation);
+		if(copyReturnAppToCallPredsLists) {
+			m_outgoingReturnAppToCallPreds = cloneMap(oldApp.m_outgoingReturnAppToCallPreds);
+			m_ingoingReturnAppToCallPreds = cloneMap(oldApp.m_ingoingReturnAppToCallPreds);
+		}
+	}
 
 	public void addCopy(AnnotatedProgramPoint copy) {
 		newCopies.add(copy);
@@ -103,7 +94,6 @@ public class AnnotatedProgramPoint extends ModifiableLabeledEdgesMultigraph<Anno
 	public void setCloneSource(AnnotatedProgramPoint source) {
 		cloneSource = source;
 	}
-	
 	
 	public ArrayList<AnnotatedProgramPoint> getCopies() {
 		ArrayList<AnnotatedProgramPoint> result = new ArrayList<AnnotatedProgramPoint>();
@@ -132,7 +122,7 @@ public class AnnotatedProgramPoint extends ModifiableLabeledEdgesMultigraph<Anno
 		return m_programPoint;
 	}
 	
-	public void addOutGoingReturnCallPred(AnnotatedProgramPoint target, AnnotatedProgramPoint callPred) {
+	public boolean addOutGoingReturnCallPred(AnnotatedProgramPoint target, AnnotatedProgramPoint callPred) {
 		assert mOutgoingEdgeLabels.get(target) instanceof Return;
 		
 		if (m_outgoingReturnAppToCallPreds == null) {
@@ -144,7 +134,8 @@ public class AnnotatedProgramPoint extends ModifiableLabeledEdgesMultigraph<Anno
 			hyperEdges = new HashSet<AnnotatedProgramPoint>();
 			m_outgoingReturnAppToCallPreds.put(target, hyperEdges);
 		}
-		hyperEdges.add(callPred);
+		
+		boolean added = hyperEdges.add(callPred);
 		
 		if (callPred.m_ingoingReturnAppToCallPreds == null) {
 			callPred.m_ingoingReturnAppToCallPreds = new HashMap<AnnotatedProgramPoint, HashSet<AnnotatedProgramPoint>>();
@@ -155,32 +146,39 @@ public class AnnotatedProgramPoint extends ModifiableLabeledEdgesMultigraph<Anno
 			callPred.m_ingoingReturnAppToCallPreds.put(this, returns);
 		}
 		returns.add(target);
+		
+		return added;
 	}
 	
-	public void removeOutgoingReturnCallPred(AnnotatedProgramPoint target, AnnotatedProgramPoint callPred) {
+	public boolean removeOutgoingReturnCallPred(AnnotatedProgramPoint target, AnnotatedProgramPoint callPred) {
 		assert mOutgoingEdgeLabels.get(target) instanceof Return;
 		assert m_outgoingReturnAppToCallPreds != null && m_outgoingReturnAppToCallPreds.get(target) != null;
 		assert callPred.m_ingoingReturnAppToCallPreds != null && callPred.m_ingoingReturnAppToCallPreds.get(this) != null;
 	
+		
+		if(m_outgoingReturnAppToCallPreds == null)
+			return false;
+		if(m_outgoingReturnAppToCallPreds.get(target) == null)
+			return false;
+		
 		if (m_outgoingReturnAppToCallPreds.get(target).contains(callPred)) {
-			// FIXME: Entfernen einige Menge wenn sie leer bekommen.
 			m_outgoingReturnAppToCallPreds.get(target).remove(callPred);
 			callPred.m_ingoingReturnAppToCallPreds.get(this).remove(target);
 			
-			/*
 			if (m_outgoingReturnAppToCallPreds.get(target).isEmpty()) {
 				m_outgoingReturnAppToCallPreds.remove(target);
-				//disconnectFrom(target);
 			}
 			if (callPred.m_ingoingReturnAppToCallPreds.get(this) != null && callPred.m_ingoingReturnAppToCallPreds.get(this).isEmpty()) {
 				callPred.m_ingoingReturnAppToCallPreds.remove(this);
 			}
-			*/
+			return true;
 		}
+		else
+			return false;
 	}
 	
 	public boolean outGoingReturnAppToCallPredContains(AnnotatedProgramPoint target, AnnotatedProgramPoint callPred) {
-		if (!( mOutgoingEdgeLabels.get(target) instanceof Return))
+		if (!( this.mOutgoingEdgeLabels.get(target) instanceof Return))
 			return false;
 		assert m_outgoingReturnAppToCallPreds != null; 
 		
@@ -200,7 +198,9 @@ public class AnnotatedProgramPoint extends ModifiableLabeledEdgesMultigraph<Anno
 		dest.addIncomingNode(this);
 	}
 	public void disconnectFrom(AnnotatedProgramPoint dest) {
-		removeOutgoingNode(dest);
+		if(this.getOutgoingEdgeLabel(dest) instanceof Return)
+			this.m_outgoingReturnAppToCallPreds.remove(dest);
+		this.removeOutgoingNode(dest);
 		dest.removeIncomingNode(this);
 	}
 	

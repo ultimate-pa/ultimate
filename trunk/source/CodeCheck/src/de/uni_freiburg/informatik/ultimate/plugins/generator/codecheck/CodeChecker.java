@@ -65,11 +65,23 @@ public abstract class CodeChecker {
 	
 	protected boolean isValidEdge(AnnotatedProgramPoint sourceNode, CodeBlock edgeLabel,
 			AnnotatedProgramPoint destinationNode) {
-		//FIXME
 		if (edgeLabel instanceof DummyCodeBlock)
 			return false;
 		System.out.print(".");
+		
+		if (edgeLabel instanceof Call) 
+			return m_smtManager.isInductiveCall(sourceNode.getPredicate(), (Call) edgeLabel, destinationNode.getPredicate()) == LBool.UNSAT;
+		
 		return m_smtManager.isInductive(sourceNode.getPredicate(), edgeLabel, destinationNode.getPredicate()) == LBool.UNSAT;
+	}
+
+	protected boolean isValidReturnEdge(AnnotatedProgramPoint sourceNode, CodeBlock edgeLabel,
+			AnnotatedProgramPoint destinationNode, AnnotatedProgramPoint callNode) {
+		return m_smtManager.isInductiveReturn(sourceNode.getPredicate(), callNode.getPredicate(), (Return) edgeLabel, destinationNode.getPredicate()) == LBool.UNSAT;
+	}
+
+	protected boolean isStrongerPredicate(AnnotatedProgramPoint strongerNode, AnnotatedProgramPoint weakerNode) {
+		return m_smtManager.isCovered(strongerNode.getPredicate(), weakerNode.getPredicate()) == LBool.UNSAT;
 	}
 	
 	public static String objectReference(Object o) {
