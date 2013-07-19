@@ -23,7 +23,7 @@ int fibonacci(int n) {
 int main() {
     int x = __VERIFIER_nondet_int();
     int result = fibonacci(x);
-    if (result >= 0) {
+    if (result >= x - 1) {
         return 0;
     } else {
         ERROR: 
