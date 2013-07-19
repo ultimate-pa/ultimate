@@ -3,6 +3,9 @@
 // Date: 15.5.2011
 
 
+NestedLassoWord emptyOmega = [,];
+assert(!buchiAccepts(finitelyManyA, emptyOmega));
+
 assert(buchiAccepts(finitelyManyA, [ a a b a, b ]));
 assert(!buchiIsEmpty(finitelyManyA));
 
