@@ -110,3 +110,24 @@ NestedWordAutomaton emptyAutomaton = (
 );
 
 assert(isEmpty(emptyAutomaton));
+
+
+
+NestedWordAutomaton noTransitionAutomaton = (
+	callAlphabet = {},
+	internalAlphabet = {a1 a0 },
+	returnAlphabet = {},
+	states = {s0 },
+	initialStates = {s0 },
+	finalStates = {s0 },
+	callTransitions = {
+	},
+	internalTransitions = {
+	},
+	returnTransitions = {
+	}
+);
+
+
+NestedWord emptyString = [];
+assert(accepts(noTransitionAutomaton, emptyString));
