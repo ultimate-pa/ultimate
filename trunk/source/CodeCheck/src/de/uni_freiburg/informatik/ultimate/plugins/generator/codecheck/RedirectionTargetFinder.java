@@ -49,25 +49,6 @@ public class RedirectionTargetFinder {
 			return null;
 		}
 	}
-	
-	/*
-	
-	protected AnnotatedProgramPoint findReturnRedirectionCallPred(AnnotatedProgramPoint callPred, AnnotatedProgramPoint predecessorNode, AnnotatedProgramPoint dest) {
-		switch(findingStrategy) {
-		case First:
-		case Random:
-			return findFirstReturnRedirectionCallPred(callPred, predecessorNode, dest);
-		case FirstStrongest:
-		case RandomStrongest:
-			return findStrongestReturnRedirectionCallPred(callPred, predecessorNode, dest);
-		case Alex:
-			return null; // Alex : Write your redirection algorithm here.
-		default:
-			return null;
-		}
-	}
-	
-	*/
 
 	protected AnnotatedProgramPoint findRedirectionTarget(
 			AnnotatedProgramPoint predecessorNode, AnnotatedProgramPoint dest) {
@@ -125,47 +106,6 @@ public class RedirectionTargetFinder {
 		return res;
 		
 	}
-	
-	/*
-	
-	private AnnotatedProgramPoint findFirstReturnRedirectionCallPred(AnnotatedProgramPoint callPred, AnnotatedProgramPoint predecessorNode, AnnotatedProgramPoint dest) {
-		CodeBlock label = predecessorNode.getOutgoingEdgeLabel(dest);
-		
-		ArrayList <AnnotatedProgramPoint> candidates = callPred.getNewCopies();
-
-		if(random)
-			Collections.shuffle(candidates);
-		
-		for (AnnotatedProgramPoint candidate : candidates) {
-			if(codeChecker.isValidReturnEdge(predecessorNode, label, dest, candidate)) {
-				return candidate;
-			}
-		}
-		
-		return null;
-	}
-
-	private AnnotatedProgramPoint findStrongestReturnRedirectionCallPred(AnnotatedProgramPoint callPred, AnnotatedProgramPoint predecessorNode, AnnotatedProgramPoint dest) {
-		CodeBlock label = predecessorNode.getOutgoingEdgeLabel(dest);
-		
-		ArrayList <AnnotatedProgramPoint> candidates = callPred.getNewCopies();
-
-		if(random)
-			Collections.shuffle(candidates);
-
-		AnnotatedProgramPoint res = null;
-		
-		for (AnnotatedProgramPoint candidate : candidates) {
-			if(codeChecker.isValidReturnEdge(predecessorNode, label, dest, candidate)) {
-				if(res == null || codeChecker.isStrongerPredicate(candidate, res))
-					res = candidate;
-			}
-		}
-		
-		return res;
-	}
-	
-	*/
 
 	private AnnotatedProgramPoint findFirstReturnRedirectionTarget(
 			AnnotatedProgramPoint predecessorNode, 

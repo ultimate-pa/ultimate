@@ -62,7 +62,7 @@ public abstract class CodeChecker {
 	protected boolean isSatRetEdge(AnnotatedProgramPoint sourceNode, Return edgeLabel,
 			AnnotatedProgramPoint destinationNode, AnnotatedProgramPoint callNode) {
 		System.out.print(".");
-		return m_smtManager.isInductiveReturn(sourceNode.getPredicate(), destinationNode.getPredicate(), (Return) edgeLabel, callNode.getPredicate()) != LBool.UNSAT;
+		return m_smtManager.isInductiveReturn(sourceNode.getPredicate(), callNode.getPredicate(), (Return) edgeLabel, negatePredicate(destinationNode.getPredicate())) != LBool.UNSAT;
 	}
 	
 	protected boolean isValidEdge(AnnotatedProgramPoint sourceNode, CodeBlock edgeLabel,

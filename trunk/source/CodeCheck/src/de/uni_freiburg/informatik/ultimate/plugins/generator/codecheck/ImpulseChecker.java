@@ -55,7 +55,7 @@ public class ImpulseChecker extends CodeChecker {
 	}
 	
 	private AnnotatedProgramPoint copyNode(AnnotatedProgramPoint oldNode, IPredicate interpolant) {
-		/*
+		
 		if(interpolant == m_truePredicate) {
 			return oldNode;
 		}
@@ -64,10 +64,6 @@ public class ImpulseChecker extends CodeChecker {
 		AnnotatedProgramPoint newNode = LocationPredicates.get(programPoint).get(newPredicate);
 		if(newNode != null)
 			return newNode;
-		*/
-		ProgramPoint programPoint = oldNode.getProgramPoint();
-		IPredicate newPredicate = conjugatePredicates(oldNode.getPredicate(), interpolant);
-		AnnotatedProgramPoint newNode;
 		
 		newNode = new AnnotatedProgramPoint(oldNode, newPredicate, true);
 		LocationPredicates.get(programPoint).put(newPredicate, newNode);
@@ -89,10 +85,13 @@ public class ImpulseChecker extends CodeChecker {
 		
 		//redirect intermediate edges
 		for(int i = 1; i < copies.length; ++i) {
-
-			
-			if(nodes[i].getNewCopies().contains(copies[i-1]))
-				redirectEdge(copies[i-1], nodes[i+1], copies[i]);
+			if(nodes[i].getNewCopies().contains(copies[i-1])) {
+				if (copies[i-1].getOutgoingEdgeLabel(nodes[i+1]) instanceof Return) {
+//FIXME					
+				}
+				else
+					redirectEdge(copies[i-1], nodes[i+1], copies[i]);
+			}
 			else {
 				AnnotatedProgramPoint source = copies[i-1];
 				AnnotatedProgramPoint oldDest = findTargetInTree(source, nodes[i+1]);
@@ -102,8 +101,13 @@ public class ImpulseChecker extends CodeChecker {
 					boolean alwaysRedirect = true;
 					boolean randomlyDecide = false;
 					randomlyDecide &= (Math.random() * 2) >= 1;
-					if(alwaysRedirect || randomlyDecide || isStrongerPredicate(newDest, oldDest))
-						redirectEdge(source, oldDest, newDest);
+					if(alwaysRedirect || randomlyDecide || isStrongerPredicate(newDest, oldDest)) {
+						if (source.getOutgoingEdgeLabel(oldDest) instanceof Return) {
+//FIXME							
+						}
+						else
+							redirectEdge(source, oldDest, newDest);
+					}
 				}
 			}
 		}
@@ -112,7 +116,11 @@ public class ImpulseChecker extends CodeChecker {
 		AnnotatedProgramPoint lastNode = copies[copies.length - 1];
 		AnnotatedProgramPoint errorLocation = nodes[nodes.length - 1];
 		if (lastNode.getOutgoingNodes().contains(errorLocation)) {
-			lastNode.disconnectFrom(errorLocation);
+			if(lastNode.getOutgoingEdgeLabel(errorLocation) instanceof Return) {
+//FIXME
+			}
+			else
+				lastNode.disconnectFrom(errorLocation);
 		}
 		
 		return true;
@@ -144,58 +152,13 @@ public class ImpulseChecker extends CodeChecker {
 		return true;
 	}
 	
-	/*
-	
-	private boolean redirectEdges(AnnotatedProgramPoint[] node) {
-		
-		for (AnnotatedProgramPoint node : nodes) {
-			AnnotatedProgramPoint[] predecessorNodes = node.getIncomingNodes().toArray(new AnnotatedProgramPoint[]{});
-			for (AnnotatedProgramPoint predecessorNode : predecessorNodes) {
-				if(predecessorNode != m_graphRoot) {
-					if(predecessorNode.getOutgoingEdgeLabel(node) instanceof Return) {
-						HashSet<AnnotatedProgramPoint> callPreds;
-						callPreds = predecessorNode.getCallPredsOfOutgoingReturnTarget(node);
-						if(callPreds != null) {
-							for (AnnotatedProgramPoint callPred : callPreds) {
-								AnnotatedProgramPoint newDest = redirectionTargetFinder.findReturnRedirectionTarget(predecessorNode, callPred, node);
-								if (newDest != null)
-									redirectHyperEdgeDestination(predecessorNode, callPred, node, newDest);
-							}
-						}
-					}
-					else {
-						AnnotatedProgramPoint newDest = redirectionTargetFinder.findRedirectionTarget(predecessorNode, node);
-						if(newDest != null)
-							redirectEdge(predecessorNode, node, newDest);
-					}
-				}
-			}
-			/*
-			HashMap<AnnotatedProgramPoint, HashSet<AnnotatedProgramPoint>> hyperEdgesToCallPred;
-			hyperEdgesToCallPred = node.m_ingoingReturnAppToCallPreds;
-			AnnotatedProgramPoint[] sources = hyperEdgesToCallPred.keySet().toArray(new AnnotatedProgramPoint[]{});
-			for (AnnotatedProgramPoint source : sources) {
-				AnnotatedProgramPoint[] targets = hyperEdgesToCallPred.get(source).toArray(new AnnotatedProgramPoint[]{});
-				for (AnnotatedProgramPoint target : targets) {
-					AnnotatedProgramPoint newCallPred = redirectionTargetFinder.findReturnRedirectionCallPred(node, source, target);
-					if(newCallPred != null)
-						redirectHyperEdgeCallPred(source, node, newCallPred, target);
-				}
-			}
-			
-		}
-		return true;
-	}
-	
-	*/
-	
 	private boolean redirectEdge(AnnotatedProgramPoint source,
 			AnnotatedProgramPoint oldDest,
 			AnnotatedProgramPoint newDest) {
 		
 		CodeBlock label = source.getOutgoingEdgeLabel(oldDest);
 		
-		if(label == null) //FIXME how to default redirect return edges?
+		if(label == null)
 			return false;
 		source.connectTo(newDest, label);
 		
@@ -227,24 +190,6 @@ public class ImpulseChecker extends CodeChecker {
 		return true;
 		
 	}
-	
-	/*
-	
-	private boolean redirectHyperEdgeCallPred(AnnotatedProgramPoint source, AnnotatedProgramPoint oldCallPred,
-			AnnotatedProgramPoint newCallPred,
-			AnnotatedProgramPoint dest) {
-		
-		CodeBlock label = source.getOutgoingEdgeLabel(dest);
-		if(label == null || !(label instanceof Return))
-			return false;
-		source.addOutGoingReturnCallPred(dest, newCallPred);
-		source.removeOutgoingReturnCallPred(dest, oldCallPred);
-		
-		return true;
-		
-	}
-	
-	*/
 	
 	private AnnotatedProgramPoint findTargetInTree(AnnotatedProgramPoint source, AnnotatedProgramPoint root) {
 		if(source.getOutgoingNodes().contains(root))

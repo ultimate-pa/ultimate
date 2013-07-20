@@ -203,8 +203,12 @@ public class AnnotatedProgramPoint extends ModifiableLabeledEdgesMultigraph<Anno
 		dest.addIncomingNode(this);
 	}
 	public void disconnectFrom(AnnotatedProgramPoint dest) {
-		if(this.getOutgoingEdgeLabel(dest) instanceof Return)
-			this.m_outgoingReturnAppToCallPreds.remove(dest);
+		if(this.getOutgoingEdgeLabel(dest) instanceof Return) {
+			AnnotatedProgramPoint[] callPreds = this.m_outgoingReturnAppToCallPreds.get(dest).toArray(new AnnotatedProgramPoint[]{});
+			for (AnnotatedProgramPoint callPred : callPreds) {
+				removeOutgoingReturnCallPred(dest, callPred);
+			}
+		}
 		this.removeOutgoingNode(dest);
 		dest.removeIncomingNode(this);
 	}
