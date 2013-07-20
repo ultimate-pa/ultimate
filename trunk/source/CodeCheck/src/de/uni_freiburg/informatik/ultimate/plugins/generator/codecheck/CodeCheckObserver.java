@@ -125,11 +125,10 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 		m_taPrefs = rootAnnot.getTaPrefs();
 		m_smtManager = new SmtManager(rootAnnot.getBoogie2Smt(),
 				Solver.SMTInterpol, rootAnnot.getGlobalVars(),
-				rootAnnot.getModifiedVars(), false, "");
+				rootAnnot.getModGlobVarManager(), false, "");
 
 		m_truePredicate = m_smtManager.newTruePredicate();
 		m_falsePredicate = m_smtManager.newFalsePredicate();
-		
 		RCFG2AnnotatedRCFG r2ar = new RCFG2AnnotatedRCFG(m_smtManager);
 		m_graphRoot = r2ar.convert(m_originalRoot, m_truePredicate);
 
@@ -148,7 +147,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 		initialize(root);
 		
 		final boolean loop_forever = true; // for DEBUG
-		final int iterationsLimit = 10; // for DEBUG
+		final int iterationsLimit = 0; // for DEBUG
 		
 		//ImpRootNode originalGraphCopy = copyGraph(m_graphRoot);
 		
@@ -170,8 +169,10 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 			stack.add(procRoot);
 			EmptinessCheck emptinessCheck = new EmptinessCheck();
 			int iterationsCount = 0; // for DEBUG
+			
 			while (loop_forever | iterationsCount++ < iterationsLimit) {
-				System.out.printf("Iterations = %d\n", iterationsCount);
+				s_Logger.debug(String.format("Iterations = %d\n", iterationsCount));
+				codeChecker.debug();
 				if (stack.isEmpty()) {
 					s_Logger.info("This Program is SAFE, Check terminated with " + iterationsCount + " iterations.");
 					break;
@@ -187,7 +188,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 				} else {
 					s_Logger.info("Error Path is FOUND.");
 					TraceChecker traceChecker = new TraceChecker(m_smtManager, 
-							m_originalRoot.getRootAnnot().getModifiedVars(), 
+							m_originalRoot.getRootAnnot().getModGlobVarManager(), 
 							m_originalRoot.getRootAnnot().getEntryNodes(),
 							dumpInitialize());
 					LBool isSafe = traceChecker.checkTrace(m_truePredicate, // checks whether the trace is feasible, i.e. the formula is satisfiable
@@ -208,6 +209,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 					}
 				}
 			}
+			codeChecker.debug();
 			//if (procID < noOfProcedures)
 			//m_graphRoot = copyGraph(originalGraphCopy);
 		}
@@ -215,22 +217,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 		return false;
 	}
 	// Debug
-	HashSet <AnnotatedProgramPoint> visited = new HashSet<AnnotatedProgramPoint>(); 
-	public boolean dfs(AnnotatedProgramPoint node) {
-		if (!visited.contains(node)) {
-			visited.add(node);
-			AnnotatedProgramPoint[] adj = node.getOutgoingNodes().toArray(new AnnotatedProgramPoint[]{});
-			for (int i = 0; i < adj.length; ++i) {
-				dfs(adj[i]);
-				if (node.getOutgoingEdgeLabel(adj[i]) instanceof Summary) {
-					node.removeOutgoingNode(adj[i]);
-					adj[i].removeIncomingNode(node);
-				}
-			}
-		}
-		return false;
-	}
-		
+	
 	public ImpRootNode getRoot() {
 		return codeChecker.m_graphRoot;
 	}

@@ -50,6 +50,8 @@ public class RedirectionTargetFinder {
 		}
 	}
 	
+	/*
+	
 	protected AnnotatedProgramPoint findReturnRedirectionCallPred(AnnotatedProgramPoint callPred, AnnotatedProgramPoint predecessorNode, AnnotatedProgramPoint dest) {
 		switch(findingStrategy) {
 		case First:
@@ -64,6 +66,8 @@ public class RedirectionTargetFinder {
 			return null;
 		}
 	}
+	
+	*/
 
 	protected AnnotatedProgramPoint findRedirectionTarget(
 			AnnotatedProgramPoint predecessorNode, AnnotatedProgramPoint dest) {
@@ -122,6 +126,8 @@ public class RedirectionTargetFinder {
 		
 	}
 	
+	/*
+	
 	private AnnotatedProgramPoint findFirstReturnRedirectionCallPred(AnnotatedProgramPoint callPred, AnnotatedProgramPoint predecessorNode, AnnotatedProgramPoint dest) {
 		CodeBlock label = predecessorNode.getOutgoingEdgeLabel(dest);
 		
@@ -158,6 +164,8 @@ public class RedirectionTargetFinder {
 		
 		return res;
 	}
+	
+	*/
 
 	private AnnotatedProgramPoint findFirstReturnRedirectionTarget(
 			AnnotatedProgramPoint predecessorNode, 

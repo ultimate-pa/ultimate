@@ -18,7 +18,7 @@ public class UltimateChecker extends CodeChecker {
 	
 	
 	public UltimateChecker(IElement root, SmtManager m_smtManager, IPredicate m_truePredicate, IPredicate m_falsePredicate, TAPreferences m_taPrefs, RootNode m_originalRoot, ImpRootNode m_graphRoot) {
-		super(root, m_smtManager, m_falsePredicate, m_falsePredicate, m_taPrefs, m_originalRoot, m_graphRoot);
+		super(root, m_smtManager, m_truePredicate, m_falsePredicate, m_taPrefs, m_originalRoot, m_graphRoot);
 		// TODO Auto-generated constructor stub
 	}
 	
@@ -43,6 +43,7 @@ public class UltimateChecker extends CodeChecker {
 				for (int i = 0; i < interpolantsCount; ++i) {
 					for (AnnotatedProgramPoint newNode : newNodes[i]) {
 						if (isReturn) {
+							//CodeCheckObserver.s_Logger.debug("Hallo");
 							AnnotatedProgramPoint[] hyperEdges = predecessorNode.getCallPredsOfOutgoingReturnTarget(oldNode).toArray(new AnnotatedProgramPoint[]{});
 							
 							boolean putEdge = false;
@@ -79,6 +80,7 @@ public class UltimateChecker extends CodeChecker {
 				for (int i = 0; i < interpolantsCount; ++i) {
 					for (AnnotatedProgramPoint newNode : newNodes[i]) {
 						if (isReturn) {
+							//CodeCheckObserver.s_Logger.debug("Hallo");
 							AnnotatedProgramPoint[] hyperEdges = oldNode.getCallPredsOfOutgoingReturnTarget(successorNode).toArray(new AnnotatedProgramPoint[]{});
 							
 							boolean putEdge = false;
@@ -144,17 +146,19 @@ public class UltimateChecker extends CodeChecker {
 			for (AnnotatedProgramPoint ret : rets) {
 				preRet.removeOutgoingReturnCallPred(ret, oldNode);
 				for (AnnotatedProgramPoint newNode : nodesClones.get(oldNode)) {
-					
+					//CodeCheckObserver.s_Logger.debug(String.format("%s ~~~> %s; %s", preRet, ret, newNode));
 					CodeBlock label = preRet.getOutgoingEdgeLabel(ret);
 					if (isSatRetEdge(preRet, (Return) label, ret, newNode)) {
+						//CodeCheckObserver.s_Logger.debug("Satisfiable");
 						preRet.addOutGoingReturnCallPred(ret, newNode);
+					} else {
+						//CodeCheckObserver.s_Logger.debug("Not Satisfiable");
 					}
 					
 				}
 			}
 		}
 		
-
 		for (int i = 0; i < interpolantsCount; ++i) {
 			for (AnnotatedProgramPoint newNode : newNodes[i]) {
 				AnnotatedProgramPoint[] retNodes = newNode.m_outgoingReturnAppToCallPreds.keySet().toArray(new AnnotatedProgramPoint[]{});
@@ -172,7 +176,6 @@ public class UltimateChecker extends CodeChecker {
 				}
 			}
 		}
-		
 		return true;
 	}
 	

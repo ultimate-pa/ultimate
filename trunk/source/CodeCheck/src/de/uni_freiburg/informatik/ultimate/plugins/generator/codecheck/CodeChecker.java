@@ -1,5 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck;
 
+import java.util.HashSet;
+
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
@@ -60,7 +62,7 @@ public abstract class CodeChecker {
 	protected boolean isSatRetEdge(AnnotatedProgramPoint sourceNode, Return edgeLabel,
 			AnnotatedProgramPoint destinationNode, AnnotatedProgramPoint callNode) {
 		System.out.print(".");
-		return m_smtManager.isInductiveReturn(sourceNode.getPredicate(), callNode.getPredicate(), (Return) edgeLabel, destinationNode.getPredicate()) != LBool.UNSAT;
+		return m_smtManager.isInductiveReturn(sourceNode.getPredicate(), destinationNode.getPredicate(), (Return) edgeLabel, callNode.getPredicate()) != LBool.UNSAT;
 	}
 	
 	protected boolean isValidEdge(AnnotatedProgramPoint sourceNode, CodeBlock edgeLabel,
@@ -86,5 +88,23 @@ public abstract class CodeChecker {
 	
 	public static String objectReference(Object o) {
 		return Integer.toHexString(System.identityHashCode(o));
+	}
+	
+	
+	HashSet <AnnotatedProgramPoint> visited = new HashSet<AnnotatedProgramPoint>(); 
+	public void debug() {
+		visited.clear();
+		dfs(m_graphRoot);
+	}
+	private boolean dfs(AnnotatedProgramPoint node) {
+		if (!visited.contains(node)) {
+			visited.add(node);
+			CodeCheckObserver.s_Logger.debug(String.format("Node: %s:\noutGoing: %s\ninHyperEdges: %s\n", node, node.m_outgoingReturnAppToCallPreds, node.m_ingoingReturnAppToCallPreds));
+			AnnotatedProgramPoint[] adj = node.getOutgoingNodes().toArray(new AnnotatedProgramPoint[]{});
+			for (int i = 0; i < adj.length; ++i) {
+				dfs(adj[i]);
+			}
+		}
+		return false;
 	}
 }

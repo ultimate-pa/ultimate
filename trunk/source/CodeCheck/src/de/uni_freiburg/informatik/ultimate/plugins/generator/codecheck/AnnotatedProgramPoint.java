@@ -79,6 +79,11 @@ public class AnnotatedProgramPoint extends ModifiableLabeledEdgesMultigraph<Anno
 		if(copyReturnAppToCallPredsLists) {
 			m_outgoingReturnAppToCallPreds = cloneMap(oldApp.m_outgoingReturnAppToCallPreds);
 			m_ingoingReturnAppToCallPreds = cloneMap(oldApp.m_ingoingReturnAppToCallPreds);
+			for (AnnotatedProgramPoint returnPred : m_ingoingReturnAppToCallPreds.keySet()) {
+				for (AnnotatedProgramPoint returnDest : m_ingoingReturnAppToCallPreds.get(returnPred)) {
+					returnPred.addOutGoingReturnCallPred(returnDest, this);
+				}
+			}
 		}
 	}
 
