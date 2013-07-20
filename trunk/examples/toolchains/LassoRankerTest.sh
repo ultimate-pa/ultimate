@@ -40,7 +40,8 @@ echo "Started `date`."
 files=`find "$TestDir" -name "*.bpl" | sort`
 
 for f in $files; do
-	echo -n "Test case: $f "
+	name=`basename "$f"`
+	echo -n "Test case: $name "
 
 	KEYWORD_TERMD=`head -n 1 "$f" | grep "#rTerminationDerivable"`
 	# program does terminate and Ultimate should see that
@@ -52,14 +53,14 @@ for f in $files; do
 	# program will not be able to be processed
 
 	# Run Ultimate!
-	Ultimate_OUTPUT=`bash -c "ulimit -t $TimeLimit; $Ultimate_PATH/$Ultimate_BIN --console "$TOOLCHAIN" "$f" 2>&1"`
+	Ultimate_OUTPUT=`bash -c "ulimit -t $TimeLimit; $Ultimate_BIN --console "$TOOLCHAIN" "$f" 2>&1"`
 
 	EXCEPTION=`echo "$Ultimate_OUTPUT" | grep "has thrown an Exception!"`
 	EXCEPT=`echo "$Ultimate_OUTPUT" | grep "Exception"`
 	ASSERTION_ERROR=`echo "$Ultimate_OUTPUT" | grep "java.lang.AssertionError"`
 
-	RESULT_NORANKING=`echo "$Ultimate_OUTPUT" | grep "No ranking function has been found."`
-	RESULT_RANKING=`echo "$Ultimate_OUTPUT" | grep "A ranking function has been found:"`
+	RESULT_NORANKING=`echo "$Ultimate_OUTPUT" | grep "There are no more templates to try. I give up."`
+	RESULT_RANKING=`echo "$Ultimate_OUTPUT" | grep "Found a model, proceeding to extract ranking function."`
 
 	if [ "$EXCEPT" -o "$ASSERTION_ERROR" -o "$JVMCRASH" ]; then
 		if [ "$KEYWORD_ERROR" ]; then
