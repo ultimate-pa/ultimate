@@ -49,6 +49,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Sum
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.TransFormula;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.TransFormula.Infeasibility;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.PreferenceValues.Solver;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.DestructiveEqualityResolution;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.HoareAnnotation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager.TermVarsProc;
@@ -1650,11 +1651,9 @@ public class SmtManager {
 	 */
 	public IPredicate strongestPostcondition(IPredicate p, CodeBlock cb) {
 		if (cb instanceof Call) {
-			// throw new UnsupportedOperationException("This method is not responsible for Call-Statemtens.");
-			return p;
+			throw new UnsupportedOperationException("This method is not responsible for Call-Statemtens.");
 		} else if (cb instanceof Return) {
-			// throw new UnsupportedOperationException("This method is not responsible for Return-Statemtens.");
-			return p;
+			throw new UnsupportedOperationException("This method is not responsible for Return-Statements.");
 		} else if (cb instanceof InterproceduralSequentialComposition) {
 			throw new UnsupportedOperationException();
 		}
@@ -1732,7 +1731,6 @@ public class SmtManager {
 			}
 			int i = 0;
 			for (BoogieVar bv : tf.getInVars().keySet()) {
-				Term bv_term = tf.getInVars().get(bv);
 				if (freeVars.contains(tf.getInVars().get(bv))) {
 					invarsOccuringInFreeVarsOrAssignedVars.put(bv, tf.getInVars().get(bv));
 				}
@@ -1762,7 +1760,7 @@ public class SmtManager {
 			Term predicate_renamed = substituteVars(p.getFormula(), replacees, replacers);
 			predicate_AND_tf_term = Util.and(m_Script, predicate_renamed, tf_term_outvars_renamed);
 			
-			result = m_Script.quantifier(Script.EXISTS, 
+			result = DestructiveEqualityResolution.quantifier(m_Script, Script.EXISTS,
 					invarsOccuringInFreeVarsOrAssignedVars_TermVariables, predicate_AND_tf_term, (Term[][]) null);
 		} else {
 			result = predicate_AND_tf_term;
@@ -1780,6 +1778,7 @@ public class SmtManager {
 	 */
 	private Term substituteVars(Term formula, List<TermVariable> replacees, List<Term> replacers) {
 		
+		assert(replacees.size() == replacers.size());
 		TermVariable[] vars = replacees.toArray(new TermVariable[replacees
 		                                                         .size()]);
 		Term[] values = replacers.toArray(new Term[replacers.size()]);
@@ -1821,7 +1820,8 @@ public class SmtManager {
 		// Collect the local variables
 		Set<TermVariable> localVars = new HashSet<TermVariable>();
 		for (BoogieVar bv : p.getVars()) {
-			if (!globalVarsAssignment.getInVars().keySet().contains(bv)) {
+			String id = bv.getIdentifier();
+			if (!m_GlobalVars.containsKey(bv.getIdentifier())) {
 				localVars.add(bv.getTermVariable());
 			}
 		}
@@ -1850,7 +1850,7 @@ public class SmtManager {
 		Term callTerm_AND_predicate = Util.and(m_Script, call_Term_InVarsRenamed_OutVarsRenamed, p.getFormula());
 		Term callTerm_AND_predicate_quantified = callTerm_AND_predicate;
 		if (localVars.size() > 0) {
-			callTerm_AND_predicate_quantified = m_Script.quantifier(Script.EXISTS, 
+			callTerm_AND_predicate_quantified = DestructiveEqualityResolution.quantifier(m_Script, Script.EXISTS,
 					localVars.toArray(new TermVariable[localVars.size()]),
 					callTerm_AND_predicate, (Term[][])null);
 		}
@@ -1871,13 +1871,7 @@ public class SmtManager {
 	 */
 	public IPredicate strongestPostcondition(IPredicate calleePred, 
 											IPredicate callerPred, Return ret) {
-		// Unquantify variables in calleePred, which are locals to callerPred, so they occur in callerPred
-		Set<Term> callerPredVars = new HashSet<Term>();
-		for (BoogieVar bv : callerPred.getVars()) {
-			callerPredVars.add(bv.getTermVariable());
-		}
-		Term calleePredTermUnquantified = unquantifyCalleePredicate(calleePred.getFormula(), callerPredVars);
-		
+		// 1. Rename invars in Term of Return statement
 		List<TermVariable> replacees = new ArrayList<TermVariable>();
 		List<Term> replacers = new ArrayList<Term>();
 		TransFormula ret_TF = ret.getTransitionFormula();
@@ -1888,66 +1882,35 @@ public class SmtManager {
 		Term ret_Term_InVarsRenamed = substituteVars(ret_TF.getFormula(), replacees, replacers);
 		replacees.clear();
 		replacers.clear();
-		
+		//2. Rename outvars in Term of Return statement
 		for (BoogieVar bv : ret_TF.getOutVars().keySet()) {
 			replacees.add(ret_TF.getOutVars().get(bv));
 			replacers.add(bv.getTermVariable());
 		}
 		Term ret_Term_InVarsRenamed_OutVarsRenamed = substituteVars(ret_Term_InVarsRenamed, replacees, replacers);
+		// 3. Compute the local variables of the called procedure.
 		Set<TermVariable> localVarsToCalledProc = new HashSet<TermVariable>();
 		for (BoogieVar bv : calleePred.getVars()) {
 			if (!callerPred.getVars().contains(bv)) {
-				localVarsToCalledProc.add(bv.getTermVariable());
+				if (!m_GlobalVars.containsKey(bv.getIdentifier())) {
+					localVarsToCalledProc.add(bv.getTermVariable());
+				}
 			}
 		}
-		// TODO: If localVars.size == 0, then we get an error, if we try to
-		// quantify.
-		Term ret_Term_AND_calleePred = Util.and(m_Script, ret_Term_InVarsRenamed_OutVarsRenamed, calleePredTermUnquantified);
-		Term ret_Term_AND_calleePred_quantified = m_Script.quantifier(Script.EXISTS, 
-				localVarsToCalledProc.toArray(new TermVariable[localVarsToCalledProc.size()]),
-				ret_Term_AND_calleePred, (Term[][])null);
+		
+		Term ret_Term_AND_calleePred = Util.and(m_Script, ret_Term_InVarsRenamed_OutVarsRenamed, calleePred.getFormula());
+		Term ret_Term_AND_calleePred_quantified = ret_Term_AND_calleePred;
+		if (localVarsToCalledProc.size() > 0) {
+			ret_Term_AND_calleePred_quantified = DestructiveEqualityResolution.quantifier(m_Script, Script.EXISTS,
+					localVarsToCalledProc.toArray(new TermVariable[localVarsToCalledProc.size()]),
+					ret_Term_AND_calleePred, (Term[][])null);
+		}
 				
 		TermVarsProc tvp = computeTermVarsProc(ret_Term_AND_calleePred_quantified);
 		Term ret_Term_AND_calleePred_as_closed_formula = SmtManager.computeClosedFormula(ret_Term_AND_calleePred_quantified, tvp.getVars(), m_Script);
 		return newPredicate(ret_Term_AND_calleePred_quantified, tvp.getProcedures(), tvp.getVars(), ret_Term_AND_calleePred_as_closed_formula);
 	}
 
-	private Term unquantifyCalleePredicate(Term calleePredTerm, Set<Term> callerPredVars) {
-		if (calleePredTerm instanceof ApplicationTerm) {
-			Term[] subTerms = ((ApplicationTerm) calleePredTerm).getParameters();
-			FunctionSymbol fs = ((ApplicationTerm) calleePredTerm).getFunction();
-			Term[] subTermsUnquantified = new Term[subTerms.length];
-			for (int i = 0; i < subTerms.length; i++) {
-				subTermsUnquantified[i] = unquantifyCalleePredicate(subTerms[i], callerPredVars);
-			}
-
-			return calleePredTerm.getTheory().term(fs, subTermsUnquantified);
-			
-		} else if (calleePredTerm instanceof AnnotatedTerm) {
-			throw new UnsupportedOperationException("Don't know what to do in this case! (AnnotatedTerm)");
-		} else if (calleePredTerm instanceof QuantifiedFormula) {
-			Term[] quantifiedVars = ((QuantifiedFormula) calleePredTerm).getVariables();
-			List<TermVariable> quantifiedVarsLocalToCalledProc = new ArrayList<TermVariable>();
-			for (Term t : quantifiedVars) {
-				if (!callerPredVars.contains(t)) {
-					if (t instanceof TermVariable) {
-						quantifiedVarsLocalToCalledProc.add((TermVariable)t);
-					}
-				}
-			}
-			if (quantifiedVarsLocalToCalledProc.size() > 0) {
-			return m_Script.quantifier(((QuantifiedFormula) calleePredTerm).getQuantifier(), 
-					quantifiedVarsLocalToCalledProc.toArray(new TermVariable[quantifiedVarsLocalToCalledProc.size()]),
-					((QuantifiedFormula) calleePredTerm).getSubformula(), (Term[][])null);
-			} else {
-				return ((QuantifiedFormula) calleePredTerm).getSubformula();
-			}
-				
-		} else {
-			return calleePredTerm;
-		}
-	}
-	
 	
 	// TODO: Do we need also a special SP for call and return?
 	public IPredicate strongestPostconditionSpecial(IPredicate p, CodeBlock cb) {

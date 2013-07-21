@@ -39,7 +39,6 @@ public class TraceCheckerSpWp extends TraceChecker {
 
 	@Override
 	public IPredicate[] getInterpolants(Set<Integer> interpolatedPositions) {
-		// return getInterpolantsIgnoringCallAndReturn(interpolatedPositions);
 		if (m_useUnsatCore) {
 			return getInterpolantsWithUsageOfUnsatCore(interpolatedPositions);
 		} else {
@@ -226,56 +225,7 @@ public class TraceCheckerSpWp extends TraceChecker {
 		
 		return m_InterpolantsSp;
 	}
-	
-	private IPredicate[] getInterpolantsIgnoringCallAndReturn(Set<Integer> interpolatedPositions) {
-		if (!(interpolatedPositions instanceof AllIntegers)) {
-			throw new UnsupportedOperationException();
-		}
-		IPredicate tracePrecondition = m_Precondition;
-		IPredicate tracePostcondition = m_Postcondition;
-		m_PredicateBuilder.declarePredicate(tracePrecondition);
-		m_PredicateBuilder.declarePredicate(tracePostcondition);
-		
-		Word<CodeBlock> trace = m_Trace;
-		
-		forgetTrace();
-		m_InterpolantsSp = new IPredicate[trace.length()-1];
-		m_InterpolantsWp = new IPredicate[trace.length()-1];
-		
-		s_Logger.debug("Computing strongest postcondition for given trace ...");
-		
-		{
-			IPredicate p = m_SmtManager.strongestPostcondition(
-					tracePrecondition, trace.getSymbol(0));
-			m_InterpolantsSp[0] = m_PredicateBuilder.getOrConstructPredicate(p.getFormula(), p.getVars(),
-					new HashSet<String>(Arrays.asList(p.getProcedures())));
-		}
-		for (int i=1; i<m_InterpolantsSp.length; i++) {
-			IPredicate p = m_SmtManager.strongestPostcondition(
-					m_InterpolantsSp[i-1],trace.getSymbol(i));
-			m_InterpolantsSp[i] = m_PredicateBuilder.getOrConstructPredicate(p.getFormula(), p.getVars(),
-					new HashSet<String>(Arrays.asList(p.getProcedures())));
-		}
 
-		
-		/*s_Logger.debug("Computing weakest precondition for given trace ...");
-		m_InterpolantsWp[m_InterpolantsWp.length-1] = m_SmtManager.weakestPrecondition(
-				tracePostcondition, trace.getSymbol(m_InterpolantsWp.length));
-		
-		for (int i=m_InterpolantsWp.length-2; i>=0; i--) {
-			m_InterpolantsWp[i] = m_SmtManager.weakestPrecondition(
-					m_InterpolantsWp[i+1], trace.getSymbol(i+1));
-		}*/
-		
-
-		s_Logger.debug("Checking strongest postcondition...");
-		checkInterpolantsCorrect(m_InterpolantsSp, trace, tracePrecondition, tracePostcondition);
-		/*s_Logger.debug("Checking weakest precondition...");
-		checkInterpolantsCorrect(m_InterpolantsWp, trace, tracePrecondition, tracePostcondition);*/
-		
-		return m_InterpolantsSp;
-	}
-	
 	/**
 	 * Checks whether the term at position pos is contained in unsat_core.
 	 */
@@ -301,7 +251,7 @@ public class TraceCheckerSpWp extends TraceChecker {
 		assert result == LBool.UNSAT || result == LBool.UNKNOWN;
 	}
 	
-	IPredicate getInterpolantAtPosition(int i, IPredicate tracePrecondition,
+	private IPredicate getInterpolantAtPosition(int i, IPredicate tracePrecondition,
 			IPredicate tracePostcondition, IPredicate[] interpolants) {
 		assert (i>= -1 && i<= interpolants.length);
 		if (i == -1) {
@@ -314,8 +264,7 @@ public class TraceCheckerSpWp extends TraceChecker {
 	}
 	
 	
-	
-	LBool isHoareTriple(int i, IPredicate tracePrecondition, 
+	private LBool isHoareTriple(int i, IPredicate tracePrecondition, 
 			IPredicate tracePostcondition, 
 			IPredicate[] interpolants, Word<CodeBlock> trace) {
 		IPredicate pre = getInterpolantAtPosition(i-1, tracePrecondition, 
