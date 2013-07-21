@@ -151,7 +151,8 @@ public class Example {
 					"Example must be assign to at least one TaskName!");
 		}
 		if (ids.contains(id)) {
-			throw new IllegalArgumentException("ID must be unique!");
+			throw new IllegalArgumentException("ID must be unique! " + 
+					"Not unique: " + name + " " + id);
 		}
 		if (id == null || id.equals("")) {
 			throw new IllegalArgumentException("ID cannot be empty!");
