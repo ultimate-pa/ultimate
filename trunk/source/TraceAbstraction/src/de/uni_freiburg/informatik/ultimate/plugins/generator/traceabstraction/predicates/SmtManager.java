@@ -1914,62 +1914,12 @@ public class SmtManager {
 	
 	// TODO: Do we need also a special SP for call and return?
 	public IPredicate strongestPostconditionSpecial(IPredicate p, CodeBlock cb) {
-		/*TransFormula tf = cb.getTransitionFormula();
-		Term tf_term = tf.getFormula();		
-		ArrayList<TermVariable> replacees = new ArrayList<TermVariable>();
-		ArrayList<Term> replacers = new ArrayList<Term>();*/
+
 		Set<TermVariable> assignedVars = new HashSet<TermVariable>();
 		for (BoogieVar bv : cb.getTransitionFormula().getAssignedVars()) {
 			assignedVars.add(bv.getTermVariable());
 		}
 		
-		/*// 1 Rename the invars of the TransFormula of the given CodeBlock cb into TermVariables
-		for (BoogieVar bv : tf.getInVars().keySet()) {
-			// TODO: Check if bv is a free var
-			// if not, then continue, there is nothing to do
-			TermVariable bv_term = tf.getInVars().get(bv);
-			// Case: var in InVars and var not in OutVars
-			if (!tf.getOutVars().keySet().contains(bv)) {
-				throw new UnsupportedOperationException("This case is still undefined!");
-			} 
-			// Case: var in InVars and var in OutVars and Invars(var) == OutVars(var)
-			else if (bv_term == tf.getOutVars().get(bv)) {
-				replacees.add(bv_term);
-				replacers.add(bv.getTermVariable());
-			}
-			// Case: var in InVars and var in OutVars and Invars(var) != OutVars(var)
-			else {
-				replacees.add(bv_term);
-				replacers.add(bv.getTermVariable());
-			}
-		}
-		
-		Term tf_term_invars_renamed = substituteVars(tf_term, replacees, replacers);
-		
-		// 2 Rename the outvars of the TransFormula of the given CodeBlock cb into TermVariables
-		replacees.clear();
-		replacers.clear();
-		for (BoogieVar bv : tf.getOutVars().keySet()) {
-			TermVariable bv_term = tf.getOutVars().get(bv);
-			
-			// Case: var not in InVars and var in OutVars
-			if (!tf.getInVars().keySet().contains(bv)) {
-				replacees.add(bv_term);
-				replacers.add(bv.getTermVariable());
-			} 
-			// Case: var in InVars and var in OutVars and Invars(var) == OutVars(var)
-			else if (bv_term == tf.getInVars().get(bv)) {
-				continue;
-			}
-			// Case: var in InVars and var in OutVars and Invars(var) != OutVars(var)
-			else {
-				replacees.add(bv_term);
-				replacers.add(bv.getTermVariable());
-			}
-		}
-
-		Term tf_term_outvars_renamed = substituteVars(tf_term_invars_renamed, replacees, replacers);
-		*/
 		Term formulaAssignedVarsQuantified = p.getFormula();
 		if (assignedVars.size() > 0) {
 			formulaAssignedVarsQuantified = m_Script.quantifier(Script.EXISTS,
@@ -1982,6 +1932,8 @@ public class SmtManager {
 		return newPredicate(result, tvp.getProcedures(), tvp.getVars(), result_as_closed_formula);
 		
 	}
+
+	
 	/**
 	 * Computes the weakest precondition of the given predicate p and the
 	 * CodeBlock cb. 
@@ -1995,22 +1947,21 @@ public class SmtManager {
 			throw new UnsupportedOperationException();
 		}
 		// If the given predicate p is true, then return true, since wp(true, st) = true for every statement st.
-		if (p == True()) {
+		/*if (p.getFormula() == True()) {
 			return p;
-		}
+		}*/
 		TransFormula tf = cb.getTransitionFormula();	
 		Term tf_term = tf.getFormula();		
 		ArrayList<TermVariable> replacees = new ArrayList<TermVariable>();
 		ArrayList<Term> replacers = new ArrayList<Term>();
 		// 1 Rename the invars of the TransFormula of the given CodeBlock cb into TermVariables
 		for (BoogieVar bv : tf.getInVars().keySet()) {
-			// TODO: Check if bv is a free var
-			// if not, then continue, there is nothing to do
 			TermVariable bv_term = tf.getInVars().get(bv);
 			// Case: var in InVars and var not in OutVars
 			if (!tf.getOutVars().keySet().contains(bv)) {
 				throw new UnsupportedOperationException("This case is still undefined!");
-			} 
+			}
+			
 			// Case: var in InVars and var in OutVars and Invars(var) == OutVars(var)
 			else if (bv_term == tf.getOutVars().get(bv)) {
 				replacees.add(bv_term);
@@ -2030,20 +1981,21 @@ public class SmtManager {
 		replacees.clear();
 		replacers.clear();
 		for (BoogieVar bv : tf.getOutVars().keySet()) {
-			// TODO: Check if bv is a free var
-			// if not, then continue, there is nothing to do
 			TermVariable bv_term = tf.getOutVars().get(bv);
 			// Case: var not in InVars and var in OutVars
 			if (!tf.getInVars().keySet().contains(bv)) {
 				continue;
-			} 
+			}  
 			// Case: var in InVars and var in OutVars and Invars(var) == OutVars(var)
 			else if (bv_term == tf.getInVars().get(bv)) {
 				continue;
 			}
 			// Case: var in InVars and var in OutVars and Invars(var) != OutVars(var)
 			else {
-				continue;
+				if (!tf.getAssignedVars().contains(bv)) {
+					replacees.add(bv_term);
+					replacers.add(bv.getTermVariable());
+				}
 			}
 		}
 

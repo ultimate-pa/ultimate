@@ -169,7 +169,7 @@ public class TraceCheckerSpWp extends TraceChecker {
 		m_InterpolantsSp = new IPredicate[trace.length()-1];
 		m_InterpolantsWp = new IPredicate[trace.length()-1];
 		
-		s_Logger.debug("Computing strongest postcondition for given trace ...");
+		/*s_Logger.debug("Computing strongest postcondition for given trace ...");
 		
 		if (trace.getSymbol(0) instanceof Call) {
 			IPredicate p = m_SmtManager.strongestPostcondition(
@@ -205,25 +205,29 @@ public class TraceCheckerSpWp extends TraceChecker {
 				m_InterpolantsSp[i] = m_PredicateBuilder.getOrConstructPredicate(p.getFormula(), p.getVars(),
 						new HashSet<String>(Arrays.asList(p.getProcedures())));
 			}
-		}
+		}*/
 
 		
-		/*s_Logger.debug("Computing weakest precondition for given trace ...");
-		m_InterpolantsWp[m_InterpolantsWp.length-1] = m_SmtManager.weakestPrecondition(
+		s_Logger.debug("Computing weakest precondition for given trace ...");
+		IPredicate p = m_SmtManager.weakestPrecondition(
 				tracePostcondition, trace.getSymbol(m_InterpolantsWp.length));
+		m_InterpolantsWp[m_InterpolantsWp.length-1] = m_PredicateBuilder.getOrConstructPredicate(p.getFormula(),
+				p.getVars(), new HashSet<String>(Arrays.asList(p.getProcedures())));
 		
 		for (int i=m_InterpolantsWp.length-2; i>=0; i--) {
-			m_InterpolantsWp[i] = m_SmtManager.weakestPrecondition(
+			p = m_SmtManager.weakestPrecondition(
 					m_InterpolantsWp[i+1], trace.getSymbol(i+1));
-		}*/
+			m_InterpolantsWp[i] = m_PredicateBuilder.getOrConstructPredicate(p.getFormula(),
+					p.getVars(), new HashSet<String>(Arrays.asList(p.getProcedures())));
+		}
 		
 
-		s_Logger.debug("Checking strongest postcondition...");
-		checkInterpolantsCorrect(m_InterpolantsSp, trace, tracePrecondition, tracePostcondition);
-		/*s_Logger.debug("Checking weakest precondition...");
-		checkInterpolantsCorrect(m_InterpolantsWp, trace, tracePrecondition, tracePostcondition);*/
+		/*s_Logger.debug("Checking strongest postcondition...");
+		checkInterpolantsCorrect(m_InterpolantsSp, trace, tracePrecondition, tracePostcondition);*/
+		s_Logger.debug("Checking weakest precondition...");
+		checkInterpolantsCorrect(m_InterpolantsWp, trace, tracePrecondition, tracePostcondition);
 		
-		return m_InterpolantsSp;
+		return m_InterpolantsWp;
 	}
 
 	/**
