@@ -1,5 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
@@ -33,7 +34,7 @@ public class DestructiveEqualityResolution {
 	public static Term quantifier(Script script, int quantifier, 
 			TermVariable[] vars, Term body,	Term[]... patterns) {
 		if (quantifier == QuantifiedFormula.EXISTS) {
-			List<TermVariable> remaning = Arrays.asList(vars);
+			List<TermVariable> remaning = new ArrayList<TermVariable>(Arrays.asList(vars));
 			Term reduced = derExistsSimple(script, body, remaning);
 			if (remaning.isEmpty()) {
 				return reduced;
@@ -62,7 +63,7 @@ public class DestructiveEqualityResolution {
 			Term replacementTerm = findEqualTerm(tv, resFormula);
 			if (replacementTerm != null) {
 				s_Logger.debug("eliminated existentially quantifed variable " + tv);
-				vars.remove(tv);
+				it.remove();
 				TermVariable[] varsAux = { tv };
 				Term[] valuesAux = { replacementTerm };
 				resFormula = script.let(varsAux, valuesAux, resFormula);
