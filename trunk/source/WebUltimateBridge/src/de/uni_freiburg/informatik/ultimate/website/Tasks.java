@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.website.toolchains.AutomtaScriptTC;
+import de.uni_freiburg.informatik.ultimate.website.toolchains.BoogieBuchiAutomizerTC;
 import de.uni_freiburg.informatik.ultimate.website.toolchains.BoogieLassoRankerTC;
 import de.uni_freiburg.informatik.ultimate.website.toolchains.BoogieTraceAbstractionTC;
 import de.uni_freiburg.informatik.ultimate.website.toolchains.CBuchiAutomizerTC;
@@ -29,7 +30,7 @@ public class Tasks {
 	private static final Class[] actTCs = {AutomtaScriptTC.class, 
 		BoogieTraceAbstractionTC.class,
 		CTraceAbstractionTC.class, BoogieLassoRankerTC.class, 
-		CLassoRankerTC.class, CBuchiAutomizerTC.class, BoogieLassoRankerTC.class};
+		CLassoRankerTC.class, CBuchiAutomizerTC.class, BoogieBuchiAutomizerTC.class};
 	/**
 	 * The String representations of TaskNames.
 	 */
