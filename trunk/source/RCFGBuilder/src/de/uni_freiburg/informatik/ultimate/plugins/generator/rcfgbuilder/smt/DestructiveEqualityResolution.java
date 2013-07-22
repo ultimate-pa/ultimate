@@ -23,7 +23,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.Activat
 /**
  * Try to eliminate existentially quantified variables in terms.
  * Therefore we use that the term ∃v.v=c∧φ[v] is equivalent to term φ[c].
- *
+ * Resp. we use that the term ∀v.v!=c∨φ[v] is equivalent to term φ[c].
  */
 public class DestructiveEqualityResolution {
 	
@@ -33,18 +33,13 @@ public class DestructiveEqualityResolution {
 	
 	public static Term quantifier(Script script, int quantifier, 
 			TermVariable[] vars, Term body,	Term[]... patterns) {
-		if (quantifier == QuantifiedFormula.EXISTS) {
-			List<TermVariable> remaning = new ArrayList<TermVariable>(Arrays.asList(vars));
-			Term reduced = derExistsSimple(script, body, remaning);
-			if (remaning.isEmpty()) {
-				return reduced;
-			} else {
-				return script.quantifier(quantifier, 
-						remaning.toArray(new TermVariable[0]), reduced, patterns);
-			}
+		List<TermVariable> remaning = new ArrayList<TermVariable>(Arrays.asList(vars));
+		Term reduced = derSimple(script, quantifier, body, remaning);
+		if (remaning.isEmpty()) {
+			return reduced;
 		} else {
 			return script.quantifier(quantifier, 
-					vars, body, patterns);
+					remaning.toArray(new TermVariable[0]), reduced, patterns);
 		}
 	}
 	
@@ -52,17 +47,25 @@ public class DestructiveEqualityResolution {
 	 * Try to eliminate the variables vars in term.
 	 * Let vars =  {x_1,...,x_n} and term = φ. Returns a term that is 
 	 * equivalent to ∃x_1,...,∃x_n φ, but were variables are removed.
-	 * Successfully removed variables are also removed from vars. 
+	 * Successfully removed variables are also removed from vars.
+	 * Analogously for universal quantification.
 	 */
-	public static Term derExistsSimple(Script script, Term term, 
+	public static Term derSimple(Script script, int quantifier, Term term, 
 			Collection<TermVariable> vars) {
 		Term resFormula = new FormulaUnLet().unlet(term);
 		Iterator<TermVariable> it = vars.iterator();
 		while(it.hasNext()) {
 		TermVariable tv = it.next();
-			Term replacementTerm = findEqualTerm(tv, resFormula);
+			Term replacementTerm;
+			if (quantifier == QuantifiedFormula.EXISTS) {
+				replacementTerm = findEqualTermExists(tv, resFormula);
+			} else if (quantifier == QuantifiedFormula.FORALL) {
+				replacementTerm = findEqualTermForall(tv, resFormula);
+			} else {
+				throw new AssertionError("unknown quantifier");
+			}
 			if (replacementTerm != null) {
-				s_Logger.debug("eliminated existentially quantifed variable " + tv);
+				s_Logger.debug("eliminated quantifed variable " + tv);
 				it.remove();
 				TermVariable[] varsAux = { tv };
 				Term[] valuesAux = { replacementTerm };
@@ -70,14 +73,17 @@ public class DestructiveEqualityResolution {
 				resFormula = new FormulaUnLet().unlet(resFormula);
 			}
 			else {
-				s_Logger.debug("unable to eliminated existentially quantifed variable " + tv);
+				s_Logger.debug("unable to eliminated quantifed variable " + tv);
 			}
 		}
 		return resFormula;
 	}
 	
 	
-	private static Term findEqualTerm(TermVariable tv, Term term) {
+	/**
+	 * Find term φ such that term implies tv == φ. 
+	 */
+	private static Term findEqualTermExists(TermVariable tv, Term term) {
 		if (term instanceof ApplicationTerm) {
 			ApplicationTerm appTerm = (ApplicationTerm) term;
 			FunctionSymbol sym = appTerm.getFunction();
@@ -92,13 +98,58 @@ public class DestructiveEqualityResolution {
 				}
 			} else if (sym.getName().equals("and")) {
 				for (Term param : params) {
-					Term equalTerm = findEqualTerm(tv, param);
+					Term equalTerm = findEqualTermExists(tv, param);
 					if (equalTerm != null) {
 						return equalTerm;
 					}
 				}
 				return null;
 			} else {
+				return null;
+			}
+		} else {
+			return null;
+		}
+	}
+	
+	
+	/**
+	 * Find term φ such that tv != φ implies term 
+	 */
+	private static Term findEqualTermForall(TermVariable tv, Term term) {
+		if (term instanceof ApplicationTerm) {
+			ApplicationTerm appTerm = (ApplicationTerm) term;
+			FunctionSymbol sym = appTerm.getFunction();
+			Term[] params = appTerm.getParameters();
+			if (sym.getName().equals("not")) {
+				assert params.length == 1;
+				if (params[0] instanceof ApplicationTerm) {
+					appTerm = (ApplicationTerm) params[0];
+					sym = appTerm.getFunction();
+					params = appTerm.getParameters();
+					if (sym.getName().equals("=")) {
+						int tvOnOneSideOfEquality = tvOnOneSideOfEquality(tv, params);
+						if (tvOnOneSideOfEquality == -1) {
+							return null;
+						} else {
+							assert (tvOnOneSideOfEquality == 0 || tvOnOneSideOfEquality == 1);
+							return params[tvOnOneSideOfEquality];				
+						}
+					} else {
+						return null;
+					}
+				} else {
+					return null;
+				}
+			} else if (sym.getName().equals("or")) {
+				for (Term param : params) {
+					Term equalTerm = findEqualTermForall(tv, param);
+					if (equalTerm != null) {
+						return equalTerm;
+					}
+				}
+				return null;
+		} else {
 				return null;
 			}
 		} else {
