@@ -618,8 +618,13 @@ public class TraceChecker {
 				//no simplification possible
 				return addNewPredicate(term, vars, procs);
 			} else {
+				if (m_Term2Predicates.containsKey(simplifiedTerm)) {
+					// this case can occur only if theorem prover says UNKNOWN
+					// on equivalence checks
+					return m_Term2Predicates.get(simplifiedTerm);
+				}
 				HashSet<TermVariable> tvs = new HashSet<TermVariable>();
-				for (TermVariable tv : term.getFreeVars()) {
+				for (TermVariable tv : simplifiedTerm.getFreeVars()) {
 					tvs.add(tv);
 				}
 				Set<BoogieVar> newVars = new HashSet<BoogieVar>();
@@ -719,7 +724,8 @@ public class TraceChecker {
 		case SAT:
 			return false;
 		case UNKNOWN:
-			throw new AssertionError("Expected decideable theory");
+			s_Logger.warn(new DebugMessage("assuming that {0} is not equivalent to false", term));
+			return false;
 		default:
 			throw new AssertionError();
 		}
