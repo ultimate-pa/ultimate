@@ -140,7 +140,7 @@ public class SimplifyDDA {
 		}.transform(term);
 		m_Script.pop(1);
 		m_Logger.debug(new DebugMessage("Simplified to: {0}", term));
-		assert (checkEquivalence(inputTerm, term) == LBool.UNSAT) : "Simplification Unsound";
+		assert (checkEquivalence(inputTerm, term) != LBool.SAT) : "Simplification Unsound";
 		return term;
 	}
 	
