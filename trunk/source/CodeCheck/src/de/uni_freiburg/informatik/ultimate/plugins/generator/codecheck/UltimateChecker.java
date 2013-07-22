@@ -22,7 +22,7 @@ public class UltimateChecker extends CodeChecker {
 		// TODO Auto-generated constructor stub
 	}
 	
-	private boolean splitNode(AnnotatedProgramPoint oldNode, IPredicate[] interpolant, HashMap <AnnotatedProgramPoint, ArrayList <AnnotatedProgramPoint>> nodesClones) {
+	private boolean splitNode(AnnotatedProgramPoint oldNode, IPredicate[] interpolant, HashMap <AnnotatedProgramPoint, HashSet <AnnotatedProgramPoint>> nodesClones) {
 		int interpolantsCount = interpolant.length;
 		AnnotatedProgramPoint[][] newNodes = new AnnotatedProgramPoint[interpolantsCount][2];
 		for (int i = 0; i < interpolantsCount; ++i) {
@@ -43,7 +43,6 @@ public class UltimateChecker extends CodeChecker {
 				for (int i = 0; i < interpolantsCount; ++i) {
 					for (AnnotatedProgramPoint newNode : newNodes[i]) {
 						if (isReturn) {
-							//CodeCheckObserver.s_Logger.debug("Hallo");
 							AnnotatedProgramPoint[] hyperEdges = predecessorNode.getCallPredsOfOutgoingReturnTarget(oldNode).toArray(new AnnotatedProgramPoint[]{});
 							
 							boolean putEdge = false;
@@ -53,9 +52,8 @@ public class UltimateChecker extends CodeChecker {
 									predecessorNode.addOutGoingReturnCallPred(newNode, callNode);
 								}
 							}
-							if (putEdge) {
+							if (putEdge)
 								predecessorNode.connectTo(newNode, label);
-							}
 						} else {
 							if (isSatEdge(predecessorNode, label, newNode)) {
 								predecessorNode.connectTo(newNode, label);
@@ -63,14 +61,6 @@ public class UltimateChecker extends CodeChecker {
 						}
 					}
 				}
-				/*
-				if (isReturn) {
-					AnnotatedProgramPoint[] hyperEdges = predecessorNode.getCallPredsOfOutgoingReturnTarget(oldNode).toArray(new AnnotatedProgramPoint[]{});
-					for (AnnotatedProgramPoint callNode : hyperEdges) {
-						predecessorNode.removeOutgoingReturnCallPred(oldNode, callNode);
-					}
-				}
-				*/
 				predecessorNode.disconnectFrom(oldNode);
 			}
 		}
@@ -82,7 +72,6 @@ public class UltimateChecker extends CodeChecker {
 				for (int i = 0; i < interpolantsCount; ++i) {
 					for (AnnotatedProgramPoint newNode : newNodes[i]) {
 						if (isReturn) {
-							//CodeCheckObserver.s_Logger.debug("Hallo");
 							AnnotatedProgramPoint[] hyperEdges = oldNode.getCallPredsOfOutgoingReturnTarget(successorNode).toArray(new AnnotatedProgramPoint[]{});
 							
 							boolean putEdge = false;
@@ -92,9 +81,8 @@ public class UltimateChecker extends CodeChecker {
 									newNode.addOutGoingReturnCallPred(successorNode, callNode);
 								}
 							}
-							if (putEdge) {
+							if (putEdge)
 								newNode.connectTo(successorNode, label);
-							}
 						} else {
 							if (isSatEdge(newNode, label, successorNode)) {
 								newNode.connectTo(successorNode, label);
@@ -102,15 +90,6 @@ public class UltimateChecker extends CodeChecker {
 						}
 					}
 				}
-				/*
-				if (isReturn) {
-					AnnotatedProgramPoint[] hyperEdges = oldNode.getCallPredsOfOutgoingReturnTarget(successorNode).toArray(new AnnotatedProgramPoint[]{});
-					
-					for (AnnotatedProgramPoint callNode : hyperEdges) {
-						oldNode.removeOutgoingReturnCallPred(successorNode, callNode);
-					}
-				}
-				*/
 				oldNode.disconnectFrom(successorNode);
 			}
 		}
@@ -134,7 +113,7 @@ public class UltimateChecker extends CodeChecker {
 		}
 		//System.out.println("Splitted node : " + oldNode.toString());
 		
-		nodesClones.put(oldNode, new ArrayList <AnnotatedProgramPoint>());
+		nodesClones.put(oldNode, new HashSet <AnnotatedProgramPoint>());
 		for (int i = 0; i < interpolantsCount; ++i) {
 			for (AnnotatedProgramPoint node : newNodes[i]) {
 				if (node != null) {
@@ -194,10 +173,7 @@ public class UltimateChecker extends CodeChecker {
 		CodeCheckObserver.s_Logger.debug(String.format("Inters: %s\n", interpolantsDBG));
 		
 		
-		
-		HashMap <AnnotatedProgramPoint, ArrayList <AnnotatedProgramPoint>> nodesClones = new HashMap <AnnotatedProgramPoint, ArrayList <AnnotatedProgramPoint>>();
-		// nodesClones.clear();
-		
+		HashMap <AnnotatedProgramPoint, HashSet <AnnotatedProgramPoint>> nodesClones = new HashMap <AnnotatedProgramPoint, HashSet <AnnotatedProgramPoint>>();
 		HashMap <AnnotatedProgramPoint, HashSet <IPredicate>> map = new HashMap <AnnotatedProgramPoint, HashSet <IPredicate>>();
 		
 		for (int i = 0; i < interpolants.length; ++i) {
@@ -208,14 +184,11 @@ public class UltimateChecker extends CodeChecker {
 		for (int i = 0; i < interpolants.length; ++i) {
 			map.get(nodes[i + 1]).add(interpolants[i]);
 		}
-		for (Iterator <AnnotatedProgramPoint> it = map.keySet().iterator(); it.hasNext(); ) {
-			AnnotatedProgramPoint node = it.next();
+		for (AnnotatedProgramPoint node : map.keySet()) {
 			if (node == procedureRoot) {
 				map.get(node).add(m_truePredicate);
 			}
-
 			splitNode(node, map.get(node).toArray(new IPredicate[]{}), nodesClones);
-			
 		}
 		return true;
 	}

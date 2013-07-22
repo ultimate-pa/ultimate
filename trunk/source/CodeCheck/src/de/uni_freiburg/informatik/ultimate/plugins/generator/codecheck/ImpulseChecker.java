@@ -69,11 +69,6 @@ public class ImpulseChecker extends CodeChecker {
 		LocationPredicates.get(programPoint).put(newPredicate, newNode);
 		oldNode.addCopy(newNode);
 		newNode.setCloneSource(oldNode);
-
-		AnnotatedProgramPoint[] successorNodes = oldNode.getOutgoingNodes().toArray(new AnnotatedProgramPoint[]{});
-		for (AnnotatedProgramPoint successorNode : successorNodes) {
-			newNode.connectTo(successorNode, oldNode.getOutgoingEdgeLabel(successorNode));
-		}
 		
 		return newNode;
 	}

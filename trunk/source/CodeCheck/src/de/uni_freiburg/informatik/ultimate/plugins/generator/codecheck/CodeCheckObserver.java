@@ -209,7 +209,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 					}
 				}
 			}
-			codeChecker.debug();
+			//codeChecker.debug();
 			//if (procID < noOfProcedures)
 			//m_graphRoot = copyGraph(originalGraphCopy);
 		}
