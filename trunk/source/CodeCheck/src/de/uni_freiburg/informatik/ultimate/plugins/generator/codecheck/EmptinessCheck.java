@@ -20,7 +20,7 @@ import de.uni_freiburg.informatik.ultimate.util.HashUtils;
 public class EmptinessCheck {
 	private static int c_badNestingRelationInit = -7;
 	
-	HashMap<AnnotatedProgramPoint, ArrayList<AnnotatedProgramPoint>> callPredecessorToItsCallPredecessors;
+//	HashMap<AnnotatedProgramPoint, ArrayList<AnnotatedProgramPoint>> callPredecessorToItsCallPredecessors;
 	ArrayDeque<AppDoubleDecker> openNodes;
 	HashSet<AppDoubleDecker> visitedNodes;
 	HashMap<AnnotatedProgramPoint, HashSet<AnnotatedProgramPoint>> summaryEdges;
@@ -33,8 +33,8 @@ public class EmptinessCheck {
 	 * @return
 	 */
 	Pair<AnnotatedProgramPoint[],NestedWord<CodeBlock>> checkForEmptiness(AnnotatedProgramPoint root) {
-		callPredecessorToItsCallPredecessors = 	
-				new HashMap<AnnotatedProgramPoint, ArrayList<AnnotatedProgramPoint>>();
+//		callPredecessorToItsCallPredecessors = 	
+//				new HashMap<AnnotatedProgramPoint, ArrayList<AnnotatedProgramPoint>>();
 		openNodes = new ArrayDeque<EmptinessCheck.AppDoubleDecker>();
 		visitedNodes = new HashSet<EmptinessCheck.AppDoubleDecker>();
 		
@@ -45,7 +45,7 @@ public class EmptinessCheck {
 		
 		EmptyStackSymbol emptyStackSymbol = new EmptyStackSymbol();
 		
-		openNodes.add(new AppDoubleDecker(root, emptyStackSymbol));
+		openNodes.add(new AppDoubleDecker(root, emptyStackSymbol, new Stack<AnnotatedProgramPoint>()));
 		Pair<AnnotatedProgramPoint[],NestedWord<CodeBlock>> returnedPath = null;
 		
 		while (!openNodes.isEmpty() && returnedPath == null) {
@@ -62,19 +62,21 @@ public class EmptinessCheck {
 				
 				if (!(edge instanceof Call || edge instanceof Return)) {
 
-					newAdd = new AppDoubleDecker(app, currentAdd.bot);
+					newAdd = new AppDoubleDecker(app, currentAdd.bot, (Stack<AnnotatedProgramPoint>) currentAdd.callPredStack.clone());
 					if (returnedPath == null)
 						returnedPath = openNewNode(currentAdd, app, edge, newAdd);
 					
 				} else if (edge instanceof Call) {
 
-					newAdd = new AppDoubleDecker(app, currentAdd.top);
-					updateCallPredecessorMapping(currentAdd.top, currentAdd.bot);
+					newAdd = new AppDoubleDecker(app, currentAdd.top, (Stack<AnnotatedProgramPoint>) currentAdd.callPredStack.clone());
+//					updateCallPredecessorMapping(currentAdd.top, currentAdd.bot);
+					newAdd.callPredStack.add(currentAdd.bot);
+					
 					if (returnedPath == null)
 						returnedPath = openNewNode(currentAdd, app, edge, newAdd);
 				
 				} else if (edge instanceof Return) {
-					ArrayList<AnnotatedProgramPoint> cps = callPredecessorToItsCallPredecessors.get(currentAdd.bot);
+//					ArrayList<AnnotatedProgramPoint> cps = callPredecessorToItsCallPredecessors.get(currentAdd.bot);
 					
 					//only take return edges that return to the current callpredecessor
 //					if (!((Return) edge).getCallerNode().equals(currentAdd.bot.getProgramPoint()))
@@ -83,16 +85,20 @@ public class EmptinessCheck {
 						
 					//the question is: which are the callpredecessors for the new doubledecker
 					// this is stored in the hashmap
-					for (AnnotatedProgramPoint callPredPred : cps) {
-						newAdd = new AppDoubleDecker(app, callPredPred);
-						addSummaryEdge(currentAdd.bot, app);
-						summaryEdgeToReturnPred.put(
-								new Pair<AnnotatedProgramPoint, AnnotatedProgramPoint>(currentAdd.bot, app), 
-								currentAdd);
+//					for (AnnotatedProgramPoint callPredPred : cps) {
+					Stack<AnnotatedProgramPoint> currentCpStack = (Stack<AnnotatedProgramPoint>) currentAdd.callPredStack.clone();
+					
+					AnnotatedProgramPoint callPredPred = currentCpStack.pop();
+					newAdd = new AppDoubleDecker(app, callPredPred, currentCpStack);
+					
+					addSummaryEdge(currentAdd.bot, app);
+					summaryEdgeToReturnPred.put(
+							new Pair<AnnotatedProgramPoint, AnnotatedProgramPoint>(currentAdd.bot, app), 
+							currentAdd);
 //								currentAdd.top);
-						if (returnedPath == null)
-							returnedPath = openNewNode(currentAdd, app, edge, newAdd);
-					}
+					if (returnedPath == null)
+						returnedPath = openNewNode(currentAdd, app, edge, newAdd);
+//					}
 				}
 			}
 			
@@ -100,7 +106,8 @@ public class EmptinessCheck {
 			HashSet<AnnotatedProgramPoint> targets = summaryEdges.get(currentAdd.top);
 			if (targets != null) {
 				for (AnnotatedProgramPoint target : targets) {
-					AppDoubleDecker	newAdd = new AppDoubleDecker(target, currentAdd.bot);
+					AppDoubleDecker	newAdd = new AppDoubleDecker(
+							target, currentAdd.bot, (Stack<AnnotatedProgramPoint>) currentAdd.callPredStack.clone());
 					if (returnedPath == null)
 						returnedPath = openNewNode(currentAdd, target, new DummyCodeBlock(), newAdd);//convention: AddEdges which are summaries are labeled "null"
 				}
@@ -128,6 +135,7 @@ public class EmptinessCheck {
 			AddEdge newAddEdge = new AddEdge(currentAdd, newAdd, edge);
 			newAdd.inEdge = newAddEdge;
 			currentAdd.outEdges.add(newAddEdge);
+			newAdd.setPathToRoot();
 
 			if (app.isErrorLocation())
 				return reconstructPath(newAdd);
@@ -138,15 +146,15 @@ public class EmptinessCheck {
 	}
 	
 	
-	private void updateCallPredecessorMapping(AnnotatedProgramPoint top,
-			AnnotatedProgramPoint bot) {
-		ArrayList<AnnotatedProgramPoint> cps = callPredecessorToItsCallPredecessors.get(top);
-		if (cps == null) {
-			cps = new ArrayList<AnnotatedProgramPoint>();
-		} 
-		cps.add(bot);
-		callPredecessorToItsCallPredecessors.put(top, cps);
-	}
+//	private void updateCallPredecessorMapping(AnnotatedProgramPoint top,
+//			AnnotatedProgramPoint bot) {
+//		ArrayList<AnnotatedProgramPoint> cps = callPredecessorToItsCallPredecessors.get(top);
+//		if (cps == null) {
+//			cps = new ArrayList<AnnotatedProgramPoint>();
+//		} 
+//		cps.add(bot);
+//		callPredecessorToItsCallPredecessors.put(top, cps);
+//	}
 
 
 	private Pair<AnnotatedProgramPoint[], NestedWord<CodeBlock>> reconstructPath(
@@ -273,12 +281,23 @@ public class EmptinessCheck {
 		AnnotatedProgramPoint top;
 		AnnotatedProgramPoint bot;
 		
+		Stack<AnnotatedProgramPoint> callPredStack;
+		ArrayList<AnnotatedProgramPoint> pathToRoot = new ArrayList<AnnotatedProgramPoint>();
+		
 		AddEdge inEdge;
 		ArrayList<AddEdge> outEdges = new ArrayList<AddEdge>();
 		
-		AppDoubleDecker(AnnotatedProgramPoint top, AnnotatedProgramPoint bot) {
+		AppDoubleDecker(AnnotatedProgramPoint top, AnnotatedProgramPoint bot, Stack<AnnotatedProgramPoint> callStack) {
 			this.top = top;
 			this.bot = bot;
+			this.callPredStack = callStack;
+		}
+		
+		//added for debugging purposes
+		void setPathToRoot() {
+			pathToRoot.addAll(inEdge.source.pathToRoot);
+			pathToRoot.add(this.top);
+			reconstructPath(this);
 		}
 		
 		public int hashCode() {
@@ -326,12 +345,15 @@ public class EmptinessCheck {
 			super((IPredicate) null, (ProgramPoint) null);
 		}
 		
-		boolean equals(EmptyStackSymbol ess) {
-			return true;
+		public boolean equals(Object o) {
+			if (o instanceof EmptyStackSymbol)
+				return true;
+			else
+				return false;
 		}
 		
 		public String toString() {
-			return "�";
+			return "E";
 		}
 	}
 
