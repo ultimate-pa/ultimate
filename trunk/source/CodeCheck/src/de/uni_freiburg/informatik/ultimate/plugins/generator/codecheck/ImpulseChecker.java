@@ -128,24 +128,24 @@ public class ImpulseChecker extends CodeChecker {
 
 	private boolean redirectEdges(AnnotatedProgramPoint[] newCopies) {
 		
-		for (AnnotatedProgramPoint node : newCopies) {
-			AnnotatedProgramPoint[] successorNodes = node.getOutgoingNodes().toArray(new AnnotatedProgramPoint[]{});
-			for (AnnotatedProgramPoint successorNode : successorNodes) {
-				if(node.getOutgoingEdgeLabel(successorNode) instanceof Return) {
+		for (AnnotatedProgramPoint source : newCopies) {
+			AnnotatedProgramPoint[] successorNodes = source.getOutgoingNodes().toArray(new AnnotatedProgramPoint[]{});
+			for (AnnotatedProgramPoint oldDest : successorNodes) {
+				if(source.getOutgoingEdgeLabel(oldDest) instanceof Return) {
 					AnnotatedProgramPoint[] callPreds;
-					callPreds = node.getCallPredsOfOutgoingReturnTarget(successorNode).toArray(new AnnotatedProgramPoint[]{});
+					callPreds = source.getCallPredsOfOutgoingReturnTarget(oldDest).toArray(new AnnotatedProgramPoint[]{});
 					if(callPreds != null) {
 						for (AnnotatedProgramPoint callPred : callPreds) {
-							AnnotatedProgramPoint newDest = redirectionTargetFinder.findReturnRedirectionTarget(node, callPred, successorNode);
+							AnnotatedProgramPoint newDest = redirectionTargetFinder.findReturnRedirectionTarget(source, callPred, oldDest);
 							if (newDest != null)
-								redirectHyperEdgeDestination(node, callPred, successorNode, newDest);
+								redirectHyperEdgeDestination(source, callPred, oldDest, newDest);
 						}
 					}
 				}
 				else {
-					AnnotatedProgramPoint newDest = redirectionTargetFinder.findRedirectionTarget(node, successorNode);
+					AnnotatedProgramPoint newDest = redirectionTargetFinder.findRedirectionTarget(source, oldDest);
 					if(newDest != null)
-						redirectEdge(node, successorNode, newDest);
+						redirectEdge(source, oldDest, newDest);
 				}
 			}
 		}
@@ -179,7 +179,7 @@ public class ImpulseChecker extends CodeChecker {
 			AnnotatedProgramPoint newDest) {
 		
 		CodeBlock label = source.getOutgoingEdgeLabel(oldDest);
-		if(label == null || (label instanceof Return))
+		if(label == null || !(label instanceof Return))
 			return false;
 		source.connectTo(newDest, label);
 		source.addOutGoingReturnCallPred(newDest, callPred);

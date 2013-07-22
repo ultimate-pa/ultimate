@@ -63,12 +63,14 @@ public class UltimateChecker extends CodeChecker {
 						}
 					}
 				}
+				/*
 				if (isReturn) {
 					AnnotatedProgramPoint[] hyperEdges = predecessorNode.getCallPredsOfOutgoingReturnTarget(oldNode).toArray(new AnnotatedProgramPoint[]{});
 					for (AnnotatedProgramPoint callNode : hyperEdges) {
 						predecessorNode.removeOutgoingReturnCallPred(oldNode, callNode);
 					}
 				}
+				*/
 				predecessorNode.disconnectFrom(oldNode);
 			}
 		}
@@ -100,6 +102,7 @@ public class UltimateChecker extends CodeChecker {
 						}
 					}
 				}
+				/*
 				if (isReturn) {
 					AnnotatedProgramPoint[] hyperEdges = oldNode.getCallPredsOfOutgoingReturnTarget(successorNode).toArray(new AnnotatedProgramPoint[]{});
 					
@@ -107,6 +110,7 @@ public class UltimateChecker extends CodeChecker {
 						oldNode.removeOutgoingReturnCallPred(successorNode, callNode);
 					}
 				}
+				*/
 				oldNode.disconnectFrom(successorNode);
 			}
 		}
