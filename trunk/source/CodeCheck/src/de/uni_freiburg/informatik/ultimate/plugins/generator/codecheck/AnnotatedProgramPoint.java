@@ -269,6 +269,8 @@ public class AnnotatedProgramPoint extends ModifiableLabeledEdgesMultigraph<Anno
 	 * @param label the label of the edge
 	 */
 	public void connectTo(AnnotatedProgramPoint dest, CodeBlock label) {
+		if(this.getOutgoingNodes().contains(dest))
+			return;
 		addOutgoingNode(dest, label);
 		dest.addIncomingNode(this);
 	}
@@ -278,6 +280,8 @@ public class AnnotatedProgramPoint extends ModifiableLabeledEdgesMultigraph<Anno
 	 * @param dest the destination that will be disconnected from this APP
 	 */
 	public void disconnectFrom(AnnotatedProgramPoint dest) {
+		if(!this.getOutgoingNodes().contains(dest))
+			return;
 		if(this.getOutgoingEdgeLabel(dest) instanceof Return) {
 			AnnotatedProgramPoint[] callPreds = this.m_outgoingReturnAppToCallPreds.get(dest).toArray(new AnnotatedProgramPoint[]{});
 			for (AnnotatedProgramPoint callPred : callPreds) {
@@ -293,7 +297,7 @@ public class AnnotatedProgramPoint extends ModifiableLabeledEdgesMultigraph<Anno
 	}
 	
 	public String toString() {
-		return m_programPoint.toString(); //+ ":" + m_predicate.toString();
+		return m_programPoint.toString() + CodeChecker.objectReference(this);// + ":" + m_predicate.toString();
 	}
 
 	public void setIsPseudoErrorLocation(boolean value) {
