@@ -2,26 +2,54 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
 
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 
-
+/**
+ * Specifies the algorithm for finding the redirection target.
+ *
+ * @author Mohamed Sherif
+ */
 enum RedirectionTargetFindingMethod {
-	First, FirstStrongest, Random, RandomStrongest, Alex
+	/**
+	* finds the first valid redirection target
+	*/
+	First, 
+	/**
+	* finds the first valid redirection target, and then goes on to find if other valid targets are stronger
+	*/
+	FirstStrongest, 
+	/**
+	* shuffles the list of candidates, then finds the first valid redirection target
+	*/
+	Random, 
+	/**
+	* shuffles the list of candidates, finds the first valid redirection target, then tries to find stronger ones
+	*/
+	RandomStrongest, 
+	/**
+	* left for alex to implement his own method
+	*/
+	Alex
 }
 
+/**
+ * A class having several ways and algorithms dedicated to finding the best redirection target of an old edge.
+ *
+ * @author Mohamed Sherif
+ */
 public class RedirectionTargetFinder {
 	
 	private CodeChecker codeChecker;
 	private RedirectionTargetFindingMethod findingStrategy;
 	private boolean random;
-	
-	protected RedirectionTargetFinder(CodeChecker codeChecker) {
-		this(codeChecker, RedirectionTargetFindingMethod.RandomStrongest);
-	}
-	
+
+	/**
+	 * Constructor of a new Finder.
+	 * @param codeChecker the code checker that uses this finder
+	 * @param findingStrategy specifies which finding algorithm will be used
+	 * @see RedirectionTargetFindingMethod
+	 */
 	protected RedirectionTargetFinder(CodeChecker codeChecker, RedirectionTargetFindingMethod findingStrategy) {
 		this.codeChecker = codeChecker;
 		this.findingStrategy = findingStrategy;
@@ -31,6 +59,44 @@ public class RedirectionTargetFinder {
 			random = false;
 	}
 	
+	/**
+	 * Constructor of a new Finder with RandomStrongest as the default finding strategy.
+	 * @param codeChecker the code checker that uses this finder
+	 * @see RedirectionTargetFindingMethod
+	 */
+	protected RedirectionTargetFinder(CodeChecker codeChecker) {
+		this(codeChecker, RedirectionTargetFindingMethod.RandomStrongest);
+	}
+
+	/**
+	 * Finds an edge redirection target according to the specified finding method.
+	 * @param predecessorNode the source of the old edge
+	 * @param dest the destination of the old edge
+	 * @return returns a new destination, returns null if no valid destination is found
+	 */
+	protected AnnotatedProgramPoint findRedirectionTarget(
+			AnnotatedProgramPoint predecessorNode, AnnotatedProgramPoint dest) {
+		switch(findingStrategy) {
+		case First:
+		case Random:
+			return findFirstRedirectionTarget(predecessorNode, dest);
+		case FirstStrongest:
+		case RandomStrongest:
+			return findStrongestRedirectionTarget(predecessorNode, dest);
+		case Alex:
+			return null; // Alex : Write your redirection algorithm here.
+		default:
+			return null;
+		}
+	}
+	
+	/**
+	 * Finds a hyper edge redirection target according to the specified finding method.
+	 * @param predecessorNode the source of the old hyper edge
+	 * @param callPred the call predecessor of the old hyper edge
+	 * @param dest the destination of the old edge
+	 * @return returns a new destination, returns null if no valid destination is found
+	 */
 	protected AnnotatedProgramPoint findReturnRedirectionTarget(
 			AnnotatedProgramPoint predecessorNode, 
 			AnnotatedProgramPoint callPred, 
@@ -50,22 +116,15 @@ public class RedirectionTargetFinder {
 		}
 	}
 
-	protected AnnotatedProgramPoint findRedirectionTarget(
-			AnnotatedProgramPoint predecessorNode, AnnotatedProgramPoint dest) {
-		switch(findingStrategy) {
-		case First:
-		case Random:
-			return findFirstRedirectionTarget(predecessorNode, dest);
-		case FirstStrongest:
-		case RandomStrongest:
-			return findStrongestRedirectionTarget(predecessorNode, dest);
-		case Alex:
-			return null; // Alex : Write your redirection algorithm here.
-		default:
-			return null;
-		}
-	}
-
+	/**
+	 * Finds an edge redirection target according to the specified finding method.
+	 * @param predecessorNode the source of the old edge
+	 * @param dest the destination of the old edge
+	 * @return returns a new destination, returns null if no valid destination is found
+	 * @see #findRedirectionTarget(AnnotatedProgramPoint, AnnotatedProgramPoint)
+	 * @see RedirectionTargetFindingMethod#First
+	 * @see RedirectionTargetFindingMethod#Random
+	 */
 	private AnnotatedProgramPoint findFirstRedirectionTarget(AnnotatedProgramPoint predecessorNode, AnnotatedProgramPoint dest) {
 
 		CodeBlock label = predecessorNode.getOutgoingEdgeLabel(dest);
@@ -84,7 +143,16 @@ public class RedirectionTargetFinder {
 		return null;
 		
 	}
-	
+
+	/**
+	 * Finds an edge redirection target according to the specified finding method.
+	 * @param predecessorNode the source of the old edge
+	 * @param dest the destination of the old edge
+	 * @return returns a new destination, returns null if no valid destination is found
+	 * @see #findRedirectionTarget(AnnotatedProgramPoint, AnnotatedProgramPoint)
+	 * @see RedirectionTargetFindingMethod#FirstStrongest
+	 * @see RedirectionTargetFindingMethod#RandomStrongest
+	 */
 	private AnnotatedProgramPoint findStrongestRedirectionTarget(AnnotatedProgramPoint predecessorNode, AnnotatedProgramPoint dest) {
 
 		CodeBlock label = predecessorNode.getOutgoingEdgeLabel(dest);
@@ -107,6 +175,16 @@ public class RedirectionTargetFinder {
 		
 	}
 
+	/**
+	 * Finds a hyper edge redirection target according to the specified finding method.
+	 * @param predecessorNode the source of the old hyper edge
+	 * @param callPred the call predecessor of the old hyper edge
+	 * @param dest the destination of the old edge
+	 * @return returns a new destination, returns null if no valid destination is found
+	 * @see #findReturnRedirectionTarget(AnnotatedProgramPoint, AnnotatedProgramPoint, AnnotatedProgramPoint)
+	 * @see RedirectionTargetFindingMethod#First
+	 * @see RedirectionTargetFindingMethod#Random
+	 */
 	private AnnotatedProgramPoint findFirstReturnRedirectionTarget(
 			AnnotatedProgramPoint predecessorNode, 
 			AnnotatedProgramPoint callPred, 
@@ -128,6 +206,16 @@ public class RedirectionTargetFinder {
 		return null;
 	}
 
+	/**
+	 * Finds an edge redirection target according to the specified finding method.
+	 * @param predecessorNode the source of the old hyper edge
+	 * @param callPred the call predecessor of the old hyper edge
+	 * @param dest the destination of the old edge
+	 * @return returns a new destination, returns null if no valid destination is found
+	 * @see #findReturnRedirectionTarget(AnnotatedProgramPoint, AnnotatedProgramPoint, AnnotatedProgramPoint)
+	 * @see RedirectionTargetFindingMethod#FirstStrongest
+	 * @see RedirectionTargetFindingMethod#RandomStrongest
+	 */
 	private AnnotatedProgramPoint findStrongestReturnRedirectionTarget(
 			AnnotatedProgramPoint predecessorNode, 
 			AnnotatedProgramPoint callPred, 
