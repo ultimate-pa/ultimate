@@ -45,7 +45,8 @@ public class EmptinessCheck {
 		
 		EmptyStackSymbol emptyStackSymbol = new EmptyStackSymbol();
 		
-		openNodes.add(new AppDoubleDecker(root, emptyStackSymbol, new Stack<AnnotatedProgramPoint>()));
+		openNodes.add(new AppDoubleDecker(root, emptyStackSymbol, 
+				new Stack<Call>(), new Stack<AnnotatedProgramPoint>()));
 		Pair<AnnotatedProgramPoint[],NestedWord<CodeBlock>> returnedPath = null;
 		
 		while (!openNodes.isEmpty() && returnedPath == null) {
@@ -62,14 +63,19 @@ public class EmptinessCheck {
 				
 				if (!(edge instanceof Call || edge instanceof Return)) {
 
-					newAdd = new AppDoubleDecker(app, currentAdd.bot, (Stack<AnnotatedProgramPoint>) currentAdd.callPredStack.clone());
+					newAdd = new AppDoubleDecker(app, currentAdd.bot,
+							(Stack<Call>) currentAdd.callStack.clone(),
+							(Stack<AnnotatedProgramPoint>) currentAdd.callPredStack.clone());
 					if (returnedPath == null)
 						returnedPath = openNewNode(currentAdd, app, edge, newAdd);
 					
 				} else if (edge instanceof Call) {
 
-					newAdd = new AppDoubleDecker(app, currentAdd.top, (Stack<AnnotatedProgramPoint>) currentAdd.callPredStack.clone());
+					newAdd = new AppDoubleDecker(app, currentAdd.top, 
+							(Stack<Call>) currentAdd.callStack.clone(),
+							(Stack<AnnotatedProgramPoint>) currentAdd.callPredStack.clone());
 //					updateCallPredecessorMapping(currentAdd.top, currentAdd.bot);
+					newAdd.callStack.add((Call) edge);
 					newAdd.callPredStack.add(currentAdd.bot);
 					
 					if (returnedPath == null)
@@ -86,10 +92,16 @@ public class EmptinessCheck {
 					//the question is: which are the callpredecessors for the new doubledecker
 					// this is stored in the hashmap
 //					for (AnnotatedProgramPoint callPredPred : cps) {
+					Stack<Call> currentCallStack = (Stack<Call>) currentAdd.callStack.clone();
 					Stack<AnnotatedProgramPoint> currentCpStack = (Stack<AnnotatedProgramPoint>) currentAdd.callPredStack.clone();
 					
+					Call poppedCall = currentCallStack.pop();
 					AnnotatedProgramPoint callPredPred = currentCpStack.pop();
-					newAdd = new AppDoubleDecker(app, callPredPred, currentCpStack);
+					
+					if (!((Return) edge).getCorrespondingCall().equals(poppedCall))
+						continue;
+					
+					newAdd = new AppDoubleDecker(app, callPredPred, currentCallStack, currentCpStack);
 					
 					addSummaryEdge(currentAdd.bot, app);
 					summaryEdgeToReturnPred.put(
@@ -107,7 +119,9 @@ public class EmptinessCheck {
 			if (targets != null) {
 				for (AnnotatedProgramPoint target : targets) {
 					AppDoubleDecker	newAdd = new AppDoubleDecker(
-							target, currentAdd.bot, (Stack<AnnotatedProgramPoint>) currentAdd.callPredStack.clone());
+							target, currentAdd.bot, 
+							(Stack<Call>) currentAdd.callStack.clone(),
+							(Stack<AnnotatedProgramPoint>) currentAdd.callPredStack.clone());
 					if (returnedPath == null)
 						returnedPath = openNewNode(currentAdd, target, new DummyCodeBlock(), newAdd);//convention: AddEdges which are summaries are labeled "null"
 				}
@@ -281,23 +295,27 @@ public class EmptinessCheck {
 		AnnotatedProgramPoint top;
 		AnnotatedProgramPoint bot;
 		
+		Stack<Call> callStack;
 		Stack<AnnotatedProgramPoint> callPredStack;
 		ArrayList<AnnotatedProgramPoint> pathToRoot = new ArrayList<AnnotatedProgramPoint>();
 		
 		AddEdge inEdge;
 		ArrayList<AddEdge> outEdges = new ArrayList<AddEdge>();
 		
-		AppDoubleDecker(AnnotatedProgramPoint top, AnnotatedProgramPoint bot, Stack<AnnotatedProgramPoint> callStack) {
+		AppDoubleDecker(AnnotatedProgramPoint top, AnnotatedProgramPoint bot, 
+				Stack<Call> callStack, Stack<AnnotatedProgramPoint> callPredStack) {
 			this.top = top;
 			this.bot = bot;
-			this.callPredStack = callStack;
+			this.callPredStack = callPredStack;
+			this.callStack = callStack;
 		}
 		
 		//added for debugging purposes
 		void setPathToRoot() {
 			pathToRoot.addAll(inEdge.source.pathToRoot);
 			pathToRoot.add(this.top);
-			reconstructPath(this);
+//			if (pathToRoot.size() > 2)
+//				reconstructPath(this);
 		}
 		
 		public int hashCode() {
