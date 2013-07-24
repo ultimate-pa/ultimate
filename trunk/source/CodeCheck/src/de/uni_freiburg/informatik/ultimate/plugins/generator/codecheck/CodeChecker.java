@@ -2,6 +2,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck;
 
 import java.util.HashSet;
 
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
@@ -34,7 +35,7 @@ public abstract class CodeChecker {
 		this.m_graphRoot = m_graphRoot;
 	}
 	
-	public abstract boolean codeCheck(AnnotatedProgramPoint[] nodes, IPredicate[] interpolants, AnnotatedProgramPoint procedureRoot);
+	public abstract boolean codeCheck(Pair<AnnotatedProgramPoint[], NestedWord<CodeBlock>> errorTrace, IPredicate[] interpolants, AnnotatedProgramPoint procedureRoot);
 
 	/**
 	 * Given 2 predicates, return a predicate which is the conjunction of both.
@@ -134,17 +135,21 @@ public abstract class CodeChecker {
 	 * @return
 	 */
 	protected boolean debugNode(AnnotatedProgramPoint node, String message) {
-		String display = String.format("%s\nNode %s:\n", message, node);
+		String display = "";
+		/*
 		display += String.format("connected To: %s\n", node.getOutgoingNodes());
 		display += String.format("connected Fr: %s\n", node.getIncomingNodes());
-		
+		*/
 		if (node.m_outgoingReturnAppToCallPreds != null && node.m_outgoingReturnAppToCallPreds.size() > 0) {
 			display += String.format("outGoing: %s\n", node.m_outgoingReturnAppToCallPreds);
 		}
 		if (node.m_ingoingReturnAppToCallPreds != null && node.m_ingoingReturnAppToCallPreds.size() > 0) {
 			display += String.format("inHyperEdges: %s\n", node.m_ingoingReturnAppToCallPreds);
 		}
-		CodeCheckObserver.s_Logger.debug(display);
+		if (display.length() > 0) {
+			display = String.format("%s\nNode %s:\n", message, node) + display;
+			CodeCheckObserver.s_Logger.debug(display);
+		}
 		return false;
 	}
 	/**

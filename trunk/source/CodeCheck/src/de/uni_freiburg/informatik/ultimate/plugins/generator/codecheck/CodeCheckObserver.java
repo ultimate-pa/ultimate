@@ -29,6 +29,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
 import org.apache.log4j.Logger;
 //import org.eclipse.swt.program.Program;
 import org.eclipse.core.commands.common.AbstractNamedHandleEvent;
+import org.eclipse.ui.internal.handlers.ReuseEditorTester;
 
 
 /**
@@ -56,6 +57,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 	
 	public ImpRootNode m_graphRoot;
 
+	private static final boolean DEBUG = false;
 	
 	private PrintWriter dumpInitialize() { // copied from Impulse, needed for trace checker
 		File file = 
@@ -99,28 +101,15 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 			List <AnnotatedProgramPoint> nextNodes = node.getOutgoingNodes();
 			for (AnnotatedProgramPoint nextNode : nextNodes) {
 				AnnotatedProgramPoint nextNewNode = copy.get(nextNode);
-				newNode.addOutgoingNode(nextNewNode, node.getOutgoingEdgeLabel(nextNode));
-				nextNewNode.addIncomingNode(newNode);
+				newNode.connectTo(nextNewNode, node.getOutgoingEdgeLabel(nextNode));
 			}
+		}
+		for (AnnotatedProgramPoint node : copy.keySet()) {
 			AnnotatedProgramPoint[] returnNodes = node.m_outgoingReturnAppToCallPreds.keySet().toArray(new AnnotatedProgramPoint[]{});
 			for (AnnotatedProgramPoint returnNode : returnNodes) {
-				AnnotatedProgramPoint[] callNodes = node.m_outgoingReturnAppToCallPreds.get(returnNode).toArray(new AnnotatedProgramPoint[]{});
-				for (AnnotatedProgramPoint callNode : callNodes) {
-					node.m_outgoingReturnAppToCallPreds.get(returnNode).add(copy.get(callNode));
-					node.m_outgoingReturnAppToCallPreds.get(returnNode).remove(callNode);
+				for (AnnotatedProgramPoint callPred : node.getCallPredsOfOutgoingReturnTarget(returnNode)) {
+					copy.get(node).addOutGoingReturnCallPred(copy.get(returnNode), copy.get(callPred));
 				}
-				node.m_outgoingReturnAppToCallPreds.put(copy.get(returnNode), node.m_outgoingReturnAppToCallPreds.get(returnNode));
-				node.m_outgoingReturnAppToCallPreds.remove(returnNode);
-			}
-			AnnotatedProgramPoint[] hyperNodes = node.m_ingoingReturnAppToCallPreds.keySet().toArray(new AnnotatedProgramPoint[]{});
-			for (AnnotatedProgramPoint hyperNode : hyperNodes) {
-				AnnotatedProgramPoint[] preRets = node.m_ingoingReturnAppToCallPreds.get(hyperNode).toArray(new AnnotatedProgramPoint[]{});
-				for (AnnotatedProgramPoint preRet : preRets) {
-					node.m_ingoingReturnAppToCallPreds.get(hyperNode).add(copy.get(preRet));
-					node.m_ingoingReturnAppToCallPreds.get(hyperNode).remove(preRet);
-				}
-				node.m_ingoingReturnAppToCallPreds.put(copy.get(hyperNode), node.m_ingoingReturnAppToCallPreds.get(hyperNode));
-				node.m_ingoingReturnAppToCallPreds.remove(hyperNode);
 			}
 		}
 		return newRoot;
@@ -175,47 +164,38 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 	
 	public boolean process(IElement root) {
 		//FIXME
-		checker = Checker.ULTIMATE;
-		
+		checker = Checker.IMPULSE;
 		initialize(root);
 		
 		final boolean loop_forever = true; // for DEBUG
 		final int iterationsLimit = 0; // for DEBUG
 		
-		//ImpRootNode originalGraphCopy = copyGraph(m_graphRoot);
-		
-		 /* testing copy graph
-		
-		m_graphRoot.addOutgoingNode(originalGraphCopy, new DummyCodeBlock());
-		originalGraphCopy.addIncomingNode(m_graphRoot);
-		
-		if(true)
-			return false;
-		
-		// */
+		ImpRootNode originalGraphCopy = copyGraph(m_graphRoot);
+		//m_graphRoot.addOutgoingNode(originalGraphCopy, new DummyCodeBlock());
+		//originalGraphCopy.addIncomingNode(m_graphRoot);
+
 		int noOfProcedures = m_graphRoot.getOutgoingNodes().size();
 		
-		for (int procID = 0; procID < 1 && procID < noOfProcedures; ++procID) {
+		for (int procID = 0; procID < noOfProcedures; ++procID) {
 			AnnotatedProgramPoint procRoot = m_graphRoot.getOutgoingNodes().get(procID);
-			System.err.println("Exploring : " + procRoot);
+			s_Logger.debug("Exploring : " + procRoot);
 			Stack <AnnotatedProgramPoint> stack = new Stack <AnnotatedProgramPoint>();
 			stack.add(procRoot);
 			EmptinessCheck emptinessCheck = new EmptinessCheck();
 			int iterationsCount = 0; // for DEBUG
-			
-			codeChecker.debug();
+			if (DEBUG)
+				codeChecker.debug();
 			while (loop_forever | iterationsCount++ < iterationsLimit) {
 				s_Logger.debug(String.format("Iterations = %d\n", iterationsCount));
-				codeChecker.debug();
 				if (stack.isEmpty()) {
 					s_Logger.info("This Program is SAFE, Check terminated with " + iterationsCount + " iterations.");
 					break;
 				}
 				AnnotatedProgramPoint procedureRoot = stack.peek();
-				Pair<AnnotatedProgramPoint[], NestedWord<CodeBlock>> errorNWP = 
+				Pair<AnnotatedProgramPoint[], NestedWord<CodeBlock>> errorTrace = 
 						emptinessCheck.checkForEmptiness(procedureRoot);
 				
-				if (errorNWP == null) {
+				if (errorTrace == null) {
 					// if an error trace doesn't exist, return safe
 					stack.pop();
 					continue;
@@ -227,26 +207,26 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 							dumpInitialize());
 					LBool isSafe = traceChecker.checkTrace(m_truePredicate, // checks whether the trace is feasible, i.e. the formula is satisfiable
 														   m_falsePredicate,  //return LBool.UNSAT if trace is infeasible
-														   errorNWP.getSecond());
-					
+														   errorTrace.getSecond());
 					if(isSafe == LBool.UNSAT) { //trace is infeasible
 						IPredicate[] interpolants = traceChecker.getInterpolants(new TraceChecker.AllIntegers());
-						
-						AnnotatedProgramPoint[] trace = errorNWP.getFirst();
-						codeChecker.codeCheck(trace, interpolants, procedureRoot);
-						
-						System.out.println();
-						
+						codeChecker.codeCheck(errorTrace, interpolants, procedureRoot);
 					} else { // trace is feasible
 						s_Logger.info("This program is UNSAFE, Check terminated with " + iterationsCount + " iterations.");
+						if (DEBUG)
+							codeChecker.debug();
 						return false; //break
 					}
 				}
+				if(DEBUG)
+					codeChecker.debug();
 			}
-			//codeChecker.debug();
-			//if (procID < noOfProcedures)
-			//m_graphRoot = copyGraph(originalGraphCopy);
+			m_graphRoot = copyGraph(originalGraphCopy);
+			codeChecker.m_graphRoot = m_graphRoot;
 		}
+
+		if(DEBUG)
+			codeChecker.debug();
 		
 		return false;
 	}

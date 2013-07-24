@@ -5,6 +5,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
@@ -186,9 +187,10 @@ public class UltimateChecker extends CodeChecker {
 	/**
 	 * Given an error trace with the corresponding interpolants, then it modifies the graph accordingly.
 	 */
-	public boolean codeCheck(AnnotatedProgramPoint[] nodes, IPredicate[] interpolants, AnnotatedProgramPoint procedureRoot) {
+	public boolean codeCheck(Pair<AnnotatedProgramPoint[], NestedWord<CodeBlock>> errorTrace, IPredicate[] interpolants, AnnotatedProgramPoint procedureRoot) {
 		
 		// Debug The Error Trace and the corresponding list of interpolants.
+		AnnotatedProgramPoint[] nodes = errorTrace.getFirst();
 		ArrayList <AnnotatedProgramPoint> errorTraceDBG = new ArrayList<AnnotatedProgramPoint>();
 		Collections.addAll(errorTraceDBG, nodes);
 		CodeCheckObserver.s_Logger.debug(String.format("Error: %s\n", errorTraceDBG));

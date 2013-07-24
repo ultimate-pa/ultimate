@@ -3,7 +3,9 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck;
 import java.util.HashMap;
 import java.util.HashSet;
 
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
@@ -72,18 +74,47 @@ public class ImpulseChecker extends CodeChecker {
 	 * @see #copyNode(AnnotatedProgramPoint, IPredicate)
 	 * @see #defaultRedirectEdges(AnnotatedProgramPoint[],AnnotatedProgramPoint[])
 	 * @see #redirectEdges(AnnotatedProgramPoint[])
-	 * @param nodes the infeasible error trace represented as an array of nodes
+	 * @param errorTrace the infeasible error trace found by the emptiness check
 	 * @param interpolants the list of interpolants attached to the nodes of the infeasible error trace
 	 * @param procedureRoot the procedure root, not needed, exists only because of inheritance
 	 * @return always returns true
 	 */
-	public boolean codeCheck(AnnotatedProgramPoint[] nodes, IPredicate[] interpolants, AnnotatedProgramPoint procedureRoot) {
+	public boolean codeCheck(Pair<AnnotatedProgramPoint[], NestedWord<CodeBlock>> errorTrace, IPredicate[] interpolants, AnnotatedProgramPoint procedureRoot) {
+		AnnotatedProgramPoint[] nodes = errorTrace.getFirst();
+		NestedWord<CodeBlock> nestedWords = errorTrace.getSecond();
+		
+		//Debugging
+		/*
+		System.err.printf("nodes length : %d, nestedwords length : %d\n", nodes.length, nestedWords.length());
+		for (int i = 0; i < nestedWords.length(); i++) {
+			try {
+				System.err.println(nestedWords.getCallPosition(i));
+			}
+			catch (Exception e) {
+				try {
+					System.err.println(nestedWords.getReturnPosition(i));
+				}
+				catch (Exception f) {
+					System.err.println("Null");
+				}
+			}
+		}
+		
+		
+		for (int i = 0; i < nodes.length - 1; i++) {
+			if (nodes[i].getOutgoingEdgeLabel(nodes[i+1]) instanceof Return)
+				System.err.println("FoundReturnEdge at " + i);
+			else if (nodes[i].getOutgoingEdgeLabel(nodes[i+1]) instanceof Call)
+				System.err.println("FoundCallEdge at " + i);
+		}
+		*/
+		
 		AnnotatedProgramPoint[] copies = new AnnotatedProgramPoint[interpolants.length];
 		for(int i = 0; i < copies.length; ++i) {
 			copies[i] = copyNode(nodes[i+1], interpolants[i]);
 		}
 		
-		defaultRedirectEdges(nodes, copies);
+		defaultRedirectEdges(nodes, nestedWords, copies);
 		redirectEdges(copies);
 		
 		for (AnnotatedProgramPoint node : nodes)
@@ -131,11 +162,12 @@ public class ImpulseChecker extends CodeChecker {
 	 * Also checks if the source of an edge is not a new copy but rather a similar old node, 
 	 * the edge then is found and redirected
 	 * @see #findTargetInTree(AnnotatedProgramPoint, AnnotatedProgramPoint)
-	 * @param nodes the error trace
+	 * @param nodes the nodes of the error trace
+	 * @param nestedWord the nested word of the error trace, used to get call predecessors of return edges
 	 * @param copies the copies along the error trace
 	 * @return always returns true
 	 */
-	private boolean defaultRedirectEdges(AnnotatedProgramPoint[] nodes, AnnotatedProgramPoint[] copies) {
+	private boolean defaultRedirectEdges(AnnotatedProgramPoint[] nodes, NestedWord<CodeBlock> nestedWord, AnnotatedProgramPoint[] copies) {
 		
 		//Redirect First Edge
 		redirectEdge(nodes[0], nodes[1], copies[0]); 
@@ -146,7 +178,9 @@ public class ImpulseChecker extends CodeChecker {
 				// if the source node is a new copy, then we redirect right away.
 				if (copies[i-1].getOutgoingEdgeLabel(nodes[i+1]) instanceof Return) {
 					// if the edge is a hyper edge, then we need to find the call pred.
-//FIXME					
+					AnnotatedProgramPoint callPred = nodes[nestedWord.getCallPosition(i)];
+					// System.err.printf("Removing return edge %d:%d -> %d", i, nestedWords.getCallPosition(i), i+1); // for debugging
+					redirectHyperEdgeDestination(copies[i-1], callPred, nodes[i+1], copies[i]);
 				}
 				else
 					redirectEdge(copies[i-1], nodes[i+1], copies[i]);
@@ -170,7 +204,9 @@ public class ImpulseChecker extends CodeChecker {
 					if(alwaysRedirect || randomlyDecide || isStrongerPredicate(newDest, oldDest)) {
 						if (source.getOutgoingEdgeLabel(oldDest) instanceof Return) {
 							// if the edge is a hyper edge, then we need to find the call pred.
-//FIXME							
+							AnnotatedProgramPoint callPred = nodes[nestedWord.getCallPosition(i)];
+							// System.err.printf("Removing return edge %d:%d -> %d", i, nestedWords.getCallPosition(i), i+1); // for debugging
+							redirectHyperEdgeDestination(copies[i-1], callPred, nodes[i+1], copies[i]);
 						}
 						else
 							redirectEdge(source, oldDest, newDest);
@@ -184,7 +220,9 @@ public class ImpulseChecker extends CodeChecker {
 		AnnotatedProgramPoint errorLocation = nodes[nodes.length - 1];
 		if (lastNode.getOutgoingNodes().contains(errorLocation)) {
 			if(lastNode.getOutgoingEdgeLabel(errorLocation) instanceof Return) {
-//FIXME
+				AnnotatedProgramPoint callPred = nodes[nestedWord.getCallPosition(nodes.length - 2)];
+				// System.err.printf("Removing return edge %d:%d -> %d", nodes.length-2, nestedWords.getCallPosition(nodes.length-2), nodes.length-1); //for debugging
+				lastNode.removeOutgoingReturnCallPred(errorLocation, callPred);
 			}
 			else
 				lastNode.disconnectFrom(errorLocation);

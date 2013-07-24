@@ -284,9 +284,14 @@ public class AnnotatedProgramPoint extends ModifiableLabeledEdgesMultigraph<Anno
 		if(!this.getOutgoingNodes().contains(dest))
 			return;
 		if(this.getOutgoingEdgeLabel(dest) instanceof Return) {
-			AnnotatedProgramPoint[] callPreds = this.m_outgoingReturnAppToCallPreds.get(dest).toArray(new AnnotatedProgramPoint[]{});
-			for (AnnotatedProgramPoint callPred : callPreds) {
-				removeOutgoingReturnCallPred(dest, callPred);
+			try {
+				AnnotatedProgramPoint[] callPreds = this.m_outgoingReturnAppToCallPreds.get(dest).toArray(new AnnotatedProgramPoint[]{});				
+				for (AnnotatedProgramPoint callPred : callPreds) {
+					removeOutgoingReturnCallPred(dest, callPred);
+				}
+			}
+			catch (NullPointerException e) {
+				// no call preds
 			}
 		}
 		this.removeOutgoingNode(dest);
