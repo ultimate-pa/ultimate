@@ -36,17 +36,33 @@ public abstract class CodeChecker {
 	
 	public abstract boolean codeCheck(AnnotatedProgramPoint[] nodes, IPredicate[] interpolants, AnnotatedProgramPoint procedureRoot);
 
-	
+	/**
+	 * Given 2 predicates, return a predicate which is the conjunction of both.
+	 * @param a : The first Predicate.
+	 * @param b : The second Predicate.
+	 */
 	protected IPredicate conjugatePredicates(IPredicate a, IPredicate b) {
 		TermVarsProc tvp = m_smtManager.and(a, b);
 		return m_smtManager.newPredicate(tvp.getFormula(), tvp.getProcedures(), tvp.getVars(), tvp.getClosedFormula());
 	}
 	
+	/**
+	 * Given a predicate, return a predicate which is the negation of it.
+	 * @param a : The Predicate.
+	 */
 	protected IPredicate negatePredicate(IPredicate a) {
 		TermVarsProc tvp = m_smtManager.not(a);
 		return m_smtManager.newPredicate(tvp.getFormula(), tvp.getProcedures(), tvp.getVars(), tvp.getClosedFormula());
 	}
 
+	/**
+	 * Check if an edge between two AnnotatedProgramPoints is satisfiable or not, works with
+	 * the cases if the edge is a normal edge or a call edge.
+	 * @param sourceNode
+	 * @param edgeLabel
+	 * @param destinationNode
+	 * @return
+	 */
 	protected boolean isSatEdge(AnnotatedProgramPoint sourceNode, CodeBlock edgeLabel,
 			AnnotatedProgramPoint destinationNode) {
 		if (edgeLabel instanceof DummyCodeBlock)
@@ -59,6 +75,14 @@ public abstract class CodeChecker {
 		return m_smtManager.isInductive(sourceNode.getPredicate(), edgeLabel, negatePredicate(destinationNode.getPredicate())) != LBool.UNSAT;
 	}
 	
+	/**
+	 * Check if a return edge between two AnnotatedProgramPoints is satisfiable or not.
+	 * @param sourceNode
+	 * @param edgeLabel
+	 * @param destinationNode
+	 * @param callNode
+	 * @return
+	 */
 	protected boolean isSatRetEdge(AnnotatedProgramPoint sourceNode, Return edgeLabel,
 			AnnotatedProgramPoint destinationNode, AnnotatedProgramPoint callNode) {
 		System.out.print(".");
@@ -90,20 +114,51 @@ public abstract class CodeChecker {
 		return Integer.toHexString(System.identityHashCode(o));
 	}
 	
-	
+
+	/**
+	 * Debugs all the nodes in a graph.
+	 */
 	HashSet <AnnotatedProgramPoint> visited = new HashSet<AnnotatedProgramPoint>(); 
 	public void debug() {
 		visited.clear();
 		dfs(m_graphRoot);
 	}
+	protected boolean debugNode(AnnotatedProgramPoint node) {
+		return debugNode(node, "");
+	}
+	/**
+	 * A method used for debugging, it prints all the connections of a given node.
+	 * A message can be added to the printed information.
+	 * @param node
+	 * @param message
+	 * @return
+	 */
+	protected boolean debugNode(AnnotatedProgramPoint node, String message) {
+		String display = String.format("%s\nNode %s:\n", message, node);
+		display += String.format("connected To: %s\n", node.getOutgoingNodes());
+		display += String.format("connected Fr: %s\n", node.getIncomingNodes());
+		
+		if (node.m_outgoingReturnAppToCallPreds != null && node.m_outgoingReturnAppToCallPreds.size() > 0) {
+			display += String.format("outGoing: %s\n", node.m_outgoingReturnAppToCallPreds);
+		}
+		if (node.m_ingoingReturnAppToCallPreds != null && node.m_ingoingReturnAppToCallPreds.size() > 0) {
+			display += String.format("inHyperEdges: %s\n", node.m_ingoingReturnAppToCallPreds);
+		}
+		CodeCheckObserver.s_Logger.debug(display);
+		return false;
+	}
+	/**
+	 * Depth First Search algorithm that debugs all the nodes in a graph.
+	 * @param node : The current Node being explored in the DFS.
+	 * @return
+	 */
 	private boolean dfs(AnnotatedProgramPoint node) {
 		if (!visited.contains(node)) {
 			visited.add(node);
-			CodeCheckObserver.s_Logger.debug(String.format("Node: %s:\noutGoing: %s\ninHyperEdges: %s\n", node, node.m_outgoingReturnAppToCallPreds, node.m_ingoingReturnAppToCallPreds));
+			debugNode(node);
 			AnnotatedProgramPoint[] adj = node.getOutgoingNodes().toArray(new AnnotatedProgramPoint[]{});
-			for (int i = 0; i < adj.length; ++i) {
-				dfs(adj[i]);
-			}
+			for (AnnotatedProgramPoint child : adj)
+				dfs(child);
 		}
 		return false;
 	}

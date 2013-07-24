@@ -28,6 +28,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
 
 import org.apache.log4j.Logger;
 //import org.eclipse.swt.program.Program;
+import org.eclipse.core.commands.common.AbstractNamedHandleEvent;
 
 
 /**
@@ -37,6 +38,8 @@ import org.apache.log4j.Logger;
 enum Checker {
 	ULTIMATE, IMPULSE
 }
+
+enum Result { CORRECT, TIMEOUT , MAXEDITERATIONS , UNKNOWN , INCORRECT }
 
 public class CodeCheckObserver implements IUnmanagedObserver {
 
@@ -66,7 +69,11 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 		} 
 		return null;
 	}
-
+	/**
+	 * Given a graph root, copy all the nodes and the corresponding connections.
+	 * @param root
+	 * @return
+	 */
 	public ImpRootNode copyGraph(ImpRootNode root) {
 		HashMap <AnnotatedProgramPoint, AnnotatedProgramPoint> copy = new HashMap<AnnotatedProgramPoint, AnnotatedProgramPoint>();
 		ImpRootNode newRoot = new ImpRootNode(root.getRootAnnot());
@@ -119,6 +126,11 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 		return newRoot;
 	}
 	
+	/**
+	 * Initialize all the required objects in the implementation.
+	 * @param root
+	 * @return
+	 */
 	public boolean initialize(IElement root) {
 		m_originalRoot = (RootNode) root;
 		RootAnnot rootAnnot = m_originalRoot.getRootAnnot();
@@ -131,13 +143,34 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 		m_falsePredicate = m_smtManager.newFalsePredicate();
 		RCFG2AnnotatedRCFG r2ar = new RCFG2AnnotatedRCFG(m_smtManager);
 		m_graphRoot = r2ar.convert(m_originalRoot, m_truePredicate);
-
+		removeSummaryEdges();
 		if (checker == Checker.IMPULSE) {
 			codeChecker = new ImpulseChecker(root, m_smtManager, m_truePredicate, m_falsePredicate, m_taPrefs, m_originalRoot, m_graphRoot);
 		} else {
 			codeChecker = new UltimateChecker(root, m_smtManager, m_truePredicate, m_falsePredicate, m_taPrefs, m_originalRoot, m_graphRoot);
 		}
 		return false;
+	}
+	
+	private void removeSummaryEdges() {
+		Stack <AnnotatedProgramPoint> stack = new Stack<AnnotatedProgramPoint>();
+		HashSet<AnnotatedProgramPoint> visited = new HashSet<AnnotatedProgramPoint>();
+		visited.add(m_graphRoot);
+		stack.add(m_graphRoot);
+		while(!stack.isEmpty()) {
+			AnnotatedProgramPoint node = stack.pop();
+			AnnotatedProgramPoint[] successors = node.getOutgoingNodes().toArray(new AnnotatedProgramPoint[]{});
+			for (AnnotatedProgramPoint successor : successors) {
+				if (node.getOutgoingEdgeLabel(successor) instanceof Summary) {
+					node.removeOutgoingNode(successor);
+					successor.removeIncomingNode(node);
+				}
+				if(!visited.contains(successor)) {
+					visited.add(successor);
+					stack.add(successor);
+				}
+			}
+		}
 	}
 	
 	public boolean process(IElement root) {
@@ -170,6 +203,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 			EmptinessCheck emptinessCheck = new EmptinessCheck();
 			int iterationsCount = 0; // for DEBUG
 			
+			codeChecker.debug();
 			while (loop_forever | iterationsCount++ < iterationsLimit) {
 				s_Logger.debug(String.format("Iterations = %d\n", iterationsCount));
 				codeChecker.debug();

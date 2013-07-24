@@ -17,6 +17,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
  *
  * @author Alexander Nutz
  * @author Mohamed Sherif
+ * @author Mostafa Mahmoud
  */
 public class AnnotatedProgramPoint extends ModifiableLabeledEdgesMultigraph<AnnotatedProgramPoint, CodeBlock> {
 
