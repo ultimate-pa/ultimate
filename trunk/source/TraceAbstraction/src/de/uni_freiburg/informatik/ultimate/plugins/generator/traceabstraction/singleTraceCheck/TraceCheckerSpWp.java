@@ -209,16 +209,48 @@ public class TraceCheckerSpWp extends TraceChecker {
 
 		
 		s_Logger.debug("Computing weakest precondition for given trace ...");
-		IPredicate p = m_SmtManager.weakestPrecondition(
-				tracePostcondition, trace.getSymbol(m_InterpolantsWp.length));
-		m_InterpolantsWp[m_InterpolantsWp.length-1] = m_PredicateBuilder.getOrConstructPredicate(p.getFormula(),
-				p.getVars(), new HashSet<String>(Arrays.asList(p.getProcedures())));
+		if (trace.getSymbol(m_InterpolantsWp.length) instanceof Call) {
+			// TOFIX: This case shouldn't / cannot happen?
+//			IPredicate p = m_SmtManager.weakestPrecondition(
+//					tracePostcondition, (Call) trace.getSymbol(m_InterpolantsWp.length));
+//			m_InterpolantsWp[m_InterpolantsWp.length-1] = m_PredicateBuilder.getOrConstructPredicate(p.getFormula(),
+//					p.getVars(), new HashSet<String>(Arrays.asList(p.getProcedures())));
+		} else if (trace.getSymbol(m_InterpolantsWp.length) instanceof Return) {
+			IPredicate p = m_SmtManager.weakestPrecondition(
+					tracePostcondition, (Return) trace.getSymbol(m_InterpolantsWp.length));
+			m_InterpolantsWp[m_InterpolantsWp.length-1] = m_PredicateBuilder.getOrConstructPredicate(p.getFormula(),
+					p.getVars(), new HashSet<String>(Arrays.asList(p.getProcedures())));
+		} else {
+			IPredicate p = m_SmtManager.weakestPrecondition(
+					tracePostcondition, trace.getSymbol(m_InterpolantsWp.length));
+			m_InterpolantsWp[m_InterpolantsWp.length-1] = m_PredicateBuilder.getOrConstructPredicate(p.getFormula(),
+					p.getVars(), new HashSet<String>(Arrays.asList(p.getProcedures())));
+		}
 		
 		for (int i=m_InterpolantsWp.length-2; i>=0; i--) {
-			p = m_SmtManager.weakestPrecondition(
-					m_InterpolantsWp[i+1], trace.getSymbol(i+1));
-			m_InterpolantsWp[i] = m_PredicateBuilder.getOrConstructPredicate(p.getFormula(),
-					p.getVars(), new HashSet<String>(Arrays.asList(p.getProcedures())));
+			if (trace.getSymbol(i+1) instanceof Call) {
+				int retPos = ((NestedWord<CodeBlock>) trace).getReturnPosition(i+1);
+				IPredicate returnerPred = tracePostcondition;
+				if (retPos < m_InterpolantsWp.length) {
+					returnerPred = m_InterpolantsWp[retPos];
+				}
+				IPredicate p = m_SmtManager.weakestPrecondition(
+						m_InterpolantsWp[i+1], returnerPred, 
+						(Call) trace.getSymbol(i+1));
+				m_InterpolantsWp[i] = m_PredicateBuilder.getOrConstructPredicate(p.getFormula(),
+						p.getVars(), new HashSet<String>(Arrays.asList(p.getProcedures())));
+			} else if (trace.getSymbol(i+1) instanceof Return) {
+				IPredicate p = m_SmtManager.weakestPrecondition(
+						m_InterpolantsWp[i+1], (Return) trace.getSymbol(i+1)); 
+				m_InterpolantsWp[i] = m_PredicateBuilder.getOrConstructPredicate(p.getFormula(),
+						p.getVars(), new 
+						HashSet<String>(Arrays.asList(p.getProcedures())));
+			} else {
+				IPredicate p = m_SmtManager.weakestPrecondition(
+						m_InterpolantsWp[i+1], trace.getSymbol(i+1));
+				m_InterpolantsWp[i] = m_PredicateBuilder.getOrConstructPredicate(p.getFormula(),
+						p.getVars(), new HashSet<String>(Arrays.asList(p.getProcedures())));
+			}
 		}
 		
 

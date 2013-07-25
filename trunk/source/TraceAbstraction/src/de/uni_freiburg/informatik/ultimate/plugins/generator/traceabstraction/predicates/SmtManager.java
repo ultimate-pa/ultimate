@@ -1820,7 +1820,6 @@ public class SmtManager {
 		// Collect the local variables
 		Set<TermVariable> localVars = new HashSet<TermVariable>();
 		for (BoogieVar bv : p.getVars()) {
-			String id = bv.getIdentifier();
 			if (!m_GlobalVars.containsKey(bv.getIdentifier())) {
 				localVars.add(bv.getTermVariable());
 			}
@@ -1889,20 +1888,20 @@ public class SmtManager {
 		}
 		Term ret_Term_InVarsRenamed_OutVarsRenamed = substituteVars(ret_Term_InVarsRenamed, replacees, replacers);
 		// 3. Compute the local variables of the called procedure.
-		Set<TermVariable> localVarsToCalledProc = new HashSet<TermVariable>();
+		Set<TermVariable> localVarsOfCalledProc = new HashSet<TermVariable>();
 		for (BoogieVar bv : calleePred.getVars()) {
 			if (!callerPred.getVars().contains(bv)) {
 				if (!m_GlobalVars.containsKey(bv.getIdentifier())) {
-					localVarsToCalledProc.add(bv.getTermVariable());
+					localVarsOfCalledProc.add(bv.getTermVariable());
 				}
 			}
 		}
 		
 		Term ret_Term_AND_calleePred = Util.and(m_Script, ret_Term_InVarsRenamed_OutVarsRenamed, calleePred.getFormula());
 		Term ret_Term_AND_calleePred_quantified = ret_Term_AND_calleePred;
-		if (localVarsToCalledProc.size() > 0) {
+		if (localVarsOfCalledProc.size() > 0) {
 			ret_Term_AND_calleePred_quantified = DestructiveEqualityResolution.quantifier(m_Script, Script.EXISTS,
-					localVarsToCalledProc.toArray(new TermVariable[localVarsToCalledProc.size()]),
+					localVarsOfCalledProc.toArray(new TermVariable[localVarsOfCalledProc.size()]),
 					ret_Term_AND_calleePred, (Term[][])null);
 		}
 				
@@ -1947,9 +1946,9 @@ public class SmtManager {
 			throw new UnsupportedOperationException();
 		}
 		// If the given predicate p is true, then return true, since wp(true, st) = true for every statement st.
-		/*if (p.getFormula() == True()) {
+		if (p.getFormula() == True()) {
 			return p;
-		}*/
+		}
 		TransFormula tf = cb.getTransitionFormula();	
 		Term tf_term = tf.getFormula();		
 		ArrayList<TermVariable> replacees = new ArrayList<TermVariable>();
@@ -2039,8 +2038,9 @@ public class SmtManager {
 			Term predicate_renamed = substituteVars(p.getFormula(), replacees, replacers);
 			NOT_tfterm_OR_predicate = Util.or(m_Script, Util.not(m_Script, tf_term_outvars_renamed), predicate_renamed);
 			
-			result = m_Script.quantifier(Script.FORALL, 
-					outvarsOccuringInFreeVars_TermVariables, NOT_tfterm_OR_predicate, (Term[][]) null);
+			result = DestructiveEqualityResolution.quantifier(m_Script, Script.FORALL,
+					outvarsOccuringInFreeVars_TermVariables,
+					NOT_tfterm_OR_predicate, (Term[][]) null);
 		} else {
 			result = NOT_tfterm_OR_predicate;
 		}
@@ -2060,11 +2060,125 @@ public class SmtManager {
 	 */
 	public IPredicate weakestPrecondition(IPredicate returneePred, 
 						IPredicate returnerPred, Call call) {
-		throw new UnsupportedOperationException();
+		
+		// 1. Rename invars in Term of Call statement
+		List<TermVariable> replacees = new ArrayList<TermVariable>();
+		List<Term> replacers = new ArrayList<Term>();
+		TransFormula call_TF = call.getTransitionFormula();
+		for (BoogieVar bv : call_TF.getInVars().keySet()) {
+			replacees.add(call_TF.getInVars().get(bv));
+			replacers.add(bv.getTermVariable());
+		}
+		Term call_Term_InVarsRenamed = substituteVars(call_TF.getFormula(), replacees, replacers);
+		replacees.clear();
+		replacers.clear();
+		//2. Rename outvars in Term of Call statement
+		for (BoogieVar bv : call_TF.getOutVars().keySet()) {
+			replacees.add(call_TF.getOutVars().get(bv));
+			replacers.add(bv.getTermVariable());
+		}
+		Term call_Term_InVarsRenamed_OutVarsRenamed = substituteVars(call_Term_InVarsRenamed, replacees, replacers);
+		// 3. Compute the local variables of the called procedure.
+		Set<TermVariable> localVarsOfCalledProc = new HashSet<TermVariable>();
+		for (BoogieVar bv : returneePred.getVars()) {
+			if (!returnerPred.getVars().contains(bv)) {
+				if (!m_GlobalVars.containsKey(bv.getIdentifier())) {
+					localVarsOfCalledProc.add(bv.getTermVariable());
+				}
+			}
+		}
+
+		Term call_Term_IMPLIES_returneePred = Util.or(m_Script, 
+				Util.not(m_Script, call_Term_InVarsRenamed_OutVarsRenamed),
+				returneePred.getFormula());
+		Term call_Term_AND_returneePred_quantified = call_Term_IMPLIES_returneePred;
+		if (localVarsOfCalledProc.size() > 0) {
+			call_Term_AND_returneePred_quantified = DestructiveEqualityResolution.quantifier(m_Script, Script.FORALL,
+					localVarsOfCalledProc.toArray(new TermVariable[localVarsOfCalledProc.size()]),
+					call_Term_IMPLIES_returneePred, (Term[][])null);
+		}
+
+		TermVarsProc tvp = computeTermVarsProc(call_Term_AND_returneePred_quantified);
+		Term call_Term_AND_returneePred_as_closed_formula = SmtManager.computeClosedFormula(call_Term_AND_returneePred_quantified, tvp.getVars(), m_Script);
+		return newPredicate(call_Term_AND_returneePred_quantified, tvp.getProcedures(), tvp.getVars(), call_Term_AND_returneePred_as_closed_formula);
 	}
 	
 	public IPredicate weakestPrecondition(IPredicate p, Return ret) {
-		throw new UnsupportedOperationException();
+		// 1. Compute those global variable assignments, i.e. x_global = old(x_global) if x_global is
+		// a global variable.
+		TransFormula globalVarsAssignment = m_ModifiableGlobals.getGlobalVarsAssignment(
+				ret.getCorrespondingCall().getCallStatement().getMethodName());
+		// 1.1 Rename the invars in global variable assignments.
+		List<TermVariable> replacees = new ArrayList<TermVariable>();
+		List<Term> replacers = new ArrayList<Term>();
+		for (BoogieVar bv : globalVarsAssignment.getInVars().keySet()) {
+			replacees.add(globalVarsAssignment.getInVars().get(bv));
+			replacers.add(bv.getTermVariable());
+		}
+		Term globalVars_Invars_Renamed = substituteVars(globalVarsAssignment.getFormula(), replacees, replacers);
+		// 1.2 Rename the outvars in global variable assignments.
+		replacees.clear();
+		replacers.clear();
+		for (BoogieVar bv : globalVarsAssignment.getOutVars().keySet()) {
+			replacees.add(globalVarsAssignment.getOutVars().get(bv));
+			replacers.add(bv.getTermVariable());
+		}
+		
+		Term globalVars_InVarsRenamed_OutVarsRenamed = substituteVars(globalVars_Invars_Renamed, replacees, replacers);
+		replacees.clear();
+		replacers.clear();
+		
+		// Collect the local variables
+		Set<TermVariable> localVars = new HashSet<TermVariable>();
+		for (BoogieVar bv : p.getVars()) {
+			if (!m_GlobalVars.containsKey(bv.getIdentifier())) {
+				localVars.add(bv.getTermVariable());
+			}
+		}
+		TransFormula ret_TF = ret.getTransitionFormula();
+		// 2.1 Rename the invars of the term of the Return-Statement.
+		for (BoogieVar bv : ret_TF.getInVars().keySet()) {
+			replacees.add(ret_TF.getInVars().get(bv));
+			replacers.add(bv.getTermVariable());
+		}
+		Term ret_Term_InVarsRenamed = substituteVars(ret_TF.getFormula(), replacees, replacers);
+		replacees.clear();
+		replacers.clear();
+		// 2.2 Rename the outvars of the term of the Return-Statement.
+		for (BoogieVar bv : ret_TF.getOutVars().keySet()) {
+			replacees.add(ret_TF.getOutVars().get(bv));
+			replacers.add(bv.getTermVariable());
+			// Add this invar to localVars, if it is not contained in outVars, such
+			// that it is later quantified.
+			if (!ret_TF.getOutVars().keySet().contains(bv)) {
+				localVars.add(bv.getTermVariable());
+			}
+
+		}
+		
+
+
+		Term ret_Term_InVarsRenamed_OutVarsRenamed = substituteVars(ret_Term_InVarsRenamed, replacees, replacers);
+		
+		Term ret_Term_AND_globalVarsAssignment = Util.and(m_Script, 
+				ret_Term_InVarsRenamed_OutVarsRenamed, 
+				globalVars_InVarsRenamed_OutVarsRenamed);
+		
+		Term retTermANDglobalVarsAssignment_IMPLIES_predicate = Util.or(m_Script, 
+				Util.not(m_Script, ret_Term_AND_globalVarsAssignment), p.getFormula());
+		
+		Term retTermANDglobalVarsAssignment_IMPLIES_predicate_quantified = retTermANDglobalVarsAssignment_IMPLIES_predicate;
+		if (localVars.size() > 0) {
+			retTermANDglobalVarsAssignment_IMPLIES_predicate_quantified = DestructiveEqualityResolution.quantifier(m_Script, Script.FORALL,
+					localVars.toArray(new TermVariable[localVars.size()]),
+					retTermANDglobalVarsAssignment_IMPLIES_predicate, (Term[][])null);
+		}
+
+		Term result = Util.and(m_Script, retTermANDglobalVarsAssignment_IMPLIES_predicate_quantified, globalVars_InVarsRenamed_OutVarsRenamed);
+
+		TermVarsProc tvp = computeTermVarsProc(result);
+		Term result_as_closed_formula = SmtManager.computeClosedFormula(result, tvp.getVars(), m_Script);
+		return newPredicate(result, tvp.getProcedures(), tvp.getVars(), result_as_closed_formula);
 	}
 	
 	
