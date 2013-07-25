@@ -192,7 +192,7 @@ public class ImpulseChecker extends CodeChecker {
 				AnnotatedProgramPoint oldDest = findTargetInTree(source, nodes[i+1]);
 				AnnotatedProgramPoint newDest = copies[i];
 				
-				if (oldDest == null || !isStrongerPredicate(oldDest, newDest)) {
+				if (oldDest != null && !isStrongerPredicate(oldDest, newDest)) {
 					// the edge is not redirected if the old edge is not found, 
 					// or if the found edge destination is stronger than the new one.
 					// the edge is redirected if the new destination is stronger than the old one.
@@ -206,7 +206,7 @@ public class ImpulseChecker extends CodeChecker {
 							// if the edge is a hyper edge, then we need to find the call pred.
 							AnnotatedProgramPoint callPred = nodes[nestedWord.getCallPosition(i)];
 							// System.err.printf("Removing return edge %d:%d -> %d", i, nestedWords.getCallPosition(i), i+1); // for debugging
-							redirectHyperEdgeDestination(copies[i-1], callPred, nodes[i+1], copies[i]);
+							redirectHyperEdgeDestination(source, callPred, oldDest, newDest);
 						}
 						else
 							redirectEdge(source, oldDest, newDest);
