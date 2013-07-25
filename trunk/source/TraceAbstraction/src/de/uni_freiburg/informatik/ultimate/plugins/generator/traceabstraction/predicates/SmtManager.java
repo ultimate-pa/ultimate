@@ -1249,6 +1249,12 @@ public class SmtManager {
 		return m_Script.term(name, emptyTerms); 
 	}
 	
+	public TermVariable getFreshTermVariable(String identifier, Sort sort) {
+		String name = "fresh_" + identifier + m_FreshVariableCouter++;
+		TermVariable result = m_Script.variable(name, sort);
+		return result;
+	}
+	
 	/**
 	 * @param int >=-1
 	 * @return String representation of number, where -1 is represented as 
