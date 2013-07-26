@@ -45,12 +45,12 @@ public class AnnotateAndAsserter {
 	private static Logger s_Logger = 
 			UltimateServices.getInstance().getLogger(Activator.s_PLUGIN_ID);
 		
-		private final Script m_Script;
-		private final SmtManager m_SmtManager;
-		private final NestedWord<CodeBlock> m_Trace;
+		protected final Script m_Script;
+		protected final SmtManager m_SmtManager;
+		protected final NestedWord<CodeBlock> m_Trace;
 		
-		private LBool m_Satisfiable;
-		private NestedSsa m_AnnotSSA;
+		protected final LBool m_Satisfiable;
+		protected final NestedSsa m_AnnotSSA;
 
 		public AnnotateAndAsserter(SmtManager smtManager, NestedSsa nestedSSA, Word<CodeBlock> trace) {
 			m_SmtManager = smtManager;
@@ -60,7 +60,7 @@ public class AnnotateAndAsserter {
 			} else {
 				m_Trace = new NestedWord<CodeBlock>(trace);
 			}
-			setAnnotSSA(buildAnnotatedSsaAndAssertTerms(nestedSSA));
+			m_AnnotSSA = buildAnnotatedSsaAndAssertTerms(nestedSSA);
 
 			m_Satisfiable = m_SmtManager.getScript().checkSat();
 			s_Logger.info("Conjunction of SSA is " + m_Satisfiable);
@@ -286,11 +286,5 @@ public class AnnotateAndAsserter {
 		public NestedSsa getAnnotSSA() {
 			return m_AnnotSSA;
 		}
-
-
-		public void setAnnotSSA(NestedSsa annotSSA) {
-			m_AnnotSSA = annotSSA;
-		}
-		
 
 }
