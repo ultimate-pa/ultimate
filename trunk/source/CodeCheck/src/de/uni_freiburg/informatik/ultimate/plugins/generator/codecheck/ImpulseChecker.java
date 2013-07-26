@@ -1,5 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 
@@ -81,6 +83,15 @@ public class ImpulseChecker extends CodeChecker {
 	 */
 	public boolean codeCheck(Pair<AnnotatedProgramPoint[], NestedWord<CodeBlock>> errorTrace, IPredicate[] interpolants, AnnotatedProgramPoint procedureRoot) {
 		AnnotatedProgramPoint[] nodes = errorTrace.getFirst();
+		/* //Debugging
+		ArrayList <AnnotatedProgramPoint> errorTraceDBG = new ArrayList<AnnotatedProgramPoint>();
+		Collections.addAll(errorTraceDBG, nodes);
+		CodeCheckObserver.s_Logger.debug(String.format("Error: %s\n", errorTraceDBG));
+		
+		ArrayList <IPredicate> interpolantsDBG = new ArrayList<IPredicate>();
+		Collections.addAll(interpolantsDBG, interpolants);
+		CodeCheckObserver.s_Logger.debug(String.format("Inters: %s\n", interpolantsDBG));
+		*/
 		NestedWord<CodeBlock> nestedWords = errorTrace.getSecond();
 		
 		//Debugging
@@ -278,7 +289,10 @@ public class ImpulseChecker extends CodeChecker {
 	private boolean redirectEdge(AnnotatedProgramPoint source,
 			AnnotatedProgramPoint oldDest,
 			AnnotatedProgramPoint newDest) {
-		
+			
+		if(oldDest == newDest) // IF the new Dest is the same as the old Dest, then nothing needs to be done
+			return true;
+			
 		CodeBlock label = source.getOutgoingEdgeLabel(oldDest);
 		if(label == null)
 			return false;
@@ -309,6 +323,9 @@ public class ImpulseChecker extends CodeChecker {
 	private boolean redirectHyperEdgeDestination(AnnotatedProgramPoint source, AnnotatedProgramPoint callPred,
 			AnnotatedProgramPoint oldDest,
 			AnnotatedProgramPoint newDest) {
+		
+		if(oldDest == newDest) // IF the new Dest is the same as the old Dest, then nothing needs to be done
+			return true;
 		
 		CodeBlock label = source.getOutgoingEdgeLabel(oldDest);
 		if(label == null || !(label instanceof Return))
