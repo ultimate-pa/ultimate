@@ -36,7 +36,7 @@ public class LassoExtractor<LETTER, STATE> implements IOperation<LETTER,STATE> {
 				m_Reach.getStronglyConnectedComponents();
 		m_NestedLassoRuns = sccs.getAllNestedLassoRuns();
 		m_NestedLassoWords = new ArrayList<NestedLassoWord<LETTER>>(m_NestedLassoRuns.size());
-		if (m_NestedLassoRuns.isEmpty()) {
+		if (m_NestedLassoRuns.isEmpty() && sccs.getNestedLassoRun() == null) {
 			assert (new BuchiIsEmpty<LETTER, STATE>(m_Reach)).getResult();
 		} else {
 			for (NestedLassoRun<LETTER, STATE> nlr  : m_NestedLassoRuns) {
