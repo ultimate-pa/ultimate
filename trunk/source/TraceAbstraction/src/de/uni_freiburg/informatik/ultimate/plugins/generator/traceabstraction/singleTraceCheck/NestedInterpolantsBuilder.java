@@ -48,7 +48,7 @@ public class NestedInterpolantsBuilder {
 	
 	private NestedSsa m_AnnotSSA;
 	
-	private final TraceChecker.PredicateBuilder m_PredicateBuilder;
+	private final PredicateUnifier m_PredicateBuilder;
 
 	private Set<Integer> m_InterpolatedPositions;
 
@@ -70,7 +70,7 @@ public class NestedInterpolantsBuilder {
 
 	public NestedInterpolantsBuilder(SmtManager smtManager,
 								 	NestedSsa annotatdSsa,
-								 	TraceChecker.PredicateBuilder predicateBuilder,
+								 	PredicateUnifier predicateBuilder,
 								 	Set<Integer> interpolatedPositions,
 								 	boolean treeInterpolation) {
 		m_TreeInterpolation = treeInterpolation;
