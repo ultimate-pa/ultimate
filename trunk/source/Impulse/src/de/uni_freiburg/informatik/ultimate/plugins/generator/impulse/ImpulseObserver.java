@@ -34,6 +34,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Ac
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager.TermVarsProc;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceChecker;
 import de.uni_freiburg.informatik.ultimate.result.CounterExampleResult;
 import de.uni_freiburg.informatik.ultimate.result.IResult;
@@ -179,7 +180,6 @@ public class ImpulseObserver implements IUnmanagedObserver {
 
 				TraceChecker traceChecker = new TraceChecker(m_smtManager, 
 						m_originalRoot.getRootAnnot().getModGlobVarManager(), 
-						m_originalRoot.getRootAnnot().getEntryNodes(),
 						dumpInitialize());
 				LBool isSafe = traceChecker.checkTrace(m_truePredicate, 
 						isPEL ? pEL.getPredicate() : m_falsePredicate, 
@@ -187,8 +187,9 @@ public class ImpulseObserver implements IUnmanagedObserver {
 				m_pathChecks++;
 
 				if(isSafe == LBool.UNSAT) {
-					IPredicate[] interpolants = traceChecker.getInterpolants(
-							new TraceChecker.AllIntegers());
+					PredicateUnifier pu = new PredicateUnifier(m_smtManager, m_truePredicate, m_falsePredicate);
+					traceChecker.computeInterpolants(new TraceChecker.AllIntegers(), pu);
+					IPredicate[] interpolants = traceChecker.getInterpolants();
 
 					boolean writeDetailedGraphs = true;
 
@@ -218,7 +219,7 @@ public class ImpulseObserver implements IUnmanagedObserver {
 						secondLastApp.disconnectOutgoing(lastApp);
 						//								secondLastApp.removeOutgoingNode(lastApp);
 						//								lastApp.removeIncomingNode(secondLastApp);
-						traceChecker.forgetTrace();
+						traceChecker.unlockSmtManager();
 					} else {
 						//								makeErrorTraceFromNW(errorNWP.getSecond());
 						return Result.INCORRECT;

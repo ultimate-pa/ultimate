@@ -41,6 +41,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.ISLPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceChecker.AllIntegers;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceCheckerSpWp;
@@ -145,12 +146,10 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		if (m_Pref.interpolatedLocs() == InterpolatedLocs.WP) {
 			m_TraceChecker = new TraceCheckerSpWp(m_SmtManager,
 					m_RootNode.getRootAnnot().getModGlobVarManager(),
-					m_RootNode.getRootAnnot().getEntryNodes(),
 					m_IterationPW);
 		} else {
 			m_TraceChecker = new TraceChecker(m_SmtManager,
 					m_RootNode.getRootAnnot().getModGlobVarManager(),
-					m_RootNode.getRootAnnot().getEntryNodes(),
 					m_IterationPW);
 		}
 		m_TruePredicate = m_SmtManager.newTruePredicate();
@@ -177,7 +176,10 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 			m_FailurePath = m_TraceChecker.getFailurePath();
 		} else {
 			AllIntegers allInt = new TraceChecker.AllIntegers();
-			m_Interpolants = m_TraceChecker.getInterpolants(allInt);
+			PredicateUnifier predicateUnifier = new PredicateUnifier(m_SmtManager,
+					m_TruePredicate, m_FalsePredicate);
+			m_TraceChecker.computeInterpolants(allInt, predicateUnifier);
+			m_Interpolants = m_TraceChecker.getInterpolants();
 		}
 		m_TimingStatistics.finishTraceCheck();
 		return feasibility;

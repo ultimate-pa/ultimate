@@ -44,6 +44,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Tra
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.PreferenceValues.Solver;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceChecker.AllIntegers;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IPredicate;
@@ -273,7 +274,6 @@ public class ReImpactObserver implements IUnmanagedObserver {
 
 		TraceChecker traceChecker = new TraceChecker(m_smtManager, 
 				m_rootAnnot.getModGlobVarManager(),
-				m_rootAnnot.getEntryNodes(),				
 				dumpInitialize());
 		LBool isSafe = traceChecker.checkTrace(m_truePredicate, 
 				m_falsePredicate, 
@@ -281,11 +281,13 @@ public class ReImpactObserver implements IUnmanagedObserver {
 		m_pathChecks++;
 		
 		if (isSafe == LBool.UNSAT) {
-			IPredicate[] interpolants = traceChecker.getInterpolants(new TraceChecker.AllIntegers());
+			PredicateUnifier pu = new PredicateUnifier(m_smtManager, m_truePredicate, m_falsePredicate);
+			traceChecker.computeInterpolants(new TraceChecker.AllIntegers(), pu);
+			IPredicate[] interpolants = traceChecker.getInterpolants();
 			refineTrace(errorNWP, interpolants);
 			setPreCallNodeImportantFlags(errorNWP.getFirst(), 0, getFirstPendingReturnIndex(nestingRelation));
 		} else {
-			traceChecker.forgetTrace();
+			traceChecker.unlockSmtManager();
 			if (isSafe == LBool.SAT)
 				m_currentResult = Result.INCORRECT;
 			else if (isSafe == LBool.UNKNOWN)
@@ -601,19 +603,20 @@ public class ReImpactObserver implements IUnmanagedObserver {
 		
 		TraceChecker traceChecker = new TraceChecker(m_smtManager, 
 				m_rootAnnot.getModGlobVarManager(),
-				m_rootAnnot.getEntryNodes(),
 				dumpInitialize());
 		
 		LBool isSafe = traceChecker.checkTrace(v.getPredicate(), w.getPredicate(), newPathNWP.getSecond());
 		
 		if (isSafe == LBool.UNSAT) {
-			IPredicate[] interpolants = traceChecker.getInterpolants(new TraceChecker.AllIntegers());
+			PredicateUnifier pu = new PredicateUnifier(m_smtManager, v.getPredicate(), w.getPredicate());
+			traceChecker.computeInterpolants(new TraceChecker.AllIntegers(), pu);
+			IPredicate[] interpolants = traceChecker.getInterpolants();
 			refineTrace(newPathNWP, interpolants);
 			p_cover(v, w); //FIXME: cover does an implication check which is not necessary, here
 			assert v.m_isCovered && v.m_coveringNode == w;
 			return true;
 		} else {
-			traceChecker.forgetTrace();
+			traceChecker.unlockSmtManager();
 			return false;
 		}
 	}

@@ -74,6 +74,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.ISLPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.InductivityCheck;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceChecker.AllIntegers;
 import de.uni_freiburg.informatik.ultimate.result.IResult;
@@ -293,7 +294,7 @@ public class BuchiCegarLoop {
 						refineFinite();
 						m_Infeasible++;
 					} else if (isCounterexampleFeasible == Script.LBool.SAT) {
-						m_TraceChecker.forgetTrace();
+						m_TraceChecker.unlockSmtManager();
 						boolean terminating = isCounterexampleTerminating(
 								m_Counterexample.getStem().getWord(), m_Counterexample.getLoop().getWord());
 						if (!terminating) {
@@ -387,7 +388,6 @@ public class BuchiCegarLoop {
 			s_Logger.info("Loop: " + loop);
 			m_TraceChecker = new TraceChecker(m_SmtManager,
 					m_RootNode.getRootAnnot().getModGlobVarManager(),
-					m_RootNode.getRootAnnot().getEntryNodes(),
 					null);
 			m_TruePredicate = m_SmtManager.newTruePredicate();
 			m_FalsePredicate = m_SmtManager.newFalsePredicate();
@@ -399,14 +399,14 @@ public class BuchiCegarLoop {
 			if (feasibility == LBool.UNSAT) {
 				s_Logger.info("stem already infeasible");
 			} else {
-				m_TraceChecker.forgetTrace();
+				m_TraceChecker.unlockSmtManager();
 				m_ConcatenatedCounterexample = loop;
 				feasibility = m_TraceChecker.checkTrace(m_TruePredicate, 
 						m_FalsePredicate, m_ConcatenatedCounterexample.getWord());
 				if (feasibility == LBool.UNSAT) {
 					s_Logger.info("loop already infeasible");
 				} else {
-					m_TraceChecker.forgetTrace();
+					m_TraceChecker.unlockSmtManager();
 					m_ConcatenatedCounterexample = stem.concatenate(loop);
 					feasibility = m_TraceChecker.checkTrace(m_TruePredicate, 
 							m_FalsePredicate, m_ConcatenatedCounterexample.getWord());
@@ -418,7 +418,9 @@ public class BuchiCegarLoop {
 		
 		private void refineFinite() throws OperationCanceledException {
 			AllIntegers allInt = new TraceChecker.AllIntegers();
-			IPredicate[] interpolants = m_TraceChecker.getInterpolants(allInt);
+			PredicateUnifier pu = new PredicateUnifier(m_SmtManager);
+			m_TraceChecker.computeInterpolants(allInt, pu);
+			IPredicate[] interpolants = m_TraceChecker.getInterpolants();
 			constructInterpolantAutomaton(interpolants);
 			EdgeChecker ec = new EdgeChecker(m_SmtManager, buchiModGlobalVarManager);
 			PostDeterminizer spd = new PostDeterminizer(
@@ -683,23 +685,27 @@ public class BuchiCegarLoop {
 //					null);
 			m_TraceChecker = new TraceChecker(m_SmtManager,
 					buchiModGlobalVarManager,
-					m_RootNode.getRootAnnot().getEntryNodes(),
 					null);
 			LBool stemCheck = m_TraceChecker.checkTrace(m_Bspm.getStemPrecondition(), m_Bspm.getStemPostcondition(), stem);
 			IPredicate[] stemInterpolants;
 			if (stemCheck == LBool.UNSAT) {
-				stemInterpolants = m_TraceChecker.getInterpolants(new TraceChecker.AllIntegers());
+				PredicateUnifier pu = new PredicateUnifier(m_SmtManager, 
+						m_Bspm.getStemPrecondition(), m_Bspm.getStemPostcondition());
+				m_TraceChecker.computeInterpolants(new TraceChecker.AllIntegers(), pu);
+				stemInterpolants = m_TraceChecker.getInterpolants();
 			} else {
 				throw new AssertionError();
 			}
 			m_TraceChecker = new TraceChecker(m_SmtManager,
 					buchiModGlobalVarManager,
-					m_RootNode.getRootAnnot().getEntryNodes(),
 					null);
+			PredicateUnifier pu = new PredicateUnifier(m_SmtManager, 
+					m_Bspm.getRankEqAndSi(), m_Bspm.getHondaPredicate());
 			LBool loopCheck = m_TraceChecker.checkTrace(m_Bspm.getRankEqAndSi(), m_Bspm.getHondaPredicate(), loop);
 			IPredicate[] loopInterpolants;
 			if (loopCheck == LBool.UNSAT) {
-				loopInterpolants = m_TraceChecker.getInterpolants(new TraceChecker.AllIntegers());
+				m_TraceChecker.computeInterpolants(new TraceChecker.AllIntegers(), pu);
+				loopInterpolants = m_TraceChecker.getInterpolants();
 			} else {
 				throw new AssertionError();
 			}

@@ -36,6 +36,15 @@ import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
 			}
 		}
 		
+		/**
+		 * Return true iff pred is the representative IPredicate for the Term 
+		 * pred.getFormula().
+		 */
+		boolean isRepresentative(IPredicate pred) {
+			IPredicate representative = m_Term2Predicates.get(pred.getFormula());
+			return pred == representative;
+		}
+		
 		
 		/**
 		 * Add the pair (predicate.getFormula(), predicate) to the 

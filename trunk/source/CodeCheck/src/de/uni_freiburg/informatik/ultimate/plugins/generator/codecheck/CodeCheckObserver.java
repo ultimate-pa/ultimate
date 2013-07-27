@@ -24,6 +24,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.prefere
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceChecker;
 
 import org.apache.log4j.Logger;
@@ -203,13 +204,14 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 					s_Logger.info("Error Path is FOUND.");
 					TraceChecker traceChecker = new TraceChecker(m_smtManager, 
 							m_originalRoot.getRootAnnot().getModGlobVarManager(), 
-							m_originalRoot.getRootAnnot().getEntryNodes(),
 							dumpInitialize());
 					LBool isSafe = traceChecker.checkTrace(m_truePredicate, // checks whether the trace is feasible, i.e. the formula is satisfiable
 														   m_falsePredicate,  //return LBool.UNSAT if trace is infeasible
 														   errorTrace.getSecond());
 					if(isSafe == LBool.UNSAT) { //trace is infeasible
-						IPredicate[] interpolants = traceChecker.getInterpolants(new TraceChecker.AllIntegers());
+						PredicateUnifier pu = new PredicateUnifier(m_smtManager, m_truePredicate, m_falsePredicate);
+						traceChecker.computeInterpolants(new TraceChecker.AllIntegers(), pu);
+						IPredicate[] interpolants = traceChecker.getInterpolants();
 						codeChecker.codeCheck(errorTrace, interpolants, procedureRoot);
 					} else { // trace is feasible
 						s_Logger.info("This program is UNSAFE, Check terminated with " + iterationsCount + " iterations.");

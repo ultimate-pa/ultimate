@@ -253,7 +253,6 @@ public class BinaryStatePredicateManager {
 		boolean result = true;
 		TraceChecker traceChecker = new TraceChecker(m_SmtManager,
 				rootAnnot.getModGlobVarManager(),
-				rootAnnot.getEntryNodes(),
 				null);
 		IPredicate truePredicate = m_SmtManager.newTruePredicate();
 		IPredicate siPred = supportingInvariant2Predicate(si);
@@ -262,7 +261,7 @@ public class BinaryStatePredicateManager {
 		}
 		LBool stemCheck = traceChecker.checkTrace(truePredicate, siPred, stem);
 		if (stemCheck == LBool.UNSAT) {
-			traceChecker.forgetTrace();
+			traceChecker.unlockSmtManager();
 //			IPredicate[] interpolants = m_TraceChecker.getInterpolants(new TraceChecker.AllIntegers());
 //			interpolants.toString();
 		} else {
@@ -270,7 +269,7 @@ public class BinaryStatePredicateManager {
 		}
 		LBool loopCheck = traceChecker.checkTrace(siPred, siPred, stem);
 		if (loopCheck == LBool.UNSAT) {
-			traceChecker.forgetTrace();
+			traceChecker.unlockSmtManager();
 //			IPredicate[] interpolants = m_TraceChecker.getInterpolants(new TraceChecker.AllIntegers());
 //			interpolants.toString();
 		} else {
@@ -282,10 +281,9 @@ public class BinaryStatePredicateManager {
 	public boolean checkRankDecrease(NestedWord<CodeBlock> loop, RootAnnot rootAnnot) {
 		TraceChecker traceChecker = new TraceChecker(m_SmtManager,
 				rootAnnot.getModGlobVarManager(),
-				rootAnnot.getEntryNodes(),
 				null);
 		LBool loopCheck = traceChecker.checkTrace(m_RankEqualityAndSi, m_RankDecrease, loop);
-		traceChecker.forgetTrace();
+		traceChecker.unlockSmtManager();
 		if (loopCheck == LBool.UNSAT) {
 			return true;
 		} else {

@@ -21,7 +21,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ModifiableGlobalVariableManager;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IPredicate;
@@ -87,7 +86,7 @@ public class TraceChecker {
 	/**
 	 * Data structure that unifies Predicates with respect to its Term.
 	 */
-	protected final PredicateUnifier m_PredicateBuilder;
+	protected PredicateUnifier m_PredicateUnifier;
 	
 	
 	/**
@@ -119,20 +118,9 @@ public class TraceChecker {
 	
 	public TraceChecker(SmtManager smtManager,
 						ModifiableGlobalVariableManager modifiedGlobals,
-		 				Map<String,ProgramPoint> proc2entry,
 		 				PrintWriter debugPW) {
 		m_SmtManager = smtManager;
-		m_PredicateBuilder = new PredicateUnifier(m_SmtManager);
-		m_ModifiedGlobals = modifiedGlobals;
-		m_DebugPW = debugPW;
-	}
-	
-	private TraceChecker(SmtManager smtManager,
-						 ModifiableGlobalVariableManager modifiedGlobals, 
-		 				 PrintWriter debugPW, PredicateUnifier 
-		 				 predicateBuilder) {
-		m_SmtManager = smtManager;
-		m_PredicateBuilder = predicateBuilder;
+		m_PredicateUnifier = new PredicateUnifier(m_SmtManager);
 		m_ModifiedGlobals = modifiedGlobals;
 		m_DebugPW = debugPW;
 	}
@@ -170,7 +158,7 @@ public class TraceChecker {
 	public LBool checkTrace(IPredicate precondition, IPredicate postcondition,
 			Map<Integer, IPredicate> pendingContexts, Word<CodeBlock> trace) {
 		if (traceCheckRunning()) {
-			throw new AssertionError("Forget current trace to be able to check new one");
+			throw new AssertionError("Each trace checker can check only one trace.");
 		}
 		m_Trace = trace;
 		m_Precondition = precondition;
@@ -245,17 +233,48 @@ public class TraceChecker {
 	 * <p>
 	 * interpolatedPositions has to be sorted (ascending) and its entries have
 	 * to be smaller than or equal to m_Trace.size() 
+	 * 
+	 * @param predicateUnifier A PredicateUnifier in which precondition, 
+	 * postcondition and all pending contexts are representatives.
 	 */
 	
-	public IPredicate[] getInterpolants(Set<Integer> interpolatedPositions) {
-		return getInterpolants_Recursive(interpolatedPositions);
+	public void computeInterpolants(Set<Integer> interpolatedPositions,
+										PredicateUnifier predicateUnifier) {
+		m_PredicateUnifier = predicateUnifier;
+		assert predicateUnifier.isRepresentative(m_Precondition);
+		assert predicateUnifier.isRepresentative(m_Postcondition);
+		for (IPredicate pred : m_PendingContexts.values()) {
+			assert predicateUnifier.isRepresentative(pred);
+		}
+		computeInterpolants_Recursive(interpolatedPositions, predicateUnifier);
 	}
 	
-	
+	public Word<CodeBlock> getTrace() {
+		return m_Trace;
+	}
+
+	public IPredicate getPrecondition() {
+		return m_Precondition;
+	}
+
+	public IPredicate getPostcondition() {
+		return m_Postcondition;
+	}
+
+	public Map<Integer, IPredicate> getPendingContexts() {
+		return m_PendingContexts;
+	}
+
+	public IPredicate[] getInterpolants() {
+		return m_Interpolants;
+	}
+
 	/**
 	 * Use tree interpolants to compute nested interpolants.
 	 */
-	private IPredicate[] getInterpolants_Tree(Set<Integer> interpolatedPositions) {
+	private void computeInterpolants_Tree(Set<Integer> interpolatedPositions, 
+			PredicateUnifier predicateUnifier) {
+		m_PredicateUnifier = predicateUnifier;
 		if (m_IsSafe != LBool.UNSAT) {
 			throw new IllegalArgumentException(
 				"Interpolants only available if trace fulfills specification");
@@ -263,20 +282,12 @@ public class TraceChecker {
 		if (m_Interpolants != null){
 			throw new AssertionError("You already computed interpolants");
 		}
-		m_PredicateBuilder.declarePredicate(m_Precondition);
-		m_PredicateBuilder.declarePredicate(m_Postcondition);
-		NestedInterpolantsBuilder nib = 
-				new NestedInterpolantsBuilder(m_SmtManager,
-						m_AnnotatedSsa, 
-							m_PredicateBuilder, interpolatedPositions, true);
+		NestedInterpolantsBuilder nib = new NestedInterpolantsBuilder(
+				m_SmtManager, m_AnnotatedSsa, m_PredicateUnifier, 
+				interpolatedPositions, true);
 		m_Interpolants = nib.getNestedInterpolants();
 		assert !inductivityOfSequenceCanBeRefuted();
-		m_Trace = null;
-		m_Precondition = null;
-		m_Postcondition = null;
-		m_IsSafe = null;
 		assert m_Interpolants != null;
-		return m_Interpolants;
 	}
 	
 	
@@ -284,7 +295,9 @@ public class TraceChecker {
 	 * Use Matthias old naive interative method to compute nested interpolants.
 	 * (Recursive interpolation queries, one for each call-return pair)
 	 */
-	private IPredicate[] getInterpolants_Recursive(Set<Integer> interpolatedPositions) {
+	private void computeInterpolants_Recursive(Set<Integer> interpolatedPositions,
+			PredicateUnifier predicateUnifier) {
+		m_PredicateUnifier = predicateUnifier;
 		assert interpolatedPositions != null : "no interpolatedPositions";
 		if (m_IsSafe != LBool.UNSAT) {
 			if (m_IsSafe == null) {
@@ -298,8 +311,6 @@ public class TraceChecker {
 		if (m_Interpolants != null){
 			throw new AssertionError("You already computed interpolants");
 		}
-		m_PredicateBuilder.declarePredicate(m_Precondition);
-		m_PredicateBuilder.declarePredicate(m_Postcondition);
 
 		
 		List<Integer> nonPendingCallPositions = new ArrayList<Integer>();
@@ -309,7 +320,7 @@ public class TraceChecker {
 		NestedInterpolantsBuilder nib = 
 				new NestedInterpolantsBuilder(m_SmtManager,
 						m_AnnotatedSsa, 
-						m_PredicateBuilder, newInterpolatedPositions, false);
+						m_PredicateUnifier, newInterpolatedPositions, false);
 		m_Interpolants = nib.getNestedInterpolants();
 		IPredicate oldPrecondition = m_Precondition;
 		IPredicate oldPostcondition = m_Postcondition;
@@ -320,12 +331,7 @@ public class TraceChecker {
 			if (m_Interpolants != null) { 
 				assert !inductivityOfSequenceCanBeRefuted();
 			}
-			m_Trace = null;
-			m_Precondition = null;
-			m_Postcondition = null;
-			m_IsSafe = null;
-			
-			return m_Interpolants;
+		return;
 		}
 		
 		NestedWord<CodeBlock> nestedTrace = (NestedWord<CodeBlock>) m_Trace;
@@ -334,11 +340,6 @@ public class TraceChecker {
 		if (m_Interpolants != null) { 
 			assert !inductivityOfSequenceCanBeRefuted();
 		}
-		m_Trace = null;
-		m_Precondition = null;
-		m_Postcondition = null;
-		m_IsSafe = null;
-		
 		
 		for (Integer nonPendingCall : nonPendingCallPositions) {
 			//compute subtrace from to call to corresponding return
@@ -350,13 +351,13 @@ public class TraceChecker {
 			String calledMethod = call.getCallStatement().getMethodName();
 			IPredicate oldVarsEquality = m_SmtManager.getOldVarsEquality(calledMethod);
 			
-			IPredicate precondition = m_PredicateBuilder.getOrConstructPredicate(
+			IPredicate precondition = m_PredicateUnifier.getOrConstructPredicate(
 					oldVarsEquality.getFormula(), oldVarsEquality.getVars(), 
 					oldVarsEquality.getProcedures());
 
 			TraceChecker tc = new TraceChecker(m_SmtManager, 
 												m_ModifiedGlobals, 
-												m_DebugPW, m_PredicateBuilder);
+												m_DebugPW);
 			
 			//Use a pendingContext the interpolant at the position before the
 			//call, if this is -1 (because call is first codeBlock) use the
@@ -393,8 +394,9 @@ public class TraceChecker {
 			
 			//Compute interpolants for subsequence and add them to interpolants
 			//computed by this TraceChecker
-			IPredicate[] interpolantSubsequence = 
-					tc.getInterpolants_Recursive(interpolatedPositions);
+			tc.computeInterpolants_Recursive(interpolatedPositions, m_PredicateUnifier);
+			IPredicate[] interpolantSubsequence = tc.getInterpolants();
+					
 			assert SmtManager.isDontCare(m_Interpolants[nonPendingCall]);
 			m_Interpolants[nonPendingCall] = precondition;
 			for (int i=0; i<interpolantSubsequence.length; i++) {
@@ -402,9 +404,6 @@ public class TraceChecker {
 				m_Interpolants[nonPendingCall+1+i] = interpolantSubsequence[i];
 			}			
 		}
-		IPredicate[] result = m_Interpolants;
-		m_Interpolants = null;
-		return result;
 	}
 	
 	
@@ -458,10 +457,11 @@ public class TraceChecker {
 	
 	
 	/**
-	 * Forget the trace which is checked at the moment. (Only then we are able
-	 * to check the next trace)
+	 * After start of a trace check until the computation of interpolants or
+	 * an error path, the SmtManager is locked. If you do not compute
+	 * interpolants or an error path, use this method to unlock the SmtManager.
 	 */
-	public void forgetTrace() {
+	public void unlockSmtManager() {
 		if (!traceCheckRunning()) {
 			throw new AssertionError("No trace checked before");
 		}
@@ -469,17 +469,12 @@ public class TraceChecker {
 		if (m_Interpolants != null) { 
 			assert !inductivityOfSequenceCanBeRefuted();
 		}
-		m_Trace = null;
-		m_Precondition = null;
-		m_Postcondition = null;
-		m_IsSafe = null;
-//		m_Interpolants = null;
 	}
 	
 	
 	
 	/**
-	 * Return true if a trace is checked at the moment 
+	 * Return true if a trace was already checked.
 	 */
 	private boolean traceCheckRunning() {
 		if (m_Trace == null) {
@@ -515,7 +510,7 @@ public class TraceChecker {
 		}
 		List<CodeBlock> result = 
 				AnnotateAndAsserter.constructFailureTrace(m_Trace, m_SmtManager);
-		forgetTrace();
+		unlockSmtManager();
 		return result;
 	}
 	

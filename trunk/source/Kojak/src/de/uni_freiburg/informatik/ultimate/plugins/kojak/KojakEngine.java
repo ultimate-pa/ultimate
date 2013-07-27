@@ -25,6 +25,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.prefere
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.BasicPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 
@@ -112,14 +113,14 @@ public class KojakEngine {
 	private IPredicate[] getInterpolants(NestedWord<CodeBlock> errorPathNW) {
 		TraceChecker traceChecker = new TraceChecker(mSmtManager, 
 				mOriginalRoot.getRootAnnot().getModGlobVarManager(), 
-				mOriginalRoot.getRootAnnot().getEntryNodes(),
 				dumpInitialize());
 		
 		LBool isSafe = traceChecker.checkTrace(mTruePredicate, 
 				mFalsePredicate, errorPathNW);
 		if(isSafe == LBool.UNSAT) {
-			IPredicate[] interpolants = traceChecker.getInterpolants(
-					new TraceChecker.AllIntegers());
+			PredicateUnifier pu = new PredicateUnifier(mSmtManager, mTruePredicate, mFalsePredicate);
+			traceChecker.computeInterpolants(new TraceChecker.AllIntegers(), pu);
+			IPredicate[] interpolants = traceChecker.getInterpolants();
 			return interpolants;
 		}
 			

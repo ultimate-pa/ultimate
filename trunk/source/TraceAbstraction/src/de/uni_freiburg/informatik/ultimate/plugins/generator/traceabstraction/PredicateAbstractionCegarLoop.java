@@ -12,6 +12,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Roo
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceChecker;
 
 public class PredicateAbstractionCegarLoop extends BasicCegarLoop {
@@ -36,13 +37,11 @@ public class PredicateAbstractionCegarLoop extends BasicCegarLoop {
 	protected LBool isCounterexampleFeasible() {
 		m_TraceChecker = new TraceChecker(m_SmtManager,
 				m_RootNode.getRootAnnot().getModGlobVarManager(),
-				m_RootNode.getRootAnnot().getEntryNodes(), m_IterationPW);
-		
-		
-		LBool feasibility = m_TraceChecker.checkTrace(
-				super.m_SmtManager.newTruePredicate(), 
-				super.m_SmtManager.newFalsePredicate(), 
-				m_Counterexample.getWord());
+				m_IterationPW);
+		IPredicate precondition = super.m_SmtManager.newTruePredicate();
+		IPredicate postcondition = super.m_SmtManager.newFalsePredicate();
+		LBool feasibility = m_TraceChecker.checkTrace(precondition, 
+				postcondition, m_Counterexample.getWord());
 		if (feasibility != LBool.UNSAT) {
 			s_Logger.info("Counterexample might be feasible");
 			Word<CodeBlock> counterexample = m_Counterexample.getWord();
@@ -52,7 +51,7 @@ public class PredicateAbstractionCegarLoop extends BasicCegarLoop {
 			}
 			m_FailurePath = m_TraceChecker.getFailurePath();
 		} else {
-			m_TraceChecker.forgetTrace();
+			m_TraceChecker.unlockSmtManager();
 		}
 		return feasibility;
 	}
