@@ -18,9 +18,6 @@ import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.logic.Util;
-import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ModifiableGlobalVariableManager;
@@ -219,29 +216,7 @@ public class TraceChecker {
 	
 	
 	
-	/**
-	 * Returns a predicate which states that old(g)=g for all global variables
-	 * g that are modified by procedure proc. 
-	 */
-	public IPredicate getOldVarsEquality(String proc) {
-		Set<BoogieVar> modifiableGlobals = m_ModifiedGlobals.getModifiedBoogieVars(proc);
-		Set<BoogieVar> vars = new HashSet<BoogieVar>();
-		Term term = m_SmtManager.getScript().term("true");
-			for (BoogieVar bv : modifiableGlobals) {
-				vars.add(bv);
-				BoogieVar bvOld = m_SmtManager.getBoogieVar2SmtVar()
-						.getOldGlobals().get(bv.getIdentifier());
-				vars.add(bvOld);
-				TermVariable tv = bv.getTermVariable();
-				TermVariable tvOld = bvOld.getTermVariable();
-				Term equality = m_SmtManager.getScript().term("=", tv, tvOld);
-				term = Util.and(m_SmtManager.getScript(), term, equality);
-			}
 
-		IPredicate result = m_PredicateBuilder.getOrConstructPredicate(
-											term, vars, new HashSet<String>(0));
-		return result;
-	}
 	
 	
 
@@ -373,7 +348,11 @@ public class TraceChecker {
 
 			Call call = (Call) nestedTrace.getSymbol(nonPendingCall);
 			String calledMethod = call.getCallStatement().getMethodName();
-			IPredicate precondition = getOldVarsEquality(calledMethod);
+			IPredicate oldVarsEquality = m_SmtManager.getOldVarsEquality(calledMethod);
+			
+			IPredicate precondition = m_PredicateBuilder.getOrConstructPredicate(
+					oldVarsEquality.getFormula(), oldVarsEquality.getVars(), 
+					oldVarsEquality.getProcedures());
 
 			TraceChecker tc = new TraceChecker(m_SmtManager, 
 												m_ModifiedGlobals, 

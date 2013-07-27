@@ -3,6 +3,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.p
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -227,7 +228,6 @@ public class SmtManager {
 	}
 	
 	
-	
 	/**
 	 * Return a similar BoogieVar that is not an oldvar. Requires that this is
 	 * an oldvar.
@@ -253,6 +253,31 @@ public class SmtManager {
 		}
 		BoogieVar result = m_Smt2Boogie.getOldGlobals().get(bv.getIdentifier());
 		assert result != null;
+		return result;
+	}
+	
+	
+	/**
+	 * Returns a predicate which states that old(g)=g for all global variables
+	 * g that are modified by procedure proc. 
+	 */
+	public IPredicate getOldVarsEquality(String proc) {
+		Set<BoogieVar> modifiableGlobals = m_ModifiableGlobals.getModifiedBoogieVars(proc);
+		Set<BoogieVar> vars = new HashSet<BoogieVar>();
+		Term term = getScript().term("true");
+		for (BoogieVar bv : modifiableGlobals) {
+			vars.add(bv);
+			BoogieVar bvOld = getBoogieVar2SmtVar()
+					.getOldGlobals().get(bv.getIdentifier());
+			vars.add(bvOld);
+			TermVariable tv = bv.getTermVariable();
+			TermVariable tvOld = bvOld.getTermVariable();
+			Term equality = getScript().term("=", tv, tvOld);
+			term = Util.and(getScript(), term, equality);
+		}
+		String[] procs = new String[0];
+		IPredicate result = newPredicate(term, procs, vars, 
+				computeClosedFormula(term, vars, getScript())); 
 		return result;
 	}
 	

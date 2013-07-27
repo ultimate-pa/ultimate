@@ -62,8 +62,7 @@ import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
 		 * @param vars The BoogieVars of the TermVariables contained in term.
 		 * @param proc All procedures of which vars contains local variables.
 		 */
-		IPredicate getOrConstructPredicate(Term term, 
-											Set<BoogieVar> vars, Set<String> procs) {
+		IPredicate getOrConstructPredicate(Term term, Set<BoogieVar> vars, String[] procs) {
 			if (term instanceof AnnotatedTerm) {
 				AnnotatedTerm annotatedTerm = (AnnotatedTerm) term;
 				Annotation[] annotations = annotatedTerm.getAnnotations();
@@ -84,7 +83,7 @@ import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
 			}  
 			ArrayList<IPredicate> impliedInterpolants = new ArrayList<IPredicate>();
 			ArrayList<IPredicate> expliedInterpolants = new ArrayList<IPredicate>();
-			p = getEquivalentPredicate(term, vars, procs, 
+			p = getEquivalentPredicate(term, vars, 
 									impliedInterpolants, expliedInterpolants);
 			if (p != null) {
 				return p;
@@ -115,13 +114,14 @@ import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
 						}
 					}
 				}
-				return addNewPredicate(simplifiedTerm, newVars, newProcs);
+				return addNewPredicate(simplifiedTerm, newVars, 
+						newProcs.toArray(new String[0]));
 			}
 
 		}
 		
 		private IPredicate addNewPredicate(Term term, Set<BoogieVar> vars, 
-															Set<String> procs) {
+															String[] procs) {
 			assert !m_Term2Predicates.containsKey(term);
 			IPredicate predicate;
 			if (equivalentToTrue(term)) {
@@ -139,18 +139,17 @@ import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
 				}
 				TraceChecker.s_Logger.warn("Interpolant was equivalent to false");
 			} else {
-				String[] procedures = procs.toArray(new String [0]);
 				Term closedTerm = SmtManager.computeClosedFormula(
 										term, vars, m_SmtManager.getScript());
 				predicate = m_SmtManager.newPredicate(
-										term, procedures, vars, closedTerm);
+										term, procs, vars, closedTerm);
 			}
 			m_Term2Predicates.put(term, predicate);
 			assert predicate != null;
 			return predicate;
 		}
 		
-		private IPredicate getEquivalentPredicate(Term term, Set<BoogieVar> vars, Set<String> procs,
+		private IPredicate getEquivalentPredicate(Term term, Set<BoogieVar> vars,
 				ArrayList<IPredicate> impliedInterpolants, ArrayList<IPredicate> expliedInterpolants) {
 			Term closedTerm = SmtManager.computeClosedFormula(term, vars, m_SmtManager.getScript());
 			for (Term interpolantTerm : m_Term2Predicates.keySet()) {

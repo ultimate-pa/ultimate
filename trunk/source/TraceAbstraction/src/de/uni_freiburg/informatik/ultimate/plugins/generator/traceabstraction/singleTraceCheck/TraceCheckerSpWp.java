@@ -1,7 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck;
 
 import java.io.PrintWriter;
-import java.lang.reflect.Array;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Map;
@@ -17,11 +16,11 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Int
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ParallelComposition;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.SequentialComposition;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.EdgeChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 
 public class TraceCheckerSpWp extends TraceChecker {
@@ -86,14 +85,14 @@ public class TraceCheckerSpWp extends TraceChecker {
 					IPredicate p = m_SmtManager.strongestPostcondition(
 							predOfLastStmtInUnsatCore, (Call) trace.getSymbol(i));
 					m_InterpolantsSp[i] = m_PredicateBuilder.getOrConstructPredicate(p.getFormula(), p.getVars(),
-							new HashSet<String>(Arrays.asList(p.getProcedures())));
+							p.getProcedures());
 					predOfLastStmtInUnsatCore = m_InterpolantsSp[i];
 					lastlyComputedPred = m_InterpolantsSp[i];
 				} else {
 					IPredicate p = m_SmtManager.strongestPostconditionSpecial(
 							lastlyComputedPred, trace.getSymbol(i));
 					m_InterpolantsSp[i] = m_PredicateBuilder.getOrConstructPredicate(p.getFormula(), p.getVars(),
-							new HashSet<String>(Arrays.asList(p.getProcedures())));
+							p.getProcedures());
 					lastlyComputedPred = m_InterpolantsSp[i];
 				}
 			} else if (trace.getSymbol(i) instanceof Return) {
@@ -107,7 +106,7 @@ public class TraceCheckerSpWp extends TraceChecker {
 					IPredicate p = m_SmtManager.strongestPostcondition(
 							predOfLastStmtInUnsatCore, callerPred, (Return) trace.getSymbol(i));
 					m_InterpolantsSp[i] = m_PredicateBuilder.getOrConstructPredicate(p.getFormula(), p.getVars(),
-							new HashSet<String>(Arrays.asList(p.getProcedures())));
+							p.getProcedures());
 					predOfLastStmtInUnsatCore = m_InterpolantsSp[i];
 					lastlyComputedPred = m_InterpolantsSp[i];
 				} else {
@@ -115,7 +114,7 @@ public class TraceCheckerSpWp extends TraceChecker {
 					IPredicate p = m_SmtManager.strongestPostconditionSpecial(
 							lastlyComputedPred, trace.getSymbol(i));
 					m_InterpolantsSp[i] = m_PredicateBuilder.getOrConstructPredicate(p.getFormula(), p.getVars(),
-							new HashSet<String>(Arrays.asList(p.getProcedures())));
+							p.getProcedures());
 					lastlyComputedPred = m_InterpolantsSp[i];
 				}
 				
@@ -124,14 +123,14 @@ public class TraceCheckerSpWp extends TraceChecker {
 					IPredicate p = m_SmtManager.strongestPostcondition(
 							predOfLastStmtInUnsatCore, trace.getSymbol(i));
 					m_InterpolantsSp[i] = m_PredicateBuilder.getOrConstructPredicate(p.getFormula(), p.getVars(),
-							new HashSet<String>(Arrays.asList(p.getProcedures())));
+							p.getProcedures());
 					predOfLastStmtInUnsatCore = m_InterpolantsSp[i];
 					lastlyComputedPred = m_InterpolantsSp[i];
 				} else {
 					IPredicate p = m_SmtManager.strongestPostconditionSpecial(
 							lastlyComputedPred, trace.getSymbol(i));
 					m_InterpolantsSp[i] = m_PredicateBuilder.getOrConstructPredicate(p.getFormula(), p.getVars(),
-							new HashSet<String>(Arrays.asList(p.getProcedures())));
+							p.getProcedures());
 					lastlyComputedPred = m_InterpolantsSp[i];
 				}
 			}
@@ -178,19 +177,19 @@ public class TraceCheckerSpWp extends TraceChecker {
 				IPredicate p = m_SmtManager.strongestPostcondition(
 						tracePrecondition, (Call) trace.getSymbol(0));
 				m_InterpolantsSp[0] = m_PredicateBuilder.getOrConstructPredicate(p.getFormula(), p.getVars(),
-						new HashSet<String>(Arrays.asList(p.getProcedures())));
+						p.getProcedures());
 			} else {
 				IPredicate p = m_SmtManager.strongestPostcondition(
 						tracePrecondition, trace.getSymbol(0));
 				m_InterpolantsSp[0] = m_PredicateBuilder.getOrConstructPredicate(p.getFormula(), p.getVars(),
-						new HashSet<String>(Arrays.asList(p.getProcedures())));
+						p.getProcedures());
 			}
 			for (int i=1; i<m_InterpolantsSp.length; i++) {
 				if (trace.getSymbol(i) instanceof Call) {
 					IPredicate p = m_SmtManager.strongestPostcondition(
 							m_InterpolantsSp[i-1], (Call) trace.getSymbol(i));
 					m_InterpolantsSp[i] = m_PredicateBuilder.getOrConstructPredicate(p.getFormula(), p.getVars(),
-							new HashSet<String>(Arrays.asList(p.getProcedures())));
+							p.getProcedures());
 				} else if (trace.getSymbol(i) instanceof Return) {
 					int call_pos = ((NestedWord<CodeBlock>)trace).getCallPosition(i);
 					assert call_pos >= 0 && call_pos <= i : "Bad call position!";
@@ -201,12 +200,12 @@ public class TraceCheckerSpWp extends TraceChecker {
 					IPredicate p = m_SmtManager.strongestPostcondition(
 							m_InterpolantsSp[i-1], callerPred, (Return) trace.getSymbol(i));
 					m_InterpolantsSp[i] = m_PredicateBuilder.getOrConstructPredicate(p.getFormula(), p.getVars(),
-							new HashSet<String>(Arrays.asList(p.getProcedures())));
+							p.getProcedures());
 				} else {
 					IPredicate p = m_SmtManager.strongestPostcondition(
 							m_InterpolantsSp[i-1],trace.getSymbol(i));
 					m_InterpolantsSp[i] = m_PredicateBuilder.getOrConstructPredicate(p.getFormula(), p.getVars(),
-							new HashSet<String>(Arrays.asList(p.getProcedures())));
+							p.getProcedures());
 				}
 			}
 			s_Logger.debug("Checking strongest postcondition...");
@@ -220,17 +219,17 @@ public class TraceCheckerSpWp extends TraceChecker {
 				//			IPredicate p = m_SmtManager.weakestPrecondition(
 				//					tracePostcondition, (Call) trace.getSymbol(m_InterpolantsWp.length));
 				//			m_InterpolantsWp[m_InterpolantsWp.length-1] = m_PredicateBuilder.getOrConstructPredicate(p.getFormula(),
-				//					p.getVars(), new HashSet<String>(Arrays.asList(p.getProcedures())));
+				//					p.getVars(), p.getProcedures());
 			} else if (trace.getSymbol(m_InterpolantsWp.length) instanceof Return) {
 				IPredicate p = m_SmtManager.weakestPrecondition(
 						tracePostcondition, (Return) trace.getSymbol(m_InterpolantsWp.length));
 				m_InterpolantsWp[m_InterpolantsWp.length-1] = m_PredicateBuilder.getOrConstructPredicate(p.getFormula(),
-						p.getVars(), new HashSet<String>(Arrays.asList(p.getProcedures())));
+						p.getVars(), p.getProcedures());
 			} else {
 				IPredicate p = m_SmtManager.weakestPrecondition(
 						tracePostcondition, trace.getSymbol(m_InterpolantsWp.length));
 				m_InterpolantsWp[m_InterpolantsWp.length-1] = m_PredicateBuilder.getOrConstructPredicate(p.getFormula(),
-						p.getVars(), new HashSet<String>(Arrays.asList(p.getProcedures())));
+						p.getVars(), p.getProcedures());
 			}
 
 			for (int i=m_InterpolantsWp.length-2; i>=0; i--) {
@@ -244,18 +243,17 @@ public class TraceCheckerSpWp extends TraceChecker {
 							m_InterpolantsWp[i+1], returnerPred, 
 							(Call) trace.getSymbol(i+1));
 					m_InterpolantsWp[i] = m_PredicateBuilder.getOrConstructPredicate(p.getFormula(),
-							p.getVars(), new HashSet<String>(Arrays.asList(p.getProcedures())));
+							p.getVars(), p.getProcedures());
 				} else if (trace.getSymbol(i+1) instanceof Return) {
 					IPredicate p = m_SmtManager.weakestPrecondition(
 							m_InterpolantsWp[i+1], (Return) trace.getSymbol(i+1)); 
 					m_InterpolantsWp[i] = m_PredicateBuilder.getOrConstructPredicate(p.getFormula(),
-							p.getVars(), new 
-							HashSet<String>(Arrays.asList(p.getProcedures())));
+							p.getVars(), p.getProcedures());
 				} else {
 					IPredicate p = m_SmtManager.weakestPrecondition(
 							m_InterpolantsWp[i+1], trace.getSymbol(i+1));
 					m_InterpolantsWp[i] = m_PredicateBuilder.getOrConstructPredicate(p.getFormula(),
-							p.getVars(), new HashSet<String>(Arrays.asList(p.getProcedures())));
+							p.getVars(), p.getProcedures());
 				}
 			}
 			s_Logger.debug("Checking weakest precondition...");

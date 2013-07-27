@@ -477,7 +477,7 @@ public class NestedInterpolantsBuilder {
 						m_sfmv.clearVarsAndProc();
 						Term withoutIndices = walker.process(new FormulaUnLet().unlet(withIndices));
 						Set<BoogieVar> vars = m_sfmv.getVars();
-						Set<String> procs = m_sfmv.getProcedure();
+						String[] procs = m_sfmv.getProcedure().toArray(new String[0]);
 						result[resultPos] = m_PredicateBuilder.
 								getOrConstructPredicate(withoutIndices, vars, procs);
 						withIndices2Predicate.put(withIndices, result[resultPos]);
