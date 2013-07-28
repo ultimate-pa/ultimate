@@ -1910,31 +1910,7 @@ public class SmtManager {
 		Term result_as_closed_formula = SmtManager.computeClosedFormula(result, tvp.getVars(), m_Script);
 		return newPredicate(result, tvp.getProcedures(), tvp.getVars(), result_as_closed_formula);
 	}
-	
-	private Set<TermVariable> getBoundVariables(IPredicate p) {
-		Set<TermVariable> result = new HashSet<TermVariable>();
-		Queue<Term> termsToProcess = new ArrayDeque<Term>();
-		termsToProcess.add(p.getFormula());
-		while (!termsToProcess.isEmpty()) {
-			Term currentFormula = termsToProcess.poll();
-			if (currentFormula instanceof ApplicationTerm) {
-				Term[] subFormulae = ((ApplicationTerm) currentFormula).getParameters();
-				for (int i = 0; i < subFormulae.length; i++) {
-					termsToProcess.add(subFormulae[i]);
-				}
-			} else if (currentFormula instanceof LetTerm) {
-				Term[] subFormulae = ((LetTerm) currentFormula).getValues();
-				for (int i = 0; i < subFormulae.length; i++) {
-					termsToProcess.add(subFormulae[i]);
-				}
-			}
-			else if (currentFormula instanceof QuantifiedFormula) {
-				result.addAll(Arrays.asList(((QuantifiedFormula) currentFormula).getVariables()));
-			}
-		}
-		return result;
-	}
-	
+
 	/**
 	 * Compute strongest postcondition for a return statement, where calleePred
 	 * is the predicate that holds in the called procedure before the return 
@@ -1955,10 +1931,7 @@ public class SmtManager {
 		Map<TermVariable, Term> substitution = new HashMap<TermVariable, Term>();
 		TransFormula ret_TF = ret.getTransitionFormula();
 		for (BoogieVar bv : ret_TF.getInVars().keySet()) {
-			TermVariable substitutor = ret_TF.getInVars().get(bv);
-			if (calleePredBoundVariables.contains(substitutor)) {
-				substitutor = getFreshTermVariable(bv.getIdentifier(), bv.getTermVariable().getSort());
-			}
+			TermVariable substitutor = getFreshTermVariable(bv.getIdentifier(), bv.getTermVariable().getSort());
 			varsToRenameInCalleePred.put(bv.getTermVariable(), substitutor);
 			varsToQuantify.add(substitutor);
 		}
@@ -1969,10 +1942,7 @@ public class SmtManager {
 			substitution.put(ret_TF.getOutVars().get(bv), bv.getTermVariable());
 			if (calleePred.getVars().contains(bv)) {
 				if (!varsToRenameInCalleePred.containsKey(bv.getTermVariable())) {
-					TermVariable substitutor = ret_TF.getOutVars().get(bv);
-					if (calleePredBoundVariables.contains(substitutor)) {
-						substitutor = getFreshTermVariable(bv.getIdentifier(), bv.getTermVariable().getSort());
-					}
+					TermVariable substitutor = getFreshTermVariable(bv.getIdentifier(), bv.getTermVariable().getSort());
 					varsToRenameInCalleePred.put(bv.getTermVariable(), substitutor);
 					varsToQuantify.add(ret_TF.getOutVars().get(bv));
 				}
@@ -1985,20 +1955,14 @@ public class SmtManager {
 		// 2.1 Rename invars of TransFormula of corresponding Call statement
 		substitution.clear();
 		for (BoogieVar bv : callTF.getInVars().keySet()) {
-			TermVariable substitutor = bv.getTermVariable();
-			if (calleePredBoundVariables.contains(substitutor)) {
-				substitutor = getFreshTermVariable(bv.getIdentifier(), bv.getTermVariable().getSort());
-			}
+			TermVariable substitutor = getFreshTermVariable(bv.getIdentifier(), bv.getTermVariable().getSort());
 			substitution.put(callTF.getInVars().get(bv), substitutor);
 		}
 		Term callTerm_InvarsRenamed = substituteTermVariablesByTerms(substitution, callTF.getFormula());
 		// 2.2 We doesn't rename the outvars, because the outvars are the localvars
 		// of the called procedure, therefore we want to quantify them out.
 		for (BoogieVar bv : callTF.getOutVars().keySet()) {
-			TermVariable substitutor = callTF.getOutVars().get(bv);
-			if (calleePredBoundVariables.contains(substitutor)) {
-				substitutor = getFreshTermVariable(bv.getIdentifier(), bv.getTermVariable().getSort());
-			}			
+			TermVariable substitutor = getFreshTermVariable(bv.getIdentifier(), bv.getTermVariable().getSort());
 			varsToRenameInCalleePred.put(bv.getTermVariable(), substitutor);
 			varsToQuantify.add(substitutor);			
 		}
