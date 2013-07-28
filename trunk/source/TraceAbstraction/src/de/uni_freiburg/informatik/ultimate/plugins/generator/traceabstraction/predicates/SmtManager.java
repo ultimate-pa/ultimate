@@ -2450,6 +2450,9 @@ public class SmtManager {
 		Set<String> procs = new HashSet<String>();
 		for (TermVariable tv : term.getFreeVars()) {
 			BoogieVar bv = m_Smt2Boogie.getBoogieVar(tv);
+			if (bv == null) {
+				throw new AssertionError("No corresponding BoogieVar for " + tv);
+			}
 			vars.add(bv);
 			if (bv.getProcedure() != null) {
 				procs.add(bv.getProcedure());
