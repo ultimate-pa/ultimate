@@ -152,7 +152,8 @@ public class PreferencePage extends FieldEditorPreferencePage
 				PreferenceValues.LABEL_InterpolantAutomaton, 
 				new String[][]{{PreferenceValues.VALUE_InterpolantAutomaton_SingleTrace, PreferenceValues.VALUE_InterpolantAutomaton_SingleTrace},
 						{PreferenceValues.VALUE_InterpolantAutomaton_Canonical, PreferenceValues.VALUE_InterpolantAutomaton_Canonical},
-						{PreferenceValues.VALUE_InterpolantAutomaton_TotalInterpolation, PreferenceValues.VALUE_InterpolantAutomaton_TotalInterpolation}},
+						{PreferenceValues.VALUE_InterpolantAutomaton_TotalInterpolation, PreferenceValues.VALUE_InterpolantAutomaton_TotalInterpolation},
+						{PreferenceValues.VALUE_InterpolantAutomaton_TwoTrack, PreferenceValues.VALUE_InterpolantAutomaton_TwoTrack}},
 				getFieldEditorParent());
 		addField(additionalEdges);
 

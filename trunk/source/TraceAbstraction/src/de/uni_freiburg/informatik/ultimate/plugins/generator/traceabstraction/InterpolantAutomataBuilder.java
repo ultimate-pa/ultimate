@@ -30,6 +30,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.ISLPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceChecker;
 
 /**
  * Construct interpolant automaton.
@@ -77,16 +78,14 @@ public class InterpolantAutomataBuilder {
 
 	public InterpolantAutomataBuilder(
 			IRun<CodeBlock,IPredicate> nestedRun,
-			IPredicate truePredicate,
-			IPredicate falsePredicate,
-			IPredicate[] interpolants,
+			TraceChecker traceChecker,
 			InterpolantAutomaton additionalEdges,
 			boolean selfloopAtInitial,
 			SmtManager smtManager,
 			TAPreferences taPreferences,
 			int iterationNumber,
 			PrintWriter iterationPW) {
-		this.m_Interpolants = interpolants;
+		this.m_Interpolants = traceChecker.getInterpolants();
 		m_NestedWord = NestedWord.nestedWord(nestedRun.getWord());
 		if (nestedRun instanceof NestedRun) {
 			m_StateSequence = ((NestedRun<CodeBlock,IPredicate>) nestedRun).getStateSequence();
@@ -103,8 +102,8 @@ public class InterpolantAutomataBuilder {
 		this.iterationPW = iterationPW;
 		m_SelfloopAtInitial = selfloopAtInitial;
 		m_Pref = taPreferences;
-		m_TruePredicate = truePredicate;
-		m_FalsePredicate = falsePredicate;
+		m_TruePredicate = traceChecker.getPrecondition();
+		m_FalsePredicate = traceChecker.getPostcondition();
 	}
 	
 	

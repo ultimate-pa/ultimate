@@ -420,8 +420,7 @@ public class BuchiCegarLoop {
 			AllIntegers allInt = new TraceChecker.AllIntegers();
 			PredicateUnifier pu = new PredicateUnifier(m_SmtManager);
 			m_TraceChecker.computeInterpolants(allInt, pu);
-			IPredicate[] interpolants = m_TraceChecker.getInterpolants();
-			constructInterpolantAutomaton(interpolants);
+			constructInterpolantAutomaton(m_TraceChecker);
 			EdgeChecker ec = new EdgeChecker(m_SmtManager, buchiModGlobalVarManager);
 			PostDeterminizer spd = new PostDeterminizer(
 					ec, m_Pref, m_InterpolAutomaton, false);
@@ -443,12 +442,10 @@ public class BuchiCegarLoop {
 			m_ConcatenatedCounterexample = null;
 		}
 		
-		protected void constructInterpolantAutomaton(IPredicate[] interpolants) throws OperationCanceledException {
+		protected void constructInterpolantAutomaton(TraceChecker traceChecker) throws OperationCanceledException {
 			InterpolantAutomataBuilder iab = new InterpolantAutomataBuilder(
 							m_ConcatenatedCounterexample,
-							m_TruePredicate,
-							m_FalsePredicate,
-							interpolants,
+							traceChecker,
 							m_Pref.interpolantAutomaton(), m_Pref.edges2True(),
 							m_SmtManager, m_Pref,
 							m_Iteration, null);

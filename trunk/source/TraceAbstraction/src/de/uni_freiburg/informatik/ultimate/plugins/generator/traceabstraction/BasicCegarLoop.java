@@ -32,6 +32,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Pro
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.TAPreferences.Artifact;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.TAPreferences.InterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.TAPreferences.InterpolatedLocs;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.InterpolantAutomataTransitionAppender.BestApproximationDeterminizer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.InterpolantAutomataTransitionAppender.PostDeterminizer;
@@ -63,11 +64,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 
 	protected RunAnalyzer m_RunAnalyzer;
 
-	private IPredicate m_TruePredicate;
-
-	private IPredicate m_FalsePredicate;
-
-	private IPredicate[] m_Interpolants;
+	protected TraceChecker m_TraceChecker;
 
 	private PredicateFactoryRefinement m_StateFactoryForRefinement;
 	
@@ -152,11 +149,11 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 					m_RootNode.getRootAnnot().getModGlobVarManager(),
 					m_IterationPW);
 		}
-		m_TruePredicate = m_SmtManager.newTruePredicate();
-		m_FalsePredicate = m_SmtManager.newFalsePredicate();
+		IPredicate truePredicate = m_SmtManager.newTruePredicate();
+		IPredicate falsePredicate = m_SmtManager.newFalsePredicate();
 		
 		LBool feasibility = m_TraceChecker.checkTrace(
-				m_TruePredicate, m_FalsePredicate, m_Counterexample.getWord());
+				truePredicate, falsePredicate, m_Counterexample.getWord());
 		if (feasibility != LBool.UNSAT) {
 			s_Logger.info("Counterexample might be feasible");
 			NestedWord<CodeBlock> counterexample = NestedWord.nestedWord(m_Counterexample.getWord());
@@ -177,9 +174,8 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		} else {
 			AllIntegers allInt = new TraceChecker.AllIntegers();
 			PredicateUnifier predicateUnifier = new PredicateUnifier(m_SmtManager,
-					m_TruePredicate, m_FalsePredicate);
+					truePredicate, falsePredicate);
 			m_TraceChecker.computeInterpolants(allInt, predicateUnifier);
-			m_Interpolants = m_TraceChecker.getInterpolants();
 		}
 		m_TimingStatistics.finishTraceCheck();
 		return feasibility;
@@ -192,16 +188,20 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 	@Override
 	protected void constructInterpolantAutomaton() {
 		m_TimingStatistics.startBasicInterpolantAutomaton();
-		InterpolantAutomataBuilder iab = new InterpolantAutomataBuilder(
+		if (m_Pref.interpolantAutomaton() == InterpolantAutomaton.TWOTRACK) {
+			TwoTrackInterpolantAutomatonBuilder ttiab = 
+					new TwoTrackInterpolantAutomatonBuilder(m_Counterexample, m_TraceChecker);
+			m_InterpolAutomaton = ttiab.getResult();
+		} else {
+			InterpolantAutomataBuilder iab = new InterpolantAutomataBuilder(
 						m_Counterexample,
-						m_TruePredicate,
-						m_FalsePredicate,
-						m_Interpolants,
+						m_TraceChecker,
 						m_Pref.interpolantAutomaton(), m_Pref.edges2True(),
 						m_SmtManager, m_Pref,
 						m_Iteration, m_IterationPW);
-		m_InterpolAutomaton = iab.buildInterpolantAutomaton(
+			m_InterpolAutomaton = iab.buildInterpolantAutomaton(
 				m_Abstraction, m_Abstraction.getStateFactory());
+		}
 		m_TimingStatistics.finishBasicInterpolantAutomaton();		
 		assert(m_InterpolAutomaton.accepts(m_Counterexample.getWord())) :
 			"Interpolant automaton broken!";

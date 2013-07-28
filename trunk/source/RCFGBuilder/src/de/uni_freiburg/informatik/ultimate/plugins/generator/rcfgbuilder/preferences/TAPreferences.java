@@ -33,7 +33,7 @@ public class TAPreferences {
 
 	public enum Artifact { ABSTRACTION, INTERPOLANT_AUTOMATON, NEG_INTERPOLANT_AUTOMATON, RCFG }
 	public enum InterpolatedLocs { ALL, CUTPOINTS, GUESS, WP }
-	public enum InterpolantAutomaton { CANONICAL, TOTALINTERPOLATION, SINGLETRACE }
+	public enum InterpolantAutomaton { CANONICAL, TOTALINTERPOLATION, SINGLETRACE, TWOTRACK }
 	public enum Determinization { POWERSET, BESTAPPROXIMATION, SELFLOOP, STRONGESTPOST, EAGERPOST, LAZYPOST }
 	public enum Concurrency { FINITE_AUTOMATA, PETRI_NET }
 	public enum Letter { STATEMENT, SEQUENCE, BLOCK }
@@ -98,6 +98,9 @@ public class TAPreferences {
 		String prefAdditionalEdges = m_Prefs.get(PreferenceValues.NAME_InterpolantAutomaton, PreferenceValues.DEF_ADDITIONAL_EDGES);
 		if (prefAdditionalEdges.equals(PreferenceValues.VALUE_InterpolantAutomaton_SingleTrace)) {
 			m_InterpolantAutomaton = InterpolantAutomaton.SINGLETRACE;
+		}
+		else if (prefAdditionalEdges.equals(PreferenceValues.VALUE_InterpolantAutomaton_TwoTrack)) {
+			m_InterpolantAutomaton = InterpolantAutomaton.TWOTRACK;
 		}
 		else if (prefAdditionalEdges.equals(PreferenceValues.VALUE_InterpolantAutomaton_Canonical)) {
 			m_InterpolantAutomaton = InterpolantAutomaton.CANONICAL;
