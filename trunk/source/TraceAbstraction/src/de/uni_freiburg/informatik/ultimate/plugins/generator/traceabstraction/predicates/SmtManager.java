@@ -1923,7 +1923,6 @@ public class SmtManager {
 		// some invars, if it was a recursive call, i.e. callingProc = calledProc.
 		Set<TermVariable> varsToQuantify = new HashSet<TermVariable>();
 		Map<TermVariable, TermVariable> varsToRenameInCalleePred = new HashMap<TermVariable, TermVariable>();
-		Set<TermVariable> calleePredBoundVariables = getBoundVariables(calleePred);
 		
 		
 		// 1.1 We doesn't rename the invars of the TransFormula Return,
