@@ -3,7 +3,6 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.s
 import java.io.PrintWriter;
 import java.util.Arrays;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.Word;
@@ -15,7 +14,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.InterproceduralSequentialComposition;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ParallelComposition;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.SequentialComposition;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence;
@@ -157,7 +155,7 @@ public class TraceCheckerSpWp extends TraceChecker {
 		m_Interpolants = m_InterpolantsSp;
 	}
 	
-	private IPredicate[] computeInterpolantsWithoutUsageOfUnsatCore(Set<Integer> interpolatedPositions) {
+	private void computeInterpolantsWithoutUsageOfUnsatCore(Set<Integer> interpolatedPositions) {
 		if (!(interpolatedPositions instanceof AllIntegers)) {
 			throw new UnsupportedOperationException();
 		}
@@ -262,10 +260,10 @@ public class TraceCheckerSpWp extends TraceChecker {
 			checkInterpolantsCorrect(m_InterpolantsWp, trace, tracePrecondition, tracePostcondition);
 		}
 		if (m_ComputeInterpolantsSp) {
-			return m_InterpolantsSp;
+			m_Interpolants = m_InterpolantsSp;
 		} else {
 			assert (m_ComputeInterpolantsWp);
-			return m_InterpolantsWp;
+			m_Interpolants = m_InterpolantsWp;
 		}
 	}
 

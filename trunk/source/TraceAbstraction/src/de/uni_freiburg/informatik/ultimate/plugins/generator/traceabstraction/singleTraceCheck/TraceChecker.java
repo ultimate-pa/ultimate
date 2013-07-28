@@ -266,6 +266,7 @@ public class TraceChecker {
 	}
 
 	public IPredicate[] getInterpolants() {
+		assert m_Interpolants.length == m_Trace.length()-1;
 		return m_Interpolants;
 	}
 
