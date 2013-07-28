@@ -169,6 +169,7 @@ public class TraceCheckerSpWp extends TraceChecker {
 		unlockSmtManager();
 		m_InterpolantsSp = new IPredicate[trace.length()-1];
 		m_InterpolantsWp = new IPredicate[trace.length()-1];
+		int traceLength = trace.length();
 		
 		if (m_ComputeInterpolantsSp) {
 			s_Logger.debug("Computing strongest postcondition for given trace ...");
@@ -201,6 +202,7 @@ public class TraceCheckerSpWp extends TraceChecker {
 							m_InterpolantsSp[i-1], callerPred, (Return) trace.getSymbol(i));
 					m_InterpolantsSp[i] = m_PredicateUnifier.getOrConstructPredicate(p.getFormula(), p.getVars(),
 							p.getProcedures());
+				
 				} else {
 					IPredicate p = m_SmtManager.strongestPostcondition(
 							m_InterpolantsSp[i-1],trace.getSymbol(i));
@@ -341,6 +343,7 @@ public class TraceCheckerSpWp extends TraceChecker {
 		s_Logger.debug("Hoare triple {" + pre + "}, " + cb + " {" 
 											+ post + "} is " + (result == LBool.UNSAT ? "valid" :
 												(result == LBool.SAT ? "not valid" : result)));
+		s_Logger.debug("Trace length: " + trace.length());
 		return result;
 	}
 
