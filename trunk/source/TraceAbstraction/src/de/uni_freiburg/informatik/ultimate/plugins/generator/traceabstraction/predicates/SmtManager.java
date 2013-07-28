@@ -2445,6 +2445,12 @@ public class SmtManager {
 		}
 	}
 
+	
+	/**
+	 * Given a term in which every free variable is the TermVariable of a 
+	 * BoogieVar. Compute the BoogieVars of the free variables and the 
+	 * procedures of these BoogieVariables.
+	 */
 	public TermVarsProc computeTermVarsProc(Term term) {
 		HashSet<BoogieVar> vars = new HashSet<BoogieVar>();
 		Set<String> procs = new HashSet<String>();
