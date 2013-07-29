@@ -40,6 +40,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.TransitionConsite
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.BuchiAccepts;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.NestedLassoRun;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.IOpWithDelayedDeadEndRemoval.UpDownEntry;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.NestedWordAutomatonReachableStates.StronglyConnectedComponents.SCC;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.StateContainer.DownStateProp;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.util.HashUtils;
@@ -1528,7 +1529,7 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
         public void computeNestedLassoRuns(boolean computeOnlyOne) {
             for (SCC scc : m_Balls) {
             	for (StateContainer<LETTER, STATE> fin  : scc.getAcceptingStates()) {
-            		NestedLassoRun<LETTER, STATE> nlr = (new LassoExtractor(fin)).getNestedLassoRun();
+            		NestedLassoRun<LETTER, STATE> nlr = (new ShortestLassoExtractor(fin)).getNestedLassoRun();
             		if (computeOnlyOne) {
             			m_NestedLassoRun = nlr;
             		} else {
@@ -1539,7 +1540,7 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
             		}
             	}
             	for (StateContainer<LETTER, STATE> sumPred : scc.getAcceptingSumPred()) {
-            		NestedLassoRun<LETTER, STATE> nlr = (new LassoExtractor(sumPred)).getNestedLassoRun();
+            		NestedLassoRun<LETTER, STATE> nlr = (new ShortestLassoExtractor(sumPred)).getNestedLassoRun();
             		if (computeOnlyOne) {
             			m_NestedLassoRun = nlr;
             		} else {
@@ -1728,6 +1729,95 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 			}
 	    }
     }
+    
+    
+    
+    class LassoExtractor {
+    	
+    	
+    	class RunFinder {
+    		private final STATE m_Goal;
+    		private final SCC m_Scc;
+    		private final List<Map<STATE, Object>> m_SuccessorsAcceptingSeen;
+    		private final List<Map<STATE, Object>> m_Successors;
+    		
+			public RunFinder(STATE goal, SCC scc,
+					List<Map<STATE, Object>> successorsAcceptingSeen,
+					List<Map<STATE, Object>> successors) {
+				m_Goal = goal;
+				m_Scc = scc;
+				m_SuccessorsAcceptingSeen = new ArrayList<Map<STATE,Object>>();
+				m_Successors = new ArrayList<Map<STATE,Object>>();;
+			}
+			
+			private void process(STATE start) {
+				int i = 0;
+				m_Successors.add(new HashMap<STATE,Object>());
+				m_SuccessorsAcceptingSeen.add(new HashMap<STATE,Object>());
+				findPredecessors(start, m_Scc, i, isFinal(start));
+				while(!m_SuccessorsAcceptingSeen.get(i).containsKey(m_Goal)) {
+					for (STATE state : m_Successors.get(i).keySet()) {
+						findPredecessors(state, m_Scc, i, false);
+					}
+					for (STATE state : m_SuccessorsAcceptingSeen.get(i).keySet()) {
+						findPredecessors(state, m_Scc, i, true);
+					}
+				}
+			}
+			
+			private NestedRun<LETTER, STATE> reconstructRun() {
+				NestedRun<LETTER, STATE> result = new NestedRun<LETTER, STATE>(m_Goal);
+				for (int i = m_SuccessorsAcceptingSeen.size() - 1; i>=0; i--) {
+					STATE currentState = result.getStateAtPosition(result.getLength());
+					Object succs = m_SuccessorsAcceptingSeen.get(i).get(currentState);
+					if(succs == null) {
+						succs = m_Successors.get(i).get(currentState);
+					}
+				}//TODO: here
+				return result;
+				
+			}
+			
+			private void findPredecessors(STATE state, SCC scc, int iteration, boolean acceptingSeen) {
+				for (IncomingReturnTransition<LETTER, STATE> inTrans : returnPredecessors(state)) {
+					if (scc.getAllStates().contains(inTrans.getHierPred())) {
+						if (acceptingSeen || isFinal(inTrans.getHierPred())) {
+							m_SuccessorsAcceptingSeen.get(iteration).put(state,
+									new SummaryReturnTransition<LETTER, STATE>(inTrans.getLinPred(), inTrans.getLetter(), state));
+						} else {
+							m_Successors.get(iteration).put(state, 
+									new SummaryReturnTransition<LETTER, STATE>(inTrans.getLinPred(), inTrans.getLetter(), state));
+						}
+					}
+				}
+				for (IncomingCallTransition<LETTER, STATE> inTrans : callPredecessors(state)) {
+					if (scc.getAllStates().contains(inTrans.getPred())) {
+						if (acceptingSeen || isFinal(inTrans.getPred())) {
+							m_SuccessorsAcceptingSeen.get(iteration).put(state,
+									new OutgoingCallTransition<LETTER, STATE>(inTrans.getLetter(), state));
+						} else {
+							m_Successors.get(iteration).put(state, 
+									new OutgoingCallTransition<LETTER, STATE>(inTrans.getLetter(), state));
+						}
+					}
+				}
+				for (IncomingInternalTransition<LETTER, STATE> inTrans : internalPredecessors(state)) {
+					if (scc.getAllStates().contains(inTrans.getPred())) {
+						if (acceptingSeen || isFinal(inTrans.getPred())) {
+							m_SuccessorsAcceptingSeen.get(iteration).put(
+									state, new OutgoingInternalTransition<LETTER, STATE>(inTrans.getLetter(), state));
+						} else {
+							m_Successors.get(iteration).put(
+									state, new OutgoingInternalTransition<LETTER, STATE>(inTrans.getLetter(), state));
+						}
+					}
+				}
+			}
+    		
+    		
+    	}
+    }
+    
 
 	
 	
@@ -1740,7 +1830,7 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 	 * visited.
 	 * 
 	 */
-	class LassoExtractor {
+	class ShortestLassoExtractor {
 		
 		List<Set<StackOfFlaggedStates>> m_Iterations = new ArrayList<Set<StackOfFlaggedStates>>();
 		
@@ -1756,7 +1846,7 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 		NestedRun<LETTER, STATE> m_Loop;
 		NestedRun<LETTER, STATE> m_ConstructedNestedRun;
 		
-		public LassoExtractor(StateContainer<LETTER, STATE> goal) {
+		public ShortestLassoExtractor(StateContainer<LETTER, STATE> goal) {
 			m_Goal = goal;
 			addInitialStack(goal);
 			findPath(1);
@@ -2173,8 +2263,8 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 				return true;
 			}
 
-			private LassoExtractor getOuterType() {
-				return LassoExtractor.this;
+			private ShortestLassoExtractor getOuterType() {
+				return ShortestLassoExtractor.this;
 			}
 
 			@Override
