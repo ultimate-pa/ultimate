@@ -5,10 +5,19 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 
 public class AnnotateAndAsserterConjuncts extends AnnotateAndAsserter {
+	
 
 	public AnnotateAndAsserterConjuncts(SmtManager smtManager,
 			NestedSsa nestedSSA, Word<CodeBlock> trace) {
 		super(smtManager, nestedSSA, trace);
 	}
+
+	@Override
+	protected NestedSsa buildAnnotatedSsaAndAssertTerms(NestedSsa nestedSsa) {
+		// TODO Auto-generated method stub
+		return super.buildAnnotatedSsaAndAssertTerms(nestedSsa);
+	}
+	
+	
 
 }

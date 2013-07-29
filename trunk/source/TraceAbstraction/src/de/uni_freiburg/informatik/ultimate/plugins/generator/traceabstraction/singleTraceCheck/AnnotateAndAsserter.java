@@ -68,7 +68,7 @@ public class AnnotateAndAsserter {
 			}
 			
 
-		private NestedSsa buildAnnotatedSsaAndAssertTerms(NestedSsa nestedSsa) {
+		protected NestedSsa buildAnnotatedSsaAndAssertTerms(NestedSsa nestedSsa) {
 			Term[] terms = nestedSsa.getTerms();
 			Term[] annotatedTerms = new Term[nestedSsa.getTerms().length];
 			for (int i=0; i<terms.length; i++) {

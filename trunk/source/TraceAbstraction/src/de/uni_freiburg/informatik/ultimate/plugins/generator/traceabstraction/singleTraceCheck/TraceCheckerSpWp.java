@@ -27,8 +27,8 @@ public class TraceCheckerSpWp extends TraceChecker {
 	protected IPredicate[] m_InterpolantsWp;
 	
 	private static boolean m_useUnsatCore = false;
-	private static boolean m_ComputeInterpolantsSp = true;
-	private static boolean m_ComputeInterpolantsWp = false;
+	private static boolean m_ComputeInterpolantsSp = false;
+	private static boolean m_ComputeInterpolantsWp = true;
 
 	public TraceCheckerSpWp(SmtManager smtManager,
 			ModifiableGlobalVariableManager modifiedGlobals,
@@ -169,7 +169,6 @@ public class TraceCheckerSpWp extends TraceChecker {
 		unlockSmtManager();
 		m_InterpolantsSp = new IPredicate[trace.length()-1];
 		m_InterpolantsWp = new IPredicate[trace.length()-1];
-		int traceLength = trace.length();
 		
 		if (m_ComputeInterpolantsSp) {
 			s_Logger.debug("Computing strongest postcondition for given trace ...");
@@ -202,6 +201,7 @@ public class TraceCheckerSpWp extends TraceChecker {
 							m_InterpolantsSp[i-1], callerPred, (Return) trace.getSymbol(i));
 					m_InterpolantsSp[i] = m_PredicateUnifier.getOrConstructPredicate(p.getFormula(), p.getVars(),
 							p.getProcedures());
+					
 				
 				} else {
 					IPredicate p = m_SmtManager.strongestPostcondition(
@@ -217,11 +217,20 @@ public class TraceCheckerSpWp extends TraceChecker {
 		if (m_ComputeInterpolantsWp) {
 			s_Logger.debug("Computing weakest precondition for given trace ...");
 			if (trace.getSymbol(m_InterpolantsWp.length) instanceof Call) {
-				// TOFIX: This case shouldn't / cannot happen?
-				//			IPredicate p = m_SmtManager.weakestPrecondition(
-				//					tracePostcondition, (Call) trace.getSymbol(m_InterpolantsWp.length));
-				//			m_InterpolantsWp[m_InterpolantsWp.length-1] = m_PredicateBuilder.getOrConstructPredicate(p.getFormula(),
-				//					p.getVars(), p.getProcedures());
+				// If the trace contains a Call statement, then it must be a NestedWord
+				NestedWord<CodeBlock> traceAsNW = ((NestedWord<CodeBlock>) trace);
+				int retPos = traceAsNW.getReturnPosition(m_InterpolantsWp.length);
+				IPredicate returnerPred = tracePostcondition;
+				if (retPos < m_InterpolantsWp.length) {
+					returnerPred = m_InterpolantsWp[retPos];
+				}
+				IPredicate p = m_SmtManager.weakestPrecondition(
+						tracePostcondition, returnerPred,
+						(Call) trace.getSymbol(m_InterpolantsWp.length),
+						(Return) trace.getSymbol(retPos) ,
+						traceAsNW.isPendingCall(m_InterpolantsWp.length));
+				m_InterpolantsWp[m_InterpolantsWp.length-1] = m_PredicateUnifier.getOrConstructPredicate(p.getFormula(),
+						p.getVars(), p.getProcedures());
 			} else if (trace.getSymbol(m_InterpolantsWp.length) instanceof Return) {
 				IPredicate p = m_SmtManager.weakestPrecondition(
 						tracePostcondition, (Return) trace.getSymbol(m_InterpolantsWp.length));
@@ -236,14 +245,17 @@ public class TraceCheckerSpWp extends TraceChecker {
 
 			for (int i=m_InterpolantsWp.length-2; i>=0; i--) {
 				if (trace.getSymbol(i+1) instanceof Call) {
-					int retPos = ((NestedWord<CodeBlock>) trace).getReturnPosition(i+1);
+					NestedWord<CodeBlock> traceAsNW = (NestedWord<CodeBlock>) trace;					
+					int retPos = traceAsNW.getReturnPosition(i+1);
 					IPredicate returnerPred = tracePostcondition;
 					if (retPos < m_InterpolantsWp.length) {
 						returnerPred = m_InterpolantsWp[retPos];
 					}
 					IPredicate p = m_SmtManager.weakestPrecondition(
 							m_InterpolantsWp[i+1], returnerPred, 
-							(Call) trace.getSymbol(i+1));
+							(Call) trace.getSymbol(i+1),
+							(Return) trace.getSymbol(retPos),
+							traceAsNW.isPendingCall(i+1));
 					m_InterpolantsWp[i] = m_PredicateUnifier.getOrConstructPredicate(p.getFormula(),
 							p.getVars(), p.getProcedures());
 				} else if (trace.getSymbol(i+1) instanceof Return) {
