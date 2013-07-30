@@ -1,7 +1,9 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck;
 
+import de.uni_freiburg.informatik.ultimate.util.HashUtils;
+
 public class Pair<T,U> {
-	private T m_First;
+	private final T m_First;
 	private U m_Second;
 	
 	public Pair(T e1, U e2) {
@@ -17,12 +19,27 @@ public class Pair<T,U> {
 		return m_Second;
 	}
 	
-	public boolean equals(Pair<T, U> pair2) {
+	private boolean equals(Pair<T, U> pair2) {
 		if (pair2.getFirst().equals(m_First)) {
 			if (pair2.getSecond().equals(m_Second)) {
 				return true;
 			}
 		}
 		return false;
+	}
+	
+	public boolean equals(Object pair2) {
+		if (pair2 instanceof Pair<?,?>)
+			return this.equals((Pair<T,U>) pair2);
+		else 
+			return false;
+	}
+	
+	public int hashCode() {
+		return HashUtils.hashJenkins(m_First.hashCode(), m_Second.hashCode());
+    }
+	
+	public String toString() {
+		return "(" + m_First + "," + m_Second + ")";
 	}
 }
