@@ -27,8 +27,8 @@ public class TraceCheckerSpWp extends TraceChecker {
 	protected IPredicate[] m_InterpolantsWp;
 	
 	private static boolean m_useUnsatCore = false;
-	private static boolean m_ComputeInterpolantsSp = false;
-	private static boolean m_ComputeInterpolantsWp = true;
+	private static boolean m_ComputeInterpolantsSp = true;
+	private static boolean m_ComputeInterpolantsWp = false;
 
 	public TraceCheckerSpWp(SmtManager smtManager,
 			ModifiableGlobalVariableManager modifiedGlobals,
@@ -175,7 +175,8 @@ public class TraceCheckerSpWp extends TraceChecker {
 
 			if (trace.getSymbol(0) instanceof Call) {
 				IPredicate p = m_SmtManager.strongestPostcondition(
-						tracePrecondition, (Call) trace.getSymbol(0));
+						tracePrecondition, (Call) trace.getSymbol(0),
+						((NestedWord<CodeBlock>) trace).isPendingCall(0));
 				m_InterpolantsSp[0] = m_PredicateUnifier.getOrConstructPredicate(p.getFormula(), p.getVars(),
 						p.getProcedures());
 			} else {
@@ -187,7 +188,8 @@ public class TraceCheckerSpWp extends TraceChecker {
 			for (int i=1; i<m_InterpolantsSp.length; i++) {
 				if (trace.getSymbol(i) instanceof Call) {
 					IPredicate p = m_SmtManager.strongestPostcondition(
-							m_InterpolantsSp[i-1], (Call) trace.getSymbol(i));
+							m_InterpolantsSp[i-1], (Call) trace.getSymbol(i),
+							((NestedWord<CodeBlock>) trace).isPendingCall(i));
 					m_InterpolantsSp[i] = m_PredicateUnifier.getOrConstructPredicate(p.getFormula(), p.getVars(),
 							p.getProcedures());
 				} else if (trace.getSymbol(i) instanceof Return) {
