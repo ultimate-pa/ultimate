@@ -81,7 +81,11 @@ public class TotalizeNwa<LETTER, STATE> implements INestedWordAutomatonSimple<LE
 	
 	@Override
 	public boolean isInitial(STATE state) {
-		return m_Operand.isInitial(state);
+		if (state == m_SinkState) {
+			return false;
+		} else {
+			return m_Operand.isInitial(state);
+		}
 	}
 
 	@Override
