@@ -45,7 +45,7 @@ public class RIAnnotatedProgramPoint extends BaseLabeledEdgesMultigraph<RIAnnota
 	
 	protected void addOutgoingNode(RIAnnotatedProgramPoint node, CodeBlock label) {
 		this.mOutgoingNodes.add(node);
-		this.mOutgoingEdgeLabels.put(node, label);
+		this.mOutgoingEdgeLabels.add(label);
 		node.mIncomingNodes.add(this);
 	}
 
@@ -57,7 +57,7 @@ public class RIAnnotatedProgramPoint extends BaseLabeledEdgesMultigraph<RIAnnota
 	
 	protected void addIncomingNode(RIAnnotatedProgramPoint node, CodeBlock label) {
 		this.mIncomingNodes.add(node);
-		node.mOutgoingEdgeLabels.put(node, label);
+		node.mOutgoingEdgeLabels.add(label);
 		node.mOutgoingNodes.add(this);
 	}
 
