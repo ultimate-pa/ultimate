@@ -1831,25 +1831,28 @@ public class SmtManager {
 		Set<BoogieVar> modifiableGlobalVarsAsBoogieVars = m_ModifiableGlobals.getModifiedBoogieVars(
 				call.getCallStatement().getMethodName());
 		TransFormula callTF = call.getTransitionFormula();
+		// VarsToQuantify contains the local Vars of the calling proc, the global vars of the calling proc,
+		// which we aren't allowed to modify. It contains also the invars of the call TransFormula, if
+		// it is a recursive call, i.e. callingProc = calledProc.
+		Set<TermVariable> varsToQuantify = new HashSet<TermVariable>();
 		
 		// 1.1 Rename the invars in global variable assignments.
 		Map<TermVariable, Term> substitution = new HashMap<TermVariable, Term>();
 		for (BoogieVar bv : globalVarsAssignment.getInVars().keySet()) {
 			substitution.put(globalVarsAssignment.getInVars().get(bv), bv.getTermVariable());
+			varsToQuantify.add(bv.getTermVariable());
 		}
 		Term globalVars_Invars_Renamed = substituteTermVariablesByTerms(substitution, globalVarsAssignment.getFormula());
 		// 1.2 Rename the outvars in global variable assignments.
 		substitution.clear();
 		for (BoogieVar bv : globalVarsAssignment.getOutVars().keySet()) {
 			substitution.put(globalVarsAssignment.getOutVars().get(bv), bv.getTermVariable());
+			varsToQuantify.add(bv.getTermVariable());
 		}
 		
 		Term globalVars_InVarsRenamed_OutVarsRenamed = substituteTermVariablesByTerms(substitution, globalVars_Invars_Renamed);
 
-		// VarsToQuantify contains the local Vars of the calling proc, the global vars of the calling proc,
-		// which we aren't allowed to modify. It contains also the invars of the call TransFormula, if
-		// it is a recursive call, i.e. callingProc = calledProc.
-		Set<TermVariable> varsToQuantify = new HashSet<TermVariable>();
+
 		for (BoogieVar bv : p.getVars()) {
 			// If bv is a global variable, it shouldn't be modifiable by the called procedure,
 			// then we quantify it. We treat it as a normal local var.
@@ -1909,7 +1912,6 @@ public class SmtManager {
 			return newPredicate(result, tvp.getProcedures(), tvp.getVars(), result_as_closed_formula);
 		} else {
 			Term result = Util.and(m_Script, globalVars_InVarsRenamed_OutVarsRenamed, p.getFormula());
-			varsToQuantify.addAll(Arrays.asList(globalVars_InVarsRenamed_OutVarsRenamed.getFreeVars()));
 			Term result_quantified = DestructiveEqualityResolution.quantifier(m_Script, 
 					Script.EXISTS,
 					varsToQuantify.toArray(new TermVariable[varsToQuantify.size()]),
@@ -1917,7 +1919,7 @@ public class SmtManager {
 					(Term[][])null);
 			TermVarsProc tvp = computeTermVarsProc(result_quantified);
 			Term result_as_closed_formula = SmtManager.computeClosedFormula(result_quantified, tvp.getVars(), m_Script);
-			return newPredicate(result, tvp.getProcedures(), tvp.getVars(), result_as_closed_formula);
+			return newPredicate(result_quantified, tvp.getProcedures(), tvp.getVars(), result_as_closed_formula);
 
 		}
 //		Term call_Term_InVarsRenamed_OutVarsRenamed = substituteTermVariablesByTerms(substitution, call_Term_InVarsRenamed);
