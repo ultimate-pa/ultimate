@@ -1735,6 +1735,24 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
     
     class LassoExtractor {
     	
+    	public LassoExtractor(Map<StateContainer<LETTER, STATE>, Set<StateContainer<LETTER, STATE>>> acceptingSummaries) {
+    		
+    	}
+    	
+    	private Map<StateContainer<LETTER, STATE>, Set<StateContainer<LETTER, STATE>>> m_AcceptingSummaries;
+    	
+		public boolean isAcceptingSummary(STATE pre, STATE post) {
+			StateContainer<LETTER, STATE> preSc = m_States.get(pre);
+			Set<StateContainer<LETTER, STATE>> postCandidates = m_AcceptingSummaries.get(preSc);
+			if (postCandidates == null) {
+				return false;
+			} else {
+				StateContainer<LETTER, STATE> postSc = m_States.get(pre);
+				return postCandidates.contains(postSc);
+			}
+			
+			
+		}
     	
     	class LoopFinder {
     		private final STATE m_Goal;
@@ -1849,17 +1867,30 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
     	class SummaryFinder {
     		private final STATE m_CallPredecessor;
     		private final boolean m_Accepting;
-    		private final List<Map<STATE, Object>> m_SuccessorsAcceptingSeen;
-    		private final List<Map<STATE, Object>> m_Successors;
+    		/**
+    		 * Successor mapping. If you build a path starting with this mapping
+    		 * it is guaranteed that the requirement (e.g., final state visited)
+    		 * is fulfilled. If you are rebuilding a run and requirement is 
+    		 * already met, my may need m_SuccessorsNoGuarantee for the 
+    		 * remainder of the run.
+    		 * If there is no requirement all successor informations are in 
+    		 * these Maps.
+    		 */
+    		private final List<Map<STATE, Object>> m_SuccessorsWithGuarantee;
     		
-			public SummaryFinder(STATE callPredecessor, boolean accepting,
-					List<Map<STATE, Object>> successorsAcceptingSeen,
-					List<Map<STATE, Object>> successors) {
+    		/**
+    		 * Successor mapping. I you use this to build a run, it is not
+    		 * guaranteed that the requirement (e.g., final state visited) is
+    		 * fulfilled.
+    		 */
+    		private final List<Map<STATE, Object>> m_SuccessorsNoGuarantee;
+    		
+    		
+			public SummaryFinder(STATE returnPredecessor, STATE callPredecessor, boolean accepting) {
 				m_CallPredecessor = callPredecessor;
 				m_Accepting = accepting;
-				//TODO: Rename to m_SuccessorsLeadsToAccepting
-				m_SuccessorsAcceptingSeen = new ArrayList<Map<STATE,Object>>();
-				m_Successors = new ArrayList<Map<STATE,Object>>();;
+				m_SuccessorsWithGuarantee = new ArrayList<Map<STATE,Object>>();
+				m_SuccessorsNoGuarantee = new ArrayList<Map<STATE,Object>>();
 			}
 			
 //			private void process(STATE start) {
@@ -1892,14 +1923,14 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 					if (predSc.getDownStates().containsKey(m_CallPredecessor)) {
 						if (acceptingRequired) {
 							if (isFinal(predSc.getState())) {
-								m_SuccessorsAcceptingSeen.get(iteration).put(
+								m_SuccessorsWithGuarantee.get(iteration).put(
 										state, new OutgoingInternalTransition<LETTER, STATE>(inTrans.getLetter(), state));
 							} else if (predSc.hasDownProp(m_CallPredecessor, DownStateProp.REACHABLE_FROM_FINAL_WITHOUT_CALL)) {
-								m_Successors.get(iteration).put(
+								m_SuccessorsNoGuarantee.get(iteration).put(
 										state, new OutgoingInternalTransition<LETTER, STATE>(inTrans.getLetter(), state));
 							}
 						} else {
-							m_Successors.get(iteration).put(
+							m_SuccessorsWithGuarantee.get(iteration).put(
 									state, new OutgoingInternalTransition<LETTER, STATE>(inTrans.getLetter(), state));
 						}
 					}
@@ -1909,19 +1940,68 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 					if (predSc.getDownStates().containsKey(m_CallPredecessor)) {
 						if (acceptingRequired) {
 							if (isFinal(predSc.getState())) {
-								m_SuccessorsAcceptingSeen.get(iteration).put(
+								m_SuccessorsWithGuarantee.get(iteration).put(
+										state, new SummaryReturnTransition<LETTER, STATE>(inTrans.getLinPred(), inTrans.getLetter(), state));
+							} else if (isAcceptingSummary(inTrans.getHierPred(), state)) {
+								m_SuccessorsWithGuarantee.get(iteration).put(
 										state, new SummaryReturnTransition<LETTER, STATE>(inTrans.getLinPred(), inTrans.getLetter(), state));
 							} else if (predSc.hasDownProp(m_CallPredecessor, DownStateProp.REACHABLE_FROM_FINAL_WITHOUT_CALL)) {
-								m_Successors.get(iteration).put(
+								m_SuccessorsNoGuarantee.get(iteration).put(
 										state, new SummaryReturnTransition<LETTER, STATE>(inTrans.getLinPred(), inTrans.getLetter(), state));
 							}
 						} else {
-							m_Successors.get(iteration).put(
+							m_SuccessorsWithGuarantee.get(iteration).put(
 									state, new SummaryReturnTransition<LETTER, STATE>(inTrans.getLinPred(), inTrans.getLetter(), state));
 						}
 					}
 				}
 				return null;
+			}
+			
+			
+			
+			private NestedRun<LETTER, STATE> getRun() {
+				NestedRun<LETTER, STATE> result = new NestedRun<LETTER, STATE>(m_CallPredecessor);
+				for (int i = m_SuccessorsWithGuarantee.size() - 1; i>=0; i--) {
+					STATE currentState = result.getStateAtPosition(result.getLength());
+					Object succs = m_SuccessorsWithGuarantee.get(i).get(currentState);
+					if(succs == null) {
+						succs = m_SuccessorsNoGuarantee.get(i).get(currentState);
+					}
+					assert succs != null;
+					NestedRun<LETTER, STATE> newSuffix;
+					if (succs instanceof OutgoingInternalTransition) {
+						OutgoingInternalTransition<LETTER, STATE> outTrans = 
+								(OutgoingInternalTransition<LETTER, STATE>) succs;
+						newSuffix = new NestedRun<LETTER, STATE>(currentState, 
+								outTrans.getLetter(), 
+								NestedWord.INTERNAL_POSITION, outTrans.getSucc());
+						result = result.concatenate(newSuffix);
+					} else if (succs instanceof OutgoingCallTransition) {
+						OutgoingCallTransition<LETTER, STATE> outTrans = 
+								(OutgoingCallTransition<LETTER, STATE>) succs;
+						newSuffix = new NestedRun<LETTER, STATE>(currentState, 
+								outTrans.getLetter(), 
+								NestedWord.PLUS_INFINITY, outTrans.getSucc());
+					} else if (succs instanceof SummaryReturnTransition) {
+						SummaryReturnTransition<LETTER, STATE> outTrans = 
+								(SummaryReturnTransition<LETTER, STATE>) succs;
+						boolean accepting = isAcceptingSummary(currentState, outTrans.getSucc());
+						SummaryFinder summaryFinder = new SummaryFinder(outTrans.getSucc(), currentState, accepting);
+						newSuffix = summaryFinder.getRun();
+						NestedRun<LETTER, STATE> retSuffix = 
+								new NestedRun<LETTER, STATE>(outTrans.getLinPred(), 
+								outTrans.getLetter(), 
+								NestedWord.MINUS_INFINITY, outTrans.getSucc());
+						newSuffix = newSuffix.concatenate(retSuffix);
+					} else {
+						throw new AssertionError("unknown transition");
+					}
+					result = result.concatenate(newSuffix);
+				}
+					//TODO: here
+				return result;
+				
 			}
     	}
     }
