@@ -10,7 +10,6 @@ Require-Bundle: org.eclipse.core.runtime,
  Library-ModelCheckerUtils;bundle-version="0.0.1",
  NestedWordAutomata;bundle-version="0.0.1",
  RCFGBuilder;bundle-version="0.0.1",
- TraceAbstraction;bundle-version="0.0.1",
- Impulse;bundle-version="0.0.1"
+ TraceAbstraction;bundle-version="0.0.1"
 Bundle-ActivationPolicy: lazy
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6

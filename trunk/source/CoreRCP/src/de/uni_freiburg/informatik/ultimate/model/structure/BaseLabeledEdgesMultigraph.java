@@ -37,7 +37,7 @@ public abstract class BaseLabeledEdgesMultigraph<T extends BaseLabeledEdgesMulti
 
 	protected List<T> mIncomingNodes;
 
-	protected HashMap<T, L> mOutgoingEdgeLabels;
+	protected List<L> mOutgoingEdgeLabels;
 
 	/***
 	 * This constructor creates a new BaseLabeledEdgesMultigraph node without
@@ -116,11 +116,11 @@ public abstract class BaseLabeledEdgesMultigraph<T extends BaseLabeledEdgesMulti
 	protected BaseLabeledEdgesMultigraph(T predecessor, L incomingEdgeLabel,
 			IPayload payload) {
 		super(payload);
-		mOutgoingEdgeLabels = new HashMap<T, L>();
+		mOutgoingEdgeLabels = new ArrayList<L>();
 		mOutgoingNodes = new ArrayList<T>();
 		mIncomingNodes = new ArrayList<T>();
 		if (predecessor != null) {
-			predecessor.mOutgoingEdgeLabels.put((T) this, incomingEdgeLabel);
+			predecessor.mOutgoingEdgeLabels.add(incomingEdgeLabel);
 			predecessor.mOutgoingNodes.add((T) this);
 			mIncomingNodes.add(predecessor);
 		}
@@ -136,15 +136,21 @@ public abstract class BaseLabeledEdgesMultigraph<T extends BaseLabeledEdgesMulti
 		return mOutgoingNodes;
 	}
 
+	/**
+	 * beware: this is linear-time, if you have the index of node, use it to get the label from the list directly
+	 */
 	@Override
 	public L getOutgoingEdgeLabel(T node) {
-		return mOutgoingEdgeLabels.get(node);
+		return mOutgoingEdgeLabels.get(mOutgoingNodes.indexOf(node));
 	}
 
+	/**
+	 * beware: this is linear-time, if you have the index of node, use it to get the label from the list directly
+	 */
 	@Override
 	public L getIncomingEdgeLabel(T node) {
 		if (node != null) {
-			return node.mOutgoingEdgeLabels.get(this);
+			return node.mOutgoingEdgeLabels.get(node.mOutgoingNodes.indexOf(this));
 		}
 		return null;
 	}
@@ -158,6 +164,10 @@ public abstract class BaseLabeledEdgesMultigraph<T extends BaseLabeledEdgesMulti
 	@Override
 	public List<IWalkable> getSuccessors() {
 		return (List<IWalkable>) getOutgoingNodes();
+	}
+	
+	List<L> getOutgoingEdgeLabels() {
+		return mOutgoingEdgeLabels;
 	}
 
 }

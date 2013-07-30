@@ -176,7 +176,7 @@ public class AnnotatedProgramPoint extends ModifiableLabeledEdgesMultigraph<Anno
 	 * @return returns true if addition of the hyper edge was successful, false if the hyper edge already existed
 	 */
 	public boolean addOutGoingReturnCallPred(AnnotatedProgramPoint target, AnnotatedProgramPoint callPred) {
-		assert mOutgoingEdgeLabels.get(target) instanceof Return;
+//		assert this.getOutgoingEdgeLabel(target) instanceof Return;
 		
 		if (m_outgoingReturnAppToCallPreds == null) {
 			m_outgoingReturnAppToCallPreds = new HashMap<AnnotatedProgramPoint, HashSet<AnnotatedProgramPoint>>();
@@ -210,7 +210,7 @@ public class AnnotatedProgramPoint extends ModifiableLabeledEdgesMultigraph<Anno
 	 * @return returns true if removing the hyper edge was successful, false if the hyper edge didn't even exist
 	 */
 	public boolean removeOutgoingReturnCallPred(AnnotatedProgramPoint target, AnnotatedProgramPoint callPred) {
-		assert mOutgoingEdgeLabels.get(target) instanceof Return;
+		assert this.getOutgoingEdgeLabel(target) instanceof Return;
 		assert m_outgoingReturnAppToCallPreds != null && m_outgoingReturnAppToCallPreds.get(target) != null;
 		assert callPred.m_ingoingReturnAppToCallPreds != null && callPred.m_ingoingReturnAppToCallPreds.get(this) != null;
 	
@@ -243,7 +243,7 @@ public class AnnotatedProgramPoint extends ModifiableLabeledEdgesMultigraph<Anno
 	 * @return returns true if the hyper edge was found, false otherwise
 	 */
 	public boolean outGoingReturnAppToCallPredContains(AnnotatedProgramPoint target, AnnotatedProgramPoint callPred) {
-		if (!( this.mOutgoingEdgeLabels.get(target) instanceof Return))
+		if (!(this.getOutgoingEdgeLabel(target) instanceof Return))
 			return false;
 		assert m_outgoingReturnAppToCallPreds != null; 
 		

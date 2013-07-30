@@ -21,7 +21,6 @@ import de.uni_freiburg.informatik.ultimate.util.HashUtils;
 public class EmptinessCheck {
 	private static int c_badNestingRelationInit = -7;
 
-	//	HashMap<AnnotatedProgramPoint, ArrayList<AnnotatedProgramPoint>> callPredecessorToItsCallPredecessors;
 	ArrayDeque<AppDoubleDecker> openNodes;
 	HashSet<AppDoubleDecker> visitedNodes;
 	HashMap<AnnotatedProgramPoint, HashSet<AnnotatedProgramPoint>> summaryEdges;
@@ -34,8 +33,6 @@ public class EmptinessCheck {
 	 * @return
 	 */
 	Pair<AnnotatedProgramPoint[],NestedWord<CodeBlock>> checkForEmptiness(AnnotatedProgramPoint root) {
-		//		callPredecessorToItsCallPredecessors = 	
-		//				new HashMap<AnnotatedProgramPoint, ArrayList<AnnotatedProgramPoint>>();
 		openNodes = new ArrayDeque<EmptinessCheck.AppDoubleDecker>();
 		visitedNodes = new HashSet<EmptinessCheck.AppDoubleDecker>();
 
@@ -75,7 +72,6 @@ public class EmptinessCheck {
 					newAdd = new AppDoubleDecker(app, currentAdd.top, 
 							(Stack<Call>) currentAdd.callStack.clone(),
 							(Stack<AnnotatedProgramPoint>) currentAdd.callPredStack.clone());
-					//					updateCallPredecessorMapping(currentAdd.top, currentAdd.bot);
 					newAdd.callStack.add((Call) edge);
 					newAdd.callPredStack.add(currentAdd.bot);
 
@@ -83,16 +79,11 @@ public class EmptinessCheck {
 						returnedPath = openNewNode(currentAdd, app, edge, newAdd);
 
 				} else if (edge instanceof Return) {
-					//					ArrayList<AnnotatedProgramPoint> cps = callPredecessorToItsCallPredecessors.get(currentAdd.bot);
-
 					//only take return edges that return to the current callpredecessor
 					//					if (!((Return) edge).getCallerNode().equals(currentAdd.bot.getProgramPoint()))
 					if (!currentAdd.top.outGoingReturnAppToCallPredContains(app, currentAdd.bot))
 						continue;
 
-					//the question is: which are the callpredecessors for the new doubledecker
-					// this is stored in the hashmap
-					//					for (AnnotatedProgramPoint callPredPred : cps) {
 					Stack<Call> currentCallStack = (Stack<Call>) currentAdd.callStack.clone();
 					Stack<AnnotatedProgramPoint> currentCpStack = (Stack<AnnotatedProgramPoint>) currentAdd.callPredStack.clone();
 
@@ -108,11 +99,9 @@ public class EmptinessCheck {
 					Pair<AnnotatedProgramPoint, AnnotatedProgramPoint> pairToAdd = 
 							new Pair<AnnotatedProgramPoint, AnnotatedProgramPoint>(currentAdd.bot, app); //rausgezogen fuer debugging
 					summaryEdgeToReturnSucc.put(pairToAdd, newAdd);
-					System.out.println("--------------- " + pairToAdd + " --> " + pairToAdd.hashCode());
-					//								currentAdd.top);
+//					System.out.println("--------------- " + pairToAdd + " --> " + pairToAdd.hashCode());
 					if (returnedPath == null)
 						returnedPath = openNewNode(currentAdd, app, edge, newAdd);
-					//					}
 				}
 			}
 
@@ -147,7 +136,6 @@ public class EmptinessCheck {
 			AppDoubleDecker currentAdd, AnnotatedProgramPoint app,
 			CodeBlock edge, AppDoubleDecker newAdd) {
 		if (!visitedNodes.contains(newAdd)){
-			//			newAdd.appendToPath(new AddEdge(currentAdd, newAdd, edge));
 			AddEdge newAddEdge = new AddEdge(currentAdd, newAdd, edge);
 			newAdd.inEdge = newAddEdge;
 			currentAdd.outEdges.add(newAddEdge);
@@ -160,18 +148,6 @@ public class EmptinessCheck {
 		}
 		return null;
 	}
-
-
-	//	private void updateCallPredecessorMapping(AnnotatedProgramPoint top,
-	//			AnnotatedProgramPoint bot) {
-	//		ArrayList<AnnotatedProgramPoint> cps = callPredecessorToItsCallPredecessors.get(top);
-	//		if (cps == null) {
-	//			cps = new ArrayList<AnnotatedProgramPoint>();
-	//		} 
-	//		cps.add(bot);
-	//		callPredecessorToItsCallPredecessors.put(top, cps);
-	//	}
-
 
 	private Pair<AnnotatedProgramPoint[], NestedWord<CodeBlock>> reconstructPath(
 			AppDoubleDecker errorAdd) {
@@ -234,7 +210,6 @@ public class EmptinessCheck {
 				nextApp = pathIt.next();
 
 				if (currentCodeBlock instanceof DummyCodeBlock) {
-					//				assert false; //I want to see, when this happens for the first time
 					assert summaryEdges.get(previousApp).contains(nextApp);
 					
 					newErrorTrace.removeLast();
@@ -247,22 +222,16 @@ public class EmptinessCheck {
 					LinkedList<CodeBlock> traceToInsert = new LinkedList<CodeBlock>();
 					LinkedList<AnnotatedProgramPoint> pathToInsert = new LinkedList<AnnotatedProgramPoint>();
 
-//					traceToInsert.add(toInsertAdd.inEdge.label);
-//					pathToInsert.add(toInsertAdd.top);
-					
 					while (!(toInsertAdd.inEdge.label instanceof Call)) { //is this exit condition adequate? -- mb via source and target? 
 						if (toInsertAdd.inEdge.label instanceof DummyCodeBlock) 
 							repeat = true;// this happens, we have a nested summary --> we need to expand the result again 
 						traceToInsert.add(toInsertAdd.inEdge.label);
 						pathToInsert.add(toInsertAdd.inEdge.source.top);
-//						newErrorPath.add(toInsertAdd.inEdge.target.top);
-//						newErrorTrace.add(toInsertAdd.inEdge.label);
 						toInsertAdd = toInsertAdd.inEdge.source;
 					}
 					if (toInsertAdd.inEdge.label instanceof DummyCodeBlock) 
 						repeat = true;
 					traceToInsert.add(toInsertAdd.inEdge.label);
-//					pathToInsert.add(toInsertAdd.inEdge.source.top);
 					
 					Collections.reverse(pathToInsert);
 					Collections.reverse(traceToInsert);
@@ -346,7 +315,6 @@ public class EmptinessCheck {
 		}
 
 		public int hashCode() {
-			//			return (top.hashCode() * 2591 + bot.hashCode()) * 2591;
 			return HashUtils.hashJenkins(top.hashCode(), bot.hashCode());
 		}
 

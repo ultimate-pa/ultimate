@@ -5,7 +5,8 @@ package de.uni_freiburg.informatik.ultimate.model.structure;
 public class ModifiableLabeledEdgesMultigraph<T extends ModifiableLabeledEdgesMultigraph<T,L>,L> extends
 		BaseLabeledEdgesMultigraph<T,L> {
 
-	
+	private static final long serialVersionUID = -3595056576172626796L;
+
 	/**
 	 * Adds an outgoing node to the corresponding list and updates the hashmap with the edge label accordingly.
 	 * @param node
@@ -15,7 +16,7 @@ public class ModifiableLabeledEdgesMultigraph<T extends ModifiableLabeledEdgesMu
 	 */
 	public boolean addOutgoingNode(T node, L label) {
 		if (mOutgoingNodes.add(node)) {
-			mOutgoingEdgeLabels.put(node, label);
+			mOutgoingEdgeLabels.add(label);
 			return true;
 		}
 		return false;
@@ -25,12 +26,13 @@ public class ModifiableLabeledEdgesMultigraph<T extends ModifiableLabeledEdgesMu
 	 * Removes an outgoing node from the corresponding list and updates the hashmap with the edge label accordingly.
 	 * @param node
 	 * @param label
-	 * @return true iff the list update was succesful, only then the hashmap is
+	 * @return true iff the list update was successful, only then the hashmap is
 	 *  updated, too.
 	 */
 	public boolean removeOutgoingNode(T node) {
-		if (mOutgoingNodes.remove(node)) {
-			mOutgoingEdgeLabels.remove(node);
+		int index = mOutgoingNodes.indexOf(node);
+		if (mOutgoingNodes.remove(index) != null) {
+			mOutgoingEdgeLabels.remove(index);
 			return true;
 		}
 		return false;
@@ -40,7 +42,7 @@ public class ModifiableLabeledEdgesMultigraph<T extends ModifiableLabeledEdgesMu
 	 * Adds an incoming node to the corresponding list.
 	 * @param node
 	 * @param label
-	 * @return true iff the list update was succesful.
+	 * @return true iff the list update was successful.
 	 */
 	public boolean addIncomingNode(T node) {
 		return mIncomingNodes.add(node);
@@ -66,9 +68,10 @@ public class ModifiableLabeledEdgesMultigraph<T extends ModifiableLabeledEdgesMu
 	 *  the latter case, changes already made are undone.
 	 */
 	public boolean connectOutgoing(T node, L label) {
+		assert label != null;
 		if(mOutgoingNodes.add(node)){
 			if(node.mIncomingNodes.add((T) this)){
-				mOutgoingEdgeLabels.put(node, label);
+				mOutgoingEdgeLabels.add(label);
 				return true;
 			} else {
 				mOutgoingNodes.remove(node);
@@ -88,9 +91,10 @@ public class ModifiableLabeledEdgesMultigraph<T extends ModifiableLabeledEdgesMu
 	 *  the latter case, changes already made are undone.
 	 */
 	public boolean disconnectOutgoing(T node) {
-		if(mOutgoingNodes.remove(node)) {
+		int index = mOutgoingNodes.indexOf(node);
+		if(mOutgoingNodes.remove(index) != null) {
 			if(node.mIncomingNodes.remove(this)) {
-				mOutgoingEdgeLabels.remove(node);
+				mOutgoingEdgeLabels.remove(index);
 				return true;
 			} else {
 				mOutgoingNodes.add(node);
@@ -110,9 +114,10 @@ public class ModifiableLabeledEdgesMultigraph<T extends ModifiableLabeledEdgesMu
 	 *  the latter case, changes already made are undone.
 	 */
 	public boolean connectIncoming(T node, L label) {
+		assert label != null;
 		if(mIncomingNodes.add(node)) {
 			if(node.mOutgoingNodes.add((T) this)) {
-				node.mOutgoingEdgeLabels.put(node, label);
+				node.mOutgoingEdgeLabels.add(label);
 				return true;
 			} else {
 				mIncomingNodes.remove(node);
@@ -133,8 +138,9 @@ public class ModifiableLabeledEdgesMultigraph<T extends ModifiableLabeledEdgesMu
 	 */
 	public boolean disconnectIncoming(T node) {
 		if (mIncomingNodes.remove(node)) {
-			if (node.mOutgoingNodes.remove(this)) {
-				node.mOutgoingEdgeLabels.remove(this);
+			int index = node.mOutgoingNodes.indexOf(this);
+			if (node.mOutgoingNodes.remove(index) != null) {
+				node.mOutgoingEdgeLabels.remove(index);
 				return true;
 			} else {
 				mIncomingNodes.add(node);
