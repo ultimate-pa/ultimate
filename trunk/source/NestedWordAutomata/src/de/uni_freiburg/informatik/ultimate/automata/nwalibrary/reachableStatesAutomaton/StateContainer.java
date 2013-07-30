@@ -33,6 +33,7 @@ public abstract class StateContainer<LETTER, STATE> {
 	
 
 	protected final STATE m_State;
+	protected final int m_SerialNumber;
 	protected ReachProp m_ReachProp;
 	protected final Map<STATE, Integer> m_DownStates;
 	protected Set<STATE> m_UnpropagatedDownStates;
@@ -71,11 +72,17 @@ public abstract class StateContainer<LETTER, STATE> {
 		return sb.toString();
 	}
 
-	public StateContainer(STATE state, HashMap<STATE, Integer> downStates, boolean canHaveOutgoingReturn) {
+	public StateContainer(STATE state, int serialNumber, 
+			HashMap<STATE, Integer> downStates, boolean canHaveOutgoingReturn) {
 		m_State = state;
+		m_SerialNumber = serialNumber;
 		m_DownStates = downStates;
 		m_ReachProp = ReachProp.REACHABLE;
 		m_CanHaveOutgoingReturn = canHaveOutgoingReturn;
+	}
+	
+	public int getSerialNumber() {
+		return m_SerialNumber;
 	}
 
 	public ReachProp getReachProp() {
