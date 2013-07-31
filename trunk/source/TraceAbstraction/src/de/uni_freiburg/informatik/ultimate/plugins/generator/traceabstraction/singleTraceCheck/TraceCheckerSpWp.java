@@ -47,6 +47,20 @@ public class TraceCheckerSpWp extends TraceChecker {
 		}
 	}
 	
+	public IPredicate getInterpolanstsSPAtPosition(int i) {
+		assert m_InterpolantsSp != null : "InterpolantsSP hasn't been computed, yet.";
+		assert i >= 0 && i < m_InterpolantsSp.length : "The given position is not a correct position!";
+		return m_InterpolantsSp[i];
+	}
+	
+	public IPredicate getInterpolanstsWPAtPosition(int i) {
+		assert m_InterpolantsWp != null : "InterpolantsWP hasn't been computed, yet.";
+		assert i >= 0 && i < m_InterpolantsWp.length : "The given position is not a correct position!";
+		return m_InterpolantsWp[i];
+	}
+	
+	
+	
 	private void computeInterpolantsWithUsageOfUnsatCore(Set<Integer> interpolatedPositions) {
 		
 		Term[] unsat_core = m_SmtManager.getScript().getUnsatCore();

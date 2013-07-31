@@ -1823,105 +1823,11 @@ public class SmtManager {
 	 * Call statements must be treated in a special way.
 	 */
 	public IPredicate strongestPostcondition(IPredicate p, Call call, boolean isPendingCall) {
-
-		// 1. Compute those global variable assignments, i.e. x_global = old(x_global) if x_global is
-		// a global variable.
-		TransFormula globalVarsAssignment = m_ModifiableGlobals.getGlobalVarsAssignment(
-				call.getCallStatement().getMethodName());
-		Set<BoogieVar> modifiableGlobalVarsAsBoogieVars = m_ModifiableGlobals.getModifiedBoogieVars(
-				call.getCallStatement().getMethodName());
-		TransFormula callTF = call.getTransitionFormula();
-		// VarsToQuantify contains the local Vars of the calling proc, the global vars of the calling proc,
-		// which we aren't allowed to modify. It contains also the invars of the call TransFormula, if
-		// it is a recursive call, i.e. callingProc = calledProc.
-		Set<TermVariable> varsToQuantify = new HashSet<TermVariable>();
 		
-		// 1.1 Rename the invars in global variable assignments.
-		Map<TermVariable, Term> substitution = new HashMap<TermVariable, Term>();
-		for (BoogieVar bv : globalVarsAssignment.getInVars().keySet()) {
-			substitution.put(globalVarsAssignment.getInVars().get(bv), bv.getTermVariable());
-			varsToQuantify.add(bv.getTermVariable());
-		}
-		Term globalVars_Invars_Renamed = substituteTermVariablesByTerms(substitution, globalVarsAssignment.getFormula());
-		// 1.2 Rename the outvars in global variable assignments.
-		substitution.clear();
-		for (BoogieVar bv : globalVarsAssignment.getOutVars().keySet()) {
-			substitution.put(globalVarsAssignment.getOutVars().get(bv), bv.getTermVariable());
-			varsToQuantify.add(bv.getTermVariable());
-		}
-		
-		Term globalVars_InVarsRenamed_OutVarsRenamed = substituteTermVariablesByTerms(substitution, globalVars_Invars_Renamed);
+		return strongestPostcondition(p, call.getTransitionFormula(),
+				m_ModifiableGlobals.getGlobalVarsAssignment(call.getCallStatement().getMethodName()), isPendingCall);
 
 
-		for (BoogieVar bv : p.getVars()) {
-			// If bv is a global variable, it shouldn't be modifiable by the called procedure,
-			// then we quantify it. We treat it as a normal local var.
-			if (!modifiableGlobalVarsAsBoogieVars.contains(bv)) {
-				// If it is contained in outvars, then it is later substitued by an appropriate TermVariable,
-				// therefore we mustn't quantify it.
-				if (!callTF.getOutVars().containsKey(bv)) {
-					varsToQuantify.add(bv.getTermVariable());
-				}
-			}
-		}
-		substitution.clear();
-		Map<TermVariable, TermVariable> varsToRenameInPred = new HashMap<TermVariable, TermVariable>();
-
-		// 2.1 Rename the invars of the term of the Call-Statement.
-		for (BoogieVar bv : callTF.getInVars().keySet()) {
-			// If the invar is also contained in the outvar, then it is a recursive call,
-			// so we don't want to rename this invar.
-			if (callTF.getOutVars().keySet().contains(bv)) {
-				varsToRenameInPred.put(bv.getTermVariable(), callTF.getInVars().get(bv));
-				varsToQuantify.add(callTF.getInVars().get(bv));
-			} else {
-				substitution.put(callTF.getInVars().get(bv), bv.getTermVariable());
-			}
-			// Add this invar to localVars, if it is not contained in outVars, such
-			// that it is later quantified.
-			if (!callTF.getOutVars().keySet().contains(bv)) {
-				varsToQuantify.add(bv.getTermVariable());
-			}
-		}
-		Term call_Term_InVarsRenamed = substituteTermVariablesByTerms(substitution, callTF.getFormula());
-		substitution.clear();
-		// 2.2 Rename the outvars of the term of the Call-Statement.
-		for (BoogieVar bv : callTF.getOutVars().keySet()) {
-			if (p.getVars().contains(bv)) {
-				if (!varsToRenameInPred.containsKey(bv.getTermVariable())) {
-					varsToRenameInPred.put(bv.getTermVariable(),
-							callTF.getOutVars().get(bv));
-					varsToQuantify.add(callTF.getOutVars().get(bv));
-				}
-			}
-			substitution.put(callTF.getOutVars().get(bv), bv.getTermVariable());
-		}
-		if (isPendingCall) {
-			for (BoogieVar bv : globalVarsAssignment.getInVars().keySet()) {
-				varsToQuantify.add(bv.getTermVariable());
-			}
-			
-			Term result1 = Util.and(m_Script, p.getFormula(), call_Term_InVarsRenamed);
-			Term result1_quantified = DestructiveEqualityResolution.quantifier(m_Script,
-					Script.EXISTS,
-					varsToQuantify.toArray(new TermVariable[varsToQuantify.size()]),
-					result1, (Term[][])null);
-			Term result = Util.and(m_Script, result1_quantified, globalVars_InVarsRenamed_OutVarsRenamed);
-			TermVarsProc tvp = computeTermVarsProc(result);
-			Term result_as_closed_formula = SmtManager.computeClosedFormula(result, tvp.getVars(), m_Script);
-			return newPredicate(result, tvp.getProcedures(), tvp.getVars(), result_as_closed_formula);
-		} else {
-			Term result = Util.and(m_Script, globalVars_InVarsRenamed_OutVarsRenamed, p.getFormula());
-			Term result_quantified = DestructiveEqualityResolution.quantifier(m_Script, 
-					Script.EXISTS,
-					varsToQuantify.toArray(new TermVariable[varsToQuantify.size()]),
-					result,
-					(Term[][])null);
-			TermVarsProc tvp = computeTermVarsProc(result_quantified);
-			Term result_as_closed_formula = SmtManager.computeClosedFormula(result_quantified, tvp.getVars(), m_Script);
-			return newPredicate(result_quantified, tvp.getProcedures(), tvp.getVars(), result_as_closed_formula);
-
-		}
 //		Term call_Term_InVarsRenamed_OutVarsRenamed = substituteTermVariablesByTerms(substitution, call_Term_InVarsRenamed);
 //		Term predicateLocVarsRenamed = substituteTermVariablesByTermVariables(varsToRenameInPred, p.getFormula());
 //		Term callTerm_AND_predicate = Util.and(m_Script, call_Term_InVarsRenamed_OutVarsRenamed, predicateLocVarsRenamed);
@@ -1939,6 +1845,100 @@ public class SmtManager {
 //		return newPredicate(result, tvp.getProcedures(), tvp.getVars(), result_as_closed_formula);
 	}
 
+	public IPredicate strongestPostcondition(IPredicate p, TransFormula localVarAssignments, TransFormula globalVarAssignments,
+			boolean isPendingCall) {
+
+		// VarsToQuantify contains the local Vars and  the global vars of the calling proc, for a non-pending call.
+		Set<TermVariable> varsToQuantifyNonPendingCall = new HashSet<TermVariable>();
+		// Variables, which should be quantified if we have a pending call.
+		Set<TermVariable> varsToQuantifyPendingCall = new HashSet<TermVariable>();
+		
+		Map<TermVariable, TermVariable> varsToRenameInPredPendingCall = new HashMap<TermVariable, TermVariable>();
+		Map<TermVariable, TermVariable> varsToRenameInPredNonPendingCall = new HashMap<TermVariable, TermVariable>();
+		// 1. Compute those global variable assignments, i.e. x_global = old(x_global) if x_global is
+		// a global variable.		
+		// 1.1 Rename the invars in global variable assignments.Invars are {old(g) --> old(g)_23}
+		Map<TermVariable, Term> substitution = new HashMap<TermVariable, Term>();
+		for (BoogieVar bv : globalVarAssignments.getInVars().keySet()) {
+			TermVariable freshVar = getFreshTermVariable(bv.getIdentifier(), bv.getTermVariable().getSort());
+			substitution.put(globalVarAssignments.getInVars().get(bv), bv.getTermVariable());
+			varsToQuantifyPendingCall.add(freshVar);
+			varsToRenameInPredPendingCall.put(bv.getTermVariable(), freshVar);
+			varsToRenameInPredNonPendingCall.put(bv.getTermVariable(), freshVar);
+			varsToQuantifyNonPendingCall.add(freshVar);
+		}
+		Term globalVarsInvarsRenamed = substituteTermVariablesByTerms(substitution, globalVarAssignments.getFormula());
+		// 1.2 Rename the outvars in global variable assignments. The outvars are {g --> g_23}
+		substitution.clear();
+		for (BoogieVar bv : globalVarAssignments.getOutVars().keySet()) {
+			substitution.put(globalVarAssignments.getOutVars().get(bv), bv.getTermVariable());
+			TermVariable freshVar = getFreshTermVariable(bv.getIdentifier(), bv.getTermVariable().getSort());
+			varsToQuantifyNonPendingCall.add(freshVar);
+			varsToRenameInPredNonPendingCall.put(bv.getTermVariable(), freshVar);
+		}
+		
+		Term globalVarsInVarsRenamedOutVarsRenamed = substituteTermVariablesByTerms(substitution, globalVarsInvarsRenamed);
+		
+		// Collect the local variables of the calling proc.
+		for (BoogieVar bv : p.getVars()) {
+			// Procedure is null, if it is a global variable
+			if (bv.getProcedure() != null) {
+				varsToQuantifyNonPendingCall.add(bv.getTermVariable());
+				// Ensure that variable doesn't occur in call
+				if (!localVarAssignments.getInVars().containsKey(bv.getTermVariable())
+						&& !localVarAssignments.getOutVars().containsKey(bv.getTermVariable())) {
+					TermVariable freshVar = getFreshTermVariable(bv.getIdentifier(), bv.getTermVariable().getSort());
+					varsToRenameInPredPendingCall.put(bv.getTermVariable(), freshVar);
+					varsToQuantifyPendingCall.add(freshVar);
+					varsToQuantifyNonPendingCall.add(bv.getTermVariable());
+				}
+			}
+		}
+		substitution.clear();
+		
+//		 2.1 Rename the invars of the term of Call-Statement.
+		for (BoogieVar bv : localVarAssignments.getInVars().keySet()) {
+			TermVariable freshVar = getFreshTermVariable(bv.getIdentifier(), bv.getTermVariable().getSort());
+			substitution.put(localVarAssignments.getInVars().get(bv), freshVar);
+			varsToRenameInPredPendingCall.put(bv.getTermVariable(), freshVar);
+			varsToQuantifyPendingCall.add(freshVar);
+			varsToQuantifyNonPendingCall.add(bv.getTermVariable());
+		}
+		Term call_Term_InVarsRenamed = substituteTermVariablesByTerms(substitution, localVarAssignments.getFormula());
+		substitution.clear();
+
+
+		if (isPendingCall) {
+			// 2.2 Rename the outvars of the term of the Call-Statement.
+			for (BoogieVar bv : localVarAssignments.getOutVars().keySet()) {
+				substitution.put(localVarAssignments.getOutVars().get(bv), bv.getTermVariable());
+			}
+			Term callTermInvarsRenamedOutVarsRenamed = substituteTermVariablesByTerms(substitution, call_Term_InVarsRenamed);
+			// Rename the invars of CAll, local Vars and old version of global variables.
+			Term predRenamed = substituteTermVariablesByTermVariables(varsToRenameInPredPendingCall, p.getFormula());
+			Term predANDCallANDGlobalVars = Util.and(m_Script, predRenamed, callTermInvarsRenamedOutVarsRenamed,
+					globalVarsInVarsRenamedOutVarsRenamed);
+			Term result = DestructiveEqualityResolution.quantifier(m_Script,
+					Script.EXISTS,
+					varsToQuantifyPendingCall.toArray(new TermVariable[varsToQuantifyPendingCall.size()]),
+					predANDCallANDGlobalVars, (Term[][])null);
+			TermVarsProc tvp = computeTermVarsProc(result);
+			Term result_as_closed_formula = SmtManager.computeClosedFormula(result, tvp.getVars(), m_Script);
+			return newPredicate(result, tvp.getProcedures(), tvp.getVars(), result_as_closed_formula);
+		} else {
+			// TODO: Die Variable (a) fehlen noch.
+			Term predRenamed = substituteTermVariablesByTermVariables(varsToRenameInPredNonPendingCall, p.getFormula());
+			Term result = DestructiveEqualityResolution.quantifier(m_Script, 
+					Script.EXISTS,
+					varsToQuantifyNonPendingCall.toArray(new TermVariable[varsToQuantifyNonPendingCall.size()]),
+					Util.and(m_Script, predRenamed, globalVarsInVarsRenamedOutVarsRenamed),
+					(Term[][])null);
+			TermVarsProc tvp = computeTermVarsProc(result);
+			Term result_as_closed_formula = SmtManager.computeClosedFormula(result, tvp.getVars(), m_Script);
+			return newPredicate(result, tvp.getProcedures(), tvp.getVars(), result_as_closed_formula);
+
+		}
+	}
 	/**
 	 * Compute strongest postcondition for a return statement, where calleePred
 	 * is the predicate that holds in the called procedure before the return 
@@ -1947,23 +1947,31 @@ public class SmtManager {
 	 */
 	public IPredicate strongestPostcondition(IPredicate calleePred, 
 											IPredicate callerPred, Return ret) {
+
+		return strongestPostcondition(calleePred, callerPred, ret.getTransitionFormula(),
+				ret.getCorrespondingCall().getTransitionFormula(),
+				m_ModifiableGlobals.getGlobalVarsAssignment(
+						ret.getCorrespondingCall().getCallStatement().getMethodName()));
+	}
+
+	public IPredicate strongestPostcondition(IPredicate calleePred, 
+			IPredicate callerPred, TransFormula ret_TF, TransFormula callTF,
+			TransFormula globalVarsAssignment) {
 		// VarsToQuantify contains local vars of called procedure, and it may contain
 		// some invars, if it was a recursive call, i.e. callingProc = calledProc.
 		Set<TermVariable> varsToQuantifyOverAll = new HashSet<TermVariable>();
 		Set<TermVariable> varsToQuantifyInCalleePred = new HashSet<TermVariable>();
-		Set<TermVariable> varsToQuantifyInCallerAndCallTF = new HashSet<TermVariable>();
+		Set<TermVariable> varsToQuantifyInCallerPredAndCallTF = new HashSet<TermVariable>();
 		Map<TermVariable, TermVariable> varsToRenameInCalleePred = new HashMap<TermVariable, TermVariable>();
+		Map<TermVariable, TermVariable> varsToRenameInCallerPred = new HashMap<TermVariable, TermVariable>();
 		
 		
 		// 1.1 We doesn't rename the invars of the TransFormula Return,
 		// because we quantify them out.
 		Map<TermVariable, Term> substitution = new HashMap<TermVariable, Term>();
-		TransFormula ret_TF = ret.getTransitionFormula();
 		for (BoogieVar bv : ret_TF.getInVars().keySet()) {
 			TermVariable substitutor = ret_TF.getInVars().get(bv);
-			if (!varsToRenameInCalleePred.containsKey(bv.getTermVariable())) {
-				varsToRenameInCalleePred.put(bv.getTermVariable(), substitutor);
-			}
+			varsToRenameInCalleePred.put(bv.getTermVariable(), substitutor);
 			varsToQuantifyOverAll.add(substitutor);
 		}
 		//1.2 Rename outvars of Return statement
@@ -1971,7 +1979,7 @@ public class SmtManager {
 			// TODO: We could maybe also have the case where an outvar occurs
 			// in calleePred or callerPred, therefore we have to rename it there.
 			substitution.put(ret_TF.getOutVars().get(bv), bv.getTermVariable());
-			varsToQuantifyInCallerAndCallTF.add(bv.getTermVariable());
+			varsToQuantifyInCallerPredAndCallTF.add(bv.getTermVariable());
 //			if (calleePred.getVars().contains(bv)) {
 //				if (!varsToRenameInCalleePred.containsKey(bv.getTermVariable())) {
 //					TermVariable substitutor = ret_TF.getOutVars().get(bv);
@@ -1983,8 +1991,6 @@ public class SmtManager {
 		}
 		Term ret_Term_OutVarsRenamed = substituteTermVariablesByTerms(substitution, ret_TF.getFormula());
 		
-		// 2. Rename invars of TransFormula of corresponding Call statement
-		TransFormula callTF = ret.getCorrespondingCall().getTransitionFormula();
 		// 2.1 Rename invars of TransFormula of corresponding Call statement
 		substitution.clear();
 		for (BoogieVar bv : callTF.getInVars().keySet()) {
@@ -1995,43 +2001,23 @@ public class SmtManager {
 		// of the called procedure, therefore we want to quantify them out.
 		for (BoogieVar bv : callTF.getOutVars().keySet()) {
 			TermVariable substitutor = callTF.getOutVars().get(bv);
-			if (!varsToRenameInCalleePred.containsKey(bv.getTermVariable())) {
-				varsToRenameInCalleePred.put(bv.getTermVariable(), substitutor);
-			}
-//			varsToQuantify.add(substitutor);	
+			varsToRenameInCalleePred.put(bv.getTermVariable(), substitutor);
+			varsToRenameInCallerPred.put(bv.getTermVariable(), substitutor);
 			varsToQuantifyOverAll.add(substitutor);
 		}
 		// 3. Rename the vars in calleePred, which occur as an outvar in the TransFormula of Return Statement, or
-		// which occur as an invar in the TransFormual of the corresponding Call statement.
+		// which occur as an invar in the TransFormula of the corresponding Call statement.
 		// This substitution is only necessary, if we have a recursive call.
 		Term calleePredVarsRenamed = substituteTermVariablesByTermVariables(
 				varsToRenameInCalleePred,
 				calleePred.getFormula());
 		
-		// 4. Collect the local variables and the oldvars of the called procedure
-		// TODO: This step is maybe too complicated, maybe it could be simplified.
-		Map<TermVariable, TermVariable> oldVarsToFreshVars = new HashMap<TermVariable, TermVariable>();
-		Map<TermVariable, TermVariable> globalVarsToFreshVars = new HashMap<TermVariable, TermVariable>();
-//		for (BoogieVar bv : calleePred.getVars()) {
-//			if (!varsToRenameInCalleePred.containsKey(bv.getTermVariable())) {
-//				if (!callerPred.getVars().contains(bv)) {
-//					if (!m_GlobalVars.containsKey(bv.getIdentifier())) {
-//						varsToQuantify.add(bv.getTermVariable());
-//					} 
-//					if (bv.isOldvar()) {
-//						TermVariable freshVar = getFreshTermVariable(bv.getIdentifier(), bv.getTermVariable().getSort());
-//						oldVarsToFreshVars.put(bv.getTermVariable(), freshVar);
-//						globalVarsToFreshVars.put(getNonOldVar(bv).getTermVariable(), freshVar);
-//					}
-//				}
-//			}
-//		}
-		TransFormula globalVarsAssignment = m_ModifiableGlobals.getGlobalVarsAssignment(
-				ret.getCorrespondingCall().getCallStatement().getMethodName());
 		for (BoogieVar bv : globalVarsAssignment.getInVars().keySet()) {
 			TermVariable freshVar = getFreshTermVariable(bv.getIdentifier(), bv.getTermVariable().getSort());
-			oldVarsToFreshVars.put(bv.getTermVariable(), freshVar);
-			globalVarsToFreshVars.put(getNonOldVar(bv).getTermVariable(), freshVar);
+//			oldVarsToFreshVars.put(bv.getTermVariable(), freshVar);
+//			globalVarsToFreshVars.put(getNonOldVar(bv).getTermVariable(), freshVar);
+			varsToRenameInCalleePred.put(bv.getTermVariable(), freshVar);
+			varsToRenameInCallerPred.put(getNonOldVar(bv).getTermVariable(), freshVar);
 			varsToQuantifyOverAll.add(freshVar);
 		}
 		
@@ -2041,20 +2027,23 @@ public class SmtManager {
 			if (!callTF.getInVars().containsKey(bv) && !callTF.getOutVars().containsKey(bv)) {
 				// Ensure that loc var is not contained in return
 				if (!ret_TF.getInVars().containsKey(bv) && !ret_TF.getOutVars().containsKey(bv)) {
-					varsToQuantifyInCalleePred.add(bv.getTermVariable());
+					if (bv.getProcedure() != null) {
+						varsToQuantifyInCalleePred.add(bv.getTermVariable());
+					}
 				}
 			}
 		}
 		
 		
 		// 5. Substitute oldvars through fresh variables in calleePredicate.
-		Term calleePredVarsRenamedOldVarsToFreshVars = substituteTermVariablesByTermVariables(oldVarsToFreshVars,
+		Term calleePredVarsRenamedOldVarsToFreshVars = substituteTermVariablesByTermVariables(
+				varsToRenameInCalleePred,
 				calleePredVarsRenamed);
 		
 
 		// 6. Substitute the global variables in callerPred through the fresh Vars computed in (4).
-		Term callerPredGlobalVarsRenamedToFreshVars = substituteTermVariablesByTermVariables(
-				globalVarsToFreshVars,
+		Term callerPredVarsRenamedToFreshVars = substituteTermVariablesByTermVariables(
+				varsToRenameInCallerPred,
 				callerPred.getFormula());
 		
 		// 1. CalleePredRenamed and loc vars quantified
@@ -2065,8 +2054,8 @@ public class SmtManager {
 		// 2. CallTF and callerPred
 		Term calleRPredANDCallTFRenamedQuantified = DestructiveEqualityResolution.quantifier(m_Script,
 				Script.EXISTS,
-				varsToQuantifyInCallerAndCallTF.toArray(new TermVariable[varsToQuantifyInCallerAndCallTF.size()]),
-				Util.and(m_Script, callerPredGlobalVarsRenamedToFreshVars, callTerm_InvarsRenamed),(Term[][])null);
+				varsToQuantifyInCallerPredAndCallTF.toArray(new TermVariable[varsToQuantifyInCallerPredAndCallTF.size()]),
+				Util.and(m_Script, callerPredVarsRenamedToFreshVars, callTerm_InvarsRenamed),(Term[][])null);
 		// 3. Result
 		Term result = DestructiveEqualityResolution.quantifier(m_Script,
 				Script.EXISTS,
@@ -2076,37 +2065,7 @@ public class SmtManager {
 		TermVarsProc tvp = computeTermVarsProc(result);
 		Term resultAsClosedFormula = SmtManager.computeClosedFormula(result, tvp.getVars(), m_Script);
 		return newPredicate(result, tvp.getProcedures(), tvp.getVars(), resultAsClosedFormula);
-		
-		
-//		Term retTerm_AND_calleePred_AND_callerPred_AND_callTerm = Util.and(
-//				m_Script,
-//				ret_Term_OutVarsRenamed,
-//				calleePredVarsRenamedOldVarsToFreshVars, 
-//				callerPredGlobalVarsRenamedToFreshVars,
-//				callTerm_InvarsRenamed);
-		
-//		Term ret_Term_AND_calleePred_quantified = retTerm_AND_calleePred_AND_callerPred_AND_callTerm;
-//		if (varsToQuantify.size() > 0 || oldVarsToFreshVars.keySet().size() > 0) {
-//			TermVariable[] varsToQuantifyAsArray = new TermVariable[varsToQuantify.size() + oldVarsToFreshVars.size()];
-//			int i = 0;
-//			for (TermVariable tv : varsToQuantify) {
-//				varsToQuantifyAsArray[i] = tv;
-//				i++;
-//			}
-//			for (TermVariable tv : oldVarsToFreshVars.values()) {
-//				varsToQuantifyAsArray[i] = tv;
-//				i++;
-//			}
-//			ret_Term_AND_calleePred_quantified = DestructiveEqualityResolution.quantifier(m_Script, Script.EXISTS,
-//					varsToQuantifyAsArray,
-//					retTerm_AND_calleePred_AND_callerPred_AND_callTerm, (Term[][])null);
-//		}
-				
-//		TermVarsProc tvp = computeTermVarsProc(ret_Term_AND_calleePred_quantified);
-//		Term ret_Term_AND_calleePred_as_closed_formula = SmtManager.computeClosedFormula(ret_Term_AND_calleePred_quantified, tvp.getVars(), m_Script);
-//		return newPredicate(ret_Term_AND_calleePred_quantified, tvp.getProcedures(), tvp.getVars(), ret_Term_AND_calleePred_as_closed_formula);
 	}
-
 
 	/**
 	 * For statements which aren't contained in the corresponding unsatisfiable core,
