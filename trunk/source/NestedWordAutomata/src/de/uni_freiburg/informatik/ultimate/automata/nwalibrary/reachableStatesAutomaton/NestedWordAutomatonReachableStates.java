@@ -1538,7 +1538,9 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
         
         public void computeNestedLassoRuns(boolean computeOnlyOne) {
             for (SCC scc : m_Balls) {
-//            	m_NestedLassoRuns.add((new LassoExtractor(scc.getStateWithLowestSerialNumber(), scc,  m_AcceptingSummaries)).getNestedLassoRun());
+            	if (!scc.getAcceptingStates().isEmpty() || !scc.getAcceptingSumPred().isEmpty()) {
+            		m_NestedLassoRuns.add((new LassoExtractor(scc.getStateWithLowestSerialNumber(), scc,  m_AcceptingSummaries)).getNestedLassoRun());
+            	}
             	for (StateContainer<LETTER, STATE> fin  : scc.getAcceptingStates()) {
             		NestedLassoRun<LETTER, STATE> nlr = (new ShortestLassoExtractor(fin)).getNestedLassoRun();
             		if (computeOnlyOne) {
@@ -1799,44 +1801,62 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 				assert (iteration <= m_Scc.getAllStates().size()) : 
 					" shortest path may not have more states than scc";
 				for (IncomingReturnTransition<LETTER, STATE> inTrans : returnPredecessors(state)) {
-					if (m_Scc.getAllStates().contains(inTrans.getHierPred())) {
-						if (!acceptingRequired || isFinal(inTrans.getHierPred())) {
-							m_SuccessorsWithGuarantee.get(iteration).put(inTrans.getHierPred(),
-									new SummaryReturnTransition<LETTER, STATE>(inTrans.getLinPred(), inTrans.getLetter(), state));
-							if (m_Goal.equals(inTrans.getHierPred())) {
-								return true;
+					if (m_Scc.getAllStates().contains(m_States.get(inTrans.getHierPred()))) {
+						if (!acceptingRequired || isFinal(inTrans.getHierPred()) || isAcceptingSummary(inTrans.getHierPred(), state)) {
+							if (!m_VisitedWithGuarantee.contains(inTrans.getHierPred())) {
+								m_SuccessorsWithGuarantee.get(iteration).put(inTrans.getHierPred(),
+										new SummaryReturnTransition<LETTER, STATE>(inTrans.getLinPred(), inTrans.getLetter(), state));
+								m_VisitedWithGuarantee.add(inTrans.getHierPred());
+								if (m_Goal.equals(inTrans.getHierPred())) {
+									return true;
+								}
 							}
 						} else {
-							m_SuccessorsNoGuarantee.get(iteration).put(inTrans.getHierPred(), 
-									new SummaryReturnTransition<LETTER, STATE>(inTrans.getLinPred(), inTrans.getLetter(), state));
+							if (!m_VisitedNoGuarantee.contains(inTrans.getHierPred())) {
+								m_SuccessorsNoGuarantee.get(iteration).put(inTrans.getHierPred(), 
+										new SummaryReturnTransition<LETTER, STATE>(inTrans.getLinPred(), inTrans.getLetter(), state));
+								m_VisitedNoGuarantee.add(inTrans.getHierPred());
+							}
 						}
 					}
 				}
 				for (IncomingCallTransition<LETTER, STATE> inTrans : callPredecessors(state)) {
-					if (m_Scc.getAllStates().contains(inTrans.getPred())) {
+					if (m_Scc.getAllStates().contains(m_States.get(inTrans.getPred()))) {
 						if (!acceptingRequired || isFinal(inTrans.getPred())) {
-							m_SuccessorsWithGuarantee.get(iteration).put(inTrans.getPred(),
-									new OutgoingCallTransition<LETTER, STATE>(inTrans.getLetter(), state));
-							if (m_Goal.equals(inTrans.getPred())) {
-								return true;
+							if (!m_VisitedWithGuarantee.contains(inTrans.getPred())) {
+								m_SuccessorsWithGuarantee.get(iteration).put(inTrans.getPred(),
+										new OutgoingCallTransition<LETTER, STATE>(inTrans.getLetter(), state));
+								m_VisitedWithGuarantee.add(inTrans.getPred());
+								if (m_Goal.equals(inTrans.getPred())) {
+									return true;
+								}
 							}
 						} else {
-							m_SuccessorsNoGuarantee.get(iteration).put(inTrans.getPred(), 
+							if (!m_VisitedNoGuarantee.contains(inTrans.getPred())) {
+								m_SuccessorsNoGuarantee.get(iteration).put(inTrans.getPred(), 
 									new OutgoingCallTransition<LETTER, STATE>(inTrans.getLetter(), state));
+								m_VisitedNoGuarantee.add(inTrans.getPred());
+							}
 						}
 					}
 				}
 				for (IncomingInternalTransition<LETTER, STATE> inTrans : internalPredecessors(state)) {
-					if (m_Scc.getAllStates().contains(inTrans.getPred())) {
+					if (m_Scc.getAllStates().contains(m_States.get(inTrans.getPred()))) {
 						if (!acceptingRequired || isFinal(inTrans.getPred())) {
-							m_SuccessorsWithGuarantee.get(iteration).put(
+							if (!m_VisitedWithGuarantee.contains(inTrans.getPred())) {
+								m_SuccessorsWithGuarantee.get(iteration).put(
 									inTrans.getPred(), new OutgoingInternalTransition<LETTER, STATE>(inTrans.getLetter(), state));
-							if (m_Goal.equals(inTrans.getPred())) {
-								return true;
+								m_VisitedWithGuarantee.add(inTrans.getPred());
+								if (m_Goal.equals(inTrans.getPred())) {
+									return true;
+								}
 							}
 						} else {
-							m_SuccessorsNoGuarantee.get(iteration).put(
+							if (!m_VisitedNoGuarantee.contains(inTrans.getPred())) {
+								m_SuccessorsNoGuarantee.get(iteration).put(
 									inTrans.getPred(), new OutgoingInternalTransition<LETTER, STATE>(inTrans.getLetter(), state));
+								m_VisitedNoGuarantee.add(inTrans.getPred());
+							}
 						}
 					}
 				}
@@ -2463,11 +2483,26 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 		protected final List<Map<STATE, Object>> m_SuccessorsWithGuarantee;
 		
 		/**
+		 * States that have already been visited (without start state) from 
+		 * which there is a run to the start state (of this search) such the
+		 * equirement (e.g., final state visited) is fulfilled.
+		 */
+		protected final Set<STATE> m_VisitedWithGuarantee;
+		
+		/**
 		 * Successor mapping. I you use this to build a run, it is not
 		 * guaranteed that the requirement (e.g., final state visited) is
 		 * fulfilled.
 		 */
 		protected final List<Map<STATE, Object>> m_SuccessorsNoGuarantee;
+		
+		/**
+		 * States that have already been visited (without start state) from 
+		 * which there is a run to the start state (of this search) it is not
+		 * guaranteed that the requirement (e.g., final state visited) is
+		 * fulfilled.
+		 */
+		protected final Set<STATE> m_VisitedNoGuarantee;
 		
 		/**
 		 * Contains a pair of states (pre,post) if there is an run from
@@ -2491,6 +2526,8 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 			m_AcceptingSummaries = acceptingSummaries;
 			m_SuccessorsWithGuarantee = new ArrayList<Map<STATE,Object>>();
 			m_SuccessorsNoGuarantee = new ArrayList<Map<STATE,Object>>();
+			m_VisitedWithGuarantee = new HashSet<STATE>();
+			m_VisitedNoGuarantee = new HashSet<STATE>();
 		}
 		
 		public NestedRun<LETTER, STATE> getNestedRun() {
@@ -2504,7 +2541,7 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 			if (postCandidates == null) {
 				return false;
 			} else {
-				StateContainer<LETTER, STATE> postSc = m_States.get(pre);
+				StateContainer<LETTER, STATE> postSc = m_States.get(post);
 				return postCandidates.contains(postSc);
 			}
 		}
@@ -2513,8 +2550,9 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 			int iteration = 0;
 			m_SuccessorsWithGuarantee.add(new HashMap<STATE,Object>());
 			m_SuccessorsNoGuarantee.add(new HashMap<STATE,Object>());
-			boolean found = findPredecessors(start, iteration, m_VisitAccepting);
-			while(!found) {
+			boolean found = findPredecessors(start, iteration, m_VisitAccepting && !isFinal(start));
+			while(!found && (!m_SuccessorsWithGuarantee.get(iteration).isEmpty() 
+					|| m_SuccessorsNoGuarantee.get(iteration).isEmpty())) {
 				assert (iteration <= size()) : "shortest run must be smaller than number of states";
 				iteration++;
 				m_SuccessorsWithGuarantee.add(new HashMap<STATE,Object>());
@@ -2526,6 +2564,7 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 					found |= findPredecessors(state, iteration, true);
 				}
 			}
+			assert (found);
 		}
 		
 		protected abstract boolean findPredecessors(STATE state, int iteration, boolean acceptingRequired);
