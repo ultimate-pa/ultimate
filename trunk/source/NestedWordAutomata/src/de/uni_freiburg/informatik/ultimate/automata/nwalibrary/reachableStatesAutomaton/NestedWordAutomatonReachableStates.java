@@ -1538,6 +1538,7 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
         
         public void computeNestedLassoRuns(boolean computeOnlyOne) {
             for (SCC scc : m_Balls) {
+//            	m_NestedLassoRuns.add((new LassoExtractor(scc.getStateWithLowestSerialNumber(), scc,  m_AcceptingSummaries)).getNestedLassoRun());
             	for (StateContainer<LETTER, STATE> fin  : scc.getAcceptingStates()) {
             		NestedLassoRun<LETTER, STATE> nlr = (new ShortestLassoExtractor(fin)).getNestedLassoRun();
             		if (computeOnlyOne) {
@@ -1685,6 +1686,7 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 	    			new HashSet<StateContainer<LETTER, STATE>>();
 	    	final Set<StateContainer<LETTER, STATE>> m_AllStates = 
 	    			new HashSet<StateContainer<LETTER, STATE>>();
+	    	private StateContainer<LETTER, STATE> m_StateWithLowestSerialNumber;
 	    	
 	    	public void addState(StateContainer<LETTER, STATE> cont) {
 	    		if (m_RootNode != null) {
@@ -1692,6 +1694,10 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 	    					"If root node is set SCC may not be modified");
 	    		}
 	    		m_AllStates.add(cont);
+	    		if (m_StateWithLowestSerialNumber == null || 
+	    				cont.getSerialNumber() < m_StateWithLowestSerialNumber.getSerialNumber()) {
+	    			m_StateWithLowestSerialNumber = cont;
+	    		}
 	    		if (isFinal(cont.getState())) {
 	    			m_AcceptingStates.add(cont);
 	    		}
@@ -1737,6 +1743,10 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 			public Set<StateContainer<LETTER, STATE>> getAcceptingSumPred() {
 				return m_HasAcceptingSumInSCC;
 			}
+			
+			public StateContainer<LETTER, STATE> getStateWithLowestSerialNumber() {
+				return m_StateWithLowestSerialNumber;
+			}
 	    }
     }
     
@@ -1748,14 +1758,14 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
     	private final NestedLassoRun<LETTER, STATE> m_nlr;
     	
     	public LassoExtractor(StateContainer<LETTER, STATE> honda, 
-    			StronglyConnectedComponents.SCC scc, StateContainer<LETTER, STATE> goal, 
+    			StronglyConnectedComponents.SCC scc, 
     			Map<StateContainer<LETTER, STATE>, Set<StateContainer<LETTER, STATE>>> acceptingSummaries) {
     			m_AcceptingSummaries = acceptingSummaries;
     			
     			LoopFinder lf = new LoopFinder(honda.getState(), scc, true, 
     					acceptingSummaries);
     			NestedRun<LETTER, STATE> loop = lf.getNestedRun();
-    			NestedRun<LETTER, STATE> stem = null;
+    			NestedRun<LETTER, STATE> stem = constructRun(honda);
     			s_Logger.debug("Stem length: " + stem.getLength());
     			s_Logger.debug("Loop length: " + loop.getLength());
     			m_nlr = new NestedLassoRun<LETTER, STATE>(stem, loop);
@@ -1763,6 +1773,10 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
     			s_Logger.debug("Loop " + loop);
     			INestedWordAutomatonOldApi<LETTER, STATE> test = NestedWordAutomatonReachableStates.this;
     			assert (new BuchiAccepts<LETTER, STATE>(test, m_nlr.getNestedLassoWord())).getResult();
+    	}
+    	
+    	NestedLassoRun<LETTER, STATE> getNestedLassoRun() {
+    		return m_nlr;
     	}
     	
     	
@@ -1782,6 +1796,8 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 			@Override
 			protected boolean findPredecessors(STATE state, int iteration,
 					boolean acceptingRequired) {
+				assert (iteration <= m_Scc.getAllStates().size()) : 
+					" shortest path may not have more states than scc";
 				for (IncomingReturnTransition<LETTER, STATE> inTrans : returnPredecessors(state)) {
 					if (m_Scc.getAllStates().contains(inTrans.getHierPred())) {
 						if (!acceptingRequired || isFinal(inTrans.getHierPred())) {
@@ -2499,10 +2515,13 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 			m_SuccessorsNoGuarantee.add(new HashMap<STATE,Object>());
 			boolean found = findPredecessors(start, iteration, m_VisitAccepting);
 			while(!found) {
-				for (STATE state : m_SuccessorsWithGuarantee.get(iteration).keySet()) {
+				iteration++;
+				m_SuccessorsWithGuarantee.add(new HashMap<STATE,Object>());
+				m_SuccessorsNoGuarantee.add(new HashMap<STATE,Object>());
+				for (STATE state : m_SuccessorsWithGuarantee.get(iteration-1).keySet()) {
 					findPredecessors(state, iteration, false);
 				}
-				for (STATE state : m_SuccessorsNoGuarantee.get(iteration).keySet()) {
+				for (STATE state : m_SuccessorsNoGuarantee.get(iteration-1).keySet()) {
 					findPredecessors(state, iteration, true);
 				}
 			}
