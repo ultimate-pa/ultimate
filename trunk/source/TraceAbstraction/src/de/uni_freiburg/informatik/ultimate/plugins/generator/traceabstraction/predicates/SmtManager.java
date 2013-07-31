@@ -1980,21 +1980,20 @@ public class SmtManager {
 			// in calleePred or callerPred, therefore we have to rename it there.
 			substitution.put(ret_TF.getOutVars().get(bv), bv.getTermVariable());
 			varsToQuantifyInCallerPredAndCallTF.add(bv.getTermVariable());
-//			if (calleePred.getVars().contains(bv)) {
-//				if (!varsToRenameInCalleePred.containsKey(bv.getTermVariable())) {
-//					TermVariable substitutor = ret_TF.getOutVars().get(bv);
-//					varsToRenameInCalleePred.put(bv.getTermVariable(), substitutor);
-//				}
-//				varsToQuantify.add(ret_TF.getOutVars().get(bv));
-//			}
-			
 		}
-		Term ret_Term_OutVarsRenamed = substituteTermVariablesByTerms(substitution, ret_TF.getFormula());
+		Term ret_TermOutVarsRenamed = substituteTermVariablesByTerms(substitution, ret_TF.getFormula());
 		
 		// 2.1 Rename invars of TransFormula of corresponding Call statement
 		substitution.clear();
 		for (BoogieVar bv : callTF.getInVars().keySet()) {
-			substitution.put(callTF.getInVars().get(bv), bv.getTermVariable());
+			if (ret_TF.getOutVars().containsKey(bv)) {
+				TermVariable freshVar = getFreshTermVariable(bv.getIdentifier(), bv.getTermVariable().getSort());
+				substitution.put(callTF.getInVars().get(bv), freshVar);
+				varsToRenameInCallerPred.put(bv.getTermVariable(), freshVar);
+				varsToQuantifyInCallerPredAndCallTF.add(freshVar);
+			} else {
+				substitution.put(callTF.getInVars().get(bv), bv.getTermVariable());
+			}
 		}
 		Term callTerm_InvarsRenamed = substituteTermVariablesByTerms(substitution, callTF.getFormula());
 		// 2.2 We doesn't rename the outvars, because the outvars are the localvars
@@ -2002,7 +2001,6 @@ public class SmtManager {
 		for (BoogieVar bv : callTF.getOutVars().keySet()) {
 			TermVariable substitutor = callTF.getOutVars().get(bv);
 			varsToRenameInCalleePred.put(bv.getTermVariable(), substitutor);
-			varsToRenameInCallerPred.put(bv.getTermVariable(), substitutor);
 			varsToQuantifyOverAll.add(substitutor);
 		}
 		// 3. Rename the vars in calleePred, which occur as an outvar in the TransFormula of Return Statement, or
@@ -2014,8 +2012,6 @@ public class SmtManager {
 		
 		for (BoogieVar bv : globalVarsAssignment.getInVars().keySet()) {
 			TermVariable freshVar = getFreshTermVariable(bv.getIdentifier(), bv.getTermVariable().getSort());
-//			oldVarsToFreshVars.put(bv.getTermVariable(), freshVar);
-//			globalVarsToFreshVars.put(getNonOldVar(bv).getTermVariable(), freshVar);
 			varsToRenameInCalleePred.put(bv.getTermVariable(), freshVar);
 			varsToRenameInCallerPred.put(getNonOldVar(bv).getTermVariable(), freshVar);
 			varsToQuantifyOverAll.add(freshVar);
@@ -2060,7 +2056,7 @@ public class SmtManager {
 		Term result = DestructiveEqualityResolution.quantifier(m_Script,
 				Script.EXISTS,
 				varsToQuantifyOverAll.toArray(new TermVariable[varsToQuantifyOverAll.size()]),
-				Util.and(m_Script, calleePredRenamedQuantified, ret_Term_OutVarsRenamed, calleRPredANDCallTFRenamedQuantified),
+				Util.and(m_Script, calleePredRenamedQuantified, ret_TermOutVarsRenamed, calleRPredANDCallTFRenamedQuantified),
 				(Term[][])null);
 		TermVarsProc tvp = computeTermVarsProc(result);
 		Term resultAsClosedFormula = SmtManager.computeClosedFormula(result, tvp.getVars(), m_Script);
