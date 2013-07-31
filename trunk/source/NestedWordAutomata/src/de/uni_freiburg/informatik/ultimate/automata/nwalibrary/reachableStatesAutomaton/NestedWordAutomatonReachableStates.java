@@ -1801,13 +1801,13 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 				for (IncomingReturnTransition<LETTER, STATE> inTrans : returnPredecessors(state)) {
 					if (m_Scc.getAllStates().contains(inTrans.getHierPred())) {
 						if (!acceptingRequired || isFinal(inTrans.getHierPred())) {
-							m_SuccessorsWithGuarantee.get(iteration).put(state,
+							m_SuccessorsWithGuarantee.get(iteration).put(inTrans.getHierPred(),
 									new SummaryReturnTransition<LETTER, STATE>(inTrans.getLinPred(), inTrans.getLetter(), state));
 							if (m_Goal.equals(inTrans.getHierPred())) {
 								return true;
 							}
 						} else {
-							m_SuccessorsNoGuarantee.get(iteration).put(state, 
+							m_SuccessorsNoGuarantee.get(iteration).put(inTrans.getHierPred(), 
 									new SummaryReturnTransition<LETTER, STATE>(inTrans.getLinPred(), inTrans.getLetter(), state));
 						}
 					}
@@ -1815,13 +1815,13 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 				for (IncomingCallTransition<LETTER, STATE> inTrans : callPredecessors(state)) {
 					if (m_Scc.getAllStates().contains(inTrans.getPred())) {
 						if (!acceptingRequired || isFinal(inTrans.getPred())) {
-							m_SuccessorsWithGuarantee.get(iteration).put(state,
+							m_SuccessorsWithGuarantee.get(iteration).put(inTrans.getPred(),
 									new OutgoingCallTransition<LETTER, STATE>(inTrans.getLetter(), state));
 							if (m_Goal.equals(inTrans.getPred())) {
 								return true;
 							}
 						} else {
-							m_SuccessorsNoGuarantee.get(iteration).put(state, 
+							m_SuccessorsNoGuarantee.get(iteration).put(inTrans.getPred(), 
 									new OutgoingCallTransition<LETTER, STATE>(inTrans.getLetter(), state));
 						}
 					}
@@ -1830,13 +1830,13 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 					if (m_Scc.getAllStates().contains(inTrans.getPred())) {
 						if (!acceptingRequired || isFinal(inTrans.getPred())) {
 							m_SuccessorsWithGuarantee.get(iteration).put(
-									state, new OutgoingInternalTransition<LETTER, STATE>(inTrans.getLetter(), state));
+									inTrans.getPred(), new OutgoingInternalTransition<LETTER, STATE>(inTrans.getLetter(), state));
 							if (m_Goal.equals(inTrans.getPred())) {
 								return true;
 							}
 						} else {
 							m_SuccessorsNoGuarantee.get(iteration).put(
-									state, new OutgoingInternalTransition<LETTER, STATE>(inTrans.getLetter(), state));
+									inTrans.getPred(), new OutgoingInternalTransition<LETTER, STATE>(inTrans.getLetter(), state));
 						}
 					}
 				}
@@ -2396,7 +2396,7 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 			} else if (transitionToLowest instanceof IncomingReturnTransition) {
 				IncomingReturnTransition<LETTER, STATE> inTrans = (IncomingReturnTransition) transitionToLowest;
 				SummaryFinder summaryFinder = new SummaryFinder(
-						current.getState(), inTrans.getHierPred(), 
+						inTrans.getLinPred(), inTrans.getHierPred(), 
 						false, null);
 				NestedRun<LETTER, STATE> summary = summaryFinder.getNestedRun();
 				NestedRun<LETTER, STATE> returnSuffix = 
@@ -2515,14 +2515,15 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 			m_SuccessorsNoGuarantee.add(new HashMap<STATE,Object>());
 			boolean found = findPredecessors(start, iteration, m_VisitAccepting);
 			while(!found) {
+				assert (iteration <= size()) : "shortest run must be smaller than number of states";
 				iteration++;
 				m_SuccessorsWithGuarantee.add(new HashMap<STATE,Object>());
 				m_SuccessorsNoGuarantee.add(new HashMap<STATE,Object>());
 				for (STATE state : m_SuccessorsWithGuarantee.get(iteration-1).keySet()) {
-					findPredecessors(state, iteration, false);
+					found |= findPredecessors(state, iteration, false);
 				}
 				for (STATE state : m_SuccessorsNoGuarantee.get(iteration-1).keySet()) {
-					findPredecessors(state, iteration, true);
+					found |= findPredecessors(state, iteration, true);
 				}
 			}
 		}
@@ -2541,7 +2542,7 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 			NestedRun<LETTER, STATE> result = initializeRunReconstruction(); 
 					
 			for (int i = m_SuccessorsWithGuarantee.size() - 1; i>=0; i--) {
-				STATE currentState = result.getStateAtPosition(result.getLength());
+				STATE currentState = result.getStateAtPosition(result.getLength()-1);
 				if (isFinal(currentState)) {
 					visitAcceptingStillRequired = false;
 				}
@@ -2557,7 +2558,6 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 					newSuffix = new NestedRun<LETTER, STATE>(currentState, 
 							outTrans.getLetter(), 
 							NestedWord.INTERNAL_POSITION, outTrans.getSucc());
-					result = result.concatenate(newSuffix);
 				} else if (succs instanceof OutgoingCallTransition) {
 					OutgoingCallTransition<LETTER, STATE> outTrans = 
 							(OutgoingCallTransition<LETTER, STATE>) succs;
@@ -2578,7 +2578,7 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 						findAcceptingSummary = false;
 					}
 					SummaryFinder summaryFinder = new SummaryFinder(
-							outTrans.getSucc(), currentState, 
+							outTrans.getLinPred(), currentState, 
 							findAcceptingSummary, m_AcceptingSummaries);
 					newSuffix = summaryFinder.getNestedRun();
 					NestedRun<LETTER, STATE> retSuffix = 
@@ -2611,8 +2611,6 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 
 	class SummaryFinder extends RunFinder {
 	
-		OutgoingCallTransition<LETTER, STATE> m_Call;
-		
 		public SummaryFinder(STATE returnPredecessor, STATE callPredecessor, 
 				boolean visitAccepting,	Map<StateContainer<LETTER, STATE>, 
 						Set<StateContainer<LETTER, STATE>>> acceptingSummaries) {
@@ -2623,7 +2621,8 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 			if (!acceptingRequired) {
 				for (IncomingCallTransition<LETTER, STATE> inTrans : callPredecessors(state)) {
 					if (m_Goal.equals(inTrans.getPred())) {
-						m_Call = new OutgoingCallTransition<LETTER, STATE>(inTrans.getLetter(), state);
+						m_SuccessorsWithGuarantee.get(iteration).put(
+								inTrans.getPred(), new OutgoingCallTransition<LETTER, STATE>(inTrans.getLetter(), state));
 						return true;
 					}
 				}
@@ -2634,34 +2633,34 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 					if (acceptingRequired) {
 						if (isFinal(predSc.getState())) {
 							m_SuccessorsWithGuarantee.get(iteration).put(
-									state, new OutgoingInternalTransition<LETTER, STATE>(inTrans.getLetter(), state));
+									inTrans.getPred(), new OutgoingInternalTransition<LETTER, STATE>(inTrans.getLetter(), state));
 						} else if (predSc.hasDownProp(m_Goal, DownStateProp.REACHABLE_FROM_FINAL_WITHOUT_CALL)) {
 							m_SuccessorsNoGuarantee.get(iteration).put(
-									state, new OutgoingInternalTransition<LETTER, STATE>(inTrans.getLetter(), state));
+									inTrans.getPred(), new OutgoingInternalTransition<LETTER, STATE>(inTrans.getLetter(), state));
 						}
 					} else {
 						m_SuccessorsWithGuarantee.get(iteration).put(
-								state, new OutgoingInternalTransition<LETTER, STATE>(inTrans.getLetter(), state));
+								inTrans.getPred(), new OutgoingInternalTransition<LETTER, STATE>(inTrans.getLetter(), state));
 					}
 				}
 			}
 			for (IncomingReturnTransition<LETTER, STATE> inTrans : returnPredecessors(state)) {
-				StateContainer<LETTER, STATE> predSc = m_States.get(inTrans.getHierPred());
-				if (predSc.getDownStates().containsKey(m_Goal)) {
+				StateContainer<LETTER, STATE> linpredSc = m_States.get(inTrans.getLinPred());
+				if (linpredSc.getDownStates().containsKey(m_Goal)) {
 					if (acceptingRequired) {
-						if (isFinal(predSc.getState())) {
+						if (isFinal(linpredSc.getState())) {
 							m_SuccessorsWithGuarantee.get(iteration).put(
-									state, new SummaryReturnTransition<LETTER, STATE>(inTrans.getLinPred(), inTrans.getLetter(), state));
+									inTrans.getHierPred(), new SummaryReturnTransition<LETTER, STATE>(inTrans.getLinPred(), inTrans.getLetter(), state));
 						} else if (isAcceptingSummary(inTrans.getHierPred(), state)) {
 							m_SuccessorsWithGuarantee.get(iteration).put(
-									state, new SummaryReturnTransition<LETTER, STATE>(inTrans.getLinPred(), inTrans.getLetter(), state));
-						} else if (predSc.hasDownProp(m_Goal, DownStateProp.REACHABLE_FROM_FINAL_WITHOUT_CALL)) {
+									inTrans.getHierPred(), new SummaryReturnTransition<LETTER, STATE>(inTrans.getLinPred(), inTrans.getLetter(), state));
+						} else if (linpredSc.hasDownProp(m_Goal, DownStateProp.REACHABLE_FROM_FINAL_WITHOUT_CALL)) {
 							m_SuccessorsNoGuarantee.get(iteration).put(
-									state, new SummaryReturnTransition<LETTER, STATE>(inTrans.getLinPred(), inTrans.getLetter(), state));
+									inTrans.getHierPred(), new SummaryReturnTransition<LETTER, STATE>(inTrans.getLinPred(), inTrans.getLetter(), state));
 						}
 					} else {
 						m_SuccessorsWithGuarantee.get(iteration).put(
-								state, new SummaryReturnTransition<LETTER, STATE>(inTrans.getLinPred(), inTrans.getLetter(), state));
+								inTrans.getHierPred(), new SummaryReturnTransition<LETTER, STATE>(inTrans.getLinPred(), inTrans.getLetter(), state));
 					}
 				}
 			}
@@ -2670,7 +2669,8 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 		
 		@Override
 		NestedRun<LETTER, STATE> initializeRunReconstruction() {
-			return new NestedRun<LETTER, STATE>(m_Goal, m_Call.getLetter(), NestedWord.PLUS_INFINITY,m_Call.getSucc());
+			return new NestedRun<LETTER, STATE>(m_Goal);
+			//return null;
 		}
 	}
 
