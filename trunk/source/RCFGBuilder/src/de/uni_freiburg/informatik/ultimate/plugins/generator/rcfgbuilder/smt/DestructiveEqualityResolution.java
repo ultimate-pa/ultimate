@@ -3,8 +3,10 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 
 import org.apache.log4j.Logger;
 
@@ -30,10 +32,21 @@ public class DestructiveEqualityResolution {
 	private static Logger s_Logger = 
 			UltimateServices.getInstance().getLogger(Activator.PLUGIN_ID);
 	
-	
+	/**
+	 * Returns equivalent formula. Quantifier is dropped if quantified
+	 * variable not in formula. Quantifier is eliminated if this can be done
+	 * by using a naive "destructive equality resolution".
+	 */
 	public static Term quantifier(Script script, int quantifier, 
 			TermVariable[] vars, Term body,	Term[]... patterns) {
-		List<TermVariable> remaning = new ArrayList<TermVariable>(Arrays.asList(vars));
+		Set<TermVariable> occuringVars = 
+				new HashSet<TermVariable>(Arrays.asList(body.getFreeVars()));
+		List<TermVariable> remaning = new ArrayList<TermVariable>(vars.length);
+		for (TermVariable tv : vars) {
+			if (occuringVars.contains(tv)) {
+				remaning.add(tv);
+			}
+		}
 		Term reduced = derSimple(script, quantifier, body, remaning);
 		if (remaning.isEmpty()) {
 			return reduced;
