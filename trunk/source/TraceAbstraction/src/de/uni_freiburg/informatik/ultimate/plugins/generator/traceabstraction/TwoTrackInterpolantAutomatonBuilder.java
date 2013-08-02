@@ -21,22 +21,23 @@ public class TwoTrackInterpolantAutomatonBuilder {
 	private final TraceCheckerSpWp m_TraceCheckerSpWp;
 	
 	private final NestedWord<CodeBlock> m_NestedWord;
-	private ArrayList<IPredicate> m_StateSequence;
+//	private ArrayList<IPredicate> m_StateSequence;
 	NestedWordAutomaton<CodeBlock, IPredicate> m_TTIA;
 	private final SmtManager m_SmtManager;
 	
-	private NestedWordAutomaton<CodeBlock, IPredicate> m_Result;
 	
 	public TwoTrackInterpolantAutomatonBuilder(
 			IRun<CodeBlock,IPredicate> nestedRun,
 			SmtManager smtManager,
-			TraceChecker traceChecker) {
+			TraceChecker traceChecker,
+			IAutomaton<CodeBlock, IPredicate> abstraction) {
 		if (!(traceChecker instanceof TraceCheckerSpWp)) {
 			throw new UnsupportedOperationException("Wrong trace checker");
 		}
 		m_TraceCheckerSpWp = (TraceCheckerSpWp) traceChecker;
 		m_NestedWord = NestedWord.nestedWord(nestedRun.getWord());
 		m_SmtManager = smtManager;
+		m_TTIA = buildTwoTrackInterpolantAutomaton(abstraction, abstraction.getStateFactory());
 	}
 	
 	public NestedWordAutomaton<CodeBlock, IPredicate> 
@@ -84,104 +85,44 @@ public class TwoTrackInterpolantAutomatonBuilder {
 				callAlphabet,
 				returnAlphabet,
 				tAContentFactory);
-		{
-			m_TTIA.addState(true, false, m_TraceCheckerSpWp.getPrecondition());
-//			List<Integer> occurrence = new ArrayList<Integer>();
-//			occurrence.add(0);
-//			ProgramPoint pp = getProgramPointAtPosition(0);
-//			m_ProgramPoint2Occurence.put(pp,occurrence);
-		}
+		m_TTIA.addState(true, false, m_TraceCheckerSpWp.getPrecondition());
 		m_TTIA.addState(false, true, m_TraceCheckerSpWp.getPostcondition());
 		
 		for (int i=0; i<m_NestedWord.length(); i++) {
-			// TODO: Is it really necessary, in our setting an automaton has only one initial,
-			// and final state, namely initial = {true} and final={false}
-			boolean isFinal = isFalsePredicate(m_TraceCheckerSpWp.getInterpolanstsSPAtPosition(i));
-			if (!m_TTIA.getStates().contains(m_TraceCheckerSpWp.getInterpolanstsSPAtPosition(i))) {
-				m_TTIA.addState(false, isFinal, m_TraceCheckerSpWp.getInterpolanstsSPAtPosition(i));
+			if (i < (m_NestedWord.length() - 1)) {
+				boolean isFinal = isFalsePredicate(m_TraceCheckerSpWp.getInterpolanstsSPAtPosition(i));
+				if (!m_TTIA.getStates().contains(m_TraceCheckerSpWp.getInterpolanstsSPAtPosition(i))) {
+					m_TTIA.addState(false, isFinal, m_TraceCheckerSpWp.getInterpolanstsSPAtPosition(i));
+				}
 			}
-
-			addTransition(m_TraceCheckerSpWp.getInterpolanstsSPAtPosition(i-1), i, m_TraceCheckerSpWp.getInterpolanstsSPAtPosition(i));
-			
-			isFinal = isFalsePredicate(m_TraceCheckerSpWp.getInterpolanstsWPAtPosition(i));
-			if (!m_TTIA.getStates().contains(m_TraceCheckerSpWp.getInterpolanstsWPAtPosition(i))) {
-				m_TTIA.addState(false, isFinal, m_TraceCheckerSpWp.getInterpolanstsWPAtPosition(i));
+			if (i == 0) {
+				addTransition(m_TraceCheckerSpWp.getPrecondition(), i,
+						m_TraceCheckerSpWp.getInterpolanstsSPAtPosition(i));
+			} else if (i == (m_NestedWord.length() - 1)) {
+				addTransition(m_TraceCheckerSpWp.getInterpolanstsSPAtPosition(i-1), i,
+						m_TraceCheckerSpWp.getPostcondition());
+			} else {
+				addTransition(m_TraceCheckerSpWp.getInterpolanstsSPAtPosition(i-1), i,
+						m_TraceCheckerSpWp.getInterpolanstsSPAtPosition(i));
 			}
-
-			addTransition(m_TraceCheckerSpWp.getInterpolanstsWPAtPosition(i-1), i, m_TraceCheckerSpWp.getInterpolanstsWPAtPosition(i));
+			if (i < (m_NestedWord.length() - 1)) {
+				boolean isFinal = isFalsePredicate(m_TraceCheckerSpWp.getInterpolanstsWPAtPosition(i));
+				if (!m_TTIA.getStates().contains(m_TraceCheckerSpWp.getInterpolanstsWPAtPosition(i))) {
+					m_TTIA.addState(false, isFinal, m_TraceCheckerSpWp.getInterpolanstsWPAtPosition(i));
+				}
+			}
+			if (i == 0) {
+				addTransition(m_TraceCheckerSpWp.getPrecondition(), i,
+						m_TraceCheckerSpWp.getInterpolanstsWPAtPosition(i));
+			} else if (i == (m_NestedWord.length() - 1)) {
+				addTransition(m_TraceCheckerSpWp.getInterpolanstsWPAtPosition(i-1), i,
+						m_TraceCheckerSpWp.getPostcondition());
+			} else {
+				addTransition(m_TraceCheckerSpWp.getInterpolanstsWPAtPosition(i-1), i,
+						m_TraceCheckerSpWp.getInterpolanstsWPAtPosition(i));
+			}
 		}
 			
-//			if(m_AdditionalEdges == InterpolantAutomaton.CANONICAL) {
-//				ProgramPoint pp = getProgramPointAtPosition(i-1);
-//				List<Integer> occurrence = m_ProgramPoint2Occurence.get(pp);
-//				if (occurrence == null) {
-//					occurrence = new ArrayList<Integer>();
-//					m_ProgramPoint2Occurence.put(pp, occurrence);
-//				}
-//				else {
-//					for (int occur : occurrence) {
-//						surveyBackedge(i-1, occur);
-//					}
-//				}
-//				occurrence.add(i-1);
-//			}
-//		}
-//		
-//		
-//		if (m_SelfloopAtInitial) {
-//			for (CodeBlock symbol : internalAlphabet) {
-//				m_IA.addInternalTransition(
-//								getInterpolant(-1), symbol, getInterpolant(-1));
-//			}
-//			for (CodeBlock symbol : callAlphabet) {
-//				m_IA.addCallTransition(
-//								getInterpolant(-1), symbol, getInterpolant(-1));
-//			}
-//			for (CodeBlock symbol : returnAlphabet) {
-//				m_IA.addReturnTransition(
-//				  getInterpolant(-1),getInterpolant(-1),symbol,getInterpolant(-1));
-//				for (Integer pos : m_AlternativeCallPredecessors.keySet()) {
-//					for (IPredicate hier : 
-//									m_AlternativeCallPredecessors.get(pos)) {
-//						m_IA.addReturnTransition(
-//							getInterpolant(-1), hier, symbol, getInterpolant(-1));
-//					}
-//				}
-//
-//			}
-//			
-//		}
-//		
-//		if (m_SelfloopAtFinal) {
-//			for (CodeBlock symbol : internalAlphabet) {
-//				m_IA.addInternalTransition(m_FalsePredicate, symbol, m_FalsePredicate);
-//			}
-//			for (CodeBlock symbol : callAlphabet) {
-//				m_IA.addCallTransition(m_FalsePredicate, symbol, m_FalsePredicate);
-//			}
-//			for (CodeBlock symbol : returnAlphabet) {
-//				m_IA.addReturnTransition(
-//						m_FalsePredicate, m_FalsePredicate, symbol, m_FalsePredicate);
-//				for (Integer pos : m_AlternativeCallPredecessors.keySet()) {
-//					for (IPredicate hier : 
-//									m_AlternativeCallPredecessors.get(pos)) {
-//						m_IA.addReturnTransition(
-//								m_FalsePredicate, hier, symbol, m_FalsePredicate);
-//					}
-//				}
-//			}
-//		}
-//		
-//		s_Logger.info("Checked inductivity of " +
-//				(m_Unsat+m_Sat+m_Unknown+m_Trivial) +	" backedges. " + 
-//				m_Unsat + " proven. " + 
-//				m_Sat + " refuted. " + 
-//				m_Unknown + " times theorem prover too weak." +
-//				m_Trivial + " trivial.");
-//		
-//		if (m_AdditionalEdges == InterpolantAutomaton.TOTALINTERPOLATION) {
-//			throw new UnsupportedOperationException();
-//		}
 		return m_TTIA;
 	}
 	
@@ -216,7 +157,7 @@ public class TwoTrackInterpolantAutomatonBuilder {
 	}
 	
 	public NestedWordAutomaton<CodeBlock, IPredicate> getResult() {
-		return m_Result;
+		return m_TTIA;
 	}
 
 }

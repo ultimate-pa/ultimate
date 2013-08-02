@@ -28,7 +28,7 @@ public class TraceCheckerSpWp extends TraceChecker {
 	
 	private static boolean m_useUnsatCore = false;
 	private static boolean m_ComputeInterpolantsSp = true;
-	private static boolean m_ComputeInterpolantsWp = false;
+	private static boolean m_ComputeInterpolantsWp = true;
 
 	public TraceCheckerSpWp(SmtManager smtManager,
 			ModifiableGlobalVariableManager modifiedGlobals,
@@ -49,13 +49,15 @@ public class TraceCheckerSpWp extends TraceChecker {
 	
 	public IPredicate getInterpolanstsSPAtPosition(int i) {
 		assert m_InterpolantsSp != null : "InterpolantsSP hasn't been computed, yet.";
-		assert i >= 0 && i < m_InterpolantsSp.length : "The given position is not a correct position!";
+		assert i >= 0 && i < m_InterpolantsSp.length : ("The given position "+ i
+				+ " is not a correct position. #Interpolants = " 
+				+ m_InterpolantsSp.length);
 		return m_InterpolantsSp[i];
 	}
 	
 	public IPredicate getInterpolanstsWPAtPosition(int i) {
 		assert m_InterpolantsWp != null : "InterpolantsWP hasn't been computed, yet.";
-		assert i >= 0 && i < m_InterpolantsWp.length : "The given position is not a correct position!";
+		assert i >= 0 && i < m_InterpolantsWp.length : "The given position "+ i + " is not a correct position!";
 		return m_InterpolantsWp[i];
 	}
 	
@@ -181,10 +183,9 @@ public class TraceCheckerSpWp extends TraceChecker {
 		Word<CodeBlock> trace = m_Trace;
 		
 		unlockSmtManager();
-		m_InterpolantsSp = new IPredicate[trace.length()-1];
-		m_InterpolantsWp = new IPredicate[trace.length()-1];
 		
 		if (m_ComputeInterpolantsSp) {
+			m_InterpolantsSp = new IPredicate[trace.length()-1];
 			s_Logger.debug("Computing strongest postcondition for given trace ...");
 
 			if (trace.getSymbol(0) instanceof Call) {
@@ -231,6 +232,7 @@ public class TraceCheckerSpWp extends TraceChecker {
 		}
 
 		if (m_ComputeInterpolantsWp) {
+			m_InterpolantsWp = new IPredicate[trace.length()-1];
 			s_Logger.debug("Computing weakest precondition for given trace ...");
 			if (trace.getSymbol(m_InterpolantsWp.length) instanceof Call) {
 				// If the trace contains a Call statement, then it must be a NestedWord

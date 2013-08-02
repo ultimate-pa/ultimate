@@ -190,7 +190,8 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		m_TimingStatistics.startBasicInterpolantAutomaton();
 		if (m_Pref.interpolantAutomaton() == InterpolantAutomaton.TWOTRACK) {
 			TwoTrackInterpolantAutomatonBuilder ttiab = 
-					new TwoTrackInterpolantAutomatonBuilder(m_Counterexample,m_SmtManager, m_TraceChecker);
+					new TwoTrackInterpolantAutomatonBuilder(m_Counterexample,m_SmtManager, m_TraceChecker,
+							m_Abstraction);
 			m_InterpolAutomaton = ttiab.getResult();
 		} else {
 			InterpolantAutomataBuilder iab = new InterpolantAutomataBuilder(
