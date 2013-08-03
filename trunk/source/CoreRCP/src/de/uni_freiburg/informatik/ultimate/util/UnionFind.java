@@ -85,18 +85,10 @@ public class UnionFind<E> {
 	}
 	
 	/**
-	 * Returns an unmodifiable set that contains the representatives of each
-	 * equivalence class.
+	 * Returns an unmodifiable set containing all equivalence classes
 	 */
-	public Set<E> getRepresentatives() {
-		return Collections.unmodifiableSet(m_EquivalenceClass.keySet());
-	}
-
-	/**
-	 * Returns an unmodifiable versions of the equivalence class of element e. 
-	 */
-	public Set<E> getEquivalenceClass(E e) {
-		return Collections.unmodifiableSet(m_EquivalenceClass.get(e)); 
+	public Set<Set<E>> getEquivalenceClass() {
+		return Collections.unmodifiableSet(m_Representative.keySet()); 
 	}
 
 	@Override
