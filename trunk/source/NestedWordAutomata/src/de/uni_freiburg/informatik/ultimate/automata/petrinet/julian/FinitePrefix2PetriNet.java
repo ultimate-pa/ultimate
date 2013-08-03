@@ -19,6 +19,7 @@ import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Place;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
+import de.uni_freiburg.informatik.ultimate.util.UnionFind;
 
 public class FinitePrefix2PetriNet<L, C> implements IOperation<L, C> {
 
@@ -110,7 +111,7 @@ public class FinitePrefix2PetriNet<L, C> implements IOperation<L, C> {
 		
 		representatives = new UnionFind<Condition<L, C>>();
 		for (Condition c : bp.getDummyRoot().getSuccessorConditions()) {
-			representatives.makeSet(c);
+			representatives.makeEquivalenceClass(c);
 		}
 		Iterator<Event<L, C>> it = events.iterator();
 		Event<L, C> first = it.next();
@@ -126,7 +127,7 @@ public class FinitePrefix2PetriNet<L, C> implements IOperation<L, C> {
 				Place p = c.getPlace();
 				Condition<L, C> representative = representatives.find(c);
 				if (representative == null) {
-					representatives.makeSet(c);
+					representatives.makeEquivalenceClass(c);
 				}
 			}
 			
@@ -239,43 +240,7 @@ public class FinitePrefix2PetriNet<L, C> implements IOperation<L, C> {
 	
 	
 	
-	private class UnionFind<E> {
-		Map<E,Set<E>> m_Element2Set = new HashMap<E,Set<E>>();
-		Map<Set<E>,E> m_CanonicalElement = new HashMap<Set<E>,E>();
-		
-		public E find(E element) {
-			Set<E> set = m_Element2Set.get(element);
-			return m_CanonicalElement.get(set);
-		}
-		
-		public void makeSet(E element) {
-			if (m_Element2Set.containsKey(element)) {
-				throw new IllegalArgumentException("Already contained " + element);
-			}
-			Set<E> result = new HashSet<E>();
-			result.add(element);
-			m_Element2Set.put(element, result);
-			m_CanonicalElement.put(result, element);
-		}
-		
-		public void union(E e1, E e2) {
-			Set<E> set1 = m_Element2Set.get(e1);
-			Set<E> set2 = m_Element2Set.get(e2);
-			E set1rep = m_CanonicalElement.get(set1);
-			m_CanonicalElement.remove(set1);
-			m_CanonicalElement.remove(set2);
-			set1.addAll(set2);
-			for (E e : set2) {
-				m_Element2Set.put(e, set1);
-			}
-			m_CanonicalElement.put(set1, set1rep);
-		}
-		
-		@Override
-		public String toString() {
-			return m_CanonicalElement.toString();
-		}
-	}
+
 	
 	
 	class TransitionSet {
