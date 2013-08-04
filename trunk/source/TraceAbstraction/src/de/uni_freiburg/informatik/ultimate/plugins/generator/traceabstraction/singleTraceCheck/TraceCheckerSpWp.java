@@ -68,6 +68,14 @@ public class TraceCheckerSpWp extends TraceChecker {
 	
 	
 	
+	public static boolean interpolantsSPComputed() {
+		return m_ComputeInterpolantsSp;
+	}
+
+	public static boolean interpolantsWPComputed() {
+		return m_ComputeInterpolantsWp;
+	}
+
 	private void computeInterpolantsWithUsageOfUnsatCore(Set<Integer> interpolatedPositions) {
 		
 		Term[] unsat_core = m_SmtManager.getScript().getUnsatCore();

@@ -10,7 +10,10 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
+import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceChecker;
@@ -53,33 +56,6 @@ public class TwoTrackInterpolantAutomatonBuilder {
 			returnAlphabet = nwa.getReturnAlphabet();
 		}
 		
-//		assert(m_NestedWord.length()-1==m_TraceCheckerSpWp.getI);
-//		String interpolantAutomatonType;
-//		switch (m_AdditionalEdges) {
-//		case SINGLETRACE:
-//			interpolantAutomatonType = 
-//				"Constructing interpolant automaton without backedges";
-//			break;
-//		case CANONICAL:
-//			interpolantAutomatonType = 
-//				"Constructing canonical interpolant automaton";
-//			break;
-//		case TOTALINTERPOLATION:
-//			interpolantAutomatonType = 
-//				"Constructing eager interpolant automaton"; 
-//			break;
-//		default:
-//			throw new IllegalArgumentException();
-//			
-//		}
-//		if (m_SelfloopAtInitial) {
-//			interpolantAutomatonType += ", with selfloop in true state";
-//		}
-//		if (m_SelfloopAtFinal) {
-//			interpolantAutomatonType += ", with selfloop in false state";
-//		}
-//		s_Logger.info(interpolantAutomatonType);
-
 		m_TTIA = new NestedWordAutomaton<CodeBlock, IPredicate>(
 				internalAlphabet,
 				callAlphabet,
@@ -90,40 +66,95 @@ public class TwoTrackInterpolantAutomatonBuilder {
 		
 		for (int i=0; i<m_NestedWord.length(); i++) {
 			if (i < (m_NestedWord.length() - 1)) {
-				boolean isFinal = isFalsePredicate(m_TraceCheckerSpWp.getInterpolanstsSPAtPosition(i));
-				if (!m_TTIA.getStates().contains(m_TraceCheckerSpWp.getInterpolanstsSPAtPosition(i))) {
-					m_TTIA.addState(false, isFinal, m_TraceCheckerSpWp.getInterpolanstsSPAtPosition(i));
+				if (TraceCheckerSpWp.interpolantsSPComputed()) {
+				// 1. Add a state which contains the assertion computed via SP
+					boolean isFinal = isFalsePredicate(m_TraceCheckerSpWp.getInterpolanstsSPAtPosition(i));
+					if (!m_TTIA.getStates().contains(m_TraceCheckerSpWp.getInterpolanstsSPAtPosition(i))) {
+						m_TTIA.addState(false, isFinal, m_TraceCheckerSpWp.getInterpolanstsSPAtPosition(i));
+					}
+				}
+				// 2. Add a state which contains the assertion computed via WP
+				if (TraceCheckerSpWp.interpolantsWPComputed()) {
+					boolean isFinal = isFalsePredicate(m_TraceCheckerSpWp.getInterpolanstsWPAtPosition(i));
+					if (!m_TTIA.getStates().contains(m_TraceCheckerSpWp.getInterpolanstsWPAtPosition(i))) {
+						m_TTIA.addState(false, isFinal, m_TraceCheckerSpWp.getInterpolanstsWPAtPosition(i));
+					}
 				}
 			}
 			if (i == 0) {
-				addTransition(m_TraceCheckerSpWp.getPrecondition(), i,
-						m_TraceCheckerSpWp.getInterpolanstsSPAtPosition(i));
-			} else if (i == (m_NestedWord.length() - 1)) {
-				addTransition(m_TraceCheckerSpWp.getInterpolanstsSPAtPosition(i-1), i,
-						m_TraceCheckerSpWp.getPostcondition());
-			} else {
-				addTransition(m_TraceCheckerSpWp.getInterpolanstsSPAtPosition(i-1), i,
-						m_TraceCheckerSpWp.getInterpolanstsSPAtPosition(i));
-			}
-			if (i < (m_NestedWord.length() - 1)) {
-				boolean isFinal = isFalsePredicate(m_TraceCheckerSpWp.getInterpolanstsWPAtPosition(i));
-				if (!m_TTIA.getStates().contains(m_TraceCheckerSpWp.getInterpolanstsWPAtPosition(i))) {
-					m_TTIA.addState(false, isFinal, m_TraceCheckerSpWp.getInterpolanstsWPAtPosition(i));
+				if (TraceCheckerSpWp.interpolantsSPComputed()) {
+					addTransition(m_TraceCheckerSpWp.getPrecondition(), i,
+							m_TraceCheckerSpWp.getInterpolanstsSPAtPosition(i));
 				}
-			}
-			if (i == 0) {
-				addTransition(m_TraceCheckerSpWp.getPrecondition(), i,
-						m_TraceCheckerSpWp.getInterpolanstsWPAtPosition(i));
+				if (TraceCheckerSpWp.interpolantsWPComputed()) {
+					addTransition(m_TraceCheckerSpWp.getPrecondition(), i,
+							m_TraceCheckerSpWp.getInterpolanstsWPAtPosition(i));
+				}
+				
 			} else if (i == (m_NestedWord.length() - 1)) {
-				addTransition(m_TraceCheckerSpWp.getInterpolanstsWPAtPosition(i-1), i,
-						m_TraceCheckerSpWp.getPostcondition());
+				if (TraceCheckerSpWp.interpolantsSPComputed()) {
+					addTransition(m_TraceCheckerSpWp.getInterpolanstsSPAtPosition(i-1), i,
+							m_TraceCheckerSpWp.getPostcondition());
+				}
+				if (TraceCheckerSpWp.interpolantsWPComputed()) {
+					addTransition(m_TraceCheckerSpWp.getInterpolanstsWPAtPosition(i-1), i,
+							m_TraceCheckerSpWp.getPostcondition());
+				}
 			} else {
-				addTransition(m_TraceCheckerSpWp.getInterpolanstsWPAtPosition(i-1), i,
-						m_TraceCheckerSpWp.getInterpolanstsWPAtPosition(i));
+				if (TraceCheckerSpWp.interpolantsSPComputed()) {
+					addTransition(m_TraceCheckerSpWp.getInterpolanstsSPAtPosition(i-1), i,
+							m_TraceCheckerSpWp.getInterpolanstsSPAtPosition(i));
+				}
+				if (TraceCheckerSpWp.interpolantsWPComputed()) {
+					addTransition(m_TraceCheckerSpWp.getInterpolanstsWPAtPosition(i-1), i,
+							m_TraceCheckerSpWp.getInterpolanstsWPAtPosition(i));
+				}
+				// 1. Try to add a transition from state annotated with the assertion computed via SP to
+				// to a state annotated with the assertion computed via WP.
+				if (TraceCheckerSpWp.interpolantsSPComputed() && TraceCheckerSpWp.interpolantsWPComputed()) {
+					if (transitionFromSPtoWPAllowed(m_TraceCheckerSpWp.getInterpolanstsSPAtPosition(i),
+							i,
+							m_TraceCheckerSpWp.getInterpolanstsWPAtPosition(i),true)) { 
+						addTransition(m_TraceCheckerSpWp.getInterpolanstsSPAtPosition(i), i,
+								m_TraceCheckerSpWp.getInterpolanstsWPAtPosition(i));
+					}
+				}
+				// 2. Try to add a transition from state annotated with the assertion computed via WP to
+				// to a state annotated with the assertion computed via SP.
+				if (TraceCheckerSpWp.interpolantsSPComputed() && TraceCheckerSpWp.interpolantsWPComputed()) {
+					if (transitionFromSPtoWPAllowed(m_TraceCheckerSpWp.getInterpolanstsWPAtPosition(i),
+							i,
+							m_TraceCheckerSpWp.getInterpolanstsSPAtPosition(i),false)) { 
+						addTransition(m_TraceCheckerSpWp.getInterpolanstsWPAtPosition(i), i,
+								m_TraceCheckerSpWp.getInterpolanstsSPAtPosition(i));
+					}
+				}
 			}
 		}
 			
 		return m_TTIA;
+	}
+	
+	/**
+	 * Checks whether we are allowed to add a transition from a state annotated with the assertion p1 computed via
+	 * SP (or WP)  with the statement obtained by symbolPos to a state annotated with the assertion p2 computed via WP (or SP).
+	 * The boolean variable fromSPToWp indicates which direction we want to check, if it is true, then p1 is computed
+	 * via SP and p2 via WP, else the other way around.
+	 */
+	private boolean transitionFromSPtoWPAllowed(IPredicate p1, int symbolPos, IPredicate p2, boolean fromSPToWP) {
+		CodeBlock statement = m_NestedWord.getSymbol(symbolPos);
+		if (m_NestedWord.isCallPosition(symbolPos)) {
+			return (m_SmtManager.isInductiveCall(p1, (Call) statement, p2) == LBool.UNSAT);
+		} else if (m_NestedWord.isReturnPosition(symbolPos)) {
+			int callPos= m_NestedWord.getCallPosition(symbolPos);
+			IPredicate callerPred = m_TraceCheckerSpWp.getInterpolanstsSPAtPosition(callPos-1);
+			if (!fromSPToWP) {
+				callerPred = m_TraceCheckerSpWp.getInterpolanstsWPAtPosition(callPos-1);
+			}
+			return (m_SmtManager.isInductiveReturn(p1, callerPred,(Return) statement, p2) == LBool.UNSAT);
+		} else {
+			return (m_SmtManager.isInductive(p1, statement, p2) == LBool.UNSAT);
+		}
 	}
 	
 	private boolean isFalsePredicate(IPredicate p) {
