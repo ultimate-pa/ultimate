@@ -1974,6 +1974,10 @@ public class SmtManager {
 		
 		// Collect the local variables of called proc
 		for (BoogieVar bv : calleePred.getVars()) {
+			if (globalVarsAssignment.getInVars().containsKey(bv) ||
+					globalVarsAssignment.getOutVars().containsKey(bv)) {
+				continue;
+			}
 			if (ret_TF.getOutVars().containsKey(bv)) {
 				TermVariable freshVar = getFreshTermVariable(bv.getIdentifier(), bv.getTermVariable().getSort());
 				varsToRenameInCalleePred.put(bv.getTermVariable(), freshVar);
@@ -2006,7 +2010,9 @@ public class SmtManager {
 				}
 			} else if (!ret_TF.getInVars().containsKey(bv) && 
 					!callTF.getOutVars().containsKey(bv)) {
-				varsToQuantifyInCalleePred.add(bv.getTermVariable());
+				if (!m_GlobalVars.containsKey(bv.getIdentifier())) {
+					varsToQuantifyInCalleePred.add(bv.getTermVariable());
+				}
 			}
 			
 		}

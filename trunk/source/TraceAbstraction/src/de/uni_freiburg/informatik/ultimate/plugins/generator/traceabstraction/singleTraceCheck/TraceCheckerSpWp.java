@@ -228,7 +228,7 @@ public class TraceCheckerSpWp extends TraceChecker {
 					m_InterpolantsSp[i] = m_PredicateUnifier.getOrConstructPredicate(p.getFormula(), p.getVars(),
 							p.getProcedures());
 				} else if (trace.getSymbol(i) instanceof Return) {
-					if (trace.length() == 22 && i >= 17) {
+					if (trace.length() == 5 && i >= 3) {
 						int test = 0;
 					}
 					int call_pos = ((NestedWord<CodeBlock>)trace).getCallPosition(i);
