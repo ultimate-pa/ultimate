@@ -40,36 +40,37 @@ public abstract class StateContainer<LETTER, STATE> {
 	protected final boolean m_CanHaveOutgoingReturn;
 
 	public String toString() {
-		StringBuilder sb = new StringBuilder();
-		sb.append(m_State.toString());
-		sb.append(System.getProperty("line.separator"));
-		for (OutgoingInternalTransition<LETTER, STATE> trans : internalSuccessors()) {
-			sb.append(trans).append("  ");
-		}
-		sb.append(System.getProperty("line.separator"));
-		for (IncomingInternalTransition<LETTER, STATE> trans : internalPredecessors()) {
-			sb.append(trans).append("  ");
-		}
-		sb.append(System.getProperty("line.separator"));
-		for (OutgoingCallTransition<LETTER, STATE> trans : callSuccessors()) {
-			sb.append(trans).append("  ");
-		}
-		sb.append(System.getProperty("line.separator"));
-		for (IncomingCallTransition<LETTER, STATE> trans : callPredecessors()) {
-			sb.append(trans).append("  ");
-		}
-		sb.append(System.getProperty("line.separator"));
-		for (OutgoingReturnTransition<LETTER, STATE> trans : returnSuccessors()) {
-			sb.append(trans).append("  ");
-		}
-		sb.append(System.getProperty("line.separator"));
-		for (IncomingReturnTransition<LETTER, STATE> trans : returnPredecessors()) {
-			sb.append(trans).append("  ");
-		}
-		sb.append(System.getProperty("line.separator"));
-		sb.append(m_DownStates.toString());
-		sb.append(System.getProperty("line.separator"));
-		return sb.toString();
+//		StringBuilder sb = new StringBuilder();
+//		sb.append(m_State.toString());
+//		sb.append(System.getProperty("line.separator"));
+//		for (OutgoingInternalTransition<LETTER, STATE> trans : internalSuccessors()) {
+//			sb.append(trans).append("  ");
+//		}
+//		sb.append(System.getProperty("line.separator"));
+//		for (IncomingInternalTransition<LETTER, STATE> trans : internalPredecessors()) {
+//			sb.append(trans).append("  ");
+//		}
+//		sb.append(System.getProperty("line.separator"));
+//		for (OutgoingCallTransition<LETTER, STATE> trans : callSuccessors()) {
+//			sb.append(trans).append("  ");
+//		}
+//		sb.append(System.getProperty("line.separator"));
+//		for (IncomingCallTransition<LETTER, STATE> trans : callPredecessors()) {
+//			sb.append(trans).append("  ");
+//		}
+//		sb.append(System.getProperty("line.separator"));
+//		for (OutgoingReturnTransition<LETTER, STATE> trans : returnSuccessors()) {
+//			sb.append(trans).append("  ");
+//		}
+//		sb.append(System.getProperty("line.separator"));
+//		for (IncomingReturnTransition<LETTER, STATE> trans : returnPredecessors()) {
+//			sb.append(trans).append("  ");
+//		}
+//		sb.append(System.getProperty("line.separator"));
+//		sb.append(m_DownStates.toString());
+//		sb.append(System.getProperty("line.separator"));
+//		return sb.toString();
+		return m_State.toString();
 	}
 
 	public StateContainer(STATE state, int serialNumber, 
