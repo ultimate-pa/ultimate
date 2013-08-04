@@ -41,7 +41,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.BuchiAcc
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.NestedLassoRun;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.Accepts;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.IOpWithDelayedDeadEndRemoval.UpDownEntry;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.NestedWordAutomatonReachableStates.RunFinder.SuccInfo;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.StateContainer.DownStateProp;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.util.HashUtils;
@@ -1799,40 +1798,58 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 
 			@Override
 			protected int getMaximalIterationNumber() {
-				return m_Scc.getAcceptingStates().size();
+				return m_Scc.getAllStates().size();
 			}
 
 			@Override
-			protected boolean[] possiblePredecessor(StateContainer<LETTER, STATE> succSc, 
+			protected SuccInfo possiblePredecessor(StateContainer<LETTER, STATE> succSc, 
 					IncomingReturnTransition<LETTER, STATE> inTrans,
 					boolean summaryUsed, boolean isGuaranteed) {
-				boolean[] result = new boolean[2];
 				StateContainer<LETTER, STATE> predSc = m_States.get(inTrans.getHierPred());
-				result[0] = m_Scc.getAllStates().contains(predSc);
-				result[1] = m_Goal.equals(predSc);
-				return result;
+				StateContainer<LETTER, STATE> linPredSc = m_States.get(inTrans.getLinPred());
+				return possiblePredecessor(predSc, inTrans.getLetter(), succSc, 
+						InCaRe.SUMMARY, linPredSc, true, isGuaranteed);
 			}
 
 			@Override
-			protected boolean[] possiblePredecessor(StateContainer<LETTER, STATE> succSc, 
+			protected SuccInfo possiblePredecessor(StateContainer<LETTER, STATE> succSc, 
 					IncomingCallTransition<LETTER, STATE> inTrans,
 					boolean summaryUsed, boolean isGuaranteed) {
-				boolean[] result = new boolean[2];
 				StateContainer<LETTER, STATE> predSc = m_States.get(inTrans.getPred());
-				result[0] = m_Scc.getAllStates().contains(predSc);
-				result[1] = m_Goal.equals(predSc);
-				return result;
+				return possiblePredecessor(predSc, inTrans.getLetter(), succSc, 
+						InCaRe.CALL, null, summaryUsed, isGuaranteed);
 			}
 
 			@Override
-			protected boolean[] possiblePredecessor(StateContainer<LETTER, STATE> succSc, 
+			protected SuccInfo possiblePredecessor(StateContainer<LETTER, STATE> succSc, 
 					IncomingInternalTransition<LETTER, STATE> inTrans,
 					boolean summaryUsed, boolean isGuaranteed) {
-				boolean[] result = new boolean[2];
 				StateContainer<LETTER, STATE> predSc = m_States.get(inTrans.getPred());
-				result[0] = m_Scc.getAllStates().contains(predSc);
-				result[1] = m_Goal.equals(predSc);
-				return result;
+				return possiblePredecessor(predSc, inTrans.getLetter(), succSc, 
+						InCaRe.INTERNAL, null, summaryUsed, isGuaranteed);
+			}
+			
+			private SuccInfo possiblePredecessor(StateContainer<LETTER, STATE> predSc,
+					LETTER letter,
+					StateContainer<LETTER, STATE> succSc, InCaRe type, 
+					StateContainer<LETTER, STATE> linPred, 
+					boolean summaryUsed, boolean isGuaranteed) {
+				if (!m_Scc.getAllStates().contains(predSc)) {
+					return null;
+				}
+				boolean isGuaranteedPred = isGuaranteed;
+				isGuaranteedPred = isGuaranteedPred || isFinal(predSc.getState());
+				if (type == InCaRe.SUMMARY) {
+					isGuaranteedPred = isGuaranteed || isAcceptingSummary(predSc, succSc);
+				}
+				if (alreadyVisited(predSc, summaryUsed, isGuaranteedPred)) {
+					return null;
+				}
+				boolean goalFound = m_Goal.equals(predSc) && isGuaranteed;
+				SuccInfo succInfo = new SuccInfo(succSc, letter, type, linPred, 
+											isGuaranteedPred, goalFound);
+				super.markVisited(predSc, summaryUsed, isGuaranteedPred);
+				return succInfo;
 			}
     	}
 
@@ -2441,10 +2458,12 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 			private final InCaRe m_Type;
 			private final StateContainer<LETTER, STATE> m_LinPred;
 			private final boolean m_Guarantee;
+			private final boolean m_GoalFound;
 			public SuccInfo(StateContainer<LETTER, STATE> successor,
 					LETTER letter,
 					InCaRe type, StateContainer<LETTER, STATE> linPred,
-					boolean guarantee) {
+					boolean guarantee,
+					boolean goalFound) {
 				if (type == InCaRe.SUMMARY && linPred == null) {
 					throw new IllegalArgumentException("for summary we need linPred");
 				}
@@ -2459,6 +2478,7 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 				m_Type = type;
 				m_LinPred = linPred;
 				m_Guarantee = guarantee;
+				m_GoalFound = goalFound;
 			}
 			public StateContainer<LETTER, STATE> getSuccessor() {
 				return m_Successor;
@@ -2474,6 +2494,9 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 			}
 			public boolean isGuarantee() {
 				return m_Guarantee;
+			}
+			public boolean goalFound() {
+				return m_GoalFound;
 			}
 			@Override
 			public String toString() {
@@ -2540,6 +2563,15 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 		
 		protected final List<Map<StateContainer<LETTER,STATE>, SuccInfo>> m_SuccessorsWithSummary;
 		protected final List<Map<StateContainer<LETTER,STATE>, SuccInfo>> m_SuccessorsWithoutSummary;
+		
+		private final Set<StateContainer<LETTER,STATE>> m_Visited_WithoutSummary_WithoutGuarantee = 
+				new HashSet<StateContainer<LETTER,STATE>>();
+		private final Set<StateContainer<LETTER,STATE>> m_Visited_WithSummary_WithoutGuarantee = 
+				new HashSet<StateContainer<LETTER,STATE>>();
+		private final Set<StateContainer<LETTER,STATE>> m_Visited_WithoutSummary_WithGuarantee = 
+				new HashSet<StateContainer<LETTER,STATE>>();
+		private final Set<StateContainer<LETTER,STATE>> m_Visited_WithSummary_WithGuarantee = 
+				new HashSet<StateContainer<LETTER,STATE>>();
 		
 		protected boolean foundWithSummary = false;
 		protected boolean foundWithoutSummary = false;
@@ -2620,9 +2652,9 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 		
 		abstract protected int getMaximalIterationNumber();
 		
-		abstract protected boolean[] possiblePredecessor(StateContainer<LETTER, STATE> succSc, IncomingReturnTransition<LETTER, STATE> inTrans, boolean summaryUsed, boolean isGuaranteed);
-		abstract protected boolean[] possiblePredecessor(StateContainer<LETTER, STATE> succSc, IncomingCallTransition<LETTER, STATE> inTrans, boolean summaryUsed, boolean isGuaranteed);
-		abstract protected boolean[] possiblePredecessor(StateContainer<LETTER, STATE> succSc, IncomingInternalTransition<LETTER, STATE> inTrans, boolean summaryUsed, boolean isGuaranteed);
+		abstract protected SuccInfo possiblePredecessor(StateContainer<LETTER, STATE> succSc, IncomingReturnTransition<LETTER, STATE> inTrans, boolean summaryUsed, boolean isGuaranteed);
+		abstract protected SuccInfo possiblePredecessor(StateContainer<LETTER, STATE> succSc, IncomingCallTransition<LETTER, STATE> inTrans, boolean summaryUsed, boolean isGuaranteed);
+		abstract protected SuccInfo possiblePredecessor(StateContainer<LETTER, STATE> succSc, IncomingInternalTransition<LETTER, STATE> inTrans, boolean summaryUsed, boolean isGuaranteed);
 		
 		
 		/**
@@ -2635,64 +2667,85 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 		 * @param isGuranteed is the requirement (e.g., accepting state) visited
 		 * guaranteed?
 		 */
-		private void addSuccessorInformation(StateContainer<LETTER, STATE> predSc,
-				LETTER letter,
-				InCaRe type, StateContainer<LETTER, STATE> linPred,
-				StateContainer<LETTER, STATE> succSc,
-				Map<StateContainer<LETTER,STATE>, SuccInfo> succMap, 
-				boolean isGuranteed) {
-			assert (type != InCaRe.SUMMARY || linPred != null);
-			assert (type == InCaRe.SUMMARY || linPred == null);
+		private void addSuccessorInformation(StateContainer<LETTER,STATE> predSc, 
+				boolean summaryUsed,
+				SuccInfo newSuccInfo) {
+			Map<StateContainer<LETTER,STATE>, SuccInfo> succMap;
+			if (summaryUsed) {
+				foundWithSummary |= newSuccInfo.goalFound();
+				succMap = m_SuccessorsWithSummary.get(m_Iteration);
+			} else {
+				foundWithoutSummary |= newSuccInfo.goalFound();
+				succMap = m_SuccessorsWithoutSummary.get(m_Iteration);
+			}
 			SuccInfo current = succMap.get(predSc);
-			if (current == null || !current.isGuarantee() && isGuranteed) {
-				boolean acceptingVisited = isFinal(predSc.getState());
-				if (m_VisitAccepting && type == InCaRe.SUMMARY) {
-					acceptingVisited = isAcceptingSummary(predSc, succSc);
-				}
-				SuccInfo newSucc = new SuccInfo(succSc, letter, type, linPred, 
-										isGuranteed || acceptingVisited);
-				succMap.put(predSc, newSucc);
+			if (current == null) {
+				succMap.put(predSc, newSuccInfo);
+				return;
+			}
+			if (!current.isGuarantee() && newSuccInfo.isGuarantee()) {
+				succMap.put(predSc, newSuccInfo);
+				return;
+			}
+			if (!current.goalFound() && newSuccInfo.goalFound()) {
+				succMap.put(predSc, newSuccInfo);
+				return;
 			}
 		}
 		
+		private void markVisited(StateContainer<LETTER,STATE> sc, boolean summaryUsed, boolean isGuranteed) {
+			if (summaryUsed) {
+				if (isGuranteed) {
+					m_Visited_WithSummary_WithGuarantee.add(sc);
+				} else {
+					m_Visited_WithSummary_WithoutGuarantee.add(sc);
+				}
+			} else {
+				if (isGuranteed) {
+					m_Visited_WithoutSummary_WithGuarantee.add(sc);
+				} else {
+					m_Visited_WithoutSummary_WithoutGuarantee.add(sc);
+				}
+			}
+		}
+		
+		protected boolean alreadyVisited(StateContainer<LETTER,STATE> sc, boolean summaryUsed, boolean isGuranteed) {
+			if (summaryUsed) {
+				if (isGuranteed) {
+					return m_Visited_WithSummary_WithGuarantee.contains(sc);
+				} else {
+					return m_Visited_WithSummary_WithoutGuarantee.contains(sc);
+				}
+			} else {
+				if (isGuranteed) {
+					return m_Visited_WithoutSummary_WithGuarantee.contains(sc);
+				} else {
+					return m_Visited_WithoutSummary_WithoutGuarantee.contains(sc);
+				}
+			}
+		}
+
 		protected void findPredecessors(StateContainer<LETTER,STATE> sc,
 				boolean isGuaranteed, boolean summaryUsed) {
 			for (IncomingInternalTransition<LETTER, STATE> inTrans : internalPredecessors(sc.getState())) {
-				boolean[] predInfo = possiblePredecessor(sc, inTrans, summaryUsed, isGuaranteed);
-				if (predInfo[0]) {
+				SuccInfo succInfo = possiblePredecessor(sc, inTrans, summaryUsed, isGuaranteed);
+				if (succInfo != null) {
 					StateContainer<LETTER, STATE> predSc = m_States.get(inTrans.getPred());
-					boolean goalFound = predInfo[1];
-					if (summaryUsed) {
-						foundWithSummary |= goalFound && isGuaranteed;
-						addSuccessorInformation(predSc, inTrans.getLetter(), InCaRe.INTERNAL, null, sc,m_SuccessorsWithSummary.get(m_Iteration), isGuaranteed);
-					} else {
-						foundWithoutSummary |= goalFound && isGuaranteed;
-						addSuccessorInformation(predSc, inTrans.getLetter(), InCaRe.INTERNAL, null, sc,m_SuccessorsWithoutSummary.get(m_Iteration), isGuaranteed);
-					}
+					addSuccessorInformation(predSc, summaryUsed, succInfo);
 				}
 			}
 			for (IncomingCallTransition<LETTER, STATE> inTrans : callPredecessors(sc.getState())) {
-				boolean[] predInfo = possiblePredecessor(sc, inTrans, summaryUsed, isGuaranteed);
-				if (predInfo[0]) {
+				SuccInfo succInfo = possiblePredecessor(sc, inTrans, summaryUsed, isGuaranteed);
+				if (succInfo != null) {
 					StateContainer<LETTER, STATE> predSc = m_States.get(inTrans.getPred());
-					boolean goalFound = predInfo[1];
-					if (summaryUsed) {
-						foundWithSummary |= goalFound && isGuaranteed;
-						addSuccessorInformation(predSc, inTrans.getLetter(), InCaRe.CALL, null, sc,m_SuccessorsWithSummary.get(m_Iteration), isGuaranteed);
-					} else {
-						foundWithoutSummary |= goalFound && isGuaranteed;
-						addSuccessorInformation(predSc, inTrans.getLetter(), InCaRe.CALL, null, sc,m_SuccessorsWithoutSummary.get(m_Iteration), isGuaranteed);
-					}
+					addSuccessorInformation(predSc, summaryUsed, succInfo);
 				}
 			}
 			for (IncomingReturnTransition<LETTER, STATE> inTrans : returnPredecessors(sc.getState())) {
-				boolean[] predInfo = possiblePredecessor(sc, inTrans, summaryUsed, isGuaranteed);
-				if (predInfo[0]) {
+				SuccInfo succInfo = possiblePredecessor(sc, inTrans, summaryUsed, isGuaranteed);
+				if (succInfo != null) {
 					StateContainer<LETTER, STATE> predSc = m_States.get(inTrans.getHierPred());
-					boolean goalFound = predInfo[1];
-					StateContainer<LETTER, STATE> linpredSc = m_States.get(inTrans.getLinPred());
-					foundWithSummary |= goalFound && isGuaranteed;
-					addSuccessorInformation(predSc, inTrans.getLetter(), InCaRe.SUMMARY, linpredSc, sc,m_SuccessorsWithSummary.get(m_Iteration), isGuaranteed);
+					addSuccessorInformation(predSc, true, succInfo);
 				}
 			}
 		}
@@ -2791,55 +2844,71 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 		protected int getMaximalIterationNumber() {
 			return size();
 		}
-		//TODO: here
-		@Override
-		protected boolean[] possiblePredecessor(StateContainer<LETTER, STATE> succSc, 
-				IncomingReturnTransition<LETTER, STATE> inTrans,
-				boolean summaryUsed, boolean isGuaranteed) {
-			StateContainer<LETTER, STATE> predSc = m_States.get(inTrans.getHierPred());
-			return possiblePredecessorInternalSummary(isGuaranteed, predSc);
-		}
-
-		/**
-		 * @param isGuaranteed
-		 * @param predSc
-		 * @return
-		 */
-		private boolean[] possiblePredecessorInternalSummary(
-				boolean isGuaranteed, StateContainer<LETTER, STATE> predSc) {
-			boolean possiblePred;
-			if (!predSc.getDownStates().containsKey(m_Goal.getState())) {
-				possiblePred = false;
-			} else {
-				if (isGuaranteed) {
-					possiblePred = true;
-				} else {
-					possiblePred = predSc.hasDownProp(m_Goal.getState(), 
-							DownStateProp.REACHABLE_FROM_FINAL_WITHOUT_CALL); 
-				}
-			}
-			boolean[] result = { possiblePred, false };
-			return result;
-		}
 
 		@Override
-		protected boolean[] possiblePredecessor(StateContainer<LETTER, STATE> succSc, 
-				IncomingCallTransition<LETTER, STATE> inTrans,
-				boolean summaryUsed, boolean isGuaranteed) {
-			boolean[] result = new boolean[2];
-			StateContainer<LETTER, STATE> predSc = m_States.get(inTrans.getPred());
-			boolean isGoal = predSc.equals(m_Goal);
-			result[0] = isGoal;
-			result[1] = isGoal;
-			return result;
-		}
-
-		@Override
-		protected boolean[] possiblePredecessor(StateContainer<LETTER, STATE> succSc, 
+		protected SuccInfo possiblePredecessor(StateContainer<LETTER, STATE> succSc, 
 				IncomingInternalTransition<LETTER, STATE> inTrans,
 				boolean summaryUsed, boolean isGuaranteed) {
 			StateContainer<LETTER, STATE> predSc = m_States.get(inTrans.getPred());
-			return possiblePredecessorInternalSummary(isGuaranteed, predSc);
+			if (!goalIsDownState(predSc, isGuaranteed)) {
+				return null;
+			}
+			boolean isGuaranteedPred = isGuaranteed;
+			isGuaranteedPred = isGuaranteedPred || isFinal(predSc.getState());
+			if (alreadyVisited(predSc, summaryUsed, isGuaranteedPred)) {
+				return null;
+			}
+			SuccInfo succInfo = new SuccInfo(succSc, inTrans.getLetter(), 
+					InCaRe.INTERNAL, null, isGuaranteedPred, false);
+			super.markVisited(predSc, summaryUsed, isGuaranteedPred);
+			return succInfo;
+		}
+
+		@Override
+		protected SuccInfo possiblePredecessor(StateContainer<LETTER, STATE> succSc, 
+				IncomingCallTransition<LETTER, STATE> inTrans,
+				boolean summaryUsed, boolean isGuaranteed) {
+			StateContainer<LETTER, STATE> predSc = m_States.get(inTrans.getPred());
+			if (!isGuaranteed || !m_Goal.equals(predSc)) {
+				return null;
+			}
+			SuccInfo succInfo = new SuccInfo(succSc, inTrans.getLetter(), 
+					InCaRe.CALL, null, isGuaranteed, true);
+			super.markVisited(predSc, summaryUsed, isGuaranteed);
+			return succInfo;
+		}
+
+		@Override
+		protected SuccInfo possiblePredecessor(StateContainer<LETTER, STATE> succSc, 
+				IncomingReturnTransition<LETTER, STATE> inTrans,
+				boolean summaryUsed, boolean isGuaranteed) {
+			StateContainer<LETTER, STATE> predSc = m_States.get(inTrans.getHierPred());
+			if (!goalIsDownState(predSc, isGuaranteed)) {
+				return null;
+			}
+			boolean isGuaranteedPred = isGuaranteed;
+			isGuaranteedPred = isGuaranteedPred || isFinal(predSc.getState());
+			isGuaranteedPred = isGuaranteedPred || isAcceptingSummary(predSc, succSc);
+			if (alreadyVisited(predSc, true, isGuaranteedPred)) {
+				return null;
+			}
+			StateContainer<LETTER, STATE> linPredSc = m_States.get(inTrans.getLinPred());
+			SuccInfo succInfo = new SuccInfo(succSc, inTrans.getLetter(), 
+					InCaRe.SUMMARY, linPredSc, isGuaranteedPred, false);
+			super.markVisited(predSc, true, isGuaranteedPred);
+			return succInfo;
+		}
+		
+		private boolean goalIsDownState(StateContainer<LETTER,STATE> predSc, boolean isGuranteed) {
+			if (!predSc.getDownStates().containsKey(m_Goal.getState())) {
+				return false;
+			}
+			if (isGuranteed) {
+				return true;
+			} else {
+				return predSc.hasDownProp(m_Goal.getState(), 
+						DownStateProp.REACHABLE_FROM_FINAL_WITHOUT_CALL);
+			}
 		}
 		
 	}
