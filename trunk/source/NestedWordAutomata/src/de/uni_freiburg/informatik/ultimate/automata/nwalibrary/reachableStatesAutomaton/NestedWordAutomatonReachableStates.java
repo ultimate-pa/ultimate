@@ -1539,9 +1539,9 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
         public void computeNestedLassoRuns(boolean computeOnlyOne) {
             for (SCC scc : m_Balls) {
 // TODO: test this
-//            	if (!scc.getAcceptingStates().isEmpty() || !scc.getAcceptingSumPred().isEmpty()) {
-//            		m_NestedLassoRuns.add((new LassoExtractor(scc.getStateWithLowestSerialNumber(), scc,  m_AcceptingSummaries)).getNestedLassoRun());
-//            	}
+            	if (!scc.getAcceptingStates().isEmpty() || !scc.getAcceptingSumPred().isEmpty()) {
+            		m_NestedLassoRuns.add((new LassoExtractor(scc.getStateWithLowestSerialNumber(), scc,  m_AcceptingSummaries)).getNestedLassoRun());
+            	}
             	for (StateContainer<LETTER, STATE> fin  : scc.getAcceptingStates()) {
             		NestedLassoRun<LETTER, STATE> nlr = (new ShortestLassoExtractor(fin)).getNestedLassoRun();
             		if (computeOnlyOne) {
@@ -1833,21 +1833,22 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 					LETTER letter,
 					StateContainer<LETTER, STATE> succSc, InCaRe type, 
 					StateContainer<LETTER, STATE> linPred, 
-					boolean summaryUsed, boolean isGuaranteed) {
+					boolean summaryUsed, boolean isGuaranteedSucc) {
 				if (!m_Scc.getAllStates().contains(predSc)) {
 					return null;
 				}
-				boolean isGuaranteedPred = isGuaranteed;
+				boolean isGuaranteedPred = isGuaranteedSucc;
 				isGuaranteedPred = isGuaranteedPred || isFinal(predSc.getState());
 				if (type == InCaRe.SUMMARY) {
-					isGuaranteedPred = isGuaranteed || isAcceptingSummary(predSc, succSc);
+					isGuaranteedPred = isGuaranteedSucc || isAcceptingSummary(predSc, succSc);
 				}
 				if (alreadyVisited(predSc, summaryUsed, isGuaranteedPred)) {
 					return null;
 				}
-				boolean goalFound = m_Goal.equals(predSc) && isGuaranteed;
+				boolean goalFound = m_Goal.equals(predSc) && isGuaranteedPred;
+				boolean guaranteeChanger = isGuaranteedSucc ^ isGuaranteedPred;
 				SuccInfo succInfo = new SuccInfo(succSc, letter, type, linPred, 
-											isGuaranteedPred, goalFound);
+								isGuaranteedPred, goalFound, guaranteeChanger);
 				super.markVisited(predSc, summaryUsed, isGuaranteedPred);
 				return succInfo;
 			}
@@ -2459,11 +2460,13 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 			private final StateContainer<LETTER, STATE> m_LinPred;
 			private final boolean m_Guarantee;
 			private final boolean m_GoalFound;
+			private final boolean m_GuaranteeChanger;
 			public SuccInfo(StateContainer<LETTER, STATE> successor,
 					LETTER letter,
 					InCaRe type, StateContainer<LETTER, STATE> linPred,
 					boolean guarantee,
-					boolean goalFound) {
+					boolean goalFound,
+					boolean guaranteeChanger) {
 				if (type == InCaRe.SUMMARY && linPred == null) {
 					throw new IllegalArgumentException("for summary we need linPred");
 				}
@@ -2479,6 +2482,7 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 				m_LinPred = linPred;
 				m_Guarantee = guarantee;
 				m_GoalFound = goalFound;
+				m_GuaranteeChanger = guaranteeChanger;
 			}
 			public StateContainer<LETTER, STATE> getSuccessor() {
 				return m_Successor;
@@ -2498,12 +2502,18 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 			public boolean goalFound() {
 				return m_GoalFound;
 			}
+			public boolean isGuaranteeChanger() {
+				return m_GuaranteeChanger;
+			}
 			@Override
 			public String toString() {
 				return "SuccInfo [m_Successor=" + m_Successor + ", m_Letter="
 						+ m_Letter + ", m_Type=" + m_Type + ", m_LinPred="
-						+ m_LinPred + ", m_Guarantee=" + m_Guarantee + "]";
+						+ m_LinPred + ", m_Guarantee=" + m_Guarantee
+						+ ", m_GoalFound=" + m_GoalFound
+						+ ", m_GuaranteeChanger=" + m_GuaranteeChanger + "]";
 			}
+
 			
 			
 			
@@ -2643,9 +2653,7 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 					boolean isGuaranteed = m_SuccessorsWithoutSummary.get(m_Iteration-1).get(sc).isGuarantee();
 					findPredecessors(sc, isGuaranteed, false);
 				}
-				if (foundWithSummary && m_IterationFoundWithSummary == -1) {
-					m_IterationFoundWithSummary = m_Iteration;
-				}
+
 			}
 			assert (foundWithSummary || foundWithoutSummary);
 		}
@@ -2748,6 +2756,9 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 					addSuccessorInformation(predSc, true, succInfo);
 				}
 			}
+			if (foundWithSummary && m_IterationFoundWithSummary == -1) {
+				m_IterationFoundWithSummary = m_Iteration;
+			}
 		}
 
 
@@ -2789,12 +2800,9 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 							succs.getSuccessor().getState());
 				} else if (succs.getType() == InCaRe.SUMMARY) {
 					boolean findAcceptingSummary;
-					if (visitAcceptingStillRequired) {
-						if (isAcceptingSummary(currentState, succs.getLinPred())) {
-							findAcceptingSummary = true;
-						} else {
-							findAcceptingSummary = false;
-						}
+					if (visitAcceptingStillRequired && succs.isGuaranteeChanger() && !isFinal(currentState.getState())) {
+						assert (isAcceptingSummary(currentState, succs.getLinPred()));
+						findAcceptingSummary = true;
 					} else {
 						findAcceptingSummary = false;
 					}
@@ -2848,18 +2856,19 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 		@Override
 		protected SuccInfo possiblePredecessor(StateContainer<LETTER, STATE> succSc, 
 				IncomingInternalTransition<LETTER, STATE> inTrans,
-				boolean summaryUsed, boolean isGuaranteed) {
+				boolean summaryUsed, boolean isGuaranteedSucc) {
 			StateContainer<LETTER, STATE> predSc = m_States.get(inTrans.getPred());
-			if (!goalIsDownState(predSc, isGuaranteed)) {
+			if (!goalIsDownState(predSc, isGuaranteedSucc)) {
 				return null;
 			}
-			boolean isGuaranteedPred = isGuaranteed;
+			boolean isGuaranteedPred = isGuaranteedSucc;
 			isGuaranteedPred = isGuaranteedPred || isFinal(predSc.getState());
 			if (alreadyVisited(predSc, summaryUsed, isGuaranteedPred)) {
 				return null;
 			}
+			boolean guaranteeChanger = isGuaranteedPred ^ isGuaranteedSucc;
 			SuccInfo succInfo = new SuccInfo(succSc, inTrans.getLetter(), 
-					InCaRe.INTERNAL, null, isGuaranteedPred, false);
+					InCaRe.INTERNAL, null, isGuaranteedPred, false, guaranteeChanger);
 			super.markVisited(predSc, summaryUsed, isGuaranteedPred);
 			return succInfo;
 		}
@@ -2867,34 +2876,35 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 		@Override
 		protected SuccInfo possiblePredecessor(StateContainer<LETTER, STATE> succSc, 
 				IncomingCallTransition<LETTER, STATE> inTrans,
-				boolean summaryUsed, boolean isGuaranteed) {
+				boolean summaryUsed, boolean isGuaranteedSucc) {
 			StateContainer<LETTER, STATE> predSc = m_States.get(inTrans.getPred());
-			if (!isGuaranteed || !m_Goal.equals(predSc)) {
+			if (!isGuaranteedSucc || !m_Goal.equals(predSc)) {
 				return null;
 			}
 			SuccInfo succInfo = new SuccInfo(succSc, inTrans.getLetter(), 
-					InCaRe.CALL, null, isGuaranteed, true);
-			super.markVisited(predSc, summaryUsed, isGuaranteed);
+					InCaRe.CALL, null, isGuaranteedSucc, true, false);
+			super.markVisited(predSc, summaryUsed, isGuaranteedSucc);
 			return succInfo;
 		}
 
 		@Override
 		protected SuccInfo possiblePredecessor(StateContainer<LETTER, STATE> succSc, 
 				IncomingReturnTransition<LETTER, STATE> inTrans,
-				boolean summaryUsed, boolean isGuaranteed) {
+				boolean summaryUsed, boolean isGuaranteedSucc) {
 			StateContainer<LETTER, STATE> predSc = m_States.get(inTrans.getHierPred());
-			if (!goalIsDownState(predSc, isGuaranteed)) {
+			if (!goalIsDownState(predSc, isGuaranteedSucc)) {
 				return null;
 			}
-			boolean isGuaranteedPred = isGuaranteed;
+			boolean isGuaranteedPred = isGuaranteedSucc;
 			isGuaranteedPred = isGuaranteedPred || isFinal(predSc.getState());
 			isGuaranteedPred = isGuaranteedPred || isAcceptingSummary(predSc, succSc);
 			if (alreadyVisited(predSc, true, isGuaranteedPred)) {
 				return null;
 			}
+			boolean guaranteeChanger = isGuaranteedPred ^ isGuaranteedSucc;
 			StateContainer<LETTER, STATE> linPredSc = m_States.get(inTrans.getLinPred());
 			SuccInfo succInfo = new SuccInfo(succSc, inTrans.getLetter(), 
-					InCaRe.SUMMARY, linPredSc, isGuaranteedPred, false);
+					InCaRe.SUMMARY, linPredSc, isGuaranteedPred, false, guaranteeChanger);
 			super.markVisited(predSc, true, isGuaranteedPred);
 			return succInfo;
 		}
