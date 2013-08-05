@@ -229,9 +229,9 @@ public class TraceCheckerSpWp extends TraceChecker {
 			}
 			for (int i=1; i<m_InterpolantsSp.length; i++) {
 				if (trace.getSymbol(i) instanceof Call) {
-					if (trace.length() == 19) {
-						int test = 0;
-					}
+//					if (trace.length() == 19) {
+//						int test = 0;
+//					}
 					IPredicate p = m_SmtManager.strongestPostcondition(
 							m_InterpolantsSp[i-1], (Call) trace.getSymbol(i),
 							((NestedWord<CodeBlock>) trace).isPendingCall(i));
@@ -239,9 +239,9 @@ public class TraceCheckerSpWp extends TraceChecker {
 					m_InterpolantsSp[i] = m_PredicateUnifier.getOrConstructPredicate(p.getFormula(), p.getVars(),
 							p.getProcedures());
 				} else if (trace.getSymbol(i) instanceof Return) {
-					if (trace.length() == 19 && i >= 3) {
-						int test = 0;
-					}
+//					if (trace.length() == 19 && i >= 3) {
+//						int test = 0;
+//					}
 					int call_pos = ((NestedWord<CodeBlock>)trace).getCallPosition(i);
 					assert call_pos >= 0 && call_pos <= i : "Bad call position!";
 					IPredicate callerPred = tracePrecondition;
