@@ -3,6 +3,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -93,7 +94,7 @@ public class DestructiveEqualityResolution {
 		} else {
 			Set<TermVariable> occuringVars = 
 					new HashSet<TermVariable>(Arrays.asList(term.getFreeVars()));
-			Term[] conjuncts = getConjuncts(term);
+			Set<Term> conjuncts = getConjuncts(term);
 			ConnectionPartition connection = new ConnectionPartition();
 			for (Term conjunct : conjuncts) {
 				connection.addTerm(conjunct);
@@ -114,7 +115,7 @@ public class DestructiveEqualityResolution {
 			}
 			List<Term> termsWithoutTvs = connection.getTermsWithOutTvs();
 			assert occuringVars.size() == removeableTvs.size() + unremoveableTvs.size();
-			assert conjuncts.length == removeableTerms.size() + unremoveableTerms.size() + termsWithoutTvs.size();
+			assert conjuncts.size() == removeableTerms.size() + unremoveableTerms.size() + termsWithoutTvs.size();
 			for (Term termWithoutTvs : termsWithoutTvs) {
 				LBool sat = Util.checkSat(script, termWithoutTvs);
 				if (sat == LBool.UNSAT) {
@@ -155,15 +156,14 @@ public class DestructiveEqualityResolution {
 	/**
 	 * If term is a conjunction return all conjuncts, otherwise return term.
 	 */
-	public static Term[] getConjuncts(Term term) {
+	public static Set<Term> getConjuncts(Term term) {
 		if (term instanceof ApplicationTerm) {
 			ApplicationTerm appTerm = (ApplicationTerm) term;
 			if (appTerm.getFunction().getName().equals("and")) {
-				return appTerm.getParameters();
+				return new HashSet<Term>(Arrays.asList(appTerm.getParameters()));
 			}
 		}
-		Term[] result = { term };
-		return result;
+		return Collections.singleton(term);
 	}
 	
 	/**
@@ -190,7 +190,14 @@ public class DestructiveEqualityResolution {
 			}
 			for (int i=1; i < tvs.length; i++) {
 				add(term, tvs[i]);
-				unionFind.add(tvs[i], firstTv);
+				if (unionFind.find(tvs[i]) == null) {
+					unionFind.makeEquivalenceClass(tvs[i]);					
+				} 
+				if (unionFind.find(firstTv).equals(unionFind.find(tvs[i]))) {
+					// already in same equivalence class
+				} else {
+					unionFind.union(tvs[i], firstTv);
+				}
 			}
 		}
 		
