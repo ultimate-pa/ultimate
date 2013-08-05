@@ -2861,7 +2861,7 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 				} else if (succs.getType() == InCaRe.SUMMARY) {
 					boolean findAcceptingSummary;
 					if (visitAcceptingStillRequired && succs.isGuaranteeChanger() && !isFinal(currentState.getState())) {
-						assert (isAcceptingSummary(currentState, succs.getLinPred()));
+						assert (isAcceptingSummary(currentState, succs.getSuccessor()));
 						findAcceptingSummary = true;
 					} else {
 						findAcceptingSummary = false;
