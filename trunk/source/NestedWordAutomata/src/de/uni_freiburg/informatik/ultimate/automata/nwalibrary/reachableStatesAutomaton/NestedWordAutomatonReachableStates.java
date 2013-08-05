@@ -1765,8 +1765,9 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
     			Map<StateContainer<LETTER, STATE>, Set<StateContainer<LETTER, STATE>>> acceptingSummaries) {
     			m_AcceptingSummaries = acceptingSummaries;
     			
+    			Set<SuccInfo> forbiddenSummaries = Collections.emptySet();
     			LoopFinder lf = new LoopFinder(honda, scc, true, 
-    					acceptingSummaries);
+    					acceptingSummaries, forbiddenSummaries);
     			NestedRun<LETTER, STATE> loop = lf.getNestedRun();
     			NestedRun<LETTER, STATE> stem = constructRun(honda);
     			s_Logger.debug("Stem length: " + stem.getLength());
@@ -1791,8 +1792,8 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
     		
 			public LoopFinder(StateContainer<LETTER, STATE> goal, StronglyConnectedComponents.SCC scc, 
 					boolean visitAccepting, Map<StateContainer<LETTER, STATE>, 
-					Set<StateContainer<LETTER, STATE>>> acceptingSummaries) {
-				super(goal, goal, visitAccepting, acceptingSummaries);
+					Set<StateContainer<LETTER, STATE>>> acceptingSummaries, Set<SuccInfo> forbiddenSummaries) {
+				super(goal, goal, visitAccepting, acceptingSummaries, forbiddenSummaries);
 				m_Scc = scc;
 			}
 
@@ -2400,10 +2401,11 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 				newPrefix = new NestedRun(inTrans.getPred(), inTrans.getLetter(), NestedWord.PLUS_INFINITY ,current.getState());
 			} else if (transitionToLowest instanceof IncomingReturnTransition) {
 				IncomingReturnTransition<LETTER, STATE> inTrans = (IncomingReturnTransition) transitionToLowest;
+				Set<SuccInfo> forbiddenSummaries = Collections.emptySet();
 				SummaryFinder summaryFinder = new SummaryFinder(
 						m_States.get(inTrans.getLinPred()), 
 						m_States.get(inTrans.getHierPred()), 
-						false, null);
+						false, null, forbiddenSummaries);
 				NestedRun<LETTER, STATE> summary = summaryFinder.getNestedRun();
 				NestedRun<LETTER, STATE> returnSuffix = 
 						new NestedRun<LETTER, STATE>(inTrans.getLinPred(), 
@@ -2442,7 +2444,126 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 	
 	
 	
-	
+	class SuccInfo {
+		private final StateContainer<LETTER, STATE> m_Successor;
+		private final LETTER m_Letter;
+		private final InCaRe m_Type;
+		private final StateContainer<LETTER, STATE> m_LinPred;
+		private final boolean m_Guarantee;
+		private final boolean m_GoalFound;
+		private final boolean m_GuaranteeChanger;
+		public SuccInfo(StateContainer<LETTER, STATE> successor,
+				LETTER letter,
+				InCaRe type, StateContainer<LETTER, STATE> linPred,
+				boolean guarantee,
+				boolean goalFound,
+				boolean guaranteeChanger) {
+			if (type == InCaRe.SUMMARY && linPred == null) {
+				throw new IllegalArgumentException("for summary we need linPred");
+			}
+			if ((type == InCaRe.INTERNAL || type == InCaRe.CALL) && linPred != null) {
+				throw new IllegalArgumentException("linPred not allowed for internal and call");
+			}
+			if (type == InCaRe.RETURN) {
+				throw new IllegalArgumentException("we do not use return here");
+			}
+			m_Successor = successor;
+			m_Letter = letter;
+			m_Type = type;
+			m_LinPred = linPred;
+			m_Guarantee = guarantee;
+			m_GoalFound = goalFound;
+			m_GuaranteeChanger = guaranteeChanger;
+		}
+		public StateContainer<LETTER, STATE> getSuccessor() {
+			return m_Successor;
+		}
+		public LETTER getLetter() {
+			return m_Letter;
+		}
+		public InCaRe getType() {
+			return m_Type;
+		}
+		public StateContainer<LETTER, STATE> getLinPred() {
+			return m_LinPred;
+		}
+		public boolean isGuarantee() {
+			return m_Guarantee;
+		}
+		public boolean goalFound() {
+			return m_GoalFound;
+		}
+		public boolean isGuaranteeChanger() {
+			return m_GuaranteeChanger;
+		}
+		@Override
+		public String toString() {
+			return "SuccInfo [m_Successor=" + m_Successor + ", m_Letter="
+					+ m_Letter + ", m_Type=" + m_Type + ", m_LinPred="
+					+ m_LinPred + ", m_Guarantee=" + m_Guarantee
+					+ ", m_GoalFound=" + m_GoalFound
+					+ ", m_GuaranteeChanger=" + m_GuaranteeChanger + "]";
+		}
+		@Override
+		public int hashCode() {
+			final int prime = 31;
+			int result = 1;
+			result = prime * result + getOuterType().hashCode();
+			result = prime * result + (m_GoalFound ? 1231 : 1237);
+			result = prime * result + (m_Guarantee ? 1231 : 1237);
+			result = prime * result + (m_GuaranteeChanger ? 1231 : 1237);
+			result = prime * result
+					+ ((m_Letter == null) ? 0 : m_Letter.hashCode());
+			result = prime * result
+					+ ((m_LinPred == null) ? 0 : m_LinPred.hashCode());
+			result = prime * result
+					+ ((m_Successor == null) ? 0 : m_Successor.hashCode());
+			result = prime * result
+					+ ((m_Type == null) ? 0 : m_Type.hashCode());
+			return result;
+		}
+		@Override
+		public boolean equals(Object obj) {
+			if (this == obj)
+				return true;
+			if (obj == null)
+				return false;
+			if (getClass() != obj.getClass())
+				return false;
+			SuccInfo other = (SuccInfo) obj;
+			if (!getOuterType().equals(other.getOuterType()))
+				return false;
+			if (m_GoalFound != other.m_GoalFound)
+				return false;
+			if (m_Guarantee != other.m_Guarantee)
+				return false;
+			if (m_GuaranteeChanger != other.m_GuaranteeChanger)
+				return false;
+			if (m_Letter == null) {
+				if (other.m_Letter != null)
+					return false;
+			} else if (!m_Letter.equals(other.m_Letter))
+				return false;
+			if (m_LinPred == null) {
+				if (other.m_LinPred != null)
+					return false;
+			} else if (!m_LinPred.equals(other.m_LinPred))
+				return false;
+			if (m_Successor == null) {
+				if (other.m_Successor != null)
+					return false;
+			} else if (!m_Successor.equals(other.m_Successor))
+				return false;
+			if (m_Type != other.m_Type)
+				return false;
+			return true;
+		}
+		private NestedWordAutomatonReachableStates getOuterType() {
+			return NestedWordAutomatonReachableStates.this;
+		}
+		
+		
+	}
 	
 	
 	
@@ -2453,71 +2574,9 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 	abstract class RunFinder {
 		
 		
-		class SuccInfo {
-			private final StateContainer<LETTER, STATE> m_Successor;
-			private final LETTER m_Letter;
-			private final InCaRe m_Type;
-			private final StateContainer<LETTER, STATE> m_LinPred;
-			private final boolean m_Guarantee;
-			private final boolean m_GoalFound;
-			private final boolean m_GuaranteeChanger;
-			public SuccInfo(StateContainer<LETTER, STATE> successor,
-					LETTER letter,
-					InCaRe type, StateContainer<LETTER, STATE> linPred,
-					boolean guarantee,
-					boolean goalFound,
-					boolean guaranteeChanger) {
-				if (type == InCaRe.SUMMARY && linPred == null) {
-					throw new IllegalArgumentException("for summary we need linPred");
-				}
-				if ((type == InCaRe.INTERNAL || type == InCaRe.CALL) && linPred != null) {
-					throw new IllegalArgumentException("linPred not allowed for internal and call");
-				}
-				if (type == InCaRe.RETURN) {
-					throw new IllegalArgumentException("we do not use return here");
-				}
-				m_Successor = successor;
-				m_Letter = letter;
-				m_Type = type;
-				m_LinPred = linPred;
-				m_Guarantee = guarantee;
-				m_GoalFound = goalFound;
-				m_GuaranteeChanger = guaranteeChanger;
-			}
-			public StateContainer<LETTER, STATE> getSuccessor() {
-				return m_Successor;
-			}
-			public LETTER getLetter() {
-				return m_Letter;
-			}
-			public InCaRe getType() {
-				return m_Type;
-			}
-			public StateContainer<LETTER, STATE> getLinPred() {
-				return m_LinPred;
-			}
-			public boolean isGuarantee() {
-				return m_Guarantee;
-			}
-			public boolean goalFound() {
-				return m_GoalFound;
-			}
-			public boolean isGuaranteeChanger() {
-				return m_GuaranteeChanger;
-			}
-			@Override
-			public String toString() {
-				return "SuccInfo [m_Successor=" + m_Successor + ", m_Letter="
-						+ m_Letter + ", m_Type=" + m_Type + ", m_LinPred="
-						+ m_LinPred + ", m_Guarantee=" + m_Guarantee
-						+ ", m_GoalFound=" + m_GoalFound
-						+ ", m_GuaranteeChanger=" + m_GuaranteeChanger + "]";
-			}
 
-			
-			
-			
-		}
+		
+		protected final Set<SuccInfo> m_ForbiddenSummaries;
 		
 		protected final StateContainer<LETTER, STATE> m_Start;
 		protected final StateContainer<LETTER, STATE> m_Goal;
@@ -2590,13 +2649,14 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 		private int m_IterationFoundWithSummary;
 		
 		public RunFinder(StateContainer<LETTER, STATE> start, StateContainer<LETTER, STATE> goal, boolean visitAccepting, 
-				Map<StateContainer<LETTER, STATE>, Set<StateContainer<LETTER, STATE>>> acceptingSummaries) {
+				Map<StateContainer<LETTER, STATE>, Set<StateContainer<LETTER, STATE>>> acceptingSummaries, Set<SuccInfo> forbiddenSummaries) {
 			assert (start != null);
 			assert (goal != null);
 			m_Start = start;
 			m_Goal = goal;
 			m_VisitAccepting = visitAccepting;
 			m_AcceptingSummaries = acceptingSummaries;
+			m_ForbiddenSummaries = forbiddenSummaries;
 			m_SuccessorsWithSummary = new ArrayList<Map<StateContainer<LETTER,STATE>, SuccInfo>>();
 			m_SuccessorsWithoutSummary = new ArrayList<Map<StateContainer<LETTER,STATE>, SuccInfo>>();
 			m_IterationFoundWithSummary = -1;
@@ -2806,9 +2866,14 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 					} else {
 						findAcceptingSummary = false;
 					}
+					Set<SuccInfo> forbiddenSummaries = new HashSet<SuccInfo>();
+					forbiddenSummaries.addAll(m_ForbiddenSummaries);
+					assert !forbiddenSummaries.contains(succs);
+					forbiddenSummaries.add(succs);
 					SummaryFinder summaryFinder = new SummaryFinder(
 							succs.getLinPred(), currentState, 
-							findAcceptingSummary, m_AcceptingSummaries);
+							findAcceptingSummary, m_AcceptingSummaries, 
+							forbiddenSummaries);
 					newSuffix = summaryFinder.getNestedRun();
 					NestedRun<LETTER, STATE> retSuffix = 
 							new NestedRun<LETTER, STATE>(
@@ -2841,11 +2906,13 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 
 
 	class SummaryFinder extends RunFinder {
+		
 	
 		public SummaryFinder(StateContainer<LETTER, STATE> returnPredecessor, StateContainer<LETTER, STATE> callPredecessor, 
 				boolean visitAccepting,	Map<StateContainer<LETTER, STATE>, 
-						Set<StateContainer<LETTER, STATE>>> acceptingSummaries) {
-			super(returnPredecessor, callPredecessor, visitAccepting, acceptingSummaries);
+						Set<StateContainer<LETTER, STATE>>> acceptingSummaries,
+						Set<SuccInfo> forbiddenSummaries) {
+			super(returnPredecessor, callPredecessor, visitAccepting, acceptingSummaries, forbiddenSummaries);
 		}
 
 		@Override
@@ -2905,6 +2972,9 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 			StateContainer<LETTER, STATE> linPredSc = m_States.get(inTrans.getLinPred());
 			SuccInfo succInfo = new SuccInfo(succSc, inTrans.getLetter(), 
 					InCaRe.SUMMARY, linPredSc, isGuaranteedPred, false, guaranteeChanger);
+			if (m_ForbiddenSummaries.contains(succInfo)) {
+				return null;
+			}
 			super.markVisited(predSc, true, isGuaranteedPred);
 			return succInfo;
 		}
