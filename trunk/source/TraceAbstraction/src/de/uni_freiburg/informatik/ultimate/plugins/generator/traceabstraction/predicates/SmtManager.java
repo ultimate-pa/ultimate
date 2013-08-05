@@ -1830,23 +1830,6 @@ public class SmtManager {
 		
 		return strongestPostcondition(p, call.getTransitionFormula(),
 				m_ModifiableGlobals.getGlobalVarsAssignment(call.getCallStatement().getMethodName()), isPendingCall);
-
-
-//		Term call_Term_InVarsRenamed_OutVarsRenamed = substituteTermVariablesByTerms(substitution, call_Term_InVarsRenamed);
-//		Term predicateLocVarsRenamed = substituteTermVariablesByTermVariables(varsToRenameInPred, p.getFormula());
-//		Term callTerm_AND_predicate = Util.and(m_Script, call_Term_InVarsRenamed_OutVarsRenamed, predicateLocVarsRenamed);
-//		Term callTerm_AND_predicate_quantified = callTerm_AND_predicate;
-//		if (varsToQuantify.size() > 0) {
-//			callTerm_AND_predicate_quantified = DestructiveEqualityResolution.quantifier(m_Script, Script.EXISTS,
-//					varsToQuantify.toArray(new TermVariable[varsToQuantify.size()]),
-//					callTerm_AND_predicate, (Term[][])null);
-//		}
-//		
-//		Term result = Util.and(m_Script, callTerm_AND_predicate_quantified, globalVars_InVarsRenamed_OutVarsRenamed);
-//		
-//		TermVarsProc tvp = computeTermVarsProc(result);
-//		Term result_as_closed_formula = SmtManager.computeClosedFormula(result, tvp.getVars(), m_Script);
-//		return newPredicate(result, tvp.getProcedures(), tvp.getVars(), result_as_closed_formula);
 	}
 
 	public IPredicate strongestPostcondition(IPredicate p, TransFormula localVarAssignments, TransFormula globalVarAssignments,
@@ -1856,6 +1839,10 @@ public class SmtManager {
 		Set<TermVariable> varsToQuantifyNonPendingCall = new HashSet<TermVariable>();
 		// Variables, which should be quantified if we have a pending call.
 		Set<TermVariable> varsToQuantifyPendingCall = new HashSet<TermVariable>();
+		// We rename oldvars of non-modifiable global variables to freshvars and quantify them.
+		Set<TermVariable> varsToQuantifyNonModOldVars = new HashSet<TermVariable>();
+		// In Pred we rename oldvars of non-modifiable global variables to freshvars.
+		Map<TermVariable, TermVariable> varsToRenameInPredInBoth = new HashMap<TermVariable, TermVariable>();
 		
 		Map<TermVariable, TermVariable> varsToRenameInPredPendingCall = new HashMap<TermVariable, TermVariable>();
 		Map<TermVariable, TermVariable> varsToRenameInPredNonPendingCall = new HashMap<TermVariable, TermVariable>();
@@ -1883,7 +1870,7 @@ public class SmtManager {
 		
 		Term globalVarsInVarsRenamedOutVarsRenamed = substituteTermVariablesByTerms(substitution, globalVarsInvarsRenamed);
 		
-		// Collect the local variables of the calling proc.
+		// Collect the local and the non-modifiable global variables of the calling proc.
 		for (BoogieVar bv : p.getVars()) {
 			// Procedure is null, if it is a global variable
 			if (bv.getProcedure() != null) {
@@ -1895,6 +1882,17 @@ public class SmtManager {
 					varsToRenameInPredPendingCall.put(bv.getTermVariable(), freshVar);
 					varsToQuantifyPendingCall.add(freshVar);
 					varsToQuantifyNonPendingCall.add(bv.getTermVariable());
+				}
+				
+			}
+			
+			if (bv.isGlobal() &&
+					!globalVarAssignments.getInVars().containsKey(bv) && 
+					!globalVarAssignments.getOutVars().containsKey(bv)) {
+				if (bv.isOldvar()) {
+					TermVariable freshVar = getFreshTermVariable(bv.getIdentifier(), bv.getTermVariable().getSort());
+					varsToRenameInPredInBoth.put(bv.getTermVariable(), freshVar);
+					varsToQuantifyNonModOldVars.add(freshVar);
 				}
 			}
 		}
@@ -1910,6 +1908,8 @@ public class SmtManager {
 		}
 		Term call_Term_InVarsRenamed = substituteTermVariablesByTerms(substitution, localVarAssignments.getFormula());
 		substitution.clear();
+		
+		Term predNonModOldVarsRenamed = substituteTermVariablesByTermVariables(varsToRenameInPredInBoth, p.getFormula());
 
 
 		if (isPendingCall) {
@@ -1919,9 +1919,10 @@ public class SmtManager {
 			}
 			Term callTermInvarsRenamedOutVarsRenamed = substituteTermVariablesByTerms(substitution, call_Term_InVarsRenamed);
 			// Rename the invars of CAll, local Vars and old version of global variables.
-			Term predRenamed = substituteTermVariablesByTermVariables(varsToRenameInPredPendingCall, p.getFormula());
+			Term predRenamed = substituteTermVariablesByTermVariables(varsToRenameInPredPendingCall, predNonModOldVarsRenamed);
 			Term predANDCallANDGlobalVars = Util.and(m_Script, predRenamed, callTermInvarsRenamedOutVarsRenamed,
 					globalVarsInVarsRenamedOutVarsRenamed);
+			varsToQuantifyPendingCall.addAll(varsToQuantifyNonModOldVars);
 			Term result = DestructiveEqualityResolution.quantifier(m_Script,
 					Script.EXISTS,
 					varsToQuantifyPendingCall.toArray(new TermVariable[varsToQuantifyPendingCall.size()]),
@@ -1931,7 +1932,8 @@ public class SmtManager {
 			return newPredicate(result, tvp.getProcedures(), tvp.getVars(), result_as_closed_formula);
 		} else {
 			// TODO: Die Variable (a) fehlen noch.
-			Term predRenamed = substituteTermVariablesByTermVariables(varsToRenameInPredNonPendingCall, p.getFormula());
+			Term predRenamed = substituteTermVariablesByTermVariables(varsToRenameInPredNonPendingCall, predNonModOldVarsRenamed);
+			varsToQuantifyNonPendingCall.addAll(varsToQuantifyNonModOldVars);
 			Term result = DestructiveEqualityResolution.quantifier(m_Script, 
 					Script.EXISTS,
 					varsToQuantifyNonPendingCall.toArray(new TermVariable[varsToQuantifyNonPendingCall.size()]),
@@ -2030,8 +2032,6 @@ public class SmtManager {
 		}
 		//1.2 Rename outvars of Return statement
 		for (BoogieVar bv : ret_TF.getOutVars().keySet()) {
-			// TODO: We could maybe also have the case where an outvar occurs
-			// in calleePred or callerPred, therefore we have to rename it there.
 			substitution.put(ret_TF.getOutVars().get(bv), bv.getTermVariable());
 			varsToQuantifyInCallerPredAndCallTF.add(bv.getTermVariable());
 		}
