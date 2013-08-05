@@ -67,24 +67,6 @@ public class UnionFind<E> {
 	}
 	
 	/**
-	 * Add the element eNew to the equivalence class of element eContained.
-	 * The element eNew must not be contained in this UnionFind data structure.
-	 * The element eContained has to be contained in this UnionFind data 
-	 * structure.
-	 */
-	public void add(E eNew, E eContained) {
-		if (!m_EquivalenceClass.containsKey(eContained)) {
-			throw new IllegalArgumentException("Not contained " + eContained);
-		}
-		if (m_EquivalenceClass.containsKey(eNew)) {
-			throw new IllegalArgumentException("Already contained " + eContained);
-		}
-		Set<E> equivalenceClass = m_EquivalenceClass.get(eContained);
-		equivalenceClass.add(eNew);
-		m_EquivalenceClass.put(eNew, equivalenceClass);
-	}
-	
-	/**
 	 * Returns an unmodifiable set containing all equivalence classes
 	 */
 	public Set<Set<E>> getEquivalenceClass() {
