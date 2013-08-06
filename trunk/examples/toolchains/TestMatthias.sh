@@ -1,19 +1,32 @@
 #!/bin/bash
 
-# trunk/examples/toolchains/TraceAbstractionTestDir.sh 20 trunk/examples/programs \
-# "TraceAbstraction.xml;TraceAbstractionC.xml;TraceAbstraction-LargeStatements-EagerPost-Hoare" \
-# "TraceAbstractionWithBlockEncoding.xml;TraceAbstractionCWithBlockEncoding.xml;TraceAbstraction-BlockEncoding-EagerPost-Hoare" \
-# "TraceAbstractionWithBlockEncoding.xml;TraceAbstractionCWithBlockEncoding.xml;TraceAbstraction-BlockEncodingNoParallel-EagerPost-Hoare" \
-# "TraceAbstraction.xml;TraceAbstractionC.xml;TraceAbstraction-LargeStatements-Lazypost-Hoare" \
-# "TraceAbstractionWithBlockEncoding.xml;TraceAbstractionCWithBlockEncoding.xml;TraceAbstraction-BlockEncoding-Lazypost-Hoare" \
-# "TraceAbstractionWithBlockEncoding.xml;TraceAbstractionCWithBlockEncoding.xml;TraceAbstraction-BlockEncodingNoParallel-Lazypost-Hoare" \
-# "TraceAbstraction.xml;TraceAbstractionC.xml;TraceAbstraction-LargeStatements-StrongestPost-Hoare" \
-# "TraceAbstractionWithBlockEncoding.xml;TraceAbstractionCWithBlockEncoding.xml;TraceAbstraction-BlockEncoding-StrongestPost-Hoare" \
-# "TraceAbstractionWithBlockEncoding.xml;TraceAbstractionCWithBlockEncoding.xml;TraceAbstraction-BlockEncodingNoParallel-StrongestPost-Hoare"
+if [ "$1" = "0" ]; then
+echo "testing our example programs with different block encodings"
+trunk/examples/toolchains/TraceAbstractionTestDir.sh 20 trunk/examples/programs \
+"TraceAbstraction.xml;TraceAbstractionC.xml;TraceAbstraction-LargeStatements-EagerPost-Hoare" \
+"TraceAbstractionWithBlockEncoding.xml;TraceAbstractionCWithBlockEncoding.xml;TraceAbstraction-BlockEncoding-EagerPost-Hoare" \
+"TraceAbstractionWithBlockEncoding.xml;TraceAbstractionCWithBlockEncoding.xml;TraceAbstraction-BlockEncodingNoParallel-EagerPost-Hoare" \
+"TraceAbstraction.xml;TraceAbstractionC.xml;TraceAbstraction-LargeStatements-Lazypost-Hoare" \
+"TraceAbstractionWithBlockEncoding.xml;TraceAbstractionCWithBlockEncoding.xml;TraceAbstraction-BlockEncoding-Lazypost-Hoare" \
+"TraceAbstractionWithBlockEncoding.xml;TraceAbstractionCWithBlockEncoding.xml;TraceAbstraction-BlockEncodingNoParallel-Lazypost-Hoare" \
+"TraceAbstraction.xml;TraceAbstractionC.xml;TraceAbstraction-LargeStatements-StrongestPost-Hoare" \
+"TraceAbstractionWithBlockEncoding.xml;TraceAbstractionCWithBlockEncoding.xml;TraceAbstraction-BlockEncoding-StrongestPost-Hoare" \
+"TraceAbstractionWithBlockEncoding.xml;TraceAbstractionCWithBlockEncoding.xml;TraceAbstraction-BlockEncodingNoParallel-StrongestPost-Hoare"
+fi
 
-# trunk/examples/toolchains/TraceAbstractionTestDir.sh 20 trunk/examples/programs \
-#  "TraceAbstraction.xml;TraceAbstractionC.xml;TraceAbstraction-LargeStatements-EagerPost-Hoare" \
-#  "TraceAbstractionWithBlockEncoding.xml;TraceAbstractionCWithBlockEncoding.xml;TraceAbstraction-BlockEncoding-EagerPost-Hoare" \
+if [ "$1" = "2" ]; then
+echo "small test"
+trunk/examples/toolchains/TraceAbstractionTestDir.sh 20 trunk/examples/programs \
+ "TraceAbstraction.xml;TraceAbstractionC.xml;TraceAbstraction-LargeStatements-EagerPost-Hoare" \
+ "TraceAbstractionWithBlockEncoding.xml;TraceAbstractionCWithBlockEncoding.xml;TraceAbstraction-BlockEncoding-EagerPost-Hoare"
+fi
+
+if [ "$1" = "3" ]; then
+echo "testing TraceCheckerSpWp"
+trunk/examples/toolchains/TraceAbstractionTestDir.sh 20 trunk/examples/programs \
+"TraceAbstraction.xml;TraceAbstractionC.xml;TraceAbstraction-LargeStatements-StrongestPost-Hoare-SpWp" \
+"TraceAbstraction.xml;TraceAbstractionC.xml;TraceAbstraction-LargeStatements-StrongestPost-Hoare"
+fi
 
 
 #trunk/examples/toolchains/TraceAbstractionTestDir.sh 1000 trunk/examples/svcomp13/systemc \
@@ -34,18 +47,18 @@
 # "TraceAbstraction.xml;TraceAbstractionC.xml;TraceAbstraction-svcomp-LargeStrongest" \
 # "TraceAbstractionWithBlockEncoding.xml;TraceAbstractionCWithBlockEncoding.xml;TraceAbstraction-svcomp-BlockEncodingStrongest" 
 
-trunk/examples/toolchains/TraceAbstractionTestDir.sh 1000 trunk/examples/svcomp13/ssh-simplified/ \
-"TraceAbstraction.xml;TraceAbstractionC.xml;TraceAbstraction-svcomp-LargeStrongest" \
-"TraceAbstraction.xml;TraceAbstractionC.xml;TraceAbstraction-svcomp-LargeStrongestMinimizeSevpa"
-trunk/examples/toolchains/TraceAbstractionTestDir.sh 1000 trunk/examples/svcomp13/ntdrivers-simplified \
-"TraceAbstraction.xml;TraceAbstractionC.xml;TraceAbstraction-svcomp-LargeStrongest" \
-"TraceAbstraction.xml;TraceAbstractionC.xml;TraceAbstraction-svcomp-LargeStrongestMinimizeSevpa"
-trunk/examples/toolchains/TraceAbstractionTestDir.sh 1000 trunk/examples/svcomp13/systemc \
-"TraceAbstraction.xml;TraceAbstractionC.xml;TraceAbstraction-svcomp-LargeStrongest" \
-"TraceAbstraction.xml;TraceAbstractionC.xml;TraceAbstraction-svcomp-LargeStrongestMinimizeSevpa"
-trunk/examples/toolchains/TraceAbstractionTestDir.sh 1000 trunk/examples/programs \
-"TraceAbstraction.xml;TraceAbstractionC.xml;TraceAbstraction-svcomp-LargeStrongest" \
-"TraceAbstraction.xml;TraceAbstractionC.xml;TraceAbstraction-svcomp-LargeStrongestMinimizeSevpa"
+# trunk/examples/toolchains/TraceAbstractionTestDir.sh 1000 trunk/examples/svcomp13/ssh-simplified/ \
+# "TraceAbstraction.xml;TraceAbstractionC.xml;TraceAbstraction-svcomp-LargeStrongest" \
+# "TraceAbstraction.xml;TraceAbstractionC.xml;TraceAbstraction-svcomp-LargeStrongestMinimizeSevpa"
+# trunk/examples/toolchains/TraceAbstractionTestDir.sh 1000 trunk/examples/svcomp13/ntdrivers-simplified \
+# "TraceAbstraction.xml;TraceAbstractionC.xml;TraceAbstraction-svcomp-LargeStrongest" \
+# "TraceAbstraction.xml;TraceAbstractionC.xml;TraceAbstraction-svcomp-LargeStrongestMinimizeSevpa"
+# trunk/examples/toolchains/TraceAbstractionTestDir.sh 1000 trunk/examples/svcomp13/systemc \
+# "TraceAbstraction.xml;TraceAbstractionC.xml;TraceAbstraction-svcomp-LargeStrongest" \
+# "TraceAbstraction.xml;TraceAbstractionC.xml;TraceAbstraction-svcomp-LargeStrongestMinimizeSevpa"
+# trunk/examples/toolchains/TraceAbstractionTestDir.sh 1000 trunk/examples/programs \
+# "TraceAbstraction.xml;TraceAbstractionC.xml;TraceAbstraction-svcomp-LargeStrongest" \
+# "TraceAbstraction.xml;TraceAbstractionC.xml;TraceAbstraction-svcomp-LargeStrongestMinimizeSevpa"
 
 
 #trunk/examples/toolchains/TraceAbstractionTestDir.sh 1000 trunk/examples/svcomp13/ssh-simplified/ \
