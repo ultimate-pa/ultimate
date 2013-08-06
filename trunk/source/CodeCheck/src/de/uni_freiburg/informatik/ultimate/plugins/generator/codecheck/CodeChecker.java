@@ -2,6 +2,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck;
 
 import java.util.HashSet;
 
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
@@ -35,7 +36,7 @@ public abstract class CodeChecker {
 		this.m_graphRoot = m_graphRoot;
 	}
 	
-	public abstract boolean codeCheck(Pair<AnnotatedProgramPoint[], NestedWord<CodeBlock>> errorTrace, IPredicate[] interpolants, AnnotatedProgramPoint procedureRoot);
+	public abstract boolean codeCheck(NestedRun<CodeBlock, AnnotatedProgramPoint> errorRun, IPredicate[] interpolants, AnnotatedProgramPoint procedureRoot);
 
 	/**
 	 * Given 2 predicates, return a predicate which is the conjunction of both.

@@ -2,6 +2,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -9,6 +10,7 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Stack;
 
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
@@ -18,7 +20,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Sum
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.util.HashUtils;
 
-public class EmptinessCheck {
+public class BFSEmptinessCheck implements IEmptinessCheck {
 	private static int c_badNestingRelationInit = -7;
 
 	ArrayDeque<AppDoubleDecker> openNodes;
@@ -32,9 +34,9 @@ public class EmptinessCheck {
 	 * @param root
 	 * @return
 	 */
-	Pair<AnnotatedProgramPoint[],NestedWord<CodeBlock>> checkForEmptiness(AnnotatedProgramPoint root) {
-		openNodes = new ArrayDeque<EmptinessCheck.AppDoubleDecker>();
-		visitedNodes = new HashSet<EmptinessCheck.AppDoubleDecker>();
+	public NestedRun<CodeBlock, AnnotatedProgramPoint> checkForEmptiness(AnnotatedProgramPoint root) {
+		openNodes = new ArrayDeque<BFSEmptinessCheck.AppDoubleDecker>();
+		visitedNodes = new HashSet<BFSEmptinessCheck.AppDoubleDecker>();
 
 		summaryEdges = 
 				new HashMap<AnnotatedProgramPoint, HashSet<AnnotatedProgramPoint>>();
@@ -118,7 +120,10 @@ public class EmptinessCheck {
 				}
 			}
 		}
-		return returnedPath;
+		return returnedPath == null ? 
+				null :
+			new NestedRun<CodeBlock, AnnotatedProgramPoint>(returnedPath.getSecond(), 
+				new ArrayList<AnnotatedProgramPoint>(Arrays.asList(returnedPath.getFirst())));
 	}
 
 

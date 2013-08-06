@@ -5,6 +5,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
@@ -81,8 +82,8 @@ public class ImpulseChecker extends CodeChecker {
 	 * @param procedureRoot the procedure root, not needed, exists only because of inheritance
 	 * @return always returns true
 	 */
-	public boolean codeCheck(Pair<AnnotatedProgramPoint[], NestedWord<CodeBlock>> errorTrace, IPredicate[] interpolants, AnnotatedProgramPoint procedureRoot) {
-		AnnotatedProgramPoint[] nodes = errorTrace.getFirst();
+	public boolean codeCheck(NestedRun<CodeBlock, AnnotatedProgramPoint> errorTrace, IPredicate[] interpolants, AnnotatedProgramPoint procedureRoot) {
+		AnnotatedProgramPoint[] nodes = errorTrace.getStateSequence().toArray(new AnnotatedProgramPoint[0]);
 		/* //Debugging
 		ArrayList <AnnotatedProgramPoint> errorTraceDBG = new ArrayList<AnnotatedProgramPoint>();
 		Collections.addAll(errorTraceDBG, nodes);
@@ -92,7 +93,7 @@ public class ImpulseChecker extends CodeChecker {
 		Collections.addAll(interpolantsDBG, interpolants);
 		CodeCheckObserver.s_Logger.debug(String.format("Inters: %s\n", interpolantsDBG));
 		*/
-		NestedWord<CodeBlock> nestedWords = errorTrace.getSecond();
+		NestedWord<CodeBlock> nestedWords = errorTrace.getWord();
 		
 		//Debugging
 		/*

@@ -12,6 +12,7 @@ import java.util.Stack;
 
 import de.uni_freiburg.informatik.ultimate.access.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.access.WalkerOptions;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
@@ -165,7 +166,8 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 	
 	public boolean process(IElement root) {
 		//FIXME
-		checker = Checker.IMPULSE;
+		checker = Checker.ULTIMATE;
+//		checker = Checker.IMPULSE;
 		initialize(root);
 		
 		final boolean loop_forever = true; // for DEBUG
@@ -182,7 +184,11 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 			s_Logger.debug("Exploring : " + procRoot);
 			Stack <AnnotatedProgramPoint> stack = new Stack <AnnotatedProgramPoint>();
 			stack.add(procRoot);
-			EmptinessCheck emptinessCheck = new EmptinessCheck();
+			
+			//FIXME
+//			IEmptinessCheck emptinessCheck = new BFSEmptinessCheck();
+			IEmptinessCheck emptinessCheck = new NWAEmptinessCheck();
+			
 			int iterationsCount = 0; // for DEBUG
 			if (DEBUG)
 				codeChecker.debug();
@@ -193,10 +199,10 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 					break;
 				}
 				AnnotatedProgramPoint procedureRoot = stack.peek();
-				Pair<AnnotatedProgramPoint[], NestedWord<CodeBlock>> errorTrace = 
+				NestedRun<CodeBlock, AnnotatedProgramPoint> errorRun = 
 						emptinessCheck.checkForEmptiness(procedureRoot);
 				
-				if (errorTrace == null) {
+				if (errorRun == null) {
 					// if an error trace doesn't exist, return safe
 					stack.pop();
 					continue;
@@ -205,7 +211,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 					TraceChecker traceChecker = new TraceChecker(
 							m_truePredicate, // checks whether the trace is feasible, i.e. the formula is satisfiable
 							m_falsePredicate,  //return LBool.UNSAT if trace is infeasible
-							errorTrace.getSecond(),
+							errorRun.getWord(),
 							m_smtManager, 
 							m_originalRoot.getRootAnnot().getModGlobVarManager(), 
 							dumpInitialize());
@@ -214,7 +220,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 						PredicateUnifier pu = new PredicateUnifier(m_smtManager, m_truePredicate, m_falsePredicate);
 						traceChecker.computeInterpolants(new TraceChecker.AllIntegers(), pu);
 						IPredicate[] interpolants = traceChecker.getInterpolants();
-						codeChecker.codeCheck(errorTrace, interpolants, procedureRoot);
+						codeChecker.codeCheck(errorRun, interpolants, procedureRoot);
 					} else { // trace is feasible
 						s_Logger.info("This program is UNSAFE, Check terminated with " + iterationsCount + " iterations.");
 						if (DEBUG)
