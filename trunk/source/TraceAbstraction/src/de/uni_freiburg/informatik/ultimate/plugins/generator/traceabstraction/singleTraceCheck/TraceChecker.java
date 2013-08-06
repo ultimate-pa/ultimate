@@ -152,6 +152,7 @@ public class TraceChecker {
 		m_PredicateUnifier = new PredicateUnifier(m_SmtManager);
 		m_ModifiedGlobals = modifiedGlobals;
 		m_DebugPW = debugPW;
+		checkTrace(precondition, postcondition, pendingContexts, trace);
 	}
 	
 	
