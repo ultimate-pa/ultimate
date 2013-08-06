@@ -679,7 +679,7 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 			
 			//TODO: This is a test for constructRun
 			for (STATE fin : getFinalStates()) {
-				NestedRun<LETTER,STATE> run = constructRun(m_States.get(fin));
+				NestedRun<LETTER,STATE> run = (new RunConstructor(m_States.get(fin), null)).constructRun();
 				assert (new Accepts<LETTER, STATE>(NestedWordAutomatonReachableStates.this, run.getWord())).getResult();
 			}
 		}
@@ -1769,7 +1769,7 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
     			LoopFinder lf = new LoopFinder(honda, scc, true, 
     					acceptingSummaries, forbiddenSummaries);
     			NestedRun<LETTER, STATE> loop = lf.getNestedRun();
-    			NestedRun<LETTER, STATE> stem = constructRun(honda);
+    			NestedRun<LETTER, STATE> stem = (new RunConstructor(honda, null)).constructRun();
     			s_Logger.debug("Stem length: " + stem.getLength());
     			s_Logger.debug("Loop length: " + loop.getLength());
     			m_nlr = new NestedLassoRun<LETTER, STATE>(stem, loop);
@@ -2346,88 +2346,144 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 	
 	
 
-	
-
-	
-
-	
-	
-
-
-	
-	
-
-	
-	/**
-	 * Construct a run that starts in an initial state and ends in end.
-	 */
-	private NestedRun<LETTER, STATE> constructRun(final StateContainer<LETTER,STATE> end) {
-		StateContainer<LETTER,STATE> current = end;
-		Object transitionToLowest = null;
-		int lowestPredecessorSerialNumber = Integer.MAX_VALUE;
-		NestedRun<LETTER,STATE> result = new NestedRun<LETTER,STATE>(end.getState());
+	class RunConstructor {
+		private final StateContainer<LETTER,STATE> m_Start;
+		private final StateContainer<LETTER,STATE> m_Goal;
+		private final Set<IncomingReturnTransition<LETTER, STATE>> m_ForbiddenSummaries;
+		private final boolean m_FindSummary;
+		private boolean m_GoalFound = false;
 		
-		while (!isInitial(current.getState())) {
-			for (IncomingReturnTransition<LETTER, STATE> inTrans : returnPredecessors(current.getState())) {
-				StateContainer<LETTER,STATE> predSc = m_States.get(inTrans.getHierPred());
+		public RunConstructor(StateContainer<LETTER, STATE> start,
+				StateContainer<LETTER, STATE> goal) {
+			m_Start = start;
+			m_Goal = goal;
+			m_ForbiddenSummaries = Collections.emptySet();
+			m_FindSummary = (m_Goal != null);
+		}
+		
+		public RunConstructor(StateContainer<LETTER, STATE> start,
+				StateContainer<LETTER, STATE> goal,
+				Set<IncomingReturnTransition<LETTER, STATE>> forbiddenSummaries) {
+			m_Start = start;
+			m_Goal = goal;
+			m_ForbiddenSummaries = forbiddenSummaries;
+			m_FindSummary = (m_Goal != null);
+		}
+		
+
+		Object findPredecessor(StateContainer<LETTER,STATE> current) {
+			Object result = null;
+			int lowestPredecessorSerialNumber = Integer.MAX_VALUE;
+			for (IncomingInternalTransition<LETTER, STATE> inTrans : internalPredecessors(current.getState())) {
+				StateContainer<LETTER,STATE> predSc = m_States.get(inTrans.getPred());
+				if (!m_FindSummary && isInitial(inTrans.getPred())) {
+					m_GoalFound = true;
+					return inTrans;
+				}
+				if (m_FindSummary && !predSc.getDownStates().containsKey(m_Goal.getState())) {
+					continue;
+				}
 				int predSerialNumber = predSc.getSerialNumber();
 				if (predSerialNumber < lowestPredecessorSerialNumber) {
 					lowestPredecessorSerialNumber = predSerialNumber;
-					transitionToLowest = inTrans;
+					result = inTrans;
 				}
 			}
 			for (IncomingCallTransition<LETTER, STATE> inTrans : callPredecessors(current.getState())) {
+				if (!m_FindSummary && isInitial(inTrans.getPred())) {
+					m_GoalFound = true;
+					return inTrans;
+				}				
 				StateContainer<LETTER,STATE> predSc = m_States.get(inTrans.getPred());
+				if (m_FindSummary) {
+					if (m_Goal.equals(predSc)) {
+						m_GoalFound = true;
+						return inTrans;
+					} else {
+						continue;
+					}
+				} else {
+					if (isInitial(inTrans.getPred())) {
+						m_GoalFound = true;
+						return inTrans;
+					}
+					int predSerialNumber = predSc.getSerialNumber();
+					if (predSerialNumber < lowestPredecessorSerialNumber) {
+						lowestPredecessorSerialNumber = predSerialNumber;
+						result = inTrans;
+					}
+				}
+			}
+			
+			for (IncomingReturnTransition<LETTER, STATE> inTrans : returnPredecessors(current.getState())) {
+				if (m_ForbiddenSummaries.contains(inTrans)) {
+					continue;
+				}
+				StateContainer<LETTER,STATE> predSc = m_States.get(inTrans.getHierPred());
+				if (!m_FindSummary && isInitial(inTrans.getHierPred())) {
+					m_GoalFound = true;
+					return inTrans;
+				}
+				if (m_FindSummary && !predSc.getDownStates().containsKey(m_Goal.getState())) {
+					continue;
+				}
 				int predSerialNumber = predSc.getSerialNumber();
 				if (predSerialNumber < lowestPredecessorSerialNumber) {
 					lowestPredecessorSerialNumber = predSerialNumber;
-					transitionToLowest = inTrans;
+					result = inTrans;
 				}
 			}
-			for (IncomingInternalTransition<LETTER, STATE> inTrans : internalPredecessors(current.getState())) {
-				StateContainer<LETTER,STATE> predSc = m_States.get(inTrans.getPred());
-				int predSerialNumber = predSc.getSerialNumber();
-				if (predSerialNumber < lowestPredecessorSerialNumber) {
-					lowestPredecessorSerialNumber = predSerialNumber;
-					transitionToLowest = inTrans;
-				}
-			}
-			NestedRun<LETTER,STATE> newPrefix;
-			if (transitionToLowest instanceof IncomingInternalTransition) {
-				IncomingInternalTransition<LETTER, STATE> inTrans = (IncomingInternalTransition) transitionToLowest;
-				newPrefix = new NestedRun(inTrans.getPred(), inTrans.getLetter(), NestedWord.INTERNAL_POSITION ,current.getState());
-			} else if (transitionToLowest instanceof IncomingCallTransition) {
-				IncomingCallTransition<LETTER, STATE> inTrans = (IncomingCallTransition) transitionToLowest;
-				newPrefix = new NestedRun(inTrans.getPred(), inTrans.getLetter(), NestedWord.PLUS_INFINITY ,current.getState());
-			} else if (transitionToLowest instanceof IncomingReturnTransition) {
-				IncomingReturnTransition<LETTER, STATE> inTrans = (IncomingReturnTransition) transitionToLowest;
-				Set<SuccInfo> forbiddenSummaries = Collections.emptySet();
-				SummaryFinder summaryFinder = new SummaryFinder(
-						m_States.get(inTrans.getLinPred()), 
-						m_States.get(inTrans.getHierPred()), 
-						false, null, forbiddenSummaries);
-				NestedRun<LETTER, STATE> summary = summaryFinder.getNestedRun();
-				NestedRun<LETTER, STATE> returnSuffix = 
-						new NestedRun<LETTER, STATE>(inTrans.getLinPred(), 
-								inTrans.getLetter(), 
-								NestedWord.MINUS_INFINITY, current.getState());
-				summary = summary.concatenate(returnSuffix);
-				newPrefix = summary;
-			} else {
-				throw new AssertionError();
-			}
-			result = newPrefix.concatenate(result);
-			current = m_States.get(result.getStateAtPosition(0));
-			transitionToLowest = null;
-			lowestPredecessorSerialNumber = Integer.MAX_VALUE;
+			assert result != null;
+			return result;
 		}
-		return result;
+		
+		
+		NestedRun<LETTER, STATE> constructRun() {
+			NestedRun<LETTER,STATE> result = new NestedRun<LETTER,STATE>(m_Start.getState());
+			if (!m_FindSummary && isInitial(m_Start.getState())) {
+				return result;
+			}
+			StateContainer<LETTER, STATE> current = m_Start;
+			while (true) {
+				NestedRun<LETTER,STATE> newPrefix;
+				Object transitionToLowest = findPredecessor(current);
+				assert transitionToLowest != null;
+				if (transitionToLowest instanceof IncomingInternalTransition) {
+					IncomingInternalTransition<LETTER, STATE> inTrans = (IncomingInternalTransition) transitionToLowest;
+					newPrefix = new NestedRun(inTrans.getPred(), inTrans.getLetter(), NestedWord.INTERNAL_POSITION ,current.getState());
+				} else if (transitionToLowest instanceof IncomingCallTransition) {
+					IncomingCallTransition<LETTER, STATE> inTrans = (IncomingCallTransition) transitionToLowest;
+					newPrefix = new NestedRun(inTrans.getPred(), inTrans.getLetter(), NestedWord.PLUS_INFINITY ,current.getState());
+				} else if (transitionToLowest instanceof IncomingReturnTransition) {
+					IncomingReturnTransition<LETTER, STATE> inTrans = (IncomingReturnTransition) transitionToLowest;
+					Set<IncomingReturnTransition<LETTER, STATE>> forbiddenSummaries = 
+							new HashSet<IncomingReturnTransition<LETTER, STATE>>();
+					forbiddenSummaries.addAll(m_ForbiddenSummaries);
+					forbiddenSummaries.add(inTrans);
+					RunConstructor runConstuctor = new RunConstructor(
+							m_States.get(inTrans.getLinPred()), 
+							m_States.get(inTrans.getHierPred()), 
+							forbiddenSummaries);
+					NestedRun<LETTER, STATE> summary = runConstuctor.constructRun();
+					NestedRun<LETTER, STATE> returnSuffix = 
+							new NestedRun<LETTER, STATE>(inTrans.getLinPred(), 
+									inTrans.getLetter(), 
+									NestedWord.MINUS_INFINITY, current.getState());
+					summary = summary.concatenate(returnSuffix);
+					newPrefix = summary;
+				} else {
+					throw new AssertionError();
+				}
+				result = newPrefix.concatenate(result);
+				if (m_GoalFound) {
+					return result;
+				}
+				current = m_States.get(result.getStateAtPosition(0));
+			}
+		}
+		
 	}
-	
-	
 
-	
-	
 	
 
 	
@@ -2435,11 +2491,7 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 
 
 	
-	
 
-	
-	
-	
 	
 	
 	
