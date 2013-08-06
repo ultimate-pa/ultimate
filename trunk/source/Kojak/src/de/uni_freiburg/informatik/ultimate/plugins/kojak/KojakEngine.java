@@ -111,12 +111,12 @@ public class KojakEngine {
 	}
 	
 	private IPredicate[] getInterpolants(NestedWord<CodeBlock> errorPathNW) {
-		TraceChecker traceChecker = new TraceChecker(mSmtManager, 
+		TraceChecker traceChecker = new TraceChecker(mTruePredicate, 
+				mFalsePredicate, errorPathNW, mSmtManager, 
 				mOriginalRoot.getRootAnnot().getModGlobVarManager(), 
 				dumpInitialize());
 		
-		LBool isSafe = traceChecker.checkTrace(mTruePredicate, 
-				mFalsePredicate, errorPathNW);
+		LBool isSafe = traceChecker.isCorrect();
 		if(isSafe == LBool.UNSAT) {
 			PredicateUnifier pu = new PredicateUnifier(mSmtManager, mTruePredicate, mFalsePredicate);
 			traceChecker.computeInterpolants(new TraceChecker.AllIntegers(), pu);

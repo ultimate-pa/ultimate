@@ -272,12 +272,11 @@ public class ReImpactObserver implements IUnmanagedObserver {
 				new Pair<UnwindingNode[], NestedWord<CodeBlock>>(
 						errorPath.getFirst(), errorPathAsNestedWord);
 
-		TraceChecker traceChecker = new TraceChecker(m_smtManager, 
+		TraceChecker traceChecker = new TraceChecker(m_truePredicate, 
+				m_falsePredicate, errorNWP.getSecond(), m_smtManager, 
 				m_rootAnnot.getModGlobVarManager(),
 				dumpInitialize());
-		LBool isSafe = traceChecker.checkTrace(m_truePredicate, 
-				m_falsePredicate, 
-				errorNWP.getSecond());
+		LBool isSafe = traceChecker.isCorrect();
 		m_pathChecks++;
 		
 		if (isSafe == LBool.UNSAT) {
@@ -601,11 +600,11 @@ public class ReImpactObserver implements IUnmanagedObserver {
 		Pair<UnwindingNode[], NestedWord<CodeBlock>> newPathNWP = 
 				prolongNestedWordUnwNodePair(v, x);
 		
-		TraceChecker traceChecker = new TraceChecker(m_smtManager, 
-				m_rootAnnot.getModGlobVarManager(),
-				dumpInitialize());
+		TraceChecker traceChecker = new TraceChecker(v.getPredicate(), 
+				w.getPredicate(), newPathNWP.getSecond(), m_smtManager, 
+				m_rootAnnot.getModGlobVarManager(), dumpInitialize());
 		
-		LBool isSafe = traceChecker.checkTrace(v.getPredicate(), w.getPredicate(), newPathNWP.getSecond());
+		LBool isSafe = traceChecker.isCorrect();
 		
 		if (isSafe == LBool.UNSAT) {
 			PredicateUnifier pu = new PredicateUnifier(m_smtManager, v.getPredicate(), w.getPredicate());

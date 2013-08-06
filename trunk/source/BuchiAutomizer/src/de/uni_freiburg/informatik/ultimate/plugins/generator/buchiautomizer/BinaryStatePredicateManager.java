@@ -251,15 +251,15 @@ public class BinaryStatePredicateManager {
 			NestedWord<CodeBlock> stem, NestedWord<CodeBlock> loop, 
 			RootAnnot rootAnnot) {
 		boolean result = true;
-		TraceChecker traceChecker = new TraceChecker(m_SmtManager,
-				rootAnnot.getModGlobVarManager(),
-				null);
+		TraceChecker traceChecker;
 		IPredicate truePredicate = m_SmtManager.newTruePredicate();
 		IPredicate siPred = supportingInvariant2Predicate(si);
 		if (isTrue(siPred)) {
 			siPred = truePredicate;
 		}
-		LBool stemCheck = traceChecker.checkTrace(truePredicate, siPred, stem);
+		traceChecker = new TraceChecker(truePredicate, siPred, stem, m_SmtManager,
+				rootAnnot.getModGlobVarManager(), null);
+		LBool stemCheck = traceChecker.isCorrect();
 		if (stemCheck == LBool.UNSAT) {
 			traceChecker.unlockSmtManager();
 //			IPredicate[] interpolants = m_TraceChecker.getInterpolants(new TraceChecker.AllIntegers());
@@ -267,7 +267,9 @@ public class BinaryStatePredicateManager {
 		} else {
 			result = false;			
 		}
-		LBool loopCheck = traceChecker.checkTrace(siPred, siPred, stem);
+		traceChecker = new TraceChecker(siPred, siPred, stem, m_SmtManager,
+				rootAnnot.getModGlobVarManager(), null);
+		LBool loopCheck = traceChecker.isCorrect();
 		if (loopCheck == LBool.UNSAT) {
 			traceChecker.unlockSmtManager();
 //			IPredicate[] interpolants = m_TraceChecker.getInterpolants(new TraceChecker.AllIntegers());
@@ -279,10 +281,10 @@ public class BinaryStatePredicateManager {
 	}
 	
 	public boolean checkRankDecrease(NestedWord<CodeBlock> loop, RootAnnot rootAnnot) {
-		TraceChecker traceChecker = new TraceChecker(m_SmtManager,
-				rootAnnot.getModGlobVarManager(),
+		TraceChecker traceChecker = new TraceChecker(m_RankEqualityAndSi, 
+				m_RankDecrease, loop, m_SmtManager,	rootAnnot.getModGlobVarManager(),
 				null);
-		LBool loopCheck = traceChecker.checkTrace(m_RankEqualityAndSi, m_RankDecrease, loop);
+		LBool loopCheck = traceChecker.isCorrect();
 		traceChecker.unlockSmtManager();
 		if (loopCheck == LBool.UNSAT) {
 			return true;

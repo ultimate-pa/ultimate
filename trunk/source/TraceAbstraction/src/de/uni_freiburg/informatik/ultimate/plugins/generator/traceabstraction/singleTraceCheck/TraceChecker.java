@@ -116,9 +116,38 @@ public class TraceChecker {
 	protected IPredicate[] m_Interpolants;
 	
 	
-	public TraceChecker(SmtManager smtManager,
+	
+	/**
+	 * Check if trace fulfills specification given by precondition and
+	 * postcondition. 
+	 * 
+	 */
+	public TraceChecker(IPredicate precondition, IPredicate postcondition,
+			Word<CodeBlock> trace,
+			SmtManager smtManager,
 						ModifiableGlobalVariableManager modifiedGlobals,
 		 				PrintWriter debugPW) {
+		m_SmtManager = smtManager;
+		m_PredicateUnifier = new PredicateUnifier(m_SmtManager);
+		m_ModifiedGlobals = modifiedGlobals;
+		m_DebugPW = debugPW;
+		Map<Integer, IPredicate> pendingContexts = new HashMap<Integer, IPredicate>(0);
+		checkTrace(precondition, postcondition, pendingContexts, trace);
+	}
+	
+	
+	/**
+	 * Like three-argument-checkTrace-Method above but for traces which contain
+	 * pending returns. The pendingContext maps the positions of pending returns
+	 * to predicates which define possible variable valuations in the context to
+	 * which the return leads the trace.
+	 * 
+	 */
+	public TraceChecker(IPredicate precondition, IPredicate postcondition,
+			Map<Integer, IPredicate> pendingContexts, Word<CodeBlock> trace,
+			SmtManager smtManager,
+			ModifiableGlobalVariableManager modifiedGlobals,
+			PrintWriter debugPW) {
 		m_SmtManager = smtManager;
 		m_PredicateUnifier = new PredicateUnifier(m_SmtManager);
 		m_ModifiedGlobals = modifiedGlobals;
@@ -126,29 +155,22 @@ public class TraceChecker {
 	}
 	
 	
-
-
-
 	/**
-	 * Check if trace fulfills specification given by precondition and
-	 * postcondition. Returns 
+	 * Returns 
 	 * <ul> 
 	 * <li> SAT if the trace does not fulfill its specification,
 	 * <li> UNSAT if the trace does fulfill its specification,
 	 * <li> UNKNOWN if it was not possible to determine if the trace fulfills
 	 * its specification.
 	 * </ul>
-	 * 
 	 */
-	public LBool checkTrace(IPredicate precondition, IPredicate postcondition,
-														Word<CodeBlock> trace) {
-		Map<Integer, IPredicate> pendingContexts = new HashMap<Integer, IPredicate>(0);
-		return checkTrace(precondition, postcondition, pendingContexts, trace);
+	public LBool isCorrect() {
+		return m_IsSafe;		
 	}
 	
 	
 	
-	/**b
+	/**
 	 * Like three-argument-checkTrace-Method above but for traces which contain
 	 * pending returns. The pendingContext maps the positions of pending returns
 	 * to predicates which define possible variable valuations in the context to
@@ -356,9 +378,6 @@ public class TraceChecker {
 					oldVarsEquality.getFormula(), oldVarsEquality.getVars(), 
 					oldVarsEquality.getProcedures());
 
-			TraceChecker tc = new TraceChecker(m_SmtManager, 
-												m_ModifiedGlobals, 
-												m_DebugPW);
 			
 			//Use a pendingContext the interpolant at the position before the
 			//call, if this is -1 (because call is first codeBlock) use the
@@ -389,8 +408,11 @@ public class TraceChecker {
 				interpolantAtReturnPosition = m_Interpolants[returnPosition];
 				assert interpolantAtReturnPosition != null;
 			}
-			LBool isSafe = tc.checkTrace(precondition, interpolantAtReturnPosition 
-					, pendingContexts, subtrace);
+
+			TraceChecker tc = new TraceChecker(precondition, 
+					interpolantAtReturnPosition, pendingContexts, subtrace, 
+					m_SmtManager, m_ModifiedGlobals, m_DebugPW);
+			LBool isSafe = tc.isCorrect();
 			assert isSafe == LBool.UNSAT;
 			
 			//Compute interpolants for subsequence and add them to interpolants

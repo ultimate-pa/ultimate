@@ -35,13 +35,14 @@ public class PredicateAbstractionCegarLoop extends BasicCegarLoop {
 	
 	@Override
 	protected LBool isCounterexampleFeasible() {
-		m_TraceChecker = new TraceChecker(m_SmtManager,
-				m_RootNode.getRootAnnot().getModGlobVarManager(),
-				m_IterationPW);
 		IPredicate precondition = super.m_SmtManager.newTruePredicate();
 		IPredicate postcondition = super.m_SmtManager.newFalsePredicate();
-		LBool feasibility = m_TraceChecker.checkTrace(precondition, 
-				postcondition, m_Counterexample.getWord());
+		m_TraceChecker = new TraceChecker(precondition, 
+				postcondition, m_Counterexample.getWord(), m_SmtManager,
+				m_RootNode.getRootAnnot().getModGlobVarManager(),
+				m_IterationPW);
+
+		LBool feasibility = m_TraceChecker.isCorrect();
 		if (feasibility != LBool.UNSAT) {
 			s_Logger.info("Counterexample might be feasible");
 			Word<CodeBlock> counterexample = m_Counterexample.getWord();

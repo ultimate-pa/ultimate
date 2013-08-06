@@ -202,12 +202,14 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 					continue;
 				} else {
 					s_Logger.info("Error Path is FOUND.");
-					TraceChecker traceChecker = new TraceChecker(m_smtManager, 
+					TraceChecker traceChecker = new TraceChecker(
+							m_truePredicate, // checks whether the trace is feasible, i.e. the formula is satisfiable
+							m_falsePredicate,  //return LBool.UNSAT if trace is infeasible
+							errorTrace.getSecond(),
+							m_smtManager, 
 							m_originalRoot.getRootAnnot().getModGlobVarManager(), 
 							dumpInitialize());
-					LBool isSafe = traceChecker.checkTrace(m_truePredicate, // checks whether the trace is feasible, i.e. the formula is satisfiable
-														   m_falsePredicate,  //return LBool.UNSAT if trace is infeasible
-														   errorTrace.getSecond());
+					LBool isSafe = traceChecker.isCorrect();
 					if(isSafe == LBool.UNSAT) { //trace is infeasible
 						PredicateUnifier pu = new PredicateUnifier(m_smtManager, m_truePredicate, m_falsePredicate);
 						traceChecker.computeInterpolants(new TraceChecker.AllIntegers(), pu);

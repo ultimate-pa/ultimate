@@ -140,20 +140,20 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 	@Override
 	protected LBool isCounterexampleFeasible() {
 		m_TimingStatistics.startTraceCheck();
+		IPredicate truePredicate = m_SmtManager.newTruePredicate();
+		IPredicate falsePredicate = m_SmtManager.newFalsePredicate();
 		if (m_Pref.interpolatedLocs() == InterpolatedLocs.WP) {
-			m_TraceChecker = new TraceCheckerSpWp(m_SmtManager,
+			m_TraceChecker = new TraceCheckerSpWp(truePredicate, falsePredicate, 
+					m_Counterexample.getWord(),m_SmtManager,
 					m_RootNode.getRootAnnot().getModGlobVarManager(),
 					m_IterationPW);
 		} else {
-			m_TraceChecker = new TraceChecker(m_SmtManager,
+			m_TraceChecker = new TraceChecker(truePredicate, falsePredicate, 
+					m_Counterexample.getWord(),	m_SmtManager,
 					m_RootNode.getRootAnnot().getModGlobVarManager(),
 					m_IterationPW);
 		}
-		IPredicate truePredicate = m_SmtManager.newTruePredicate();
-		IPredicate falsePredicate = m_SmtManager.newFalsePredicate();
-		
-		LBool feasibility = m_TraceChecker.checkTrace(
-				truePredicate, falsePredicate, m_Counterexample.getWord());
+		LBool feasibility = m_TraceChecker.isCorrect();
 		if (feasibility != LBool.UNSAT) {
 			s_Logger.info("Counterexample might be feasible");
 			NestedWord<CodeBlock> counterexample = NestedWord.nestedWord(m_Counterexample.getWord());

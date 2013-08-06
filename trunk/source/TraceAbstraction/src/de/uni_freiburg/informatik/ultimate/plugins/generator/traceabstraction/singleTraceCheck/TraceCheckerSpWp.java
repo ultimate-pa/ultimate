@@ -35,10 +35,11 @@ public class TraceCheckerSpWp extends TraceChecker {
 	private static boolean m_ComputeInterpolantsSp = true;
 	private static boolean m_ComputeInterpolantsWp = !true;
 
-	public TraceCheckerSpWp(SmtManager smtManager,
+	public TraceCheckerSpWp(IPredicate precondition, IPredicate postcondition,
+			Word<CodeBlock> trace, SmtManager smtManager,
 			ModifiableGlobalVariableManager modifiedGlobals,
 			PrintWriter debugPW) {
-		super(smtManager, modifiedGlobals, debugPW);
+		super(precondition, postcondition, trace, smtManager, modifiedGlobals, debugPW);
 	}
 
 	@Override
