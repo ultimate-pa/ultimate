@@ -2715,7 +2715,7 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 				}
 
 			}
-			assert (foundWithSummary || foundWithoutSummary);
+			assert (foundWithSummary || foundWithoutSummary) : "Bug in run reconstruction of new emptiness test.";
 		}
 		
 		abstract protected int getMaximalIterationNumber();
