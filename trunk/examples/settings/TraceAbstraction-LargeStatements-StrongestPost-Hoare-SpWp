@@ -1,0 +1,41 @@
+#Tue Aug 06 03:12:09 CEST 2013
+file_export_version=3.0
+/instance/UltimateCore/ultimate.logging.tools=info
+\!/instance/UltimateCore=
+/instance/UltimateCore/ultimate.logging.core=info
+/instance/UltimateCore/ultimate.logging.tooldetails=SmtInterpol\=Warn;SMTInterface\=Warn;Groundifier\=Warn;
+@UltimateCore=0.0.1
+/instance/UltimateCore/ultimate.logging.plugins=debug
+/instance/UltimateCore/ultimate.logging.controller=info
+#Tue Aug 06 03:12:09 CEST 2013
+/configuration/AutomataScriptInterpreter/Timeout=600000
+file_export_version=3.0
+/configuration/AutomataScriptInterpreter/Path=dump
+\!/configuration/AutomataScriptInterpreter=
+#Tue Aug 06 03:12:09 CEST 2013
+file_export_version=3.0
+/configuration/BlockEncoding/MinimizeCall=true
+/configuration/BlockEncoding/RatingBoundary=0
+\!/configuration/BlockEncoding=
+/configuration/BlockEncoding/RatingStrategy=2
+#Tue Aug 06 03:12:09 CEST 2013
+file_export_version=3.0
+/configuration/CACSL2BoogieTranslator/CheckedMethod=main
+/configuration/CACSL2BoogieTranslator/Translation-Mode=SV_COMP
+\!/configuration/CACSL2BoogieTranslator=
+#Tue Aug 06 03:12:09 CEST 2013
+file_export_version=3.0
+/configuration/JungVisualization/shapeForNodePreference=RoundRectangle
+/configuration/JungVisualization/annotatedEdgesPreference=true
+\!/configuration/JungVisualization=
+#Tue Aug 06 03:12:09 CEST 2013
+file_export_version=3.0
+\!/configuration/NestedWordAutomata=
+/configuration/NestedWordAutomata/writeToFile=true
+/configuration/NestedWordAutomata/path=dump
+#Tue Aug 06 03:12:09 CEST 2013
+file_export_version=3.0
+/configuration/RCFGBuilder/Timeout=10
+\!/configuration/RCFGBuilder=
+/configuration/RCFGBuilder/HoareAnnotation=true
+/configuration/RCFGBuilder/Interpolants=StrongestPostcondition&WeakestPrecondition
