@@ -3,6 +3,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.s
 import java.io.PrintWriter;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.Word;
@@ -31,7 +32,7 @@ public class TraceCheckerSpWp extends TraceChecker {
 	protected IPredicate[] m_InterpolantsSpNotSimplified;
 	protected IPredicate[] m_InterpolantsWpNotSimplified;
 	
-	private static boolean m_useUnsatCore = !true;
+	private static boolean m_useUnsatCore = true;
 	private static boolean m_ComputeInterpolantsSp = true;
 	private static boolean m_ComputeInterpolantsWp = !true;
 
@@ -94,75 +95,86 @@ public class TraceCheckerSpWp extends TraceChecker {
 		Set<CodeBlock> codeBlocksInUnsatCore = new HashSet<CodeBlock>();
 		
 		unlockSmtManager();
+		
+		Boolean[] localVarAssignmentAtCallInUnsatCore = new Boolean[trace.length()];
 		// Filter out the statements, which doesn't occur in the unsat core.
 		for (int i = 0; i < trace.length(); i++) {
-			if (isInUnsatCore(i, unsat_coresAsSet)) {
+			
+			if (unsat_coresAsSet.contains(m_AnnotatedSsa.getTerms()[i])) {
+				// The upper condition checks, whether the globalVarAssignments
+				// is in unsat core, now check whether the local variable assignments
+				// is in unsat core, if it is Call statement
+				if (trace.getSymbol(i) instanceof Call) {
+					// Check whether the local variable assignments are also in unsat core.
+					if (unsat_coresAsSet.contains(m_AnnotatedSsa.getLocalVarAssignmentAtCall().get(i))) {
+						localVarAssignmentAtCallInUnsatCore[i] = true;
+					}
+				}
+				// Add the globalVarAssignments to the unsat_core
 				codeBlocksInUnsatCore.add(trace.getSymbol(i));
+			} else {
+				if (trace.getSymbol(i) instanceof Call) {
+					if (unsat_coresAsSet.contains(m_AnnotatedSsa.getLocalVarAssignmentAtCall().get(i))) {
+						localVarAssignmentAtCallInUnsatCore[i] = true;
+					}
+				}
 			}
 		}
-
+		
+		RelevantTransFormulas rv = new RelevantTransFormulas(NestedWord.nestedWord(trace),
+				codeBlocksInUnsatCore,
+				m_ModifiedGlobals,
+				localVarAssignmentAtCallInUnsatCore,
+				m_SmtManager);
 		
 		if (m_ComputeInterpolantsSp) {
 			m_InterpolantsSp = new IPredicate[trace.length()-1];
-			IPredicate lastlyComputedPred = tracePrecondition;
-			IPredicate predOfLastStmtInUnsatCore = tracePrecondition;
 
 			s_Logger.debug("Computing strongest postcondition for given trace ...");
+			
+			if (trace.getSymbol(0) instanceof Call) {
+				IPredicate p = m_SmtManager.strongestPostcondition(tracePrecondition,
+						rv.getRelevantTransFormulaAtPosition(0),
+						rv.getGlobalVarAssignmentAtCallPosition(0),
+						((NestedWord<CodeBlock>) trace).isPendingCall(0));							
+					m_InterpolantsSp[0] = m_PredicateUnifier.getOrConstructPredicate(p.getFormula(), p.getVars(),
+							p.getProcedures());
+				} else {
+					IPredicate p = m_SmtManager.strongestPostcondition(tracePrecondition,
+							rv.getRelevantTransFormulaAtPosition(0));
+					m_InterpolantsSp[0] = m_PredicateUnifier.getOrConstructPredicate(p.getFormula(), p.getVars(),
+							p.getProcedures());
+				}
 
-			for (int i=0; i<m_InterpolantsSp.length; i++) {
+			for (int i=1; i<m_InterpolantsSp.length; i++) {
 				if (trace.getSymbol(i) instanceof Call) {
-					if (codeBlocksInUnsatCore.contains(trace.getSymbol(i))) {
-						IPredicate p = m_SmtManager.strongestPostcondition(
-								predOfLastStmtInUnsatCore, (Call) trace.getSymbol(i));
+					IPredicate p = m_SmtManager.strongestPostcondition(m_InterpolantsSp[i-1],
+							rv.getRelevantTransFormulaAtPosition(i),
+							rv.getGlobalVarAssignmentAtCallPosition(i),
+							((NestedWord<CodeBlock>) trace).isPendingCall(i));
 						m_InterpolantsSp[i] = m_PredicateUnifier.getOrConstructPredicate(p.getFormula(), p.getVars(),
 								p.getProcedures());
-						predOfLastStmtInUnsatCore = m_InterpolantsSp[i];
-						lastlyComputedPred = m_InterpolantsSp[i];
-					} else {
-						IPredicate p = m_SmtManager.strongestPostconditionSpecial(
-								lastlyComputedPred, trace.getSymbol(i));
-						m_InterpolantsSp[i] = m_PredicateUnifier.getOrConstructPredicate(p.getFormula(), p.getVars(),
-								p.getProcedures());
-						lastlyComputedPred = m_InterpolantsSp[i];
-					}
 				} else if (trace.getSymbol(i) instanceof Return) {
-					if (codeBlocksInUnsatCore.contains(trace.getSymbol(i))) {
 						int call_pos = ((NestedWord<CodeBlock>)trace).getCallPosition(i);
 						assert call_pos >= 0 && call_pos <= i : "Bad call position!";
 						IPredicate callerPred = tracePrecondition;
 						if (call_pos > 0) {
 							callerPred = m_InterpolantsSp[call_pos - 1];
 						}
-						IPredicate p = m_SmtManager.strongestPostcondition(
-								predOfLastStmtInUnsatCore, callerPred, (Return) trace.getSymbol(i));
+						IPredicate p = m_SmtManager.strongestPostcondition(m_InterpolantsSp[i-1], 
+								callerPred,
+								rv.getRelevantTransFormulaAtPosition(i),
+								rv.getRelevantTransFormulaAtPosition(call_pos),
+								rv.getGlobalVarAssignmentAtCallPosition(call_pos)
+								);
 						m_InterpolantsSp[i] = m_PredicateUnifier.getOrConstructPredicate(p.getFormula(), p.getVars(),
 								p.getProcedures());
-						predOfLastStmtInUnsatCore = m_InterpolantsSp[i];
-						lastlyComputedPred = m_InterpolantsSp[i];
-					} else {
-						// TODO: Probably, we also have to define a special method for Return and Call statement.
-						IPredicate p = m_SmtManager.strongestPostconditionSpecial(
-								lastlyComputedPred, trace.getSymbol(i));
-						m_InterpolantsSp[i] = m_PredicateUnifier.getOrConstructPredicate(p.getFormula(), p.getVars(),
-								p.getProcedures());
-						lastlyComputedPred = m_InterpolantsSp[i];
-					}
 
 				} else {
-					if (codeBlocksInUnsatCore.contains(trace.getSymbol(i))) {
-						IPredicate p = m_SmtManager.strongestPostcondition(
-								predOfLastStmtInUnsatCore, trace.getSymbol(i));
+						IPredicate p = m_SmtManager.strongestPostcondition(m_InterpolantsSp[i-1],
+								rv.getRelevantTransFormulaAtPosition(i));
 						m_InterpolantsSp[i] = m_PredicateUnifier.getOrConstructPredicate(p.getFormula(), p.getVars(),
 								p.getProcedures());
-						predOfLastStmtInUnsatCore = m_InterpolantsSp[i];
-						lastlyComputedPred = m_InterpolantsSp[i];
-					} else {
-						IPredicate p = m_SmtManager.strongestPostconditionSpecial(
-								lastlyComputedPred, trace.getSymbol(i));
-						m_InterpolantsSp[i] = m_PredicateUnifier.getOrConstructPredicate(p.getFormula(), p.getVars(),
-								p.getProcedures());
-						lastlyComputedPred = m_InterpolantsSp[i];
-					}
 				}
 			}
 			s_Logger.debug("Checking strongest postcondition...");
@@ -212,6 +224,10 @@ public class TraceCheckerSpWp extends TraceChecker {
 		if (m_ComputeInterpolantsSp) {
 			m_InterpolantsSp = new IPredicate[trace.length()-1];
 			m_InterpolantsSpNotSimplified = new IPredicate[trace.length()-1];
+			if (trace.length() == 1) {
+				m_Interpolants = m_InterpolantsSp;
+				return;
+			}
 			s_Logger.debug("Computing strongest postcondition for given trace ...");
 
 			if (trace.getSymbol(0) instanceof Call) {
@@ -270,6 +286,10 @@ public class TraceCheckerSpWp extends TraceChecker {
 
 		if (m_ComputeInterpolantsWp) {
 			m_InterpolantsWp = new IPredicate[trace.length()-1];
+			if (trace.length() == 1) {
+				m_Interpolants = m_InterpolantsWp;
+				return;
+			}
 			s_Logger.debug("Computing weakest precondition for given trace ...");
 			if (trace.getSymbol(m_InterpolantsWp.length) instanceof Call) {
 				// If the trace contains a Call statement, then it must be a NestedWord
@@ -365,9 +385,11 @@ public class TraceCheckerSpWp extends TraceChecker {
 			 }
 			 assert result == LBool.UNSAT || result == LBool.UNKNOWN;
 		}
-		result = isHoareTriple(interpolants.length, tracePrecondition, 
-				tracePostcondition,	interpolants, trace);
-		assert result == LBool.UNSAT || result == LBool.UNKNOWN;
+		if (trace.length() > 1) {
+			result = isHoareTriple(interpolants.length, tracePrecondition, 
+					tracePostcondition,	interpolants, trace);
+			assert result == LBool.UNSAT || result == LBool.UNKNOWN;
+		}
 	}
 	
 	private IPredicate getInterpolantAtPosition(int i, IPredicate tracePrecondition,

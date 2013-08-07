@@ -1688,11 +1688,39 @@ public class SmtManager {
 		} else if (cb instanceof InterproceduralSequentialComposition) {
 			throw new UnsupportedOperationException();
 		}
+		return strongestPostcondition(p, cb.getTransitionFormula());
+	}
+	
+	/**
+	 *TODO: Change comment here!
+	 * Substitutes the replacees through replacers in the given formula.
+	 * @return formula, where replacees are substituted by replacers.
+	 */
+	private Term substituteTermVariablesByTermVariables(Map<TermVariable, TermVariable> substitution, Term formula) {
+		
+		if (substitution.entrySet().size() > 0) {
+			List<TermVariable> replacees = Arrays.asList(
+					substitution.keySet().toArray(
+							new TermVariable[substitution.keySet().size()]));
+			List<Term> replacers = Arrays.asList(
+					substitution.values().toArray(new Term[substitution.values().size()]));
+			assert(replacees.size() == replacers.size());
+			TermVariable[] vars = replacees.toArray(new TermVariable[replacees
+			                                                         .size()]);
+			Term[] values = replacers.toArray(new Term[replacers.size()]);
+			Term predicate_renamed = m_Script.let(vars, values, formula);
+			predicate_renamed = (new FormulaUnLet()).unlet(predicate_renamed);
+			return predicate_renamed;
+		} else {
+			return formula;
+		}
+	}
+	
+	public IPredicate strongestPostcondition(IPredicate p, TransFormula tf) {
 		// Check if p is false
 		if (p.getFormula() == False()) {
 			return p;
 		}
-		TransFormula tf = cb.getTransitionFormula();	
 		Term tf_term = tf.getFormula();		
 		Map<TermVariable, Term> substitution = new HashMap<TermVariable, Term>();
 		// 1 Rename the invars of the TransFormula of the given CodeBlock cb into TermVariables
@@ -1794,33 +1822,8 @@ public class SmtManager {
 		// Compute a closed formula version of result, it is needed for newPredicate.
 		Term result_as_closed_formula = SmtManager.computeClosedFormula(result, tvp.getVars(), m_Script);
 		return newPredicate(result, tvp.getProcedures(), tvp.getVars(), result_as_closed_formula);
+
 	}
-	
-	/**
-	 *TODO: Change comment here!
-	 * Substitutes the replacees through replacers in the given formula.
-	 * @return formula, where replacees are substituted by replacers.
-	 */
-	private Term substituteTermVariablesByTermVariables(Map<TermVariable, TermVariable> substitution, Term formula) {
-		
-		if (substitution.entrySet().size() > 0) {
-			List<TermVariable> replacees = Arrays.asList(
-					substitution.keySet().toArray(
-							new TermVariable[substitution.keySet().size()]));
-			List<Term> replacers = Arrays.asList(
-					substitution.values().toArray(new Term[substitution.values().size()]));
-			assert(replacees.size() == replacers.size());
-			TermVariable[] vars = replacees.toArray(new TermVariable[replacees
-			                                                         .size()]);
-			Term[] values = replacers.toArray(new Term[replacers.size()]);
-			Term predicate_renamed = m_Script.let(vars, values, formula);
-			predicate_renamed = (new FormulaUnLet()).unlet(predicate_renamed);
-			return predicate_renamed;
-		} else {
-			return formula;
-		}
-	}
-	
 	
 	/**
 	 * Compute the strongest postcondition for a predicate and a call statement.
