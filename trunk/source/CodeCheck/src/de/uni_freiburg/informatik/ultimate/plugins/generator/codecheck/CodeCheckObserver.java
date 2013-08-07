@@ -13,7 +13,6 @@ import java.util.Stack;
 import de.uni_freiburg.informatik.ultimate.access.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.access.WalkerOptions;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
@@ -29,9 +28,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceChecker;
 
 import org.apache.log4j.Logger;
-//import org.eclipse.swt.program.Program;
-import org.eclipse.core.commands.common.AbstractNamedHandleEvent;
-import org.eclipse.ui.internal.handlers.ReuseEditorTester;
 
 
 /**
@@ -166,8 +162,8 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 	
 	public boolean process(IElement root) {
 		//FIXME
-		checker = Checker.ULTIMATE;
-//		checker = Checker.IMPULSE;
+//		checker = Checker.ULTIMATE;
+		checker = Checker.IMPULSE;
 		initialize(root);
 		
 		final boolean loop_forever = true; // for DEBUG

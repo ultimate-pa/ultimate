@@ -166,7 +166,7 @@ public abstract class BaseLabeledEdgesMultigraph<T extends BaseLabeledEdgesMulti
 		return (List<IWalkable>) getOutgoingNodes();
 	}
 	
-	List<L> getOutgoingEdgeLabels() {
+	public List<L> getOutgoingEdgeLabels() {
 		return mOutgoingEdgeLabels;
 	}
 

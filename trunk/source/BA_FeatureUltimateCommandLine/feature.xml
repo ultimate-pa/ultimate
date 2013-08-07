@@ -99,8 +99,8 @@
          install-size="0"
          version="0.0.0"
          unpack="false"/>
-	
-	   <plugin
+
+   <plugin
          id="LassoRanker"
          download-size="0"
          install-size="0"
@@ -214,6 +214,13 @@
 
    <plugin
          id="BuchiAutomizer"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="CodeCheck"
          download-size="0"
          install-size="0"
          version="0.0.0"

@@ -73,7 +73,7 @@ public class AnnotatedProgramPoint extends ModifiableLabeledEdgesMultigraph<Anno
 	}
 	
 	public void addOutGoingReturnCallPred(AnnotatedProgramPoint target, AnnotatedProgramPoint callPred) {
-		assert mOutgoingEdgeLabels.get(target) instanceof Return;
+		assert this.getOutgoingEdgeLabel(target) instanceof Return;
 		
 		if (m_outgoingReturnAppToCallPreds == null)
 			m_outgoingReturnAppToCallPreds = new HashMap<AnnotatedProgramPoint, HashSet<AnnotatedProgramPoint>>();
@@ -85,14 +85,14 @@ public class AnnotatedProgramPoint extends ModifiableLabeledEdgesMultigraph<Anno
 	}
 	
 	public void removeOutgoingReturnCallPred(AnnotatedProgramPoint target, AnnotatedProgramPoint callPred) {
-		assert mOutgoingEdgeLabels.get(target) instanceof Return;
+		assert this.getOutgoingEdgeLabel(target) instanceof Return;
 		assert m_outgoingReturnAppToCallPreds != null && m_outgoingReturnAppToCallPreds.get(target) != null;
 		
 		m_outgoingReturnAppToCallPreds.get(target).remove(callPred);		
 	}
 	
 	public boolean outGoingReturnAppToCallPredContains(AnnotatedProgramPoint target, AnnotatedProgramPoint callPred) {
-		if (!( mOutgoingEdgeLabels.get(target) instanceof Return))
+		if (!( this.getOutgoingEdgeLabel(target) instanceof Return))
 			return false;
 		assert m_outgoingReturnAppToCallPreds != null; 
 		

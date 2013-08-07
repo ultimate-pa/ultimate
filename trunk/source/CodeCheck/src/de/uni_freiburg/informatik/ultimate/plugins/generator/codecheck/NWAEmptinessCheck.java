@@ -211,7 +211,6 @@ public class NWAEmptinessCheck implements IEmptinessCheck {
 
 		@Override
 		public StateFactory<AnnotatedProgramPoint> getStateFactory() {
-			assert false;
 			return _stateFactory;
 		}
 

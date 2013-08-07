@@ -60,11 +60,16 @@
 				<version>${tycho-version}</version>
 				<configuration>
 					<environments>
-					<!--<environment>
+						<environment>
 							<os>win32</os>
 							<ws>win32</ws>
 							<arch>x86</arch>
-						</environment>-->
+						</environment>
+						<environment>
+							<os>win32</os>
+							<ws>win32</ws>
+							<arch>x86_64</arch>
+						</environment>
 						<environment>
 							<os>linux</os>
 							<ws>gtk</ws>
@@ -135,7 +140,8 @@
 		<module>../RCFGBuilder</module>
 		
 		<module>../NestedWordAutomata</module>
-		
+
+		<module>../CodeCheck</module>
 		
 		<module>../Library-log4j</module>
 		<module>../Library-prefuse</module>
@@ -145,7 +151,7 @@
 		<module>../BA_FeatureUltimateCommandLine</module>
 		<module>../ACSLParser</module>
 		<module>../ConsoleOut</module>
-		<module>../ReImpact</module>
+		<!-- <module>../ReImpact</module> -->
 		<module>../Library-Batik</module>
 		<module>../Library-Jung</module>
 		<module>../CDTDummyParser</module>

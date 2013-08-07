@@ -93,54 +93,54 @@ public class ImpulseObserver implements IUnmanagedObserver {
 
 		RCFG2AnnotatedRCFG r2ar = new RCFG2AnnotatedRCFG(m_smtManager);
 		m_graphRoot = r2ar.convert(m_originalRoot);
-		m_programPointToItsAnnotatedPPsInit = new HashMap<ProgramPoint, ArrayList<AnnotatedProgramPoint>>();
-		for (Entry<ProgramPoint, AnnotatedProgramPoint> en : r2ar.getOldPpTonew().entrySet()) {
-			ArrayList<AnnotatedProgramPoint> apps = new ArrayList<AnnotatedProgramPoint>();
-			apps.add(en.getValue());
-			m_programPointToItsAnnotatedPPsInit.put(en.getKey(), apps);
-		}
-		m_callPredToReturnPreds = ((ImpRootAnnot) m_graphRoot.getRootAnnot()).getCallPredToReturnPreds();
-
-		Result overallResult = null;
-
-		for (AnnotatedProgramPoint procRoot : m_graphRoot.getOutgoingNodes()) {
-			Result procResult = processProcedure(procRoot);
-
-			if (overallResult == null || 
-					(overallResult == Result.CORRECT && procResult != Result.CORRECT))
-				overallResult = procResult;
-		}
-
-		s_Logger.info("-----------------");
-		s_Logger.info(overallResult);
-		s_Logger.info("-----------------");
-
-		s_Logger.info("PC#: " + m_smtManager.getInterpolQueries());
-		s_Logger.info("TIME#: " + m_smtManager.getInterpolQuriesTime());
-		s_Logger.info("ManipulationTIME#: " + m_smtManager.getTraceCheckTime());
-		s_Logger.info("EC#: " + m_smtManager.getNontrivialSatQueries());
-		s_Logger.info("TIME#: " + m_smtManager.getSatQuriesTime());
-		s_Logger.info("ManipulationTIME#: "	+ m_smtManager.getCodeBlockCheckTime());
-
-		if (overallResult == Result.CORRECT) {
-			PositiveResult<CodeBlock> result = new PositiveResult<CodeBlock>(
-					null,
-					Activator.s_PLUGIN_NAME,
-					UltimateServices.getInstance().getTranslatorSequence(),
-					this.m_graphRoot.getPayload().getLocation());
-			result.setShortDescription("Program is safe!");
-			reportResult(result);
-		} else if (overallResult == Result.INCORRECT) {
-			this.reportResult(new CounterExampleResult<CodeBlock>(null,
-					Activator.s_PLUGIN_NAME,
-					UltimateServices.getInstance().getTranslatorSequence(),
-					null, null));//m_errorTrace.getCounterExampleResult());
-		} else {
-			this.reportResult(new UnprovableResult<CodeBlock>(null,
-					Activator.s_PLUGIN_NAME,
-					UltimateServices.getInstance().getTranslatorSequence(),
-					null));
-		}
+//		m_programPointToItsAnnotatedPPsInit = new HashMap<ProgramPoint, ArrayList<AnnotatedProgramPoint>>();
+//		for (Entry<ProgramPoint, AnnotatedProgramPoint> en : r2ar.getOldPpTonew().entrySet()) {
+//			ArrayList<AnnotatedProgramPoint> apps = new ArrayList<AnnotatedProgramPoint>();
+//			apps.add(en.getValue());
+//			m_programPointToItsAnnotatedPPsInit.put(en.getKey(), apps);
+//		}
+//		m_callPredToReturnPreds = ((ImpRootAnnot) m_graphRoot.getRootAnnot()).getCallPredToReturnPreds();
+//
+//		Result overallResult = null;
+//
+//		for (AnnotatedProgramPoint procRoot : m_graphRoot.getOutgoingNodes()) {
+//			Result procResult = processProcedure(procRoot);
+//
+//			if (overallResult == null || 
+//					(overallResult == Result.CORRECT && procResult != Result.CORRECT))
+//				overallResult = procResult;
+//		}
+//
+//		s_Logger.info("-----------------");
+//		s_Logger.info(overallResult);
+//		s_Logger.info("-----------------");
+//
+//		s_Logger.info("PC#: " + m_smtManager.getInterpolQueries());
+//		s_Logger.info("TIME#: " + m_smtManager.getInterpolQuriesTime());
+//		s_Logger.info("ManipulationTIME#: " + m_smtManager.getTraceCheckTime());
+//		s_Logger.info("EC#: " + m_smtManager.getNontrivialSatQueries());
+//		s_Logger.info("TIME#: " + m_smtManager.getSatQuriesTime());
+//		s_Logger.info("ManipulationTIME#: "	+ m_smtManager.getCodeBlockCheckTime());
+//
+//		if (overallResult == Result.CORRECT) {
+//			PositiveResult<CodeBlock> result = new PositiveResult<CodeBlock>(
+//					null,
+//					Activator.s_PLUGIN_NAME,
+//					UltimateServices.getInstance().getTranslatorSequence(),
+//					this.m_graphRoot.getPayload().getLocation());
+//			result.setShortDescription("Program is safe!");
+//			reportResult(result);
+//		} else if (overallResult == Result.INCORRECT) {
+//			this.reportResult(new CounterExampleResult<CodeBlock>(null,
+//					Activator.s_PLUGIN_NAME,
+//					UltimateServices.getInstance().getTranslatorSequence(),
+//					null, null));//m_errorTrace.getCounterExampleResult());
+//		} else {
+//			this.reportResult(new UnprovableResult<CodeBlock>(null,
+//					Activator.s_PLUGIN_NAME,
+//					UltimateServices.getInstance().getTranslatorSequence(),
+//					null));
+//		}
 
 		return false;
 	}
