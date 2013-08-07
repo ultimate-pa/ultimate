@@ -425,7 +425,8 @@ public class BuchiCegarLoop {
 		
 		private void refineFinite() throws OperationCanceledException {
 			AllIntegers allInt = new TraceChecker.AllIntegers();
-			PredicateUnifier pu = new PredicateUnifier(m_SmtManager);
+			PredicateUnifier pu = new PredicateUnifier(m_SmtManager, 
+					m_TruePredicate, m_FalsePredicate);
 			m_TraceChecker.computeInterpolants(allInt, pu);
 			constructInterpolantAutomaton(m_TraceChecker);
 			EdgeChecker ec = new EdgeChecker(m_SmtManager, buchiModGlobalVarManager);
@@ -778,6 +779,10 @@ public class BuchiCegarLoop {
 			}
 			assert !(new BuchiAccepts<CodeBlock, IPredicate>(newAbstraction,m_Counterexample.getNestedLassoWord())).getResult();
 			m_Abstraction = newAbstraction;
+			if (m_Pref.dumpAutomata()) {
+				String filename = "interpolAutomatonUsedInRefinement"+m_Iteration+"after";
+				writeAutomatonToFile(interpolAutomatonUsedInRefinement, filename);
+			}
 		}
 		
 	
@@ -882,7 +887,7 @@ public class BuchiCegarLoop {
 		protected void writeAutomatonToFile(
 				IAutomaton<CodeBlock, IPredicate> automaton, String filename) {
 			new AtsDefinitionPrinter<String,String>(filename, 
-					m_Pref.dumpPath()+"/"+filename, Labeling.NUMERATE,"",automaton);
+					m_Pref.dumpPath()+"/"+filename, Labeling.TOSTRING,"",automaton);
 		}
 		
 }

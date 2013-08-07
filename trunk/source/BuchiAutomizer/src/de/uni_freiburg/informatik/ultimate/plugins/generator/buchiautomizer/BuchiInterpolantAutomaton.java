@@ -481,18 +481,21 @@ public class BuchiInterpolantAutomaton implements
 			}
 		} else {
 			assert (m_ResultLoopPredicates.contains(resPred) || resPred == m_HondaPredicate);
-			Set<IPredicate> succs = addSuccInternal(resPred, letter, m_InputLoopPredicates);
-			if (!succs.isEmpty()) {
-				IPredicate stemSucc = getOrConstructPredicate(succs, m_ResultLoopPredicates);
-				m_Result.addInternalTransition(resPred, letter, stemSucc);
-			}
+			boolean hondaTransition = false;
 			if (letter.equals(m_HondaEntererLoop)) {
 				LBool sat = computeSuccInternalSolver(resPred, letter, m_HondaPredicate);
 				if (sat == LBool.UNSAT) {
 					m_Result.addInternalTransition(resPred, letter, m_HondaPredicate);
+					hondaTransition = true;
 				}
 			}
-
+			if (!hondaTransition) {
+				Set<IPredicate> succs = addSuccInternal(resPred, letter, m_InputLoopPredicates);
+				if (!succs.isEmpty()) {
+					IPredicate stemSucc = getOrConstructPredicate(succs, m_ResultLoopPredicates);
+					m_Result.addInternalTransition(resPred, letter, stemSucc);
+				}
+			}
 		}
 
 	}
@@ -542,18 +545,21 @@ public class BuchiInterpolantAutomaton implements
 			}
 		} else {
 			assert (m_ResultLoopPredicates.contains(resPred) || resPred == m_HondaPredicate);
-			Set<IPredicate> succs = addSuccCall(resPred, letter, m_InputLoopPredicates);
-			if (!succs.isEmpty()) {
-				IPredicate stemSucc = getOrConstructPredicate(succs, m_ResultLoopPredicates);
-				m_Result.addCallTransition(resPred, letter, stemSucc);
-			}
+			boolean hondaTransition = false;
 			if (letter.equals(m_HondaEntererLoop)) {
 				LBool sat = computeSuccCallSolver(resPred, letter, m_HondaPredicate);
 				if (sat == LBool.UNSAT) {
 					m_Result.addCallTransition(resPred, letter, m_HondaPredicate);
+					hondaTransition = true;
 				}
 			}
-
+			if (!hondaTransition) {
+				Set<IPredicate> succs = addSuccCall(resPred, letter, m_InputLoopPredicates);
+				if (!succs.isEmpty()) {
+					IPredicate stemSucc = getOrConstructPredicate(succs, m_ResultLoopPredicates);
+					m_Result.addCallTransition(resPred, letter, stemSucc);
+				}
+			}
 		}
 
 	}
@@ -603,17 +609,22 @@ public class BuchiInterpolantAutomaton implements
 			}
 		} else {
 			assert (m_ResultLoopPredicates.contains(resPred) || resPred == m_HondaPredicate);
-			Set<IPredicate> succs = addSuccReturn(resPred, resHier, letter, m_InputLoopPredicates);
-			if (!succs.isEmpty()) {
-				IPredicate stemSucc = getOrConstructPredicate(succs, m_ResultLoopPredicates);
-				m_Result.addReturnTransition(resPred, resHier, letter, stemSucc);
-			}
+			boolean hondaTransition = false;
 			if (letter.equals(m_HondaEntererLoop)) {
 				LBool sat = computeSuccReturnSolver(resPred, resHier, letter, m_HondaPredicate);
 				if (sat == LBool.UNSAT) {
 					m_Result.addReturnTransition(resPred, resHier, letter, m_HondaPredicate);
+					hondaTransition = true;
 				}
 			}
+			if (!hondaTransition) {
+				Set<IPredicate> succs = addSuccReturn(resPred, resHier, letter, m_InputLoopPredicates);
+				if (!succs.isEmpty()) {
+					IPredicate stemSucc = getOrConstructPredicate(succs, m_ResultLoopPredicates);
+					m_Result.addReturnTransition(resPred, resHier, letter, stemSucc);
+				}
+			}
+
 
 		}
 
