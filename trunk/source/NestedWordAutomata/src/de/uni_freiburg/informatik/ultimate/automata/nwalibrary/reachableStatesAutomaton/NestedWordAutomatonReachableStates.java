@@ -2459,6 +2459,7 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 					Set<IncomingReturnTransition<LETTER, STATE>> forbiddenSummaries = 
 							new HashSet<IncomingReturnTransition<LETTER, STATE>>();
 					forbiddenSummaries.addAll(m_ForbiddenSummaries);
+					assert (!forbiddenSummaries.contains(inTrans));
 					forbiddenSummaries.add(inTrans);
 					RunConstructor runConstuctor = new RunConstructor(
 							m_States.get(inTrans.getLinPred()), 
