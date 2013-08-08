@@ -96,7 +96,7 @@ public class TraceCheckerSpWp extends TraceChecker {
 		
 		unlockSmtManager();
 		
-		Boolean[] localVarAssignmentAtCallInUnsatCore = new Boolean[trace.length()];
+		boolean[] localVarAssignmentAtCallInUnsatCore = new boolean[trace.length()];
 		// Filter out the statements, which doesn't occur in the unsat core.
 		for (int i = 0; i < trace.length(); i++) {
 			
@@ -121,6 +121,7 @@ public class TraceCheckerSpWp extends TraceChecker {
 			}
 		}
 		
+		@SuppressWarnings("unchecked")
 		RelevantTransFormulas rv = new RelevantTransFormulas(NestedWord.nestedWord(trace),
 				codeBlocksInUnsatCore,
 				m_ModifiedGlobals,

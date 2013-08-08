@@ -85,34 +85,81 @@ public class TwoTrackInterpolantAutomatonBuilder {
 				if (TraceCheckerSpWp.interpolantsSPComputed()) {
 					addTransition(m_TraceCheckerSpWp.getPrecondition(), i,
 							m_TraceCheckerSpWp.getInterpolanstsSPAtPosition(i));
+					// Try to add a self-loop labelled with stmt i on the current state 
+					if (selfLoopAllowed(m_TraceCheckerSpWp.getInterpolanstsSPAtPosition(i), i)) {
+						addTransition(m_TraceCheckerSpWp.getInterpolanstsSPAtPosition(i), i,
+								m_TraceCheckerSpWp.getInterpolanstsSPAtPosition(i));
+					}// Try to add a self-loop labelled with stmt (i+1) on the current state 
+					else if (selfLoopAllowed(m_TraceCheckerSpWp.getInterpolanstsSPAtPosition(i), i)) {
+						addTransition(m_TraceCheckerSpWp.getInterpolanstsSPAtPosition(i), (i+1),
+								m_TraceCheckerSpWp.getInterpolanstsSPAtPosition(i));
+					}
 				}
+				
+				
 				if (TraceCheckerSpWp.interpolantsWPComputed()) {
 					addTransition(m_TraceCheckerSpWp.getPrecondition(), i,
 							m_TraceCheckerSpWp.getInterpolanstsWPAtPosition(i));
+					// Try to add a self-loop labelled with stmt i on the current state 
+					if (selfLoopAllowed(m_TraceCheckerSpWp.getInterpolanstsWPAtPosition(i), i)) {
+						addTransition(m_TraceCheckerSpWp.getInterpolanstsWPAtPosition(i), i,
+								m_TraceCheckerSpWp.getInterpolanstsWPAtPosition(i));
+					}// Try to add a self-loop labelled with stmt (i+1) on the current state 
+					else if (selfLoopAllowed(m_TraceCheckerSpWp.getInterpolanstsWPAtPosition(i), i)) {
+						addTransition(m_TraceCheckerSpWp.getInterpolanstsWPAtPosition(i), (i+1),
+								m_TraceCheckerSpWp.getInterpolanstsWPAtPosition(i));
+					}
 				}
 				
 			} else if (i == (m_NestedWord.length() - 1)) {
 				if (TraceCheckerSpWp.interpolantsSPComputed()) {
 					addTransition(m_TraceCheckerSpWp.getInterpolanstsSPAtPosition(i-1), i,
 							m_TraceCheckerSpWp.getPostcondition());
+					// Try to add a self-loop labelled with stmt i on the current state 
+					if (selfLoopAllowed(m_TraceCheckerSpWp.getInterpolanstsSPAtPosition(i), i)) {
+						addTransition(m_TraceCheckerSpWp.getInterpolanstsSPAtPosition(i), i,
+								m_TraceCheckerSpWp.getInterpolanstsSPAtPosition(i));
+					}
 				}
 				if (TraceCheckerSpWp.interpolantsWPComputed()) {
 					addTransition(m_TraceCheckerSpWp.getInterpolanstsWPAtPosition(i-1), i,
 							m_TraceCheckerSpWp.getPostcondition());
+					// Try to add a self-loop labelled with stmt i on the current state 
+					if (selfLoopAllowed(m_TraceCheckerSpWp.getInterpolanstsWPAtPosition(i), i)) {
+						addTransition(m_TraceCheckerSpWp.getInterpolanstsWPAtPosition(i), i,
+								m_TraceCheckerSpWp.getInterpolanstsWPAtPosition(i));
+					}
 				}
 			} else {
 				if (TraceCheckerSpWp.interpolantsSPComputed()) {
 					addTransition(m_TraceCheckerSpWp.getInterpolanstsSPAtPosition(i-1), i,
 							m_TraceCheckerSpWp.getInterpolanstsSPAtPosition(i));
+					if (selfLoopAllowed(m_TraceCheckerSpWp.getInterpolanstsSPAtPosition(i), i)) {
+						addTransition(m_TraceCheckerSpWp.getInterpolanstsSPAtPosition(i), i,
+								m_TraceCheckerSpWp.getInterpolanstsSPAtPosition(i));
+					}// Try to add a self-loop labelled with stmt (i+1) on the current state 
+					else if (selfLoopAllowed(m_TraceCheckerSpWp.getInterpolanstsSPAtPosition(i), i)) {
+						addTransition(m_TraceCheckerSpWp.getInterpolanstsSPAtPosition(i), (i+1),
+								m_TraceCheckerSpWp.getInterpolanstsSPAtPosition(i));
+					}
 				}
 				if (TraceCheckerSpWp.interpolantsWPComputed()) {
 					addTransition(m_TraceCheckerSpWp.getInterpolanstsWPAtPosition(i-1), i,
 							m_TraceCheckerSpWp.getInterpolanstsWPAtPosition(i));
+					// Try to add a self-loop labelled with stmt i on the current state 
+					if (selfLoopAllowed(m_TraceCheckerSpWp.getInterpolanstsWPAtPosition(i), i)) {
+						addTransition(m_TraceCheckerSpWp.getInterpolanstsWPAtPosition(i), i,
+								m_TraceCheckerSpWp.getInterpolanstsWPAtPosition(i));
+					}// Try to add a self-loop labelled with stmt (i+1) on the current state 
+					else if (selfLoopAllowed(m_TraceCheckerSpWp.getInterpolanstsWPAtPosition(i), i)) {
+						addTransition(m_TraceCheckerSpWp.getInterpolanstsWPAtPosition(i), (i+1),
+								m_TraceCheckerSpWp.getInterpolanstsWPAtPosition(i));
+					}
 				}
 				// 1. Try to add a transition from state annotated with the assertion computed via SP to
 				// to a state annotated with the assertion computed via WP.
 				if (TraceCheckerSpWp.interpolantsSPComputed() && TraceCheckerSpWp.interpolantsWPComputed()) {
-					if (transitionFromSPtoWPAllowed(m_TraceCheckerSpWp.getInterpolanstsSPAtPosition(i),
+					if (transitionFromSPtoWPOrVVAllowed(m_TraceCheckerSpWp.getInterpolanstsSPAtPosition(i),
 							i,
 							m_TraceCheckerSpWp.getInterpolanstsWPAtPosition(i),true)) { 
 						addTransition(m_TraceCheckerSpWp.getInterpolanstsSPAtPosition(i), i,
@@ -122,7 +169,7 @@ public class TwoTrackInterpolantAutomatonBuilder {
 				// 2. Try to add a transition from state annotated with the assertion computed via WP to
 				// to a state annotated with the assertion computed via SP.
 				if (TraceCheckerSpWp.interpolantsSPComputed() && TraceCheckerSpWp.interpolantsWPComputed()) {
-					if (transitionFromSPtoWPAllowed(m_TraceCheckerSpWp.getInterpolanstsWPAtPosition(i),
+					if (transitionFromSPtoWPOrVVAllowed(m_TraceCheckerSpWp.getInterpolanstsWPAtPosition(i),
 							i,
 							m_TraceCheckerSpWp.getInterpolanstsSPAtPosition(i),false)) { 
 						addTransition(m_TraceCheckerSpWp.getInterpolanstsWPAtPosition(i), i,
@@ -135,13 +182,17 @@ public class TwoTrackInterpolantAutomatonBuilder {
 		return m_TTIA;
 	}
 	
+	private boolean selfLoopAllowed(IPredicate p1, int symbolPos) {
+		return transitionFromSPtoWPOrVVAllowed(p1, symbolPos, p1, true);
+	}
+	
 	/**
 	 * Checks whether we are allowed to add a transition from a state annotated with the assertion p1 computed via
 	 * SP (or WP)  with the statement obtained by symbolPos to a state annotated with the assertion p2 computed via WP (or SP).
 	 * The boolean variable fromSPToWp indicates which direction we want to check, if it is true, then p1 is computed
 	 * via SP and p2 via WP, else the other way around.
 	 */
-	private boolean transitionFromSPtoWPAllowed(IPredicate p1, int symbolPos, IPredicate p2, boolean fromSPToWP) {
+	private boolean transitionFromSPtoWPOrVVAllowed(IPredicate p1, int symbolPos, IPredicate p2, boolean fromSPToWP) {
 		CodeBlock statement = m_NestedWord.getSymbol(symbolPos);
 		if (m_NestedWord.isCallPosition(symbolPos)) {
 			return (m_SmtManager.isInductiveCall(p1, (Call) statement, p2) == LBool.UNSAT);
