@@ -5,7 +5,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -19,7 +18,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingInternalT
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IsEmpty;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.NestedWordAutomatonReachableStates;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.RemoveUnreachable;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
@@ -34,7 +33,7 @@ public class NWAEmptinessCheck implements IEmptinessCheck {
 		INestedWordAutomatonSimple<CodeBlock, AnnotatedProgramPoint> converted = new MyNWA(root);
 		try {
 			return new IsEmpty<CodeBlock, AnnotatedProgramPoint>(
-					new NestedWordAutomatonReachableStates<CodeBlock, AnnotatedProgramPoint>(converted)).getNestedRun();
+					(new RemoveUnreachable<CodeBlock, AnnotatedProgramPoint>(converted)).getResult()).getNestedRun();
 		} catch (OperationCanceledException e) {
 			e.printStackTrace();
 			return null;
