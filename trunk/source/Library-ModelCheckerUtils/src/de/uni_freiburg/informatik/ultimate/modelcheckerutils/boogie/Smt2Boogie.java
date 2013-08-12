@@ -24,6 +24,7 @@ import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.LetTerm;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
+import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
@@ -444,17 +445,21 @@ public class Smt2Boogie implements Serializable {
 
 	private Expression translate(ConstantTerm term) {
 		Object value = term.getValue();
+		IType type = getType(term.getSort());
 		if (value instanceof String) {
-			IType type = getType(term.getSort());
 			return new StringLiteral(null, type, value.toString());
-			
 		} else if (value instanceof BigInteger) {
-			IType type = getType(term.getSort());
 			return new IntegerLiteral(null, type, value.toString());
-			
 		} else if (value instanceof BigDecimal) {
-			IType type = getType(term.getSort());
 			return new RealLiteral(null, type, value.toString());
+		} else if (value instanceof Rational) {
+			if (term.getSort().getName().equals("Int")) {
+				return new IntegerLiteral(null, type, value.toString());
+			} else if (term.getSort().getName().equals("Real")) {
+				return new RealLiteral(null, type, value.toString());
+			} else {
+				throw new UnsupportedOperationException("unknown Sort");
+			}
 		} else {
 			throw new UnsupportedOperationException("unknown kind of Term");
 		}
