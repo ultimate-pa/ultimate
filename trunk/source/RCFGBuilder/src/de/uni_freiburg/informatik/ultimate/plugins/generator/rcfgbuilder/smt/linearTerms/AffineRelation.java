@@ -35,10 +35,18 @@ public class AffineRelation {
 			m_FunctionSymbol = functionSymbol;
 			affineLhs = (AffineTerm) (new AffineTermTransformer()).transform(params[0]);
 			affineRhs = (AffineTerm) (new AffineTermTransformer()).transform(params[1]);
-			m_AffineTerm = new AffineTerm(affineLhs, new AffineTerm(affineRhs, Rational.MONE));
+			if (affineLhs.isErrorTerm() || affineRhs.isErrorTerm()) {
+				m_AffineTerm = null;
+			} else {
+				m_AffineTerm = new AffineTerm(affineLhs, new AffineTerm(affineRhs, Rational.MONE));
+			}
 		} else {
 			throw new UnsupportedOperationException();
 		}
+	}
+	
+	public boolean translationFailed() {
+		return m_AffineTerm == null;
 	}
 	
 	public Term negationNormalForm(Script script) {

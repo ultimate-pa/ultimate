@@ -3,6 +3,9 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.li
 import java.math.BigDecimal;
 import java.math.BigInteger;
 
+import org.apache.log4j.Logger;
+
+import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
@@ -10,6 +13,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.Activator;
 
 /**
  * Transform Term into AffineTerm.
@@ -17,6 +21,9 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
  *
  */
 public class AffineTermTransformer extends TermTransformer {
+	
+	private static Logger s_Logger = 
+			UltimateServices.getInstance().getLogger(Activator.PLUGIN_ID);
 	
 	@Override
 	protected void convert(Term term) {
@@ -69,7 +76,8 @@ public class AffineTermTransformer extends TermTransformer {
 	@Override
 	public void convertApplicationTerm(ApplicationTerm appTerm, Term[] newArgs) {
 		if (!appTerm.getSort().isNumericSort()) {
-			throw new UnsupportedOperationException("not affine");
+			resultIsNotAffine();
+			return;
 		}
 		String funName = appTerm.getFunction().getName();
 		if (funName.equals("*")) {
@@ -77,6 +85,10 @@ public class AffineTermTransformer extends TermTransformer {
 			Rational multiplier = Rational.ONE;
 			Sort sort = appTerm.getSort();
 			for (Term termArg : newArgs) {
+				if (!(termArg instanceof AffineTerm)) {
+					resultIsNotAffine();
+					return;
+				}
 				AffineTerm affineArg = (AffineTerm) termArg;
 				assert affineArg.getSort() == sort;
 				if (affineArg.isConstant()) {
@@ -85,7 +97,8 @@ public class AffineTermTransformer extends TermTransformer {
 					if (affineTerm == null) {
 						affineTerm = affineArg;
 					} else {
-						throw new UnsupportedOperationException("not affine");
+						resultIsNotAffine();
+						return;
 					}
 				}
 			}
@@ -124,6 +137,14 @@ public class AffineTermTransformer extends TermTransformer {
 		} else {
 			throw new UnsupportedOperationException("unknown symbol " + funName);
 		}
+	}
+	
+	/**
+	 * set result to auxiliary error term
+	 */
+	private void resultIsNotAffine() {
+		s_Logger.debug("not affine");
+		setResult(new AffineTerm());
 	}
 	
 	

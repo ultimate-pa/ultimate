@@ -343,17 +343,19 @@ public class DestructiveEqualityResolution {
 			if (allowRewrite) {
 				if (Arrays.asList(appTerm.getFreeVars()).contains(tv)) {
 					AffineRelation affRel = new AffineRelation(appTerm);
-					ApplicationTerm eqTerm = (ApplicationTerm) affRel.onLeftHandSideOnly(script, tv);
-					return new EqualityInformation(i, tv, eqTerm.getParameters()[1]);
-				}
-			} else {
-				if (lhs.equals(tv) && !Arrays.asList(rhs.getFreeVars()).contains(tv)) {
-					return new EqualityInformation(i, tv, rhs);
-				}
-				if (rhs.equals(tv) && !Arrays.asList(lhs.getFreeVars()).contains(tv)) {
-					return new EqualityInformation(i, tv, lhs);
+					if (!affRel.translationFailed()) {
+						ApplicationTerm eqTerm = (ApplicationTerm) affRel.onLeftHandSideOnly(script, tv);
+						return new EqualityInformation(i, tv, eqTerm.getParameters()[1]);
+					}
 				}
 			}
+			if (lhs.equals(tv) && !Arrays.asList(rhs.getFreeVars()).contains(tv)) {
+				return new EqualityInformation(i, tv, rhs);
+			}
+			if (rhs.equals(tv) && !Arrays.asList(lhs.getFreeVars()).contains(tv)) {
+				return new EqualityInformation(i, tv, lhs);
+			}
+
 		}
 		// no equality information found
 		return null;

@@ -48,7 +48,6 @@ public class AffineTerm extends Term {
 	 */
 	private final Sort m_Sort;
 	
-
 	/**
 	 * AffineTerm that represents the Rational r of sort sort. 
 	 */
@@ -122,6 +121,33 @@ public class AffineTerm extends Term {
 			m_Variable2Coefficient.put(summand.getKey(), summand.getValue().mul(multiplier));
 		}
 	}
+
+	/**
+	 * Auxiliary affine term that represents an error during the translation
+	 * process, e.g., if original term was not linear.
+	 */
+	public AffineTerm() {
+		super(0);
+		m_Variable2Coefficient = null;
+		m_Constant = null;
+		m_Sort = null;
+	}
+	
+	/**
+	 * True if this represents not an affine term but an error during the 
+	 * translation process, e.g., if original term was not linear.
+	 */
+	public boolean isErrorTerm() {
+		if (m_Variable2Coefficient == null) {
+			assert m_Constant == null;
+			assert m_Sort == null;
+			return true;
+		} else {
+			assert m_Constant != null;
+			assert m_Sort != null;
+			return false;
+		}
+	}
 	
 
 	/**
@@ -163,6 +189,9 @@ public class AffineTerm extends Term {
 	
 	@Override
 	public String toString() {
+		if (isErrorTerm()) {
+			return "auxilliaryErrorTerm";
+		}
 		String result = "";
 		for (Map.Entry<Term, Rational> entry : m_Variable2Coefficient.entrySet()) {
 			result += entry.getValue().isNegative() ? " - " : " + ";
