@@ -18,6 +18,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Par
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.SequentialComposition;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.EdgeChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
@@ -434,7 +435,8 @@ public class TraceCheckerSpWp extends TraceChecker {
 		} else {
 			assert (cb instanceof SequentialComposition) || 
 				(cb instanceof ParallelComposition) || 
-				(cb instanceof StatementSequence);
+				(cb instanceof StatementSequence) ||
+				(cb instanceof Summary);
 			result = ec.postInternalImplies(post); 
 		}
 		ec.unAssertPrecondition();
