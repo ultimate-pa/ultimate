@@ -5,7 +5,6 @@ import java.util.List;
 import java.util.Map.Entry;
 
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
-import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
@@ -18,30 +17,52 @@ import de.uni_freiburg.informatik.ultimate.logic.Util;
  */
 public class AffineRelation {
 	private final Term m_OriginalTerm;
-	private final FunctionSymbol m_FunctionSymbol;
+	private final String m_FunctionSymbolName;
 	private final AffineTerm m_AffineTerm;
+	private final static String NOT_EQUALS = "!=";
 	
 	
 	public AffineRelation(ApplicationTerm term) {
 		m_OriginalTerm = term;
-		FunctionSymbol functionSymbol = term.getFunction();
+		String functionSymbolName = term.getFunction().getName();
 		Term[] params = term.getParameters();
 		AffineTerm affineLhs;
 		AffineTerm affineRhs;
-		if (params.length != 2) {
-			throw new UnsupportedOperationException();
-		}
-		if (functionSymbol.getName().equals("=")) {
-			m_FunctionSymbol = functionSymbol;
-			affineLhs = (AffineTerm) (new AffineTermTransformer()).transform(params[0]);
-			affineRhs = (AffineTerm) (new AffineTermTransformer()).transform(params[1]);
-			if (affineLhs.isErrorTerm() || affineRhs.isErrorTerm()) {
-				m_AffineTerm = null;
+		if (functionSymbolName.equals("not")) {
+			assert params.length == 1;
+			if (params[0] instanceof ApplicationTerm) {
+				ApplicationTerm appTerm = (ApplicationTerm) params[0];
+				functionSymbolName = appTerm.getFunction().getName();
+				if (functionSymbolName.equals("=")) {
+					params = appTerm.getParameters();
+					m_FunctionSymbolName = NOT_EQUALS;
+				} else {
+					throw new UnsupportedOperationException("if not then =");	
+				}
 			} else {
-				m_AffineTerm = new AffineTerm(affineLhs, new AffineTerm(affineRhs, Rational.MONE));
+				throw new UnsupportedOperationException("if not then =");
 			}
 		} else {
-			throw new UnsupportedOperationException();
+			if (functionSymbolName.equals("=") ||
+					functionSymbolName.equals("distinct") ||
+					functionSymbolName.equals("<") ||
+					functionSymbolName.equals(">") ||
+					functionSymbolName.equals("<=") ||
+					functionSymbolName.equals(">=")) {
+				m_FunctionSymbolName = functionSymbolName;
+			} else {
+				throw new UnsupportedOperationException("unsupported function symbol");
+			}
+		}
+		if (params.length != 2) {
+			throw new UnsupportedOperationException("exactly two parameters expected");
+		}
+		affineLhs = (AffineTerm) (new AffineTermTransformer()).transform(params[0]);
+		affineRhs = (AffineTerm) (new AffineTermTransformer()).transform(params[1]);
+		if (affineLhs.isErrorTerm() || affineRhs.isErrorTerm()) {
+			m_AffineTerm = null;
+		} else {
+			m_AffineTerm = new AffineTerm(affineLhs, new AffineTerm(affineRhs, Rational.MONE));
 		}
 	}
 	
@@ -68,7 +89,7 @@ public class AffineRelation {
 		}
 		Term lhsTerm = Util.sum(script, lhsSummands.toArray(new Term[0]));
 		Term rhsTerm = Util.sum(script, rhsSummands.toArray(new Term[0]));
-		Term result = script.term(m_FunctionSymbol.getName(), lhsTerm, rhsTerm);
+		Term result = constuctTerm(script, m_FunctionSymbolName, lhsTerm, rhsTerm);
 		assert isEquivalent(script, m_OriginalTerm, result) == LBool.UNSAT;
 		return result;
 	}
@@ -100,8 +121,19 @@ public class AffineRelation {
 			}
 		}
 		Term rhsTerm = Util.sum(script, rhsSummands.toArray(new Term[0]));
-		Term result = script.term(m_FunctionSymbol.getName(), term, rhsTerm);
+		Term result = constuctTerm(script, m_FunctionSymbolName, term, rhsTerm);
 		assert isEquivalent(script, m_OriginalTerm, result) == LBool.UNSAT;
+		return result;
+	}
+	
+	private Term constuctTerm(Script script, String functionSymbolName, Term lhs, Term rhs) {
+		Term result;
+		if (functionSymbolName.equals(NOT_EQUALS)) {
+			result = script.term("=", lhs, rhs);
+			result = script.term("not", result);
+		} else {
+			result = script.term(functionSymbolName, lhs, rhs);
+		}
 		return result;
 	}
 	
