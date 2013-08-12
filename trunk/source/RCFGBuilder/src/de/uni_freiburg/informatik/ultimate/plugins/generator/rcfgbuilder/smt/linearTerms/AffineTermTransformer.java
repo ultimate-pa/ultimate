@@ -29,9 +29,11 @@ public class AffineTermTransformer extends TermTransformer {
 	protected void convert(Term term) {
 		if (term instanceof TermVariable) {
 			TermVariable tv = (TermVariable) term;
-			AffineTerm result = new AffineTerm(tv);
-			setResult(result);
-			return;
+			if (tv.getSort().isNumericSort()) {
+				AffineTerm result = new AffineTerm(tv);
+				setResult(result);
+				return;
+			}
 		} else if (term instanceof ApplicationTerm) {
 			ApplicationTerm appTerm = (ApplicationTerm) term;
 			String funName = appTerm.getFunction().getName();

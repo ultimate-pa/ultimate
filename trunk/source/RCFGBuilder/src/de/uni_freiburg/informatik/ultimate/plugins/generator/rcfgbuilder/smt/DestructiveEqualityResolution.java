@@ -341,7 +341,7 @@ public class DestructiveEqualityResolution {
 			}
 			boolean allowRewrite = true;
 			if (allowRewrite) {
-				if (Arrays.asList(appTerm.getFreeVars()).contains(tv)) {
+				if (Arrays.asList(appTerm.getFreeVars()).contains(tv) && rhs.getSort().isNumericSort()) {
 					AffineRelation affRel = new AffineRelation(appTerm);
 					if (!affRel.translationFailed()) {
 						ApplicationTerm eqTerm = (ApplicationTerm) affRel.onLeftHandSideOnly(script, tv);
