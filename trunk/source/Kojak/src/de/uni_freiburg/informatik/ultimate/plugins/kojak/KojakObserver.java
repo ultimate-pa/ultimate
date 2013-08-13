@@ -64,7 +64,7 @@ public class KojakObserver implements IUnmanagedObserver {
 			dumpPath += (dumpPath.endsWith(System.getProperty("file.separator"))?"":System.getProperty("file.separator"));
 		}
 		// 2nd, 4th and 5th parameter of SmtManager Constructor have no effect.
-		SmtManager smtManager = new SmtManager(rootAnnot.getBoogie2Smt(), 
+		SmtManager smtManager = new SmtManager(rootAnnot.getBoogie2SMT(), 
 				Solver.SMTInterpol, rootAnnot.getGlobalVars(), rootAnnot.getModGlobVarManager(),
 				false, "");
 		

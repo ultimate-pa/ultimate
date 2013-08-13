@@ -61,7 +61,7 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 		settings += " Timeout:" + taPrefs.timeout();
 		System.out.println(settings);
 
-		smtManager = new SmtManager(rootAnnot.getBoogie2Smt(),
+		smtManager = new SmtManager(rootAnnot.getBoogie2SMT(),
 				taPrefs.solver(), rootAnnot.getGlobalVars(), rootAnnot.getModGlobVarManager(),
 				taPrefs.dumpFormulas(), taPrefs.dumpPath());
 

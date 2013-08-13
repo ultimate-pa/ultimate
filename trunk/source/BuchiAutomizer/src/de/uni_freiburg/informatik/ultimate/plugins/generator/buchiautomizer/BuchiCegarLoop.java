@@ -542,7 +542,7 @@ public class BuchiCegarLoop {
 				ProgramPoint honda, NestedWord<CodeBlock> stem,
 				NestedWord<CodeBlock> loop) {
 			Expression rfExp = m_LinRf.asExpression(m_SmtManager.getScript(),
-					m_SmtManager.getBoogieVar2SmtVar());
+					m_SmtManager.getSmt2Boogie());
 			String rfString = RankingFunctionsObserver
 					.backtranslateExprWorkaround(rfExp);
 			StringBuilder longDescr = new StringBuilder();
@@ -552,7 +552,7 @@ public class BuchiCegarLoop {
 			longDescr.append(" with linear supporting invariants");
 			for (SupportingInvariant si : m_SiList) {
 				Expression siExp = si.asExpression(m_SmtManager.getScript(),
-						m_SmtManager.getBoogieVar2SmtVar());
+						m_SmtManager.getSmt2Boogie());
 				String siString = RankingFunctionsObserver
 						.backtranslateExprWorkaround(siExp);
 				longDescr.append(" " + siString);

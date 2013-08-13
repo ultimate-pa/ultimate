@@ -122,7 +122,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 		m_originalRoot = (RootNode) root;
 		RootAnnot rootAnnot = m_originalRoot.getRootAnnot();
 		m_taPrefs = rootAnnot.getTaPrefs();
-		m_smtManager = new SmtManager(rootAnnot.getBoogie2Smt(),
+		m_smtManager = new SmtManager(rootAnnot.getBoogie2SMT(),
 				Solver.SMTInterpol, rootAnnot.getGlobalVars(),
 				rootAnnot.getModGlobVarManager(), false, "");
 

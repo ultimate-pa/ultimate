@@ -80,7 +80,7 @@ public class ImpulseObserver implements IUnmanagedObserver {
 		m_originalRoot = (RootNode) root;
 		RootAnnot rootAnnot = m_originalRoot.getRootAnnot();
 		m_taPrefs = rootAnnot.getTaPrefs();
-		m_smtManager = new SmtManager(rootAnnot.getBoogie2Smt(), 
+		m_smtManager = new SmtManager(rootAnnot.getBoogie2SMT(), 
 				Solver.SMTInterpol, rootAnnot.getGlobalVars(), null, false, "");
 
 		m_truePredicate = m_smtManager.newTruePredicate();

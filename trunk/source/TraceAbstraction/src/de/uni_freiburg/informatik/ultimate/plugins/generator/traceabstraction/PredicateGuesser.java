@@ -45,7 +45,7 @@ public class PredicateGuesser {
 	public PredicateGuesser(SmtManager m_SmtManager, ModifiableGlobalVariableManager modGlobVarManager) {
 		super();
 		this.m_SmtManager = m_SmtManager;
-		this.m_BoogieVar2SmtVar = m_SmtManager.getBoogieVar2SmtVar();
+		this.m_BoogieVar2SmtVar = m_SmtManager.getSmt2Boogie();
 		this.m_ModGlobVarManager = modGlobVarManager;
 	}
 	

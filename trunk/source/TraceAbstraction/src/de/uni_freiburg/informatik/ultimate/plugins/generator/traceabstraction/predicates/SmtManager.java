@@ -16,17 +16,11 @@ import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
-import de.uni_freiburg.informatik.ultimate.logic.AnnotatedTerm;
-import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.FormulaUnLet;
-import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
-import de.uni_freiburg.informatik.ultimate.logic.LetTerm;
-import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.ReasonUnknown;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
-import de.uni_freiburg.informatik.ultimate.logic.ComputeFreeVariables;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
@@ -35,6 +29,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.logic.simplification.SimplifyDDA;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ASTType;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Smt2Boogie;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
@@ -45,7 +40,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCF
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.TransFormula;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.TransFormula.Infeasibility;
@@ -53,7 +47,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.prefere
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.DestructiveEqualityResolution;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.HoareAnnotation;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager.TermVarsProc;
 import de.uni_freiburg.informatik.ultimate.util.ScopedHashMap;
 
 public class SmtManager {
@@ -66,7 +59,8 @@ public class SmtManager {
 	
 	Status m_Status = Status.IDLE; 
 	
-	final Smt2Boogie m_Smt2Boogie;
+	private final Boogie2SMT m_Boogie2Smt;
+	private final Smt2Boogie m_Smt2Boogie;
 	private final Script m_Script;
 	private final Map<String,ASTType> m_GlobalVars;
 	private final ModifiableGlobalVariableManager m_ModifiableGlobals;
@@ -113,7 +107,7 @@ public class SmtManager {
 	protected static String[] m_NoProcedure = new String[0];
 	protected static Set<BoogieVar> m_EmptyVars = new HashSet<BoogieVar>(0);
 	
-	public SmtManager(Smt2Boogie smt2Boogie,
+	public SmtManager(Boogie2SMT boogie2smt,
 					Solver solver, 
 					Map<String,ASTType> globalVars,
 					ModifiableGlobalVariableManager modifiableGlobals, 
@@ -121,7 +115,8 @@ public class SmtManager {
 					String dumpPath) {
 		m_DontCareTerm = new AuxilliaryTerm("don't care");
 		m_EmptyStackTerm = new AuxilliaryTerm("emptyStack");
-		m_Smt2Boogie = smt2Boogie;
+		m_Boogie2Smt = boogie2smt;
+		m_Smt2Boogie = boogie2smt.getSmt2Boogie();
 		m_Script = m_Smt2Boogie.getScript();
 		m_GlobalVars = globalVars;
 		m_ModifiableGlobals =  modifiableGlobals;
@@ -134,8 +129,12 @@ public class SmtManager {
 	}
 	
 	
-	public Smt2Boogie getBoogieVar2SmtVar() {
+	public Smt2Boogie getSmt2Boogie() {
 		return m_Smt2Boogie;
+	}
+	
+	public Boogie2SMT getBoogie2Smt() {
+		return m_Boogie2Smt;
 	}
 
 
@@ -267,7 +266,7 @@ public class SmtManager {
 		Term term = getScript().term("true");
 		for (BoogieVar bv : modifiableGlobals) {
 			vars.add(bv);
-			BoogieVar bvOld = getBoogieVar2SmtVar()
+			BoogieVar bvOld = getSmt2Boogie()
 					.getOldGlobals().get(bv.getIdentifier());
 			vars.add(bvOld);
 			TermVariable tv = bv.getTermVariable();

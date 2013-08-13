@@ -57,7 +57,7 @@ public class NonCraigInterpolation {
 		m_Pref = prefs;
 		m_Script = smtManager.getScript();
 		m_SmtManager = smtManager;
-		m_BoogieVar2SmtVar = smtManager.getBoogieVar2SmtVar();
+		m_BoogieVar2SmtVar = smtManager.getSmt2Boogie();
 		
 		m_NestedWord = NestedWord.nestedWord(run.getWord());
 		m_Run = run;

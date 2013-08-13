@@ -198,7 +198,7 @@ public class BinaryStatePredicateManager {
 	
 	private IPredicate supportingInvariant2Predicate(SupportingInvariant si) {
 		Set<BoogieVar> coefficients = si.getCoefficients().keySet();
-		Term formula = si.asTerm(m_SmtManager.getScript(), m_SmtManager.getBoogieVar2SmtVar());
+		Term formula = si.asTerm(m_SmtManager.getScript(), m_SmtManager.getSmt2Boogie());
 		formula = (new SimplifyDDA(m_Script, s_Logger)).getSimplifiedTerm(formula);
 		TermVarsProc termVarsProc = m_SmtManager.computeTermVarsProc(formula);
 		assert termVarsProc.getVars().equals(coefficients);
@@ -220,7 +220,7 @@ public class BinaryStatePredicateManager {
 	
 	private IPredicate getRankInEquality(RankingFunction rf, String symbol, boolean addGeq0) {
 		assert symbol.equals("=") || symbol.equals(">");
-		Term rfTerm = rf.asFormula(m_Script, m_SmtManager.getBoogieVar2SmtVar());
+		Term rfTerm = rf.asFormula(m_Script, m_SmtManager.getSmt2Boogie());
 		TermVarsProc termVarsProc = m_SmtManager.computeTermVarsProc(rfTerm);
 		
 		Term equality = m_Script.term(symbol, m_OldRankVariable.getTermVariable(), rfTerm);

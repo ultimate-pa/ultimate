@@ -77,7 +77,7 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 		settings += " Timeout:" + taPrefs.timeout();
 		System.out.println(settings);
 
-		SmtManager smtManager = new SmtManager(rootAnnot.getBoogie2Smt(),
+		SmtManager smtManager = new SmtManager(rootAnnot.getBoogie2SMT(),
 				taPrefs.solver(), rootAnnot.getGlobalVars(),
 				rootAnnot.getModGlobVarManager(),
 				taPrefs.dumpFormulas(), taPrefs.dumpPath());
