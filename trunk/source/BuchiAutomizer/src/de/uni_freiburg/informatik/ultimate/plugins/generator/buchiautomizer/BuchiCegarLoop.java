@@ -186,7 +186,7 @@ public class BuchiCegarLoop {
 
 		
 
-		private static final boolean m_ReduceAbstractionSize = true;
+		private static final boolean m_ReduceAbstractionSize = !true;
 		private static final boolean m_Eager = true;
 		private static final boolean m_Difference = true;
 		private static final boolean m_UseDoubleDeckers = !true;
@@ -774,6 +774,7 @@ public class BuchiCegarLoop {
 			if (interpolAutomatonUsedInRefinement instanceof BuchiInterpolantAutomaton) {
 				BuchiInterpolantAutomaton bia = ((BuchiInterpolantAutomaton) interpolAutomatonUsedInRefinement);
 				bia.clearAssertionStack();
+//				bia.computationFinished();
 				INestedWordAutomatonOldApi<CodeBlock, IPredicate> oldApi = (new RemoveUnreachable<CodeBlock, IPredicate>(bia)).getResult();
 				assert (new BuchiAccepts<CodeBlock, IPredicate>(oldApi,m_Counterexample.getNestedLassoWord())).getResult();
 			}

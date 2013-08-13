@@ -49,6 +49,7 @@ public class BuchiInterpolantAutomaton implements
 	private final Map<Set<IPredicate>, IPredicate> m_InputPreds2ResultPreds = 
 			new HashMap<Set<IPredicate>, IPredicate>();
 
+	private boolean m_ComputationFinished = false;
 	
 	
 	private CodeBlock m_AssertedCodeBlock;
@@ -118,6 +119,20 @@ public class BuchiInterpolantAutomaton implements
 		m_ResultBookkeeping = new NwaCacheBookkeeping<CodeBlock, IPredicate>();
 		m_HondaEntererStem = hondaEntererStem;
 		m_HondaEntererLoop = hondaEntererLoop;
+	}
+	
+	
+	/**
+	 * Announce that computation is finished. From now on this automaton
+	 * returns only existing transitions but does not compute new ones.
+	 */
+	public void computationFinished() {
+		if (m_ComputationFinished) {
+			throw new AssertionError("Computation already finished.");
+		} else {
+			m_ComputationFinished = true;
+		}
+		
 	}
 
 
@@ -390,7 +405,7 @@ public class BuchiInterpolantAutomaton implements
 	@Override
 	public Iterable<OutgoingInternalTransition<CodeBlock, IPredicate>> internalSuccessors(
 			IPredicate state, CodeBlock letter) {
-		if (!m_ResultBookkeeping.isCachedInternal(state, letter)) {
+		if (!m_ResultBookkeeping.isCachedInternal(state, letter) && !m_ComputationFinished) {
 			computeSuccInternal(state, letter);
 			m_ResultBookkeeping.reportCachedInternal(state, letter);
 		}
@@ -409,7 +424,7 @@ public class BuchiInterpolantAutomaton implements
 	public Iterable<OutgoingInternalTransition<CodeBlock, IPredicate>> internalSuccessors(
 			IPredicate state) {
 		for (CodeBlock letter : lettersInternal(state)) {
-			if (!m_ResultBookkeeping.isCachedInternal(state, letter)) {
+			if (!m_ResultBookkeeping.isCachedInternal(state, letter) && !m_ComputationFinished) {
 				computeSuccInternal(state, letter);
 				m_ResultBookkeeping.reportCachedInternal(state, letter);
 			}
@@ -421,7 +436,7 @@ public class BuchiInterpolantAutomaton implements
 	public Iterable<OutgoingCallTransition<CodeBlock, IPredicate>> callSuccessors(
 			IPredicate state, CodeBlock letter) {
 		Call call = (Call) letter;
-		if (!m_ResultBookkeeping.isCachedCall(state, call)) {
+		if (!m_ResultBookkeeping.isCachedCall(state, call) && !m_ComputationFinished) {
 			computeSuccCall(state, call);
 			m_ResultBookkeeping.reportCachedCall(state, call);
 		}
@@ -433,7 +448,7 @@ public class BuchiInterpolantAutomaton implements
 			IPredicate state) {
 		for (CodeBlock letter : lettersCall(state)) {
 			Call call = (Call) letter;
-			if (!m_ResultBookkeeping.isCachedCall(state, call)) {
+			if (!m_ResultBookkeeping.isCachedCall(state, call) && !m_ComputationFinished) {
 				computeSuccCall(state, call);
 				m_ResultBookkeeping.reportCachedCall(state, call);
 			}
@@ -445,7 +460,7 @@ public class BuchiInterpolantAutomaton implements
 	public Iterable<OutgoingReturnTransition<CodeBlock, IPredicate>> returnSucccessors(
 			IPredicate state, IPredicate hier, CodeBlock letter) {
 		Return ret = (Return) letter;
-		if (!m_ResultBookkeeping.isCachedReturn(state, hier, ret)) {
+		if (!m_ResultBookkeeping.isCachedReturn(state, hier, ret) && !m_ComputationFinished) {
 			computeSuccReturn(state, hier, ret);
 			m_ResultBookkeeping.reportCachedReturn(state, hier, ret);
 		}
@@ -457,7 +472,7 @@ public class BuchiInterpolantAutomaton implements
 			IPredicate state, IPredicate hier) {
 		for (CodeBlock letter : lettersReturn(state)) {
 			Return ret = (Return) letter;
-			if (!m_ResultBookkeeping.isCachedReturn(state, hier, ret)) {
+			if (!m_ResultBookkeeping.isCachedReturn(state, hier, ret) && !m_ComputationFinished) {
 				computeSuccReturn(state, hier, ret);
 				m_ResultBookkeeping.reportCachedReturn(state, hier, ret);
 			}
