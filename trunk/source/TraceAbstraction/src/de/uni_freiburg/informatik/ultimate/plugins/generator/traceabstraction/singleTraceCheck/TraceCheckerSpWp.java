@@ -2,6 +2,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.s
 
 import java.io.PrintWriter;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -10,6 +11,8 @@ import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.InterproceduralSequentialComposition;
@@ -19,9 +22,11 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Ret
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.SequentialComposition;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.TransFormula;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.EdgeChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager.TermVarsProc;
 
 public class TraceCheckerSpWp extends TraceChecker {
 	
@@ -69,6 +74,25 @@ public class TraceCheckerSpWp extends TraceChecker {
 		return m_InterpolantsWp[i];
 	}
 	
+	
+	/**
+	 * Computes the sequential composition of the statements from the given trace.
+	 * TODO: Currently, it only computes composition for statements without Calls (esp. PendingCalls) and Returns.
+	 */
+	private TransFormula computeSummaryForTrace(Word<CodeBlock> trace) {
+		assert trace.length() >= 1;
+		TransFormula[] transFormulasToComputeSummaryFor = new TransFormula[trace.length()];
+		for (int i = 0; i < trace.length(); i++) {
+			transFormulasToComputeSummaryFor[i] = trace.getSymbol(i).getTransitionFormula();
+		}
+		return TransFormula.sequentialComposition(m_SmtManager.getBoogie2Smt(), true, transFormulasToComputeSummaryFor);
+	}
+	
+	private TransFormula computeSummaryForTrace(Word<CodeBlock> trace, TransFormula Call, TransFormula Return, TransFormula oldVarsAssignment) {
+		assert trace.length() >= 1;
+		TransFormula procedureSummary = computeSummaryForTrace(trace);
+		return TransFormula.sequentialCompositionWithCallAndReturn(m_SmtManager.getBoogie2Smt(), true, Call, oldVarsAssignment, procedureSummary, Return);
+	}
 	
 	
 	public static boolean interpolantsSPComputed() {
@@ -210,6 +234,25 @@ public class TraceCheckerSpWp extends TraceChecker {
 		}
 	}
 	
+	/**
+	 * Returns a sub-trace of the given trace, from startPos to endPos.
+	 */
+	private Word<CodeBlock> getSubTrace(int startPos, int endPos, Word<CodeBlock> trace) {
+		CodeBlock[] codeBlocks = new CodeBlock[endPos - startPos];
+		for (int i = startPos; i < trace.length(); i++) {
+			codeBlocks[i - startPos] = trace.getSymbol(i);
+		}
+		return new Word<CodeBlock>(codeBlocks);
+	}
+	
+	private IPredicate transformulaToPredicate(TransFormula tf) {
+		Term tfInvarsRenamed = m_SmtManager.substituteToRepresentants(tf.getAssignedVars(), tf.getInVars(), tf.getFormula());
+		Term tfInOutVarsRenamed = m_SmtManager.substituteToRepresentants(tf.getAssignedVars(), tf.getOutVars(), tfInvarsRenamed);
+		TermVarsProc tvp = m_SmtManager.computeTermVarsProc(tfInOutVarsRenamed);
+		Term termClosedFormula = SmtManager.computeClosedFormula(tfInOutVarsRenamed, tvp.getVars(), m_SmtManager.getScript());
+		return m_SmtManager.newPredicate(tfInOutVarsRenamed, tvp.getProcedures(), tvp.getVars(), termClosedFormula);
+	}
+	
 	private void computeInterpolantsWithoutUsageOfUnsatCore(Set<Integer> interpolatedPositions) {
 		if (!(interpolatedPositions instanceof AllIntegers)) {
 			throw new UnsupportedOperationException();
@@ -309,8 +352,22 @@ public class TraceCheckerSpWp extends TraceChecker {
 				m_InterpolantsWp[m_InterpolantsWp.length-1] = m_PredicateUnifier.getOrConstructPredicate(p.getFormula(),
 						p.getVars(), p.getProcedures());
 			} else if (trace.getSymbol(m_InterpolantsWp.length) instanceof Return) {
+				int call_pos = ((NestedWord<CodeBlock>)trace).getCallPosition(m_InterpolantsWp.length);
+				TransFormula summary = computeSummaryForTrace(getSubTrace(0, call_pos, trace));
+				IPredicate callerPred = m_SmtManager.strongestPostcondition(m_Precondition, summary);
+				// If the sub-trace between call_pos and returnPos (here: i) is shorter, than compute the
+				// callerPred in this way.
+				TransFormula callTF = ((Return) trace.getSymbol(m_InterpolantsWp.length)).getCorrespondingCall().getTransitionFormula();
+				TransFormula globalVarsAssignments = m_ModifiedGlobals.getGlobalVarsAssignment(((Return) trace.getSymbol(m_InterpolantsWp.length)).getCorrespondingCall().getCallStatement().getMethodName());
+				if ((m_InterpolantsWp.length - call_pos) < call_pos) {
+					summary = computeSummaryForTrace(getSubTrace(call_pos, m_InterpolantsWp.length - 1, trace), callTF,
+							trace.getSymbol(m_InterpolantsWp.length).getTransitionFormula(), globalVarsAssignments);
+					callerPred = m_SmtManager.weakestPrecondition(transformulaToPredicate(summary), 
+							((Return) trace.getSymbol(m_InterpolantsWp.length)).getCorrespondingCall());
+				}
 				IPredicate p = m_SmtManager.weakestPrecondition(
-						tracePostcondition, (Return) trace.getSymbol(m_InterpolantsWp.length));
+						tracePostcondition, callerPred, trace.getSymbol(m_InterpolantsWp.length).getTransitionFormula(),
+						callTF, globalVarsAssignments);
 				m_InterpolantsWp[m_InterpolantsWp.length-1] = m_PredicateUnifier.getOrConstructPredicate(p.getFormula(),
 						p.getVars(), p.getProcedures());
 			} else {
@@ -336,8 +393,22 @@ public class TraceCheckerSpWp extends TraceChecker {
 					m_InterpolantsWp[i] = m_PredicateUnifier.getOrConstructPredicate(p.getFormula(),
 							p.getVars(), p.getProcedures());
 				} else if (trace.getSymbol(i+1) instanceof Return) {
+					int call_pos = ((NestedWord<CodeBlock>)trace).getCallPosition(i);
+					TransFormula summary = computeSummaryForTrace(getSubTrace(0, call_pos, trace));
+					IPredicate callerPred = transformulaToPredicate(summary);
+					// If the sub-trace between call_pos and returnPos (here: i) is shorter, than compute the
+					// callerPred in this way.
+					TransFormula callTF = ((Return) trace.getSymbol(i)).getCorrespondingCall().getTransitionFormula();
+					TransFormula globalVarsAssignments = m_ModifiedGlobals.getGlobalVarsAssignment(((Return) trace.getSymbol(i)).getCorrespondingCall().getCallStatement().getMethodName());
+					if ((i - call_pos) < call_pos) {
+						summary = computeSummaryForTrace(getSubTrace(call_pos, i - 1, trace), callTF,
+								trace.getSymbol(i).getTransitionFormula(), globalVarsAssignments);
+						callerPred = m_SmtManager.weakestPrecondition(m_InterpolantsWp[i+1], 
+								((Return) trace.getSymbol(i)).getCorrespondingCall());;
+					}
+					
 					IPredicate p = m_SmtManager.weakestPrecondition(
-							m_InterpolantsWp[i+1], (Return) trace.getSymbol(i+1)); 
+							m_InterpolantsWp[i+1], callerPred, trace.getSymbol(i+1).getTransitionFormula(), callTF, globalVarsAssignments); 
 					m_InterpolantsWp[i] = m_PredicateUnifier.getOrConstructPredicate(p.getFormula(),
 							p.getVars(), p.getProcedures());
 				} else {
@@ -358,14 +429,6 @@ public class TraceCheckerSpWp extends TraceChecker {
 		}
 	}
 
-	/**
-	 * Checks whether the term at position pos is contained in unsat_core.
-	 */
-	private boolean isInUnsatCore(int pos, Set<Term> unsat_core) {
-		Term annotTerm = m_AnnotatedSsa.getTerms()[pos];
-		return unsat_core.contains(annotTerm);
-	}
-	
 	void checkInterpolantsCorrect(IPredicate[] interpolants,IPredicate[] interpolantsNotSimplified,
 								  Word<CodeBlock> trace, 
 								  IPredicate tracePrecondition, 

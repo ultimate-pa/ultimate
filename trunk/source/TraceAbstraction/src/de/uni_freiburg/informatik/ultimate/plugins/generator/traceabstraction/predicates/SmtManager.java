@@ -2134,31 +2134,6 @@ public class SmtManager {
 	}
 
 	/**
-	 * For statements which aren't contained in the corresponding unsatisfiable core,
-	 * we compute a special strongest postcondition.
-	 */
-	public IPredicate strongestPostconditionSpecial(IPredicate p, CodeBlock cb) {
-
-		Set<TermVariable> assignedVars = new HashSet<TermVariable>();
-		for (BoogieVar bv : cb.getTransitionFormula().getAssignedVars()) {
-			assignedVars.add(bv.getTermVariable());
-		}
-		
-		Term formulaAssignedVarsQuantified = p.getFormula();
-		if (assignedVars.size() > 0) {
-			formulaAssignedVarsQuantified = m_Script.quantifier(Script.EXISTS,
-					assignedVars.toArray(new TermVariable[assignedVars.size()]),
-					p.getFormula(), (Term[][]) null);
-		} 
-		Term result = formulaAssignedVarsQuantified;
-		TermVarsProc tvp = computeTermVarsProc(result);
-		Term result_as_closed_formula = SmtManager.computeClosedFormula(result, tvp.getVars(), m_Script);
-		return newPredicate(result, tvp.getProcedures(), tvp.getVars(), result_as_closed_formula);
-		
-	}
-
-	
-	/**
 	 * Computes the weakest precondition of the given predicate p and the
 	 * CodeBlock cb. 
 	 */
@@ -2170,11 +2145,14 @@ public class SmtManager {
 		} else if (cb instanceof InterproceduralSequentialComposition) {
 			throw new UnsupportedOperationException();
 		}
+		return weakestPrecondition(p, cb.getTransitionFormula());
+	}
+	
+	public IPredicate weakestPrecondition(IPredicate p, TransFormula tf) {
 		// If the given predicate p is true, then return true, since wp(true, st) = true for every statement st.
 		if (p.getFormula() == True()) {
 			return p;
 		}
-		TransFormula tf = cb.getTransitionFormula();	
 		Term tf_term = tf.getFormula();		
 		Map<TermVariable, Term> substitution = new HashMap<TermVariable, Term>();
 		// 1 Rename the invars of the TransFormula of the given CodeBlock cb into TermVariables
@@ -2185,7 +2163,7 @@ public class SmtManager {
 			if (!tf.getOutVars().keySet().contains(bv)) {
 				throw new UnsupportedOperationException("This case is still undefined!");
 			}
-			
+
 			// Case: var in InVars and var in OutVars and Invars(var) == OutVars(var)
 			else if (bv_term == tf.getOutVars().get(bv)) {
 				substitution.put(bv_term, bv.getTermVariable());
@@ -2195,10 +2173,10 @@ public class SmtManager {
 				substitution.put(bv_term, bv.getTermVariable());
 			}
 		}
-		
+
 
 		Term tf_term_invars_renamed = substituteTermVariablesByTerms(substitution, tf_term);
-		
+
 		// 2 Rename the outvars of the TransFormula of the given CodeBlock cb into TermVariables
 		substitution.clear();
 		for (BoogieVar bv : tf.getOutVars().keySet()) {
@@ -2221,8 +2199,8 @@ public class SmtManager {
 
 		Term tf_term_outvars_renamed = substituteTermVariablesByTerms(substitution, tf_term_invars_renamed);
 
-				
-		
+
+
 		// 3. Connect the renamed TransFormula and the renamed predicate by a logical implication.
 		//    (TransFormula) --> Predicate
 		Term NOT_tfterm_OR_predicate = Util.or(m_Script, Util.not(m_Script, tf_term_outvars_renamed), p.getFormula());
@@ -2257,7 +2235,7 @@ public class SmtManager {
 			}
 			Term predicate_renamed = substituteTermVariablesByTerms(substitution, p.getFormula());
 			NOT_tfterm_OR_predicate = Util.or(m_Script, Util.not(m_Script, tf_term_outvars_renamed), predicate_renamed);
-			
+
 			result = DestructiveEqualityResolution.quantifier(m_Script, Script.FORALL,
 					outvarsOccuringInFreeVars_TermVariables,
 					NOT_tfterm_OR_predicate, (Term[][]) null);
@@ -2269,8 +2247,8 @@ public class SmtManager {
 		// Compute a closed formula version of result, it is needed for newPredicate.
 		Term result_as_closed_formula = SmtManager.computeClosedFormula(result, tvp.getVars(), m_Script);
 		return newPredicate(result, tvp.getProcedures(), tvp.getVars(), result_as_closed_formula);
+		
 	}
-	
 	
 	/**
 	 * Compute the weakest precondition for a call statement, where the returneePred
@@ -2280,12 +2258,16 @@ public class SmtManager {
 	 */
 	public IPredicate weakestPrecondition(IPredicate returneePred, 
 						IPredicate returnerPred, Call call, Return ret, boolean isPendingCall) {
+		return weakestPrecondition(returneePred, returnerPred, call.getTransitionFormula(), ret.getTransitionFormula(), isPendingCall);
+	}
+	
+	public IPredicate weakestPrecondition(IPredicate returneePred, 
+			IPredicate returnerPred, TransFormula call_TF, TransFormula returnTF, boolean isPendingCall) {
 		
 		Map<TermVariable, TermVariable> varsToRenameInReturneePred = new HashMap<TermVariable, TermVariable>();
 		Set<TermVariable> varsToQuantify = new HashSet<TermVariable>();
 		// 1. Rename invars in Term of Call statement
 		Map<TermVariable, Term> substitution = new HashMap<TermVariable, Term>();
-		TransFormula call_TF = call.getTransitionFormula();
 		for (BoogieVar bv : call_TF.getInVars().keySet()) {
 			if (returneePred.getVars().contains(bv)) {
 				if (!varsToRenameInReturneePred.containsKey(bv.getTermVariable())) {
@@ -2314,21 +2296,19 @@ public class SmtManager {
 		Term retTF_OutVarsRenamed = null;
 		if (!isPendingCall) {
 			// 4. Rename the vars in TF of corresponding Return
-			TransFormula retTF = ret.getTransitionFormula();
-			
 			// 4.1 We want to quantify over the invars of Ret TF
-			for (BoogieVar bv : retTF.getInVars().keySet()) {
+			for (BoogieVar bv : returnTF.getInVars().keySet()) {
 				if (!varsToRenameInReturneePred.containsKey(bv.getTermVariable())) {
-					varsToRenameInReturneePred.put(bv.getTermVariable(), retTF.getInVars().get(bv));
+					varsToRenameInReturneePred.put(bv.getTermVariable(), returnTF.getInVars().get(bv));
 				}
-				varsToQuantify.add(retTF.getInVars().get(bv));
+				varsToQuantify.add(returnTF.getInVars().get(bv));
 			}
 			substitution.clear();
 			// 4.2 Rename the outvars of Ret TF
-			for (BoogieVar bv : retTF.getOutVars().keySet()) {
-				substitution.put(retTF.getOutVars().get(bv), bv.getTermVariable());
+			for (BoogieVar bv : returnTF.getOutVars().keySet()) {
+				substitution.put(returnTF.getOutVars().get(bv), bv.getTermVariable());
 			}
-			retTF_OutVarsRenamed = substituteTermVariablesByTerms(substitution, retTF.getFormula());
+			retTF_OutVarsRenamed = substituteTermVariablesByTerms(substitution, returnTF.getFormula());
 		}
 		Term returneePredRenamed = substituteTermVariablesByTermVariables(
 				varsToRenameInReturneePred, returneePred.getFormula());
@@ -2356,81 +2336,107 @@ public class SmtManager {
 		return newPredicate(call_Term_IMPLIES_rhsOfImplication_quantified, tvp.getProcedures(), tvp.getVars(), call_Term_AND_returneePred_as_closed_formula);
 	}
 	
-	public IPredicate weakestPrecondition(IPredicate p, Return ret) {
+	public IPredicate weakestPrecondition(IPredicate returnerPred, IPredicate callerPred, Return ret) {
+		return weakestPrecondition(returnerPred, callerPred, ret.getTransitionFormula(), ret.getCorrespondingCall().getTransitionFormula(),
+				m_ModifiableGlobals.getGlobalVarsAssignment(ret.getCorrespondingCall().getCallStatement().getMethodName()));
 		
-		Map<TermVariable, TermVariable> varsToRenameInPred = new HashMap<TermVariable, TermVariable>();
+	}
+	
+	
+	public IPredicate weakestPrecondition(IPredicate returnerPred, IPredicate callerPred, TransFormula returnTF,
+			TransFormula callTF,
+			TransFormula globalVarsAssignments) {
+		
+		Map<TermVariable, TermVariable> varsToRenameInCallerAndReturnPred = new HashMap<TermVariable, TermVariable>();
+		Map<TermVariable, TermVariable> inVarsOfCallToRename = new HashMap<TermVariable, TermVariable>();
 		Set<TermVariable> varsToQuantify = new HashSet<TermVariable>();
 		// 1. Compute those global variable assignments, i.e. x_global = old(x_global) if x_global is
 		// a global variable.
-		TransFormula globalVarsAssignment = m_ModifiableGlobals.getGlobalVarsAssignment(
-				ret.getCorrespondingCall().getCallStatement().getMethodName());
-		Set<BoogieVar> modifiableGlobalVarsAsBoogieVars = m_ModifiableGlobals.getModifiedBoogieVars(
-				ret.getCorrespondingCall().getCallStatement().getMethodName());
+		Set<BoogieVar> modifiableGlobalVarsAsBoogieVars = globalVarsAssignments.getAssignedVars();
 		// 1.1 Rename the invars in global variable assignments.
 		Map<TermVariable, Term> substitution = new HashMap<TermVariable, Term>();
-		for (BoogieVar bv : globalVarsAssignment.getInVars().keySet()) {
-			substitution.put(globalVarsAssignment.getInVars().get(bv), bv.getTermVariable());
+		for (BoogieVar bv : globalVarsAssignments.getInVars().keySet()) {
+			substitution.put(globalVarsAssignments.getInVars().get(bv), bv.getTermVariable());
 		}
-		Term globalVars_Invars_Renamed = substituteTermVariablesByTerms(substitution, globalVarsAssignment.getFormula());
+		Term globalVarsInvarsRenamed = substituteTermVariablesByTerms(substitution, globalVarsAssignments.getFormula());
 		// 1.2 Rename the outvars in global variable assignments.
 		substitution.clear();
-		for (BoogieVar bv : globalVarsAssignment.getOutVars().keySet()) {
-			substitution.put(globalVarsAssignment.getOutVars().get(bv), bv.getTermVariable());
+		for (BoogieVar bv : globalVarsAssignments.getOutVars().keySet()) {
+			substitution.put(globalVarsAssignments.getOutVars().get(bv), bv.getTermVariable());
 		}
 		
-		Term globalVars_InVarsRenamed_OutVarsRenamed = substituteTermVariablesByTerms(substitution, globalVars_Invars_Renamed);
-		// Collect the local variables of the proc, in which the Return statement would lead to.
-		for (BoogieVar bv : p.getVars()) {
-			if (!modifiableGlobalVarsAsBoogieVars.contains(bv)) {
+		Term globalVars_InVarsRenamed_OutVarsRenamed = substituteTermVariablesByTerms(substitution, globalVarsInvarsRenamed);
+		// 2.1 Rename the invars of the term of the Return-Statement.
+		substitution.clear();
+		for (BoogieVar bv : returnTF.getInVars().keySet()) {
+			TermVariable freshVar = getFreshTermVariable(bv.getIdentifier(), bv.getTermVariable().getSort());
+			varsToRenameInCallerAndReturnPred.put(bv.getTermVariable(), freshVar);
+			varsToQuantify.add(freshVar);
+			substitution.put(returnTF.getInVars().get(bv), bv.getTermVariable());
+		}
+		Term retTermInVarsRenamed = substituteTermVariablesByTerms(substitution, returnTF.getFormula());
+		// 2.2 We doesn't rename the outvars of the Return statement, as we want to quantify them.
+		for (BoogieVar bv : returnTF.getOutVars().keySet()) {
+			if (callerPred.getVars().contains(bv) || returnerPred.getVars().contains(bv)) {
+				TermVariable freshVar = getFreshTermVariable(bv.getIdentifier(), bv.getTermVariable().getSort());
+				varsToRenameInCallerAndReturnPred.put(bv.getTermVariable(), freshVar);
+				varsToQuantify.add(freshVar);
+			} else {
+				varsToQuantify.add(returnTF.getOutVars().get(bv));
+			}
+		}
+		
+		// Rename the invars of the Call and quantify them
+		for (BoogieVar bv : callTF.getInVars().keySet()) {
+			if (callerPred.getVars().contains(bv) || returnerPred.getVars().contains(bv)) {
+				TermVariable freshVar = getFreshTermVariable(bv.getIdentifier(), bv.getTermVariable().getSort());
+				varsToRenameInCallerAndReturnPred.put(bv.getTermVariable(), freshVar);
+				varsToQuantify.add(freshVar);
+			} else {
+				varsToQuantify.add(returnTF.getOutVars().get(bv));
+			}
+		}
+		substitution.clear();
+		for (BoogieVar bv : callTF.getOutVars().keySet()) {
+			if (callerPred.getVars().contains(bv) || returnerPred.getVars().contains(bv)) {
+				TermVariable freshVar = getFreshTermVariable(bv.getIdentifier(), bv.getTermVariable().getSort());
+				varsToRenameInCallerAndReturnPred.put(bv.getTermVariable(), freshVar);
+				varsToQuantify.add(freshVar);
+			} else {
+				varsToQuantify.add(callTF.getOutVars().get(bv));
+			}
+			substitution.put(callTF.getOutVars().get(bv), bv.getTermVariable());
+		}
+		Term callTFRenamed = substituteTermVariablesByTerms(substitution, callTF.getFormula());
+		
+		Term retPredRenamed = substituteTermVariablesByTermVariables(varsToRenameInCallerAndReturnPred, returnerPred.getFormula());
+		Term callerPredRenamed = substituteTermVariablesByTermVariables(varsToRenameInCallerAndReturnPred, callerPred.getFormula());
+		// Quantify all the other local vars.
+		for (BoogieVar bv : returnerPred.getVars()) {
+			if (!varsToRenameInCallerAndReturnPred.containsKey(bv.getTermVariable())) {
 				varsToQuantify.add(bv.getTermVariable());
 			}
 		}
-		TransFormula ret_TF = ret.getTransitionFormula();
-		// 2.1 Rename the invars of the term of the Return-Statement.
-		substitution.clear();
-		for (BoogieVar bv : ret_TF.getInVars().keySet()) {
-			if (p.getVars().contains(bv)) {
-				if (!varsToRenameInPred.containsKey(bv.getTermVariable())) {
-					varsToRenameInPred.put(bv.getTermVariable(), ret_TF.getInVars().get(bv));
-				}
-				varsToQuantify.add(ret_TF.getInVars().get(bv));
+		for (BoogieVar bv : callerPred.getVars()) {
+			if (!varsToRenameInCallerAndReturnPred.containsKey(bv.getTermVariable())) {
+				varsToQuantify.add(bv.getTermVariable());
 			}
-			substitution.put(ret_TF.getInVars().get(bv), bv.getTermVariable());
 		}
-		Term ret_Term_InVarsRenamed = substituteTermVariablesByTerms(substitution, ret_TF.getFormula());
-		// 2.2 We doesn't rename the outvars of the Return statement, as we want to quantify them.
-		for (BoogieVar bv : ret_TF.getOutVars().keySet()) {
-			// Add this outvar to vars to be renamed in Pred and to be quantified.
-			if (!varsToRenameInPred.containsKey(bv.getTermVariable())) {
-				varsToRenameInPred.put(bv.getTermVariable(), ret_TF.getOutVars().get(bv));
-			}
-			varsToQuantify.add(ret_TF.getOutVars().get(bv));
 
-		}
+		Term callerPredANDCallANDReturn = Util.and(m_Script, callerPredRenamed, retTermInVarsRenamed, callTFRenamed);
 		
-		Term predRenamed = substituteTermVariablesByTermVariables(varsToRenameInPred, p.getFormula());
-		
-		Term ret_Term_AND_globalVarsAssignment = Util.and(m_Script, 
-				ret_Term_InVarsRenamed, 
-				globalVars_InVarsRenamed_OutVarsRenamed);
-		
-		Term retTermANDglobalVarsAssignment_IMPLIES_predicate = Util.or(m_Script, 
-				Util.not(m_Script, ret_Term_AND_globalVarsAssignment), predRenamed);
-		
-		Term retTermANDglobalVarsAssignment_IMPLIES_predicate_quantified = retTermANDglobalVarsAssignment_IMPLIES_predicate;
-		if (varsToRenameInPred.size() > 0) {
-			retTermANDglobalVarsAssignment_IMPLIES_predicate_quantified = DestructiveEqualityResolution.quantifier(m_Script, Script.FORALL,
+		Term result = Util.or(m_Script, Util.not(m_Script, callerPredANDCallANDReturn), retPredRenamed);
+		Term resultQuantified = result;
+		if (varsToQuantify.size() > 0) {
+			resultQuantified = DestructiveEqualityResolution.quantifier(m_Script, Script.FORALL,
 					varsToQuantify.toArray(new TermVariable[varsToQuantify.size()]),
-					retTermANDglobalVarsAssignment_IMPLIES_predicate, (Term[][])null);
+					result, (Term[][])null);
 		}
-
-		Term result = Util.and(m_Script, retTermANDglobalVarsAssignment_IMPLIES_predicate_quantified, globalVars_InVarsRenamed_OutVarsRenamed);
-
-		TermVarsProc tvp = computeTermVarsProc(result);
-		Term result_as_closed_formula = SmtManager.computeClosedFormula(result, tvp.getVars(), m_Script);
-		return newPredicate(result, tvp.getProcedures(), tvp.getVars(), result_as_closed_formula);
+		TermVarsProc tvp = computeTermVarsProc(resultQuantified);
+		Term result_as_closed_formula = SmtManager.computeClosedFormula(resultQuantified, tvp.getVars(), m_Script);
+		return newPredicate(resultQuantified, tvp.getProcedures(), tvp.getVars(), result_as_closed_formula);
+		
 	}
-	
 	
 	//FIXME: does not work im SmtInterpol2
 	public static void dumpInterpolProblem(Term[] formulas,

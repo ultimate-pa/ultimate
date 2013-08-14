@@ -82,6 +82,8 @@ public class RelevantTransFormulas {
 							modGlobalVarManager.getGlobalVarsAssignment(((Call)m_NestedTrace.getSymbol(i)).getCallStatement().getMethodName()));
 					if (localVarAssignmentsAtCallInUnsatCore[i]) {
 						m_TransFormulas[i] = m_NestedTrace.getSymbol(i).getTransitionFormula();
+					} else {
+						m_TransFormulas[i] = buildTransFormulaForStmtNotInUnsatCore(m_NestedTrace.getSymbol(i).getTransitionFormula());
 					}
 					
 				} else {
