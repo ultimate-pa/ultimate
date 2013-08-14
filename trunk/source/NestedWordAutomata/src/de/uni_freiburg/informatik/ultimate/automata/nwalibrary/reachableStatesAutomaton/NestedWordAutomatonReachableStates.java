@@ -2374,6 +2374,7 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 		Object findPredecessor(StateContainer<LETTER,STATE> current) {
 			Object result = null;
 			int lowestPredecessorSerialNumber = Integer.MAX_VALUE;
+			int lowestCorrespondingLinPredSerialNumber = Integer.MAX_VALUE;
 			for (IncomingInternalTransition<LETTER, STATE> inTrans : internalPredecessors(current.getState())) {
 				StateContainer<LETTER,STATE> predSc = m_States.get(inTrans.getPred());
 				if (!m_FindSummary && isInitial(inTrans.getPred())) {
@@ -2386,6 +2387,7 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 				int predSerialNumber = predSc.getSerialNumber();
 				if (predSerialNumber < lowestPredecessorSerialNumber) {
 					lowestPredecessorSerialNumber = predSerialNumber;
+					lowestCorrespondingLinPredSerialNumber = Integer.MAX_VALUE;
 					result = inTrans;
 				}
 			}
@@ -2410,6 +2412,7 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 					int predSerialNumber = predSc.getSerialNumber();
 					if (predSerialNumber < lowestPredecessorSerialNumber) {
 						lowestPredecessorSerialNumber = predSerialNumber;
+						lowestCorrespondingLinPredSerialNumber = Integer.MAX_VALUE;
 						result = inTrans;
 					}
 				}
@@ -2427,10 +2430,17 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 				if (m_FindSummary && !predSc.getDownStates().containsKey(m_Goal.getState())) {
 					continue;
 				}
+				StateContainer<LETTER, STATE> linPredSc = m_States.get(inTrans.getLinPred());
 				int predSerialNumber = predSc.getSerialNumber();
 				if (predSerialNumber < lowestPredecessorSerialNumber) {
 					lowestPredecessorSerialNumber = predSerialNumber;
+					lowestCorrespondingLinPredSerialNumber = linPredSc.getSerialNumber();
 					result = inTrans;
+				} else if (predSerialNumber == lowestPredecessorSerialNumber) {
+					if (linPredSc.getSerialNumber() < lowestCorrespondingLinPredSerialNumber) {
+						lowestCorrespondingLinPredSerialNumber = m_States.get(inTrans.getLinPred()).getSerialNumber();
+						result = inTrans;
+					}
 				}
 			}
 			assert result != null;
