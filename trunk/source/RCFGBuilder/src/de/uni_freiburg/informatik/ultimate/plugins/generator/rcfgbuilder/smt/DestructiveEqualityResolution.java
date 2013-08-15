@@ -252,12 +252,15 @@ public class DestructiveEqualityResolution {
 
 			Term[] oldParams = appTerm.getParameters();
 			if (quantifier == QuantifiedFormula.EXISTS) {
-				if (appTerm.getParameters().length == 1 && appTerm.getFunction().getName().equals("=")) {
+				if (appTerm.getFunction().getName().equals("=")) {
 					// case single equality
 					Term[] singleton = { appTerm };
 					EqualityInformation eqInfo = getEqinfo(script, tv, singleton, quantifier);
 					if (eqInfo != null) {
 						// can be trivially eliminated
+						//TODO: what if there are other variable that will now
+						//be quantified but do not occur
+						it.remove();
 						return script.term("true");
 					}
 				}
