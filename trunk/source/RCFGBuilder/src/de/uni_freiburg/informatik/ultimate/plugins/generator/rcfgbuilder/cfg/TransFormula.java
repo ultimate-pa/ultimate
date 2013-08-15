@@ -372,9 +372,8 @@ public class TransFormula implements Serializable {
 		Set<TermVariable> newBranchEncoders = new HashSet<TermVariable>();
 		Term formula = boogie2smt.getScript().term("true");
 
+		Map<TermVariable,Term> subsitutionMapping = new HashMap<TermVariable, Term>();
 		for (int i = transFormula.length-1; i>=0; i--) {
-			ArrayList<TermVariable> replacees = new ArrayList<TermVariable>();
-			ArrayList<Term> replacers = new ArrayList<Term>();
 			for (BoogieVar var : transFormula[i].getOutVars().keySet()) {
 				TermVariable outVar = transFormula[i].getOutVars().get(var);
 				TermVariable newOutVar;
@@ -384,8 +383,7 @@ public class TransFormula implements Serializable {
 					Sort sort = outVar.getSort();
 					newOutVar = getFreshVariable(boogie2smt,var, sort); 
 				}
-				replacees.add(outVar);
-				replacers.add(newOutVar);
+				subsitutionMapping.put(outVar, newOutVar);
 				// add to outvars if var is not outvar
 				if (!outVars.containsKey(var)) {
 					outVars.put(var, newOutVar);
@@ -404,9 +402,8 @@ public class TransFormula implements Serializable {
 				} else {
 					// case: var is read and written
 					Sort sort = outVar.getSort();
-					TermVariable newInVar = getFreshVariable(boogie2smt,var, sort); 
-					replacees.add(inVar);
-					replacers.add(newInVar);
+					TermVariable newInVar = getFreshVariable(boogie2smt,var, sort);
+					subsitutionMapping.put(inVar, newInVar);
 					inVars.put(var, newInVar);
 					if (outVars.get(var) != newOutVar) {
 						//add to auxVars if not already outVar
@@ -416,8 +413,7 @@ public class TransFormula implements Serializable {
 			}
 			for (TermVariable auxVar : transFormula[i].getAuxVars()) {
 				TermVariable newAuxVar = getFreshAuxVariable(boogie2smt, auxVar.getName(), auxVar.getSort());
-				replacees.add(auxVar);
-				replacers.add(newAuxVar);
+				subsitutionMapping.put(auxVar, newAuxVar);
 				auxVars.add(newAuxVar);
 			}
 			newBranchEncoders.addAll(transFormula[i].getBranchEncoders());
@@ -437,13 +433,11 @@ public class TransFormula implements Serializable {
 						newInVar = getFreshVariable(boogie2smt,var, sort); 
 						inVars.put(var, newInVar);
 					}
-					replacees.add(inVar);
-					replacers.add(newInVar);
+					subsitutionMapping.put(inVar, newInVar);
 				}
 			}
-			TermVariable[] vars = replacees.toArray(new TermVariable[replacees.size()]);
-			Term[] values = replacers.toArray(new Term[replacers.size()]);
-			Term updatedFormula = script.let( vars , values, transFormula[i].getFormula());
+			Term originalFormula = transFormula[i].getFormula();
+			Term updatedFormula = (new Substitution(subsitutionMapping, script)).transform(originalFormula);
 			formula = Util.and(script, formula, updatedFormula);
 			//formula = new FormulaUnLet().unlet(formula);
 		
@@ -812,13 +806,10 @@ public class TransFormula implements Serializable {
 		for (int i=0; i<transFormulas.length; i++) {
 			auxVars.addAll(transFormulas[i].getAuxVars());
 			branchEncoders.addAll(transFormulas[i].getBranchEncoders());
-		
-			ArrayList<TermVariable> replacees = new ArrayList<TermVariable>();
-			ArrayList<Term> replacers = new ArrayList<Term>();
+			Map<TermVariable,Term> subsitutionMapping = new HashMap<TermVariable, Term>();
 			for (BoogieVar bv : transFormulas[i].getInVars().keySet()) {
 				TermVariable inVar = transFormulas[i].getInVars().get(bv);
-				replacees.add(inVar);
-				replacers.add(newInVars.get(bv));
+				subsitutionMapping.put(inVar, newInVars.get(bv));
 			}
 			for (BoogieVar bv : transFormulas[i].getOutVars().keySet()) {
 				TermVariable outVar = transFormulas[i].getOutVars().get(bv);
@@ -826,18 +817,14 @@ public class TransFormula implements Serializable {
 				
 				boolean isAssignedVar = (inVar != outVar);
 				if (isAssignedVar) {
-					replacees.add(outVar);
-					replacers.add(newOutVars.get(bv));
+					subsitutionMapping.put(outVar, newOutVars.get(bv));
 				} else {
-					assert replacees.contains(outVar);
-					assert replacers.contains(newInVars.get(bv));
+					assert subsitutionMapping.containsKey(outVar);
+					assert subsitutionMapping.containsValue(newInVars.get(bv));
 				}
 			}
-			TermVariable[] vars = replacees.toArray(new TermVariable[replacees.size()]);
-			Term[] values = replacers.toArray(new Term[replacers.size()]);
 			Term originalFormula = transFormulas[i].getFormula();
-			renamedFormulas[i] = script.let( vars , values, originalFormula);
-			renamedFormulas[i] = (new FormulaUnLet()).unlet(renamedFormulas[i]);
+			renamedFormulas[i] = (new Substitution(subsitutionMapping, script)).transform(originalFormula);
 
 			for (BoogieVar bv : assignedInSomeBranch.keySet()) {
 				TermVariable inVar = transFormulas[i].getInVars().get(bv);
@@ -855,8 +842,8 @@ public class TransFormula implements Serializable {
 					assert newOutVars.get(bv) != null;
 					Term equality = script.term("=", newInVars.get(bv), newOutVars.get(bv));
 					renamedFormulas[i] = Util.and(script, renamedFormulas[i], equality);
-					assert (replacees.add(inVar));
-					assert (replacers.add(newInVars.get(bv)));					
+					assert !subsitutionMapping.containsKey(inVar);
+					assert !subsitutionMapping.containsValue(newInVars.get(bv));
 				}
 			}
 
