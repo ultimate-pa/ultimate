@@ -45,6 +45,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Tra
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.TransFormula.Infeasibility;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.PreferenceValues.Solver;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.DestructiveEqualityResolution;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.HoareAnnotation;
 import de.uni_freiburg.informatik.ultimate.util.ScopedHashMap;
@@ -97,6 +98,14 @@ public class SmtManager {
 	protected int m_SerialNumber;
 
 	private long m_TraceCheckStartTime = Long.MIN_VALUE;
+	
+	/**
+	 * Whenever you do an edge check with the old method (not edge checker),
+	 * test if the dataflow checks deliver a compatible result.
+	 * Set this only to true if you can guarantee that only an IPredicate whose
+	 * formula is true is equivalent to true.
+	 */
+	private final static boolean m_TestDataflow = false;
 
 
 
@@ -719,7 +728,9 @@ public class SmtManager {
 		m_IndexedConstants = null;
 		m_Script.pop(1);
 		m_SatCheckTime += (System.nanoTime() - startTime);
-		testMyInternalDataflowCheck(ps1, ta, ps2, result);
+		if (m_TestDataflow) {
+			testMyInternalDataflowCheck(ps1, ta, ps2, result);
+		}
 		return result;
 	}
 	
@@ -904,7 +915,9 @@ public class SmtManager {
 				: "call statement not inductive";
 		}
 		m_SatCheckTime += (System.nanoTime() - startTime);
-		testMyCallDataflowCheck(ps1, ta, ps2, result);
+		if (m_TestDataflow) {
+			testMyCallDataflowCheck(ps1, ta, ps2, result);
+		}
 		return result;
 	}
 	
@@ -1000,8 +1013,9 @@ public class SmtManager {
 				: "return statement not inductive";
 		}
 		m_SatCheckTime += (System.nanoTime() - startTime);
-		
-		testMyReturnDataflowCheck(ps1,psk,ta,ps2,result);
+		if (m_TestDataflow) {
+			testMyReturnDataflowCheck(ps1,psk,ta,ps2,result);
+		}
 		return result;
 	}
 	
@@ -2635,17 +2649,11 @@ public class SmtManager {
 
 	public static Term computeClosedFormula(Term formula,
 			Set<BoogieVar> boogieVars, Script script) {
-		ArrayList<TermVariable> replacees = new ArrayList<TermVariable>();
-		ArrayList<Term> replacers = new ArrayList<Term>();
+		Map<TermVariable,Term> substitutionMapping = new HashMap<TermVariable, Term>();
 		for (BoogieVar bv : boogieVars) {
-			replacees.add(bv.getTermVariable());
-			replacers.add(bv.getDefaultConstant());
+			substitutionMapping.put(bv.getTermVariable(), bv.getDefaultConstant());
 		}
-		TermVariable[] vars = replacees.toArray(new TermVariable[replacees
-				.size()]);
-		Term[] values = replacers.toArray(new Term[replacers.size()]);
-		Term closedTerm = script.let(vars, values, formula);
-		closedTerm = (new FormulaUnLet()).unlet(closedTerm);
+		Term closedTerm = (new Substitution(substitutionMapping, script)).transform(formula);
 		assert closedTerm.getFreeVars().length == 0;
 		return closedTerm;
 	}

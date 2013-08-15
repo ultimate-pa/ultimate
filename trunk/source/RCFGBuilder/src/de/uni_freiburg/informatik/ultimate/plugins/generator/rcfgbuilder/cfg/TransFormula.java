@@ -25,6 +25,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.NaiveDestructiveEqualityResolution;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.Substitution;
 
 /**
  * Represents the transition of a program or a transition system as an SMT
@@ -134,28 +135,22 @@ public class TransFormula implements Serializable {
 			Map<BoogieVar, TermVariable> outVars,
 			Set<TermVariable> auxVars,
 			Boogie2SMT boogie2smt) {
-		ArrayList<TermVariable> replacees = new ArrayList<TermVariable>();
-		ArrayList<Term> replacers = new ArrayList<Term>();
+		Map<TermVariable,Term> substitutionMapping = new HashMap<TermVariable, Term>();
 		for (BoogieVar bv : inVars.keySet()) {
-			replacees.add(inVars.get(bv));
-			replacers.add(bv.getDefaultConstant());
+			assert !substitutionMapping.containsKey(inVars.get(bv));
+			substitutionMapping.put(inVars.get(bv), bv.getDefaultConstant());
 		}
 		for (BoogieVar bv : outVars.keySet()) {
 			if (inVars.get(bv) == outVars.get(bv)) {
 				// is assigned var
 				continue;
 			}
-			replacees.add(outVars.get(bv));
-			replacers.add(bv.getPrimedConstant());
+			substitutionMapping.put(outVars.get(bv), bv.getPrimedConstant());
 		}
 		for (TermVariable tv : auxVars) {
-			replacees.add(tv);
-			replacers.add(boogie2smt.getFreshConstant(tv));
+			substitutionMapping.put(tv, boogie2smt.getFreshConstant(tv));
 		}
-		TermVariable[] vars = replacees.toArray(new TermVariable[replacees.size()]);
-		Term[] values = replacers.toArray(new Term[replacers.size()]);
-		Term closedTerm = boogie2smt.getScript().let( vars , values, formula);
-		closedTerm = (new FormulaUnLet()).unlet(closedTerm);
+		Term closedTerm = (new Substitution(substitutionMapping, boogie2smt.getScript())).transform(formula);
 		return closedTerm;
 	}
 	
