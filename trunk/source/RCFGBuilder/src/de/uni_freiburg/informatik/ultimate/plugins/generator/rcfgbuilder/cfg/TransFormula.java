@@ -847,8 +847,6 @@ public class TransFormula implements Serializable {
 					assert newOutVars.get(bv) != null;
 					Term equality = script.term("=", newInVars.get(bv), newOutVars.get(bv));
 					renamedFormulas[i] = Util.and(script, renamedFormulas[i], equality);
-					assert !subsitutionMapping.containsKey(inVar);
-					assert !subsitutionMapping.containsValue(newInVars.get(bv));
 				}
 			}
 
