@@ -243,30 +243,29 @@ public class DestructiveEqualityResolution {
 		Term resFormula = new FormulaUnLet().unlet(term);
 		Iterator<TermVariable> it = vars.iterator();
 		while(it.hasNext()) {
+			TermVariable tv = it.next();
+			if (!Arrays.asList(resFormula.getFreeVars()).contains(tv)) {
+				//case where var does not occur
+				it.remove();
+				continue;
+			}
 			if (!(resFormula instanceof ApplicationTerm)) {
 				s_Logger.debug("abort DER: No application Term");
 				return resFormula;
 			}
 			ApplicationTerm appTerm = (ApplicationTerm) resFormula;
-			TermVariable tv = it.next();
-
+			//TODO unify: consider always as conjunction
 			Term[] oldParams = appTerm.getParameters();
 			if (quantifier == QuantifiedFormula.EXISTS) {
-				if (appTerm.getFunction().getName().equals("=")) {
-					// case single equality
-					Term[] singleton = { appTerm };
-					EqualityInformation eqInfo = getEqinfo(script, tv, singleton, quantifier);
-					if (eqInfo != null) {
-						// can be trivially eliminated
-						//TODO: what if there are other variable that will now
-						//be quantified but do not occur
-						it.remove();
-						return script.term("true");
-					}
-				}
 				if (!appTerm.getFunction().getName().equals("and")) {
-					s_Logger.debug("abort DER: existential quantification but no conjunction");
-					return resFormula;
+					if (appTerm.getFunction().getName().equals("=")) {
+						// case single equality
+						oldParams = new Term[1];
+						oldParams[0] = appTerm;
+					} else {
+						s_Logger.debug("abort DER: existential quantification but no conjunction");
+						return resFormula;
+					}
 				}
 			} else if (quantifier == QuantifiedFormula.FORALL) {
 				if (!appTerm.getFunction().getName().equals("or")) {
