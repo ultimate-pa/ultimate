@@ -2,6 +2,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt;
 
 import java.util.HashSet;
 
+import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
@@ -48,6 +49,9 @@ public class DnfTransformer extends TermTransformer {
 				setResult(term);
 				return;
 			}
+		} else if (term instanceof TermVariable) {
+			//consider term as atom
+			setResult(term);
 		} else if (term instanceof ConstantTerm) {
 			//consider term as atom
 			setResult(term);
@@ -122,11 +126,11 @@ public class DnfTransformer extends TermTransformer {
 	@Override
 	public void convertApplicationTerm(ApplicationTerm appTerm, Term[] newArgs) {
 		String functionSymbolName = appTerm.getFunction().getName();
+		Term result;
 		if (functionSymbolName.equals("and")) {
 			HashSet<Term> disjuncts = new HashSet<Term>();
 			disjuncts.add(m_Script.term("true"));
 			HashSet<Term> oldDisjuncts;
-			disjuncts = new HashSet<Term>();
 			for (Term conjunct : newArgs) {
 				oldDisjuncts = disjuncts;
 				disjuncts = new HashSet<Term>();
@@ -146,11 +150,13 @@ public class DnfTransformer extends TermTransformer {
 					}
 				}
 			}
+			result = Util.or(m_Script, disjuncts.toArray(new Term[0]));
 		} else if (functionSymbolName.equals("or")) {
-			setResult(Util.or(m_Script, newArgs));
+			result = Util.or(m_Script, newArgs);
 		} else {
 			throw new AssertionError();
 		}
+		setResult(result);
 	}
 
 }
