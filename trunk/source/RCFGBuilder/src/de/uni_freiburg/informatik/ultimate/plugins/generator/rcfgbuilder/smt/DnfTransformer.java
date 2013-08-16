@@ -1,6 +1,9 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt;
 
+import java.util.HashSet;
+
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
+import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -45,16 +48,17 @@ public class DnfTransformer extends TermTransformer {
 				setResult(term);
 				return;
 			}
-		} else if (term instanceof QuantifiedFormula) {
-			throw new UnsupportedOperationException("quantifer not supported");
-		} else {
+		} else if (term instanceof ConstantTerm) {
 			//consider term as atom
 			setResult(term);
-			return;
+		}else if (term instanceof QuantifiedFormula) {
+			throw new UnsupportedOperationException("quantifer not supported");
+		} else {
+			throw new UnsupportedOperationException("Unsupported " + term.getClass());
 		}
 	}
 	
-	private void convertNot(Term notParam, Term originalTerm) {
+	private void convertNot(Term notParam, Term notTerm) {
 		assert notParam.getSort().getName().equals("Bool");
 		if (notParam instanceof ApplicationTerm) {
 			ApplicationTerm appTerm = (ApplicationTerm) notParam; 
@@ -76,15 +80,16 @@ public class DnfTransformer extends TermTransformer {
 				return;
 			} else {
 				//consider original term as atom
-				setResult(originalTerm);
+				setResult(notTerm);
 				return;
 			}
-		} else if (notParam instanceof QuantifiedFormula) {
+		} else if (notParam instanceof ConstantTerm) {
+			//consider term as atom
+			setResult(notTerm);
+		}else if (notParam instanceof QuantifiedFormula) {
 			throw new UnsupportedOperationException("quantifer not supported");
 		} else {
-			//consider original term as atom
-			setResult(originalTerm);
-			return;
+			throw new UnsupportedOperationException("Unsupported " + notParam.getClass());
 		}
 	}
 	
@@ -118,10 +123,33 @@ public class DnfTransformer extends TermTransformer {
 	public void convertApplicationTerm(ApplicationTerm appTerm, Term[] newArgs) {
 		String functionSymbolName = appTerm.getFunction().getName();
 		if (functionSymbolName.equals("and")) {
-			//TODO:
-			
+			HashSet<Term> disjuncts = new HashSet<Term>();
+			disjuncts.add(m_Script.term("true"));
+			HashSet<Term> oldDisjuncts;
+			disjuncts = new HashSet<Term>();
+			for (Term conjunct : newArgs) {
+				oldDisjuncts = disjuncts;
+				disjuncts = new HashSet<Term>();
+				if ((conjunct instanceof ApplicationTerm) && 
+						((ApplicationTerm) conjunct).getFunction().getName().equals("or")) {
+					Term[] atoms = ((ApplicationTerm) conjunct).getParameters();
+					for (Term atom : atoms) {
+						for (Term disjunct : oldDisjuncts) {
+							disjuncts.add(Util.and(m_Script, disjunct, atom));
+						}
+
+					}
+					
+				} else {
+					for (Term disjunct : oldDisjuncts) {
+						disjuncts.add(Util.and(m_Script, disjunct, conjunct));
+					}
+				}
+			}
+		} else if (functionSymbolName.equals("or")) {
+			setResult(Util.or(m_Script, newArgs));
 		} else {
-			super.convertApplicationTerm(appTerm, newArgs);
+			throw new AssertionError();
 		}
 	}
 
