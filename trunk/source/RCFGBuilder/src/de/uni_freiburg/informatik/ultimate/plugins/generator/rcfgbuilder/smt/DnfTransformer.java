@@ -42,7 +42,7 @@ public class DnfTransformer extends TermTransformer {
 				return;
 			} else if (functionName.equals("=>")) {
 				Term[] params = appTerm.getParameters();
-				super.convert(Util.or(m_Script, negateLast(params)));
+				super.convert(Util.or(m_Script, negateAllButLast(params)));
 				return;
 			} else {
 				//consider term as atom
@@ -80,7 +80,7 @@ public class DnfTransformer extends TermTransformer {
 				super.convert(notnotParam);
 				return;
 			} else if (functionName.equals("=>")) {
-				super.convert(Util.and(m_Script, negateAllButLast(params)));
+				super.convert(Util.and(m_Script, negateLast(params)));
 				return;
 			} else {
 				//consider original term as atom
