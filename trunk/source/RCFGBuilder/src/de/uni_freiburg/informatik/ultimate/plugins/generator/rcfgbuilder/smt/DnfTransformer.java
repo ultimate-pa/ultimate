@@ -90,7 +90,10 @@ public class DnfTransformer extends TermTransformer {
 		} else if (notParam instanceof ConstantTerm) {
 			//consider term as atom
 			setResult(notTerm);
-		}else if (notParam instanceof QuantifiedFormula) {
+		} else if (notParam instanceof TermVariable) {
+			//consider term as atom
+			setResult(notTerm);
+		} else if (notParam instanceof QuantifiedFormula) {
 			throw new UnsupportedOperationException("quantifer not supported");
 		} else {
 			throw new UnsupportedOperationException("Unsupported " + notParam.getClass());
