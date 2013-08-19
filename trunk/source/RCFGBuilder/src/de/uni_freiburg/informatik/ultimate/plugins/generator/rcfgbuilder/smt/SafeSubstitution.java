@@ -19,6 +19,10 @@ import de.uni_freiburg.informatik.ultimate.util.ScopedHashSet;
  * - no variable in substituted term is "captured" by an existing quantifier
  * - no subterm that contains a bound variable is substituted.
  * @author Matthias Heizmann
+ * Idea of this implementation. Replace quantified variables by fresh variables
+ * whenever a variable interferes with a variable in the substitution mapping.
+ * TODO: If quantified variable occurs in key of substitution mapping, do not
+ * rename quantified variable but remove substitution in the current scope.
  */
 public class SafeSubstitution extends TermTransformer {
 	
@@ -52,10 +56,12 @@ public class SafeSubstitution extends TermTransformer {
 					if (m_VarsInSubstitutionMapping.contains(var)) {
 						TermVariable freshVariable = var.getTheory().
 								createFreshTermVariable("subst", var.getSort());
-						//throw new UnsupportedOperationException();
-						m_ScopedSubstitutionMapping.put(var, freshVariable);
-						m_VarsInSubstitutionMapping.add(var);
-						m_VarsInSubstitutionMapping.add(freshVariable);
+						//FIXME uncomment following code once this problem occurs
+						throw new UnsupportedOperationException(
+								"interference between quantified vars and substitution");
+//						m_ScopedSubstitutionMapping.put(var, freshVariable);
+//						m_VarsInSubstitutionMapping.add(var);
+//						m_VarsInSubstitutionMapping.add(freshVariable);
 					}
 				}
 				
@@ -90,6 +96,8 @@ public class SafeSubstitution extends TermTransformer {
 			}
 			result = m_Script.quantifier(old.getQuantifier(), newQuantifiedVars, newBody);
 		}
+		m_ScopedSubstitutionMapping.endScope();
+		m_ScopedSubstitutionMapping.beginScope();
 		setResult(result);
 	}
 
