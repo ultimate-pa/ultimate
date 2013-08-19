@@ -2,8 +2,6 @@ package de.uni_freiburg.informatik.ultimate.plugins.ic3modelchecker;
 
 import org.apache.log4j.Logger;
 import org.eclipse.core.runtime.preferences.ConfigurationScope;
-import org.eclipse.core.runtime.preferences.IEclipsePreferences;
-
 import de.uni_freiburg.informatik.ultimate.access.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.access.WalkerOptions;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
@@ -26,7 +24,6 @@ public class IC3ModelCheckerObserver implements IUnmanagedObserver {
 	protected static Logger 	s_logger 			= UltimateServices.getInstance().getLogger(Activator.PLUGIN_ID);
 	private CFGExplicitNode		m_graphroot 		= null;
 	private Script 				m_script 			= null;
-	private IEclipsePreferences m_prefs				= null;
 	private boolean 			m_madeChanges		= false;
 	
 	@Override
@@ -34,7 +31,6 @@ public class IC3ModelCheckerObserver implements IUnmanagedObserver {
 		System.err.println("Logger im Debug-Modus: " + s_logger.isDebugEnabled());
 		m_graphroot		= (CFGExplicitNode)root;
 		m_script		= m_graphroot.getScript();
-		m_prefs = ConfigurationScope.INSTANCE.getNode(Activator.PLUGIN_ID);
 		treeIC3();
 		return false;
 	}
@@ -66,18 +62,15 @@ public class IC3ModelCheckerObserver implements IUnmanagedObserver {
 	
 	@Override
 	public void finish() {
-		// TODO Auto-generated method stub
 	}
 
 	@Override
 	public WalkerOptions getWalkerOptions() {
-		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
 	public void init() {
-		// TODO Auto-generated method stub
 	}
 
 	@Override

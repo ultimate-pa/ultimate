@@ -47,7 +47,12 @@ public class TreeIC3 {
 	private Set<CFGExplicitNode> loopLocations;
 	private Generalizer generalizer;
 	private boolean useHybrid;
+	/** Indicates the multiple of an interpolant's original tree size up to which it may
+	 * grow during cnf transformation after interpolant path blocking. <br/>
+	 * Thus, an exceedingFactor = 5 means that the interpolant may increase by 4 times of its
+	 * original size until interpolant path blocking is cancelled and preimages path blocking is used instead. */
 	private int exceedingFactor = 5;
+	private int highestIndexUsed;
 	// Plugin expects the following order:
 	// BoogiePreprocessor, CFGBuilder, CFG2SMT, CFGReducer, ErrorLocationGenerator, IC3ModelChecker.
 	
@@ -65,16 +70,16 @@ public class TreeIC3 {
 		prepareArt(this.artRoot);
 		// DEBUG:
 		//Tests.smtParserTests(script, IC3ModelCheckerObserver.s_logger);
-		Tests.equalityTests(script);
-		Tests.nnfTransformerTests(script);
-		Tests.dnfTransformerTests(script);
-		Tests.nnfAndDnfTransformerTests(script);
+		//Tests.equalityTests(script);
+		//Tests.nnfTransformerTests(script);
+		//Tests.dnfTransformerTests(script);
+		//Tests.nnfAndDnfTransformerTests(script);
 		//Tests.approxPreimageTests(script);
-		Tests.substitutionTests(script);
+		//Tests.substitutionTests(script);
 		//Tests.loopCfgNodesTests(cfgFunctionRoot);
 		//Tests.createSimplifiedFormulaTests(script);
-		Tests.termSizeCalculatorTests(script);
-		Tests.freeVarsToConstTest(script);
+		//Tests.termSizeCalculatorTests(script);
+		//Tests.freeVarsToConstTest(script);
 	}
 	
 	
@@ -315,7 +320,6 @@ public class TreeIC3 {
 		UnwindingNode endNode = path.get(path.size()-1);	// called v2 in article
 		Set<Clause> psi = HelperMethods.getClauseSet(endNode);
 		FormulaAndLevelAnnotation psiConjunctionAndLvl = Clause.buildConjunction(script, psi);
-		// TODO
 		
 		// determine phi_path:
 		FormulasAndLevelAnnotations edgeFormulasAndLvl = HelperMethods.extractEdgeFormulasAndLvlFromArtPath(path);
@@ -474,6 +478,7 @@ public class TreeIC3 {
 	
 	private void prepareArt(UnwindingProcRoot artRoot) {
 		HelperMethods.setIC3Index(artRoot, 1);
+		highestIndexUsed = 1;
 		registerArtNode(artRoot, false);
 	}
 	
@@ -485,7 +490,6 @@ public class TreeIC3 {
 		
 		for (UnwindingNode uncoveredArtLeaf : uncoveredArtLeaves) {
 			// pop leaf from uncovered leaves
-			int uncoveredArtLeafIndex = HelperMethods.getIC3Index(uncoveredArtLeaf);
 			CFGExplicitNode location = uncoveredArtLeaf.getOriginalCFGNode();
 			
 			if (location.getOutgoingEdges().size() == 0)
@@ -532,7 +536,8 @@ public class TreeIC3 {
 				assert(child.getIncomingEdges().contains(newEdge));
 				assert(uncoveredArtLeaf.getOutgoingEdges().contains(newEdge));
 				// set index of child
-				HelperMethods.setIC3Index(child, uncoveredArtLeafIndex+1);
+				HelperMethods.setIC3Index(child, highestIndexUsed+1);
+				highestIndexUsed++;
 				registerArtNode(child, true);
 				// push child onto newly uncovered leaves
 				newUncoveredArtLeaves.add(child);
@@ -587,12 +592,15 @@ public class TreeIC3 {
 	private void registerArtNode(UnwindingNode artNode, boolean knowThatSatisfiable) {
 		if (HelperMethods.hasErrorLocation(artNode) && (knowThatSatisfiable || isSatisfiableNode(artNode)))
 			satErrorLocationNodes.add(artNode);
-		SortedMap<Integer, UnwindingNode> map = artNodes.get(artNode.getOriginalCFGNode());
+		CFGExplicitNode originalCFGNode = artNode.getOriginalCFGNode();
+		int ic3Index = HelperMethods.getIC3Index(artNode);
+		SortedMap<Integer, UnwindingNode> map = artNodes.get(originalCFGNode);
 		if (map == null) {
 			map = new TreeMap<Integer, UnwindingNode>();
-			artNodes.put(artNode.getOriginalCFGNode(), map);
+			artNodes.put(originalCFGNode, map);
 		}
-		map.put(HelperMethods.getIC3Index(artNode), artNode);
+		assert(!map.containsKey(ic3Index));
+		map.put(ic3Index, artNode);
 	}
 	
 	/** Checks if the annotated formula of this ART node is satisfiable */

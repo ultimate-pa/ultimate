@@ -80,7 +80,7 @@ public class MathPrinter {
 			ConstantTerm constantTerm = (ConstantTerm) term;
 			Object value = constantTerm.getValue();
 			if (value instanceof BigDecimal) {
-				converted.put(term, bigDecimalToCommaFreeString((BigDecimal) value));
+				converted.put(term, bigDecimalToDecimalMarkFreeString((BigDecimal) value));
 			} else {
 				String string = term.toStringDirect();
 				converted.put(term, string);
@@ -168,7 +168,7 @@ public class MathPrinter {
 		return builder.toString();
 	}
 	
-	private static String bigDecimalToCommaFreeString(BigDecimal bigDecimal) {
+	private static String bigDecimalToDecimalMarkFreeString(BigDecimal bigDecimal) {
 		BigInteger unscaled = bigDecimal.unscaledValue();
 		int scale = bigDecimal.scale();
 		if (scale <= 0)

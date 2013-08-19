@@ -56,6 +56,7 @@ public class SubstitutionManager {
 	
 	
 	/** Replaces all vars by specially named TermVariables.
+	 * Abbreviation for substituteSpecificInToOut(script, formulaAndLvl, 0, true).
 	 * Doesn't create constants needed for satisfiability check (use substituteFreeVarsToConst for that). Pure. */
 	public static FormulaAndLevelAnnotation substituteInOut(Script script, FormulaAndLevelAnnotation formulaAndLvl) {
 		// Replace all leveled vars:
