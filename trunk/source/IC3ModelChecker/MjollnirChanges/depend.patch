@@ -1,0 +1,11 @@
+--- original_Mjollnir/trunk/depend	2010-06-21 18:14:47.000000000 +0200
++++ Mjollnir/trunk/depend	2012-11-27 12:32:19.000000000 +0100
+@@ -12,6 +12,8 @@
+ formula_math.cmx: z.cmx multiple_choices.cmx formula.cmx 
+ formula_redlog.cmo: z.cmo multiple_choices.cmo formula.cmo 
+ formula_redlog.cmx: z.cmx multiple_choices.cmx formula.cmx 
++formula_smtlib.cmo: z.cmo multiple_choices.cmo formula.cmo 
++formula_smtlib.cmx: z.cmx multiple_choices.cmx formula.cmx 
+ formula_yices.cmo: z.cmo yices.cmo q.cmo projection.cmo mjollnir_options.cmo \
+     minimal.cmi formula_math.cmo formula.cmo 
+ formula_yices.cmx: z.cmx yices.cmx q.cmx projection.cmx mjollnir_options.cmx \
