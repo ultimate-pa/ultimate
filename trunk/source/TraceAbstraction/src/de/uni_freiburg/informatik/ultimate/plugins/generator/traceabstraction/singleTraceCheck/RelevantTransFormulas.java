@@ -41,12 +41,6 @@ public class RelevantTransFormulas {
 	private final Map<Integer,TransFormula> m_GlobalOldVarAssignmentTransFormulaAtCall;
 	
 	
-	/**
-	 * Maps indexed variables (represented by terms) to the BoogieVar which
-	 * represented the non-indexed version of the term.
-	 */
-	private final Map<Term, BoogieVar> m_Constants2BoogieVar;
-	
 	private final SmtManager m_SmtManager;
 	
 	public RelevantTransFormulas(NestedWord<CodeBlock> nestedTrace, 
@@ -57,7 +51,6 @@ public class RelevantTransFormulas {
 		m_NestedTrace = nestedTrace;
 		m_TransFormulas = new TransFormula[nestedTrace.length()];
 		m_GlobalOldVarAssignmentTransFormulaAtCall = new HashMap<Integer, TransFormula>();
-		m_Constants2BoogieVar = new HashMap<Term, BoogieVar>();
 		m_SmtManager = smtManager;
 		generateRelevantTransFormulas(unsat_core, localVarAssignmentsAtCallInUnsatCore, modGlobalVarManager);
 	}
@@ -66,6 +59,7 @@ public class RelevantTransFormulas {
 		assert i >= 0 && i < m_TransFormulas.length : "TransFormula at position " + i + " is not available!";
 		return m_TransFormulas[i];
 	}
+	
 	public TransFormula getGlobalVarAssignmentAtCallPosition(int i) {
 		assert m_GlobalOldVarAssignmentTransFormulaAtCall.containsKey(i) : "TransFormula for global variable assignment " +
 				"at position " + i + " is not available!";
