@@ -12,7 +12,12 @@ import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
-public class ArrayReadExtractor extends NonRecursive {
+/**
+ * Find all subterms that are application terms with FunctionSymbol m_Name.
+ * @author Matthias Heizmann
+ *
+ */
+public class ApplicationTermFinder extends NonRecursive {
 	class MyWalker extends TermWalker {
 		MyWalker(Term term) { super(term); }
 		
@@ -26,10 +31,8 @@ public class ArrayReadExtractor extends NonRecursive {
 		}
 		@Override
 		public void walk(NonRecursive walker, ApplicationTerm term) {
-			if (term.getFunction().getName().equals("select")) {
-				//FIXME: some other function might have the name "select"!?!
-				// ask Jochen or Jürgen
-				m_ArrayReads.add(term);
+			if (term.getFunction().getName().equals(m_FunctionSymbolName)) {
+				m_Result.add(term);
 			}
 			for (Term t : term.getParameters()) {
 				walker.enqueueWalker(new MyWalker(t));
@@ -49,12 +52,19 @@ public class ArrayReadExtractor extends NonRecursive {
 		}
 	}
 	
-	Set<Term> m_ArrayReads;
 	
-	public void compute(Term term) {
-		m_ArrayReads = new HashSet<Term>();
+	
+	public ApplicationTermFinder(String functionSymbolName) {
+		super();
+		m_FunctionSymbolName = functionSymbolName;
+	}
+
+	private final String m_FunctionSymbolName;
+	private Set<Term> m_Result;
+	
+	public Set<Term> findMatchingSubterms(Term term) {
+		m_Result = new HashSet<Term>();
 		run(new MyWalker(term));
-		boolean stop = true;
-		m_ArrayReads.toString();
+		return m_Result;
 	}
 }
