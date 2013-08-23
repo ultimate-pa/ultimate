@@ -60,10 +60,10 @@ public class ApplicationTermFinder extends NonRecursive {
 	}
 
 	private final String m_FunctionSymbolName;
-	private Set<Term> m_Result;
+	private Set<ApplicationTerm> m_Result;
 	
-	public Set<Term> findMatchingSubterms(Term term) {
-		m_Result = new HashSet<Term>();
+	public Set<ApplicationTerm> findMatchingSubterms(Term term) {
+		m_Result = new HashSet<ApplicationTerm>();
 		run(new MyWalker(term));
 		return m_Result;
 	}
