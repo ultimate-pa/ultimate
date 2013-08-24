@@ -68,6 +68,20 @@ public class DestructiveEqualityResolution {
 				return reduced;
 			} 
 		}
+		Iterator<TermVariable> it = remaning.iterator();
+		while (it.hasNext()) {
+			TermVariable tv = it.next();
+			if (tv.getSort().isArraySort()) {
+				Term elim = (new ElimStore(script)).elim(tv, reduced);
+				if (elim != null) {
+					it.remove();
+					reduced = elim;
+				}
+			}
+		}
+		if (remaning.isEmpty()) {
+			return reduced;
+		} 
 		return script.quantifier(quantifier, 
 					remaning.toArray(new TermVariable[0]), reduced, patterns);
 	}
@@ -305,6 +319,11 @@ public class DestructiveEqualityResolution {
 	
 	private static EqualityInformation getEqinfo(Script script, TermVariable tv,
 			Term[] terms, int quantifier) {
+		if (!tv.getSort().isNumericSort()) {
+			s_Logger.debug("DER works only for numeric Sorts");
+			//TODO check equality for arrays
+			return null;
+		}
 		for (int i=0; i<terms.length; i++) {
 			if (!(terms[i] instanceof ApplicationTerm)) {
 				continue;
