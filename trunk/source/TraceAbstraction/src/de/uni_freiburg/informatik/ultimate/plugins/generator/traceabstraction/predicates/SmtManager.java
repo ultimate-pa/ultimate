@@ -1664,19 +1664,15 @@ public class SmtManager {
 				varsOfRenamed.remove(var);
 			}
 		}
-		List<TermVariable> vars = new ArrayList<TermVariable>();
-		List<Term> values = new ArrayList<Term>();
+		Map<TermVariable, Term> substitutionMapping = new HashMap<TermVariable, Term>();
 		for (BoogieVar globalBoogieVar : globalVars) {
 			if (!globalBoogieVar.isOldvar()) {
-				vars.add(globalBoogieVar.getTermVariable());
 				BoogieVar oldBoogieVar = this.getOldVar(globalBoogieVar);
 				varsOfRenamed.add(oldBoogieVar);
-				values.add(oldBoogieVar.getTermVariable());
+				substitutionMapping.put(globalBoogieVar.getTermVariable(), oldBoogieVar.getTermVariable());
 			}
 		}
-		ps.getFormula().getFreeVars();
-		Term renamedFormula = m_Script.let(vars.toArray(new TermVariable[0]), 
-								values.toArray(new Term[0]), ps.getFormula());
+		Term renamedFormula = (new Substitution(substitutionMapping, m_Script)).transform(ps.getFormula());
 		SmtManager.TermVarsProc tvp = this.computeTermVarsProc(renamedFormula);
 		SPredicate result = this.newSPredicate(ps.getProgramPoint(), 
 				renamedFormula, tvp.getProcedures(),
