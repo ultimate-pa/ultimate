@@ -1,17 +1,21 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt;
 
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
+import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.DestructiveEqualityResolution.EqualityInformation;
 import de.uni_freiburg.informatik.ultimate.util.ScopedHashMap;
 import de.uni_freiburg.informatik.ultimate.util.UnionFind;
 
@@ -33,54 +37,49 @@ public class ElimStore {
 		Set<Term> conjuncts = DestructiveEqualityResolution.getConjuncts(term);
 		HashSet<Term> others = new HashSet<Term>();
 		for (Term conjunct : conjuncts) {
-			if (conjunct instanceof ApplicationTerm) {
-				ApplicationTerm eqAppTerm = (ApplicationTerm) conjunct;
-				if (eqAppTerm.getFunction().getName().equals("=")) {
-					if (eqAppTerm.getParameters().length == 2) {
-						if (eqAppTerm.getParameters()[0] instanceof ApplicationTerm) {
-							ApplicationTerm appTerm = (ApplicationTerm) eqAppTerm.getParameters()[0];
-							if (appTerm.getFunction().getName().equals("store")) {
-								if (appTerm.getParameters()[0].equals(tv)) {
-									assert appTerm.getParameters().length == 3;
-									m_NewArray = eqAppTerm.getParameters()[1];
-									m_WriteIndex = appTerm.getParameters()[1];
-									m_Data = appTerm.getParameters()[2];
-									continue;
-								}
-							}
-						}
-						if (eqAppTerm.getParameters()[1] instanceof ApplicationTerm) {
-							ApplicationTerm appTerm = (ApplicationTerm) eqAppTerm.getParameters()[1];
-							if (appTerm.getFunction().getName().equals("store")) {
-								if (appTerm.getParameters()[0].equals(tv)) {
-									assert appTerm.getParameters().length == 3;
-									m_NewArray = eqAppTerm.getParameters()[0];
-									m_WriteIndex = appTerm.getParameters()[1];
-									m_Data = appTerm.getParameters()[2];
-									continue;
-								}
-							}
-						}
-					}
-					
+			if (m_NewArray == null) {
+				ArrayUpdate au = ArrayUpdate.getArrayUpdate(conjunct, tv);
+				if (au != null) {
+					m_WriteIndex = au.getIndex();
+					m_NewArray = au.getNewArray();
+					m_Data = au.getData();
+					continue;
 				}
 			}
 			others.add(conjunct);
 		}
-		if (others.size() != conjuncts.size() -1) {
-			throw new UnsupportedOperationException("not exactly one store");
-		}
-		assert m_WriteIndex != null;
-		assert m_Data != null;
 		Term othersT = Util.and(m_Script, others.toArray(new Term[0])); 
 		Set<ApplicationTerm> selectTerms = (new ApplicationTermFinder("select")).findMatchingSubterms(term);
 		Map<Term,ApplicationTerm> arrayReads = new HashMap<Term,ApplicationTerm>();
 		for (ApplicationTerm selectTerm : selectTerms) {
 			if (selectTerm.getParameters()[0].equals(tv)) {
 				Term index = selectTerm.getParameters()[1];
+				assert !arrayReads.containsKey(index) : "implement this";
 				arrayReads.put(index, selectTerm);
 			}
 		}
+		
+		if (m_NewArray == null) {
+			// no store
+			Map<Term, Term> substitutionMapping = new HashMap<Term, Term>();
+			for (Term select : arrayReads.values()) {
+				EqualityInformation eqInfo = DestructiveEqualityResolution.getEqinfo(m_Script, select, others.toArray(new Term[0]), QuantifiedFormula.EXISTS);
+				if (eqInfo == null) {
+					return null;
+				} else {
+					substitutionMapping.put(select,eqInfo.getTerm());
+				}
+			}
+			Term result = (new SafeSubstitution(m_Script, substitutionMapping)).transform(othersT);
+			if (Arrays.asList(result.getFreeVars()).contains(tv)) {
+				throw new UnsupportedOperationException("not eliminated");
+			} else {
+				return result;
+			}
+		}
+
+		
+		
 		
 		m_Script.push(1);
 		ScopedHashMap<TermVariable, Term> tv2constant = new ScopedHashMap<TermVariable, Term>();
@@ -88,8 +87,8 @@ public class ElimStore {
 		
 		UnionFind<Term> uf = new UnionFind<Term>();
 		for (Term index : arrayReads.keySet()) {
-			uf.makeEquivalenceClass(index);
 			Term eqTerm = getEquivalentTerm(index, uf, tv2constant);
+			uf.makeEquivalenceClass(index);
 			if (eqTerm != null) {
 				uf.union(index, eqTerm);
 			}
@@ -97,7 +96,7 @@ public class ElimStore {
 		Term writeIndexEqClass = getEquivalentTerm(m_WriteIndex, uf, tv2constant);
 		HashSet<Term> distinctIndices = new HashSet<Term>();
 		HashSet<Term> unknownIndices = new HashSet<Term>();
-		divideInDistinctAndUnknown(m_WriteIndex, uf, distinctIndices, unknownIndices, tv2constant);
+		divideInDistinctAndUnknown(m_WriteIndex, uf, writeIndexEqClass, distinctIndices, unknownIndices, tv2constant);
 		if (!unknownIndices.isEmpty()) {
 			throw new UnsupportedOperationException();
 		}
@@ -118,8 +117,13 @@ public class ElimStore {
 		
 		if (writeIndexEqClass != null) {
 			for(Term writeIndexEqTerm : uf.getEquivalenceClassMembers(writeIndexEqClass)) {
-				TermVariable freshVar = writeIndexEqTerm.getTheory().createFreshTermVariable(writeIndexEqTerm.toStringDirect(), writeIndexEqTerm.getSort());
-				substitutionMapping.put(writeIndexEqTerm, freshVar);
+				Term select = arrayReads.get(writeIndexEqTerm);
+				EqualityInformation eqInfo = DestructiveEqualityResolution.getEqinfo(m_Script, select, others.toArray(new Term[0]), QuantifiedFormula.EXISTS);
+				if (eqInfo == null) {
+					return null;
+				} else {
+					substitutionMapping.put(select, eqInfo.getTerm());
+				}
 			}
 		}
 		Term result = (new SafeSubstitution(m_Script, substitutionMapping)).transform(othersT);
@@ -149,9 +153,14 @@ public class ElimStore {
 	}
 	
 	private void divideInDistinctAndUnknown(Term term, UnionFind<Term> uf, 
-			HashSet<Term> distinctTerms, HashSet<Term> unknownTerms, ScopedHashMap<TermVariable, Term> tv2constant) {
+			Term writeIndexEqClass, HashSet<Term> distinctTerms, HashSet<Term> unknownTerms, ScopedHashMap<TermVariable, Term> tv2constant) {
 		for (Term representative : uf.getAllRepresentatives()) {
 			assert representative != null;
+			if (representative == writeIndexEqClass) {
+				// is equal, we do not want to consider
+				// this equivalence class
+				continue;
+			}
 			Term test = m_Script.term("=", representative, term);
 			m_Script.push(1);
 			tv2constant.beginScope();
@@ -186,4 +195,63 @@ public class ElimStore {
 		m_Script.assertTerm(renamed);
 	}
 	
+	/**
+	 * Represents Term of the form a = ("store", a', k, data)
+	 */
+	private static class ArrayUpdate {
+		private final Term m_NewArray;
+		private final Term m_Index;
+		private final Term m_Data;
+		private ArrayUpdate(Term newArray, Term index, Term data) {
+			m_NewArray = newArray;
+			m_Index = index;
+			m_Data = data;
+		}
+		public Term getNewArray() {
+			return m_NewArray;
+		}
+		public Term getIndex() {
+			return m_Index;
+		}
+		public Term getData() {
+			return m_Data;
+		}
+		public static ArrayUpdate getArrayUpdate(Term term, TermVariable tv) {
+			if (term instanceof ApplicationTerm) {
+				ApplicationTerm eqAppTerm = (ApplicationTerm) term;
+				if (eqAppTerm.getFunction().getName().equals("=")) {
+					if (eqAppTerm.getParameters().length == 2) {
+						if (eqAppTerm.getParameters()[0] instanceof ApplicationTerm) {
+							ApplicationTerm appTerm = (ApplicationTerm) eqAppTerm.getParameters()[0];
+							if (appTerm.getFunction().getName().equals("store")) {
+								if (appTerm.getParameters()[0].equals(tv)) {
+									assert appTerm.getParameters().length == 3;
+									ArrayUpdate au = new ArrayUpdate(
+											eqAppTerm.getParameters()[1],
+											appTerm.getParameters()[1],
+											appTerm.getParameters()[2]);
+									return au;
+								}
+							}
+						}
+						if (eqAppTerm.getParameters()[1] instanceof ApplicationTerm) {
+							ApplicationTerm appTerm = (ApplicationTerm) eqAppTerm.getParameters()[1];
+							if (appTerm.getFunction().getName().equals("store")) {
+								if (appTerm.getParameters()[0].equals(tv)) {
+									assert appTerm.getParameters().length == 3;
+									ArrayUpdate au = new ArrayUpdate(
+											eqAppTerm.getParameters()[0],
+											appTerm.getParameters()[1],
+											appTerm.getParameters()[2]);
+									return au;
+								}
+							}
+						}
+					}
+
+				}
+			}
+			return null;
+		}
+	}
 }

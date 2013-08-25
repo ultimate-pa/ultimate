@@ -296,9 +296,9 @@ public class DestructiveEqualityResolution {
 				it.remove();
 				s_Logger.debug(new DebugMessage("eliminated quantifier via DER for {0}", tv));
 				Term[] newParams = new Term[oldParams.length-1];
-				Map<TermVariable, Term> substitutionMapping = 
+				Map<Term, Term> substitutionMapping = 
 						Collections.singletonMap(eqInfo.getVariable(), eqInfo.getTerm());
-				Substitution substitution = new Substitution(substitutionMapping, script);
+				SafeSubstitution substitution = new SafeSubstitution(script, substitutionMapping);
 				for (int i=0; i<eqInfo.getIndex(); i++) {
 					newParams[i] = substitution.transform(oldParams[i]);
 				}
@@ -317,18 +317,24 @@ public class DestructiveEqualityResolution {
 		return resFormula;
 	}
 	
-	private static EqualityInformation getEqinfo(Script script, TermVariable tv,
-			Term[] terms, int quantifier) {
-		if (!tv.getSort().isNumericSort()) {
+	/**
+	 * Check all terms in context if they are an equality of the form
+	 * givenTerm == t
+	 * if this is the case return corresponding equality information,
+	 * otherwise return null
+	 */
+	public static EqualityInformation getEqinfo(Script script, Term givenTerm,
+			Term[] context, int quantifier) {
+		if (!givenTerm.getSort().isNumericSort()) {
 			s_Logger.debug("DER works only for numeric Sorts");
 			//TODO check equality for arrays
 			return null;
 		}
-		for (int i=0; i<terms.length; i++) {
-			if (!(terms[i] instanceof ApplicationTerm)) {
+		for (int i=0; i<context.length; i++) {
+			if (!(context[i] instanceof ApplicationTerm)) {
 				continue;
 			}
-			ApplicationTerm appTerm = (ApplicationTerm) terms[i];
+			ApplicationTerm appTerm = (ApplicationTerm) context[i];
 			Term lhs;
 			Term rhs;
 			if (quantifier == QuantifiedFormula.EXISTS) {
@@ -371,19 +377,20 @@ public class DestructiveEqualityResolution {
 			}
 			boolean allowRewrite = true;
 			if (allowRewrite) {
-				if (Arrays.asList(appTerm.getFreeVars()).contains(tv) && rhs.getSort().isNumericSort()) {
+				
+				if ((new ContainsSubterm(givenTerm)).containsSubterm(appTerm) && rhs.getSort().isNumericSort()) {
 					AffineRelation affRel = new AffineRelation(appTerm);
 					if (!affRel.translationFailed()) {
-						ApplicationTerm eqTerm = (ApplicationTerm) affRel.onLeftHandSideOnly(script, tv);
-						return new EqualityInformation(i, tv, eqTerm.getParameters()[1]);
+						ApplicationTerm eqTerm = (ApplicationTerm) affRel.onLeftHandSideOnly(script, givenTerm);
+						return new EqualityInformation(i, givenTerm, eqTerm.getParameters()[1]);
 					}
 				}
 			}
-			if (lhs.equals(tv) && !Arrays.asList(rhs.getFreeVars()).contains(tv)) {
-				return new EqualityInformation(i, tv, rhs);
+			if (lhs.equals(givenTerm) && !(new ContainsSubterm(givenTerm)).containsSubterm(rhs)) {
+				return new EqualityInformation(i, givenTerm, rhs);
 			}
-			if (rhs.equals(tv) && !Arrays.asList(lhs.getFreeVars()).contains(tv)) {
-				return new EqualityInformation(i, tv, lhs);
+			if (rhs.equals(givenTerm) && !(new ContainsSubterm(givenTerm)).containsSubterm(lhs)) {
+				return new EqualityInformation(i, givenTerm, lhs);
 			}
 
 		}
@@ -391,23 +398,26 @@ public class DestructiveEqualityResolution {
 		return null;
 	}
 
-	private static class EqualityInformation {
+	/**
+	 * A given term, an equal term and the index at which this equality occurred
+	 */
+	public static class EqualityInformation {
 		private final int m_Index;
-		private final TermVariable m_Variable;
-		private final Term m_Term;
-		public EqualityInformation(int index, TermVariable variable, Term term) {
+		private final Term m_GivenTerm;
+		private final Term m_EqualTerm;
+		public EqualityInformation(int index, Term givenTerm, Term equalTerm) {
 			m_Index = index;
-			m_Variable = variable;
-			m_Term = term;
+			m_GivenTerm = givenTerm;
+			m_EqualTerm = equalTerm;
 		}
 		public int getIndex() {
 			return m_Index;
 		}
-		public TermVariable getVariable() {
-			return m_Variable;
+		public Term getVariable() {
+			return m_GivenTerm;
 		}
 		public Term getTerm() {
-			return m_Term;
+			return m_EqualTerm;
 		}
 		
 	}

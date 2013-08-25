@@ -1,8 +1,5 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt;
 
-import java.util.HashSet;
-import java.util.Set;
-
 import de.uni_freiburg.informatik.ultimate.logic.AnnotatedTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
@@ -13,29 +10,42 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
 /**
- * Find all subterms that are application terms with FunctionSymbol m_Name.
+ * Check if term contains given subterm.
  * @author Matthias Heizmann
  *
  */
-public class ApplicationTermFinder extends NonRecursive {
-	class FindWalker extends TermWalker {
-		FindWalker(Term term) { super(term); }
+public class ContainsSubterm extends NonRecursive {
+	class MyWalker extends TermWalker {
+		MyWalker(Term term) { super(term); }
 		
 		@Override
 		public void walk(NonRecursive walker, ConstantTerm term) {
-			// do nothing
+			if (!m_FoundInCurrentSeach) {
+				if (m_GivenSubterm.equals(term)) {
+					m_FoundInCurrentSeach = true;
+				} 
+			}
 		}
 		@Override
 		public void walk(NonRecursive walker, AnnotatedTerm term) {
-			walker.enqueueWalker(new FindWalker(term.getSubterm()));
+			if (!m_FoundInCurrentSeach) {
+				if (m_GivenSubterm.equals(term)) {
+					m_FoundInCurrentSeach = true;
+				} else {
+					walker.enqueueWalker(new MyWalker(term.getSubterm()));
+				}
+			}
 		}
 		@Override
 		public void walk(NonRecursive walker, ApplicationTerm term) {
-			if (term.getFunction().getName().equals(m_FunctionSymbolName)) {
-				m_Result.add(term);
-			}
-			for (Term t : term.getParameters()) {
-				walker.enqueueWalker(new FindWalker(t));
+			if (!m_FoundInCurrentSeach) {
+				if (m_GivenSubterm.equals(term)) {
+					m_FoundInCurrentSeach = true;
+				} 
+			} else {
+				for (Term t : term.getParameters()) {
+					walker.enqueueWalker(new MyWalker(t));
+				}
 			}
 		}
 		@Override
@@ -48,23 +58,25 @@ public class ApplicationTermFinder extends NonRecursive {
 		}
 		@Override
 		public void walk(NonRecursive walker, TermVariable term) {
-			// do nothing
+			if (!m_FoundInCurrentSeach) {
+				if (m_GivenSubterm.equals(term)) {
+					m_FoundInCurrentSeach = true;
+				} 
+			}
 		}
 	}
 	
+	private final Term m_GivenSubterm;
+	private boolean m_FoundInCurrentSeach;
 	
-	
-	public ApplicationTermFinder(String functionSymbolName) {
+	public ContainsSubterm(Term givenSubterm) {
 		super();
-		m_FunctionSymbolName = functionSymbolName;
+		m_GivenSubterm = givenSubterm;
 	}
 
-	private final String m_FunctionSymbolName;
-	private Set<ApplicationTerm> m_Result;
-	
-	public Set<ApplicationTerm> findMatchingSubterms(Term term) {
-		m_Result = new HashSet<ApplicationTerm>();
-		run(new FindWalker(term));
-		return m_Result;
+	public boolean containsSubterm(Term term) {
+		m_FoundInCurrentSeach = false;
+		run(new MyWalker(term));
+		return m_FoundInCurrentSeach;
 	}
 }

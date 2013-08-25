@@ -18,11 +18,12 @@ import de.uni_freiburg.informatik.ultimate.util.ScopedHashSet;
  * variables are renamed to fresh variables such that 
  * - no variable in substituted term is "captured" by an existing quantifier
  * - no subterm that contains a bound variable is substituted.
- * @author Matthias Heizmann
+ * 
  * Idea of this implementation. Replace quantified variables by fresh variables
  * whenever a variable interferes with a variable in the substitution mapping.
  * TODO: If quantified variable occurs in key of substitution mapping, do not
  * rename quantified variable but remove substitution in the current scope.
+ * @author Matthias Heizmann
  */
 public class SafeSubstitution extends TermTransformer {
 	
