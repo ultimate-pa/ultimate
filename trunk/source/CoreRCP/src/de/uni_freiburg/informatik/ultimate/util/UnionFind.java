@@ -1,10 +1,13 @@
 package de.uni_freiburg.informatik.ultimate.util;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+
+import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 
 /**
@@ -69,13 +72,33 @@ public class UnionFind<E> {
 	/**
 	 * Returns an unmodifiable set containing all equivalence classes
 	 */
+	@Deprecated
 	public Set<Set<E>> getEquivalenceClass() {
 		return Collections.unmodifiableSet(m_Representative.keySet()); 
+	}
+	
+	
+	/**
+	 * Return collection of all elements e such that e is representative of an
+	 * equivalence class.
+	 */
+	public Collection<E> getAllRepresentatives() {
+		return m_Representative.values();
+	}
+
+	/**
+	 * Return set of all elements that are in the same equivalence class than e.
+	 * (Returned set also contains e).
+	 */
+	public Set<E> getEquivalenceClassMembers(E e) {
+		return Collections.unmodifiableSet(m_EquivalenceClass.get(e));
 	}
 
 	@Override
 	public String toString() {
 		return m_Representative.toString();
 	}
+
+
 }
 
