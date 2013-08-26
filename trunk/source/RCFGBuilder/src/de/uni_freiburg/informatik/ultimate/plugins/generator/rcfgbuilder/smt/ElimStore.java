@@ -1,6 +1,8 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -115,21 +117,34 @@ public class ElimStore {
 			}
 		}
 		
+		Collection<TermVariable> newAuxVars = new ArrayList<TermVariable>();
+		
 		if (writeIndexEqClass != null) {
 			for(Term writeIndexEqTerm : uf.getEquivalenceClassMembers(writeIndexEqClass)) {
 				Term select = arrayReads.get(writeIndexEqTerm);
 				EqualityInformation eqInfo = DestructiveEqualityResolution.getEqinfo(m_Script, select, others.toArray(new Term[0]), QuantifiedFormula.EXISTS);
+				Term replacement;
 				if (eqInfo == null) {
-					return null;
+					TermVariable auxVar = writeIndexEqTerm.getTheory().createFreshTermVariable("arrayElim", select.getSort());
+					newAuxVars.add(auxVar);
+					replacement = auxVar;
 				} else {
-					substitutionMapping.put(select, eqInfo.getTerm());
+					replacement = eqInfo.getTerm();
 				}
+				substitutionMapping.put(select, replacement);
 			}
 		}
 		Term result = (new SafeSubstitution(m_Script, substitutionMapping)).transform(othersT);
 		Term newData = (new SafeSubstitution(m_Script, substitutionMapping)).transform(m_Data);
 		Term t = m_Script.term("=", m_Script.term("select", m_NewArray, m_WriteIndex), newData);
 		result = Util.and(m_Script, result, t);
+		
+		if (!newAuxVars.isEmpty()) {
+			result = DestructiveEqualityResolution.derSimple(m_Script, QuantifiedFormula.EXISTS, result, newAuxVars);
+			if (!newAuxVars.isEmpty()) {
+				throw new UnsupportedOperationException();
+			}
+		}
 		result.toString();
 		return result;
 	}
