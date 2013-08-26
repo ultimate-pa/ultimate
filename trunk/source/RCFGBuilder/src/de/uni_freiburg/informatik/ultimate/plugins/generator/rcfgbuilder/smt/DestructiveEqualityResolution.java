@@ -411,11 +411,6 @@ public class DestructiveEqualityResolution {
 	 */
 	public static EqualityInformation getEqinfo(Script script, Term givenTerm,
 			Term[] context, int quantifier) {
-		if (!givenTerm.getSort().isNumericSort()) {
-			s_Logger.debug("DER works only for numeric Sorts");
-			//TODO check equality for arrays
-			return null;
-		}
 		for (int i=0; i<context.length; i++) {
 			if (!(context[i] instanceof ApplicationTerm)) {
 				continue;
@@ -461,10 +456,15 @@ public class DestructiveEqualityResolution {
 			} else {
 				throw new AssertionError("unknown quantifier");
 			}
+			if (lhs.equals(givenTerm) && !isSubterm(givenTerm, rhs)) {
+				return new EqualityInformation(i, givenTerm, rhs);
+			}
+			if (rhs.equals(givenTerm) && !isSubterm(givenTerm, lhs)) {
+				return new EqualityInformation(i, givenTerm, lhs);
+			}			
 			boolean allowRewrite = true;
 			if (allowRewrite) {
-				
-				if ((new ContainsSubterm(givenTerm)).containsSubterm(appTerm) && rhs.getSort().isNumericSort()) {
+				if (isSubterm(givenTerm, appTerm) && rhs.getSort().isNumericSort()) {
 					AffineRelation affRel = new AffineRelation(appTerm);
 					if (!affRel.translationFailed()) {
 						ApplicationTerm eqTerm = (ApplicationTerm) affRel.onLeftHandSideOnly(script, givenTerm);
@@ -472,16 +472,16 @@ public class DestructiveEqualityResolution {
 					}
 				}
 			}
-			if (lhs.equals(givenTerm) && !(new ContainsSubterm(givenTerm)).containsSubterm(rhs)) {
-				return new EqualityInformation(i, givenTerm, rhs);
-			}
-			if (rhs.equals(givenTerm) && !(new ContainsSubterm(givenTerm)).containsSubterm(lhs)) {
-				return new EqualityInformation(i, givenTerm, lhs);
-			}
-
 		}
 		// no equality information found
 		return null;
+	}
+	
+	/**
+	 * Returns true if subterm is a subterm of term.
+	 */
+	private static boolean isSubterm(Term subterm, Term term) {
+		return (new ContainsSubterm(term)).containsSubterm(subterm);
 	}
 
 	/**
