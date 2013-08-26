@@ -1,24 +1,24 @@
-package de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt;
+package de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.normalForms;
 
-import java.util.HashSet;
-
-import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
+import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 
 
-public class DnfTransformer extends TermTransformer {
+/**
+ * Transform Boolean Term into negation normal form.
+ * @author heizmann@informatik.uni-freiburg.de
+ */
+public class Nnf extends TermTransformer {
 	
-	private final Script m_Script;
-
+	protected final Script m_Script;
 	
-	
-	public DnfTransformer(Script script) {
+	public Nnf(Script script) {
 		super();
 		m_Script = script;
 	}
@@ -124,42 +124,6 @@ public class DnfTransformer extends TermTransformer {
 		}
 		newTerms[terms.length-1] = terms[terms.length-1];
 		return newTerms;
-	}
-
-	@Override
-	public void convertApplicationTerm(ApplicationTerm appTerm, Term[] newArgs) {
-		String functionSymbolName = appTerm.getFunction().getName();
-		Term result;
-		if (functionSymbolName.equals("and")) {
-			HashSet<Term> disjuncts = new HashSet<Term>();
-			disjuncts.add(m_Script.term("true"));
-			HashSet<Term> oldDisjuncts;
-			for (Term conjunct : newArgs) {
-				oldDisjuncts = disjuncts;
-				disjuncts = new HashSet<Term>();
-				if ((conjunct instanceof ApplicationTerm) && 
-						((ApplicationTerm) conjunct).getFunction().getName().equals("or")) {
-					Term[] atoms = ((ApplicationTerm) conjunct).getParameters();
-					for (Term atom : atoms) {
-						for (Term disjunct : oldDisjuncts) {
-							disjuncts.add(Util.and(m_Script, disjunct, atom));
-						}
-
-					}
-					
-				} else {
-					for (Term disjunct : oldDisjuncts) {
-						disjuncts.add(Util.and(m_Script, disjunct, conjunct));
-					}
-				}
-			}
-			result = Util.or(m_Script, disjuncts.toArray(new Term[0]));
-		} else if (functionSymbolName.equals("or")) {
-			result = Util.or(m_Script, newArgs);
-		} else {
-			throw new AssertionError();
-		}
-		setResult(result);
 	}
 
 }

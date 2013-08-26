@@ -24,9 +24,9 @@ import de.uni_freiburg.informatik.ultimate.logic.simplification.SimplifyDDA;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.Activator;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.DnfTransformer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.NaiveDestructiveEqualityResolution;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.Substitution;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.normalForms.Dnf;
 
 /**
  * Represents the transition of a program or a transition system as an SMT
@@ -478,7 +478,7 @@ public class TransFormula implements Serializable {
 //		assert allVarsContainsFreeVars(allVars, formula);
 		assert freeVarsSubsetInOutAuxBranch(formula, inVars, outVars, auxVars, newBranchEncoders);
 		//TODO: this is only for testing
-		Term dnf = (new DnfTransformer(script)).transform(formula);
+		Term dnf = (new Dnf(script)).transform(formula);
 		assert (Util.checkSat(script, script.term("distinct", dnf, formula)) == LBool.UNSAT);
 		//TODO: this is only for testing
 		return result;
