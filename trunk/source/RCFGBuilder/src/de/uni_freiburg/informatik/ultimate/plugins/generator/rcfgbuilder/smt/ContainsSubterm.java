@@ -74,6 +74,10 @@ public class ContainsSubterm extends NonRecursive {
 		m_GivenSubterm = givenSubterm;
 	}
 
+	/**
+	 * Returns true iff this term contains the subterm of this ContainsSubterm 
+	 * object.
+	 */
 	public boolean containsSubterm(Term term) {
 		m_FoundInCurrentSeach = false;
 		run(new MyWalker(term));
