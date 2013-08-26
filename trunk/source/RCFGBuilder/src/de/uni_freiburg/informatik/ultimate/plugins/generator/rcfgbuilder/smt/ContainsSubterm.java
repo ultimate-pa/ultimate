@@ -41,10 +41,10 @@ public class ContainsSubterm extends NonRecursive {
 			if (!m_FoundInCurrentSeach) {
 				if (m_GivenSubterm.equals(term)) {
 					m_FoundInCurrentSeach = true;
-				} 
-			} else {
-				for (Term t : term.getParameters()) {
-					walker.enqueueWalker(new MyWalker(t));
+				} else {
+					for (Term t : term.getParameters()) {
+						walker.enqueueWalker(new MyWalker(t));
+					}
 				}
 			}
 		}
