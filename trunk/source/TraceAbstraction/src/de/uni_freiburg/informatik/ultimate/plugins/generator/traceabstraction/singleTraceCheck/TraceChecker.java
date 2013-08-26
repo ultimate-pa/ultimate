@@ -212,14 +212,16 @@ public class TraceChecker {
 				if (!t.getSort().isArraySort())
 					terms.add(t);
 			Term[] allTerms = terms.toArray(new Term[terms.size()]);
-			try {
-				Map<Term, Term> val = m_SmtManager.getScript().getValue(allTerms);
-				for (Term term : allTerms) {
-					s_Logger.debug(new DebugMessage("Value of {0}: {1}", term, val.get(term)));
+			if (allTerms.length > 0) {
+				try {
+					Map<Term, Term> val = m_SmtManager.getScript().getValue(allTerms);
+					for (Term term : allTerms) {
+						s_Logger.debug(new DebugMessage("Value of {0}: {1}", term, val.get(term)));
+					}
+				} catch (SMTLIBException e) {
+					s_Logger.debug("Valuation not available.");
+					s_Logger.debug(e.getMessage());
 				}
-			} catch (SMTLIBException e) {
-				s_Logger.debug("Valuation not available.");
-				s_Logger.debug(e.getMessage());
 			}
 		}
 		return m_IsSafe;
