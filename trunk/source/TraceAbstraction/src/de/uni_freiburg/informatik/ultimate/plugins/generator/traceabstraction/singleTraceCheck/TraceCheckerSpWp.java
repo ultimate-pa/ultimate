@@ -156,11 +156,12 @@ public class TraceCheckerSpWp extends TraceChecker {
 
 			s_Logger.debug("Computing strongest postcondition for given trace ...");
 			
-			if (trace.getSymbol(0) instanceof Call) {
-				IPredicate p = m_SmtManager.strongestPostcondition(tracePrecondition,
-						rv.getRelevantTransFormulaAtPosition(0),
-						rv.getGlobalVarAssignmentAtCallPosition(0),
-						((NestedWord<CodeBlock>) trace).isPendingCall(0));							
+			if (trace.length() > 1) {
+				if (trace.getSymbol(0) instanceof Call) {
+					IPredicate p = m_SmtManager.strongestPostcondition(tracePrecondition,
+							rv.getRelevantTransFormulaAtPosition(0),
+							rv.getGlobalVarAssignmentAtCallPosition(0),
+							((NestedWord<CodeBlock>) trace).isPendingCall(0));							
 					m_InterpolantsSp[0] = m_PredicateUnifier.getOrConstructPredicate(p.getFormula(), p.getVars(),
 							p.getProcedures());
 				} else {
@@ -169,6 +170,7 @@ public class TraceCheckerSpWp extends TraceChecker {
 					m_InterpolantsSp[0] = m_PredicateUnifier.getOrConstructPredicate(p.getFormula(), p.getVars(),
 							p.getProcedures());
 				}
+			}
 
 			for (int i=1; i<m_InterpolantsSp.length; i++) {
 				if (trace.getSymbol(i) instanceof Call) {
