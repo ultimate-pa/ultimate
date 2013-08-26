@@ -36,7 +36,7 @@ public class ElimStore {
 	private Term m_NewArray;
 	public Term elim(TermVariable tv, Term term) {
 		assert tv.getSort().isArraySort();
-		Set<Term> conjuncts = DestructiveEqualityResolution.getConjuncts(term);
+		Term[] conjuncts = DestructiveEqualityResolution.getConjuncts(term);
 		HashSet<Term> others = new HashSet<Term>();
 		for (Term conjunct : conjuncts) {
 			if (m_NewArray == null) {

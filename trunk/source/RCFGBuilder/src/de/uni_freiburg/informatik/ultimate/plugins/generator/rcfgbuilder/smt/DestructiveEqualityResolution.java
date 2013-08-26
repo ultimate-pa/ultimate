@@ -25,6 +25,8 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.linearTerms.AffineRelation;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.normalForms.Cnf;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.normalForms.Dnf;
 import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
 import de.uni_freiburg.informatik.ultimate.util.UnionFind;
 
@@ -51,39 +53,111 @@ public class DestructiveEqualityResolution {
 			TermVariable[] vars, Term body,	Term[]... patterns) {
 		Set<TermVariable> occuringVars = 
 				new HashSet<TermVariable>(Arrays.asList(body.getFreeVars()));
-		Set<TermVariable> remaning = new HashSet<TermVariable>(vars.length);
+		Set<TermVariable> remainingVars = new HashSet<TermVariable>(vars.length);
 		for (TermVariable tv : vars) {
 			if (occuringVars.contains(tv)) {
-				remaning.add(tv);
+				remainingVars.add(tv);
 			}
 		}
-		Term reduced;
-		reduced = derSimple(script, quantifier, body, remaning);
-		if (remaning.isEmpty()) {
-			return reduced;
+		if (remainingVars.isEmpty()) {
+			return body;
 		}
+		Term result;
+		
+		// transform to DNF (resp. CNF)
+		if (quantifier == QuantifiedFormula.EXISTS) {
+			result = (new Dnf(script)).transform(body);
+		} else if (quantifier == QuantifiedFormula.FORALL) {
+			result = (new Cnf(script)).transform(body);
+		} else {
+			throw new AssertionError("unknown quantifier");
+		}
+		
+		
+		// apply Destructive Equality Resolution
+		{
+			Set<TermVariable> remainingAfterDER = new HashSet<TermVariable>();
+			Term termAfterDER;
+			Term[] oldParams;
+			if (quantifier == QuantifiedFormula.EXISTS) {
+				oldParams = getDisjuncts(result);
+			} else if (quantifier == QuantifiedFormula.FORALL) {
+				oldParams = getConjuncts(result);
+			} else {
+				throw new AssertionError("unknown quantifier");
+			}
+			Term[] newParams = new Term[oldParams.length];
+			for (int i=0; i<oldParams.length; i++) {
+				Set<TermVariable> eliminatees = new HashSet<TermVariable>(remainingVars);
+				newParams[i] = derSimple(script, quantifier, oldParams[i], eliminatees);
+				remainingAfterDER.addAll(eliminatees);
+			}
+			if (quantifier == QuantifiedFormula.EXISTS) {
+				termAfterDER = Util.or(script, newParams);
+			} else if (quantifier == QuantifiedFormula.FORALL) {
+				termAfterDER = Util.and(script, newParams);
+			} else {
+				throw new AssertionError("unknown quantifier");
+			}
+			remainingVars = remainingAfterDER;
+			result = termAfterDER;
+		}
+		
+		if (remainingVars.isEmpty()) {
+			return result;
+		}
+		
+		// apply Unconnected Parameter Deletion
 		if (USE_UPD) {
-			reduced = updSimple(script, quantifier, reduced, remaning);
-			if (remaning.isEmpty()) {
-				return reduced;
-			} 
+			Set<TermVariable> remainingAfterUPD = new HashSet<TermVariable>();
+			Term termAfterUPD;
+			Term[] oldParams;
+			if (quantifier == QuantifiedFormula.EXISTS) {
+				oldParams = getDisjuncts(result);
+			} else if (quantifier == QuantifiedFormula.FORALL) {
+				oldParams = getConjuncts(result);
+			} else {
+				throw new AssertionError("unknown quantifier");
+			}
+			Term[] newParams = new Term[oldParams.length];
+			for (int i=0; i<oldParams.length; i++) {
+				Set<TermVariable> eliminatees = new HashSet<TermVariable>(remainingVars);
+				newParams[i] = updSimple(script, quantifier, oldParams[i], eliminatees);
+				remainingAfterUPD.addAll(eliminatees);
+			}
+			if (quantifier == QuantifiedFormula.EXISTS) {
+				termAfterUPD = Util.or(script, newParams);
+			} else if (quantifier == QuantifiedFormula.FORALL) {
+				termAfterUPD = Util.and(script, newParams);
+			} else {
+				throw new AssertionError("unknown quantifier");
+			}
+			remainingVars = remainingAfterUPD;
+			result = termAfterUPD;
 		}
-		Iterator<TermVariable> it = remaning.iterator();
+		
+		if (remainingVars.isEmpty()) {
+			return result;
+		}
+		
+		// apply some array var elimination
+		// TODO will only work if one disjunct
+		Iterator<TermVariable> it = remainingVars.iterator();
 		while (it.hasNext()) {
 			TermVariable tv = it.next();
 			if (tv.getSort().isArraySort()) {
-				Term elim = (new ElimStore(script)).elim(tv, reduced);
+				Term elim = (new ElimStore(script)).elim(tv, result);
 				if (elim != null) {
 					it.remove();
-					reduced = elim;
+					result = elim;
 				}
 			}
 		}
-		if (remaning.isEmpty()) {
-			return reduced;
+		if (remainingVars.isEmpty()) {
+			return result;
 		} 
 		return script.quantifier(quantifier, 
-					remaning.toArray(new TermVariable[0]), reduced, patterns);
+					remainingVars.toArray(new TermVariable[0]), result, patterns);
 	}
 	
 	/**
@@ -109,7 +183,7 @@ public class DestructiveEqualityResolution {
 		} else {
 			Set<TermVariable> occuringVars = 
 					new HashSet<TermVariable>(Arrays.asList(term.getFreeVars()));
-			Set<Term> conjuncts = getConjuncts(term);
+			Set<Term> conjuncts = new HashSet<Term>(Arrays.asList(getConjuncts(term)));
 			ConnectionPartition connection = new ConnectionPartition();
 			for (Term conjunct : conjuncts) {
 				connection.addTerm(conjunct);
@@ -171,14 +245,31 @@ public class DestructiveEqualityResolution {
 	/**
 	 * If term is a conjunction return all conjuncts, otherwise return term.
 	 */
-	public static Set<Term> getConjuncts(Term term) {
+	public static Term[] getConjuncts(Term term) {
 		if (term instanceof ApplicationTerm) {
 			ApplicationTerm appTerm = (ApplicationTerm) term;
 			if (appTerm.getFunction().getName().equals("and")) {
-				return new HashSet<Term>(Arrays.asList(appTerm.getParameters()));
+				return appTerm.getParameters();
 			}
 		}
-		return Collections.singleton(term);
+		Term[] result = new Term[1];
+		result[0] = term;
+		return result;
+	}
+	
+	/**
+	 * If term is a disjunction return all disjuncts, otherwise return term.
+	 */
+	public static Term[] getDisjuncts(Term term) {
+		if (term instanceof ApplicationTerm) {
+			ApplicationTerm appTerm = (ApplicationTerm) term;
+			if (appTerm.getFunction().getName().equals("or")) {
+				return appTerm.getParameters();
+			}
+		}
+		Term[] result = new Term[1];
+		result[0] = term;
+		return result;
 	}
 	
 	/**
@@ -244,8 +335,30 @@ public class DestructiveEqualityResolution {
 	}
 	
 	
+	public static Term derSimple(Script script, int quantifier, Term term, 
+			Collection<TermVariable> vars) {
+		Iterator<TermVariable> it = vars.iterator();
+		Term result = term;
+		while(it.hasNext()) {
+			TermVariable tv = it.next();
+			if (!Arrays.asList(result.getFreeVars()).contains(tv)) {
+				//case where var does not occur
+				it.remove();
+				continue;
+			} else {
+				Term withoutTv = derSimple(script, quantifier, result, tv);
+				if (withoutTv != null) {
+					result = withoutTv;
+					it.remove();
+				}
+			}
+		}
+		return result;
+	}
+	
 	
 	/**
+	 * TODO: revise documentation
 	 * Try to eliminate the variables vars in term.
 	 * Let vars =  {x_1,...,x_n} and term = φ. Returns a term that is 
 	 * equivalent to ∃x_1,...,∃x_n φ, but were variables are removed.
@@ -253,68 +366,41 @@ public class DestructiveEqualityResolution {
 	 * Analogously for universal quantification.
 	 */
 	public static Term derSimple(Script script, int quantifier, Term term, 
-			Collection<TermVariable> vars) {
-		Term resFormula = new FormulaUnLet().unlet(term);
-		Iterator<TermVariable> it = vars.iterator();
-		while(it.hasNext()) {
-			TermVariable tv = it.next();
-			if (!Arrays.asList(resFormula.getFreeVars()).contains(tv)) {
-				//case where var does not occur
-				it.remove();
-				continue;
+			TermVariable tv) {
+		Term[] oldParams;
+		if (quantifier == QuantifiedFormula.EXISTS) {
+			oldParams = getConjuncts(term);
+		} else if (quantifier == QuantifiedFormula.FORALL) {
+			oldParams = getDisjuncts(term);
+		} else {
+			throw new AssertionError("unknown quantifier");
+		}
+		Term result;
+		EqualityInformation eqInfo = getEqinfo(script, tv, oldParams, quantifier);
+		if (eqInfo == null) {
+			s_Logger.debug(new DebugMessage("not eliminated quantifier via DER for {0}", tv));
+			result = null;
+		} else {
+			s_Logger.debug(new DebugMessage("eliminated quantifier via DER for {0}", tv));
+			Term[] newParams = new Term[oldParams.length-1];
+			Map<Term, Term> substitutionMapping = 
+					Collections.singletonMap(eqInfo.getVariable(), eqInfo.getTerm());
+			SafeSubstitution substitution = new SafeSubstitution(script, substitutionMapping);
+			for (int i=0; i<eqInfo.getIndex(); i++) {
+				newParams[i] = substitution.transform(oldParams[i]);
 			}
-			if (!(resFormula instanceof ApplicationTerm)) {
-				s_Logger.debug("abort DER: No application Term");
-				return resFormula;
+			for (int i=eqInfo.getIndex()+1; i<oldParams.length; i++) {
+				newParams[i-1] = substitution.transform(oldParams[i]);
 			}
-			ApplicationTerm appTerm = (ApplicationTerm) resFormula;
-			//TODO unify: consider always as conjunction
-			Term[] oldParams = appTerm.getParameters();
 			if (quantifier == QuantifiedFormula.EXISTS) {
-				if (!appTerm.getFunction().getName().equals("and")) {
-					if (appTerm.getFunction().getName().equals("=")) {
-						// case single equality
-						oldParams = new Term[1];
-						oldParams[0] = appTerm;
-					} else {
-						s_Logger.debug("abort DER: existential quantification but no conjunction");
-						return resFormula;
-					}
-				}
+				result = Util.and(script, newParams);
 			} else if (quantifier == QuantifiedFormula.FORALL) {
-				if (!appTerm.getFunction().getName().equals("or")) {
-					s_Logger.debug("abort DER: universal quantification but no disjunction");
-					return resFormula;
-				}
+				result = Util.or(script, newParams);
 			} else {
 				throw new AssertionError("unknown quantifier");
 			}
-			EqualityInformation eqInfo = getEqinfo(script, tv, oldParams, quantifier);
-			if (eqInfo == null) {
-				s_Logger.debug(new DebugMessage("not eliminated quantifier via DER for {0}", tv));
-			} else {
-				it.remove();
-				s_Logger.debug(new DebugMessage("eliminated quantifier via DER for {0}", tv));
-				Term[] newParams = new Term[oldParams.length-1];
-				Map<Term, Term> substitutionMapping = 
-						Collections.singletonMap(eqInfo.getVariable(), eqInfo.getTerm());
-				SafeSubstitution substitution = new SafeSubstitution(script, substitutionMapping);
-				for (int i=0; i<eqInfo.getIndex(); i++) {
-					newParams[i] = substitution.transform(oldParams[i]);
-				}
-				for (int i=eqInfo.getIndex()+1; i<oldParams.length; i++) {
-					newParams[i-1] = substitution.transform(oldParams[i]);
-				}
-				if (quantifier == QuantifiedFormula.EXISTS) {
-					resFormula = Util.and(script, newParams);
-				} else if (quantifier == QuantifiedFormula.FORALL) {
-					resFormula = Util.or(script, newParams);
-				} else {
-					throw new AssertionError("unknown quantifier");
-				}
-			}
 		}
-		return resFormula;
+		return result;
 	}
 	
 	/**
