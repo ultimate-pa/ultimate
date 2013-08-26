@@ -2082,6 +2082,7 @@ public class SmtManager {
 				varsToQuantifyInCallerPredAndCallTF.add(freshVar);
 			} else if (globalVarsAssignment.getOutVars().containsKey(bv)) {
 				Term freshVar = varsToRenameInCallerPred.get(bv.getTermVariable());
+				assert freshVar != null : "added null to substitution mapping";
 				substitution.put(callTF.getInVars().get(bv), freshVar);
 			} else {
 				substitution.put(callTF.getInVars().get(bv), bv.getTermVariable());
