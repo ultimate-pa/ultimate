@@ -80,7 +80,6 @@ public class TraceCheckerSpWp extends TraceChecker {
 	 * TODO: Currently, it only computes composition for statements without Calls (esp. PendingCalls) and Returns.
 	 */
 	private TransFormula computeSummaryForTrace(Word<CodeBlock> trace) {
-		assert trace.length() >= 1;
 		TransFormula[] transFormulasToComputeSummaryFor = new TransFormula[trace.length()];
 		for (int i = 0; i < trace.length(); i++) {
 			transFormulasToComputeSummaryFor[i] = trace.getSymbol(i).getTransitionFormula();
@@ -89,7 +88,6 @@ public class TraceCheckerSpWp extends TraceChecker {
 	}
 	
 	private TransFormula computeSummaryForTrace(Word<CodeBlock> trace, TransFormula Call, TransFormula Return, TransFormula oldVarsAssignment) {
-		assert trace.length() >= 1;
 		TransFormula procedureSummary = computeSummaryForTrace(trace);
 		return TransFormula.sequentialCompositionWithCallAndReturn(m_SmtManager.getBoogie2Smt(), true, Call, oldVarsAssignment, procedureSummary, Return);
 	}
@@ -267,7 +265,7 @@ public class TraceCheckerSpWp extends TraceChecker {
 						// TODO:
 					}
 				} else if (trace.getSymbol(i+1) instanceof Return) {
-					int call_pos = ((NestedWord<CodeBlock>)trace).getCallPosition(i);
+					int call_pos = ((NestedWord<CodeBlock>)trace).getCallPosition(i+1);
 					TransFormula summary = computeSummaryForTrace(getSubTrace(0, call_pos, trace));
 					IPredicate callerPred = m_SmtManager.strongestPostcondition(m_Precondition, summary);
 					// If the sub-trace between call_pos and returnPos (here: i) is shorter, than compute the
@@ -276,7 +274,7 @@ public class TraceCheckerSpWp extends TraceChecker {
 					TransFormula globalVarsAssignments = rv.getGlobalVarAssignmentAtCallPosition(call_pos);
 					if ((i - call_pos) < call_pos) {
 						summary = computeSummaryForTrace(getSubTrace(call_pos, i - 1, trace), callTF,
-								trace.getSymbol(i).getTransitionFormula(), globalVarsAssignments);
+								trace.getSymbol(i+1).getTransitionFormula(), globalVarsAssignments);
 						callerPred = m_SmtManager.weakestPrecondition(m_InterpolantsWp[i+1], 
 								summary);
 						callerPredicatesComputed.put(i, callerPred);
@@ -310,7 +308,7 @@ public class TraceCheckerSpWp extends TraceChecker {
 	 */
 	private Word<CodeBlock> getSubTrace(int startPos, int endPos, Word<CodeBlock> trace) {
 		CodeBlock[] codeBlocks = new CodeBlock[endPos - startPos];
-		for (int i = startPos; i < trace.length(); i++) {
+		for (int i = startPos; i < endPos; i++) {
 			codeBlocks[i - startPos] = trace.getSymbol(i);
 		}
 		return new Word<CodeBlock>(codeBlocks);
@@ -455,7 +453,7 @@ public class TraceCheckerSpWp extends TraceChecker {
 					m_InterpolantsWp[i] = m_PredicateUnifier.getOrConstructPredicate(p.getFormula(),
 							p.getVars(), p.getProcedures());
 				} else if (trace.getSymbol(i+1) instanceof Return) {
-					int call_pos = ((NestedWord<CodeBlock>)trace).getCallPosition(i);
+					int call_pos = ((NestedWord<CodeBlock>)trace).getCallPosition(i+1);
 					TransFormula summary = computeSummaryForTrace(getSubTrace(0, call_pos, trace));
 					IPredicate callerPred = m_SmtManager.strongestPostcondition(m_Precondition, summary);
 					// If the sub-trace between call_pos and returnPos (here: i) is shorter, than compute the
