@@ -117,7 +117,7 @@ public class ElimStore {
 			}
 		}
 		
-		Collection<TermVariable> newAuxVars = new ArrayList<TermVariable>();
+		Set<TermVariable> newAuxVars = new HashSet<TermVariable>();
 		
 		if (writeIndexEqClass != null) {
 			for(Term writeIndexEqTerm : uf.getEquivalenceClassMembers(writeIndexEqClass)) {
@@ -142,7 +142,10 @@ public class ElimStore {
 		if (!newAuxVars.isEmpty()) {
 			result = DestructiveEqualityResolution.derSimple(m_Script, QuantifiedFormula.EXISTS, result, newAuxVars);
 			if (!newAuxVars.isEmpty()) {
-				throw new UnsupportedOperationException();
+				result = DestructiveEqualityResolution.updSimple(m_Script, QuantifiedFormula.EXISTS, result, newAuxVars);
+				if (!newAuxVars.isEmpty()) {
+					throw new UnsupportedOperationException();
+				}
 			}
 		}
 		result.toString();
