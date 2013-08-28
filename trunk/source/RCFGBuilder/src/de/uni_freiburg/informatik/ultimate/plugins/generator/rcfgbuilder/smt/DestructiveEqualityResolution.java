@@ -72,6 +72,14 @@ public class DestructiveEqualityResolution {
 		} else {
 			throw new AssertionError("unknown quantifier");
 		}
+		if (result instanceof QuantifiedFormula) {
+			QuantifiedFormula qf = (QuantifiedFormula) result;
+			if (qf.getQuantifier() != quantifier) {
+				throw new UnsupportedOperationException("quantifier alternation unsupported");
+			}
+			remainingVars.addAll(Arrays.asList(qf.getVariables()));
+			result = qf.getSubformula();
+		}
 		
 		
 		// apply Destructive Equality Resolution
