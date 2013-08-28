@@ -189,8 +189,7 @@ public class NWAEmptinessCheck implements IEmptinessCheck {
 
 		@Override
 		public String sizeInformation() {
-			assert false;
-			return null;
+			return "no size info available";
 		}
 
 		@Override
@@ -225,7 +224,6 @@ public class NWAEmptinessCheck implements IEmptinessCheck {
 
 		@Override
 		public boolean isInitial(AnnotatedProgramPoint state) {
-			assert false;
 			return _initialStates.contains(state);
 		}
 
