@@ -15,31 +15,43 @@ public class Cnf extends Xnf {
 		super(script);
 	}
 	
+	
 	@Override
-	public String innerConnectiveSymbol() {
-		return "or";
+	protected NnfTransformerHelper getNnfTransformerHelper() {
+		return new CnfTransformerHelper();
 	}
 
-	@Override
-	public String outerConnectiveSymbol() {
-		return "and";
-	}
 
-	@Override
-	public String innerConnectiveNeutralElement() {
-		return "false";
-	}
 
-	@Override
-	public Term innerConnective(Script script, Term... params) {
-		Term result = Util.or(m_Script, params);
-		return result;
-	}
+	protected class CnfTransformerHelper extends XnfTransformerHelper {
+		
+		@Override
+		public String innerConnectiveSymbol() {
+			return "or";
+		}
 
-	@Override
-	public Term outerConnective(Script script, Term... params) {
-		Term result = Util.and(m_Script, params);
-		return result;
+		@Override
+		public String outerConnectiveSymbol() {
+			return "and";
+		}
+
+		@Override
+		public String innerConnectiveNeutralElement() {
+			return "false";
+		}
+
+		@Override
+		public Term innerConnective(Script script, Term... params) {
+			Term result = Util.or(m_Script, params);
+			return result;
+		}
+
+		@Override
+		public Term outerConnective(Script script, Term... params) {
+			Term result = Util.and(m_Script, params);
+			return result;
+		}
+
 	}
 
 }
