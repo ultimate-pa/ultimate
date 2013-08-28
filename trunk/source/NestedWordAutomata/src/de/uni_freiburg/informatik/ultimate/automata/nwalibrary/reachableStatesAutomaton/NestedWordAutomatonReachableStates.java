@@ -746,7 +746,8 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 				} else {
 					addNewDownStates(cont, succSC, cont.getDownStates().keySet());
 				}
-				assert (!containsCallTransition(state, trans.getLetter(), succ));
+				assert (!containsCallTransition(state, trans.getLetter(), succ)) : 
+					"Operand contains transition twice: " + state + trans.getSucc();
 				cont.addInternalOutgoing(trans);
 				succSC.addInternalIncoming(new IncomingInternalTransition<LETTER, STATE>(state, trans.getLetter()));
 			}
@@ -760,7 +761,8 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 			boolean addedSelfloop = false;
 			STATE state = cont.getState();
 			for (OutgoingCallTransition<LETTER, STATE> trans : 
-										m_Operand.callSuccessors(cont.getState())) {
+									m_Operand.callSuccessors(cont.getState())) {
+				System.out.println("state" + state + " call" + trans.getLetter() + " succ" + trans.getSucc());
 				STATE succ = trans.getSucc();
 				StateContainer<LETTER,STATE> succCont = m_States.get(succ);
 				HashMap<STATE, Integer> succDownStates = new HashMap<STATE,Integer>();
@@ -773,7 +775,8 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 						addedSelfloop = true;
 					}
 				}
-				assert (!containsCallTransition(state, trans.getLetter(), succ));
+				assert (!containsCallTransition(state, trans.getLetter(), succ)) : 
+					"Operand contains transition twice: " + state + trans.getSucc();
 				cont.addCallOutgoing(trans);
 				succCont.addCallIncoming(
 						new IncomingCallTransition<LETTER, STATE>(state, trans.getLetter()));
@@ -810,7 +813,8 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 						addedSelfloop = true;
 					}
 				}
-				assert (!containsReturnTransition(state, down, trans.getLetter(), succ));
+				assert (!containsReturnTransition(state, down, trans.getLetter(), succ)) : 
+					"Operand contains transition twice: " + state + trans.getSucc();
 				cont.addReturnOutgoing(trans);
 				succCont.addReturnIncoming(
 						new IncomingReturnTransition<LETTER, STATE>(cont.getState(), down, trans.getLetter()));
