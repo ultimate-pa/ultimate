@@ -762,7 +762,6 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 			STATE state = cont.getState();
 			for (OutgoingCallTransition<LETTER, STATE> trans : 
 									m_Operand.callSuccessors(cont.getState())) {
-				System.out.println("state" + state + " call" + trans.getLetter() + " succ" + trans.getSucc());
 				STATE succ = trans.getSucc();
 				StateContainer<LETTER,STATE> succCont = m_States.get(succ);
 				HashMap<STATE, Integer> succDownStates = new HashMap<STATE,Integer>();
