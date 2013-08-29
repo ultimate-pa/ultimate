@@ -53,7 +53,7 @@ public class Nnf {
 				result = m_Script.quantifier(quantor, variables, result);
 			}
 		}
-		assert (Util.checkSat(m_Script, m_Script.term("distinct", term, result)) == LBool.UNSAT);
+		assert (Util.checkSat(m_Script, m_Script.term("distinct", term, result)) != LBool.SAT);
 		m_QuantifiedVariables = null;
 		return result;
 	}
