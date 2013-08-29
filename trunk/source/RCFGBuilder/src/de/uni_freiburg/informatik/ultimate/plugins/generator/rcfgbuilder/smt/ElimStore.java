@@ -112,6 +112,11 @@ public class ElimStore {
 				assert oldSelectTerm.getFunction().getName().equals("select");
 				assert oldSelectTerm.getParameters().length == 2;
 				assert oldSelectTerm.getParameters()[0] == tv;
+				Set<ApplicationTerm> selectTermsInIndex = 
+						(new ApplicationTermFinder("select")).findMatchingSubterms(oldSelectTerm.getParameters()[0]);
+				if (!selectTermsInIndex.isEmpty()) {
+					throw new UnsupportedOperationException("select in index not supported");
+				}
 				Term newSelectTerm = m_Script.term("select", m_NewArray, oldSelectTerm.getParameters()[1]);
 				substitutionMapping.put(oldSelectTerm, newSelectTerm);
 			}
