@@ -6,9 +6,11 @@ var a : [int] int;
 
 implementation main() returns ()
 {
-  assume a[a[0]] == 23;
+  assume a[0] != 0;
+  assume a[1] != 0;
+  assume a[a[0]] != a[a[1]];
   a[0] := 42;
-  assert a[a[0]] == 23;
+  assert a[a[0]] != a[a[1]];
 }
 
 procedure main() returns ();
