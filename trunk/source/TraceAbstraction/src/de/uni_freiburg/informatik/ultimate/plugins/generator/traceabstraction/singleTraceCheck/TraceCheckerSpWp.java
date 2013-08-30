@@ -496,10 +496,10 @@ public class TraceCheckerSpWp extends TraceChecker {
 								  IPredicate tracePrecondition, 
 								  IPredicate tracePostcondition) {
 		LBool result;
-		result = isHoareTriple(0, tracePrecondition, tracePostcondition, 
-				interpolants, trace);
-		assert result == LBool.UNSAT || result == LBool.UNKNOWN;
-		for (int i=0; i<interpolants.length-1; i++) {
+//		result = isHoareTriple(0, tracePrecondition, tracePostcondition, 
+//				interpolants, trace);
+//		assert result == LBool.UNSAT || result == LBool.UNKNOWN;
+		for (int i=-1; i<interpolants.length; i++) {
 			 result = isHoareTriple(i+1, tracePrecondition, tracePostcondition, 
 						interpolants, trace);
 			 if (result == LBool.SAT) {
@@ -512,11 +512,11 @@ public class TraceCheckerSpWp extends TraceChecker {
 			 }
 			 assert result == LBool.UNSAT || result == LBool.UNKNOWN;
 		}
-		if (trace.length() > 1) {
-			result = isHoareTriple(interpolants.length, tracePrecondition, 
-					tracePostcondition,	interpolants, trace);
-			assert result == LBool.UNSAT || result == LBool.UNKNOWN;
-		}
+//		if (trace.length() > 1) {
+//			result = isHoareTriple(interpolants.length, tracePrecondition, 
+//					tracePostcondition,	interpolants, trace);
+//			assert result == LBool.UNSAT || result == LBool.UNKNOWN;
+//		}
 	}
 	
 	private IPredicate getInterpolantAtPosition(int i, IPredicate tracePrecondition,
