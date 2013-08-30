@@ -164,6 +164,7 @@ public class DestructiveEqualityResolution {
 		if (remainingVars.isEmpty()) {
 			return result;
 		} 
+		
 		return script.quantifier(quantifier, 
 					remainingVars.toArray(new TermVariable[0]), result, patterns);
 	}
@@ -489,7 +490,7 @@ public class DestructiveEqualityResolution {
 	 * Returns true if subterm is a subterm of term.
 	 */
 	private static boolean isSubterm(Term subterm, Term term) {
-		return (new ContainsSubterm(term)).containsSubterm(subterm);
+		return (new ContainsSubterm(subterm)).containsSubterm(term);
 	}
 
 	/**
