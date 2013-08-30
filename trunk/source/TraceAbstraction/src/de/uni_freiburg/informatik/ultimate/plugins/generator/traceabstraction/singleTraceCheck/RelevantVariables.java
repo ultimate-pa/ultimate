@@ -27,38 +27,46 @@ public class RelevantVariables {
 		super();
 		m_Trace = trace;
 		m_ModifiableGlobalVariableManager = modifiableGlobalVariableManager;
-		m_ForwardRelevantVariables = computeForwardRelevantVariables();
+		m_ForwardRelevantVariables = new Set[m_Trace.length()+1];
 	}
 
-	private Set<BoogieVar>[] computeForwardRelevantVariables() {
-		Set<BoogieVar>[] result = new Set[m_Trace.length()+1];
-		result[0] = Collections.emptySet();
-		
-		return result;
-		
-		
+	private void computeForwardRelevantVariables() {
+		assert m_ForwardRelevantVariables[0] == null : "already computed";
+		m_ForwardRelevantVariables[0] = Collections.emptySet();
+		for (int i=1; i<=m_Trace.length(); i++) {
+			assert m_ForwardRelevantVariables[i] == null : "already computed";
+			m_ForwardRelevantVariables[i] = computeForwardRelevantVariables(i);
+		}
 	}
 	
 	private Set<BoogieVar> computeForwardRelevantVariables(int i) {
 		Set<BoogieVar> result;
 		Set<BoogieVar> currentRelevantVariables = m_ForwardRelevantVariables[i];
 		if (m_Trace.isInternalPosition(i)) {
-			result = computeSuccessorRVInternal(currentRelevantVariables, m_Trace.getSymbol(i).getTransitionFormula());
+			result = computeSuccessorRvInternal(currentRelevantVariables, 
+					m_Trace.getSymbol(i).getTransitionFormula());
 		} else if (m_Trace.isCallPosition(i)) {
 			Call call = (Call) m_Trace.getSymbol(i);
-			m_ModifiableGlobalVariableManager.getOldVarsAssignment(call.getCallStatement().getMethodName());
-			result = null;
+			TransFormula oldVarAssignment = m_ModifiableGlobalVariableManager.
+					getOldVarsAssignment(call.getCallStatement().getMethodName());
+			result = computeSuccessorRvCall(currentRelevantVariables, 
+					m_Trace.getSymbol(i).getTransitionFormula(), oldVarAssignment);
 		} else if (m_Trace.isReturnPosition(i)) {
-			result = null;
+			int correspondingCallPosition = m_Trace.getCallPosition(i);
+			Set<BoogieVar> relevantVariablesBeforeCall = 
+					m_ForwardRelevantVariables[correspondingCallPosition];
+			result = computeSuccessorRvReturn(currentRelevantVariables, 
+					relevantVariablesBeforeCall, 
+					m_Trace.getSymbol(i).getTransitionFormula());
 		} else {
 			throw new AssertionError();
 		}
 		return result;
 	}
 	
-	private Set<BoogieVar> computeSuccessorRVInternal(Set<BoogieVar> rvs, TransFormula tf) {
-		Set<BoogieVar> result = new HashSet<BoogieVar>(rvs.size());
-		for (BoogieVar bv : rvs) {
+	private Set<BoogieVar> computeSuccessorRvInternal(Set<BoogieVar> predRv, TransFormula tf) {
+		Set<BoogieVar> result = new HashSet<BoogieVar>(predRv.size());
+		for (BoogieVar bv : predRv) {
 			if (!isHavoced(bv,tf)) {
 				result.add(bv);
 			}
@@ -72,10 +80,10 @@ public class RelevantVariables {
 		return result;
 	}
 	
-	private Set<BoogieVar> computeSuccessorRVCall(Set<BoogieVar> rvs, 
+	private Set<BoogieVar> computeSuccessorRvCall(Set<BoogieVar> predRv, 
 			TransFormula localVarAssignment, TransFormula oldVarAssignment) {
-		Set<BoogieVar> result = new HashSet<BoogieVar>(rvs.size());
-		for (BoogieVar bv : rvs) {
+		Set<BoogieVar> result = new HashSet<BoogieVar>(predRv.size());
+		for (BoogieVar bv : predRv) {
 			if (bv.isGlobal() && !oldVarAssignment.getInVars().containsKey(bv)) {
 				// is global var that can not be modfied by called procedure
 				result.add(bv);
@@ -87,6 +95,25 @@ public class RelevantVariables {
 		for (BoogieVar bv : oldVarAssignment.getOutVars().keySet()) {
 			result.add(bv);
 		}
+		for (BoogieVar bv : localVarAssignment.getOutVars().keySet()) {
+			result.add(bv);
+		}
+		return result;
+	}
+	
+	
+	private Set<BoogieVar> computeSuccessorRvReturn(Set<BoogieVar> returnPredRv,
+			Set<BoogieVar> callPredRv,
+			TransFormula localVarAssignment) {
+		// add all vars that were relevant before the call
+		Set<BoogieVar> result = new HashSet<BoogieVar>(callPredRv);
+		// add all global vars that are relevant before the return
+		for (BoogieVar bv : returnPredRv) {
+			if (bv.isGlobal()) {
+				result.add(bv);
+			}
+		}
+		// add all vars that are assigned by the call
 		for (BoogieVar bv : localVarAssignment.getOutVars().keySet()) {
 			result.add(bv);
 		}
