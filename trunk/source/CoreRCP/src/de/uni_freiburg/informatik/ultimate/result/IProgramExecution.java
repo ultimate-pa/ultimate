@@ -68,6 +68,11 @@ public interface IProgramExecution<TE, E> {
 
 		public Map<E, Collection<E>> getVariable2Values() {
 			return m_Variable2Values;
-		} 
+		}
+
+		@Override
+		public String toString() {
+			return m_Variable2Values.toString();
+		}
 	}
 }
