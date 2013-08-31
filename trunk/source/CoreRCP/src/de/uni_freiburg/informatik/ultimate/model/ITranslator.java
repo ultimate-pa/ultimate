@@ -3,12 +3,13 @@ package de.uni_freiburg.informatik.ultimate.model;
 import java.util.List;
 
 /**
- * Object translate traces and expressions form one format to another.
+ * Object translate traces and expressions from one format to another.
  * In ULTIMATE generator plugins may transform one program model into another.
  * A program analysis constructs results (e.g., traces or expressions) for some 
  * program model, but a user wants to see the results for the initial program 
- * model (e.g., C programming language). An ITranslator does the backtranslation
- * for a single plugin.  
+ * model (e.g., C programming language).
+ * We use ITranslater objects for a backtranslation of the program 
+ * transformations that were done by plugins. 
  * 
  * @author heizmann@informatik.uni-freiburg.de
  *
@@ -30,6 +31,23 @@ public interface ITranslator<STE, TTE, SE, TE> {
 	 * (resp. list of Target Trace Elements).
 	 */
 	public List<TTE> translateTrace(List<STE> trace);
+	
+	
+	/**
+	 * Translate an expression of an arbitrary type E to the target expression 
+	 * type of this ITranslator.
+	 * @param iTranslators is a sequence of ITranslaters itrans_0,...,itrans_n
+	 * such that
+	 * <ul> 
+	 * <li> the target expression type of itrans_0 is the source expression type of
+	 * this ITranslator,  
+	 * <li> for 0<i<n the source expression type of iTrans_i coincides
+	 * with the target expression type of iTrans_{i+1}, and 
+	 * <li> the source expression type of itrans_n is E (the type of the 
+	 * expression expr)
+	 * </ul>  
+	 */
+	public <E> TE translateExpressionIteratively(E expr, ITranslator<?,?,?,?>...iTranslators);
 	
 
 

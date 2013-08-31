@@ -117,7 +117,7 @@ public class Backtranslator extends DefaultTranslator<ASTNode, CACSLLocation, Ex
 			throw new UnsupportedOperationException(
 					"auxilliary boogie variable " + boogieId);
 		} else {
-			throw new AssertionError("unknown boogie variable " + boogieId);
+			throw new UnsupportedOperationException("unknown boogie variable " + boogieId);
 		}
 		return cId;
 	}

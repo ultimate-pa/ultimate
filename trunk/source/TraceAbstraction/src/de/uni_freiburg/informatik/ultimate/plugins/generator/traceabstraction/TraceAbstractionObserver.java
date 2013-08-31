@@ -299,12 +299,9 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 	private String backtranslateExprWorkaround(Expression expr) {
 		List<ITranslator<?, ?, ?, ?>> translators = 
 				UltimateServices.getInstance().getTranslatorSequence();
-		Object backExpr = expr;
-		for (int i=translators.size()-1; i>=0; i--) {
-			ITranslator<?, ?, Expression, ?> iback = 
-					(ITranslator<?, ?, Expression, ?>) translators.get(i);
-			backExpr = iback.translateExpression((Expression) backExpr);
-		}
+		List<ITranslator<?, ?, ?, ?>> copy = new ArrayList<ITranslator<?, ?, ?, ?>>(translators);
+		ITranslator<?, ?, ?, ?> first = copy.remove(0);
+		Object backExpr = first.translateExpressionIteratively(expr, copy.toArray(new ITranslator[0]));
 		String ppExpr;
 		if (backExpr instanceof String) {
 			ppExpr = (String) backExpr;

@@ -1,6 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.model;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 
@@ -69,6 +70,23 @@ public class DefaultTranslator<STE, TTE, SE, TE>
 			}
 		}
 		return true;
+	}
+
+	@SuppressWarnings("unchecked")
+	@Override
+	public <E> TE translateExpressionIteratively(E expr,
+			ITranslator<?, ?, ?, ?>... iTranslators) {
+		TE result;
+		if (iTranslators.length == 0) {
+			result = translateExpression((SE) expr);
+		} else {
+			ITranslator<?, ?, E, ?> last = 
+					(ITranslator<?, ?, E, ?>) iTranslators[iTranslators.length-1];
+			ITranslator<?, ?, ?, ?>[] allButLast = 
+					Arrays.copyOf(iTranslators, iTranslators.length-1);
+			result = (TE) last.translateExpressionIteratively(expr, allButLast);
+		}
+		return result;
 	}
 
 }
