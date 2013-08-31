@@ -208,21 +208,25 @@ public class TraceChecker {
 		if (m_IsSafe==LBool.SAT) {
 			s_Logger.debug("Valuations of some variables");
 			HashSet<Term> terms = new HashSet<Term>();
-			for (Term t : ssa.getConstants2BoogieVar().keySet())
-				if (!t.getSort().isArraySort())
-					terms.add(t);
-			Term[] allTerms = terms.toArray(new Term[terms.size()]);
-			if (allTerms.length > 0) {
-				try {
-					Map<Term, Term> val = m_SmtManager.getScript().getValue(allTerms);
-					for (Term term : allTerms) {
-						s_Logger.debug(new DebugMessage("Value of {0}: {1}", term, val.get(term)));
+//			for (Term t : ssa.getConstants2BoogieVar().keySet())
+			
+			for (Map<Integer, Term> index2term : nsb.getIndexedVarRepresentative().values())
+				for (Term t : index2term.values()) { 
+					if (!t.getSort().isArraySort())
+						terms.add(t);
+					Term[] allTerms = terms.toArray(new Term[terms.size()]);
+					if (allTerms.length > 0) {
+						try {
+							Map<Term, Term> val = m_SmtManager.getScript().getValue(allTerms);
+							for (Term term : allTerms) {
+								s_Logger.debug(new DebugMessage("Value of {0}: {1}", term, val.get(term)));
+							}
+						} catch (SMTLIBException e) {
+							s_Logger.debug("Valuation not available.");
+							s_Logger.debug(e.getMessage());
+						}
 					}
-				} catch (SMTLIBException e) {
-					s_Logger.debug("Valuation not available.");
-					s_Logger.debug(e.getMessage());
 				}
-			}
 		}
 		return m_IsSafe;
 	}

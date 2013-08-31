@@ -28,7 +28,16 @@ public class RelevantVariables {
 		m_Trace = trace;
 		m_ModifiableGlobalVariableManager = modifiableGlobalVariableManager;
 		m_ForwardRelevantVariables = new Set[m_Trace.length()+1];
+		computeForwardRelevantVariables();
 	}
+	
+	
+
+	public Set<BoogieVar>[] getForwardRelevantVariables() {
+		return m_ForwardRelevantVariables;
+	}
+
+
 
 	private void computeForwardRelevantVariables() {
 		assert m_ForwardRelevantVariables[0] == null : "already computed";

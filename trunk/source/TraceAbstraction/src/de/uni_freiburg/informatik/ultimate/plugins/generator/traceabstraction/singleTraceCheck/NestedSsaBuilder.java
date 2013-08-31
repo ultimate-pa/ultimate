@@ -53,6 +53,11 @@ public class NestedSsaBuilder {
 	final Map<BoogieVar,Map<Integer,Term>> m_IndexedVarRepresentative =
 			new HashMap<BoogieVar,Map<Integer,Term>>();
 	
+	public Map<BoogieVar, Map<Integer, Term>> getIndexedVarRepresentative() {
+		return m_IndexedVarRepresentative;
+	}
+
+
 	private final IPredicate m_Precondition;
 	private final IPredicate m_Postcondition;
 	private final Map<Integer, IPredicate> m_PendingContexts;
