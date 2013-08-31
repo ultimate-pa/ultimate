@@ -70,6 +70,14 @@ public class AffineRelation {
 		return m_AffineTerm == null;
 	}
 	
+	/**
+	 * Return if term is variable (possibly with coefficient 0) in this affine 
+	 * relation.
+	 */
+	public boolean isVariable(Term term) {
+		return m_AffineTerm.getVariable2Coefficient().containsKey(term);
+	}
+	
 	public Term negationNormalForm(Script script) {
 		List<Term> lhsSummands = new ArrayList<Term>();
 		List<Term> rhsSummands = new ArrayList<Term>();

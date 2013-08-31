@@ -475,7 +475,7 @@ public class DestructiveEqualityResolution {
 			if (allowRewrite) {
 				if (isSubterm(givenTerm, appTerm) && rhs.getSort().isNumericSort()) {
 					AffineRelation affRel = new AffineRelation(appTerm);
-					if (!affRel.translationFailed()) {
+					if (!affRel.translationFailed() && affRel.isVariable(givenTerm)) {
 						ApplicationTerm eqTerm = (ApplicationTerm) affRel.onLeftHandSideOnly(script, givenTerm);
 						return new EqualityInformation(i, givenTerm, eqTerm.getParameters()[1]);
 					}
