@@ -18,6 +18,8 @@ import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ModifiableGlobalVariableManager;
@@ -208,12 +210,28 @@ public class TraceChecker {
 		if (m_IsSafe==LBool.SAT) {
 			s_Logger.debug("Valuations of some variables");
 			HashSet<Term> terms = new HashSet<Term>();
-//			for (Term t : ssa.getConstants2BoogieVar().keySet())
+			//			for (Term t : ssa.getConstants2BoogieVar().keySet())
+
+			RelevantVariables relVars = new RelevantVariables((NestedWord<CodeBlock>) m_Trace, m_ModifiedGlobals);
+			RcfgProgramExecutionBuilder rpeb = new RcfgProgramExecutionBuilder(m_ModifiedGlobals, (NestedWord<CodeBlock>) m_Trace, relVars);
+			for (BoogieVar bv : nsb.getIndexedVarRepresentative().keySet()) {
+				for (Integer index : nsb.getIndexedVarRepresentative().get(bv).keySet()) {
+					Term indexedVar = nsb.getIndexedVarRepresentative().get(bv).get(index);
+					Term[] indexedVarArr = { indexedVar };
+					Map<Term, Term> val = m_SmtManager.getScript().getValue(indexedVarArr);
+					Term valueT = val.get(indexedVar);
+					Expression valueE = m_SmtManager.getBoogie2Smt().getSmt2Boogie().translate(valueT);
+					rpeb.addValueAtVarAssignmentPosition(bv, index, valueE);
+				}
+			}
+			RcfgProgramExecution rpe = rpeb.getRcfgProgramExecution();
+			rpe.toString();
 			
-			for (Map<Integer, Term> index2term : nsb.getIndexedVarRepresentative().values())
+			for (Map<Integer, Term> index2term : nsb.getIndexedVarRepresentative().values()) {
 				for (Term t : index2term.values()) { 
-					if (!t.getSort().isArraySort())
+					if (!t.getSort().isArraySort()) {
 						terms.add(t);
+					}
 					Term[] allTerms = terms.toArray(new Term[terms.size()]);
 					if (allTerms.length > 0) {
 						try {
@@ -227,6 +245,7 @@ public class TraceChecker {
 						}
 					}
 				}
+			}
 		}
 		return m_IsSafe;
 	}
