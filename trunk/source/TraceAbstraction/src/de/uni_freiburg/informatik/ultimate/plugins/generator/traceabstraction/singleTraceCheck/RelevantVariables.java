@@ -50,23 +50,23 @@ public class RelevantVariables {
 	
 	private Set<BoogieVar> computeForwardRelevantVariables(int i) {
 		Set<BoogieVar> result;
-		Set<BoogieVar> currentRelevantVariables = m_ForwardRelevantVariables[i];
-		if (m_Trace.isInternalPosition(i)) {
+		Set<BoogieVar> currentRelevantVariables = m_ForwardRelevantVariables[i-1];
+		if (m_Trace.isInternalPosition(i-1)) {
 			result = computeSuccessorRvInternal(currentRelevantVariables, 
-					m_Trace.getSymbol(i).getTransitionFormula());
-		} else if (m_Trace.isCallPosition(i)) {
-			Call call = (Call) m_Trace.getSymbol(i);
+					m_Trace.getSymbol(i-1).getTransitionFormula());
+		} else if (m_Trace.isCallPosition(i-1)) {
+			Call call = (Call) m_Trace.getSymbol(i-1);
 			TransFormula oldVarAssignment = m_ModifiableGlobalVariableManager.
 					getOldVarsAssignment(call.getCallStatement().getMethodName());
 			result = computeSuccessorRvCall(currentRelevantVariables, 
-					m_Trace.getSymbol(i).getTransitionFormula(), oldVarAssignment);
-		} else if (m_Trace.isReturnPosition(i)) {
-			int correspondingCallPosition = m_Trace.getCallPosition(i);
+					m_Trace.getSymbol(i-1).getTransitionFormula(), oldVarAssignment);
+		} else if (m_Trace.isReturnPosition(i-1)) {
+			int correspondingCallPosition = m_Trace.getCallPosition(i-1);
 			Set<BoogieVar> relevantVariablesBeforeCall = 
 					m_ForwardRelevantVariables[correspondingCallPosition];
 			result = computeSuccessorRvReturn(currentRelevantVariables, 
 					relevantVariablesBeforeCall, 
-					m_Trace.getSymbol(i).getTransitionFormula());
+					m_Trace.getSymbol(i-1).getTransitionFormula());
 		} else {
 			throw new AssertionError();
 		}
@@ -141,7 +141,7 @@ public class RelevantVariables {
 		if (outVar == null) {
 			return false;
 		} else {
-			return !Arrays.asList(tf.getFormula().getFreeVars()).contains(bv);
+			return !Arrays.asList(tf.getFormula().getFreeVars()).contains(tf.getOutVars().get(bv)); 
 		}
 	}
 
