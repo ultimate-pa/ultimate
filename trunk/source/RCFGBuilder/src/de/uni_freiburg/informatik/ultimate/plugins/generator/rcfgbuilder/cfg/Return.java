@@ -1,5 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg;
 
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.BoogieStatementPrettyPrinter;
 
@@ -77,7 +78,7 @@ public class Return extends CodeBlock {
 				+ m_CorrespondingCall.getPrettyPrintedStatements();
 	}
 
-	public Statement getCallStatement() {
+	public CallStatement getCallStatement() {
 		return m_CorrespondingCall.getCallStatement();
 	}
 
