@@ -59,15 +59,16 @@ public class RcfgProgramExecutionBuilder {
 			TransFormula tf = m_Trace.getSymbolAt(position).getTransitionFormula();
 			result = tf.getAssignedVars().contains(bv);
 		} else if (m_Trace.isCallPosition(position)) {
+			Call call = (Call) m_Trace.getSymbolAt(position);
+			String callee = call.getCallStatement().getMethodName();
 			if (bv.isGlobal()) {
-				Call call = (Call) m_Trace.getSymbolAt(position);
-				String callee = call.getCallStatement().getMethodName();
 				Set<BoogieVar> modGlobals = m_ModifiableGlobalVariableManager.getGlobalVarsAssignment(callee).getOutVars().keySet();
 				Set<BoogieVar> modOldGlobals = m_ModifiableGlobalVariableManager.getOldVarsAssignment(callee).getOutVars().keySet();
 				result = modGlobals.contains(bv) || modOldGlobals.contains(bv);
 			} else {
-			TransFormula locVarAssign = m_Trace.getSymbolAt(position).getTransitionFormula();
-				result = locVarAssign.getAssignedVars().contains(bv);
+//			TransFormula locVarAssign = m_Trace.getSymbolAt(position).getTransitionFormula();
+//				result = locVarAssign.getAssignedVars().contains(bv);
+				result = (callee.equals(bv.getProcedure()));
 			}
 		} else {
 			throw new AssertionError();
