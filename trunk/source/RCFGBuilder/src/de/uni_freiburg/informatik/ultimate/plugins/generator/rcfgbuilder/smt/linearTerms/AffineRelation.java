@@ -74,7 +74,11 @@ public class AffineRelation {
 		return m_AffineTerm.getVariable2Coefficient().containsKey(term);
 	}
 	
-	public Term negationNormalForm(Script script) {
+	/**
+	 * Returns a term representation of this AffineTerm where each summand that
+	 * has a negative coefficient is moved to the right hand side. 
+	 */
+	public Term positiveNormalForm(Script script) {
 		List<Term> lhsSummands = new ArrayList<Term>();
 		List<Term> rhsSummands = new ArrayList<Term>();
 		for(Entry<Term, Rational> entry : m_AffineTerm.getVariable2Coefficient().entrySet()) {
