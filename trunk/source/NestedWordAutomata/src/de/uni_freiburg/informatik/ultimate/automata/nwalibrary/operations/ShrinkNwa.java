@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
@@ -119,6 +120,9 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	// also do the hierarchical split without a matrix
 	private boolean m_firstReturnSplitHierAlternative;
 	
+	/* split all call predecessors to avoid one dimension in the matrix */
+	private boolean m_splitAllCallPreds;
+	
 	// TODO<debug>
 	private final boolean DEBUG = false; // general output
 	private final boolean DEBUG2 = false; // general return split
@@ -158,7 +162,7 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	 */
 	public ShrinkNwa(final INestedWordAutomaton<LETTER,STATE> operand)
 			throws OperationCanceledException {
-		this(operand, false, 0, false, 0);
+		this(operand, false, 0, false, 0, false);
 	}
 	
 	/**
@@ -175,16 +179,18 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	 * @param firstReturnSplitAlternative 0 == no alternative return split
 	 *                                    1 == alternative return split
 	 *                                    2 == alternative hierarchical split
+	 * @param splitAllCallPreds true iff all call predecessors should be singleton
 	 * @throws OperationCanceledException if cancel signal is received
 	 */
 	public ShrinkNwa(final INestedWordAutomaton<LETTER,STATE> operand,
 			final boolean splitOutgoing, final int splitRandomSize,
 			final boolean firstReturnSplit,
-			final int firstReturnSplitAlternative)
+			final int firstReturnSplitAlternative,
+			final boolean splitAllCallPreds)
 			throws OperationCanceledException {
 		this(operand, null, null, false, false, splitOutgoing,
 				splitRandomSize, firstReturnSplit,
-				firstReturnSplitAlternative);
+				firstReturnSplitAlternative, splitAllCallPreds);
 	}
 	
 	/**
@@ -206,6 +212,7 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	 * @param firstReturnSplitAlternative 0 == no alternative return split
 	 *                                    1 == alternative return split
 	 *                                    2 == alternative hierarchical split
+	 * @param splitAllCallPreds true iff all call predecessors should be singleton
 	 * @throws OperationCanceledException if cancel signal is received
 	 */
 	@SuppressWarnings("unchecked")
@@ -216,7 +223,8 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 			final boolean includeMapping, final boolean isFiniteAutomaton,
 			final boolean splitOutgoing, final int splitRandomSize,
 			final boolean firstReturnSplit,
-			final int firstReturnSplitAlternative)
+			final int firstReturnSplitAlternative,
+			final boolean splitAllCallPreds)
 					throws OperationCanceledException {
 		if (STAT_RETURN_SIZE) {
 			try {
@@ -289,6 +297,8 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 		if (m_firstReturnSplitAlternative) {
 			m_workListRetHier = new WorkListRetHier();
 		}
+		
+		m_splitAllCallPreds = splitAllCallPreds;
 		
 		// must be the last part of the constructor
 		s_Logger.info(startMessage());
@@ -431,8 +441,10 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 						a.m_incomingCall = EIncomingStatus.unknown;
 						if (DEBUG)
 							System.out.println("\n-- call search");
-						splitInternalOrCallPredecessors(a, callIterator,
-								false);
+						if (! m_splitAllCallPreds) {
+							splitInternalOrCallPredecessors(a, callIterator,
+									false);
+						}
 					}
 				}
 				
@@ -601,7 +613,12 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 			final HashSet<STATE> nonfinals = new HashSet<STATE>();
 			
 			for (STATE state : m_operand.getStates()) {
-				if (m_operand.isFinal(state)) {
+				if (m_splitAllCallPreds &&
+						(m_operand.callSuccessors(state).iterator().hasNext())) {
+						m_partition.addEcInitialization(
+								Collections.singleton(state));
+				}
+				else if (m_operand.isFinal(state)) {
 					finals.add(state);
 				}
 				else {
@@ -630,6 +647,12 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 				"respect to their final status.";
 			for (Set<STATE> module : modules) {
 				m_partition.addEcInitialization(module);
+			}
+		}
+		
+		if (m_splitAllCallPreds) {
+			for (final EquivalenceClass ec : m_partition.m_equivalenceClasses) {
+				ec.m_incomingCall= EIncomingStatus.none; 
 			}
 		}
 		
