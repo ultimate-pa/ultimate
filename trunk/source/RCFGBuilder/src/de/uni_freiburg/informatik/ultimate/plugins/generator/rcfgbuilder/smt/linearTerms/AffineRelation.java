@@ -22,7 +22,7 @@ public class AffineRelation {
 	private final static String NOT_EQUALS = "!=";
 	
 	
-	public AffineRelation(ApplicationTerm term) {
+	public AffineRelation(ApplicationTerm term) throws NotAffineException {
 		m_OriginalTerm = term;
 		String functionSymbolName = term.getFunction().getName();
 		Term[] params = term.getParameters();
@@ -60,14 +60,10 @@ public class AffineRelation {
 		affineLhs = (AffineTerm) (new AffineTermTransformer()).transform(params[0]);
 		affineRhs = (AffineTerm) (new AffineTermTransformer()).transform(params[1]);
 		if (affineLhs.isErrorTerm() || affineRhs.isErrorTerm()) {
-			m_AffineTerm = null;
+			throw new NotAffineException("Relation is not affine"); 
 		} else {
 			m_AffineTerm = new AffineTerm(affineLhs, new AffineTerm(affineRhs, Rational.MONE));
 		}
-	}
-	
-	public boolean translationFailed() {
-		return m_AffineTerm == null;
 	}
 	
 	/**
@@ -89,11 +85,11 @@ public class AffineRelation {
 				Term coeff = entry.getValue().toTerm(m_AffineTerm.getSort());
 				lhsSummands.add(script.term("*", coeff, entry.getKey()));
 			}
-			if (m_AffineTerm.getConstant().isNegative()) {
-				rhsSummands.add(m_AffineTerm.getConstant().toTerm(m_AffineTerm.getSort()));
-			} else {
-				lhsSummands.add(m_AffineTerm.getConstant().toTerm(m_AffineTerm.getSort()));
-			}
+		}
+		if (m_AffineTerm.getConstant().isNegative()) {
+			rhsSummands.add(m_AffineTerm.getConstant().abs().toTerm(m_AffineTerm.getSort()));
+		} else {
+			lhsSummands.add(m_AffineTerm.getConstant().toTerm(m_AffineTerm.getSort()));
 		}
 		Term lhsTerm = Util.sum(script, lhsSummands.toArray(new Term[0]));
 		Term rhsTerm = Util.sum(script, rhsSummands.toArray(new Term[0]));
@@ -102,7 +98,7 @@ public class AffineRelation {
 		return result;
 	}
 	
-	public Term onLeftHandSideOnly(Script script, Term term) {
+	public Term onLeftHandSideOnly(Script script, Term term) throws NotAffineException {
 		assert m_AffineTerm.getVariable2Coefficient().containsKey(term);
 		Rational termsCoeff = m_AffineTerm.getVariable2Coefficient().get(term);
 		List<Term> rhsSummands = new ArrayList<Term>(m_AffineTerm.getVariable2Coefficient().size());
@@ -115,7 +111,8 @@ public class AffineRelation {
 					Rational negated = newCoeff.negate();
 					rhsSummands.add(product(script, negated, entry.getKey()));
 				} else {
-					throw new UnsupportedOperationException();
+					throw new NotAffineException("No affine representation " +
+							"where desired variable is on left hand side");
 				}
 			}
 		}
@@ -125,7 +122,8 @@ public class AffineRelation {
 				Rational negated = newConstant.negate();
 				rhsSummands.add(negated.toTerm(m_AffineTerm.getSort()));
 			} else {
-				throw new UnsupportedOperationException();
+				throw new NotAffineException("No affine representation " +
+						"where desired variable is on left hand side");
 			}
 		}
 		Term rhsTerm = Util.sum(script, rhsSummands.toArray(new Term[0]));

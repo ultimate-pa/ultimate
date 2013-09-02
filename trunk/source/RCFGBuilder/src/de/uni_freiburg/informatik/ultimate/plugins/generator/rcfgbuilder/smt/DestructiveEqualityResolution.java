@@ -25,6 +25,7 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.linearTerms.AffineRelation;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.linearTerms.NotAffineException;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.normalForms.Cnf;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.normalForms.Dnf;
 import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
@@ -474,9 +475,20 @@ public class DestructiveEqualityResolution {
 			boolean allowRewrite = true;
 			if (allowRewrite) {
 				if (isSubterm(givenTerm, appTerm) && rhs.getSort().isNumericSort()) {
-					AffineRelation affRel = new AffineRelation(appTerm);
-					if (!affRel.translationFailed() && affRel.isVariable(givenTerm)) {
-						ApplicationTerm eqTerm = (ApplicationTerm) affRel.onLeftHandSideOnly(script, givenTerm);
+					AffineRelation affRel;
+					try {
+						affRel = new AffineRelation(appTerm);
+					} catch (NotAffineException e1) {
+						continue;
+					}
+					if (affRel.isVariable(givenTerm)) {
+						ApplicationTerm eqTerm;
+						try {
+							eqTerm = (ApplicationTerm) affRel.onLeftHandSideOnly(script, givenTerm);
+						} catch (NotAffineException e) {
+							// no representation where var is on lhs
+							continue;
+						}
 						return new EqualityInformation(i, givenTerm, eqTerm.getParameters()[1]);
 					}
 				}
