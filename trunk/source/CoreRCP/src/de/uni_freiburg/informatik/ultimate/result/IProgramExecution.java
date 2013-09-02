@@ -2,10 +2,14 @@ package de.uni_freiburg.informatik.ultimate.result;
 
 import java.util.Collection;
 import java.util.Map;
+import java.util.Set;
 
 /**
- * Program Execution defined by a trace and (partial) program states at each
- * position of this trace.
+ * Program Execution defined by a finite trace and (partial) program states at 
+ * each position of this trace. This interface is used to transport traces from
+ * an analyzer tool through the toolchain back to the user.
+ * 
+ * TODO: how should an interface for infinite traces look?
  * 
  * @author Matthias Heizmann
  *
@@ -36,7 +40,7 @@ public interface IProgramExecution<TE, E> {
 	 * Returns null if this object does not have any information about the
 	 * program state at position i.
 	 */
-	public PartialProgramState<E> getPartialProgramState(int i);
+	public ProgramState<E> getProgramState(int i);
 	
 	
 	/**
@@ -45,29 +49,32 @@ public interface IProgramExecution<TE, E> {
 	 * This is the partial program state before the first trace element was
 	 * executed.
 	 */
-	public PartialProgramState<E> getInitialPartialProgramState();
+	public ProgramState<E> getInitialProgramState();
 	
 	
 	
 	/**
-	 * Program state that is defined only partially. This class defines for
-	 * some variables of the program a Collection of possible values.
+	 * Program state that is can be defined only partially. This class defines 
+	 * for some variables of the program a Collection of possible values.
 	 * Variables and values are expressions of type E. 
 	 * We use a map to assign to each variable a set of possible values.
 	 * 
 	 * @author Matthias Heizmann
-	 *
 	 */
-	public class PartialProgramState<E> {
+	public class ProgramState<E> {
 		private final Map<E, Collection<E>> m_Variable2Values;
 
-		public PartialProgramState(Map<E, Collection<E>> variable2Values) {
+		public ProgramState(Map<E, Collection<E>> variable2Values) {
 			super();
 			m_Variable2Values = variable2Values;
 		}
 
-		public Map<E, Collection<E>> getVariable2Values() {
-			return m_Variable2Values;
+		public Set<E> getVariables() {
+			return m_Variable2Values.keySet();
+		}
+		
+		public Collection<E> getValues(E variable) {
+			return m_Variable2Values.get(variable);
 		}
 
 		@Override

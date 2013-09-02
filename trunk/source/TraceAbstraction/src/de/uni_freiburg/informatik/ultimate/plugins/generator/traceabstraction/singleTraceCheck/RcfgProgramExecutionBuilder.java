@@ -18,7 +18,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.TransFormula;
-import de.uni_freiburg.informatik.ultimate.result.IProgramExecution.PartialProgramState;
+import de.uni_freiburg.informatik.ultimate.result.IProgramExecution.ProgramState;
 
 public class RcfgProgramExecutionBuilder {
 	
@@ -125,8 +125,8 @@ public class RcfgProgramExecutionBuilder {
 	}
 	
 	private RcfgProgramExecution computeRcfgProgramExecution() {
-		Map<Integer, PartialProgramState<Expression>> partialProgramStateMapping = 
-				new HashMap<Integer, PartialProgramState<Expression>>();
+		Map<Integer, ProgramState<Expression>> partialProgramStateMapping = 
+				new HashMap<Integer, ProgramState<Expression>>();
 		for (int i=0; i<m_Trace.length(); i++) {
 			Map<BoogieVar, Expression> varValAtPos = varValAtPos(i);
 			Map<Expression,Collection<Expression>> variable2Values = 
@@ -136,7 +136,7 @@ public class RcfgProgramExecutionBuilder {
 						entry.getKey().getIType(), entry.getKey().getIdentifier());
 				variable2Values.put(idExpr, Collections.singleton(entry.getValue()));
 			}
-			PartialProgramState<Expression> pps = new PartialProgramState<Expression>(variable2Values);
+			ProgramState<Expression> pps = new ProgramState<Expression>(variable2Values);
 			partialProgramStateMapping.put(i, pps);
 		}
 		return new RcfgProgramExecution(nestedWord2list(m_Trace), partialProgramStateMapping);
