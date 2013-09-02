@@ -1700,32 +1700,8 @@ public class SmtManager {
 		return strongestPostcondition(p, cb.getTransitionFormula());
 	}
 	
-	/**
-	 *TODO: Change comment here!
-	 * Substitutes the replacees through replacers in the given formula.
-	 * @return formula, where replacees are substituted by replacers.
-	 */
-	private Term substituteTermVariablesByTermVariables(Map<TermVariable, TermVariable> substitution, Term formula) {
-		
-		if (substitution.entrySet().size() > 0) {
-			List<TermVariable> replacees = Arrays.asList(
-					substitution.keySet().toArray(
-							new TermVariable[substitution.keySet().size()]));
-			List<Term> replacers = Arrays.asList(
-					substitution.values().toArray(new Term[substitution.values().size()]));
-			assert(replacees.size() == replacers.size());
-			TermVariable[] vars = replacees.toArray(new TermVariable[replacees
-			                                                         .size()]);
-			Term[] values = replacers.toArray(new Term[replacers.size()]);
-			Term predicate_renamed = m_Script.let(vars, values, formula);
-			predicate_renamed = (new FormulaUnLet()).unlet(predicate_renamed);
-			return predicate_renamed;
-		} else {
-			return formula;
-		}
-	}
-	
 	public IPredicate strongestPostcondition(IPredicate p, TransFormula tf) {
+		Set<TermVariable> varsToQuantify = new HashSet<TermVariable>();
 		// Check if p is false
 		if (p.getFormula() == False()) {
 			return p;
@@ -1807,12 +1783,13 @@ public class SmtManager {
 			invarsOccuringInFreeVarsOrAssignedVars_TermVariables = new TermVariable[invarsOccuringInFreeVarsOrAssignedVars.values().size()];
 			for (TermVariable tv : invarsOccuringInFreeVarsOrAssignedVars.values()) {
 				invarsOccuringInFreeVarsOrAssignedVars_TermVariables[i] = tv;
+				varsToQuantify.add(tv);
 				i++;
 			}
 		}
 		// 4. Existentially quantify the invars in TransFormula of the given CodeBlock cb, but only if the set of invars
 		// is not empty.
-		Term result = null;
+		Term result = predicate_AND_tf_term;
 		if (invarsOccuringInFreeVarsOrAssignedVars_TermVariables.length > 0) {
 			substitution.clear();
 			for (BoogieVar bv : invarsOccuringInFreeVarsOrAssignedVars.keySet()) {
@@ -1821,10 +1798,12 @@ public class SmtManager {
 			Term predicate_renamed = substituteTermVariablesByTerms(substitution, p.getFormula());
 			predicate_AND_tf_term = Util.and(m_Script, predicate_renamed, tf_term_outvars_renamed);
 			
+		}
+		// Add aux vars to varsToQuantify
+		varsToQuantify.addAll(tf.getAuxVars());
+		if (varsToQuantify.size() > 0) {
 			result = DestructiveEqualityResolution.quantifier(m_Script, Script.EXISTS,
-					invarsOccuringInFreeVarsOrAssignedVars_TermVariables, predicate_AND_tf_term, (Term[][]) null);
-		} else {
-			result = predicate_AND_tf_term;
+					varsToQuantify.toArray(new TermVariable[varsToQuantify.size()]), predicate_AND_tf_term, (Term[][]) null);
 		}
 		// Compute the set of BoogieVars, the procedures and the term
 		TermVarsProc tvp = computeTermVarsProc(result);
@@ -1854,6 +1833,10 @@ public class SmtManager {
 		Set<TermVariable> varsToQuantifyNonModOldVars = new HashSet<TermVariable>();
 		// In Pred we rename oldvars of non-modifiable global variables to freshvars.
 		Map<TermVariable, Term> varsToRenameInPredInBoth = new HashMap<TermVariable, Term>();
+		// Union Set of auxvars occurring in each transformula
+		Set<TermVariable> allAuxVars = new HashSet<TermVariable>();
+		allAuxVars.addAll(localVarAssignments.getAuxVars());
+		allAuxVars.addAll(globalVarAssignments.getAuxVars());
 		
 		Map<TermVariable, Term> varsToRenameInPredPendingCall = new HashMap<TermVariable, Term>();
 		Map<TermVariable, Term> varsToRenameInPredNonPendingCall = new HashMap<TermVariable, Term>();
@@ -1942,6 +1925,7 @@ public class SmtManager {
 			Term predANDCallANDGlobalVars = Util.and(m_Script, predRenamed, callTermInvarsRenamedOutVarsRenamed,
 					globalVarsInVarsRenamedOutVarsRenamed);
 			varsToQuantifyPendingCall.addAll(varsToQuantifyNonModOldVars);
+			varsToQuantifyPendingCall.addAll(allAuxVars);
 			Term result = DestructiveEqualityResolution.quantifier(m_Script,
 					Script.EXISTS,
 					varsToQuantifyPendingCall.toArray(new TermVariable[varsToQuantifyPendingCall.size()]),
@@ -1952,6 +1936,7 @@ public class SmtManager {
 		} else {
 			Term predRenamed = new Substitution(varsToRenameInPredNonPendingCall, m_Script).transform(predNonModOldVarsRenamed);
 			varsToQuantifyNonPendingCall.addAll(varsToQuantifyNonModOldVars);
+			varsToQuantifyNonPendingCall.addAll(allAuxVars);
 			Term result = DestructiveEqualityResolution.quantifier(m_Script, 
 					Script.EXISTS,
 					varsToQuantifyNonPendingCall.toArray(new TermVariable[varsToQuantifyNonPendingCall.size()]),
@@ -1990,6 +1975,10 @@ public class SmtManager {
 		Map<TermVariable, Term> varsToRenameInCallerPred = new HashMap<TermVariable, Term>();
 		Map<TermVariable, Term> outVarsToRenameInCallTF = new HashMap<TermVariable, Term>();
 		Map<TermVariable, Term> inVarsToRenameInReturnTF = new HashMap<TermVariable, Term>();
+		Set<TermVariable> allAuxVars = new HashSet<TermVariable>();
+		allAuxVars.addAll(ret_TF.getAuxVars());
+		allAuxVars.addAll(callTF.getAuxVars());
+		allAuxVars.addAll(globalVarsAssignment.getAuxVars());
 		
 		
 		// Substitute oldvars of modifiable global vars by fresh vars in calleePred
@@ -1999,6 +1988,18 @@ public class SmtManager {
 			varsToRenameInCalleePred.put(bv.getTermVariable(), freshVar);
 			varsToRenameInCallerPred.put(getNonOldVar(bv).getTermVariable(), freshVar);
 			varsToQuantifyOverAll.add(freshVar);
+		}
+		// Note: We have to take also the outvars into account, because sometimes it may be the case,
+		// that a invar does not occur in the outvars.
+		for (BoogieVar bv : globalVarsAssignment.getOutVars().keySet()) {
+			// We have only to check the vars, that are not contained in the map varsToRenameInCallerPred,
+			// because otherwise it is already treated in the case above.
+			if (!varsToRenameInCallerPred.containsKey(bv.getTermVariable())) {
+				TermVariable freshVar = getFreshTermVariable(bv.getIdentifier(), bv.getTermVariable().getSort());
+				varsToRenameInCallerPred.put(bv.getTermVariable(), freshVar);
+				varsToQuantifyOverAll.add(freshVar);
+			}
+			
 		}
 		
 		
@@ -2126,6 +2127,7 @@ public class SmtManager {
 				varsToQuantifyInCallerPredAndCallTF.toArray(new TermVariable[varsToQuantifyInCallerPredAndCallTF.size()]),
 				Util.and(m_Script, callerPredVarsRenamedToFreshVars, callTermRenamed),(Term[][])null);
 		// 3. Result
+		varsToQuantifyOverAll.addAll(allAuxVars);
 		Term result = DestructiveEqualityResolution.quantifier(m_Script,
 				Script.EXISTS,
 				varsToQuantifyOverAll.toArray(new TermVariable[varsToQuantifyOverAll.size()]),
@@ -2157,6 +2159,7 @@ public class SmtManager {
 		if (p.getFormula() == True()) {
 			return p;
 		}
+		Set<TermVariable> varsToQuantify = new HashSet<TermVariable>();
 		Term tf_term = tf.getFormula();		
 		Map<TermVariable, Term> substitution = new HashMap<TermVariable, Term>();
 		// 1 Rename the invars of the TransFormula of the given CodeBlock cb into TermVariables
@@ -2227,6 +2230,7 @@ public class SmtManager {
 			for (TermVariable tv : outvarsOccuringInFreeVars.values()) {
 				outvarsOccuringInFreeVars_TermVariables[i] = tv;
 				i++;
+				varsToQuantify.add(tv);
 			}
 		}
 		// 4. Universally quantify the invars in TransFormula of the given CodeBlock cb, but only if the set of invars
@@ -2239,9 +2243,9 @@ public class SmtManager {
 			}
 			Term predicate_renamed = substituteTermVariablesByTerms(substitution, p.getFormula());
 			NOT_tfterm_OR_predicate = Util.or(m_Script, Util.not(m_Script, tf_term_outvars_renamed), predicate_renamed);
-
+			varsToQuantify.addAll(tf.getAuxVars());
 			result = DestructiveEqualityResolution.quantifier(m_Script, Script.FORALL,
-					outvarsOccuringInFreeVars_TermVariables,
+					varsToQuantify.toArray(new TermVariable[varsToQuantify.size()]),
 					NOT_tfterm_OR_predicate, (Term[][]) null);
 		} else {
 			result = NOT_tfterm_OR_predicate;
@@ -2274,6 +2278,7 @@ public class SmtManager {
 		
 		Map<TermVariable, Term> varsToRenameInReturneePred = new HashMap<TermVariable, Term>();
 		Set<TermVariable> varsToQuantify = new HashSet<TermVariable>();
+
 		// 1. Rename invars in Term of Call statement
 		Map<TermVariable, Term> substitution = new HashMap<TermVariable, Term>();
 		for (BoogieVar bv : call_TF.getInVars().keySet()) {
@@ -2332,6 +2337,10 @@ public class SmtManager {
 				Util.not(m_Script, call_Term_InVarsRenamed),
 				rhsOfImplication);
 		Term call_Term_IMPLIES_rhsOfImplication_quantified = call_Term_IMPLIES_rhsOfImplication;
+		varsToQuantify.addAll(call_TF.getAuxVars());
+		varsToQuantify.addAll(returnTF.getAuxVars());
+		varsToQuantify.addAll(returnTF.getAuxVars());
+		varsToQuantify.addAll(call_TF.getAuxVars());
 		if (varsToQuantify.size() > 0) {
 			call_Term_IMPLIES_rhsOfImplication_quantified = DestructiveEqualityResolution.quantifier(m_Script, Script.FORALL,
 					varsToQuantify.toArray(new TermVariable[varsToQuantify.size()]),
@@ -2441,6 +2450,9 @@ public class SmtManager {
 		
 		Term result = Util.or(m_Script, Util.not(m_Script, callerPredANDCallANDReturn), retPredRenamed);
 		Term resultQuantified = result;
+		varsToQuantify.addAll(returnTF.getAuxVars());
+		varsToQuantify.addAll(callTF.getAuxVars());
+		varsToQuantify.addAll(globalVarsAssignments.getAuxVars());
 		if (varsToQuantify.size() > 0) {
 			resultQuantified = DestructiveEqualityResolution.quantifier(m_Script, Script.FORALL,
 					varsToQuantify.toArray(new TermVariable[varsToQuantify.size()]),

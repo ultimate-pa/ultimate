@@ -33,10 +33,6 @@ public class TraceCheckerSpWp extends TraceChecker {
 	protected IPredicate[] m_InterpolantsSp;
 	protected IPredicate[] m_InterpolantsWp;
 	
-	//TODO: These two members are just for debugging purposes, they should removed
-	// after the computation of SP and WP has been justified to be correct.
-	protected IPredicate[] m_InterpolantsSpNotSimplified;
-	protected IPredicate[] m_InterpolantsWpNotSimplified;
 	
 	private static boolean m_useUnsatCore = true;
 	private static boolean m_ComputeInterpolantsSp = true;
@@ -204,7 +200,7 @@ public class TraceCheckerSpWp extends TraceChecker {
 				}
 			}
 			s_Logger.debug("Checking strongest postcondition...");
-			checkInterpolantsCorrect(m_InterpolantsSp, m_InterpolantsSpNotSimplified, trace, tracePrecondition, tracePostcondition);
+			checkInterpolantsCorrect(m_InterpolantsSp, trace, tracePrecondition, tracePostcondition);
 		}
 		if (m_ComputeInterpolantsWp) {
 			m_InterpolantsWp = new IPredicate[trace.length()-1];
@@ -295,7 +291,7 @@ public class TraceCheckerSpWp extends TraceChecker {
 			}
 
 			s_Logger.debug("Checking weakest precondition...");
-			checkInterpolantsCorrect(m_InterpolantsWp, m_InterpolantsWpNotSimplified,trace, tracePrecondition, tracePostcondition);
+			checkInterpolantsCorrect(m_InterpolantsWp, trace, tracePrecondition, tracePostcondition);
 		}
 		if (m_ComputeInterpolantsSp) {
 			m_Interpolants = m_InterpolantsSp;
@@ -331,7 +327,6 @@ public class TraceCheckerSpWp extends TraceChecker {
 		
 		if (m_ComputeInterpolantsSp) {
 			m_InterpolantsSp = new IPredicate[trace.length()-1];
-			m_InterpolantsSpNotSimplified = new IPredicate[trace.length()-1];
 			if (trace.length() == 1) {
 				m_Interpolants = m_InterpolantsSp;
 				return;
@@ -342,13 +337,11 @@ public class TraceCheckerSpWp extends TraceChecker {
 				IPredicate p = m_SmtManager.strongestPostcondition(
 						tracePrecondition, (Call) trace.getSymbol(0),
 						((NestedWord<CodeBlock>) trace).isPendingCall(0));
-				m_InterpolantsSpNotSimplified[0] = p;
 				m_InterpolantsSp[0] = m_PredicateUnifier.getOrConstructPredicate(p.getFormula(), p.getVars(),
 						p.getProcedures());
 			} else {
 				IPredicate p = m_SmtManager.strongestPostcondition(
 						tracePrecondition, trace.getSymbol(0));
-				m_InterpolantsSpNotSimplified[0] = p;
 				m_InterpolantsSp[0] = m_PredicateUnifier.getOrConstructPredicate(p.getFormula(), p.getVars(),
 						p.getProcedures());
 			}
@@ -360,7 +353,6 @@ public class TraceCheckerSpWp extends TraceChecker {
 					IPredicate p = m_SmtManager.strongestPostcondition(
 							m_InterpolantsSp[i-1], (Call) trace.getSymbol(i),
 							((NestedWord<CodeBlock>) trace).isPendingCall(i));
-					m_InterpolantsSpNotSimplified[i] = p;
 					m_InterpolantsSp[i] = m_PredicateUnifier.getOrConstructPredicate(p.getFormula(), p.getVars(),
 							p.getProcedures());
 				} else if (trace.getSymbol(i) instanceof Return) {
@@ -375,7 +367,6 @@ public class TraceCheckerSpWp extends TraceChecker {
 					}
 					IPredicate p = m_SmtManager.strongestPostcondition(
 							m_InterpolantsSp[i-1], callerPred, (Return) trace.getSymbol(i));
-					m_InterpolantsSpNotSimplified[i] = p;
 					m_InterpolantsSp[i] = m_PredicateUnifier.getOrConstructPredicate(p.getFormula(), p.getVars(),
 							p.getProcedures());
 					
@@ -383,13 +374,12 @@ public class TraceCheckerSpWp extends TraceChecker {
 				} else {
 					IPredicate p = m_SmtManager.strongestPostcondition(
 							m_InterpolantsSp[i-1],trace.getSymbol(i));
-					m_InterpolantsSpNotSimplified[i] = p;
 					m_InterpolantsSp[i] = m_PredicateUnifier.getOrConstructPredicate(p.getFormula(), p.getVars(),
 							p.getProcedures());
 				}
 			}
 			s_Logger.debug("Checking strongest postcondition...");
-			checkInterpolantsCorrect(m_InterpolantsSp, m_InterpolantsSpNotSimplified, trace, tracePrecondition, tracePostcondition);
+			checkInterpolantsCorrect(m_InterpolantsSp, trace, tracePrecondition, tracePostcondition);
 		}
 
 		if (m_ComputeInterpolantsWp) {
@@ -481,7 +471,7 @@ public class TraceCheckerSpWp extends TraceChecker {
 				}
 			}
 			s_Logger.debug("Checking weakest precondition...");
-			checkInterpolantsCorrect(m_InterpolantsWp, m_InterpolantsWpNotSimplified, trace, tracePrecondition, tracePostcondition);
+			checkInterpolantsCorrect(m_InterpolantsWp, trace, tracePrecondition, tracePostcondition);
 		}
 		if (m_ComputeInterpolantsSp) {
 			m_Interpolants = m_InterpolantsSp;
@@ -491,7 +481,7 @@ public class TraceCheckerSpWp extends TraceChecker {
 		}
 	}
 
-	void checkInterpolantsCorrect(IPredicate[] interpolants,IPredicate[] interpolantsNotSimplified,
+	void checkInterpolantsCorrect(IPredicate[] interpolants,
 								  Word<CodeBlock> trace, 
 								  IPredicate tracePrecondition, 
 								  IPredicate tracePostcondition) {
@@ -505,10 +495,6 @@ public class TraceCheckerSpWp extends TraceChecker {
 			 if (result == LBool.SAT) {
 				 s_Logger.debug("Trace length: " + trace.length());
 				 s_Logger.debug("Stmt: " + i);
-				 s_Logger.debug("Pre_not_simplified: " + 
-				 getInterpolantAtPosition(i+1, tracePrecondition, tracePostcondition, interpolantsNotSimplified));
-				 s_Logger.debug("Post_not_simplified: " + 
-						 getInterpolantAtPosition(i+2, tracePrecondition, tracePostcondition, interpolantsNotSimplified));
 			 }
 			 assert result == LBool.UNSAT || result == LBool.UNKNOWN;
 		}
