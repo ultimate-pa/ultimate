@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map.Entry;
 
-import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
@@ -20,9 +19,6 @@ public class AffineRelation {
 	private final Term m_OriginalTerm;
 	private final String m_FunctionSymbolName;
 	private final AffineTerm m_AffineTerm;
-	private final static String NOT_EQUALS = "!=";
-	
-	
 
 	
 	public AffineRelation(Term term) throws NotAffineException {
@@ -76,7 +72,7 @@ public class AffineRelation {
 		}
 		Term lhsTerm = Util.sum(script, lhsSummands.toArray(new Term[0]));
 		Term rhsTerm = Util.sum(script, rhsSummands.toArray(new Term[0]));
-		Term result = constuctTerm(script, m_FunctionSymbolName, lhsTerm, rhsTerm);
+		Term result = script.term(m_FunctionSymbolName, lhsTerm, rhsTerm);
 		assert isEquivalent(script, m_OriginalTerm, result) == LBool.UNSAT;
 		return result;
 	}
@@ -114,19 +110,8 @@ public class AffineRelation {
 			}
 		}
 		Term rhsTerm = Util.sum(script, rhsSummands.toArray(new Term[0]));
-		Term result = constuctTerm(script, m_FunctionSymbolName, term, rhsTerm);
+		Term result = script.term(m_FunctionSymbolName, term, rhsTerm);
 		assert isEquivalent(script, m_OriginalTerm, result) == LBool.UNSAT;
-		return result;
-	}
-	
-	private Term constuctTerm(Script script, String functionSymbolName, Term lhs, Term rhs) {
-		Term result;
-		if (functionSymbolName.equals(NOT_EQUALS)) {
-			result = script.term("=", lhs, rhs);
-			result = script.term("not", result);
-		} else {
-			result = script.term(functionSymbolName, lhs, rhs);
-		}
 		return result;
 	}
 	
