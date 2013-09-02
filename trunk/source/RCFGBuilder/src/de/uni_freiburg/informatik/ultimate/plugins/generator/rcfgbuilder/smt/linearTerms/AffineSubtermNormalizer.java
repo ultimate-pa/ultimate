@@ -1,9 +1,9 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.linearTerms;
 
-import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.linearTerms.BinaryNumericRelation.NotBinaryNumericRelationException;
 
 public class AffineSubtermNormalizer extends TermTransformer {
 	
@@ -17,34 +17,36 @@ public class AffineSubtermNormalizer extends TermTransformer {
 		m_Script = script;
 	}
 
-	private static boolean hasAffineRelationSymbol(ApplicationTerm term) {
-		String symb = term.getFunction().getName();
-		return symb.equals("=") || symb.equals(">=") || symb.equals("<=") 
-					|| symb.equals(">") || symb.equals("<");  
+	private static boolean isBinaryNumericRelation(Term term) {
+		boolean result = true;
+		try {
+			new BinaryNumericRelation(term);
+		} catch (NotBinaryNumericRelationException e) {
+			result = false;
+		}
+		return result;
 	}
-	
-	private static boolean firstParamIsNumeric(ApplicationTerm term) {
-		return term.getParameters()[0].getSort().isNumericSort();
-	}
-	
+
 	@Override
 	protected void convert(Term term) {
-		if (term instanceof ApplicationTerm) {
-			ApplicationTerm appTerm = (ApplicationTerm) term;
-			if (hasAffineRelationSymbol(appTerm) && firstParamIsNumeric(appTerm)
-					&& appTerm.getParameters().length == 2) {
-				AffineRelation affRel = null;
-				try {
-					affRel = new AffineRelation(appTerm);
-				} catch (NotAffineException e) {
-					setResult(appTerm);
-					return;
-				}
-				Term pnf = affRel.positiveNormalForm(m_Script);
-				setResult(pnf);
+		if (!term.getSort().getName().equals("Bool")) {
+			// do not descend further
+			super.setResult(term);
+			return;
+		}
+		if (isBinaryNumericRelation(term)) {
+			AffineRelation affRel = null;
+			try {
+				affRel = new AffineRelation(term);
+			} catch (NotAffineException e) {
+				setResult(term);
 				return;
 			}
-		}
+			Term pnf = affRel.positiveNormalForm(m_Script);
+			setResult(pnf);
+			return;
+			}
+
 		super.convert(term);
 	}
 

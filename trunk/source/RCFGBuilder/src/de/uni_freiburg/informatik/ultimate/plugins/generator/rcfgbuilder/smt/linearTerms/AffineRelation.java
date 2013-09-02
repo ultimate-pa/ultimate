@@ -10,6 +10,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.linearTerms.BinaryNumericRelation.NotBinaryNumericRelationException;
 
 /**
  * TODO documentation 
@@ -22,43 +23,21 @@ public class AffineRelation {
 	private final static String NOT_EQUALS = "!=";
 	
 	
-	public AffineRelation(ApplicationTerm term) throws NotAffineException {
+
+	
+	public AffineRelation(Term term) throws NotAffineException {
 		m_OriginalTerm = term;
-		String functionSymbolName = term.getFunction().getName();
-		Term[] params = term.getParameters();
-		AffineTerm affineLhs;
-		AffineTerm affineRhs;
-		if (functionSymbolName.equals("not")) {
-			assert params.length == 1;
-			if (params[0] instanceof ApplicationTerm) {
-				ApplicationTerm appTerm = (ApplicationTerm) params[0];
-				functionSymbolName = appTerm.getFunction().getName();
-				if (functionSymbolName.equals("=")) {
-					params = appTerm.getParameters();
-					m_FunctionSymbolName = NOT_EQUALS;
-				} else {
-					throw new UnsupportedOperationException("if not then =");	
-				}
-			} else {
-				throw new UnsupportedOperationException("if not then =");
-			}
-		} else {
-			if (functionSymbolName.equals("=") ||
-					functionSymbolName.equals("distinct") ||
-					functionSymbolName.equals("<") ||
-					functionSymbolName.equals(">") ||
-					functionSymbolName.equals("<=") ||
-					functionSymbolName.equals(">=")) {
-				m_FunctionSymbolName = functionSymbolName;
-			} else {
-				throw new UnsupportedOperationException("unsupported function symbol");
-			}
+		BinaryNumericRelation bnr = null;
+		try {
+			bnr = new BinaryNumericRelation(term);
+		} catch (NotBinaryNumericRelationException e) {
+			throw new NotAffineException("Relation is not affine"); 
 		}
-		if (params.length != 2) {
-			throw new UnsupportedOperationException("exactly two parameters expected");
-		}
-		affineLhs = (AffineTerm) (new AffineTermTransformer()).transform(params[0]);
-		affineRhs = (AffineTerm) (new AffineTermTransformer()).transform(params[1]);
+		m_FunctionSymbolName = bnr.getRelationSymbol();
+		Term lhs = bnr.getLhs();
+		Term rhs = bnr.getRhs();
+		AffineTerm affineLhs = (AffineTerm) (new AffineTermTransformer()).transform(lhs);
+		AffineTerm affineRhs = (AffineTerm) (new AffineTermTransformer()).transform(rhs);
 		if (affineLhs.isErrorTerm() || affineRhs.isErrorTerm()) {
 			throw new NotAffineException("Relation is not affine"); 
 		} else {
@@ -105,6 +84,10 @@ public class AffineRelation {
 	public Term onLeftHandSideOnly(Script script, Term term) throws NotAffineException {
 		assert m_AffineTerm.getVariable2Coefficient().containsKey(term);
 		Rational termsCoeff = m_AffineTerm.getVariable2Coefficient().get(term);
+		if (termsCoeff.equals(Rational.ZERO)) {
+			throw new NotAffineException("No affine representation " +
+					"where desired variable is on left hand side");
+		}
 		List<Term> rhsSummands = new ArrayList<Term>(m_AffineTerm.getVariable2Coefficient().size());
 		for (Entry<Term, Rational> entry : m_AffineTerm.getVariable2Coefficient().entrySet()) {
 			if (term == entry.getKey()) {
