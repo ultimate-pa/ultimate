@@ -45,13 +45,13 @@ public class RcfgProgramExecution implements IProgramExecution<CodeBlock, Expres
 
 	@Override
 	public PartialProgramState<Expression> getInitialPartialProgramState() {
-		return null;
+		return m_PartialProgramStateMapping.get(-1);
 	}
 	
 	private String ppstoString(PartialProgramState<Expression> pps) {
 		String result;
 		if (pps == null) {
-			result = " unknown";
+			result = " not available";
 		} else {
 			StringBuilder sb = new StringBuilder();
 			for (Entry<Expression, Collection<Expression>> entry  : pps.getVariable2Values().entrySet()) {
