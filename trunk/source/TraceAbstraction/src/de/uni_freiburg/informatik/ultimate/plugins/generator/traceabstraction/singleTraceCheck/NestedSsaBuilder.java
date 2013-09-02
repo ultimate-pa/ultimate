@@ -124,7 +124,7 @@ public class NestedSsaBuilder {
 			int numberPendingContexts = m_PendingContexts.size();
 			List<Integer> pendingReturns;
 			if (numberPendingContexts > 0) {
-				pendingReturns = positionsOfPendingReturns(m_Ssa.getCounterexample());
+				pendingReturns = positionsOfPendingReturns(m_Ssa.getTrace());
 			} else {
 				pendingReturns = new ArrayList<Integer>(0);
 			}
@@ -135,7 +135,7 @@ public class NestedSsaBuilder {
 			
 			for (int i=numberPendingContexts-1; i>=0; i--) {
 				int pendingReturnPosition = pendingReturns.get(i);
-				Return ret = (Return) m_Ssa.getCounterexample().getSymbol(pendingReturnPosition);
+				Return ret = (Return) m_Ssa.getTrace().getSymbol(pendingReturnPosition);
 				Call correspondingCall = ret.getCorrespondingCall();
 				{
 					ProgramPoint callPredecessor = (ProgramPoint) correspondingCall.getSource();
@@ -177,7 +177,7 @@ public class NestedSsaBuilder {
 		}
 		assert (startOfCallingContext == -1);
 		
-		CodeBlock firstCodeBlock = m_Ssa.getCounterexample().getSymbolAt(0);
+		CodeBlock firstCodeBlock = m_Ssa.getTrace().getSymbolAt(0);
 		ProgramPoint pp = (ProgramPoint) firstCodeBlock.getSource();
 		m_currentProcedure = pp.getProcedure();
 		
@@ -186,8 +186,8 @@ public class NestedSsaBuilder {
 			m_Ssa.setPrecondition(versioneeredPrecondition);
 		}
 		
-		for (int i=0; i<m_Ssa.getCounterexample().length(); i++) {
-			CodeBlock symbol = m_Ssa.getCounterexample().getSymbolAt(i);
+		for (int i=0; i<m_Ssa.getTrace().length(); i++) {
+			CodeBlock symbol = m_Ssa.getTrace().getSymbolAt(i);
 			assert (!(symbol instanceof GotoEdge)) : "TraceChecker does not support GotoEdges";
 			
 			TransFormula tf = symbol.getTransitionFormulaWithBranchEncoders();
@@ -195,7 +195,7 @@ public class NestedSsaBuilder {
 			VariableVersioneer tfVV = new VariableVersioneer(tf);
 			tfVV.versionInVars();
 			
-			if (m_Ssa.getCounterexample().isCallPosition(i)) {
+			if (m_Ssa.getTrace().isCallPosition(i)) {
 				Call call = (Call) symbol;
 				String calledProcedure = call.getCallStatement().getMethodName();
 				m_currentProcedure = calledProcedure;
@@ -213,14 +213,14 @@ public class NestedSsaBuilder {
 						new VariableVersioneer(globalVarAssignment);
 				initGlobalVarsVV.versionInVars();
 				initGlobalVarsVV.versionAssignedVars(i);
-				m_Ssa.getTerms()[i] = initGlobalVarsVV.getVersioneeredTerm();
+				m_Ssa.getFormulas()[i] = initGlobalVarsVV.getVersioneeredTerm();
 				currentVersionStack.push(currentLocalVarVersion);
 				currentLocalVarVersion = new HashMap<BoogieVar,Term>();
 			}
-			if (m_Ssa.getCounterexample().isReturnPosition(i)) {
+			if (m_Ssa.getTrace().isReturnPosition(i)) {
 				Return ret = (Return) symbol;
 				m_currentProcedure = ret.getCallerProgramPoint().getProcedure();
-				if (m_Ssa.getCounterexample().isPendingReturn(i)) {
+				if (m_Ssa.getTrace().isPendingReturn(i)) {
 					// start new context. here local variables get negative numbers
 					assert currentVersionStack.isEmpty();
 					currentLocalVarVersion = new HashMap<BoogieVar,Term>();
@@ -232,11 +232,11 @@ public class NestedSsaBuilder {
 			tfVV.versionAssignedVars(i);
 			tfVV.versionBranchEncoders(i);
 			tfVV.replaceRemainingVariables();
-			if (m_Ssa.getCounterexample().isCallPosition(i)) {
+			if (m_Ssa.getTrace().isCallPosition(i)) {
 				m_Ssa.getLocalVarAssignmentAtCall().put(i, tfVV.getVersioneeredTerm());
 			}
 			else {
-				m_Ssa.getTerms()[i] = tfVV.getVersioneeredTerm();
+				m_Ssa.getFormulas()[i] = tfVV.getVersioneeredTerm();
 			}
 //			s_Logger.debug("Term"+i+": "+m_ssa[i]);
 //			TermUnLet unflet = new FormulaUnLet();
@@ -268,8 +268,8 @@ public class NestedSsaBuilder {
 			line = "===== Nested SSA =====";
 			s_Logger.debug(line);
 			m_IterationPW.println(line);
-			for (int i=0; i<m_Ssa.length(); i++) {
-				if (m_Ssa.getCounterexample().isCallPosition(i)) {
+			for (int i=0; i<m_Ssa.getTrace().length(); i++) {
+				if (m_Ssa.getTrace().isCallPosition(i)) {
 					indentation++;
 					line = AbstractCegarLoop.addIndentation(indentation, 
 							"LocalVariableAssignment"+i+": "+unflet.unlet(
@@ -283,19 +283,19 @@ public class NestedSsaBuilder {
 					m_IterationPW.println(line);
 					line = AbstractCegarLoop.addIndentation(indentation, 
 							"GlobalVariableAssignment"+i+": "+unflet.unlet(
-									m_Ssa.getTerms()[i]).toString());
+									m_Ssa.getFormulas()[i]).toString());
 					s_Logger.debug(line);
 					m_IterationPW.println(line);
-				} else if (m_Ssa.getCounterexample().isReturnPosition(i)) {
+				} else if (m_Ssa.getTrace().isReturnPosition(i)) {
 					line = AbstractCegarLoop.addIndentation(indentation, 
 							"LocalVariableAssignment"+i+": "+unflet.unlet(
-									m_Ssa.getTerms()[i]).toString());
+									m_Ssa.getFormulas()[i]).toString());
 					s_Logger.debug(line);
 					m_IterationPW.println(line);
 					indentation--;
 				} else 	{
 					line = AbstractCegarLoop.addIndentation(indentation, 
-						"Term "+i+": "+unflet.unlet(m_Ssa.getTerms()[i]).toString());
+						"Term "+i+": "+unflet.unlet(m_Ssa.getFormulas()[i]).toString());
 					s_Logger.debug(line);
 					m_IterationPW.println(line);
 				}

@@ -119,7 +119,7 @@ public class TraceCheckerSpWp extends TraceChecker {
 		// Filter out the statements, which doesn't occur in the unsat core.
 		for (int i = 0; i < trace.length(); i++) {
 			
-			if (unsat_coresAsSet.contains(m_AnnotatedSsa.getTerms()[i])) {
+			if (unsat_coresAsSet.contains(m_AnnotatedSsa.getFormulas()[i])) {
 				// The upper condition checks, whether the globalVarAssignments
 				// is in unsat core, now check whether the local variable assignments
 				// is in unsat core, if it is Call statement

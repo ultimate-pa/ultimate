@@ -78,10 +78,10 @@ public class NestedInterpolantsBuilder {
 		m_SmtManager = smtManager;
 		m_PredicateBuilder = predicateBuilder;
 		m_AnnotSSA = annotatdSsa;
-		m_CraigInterpolants = new Term[m_AnnotSSA.getTerms().length-1];
+		m_CraigInterpolants = new Term[m_AnnotSSA.getFormulas().length-1];
 		m_sfmv = new PredicateConstructionVisitor(m_AnnotSSA.getConstants2BoogieVar());
 		m_InterpolatedPositions = interpolatedPositions;
-		m_Trace = annotatdSsa.getCounterexample();
+		m_Trace = annotatdSsa.getTrace();
 
 		
 		computeCraigInterpolants();
@@ -110,7 +110,7 @@ public class NestedInterpolantsBuilder {
 		m_stackHeightAtLastInterpolatedPosition = 0;
 		boolean startNewFormula = true;
 		
-		for (int i=0; i<m_AnnotSSA.length(); i++) {
+		for (int i=0; i<m_AnnotSSA.getTrace().length(); i++) {
 			//if last position was interpolated position we add new formula to interpol input
 			if (startNewFormula) {
 				if (m_Trace.isInternalPosition(i)) {
@@ -146,26 +146,26 @@ public class NestedInterpolantsBuilder {
 						
 			} else {
 				if (m_Trace.isInternalPosition(i)) {
-					addToLastInterpolInputFormula(m_AnnotSSA.getTerms()[i]);
+					addToLastInterpolInputFormula(m_AnnotSSA.getFormulas()[i]);
 				} else if (m_Trace.isCallPosition(i)) {
 					if (!m_Trace.isPendingCall(i)) {
 						m_startOfSubtreeStack.push(startOfCurrentSubtree);
 						startOfCurrentSubtree = -23;
 					}
-					addToLastInterpolInputFormula(m_AnnotSSA.getTerms()[i]);
+					addToLastInterpolInputFormula(m_AnnotSSA.getFormulas()[i]);
 					if (m_Trace.isPendingCall(i)) {
 						addToLastInterpolInputFormula(m_AnnotSSA.getLocalVarAssignmentAtCall().get(i));
 						addToLastInterpolInputFormula(m_AnnotSSA.getGlobalOldVarAssignmentAtCall().get(i));
 					} 
 				} else if (m_Trace.isReturnPosition(i)) {
 					if (m_Trace.isPendingReturn(i)) {
-						addToLastInterpolInputFormula(m_AnnotSSA.getTerms()[i]);
+						addToLastInterpolInputFormula(m_AnnotSSA.getFormulas()[i]);
 						addToLastInterpolInputFormula(m_AnnotSSA.getLocalVarAssignmentAtCall().get(i));
 						addToLastInterpolInputFormula(m_AnnotSSA.getGlobalOldVarAssignmentAtCall().get(i));
 						addToLastInterpolInputFormula(m_AnnotSSA.getPendingContexts().get(i));
 					} else {
 						startOfCurrentSubtree = m_startOfSubtreeStack.pop();
-						addToLastInterpolInputFormula(m_AnnotSSA.getTerms()[i]);
+						addToLastInterpolInputFormula(m_AnnotSSA.getFormulas()[i]);
 						int correspondingCallPosition = m_Trace.getCallPosition(i);
 						addToLastInterpolInputFormula(m_AnnotSSA.getLocalVarAssignmentAtCall().get(correspondingCallPosition));
 						addToLastInterpolInputFormula(m_AnnotSSA.getGlobalOldVarAssignmentAtCall().get(correspondingCallPosition));
@@ -221,7 +221,7 @@ public class NestedInterpolantsBuilder {
 			}
 		}
 		
-		interpolInput.add(m_AnnotSSA.getTerms()[i]);
+		interpolInput.add(m_AnnotSSA.getFormulas()[i]);
 		//the interpolant between last formula and this new formula can be found
 		//at position i-1
 		

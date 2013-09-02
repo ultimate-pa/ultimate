@@ -69,8 +69,8 @@ public class AnnotateAndAsserter {
 			
 
 		protected NestedSsa buildAnnotatedSsaAndAssertTerms(NestedSsa nestedSsa) {
-			Term[] terms = nestedSsa.getTerms();
-			Term[] annotatedTerms = new Term[nestedSsa.getTerms().length];
+			Term[] terms = nestedSsa.getFormulas();
+			Term[] annotatedTerms = new Term[nestedSsa.getFormulas().length];
 			for (int i=0; i<terms.length; i++) {
 				Term term = terms[i];
 				assert term.getFreeVars().length == 0 : "Term has free vars";

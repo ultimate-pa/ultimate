@@ -63,7 +63,7 @@ public class NonCraigInterpolation {
 		m_Run = run;
 		m_SSA = nestedSSA;
 		m_cutpoints = cutpoints;
-		assert (m_SSA.getTerms().length+1 == run.getLength());
+		assert (m_SSA.getFormulas().length+1 == run.getLength());
 		m_Iteration = iteration;
 		m_IterationPW = iterationPW;
 		computeInterpolants();

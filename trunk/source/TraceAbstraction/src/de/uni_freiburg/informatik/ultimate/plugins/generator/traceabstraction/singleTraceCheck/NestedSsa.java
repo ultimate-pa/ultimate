@@ -96,17 +96,12 @@ public class NestedSsa {
 		m_Constants2BoogieVar = constants2BoogieVar;
 	}
 
-
-	public int length() {
-		return m_NestedTrace.length();
-	}
-
-	public NestedWord<CodeBlock> getCounterexample() {
+	public NestedWord<CodeBlock> getTrace() {
 		return m_NestedTrace;
 	}
 
 
-	public Term[] getTerms() {
+	public Term[] getFormulas() {
 		return m_Terms;
 	}
 
