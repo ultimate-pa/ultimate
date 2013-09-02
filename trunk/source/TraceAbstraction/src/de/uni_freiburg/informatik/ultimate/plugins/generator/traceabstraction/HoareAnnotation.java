@@ -12,10 +12,12 @@ import de.uni_freiburg.informatik.ultimate.logic.FormulaUnLet;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
+import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.simplification.SimplifyDDA;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.linearTerms.AffineSubtermNormalizer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
@@ -133,9 +135,15 @@ public class HoareAnnotation extends SPredicate {
 		m_Formula = m_SmtManager.substituteOldVarsOfNonModifiableGlobals(
 				getProgramPoint().getProcedure(), m_Vars, m_Formula);
 		m_Formula = (new SimplifyDDA(m_SmtManager.getScript(), s_Logger)).getSimplifiedTerm(m_Formula);
+		m_Formula = getPositiveNormalForm(m_Formula);
 	}
 	
-
+	private Term getPositiveNormalForm(Term term) {
+		Script script = m_SmtManager.getScript();
+		Term result = (new AffineSubtermNormalizer(m_SmtManager.getScript())).transform(term);
+		assert (Util.checkSat(script, script.term("distinct", term, result)) != LBool.SAT);
+		return result;
+	}
 	
 
 	/**
