@@ -78,7 +78,7 @@ public class BinaryNumericRelation {
 		if (functionSymbolName.equals("not")) {
 			assert params.length == 1;
 			Term notTerm = params[0];
-			if (!(term instanceof ApplicationTerm)) {
+			if (!(notTerm instanceof ApplicationTerm)) {
 				throw new NotBinaryNumericRelationException("no ApplicationTerm");
 			}
 			isNegated = true;
