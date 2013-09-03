@@ -1,6 +1,8 @@
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary;
 
 import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.Word;
 
@@ -154,6 +156,16 @@ public class NestedWord<LETTER> extends Word<LETTER> {
 	
 	private int[] getNestingRelation() {
 		return this.m_NestingRelation;
+	}
+	
+	public Set<Integer> computeCallPositions() {
+		Set<Integer> result = new HashSet<Integer>();
+		for (int i : m_NestingRelation) {
+			if (isCallPosition(i)) {
+				result.add(i);
+			}
+		}
+		return result;
 	}
 	
 	

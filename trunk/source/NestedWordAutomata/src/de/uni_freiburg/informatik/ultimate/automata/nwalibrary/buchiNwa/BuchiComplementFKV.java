@@ -115,20 +115,55 @@ public class BuchiComplementFKV<LETTER,STATE> implements IOperation<LETTER,STATE
 		}
 		correct &= !(operandEmpty && resultEmpty);
 		assert correct;
-		lassoWords.add(ResultChecker.getRandomNestedLassoWord(m_Result, m_Result.size()));
-		lassoWords.add(ResultChecker.getRandomNestedLassoWord(m_Result, m_Result.size()));
-		lassoWords.add(ResultChecker.getRandomNestedLassoWord(m_Result, operandOldApi.size()));
-		lassoWords.add(ResultChecker.getRandomNestedLassoWord(m_Result, operandOldApi.size()));
+//		lassoWords.add(ResultChecker.getRandomNestedLassoWord(m_Result, m_Result.size()));
+//		lassoWords.add(ResultChecker.getRandomNestedLassoWord(m_Result, m_Result.size()));
+//		lassoWords.add(ResultChecker.getRandomNestedLassoWord(m_Result, operandOldApi.size()));
+//		lassoWords.add(ResultChecker.getRandomNestedLassoWord(m_Result, operandOldApi.size()));
+//		lassoWords.add(ResultChecker.getRandomNestedLassoWord(m_Result, operandOldApi.size()));
+//		lassoWords.add(ResultChecker.getRandomNestedLassoWord(m_Result, operandOldApi.size()));
+//		lassoWords.add(ResultChecker.getRandomNestedLassoWord(m_Result, operandOldApi.size()));
+//		lassoWords.add(ResultChecker.getRandomNestedLassoWord(m_Result, operandOldApi.size()));
+//		lassoWords.add(ResultChecker.getRandomNestedLassoWord(m_Result, operandOldApi.size()));
+//		lassoWords.add(ResultChecker.getRandomNestedLassoWord(m_Result, operandOldApi.size()));
+		lassoWords.add(ResultChecker.getRandomNestedLassoWord(m_Result, 1));
+		lassoWords.add(ResultChecker.getRandomNestedLassoWord(m_Result, 1));
+		lassoWords.add(ResultChecker.getRandomNestedLassoWord(m_Result, 1));
+		lassoWords.add(ResultChecker.getRandomNestedLassoWord(m_Result, 1));
+		lassoWords.add(ResultChecker.getRandomNestedLassoWord(m_Result, 1));
+		lassoWords.add(ResultChecker.getRandomNestedLassoWord(m_Result, 1));
+		lassoWords.add(ResultChecker.getRandomNestedLassoWord(m_Result, 1));
+		lassoWords.add(ResultChecker.getRandomNestedLassoWord(m_Result, 1));
+		lassoWords.add(ResultChecker.getRandomNestedLassoWord(m_Result, 1));
+		lassoWords.add(ResultChecker.getRandomNestedLassoWord(m_Result, 1));
+		lassoWords.add(ResultChecker.getRandomNestedLassoWord(m_Result, 1));
 		lassoWords.addAll((new LassoExtractor<LETTER, STATE>(operandOldApi)).getResult());
 		lassoWords.addAll((new LassoExtractor<LETTER, STATE>(m_Result)).getResult());
 
+		lassoWords.add(ResultChecker.getRandomNestedLassoWord(m_Result, 2));
+		lassoWords.add(ResultChecker.getRandomNestedLassoWord(m_Result, 2));
+		lassoWords.add(ResultChecker.getRandomNestedLassoWord(m_Result, 2));
+		lassoWords.add(ResultChecker.getRandomNestedLassoWord(m_Result, 2));
+		lassoWords.add(ResultChecker.getRandomNestedLassoWord(m_Result, 2));
+		lassoWords.add(ResultChecker.getRandomNestedLassoWord(m_Result, 2));
+		lassoWords.add(ResultChecker.getRandomNestedLassoWord(m_Result, 2));
+		lassoWords.add(ResultChecker.getRandomNestedLassoWord(m_Result, 2));
+		lassoWords.add(ResultChecker.getRandomNestedLassoWord(m_Result, 2));
+		lassoWords.add(ResultChecker.getRandomNestedLassoWord(m_Result, 2));
+		lassoWords.add(ResultChecker.getRandomNestedLassoWord(m_Result, 2));
+		
+
 		for (NestedLassoWord<LETTER> nlw : lassoWords) {
-			correct &= checkAcceptance(nlw, operandOldApi, underApproximationOfComplement);
-			assert correct;
+			boolean thistime = checkAcceptance(nlw, operandOldApi, underApproximationOfComplement);
+			if (!thistime) {
+				thistime = checkAcceptance(nlw, operandOldApi, underApproximationOfComplement);
+			}
+			correct &= thistime;
+//			assert correct;
 		}
 
 		if (!correct) {
 			ResultChecker.writeToFileIfPreferred(operationName() + "Failed", "", m_Operand);
+			ResultChecker.writeToFileIfPreferred(operationName() + "FailedRes", "", m_Result);
 		}
 		s_Logger.info("Finished testing correctness of " + operationName());
 		return correct;
@@ -146,7 +181,7 @@ public class BuchiComplementFKV<LETTER,STATE> implements IOperation<LETTER,STATE
 		} else {
 			correct = op ^ res;
 		}
-		assert correct : operationName() + " wrong result!";
+//		assert correct : operationName() + " wrong result!";
 		return correct;
 	}
 
