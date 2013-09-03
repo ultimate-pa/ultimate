@@ -128,7 +128,7 @@ public class AffineRelation {
 		} else if (rational.equals(Rational.MONE)) {
 			return script.term("-", term);
 		} else {
-			return rational.toTerm(term.getSort());
+			return script.term("*", rational.toTerm(term.getSort()), term);
 		}
 	}
 
