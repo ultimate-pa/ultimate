@@ -2244,7 +2244,10 @@ public class SmtManager {
 			Term predicate_renamed = substituteTermVariablesByTerms(substitution, p.getFormula());
 			NOT_tfterm_OR_predicate = Util.or(m_Script, Util.not(m_Script, tf_term_outvars_renamed), predicate_renamed);
 			varsToQuantify.addAll(tf.getAuxVars());
-			result = DestructiveEqualityResolution.quantifier(m_Script, Script.FORALL,
+//			result = DestructiveEqualityResolution.quantifier(m_Script, Script.FORALL,
+//					varsToQuantify.toArray(new TermVariable[varsToQuantify.size()]),
+//					NOT_tfterm_OR_predicate, (Term[][]) null);
+			result = m_Script.quantifier(Script.FORALL,
 					varsToQuantify.toArray(new TermVariable[varsToQuantify.size()]),
 					NOT_tfterm_OR_predicate, (Term[][]) null);
 		} else {
@@ -2395,17 +2398,18 @@ public class SmtManager {
 			substitution.put(returnTF.getInVars().get(bv), bv.getTermVariable());
 		}
 		Term retTermInVarsRenamed = substituteTermVariablesByTerms(substitution, returnTF.getFormula());
-		// 2.2 We doesn't rename the outvars of the Return statement, as we want to quantify them.
+		substitution.clear();
+		// 2.2 We rename the outvars to freshvars and quantify them
 		for (BoogieVar bv : returnTF.getOutVars().keySet()) {
-			if (callerPred.getVars().contains(bv) || returnerPred.getVars().contains(bv)) {
-				TermVariable freshVar = getFreshTermVariable(bv.getIdentifier(), bv.getTermVariable().getSort());
-				varsToRenameInCallerAndReturnPred.put(bv.getTermVariable(), freshVar);
-				varsToQuantify.add(freshVar);
-			} else {
-				varsToQuantify.add(returnTF.getOutVars().get(bv));
-			}
+//			if (callerPred.getVars().contains(bv) || returnerPred.getVars().contains(bv)) {
+			TermVariable freshVar = getFreshTermVariable(bv.getIdentifier(), bv.getTermVariable().getSort());
+			varsToRenameInCallerAndReturnPred.put(bv.getTermVariable(), freshVar);
+			substitution.put(returnTF.getOutVars().get(bv), freshVar);
+			varsToQuantify.add(freshVar);
+//			} else {
+//			}
 		}
-		
+		Term retTermInVarsRenamedOutVarsToFreshVars = substituteTermVariablesByTerms(substitution, retTermInVarsRenamed);
 		// Rename the invars of the Call and quantify them
 		for (BoogieVar bv : callTF.getInVars().keySet()) {
 			if (callerPred.getVars().contains(bv) || returnerPred.getVars().contains(bv)) {
@@ -2446,7 +2450,7 @@ public class SmtManager {
 		// Add aux vars to quantify them
 		varsToQuantify.addAll(callTF.getAuxVars());
 
-		Term callerPredANDCallANDReturn = Util.and(m_Script, callerPredRenamed, retTermInVarsRenamed, callTFRenamed);
+		Term callerPredANDCallANDReturn = Util.and(m_Script, callerPredRenamed, retTermInVarsRenamedOutVarsToFreshVars, callTFRenamed);
 		
 		Term result = Util.or(m_Script, Util.not(m_Script, callerPredANDCallANDReturn), retPredRenamed);
 		Term resultQuantified = result;
@@ -2454,14 +2458,17 @@ public class SmtManager {
 		varsToQuantify.addAll(callTF.getAuxVars());
 		varsToQuantify.addAll(globalVarsAssignments.getAuxVars());
 		if (varsToQuantify.size() > 0) {
-			resultQuantified = DestructiveEqualityResolution.quantifier(m_Script, Script.FORALL,
-					varsToQuantify.toArray(new TermVariable[varsToQuantify.size()]),
+//			resultQuantified = DestructiveEqualityResolution.quantifier(m_Script, Script.FORALL,
+//					varsToQuantify.toArray(new TermVariable[varsToQuantify.size()]),
+//					result, (Term[][])null);
+			resultQuantified = m_Script.quantifier(Script.FORALL, 
+					varsToQuantify.toArray(new TermVariable[varsToQuantify.size()]), 
 					result, (Term[][])null);
+			
 		}
 		TermVarsProc tvp = computeTermVarsProc(resultQuantified);
 		Term result_as_closed_formula = SmtManager.computeClosedFormula(resultQuantified, tvp.getVars(), m_Script);
 		return newPredicate(resultQuantified, tvp.getProcedures(), tvp.getVars(), result_as_closed_formula);
-		
 	}
 	
 	//FIXME: does not work im SmtInterpol2
