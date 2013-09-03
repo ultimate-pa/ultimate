@@ -160,7 +160,7 @@ public class NestedWord<LETTER> extends Word<LETTER> {
 	
 	public Set<Integer> computeCallPositions() {
 		Set<Integer> result = new HashSet<Integer>();
-		for (int i : m_NestingRelation) {
+		for (int i=0; i<m_NestingRelation.length; i++) {
 			if (isCallPosition(i)) {
 				result.add(i);
 			}
