@@ -5,44 +5,31 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.TransFormula;
 
 public class RelevantVariables {
-	
-	public final NestedWord<CodeBlock> m_Trace;
-	public final ModifiableGlobalVariableManager m_ModifiableGlobalVariableManager;
+
+	public final TraceWithFormulas<TransFormula> m_TraceWithFormulas;
 	public final Set<BoogieVar>[] m_ForwardRelevantVariables;
 	
-	
-	
-
-	public RelevantVariables(NestedWord<CodeBlock> trace,
-			ModifiableGlobalVariableManager modifiableGlobalVariableManager) {
+	@SuppressWarnings("unchecked")
+	public RelevantVariables(TraceWithFormulas<TransFormula> traceWithFormulas) {
 		super();
-		m_Trace = trace;
-		m_ModifiableGlobalVariableManager = modifiableGlobalVariableManager;
-		m_ForwardRelevantVariables = new Set[m_Trace.length()+1];
+		m_TraceWithFormulas = traceWithFormulas;
+		m_ForwardRelevantVariables = new Set[m_TraceWithFormulas.getTrace().length()+1];
 		computeForwardRelevantVariables();
 	}
 	
-	
-
 	public Set<BoogieVar>[] getForwardRelevantVariables() {
 		return m_ForwardRelevantVariables;
 	}
 
-
-
 	private void computeForwardRelevantVariables() {
 		assert m_ForwardRelevantVariables[0] == null : "already computed";
 		m_ForwardRelevantVariables[0] = Collections.emptySet();
-		for (int i=1; i<=m_Trace.length(); i++) {
+		for (int i=1; i<=m_TraceWithFormulas.getTrace().length(); i++) {
 			assert m_ForwardRelevantVariables[i] == null : "already computed";
 			m_ForwardRelevantVariables[i] = computeForwardRelevantVariables(i);
 		}
@@ -51,22 +38,21 @@ public class RelevantVariables {
 	private Set<BoogieVar> computeForwardRelevantVariables(int i) {
 		Set<BoogieVar> result;
 		Set<BoogieVar> currentRelevantVariables = m_ForwardRelevantVariables[i-1];
-		if (m_Trace.isInternalPosition(i-1)) {
-			result = computeSuccessorRvInternal(currentRelevantVariables, 
-					m_Trace.getSymbol(i-1).getTransitionFormula());
-		} else if (m_Trace.isCallPosition(i-1)) {
-			Call call = (Call) m_Trace.getSymbol(i-1);
-			TransFormula oldVarAssignment = m_ModifiableGlobalVariableManager.
-					getOldVarsAssignment(call.getCallStatement().getMethodName());
+		if (m_TraceWithFormulas.getTrace().isInternalPosition(i-1)) {
+			TransFormula tf = m_TraceWithFormulas.getFormulaFromNonCallPos(i-1);
+			result = computeSuccessorRvInternal(currentRelevantVariables,tf);
+		} else if (m_TraceWithFormulas.getTrace().isCallPosition(i-1)) {
+			TransFormula oldVarAssignment =m_TraceWithFormulas.getOldVarAssignment(i-1);
+			TransFormula localVarAssignment =m_TraceWithFormulas.getLocalVarAssignment(i-1);
 			result = computeSuccessorRvCall(currentRelevantVariables, 
-					m_Trace.getSymbol(i-1).getTransitionFormula(), oldVarAssignment);
-		} else if (m_Trace.isReturnPosition(i-1)) {
-			int correspondingCallPosition = m_Trace.getCallPosition(i-1);
+					localVarAssignment, oldVarAssignment);
+		} else if (m_TraceWithFormulas.getTrace().isReturnPosition(i-1)) {
+			int correspondingCallPosition = m_TraceWithFormulas.getTrace().getCallPosition(i-1);
 			Set<BoogieVar> relevantVariablesBeforeCall = 
 					m_ForwardRelevantVariables[correspondingCallPosition];
+			TransFormula tfReturn = m_TraceWithFormulas.getFormulaFromNonCallPos(i-1);
 			result = computeSuccessorRvReturn(currentRelevantVariables, 
-					relevantVariablesBeforeCall, 
-					m_Trace.getSymbol(i-1).getTransitionFormula());
+					relevantVariablesBeforeCall, tfReturn);
 		} else {
 			throw new AssertionError();
 		}

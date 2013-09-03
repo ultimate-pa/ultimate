@@ -212,7 +212,8 @@ public class TraceChecker {
 			HashSet<Term> terms = new HashSet<Term>();
 			//			for (Term t : ssa.getConstants2BoogieVar().keySet())
 
-			RelevantVariables relVars = new RelevantVariables((NestedWord<CodeBlock>) m_Trace, m_ModifiedGlobals);
+			DefaultTransFormulas dtf = new DefaultTransFormulas((NestedWord<CodeBlock>) m_Trace, m_ModifiedGlobals);
+			RelevantVariables relVars = new RelevantVariables(dtf);
 			RcfgProgramExecutionBuilder rpeb = new RcfgProgramExecutionBuilder(m_ModifiedGlobals, (NestedWord<CodeBlock>) m_Trace, relVars);
 			for (BoogieVar bv : nsb.getIndexedVarRepresentative().keySet()) {
 				for (Integer index : nsb.getIndexedVarRepresentative().get(bv).keySet()) {
