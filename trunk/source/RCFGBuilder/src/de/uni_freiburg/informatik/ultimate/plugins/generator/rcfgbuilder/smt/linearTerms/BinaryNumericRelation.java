@@ -99,7 +99,7 @@ public class BinaryNumericRelation {
 		
 		RelationSymbol relSymb = null;
 		for (RelationSymbol symb : RelationSymbol.values()) {
-			if (functionSymbolName.equals(functionSymbolName)) {
+			if (symb.toString().equals(functionSymbolName)) {
 				relSymb = isNegated ? getNegation(symb) : symb;
 				break;
 			}
