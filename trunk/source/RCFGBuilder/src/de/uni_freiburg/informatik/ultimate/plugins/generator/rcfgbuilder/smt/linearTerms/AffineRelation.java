@@ -73,7 +73,8 @@ public class AffineRelation {
 		Term lhsTerm = Util.sum(script, lhsSummands.toArray(new Term[0]));
 		Term rhsTerm = Util.sum(script, rhsSummands.toArray(new Term[0]));
 		Term result = script.term(m_FunctionSymbolName, lhsTerm, rhsTerm);
-		assert isEquivalent(script, m_OriginalTerm, result) == LBool.UNSAT;
+		assert isEquivalent(script, m_OriginalTerm, result) == LBool.UNSAT : 
+			"transformation to positive normal form unsound";
 		return result;
 	}
 	
