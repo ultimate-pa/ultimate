@@ -440,7 +440,15 @@ public class NestedSsaBuilder {
 					return currentGlobalVarVersion.get(bv);
 				}
 				else {
-					return setCurrentVarVersion(bv, startOfCallingContext);
+					if (modifiedInCurrentCallingContext(bv)) {
+						// this is the assignment at the call position
+						return setCurrentVarVersion(bv, startOfCallingContext);
+					} else {
+						// this global variable is not modified by any procedure
+						// in this trace
+						return setCurrentVarVersion(bv, -1);
+					}
+					
 				}
 			}
 			else { //case varName is no global var
@@ -462,9 +470,15 @@ public class NestedSsaBuilder {
 			if (!bv.isGlobal()) {
 				throw new IllegalArgumentException(bv + " no global var");
 			}
-			assert (bv.isOldvar());
-			boolean isModified = m_ModifiedGlobals.
+			boolean isModified;
+			if (bv.isOldvar()) {
+				isModified = m_ModifiedGlobals.
 					getOldVarsAssignment(m_currentProcedure).getAssignedVars().contains(bv);
+			} else {
+				isModified = m_ModifiedGlobals.
+					getGlobalVarsAssignment(m_currentProcedure).getAssignedVars().contains(bv);
+			}
+			
 			return isModified;
 		}
 
