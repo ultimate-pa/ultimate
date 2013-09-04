@@ -63,10 +63,12 @@ public class AffineRelation {
 				lhsSummands.add(product(script, entry.getValue(), entry.getKey()));
 			}
 		}
-		if (m_AffineTerm.getConstant().isNegative()) {
-			rhsSummands.add(m_AffineTerm.getConstant().abs().toTerm(m_AffineTerm.getSort()));
-		} else {
-			lhsSummands.add(m_AffineTerm.getConstant().toTerm(m_AffineTerm.getSort()));
+		if (m_AffineTerm.getConstant() != Rational.ZERO) {
+			if (m_AffineTerm.getConstant().isNegative()) {
+				rhsSummands.add(m_AffineTerm.getConstant().abs().toTerm(m_AffineTerm.getSort()));
+			} else {
+				lhsSummands.add(m_AffineTerm.getConstant().toTerm(m_AffineTerm.getSort()));
+			}
 		}
 		Term lhsTerm = Util.sum(script, lhsSummands.toArray(new Term[0]));
 		Term rhsTerm = Util.sum(script, rhsSummands.toArray(new Term[0]));
