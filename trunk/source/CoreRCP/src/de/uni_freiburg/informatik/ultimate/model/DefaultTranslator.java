@@ -77,15 +77,17 @@ public class DefaultTranslator<STE, TTE, SE, TE>
 	public <E> TE translateExpressionIteratively(E expr,
 			ITranslator<?, ?, ?, ?>... iTranslators) {
 		TE result;
+		SE expressionOfSourceType;
 		if (iTranslators.length == 0) {
-			result = translateExpression((SE) expr);
+			expressionOfSourceType = (SE) expr;
 		} else {
 			ITranslator<?, ?, E, ?> last = 
 					(ITranslator<?, ?, E, ?>) iTranslators[iTranslators.length-1];
 			ITranslator<?, ?, ?, ?>[] allButLast = 
 					Arrays.copyOf(iTranslators, iTranslators.length-1);
-			result = (TE) last.translateExpressionIteratively(expr, allButLast);
+			expressionOfSourceType = (SE) last.translateExpressionIteratively(expr, allButLast);
 		}
+		result = translateExpression(expressionOfSourceType);
 		return result;
 	}
 
