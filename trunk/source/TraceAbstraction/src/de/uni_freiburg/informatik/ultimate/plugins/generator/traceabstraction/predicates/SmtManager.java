@@ -2244,12 +2244,12 @@ public class SmtManager {
 			Term predicate_renamed = substituteTermVariablesByTerms(substitution, p.getFormula());
 			NOT_tfterm_OR_predicate = Util.or(m_Script, Util.not(m_Script, tf_term_outvars_renamed), predicate_renamed);
 			varsToQuantify.addAll(tf.getAuxVars());
-//			result = DestructiveEqualityResolution.quantifier(m_Script, Script.FORALL,
-//					varsToQuantify.toArray(new TermVariable[varsToQuantify.size()]),
-//					NOT_tfterm_OR_predicate, (Term[][]) null);
-			result = m_Script.quantifier(Script.FORALL,
+			result = DestructiveEqualityResolution.quantifier(m_Script, Script.FORALL,
 					varsToQuantify.toArray(new TermVariable[varsToQuantify.size()]),
 					NOT_tfterm_OR_predicate, (Term[][]) null);
+//			result = m_Script.quantifier(Script.FORALL,
+//					varsToQuantify.toArray(new TermVariable[varsToQuantify.size()]),
+//					NOT_tfterm_OR_predicate, (Term[][]) null);
 		} else {
 			result = NOT_tfterm_OR_predicate;
 		}
