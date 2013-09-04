@@ -38,7 +38,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingCallTrans
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.MinimizeSevpa.ReturnTransition;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 
 /**
@@ -3016,8 +3015,13 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 		 * @return the equivalence class
 		 */
 		private EquivalenceClass addEcIntCall(final EquivalenceClass parent) {
+			Set<STATE> newStates = parent.m_intersection;
+			if (newStates.size() > parent.m_states.size()) {
+				newStates = parent.m_states;
+				parent.m_states = parent.m_intersection;
+			}
 			final EquivalenceClass ec =
-					new EquivalenceClass(parent.m_intersection, parent);
+					new EquivalenceClass(newStates, parent);
 			m_equivalenceClasses.add(ec);
 			for (STATE state : ec.m_states) {
 				m_state2EquivalenceClass.put(state, ec);
