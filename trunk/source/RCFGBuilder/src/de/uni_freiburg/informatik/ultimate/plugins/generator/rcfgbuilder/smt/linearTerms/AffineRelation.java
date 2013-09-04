@@ -58,11 +58,9 @@ public class AffineRelation {
 		List<Term> rhsSummands = new ArrayList<Term>();
 		for(Entry<Term, Rational> entry : m_AffineTerm.getVariable2Coefficient().entrySet()) {
 			if (entry.getValue().isNegative()) {
-				Term coeff = entry.getValue().abs().toTerm(m_AffineTerm.getSort());
-				rhsSummands.add(script.term("*", coeff, entry.getKey()));
+				rhsSummands.add(product(script, entry.getValue().abs(), entry.getKey()));
 			} else {
-				Term coeff = entry.getValue().toTerm(m_AffineTerm.getSort());
-				lhsSummands.add(script.term("*", coeff, entry.getKey()));
+				lhsSummands.add(product(script, entry.getValue(), entry.getKey()));
 			}
 		}
 		if (m_AffineTerm.getConstant().isNegative()) {
