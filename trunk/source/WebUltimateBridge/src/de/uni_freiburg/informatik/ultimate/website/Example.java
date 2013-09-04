@@ -79,10 +79,10 @@ public class Example {
 				new Tasks.TaskNames[] { Tasks.TaskNames.VerifyC }));
 		list.add(new Example("F-91", "f91", "f91.c",
 				new Tasks.TaskNames[] { Tasks.TaskNames.VerifyC }));
-		list.add(new Example("addition correct", "additionCorrect", "additionCorrect.bpl",
-				new Tasks.TaskNames[] { Tasks.TaskNames.VerifyBoogie }));
-		list.add(new Example("addition incorrect", "additionIncorrect", "additionIncorrect.bpl",
-				new Tasks.TaskNames[] { Tasks.TaskNames.VerifyBoogie }));
+//		list.add(new Example("addition correct", "additionCorrect", "additionCorrect.bpl",
+//				new Tasks.TaskNames[] { Tasks.TaskNames.VerifyBoogie }));
+//		list.add(new Example("addition incorrect", "additionIncorrect", "additionIncorrect.bpl",
+//				new Tasks.TaskNames[] { Tasks.TaskNames.VerifyBoogie }));
 		list.add(new Example("Moscow.bpl", "Moscow", "Moscow.bpl",
 				new Tasks.TaskNames[] { Tasks.TaskNames.RANK_SYNTHESIS_BOOGIE }));
 		list.add(new Example("Bangalore.c", "BangaloreC", "Bangalore.c",
@@ -97,6 +97,8 @@ public class Example {
 		addAllFilesInExamplesSubfolder(list, "verifyC/", verifyC);
 		Tasks.TaskNames[] automataScript =  { Tasks.TaskNames.AUTOMATA_SCRIPT };
 		addAllFilesInExamplesSubfolder(list, "AUTOMATA_SCRIPT/", automataScript);
+		Tasks.TaskNames[] verifyBoogie =  { Tasks.TaskNames.VerifyBoogie };
+		addAllFilesInExamplesSubfolder(list, "verifyBoogie/", verifyBoogie);
 		// TODO : add more/new examples here
 		for (Example e : list) {
 			try {
