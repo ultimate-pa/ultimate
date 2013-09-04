@@ -123,15 +123,15 @@ public class CounterExampleResult<P> extends AbstractResult<P> implements IResul
 	@Override
 	public String getLongDescription() {
 		StringBuilder sb = new StringBuilder();
-		sb.append(longDescription);
-		sb.append(System.getProperty("line.separator"));
+//		sb.append(System.getProperty("line.separator"));
 		sb.append("We found a FailurePath: "
 				+ System.getProperty("line.separator"));
-		for (ILocation loc : failurePath) {
-			// TODO: What to show exactly here
-			sb.append(loc.toString());
-			sb.append(System.getProperty("line.separator"));
-		}
+		sb.append(longDescription);
+//		for (ILocation loc : failurePath) {
+//			// TODO: What to show exactly here
+//			sb.append(loc.toString());
+//			sb.append(System.getProperty("line.separator"));
+//		}
 		return sb.toString();
 	}
 
