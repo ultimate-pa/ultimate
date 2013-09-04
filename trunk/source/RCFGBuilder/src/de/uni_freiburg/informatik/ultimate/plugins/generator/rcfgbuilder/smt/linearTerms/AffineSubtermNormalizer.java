@@ -10,7 +10,7 @@ public class AffineSubtermNormalizer extends TermTransformer {
 	private final Script m_Script;
 
 	/**
-	 * Transform all subterm that are an affine relation to positive normal form.
+	 * Transform all subterms that are an affine relation to positive normal form.
 	 */
 	public AffineSubtermNormalizer(Script script) {
 		super();
