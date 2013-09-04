@@ -8,6 +8,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import org.apache.log4j.Logger;
@@ -18,12 +19,14 @@ import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.TransFormula;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
@@ -209,9 +212,36 @@ public class TraceChecker {
 		}
 		if (m_IsSafe==LBool.SAT) {
 			s_Logger.debug("Valuations of some variables");
-			DefaultTransFormulas dtf = new DefaultTransFormulas((NestedWord<CodeBlock>) m_Trace, m_ModifiedGlobals);
+			NestedWord<CodeBlock> nw = (NestedWord<CodeBlock>) m_Trace;
+			DefaultTransFormulas dtf = new DefaultTransFormulas(nw, m_ModifiedGlobals);
 			RelevantVariables relVars = new RelevantVariables(dtf);
 			RcfgProgramExecutionBuilder rpeb = new RcfgProgramExecutionBuilder(m_ModifiedGlobals, (NestedWord<CodeBlock>) m_Trace, relVars);
+			for (int i=0; i<nw.length(); i++) {
+				CodeBlock cb = nw.getSymbolAt(i);
+				TransFormula tf = cb.getTransitionFormulaWithBranchEncoders();
+				if (tf.getBranchEncoders().size() > 0 && false) {
+					ArrayList<Term> beVars = new ArrayList<Term>();
+					for (TermVariable tv : tf.getBranchEncoders()) {
+						String nameOfConstant = NestedSsaBuilder.branchEncoderConstantName(tv, i);
+						beVars.add(m_SmtManager.getScript().term(nameOfConstant));
+					}
+					Map<Term, Term> val = m_SmtManager.getScript().getValue(beVars.toArray(new Term[0]));
+					Map<TermVariable, Boolean> beMapping = new HashMap<TermVariable, Boolean>();
+					for (Entry<Term, Term> entry  : val.entrySet()) {
+						TermVariable tv  = (TermVariable) entry.getKey();
+						Boolean branchTaken;
+						if (entry.getValue().equals(m_SmtManager.getScript().term("true"))) {
+							branchTaken = true;
+						} if  (entry.getValue().equals(m_SmtManager.getScript().term("false"))) {
+							branchTaken = false;
+						} else {
+							throw new AssertionError();
+						}
+						beMapping.put(tv, branchTaken);
+					}
+					rpeb.setBranchEncoders(i, beMapping);
+				}
+			}
 			for (BoogieVar bv : nsb.getIndexedVarRepresentative().keySet()) {
 				for (Integer index : nsb.getIndexedVarRepresentative().get(bv).keySet()) {
 					Term indexedVar = nsb.getIndexedVarRepresentative().get(bv).get(index);

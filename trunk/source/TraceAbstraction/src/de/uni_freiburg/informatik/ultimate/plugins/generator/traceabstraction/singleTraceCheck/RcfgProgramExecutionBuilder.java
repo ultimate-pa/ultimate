@@ -91,6 +91,9 @@ public class RcfgProgramExecutionBuilder {
 		pos2value.put(index, value);
 	}
 	
+	public void setBranchEncoders(int i, Map<TermVariable, Boolean> beMapping) {
+		m_BranchEncoders[i] = beMapping;
+	}
 	
 	private int indexWhereVarWasAssignedTheLastTime(BoogieVar bv, int pos) {
 		assert pos >= -1;
@@ -153,5 +156,9 @@ public class RcfgProgramExecutionBuilder {
 		}
 		return result;
 	}
+
+
+
+
 
 }

@@ -308,7 +308,14 @@ public class NestedSsaBuilder {
 	}
 	
 	
-	
+	/**
+	 * Compute identifier of the Constant that represents the branch encoder tv
+	 * at position pos.
+	 */
+	public static String branchEncoderConstantName(TermVariable tv, int pos) {
+		String name = tv.getName() + "_" + pos;
+		return name;
+	}
 	
 	
 	private Term versioneerPredicate(IPredicate predicate) {
@@ -404,7 +411,7 @@ public class NestedSsaBuilder {
 			ArrayList<TermVariable> replacees = new ArrayList<TermVariable>();
 			ArrayList<Term> replacers = new ArrayList<Term>();
 			for (TermVariable tv : m_BranchEncoders) {
-				String name = tv.getName() + "_" + currentPos;
+				String name = branchEncoderConstantName(tv, currentPos);
 				m_Script.declareFun(name, new Sort[0], tv.getSort());
 				replacees.add(tv);
 				replacers.add(m_Script.term(name));
