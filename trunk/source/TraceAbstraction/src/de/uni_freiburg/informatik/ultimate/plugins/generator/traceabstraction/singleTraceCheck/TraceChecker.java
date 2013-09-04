@@ -211,7 +211,6 @@ public class TraceChecker {
 			}
 		}
 		if (m_IsSafe==LBool.SAT) {
-			s_Logger.debug("Valuations of some variables");
 			NestedWord<CodeBlock> nw = (NestedWord<CodeBlock>) m_Trace;
 			DefaultTransFormulas dtf = new DefaultTransFormulas(nw, m_ModifiedGlobals);
 			RelevantVariables relVars = new RelevantVariables(dtf);
@@ -219,25 +218,14 @@ public class TraceChecker {
 			for (int i=0; i<nw.length(); i++) {
 				CodeBlock cb = nw.getSymbolAt(i);
 				TransFormula tf = cb.getTransitionFormulaWithBranchEncoders();
-				if (tf.getBranchEncoders().size() > 0 && false) {
-					ArrayList<Term> beVars = new ArrayList<Term>();
+				if (tf.getBranchEncoders().size() > 0) {
+					Map<TermVariable, Boolean> beMapping = new HashMap<TermVariable, Boolean>();
 					for (TermVariable tv : tf.getBranchEncoders()) {
 						String nameOfConstant = NestedSsaBuilder.branchEncoderConstantName(tv, i);
-						beVars.add(m_SmtManager.getScript().term(nameOfConstant));
-					}
-					Map<Term, Term> val = m_SmtManager.getScript().getValue(beVars.toArray(new Term[0]));
-					Map<TermVariable, Boolean> beMapping = new HashMap<TermVariable, Boolean>();
-					for (Entry<Term, Term> entry  : val.entrySet()) {
-						TermVariable tv  = (TermVariable) entry.getKey();
-						Boolean branchTaken;
-						if (entry.getValue().equals(m_SmtManager.getScript().term("true"))) {
-							branchTaken = true;
-						} if  (entry.getValue().equals(m_SmtManager.getScript().term("false"))) {
-							branchTaken = false;
-						} else {
-							throw new AssertionError();
-						}
-						beMapping.put(tv, branchTaken);
+						Term indexedBe = m_SmtManager.getScript().term(nameOfConstant);
+						Term value = getValue(indexedBe);
+						Boolean booleanValue = getBooleanValue(value);
+						beMapping.put(tv, booleanValue);
 					}
 					rpeb.setBranchEncoders(i, beMapping);
 				}
@@ -245,9 +233,7 @@ public class TraceChecker {
 			for (BoogieVar bv : nsb.getIndexedVarRepresentative().keySet()) {
 				for (Integer index : nsb.getIndexedVarRepresentative().get(bv).keySet()) {
 					Term indexedVar = nsb.getIndexedVarRepresentative().get(bv).get(index);
-					Term[] indexedVarArr = { indexedVar };
-					Map<Term, Term> val = m_SmtManager.getScript().getValue(indexedVarArr);
-					Term valueT = val.get(indexedVar);
+					Term valueT = getValue(indexedVar);
 					Expression valueE = m_SmtManager.getBoogie2Smt().getSmt2Boogie().translate(valueT);
 					rpeb.addValueAtVarAssignmentPosition(bv, index, valueE);
 				}
@@ -258,7 +244,28 @@ public class TraceChecker {
 	}
 	
 	
+	private Term getValue(Term term) {
+		Term[] arr = { term };
+		Map<Term, Term> map = m_SmtManager.getScript().getValue(arr);
+		Term value = map.get(term);
+		return value;
+	}
 	
+	private Boolean getBooleanValue(Term term) {
+		Boolean result;
+		Term trueTerm = m_SmtManager.getScript().term("true");
+		if (term.equals(trueTerm)) {
+			result = true;
+		} else {
+			Term falseTerm = m_SmtManager.getScript().term("false");
+			if  (term.equals(falseTerm)) {
+				result = false;
+			} else {
+				throw new AssertionError();
+			}
+		}
+		return result;
+	}
 
 	
 	

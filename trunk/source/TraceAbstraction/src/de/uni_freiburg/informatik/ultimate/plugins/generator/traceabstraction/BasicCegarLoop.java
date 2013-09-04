@@ -170,6 +170,9 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 					indentation = indentation.substring(0, indentation.length()-4); 
 				}
 			}
+			
+			s_Logger.info("Trace with values");
+			s_Logger.info(m_TraceChecker.getRcfgProgramExecution());
 			m_FailurePath = m_TraceChecker.getFailurePath();
 			m_RcfgProgramExecution = m_TraceChecker.getRcfgProgramExecution();
 		} else {
