@@ -18,11 +18,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 
 
 
-public class RelevantTransFormulas {
-	/**
-	 * Trace for which the relevant transformula are computed.
-	 */
-	private final NestedWord<CodeBlock> m_NestedTrace;
+public class RelevantTransFormulas extends TraceWithFormulas<TransFormula> {
 	
 	/**
 	 * If index i is an internal position or a return transition in the
@@ -48,7 +44,7 @@ public class RelevantTransFormulas {
 			ModifiableGlobalVariableManager modGlobalVarManager,
 			boolean[] localVarAssignmentsAtCallInUnsatCore,
 			SmtManager smtManager) {
-		m_NestedTrace = nestedTrace;
+		super(nestedTrace);
 		m_TransFormulas = new TransFormula[nestedTrace.length()];
 		m_GlobalOldVarAssignmentTransFormulaAtCall = new HashMap<Integer, TransFormula>();
 		m_SmtManager = smtManager;
@@ -69,31 +65,31 @@ public class RelevantTransFormulas {
 	private void generateRelevantTransFormulas(Set<CodeBlock> unsat_core, 
 			boolean[] localVarAssignmentsAtCallInUnsatCore,
 			ModifiableGlobalVariableManager modGlobalVarManager) {
-		for (int i = 0; i < m_NestedTrace.length(); i++) {
-			if (unsat_core.contains(m_NestedTrace.getSymbol(i))) {
-				if (m_NestedTrace.getSymbol(i) instanceof Call) {
+		for (int i = 0; i < super.getTrace().length(); i++) {
+			if (unsat_core.contains(super.getTrace().getSymbol(i))) {
+				if (super.getTrace().getSymbol(i) instanceof Call) {
 					m_GlobalOldVarAssignmentTransFormulaAtCall.put(i,
-							modGlobalVarManager.getGlobalVarsAssignment(((Call)m_NestedTrace.getSymbol(i)).getCallStatement().getMethodName()));
+							modGlobalVarManager.getGlobalVarsAssignment(((Call)super.getTrace().getSymbol(i)).getCallStatement().getMethodName()));
 					if (localVarAssignmentsAtCallInUnsatCore[i]) {
-						m_TransFormulas[i] = m_NestedTrace.getSymbol(i).getTransitionFormula();
+						m_TransFormulas[i] = super.getTrace().getSymbol(i).getTransitionFormula();
 					} else {
-						m_TransFormulas[i] = buildTransFormulaForStmtNotInUnsatCore(m_NestedTrace.getSymbol(i).getTransitionFormula());
+						m_TransFormulas[i] = buildTransFormulaForStmtNotInUnsatCore(super.getTrace().getSymbol(i).getTransitionFormula());
 					}
 					
 				} else {
-					m_TransFormulas[i] = m_NestedTrace.getSymbol(i).getTransitionFormula();
+					m_TransFormulas[i] = super.getTrace().getSymbol(i).getTransitionFormula();
 				}
 			} else {
-				if (m_NestedTrace.getSymbol(i) instanceof Call) {
+				if (super.getTrace().getSymbol(i) instanceof Call) {
 					if (localVarAssignmentsAtCallInUnsatCore[i]) {
-						m_TransFormulas[i] = m_NestedTrace.getSymbol(i).getTransitionFormula();
+						m_TransFormulas[i] = super.getTrace().getSymbol(i).getTransitionFormula();
 					} else {
-						m_TransFormulas[i] = buildTransFormulaForStmtNotInUnsatCore(m_NestedTrace.getSymbol(i).getTransitionFormula());
+						m_TransFormulas[i] = buildTransFormulaForStmtNotInUnsatCore(super.getTrace().getSymbol(i).getTransitionFormula());
 					}
 					m_GlobalOldVarAssignmentTransFormulaAtCall.put(i, buildTransFormulaForStmtNotInUnsatCore(
-							modGlobalVarManager.getGlobalVarsAssignment(((Call)m_NestedTrace.getSymbol(i)).getCallStatement().getMethodName())));
+							modGlobalVarManager.getGlobalVarsAssignment(((Call)super.getTrace().getSymbol(i)).getCallStatement().getMethodName())));
 				} else {
-					m_TransFormulas[i] = buildTransFormulaForStmtNotInUnsatCore(m_NestedTrace.getSymbol(i).getTransitionFormula());
+					m_TransFormulas[i] = buildTransFormulaForStmtNotInUnsatCore(super.getTrace().getSymbol(i).getTransitionFormula());
 				}
 			}
 		}
@@ -115,6 +111,36 @@ public class RelevantTransFormulas {
 				tf.getBranchEncoders(),
 				tf.isInfeasible(),
 				tf.getClosedFormula());
+	}
+
+	@Override
+	public Set<Integer> callPositions() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	protected TransFormula getFormulaFromValidNonCallPos(int i) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	protected TransFormula getLocalVarAssignmentFromValidPos(int i) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	protected TransFormula getGlobalVarAssignmentFromValidPos(int i) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	protected TransFormula getOldVarAssignmentFromValidPos(int i) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 }

@@ -208,52 +208,53 @@ public class TraceCheckerSpWp extends TraceChecker {
 			// is computed as wp(returnerPred, summaryOfCalledProcedure).
 			Map<Integer, IPredicate> callerPredicatesComputed = new HashMap<Integer, IPredicate>();
 			s_Logger.debug("Computing weakest precondition for given trace ...");
-			if (trace.getSymbol(m_InterpolantsWp.length) instanceof Call) {
-				// TODO: If it is a pending Call, then we probably have computed it already.
-//				
-//				// If the trace contains a Call statement, then it must be a NestedWord
-//				NestedWord<CodeBlock> traceAsNW = ((NestedWord<CodeBlock>) trace);
-//				int retPos = traceAsNW.getReturnPosition(m_InterpolantsWp.length);
-//				IPredicate returnerPred = tracePostcondition;
-//				if (retPos < m_InterpolantsWp.length) {
-//					returnerPred = m_InterpolantsWp[retPos];
-//				}
-//				IPredicate p = m_SmtManager.weakestPrecondition(
-//						tracePostcondition, returnerPred,
-//						(Call) trace.getSymbol(m_InterpolantsWp.length),
-//						(Return) trace.getSymbol(retPos) ,
-//						traceAsNW.isPendingCall(m_InterpolantsWp.length));
-//				m_InterpolantsWp[m_InterpolantsWp.length-1] = m_PredicateUnifier.getOrConstructPredicate(p.getFormula(),
-//						p.getVars(), p.getProcedures());
-//				
-				
-			} else if (trace.getSymbol(m_InterpolantsWp.length) instanceof Return) {
-				int call_pos = ((NestedWord<CodeBlock>)trace).getCallPosition(m_InterpolantsWp.length);
-				TransFormula summary = computeSummaryForTrace(getSubTrace(0, call_pos, trace));
-				IPredicate callerPred = m_SmtManager.strongestPostcondition(m_Precondition, summary);
-				// If the sub-trace between call_pos and returnPos (here: i) is shorter, than compute the
-				// callerPred in this way.
-				TransFormula callTF = ((Return) trace.getSymbol(m_InterpolantsWp.length)).getCorrespondingCall().getTransitionFormula();
-				TransFormula globalVarsAssignments = m_ModifiedGlobals.getGlobalVarsAssignment(((Return) trace.getSymbol(m_InterpolantsWp.length)).getCorrespondingCall().getCallStatement().getMethodName());
-				if ((m_InterpolantsWp.length - call_pos) < call_pos) {
-					summary = computeSummaryForTrace(getSubTrace(call_pos, m_InterpolantsWp.length - 1, trace), callTF,
-							trace.getSymbol(m_InterpolantsWp.length).getTransitionFormula(), globalVarsAssignments);
-					callerPred = m_SmtManager.weakestPrecondition(m_Postcondition, summary);
-				}
-				callerPredicatesComputed.put(call_pos, callerPred);
-				IPredicate p = m_SmtManager.weakestPrecondition(tracePostcondition,
-						callerPred, trace.getSymbol(m_InterpolantsWp.length).getTransitionFormula(),
-						callTF, globalVarsAssignments);
-				m_InterpolantsWp[m_InterpolantsWp.length-1] = m_PredicateUnifier.getOrConstructPredicate(p.getFormula(),
-						p.getVars(), p.getProcedures());
-			}
-			else {
-				IPredicate p = m_SmtManager.weakestPrecondition(
-						tracePostcondition, rv.getRelevantTransFormulaAtPosition(m_InterpolantsWp.length));
-				m_InterpolantsWp[m_InterpolantsWp.length-1] = m_PredicateUnifier.getOrConstructPredicate(p.getFormula(),
-						p.getVars(), p.getProcedures());
-			}
+			if (trace.length() > 1) {
+				if (trace.getSymbol(m_InterpolantsWp.length) instanceof Call) {
+					// TODO: If it is a pending Call, then we probably have computed it already.
+					//				
+					//				// If the trace contains a Call statement, then it must be a NestedWord
+					//				NestedWord<CodeBlock> traceAsNW = ((NestedWord<CodeBlock>) trace);
+					//				int retPos = traceAsNW.getReturnPosition(m_InterpolantsWp.length);
+					//				IPredicate returnerPred = tracePostcondition;
+					//				if (retPos < m_InterpolantsWp.length) {
+					//					returnerPred = m_InterpolantsWp[retPos];
+					//				}
+					//				IPredicate p = m_SmtManager.weakestPrecondition(
+					//						tracePostcondition, returnerPred,
+					//						(Call) trace.getSymbol(m_InterpolantsWp.length),
+					//						(Return) trace.getSymbol(retPos) ,
+					//						traceAsNW.isPendingCall(m_InterpolantsWp.length));
+					//				m_InterpolantsWp[m_InterpolantsWp.length-1] = m_PredicateUnifier.getOrConstructPredicate(p.getFormula(),
+					//						p.getVars(), p.getProcedures());
+					//				
 
+				} else if (trace.getSymbol(m_InterpolantsWp.length) instanceof Return) {
+					int call_pos = ((NestedWord<CodeBlock>)trace).getCallPosition(m_InterpolantsWp.length);
+					TransFormula summary = computeSummaryForTrace(getSubTrace(0, call_pos, trace));
+					IPredicate callerPred = m_SmtManager.strongestPostcondition(m_Precondition, summary);
+					// If the sub-trace between call_pos and returnPos (here: i) is shorter, than compute the
+					// callerPred in this way.
+					TransFormula callTF = ((Return) trace.getSymbol(m_InterpolantsWp.length)).getCorrespondingCall().getTransitionFormula();
+					TransFormula globalVarsAssignments = m_ModifiedGlobals.getGlobalVarsAssignment(((Return) trace.getSymbol(m_InterpolantsWp.length)).getCorrespondingCall().getCallStatement().getMethodName());
+					if ((m_InterpolantsWp.length - call_pos) < call_pos) {
+						summary = computeSummaryForTrace(getSubTrace(call_pos, m_InterpolantsWp.length - 1, trace), callTF,
+								trace.getSymbol(m_InterpolantsWp.length).getTransitionFormula(), globalVarsAssignments);
+						callerPred = m_SmtManager.weakestPrecondition(m_Postcondition, summary);
+					}
+					callerPredicatesComputed.put(call_pos, callerPred);
+					IPredicate p = m_SmtManager.weakestPrecondition(tracePostcondition,
+							callerPred, trace.getSymbol(m_InterpolantsWp.length).getTransitionFormula(),
+							callTF, globalVarsAssignments);
+					m_InterpolantsWp[m_InterpolantsWp.length-1] = m_PredicateUnifier.getOrConstructPredicate(p.getFormula(),
+							p.getVars(), p.getProcedures());
+				}
+				else {
+					IPredicate p = m_SmtManager.weakestPrecondition(
+							tracePostcondition, rv.getRelevantTransFormulaAtPosition(m_InterpolantsWp.length));
+					m_InterpolantsWp[m_InterpolantsWp.length-1] = m_PredicateUnifier.getOrConstructPredicate(p.getFormula(),
+							p.getVars(), p.getProcedures());
+				}
+			}
 			for (int i=m_InterpolantsWp.length-2; i>=0; i--) {
 				if (trace.getSymbol(i+1) instanceof Call) {
 					if (callerPredicatesComputed.containsKey(i+1)) {
@@ -262,7 +263,8 @@ public class TraceCheckerSpWp extends TraceChecker {
 								p.getVars(), p.getProcedures());
 					} else {
 						// TODO: This case is only relevant for pending calls.
-						throw new AssertionError("Predicate for Call is not computed, this shouldn't happen!");
+						throw new AssertionError("Predicate for Call is not computed, this is a pending-call.\n"
+								+"WP for pending-call is not yet implemented!");
 					}
 				} else if (trace.getSymbol(i+1) instanceof Return) {
 					int call_pos = ((NestedWord<CodeBlock>)trace).getCallPosition(i+1);

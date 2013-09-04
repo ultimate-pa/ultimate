@@ -2372,20 +2372,27 @@ public class SmtManager {
 		
 		Map<TermVariable, Term> varsToRenameInCallerAndReturnPred = new HashMap<TermVariable, Term>();
 		Map<TermVariable, Term> inVarsOfCallToRename = new HashMap<TermVariable, Term>();
+		Map<TermVariable, Term> varsToRenameInCallerPred = new HashMap<TermVariable, Term>();
 		Set<TermVariable> varsToQuantify = new HashSet<TermVariable>();
 		// 1. Compute those global variable assignments, i.e. x_global = old(x_global) if x_global is
 		// a global variable.
-		Set<BoogieVar> modifiableGlobalVarsAsBoogieVars = globalVarsAssignments.getAssignedVars();
+//		Set<BoogieVar> modifiableGlobalVarsAsBoogieVars = globalVarsAssignments.getAssignedVars();
 		// 1.1 Rename the invars in global variable assignments.
 		Map<TermVariable, Term> substitution = new HashMap<TermVariable, Term>();
 		for (BoogieVar bv : globalVarsAssignments.getInVars().keySet()) {
+			TermVariable freshVar = getFreshTermVariable(bv.getIdentifier(), bv.getTermVariable().getSort());
+			varsToRenameInCallerPred.put(bv.getTermVariable(), freshVar);
+			varsToQuantify.add(freshVar);
 			substitution.put(globalVarsAssignments.getInVars().get(bv), bv.getTermVariable());
 		}
 		Term globalVarsInvarsRenamed = new Substitution(substitution, m_Script).transform(globalVarsAssignments.getFormula());
 		// 1.2 Rename the outvars in global variable assignments.
 		substitution.clear();
 		for (BoogieVar bv : globalVarsAssignments.getOutVars().keySet()) {
-			substitution.put(globalVarsAssignments.getOutVars().get(bv), bv.getTermVariable());
+			TermVariable freshVar = getFreshTermVariable(bv.getIdentifier(), bv.getTermVariable().getSort());
+//			varsToRenameInCallerAndReturnPred.put(bv.getTermVariable(), freshVar);
+//			varsToQuantify.add(freshVar);
+			substitution.put(globalVarsAssignments.getOutVars().get(bv), freshVar);
 		}
 		
 		Term globalVars_InVarsRenamed_OutVarsRenamed = new Substitution(substitution, m_Script).transform(globalVarsInvarsRenamed);
@@ -2401,13 +2408,13 @@ public class SmtManager {
 		substitution.clear();
 		// 2.2 We rename the outvars to freshvars and quantify them
 		for (BoogieVar bv : returnTF.getOutVars().keySet()) {
-//			if (callerPred.getVars().contains(bv) || returnerPred.getVars().contains(bv)) {
+			if (globalVarsAssignments.getAssignedVars().contains(bv)) {
+				// TODO:
+			}
 			TermVariable freshVar = getFreshTermVariable(bv.getIdentifier(), bv.getTermVariable().getSort());
 			varsToRenameInCallerAndReturnPred.put(bv.getTermVariable(), freshVar);
 			substitution.put(returnTF.getOutVars().get(bv), freshVar);
 			varsToQuantify.add(freshVar);
-//			} else {
-//			}
 		}
 		Term retTermInVarsRenamedOutVarsToFreshVars = substituteTermVariablesByTerms(substitution, retTermInVarsRenamed);
 		// Rename the invars of the Call and quantify them
@@ -2438,7 +2445,10 @@ public class SmtManager {
 		// Quantify all the other local vars.
 		for (BoogieVar bv : returnerPred.getVars()) {
 			if (!varsToRenameInCallerAndReturnPred.containsKey(bv.getTermVariable())) {
-				varsToQuantify.add(bv.getTermVariable());
+				if (!(globalVarsAssignments.getInVars().keySet().contains(bv)) 
+						&& !(globalVarsAssignments.getOutVars().keySet().contains(bv))) {
+					varsToQuantify.add(bv.getTermVariable());
+				}
 			}
 		}
 		for (BoogieVar bv : callerPred.getVars()) {
@@ -2450,9 +2460,11 @@ public class SmtManager {
 		// Add aux vars to quantify them
 		varsToQuantify.addAll(callTF.getAuxVars());
 
-		Term callerPredANDCallANDReturn = Util.and(m_Script, callerPredRenamed, retTermInVarsRenamedOutVarsToFreshVars, callTFRenamed);
+		Term callerPredANDCallANDReturnAndGlobalVars = Util.and(m_Script, callerPredRenamed,
+				retTermInVarsRenamedOutVarsToFreshVars, callTFRenamed,
+				globalVars_InVarsRenamed_OutVarsRenamed);
 		
-		Term result = Util.or(m_Script, Util.not(m_Script, callerPredANDCallANDReturn), retPredRenamed);
+		Term result = Util.or(m_Script, Util.not(m_Script, callerPredANDCallANDReturnAndGlobalVars), retPredRenamed);
 		Term resultQuantified = result;
 		varsToQuantify.addAll(returnTF.getAuxVars());
 		varsToQuantify.addAll(callTF.getAuxVars());
