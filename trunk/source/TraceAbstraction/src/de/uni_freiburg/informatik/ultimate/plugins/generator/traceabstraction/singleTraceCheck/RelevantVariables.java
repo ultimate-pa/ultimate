@@ -13,6 +13,8 @@ public class RelevantVariables {
 
 	public final TraceWithFormulas<TransFormula> m_TraceWithFormulas;
 	public final Set<BoogieVar>[] m_ForwardRelevantVariables;
+	public final Set<BoogieVar>[] m_BackwardRelevantVariables;
+	public final Set<BoogieVar>[] m_RelevantVariables;
 	
 	@SuppressWarnings("unchecked")
 	public RelevantVariables(TraceWithFormulas<TransFormula> traceWithFormulas) {
@@ -20,11 +22,31 @@ public class RelevantVariables {
 		m_TraceWithFormulas = traceWithFormulas;
 		m_ForwardRelevantVariables = new Set[m_TraceWithFormulas.getTrace().length()+1];
 		computeForwardRelevantVariables();
+		m_BackwardRelevantVariables = new Set[m_TraceWithFormulas.getTrace().length()+1];
+		computeBackwardRelevantVariables();
+		m_RelevantVariables = new Set[m_TraceWithFormulas.getTrace().length()+1];
+		computeRelevantVariables();
 	}
 	
 	public Set<BoogieVar>[] getForwardRelevantVariables() {
 		return m_ForwardRelevantVariables;
 	}
+
+	public Set<BoogieVar>[] getBackwardRelevantVariables() {
+		return m_BackwardRelevantVariables;
+	}
+
+	public Set<BoogieVar>[] getRelevantVariables() {
+		return m_RelevantVariables;
+	}
+
+	private void computeRelevantVariables() {
+		for (int i=0; i<=m_TraceWithFormulas.getTrace().length(); i++) {
+			m_RelevantVariables[i] = new HashSet<BoogieVar>(m_ForwardRelevantVariables[i]);
+			m_RelevantVariables[i].retainAll(m_BackwardRelevantVariables[i]);
+		}
+	}
+	
 
 	private void computeForwardRelevantVariables() {
 		assert m_ForwardRelevantVariables[0] == null : "already computed";
@@ -113,7 +135,122 @@ public class RelevantVariables {
 			result.add(bv);
 		}
 		return result;
+	}
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	private void computeBackwardRelevantVariables() {
+		assert m_BackwardRelevantVariables[m_TraceWithFormulas.getTrace().length()] == null : "already computed";
+		m_BackwardRelevantVariables[m_TraceWithFormulas.getTrace().length()] = Collections.emptySet();
+		for (int i=m_TraceWithFormulas.getTrace().length()-1; i>=0; i--) {
+			assert m_BackwardRelevantVariables[i] == null : "already computed";
+			m_BackwardRelevantVariables[i] = computeBackwardRelevantVariables(i);
+		}
+	}
+	
+	private Set<BoogieVar> computeBackwardRelevantVariables(int i) {
+		Set<BoogieVar> result;
+		Set<BoogieVar> currentRelevantVariables = m_BackwardRelevantVariables[i+1];
+		if (m_TraceWithFormulas.getTrace().isInternalPosition(i)) {
+			TransFormula tf = m_TraceWithFormulas.getFormulaFromNonCallPos(i);
+			result = computePredecessorRvInternal(currentRelevantVariables,tf);
+		} else if (m_TraceWithFormulas.getTrace().isCallPosition(i)) {
+			int correspondingReturnPosition = m_TraceWithFormulas.getTrace().getReturnPosition(i);
+			TransFormula localVarAssignment = m_TraceWithFormulas.getLocalVarAssignment(i);
+			Set<BoogieVar> relevantVariablesAfterReturn = 
+					m_BackwardRelevantVariables[correspondingReturnPosition];
+			result = computePredecessorRvCall(currentRelevantVariables, 
+					relevantVariablesAfterReturn, localVarAssignment);
+		} else if (m_TraceWithFormulas.getTrace().isReturnPosition(i)) {
+			int correspondingReturnPosition = m_TraceWithFormulas.getTrace().getReturnPosition(i);
+			TransFormula oldVarAssignment =m_TraceWithFormulas.getOldVarAssignment(correspondingReturnPosition);
+			TransFormula tfReturn = m_TraceWithFormulas.getFormulaFromNonCallPos(i);
+			result = computePredecessorRvReturn(currentRelevantVariables, 
+					tfReturn, oldVarAssignment);
+		} else {
+			throw new AssertionError();
+		}
+		return result;
+	}
+	
+	private Set<BoogieVar> computePredecessorRvInternal(Set<BoogieVar> succRv, TransFormula tf) {
+		Set<BoogieVar> result = new HashSet<BoogieVar>(succRv.size());
+		for (BoogieVar bv : succRv) {
+			if (!isHavoced(bv,tf)) {
+				result.add(bv);
+			}
+		}
+		if (true || containsSomeNonHavocedOutVar(succRv, tf)) {
+			result.addAll(tf.getInVars().keySet());
+		}
+		return result;
+	}
+	
+	private boolean containsSomeNonHavocedOutVar(Set<BoogieVar> bvs, TransFormula tf) {
+		for (BoogieVar bv : tf.getOutVars().keySet()) {
+			if (!isHavoced(bv, tf) &&  bvs.contains(bv)) {
+				return true;
+			}
+		}
+		return false;
+	}
+	
+	private Set<BoogieVar> computePredecessorRvCall(Set<BoogieVar> callPredRv, 
+			Set<BoogieVar> returnPredRv,
+			TransFormula localVarAssignment) {
+		Set<BoogieVar> result = new HashSet<BoogieVar>();
+		result.addAll(returnPredRv);
+		result.addAll(localVarAssignment.getInVars().keySet());
+		for (BoogieVar bv : callPredRv) {
+			if (bv.isGlobal()) {
+				result.add(bv);
+			}
+		}
+		return result;
+	}
+	
+	
+	private Set<BoogieVar> computePredecessorRvReturn(Set<BoogieVar> returnSuccRv,
+			TransFormula localVarAssignment,
+			TransFormula oldVarAssignment) {
+		Set<BoogieVar> result = new HashSet<BoogieVar>(returnSuccRv.size());
+		for (BoogieVar bv : returnSuccRv) {
+			if (bv.isGlobal()) {
+				result.add(bv);
+			} else {
+				//do nothing
+			}
+		}
+		if (true || containsSomeNonHavocedOutVar(returnSuccRv, localVarAssignment)) {
+			result.addAll(localVarAssignment.getInVars().keySet());
+		}
+		result.addAll(oldVarAssignment.getInVars().keySet());
+		result.addAll(oldVarAssignment.getOutVars().keySet());
+		return result;
 	}	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
 	
 	
 	
