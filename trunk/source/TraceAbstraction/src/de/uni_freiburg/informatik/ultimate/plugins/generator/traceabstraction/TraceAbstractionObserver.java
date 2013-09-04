@@ -31,6 +31,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Ab
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.result.CounterExampleResult;
 import de.uni_freiburg.informatik.ultimate.result.GenericResult;
+import de.uni_freiburg.informatik.ultimate.result.IProgramExecution;
 import de.uni_freiburg.informatik.ultimate.result.IResult;
 import de.uni_freiburg.informatik.ultimate.result.InvariantResult;
 import de.uni_freiburg.informatik.ultimate.result.PositiveResult;
@@ -264,7 +265,7 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 			{
 				List<CodeBlock> errorTrace = abstractCegarLoop.getFailurePath();
 				reportCounterexampleResult(errorTrace.get(errorTrace.size()-1),
-						AbstractCegarLoop.trace2path(errorTrace));
+						AbstractCegarLoop.trace2path(errorTrace), abstractCegarLoop.getRcfgProgramExecution());
 				m_OverallResult = result;
 				break;
 			}
@@ -346,7 +347,8 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 		}
 	}
 	
-	private void reportCounterexampleResult(CodeBlock position, List<ILocation> failurePath) {
+	private void reportCounterexampleResult(CodeBlock position, List<ILocation> failurePath, 
+			IProgramExecution<CodeBlock, Expression> pe) {
 		ILocation errorLoc = failurePath.get(failurePath.size()-1);
 		ILocation origin = errorLoc.getOrigin();
 		CounterExampleResult<RcfgElement> ctxRes = new CounterExampleResult<RcfgElement>(
@@ -358,7 +360,7 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 		String ctxMessage = origin.checkedSpecification().getNegativeMessage();
 		ctxRes.setShortDescription(ctxMessage);		
 		ctxMessage += " (line " + origin.getStartLine() + ")";
-		ctxRes.setLongDescription(failurePath.toString());
+		ctxRes.setLongDescription(pe.toString());
 		reportResult(ctxRes);
 		s_Logger.warn(ctxMessage);
 	}

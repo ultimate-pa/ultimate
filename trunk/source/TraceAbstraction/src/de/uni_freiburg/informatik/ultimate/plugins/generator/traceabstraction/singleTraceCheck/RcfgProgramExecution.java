@@ -3,6 +3,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.s
 import java.util.List;
 import java.util.Map;
 
+import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.BoogieStatementPrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
@@ -12,15 +13,23 @@ public class RcfgProgramExecution implements IProgramExecution<CodeBlock, Expres
 	
 	private final List<CodeBlock> m_Trace;
 	private final Map<Integer, ProgramState<Expression>> m_PartialProgramStateMapping;
+	private final Map<TermVariable, Boolean>[] m_BranchEncoders;
 	
 	
 
 	public RcfgProgramExecution(
 			List<CodeBlock> trace,
-			Map<Integer, ProgramState<Expression>> partialProgramStateMapping) {
+			Map<Integer, ProgramState<Expression>> partialProgramStateMapping,
+			Map<TermVariable, Boolean>[] branchEncoders) {
 		super();
 		m_Trace = trace;
 		m_PartialProgramStateMapping = partialProgramStateMapping;
+		m_BranchEncoders = branchEncoders;
+	}
+	
+
+	public Map<TermVariable, Boolean>[] getBranchEncoders() {
+		return m_BranchEncoders;
 	}
 
 	@Override

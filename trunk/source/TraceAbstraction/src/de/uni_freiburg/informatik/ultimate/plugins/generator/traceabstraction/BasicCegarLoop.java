@@ -171,6 +171,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 				}
 			}
 			m_FailurePath = m_TraceChecker.getFailurePath();
+			m_RcfgProgramExecution = m_TraceChecker.getRcfgProgramExecution();
 		} else {
 			AllIntegers allInt = new TraceChecker.AllIntegers();
 			PredicateUnifier predicateUnifier = new PredicateUnifier(m_SmtManager,

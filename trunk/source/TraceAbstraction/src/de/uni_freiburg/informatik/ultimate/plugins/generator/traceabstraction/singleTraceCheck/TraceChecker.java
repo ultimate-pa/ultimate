@@ -27,7 +27,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Ret
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
-import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
 
 
 /**
@@ -116,6 +115,7 @@ public class TraceChecker {
 	
 	protected LBool m_IsSafe;
 	protected IPredicate[] m_Interpolants;
+	protected RcfgProgramExecution m_RcfgProgramExecution;
 	
 	
 	
@@ -209,9 +209,6 @@ public class TraceChecker {
 		}
 		if (m_IsSafe==LBool.SAT) {
 			s_Logger.debug("Valuations of some variables");
-			HashSet<Term> terms = new HashSet<Term>();
-			//			for (Term t : ssa.getConstants2BoogieVar().keySet())
-
 			DefaultTransFormulas dtf = new DefaultTransFormulas((NestedWord<CodeBlock>) m_Trace, m_ModifiedGlobals);
 			RelevantVariables relVars = new RelevantVariables(dtf);
 			RcfgProgramExecutionBuilder rpeb = new RcfgProgramExecutionBuilder(m_ModifiedGlobals, (NestedWord<CodeBlock>) m_Trace, relVars);
@@ -225,28 +222,7 @@ public class TraceChecker {
 					rpeb.addValueAtVarAssignmentPosition(bv, index, valueE);
 				}
 			}
-			RcfgProgramExecution rpe = rpeb.getRcfgProgramExecution();
-			rpe.toString();
-			
-			for (Map<Integer, Term> index2term : nsb.getIndexedVarRepresentative().values()) {
-				for (Term t : index2term.values()) { 
-					if (!t.getSort().isArraySort()) {
-						terms.add(t);
-					}
-					Term[] allTerms = terms.toArray(new Term[terms.size()]);
-					if (allTerms.length > 0) {
-						try {
-							Map<Term, Term> val = m_SmtManager.getScript().getValue(allTerms);
-							for (Term term : allTerms) {
-								s_Logger.debug(new DebugMessage("Value of {0}: {1}", term, val.get(term)));
-							}
-						} catch (SMTLIBException e) {
-							s_Logger.debug("Valuation not available.");
-							s_Logger.debug(e.getMessage());
-						}
-					}
-				}
-			}
+			m_RcfgProgramExecution = rpeb.getRcfgProgramExecution();
 		}
 		return m_IsSafe;
 	}
@@ -318,6 +294,16 @@ public class TraceChecker {
 		assert m_Interpolants.length == m_Trace.length()-1;
 		return m_Interpolants;
 	}
+	
+
+	public RcfgProgramExecution getRcfgProgramExecution() {
+		if (m_IsSafe == LBool.SAT || m_IsSafe == LBool.UNKNOWN) {
+			return m_RcfgProgramExecution;
+		} else {
+			throw new AssertionError("only available if trace is feasible");
+		}
+	}
+
 
 	/**
 	 * Use tree interpolants to compute nested interpolants.

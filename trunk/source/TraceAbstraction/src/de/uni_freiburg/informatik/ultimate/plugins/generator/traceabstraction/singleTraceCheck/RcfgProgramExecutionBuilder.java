@@ -10,6 +10,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
+import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IdentifierExpression;
@@ -27,6 +28,7 @@ public class RcfgProgramExecutionBuilder {
 	private final Map<BoogieVar,Map<Integer, Expression>> m_var2pos2value;
 	private final RelevantVariables m_RelevantVariables;
 	private RcfgProgramExecution m_RcfgProgramExecution;
+	private final Map<TermVariable, Boolean>[] m_BranchEncoders;
 	
 	
 	
@@ -39,6 +41,7 @@ public class RcfgProgramExecutionBuilder {
 		m_Trace = trace;
 		m_var2pos2value = new HashMap<BoogieVar, Map<Integer, Expression>>();
 		m_RelevantVariables = relevantVariables;
+		m_BranchEncoders = new Map[m_Trace.length()];
 		m_RcfgProgramExecution = null;
 	}
 	
@@ -139,7 +142,7 @@ public class RcfgProgramExecutionBuilder {
 			ProgramState<Expression> pps = new ProgramState<Expression>(variable2Values);
 			partialProgramStateMapping.put(i, pps);
 		}
-		return new RcfgProgramExecution(nestedWord2list(m_Trace), partialProgramStateMapping);
+		return new RcfgProgramExecution(nestedWord2list(m_Trace), partialProgramStateMapping, m_BranchEncoders);
 		
 	}
 	
