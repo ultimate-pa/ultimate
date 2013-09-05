@@ -1,36 +1,35 @@
-package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck;
+package de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.boogie;
 
+import java.util.AbstractMap.SimpleEntry;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.model.ILocation;
+import de.uni_freiburg.informatik.ultimate.model.IType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.wrapper.ASTNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.BoogieStatementPrettyPrinter;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.result.IProgramExecution;
+import de.uni_freiburg.informatik.ultimate.result.IValuation;
 
-public class RcfgProgramExecution implements IProgramExecution<CodeBlock, Expression> {
+public class BoogieProgramExecution implements IProgramExecution<ASTNode, Expression> {
 	
-	private final List<CodeBlock> m_Trace;
+	private final List<Statement> m_Trace;
 	private final Map<Integer, ProgramState<Expression>> m_PartialProgramStateMapping;
-	private final Map<TermVariable, Boolean>[] m_BranchEncoders;
 	
 	
 
-	public RcfgProgramExecution(
-			List<CodeBlock> trace,
-			Map<Integer, ProgramState<Expression>> partialProgramStateMapping,
-			Map<TermVariable, Boolean>[] branchEncoders) {
+	public BoogieProgramExecution(
+			List<Statement> trace,
+			Map<Integer, ProgramState<Expression>> partialProgramStateMapping) {
 		super();
 		m_Trace = trace;
 		m_PartialProgramStateMapping = partialProgramStateMapping;
-		m_BranchEncoders = branchEncoders;
 	}
 	
-
-	public Map<TermVariable, Boolean>[] getBranchEncoders() {
-		return m_BranchEncoders;
-	}
 
 	@Override
 	public int getLength() {
@@ -38,7 +37,7 @@ public class RcfgProgramExecution implements IProgramExecution<CodeBlock, Expres
 	}
 
 	@Override
-	public CodeBlock getTraceElement(int i) {
+	public Statement getTraceElement(int i) {
 		return m_Trace.get(i);
 	}
 
@@ -83,7 +82,7 @@ public class RcfgProgramExecution implements IProgramExecution<CodeBlock, Expres
 			sb.append("statement");
 			sb.append(i);
 			sb.append(": ");
-			sb.append(m_Trace.get(i).toString());
+			sb.append(BoogieStatementPrettyPrinter.print(m_Trace.get(i)));
 			sb.append(System.getProperty("line.separator"));
 			sb.append("values");
 			sb.append(i);
@@ -92,6 +91,38 @@ public class RcfgProgramExecution implements IProgramExecution<CodeBlock, Expres
 			sb.append(System.getProperty("line.separator"));
 		}
 		return sb.toString();
+	}
+	
+	public List<ILocation> getLocationSequence() {
+		List<ILocation> result = new ArrayList<ILocation>();
+		for (int i=0; i<m_Trace.size(); i++) {
+			Statement st = m_Trace.get(i);
+			result.add(st.getLocation());
+		}
+		return result;
+	}
+	
+	public class IValuationWrapper implements IValuation {
+
+		@Override
+		public Map<String, SimpleEntry<IType, List<String>>> getValuesForFailurePathIndex(
+				int index) {
+			ProgramState<Expression> ps = getProgramState(index);
+			if (ps == null) {
+				return getEmtpyProgramState();
+			} else {
+				return translateProgramState(ps);
+			}
+		}
+		
+		public Map<String, SimpleEntry<IType, List<String>>> getEmtpyProgramState() {
+			return Collections.emptyMap();
+		}
+		
+		public Map<String, SimpleEntry<IType, List<String>>> translateProgramState(ProgramState<Expression> ps) {
+			return null;
+		}
+		
 	}
 
 }

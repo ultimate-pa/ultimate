@@ -17,7 +17,10 @@ import de.uni_freiburg.informatik.ultimate.model.ILocation;
 import de.uni_freiburg.informatik.ultimate.model.ITranslator;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Procedure;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.wrapper.ASTNode;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.Backtranslator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.BoogieStatementPrettyPrinter;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.boogie.BoogieProgramExecution;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGNode;
@@ -348,19 +351,23 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 	}
 	
 	private void reportCounterexampleResult(CodeBlock position, List<ILocation> failurePath, 
-			IProgramExecution<CodeBlock, Expression> pe) {
+			IProgramExecution<RcfgElement, Expression> pe) {
 		ILocation errorLoc = failurePath.get(failurePath.size()-1);
 		ILocation origin = errorLoc.getOrigin();
+		
+		List<ITranslator<?, ?, ?, ?>> translatorSequence = UltimateServices.getInstance().getTranslatorSequence();
 		CounterExampleResult<RcfgElement> ctxRes = new CounterExampleResult<RcfgElement>(
 				position,
 				Activator.s_PLUGIN_NAME,
-				UltimateServices.getInstance().getTranslatorSequence(),
+				translatorSequence,
 				origin, null);
 		ctxRes.setFailurePath(failurePath);
 		String ctxMessage = origin.checkedSpecification().getNegativeMessage();
 		ctxRes.setShortDescription(ctxMessage);		
 		ctxMessage += " (line " + origin.getStartLine() + ")";
-		ctxRes.setLongDescription(pe.toString());
+		Backtranslator backtrans = (Backtranslator) translatorSequence.get(translatorSequence.size()-1);
+		BoogieProgramExecution bpe = (BoogieProgramExecution) backtrans.translateProgramExecution(pe);
+		ctxRes.setLongDescription(bpe.toString());
 		reportResult(ctxRes);
 		s_Logger.warn(ctxMessage);
 	}
