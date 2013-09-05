@@ -168,12 +168,16 @@ public class RelevantVariables {
 			TransFormula tf = m_TraceWithFormulas.getFormulaFromNonCallPos(i);
 			result = computePredecessorRvInternal(currentRelevantVariables,tf);
 		} else if (m_TraceWithFormulas.getTrace().isCallPosition(i)) {
-			int correspondingReturnPosition = m_TraceWithFormulas.getTrace().getReturnPosition(i);
 			TransFormula localVarAssignment = m_TraceWithFormulas.getLocalVarAssignment(i);
-			Set<BoogieVar> relevantVariablesAfterReturn = 
-					m_BackwardRelevantVariables[correspondingReturnPosition];
-			result = computePredecessorRvCall(currentRelevantVariables, 
-					relevantVariablesAfterReturn, localVarAssignment);
+			if (m_TraceWithFormulas.getTrace().isPendingCall(i)) {
+				result = computePredecessorRvCall_Pending(currentRelevantVariables, localVarAssignment);
+			} else {
+				int correspondingReturnPosition = m_TraceWithFormulas.getTrace().getReturnPosition(i);
+				Set<BoogieVar> relevantVariablesAfterReturn = 
+						m_BackwardRelevantVariables[correspondingReturnPosition];
+				result = computePredecessorRvCall_NonPending(currentRelevantVariables, 
+						relevantVariablesAfterReturn, localVarAssignment);
+			}
 		} else if (m_TraceWithFormulas.getTrace().isReturnPosition(i)) {
 			int correspondingReturnPosition = m_TraceWithFormulas.getTrace().getCallPosition(i);
 			TransFormula oldVarAssignment =m_TraceWithFormulas.getOldVarAssignment(correspondingReturnPosition);
@@ -208,7 +212,7 @@ public class RelevantVariables {
 		return false;
 	}
 	
-	private Set<BoogieVar> computePredecessorRvCall(Set<BoogieVar> callPredRv, 
+	private Set<BoogieVar> computePredecessorRvCall_NonPending(Set<BoogieVar> callPredRv, 
 			Set<BoogieVar> returnPredRv,
 			TransFormula localVarAssignment) {
 		Set<BoogieVar> result = new HashSet<BoogieVar>();
@@ -219,6 +223,19 @@ public class RelevantVariables {
 				result.add(bv);
 			}
 		}
+		return result;
+	}
+	
+	private Set<BoogieVar> computePredecessorRvCall_Pending(Set<BoogieVar> callPredRv,
+			TransFormula localVarAssignment) {
+		Set<BoogieVar> result = new HashSet<BoogieVar>();
+		result.addAll(localVarAssignment.getInVars().keySet());
+		for (BoogieVar bv : callPredRv) {
+			if (bv.isGlobal()) {
+				result.add(bv);
+			}
+		}
+		
 		return result;
 	}
 	
