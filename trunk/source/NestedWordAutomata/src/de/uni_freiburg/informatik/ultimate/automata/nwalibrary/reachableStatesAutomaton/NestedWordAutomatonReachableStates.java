@@ -1844,7 +1844,7 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 				boolean isGuaranteedPred = isGuaranteedSucc;
 				isGuaranteedPred = isGuaranteedPred || isFinal(predSc.getState());
 				if (type == InCaRe.SUMMARY) {
-					isGuaranteedPred = isGuaranteedSucc || isAcceptingSummary(predSc, succSc);
+					isGuaranteedPred = isGuaranteedPred || isAcceptingSummary(predSc, succSc);
 				}
 				if (alreadyVisited(predSc, summaryUsed, isGuaranteedPred)) {
 					return null;
