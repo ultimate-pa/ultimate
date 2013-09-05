@@ -1,29 +1,24 @@
-// Author: Christian Schilling
+// Author: Christian Schilling and Matthias Heizmann
 // Date: 5.9.2013
 
-print(shrinkNwa(reachableStatesCopy(nwa)));
+removeUnreachable(nwa);
 
 NestedWordAutomaton nwa = (
-	callAlphabet = {c},
-	internalAlphabet = {i},
-	returnAlphabet = {r},
-	states = {q1 q2 q3 q4 q5 q6},
-	initialStates = {q1},
-	finalStates = {q4 q5},
+	callAlphabet = {"c" },
+	internalAlphabet = {"i" },
+	returnAlphabet = {"r" },
+	states = {q2 q0 q1 },
+	initialStates = {q0 },
+	finalStates = {q2 },
 	callTransitions = {
-		(q1 c q3)
-		(q2 c q3)
-		(q4 c q6)
-		(q5 c q6)
+		 (q2 "c" q1)
+		 (q0 "c" q1)
 	},
 	internalTransitions = {
-		(q1 i q2)
-		(q2 i q2)
+// 		 (q0 "i" q0)
 	},
 	returnTransitions = {
-		(q3 q1 r q4)
-		(q3 q2 r q5)
-		(q6 q4 r q1)
-		(q6 q5 r q2)
+		 (q1 q2 "r" q0)
+		 (q1 q0 "r" q2)
 	}
 );
