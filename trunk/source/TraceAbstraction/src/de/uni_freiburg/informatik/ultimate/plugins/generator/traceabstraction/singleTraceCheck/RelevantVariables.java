@@ -175,7 +175,7 @@ public class RelevantVariables {
 			result = computePredecessorRvCall(currentRelevantVariables, 
 					relevantVariablesAfterReturn, localVarAssignment);
 		} else if (m_TraceWithFormulas.getTrace().isReturnPosition(i)) {
-			int correspondingReturnPosition = m_TraceWithFormulas.getTrace().getReturnPosition(i);
+			int correspondingReturnPosition = m_TraceWithFormulas.getTrace().getCallPosition(i);
 			TransFormula oldVarAssignment =m_TraceWithFormulas.getOldVarAssignment(correspondingReturnPosition);
 			TransFormula tfReturn = m_TraceWithFormulas.getFormulaFromNonCallPos(i);
 			result = computePredecessorRvReturn(currentRelevantVariables, 
