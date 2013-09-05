@@ -361,13 +361,14 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 				Activator.s_PLUGIN_NAME,
 				translatorSequence,
 				origin, null);
-		ctxRes.setFailurePath(failurePath);
 		String ctxMessage = origin.checkedSpecification().getNegativeMessage();
 		ctxRes.setShortDescription(ctxMessage);		
 		ctxMessage += " (line " + origin.getStartLine() + ")";
 		Backtranslator backtrans = (Backtranslator) translatorSequence.get(translatorSequence.size()-1);
 		BoogieProgramExecution bpe = (BoogieProgramExecution) backtrans.translateProgramExecution(pe);
 		ctxRes.setLongDescription(bpe.toString());
+		ctxRes.setFailurePath(bpe.getLocationSequence());
+//		ctxRes.setValuation(valuation);
 		reportResult(ctxRes);
 		s_Logger.warn(ctxMessage);
 	}
