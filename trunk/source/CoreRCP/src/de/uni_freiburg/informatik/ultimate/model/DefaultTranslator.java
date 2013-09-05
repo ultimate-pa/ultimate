@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import de.uni_freiburg.informatik.ultimate.result.IProgramExecution;
+
 
 /**
  * Translator which just passes the input along, i.e., the mapping from input
@@ -88,6 +90,29 @@ public class DefaultTranslator<STE, TTE, SE, TE>
 			expressionOfSourceType = (SE) last.translateExpressionIteratively(expr, allButLast);
 		}
 		result = translateExpression(expressionOfSourceType);
+		return result;
+	}
+	
+	public IProgramExecution<TTE, TE> translateProgramExecution(
+			IProgramExecution<STE, SE> programExecution) {
+		return (IProgramExecution<TTE, TE>) programExecution;
+	}
+
+	public IProgramExecution<TTE, TE> translateProgramExecutionIteratively(
+			IProgramExecution<STE, SE> programExecution, ITranslator<?,?,?,?>...iTranslators) {
+		IProgramExecution<TTE, TE> result;
+		IProgramExecution<STE, SE> programExecutionOfSourceType;
+		if (iTranslators.length == 0) {
+			programExecutionOfSourceType = (IProgramExecution<STE, SE>) programExecution;
+		} else {
+			ITranslator<?, ?, TE, TTE> last = 
+					(ITranslator<?, ?, TE, TTE>) iTranslators[iTranslators.length-1];
+			ITranslator<?, ?, ?, ?>[] allButLast = 
+					Arrays.copyOf(iTranslators, iTranslators.length-1);
+			programExecutionOfSourceType = (IProgramExecution<STE, SE>) 
+					last.translateExpressionIteratively(programExecution, allButLast);
+		}
+		result = translateProgramExecution(programExecutionOfSourceType);
 		return result;
 	}
 

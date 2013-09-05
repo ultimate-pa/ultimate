@@ -2,6 +2,8 @@ package de.uni_freiburg.informatik.ultimate.model;
 
 import java.util.List;
 
+import de.uni_freiburg.informatik.ultimate.result.IProgramExecution;
+
 /**
  * Object translate traces and expressions from one format to another.
  * In ULTIMATE generator plugins may transform one program model into another.
@@ -48,6 +50,16 @@ public interface ITranslator<STE, TTE, SE, TE> {
 	 * </ul>  
 	 */
 	public <E> TE translateExpressionIteratively(E expr, ITranslator<?,?,?,?>...iTranslators);
+	
+	
+	public IProgramExecution<TTE, TE> translateProgramExecution(
+								IProgramExecution<STE, SE> programExecution);
+	
+	public IProgramExecution<TTE, TE> translateProgramExecutionIteratively(
+			IProgramExecution<STE, SE> programExecution, ITranslator<?,?,?,?>...iTranslators);
+
+	
+	
 	
 
 
