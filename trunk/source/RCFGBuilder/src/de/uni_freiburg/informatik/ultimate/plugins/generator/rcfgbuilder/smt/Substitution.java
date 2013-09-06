@@ -48,7 +48,9 @@ public class Substitution {
 		int i=0;
 		for (Entry<TermVariable, Term> entry : m_Mapping.entrySet()) {
 			vars[i] = entry.getKey();
+			assert vars[i] != null : "substitution of null";
 			values[i] = entry.getValue(); 
+			assert values[i] != null : "substitution by null";
 			i++;
 		}
 		Term result = m_Script.let(vars, values, term);
