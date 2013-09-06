@@ -2,7 +2,9 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.boogie
 
 import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -102,6 +104,44 @@ public class BoogieProgramExecution implements IProgramExecution<ASTNode, Expres
 		return result;
 	}
 	
+	public IValuation getValuation() {
+		return new IValuation() {
+			@Override
+			public Map<String, SimpleEntry<IType, List<String>>> getValuesForFailurePathIndex(
+					int index) {
+				ProgramState<Expression> ps = getProgramState(index);
+				if (ps == null) {
+					return getEmtpyProgramState();
+				} else {
+					return translateProgramState(ps);
+				}
+			}
+			
+			public Map<String, SimpleEntry<IType, List<String>>> getEmtpyProgramState() {
+				return Collections.emptyMap();
+			}
+			
+			public Map<String, SimpleEntry<IType, List<String>>> translateProgramState(ProgramState<Expression> ps) {
+				Map<String, SimpleEntry<IType, List<String>>> result = new HashMap<String, SimpleEntry<IType, List<String>>>();
+				for (Expression var : ps.getVariables()) {
+					String varString = BoogieStatementPrettyPrinter.print(var);
+					List<String> valuesString = exprSet2StringList(ps.getValues(var));
+					result.put(varString, new SimpleEntry<IType, List<String>>(var.getType(), valuesString));
+				}
+				return result;
+			}
+			
+			private List<String> exprSet2StringList(Collection<Expression> expressions) {
+				List<String> result = new ArrayList<String>(expressions.size());
+				for (Expression expr : expressions) {
+					result.add(BoogieStatementPrettyPrinter.print(expr));
+				}
+				return result;
+			}
+		};
+	}
+	
+	
 	public class IValuationWrapper implements IValuation {
 
 		@Override
@@ -120,9 +160,24 @@ public class BoogieProgramExecution implements IProgramExecution<ASTNode, Expres
 		}
 		
 		public Map<String, SimpleEntry<IType, List<String>>> translateProgramState(ProgramState<Expression> ps) {
-			return null;
+			Map<String, SimpleEntry<IType, List<String>>> result = new HashMap<String, SimpleEntry<IType, List<String>>>();
+			for (Expression var : ps.getVariables()) {
+				String varString = BoogieStatementPrettyPrinter.print(var);
+				List<String> valuesString = exprSet2StringList(ps.getValues(var));
+				result.put(varString, new SimpleEntry<IType, List<String>>(var.getType(), valuesString));
+			}
+			return result;
+		}
+		
+		private List<String> exprSet2StringList(Collection<Expression> expressions) {
+			List<String> result = new ArrayList<String>(expressions.size());
+			for (Expression expr : expressions) {
+				result.add(BoogieStatementPrettyPrinter.print(expr));
+			}
+			return result;
 		}
 		
 	}
+	
 
 }

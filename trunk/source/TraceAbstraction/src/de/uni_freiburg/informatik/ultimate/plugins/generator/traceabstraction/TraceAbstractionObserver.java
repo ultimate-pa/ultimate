@@ -332,7 +332,8 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 					shortDescription,
 					longDescription,
 					GenericResult.Severity.WARNING);
-			s_Logger.warn(shortDescription + " " + longDescription); 
+			s_Logger.warn(shortDescription + " " + longDescription);
+			reportResult(gr);
 		} else {
 			for (ProgramPoint errorLoc : errorLocs) {
 				ILocation origin = errorLoc.getAstNode().getLocation().getOrigin();
@@ -368,7 +369,7 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 		BoogieProgramExecution bpe = (BoogieProgramExecution) backtrans.translateProgramExecution(pe);
 		ctxRes.setLongDescription(bpe.toString());
 		ctxRes.setFailurePath(bpe.getLocationSequence());
-//		ctxRes.setValuation(valuation);
+		ctxRes.setValuation(bpe.getValuation());
 		reportResult(ctxRes);
 		s_Logger.warn(ctxMessage);
 	}
