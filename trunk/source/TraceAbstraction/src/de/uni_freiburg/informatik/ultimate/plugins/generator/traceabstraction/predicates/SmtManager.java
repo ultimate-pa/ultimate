@@ -2241,15 +2241,15 @@ public class SmtManager {
 			for (BoogieVar bv : outvarsOccuringInFreeVars.keySet()) {
 				substitution.put(bv.getTermVariable(), outvarsOccuringInFreeVars.get(bv));
 			}
-			Term predicate_renamed = substituteTermVariablesByTerms(substitution, p.getFormula());
+			Term predicate_renamed = new Substitution(substitution, m_Script).transform(p.getFormula());
 			NOT_tfterm_OR_predicate = Util.or(m_Script, Util.not(m_Script, tf_term_outvars_renamed), predicate_renamed);
 			varsToQuantify.addAll(tf.getAuxVars());
-			result = DestructiveEqualityResolution.quantifier(m_Script, Script.FORALL,
-					varsToQuantify.toArray(new TermVariable[varsToQuantify.size()]),
-					NOT_tfterm_OR_predicate, (Term[][]) null);
-//			result = m_Script.quantifier(Script.FORALL,
+//			result = DestructiveEqualityResolution.quantifier(m_Script, Script.FORALL,
 //					varsToQuantify.toArray(new TermVariable[varsToQuantify.size()]),
 //					NOT_tfterm_OR_predicate, (Term[][]) null);
+			result = m_Script.quantifier(Script.FORALL,
+					varsToQuantify.toArray(new TermVariable[varsToQuantify.size()]),
+					NOT_tfterm_OR_predicate, (Term[][]) null);
 		} else {
 			result = NOT_tfterm_OR_predicate;
 		}
@@ -2370,8 +2370,8 @@ public class SmtManager {
 			TransFormula callTF,
 			TransFormula globalVarsAssignments) {
 		
-		Map<TermVariable, Term> varsToRenameInCallerAndReturnPred = new HashMap<TermVariable, Term>();
-		Map<TermVariable, Term> inVarsOfCallToRename = new HashMap<TermVariable, Term>();
+		Map<TermVariable, Term> globalVarsToRenameInCallerAndReturnPred = new HashMap<TermVariable, Term>();
+		Map<TermVariable, Term> varsToRenameInReturnPred = new HashMap<TermVariable, Term>();
 		Map<TermVariable, Term> varsToRenameInCallerPred = new HashMap<TermVariable, Term>();
 		Set<TermVariable> varsToQuantify = new HashSet<TermVariable>();
 		// 1. Compute those global variable assignments, i.e. x_global = old(x_global) if x_global is
@@ -2381,7 +2381,7 @@ public class SmtManager {
 		Map<TermVariable, Term> substitution = new HashMap<TermVariable, Term>();
 		for (BoogieVar bv : globalVarsAssignments.getInVars().keySet()) {
 			TermVariable freshVar = getFreshTermVariable(bv.getIdentifier(), bv.getTermVariable().getSort());
-			varsToRenameInCallerPred.put(bv.getTermVariable(), freshVar);
+			globalVarsToRenameInCallerAndReturnPred.put(bv.getTermVariable(), freshVar);
 			varsToQuantify.add(freshVar);
 			substitution.put(globalVarsAssignments.getInVars().get(bv), bv.getTermVariable());
 		}
@@ -2390,8 +2390,8 @@ public class SmtManager {
 		substitution.clear();
 		for (BoogieVar bv : globalVarsAssignments.getOutVars().keySet()) {
 			TermVariable freshVar = getFreshTermVariable(bv.getIdentifier(), bv.getTermVariable().getSort());
-//			varsToRenameInCallerAndReturnPred.put(bv.getTermVariable(), freshVar);
-//			varsToQuantify.add(freshVar);
+			varsToRenameInCallerPred.put(bv.getTermVariable(), freshVar);
+			varsToQuantify.add(freshVar);
 			substitution.put(globalVarsAssignments.getOutVars().get(bv), freshVar);
 		}
 		
@@ -2400,68 +2400,100 @@ public class SmtManager {
 		substitution.clear();
 		for (BoogieVar bv : returnTF.getInVars().keySet()) {
 			TermVariable freshVar = getFreshTermVariable(bv.getIdentifier(), bv.getTermVariable().getSort());
-			varsToRenameInCallerAndReturnPred.put(bv.getTermVariable(), freshVar);
+			varsToRenameInReturnPred.put(bv.getTermVariable(), freshVar);
 			varsToQuantify.add(freshVar);
 			substitution.put(returnTF.getInVars().get(bv), bv.getTermVariable());
 		}
-		Term retTermInVarsRenamed = substituteTermVariablesByTerms(substitution, returnTF.getFormula());
+		Term retTermInVarsRenamed = new Substitution(substitution, m_Script).transform(returnTF.getFormula());
 		substitution.clear();
 		// 2.2 We rename the outvars to freshvars and quantify them
 		for (BoogieVar bv : returnTF.getOutVars().keySet()) {
-			if (globalVarsAssignments.getAssignedVars().contains(bv)) {
-				// TODO:
-			}
-			TermVariable freshVar = getFreshTermVariable(bv.getIdentifier(), bv.getTermVariable().getSort());
-			varsToRenameInCallerAndReturnPred.put(bv.getTermVariable(), freshVar);
-			substitution.put(returnTF.getOutVars().get(bv), freshVar);
-			varsToQuantify.add(freshVar);
-		}
-		Term retTermInVarsRenamedOutVarsToFreshVars = substituteTermVariablesByTerms(substitution, retTermInVarsRenamed);
-		// Rename the invars of the Call and quantify them
-		for (BoogieVar bv : callTF.getInVars().keySet()) {
-			if (callerPred.getVars().contains(bv) || returnerPred.getVars().contains(bv)) {
+			if (!bv.isGlobal()) {
 				TermVariable freshVar = getFreshTermVariable(bv.getIdentifier(), bv.getTermVariable().getSort());
-				varsToRenameInCallerAndReturnPred.put(bv.getTermVariable(), freshVar);
+				varsToRenameInReturnPred.put(bv.getTermVariable(), freshVar);
+				substitution.put(returnTF.getOutVars().get(bv), freshVar);
 				varsToQuantify.add(freshVar);
 			} else {
-				varsToQuantify.add(returnTF.getOutVars().get(bv));
-			}
-		}
-		substitution.clear();
-		for (BoogieVar bv : callTF.getOutVars().keySet()) {
-			if (callerPred.getVars().contains(bv) || returnerPred.getVars().contains(bv)) {
-				TermVariable freshVar = getFreshTermVariable(bv.getIdentifier(), bv.getTermVariable().getSort());
-				varsToRenameInCallerAndReturnPred.put(bv.getTermVariable(), freshVar);
-				varsToQuantify.add(freshVar);
-			} else {
-				varsToQuantify.add(callTF.getOutVars().get(bv));
-			}
-			substitution.put(callTF.getOutVars().get(bv), bv.getTermVariable());
-		}
-		Term callTFRenamed = substituteTermVariablesByTerms(substitution, callTF.getFormula());
-		
-		Term retPredRenamed = new Substitution(varsToRenameInCallerAndReturnPred, m_Script).transform(returnerPred.getFormula());
-		Term callerPredRenamed = new Substitution(varsToRenameInCallerAndReturnPred, m_Script).transform(callerPred.getFormula());
-		// Quantify all the other local vars.
-		for (BoogieVar bv : returnerPred.getVars()) {
-			if (!varsToRenameInCallerAndReturnPred.containsKey(bv.getTermVariable())) {
-				if (!(globalVarsAssignments.getInVars().keySet().contains(bv)) 
-						&& !(globalVarsAssignments.getOutVars().keySet().contains(bv))) {
-					varsToQuantify.add(bv.getTermVariable());
+				if (varsToRenameInReturnPred.containsKey(bv.getTermVariable())) {
+					substitution.put(returnTF.getOutVars().get(bv), varsToRenameInReturnPred.get(bv.getTermVariable()));
+				} else {
+					TermVariable freshVar = getFreshTermVariable(bv.getIdentifier(), bv.getTermVariable().getSort());
+					substitution.put(callTF.getInVars().get(bv), freshVar);
+					varsToQuantify.add(freshVar);
 				}
 			}
 		}
-		for (BoogieVar bv : callerPred.getVars()) {
-			if (!varsToRenameInCallerAndReturnPred.containsKey(bv.getTermVariable())) {
-				varsToQuantify.add(bv.getTermVariable());
+		Term retTermInVarsRenamedOutVarsRenamed = new Substitution(substitution, m_Script).transform(retTermInVarsRenamed);
+		// Rename the invars of the Call and quantify them
+		substitution.clear();
+		for (BoogieVar bv : callTF.getInVars().keySet()) {
+			if (!bv.isGlobal()) {
+				TermVariable freshVar = null;
+				if (varsToRenameInCallerPred.containsKey(bv.getTermVariable())) {
+					freshVar = (TermVariable) varsToRenameInCallerPred.get(bv.getTermVariable());
+				} else {
+					freshVar = getFreshTermVariable(bv.getIdentifier(), bv.getTermVariable().getSort());
+				}
+				if (freshVar != null) {
+					globalVarsToRenameInCallerAndReturnPred.put(bv.getTermVariable(), freshVar);
+					substitution.put(callTF.getInVars().get(bv), freshVar);
+					varsToQuantify.add(freshVar);
+				} else {
+					varsToQuantify.add(returnTF.getOutVars().get(bv));
+				}
+			} else {
+				if (varsToRenameInCallerPred.containsKey(bv.getTermVariable())) {
+					substitution.put(callTF.getInVars().get(bv), varsToRenameInCallerPred.get(bv.getTermVariable()));
+				} else {
+					TermVariable freshVar = getFreshTermVariable(bv.getIdentifier(), bv.getTermVariable().getSort());
+					substitution.put(callTF.getInVars().get(bv), freshVar);
+					varsToQuantify.add(freshVar);
+				}
+					
 			}
 		}
+		Term callTF_InVarsRenamed = new Substitution(substitution, m_Script).transform(callTF.getFormula());
+		substitution.clear();
+		for (BoogieVar bv : callTF.getOutVars().keySet()) {
+//			TermVariable freshVar = getFreshTermVariable(bv.getIdentifier(), bv.getTermVariable().getSort());
+//			varsToQuantify.add(callTF.getOutVars().get(bv));
+			substitution.put(callTF.getOutVars().get(bv), bv.getTermVariable());
+		}
+		Term callTFRenamed = new Substitution(substitution, m_Script).transform(callTF_InVarsRenamed);
+		
+		Term retPredRenamed = new Substitution(globalVarsToRenameInCallerAndReturnPred, m_Script).transform(returnerPred.getFormula());
+		Term callerPredRenamed = new Substitution(globalVarsToRenameInCallerAndReturnPred, m_Script).transform(callerPred.getFormula());
+		// Quantify all the other local vars.
+		for (BoogieVar bv : returnerPred.getVars()) {
+//			if (!globalVarsToRenameInCallerAndReturnPred.containsKey(bv.getTermVariable())) {
+//				if (!(globalVarsAssignments.getInVars().keySet().contains(bv)) 
+//						&& !(globalVarsAssignments.getOutVars().keySet().contains(bv))) {
+//					if (!bv.isGlobal()) {
+//						varsToQuantify.add(bv.getTermVariable());
+//					}
+//				}
+//			}
+		}
+		retPredRenamed = new Substitution(varsToRenameInReturnPred, m_Script).transform(retPredRenamed);
+		List<TermVariable> freeVarsOfCallerPred = new ArrayList<TermVariable>();
+		for (int i = 0; i < callerPredRenamed.getFreeVars().length; i++) {
+			freeVarsOfCallerPred.add(callerPredRenamed.getFreeVars()[i]);
+		}
+		substitution.clear();
+		for (BoogieVar bv : callerPred.getVars()) {
+			if (freeVarsOfCallerPred.contains(bv.getTermVariable())) {
+				TermVariable freshVar = getFreshTermVariable(bv.getIdentifier(), bv.getTermVariable().getSort());
+				substitution.put(bv.getTermVariable(), freshVar);
+				varsToQuantify.add(freshVar);
+			}
+		}
+		callerPredRenamed = new Substitution(substitution, m_Script).transform(callerPredRenamed); 
 		
 		// Add aux vars to quantify them
 		varsToQuantify.addAll(callTF.getAuxVars());
 
 		Term callerPredANDCallANDReturnAndGlobalVars = Util.and(m_Script, callerPredRenamed,
-				retTermInVarsRenamedOutVarsToFreshVars, callTFRenamed,
+				retTermInVarsRenamedOutVarsRenamed, callTFRenamed,
 				globalVars_InVarsRenamed_OutVarsRenamed);
 		
 		Term result = Util.or(m_Script, Util.not(m_Script, callerPredANDCallANDReturnAndGlobalVars), retPredRenamed);
@@ -2470,12 +2502,12 @@ public class SmtManager {
 		varsToQuantify.addAll(callTF.getAuxVars());
 		varsToQuantify.addAll(globalVarsAssignments.getAuxVars());
 		if (varsToQuantify.size() > 0) {
-//			resultQuantified = DestructiveEqualityResolution.quantifier(m_Script, Script.FORALL,
-//					varsToQuantify.toArray(new TermVariable[varsToQuantify.size()]),
-//					result, (Term[][])null);
-			resultQuantified = m_Script.quantifier(Script.FORALL, 
-					varsToQuantify.toArray(new TermVariable[varsToQuantify.size()]), 
+			resultQuantified = DestructiveEqualityResolution.quantifier(m_Script, Script.FORALL,
+					varsToQuantify.toArray(new TermVariable[varsToQuantify.size()]),
 					result, (Term[][])null);
+//			resultQuantified = m_Script.quantifier(Script.FORALL, 
+//					varsToQuantify.toArray(new TermVariable[varsToQuantify.size()]), 
+//					result, (Term[][])null);
 			
 		}
 		TermVarsProc tvp = computeTermVarsProc(resultQuantified);
