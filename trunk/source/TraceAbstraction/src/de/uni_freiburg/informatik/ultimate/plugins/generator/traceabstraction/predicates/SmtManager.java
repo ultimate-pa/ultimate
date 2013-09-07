@@ -2418,7 +2418,8 @@ public class SmtManager {
 					substitution.put(returnTF.getOutVars().get(bv), varsToRenameInReturnPred.get(bv.getTermVariable()));
 				} else {
 					TermVariable freshVar = getFreshTermVariable(bv.getIdentifier(), bv.getTermVariable().getSort());
-					substitution.put(callTF.getInVars().get(bv), freshVar);
+					varsToRenameInReturnPred.put(bv.getTermVariable(), freshVar);
+					substitution.put(returnTF.getOutVars().get(bv), freshVar);
 					varsToQuantify.add(freshVar);
 				}
 			}
