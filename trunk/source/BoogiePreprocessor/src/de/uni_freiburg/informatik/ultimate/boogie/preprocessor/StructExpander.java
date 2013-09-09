@@ -826,14 +826,16 @@ public class StructExpander extends BoogieTransformer implements
             for (int k = 0; k < ies.size(); k++) {
                 Expression ie = ies.get(k);
                 Expression val = newVal[k];
-                Expression j = new ArrayStoreExpression(l, ie.getType(), ie,
-                        newIdc, val);
+                Expression newArray; 
                 if (left instanceof UnaryExpression) {
-                    newExprs.add(new UnaryExpression(l, left.getType(),
-                            ((UnaryExpression) left).getOperator(), j));
+                	newArray = new UnaryExpression(l, left.getType(),
+                            ((UnaryExpression) left).getOperator(), ie);
                 } else {
-                    newExprs.add(j);
+                	newArray = ie;
                 }
+            	Expression j = new ArrayStoreExpression(l, newArray.getType(), 
+            			newArray, newIdc, val);
+                newExprs.add(j);
             }
             return newExprs;
         }
