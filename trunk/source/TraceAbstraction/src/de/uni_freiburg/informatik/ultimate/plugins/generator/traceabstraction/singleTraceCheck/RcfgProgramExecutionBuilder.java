@@ -123,10 +123,12 @@ public class RcfgProgramExecutionBuilder {
 		Map<BoogieVar, Expression> result = new HashMap<BoogieVar, Expression>();
 		Set<BoogieVar> vars = m_RelevantVariables.getForwardRelevantVariables()[position+1];
 		for (BoogieVar bv : vars) {
-			int assignPos = indexWhereVarWasAssignedTheLastTime(bv, position);
-			Expression value = m_var2pos2value.get(bv).get(assignPos);
-			assert value != null;
-			result.put(bv, value);
+			if (!bv.getTermVariable().getSort().isArraySort()) {
+				int assignPos = indexWhereVarWasAssignedTheLastTime(bv, position);
+				Expression value = m_var2pos2value.get(bv).get(assignPos);
+				assert value != null;
+				result.put(bv, value);
+			}
 		}
 		return result;
 	}

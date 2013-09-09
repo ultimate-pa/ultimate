@@ -232,11 +232,13 @@ public class TraceChecker {
 				}
 			}
 			for (BoogieVar bv : nsb.getIndexedVarRepresentative().keySet()) {
-				for (Integer index : nsb.getIndexedVarRepresentative().get(bv).keySet()) {
-					Term indexedVar = nsb.getIndexedVarRepresentative().get(bv).get(index);
-					Term valueT = getValue(indexedVar);
-					Expression valueE = m_SmtManager.getBoogie2Smt().getSmt2Boogie().translate(valueT);
-					rpeb.addValueAtVarAssignmentPosition(bv, index, valueE);
+				if (!bv.getTermVariable().getSort().isArraySort()) {
+					for (Integer index : nsb.getIndexedVarRepresentative().get(bv).keySet()) {
+						Term indexedVar = nsb.getIndexedVarRepresentative().get(bv).get(index);
+						Term valueT = getValue(indexedVar);
+						Expression valueE = m_SmtManager.getBoogie2Smt().getSmt2Boogie().translate(valueT);
+						rpeb.addValueAtVarAssignmentPosition(bv, index, valueE);
+					}
 				}
 			}
 			m_RcfgProgramExecution = rpeb.getRcfgProgramExecution();
