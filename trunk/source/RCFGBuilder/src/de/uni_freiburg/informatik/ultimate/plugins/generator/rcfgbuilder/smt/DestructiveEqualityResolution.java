@@ -294,7 +294,7 @@ public class DestructiveEqualityResolution {
 	public static boolean isSuperfluousDisjunction(Script script, Set<Term> terms,  
 			Set<TermVariable> connectedVars, Set<TermVariable> quantifiedVars) {
 		if (quantifiedVars.containsAll(connectedVars)) {
-			Term disjunction = Util.and(script, terms.toArray(new Term[0]));
+			Term disjunction = Util.or(script, terms.toArray(new Term[0]));
 			if (Util.checkSat(script, disjunction) == LBool.UNSAT) {
 				return true;
 			}
