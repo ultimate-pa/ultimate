@@ -75,16 +75,19 @@ public class TraceCheckerSpWp extends TraceChecker {
 	 * Computes the sequential composition of the statements from the given trace.
 	 * TODO: Currently, it only computes composition for statements without Calls (esp. PendingCalls) and Returns.
 	 */
-	private TransFormula computeSummaryForTrace(Word<CodeBlock> trace) {
+	private TransFormula computeSummaryForTrace(Word<CodeBlock> trace, RelevantTransFormulas rv) {
 		TransFormula[] transFormulasToComputeSummaryFor = new TransFormula[trace.length()];
 		for (int i = 0; i < trace.length(); i++) {
-			transFormulasToComputeSummaryFor[i] = trace.getSymbol(i).getTransitionFormula();
+			transFormulasToComputeSummaryFor[i] = rv.getRelevantTransFormulaAtPosition(i);
 		}
 		return TransFormula.sequentialComposition(m_SmtManager.getBoogie2Smt(), true, transFormulasToComputeSummaryFor);
 	}
 	
-	private TransFormula computeSummaryForTrace(Word<CodeBlock> trace, TransFormula Call, TransFormula Return, TransFormula oldVarsAssignment) {
-		TransFormula procedureSummary = computeSummaryForTrace(trace);
+	private TransFormula computeSummaryForTrace(Word<CodeBlock> trace, TransFormula Call, 
+			TransFormula Return, 
+			TransFormula oldVarsAssignment,
+			RelevantTransFormulas rv) {
+		TransFormula procedureSummary = computeSummaryForTrace(trace, rv);
 		return TransFormula.sequentialCompositionWithCallAndReturn(m_SmtManager.getBoogie2Smt(), true, Call, oldVarsAssignment, procedureSummary, Return);
 	}
 	
@@ -226,13 +229,15 @@ public class TraceCheckerSpWp extends TraceChecker {
 					TransFormula callTF = rv.getRelevantTransFormulaAtPosition(call_pos);
 					TransFormula globalVarsAssignments = rv.getGlobalVarAssignmentAtCallPosition(call_pos);
 					if ((m_InterpolantsWp.length - call_pos) >= call_pos) {
-						TransFormula summary = computeSummaryForTrace(getSubTrace(0, call_pos, trace));
+						TransFormula summary = computeSummaryForTrace(getSubTrace(0, call_pos, trace), rv);
 						callerPred = m_SmtManager.strongestPostcondition(m_Precondition, summary);
 					} else {
 					// If the sub-trace between call_pos and returnPos (here: i) is shorter, than compute the
 					// callerPred in this way.
 						TransFormula summary = computeSummaryForTrace(getSubTrace(call_pos, m_InterpolantsWp.length - 1, trace), callTF,
-								trace.getSymbol(m_InterpolantsWp.length).getTransitionFormula(), globalVarsAssignments);
+								rv.getRelevantTransFormulaAtPosition(m_InterpolantsWp.length), 
+								globalVarsAssignments,
+								rv);
 						callerPred = m_SmtManager.weakestPrecondition(m_Postcondition, summary);
 					}
 					callerPredicatesComputed.put(call_pos, callerPred);
@@ -273,13 +278,15 @@ public class TraceCheckerSpWp extends TraceChecker {
 					TransFormula globalVarsAssignments = rv.getGlobalVarAssignmentAtCallPosition(call_pos);
 					
 					if ((i - call_pos) >= call_pos) {
-						TransFormula summary = computeSummaryForTrace(getSubTrace(0, call_pos, trace));
+						TransFormula summary = computeSummaryForTrace(getSubTrace(0, call_pos, trace), rv);
 						callerPred = m_SmtManager.strongestPostcondition(m_Precondition, summary);
 					} else {
-					// If the sub-trace between call_pos and returnPos (here: i) is shorter, than compute the
+					// If the sub-trace between call_pos and returnPos (here: i) is shorter, then compute the
 					// callerPred in this way.
 						TransFormula summary = computeSummaryForTrace(getSubTrace(call_pos, i - 1, trace), callTF,
-								trace.getSymbol(i+1).getTransitionFormula(), globalVarsAssignments);
+								rv.getRelevantTransFormulaAtPosition(i+1), 
+								globalVarsAssignments,
+								rv);
 						callerPred = m_SmtManager.weakestPrecondition(m_InterpolantsWp[i+1], 
 								summary);
 					}
