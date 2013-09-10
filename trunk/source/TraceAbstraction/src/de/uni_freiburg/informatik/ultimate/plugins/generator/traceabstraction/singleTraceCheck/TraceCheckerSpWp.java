@@ -35,7 +35,7 @@ public class TraceCheckerSpWp extends TraceChecker {
 	
 	
 	private static boolean m_useUnsatCore = true;
-	private static boolean m_ComputeInterpolantsSp = !true;
+	private static boolean m_ComputeInterpolantsSp = true;
 	private static boolean m_ComputeInterpolantsWp = true;
 
 	public TraceCheckerSpWp(IPredicate precondition, IPredicate postcondition,
@@ -132,7 +132,8 @@ public class TraceCheckerSpWp extends TraceChecker {
 						localVarAssignmentAtCallInUnsatCore[i] = true;
 					}
 				}
-				// Add the globalVarAssignments to the unsat_core
+				// Add the globalVarAssignments to the unsat_core, if it is a Call statement, otherwise it adds
+				// the statement
 				codeBlocksInUnsatCore.add(trace.getSymbol(i));
 			} else {
 				if (trace.getSymbol(i) instanceof Call) {
@@ -309,6 +310,9 @@ public class TraceCheckerSpWp extends TraceChecker {
 			s_Logger.debug("Checking weakest precondition...");
 			checkInterpolantsCorrect(m_InterpolantsWp, trace, tracePrecondition, tracePostcondition);
 		}
+		if (m_ComputeInterpolantsSp && m_ComputeInterpolantsWp) {
+			checkSPImpliesWP(m_InterpolantsSp, m_InterpolantsWp);
+		}
 		if (m_ComputeInterpolantsSp) {
 			m_Interpolants = m_InterpolantsSp;
 		} else {
@@ -317,10 +321,19 @@ public class TraceCheckerSpWp extends TraceChecker {
 		}
 	}
 	
+	private void checkSPImpliesWP(IPredicate[] interpolantsSP, IPredicate[] interpolantsWP) {
+		for (int i = 0; i < interpolantsSP.length; i++) {
+			LBool result = m_SmtManager.isCovered(interpolantsSP[i], interpolantsWP[i]);
+			s_Logger.debug("SP {" + interpolantsSP[i] + "} ==> WP {" + interpolantsWP[i] + "} is " + 
+						(result == LBool.UNSAT ? "valid" :
+						(result == LBool.SAT ? "not valid" : result)));
+			assert(result == LBool.UNSAT || result == LBool.UNKNOWN);	
+		}
+	}
 	/**
 	 * Returns a sub-trace of the given trace, from startPos to endPos.
 	 */
-	private Word<CodeBlock> getSubTrace(int startPos, int endPos, Word<CodeBlock> trace) {
+ 	private Word<CodeBlock> getSubTrace(int startPos, int endPos, Word<CodeBlock> trace) {
 		CodeBlock[] codeBlocks = new CodeBlock[endPos - startPos];
 		for (int i = startPos; i < endPos; i++) {
 			codeBlocks[i - startPos] = trace.getSymbol(i);
