@@ -16,7 +16,7 @@
 int main() {
     int x, *a;
     int *p = malloc(sizeof(int));
-    x = 5;
+    x = 10;
     while ( x > 0 ) {
         a = p;
         if (x == 1) {
