@@ -1703,110 +1703,64 @@ public class SmtManager {
 	}
 	
 	public IPredicate strongestPostcondition(IPredicate p, TransFormula tf) {
-		Set<TermVariable> varsToQuantify = new HashSet<TermVariable>();
 		// Check if p is false
 		if (p.getFormula() == False()) {
 			return p;
 		}
-		Term tf_term = tf.getFormula();		
+		
+		Set<TermVariable> varsToQuantify = new HashSet<TermVariable>();
+		Map<TermVariable, Term> varsToRenameInPred = new HashMap<TermVariable, Term>();
 		Map<TermVariable, Term> substitution = new HashMap<TermVariable, Term>();
-		// 1 Rename the invars of the TransFormula of the given CodeBlock cb into TermVariables
+		Term tf_term = tf.getFormula();		
+		
 		for (BoogieVar bv : tf.getInVars().keySet()) {
-			// TODO: Check if bv is a free var
-			// if not, then continue, there is nothing to do
-			TermVariable bv_term = tf.getInVars().get(bv);
-			// Case: var in InVars and var not in OutVars
-			if (!tf.getOutVars().keySet().contains(bv)) {
-				throw new UnsupportedOperationException("This case is still undefined!");
-			} 
-			// Case: var in InVars and var in OutVars and Invars(var) == OutVars(var)
-			else if (bv_term == tf.getOutVars().get(bv)) {
-				substitution.put(bv_term, bv.getTermVariable());
-			}
-			// Case: var in InVars and var in OutVars and Invars(var) != OutVars(var)
-			else {
-				if (!tf.getAssignedVars().contains(bv)) {
-					substitution.put(bv_term, bv.getTermVariable());
-				}
+			if (!tf.getOutVars().containsKey(bv) || 
+					tf.getOutVars().get(bv) != tf.getInVars().get(bv)) {
+				TermVariable freshVar = getFreshTermVariable(bv.getIdentifier(), bv.getTermVariable().getSort());
+				varsToRenameInPred.put(bv.getTermVariable(), freshVar);
+				substitution.put(tf.getInVars().get(bv), freshVar);
+				varsToQuantify.add(freshVar);
 			}
 		}
 		
-
-		Term tf_term_invars_renamed = new Substitution(substitution, m_Script).transform(tf_term);
+		Term TFInvarsRenamed = new Substitution(substitution, m_Script).transform(tf_term);
 		
-		// 2 Rename the outvars of the TransFormula of the given CodeBlock cb into TermVariables
 		substitution.clear();
 		for (BoogieVar bv : tf.getOutVars().keySet()) {
-			// TODO: Check if bv is a free var
-			// if not, then continue, there is nothing to do
-			TermVariable bv_term = tf.getOutVars().get(bv);
-			// Case: var not in InVars and var in OutVars
-			if (!tf.getInVars().keySet().contains(bv)) {
-				substitution.put(bv_term, bv.getTermVariable());
-			} 
-			// Case: var in InVars and var in OutVars and Invars(var) == OutVars(var)
-			else if (bv_term == tf.getInVars().get(bv)) {
-				continue;
-			}
-			// Case: var in InVars and var in OutVars and Invars(var) != OutVars(var)
-			else if (bv_term != tf.getInVars().get(bv)) {
-				substitution.put(bv_term, bv.getTermVariable());
+			substitution.put(tf.getOutVars().get(bv), bv.getTermVariable());
+			if (tf.getInVars().isEmpty() && tf.getFormula() == True()) {
+				varsToQuantify.add(bv.getTermVariable());
 			}
 		}
-
-		Term tf_term_outvars_renamed = new Substitution(substitution, m_Script).transform(tf_term_invars_renamed);
-
-				
 		
-		// 3. Connect the renamed predicate and the renamed TransFormula by an logical and.
-		Term predicate_AND_tf_term = Util.and(m_Script, p.getFormula(), tf_term_outvars_renamed);
-		// Select from the invars the freevars, and existentially quantify over them. Quantification is done
-		// in step 4 below.
-		TermVariable[] invarsOccuringInFreeVarsOrAssignedVars_TermVariables = new TermVariable[tf.getInVars().keySet().size()];
-		Map<BoogieVar, TermVariable> invarsOccuringInFreeVarsOrAssignedVars = new HashMap<BoogieVar, TermVariable>();
-		{
-			ArrayList<TermVariable> freeVars = new ArrayList<TermVariable>();
-			for (int j = 0; j < predicate_AND_tf_term.getFreeVars().length; j++) {
-				freeVars.add(predicate_AND_tf_term.getFreeVars()[j]);
-			}
-			int i = 0;
-			for (BoogieVar bv : tf.getInVars().keySet()) {
-				if (freeVars.contains(tf.getInVars().get(bv))) {
-					invarsOccuringInFreeVarsOrAssignedVars.put(bv, tf.getInVars().get(bv));
-				}
-			}
-			for (BoogieVar bv : tf.getAssignedVars()) {
-				if (p.getVars().contains(bv)) {
-					if (!invarsOccuringInFreeVarsOrAssignedVars.keySet().contains(bv)) {
-						invarsOccuringInFreeVarsOrAssignedVars.put(bv, tf.getOutVars().get(bv));
-					}
-				}
-			}
-			invarsOccuringInFreeVarsOrAssignedVars_TermVariables = new TermVariable[invarsOccuringInFreeVarsOrAssignedVars.values().size()];
-			for (TermVariable tv : invarsOccuringInFreeVarsOrAssignedVars.values()) {
-				invarsOccuringInFreeVarsOrAssignedVars_TermVariables[i] = tv;
-				varsToQuantify.add(tv);
-				i++;
+		Term TFInVarsOutVarsRenamed = new Substitution(substitution, m_Script).transform(TFInvarsRenamed);
+		
+		Term predicateRenamed = new Substitution(varsToRenameInPred, m_Script).transform(p.getFormula());
+		
+		// Remove the superflous quantified variables. These are variables, which don't occur neither in
+		// the predicate nor in the Transformula
+		Set<TermVariable> freeVarsOfPredicate = new HashSet<TermVariable>();
+		Set<TermVariable> freeVarsOfTF = new HashSet<TermVariable>();
+		Collections.addAll(freeVarsOfPredicate, predicateRenamed.getFreeVars());
+		Collections.addAll(freeVarsOfTF, TFInVarsOutVarsRenamed.getFreeVars());
+		Set<TermVariable> superflousQuantifiedVars = new HashSet<TermVariable>();
+		for (TermVariable tv : varsToQuantify) {
+			if (!freeVarsOfPredicate.contains(tv) && !freeVarsOfTF.contains(tv)) {
+				superflousQuantifiedVars.add(tv);
 			}
 		}
-		// 4. Existentially quantify the invars in TransFormula of the given CodeBlock cb, but only if the set of invars
-		// is not empty.
-		Term result = predicate_AND_tf_term;
-		if (invarsOccuringInFreeVarsOrAssignedVars_TermVariables.length > 0) {
-			substitution.clear();
-			for (BoogieVar bv : invarsOccuringInFreeVarsOrAssignedVars.keySet()) {
-				substitution.put(bv.getTermVariable(), invarsOccuringInFreeVarsOrAssignedVars.get(bv));
-			}
-			Term predicate_renamed = substituteTermVariablesByTerms(substitution, p.getFormula());
-			predicate_AND_tf_term = Util.and(m_Script, predicate_renamed, tf_term_outvars_renamed);
-			
-		}
+		varsToQuantify.removeAll(superflousQuantifiedVars);
+		
+		Term result = Util.and(m_Script, TFInVarsOutVarsRenamed, predicateRenamed);
+		
 		// Add aux vars to varsToQuantify
 		varsToQuantify.addAll(tf.getAuxVars());
+		
 		if (varsToQuantify.size() > 0) {
 			result = DestructiveEqualityResolution.quantifier(m_Script, Script.EXISTS,
-					varsToQuantify.toArray(new TermVariable[varsToQuantify.size()]), predicate_AND_tf_term, (Term[][]) null);
+					varsToQuantify.toArray(new TermVariable[varsToQuantify.size()]), result, (Term[][]) null);
 		}
+		
 		// Compute the set of BoogieVars, the procedures and the term
 		TermVarsProc tvp = computeTermVarsProc(result);
 		// Compute a closed formula version of result, it is needed for newPredicate.
@@ -2187,29 +2141,29 @@ public class SmtManager {
 		Term predicateRenamed = new Substitution(varsToRenameInPred, m_Script).transform(p.getFormula());
 		
 		// Remove the superflous quantified variables. These are variables, which don't occur neither in
-		// the predicate nor in the Call formula
+		// the predicate nor in the transformula
 		Set<TermVariable> freeVarsOfPredicate = new HashSet<TermVariable>();
-		Set<TermVariable> freeVarsOfCall = new HashSet<TermVariable>();
+		Set<TermVariable> freeVarsOfTF = new HashSet<TermVariable>();
 		Collections.addAll(freeVarsOfPredicate, predicateRenamed.getFreeVars());
-		Collections.addAll(freeVarsOfCall, TFInVarsOutVarsRenamed.getFreeVars());
+		Collections.addAll(freeVarsOfTF, TFInVarsOutVarsRenamed.getFreeVars());
 		Set<TermVariable> superflousQuantifiedVars = new HashSet<TermVariable>();
 		for (TermVariable tv : varsToQuantify) {
-			if (!freeVarsOfPredicate.contains(tv) && !freeVarsOfCall.contains(tv)) {
+			if (!freeVarsOfPredicate.contains(tv) && !freeVarsOfTF.contains(tv)) {
 				superflousQuantifiedVars.add(tv);
 			}
 		}
 		varsToQuantify.removeAll(superflousQuantifiedVars);
 		
 		Term result = Util.or(m_Script, Util.not(m_Script, TFInVarsOutVarsRenamed), predicateRenamed);
+		// Add aux-vars to quantified vars
+		varsToQuantify.addAll(tf.getAuxVars());
 		if (varsToQuantify.size() > 0) {
-			// Add aux-vars to quantified vars
-			varsToQuantify.addAll(tf.getAuxVars());
-			result = DestructiveEqualityResolution.quantifier(m_Script, Script.FORALL,
-					varsToQuantify.toArray(new TermVariable[varsToQuantify.size()]),
-					result, (Term[][]) null);
-//			result = m_Script.quantifier(Script.FORALL,
+//			result = DestructiveEqualityResolution.quantifier(m_Script, Script.FORALL,
 //					varsToQuantify.toArray(new TermVariable[varsToQuantify.size()]),
 //					result, (Term[][]) null);
+			result = m_Script.quantifier(Script.FORALL,
+					varsToQuantify.toArray(new TermVariable[varsToQuantify.size()]),
+					result, (Term[][]) null);
 		} 
 		// Compute the set of BoogieVars, the procedures and the term
 		TermVarsProc tvp = computeTermVarsProc(result);
@@ -2543,6 +2497,8 @@ public class SmtManager {
 	}
 	
 	//FIXME: does not work im SmtInterpol2
+	
+
 	public static void dumpInterpolProblem(Term[] formulas,
 			int iterationNumber, int interpolProblem,
 			String dumpPath, Script theory) {
