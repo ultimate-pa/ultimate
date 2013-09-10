@@ -76,7 +76,7 @@ public class AffineTerm extends Term {
 		super(0);
 		m_Sort = appTerm.getSort();
 		String funName = appTerm.getFunction().getName();
-		if (funName.equals("select")) {
+		if (funName.equals("select") || appTerm.getParameters().length == 0) {
 			m_Variable2Coefficient = Collections.singletonMap((Term) appTerm, Rational.ONE);
 			m_Constant = Rational.ZERO;
 		} else {

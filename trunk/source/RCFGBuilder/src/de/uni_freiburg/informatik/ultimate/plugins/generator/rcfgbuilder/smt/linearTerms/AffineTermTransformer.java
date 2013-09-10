@@ -81,6 +81,11 @@ public class AffineTermTransformer extends TermTransformer {
 			resultIsNotAffine();
 			return;
 		}
+		if (appTerm.getParameters().length == 0) {
+			AffineTerm result = new AffineTerm(appTerm);
+			setResult(result);
+			return;
+		}
 		String funName = appTerm.getFunction().getName();
 		if (funName.equals("*")) {
 			AffineTerm affineTerm = null;
