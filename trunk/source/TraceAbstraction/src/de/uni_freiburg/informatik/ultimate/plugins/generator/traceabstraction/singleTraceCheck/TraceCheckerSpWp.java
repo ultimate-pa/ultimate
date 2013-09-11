@@ -30,6 +30,11 @@ public class TraceCheckerSpWp extends TraceChecker {
 	protected IPredicate[] m_InterpolantsSp;
 	protected IPredicate[] m_InterpolantsWp;
 	
+	// Forward relevant predicates
+	protected IPredicate[] m_InterpolantsFp;
+	// Backward relevant predicates
+	protected IPredicate[] m_InterpolantsBp;
+	
 	
 	private static boolean m_useUnsatCore = true;
 	private static boolean m_ComputeInterpolantsSp = true;
@@ -153,6 +158,7 @@ public class TraceCheckerSpWp extends TraceChecker {
 				m_ModifiedGlobals,
 				localVarAssignmentAtCallInUnsatCore,
 				m_SmtManager);
+		RelevantVariables rvar = new RelevantVariables(rv);
 		
 		if (m_ComputeInterpolantsSp) {
 			m_InterpolantsSp = new IPredicate[trace.length()-1];
@@ -208,6 +214,9 @@ public class TraceCheckerSpWp extends TraceChecker {
 			}
 			s_Logger.debug("Checking strongest postcondition...");
 			checkInterpolantsCorrect(m_InterpolantsSp, trace, tracePrecondition, tracePostcondition);
+			computeForwardRelevantPredicates(rvar);
+			s_Logger.debug("Checking inductivity of forward relevant predicates...");
+			checkInterpolantsCorrect(m_InterpolantsFp, trace, tracePrecondition, tracePostcondition);
 		}
 		if (m_ComputeInterpolantsWp) {
 			m_InterpolantsWp = new IPredicate[trace.length()-1];
@@ -236,8 +245,8 @@ public class TraceCheckerSpWp extends TraceChecker {
 						TransFormula summary = computeSummaryForTrace(getSubTrace(0, call_pos, trace), rv, 0);
 						callerPred = m_SmtManager.strongestPostcondition(m_Precondition, summary);
 					} else {
-					// If the sub-trace between call_pos and returnPos (here: i) is shorter, than compute the
-					// callerPred in this way.
+						// If the sub-trace between call_pos and returnPos (here: i) is shorter, than compute the
+						// callerPred in this way.
 						TransFormula summary = computeSummaryForTrace(getSubTrace(call_pos, m_InterpolantsWp.length - 1, trace), callTF,
 								rv.getFormulaFromNonCallPos(m_InterpolantsWp.length), 
 								globalVarsAssignments,
@@ -312,6 +321,10 @@ public class TraceCheckerSpWp extends TraceChecker {
 
 			s_Logger.debug("Checking weakest precondition...");
 			checkInterpolantsCorrect(m_InterpolantsWp, trace, tracePrecondition, tracePostcondition);
+			computeBackwardRelevantPredicates(rvar);
+			s_Logger.debug("Checking inductivity of backward relevant predicates...");
+			checkInterpolantsCorrect(m_InterpolantsBp, trace, tracePrecondition, tracePostcondition);
+
 		}
 		if (m_ComputeInterpolantsSp && m_ComputeInterpolantsWp) {
 			checkSPImpliesWP(m_InterpolantsSp, m_InterpolantsWp);
@@ -323,8 +336,24 @@ public class TraceCheckerSpWp extends TraceChecker {
 			m_Interpolants = m_InterpolantsWp;
 		}
 	}
+
+	private void computeForwardRelevantPredicates(RelevantVariables rvar) {
+		assert m_InterpolantsSp != null : "Interpolants SP_i have not been computed!";
+		m_InterpolantsFp = new IPredicate[m_InterpolantsSp.length];
+		for (int i = 0; i < m_InterpolantsSp.length; i++) {
+			m_InterpolantsFp[i] = m_SmtManager.computeForwardRelevantPredicate(m_InterpolantsSp[i], rvar, i);
+		}
+	}
+	private void computeBackwardRelevantPredicates(RelevantVariables rvar) {
+		assert m_InterpolantsWp != null : "Interpolants WP_i have not been computed!";
+		m_InterpolantsBp = new IPredicate[m_InterpolantsWp.length];
+		for (int i = 0; i < m_InterpolantsWp.length; i++) {
+			m_InterpolantsBp[i] = m_SmtManager.computeForwardRelevantPredicate(m_InterpolantsWp[i], rvar, i);
+		}
+	}
 	
 	private void checkSPImpliesWP(IPredicate[] interpolantsSP, IPredicate[] interpolantsWP) {
+		s_Logger.debug("Checking implication of SP and WP...");
 		for (int i = 0; i < interpolantsSP.length; i++) {
 			LBool result = m_SmtManager.isCovered(interpolantsSP[i], interpolantsWP[i]);
 			s_Logger.debug("SP {" + interpolantsSP[i] + "} ==> WP {" + interpolantsWP[i] + "} is " + 
@@ -333,6 +362,7 @@ public class TraceCheckerSpWp extends TraceChecker {
 			assert(result == LBool.UNSAT || result == LBool.UNKNOWN);	
 		}
 	}
+	
 	/**
 	 * Returns a sub-trace of the given trace, from startPos to endPos.
 	 */

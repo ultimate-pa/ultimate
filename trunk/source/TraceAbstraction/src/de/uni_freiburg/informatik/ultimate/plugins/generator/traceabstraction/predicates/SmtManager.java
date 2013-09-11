@@ -50,6 +50,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.Des
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.HoareAnnotation;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.RelevantVariables;
 import de.uni_freiburg.informatik.ultimate.util.ScopedHashMap;
 
 public class SmtManager {
@@ -1682,7 +1683,55 @@ public class SmtManager {
 		return result;
 	}
 	
+	private IPredicate constructIPredicate(Term formula) {
+		// Compute the set of BoogieVars, the procedures and the term
+		TermVarsProc tvp = computeTermVarsProc(formula);
+		// Compute a closed formula version of result, it is needed for newPredicate.
+		Term closed_formula = SmtManager.computeClosedFormula(formula, tvp.getVars(), m_Script);
+		return newPredicate(formula, tvp.getProcedures(), tvp.getVars(), closed_formula);
+	}
 	
+	private Set<TermVariable> computeIrrelevantVariables(Set<BoogieVar> relevantVars, IPredicate p) {
+		Set<TermVariable> result = new HashSet<TermVariable>();
+		for (BoogieVar bv : p.getVars()) {
+			if (!relevantVars.contains(bv)) {
+				result.add(bv.getTermVariable());
+			}
+		}
+		return result;
+	}
+	
+	public IPredicate computeForwardRelevantPredicate(IPredicate sp, RelevantVariables rvar, 
+			int posToComputePredicateFor) {
+		return computeRelevantPredicateHelper(sp, rvar,
+				posToComputePredicateFor,
+				Script.EXISTS);
+	}
+
+	/**
+	 * @param rvar
+	 * @param posToComputePredicateFor
+	 * @param sp
+	 * @return
+	 */
+	private IPredicate computeRelevantPredicateHelper(IPredicate p,
+			RelevantVariables rvar, int posToComputePredicateFor,
+			int quantifier) {
+		
+		Set<BoogieVar> relevantVars = rvar.getRelevantVariables()[posToComputePredicateFor];
+		Set<TermVariable> irrelevantVars = computeIrrelevantVariables(relevantVars, p);
+		
+		Term formula = DestructiveEqualityResolution.quantifier(m_Script, quantifier,
+				irrelevantVars.toArray(new TermVariable[irrelevantVars.size()]), p.getFormula(), (Term[][]) null);
+		return constructIPredicate(formula);
+	}
+	
+	
+	public IPredicate computeBackwardRelevantPredicate(IPredicate wp, TransFormula tf, 
+			RelevantVariables rvar, 
+			int posToComputePredicateFor) {
+		return computeRelevantPredicateHelper(wp, rvar, posToComputePredicateFor, Script.FORALL);
+	}
 	
 	/**
 	 * Computes the strongest postcondition of the given predicate p and
@@ -1760,12 +1809,7 @@ public class SmtManager {
 			result = DestructiveEqualityResolution.quantifier(m_Script, Script.EXISTS,
 					varsToQuantify.toArray(new TermVariable[varsToQuantify.size()]), result, (Term[][]) null);
 		}
-		
-		// Compute the set of BoogieVars, the procedures and the term
-		TermVarsProc tvp = computeTermVarsProc(result);
-		// Compute a closed formula version of result, it is needed for newPredicate.
-		Term result_as_closed_formula = SmtManager.computeClosedFormula(result, tvp.getVars(), m_Script);
-		return newPredicate(result, tvp.getProcedures(), tvp.getVars(), result_as_closed_formula);
+		return constructIPredicate(result);
 	}
 	
 	/**
@@ -1886,9 +1930,7 @@ public class SmtManager {
 					Script.EXISTS,
 					varsToQuantifyPendingCall.toArray(new TermVariable[varsToQuantifyPendingCall.size()]),
 					predANDCallANDGlobalVars, (Term[][])null);
-			TermVarsProc tvp = computeTermVarsProc(result);
-			Term result_as_closed_formula = SmtManager.computeClosedFormula(result, tvp.getVars(), m_Script);
-			return newPredicate(result, tvp.getProcedures(), tvp.getVars(), result_as_closed_formula);
+			return constructIPredicate(result);
 		} else {
 			Term predRenamed = new Substitution(varsToRenameInPredNonPendingCall, m_Script).transform(predNonModOldVarsRenamed);
 			varsToQuantifyNonPendingCall.addAll(varsToQuantifyNonModOldVars);
@@ -1898,10 +1940,7 @@ public class SmtManager {
 					varsToQuantifyNonPendingCall.toArray(new TermVariable[varsToQuantifyNonPendingCall.size()]),
 					Util.and(m_Script, predRenamed, globalVarsInVarsRenamedOutVarsRenamed),
 					(Term[][])null);
-			TermVarsProc tvp = computeTermVarsProc(result);
-			Term result_as_closed_formula = SmtManager.computeClosedFormula(result, tvp.getVars(), m_Script);
-			return newPredicate(result, tvp.getProcedures(), tvp.getVars(), result_as_closed_formula);
-
+			return constructIPredicate(result);
 		}
 	}
 	/**
@@ -2090,9 +2129,7 @@ public class SmtManager {
 				Util.and(m_Script, calleePredRenamedQuantified, retTermRenamed,
 						calleRPredANDCallTFRenamedQuantified),
 				(Term[][])null);
-		TermVarsProc tvp = computeTermVarsProc(result);
-		Term resultAsClosedFormula = SmtManager.computeClosedFormula(result, tvp.getVars(), m_Script);
-		return newPredicate(result, tvp.getProcedures(), tvp.getVars(), resultAsClosedFormula);
+		return constructIPredicate(result);
 	}
 
 	/**
@@ -2165,11 +2202,7 @@ public class SmtManager {
 					varsToQuantify.toArray(new TermVariable[varsToQuantify.size()]),
 					result, (Term[][]) null);
 		} 
-		// Compute the set of BoogieVars, the procedures and the term
-		TermVarsProc tvp = computeTermVarsProc(result);
-		// Compute a closed formula version of result, it is needed for newPredicate.
-		Term result_as_closed_formula = SmtManager.computeClosedFormula(result, tvp.getVars(), m_Script);
-		return newPredicate(result, tvp.getProcedures(), tvp.getVars(), result_as_closed_formula);
+		return constructIPredicate(result);
 	}
 	
 	/**
@@ -2247,9 +2280,7 @@ public class SmtManager {
 						varsToQuantify.toArray(new TermVariable[varsToQuantify.size()]),
 						result, (Term[][])null);
 			}
-			TermVarsProc tvp = computeTermVarsProc(result);
-			Term result_as_closed_formula = SmtManager.computeClosedFormula(result, tvp.getVars(), m_Script);
-			return newPredicate(result, tvp.getProcedures(), tvp.getVars(), result_as_closed_formula);
+			return constructIPredicate(result);
 		} else {
 			throw new UnsupportedOperationException("WP for non-pending Call is not implemented yet!");
 		}
@@ -2491,9 +2522,7 @@ public class SmtManager {
 //					result, (Term[][])null);
 			
 		}
-		TermVarsProc tvp = computeTermVarsProc(resultQuantified);
-		Term result_as_closed_formula = SmtManager.computeClosedFormula(resultQuantified, tvp.getVars(), m_Script);
-		return newPredicate(resultQuantified, tvp.getProcedures(), tvp.getVars(), result_as_closed_formula);
+		return constructIPredicate(resultQuantified);
 	}
 	
 	//FIXME: does not work im SmtInterpol2
