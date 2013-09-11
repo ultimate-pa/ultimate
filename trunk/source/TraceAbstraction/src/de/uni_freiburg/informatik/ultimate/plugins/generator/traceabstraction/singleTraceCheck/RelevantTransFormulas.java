@@ -18,7 +18,11 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 
 
-
+/**
+ * Class for computing the relevant transformulas of a trace with unsatisfiable core.
+ * @author musab@informatik.uni-freiburg.de
+ *
+ */
 public class RelevantTransFormulas extends TraceWithFormulas<TransFormula, IPredicate> {
 	
 	/**
@@ -51,17 +55,6 @@ public class RelevantTransFormulas extends TraceWithFormulas<TransFormula, IPred
 		m_GlobalOldVarAssignmentTransFormulaAtCall = new HashMap<Integer, TransFormula>();
 		m_SmtManager = smtManager;
 		generateRelevantTransFormulas(unsat_core, localVarAssignmentsAtCallInUnsatCore, modGlobalVarManager);
-	}
-	
-	public TransFormula getRelevantTransFormulaAtPosition(int i) {
-		assert i >= 0 && i < m_TransFormulas.length : "TransFormula at position " + i + " is not available!";
-		return m_TransFormulas[i];
-	}
-	
-	public TransFormula getGlobalVarAssignmentAtCallPosition(int i) {
-		assert m_GlobalOldVarAssignmentTransFormulaAtCall.containsKey(i) : "TransFormula for global variable assignment " +
-				"at position " + i + " is not available!";
-		return m_GlobalOldVarAssignmentTransFormulaAtCall.get(i);
 	}
 	
 	private void generateRelevantTransFormulas(Set<CodeBlock> unsat_core, 
@@ -98,6 +91,7 @@ public class RelevantTransFormulas extends TraceWithFormulas<TransFormula, IPred
 		
 	}
 	
+	
 	private TransFormula buildTransFormulaForStmtNotInUnsatCore(TransFormula tf) {
 		Map<BoogieVar, TermVariable> outvars = new HashMap<BoogieVar, TermVariable>();
 		for (BoogieVar bv : tf.getAssignedVars()) {
@@ -117,32 +111,27 @@ public class RelevantTransFormulas extends TraceWithFormulas<TransFormula, IPred
 
 	@Override
 	public Set<Integer> callPositions() {
-		// TODO Auto-generated method stub
-		return null;
+		return super.getTrace().computeCallPositions();
 	}
 
 	@Override
 	protected TransFormula getFormulaFromValidNonCallPos(int i) {
-		// TODO Auto-generated method stub
-		return null;
+		return m_TransFormulas[i];
 	}
 
 	@Override
 	protected TransFormula getLocalVarAssignmentFromValidPos(int i) {
-		// TODO Auto-generated method stub
-		return null;
+		return m_TransFormulas[i];
 	}
 
 	@Override
 	protected TransFormula getGlobalVarAssignmentFromValidPos(int i) {
-		// TODO Auto-generated method stub
-		return null;
+		return m_GlobalOldVarAssignmentTransFormulaAtCall.get(i);
 	}
 
 	@Override
 	protected TransFormula getOldVarAssignmentFromValidPos(int i) {
-		// TODO Auto-generated method stub
-		return null;
+		throw new UnsupportedOperationException("Method not implemented yet!");
 	}
 
 }

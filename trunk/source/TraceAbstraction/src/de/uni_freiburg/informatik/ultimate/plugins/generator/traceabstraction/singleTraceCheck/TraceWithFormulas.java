@@ -76,7 +76,7 @@ public abstract class TraceWithFormulas<TF, SF> {
 		assert i>=0 && i<m_NestedWord.length() : "out of range";
 		assert callPositions().contains(i) : "no call position";
 		assert m_NestedWord.isCallPosition(i) : "no call position";
-		return getLocalVarAssignmentFromValidPos(i);
+		return getGlobalVarAssignmentFromValidPos(i);
 	}
 	
 	protected abstract TF getGlobalVarAssignmentFromValidPos(int i);
