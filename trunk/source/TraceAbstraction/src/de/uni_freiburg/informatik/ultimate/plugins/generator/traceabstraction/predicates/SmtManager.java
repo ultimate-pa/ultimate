@@ -1702,9 +1702,9 @@ public class SmtManager {
 	}
 	
 	public IPredicate computeForwardRelevantPredicate(IPredicate sp, RelevantVariables rvar, 
-			int posToComputePredicateFor) {
+			int posOfPredicate) {
 		return computeRelevantPredicateHelper(sp, rvar,
-				posToComputePredicateFor,
+				posOfPredicate + 1,
 				Script.EXISTS);
 	}
 
@@ -1727,10 +1727,9 @@ public class SmtManager {
 	}
 	
 	
-	public IPredicate computeBackwardRelevantPredicate(IPredicate wp, TransFormula tf, 
-			RelevantVariables rvar, 
-			int posToComputePredicateFor) {
-		return computeRelevantPredicateHelper(wp, rvar, posToComputePredicateFor, Script.FORALL);
+	public IPredicate computeBackwardRelevantPredicate(IPredicate wp, RelevantVariables rvar, 
+			int posOfPredicate) {
+		return computeRelevantPredicateHelper(wp, rvar, posOfPredicate + 1, Script.FORALL);
 	}
 	
 	/**

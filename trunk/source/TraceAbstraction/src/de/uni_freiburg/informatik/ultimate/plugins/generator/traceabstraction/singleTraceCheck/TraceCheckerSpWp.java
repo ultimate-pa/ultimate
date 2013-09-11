@@ -214,6 +214,7 @@ public class TraceCheckerSpWp extends TraceChecker {
 			}
 			s_Logger.debug("Checking strongest postcondition...");
 			checkInterpolantsCorrect(m_InterpolantsSp, trace, tracePrecondition, tracePostcondition);
+			s_Logger.debug("Computing forward relevant predicates...");
 			computeForwardRelevantPredicates(rvar);
 			s_Logger.debug("Checking inductivity of forward relevant predicates...");
 			checkInterpolantsCorrect(m_InterpolantsFp, trace, tracePrecondition, tracePostcondition);
@@ -321,6 +322,7 @@ public class TraceCheckerSpWp extends TraceChecker {
 
 			s_Logger.debug("Checking weakest precondition...");
 			checkInterpolantsCorrect(m_InterpolantsWp, trace, tracePrecondition, tracePostcondition);
+			s_Logger.debug("Computing backward relevant predicates...");
 			computeBackwardRelevantPredicates(rvar);
 			s_Logger.debug("Checking inductivity of backward relevant predicates...");
 			checkInterpolantsCorrect(m_InterpolantsBp, trace, tracePrecondition, tracePostcondition);
@@ -348,7 +350,7 @@ public class TraceCheckerSpWp extends TraceChecker {
 		assert m_InterpolantsWp != null : "Interpolants WP_i have not been computed!";
 		m_InterpolantsBp = new IPredicate[m_InterpolantsWp.length];
 		for (int i = 0; i < m_InterpolantsWp.length; i++) {
-			m_InterpolantsBp[i] = m_SmtManager.computeForwardRelevantPredicate(m_InterpolantsWp[i], rvar, i);
+			m_InterpolantsBp[i] = m_SmtManager.computeBackwardRelevantPredicate(m_InterpolantsWp[i], rvar, i);
 		}
 	}
 	
