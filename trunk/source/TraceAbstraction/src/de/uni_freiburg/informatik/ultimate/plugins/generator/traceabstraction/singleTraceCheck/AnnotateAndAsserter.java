@@ -86,12 +86,12 @@ public class AnnotateAndAsserter {
 				if (m_Trace.isCallPosition(i)) {
 					callPositions.add(i);
 					{
-						Term locVarAssign = annotateAndAssertLocalVarAssignemntCall(i);
-						localVarAssignmentAtCall.put(i, locVarAssign);
-					}
-					{
 						Term globVarAssign = annotateAndAssertGlobalVarAssignemntCall(i);
 						annotatedTerms[i] = globVarAssign;
+					}
+					{
+						Term locVarAssign = annotateAndAssertLocalVarAssignemntCall(i);
+						localVarAssignmentAtCall.put(i, locVarAssign);
 					}
 					{
 						Term oldVarAssign = annotateAndAssertOldVarAssignemntCall(i);
@@ -114,20 +114,20 @@ public class AnnotateAndAsserter {
 
 			SortedMap<Integer, Term> annotatedPendingContexts = new TreeMap<Integer,Term>();
 			int pendingReturnCode = -1 - nestedSsa.getPendingContexts().size();
-			for (Integer position : nestedSsa.getPendingContexts().keySet()) {
-				assert m_Trace.isPendingReturn(position);
+			for (Integer positionOfPendingReturn : nestedSsa.getPendingContexts().keySet()) {
+				assert m_Trace.isPendingReturn(positionOfPendingReturn);
 				{
-					//TODO: returnPosition instead of pendingReturnCode
-					Term annotated = annotateAndAssertPendingContext(pendingReturnCode);
-					annotatedPendingContexts.put(position, annotated);
+					//TODO: use pendingReturnCode for naming of ssa
+					Term annotated = annotateAndAssertPendingContext(positionOfPendingReturn);
+					annotatedPendingContexts.put(positionOfPendingReturn, annotated);
 				}
 				{
-					Term annotated = annotateAndAssertLocalVarAssignemntPendingContext(position);
-					localVarAssignmentAtCall.put(position, annotated);
+					Term annotated = annotateAndAssertLocalVarAssignemntPendingContext(positionOfPendingReturn);
+					localVarAssignmentAtCall.put(positionOfPendingReturn, annotated);
 				}
 				{
-					Term annotated = annotateAndAssertOldVarAssignemntPendingContext(position);
-					globalOldVarAssignmentAtCall.put(position, annotated);
+					Term annotated = annotateAndAssertOldVarAssignemntPendingContext(positionOfPendingReturn);
+					globalOldVarAssignmentAtCall.put(positionOfPendingReturn, annotated);
 				}
 
 				pendingReturnCode++;
@@ -179,7 +179,7 @@ public class AnnotateAndAsserter {
 		
 		protected Term annotateAndAssertOldVarAssignemntCall(int position) {
 			String name = SSA + position + OLDVARASSIGN_CALL;
-			Term original = m_SSA.getGlobalVarAssignment(position);
+			Term original = m_SSA.getOldVarAssignment(position);
 			Term annotated = annotateAndAssertTerm(original, name);
 			return annotated;
 		}
@@ -200,7 +200,7 @@ public class AnnotateAndAsserter {
 		
 		protected Term annotateAndAssertOldVarAssignemntPendingContext(int positionOfPendingReturn) {
 			String name = SSA + positionOfPendingReturn + OLDVARASSIGN_PENDINGCONTEXT;
-			Term original = m_SSA.getGlobalVarAssignment(positionOfPendingReturn);
+			Term original = m_SSA.getOldVarAssignment(positionOfPendingReturn);
 			Term annotated = annotateAndAssertTerm(original, name);
 			return annotated;
 		}

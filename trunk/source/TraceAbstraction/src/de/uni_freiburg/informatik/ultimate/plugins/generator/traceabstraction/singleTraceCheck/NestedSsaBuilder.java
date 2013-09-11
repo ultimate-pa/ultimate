@@ -183,7 +183,9 @@ public class NestedSsaBuilder {
 		}
 		
 		public void putPendingContext(Integer pendingReturnPos, Term term) {
-			
+			assert m_TraceWF.getTrace().isPendingReturn(pendingReturnPos);
+			assert !m_PendingContexts.containsKey(pendingReturnPos);
+			m_PendingContexts.put(pendingReturnPos, term);
 		}
 	}
 	
