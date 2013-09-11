@@ -1,6 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck;
 
 import java.util.Map;
+import java.util.Set;
 import java.util.SortedMap;
 
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
@@ -16,26 +17,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
  * @author heizmann@informatik.uni-freiburg.de
  *
  */
-public class NestedSsa {
-	
-	/**
-	 * Trace for which this is the single static assignment form.
-	 */
-	private final NestedWord<CodeBlock> m_NestedTrace;
-	
-	/**
-	 * SSA form of Precondition.
-	 * Original precondition where all variables get index -1.  
-	 */
-	private Term m_Precondition;
-	
-	/**
-	 * SSA form of Postcondition. 
-	 * Original postcondition where all variables get as index the last position
-	 * of the trace where this variable has been modified (with respect to 
-	 * calling context).  
-	 */
-	private Term m_Postcondition;
+public class NestedSsa extends TraceWithFormulas<Term, Term> {
 	
 	/**
 	 * If index i is an internal position or a return transition in the
@@ -60,14 +42,6 @@ public class NestedSsa {
 	 */
 	private final Map<Integer,Term> m_GlobalOldVarAssignmentAtCall;
 	
-	
-	/**
-	 * Maps a pending return position to a formula which represents the state of
-	 * the procedure to which is returned before the return.
-	 */
-	private final SortedMap<Integer,Term> m_PendingContexts;
-	
-	
 	/**
 	 * Maps indexed variables (represented by terms) to the BoogieVar which
 	 * represented the non-indexed version of the term.
@@ -83,68 +57,49 @@ public class NestedSsa {
 	 * @param pendingContexts
 	 * @param constants2BoogieVar
 	 */
-	public NestedSsa(NestedWord<CodeBlock> nestedTrace, Term[] terms,
+	public NestedSsa(NestedWord<CodeBlock> nestedTrace, Term precondition, 
+			Term postcondition, Term[] terms,
 			Map<Integer, Term> localVarAssignmentAtCall,
 			Map<Integer, Term> globalOldVarAssignmentAtCall,
 			SortedMap<Integer, Term> pendingContexts, 
 			Map<Term, BoogieVar> constants2BoogieVar) {
-		m_NestedTrace = nestedTrace;
+		super(nestedTrace, precondition, postcondition, pendingContexts);
 		m_Terms = terms;
 		m_LocalVarAssignmentAtCall = localVarAssignmentAtCall;
 		m_GlobalOldVarAssignmentAtCall = globalOldVarAssignmentAtCall;
-		m_PendingContexts = pendingContexts;
 		m_Constants2BoogieVar = constants2BoogieVar;
 	}
-
-	public NestedWord<CodeBlock> getTrace() {
-		return m_NestedTrace;
-	}
-
-
-	public Term[] getFormulas() {
-		return m_Terms;
-	}
-
-
-	public Map<Integer, Term> getLocalVarAssignmentAtCall() {
-		return m_LocalVarAssignmentAtCall;
-	}
-
-
-	public Map<Integer, Term> getGlobalOldVarAssignmentAtCall() {
-		return m_GlobalOldVarAssignmentAtCall;
-	}
-	
-	public SortedMap<Integer, Term> getPendingContexts() {
-		return m_PendingContexts;
-	}
-
 
 	public Map<Term, BoogieVar> getConstants2BoogieVar() {
 		return m_Constants2BoogieVar;
 	}
 
-
-	public Term getPrecondition() {
-		return m_Precondition;
+	@Override
+	public Set<Integer> callPositions() {
+		System.out.println("necessary?");
+		return super.getTrace().computeCallPositions();
 	}
 
-	@Deprecated
-	public void setPrecondition(Term precondition) {
-		m_Precondition = precondition;
+	@Override
+	protected Term getFormulaFromValidNonCallPos(int i) {
+		return m_Terms[i];
+	}
+
+	@Override
+	protected Term getLocalVarAssignmentFromValidPos(int i) {
+		return m_LocalVarAssignmentAtCall.get(i);
+	}
+
+	@Override
+	protected Term getGlobalVarAssignmentFromValidPos(int i) {
+		return m_Terms[i];
+	}
+
+	@Override
+	protected Term getOldVarAssignmentFromValidPos(int i) {
+		return m_GlobalOldVarAssignmentAtCall.get(i);
 	}
 
 
-	public Term getPostcondition() {
-		return m_Postcondition;
-	}
-
-
-	@Deprecated
-	public void setPostcondition(Term postcondition) {
-		m_Postcondition = postcondition;
-	}
-	
-	
 
 }

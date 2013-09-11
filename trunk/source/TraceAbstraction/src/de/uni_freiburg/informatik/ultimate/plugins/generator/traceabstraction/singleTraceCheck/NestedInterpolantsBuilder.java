@@ -78,7 +78,7 @@ public class NestedInterpolantsBuilder {
 		m_SmtManager = smtManager;
 		m_PredicateBuilder = predicateBuilder;
 		m_AnnotSSA = annotatdSsa;
-		m_CraigInterpolants = new Term[m_AnnotSSA.getFormulas().length-1];
+		m_CraigInterpolants = new Term[m_AnnotSSA.getTrace().length()-1];
 		m_sfmv = new PredicateConstructionVisitor(m_AnnotSSA.getConstants2BoogieVar());
 		m_InterpolatedPositions = interpolatedPositions;
 		m_Trace = annotatdSsa.getTrace();
@@ -123,21 +123,21 @@ public class NestedInterpolantsBuilder {
 					}
 					newInterpolInputFormula(i);
 					if (m_Trace.isPendingCall(i)) {
-						addToLastInterpolInputFormula(m_AnnotSSA.getLocalVarAssignmentAtCall().get(i));
-						addToLastInterpolInputFormula(m_AnnotSSA.getGlobalOldVarAssignmentAtCall().get(i));
+						addToLastInterpolInputFormula(m_AnnotSSA.getLocalVarAssignment(i));
+						addToLastInterpolInputFormula(m_AnnotSSA.getOldVarAssignment(i));
 					}
 				} else if (m_Trace.isReturnPosition(i)) {
 					if (m_Trace.isPendingReturn(i)) {
 						newInterpolInputFormula(i);
-						addToLastInterpolInputFormula(m_AnnotSSA.getLocalVarAssignmentAtCall().get(i));
-						addToLastInterpolInputFormula(m_AnnotSSA.getGlobalOldVarAssignmentAtCall().get(i));
+						addToLastInterpolInputFormula(m_AnnotSSA.getLocalVarAssignment(i));
+						addToLastInterpolInputFormula(m_AnnotSSA.getOldVarAssignment(i));
 						addToLastInterpolInputFormula(m_AnnotSSA.getPendingContexts().get(i));
 					} else {
 						startOfCurrentSubtree = m_startOfSubtreeStack.pop();
 						newInterpolInputFormula(i);
 						int correspondingCallPosition = m_Trace.getCallPosition(i);
-						addToLastInterpolInputFormula(m_AnnotSSA.getLocalVarAssignmentAtCall().get(correspondingCallPosition));
-						addToLastInterpolInputFormula(m_AnnotSSA.getGlobalOldVarAssignmentAtCall().get(correspondingCallPosition));
+						addToLastInterpolInputFormula(m_AnnotSSA.getLocalVarAssignment(correspondingCallPosition));
+						addToLastInterpolInputFormula(m_AnnotSSA.getOldVarAssignment(correspondingCallPosition));
 					}
 						
 				} else {
@@ -146,29 +146,29 @@ public class NestedInterpolantsBuilder {
 						
 			} else {
 				if (m_Trace.isInternalPosition(i)) {
-					addToLastInterpolInputFormula(m_AnnotSSA.getFormulas()[i]);
+					addToLastInterpolInputFormula(m_AnnotSSA.getFormulaFromNonCallPos(i));
 				} else if (m_Trace.isCallPosition(i)) {
 					if (!m_Trace.isPendingCall(i)) {
 						m_startOfSubtreeStack.push(startOfCurrentSubtree);
 						startOfCurrentSubtree = -23;
 					}
-					addToLastInterpolInputFormula(m_AnnotSSA.getFormulas()[i]);
+					addToLastInterpolInputFormula(m_AnnotSSA.getGlobalVarAssignment(i));
 					if (m_Trace.isPendingCall(i)) {
-						addToLastInterpolInputFormula(m_AnnotSSA.getLocalVarAssignmentAtCall().get(i));
-						addToLastInterpolInputFormula(m_AnnotSSA.getGlobalOldVarAssignmentAtCall().get(i));
+						addToLastInterpolInputFormula(m_AnnotSSA.getLocalVarAssignment(i));
+						addToLastInterpolInputFormula(m_AnnotSSA.getOldVarAssignment(i));
 					} 
 				} else if (m_Trace.isReturnPosition(i)) {
 					if (m_Trace.isPendingReturn(i)) {
-						addToLastInterpolInputFormula(m_AnnotSSA.getFormulas()[i]);
-						addToLastInterpolInputFormula(m_AnnotSSA.getLocalVarAssignmentAtCall().get(i));
-						addToLastInterpolInputFormula(m_AnnotSSA.getGlobalOldVarAssignmentAtCall().get(i));
+						addToLastInterpolInputFormula(m_AnnotSSA.getFormulaFromNonCallPos(i));
+						addToLastInterpolInputFormula(m_AnnotSSA.getLocalVarAssignment(i));
+						addToLastInterpolInputFormula(m_AnnotSSA.getOldVarAssignment(i));
 						addToLastInterpolInputFormula(m_AnnotSSA.getPendingContexts().get(i));
 					} else {
 						startOfCurrentSubtree = m_startOfSubtreeStack.pop();
-						addToLastInterpolInputFormula(m_AnnotSSA.getFormulas()[i]);
+						addToLastInterpolInputFormula(m_AnnotSSA.getFormulaFromNonCallPos(i));
 						int correspondingCallPosition = m_Trace.getCallPosition(i);
-						addToLastInterpolInputFormula(m_AnnotSSA.getLocalVarAssignmentAtCall().get(correspondingCallPosition));
-						addToLastInterpolInputFormula(m_AnnotSSA.getGlobalOldVarAssignmentAtCall().get(correspondingCallPosition));
+						addToLastInterpolInputFormula(m_AnnotSSA.getLocalVarAssignment(correspondingCallPosition));
+						addToLastInterpolInputFormula(m_AnnotSSA.getOldVarAssignment(correspondingCallPosition));
 					}					
 				} else {
 					throw new AssertionError();
@@ -220,8 +220,13 @@ public class NestedInterpolantsBuilder {
 				}
 			}
 		}
-		
-		interpolInput.add(m_AnnotSSA.getFormulas()[i]);
+		Term term;
+		if (m_Trace.isCallPosition(i)) {
+			term = m_AnnotSSA.getGlobalVarAssignment(i);
+		} else {
+			term = m_AnnotSSA.getFormulaFromNonCallPos(i);
+		}
+		interpolInput.add(term);
 		//the interpolant between last formula and this new formula can be found
 		//at position i-1
 		

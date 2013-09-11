@@ -7,12 +7,12 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.SortedMap;
 import java.util.Stack;
 import java.util.TreeMap;
 
 import org.apache.log4j.Logger;
 
-import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.logic.FormulaUnLet;
@@ -56,16 +56,144 @@ public class NestedSsaBuilder {
 	public Map<BoogieVar, Map<Integer, Term>> getIndexedVarRepresentative() {
 		return m_IndexedVarRepresentative;
 	}
-
-
-	private final IPredicate m_Precondition;
-	private final IPredicate m_Postcondition;
-	private final Map<Integer, IPredicate> m_PendingContexts;
 	
-	private final NestedSsa m_Ssa;
+	private final Map<Term,BoogieVar> m_Constants2BoogieVar = new HashMap<Term,BoogieVar>();
+
+	private final TraceWithFormulas<TransFormula, IPredicate> m_TraceWF;
+	
+	private final SsaData m_SsaData;
+	
+	private class SsaData {
+		
+		/**
+		 * SSA form of Precondition.
+		 * Original precondition where all variables get index -1.  
+		 */
+		private Term m_Precondition;
+		
+		/**
+		 * SSA form of Postcondition. 
+		 * Original postcondition where all variables get as index the last position
+		 * of the trace where this variable has been modified (with respect to 
+		 * calling context).  
+		 */
+		private Term m_Postcondition;
+		
+		/**
+		 * If index i is an internal position or a return transition in the
+		 * nested trace Term[i] represents the i-th statement.
+		 * If index i is a call position Term[i] represents the assignment 
+		 * {@code g_1,...,g_n := old(g_1),...,old(g_n)} where g_1,...,g_n are the
+		 * global variables modified by the called procedure.  
+		 */
+		private final Term[] m_Terms;
+		
+		/**
+		 * Maps a call position to a formula that represents the assignment 
+		 * {@code x_1,...,x_n := t_1,...,t_n} where x_1,...,x_n are the parameters
+		 * of the callee and t_1,...,t_n are the arguments of the caller.
+		 */
+		private final Map<Integer,Term> m_LocalVarAssignmentAtCall;
+		
+		/**
+		 * Maps a call position to a formula that represents the assignment 
+		 * {@code old(g_1),...,old(g_n) := g_1,...,g_n} where g_1,...,g_n are the
+		 * global variables modified by the called procedure.  
+		 */
+		private final Map<Integer,Term> m_GlobalOldVarAssignmentAtCall;
+		
+		
+		/**
+		 * Maps a pending return position to a formula which represents the state of
+		 * the procedure to which is returned before the return.
+		 */
+		private final SortedMap<Integer,Term> m_PendingContexts;
+		
+		public SsaData() {
+			m_Terms = new Term[m_TraceWF.getTrace().length()];
+			m_LocalVarAssignmentAtCall = new HashMap<Integer,Term>();
+			m_GlobalOldVarAssignmentAtCall = new HashMap<Integer,Term>();
+			m_PendingContexts = new TreeMap<Integer,Term>();
+		}
+
+
+		public Term getPrecondition() {
+			return m_Precondition;
+		}
+
+
+		public void setPrecondition(Term precondition) {
+			m_Precondition = precondition;
+		}
+
+
+		public Term getPostcondition() {
+			return m_Postcondition;
+		}
+
+
+		public void setPostcondition(Term postcondition) {
+			m_Postcondition = postcondition;
+		}
+
+
+		public Term[] getTerms() {
+			return m_Terms;
+		}
+
+
+		public Map<Integer, Term> getLocalVarAssignmentAtCall() {
+			return m_LocalVarAssignmentAtCall;
+		}
+
+
+		public Map<Integer, Term> getGlobalOldVarAssignmentAtCall() {
+			return m_GlobalOldVarAssignmentAtCall;
+		}
+
+
+		public SortedMap<Integer, Term> getPendingContexts() {
+			return m_PendingContexts;
+		}
+
+
+		public void putOldVarAssign(Integer pos, Term term) {
+			assert m_TraceWF.getTrace().isCallPosition(pos) || m_TraceWF.getTrace().isPendingReturn(pos);
+			assert m_GlobalOldVarAssignmentAtCall.get(pos) == null;
+			m_GlobalOldVarAssignmentAtCall.put(pos, term);
+		}
+		
+		public void putLocalVarAssign(Integer pos, Term term) {
+			assert m_TraceWF.getTrace().isCallPosition(pos) || m_TraceWF.getTrace().isPendingReturn(pos);
+			assert m_LocalVarAssignmentAtCall.get(pos) == null;
+			m_LocalVarAssignmentAtCall.put(pos, term);
+		}
+		
+		public void putGlobalVarAssign(Integer pos, Term term) {
+			assert m_TraceWF.getTrace().isCallPosition(pos);
+			assert m_Terms[pos] == null;
+			m_Terms[pos] = term;
+		}
+		
+		public void putNonCallFormula(Integer pos, Term term) {
+			assert !m_TraceWF.getTrace().isCallPosition(pos);
+			assert m_Terms[pos] == null;
+			m_Terms[pos] = term;
+			
+		}
+		
+		public void putPendingContext(Integer pendingReturnPos, Term term) {
+			
+		}
+	}
+	
+	private NestedSsa m_Ssa;
 	
 	private String m_currentProcedure;
 	
+	
+	
+
 	
 	/**
 	 * Maps a procedure name to the set of global variables which may be
@@ -73,27 +201,20 @@ public class NestedSsaBuilder {
 	 */
 	private final ModifiableGlobalVariableManager m_ModifiedGlobals;
 
-	@SuppressWarnings("unchecked")
-	public NestedSsaBuilder(Word<CodeBlock> counterexample,
+	public NestedSsaBuilder(NestedWord<CodeBlock> trace,
 							IPredicate precondition,
 							IPredicate postcondition,
-							Map<Integer, IPredicate> pendingContexts,
+							SortedMap<Integer, IPredicate> pendingContexts,
 							SmtManager smtManager,
 							ModifiableGlobalVariableManager modifiedGlobals,
 						 	PrintWriter iterationPW) {
 		m_Script = smtManager.getScript();
 		m_SmtManager = smtManager;
-		m_Precondition = precondition;
-		m_Postcondition = postcondition;
-		m_PendingContexts = pendingContexts;
+		m_TraceWF = new DefaultTransFormulas(trace, precondition, postcondition, 
+				pendingContexts, modifiedGlobals);
+		m_SsaData = new SsaData();
 		 
-		m_Ssa  = new NestedSsa(
-				NestedWord.nestedWord(counterexample),
-				new Term[counterexample.length()],
-				new HashMap<Integer,Term>(),
-				new HashMap<Integer,Term>(),
-				new TreeMap<Integer,Term>(),
-				new HashMap<Term, BoogieVar>());
+
 		m_IterationPW = iterationPW;
 		m_ModifiedGlobals = modifiedGlobals;
 		buildSSA();
@@ -121,10 +242,10 @@ public class NestedSsaBuilder {
 	private void buildSSA() {
 		// add negative numbers <-1 for each pending context
 		{
-			int numberPendingContexts = m_PendingContexts.size();
+			int numberPendingContexts = m_TraceWF.getPendingContexts().size();
 			List<Integer> pendingReturns;
 			if (numberPendingContexts > 0) {
-				pendingReturns = positionsOfPendingReturns(m_Ssa.getTrace());
+				pendingReturns = positionsOfPendingReturns(m_TraceWF.getTrace());
 			} else {
 				pendingReturns = new ArrayList<Integer>(0);
 			}
@@ -135,14 +256,15 @@ public class NestedSsaBuilder {
 			
 			for (int i=numberPendingContexts-1; i>=0; i--) {
 				int pendingReturnPosition = pendingReturns.get(i);
-				Return ret = (Return) m_Ssa.getTrace().getSymbol(pendingReturnPosition);
+				Return ret = (Return) m_TraceWF.getTrace().getSymbol(pendingReturnPosition);
 				Call correspondingCall = ret.getCorrespondingCall();
 				{
 					ProgramPoint callPredecessor = (ProgramPoint) correspondingCall.getSource();
 					m_currentProcedure = callPredecessor.getProcedure();
 				}
-				Term versioneeredContext = versioneerPredicate(m_PendingContexts.get(pendingReturnPosition));
-				m_Ssa.getPendingContexts().put(pendingReturnPosition, versioneeredContext);
+				IPredicate pendingContext = m_TraceWF.getPendingContexts().get(pendingReturnPosition);
+				Term versioneeredContext = versioneerPredicate(pendingContext);
+				m_SsaData.putPendingContext(pendingReturnPosition, versioneeredContext);
 				startOfCallingContextStack.push(startOfCallingContext);
 				
 				TransFormula localVarAssignment = correspondingCall.getTransitionFormula();
@@ -170,24 +292,23 @@ public class NestedSsaBuilder {
 				initOldVarsVV.versionAssignedVars(startOfCallingContext);
 				initLocalVarsVV.versionAssignedVars(startOfCallingContext);
 				
-				m_Ssa.getGlobalOldVarAssignmentAtCall().put(pendingReturnPosition, initOldVarsVV.getVersioneeredTerm());
-				m_Ssa.getLocalVarAssignmentAtCall().put(pendingReturnPosition, initLocalVarsVV.getVersioneeredTerm());
+				m_SsaData.putOldVarAssign(pendingReturnPosition, initOldVarsVV.getVersioneeredTerm());
+				m_SsaData.putLocalVarAssign(pendingReturnPosition, initLocalVarsVV.getVersioneeredTerm());
 			}
 				
 		}
 		assert (startOfCallingContext == -1);
 		
-		CodeBlock firstCodeBlock = m_Ssa.getTrace().getSymbolAt(0);
-		ProgramPoint pp = (ProgramPoint) firstCodeBlock.getSource();
-		m_currentProcedure = pp.getProcedure();
+		CodeBlock firstCodeBlock = m_TraceWF.getTrace().getSymbolAt(0);
+		m_currentProcedure = getProcedureofCodeBlock(firstCodeBlock);
 		
 		{
-			Term versioneeredPrecondition = versioneerPredicate(m_Precondition);
-			m_Ssa.setPrecondition(versioneeredPrecondition);
+			Term versioneeredPrecondition = versioneerPredicate(m_TraceWF.getPrecondition());
+			m_SsaData.setPrecondition(versioneeredPrecondition);
 		}
 		
-		for (int i=0; i<m_Ssa.getTrace().length(); i++) {
-			CodeBlock symbol = m_Ssa.getTrace().getSymbolAt(i);
+		for (int i=0; i < m_TraceWF.getTrace().length(); i++) {
+			CodeBlock symbol = m_TraceWF.getTrace().getSymbolAt(i);
 			assert (!(symbol instanceof GotoEdge)) : "TraceChecker does not support GotoEdges";
 			
 			TransFormula tf = symbol.getTransitionFormulaWithBranchEncoders();
@@ -195,7 +316,7 @@ public class NestedSsaBuilder {
 			VariableVersioneer tfVV = new VariableVersioneer(tf);
 			tfVV.versionInVars();
 			
-			if (m_Ssa.getTrace().isCallPosition(i)) {
+			if (m_TraceWF.getTrace().isCallPosition(i)) {
 				Call call = (Call) symbol;
 				String calledProcedure = call.getCallStatement().getMethodName();
 				m_currentProcedure = calledProcedure;
@@ -206,21 +327,21 @@ public class NestedSsaBuilder {
 				startOfCallingContextStack.push(startOfCallingContext);
 				startOfCallingContext = i;
 				initOldVarsVV.versionAssignedVars(i);
-				m_Ssa.getGlobalOldVarAssignmentAtCall().put(i, initOldVarsVV.getVersioneeredTerm());
+				m_SsaData.putOldVarAssign(i, initOldVarsVV.getVersioneeredTerm());
 
 				TransFormula globalVarAssignment = m_ModifiedGlobals.getGlobalVarsAssignment(calledProcedure);
 				VariableVersioneer initGlobalVarsVV = 
 						new VariableVersioneer(globalVarAssignment);
 				initGlobalVarsVV.versionInVars();
 				initGlobalVarsVV.versionAssignedVars(i);
-				m_Ssa.getFormulas()[i] = initGlobalVarsVV.getVersioneeredTerm();
+				m_SsaData.putGlobalVarAssign(i, initGlobalVarsVV.getVersioneeredTerm());
 				currentVersionStack.push(currentLocalVarVersion);
 				currentLocalVarVersion = new HashMap<BoogieVar,Term>();
 			}
-			if (m_Ssa.getTrace().isReturnPosition(i)) {
+			if (m_TraceWF.getTrace().isReturnPosition(i)) {
 				Return ret = (Return) symbol;
 				m_currentProcedure = ret.getCallerProgramPoint().getProcedure();
-				if (m_Ssa.getTrace().isPendingReturn(i)) {
+				if (m_TraceWF.getTrace().isPendingReturn(i)) {
 					// start new context. here local variables get negative numbers
 					assert currentVersionStack.isEmpty();
 					currentLocalVarVersion = new HashMap<BoogieVar,Term>();
@@ -232,11 +353,11 @@ public class NestedSsaBuilder {
 			tfVV.versionAssignedVars(i);
 			tfVV.versionBranchEncoders(i);
 			tfVV.replaceRemainingVariables();
-			if (m_Ssa.getTrace().isCallPosition(i)) {
-				m_Ssa.getLocalVarAssignmentAtCall().put(i, tfVV.getVersioneeredTerm());
+			if (m_TraceWF.getTrace().isCallPosition(i)) {
+				m_SsaData.putLocalVarAssign(i, tfVV.getVersioneeredTerm());
 			}
 			else {
-				m_Ssa.getFormulas()[i] = tfVV.getVersioneeredTerm();
+				m_SsaData.putNonCallFormula(i, tfVV.getVersioneeredTerm());
 			}
 //			s_Logger.debug("Term"+i+": "+m_ssa[i]);
 //			TermUnLet unflet = new FormulaUnLet();
@@ -244,14 +365,28 @@ public class NestedSsaBuilder {
 		}
 		
 		{
-			Term versioneeredPostcondition = versioneerPredicate(m_Postcondition);
-			m_Ssa.setPostcondition(versioneeredPostcondition);
+			Term versioneeredPostcondition = versioneerPredicate(m_TraceWF.getPostcondition());
+			m_SsaData.setPostcondition(versioneeredPostcondition);
 		}
 		
+		m_Ssa = new NestedSsa(
+		m_TraceWF.getTrace(),
+		m_SsaData.getPrecondition(),
+		m_SsaData.getPostcondition(),
+		m_SsaData.getTerms(),
+		m_SsaData.getLocalVarAssignmentAtCall(),
+		m_SsaData.getGlobalOldVarAssignmentAtCall(),
+		m_SsaData.getPendingContexts(),
+		m_Constants2BoogieVar);
 		
 		if (m_IterationPW != null) {
 			dumpSSA();
 		}
+	}
+	
+	public String getProcedureofCodeBlock(CodeBlock cb) {
+		ProgramPoint pp = (ProgramPoint) cb.getSource();
+		return pp.getProcedure();
 	}
 	
 	public NestedSsa getSsa() {
@@ -273,29 +408,29 @@ public class NestedSsaBuilder {
 					indentation++;
 					line = AbstractCegarLoop.addIndentation(indentation, 
 							"LocalVariableAssignment"+i+": "+unflet.unlet(
-										m_Ssa.getLocalVarAssignmentAtCall().get(i)).toString());
+										m_Ssa.getLocalVarAssignment(i)).toString());
 					s_Logger.debug(line);
 					m_IterationPW.println(line);
 					line = AbstractCegarLoop.addIndentation(indentation, 
 							"GlobalOld-VariableAssignment"+i+": "+unflet.unlet(
-									m_Ssa.getGlobalOldVarAssignmentAtCall().get(i)).toString());
+									m_Ssa.getOldVarAssignment(i)).toString());
 					s_Logger.debug(line);
 					m_IterationPW.println(line);
 					line = AbstractCegarLoop.addIndentation(indentation, 
 							"GlobalVariableAssignment"+i+": "+unflet.unlet(
-									m_Ssa.getFormulas()[i]).toString());
+									m_Ssa.getGlobalVarAssignment(i)));
 					s_Logger.debug(line);
 					m_IterationPW.println(line);
 				} else if (m_Ssa.getTrace().isReturnPosition(i)) {
 					line = AbstractCegarLoop.addIndentation(indentation, 
 							"LocalVariableAssignment"+i+": "+unflet.unlet(
-									m_Ssa.getFormulas()[i]).toString());
+									m_Ssa.getLocalVarAssignment(i)).toString());
 					s_Logger.debug(line);
 					m_IterationPW.println(line);
 					indentation--;
 				} else 	{
 					line = AbstractCegarLoop.addIndentation(indentation, 
-						"Term "+i+": "+unflet.unlet(m_Ssa.getFormulas()[i]).toString());
+						"Term "+i+": "+unflet.unlet(m_Ssa.getFormulaFromNonCallPos(i)).toString());
 					s_Logger.debug(line);
 					m_IterationPW.println(line);
 				}
@@ -326,7 +461,7 @@ public class NestedSsaBuilder {
 		for (BoogieVar bv : predicate.getVars()) {
 			TermVariable tv = bv.getTermVariable();
 			Term var = getCurrentVarVersion(bv);
-			m_Ssa.getConstants2BoogieVar().put(var, bv);
+			m_Constants2BoogieVar.put(var, bv);
 			replacees.add(tv);
 			replacers.add(var);
 		}
@@ -384,7 +519,7 @@ public class NestedSsaBuilder {
 			for (BoogieVar name : m_inVars.keySet()) {
 				TermVariable tv = m_inVars.get(name);
 				Term var = getCurrentVarVersion(name);
-				m_Ssa.getConstants2BoogieVar().put(var, name);
+				m_Constants2BoogieVar.put(var, name);
 				TermVariable[] vars = { tv }; 
 				Term[] values = { var };
 				m_formula = m_Script.let(vars, values, m_formula);
@@ -401,7 +536,7 @@ public class NestedSsaBuilder {
 				Term[] values = { var };
 				m_formula = m_Script.let(vars, values, m_formula);
 				letedVars.add(tv);
-				m_Ssa.getConstants2BoogieVar().put(var, name);
+				m_Constants2BoogieVar.put(var, name);
 			}
 		}
 		

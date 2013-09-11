@@ -10,7 +10,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
 public class UnsatCore2Conjuncts extends TraceWithFormulas<Map<Term,Term>, Map<Term,Term>> {
 
 	public UnsatCore2Conjuncts(NestedWord<CodeBlock> nestedWord) {
-		super(nestedWord, null, null);
+		super(nestedWord, null, null, null);
 		// TODO Auto-generated constructor stub
 	}
 

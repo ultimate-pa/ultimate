@@ -1,6 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck;
 
 import java.util.Set;
+import java.util.SortedMap;
 
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
@@ -30,24 +31,30 @@ public abstract class TraceWithFormulas<TF, SF> {
 	private final NestedWord<CodeBlock> m_NestedWord;
 	private final SF m_Precondition;
 	private final SF m_Postcondition;
+	private final SortedMap<Integer, SF> m_PendingContexts;
 	
-	public NestedWord<CodeBlock> getTrace() {
+	public final NestedWord<CodeBlock> getTrace() {
 		return m_NestedWord;
 	}
 	
 	public TraceWithFormulas(NestedWord<CodeBlock> nestedWord, 
-			SF precondition, SF postcondition) {
+			SF precondition, SF postcondition, SortedMap<Integer, SF> pendingContexts) {
 		m_NestedWord = nestedWord;
 		m_Precondition = precondition;
 		m_Postcondition = postcondition;
+		m_PendingContexts = pendingContexts;
 	}
 	
-	public SF getPrecondition() {
+	public final SF getPrecondition() {
 		return m_Precondition;
 	}
 	
-	public SF getPostcondition() {
+	public final SF getPostcondition() {
 		return m_Postcondition;
+	}
+	
+	public final SortedMap<Integer, SF> getPendingContexts() {
+		return m_PendingContexts;
 	}
 	
 	public abstract Set<Integer> callPositions();
@@ -65,8 +72,10 @@ public abstract class TraceWithFormulas<TF, SF> {
 	
 	public TF getLocalVarAssignment(int i) {
 		assert i>=0 && i<m_NestedWord.length() : "out of range";
-		assert callPositions().contains(i) : "no call position";
-		assert m_NestedWord.isCallPosition(i) : "no call position";
+		assert callPositions().contains(i) || m_NestedWord.isPendingReturn(i) : 
+			"neither call nor pending return position";
+		assert m_NestedWord.isCallPosition(i) || m_NestedWord.isPendingReturn(i) : 
+			"neither call nor pending return position";
 		return getLocalVarAssignmentFromValidPos(i);
 	}
 	
@@ -83,9 +92,11 @@ public abstract class TraceWithFormulas<TF, SF> {
 	
 	public TF getOldVarAssignment(int i) {
 		assert i>=0 && i<m_NestedWord.length() : "out of range";
-		assert callPositions().contains(i) : "no call position";
-		assert m_NestedWord.isCallPosition(i) : "no call position";
-		return getLocalVarAssignmentFromValidPos(i);
+		assert callPositions().contains(i) || m_NestedWord.isPendingReturn(i) : 
+			"neither call nor pending return position";
+		assert m_NestedWord.isCallPosition(i) || m_NestedWord.isPendingReturn(i) : 
+			"neither call nor pending return position";
+		return getOldVarAssignmentFromValidPos(i);
 	}
 	
 	protected abstract TF getOldVarAssignmentFromValidPos(int i);

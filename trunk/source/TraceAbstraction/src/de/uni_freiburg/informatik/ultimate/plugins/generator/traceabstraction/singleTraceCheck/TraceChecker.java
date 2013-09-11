@@ -3,6 +3,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.s
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -10,6 +11,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.SortedMap;
+import java.util.TreeMap;
 
 import org.apache.log4j.Logger;
 
@@ -137,7 +140,8 @@ public class TraceChecker {
 		m_PredicateUnifier = new PredicateUnifier(m_SmtManager);
 		m_ModifiedGlobals = modifiedGlobals;
 		m_DebugPW = debugPW;
-		Map<Integer, IPredicate> pendingContexts = new HashMap<Integer, IPredicate>(0);
+		SortedMap<Integer, IPredicate> pendingContexts = 
+				new TreeMap<Integer, IPredicate>();
 		checkTrace(precondition, postcondition, pendingContexts, trace);
 	}
 	
@@ -150,7 +154,7 @@ public class TraceChecker {
 	 * 
 	 */
 	public TraceChecker(IPredicate precondition, IPredicate postcondition,
-			Map<Integer, IPredicate> pendingContexts, NestedWord<CodeBlock> trace,
+			SortedMap<Integer, IPredicate> pendingContexts, NestedWord<CodeBlock> trace,
 			SmtManager smtManager,
 			ModifiableGlobalVariableManager modifiedGlobals,
 			PrintWriter debugPW) {
@@ -185,7 +189,7 @@ public class TraceChecker {
 	 * 
 	 */
 	public LBool checkTrace(IPredicate precondition, IPredicate postcondition,
-			Map<Integer, IPredicate> pendingContexts, NestedWord<CodeBlock> trace) {
+			SortedMap<Integer, IPredicate> pendingContexts, NestedWord<CodeBlock> trace) {
 		if (traceCheckRunning()) {
 			throw new AssertionError("Each trace checker can check only one trace.");
 		}
@@ -213,7 +217,7 @@ public class TraceChecker {
 		}
 		if (m_IsSafe==LBool.SAT) {
 			DefaultTransFormulas dtf = new DefaultTransFormulas(m_Trace, 
-					m_Precondition, m_Postcondition, m_ModifiedGlobals);
+					m_Precondition, m_Postcondition, pendingContexts, m_ModifiedGlobals);
 			RelevantVariables relVars = new RelevantVariables(dtf);
 			RcfgProgramExecutionBuilder rpeb = new RcfgProgramExecutionBuilder(m_ModifiedGlobals, (NestedWord<CodeBlock>) m_Trace, relVars);
 			for (int i=0; i<m_Trace.length(); i++) {
@@ -436,8 +440,8 @@ public class TraceChecker {
 			//call, if this is -1 (because call is first codeBlock) use the
 			//precondition used in this recursive interpolant computation one
 			//level above
-			Map<Integer, IPredicate> pendingContexts = 
-											new HashMap<Integer,IPredicate>(1);
+			SortedMap<Integer, IPredicate> pendingContexts = 
+											new TreeMap<Integer,IPredicate>();
 			IPredicate beforeCall;
 			if (nonPendingCall == 0) {
 				beforeCall = oldPrecondition;

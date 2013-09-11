@@ -1,6 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -10,7 +11,6 @@ import java.util.TreeMap;
 
 import org.apache.log4j.Logger;
 
-import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
@@ -19,10 +19,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.logic.Valuation;
-import de.uni_freiburg.informatik.ultimate.model.ILocation;
-import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ParallelComposition;
@@ -31,7 +27,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Seq
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 
 
@@ -50,157 +45,175 @@ public class AnnotateAndAsserter {
 		protected final NestedWord<CodeBlock> m_Trace;
 		
 		protected final LBool m_Satisfiable;
+		protected final NestedSsa m_SSA;
 		protected final NestedSsa m_AnnotSSA;
 
-		public AnnotateAndAsserter(SmtManager smtManager, NestedSsa nestedSSA, Word<CodeBlock> trace) {
+		protected static final String SSA = "ssa_";
+		protected static final String PRECOND = "precond";
+		protected static final String POSTCOND = "postcond";
+		protected static final String RETURN = "_return";
+		protected static final String LOCVARASSIGN_CALL = "_LocVarAssigCall";
+		protected static final String GLOBVARASSIGN_CALL = "_GlobVarAssigCall";
+		protected static final String OLDVARASSIGN_CALL = "_OldVarAssigCall";
+		protected static final String PENDINGCONTEXT = "_PendingContext";
+		protected static final String LOCVARASSIGN_PENDINGCONTEXT = "_LocVarAssignPendingContext";
+		protected static final String OLDVARASSIGN_PENDINGCONTEXT = "_OldVarAssignPendingContext";
+		
+
+		public AnnotateAndAsserter(SmtManager smtManager, NestedSsa nestedSSA, 
+				NestedWord<CodeBlock> trace) {
 			m_SmtManager = smtManager;
 			m_Script = smtManager.getScript();
-			if (trace instanceof NestedWord) {
-				m_Trace = (NestedWord<CodeBlock>) trace;
-			} else {
-				m_Trace = new NestedWord<CodeBlock>(trace);
-			}
+			m_Trace = trace;
+			m_SSA = nestedSSA;
 			m_AnnotSSA = buildAnnotatedSsaAndAssertTerms(nestedSSA);
 
 			m_Satisfiable = m_SmtManager.getScript().checkSat();
 			s_Logger.info("Conjunction of SSA is " + m_Satisfiable);
-			
-			}
+		}
 			
 
-		protected NestedSsa buildAnnotatedSsaAndAssertTerms(NestedSsa nestedSsa) {
-			Term[] terms = nestedSsa.getFormulas();
-			Term[] annotatedTerms = new Term[nestedSsa.getFormulas().length];
-			for (int i=0; i<terms.length; i++) {
-				Term term = terms[i];
-				assert term.getFreeVars().length == 0 : "Term has free vars";
-				String name;
+		private NestedSsa buildAnnotatedSsaAndAssertTerms(NestedSsa nestedSsa) {
+			Term precondition = annotateAndAssertPrecondition();
+			Term postcondition = annotateAndAssertPostcondition();
+			Term[] annotatedTerms = new Term[m_Trace.length()];
+			Map<Integer, Term> localVarAssignmentAtCall = new HashMap<Integer, Term>();
+			Map<Integer, Term> globalOldVarAssignmentAtCall = new HashMap<Integer, Term>();
+			
+			Collection<Integer> callPositions = new ArrayList<Integer>();
+			Collection<Integer> pendingReturnPositions = new ArrayList<Integer>();
+			for (int i=0; i<annotatedTerms.length; i++) {
 				if (m_Trace.isCallPosition(i)) {
-					name = "ssa_" + i + "_callglobVarAssign";
-				} else if (m_Trace.isReturnPosition(i)) {
-					name = "ssa_" + i + "_return";
-				} else {
-					name = "ssa_"+i;
+					callPositions.add(i);
+					{
+						Term locVarAssign = annotateAndAssertLocalVarAssignemntCall(i);
+						localVarAssignmentAtCall.put(i, locVarAssign);
+					}
+					{
+						Term globVarAssign = annotateAndAssertGlobalVarAssignemntCall(i);
+						annotatedTerms[i] = globVarAssign;
+					}
+					{
+						Term oldVarAssign = annotateAndAssertOldVarAssignemntCall(i);
+						globalOldVarAssignmentAtCall.put(i, oldVarAssign);
+						
+					}
+				} else  {
+					if (m_Trace.isReturnPosition(i) && m_Trace.isPendingReturn(i)) {
+						pendingReturnPositions.add(i);
+					}
+					Term annotated = annotateAndAssertNonCall(i);
+					annotatedTerms[i] = annotated;
 				}
-				Annotation annot = new Annotation(":named", name);
-				Term annotTerm = m_Script.annotate(term, annot);
-				m_SmtManager.assertTerm(annotTerm);
-				Term constantRepresentingAnnotatedTerm = m_Script.term(name);
-				annotatedTerms[i] = constantRepresentingAnnotatedTerm;
+				assert annotatedTerms[i] != null;
 			}
 			
-			Map<Integer, Term> localVarAssignmentAtCall = nestedSsa.getLocalVarAssignmentAtCall();
-			HashMap<Integer, Term> annotatedLocalVarAssignmentAtCall = new HashMap<Integer,Term>();
-			for (Integer position : localVarAssignmentAtCall.keySet()) {
-				// FIXME separate map pending returns
-				if (m_Trace.isPendingReturn(position)) {
-					continue;
-				}
-				assert m_Trace.isCallPosition(position);
-				Term term = localVarAssignmentAtCall.get(position);
-				assert term.getFreeVars().length == 0 : "Term has free vars";
-				String name = "ssa_" + position + "_calllocVarAssign";
-				Annotation annot = new Annotation(":named", name);
-				Term annotTerm = m_Script.annotate(term, annot);
-				m_SmtManager.assertTerm(annotTerm);
-				Term constantRepresentingAnnotatedTerm = m_Script.term(name);
-				annotatedLocalVarAssignmentAtCall.put(position, constantRepresentingAnnotatedTerm);			
-			}
+			assert callPositions.containsAll(m_Trace.computeCallPositions());
+			assert m_Trace.computeCallPositions().containsAll(callPositions);
 			
-			Map<Integer, Term> globalOldVarAssignmentAtCall = nestedSsa.getGlobalOldVarAssignmentAtCall();
-			HashMap<Integer, Term> annotatedGlobalOldVarAssignmentAtCall = new HashMap<Integer,Term>();
-			for (Integer position : globalOldVarAssignmentAtCall.keySet()) {
-				// FIXME separate map pending returns
-				if (m_Trace.isPendingReturn(position)) {
-					continue;
-				}
-				assert m_Trace.isCallPosition(position);
-				Term term = globalOldVarAssignmentAtCall.get(position);
-				assert term.getFreeVars().length == 0 : "Term has free vars";
-				String name = "ssa_" + position + "_calloldVarAssign";
-				Annotation annot = new Annotation(":named", name);
-				Term annotTerm = m_Script.annotate(term, annot);
-				m_SmtManager.assertTerm(annotTerm);
-				Term constantRepresentingAnnotatedTerm = m_Script.term(name);
-				annotatedGlobalOldVarAssignmentAtCall.put(position, constantRepresentingAnnotatedTerm);			
-			}
-			
-			SortedMap<Integer, Term> pendingContexts = nestedSsa.getPendingContexts();
+
 			SortedMap<Integer, Term> annotatedPendingContexts = new TreeMap<Integer,Term>();
-			int pendingReturnCode = -1 - pendingContexts.size();
-			for (Integer position : pendingContexts.keySet()) {
+			int pendingReturnCode = -1 - nestedSsa.getPendingContexts().size();
+			for (Integer position : nestedSsa.getPendingContexts().keySet()) {
 				assert m_Trace.isPendingReturn(position);
 				{
-					Term term = pendingContexts.get(position);
-					assert term.getFreeVars().length == 0 : "Term has free vars";
-					String name = "ssa_pendingContext"+pendingReturnCode;
-					Annotation annot = new Annotation(":named", name);
-					Term annotTerm = m_Script.annotate(term, annot);
-					m_SmtManager.assertTerm(annotTerm);
-					Term constantRepresentingAnnotatedTerm = m_Script.term(name);
-					annotatedPendingContexts.put(position, constantRepresentingAnnotatedTerm);
+					//TODO: returnPosition instead of pendingReturnCode
+					Term annotated = annotateAndAssertPendingContext(pendingReturnCode);
+					annotatedPendingContexts.put(position, annotated);
 				}
 				{
-					Term term = localVarAssignmentAtCall.get(position);
-					assert term.getFreeVars().length == 0 : "Term has free vars";
-					String name = "ssa_" + position + "pendingCalllocalVarAssig";
-					Annotation annot = new Annotation(":named", name);
-					Term annotTerm = m_Script.annotate(term, annot);
-					m_SmtManager.assertTerm(annotTerm);
-					Term constantRepresentingAnnotatedTerm = m_Script.term(name);
-					annotatedLocalVarAssignmentAtCall.put(position, constantRepresentingAnnotatedTerm);
+					Term annotated = annotateAndAssertLocalVarAssignemntPendingContext(position);
+					localVarAssignmentAtCall.put(position, annotated);
 				}
 				{
-					Term term = globalOldVarAssignmentAtCall.get(position);
-					assert term.getFreeVars().length == 0 : "Term has free vars";
-					String name = "ssa_" + position + "pendingCalloldVarAssign";
-					Annotation annot = new Annotation(":named", name);
-					Term annotTerm = m_Script.annotate(term, annot);
-					m_SmtManager.assertTerm(annotTerm);
-					Term constantRepresentingAnnotatedTerm = m_Script.term(name);
-					annotatedGlobalOldVarAssignmentAtCall.put(position, constantRepresentingAnnotatedTerm);
+					Term annotated = annotateAndAssertOldVarAssignemntPendingContext(position);
+					globalOldVarAssignmentAtCall.put(position, annotated);
 				}
 
 				pendingReturnCode++;
 			}
-
 			
-			
-			Map<Term, BoogieVar> constants2BoogieVar = nestedSsa.getConstants2BoogieVar();
-
-			
-			NestedSsa annotatedNestedSSA = new NestedSsa(
-					m_Trace,
-					annotatedTerms, annotatedLocalVarAssignmentAtCall, annotatedGlobalOldVarAssignmentAtCall, 
-					annotatedPendingContexts,
-					constants2BoogieVar);
-			
-			{
-				Term term = nestedSsa.getPrecondition();
-				assert term.getFreeVars().length == 0 : "Term has free vars";
-				String name = "ssa_precond";
-				Annotation annot = new Annotation(":named", name);
-				Term annotTerm = m_Script.annotate(term, annot);
-				m_SmtManager.assertTerm(annotTerm);
-				Term constantRepresentingAnnotatedTerm = m_Script.term(name);
-				annotatedNestedSSA.setPrecondition(constantRepresentingAnnotatedTerm);
+			NestedSsa annotatedSSA = new NestedSsa(m_Trace, 
+					precondition, postcondition, annotatedTerms, 
+					localVarAssignmentAtCall, globalOldVarAssignmentAtCall, 
+					annotatedPendingContexts, nestedSsa.getConstants2BoogieVar());
+			return annotatedSSA;
+		}
+		
+		protected Term annotateAndAssertPrecondition() {
+			String name = SSA + PRECOND;
+			Term annotated = annotateAndAssertTerm(m_SSA.getPrecondition(),name);
+			return annotated;
+		}
+		
+		protected Term annotateAndAssertPostcondition() {
+			String name = SSA + POSTCOND;
+			Term negatedPostcondition = m_Script.term("not", m_SSA.getPostcondition());
+			Term annotated = annotateAndAssertTerm(negatedPostcondition,name);
+			return annotated;
+		}
+		
+		protected Term annotateAndAssertNonCall(int position) {
+			String name = SSA + position;
+			if (m_Trace.isReturnPosition(position)) {
+				name += RETURN;
 			}
-			
-			{
-				Term term = nestedSsa.getPostcondition();
-				assert term.getFreeVars().length == 0 : "Term has free vars";
-				term = m_Script.term("not",term);
-				String name = "ssa_negPostcond";
-				Annotation annot = new Annotation(":named", name);
-				Term annotTerm = m_Script.annotate(term, annot);
-				m_SmtManager.assertTerm(annotTerm);
-				Term constantRepresentingAnnotatedTerm = m_Script.term(name);
-				annotatedNestedSSA.setPostcondition(constantRepresentingAnnotatedTerm);
-			}
-			
-			
-			
-			return annotatedNestedSSA;
+			Term original = m_SSA.getFormulaFromNonCallPos(position);
+			Term annotated = annotateAndAssertTerm(original, name);
+			return annotated;
+		}
+		
+		protected Term annotateAndAssertLocalVarAssignemntCall(int position) {
+			String name = SSA + position + LOCVARASSIGN_CALL;
+			Term original = m_SSA.getLocalVarAssignment(position);
+			Term annotated = annotateAndAssertTerm(original, name);
+			return annotated;
+		}
+		
+		protected Term annotateAndAssertGlobalVarAssignemntCall(int position) {
+			String name = SSA + position + GLOBVARASSIGN_CALL;
+			Term original = m_SSA.getGlobalVarAssignment(position);
+			Term annotated = annotateAndAssertTerm(original, name);
+			return annotated;
+		}
+		
+		protected Term annotateAndAssertOldVarAssignemntCall(int position) {
+			String name = SSA + position + OLDVARASSIGN_CALL;
+			Term original = m_SSA.getGlobalVarAssignment(position);
+			Term annotated = annotateAndAssertTerm(original, name);
+			return annotated;
+		}
+		
+		protected Term annotateAndAssertPendingContext(int positionOfPendingContext) {
+			String name = SSA + positionOfPendingContext + PENDINGCONTEXT;
+			Term original = m_SSA.getPendingContexts().get(positionOfPendingContext);
+			Term annotated = annotateAndAssertTerm(original, name);
+			return annotated;
+		}
+		
+		protected Term annotateAndAssertLocalVarAssignemntPendingContext(int positionOfPendingReturn) {
+			String name = SSA + positionOfPendingReturn + LOCVARASSIGN_PENDINGCONTEXT;
+			Term original = m_SSA.getLocalVarAssignment(positionOfPendingReturn);
+			Term annotated = annotateAndAssertTerm(original, name);
+			return annotated;
+		}
+		
+		protected Term annotateAndAssertOldVarAssignemntPendingContext(int positionOfPendingReturn) {
+			String name = SSA + positionOfPendingReturn + OLDVARASSIGN_PENDINGCONTEXT;
+			Term original = m_SSA.getGlobalVarAssignment(positionOfPendingReturn);
+			Term annotated = annotateAndAssertTerm(original, name);
+			return annotated;
+		}
+		
+		
+		
+		protected Term annotateAndAssertTerm(Term term, String name) {
+			assert term.getFreeVars().length == 0 : "Term has free vars";
+			Annotation annot = new Annotation(":named", name);
+			Term annotTerm = m_Script.annotate(term, annot);
+			m_SmtManager.assertTerm(annotTerm);
+			Term constantRepresentingAnnotatedTerm = m_Script.term(name);
+			return constantRepresentingAnnotatedTerm;
 		}
 		
 		

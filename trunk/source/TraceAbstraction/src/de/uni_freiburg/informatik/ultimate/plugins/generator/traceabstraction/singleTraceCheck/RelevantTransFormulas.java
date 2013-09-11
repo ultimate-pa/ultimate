@@ -46,11 +46,12 @@ public class RelevantTransFormulas extends TraceWithFormulas<TransFormula, IPred
 	
 	public RelevantTransFormulas(NestedWord<CodeBlock> nestedTrace,
 			IPredicate precondition, IPredicate postcondition,
+			SortedMap<Integer, IPredicate> pendingContexts,
 			Set<CodeBlock> unsat_core,
 			ModifiableGlobalVariableManager modGlobalVarManager,
 			boolean[] localVarAssignmentsAtCallInUnsatCore,
 			SmtManager smtManager) {
-		super(nestedTrace, precondition, postcondition);
+		super(nestedTrace, precondition, postcondition, pendingContexts);
 		m_TransFormulas = new TransFormula[nestedTrace.length()];
 		m_GlobalOldVarAssignmentTransFormulaAtCall = new HashMap<Integer, TransFormula>();
 		m_SmtManager = smtManager;

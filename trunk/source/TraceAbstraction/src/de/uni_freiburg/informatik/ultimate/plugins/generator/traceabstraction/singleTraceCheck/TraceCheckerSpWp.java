@@ -120,7 +120,7 @@ public class TraceCheckerSpWp extends TraceChecker {
 		IPredicate tracePostcondition = m_Postcondition;
 		m_PredicateUnifier.declarePredicate(tracePrecondition);
 		m_PredicateUnifier.declarePredicate(tracePostcondition);
-		Word<CodeBlock> trace = m_Trace;
+		NestedWord<CodeBlock> trace = m_Trace;
 		Set<CodeBlock> codeBlocksInUnsatCore = new HashSet<CodeBlock>();
 		
 		unlockSmtManager();
@@ -129,13 +129,13 @@ public class TraceCheckerSpWp extends TraceChecker {
 		// Filter out the statements, which doesn't occur in the unsat core.
 		for (int i = 0; i < trace.length(); i++) {
 			
-			if (unsat_coresAsSet.contains(m_AnnotatedSsa.getFormulas()[i])) {
+			if (unsat_coresAsSet.contains(m_AnnotatedSsa.getFormulaFromNonCallPos(i))) {
 				// The upper condition checks, whether the globalVarAssignments
 				// is in unsat core, now check whether the local variable assignments
 				// is in unsat core, if it is Call statement
 				if (trace.getSymbol(i) instanceof Call) {
 					// Check whether the local variable assignments are also in unsat core.
-					if (unsat_coresAsSet.contains(m_AnnotatedSsa.getLocalVarAssignmentAtCall().get(i))) {
+					if (unsat_coresAsSet.contains(m_AnnotatedSsa.getLocalVarAssignment(i))) {
 						localVarAssignmentAtCallInUnsatCore[i] = true;
 					}
 				}
@@ -144,7 +144,7 @@ public class TraceCheckerSpWp extends TraceChecker {
 				codeBlocksInUnsatCore.add(trace.getSymbol(i));
 			} else {
 				if (trace.getSymbol(i) instanceof Call) {
-					if (unsat_coresAsSet.contains(m_AnnotatedSsa.getLocalVarAssignmentAtCall().get(i))) {
+					if (unsat_coresAsSet.contains(m_AnnotatedSsa.getLocalVarAssignment(i))) {
 						localVarAssignmentAtCallInUnsatCore[i] = true;
 					}
 				}
@@ -152,8 +152,8 @@ public class TraceCheckerSpWp extends TraceChecker {
 		}
 		
 		@SuppressWarnings("unchecked")
-		RelevantTransFormulas rv = new RelevantTransFormulas(NestedWord.nestedWord(trace),
-				m_Precondition, m_Postcondition,
+		RelevantTransFormulas rv = new RelevantTransFormulas(trace,
+				m_Precondition, m_Postcondition, null,
 				codeBlocksInUnsatCore,
 				m_ModifiedGlobals,
 				localVarAssignmentAtCallInUnsatCore,
@@ -170,7 +170,7 @@ public class TraceCheckerSpWp extends TraceChecker {
 					IPredicate p = m_SmtManager.strongestPostcondition(tracePrecondition,
 							rv.getLocalVarAssignment(0),
 							rv.getGlobalVarAssignment(0),
-							((NestedWord<CodeBlock>) trace).isPendingCall(0));							
+							trace.isPendingCall(0));							
 					m_InterpolantsSp[0] = m_PredicateUnifier.getOrConstructPredicate(p.getFormula(), p.getVars(),
 							p.getProcedures());
 				} else {

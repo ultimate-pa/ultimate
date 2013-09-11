@@ -1,6 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck;
 
 import java.util.Set;
+import java.util.SortedMap;
 
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
@@ -17,8 +18,9 @@ public class DefaultTransFormulas extends TraceWithFormulas<TransFormula, IPredi
 	
 	public DefaultTransFormulas(NestedWord<CodeBlock> nestedWord, 
 			IPredicate precondition, IPredicate postcondition,
+			SortedMap<Integer, IPredicate> pendingContexts,
 			ModifiableGlobalVariableManager modifiableGlobalVariableManager) {
-		super(nestedWord, precondition, postcondition);
+		super(nestedWord, precondition, postcondition, pendingContexts);
 		m_ModifiableGlobalVariableManager = modifiableGlobalVariableManager;
 		m_CallPositions = super.getTrace().computeCallPositions();
 	}
