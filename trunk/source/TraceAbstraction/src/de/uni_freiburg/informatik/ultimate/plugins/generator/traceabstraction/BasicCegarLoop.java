@@ -144,12 +144,12 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		IPredicate falsePredicate = m_SmtManager.newFalsePredicate();
 		if (m_Pref.interpolatedLocs() == InterpolatedLocs.WP) {
 			m_TraceChecker = new TraceCheckerSpWp(truePredicate, falsePredicate, 
-					m_Counterexample.getWord(),m_SmtManager,
+					NestedWord.nestedWord(m_Counterexample.getWord()),m_SmtManager,
 					m_RootNode.getRootAnnot().getModGlobVarManager(),
 					m_IterationPW);
 		} else {
 			m_TraceChecker = new TraceChecker(truePredicate, falsePredicate, 
-					m_Counterexample.getWord(),	m_SmtManager,
+					NestedWord.nestedWord(m_Counterexample.getWord()),	m_SmtManager,
 					m_RootNode.getRootAnnot().getModGlobVarManager(),
 					m_IterationPW);
 		}

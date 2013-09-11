@@ -110,7 +110,7 @@ public class TraceChecker {
 	private final PrintWriter m_DebugPW;
 	
 
-	protected Word<CodeBlock> m_Trace;
+	protected NestedWord<CodeBlock> m_Trace;
 	protected IPredicate m_Precondition;
 	protected IPredicate m_Postcondition;
 	protected Map<Integer,IPredicate> m_PendingContexts;
@@ -129,7 +129,7 @@ public class TraceChecker {
 	 * 
 	 */
 	public TraceChecker(IPredicate precondition, IPredicate postcondition,
-			Word<CodeBlock> trace,
+			NestedWord<CodeBlock> trace,
 			SmtManager smtManager,
 						ModifiableGlobalVariableManager modifiedGlobals,
 		 				PrintWriter debugPW) {
@@ -150,7 +150,7 @@ public class TraceChecker {
 	 * 
 	 */
 	public TraceChecker(IPredicate precondition, IPredicate postcondition,
-			Map<Integer, IPredicate> pendingContexts, Word<CodeBlock> trace,
+			Map<Integer, IPredicate> pendingContexts, NestedWord<CodeBlock> trace,
 			SmtManager smtManager,
 			ModifiableGlobalVariableManager modifiedGlobals,
 			PrintWriter debugPW) {
@@ -185,7 +185,7 @@ public class TraceChecker {
 	 * 
 	 */
 	public LBool checkTrace(IPredicate precondition, IPredicate postcondition,
-			Map<Integer, IPredicate> pendingContexts, Word<CodeBlock> trace) {
+			Map<Integer, IPredicate> pendingContexts, NestedWord<CodeBlock> trace) {
 		if (traceCheckRunning()) {
 			throw new AssertionError("Each trace checker can check only one trace.");
 		}
@@ -212,12 +212,12 @@ public class TraceChecker {
 			}
 		}
 		if (m_IsSafe==LBool.SAT) {
-			NestedWord<CodeBlock> nw = (NestedWord<CodeBlock>) m_Trace;
-			DefaultTransFormulas dtf = new DefaultTransFormulas(nw, m_ModifiedGlobals);
+			DefaultTransFormulas dtf = new DefaultTransFormulas(m_Trace, 
+					m_Precondition, m_Postcondition, m_ModifiedGlobals);
 			RelevantVariables relVars = new RelevantVariables(dtf);
 			RcfgProgramExecutionBuilder rpeb = new RcfgProgramExecutionBuilder(m_ModifiedGlobals, (NestedWord<CodeBlock>) m_Trace, relVars);
-			for (int i=0; i<nw.length(); i++) {
-				CodeBlock cb = nw.getSymbolAt(i);
+			for (int i=0; i<m_Trace.length(); i++) {
+				CodeBlock cb = m_Trace.getSymbolAt(i);
 				TransFormula tf = cb.getTransitionFormulaWithBranchEncoders();
 				if (tf.getBranchEncoders().size() > 0) {
 					Map<TermVariable, Boolean> beMapping = new HashMap<TermVariable, Boolean>();

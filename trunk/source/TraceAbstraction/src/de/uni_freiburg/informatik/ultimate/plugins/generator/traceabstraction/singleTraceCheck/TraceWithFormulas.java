@@ -23,58 +23,72 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
  * 
  * @author Matthias Heizmann
  *
- * @param <F> Type of the formulas along the trace.
+ * @param <TF> Type of the formulas along the trace.
  */
-public abstract class TraceWithFormulas<F> {
+public abstract class TraceWithFormulas<TF, SF> {
 	
 	private final NestedWord<CodeBlock> m_NestedWord;
+	private final SF m_Precondition;
+	private final SF m_Postcondition;
 	
 	public NestedWord<CodeBlock> getTrace() {
 		return m_NestedWord;
 	}
 	
-	public TraceWithFormulas(NestedWord<CodeBlock> nestedWord) {
+	public TraceWithFormulas(NestedWord<CodeBlock> nestedWord, 
+			SF precondition, SF postcondition) {
 		m_NestedWord = nestedWord;
+		m_Precondition = precondition;
+		m_Postcondition = postcondition;
+	}
+	
+	public SF getPrecondition() {
+		return m_Precondition;
+	}
+	
+	public SF getPostcondition() {
+		return m_Postcondition;
 	}
 	
 	public abstract Set<Integer> callPositions();
 	
-	public final F getFormulaFromNonCallPos(int i) {
+	
+	public final TF getFormulaFromNonCallPos(int i) {
 		assert i>=0 && i<m_NestedWord.length() : "out of range";
 		assert !m_NestedWord.isCallPosition(i) : "call position";
 		return getFormulaFromValidNonCallPos(i);
 	}
 	
-	protected abstract F getFormulaFromValidNonCallPos(int i);
+	protected abstract TF getFormulaFromValidNonCallPos(int i);
 	
 	
 	
-	public F getLocalVarAssignment(int i) {
+	public TF getLocalVarAssignment(int i) {
 		assert i>=0 && i<m_NestedWord.length() : "out of range";
 		assert callPositions().contains(i) : "no call position";
 		assert m_NestedWord.isCallPosition(i) : "no call position";
 		return getLocalVarAssignmentFromValidPos(i);
 	}
 	
-	protected abstract F getLocalVarAssignmentFromValidPos(int i);
+	protected abstract TF getLocalVarAssignmentFromValidPos(int i);
 	
-	public F getGlobalVarAssignment(int i) {
+	public TF getGlobalVarAssignment(int i) {
 		assert i>=0 && i<m_NestedWord.length() : "out of range";
 		assert callPositions().contains(i) : "no call position";
 		assert m_NestedWord.isCallPosition(i) : "no call position";
 		return getLocalVarAssignmentFromValidPos(i);
 	}
 	
-	protected abstract F getGlobalVarAssignmentFromValidPos(int i);
+	protected abstract TF getGlobalVarAssignmentFromValidPos(int i);
 	
-	public F getOldVarAssignment(int i) {
+	public TF getOldVarAssignment(int i) {
 		assert i>=0 && i<m_NestedWord.length() : "out of range";
 		assert callPositions().contains(i) : "no call position";
 		assert m_NestedWord.isCallPosition(i) : "no call position";
 		return getLocalVarAssignmentFromValidPos(i);
 	}
 	
-	protected abstract F getOldVarAssignmentFromValidPos(int i);
+	protected abstract TF getOldVarAssignmentFromValidPos(int i);
 
 
 }

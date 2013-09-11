@@ -11,8 +11,6 @@ import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.InterproceduralSequentialComposition;
@@ -26,7 +24,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Tra
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.EdgeChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager.TermVarsProc;
 
 public class TraceCheckerSpWp extends TraceChecker {
 	
@@ -39,7 +36,7 @@ public class TraceCheckerSpWp extends TraceChecker {
 	private static boolean m_ComputeInterpolantsWp = true;
 
 	public TraceCheckerSpWp(IPredicate precondition, IPredicate postcondition,
-			Word<CodeBlock> trace, SmtManager smtManager,
+			NestedWord<CodeBlock> trace, SmtManager smtManager,
 			ModifiableGlobalVariableManager modifiedGlobals,
 			PrintWriter debugPW) {
 		super(precondition, postcondition, trace, smtManager, modifiedGlobals, debugPW);
@@ -146,6 +143,7 @@ public class TraceCheckerSpWp extends TraceChecker {
 		
 		@SuppressWarnings("unchecked")
 		RelevantTransFormulas rv = new RelevantTransFormulas(NestedWord.nestedWord(trace),
+				m_Precondition, m_Postcondition,
 				codeBlocksInUnsatCore,
 				m_ModifiedGlobals,
 				localVarAssignmentAtCallInUnsatCore,

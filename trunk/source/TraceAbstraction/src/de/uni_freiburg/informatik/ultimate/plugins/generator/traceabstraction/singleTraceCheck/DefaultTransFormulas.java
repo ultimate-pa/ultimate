@@ -8,15 +8,17 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.InterproceduralSequentialComposition;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.TransFormula;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IPredicate;
 
-public class DefaultTransFormulas extends TraceWithFormulas<TransFormula> {
+public class DefaultTransFormulas extends TraceWithFormulas<TransFormula, IPredicate> {
 	
 	private final ModifiableGlobalVariableManager m_ModifiableGlobalVariableManager;
 	private final Set<Integer> m_CallPositions;
 	
 	public DefaultTransFormulas(NestedWord<CodeBlock> nestedWord, 
+			IPredicate precondition, IPredicate postcondition,
 			ModifiableGlobalVariableManager modifiableGlobalVariableManager) {
-		super(nestedWord);
+		super(nestedWord, precondition, postcondition);
 		m_ModifiableGlobalVariableManager = modifiableGlobalVariableManager;
 		m_CallPositions = super.getTrace().computeCallPositions();
 	}

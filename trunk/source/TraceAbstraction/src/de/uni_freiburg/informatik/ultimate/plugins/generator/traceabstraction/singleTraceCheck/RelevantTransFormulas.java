@@ -14,11 +14,12 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.TransFormula;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 
 
 
-public class RelevantTransFormulas extends TraceWithFormulas<TransFormula> {
+public class RelevantTransFormulas extends TraceWithFormulas<TransFormula, IPredicate> {
 	
 	/**
 	 * If index i is an internal position or a return transition in the
@@ -39,12 +40,13 @@ public class RelevantTransFormulas extends TraceWithFormulas<TransFormula> {
 	
 	private final SmtManager m_SmtManager;
 	
-	public RelevantTransFormulas(NestedWord<CodeBlock> nestedTrace, 
+	public RelevantTransFormulas(NestedWord<CodeBlock> nestedTrace,
+			IPredicate precondition, IPredicate postcondition,
 			Set<CodeBlock> unsat_core,
 			ModifiableGlobalVariableManager modGlobalVarManager,
 			boolean[] localVarAssignmentsAtCallInUnsatCore,
 			SmtManager smtManager) {
-		super(nestedTrace);
+		super(nestedTrace, precondition, postcondition);
 		m_TransFormulas = new TransFormula[nestedTrace.length()];
 		m_GlobalOldVarAssignmentTransFormulaAtCall = new HashMap<Integer, TransFormula>();
 		m_SmtManager = smtManager;

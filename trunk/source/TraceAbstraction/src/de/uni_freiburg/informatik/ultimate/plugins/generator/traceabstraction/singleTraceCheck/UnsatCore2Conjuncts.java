@@ -7,10 +7,10 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 
-public class UnsatCore2Conjuncts extends TraceWithFormulas<Map<Term,Term>> {
+public class UnsatCore2Conjuncts extends TraceWithFormulas<Map<Term,Term>, Map<Term,Term>> {
 
 	public UnsatCore2Conjuncts(NestedWord<CodeBlock> nestedWord) {
-		super(nestedWord);
+		super(nestedWord, null, null);
 		// TODO Auto-generated constructor stub
 	}
 

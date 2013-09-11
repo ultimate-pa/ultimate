@@ -8,16 +8,17 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.TransFormula;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IPredicate;
 
 public class RelevantVariables {
 
-	public final TraceWithFormulas<TransFormula> m_TraceWithFormulas;
+	public final TraceWithFormulas<TransFormula, IPredicate> m_TraceWithFormulas;
 	public final Set<BoogieVar>[] m_ForwardRelevantVariables;
 	public final Set<BoogieVar>[] m_BackwardRelevantVariables;
 	public final Set<BoogieVar>[] m_RelevantVariables;
 	
 	@SuppressWarnings("unchecked")
-	public RelevantVariables(TraceWithFormulas<TransFormula> traceWithFormulas) {
+	public RelevantVariables(TraceWithFormulas<TransFormula, IPredicate> traceWithFormulas) {
 		super();
 		m_TraceWithFormulas = traceWithFormulas;
 		m_ForwardRelevantVariables = new Set[m_TraceWithFormulas.getTrace().length()+1];
