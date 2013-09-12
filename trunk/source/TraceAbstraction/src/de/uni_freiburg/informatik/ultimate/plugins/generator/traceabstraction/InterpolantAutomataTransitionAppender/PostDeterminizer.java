@@ -569,7 +569,7 @@ public class PostDeterminizer
 		if (state == succ) {
 			sat = m_EdgeChecker.sdecCallSelfloop(state, symbol);
 		}
-		if (state == null) {
+		if (sat == null) {
 			sat = m_EdgeChecker.sdLazyEcCall(state, symbol, succ);
 		}
 		if (sat == null) {
