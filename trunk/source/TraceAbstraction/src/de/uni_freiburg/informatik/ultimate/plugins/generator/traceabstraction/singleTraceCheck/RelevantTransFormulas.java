@@ -36,10 +36,17 @@ public class RelevantTransFormulas extends TraceWithFormulas<TransFormula, IPred
 	
 	/**
 	 * Maps a call position to a formula that represents the assignment 
+	 * {@code g_1,...,g_n := old(g_1),...,old(g_n)} where g_1,...,g_n are the
+	 * global variables modified by the called procedure.  
+	 */
+	private final Map<Integer,TransFormula> m_GlobalAssignmentTransFormulaAtCall;
+	
+	/**
+	 * Maps a call position to a formula that represents the assignment 
 	 * {@code old(g_1),...,old(g_n) := g_1,...,g_n} where g_1,...,g_n are the
 	 * global variables modified by the called procedure.  
 	 */
-	private final Map<Integer,TransFormula> m_GlobalOldVarAssignmentTransFormulaAtCall;
+	private final Map<Integer, TransFormula> m_OldVarsAssignmentTransFormulasAtCall;
 	
 	
 	private final SmtManager m_SmtManager;
@@ -53,7 +60,8 @@ public class RelevantTransFormulas extends TraceWithFormulas<TransFormula, IPred
 			SmtManager smtManager) {
 		super(nestedTrace, precondition, postcondition, pendingContexts);
 		m_TransFormulas = new TransFormula[nestedTrace.length()];
-		m_GlobalOldVarAssignmentTransFormulaAtCall = new HashMap<Integer, TransFormula>();
+		m_GlobalAssignmentTransFormulaAtCall = new HashMap<Integer, TransFormula>();
+		m_OldVarsAssignmentTransFormulasAtCall = new HashMap<Integer, TransFormula>();
 		m_SmtManager = smtManager;
 		generateRelevantTransFormulas(unsat_core, localVarAssignmentsAtCallInUnsatCore, modGlobalVarManager);
 	}
@@ -64,8 +72,10 @@ public class RelevantTransFormulas extends TraceWithFormulas<TransFormula, IPred
 		for (int i = 0; i < super.getTrace().length(); i++) {
 			if (unsat_core.contains(super.getTrace().getSymbol(i))) {
 				if (super.getTrace().getSymbol(i) instanceof Call) {
-					m_GlobalOldVarAssignmentTransFormulaAtCall.put(i,
+					m_GlobalAssignmentTransFormulaAtCall.put(i,
 							modGlobalVarManager.getGlobalVarsAssignment(((Call)super.getTrace().getSymbol(i)).getCallStatement().getMethodName()));
+					m_OldVarsAssignmentTransFormulasAtCall.put(i, 
+							modGlobalVarManager.getOldVarsAssignment(((Call)super.getTrace().getSymbol(i)).getCallStatement().getMethodName()));
 					if (localVarAssignmentsAtCallInUnsatCore[i]) {
 						m_TransFormulas[i] = super.getTrace().getSymbol(i).getTransitionFormula();
 					} else {
@@ -82,8 +92,11 @@ public class RelevantTransFormulas extends TraceWithFormulas<TransFormula, IPred
 					} else {
 						m_TransFormulas[i] = buildTransFormulaForStmtNotInUnsatCore(super.getTrace().getSymbol(i).getTransitionFormula());
 					}
-					m_GlobalOldVarAssignmentTransFormulaAtCall.put(i, buildTransFormulaForStmtNotInUnsatCore(
+					m_GlobalAssignmentTransFormulaAtCall.put(i, buildTransFormulaForStmtNotInUnsatCore(
 							modGlobalVarManager.getGlobalVarsAssignment(((Call)super.getTrace().getSymbol(i)).getCallStatement().getMethodName())));
+					m_OldVarsAssignmentTransFormulasAtCall.put(i, 
+							buildTransFormulaForStmtNotInUnsatCore(
+									modGlobalVarManager.getOldVarsAssignment(((Call)super.getTrace().getSymbol(i)).getCallStatement().getMethodName())));
 				} else {
 					m_TransFormulas[i] = buildTransFormulaForStmtNotInUnsatCore(super.getTrace().getSymbol(i).getTransitionFormula());
 				}
@@ -127,12 +140,12 @@ public class RelevantTransFormulas extends TraceWithFormulas<TransFormula, IPred
 
 	@Override
 	protected TransFormula getGlobalVarAssignmentFromValidPos(int i) {
-		return m_GlobalOldVarAssignmentTransFormulaAtCall.get(i);
+		return m_GlobalAssignmentTransFormulaAtCall.get(i);
 	}
 
 	@Override
 	protected TransFormula getOldVarAssignmentFromValidPos(int i) {
-		throw new UnsupportedOperationException("Method not implemented yet!");
+		return m_OldVarsAssignmentTransFormulasAtCall.get(i);
 	}
 
 }

@@ -152,7 +152,6 @@ public class TraceCheckerSpWp extends TraceChecker {
 			}
 		}
 		
-		@SuppressWarnings("unchecked")
 		RelevantTransFormulas rv = new RelevantTransFormulas(trace,
 				m_Precondition, m_Postcondition, null,
 				codeBlocksInUnsatCore,
