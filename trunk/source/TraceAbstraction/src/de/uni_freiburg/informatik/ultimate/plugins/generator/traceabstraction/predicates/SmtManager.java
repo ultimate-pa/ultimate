@@ -2261,14 +2261,14 @@ public class SmtManager {
 			substitution.clear();
 			for (BoogieVar bv : call_TF.getOutVars().keySet()) {
 				TermVariable freshVar = getFreshTermVariable(bv.getIdentifier(), bv.getTermVariable().getSort());
-				substitution.put(call_TF.getInVars().get(bv), freshVar);
+				substitution.put(call_TF.getOutVars().get(bv), freshVar);
 				varsToRenameInCalleePred.put(bv.getTermVariable(), freshVar);
 				varsToQuantify.add(freshVar);
 			}
 			Term callTFInVarsOutVarsRenamed = new Substitution(substitution, m_Script).transform(callTFInVarsRenamed);
 			
-			Term calleePredRenamed = new Substitution(varsToRenameInCalleePred, m_Script).transform(callTFInVarsRenamed);
-			
+			Term calleePredRenamed = new Substitution(varsToRenameInCalleePred, m_Script).transform(calleePred.getFormula());
+
 			Term result = Util.or(m_Script, 
 					Util.not(m_Script, 
 							Util.and(m_Script, callTFInVarsOutVarsRenamed,

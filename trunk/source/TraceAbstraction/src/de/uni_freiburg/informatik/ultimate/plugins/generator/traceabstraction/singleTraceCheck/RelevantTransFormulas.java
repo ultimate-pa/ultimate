@@ -1,6 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.SortedMap;
@@ -117,7 +118,7 @@ public class RelevantTransFormulas extends TraceWithFormulas<TransFormula, IPred
 		return new TransFormula(m_SmtManager.newTruePredicate().getFormula(),
 				new HashMap<BoogieVar, TermVariable>(),
 				outvars,
-				tf.getAuxVars(), 
+				new HashSet<TermVariable>(), 
 				tf.getBranchEncoders(),
 				tf.isInfeasible(),
 				tf.getClosedFormula());
