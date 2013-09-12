@@ -2194,12 +2194,12 @@ public class SmtManager {
 		// Add aux-vars to quantified vars
 		varsToQuantify.addAll(tf.getAuxVars());
 		if (varsToQuantify.size() > 0) {
-//			result = DestructiveEqualityResolution.quantifier(m_Script, Script.FORALL,
-//					varsToQuantify.toArray(new TermVariable[varsToQuantify.size()]),
-//					result, (Term[][]) null);
-			result = m_Script.quantifier(Script.FORALL,
+			result = DestructiveEqualityResolution.quantifier(m_Script, Script.FORALL,
 					varsToQuantify.toArray(new TermVariable[varsToQuantify.size()]),
 					result, (Term[][]) null);
+//			result = m_Script.quantifier(Script.FORALL,
+//					varsToQuantify.toArray(new TermVariable[varsToQuantify.size()]),
+//					result, (Term[][]) null);
 		} 
 		return constructIPredicate(result);
 	}
