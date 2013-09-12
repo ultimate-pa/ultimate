@@ -1869,8 +1869,8 @@ public class SmtManager {
 			if (bv.getProcedure() != null) {
 				varsToQuantifyNonPendingCall.add(bv.getTermVariable());
 				// Ensure that variable doesn't occur in call
-				if (!localVarAssignments.getInVars().containsKey(bv.getTermVariable())
-						&& !localVarAssignments.getOutVars().containsKey(bv.getTermVariable())) {
+				if (!localVarAssignments.getInVars().containsKey(bv)
+						&& !localVarAssignments.getOutVars().containsKey(bv)) {
 					TermVariable freshVar = getFreshTermVariable(bv.getIdentifier(), bv.getTermVariable().getSort());
 					varsToRenameInPredPendingCall.put(bv.getTermVariable(), freshVar);
 					varsToQuantifyPendingCall.add(freshVar);
