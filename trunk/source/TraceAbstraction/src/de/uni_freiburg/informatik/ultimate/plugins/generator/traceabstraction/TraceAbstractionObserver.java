@@ -57,7 +57,7 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 	 */
 	private IElement m_graphroot = null;
 	private int m_OverallIterations;
-	private int OverallBiggestAbstraction;
+	private int m_OverallBiggestAbstraction;
 	private long m_OverallDeadEndRemovalTime;
 	private long m_OverallMinimizationTime;
 	private int m_OverallStatesRemovedByMinimization;
@@ -97,7 +97,7 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 		UltimateServices.getInstance().setDeadline(
 				System.currentTimeMillis() + timoutMilliseconds);
 		m_OverallIterations = 0;
-		OverallBiggestAbstraction = 0;
+		m_OverallBiggestAbstraction = 0;
 		m_OverallResult = Result.SAFE;
 		m_Artifact = null;
 
@@ -199,7 +199,7 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 		stat += " Minimization removed " + m_OverallStatesRemovedByMinimization;
 		stat += " in time " + m_OverallMinimizationTime;
 		stat += " Biggest abstraction had ";
-		stat += OverallBiggestAbstraction;
+		stat += m_OverallBiggestAbstraction;
 		stat += " states.";
 		s_Logger.warn(stat);
 		s_Logger.warn("PC#: " + smtManager.getInterpolQueries());
@@ -253,8 +253,8 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 		Result result = abstractCegarLoop.iterate();
 
 		m_OverallIterations += abstractCegarLoop.m_Iteration;
-		if (abstractCegarLoop.m_BiggestAbstractionSize > OverallBiggestAbstraction) {
-			OverallBiggestAbstraction = abstractCegarLoop.m_BiggestAbstractionSize;
+		if (abstractCegarLoop.m_BiggestAbstractionSize > m_OverallBiggestAbstraction) {
+			m_OverallBiggestAbstraction = abstractCegarLoop.m_BiggestAbstractionSize;
 		}
 		m_OverallDeadEndRemovalTime += abstractCegarLoop.m_DeadEndRemovalTime;
 		m_OverallMinimizationTime += abstractCegarLoop.m_MinimizationTime;
