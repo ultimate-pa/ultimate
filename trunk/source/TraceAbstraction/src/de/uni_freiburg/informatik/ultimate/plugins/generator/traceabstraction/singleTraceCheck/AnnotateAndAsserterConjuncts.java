@@ -4,6 +4,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.TransFormula;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.DestructiveEqualityResolution;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 
@@ -18,7 +19,14 @@ public class AnnotateAndAsserterConjuncts extends AnnotateAndAsserter {
 
 	@Override
 	protected Term annotateAndAssertPrecondition() {
-		Term original = null;
+		Term original = m_Original.getPrecondition().getFormula();
+		Term[] originalConjuncts = DestructiveEqualityResolution.getConjuncts(original);
+		Term indexed = m_SSA.getPrecondition();
+		Term[] indexedConjuncts = DestructiveEqualityResolution.getConjuncts(indexed);
+		assert originalConjuncts.length == indexedConjuncts.length;
+		for (int i=0; i<originalConjuncts.length; i++) {
+			//TODO:
+		}
 		return null;
 	}
 

@@ -175,16 +175,17 @@ public class RelevantVariables {
 			} else {
 				int correspondingReturnPosition = m_TraceWithFormulas.getTrace().getReturnPosition(i);
 				Set<BoogieVar> relevantVariablesAfterReturn = 
-						m_BackwardRelevantVariables[correspondingReturnPosition];
+						m_BackwardRelevantVariables[correspondingReturnPosition+1];
 				result = computePredecessorRvCall_NonPending(currentRelevantVariables, 
 						relevantVariablesAfterReturn, localVarAssignment);
 			}
 		} else if (m_TraceWithFormulas.getTrace().isReturnPosition(i)) {
-			int correspondingReturnPosition = m_TraceWithFormulas.getTrace().getCallPosition(i);
-			TransFormula oldVarAssignment =m_TraceWithFormulas.getOldVarAssignment(correspondingReturnPosition);
+			int correspondingCallPosition = m_TraceWithFormulas.getTrace().getCallPosition(i);
+			TransFormula oldVarAssignment =m_TraceWithFormulas.getOldVarAssignment(correspondingCallPosition);
+			TransFormula localVarAssignment =m_TraceWithFormulas.getLocalVarAssignment(correspondingCallPosition);
 			TransFormula tfReturn = m_TraceWithFormulas.getFormulaFromNonCallPos(i);
 			result = computePredecessorRvReturn(currentRelevantVariables, 
-					tfReturn, oldVarAssignment);
+					tfReturn, oldVarAssignment, localVarAssignment);
 		} else {
 			throw new AssertionError();
 		}
@@ -242,8 +243,8 @@ public class RelevantVariables {
 	
 	
 	private Set<BoogieVar> computePredecessorRvReturn(Set<BoogieVar> returnSuccRv,
-			TransFormula localVarAssignment,
-			TransFormula oldVarAssignment) {
+			TransFormula returnTf,
+			TransFormula oldVarAssignmentAtCall, TransFormula localVarAssignmentAtCall) {
 		Set<BoogieVar> result = new HashSet<BoogieVar>(returnSuccRv.size());
 		for (BoogieVar bv : returnSuccRv) {
 			if (bv.isGlobal()) {
@@ -252,11 +253,13 @@ public class RelevantVariables {
 				//do nothing
 			}
 		}
-		if (true || containsSomeNonHavocedOutVar(returnSuccRv, localVarAssignment)) {
-			result.addAll(localVarAssignment.getInVars().keySet());
+		if (true || containsSomeNonHavocedOutVar(returnSuccRv, returnTf)) {
+			result.addAll(returnTf.getInVars().keySet());
 		}
-		result.addAll(oldVarAssignment.getInVars().keySet());
-		result.addAll(oldVarAssignment.getOutVars().keySet());
+		result.addAll(oldVarAssignmentAtCall.getInVars().keySet());
+		result.addAll(oldVarAssignmentAtCall.getOutVars().keySet());
+		
+		result.addAll(localVarAssignmentAtCall.getOutVars().keySet());
 		return result;
 	}	
 	

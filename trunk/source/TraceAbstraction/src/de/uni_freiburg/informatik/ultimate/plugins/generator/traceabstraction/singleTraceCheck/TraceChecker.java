@@ -316,6 +316,20 @@ public class TraceChecker {
 			assert predicateUnifier.isRepresentative(pred);
 		}
 		computeInterpolants_Recursive(interpolatedPositions, predicateUnifier);
+		
+		boolean testRelevantVars = true;
+		if (testRelevantVars) {
+			RelevantVariables rv = new RelevantVariables(
+					new DefaultTransFormulas(m_Trace, m_Precondition, m_Postcondition, null, m_ModifiedGlobals));
+			for (int i=0; i<m_Interpolants.length; i++) {
+				IPredicate itp = m_Interpolants[i];
+				Set<BoogieVar> vars = itp.getVars();
+				Set<BoogieVar> frel = rv.getForwardRelevantVariables()[i+1];
+				Set<BoogieVar> brel = rv.getBackwardRelevantVariables()[i+1];
+				assert (frel.containsAll(vars)) : "forward relevant variables wrong";
+				assert (brel.containsAll(vars)) : "backward relevant variables wrong";;
+			}
+		}
 	}
 	
 	public Word<CodeBlock> getTrace() {
