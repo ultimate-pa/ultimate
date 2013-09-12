@@ -1,5 +1,8 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
@@ -11,77 +14,131 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 public class AnnotateAndAsserterConjuncts extends AnnotateAndAsserter {
 	
 	TraceWithFormulas<TransFormula, IPredicate> m_Original;
+	Map<Term,Term> m_Annotated2Original = new HashMap<Term,Term>();
 
 	public AnnotateAndAsserterConjuncts(SmtManager smtManager, NestedSsa nestedSSA, 
 			NestedWord<CodeBlock> trace) {
 		super(smtManager, nestedSSA, trace);
 	}
-
-	@Override
-	protected Term annotateAndAssertPrecondition() {
-		Term original = m_Original.getPrecondition().getFormula();
+	
+	
+	/**
+	 * @param name
+	 * @param original
+	 * @param indexed
+	 * @return
+	 */
+	private Term annotateAndAssertConjuncts(String name, Term original,	Term indexed) {
 		Term[] originalConjuncts = DestructiveEqualityResolution.getConjuncts(original);
-		Term indexed = m_SSA.getPrecondition();
 		Term[] indexedConjuncts = DestructiveEqualityResolution.getConjuncts(indexed);
 		assert originalConjuncts.length == indexedConjuncts.length;
+		Term[] annotatedConjuncts = new Term[originalConjuncts.length];
 		for (int i=0; i<originalConjuncts.length; i++) {
-			//TODO:
+			Term originalConjunct = originalConjuncts[i];
+			Term indexedConjunct = indexedConjuncts[i];
+			Term annotatedConjunct = annotateAndAssertTerm(indexedConjunct, name, i);
+			m_Annotated2Original.put(annotatedConjunct, originalConjunct);
 		}
-		return null;
+		return m_Script.term("and", annotatedConjuncts);
 	}
+	
+	@Override
+	protected Term annotateAndAssertPrecondition() {
+		String name = super.precondAnnotation();
+		Term original = m_Original.getPrecondition().getFormula();
+		Term indexed = m_SSA.getPrecondition();
+		return annotateAndAssertConjuncts(name, original, indexed);
+	}
+
+
 
 	@Override
 	protected Term annotateAndAssertPostcondition() {
-		// TODO Auto-generated method stub
-		return super.annotateAndAssertPostcondition();
+		String name = super.postcondAnnotation();
+		Term original = m_Original.getPostcondition().getFormula();
+		Term indexed = m_SSA.getPostcondition();
+		return annotateAndAssertConjuncts(name, original, indexed);
 	}
 
 	@Override
 	protected Term annotateAndAssertNonCall(int position) {
-		// TODO Auto-generated method stub
-		return super.annotateAndAssertNonCall(position);
+		String name;
+		if (m_Trace.isReturnPosition(position)) {
+			name = returnAnnotation(position);
+		} else {
+			 name = internalAnnotation(position);
+		}
+		Term original = m_SSA.getFormulaFromNonCallPos(position);
+		Term annotated = annotateAndAssertTerm(original, name);
+		return annotated;
 	}
 
 	@Override
 	protected Term annotateAndAssertLocalVarAssignemntCall(int position) {
-		// TODO Auto-generated method stub
-		return super.annotateAndAssertLocalVarAssignemntCall(position);
+		String name = super.localVarAssignemntCallAnnotation(position);
+		Term original = m_Original.getLocalVarAssignment(position).getFormula();
+		Term indexed = m_SSA.getLocalVarAssignment(position);
+		return annotateAndAssertConjuncts(name, original, indexed);
 	}
 
 	@Override
 	protected Term annotateAndAssertGlobalVarAssignemntCall(int position) {
-		// TODO Auto-generated method stub
-		return super.annotateAndAssertGlobalVarAssignemntCall(position);
+		String name = super.globalVarAssignemntAnnotation(position);
+		Term original = m_Original.getGlobalVarAssignment(position).getFormula();
+		Term indexed = m_SSA.getGlobalVarAssignment(position);
+		return annotateAndAssertConjuncts(name, original, indexed);
 	}
 
 	@Override
 	protected Term annotateAndAssertOldVarAssignemntCall(int position) {
-		// TODO Auto-generated method stub
-		return super.annotateAndAssertOldVarAssignemntCall(position);
+		String name = super.oldVarAssignemntCallAnnotation(position);
+		Term original = m_Original.getOldVarAssignment(position).getFormula();
+		Term indexed = m_SSA.getOldVarAssignment(position);
+		return annotateAndAssertConjuncts(name, original, indexed);
 	}
 
 	@Override
-	protected Term annotateAndAssertPendingContext(int positionOfPendingContext) {
-		// TODO Auto-generated method stub
-		return super.annotateAndAssertPendingContext(positionOfPendingContext);
+	protected Term annotateAndAssertPendingContext(
+			int positionOfPendingContext, int pendingContextCode) {
+		String name = super.pendingContextAnnotation(pendingContextCode);
+		Term original = m_Original.getPendingContexts().get(positionOfPendingContext).getFormula();
+		Term indexed = m_SSA.getPendingContexts().get(positionOfPendingContext);
+		return annotateAndAssertConjuncts(name, original, indexed);
 	}
+
 
 	@Override
 	protected Term annotateAndAssertLocalVarAssignemntPendingContext(
-			int positionOfPendingReturn) {
-		// TODO Auto-generated method stub
-		return super
-				.annotateAndAssertLocalVarAssignemntPendingContext(positionOfPendingReturn);
+			int positionOfPendingReturn, int pendingContextCode) {
+		String name = super.localVarAssignemntPendingReturnAnnotation(pendingContextCode);
+		Term original = m_Original.getLocalVarAssignment(positionOfPendingReturn).getFormula();
+		Term indexed = m_SSA.getLocalVarAssignment(positionOfPendingReturn);
+		return annotateAndAssertConjuncts(name, original, indexed);
 	}
+
 
 	@Override
 	protected Term annotateAndAssertOldVarAssignemntPendingContext(
-			int positionOfPendingReturn) {
-		// TODO Auto-generated method stub
-		return super
-				.annotateAndAssertOldVarAssignemntPendingContext(positionOfPendingReturn);
+			int positionOfPendingReturn, int pendingContextCode) {
+		String name = super.oldVarAssignemntPendingReturnAnnotation(pendingContextCode);
+		Term original = m_Original.getOldVarAssignment(positionOfPendingReturn).getFormula();
+		Term indexed = m_SSA.getOldVarAssignment(positionOfPendingReturn);
+		return annotateAndAssertConjuncts(name, original, indexed);
+	}
+
+
+	protected Term annotateAndAssertTerm(Term term, String name, int conjunct) {
+		name += "_conjunct" + conjunct;
+		return super.annotateAndAssertTerm(term, name);
+	}
+
+
+	/**
+	 * Returns a mapping from named terms (that were asserted) to the conjuncts
+	 * to which these named terms correspond.
+	 */
+	public Map<Term, Term> getAnnotated2Original() {
+		return m_Annotated2Original;
 	}
 	
-	
-
 }
