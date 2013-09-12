@@ -3,13 +3,11 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.s
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
@@ -118,7 +116,8 @@ public class TraceChecker {
 	protected IPredicate m_Postcondition;
 	protected Map<Integer,IPredicate> m_PendingContexts;
 
-	protected NestedSsa m_AnnotatedSsa;
+//	protected NestedSsa m_AnnotatedSsa;
+	protected AnnotateAndAsserter m_AAA;
 	
 	protected LBool m_IsSafe;
 	protected IPredicate[] m_Interpolants;
@@ -204,9 +203,8 @@ public class TraceChecker {
 						pendingContexts, m_SmtManager, m_ModifiedGlobals, m_DebugPW);
 		NestedSsa ssa = nsb.getSsa();
 		try {
-			AnnotateAndAsserter aaa = new AnnotateAndAsserter(m_SmtManager, ssa, m_Trace);
-			m_AnnotatedSsa = aaa.getAnnotSSA();
-			m_IsSafe = aaa.isInputSatisfiable();
+			m_AAA = annotateAndAssert(ssa);
+			m_IsSafe = m_AAA.isInputSatisfiable();
 		} catch (SMTLIBException e) {
 			if (e.getMessage().equals("Unsupported non-linear arithmetic")) {
 				m_IsSafe = LBool.UNKNOWN;
@@ -248,6 +246,10 @@ public class TraceChecker {
 			m_RcfgProgramExecution = rpeb.getRcfgProgramExecution();
 		}
 		return m_IsSafe;
+	}
+	
+	protected AnnotateAndAsserter annotateAndAssert(NestedSsa ssa) {
+		return new AnnotateAndAsserter(m_SmtManager, ssa);
 	}
 	
 	
@@ -377,7 +379,7 @@ public class TraceChecker {
 			throw new AssertionError("You already computed interpolants");
 		}
 		NestedInterpolantsBuilder nib = new NestedInterpolantsBuilder(
-				m_SmtManager, m_AnnotatedSsa, m_PredicateUnifier, 
+				m_SmtManager, m_AAA.getAnnotSSA(), m_PredicateUnifier, 
 				interpolatedPositions, true);
 		m_Interpolants = nib.getNestedInterpolants();
 		assert !inductivityOfSequenceCanBeRefuted();
@@ -413,7 +415,7 @@ public class TraceChecker {
 		
 		NestedInterpolantsBuilder nib = 
 				new NestedInterpolantsBuilder(m_SmtManager,
-						m_AnnotatedSsa, 
+						m_AAA.getAnnotSSA(), 
 						m_PredicateUnifier, newInterpolatedPositions, false);
 		m_Interpolants = nib.getNestedInterpolants();
 		IPredicate oldPrecondition = m_Precondition;

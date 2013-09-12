@@ -3,9 +3,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.s
 import java.util.HashMap;
 import java.util.Map;
 
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.TransFormula;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.DestructiveEqualityResolution;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IPredicate;
@@ -16,9 +14,8 @@ public class AnnotateAndAsserterConjuncts extends AnnotateAndAsserter {
 	TraceWithFormulas<TransFormula, IPredicate> m_Original;
 	Map<Term,Term> m_Annotated2Original = new HashMap<Term,Term>();
 
-	public AnnotateAndAsserterConjuncts(SmtManager smtManager, NestedSsa nestedSSA, 
-			NestedWord<CodeBlock> trace) {
-		super(smtManager, nestedSSA, trace);
+	public AnnotateAndAsserterConjuncts(SmtManager smtManager, NestedSsa nestedSSA) {
+		super(smtManager, nestedSSA);
 	}
 	
 	

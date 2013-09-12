@@ -60,11 +60,10 @@ public class AnnotateAndAsserter {
 		protected static final String OLDVARASSIGN_PENDINGCONTEXT = "_OldVarAssignPendingContext";
 		
 
-		public AnnotateAndAsserter(SmtManager smtManager, NestedSsa nestedSSA, 
-				NestedWord<CodeBlock> trace) {
+		public AnnotateAndAsserter(SmtManager smtManager, NestedSsa nestedSSA) {
 			m_SmtManager = smtManager;
 			m_Script = smtManager.getScript();
-			m_Trace = trace;
+			m_Trace = nestedSSA.getTrace();
 			m_SSA = nestedSSA;
 			m_AnnotSSA = buildAnnotatedSsaAndAssertTerms(nestedSSA);
 
