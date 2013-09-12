@@ -379,7 +379,7 @@ public class TraceChecker {
 			throw new AssertionError("You already computed interpolants");
 		}
 		NestedInterpolantsBuilder nib = new NestedInterpolantsBuilder(
-				m_SmtManager, m_AAA.getAnnotSSA(), m_PredicateUnifier, 
+				m_SmtManager, m_AAA.getAnnotatedSsa(), m_PredicateUnifier, 
 				interpolatedPositions, true);
 		m_Interpolants = nib.getNestedInterpolants();
 		assert !inductivityOfSequenceCanBeRefuted();
@@ -415,7 +415,7 @@ public class TraceChecker {
 		
 		NestedInterpolantsBuilder nib = 
 				new NestedInterpolantsBuilder(m_SmtManager,
-						m_AAA.getAnnotSSA(), 
+						m_AAA.getAnnotatedSsa(), 
 						m_PredicateUnifier, newInterpolatedPositions, false);
 		m_Interpolants = nib.getNestedInterpolants();
 		IPredicate oldPrecondition = m_Precondition;

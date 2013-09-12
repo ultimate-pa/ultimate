@@ -344,7 +344,7 @@ public class AnnotateAndAsserter {
 		}
 
 
-		public NestedSsa getAnnotSSA() {
+		public NestedSsa getAnnotatedSsa() {
 			return m_AnnotSSA;
 		}
 

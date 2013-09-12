@@ -129,14 +129,14 @@ public class TraceCheckerSpWp extends TraceChecker {
 		// Filter out the statements, which doesn't occur in the unsat core.
 		for (int i = 0; i < trace.length(); i++) {
 			
-			if (!trace.isCallPosition(i) && unsat_coresAsSet.contains(m_AAA.getAnnotSSA().getFormulaFromNonCallPos(i))
-					|| trace.isCallPosition(i) && unsat_coresAsSet.contains(m_AAA.getAnnotSSA().getGlobalVarAssignment(i))) {
+			if (!trace.isCallPosition(i) && unsat_coresAsSet.contains(m_AAA.getAnnotatedSsa().getFormulaFromNonCallPos(i))
+					|| trace.isCallPosition(i) && unsat_coresAsSet.contains(m_AAA.getAnnotatedSsa().getGlobalVarAssignment(i))) {
 				// The upper condition checks, whether the globalVarAssignments
 				// is in unsat core, now check whether the local variable assignments
 				// is in unsat core, if it is Call statement
 				if (trace.getSymbol(i) instanceof Call) {
 					// Check whether the local variable assignments are also in unsat core.
-					if (unsat_coresAsSet.contains(m_AAA.getAnnotSSA().getLocalVarAssignment(i))) {
+					if (unsat_coresAsSet.contains(m_AAA.getAnnotatedSsa().getLocalVarAssignment(i))) {
 						localVarAssignmentAtCallInUnsatCore[i] = true;
 					}
 				}
@@ -145,7 +145,7 @@ public class TraceCheckerSpWp extends TraceChecker {
 				codeBlocksInUnsatCore.add(trace.getSymbol(i));
 			} else {
 				if (trace.getSymbol(i) instanceof Call) {
-					if (unsat_coresAsSet.contains(m_AAA.getAnnotSSA().getLocalVarAssignment(i))) {
+					if (unsat_coresAsSet.contains(m_AAA.getAnnotatedSsa().getLocalVarAssignment(i))) {
 						localVarAssignmentAtCallInUnsatCore[i] = true;
 					}
 				}
