@@ -113,7 +113,7 @@ public class PredicateFactoryRefinement extends PredicateFactory {
 		}
 		TermVarsProc tvp = m_SmtManager.or(
 				states.toArray(new IPredicate[0]));
-		if (tvp.getFormula() == SmtManager.getDontCareTerm()) {
+		if (tvp.getFormula() == m_SmtManager.getDontCareTerm()) {
 			return m_SmtManager.newDontCarePredicate(pp);
 		} else {
 			return m_SmtManager.newSPredicate(pp, tvp.getFormula(), 

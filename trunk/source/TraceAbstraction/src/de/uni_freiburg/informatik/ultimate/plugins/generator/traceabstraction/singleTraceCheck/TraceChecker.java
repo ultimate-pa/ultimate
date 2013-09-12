@@ -421,17 +421,6 @@ public class TraceChecker {
 		IPredicate oldPrecondition = m_Precondition;
 		IPredicate oldPostcondition = m_Postcondition;
 		
-		if (!(m_Trace instanceof NestedWord)) {
-
-			//forget trace - endTraceCheck already called
-			if (m_Interpolants != null) { 
-				assert !inductivityOfSequenceCanBeRefuted();
-			}
-		return;
-		}
-		
-		NestedWord<CodeBlock> nestedTrace = (NestedWord<CodeBlock>) m_Trace;
-
 		//forget trace - endTraceCheck already called
 		if (m_Interpolants != null) { 
 			assert !inductivityOfSequenceCanBeRefuted();
@@ -439,11 +428,11 @@ public class TraceChecker {
 		
 		for (Integer nonPendingCall : nonPendingCallPositions) {
 			//compute subtrace from to call to corresponding return
-			int returnPosition = nestedTrace.getReturnPosition(nonPendingCall);
+			int returnPosition = m_Trace.getReturnPosition(nonPendingCall);
 			NestedWord<CodeBlock> subtrace = 
-					nestedTrace.getSubWord(nonPendingCall+1, returnPosition);
+					m_Trace.getSubWord(nonPendingCall+1, returnPosition);
 
-			Call call = (Call) nestedTrace.getSymbol(nonPendingCall);
+			Call call = (Call) m_Trace.getSymbol(nonPendingCall);
 			String calledMethod = call.getCallStatement().getMethodName();
 			IPredicate oldVarsEquality = m_SmtManager.getOldVarsEquality(calledMethod);
 			
@@ -470,7 +459,7 @@ public class TraceChecker {
 			//far. Obviously trace fulfills specification, but we need this
 			//proof to be able to compute interpolants.
 			IPredicate interpolantAtReturnPosition;
-			if (returnPosition == nestedTrace.length()-1) {
+			if (returnPosition == m_Trace.length()-1) {
 				// special case: last position of trace is return
 				// interpolant at this position is the postcondition
 				// (which is stored in oldPostcondition, since m_Postcondition
@@ -510,10 +499,7 @@ public class TraceChecker {
 	private Set<Integer> interpolatedPositionsForSubtraces(
 										Set<Integer> interpolatedPositions, 
 										List<Integer> nonPendingCallPositions) {
-		if (!(m_Trace instanceof NestedWord)) {
-			return interpolatedPositions;
-		}
-		
+
 		Set<Integer> newInterpolatedPositions = new HashSet<Integer>();
 	
 		int currentContextStackDepth = 0;

@@ -86,10 +86,10 @@ public class RunAnalyzer {
 	private void updateOccurence(ProgramPoint location) {
 		Integer value = m_Occurence.get(location);
 		if (value == null) {
-			value = new Integer(1);
+			value = Integer.valueOf(1);
 		}
 		else {
-			value = new Integer(++value);
+			value = Integer.valueOf(++value);
 		}
 		m_Occurence.put(location,value);
 	}

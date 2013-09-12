@@ -441,12 +441,7 @@ public class StrongestPostDeterminizer
 		switch (sat1) {
 		case UNSAT:
 			return sat2 == LBool.UNSAT;
-		case SAT:
-			if (sat2 == LBool.SAT || sat2 == LBool.UNKNOWN) {
-				return true;
-			} else {
-				return false;
-			}
+		case SAT: //same as unknown
 		case UNKNOWN:
 			if (sat2 == LBool.SAT || sat2 == LBool.UNKNOWN) {
 				return true;

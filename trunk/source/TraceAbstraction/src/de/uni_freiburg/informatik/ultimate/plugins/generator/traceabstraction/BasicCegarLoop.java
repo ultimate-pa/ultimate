@@ -64,8 +64,6 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 
 	protected RunAnalyzer m_RunAnalyzer;
 
-	protected TraceChecker m_TraceChecker;
-
 	private PredicateFactoryRefinement m_StateFactoryForRefinement;
 	
 	private final TimingStatistics m_TimingStatistics;

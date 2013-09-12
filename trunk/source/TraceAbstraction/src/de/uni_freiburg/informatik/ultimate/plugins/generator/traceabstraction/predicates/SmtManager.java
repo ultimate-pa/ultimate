@@ -101,6 +101,8 @@ public class SmtManager {
 	protected int m_SerialNumber;
 
 	private long m_TraceCheckStartTime = Long.MIN_VALUE;
+
+	private Set<BoogieVar> m_EmptyVars = Collections.emptySet();
 	
 	/**
 	 * Whenever you do an edge check with the old method (not edge checker),
@@ -117,7 +119,6 @@ public class SmtManager {
 	protected static Term m_DontCareTerm;
 	protected static Term m_EmptyStackTerm;
 	protected static String[] m_NoProcedure = new String[0];
-	protected static Set<BoogieVar> m_EmptyVars = new HashSet<BoogieVar>(0);
 	
 	public SmtManager(Boogie2SMT boogie2smt,
 					Solver solver, 

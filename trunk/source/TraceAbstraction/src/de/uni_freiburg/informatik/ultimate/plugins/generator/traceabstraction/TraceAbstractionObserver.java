@@ -93,7 +93,7 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 			errNodesOfAllProc.addAll(errNodeOfProc);
 		}
 
-		long timoutMilliseconds = taPrefs.timeout() * 1000;
+		long timoutMilliseconds = taPrefs.timeout() * 1000L;
 		UltimateServices.getInstance().setDeadline(
 				System.currentTimeMillis() + timoutMilliseconds);
 		m_OverallIterations = 0;
