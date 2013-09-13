@@ -624,7 +624,9 @@ public class TraceCheckerSpWp extends TraceChecker {
 
 	@Override
 	protected AnnotateAndAsserter getAnnotateAndAsserter(NestedSsa ssa) {
-		return new AnnotateAndAsserterConjuncts(m_SmtManager, ssa);
+		//TODO: use this for find grained unsat cores
+		//return new AnnotateAndAsserterConjuncts(m_SmtManager, ssa);
+		return new AnnotateAndAsserter(m_SmtManager, ssa);
 	}
 	
 	
