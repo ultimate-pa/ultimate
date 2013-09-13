@@ -623,10 +623,8 @@ public class TraceCheckerSpWp extends TraceChecker {
 	}
 
 	@Override
-	protected AnnotateAndAsserter annotateAndAssert(NestedSsa ssa) {
-		// TODO: return an AnnotateAndAsserterConjuncts if you want to use
-		// "fine grained unsat cores"
-		return super.annotateAndAssert(ssa);
+	protected AnnotateAndAsserter getAnnotateAndAsserter(NestedSsa ssa) {
+		return new AnnotateAndAsserterConjuncts(m_SmtManager, ssa);
 	}
 	
 	
