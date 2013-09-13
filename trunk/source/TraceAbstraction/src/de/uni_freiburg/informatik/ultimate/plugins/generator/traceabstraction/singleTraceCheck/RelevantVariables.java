@@ -10,6 +10,13 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.TransFormula;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IPredicate;
 
+
+/**
+ * TODO: documentation, support for pending contexts
+ * 
+ * @author Matthias Heizmann
+ *
+ */
 public class RelevantVariables {
 
 	public final TraceWithFormulas<TransFormula, IPredicate> m_TraceWithFormulas;
@@ -17,7 +24,7 @@ public class RelevantVariables {
 	public final Set<BoogieVar>[] m_BackwardRelevantVariables;
 	public final Set<BoogieVar>[] m_RelevantVariables;
 	
-	@SuppressWarnings("unchecked")
+
 	public RelevantVariables(TraceWithFormulas<TransFormula, IPredicate> traceWithFormulas) {
 		super();
 		m_TraceWithFormulas = traceWithFormulas;
@@ -51,7 +58,8 @@ public class RelevantVariables {
 
 	private void computeForwardRelevantVariables() {
 		assert m_ForwardRelevantVariables[0] == null : "already computed";
-		m_ForwardRelevantVariables[0] = Collections.emptySet();
+		m_ForwardRelevantVariables[0] = 
+				new HashSet<BoogieVar>(m_TraceWithFormulas.getPrecondition().getVars());
 		for (int i=1; i<=m_TraceWithFormulas.getTrace().length(); i++) {
 			assert m_ForwardRelevantVariables[i] == null : "already computed";
 			m_ForwardRelevantVariables[i] = computeForwardRelevantVariables(i);
@@ -161,7 +169,8 @@ public class RelevantVariables {
 	
 	private void computeBackwardRelevantVariables() {
 		assert m_BackwardRelevantVariables[m_TraceWithFormulas.getTrace().length()] == null : "already computed";
-		m_BackwardRelevantVariables[m_TraceWithFormulas.getTrace().length()] = Collections.emptySet();
+		m_BackwardRelevantVariables[m_TraceWithFormulas.getTrace().length()] = 
+				new HashSet<BoogieVar>(m_TraceWithFormulas.getPostcondition().getVars());
 		for (int i=m_TraceWithFormulas.getTrace().length()-1; i>=0; i--) {
 			assert m_BackwardRelevantVariables[i] == null : "already computed";
 			m_BackwardRelevantVariables[i] = computeBackwardRelevantVariables(i);
@@ -184,6 +193,7 @@ public class RelevantVariables {
 						m_BackwardRelevantVariables[correspondingReturnPosition+1];
 				result = computePredecessorRvCall_NonPending(currentRelevantVariables, 
 						relevantVariablesAfterReturn, localVarAssignment);
+				addNonModifiableGlobalsAlongCalledProcedure(result,i);
 			}
 		} else if (m_TraceWithFormulas.getTrace().isReturnPosition(i)) {
 			int correspondingCallPosition = m_TraceWithFormulas.getTrace().getCallPosition(i);
@@ -198,6 +208,42 @@ public class RelevantVariables {
 		return result;
 	}
 	
+	/**
+	 * Relevant variables directly before the call that are global are also 
+	 * relevant during the whole procedure. Variables that are modifiable by the
+	 * procedure (and corresponding oldvars) have already been added (we have
+	 * to add the others.  
+	 */
+	private void addNonModifiableGlobalsAlongCalledProcedure(
+			Set<BoogieVar> relevantVariablesBeforeCall, int i) {
+		assert m_TraceWithFormulas.getTrace().isCallPosition(i);
+		assert !m_TraceWithFormulas.getTrace().isPendingCall(i);
+		Set<BoogieVar> modifiableGlobals = 
+				m_TraceWithFormulas.getGlobalVarAssignment(i).getOutVars().keySet();
+		Set<BoogieVar> oldVarsOfModifiableGlobals = 
+				m_TraceWithFormulas.getGlobalVarAssignment(i).getOutVars().keySet();
+		Set<BoogieVar> varsThatWeHaveToAdd = new HashSet<BoogieVar>();
+		for (BoogieVar bv : relevantVariablesBeforeCall) {
+			if (bv.isGlobal()) {
+				if (bv.isOldvar()) {
+					if (!oldVarsOfModifiableGlobals.contains(bv)) {
+						varsThatWeHaveToAdd.add(bv);
+					}
+				} else {
+					if (!modifiableGlobals.contains(bv)) {
+						varsThatWeHaveToAdd.add(bv);
+					}
+				}
+			}
+		}
+		if (!varsThatWeHaveToAdd.isEmpty()) {
+			int returnPosition = m_TraceWithFormulas.getTrace().getReturnPosition(i);
+			for (int pos = i+1; pos<=returnPosition; pos++) {
+				m_BackwardRelevantVariables[pos].addAll(varsThatWeHaveToAdd);
+			}
+		}
+	}
+
 	private Set<BoogieVar> computePredecessorRvInternal(Set<BoogieVar> succRv, TransFormula tf) {
 		Set<BoogieVar> result = new HashSet<BoogieVar>(succRv.size());
 		for (BoogieVar bv : succRv) {
