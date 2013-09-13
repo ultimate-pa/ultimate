@@ -44,9 +44,9 @@ public class AnnotateAndAsserter {
 		protected final SmtManager m_SmtManager;
 		protected final NestedWord<CodeBlock> m_Trace;
 		
-		protected final LBool m_Satisfiable;
+		protected LBool m_Satisfiable;
 		protected final NestedSsa m_SSA;
-		protected final NestedSsa m_AnnotSSA;
+		protected NestedSsa m_AnnotSSA;
 
 		protected static final String SSA = "ssa_";
 		protected static final String PRECOND = "precond";
@@ -65,14 +65,14 @@ public class AnnotateAndAsserter {
 			m_Script = smtManager.getScript();
 			m_Trace = nestedSSA.getTrace();
 			m_SSA = nestedSSA;
-			m_AnnotSSA = buildAnnotatedSsaAndAssertTerms(nestedSSA);
-
-			m_Satisfiable = m_SmtManager.getScript().checkSat();
-			s_Logger.info("Conjunction of SSA is " + m_Satisfiable);
 		}
 			
 
-		private NestedSsa buildAnnotatedSsaAndAssertTerms(NestedSsa nestedSsa) {
+		public void buildAnnotatedSsaAndAssertTerms() {
+			if (m_AnnotSSA != null) {
+				throw new AssertionError("already build");
+			}
+			assert m_Satisfiable == null;
 			Term precondition = annotateAndAssertPrecondition();
 			Term postcondition = annotateAndAssertPostcondition();
 			Term[] annotatedTerms = new Term[m_Trace.length()];
@@ -114,8 +114,8 @@ public class AnnotateAndAsserter {
 			SortedMap<Integer, Term> annotatedPendingContexts = new TreeMap<Integer,Term>();
 			// number that the pending context. The first pending context has
 			// number -1, the second -2, ...
-			int pendingContextCode = -1 - nestedSsa.getPendingContexts().size();
-			for (Integer positionOfPendingReturn : nestedSsa.getPendingContexts().keySet()) {
+			int pendingContextCode = -1 - m_SSA.getPendingContexts().size();
+			for (Integer positionOfPendingReturn : m_SSA.getPendingContexts().keySet()) {
 				assert m_Trace.isPendingReturn(positionOfPendingReturn);
 				{
 					Term annotated = annotateAndAssertPendingContext(
@@ -136,11 +136,14 @@ public class AnnotateAndAsserter {
 				pendingContextCode++;
 			}
 			
-			NestedSsa annotatedSSA = new NestedSsa(m_Trace, 
+			m_AnnotSSA = new NestedSsa(m_SSA.getTransFormulas(), 
 					precondition, postcondition, annotatedTerms, 
 					localVarAssignmentAtCall, globalOldVarAssignmentAtCall, 
-					annotatedPendingContexts, nestedSsa.getConstants2BoogieVar());
-			return annotatedSSA;
+					annotatedPendingContexts, m_SSA.getConstants2BoogieVar());
+			
+
+			m_Satisfiable = m_SmtManager.getScript().checkSat();
+			s_Logger.info("Conjunction of SSA is " + m_Satisfiable);
 		}
 		
 		protected Term annotateAndAssertPrecondition() {

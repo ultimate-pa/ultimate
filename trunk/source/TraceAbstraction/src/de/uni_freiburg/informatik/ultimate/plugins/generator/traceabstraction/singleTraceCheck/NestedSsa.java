@@ -8,6 +8,8 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.TransFormula;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IPredicate;
 
 
 /**
@@ -47,6 +49,12 @@ public class NestedSsa extends TraceWithFormulas<Term, Term> {
 	 * represented the non-indexed version of the term.
 	 */
 	private final Map<Term, BoogieVar> m_Constants2BoogieVar;
+	
+	
+	/**
+	 * TransFormulas for which this SSA was computed.
+	 */
+	private final TraceWithFormulas<TransFormula, IPredicate> m_TransFormulas;
 
 
 	/**
@@ -57,13 +65,14 @@ public class NestedSsa extends TraceWithFormulas<Term, Term> {
 	 * @param pendingContexts
 	 * @param constants2BoogieVar
 	 */
-	public NestedSsa(NestedWord<CodeBlock> nestedTrace, Term precondition, 
+	public NestedSsa(TraceWithFormulas<TransFormula, IPredicate> traceWF, Term precondition, 
 			Term postcondition, Term[] terms,
 			Map<Integer, Term> localVarAssignmentAtCall,
 			Map<Integer, Term> globalOldVarAssignmentAtCall,
 			SortedMap<Integer, Term> pendingContexts, 
 			Map<Term, BoogieVar> constants2BoogieVar) {
-		super(nestedTrace, precondition, postcondition, pendingContexts);
+		super(traceWF.getTrace(), precondition, postcondition, pendingContexts);
+		m_TransFormulas = traceWF;
 		m_Terms = terms;
 		m_LocalVarAssignmentAtCall = localVarAssignmentAtCall;
 		m_GlobalOldVarAssignmentAtCall = globalOldVarAssignmentAtCall;
@@ -99,6 +108,12 @@ public class NestedSsa extends TraceWithFormulas<Term, Term> {
 	protected Term getOldVarAssignmentFromValidPos(int i) {
 		return m_GlobalOldVarAssignmentAtCall.get(i);
 	}
+
+	public TraceWithFormulas<TransFormula, IPredicate> getTransFormulas() {
+		return m_TransFormulas;
+	}
+	
+	
 
 
 

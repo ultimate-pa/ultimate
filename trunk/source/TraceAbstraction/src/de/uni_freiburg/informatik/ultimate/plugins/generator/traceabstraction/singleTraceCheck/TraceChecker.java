@@ -203,7 +203,8 @@ public class TraceChecker {
 						pendingContexts, m_SmtManager, m_ModifiedGlobals, m_DebugPW);
 		NestedSsa ssa = nsb.getSsa();
 		try {
-			m_AAA = annotateAndAssert(ssa);
+			m_AAA = getAnnotateAndAsserter(ssa);
+			m_AAA.buildAnnotatedSsaAndAssertTerms();
 			m_IsSafe = m_AAA.isInputSatisfiable();
 		} catch (SMTLIBException e) {
 			if (e.getMessage().equals("Unsupported non-linear arithmetic")) {
@@ -248,7 +249,7 @@ public class TraceChecker {
 		return m_IsSafe;
 	}
 	
-	protected AnnotateAndAsserter annotateAndAssert(NestedSsa ssa) {
+	protected AnnotateAndAsserter getAnnotateAndAsserter(NestedSsa ssa) {
 		return new AnnotateAndAsserter(m_SmtManager, ssa);
 	}
 	

@@ -372,7 +372,7 @@ public class NestedSsaBuilder {
 		}
 		
 		m_Ssa = new NestedSsa(
-		m_TraceWF.getTrace(),
+		m_TraceWF,
 		m_SsaData.getPrecondition(),
 		m_SsaData.getPostcondition(),
 		m_SsaData.getTerms(),

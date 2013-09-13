@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.TransFormula;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.DestructiveEqualityResolution;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IPredicate;
@@ -11,7 +12,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 
 public class AnnotateAndAsserterConjuncts extends AnnotateAndAsserter {
 	
-	TraceWithFormulas<TransFormula, IPredicate> m_Original;
 	Map<Term,Term> m_Annotated2Original = new HashMap<Term,Term>();
 
 	public AnnotateAndAsserterConjuncts(SmtManager smtManager, NestedSsa nestedSSA) {
@@ -33,16 +33,16 @@ public class AnnotateAndAsserterConjuncts extends AnnotateAndAsserter {
 		for (int i=0; i<originalConjuncts.length; i++) {
 			Term originalConjunct = originalConjuncts[i];
 			Term indexedConjunct = indexedConjuncts[i];
-			Term annotatedConjunct = annotateAndAssertTerm(indexedConjunct, name, i);
-			m_Annotated2Original.put(annotatedConjunct, originalConjunct);
+			annotatedConjuncts[i] = annotateAndAssertTerm(indexedConjunct, name, i);
+			m_Annotated2Original.put(annotatedConjuncts[i], originalConjunct);
 		}
-		return m_Script.term("and", annotatedConjuncts);
+		return Util.and(m_Script, annotatedConjuncts);
 	}
 	
 	@Override
 	protected Term annotateAndAssertPrecondition() {
 		String name = super.precondAnnotation();
-		Term original = m_Original.getPrecondition().getFormula();
+		Term original = m_SSA.getTransFormulas().getPrecondition().getFormula();
 		Term indexed = m_SSA.getPrecondition();
 		return annotateAndAssertConjuncts(name, original, indexed);
 	}
@@ -52,7 +52,7 @@ public class AnnotateAndAsserterConjuncts extends AnnotateAndAsserter {
 	@Override
 	protected Term annotateAndAssertPostcondition() {
 		String name = super.postcondAnnotation();
-		Term original = m_Original.getPostcondition().getFormula();
+		Term original = m_SSA.getTransFormulas().getPostcondition().getFormula();
 		Term indexed = m_SSA.getPostcondition();
 		return annotateAndAssertConjuncts(name, original, indexed);
 	}
@@ -73,7 +73,7 @@ public class AnnotateAndAsserterConjuncts extends AnnotateAndAsserter {
 	@Override
 	protected Term annotateAndAssertLocalVarAssignemntCall(int position) {
 		String name = super.localVarAssignemntCallAnnotation(position);
-		Term original = m_Original.getLocalVarAssignment(position).getFormula();
+		Term original = m_SSA.getTransFormulas().getLocalVarAssignment(position).getFormula();
 		Term indexed = m_SSA.getLocalVarAssignment(position);
 		return annotateAndAssertConjuncts(name, original, indexed);
 	}
@@ -81,7 +81,7 @@ public class AnnotateAndAsserterConjuncts extends AnnotateAndAsserter {
 	@Override
 	protected Term annotateAndAssertGlobalVarAssignemntCall(int position) {
 		String name = super.globalVarAssignemntAnnotation(position);
-		Term original = m_Original.getGlobalVarAssignment(position).getFormula();
+		Term original = m_SSA.getTransFormulas().getGlobalVarAssignment(position).getFormula();
 		Term indexed = m_SSA.getGlobalVarAssignment(position);
 		return annotateAndAssertConjuncts(name, original, indexed);
 	}
@@ -89,7 +89,7 @@ public class AnnotateAndAsserterConjuncts extends AnnotateAndAsserter {
 	@Override
 	protected Term annotateAndAssertOldVarAssignemntCall(int position) {
 		String name = super.oldVarAssignemntCallAnnotation(position);
-		Term original = m_Original.getOldVarAssignment(position).getFormula();
+		Term original = m_SSA.getTransFormulas().getOldVarAssignment(position).getFormula();
 		Term indexed = m_SSA.getOldVarAssignment(position);
 		return annotateAndAssertConjuncts(name, original, indexed);
 	}
@@ -98,7 +98,7 @@ public class AnnotateAndAsserterConjuncts extends AnnotateAndAsserter {
 	protected Term annotateAndAssertPendingContext(
 			int positionOfPendingContext, int pendingContextCode) {
 		String name = super.pendingContextAnnotation(pendingContextCode);
-		Term original = m_Original.getPendingContexts().get(positionOfPendingContext).getFormula();
+		Term original = m_SSA.getTransFormulas().getPendingContexts().get(positionOfPendingContext).getFormula();
 		Term indexed = m_SSA.getPendingContexts().get(positionOfPendingContext);
 		return annotateAndAssertConjuncts(name, original, indexed);
 	}
@@ -108,7 +108,7 @@ public class AnnotateAndAsserterConjuncts extends AnnotateAndAsserter {
 	protected Term annotateAndAssertLocalVarAssignemntPendingContext(
 			int positionOfPendingReturn, int pendingContextCode) {
 		String name = super.localVarAssignemntPendingReturnAnnotation(pendingContextCode);
-		Term original = m_Original.getLocalVarAssignment(positionOfPendingReturn).getFormula();
+		Term original = m_SSA.getTransFormulas().getLocalVarAssignment(positionOfPendingReturn).getFormula();
 		Term indexed = m_SSA.getLocalVarAssignment(positionOfPendingReturn);
 		return annotateAndAssertConjuncts(name, original, indexed);
 	}
@@ -118,7 +118,7 @@ public class AnnotateAndAsserterConjuncts extends AnnotateAndAsserter {
 	protected Term annotateAndAssertOldVarAssignemntPendingContext(
 			int positionOfPendingReturn, int pendingContextCode) {
 		String name = super.oldVarAssignemntPendingReturnAnnotation(pendingContextCode);
-		Term original = m_Original.getOldVarAssignment(positionOfPendingReturn).getFormula();
+		Term original = m_SSA.getTransFormulas().getOldVarAssignment(positionOfPendingReturn).getFormula();
 		Term indexed = m_SSA.getOldVarAssignment(positionOfPendingReturn);
 		return annotateAndAssertConjuncts(name, original, indexed);
 	}
