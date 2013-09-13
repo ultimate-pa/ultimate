@@ -65,8 +65,8 @@ public class RelevantVariables {
 			TransFormula tf = m_TraceWithFormulas.getFormulaFromNonCallPos(i-1);
 			result = computeSuccessorRvInternal(currentRelevantVariables,tf);
 		} else if (m_TraceWithFormulas.getTrace().isCallPosition(i-1)) {
-			TransFormula oldVarAssignment =m_TraceWithFormulas.getOldVarAssignment(i-1);
-			TransFormula localVarAssignment =m_TraceWithFormulas.getLocalVarAssignment(i-1);
+			TransFormula oldVarAssignment = m_TraceWithFormulas.getOldVarAssignment(i-1);
+			TransFormula localVarAssignment = m_TraceWithFormulas.getLocalVarAssignment(i-1);
 			result = computeSuccessorRvCall(currentRelevantVariables, 
 					localVarAssignment, oldVarAssignment);
 		} else if (m_TraceWithFormulas.getTrace().isReturnPosition(i-1)) {
@@ -74,8 +74,10 @@ public class RelevantVariables {
 			Set<BoogieVar> relevantVariablesBeforeCall = 
 					m_ForwardRelevantVariables[correspondingCallPosition];
 			TransFormula tfReturn = m_TraceWithFormulas.getFormulaFromNonCallPos(i-1);
+			TransFormula localVarAssignmentAtCall = 
+					m_TraceWithFormulas.getLocalVarAssignment(correspondingCallPosition);
 			result = computeSuccessorRvReturn(currentRelevantVariables, 
-					relevantVariablesBeforeCall, tfReturn);
+					relevantVariablesBeforeCall, tfReturn, localVarAssignmentAtCall);
 		} else {
 			throw new AssertionError();
 		}
@@ -122,7 +124,7 @@ public class RelevantVariables {
 	
 	private Set<BoogieVar> computeSuccessorRvReturn(Set<BoogieVar> returnPredRv,
 			Set<BoogieVar> callPredRv,
-			TransFormula localVarAssignment) {
+			TransFormula returnTF, TransFormula localVarAssignment) {
 		// add all vars that were relevant before the call
 		Set<BoogieVar> result = new HashSet<BoogieVar>(callPredRv);
 		// add all global vars that are relevant before the return
@@ -132,7 +134,11 @@ public class RelevantVariables {
 			}
 		}
 		// add all vars that are assigned by the call
-		for (BoogieVar bv : localVarAssignment.getOutVars().keySet()) {
+		for (BoogieVar bv : returnTF.getOutVars().keySet()) {
+			result.add(bv);
+		}
+		// add all arguments of the call
+		for (BoogieVar bv : localVarAssignment.getInVars().keySet()) {
 			result.add(bv);
 		}
 		return result;
