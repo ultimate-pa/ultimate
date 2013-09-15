@@ -128,6 +128,13 @@ public class Boogie2SMT {
 	 */
 	private final boolean m_BlackHoleArrays;
 
+	/**
+	 * True if we are translation a requires clause of the specification.
+	 * In this case, a global variable g refers to the instance of the variable
+	 * before the procedure call (the same instance as old(g)).
+	 */
+	private boolean m_TranslatingRequires = false;
+
 	public void incGeneration(){
 		VariableSSAManager.incAllIndices();
 //		generation++;
@@ -291,7 +298,7 @@ public class Boogie2SMT {
 			// than for the non-old variable.
 			BoogieVar boogieVar = globals.get(id);
 			if (m_CalleesModifiedGlobalsIn.containsKey(boogieVar)) {
-				if (isOldContext) {
+				if (isOldContext || m_TranslatingRequires ) {
 					return m_CalleesModifiedGlobalsIn.get(boogieVar);
 				}
 				else {
@@ -1172,6 +1179,7 @@ public class Boogie2SMT {
 			}
 		}
 
+		m_TranslatingRequires = true;
 		for (Specification spec: procedure.getSpecification()){
 			if (spec instanceof RequiresSpecification) {
 				Expression pre = ((RequiresSpecification)spec).getFormula();
@@ -1185,6 +1193,7 @@ public class Boogie2SMT {
 				}
 			}
 		}
+		m_TranslatingRequires = false;
 		
 		m_CalleesModifiedGlobalsIn = null;
 		m_CalleesModifiedGlobalsOut = null;
