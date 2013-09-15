@@ -1,5 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -119,7 +120,9 @@ public class Backtranslator extends DefaultTranslator<ASTNode, CACSLLocation, Ex
 		} else if (boogieId.equals(SFO.VALID)) {
 			cId = "\\valid";	
 		} else {
-			throw new UnsupportedOperationException("unknown boogie variable " + boogieId);
+			//FIXME: handle unknown variables
+			return boogieId;
+//			throw new UnsupportedOperationException("unknown boogie variable " + boogieId);
 		}
 		return cId;
 	}
@@ -152,7 +155,13 @@ public class Backtranslator extends DefaultTranslator<ASTNode, CACSLLocation, Ex
 				throw new IllegalArgumentException("unknown unary operator");
 			}
 		} else if (expr instanceof ArrayAccessExpression) {
-			throw new UnsupportedOperationException("Unsupported ArrayAccessExpression");
+			ArrayAccessExpression aae = (ArrayAccessExpression) expr;
+			String array = processExpression(aae.getArray());
+			String indices[] = new String[aae.getIndices().length];
+			for (int i=0; i<indices.length; i++) {
+				indices[i] = processExpression(aae.getIndices()[i]);
+			}
+			return array + Arrays.toString(indices);
 		} else if (expr instanceof ArrayStoreExpression) {
 			throw new UnsupportedOperationException("Unsupported ArrayStoreExpression");
 		} else if (expr instanceof BitVectorAccessExpression) {
