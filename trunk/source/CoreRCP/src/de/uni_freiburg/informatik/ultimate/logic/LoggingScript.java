@@ -267,11 +267,11 @@ public class LoggingScript implements Script {
 	}
 
 	@Override
-	public Term simplifyTerm(Term term) throws SMTLIBException {
+	public Term simplify(Term term) throws SMTLIBException {
 		m_Pw.print("(simplify ");
 		m_TermPrinter.append(m_Pw, term);
 		m_Pw.println(")");
-		return m_Script.simplifyTerm(term);
+		return m_Script.simplify(term);
 	}
 
 	@Override

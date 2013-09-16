@@ -8,11 +8,10 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.AnnotatedTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Annotation;
+import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
-import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
-import de.uni_freiburg.informatik.ultimate.logic.simplification.SimplifyDDA;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
@@ -97,9 +96,7 @@ import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
 			if (p != null) {
 				return p;
 			}  
-			SimplifyDDA simplifyDDA = 
-					new SimplifyDDA(m_SmtManager.getScript(),TraceChecker.s_Logger);
-			Term simplifiedTerm = simplifyDDA.getSimplifiedTerm(term);
+			Term simplifiedTerm = m_SmtManager.simplify(term);
 			if (simplifiedTerm == term) {
 				//no simplification possible
 				return addNewPredicate(term, vars, procs);

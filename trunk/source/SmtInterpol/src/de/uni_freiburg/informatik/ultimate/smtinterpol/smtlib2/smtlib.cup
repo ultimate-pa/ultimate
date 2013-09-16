@@ -716,7 +716,7 @@ command ::= SETLOGIC symbol:logic
             {: if (hasError())
             	   parser.env.printError(getError());
                else
-                   parser.env.printResponse(parser.env.getScript().simplifyTerm(t));
+                   parser.env.printResponse(parser.env.getScript().simplify(t));
             :}
           | RESET
             {: parser.env.getScript().reset(); parser.env.printSuccess(); :}

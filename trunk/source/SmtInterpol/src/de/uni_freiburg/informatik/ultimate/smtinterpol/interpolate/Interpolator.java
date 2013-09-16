@@ -1110,14 +1110,30 @@ public class Interpolator {
 				Term s1DivByc1 = s1divc1.toSMTLib(m_Theory, false);
 				newF = substitute(la2.m_F, m_MixedVar, s1DivByc1);
 				newK = la2.m_k;
-			} else {
-				assert (la2.m_k.less(InfinitNumber.ZERO));
+			} else if (la2.m_k.less(InfinitNumber.ZERO)) {
 				//compute s2/c2
 				InterpolatorAffineTerm s2divc2 = new InterpolatorAffineTerm(s2);
 				s2divc2.mul(c2.inverse().negate());
 				Term s2DivByc2 = s2divc2.toSMTLib(m_Theory, false);
 				newF = substitute(la1.m_F, m_MixedVar, s2DivByc2);
 				newK = la1.m_k;
+			} else {
+				InterpolatorAffineTerm s1divc1 = new InterpolatorAffineTerm(s1);
+				s1divc1.mul(c1.inverse().negate());
+				Term s1DivByc1 = s1divc1.toSMTLib(m_Theory, false);
+				Term f1 = substitute(la1.m_F, m_MixedVar, s1DivByc1);
+				Term f2 = substitute(la2.m_F, m_MixedVar, s1DivByc1);
+				newF = m_Theory.and(f1, f2);
+				if (c1s2c2s1.isConstant()) {
+					if (c1s2c2s1.getConstant().less(InfinitNumber.ZERO))
+						newF = m_Theory.TRUE;
+				} else {
+					InterpolatorAffineTerm s3 =
+							new InterpolatorAffineTerm(c1s2c2s1);
+					s3.add(InfinitNumber.EPSILON.negate());
+					newF = m_Theory.or(s3.toLeq0(m_Theory), newF);
+				}
+				newK = InfinitNumber.ZERO;
 			}
 			LATerm la3 = new LATerm(c1s2c2s1, newK, newF);
 			return la3;

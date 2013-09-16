@@ -1,7 +1,22 @@
+/*
+ * Copyright (C) 2013 University of Freiburg
+ *
+ * This file is part of SMTInterpol.
+ *
+ * SMTInterpol is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * SMTInterpol is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with SMTInterpol.  If not, see <http://www.gnu.org/licenses/>.
+ */
 package de.uni_freiburg.informatik.ultimate.smtinterpol.util;
-
-import java.math.BigDecimal;
-import java.math.BigInteger;
 
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
@@ -20,7 +35,7 @@ public class Coercion {
 		if (t instanceof ConstantTerm) {
 			Rational val = SMTAffineTerm.create(t).getConstant();
 			assert val.isIntegral();
-			return val.toSMTLIB(t.getTheory());
+			return val.toTerm(t.getTheory().getSort("Int"));
 		}
 		return t.getTheory().term("to_int", t);
 	}
@@ -29,11 +44,7 @@ public class Coercion {
 		if (t instanceof ConstantTerm) {
 			SMTAffineTerm tmp = SMTAffineTerm.create(t);
 			assert tmp.getConstant().isIntegral();
-			BigInteger val = tmp.getConstant().numerator();
-			return t.getTheory().constant(
-					// Convention: No scale=0 BigDecimals...
-					new BigDecimal(val.multiply(BigInteger.TEN), 1),
-					t.getTheory().getSort("Real"));
+			return tmp.getConstant().toTerm(t.getTheory().getSort("Real"));
 		}
 		return t.getTheory().term("to_real", t);
 	}

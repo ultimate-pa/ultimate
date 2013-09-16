@@ -23,11 +23,13 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Queue;
+import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
 
@@ -390,8 +392,10 @@ public class LinArSolve implements ITheory {
 				if (var.m_numUpperInf == 0) {
 					if (conflict == null)
 						conflict = propagateBound(var, true);
-					else
+					else {
+						assert var.isAlive();
 						m_propBounds.addLast(var);
+					}
 				}
 			} else {
 				var.updateLower(entry.coeff, oldBound, newBound);
@@ -400,8 +404,10 @@ public class LinArSolve implements ITheory {
 				if (var.m_numLowerInf == 0) {
 					if (conflict == null)
 						conflict = propagateBound(var, false);
-					else
+					else {
+						assert var.isAlive();
 						m_propBounds.addLast(var);
+					}
 				}
 			}
 			assert(!var.mbasic || var.checkBrpCounters());
@@ -425,8 +431,10 @@ public class LinArSolve implements ITheory {
 	
 	public void removeReason(LAReason reason) {
 		LinVar var = reason.getVar();
-		if (var.mbasic && var.headEntry != null)
+		if (var.mbasic && var.headEntry != null) {
+			assert var.isAlive();
 			m_propBounds.add(var);
+		}
 		LAReason chain;
 		if (reason.isUpper()) {
 			if (var.m_upper == reason) {
@@ -549,8 +557,10 @@ public class LinArSolve implements ITheory {
 			if (b.m_numLowerInf == 0) {
 				if (conflict == null)
 					conflict = propagateBound(b, false);
-				else
+				else {
+					assert b.isAlive();
 					m_propBounds.addLast(b);
+				}
 			}
 			if (Config.PROFILE_TIME)
 				m_backtrackPropTime += System.nanoTime() - time;
@@ -994,11 +1004,29 @@ public class LinArSolve implements ITheory {
 	}
 
 	private void prepareModel() {
-		InfinitNumber maxeps = computeMaxEpsilon();
+//		HashSet<Rational> prohibitions = new HashSet<Rational>();
+		TreeSet<Rational> prohibitions = new TreeSet<Rational>();
+		InfinitNumber maxeps = computeMaxEpsilon(prohibitions);
 		if (maxeps == InfinitNumber.POSITIVE_INFINITY)
 			m_Eps = Rational.ONE;
 		else
 			m_Eps = maxeps.inverse().ceil().ma.inverse();
+		// FIX: If we cannot choose the current value since we would violate a
+		//      disequality, choose a different number.
+//		while (prohibitions.contains(m_Eps))
+//			m_Eps = m_Eps.div(Rational.TWO);
+		if (prohibitions.contains(m_Eps)) {
+			if (prohibitions.size() == 1)
+				// No other chance
+				m_Eps = m_Eps.div(Rational.TWO);
+			else {
+				Rational next = prohibitions.lower(m_Eps);
+				if (next.signum() <= 0)
+					m_Eps = m_Eps.div(Rational.TWO);
+				else
+					m_Eps = m_Eps.add(next).div(Rational.TWO);
+			}
+		}
 	}
 	
 	@Override
@@ -1088,14 +1116,18 @@ public class LinArSolve implements ITheory {
 			if (row.m_numUpperInf == 0) {
 				if (conflict == null)
 					conflict = propagateBound(row, true);
-				else
+				else {
+					assert row.isAlive();
 					m_propBounds.addLast(row);
+				}
 			}
 			if (row.m_numLowerInf == 0) {
 				if (conflict == null)
 					conflict = propagateBound(row, false);
-				else
+				else{
+					assert row.isAlive();
 					m_propBounds.addLast(row);
+				}
 			}
 		}
 		
@@ -1104,14 +1136,18 @@ public class LinArSolve implements ITheory {
 		if (nonbasic.m_numUpperInf == 0) {
 			if (conflict == null)
 				conflict = propagateBound(nonbasic, true);
-			else
+			else {
+				assert nonbasic.isAlive();
 				m_propBounds.addLast(nonbasic);
+			}
 		}
 		if (nonbasic.m_numLowerInf == 0) {
 			if (conflict == null)
 				conflict = propagateBound(nonbasic, false);
-			else
+			else {
+				assert nonbasic.isAlive();
 				m_propBounds.addLast(nonbasic);
+			}
 		}
 		if (Config.PROFILE_TIME)
 			pivotTime += System.nanoTime() - starttime;
@@ -1565,13 +1601,16 @@ public class LinArSolve implements ITheory {
 		 */
 		HashMap<LinVar,TreeMap<LinVar,Rational>> newsimps = 
 			new HashMap<LinVar, TreeMap<LinVar,Rational>>();
+		LinkedHashSet<LinVar> props = new LinkedHashSet<LinVar>(m_propBounds);
 		for (LinVar v : removeVars) {
 			assert(v.mbasic);
 			mengine.getLogger().debug(new DebugMessage("Simplifying {0}",v));
 			TreeMap<LinVar,Rational> coeffs = removeVar(v);
 			updateSimps(v,coeffs);
 			newsimps.put(v,coeffs);
+			props.remove(v);
 		}
+		m_propBounds = new ArrayDeque<LinVar>(props);
 		msimps.putAll(newsimps);
 		assert(checkPostSimplify());
 		return null;
@@ -2017,7 +2056,7 @@ public class LinArSolve implements ITheory {
 		return res;
 	}
 	
-	private InfinitNumber computeMaxEpsilon() {
+	private InfinitNumber computeMaxEpsilon(Set<Rational> prohibitions) {
 		InfinitNumber maxeps = InfinitNumber.POSITIVE_INFINITY;
 		for (LinVar v : m_linvars) {
 			if (v.mbasic) {
@@ -2033,17 +2072,35 @@ public class LinArSolve implements ITheory {
 					if (diff.compareTo(maxeps) < 0)
 						maxeps = diff;
 				}
+				if (epsilons.signum() != 0 && v.mdisequalities != null) {
+					for (Rational prohib : v.mdisequalities.keySet())
+						// solve v.mcurval = prohib to eps
+						// a+b*eps = p ==> eps = (p-a)/b given b != 0
+						prohibitions.add(prohib.sub(v.m_curval.ma).div(epsilons));
+				}
 			} else {
 				if (v.m_curval.meps > 0) {
 					InfinitNumber diff = v.getUpperBound().sub
 							(new InfinitNumber(v.m_curval.ma, 0));
 					if (diff.compareTo(maxeps) < 0)
 						maxeps = diff;
+					assert (v.m_curval.meps == 1);
+					if (v.mdisequalities != null) {
+						for (Rational prohib : v.mdisequalities.keySet())
+							// solve a+eps = p ==> eps = p-a
+							prohibitions.add(prohib.sub(v.m_curval.ma));
+					}
 				} else if (v.m_curval.meps < 0) {
 					InfinitNumber diff = new InfinitNumber(v.m_curval.ma, 0).sub
 							(v.getLowerBound());
 					if (diff.compareTo(maxeps) < 0)
 						maxeps = diff;
+					assert (v.m_curval.meps == -1);
+					if (v.mdisequalities != null) {
+						for (Rational prohib : v.mdisequalities.keySet())
+							// solve a-eps = p ==> eps = a-p
+							prohibitions.add(v.m_curval.ma.sub(prohib));
+					}
 				}
 			}
 		}

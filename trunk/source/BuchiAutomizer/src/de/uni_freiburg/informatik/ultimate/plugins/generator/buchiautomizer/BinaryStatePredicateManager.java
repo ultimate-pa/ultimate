@@ -199,7 +199,7 @@ public class BinaryStatePredicateManager {
 	private IPredicate supportingInvariant2Predicate(SupportingInvariant si) {
 		Set<BoogieVar> coefficients = si.getCoefficients().keySet();
 		Term formula = si.asTerm(m_SmtManager.getScript(), m_SmtManager.getSmt2Boogie());
-		formula = (new SimplifyDDA(m_Script, s_Logger)).getSimplifiedTerm(formula);
+		formula = m_SmtManager.simplify(formula);
 		TermVarsProc termVarsProc = m_SmtManager.computeTermVarsProc(formula);
 		assert termVarsProc.getVars().equals(coefficients);
 		

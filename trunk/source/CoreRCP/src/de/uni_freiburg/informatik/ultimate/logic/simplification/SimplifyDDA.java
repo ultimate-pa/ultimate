@@ -1,6 +1,23 @@
+/*
+ * Copyright (C) 2009-2013 University of Freiburg
+ *
+ * This file is part of SMTInterpol.
+ *
+ * SMTInterpol is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * SMTInterpol is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with SMTInterpol.  If not, see <http://www.gnu.org/licenses/>.
+ */
 package de.uni_freiburg.informatik.ultimate.logic.simplification;
 
-import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.FormulaUnLet;
@@ -12,7 +29,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
-import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
 
 /**
  * Simplify formulas, but keep their Boolean structure.
@@ -29,17 +45,15 @@ import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
  */
 public class SimplifyDDA {
 	private final Script m_Script;
-	private final Logger m_Logger;
 	private final Term m_True;
 	private final Term m_False;
 	
 	/**
 	 * The constructor gets the script interface and the logger for output
 	 */
-	public SimplifyDDA(final Script script, final Logger logger) 
+	public SimplifyDDA(final Script script) 
 			throws SMTLIBException {
 		m_Script = script;
-		m_Logger = logger;
 		m_True = m_Script.term("true");
 		m_False = m_Script.term("false");
 	}
@@ -139,8 +153,7 @@ public class SimplifyDDA {
 			}
 		}.transform(term);
 		m_Script.pop(1);
-		m_Logger.debug(new DebugMessage("Simplified to: {0}", term));
-		assert (checkEquivalence(inputTerm, term) != LBool.SAT) : "Simplification Unsound";
+		assert (checkEquivalence(inputTerm, term) != LBool.SAT) : "Simplification unsound";
 		return term;
 	}
 	

@@ -550,7 +550,7 @@ public class SmtManager {
 	
 	
 	public Term simplify(Term term) {
-		return new SimplifyDDA(m_Script, s_Logger).getSimplifiedTerm(term);
+		return new SimplifyDDA(m_Script).getSimplifiedTerm(term);
 	}
 	
 //	public Predicate simplify(Predicate ps) {

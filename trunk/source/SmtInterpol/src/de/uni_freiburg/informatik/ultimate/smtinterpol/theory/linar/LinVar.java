@@ -569,4 +569,7 @@ public class LinVar implements Comparable<LinVar> {
 	public LAEquality getEquality(InfinitNumber bound) {
 		return mequalities.get(bound);
 	}
+	public boolean isAlive() {
+		return !dead;
+	}
 }

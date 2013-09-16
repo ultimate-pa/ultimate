@@ -451,7 +451,7 @@ public interface Script {
 	 * @return The simplified term.
 	 * @throws SMTLIBException If an error occurred or unsupported.
 	 */
-	public Term simplifyTerm(Term term) throws SMTLIBException;
+	public Term simplify(Term term) throws SMTLIBException;
 	/**
 	 * Reset the solver completely.  Note that this invalidates all objects
 	 * previously returned and unsets the logic.

@@ -115,7 +115,7 @@ public class PrepareScript extends LoggingScript {
 	}
 
 	@Override
-	public Term simplifyTerm(Term term) throws SMTLIBException {
+	public Term simplify(Term term) throws SMTLIBException {
 		// Do nothing since no track allows this command
 		return term;
 	}

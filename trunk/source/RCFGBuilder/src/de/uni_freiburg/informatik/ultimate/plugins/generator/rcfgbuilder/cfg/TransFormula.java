@@ -446,7 +446,7 @@ public class TransFormula implements Serializable {
 		
 		formula = new FormulaUnLet().unlet(formula);
 		if (simplify) {
-			formula = (new SimplifyDDA(script, s_Logger)).getSimplifiedTerm(formula);
+			formula = (new SimplifyDDA(script)).getSimplifiedTerm(formula);
 		}
 		removesuperfluousVariables(inVars, outVars, auxVars, formula);
 		
@@ -454,7 +454,7 @@ public class TransFormula implements Serializable {
 								new NaiveDestructiveEqualityResolution(script);
 		formula = der.eliminate(auxVars, formula);
 		if (simplify) {
-			formula = (new SimplifyDDA(script, s_Logger)).getSimplifiedTerm(formula);
+			formula = (new SimplifyDDA(script)).getSimplifiedTerm(formula);
 		}
 		LBool isSat = Util.checkSat(script, formula);
 		if (isSat == LBool.UNSAT) {

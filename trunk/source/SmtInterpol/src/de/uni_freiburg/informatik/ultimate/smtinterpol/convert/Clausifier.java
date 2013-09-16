@@ -1678,7 +1678,8 @@ public class Clausifier {
 	
 	public EqualityProxy createEqualityProxy(SharedTerm lhs, SharedTerm rhs) {
 		SMTAffineTerm diff = SMTAffineTerm.create(lhs.getTerm()).addUnchecked(
-				SMTAffineTerm.create(rhs.getTerm()).negate());
+				SMTAffineTerm.create(rhs.getTerm()).negate(),
+				lhs.getSort() == rhs.getSort());
 		if (diff.isConstant()) {
 			if (diff.getConstant().equals(Rational.ZERO)) {
 				return EqualityProxy.getTrueProxy();

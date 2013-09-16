@@ -49,7 +49,8 @@ public class FormulaLet extends NonRecursive {
 		run(new Letter(input));
 		Term result = m_ResultStack.removeLast();
 		assert m_ResultStack.size() == 0 && m_Visited.size() == 0;
-		assert new FormulaUnLet().unlet(result) == input;
+		assert new TermEquivalence().equal(
+				new FormulaUnLet().unlet(result), input);
 		m_ResultStack = null;
 		m_Visited = null;
 		return result;

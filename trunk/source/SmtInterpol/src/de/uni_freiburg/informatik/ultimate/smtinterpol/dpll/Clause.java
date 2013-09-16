@@ -166,7 +166,7 @@ public class Clause extends SimpleListable<Clause> {
 	 * the activity drops below some point the clause is removed.
 	 */
 	double activity;
-	int usedTimes;
+//	int usedTimes;
 	/**
 	 * The stacklevel this clause was introduced.
 	 */

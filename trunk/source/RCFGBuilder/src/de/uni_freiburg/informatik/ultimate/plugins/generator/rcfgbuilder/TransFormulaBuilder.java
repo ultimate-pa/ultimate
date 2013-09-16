@@ -174,7 +174,7 @@ public class TransFormulaBuilder {
 		formula = eliminateAuxVars(m_Boogie2smt.getAssumes(),auxVars);
 		if (simplify) {
 			try {
-				formula = (new SimplifyDDA(m_Boogie2smt.getScript(), s_Logger)).
+				formula = (new SimplifyDDA(m_Boogie2smt.getScript())).
 						getSimplifiedTerm(formula);
 			}
 			catch (SMTLIBException e) {

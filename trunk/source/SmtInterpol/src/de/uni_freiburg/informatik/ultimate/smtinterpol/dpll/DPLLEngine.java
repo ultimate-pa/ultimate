@@ -609,7 +609,7 @@ public class DPLLEngine {
 			/* Do a resolution step with explanation */
 			Clause expl = getExplanation(lit);
 			expl.activity += cls_scale;
-			expl.usedTimes++;
+//			expl.usedTimes++;
 			expstacklevel = Math.max(expstacklevel,expl.stacklevel);
 			if (isProofGenerationEnabled()) {
 				antecedents.add(new Antecedent(lit,expl));
@@ -673,7 +673,7 @@ public class DPLLEngine {
 				/* Do a resolution step with explanation */
 				Clause expl = getExplanation(lit);
 				expl.activity += cls_scale;
-				expl.usedTimes++;
+//				expl.usedTimes++;
 				expstacklevel = Math.max(expstacklevel,expl.stacklevel);
 				if (isProofGenerationEnabled()) {
 					antecedents.add(new Antecedent(lit,expl));
@@ -1099,7 +1099,7 @@ public class DPLLEngine {
 								++decleveldec;
 							if (litexpl instanceof Clause) {
 								((Clause) litexpl).activity += cls_scale;
-								((Clause) litexpl).usedTimes++;
+//								((Clause) litexpl).usedTimes++;
 							}
 							backtrackLiteral(lit);
 						}
@@ -1246,7 +1246,7 @@ public class DPLLEngine {
 				Object litexpl = lit.getAtom().explanation;
 				if (litexpl instanceof Clause) {
 					((Clause) litexpl).activity += cls_scale;
-					((Clause) litexpl).usedTimes++;
+//					((Clause) litexpl).usedTimes++;
 				}
 				backtrackLiteral(lit);
 			}

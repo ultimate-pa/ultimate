@@ -120,10 +120,10 @@ public class SMTAffineTerm extends Term {
 	
 	public SMTAffineTerm add(SMTAffineTerm a2) {
 		assert this.getSort().equals(a2.getSort());
-		return addUnchecked(a2);
+		return addUnchecked(a2, true);
 	}
 	
-	public SMTAffineTerm addUnchecked(SMTAffineTerm a2) {
+	public SMTAffineTerm addUnchecked(SMTAffineTerm a2, boolean sortCorrect) {
 		Map<Term, Rational> summands = new HashMap<Term, Rational>();
 		summands.putAll(this.m_summands);
 		for (Map.Entry<Term,Rational> entry : a2.m_summands.entrySet()) {
@@ -139,7 +139,10 @@ public class SMTAffineTerm extends Term {
 				summands.put(var, entry.getValue());
 			}
 		}
-		return create(summands, m_constant.add(a2.m_constant), m_sort);
+		return create(summands, m_constant.add(a2.m_constant),
+				sortCorrect ? m_sort :
+					a2.getSort().getName().equals("Real") ? 
+							a2.getSort() : m_sort);
 	}
 
 	/**

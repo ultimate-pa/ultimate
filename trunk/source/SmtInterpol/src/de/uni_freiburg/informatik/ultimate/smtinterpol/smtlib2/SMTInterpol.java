@@ -52,6 +52,7 @@ import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
+import de.uni_freiburg.informatik.ultimate.logic.simplification.SimplifyDDA;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.Config;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.Clausifier;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.Clause;
@@ -87,6 +88,24 @@ public class SMTInterpol extends NoopScript {
 			}
 		};
 		abstract boolean check(DPLLEngine engine);
+
+		public static final CheckType fromOption(Option o, Object value) {
+			try {
+				return CheckType.valueOf(
+								o.checkArg(value, ""/*dummy*/).toUpperCase());
+			} catch (IllegalArgumentException iae) {
+				// The enum constant is not present
+				StringBuilder sb = new StringBuilder();
+				sb.append("Illegal value. Only ");
+				String sep = "";
+				for (CheckType t : CheckType.values()) {
+					sb.append(sep).append(t.name().toLowerCase());
+					sep = ", ";
+				}
+				sb.append(" allowed.");
+				throw new SMTLIBException(sb.toString());
+			}
+		}
 	}
 	
 	private static class SMTInterpolSetup extends Theory.SolverSetup {
@@ -453,6 +472,9 @@ public class SMTInterpol extends NoopScript {
 	private AvailableTransformations m_ProofTransformation =
 		AvailableTransformations.NONE;
 	
+	private boolean m_SimplifyInterpolants = false;
+	private CheckType m_SimplifyCheckType = CheckType.QUICK;
+	
 	// The option numbers
 	private final static int OPT_PRINT_SUCCESS = 0;
 	private final static int OPT_VERBOSITY = 1;
@@ -473,6 +495,8 @@ public class SMTInterpol extends NoopScript {
 	private final static int OPT_PROOF_TRANSFORMATION = 16;
 	private final static int OPT_MODELS_PARTIAL = 17;
 	private final static int OPT_CHECK_TYPE = 18;
+	private final static int OPT_SIMPLIFY_INTERPOLANTS = 19;
+	private final static int OPT_SIMPLIFY_CHECK_TYPE = 20;
 	//// Add a new option number for every new option
 	
 	// The Options Map
@@ -526,8 +550,25 @@ public class SMTInterpol extends NoopScript {
 		new StringOption(":check-type",
 				"Strength of check used in check-sat command", true,
 				OPT_CHECK_TYPE);
+		new BoolOption(":simplify-interpolants",
+				"Apply strong context simplification to computed interpolants",
+				true, OPT_SIMPLIFY_INTERPOLANTS);
+		new StringOption(":simplify-check-type",
+				"Strength of check used in simplify command", true,
+				OPT_SIMPLIFY_CHECK_TYPE);
 		//// Create new option object for every new option
 	}
+	
+	/**
+	 * Delta debugger friendly version.  Exits with following codes:
+	 * model-check-mode fails: 1
+	 * interpolant-check-mode fails: 2
+	 * exception during check-sat: 3
+	 * command that needed sat after last check got unsat: 4
+	 * command that needed unsat after last check got sat: 5
+	 */
+	private final boolean m_ddfriendly = 
+			System.getProperty("smtinterpol.ddfriendly") != null;
 	
 	public SMTInterpol() {
 		this(Logger.getRootLogger(), true);
@@ -641,9 +682,15 @@ public class SMTInterpol extends NoopScript {
 								m_Clausifier, getTheory(), m_PartialModels);
 						for (Term asserted : m_Assertions) {
 							Term checkedResult = m_Model.evaluate(asserted);
-							if (checkedResult != getTheory().TRUE)
+							if (checkedResult != getTheory().TRUE) {
+								if (m_ddfriendly)
+									System.exit(1);
 								m_Logger.fatal("Model does not satisfy " + 
 										asserted.toStringDirect());
+//								for (Term t : getSatisfiedLiterals())
+//									if (m_Model.evaluate(t) != getTheory().TRUE)
+//										m_Logger.fatal("Unsat lit: " + t.toStringDirect());
+							}
 						}
 					}
 				} else {
@@ -682,6 +729,8 @@ public class SMTInterpol extends NoopScript {
 //			m_Logger.fatal("OOM during check ",oom);
 			m_ReasonUnknown = ReasonUnknown.MEMOUT;
 		} catch (Throwable ex) {
+			if (m_ddfriendly)
+				System.exit(3);
 			m_Logger.fatal("Error during check ",ex);
 			m_ReasonUnknown = ReasonUnknown.CRASHED;
 		}
@@ -896,6 +945,10 @@ public class SMTInterpol extends NoopScript {
 			return m_PartialModels;
 		case OPT_CHECK_TYPE:
 			return m_CheckType.name().toLowerCase();
+		case OPT_SIMPLIFY_INTERPOLANTS:
+			return m_SimplifyInterpolants;
+		case OPT_SIMPLIFY_CHECK_TYPE:
+			return m_SimplifyCheckType.name().toLowerCase();
 		default:
 			throw new InternalError("This should be implemented!!!");
 		}
@@ -1085,6 +1138,8 @@ public class SMTInterpol extends NoopScript {
 					}
 					LBool res = tmpBench.checkSat();
 					if (res != LBool.UNSAT) {
+						if (m_ddfriendly)
+							System.exit(2);
 						m_Logger.error(new DebugMessage(
 								"Interpolant {0} not inductive: " +
 								" (Check returned {1})", i, res));
@@ -1112,6 +1167,11 @@ public class SMTInterpol extends NoopScript {
 			if (error)
 				throw new SMTLIBException
 					("generated interpolants did not pass sanity check");
+		}
+		if (m_SimplifyInterpolants) {
+			SimplifyDDA simplifier = getSimplifier();
+			for (int i = 0; i < ipls.length; ++i)
+				ipls[i] = simplifier.getSimplifiedTerm(ipls[i]);
 		}
 		return ipls;
 	}
@@ -1360,36 +1420,31 @@ public class SMTInterpol extends NoopScript {
 			m_Model = null;
 			break;
 		case OPT_CHECK_TYPE:
-			try {
-				m_CheckType = 
-						CheckType.valueOf(
-								o.checkArg(value, ""/*dummy*/).toUpperCase());
-			} catch (IllegalArgumentException iae) {
-				// The enum constant is not present
-				StringBuilder sb = new StringBuilder();
-				sb.append("Illegal value. Only ");
-				String sep = "";
-				for (CheckType t : CheckType.values()) {
-					sb.append(sep).append(t.name().toLowerCase());
-					sep = ", ";
-				}
-				sb.append(" allowed.");
-				throw new SMTLIBException(sb.toString());
-			}
+			m_CheckType = CheckType.fromOption(o, value);
+			break;
+		case OPT_SIMPLIFY_INTERPOLANTS:
+			m_SimplifyInterpolants = o.checkArg(value, m_SimplifyInterpolants);
+			break;
+		case OPT_SIMPLIFY_CHECK_TYPE:
+			m_SimplifyCheckType = CheckType.fromOption(o, value);
 			break;
 		default:
 			throw new InternalError("This should be implemented!!!");
 		}
 	}
 	
-	public Term simplifyTerm(Term term) throws SMTLIBException {
+	private SimplifyDDA getSimplifier() {
+		return new SimplifyDDA(new SMTInterpol(this, 
+				Collections.singletonMap(
+						":check-type", (Object) m_SimplifyCheckType.name())));
+	}
+	
+	public Term simplify(Term term) throws SMTLIBException {
 //		if (m_Engine == null)
 //			throw new SMTLIBException("No logic set!");
 //		return m_Converter.simplify(term);
-//		return new SimplifyDDA(new SMTInterpol(this, 
-//				Collections.<String, Object> emptyMap()), getLogger()).
-//				getSimplifiedTerm(term);
-		throw new UnsupportedOperationException();
+		return getSimplifier().getSimplifiedTerm(term);
+//		throw new UnsupportedOperationException();
 	}
 
 	/**
@@ -1443,8 +1498,11 @@ public class SMTInterpol extends NoopScript {
 	
 	private void buildModel() throws SMTLIBException {
 		checkAssertionStackModified();
-		if (m_Engine.inconsistent())
+		if (m_Engine.inconsistent()) {
+			if (m_ddfriendly)
+				System.exit(4);
 			throw new SMTLIBException("Context is inconsistent");
+		}
 		if (m_Model == null) {
 			m_Model = new
 				de.uni_freiburg.informatik.ultimate.smtinterpol.model.Model(
@@ -1454,8 +1512,11 @@ public class SMTInterpol extends NoopScript {
 	
 	public Clause retrieveProof() throws SMTLIBException {
 		Clause unsat = m_Engine.getProof();
-		if (unsat == null)
+		if (unsat == null) {
+			if (m_ddfriendly)
+				System.exit(5);
 			throw new SMTLIBException("Logical context not inconsistent!");
+		}
 		Clause proof = m_ProofTransformation.transform(unsat);
 		if (Config.CHECK_PROP_PROOF) {
 			if (proof.getSize() != 0 || !new PropProofChecker().check(proof))

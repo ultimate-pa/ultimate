@@ -8,12 +8,10 @@ import java.util.Map.Entry;
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
-import de.uni_freiburg.informatik.ultimate.logic.FormulaUnLet;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
+import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
-import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
-import de.uni_freiburg.informatik.ultimate.logic.simplification.SimplifyDDA;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
@@ -134,7 +132,7 @@ public class HoareAnnotation extends SPredicate {
 		}
 		m_Formula = m_SmtManager.substituteOldVarsOfNonModifiableGlobals(
 				getProgramPoint().getProcedure(), m_Vars, m_Formula);
-		m_Formula = (new SimplifyDDA(m_SmtManager.getScript(), s_Logger)).getSimplifiedTerm(m_Formula);
+		m_Formula = m_SmtManager.simplify(m_Formula);
 		m_Formula = getPositiveNormalForm(m_Formula);
 	}
 	
