@@ -2357,6 +2357,9 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 	class RunConstructor {
 		private final StateContainer<LETTER,STATE> m_Start;
 		private final StateContainer<LETTER,STATE> m_Goal;
+		/**
+		 * TODO: Do not store set of transitions, but set of state pairs.
+		 */
 		private final Set<IncomingReturnTransition<LETTER, STATE>> m_ForbiddenSummaries;
 		private final boolean m_FindSummary;
 		private boolean m_GoalFound = false;
