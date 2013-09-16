@@ -200,7 +200,7 @@ public class TraceChecker {
 		m_SmtManager.startTraceCheck();
 		NestedSsaBuilder nsb = 
 				new NestedSsaBuilder(m_Trace, precondition, postcondition, 
-						pendingContexts, m_SmtManager, m_ModifiedGlobals, m_DebugPW);
+						pendingContexts, m_SmtManager, m_ModifiedGlobals);
 		NestedSsa ssa = nsb.getSsa();
 		try {
 			m_AAA = getAnnotateAndAsserter(ssa);

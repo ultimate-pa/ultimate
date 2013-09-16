@@ -28,7 +28,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Mod
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.TransFormula;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbstractCegarLoop;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
@@ -48,7 +47,6 @@ public class NestedSsaBuilder {
 	final Map<BoogieVar,Term> currentGlobalVarVersion =
 									new HashMap<BoogieVar,Term>();
 	Integer startOfCallingContext;
-	final PrintWriter m_IterationPW;
 	
 	final Map<BoogieVar,Map<Integer,Term>> m_IndexedVarRepresentative =
 			new HashMap<BoogieVar,Map<Integer,Term>>();
@@ -208,16 +206,13 @@ public class NestedSsaBuilder {
 							IPredicate postcondition,
 							SortedMap<Integer, IPredicate> pendingContexts,
 							SmtManager smtManager,
-							ModifiableGlobalVariableManager modifiedGlobals,
-						 	PrintWriter iterationPW) {
+							ModifiableGlobalVariableManager modifiedGlobals) {
 		m_Script = smtManager.getScript();
 		m_SmtManager = smtManager;
 		m_TraceWF = new DefaultTransFormulas(trace, precondition, postcondition, 
 				pendingContexts, modifiedGlobals);
 		m_SsaData = new SsaData();
 		 
-
-		m_IterationPW = iterationPW;
 		m_ModifiedGlobals = modifiedGlobals;
 		buildSSA();
 	}
@@ -380,10 +375,6 @@ public class NestedSsaBuilder {
 		m_SsaData.getGlobalOldVarAssignmentAtCall(),
 		m_SsaData.getPendingContexts(),
 		m_Constants2BoogieVar);
-		
-		if (m_IterationPW != null) {
-			dumpSSA();
-		}
 	}
 	
 	public String getProcedureofCodeBlock(CodeBlock cb) {
@@ -393,55 +384,6 @@ public class NestedSsaBuilder {
 	
 	public NestedSsa getSsa() {
 		return m_Ssa;
-	}
-	
-	
-	
-	private void dumpSSA() {
-		String line;
-		int indentation = 0;
-		FormulaUnLet unflet = new FormulaUnLet();
-		try {
-			line = "===== Nested SSA =====";
-			s_Logger.debug(line);
-			m_IterationPW.println(line);
-			for (int i=0; i<m_Ssa.getTrace().length(); i++) {
-				if (m_Ssa.getTrace().isCallPosition(i)) {
-					indentation++;
-					line = AbstractCegarLoop.addIndentation(indentation, 
-							"LocalVariableAssignment"+i+": "+unflet.unlet(
-										m_Ssa.getLocalVarAssignment(i)).toString());
-					s_Logger.debug(line);
-					m_IterationPW.println(line);
-					line = AbstractCegarLoop.addIndentation(indentation, 
-							"GlobalOld-VariableAssignment"+i+": "+unflet.unlet(
-									m_Ssa.getOldVarAssignment(i)).toString());
-					s_Logger.debug(line);
-					m_IterationPW.println(line);
-					line = AbstractCegarLoop.addIndentation(indentation, 
-							"GlobalVariableAssignment"+i+": "+unflet.unlet(
-									m_Ssa.getGlobalVarAssignment(i)));
-					s_Logger.debug(line);
-					m_IterationPW.println(line);
-				} else if (m_Ssa.getTrace().isReturnPosition(i)) {
-					line = AbstractCegarLoop.addIndentation(indentation, 
-							"LocalVariableAssignment"+i+": "+unflet.unlet(
-									m_Ssa.getLocalVarAssignment(i)).toString());
-					s_Logger.debug(line);
-					m_IterationPW.println(line);
-					indentation--;
-				} else 	{
-					line = AbstractCegarLoop.addIndentation(indentation, 
-						"Term "+i+": "+unflet.unlet(m_Ssa.getFormulaFromNonCallPos(i)).toString());
-					s_Logger.debug(line);
-					m_IterationPW.println(line);
-				}
-			}
-			m_IterationPW.println("");
-			m_IterationPW.println("");
-		} finally {
-			m_IterationPW.flush();
-		}
 	}
 	
 	
