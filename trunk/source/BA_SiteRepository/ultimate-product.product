@@ -99,6 +99,19 @@
       <feature id="org.eclipse.rcp"/>
       <feature id="org.eclipse.cdt"/>
       <feature id="org.eclipse.platform"/>
+	        <feature id="org.eclipse.cdt.platform"/>
+      <feature id="org.eclipse.equinox.p2.core.feature"/>
+      <feature id="org.eclipse.help"/>
+      <feature id="org.eclipse.emf.ecore"/>
+      <feature id="org.eclipse.e4.rcp"/>
+      <feature id="org.eclipse.emf.common"/>
+      <feature id="org.eclipse.cdt.gnu.build"/>
+      <feature id="org.eclipse.equinox.p2.rcp.feature"/>
+      <feature id="org.eclipse.equinox.p2.user.ui"/>
+      <feature id="org.eclipse.equinox.p2.extras.feature"/>
+      <feature id="org.eclipse.cdt.gnu.dsf"/>
+      <feature id="org.eclipse.cdt.gdb"/>
+      <feature id="org.eclipse.cdt.gnu.debug"/>
    </features>
 
    <configurations>
