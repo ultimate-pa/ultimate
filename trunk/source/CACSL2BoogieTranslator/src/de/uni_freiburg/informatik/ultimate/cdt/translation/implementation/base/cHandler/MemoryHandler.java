@@ -102,6 +102,12 @@ public class MemoryHandler {
      * offset constants.
      */
     private final HashSet<Axiom> axioms;
+    
+    /**
+     * Add also implementations of malloc, free, write and read functions.
+     * TODO: details
+     */
+	private static final boolean m_AddImplementation = true;
 
     /**
      * Constructor.
@@ -409,21 +415,23 @@ public class MemoryHandler {
                 new String[0], new VarList[] { new VarList(tuLoc,
                         new String[] { ADDR }, POINTER_TYPE) }, new VarList[0],
                 specFree, null));
-        // procedure ~free(~addr:$Pointer$) returns() {
-        // #valid[~addr!base] := false;
-        // // havoc #memory[n];
-        // }
-        LeftHandSide[] lhs = new LeftHandSide[] { new ArrayLHS(tuLoc,
-                new VariableLHS(tuLoc, SFO.VALID), idcFree) };
-        Expression[] rhsFree = new Expression[] { bLFalse };
-        Body bodyFree = new Body(
-                tuLoc,
-                new VariableDeclaration[0],
-                new Statement[] { new AssignmentStatement(tuLoc, lhs, rhsFree) });
-        decl.add(new Procedure(tuLoc, new Attribute[0], SFO.FREE,
-                new String[0], new VarList[] { new VarList(tuLoc,
-                        new String[] { ADDR }, POINTER_TYPE) }, new VarList[0],
-                null, bodyFree));
+        if (m_AddImplementation) {
+        	// procedure ~free(~addr:$Pointer$) returns() {
+        	// #valid[~addr!base] := false;
+        	// // havoc #memory[n];
+        	// }
+        	LeftHandSide[] lhs = new LeftHandSide[] { new ArrayLHS(tuLoc,
+        			new VariableLHS(tuLoc, SFO.VALID), idcFree) };
+        	Expression[] rhsFree = new Expression[] { bLFalse };
+        	Body bodyFree = new Body(
+        			tuLoc,
+        			new VariableDeclaration[0],
+        			new Statement[] { new AssignmentStatement(tuLoc, lhs, rhsFree) });
+        	decl.add(new Procedure(tuLoc, new Attribute[0], SFO.FREE,
+        			new String[0], new VarList[] { new VarList(tuLoc,
+        					new String[] { ADDR }, POINTER_TYPE) }, new VarList[0],
+        					null, bodyFree));
+        }
         return decl;
     }
 
@@ -497,48 +505,50 @@ public class MemoryHandler {
                         new String[] { SIZE }, intType) },
                 new VarList[] { new VarList(tuLoc, new String[] { SFO.RES },
                         POINTER_TYPE) }, specMalloc, null));
-        // procedure ~malloc(~size:int) returns (#res:pointer) {
-        // var ~addr : pointer;
-        //
-        // assume ~addr!offset = 0;
-        // assume ~addr!base != 0;
-        // assume !#valid[~addr!base];
-        // // #valid setzen
-        // #valid = #valid[~addr!base := true];
-        // #length = #length[~addr!base := size];
-        // // return pointer
-        // #res := ~addr;
-        // }
-        Expression[] idcAddrBase = new Expression[] { addrBase };
-        VariableDeclaration[] localVars = new VariableDeclaration[] { new VariableDeclaration(
-                tuLoc, new Attribute[0], new VarList[] { new VarList(tuLoc,
-                        new String[] { ADDR }, POINTER_TYPE) }) };
-        Statement[] block = new Statement[6];
-        block[0] = new AssumeStatement(tuLoc, new BinaryExpression(tuLoc,
-                Operator.COMPEQ, addrOffset, nr0));
-        block[1] = new AssumeStatement(tuLoc, new BinaryExpression(tuLoc,
-                Operator.COMPNEQ, addrBase, nr0));
-        block[2] = new AssumeStatement(tuLoc, new UnaryExpression(tuLoc,
-                UnaryExpression.Operator.LOGICNEG, new ArrayAccessExpression(
-                        tuLoc, valid, idcAddrBase)));
-        block[3] = new AssignmentStatement(tuLoc,
-                new LeftHandSide[] { new VariableLHS(tuLoc, SFO.VALID) },
-                new Expression[] { new ArrayStoreExpression(tuLoc, valid,
-                        idcAddrBase, bLTrue) });
-        block[4] = new AssignmentStatement(tuLoc,
-                new LeftHandSide[] { new VariableLHS(tuLoc, SFO.LENGTH) },
-                new Expression[] { new ArrayStoreExpression(tuLoc, length,
-                        idcAddrBase, size) });
-        block[5] = new AssignmentStatement(
-                tuLoc,
-                new LeftHandSide[] { new VariableLHS(tuLoc, pointerIT, SFO.RES) },
-                new Expression[] { addr });
-        Body bodyMalloc = new Body(tuLoc, localVars, block);
-        decl.add(new Procedure(tuLoc, new Attribute[0], SFO.MALLOC,
-                new String[0], new VarList[] { new VarList(tuLoc,
-                        new String[] { SIZE }, intType) },
-                new VarList[] { new VarList(tuLoc, new String[] { SFO.RES },
-                        POINTER_TYPE) }, null, bodyMalloc));
+        if (m_AddImplementation) {
+        	// procedure ~malloc(~size:int) returns (#res:pointer) {
+        	// var ~addr : pointer;
+        	//
+        	// assume ~addr!offset = 0;
+        	// assume ~addr!base != 0;
+        	// assume !#valid[~addr!base];
+        	// // #valid setzen
+        	// #valid = #valid[~addr!base := true];
+        	// #length = #length[~addr!base := size];
+        	// // return pointer
+        	// #res := ~addr;
+        	// }
+        	Expression[] idcAddrBase = new Expression[] { addrBase };
+        	VariableDeclaration[] localVars = new VariableDeclaration[] { new VariableDeclaration(
+        			tuLoc, new Attribute[0], new VarList[] { new VarList(tuLoc,
+        					new String[] { ADDR }, POINTER_TYPE) }) };
+        	Statement[] block = new Statement[6];
+        	block[0] = new AssumeStatement(tuLoc, new BinaryExpression(tuLoc,
+        			Operator.COMPEQ, addrOffset, nr0));
+        	block[1] = new AssumeStatement(tuLoc, new BinaryExpression(tuLoc,
+        			Operator.COMPNEQ, addrBase, nr0));
+        	block[2] = new AssumeStatement(tuLoc, new UnaryExpression(tuLoc,
+        			UnaryExpression.Operator.LOGICNEG, new ArrayAccessExpression(
+        					tuLoc, valid, idcAddrBase)));
+        	block[3] = new AssignmentStatement(tuLoc,
+        			new LeftHandSide[] { new VariableLHS(tuLoc, SFO.VALID) },
+        			new Expression[] { new ArrayStoreExpression(tuLoc, valid,
+        					idcAddrBase, bLTrue) });
+        	block[4] = new AssignmentStatement(tuLoc,
+        			new LeftHandSide[] { new VariableLHS(tuLoc, SFO.LENGTH) },
+        			new Expression[] { new ArrayStoreExpression(tuLoc, length,
+        					idcAddrBase, size) });
+        	block[5] = new AssignmentStatement(
+        			tuLoc,
+        			new LeftHandSide[] { new VariableLHS(tuLoc, pointerIT, SFO.RES) },
+        			new Expression[] { addr });
+        	Body bodyMalloc = new Body(tuLoc, localVars, block);
+        	decl.add(new Procedure(tuLoc, new Attribute[0], SFO.MALLOC,
+        			new String[0], new VarList[] { new VarList(tuLoc,
+        					new String[] { SIZE }, intType) },
+        					new VarList[] { new VarList(tuLoc, new String[] { SFO.RES },
+        							POINTER_TYPE) }, null, bodyMalloc));
+        }
         return decl;
     }
 
