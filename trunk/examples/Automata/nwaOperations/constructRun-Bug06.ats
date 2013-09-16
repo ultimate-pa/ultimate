@@ -3,8 +3,6 @@
 // Reveals Bug in r9618
 
 removeUnreachable(nwa);
-//print(nwa);
-//shrinkNwa(removeDeadEnds(nwa));
 
 NestedWordAutomaton nwa = (
 	callAlphabet = {c13 c0 c14 c1 c15 c2 c16 c3 c17 c4 c18 c5 c19 c6 c20 c7 c21 c22 c8 c23 c24 c25 c9 c26 c10 c27 c11 c28 c12 },
