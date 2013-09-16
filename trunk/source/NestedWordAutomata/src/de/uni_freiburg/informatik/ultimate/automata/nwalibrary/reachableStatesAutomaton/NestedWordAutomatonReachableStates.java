@@ -2348,38 +2348,68 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 	
 	
 	
-
+	/**
+	 * Construction of initial runs and runs for summaries. Runs are constructed
+	 * backwards, therefore m_Start is the last state in the run and m_Goal is
+	 * the first state of the run. 
+	 *
+	 */
 	class RunConstructor {
 		private final StateContainer<LETTER,STATE> m_Start;
 		private final StateContainer<LETTER,STATE> m_Goal;
 		private final Set<IncomingReturnTransition<LETTER, STATE>> m_ForbiddenSummaries;
 		private final boolean m_FindSummary;
 		private boolean m_GoalFound = false;
+		private final Set<StateContainer<LETTER,STATE>> m_Visited =
+				new HashSet<StateContainer<LETTER,STATE>>();
 		
+		/**
+		 * Construction of run whose last state is start. The state goal can be
+		 * either a down state of start or null.
+		 * If goal is a down state of start we construct a run whose first state
+		 * is goal and whose last state is start. If goal is null we construct
+		 * an initial run whose last state is start.
+		 */
 		public RunConstructor(StateContainer<LETTER, STATE> start,
 				StateContainer<LETTER, STATE> goal) {
 			m_Start = start;
 			m_Goal = goal;
+			m_Visited.add(m_Start);
 			m_ForbiddenSummaries = Collections.emptySet();
 			m_FindSummary = (m_Goal != null);
 		}
 		
-		public RunConstructor(StateContainer<LETTER, STATE> start,
+		/**
+		 * Run construction where not summary in forbiddenSummaries where we
+		 * may not take any summary in forbiddenSummaries. This is used to 
+		 * avoid endless loop in recursive calls (if there is a run that takes
+		 * a summary twice, then there is a run that takes the summary once).
+		 */
+		private RunConstructor(StateContainer<LETTER, STATE> start,
 				StateContainer<LETTER, STATE> goal,
 				Set<IncomingReturnTransition<LETTER, STATE>> forbiddenSummaries) {
 			m_Start = start;
 			m_Goal = goal;
+			m_Visited.add(m_Start);
 			m_ForbiddenSummaries = forbiddenSummaries;
 			m_FindSummary = (m_Goal != null);
 		}
 		
 
-		Object findPredecessor(StateContainer<LETTER,STATE> current) {
+		/**
+		 * Find suitable predecessor in run construction. Returns incoming
+		 * transition from the state with the lowest serial number (that has
+		 * not been visited before).
+		 */
+		private Object findPredecessor(StateContainer<LETTER,STATE> current) {
 			Object result = null;
 			int lowestPredecessorSerialNumber = Integer.MAX_VALUE;
 			int lowestCorrespondingLinPredSerialNumber = Integer.MAX_VALUE;
 			for (IncomingInternalTransition<LETTER, STATE> inTrans : internalPredecessors(current.getState())) {
 				StateContainer<LETTER,STATE> predSc = m_States.get(inTrans.getPred());
+				if (m_Visited.contains(predSc)) {
+					continue;
+				}
 				if (!m_FindSummary && isInitial(inTrans.getPred())) {
 					m_GoalFound = true;
 					return inTrans;
@@ -2390,7 +2420,7 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 				int predSerialNumber = predSc.getSerialNumber();
 				if (predSerialNumber < lowestPredecessorSerialNumber) {
 					lowestPredecessorSerialNumber = predSerialNumber;
-					lowestCorrespondingLinPredSerialNumber = Integer.MAX_VALUE;
+					lowestCorrespondingLinPredSerialNumber = Integer.MIN_VALUE;
 					result = inTrans;
 				}
 			}
@@ -2408,6 +2438,9 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 						continue;
 					}
 				} else {
+					if (m_Visited.contains(predSc)) {
+						continue;
+					}
 					if (isInitial(inTrans.getPred())) {
 						m_GoalFound = true;
 						return inTrans;
@@ -2415,7 +2448,7 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 					int predSerialNumber = predSc.getSerialNumber();
 					if (predSerialNumber < lowestPredecessorSerialNumber) {
 						lowestPredecessorSerialNumber = predSerialNumber;
-						lowestCorrespondingLinPredSerialNumber = Integer.MAX_VALUE;
+						lowestCorrespondingLinPredSerialNumber = Integer.MIN_VALUE;
 						result = inTrans;
 					}
 				}
@@ -2426,6 +2459,9 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 					continue;
 				}
 				StateContainer<LETTER,STATE> predSc = m_States.get(inTrans.getHierPred());
+				if (m_Visited.contains(predSc)) {
+					continue;
+				}
 				if (!m_FindSummary && isInitial(inTrans.getHierPred())) {
 					m_GoalFound = true;
 					return inTrans;
@@ -2451,6 +2487,11 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 		}
 		
 		
+		
+		/**
+		 * Returns run whose first state is m_Goal and whose last state is 
+		 * m_Start.
+		 */
 		NestedRun<LETTER, STATE> constructRun() {
 			NestedRun<LETTER,STATE> result = new NestedRun<LETTER,STATE>(m_Start.getState());
 			if (!m_FindSummary && isInitial(m_Start.getState())) {
@@ -2462,13 +2503,20 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 				Object transitionToLowest = findPredecessor(current);
 				assert transitionToLowest != null;
 				if (transitionToLowest instanceof IncomingInternalTransition) {
-					IncomingInternalTransition<LETTER, STATE> inTrans = (IncomingInternalTransition) transitionToLowest;
-					newPrefix = new NestedRun(inTrans.getPred(), inTrans.getLetter(), NestedWord.INTERNAL_POSITION ,current.getState());
+					IncomingInternalTransition<LETTER, STATE> inTrans = 
+							(IncomingInternalTransition<LETTER, STATE>) transitionToLowest;
+					newPrefix = new NestedRun<LETTER, STATE>(inTrans.getPred(), 
+							inTrans.getLetter(), NestedWord.INTERNAL_POSITION,
+							current.getState());
 				} else if (transitionToLowest instanceof IncomingCallTransition) {
-					IncomingCallTransition<LETTER, STATE> inTrans = (IncomingCallTransition) transitionToLowest;
-					newPrefix = new NestedRun(inTrans.getPred(), inTrans.getLetter(), NestedWord.PLUS_INFINITY ,current.getState());
+					IncomingCallTransition<LETTER, STATE> inTrans = 
+							(IncomingCallTransition<LETTER, STATE>) transitionToLowest;
+					newPrefix = new NestedRun<LETTER, STATE>(inTrans.getPred(), 
+							inTrans.getLetter(), NestedWord.PLUS_INFINITY, 
+							current.getState());
 				} else if (transitionToLowest instanceof IncomingReturnTransition) {
-					IncomingReturnTransition<LETTER, STATE> inTrans = (IncomingReturnTransition) transitionToLowest;
+					IncomingReturnTransition<LETTER, STATE> inTrans = 
+							(IncomingReturnTransition<LETTER, STATE>) transitionToLowest;
 					Set<IncomingReturnTransition<LETTER, STATE>> forbiddenSummaries = 
 							new HashSet<IncomingReturnTransition<LETTER, STATE>>();
 					forbiddenSummaries.addAll(m_ForbiddenSummaries);
@@ -2493,9 +2541,9 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 					return result;
 				}
 				current = m_States.get(result.getStateAtPosition(0));
+				m_Visited.add(current);
 			}
 		}
-		
 	}
 
 	
@@ -2624,7 +2672,7 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 				return false;
 			return true;
 		}
-		private NestedWordAutomatonReachableStates getOuterType() {
+		private NestedWordAutomatonReachableStates<LETTER, STATE> getOuterType() {
 			return NestedWordAutomatonReachableStates.this;
 		}
 		
