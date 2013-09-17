@@ -13,7 +13,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
+import java.util.SortedMap;
 import java.util.Stack;
+import java.util.TreeMap;
 
 import org.apache.log4j.Logger;
 
@@ -2404,10 +2406,8 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 		 * transition from the state with the lowest serial number (that has
 		 * not been visited before).
 		 */
-		private Object findPredecessor(StateContainer<LETTER,STATE> current) {
-			Object result = null;
-			int lowestPredecessorSerialNumber = Integer.MAX_VALUE;
-			int lowestCorrespondingLinPredSerialNumber = Integer.MAX_VALUE;
+		private Collection<?> findSuitablePredecessors(StateContainer<LETTER,STATE> current) {
+			SortedMap<Integer, Object> number2transition = new TreeMap<Integer, Object>(); 
 			for (IncomingInternalTransition<LETTER, STATE> inTrans : internalPredecessors(current.getState())) {
 				StateContainer<LETTER,STATE> predSc = m_States.get(inTrans.getPred());
 				if (m_Visited.contains(predSc)) {
@@ -2415,44 +2415,35 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 				}
 				if (!m_FindSummary && isInitial(inTrans.getPred())) {
 					m_GoalFound = true;
-					return inTrans;
+					return Collections.singleton(inTrans);
 				}
 				if (m_FindSummary && !predSc.getDownStates().containsKey(m_Goal.getState())) {
 					continue;
 				}
 				int predSerialNumber = predSc.getSerialNumber();
-				if (predSerialNumber < lowestPredecessorSerialNumber) {
-					lowestPredecessorSerialNumber = predSerialNumber;
-					lowestCorrespondingLinPredSerialNumber = Integer.MIN_VALUE;
-					result = inTrans;
-				}
+				number2transition.put(predSerialNumber, predSc);
 			}
 			for (IncomingCallTransition<LETTER, STATE> inTrans : callPredecessors(current.getState())) {
-				if (!m_FindSummary && isInitial(inTrans.getPred())) {
-					m_GoalFound = true;
-					return inTrans;
-				}				
 				StateContainer<LETTER,STATE> predSc = m_States.get(inTrans.getPred());
 				if (m_FindSummary) {
 					if (m_Goal.equals(predSc)) {
 						m_GoalFound = true;
-						return inTrans;
+						return Collections.singleton(inTrans);
 					} else {
 						continue;
 					}
 				} else {
+					if (isInitial(inTrans.getPred())) {
+						m_GoalFound = true;
+						return Collections.singleton(inTrans);
+					}
 					if (m_Visited.contains(predSc)) {
 						continue;
 					}
-					if (isInitial(inTrans.getPred())) {
-						m_GoalFound = true;
-						return inTrans;
-					}
+
 					int predSerialNumber = predSc.getSerialNumber();
-					if (predSerialNumber < lowestPredecessorSerialNumber) {
-						lowestPredecessorSerialNumber = predSerialNumber;
-						lowestCorrespondingLinPredSerialNumber = Integer.MIN_VALUE;
-						result = inTrans;
+					if (!number2transition.containsKey(predSerialNumber)) {
+						number2transition.put(predSerialNumber, predSc);
 					}
 				}
 			}
@@ -2467,25 +2458,46 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 				}
 				if (!m_FindSummary && isInitial(inTrans.getHierPred())) {
 					m_GoalFound = true;
-					return inTrans;
+					return Collections.singleton(inTrans);
 				}
 				if (m_FindSummary && !predSc.getDownStates().containsKey(m_Goal.getState())) {
 					continue;
 				}
-				StateContainer<LETTER, STATE> linPredSc = m_States.get(inTrans.getLinPred());
+				
+				
 				int predSerialNumber = predSc.getSerialNumber();
-				if (predSerialNumber < lowestPredecessorSerialNumber) {
-					lowestPredecessorSerialNumber = predSerialNumber;
-					lowestCorrespondingLinPredSerialNumber = linPredSc.getSerialNumber();
-					result = inTrans;
-				} else if (predSerialNumber == lowestPredecessorSerialNumber) {
-					if (linPredSc.getSerialNumber() < lowestCorrespondingLinPredSerialNumber) {
-						lowestCorrespondingLinPredSerialNumber = m_States.get(inTrans.getLinPred()).getSerialNumber();
-						result = inTrans;
+				Object previousEntry = number2transition.get(predSerialNumber);
+				if (previousEntry instanceof IncomingInternalTransition) {
+					// do nothing
+				} else if (previousEntry instanceof IncomingCallTransition) {
+					// do nothing
+				} else {
+					assert previousEntry == null || (previousEntry instanceof SortedMap);
+					SortedMap<Integer, IncomingReturnTransition<LETTER, STATE>> linPredSerial2inTrans;
+					if (previousEntry == null) {
+						linPredSerial2inTrans = new TreeMap<Integer, IncomingReturnTransition<LETTER,STATE>>();
+					} else {
+						linPredSerial2inTrans = (SortedMap<Integer, IncomingReturnTransition<LETTER, STATE>>) previousEntry;
+					}
+					StateContainer<LETTER, STATE> linPredSc = m_States.get(inTrans.getLinPred());
+					int linPredSerial = linPredSc.getSerialNumber();
+					linPredSerial2inTrans.put(linPredSerial, inTrans);
+				}
+			}
+			ArrayList<Object> result = new ArrayList<Object>();
+			for (Object value  : number2transition.values()) {
+				if (value instanceof IncomingInternalTransition || value  instanceof IncomingCallTransition) {
+					result.add(value);
+				} else {
+					assert value instanceof SortedMap;
+					SortedMap<Integer, IncomingReturnTransition<LETTER, STATE>> linPredSerial2inTrans = 
+							(SortedMap<Integer, IncomingReturnTransition<LETTER, STATE>>) value;
+					for (IncomingReturnTransition<LETTER, STATE> ret : linPredSerial2inTrans.values()) {
+						result.add(ret);
 					}
 				}
 			}
-			assert result != null;
+			assert !result.isEmpty();
 			return result;
 		}
 		
@@ -2503,7 +2515,8 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 			StateContainer<LETTER, STATE> current = m_Start;
 			while (true) {
 				NestedRun<LETTER,STATE> newPrefix;
-				Object transitionToLowest = findPredecessor(current);
+				Collection<?> predecessors = findSuitablePredecessors(current);
+				Object transitionToLowest = predecessors.iterator().next();
 				assert transitionToLowest != null;
 				if (transitionToLowest instanceof IncomingInternalTransition) {
 					IncomingInternalTransition<LETTER, STATE> inTrans = 
