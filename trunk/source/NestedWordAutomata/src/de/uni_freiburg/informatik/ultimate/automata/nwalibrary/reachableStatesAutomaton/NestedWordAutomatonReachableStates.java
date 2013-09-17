@@ -2421,7 +2421,7 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 					continue;
 				}
 				int predSerialNumber = predSc.getSerialNumber();
-				number2transition.put(predSerialNumber, predSc);
+				number2transition.put(predSerialNumber, inTrans);
 			}
 			for (IncomingCallTransition<LETTER, STATE> inTrans : callPredecessors(current.getState())) {
 				StateContainer<LETTER,STATE> predSc = m_States.get(inTrans.getPred());
@@ -2443,7 +2443,7 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 
 					int predSerialNumber = predSc.getSerialNumber();
 					if (!number2transition.containsKey(predSerialNumber)) {
-						number2transition.put(predSerialNumber, predSc);
+						number2transition.put(predSerialNumber, inTrans);
 					}
 				}
 			}
@@ -2476,6 +2476,7 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 					SortedMap<Integer, IncomingReturnTransition<LETTER, STATE>> linPredSerial2inTrans;
 					if (previousEntry == null) {
 						linPredSerial2inTrans = new TreeMap<Integer, IncomingReturnTransition<LETTER,STATE>>();
+						number2transition.put(predSerialNumber, linPredSerial2inTrans);
 					} else {
 						linPredSerial2inTrans = (SortedMap<Integer, IncomingReturnTransition<LETTER, STATE>>) previousEntry;
 					}
@@ -2497,7 +2498,7 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 					}
 				}
 			}
-			assert !result.isEmpty();
+			assert !result.isEmpty() : "implement depth first search!";
 			return result;
 		}
 		
