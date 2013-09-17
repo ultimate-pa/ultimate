@@ -2379,7 +2379,6 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 				StateContainer<LETTER, STATE> goal) {
 			m_Start = start;
 			m_Goal = goal;
-			m_Visited.add(m_Start);
 			m_ForbiddenSummaries = Collections.emptySet();
 			m_FindSummary = (m_Goal != null);
 		}
@@ -2395,7 +2394,6 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 				Set<IncomingReturnTransition<LETTER, STATE>> forbiddenSummaries) {
 			m_Start = start;
 			m_Goal = goal;
-			m_Visited.add(m_Start);
 			m_ForbiddenSummaries = forbiddenSummaries;
 			m_FindSummary = (m_Goal != null);
 		}
@@ -2498,7 +2496,6 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 					}
 				}
 			}
-			assert !result.isEmpty() : "implement depth first search!";
 			return result;
 		}
 		
@@ -2509,16 +2506,34 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 		 * m_Start.
 		 */
 		NestedRun<LETTER, STATE> constructRun() {
-			NestedRun<LETTER,STATE> result = new NestedRun<LETTER,STATE>(m_Start.getState());
 			if (!m_FindSummary && isInitial(m_Start.getState())) {
-				return result;
+				return new NestedRun<LETTER, STATE>(m_Start.getState());
 			}
 			StateContainer<LETTER, STATE> current = m_Start;
+			Stack<Iterator<?>> predStack = new Stack<Iterator<?>>();
+			Stack<NestedRun<LETTER, STATE>> takenStack = new Stack<NestedRun<LETTER, STATE>>();
+			
+			
 			while (true) {
-				NestedRun<LETTER,STATE> newPrefix;
+				current = getCurrent(takenStack);
+				assert predStack.size() == takenStack.size();
 				Collection<?> predecessors = findSuitablePredecessors(current);
-				Object transitionToLowest = predecessors.iterator().next();
+				predStack.push(predecessors.iterator());
+				while (!predStack.peek().hasNext()) {
+					predStack.pop();
+					NestedRun<LETTER, STATE> wrongDescision = takenStack.pop();
+					StateContainer<LETTER, STATE> sc = m_States.get(wrongDescision.getStateAtPosition(0));
+					assert m_Visited.contains(sc);
+					m_Visited.remove(sc);
+					current = getCurrent(takenStack);
+				}
+				
+				assert !m_Visited.contains(current);
+				m_Visited.add(current);
+				
+				Object transitionToLowest = predStack.peek().next();
 				assert transitionToLowest != null;
+				NestedRun<LETTER,STATE> newPrefix;
 				if (transitionToLowest instanceof IncomingInternalTransition) {
 					IncomingInternalTransition<LETTER, STATE> inTrans = 
 							(IncomingInternalTransition<LETTER, STATE>) transitionToLowest;
@@ -2553,13 +2568,35 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 				} else {
 					throw new AssertionError();
 				}
-				result = newPrefix.concatenate(result);
+				assert current.getState() == newPrefix.getStateAtPosition(newPrefix.getLength()-1);
+				takenStack.push(newPrefix);
 				if (m_GoalFound) {
-					return result;
+					return constructResult(takenStack);
 				}
-				current = m_States.get(result.getStateAtPosition(0));
-				m_Visited.add(current);
 			}
+		}
+
+		private StateContainer<LETTER, STATE> getCurrent(
+				Stack<NestedRun<LETTER, STATE>> takenStack) {
+			StateContainer<LETTER, STATE> current;
+			if (takenStack.isEmpty()) {
+				current = m_Start;
+			} else {
+				NestedRun<LETTER,STATE> currentPrefix = takenStack.peek();
+				current = m_States.get(currentPrefix.getStateAtPosition(0));
+			}
+			return current;
+		}
+
+			
+		private NestedRun<LETTER, STATE> constructResult(Stack<NestedRun<LETTER, STATE>> stack) {
+			Iterator<NestedRun<LETTER, STATE>> it = stack.iterator();
+			NestedRun<LETTER, STATE> result = it.next();
+			while(it.hasNext()) {
+				result = it.next().concatenate(result);
+			}
+			assert m_Start.getState() == result.getStateAtPosition(result.getLength()-1);
+			return result;
 		}
 	}
 
