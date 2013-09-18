@@ -158,7 +158,7 @@ public class NestedRun<LETTER,STATE> implements IRun<LETTER,STATE> {
 				sb.append(m_NestedWord.getSymbolAt(i)+"< ");
 			}
 			else if (m_NestedWord.isReturnPosition(i)) {
-				sb.append("> " + m_NestedWord.getSymbolAt(i));
+				sb.append(">" + m_NestedWord.getSymbolAt(i) + " ");
 			}
 		}
 		sb.append(getStateAtPosition(m_StateSequence.size()-1) + " ");
