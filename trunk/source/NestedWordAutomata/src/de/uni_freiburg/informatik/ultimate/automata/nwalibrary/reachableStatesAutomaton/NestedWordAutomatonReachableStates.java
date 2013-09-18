@@ -2515,7 +2515,8 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 			
 			
 			while (true) {
-				current = getCurrent(takenStack);
+				assert !m_Visited.contains(current);
+				m_Visited.add(current);
 				assert predStack.size() == takenStack.size();
 				Collection<?> predecessors = findSuitablePredecessors(current);
 				predStack.push(predecessors.iterator());
@@ -2525,11 +2526,13 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 					StateContainer<LETTER, STATE> sc = m_States.get(wrongDescision.getStateAtPosition(0));
 					assert m_Visited.contains(sc);
 					m_Visited.remove(sc);
-					current = getCurrent(takenStack);
+					if (takenStack.isEmpty()) {
+						current = m_Start;
+					} else {
+						NestedRun<LETTER,STATE> currentPrefix = takenStack.peek();
+						current = m_States.get(currentPrefix.getStateAtPosition(0));
+					}
 				}
-				
-				assert !m_Visited.contains(current);
-				m_Visited.add(current);
 				
 				Object transitionToLowest = predStack.peek().next();
 				assert transitionToLowest != null;
@@ -2573,6 +2576,7 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 				if (m_GoalFound) {
 					return constructResult(takenStack);
 				}
+				current = m_States.get(newPrefix.getStateAtPosition(0));
 			}
 		}
 
