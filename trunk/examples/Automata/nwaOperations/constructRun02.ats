@@ -3,8 +3,8 @@
 // Here: summary (q1 sEx s1) and summary (q1 q4 q3)
 // we use the triple (hierPred, linPred, succ) to denote a summary
 //
-// We assume that we want to contruct the following run 
-// ...
+// We assume that we want to construct the following run 
+// q0 a1 q1 c1< sEn a2 q1 c1< sEn a2 q1 c1< sEn a3 sEx >r s1 >r1 sEx >r q3 a4 qFin 
 //
 // To ensure that this run is found, we need that s1 is an initial
 // state. In algorithm the run is reconstucted in a backward depth first
