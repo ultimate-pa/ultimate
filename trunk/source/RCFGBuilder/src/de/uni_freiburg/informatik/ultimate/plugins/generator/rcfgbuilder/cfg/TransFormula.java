@@ -365,6 +365,8 @@ public class TransFormula implements Serializable {
 	 */
 	public static TransFormula sequentialComposition(Boogie2SMT boogie2smt, 
 			boolean simplify, TransFormula... transFormula) {
+		s_Logger.debug("sequential composition with" + (simplify ? "" : "out") +
+				" formula simplification");
 		Script script = boogie2smt.getScript();
 		Map<BoogieVar, TermVariable> inVars = new HashMap<BoogieVar, TermVariable>();
 		Map<BoogieVar, TermVariable> outVars = new HashMap<BoogieVar, TermVariable>();
@@ -745,6 +747,7 @@ public class TransFormula implements Serializable {
 	public static TransFormula parallelComposition(int serialNumber, 
 			Boogie2SMT boogie2smt, 
 			TermVariable[] branchIndicators, TransFormula... transFormulas) {
+		s_Logger.debug("parallel composition");
 		Script script = boogie2smt.getScript();
 		boolean useBranchEncoders;
 		if (branchIndicators == null) {
@@ -1146,7 +1149,8 @@ public class TransFormula implements Serializable {
 			Boogie2SMT boogie2smt, boolean simplify, TransFormula[] beforeCall,
 			TransFormula callTf, TransFormula oldVarsAssignment,
 			TransFormula bfterCall) {
-
+		s_Logger.debug("sequential composition (pending call) with" + 
+				(simplify ? "" : "out") + " formula simplification");
 		TransFormula callAndBeforeTF;
 		{
 			List<TransFormula> callAndBeforeList =  new ArrayList<TransFormula>(Arrays.asList(beforeCall));
@@ -1227,6 +1231,8 @@ public class TransFormula implements Serializable {
 			Boogie2SMT boogie2smt, boolean simplify, TransFormula callTf,
 			TransFormula oldVarsAssignment, TransFormula procedureTf,
 			TransFormula returnTf) {
+		s_Logger.debug("sequential composition (call/return) with" + 
+			(simplify ? "" : "out") + " formula simplification");
 		TransFormula result = sequentialComposition(boogie2smt, simplify, callTf,
 				oldVarsAssignment, procedureTf, returnTf);
 		{
