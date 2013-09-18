@@ -2359,10 +2359,7 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 	class RunConstructor {
 		private final StateContainer<LETTER,STATE> m_Start;
 		private final StateContainer<LETTER,STATE> m_Goal;
-		/**
-		 * TODO: Do not store set of transitions, but set of state pairs.
-		 */
-		private final Set<IncomingReturnTransition<LETTER, STATE>> m_ForbiddenSummaries;
+		private final Set<Summary<STATE>> m_ForbiddenSummaries;
 		private final boolean m_FindSummary;
 		private boolean m_GoalFound = false;
 		private final Set<StateContainer<LETTER,STATE>> m_Visited =
@@ -2391,7 +2388,7 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 		 */
 		private RunConstructor(StateContainer<LETTER, STATE> start,
 				StateContainer<LETTER, STATE> goal,
-				Set<IncomingReturnTransition<LETTER, STATE>> forbiddenSummaries) {
+				Set<Summary<STATE>> forbiddenSummaries) {
 			m_Start = start;
 			m_Goal = goal;
 			m_ForbiddenSummaries = forbiddenSummaries;
@@ -2447,7 +2444,9 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 			}
 			
 			for (IncomingReturnTransition<LETTER, STATE> inTrans : returnPredecessors(current.getState())) {
-				if (m_ForbiddenSummaries.contains(inTrans)) {
+				Summary<STATE> summary = new Summary<STATE>(inTrans.getHierPred(), 
+						inTrans.getLinPred(), current.getState());
+				if (m_ForbiddenSummaries.contains(summary)) {
 					continue;
 				}
 				StateContainer<LETTER,STATE> predSc = m_States.get(inTrans.getHierPred());
@@ -2513,7 +2512,6 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 			Stack<Iterator<?>> predStack = new Stack<Iterator<?>>();
 			Stack<NestedRun<LETTER, STATE>> takenStack = new Stack<NestedRun<LETTER, STATE>>();
 			
-			
 			while (true) {
 				assert !m_Visited.contains(current);
 				m_Visited.add(current);
@@ -2552,22 +2550,23 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 				} else if (transitionToLowest instanceof IncomingReturnTransition) {
 					IncomingReturnTransition<LETTER, STATE> inTrans = 
 							(IncomingReturnTransition<LETTER, STATE>) transitionToLowest;
-					Set<IncomingReturnTransition<LETTER, STATE>> forbiddenSummaries = 
-							new HashSet<IncomingReturnTransition<LETTER, STATE>>();
+					Set<Summary<STATE>> forbiddenSummaries = new HashSet<Summary<STATE>>();
 					forbiddenSummaries.addAll(m_ForbiddenSummaries);
-					assert (!forbiddenSummaries.contains(inTrans));
-					forbiddenSummaries.add(inTrans);
+					Summary<STATE> summary = new Summary(inTrans.getHierPred(), 
+							inTrans.getLinPred(), current.getState());
+					assert (!forbiddenSummaries.contains(summary));
+					forbiddenSummaries.add(summary);
 					RunConstructor runConstuctor = new RunConstructor(
 							m_States.get(inTrans.getLinPred()), 
 							m_States.get(inTrans.getHierPred()), 
 							forbiddenSummaries);
-					NestedRun<LETTER, STATE> summary = runConstuctor.constructRun();
+					NestedRun<LETTER, STATE> summaryRun = runConstuctor.constructRun();
 					NestedRun<LETTER, STATE> returnSuffix = 
 							new NestedRun<LETTER, STATE>(inTrans.getLinPred(), 
 									inTrans.getLetter(), 
 									NestedWord.MINUS_INFINITY, current.getState());
-					summary = summary.concatenate(returnSuffix);
-					newPrefix = summary;
+					summaryRun = summaryRun.concatenate(returnSuffix);
+					newPrefix = summaryRun;
 				} else {
 					throw new AssertionError();
 				}
@@ -2591,76 +2590,7 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 		}
 		
 		
-		private class Summary {
-			private final STATE m_HierPred;
-			private final STATE m_LinPred;
-			private final STATE m_Succ;
-			public Summary(STATE hierPred, STATE linPred, STATE succ) {
-				super();
-				m_HierPred = hierPred;
-				m_LinPred = linPred;
-				m_Succ = succ;
-			}
-			public STATE getHierPred() {
-				return m_HierPred;
-			}
-			public STATE getLinPred() {
-				return m_LinPred;
-			}
-			public STATE getSucc() {
-				return m_Succ;
-			}
-			@Override
-			public int hashCode() {
-				final int prime = 31;
-				int result = 1;
-				result = prime * result + getOuterType().hashCode();
-				result = prime * result
-						+ ((m_HierPred == null) ? 0 : m_HierPred.hashCode());
-				result = prime * result
-						+ ((m_LinPred == null) ? 0 : m_LinPred.hashCode());
-				result = prime * result
-						+ ((m_Succ == null) ? 0 : m_Succ.hashCode());
-				return result;
-			}
-			@Override
-			public boolean equals(Object obj) {
-				if (this == obj)
-					return true;
-				if (obj == null)
-					return false;
-				if (getClass() != obj.getClass())
-					return false;
-				Summary other = (Summary) obj;
-				if (!getOuterType().equals(other.getOuterType()))
-					return false;
-				if (m_HierPred == null) {
-					if (other.m_HierPred != null)
-						return false;
-				} else if (!m_HierPred.equals(other.m_HierPred))
-					return false;
-				if (m_LinPred == null) {
-					if (other.m_LinPred != null)
-						return false;
-				} else if (!m_LinPred.equals(other.m_LinPred))
-					return false;
-				if (m_Succ == null) {
-					if (other.m_Succ != null)
-						return false;
-				} else if (!m_Succ.equals(other.m_Succ))
-					return false;
-				return true;
-			}
-			private RunConstructor getOuterType() {
-				return RunConstructor.this;
-			}
-			@Override
-			public String toString() {
-				return "(" + m_HierPred + ", " + m_LinPred + ", " + m_Succ + ")";
-			}
-			
-			
-		}
+
 		
 	}
 
@@ -2668,7 +2598,71 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 
 	
 	
-
+	private static class Summary<STATE> {
+		private final STATE m_HierPred;
+		private final STATE m_LinPred;
+		private final STATE m_Succ;
+		public Summary(STATE hierPred, STATE linPred, STATE succ) {
+			super();
+			m_HierPred = hierPred;
+			m_LinPred = linPred;
+			m_Succ = succ;
+		}
+		public STATE getHierPred() {
+			return m_HierPred;
+		}
+		public STATE getLinPred() {
+			return m_LinPred;
+		}
+		public STATE getSucc() {
+			return m_Succ;
+		}
+		
+		@Override
+		public int hashCode() {
+			final int prime = 31;
+			int result = 1;
+			result = prime * result
+					+ ((m_HierPred == null) ? 0 : m_HierPred.hashCode());
+			result = prime * result
+					+ ((m_LinPred == null) ? 0 : m_LinPred.hashCode());
+			result = prime * result
+					+ ((m_Succ == null) ? 0 : m_Succ.hashCode());
+			return result;
+		}
+		@Override
+		public boolean equals(Object obj) {
+			if (this == obj)
+				return true;
+			if (obj == null)
+				return false;
+			if (getClass() != obj.getClass())
+				return false;
+			Summary other = (Summary) obj;
+			if (m_HierPred == null) {
+				if (other.m_HierPred != null)
+					return false;
+			} else if (!m_HierPred.equals(other.m_HierPred))
+				return false;
+			if (m_LinPred == null) {
+				if (other.m_LinPred != null)
+					return false;
+			} else if (!m_LinPred.equals(other.m_LinPred))
+				return false;
+			if (m_Succ == null) {
+				if (other.m_Succ != null)
+					return false;
+			} else if (!m_Succ.equals(other.m_Succ))
+				return false;
+			return true;
+		}
+		@Override
+		public String toString() {
+			return "(" + m_HierPred + ", " + m_LinPred + ", " + m_Succ + ")";
+		}
+		
+		
+	}
 
 	
 
