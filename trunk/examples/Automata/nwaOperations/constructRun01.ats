@@ -1,0 +1,44 @@
+// Example where on run reconstruction a two summaries with the same call 
+// predecessor and the same return successor are used
+// here: summary (q1 sEx q3) and summary (q1 q4 q3)
+// we use the triple (hierPred, linPred, succ) to denote a summary
+//
+// We assume that we want to contruct the following run 
+// q0 a1 q1 c1< q2 a2 q1 c1< sEn a3 sEx >r1 q3 a3 q4 >r2 q3 a4 qFin
+//
+// To ensure that this run is found, we need that q4 is an initial
+// state. In algorithm the run is reconstucted in a backward depth first
+// search where the node with the lowest serial number is explored first.
+// By making q4 initial we ensure that q4 has a lower serial number than
+// sEx.
+// 
+// Author: heizmann@informatik.uni-freiburg.de
+// Date: 18.9.2013
+
+isEmpty(nwa);
+NestedWordAutomaton result = removeUnreachable(nwa);
+//print(numberOfStates(result));
+
+NestedWordAutomaton nwa = (
+	callAlphabet = {c1 c2 },
+	internalAlphabet = {a1 a2 a3 a4 a5 },
+	returnAlphabet = {r1 r2 },
+	states = {q0 q1 q2 sEn sEx q3 q4 qFin },
+	initialStates = {q0 q4 },
+	finalStates = {qFin },
+	callTransitions = {
+		 (q1 c1 q2)
+		 (q1 c1 sEn)
+	},
+	internalTransitions = {
+		 (q0 a1 q1)
+		 (q2 a2 q1)
+		 (sEn a3 sEx)
+		 (q3 a3 q4)
+		 (q3 a4 qFin)
+	},
+	returnTransitions = {
+		 (sEx q1 r1 q3)
+		 (q4 q1 r2 q3)
+	}
+);

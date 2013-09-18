@@ -1,0 +1,31 @@
+// Reduced version of removeDeadEnds-Bug02.ats
+// Date: September 2013
+// Author: heizmann@informatik.uni-freiburg.de
+
+
+NestedWordAutomaton result = removeUnreachable(nwa);
+
+
+NestedWordAutomaton nwa = (
+	callAlphabet = {"callT" "callS" },
+	internalAlphabet = {"a1" "a2" "a3" "a4" },
+	returnAlphabet = {"retT" "retS" },
+	states = {"sEntry" "s2" "qEx1" "s0" "sEx" "rAcc" "t0" "sEntry2" "q10" "q5" },
+	initialStates = {"t0" "q5" },
+	finalStates = {"rAcc" },
+	callTransitions = {
+		 ("s0" "callS" "sEntry")
+		 ("t0" "callT" "sEntry2")
+	},
+	internalTransitions = {
+		 ("sEntry" "a1" "s2")
+		 ("s2" "a2" "s0")
+		 ("s2" "a3" "sEx")
+		 ("sEntry2" "a1" "s2")
+		 ("q10" "a4" "qEx1")
+	},
+	returnTransitions = {
+		 ("qEx1" "t0" "retT" "rAcc")
+		 ("sEx" "s0" "retS" "q10")
+	}
+);
