@@ -2580,19 +2580,6 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 			}
 		}
 
-		private StateContainer<LETTER, STATE> getCurrent(
-				Stack<NestedRun<LETTER, STATE>> takenStack) {
-			StateContainer<LETTER, STATE> current;
-			if (takenStack.isEmpty()) {
-				current = m_Start;
-			} else {
-				NestedRun<LETTER,STATE> currentPrefix = takenStack.peek();
-				current = m_States.get(currentPrefix.getStateAtPosition(0));
-			}
-			return current;
-		}
-
-			
 		private NestedRun<LETTER, STATE> constructResult(Stack<NestedRun<LETTER, STATE>> stack) {
 			Iterator<NestedRun<LETTER, STATE>> it = stack.iterator();
 			NestedRun<LETTER, STATE> result = it.next();
@@ -2602,6 +2589,79 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 			assert m_Start.getState() == result.getStateAtPosition(result.getLength()-1);
 			return result;
 		}
+		
+		
+		private class Summary {
+			private final STATE m_HierPred;
+			private final STATE m_LinPred;
+			private final STATE m_Succ;
+			public Summary(STATE hierPred, STATE linPred, STATE succ) {
+				super();
+				m_HierPred = hierPred;
+				m_LinPred = linPred;
+				m_Succ = succ;
+			}
+			public STATE getHierPred() {
+				return m_HierPred;
+			}
+			public STATE getLinPred() {
+				return m_LinPred;
+			}
+			public STATE getSucc() {
+				return m_Succ;
+			}
+			@Override
+			public int hashCode() {
+				final int prime = 31;
+				int result = 1;
+				result = prime * result + getOuterType().hashCode();
+				result = prime * result
+						+ ((m_HierPred == null) ? 0 : m_HierPred.hashCode());
+				result = prime * result
+						+ ((m_LinPred == null) ? 0 : m_LinPred.hashCode());
+				result = prime * result
+						+ ((m_Succ == null) ? 0 : m_Succ.hashCode());
+				return result;
+			}
+			@Override
+			public boolean equals(Object obj) {
+				if (this == obj)
+					return true;
+				if (obj == null)
+					return false;
+				if (getClass() != obj.getClass())
+					return false;
+				Summary other = (Summary) obj;
+				if (!getOuterType().equals(other.getOuterType()))
+					return false;
+				if (m_HierPred == null) {
+					if (other.m_HierPred != null)
+						return false;
+				} else if (!m_HierPred.equals(other.m_HierPred))
+					return false;
+				if (m_LinPred == null) {
+					if (other.m_LinPred != null)
+						return false;
+				} else if (!m_LinPred.equals(other.m_LinPred))
+					return false;
+				if (m_Succ == null) {
+					if (other.m_Succ != null)
+						return false;
+				} else if (!m_Succ.equals(other.m_Succ))
+					return false;
+				return true;
+			}
+			private RunConstructor getOuterType() {
+				return RunConstructor.this;
+			}
+			@Override
+			public String toString() {
+				return "(" + m_HierPred + ", " + m_LinPred + ", " + m_Succ + ")";
+			}
+			
+			
+		}
+		
 	}
 
 	
