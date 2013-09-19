@@ -479,10 +479,6 @@ public class TransFormula implements Serializable {
 
 //		assert allVarsContainsFreeVars(allVars, formula);
 		assert freeVarsSubsetInOutAuxBranch(formula, inVars, outVars, auxVars, newBranchEncoders);
-		//TODO: this is only for testing
-		Term dnf = (new Dnf(script)).transform(formula);
-		assert (Util.checkSat(script, script.term("distinct", dnf, formula)) == LBool.UNSAT);
-		//TODO: this is only for testing
 		return result;
 	 
  }
