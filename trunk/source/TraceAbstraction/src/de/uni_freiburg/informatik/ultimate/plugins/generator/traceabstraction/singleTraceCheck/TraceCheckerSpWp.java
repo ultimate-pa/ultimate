@@ -346,14 +346,18 @@ public class TraceCheckerSpWp extends TraceChecker {
 		assert m_InterpolantsSp != null : "Interpolants SP_i have not been computed!";
 		m_InterpolantsFp = new IPredicate[m_InterpolantsSp.length];
 		for (int i = 0; i < m_InterpolantsSp.length; i++) {
-			m_InterpolantsFp[i] = m_SmtManager.computeForwardRelevantPredicate(m_InterpolantsSp[i], rvar, i);
+			IPredicate p = m_SmtManager.computeForwardRelevantPredicate(m_InterpolantsSp[i], rvar, i);
+			m_InterpolantsFp[i] = m_PredicateUnifier.getOrConstructPredicate(p.getFormula(),
+					p.getVars(), p.getProcedures());
 		}
 	}
 	private void computeBackwardRelevantPredicates(RelevantVariables rvar) {
 		assert m_InterpolantsWp != null : "Interpolants WP_i have not been computed!";
 		m_InterpolantsBp = new IPredicate[m_InterpolantsWp.length];
 		for (int i = 0; i < m_InterpolantsWp.length; i++) {
-			m_InterpolantsBp[i] = m_SmtManager.computeBackwardRelevantPredicate(m_InterpolantsWp[i], rvar, i);
+			IPredicate p = m_SmtManager.computeBackwardRelevantPredicate(m_InterpolantsWp[i], rvar, i);
+			m_InterpolantsBp[i]  = m_PredicateUnifier.getOrConstructPredicate(p.getFormula(),
+					p.getVars(), p.getProcedures());
 		}
 	}
 	
