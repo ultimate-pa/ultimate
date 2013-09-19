@@ -1,9 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt;
 
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -34,13 +31,13 @@ public class ElimStore {
 	private Term m_WriteIndex;
 	private Term m_Data;
 	private Term m_NewArray;
-	public Term elim(TermVariable tv, Term term) {
-		assert tv.getSort().isArraySort();
+	public Term elim(TermVariable quantifArrTv, Term term) {
+		assert quantifArrTv.getSort().isArraySort();
 		Term[] conjuncts = DestructiveEqualityResolution.getConjuncts(term);
 		HashSet<Term> others = new HashSet<Term>();
 		for (Term conjunct : conjuncts) {
 			if (m_NewArray == null) {
-				ArrayUpdate au = ArrayUpdate.getArrayUpdate(conjunct, tv);
+				ArrayUpdate au = ArrayUpdate.getArrayUpdate(conjunct, quantifArrTv);
 				if (au != null) {
 					m_WriteIndex = au.getIndex();
 					m_NewArray = au.getNewArray();
@@ -50,19 +47,15 @@ public class ElimStore {
 			}
 			others.add(conjunct);
 		}
-		Term othersT = Util.and(m_Script, others.toArray(new Term[0])); 
-		Set<ApplicationTerm> selectTerms = (new ApplicationTermFinder("select")).findMatchingSubterms(term);
-		Map<Term,ApplicationTerm> arrayReads = new HashMap<Term,ApplicationTerm>();
-		for (ApplicationTerm selectTerm : selectTerms) {
-			if (selectTerm.getParameters()[0].equals(tv)) {
-				Term index = selectTerm.getParameters()[1];
-				assert !arrayReads.containsKey(index) : "implement this";
-				arrayReads.put(index, selectTerm);
-			}
-		}
+		Term othersT = Util.and(m_Script, others.toArray(new Term[0]));
+		Set<ApplicationTerm> selectTerms = 
+				(new ApplicationTermFinder("select")).findMatchingSubterms(term);
+		Map<Term, ApplicationTerm> arrayReads =
+				getArrayReads(quantifArrTv,	selectTerms);
 		
 		if (m_NewArray == null) {
 			// no store
+			// replace array reads by equal terms
 			Map<Term, Term> substitutionMapping = new HashMap<Term, Term>();
 			for (Term select : arrayReads.values()) {
 				EqualityInformation eqInfo = DestructiveEqualityResolution.getEqinfo(m_Script, select, others.toArray(new Term[0]), QuantifiedFormula.EXISTS);
@@ -73,7 +66,7 @@ public class ElimStore {
 				}
 			}
 			Term result = (new SafeSubstitution(m_Script, substitutionMapping)).transform(othersT);
-			if (Arrays.asList(result.getFreeVars()).contains(tv)) {
+			if (Arrays.asList(result.getFreeVars()).contains(quantifArrTv)) {
 				throw new UnsupportedOperationException("not eliminated");
 			} else {
 				return result;
@@ -86,15 +79,9 @@ public class ElimStore {
 		m_Script.push(1);
 		ScopedHashMap<TermVariable, Term> tv2constant = new ScopedHashMap<TermVariable, Term>();
 		assertTermWithTvs(tv2constant, m_Script, othersT);
-		
-		UnionFind<Term> uf = new UnionFind<Term>();
-		for (Term index : arrayReads.keySet()) {
-			Term eqTerm = getEquivalentTerm(index, uf, tv2constant);
-			uf.makeEquivalenceClass(index);
-			if (eqTerm != null) {
-				uf.union(index, eqTerm);
-			}
-		}
+
+		Set<Term> indices = arrayReads.keySet();
+		UnionFind<Term> uf = partitionEquivalent(tv2constant, indices);
 		Term writeIndexEqClass = getEquivalentTerm(m_WriteIndex, uf, tv2constant);
 		HashSet<Term> distinctIndices = new HashSet<Term>();
 		HashSet<Term> unknownIndices = new HashSet<Term>();
@@ -111,7 +98,7 @@ public class ElimStore {
 				ApplicationTerm oldSelectTerm = arrayReads.get(distTerm);
 				assert oldSelectTerm.getFunction().getName().equals("select");
 				assert oldSelectTerm.getParameters().length == 2;
-				assert oldSelectTerm.getParameters()[0] == tv;
+				assert oldSelectTerm.getParameters()[0] == quantifArrTv;
 				Set<ApplicationTerm> selectTermsInIndex = 
 						(new ApplicationTermFinder("select")).findMatchingSubterms(oldSelectTerm.getParameters()[0]);
 				if (!selectTermsInIndex.isEmpty()) {
@@ -156,7 +143,52 @@ public class ElimStore {
 		result.toString();
 		return result;
 	}
+
+	/**
+	 * Build a partition such term whose equivalence can be proven are in the
+	 * same equivalence class.
+	 * @param tv2constant mapping from TermVariables to constants that is used
+	 * for satisfiable checks.
+	 */
+	private UnionFind<Term> partitionEquivalent(
+			ScopedHashMap<TermVariable, Term> tv2constant, Set<Term> term) {
+		UnionFind<Term> uf = new UnionFind<Term>();
+		for (Term index : term) {
+			uf.makeEquivalenceClass(index);
+			Term eqTerm = getEquivalentTerm(index, uf, tv2constant);
+			if (eqTerm != null) {
+				uf.union(index, eqTerm);
+			}
+		}
+		return uf;
+	}
+
+	/**
+	 * Return all selectTerms that read from the array given by arrayTv.
+	 * @param selectTerms a[i], 
+	 * @return
+	 */
+	private Map<Term, ApplicationTerm> getArrayReads(TermVariable arrayTv,
+			Set<ApplicationTerm> selectTerms) {
+		Map<Term,ApplicationTerm> arrayReads = new HashMap<Term,ApplicationTerm>();
+		for (ApplicationTerm selectTerm : selectTerms) {
+			if (selectTerm.getParameters()[0].equals(arrayTv)) {
+				Term index = selectTerm.getParameters()[1];
+				if (arrayReads.containsKey(index)) {
+					throw new UnsupportedOperationException("several array" +
+							" reads at the same index are not supported at the moment");
+				}
+				arrayReads.put(index, selectTerm);
+			}
+		}
+		return arrayReads;
+	}
 	
+	/**
+	 * Check if the partition uf contains a term that is equivalent to term. 
+	 * @param tv2constant mapping of TermVariables to constants used in
+	 * satisfiability checks (we need closed terms) 
+	 */
 	private Term getEquivalentTerm(Term term, UnionFind<Term> uf, ScopedHashMap<TermVariable, Term> tv2constant) {
 		for (Term representative : uf.getAllRepresentatives()) {
 			assert representative != null;
