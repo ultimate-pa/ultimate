@@ -1816,6 +1816,7 @@ public class SmtManager {
 	 * Compute the strongest postcondition for a predicate and a call statement.
 	 * Call statements must be treated in a special way.
 	 */
+	@Deprecated
 	public IPredicate strongestPostcondition(IPredicate p, Call call, boolean isPendingCall) {
 		
 		return strongestPostcondition(p, call.getTransitionFormula(),

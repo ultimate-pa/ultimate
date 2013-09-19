@@ -38,6 +38,7 @@ public class TraceCheckerSpWp extends TraceChecker {
 	
 	private static boolean m_useUnsatCore = true;
 	private static boolean m_ComputeInterpolantsSp = true;
+	private static boolean m_ComputeInterpolantsFp = true;
 	private static boolean m_ComputeInterpolantsWp = true;
 
 	public TraceCheckerSpWp(IPredicate precondition, IPredicate postcondition,
@@ -331,7 +332,9 @@ public class TraceCheckerSpWp extends TraceChecker {
 		if (m_ComputeInterpolantsSp && m_ComputeInterpolantsWp) {
 			checkSPImpliesWP(m_InterpolantsSp, m_InterpolantsWp);
 		}
-		if (m_ComputeInterpolantsSp) {
+		if (m_ComputeInterpolantsFp) {
+			m_Interpolants = m_InterpolantsFp;
+		} else if (m_ComputeInterpolantsSp) {
 			m_Interpolants = m_InterpolantsSp;
 		} else {
 			assert m_InterpolantsWp != null;
@@ -376,6 +379,7 @@ public class TraceCheckerSpWp extends TraceChecker {
 		return new Word<CodeBlock>(codeBlocks);
 	}
 	
+ 	@Deprecated
 	private void computeInterpolantsWithoutUsageOfUnsatCore(Set<Integer> interpolatedPositions) {
 		if (!(interpolatedPositions instanceof AllIntegers)) {
 			throw new UnsupportedOperationException();
