@@ -568,7 +568,7 @@ public class TraceCheckerSpWp extends TraceChecker {
 				 s_Logger.debug("Trace length: " + trace.length());
 				 s_Logger.debug("Stmt: " + i);
 			 }
-			 assert result == LBool.UNSAT || result == LBool.UNKNOWN;
+			 assert result == LBool.UNSAT || result == LBool.UNKNOWN : "invalid Hoare triple";
 		}
 //		if (trace.length() > 1) {
 //			result = isHoareTriple(interpolants.length, tracePrecondition, 
