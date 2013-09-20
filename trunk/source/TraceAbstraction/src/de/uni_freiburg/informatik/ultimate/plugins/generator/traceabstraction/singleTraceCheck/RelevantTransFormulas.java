@@ -7,8 +7,6 @@ import java.util.Set;
 import java.util.SortedMap;
 
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
-import de.uni_freiburg.informatik.ultimate.logic.Script;
-import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
@@ -58,17 +56,20 @@ public class RelevantTransFormulas extends TraceWithFormulas<TransFormula, IPred
 			Set<CodeBlock> unsat_core,
 			ModifiableGlobalVariableManager modGlobalVarManager,
 			boolean[] localVarAssignmentsAtCallInUnsatCore,
+			boolean[] oldVarAssignmentAtCallInUnsatCore,
 			SmtManager smtManager) {
 		super(nestedTrace, precondition, postcondition, pendingContexts);
 		m_TransFormulas = new TransFormula[nestedTrace.length()];
 		m_GlobalAssignmentTransFormulaAtCall = new HashMap<Integer, TransFormula>();
 		m_OldVarsAssignmentTransFormulasAtCall = new HashMap<Integer, TransFormula>();
 		m_SmtManager = smtManager;
-		generateRelevantTransFormulas(unsat_core, localVarAssignmentsAtCallInUnsatCore, modGlobalVarManager);
+		generateRelevantTransFormulas(unsat_core, localVarAssignmentsAtCallInUnsatCore, 
+				oldVarAssignmentAtCallInUnsatCore, modGlobalVarManager);
 	}
 	
 	private void generateRelevantTransFormulas(Set<CodeBlock> unsat_core, 
 			boolean[] localVarAssignmentsAtCallInUnsatCore,
+			boolean[] oldVarAssignmentAtCallInUnsatCore,
 			ModifiableGlobalVariableManager modGlobalVarManager) {
 		for (int i = 0; i < super.getTrace().length(); i++) {
 			if (unsat_core.contains(super.getTrace().getSymbol(i))) {
@@ -82,6 +83,7 @@ public class RelevantTransFormulas extends TraceWithFormulas<TransFormula, IPred
 					} else {
 						m_TransFormulas[i] = buildTransFormulaForStmtNotInUnsatCore(super.getTrace().getSymbol(i).getTransitionFormula());
 					}
+
 					
 				} else {
 					m_TransFormulas[i] = super.getTrace().getSymbol(i).getTransitionFormula();
@@ -93,11 +95,16 @@ public class RelevantTransFormulas extends TraceWithFormulas<TransFormula, IPred
 					} else {
 						m_TransFormulas[i] = buildTransFormulaForStmtNotInUnsatCore(super.getTrace().getSymbol(i).getTransitionFormula());
 					}
+					if (oldVarAssignmentAtCallInUnsatCore[i]) {
+						m_OldVarsAssignmentTransFormulasAtCall.put(i, modGlobalVarManager.getOldVarsAssignment(((Call)super.getTrace().getSymbol(i)).getCallStatement().getMethodName()));
+					} else {
+						m_OldVarsAssignmentTransFormulasAtCall.put(i, 
+								buildTransFormulaForStmtNotInUnsatCore(
+										modGlobalVarManager.getOldVarsAssignment(((Call)super.getTrace().getSymbol(i)).getCallStatement().getMethodName())));
+					}
 					m_GlobalAssignmentTransFormulaAtCall.put(i, buildTransFormulaForStmtNotInUnsatCore(
 							modGlobalVarManager.getGlobalVarsAssignment(((Call)super.getTrace().getSymbol(i)).getCallStatement().getMethodName())));
-					m_OldVarsAssignmentTransFormulasAtCall.put(i, 
-							buildTransFormulaForStmtNotInUnsatCore(
-									modGlobalVarManager.getOldVarsAssignment(((Call)super.getTrace().getSymbol(i)).getCallStatement().getMethodName())));
+					
 				} else {
 					m_TransFormulas[i] = buildTransFormulaForStmtNotInUnsatCore(super.getTrace().getSymbol(i).getTransitionFormula());
 				}

@@ -1723,7 +1723,7 @@ public class SmtManager {
 		Set<TermVariable> irrelevantVars = computeIrrelevantVariables(relevantVars, p);
 		
 		Term formula = DestructiveEqualityResolution.quantifier(m_Script, quantifier,
-				irrelevantVars.toArray(new TermVariable[irrelevantVars.size()]), p.getFormula(), (Term[][]) null);
+				irrelevantVars.toArray(new TermVariable[0]), p.getFormula(), (Term[][]) null);
 		return constructIPredicate(formula);
 	}
 	
@@ -1740,6 +1740,7 @@ public class SmtManager {
 	 * @param cb
 	 * @return
 	 */
+	@Deprecated
 	public IPredicate strongestPostcondition(IPredicate p, CodeBlock cb) {
 		if (cb instanceof Call) {
 			throw new UnsupportedOperationException("This method is not responsible for Call-Statemtens.");
@@ -1751,6 +1752,10 @@ public class SmtManager {
 		return strongestPostcondition(p, cb.getTransitionFormula());
 	}
 	
+	/**
+	 * Computes the strongest postcondition of the given predicate p and
+	 * the TransFormula tf.
+	 */
 	public IPredicate strongestPostcondition(IPredicate p, TransFormula tf) {
 		// Check if p is false
 		if (p.getFormula() == False()) {
@@ -1820,10 +1825,18 @@ public class SmtManager {
 	public IPredicate strongestPostcondition(IPredicate p, Call call, boolean isPendingCall) {
 		
 		return strongestPostcondition(p, call.getTransitionFormula(),
-				m_ModifiableGlobals.getGlobalVarsAssignment(call.getCallStatement().getMethodName()), isPendingCall);
+				m_ModifiableGlobals.getGlobalVarsAssignment(call.getCallStatement().getMethodName()), 
+				m_ModifiableGlobals.getOldVarsAssignment(call.getCallStatement().getMethodName()),
+				isPendingCall);
 	}
 
-	public IPredicate strongestPostcondition(IPredicate p, TransFormula localVarAssignments, TransFormula globalVarAssignments,
+	/**
+	 * Compute the strongest postcondition for a predicate and a call statement.
+	 * Call statements must be treated in a special way.
+	 */
+	public IPredicate strongestPostcondition(IPredicate p, TransFormula localVarAssignments, 
+			TransFormula globalVarAssignments,
+			TransFormula oldVarAssignments,
 			boolean isPendingCall) {
 
 		// VarsToQuantify contains the local Vars and  the global vars of the calling proc, for a non-pending call.
@@ -1864,7 +1877,6 @@ public class SmtManager {
 		}
 		
 		Term globalVarsInVarsRenamedOutVarsRenamed = new Substitution(substitution, m_Script).transform(globalVarsInvarsRenamed);
-		
 		// Collect the local and the non-modifiable global variables of the calling proc.
 		for (BoogieVar bv : p.getVars()) {
 			// Procedure is null, if it is a global variable
@@ -1944,12 +1956,16 @@ public class SmtManager {
 			return constructIPredicate(result);
 		}
 	}
+	
+	
+	
 	/**
 	 * Compute strongest postcondition for a return statement, where calleePred
 	 * is the predicate that holds in the called procedure before the return 
 	 * statement and callerPred is the predicate that held in the calling 
 	 * procedure before the corresponding call. 
 	 */
+	@Deprecated
 	public IPredicate strongestPostcondition(IPredicate calleePred, 
 											IPredicate callerPred, Return ret) {
 
@@ -2137,6 +2153,7 @@ public class SmtManager {
 	 * Computes the weakest precondition of the given predicate p and the
 	 * CodeBlock cb. 
 	 */
+	@Deprecated
 	public IPredicate weakestPrecondition(IPredicate p, CodeBlock cb) {
 		if (cb instanceof Call) {
 			throw new UnsupportedOperationException("This method is not responsible for Call.");
@@ -2212,11 +2229,13 @@ public class SmtManager {
 	 * and returnerPred is the predicate that held in the returning procedure before the
 	 * corresponding  return.
 	 */
+	@Deprecated
 	public IPredicate weakestPrecondition(IPredicate calleePred, 
 						IPredicate returnerPred, Call call, Return ret,
 						TransFormula globalVarsAssignments,
+						TransFormula oldVarsAssignments,
 						boolean isPendingCall) {
-		return weakestPrecondition(calleePred, call.getTransitionFormula(), globalVarsAssignments,
+		return weakestPrecondition(calleePred, call.getTransitionFormula(), globalVarsAssignments, oldVarsAssignments,
 				isPendingCall);
 	}
 	
@@ -2227,6 +2246,7 @@ public class SmtManager {
 	public IPredicate weakestPrecondition(IPredicate calleePred, 
 			TransFormula call_TF, 
 			TransFormula globalVarsAssignments,
+			TransFormula oldVarsAssignments,
 			boolean isPendingCall) {
 		
 		if (isPendingCall) {
@@ -2285,80 +2305,6 @@ public class SmtManager {
 		} else {
 			throw new UnsupportedOperationException("WP for non-pending Call is not implemented yet!");
 		}
-//		Map<TermVariable, Term> varsToRenameInReturneePred = new HashMap<TermVariable, Term>();
-//		Set<TermVariable> varsToQuantify = new HashSet<TermVariable>();
-//
-//		// 1. Rename invars in Term of Call statement
-//		Map<TermVariable, Term> substitution = new HashMap<TermVariable, Term>();
-//		for (BoogieVar bv : call_TF.getInVars().keySet()) {
-//			if (calleePred.getVars().contains(bv)) {
-//				if (!varsToRenameInReturneePred.containsKey(bv.getTermVariable())) {
-//					varsToRenameInReturneePred.put(bv.getTermVariable(), call_TF.getInVars().get(bv));
-//				}
-//				varsToQuantify.add(call_TF.getInVars().get(bv));
-//			}
-//			substitution.put(call_TF.getInVars().get(bv), bv.getTermVariable());
-//		}
-//		Term call_Term_InVarsRenamed = new Substitution(substitution, m_Script).transform(call_TF.getFormula());
-//		substitution.clear();
-//		//2. Don't rename outvars, because we want to quantify them.
-//		for (BoogieVar bv : call_TF.getOutVars().keySet()) {
-//			varsToRenameInReturneePred.put(bv.getTermVariable(), call_TF.getOutVars().get(bv));
-//			varsToQuantify.add(call_TF.getOutVars().get(bv));
-//		}
-//		// 3. Compute the local variables of the called procedure.
-//		for (BoogieVar bv : returneePred.getVars()) {
-//			if (!returnerPred.getVars().contains(bv)) {
-//				if (!m_GlobalVars.containsKey(bv.getIdentifier())) {
-//					// TODO: Here we have to rename oldvars to fresh vars.
-//					varsToQuantify.add(bv.getTermVariable());
-//				}
-//			}
-//		}
-//		Term retTF_OutVarsRenamed = null;
-//		if (!isPendingCall) {
-//			// 4. Rename the vars in TF of corresponding Return
-//			// 4.1 We want to quantify over the invars of Ret TF
-//			for (BoogieVar bv : returnTF.getInVars().keySet()) {
-//				if (!varsToRenameInReturneePred.containsKey(bv.getTermVariable())) {
-//					varsToRenameInReturneePred.put(bv.getTermVariable(), returnTF.getInVars().get(bv));
-//				}
-//				varsToQuantify.add(returnTF.getInVars().get(bv));
-//			}
-//			substitution.clear();
-//			// 4.2 Rename the outvars of Ret TF
-//			for (BoogieVar bv : returnTF.getOutVars().keySet()) {
-//				substitution.put(returnTF.getOutVars().get(bv), bv.getTermVariable());
-//			}
-//			retTF_OutVarsRenamed = substituteTermVariablesByTerms(substitution, returnTF.getFormula());
-//		}
-//		Term returneePredRenamed = new Substitution(varsToRenameInReturneePred, m_Script).transform(returneePred.getFormula());
-//		// 5. Compute the right-hand side of the implication.
-//		Term rhsOfImplication = null;
-//		if (!isPendingCall) {
-//			rhsOfImplication = Util.and(m_Script, returneePredRenamed, returnerPred.getFormula(), retTF_OutVarsRenamed);
-//		} else {
-//			// If it is a pending call, then it doesn't have a corresponding Return stmt
-//			rhsOfImplication = Util.and(m_Script, returneePredRenamed, returnerPred.getFormula());
-//		}
-//
-//		Term call_Term_IMPLIES_rhsOfImplication = Util.or(m_Script, 
-//				Util.not(m_Script, call_Term_InVarsRenamed),
-//				rhsOfImplication);
-//		Term call_Term_IMPLIES_rhsOfImplication_quantified = call_Term_IMPLIES_rhsOfImplication;
-//		varsToQuantify.addAll(call_TF.getAuxVars());
-//		varsToQuantify.addAll(returnTF.getAuxVars());
-//		varsToQuantify.addAll(returnTF.getAuxVars());
-//		varsToQuantify.addAll(call_TF.getAuxVars());
-//		if (varsToQuantify.size() > 0) {
-//			call_Term_IMPLIES_rhsOfImplication_quantified = DestructiveEqualityResolution.quantifier(m_Script, Script.FORALL,
-//					varsToQuantify.toArray(new TermVariable[varsToQuantify.size()]),
-//					call_Term_IMPLIES_rhsOfImplication, (Term[][])null);
-//		}
-//
-//		TermVarsProc tvp = computeTermVarsProc(call_Term_IMPLIES_rhsOfImplication_quantified);
-//		Term call_Term_AND_returneePred_as_closed_formula = SmtManager.computeClosedFormula(call_Term_IMPLIES_rhsOfImplication_quantified, tvp.getVars(), m_Script);
-//		return newPredicate(call_Term_IMPLIES_rhsOfImplication_quantified, tvp.getProcedures(), tvp.getVars(), call_Term_AND_returneePred_as_closed_formula);
 	}
 	
 	public IPredicate weakestPrecondition(IPredicate returnerPred, IPredicate callerPred, Return ret) {

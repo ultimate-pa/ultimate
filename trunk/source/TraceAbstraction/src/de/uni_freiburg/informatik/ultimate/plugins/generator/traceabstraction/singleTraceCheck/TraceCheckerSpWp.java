@@ -38,7 +38,7 @@ public class TraceCheckerSpWp extends TraceChecker {
 	
 	private static boolean m_useUnsatCore = true;
 	private static boolean m_ComputeInterpolantsSp = true;
-	private static boolean m_ComputeInterpolantsFp = true;
+	private static boolean m_ComputeInterpolantsFp = !true;
 	private static boolean m_ComputeInterpolantsWp = true;
 
 	public TraceCheckerSpWp(IPredicate precondition, IPredicate postcondition,
@@ -127,19 +127,23 @@ public class TraceCheckerSpWp extends TraceChecker {
 		unlockSmtManager();
 		
 		boolean[] localVarAssignmentAtCallInUnsatCore = new boolean[trace.length()];
+		boolean[] oldVarAssignmentAtCallInUnsatCore = new boolean[trace.length()];
 		// Filter out the statements, which doesn't occur in the unsat core.
 		for (int i = 0; i < trace.length(); i++) {
-			
-			if (!trace.isCallPosition(i) && unsat_coresAsSet.contains(m_AAA.getAnnotatedSsa().getFormulaFromNonCallPos(i))
-					|| trace.isCallPosition(i) && unsat_coresAsSet.contains(m_AAA.getAnnotatedSsa().getGlobalVarAssignment(i))) {
+			if (!trace.isCallPosition(i) && unsat_coresAsSet.contains(m_AAA.getAnnotatedSsa().getFormulaFromNonCallPos(i))) {
+				codeBlocksInUnsatCore.add(trace.getSymbol(i));
+			} else if (trace.isCallPosition(i) && 
+					(unsat_coresAsSet.contains(m_AAA.getAnnotatedSsa().getGlobalVarAssignment(i))
+							|| unsat_coresAsSet.contains(m_AAA.getAnnotatedSsa().getOldVarAssignment(i)))) {
 				// The upper condition checks, whether the globalVarAssignments
 				// is in unsat core, now check whether the local variable assignments
 				// is in unsat core, if it is Call statement
-				if (trace.getSymbol(i) instanceof Call) {
 					// Check whether the local variable assignments are also in unsat core.
-					if (unsat_coresAsSet.contains(m_AAA.getAnnotatedSsa().getLocalVarAssignment(i))) {
-						localVarAssignmentAtCallInUnsatCore[i] = true;
-					}
+				if (unsat_coresAsSet.contains(m_AAA.getAnnotatedSsa().getLocalVarAssignment(i))) {
+					localVarAssignmentAtCallInUnsatCore[i] = true;
+				}
+				if (unsat_coresAsSet.contains(m_AAA.getAnnotatedSsa().getOldVarAssignment(i))) {
+					oldVarAssignmentAtCallInUnsatCore[i] = true;
 				}
 				// Add the globalVarAssignments to the unsat_core, if it is a Call statement, otherwise it adds
 				// the statement
@@ -158,6 +162,7 @@ public class TraceCheckerSpWp extends TraceChecker {
 				codeBlocksInUnsatCore,
 				m_ModifiedGlobals,
 				localVarAssignmentAtCallInUnsatCore,
+				oldVarAssignmentAtCallInUnsatCore,
 				m_SmtManager);
 		RelevantVariables rvar = new RelevantVariables(rv);
 		
@@ -171,6 +176,7 @@ public class TraceCheckerSpWp extends TraceChecker {
 					IPredicate p = m_SmtManager.strongestPostcondition(tracePrecondition,
 							rv.getLocalVarAssignment(0),
 							rv.getGlobalVarAssignment(0),
+							rv.getOldVarAssignment(0),
 							trace.isPendingCall(0));							
 					m_InterpolantsSp[0] = m_PredicateUnifier.getOrConstructPredicate(p.getFormula(), p.getVars(),
 							p.getProcedures());
@@ -187,6 +193,7 @@ public class TraceCheckerSpWp extends TraceChecker {
 					IPredicate p = m_SmtManager.strongestPostcondition(m_InterpolantsSp[i-1],
 							rv.getLocalVarAssignment(i),
 							rv.getGlobalVarAssignment(i),
+							rv.getOldVarAssignment(i),
 							((NestedWord<CodeBlock>) trace).isPendingCall(i));
 						m_InterpolantsSp[i] = m_PredicateUnifier.getOrConstructPredicate(p.getFormula(), p.getVars(),
 								p.getProcedures());
@@ -234,6 +241,7 @@ public class TraceCheckerSpWp extends TraceChecker {
 							tracePostcondition, 
 							rv.getLocalVarAssignment(m_InterpolantsWp.length),
 							rv.getGlobalVarAssignment(m_InterpolantsWp.length),
+							rv.getOldVarAssignment(m_InterpolantsWp.length),
 							traceAsNW.isPendingCall(m_InterpolantsWp.length));
 					m_InterpolantsWp[m_InterpolantsWp.length-1] = m_PredicateUnifier.getOrConstructPredicate(p.getFormula(),
 							p.getVars(), p.getProcedures());
@@ -281,6 +289,7 @@ public class TraceCheckerSpWp extends TraceChecker {
 								m_InterpolantsWp[i+1], 
 								rv.getLocalVarAssignment(i+1),
 								rv.getGlobalVarAssignment(i+1),
+								rv.getOldVarAssignment(i+1),
 								true);
 						m_InterpolantsWp[i] = m_PredicateUnifier.getOrConstructPredicate(p.getFormula(),
 								p.getVars(), p.getProcedures());
