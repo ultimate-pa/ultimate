@@ -31,13 +31,13 @@ public class ElimStore {
 	private Term m_WriteIndex;
 	private Term m_Data;
 	private Term m_NewArray;
-	public Term elim(TermVariable quantifArrTv, Term term) {
-		assert quantifArrTv.getSort().isArraySort();
+	public Term elim(TermVariable oldArr, Term term) {
+		assert oldArr.getSort().isArraySort();
 		Term[] conjuncts = DestructiveEqualityResolution.getConjuncts(term);
 		HashSet<Term> others = new HashSet<Term>();
 		for (Term conjunct : conjuncts) {
 			if (m_NewArray == null) {
-				ArrayUpdate au = ArrayUpdate.getArrayUpdate(conjunct, quantifArrTv);
+				ArrayUpdate au = ArrayUpdate.getArrayUpdate(conjunct, oldArr);
 				if (au != null) {
 					m_WriteIndex = au.getIndex();
 					m_NewArray = au.getNewArray();
@@ -51,7 +51,7 @@ public class ElimStore {
 		Set<ApplicationTerm> selectTerms = 
 				(new ApplicationTermFinder("select")).findMatchingSubterms(term);
 		Map<Term, ApplicationTerm> arrayReads =
-				getArrayReads(quantifArrTv,	selectTerms);
+				getArrayReads(oldArr,	selectTerms);
 		
 		if (m_NewArray == null) {
 			// no store
@@ -66,7 +66,7 @@ public class ElimStore {
 				}
 			}
 			Term result = (new SafeSubstitution(m_Script, substitutionMapping)).transform(othersT);
-			if (Arrays.asList(result.getFreeVars()).contains(quantifArrTv)) {
+			if (Arrays.asList(result.getFreeVars()).contains(oldArr)) {
 				throw new UnsupportedOperationException("not eliminated");
 			} else {
 				return result;
@@ -75,30 +75,65 @@ public class ElimStore {
 
 		
 		
-		
-		m_Script.push(1);
-		ScopedHashMap<TermVariable, Term> tv2constant = new ScopedHashMap<TermVariable, Term>();
-		assertTermWithTvs(tv2constant, m_Script, othersT);
-
-		Set<Term> indices = arrayReads.keySet();
-		UnionFind<Term> uf = partitionEquivalent(tv2constant, indices);
-		Term writeIndexEqClass = getEquivalentTerm(m_WriteIndex, uf, tv2constant);
 		HashSet<Term> distinctIndices = new HashSet<Term>();
 		HashSet<Term> unknownIndices = new HashSet<Term>();
-		divideInDistinctAndUnknown(m_WriteIndex, uf, writeIndexEqClass, distinctIndices, unknownIndices, tv2constant);
+		UnionFind<Term> uf = new UnionFind<Term>();
+		Term writeIndexEqClass;
+		
+		{
+			m_Script.push(1);
+			ScopedHashMap<TermVariable, Term> tv2constant = new ScopedHashMap<TermVariable, Term>();
+			assertTermWithTvs(tv2constant, m_Script, othersT);
+
+			Set<Term> indices = arrayReads.keySet();
+			partitionEquivalent(tv2constant, indices, uf);
+			writeIndexEqClass = getEquivalentTerm(m_WriteIndex, uf, tv2constant);
+
+			divideInDistinctAndUnknown(m_WriteIndex, uf, writeIndexEqClass, distinctIndices, unknownIndices, tv2constant);
+			m_Script.pop(1);
+		}
+		
 		if (!unknownIndices.isEmpty()) {
 			throw new UnsupportedOperationException();
 		}
-		m_Script.pop(1);
 		
+		HashSet<Term> distinctIndicesForDisjunct = new HashSet<Term>(distinctIndices);
+		HashSet<Term> equivalentIndicesForDisjunct = new HashSet<Term>(0);
+		if (writeIndexEqClass != null) {
+			equivalentIndicesForDisjunct.add(writeIndexEqClass);
+		}
 		
+		Term result = buildDisjunct(oldArr, others, othersT, arrayReads,
+				distinctIndicesForDisjunct, uf, equivalentIndicesForDisjunct);
+		result.toString();
+		return result;
+	}
+
+	/**
+	 * @param oldArr
+	 * @param others
+	 * @param othersT
+	 * @param arrayReads
+	 * @param distinctIndices
+	 * @param uf
+	 * @param writeIndexEqClass
+	 * @return
+	 */
+	private Term buildDisjunct(TermVariable oldArr, HashSet<Term> others,
+			Term othersT, Map<Term, ApplicationTerm> arrayReads,
+			HashSet<Term> distinctIndices, UnionFind<Term> uf,
+			HashSet<Term> equivalentIndices) {
+		/*
+		 * replace oldArr[i] by newArr[i] for all i that are different from the
+		 * array write index
+		 */
 		Map<Term,Term> substitutionMapping = new HashMap<Term,Term>();
 		for (Term distinctIndexRep : distinctIndices) {
 			for (Term distTerm : uf.getEquivalenceClassMembers(distinctIndexRep)) {
 				ApplicationTerm oldSelectTerm = arrayReads.get(distTerm);
 				assert oldSelectTerm.getFunction().getName().equals("select");
 				assert oldSelectTerm.getParameters().length == 2;
-				assert oldSelectTerm.getParameters()[0] == quantifArrTv;
+				assert oldSelectTerm.getParameters()[0] == oldArr;
 				Set<ApplicationTerm> selectTermsInIndex = 
 						(new ApplicationTermFinder("select")).findMatchingSubterms(oldSelectTerm.getParameters()[0]);
 				if (!selectTermsInIndex.isEmpty()) {
@@ -108,11 +143,15 @@ public class ElimStore {
 				substitutionMapping.put(oldSelectTerm, newSelectTerm);
 			}
 		}
+
 		
+		/*
+		 * replace oldArr[i] by t if there is some conjunct oldArr[i] = t,
+		 * otherwise replace oldArr[i] by a fresh variable
+		 */
 		Set<TermVariable> newAuxVars = new HashSet<TermVariable>();
-		
-		if (writeIndexEqClass != null) {
-			for(Term writeIndexEqTerm : uf.getEquivalenceClassMembers(writeIndexEqClass)) {
+		for (Term equivalentIndexRep : equivalentIndices) {
+			for(Term writeIndexEqTerm : uf.getEquivalenceClassMembers(equivalentIndexRep)) {
 				Term select = arrayReads.get(writeIndexEqTerm);
 				EqualityInformation eqInfo = DestructiveEqualityResolution.getEqinfo(m_Script, select, others.toArray(new Term[0]), QuantifiedFormula.EXISTS);
 				Term replacement;
@@ -140,7 +179,6 @@ public class ElimStore {
 				}
 			}
 		}
-		result.toString();
 		return result;
 	}
 
@@ -151,8 +189,7 @@ public class ElimStore {
 	 * for satisfiable checks.
 	 */
 	private UnionFind<Term> partitionEquivalent(
-			ScopedHashMap<TermVariable, Term> tv2constant, Set<Term> term) {
-		UnionFind<Term> uf = new UnionFind<Term>();
+			ScopedHashMap<TermVariable, Term> tv2constant, Set<Term> term, UnionFind<Term> uf) {
 		for (Term index : term) {
 			uf.makeEquivalenceClass(index);
 			Term eqTerm = getEquivalentTerm(index, uf, tv2constant);
