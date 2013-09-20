@@ -15,7 +15,6 @@ import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
-import de.uni_freiburg.informatik.ultimate.logic.FormulaUnLet;
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -149,6 +148,9 @@ public class DestructiveEqualityResolution {
 			return result;
 		}
 		
+		assert Arrays.asList(result.getFreeVars()).containsAll(remainingVars) : 
+			"superficial variables";
+		
 		// apply some array var elimination
 		// TODO will only work if one disjunct
 		Iterator<TermVariable> it = remainingVars.iterator();
@@ -192,6 +194,7 @@ public class DestructiveEqualityResolution {
 			Set<TermVariable> vars) {
 		Set<TermVariable> occuringVars = 
 				new HashSet<TermVariable>(Arrays.asList(term.getFreeVars()));
+		vars.retainAll(occuringVars);
 		Set<Term> parameters;
 		if (quantifier == QuantifiedFormula.EXISTS) {
 			parameters = new HashSet<Term>(Arrays.asList(getConjuncts(term)));
@@ -379,8 +382,37 @@ public class DestructiveEqualityResolution {
 			terms.add(term);
 		}
 		
-		Set<Set<TermVariable>> getConnectedVariables() {
-			return unionFind.getEquivalenceClass();
+		Iterable<Set<TermVariable>> getConnectedVariables() {
+			return new Iterable<Set<TermVariable>>() {
+				
+				@Override
+				public Iterator<Set<TermVariable>> iterator() {
+
+					return new Iterator<Set<TermVariable>>() {
+						private Iterator<TermVariable> m_It;
+
+						{
+							m_It = unionFind.getAllRepresentatives().iterator();
+						}
+
+						@Override
+						public boolean hasNext() {
+							return m_It.hasNext();
+						}
+
+						@Override
+						public Set<TermVariable> next() {
+							return unionFind.getEquivalenceClassMembers(m_It.next());
+						}
+
+						@Override
+						public void remove() {
+							throw new UnsupportedOperationException();
+						}
+						
+					};
+				}
+			};
 		}
 		
 		Set<Term> getTermsOfConnectedVariables(Set<TermVariable> connectedVars) {
