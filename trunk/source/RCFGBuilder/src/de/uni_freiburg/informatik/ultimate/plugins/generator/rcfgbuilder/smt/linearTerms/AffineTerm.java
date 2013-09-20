@@ -69,20 +69,14 @@ public class AffineTerm extends Term {
 	}
 	
 	/**
-	 * AffineTerm that consists of the single variable which is an array read
-	 * expression.
+	 * AffineTerm that consists of the single variable which is an application 
+	 * term. 
 	 */
 	public AffineTerm(ApplicationTerm appTerm) {
 		super(0);
 		m_Sort = appTerm.getSort();
-		String funName = appTerm.getFunction().getName();
-		if (funName.equals("select") || appTerm.getParameters().length == 0) {
-			m_Variable2Coefficient = Collections.singletonMap((Term) appTerm, Rational.ONE);
-			m_Constant = Rational.ZERO;
-		} else {
-			throw new UnsupportedOperationException(
-					"This application term may not be variable in AffineTerm: " + funName);
-		}
+		m_Variable2Coefficient = Collections.singletonMap((Term) appTerm, Rational.ONE);
+		m_Constant = Rational.ZERO;
 	}
 	
 	/**

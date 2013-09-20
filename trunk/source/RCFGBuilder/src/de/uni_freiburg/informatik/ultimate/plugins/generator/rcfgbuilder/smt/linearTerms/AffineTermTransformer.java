@@ -37,7 +37,9 @@ public class AffineTermTransformer extends TermTransformer {
 		} else if (term instanceof ApplicationTerm) {
 			ApplicationTerm appTerm = (ApplicationTerm) term;
 			String funName = appTerm.getFunction().getName();
-			if (funName.equals("select")) {
+			if (isAffineSymbol(funName)) {
+				super.convert(term);
+			} else  {
 				AffineTerm result = new AffineTerm(appTerm);
 				setResult(result);
 				return;
@@ -73,6 +75,11 @@ public class AffineTermTransformer extends TermTransformer {
 			}
 		}
 		super.convert(term);
+	}
+
+	private boolean isAffineSymbol(String funName) {
+		return (funName.equals("+") || funName.equals("-") || 
+				funName.equals("*") || funName.equals("/"));
 	}
 
 	@Override
@@ -142,7 +149,7 @@ public class AffineTermTransformer extends TermTransformer {
 			setResult(result);
 			return;
 		} else {
-			throw new UnsupportedOperationException("unknown symbol " + funName);
+			throw new UnsupportedOperationException("unsupported symbol " + funName);
 		}
 	}
 	
