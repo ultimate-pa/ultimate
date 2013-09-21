@@ -1,0 +1,57 @@
+//#rTerminationDerivable
+/*
+ * Date: 21.09.2013
+ * Author: leikej@informatik.uni-freiburg.de
+ *
+ * This example is from
+ * A. R. Bradley, Z. Manna, and H. B. Sipma.
+ * The polyranking principle.
+ * In ICALP, pages 1349–1361. Springer, 2005.
+ *
+ * This program has a lexicographic multiphase ranking function.
+ */
+
+procedure erraticPolyranking(N: int) returns (x: int, y: int)
+{
+  var p: int;
+  var q: int;
+  var n: int;
+  var e: int;
+
+  var x_old, y_old, n_old, e_old, q_old: int;
+  var random: int;
+  assume(p >= 0 && q >= 1 && x == 0 && y == 0);
+  while (true) {
+    x_old := x;
+    y_old := y;
+    n_old := n;
+    e_old := e;
+    
+    havoc random;
+    if (random <= -10) {
+      assume(x + y <= N);
+      havoc x;
+      assume(x_old + e_old - q <= x && x <= x_old + e_old + q);
+      havoc y;
+      assume(y_old + n_old - q <= y && y <= y_old + n_old + q);
+      havoc n;
+      havoc e;
+      assume(n_old + e_old + 1 <= n + e && n + e <= n_old + e_old + p);
+    } else if (random >= 20) {
+      assume(x + y <= N && n + e >= 2*q + 1);
+      havoc x;
+      assume(x_old + e_old - q <= x && x <= x_old + e_old + q);
+      havoc y;
+      assume(y_old + n_old - q <= y && y <= y_old + n_old + q);
+    } else {
+      assume(p >= 0);
+      havoc n;
+      havoc e;
+      assume(n + e <= -(n_old + e_old));
+      p := p - 1;
+      q_old := q;
+      havoc q;
+      assume(2*q == q_old); // q := q / 2;
+    }
+  }
+}
