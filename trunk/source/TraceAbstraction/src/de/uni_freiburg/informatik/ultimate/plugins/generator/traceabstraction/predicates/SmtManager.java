@@ -1784,7 +1784,12 @@ public class SmtManager {
 			substitution.put(tf.getOutVars().get(bv), bv.getTermVariable());
 			if (tf.getInVars().isEmpty() && tf.getFormula() == True()) {
 				varsToQuantify.add(bv.getTermVariable());
+			} else if (!tf.getInVars().containsKey(bv)) {
+				TermVariable freshVar = getFreshTermVariable(bv.getIdentifier(), bv.getTermVariable().getSort());
+				varsToRenameInPred.put(bv.getTermVariable(), freshVar);
+				varsToQuantify.add(freshVar);
 			}
+			
 		}
 		
 		Term TFInVarsOutVarsRenamed = new Substitution(substitution, m_Script).transform(TFInvarsRenamed);
