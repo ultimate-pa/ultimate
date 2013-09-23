@@ -93,20 +93,34 @@ public class ElimStore {
 			m_Script.pop(1);
 		}
 		
-		if (!unknownIndices.isEmpty()) {
-			throw new UnsupportedOperationException();
+
+		int numberOfdisjuncts = (int) Math.pow(2,unknownIndices.size());
+		Term[] disjuncts = new Term[numberOfdisjuncts];
+		for (int k=0; k<numberOfdisjuncts; k++) {
+			HashSet<Term> distinctIndicesForDisjunct = new HashSet<Term>(distinctIndices);
+			HashSet<Term> equivalentIndicesForDisjunct = new HashSet<Term>(0);
+			if (writeIndexEqClass != null) {
+				equivalentIndicesForDisjunct.add(writeIndexEqClass);
+			}
+			Term[] conj = new Term[unknownIndices.size()+1];
+			Term[] unknownIndicesArray = unknownIndices.toArray(new Term[0]);
+			for (int i=0; i<unknownIndicesArray.length; i++) {
+				int digitOfKAtPosI = (k / (int)Math.pow(2,i)) % 2;
+				assert (digitOfKAtPosI == 0 || digitOfKAtPosI == 1);
+				boolean assumeEqual = (digitOfKAtPosI == 0);
+				if (assumeEqual) {
+					conj[i] = m_Script.term("=", unknownIndicesArray[i], m_WriteIndex);
+					equivalentIndicesForDisjunct.add(unknownIndicesArray[i]);
+				} else {
+					conj[i] = m_Script.term("not", m_Script.term("=", unknownIndicesArray[i], m_WriteIndex));
+					distinctIndicesForDisjunct.add(unknownIndicesArray[i]);
+				}
+			}
+			conj[unknownIndices.size()] = buildDisjunct(oldArr, others, othersT, arrayReads,
+					distinctIndicesForDisjunct, uf, equivalentIndicesForDisjunct);
+			disjuncts[k] = Util.and(m_Script, conj);
 		}
-		
-		HashSet<Term> distinctIndicesForDisjunct = new HashSet<Term>(distinctIndices);
-		HashSet<Term> equivalentIndicesForDisjunct = new HashSet<Term>(0);
-		if (writeIndexEqClass != null) {
-			equivalentIndicesForDisjunct.add(writeIndexEqClass);
-		}
-		
-		Term result = buildDisjunct(oldArr, others, othersT, arrayReads,
-				distinctIndicesForDisjunct, uf, equivalentIndicesForDisjunct);
-		result.toString();
-		return result;
+		return Util.or(m_Script, disjuncts);
 	}
 
 	/**
