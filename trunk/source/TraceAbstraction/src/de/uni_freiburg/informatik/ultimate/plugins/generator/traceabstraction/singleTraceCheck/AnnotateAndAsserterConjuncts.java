@@ -53,7 +53,7 @@ public class AnnotateAndAsserterConjuncts extends AnnotateAndAsserter {
 	protected Term annotateAndAssertPostcondition() {
 		String name = super.postcondAnnotation();
 		Term original = m_SSA.getTransFormulas().getPostcondition().getFormula();
-		Term indexed = m_SSA.getPostcondition();
+		Term indexed = m_Script.term("not", m_SSA.getPostcondition());
 		return annotateAndAssertConjuncts(name, original, indexed);
 	}
 
