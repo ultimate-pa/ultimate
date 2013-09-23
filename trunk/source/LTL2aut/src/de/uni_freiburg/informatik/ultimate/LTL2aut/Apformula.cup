@@ -1,0 +1,53 @@
+// CUP specification for a simple expression evaluator (w/ actions)
+package de.uni_freiburg.informatik.ultimate.LTL2aut;
+import java_cup.runtime.*;
+import de.uni_freiburg.informatik.ultimate.LTL2aut.ast.*;
+import java.util.ArrayList;
+
+/* exprinals (tokens returned by the scanner). */
+terminal           	COLON, LPAR, RPAR, PLUS, MINUS , TIMES, EQUALS, GREATER, GEQ, UMINUS, TRUE, FALSE;
+terminal String 			NAME;
+terminal int 				INT;
+
+/* Non-exprinals */
+non terminal AstNode     		 ap, assign, name, expr;
+
+precedence left PLUS, MINUS;
+precedence left TIMES;
+precedence left UMINUS;
+
+start with assign;
+
+/*rules*/
+
+assign ::= NAME:n COLON ap:a
+	{: RESULT = new AtomicProposition(n, a); :};
+
+ap ::= expr:e1 EQUALS expr:e2
+	{: RESULT = new ComperativeOperator(ComperativeType.equals, e1, e2); :}
+	| expr:e1 GREATER expr:e2
+	{: RESULT = new ComperativeOperator(ComperativeType.greater, e1, e2); :}
+	| expr:e1 GEQ expr:e2
+	{: RESULT = new ComperativeOperator(ComperativeType.geq, e1, e2); :}
+	| TRUE
+	{: RESULT = new BoolLiteral(true); :}
+	| FALSE
+	{: RESULT = new BoolLiteral(false); :};
+	
+expr ::= expr:e1 PLUS expr:e2
+	{: RESULT = new BinaryOperator(BinaryType.plus, e1, e2); :}
+	| expr:e1 MINUS expr:e2
+	{: RESULT = new BinaryOperator(BinaryType.minus, e1, e2); :}
+	| expr:e1 TIMES expr:e2
+	{: RESULT = new BinaryOperator(BinaryType.times, e1, e2); :}
+	| MINUS expr:e1 		
+	{: RESULT = new UnaryMinus(e1); :} %prec UMINUS
+	| LPAR expr:e1 RPAR
+	{: RESULT = e1; :}
+	| name:n	
+	{: RESULT = n; :}
+	| INT:i
+	{: RESULT = new IntLiteral(i); :};
+	
+name ::= NAME:m
+		{: RESULT = new Name(m); :};	
