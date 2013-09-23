@@ -9,15 +9,16 @@
  *
  */
 
-var x:int;
+var x,y:int;
 
 procedure main()
 modifies x;
 {
   x := 0;
-  while (x < 100) {
+  assume y > 0;
+  while (x < y) {
     x := x + 1;
   }
 
-  assert(x == 100);
+  assert(x == y);
 }
