@@ -65,8 +65,10 @@ public class AnnotateAndAsserterConjuncts extends AnnotateAndAsserter {
 		} else {
 			 name = internalAnnotation(position);
 		}
-		Term original = m_SSA.getFormulaFromNonCallPos(position);
-		Term annotated = annotateAndAssertTerm(original, name);
+		
+		Term original = m_SSA.getTransFormulas().getFormulaFromNonCallPos(position).getFormula();
+		Term indexed = m_SSA.getFormulaFromNonCallPos(position);
+		Term annotated = annotateAndAssertConjuncts(name, original, indexed);
 		return annotated;
 	}
 
