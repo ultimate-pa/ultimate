@@ -39,7 +39,7 @@ public class TraceCheckerSpWp extends TraceChecker {
 	private static boolean m_useUnsatCore = true;
 	private static boolean m_ComputeInterpolantsSp = true;
 	private static boolean m_ComputeInterpolantsFp = true;
-	private static boolean m_ComputeInterpolantsWp = !true;
+	private static boolean m_ComputeInterpolantsWp = true;
 
 	public TraceCheckerSpWp(IPredicate precondition, IPredicate postcondition,
 			NestedWord<CodeBlock> trace, SmtManager smtManager,
