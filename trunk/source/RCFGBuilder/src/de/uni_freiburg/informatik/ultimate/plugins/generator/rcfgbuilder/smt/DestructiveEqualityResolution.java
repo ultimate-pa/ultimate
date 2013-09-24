@@ -194,14 +194,15 @@ public class DestructiveEqualityResolution {
 	
 	public static Term sos(Script script, int quantifier, Term term, 
 			Set<TermVariable> vars) {
-		if (quantifier != QuantifiedFormula.EXISTS) {
-			throw new UnsupportedOperationException();
-		}
 		Term result = term;
 		Iterator<TermVariable> it = vars.iterator();
 		while (it.hasNext()) {
 			TermVariable tv = it.next();
 			if (tv.getSort().isArraySort()) {
+				if (quantifier != QuantifiedFormula.EXISTS) {
+					throw new UnsupportedOperationException(
+							"QE for universal quantified arrays not implemented yet.");
+				}
 				Term elim = (new ElimStore(script)).elim(tv, result);
 				if (elim != null) {
 					it.remove();
