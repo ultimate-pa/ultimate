@@ -125,20 +125,21 @@ public class RedirectionTargetFinder {
 	 * @see RedirectionTargetFindingMethod#First
 	 * @see RedirectionTargetFindingMethod#Random
 	 */
-	private AnnotatedProgramPoint findFirstRedirectionTarget(AnnotatedProgramPoint predecessorNode, AnnotatedProgramPoint dest) {
+	private AnnotatedProgramPoint findFirstRedirectionTarget(AnnotatedProgramPoint predecessorNode, 
+			AnnotatedProgramPoint dest) {
 
-		CodeBlock label = predecessorNode.getOutgoingEdgeLabel(dest);
-		
-		ArrayList <AnnotatedProgramPoint> candidates = dest.getNewCopies();
-
-		if(random)
-			Collections.shuffle(candidates);
-		
-		for (AnnotatedProgramPoint candidate : candidates) {
-			if(codeChecker.isValidEdge(predecessorNode, label, candidate)) {
-				return candidate;
-			}
-		}
+//		CodeBlock label = predecessorNode.getOutgoingEdgeLabel(dest);//FIXME
+//		
+//		ArrayList <AnnotatedProgramPoint> candidates = dest.getNewCopies();
+//
+//		if(random)
+//			Collections.shuffle(candidates);
+//		
+//		for (AnnotatedProgramPoint candidate : candidates) {
+//			if(codeChecker.isValidEdge(predecessorNode, label, candidate)) {
+//				return candidate;
+//			}
+//		}
 		
 		return null;
 		
@@ -155,24 +156,24 @@ public class RedirectionTargetFinder {
 	 */
 	private AnnotatedProgramPoint findStrongestRedirectionTarget(AnnotatedProgramPoint predecessorNode, AnnotatedProgramPoint dest) {
 
-		CodeBlock label = predecessorNode.getOutgoingEdgeLabel(dest);
-		
-		ArrayList <AnnotatedProgramPoint> candidates = dest.getNewCopies();
-		
-		if(random)
-			Collections.shuffle(candidates);
-
-		AnnotatedProgramPoint res = null;
-		
-		for (AnnotatedProgramPoint candidate : candidates) {
-			if(codeChecker.isValidEdge(predecessorNode, label, candidate)) {
-				if(res == null || codeChecker.isStrongerPredicate(candidate, res))
-					res = candidate;
-			}
-		}
-		
-		return res;
-		
+//		CodeBlock label = predecessorNode.getOutgoingEdgeLabel(dest); //FIXME
+//		
+//		ArrayList <AnnotatedProgramPoint> candidates = dest.getNewCopies();
+//		
+//		if(random)
+//			Collections.shuffle(candidates);
+//
+//		AnnotatedProgramPoint res = null;
+//		
+//		for (AnnotatedProgramPoint candidate : candidates) {
+//			if(codeChecker.isValidEdge(predecessorNode, label, candidate)) {
+//				if(res == null || codeChecker.isStrongerPredicate(candidate, res))
+//					res = candidate;
+//			}
+//		}
+//		
+//		return res;
+		return null;
 	}
 
 	/**
@@ -190,18 +191,18 @@ public class RedirectionTargetFinder {
 			AnnotatedProgramPoint callPred, 
 			AnnotatedProgramPoint dest) {
 
-		CodeBlock label = predecessorNode.getOutgoingEdgeLabel(dest);
-		
-		ArrayList <AnnotatedProgramPoint> candidates = dest.getNewCopies();
-
-		if(random)
-			Collections.shuffle(candidates);
-		
-		for (AnnotatedProgramPoint candidate : candidates) {
-			if(codeChecker.isValidReturnEdge(predecessorNode, label, candidate, callPred)) {
-				return candidate;
-			}
-		}
+//		CodeBlock label = predecessorNode.getOutgoingEdgeLabel(dest);
+//		
+//		ArrayList <AnnotatedProgramPoint> candidates = dest.getNewCopies();
+//
+//		if(random)
+//			Collections.shuffle(candidates);
+//		
+//		for (AnnotatedProgramPoint candidate : candidates) {
+//			if(codeChecker.isValidReturnEdge(predecessorNode, label, candidate, callPred)) {
+//				return candidate;
+//			}
+//		}
 		
 		return null;
 	}
@@ -221,22 +222,23 @@ public class RedirectionTargetFinder {
 			AnnotatedProgramPoint callPred, 
 			AnnotatedProgramPoint dest) {
 
-		CodeBlock label = predecessorNode.getOutgoingEdgeLabel(dest);
-		
-		ArrayList <AnnotatedProgramPoint> candidates = dest.getNewCopies();
-
-		if(random)
-			Collections.shuffle(candidates);
-		
-		AnnotatedProgramPoint res = null;
-
-		for (AnnotatedProgramPoint candidate : candidates) {
-			if(codeChecker.isValidReturnEdge(predecessorNode, label, candidate, callPred)) {
-				if(res == null || codeChecker.isStrongerPredicate(candidate, res))
-					res = candidate;
-			}
-		}
-		
-		return res;
+//		CodeBlock label = predecessorNode.getOutgoingEdgeLabel(dest);//FIXME
+//		
+//		ArrayList <AnnotatedProgramPoint> candidates = dest.getNewCopies();
+//
+//		if(random)
+//			Collections.shuffle(candidates);
+//		
+//		AnnotatedProgramPoint res = null;
+//
+//		for (AnnotatedProgramPoint candidate : candidates) {
+//			if(codeChecker.isValidReturnEdge(predecessorNode, label, candidate, callPred)) {
+//				if(res == null || codeChecker.isStrongerPredicate(candidate, res))
+//					res = candidate;
+//			}
+//		}
+//		
+//		return res;
+		return null;
 	}
 }

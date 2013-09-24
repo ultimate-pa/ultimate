@@ -95,71 +95,97 @@ public class NWAEmptinessCheck implements IEmptinessCheck {
 			
 			while (!openNodes.isEmpty()) {
 				AnnotatedProgramPoint currentNode = openNodes.pollFirst();
+				assert !visitedNodes.contains(currentNode);
 				visitedNodes.add(currentNode);
+				assert visitedNodes.contains(currentNode);
 				
-				for (int i = 0; i < currentNode.getOutgoingNodes().size(); i++) {
-					AnnotatedProgramPoint targetNode = currentNode.getOutgoingNodes().get(i);
-					if (!visitedNodes.contains(targetNode))
-						openNodes.add(targetNode);
+//				for (int i = 0; i < currentNode.getOutgoingNodes().size(); i++) {
+//					AnnotatedProgramPoint targetNode = currentNode.getOutgoingNodes().get(i);
+//					CodeBlock edge = currentNode.getOutgoingEdgeLabels().get(i);
+				for (AppEdge outEdge : currentNode.getOutgoingEdges()) {
+					AnnotatedProgramPoint targetNode = outEdge.getTarget();
+					CodeBlock statement = outEdge.getStatement();
 					
-					CodeBlock edge = currentNode.getOutgoingEdgeLabels().get(i);
+					if (!visitedNodes.contains(targetNode) && !openNodes.contains(targetNode))//FIXME openNodes.contains: not nice (linear) --> do it different
+						openNodes.add(targetNode);
 					
 					_size++;
 					
-					if (edge instanceof Call) {
-						_callAlphabet.add(edge);
+					if (statement instanceof Call) {
+						_callAlphabet.add(statement);
 						
 						if (_stateToLettersCall.get(currentNode) == null)
 							_stateToLettersCall.put(currentNode, new HashSet<CodeBlock>());
-						_stateToLettersCall.get(currentNode).add(edge);
+						_stateToLettersCall.get(currentNode).add(statement);
 						
 						if (_stateToLetterToOutgoingCallTransitions.get(currentNode) == null)
 							_stateToLetterToOutgoingCallTransitions.put(currentNode, 
 									new HashMap<CodeBlock, ArrayList<OutgoingCallTransition<CodeBlock,AnnotatedProgramPoint>>>());
-						if (_stateToLetterToOutgoingCallTransitions.get(currentNode).get(edge) == null)
-							_stateToLetterToOutgoingCallTransitions.get(currentNode).put(edge, 
+						if (_stateToLetterToOutgoingCallTransitions.get(currentNode).get(statement) == null)
+							_stateToLetterToOutgoingCallTransitions.get(currentNode).put(statement, 
 									new ArrayList<OutgoingCallTransition<CodeBlock,AnnotatedProgramPoint>>());
-						_stateToLetterToOutgoingCallTransitions.get(currentNode).get(edge)
-							.add(new OutgoingCallTransition<CodeBlock, AnnotatedProgramPoint>(edge, targetNode));
+						_stateToLetterToOutgoingCallTransitions.get(currentNode).get(statement)
+							.add(new OutgoingCallTransition<CodeBlock, AnnotatedProgramPoint>(statement, targetNode));
 						
-					} else if (edge instanceof Return) {
-						_returnAlphabet.add(edge);
+					} else if (statement instanceof Return) {
+						_returnAlphabet.add(statement);
 						
 						if (_stateToLettersReturn.get(currentNode) == null)
 							_stateToLettersReturn.put(currentNode, new HashSet<CodeBlock>());
-						_stateToLettersReturn.get(currentNode).add(edge);
+						_stateToLettersReturn.get(currentNode).add(statement);
 						
-						HashSet<AnnotatedProgramPoint> hiers = currentNode.getCallPredsOfOutgoingReturnTarget(targetNode);
+						AppHyperEdge outHyperEdge = (AppHyperEdge) outEdge;
+						
+						AnnotatedProgramPoint hier = outHyperEdge.getHier();
+//								currentNode.getOutgoingReturnCallPreds().get(i);
+						assert hier != null;
+						
+						if (_stateToHierToLetterToOutgoingReturnTransitions.get(currentNode) == null)
+							_stateToHierToLetterToOutgoingReturnTransitions.put(currentNode, 
+									new HashMap<AnnotatedProgramPoint, HashMap<CodeBlock, 
+									ArrayList<OutgoingReturnTransition<CodeBlock,AnnotatedProgramPoint>>>>());
+						if (_stateToHierToLetterToOutgoingReturnTransitions.get(currentNode).get(hier) == null)
+							_stateToHierToLetterToOutgoingReturnTransitions.get(currentNode).put(hier, 
+									new HashMap<CodeBlock, ArrayList<OutgoingReturnTransition<CodeBlock,AnnotatedProgramPoint>>>());
+						if (_stateToHierToLetterToOutgoingReturnTransitions.get(currentNode).get(hier).get(statement) == null)
+							_stateToHierToLetterToOutgoingReturnTransitions.get(currentNode).get(hier).put(statement, 
+									new ArrayList<OutgoingReturnTransition<CodeBlock,AnnotatedProgramPoint>>());
+						assert isOutReturnTransitionNotContained(currentNode, hier, statement, targetNode);
+						_stateToHierToLetterToOutgoingReturnTransitions.get(currentNode).get(hier).get(statement)
+							.add(new OutgoingReturnTransition<CodeBlock, AnnotatedProgramPoint>(hier, statement, targetNode));	
 
-						for (AnnotatedProgramPoint hier : hiers) {
-							if (_stateToHierToLetterToOutgoingReturnTransitions.get(currentNode) == null)
-								_stateToHierToLetterToOutgoingReturnTransitions.put(currentNode, 
-										new HashMap<AnnotatedProgramPoint, HashMap<CodeBlock, 
-										ArrayList<OutgoingReturnTransition<CodeBlock,AnnotatedProgramPoint>>>>());
-							if (_stateToHierToLetterToOutgoingReturnTransitions.get(currentNode).get(hier) == null)
-								_stateToHierToLetterToOutgoingReturnTransitions.get(currentNode).put(hier, 
-										new HashMap<CodeBlock, ArrayList<OutgoingReturnTransition<CodeBlock,AnnotatedProgramPoint>>>());
-							if (_stateToHierToLetterToOutgoingReturnTransitions.get(currentNode).get(hier).get(edge) == null)
-								_stateToHierToLetterToOutgoingReturnTransitions.get(currentNode).get(hier).put(edge, 
-										new ArrayList<OutgoingReturnTransition<CodeBlock,AnnotatedProgramPoint>>());
-							_stateToHierToLetterToOutgoingReturnTransitions.get(currentNode).get(hier).get(edge)
-								.add(new OutgoingReturnTransition<CodeBlock, AnnotatedProgramPoint>(hier, edge, targetNode));
-						}
+							
+//						HashSet<AnnotatedProgramPoint> hiers = currentNode.getCallPredsOfOutgoingReturnTarget(targetNode);
+//
+//						for (AnnotatedProgramPoint hier : hiers) {
+//							if (_stateToHierToLetterToOutgoingReturnTransitions.get(currentNode) == null)
+//								_stateToHierToLetterToOutgoingReturnTransitions.put(currentNode, 
+//										new HashMap<AnnotatedProgramPoint, HashMap<CodeBlock, 
+//										ArrayList<OutgoingReturnTransition<CodeBlock,AnnotatedProgramPoint>>>>());
+//							if (_stateToHierToLetterToOutgoingReturnTransitions.get(currentNode).get(hier) == null)
+//								_stateToHierToLetterToOutgoingReturnTransitions.get(currentNode).put(hier, 
+//										new HashMap<CodeBlock, ArrayList<OutgoingReturnTransition<CodeBlock,AnnotatedProgramPoint>>>());
+//							if (_stateToHierToLetterToOutgoingReturnTransitions.get(currentNode).get(hier).get(edge) == null)
+//								_stateToHierToLetterToOutgoingReturnTransitions.get(currentNode).get(hier).put(edge, 
+//										new ArrayList<OutgoingReturnTransition<CodeBlock,AnnotatedProgramPoint>>());
+//							_stateToHierToLetterToOutgoingReturnTransitions.get(currentNode).get(hier).get(edge)
+//								.add(new OutgoingReturnTransition<CodeBlock, AnnotatedProgramPoint>(hier, edge, targetNode));
+//						}
 					} else {
-						_internalAlphabet.add(edge);
+						_internalAlphabet.add(statement);
 						
 						if (_stateToLettersInternal.get(currentNode) == null)
 						_stateToLettersInternal.put(currentNode, new HashSet<CodeBlock>());
-						_stateToLettersInternal.get(currentNode).add(edge);
+						_stateToLettersInternal.get(currentNode).add(statement);
 						
 						if (_stateToLetterToOutgoingInternalTransitions.get(currentNode) == null)
 							_stateToLetterToOutgoingInternalTransitions.put(currentNode, 
 									new HashMap<CodeBlock, ArrayList<OutgoingInternalTransition<CodeBlock,AnnotatedProgramPoint>>>());
-						if (_stateToLetterToOutgoingInternalTransitions.get(currentNode).get(edge) == null)
-							_stateToLetterToOutgoingInternalTransitions.get(currentNode).put(edge, 
+						if (_stateToLetterToOutgoingInternalTransitions.get(currentNode).get(statement) == null)
+							_stateToLetterToOutgoingInternalTransitions.get(currentNode).put(statement, 
 									new ArrayList<OutgoingInternalTransition<CodeBlock,AnnotatedProgramPoint>>());
-						_stateToLetterToOutgoingInternalTransitions.get(currentNode).get(edge)
-							.add(new OutgoingInternalTransition<CodeBlock, AnnotatedProgramPoint>(edge, targetNode));
+						_stateToLetterToOutgoingInternalTransitions.get(currentNode).get(statement)
+							.add(new OutgoingInternalTransition<CodeBlock, AnnotatedProgramPoint>(statement, targetNode));
 					}
 							
 				}
@@ -168,6 +194,16 @@ public class NWAEmptinessCheck implements IEmptinessCheck {
 			_alphabet.addAll(_callAlphabet);
 			_alphabet.addAll(_returnAlphabet);
 			_alphabet.addAll(_internalAlphabet);
+		}
+
+		private boolean isOutReturnTransitionNotContained(
+				AnnotatedProgramPoint currentNode, AnnotatedProgramPoint hier, CodeBlock edge,
+				AnnotatedProgramPoint targetNode) {
+			boolean result = true;
+			for (OutgoingReturnTransition<CodeBlock, AnnotatedProgramPoint> ort : 
+				_stateToHierToLetterToOutgoingReturnTransitions.get(currentNode).get(hier).get(edge)) 
+				result &= ort.getHierPred() != hier || ort.getLetter() != edge || ort.getSucc() != targetNode;
+			return result;
 		}
 
 		@Override

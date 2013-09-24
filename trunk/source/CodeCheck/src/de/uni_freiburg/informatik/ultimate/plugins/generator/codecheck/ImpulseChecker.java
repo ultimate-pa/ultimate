@@ -38,9 +38,11 @@ public class ImpulseChecker extends CodeChecker {
 	 * @param m_taPrefs TAPreferences
 	 * @param m_originalRoot the original RootNode
 	 * @param m_graphRoot the ImpRootNode
+	 * @param m_graphWriter 
 	 */
-	public ImpulseChecker(IElement root, SmtManager m_smtManager, IPredicate m_truePredicate, IPredicate m_falsePredicate, TAPreferences m_taPrefs, RootNode m_originalRoot, ImpRootNode m_graphRoot) {
-		super(root, m_smtManager, m_truePredicate, m_falsePredicate, m_taPrefs, m_originalRoot, m_graphRoot);
+	public ImpulseChecker(IElement root, SmtManager m_smtManager, IPredicate m_truePredicate, IPredicate m_falsePredicate, 
+			TAPreferences m_taPrefs, RootNode m_originalRoot, ImpRootNode m_graphRoot, GraphWriter graphWriter) {
+		super(root, m_smtManager, m_truePredicate, m_falsePredicate, m_taPrefs, m_originalRoot, m_graphRoot, graphWriter);
 		redirectionTargetFinder = new RedirectionTargetFinder(this);
 		LocationPredicates = new HashMap<ProgramPoint, HashMap<IPredicate,AnnotatedProgramPoint>>();
 		initializeLocationPredicates(m_graphRoot);
@@ -129,8 +131,8 @@ public class ImpulseChecker extends CodeChecker {
 		defaultRedirectEdges(nodes, nestedWords, copies);
 		redirectEdges(copies);
 		
-		for (AnnotatedProgramPoint node : nodes)
-			node.updateCopies();
+//		for (AnnotatedProgramPoint node : nodes) //FIXME ..
+//			node.updateCopies();
 		
 		return true;
 		
@@ -158,9 +160,9 @@ public class ImpulseChecker extends CodeChecker {
 			return newNode;
 		
 		// If no old node is found, a new one is created using the constructor which copies outgoing edges
-		newNode = new AnnotatedProgramPoint(oldNode, newPredicate, true);
-		oldNode.addCopy(newNode);
-		newNode.setCloneSource(oldNode);
+//		newNode = new AnnotatedProgramPoint(oldNode, newPredicate, true); //FIXME
+//		oldNode.addCopy(newNode);
+//		newNode.setCloneSource(oldNode);
 
 		// We update the LocationPredicate map with the new node, to make sure that no duplicate will be created after that.
 		LocationPredicates.get(programPoint).put(newPredicate, newNode);
@@ -186,18 +188,18 @@ public class ImpulseChecker extends CodeChecker {
 		
 		//redirect intermediate edges
 		for(int i = 1; i < copies.length; ++i) {
-			if(nodes[i].getNewCopies().contains(copies[i-1])) {
-				// if the source node is a new copy, then we redirect right away.
-				if (copies[i-1].getOutgoingEdgeLabel(nodes[i+1]) instanceof Return) {
-					// if the edge is a hyper edge, then we need to find the call pred.
-					AnnotatedProgramPoint callPred = nodes[nestedWord.getCallPosition(i)];
-					// System.err.printf("Removing return edge %d:%d -> %d", i, nestedWords.getCallPosition(i), i+1); // for debugging
-					redirectHyperEdgeDestination(copies[i-1], callPred, nodes[i+1], copies[i]);
-				}
-				else
-					redirectEdge(copies[i-1], nodes[i+1], copies[i]);
-			}
-			else {
+//			if(nodes[i].getNewCopies().contains(copies[i-1])) {//FIXME
+//				// if the source node is a new copy, then we redirect right away.
+////				if (copies[i-1].getOutgoingEdgeLabel(nodes[i+1]) instanceof Return) { //--> commented out as the return case moved into redirectEdge
+////					// if the edge is a hyper edge, then we need to find the call pred.
+////					AnnotatedProgramPoint callPred = nodes[nestedWord.getCallPosition(i)];
+////					// System.err.printf("Removing return edge %d:%d -> %d", i, nestedWords.getCallPosition(i), i+1); // for debugging
+////					redirectHyperEdgeDestination(copies[i-1], callPred, nodes[i+1], copies[i]);
+////				}
+////				else
+//					redirectEdge(copies[i-1], nodes[i+1], copies[i]);
+//			}
+//			else {
 				// if the source node is not a new copy, but a similar one,
 				// then we find the old edge that should be redirected, and then decide whether to redirect or not.
 				AnnotatedProgramPoint source = copies[i-1];
@@ -214,16 +216,16 @@ public class ImpulseChecker extends CodeChecker {
 					boolean randomlyDecide = false;
 					randomlyDecide &= (Math.random() * 2) >= 1;
 					if(alwaysRedirect || randomlyDecide || isStrongerPredicate(newDest, oldDest)) {
-						if (source.getOutgoingEdgeLabel(oldDest) instanceof Return) {
-							// if the edge is a hyper edge, then we need to find the call pred.
-							AnnotatedProgramPoint callPred = nodes[nestedWord.getCallPosition(i)];
-							// System.err.printf("Removing return edge %d:%d -> %d", i, nestedWords.getCallPosition(i), i+1); // for debugging
-							redirectHyperEdgeDestination(source, callPred, oldDest, newDest);
-						}
-						else
+//						if (source.getOutgoingEdgeLabel(oldDest) instanceof Return) {
+//							// if the edge is a hyper edge, then we need to find the call pred.
+//							AnnotatedProgramPoint callPred = nodes[nestedWord.getCallPosition(i)];
+//							// System.err.printf("Removing return edge %d:%d -> %d", i, nestedWords.getCallPosition(i), i+1); // for debugging
+//							redirectHyperEdgeDestination(source, callPred, oldDest, newDest);
+//						}
+//						else
 							redirectEdge(source, oldDest, newDest);
 					}
-				}
+//				}
 			}
 		}
 		
@@ -231,13 +233,13 @@ public class ImpulseChecker extends CodeChecker {
 		AnnotatedProgramPoint lastNode = copies[copies.length - 1];
 		AnnotatedProgramPoint errorLocation = nodes[nodes.length - 1];
 		if (lastNode.getOutgoingNodes().contains(errorLocation)) {
-			if(lastNode.getOutgoingEdgeLabel(errorLocation) instanceof Return) {
-				AnnotatedProgramPoint callPred = nodes[nestedWord.getCallPosition(nodes.length - 2)];
-				// System.err.printf("Removing return edge %d:%d -> %d", nodes.length-2, nestedWords.getCallPosition(nodes.length-2), nodes.length-1); //for debugging
-				lastNode.removeOutgoingReturnCallPred(errorLocation, callPred);
-			}
-			else
-				lastNode.disconnectFrom(errorLocation);
+//			if(lastNode.getOutgoingEdgeLabel(errorLocation) instanceof Return) {
+//				AnnotatedProgramPoint callPred = nodes[nestedWord.getCallPosition(nodes.length - 2)];
+//				// System.err.printf("Removing return edge %d:%d -> %d", nodes.length-2, nestedWords.getCallPosition(nodes.length-2), nodes.length-1); //for debugging
+//				lastNode.removeOutgoingReturnCallPred(errorLocation, callPred);
+//			}
+//			else
+//			lastNode.disconnectOutgoing(errorLocation);//FIXME
 		}
 		
 		return true;
@@ -253,27 +255,30 @@ public class ImpulseChecker extends CodeChecker {
 		for (AnnotatedProgramPoint source : newCopies) {
 			AnnotatedProgramPoint[] successorNodes = source.getOutgoingNodes().toArray(new AnnotatedProgramPoint[]{});
 			for (AnnotatedProgramPoint oldDest : successorNodes) {
-				// For each new copy, and for each of it's outgoing nodes, we search for a better redirection target
-				if(source.getOutgoingEdgeLabel(oldDest) instanceof Return) {
-					// If the edge is a return edge, then each hyper edge is checked for redirection
-					AnnotatedProgramPoint[] callPreds;
-					callPreds = source.getCallPredsOfOutgoingReturnTarget(oldDest).toArray(new AnnotatedProgramPoint[]{});
-					if(callPreds != null) {
-						for (AnnotatedProgramPoint callPred : callPreds) {
-							// we use the target finder to find us the best redirection target. 
-							// if it returns null, then no better target is found and we don't redirect.
-							AnnotatedProgramPoint newDest = redirectionTargetFinder.findReturnRedirectionTarget(source, callPred, oldDest);
-							if (newDest != null)
-								redirectHyperEdgeDestination(source, callPred, oldDest, newDest);
-						}
-					}
-				}
-				else {
+				
+				
+//				// For each new copy, and for each of it's outgoing nodes, we search for a better redirection target
+//				if(source.getOutgoingEdgeLabel(oldDest) instanceof Return) {
+//					// If the edge is a return edge, then each hyper edge is checked for redirection
+//					AnnotatedProgramPoint[] callPreds;
+//					callPreds = source.getCallPredsOfOutgoingReturnTarget(oldDest).toArray(new AnnotatedProgramPoint[]{});
+//					if(callPreds != null) {
+//						for (AnnotatedProgramPoint callPred : callPreds) {
+//							// we use the target finder to find us the best redirection target. 
+//							// if it returns null, then no better target is found and we don't redirect.
+//							AnnotatedProgramPoint newDest = redirectionTargetFinder.findReturnRedirectionTarget(source, callPred, oldDest);
+//							if (newDest != null)
+//								redirectHyperEdgeDestination(source, callPred, oldDest, newDest);
+//						}
+//					}
+//				}
+//				else {
 					// For normal edges, we use the target finder to find us the redirection target, and redirect.
 					AnnotatedProgramPoint newDest = redirectionTargetFinder.findRedirectionTarget(source, oldDest);
 					if(newDest != null)
 						redirectEdge(source, oldDest, newDest);
-				}
+					//TODO: treat return edges --> maybe just adapt the redirectionTargetFinder
+//				}
 			}
 		}
 		return true;
@@ -294,58 +299,63 @@ public class ImpulseChecker extends CodeChecker {
 		if(oldDest == newDest) // IF the new Dest is the same as the old Dest, then nothing needs to be done
 			return true;
 			
-		CodeBlock label = source.getOutgoingEdgeLabel(oldDest);
-		if(label == null)
-			return false;
-
-		source.connectTo(newDest, label);
-		
-		// Usually I make sure not to use this method if it's a return edge. But I wrote this part anyway for future uses maybe
-		if(label instanceof Return) { 
-			 HashSet<AnnotatedProgramPoint> callPreds = source.getCallPredsOfOutgoingReturnTarget(oldDest);
-			 for(AnnotatedProgramPoint callPred : callPreds)
-				 source.addOutGoingReturnCallPred(newDest, callPred);
-		}
-		
-		source.disconnectFrom(oldDest);
+//		CodeBlock label = source.getOutgoingEdgeLabel(oldDest); //FIXME
+//		if(label == null)
+//			return false;
+//
+//		if (label instanceof Return) {
+//			source.connectOutgoingWithReturn(newDest, (Return) label, 
+//					source.getOutgoingReturnCallPreds().get(source.getOutgoingNodes().indexOf(oldDest)));
+//		} else {
+//			source.connectOutgoing(newDest, label);
+//		}
+//		
+////		// Usually I make sure not to use this method if it's a return edge. But I wrote this part anyway for future uses maybe
+////		if(label instanceof Return) { 
+////			 HashSet<AnnotatedProgramPoint> callPreds = source.getCallPredsOfOutgoingReturnTarget(oldDest);
+////			 for(AnnotatedProgramPoint callPred : callPreds)
+////				 source.addOutGoingReturnCallPred(newDest, callPred);
+////		}
+//		
+//		source.disconnectOutgoing(oldDest);
 		
 		return true;
 		
 	}
 	
-	/**
-	 * Redirects a hyper edge from it's old destination to another destination.
-	 * @param source the source of the hyper edge
-	 * @param callPred the call predecessor of the hyper edge
-	 * @param oldDest the old destination of the hyper edge
-	 * @param newDest the new destination the hyper edge will be redirected to
-	 * @return returns false if there is no hyper edge to be redirected, otherwise true
-	 */
-	private boolean redirectHyperEdgeDestination(AnnotatedProgramPoint source, AnnotatedProgramPoint callPred,
-			AnnotatedProgramPoint oldDest,
-			AnnotatedProgramPoint newDest) {
-		
-		if(oldDest == newDest) // IF the new Dest is the same as the old Dest, then nothing needs to be done
-			return true;
-		
-		CodeBlock label = source.getOutgoingEdgeLabel(oldDest);
-		if(label == null || !(label instanceof Return))
-			return false;
-
-		// We add the label of the hyper edge via the connectTo method.
-		// If the already exists, the connectTo method will detect that and create no duplicates
-		source.connectTo(newDest, label);
-
-		source.addOutGoingReturnCallPred(newDest, callPred);
-		source.removeOutgoingReturnCallPred(oldDest, callPred);
-
-		// If that was the last hyper edge connecting the source and old destination, then the 2 are disconnected.
-		if(source.getCallPredsOfOutgoingReturnTarget(oldDest) == null)
-			source.disconnectFrom(oldDest);
-		
-		return true;
-		
-	}
+//	/**
+//	 * Redirects a hyper edge from it's old destination to another destination.
+//	 * @param source the source of the hyper edge
+//	 * @param callPred the call predecessor of the hyper edge
+//	 * @param oldDest the old destination of the hyper edge
+//	 * @param newDest the new destination the hyper edge will be redirected to
+//	 * @return returns false if there is no hyper edge to be redirected, otherwise true
+//	 */
+//	private boolean redirectHyperEdgeDestination(AnnotatedProgramPoint source, AnnotatedProgramPoint callPred,
+//			AnnotatedProgramPoint oldDest,
+//			AnnotatedProgramPoint newDest) {
+//		
+//		if(oldDest == newDest) // IF the new Dest is the same as the old Dest, then nothing needs to be done
+//			return true;
+//		
+//		CodeBlock label = source.getOutgoingEdgeLabel(oldDest);
+//		if(label == null || !(label instanceof Return))
+//			return false;
+//
+//		// We add the label of the hyper edge via the connectTo method.
+//		// If the already exists, the connectTo method will detect that and create no duplicates
+//		source.connectTo(newDest, label);
+//
+//		source.addOutGoingReturnCallPred(newDest, callPred);
+//		source.removeOutgoingReturnCallPred(oldDest, callPred);
+//
+//		// If that was the last hyper edge connecting the source and old destination, then the 2 are disconnected.
+//		if(source.getCallPredsOfOutgoingReturnTarget(oldDest) == null)
+//			source.disconnectOutgoing(oldDest);
+//		
+//		return true;
+//		
+//	}
 	
 	/**
 	 * Search for an edge between the source and the root or one of its children.
@@ -359,11 +369,11 @@ public class ImpulseChecker extends CodeChecker {
 		// It's a tree, no cycles, so we don't need a list for visited nodes.
 		if(source.getOutgoingNodes().contains(root))
 			return root;
-		for(AnnotatedProgramPoint child : root.getCopies()) {
-			AnnotatedProgramPoint res = findTargetInTree(source, child);
-			if(res != null)
-				return res;
-		}
+//		for(AnnotatedProgramPoint child : root.getCopies()) { //FIXME
+//			AnnotatedProgramPoint res = findTargetInTree(source, child);
+//			if(res != null)
+//				return res;
+//		}
 		return null;
 	}
 }

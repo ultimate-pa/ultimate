@@ -17,6 +17,7 @@ import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootAnnot;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
@@ -52,6 +53,9 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 	public SmtManager m_smtManager;
 	public IPredicate m_truePredicate;
 	public IPredicate m_falsePredicate;
+	
+	GraphWriter m_graphWriter;
+	String m_dotGraphPath = "C:/temp/codeCheckGraphs";
 	
 	public ImpRootNode m_graphRoot;
 
@@ -94,19 +98,15 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 				}
 			}
 		}
-		for (AnnotatedProgramPoint node : copy.keySet()) {
-			AnnotatedProgramPoint newNode = copy.get(node);
-			List <AnnotatedProgramPoint> nextNodes = node.getOutgoingNodes();
-			for (AnnotatedProgramPoint nextNode : nextNodes) {
-				AnnotatedProgramPoint nextNewNode = copy.get(nextNode);
-				newNode.connectTo(nextNewNode, node.getOutgoingEdgeLabel(nextNode));
-			}
-		}
-		for (AnnotatedProgramPoint node : copy.keySet()) {
-			AnnotatedProgramPoint[] returnNodes = node.m_outgoingReturnAppToCallPreds.keySet().toArray(new AnnotatedProgramPoint[]{});
-			for (AnnotatedProgramPoint returnNode : returnNodes) {
-				for (AnnotatedProgramPoint callPred : node.getCallPredsOfOutgoingReturnTarget(returnNode)) {
-					copy.get(node).addOutGoingReturnCallPred(copy.get(returnNode), copy.get(callPred));
+		for (AnnotatedProgramPoint oldNode : copy.keySet()) {
+			AnnotatedProgramPoint newNode = copy.get(oldNode);
+			for (AppEdge outEdge : oldNode.getOutgoingEdges()) {
+				if (outEdge instanceof AppHyperEdge) {
+					AppHyperEdge outHypEdge = (AppHyperEdge) outEdge;
+					newNode.connectOutgoingReturn(outHypEdge.getTarget(), 
+							outHypEdge.getHier(), (Return) outHypEdge.getStatement());
+				} else {
+					newNode.connectOutgoing(outEdge.getTarget(), outEdge.getStatement());
 				}
 			}
 		}
@@ -128,13 +128,17 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 
 		m_truePredicate = m_smtManager.newTruePredicate();
 		m_falsePredicate = m_smtManager.newFalsePredicate();
+		
+		m_graphWriter = new GraphWriter(m_dotGraphPath, 
+				true, true, true, false, m_smtManager.getScript());
+		
 		RCFG2AnnotatedRCFG r2ar = new RCFG2AnnotatedRCFG(m_smtManager);
 		m_graphRoot = r2ar.convert(m_originalRoot, m_truePredicate);
 		removeSummaryEdges();
 		if (checker == Checker.IMPULSE) {
-			codeChecker = new ImpulseChecker(root, m_smtManager, m_truePredicate, m_falsePredicate, m_taPrefs, m_originalRoot, m_graphRoot);
+			codeChecker = new ImpulseChecker(root, m_smtManager, m_truePredicate, m_falsePredicate, m_taPrefs, m_originalRoot, m_graphRoot, m_graphWriter);
 		} else {
-			codeChecker = new UltimateChecker(root, m_smtManager, m_truePredicate, m_falsePredicate, m_taPrefs, m_originalRoot, m_graphRoot);
+			codeChecker = new UltimateChecker(root, m_smtManager, m_truePredicate, m_falsePredicate, m_taPrefs, m_originalRoot, m_graphRoot, m_graphWriter);
 		}
 		return false;
 	}
@@ -146,11 +150,14 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 		stack.add(m_graphRoot);
 		while(!stack.isEmpty()) {
 			AnnotatedProgramPoint node = stack.pop();
-			AnnotatedProgramPoint[] successors = node.getOutgoingNodes().toArray(new AnnotatedProgramPoint[]{});
-			for (AnnotatedProgramPoint successor : successors) {
-				if (node.getOutgoingEdgeLabel(successor) instanceof Summary) {
-					node.removeOutgoingNode(successor);
-					successor.removeIncomingNode(node);
+//			AnnotatedProgramPoint[] successors = node.getOutgoingNodes().toArray(new AnnotatedProgramPoint[]{});
+//			for (AnnotatedProgramPoint successor : successors) {
+			AppEdge[] outEdges = node.getOutgoingEdges().toArray(new AppEdge[]{});
+			for (AppEdge outEdge : outEdges) {
+				AnnotatedProgramPoint successor = outEdge.getTarget();
+				if (outEdge.getStatement() instanceof Summary) {
+//					node.disconnectOutgoing(outEdge);
+					outEdge.disconnect();
 				}
 				if(!visited.contains(successor)) {
 					visited.add(successor);
@@ -172,8 +179,15 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 		ImpRootNode originalGraphCopy = copyGraph(m_graphRoot);
 		//m_graphRoot.addOutgoingNode(originalGraphCopy, new DummyCodeBlock());
 		//originalGraphCopy.addIncomingNode(m_graphRoot);
+		
+		m_graphWriter.writeGraphAsImage(originalGraphCopy, 
+				String.format("graph_%s_original", m_graphWriter._graphCounter));
+
 
 		int noOfProcedures = m_graphRoot.getOutgoingNodes().size();
+		
+		//FIXME
+		noOfProcedures = 1;
 		
 		for (int procID = 0; procID < noOfProcedures; ++procID) {
 			AnnotatedProgramPoint procRoot = m_graphRoot.getOutgoingNodes().get(procID);
@@ -199,11 +213,17 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 						emptinessCheck.checkForEmptiness(procedureRoot);
 				
 				if (errorRun == null) {
+					m_graphWriter.writeGraphAsImage(procedureRoot, 
+						String.format("graph_%s_%s_noEP", m_graphWriter._graphCounter, procedureRoot.toString().substring(0, 5)));
 					// if an error trace doesn't exist, return safe
 					stack.pop();
 					continue;
 				} else {
 					s_Logger.info("Error Path is FOUND.");
+					m_graphWriter.writeGraphAsImage(procedureRoot, 
+						String.format("graph_%s_%s_foundEP", m_graphWriter._graphCounter, procedureRoot.toString().substring(0, 5)), 
+						errorRun.getStateSequence().toArray(new AnnotatedProgramPoint[]{}));
+					
 					TraceChecker traceChecker = new TraceChecker(
 							m_truePredicate, // checks whether the trace is feasible, i.e. the formula is satisfiable
 							m_falsePredicate,  //return LBool.UNSAT if trace is infeasible
@@ -227,8 +247,8 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 				if(DEBUG)
 					codeChecker.debug();
 			}
-			m_graphRoot = copyGraph(originalGraphCopy);
 			codeChecker.m_graphRoot = m_graphRoot;
+			m_graphRoot = copyGraph(originalGraphCopy);
 		}
 
 		if(DEBUG)

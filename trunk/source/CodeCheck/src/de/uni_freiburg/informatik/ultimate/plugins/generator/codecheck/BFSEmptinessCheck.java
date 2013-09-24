@@ -54,7 +54,8 @@ public class BFSEmptinessCheck implements IEmptinessCheck {
 			visitedNodes.add(currentAdd);
 
 			for (AnnotatedProgramPoint app : currentAdd.top.getOutgoingNodes()) {
-				CodeBlock edge = currentAdd.top.getOutgoingEdgeLabel(app);
+//				CodeBlock edge = currentAdd.top.getOutgoingEdgeLabel(app); //FIXME
+				CodeBlock edge = null;
 
 				if (edge instanceof Summary)//we are computing our own summaries
 					continue;
@@ -83,8 +84,9 @@ public class BFSEmptinessCheck implements IEmptinessCheck {
 				} else if (edge instanceof Return) {
 					//only take return edges that return to the current callpredecessor
 					//					if (!((Return) edge).getCallerNode().equals(currentAdd.bot.getProgramPoint()))
-					if (!currentAdd.top.outGoingReturnAppToCallPredContains(app, currentAdd.bot))
-						continue;
+//					if (currentAdd.top.getOutgoingReturnCallPreds().get(currentAdd.top.getOutgoingNodes().indexOf(app)) != currentAdd.bot) //FIXME
+////							old: "!currentAdd.top.outGoingReturnAppToCallPredContains(app, currentAdd.bot))"
+//						continue;
 
 					Stack<Call> currentCallStack = (Stack<Call>) currentAdd.callStack.clone();
 					Stack<AnnotatedProgramPoint> currentCpStack = (Stack<AnnotatedProgramPoint>) currentAdd.callPredStack.clone();

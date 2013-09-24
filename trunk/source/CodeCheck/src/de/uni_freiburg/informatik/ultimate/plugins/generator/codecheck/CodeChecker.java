@@ -27,13 +27,18 @@ public abstract class CodeChecker {
 	public IPredicate m_truePredicate;
 	public IPredicate m_falsePredicate;
 	
-	public CodeChecker(IElement root, SmtManager m_smtManager, IPredicate m_truePredicate, IPredicate m_falsePredicate, TAPreferences m_taPrefs, RootNode m_originalRoot, ImpRootNode m_graphRoot) {
+	protected GraphWriter _graphWriter;
+	
+	public CodeChecker(IElement root, SmtManager m_smtManager, IPredicate m_truePredicate, IPredicate m_falsePredicate, 
+			TAPreferences m_taPrefs, RootNode m_originalRoot, ImpRootNode m_graphRoot, GraphWriter graphWriter) {
 		this.m_smtManager = m_smtManager;
 		this.m_truePredicate = m_truePredicate;
 		this.m_falsePredicate = m_falsePredicate;
 		this.m_taPrefs = m_taPrefs;
 		this.m_originalRoot = m_originalRoot;
 		this.m_graphRoot = m_graphRoot;
+		
+		this._graphWriter = graphWriter;
 	}
 	
 	public abstract boolean codeCheck(NestedRun<CodeBlock, AnnotatedProgramPoint> errorRun, IPredicate[] interpolants, AnnotatedProgramPoint procedureRoot);
@@ -91,6 +96,19 @@ public abstract class CodeChecker {
 		return m_smtManager.isInductiveReturn(sourceNode.getPredicate(), callNode.getPredicate(), (Return) edgeLabel, negatePredicate(destinationNode.getPredicate())) != LBool.UNSAT;
 	}
 	
+	protected void connectOutgoingIfSat(AnnotatedProgramPoint source,
+			CodeBlock statement, AnnotatedProgramPoint target) {
+		if (isSatEdge(source, statement, target))
+			source.connectOutgoing(target, statement);
+	}
+
+	protected void connectOutgoingReturnIfSat(AnnotatedProgramPoint source,
+			AnnotatedProgramPoint hier, Return statement,
+			AnnotatedProgramPoint target) {
+		if (isSatRetEdge(source, statement, target, hier))
+			source.connectOutgoingReturn(target, hier, statement);
+	}	
+	
 	protected boolean isValidEdge(AnnotatedProgramPoint sourceNode, CodeBlock edgeLabel,
 			AnnotatedProgramPoint destinationNode) {
 		if (edgeLabel instanceof DummyCodeBlock)
@@ -141,12 +159,12 @@ public abstract class CodeChecker {
 		display += String.format("connected To: %s\n", node.getOutgoingNodes());
 		display += String.format("connected Fr: %s\n", node.getIncomingNodes());
 		*/
-		if (node.m_outgoingReturnAppToCallPreds != null && node.m_outgoingReturnAppToCallPreds.size() > 0) {
-			display += String.format("outGoing: %s\n", node.m_outgoingReturnAppToCallPreds);
-		}
-		if (node.m_ingoingReturnAppToCallPreds != null && node.m_ingoingReturnAppToCallPreds.size() > 0) {
-			display += String.format("inHyperEdges: %s\n", node.m_ingoingReturnAppToCallPreds);
-		}
+//		if (node.m_outgoingReturnCallPreds != null && node.m_outgoingReturnCallPreds.size() > 0) {
+//			display += String.format("outGoing: %s\n", node.m_outgoingReturnCallPreds);
+//		}
+//		if (node.m_nodesThatThisIsReturnCallPredOf != null && node.m_nodesThatThisIsReturnCallPredOf.size() > 0) {
+//			display += String.format("inHyperEdges: %s\n", node.m_nodesThatThisIsReturnCallPredOf);
+//		}
 		if (display.length() > 0) {
 			display = String.format("%s\nNode %s:\n", message, node) + display;
 			CodeCheckObserver.s_Logger.debug(display);

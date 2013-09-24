@@ -12,15 +12,15 @@ public class ImpRootAnnot extends RootAnnot {
 	
 	private static final long serialVersionUID = 1L;
 	
-	HashMap<AnnotatedProgramPoint, ArrayList<AnnotatedProgramPoint>> callPredToReturnPreds;
+//	HashMap<AnnotatedProgramPoint, ArrayList<AnnotatedProgramPoint>> callPredToReturnPreds;
 
 	public ImpRootAnnot(TAPreferences taPrefs, Boogie2SMT m_Boogie2smt,
-			Backtranslator backtranslator, HashMap<AnnotatedProgramPoint, ArrayList<AnnotatedProgramPoint>> callPredToReturnPreds) {
+			Backtranslator backtranslator) { //, HashMap<AnnotatedProgramPoint, ArrayList<AnnotatedProgramPoint>> callPredToReturnPreds) {
 		super(taPrefs, m_Boogie2smt, backtranslator);
-		this.callPredToReturnPreds = callPredToReturnPreds;
+//		this.callPredToReturnPreds = callPredToReturnPreds;
 	}
 
-	HashMap<AnnotatedProgramPoint, ArrayList<AnnotatedProgramPoint>> getCallPredToReturnPreds() {
-		return callPredToReturnPreds;
-	}
+//	HashMap<AnnotatedProgramPoint, ArrayList<AnnotatedProgramPoint>> getCallPredToReturnPreds() {
+//		return callPredToReturnPreds;
+//	}
 }
