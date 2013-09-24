@@ -213,11 +213,19 @@ public class RelevantTransFormulas extends TraceWithFormulas<TransFormula, IPred
 			}
 		}
 		for (BoogieVar bv : tf.getOutVars().keySet()) {
-			if (freeVars.contains(tf.getOutVars().get(bv))) {
+			if (tf.getOutVars().get(bv) != tf.getInVars().get(bv)) {
+				outvars.put(bv, tf.getOutVars().get(bv));
+			} else if (freeVars.contains(tf.getOutVars().get(bv))) {
 				outvars.put(bv, tf.getOutVars().get(bv));
 			}
 		}
-//		TermVarsProc tvp = m_SmtManager.computeTermVarsProc(formula);
+		Set<TermVariable> auxVars = new HashSet<TermVariable>();
+		for (TermVariable tv : tf.getAuxVars()) {
+			if (freeVars.contains(tv)) {
+				auxVars.add(tv);
+			}
+		}
+		Term closedFormula = TransFormula.computeClosedFormula(formula, invars, outvars, auxVars, m_SmtManager.getBoogie2Smt());
 		
 		return new TransFormula(formula,
 				invars,
@@ -225,8 +233,7 @@ public class RelevantTransFormulas extends TraceWithFormulas<TransFormula, IPred
 				new HashSet<TermVariable>(), 
 				tf.getBranchEncoders(),
 				tf.isInfeasible(),
-				tf.getClosedFormula());
-		// TODO: SmtManager.computeClosedFormula(formula, tvp.getVars(), m_SmtManager.getScript())
+				closedFormula);
 	}
 
 	@Override
