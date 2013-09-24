@@ -40,7 +40,7 @@ public class TraceCheckerSpWp extends TraceChecker {
 	
 	
 	private static boolean m_useUnsatCore = true;
-	private static boolean m_useUnsatCoreOfFineGranularity = !true;
+	private static boolean m_useUnsatCoreOfFineGranularity = true;
 	private static boolean m_ComputeInterpolantsSp = true;
 	private static boolean m_ComputeInterpolantsFp = true;
 	private static boolean m_ComputeInterpolantsWp = true;

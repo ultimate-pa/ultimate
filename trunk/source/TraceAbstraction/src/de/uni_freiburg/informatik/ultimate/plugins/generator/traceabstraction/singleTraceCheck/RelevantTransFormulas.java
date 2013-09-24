@@ -212,7 +212,7 @@ public class RelevantTransFormulas extends TraceWithFormulas<TransFormula, IPred
 				invars.put(bv, tf.getInVars().get(bv));
 			}
 		}
-		for (BoogieVar bv : tf.getAssignedVars()) {
+		for (BoogieVar bv : tf.getOutVars().keySet()) {
 			if (freeVars.contains(tf.getOutVars().get(bv))) {
 				outvars.put(bv, tf.getOutVars().get(bv));
 			}
