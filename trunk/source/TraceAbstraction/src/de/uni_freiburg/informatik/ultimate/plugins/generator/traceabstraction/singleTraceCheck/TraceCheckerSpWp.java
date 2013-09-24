@@ -6,10 +6,12 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.SortedMap;
 
 import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
+import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
@@ -21,6 +23,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Seq
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.TransFormula;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.DestructiveEqualityResolution;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.EdgeChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
@@ -37,6 +40,7 @@ public class TraceCheckerSpWp extends TraceChecker {
 	
 	
 	private static boolean m_useUnsatCore = true;
+	private static boolean m_useUnsatCoreOfFineGranularity = !true;
 	private static boolean m_ComputeInterpolantsSp = true;
 	private static boolean m_ComputeInterpolantsFp = true;
 	private static boolean m_ComputeInterpolantsWp = true;
@@ -122,48 +126,30 @@ public class TraceCheckerSpWp extends TraceChecker {
 		m_PredicateUnifier.declarePredicate(tracePrecondition);
 		m_PredicateUnifier.declarePredicate(tracePostcondition);
 		NestedWord<CodeBlock> trace = m_Trace;
-		Set<CodeBlock> codeBlocksInUnsatCore = new HashSet<CodeBlock>();
-		
 		unlockSmtManager();
-		
-		boolean[] localVarAssignmentAtCallInUnsatCore = new boolean[trace.length()];
-		boolean[] oldVarAssignmentAtCallInUnsatCore = new boolean[trace.length()];
-		// Filter out the statements, which doesn't occur in the unsat core.
-		for (int i = 0; i < trace.length(); i++) {
-			if (!trace.isCallPosition(i) && unsat_coresAsSet.contains(m_AAA.getAnnotatedSsa().getFormulaFromNonCallPos(i))) {
-				codeBlocksInUnsatCore.add(trace.getSymbol(i));
-			} else if (trace.isCallPosition(i) && 
-					(unsat_coresAsSet.contains(m_AAA.getAnnotatedSsa().getGlobalVarAssignment(i))
-							|| unsat_coresAsSet.contains(m_AAA.getAnnotatedSsa().getOldVarAssignment(i)))) {
-				// The upper condition checks, whether the globalVarAssignments
-				// is in unsat core, now check whether the local variable assignments
-				// is in unsat core, if it is Call statement
-					// Check whether the local variable assignments are also in unsat core.
-				if (unsat_coresAsSet.contains(m_AAA.getAnnotatedSsa().getLocalVarAssignment(i))) {
-					localVarAssignmentAtCallInUnsatCore[i] = true;
-				}
-				if (unsat_coresAsSet.contains(m_AAA.getAnnotatedSsa().getOldVarAssignment(i))) {
-					oldVarAssignmentAtCallInUnsatCore[i] = true;
-				}
-				// Add the globalVarAssignments to the unsat_core, if it is a Call statement, otherwise it adds
-				// the statement
-				codeBlocksInUnsatCore.add(trace.getSymbol(i));
-			} else {
-				if (trace.getSymbol(i) instanceof Call) {
-					if (unsat_coresAsSet.contains(m_AAA.getAnnotatedSsa().getLocalVarAssignment(i))) {
-						localVarAssignmentAtCallInUnsatCore[i] = true;
-					}
-				}
-			}
+		RelevantTransFormulas rv = null;
+		if (!m_useUnsatCoreOfFineGranularity) {
+			boolean[] localVarAssignmentAtCallInUnsatCore = new boolean[trace.length()];
+			boolean[] oldVarAssignmentAtCallInUnsatCore = new boolean[trace.length()];
+			// Filter out the statements, which doesn't occur in the unsat core.
+			Set<CodeBlock> codeBlocksInUnsatCore = filterOutIrrelevantStatements(trace, unsat_coresAsSet, 
+					localVarAssignmentAtCallInUnsatCore, 
+					oldVarAssignmentAtCallInUnsatCore);
+			rv = new RelevantTransFormulas(trace,
+					m_Precondition, m_Postcondition, null,
+					codeBlocksInUnsatCore,
+					m_ModifiedGlobals,
+					localVarAssignmentAtCallInUnsatCore,
+					oldVarAssignmentAtCallInUnsatCore,
+					m_SmtManager);
+		} else {
+			rv = new RelevantTransFormulas(trace,
+					m_Precondition, m_Postcondition, null,
+					unsat_coresAsSet,
+					m_ModifiedGlobals,
+					m_SmtManager,
+					(AnnotateAndAsserterConjuncts)m_AAA);
 		}
-		
-		RelevantTransFormulas rv = new RelevantTransFormulas(trace,
-				m_Precondition, m_Postcondition, null,
-				codeBlocksInUnsatCore,
-				m_ModifiedGlobals,
-				localVarAssignmentAtCallInUnsatCore,
-				oldVarAssignmentAtCallInUnsatCore,
-				m_SmtManager);
 		RelevantVariables rvar = new RelevantVariables(rv);
 		
 		if (m_ComputeInterpolantsSp) {
@@ -354,6 +340,40 @@ public class TraceCheckerSpWp extends TraceChecker {
 			m_Interpolants = m_InterpolantsWp;
 		}
 	}
+	
+	private Set<CodeBlock> filterOutIrrelevantStatements(NestedWord<CodeBlock> trace, Set<Term> unsat_coresAsSet,
+			boolean[] localVarAssignmentAtCallInUnsatCore,
+			boolean[] oldVarAssignmentAtCallInUnsatCore ) {
+		Set<CodeBlock> codeBlocksInUnsatCore = new HashSet<CodeBlock>();
+		for (int i = 0; i < trace.length(); i++) {
+			if (!trace.isCallPosition(i) && unsat_coresAsSet.contains(m_AAA.getAnnotatedSsa().getFormulaFromNonCallPos(i))) {
+				codeBlocksInUnsatCore.add(trace.getSymbol(i));
+			} else if (trace.isCallPosition(i) && 
+					(unsat_coresAsSet.contains(m_AAA.getAnnotatedSsa().getGlobalVarAssignment(i))
+							|| unsat_coresAsSet.contains(m_AAA.getAnnotatedSsa().getOldVarAssignment(i)))) {
+				// The upper condition checks, whether the globalVarAssignments
+				// is in unsat core, now check whether the local variable assignments
+				// is in unsat core, if it is Call statement
+					// Check whether the local variable assignments are also in unsat core.
+				if (unsat_coresAsSet.contains(m_AAA.getAnnotatedSsa().getLocalVarAssignment(i))) {
+					localVarAssignmentAtCallInUnsatCore[i] = true;
+				}
+				if (unsat_coresAsSet.contains(m_AAA.getAnnotatedSsa().getOldVarAssignment(i))) {
+					oldVarAssignmentAtCallInUnsatCore[i] = true;
+				}
+				// Add the globalVarAssignments to the unsat_core, if it is a Call statement, otherwise it adds
+				// the statement
+				codeBlocksInUnsatCore.add(trace.getSymbol(i));
+			} else {
+				if (trace.getSymbol(i) instanceof Call) {
+					if (unsat_coresAsSet.contains(m_AAA.getAnnotatedSsa().getLocalVarAssignment(i))) {
+						localVarAssignmentAtCallInUnsatCore[i] = true;
+					}
+				}
+			}
+		}
+		return codeBlocksInUnsatCore;
+	}
 
 	private void computeForwardRelevantPredicates(RelevantVariables rvar) {
 		assert m_InterpolantsSp != null : "Interpolants SP_i have not been computed!";
@@ -364,6 +384,7 @@ public class TraceCheckerSpWp extends TraceChecker {
 					p.getVars(), p.getProcedures());
 		}
 	}
+	
 	private void computeBackwardRelevantPredicates(RelevantVariables rvar) {
 		assert m_InterpolantsWp != null : "Interpolants WP_i have not been computed!";
 		m_InterpolantsBp = new IPredicate[m_InterpolantsWp.length];
@@ -646,12 +667,15 @@ public class TraceCheckerSpWp extends TraceChecker {
 												(result == LBool.SAT ? "not valid" : result)));
 		return result;
 	}
-
+	
+	
 	@Override
 	protected AnnotateAndAsserter getAnnotateAndAsserter(NestedSsa ssa) {
-		//TODO: use this for find grained unsat cores
-		//return new AnnotateAndAsserterConjuncts(m_SmtManager, ssa);
-		return new AnnotateAndAsserter(m_SmtManager, ssa);
+		if (m_useUnsatCoreOfFineGranularity) {
+			return new AnnotateAndAsserterConjuncts(m_SmtManager, ssa); 
+		} else {
+			return new AnnotateAndAsserter(m_SmtManager, ssa);
+		}
 	}
 	
 	

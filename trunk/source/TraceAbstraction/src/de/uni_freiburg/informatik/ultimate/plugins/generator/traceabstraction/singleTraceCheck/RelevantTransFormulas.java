@@ -1,5 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -7,12 +8,15 @@ import java.util.Set;
 import java.util.SortedMap;
 
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.TransFormula;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.DestructiveEqualityResolution;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 
@@ -65,7 +69,25 @@ public class RelevantTransFormulas extends TraceWithFormulas<TransFormula, IPred
 		m_SmtManager = smtManager;
 		generateRelevantTransFormulas(unsat_core, localVarAssignmentsAtCallInUnsatCore, 
 				oldVarAssignmentAtCallInUnsatCore, modGlobalVarManager);
+		
 	}
+	
+	public RelevantTransFormulas(NestedWord<CodeBlock> nestedTrace,
+			IPredicate precondition, IPredicate postcondition,
+			SortedMap<Integer, IPredicate> pendingContexts,
+			Set<Term> unsat_core,
+			ModifiableGlobalVariableManager modGlobalVarManager,
+			SmtManager smtManager,
+			AnnotateAndAsserterConjuncts aac) {
+		super(nestedTrace, precondition, postcondition, pendingContexts);
+		m_TransFormulas = new TransFormula[nestedTrace.length()];
+		m_GlobalAssignmentTransFormulaAtCall = new HashMap<Integer, TransFormula>();
+		m_OldVarsAssignmentTransFormulasAtCall = new HashMap<Integer, TransFormula>();
+		m_SmtManager = smtManager;
+		generateRelevantTransFormulas(unsat_core, modGlobalVarManager, aac);
+		
+	}
+	
 	
 	private void generateRelevantTransFormulas(Set<CodeBlock> unsat_core, 
 			boolean[] localVarAssignmentsAtCallInUnsatCore,
@@ -83,8 +105,6 @@ public class RelevantTransFormulas extends TraceWithFormulas<TransFormula, IPred
 					} else {
 						m_TransFormulas[i] = buildTransFormulaForStmtNotInUnsatCore(super.getTrace().getSymbol(i).getTransitionFormula());
 					}
-
-					
 				} else {
 					m_TransFormulas[i] = super.getTrace().getSymbol(i).getTransitionFormula();
 				}
@@ -113,6 +133,56 @@ public class RelevantTransFormulas extends TraceWithFormulas<TransFormula, IPred
 		
 	}
 	
+	private void generateRelevantTransFormulas(Set<Term> unsat_core, 
+			ModifiableGlobalVariableManager modGlobalVarManager,
+			AnnotateAndAsserterConjuncts aac) {
+		Map<Term, Term> annot2Original = aac.getAnnotated2Original();
+		for (int i = 0; i < super.getTrace().length(); i++) {
+			if (super.getTrace().getSymbol(i) instanceof Call) {
+				// 1. Local var assignment
+				Term[] conjuncts_annot = DestructiveEqualityResolution.getConjuncts(aac.getAnnotatedSsa().getLocalVarAssignment(i));
+				Set<Term> conjunctsInUnsatCore = filterRelevantConjuncts(
+						unsat_core, annot2Original, conjuncts_annot);
+				m_TransFormulas[i]  = buildTransFormulaWithRelevantConjuncts(super.getTrace().getSymbol(i).getTransitionFormula(),
+						conjunctsInUnsatCore.toArray(new Term[0]));
+				// 2. Global Var assignment
+				conjuncts_annot = DestructiveEqualityResolution.getConjuncts(aac.getAnnotatedSsa().getGlobalVarAssignment(i));
+				conjunctsInUnsatCore = filterRelevantConjuncts(unsat_core, annot2Original, conjuncts_annot);
+				m_GlobalAssignmentTransFormulaAtCall.put(i, buildTransFormulaWithRelevantConjuncts(
+						modGlobalVarManager.getGlobalVarsAssignment(((Call)super.getTrace().getSymbol(i)).getCallStatement().getMethodName()),
+						conjunctsInUnsatCore.toArray(new Term[0])));
+				// 3. Old Var Assignment
+				conjuncts_annot = DestructiveEqualityResolution.getConjuncts(aac.getAnnotatedSsa().getOldVarAssignment(i));
+				conjunctsInUnsatCore = filterRelevantConjuncts(unsat_core, annot2Original, conjuncts_annot);
+				m_OldVarsAssignmentTransFormulasAtCall.put(i, buildTransFormulaWithRelevantConjuncts(
+						modGlobalVarManager.getOldVarsAssignment(((Call)super.getTrace().getSymbol(i)).getCallStatement().getMethodName()),
+						conjunctsInUnsatCore.toArray(new Term[0])));
+				
+			} else {
+				Term[] conjuncts_annot = DestructiveEqualityResolution.getConjuncts(aac.getAnnotatedSsa().getFormulaFromNonCallPos(i));
+				Set<Term> conjunctsInUnsatCore = filterRelevantConjuncts(
+						unsat_core, annot2Original, conjuncts_annot);
+				m_TransFormulas[i]  = buildTransFormulaWithRelevantConjuncts(super.getTrace().getSymbol(i).getTransitionFormula(),
+						conjunctsInUnsatCore.toArray(new Term[0]));
+			}
+		}
+		
+	}
+
+	/**
+	 * Filters out the irrelevant conjuncts, i.e. all conjuncts that are
+	 * not contained in the unsatisfiable core, are replaced by "true".
+	 */
+	private Set<Term> filterRelevantConjuncts(Set<Term> unsat_core,
+			Map<Term, Term> annot2Original, Term[] conjuncts_annot) {
+		Set<Term> conjunctsInUnsatCore = new HashSet<Term>(conjuncts_annot.length);
+		for (int j = 0; j < conjuncts_annot.length; j++) {
+			if (unsat_core.contains(conjuncts_annot[j])) {
+				conjunctsInUnsatCore.add(annot2Original.get(conjuncts_annot[j]));
+			}
+		}
+		return conjunctsInUnsatCore;
+	}
 	
 	private TransFormula buildTransFormulaForStmtNotInUnsatCore(TransFormula tf) {
 		Map<BoogieVar, TermVariable> outvars = new HashMap<BoogieVar, TermVariable>();
@@ -129,6 +199,34 @@ public class RelevantTransFormulas extends TraceWithFormulas<TransFormula, IPred
 				tf.getBranchEncoders(),
 				tf.isInfeasible(),
 				tf.getClosedFormula());
+	}
+	
+	private TransFormula buildTransFormulaWithRelevantConjuncts(TransFormula tf, Term[] conjunctsInUnsatCore) {
+		Term formula = Util.and(m_SmtManager.getScript(), conjunctsInUnsatCore);
+		Set<TermVariable> freeVars = new HashSet<TermVariable>();
+		Collections.addAll(freeVars, formula.getFreeVars());
+		Map<BoogieVar, TermVariable> invars = new HashMap<BoogieVar, TermVariable>();
+		Map<BoogieVar, TermVariable> outvars = new HashMap<BoogieVar, TermVariable>();
+		for (BoogieVar bv : tf.getInVars().keySet()) {
+			if (freeVars.contains(tf.getInVars().get(bv))) {
+				invars.put(bv, tf.getInVars().get(bv));
+			}
+		}
+		for (BoogieVar bv : tf.getAssignedVars()) {
+			if (freeVars.contains(tf.getOutVars().get(bv))) {
+				outvars.put(bv, tf.getOutVars().get(bv));
+			}
+		}
+//		TermVarsProc tvp = m_SmtManager.computeTermVarsProc(formula);
+		
+		return new TransFormula(formula,
+				invars,
+				outvars,
+				new HashSet<TermVariable>(), 
+				tf.getBranchEncoders(),
+				tf.isInfeasible(),
+				tf.getClosedFormula());
+		// TODO: SmtManager.computeClosedFormula(formula, tvp.getVars(), m_SmtManager.getScript())
 	}
 
 	@Override
