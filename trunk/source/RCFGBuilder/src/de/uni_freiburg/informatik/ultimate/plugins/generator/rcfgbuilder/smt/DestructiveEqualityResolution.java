@@ -19,6 +19,7 @@ import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
+import de.uni_freiburg.informatik.ultimate.logic.simplification.SimplifyDDA;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
@@ -40,6 +41,7 @@ import de.uni_freiburg.informatik.ultimate.util.UnionFind;
 public class DestructiveEqualityResolution {
 	
 	static boolean USE_UPD = true;
+	static boolean USE_SOS = true;
 	
 	private static Logger s_Logger = 
 			UltimateServices.getInstance().getLogger(Activator.PLUGIN_ID);
@@ -151,9 +153,52 @@ public class DestructiveEqualityResolution {
 		assert Arrays.asList(result.getFreeVars()).containsAll(remainingVars) : 
 			"superficial variables";
 		
-		// apply some array var elimination
-		// TODO will only work if one disjunct
-		Iterator<TermVariable> it = remainingVars.iterator();
+		// apply Store Over Select
+		if (USE_SOS) {
+			Set<TermVariable> remainingAfterSOS = new HashSet<TermVariable>();
+			Term termAfterSOS;
+			Term[] oldParams;
+			if (quantifier == QuantifiedFormula.EXISTS) {
+				oldParams = getDisjuncts(result);
+			} else if (quantifier == QuantifiedFormula.FORALL) {
+				oldParams = getConjuncts(result);
+			} else {
+				throw new AssertionError("unknown quantifier");
+			}
+			Term[] newParams = new Term[oldParams.length];
+			for (int i=0; i<oldParams.length; i++) {
+				Set<TermVariable> eliminatees = new HashSet<TermVariable>(remainingVars);
+				newParams[i] = sos(script, quantifier, oldParams[i], eliminatees);
+				remainingAfterSOS.addAll(eliminatees);
+			}
+			if (quantifier == QuantifiedFormula.EXISTS) {
+				termAfterSOS = Util.or(script, newParams);
+			} else if (quantifier == QuantifiedFormula.FORALL) {
+				termAfterSOS = Util.and(script, newParams);
+			} else {
+				throw new AssertionError("unknown quantifier");
+			}
+			remainingVars = remainingAfterSOS;
+			termAfterSOS = (new SimplifyDDA(script)).getSimplifiedTerm(termAfterSOS);
+			result = termAfterSOS;
+		}
+		
+		if (remainingVars.isEmpty()) {
+			return result;
+		} 
+		
+		return script.quantifier(quantifier, 
+					remainingVars.toArray(new TermVariable[0]), result, patterns);
+	}
+	
+	
+	public static Term sos(Script script, int quantifier, Term term, 
+			Set<TermVariable> vars) {
+		if (quantifier != QuantifiedFormula.EXISTS) {
+			throw new UnsupportedOperationException();
+		}
+		Term result = term;
+		Iterator<TermVariable> it = vars.iterator();
 		while (it.hasNext()) {
 			TermVariable tv = it.next();
 			if (tv.getSort().isArraySort()) {
@@ -164,14 +209,8 @@ public class DestructiveEqualityResolution {
 				}
 			}
 		}
-		if (remainingVars.isEmpty()) {
-			return result;
-		} 
-		
-		return script.quantifier(quantifier, 
-					remainingVars.toArray(new TermVariable[0]), result, patterns);
+		return result;
 	}
-	
 	
 
 	
@@ -188,7 +227,7 @@ public class DestructiveEqualityResolution {
 	 * φ_1∧...∧φ_m and obtain an equivalent formula.
 	 * 
 	 * Is only sound if there are no uninterpreted function symbols in the term
-	 * TODO: extend this to uninterpreted function symbols
+	 * TODO: extend this to uninterpreted function symbols (for soundness)
 	 */
 	public static Term updSimple(Script script, int quantifier, Term term, 
 			Set<TermVariable> vars) {
