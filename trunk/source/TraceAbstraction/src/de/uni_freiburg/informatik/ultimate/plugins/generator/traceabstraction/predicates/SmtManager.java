@@ -1856,6 +1856,7 @@ public class SmtManager {
 		Set<TermVariable> allAuxVars = new HashSet<TermVariable>();
 		allAuxVars.addAll(localVarAssignments.getAuxVars());
 		allAuxVars.addAll(globalVarAssignments.getAuxVars());
+		allAuxVars.addAll(oldVarAssignments.getAuxVars());
 		
 		Map<TermVariable, Term> varsToRenameInPredPendingCall = new HashMap<TermVariable, Term>();
 		Map<TermVariable, Term> varsToRenameInPredNonPendingCall = new HashMap<TermVariable, Term>();
@@ -1882,6 +1883,27 @@ public class SmtManager {
 		}
 		
 		Term globalVarsInVarsRenamedOutVarsRenamed = new Substitution(substitution, m_Script).transform(globalVarsInvarsRenamed);
+		substitution.clear();
+		if (globalVarAssignments.getFormula() == newTruePredicate().getFormula()) {
+			for (BoogieVar bv : oldVarAssignments.getInVars().keySet()) {
+				substitution.put(oldVarAssignments.getInVars().get(bv), bv.getTermVariable());
+				TermVariable freshVar = getFreshTermVariable(bv.getIdentifier(), bv.getTermVariable().getSort());
+				varsToQuantifyNonPendingCall.add(freshVar);
+				varsToRenameInPredNonPendingCall.put(bv.getTermVariable(), freshVar);
+			}
+			globalVarsInvarsRenamed = new Substitution(substitution, m_Script).transform(oldVarAssignments.getFormula());
+			substitution.clear();
+			
+			for (BoogieVar bv : oldVarAssignments.getOutVars().keySet()) {
+				TermVariable freshVar = getFreshTermVariable(bv.getIdentifier(), bv.getTermVariable().getSort());
+				substitution.put(oldVarAssignments.getOutVars().get(bv), bv.getTermVariable());
+				varsToQuantifyPendingCall.add(freshVar);
+				varsToRenameInPredPendingCall.put(bv.getTermVariable(), freshVar);
+				varsToRenameInPredNonPendingCall.put(bv.getTermVariable(), freshVar);
+				varsToQuantifyNonPendingCall.add(freshVar);
+			}
+			globalVarsInVarsRenamedOutVarsRenamed = new Substitution(substitution, m_Script).transform(globalVarsInvarsRenamed);
+		}
 		// Collect the local and the non-modifiable global variables of the calling proc.
 		for (BoogieVar bv : p.getVars()) {
 			// Procedure is null, if it is a global variable
