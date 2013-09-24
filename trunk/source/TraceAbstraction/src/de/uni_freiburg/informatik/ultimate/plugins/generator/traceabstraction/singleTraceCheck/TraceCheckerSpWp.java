@@ -149,6 +149,7 @@ public class TraceCheckerSpWp extends TraceChecker {
 					m_ModifiedGlobals,
 					m_SmtManager,
 					(AnnotateAndAsserterConjuncts)m_AAA);
+			assert stillInfeasible(rv);
 		}
 		RelevantVariables rvar = new RelevantVariables(rv);
 		
@@ -339,6 +340,16 @@ public class TraceCheckerSpWp extends TraceChecker {
 			assert m_InterpolantsWp != null;
 			m_Interpolants = m_InterpolantsWp;
 		}
+	}
+
+	/**
+	 * TODO: documentation
+	 */
+	private boolean stillInfeasible(RelevantTransFormulas rv) {
+		TraceChecker tc = new TraceChecker(rv.getPrecondition(), rv.getPostcondition(), rv.getTrace(), m_SmtManager, m_ModifiedGlobals, null);
+		tc.unlockSmtManager();
+		boolean result = (tc.isCorrect() == LBool.UNSAT);
+		return result;
 	}
 	
 	private Set<CodeBlock> filterOutIrrelevantStatements(NestedWord<CodeBlock> trace, Set<Term> unsat_coresAsSet,

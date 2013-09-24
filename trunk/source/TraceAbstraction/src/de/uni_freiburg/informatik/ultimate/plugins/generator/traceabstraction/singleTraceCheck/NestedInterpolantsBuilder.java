@@ -454,7 +454,7 @@ public class NestedInterpolantsBuilder {
 	private IPredicate[] computePredicates() {
 		IPredicate[] result = new IPredicate[m_Trace.length()-1];
 		assert m_CraigInterpolants.length == craigInt2interpolantIndex.size();
-		assert m_InterpolatedPositions.size() == m_CraigInterpolants.length;
+//		assert m_InterpolatedPositions.size() == m_CraigInterpolants.length;
 		FormulaWalker walker = new FormulaWalker(m_sfmv, m_Script);
 		
 		Map<Term,IPredicate> withIndices2Predicate =	new HashMap<Term,IPredicate>();
