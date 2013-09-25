@@ -2300,6 +2300,25 @@ public class SmtManager {
 			}
 			Term globalVarsInVarsOutVarsRenamed  = new Substitution(substitution, m_Script).transform(globalVarsInVarsRenamed);
 			substitution.clear();
+			if (globalVarsAssignments.getFormula() == newTruePredicate().getFormula()) {
+				for (BoogieVar bv : oldVarsAssignments.getInVars().keySet()) {
+					TermVariable freshVar = getFreshTermVariable(bv.getIdentifier(), bv.getTermVariable().getSort());
+					substitution.put(oldVarsAssignments.getInVars().get(bv), freshVar);
+					varsToRenameInCalleePred.put(bv.getTermVariable(), freshVar);
+					varsToQuantify.add(freshVar);
+				}
+				globalVarsInVarsRenamed = new Substitution(substitution, m_Script).transform(oldVarsAssignments.getFormula());
+				substitution.clear();
+				for (BoogieVar bv : oldVarsAssignments.getOutVars().keySet()) {
+					TermVariable freshVar = getFreshTermVariable(bv.getIdentifier(), bv.getTermVariable().getSort());
+					substitution.put(oldVarsAssignments.getOutVars().get(bv), freshVar);
+					varsToRenameInCalleePred.put(bv.getTermVariable(), freshVar);
+					varsToQuantify.add(freshVar);
+				}
+				globalVarsInVarsOutVarsRenamed  = new Substitution(substitution, m_Script).transform(globalVarsInVarsRenamed);
+			}
+			
+			substitution.clear();
 			// 3. Rename invars of Call to its correspondent termvariables
 			for (BoogieVar bv : call_TF.getInVars().keySet()) {
 				substitution.put(call_TF.getInVars().get(bv), bv.getTermVariable());

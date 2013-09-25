@@ -42,7 +42,8 @@ public class TraceCheckerSpWp extends TraceChecker {
 	private static boolean m_useUnsatCore = true;
 	private static boolean m_useUnsatCoreOfFineGranularity = true;
 	private static boolean m_ComputeInterpolantsSp = true;
-	private static boolean m_ComputeInterpolantsFp = true;
+	private static boolean m_ComputeInterpolantsFp = !true;
+	private static boolean m_ComputeInterpolantsBp = !true;
 	private static boolean m_ComputeInterpolantsWp = true;
 
 	public TraceCheckerSpWp(IPredicate precondition, IPredicate postcondition,
@@ -210,11 +211,13 @@ public class TraceCheckerSpWp extends TraceChecker {
 			s_Logger.debug("Checking strongest postcondition...");
 			checkInterpolantsCorrect(m_InterpolantsSp, trace, tracePrecondition, 
 					tracePostcondition, "SP with unsat core");
-			s_Logger.debug("Computing forward relevant predicates...");
-			computeForwardRelevantPredicates(rvar);
-			s_Logger.debug("Checking inductivity of forward relevant predicates...");
-			checkInterpolantsCorrect(m_InterpolantsFp, trace, tracePrecondition,
-					tracePostcondition, "FP");
+			if (m_ComputeInterpolantsFp) {
+				s_Logger.debug("Computing forward relevant predicates...");
+				computeForwardRelevantPredicates(rvar);
+				s_Logger.debug("Checking inductivity of forward relevant predicates...");
+				checkInterpolantsCorrect(m_InterpolantsFp, trace, tracePrecondition,
+						tracePostcondition, "FP");
+			}
 		}
 		if (m_ComputeInterpolantsWp) {
 			m_InterpolantsWp = new IPredicate[trace.length()-1];
@@ -322,11 +325,13 @@ public class TraceCheckerSpWp extends TraceChecker {
 			s_Logger.debug("Checking weakest precondition...");
 			checkInterpolantsCorrect(m_InterpolantsWp, trace, tracePrecondition,
 					tracePostcondition, "WP with unsat core");
-			s_Logger.debug("Computing backward relevant predicates...");
-			computeBackwardRelevantPredicates(rvar);
-			s_Logger.debug("Checking inductivity of backward relevant predicates...");
-			checkInterpolantsCorrect(m_InterpolantsBp, trace, tracePrecondition,
-					tracePostcondition, "BP");
+			if (m_ComputeInterpolantsBp) {
+				s_Logger.debug("Computing backward relevant predicates...");
+				computeBackwardRelevantPredicates(rvar);
+				s_Logger.debug("Checking inductivity of backward relevant predicates...");
+				checkInterpolantsCorrect(m_InterpolantsBp, trace, tracePrecondition,
+						tracePostcondition, "BP");
+			}
 
 		}
 		if (m_ComputeInterpolantsSp && m_ComputeInterpolantsWp) {
