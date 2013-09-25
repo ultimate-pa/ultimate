@@ -154,7 +154,7 @@ public class PreferenceValues {
 	public static final boolean DEF_cutOff = true;
 	public static final boolean DEF_unfolding2Net = false;
 	public static final String DEF_Order = VALUE_EVR;
-	public static final boolean DEF_simplifyCodeBlocks = true;
+	public static final boolean DEF_simplifyCodeBlocks = false;
 	public static final boolean DEF_PreserveGotoEdges = false;
 
 	

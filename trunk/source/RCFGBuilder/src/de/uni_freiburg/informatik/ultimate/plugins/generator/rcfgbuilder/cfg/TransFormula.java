@@ -26,7 +26,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.NaiveDestructiveEqualityResolution;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.Substitution;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.normalForms.Dnf;
 
 /**
  * Represents the transition of a program or a transition system as an SMT
@@ -370,7 +369,6 @@ public class TransFormula implements Serializable {
 		Script script = boogie2smt.getScript();
 		Map<BoogieVar, TermVariable> inVars = new HashMap<BoogieVar, TermVariable>();
 		Map<BoogieVar, TermVariable> outVars = new HashMap<BoogieVar, TermVariable>();
-		Set<TermVariable> allVars = new HashSet<TermVariable>();
 		Set<TermVariable> auxVars = new HashSet<TermVariable>();
 		Set<TermVariable> newBranchEncoders = new HashSet<TermVariable>();
 		Term formula = boogie2smt.getScript().term("true");
