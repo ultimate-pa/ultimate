@@ -1,13 +1,15 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck;
 
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGNode;
 
-public class ImpRootEdge extends RCFGEdge {
+public class ImpRootEdge extends AppEdge {
 
-	protected ImpRootEdge(RCFGNode source, RCFGNode target) {
-		super(source, target);
-		// TODO Auto-generated constructor stub
+	private static final long serialVersionUID = 1052639741068663092L;
+
+	public ImpRootEdge(AnnotatedProgramPoint source, CodeBlock statement,
+			AnnotatedProgramPoint target) {
+		super(source, statement, target);
 	}
-
 }

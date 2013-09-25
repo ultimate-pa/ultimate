@@ -27,6 +27,9 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceChecker;
+import de.uni_freiburg.informatik.ultimate.result.CounterExampleResult;
+import de.uni_freiburg.informatik.ultimate.result.PositiveResult;
+import de.uni_freiburg.informatik.ultimate.result.UnprovableResult;
 
 import org.apache.log4j.Logger;
 
@@ -185,15 +188,18 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 
 
 		int noOfProcedures = m_graphRoot.getOutgoingNodes().size();
+//		noOfProcedures = 1;//TODO add SV-comp mode where only main is checked
 		
-		//FIXME
-		noOfProcedures = 1;
+		Result overallResult = Result.UNKNOWN;
+		boolean allSafe = true;
 		
 		for (int procID = 0; procID < noOfProcedures; ++procID) {
 			AnnotatedProgramPoint procRoot = m_graphRoot.getOutgoingNodes().get(procID);
+			assert m_graphRoot.getOutgoingNodes().size() == noOfProcedures;
 			s_Logger.debug("Exploring : " + procRoot);
-			Stack <AnnotatedProgramPoint> stack = new Stack <AnnotatedProgramPoint>();
-			stack.add(procRoot);
+//			Stack <AnnotatedProgramPoint> procRootStack = new Stack <AnnotatedProgramPoint>();
+//			procRootStack.add(procRoot);
+			AnnotatedProgramPoint procedureRoot = procRoot;
 			
 			//FIXME
 //			IEmptinessCheck emptinessCheck = new BFSEmptinessCheck();
@@ -204,11 +210,12 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 				codeChecker.debug();
 			while (loop_forever | iterationsCount++ < iterationsLimit) {
 				s_Logger.debug(String.format("Iterations = %d\n", iterationsCount));
-				if (stack.isEmpty()) {
-					s_Logger.info("This Program is SAFE, Check terminated with " + iterationsCount + " iterations.");
-					break;
-				}
-				AnnotatedProgramPoint procedureRoot = stack.peek();
+				assert m_graphRoot.getOutgoingNodes().size() == noOfProcedures;
+//				if (procRootStack.isEmpty()) {
+//					s_Logger.info("This Program is SAFE, Check terminated with " + iterationsCount + " iterations.");
+//					break;
+//				}
+//				AnnotatedProgramPoint procedureRoot = procRootStack.peek();
 				NestedRun<CodeBlock, AnnotatedProgramPoint> errorRun = 
 						emptinessCheck.checkForEmptiness(procedureRoot);
 				
@@ -216,8 +223,10 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 					m_graphWriter.writeGraphAsImage(procedureRoot, 
 						String.format("graph_%s_%s_noEP", m_graphWriter._graphCounter, procedureRoot.toString().substring(0, 5)));
 					// if an error trace doesn't exist, return safe
-					stack.pop();
-					continue;
+//					procRootStack.pop();
+					s_Logger.info("This Program is SAFE, Check terminated with " + iterationsCount + " iterations.");
+//					continue;
+					break;
 				} else {
 					s_Logger.info("Error Path is FOUND.");
 					m_graphWriter.writeGraphAsImage(procedureRoot, 
@@ -237,22 +246,69 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 						traceChecker.computeInterpolants(new TraceChecker.AllIntegers(), pu);
 						IPredicate[] interpolants = traceChecker.getInterpolants();
 						codeChecker.codeCheck(errorRun, interpolants, procedureRoot);
+						assert m_graphRoot.getOutgoingNodes().size() == noOfProcedures;
 					} else { // trace is feasible
 						s_Logger.info("This program is UNSAFE, Check terminated with " + iterationsCount + " iterations.");
+						allSafe = false;
 						if (DEBUG)
 							codeChecker.debug();
-						return false; //break
+						break;
+//						return false; //break
 					}
 				}
 				if(DEBUG)
 					codeChecker.debug();
 			}
+			assert m_graphRoot.getOutgoingNodes().size() == noOfProcedures;
 			codeChecker.m_graphRoot = m_graphRoot;
 			m_graphRoot = copyGraph(originalGraphCopy);
+			
+			if (!allSafe)
+				break;
 		}
 
 		if(DEBUG)
 			codeChecker.debug();
+		
+		if (allSafe)
+			overallResult = Result.CORRECT;
+		else
+			overallResult = Result.INCORRECT;
+		
+		
+		s_Logger.info("-----------------");
+		s_Logger.info(overallResult);
+		s_Logger.info("-----------------");
+
+		s_Logger.info("PC#: " + m_smtManager.getInterpolQueries());
+		s_Logger.info("TIME#: " + m_smtManager.getInterpolQuriesTime());
+//		s_Logger.info("ManipulationTIME#: " + m_smtManager.getTraceCheckTime());
+		s_Logger.info("EC#: " + m_smtManager.getNontrivialSatQueries());
+		s_Logger.info("TIME#: " + m_smtManager.getSatCheckTime());
+//		s_Logger.info("ManipulationTIME#: "	+ m_smtManager.getCodeBlockCheckTime());
+
+		if (overallResult == Result.CORRECT) {
+			PositiveResult<CodeBlock> result = new PositiveResult<CodeBlock>(
+					null,
+					Activator.s_PLUGIN_NAME,
+					UltimateServices.getInstance().getTranslatorSequence(),
+					this.m_graphRoot.getPayload().getLocation());
+			result.setShortDescription("Program is safe!");
+			UltimateServices.getInstance().reportResult(Activator.s_PLUGIN_ID, result);
+//			reportResult(result);
+		} else if (overallResult == Result.INCORRECT) {
+			CounterExampleResult<CodeBlock> result = new CounterExampleResult<CodeBlock>(null,
+					Activator.s_PLUGIN_NAME,
+					UltimateServices.getInstance().getTranslatorSequence(),
+					null, null);
+			UltimateServices.getInstance().reportResult(Activator.s_PLUGIN_ID, result);
+		} else {
+			UnprovableResult<CodeBlock> result = new UnprovableResult<CodeBlock>(null,
+					Activator.s_PLUGIN_NAME,
+					UltimateServices.getInstance().getTranslatorSequence(),
+					null);
+			UltimateServices.getInstance().reportResult(Activator.s_PLUGIN_ID, result);
+		}
 		
 		return false;
 	}

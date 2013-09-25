@@ -21,7 +21,6 @@ public class ImpRootNode extends AnnotatedProgramPoint {
 		return ((RootAnnot) getPayload().getAnnotations().get(
 				Activator.PLUGIN_ID));
 	}
-
 	
 	@Override
 	public String toString() {
