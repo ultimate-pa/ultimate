@@ -44,7 +44,7 @@ public class Nnf {
 		List<TermVariable> firstQuantifierBlock = new ArrayList<TermVariable>();
 		m_QuantifiedVariables.add(firstQuantifierBlock);
 		Term result = m_NnfTransformerHelper.transform(term);
-		for (int i = m_QuantifiedVariables.size() -1; i>=0; i--) {
+		for (int i=0; i<m_QuantifiedVariables.size(); i++) {
 			TermVariable[] variables = m_QuantifiedVariables.get(i).toArray(new TermVariable[0]);
 			if (variables.length > 0) {
 				int quantor = i%2;
@@ -101,6 +101,7 @@ public class Nnf {
 					variables = m_QuantifiedVariables.get(m_QuantifiedVariables.size()-1);
 				} else {
 					variables = new ArrayList<TermVariable>();
+					m_QuantifiedVariables.add(variables);
 				}
 				Map<Term, Term> substitutionMapping = new HashMap<Term, Term>();
 				for (TermVariable oldTv : qf.getVariables()) {
@@ -109,7 +110,9 @@ public class Nnf {
 					variables.add(freshTv);
 				}
 				Term newBody = (new SafeSubstitution(m_Script, substitutionMapping)).transform(qf.getSubformula());
-				super.convert(newBody);
+				// we have to call this.convert again, super.convert(newBody)
+				// would ignore one convertion. Alternative: enqueue newBody
+				this.convert(newBody);
 				return;
 			} else {
 				throw new UnsupportedOperationException("Unsupported " + term.getClass());
