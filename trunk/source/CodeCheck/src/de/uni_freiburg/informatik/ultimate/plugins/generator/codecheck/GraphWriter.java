@@ -206,24 +206,15 @@ public class GraphWriter {
 	ArrayList<GraphEdge> collectEdges(HashSet<AnnotatedProgramPoint> allNodes) {
 		ArrayList<GraphEdge> allEdges = new ArrayList<GraphEdge>();
 
-		for(Iterator<AnnotatedProgramPoint> it = allNodes.iterator(); it.hasNext();){
-			AnnotatedProgramPoint node = it.next();
-			
-//			for (int i = 0; i < node.getOutgoingNodes().size(); i++) {
+//		for(Iterator<AnnotatedProgramPoint> it = allNodes.iterator(); it.hasNext();){
+//			AnnotatedProgramPoint node = it.next();
+		for (AnnotatedProgramPoint node : allNodes) {
 			for (AppEdge outEdge : node.getOutgoingEdges()) {
 				allEdges.add(new GraphEdge(node, 
 						(outEdge instanceof AppHyperEdge) ? ((AppHyperEdge) outEdge).getHier() : null,
 								outEdge.getStatement(),
 								outEdge.getTarget()));
-//						node.getOutgoingReturnCallPreds().get(i),
-//						node.getOutgoingEdgeLabels().get(i),
-//						node.getOutgoingNodes().get(i)));
 			}
-//			for(AnnotatedProgramPoint outNode : node.getOutgoingNodes()) {
-//				allEdges.add(new GraphEdge(node,
-//						((AnnotatedProgramPoint) node).getOutgoingEdgeLabel((AnnotatedProgramPoint) outNode),
-//						(AnnotatedProgramPoint) outNode));
-//			}
 		}
 		return allEdges;
 	}
@@ -346,18 +337,19 @@ public class GraphWriter {
 	}
 	
 	String convertNodeName(AnnotatedProgramPoint node) {
-		String name = node.toString();
-		//		name = "\"" + name;
-		name = name.replace("[", "");
-		name = name.replace("ERROR_LOCATION", "EL");
-		name = name.replace("ERROR_Pseudo", "PEL");
-		name = name.replace(", $Ultimate#", "");
-		name = name.replace("$Ultimate#", "");
-		name = name.replace("]", "");
+//		String name = node.toString();
+//		//		name = "\"" + name;
+//		name = name.replace("[", "");
+//		name = name.replace("ERROR_LOCATION", "EL");
+//		name = name.replace("ERROR_Pseudo", "PEL");
+//		name = name.replace(", $Ultimate#", "");
+//		name = name.replace("$Ultimate#", "");
+//		name = name.replace("]", "");
 //		String sUID = node.getPayload().getID().toString();
-		String sUID = (new Integer(node.hashCode())).toString();//.getPayload().getID().toString();
+//		String sUID = (new Integer(node.hashCode())).toString();//.getPayload().getID().toString();
 //		name = name + "-" + sUID.substring(0, sUID.length()/8);
-		name = name + "-" + sUID.substring(0, sUID.length()/2);	
+//		name = name + "-" + sUID.substring(0, sUID.length()/2);	
+		String name = node.toString();
 		return name;
 	}
 

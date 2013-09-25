@@ -5,10 +5,10 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Pro
 
 public class DummyCodeBlock extends CodeBlock {
 
-	public DummyCodeBlock(ProgramPoint source, ProgramPoint target) {
-		super(source, target);
-		// TODO Auto-generated constructor stub
-	}
+//	public DummyCodeBlock(ProgramPoint source, ProgramPoint target) {
+//		super(source, target);
+//		// TODO Auto-generated constructor stub
+//	}
 	
 	public DummyCodeBlock() {
 		super(null, null);

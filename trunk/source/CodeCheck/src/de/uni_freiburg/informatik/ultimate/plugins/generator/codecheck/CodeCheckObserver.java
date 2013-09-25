@@ -7,6 +7,7 @@ import java.io.PrintWriter;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map.Entry;
 import java.util.Stack;
 
 
@@ -101,15 +102,16 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 				}
 			}
 		}
-		for (AnnotatedProgramPoint oldNode : copy.keySet()) {
-			AnnotatedProgramPoint newNode = copy.get(oldNode);
+		for (Entry<AnnotatedProgramPoint, AnnotatedProgramPoint> entry : copy.entrySet()) {
+			AnnotatedProgramPoint oldNode = entry.getKey();
+			AnnotatedProgramPoint newNode = entry.getValue();
 			for (AppEdge outEdge : oldNode.getOutgoingEdges()) {
 				if (outEdge instanceof AppHyperEdge) {
 					AppHyperEdge outHypEdge = (AppHyperEdge) outEdge;
-					newNode.connectOutgoingReturn(outHypEdge.getTarget(), 
-							outHypEdge.getHier(), (Return) outHypEdge.getStatement());
+					newNode.connectOutgoingReturn(copy.get(outHypEdge.getTarget()), 
+							copy.get(outHypEdge.getHier()), (Return) outHypEdge.getStatement());
 				} else {
-					newNode.connectOutgoing(outEdge.getTarget(), outEdge.getStatement());
+					newNode.connectOutgoing(copy.get(outEdge.getTarget()), outEdge.getStatement());
 				}
 			}
 		}
@@ -153,13 +155,10 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 		stack.add(m_graphRoot);
 		while(!stack.isEmpty()) {
 			AnnotatedProgramPoint node = stack.pop();
-//			AnnotatedProgramPoint[] successors = node.getOutgoingNodes().toArray(new AnnotatedProgramPoint[]{});
-//			for (AnnotatedProgramPoint successor : successors) {
 			AppEdge[] outEdges = node.getOutgoingEdges().toArray(new AppEdge[]{});
 			for (AppEdge outEdge : outEdges) {
 				AnnotatedProgramPoint successor = outEdge.getTarget();
 				if (outEdge.getStatement() instanceof Summary) {
-//					node.disconnectOutgoing(outEdge);
 					outEdge.disconnect();
 				}
 				if(!visited.contains(successor)) {
@@ -180,8 +179,6 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 		final int iterationsLimit = 0; // for DEBUG
 		
 		ImpRootNode originalGraphCopy = copyGraph(m_graphRoot);
-		//m_graphRoot.addOutgoingNode(originalGraphCopy, new DummyCodeBlock());
-		//originalGraphCopy.addIncomingNode(m_graphRoot);
 		
 		m_graphWriter.writeGraphAsImage(originalGraphCopy, 
 				String.format("graph_%s_original", m_graphWriter._graphCounter));
@@ -195,10 +192,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 		
 		for (int procID = 0; procID < noOfProcedures; ++procID) {
 			AnnotatedProgramPoint procRoot = m_graphRoot.getOutgoingNodes().get(procID);
-			assert m_graphRoot.getOutgoingNodes().size() == noOfProcedures;
 			s_Logger.debug("Exploring : " + procRoot);
-//			Stack <AnnotatedProgramPoint> procRootStack = new Stack <AnnotatedProgramPoint>();
-//			procRootStack.add(procRoot);
 			AnnotatedProgramPoint procedureRoot = procRoot;
 			
 			//FIXME
@@ -210,12 +204,6 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 				codeChecker.debug();
 			while (loop_forever | iterationsCount++ < iterationsLimit) {
 				s_Logger.debug(String.format("Iterations = %d\n", iterationsCount));
-				assert m_graphRoot.getOutgoingNodes().size() == noOfProcedures;
-//				if (procRootStack.isEmpty()) {
-//					s_Logger.info("This Program is SAFE, Check terminated with " + iterationsCount + " iterations.");
-//					break;
-//				}
-//				AnnotatedProgramPoint procedureRoot = procRootStack.peek();
 				NestedRun<CodeBlock, AnnotatedProgramPoint> errorRun = 
 						emptinessCheck.checkForEmptiness(procedureRoot);
 				
@@ -223,9 +211,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 					m_graphWriter.writeGraphAsImage(procedureRoot, 
 						String.format("graph_%s_%s_noEP", m_graphWriter._graphCounter, procedureRoot.toString().substring(0, 5)));
 					// if an error trace doesn't exist, return safe
-//					procRootStack.pop();
 					s_Logger.info("This Program is SAFE, Check terminated with " + iterationsCount + " iterations.");
-//					continue;
 					break;
 				} else {
 					s_Logger.info("Error Path is FOUND.");
@@ -246,22 +232,21 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 						traceChecker.computeInterpolants(new TraceChecker.AllIntegers(), pu);
 						IPredicate[] interpolants = traceChecker.getInterpolants();
 						codeChecker.codeCheck(errorRun, interpolants, procedureRoot);
-						assert m_graphRoot.getOutgoingNodes().size() == noOfProcedures;
 					} else { // trace is feasible
 						s_Logger.info("This program is UNSAFE, Check terminated with " + iterationsCount + " iterations.");
 						allSafe = false;
 						if (DEBUG)
 							codeChecker.debug();
 						break;
-//						return false; //break
 					}
 				}
 				if(DEBUG)
 					codeChecker.debug();
+				assert originalGraphCopy.getOutgoingNodes().size() == noOfProcedures;
 			}
-			assert m_graphRoot.getOutgoingNodes().size() == noOfProcedures;
-			codeChecker.m_graphRoot = m_graphRoot;
 			m_graphRoot = copyGraph(originalGraphCopy);
+			codeChecker.m_graphRoot = m_graphRoot;
+			assert m_graphRoot.getOutgoingNodes().size() == noOfProcedures;
 			
 			if (!allSafe)
 				break;

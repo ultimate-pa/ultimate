@@ -24,6 +24,6 @@ public class ImpRootNode extends AnnotatedProgramPoint {
 	
 	@Override
 	public String toString() {
-		return getPayload().getName();
+		return "root";
 	}
 }
