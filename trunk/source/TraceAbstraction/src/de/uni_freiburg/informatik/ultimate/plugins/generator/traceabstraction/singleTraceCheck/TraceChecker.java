@@ -227,9 +227,8 @@ public class TraceChecker {
 	private LBool checkTrace() {
 		LBool isSafe;
 		m_SmtManager.startTraceCheck();
-		NestedSsaBuilder nsb = 
-				new NestedSsaBuilder(m_Trace, m_Precondition, m_Postcondition, 
-						m_PendingContexts, m_SmtManager, m_DefaultTransFormulas);
+		NestedSsaBuilder nsb = new NestedSsaBuilder(m_Trace, m_Precondition, 
+				m_Postcondition, m_PendingContexts, m_SmtManager, m_DefaultTransFormulas);
 		NestedSsa ssa = nsb.getSsa();
 		try {
 			m_AAA = getAnnotateAndAsserter(ssa);
@@ -244,36 +243,64 @@ public class TraceChecker {
 			}
 		}
 		if (isSafe==LBool.SAT) {
-			RelevantVariables relVars = new RelevantVariables(m_DefaultTransFormulas);
-			RcfgProgramExecutionBuilder rpeb = new RcfgProgramExecutionBuilder(m_ModifiedGlobals, (NestedWord<CodeBlock>) m_Trace, relVars);
-			for (int i=0; i<m_Trace.length(); i++) {
-				CodeBlock cb = m_Trace.getSymbolAt(i);
-				TransFormula tf = cb.getTransitionFormulaWithBranchEncoders();
-				if (tf.getBranchEncoders().size() > 0) {
-					Map<TermVariable, Boolean> beMapping = new HashMap<TermVariable, Boolean>();
-					for (TermVariable tv : tf.getBranchEncoders()) {
-						String nameOfConstant = NestedSsaBuilder.branchEncoderConstantName(tv, i);
-						Term indexedBe = m_SmtManager.getScript().term(nameOfConstant);
-						Term value = getValue(indexedBe);
-						Boolean booleanValue = getBooleanValue(value);
-						beMapping.put(tv, booleanValue);
-					}
-					rpeb.setBranchEncoders(i, beMapping);
-				}
+			if (!m_DefaultTransFormulas.hasBranchEncoders()) {
+				unlockSmtManager();
+				DefaultTransFormulas withBE = new DefaultTransFormulas(
+						m_DefaultTransFormulas.getTrace(), 
+						m_DefaultTransFormulas.getPrecondition(), 
+						m_DefaultTransFormulas.getPostcondition(), 
+						m_DefaultTransFormulas.getPendingContexts(), 
+						m_ModifiedGlobals, true);
+				TraceChecker tc = new TraceChecker(
+						m_DefaultTransFormulas.getPrecondition(), 
+						m_DefaultTransFormulas.getPostcondition(), 
+						m_DefaultTransFormulas.getPendingContexts(), 
+						m_DefaultTransFormulas.getTrace(), m_SmtManager, 
+						m_ModifiedGlobals, withBE);
+				assert tc.isCorrect() == LBool.SAT;
+				m_RcfgProgramExecution = tc.getRcfgProgramExecution();
+			} else {
+				m_RcfgProgramExecution = computeRcfgProgramExecution(nsb);
 			}
-			for (BoogieVar bv : nsb.getIndexedVarRepresentative().keySet()) {
-				if (!bv.getTermVariable().getSort().isArraySort()) {
-					for (Integer index : nsb.getIndexedVarRepresentative().get(bv).keySet()) {
-						Term indexedVar = nsb.getIndexedVarRepresentative().get(bv).get(index);
-						Term valueT = getValue(indexedVar);
-						Expression valueE = m_SmtManager.getBoogie2Smt().getSmt2Boogie().translate(valueT);
-						rpeb.addValueAtVarAssignmentPosition(bv, index, valueE);
-					}
-				}
-			}
-			m_RcfgProgramExecution = rpeb.getRcfgProgramExecution();
 		}
 		return isSafe;
+	}
+
+
+	/**
+	 * @param nsb
+	 * @return
+	 */
+	private RcfgProgramExecution computeRcfgProgramExecution(
+			NestedSsaBuilder nsb) {
+		RelevantVariables relVars = new RelevantVariables(m_DefaultTransFormulas);
+		RcfgProgramExecutionBuilder rpeb = new RcfgProgramExecutionBuilder(m_ModifiedGlobals, (NestedWord<CodeBlock>) m_Trace, relVars);
+		for (int i=0; i<m_Trace.length(); i++) {
+			CodeBlock cb = m_Trace.getSymbolAt(i);
+			TransFormula tf = cb.getTransitionFormulaWithBranchEncoders();
+			if (tf.getBranchEncoders().size() > 0) {
+				Map<TermVariable, Boolean> beMapping = new HashMap<TermVariable, Boolean>();
+				for (TermVariable tv : tf.getBranchEncoders()) {
+					String nameOfConstant = NestedSsaBuilder.branchEncoderConstantName(tv, i);
+					Term indexedBe = m_SmtManager.getScript().term(nameOfConstant);
+					Term value = getValue(indexedBe);
+					Boolean booleanValue = getBooleanValue(value);
+					beMapping.put(tv, booleanValue);
+				}
+				rpeb.setBranchEncoders(i, beMapping);
+			}
+		}
+		for (BoogieVar bv : nsb.getIndexedVarRepresentative().keySet()) {
+			if (!bv.getTermVariable().getSort().isArraySort()) {
+				for (Integer index : nsb.getIndexedVarRepresentative().get(bv).keySet()) {
+					Term indexedVar = nsb.getIndexedVarRepresentative().get(bv).get(index);
+					Term valueT = getValue(indexedVar);
+					Expression valueE = m_SmtManager.getBoogie2Smt().getSmt2Boogie().translate(valueT);
+					rpeb.addValueAtVarAssignmentPosition(bv, index, valueE);
+				}
+			}
+		}
+		return rpeb.getRcfgProgramExecution();
 	}
 	
 	protected AnnotateAndAsserter getAnnotateAndAsserter(NestedSsa ssa) {

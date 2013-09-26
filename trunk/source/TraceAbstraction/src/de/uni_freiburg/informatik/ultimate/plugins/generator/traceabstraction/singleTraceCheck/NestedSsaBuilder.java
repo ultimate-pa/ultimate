@@ -302,7 +302,12 @@ public class NestedSsaBuilder {
 			CodeBlock symbol = m_TraceWF.getTrace().getSymbolAt(i);
 			assert (!(symbol instanceof GotoEdge)) : "TraceChecker does not support GotoEdges";
 			
-			TransFormula tf = symbol.getTransitionFormulaWithBranchEncoders();
+			TransFormula tf;
+			if (m_TraceWF.getTrace().isCallPosition(i)) {
+				tf = m_TraceWF.getGlobalVarAssignment(i);
+			} else {
+				tf = m_TraceWF.getFormulaFromNonCallPos(i);
+			}
 			
 			VariableVersioneer tfVV = new VariableVersioneer(tf);
 			tfVV.versionInVars();
