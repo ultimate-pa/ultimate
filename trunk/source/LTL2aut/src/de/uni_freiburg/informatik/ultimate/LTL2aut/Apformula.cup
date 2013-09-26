@@ -41,7 +41,7 @@ expr ::= expr:e1 PLUS expr:e2
 	| expr:e1 TIMES expr:e2
 	{: RESULT = new BinaryOperator(BinaryType.times, e1, e2); :}
 	| MINUS expr:e1 		
-	{: RESULT = new UnaryMinus(e1); :} %prec UMINUS
+	{: RESULT = RESULT = new IntLiteral(((IntLiteral)e1).getValue() * -1); :} %prec UMINUS
 	| LPAR expr:e1 RPAR
 	{: RESULT = e1; :}
 	| name:n	

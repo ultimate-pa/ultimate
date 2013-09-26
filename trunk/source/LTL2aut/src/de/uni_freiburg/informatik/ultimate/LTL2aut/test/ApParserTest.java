@@ -28,14 +28,14 @@ public class ApParserTest extends TestCase {
 	public void testApParser() throws Exception
 	{
 	
-		String code = "a : a *4 + 2 > y";
+		String code = "a : a *4 + -2 > y";
 		InputStreamReader file = new InputStreamReader(IOUtils.toInputStream(code));		
 	
 		LexerAP lexer = new LexerAP(file);
 		parserAP p = new parserAP(lexer);
 		AstNode n = (AstNode)p.parse().value;
 	
-		assertEquals("a:((a*4)+2)>y".replaceAll("\\s", "")
+		assertEquals("a:((a*4)+ -2)>y".replaceAll("\\s", "")
 				, n.toString().replaceAll("\\s", ""));
 	}
 	

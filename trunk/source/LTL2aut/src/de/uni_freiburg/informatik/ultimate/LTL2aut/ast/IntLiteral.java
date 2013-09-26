@@ -14,4 +14,8 @@ public class IntLiteral extends AstNode {
 		return Integer.toString(this.value);
 	}
 
+	public int getValue()
+	{
+		return value;
+	}
 }

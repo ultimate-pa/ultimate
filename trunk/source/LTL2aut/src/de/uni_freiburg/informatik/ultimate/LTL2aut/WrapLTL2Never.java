@@ -9,9 +9,13 @@ import org.apache.commons.io.IOUtils;
 
 import de.uni_freiburg.informatik.ultimate.LTL2aut.ast.AstNode;
 
-/*
- * Abstracts the file system acces and third party program 
- * acces. 
+/**
+ * This class handles the communication of with the external tool 
+ * for translating an LTL formula into a Promela never claim and 
+ * can parse that claim into an AST.
+ * 
+ * @author Langenfeld
+ *
  */
 
 public class WrapLTL2Never {
@@ -29,14 +33,13 @@ public class WrapLTL2Never {
 	 */
 	public String commandLineArgument = " -f \" $1 \"";
 	
-
-	
 	/**
 	 * Returns a Büchi automaton for the ltl formula as a promela never claim.
 	 * 
-	 * @param ltlFomula ltl formula in the form accepted by the underlying tool
+	 * @param ltlFomula ltl formula in the form accepted by the called tool
 	 * @throws IOException 
 	 * @throws InterruptedException 
+	 * @return whole return string of the called tool
 	 */
 	public String execLTLXBA(String ltlFormula) throws IOException, InterruptedException
 	{
@@ -57,6 +60,13 @@ public class WrapLTL2Never {
 	    return result;
 	}
 	
+	/**
+	 * Returns the Ast of the Promela never claim description of 
+	 * the Büchi automaton returned by the ltl2büchi tool.
+	 * @param ltlFormula ltl formula in the format accepted by the tool
+	 * @return Ast of Büchi automaton description
+	 * @throws Exception
+	 */
 	public AstNode ltl2Ast(String ltlFormula) throws Exception
 	{
 		String toolOutput = this.execLTLXBA(ltlFormula);

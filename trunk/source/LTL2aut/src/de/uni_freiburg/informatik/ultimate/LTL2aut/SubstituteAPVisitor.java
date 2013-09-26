@@ -7,17 +7,30 @@ import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.LTL2aut.ast.*;
 
+/**
+ * Substitute the identiefiers inside an AST of a Promela Büchi automaton description
+ * by the correct atomic propositions.
+ * 
+ * @author Langenfeld
+ *
+ */
 public class SubstituteAPVisitor {
 	
 	private Map<String, AstNode> aps;
 	private List<Name> toSubstitute = new ArrayList<Name>();
 	private List<AstNode> toSubstituteParents = new ArrayList<AstNode>();
 	
+	/**
+	 * 	Go visit and replace
+	 * @param aps: map Ident->Ast of the atomic propositions
+	 * @param ast: ast of the Promela description of the büchi automaton 
+	 */
 	public SubstituteAPVisitor(Map<String, AstNode> aps, AstNode ast)
 	{
 		this.aps = aps;
-		this.visit(ast, null); // a single name will not get parsed
+		this.visit(ast, null);
 		
+		//now substitute idents by asts at the occurences the visitor has found
 		for(int i = 0; i < this.toSubstitute.size(); i++)
 		{
 			if (this.toSubstituteParents.get(i) instanceof OptionStatement)
@@ -32,12 +45,11 @@ public class SubstituteAPVisitor {
 		}
 	}
 	
-	public void visit(AstNode node, AstNode parent)
+	private void visit(AstNode node, AstNode parent)
 	{
 		if (node instanceof BoolLiteral)
 			return;
-		else if (node instanceof IntLiteral)
-			return;
+		//int literal may not occure
 		else if (node instanceof Name)
 		{
 			Name n = (Name)node;
@@ -49,7 +61,6 @@ public class SubstituteAPVisitor {
 		}
 		else if (node instanceof OptionStatement)
 		{
-			//this.visit(node.getOutgoingNodes().get(0), node);    //not necessary!
 			this.visit(((OptionStatement)node).getCondition(), node);
 		}
 		else
