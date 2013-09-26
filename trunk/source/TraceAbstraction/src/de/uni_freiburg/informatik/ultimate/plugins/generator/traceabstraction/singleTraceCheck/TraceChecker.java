@@ -111,17 +111,18 @@ public class TraceChecker {
 	private final PrintWriter m_DebugPW;
 	
 
-	protected NestedWord<CodeBlock> m_Trace;
-	protected IPredicate m_Precondition;
-	protected IPredicate m_Postcondition;
-	protected Map<Integer,IPredicate> m_PendingContexts;
+	protected final NestedWord<CodeBlock> m_Trace;
+	protected final IPredicate m_Precondition;
+	protected final IPredicate m_Postcondition;
+	protected final SortedMap<Integer,IPredicate> m_PendingContexts;
 
-//	protected NestedSsa m_AnnotatedSsa;
 	protected AnnotateAndAsserter m_AAA;
 	
-	protected LBool m_IsSafe;
+	protected final LBool m_IsSafe;
 	protected IPredicate[] m_Interpolants;
 	protected RcfgProgramExecution m_RcfgProgramExecution;
+	
+	protected final DefaultTransFormulas m_DefaultTransFormulas;
 	
 	
 	
@@ -139,14 +140,18 @@ public class TraceChecker {
 		m_PredicateUnifier = new PredicateUnifier(m_SmtManager);
 		m_ModifiedGlobals = modifiedGlobals;
 		m_DebugPW = debugPW;
-		SortedMap<Integer, IPredicate> pendingContexts = 
-				new TreeMap<Integer, IPredicate>();
-		checkTrace(precondition, postcondition, pendingContexts, trace);
+		m_Trace = trace;
+		m_Precondition = precondition;
+		m_Postcondition = postcondition;
+		m_PendingContexts = new TreeMap<Integer, IPredicate>();
+		m_DefaultTransFormulas = new DefaultTransFormulas(m_Trace, 
+				precondition, postcondition, m_PendingContexts, m_ModifiedGlobals, false);
+		m_IsSafe = checkTrace();
 	}
 	
 	
 	/**
-	 * Like three-argument-checkTrace-Method above but for traces which contain
+	 * Like three-argument-checkTrace-Method above but for traces that contain
 	 * pending returns. The pendingContext maps the positions of pending returns
 	 * to predicates which define possible variable valuations in the context to
 	 * which the return leads the trace.
@@ -161,8 +166,40 @@ public class TraceChecker {
 		m_PredicateUnifier = new PredicateUnifier(m_SmtManager);
 		m_ModifiedGlobals = modifiedGlobals;
 		m_DebugPW = debugPW;
-		checkTrace(precondition, postcondition, pendingContexts, trace);
+		m_Trace = trace;
+		m_Precondition = precondition;
+		m_Postcondition = postcondition;
+		m_PendingContexts = pendingContexts;
+		m_DefaultTransFormulas = new DefaultTransFormulas(m_Trace, 
+				precondition, postcondition, pendingContexts, m_ModifiedGlobals, false);
+		m_IsSafe = checkTrace();
 	}
+	
+	/**
+	 * Like three-argument-checkTrace-Method above but for traces which contain
+	 * pending returns. The pendingContext maps the positions of pending returns
+	 * to predicates which define possible variable valuations in the context to
+	 * which the return leads the trace.
+	 * 
+	 */
+	private TraceChecker(IPredicate precondition, IPredicate postcondition,
+			SortedMap<Integer, IPredicate> pendingContexts, NestedWord<CodeBlock> trace,
+			SmtManager smtManager,
+			ModifiableGlobalVariableManager modifiedGlobals,
+			DefaultTransFormulas defaultTransFormulas) {
+		m_SmtManager = smtManager;
+		m_PredicateUnifier = new PredicateUnifier(m_SmtManager);
+		m_ModifiedGlobals = modifiedGlobals;
+		m_DebugPW = null;
+		m_Trace = trace;
+		m_Precondition = precondition;
+		m_Postcondition = postcondition;
+		m_PendingContexts = pendingContexts;
+		m_DefaultTransFormulas = defaultTransFormulas;
+		m_IsSafe = checkTrace();
+	}
+	
+	
 	
 	
 	/**
@@ -187,37 +224,27 @@ public class TraceChecker {
 	 * which the return leads the trace.
 	 * 
 	 */
-	public LBool checkTrace(IPredicate precondition, IPredicate postcondition,
-			SortedMap<Integer, IPredicate> pendingContexts, NestedWord<CodeBlock> trace) {
-		if (traceCheckRunning()) {
-			throw new AssertionError("Each trace checker can check only one trace.");
-		}
-		m_Trace = trace;
-		m_Precondition = precondition;
-		m_Postcondition = postcondition;
-		m_PendingContexts = pendingContexts;
-		
+	private LBool checkTrace() {
+		LBool isSafe;
 		m_SmtManager.startTraceCheck();
 		NestedSsaBuilder nsb = 
-				new NestedSsaBuilder(m_Trace, precondition, postcondition, 
-						pendingContexts, m_SmtManager, m_ModifiedGlobals);
+				new NestedSsaBuilder(m_Trace, m_Precondition, m_Postcondition, 
+						m_PendingContexts, m_SmtManager, m_DefaultTransFormulas);
 		NestedSsa ssa = nsb.getSsa();
 		try {
 			m_AAA = getAnnotateAndAsserter(ssa);
 			m_AAA.buildAnnotatedSsaAndAssertTerms();
-			m_IsSafe = m_AAA.isInputSatisfiable();
+			isSafe = m_AAA.isInputSatisfiable();
 		} catch (SMTLIBException e) {
 			if (e.getMessage().equals("Unsupported non-linear arithmetic")) {
-				m_IsSafe = LBool.UNKNOWN;
+				isSafe = LBool.UNKNOWN;
 			}
 			else {
 				throw e;
 			}
 		}
-		if (m_IsSafe==LBool.SAT) {
-			DefaultTransFormulas dtf = new DefaultTransFormulas(m_Trace, 
-					m_Precondition, m_Postcondition, pendingContexts, m_ModifiedGlobals);
-			RelevantVariables relVars = new RelevantVariables(dtf);
+		if (isSafe==LBool.SAT) {
+			RelevantVariables relVars = new RelevantVariables(m_DefaultTransFormulas);
 			RcfgProgramExecutionBuilder rpeb = new RcfgProgramExecutionBuilder(m_ModifiedGlobals, (NestedWord<CodeBlock>) m_Trace, relVars);
 			for (int i=0; i<m_Trace.length(); i++) {
 				CodeBlock cb = m_Trace.getSymbolAt(i);
@@ -246,7 +273,7 @@ public class TraceChecker {
 			}
 			m_RcfgProgramExecution = rpeb.getRcfgProgramExecution();
 		}
-		return m_IsSafe;
+		return isSafe;
 	}
 	
 	protected AnnotateAndAsserter getAnnotateAndAsserter(NestedSsa ssa) {
@@ -322,8 +349,7 @@ public class TraceChecker {
 		
 		boolean testRelevantVars = true;
 		if (testRelevantVars) {
-			RelevantVariables rv = new RelevantVariables(
-					new DefaultTransFormulas(m_Trace, m_Precondition, m_Postcondition, null, m_ModifiedGlobals));
+			RelevantVariables rv = new RelevantVariables(m_DefaultTransFormulas);
 			for (int i=0; i<m_Interpolants.length; i++) {
 				IPredicate itp = m_Interpolants[i];
 				Set<BoogieVar> vars = itp.getVars();
@@ -359,6 +385,7 @@ public class TraceChecker {
 
 	public RcfgProgramExecution getRcfgProgramExecution() {
 		if (m_IsSafe == LBool.SAT || m_IsSafe == LBool.UNKNOWN) {
+			assert m_RcfgProgramExecution != null;
 			return m_RcfgProgramExecution;
 		} else {
 			throw new AssertionError("only available if trace is feasible");
@@ -545,9 +572,6 @@ public class TraceChecker {
 	 * interpolants or an error path, use this method to unlock the SmtManager.
 	 */
 	public void unlockSmtManager() {
-		if (!traceCheckRunning()) {
-			throw new AssertionError("No trace checked before");
-		}
 		m_SmtManager.endTraceCheck();
 		if (m_Interpolants != null) { 
 			assert !inductivityOfSequenceCanBeRefuted();
@@ -556,26 +580,7 @@ public class TraceChecker {
 	
 	
 	
-	/**
-	 * Return true if a trace was already checked.
-	 */
-	private boolean traceCheckRunning() {
-		if (m_Trace == null) {
-			assert m_Precondition == null;
-			assert m_Postcondition == null;
-			assert m_IsSafe == null;
-			assert m_Interpolants == null;
-			return false;
-		} else {
-			assert m_Precondition != null;
-			assert m_Postcondition != null;
-			assert m_IsSafe != null;
-			return true;
-		}
-	}
-	
 
-	
 	/**
 	 * Return the locations of this trace.
 	 * While using large block encoding this sequence is not unique.

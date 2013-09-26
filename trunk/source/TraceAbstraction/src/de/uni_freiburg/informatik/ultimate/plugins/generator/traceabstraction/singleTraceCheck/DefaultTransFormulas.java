@@ -8,6 +8,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cal
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.InterproceduralSequentialComposition;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ModifiableGlobalVariableManager;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.TransFormula;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IPredicate;
 
@@ -15,14 +17,21 @@ public class DefaultTransFormulas extends TraceWithFormulas<TransFormula, IPredi
 	
 	private final ModifiableGlobalVariableManager m_ModifiableGlobalVariableManager;
 	private final Set<Integer> m_CallPositions;
+	private final boolean m_WithBranchEncoders;
 	
 	public DefaultTransFormulas(NestedWord<CodeBlock> nestedWord, 
 			IPredicate precondition, IPredicate postcondition,
 			SortedMap<Integer, IPredicate> pendingContexts,
-			ModifiableGlobalVariableManager modifiableGlobalVariableManager) {
+			ModifiableGlobalVariableManager modifiableGlobalVariableManager,
+			boolean withBranchEncoders) {
 		super(nestedWord, precondition, postcondition, pendingContexts);
 		m_ModifiableGlobalVariableManager = modifiableGlobalVariableManager;
 		m_CallPositions = super.getTrace().computeCallPositions();
+		m_WithBranchEncoders = withBranchEncoders;
+	}
+	
+	public boolean hasBranchEncoders() {
+		return m_WithBranchEncoders;
 	}
 	
 	@Override
@@ -32,8 +41,12 @@ public class DefaultTransFormulas extends TraceWithFormulas<TransFormula, IPredi
 
 	@Override
 	protected TransFormula getFormulaFromValidNonCallPos(int i) {
-		CodeBlock cb = super.getTrace().getSymbolAt(i); 
-		return cb.getTransitionFormula();
+		CodeBlock cb = super.getTrace().getSymbolAt(i);
+		if (m_WithBranchEncoders) {
+			return cb.getTransitionFormulaWithBranchEncoders();
+		} else {
+			return cb.getTransitionFormula();
+		}
 	}
 
 	@Override
@@ -61,13 +74,30 @@ public class DefaultTransFormulas extends TraceWithFormulas<TransFormula, IPredi
 	 */
 	private String getCalledProcedure(int i) {
 		CodeBlock cb = super.getTrace().getSymbolAt(i);
-		assert ((cb instanceof Call) || (cb instanceof InterproceduralSequentialComposition)); 
+		assert ((cb instanceof Call) || (cb instanceof InterproceduralSequentialComposition) 
+				|| (cb instanceof Return)); 
 		if (cb instanceof InterproceduralSequentialComposition) {
 			throw new UnsupportedOperationException("not yet implemented");
 			// collect all pending calls use modifiable globals of all
 		}
-		String calledProcedure = ((Call) cb).getCallStatement().getMethodName();
+		
+		Call call;
+		if (cb instanceof Return) {
+			call = ((Return) cb).getCorrespondingCall();
+		} else if (cb instanceof Call) {
+			call = (Call) cb;
+		} else {
+			throw new UnsupportedOperationException("neither call nor return");
+		}
+		String calledProcedure = call.getCallStatement().getMethodName();
 		return calledProcedure;
+	}
+
+	@Override
+	public TransFormula getInitialOldVarAssignment() {
+		ProgramPoint pp = (ProgramPoint) super.getTrace().getSymbol(0).getSource();
+		String proc = pp.getProcedure();
+		return m_ModifiableGlobalVariableManager.getOldVarsAssignment(proc);
 	}
 
 

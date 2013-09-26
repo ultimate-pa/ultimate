@@ -112,9 +112,11 @@ public class NestedSsa extends TraceWithFormulas<Term, Term> {
 	public TraceWithFormulas<TransFormula, IPredicate> getTransFormulas() {
 		return m_TransFormulas;
 	}
-	
-	
 
-
+	@Override
+	public Term getInitialOldVarAssignment() {
+		// TODO ask Matthias
+		throw new UnsupportedOperationException("not implemented yet");
+	}
 
 }

@@ -261,4 +261,10 @@ public class RelevantTransFormulas extends TraceWithFormulas<TransFormula, IPred
 		return m_OldVarsAssignmentTransFormulasAtCall.get(i);
 	}
 
+	@Override
+	public TransFormula getInitialOldVarAssignment() {
+		// TODO ask Matthias
+		throw new UnsupportedOperationException("not implemented yet");
+	}
+
 }
