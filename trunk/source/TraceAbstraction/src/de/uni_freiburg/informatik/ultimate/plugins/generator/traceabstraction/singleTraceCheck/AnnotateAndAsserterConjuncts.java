@@ -28,7 +28,8 @@ public class AnnotateAndAsserterConjuncts extends AnnotateAndAsserter {
 	private Term annotateAndAssertConjuncts(String name, Term original,	Term indexed) {
 		Term[] originalConjuncts = DestructiveEqualityResolution.getConjuncts(original);
 		Term[] indexedConjuncts = DestructiveEqualityResolution.getConjuncts(indexed);
-		assert originalConjuncts.length == indexedConjuncts.length;
+		assert originalConjuncts.length == indexedConjuncts.length : 
+			"number of original and indexed conjuncts differ";
 		Term[] annotatedConjuncts = new Term[originalConjuncts.length];
 		for (int i=0; i<originalConjuncts.length; i++) {
 			Term originalConjunct = originalConjuncts[i];
