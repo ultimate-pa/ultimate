@@ -107,7 +107,7 @@ public class MemoryHandler {
      * Add also implementations of malloc, free, write and read functions.
      * TODO: details
      */
-	private static final boolean m_AddImplementation = true;
+	private static final boolean m_AddImplementation = false;
 
     /**
      * Constructor.
@@ -238,34 +238,11 @@ public class MemoryHandler {
             decl.add(new VariableDeclaration(l, new Attribute[0],
                     new VarList[] { vlM }));
             // create and add read and write procedure
-            VariableDeclaration[] writeDecl = new VariableDeclaration[ts.length];
-            Statement[] writeBlock = new Statement[2 * ts.length - 1];
             String value = "#value";
             String inPtr = "#ptr";
             Expression idVal = new IdentifierExpression(l, value);
             Expression idPtr = new IdentifierExpression(l, inPtr);
             Expression[] idc = new Expression[] { idPtr };
-            for (int j = 0, k = 0; j < ts.length; j++, k++) {
-                String tmpVar = main.nameHandler.getTempVarUID(SFO.AUXVAR.NONDET);	
-                writeDecl[j] = new VariableDeclaration(l, new Attribute[0],
-                        new VarList[] { new VarList(l, new String[] { tmpVar },
-                                ts[j]) });
-                VariableLHS arr = new VariableLHS(l, SFO.MEMORY + "_"
-                        + tName[j]);
-                LeftHandSide[] arrL = new LeftHandSide[] { new ArrayLHS(l, arr,
-                        idc) };
-                if (i == j) {
-                    writeBlock[k] = new AssignmentStatement(l, arrL,
-                            new Expression[] { idVal });
-                } else {
-                    writeBlock[k] = new HavocStatement(l,
-                            new String[] { tmpVar });
-                    writeBlock[++k] = new AssignmentStatement(l, arrL,
-                            new Expression[] { new IdentifierExpression(l,
-                                    tmpVar) });
-                }
-            }
-            Body bwrite = new Body(l, writeDecl, writeBlock);
             String nwrite = "write~" + tName[i];
             String nread = "read~" + tName[i];
             VarList[] inWrite = new VarList[] {
@@ -338,8 +315,33 @@ public class MemoryHandler {
             }
             decl.add(new Procedure(l, new Attribute[0], nwrite, new String[0],
                     inWrite, new VarList[0], swrite, null));
-            decl.add(new Procedure(l, new Attribute[0], nwrite, new String[0],
-                    inWrite, new VarList[0], null, bwrite));
+            if (m_AddImplementation) {
+            	VariableDeclaration[] writeDecl = new VariableDeclaration[ts.length];
+            	Statement[] writeBlock = new Statement[2 * ts.length - 1];
+            	for (int j = 0, k = 0; j < ts.length; j++, k++) {
+            		String tmpVar = main.nameHandler.getTempVarUID(SFO.AUXVAR.NONDET);	
+            		writeDecl[j] = new VariableDeclaration(l, new Attribute[0],
+            				new VarList[] { new VarList(l, new String[] { tmpVar },
+            						ts[j]) });
+            		VariableLHS arr = new VariableLHS(l, SFO.MEMORY + "_"
+            				+ tName[j]);
+            		LeftHandSide[] arrL = new LeftHandSide[] { new ArrayLHS(l, arr,
+            				idc) };
+            		if (i == j) {
+            			writeBlock[k] = new AssignmentStatement(l, arrL,
+            					new Expression[] { idVal });
+            		} else {
+            			writeBlock[k] = new HavocStatement(l,
+            					new String[] { tmpVar });
+            			writeBlock[++k] = new AssignmentStatement(l, arrL,
+            					new Expression[] { new IdentifierExpression(l,
+            							tmpVar) });
+            		}
+            	}
+            	Body bwrite = new Body(l, writeDecl, writeBlock);
+            	decl.add(new Procedure(l, new Attribute[0], nwrite, new String[0],
+            			inWrite, new VarList[0], null, bwrite));
+            }
             VarList[] inRead = new VarList[] { new VarList(l,
                     new String[] { inPtr }, POINTER_TYPE) };
             VarList[] outRead = new VarList[] { new VarList(l,
@@ -356,17 +358,19 @@ public class MemoryHandler {
                                     Operator.ARITHPLUS,
                                     new IdentifierExpression(l, SFO.SIZEOF
                                             + tName[i]), ptrOff), length)) };
-            Expression arr = new IdentifierExpression(l, SFO.MEMORY + "_"
-                    + tName[i]);
-            Expression arrE = new ArrayAccessExpression(l, arr, idc);
-            Statement[] readBlock = new Statement[] { new AssignmentStatement(
-                    l, new LeftHandSide[] { new VariableLHS(l, value) },
-                    new Expression[] { arrE }) };
-            Body bread = new Body(l, new VariableDeclaration[0], readBlock);
             decl.add(new Procedure(l, new Attribute[0], nread, new String[0],
                     inRead, outRead, sread, null));
-            decl.add(new Procedure(l, new Attribute[0], nread, new String[0],
-                    inRead, outRead, null, bread));
+            if (m_AddImplementation) {
+            	Expression arr = new IdentifierExpression(l, SFO.MEMORY + "_"
+            			+ tName[i]);
+            	Expression arrE = new ArrayAccessExpression(l, arr, idc);
+            	Statement[] readBlock = new Statement[] { new AssignmentStatement(
+            			l, new LeftHandSide[] { new VariableLHS(l, value) },
+            			new Expression[] { arrE }) };
+            	Body bread = new Body(l, new VariableDeclaration[0], readBlock);
+            	decl.add(new Procedure(l, new Attribute[0], nread, new String[0],
+            			inRead, outRead, null, bread));
+            }
         }
         return decl;
     }
