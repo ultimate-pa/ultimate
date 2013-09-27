@@ -35,6 +35,9 @@ import de.uni_freiburg.informatik.ultimate.logic.Theory.SolverSetup;
  * @author Jürgen Christ, Jochen Hoenicke
  */
 public class NoopScript implements Script {
+	
+	private final static TermVariable[] EMPTY_TVAR_ARRAY = new TermVariable[0];
+	
 	private Theory m_Theory;
 	protected int m_StackLevel = 0;
 	
@@ -358,7 +361,7 @@ public class NoopScript implements Script {
   			    		throw new SMTLIBException("Cannot name open terms");
   			    	else
   			    	    defineFunInternal((String) a.getValue(), 
-  			    	    	new TermVariable[0], t.getSort(), t);
+  			    	    	EMPTY_TVAR_ARRAY, t.getSort(), t);
   			    }
   			}
   			return m_Theory.annotatedTerm(annotations, t);

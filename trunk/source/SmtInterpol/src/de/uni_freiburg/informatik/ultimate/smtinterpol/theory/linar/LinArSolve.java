@@ -393,7 +393,7 @@ public class LinArSolve implements ITheory {
 					if (conflict == null)
 						conflict = propagateBound(var, true);
 					else {
-						assert var.isAlive();
+//						assert var.isAlive();
 						m_propBounds.addLast(var);
 					}
 				}
@@ -405,7 +405,7 @@ public class LinArSolve implements ITheory {
 					if (conflict == null)
 						conflict = propagateBound(var, false);
 					else {
-						assert var.isAlive();
+//						assert var.isAlive();
 						m_propBounds.addLast(var);
 					}
 				}
@@ -432,7 +432,7 @@ public class LinArSolve implements ITheory {
 	public void removeReason(LAReason reason) {
 		LinVar var = reason.getVar();
 		if (var.mbasic && var.headEntry != null) {
-			assert var.isAlive();
+//			assert var.isAlive();
 			m_propBounds.add(var);
 		}
 		LAReason chain;
@@ -546,7 +546,7 @@ public class LinArSolve implements ITheory {
 		/* check if there are unprocessed bounds */
 		while (!m_propBounds.isEmpty()) {
 			LinVar b = m_propBounds.removeFirst();
-			if (!b.mbasic)
+			if (b.dead || !b.mbasic)
 				continue;
 			assert(b.checkBrpCounters());
 			long time;
@@ -558,7 +558,7 @@ public class LinArSolve implements ITheory {
 				if (conflict == null)
 					conflict = propagateBound(b, false);
 				else {
-					assert b.isAlive();
+//					assert b.isAlive();
 					m_propBounds.addLast(b);
 				}
 			}
@@ -1021,7 +1021,7 @@ public class LinArSolve implements ITheory {
 				m_Eps = m_Eps.div(Rational.TWO);
 			else {
 				Rational next = prohibitions.lower(m_Eps);
-				if (next.signum() <= 0)
+				if (next == null || next.signum() <= 0)
 					m_Eps = m_Eps.div(Rational.TWO);
 				else
 					m_Eps = m_Eps.add(next).div(Rational.TWO);
@@ -1117,7 +1117,7 @@ public class LinArSolve implements ITheory {
 				if (conflict == null)
 					conflict = propagateBound(row, true);
 				else {
-					assert row.isAlive();
+//					assert row.isAlive();
 					m_propBounds.addLast(row);
 				}
 			}
@@ -1125,7 +1125,7 @@ public class LinArSolve implements ITheory {
 				if (conflict == null)
 					conflict = propagateBound(row, false);
 				else{
-					assert row.isAlive();
+//					assert row.isAlive();
 					m_propBounds.addLast(row);
 				}
 			}
@@ -1137,7 +1137,7 @@ public class LinArSolve implements ITheory {
 			if (conflict == null)
 				conflict = propagateBound(nonbasic, true);
 			else {
-				assert nonbasic.isAlive();
+//				assert nonbasic.isAlive();
 				m_propBounds.addLast(nonbasic);
 			}
 		}
@@ -1145,7 +1145,7 @@ public class LinArSolve implements ITheory {
 			if (conflict == null)
 				conflict = propagateBound(nonbasic, false);
 			else {
-				assert nonbasic.isAlive();
+//				assert nonbasic.isAlive();
 				m_propBounds.addLast(nonbasic);
 			}
 		}

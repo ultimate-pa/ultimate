@@ -59,6 +59,7 @@ public class DPLLEngine {
 	public static final int INCOMPLETE_MEMOUT = 3;
 	public static final int INCOMPLETE_UNKNOWN = 4;
 	public static final int INCOMPLETE_TIMEOUT = 5;
+	public static final int INCOMPLETE_CHECK = 6;
 	
 	private static final String[] gcompletenessstrings = {
 		"Complete",
@@ -66,7 +67,8 @@ public class DPLLEngine {
 		"Theories with incomplete decision procedure used",
 		"Not enough memory",
 		"Unknown internal error",
-		"Sat check timed out"
+		"Sat check timed out",
+		"Incomplete check used"
 	};
 	private int completeness;
 	
@@ -530,6 +532,14 @@ public class DPLLEngine {
 		}
 	}
 	
+	/**
+	 * Explain one conflict clause.  DO NOT CALL THIS FUNCTION DIRECTLY!!!
+	 * USE {@link #explain(Clause)} INSTEAD SINCE THIS FUNCTION DOES A CORRECT
+	 * LOOP INCLUDING {@link #finalizeBacktrack()} AND HENCE DOES NOT LEAVE
+	 * BEHIND INCONSISTENT THEORY SOLVERS.
+	 * @param clause Conflict clause
+	 * @return Explanation
+	 */
 	private Clause explainConflict(Clause clause) {
 		if (logger.isDebugEnabled())
 			logger.debug("explain conflict "+clause);
@@ -722,6 +732,23 @@ public class DPLLEngine {
 		return resolution;
 	}
 	
+	/**
+	 * Explain all conflicts currently present in the solver starting with a
+	 * given initial conflict.  Returns <code>true</code> if and only if the
+	 * empty clause has been derived.
+	 * @param conflict The initial conflict.
+	 * @return Is the solver inconsistent?
+	 */
+	private boolean explain(Clause conflict) {
+		while (conflict != null) {
+			conflict = explainConflict(conflict);
+			learnClause(conflict);
+			if (m_unsatClause != null)
+				return true;
+			conflict = finalizeBacktrack();
+		}
+		return false;
+	}
 	private final int level0resolve(Literal l, Set<Literal> level0Ants, int sl) {
 		Clause l0 = getLevel0(l.negate());
 		if (isProofGenerationEnabled()) {
@@ -978,13 +1005,8 @@ public class DPLLEngine {
 				lastTime = System.nanoTime() - setTime - backtrackTime;
 			for (ITheory t : theories) {
 				Clause conflict = t.startCheck();
-				while (conflict != null) {
-					conflict = explainConflict(conflict);
-					learnClause(conflict);
-					if (m_unsatClause != null)
-						return false;
-					conflict = finalizeBacktrack();
-				}
+				if (explain(conflict))
+					return false;
 			}
 			while (!mStopEngine) {
 				Clause conflict;
@@ -1028,36 +1050,31 @@ public class DPLLEngine {
 						conflict = setLiteral(literal);
 					}
 				} while (conflict == null && !mStopEngine);
-				while (conflict != null) {
-					if (Config.PROFILE_TIME) {
-						time = System.nanoTime();
-						propTime += time - lastTime - setTime - backtrackTime;
-						lastTime = time - setTime - backtrackTime;
-					}
-					Clause explanation = explainConflict(conflict);
-					learnClause(explanation);
-					if (m_unsatClause != null) {
-						printStatistics();
-						logger.info("Formula is unsat");
-						/*
-						logger.info("Learned Clauses");
-						for (Clause c : learnedClauses) {
-							logger.info("Cl: len "+c.literals.length+ " used "+c.usedTimes + ": "+c);
-						}
-						*/
-						if (Config.PROFILE_TIME) {
-							time = System.nanoTime();
-							explainTime += time - lastTime - setTime - backtrackTime;
-							lastTime = time - setTime - backtrackTime;
-						}
-						return false;
-					}
-					conflict = finalizeBacktrack();
+				if (Config.PROFILE_TIME) {
+					time = System.nanoTime();
+					propTime += time - lastTime - setTime - backtrackTime;
+					lastTime = time - setTime - backtrackTime;
+				}
+				if (explain(conflict)) {
 					if (Config.PROFILE_TIME) {
 						time = System.nanoTime();
 						explainTime += time - lastTime - setTime - backtrackTime;
 						lastTime = time - setTime - backtrackTime;
 					}
+					printStatistics();
+					logger.info("Formula is unsat");
+					/*
+					logger.info("Learned Clauses");
+					for (Clause c : learnedClauses) {
+						logger.info("Cl: len "+c.literals.length+ " used "+c.usedTimes + ": "+c);
+					}
+					*/
+					return false;
+				}
+				if (Config.PROFILE_TIME) {
+					time = System.nanoTime();
+					explainTime += time - lastTime - setTime - backtrackTime;
+					lastTime = time - setTime - backtrackTime;
 				}
 				if (atom_scale > Config.LIMIT) {
 					for (DPLLAtom a : atoms) {
@@ -1129,6 +1146,8 @@ public class DPLLEngine {
 		} catch (Throwable t) {
 			logger.fatal("Unknown exception during check",t);
 			completeness = INCOMPLETE_UNKNOWN;
+			if (System.getProperty("smtinterpol.ddfriendly") != null)
+				System.exit(3);
 		}
 		return true;
 	}
@@ -1482,14 +1501,8 @@ public class DPLLEngine {
 		if (m_unsatClause != null)
 			return false;
 		Clause conflict = propagateInternal();
-		while (conflict != null) {
-			conflict = explainConflict(conflict);
-			learnClause(conflict);
-			if (m_unsatClause != null)
-				return false;
-			conflict = finalizeBacktrack();
-		}
-		return true;
+		boolean res = !explain(conflict);
+		return res;
 	}
 	
 	/**
@@ -1510,19 +1523,10 @@ public class DPLLEngine {
 		}
 		if (conflict == null)	
 			conflict = propagateInternal();
-		while (conflict != null) {
-			conflict = explainConflict(conflict);
-			learnClause(conflict);
-			if (m_unsatClause != null) {
-				for (ITheory t : theories)
-					t.endCheck();
-				return false;
-			}
-			conflict = finalizeBacktrack();
-		}
+		boolean res = !explain(conflict);
 		for (ITheory t : theories)
 			t.endCheck();
-		return true;
+		return res;
 	}
 	
 	public Random getRandom() {
@@ -1603,9 +1607,9 @@ public class DPLLEngine {
 		@Override
 		public boolean hasNext() {
 			if (m_Blocker != null) {
-				Clause resolvedBlocker =
-						explainConflict(new Clause(m_Blocker, stacklevel));
-				learnClause(resolvedBlocker);
+				Clause conflict = new Clause(m_Blocker, stacklevel);
+				if (explain(conflict))
+					return false;
 			}
 			if (solve() && hasModel())
 				return true;

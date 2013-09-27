@@ -205,7 +205,7 @@ public class ParseEnvironment {
 				printResponse(o);
 			m_Out.println(")");
 		} else
-			m_Out.println(response.toString());
+			m_Out.println(response);
 		m_Out.flush();
 	}
 	

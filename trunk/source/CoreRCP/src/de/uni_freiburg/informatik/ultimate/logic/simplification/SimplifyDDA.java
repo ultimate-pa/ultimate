@@ -178,6 +178,12 @@ public class SimplifyDDA {
 	 * @param inputTerm term whose Sort is Boolean
 	 */
 	private Term simplifySubTerm(Term inputTerm)	throws SMTLIBException {
+		Redundancy redundancy = this.getRedundancy(inputTerm);
+		switch (redundancy) {
+				case NON_CONSTRAINING: return m_True;
+				case NON_RELAXING: return m_False;
+				default: break;
+		}
 		if (inputTerm instanceof ApplicationTerm) {
 			final ApplicationTerm applicationTerm = (ApplicationTerm) inputTerm;
 			Term[] parameters = applicationTerm.getParameters();
@@ -281,12 +287,7 @@ public class SimplifyDDA {
 				
 			}
 		}
-		Redundancy redundancy = this.getRedundancy(inputTerm);
-		switch (redundancy) {
-				case NON_CONSTRAINING: return m_True;
-				case NON_RELAXING: return m_False;
-				default: return inputTerm;
-		}
+		return inputTerm;
 	}
 	
 	/**

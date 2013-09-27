@@ -785,7 +785,7 @@ public class Interpolator {
 			result = colorMixedLiteral(lit);
 		return result;
 	}
-
+	
 	/**
 	 * Compute the LitInfo for a mixed Literal.
 	 */
@@ -795,10 +795,24 @@ public class Interpolator {
 		assert info == null;
 
 		ArrayList<SharedTerm> subterms = new ArrayList<SharedTerm>();
+		/* The sort of the auxiliary variable created for this atom.  We need
+		 * this since we internally represent integral constants in LIRA logics
+		 * as Int even if they should have sort Real. 
+		 */
+		Sort auxSort;
 		if (atom instanceof CCEquality) {
 			CCEquality eq = (CCEquality)atom;
-			subterms.add(eq.getLhs().getFlatTerm());
-			subterms.add(eq.getRhs().getFlatTerm());
+			SharedTerm l = eq.getLhs().getFlatTerm();
+			SharedTerm r = eq.getRhs().getFlatTerm();
+			subterms.add(l);
+			subterms.add(r);
+			if (l.getSort() == r.getSort())
+				auxSort = l.getSort();
+			else {
+				assert m_Theory.getLogic().isIRA();
+				// IRA-Hack
+				auxSort = m_Theory.getRealSort();
+			}
 		} else {
 			LinVar lv = null;
 			if (atom instanceof BoundConstraint) {
@@ -812,9 +826,14 @@ public class Interpolator {
 			} else {
 				components = Collections.singleton(lv);
 			}
+			boolean allInt = true;
 			for (LinVar c : components) {
+				// IRA-Hack
+				allInt &= c.isInt();
 				subterms.add(c.getSharedTerm());
 			}
+			auxSort = allInt ?
+					m_Theory.getNumericSort() : m_Theory.getRealSort();
 		}
 		info = computeMixedOccurrence(subterms);
 		this.m_LiteralInfos.put(atom, info);
@@ -825,8 +844,7 @@ public class Interpolator {
 		if (shared.nextClearBit(0) >= m_NumInterpolants)
 			return info;
 
-		info.m_MixedVar = m_Theory.createFreshTermVariable("litaux",
-				subterms.get(0).getSort());
+		info.m_MixedVar = m_Theory.createFreshTermVariable("litaux", auxSort);
 		
 		if (atom instanceof CCEquality) {
 			CCEquality eq = (CCEquality)atom;

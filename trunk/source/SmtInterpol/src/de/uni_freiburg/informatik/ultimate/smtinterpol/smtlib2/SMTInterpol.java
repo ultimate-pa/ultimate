@@ -74,16 +74,19 @@ public class SMTInterpol extends NoopScript {
 	private static enum CheckType {
 		FULL {
 			boolean check(DPLLEngine engine) {
+				engine.setCompleteness(DPLLEngine.COMPLETE);
 				return engine.solve();
 			}
 		},
 		PROPAGATION {
 			boolean check(DPLLEngine engine) {
+				engine.setCompleteness(DPLLEngine.INCOMPLETE_CHECK);
 				return engine.propagate();
 			}
 		},
 		QUICK {
 			boolean check(DPLLEngine engine) {
+				engine.setCompleteness(DPLLEngine.INCOMPLETE_CHECK);
 				return engine.quickCheck();
 			}
 		};
@@ -712,6 +715,9 @@ public class SMTInterpol extends NoopScript {
 						break;
 					case DPLLEngine.INCOMPLETE_UNKNOWN:
 						m_ReasonUnknown = ReasonUnknown.CRASHED;
+						break;
+					case DPLLEngine.INCOMPLETE_CHECK:
+						m_ReasonUnknown = ReasonUnknown.INCOMPLETE;
 						break;
 					default:
 						throw new InternalError("Unknown incompleteness reason");
