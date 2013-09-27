@@ -1,0 +1,2952 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Spec Version="2.1" xsi:schemaLocation="http://czt.sourceforge.net/zml http://czt.sourceforge.net/zml/Z_2_1.xsd" xmlns:ns2="http://czt.sourceforge.net/object-z" xmlns="http://czt.sourceforge.net/zml" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <NarrSect>
+        <Anns>
+            <LocAnn Start="0" Loc="pirate.tex" Line="0" Length="63" Col="0"/>
+        </Anns>
+        <Content xsi:type="xs:string" xmlns:xs="http://www.w3.org/2001/XMLSchema">\documentclass{article}
+\usepackage{ltcadiz}
+\begin{document}
+
+</Content>
+    </NarrSect>
+    <ZSect>
+        <Anns>
+            <LocAnn Start="63" Loc="pirate.tex" Line="4" Length="2261" Col="0"/>
+        </Anns>
+        <Name>pirate</Name>
+        <Parent>
+            <Anns>
+                <LocAnn Start="107" Loc="pirate.tex" Line="5" Length="11" Col="27"/>
+            </Anns>
+            <Word>oz_toolkit</Word>
+        </Parent>
+        <Parent>
+            <Anns>
+                <LocAnn Start="120" Loc="pirate.tex" Line="5" Length="17" Col="40"/>
+            </Anns>
+            <Word>standard_toolkit</Word>
+        </Parent>
+        <ZParaList>
+            <LatexMarkupPara/>
+            <NarrPara>
+                <Anns>
+                    <LocAnn Start="152" Loc="pirate.tex" Line="6" Length="2" Col="14"/>
+                </Anns>
+                <Content xsi:type="xs:string" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+
+</Content>
+            </NarrPara>
+            <ns2:ClassPara>
+                <Anns>
+                    <LocAnn Start="168" Loc="pirate.tex" Line="8" Length="864" Col="14"/>
+                </Anns>
+                <ZName>
+                    <Anns>
+                        <LocAnn Start="168" Loc="pirate.tex" Line="8" Length="6" Col="14"/>
+                    </Anns>
+                    <Word>Pirate</Word>
+                    <ZStrokeList/>
+                </ZName>
+                <ZExprList/>
+                <ns2:State Box="SchBox">
+                    <Anns>
+                        <LocAnn Start="183" Loc="pirate.tex" Line="10" Length="141" Col="1"/>
+                    </Anns>
+                    <ns2:PrimaryDecl>
+                        <ZDeclList>
+                            <Anns>
+                                <LocAnn Loc="pirate.tex"/>
+                            </Anns>
+                            <VarDecl>
+                                <Anns>
+                                    <LocAnn Start="199" Loc="pirate.tex" Length="13"/>
+                                </Anns>
+                                <ZNameList>
+                                    <ZName>
+                                        <Anns>
+                                            <LocAnn Start="199" Loc="pirate.tex" Line="11" Length="7" Col="2"/>
+                                        </Anns>
+                                        <Word>curPosn</Word>
+                                        <ZStrokeList/>
+                                    </ZName>
+                                </ZNameList>
+                                <RefExpr Mixfix="false" Explicit="false">
+                                    <Anns>
+                                        <LocAnn Start="208" Loc="pirate.tex" Line="11" Length="4" Col="11"/>
+                                    </Anns>
+                                    <ZName>
+                                        <Anns>
+                                            <LocAnn Start="208" Loc="pirate.tex" Line="11" Length="4" Col="11"/>
+                                        </Anns>
+                                        <Word>ℕ</Word>
+                                        <ZStrokeList/>
+                                    </ZName>
+                                    <ZExprList/>
+                                </RefExpr>
+                            </VarDecl>
+                            <VarDecl>
+                                <Anns>
+                                    <LocAnn Start="218" Loc="pirate.tex" Length="14"/>
+                                </Anns>
+                                <ZNameList>
+                                    <ZName>
+                                        <Anns>
+                                            <LocAnn Start="218" Loc="pirate.tex" Line="12" Length="8" Col="2"/>
+                                        </Anns>
+                                        <Word>numSteps</Word>
+                                        <ZStrokeList/>
+                                    </ZName>
+                                </ZNameList>
+                                <RefExpr Mixfix="false" Explicit="false">
+                                    <Anns>
+                                        <LocAnn Start="228" Loc="pirate.tex" Line="12" Length="4" Col="12"/>
+                                    </Anns>
+                                    <ZName>
+                                        <Anns>
+                                            <LocAnn Start="228" Loc="pirate.tex" Line="12" Length="4" Col="12"/>
+                                        </Anns>
+                                        <Word>ℕ</Word>
+                                        <ZStrokeList/>
+                                    </ZName>
+                                    <ZExprList/>
+                                </RefExpr>
+                            </VarDecl>
+                            <VarDecl>
+                                <Anns>
+                                    <LocAnn Start="238" Loc="pirate.tex" Length="21"/>
+                                </Anns>
+                                <ZNameList>
+                                    <ZName>
+                                        <Anns>
+                                            <LocAnn Start="238" Loc="pirate.tex" Line="13" Length="10" Col="2"/>
+                                        </Anns>
+                                        <Word>firstVisit</Word>
+                                        <ZStrokeList/>
+                                    </ZName>
+                                </ZNameList>
+                                <RefExpr Mixfix="true" Explicit="true">
+                                    <Anns>
+                                        <LocAnn Start="250" Loc="pirate.tex" Line="13" Length="9" Col="14"/>
+                                    </Anns>
+                                    <ZName>
+                                        <Anns>
+                                            <LocAnn Start="250" Loc="pirate.tex" Line="13" Length="4" Col="14"/>
+                                        </Anns>
+                                        <Word>seq _ </Word>
+                                        <ZStrokeList/>
+                                    </ZName>
+                                    <ZExprList>
+                                        <RefExpr Mixfix="false" Explicit="false">
+                                            <Anns>
+                                                <LocAnn Start="255" Loc="pirate.tex" Line="13" Length="4" Col="19"/>
+                                            </Anns>
+                                            <ZName>
+                                                <Anns>
+                                                    <LocAnn Start="255" Loc="pirate.tex" Line="13" Length="4" Col="19"/>
+                                                </Anns>
+                                                <Word>ℕ</Word>
+                                                <ZStrokeList/>
+                                            </ZName>
+                                            <ZExprList/>
+                                        </RefExpr>
+                                    </ZExprList>
+                                </RefExpr>
+                            </VarDecl>
+                        </ZDeclList>
+                    </ns2:PrimaryDecl>
+                    <ns2:SecondaryDecl>
+                        <ZDeclList/>
+                    </ns2:SecondaryDecl>
+                    <AndPred And="NL">
+                        <Anns>
+                            <LocAnn Start="270" Loc="pirate.tex" Length="41"/>
+                        </Anns>
+                        <MemPred Mixfix="true">
+                            <Anns>
+                                <LocAnn Start="270" Loc="pirate.tex" Line="15" Length="15" Col="2"/>
+                            </Anns>
+                            <TupleExpr>
+                                <ZExprList>
+                                    <RefExpr Mixfix="false" Explicit="false">
+                                        <Anns>
+                                            <LocAnn Start="270" Loc="pirate.tex" Line="15" Length="7" Col="2"/>
+                                        </Anns>
+                                        <ZName>
+                                            <Anns>
+                                                <LocAnn Start="270" Loc="pirate.tex" Line="15" Length="7" Col="2"/>
+                                            </Anns>
+                                            <Word>curPosn</Word>
+                                            <ZStrokeList/>
+                                        </ZName>
+                                        <ZExprList/>
+                                    </RefExpr>
+                                    <NumExpr>
+                                        <Anns>
+                                            <LocAnn Start="283" Loc="pirate.tex" Line="15" Length="2" Col="15"/>
+                                        </Anns>
+                                        <ZNumeral Value="10">
+                                            <Anns>
+                                                <LocAnn Start="283" Loc="pirate.tex" Line="15" Length="2" Col="15"/>
+                                            </Anns>
+                                        </ZNumeral>
+                                    </NumExpr>
+                                </ZExprList>
+                            </TupleExpr>
+                            <RefExpr Mixfix="false" Explicit="false">
+                                <Anns>
+                                    <LocAnn Start="278" Loc="pirate.tex" Line="15" Length="4" Col="10"/>
+                                </Anns>
+                                <ZName>
+                                    <Anns>
+                                        <LocAnn Start="278" Loc="pirate.tex" Line="15" Length="4" Col="10"/>
+                                    </Anns>
+                                    <Word> _ ≤ _ </Word>
+                                    <ZStrokeList/>
+                                </ZName>
+                                <ZExprList/>
+                            </RefExpr>
+                        </MemPred>
+                        <MemPred Mixfix="true">
+                            <Anns>
+                                <LocAnn Start="291" Loc="pirate.tex" Line="16" Length="20" Col="2"/>
+                            </Anns>
+                            <TupleExpr>
+                                <ZExprList>
+                                    <ApplExpr Mixfix="true">
+                                        <Anns>
+                                            <LocAnn Start="291" Loc="pirate.tex" Line="16" Length="12" Col="2"/>
+                                        </Anns>
+                                        <RefExpr Mixfix="false" Explicit="false">
+                                            <Anns>
+                                                <LocAnn Start="291" Loc="pirate.tex" Line="16" Length="2" Col="2"/>
+                                            </Anns>
+                                            <ZName>
+                                                <Anns>
+                                                    <LocAnn Start="291" Loc="pirate.tex" Line="16" Length="2" Col="2"/>
+                                                </Anns>
+                                                <Word># _ </Word>
+                                                <ZStrokeList/>
+                                            </ZName>
+                                            <ZExprList/>
+                                        </RefExpr>
+                                        <RefExpr Mixfix="false" Explicit="false">
+                                            <Anns>
+                                                <LocAnn Start="293" Loc="pirate.tex" Line="16" Length="10" Col="4"/>
+                                            </Anns>
+                                            <ZName>
+                                                <Anns>
+                                                    <LocAnn Start="293" Loc="pirate.tex" Line="16" Length="10" Col="4"/>
+                                                </Anns>
+                                                <Word>firstVisit</Word>
+                                                <ZStrokeList/>
+                                            </ZName>
+                                            <ZExprList/>
+                                        </RefExpr>
+                                    </ApplExpr>
+                                    <NumExpr>
+                                        <Anns>
+                                            <LocAnn Start="309" Loc="pirate.tex" Line="16" Length="2" Col="20"/>
+                                        </Anns>
+                                        <ZNumeral Value="11">
+                                            <Anns>
+                                                <LocAnn Start="309" Loc="pirate.tex" Line="16" Length="2" Col="20"/>
+                                            </Anns>
+                                        </ZNumeral>
+                                    </NumExpr>
+                                </ZExprList>
+                            </TupleExpr>
+                            <RefExpr Mixfix="false" Explicit="false">
+                                <Anns>
+                                    <LocAnn Start="304" Loc="pirate.tex" Line="16" Length="4" Col="15"/>
+                                </Anns>
+                                <ZName>
+                                    <Anns>
+                                        <LocAnn Start="304" Loc="pirate.tex" Line="16" Length="4" Col="15"/>
+                                    </Anns>
+                                    <Word> _ ≤ _ </Word>
+                                    <ZStrokeList/>
+                                </ZName>
+                                <ZExprList/>
+                            </RefExpr>
+                        </MemPred>
+                    </AndPred>
+                </ns2:State>
+                <ns2:InitialState Box="SchBox">
+                    <Anns>
+                        <LocAnn Start="338" Loc="pirate.tex" Line="18" Length="90" Col="1"/>
+                    </Anns>
+                    <AndPred And="NL">
+                        <Anns>
+                            <LocAnn Start="353" Loc="pirate.tex" Length="63"/>
+                        </Anns>
+                        <AndPred And="NL">
+                            <Anns>
+                                <LocAnn Start="353" Loc="pirate.tex" Length="29"/>
+                            </Anns>
+                            <MemPred Mixfix="true">
+                                <Anns>
+                                    <LocAnn Start="353" Loc="pirate.tex" Length="11"/>
+                                </Anns>
+                                <RefExpr Mixfix="false" Explicit="false">
+                                    <Anns>
+                                        <LocAnn Start="353" Loc="pirate.tex" Line="19" Length="7" Col="2"/>
+                                    </Anns>
+                                    <ZName>
+                                        <Anns>
+                                            <LocAnn Start="353" Loc="pirate.tex" Line="19" Length="7" Col="2"/>
+                                        </Anns>
+                                        <Word>curPosn</Word>
+                                        <ZStrokeList/>
+                                    </ZName>
+                                    <ZExprList/>
+                                </RefExpr>
+                                <SetExpr>
+                                    <ZExprList>
+                                        <NumExpr>
+                                            <Anns>
+                                                <LocAnn Start="363" Loc="pirate.tex" Line="19" Length="1" Col="12"/>
+                                            </Anns>
+                                            <ZNumeral Value="0">
+                                                <Anns>
+                                                    <LocAnn Start="363" Loc="pirate.tex" Line="19" Length="1" Col="12"/>
+                                                </Anns>
+                                            </ZNumeral>
+                                        </NumExpr>
+                                    </ZExprList>
+                                </SetExpr>
+                            </MemPred>
+                            <MemPred Mixfix="true">
+                                <Anns>
+                                    <LocAnn Start="370" Loc="pirate.tex" Length="12"/>
+                                </Anns>
+                                <RefExpr Mixfix="false" Explicit="false">
+                                    <Anns>
+                                        <LocAnn Start="370" Loc="pirate.tex" Line="20" Length="8" Col="2"/>
+                                    </Anns>
+                                    <ZName>
+                                        <Anns>
+                                            <LocAnn Start="370" Loc="pirate.tex" Line="20" Length="8" Col="2"/>
+                                        </Anns>
+                                        <Word>numSteps</Word>
+                                        <ZStrokeList/>
+                                    </ZName>
+                                    <ZExprList/>
+                                </RefExpr>
+                                <SetExpr>
+                                    <ZExprList>
+                                        <NumExpr>
+                                            <Anns>
+                                                <LocAnn Start="381" Loc="pirate.tex" Line="20" Length="1" Col="13"/>
+                                            </Anns>
+                                            <ZNumeral Value="0">
+                                                <Anns>
+                                                    <LocAnn Start="381" Loc="pirate.tex" Line="20" Length="1" Col="13"/>
+                                                </Anns>
+                                            </ZNumeral>
+                                        </NumExpr>
+                                    </ZExprList>
+                                </SetExpr>
+                            </MemPred>
+                        </AndPred>
+                        <MemPred Mixfix="true">
+                            <Anns>
+                                <LocAnn Start="388" Loc="pirate.tex" Length="28"/>
+                            </Anns>
+                            <RefExpr Mixfix="false" Explicit="false">
+                                <Anns>
+                                    <LocAnn Start="388" Loc="pirate.tex" Line="21" Length="10" Col="2"/>
+                                </Anns>
+                                <ZName>
+                                    <Anns>
+                                        <LocAnn Start="388" Loc="pirate.tex" Line="21" Length="10" Col="2"/>
+                                    </Anns>
+                                    <Word>firstVisit</Word>
+                                    <ZStrokeList/>
+                                </ZName>
+                                <ZExprList/>
+                            </RefExpr>
+                            <SetExpr>
+                                <ZExprList>
+                                    <ApplExpr Mixfix="true">
+                                        <Anns>
+                                            <LocAnn Start="401" Loc="pirate.tex" Line="21" Length="15" Col="15"/>
+                                        </Anns>
+                                        <RefExpr Mixfix="false" Explicit="false">
+                                            <Anns>
+                                                <LocAnn Start="401" Loc="pirate.tex" Line="21" Length="15" Col="15"/>
+                                            </Anns>
+                                            <ZName>
+                                                <Anns>
+                                                    <LocAnn Start="401" Loc="pirate.tex" Line="21" Length="15" Col="15"/>
+                                                </Anns>
+                                                <Word>⟨ ,, ⟩</Word>
+                                                <ZStrokeList/>
+                                            </ZName>
+                                            <ZExprList/>
+                                        </RefExpr>
+                                        <SetExpr>
+                                            <Anns>
+                                                <LocAnn Start="401" Loc="pirate.tex" Line="21" Length="15" Col="15"/>
+                                            </Anns>
+                                            <ZExprList/>
+                                        </SetExpr>
+                                    </ApplExpr>
+                                </ZExprList>
+                            </SetExpr>
+                        </MemPred>
+                    </AndPred>
+                </ns2:InitialState>
+                <ns2:Operation Box="SchBox">
+                    <Anns>
+                        <LocAnn Start="442" Loc="pirate.tex" Line="23" Length="174" Col="1"/>
+                    </Anns>
+                    <ZName>
+                        <Anns>
+                            <LocAnn Start="453" Loc="pirate.tex" Line="23" Length="8" Col="12"/>
+                        </Anns>
+                        <Word>stepLeft</Word>
+                        <ZStrokeList/>
+                    </ZName>
+                    <ns2:AnonOpExpr>
+                        <ns2:OpText>
+                            <ns2:DeltaList>
+                                <Anns>
+                                    <LocAnn Start="465" Loc="pirate.tex" Line="24" Length="26" Col="2"/>
+                                </Anns>
+                                <ZName>
+                                    <Anns>
+                                        <LocAnn Start="473" Loc="pirate.tex" Line="24" Length="7" Col="10"/>
+                                    </Anns>
+                                    <Word>curPosn</Word>
+                                    <ZStrokeList/>
+                                </ZName>
+                                <ZName>
+                                    <Anns>
+                                        <LocAnn Start="482" Loc="pirate.tex" Line="24" Length="8" Col="19"/>
+                                    </Anns>
+                                    <Word>numSteps</Word>
+                                    <ZStrokeList/>
+                                </ZName>
+                            </ns2:DeltaList>
+                            <ZSchText>
+                                <ZDeclList/>
+                                <AndPred And="NL">
+                                    <Anns>
+                                        <LocAnn Start="510" Loc="pirate.tex" Length="93"/>
+                                    </Anns>
+                                    <AndPred And="NL">
+                                        <Anns>
+                                            <LocAnn Start="510" Loc="pirate.tex" Length="63"/>
+                                        </Anns>
+                                        <AndPred And="NL">
+                                            <Anns>
+                                                <LocAnn Start="510" Loc="pirate.tex" Length="35"/>
+                                            </Anns>
+                                            <MemPred Mixfix="true">
+                                                <Anns>
+                                                    <LocAnn Start="510" Loc="pirate.tex" Line="26" Length="14" Col="9"/>
+                                                </Anns>
+                                                <TupleExpr>
+                                                    <ZExprList>
+                                                        <RefExpr Mixfix="false" Explicit="false">
+                                                            <Anns>
+                                                                <LocAnn Start="510" Loc="pirate.tex" Line="26" Length="7" Col="9"/>
+                                                            </Anns>
+                                                            <ZName>
+                                                                <Anns>
+                                                                    <LocAnn Start="510" Loc="pirate.tex" Line="26" Length="7" Col="9"/>
+                                                                </Anns>
+                                                                <Word>curPosn</Word>
+                                                                <ZStrokeList/>
+                                                            </ZName>
+                                                            <ZExprList/>
+                                                        </RefExpr>
+                                                        <NumExpr>
+                                                            <Anns>
+                                                                <LocAnn Start="523" Loc="pirate.tex" Line="26" Length="1" Col="22"/>
+                                                            </Anns>
+                                                            <ZNumeral Value="0">
+                                                                <Anns>
+                                                                    <LocAnn Start="523" Loc="pirate.tex" Line="26" Length="1" Col="22"/>
+                                                                </Anns>
+                                                            </ZNumeral>
+                                                        </NumExpr>
+                                                    </ZExprList>
+                                                </TupleExpr>
+                                                <RefExpr Mixfix="false" Explicit="false">
+                                                    <Anns>
+                                                        <LocAnn Start="518" Loc="pirate.tex" Line="26" Length="4" Col="17"/>
+                                                    </Anns>
+                                                    <ZName>
+                                                        <Anns>
+                                                            <LocAnn Start="518" Loc="pirate.tex" Line="26" Length="4" Col="17"/>
+                                                        </Anns>
+                                                        <Word> _ ≠ _ </Word>
+                                                        <ZStrokeList/>
+                                                    </ZName>
+                                                    <ZExprList/>
+                                                </RefExpr>
+                                            </MemPred>
+                                            <MemPred Mixfix="true">
+                                                <Anns>
+                                                    <LocAnn Start="530" Loc="pirate.tex" Line="27" Length="15" Col="2"/>
+                                                </Anns>
+                                                <TupleExpr>
+                                                    <ZExprList>
+                                                        <RefExpr Mixfix="false" Explicit="false">
+                                                            <Anns>
+                                                                <LocAnn Start="530" Loc="pirate.tex" Line="27" Length="7" Col="2"/>
+                                                            </Anns>
+                                                            <ZName>
+                                                                <Anns>
+                                                                    <LocAnn Start="530" Loc="pirate.tex" Line="27" Length="7" Col="2"/>
+                                                                </Anns>
+                                                                <Word>curPosn</Word>
+                                                                <ZStrokeList/>
+                                                            </ZName>
+                                                            <ZExprList/>
+                                                        </RefExpr>
+                                                        <NumExpr>
+                                                            <Anns>
+                                                                <LocAnn Start="543" Loc="pirate.tex" Line="27" Length="2" Col="15"/>
+                                                            </Anns>
+                                                            <ZNumeral Value="10">
+                                                                <Anns>
+                                                                    <LocAnn Start="543" Loc="pirate.tex" Line="27" Length="2" Col="15"/>
+                                                                </Anns>
+                                                            </ZNumeral>
+                                                        </NumExpr>
+                                                    </ZExprList>
+                                                </TupleExpr>
+                                                <RefExpr Mixfix="false" Explicit="false">
+                                                    <Anns>
+                                                        <LocAnn Start="538" Loc="pirate.tex" Line="27" Length="4" Col="10"/>
+                                                    </Anns>
+                                                    <ZName>
+                                                        <Anns>
+                                                            <LocAnn Start="538" Loc="pirate.tex" Line="27" Length="4" Col="10"/>
+                                                        </Anns>
+                                                        <Word> _ ≠ _ </Word>
+                                                        <ZStrokeList/>
+                                                    </ZName>
+                                                    <ZExprList/>
+                                                </RefExpr>
+                                            </MemPred>
+                                        </AndPred>
+                                        <MemPred Mixfix="true">
+                                            <Anns>
+                                                <LocAnn Start="551" Loc="pirate.tex" Length="22"/>
+                                            </Anns>
+                                            <RefExpr Mixfix="false" Explicit="false">
+                                                <Anns>
+                                                    <LocAnn Start="551" Loc="pirate.tex" Line="28" Length="8" Col="2"/>
+                                                </Anns>
+                                                <ZName>
+                                                    <Anns>
+                                                        <LocAnn Start="551" Loc="pirate.tex" Line="28" Length="8" Col="2"/>
+                                                    </Anns>
+                                                    <Word>curPosn</Word>
+                                                    <ZStrokeList>
+                                                        <NextStroke/>
+                                                    </ZStrokeList>
+                                                </ZName>
+                                                <ZExprList/>
+                                            </RefExpr>
+                                            <SetExpr>
+                                                <ZExprList>
+                                                    <ApplExpr Mixfix="true">
+                                                        <Anns>
+                                                            <LocAnn Start="562" Loc="pirate.tex" Length="11"/>
+                                                        </Anns>
+                                                        <RefExpr Mixfix="false" Explicit="false">
+                                                            <Anns>
+                                                                <LocAnn Start="570" Loc="pirate.tex" Line="28" Length="1" Col="21"/>
+                                                            </Anns>
+                                                            <ZName>
+                                                                <Anns>
+                                                                    <LocAnn Start="570" Loc="pirate.tex" Line="28" Length="1" Col="21"/>
+                                                                </Anns>
+                                                                <Word> _ − _ </Word>
+                                                                <ZStrokeList/>
+                                                            </ZName>
+                                                            <ZExprList/>
+                                                        </RefExpr>
+                                                        <TupleExpr>
+                                                            <ZExprList>
+                                                                <RefExpr Mixfix="false" Explicit="false">
+                                                                    <Anns>
+                                                                        <LocAnn Start="562" Loc="pirate.tex" Line="28" Length="7" Col="13"/>
+                                                                    </Anns>
+                                                                    <ZName>
+                                                                        <Anns>
+                                                                            <LocAnn Start="562" Loc="pirate.tex" Line="28" Length="7" Col="13"/>
+                                                                        </Anns>
+                                                                        <Word>curPosn</Word>
+                                                                        <ZStrokeList/>
+                                                                    </ZName>
+                                                                    <ZExprList/>
+                                                                </RefExpr>
+                                                                <NumExpr>
+                                                                    <Anns>
+                                                                        <LocAnn Start="572" Loc="pirate.tex" Line="28" Length="1" Col="23"/>
+                                                                    </Anns>
+                                                                    <ZNumeral Value="1">
+                                                                        <Anns>
+                                                                            <LocAnn Start="572" Loc="pirate.tex" Line="28" Length="1" Col="23"/>
+                                                                        </Anns>
+                                                                    </ZNumeral>
+                                                                </NumExpr>
+                                                            </ZExprList>
+                                                        </TupleExpr>
+                                                    </ApplExpr>
+                                                </ZExprList>
+                                            </SetExpr>
+                                        </MemPred>
+                                    </AndPred>
+                                    <MemPred Mixfix="true">
+                                        <Anns>
+                                            <LocAnn Start="579" Loc="pirate.tex" Length="24"/>
+                                        </Anns>
+                                        <RefExpr Mixfix="false" Explicit="false">
+                                            <Anns>
+                                                <LocAnn Start="579" Loc="pirate.tex" Line="29" Length="9" Col="2"/>
+                                            </Anns>
+                                            <ZName>
+                                                <Anns>
+                                                    <LocAnn Start="579" Loc="pirate.tex" Line="29" Length="9" Col="2"/>
+                                                </Anns>
+                                                <Word>numSteps</Word>
+                                                <ZStrokeList>
+                                                    <NextStroke/>
+                                                </ZStrokeList>
+                                            </ZName>
+                                            <ZExprList/>
+                                        </RefExpr>
+                                        <SetExpr>
+                                            <ZExprList>
+                                                <ApplExpr Mixfix="true">
+                                                    <Anns>
+                                                        <LocAnn Start="591" Loc="pirate.tex" Length="12"/>
+                                                    </Anns>
+                                                    <RefExpr Mixfix="false" Explicit="false">
+                                                        <Anns>
+                                                            <LocAnn Start="600" Loc="pirate.tex" Line="29" Length="1" Col="23"/>
+                                                        </Anns>
+                                                        <ZName>
+                                                            <Anns>
+                                                                <LocAnn Start="600" Loc="pirate.tex" Line="29" Length="1" Col="23"/>
+                                                            </Anns>
+                                                            <Word> _ + _ </Word>
+                                                            <ZStrokeList/>
+                                                        </ZName>
+                                                        <ZExprList/>
+                                                    </RefExpr>
+                                                    <TupleExpr>
+                                                        <ZExprList>
+                                                            <RefExpr Mixfix="false" Explicit="false">
+                                                                <Anns>
+                                                                    <LocAnn Start="591" Loc="pirate.tex" Line="29" Length="8" Col="14"/>
+                                                                </Anns>
+                                                                <ZName>
+                                                                    <Anns>
+                                                                        <LocAnn Start="591" Loc="pirate.tex" Line="29" Length="8" Col="14"/>
+                                                                    </Anns>
+                                                                    <Word>numSteps</Word>
+                                                                    <ZStrokeList/>
+                                                                </ZName>
+                                                                <ZExprList/>
+                                                            </RefExpr>
+                                                            <NumExpr>
+                                                                <Anns>
+                                                                    <LocAnn Start="602" Loc="pirate.tex" Line="29" Length="1" Col="25"/>
+                                                                </Anns>
+                                                                <ZNumeral Value="1">
+                                                                    <Anns>
+                                                                        <LocAnn Start="602" Loc="pirate.tex" Line="29" Length="1" Col="25"/>
+                                                                    </Anns>
+                                                                </ZNumeral>
+                                                            </NumExpr>
+                                                        </ZExprList>
+                                                    </TupleExpr>
+                                                </ApplExpr>
+                                            </ZExprList>
+                                        </SetExpr>
+                                    </MemPred>
+                                </AndPred>
+                            </ZSchText>
+                        </ns2:OpText>
+                    </ns2:AnonOpExpr>
+                </ns2:Operation>
+                <ns2:Operation Box="SchBox">
+                    <Anns>
+                        <LocAnn Start="630" Loc="pirate.tex" Line="31" Length="341" Col="1"/>
+                    </Anns>
+                    <ZName>
+                        <Anns>
+                            <LocAnn Start="641" Loc="pirate.tex" Line="31" Length="9" Col="12"/>
+                        </Anns>
+                        <Word>stepRight</Word>
+                        <ZStrokeList/>
+                    </ZName>
+                    <ns2:AnonOpExpr>
+                        <ns2:OpText>
+                            <ns2:DeltaList>
+                                <Anns>
+                                    <LocAnn Start="654" Loc="pirate.tex" Line="32" Length="38" Col="2"/>
+                                </Anns>
+                                <ZName>
+                                    <Anns>
+                                        <LocAnn Start="662" Loc="pirate.tex" Line="32" Length="7" Col="10"/>
+                                    </Anns>
+                                    <Word>curPosn</Word>
+                                    <ZStrokeList/>
+                                </ZName>
+                                <ZName>
+                                    <Anns>
+                                        <LocAnn Start="671" Loc="pirate.tex" Line="32" Length="8" Col="19"/>
+                                    </Anns>
+                                    <Word>numSteps</Word>
+                                    <ZStrokeList/>
+                                </ZName>
+                                <ZName>
+                                    <Anns>
+                                        <LocAnn Start="681" Loc="pirate.tex" Line="32" Length="10" Col="29"/>
+                                    </Anns>
+                                    <Word>firstVisit</Word>
+                                    <ZStrokeList/>
+                                </ZName>
+                            </ns2:DeltaList>
+                            <ZSchText>
+                                <ZDeclList/>
+                                <AndPred And="NL">
+                                    <Anns>
+                                        <LocAnn Start="710" Loc="pirate.tex" Length="251"/>
+                                    </Anns>
+                                    <AndPred And="NL">
+                                        <Anns>
+                                            <LocAnn Start="710" Loc="pirate.tex" Length="187"/>
+                                        </Anns>
+                                        <AndPred And="NL">
+                                            <Anns>
+                                                <LocAnn Start="710" Loc="pirate.tex" Length="87"/>
+                                            </Anns>
+                                            <AndPred And="NL">
+                                                <Anns>
+                                                    <LocAnn Start="710" Loc="pirate.tex" Length="50"/>
+                                                </Anns>
+                                                <MemPred Mixfix="true">
+                                                    <Anns>
+                                                        <LocAnn Start="710" Loc="pirate.tex" Line="34" Length="15" Col="9"/>
+                                                    </Anns>
+                                                    <TupleExpr>
+                                                        <ZExprList>
+                                                            <RefExpr Mixfix="false" Explicit="false">
+                                                                <Anns>
+                                                                    <LocAnn Start="710" Loc="pirate.tex" Line="34" Length="7" Col="9"/>
+                                                                </Anns>
+                                                                <ZName>
+                                                                    <Anns>
+                                                                        <LocAnn Start="710" Loc="pirate.tex" Line="34" Length="7" Col="9"/>
+                                                                    </Anns>
+                                                                    <Word>curPosn</Word>
+                                                                    <ZStrokeList/>
+                                                                </ZName>
+                                                                <ZExprList/>
+                                                            </RefExpr>
+                                                            <NumExpr>
+                                                                <Anns>
+                                                                    <LocAnn Start="723" Loc="pirate.tex" Line="34" Length="2" Col="22"/>
+                                                                </Anns>
+                                                                <ZNumeral Value="10">
+                                                                    <Anns>
+                                                                        <LocAnn Start="723" Loc="pirate.tex" Line="34" Length="2" Col="22"/>
+                                                                    </Anns>
+                                                                </ZNumeral>
+                                                            </NumExpr>
+                                                        </ZExprList>
+                                                    </TupleExpr>
+                                                    <RefExpr Mixfix="false" Explicit="false">
+                                                        <Anns>
+                                                            <LocAnn Start="718" Loc="pirate.tex" Line="34" Length="4" Col="17"/>
+                                                        </Anns>
+                                                        <ZName>
+                                                            <Anns>
+                                                                <LocAnn Start="718" Loc="pirate.tex" Line="34" Length="4" Col="17"/>
+                                                            </Anns>
+                                                            <Word> _ ≠ _ </Word>
+                                                            <ZStrokeList/>
+                                                        </ZName>
+                                                        <ZExprList/>
+                                                    </RefExpr>
+                                                </MemPred>
+                                                <MemPred Mixfix="true">
+                                                    <Anns>
+                                                        <LocAnn Start="738" Loc="pirate.tex" Length="22"/>
+                                                    </Anns>
+                                                    <RefExpr Mixfix="false" Explicit="false">
+                                                        <Anns>
+                                                            <LocAnn Start="738" Loc="pirate.tex" Line="35" Length="8" Col="9"/>
+                                                        </Anns>
+                                                        <ZName>
+                                                            <Anns>
+                                                                <LocAnn Start="738" Loc="pirate.tex" Line="35" Length="8" Col="9"/>
+                                                            </Anns>
+                                                            <Word>curPosn</Word>
+                                                            <ZStrokeList>
+                                                                <NextStroke/>
+                                                            </ZStrokeList>
+                                                        </ZName>
+                                                        <ZExprList/>
+                                                    </RefExpr>
+                                                    <SetExpr>
+                                                        <ZExprList>
+                                                            <ApplExpr Mixfix="true">
+                                                                <Anns>
+                                                                    <LocAnn Start="749" Loc="pirate.tex" Length="11"/>
+                                                                </Anns>
+                                                                <RefExpr Mixfix="false" Explicit="false">
+                                                                    <Anns>
+                                                                        <LocAnn Start="757" Loc="pirate.tex" Line="35" Length="1" Col="28"/>
+                                                                    </Anns>
+                                                                    <ZName>
+                                                                        <Anns>
+                                                                            <LocAnn Start="757" Loc="pirate.tex" Line="35" Length="1" Col="28"/>
+                                                                        </Anns>
+                                                                        <Word> _ + _ </Word>
+                                                                        <ZStrokeList/>
+                                                                    </ZName>
+                                                                    <ZExprList/>
+                                                                </RefExpr>
+                                                                <TupleExpr>
+                                                                    <ZExprList>
+                                                                        <RefExpr Mixfix="false" Explicit="false">
+                                                                            <Anns>
+                                                                                <LocAnn Start="749" Loc="pirate.tex" Line="35" Length="7" Col="20"/>
+                                                                            </Anns>
+                                                                            <ZName>
+                                                                                <Anns>
+                                                                                    <LocAnn Start="749" Loc="pirate.tex" Line="35" Length="7" Col="20"/>
+                                                                                </Anns>
+                                                                                <Word>curPosn</Word>
+                                                                                <ZStrokeList/>
+                                                                            </ZName>
+                                                                            <ZExprList/>
+                                                                        </RefExpr>
+                                                                        <NumExpr>
+                                                                            <Anns>
+                                                                                <LocAnn Start="759" Loc="pirate.tex" Line="35" Length="1" Col="30"/>
+                                                                            </Anns>
+                                                                            <ZNumeral Value="1">
+                                                                                <Anns>
+                                                                                    <LocAnn Start="759" Loc="pirate.tex" Line="35" Length="1" Col="30"/>
+                                                                                </Anns>
+                                                                            </ZNumeral>
+                                                                        </NumExpr>
+                                                                    </ZExprList>
+                                                                </TupleExpr>
+                                                            </ApplExpr>
+                                                        </ZExprList>
+                                                    </SetExpr>
+                                                </MemPred>
+                                            </AndPred>
+                                            <MemPred Mixfix="true">
+                                                <Anns>
+                                                    <LocAnn Start="773" Loc="pirate.tex" Length="24"/>
+                                                </Anns>
+                                                <RefExpr Mixfix="false" Explicit="false">
+                                                    <Anns>
+                                                        <LocAnn Start="773" Loc="pirate.tex" Line="36" Length="9" Col="9"/>
+                                                    </Anns>
+                                                    <ZName>
+                                                        <Anns>
+                                                            <LocAnn Start="773" Loc="pirate.tex" Line="36" Length="9" Col="9"/>
+                                                        </Anns>
+                                                        <Word>numSteps</Word>
+                                                        <ZStrokeList>
+                                                            <NextStroke/>
+                                                        </ZStrokeList>
+                                                    </ZName>
+                                                    <ZExprList/>
+                                                </RefExpr>
+                                                <SetExpr>
+                                                    <ZExprList>
+                                                        <ApplExpr Mixfix="true">
+                                                            <Anns>
+                                                                <LocAnn Start="785" Loc="pirate.tex" Length="12"/>
+                                                            </Anns>
+                                                            <RefExpr Mixfix="false" Explicit="false">
+                                                                <Anns>
+                                                                    <LocAnn Start="794" Loc="pirate.tex" Line="36" Length="1" Col="30"/>
+                                                                </Anns>
+                                                                <ZName>
+                                                                    <Anns>
+                                                                        <LocAnn Start="794" Loc="pirate.tex" Line="36" Length="1" Col="30"/>
+                                                                    </Anns>
+                                                                    <Word> _ + _ </Word>
+                                                                    <ZStrokeList/>
+                                                                </ZName>
+                                                                <ZExprList/>
+                                                            </RefExpr>
+                                                            <TupleExpr>
+                                                                <ZExprList>
+                                                                    <RefExpr Mixfix="false" Explicit="false">
+                                                                        <Anns>
+                                                                            <LocAnn Start="785" Loc="pirate.tex" Line="36" Length="8" Col="21"/>
+                                                                        </Anns>
+                                                                        <ZName>
+                                                                            <Anns>
+                                                                                <LocAnn Start="785" Loc="pirate.tex" Line="36" Length="8" Col="21"/>
+                                                                            </Anns>
+                                                                            <Word>numSteps</Word>
+                                                                            <ZStrokeList/>
+                                                                        </ZName>
+                                                                        <ZExprList/>
+                                                                    </RefExpr>
+                                                                    <NumExpr>
+                                                                        <Anns>
+                                                                            <LocAnn Start="796" Loc="pirate.tex" Line="36" Length="1" Col="32"/>
+                                                                        </Anns>
+                                                                        <ZNumeral Value="1">
+                                                                            <Anns>
+                                                                                <LocAnn Start="796" Loc="pirate.tex" Line="36" Length="1" Col="32"/>
+                                                                            </Anns>
+                                                                        </ZNumeral>
+                                                                    </NumExpr>
+                                                                </ZExprList>
+                                                            </TupleExpr>
+                                                        </ApplExpr>
+                                                    </ZExprList>
+                                                </SetExpr>
+                                            </MemPred>
+                                        </AndPred>
+                                        <ImpliesPred>
+                                            <Anns>
+                                                <LocAnn Start="804" Loc="pirate.tex" Length="93"/>
+                                            </Anns>
+                                            <MemPred Mixfix="true">
+                                                <Anns>
+                                                    <LocAnn Start="804" Loc="pirate.tex" Line="37" Length="25" Col="3"/>
+                                                    <ParenAnn>
+                                                        <Anns>
+                                                            <LocAnn Start="803" Loc="pirate.tex" Line="37" Length="27" Col="2"/>
+                                                        </Anns>
+                                                    </ParenAnn>
+                                                </Anns>
+                                                <TupleExpr>
+                                                    <ZExprList>
+                                                        <ApplExpr Mixfix="true">
+                                                            <Anns>
+                                                                <LocAnn Start="804" Loc="pirate.tex" Line="37" Length="12" Col="3"/>
+                                                            </Anns>
+                                                            <RefExpr Mixfix="false" Explicit="false">
+                                                                <Anns>
+                                                                    <LocAnn Start="804" Loc="pirate.tex" Line="37" Length="2" Col="3"/>
+                                                                </Anns>
+                                                                <ZName>
+                                                                    <Anns>
+                                                                        <LocAnn Start="804" Loc="pirate.tex" Line="37" Length="2" Col="3"/>
+                                                                    </Anns>
+                                                                    <Word># _ </Word>
+                                                                    <ZStrokeList/>
+                                                                </ZName>
+                                                                <ZExprList/>
+                                                            </RefExpr>
+                                                            <RefExpr Mixfix="false" Explicit="false">
+                                                                <Anns>
+                                                                    <LocAnn Start="806" Loc="pirate.tex" Line="37" Length="10" Col="5"/>
+                                                                </Anns>
+                                                                <ZName>
+                                                                    <Anns>
+                                                                        <LocAnn Start="806" Loc="pirate.tex" Line="37" Length="10" Col="5"/>
+                                                                    </Anns>
+                                                                    <Word>firstVisit</Word>
+                                                                    <ZStrokeList/>
+                                                                </ZName>
+                                                                <ZExprList/>
+                                                            </RefExpr>
+                                                        </ApplExpr>
+                                                        <RefExpr Mixfix="false" Explicit="false">
+                                                            <Anns>
+                                                                <LocAnn Start="822" Loc="pirate.tex" Line="37" Length="7" Col="21"/>
+                                                            </Anns>
+                                                            <ZName>
+                                                                <Anns>
+                                                                    <LocAnn Start="822" Loc="pirate.tex" Line="37" Length="7" Col="21"/>
+                                                                </Anns>
+                                                                <Word>curPosn</Word>
+                                                                <ZStrokeList/>
+                                                            </ZName>
+                                                            <ZExprList/>
+                                                        </RefExpr>
+                                                    </ZExprList>
+                                                </TupleExpr>
+                                                <RefExpr Mixfix="false" Explicit="false">
+                                                    <Anns>
+                                                        <LocAnn Start="817" Loc="pirate.tex" Line="37" Length="4" Col="16"/>
+                                                    </Anns>
+                                                    <ZName>
+                                                        <Anns>
+                                                            <LocAnn Start="817" Loc="pirate.tex" Line="37" Length="4" Col="16"/>
+                                                        </Anns>
+                                                        <Word> _ ≤ _ </Word>
+                                                        <ZStrokeList/>
+                                                    </ZName>
+                                                    <ZExprList/>
+                                                </RefExpr>
+                                            </MemPred>
+                                            <MemPred Mixfix="true">
+                                                <Anns>
+                                                    <LocAnn Start="840" Loc="pirate.tex" Length="57"/>
+                                                </Anns>
+                                                <RefExpr Mixfix="false" Explicit="false">
+                                                    <Anns>
+                                                        <LocAnn Start="840" Loc="pirate.tex" Line="37" Length="11" Col="39"/>
+                                                    </Anns>
+                                                    <ZName>
+                                                        <Anns>
+                                                            <LocAnn Start="840" Loc="pirate.tex" Line="37" Length="11" Col="39"/>
+                                                        </Anns>
+                                                        <Word>firstVisit</Word>
+                                                        <ZStrokeList>
+                                                            <NextStroke/>
+                                                        </ZStrokeList>
+                                                    </ZName>
+                                                    <ZExprList/>
+                                                </RefExpr>
+                                                <SetExpr>
+                                                    <ZExprList>
+                                                        <ApplExpr Mixfix="true">
+                                                            <Anns>
+                                                                <LocAnn Start="854" Loc="pirate.tex" Length="43"/>
+                                                            </Anns>
+                                                            <RefExpr Mixfix="false" Explicit="false">
+                                                                <Anns>
+                                                                    <LocAnn Start="865" Loc="pirate.tex" Line="37" Length="4" Col="64"/>
+                                                                </Anns>
+                                                                <ZName>
+                                                                    <Anns>
+                                                                        <LocAnn Start="865" Loc="pirate.tex" Line="37" Length="4" Col="64"/>
+                                                                    </Anns>
+                                                                    <Word> _ ⁀ _ </Word>
+                                                                    <ZStrokeList/>
+                                                                </ZName>
+                                                                <ZExprList/>
+                                                            </RefExpr>
+                                                            <TupleExpr>
+                                                                <ZExprList>
+                                                                    <RefExpr Mixfix="false" Explicit="false">
+                                                                        <Anns>
+                                                                            <LocAnn Start="854" Loc="pirate.tex" Line="37" Length="10" Col="53"/>
+                                                                        </Anns>
+                                                                        <ZName>
+                                                                            <Anns>
+                                                                                <LocAnn Start="854" Loc="pirate.tex" Line="37" Length="10" Col="53"/>
+                                                                            </Anns>
+                                                                            <Word>firstVisit</Word>
+                                                                            <ZStrokeList/>
+                                                                        </ZName>
+                                                                        <ZExprList/>
+                                                                    </RefExpr>
+                                                                    <ApplExpr Mixfix="true">
+                                                                        <Anns>
+                                                                            <LocAnn Start="873" Loc="pirate.tex" Line="38" Length="24" Col="3"/>
+                                                                        </Anns>
+                                                                        <RefExpr Mixfix="false" Explicit="false">
+                                                                            <Anns>
+                                                                                <LocAnn Start="873" Loc="pirate.tex" Line="38" Length="24" Col="3"/>
+                                                                            </Anns>
+                                                                            <ZName>
+                                                                                <Anns>
+                                                                                    <LocAnn Start="873" Loc="pirate.tex" Line="38" Length="24" Col="3"/>
+                                                                                </Anns>
+                                                                                <Word>⟨ ,, ⟩</Word>
+                                                                                <ZStrokeList/>
+                                                                            </ZName>
+                                                                            <ZExprList/>
+                                                                        </RefExpr>
+                                                                        <SetExpr>
+                                                                            <Anns>
+                                                                                <LocAnn Start="873" Loc="pirate.tex" Line="38" Length="24" Col="3"/>
+                                                                            </Anns>
+                                                                            <ZExprList>
+                                                                                <TupleExpr>
+                                                                                    <ZExprList>
+                                                                                        <NumExpr>
+                                                                                            <ZNumeral Value="1"/>
+                                                                                        </NumExpr>
+                                                                                        <RefExpr Mixfix="false" Explicit="false">
+                                                                                            <Anns>
+                                                                                                <LocAnn Start="881" Loc="pirate.tex" Line="38" Length="8" Col="11"/>
+                                                                                            </Anns>
+                                                                                            <ZName>
+                                                                                                <Anns>
+                                                                                                    <LocAnn Start="881" Loc="pirate.tex" Line="38" Length="8" Col="11"/>
+                                                                                                </Anns>
+                                                                                                <Word>numSteps</Word>
+                                                                                                <ZStrokeList/>
+                                                                                            </ZName>
+                                                                                            <ZExprList/>
+                                                                                        </RefExpr>
+                                                                                    </ZExprList>
+                                                                                </TupleExpr>
+                                                                            </ZExprList>
+                                                                        </SetExpr>
+                                                                    </ApplExpr>
+                                                                </ZExprList>
+                                                            </TupleExpr>
+                                                        </ApplExpr>
+                                                    </ZExprList>
+                                                </SetExpr>
+                                            </MemPred>
+                                        </ImpliesPred>
+                                    </AndPred>
+                                    <ImpliesPred>
+                                        <Anns>
+                                            <LocAnn Start="904" Loc="pirate.tex" Length="57"/>
+                                        </Anns>
+                                        <MemPred Mixfix="true">
+                                            <Anns>
+                                                <LocAnn Start="904" Loc="pirate.tex" Line="39" Length="22" Col="3"/>
+                                                <ParenAnn>
+                                                    <Anns>
+                                                        <LocAnn Start="903" Loc="pirate.tex" Line="39" Length="24" Col="2"/>
+                                                    </Anns>
+                                                </ParenAnn>
+                                            </Anns>
+                                            <TupleExpr>
+                                                <ZExprList>
+                                                    <ApplExpr Mixfix="true">
+                                                        <Anns>
+                                                            <LocAnn Start="904" Loc="pirate.tex" Line="39" Length="12" Col="3"/>
+                                                        </Anns>
+                                                        <RefExpr Mixfix="false" Explicit="false">
+                                                            <Anns>
+                                                                <LocAnn Start="904" Loc="pirate.tex" Line="39" Length="2" Col="3"/>
+                                                            </Anns>
+                                                            <ZName>
+                                                                <Anns>
+                                                                    <LocAnn Start="904" Loc="pirate.tex" Line="39" Length="2" Col="3"/>
+                                                                </Anns>
+                                                                <Word># _ </Word>
+                                                                <ZStrokeList/>
+                                                            </ZName>
+                                                            <ZExprList/>
+                                                        </RefExpr>
+                                                        <RefExpr Mixfix="false" Explicit="false">
+                                                            <Anns>
+                                                                <LocAnn Start="906" Loc="pirate.tex" Line="39" Length="10" Col="5"/>
+                                                            </Anns>
+                                                            <ZName>
+                                                                <Anns>
+                                                                    <LocAnn Start="906" Loc="pirate.tex" Line="39" Length="10" Col="5"/>
+                                                                </Anns>
+                                                                <Word>firstVisit</Word>
+                                                                <ZStrokeList/>
+                                                            </ZName>
+                                                            <ZExprList/>
+                                                        </RefExpr>
+                                                    </ApplExpr>
+                                                    <RefExpr Mixfix="false" Explicit="false">
+                                                        <Anns>
+                                                            <LocAnn Start="919" Loc="pirate.tex" Line="39" Length="7" Col="18"/>
+                                                        </Anns>
+                                                        <ZName>
+                                                            <Anns>
+                                                                <LocAnn Start="919" Loc="pirate.tex" Line="39" Length="7" Col="18"/>
+                                                            </Anns>
+                                                            <Word>curPosn</Word>
+                                                            <ZStrokeList/>
+                                                        </ZName>
+                                                        <ZExprList/>
+                                                    </RefExpr>
+                                                </ZExprList>
+                                            </TupleExpr>
+                                            <RefExpr Mixfix="false" Explicit="false">
+                                                <Anns>
+                                                    <LocAnn Start="917" Loc="pirate.tex" Line="39" Length="2" Col="16"/>
+                                                </Anns>
+                                                <ZName>
+                                                    <Anns>
+                                                        <LocAnn Start="917" Loc="pirate.tex" Line="39" Length="2" Col="16"/>
+                                                    </Anns>
+                                                    <Word> _ &gt; _ </Word>
+                                                    <ZStrokeList/>
+                                                </ZName>
+                                                <ZExprList/>
+                                            </RefExpr>
+                                        </MemPred>
+                                        <MemPred Mixfix="true">
+                                            <Anns>
+                                                <LocAnn Start="937" Loc="pirate.tex" Length="24"/>
+                                            </Anns>
+                                            <RefExpr Mixfix="false" Explicit="false">
+                                                <Anns>
+                                                    <LocAnn Start="937" Loc="pirate.tex" Line="39" Length="11" Col="36"/>
+                                                </Anns>
+                                                <ZName>
+                                                    <Anns>
+                                                        <LocAnn Start="937" Loc="pirate.tex" Line="39" Length="11" Col="36"/>
+                                                    </Anns>
+                                                    <Word>firstVisit</Word>
+                                                    <ZStrokeList>
+                                                        <NextStroke/>
+                                                    </ZStrokeList>
+                                                </ZName>
+                                                <ZExprList/>
+                                            </RefExpr>
+                                            <SetExpr>
+                                                <ZExprList>
+                                                    <RefExpr Mixfix="false" Explicit="false">
+                                                        <Anns>
+                                                            <LocAnn Start="951" Loc="pirate.tex" Line="39" Length="10" Col="50"/>
+                                                        </Anns>
+                                                        <ZName>
+                                                            <Anns>
+                                                                <LocAnn Start="951" Loc="pirate.tex" Line="39" Length="10" Col="50"/>
+                                                            </Anns>
+                                                            <Word>firstVisit</Word>
+                                                            <ZStrokeList/>
+                                                        </ZName>
+                                                        <ZExprList/>
+                                                    </RefExpr>
+                                                </ZExprList>
+                                            </SetExpr>
+                                        </MemPred>
+                                    </ImpliesPred>
+                                </AndPred>
+                            </ZSchText>
+                        </ns2:OpText>
+                    </ns2:AnonOpExpr>
+                </ns2:Operation>
+                <ns2:Operation Box="OmitBox">
+                    <Anns>
+                        <LocAnn Start="985" Loc="pirate.tex" Line="41" Length="34" Col="1"/>
+                    </Anns>
+                    <ZName>
+                        <Anns>
+                            <LocAnn Start="985" Loc="pirate.tex" Line="41" Length="4" Col="1"/>
+                        </Anns>
+                        <Word>step</Word>
+                        <ZStrokeList/>
+                    </ZName>
+                    <ns2:ExChoiceOpExpr>
+                        <Anns>
+                            <LocAnn Start="996" Loc="pirate.tex" Length="23"/>
+                        </Anns>
+                        <ns2:OpPromotionExpr>
+                            <Anns>
+                                <LocAnn Start="996" Loc="pirate.tex" Line="41" Length="8" Col="12"/>
+                            </Anns>
+                            <ZName>
+                                <Anns>
+                                    <LocAnn Start="996" Loc="pirate.tex" Line="41" Length="8" Col="12"/>
+                                </Anns>
+                                <Word>stepLeft</Word>
+                                <ZStrokeList/>
+                            </ZName>
+                        </ns2:OpPromotionExpr>
+                        <ns2:OpPromotionExpr>
+                            <Anns>
+                                <LocAnn Start="1010" Loc="pirate.tex" Line="41" Length="9" Col="26"/>
+                            </Anns>
+                            <ZName>
+                                <Anns>
+                                    <LocAnn Start="1010" Loc="pirate.tex" Line="41" Length="9" Col="26"/>
+                                </Anns>
+                                <Word>stepRight</Word>
+                                <ZStrokeList/>
+                            </ZName>
+                        </ns2:OpPromotionExpr>
+                    </ns2:ExChoiceOpExpr>
+                </ns2:Operation>
+            </ns2:ClassPara>
+            <NarrPara>
+                <Anns>
+                    <LocAnn Start="1032" Loc="pirate.tex" Line="42" Length="2" Col="12"/>
+                </Anns>
+                <Content xsi:type="xs:string" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+
+</Content>
+            </NarrPara>
+            <ns2:ClassPara>
+                <Anns>
+                    <LocAnn Start="1048" Loc="pirate.tex" Line="44" Length="404" Col="14"/>
+                </Anns>
+                <ZName>
+                    <Anns>
+                        <LocAnn Start="1048" Loc="pirate.tex" Line="44" Length="9" Col="14"/>
+                    </Anns>
+                    <Word>WalkPlank</Word>
+                    <ZStrokeList/>
+                </ZName>
+                <ZExprList/>
+                <ns2:State Box="SchBox">
+                    <Anns>
+                        <LocAnn Start="1073" Loc="pirate.tex" Line="46" Length="60" Col="8"/>
+                    </Anns>
+                    <ns2:PrimaryDecl>
+                        <ZDeclList>
+                            <Anns>
+                                <LocAnn Loc="pirate.tex"/>
+                            </Anns>
+                            <VarDecl>
+                                <Anns>
+                                    <LocAnn Start="1103" Loc="pirate.tex" Length="10"/>
+                                </Anns>
+                                <ZNameList>
+                                    <ZName>
+                                        <Anns>
+                                            <LocAnn Start="1103" Loc="pirate.tex" Line="47" Length="1" Col="16"/>
+                                        </Anns>
+                                        <Word>p</Word>
+                                        <ZStrokeList/>
+                                    </ZName>
+                                </ZNameList>
+                                <RefExpr Mixfix="false" Explicit="false">
+                                    <Anns>
+                                        <LocAnn Start="1107" Loc="pirate.tex" Line="47" Length="6" Col="20"/>
+                                    </Anns>
+                                    <ZName>
+                                        <Anns>
+                                            <LocAnn Start="1107" Loc="pirate.tex" Line="47" Length="6" Col="20"/>
+                                        </Anns>
+                                        <Word>Pirate</Word>
+                                        <ZStrokeList/>
+                                    </ZName>
+                                    <ZExprList/>
+                                </RefExpr>
+                            </VarDecl>
+                        </ZDeclList>
+                    </ns2:PrimaryDecl>
+                    <ns2:SecondaryDecl>
+                        <ZDeclList/>
+                    </ns2:SecondaryDecl>
+                </ns2:State>
+                <ns2:InitialState Box="SchBox">
+                    <Anns>
+                        <LocAnn Start="1147" Loc="pirate.tex" Line="49" Length="34" Col="1"/>
+                    </Anns>
+                    <ExprPred>
+                        <Anns>
+                            <LocAnn Start="1162" Loc="pirate.tex"/>
+                        </Anns>
+                        <BindSelExpr>
+                            <Anns>
+                                <LocAnn Start="1162" Loc="pirate.tex"/>
+                            </Anns>
+                            <RefExpr Mixfix="false" Explicit="false">
+                                <Anns>
+                                    <LocAnn Start="1162" Loc="pirate.tex" Line="50" Length="1" Col="2"/>
+                                </Anns>
+                                <ZName>
+                                    <Anns>
+                                        <LocAnn Start="1162" Loc="pirate.tex" Line="50" Length="1" Col="2"/>
+                                    </Anns>
+                                    <Word>p</Word>
+                                    <ZStrokeList/>
+                                </ZName>
+                                <ZExprList/>
+                            </RefExpr>
+                            <ZName>
+                                <Anns>
+                                    <LocAnn Loc="pirate.tex"/>
+                                </Anns>
+                                <Word>Init</Word>
+                                <ZStrokeList/>
+                            </ZName>
+                        </BindSelExpr>
+                    </ExprPred>
+                </ns2:InitialState>
+                <ns2:Operation Box="SchBox">
+                    <Anns>
+                        <LocAnn Start="1194" Loc="pirate.tex" Line="52" Length="58" Col="1"/>
+                    </Anns>
+                    <ZName>
+                        <Anns>
+                            <LocAnn Start="1205" Loc="pirate.tex" Line="52" Length="4" Col="12"/>
+                        </Anns>
+                        <Word>fell</Word>
+                        <ZStrokeList/>
+                    </ZName>
+                    <ns2:AnonOpExpr>
+                        <ns2:OpText>
+                            <ZSchText>
+                                <ZDeclList/>
+                                <MemPred Mixfix="true">
+                                    <Anns>
+                                        <LocAnn Start="1228" Loc="pirate.tex" Length="14"/>
+                                    </Anns>
+                                    <BindSelExpr>
+                                        <Anns>
+                                            <LocAnn Start="1228" Loc="pirate.tex" Length="9"/>
+                                        </Anns>
+                                        <RefExpr Mixfix="false" Explicit="false">
+                                            <Anns>
+                                                <LocAnn Start="1228" Loc="pirate.tex" Line="54" Length="1" Col="2"/>
+                                            </Anns>
+                                            <ZName>
+                                                <Anns>
+                                                    <LocAnn Start="1228" Loc="pirate.tex" Line="54" Length="1" Col="2"/>
+                                                </Anns>
+                                                <Word>p</Word>
+                                                <ZStrokeList/>
+                                            </ZName>
+                                            <ZExprList/>
+                                        </RefExpr>
+                                        <ZName>
+                                            <Anns>
+                                                <LocAnn Start="1230" Loc="pirate.tex" Line="54" Length="7" Col="4"/>
+                                            </Anns>
+                                            <Word>curPosn</Word>
+                                            <ZStrokeList/>
+                                        </ZName>
+                                    </BindSelExpr>
+                                    <SetExpr>
+                                        <ZExprList>
+                                            <NumExpr>
+                                                <Anns>
+                                                    <LocAnn Start="1240" Loc="pirate.tex" Line="54" Length="2" Col="14"/>
+                                                </Anns>
+                                                <ZNumeral Value="10">
+                                                    <Anns>
+                                                        <LocAnn Start="1240" Loc="pirate.tex" Line="54" Length="2" Col="14"/>
+                                                    </Anns>
+                                                </ZNumeral>
+                                            </NumExpr>
+                                        </ZExprList>
+                                    </SetExpr>
+                                </MemPred>
+                            </ZSchText>
+                        </ns2:OpText>
+                    </ns2:AnonOpExpr>
+                </ns2:Operation>
+                <ns2:Operation Box="SchBox">
+                    <Anns>
+                        <LocAnn Start="1266" Loc="pirate.tex" Line="56" Length="109" Col="1"/>
+                    </Anns>
+                    <ZName>
+                        <Anns>
+                            <LocAnn Start="1277" Loc="pirate.tex" Line="56" Length="9" Col="12"/>
+                        </Anns>
+                        <Word>getVisits</Word>
+                        <ZStrokeList/>
+                    </ZName>
+                    <ns2:AnonOpExpr>
+                        <ns2:OpText>
+                            <ZSchText>
+                                <ZDeclList>
+                                    <Anns>
+                                        <LocAnn Start="1290" Loc="pirate.tex" Length="21"/>
+                                    </Anns>
+                                    <VarDecl>
+                                        <Anns>
+                                            <LocAnn Start="1290" Loc="pirate.tex" Length="21"/>
+                                        </Anns>
+                                        <ZNameList>
+                                            <ZName>
+                                                <Anns>
+                                                    <LocAnn Start="1290" Loc="pirate.tex" Line="57" Length="9" Col="2"/>
+                                                </Anns>
+                                                <Word>numSteps</Word>
+                                                <ZStrokeList>
+                                                    <OutStroke/>
+                                                </ZStrokeList>
+                                            </ZName>
+                                        </ZNameList>
+                                        <RefExpr Mixfix="true" Explicit="true">
+                                            <Anns>
+                                                <LocAnn Start="1302" Loc="pirate.tex" Line="57" Length="9" Col="14"/>
+                                            </Anns>
+                                            <ZName>
+                                                <Anns>
+                                                    <LocAnn Start="1302" Loc="pirate.tex" Line="57" Length="4" Col="14"/>
+                                                </Anns>
+                                                <Word>seq _ </Word>
+                                                <ZStrokeList/>
+                                            </ZName>
+                                            <ZExprList>
+                                                <RefExpr Mixfix="false" Explicit="false">
+                                                    <Anns>
+                                                        <LocAnn Start="1307" Loc="pirate.tex" Line="57" Length="4" Col="19"/>
+                                                    </Anns>
+                                                    <ZName>
+                                                        <Anns>
+                                                            <LocAnn Start="1307" Loc="pirate.tex" Line="57" Length="4" Col="19"/>
+                                                        </Anns>
+                                                        <Word>ℕ</Word>
+                                                        <ZStrokeList/>
+                                                    </ZName>
+                                                    <ZExprList/>
+                                                </RefExpr>
+                                            </ZExprList>
+                                        </RefExpr>
+                                    </VarDecl>
+                                </ZDeclList>
+                                <AndPred And="NL">
+                                    <Anns>
+                                        <LocAnn Start="1322" Loc="pirate.tex" Length="43"/>
+                                    </Anns>
+                                    <MemPred Mixfix="true">
+                                        <Anns>
+                                            <LocAnn Start="1322" Loc="pirate.tex" Length="14"/>
+                                        </Anns>
+                                        <BindSelExpr>
+                                            <Anns>
+                                                <LocAnn Start="1322" Loc="pirate.tex" Length="9"/>
+                                            </Anns>
+                                            <RefExpr Mixfix="false" Explicit="false">
+                                                <Anns>
+                                                    <LocAnn Start="1322" Loc="pirate.tex" Line="59" Length="1" Col="2"/>
+                                                </Anns>
+                                                <ZName>
+                                                    <Anns>
+                                                        <LocAnn Start="1322" Loc="pirate.tex" Line="59" Length="1" Col="2"/>
+                                                    </Anns>
+                                                    <Word>p</Word>
+                                                    <ZStrokeList/>
+                                                </ZName>
+                                                <ZExprList/>
+                                            </RefExpr>
+                                            <ZName>
+                                                <Anns>
+                                                    <LocAnn Start="1324" Loc="pirate.tex" Line="59" Length="7" Col="4"/>
+                                                </Anns>
+                                                <Word>curPosn</Word>
+                                                <ZStrokeList/>
+                                            </ZName>
+                                        </BindSelExpr>
+                                        <SetExpr>
+                                            <ZExprList>
+                                                <NumExpr>
+                                                    <Anns>
+                                                        <LocAnn Start="1334" Loc="pirate.tex" Line="59" Length="2" Col="14"/>
+                                                    </Anns>
+                                                    <ZNumeral Value="10">
+                                                        <Anns>
+                                                            <LocAnn Start="1334" Loc="pirate.tex" Line="59" Length="2" Col="14"/>
+                                                        </Anns>
+                                                    </ZNumeral>
+                                                </NumExpr>
+                                            </ZExprList>
+                                        </SetExpr>
+                                    </MemPred>
+                                    <MemPred Mixfix="true">
+                                        <Anns>
+                                            <LocAnn Start="1341" Loc="pirate.tex" Length="24"/>
+                                        </Anns>
+                                        <RefExpr Mixfix="false" Explicit="false">
+                                            <Anns>
+                                                <LocAnn Start="1341" Loc="pirate.tex" Line="60" Length="9" Col="2"/>
+                                            </Anns>
+                                            <ZName>
+                                                <Anns>
+                                                    <LocAnn Start="1341" Loc="pirate.tex" Line="60" Length="9" Col="2"/>
+                                                </Anns>
+                                                <Word>numSteps</Word>
+                                                <ZStrokeList>
+                                                    <OutStroke/>
+                                                </ZStrokeList>
+                                            </ZName>
+                                            <ZExprList/>
+                                        </RefExpr>
+                                        <SetExpr>
+                                            <ZExprList>
+                                                <BindSelExpr>
+                                                    <Anns>
+                                                        <LocAnn Start="1353" Loc="pirate.tex" Length="12"/>
+                                                    </Anns>
+                                                    <RefExpr Mixfix="false" Explicit="false">
+                                                        <Anns>
+                                                            <LocAnn Start="1353" Loc="pirate.tex" Line="60" Length="1" Col="14"/>
+                                                        </Anns>
+                                                        <ZName>
+                                                            <Anns>
+                                                                <LocAnn Start="1353" Loc="pirate.tex" Line="60" Length="1" Col="14"/>
+                                                            </Anns>
+                                                            <Word>p</Word>
+                                                            <ZStrokeList/>
+                                                        </ZName>
+                                                        <ZExprList/>
+                                                    </RefExpr>
+                                                    <ZName>
+                                                        <Anns>
+                                                            <LocAnn Start="1355" Loc="pirate.tex" Line="60" Length="10" Col="16"/>
+                                                        </Anns>
+                                                        <Word>firstVisit</Word>
+                                                        <ZStrokeList/>
+                                                    </ZName>
+                                                </BindSelExpr>
+                                            </ZExprList>
+                                        </SetExpr>
+                                    </MemPred>
+                                </AndPred>
+                            </ZSchText>
+                        </ns2:OpText>
+                    </ns2:AnonOpExpr>
+                </ns2:Operation>
+                <ns2:Operation Box="OmitBox">
+                    <Anns>
+                        <LocAnn Start="1400" Loc="pirate.tex" Line="63" Length="40" Col="8"/>
+                    </Anns>
+                    <ZName>
+                        <Anns>
+                            <LocAnn Start="1400" Loc="pirate.tex" Line="63" Length="4" Col="8"/>
+                        </Anns>
+                        <Word>walk</Word>
+                        <ZStrokeList/>
+                    </ZName>
+                    <ns2:ExChoiceOpExpr>
+                        <Anns>
+                            <LocAnn Start="1412" Loc="pirate.tex" Length="28"/>
+                        </Anns>
+                        <ns2:SeqOpExpr>
+                            <Anns>
+                                <LocAnn Start="1412" Loc="pirate.tex" Length="17"/>
+                                <ParenAnn>
+                                    <Anns>
+                                        <LocAnn Start="1411" Loc="pirate.tex" Line="63" Length="19" Col="19"/>
+                                    </Anns>
+                                </ParenAnn>
+                            </Anns>
+                            <ns2:OpPromotionExpr>
+                                <Anns>
+                                    <LocAnn Start="1412" Loc="pirate.tex" Length="6"/>
+                                </Anns>
+                                <RefExpr Mixfix="false" Explicit="false">
+                                    <Anns>
+                                        <LocAnn Start="1412" Loc="pirate.tex" Line="63" Length="1" Col="20"/>
+                                    </Anns>
+                                    <ZName>
+                                        <Anns>
+                                            <LocAnn Start="1412" Loc="pirate.tex" Line="63" Length="1" Col="20"/>
+                                        </Anns>
+                                        <Word>p</Word>
+                                        <ZStrokeList/>
+                                    </ZName>
+                                    <ZExprList/>
+                                </RefExpr>
+                                <ZName>
+                                    <Anns>
+                                        <LocAnn Start="1414" Loc="pirate.tex" Line="63" Length="4" Col="22"/>
+                                    </Anns>
+                                    <Word>step</Word>
+                                    <ZStrokeList/>
+                                </ZName>
+                            </ns2:OpPromotionExpr>
+                            <ns2:OpPromotionExpr>
+                                <Anns>
+                                    <LocAnn Start="1425" Loc="pirate.tex" Line="63" Length="4" Col="33"/>
+                                </Anns>
+                                <ZName>
+                                    <Anns>
+                                        <LocAnn Start="1425" Loc="pirate.tex" Line="63" Length="4" Col="33"/>
+                                    </Anns>
+                                    <Word>walk</Word>
+                                    <ZStrokeList/>
+                                </ZName>
+                            </ns2:OpPromotionExpr>
+                        </ns2:SeqOpExpr>
+                        <ns2:OpPromotionExpr>
+                            <Anns>
+                                <LocAnn Start="1436" Loc="pirate.tex" Line="63" Length="4" Col="44"/>
+                            </Anns>
+                            <ZName>
+                                <Anns>
+                                    <LocAnn Start="1436" Loc="pirate.tex" Line="63" Length="4" Col="44"/>
+                                </Anns>
+                                <Word>fell</Word>
+                                <ZStrokeList/>
+                            </ZName>
+                        </ns2:OpPromotionExpr>
+                    </ns2:ExChoiceOpExpr>
+                </ns2:Operation>
+            </ns2:ClassPara>
+            <NarrPara>
+                <Anns>
+                    <LocAnn Start="1452" Loc="pirate.tex" Line="64" Length="2" Col="11"/>
+                </Anns>
+                <Content xsi:type="xs:string" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+
+</Content>
+            </NarrPara>
+            <ns2:ClassPara>
+                <Anns>
+                    <LocAnn Start="1468" Loc="pirate.tex" Line="66" Length="839" Col="14"/>
+                </Anns>
+                <ZName>
+                    <Anns>
+                        <LocAnn Start="1468" Loc="pirate.tex" Line="66" Length="7" Col="14"/>
+                    </Anns>
+                    <Word>Pirates</Word>
+                    <ZStrokeList/>
+                </ZName>
+                <ZExprList/>
+                <AxPara Box="AxBox">
+                    <Anns>
+                        <LocAnn Start="1484" Loc="pirate.tex" Line="68" Length="75" Col="1"/>
+                    </Anns>
+                    <ZNameList/>
+                    <ZSchText>
+                        <Anns>
+                            <LocAnn Start="1500" Loc="pirate.tex" Length="46"/>
+                        </Anns>
+                        <ZDeclList>
+                            <Anns>
+                                <LocAnn Start="1500" Loc="pirate.tex" Length="17"/>
+                            </Anns>
+                            <VarDecl>
+                                <Anns>
+                                    <LocAnn Start="1500" Loc="pirate.tex" Length="17"/>
+                                </Anns>
+                                <ZNameList>
+                                    <ZName>
+                                        <Anns>
+                                            <LocAnn Start="1500" Loc="pirate.tex" Line="69" Length="10" Col="2"/>
+                                        </Anns>
+                                        <Word>maxPirates</Word>
+                                        <ZStrokeList/>
+                                    </ZName>
+                                </ZNameList>
+                                <RefExpr Mixfix="false" Explicit="false">
+                                    <Anns>
+                                        <LocAnn Start="1513" Loc="pirate.tex" Line="69" Length="4" Col="15"/>
+                                    </Anns>
+                                    <ZName>
+                                        <Anns>
+                                            <LocAnn Start="1513" Loc="pirate.tex" Line="69" Length="4" Col="15"/>
+                                        </Anns>
+                                        <Word>ℕ</Word>
+                                        <ZStrokeList/>
+                                    </ZName>
+                                    <ZExprList/>
+                                </RefExpr>
+                            </VarDecl>
+                        </ZDeclList>
+                        <MemPred Mixfix="true">
+                            <Anns>
+                                <LocAnn Start="1528" Loc="pirate.tex" Length="18"/>
+                            </Anns>
+                            <RefExpr Mixfix="false" Explicit="false">
+                                <Anns>
+                                    <LocAnn Start="1528" Loc="pirate.tex" Line="71" Length="10" Col="2"/>
+                                </Anns>
+                                <ZName>
+                                    <Anns>
+                                        <LocAnn Start="1528" Loc="pirate.tex" Line="71" Length="10" Col="2"/>
+                                    </Anns>
+                                    <Word>maxPirates</Word>
+                                    <ZStrokeList/>
+                                </ZName>
+                                <ZExprList/>
+                            </RefExpr>
+                            <SetExpr>
+                                <ZExprList>
+                                    <NumExpr>
+                                        <Anns>
+                                            <LocAnn Start="1541" Loc="pirate.tex" Line="71" Length="5" Col="15"/>
+                                        </Anns>
+                                        <ZNumeral Value="10000">
+                                            <Anns>
+                                                <LocAnn Start="1541" Loc="pirate.tex" Line="71" Length="5" Col="15"/>
+                                            </Anns>
+                                        </ZNumeral>
+                                    </NumExpr>
+                                </ZExprList>
+                            </SetExpr>
+                        </MemPred>
+                    </ZSchText>
+                </AxPara>
+                <ns2:State Box="SchBox">
+                    <Anns>
+                        <LocAnn Start="1563" Loc="pirate.tex" Line="73" Length="103" Col="1"/>
+                    </Anns>
+                    <ns2:PrimaryDecl>
+                        <ZDeclList>
+                            <Anns>
+                                <LocAnn Loc="pirate.tex"/>
+                            </Anns>
+                            <VarDecl>
+                                <Anns>
+                                    <LocAnn Start="1579" Loc="pirate.tex" Length="25"/>
+                                </Anns>
+                                <ZNameList>
+                                    <ZName>
+                                        <Anns>
+                                            <LocAnn Start="1579" Loc="pirate.tex" Line="74" Length="7" Col="2"/>
+                                        </Anns>
+                                        <Word>pirates</Word>
+                                        <ZStrokeList/>
+                                    </ZName>
+                                </ZNameList>
+                                <RefExpr Mixfix="true" Explicit="true">
+                                    <Anns>
+                                        <LocAnn Start="1589" Loc="pirate.tex" Line="74" Length="15" Col="12"/>
+                                    </Anns>
+                                    <ZName>
+                                        <Anns>
+                                            <LocAnn Start="1589" Loc="pirate.tex" Line="74" Length="5" Col="12"/>
+                                        </Anns>
+                                        <Word>iseq _ </Word>
+                                        <ZStrokeList/>
+                                    </ZName>
+                                    <ZExprList>
+                                        <RefExpr Mixfix="false" Explicit="false">
+                                            <Anns>
+                                                <LocAnn Start="1595" Loc="pirate.tex" Line="74" Length="9" Col="18"/>
+                                            </Anns>
+                                            <ZName>
+                                                <Anns>
+                                                    <LocAnn Start="1595" Loc="pirate.tex" Line="74" Length="9" Col="18"/>
+                                                </Anns>
+                                                <Word>WalkPlank</Word>
+                                                <ZStrokeList/>
+                                            </ZName>
+                                            <ZExprList/>
+                                        </RefExpr>
+                                    </ZExprList>
+                                </RefExpr>
+                            </VarDecl>
+                            <VarDecl>
+                                <Anns>
+                                    <LocAnn Start="1610" Loc="pirate.tex" Length="17"/>
+                                </Anns>
+                                <ZNameList>
+                                    <ZName>
+                                        <Anns>
+                                            <LocAnn Start="1610" Loc="pirate.tex" Line="75" Length="5" Col="2"/>
+                                        </Anns>
+                                        <Word>total</Word>
+                                        <ZStrokeList/>
+                                    </ZName>
+                                </ZNameList>
+                                <RefExpr Mixfix="true" Explicit="true">
+                                    <Anns>
+                                        <LocAnn Start="1618" Loc="pirate.tex" Line="75" Length="9" Col="10"/>
+                                    </Anns>
+                                    <ZName>
+                                        <Anns>
+                                            <LocAnn Start="1618" Loc="pirate.tex" Line="75" Length="4" Col="10"/>
+                                        </Anns>
+                                        <Word>seq _ </Word>
+                                        <ZStrokeList/>
+                                    </ZName>
+                                    <ZExprList>
+                                        <RefExpr Mixfix="false" Explicit="false">
+                                            <Anns>
+                                                <LocAnn Start="1623" Loc="pirate.tex" Line="75" Length="4" Col="15"/>
+                                            </Anns>
+                                            <ZName>
+                                                <Anns>
+                                                    <LocAnn Start="1623" Loc="pirate.tex" Line="75" Length="4" Col="15"/>
+                                                </Anns>
+                                                <Word>ℕ</Word>
+                                                <ZStrokeList/>
+                                            </ZName>
+                                            <ZExprList/>
+                                        </RefExpr>
+                                    </ZExprList>
+                                </RefExpr>
+                            </VarDecl>
+                        </ZDeclList>
+                    </ns2:PrimaryDecl>
+                    <ns2:SecondaryDecl>
+                        <ZDeclList/>
+                    </ns2:SecondaryDecl>
+                    <MemPred Mixfix="true">
+                        <Anns>
+                            <LocAnn Start="1638" Loc="pirate.tex" Length="12"/>
+                        </Anns>
+                        <ApplExpr Mixfix="true">
+                            <Anns>
+                                <LocAnn Start="1638" Loc="pirate.tex" Line="77" Length="7" Col="2"/>
+                            </Anns>
+                            <RefExpr Mixfix="false" Explicit="false">
+                                <Anns>
+                                    <LocAnn Start="1638" Loc="pirate.tex" Line="77" Length="2" Col="2"/>
+                                </Anns>
+                                <ZName>
+                                    <Anns>
+                                        <LocAnn Start="1638" Loc="pirate.tex" Line="77" Length="2" Col="2"/>
+                                    </Anns>
+                                    <Word># _ </Word>
+                                    <ZStrokeList/>
+                                </ZName>
+                                <ZExprList/>
+                            </RefExpr>
+                            <RefExpr Mixfix="false" Explicit="false">
+                                <Anns>
+                                    <LocAnn Start="1640" Loc="pirate.tex" Line="77" Length="5" Col="4"/>
+                                </Anns>
+                                <ZName>
+                                    <Anns>
+                                        <LocAnn Start="1640" Loc="pirate.tex" Line="77" Length="5" Col="4"/>
+                                    </Anns>
+                                    <Word>total</Word>
+                                    <ZStrokeList/>
+                                </ZName>
+                                <ZExprList/>
+                            </RefExpr>
+                        </ApplExpr>
+                        <SetExpr>
+                            <ZExprList>
+                                <NumExpr>
+                                    <Anns>
+                                        <LocAnn Start="1648" Loc="pirate.tex" Line="77" Length="2" Col="12"/>
+                                    </Anns>
+                                    <ZNumeral Value="11">
+                                        <Anns>
+                                            <LocAnn Start="1648" Loc="pirate.tex" Line="77" Length="2" Col="12"/>
+                                        </Anns>
+                                    </ZNumeral>
+                                </NumExpr>
+                            </ZExprList>
+                        </SetExpr>
+                    </MemPred>
+                </ns2:State>
+                <ns2:InitialState Box="SchBox">
+                    <Anns>
+                        <LocAnn Start="1680" Loc="pirate.tex" Line="79" Length="133" Col="1"/>
+                    </Anns>
+                    <AndPred And="NL">
+                        <Anns>
+                            <LocAnn Start="1695" Loc="pirate.tex"/>
+                        </Anns>
+                        <AndPred And="NL">
+                            <Anns>
+                                <LocAnn Start="1695" Loc="pirate.tex" Length="65"/>
+                            </Anns>
+                            <MemPred Mixfix="true">
+                                <Anns>
+                                    <LocAnn Start="1695" Loc="pirate.tex" Length="22"/>
+                                </Anns>
+                                <ApplExpr Mixfix="true">
+                                    <Anns>
+                                        <LocAnn Start="1695" Loc="pirate.tex" Line="80" Length="9" Col="2"/>
+                                    </Anns>
+                                    <RefExpr Mixfix="false" Explicit="false">
+                                        <Anns>
+                                            <LocAnn Start="1695" Loc="pirate.tex" Line="80" Length="2" Col="2"/>
+                                        </Anns>
+                                        <ZName>
+                                            <Anns>
+                                                <LocAnn Start="1695" Loc="pirate.tex" Line="80" Length="2" Col="2"/>
+                                            </Anns>
+                                            <Word># _ </Word>
+                                            <ZStrokeList/>
+                                        </ZName>
+                                        <ZExprList/>
+                                    </RefExpr>
+                                    <RefExpr Mixfix="false" Explicit="false">
+                                        <Anns>
+                                            <LocAnn Start="1697" Loc="pirate.tex" Line="80" Length="7" Col="4"/>
+                                        </Anns>
+                                        <ZName>
+                                            <Anns>
+                                                <LocAnn Start="1697" Loc="pirate.tex" Line="80" Length="7" Col="4"/>
+                                            </Anns>
+                                            <Word>pirates</Word>
+                                            <ZStrokeList/>
+                                        </ZName>
+                                        <ZExprList/>
+                                    </RefExpr>
+                                </ApplExpr>
+                                <SetExpr>
+                                    <ZExprList>
+                                        <RefExpr Mixfix="false" Explicit="false">
+                                            <Anns>
+                                                <LocAnn Start="1707" Loc="pirate.tex" Line="80" Length="10" Col="14"/>
+                                            </Anns>
+                                            <ZName>
+                                                <Anns>
+                                                    <LocAnn Start="1707" Loc="pirate.tex" Line="80" Length="10" Col="14"/>
+                                                </Anns>
+                                                <Word>maxPirates</Word>
+                                                <ZStrokeList/>
+                                            </ZName>
+                                            <ZExprList/>
+                                        </RefExpr>
+                                    </ZExprList>
+                                </SetExpr>
+                            </MemPred>
+                            <ForallPred>
+                                <Anns>
+                                    <LocAnn Start="1723" Loc="pirate.tex" Line="81" Length="37" Col="2"/>
+                                </Anns>
+                                <ZSchText>
+                                    <Anns>
+                                        <LocAnn Start="1731" Loc="pirate.tex" Length="14"/>
+                                    </Anns>
+                                    <ZDeclList>
+                                        <Anns>
+                                            <LocAnn Start="1731" Loc="pirate.tex" Length="14"/>
+                                        </Anns>
+                                        <VarDecl>
+                                            <Anns>
+                                                <LocAnn Start="1731" Loc="pirate.tex" Length="14"/>
+                                            </Anns>
+                                            <ZNameList>
+                                                <ZName>
+                                                    <Anns>
+                                                        <LocAnn Start="1731" Loc="pirate.tex" Line="81" Length="1" Col="10"/>
+                                                    </Anns>
+                                                    <Word>j</Word>
+                                                    <ZStrokeList/>
+                                                </ZName>
+                                            </ZNameList>
+                                            <ApplExpr Mixfix="false">
+                                                <Anns>
+                                                    <LocAnn Start="1735" Loc="pirate.tex" Line="81" Length="10" Col="14"/>
+                                                </Anns>
+                                                <RefExpr Mixfix="false" Explicit="false">
+                                                    <Anns>
+                                                        <LocAnn Start="1735" Loc="pirate.tex" Line="81" Length="4" Col="14"/>
+                                                    </Anns>
+                                                    <ZName>
+                                                        <Anns>
+                                                            <LocAnn Start="1735" Loc="pirate.tex" Line="81" Length="4" Col="14"/>
+                                                        </Anns>
+                                                        <Word>dom</Word>
+                                                        <ZStrokeList/>
+                                                    </ZName>
+                                                    <ZExprList/>
+                                                </RefExpr>
+                                                <RefExpr Mixfix="false" Explicit="false">
+                                                    <Anns>
+                                                        <LocAnn Start="1740" Loc="pirate.tex" Line="81" Length="5" Col="19"/>
+                                                    </Anns>
+                                                    <ZName>
+                                                        <Anns>
+                                                            <LocAnn Start="1740" Loc="pirate.tex" Line="81" Length="5" Col="19"/>
+                                                        </Anns>
+                                                        <Word>total</Word>
+                                                        <ZStrokeList/>
+                                                    </ZName>
+                                                    <ZExprList/>
+                                                </RefExpr>
+                                            </ApplExpr>
+                                        </VarDecl>
+                                    </ZDeclList>
+                                </ZSchText>
+                                <MemPred Mixfix="true">
+                                    <Anns>
+                                        <LocAnn Start="1748" Loc="pirate.tex" Length="12"/>
+                                    </Anns>
+                                    <ApplExpr Mixfix="false">
+                                        <Anns>
+                                            <LocAnn Start="1748" Loc="pirate.tex" Line="81" Length="7" Col="27"/>
+                                        </Anns>
+                                        <RefExpr Mixfix="false" Explicit="false">
+                                            <Anns>
+                                                <LocAnn Start="1748" Loc="pirate.tex" Line="81" Length="5" Col="27"/>
+                                            </Anns>
+                                            <ZName>
+                                                <Anns>
+                                                    <LocAnn Start="1748" Loc="pirate.tex" Line="81" Length="5" Col="27"/>
+                                                </Anns>
+                                                <Word>total</Word>
+                                                <ZStrokeList/>
+                                            </ZName>
+                                            <ZExprList/>
+                                        </RefExpr>
+                                        <RefExpr Mixfix="false" Explicit="false">
+                                            <Anns>
+                                                <LocAnn Start="1754" Loc="pirate.tex" Line="81" Length="1" Col="33"/>
+                                                <ParenAnn>
+                                                    <Anns>
+                                                        <LocAnn Start="1753" Loc="pirate.tex" Line="81" Length="3" Col="32"/>
+                                                    </Anns>
+                                                </ParenAnn>
+                                            </Anns>
+                                            <ZName>
+                                                <Anns>
+                                                    <LocAnn Start="1754" Loc="pirate.tex" Line="81" Length="1" Col="33"/>
+                                                </Anns>
+                                                <Word>j</Word>
+                                                <ZStrokeList/>
+                                            </ZName>
+                                            <ZExprList/>
+                                        </RefExpr>
+                                    </ApplExpr>
+                                    <SetExpr>
+                                        <ZExprList>
+                                            <NumExpr>
+                                                <Anns>
+                                                    <LocAnn Start="1759" Loc="pirate.tex" Line="81" Length="1" Col="38"/>
+                                                </Anns>
+                                                <ZNumeral Value="0">
+                                                    <Anns>
+                                                        <LocAnn Start="1759" Loc="pirate.tex" Line="81" Length="1" Col="38"/>
+                                                    </Anns>
+                                                </ZNumeral>
+                                            </NumExpr>
+                                        </ZExprList>
+                                    </SetExpr>
+                                </MemPred>
+                            </ForallPred>
+                        </AndPred>
+                        <ExprPred>
+                            <Anns>
+                                <LocAnn Start="1767" Loc="pirate.tex" Line="82" Col="2"/>
+                            </Anns>
+                            <ForallExpr>
+                                <Anns>
+                                    <LocAnn Start="1767" Loc="pirate.tex" Line="82" Col="2"/>
+                                </Anns>
+                                <ZSchText>
+                                    <Anns>
+                                        <LocAnn Start="1775" Loc="pirate.tex" Length="16"/>
+                                    </Anns>
+                                    <ZDeclList>
+                                        <Anns>
+                                            <LocAnn Start="1775" Loc="pirate.tex" Length="16"/>
+                                        </Anns>
+                                        <VarDecl>
+                                            <Anns>
+                                                <LocAnn Start="1775" Loc="pirate.tex" Length="16"/>
+                                            </Anns>
+                                            <ZNameList>
+                                                <ZName>
+                                                    <Anns>
+                                                        <LocAnn Start="1775" Loc="pirate.tex" Line="82" Length="1" Col="10"/>
+                                                    </Anns>
+                                                    <Word>p</Word>
+                                                    <ZStrokeList/>
+                                                </ZName>
+                                            </ZNameList>
+                                            <ApplExpr Mixfix="false">
+                                                <Anns>
+                                                    <LocAnn Start="1779" Loc="pirate.tex" Line="82" Length="12" Col="14"/>
+                                                </Anns>
+                                                <RefExpr Mixfix="false" Explicit="false">
+                                                    <Anns>
+                                                        <LocAnn Start="1779" Loc="pirate.tex" Line="82" Length="4" Col="14"/>
+                                                    </Anns>
+                                                    <ZName>
+                                                        <Anns>
+                                                            <LocAnn Start="1779" Loc="pirate.tex" Line="82" Length="4" Col="14"/>
+                                                        </Anns>
+                                                        <Word>ran</Word>
+                                                        <ZStrokeList/>
+                                                    </ZName>
+                                                    <ZExprList/>
+                                                </RefExpr>
+                                                <RefExpr Mixfix="false" Explicit="false">
+                                                    <Anns>
+                                                        <LocAnn Start="1784" Loc="pirate.tex" Line="82" Length="7" Col="19"/>
+                                                    </Anns>
+                                                    <ZName>
+                                                        <Anns>
+                                                            <LocAnn Start="1784" Loc="pirate.tex" Line="82" Length="7" Col="19"/>
+                                                        </Anns>
+                                                        <Word>pirates</Word>
+                                                        <ZStrokeList/>
+                                                    </ZName>
+                                                    <ZExprList/>
+                                                </RefExpr>
+                                            </ApplExpr>
+                                        </VarDecl>
+                                    </ZDeclList>
+                                </ZSchText>
+                                <BindSelExpr>
+                                    <Anns>
+                                        <LocAnn Start="1794" Loc="pirate.tex"/>
+                                    </Anns>
+                                    <RefExpr Mixfix="false" Explicit="false">
+                                        <Anns>
+                                            <LocAnn Start="1794" Loc="pirate.tex" Line="82" Length="1" Col="29"/>
+                                        </Anns>
+                                        <ZName>
+                                            <Anns>
+                                                <LocAnn Start="1794" Loc="pirate.tex" Line="82" Length="1" Col="29"/>
+                                            </Anns>
+                                            <Word>p</Word>
+                                            <ZStrokeList/>
+                                        </ZName>
+                                        <ZExprList/>
+                                    </RefExpr>
+                                    <ZName>
+                                        <Anns>
+                                            <LocAnn Loc="pirate.tex"/>
+                                        </Anns>
+                                        <Word>Init</Word>
+                                        <ZStrokeList/>
+                                    </ZName>
+                                </BindSelExpr>
+                            </ForallExpr>
+                        </ExprPred>
+                    </AndPred>
+                </ns2:InitialState>
+                <ns2:Operation Box="OmitBox">
+                    <Anns>
+                        <LocAnn Start="1834" Loc="pirate.tex" Line="84" Length="45" Col="8"/>
+                    </Anns>
+                    <ZName>
+                        <Anns>
+                            <LocAnn Start="1834" Loc="pirate.tex" Line="84" Length="7" Col="8"/>
+                        </Anns>
+                        <Word>allwalk</Word>
+                        <ZStrokeList/>
+                    </ZName>
+                    <ns2:DistConjOpExpr>
+                        <Anns>
+                            <LocAnn Start="1848" Loc="pirate.tex" Line="84" Length="31" Col="22"/>
+                        </Anns>
+                        <ZSchText>
+                            <Anns>
+                                <LocAnn Start="1854" Loc="pirate.tex" Length="16"/>
+                            </Anns>
+                            <ZDeclList>
+                                <Anns>
+                                    <LocAnn Start="1854" Loc="pirate.tex" Length="16"/>
+                                </Anns>
+                                <VarDecl>
+                                    <Anns>
+                                        <LocAnn Start="1854" Loc="pirate.tex" Length="16"/>
+                                    </Anns>
+                                    <ZNameList>
+                                        <ZName>
+                                            <Anns>
+                                                <LocAnn Start="1854" Loc="pirate.tex" Line="84" Length="1" Col="28"/>
+                                            </Anns>
+                                            <Word>p</Word>
+                                            <ZStrokeList/>
+                                        </ZName>
+                                    </ZNameList>
+                                    <ApplExpr Mixfix="false">
+                                        <Anns>
+                                            <LocAnn Start="1858" Loc="pirate.tex" Line="84" Length="12" Col="32"/>
+                                        </Anns>
+                                        <RefExpr Mixfix="false" Explicit="false">
+                                            <Anns>
+                                                <LocAnn Start="1858" Loc="pirate.tex" Line="84" Length="4" Col="32"/>
+                                            </Anns>
+                                            <ZName>
+                                                <Anns>
+                                                    <LocAnn Start="1858" Loc="pirate.tex" Line="84" Length="4" Col="32"/>
+                                                </Anns>
+                                                <Word>ran</Word>
+                                                <ZStrokeList/>
+                                            </ZName>
+                                            <ZExprList/>
+                                        </RefExpr>
+                                        <RefExpr Mixfix="false" Explicit="false">
+                                            <Anns>
+                                                <LocAnn Start="1863" Loc="pirate.tex" Line="84" Length="7" Col="37"/>
+                                            </Anns>
+                                            <ZName>
+                                                <Anns>
+                                                    <LocAnn Start="1863" Loc="pirate.tex" Line="84" Length="7" Col="37"/>
+                                                </Anns>
+                                                <Word>pirates</Word>
+                                                <ZStrokeList/>
+                                            </ZName>
+                                            <ZExprList/>
+                                        </RefExpr>
+                                    </ApplExpr>
+                                </VarDecl>
+                            </ZDeclList>
+                        </ZSchText>
+                        <ns2:OpPromotionExpr>
+                            <Anns>
+                                <LocAnn Start="1873" Loc="pirate.tex" Length="6"/>
+                            </Anns>
+                            <RefExpr Mixfix="false" Explicit="false">
+                                <Anns>
+                                    <LocAnn Start="1873" Loc="pirate.tex" Line="84" Length="1" Col="47"/>
+                                </Anns>
+                                <ZName>
+                                    <Anns>
+                                        <LocAnn Start="1873" Loc="pirate.tex" Line="84" Length="1" Col="47"/>
+                                    </Anns>
+                                    <Word>p</Word>
+                                    <ZStrokeList/>
+                                </ZName>
+                                <ZExprList/>
+                            </RefExpr>
+                            <ZName>
+                                <Anns>
+                                    <LocAnn Start="1875" Loc="pirate.tex" Line="84" Length="4" Col="49"/>
+                                </Anns>
+                                <Word>walk</Word>
+                                <ZStrokeList/>
+                            </ZName>
+                        </ns2:OpPromotionExpr>
+                    </ns2:DistConjOpExpr>
+                </ns2:Operation>
+                <ns2:Operation Box="SchBox">
+                    <Anns>
+                        <LocAnn Start="1883" Loc="pirate.tex" Line="85" Length="143" Col="1"/>
+                    </Anns>
+                    <ZName>
+                        <Anns>
+                            <LocAnn Start="1894" Loc="pirate.tex" Line="85" Length="3" Col="12"/>
+                        </Anns>
+                        <Word>add</Word>
+                        <ZStrokeList/>
+                    </ZName>
+                    <ns2:AnonOpExpr>
+                        <ns2:OpText>
+                            <ns2:DeltaList>
+                                <Anns>
+                                    <LocAnn Start="1901" Loc="pirate.tex" Line="86" Length="14" Col="2"/>
+                                </Anns>
+                                <ZName>
+                                    <Anns>
+                                        <LocAnn Start="1909" Loc="pirate.tex" Line="86" Length="5" Col="10"/>
+                                    </Anns>
+                                    <Word>total</Word>
+                                    <ZStrokeList/>
+                                </ZName>
+                            </ns2:DeltaList>
+                            <ZSchText>
+                                <ZDeclList>
+                                    <Anns>
+                                        <LocAnn Start="1921" Loc="pirate.tex" Length="21"/>
+                                    </Anns>
+                                    <VarDecl>
+                                        <Anns>
+                                            <LocAnn Start="1921" Loc="pirate.tex" Length="21"/>
+                                        </Anns>
+                                        <ZNameList>
+                                            <ZName>
+                                                <Anns>
+                                                    <LocAnn Start="1921" Loc="pirate.tex" Line="87" Length="9" Col="2"/>
+                                                </Anns>
+                                                <Word>numSteps</Word>
+                                                <ZStrokeList>
+                                                    <InStroke/>
+                                                </ZStrokeList>
+                                            </ZName>
+                                        </ZNameList>
+                                        <RefExpr Mixfix="true" Explicit="true">
+                                            <Anns>
+                                                <LocAnn Start="1933" Loc="pirate.tex" Line="87" Length="9" Col="14"/>
+                                            </Anns>
+                                            <ZName>
+                                                <Anns>
+                                                    <LocAnn Start="1933" Loc="pirate.tex" Line="87" Length="4" Col="14"/>
+                                                </Anns>
+                                                <Word>seq _ </Word>
+                                                <ZStrokeList/>
+                                            </ZName>
+                                            <ZExprList>
+                                                <RefExpr Mixfix="false" Explicit="false">
+                                                    <Anns>
+                                                        <LocAnn Start="1938" Loc="pirate.tex" Line="87" Length="4" Col="19"/>
+                                                    </Anns>
+                                                    <ZName>
+                                                        <Anns>
+                                                            <LocAnn Start="1938" Loc="pirate.tex" Line="87" Length="4" Col="19"/>
+                                                        </Anns>
+                                                        <Word>ℕ</Word>
+                                                        <ZStrokeList/>
+                                                    </ZName>
+                                                    <ZExprList/>
+                                                </RefExpr>
+                                            </ZExprList>
+                                        </RefExpr>
+                                    </VarDecl>
+                                </ZDeclList>
+                                <ForallPred>
+                                    <Anns>
+                                        <LocAnn Start="1953" Loc="pirate.tex" Line="89" Length="62" Col="2"/>
+                                    </Anns>
+                                    <ZSchText>
+                                        <Anns>
+                                            <LocAnn Start="1961" Loc="pirate.tex" Length="14"/>
+                                        </Anns>
+                                        <ZDeclList>
+                                            <Anns>
+                                                <LocAnn Start="1961" Loc="pirate.tex" Length="14"/>
+                                            </Anns>
+                                            <VarDecl>
+                                                <Anns>
+                                                    <LocAnn Start="1961" Loc="pirate.tex" Length="14"/>
+                                                </Anns>
+                                                <ZNameList>
+                                                    <ZName>
+                                                        <Anns>
+                                                            <LocAnn Start="1961" Loc="pirate.tex" Line="89" Length="1" Col="10"/>
+                                                        </Anns>
+                                                        <Word>j</Word>
+                                                        <ZStrokeList/>
+                                                    </ZName>
+                                                </ZNameList>
+                                                <ApplExpr Mixfix="false">
+                                                    <Anns>
+                                                        <LocAnn Start="1965" Loc="pirate.tex" Line="89" Length="10" Col="14"/>
+                                                    </Anns>
+                                                    <RefExpr Mixfix="false" Explicit="false">
+                                                        <Anns>
+                                                            <LocAnn Start="1965" Loc="pirate.tex" Line="89" Length="4" Col="14"/>
+                                                        </Anns>
+                                                        <ZName>
+                                                            <Anns>
+                                                                <LocAnn Start="1965" Loc="pirate.tex" Line="89" Length="4" Col="14"/>
+                                                            </Anns>
+                                                            <Word>dom</Word>
+                                                            <ZStrokeList/>
+                                                        </ZName>
+                                                        <ZExprList/>
+                                                    </RefExpr>
+                                                    <RefExpr Mixfix="false" Explicit="false">
+                                                        <Anns>
+                                                            <LocAnn Start="1970" Loc="pirate.tex" Line="89" Length="5" Col="19"/>
+                                                        </Anns>
+                                                        <ZName>
+                                                            <Anns>
+                                                                <LocAnn Start="1970" Loc="pirate.tex" Line="89" Length="5" Col="19"/>
+                                                            </Anns>
+                                                            <Word>total</Word>
+                                                            <ZStrokeList/>
+                                                        </ZName>
+                                                        <ZExprList/>
+                                                    </RefExpr>
+                                                </ApplExpr>
+                                            </VarDecl>
+                                        </ZDeclList>
+                                    </ZSchText>
+                                    <MemPred Mixfix="true">
+                                        <Anns>
+                                            <LocAnn Start="1981" Loc="pirate.tex" Length="34"/>
+                                        </Anns>
+                                        <ApplExpr Mixfix="false">
+                                            <Anns>
+                                                <LocAnn Start="1981" Loc="pirate.tex" Line="90" Length="8" Col="3"/>
+                                            </Anns>
+                                            <RefExpr Mixfix="false" Explicit="false">
+                                                <Anns>
+                                                    <LocAnn Start="1981" Loc="pirate.tex" Line="90" Length="6" Col="3"/>
+                                                </Anns>
+                                                <ZName>
+                                                    <Anns>
+                                                        <LocAnn Start="1981" Loc="pirate.tex" Line="90" Length="6" Col="3"/>
+                                                    </Anns>
+                                                    <Word>total</Word>
+                                                    <ZStrokeList>
+                                                        <NextStroke/>
+                                                    </ZStrokeList>
+                                                </ZName>
+                                                <ZExprList/>
+                                            </RefExpr>
+                                            <RefExpr Mixfix="false" Explicit="false">
+                                                <Anns>
+                                                    <LocAnn Start="1988" Loc="pirate.tex" Line="90" Length="1" Col="10"/>
+                                                    <ParenAnn>
+                                                        <Anns>
+                                                            <LocAnn Start="1987" Loc="pirate.tex" Line="90" Length="3" Col="9"/>
+                                                        </Anns>
+                                                    </ParenAnn>
+                                                </Anns>
+                                                <ZName>
+                                                    <Anns>
+                                                        <LocAnn Start="1988" Loc="pirate.tex" Line="90" Length="1" Col="10"/>
+                                                    </Anns>
+                                                    <Word>j</Word>
+                                                    <ZStrokeList/>
+                                                </ZName>
+                                                <ZExprList/>
+                                            </RefExpr>
+                                        </ApplExpr>
+                                        <SetExpr>
+                                            <ZExprList>
+                                                <ApplExpr Mixfix="true">
+                                                    <Anns>
+                                                        <LocAnn Start="1993" Loc="pirate.tex" Length="22"/>
+                                                    </Anns>
+                                                    <RefExpr Mixfix="false" Explicit="false">
+                                                        <Anns>
+                                                            <LocAnn Start="2002" Loc="pirate.tex" Line="90" Length="1" Col="24"/>
+                                                        </Anns>
+                                                        <ZName>
+                                                            <Anns>
+                                                                <LocAnn Start="2002" Loc="pirate.tex" Line="90" Length="1" Col="24"/>
+                                                            </Anns>
+                                                            <Word> _ + _ </Word>
+                                                            <ZStrokeList/>
+                                                        </ZName>
+                                                        <ZExprList/>
+                                                    </RefExpr>
+                                                    <TupleExpr>
+                                                        <ZExprList>
+                                                            <ApplExpr Mixfix="false">
+                                                                <Anns>
+                                                                    <LocAnn Start="1993" Loc="pirate.tex" Line="90" Length="7" Col="15"/>
+                                                                </Anns>
+                                                                <RefExpr Mixfix="false" Explicit="false">
+                                                                    <Anns>
+                                                                        <LocAnn Start="1993" Loc="pirate.tex" Line="90" Length="5" Col="15"/>
+                                                                    </Anns>
+                                                                    <ZName>
+                                                                        <Anns>
+                                                                            <LocAnn Start="1993" Loc="pirate.tex" Line="90" Length="5" Col="15"/>
+                                                                        </Anns>
+                                                                        <Word>total</Word>
+                                                                        <ZStrokeList/>
+                                                                    </ZName>
+                                                                    <ZExprList/>
+                                                                </RefExpr>
+                                                                <RefExpr Mixfix="false" Explicit="false">
+                                                                    <Anns>
+                                                                        <LocAnn Start="1999" Loc="pirate.tex" Line="90" Length="1" Col="21"/>
+                                                                        <ParenAnn>
+                                                                            <Anns>
+                                                                                <LocAnn Start="1998" Loc="pirate.tex" Line="90" Length="3" Col="20"/>
+                                                                            </Anns>
+                                                                        </ParenAnn>
+                                                                    </Anns>
+                                                                    <ZName>
+                                                                        <Anns>
+                                                                            <LocAnn Start="1999" Loc="pirate.tex" Line="90" Length="1" Col="21"/>
+                                                                        </Anns>
+                                                                        <Word>j</Word>
+                                                                        <ZStrokeList/>
+                                                                    </ZName>
+                                                                    <ZExprList/>
+                                                                </RefExpr>
+                                                            </ApplExpr>
+                                                            <ApplExpr Mixfix="false">
+                                                                <Anns>
+                                                                    <LocAnn Start="2004" Loc="pirate.tex" Line="90" Length="11" Col="26"/>
+                                                                </Anns>
+                                                                <RefExpr Mixfix="false" Explicit="false">
+                                                                    <Anns>
+                                                                        <LocAnn Start="2004" Loc="pirate.tex" Line="90" Length="9" Col="26"/>
+                                                                    </Anns>
+                                                                    <ZName>
+                                                                        <Anns>
+                                                                            <LocAnn Start="2004" Loc="pirate.tex" Line="90" Length="9" Col="26"/>
+                                                                        </Anns>
+                                                                        <Word>numSteps</Word>
+                                                                        <ZStrokeList>
+                                                                            <InStroke/>
+                                                                        </ZStrokeList>
+                                                                    </ZName>
+                                                                    <ZExprList/>
+                                                                </RefExpr>
+                                                                <RefExpr Mixfix="false" Explicit="false">
+                                                                    <Anns>
+                                                                        <LocAnn Start="2014" Loc="pirate.tex" Line="90" Length="1" Col="36"/>
+                                                                        <ParenAnn>
+                                                                            <Anns>
+                                                                                <LocAnn Start="2013" Loc="pirate.tex" Line="90" Length="3" Col="35"/>
+                                                                            </Anns>
+                                                                        </ParenAnn>
+                                                                    </Anns>
+                                                                    <ZName>
+                                                                        <Anns>
+                                                                            <LocAnn Start="2014" Loc="pirate.tex" Line="90" Length="1" Col="36"/>
+                                                                        </Anns>
+                                                                        <Word>j</Word>
+                                                                        <ZStrokeList/>
+                                                                    </ZName>
+                                                                    <ZExprList/>
+                                                                </RefExpr>
+                                                            </ApplExpr>
+                                                        </ZExprList>
+                                                    </TupleExpr>
+                                                </ApplExpr>
+                                            </ZExprList>
+                                        </SetExpr>
+                                    </MemPred>
+                                </ForallPred>
+                            </ZSchText>
+                        </ns2:OpText>
+                    </ns2:AnonOpExpr>
+                </ns2:Operation>
+                <ns2:Operation Box="SchBox">
+                    <Anns>
+                        <LocAnn Start="2040" Loc="pirate.tex" Line="92" Length="138" Col="1"/>
+                    </Anns>
+                    <ZName>
+                        <Anns>
+                            <LocAnn Start="2051" Loc="pirate.tex" Line="92" Length="13" Col="12"/>
+                        </Anns>
+                        <Word>outputAverage</Word>
+                        <ZStrokeList/>
+                    </ZName>
+                    <ns2:AnonOpExpr>
+                        <ns2:OpText>
+                            <ZSchText>
+                                <ZDeclList>
+                                    <Anns>
+                                        <LocAnn Start="2068" Loc="pirate.tex" Length="20"/>
+                                    </Anns>
+                                    <VarDecl>
+                                        <Anns>
+                                            <LocAnn Start="2068" Loc="pirate.tex" Length="20"/>
+                                        </Anns>
+                                        <ZNameList>
+                                            <ZName>
+                                                <Anns>
+                                                    <LocAnn Start="2068" Loc="pirate.tex" Line="93" Length="8" Col="2"/>
+                                                </Anns>
+                                                <Word>average</Word>
+                                                <ZStrokeList>
+                                                    <OutStroke/>
+                                                </ZStrokeList>
+                                            </ZName>
+                                        </ZNameList>
+                                        <RefExpr Mixfix="true" Explicit="true">
+                                            <Anns>
+                                                <LocAnn Start="2079" Loc="pirate.tex" Line="93" Length="9" Col="13"/>
+                                            </Anns>
+                                            <ZName>
+                                                <Anns>
+                                                    <LocAnn Start="2079" Loc="pirate.tex" Line="93" Length="4" Col="13"/>
+                                                </Anns>
+                                                <Word>seq _ </Word>
+                                                <ZStrokeList/>
+                                            </ZName>
+                                            <ZExprList>
+                                                <RefExpr Mixfix="false" Explicit="false">
+                                                    <Anns>
+                                                        <LocAnn Start="2084" Loc="pirate.tex" Line="93" Length="4" Col="18"/>
+                                                    </Anns>
+                                                    <ZName>
+                                                        <Anns>
+                                                            <LocAnn Start="2084" Loc="pirate.tex" Line="93" Length="4" Col="18"/>
+                                                        </Anns>
+                                                        <Word>ℤ</Word>
+                                                        <ZStrokeList/>
+                                                    </ZName>
+                                                    <ZExprList/>
+                                                </RefExpr>
+                                            </ZExprList>
+                                        </RefExpr>
+                                    </VarDecl>
+                                </ZDeclList>
+                                <ForallPred>
+                                    <Anns>
+                                        <LocAnn Start="2099" Loc="pirate.tex" Line="95" Length="69" Col="2"/>
+                                    </Anns>
+                                    <ZSchText>
+                                        <Anns>
+                                            <LocAnn Start="2107" Loc="pirate.tex" Length="17"/>
+                                        </Anns>
+                                        <ZDeclList>
+                                            <Anns>
+                                                <LocAnn Start="2107" Loc="pirate.tex" Length="17"/>
+                                            </Anns>
+                                            <VarDecl>
+                                                <Anns>
+                                                    <LocAnn Start="2107" Loc="pirate.tex" Length="17"/>
+                                                </Anns>
+                                                <ZNameList>
+                                                    <ZName>
+                                                        <Anns>
+                                                            <LocAnn Start="2107" Loc="pirate.tex" Line="95" Length="1" Col="10"/>
+                                                        </Anns>
+                                                        <Word>j</Word>
+                                                        <ZStrokeList/>
+                                                    </ZName>
+                                                </ZNameList>
+                                                <ApplExpr Mixfix="false">
+                                                    <Anns>
+                                                        <LocAnn Start="2111" Loc="pirate.tex" Line="95" Length="13" Col="14"/>
+                                                    </Anns>
+                                                    <RefExpr Mixfix="false" Explicit="false">
+                                                        <Anns>
+                                                            <LocAnn Start="2111" Loc="pirate.tex" Line="95" Length="4" Col="14"/>
+                                                        </Anns>
+                                                        <ZName>
+                                                            <Anns>
+                                                                <LocAnn Start="2111" Loc="pirate.tex" Line="95" Length="4" Col="14"/>
+                                                            </Anns>
+                                                            <Word>dom</Word>
+                                                            <ZStrokeList/>
+                                                        </ZName>
+                                                        <ZExprList/>
+                                                    </RefExpr>
+                                                    <RefExpr Mixfix="false" Explicit="false">
+                                                        <Anns>
+                                                            <LocAnn Start="2116" Loc="pirate.tex" Line="95" Length="8" Col="19"/>
+                                                        </Anns>
+                                                        <ZName>
+                                                            <Anns>
+                                                                <LocAnn Start="2116" Loc="pirate.tex" Line="95" Length="8" Col="19"/>
+                                                            </Anns>
+                                                            <Word>average</Word>
+                                                            <ZStrokeList>
+                                                                <OutStroke/>
+                                                            </ZStrokeList>
+                                                        </ZName>
+                                                        <ZExprList/>
+                                                    </RefExpr>
+                                                </ApplExpr>
+                                            </VarDecl>
+                                        </ZDeclList>
+                                    </ZSchText>
+                                    <MemPred Mixfix="true">
+                                        <Anns>
+                                            <LocAnn Start="2130" Loc="pirate.tex" Length="38"/>
+                                        </Anns>
+                                        <ApplExpr Mixfix="false">
+                                            <Anns>
+                                                <LocAnn Start="2130" Loc="pirate.tex" Line="96" Length="10" Col="3"/>
+                                            </Anns>
+                                            <RefExpr Mixfix="false" Explicit="false">
+                                                <Anns>
+                                                    <LocAnn Start="2130" Loc="pirate.tex" Line="96" Length="8" Col="3"/>
+                                                </Anns>
+                                                <ZName>
+                                                    <Anns>
+                                                        <LocAnn Start="2130" Loc="pirate.tex" Line="96" Length="8" Col="3"/>
+                                                    </Anns>
+                                                    <Word>average</Word>
+                                                    <ZStrokeList>
+                                                        <OutStroke/>
+                                                    </ZStrokeList>
+                                                </ZName>
+                                                <ZExprList/>
+                                            </RefExpr>
+                                            <RefExpr Mixfix="false" Explicit="false">
+                                                <Anns>
+                                                    <LocAnn Start="2139" Loc="pirate.tex" Line="96" Length="1" Col="12"/>
+                                                    <ParenAnn>
+                                                        <Anns>
+                                                            <LocAnn Start="2138" Loc="pirate.tex" Line="96" Length="3" Col="11"/>
+                                                        </Anns>
+                                                    </ParenAnn>
+                                                </Anns>
+                                                <ZName>
+                                                    <Anns>
+                                                        <LocAnn Start="2139" Loc="pirate.tex" Line="96" Length="1" Col="12"/>
+                                                    </Anns>
+                                                    <Word>j</Word>
+                                                    <ZStrokeList/>
+                                                </ZName>
+                                                <ZExprList/>
+                                            </RefExpr>
+                                        </ApplExpr>
+                                        <SetExpr>
+                                            <ZExprList>
+                                                <ApplExpr Mixfix="true">
+                                                    <Anns>
+                                                        <LocAnn Start="2144" Loc="pirate.tex" Length="24"/>
+                                                    </Anns>
+                                                    <RefExpr Mixfix="false" Explicit="false">
+                                                        <Anns>
+                                                            <LocAnn Start="2153" Loc="pirate.tex" Line="96" Length="4" Col="26"/>
+                                                        </Anns>
+                                                        <ZName>
+                                                            <Anns>
+                                                                <LocAnn Start="2153" Loc="pirate.tex" Line="96" Length="4" Col="26"/>
+                                                            </Anns>
+                                                            <Word> _ div _ </Word>
+                                                            <ZStrokeList/>
+                                                        </ZName>
+                                                        <ZExprList/>
+                                                    </RefExpr>
+                                                    <TupleExpr>
+                                                        <ZExprList>
+                                                            <ApplExpr Mixfix="false">
+                                                                <Anns>
+                                                                    <LocAnn Start="2144" Loc="pirate.tex" Line="96" Length="7" Col="17"/>
+                                                                </Anns>
+                                                                <RefExpr Mixfix="false" Explicit="false">
+                                                                    <Anns>
+                                                                        <LocAnn Start="2144" Loc="pirate.tex" Line="96" Length="5" Col="17"/>
+                                                                    </Anns>
+                                                                    <ZName>
+                                                                        <Anns>
+                                                                            <LocAnn Start="2144" Loc="pirate.tex" Line="96" Length="5" Col="17"/>
+                                                                        </Anns>
+                                                                        <Word>total</Word>
+                                                                        <ZStrokeList/>
+                                                                    </ZName>
+                                                                    <ZExprList/>
+                                                                </RefExpr>
+                                                                <RefExpr Mixfix="false" Explicit="false">
+                                                                    <Anns>
+                                                                        <LocAnn Start="2150" Loc="pirate.tex" Line="96" Length="1" Col="23"/>
+                                                                        <ParenAnn>
+                                                                            <Anns>
+                                                                                <LocAnn Start="2149" Loc="pirate.tex" Line="96" Length="3" Col="22"/>
+                                                                            </Anns>
+                                                                        </ParenAnn>
+                                                                    </Anns>
+                                                                    <ZName>
+                                                                        <Anns>
+                                                                            <LocAnn Start="2150" Loc="pirate.tex" Line="96" Length="1" Col="23"/>
+                                                                        </Anns>
+                                                                        <Word>j</Word>
+                                                                        <ZStrokeList/>
+                                                                    </ZName>
+                                                                    <ZExprList/>
+                                                                </RefExpr>
+                                                            </ApplExpr>
+                                                            <RefExpr Mixfix="false" Explicit="false">
+                                                                <Anns>
+                                                                    <LocAnn Start="2158" Loc="pirate.tex" Line="96" Length="10" Col="31"/>
+                                                                </Anns>
+                                                                <ZName>
+                                                                    <Anns>
+                                                                        <LocAnn Start="2158" Loc="pirate.tex" Line="96" Length="10" Col="31"/>
+                                                                    </Anns>
+                                                                    <Word>maxPirates</Word>
+                                                                    <ZStrokeList/>
+                                                                </ZName>
+                                                                <ZExprList/>
+                                                            </RefExpr>
+                                                        </ZExprList>
+                                                    </TupleExpr>
+                                                </ApplExpr>
+                                            </ZExprList>
+                                        </SetExpr>
+                                    </MemPred>
+                                </ForallPred>
+                            </ZSchText>
+                        </ns2:OpText>
+                    </ns2:AnonOpExpr>
+                </ns2:Operation>
+                <ns2:Operation Box="OmitBox">
+                    <Anns>
+                        <LocAnn Start="2192" Loc="pirate.tex" Line="98" Length="103" Col="1"/>
+                    </Anns>
+                    <ZName>
+                        <Anns>
+                            <LocAnn Start="2192" Loc="pirate.tex" Line="98" Length="11" Col="1"/>
+                        </Anns>
+                        <Word>getAverages</Word>
+                        <ZStrokeList/>
+                    </ZName>
+                    <ns2:SeqOpExpr>
+                        <Anns>
+                            <LocAnn Start="2211" Loc="pirate.tex" Length="84"/>
+                        </Anns>
+                        <ns2:DistSeqOpExpr>
+                            <Anns>
+                                <LocAnn Start="2211" Loc="pirate.tex" Line="98" Length="45" Col="20"/>
+                                <ParenAnn>
+                                    <Anns>
+                                        <LocAnn Start="2210" Loc="pirate.tex" Line="98" Length="47" Col="19"/>
+                                    </Anns>
+                                </ParenAnn>
+                            </Anns>
+                            <ZSchText>
+                                <Anns>
+                                    <LocAnn Start="2217" Loc="pirate.tex" Length="16"/>
+                                </Anns>
+                                <ZDeclList>
+                                    <Anns>
+                                        <LocAnn Start="2217" Loc="pirate.tex" Length="16"/>
+                                    </Anns>
+                                    <VarDecl>
+                                        <Anns>
+                                            <LocAnn Start="2217" Loc="pirate.tex" Length="16"/>
+                                        </Anns>
+                                        <ZNameList>
+                                            <ZName>
+                                                <Anns>
+                                                    <LocAnn Start="2217" Loc="pirate.tex" Line="98" Length="1" Col="26"/>
+                                                </Anns>
+                                                <Word>p</Word>
+                                                <ZStrokeList/>
+                                            </ZName>
+                                        </ZNameList>
+                                        <ApplExpr Mixfix="false">
+                                            <Anns>
+                                                <LocAnn Start="2221" Loc="pirate.tex" Line="98" Length="12" Col="30"/>
+                                            </Anns>
+                                            <RefExpr Mixfix="false" Explicit="false">
+                                                <Anns>
+                                                    <LocAnn Start="2221" Loc="pirate.tex" Line="98" Length="4" Col="30"/>
+                                                </Anns>
+                                                <ZName>
+                                                    <Anns>
+                                                        <LocAnn Start="2221" Loc="pirate.tex" Line="98" Length="4" Col="30"/>
+                                                    </Anns>
+                                                    <Word>ran</Word>
+                                                    <ZStrokeList/>
+                                                </ZName>
+                                                <ZExprList/>
+                                            </RefExpr>
+                                            <RefExpr Mixfix="false" Explicit="false">
+                                                <Anns>
+                                                    <LocAnn Start="2226" Loc="pirate.tex" Line="98" Length="7" Col="35"/>
+                                                </Anns>
+                                                <ZName>
+                                                    <Anns>
+                                                        <LocAnn Start="2226" Loc="pirate.tex" Line="98" Length="7" Col="35"/>
+                                                    </Anns>
+                                                    <Word>pirates</Word>
+                                                    <ZStrokeList/>
+                                                </ZName>
+                                                <ZExprList/>
+                                            </RefExpr>
+                                        </ApplExpr>
+                                    </VarDecl>
+                                </ZDeclList>
+                            </ZSchText>
+                            <ns2:ParallelOpExpr>
+                                <Anns>
+                                    <LocAnn Start="2236" Loc="pirate.tex" Length="20"/>
+                                </Anns>
+                                <ns2:OpPromotionExpr>
+                                    <Anns>
+                                        <LocAnn Start="2236" Loc="pirate.tex" Length="11"/>
+                                    </Anns>
+                                    <RefExpr Mixfix="false" Explicit="false">
+                                        <Anns>
+                                            <LocAnn Start="2236" Loc="pirate.tex" Line="98" Length="1" Col="45"/>
+                                        </Anns>
+                                        <ZName>
+                                            <Anns>
+                                                <LocAnn Start="2236" Loc="pirate.tex" Line="98" Length="1" Col="45"/>
+                                            </Anns>
+                                            <Word>p</Word>
+                                            <ZStrokeList/>
+                                        </ZName>
+                                        <ZExprList/>
+                                    </RefExpr>
+                                    <ZName>
+                                        <Anns>
+                                            <LocAnn Start="2238" Loc="pirate.tex" Line="98" Length="9" Col="47"/>
+                                        </Anns>
+                                        <Word>getVisits</Word>
+                                        <ZStrokeList/>
+                                    </ZName>
+                                </ns2:OpPromotionExpr>
+                                <ns2:OpPromotionExpr>
+                                    <Anns>
+                                        <LocAnn Start="2253" Loc="pirate.tex" Line="98" Length="3" Col="62"/>
+                                    </Anns>
+                                    <ZName>
+                                        <Anns>
+                                            <LocAnn Start="2253" Loc="pirate.tex" Line="98" Length="3" Col="62"/>
+                                        </Anns>
+                                        <Word>add</Word>
+                                        <ZStrokeList/>
+                                    </ZName>
+                                </ns2:OpPromotionExpr>
+                            </ns2:ParallelOpExpr>
+                        </ns2:DistSeqOpExpr>
+                        <ns2:OpPromotionExpr>
+                            <Anns>
+                                <LocAnn Start="2282" Loc="pirate.tex" Line="100" Length="13" Col="6"/>
+                            </Anns>
+                            <ZName>
+                                <Anns>
+                                    <LocAnn Start="2282" Loc="pirate.tex" Line="100" Length="13" Col="6"/>
+                                </Anns>
+                                <Word>outputAverage</Word>
+                                <ZStrokeList/>
+                            </ZName>
+                        </ns2:OpPromotionExpr>
+                    </ns2:SeqOpExpr>
+                </ns2:Operation>
+            </ns2:ClassPara>
+            <NarrPara>
+                <Anns>
+                    <LocAnn Start="2307" Loc="pirate.tex" Line="101" Length="17" Col="11"/>
+                </Anns>
+                <Content xsi:type="xs:string" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+
+\end{document}
+</Content>
+            </NarrPara>
+        </ZParaList>
+    </ZSect>
+</Spec>

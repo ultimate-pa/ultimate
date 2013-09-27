@@ -1,0 +1,167 @@
+\chapter{\Betw\ model, initialisation and finalisation}\label{ch6}
+
+\begin{zsection}
+  \SECTION ch6 \parents ch5
+\end{zsection}
+
+\section{Summing values}\label{ch6.sumValue}
+
+Originally from Appendix~D, p.$226$.
+\begin{LADef}[Summing values from purse payments]
+\begin{axdef}
+   sumValue: \finset PayDetails \fun \nat
+\where
+%   \Label{rule dSumValueBase}
+      sumValue~\{~\} = 0
+   \also
+%   \Label{rule dSumValueInduc}
+      \forall pds: \finset PayDetails; PayDetails | \theta PayDetails \notin pds @ \\
+          \t1 sumValue~( \{~ \theta PayDetails ~\} \cup pds) = \\
+                \t3 value + sumValue~pds
+\end{axdef}~\end{LADef}
+
+\section{Initialisation}\label{ch6.init}
+
+\begin{LSDef}[Between world initial state]
+\begin{schema}{BetweenInitState}
+  BetweenWorld~' \where \{ readExceptionLog, \bot \}
+  \\ %
+  \cup
+  \\ %
+  \bigcup \{~ cpd: CounterPartyDetails @ \{ startFrom~cpd, startTo~cpd
+  \} ~\}
+  \also %
+  \subseteq ether'
+\end{schema}~\end{LSDef}
+
+\subsection*{Automation for BetwInitIn}
+
+These rules are similar to those found in~\ref{ch4.valTransferOp} for $CounterPartyDetails$.
+%
+\begin{LFRT}[Payment details $from$ purse type]
+\begin{zeves-theorem}{frule fPayDetailsFromType}
+   x \in PayDetails \implies x.from \in NAMES
+\end{theorem}~\end{LFRT}
+
+\begin{LFRT}[Payment details $to$ purse type]
+\begin{zeves-theorem}{frule fPayDetailsToType}
+   x \in PayDetails \implies x.to \in NAMES
+\end{theorem}~\end{LFRT}
+
+\begin{LFRT}[Payment details $value$ type]
+\begin{zeves-theorem}{frule fPayDetailsValueType}
+   x \in PayDetails \implies x.value \in NAT
+\end{theorem}~\end{LFRT}
+
+These rules are similar to those found in~\ref{ch4.valTransferOp}
+for $startFrom$ and $startTo$, but for schema $CounterPartyDetails$
+rather than $PayDetails$. Nevertheless, as $PayDetails$ has an
+invariant, we cannot have an $frule$ like
+$fCounterPartyDetailsInSetMember$. Thus, the proofs for the $grules$
+is slightly different at the end. Also, we need to include the
+relationship between $req$ and $PayDetails$ explicitly.
+%
+\begin{LFRT}[$PayDetails$ binding type]
+\begin{zeves-theorem}{frule fPayDetailsMember}
+    x \in  PayDetails \implies  x \in  \lblot from: NAME; fromSeqNo: \nat; \\
+        \t1 to: NAME; toSeqNo: \nat; value: \nat \rblot
+\end{theorem}~\end{LFRT}
+
+\begin{LGRT}[$req$ $MESSAGE$ relational type]
+\begin{zeves-theorem}{grule gMESSAGEReqRelType}
+   req \in  \lblot from: NAME; fromSeqNo: \nat; \\
+        \t1 to: NAME; toSeqNo: \nat; value: \nat \rblot  \rel MESSAGE
+\end{theorem}~\end{LGRT}
+
+\begin{LGRT}[$req$ $MESSAGE$ partial function type]
+\begin{zeves-theorem}{grule gMESSAGEReqPFunType}
+  req \in  \lblot from: NAME; fromSeqNo: \nat; \\
+        \t1 to: NAME; toSeqNo: \nat; value: \nat \rblot  \pfun MESSAGE
+\end{theorem}~\end{LGRT}
+
+\begin{LGRT}[$req$ $MESSAGE$ relational non-maximal type]
+\begin{zeves-theorem}{grule gMESSAGEReqPayDetailsRelType}
+   req \in PayDetails \rel MESSAGE
+\end{theorem}~\end{LGRT}
+
+\begin{LGRT}[$req$ $MESSAGE$ partial injection type]
+\begin{zeves-theorem}{grule gMESSAGEReqPInjType}
+   req \in \lblot from: NAME; fromSeqNo: \nat; \\
+        \t1 to: NAME; toSeqNo: \nat; value: \nat \rblot \pinj MESSAGE
+\end{theorem}~\end{LGRT}
+
+The next rule is necessary to tell \zeves\ about the (non-maximal) type of the result of
+applying the given message to the inverse of the $req$ message. Although this result is trivially
+obvious, it is quite hard to prove. A simple suggestion around this, would be to give a variable
+(with declared type) named $v$ as
+%
+\begin{gzed}
+    v \in PayDetails \land v = req\inv
+\end{gzed}
+%
+\begin{LRRT}[$req$ $MESSAGE$ inverse maximal type]
+\begin{zeves-theorem}{rule rMESSAGEReqInvMaxType}
+   \forall m: MESSAGE | m \in \ran req @ req\inv m \in \\ \t1
+      \lblot from: NAMES; fromSeqNo: NAT; to: NAMES; toSeqNo: NAT; value: NAT \rblot
+\end{theorem}~\end{LRRT}
+
+\subsection*{$BetwInitIn$}
+
+In this schema the use of $(req\inv m?)$ directly is a bad idea for \zeves\ automation,
+as it incurs rather complex lemmas. To avoid this, one could simply declare a variable
+to hold such value. In this way, \zeves\ would know the type of this expression, the main
+problem appearing in the domain check. Nevertheless, for the sake of keeping to the original
+as much as possible, we left it unchanged.
+%
+\begin{LSDef}[Between world initialisation input]
+\begin{schema}{BetwInitIn}
+  g? : AIN
+  \also
+  m? : MESSAGE
+  \\    name? : NAMES
+  \where
+  m? \in \ran req \implies
+  \\ \t1                g? = transfer~(~ \mu TransferDetails |
+  \\ \t2                        from = ((req~\inv)~m?).from
+  \\ \t2                        \land to = ((req~\inv)~m?).to
+  \\ \t2                        \land value = ((req~\inv)~m?).value ~)
+  \also
+  m? \notin \ran req
+  \implies
+  g? = aNullIn
+\end{schema}~\end{LSDef}
+
+\section{Finalisation}\label{ch6.final}
+
+\begin{LSDef}[Between world finalisation state]
+\begin{schema}{BetwFinState}
+  BetweenWorld
+  \\    GlobalWorld
+  \where
+  \dom gAuthPurse = \dom conAuthPurse
+  \also
+  \forall name: \dom conAuthPurse @ \\
+  \t1             (gAuthPurse~name).balance = (conAuthPurse~name).balance
+  \also
+  \t1             \land (gAuthPurse~name).lost =
+  \\ \t2                        sumValue(~ (definitelyLost \cup maybeLost)
+  \\ \t4                          {} \cap \{~ ld:PayDetails | ld.from = name ~\}~)
+\end{schema}~\end{LSDef}
+
+\begin{LSDef}[Between world finalisation output]
+\begin{schema}{BetwFinOut}
+  g! : AOUT
+  \\      m!: MESSAGE
+  \where
+  g! = aNullOut
+\end{schema}~\end{LSDef}
+
+\newpage
+\section{Summary}\label{ch6.summary}
+
+\ldefsummary %
+\lthmsummary %
+\lthmaddeddefsummary %
+\lthmaddedthmsummary %
+\lzevessummary %
+%\lpscriptsummary

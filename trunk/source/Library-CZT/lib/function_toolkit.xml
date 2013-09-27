@@ -1,0 +1,2647 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Spec Version="2.1" xsi:schemaLocation="http://czt.sourceforge.net/zml http://czt.sourceforge.net/zml/Z_2_0.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://czt.sourceforge.net/zml">
+    <NarrSect>
+        <Anns>
+            <LocAnn Col="0" Length="143" Line="0" Loc="lib/function_toolkit.tex" Start="0"/>
+        </Anns>
+        <Content>\documentclass[draft,a4paper,10pt,wd]{isov2}
+\usepackage{ltcadiz}
+\begin{document}
+\normannex{Mathematical toolkit}
+\sclause{Functions}
+
+</Content>
+    </NarrSect>
+    <ZSect>
+        <Anns>
+            <LocAnn Col="0" Length="4078" Line="6" Loc="lib/function_toolkit.tex" Start="143"/>
+        </Anns>
+        <Name>function_toolkit</Name>
+        <Parent>
+            <Anns>
+                <LocAnn Col="36" Length="17" Line="7" Loc="lib/function_toolkit.tex" Start="197"/>
+            </Anns>
+            <Word>relation_toolkit</Word>
+        </Parent>
+        <ZParaList>
+            <LatexMarkupPara>
+                <Directive Type="IN">
+                    <Anns>
+                        <LocAnn Line="12"/>
+                    </Anns>
+                    <Command>\pfun</Command>
+                    <Unicode>⇸</Unicode>
+                </Directive>
+                <Directive Type="IN">
+                    <Anns>
+                        <LocAnn Line="28"/>
+                    </Anns>
+                    <Command>\pinj</Command>
+                    <Unicode>⤔</Unicode>
+                </Directive>
+                <Directive Type="IN">
+                    <Anns>
+                        <LocAnn Line="45"/>
+                    </Anns>
+                    <Command>\inj</Command>
+                    <Unicode>↣</Unicode>
+                </Directive>
+                <Directive Type="IN">
+                    <Anns>
+                        <LocAnn Line="60"/>
+                    </Anns>
+                    <Command>\psurj</Command>
+                    <Unicode>⤀</Unicode>
+                </Directive>
+                <Directive Type="IN">
+                    <Anns>
+                        <LocAnn Line="76"/>
+                    </Anns>
+                    <Command>\surj</Command>
+                    <Unicode>↠</Unicode>
+                </Directive>
+                <Directive Type="IN">
+                    <Anns>
+                        <LocAnn Line="91"/>
+                    </Anns>
+                    <Command>\bij</Command>
+                    <Unicode>⤖</Unicode>
+                </Directive>
+                <Directive Type="IN">
+                    <Anns>
+                        <LocAnn Line="106"/>
+                    </Anns>
+                    <Command>\ffun</Command>
+                    <Unicode>⇻</Unicode>
+                </Directive>
+                <Directive Type="IN">
+                    <Anns>
+                        <LocAnn Line="120"/>
+                    </Anns>
+                    <Command>\finj</Command>
+                    <Unicode>⤕</Unicode>
+                </Directive>
+                <Directive Type="PRE">
+                    <Anns>
+                        <LocAnn Line="134"/>
+                    </Anns>
+                    <Command>\disjoint</Command>
+                    <Unicode>disjoint</Unicode>
+                </Directive>
+                <Directive Type="IN">
+                    <Anns>
+                        <LocAnn Line="151"/>
+                    </Anns>
+                    <Command>\partition</Command>
+                    <Unicode>partition</Unicode>
+                </Directive>
+            </LatexMarkupPara>
+            <NarrPara>
+                <Anns>
+                    <LocAnn Col="14" Length="36" Line="8" Loc="lib/function_toolkit.tex" Start="230"/>
+                </Anns>
+                <Content>
+
+\ssclause{Partial functions}
+
+</Content>
+            </NarrPara>
+            <OptempPara Assoc="Right" Cat="Generic" Prec="5">
+                <Anns>
+                    <LocAnn Col="0" Length="60" Line="13" Loc="lib/function_toolkit.tex" Start="290"/>
+                </Anns>
+                <Operand List="false"/>
+                <Operator>
+                    <Anns>
+                        <LocAnn Col="27" Length="5" Line="14" Loc="lib/function_toolkit.tex" Start="330"/>
+                    </Anns>
+                    <Word>⇸</Word>
+                </Operator>
+                <Operand List="false"/>
+            </OptempPara>
+            <NarrPara>
+                <Anns>
+                    <LocAnn Col="9" Length="4" Line="15" Loc="lib/function_toolkit.tex" Start="350"/>
+                </Anns>
+                <Content>
+
+</Content>
+            </NarrPara>
+            <AxPara Box="OmitBox">
+                <Anns>
+                    <LocAnn Col="0" Length="101" Line="17" Loc="lib/function_toolkit.tex" Start="354"/>
+                </Anns>
+                <ZNameList>
+                    <ZName>
+                        <Anns>
+                            <LocAnn Col="0" Length="1" Line="18" Loc="lib/function_toolkit.tex" Start="367"/>
+                        </Anns>
+                        <Word>X</Word>
+                        <ZStrokeList/>
+                    </ZName>
+                    <ZName>
+                        <Anns>
+                            <LocAnn Col="8" Length="1" Line="18" Loc="lib/function_toolkit.tex" Start="375"/>
+                        </Anns>
+                        <Word>Y</Word>
+                        <ZStrokeList/>
+                    </ZName>
+                </ZNameList>
+                <ZSchText>
+                    <Anns>
+                        <LocAnn Loc="lib/function_toolkit.tex"/>
+                    </Anns>
+                    <ZDeclList>
+                        <ConstDecl>
+                            <Anns>
+                                <LocAnn Col="10" Line="18" Loc="lib/function_toolkit.tex"/>
+                            </Anns>
+                            <ZName>
+                                <Word> _ ⇸ _ </Word>
+                                <ZStrokeList/>
+                            </ZName>
+                            <SetCompExpr>
+                                <Anns>
+                                    <LocAnn Col="13" Length="64" Line="18" Loc="lib/function_toolkit.tex" Start="380"/>
+                                </Anns>
+                                <ZSchText>
+                                    <ZDeclList>
+                                        <VarDecl>
+                                            <Anns>
+                                                <LocAnn Col="19" Length="12" Line="18" Loc="lib/function_toolkit.tex" Start="384"/>
+                                            </Anns>
+                                            <ZNameList>
+                                                <ZName>
+                                                    <Anns>
+                                                        <LocAnn Col="17" Length="1" Line="18" Loc="lib/function_toolkit.tex" Start="384"/>
+                                                    </Anns>
+                                                    <Word>f</Word>
+                                                    <ZStrokeList/>
+                                                </ZName>
+                                            </ZNameList>
+                                            <RefExpr Explicit="true" Mixfix="true">
+                                                <Anns>
+                                                    <LocAnn Col="23" Length="8" Line="18" Loc="lib/function_toolkit.tex" Start="388"/>
+                                                </Anns>
+                                                <ZName>
+                                                    <Anns>
+                                                        <LocAnn Col="23" Length="4" Line="18" Loc="lib/function_toolkit.tex" Start="390"/>
+                                                    </Anns>
+                                                    <Word> _ ↔ _ </Word>
+                                                    <ZStrokeList/>
+                                                </ZName>
+                                                <ZExprList>
+                                                    <RefExpr Explicit="false" Mixfix="false">
+                                                        <Anns>
+                                                            <LocAnn Col="21" Length="1" Line="18" Loc="lib/function_toolkit.tex" Start="388"/>
+                                                        </Anns>
+                                                        <ZName>
+                                                            <Anns>
+                                                                <LocAnn Col="21" Length="1" Line="18" Loc="lib/function_toolkit.tex" Start="388"/>
+                                                            </Anns>
+                                                            <Word>X</Word>
+                                                            <ZStrokeList/>
+                                                        </ZName>
+                                                        <ZExprList/>
+                                                    </RefExpr>
+                                                    <RefExpr Explicit="false" Mixfix="false">
+                                                        <Anns>
+                                                            <LocAnn Col="28" Length="1" Line="18" Loc="lib/function_toolkit.tex" Start="395"/>
+                                                        </Anns>
+                                                        <ZName>
+                                                            <Anns>
+                                                                <LocAnn Col="28" Length="1" Line="18" Loc="lib/function_toolkit.tex" Start="395"/>
+                                                            </Anns>
+                                                            <Word>Y</Word>
+                                                            <ZStrokeList/>
+                                                        </ZName>
+                                                        <ZExprList/>
+                                                    </RefExpr>
+                                                </ZExprList>
+                                            </RefExpr>
+                                        </VarDecl>
+                                    </ZDeclList>
+                                    <ForallPred>
+                                        <Anns>
+                                            <LocAnn Col="32" Length="41" Line="18" Loc="lib/function_toolkit.tex" Start="399"/>
+                                        </Anns>
+                                        <ZSchText>
+                                            <ZDeclList>
+                                                <VarDecl>
+                                                    <Anns>
+                                                        <LocAnn Col="46" Length="9" Line="18" Loc="lib/function_toolkit.tex" Start="407"/>
+                                                    </Anns>
+                                                    <ZNameList>
+                                                        <ZName>
+                                                            <Anns>
+                                                                <LocAnn Col="40" Length="1" Line="18" Loc="lib/function_toolkit.tex" Start="407"/>
+                                                            </Anns>
+                                                            <Word>p</Word>
+                                                            <ZStrokeList/>
+                                                        </ZName>
+                                                        <ZName>
+                                                            <Anns>
+                                                                <LocAnn Col="44" Length="1" Line="18" Loc="lib/function_toolkit.tex" Start="411"/>
+                                                            </Anns>
+                                                            <Word>q</Word>
+                                                            <ZStrokeList/>
+                                                        </ZName>
+                                                    </ZNameList>
+                                                    <RefExpr Explicit="false" Mixfix="false">
+                                                        <Anns>
+                                                            <LocAnn Col="48" Length="1" Line="18" Loc="lib/function_toolkit.tex" Start="415"/>
+                                                        </Anns>
+                                                        <ZName>
+                                                            <Anns>
+                                                                <LocAnn Col="48" Length="1" Line="18" Loc="lib/function_toolkit.tex" Start="415"/>
+                                                            </Anns>
+                                                            <Word>f</Word>
+                                                            <ZStrokeList/>
+                                                        </ZName>
+                                                        <ZExprList/>
+                                                    </RefExpr>
+                                                </VarDecl>
+                                            </ZDeclList>
+                                            <MemPred Mixfix="true">
+                                                <Anns>
+                                                    <LocAnn Col="56" Length="9" Line="18" Loc="lib/function_toolkit.tex" Start="419"/>
+                                                </Anns>
+                                                <TupleSelExpr>
+                                                    <Anns>
+                                                        <LocAnn Col="53" Length="3" Line="18" Loc="lib/function_toolkit.tex" Start="419"/>
+                                                    </Anns>
+                                                    <RefExpr Explicit="false" Mixfix="false">
+                                                        <Anns>
+                                                            <LocAnn Col="52" Length="1" Line="18" Loc="lib/function_toolkit.tex" Start="419"/>
+                                                        </Anns>
+                                                        <ZName>
+                                                            <Anns>
+                                                                <LocAnn Col="52" Length="1" Line="18" Loc="lib/function_toolkit.tex" Start="419"/>
+                                                            </Anns>
+                                                            <Word>p</Word>
+                                                            <ZStrokeList/>
+                                                        </ZName>
+                                                        <ZExprList/>
+                                                    </RefExpr>
+                                                    <ZNumeral Value="1">
+                                                        <Anns>
+                                                            <LocAnn Col="54" Length="1" Line="18" Loc="lib/function_toolkit.tex" Start="421"/>
+                                                        </Anns>
+                                                    </ZNumeral>
+                                                </TupleSelExpr>
+                                                <SetExpr>
+                                                    <ZExprList>
+                                                        <TupleSelExpr>
+                                                            <Anns>
+                                                                <LocAnn Col="59" Length="3" Line="18" Loc="lib/function_toolkit.tex" Start="425"/>
+                                                            </Anns>
+                                                            <RefExpr Explicit="false" Mixfix="false">
+                                                                <Anns>
+                                                                    <LocAnn Col="58" Length="1" Line="18" Loc="lib/function_toolkit.tex" Start="425"/>
+                                                                </Anns>
+                                                                <ZName>
+                                                                    <Anns>
+                                                                        <LocAnn Col="58" Length="1" Line="18" Loc="lib/function_toolkit.tex" Start="425"/>
+                                                                    </Anns>
+                                                                    <Word>q</Word>
+                                                                    <ZStrokeList/>
+                                                                </ZName>
+                                                                <ZExprList/>
+                                                            </RefExpr>
+                                                            <ZNumeral Value="1">
+                                                                <Anns>
+                                                                    <LocAnn Col="60" Length="1" Line="18" Loc="lib/function_toolkit.tex" Start="427"/>
+                                                                </Anns>
+                                                            </ZNumeral>
+                                                        </TupleSelExpr>
+                                                    </ZExprList>
+                                                </SetExpr>
+                                            </MemPred>
+                                        </ZSchText>
+                                        <MemPred Mixfix="true">
+                                            <Anns>
+                                                <LocAnn Col="68" Length="9" Line="18" Loc="lib/function_toolkit.tex" Start="431"/>
+                                            </Anns>
+                                            <TupleSelExpr>
+                                                <Anns>
+                                                    <LocAnn Col="65" Length="3" Line="18" Loc="lib/function_toolkit.tex" Start="431"/>
+                                                </Anns>
+                                                <RefExpr Explicit="false" Mixfix="false">
+                                                    <Anns>
+                                                        <LocAnn Col="64" Length="1" Line="18" Loc="lib/function_toolkit.tex" Start="431"/>
+                                                    </Anns>
+                                                    <ZName>
+                                                        <Anns>
+                                                            <LocAnn Col="64" Length="1" Line="18" Loc="lib/function_toolkit.tex" Start="431"/>
+                                                        </Anns>
+                                                        <Word>p</Word>
+                                                        <ZStrokeList/>
+                                                    </ZName>
+                                                    <ZExprList/>
+                                                </RefExpr>
+                                                <ZNumeral Value="2">
+                                                    <Anns>
+                                                        <LocAnn Col="66" Length="1" Line="18" Loc="lib/function_toolkit.tex" Start="433"/>
+                                                    </Anns>
+                                                </ZNumeral>
+                                            </TupleSelExpr>
+                                            <SetExpr>
+                                                <ZExprList>
+                                                    <TupleSelExpr>
+                                                        <Anns>
+                                                            <LocAnn Col="71" Length="3" Line="18" Loc="lib/function_toolkit.tex" Start="437"/>
+                                                        </Anns>
+                                                        <RefExpr Explicit="false" Mixfix="false">
+                                                            <Anns>
+                                                                <LocAnn Col="70" Length="1" Line="18" Loc="lib/function_toolkit.tex" Start="437"/>
+                                                            </Anns>
+                                                            <ZName>
+                                                                <Anns>
+                                                                    <LocAnn Col="70" Length="1" Line="18" Loc="lib/function_toolkit.tex" Start="437"/>
+                                                                </Anns>
+                                                                <Word>q</Word>
+                                                                <ZStrokeList/>
+                                                            </ZName>
+                                                            <ZExprList/>
+                                                        </RefExpr>
+                                                        <ZNumeral Value="2">
+                                                            <Anns>
+                                                                <LocAnn Col="72" Length="1" Line="18" Loc="lib/function_toolkit.tex" Start="439"/>
+                                                            </Anns>
+                                                        </ZNumeral>
+                                                    </TupleSelExpr>
+                                                </ZExprList>
+                                            </SetExpr>
+                                        </MemPred>
+                                    </ForallPred>
+                                </ZSchText>
+                            </SetCompExpr>
+                        </ConstDecl>
+                    </ZDeclList>
+                </ZSchText>
+            </AxPara>
+            <NarrPara>
+                <Anns>
+                    <LocAnn Col="9" Length="290" Line="19" Loc="lib/function_toolkit.tex" Start="455"/>
+                </Anns>
+                <Content>
+
+$X \pfun Y$ is the set of all partial functions from $X$ to $Y$,
+that is, the set of all relations between $X$ and $Y$ such that
+each $x$ in $X$ is related to at most one $y$ in $Y$.
+The terms ``function'' and ``partial function'' are synonymous.
+
+\ssclause{Partial injections}
+
+</Content>
+            </NarrPara>
+            <OptempPara Assoc="Right" Cat="Generic" Prec="5">
+                <Anns>
+                    <LocAnn Col="0" Length="60" Line="29" Loc="lib/function_toolkit.tex" Start="769"/>
+                </Anns>
+                <Operand List="false"/>
+                <Operator>
+                    <Anns>
+                        <LocAnn Col="27" Length="5" Line="30" Loc="lib/function_toolkit.tex" Start="809"/>
+                    </Anns>
+                    <Word>⤔</Word>
+                </Operator>
+                <Operand List="false"/>
+            </OptempPara>
+            <NarrPara>
+                <Anns>
+                    <LocAnn Col="9" Length="4" Line="31" Loc="lib/function_toolkit.tex" Start="829"/>
+                </Anns>
+                <Content>
+
+</Content>
+            </NarrPara>
+            <AxPara Box="OmitBox">
+                <Anns>
+                    <LocAnn Col="0" Length="103" Line="33" Loc="lib/function_toolkit.tex" Start="833"/>
+                </Anns>
+                <ZNameList>
+                    <ZName>
+                        <Anns>
+                            <LocAnn Col="0" Length="1" Line="34" Loc="lib/function_toolkit.tex" Start="846"/>
+                        </Anns>
+                        <Word>X</Word>
+                        <ZStrokeList/>
+                    </ZName>
+                    <ZName>
+                        <Anns>
+                            <LocAnn Col="8" Length="1" Line="34" Loc="lib/function_toolkit.tex" Start="854"/>
+                        </Anns>
+                        <Word>Y</Word>
+                        <ZStrokeList/>
+                    </ZName>
+                </ZNameList>
+                <ZSchText>
+                    <Anns>
+                        <LocAnn Loc="lib/function_toolkit.tex"/>
+                    </Anns>
+                    <ZDeclList>
+                        <ConstDecl>
+                            <Anns>
+                                <LocAnn Col="10" Line="34" Loc="lib/function_toolkit.tex"/>
+                            </Anns>
+                            <ZName>
+                                <Word> _ ⤔ _ </Word>
+                                <ZStrokeList/>
+                            </ZName>
+                            <SetCompExpr>
+                                <Anns>
+                                    <LocAnn Col="13" Length="66" Line="34" Loc="lib/function_toolkit.tex" Start="859"/>
+                                </Anns>
+                                <ZSchText>
+                                    <ZDeclList>
+                                        <VarDecl>
+                                            <Anns>
+                                                <LocAnn Col="19" Length="12" Line="34" Loc="lib/function_toolkit.tex" Start="863"/>
+                                            </Anns>
+                                            <ZNameList>
+                                                <ZName>
+                                                    <Anns>
+                                                        <LocAnn Col="17" Length="1" Line="34" Loc="lib/function_toolkit.tex" Start="863"/>
+                                                    </Anns>
+                                                    <Word>f</Word>
+                                                    <ZStrokeList/>
+                                                </ZName>
+                                            </ZNameList>
+                                            <RefExpr Explicit="true" Mixfix="true">
+                                                <Anns>
+                                                    <LocAnn Col="23" Length="8" Line="34" Loc="lib/function_toolkit.tex" Start="867"/>
+                                                </Anns>
+                                                <ZName>
+                                                    <Anns>
+                                                        <LocAnn Col="23" Length="4" Line="34" Loc="lib/function_toolkit.tex" Start="869"/>
+                                                    </Anns>
+                                                    <Word> _ ↔ _ </Word>
+                                                    <ZStrokeList/>
+                                                </ZName>
+                                                <ZExprList>
+                                                    <RefExpr Explicit="false" Mixfix="false">
+                                                        <Anns>
+                                                            <LocAnn Col="21" Length="1" Line="34" Loc="lib/function_toolkit.tex" Start="867"/>
+                                                        </Anns>
+                                                        <ZName>
+                                                            <Anns>
+                                                                <LocAnn Col="21" Length="1" Line="34" Loc="lib/function_toolkit.tex" Start="867"/>
+                                                            </Anns>
+                                                            <Word>X</Word>
+                                                            <ZStrokeList/>
+                                                        </ZName>
+                                                        <ZExprList/>
+                                                    </RefExpr>
+                                                    <RefExpr Explicit="false" Mixfix="false">
+                                                        <Anns>
+                                                            <LocAnn Col="28" Length="1" Line="34" Loc="lib/function_toolkit.tex" Start="874"/>
+                                                        </Anns>
+                                                        <ZName>
+                                                            <Anns>
+                                                                <LocAnn Col="28" Length="1" Line="34" Loc="lib/function_toolkit.tex" Start="874"/>
+                                                            </Anns>
+                                                            <Word>Y</Word>
+                                                            <ZStrokeList/>
+                                                        </ZName>
+                                                        <ZExprList/>
+                                                    </RefExpr>
+                                                </ZExprList>
+                                            </RefExpr>
+                                        </VarDecl>
+                                    </ZDeclList>
+                                    <ForallPred>
+                                        <Anns>
+                                            <LocAnn Col="32" Length="43" Line="34" Loc="lib/function_toolkit.tex" Start="878"/>
+                                        </Anns>
+                                        <ZSchText>
+                                            <ZDeclList>
+                                                <VarDecl>
+                                                    <Anns>
+                                                        <LocAnn Col="45" Length="8" Line="34" Loc="lib/function_toolkit.tex" Start="886"/>
+                                                    </Anns>
+                                                    <ZNameList>
+                                                        <ZName>
+                                                            <Anns>
+                                                                <LocAnn Col="40" Length="1" Line="34" Loc="lib/function_toolkit.tex" Start="886"/>
+                                                            </Anns>
+                                                            <Word>p</Word>
+                                                            <ZStrokeList/>
+                                                        </ZName>
+                                                        <ZName>
+                                                            <Anns>
+                                                                <LocAnn Col="43" Length="1" Line="34" Loc="lib/function_toolkit.tex" Start="889"/>
+                                                            </Anns>
+                                                            <Word>q</Word>
+                                                            <ZStrokeList/>
+                                                        </ZName>
+                                                    </ZNameList>
+                                                    <RefExpr Explicit="false" Mixfix="false">
+                                                        <Anns>
+                                                            <LocAnn Col="47" Length="1" Line="34" Loc="lib/function_toolkit.tex" Start="893"/>
+                                                        </Anns>
+                                                        <ZName>
+                                                            <Anns>
+                                                                <LocAnn Col="47" Length="1" Line="34" Loc="lib/function_toolkit.tex" Start="893"/>
+                                                            </Anns>
+                                                            <Word>f</Word>
+                                                            <ZStrokeList/>
+                                                        </ZName>
+                                                        <ZExprList/>
+                                                    </RefExpr>
+                                                </VarDecl>
+                                            </ZDeclList>
+                                        </ZSchText>
+                                        <IffPred>
+                                            <Anns>
+                                                <LocAnn Col="61" Length="24" Line="34" Loc="lib/function_toolkit.tex" Start="897"/>
+                                            </Anns>
+                                            <MemPred Mixfix="true">
+                                                <Anns>
+                                                    <LocAnn Col="55" Length="9" Line="34" Loc="lib/function_toolkit.tex" Start="897"/>
+                                                </Anns>
+                                                <TupleSelExpr>
+                                                    <Anns>
+                                                        <LocAnn Col="52" Length="3" Line="34" Loc="lib/function_toolkit.tex" Start="897"/>
+                                                    </Anns>
+                                                    <RefExpr Explicit="false" Mixfix="false">
+                                                        <Anns>
+                                                            <LocAnn Col="51" Length="1" Line="34" Loc="lib/function_toolkit.tex" Start="897"/>
+                                                        </Anns>
+                                                        <ZName>
+                                                            <Anns>
+                                                                <LocAnn Col="51" Length="1" Line="34" Loc="lib/function_toolkit.tex" Start="897"/>
+                                                            </Anns>
+                                                            <Word>p</Word>
+                                                            <ZStrokeList/>
+                                                        </ZName>
+                                                        <ZExprList/>
+                                                    </RefExpr>
+                                                    <ZNumeral Value="1">
+                                                        <Anns>
+                                                            <LocAnn Col="53" Length="1" Line="34" Loc="lib/function_toolkit.tex" Start="899"/>
+                                                        </Anns>
+                                                    </ZNumeral>
+                                                </TupleSelExpr>
+                                                <SetExpr>
+                                                    <ZExprList>
+                                                        <TupleSelExpr>
+                                                            <Anns>
+                                                                <LocAnn Col="58" Length="3" Line="34" Loc="lib/function_toolkit.tex" Start="903"/>
+                                                            </Anns>
+                                                            <RefExpr Explicit="false" Mixfix="false">
+                                                                <Anns>
+                                                                    <LocAnn Col="57" Length="1" Line="34" Loc="lib/function_toolkit.tex" Start="903"/>
+                                                                </Anns>
+                                                                <ZName>
+                                                                    <Anns>
+                                                                        <LocAnn Col="57" Length="1" Line="34" Loc="lib/function_toolkit.tex" Start="903"/>
+                                                                    </Anns>
+                                                                    <Word>q</Word>
+                                                                    <ZStrokeList/>
+                                                                </ZName>
+                                                                <ZExprList/>
+                                                            </RefExpr>
+                                                            <ZNumeral Value="1">
+                                                                <Anns>
+                                                                    <LocAnn Col="59" Length="1" Line="34" Loc="lib/function_toolkit.tex" Start="905"/>
+                                                                </Anns>
+                                                            </ZNumeral>
+                                                        </TupleSelExpr>
+                                                    </ZExprList>
+                                                </SetExpr>
+                                            </MemPred>
+                                            <MemPred Mixfix="true">
+                                                <Anns>
+                                                    <LocAnn Col="70" Length="9" Line="34" Loc="lib/function_toolkit.tex" Start="912"/>
+                                                </Anns>
+                                                <TupleSelExpr>
+                                                    <Anns>
+                                                        <LocAnn Col="67" Length="3" Line="34" Loc="lib/function_toolkit.tex" Start="912"/>
+                                                    </Anns>
+                                                    <RefExpr Explicit="false" Mixfix="false">
+                                                        <Anns>
+                                                            <LocAnn Col="66" Length="1" Line="34" Loc="lib/function_toolkit.tex" Start="912"/>
+                                                        </Anns>
+                                                        <ZName>
+                                                            <Anns>
+                                                                <LocAnn Col="66" Length="1" Line="34" Loc="lib/function_toolkit.tex" Start="912"/>
+                                                            </Anns>
+                                                            <Word>p</Word>
+                                                            <ZStrokeList/>
+                                                        </ZName>
+                                                        <ZExprList/>
+                                                    </RefExpr>
+                                                    <ZNumeral Value="2">
+                                                        <Anns>
+                                                            <LocAnn Col="68" Length="1" Line="34" Loc="lib/function_toolkit.tex" Start="914"/>
+                                                        </Anns>
+                                                    </ZNumeral>
+                                                </TupleSelExpr>
+                                                <SetExpr>
+                                                    <ZExprList>
+                                                        <TupleSelExpr>
+                                                            <Anns>
+                                                                <LocAnn Col="73" Length="3" Line="34" Loc="lib/function_toolkit.tex" Start="918"/>
+                                                            </Anns>
+                                                            <RefExpr Explicit="false" Mixfix="false">
+                                                                <Anns>
+                                                                    <LocAnn Col="72" Length="1" Line="34" Loc="lib/function_toolkit.tex" Start="918"/>
+                                                                </Anns>
+                                                                <ZName>
+                                                                    <Anns>
+                                                                        <LocAnn Col="72" Length="1" Line="34" Loc="lib/function_toolkit.tex" Start="918"/>
+                                                                    </Anns>
+                                                                    <Word>q</Word>
+                                                                    <ZStrokeList/>
+                                                                </ZName>
+                                                                <ZExprList/>
+                                                            </RefExpr>
+                                                            <ZNumeral Value="2">
+                                                                <Anns>
+                                                                    <LocAnn Col="74" Length="1" Line="34" Loc="lib/function_toolkit.tex" Start="920"/>
+                                                                </Anns>
+                                                            </ZNumeral>
+                                                        </TupleSelExpr>
+                                                    </ZExprList>
+                                                </SetExpr>
+                                            </MemPred>
+                                        </IffPred>
+                                    </ForallPred>
+                                </ZSchText>
+                            </SetCompExpr>
+                        </ConstDecl>
+                    </ZDeclList>
+                </ZSchText>
+            </AxPara>
+            <NarrPara>
+                <Anns>
+                    <LocAnn Col="9" Length="356" Line="35" Loc="lib/function_toolkit.tex" Start="936"/>
+                </Anns>
+                <Content>
+
+$X \pinj Y$ is the set of partial injections from $X$ to $Y$,
+that is, the set of all relations between $X$ and $Y$ such that
+each $x$ in $X$ is related to no more than one $y$ in $Y$,
+and each $y$ in $Y$ is related to no more than one $x$ in $X$.
+The terms ``injection'' and ``partial injection'' are synonymous.
+
+\ssclause{Total injections}
+
+</Content>
+            </NarrPara>
+            <OptempPara Assoc="Right" Cat="Generic" Prec="5">
+                <Anns>
+                    <LocAnn Col="0" Length="59" Line="46" Loc="lib/function_toolkit.tex" Start="1315"/>
+                </Anns>
+                <Operand List="false"/>
+                <Operator>
+                    <Anns>
+                        <LocAnn Col="27" Length="4" Line="47" Loc="lib/function_toolkit.tex" Start="1355"/>
+                    </Anns>
+                    <Word>↣</Word>
+                </Operator>
+                <Operand List="false"/>
+            </OptempPara>
+            <NarrPara>
+                <Anns>
+                    <LocAnn Col="9" Length="4" Line="48" Loc="lib/function_toolkit.tex" Start="1374"/>
+                </Anns>
+                <Content>
+
+</Content>
+            </NarrPara>
+            <AxPara Box="OmitBox">
+                <Anns>
+                    <LocAnn Col="0" Length="67" Line="50" Loc="lib/function_toolkit.tex" Start="1378"/>
+                </Anns>
+                <ZNameList>
+                    <ZName>
+                        <Anns>
+                            <LocAnn Col="0" Length="1" Line="51" Loc="lib/function_toolkit.tex" Start="1391"/>
+                        </Anns>
+                        <Word>X</Word>
+                        <ZStrokeList/>
+                    </ZName>
+                    <ZName>
+                        <Anns>
+                            <LocAnn Col="7" Length="1" Line="51" Loc="lib/function_toolkit.tex" Start="1398"/>
+                        </Anns>
+                        <Word>Y</Word>
+                        <ZStrokeList/>
+                    </ZName>
+                </ZNameList>
+                <ZSchText>
+                    <Anns>
+                        <LocAnn Loc="lib/function_toolkit.tex"/>
+                    </Anns>
+                    <ZDeclList>
+                        <ConstDecl>
+                            <Anns>
+                                <LocAnn Col="9" Line="51" Loc="lib/function_toolkit.tex"/>
+                            </Anns>
+                            <ZName>
+                                <Word> _ ↣ _ </Word>
+                                <ZStrokeList/>
+                            </ZName>
+                            <ApplExpr Mixfix="true">
+                                <Anns>
+                                    <LocAnn Col="26" Length="27" Line="51" Loc="lib/function_toolkit.tex" Start="1405"/>
+                                </Anns>
+                                <RefExpr Explicit="false" Mixfix="false">
+                                    <Anns>
+                                        <LocAnn Col="26" Length="4" Line="51" Loc="lib/function_toolkit.tex" Start="1417"/>
+                                    </Anns>
+                                    <ZName>
+                                        <Anns>
+                                            <LocAnn Col="26" Length="4" Line="51" Loc="lib/function_toolkit.tex" Start="1417"/>
+                                        </Anns>
+                                        <Word> _ ∩ _ </Word>
+                                        <ZStrokeList/>
+                                    </ZName>
+                                    <ZExprList/>
+                                </RefExpr>
+                                <TupleExpr>
+                                    <ZExprList>
+                                        <RefExpr Explicit="true" Mixfix="true">
+                                            <Anns>
+                                                <LocAnn Col="16" Length="9" Line="51" Loc="lib/function_toolkit.tex" Start="1405"/>
+                                                <ParenAnn>
+                                                    <Anns>
+                                                        <LocAnn Col="12" Length="13" Line="51" Loc="lib/function_toolkit.tex" Start="1403"/>
+                                                    </Anns>
+                                                </ParenAnn>
+                                            </Anns>
+                                            <ZName>
+                                                <Anns>
+                                                    <LocAnn Col="16" Length="5" Line="51" Loc="lib/function_toolkit.tex" Start="1407"/>
+                                                </Anns>
+                                                <Word> _ ⤔ _ </Word>
+                                                <ZStrokeList/>
+                                            </ZName>
+                                            <ZExprList>
+                                                <RefExpr Explicit="false" Mixfix="false">
+                                                    <Anns>
+                                                        <LocAnn Col="14" Length="1" Line="51" Loc="lib/function_toolkit.tex" Start="1405"/>
+                                                    </Anns>
+                                                    <ZName>
+                                                        <Anns>
+                                                            <LocAnn Col="14" Length="1" Line="51" Loc="lib/function_toolkit.tex" Start="1405"/>
+                                                        </Anns>
+                                                        <Word>X</Word>
+                                                        <ZStrokeList/>
+                                                    </ZName>
+                                                    <ZExprList/>
+                                                </RefExpr>
+                                                <RefExpr Explicit="false" Mixfix="false">
+                                                    <Anns>
+                                                        <LocAnn Col="22" Length="1" Line="51" Loc="lib/function_toolkit.tex" Start="1413"/>
+                                                    </Anns>
+                                                    <ZName>
+                                                        <Anns>
+                                                            <LocAnn Col="22" Length="1" Line="51" Loc="lib/function_toolkit.tex" Start="1413"/>
+                                                        </Anns>
+                                                        <Word>Y</Word>
+                                                        <ZStrokeList/>
+                                                    </ZName>
+                                                    <ZExprList/>
+                                                </RefExpr>
+                                            </ZExprList>
+                                        </RefExpr>
+                                        <RefExpr Explicit="true" Mixfix="true">
+                                            <Anns>
+                                                <LocAnn Col="35" Length="8" Line="51" Loc="lib/function_toolkit.tex" Start="1424"/>
+                                                <ParenAnn>
+                                                    <Anns>
+                                                        <LocAnn Col="31" Length="12" Line="51" Loc="lib/function_toolkit.tex" Start="1422"/>
+                                                    </Anns>
+                                                </ParenAnn>
+                                            </Anns>
+                                            <ZName>
+                                                <Anns>
+                                                    <LocAnn Col="35" Length="4" Line="51" Loc="lib/function_toolkit.tex" Start="1426"/>
+                                                </Anns>
+                                                <Word> _ → _ </Word>
+                                                <ZStrokeList/>
+                                            </ZName>
+                                            <ZExprList>
+                                                <RefExpr Explicit="false" Mixfix="false">
+                                                    <Anns>
+                                                        <LocAnn Col="33" Length="1" Line="51" Loc="lib/function_toolkit.tex" Start="1424"/>
+                                                    </Anns>
+                                                    <ZName>
+                                                        <Anns>
+                                                            <LocAnn Col="33" Length="1" Line="51" Loc="lib/function_toolkit.tex" Start="1424"/>
+                                                        </Anns>
+                                                        <Word>X</Word>
+                                                        <ZStrokeList/>
+                                                    </ZName>
+                                                    <ZExprList/>
+                                                </RefExpr>
+                                                <RefExpr Explicit="false" Mixfix="false">
+                                                    <Anns>
+                                                        <LocAnn Col="40" Length="1" Line="51" Loc="lib/function_toolkit.tex" Start="1431"/>
+                                                    </Anns>
+                                                    <ZName>
+                                                        <Anns>
+                                                            <LocAnn Col="40" Length="1" Line="51" Loc="lib/function_toolkit.tex" Start="1431"/>
+                                                        </Anns>
+                                                        <Word>Y</Word>
+                                                        <ZStrokeList/>
+                                                    </ZName>
+                                                    <ZExprList/>
+                                                </RefExpr>
+                                            </ZExprList>
+                                        </RefExpr>
+                                    </ZExprList>
+                                </TupleExpr>
+                            </ApplExpr>
+                        </ConstDecl>
+                    </ZDeclList>
+                </ZSchText>
+            </AxPara>
+            <NarrPara>
+                <Anns>
+                    <LocAnn Col="9" Length="196" Line="52" Loc="lib/function_toolkit.tex" Start="1445"/>
+                </Anns>
+                <Content>
+
+$X \inj Y$ is the set of total injections from $X$ to $Y$,
+that is, the set of injections from $X$ to $Y$
+that are also total functions from $X$ to $Y$.
+
+\ssclause{Partial surjections}
+
+</Content>
+            </NarrPara>
+            <OptempPara Assoc="Right" Cat="Generic" Prec="5">
+                <Anns>
+                    <LocAnn Col="0" Length="61" Line="61" Loc="lib/function_toolkit.tex" Start="1666"/>
+                </Anns>
+                <Operand List="false"/>
+                <Operator>
+                    <Anns>
+                        <LocAnn Col="27" Length="6" Line="62" Loc="lib/function_toolkit.tex" Start="1706"/>
+                    </Anns>
+                    <Word>⤀</Word>
+                </Operator>
+                <Operand List="false"/>
+            </OptempPara>
+            <NarrPara>
+                <Anns>
+                    <LocAnn Col="9" Length="4" Line="63" Loc="lib/function_toolkit.tex" Start="1727"/>
+                </Anns>
+                <Content>
+
+</Content>
+            </NarrPara>
+            <AxPara Box="OmitBox">
+                <Anns>
+                    <LocAnn Col="0" Length="72" Line="65" Loc="lib/function_toolkit.tex" Start="1731"/>
+                </Anns>
+                <ZNameList>
+                    <ZName>
+                        <Anns>
+                            <LocAnn Col="0" Length="1" Line="66" Loc="lib/function_toolkit.tex" Start="1744"/>
+                        </Anns>
+                        <Word>X</Word>
+                        <ZStrokeList/>
+                    </ZName>
+                    <ZName>
+                        <Anns>
+                            <LocAnn Col="9" Length="1" Line="66" Loc="lib/function_toolkit.tex" Start="1753"/>
+                        </Anns>
+                        <Word>Y</Word>
+                        <ZStrokeList/>
+                    </ZName>
+                </ZNameList>
+                <ZSchText>
+                    <Anns>
+                        <LocAnn Loc="lib/function_toolkit.tex"/>
+                    </Anns>
+                    <ZDeclList>
+                        <ConstDecl>
+                            <Anns>
+                                <LocAnn Col="11" Line="66" Loc="lib/function_toolkit.tex"/>
+                            </Anns>
+                            <ZName>
+                                <Word> _ ⤀ _ </Word>
+                                <ZStrokeList/>
+                            </ZName>
+                            <SetCompExpr>
+                                <Anns>
+                                    <LocAnn Col="14" Length="34" Line="66" Loc="lib/function_toolkit.tex" Start="1758"/>
+                                </Anns>
+                                <ZSchText>
+                                    <ZDeclList>
+                                        <VarDecl>
+                                            <Anns>
+                                                <LocAnn Col="20" Length="13" Line="66" Loc="lib/function_toolkit.tex" Start="1762"/>
+                                            </Anns>
+                                            <ZNameList>
+                                                <ZName>
+                                                    <Anns>
+                                                        <LocAnn Col="18" Length="1" Line="66" Loc="lib/function_toolkit.tex" Start="1762"/>
+                                                    </Anns>
+                                                    <Word>f</Word>
+                                                    <ZStrokeList/>
+                                                </ZName>
+                                            </ZNameList>
+                                            <RefExpr Explicit="true" Mixfix="true">
+                                                <Anns>
+                                                    <LocAnn Col="24" Length="9" Line="66" Loc="lib/function_toolkit.tex" Start="1766"/>
+                                                </Anns>
+                                                <ZName>
+                                                    <Anns>
+                                                        <LocAnn Col="24" Length="5" Line="66" Loc="lib/function_toolkit.tex" Start="1768"/>
+                                                    </Anns>
+                                                    <Word> _ ⇸ _ </Word>
+                                                    <ZStrokeList/>
+                                                </ZName>
+                                                <ZExprList>
+                                                    <RefExpr Explicit="false" Mixfix="false">
+                                                        <Anns>
+                                                            <LocAnn Col="22" Length="1" Line="66" Loc="lib/function_toolkit.tex" Start="1766"/>
+                                                        </Anns>
+                                                        <ZName>
+                                                            <Anns>
+                                                                <LocAnn Col="22" Length="1" Line="66" Loc="lib/function_toolkit.tex" Start="1766"/>
+                                                            </Anns>
+                                                            <Word>X</Word>
+                                                            <ZStrokeList/>
+                                                        </ZName>
+                                                        <ZExprList/>
+                                                    </RefExpr>
+                                                    <RefExpr Explicit="false" Mixfix="false">
+                                                        <Anns>
+                                                            <LocAnn Col="30" Length="1" Line="66" Loc="lib/function_toolkit.tex" Start="1774"/>
+                                                        </Anns>
+                                                        <ZName>
+                                                            <Anns>
+                                                                <LocAnn Col="30" Length="1" Line="66" Loc="lib/function_toolkit.tex" Start="1774"/>
+                                                            </Anns>
+                                                            <Word>Y</Word>
+                                                            <ZStrokeList/>
+                                                        </ZName>
+                                                        <ZExprList/>
+                                                    </RefExpr>
+                                                </ZExprList>
+                                            </RefExpr>
+                                        </VarDecl>
+                                    </ZDeclList>
+                                    <MemPred Mixfix="true">
+                                        <Anns>
+                                            <LocAnn Col="41" Length="10" Line="66" Loc="lib/function_toolkit.tex" Start="1778"/>
+                                        </Anns>
+                                        <ApplExpr Mixfix="false">
+                                            <Anns>
+                                                <LocAnn Col="34" Length="6" Line="66" Loc="lib/function_toolkit.tex" Start="1778"/>
+                                            </Anns>
+                                            <RefExpr Explicit="false" Mixfix="false">
+                                                <Anns>
+                                                    <LocAnn Col="34" Length="4" Line="66" Loc="lib/function_toolkit.tex" Start="1778"/>
+                                                </Anns>
+                                                <ZName>
+                                                    <Anns>
+                                                        <LocAnn Col="34" Length="4" Line="66" Loc="lib/function_toolkit.tex" Start="1778"/>
+                                                    </Anns>
+                                                    <Word>ran</Word>
+                                                    <ZStrokeList/>
+                                                </ZName>
+                                                <ZExprList/>
+                                            </RefExpr>
+                                            <RefExpr Explicit="false" Mixfix="false">
+                                                <Anns>
+                                                    <LocAnn Col="39" Length="1" Line="66" Loc="lib/function_toolkit.tex" Start="1783"/>
+                                                </Anns>
+                                                <ZName>
+                                                    <Anns>
+                                                        <LocAnn Col="39" Length="1" Line="66" Loc="lib/function_toolkit.tex" Start="1783"/>
+                                                    </Anns>
+                                                    <Word>f</Word>
+                                                    <ZStrokeList/>
+                                                </ZName>
+                                                <ZExprList/>
+                                            </RefExpr>
+                                        </ApplExpr>
+                                        <SetExpr>
+                                            <ZExprList>
+                                                <RefExpr Explicit="false" Mixfix="false">
+                                                    <Anns>
+                                                        <LocAnn Col="43" Length="1" Line="66" Loc="lib/function_toolkit.tex" Start="1787"/>
+                                                    </Anns>
+                                                    <ZName>
+                                                        <Anns>
+                                                            <LocAnn Col="43" Length="1" Line="66" Loc="lib/function_toolkit.tex" Start="1787"/>
+                                                        </Anns>
+                                                        <Word>Y</Word>
+                                                        <ZStrokeList/>
+                                                    </ZName>
+                                                    <ZExprList/>
+                                                </RefExpr>
+                                            </ZExprList>
+                                        </SetExpr>
+                                    </MemPred>
+                                </ZSchText>
+                            </SetCompExpr>
+                        </ConstDecl>
+                    </ZDeclList>
+                </ZSchText>
+            </AxPara>
+            <NarrPara>
+                <Anns>
+                    <LocAnn Col="9" Length="249" Line="67" Loc="lib/function_toolkit.tex" Start="1803"/>
+                </Anns>
+                <Content>
+
+$X \psurj Y$ is the set of partial surjections from $X$ to $Y$,
+that is, the set of functions from $X$ to $Y$
+whose range is equal to $Y$.
+The terms ``surjection'' and ``partial surjection'' are synonymous.
+
+\ssclause{Total surjections}
+
+</Content>
+            </NarrPara>
+            <OptempPara Assoc="Right" Cat="Generic" Prec="5">
+                <Anns>
+                    <LocAnn Col="0" Length="60" Line="77" Loc="lib/function_toolkit.tex" Start="2076"/>
+                </Anns>
+                <Operand List="false"/>
+                <Operator>
+                    <Anns>
+                        <LocAnn Col="27" Length="5" Line="78" Loc="lib/function_toolkit.tex" Start="2116"/>
+                    </Anns>
+                    <Word>↠</Word>
+                </Operator>
+                <Operand List="false"/>
+            </OptempPara>
+            <NarrPara>
+                <Anns>
+                    <LocAnn Col="9" Length="4" Line="79" Loc="lib/function_toolkit.tex" Start="2136"/>
+                </Anns>
+                <Content>
+
+</Content>
+            </NarrPara>
+            <AxPara Box="OmitBox">
+                <Anns>
+                    <LocAnn Col="0" Length="68" Line="81" Loc="lib/function_toolkit.tex" Start="2140"/>
+                </Anns>
+                <ZNameList>
+                    <ZName>
+                        <Anns>
+                            <LocAnn Col="0" Length="1" Line="82" Loc="lib/function_toolkit.tex" Start="2153"/>
+                        </Anns>
+                        <Word>X</Word>
+                        <ZStrokeList/>
+                    </ZName>
+                    <ZName>
+                        <Anns>
+                            <LocAnn Col="8" Length="1" Line="82" Loc="lib/function_toolkit.tex" Start="2161"/>
+                        </Anns>
+                        <Word>Y</Word>
+                        <ZStrokeList/>
+                    </ZName>
+                </ZNameList>
+                <ZSchText>
+                    <Anns>
+                        <LocAnn Loc="lib/function_toolkit.tex"/>
+                    </Anns>
+                    <ZDeclList>
+                        <ConstDecl>
+                            <Anns>
+                                <LocAnn Col="10" Line="82" Loc="lib/function_toolkit.tex"/>
+                            </Anns>
+                            <ZName>
+                                <Word> _ ↠ _ </Word>
+                                <ZStrokeList/>
+                            </ZName>
+                            <ApplExpr Mixfix="true">
+                                <Anns>
+                                    <LocAnn Col="27" Length="27" Line="82" Loc="lib/function_toolkit.tex" Start="2168"/>
+                                </Anns>
+                                <RefExpr Explicit="false" Mixfix="false">
+                                    <Anns>
+                                        <LocAnn Col="27" Length="4" Line="82" Loc="lib/function_toolkit.tex" Start="2180"/>
+                                    </Anns>
+                                    <ZName>
+                                        <Anns>
+                                            <LocAnn Col="27" Length="4" Line="82" Loc="lib/function_toolkit.tex" Start="2180"/>
+                                        </Anns>
+                                        <Word> _ ∩ _ </Word>
+                                        <ZStrokeList/>
+                                    </ZName>
+                                    <ZExprList/>
+                                </RefExpr>
+                                <TupleExpr>
+                                    <ZExprList>
+                                        <RefExpr Explicit="true" Mixfix="true">
+                                            <Anns>
+                                                <LocAnn Col="17" Length="10" Line="82" Loc="lib/function_toolkit.tex" Start="2168"/>
+                                                <ParenAnn>
+                                                    <Anns>
+                                                        <LocAnn Col="13" Length="13" Line="82" Loc="lib/function_toolkit.tex" Start="2166"/>
+                                                    </Anns>
+                                                </ParenAnn>
+                                            </Anns>
+                                            <ZName>
+                                                <Anns>
+                                                    <LocAnn Col="17" Length="6" Line="82" Loc="lib/function_toolkit.tex" Start="2170"/>
+                                                </Anns>
+                                                <Word> _ ⤀ _ </Word>
+                                                <ZStrokeList/>
+                                            </ZName>
+                                            <ZExprList>
+                                                <RefExpr Explicit="false" Mixfix="false">
+                                                    <Anns>
+                                                        <LocAnn Col="15" Length="1" Line="82" Loc="lib/function_toolkit.tex" Start="2168"/>
+                                                    </Anns>
+                                                    <ZName>
+                                                        <Anns>
+                                                            <LocAnn Col="15" Length="1" Line="82" Loc="lib/function_toolkit.tex" Start="2168"/>
+                                                        </Anns>
+                                                        <Word>X</Word>
+                                                        <ZStrokeList/>
+                                                    </ZName>
+                                                    <ZExprList/>
+                                                </RefExpr>
+                                                <RefExpr Explicit="false" Mixfix="false">
+                                                    <Anns>
+                                                        <LocAnn Col="24" Length="1" Line="82" Loc="lib/function_toolkit.tex" Start="2177"/>
+                                                    </Anns>
+                                                    <ZName>
+                                                        <Anns>
+                                                            <LocAnn Col="24" Length="1" Line="82" Loc="lib/function_toolkit.tex" Start="2177"/>
+                                                        </Anns>
+                                                        <Word>Y</Word>
+                                                        <ZStrokeList/>
+                                                    </ZName>
+                                                    <ZExprList/>
+                                                </RefExpr>
+                                            </ZExprList>
+                                        </RefExpr>
+                                        <RefExpr Explicit="true" Mixfix="true">
+                                            <Anns>
+                                                <LocAnn Col="36" Length="8" Line="82" Loc="lib/function_toolkit.tex" Start="2187"/>
+                                                <ParenAnn>
+                                                    <Anns>
+                                                        <LocAnn Col="32" Length="12" Line="82" Loc="lib/function_toolkit.tex" Start="2185"/>
+                                                    </Anns>
+                                                </ParenAnn>
+                                            </Anns>
+                                            <ZName>
+                                                <Anns>
+                                                    <LocAnn Col="36" Length="4" Line="82" Loc="lib/function_toolkit.tex" Start="2189"/>
+                                                </Anns>
+                                                <Word> _ → _ </Word>
+                                                <ZStrokeList/>
+                                            </ZName>
+                                            <ZExprList>
+                                                <RefExpr Explicit="false" Mixfix="false">
+                                                    <Anns>
+                                                        <LocAnn Col="34" Length="1" Line="82" Loc="lib/function_toolkit.tex" Start="2187"/>
+                                                    </Anns>
+                                                    <ZName>
+                                                        <Anns>
+                                                            <LocAnn Col="34" Length="1" Line="82" Loc="lib/function_toolkit.tex" Start="2187"/>
+                                                        </Anns>
+                                                        <Word>X</Word>
+                                                        <ZStrokeList/>
+                                                    </ZName>
+                                                    <ZExprList/>
+                                                </RefExpr>
+                                                <RefExpr Explicit="false" Mixfix="false">
+                                                    <Anns>
+                                                        <LocAnn Col="41" Length="1" Line="82" Loc="lib/function_toolkit.tex" Start="2194"/>
+                                                    </Anns>
+                                                    <ZName>
+                                                        <Anns>
+                                                            <LocAnn Col="41" Length="1" Line="82" Loc="lib/function_toolkit.tex" Start="2194"/>
+                                                        </Anns>
+                                                        <Word>Y</Word>
+                                                        <ZStrokeList/>
+                                                    </ZName>
+                                                    <ZExprList/>
+                                                </RefExpr>
+                                            </ZExprList>
+                                        </RefExpr>
+                                    </ZExprList>
+                                </TupleExpr>
+                            </ApplExpr>
+                        </ConstDecl>
+                    </ZDeclList>
+                </ZSchText>
+            </AxPara>
+            <NarrPara>
+                <Anns>
+                    <LocAnn Col="9" Length="190" Line="83" Loc="lib/function_toolkit.tex" Start="2208"/>
+                </Anns>
+                <Content>
+
+$X \surj Y$ is the set of total surjections from $X$ to $Y$,
+that is, the set of surjections from $X$ to $Y$
+that are also total functions from $X$ to $Y$.
+
+\ssclause{Bijections}
+
+</Content>
+            </NarrPara>
+            <OptempPara Assoc="Right" Cat="Generic" Prec="5">
+                <Anns>
+                    <LocAnn Col="0" Length="59" Line="92" Loc="lib/function_toolkit.tex" Start="2421"/>
+                </Anns>
+                <Operand List="false"/>
+                <Operator>
+                    <Anns>
+                        <LocAnn Col="27" Length="4" Line="93" Loc="lib/function_toolkit.tex" Start="2461"/>
+                    </Anns>
+                    <Word>⤖</Word>
+                </Operator>
+                <Operand List="false"/>
+            </OptempPara>
+            <NarrPara>
+                <Anns>
+                    <LocAnn Col="9" Length="4" Line="94" Loc="lib/function_toolkit.tex" Start="2480"/>
+                </Anns>
+                <Content>
+
+</Content>
+            </NarrPara>
+            <AxPara Box="OmitBox">
+                <Anns>
+                    <LocAnn Col="0" Length="67" Line="96" Loc="lib/function_toolkit.tex" Start="2484"/>
+                </Anns>
+                <ZNameList>
+                    <ZName>
+                        <Anns>
+                            <LocAnn Col="0" Length="1" Line="97" Loc="lib/function_toolkit.tex" Start="2497"/>
+                        </Anns>
+                        <Word>X</Word>
+                        <ZStrokeList/>
+                    </ZName>
+                    <ZName>
+                        <Anns>
+                            <LocAnn Col="7" Length="1" Line="97" Loc="lib/function_toolkit.tex" Start="2504"/>
+                        </Anns>
+                        <Word>Y</Word>
+                        <ZStrokeList/>
+                    </ZName>
+                </ZNameList>
+                <ZSchText>
+                    <Anns>
+                        <LocAnn Loc="lib/function_toolkit.tex"/>
+                    </Anns>
+                    <ZDeclList>
+                        <ConstDecl>
+                            <Anns>
+                                <LocAnn Col="9" Line="97" Loc="lib/function_toolkit.tex"/>
+                            </Anns>
+                            <ZName>
+                                <Word> _ ⤖ _ </Word>
+                                <ZStrokeList/>
+                            </ZName>
+                            <ApplExpr Mixfix="true">
+                                <Anns>
+                                    <LocAnn Col="26" Length="27" Line="97" Loc="lib/function_toolkit.tex" Start="2511"/>
+                                </Anns>
+                                <RefExpr Explicit="false" Mixfix="false">
+                                    <Anns>
+                                        <LocAnn Col="26" Length="4" Line="97" Loc="lib/function_toolkit.tex" Start="2523"/>
+                                    </Anns>
+                                    <ZName>
+                                        <Anns>
+                                            <LocAnn Col="26" Length="4" Line="97" Loc="lib/function_toolkit.tex" Start="2523"/>
+                                        </Anns>
+                                        <Word> _ ∩ _ </Word>
+                                        <ZStrokeList/>
+                                    </ZName>
+                                    <ZExprList/>
+                                </RefExpr>
+                                <TupleExpr>
+                                    <ZExprList>
+                                        <RefExpr Explicit="true" Mixfix="true">
+                                            <Anns>
+                                                <LocAnn Col="16" Length="9" Line="97" Loc="lib/function_toolkit.tex" Start="2511"/>
+                                                <ParenAnn>
+                                                    <Anns>
+                                                        <LocAnn Col="12" Length="13" Line="97" Loc="lib/function_toolkit.tex" Start="2509"/>
+                                                    </Anns>
+                                                </ParenAnn>
+                                            </Anns>
+                                            <ZName>
+                                                <Anns>
+                                                    <LocAnn Col="16" Length="5" Line="97" Loc="lib/function_toolkit.tex" Start="2513"/>
+                                                </Anns>
+                                                <Word> _ ↠ _ </Word>
+                                                <ZStrokeList/>
+                                            </ZName>
+                                            <ZExprList>
+                                                <RefExpr Explicit="false" Mixfix="false">
+                                                    <Anns>
+                                                        <LocAnn Col="14" Length="1" Line="97" Loc="lib/function_toolkit.tex" Start="2511"/>
+                                                    </Anns>
+                                                    <ZName>
+                                                        <Anns>
+                                                            <LocAnn Col="14" Length="1" Line="97" Loc="lib/function_toolkit.tex" Start="2511"/>
+                                                        </Anns>
+                                                        <Word>X</Word>
+                                                        <ZStrokeList/>
+                                                    </ZName>
+                                                    <ZExprList/>
+                                                </RefExpr>
+                                                <RefExpr Explicit="false" Mixfix="false">
+                                                    <Anns>
+                                                        <LocAnn Col="22" Length="1" Line="97" Loc="lib/function_toolkit.tex" Start="2519"/>
+                                                    </Anns>
+                                                    <ZName>
+                                                        <Anns>
+                                                            <LocAnn Col="22" Length="1" Line="97" Loc="lib/function_toolkit.tex" Start="2519"/>
+                                                        </Anns>
+                                                        <Word>Y</Word>
+                                                        <ZStrokeList/>
+                                                    </ZName>
+                                                    <ZExprList/>
+                                                </RefExpr>
+                                            </ZExprList>
+                                        </RefExpr>
+                                        <RefExpr Explicit="true" Mixfix="true">
+                                            <Anns>
+                                                <LocAnn Col="35" Length="8" Line="97" Loc="lib/function_toolkit.tex" Start="2530"/>
+                                                <ParenAnn>
+                                                    <Anns>
+                                                        <LocAnn Col="31" Length="12" Line="97" Loc="lib/function_toolkit.tex" Start="2528"/>
+                                                    </Anns>
+                                                </ParenAnn>
+                                            </Anns>
+                                            <ZName>
+                                                <Anns>
+                                                    <LocAnn Col="35" Length="4" Line="97" Loc="lib/function_toolkit.tex" Start="2532"/>
+                                                </Anns>
+                                                <Word> _ ↣ _ </Word>
+                                                <ZStrokeList/>
+                                            </ZName>
+                                            <ZExprList>
+                                                <RefExpr Explicit="false" Mixfix="false">
+                                                    <Anns>
+                                                        <LocAnn Col="33" Length="1" Line="97" Loc="lib/function_toolkit.tex" Start="2530"/>
+                                                    </Anns>
+                                                    <ZName>
+                                                        <Anns>
+                                                            <LocAnn Col="33" Length="1" Line="97" Loc="lib/function_toolkit.tex" Start="2530"/>
+                                                        </Anns>
+                                                        <Word>X</Word>
+                                                        <ZStrokeList/>
+                                                    </ZName>
+                                                    <ZExprList/>
+                                                </RefExpr>
+                                                <RefExpr Explicit="false" Mixfix="false">
+                                                    <Anns>
+                                                        <LocAnn Col="40" Length="1" Line="97" Loc="lib/function_toolkit.tex" Start="2537"/>
+                                                    </Anns>
+                                                    <ZName>
+                                                        <Anns>
+                                                            <LocAnn Col="40" Length="1" Line="97" Loc="lib/function_toolkit.tex" Start="2537"/>
+                                                        </Anns>
+                                                        <Word>Y</Word>
+                                                        <ZStrokeList/>
+                                                    </ZName>
+                                                    <ZExprList/>
+                                                </RefExpr>
+                                            </ZExprList>
+                                        </RefExpr>
+                                    </ZExprList>
+                                </TupleExpr>
+                            </ApplExpr>
+                        </ConstDecl>
+                    </ZDeclList>
+                </ZSchText>
+            </AxPara>
+            <NarrPara>
+                <Anns>
+                    <LocAnn Col="9" Length="195" Line="98" Loc="lib/function_toolkit.tex" Start="2551"/>
+                </Anns>
+                <Content>
+
+$X \bij Y$ is the set of bijections from $X$ to $Y$,
+that is, the set of total surjections from $X$ to $Y$
+that are also total injections from $X$ to $Y$.
+
+\ssclause{Finite functions}
+
+</Content>
+            </NarrPara>
+            <OptempPara Assoc="Right" Cat="Generic" Prec="5">
+                <Anns>
+                    <LocAnn Col="0" Length="60" Line="107" Loc="lib/function_toolkit.tex" Start="2770"/>
+                </Anns>
+                <Operand List="false"/>
+                <Operator>
+                    <Anns>
+                        <LocAnn Col="27" Length="5" Line="108" Loc="lib/function_toolkit.tex" Start="2810"/>
+                    </Anns>
+                    <Word>⇻</Word>
+                </Operator>
+                <Operand List="false"/>
+            </OptempPara>
+            <NarrPara>
+                <Anns>
+                    <LocAnn Col="9" Length="4" Line="109" Loc="lib/function_toolkit.tex" Start="2830"/>
+                </Anns>
+                <Content>
+
+</Content>
+            </NarrPara>
+            <AxPara Box="OmitBox">
+                <Anns>
+                    <LocAnn Col="0" Length="74" Line="111" Loc="lib/function_toolkit.tex" Start="2834"/>
+                </Anns>
+                <ZNameList>
+                    <ZName>
+                        <Anns>
+                            <LocAnn Col="0" Length="1" Line="112" Loc="lib/function_toolkit.tex" Start="2847"/>
+                        </Anns>
+                        <Word>X</Word>
+                        <ZStrokeList/>
+                    </ZName>
+                    <ZName>
+                        <Anns>
+                            <LocAnn Col="8" Length="1" Line="112" Loc="lib/function_toolkit.tex" Start="2855"/>
+                        </Anns>
+                        <Word>Y</Word>
+                        <ZStrokeList/>
+                    </ZName>
+                </ZNameList>
+                <ZSchText>
+                    <Anns>
+                        <LocAnn Loc="lib/function_toolkit.tex"/>
+                    </Anns>
+                    <ZDeclList>
+                        <ConstDecl>
+                            <Anns>
+                                <LocAnn Col="10" Line="112" Loc="lib/function_toolkit.tex"/>
+                            </Anns>
+                            <ZName>
+                                <Word> _ ⇻ _ </Word>
+                                <ZStrokeList/>
+                            </ZName>
+                            <ApplExpr Mixfix="true">
+                                <Anns>
+                                    <LocAnn Col="25" Length="35" Line="112" Loc="lib/function_toolkit.tex" Start="2861"/>
+                                </Anns>
+                                <RefExpr Explicit="false" Mixfix="false">
+                                    <Anns>
+                                        <LocAnn Col="25" Length="4" Line="112" Loc="lib/function_toolkit.tex" Start="2872"/>
+                                    </Anns>
+                                    <ZName>
+                                        <Anns>
+                                            <LocAnn Col="25" Length="4" Line="112" Loc="lib/function_toolkit.tex" Start="2872"/>
+                                        </Anns>
+                                        <Word> _ ∩ _ </Word>
+                                        <ZStrokeList/>
+                                    </ZName>
+                                    <ZExprList/>
+                                </RefExpr>
+                                <TupleExpr>
+                                    <ZExprList>
+                                        <RefExpr Explicit="true" Mixfix="true">
+                                            <Anns>
+                                                <LocAnn Col="16" Length="9" Line="112" Loc="lib/function_toolkit.tex" Start="2861"/>
+                                                <ParenAnn>
+                                                    <Anns>
+                                                        <LocAnn Col="13" Length="11" Line="112" Loc="lib/function_toolkit.tex" Start="2860"/>
+                                                    </Anns>
+                                                </ParenAnn>
+                                            </Anns>
+                                            <ZName>
+                                                <Anns>
+                                                    <LocAnn Col="16" Length="5" Line="112" Loc="lib/function_toolkit.tex" Start="2863"/>
+                                                </Anns>
+                                                <Word> _ ⇸ _ </Word>
+                                                <ZStrokeList/>
+                                            </ZName>
+                                            <ZExprList>
+                                                <RefExpr Explicit="false" Mixfix="false">
+                                                    <Anns>
+                                                        <LocAnn Col="14" Length="1" Line="112" Loc="lib/function_toolkit.tex" Start="2861"/>
+                                                    </Anns>
+                                                    <ZName>
+                                                        <Anns>
+                                                            <LocAnn Col="14" Length="1" Line="112" Loc="lib/function_toolkit.tex" Start="2861"/>
+                                                        </Anns>
+                                                        <Word>X</Word>
+                                                        <ZStrokeList/>
+                                                    </ZName>
+                                                    <ZExprList/>
+                                                </RefExpr>
+                                                <RefExpr Explicit="false" Mixfix="false">
+                                                    <Anns>
+                                                        <LocAnn Col="22" Length="1" Line="112" Loc="lib/function_toolkit.tex" Start="2869"/>
+                                                    </Anns>
+                                                    <ZName>
+                                                        <Anns>
+                                                            <LocAnn Col="22" Length="1" Line="112" Loc="lib/function_toolkit.tex" Start="2869"/>
+                                                        </Anns>
+                                                        <Word>Y</Word>
+                                                        <ZStrokeList/>
+                                                    </ZName>
+                                                    <ZExprList/>
+                                                </RefExpr>
+                                            </ZExprList>
+                                        </RefExpr>
+                                        <RefExpr Explicit="true" Mixfix="true">
+                                            <Anns>
+                                                <LocAnn Col="30" Length="19" Line="112" Loc="lib/function_toolkit.tex" Start="2877"/>
+                                            </Anns>
+                                            <ZName>
+                                                <Anns>
+                                                    <LocAnn Col="30" Length="7" Line="112" Loc="lib/function_toolkit.tex" Start="2877"/>
+                                                </Anns>
+                                                <Word>𝔽 _ </Word>
+                                                <ZStrokeList/>
+                                            </ZName>
+                                            <ZExprList>
+                                                <ProdExpr>
+                                                    <Anns>
+                                                        <LocAnn Col="48" Length="10" Line="112" Loc="lib/function_toolkit.tex" Start="2886"/>
+                                                        <ParenAnn>
+                                                            <Anns>
+                                                                <LocAnn Col="38" Length="12" Line="112" Loc="lib/function_toolkit.tex" Start="2885"/>
+                                                            </Anns>
+                                                        </ParenAnn>
+                                                    </Anns>
+                                                    <ZExprList>
+                                                        <RefExpr Explicit="false" Mixfix="false">
+                                                            <Anns>
+                                                                <LocAnn Col="39" Length="1" Line="112" Loc="lib/function_toolkit.tex" Start="2886"/>
+                                                            </Anns>
+                                                            <ZName>
+                                                                <Anns>
+                                                                    <LocAnn Col="39" Length="1" Line="112" Loc="lib/function_toolkit.tex" Start="2886"/>
+                                                                </Anns>
+                                                                <Word>X</Word>
+                                                                <ZStrokeList/>
+                                                            </ZName>
+                                                            <ZExprList/>
+                                                        </RefExpr>
+                                                        <RefExpr Explicit="false" Mixfix="false">
+                                                            <Anns>
+                                                                <LocAnn Col="48" Length="1" Line="112" Loc="lib/function_toolkit.tex" Start="2895"/>
+                                                            </Anns>
+                                                            <ZName>
+                                                                <Anns>
+                                                                    <LocAnn Col="48" Length="1" Line="112" Loc="lib/function_toolkit.tex" Start="2895"/>
+                                                                </Anns>
+                                                                <Word>Y</Word>
+                                                                <ZStrokeList/>
+                                                            </ZName>
+                                                            <ZExprList/>
+                                                        </RefExpr>
+                                                    </ZExprList>
+                                                </ProdExpr>
+                                            </ZExprList>
+                                        </RefExpr>
+                                    </ZExprList>
+                                </TupleExpr>
+                            </ApplExpr>
+                        </ConstDecl>
+                    </ZDeclList>
+                </ZSchText>
+            </AxPara>
+            <NarrPara>
+                <Anns>
+                    <LocAnn Col="9" Length="138" Line="113" Loc="lib/function_toolkit.tex" Start="2908"/>
+                </Anns>
+                <Content>
+
+The finite functions from $X$ to $Y$ are the functions from $X$ to $Y$
+that are also finite sets.
+
+\ssclause{Finite injections}
+
+</Content>
+            </NarrPara>
+            <OptempPara Assoc="Right" Cat="Generic" Prec="5">
+                <Anns>
+                    <LocAnn Col="0" Length="60" Line="121" Loc="lib/function_toolkit.tex" Start="3070"/>
+                </Anns>
+                <Operand List="false"/>
+                <Operator>
+                    <Anns>
+                        <LocAnn Col="27" Length="5" Line="122" Loc="lib/function_toolkit.tex" Start="3110"/>
+                    </Anns>
+                    <Word>⤕</Word>
+                </Operator>
+                <Operand List="false"/>
+            </OptempPara>
+            <NarrPara>
+                <Anns>
+                    <LocAnn Col="9" Length="4" Line="123" Loc="lib/function_toolkit.tex" Start="3130"/>
+                </Anns>
+                <Content>
+
+</Content>
+            </NarrPara>
+            <AxPara Box="OmitBox">
+                <Anns>
+                    <LocAnn Col="0" Length="69" Line="125" Loc="lib/function_toolkit.tex" Start="3134"/>
+                </Anns>
+                <ZNameList>
+                    <ZName>
+                        <Anns>
+                            <LocAnn Col="0" Length="1" Line="126" Loc="lib/function_toolkit.tex" Start="3147"/>
+                        </Anns>
+                        <Word>X</Word>
+                        <ZStrokeList/>
+                    </ZName>
+                    <ZName>
+                        <Anns>
+                            <LocAnn Col="8" Length="1" Line="126" Loc="lib/function_toolkit.tex" Start="3155"/>
+                        </Anns>
+                        <Word>Y</Word>
+                        <ZStrokeList/>
+                    </ZName>
+                </ZNameList>
+                <ZSchText>
+                    <Anns>
+                        <LocAnn Loc="lib/function_toolkit.tex"/>
+                    </Anns>
+                    <ZDeclList>
+                        <ConstDecl>
+                            <Anns>
+                                <LocAnn Col="10" Line="126" Loc="lib/function_toolkit.tex"/>
+                            </Anns>
+                            <ZName>
+                                <Word> _ ⤕ _ </Word>
+                                <ZStrokeList/>
+                            </ZName>
+                            <ApplExpr Mixfix="true">
+                                <Anns>
+                                    <LocAnn Col="27" Length="28" Line="126" Loc="lib/function_toolkit.tex" Start="3162"/>
+                                </Anns>
+                                <RefExpr Explicit="false" Mixfix="false">
+                                    <Anns>
+                                        <LocAnn Col="27" Length="4" Line="126" Loc="lib/function_toolkit.tex" Start="3174"/>
+                                    </Anns>
+                                    <ZName>
+                                        <Anns>
+                                            <LocAnn Col="27" Length="4" Line="126" Loc="lib/function_toolkit.tex" Start="3174"/>
+                                        </Anns>
+                                        <Word> _ ∩ _ </Word>
+                                        <ZStrokeList/>
+                                    </ZName>
+                                    <ZExprList/>
+                                </RefExpr>
+                                <TupleExpr>
+                                    <ZExprList>
+                                        <RefExpr Explicit="true" Mixfix="true">
+                                            <Anns>
+                                                <LocAnn Col="17" Length="9" Line="126" Loc="lib/function_toolkit.tex" Start="3162"/>
+                                                <ParenAnn>
+                                                    <Anns>
+                                                        <LocAnn Col="13" Length="13" Line="126" Loc="lib/function_toolkit.tex" Start="3160"/>
+                                                    </Anns>
+                                                </ParenAnn>
+                                            </Anns>
+                                            <ZName>
+                                                <Anns>
+                                                    <LocAnn Col="17" Length="5" Line="126" Loc="lib/function_toolkit.tex" Start="3164"/>
+                                                </Anns>
+                                                <Word> _ ⇻ _ </Word>
+                                                <ZStrokeList/>
+                                            </ZName>
+                                            <ZExprList>
+                                                <RefExpr Explicit="false" Mixfix="false">
+                                                    <Anns>
+                                                        <LocAnn Col="15" Length="1" Line="126" Loc="lib/function_toolkit.tex" Start="3162"/>
+                                                    </Anns>
+                                                    <ZName>
+                                                        <Anns>
+                                                            <LocAnn Col="15" Length="1" Line="126" Loc="lib/function_toolkit.tex" Start="3162"/>
+                                                        </Anns>
+                                                        <Word>X</Word>
+                                                        <ZStrokeList/>
+                                                    </ZName>
+                                                    <ZExprList/>
+                                                </RefExpr>
+                                                <RefExpr Explicit="false" Mixfix="false">
+                                                    <Anns>
+                                                        <LocAnn Col="23" Length="1" Line="126" Loc="lib/function_toolkit.tex" Start="3170"/>
+                                                    </Anns>
+                                                    <ZName>
+                                                        <Anns>
+                                                            <LocAnn Col="23" Length="1" Line="126" Loc="lib/function_toolkit.tex" Start="3170"/>
+                                                        </Anns>
+                                                        <Word>Y</Word>
+                                                        <ZStrokeList/>
+                                                    </ZName>
+                                                    <ZExprList/>
+                                                </RefExpr>
+                                            </ZExprList>
+                                        </RefExpr>
+                                        <RefExpr Explicit="true" Mixfix="true">
+                                            <Anns>
+                                                <LocAnn Col="36" Length="9" Line="126" Loc="lib/function_toolkit.tex" Start="3181"/>
+                                                <ParenAnn>
+                                                    <Anns>
+                                                        <LocAnn Col="32" Length="13" Line="126" Loc="lib/function_toolkit.tex" Start="3179"/>
+                                                    </Anns>
+                                                </ParenAnn>
+                                            </Anns>
+                                            <ZName>
+                                                <Anns>
+                                                    <LocAnn Col="36" Length="5" Line="126" Loc="lib/function_toolkit.tex" Start="3183"/>
+                                                </Anns>
+                                                <Word> _ ⤔ _ </Word>
+                                                <ZStrokeList/>
+                                            </ZName>
+                                            <ZExprList>
+                                                <RefExpr Explicit="false" Mixfix="false">
+                                                    <Anns>
+                                                        <LocAnn Col="34" Length="1" Line="126" Loc="lib/function_toolkit.tex" Start="3181"/>
+                                                    </Anns>
+                                                    <ZName>
+                                                        <Anns>
+                                                            <LocAnn Col="34" Length="1" Line="126" Loc="lib/function_toolkit.tex" Start="3181"/>
+                                                        </Anns>
+                                                        <Word>X</Word>
+                                                        <ZStrokeList/>
+                                                    </ZName>
+                                                    <ZExprList/>
+                                                </RefExpr>
+                                                <RefExpr Explicit="false" Mixfix="false">
+                                                    <Anns>
+                                                        <LocAnn Col="42" Length="1" Line="126" Loc="lib/function_toolkit.tex" Start="3189"/>
+                                                    </Anns>
+                                                    <ZName>
+                                                        <Anns>
+                                                            <LocAnn Col="42" Length="1" Line="126" Loc="lib/function_toolkit.tex" Start="3189"/>
+                                                        </Anns>
+                                                        <Word>Y</Word>
+                                                        <ZStrokeList/>
+                                                    </ZName>
+                                                    <ZExprList/>
+                                                </RefExpr>
+                                            </ZExprList>
+                                        </RefExpr>
+                                    </ZExprList>
+                                </TupleExpr>
+                            </ApplExpr>
+                        </ConstDecl>
+                    </ZDeclList>
+                </ZSchText>
+            </AxPara>
+            <NarrPara>
+                <Anns>
+                    <LocAnn Col="9" Length="156" Line="127" Loc="lib/function_toolkit.tex" Start="3203"/>
+                </Anns>
+                <Content>
+
+The finite injections from $X$ to $Y$ are the injections from $X$ to $Y$
+that are also finite functions from $X$ to $Y$.
+
+\ssclause{Disjointness}
+
+</Content>
+            </NarrPara>
+            <OptempPara Cat="Relation">
+                <Anns>
+                    <LocAnn Col="0" Length="48" Line="135" Loc="lib/function_toolkit.tex" Start="3390"/>
+                </Anns>
+                <Operator>
+                    <Anns>
+                        <LocAnn Col="11" Length="9" Line="136" Loc="lib/function_toolkit.tex" Start="3414"/>
+                    </Anns>
+                    <Word>disjoint</Word>
+                </Operator>
+                <Operand List="false"/>
+            </OptempPara>
+            <NarrPara>
+                <Anns>
+                    <LocAnn Col="9" Length="4" Line="137" Loc="lib/function_toolkit.tex" Start="3438"/>
+                </Anns>
+                <Content>
+
+</Content>
+            </NarrPara>
+            <AxPara Box="AxBox">
+                <Anns>
+                    <LocAnn Col="0" Length="193" Line="139" Loc="lib/function_toolkit.tex" Start="3442"/>
+                </Anns>
+                <ZNameList>
+                    <ZName>
+                        <Anns>
+                            <LocAnn Col="15" Length="1" Line="139" Loc="lib/function_toolkit.tex" Start="3457"/>
+                        </Anns>
+                        <Word>L</Word>
+                        <ZStrokeList/>
+                    </ZName>
+                    <ZName>
+                        <Anns>
+                            <LocAnn Col="17" Length="1" Line="139" Loc="lib/function_toolkit.tex" Start="3459"/>
+                        </Anns>
+                        <Word>X</Word>
+                        <ZStrokeList/>
+                    </ZName>
+                </ZNameList>
+                <ZSchText>
+                    <ZDeclList>
+                        <VarDecl>
+                            <Anns>
+                                <LocAnn Col="13" Line="140" Loc="lib/function_toolkit.tex"/>
+                            </Anns>
+                            <ZNameList>
+                                <ZName>
+                                    <Anns>
+                                        <LocAnn Col="10" Line="140" Loc="lib/function_toolkit.tex"/>
+                                    </Anns>
+                                    <Word>disjoint _ </Word>
+                                    <ZStrokeList/>
+                                </ZName>
+                            </ZNameList>
+                            <PowerExpr>
+                                <Anns>
+                                    <LocAnn Col="15" Length="24" Line="140" Loc="lib/function_toolkit.tex" Start="3478"/>
+                                </Anns>
+                                <RefExpr Explicit="true" Mixfix="true">
+                                    <Anns>
+                                        <LocAnn Col="26" Length="15" Line="140" Loc="lib/function_toolkit.tex" Start="3487"/>
+                                        <ParenAnn>
+                                            <Anns>
+                                                <LocAnn Col="22" Length="19" Line="140" Loc="lib/function_toolkit.tex" Start="3485"/>
+                                            </Anns>
+                                        </ParenAnn>
+                                    </Anns>
+                                    <ZName>
+                                        <Anns>
+                                            <LocAnn Col="26" Length="4" Line="140" Loc="lib/function_toolkit.tex" Start="3489"/>
+                                        </Anns>
+                                        <Word> _ ↔ _ </Word>
+                                        <ZStrokeList/>
+                                    </ZName>
+                                    <ZExprList>
+                                        <RefExpr Explicit="false" Mixfix="false">
+                                            <Anns>
+                                                <LocAnn Col="24" Length="1" Line="140" Loc="lib/function_toolkit.tex" Start="3487"/>
+                                            </Anns>
+                                            <ZName>
+                                                <Anns>
+                                                    <LocAnn Col="24" Length="1" Line="140" Loc="lib/function_toolkit.tex" Start="3487"/>
+                                                </Anns>
+                                                <Word>L</Word>
+                                                <ZStrokeList/>
+                                            </ZName>
+                                            <ZExprList/>
+                                        </RefExpr>
+                                        <PowerExpr>
+                                            <Anns>
+                                                <LocAnn Col="31" Length="8" Line="140" Loc="lib/function_toolkit.tex" Start="3494"/>
+                                            </Anns>
+                                            <RefExpr Explicit="false" Mixfix="false">
+                                                <Anns>
+                                                    <LocAnn Col="38" Length="1" Line="140" Loc="lib/function_toolkit.tex" Start="3501"/>
+                                                </Anns>
+                                                <ZName>
+                                                    <Anns>
+                                                        <LocAnn Col="38" Length="1" Line="140" Loc="lib/function_toolkit.tex" Start="3501"/>
+                                                    </Anns>
+                                                    <Word>X</Word>
+                                                    <ZStrokeList/>
+                                                </ZName>
+                                                <ZExprList/>
+                                            </RefExpr>
+                                        </PowerExpr>
+                                    </ZExprList>
+                                </RefExpr>
+                            </PowerExpr>
+                        </VarDecl>
+                    </ZDeclList>
+                    <ForallPred>
+                        <Anns>
+                            <LocAnn Col="0" Length="105" Line="142" Loc="lib/function_toolkit.tex" Start="3514"/>
+                        </Anns>
+                        <ZSchText>
+                            <ZDeclList>
+                                <VarDecl>
+                                    <Anns>
+                                        <LocAnn Col="10" Length="19" Line="142" Loc="lib/function_toolkit.tex" Start="3522"/>
+                                    </Anns>
+                                    <ZNameList>
+                                        <ZName>
+                                            <Anns>
+                                                <LocAnn Col="8" Length="1" Line="142" Loc="lib/function_toolkit.tex" Start="3522"/>
+                                            </Anns>
+                                            <Word>f</Word>
+                                            <ZStrokeList/>
+                                        </ZName>
+                                    </ZNameList>
+                                    <RefExpr Explicit="true" Mixfix="true">
+                                        <Anns>
+                                            <LocAnn Col="14" Length="15" Line="142" Loc="lib/function_toolkit.tex" Start="3526"/>
+                                        </Anns>
+                                        <ZName>
+                                            <Anns>
+                                                <LocAnn Col="14" Length="4" Line="142" Loc="lib/function_toolkit.tex" Start="3528"/>
+                                            </Anns>
+                                            <Word> _ ↔ _ </Word>
+                                            <ZStrokeList/>
+                                        </ZName>
+                                        <ZExprList>
+                                            <RefExpr Explicit="false" Mixfix="false">
+                                                <Anns>
+                                                    <LocAnn Col="12" Length="1" Line="142" Loc="lib/function_toolkit.tex" Start="3526"/>
+                                                </Anns>
+                                                <ZName>
+                                                    <Anns>
+                                                        <LocAnn Col="12" Length="1" Line="142" Loc="lib/function_toolkit.tex" Start="3526"/>
+                                                    </Anns>
+                                                    <Word>L</Word>
+                                                    <ZStrokeList/>
+                                                </ZName>
+                                                <ZExprList/>
+                                            </RefExpr>
+                                            <PowerExpr>
+                                                <Anns>
+                                                    <LocAnn Col="19" Length="8" Line="142" Loc="lib/function_toolkit.tex" Start="3533"/>
+                                                </Anns>
+                                                <RefExpr Explicit="false" Mixfix="false">
+                                                    <Anns>
+                                                        <LocAnn Col="26" Length="1" Line="142" Loc="lib/function_toolkit.tex" Start="3540"/>
+                                                    </Anns>
+                                                    <ZName>
+                                                        <Anns>
+                                                            <LocAnn Col="26" Length="1" Line="142" Loc="lib/function_toolkit.tex" Start="3540"/>
+                                                        </Anns>
+                                                        <Word>X</Word>
+                                                        <ZStrokeList/>
+                                                    </ZName>
+                                                    <ZExprList/>
+                                                </RefExpr>
+                                            </PowerExpr>
+                                        </ZExprList>
+                                    </RefExpr>
+                                </VarDecl>
+                            </ZDeclList>
+                        </ZSchText>
+                        <IffPred>
+                            <Anns>
+                                <LocAnn Col="12" Length="74" Line="143" Loc="lib/function_toolkit.tex" Start="3545"/>
+                            </Anns>
+                            <MemPred Mixfix="true">
+                                <Anns>
+                                    <LocAnn Col="0" Length="11" Line="143" Loc="lib/function_toolkit.tex" Start="3545"/>
+                                </Anns>
+                                <RefExpr Explicit="false" Mixfix="false">
+                                    <Anns>
+                                        <LocAnn Col="10" Length="1" Line="143" Loc="lib/function_toolkit.tex" Start="3555"/>
+                                    </Anns>
+                                    <ZName>
+                                        <Anns>
+                                            <LocAnn Col="10" Length="1" Line="143" Loc="lib/function_toolkit.tex" Start="3555"/>
+                                        </Anns>
+                                        <Word>f</Word>
+                                        <ZStrokeList/>
+                                    </ZName>
+                                    <ZExprList/>
+                                </RefExpr>
+                                <RefExpr Explicit="false" Mixfix="false">
+                                    <Anns>
+                                        <LocAnn Col="0" Length="9" Line="143" Loc="lib/function_toolkit.tex" Start="3545"/>
+                                    </Anns>
+                                    <ZName>
+                                        <Anns>
+                                            <LocAnn Col="0" Length="9" Line="143" Loc="lib/function_toolkit.tex" Start="3545"/>
+                                        </Anns>
+                                        <Word>disjoint _ </Word>
+                                        <ZStrokeList/>
+                                    </ZName>
+                                    <ZExprList/>
+                                </RefExpr>
+                            </MemPred>
+                            <ForallPred>
+                                <Anns>
+                                    <LocAnn Col="19" Length="55" Line="143" Loc="lib/function_toolkit.tex" Start="3564"/>
+                                    <ParenAnn>
+                                        <Anns>
+                                            <LocAnn Col="17" Length="59" Line="143" Loc="lib/function_toolkit.tex" Start="3562"/>
+                                        </Anns>
+                                    </ParenAnn>
+                                </Anns>
+                                <ZSchText>
+                                    <ZDeclList>
+                                        <VarDecl>
+                                            <Anns>
+                                                <LocAnn Col="33" Length="9" Line="143" Loc="lib/function_toolkit.tex" Start="3572"/>
+                                            </Anns>
+                                            <ZNameList>
+                                                <ZName>
+                                                    <Anns>
+                                                        <LocAnn Col="27" Length="1" Line="143" Loc="lib/function_toolkit.tex" Start="3572"/>
+                                                    </Anns>
+                                                    <Word>p</Word>
+                                                    <ZStrokeList/>
+                                                </ZName>
+                                                <ZName>
+                                                    <Anns>
+                                                        <LocAnn Col="31" Length="1" Line="143" Loc="lib/function_toolkit.tex" Start="3576"/>
+                                                    </Anns>
+                                                    <Word>q</Word>
+                                                    <ZStrokeList/>
+                                                </ZName>
+                                            </ZNameList>
+                                            <RefExpr Explicit="false" Mixfix="false">
+                                                <Anns>
+                                                    <LocAnn Col="35" Length="1" Line="143" Loc="lib/function_toolkit.tex" Start="3580"/>
+                                                </Anns>
+                                                <ZName>
+                                                    <Anns>
+                                                        <LocAnn Col="35" Length="1" Line="143" Loc="lib/function_toolkit.tex" Start="3580"/>
+                                                    </Anns>
+                                                    <Word>f</Word>
+                                                    <ZStrokeList/>
+                                                </ZName>
+                                                <ZExprList/>
+                                            </RefExpr>
+                                        </VarDecl>
+                                    </ZDeclList>
+                                    <MemPred Mixfix="true">
+                                        <Anns>
+                                            <LocAnn Col="39" Length="8" Line="143" Loc="lib/function_toolkit.tex" Start="3584"/>
+                                        </Anns>
+                                        <TupleExpr>
+                                            <ZExprList>
+                                                <RefExpr Explicit="false" Mixfix="false">
+                                                    <Anns>
+                                                        <LocAnn Col="39" Length="1" Line="143" Loc="lib/function_toolkit.tex" Start="3584"/>
+                                                    </Anns>
+                                                    <ZName>
+                                                        <Anns>
+                                                            <LocAnn Col="39" Length="1" Line="143" Loc="lib/function_toolkit.tex" Start="3584"/>
+                                                        </Anns>
+                                                        <Word>p</Word>
+                                                        <ZStrokeList/>
+                                                    </ZName>
+                                                    <ZExprList/>
+                                                </RefExpr>
+                                                <RefExpr Explicit="false" Mixfix="false">
+                                                    <Anns>
+                                                        <LocAnn Col="46" Length="1" Line="143" Loc="lib/function_toolkit.tex" Start="3591"/>
+                                                    </Anns>
+                                                    <ZName>
+                                                        <Anns>
+                                                            <LocAnn Col="46" Length="1" Line="143" Loc="lib/function_toolkit.tex" Start="3591"/>
+                                                        </Anns>
+                                                        <Word>q</Word>
+                                                        <ZStrokeList/>
+                                                    </ZName>
+                                                    <ZExprList/>
+                                                </RefExpr>
+                                            </ZExprList>
+                                        </TupleExpr>
+                                        <RefExpr Explicit="false" Mixfix="false">
+                                            <Anns>
+                                                <LocAnn Col="41" Length="4" Line="143" Loc="lib/function_toolkit.tex" Start="3586"/>
+                                            </Anns>
+                                            <ZName>
+                                                <Anns>
+                                                    <LocAnn Col="41" Length="4" Line="143" Loc="lib/function_toolkit.tex" Start="3586"/>
+                                                </Anns>
+                                                <Word> _ ≠ _ </Word>
+                                                <ZStrokeList/>
+                                            </ZName>
+                                            <ZExprList/>
+                                        </RefExpr>
+                                    </MemPred>
+                                </ZSchText>
+                                <MemPred Mixfix="true">
+                                    <Anns>
+                                        <LocAnn Col="63" Length="24" Line="143" Loc="lib/function_toolkit.tex" Start="3595"/>
+                                    </Anns>
+                                    <ApplExpr Mixfix="true">
+                                        <Anns>
+                                            <LocAnn Col="54" Length="12" Line="143" Loc="lib/function_toolkit.tex" Start="3595"/>
+                                        </Anns>
+                                        <RefExpr Explicit="false" Mixfix="false">
+                                            <Anns>
+                                                <LocAnn Col="54" Length="4" Line="143" Loc="lib/function_toolkit.tex" Start="3599"/>
+                                            </Anns>
+                                            <ZName>
+                                                <Anns>
+                                                    <LocAnn Col="54" Length="4" Line="143" Loc="lib/function_toolkit.tex" Start="3599"/>
+                                                </Anns>
+                                                <Word> _ ∩ _ </Word>
+                                                <ZStrokeList/>
+                                            </ZName>
+                                            <ZExprList/>
+                                        </RefExpr>
+                                        <TupleExpr>
+                                            <ZExprList>
+                                                <TupleSelExpr>
+                                                    <Anns>
+                                                        <LocAnn Col="51" Length="3" Line="143" Loc="lib/function_toolkit.tex" Start="3595"/>
+                                                    </Anns>
+                                                    <RefExpr Explicit="false" Mixfix="false">
+                                                        <Anns>
+                                                            <LocAnn Col="50" Length="1" Line="143" Loc="lib/function_toolkit.tex" Start="3595"/>
+                                                        </Anns>
+                                                        <ZName>
+                                                            <Anns>
+                                                                <LocAnn Col="50" Length="1" Line="143" Loc="lib/function_toolkit.tex" Start="3595"/>
+                                                            </Anns>
+                                                            <Word>p</Word>
+                                                            <ZStrokeList/>
+                                                        </ZName>
+                                                        <ZExprList/>
+                                                    </RefExpr>
+                                                    <ZNumeral Value="2">
+                                                        <Anns>
+                                                            <LocAnn Col="52" Length="1" Line="143" Loc="lib/function_toolkit.tex" Start="3597"/>
+                                                        </Anns>
+                                                    </ZNumeral>
+                                                </TupleSelExpr>
+                                                <TupleSelExpr>
+                                                    <Anns>
+                                                        <LocAnn Col="60" Length="3" Line="143" Loc="lib/function_toolkit.tex" Start="3604"/>
+                                                    </Anns>
+                                                    <RefExpr Explicit="false" Mixfix="false">
+                                                        <Anns>
+                                                            <LocAnn Col="59" Length="1" Line="143" Loc="lib/function_toolkit.tex" Start="3604"/>
+                                                        </Anns>
+                                                        <ZName>
+                                                            <Anns>
+                                                                <LocAnn Col="59" Length="1" Line="143" Loc="lib/function_toolkit.tex" Start="3604"/>
+                                                            </Anns>
+                                                            <Word>q</Word>
+                                                            <ZStrokeList/>
+                                                        </ZName>
+                                                        <ZExprList/>
+                                                    </RefExpr>
+                                                    <ZNumeral Value="2">
+                                                        <Anns>
+                                                            <LocAnn Col="61" Length="1" Line="143" Loc="lib/function_toolkit.tex" Start="3606"/>
+                                                        </Anns>
+                                                    </ZNumeral>
+                                                </TupleSelExpr>
+                                            </ZExprList>
+                                        </TupleExpr>
+                                    </ApplExpr>
+                                    <SetExpr>
+                                        <ZExprList>
+                                            <RefExpr Explicit="false" Mixfix="false">
+                                                <Anns>
+                                                    <LocAnn Col="65" Length="9" Line="143" Loc="lib/function_toolkit.tex" Start="3610"/>
+                                                </Anns>
+                                                <ZName>
+                                                    <Anns>
+                                                        <LocAnn Col="65" Length="9" Line="143" Loc="lib/function_toolkit.tex" Start="3610"/>
+                                                    </Anns>
+                                                    <Word>∅</Word>
+                                                    <ZStrokeList/>
+                                                </ZName>
+                                                <ZExprList/>
+                                            </RefExpr>
+                                        </ZExprList>
+                                    </SetExpr>
+                                </MemPred>
+                            </ForallPred>
+                        </IffPred>
+                    </ForallPred>
+                </ZSchText>
+            </AxPara>
+            <NarrPara>
+                <Anns>
+                    <LocAnn Col="12" Length="143" Line="144" Loc="lib/function_toolkit.tex" Start="3635"/>
+                </Anns>
+                <Content>
+
+A labelled family of sets is disjoint precisely when any
+distinct pair yields sets with no members in common.
+
+\ssclause{Partitions}
+
+</Content>
+            </NarrPara>
+            <OptempPara Cat="Relation">
+                <Anns>
+                    <LocAnn Col="0" Length="52" Line="152" Loc="lib/function_toolkit.tex" Start="3810"/>
+                </Anns>
+                <Operand List="false"/>
+                <Operator>
+                    <Anns>
+                        <LocAnn Col="14" Length="10" Line="153" Loc="lib/function_toolkit.tex" Start="3837"/>
+                    </Anns>
+                    <Word>partition</Word>
+                </Operator>
+                <Operand List="false"/>
+            </OptempPara>
+            <NarrPara>
+                <Anns>
+                    <LocAnn Col="9" Length="4" Line="154" Loc="lib/function_toolkit.tex" Start="3862"/>
+                </Anns>
+                <Content>
+
+</Content>
+            </NarrPara>
+            <AxPara Box="AxBox">
+                <Anns>
+                    <LocAnn Col="0" Length="203" Line="156" Loc="lib/function_toolkit.tex" Start="3866"/>
+                </Anns>
+                <ZNameList>
+                    <ZName>
+                        <Anns>
+                            <LocAnn Col="15" Length="1" Line="156" Loc="lib/function_toolkit.tex" Start="3881"/>
+                        </Anns>
+                        <Word>L</Word>
+                        <ZStrokeList/>
+                    </ZName>
+                    <ZName>
+                        <Anns>
+                            <LocAnn Col="17" Length="1" Line="156" Loc="lib/function_toolkit.tex" Start="3883"/>
+                        </Anns>
+                        <Word>X</Word>
+                        <ZStrokeList/>
+                    </ZName>
+                </ZNameList>
+                <ZSchText>
+                    <ZDeclList>
+                        <VarDecl>
+                            <Anns>
+                                <LocAnn Col="17" Line="157" Loc="lib/function_toolkit.tex"/>
+                            </Anns>
+                            <ZNameList>
+                                <ZName>
+                                    <Anns>
+                                        <LocAnn Col="14" Line="157" Loc="lib/function_toolkit.tex"/>
+                                    </Anns>
+                                    <Word> _ partition _ </Word>
+                                    <ZStrokeList/>
+                                </ZName>
+                            </ZNameList>
+                            <RefExpr Explicit="true" Mixfix="true">
+                                <Anns>
+                                    <LocAnn Col="39" Length="31" Line="157" Loc="lib/function_toolkit.tex" Start="3908"/>
+                                </Anns>
+                                <ZName>
+                                    <Anns>
+                                        <LocAnn Col="39" Length="4" Line="157" Loc="lib/function_toolkit.tex" Start="3926"/>
+                                    </Anns>
+                                    <Word> _ ↔ _ </Word>
+                                    <ZStrokeList/>
+                                </ZName>
+                                <ZExprList>
+                                    <RefExpr Explicit="true" Mixfix="true">
+                                        <Anns>
+                                            <LocAnn Col="23" Length="15" Line="157" Loc="lib/function_toolkit.tex" Start="3908"/>
+                                            <ParenAnn>
+                                                <Anns>
+                                                    <LocAnn Col="19" Length="19" Line="157" Loc="lib/function_toolkit.tex" Start="3906"/>
+                                                </Anns>
+                                            </ParenAnn>
+                                        </Anns>
+                                        <ZName>
+                                            <Anns>
+                                                <LocAnn Col="23" Length="4" Line="157" Loc="lib/function_toolkit.tex" Start="3910"/>
+                                            </Anns>
+                                            <Word> _ ↔ _ </Word>
+                                            <ZStrokeList/>
+                                        </ZName>
+                                        <ZExprList>
+                                            <RefExpr Explicit="false" Mixfix="false">
+                                                <Anns>
+                                                    <LocAnn Col="21" Length="1" Line="157" Loc="lib/function_toolkit.tex" Start="3908"/>
+                                                </Anns>
+                                                <ZName>
+                                                    <Anns>
+                                                        <LocAnn Col="21" Length="1" Line="157" Loc="lib/function_toolkit.tex" Start="3908"/>
+                                                    </Anns>
+                                                    <Word>L</Word>
+                                                    <ZStrokeList/>
+                                                </ZName>
+                                                <ZExprList/>
+                                            </RefExpr>
+                                            <PowerExpr>
+                                                <Anns>
+                                                    <LocAnn Col="28" Length="8" Line="157" Loc="lib/function_toolkit.tex" Start="3915"/>
+                                                </Anns>
+                                                <RefExpr Explicit="false" Mixfix="false">
+                                                    <Anns>
+                                                        <LocAnn Col="35" Length="1" Line="157" Loc="lib/function_toolkit.tex" Start="3922"/>
+                                                    </Anns>
+                                                    <ZName>
+                                                        <Anns>
+                                                            <LocAnn Col="35" Length="1" Line="157" Loc="lib/function_toolkit.tex" Start="3922"/>
+                                                        </Anns>
+                                                        <Word>X</Word>
+                                                        <ZStrokeList/>
+                                                    </ZName>
+                                                    <ZExprList/>
+                                                </RefExpr>
+                                            </PowerExpr>
+                                        </ZExprList>
+                                    </RefExpr>
+                                    <PowerExpr>
+                                        <Anns>
+                                            <LocAnn Col="44" Length="8" Line="157" Loc="lib/function_toolkit.tex" Start="3931"/>
+                                        </Anns>
+                                        <RefExpr Explicit="false" Mixfix="false">
+                                            <Anns>
+                                                <LocAnn Col="51" Length="1" Line="157" Loc="lib/function_toolkit.tex" Start="3938"/>
+                                            </Anns>
+                                            <ZName>
+                                                <Anns>
+                                                    <LocAnn Col="51" Length="1" Line="157" Loc="lib/function_toolkit.tex" Start="3938"/>
+                                                </Anns>
+                                                <Word>X</Word>
+                                                <ZStrokeList/>
+                                            </ZName>
+                                            <ZExprList/>
+                                        </RefExpr>
+                                    </PowerExpr>
+                                </ZExprList>
+                            </RefExpr>
+                        </VarDecl>
+                    </ZDeclList>
+                    <ForallPred>
+                        <Anns>
+                            <LocAnn Col="0" Length="106" Line="159" Loc="lib/function_toolkit.tex" Start="3949"/>
+                        </Anns>
+                        <ZSchText>
+                            <ZDeclList>
+                                <VarDecl>
+                                    <Anns>
+                                        <LocAnn Col="10" Length="19" Line="159" Loc="lib/function_toolkit.tex" Start="3957"/>
+                                    </Anns>
+                                    <ZNameList>
+                                        <ZName>
+                                            <Anns>
+                                                <LocAnn Col="8" Length="1" Line="159" Loc="lib/function_toolkit.tex" Start="3957"/>
+                                            </Anns>
+                                            <Word>f</Word>
+                                            <ZStrokeList/>
+                                        </ZName>
+                                    </ZNameList>
+                                    <RefExpr Explicit="true" Mixfix="true">
+                                        <Anns>
+                                            <LocAnn Col="14" Length="15" Line="159" Loc="lib/function_toolkit.tex" Start="3961"/>
+                                        </Anns>
+                                        <ZName>
+                                            <Anns>
+                                                <LocAnn Col="14" Length="4" Line="159" Loc="lib/function_toolkit.tex" Start="3963"/>
+                                            </Anns>
+                                            <Word> _ ↔ _ </Word>
+                                            <ZStrokeList/>
+                                        </ZName>
+                                        <ZExprList>
+                                            <RefExpr Explicit="false" Mixfix="false">
+                                                <Anns>
+                                                    <LocAnn Col="12" Length="1" Line="159" Loc="lib/function_toolkit.tex" Start="3961"/>
+                                                </Anns>
+                                                <ZName>
+                                                    <Anns>
+                                                        <LocAnn Col="12" Length="1" Line="159" Loc="lib/function_toolkit.tex" Start="3961"/>
+                                                    </Anns>
+                                                    <Word>L</Word>
+                                                    <ZStrokeList/>
+                                                </ZName>
+                                                <ZExprList/>
+                                            </RefExpr>
+                                            <PowerExpr>
+                                                <Anns>
+                                                    <LocAnn Col="19" Length="8" Line="159" Loc="lib/function_toolkit.tex" Start="3968"/>
+                                                </Anns>
+                                                <RefExpr Explicit="false" Mixfix="false">
+                                                    <Anns>
+                                                        <LocAnn Col="26" Length="1" Line="159" Loc="lib/function_toolkit.tex" Start="3975"/>
+                                                    </Anns>
+                                                    <ZName>
+                                                        <Anns>
+                                                            <LocAnn Col="26" Length="1" Line="159" Loc="lib/function_toolkit.tex" Start="3975"/>
+                                                        </Anns>
+                                                        <Word>X</Word>
+                                                        <ZStrokeList/>
+                                                    </ZName>
+                                                    <ZExprList/>
+                                                </RefExpr>
+                                            </PowerExpr>
+                                        </ZExprList>
+                                    </RefExpr>
+                                </VarDecl>
+                                <VarDecl>
+                                    <Anns>
+                                        <LocAnn Col="32" Length="12" Line="159" Loc="lib/function_toolkit.tex" Start="3979"/>
+                                    </Anns>
+                                    <ZNameList>
+                                        <ZName>
+                                            <Anns>
+                                                <LocAnn Col="30" Length="1" Line="159" Loc="lib/function_toolkit.tex" Start="3979"/>
+                                            </Anns>
+                                            <Word>a</Word>
+                                            <ZStrokeList/>
+                                        </ZName>
+                                    </ZNameList>
+                                    <PowerExpr>
+                                        <Anns>
+                                            <LocAnn Col="34" Length="8" Line="159" Loc="lib/function_toolkit.tex" Start="3983"/>
+                                        </Anns>
+                                        <RefExpr Explicit="false" Mixfix="false">
+                                            <Anns>
+                                                <LocAnn Col="41" Length="1" Line="159" Loc="lib/function_toolkit.tex" Start="3990"/>
+                                            </Anns>
+                                            <ZName>
+                                                <Anns>
+                                                    <LocAnn Col="41" Length="1" Line="159" Loc="lib/function_toolkit.tex" Start="3990"/>
+                                                </Anns>
+                                                <Word>X</Word>
+                                                <ZStrokeList/>
+                                            </ZName>
+                                            <ZExprList/>
+                                        </RefExpr>
+                                    </PowerExpr>
+                                </VarDecl>
+                            </ZDeclList>
+                        </ZSchText>
+                        <IffPred>
+                            <Anns>
+                                <LocAnn Col="15" Length="60" Line="160" Loc="lib/function_toolkit.tex" Start="3995"/>
+                            </Anns>
+                            <MemPred Mixfix="true">
+                                <Anns>
+                                    <LocAnn Col="0" Length="14" Line="160" Loc="lib/function_toolkit.tex" Start="3995"/>
+                                </Anns>
+                                <TupleExpr>
+                                    <ZExprList>
+                                        <RefExpr Explicit="false" Mixfix="false">
+                                            <Anns>
+                                                <LocAnn Col="0" Length="1" Line="160" Loc="lib/function_toolkit.tex" Start="3995"/>
+                                            </Anns>
+                                            <ZName>
+                                                <Anns>
+                                                    <LocAnn Col="0" Length="1" Line="160" Loc="lib/function_toolkit.tex" Start="3995"/>
+                                                </Anns>
+                                                <Word>f</Word>
+                                                <ZStrokeList/>
+                                            </ZName>
+                                            <ZExprList/>
+                                        </RefExpr>
+                                        <RefExpr Explicit="false" Mixfix="false">
+                                            <Anns>
+                                                <LocAnn Col="13" Length="1" Line="160" Loc="lib/function_toolkit.tex" Start="4008"/>
+                                            </Anns>
+                                            <ZName>
+                                                <Anns>
+                                                    <LocAnn Col="13" Length="1" Line="160" Loc="lib/function_toolkit.tex" Start="4008"/>
+                                                </Anns>
+                                                <Word>a</Word>
+                                                <ZStrokeList/>
+                                            </ZName>
+                                            <ZExprList/>
+                                        </RefExpr>
+                                    </ZExprList>
+                                </TupleExpr>
+                                <RefExpr Explicit="false" Mixfix="false">
+                                    <Anns>
+                                        <LocAnn Col="2" Length="10" Line="160" Loc="lib/function_toolkit.tex" Start="3997"/>
+                                    </Anns>
+                                    <ZName>
+                                        <Anns>
+                                            <LocAnn Col="2" Length="10" Line="160" Loc="lib/function_toolkit.tex" Start="3997"/>
+                                        </Anns>
+                                        <Word> _ partition _ </Word>
+                                        <ZStrokeList/>
+                                    </ZName>
+                                    <ZExprList/>
+                                </RefExpr>
+                            </MemPred>
+                            <AndPred And="Wedge">
+                                <Anns>
+                                    <LocAnn Col="32" Length="40" Line="160" Loc="lib/function_toolkit.tex" Start="4015"/>
+                                </Anns>
+                                <MemPred Mixfix="true">
+                                    <Anns>
+                                        <LocAnn Col="20" Length="11" Line="160" Loc="lib/function_toolkit.tex" Start="4015"/>
+                                    </Anns>
+                                    <RefExpr Explicit="false" Mixfix="false">
+                                        <Anns>
+                                            <LocAnn Col="30" Length="1" Line="160" Loc="lib/function_toolkit.tex" Start="4025"/>
+                                        </Anns>
+                                        <ZName>
+                                            <Anns>
+                                                <LocAnn Col="30" Length="1" Line="160" Loc="lib/function_toolkit.tex" Start="4025"/>
+                                            </Anns>
+                                            <Word>f</Word>
+                                            <ZStrokeList/>
+                                        </ZName>
+                                        <ZExprList/>
+                                    </RefExpr>
+                                    <RefExpr Explicit="false" Mixfix="false">
+                                        <Anns>
+                                            <LocAnn Col="20" Length="9" Line="160" Loc="lib/function_toolkit.tex" Start="4015"/>
+                                        </Anns>
+                                        <ZName>
+                                            <Anns>
+                                                <LocAnn Col="20" Length="9" Line="160" Loc="lib/function_toolkit.tex" Start="4015"/>
+                                            </Anns>
+                                            <Word>disjoint _ </Word>
+                                            <ZStrokeList/>
+                                        </ZName>
+                                        <ZExprList/>
+                                    </RefExpr>
+                                </MemPred>
+                                <MemPred Mixfix="true">
+                                    <Anns>
+                                        <LocAnn Col="57" Length="22" Line="160" Loc="lib/function_toolkit.tex" Start="4033"/>
+                                    </Anns>
+                                    <ApplExpr Mixfix="false">
+                                        <Anns>
+                                            <LocAnn Col="38" Length="16" Line="160" Loc="lib/function_toolkit.tex" Start="4033"/>
+                                        </Anns>
+                                        <RefExpr Explicit="false" Mixfix="false">
+                                            <Anns>
+                                                <LocAnn Col="38" Length="7" Line="160" Loc="lib/function_toolkit.tex" Start="4033"/>
+                                            </Anns>
+                                            <ZName>
+                                                <Anns>
+                                                    <LocAnn Col="38" Length="7" Line="160" Loc="lib/function_toolkit.tex" Start="4033"/>
+                                                </Anns>
+                                                <Word>⋃</Word>
+                                                <ZStrokeList/>
+                                            </ZName>
+                                            <ZExprList/>
+                                        </RefExpr>
+                                        <ApplExpr Mixfix="false">
+                                            <Anns>
+                                                <LocAnn Col="48" Length="6" Line="160" Loc="lib/function_toolkit.tex" Start="4043"/>
+                                                <ParenAnn>
+                                                    <Anns>
+                                                        <LocAnn Col="46" Length="10" Line="160" Loc="lib/function_toolkit.tex" Start="4041"/>
+                                                    </Anns>
+                                                </ParenAnn>
+                                            </Anns>
+                                            <RefExpr Explicit="false" Mixfix="false">
+                                                <Anns>
+                                                    <LocAnn Col="48" Length="4" Line="160" Loc="lib/function_toolkit.tex" Start="4043"/>
+                                                </Anns>
+                                                <ZName>
+                                                    <Anns>
+                                                        <LocAnn Col="48" Length="4" Line="160" Loc="lib/function_toolkit.tex" Start="4043"/>
+                                                    </Anns>
+                                                    <Word>ran</Word>
+                                                    <ZStrokeList/>
+                                                </ZName>
+                                                <ZExprList/>
+                                            </RefExpr>
+                                            <RefExpr Explicit="false" Mixfix="false">
+                                                <Anns>
+                                                    <LocAnn Col="53" Length="1" Line="160" Loc="lib/function_toolkit.tex" Start="4048"/>
+                                                </Anns>
+                                                <ZName>
+                                                    <Anns>
+                                                        <LocAnn Col="53" Length="1" Line="160" Loc="lib/function_toolkit.tex" Start="4048"/>
+                                                    </Anns>
+                                                    <Word>f</Word>
+                                                    <ZStrokeList/>
+                                                </ZName>
+                                                <ZExprList/>
+                                            </RefExpr>
+                                        </ApplExpr>
+                                    </ApplExpr>
+                                    <SetExpr>
+                                        <ZExprList>
+                                            <RefExpr Explicit="false" Mixfix="false">
+                                                <Anns>
+                                                    <LocAnn Col="59" Length="1" Line="160" Loc="lib/function_toolkit.tex" Start="4054"/>
+                                                </Anns>
+                                                <ZName>
+                                                    <Anns>
+                                                        <LocAnn Col="59" Length="1" Line="160" Loc="lib/function_toolkit.tex" Start="4054"/>
+                                                    </Anns>
+                                                    <Word>a</Word>
+                                                    <ZStrokeList/>
+                                                </ZName>
+                                                <ZExprList/>
+                                            </RefExpr>
+                                        </ZExprList>
+                                    </SetExpr>
+                                </MemPred>
+                            </AndPred>
+                        </IffPred>
+                    </ForallPred>
+                </ZSchText>
+            </AxPara>
+            <NarrPara>
+                <Anns>
+                    <LocAnn Col="12" Length="152" Line="161" Loc="lib/function_toolkit.tex" Start="4069"/>
+                </Anns>
+                <Content>
+
+A labelled family of sets $f$ partitions a set $a$
+precisely when $f$ is disjoint and the union of all the sets in $f$
+is $a$.
+
+\end{document}
+</Content>
+            </NarrPara>
+        </ZParaList>
+    </ZSect>
+</Spec>
+

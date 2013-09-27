@@ -1,0 +1,200 @@
+\documentclass{article}
+\usepackage{ltcadiz}
+\begin{document}
+
+\section{Introduction}
+
+The prelude is a Z section.
+It is an implicit parent of every other section.
+It assists in defining the meaning of number literal expressions
+(see 12.2.6.9),
+and the list arguments of operators
+(see 12.2.12).
+via syntactic transformation rules later in this International Standard.
+The prelude is presented here using the mathematical lexis.
+
+\section{Formal definition of prelude}
+
+\begin{zsection}
+\SECTION prelude
+\end{zsection}
+
+The section is called $prelude$ and has no parents.
+
+% Mark-up directives for core language symbols are as follows.
+%
+%%Zchar	\{ U+007B
+%%Zchar	\} U+007D
+%%Zinchar \where U+007C
+%%Zchar \Delta U+0394
+%%Zchar \Xi U+039E
+%%Zprechar \theta U+03B8
+%%Zprechar \lambda U+03BB
+%%Zprechar \mu U+03BC
+%%Zchar \ldata U+27EA
+%%Zchar \rdata U+27EB
+%%Zchar \lblot U+2989
+%%Zchar \rblot U+298A
+%%Zchar \vdash U+22A2
+%%Zinchar \land U+2227
+%%Zinchar \lor U+2228
+%%Zinchar \implies U+21D2
+%%Zinchar \iff U+21D4
+%%Zprechar \lnot U+00AC
+%%Zprechar \forall U+2200
+%%Zprechar \exists U+2203
+%%Zinchar \in U+2208
+%%Zinchar \spot U+2981
+%%Zinchar \hide U+29F9
+%%Zinchar \project U+2A21
+%%Zinchar \semi U+2A1F
+%%Zinchar \pipe U+2A20
+%%Zpreword \IF if
+%%Zinword \THEN then
+%%Zinword \ELSE else
+%%Zpreword \LET let
+%%Zpreword \pre pre
+%%Zinword \function function
+%%Zinword \generic generic
+%%Zinword \relation relation
+%%Zinword \leftassoc leftassoc
+%%Zinword \rightassoc rightassoc
+%%Zinword \listarg {,}{,}
+%%Zinword \varg \_
+%%Zprechar \power U+2119
+%%Zinchar \cross U+00D7
+%%Zchar \arithmos U-0001D538
+%%Zchar \nat U+2115
+
+% Mark-up directives for the rest of the Greek alphabet are as follows.
+%
+%%Zchar \alpha U+03B1
+%%Zchar \beta U+03B2
+%%Zchar \gamma U+03B3
+%%Zchar \delta U+03B4
+%%Zchar \epsilon U+03B5
+%%Zchar \zeta U+03B6
+%%Zchar \eta U+03B7
+%%Zchar \iota U+03B9
+%%Zchar \kappa U+03BA
+%%Zchar \nu U+03BD
+%%Zchar \xi U+03BE
+%%Zchar \pi U+03C0
+%%Zchar \rho U+03C1
+%%Zchar \sigma U+03C3
+%%Zchar \tau U+03C4
+%%Zchar \upsilon U+03C5
+%%Zchar \phi U+03C6
+%%Zchar \chi U+03C7
+%%Zchar \psi U+03C8
+%%Zchar \omega U+03C9
+%%Zchar \Gamma U+0393
+%%Zchar \Theta U+0398
+%%Zchar \Lambda U+039B
+%%Zchar \Pi U+03A0
+%%Zchar \Sigma U+03A3
+%%Zchar \Upsilon U+03A5
+%%Zchar \Phi U+03A6
+%%Zchar \Psi U+03A8
+%%Zchar \Omega U+03A9
+
+% Extra mark-up directives for vertical spacing.
+%
+%%Zword \Also \\
+%%Zword \ALSO \\
+%%Zword \zBreak \\
+%%Zword \ZBREAK \\
+
+% Extra mark-up for type colon for typechecked terms
+%
+%%Zinword \typecolon U+FF1A
+
+NOTE 1
+\begin{zed}
+\generic (\power \_)
+\end{zed}
+$\power$ has already been introduced in this International Standard
+(see 8.3),
+so this operator template is not necessary.
+However, it may be a convenient way of introducing to a tool
+the association of $\power$ with the appropriate token and precedence,
+especially in preparation for the toolkit's $\power_1$ (see B.3.6).
+A tool may introduce $\cross$ here similarly,
+that being the only other Z core notation whose precedence
+lies amongst those of user-defined operators.
+
+%\begin{zed}
+%\generic 8 \rightassoc (\_ \cross \_)
+%\end{zed}
+
+\begin{zed}
+[\arithmos]
+\end{zed}
+
+The given type $\arithmos$, pronounced ``arithmos'', provides
+a supply of values for use in specifying number systems.
+
+\begin{axdef}
+\nat : \power \arithmos
+\end{axdef}
+
+The set of natural numbers, $\nat$, is a subset of $\arithmos$.
+
+%the original definition doesn't seem right... should be an axdef?
+%Changed by Tim Miller
+%\begin{zed}
+%number_literal_0: \nat
+%number_literal_1: \nat
+%\end{zed}
+
+\begin{axdef}
+  number\_literal\_0 : \nat\\
+  number\_literal\_1 : \nat
+\end{axdef}
+
+$0$ and $1$ are natural numbers, all uses of which are transformed
+to references to these declarations (see 12.2.6.9).
+
+\begin{zed}
+\function 30 \leftassoc (\_ + \_)
+\end{zed}
+
+\begin{axdef}
+\_ + \_ : \power ((\arithmos \cross \arithmos) \cross \arithmos)
+\where
+\forall m, n: \nat @ \exists_1 p: ( \_ + \_ ) @ p.1 = (m, n)\\
+\forall m, n: \nat @ m + n \in \nat\\
+\forall m, n: \nat | m + 1 = n + 1 @ m = n\\
+\forall n: \nat @ \lnot n + 1 = 0\\
+\forall w: \power \nat | 0 \in w \land (\forall y: w @ y + 1 \in w) @ w = \nat\\
+\forall m: \nat @ m + 0 = m\\
+\forall m, n: \nat @ m + (n + 1) = (m + n) + 1
+\end{axdef}
+
+Addition is defined here for natural numbers.
+(It is extended to integers in the mathematical toolkit,
+annex~B.)
+Addition is a function.
+The sum of two natural numbers is a natural number.
+The operation of adding 1 is an injection on natural numbers,
+and produces a result different from 0.
+There is an induction constraint that all natural numbers are
+either 0 or are formed by adding 1 to another natural number.
+0 is an identity of addition.
+Addition is associative.
+
+%NOTE 2~~The definition of addition is equivalent to the following definition,
+%which is written using notation from the mathematical toolkit
+%(and so is unsuitable as the normative definition here).
+%\begin{axdef}
+%\_~+~\_ : \arithmos \cross \arithmos \rel \arithmos
+%\where
+%(\nat \cross \nat) \dres (\_~+~\_) \in (\nat \cross \nat) \fun \nat\\
+%\lambda n : \nat @ n + 1 \in \nat \inj \nat\\
+%disjoint \langle\{0\}, \{n : \nat @ n+1\}\rangle\\
+%\forall w : \power \nat | \{0\} \cup \{n:w @ n+1\} \subseteq w @ w = \nat\\
+%\forall m : \nat @ m + 0 = m\\
+%\forall m, n : \nat @ m + (n + 1) = m + n + 1\\
+%\end{axdef}
+
+\end{document}

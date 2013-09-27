@@ -1,0 +1,405 @@
+\documentclass{article}
+\usepackage{czt}
+
+\parindent 0pt
+\parskip 1ex plus 3pt
+
+%% Syntax within rules.
+
+\newcommand{\sexprUnfoldsTo}{\mathrel{\leadsto_{se}}}
+\newcommand{\declListUnfoldsTo}{\mathrel{\leadsto_d}}
+
+
+\title{Unfolding Rules for ZLive}
+\author{Mark Utting}
+\begin{document}
+\maketitle
+
+
+This document defines some simple rules for unfolding expressions 
+and predicates prior to evaluating them in ZLive.  The rules are
+applied repeatedly to each expression/predicate until no more rules
+match, then the subexpressions are transformed.  So it is a top-down
+traversal of the syntax tree.  We must be careful not to write rules
+that create infinite loops of rewritings (eg. generating larger and
+larger terms).
+
+\begin{zsection}
+  \SECTION ZLivePreprocess \parents expansion\_rules, simplification\_rules
+\end{zsection}
+
+\begin{zedjoker}{ExprList} ExprList \end{zedjoker}
+
+\section{Logic Rules}
+
+\begin{zedrule}{implication}
+   (P1 \implies P2) \iff (\lnot P1) \lor P2
+\end{zedrule}
+
+\begin{zedrule}{equivalence}
+   (P1 \iff P2) \iff (P1 \land P2) \lor (\lnot P1 \land \lnot P2)
+\end{zedrule}
+
+
+\section{Rules from the sets\_toolkit}
+
+We do not unfold $\emptyset$ to $\{\}$, because it is not possible
+to preserve the type information (one cannot write $\{\}[T]$).
+So this rule unfolds it to an easily-evaluated empty set that
+preserves the type information.  
+NOTE: this used to be unfolded to $\{x:\{\} | x \in E\}$, but
+now that optimization within sets is done better, it is unfolded
+to the usual definition in the standard.  So this rule could now
+probably be omitted and done by the unfolddefn rule below.
+\begin{zedrule}{emptysetTyped}
+   \emptyset[E] = \{x:E | false\}  
+\end{zedrule}
+
+TODO: $\power_1$ ?
+
+This next batch of rules unfolds the various kinds of relation
+and function spaces into a term that is type equivalent, but also
+preserves several flags that tell us what kind of function space
+it was (isFun, isTotal etc.).  These flags are meaningful to ZLive, 
+even though they are not used in the body of the LET expressions.
+The pretty-printer within ZLive converts these special LET terms
+back into function space operators, so it may appear that these rules
+are not working even though they are.
+
+\begin{zedrule}{rel}
+   E1 \rel E2 = (\LET isFun==0 @ \power (E1 \cross E2))
+\end{zedrule}
+
+\begin{zedrule}{pfun}
+   E1 \pfun E2 = (\LET isFun==1 @ \power (E1 \cross E2))
+\end{zedrule}
+
+\begin{zedrule}{fun}
+   E1 \fun E2 = (\LET isFun==1;isTotal==1 @ \power (E1 \cross E2))
+\end{zedrule}
+
+\begin{zedrule}{pinj}
+   E1 \pinj E2 = (\LET isFun==1;isInj==1 @ \power (E1 \cross E2))
+\end{zedrule}
+
+\begin{zedrule}{inj}
+   E1 \inj E2 = (\LET isFun==1;isTotal==1;isInj==1 @ \power (E1 \cross E2))
+\end{zedrule}
+
+\begin{zedrule}{psurj}
+   E1 \psurj E2 = (\LET isFun==1;isOnto==1 @ \power (E1 \cross E2))
+\end{zedrule}
+
+\begin{zedrule}{surj}
+   E1 \surj E2 = (\LET isFun==1;isTotal==1; isOnto==1 @ \power (E1 \cross E2))
+\end{zedrule}
+
+\begin{zedrule}{bij}
+   E1 \bij E2 = (\LET isFun==1;isTotal==1;isOnto==1;isInj==1 
+                  @ \power (E1 \cross E2))
+\end{zedrule}
+
+We treat the finite mappings the same as the infinite ones,
+because the current implementation of RelSet in ZLive
+throws an exception for all infinite relations/functions.
+\begin{zedrule}{ffun}
+   E1 \ffun E2 = (\LET isFun==1 @ \power (E1 \cross E2))
+\end{zedrule}
+
+\begin{zedrule}{finj}
+   E1 \finj E2 = (\LET isFun==1; isInj==1 @ \power (E1 \cross E2))
+\end{zedrule}
+
+
+
+\begin{zedrule}{intersection}
+   E1 \cap E2 = \{x:E1 | x \in E2\}
+\end{zedrule}
+
+\begin{zedrule}{setminus}
+   E1 \setminus E2 = \{x:E1 | x \notin E2\}
+\end{zedrule}
+
+\begin{zedrule}{symdiff}
+  E1 :: \power E
+\derives
+   E1 \symdiff E2 = \{ x:E | \lnot (x \in E1 \iff x \in E2) \}
+\end{zedrule}
+
+TODO: it might be better to make $\subseteq$ into a primitive constraint?
+This did unfold to  $(\forall x:E1 @ x \in E2)$, but the membership seems
+better.
+
+\begin{zedrule}{subseteq}
+   E1 \subseteq E2 \iff E1 \in \power E2
+\end{zedrule}
+
+\begin{zedrule}{subset}
+   E1 \subset E2 \iff E1 \subseteq E2 \land E1 \neq E2
+\end{zedrule}
+
+Some rules for easy cases of $\bigcup$.
+\begin{zedrule}{genunion1}
+   \bigcup \{E\} = E
+\end{zedrule}
+
+TODO: we really want a recursive rule here,
+but we need an ExprList joker for that.
+\begin{zedrule}{genunion2}
+   \bigcup \{E1,E2\} = E1 \cup E2
+\end{zedrule}
+\begin{zedrule}{genunion3}
+   \bigcup \{E1,E2,E3\} = E1 \cup E2 \cup E3
+\end{zedrule}
+
+A general rule for $\bigcup$.
+The right-hand side will be evaluable after we have implemented
+some reordering optimizations. 
+\begin{zedrule}{genunion}
+   E :: \power \power E2
+\derives
+   \bigcup E = \{s:E; x:E2 | x \in s @ x\}
+\end{zedrule}
+
+This right-hand side will not be evaluable in general,
+unless the base type $E2$ is small.  We might have to
+implement $\bigcap$ as a primitive?
+\begin{zedrule}{genintersection}
+   E :: \power \power E2
+\derives
+   \bigcap E = \{x:E2 | (\forall s:E @ x \in s) @ x\}
+\end{zedrule}
+
+
+\section{Rules for Relations}
+
+\begin{zedrule}{firstdef}
+   first~ E = E.1
+\end{zedrule}
+
+\begin{zedrule}{seconddef}
+   second~ E = E.2
+\end{zedrule}
+
+\begin{zedrule}{maplet}
+   E1 \mapsto E2 = (E1,E2)
+\end{zedrule}
+
+\begin{zedrule}{domain}
+   \dom E = \{x:E @ x.1\}
+\end{zedrule}
+
+\begin{zedrule}{range}
+   \ran E = \{x:E @ x.2\}
+\end{zedrule}
+
+\begin{zedrule}{identity}
+   \id E = \{x:E @ (x,x)\}
+\end{zedrule}
+
+\begin{zedrule}{relcomp}
+   E1 \comp E2 = \{r1:E1; r2:E2 | r1.2=r2.1 @ (r1.1,r2.2)\}
+\end{zedrule}
+
+\begin{zedrule}{funccomp}
+   E1 \circ E2 = \{r1:E1; r2:E2 | r2.2=r1.1 @ (r2.1,r1.2)\}
+\end{zedrule}
+
+\begin{zedrule}{domainrestriction}
+   E1 \dres E2 = \{r:E2 | r.1 \in E1\}
+\end{zedrule}
+
+\begin{zedrule}{rangerestriction}
+   E1 \rres E2 = \{r:E1 | r.2 \in E2\}
+\end{zedrule}
+
+\begin{zedrule}{domainsubtraction}
+   E1 \ndres E2 = \{r:E2 | r.1 \notin E1\}
+\end{zedrule}
+
+\begin{zedrule}{rangesubtraction}
+   E1 \nrres E2 = \{r:E1 | r.2 \notin E2\}
+\end{zedrule}
+
+\begin{zedrule}{inverse}
+   E1 \inv = \{r:E1 @ (r.2,r.1)\}
+\end{zedrule}
+
+\begin{zedrule}{relimage}
+   E1 \limg E2 \rimg = \{r:E1 | r.1 \in E2 @ r.2\}
+\end{zedrule}
+
+\begin{zedrule}{reloverride}
+   E1 \oplus E2 = ((\dom E2) \ndres E1) \cup E2
+\end{zedrule}
+
+TODO: transitive closure and reflexive transitive closure.
+
+
+\section{Unfolding Definitions}
+
+Next, we try unfolding simple definitions.
+(This must at least come after the $\emptyset$ rule above,
+otherwise the definition of emptyset in the sets\_toolkit
+gets used instead of our simpler unfold rule).
+
+\begin{zedrule}{unfolddefn1}
+  v \hasDefn E2
+\derives
+   v = E2
+\end{zedrule}
+
+\begin{zedrule}{unfolddefn2}
+  v [ExprList] \hasDefn E2
+\derives
+   v [ExprList] = E2
+\end{zedrule}
+
+
+\section{Rules for Functions}
+
+TODO: generalise these to work on more complex decllists.
+(We must calculate characteristic tuples).
+\begin{zedrule}{lambda}
+   (\lambda v:E @ E2) = \{v:E @ (v,E2) \}
+\end{zedrule}
+\begin{zedrule}{lambda2}
+   (\lambda v1:E1; v2:E2 @ E3) = \{v1:E1; v2:E2 @ ((v1,v2),E3) \}
+\end{zedrule}
+
+%% NOTE: We do not include this rule, because it causes TOO MANY
+%% applications to be unfolded.  Instead, ZLive does this
+%% rule as the last step of unfolding, after all its
+%% predefined operators have been translated into FlatPred
+%% constraints.
+%\begin{zedrule}{funcappl}
+%   E1 ~ E2 = (\mu r:E1 | r.1=E2 @ r.2)
+%\end{zedrule}
+
+TODO: add a new set representation, which handles all function types,
+plus relations and the various kinds of sequences.
+
+\begin{zedrule}{disjointdef}
+   \disjoint E \iff (\forall p,q:E | p \neq q @ p.2 \cap q.2 = \{\})
+\end{zedrule}
+
+\begin{zedrule}{partitiondef}
+   E1 \partition E2 \iff \disjoint E1 \land \bigcup(\ran E1) = E2
+\end{zedrule}
+
+
+\section{Integer Rules}
+
+These are mostly handled as primitives of ZLive.
+
+\begin{zedrule}{num1}
+   \num_1 = \{x:\num | x \neq 0\}
+\end{zedrule}
+
+\begin{zedrule}{succ1}
+  (succ~\_) = (\lambda n : \nat @ n+1)
+\end{zedrule}
+
+TODO: implement iter somehow (it is like transitive closure).
+
+TODO: implement min and max as primitives, but only over integer sets.
+
+
+\section{Sequence Rules}
+
+TODO: this really needs to check that E1 and E2 are sequences
+\begin{zedrule}{concat}
+   E1 \cat E2 = E1 \cup \{ n:\dom E2 @ n + \# E1 \mapsto E2 ~ n \}
+\end{zedrule}
+
+TODO: implement concatenation as a primitive, with several
+modes of evaluation (III is semi-det, IIO, OII and IOI are det
+and OOI is multi-det).
+
+TODO: this could be more efficient and have more modes if it
+was a primitive? (IO and OI are det).
+\begin{zedrule}{reverse}
+   rev ~ E = (\lambda n:\dom E @ E(\# E - n + 1))
+\end{zedrule}
+
+\begin{zedrule}{headdef}
+   head ~ E = E ~ 1
+\end{zedrule}
+
+\begin{zedrule}{lastdef}
+   last ~ E = E ~ (\# E)
+\end{zedrule}
+
+TODO: it might be possible and better to implement $s=tail~e$
+as $\langle x \rangle \cat s = e$, where $x$ is a fresh variable?
+Similarly for $front$.
+\begin{zedrule}{taildef}
+   tail ~ E = (\lambda n : 1 \upto (\# E - 1) @ E ~ (n+1))
+\end{zedrule}
+
+\begin{zedrule}{frontdef}
+   front ~ E = \{\# E\} \ndres E
+\end{zedrule}
+
+TODO: implement squash as a primitive?
+Because the following definition from the Z standard is quite 
+inefficient as an evaluation rule ($O(N^2)$ at least).  
+Also, this definition is not quite correct, because it does
+not return undefined when $E$ is not a function.
+\begin{zedrule}{squash}
+   squash~E = \{ p:E @ \#\{i:\dom E | i \leq p.1\} \mapsto p.2 \}
+\end{zedrule}
+
+\begin{zedrule}{extractdef}
+   E1 \extract E2 = squash(E1 \dres E2)
+\end{zedrule}
+
+\begin{zedrule}{filterdef}
+   E1 \filter E2 = squash(E1 \rres E2)
+\end{zedrule}
+
+TODO: this might be better done using $\cat$
+(if we had much more sophisticated modes).
+\begin{zedrule}{prefixdef}
+%   E2 :: \power (\arithmos \cross T)
+%\derives
+   E1 \prefix E2 \iff E1 \subseteq E2 
+%   \provided E1 \in \seq T \land E2 \in \seq T
+\end{zedrule}
+
+\begin{zedrule}{suffixdef}
+   E1 :: \power (\arithmos \cross E3)
+\derives
+   E1 \suffix E2 \iff (\exists s:\seq E3 @ s \cat E1 = E2)
+\end{zedrule}
+
+\begin{zedrule}{infixdef}
+   E1 :: \power (\arithmos \cross E3)
+\derives
+   E1 \infix E2 \iff (\exists s,t:\seq E3 @ s \cat E1 \cat t = E2)
+\end{zedrule}
+
+For distributed concatenation, we have a recursive rule and
+two base cases, exactly like the axioms in the Z standard.
+However, the recursive axiom will not match all arguments,
+so we really need some additional recursive rules that use 
+head and tail (but these would only be valid when the sequence
+is non-empty, hence we need an if-then-else or something, but this
+creates an infinite rewrite loop...).  So we probably have to
+implement $\dcat$ as a ZLive primitive. 
+\begin{zedrule}{dcat0}
+   \dcat \langle \rangle = \langle \rangle
+\end{zedrule}
+\begin{zedrule}{dcat1}
+   \dcat \langle E \rangle = E
+\end{zedrule}
+\begin{zedrule}{dcatdistributive}
+   \dcat (E1 \cat E2) = (\dcat E1) \cat (\dcat E2)
+\end{zedrule}
+
+% This rule causes infinite recursion, of course!
+%\begin{zedrule}{dcatheadtail}
+%   \dcat E = \IF E=\{\} 
+%             \THEN \{\} 
+%             \ELSE (\dcat (head~E)) \cat (\dcat (tail~E))
+%\end{zedrule}

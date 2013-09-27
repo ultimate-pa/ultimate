@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+    <xsd:annotation>
+        <xsd:documentation xml:lang="en"> Schema for formulae in model-checkable form. Roland Meyer
+            2005 C.v.O. University of Oldenburg </xsd:documentation>
+    </xsd:annotation>
+    <xsd:include schemaLocation="http://csd.informatik.uni-oldenburg.de/pub/download/peatoolkit/BasicTypes.xsd"/>
+    <!-- MODEL-CHECKABLE TRACE -->
+    <xsd:complexType name="MCTrace">
+        <xsd:all>
+            <xsd:element name="trace" type="Trace"/>
+        </xsd:all>
+        <xsd:attribute name="entrySync" type="xsd:string" use="optional"/>
+        <xsd:attribute name="exitSync" type="xsd:string" use="required"/>
+    </xsd:complexType>
+    <xsd:complexType name="MCForm">
+        <xsd:sequence>
+            <xsd:element name="mcTrace" type="MCTrace" minOccurs="1" maxOccurs="unbounded"/>
+        </xsd:sequence>
+    </xsd:complexType>
+    <xsd:complexType name="MCFormList">
+        <xsd:sequence>
+            <xsd:element name="mcForm" type="MCForm" minOccurs="1" maxOccurs="unbounded"/>
+        </xsd:sequence>
+    </xsd:complexType>
+    <xsd:element name="mcForms" type="MCFormList"/>
+</xsd:schema>

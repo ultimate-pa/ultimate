@@ -1,0 +1,14 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: Library-jdom
+Bundle-SymbolicName: Library-jdom
+Bundle-Version: 1.1.1
+Bundle-ClassPath: .
+Export-Package: org.jdom,
+ org.jdom.adapters,
+ org.jdom.filter,
+ org.jdom.input,
+ org.jdom.output,
+ org.jdom.transform,
+ org.jdom.xpath
+Bundle-RequiredExecutionEnvironment: J2SE-1.5

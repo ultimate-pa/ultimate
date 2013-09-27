@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+  This file is part of the PEA toolkit.
+  
+  The PEA toolkit is a collection of tools for 
+  Phase Event Automata (PEA). See
+  http://csd.informatik.uni-oldenburg.de/projects/epea.html
+  for more information.
+  
+  Copyright (C) 2005-2006 Department for Computing Science,
+                          University of Oldenburg
+  
+  This program is free software; you can redistribute it and/or
+  modify it under the terms of the GNU General Public License
+  as published by the Free Software Foundation; either version 2
+  of the License, or (at your option) any later version.
+  
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU General Public License
+  along with this program; if not, write to the Free Software
+  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
+--> 
+
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+    <!-- Test-->
+    <xsd:simpleType name="RangeOperator">
+        <xsd:restriction base="xsd:string">
+            <xsd:enumeration value="greater"/>
+            <xsd:enumeration value="greaterequal"/>
+            <xsd:enumeration value="equal"/>
+            <xsd:enumeration value="notequal"/>
+            <xsd:enumeration value="lessequal"/>
+            <xsd:enumeration value="less"/>
+            <xsd:whiteSpace value="collapse"/>
+        </xsd:restriction>
+    </xsd:simpleType>
+    <xsd:simpleType name="ContinuousTime">
+        <xsd:restriction base="xsd:decimal">
+            <xsd:minInclusive value="0"/>
+            <xsd:maxInclusive value="9999."/>
+        </xsd:restriction>
+    </xsd:simpleType>
+    <xsd:complexType name="TimeBound">
+        <xsd:attribute name="operator" type="RangeOperator" use="required"/>
+        <xsd:attribute name="bound" type="ContinuousTime" use="required"/>
+    </xsd:complexType>
+    <xsd:complexType name="Phase">
+        <xsd:sequence>
+            <xsd:element name="timeBound" type="TimeBound" minOccurs="0" maxOccurs="1"/>
+            <xsd:element name="stateInvariant" type="Formula" minOccurs="1" maxOccurs="1"/>
+            <xsd:element name="forbiddenEvent" type="EventExpression" minOccurs="0"
+                maxOccurs="unbounded"/>
+        </xsd:sequence>
+        <xsd:attribute name="allowEmpty" type="xsd:boolean" use="optional"/>
+    </xsd:complexType>
+    <xsd:complexType name="Event">
+        <xsd:attribute name="name" type="xsd:string" use="required"/>
+        <xsd:attribute name="spec" type="xsd:string" use="required"/>
+    </xsd:complexType>
+    <xsd:complexType name="Trace">
+        <xsd:sequence>
+            <xsd:choice minOccurs="1" maxOccurs="unbounded">
+                <xsd:element name="phase" type="Phase"/>
+                <xsd:element name="event" type="Event"/>
+            </xsd:choice>
+        </xsd:sequence>
+        <xsd:attribute name="spec" type="xsd:boolean" use="required"/>
+    </xsd:complexType>
+    <xsd:complexType name="RangeExpression">
+        <xsd:attribute name="variable" type="xsd:string" use="required"/>
+        <xsd:attribute name="operator" type="RangeOperator"  use="required"/>
+        <xsd:attribute name="bound" type="xsd:double" use="required"/>
+    </xsd:complexType>
+    <xsd:complexType name="BooleanExpression">
+        <xsd:attribute name="expression" type="xsd:string" use="required"/>
+    </xsd:complexType>
+    <xsd:complexType name="EventExpression">
+        <xsd:attribute name="name" type="xsd:string" use="required"/>
+    </xsd:complexType>
+    <xsd:simpleType name="FormulaOperator">
+        <xsd:restriction base="xsd:string">
+            <xsd:pattern value="(AND|OR|NOT)"/>
+        </xsd:restriction>
+    </xsd:simpleType>
+    <xsd:complexType name="FormulaTree">
+        <xsd:choice minOccurs="1" maxOccurs="unbounded">
+            <xsd:element name="booleanExpression" type="BooleanExpression"/>
+            <xsd:element name="rangeExpression" type="RangeExpression"/>
+            <xsd:element name="eventExpression" type="EventExpression"/>
+            <xsd:element name="formulaTree" type="FormulaTree"/>
+        </xsd:choice>
+        <xsd:attribute name="operator" type="FormulaOperator" use="required"/>
+    </xsd:complexType>
+    <xsd:complexType name="Formula">
+        <xsd:choice minOccurs="1" maxOccurs="1">
+            <xsd:element name="booleanExpression" type="BooleanExpression"/>
+            <xsd:element name="rangeExpression" type="RangeExpression"/>
+            <xsd:element name="eventExpression" type="EventExpression"/>
+            <xsd:element name="formulaTree" type="FormulaTree"/>
+        </xsd:choice>
+    </xsd:complexType>
+    <xsd:complexType name="Variable">
+        <xsd:attribute name="name" type="xsd:string" use="required"/>
+        <xsd:attribute name="type" type="xsd:string" use="required"/>
+    </xsd:complexType>
+    <xsd:complexType name="Clock">
+        <xsd:attribute name="name" type="xsd:string" use="required"/>
+    </xsd:complexType>
+</xsd:schema>

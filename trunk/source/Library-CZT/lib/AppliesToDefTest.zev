@@ -1,0 +1,5 @@
+<Z-EVES-GUI-State version="1" index="3"><textItem location="gui::2" history="2"><syntax-def> test inrel test</syntax-def></textItem
+><textItem location="gui::1" history="3"><generic-box location="gui::1">[X, Y]<decl-part/> _test_: (X &lrarr; Y) &lrarr; X<ax-part/> &lchev;disabled rule dTestAppliesTo&rchev; &forall; R: X &lrarr; Y; x: X &bullet; R test x &hArr; (&exists;&sub1; y: Y &bullet; (x, y) &isin; R)</generic-box></textItem
+><textItem location="gui::3" history="4"><theorem-def location="gui::3">test2[X, Y]<ax-part/>    &forall; R: X &lrarr; Y; x: X &bullet; R test x</theorem-def></textItem
+><script name="test2"></script
+></Z-EVES-GUI-State>

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Spec xmlns="http://czt.sourceforge.net/zml"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xmlns:xhtml="http://www.w3.org/1999/xhtml"
+  xsi:schemaLocation="http://czt.sourceforge.net/zml
+                      http://czt.sourceforge.net/zml/Z_2_1.xsd"
+  Version="2.1">
+  <!-- No sections! -->
+</Spec>

@@ -1,0 +1,79 @@
+\begin{zsection}
+  \SECTION normalization\_rules \\~~ \parents oracle\_toolkit
+\end{zsection}
+
+Declarations in Z can consist of complicated expressions.  A schema is
+said to be normalized if its declarations are ``simple'': all
+declarations are variable declarations, there are no duplicated names
+declared, and all expressions occuring in the declarations are Z
+carrier sets.  This section defines a $normalize$ operator, a helper
+relation $pred$ and corresponding rules to transform an arbitrary
+schema expression into a normalized schema expression that is
+semantically equivalent.
+
+\begin{gendef}[SIG1,SIG2]
+  normalize : SIG1 \fun SIG2 \\
+\end{gendef}
+
+\begin{zed}
+  \relation ( pred~\_ )
+\end{zed}
+
+\begin{zedrule}{Normalize}
+   [D|P] :: \power [D1|true] \\
+\derives
+  normalize [D|P] = \\~~ [D1 | pred([D|true]) \land P]
+\end{zedrule}
+\TBDpar{IT}{Fix indent of joker and rule paragraphs to be same as other Z paragraphs.}
+
+The Normalize rule given above defines the normalize operation.  Given
+a schema expression $[D|P]$ (where $D$ is a declaration list and $P$
+is a predicate), the normalized schema is of the form
+$$[D1 | pred([D|true])\land P]$$ The declaration list $D1$ is
+obtained from the type of the given schema expression.  This exploits
+the fact that the carrier set of the schema type contains a normalized
+declaration list.  The helper relation $pred$ identifies additional
+typing constraints that were in the original declaration list but are
+omitted in the normalized declaration list.  This predicate is
+conjoined with the original predicate~$P$.
+
+The following rules define the helper relation $pred$.  The rules are
+intended to recurse through a declaration list from left to right,
+with the base case of an empty declaration list being handled by the
+PredEmptyDecl rule.  Note that multiple declarations such as $x,y,z:T$
+are expanded out into separate declarations before rules are applied,
+so the rules that follow cover all possible kinds of declarations.
+
+The PredVarDecl1 rule is a special case of PredVarDecl2.  It applies
+when the expression~$E$ is already a carrier set.  Since VarDecl1
+comes before VarDecl2 in this file, the rewrite engine (see
+Section~\ref{sec:rewrite}) gives it higher priority, and this avoids
+introducing redundant tautologies (such as $E \in \arithmos$, which is
+guaranteed to be true by the type system) into the predicate.  This is
+an example of how we can influence the behaviour of the rewrite engine
+by placing more specific rules before more general ones.  Of course,
+in the interactive prover, the user could choose to apply either rule
+when $E$ is a carrier set.
+
+
+\begin{zedrule}{PredVarDecl1}
+  E :: \power E
+\derives
+  pred [N:E;D | true] \iff \\~~ pred [D|true]
+\end{zedrule}
+
+\begin{zedrule}{PredVarDecl2}
+  pred [N:E;D | true] \iff \\~~ N \in E \land pred [D|true]
+\end{zedrule}
+
+\begin{zedrule}{PredConstDecl}
+  pred [N==E;D | true] \iff \\~~ N = E \land pred [D|true]
+\end{zedrule}
+
+\begin{zedrule}{PredIncludeDecl}
+   pred [E; D | true] \iff \\~~ E \land pred [D|true]
+\end{zedrule}
+
+\begin{zedrule}{PredEmptyDecl}
+  pred [|true] \iff true
+\end{zedrule}

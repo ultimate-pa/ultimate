@@ -1,0 +1,302 @@
+\documentclass[draft,a4paper,10pt,wd]{isov2}
+\usepackage{ltcadiz}
+\begin{document}
+\normannex{Mathematical toolkit}
+\sclause{Numbers}
+
+\begin{zsection}
+\SECTION number\_toolkit
+\end{zsection}
+
+\ssclause{Successor}
+
+\begin{zed}
+\function (succ~\_)
+\end{zed}
+
+\begin{axdef}
+succ~\_ : \power (\nat \cross \nat)
+\where
+(succ~\_) = \lambda n : \nat @ n+1
+\end{axdef}
+
+The successor of a natural number $n$ is equal to $n+1$.
+
+\ssclause{Integers}
+
+%%Zchar \num U+2124
+\begin{axdef}
+\num : \power \arithmos
+\end{axdef}
+
+$\num$ is the set of integers,
+that is, positive and negative whole numbers and zero.
+The set $\num$ is characterised by axioms for its additive structure given
+in the prelude (clause \ref{sec:prelude}) together with
+the next formal paragraph below.
+
+Number systems that extend the integers
+may be specified as supersets of $\num$.
+
+\ssclause{Addition of integers, arithmetic negation}
+
+%%Zprechar \negate U+002D
+\begin{zed}
+\function (\negate \_)
+\end{zed}
+
+\begin{axdef}
+\negate \_ : \power (\arithmos \cross \arithmos)
+\where
+\forall x, y : \num @ \exists_1 z : \num @ ((x,y),z) \in (\_ + \_)\\
+\forall x : \num @ \exists_1 y : \num @ (x,y) \in (\negate \_)
+\also
+\forall i , j , k : \num @
+\\ \t1	( i + j ) + k = i + ( j + k )
+\\ \t1	\land i + j = j + i
+\\ \t1	\land i + \negate i = 0
+\\ \t1	\land i + 0 = i
+\also
+\num = \{ z : \arithmos | \exists x : \nat @ z = x \lor z = \negate x \}
+\end{axdef}
+
+The binary addition operator $(\_ + \_)$ is defined in the prelude
+(clause~\ref{sec:prelude}).
+The definition here introduces additional properties for integers.
+The addition and negation operations on integers are total functions that
+take integer values.
+The integers form a commutative group under $(\_ + \_)$ with $\negate$ as
+the inverse operation and $0$ as the identity element.
+%%quiet 1
+%%reckless 1
+\begin{note}
+If $function\_toolkit$ notation were exploited,
+the negation operator could be defined as follows.
+%\begin{axdef}
+%\negate \_ : \arithmos \pfun \arithmos
+%\where
+%( \num \cross \num ) \dres ( \_ + \_ ) \in \num \cross \num \fun \num
+%\also
+%\num \dres \negate \in \num \fun \num
+%\also
+%\forall i , j , k : \num @
+%\\ \t1  ( i + j ) + k = i + ( j + k )
+%\\ \t1  \land i + j = j + i
+%\\ \t1  \land i + \negate i = 0
+%\\ \t1  \land i + 0 = i
+%\also
+%\forall h : \power \num @
+%\\ \t1  1 \in h
+%        \land ( \forall i , j : h @ i + j \in h \land \negate i \in h )
+%\\ \t2          \implies h = \num
+%\end{axdef}
+\end{note}
+%%reckless 0
+%%quiet 0
+
+\ssclause{Subtraction}
+
+\begin{zed}
+\function 30 \leftassoc (\_ - \_)
+\end{zed}
+
+\begin{axdef}
+\_ - \_ : \power ((\arithmos \cross \arithmos) \cross \arithmos)
+\where
+\forall x, y : \num @ \exists_1 z : \num @ ((x,y),z) \in (\_ - \_)
+\also
+\forall i , j : \num @ i - j = i + \negate j
+\end{axdef}
+
+Subtraction is a function whose domain includes all pairs of integers.
+For all integers $i$ and $j$,
+$i - j$ is equal to $i + \negate j$.
+%%quiet 1
+%%reckless 1
+\begin{note}
+If $function\_toolkit$ notation were exploited,
+the subtraction operator could be defined as follows.
+%\begin{axdef}
+%\_ - \_ : \arithmos \cross \arithmos \pfun \arithmos
+%\where
+%( \num \cross \num ) \dres ( \_ - \_ ) \in \num \cross \num \fun \num
+%\also
+%\forall i , j : \num @ i - j = i + \negate j
+%\end{axdef}
+\end{note}
+%%reckless 0
+%%quiet 0
+
+\ssclause{Less-than-or-equal}
+
+%%Zinchar \leq U+2264
+\begin{zed}
+\relation (\_ \leq \_)
+\end{zed}
+
+\begin{axdef}
+\_ \leq \_ : \power (\arithmos \cross \arithmos)
+\where
+\forall i , j : \num @ i \leq j \iff j - i \in \nat
+\end{axdef}
+
+For all integers $i$ and $j$,  $i \leq j$ if and only if
+their difference $j - i$ is a natural number.
+
+\ssclause{Less-than}
+
+\begin{zed}
+\relation (\_ < \_)
+\end{zed}
+
+\begin{axdef}
+\_ < \_ : \power (\arithmos \cross \arithmos)
+\where
+\forall i , j : \num @ i < j \iff i + 1 \leq j
+\end{axdef}
+
+For all integers $i$ and $j$,
+$i < j$ if and only if $i + 1 \leq j$.
+
+\ssclause{Greater-than-or-equal}
+
+%%Zinchar \geq U+2265
+\begin{zed}
+\relation (\_ \geq \_)
+\end{zed}
+
+\begin{axdef}
+\_ \geq \_ : \power (\arithmos \cross \arithmos)
+\where
+\forall i , j : \num @ i \geq j \iff j \leq i
+\end{axdef}
+
+For all integers $i$ and $j$,
+$i \geq j$ if and only if $j \leq i$.
+
+\ssclause{Greater-than}
+
+\begin{zed}
+\relation (\_ > \_)
+\end{zed}
+
+\begin{axdef}
+\_ > \_ : \power (\arithmos \cross \arithmos)
+\where
+\forall i , j : \num @ i > j \iff j < i
+\end{axdef}
+
+For all integers $i$ and $j$,
+$i > j$ if and only if $j < i$.
+
+\ssclause{Strictly positive natural numbers}
+
+\begin{zed}
+\nat_1 == \{ x : \nat | \lnot x = 0 \}
+\end{zed}
+
+The strictly positive natural numbers $\nat_1$
+are the natural numbers except zero. 
+
+\ssclause{Non-zero integers}
+
+\begin{zed}
+\num_1 == \{ x : \num | \lnot x = 0 \}
+\end{zed}
+
+The non-zero integers $\num_1$ are the integers except zero. 
+
+\ssclause{Multiplication of integers}
+
+\begin{zed}
+\function 40 \leftassoc (\_ * \_)
+\end{zed}
+
+\begin{axdef}
+\_ * \_ : \power ((\arithmos \cross \arithmos) \cross \arithmos)
+\where
+\forall x, y : \num @ \exists_1 z : \num @ ((x,y),z) \in (\_ * \_)
+\also
+\forall i , j , k : \num @
+\\ \t1	( i * j ) * k = i * ( j * k )
+\\ \t1	\land i * j = j * i
+\\ \t1	\land i * ( j + k ) = i * j + i * k
+\\ \t1	\land 0 * i = 0
+\\ \t1	\land 1 * i = i
+\end{axdef}
+
+The binary multiplication operator $(\_ * \_)$ is defined for integers.
+The multiplication operation on integers
+is a total function and has integer values.
+Multiplication on integers is characterised by the unique operation under
+which the integers become a commutative ring with identity element $1$.
+%%quiet 1
+%%reckless 1
+\begin{note}
+If $function\_toolkit$ notation were exploited,
+the multiplication operator could be defined as follows.
+%\begin{axdef}
+%\_ * \_ : (\arithmos \cross \arithmos) \pfun \arithmos
+%\where
+%( \num \cross \num ) \dres ( \_ * \_ ) \in \num \cross \num \fun \num
+%\also
+%\forall i , j , k : \num @
+%\\ \t1  ( i * j ) * k = i * ( j * k )
+%\\ \t1  \land i * j = j * i
+%\\ \t1  \land i * ( j + k ) = i * j + i * k
+%\\ \t1  \land 0 * i = 0
+%\\ \t1  \land 1 * i = i
+%\end{axdef}
+\end{note}
+%%reckless 0
+%%quiet 0
+
+\ssclause{Division, modulus}
+
+%%Zinword \div div
+%%Zinword \mod mod
+\begin{zed}
+\function 40 \leftassoc (\_ \div \_)\\
+\function 40 \leftassoc (\_ \mod \_)
+\end{zed}
+
+\begin{axdef}
+\_ \div \_~, \_ \mod \_ : \power ((\arithmos \cross \arithmos) \cross \arithmos)
+\where
+\forall x : \num ; y : \num_1 @ \exists_1 z : \num @ ((x,y),z) \in (\_ \div \_)
+\also
+\forall x : \num ; y : \num_1 @ \exists_1 z : \num @ ((x,y),z) \in (\_ \mod \_)
+\also
+\forall i : \num ; j : \num_1 @
+\\ \t1	i = ( i \div j ) * j + i \mod j
+\\ \t1	\land ( 0 \leq i \mod j < j  \lor  j < i \mod j \leq 0 )
+\end{axdef}
+
+For all integers $i$ and non-zero integers $j$,
+the pair $(i, j)$ is in the domain of $\_ div \_$ and of $\_ mod \_$,
+and $i \div j$ and $i \mod j$ have integer values.
+
+When not zero, $i \mod j$ has the same sign as $j$.
+This means that $i \div j$ is the largest integer no greater
+than the rational number $i/j$.
+%%quiet 1
+%%reckless 1
+\begin{note}
+If $function\_toolkit$ notation were exploited,
+the division and modulus operators could be defined as follows.
+%\begin{axdef}
+%\_ \div \_~, \_ \mod \_ : \arithmos \cross \arithmos \pfun \arithmos
+%\where
+%( \num \cross \num_1 ) \dres ( \_ \div \_ ) \in \num \cross \num_1 \fun \num
+%\also
+%( \num \cross \num_1 ) \dres ( \_ \mod \_ ) \in \num \cross \num_1 \fun \num
+%\also
+%\forall i : \num ; j : \num_1 @
+%\\ \t1  i = ( i \div j ) * j + i \mod j
+%\\ \t1  \land ( 0 \leq i \mod j < j  \lor  j < i \mod j \leq 0 )
+%\end{axdef}
+\end{note}
+%%reckless 0
+%%quiet 0
+
+\end{document}

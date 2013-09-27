@@ -1,0 +1,76 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <groupId>net.sourceforge.czt</groupId>
+    <artifactId>czt</artifactId>
+    <version>1.5-SNAPSHOT</version>
+  </parent>
+  <artifactId>zlive</artifactId>
+  <packaging>jar</packaging>
+  <name>CZT ZLive</name>
+  <description>
+    Provides animation and testing facilities for standard Z specifications.
+  </description>
+  <dependencies>
+    <dependency>
+      <groupId>${czt.groupId}</groupId>
+      <artifactId>parser</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>${czt.groupId}</groupId>
+      <artifactId>rules</artifactId>
+    </dependency>
+    <!-- ModelJUnit from modeljunit.sourceforge.net -->
+    <dependency>
+      <groupId>nz.ac.waikato.modeljunit</groupId>
+      <artifactId>modeljunit</artifactId>
+      <version>1.5</version>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+  <build>
+    <plugins>
+      <plugin>
+        <artifactId>maven-assembly-plugin</artifactId>
+        <configuration>
+          <descriptorRefs>
+            <descriptorRef>jar-with-dependencies</descriptorRef>
+          </descriptorRefs>
+          <archive>
+            <manifest>
+              <mainClass>net.sourceforge.czt.animation.eval.TextUI</mainClass>
+            </manifest>
+          </archive>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <configuration>
+	  <!-- Must use forkMode if you want to include usertests?
+	       Otherwise we get bizarre error about ZTestCase class not found.
+	       But usertests are best run via: cd tests; ant usertests -->
+          <!-- <useSystemClassLoader>false</useSystemClassLoader> -->
+	  <!-- <forkMode>never</forkMode> -->
+          <excludes>
+            <!-- exclude usertests -->
+	    <exclude>**/Animate*Test.java</exclude>
+            <!-- exclude abstract superclasses -->
+            <exclude>**/EvalTest*.java</exclude>
+            <exclude>**/ZTestCase.java</exclude>
+          </excludes>
+        </configuration>
+      </plugin>
+    </plugins>
+    <resources>
+      <resource>
+        <directory>rulesets</directory>
+      </resource>
+      <resource>
+        <directory>src/main/resources</directory>
+        <filtering>true</filtering>
+      </resource>
+    </resources>
+  </build>
+</project>

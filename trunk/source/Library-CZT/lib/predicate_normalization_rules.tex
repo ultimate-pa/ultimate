@@ -1,0 +1,17 @@
+\begin{zsection}
+  \SECTION predicate\_normalization\_rules \parents oracle\_toolkit
+\end{zsection}
+
+These are not terminating because D matches D|true.
+
+\begin{zedrule}{ForallNormalization}
+  (\forall D|P1 @ P2) \iff (\forall D @ P1 \implies P2)
+\end{zedrule}
+
+\begin{zedrule}{ExistsNormalization}
+  (\exists D|P1 @ P2) \iff (\exists D @ P1 \land P2)
+\end{zedrule}
+
+\begin{zedrule}{Exists1Normalization}
+  (\exists_1 D|P1 @ P2) \iff (\exists_1 D @ P1 \land P2)
+\end{zedrule}

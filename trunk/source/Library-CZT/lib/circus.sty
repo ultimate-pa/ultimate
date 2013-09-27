@@ -1,0 +1,241 @@
+% -- circus.sty version 1 -------------------------------------------------
+
+% Comments, complaints, and suggestions to
+%
+%   Jim.Woodcock@comlab.ox.ac.uk
+%
+% Acknowledgements to Jim Davies and Mike Spivey.
+%
+% Changed on 04.07.02 by Ana Cavalcanti to include: \circnameset
+% Changed on 09.12.02 by Leo Freitas to include: \circstate
+% Changed on 17.09.03 by Leo Freitas
+%
+%   Adjustment to include zed-csp instead of zed and csp
+%   Adjustment on options because the new version zed-csp doesn't contain the necessary options commands
+% Changed on 22.09.03 by Leo Freitas to include new macros and options
+%
+% -- circus.sty -----------------------------------------------------------
+
+\def\fileversion{1.0}
+\def\filedate{01/07/17}
+
+\NeedsTeXFormat{LaTeX2e}
+
+\ProvidesPackage{circus}[{\filedate\space\fileversion\space circus package}]
+
+% -- options -----------------------------------------------------------
+
+\newif\if@cm@ \@cm@false
+\newif\if@lucida@ \@lucida@false
+\newif\if@times@ \@times@false
+\newif\if@color@ \@color@false
+\newif\if@csp@ \@csp@false
+\newif\if@zed@ \@zed@false
+%\RequirePackage{ifthen}
+%\newboolean{boxed}
+%\setboolean{boxed}{true}
+
+\DeclareOption{cm}{\@cm@true\@lucida@false\@times@false}
+\DeclareOption{lucida}{\@cm@false\@lucida@true\@times@false}
+\DeclareOption{times}{\@cm@false\@lucida@false\@times@true}
+\DeclareOption{color}{\@color@true}
+\DeclareOption{zed}{\@zed@true}
+\DeclareOption{csp}{\@csp@true}
+%\DeclareOption{boxed}{\setboolean{boxed}{true}}
+
+\ExecuteOptions{cm}
+\ProcessOptions
+
+\RequirePackageWithOptions{zed}
+
+\@ifpackageloaded{csp}{\relax}{%
+  \RequirePackageWithOptions{csp}}
+
+%\RequirePackage{my-a4}
+
+%-- New BREAK Commmands from oz.sty -- (BEGIN) LEO
+
+\newcount\interzedlinepenalty   \interzedlinepenalty=10000  %never break
+\newcount\preboxpenalty \preboxpenalty=0    %break easily
+\newcount\forcepagepenalty  \forcepagepenalty=-10000    %always break
+\interdisplaylinepenalty=100    %break sometimes
+
+\def\znewpage{\also\noalign{\penalty\forcepagepenalty}\also}
+\def\zbreak{\also\noalign{\penalty\interdisplaylinepenalty\vskip-\jot}\also}
+\def\Zbreak{\also\noalign{\penalty\interdisplaylinepenalty}\also}
+\def\ZBREAK{\Also\noalign{\penalty\interdisplaylinepenalty}\Also}
+
+%-- New BREAK Commmands from oz.sty -- (END) LEO
+
+
+\def\fuzz{{\large\it f\kern0.1em}{\normalsize\sc uzz}}
+\let\Fuzz=\fuzz
+
+\makeatletter
+
+\def\demo{\par\vbox\bgroup\begingroup\quote}
+
+\def\gives{\endquote\endgroup\egroup}
+
+\def\enddemo{\global\@ignoretrue}
+
+\def\symtab{\setbox0=\vbox\bgroup \def\\{\cr}
+  \halign\bgroup\strut$##$\hfil&\quad##\hfil\cr}
+
+\def\endsymtab{\crcr\egroup\egroup \dimen0=\ht0 \divide\dimen0 by2
+  \advance\dimen0 by\ht\strutbox \splittopskip=\ht\strutbox
+  \vbadness=10000 \predisplaypenalty=0
+    $$\halign{##\cr\hbox to\linewidth{%
+        \valign{##\vfil\cr
+          \setbox1=\vsplit0 to\dimen0 \unvbox1\cr
+          \noalign{\hfil}\unvbox0\cr
+          \noalign{\hfil}}}\cr
+      \noalign{\prevdepth=\dp\strutbox}}$$
+    \global\@ignoretrue}
+
+\makeatother
+
+%%ignore \block \endblock
+
+\newcommand{\mathsl}[1]{\hbox{\slshape #1}}
+
+\newcommand{\Circus}{{\sf\slshape Circus}}
+
+\newcommand{\circdo}{\mathbf{do}}
+\newcommand{\circod}{\mathbf{od}}
+\newcommand{\circstate}{\mathbf{state}}
+
+\newif\ifuseCircusCounters
+\useCircusCounterstrue
+
+\ifuseCircusCounters
+    \newcounter{circusCtr}
+    \newcounter{circusopCtr}
+    \newcounter{circusactionCtr}
+    \newcounter{circuschannelCtr}
+    \newcounter{circusprocessCtr}
+    \newcounter{circusmuCtr}
+    \newcounter{circusvarCtr}
+\fi
+
+\newcommand{\circbegin}{\mathbf{begin}}
+\newcommand{\circchannel}{\mathbf{channel}\ifuseCircusCounters \stepcounter{circuschannelCtr}\fi}
+\newcommand{\circchannelfrom}{\mathbf{channelfrom}}
+%\newcommand{\circstate}{\mathbf{state}}
+\newcommand{\circchannelset}{\mathbf{channelset}}
+\newcommand{\circnameset}{\mathbf{nameset}}
+\newcommand{\circcon}{\mathbf{con}}
+\newcommand{\circelse}{[\!]}
+\newcommand{\circend}{\mathbf{end}}
+\newcommand{\circfi}{\mathbf{fi}}
+\newcommand{\circif}{\mathbf{if}}
+\newcommand{\circmu}{\mu \ifuseCircusCounters \stepcounter{circusmuCtr} \fi}
+\newcommand{\circprocess}{\mathbf{process}\ifuseCircusCounters \stepcounter{circusprocessCtr} \fi}
+\newcommand{\circthen}{\rightarrow}
+\newcommand{\circvar}{\mathbf{var}\ifuseCircusCounters \stepcounter{circusvarCtr} \fi}
+\newcommand{\circval}{\mathbf{val}}
+\newcommand{\circres}{\mathbf{res}}
+\newcommand{\circvres}{\mathbf{vres}}
+%\newcommand{\boolean}{{\mathbb B}}
+\newcommand{\freetype}[1]{\mathsf{#1}}
+
+\newcommand{\Semi}{\hbox{\large ;}}
+\renewcommand{\IF}{\circif_{Z}\;}
+\newcommand{\circseq}{~\Semi~}
+\newcommand{\circguard}{~\hbox{\&}~}
+
+\newcommand{\lchanset}{\{\!|}
+\newcommand{\rchanset}{|\!\}}
+\newcommand{\linter}{|\!|\hspace{-4pt}[}
+\newcommand{\rinter}{]\hspace{-4pt}|\!|}
+
+\def\II{\hbox{\texttt{\slshape I \kern -7.5pt I}}}
+\def\circledR{{\mathhexbox\msafam@72 }}
+
+%\def \keyword#1 {\z@op{\mbox{\textrm{#1}}}}
+%\def \SECTION {\keyword{section}}
+%\def \parents {\keyword{parents}}
+
+\def \SECTION {{\mbox{\textrm{\textbf{section}}}}}
+\def \parents {{\mbox{\textrm{\textbf{parents}}}}}
+%\newenvironment{zsection}{}{}
+%\renewenvironment{zsection}{\vspace{10pt}\noindent\textbf{BEGIN SECTION}\begin{quote}}{\end{quote}\textbf{END SECTION}\vspace{5pt}}
+
+\newcounter{openIssues}
+\setcounter{openIssues}{0}
+\newenvironment{issue}[1][\ ]{\addtocounter{openIssues}{1}\vspace{10pt}\noindent\textbf{BEGIN ISSUE (\arabic{openIssues}):}\ #1\begin{quote}\em}{\end{quote}\textbf{END ISSUE (\arabic{openIssues})}\ $\Box$\vspace{5pt}}%
+
+\newcommand{\grammar}[1]{\texttt{#1}}
+\newcommand{\code}[1]{\textsf{#1}}
+
+\newcommand{\circindex}{\odot}
+\newcommand{\lcircindex}{\lfloor}
+\newcommand{\rcircindex}{\rfloor}
+
+%\def\schema#1{\@ifnextchar[{\@schema{#1}}{\@nschema{#1}}}
+%\def\@schema#1[#2]{\@nschema{#1[#2]}}
+%\def\@nschema#1{\@narrow\axdef\omit\@topline{$\strut#1$}\cr}
+%
+%\newenvironment{circusprocess}[2][10pt]%
+%    {\@ifnextchar[}%
+
+
+%\ifthenelse{\boolean{boxed}}
+%  {%
+%    \newenvironment{circusprocess}[1][10pt]%
+%      {\hspace{#1}\begin{boxedminipage}{0.8\linewidth}}%
+%      {\end{boxedminipage}\ignorespacesafterend}%
+%  }{%
+%    \newenvironment{circusprocess}[1][10pt]%
+%      {\hspace{#1}\begin{minipage}{0.8\linewidth}}%
+%      {\end{minipage}\ignorespacesafterend}
+%  }
+
+%\newenvironment{procheader}%
+%    {\zedindent=0pt\begin{zed}\circprocess\ }%
+%    {\end{zed}\zedindent=\leftmargini\ignorespacesafterend}
+
+\newenvironment{circus}{\begin{zed}\ifuseCircusCounters \stepcounter{circusCtr} \fi}{\end{zed}\ignorespacesafterend}
+
+\newenvironment{circusop}{\ifuseCircusCounters \stepcounter{circusopCtr}\fi}{}
+
+\newenvironment{circusaction}{\begin{zed}\ifuseCircusCounters \stepcounter{circusactionCtr} \fi}{\end{zed}\ignorespacesafterend}
+
+%\newenvironment{mainaction}%
+%    {\begin{zed}@}%
+%    {\\ \hspace{-\zedindent}\circend\end{zed}\ignorespacesafterend}
+
+\newcommand{\circdef}{\defs}
+\newcommand{\circhide}{\hide}
+
+\newcommand{\lcircguard}{\langle}
+\newcommand{\rcircguard}{\rangle}
+
+\newcommand{\lcircrename}{[}
+\newcommand{\rcircrename}{]}
+
+\newcommand{\universe}{\mathbb U}
+
+% Hack: reduce space after schema by overriding \endzed in zed.sty. This file should be included AFTER zed.sty.
+%\renewcommand{\endzed}{\crcr\egroup$$\vspace{-2em}\global\@ignoretrue}
+
+\setlength{\zedtab}{1.3em}
+
+\newcommand{\Skip}{\mathsl{Skip}}
+\newcommand{\Stop}{\mathsl{Stop}}
+\newcommand{\Chaos}{\mathsl{Chaos}}
+
+\newcommand{\prefixcolon}{:}
+\newcommand{\circspot}{\spot} 
+
+\newcommand{\lschexpract}{(}
+\newcommand{\rschexpract}{)}
+
+\newcommand{\circblockbegin}{\begin{block}}
+\newcommand{\circblockend}{\end{block}}
+\newcommand{\circnote}[1]{\t2\mbox{\small \textbf{#1}}\also}
+
+\newcommand{\circtoolson}{~}%CIRCUS_TOOLS_ON} 
+\newcommand{\circtoolsoff}{~}%CIRCUS_TOOLS_ON}
+
+\def\zbreak{\cr\noalign{\penalty\interdisplaylinepenalty\vskip-\jot}\cr}

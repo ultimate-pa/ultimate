@@ -1,0 +1,608 @@
+\documentclass{article}
+
+\usepackage{vmargin}
+\usepackage{circus}
+
+\setpapersize{A4}
+%\setmarginsrb{leftmargin}{topmargin}{rightmargin}{bottommargin}{headheight}{headsep}{footheight}{footskip}
+%\setmarginsrb{20mm}{10mm}{20mm}{10mm}{12pt}{11mm}{0pt}{11mm}
+%\setmarginsrb{25mm}{20mm}{25mm}{20mm}{12pt}{11mm}{0pt}{10mm}
+\setmarginsrb{40mm}{20mm}{40mm}{20mm}{12pt}{11mm}{0pt}{10mm}
+
+\begin{document}
+
+\title{\Circus\ Grammar Explained --- Channels}
+\author{Leonardo Freitas}
+\date{March 2006}
+
+\maketitle
+
+\begin{abstract}
+    \noindent This article documents the various ways one can declare \Circus\ channels and channel sets
+    using \LaTeX\ markup.  It also documents the open issues of the language related to these two syntactic
+    categories.
+\end{abstract}
+
+\section{Introduction}
+
+In this file, we explain the various aspect of \Circus\ related to channel
+declarations. At each section relevant to the grammar, we include its
+corresponding CUP rule, as ``Section name --- \texttt{grammarRule}''.
+
+\Circus\ productions must be included within the \textsf{circus} \LaTeX\
+environment in order to be recognised by the parser. Therefore, to use \Circus\
+one needs to have the current version of the \textsf{circus.sty} \LaTeX\ style
+file.
+
+Amongst other commands, it contains all \Circus\ keywords, and some useful
+environments.
+
+% SOLVED: Under progress
+%
+%\begin{issue}[creating \texttt{circus.sty} and \texttt{circus.dtx}]
+%   Make a suitable \texttt{circus.dtx} with nice and up-to-date \Circus\
+%   typesetting commands, as well as embedded documentation.
+%
+%   Join version of \texttt{circus.sty} and add literate documentation.
+%   Also, gather the information for solving the spacing problem of the
+%   \code{circus} environment.
+%\end{issue}
+
+\section{\Circus\ channel paragraphs --- \grammar{channelPara}}
+
+In \Circus\ channels are global paragraphs at section level. Other global
+paragraphs are channel sets, processes, and all other Z paragraphs. Firstly, we
+need to create a new section containing the \textsf{circus\_toolkit} as a
+parent.
+
+\begin{zsection}
+  \SECTION\ circus\_channels \parents\ circus\_toolkit
+\end{zsection}
+%
+\begin{verbatim}
+   begin{zsection}
+      \SECTION\ circus\_channels \parents\ circus\_toolkit
+   end{zsection}
+\end{verbatim}
+%
+We include with each typeset text the corresponded \LaTeX\ code.
+
+
+\subsection{Common channels --- \grammar{channelDecl}}
+
+Channels are declared in \Circus\ to specify synchronisation points. Channel
+types are any Z expression, and they define the communication patterns to
+synchronise.
+
+Untyped channels are also allowed. They represent synchronisation points with
+the given type $Synch$. Thus, declaring a untyped channel has the same effect
+as declaring the channel with type $Synch$, as defined in the
+\textsf{circus\_toolkit.tex} file.
+
+Channels are declared within the \textsf{circus} \LaTeX\ environment, which are
+typeset as Z unboxed items like in the \textsf{zed} \LaTeX\ environment. As the
+Z standard, various unboxed \Circus\ items can be declared within the same
+environment, as long as they are separated by a \grammar{NL} (new-line) token.
+
+\subsubsection{Typed channels}
+
+Let us define some typed channels,
+%
+\begin{circus}
+  \circchannel\ a, b: \nat
+\end{circus}%
+%
+\begin{verbatim}
+     begin{circus}
+        \circchannel\ a, b: \nat
+     end{circus}%
+\end{verbatim}
+%
+as well as typed channels with strokes.
+%
+\begin{circus}
+  \circchannel\ x_1~, r, q'~, y_2: \num
+\end{circus}%
+%
+\begin{verbatim}
+     begin{circus}
+        \circchannel\ x_1~, r, q'~, y_2: \num
+     end{circus}%
+\end{verbatim}
+%
+Note that due to the Z standard idiosyncrasy regarding name lists with strokes
+and commas (\textit{i.e.}, \grammar{DECORWORD} or \grammar{DECLWORD} in CZT),
+we \textbf{*must*} include a hard space to separate these names (see Z Standard
+section 7.3). This is needed, for instance, to allow distinction between set
+extensions and a list of variable names in a declaration. The soft space
+through \verb'\ ' is optional, though.
+
+\subsubsection{Generic channels}
+
+Generic channels can also be declared, where generic formal parameters given
+are right after the $\circchannel$ keyword.
+%
+\begin{circus}
+   \circchannel\ [X, Y]\ g, h_1~, i: (X \rel Y)
+\end{circus}%
+%
+\begin{verbatim}
+     begin{circus}
+        \circchannel\ [X, Y]\ g, h_1~, i: (X \rel Y)
+     end{circus}%
+\end{verbatim}
+%
+As before, names with decorations must have hard spaces before hitting a
+\texttt{COMMA} token, as shown above.
+
+% SOLVED: This is a type checking problem. Channel type inference is done locally. The parser remains as it is.
+%
+%\begin{issue}[type inference on generic channels usage]
+%    In practice, how should generic actuals be instantiated for channels?
+%    The implications are clear at parallel composition and implementation of
+%    ``generically defined'' communications.
+%
+%    For example, in:
+%
+%    \[
+%        \circchannel\ [X] c, d: X \\
+%
+%        \vdots \\
+%
+%        c?x \then d!x \then Skip \lpar \lchanset c, d \rchanset \rpar c.v \then d?x \then Skip
+%    \]
+%
+%    Could the typechecker infer the types of both $c$ and $d$ to be the
+%    type of $v$? In a multisychronisation scenario, however, this would
+%    become a typechecking nightmare!
+%
+%    The suggestion is then to enforce generic actuals instantiation on
+%    generically defined channels, so that no type inference is needed,
+%    as in:
+%
+%    \[
+%       c[\nat]?x \then d[\nat]!x \then Skip \lpar \lchanset[\nat], d[\nat] \rchanset \rpar c[\nat].v \then d[\nat]?x \then Skip
+%    \]
+%
+%    This involves a clumsy and too verbose specification, but simpler
+%    typechecking. What would be the compromise? Just leave it out for the
+%    moment?!
+%\end{issue}
+
+\subsubsection{Synchronisation channels}
+
+Synchronisation channels are defined without a type expression. The parser
+introduces a $Synch$ \code{RefExpr} for it automatically, as it is necessary
+for translation to and from ZML. This name is defined as a given set in the
+\textsf{circus\_toolkit.tex} file.
+%
+\begin{circus}
+   \circchannel\ c, d \\
+   \circchannel\ z_2~, w_3
+\end{circus}%
+%
+\begin{verbatim}
+     begin{circus}
+        \circchannel\ c, d \\
+        \circchannel\ z_2~, w_3
+     end{circus}%
+\end{verbatim}
+%
+This time, we left two declarations within the same Z box, but separated by a
+\grammar{NL} (new-line) token.
+
+% SOLVED: Discussion in an e-mail with Tim and Mark (CZT), 20,21/03/2006
+%         (subject: Exception thrown while marshiling ZML with null Expr in VarDecl)
+%
+%\begin{issue}[technicality about representation of $Synch$]
+%    Perhaps we shall remove the $Synch$ type from \texttt{circus\_toolkit} and
+%    set it as a reserved word that the typechecker does not allow anyone else to
+%    use.
+%
+%    If that is the path to choose, we can to do this by extending the
+%    directives of the parser to have something like \code{\%\%Zreserved}.
+%\end{issue}
+
+\subsection{Channels through schemas --- \grammar{channelFromDecl}}
+
+Another way of declaring typed channels is through schema references. Let us
+define a schema named $S$ with two channels $a$ and $b$
+%
+\begin{schema}{S}
+   a, b: \nat
+\where
+   a > b \land b \neq 0
+\end{schema}
+%
+\begin{verbatim}
+     begin{schema}{S}
+         a, b: \nat
+     \where
+         a > b \land b \neq 0
+     end{schema}
+\end{verbatim}
+%
+With the $\circchannelfrom$ keyword, we can declare these channels in various
+ways, depending on the chosen decoration.
+%
+\begin{circus}
+   \circchannelfrom\ S \\
+   \circchannelfrom\ S_1
+\end{circus}%
+%
+\begin{verbatim}
+     begin{circus}
+        \circchannelfrom\ S \\
+        \circchannelfrom\ S_1
+     end{circus}%
+\end{verbatim}
+%
+These declarations include four channels of type $\nat$, namely:~$a$, $b$,
+$a_1$, and $b_1$.
+
+% SOLVED: Invariants of schemas are ignored on channelFrom - Jim
+%
+%\begin{issue}[invariant of schemas in channelFrom]
+%  What happen with the invariant of $S$?
+%  Should it be enforced on the communication patterns or just be ignored?
+%\end{issue}
+
+% SOLVED: Restricted to RefExpr only - Jim
+%
+%\begin{issue}[channelFrom with any expression]
+%What about this kind of declaration?
+%%
+%\[
+%   \circchannelfrom\ S \cross S
+%\]
+%
+%At the moment the grammar does allow it. The option is to restrict it to
+%\code{RefExpr} only (\textit{i.e.}, reference expressions that could carry
+%generic actuals).
+%\end{issue}
+
+Another option is to have schemas with generic types.
+%
+\begin{schema}{T}[X]
+   x, y: \power~X
+\where
+   x \subseteq y
+\end{schema}
+%
+\begin{verbatim}
+     begin{schema}{T}[X]
+         x, y: \power~X
+     \where
+         x \subseteq y
+     end{schema}
+\end{verbatim}
+%
+In this case, one can define the channels from the schema via
+either:~(i)~declaring the schema name with corresponding number of generic
+actuals;~(ii)~leaving the original generic formal parameters (possibly renaming
+them);~(iii)~letting the typechecker decide;~or (iii)~redefining the generic
+formal parameters of channel types in terms of a new pattern of formal
+parameters for the schema generic actuals.
+%
+\begin{circus}
+    \circchannelfrom\ T[\nat] \\
+    \circchannelfrom\ [Y]\ T_1[Y] \\
+    \circchannelfrom\ T_2 \\  % Ana says this should be a type error!
+    \circchannelfrom\ [A, B]\ T_3[A \cross B]
+\end{circus}%
+%
+\begin{verbatim}
+     begin{circus}
+         \circchannelfrom\ T[\nat] \\
+         \circchannelfrom\ [Y]\ T_1[Y] \\
+         \circchannelfrom\ T_2 \\
+         \circchannelfrom\ [A, B]\ T_3[A \cross B]
+     end{circus}%
+\end{verbatim}
+%
+It is the task of the typechecker to guarantee that either the instantiation or
+(re)definitions are type-correct. For each case we would have:
+%
+\begin{itemize}
+    \item[i] $\circchannel\ x, y: \power~\nat$
+    \item[ii] $\circchannel\ [Y]\ x_1~, y_1: \power~Y$
+    \item[iii] $\circchannel\ x_2~, y_2: \power~X$
+    \item[iv] $\circchannel\ [A, B]\ x_3~, y_3: \power~(A \cross B)$
+\end{itemize}
+%
+Thus, $\circchannelfrom$ is just syntactic sugar for a corresponding
+$\circchannel$ declaration.
+
+% SOLVED: Allow ``layered'' generics. Typechecker needs to sort it out
+%         and adjust the AST appropriately - Jim
+%
+%\begin{issue}[desugaring $\circchannelfrom$ into $\circchannel$]
+%   The AST allows room for quite powerful use of generic types within channel
+%   declaration from generic schemas via the two set of generic types on each
+%   production (\textit{i.e.}, \code{AxPara} and \code{ChannelDecl}).
+%
+%   The burden is given to the typechecker to infer the appropriate generic
+%   formals/actuals, as well as to match/update the lists of generic names (and
+%   their corresponding type expressions).
+%
+%   Anyway, the possibly tricky business comes if we decide to restrict the
+%   communication patterns with the corresponding schema invariant. As it
+%   stands, it is left for the typechecker to solve.
+%
+%   \textbf{By the way, Ana says $T_2$ should be a type error because the generic actuals
+%   are not being given to the schema. Check with Manuela.}
+%\end{issue}
+
+\section{\Circus\ channel set paragraphs --- \grammar{channelSetPara}}
+
+Channel sets defines an expression to represent a particular set of channels.
+They are normally used as reference names for other \Circus\ operators that
+have channel references as parts of their AST, such as the parallel and the
+hiding operators.
+
+Channel sets are given as a name and a corresponding channel set expression.
+%
+\begin{circus}
+    \circchannelset\ C == \emptyset \\
+    \circchannelset\ C0 == \lchanset \rchanset \\
+    \circchannelset\ C1 == \lchanset a, b, c, d \rchanset \\
+    \circchannelset\ C2 == \lchanset x, y, x_1~, y_1 \rchanset \\
+% Generic channels are not working yet    
+%    \circchannelset\ [A, B] C3 == \lchanset x_2[A \cross B]~, y_2[A \fun B], x_1[A], y_1[B] \rchanset \\
+    \circchannelset\ C4 == (C1 \cup C2 \cap C3) \setminus (C0 \cup C1 \cup C)
+\end{circus}%
+%
+\begin{verbatim}
+    begin{circus}
+        \circchannelset\ C == \emptyset \\
+        \circchannelset\ C0 == \lchanset \rchanset %\\
+        \circchannelset\ C1 == \lchanset a, b, c, d \rchanset \\
+        \circchannelset\ C2 == \lchanset x, y, x_1~, y_1 \rchanset \\
+        \circchannelset\ [A, B] C3 == \lchanset x_2[A \cross B]~,
+                                                y_2[A \fun B], x_1[A],
+                                                y_1[B] \rchanset \\
+        \circchannelset\ C4 == (C1 \cup C2 \cap C3) \setminus
+                               (C0 \cup C1 \cup C)
+    end{circus}
+\end{verbatim}
+%
+The channel set expressions mostly used are: set union, intersection and
+difference expressions;~set extension expressions;~reference expressions;~and
+application expressions.
+
+Considering \code{BasicChannelSetExpr} a special case of set extension (with special brackets),
+the channel set expressions are a subset of the whole Z expression tree. More precisely, table~\ref{csexpr}
+shows which one of the available Z expression productions are valid channel set expressions. On the third column
+of the table table:~``\textbf{Y(N)}'' means the Z expression is (is not) valid;~``\textbf{Y*}'' means the Z expression
+is valid provided one changes the normal ($\{~\}$) brackets to the special ($\lchanset~\rchanset$) channel set
+brackets;~``\textbf{Y!}'' means an undecided inclination towards accepting;~and~``\textbf{?}'' means yet unknown.
+%
+\begin{table}[h]
+\begin{tabular}{|l|l|c|}
+\hline
+\multicolumn{1}{|c|}{\textbf{Description}} & \multicolumn{1}{c|}{\textbf{Example}} & \textbf{Valid CSE?} \\
+\hline
+Conditional & $\IF pred \THEN expr \ELSE expr$ & \textbf{Y} \\
+\hline
+Universal quantification & $\forall decl | pred @ expr$ & \textbf{N} \\
+\hline
+Existential quantification & $\exists decl | pred @ expr$ & \textbf{N} \\
+\hline
+Unique existential quant. & $\exists_1 decl | pred @ expr$ & \textbf{N} \\
+\hline
+Function construction & $\lambda decl | pred @ expr$ & \textbf{Y} \\
+\hline
+Definite description & $\mu decl | pred @ expr$ & \textbf{Y} \\
+\hline
+Substitution expression & $\LET abbrv @ expr$ & \textbf{Y} \\
+\hline
+Schema equivalence & $S \iff T$ & \textbf{N} \\
+\hline
+Schema implication & $S \implies T$ & \textbf{N} \\
+\hline
+Schema disjunction & $S \lor T$ & \textbf{N} \\
+\hline
+Schema conjunction & $S \land T$ & \textbf{N} \\
+\hline
+Schema negation & $\lnot S$ & \textbf{N} \\
+\hline
+Schema composition & $S \Comp T$ & \textbf{N} \\
+\hline
+Schema piping & $S \pipe T$ & \textbf{N} \\
+\hline
+Schema hiding & $S \hide T$ & \textbf{N} \\
+\hline
+Schema projection & $S \project T$ & \textbf{N} \\
+\hline
+Schema precondition & $\pre S$ & \textbf{N} \\
+\hline
+Powerset & $\power X$ & \textbf{?} \\
+\hline
+Cartesian product & $X \cross Y$ & \textbf{N} \\
+\hline
+Prefix application (PRE) & $f \_$ & \textbf{?} \\
+\hline
+Prefix application (L, ERE) & $a \_ b \_$ & \textbf{?} \\
+\hline
+Prefix application (L, SRE) & $a \_ ,, b \_$ & \textbf{?} \\
+\hline
+Postfix application (POST) & $X~\star$ & \textbf{?} \\
+\hline
+Postfix application (ELP, ERP) & $\_ a \_ b$ & \textbf{?} \\
+\hline
+Postfix application (ELP, SREP) & $\_ a \_,, b$ & \textbf{?} \\
+\hline
+Infix application (I) & $\_ \cup \_$ & \textbf{Y} \\
+\hline
+Infix application (EL, ERE) & $\_ a \_ b \_$ & \textbf{?} \\
+\hline
+Infix application (EL, SRE) & $\_ a \_ ,, b \_$ & \textbf{?} \\
+\hline
+Nofix application (L, ER) & $a \_ b$ & \textbf{?} \\
+\hline
+Nofix application (L, SR) & $\langle \_,,\rangle$ & \textbf{Y} \\
+\hline
+Set extension & $\{~a, b~\}$ & \textbf{Y*} \\
+\hline
+Set comprehension & $\{~ decl | pred ~\}$ & \textbf{?} \\
+\hline
+Characteristic set comp. & $\{~ decl | pred @ expr ~\}$ & \textbf{?} \\
+\hline
+Tuple extension & $(x, y, z)$ & \textbf{N} \\
+\hline
+Characteristic definite desc. & $(\mu decl | pred)$ & \textbf{?} \\
+\hline
+Binding extension & $\lblot x == 10, y == \{~\} \rblot$ & \textbf{N} \\
+\hline
+Empty schema construction & $[~]$ & \textbf{N} \\
+\hline
+Schema construction & $[ decl | pred ]$ or $[ | pred]$ & \textbf{N} \\
+\hline
+Binding selection & $S.x$ or $\lblot x == 10 \rblot$.x & \textbf{Y!} \\
+\hline
+Tuple selection & $t.1$ or $(x,y).1$ & \textbf{Y!} \\
+\hline
+Schema decoration & $S'$ or $S_1$ & \textbf{Y!} \\
+\hline
+Binding construction & $\theta S$ & \textbf{Y!} \\
+\hline
+Function appl with Sch Expr. & $f~[ decl | pred ]$ & \textbf{?} \\
+\hline
+Generic instantiation & $seq[\nat, \num]$, or $(\_ \fun \_)[X, Y]$ & \textbf{Y} \\
+\hline
+Schema renaming & $S[x/y, a/b]$ & \textbf{Y!} \\
+\hline
+Number literal & $10$ & \textbf{N} \\
+\hline
+Reference & $Name:  $ & \textbf{Y} \\
+\hline
+\end{tabular}
+\caption{Filtering the Z expression tree for channel sets}
+\end{table}
+%
+At the moment, the parser implementation only filters set extension and comprehension, hence
+accepting all other Z expression productions.
+
+\begin{issue}[Including all Z restrictions]
+   Add the other restrictions from table~\ref{csexpr}
+\end{issue}
+
+% SOLVED: Generalise channel set expressions to allow any Z expression - Jim
+%         Should it simplify typechecking in a great extent?
+%
+%\begin{issue}[generalising channel set expressions]
+%  The restricted form of channel sets complicate the grammar in a great
+%  extent because it demands filtering through the (very complex) expression
+%  subtree, which also mixes with the predicate subtree.
+%
+%  If application expressions were not to be considered, the limitation would be
+%  rather simple, as the other channel set expressions are easy to (hard) code. Nevertheless,
+%  as one might like (or even require) to define particular functions for
+%  channel sets to be used over replicated operators, application expressions may not (or cannot) be
+%  avoided.
+%
+%  For example, this scenario might appear as a requirement when one needs to perform
+%  synchronisation between disjoint set of channels amongst more than two processes,
+%  in order to avoid multisynchronisation complexities.
+%
+%  Therefore, because of application expression, we need to include channel sets with mostly
+%  all expressibility power of Z expressions. The best choice seems to reuse the
+%  Z grammar for abbreviations, and encoded as an AST of \code{ChannelSet}
+%  encapsulating a \code{ConstDecl}. This is useful for simplifying typechecking
+%  (and perhaps other purposes).
+%
+%  This choice will also normalise the language with respect to generically
+%  defined channels, as Z abbreviations already take care of generic formal and
+%  actual parameters. \textbf{This would simplify the parser grammar as well as the AST structure in a grater
+%  extend.} Furthermore, a nice side effect is the ability to have generic
+%  operators as possible channel set functions!
+%
+%  On the other hand, if one wants to keep the restrictions, one possible
+%  approach would be to leave the parser with Z abbreviations, but restrict
+%  its use through the type checking of channel sets.
+%\end{issue}
+
+\begin{issue}[How are the type rules for channel set references?]
+  That is, could channel set references have generic actuals, as in?
+  %
+  \[
+    \circchannel\ [X] c, d: X \\
+    \circchannel\ [Y] e, f: Y \\
+
+    \circchannelset\ CS1 = \lchanset c, d \rchanset \\
+    \circchannelset\ CS2 = \lchanset e, f \rchanset \\
+    \circchannelset\ CS3 = CS1[\nat] \cup CS2[\power~\num]
+  \]
+  %
+  This is a typechecking problem that shouldn't affect the parser, unless
+  one wanted to restrict the generic instantiation as a parsing error, something
+  that would require the use of \code{RefName} rather than \code{RefExpr}.
+
+  Even further, as occurred with channel declaration from schemas, where we could
+  possibly have channels as well as the schema generics, shouldn't we allow this
+  for channel sets as well (\textit{i.e.}, shouldn't it has generic actions?
+  %
+  \[
+      \circchannelset\ [A, B] CS4 = CS1[\nat \cross A] \cup CS2[A \cross B]
+  \]
+  %
+  If this is a desired feature, the AST for ChannelSet do require modification to
+  include the list of \code{DeclName} for the generic formals.
+\end{issue}
+
+\begin{issue}[decorated channel sets]
+    Decorated channel sets are also valid in the parser at the moment, as it makes the
+    production rules easier accepting strokes.
+    %
+    \[
+       CS1_0  \implies  \lchanset c_0, d_0 \rchanset
+    \]
+    %
+    This could be removed if needed, though.
+    At the moment, I am assuming it as a typechecking rather than a parsing problem.
+\end{issue}
+
+
+\begin{issue}[Channel set expressions subtree --- restrictions]
+    To simplify the implementation of channel set expressions, we simply encapsulate
+    a Z expression (\grammar{expression}) filtered ``adequately'' (\textit{i.e.}, do not containing
+    set extensions or comprehension) and include the production for \code{BasicChannelSetExpr}.
+
+    From the expressive options to include Z applications, this is the simplest one. Nevertheless,
+    as \code{BasicChannelSetExpr} is not embedded into the Z expression subtree, one cannot mix
+    it with normal Z expressions. The consequence is a fairly uncompromising (verboseness) restriction.
+    For example, something like
+    %
+    \[
+        \circchannelset CS1 == \lchanset a, b \rchanset \\
+        \circchannelset CS2 == \lchanset c \rchanset \\
+        \circchannelset CS3 == CS1 \cup CS2
+    \]
+    %
+    is valid because no Z expression is mixed with \code{BasicChannelSetExpr}, whereas something like
+    %
+    \[
+        \circchannelset CS3 == \lchanset a, b \rchanset \cup \lchanset c \rchanset
+    \]
+    %
+    is not valid because such mix occurs.
+
+    One first (abandoned) alternative solution was to include the \code{BasicChannelSetExpr} production
+    under a Z expression and use flags to say when to consider it or not. The consequences are neither
+    elegant, nor desirable: clumsy code, difficulty in properly restricting the channel set expression
+    tree properly, etc.
+\end{issue}
+
+\section{Conclusion}
+
+\section{Future work}
+
+The ideal solution for channel set expressions would be to have their own expression subtree.
+This would be the neatest choice as it neither requires filtering on the Z expression subtree,
+nor imposes the restrictions on mixed expressions just mentioned above. Nevertheless, it is
+a quite hard choice as sorting the precedences and solving the conflicts of such subtree is
+very difficult (see the \textsf{parser/tests/circus/cs\_expression.Parser.xml} file for details).
+
+Another task for the near future is to sort out the JAXB problem from \code{ChannelDecl}.
+
+\end{document}

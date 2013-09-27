@@ -1,0 +1,104 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <groupId>net.sourceforge.czt</groupId>
+    <artifactId>czt</artifactId>
+    <version>1.5-SNAPSHOT</version>
+  </parent>
+  <artifactId>corejava</artifactId>
+  <packaging>jar</packaging>
+  <version>${corejava.version}</version>
+  <name>CZT Corejava</name>
+  <description>
+    Provides AST classes for Z and Z extensions.
+  </description>
+  <dependencies>
+    <dependency>
+      <groupId>${czt.groupId}</groupId>
+      <artifactId>jaxb</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>${czt.groupId}</groupId>
+      <artifactId>zml</artifactId>
+    </dependency>
+  </dependencies>
+  <build>
+    <plugins>
+      <plugin>
+        <artifactId>maven-antrun-plugin</artifactId>
+        <dependencies>
+          <dependency>
+            <groupId>ant</groupId>
+            <artifactId>ant-trax</artifactId>
+            <version>1.6.5</version>
+          </dependency>
+        </dependencies>
+        <executions>
+          <execution>
+            <phase>generate-sources</phase>
+            <configuration>
+              <tasks>
+                <property name="build.src" location="target/build/src"/>
+                <property name="xml.dir" location="src/main/xml"/>
+                <property name="src.xsl" location="xsl"/>
+		<property name="build.compiler" value="extJavac"/>
+                <xslt
+                  in="${xml.dir}/zchar.xml"
+                  out="${build.src}/net/sourceforge/czt/z/util/ZChar.java"
+                  style="${src.xsl}/zchar2class.xsl"/>
+                <xslt
+                  in="${xml.dir}/zchar.xml"
+                  out="${build.src}/net/sourceforge/czt/z/util/ZString.java"
+                  style="${src.xsl}/zchar2stringclass.xsl"/>
+                <xslt
+                  in="${xml.dir}/ozchar.xml"
+                  out="${build.src}/net/sourceforge/czt/oz/util/OzChar.java"
+                  style="${src.xsl}/ozchar2class.xsl"/>
+                <xslt
+                  in="${xml.dir}/ozchar.xml"
+                  out="${build.src}/net/sourceforge/czt/oz/util/OzString.java"
+                  style="${src.xsl}/ozchar2stringclass.xsl"/>
+                <xslt
+                  in="${xml.dir}/circuschar.xml"
+                  out="${build.src}/net/sourceforge/czt/circus/util/CircusChar.java"
+                  style="${src.xsl}/circuschar2class.xsl"/>
+                <xslt
+                  in="${xml.dir}/circuschar.xml"
+                  out="${build.src}/net/sourceforge/czt/circus/util/CircusString.java"
+                  style="${src.xsl}/circuschar2stringclass.xsl"/>
+                <xslt
+                  in="${xml.dir}/zpattchar.xml"
+                  out="${build.src}/net/sourceforge/czt/zpatt/util/ZPattChar.java"
+                  style="${src.xsl}/zpattchar2class.xsl"/>
+                <xslt
+                  in="${xml.dir}/zpattchar.xml"
+                  out="${build.src}/net/sourceforge/czt/zpatt/util/ZPattString.java"
+                  style="${src.xsl}/zpattchar2stringclass.xsl"/>
+              </tasks>
+              <sourceRoot>${basedir}/target/build/src</sourceRoot>
+            </configuration>
+            <goals>
+              <goal>run</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>net.sourceforge.czt</groupId>
+        <artifactId>maven-gnast-plugin</artifactId>
+        <executions>
+          <execution>
+            <phase>generate-sources</phase>
+            <configuration>
+              <gnastdir>${basedir}/../gnast</gnastdir>
+            </configuration>
+            <goals>
+              <goal>generate</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
+</project>

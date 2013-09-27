@@ -1,0 +1,73 @@
+\documentclass[10pt]{article}
+\usepackage{czt}
+
+\title{CZT Z-Pattern Toolkit}
+\author{Mark Utting}
+\begin{document}
+\maketitle
+
+This toolkit is for use with the \emph{Z pattern} extension of Z,
+which is used by CZT to define transformation and reasoning rules
+for Z.  These rulesets are usually defined by tool-builders rather
+than end-users of Z.
+
+\LaTeX\ files that define Z pattern rulesets should use the
+\verb!czt.sty! file, which defines several \LaTeX macros and
+environments for defining Z pattern rules, such as 
+the \verb!zedjoker! environment for declaring
+Z pattern jokers and the \verb!zedrule! environment for defining
+rules.  See the rules/src/test/resources/*.tex files for examples.
+
+\begin{zsection}
+  \SECTION zpattern\_toolkit \parents standard\_toolkit
+\end{zsection}
+
+This toolkit section defines any operators or functions used in the
+provisos of rules.  It also defines the \LaTeX\ and Unicode markup of
+the symbols used in the rule syntax.
+
+\begin{verbatim}
+%%Zinchar \proviso U+25B8
+%%Zinchar \derives U+2501
+\end{verbatim}
+
+We define some syntax for use within the provisos that manipulate
+schemas and signatures.  The $[D1|true] \schemamerge [D2|true]$
+operator calculates the union of the two DeclLists. 
+$[D1|true] \schemaminus [D2|true]$ returns the declarations that are in
+$D1$ but not in $D2$.  Both these operators have the precondition that
+$D1$ and $D2$ must be in normalized form (VarDecls only with one name
+per VarDecl, types that are base types, no duplicated names).
+
+\begin{verbatim}
+%%Zinword \schemamerge schemamerge
+%%Zinword \schemaminus schemaminus
+%%Zinword \unprefix unprefix
+%%Zinword \schemaEquals schemaEquals
+\end{verbatim}
+
+\begin{zed}
+  \function 30 \leftassoc ( \_ \schemamerge \_ ) \\
+  \function 30 \leftassoc ( \_ \schemaminus \_ ) \\
+  \function 30 \leftassoc ( \_ \unprefix \_ ) \\
+  \relation ( \_ \schemaEquals \_ )
+\end{zed}
+
+
+This definition captures part of the semantics of
+the $\schemaminus$ operator and gives it the correct
+type.  Note that this definition will create an $\exists$
+within the predicate of SIG3, but that exists will be
+trivially true if we assume that all base types are non-empty. 
+
+TODO: add this predicate: $SIG3 = \exists SIG2 @ SIG1$.
+
+\begin{gendef}[SIG1,SIG2,SIG3]
+  \_ \schemaminus \_ : SIG1 \cross SIG2 \fun SIG3 \\
+  \_ \schemamerge \_ : SIG1 \cross SIG2 \fun SIG3
+\end{gendef}
+
+\begin{gendef}[SIG1,SIG2]
+  \_ \schemaEquals \_ : SIG1 \rel SIG2
+\end{gendef}
+\end{document}

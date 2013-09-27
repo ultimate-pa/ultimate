@@ -1,0 +1,147 @@
+%\documentclass{article}
+%\usepackage{czt}
+%\newcommand{\unprefix}{\mathrel{unprefix}}
+
+%\begin{document}
+
+\begin{zsection}
+  \SECTION oracle\_toolkit \parents zpattern\_toolkit
+\end{zsection}
+\TBDpar{IT}{What's in zpattern\_toolkit?  Should it appear here?}
+
+Sufficient jokers are declared not just for this toolkit
+but also for lots of rules that use this toolkit.
+
+\begin{zedjoker}{DeclList} D, {}\\~~~~~~~~~~~~~~~ D1, D2, D3, D4, D5, D6, D7, D8, D9, D10 \end{zedjoker}
+\begin{zedjoker}{Pred} P, {}\\~~~~~~~~~~~~~~~ P1, P2, P3, P4, P5, P6, P7, P8, P9, P10 \end{zedjoker}
+\begin{zedjoker}{Expr} T, E, {}\\~~~~~~~~~~~~~~~ E1, E2, E3, E4, E5, E6, E7, E8, E9, E10 \end{zedjoker}
+\begin{zedjoker}{Name} N, {}\\~~~~~~~~~~~~~~~ N1, N2, N3, N4, N5, N6, N7, N8, N9, N10 \end{zedjoker}
+\begin{zedjoker}{NameList}NL\end{zedjoker}
+\begin{zedjoker}{ExprList} EL \end{zedjoker}
+\begin{zedjoker}{RenameList}RL\end{zedjoker}
+\begin{zedjoker}{Stroke}{}^S\end{zedjoker}
+
+\TBDpar{PD}{NL could be read as newline.}
+
+\begin{zed}
+  \relation ( \_ :: \_ )
+\end{zed}
+
+\begin{gendef}[E1,E2]
+  \_ :: \_ : E1 \rel E2
+\end{gendef}
+
+\begin{zedoracle}{TypecheckOracle}
+  E :: T
+\end{zedoracle}
+$E :: T$ is true provided $T$ is the carrier set of $E$.
+It provides a way of checking or looking-up the type of an expression.
+
+%%Zinchar \hasDefn U+225D
+\begin{zed}
+  \relation (\_ \hasDefn \_)
+\end{zed}
+
+\begin{gendef}[E]
+  \_ \hasDefn \_ : \power (E \cross E)
+\end{gendef}
+
+\begin{zedoracle}{LookupOracle}
+  E1 \hasDefn E2
+\end{zedoracle}
+$E1 \hasDefn E2$ is true provided $E1$ is either a reference expression
+or a generic instantiation expression instantiated with names,
+and the referenced definition exists in the environment
+and has the form $E1 : E2$.
+It provides a way of looking up definitions so that references can be unfolded,
+and can also be used to check that a name is defined in a particular way.
+No way is yet provided to look-up a definition's associated constraints,
+nor have we provided a way to look-up a definition of the form $E1 == E2$.
+
+%%Zinchar \is U+2261
+
+\begin{zed}
+  \relation (\_ \is \_)
+\end{zed}
+
+\begin{gendef}[E1,E2]
+  \_ \is \_ : \power (E1 \cross E2)
+\end{gendef}
+
+\begin{zedoracle}{DecorOracle}
+  E~{}^S \is E2
+\end{zedoracle}
+$E~{}^S \is E2$ is true provided $E$ and $E2$ are schemas and
+decorating $E$ with stroke ${}^S$ results in $E2$.
+It provides a way of calculating or checking the result of 
+decorating or undecorating a schema.
+
+\begin{zedoracle}{ThetaOracle}
+  \theta E \is E2
+\end{zedoracle}
+$\theta E \is E2$ is true provided that the binding $\theta E$
+is the same as $E2$.
+It provides a way of calculating or checking a binding construction.
+
+\begin{zedoracle}{DecorThetaOracle}
+  \theta E~{}^S \is E2
+\end{zedoracle}
+$\theta E~{}^S \is E2$ is true provided that the binding $\theta E~{}^S$
+is the same as $E2$.
+It provides a way of calculating or checking a binding construction
+in which decorated variables are referenced.
+
+\begin{zedoracle}{SchemaMinusOracle}
+  [D1|true] \schemaminus [D2|true] \is [D3|true]
+\end{zedoracle}
+$[D1|true] \schemaminus [D2|true] \is [D3|true]$ is true provided that
+subtracting the signature $D2$ from the signature $D1$
+results in the signature $D3$.
+It provides a way of calculating or checking a hiding.
+
+\TBDpar{IT}{Note that this isn't set subtraction, but $\backslash$schemaminus,
+as toolkit won't be in scope,
+but it's unfortunate that the symbol is further overloaded
+(already looks like schema hiding too).}
+
+\begin{zedoracle}{UnprefixOracle}
+  N1 \unprefix N2 \is N3
+\end{zedoracle}
+$N1 \unprefix N2 \is N3$ is true provided that
+name $N2$ has the characters of name $N1$ as a prefix,
+which when removed leaves the name $N3$.
+It provides a way of calculating or checking the suffix.
+
+\begin{zedoracle}{SplitNamesOracle}
+  (split [D|true]) \is {}\\~~([D1|true]? \land [D2|true] \land {}\\~~~~ [D3|true]' \land [D4|true]!)
+\end{zedoracle}
+$(split [D|true]) \is ([D1|true]? \land [D2|true] \land [D3|true]' \land [D4|true]!)$ is true provided that
+partitioning the declarations of signature $D$ according to their rightmost stroke
+results in the same declarations as decorating the declarations of signatures
+$D1$, $D2$, $D3$ and $D4$ with appropriate strokes.
+Note that $D2$ concerns only those declarations with no strokes.
+It provides a way of calculating or checking a partitioning of a signature.
+
+\begin{zedoracle}{HideOracle}
+  [D1|true] \hide (NL) \is \exists [D2|true] @ [D1|true]
+\end{zedoracle}
+$[D1|true] \hide (NL) \is \exists [D2|true] @ [D1|true]$ is true provided that
+the signature $D2$ declares the same names as the list of names $NL$.
+It provides a way of calculating or checking the hidden or quantified names.
+
+\begin{zedoracle}{RenameOracle}
+  E [ RL ] \is E2
+\end{zedoracle}
+$E [ RL ] \is E2$ is true provided that the renaming of schema $E$
+is the same as schema $E2$.
+It provides a way of calculating or checking the renaming.
+
+\begin{zedoracle}{XiOracle}
+  (\theta [D|true] = \theta [D|true]~') \iff P
+\end{zedoracle}
+$(\theta [D|true] = \theta [D|true]~') \iff P$ is true provided that
+the truth of the predicate from a $\Xi$ schema is equivalent to $P$.
+It provides a way of calculating or checking the $\Xi$ schema's predicate.
+
+%\end{document}
+\endinput

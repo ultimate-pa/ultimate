@@ -1,0 +1,180 @@
+\documentclass[11pt]{article}
+\usepackage{ltcadiz}
+
+\begin{document}
+
+\begin{zsection}
+  \SECTION mtr \parents oz\_toolkit, standard\_toolkit
+\end{zsection}
+
+\zedsize{\small}
+\begin{class}{Clock}
+\also
+\begin{state}
+date:  \nat
+\end{state}\classbreak
+\begin{init}
+date = 0
+\end{init}\classbreak
+\begin{op}{getDate}
+today!:  \nat  
+\where
+today! = date
+\end{op}\classbreak
+\begin{op}{nextDay}
+\Delta (date)
+\where
+date' = date + 1
+\end{op} 
+\end{class} 
+
+\begin{class}{FareDataBase[STATION]}
+\also
+\begin{state}
+fare: STATION \cross STATION \pfun  \nat  
+\end{state} \classbreak
+\begin{init}
+fare = \emptyset
+\end{init} \classbreak
+\begin{op}{addFare}
+\Delta (fare)\\
+start?: STATION \\ 
+finish?: STATION \\ 
+fare?:  \nat  
+\where
+(start?, finish?) \notin  \dom fare \\ 
+fare' = fare \cup \{(start?, finish?) \mapsto fare?\} \\ 
+\end{op} \classbreak
+\begin{op}{updateFare}
+\Delta (fare)\\
+start?: STATION \\ 
+finish?: STATION \\ 
+newfare?:  \nat  
+\where
+ (start?, finish?) \in  \dom fare \\ 
+fare' = fare \oplus \{(start?, finish?) \mapsto newfare?\} \\ 
+\end{op} \classbreak 
+\begin{op}{checkFare}
+start?: STATION \\ 
+finish?: STATION \\ 
+fare!:  \nat  
+\where
+ (start?, finish?) \in  \dom fare \\ 
+fare! = fare(start?, finish?)
+\end{op} 
+\end{class} 
+
+
+\begin{class}{Tickets[TICKET, STATION]}
+\also
+%TICKET == 1 \upto 10\\
+%STATION == 1 \upto 10\\
+TYPE ::= single | multi | season \\
+MultiValue == \{50, 100\} \\ 
+SeasonDuration == \{7, 31, 365\}\\
+\begin{state}
+singles:  \power TICKET \\ 
+multis:  \power TICKET \\ 
+seasons:  \power TICKET \\ 
+value: TICKET \pfun  \nat  \\ 
+expiry: TICKET \pfun  \nat  \\ 
+entrypoint: TICKET \pfun STATION 
+\where
+ \dom value = (singles \cup multis \cup seasons) \\ 
+\forall t : (singles \cup multis \cup seasons) @
+   \# (\{t\} \dres entrypoint) \leq 1
+\end{state} \classbreak 
+\begin{init}
+expiry = \emptyset \\ 
+singles = \emptyset \\ 
+multis = \emptyset \\ 
+seasons = \emptyset \\ 
+value = \emptyset \\ 
+entrypoint = \emptyset
+\end{init} \classbreak 
+\begin{op}{issue}
+\Delta (expiry, singles, multis, seasons, value)\\
+ticket?: TICKET \\ 
+today?:  \nat  \\ 
+type?: TYPE \\ 
+value?:  \nat  
+\where
+ ticket? \notin (singles \cup multis \cup seasons) \land\\
+       (type? = multi \implies value? \in MultiValue) \land\\
+       (type? = season \implies value? \in SeasonDuration)\\
+type? = single \implies \\
+\t1 expiry' = expiry \cup \{ticket? \mapsto today?\} \land \\ 
+\t1 singles' = singles \cup \{ticket?\} \land \\ 
+\t1 value' = value \cup \{ticket? \mapsto value?\} \land\\ 
+\t1 multis' = multis \land seasons' = seasons\\
+type? = multi \implies\\
+\t1 expiry' = expiry \cup \{ticket? \mapsto (today? + 730)\} \land \\ 
+\t1 value' = value \cup \{ticket? \mapsto value?\} \land \\ 
+\t1 multis' = multis \cup \{ticket?\} \land \\ 
+\t1 singles' = singles \land seasons' = seasons\\
+type? = season \implies\\
+\t1 expiry' = expiry \cup \{ticket? \mapsto today? + value?\} \land \\ 
+\t1 value' = value \cup \{ticket? \mapsto 1\} \land \\ 
+\t1 seasons' = seasons \cup \{ticket?\} \land \\ 
+\t1 singles' = singles \land  multis' = multis
+\end{op}
+\classbreak 
+\begin{op}{reIssue}
+\Delta (expiry, value, entrypoint)\\
+ticket?: TICKET \\ 
+today?:  \nat  \\ 
+value?:  \nat  
+\where
+ ticket? \in (singles \cup multis \cup seasons) \land\\
+     (ticket? \in multis \implies value? \in MultiValue) \land\\
+     (ticket? \in seasons \implies value? \in SeasonDuration)\\
+ticket? \in singles \implies\\
+\t1 expiry' = expiry \oplus \{ticket? \mapsto today?\} \land \\ 
+\t1 value' = value \oplus \{ticket? \mapsto value?\}\\ 
+ticket? \in multis \implies\\
+\t1 expiry' = expiry \oplus  \{ticket? \mapsto (today? + 730)\} \land \\ 
+\t1 value' = value \oplus \{ticket? \mapsto value?\} \\ 
+ticket? \in seasons \implies\\
+\t1 expiry' = expiry \oplus \{ticket? \mapsto today? + value?\} \land \\ 
+\t1 value' = value \oplus \{ticket? \mapsto 1\}\\
+entrypoint' = \{ticket?\} \ndres entrypoint
+\end{op} \classbreak 
+\begin{op}{enterStation}
+\Delta (entrypoint)\\
+ticket?: TICKET \\ 
+station?: STATION \\ 
+today?:  \nat  
+\where
+ ticket? \in (singles \cup multis \cup seasons) \land \\ 
+\t2 value(ticket?) \neq 0 \land \\ 
+\t2 expiry(ticket?) \geq today? \land \\ 
+\t2 \{ticket?\} \dres entrypoint = \emptyset \\ 
+entrypoint' = entrypoint \cup \{ticket? \mapsto station?\} \\ 
+\end{op} \classbreak 
+\begin{op}{entry}
+ticket?: TICKET \\ 
+station!: STATION 
+\where
+ ticket? \in  \dom entrypoint \\ 
+station! = entrypoint(ticket?) \\ 
+\end{op} \classbreak 
+\begin{op}{exitStation}
+\Delta (entrypoint, value)\\
+fare?:  \nat  \\ 
+ticket?: TICKET \\ 
+start!: STATION 
+\where
+ ticket? \in (singles \cup multis \cup seasons) \land \\ 
+ticket? \in  \dom entrypoint \\ 
+ticket? \in singles \implies\\
+\t1 fare? \leq value(ticket?) \land \\ 
+\t1 value' = value \oplus \{ticket? \mapsto 0\}\\
+ticket? \in multis \implies\\ 
+\t1 value' = value \oplus \{ticket? \mapsto max \{0, value(ticket?) - fare?\}\}\\ 
+ticket? \in seasons \implies\\
+\t1 value' = value\\
+start! = entrypoint(ticket?) \\ 
+entrypoint' = \{ticket?\} \ndres entrypoint
+\end{op} 
+\end{class} 
+\end{document}

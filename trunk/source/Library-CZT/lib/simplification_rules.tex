@@ -1,0 +1,76 @@
+\begin{zsection}
+  \SECTION simplification\_rules \parents standard\_toolkit
+\end{zsection}
+
+\begin{zedjoker}{DeclList} D, D1, D2, D3, D4, D5, D6, D7, D8, D9 \end{zedjoker}
+\begin{zedjoker}{Pred} P, P1, P2, P3, P4, P5, P6, P7, P8, P9 \end{zedjoker}
+\begin{zedjoker}{Expr} E, E1, E2, E3, E4, E5, E6, E7, E8, E9 \end{zedjoker}
+\begin{zedjoker}{Name} v, v1, v2, v3, v4, v5, v6, v7, v8, v9 \end{zedjoker}
+
+And Rules:
+
+\begin{zedrule}{AndTrueLeft}
+  true \land P \iff P
+\end{zedrule}
+
+\begin{zedrule}{AndTrueRight}
+  P \land true \iff P
+\end{zedrule}
+
+\begin{zedrule}{And}
+  P \land P \iff P
+\end{zedrule}
+
+\begin{zedrule}{AndFalseLeft}
+  false \land P \iff false
+\end{zedrule}
+
+\begin{zedrule}{AndFalseRight}
+  P \land false \iff false
+\end{zedrule}
+
+\begin{zedrule}{AndAssoc}
+  (P1 \land (P2 \land P3)) \iff (P1 \land P2 \land P3)
+\end{zedrule}
+
+Or Rules:
+
+\begin{zedrule}{OrTrueLeft}
+  true \lor P \iff true
+\end{zedrule}
+
+\begin{zedrule}{OrRightTrue}
+  P \lor true \iff true
+\end{zedrule}
+
+\begin{zedrule}{OrFalseLeft}
+  false \lor P \iff P
+\end{zedrule}
+
+\begin{zedrule}{OrFalseRight}
+  P \lor false \iff P
+\end{zedrule}
+
+Not Rules:
+
+\begin{zedrule}{NotTrue}
+  \lnot true \iff false
+\end{zedrule}
+
+\begin{zedrule}{NotFalse}
+  \lnot false \iff true
+\end{zedrule}
+
+Quantification Rules:
+
+\begin{zedrule}{ForallDistribution}
+  (\forall [D|P1]|P2 @ P3) \iff (\forall D | P1\land P2 @ P3)
+\end{zedrule}
+
+\begin{zedrule}{ExistsDistribution}
+  (\exists [D|P1]|P2 @ P3) \iff (\exists D | P1\land P2 @ P3)
+\end{zedrule}
+
+\begin{zedrule}{Exists1Distribution}
+  (\exists_1 [D|P1]|P2 @ P3) \iff (\exists_1 D | P1\land P2 @ P3)
+\end{zedrule}

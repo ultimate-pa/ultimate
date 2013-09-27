@@ -1,0 +1,42 @@
+section_BEGIN
+\begin{zsection}
+  \SECTION\ basic\_processes4 \parents\ circus\_toolkit
+\end{zsection}
+channel_decl
+\begin{circus}
+    \circchannel\ out: \nat
+\end{circus}
+basic_process_BEGIN
+\begin{circus}
+    \circprocess\ FibStateMultipleEnv ~~\circdef~~ \circbegin
+\end{circus}
+process_state_and_init
+\begin{circusaction}
+    \circstate\ FibState ~~==~~ [~ x, y: \nat ~] \\
+    InitFibState ~~==~~ [~ FibState~' | x' = y' = 1 ~]
+\end{circusaction}
+first_action
+\begin{circusaction}
+    InitFib ~~\circdef~~ out~!1 \then out~!1 \then InitFibState
+\end{circusaction}
+schema_action
+\begin{schema}{OutFibOp}
+    \Delta FibState; next!: \nat
+\where
+    next! = y' = x + y \land x' = y
+\end{schema}
+recursive_action
+\begin{circusaction}
+    OutFib ~~\circdef~~ \circmu\ X @ (~ \circvar\ next: \nat @ OutFibState \circseq out~!next \then X ~)
+\end{circusaction}
+main_action
+\begin{circusaction}
+    @ InitFib ~\circseq~ OutFib
+\end{circusaction}
+before_process_END
+\begin{circus}
+    \circend
+\end{circus}
+after_process_END
+
+section_END 

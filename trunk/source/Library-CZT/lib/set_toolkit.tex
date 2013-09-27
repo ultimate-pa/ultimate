@@ -1,0 +1,256 @@
+\documentclass[draft,a4paper,10pt,wd]{isov2}
+%\usepackage[dvips]{epsfig}
+\usepackage{ltcadiz}
+\begin{document}
+\normannex{Mathematical toolkit}
+\sclause{Preliminary definitions}
+
+\begin{zsection}
+\SECTION set\_toolkit
+\end{zsection}
+
+\ssclause{Relations}
+
+%%Zinchar \rel U+2194
+\begin{zed}
+\generic 5 \rightassoc (\_ \rel \_)
+\end{zed}
+
+\begin{zed}
+X \rel Y == \power ( X \cross Y )
+\end{zed}
+
+$X \rel Y$ is the set of relations between $X$ and $Y$,
+that is, the set of all sets of ordered pairs whose first members
+are members of $X$ and whose second members are members of $Y$.
+
+\ssclause{Total functions}
+
+%%Zinchar \fun U+2192
+\begin{zed}
+\generic 5 \rightassoc (\_ \fun \_)
+\end{zed}
+
+\begin{zed}
+X \fun Y == \{~ f : X \rel Y | \forall x : X @ \exists_1 y : Y @ (x , y) \in f ~\}
+\end{zed}
+
+$X \fun Y$ is the set of all total functions from $X$ to $Y$,
+that is, the set of all relations between $X$ and $Y$
+such that each $x$ in $X$ is related to exactly one $y$ in $Y$.
+
+\sclause{Sets}
+
+\ssclause{Inequality relation}
+
+%%Zinchar \neq U+2260
+\begin{zed}
+\relation (\_ \neq \_)
+\end{zed}
+
+\begin{gendef}[X]
+\_ \neq \_ : X \rel X
+\where
+\forall x , y : X @ x \neq y \iff \lnot x = y
+\end{gendef}
+
+Inequality is the relation between those values of the same type
+that are not equal to each other.
+
+\ssclause{Non-membership}
+
+%%Zinchar \notin U+2209
+\begin{zed}
+\relation (\_ \notin \_)
+\end{zed}
+
+\begin{gendef}[X]
+\_ \notin \_ : X \rel \power X
+\where
+\forall x : X ; a : \power X @ x \notin a \iff \lnot x \in a
+\end{gendef}
+
+Non-membership is the relation between those values of a type, $x$,
+and sets of values of that type, $a$,
+for which $x$ is not a member of $a$.
+
+\ssclause{Empty set}
+
+%%Zchar \emptyset U+2205
+\begin{zed}
+\emptyset [ X ] == \{~ x : X | false ~\}
+\end{zed}
+
+The empty set of any type is the set of that
+type that has no members.
+
+\ssclause{Subset relation}
+
+%%Zinchar \subseteq U+2286
+\begin{zed}
+\relation (\_ \subseteq \_)
+\end{zed}
+
+\begin{gendef}[X]
+\_ \subseteq \_ : \power X \rel \power X
+\where
+\forall a , b : \power X @ a \subseteq b \iff
+( \forall x : a @ x \in b )
+\end{gendef}
+
+Subset is the relation between two sets of the same type, $a$ and $b$,
+such that every member of $a$ is a member of $b$.
+
+\ssclause{Proper subset relation}
+
+%%Zinchar \subset U+2282
+\begin{zed}
+\relation (\_ \subset \_)
+\end{zed}
+
+\begin{gendef}[X]
+\_ \subset \_ : \power X \rel \power X
+\where
+\forall a , b : \power X @ a \subset b \iff
+a \subseteq b \land a \neq b
+\end{gendef}
+
+Proper subset is the relation between two
+sets of the same type, $a$ and $b$,
+such that $a$ is a subset of $b$,
+and $a$ and $b$ are not equal.
+
+\ssclause{Non-empty subsets}
+
+\begin{zed}
+\power_1 X == \{~ a : \power X | a \neq \emptyset ~\}
+\end{zed}
+
+If $X$ is a set, then $\power_1 X$ is the set of all non-empty subsets of $X$.
+
+\begin{note}
+The $\power$ symbol is established as a generic operator by the prelude.
+\end{note}
+
+\ssclause{Set union}
+
+%%Zinchar \cup U+222A
+\begin{zed}
+\function 30 \leftassoc (\_ \cup \_)
+\end{zed}
+
+\begin{gendef}[X]
+\_ \cup \_ : \power X \cross \power X \fun \power X
+\where
+\forall a , b : \power X @ a \cup b = \{~ x : X | x \in a \lor x \in b ~\}
+\end{gendef}
+
+The union of two sets of the same type is the set of values
+that are members of either set.
+
+\ssclause{Set intersection}
+
+%%Zinchar \cap U+2229
+\begin{zed}
+\function 40 \leftassoc (\_ \cap \_)
+\end{zed}
+
+\begin{gendef}[X]
+\_ \cap \_ : \power X \cross \power X \fun \power X
+\where
+\forall a , b : \power X @ a \cap b = \{~ x : X | x \in a \land x \in b ~\}
+\end{gendef}
+
+The intersection of two sets of the same type is the set of
+values that are members of both sets.
+
+\ssclause{Set difference}
+
+%%Zinchar \setminus U+2216
+\begin{zed}
+\function 30 \leftassoc (\_ \setminus \_)
+\end{zed}
+
+\begin{gendef}[X]
+\_ \setminus \_ : \power X \cross \power X \fun \power X
+\where
+\forall a , b : \power X @ a \setminus b = \{~ x : X | x \in a \land x \notin b ~\}
+\end{gendef}
+
+The difference of two sets of the same type is the set of
+values that are members of the first set but not members of the second set.
+
+\ssclause{Set symmetric difference}
+
+%%Zinchar \symdiff U+2296
+\begin{zed}
+\function 25 \leftassoc (\_ \symdiff \_)
+\end{zed}
+
+\begin{gendef}[X]
+\_ \symdiff \_ : \power X \cross \power X \fun \power X
+\where
+\forall a , b : \power X @ a \symdiff b = \{~ x : X | \lnot ( x \in a \iff x \in b) ~\}
+\end{gendef}
+
+The symmetric set difference of two sets of the same type is
+the set of values that are members of one set, or the other,
+but not members of both.
+
+\ssclause{Generalized union}
+
+%%Zprechar \bigcup U+22C3
+\begin{gendef}[X]
+\bigcup : \power \power X  \fun \power X
+\where
+\forall A : \power \power X @ \bigcup A = \{~ x : X | \exists a : A @ x \in a ~\}
+\end{gendef}
+
+The generalized union of a set of sets of the same type is
+the set of values of that type that are members of at least one of the sets.
+
+\ssclause{Generalized intersection}
+
+%%Zprechar \bigcap U+22C2
+\begin{gendef}[X]
+\bigcap : \power \power X \fun \power X
+\where
+\forall A : \power \power X @ \bigcap A = \{~ x : X | \forall a : A @ x \in a ~\}
+\end{gendef}
+
+The generalized intersection of a set of sets of values of the same
+type is the set of values of that type that are members of
+every one of the sets.
+
+\sclause{Finite sets}
+
+\ssclause{Finite subsets}
+
+%%Zprechar \finset U-0001D53D
+\begin{zed}
+\generic (\finset \_)
+\end{zed}
+
+\begin{zed}
+\finset X == \bigcap \{~ A : \power \power X |
+	\emptyset \in A \land ( \forall a : A ; x : X @ a \cup \{ x \} \in A ) ~\}
+\end{zed}
+
+If $X$ is a set,
+then $\finset X$ is the set of all finite subsets of $X$.
+The set of finite subsets of $X$ is the smallest set that contains the empty set
+and is closed under the action of adding single elements of $X$.
+
+\ssclause{Non-empty finite subsets}
+
+\begin{zed}
+\finset_1 X == \finset X \setminus \{ \emptyset \}
+\end{zed}
+
+If $X$ is a set,
+then $\finset_1 X$ is the set of all non-empty finite subsets of $X$.
+The set of non-empty finite subsets of $X$ is the smallest set that contains
+the singleton sets of $X$ and is closed under the action of adding single
+elements of $X$.
+
+\end{document}

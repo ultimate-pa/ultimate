@@ -1,0 +1,132 @@
+\documentclass[11pt]{article}
+\usepackage{oz}
+\zedindent -1mm
+\pagestyle{empty}
+\raggedbottom
+\begin{document}
+
+\begin{zsection}
+  \SECTION dms \parents oz\_toolkit, standard\_toolkit
+\end{zsection}
+
+\begin{class}{DMS[X]}
+\also
+\begin{state}
+  nodes: \finset X  \\
+  ddo:  X  \rel  X  \\
+  \Delta\\
+  tc:  X  \rel  X  
+\where
+  \dom (ddo) \subseteq nodes \land \\ 
+  tc = ddo\plus \land \\ 
+  \lnot (\exists x:  X @ (x, x) \in tc)
+\end{state}\classbreak
+\begin{init}
+  nodes = \emptyset \\ 
+  ddo = \emptyset
+\end{init}\classbreak
+\begin{op}{NoNodes}
+  result!:  \bool 
+\where
+  result! \iff nodes = \emptyset \\ 
+\end{op}\classbreak
+\begin{op}{IsNode}
+  x?:  X  \\
+  result!:  \bool  
+\where
+  result! \iff x? \in nodes
+\end{op}\classbreak
+\begin{op}{AddNode}
+  \Delta (nodes)\\
+  x?:  X  
+\where
+  x? \notin nodes \\ 
+  nodes' = nodes \cup \{x?\}
+\end{op}\classbreak
+\begin{op}{RemoveNode}
+  \Delta (nodes, ddo)\\
+  x?:  X  
+\where
+  x? \in nodes \setminus  \ran ddo \\
+  nodes' = nodes \setminus \{x?\} \land \\ 
+  ddo' = \{x?\} \ndres ddo
+\end{op}\classbreak
+\begin{op}{NoDependencies}
+  result!:  \bool  
+\where
+  result! \iff ddo = \emptyset
+\end{op}\classbreak
+\begin{op}{DependedUpon}
+  x?:  X  \\
+  result!:  \bool  
+\where
+  x? \in nodes\\
+  result! \iff x? \in  \ran ddo
+\end{op}\classbreak
+\begin{op}{IsDependency}
+  x?, y?:  X  \\
+  result!:  \bool  
+\where
+  \{x?, y?\} \subseteq nodes \\ 
+  result! \iff (x?, y?) \in ddo 
+\end{op}\classbreak
+\begin{op}{CanAdd}
+  x?, y?:  X  \\
+  result!:  \bool  
+\where
+  \{x?, y?\} \subseteq nodes \\ 
+  result! \iff ((y?, x?) \notin tc \land x? \neq y?)
+\end{op}\classbreak
+\begin{op}{AddDependency}
+  \Delta (ddo)\\
+  x?, y?:  X  
+\where
+  \{x?, y?\} \subseteq nodes \\
+  x? \neq y? \\
+  (y?, x?) \notin tc \\ 
+  ddo' = ddo \cup \{(x?, y?)\}
+\end{op}\classbreak
+\begin{op}{RemoveDependency}
+  \Delta (ddo)\\
+  x?, y?:  X  
+\where
+  (x?, y?) \in ddo \\ 
+  ddo' = ddo \setminus \{(x?, y?)\}
+\end{op}\classbreak
+\begin{op}{Dependents}
+  x?:  X  \\
+  ns!:  \finset  X  
+\where
+  x? \in nodes \\ 
+  ns! = \{n: nodes | (n, x?) \in tc\}
+\end{op}\classbreak
+\begin{op}{Supporters}
+  x?:  X  \\
+  ns!: \finset  X  
+\where
+  x? \in nodes \\ 
+  ns! = \{n: nodes | (x?, n) \in tc\}
+\end{op}\classbreak
+\begin{op}{UltSupporters}
+  x?:  X  \\
+  ns!: \finset  X  
+\where
+  x? \in nodes \\ 
+  ns! = \{n: nodes | (x?, n) \in tc \land n \notin  \dom ddo\}
+\end{op}\classbreak
+\begin{op}{CandidateSupporters}
+  x?:  X  \\
+  cs!:  \finset  X 
+\where
+  x? \in nodes \\ 
+  cs! = \{ n: nodes | (n, x?) \notin tc \land \\ n \neq x?\}
+\end{op}\classbreak
+\begin{op}{SomeDirectDependent}
+  x?:  X  \\
+  n!:  X  
+\where
+  x? \in  \ran ddo \\ 
+  (n!, x?) \in ddo
+\end{op} 
+\end{class} 
+\end{document}

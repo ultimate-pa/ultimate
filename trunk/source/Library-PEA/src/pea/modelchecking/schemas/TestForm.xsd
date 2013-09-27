@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+  This file is part of the PEA toolkit.
+  
+  The PEA toolkit is a collection of tools for 
+  Phase Event Automata (PEA). See
+  http://csd.informatik.uni-oldenburg.de/projects/epea.html
+  for more information.
+  
+  Copyright (C) 2005-2006 Roland Meyer,
+                          Department for Computing Science,
+                          University of Oldenburg
+  
+  This program is free software; you can redistribute it and/or
+  modify it under the terms of the GNU General Public License
+  as published by the Free Software Foundation; either version 2
+  of the License, or (at your option) any later version.
+  
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU General Public License
+  along with this program; if not, write to the Free Software
+  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
+--> 
+
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+    <xsd:annotation>
+        <xsd:documentation xml:lang="en"> Schema for test formulae. Roland Meyer 2005 C.v.O.
+            University of Oldenburg </xsd:documentation>
+    </xsd:annotation>
+    <xsd:include schemaLocation="http://csd.informatik.uni-oldenburg.de/pub/download/peatoolkit/BasicTypes.xsd"/>
+    <!-- Type definition of operators in test formulae -->
+    <xsd:simpleType name="TFOperator">
+        <xsd:restriction base="xsd:string">
+            <xsd:pattern value="(AND|OR|CHOP|S\d*)"/>
+        </xsd:restriction>
+    </xsd:simpleType>
+    <xsd:complexType name="TFTree">
+        <xsd:choice minOccurs="2" maxOccurs="unbounded">
+            <xsd:element name="trace" type="Trace"/>
+            <xsd:element name="tfTree" type="TFTree"/>
+        </xsd:choice>
+        <xsd:attribute name="operator" type="TFOperator" use="required"/>
+    </xsd:complexType>
+    <xsd:complexType name="TestForm">
+        <xsd:choice minOccurs="1" maxOccurs="1">
+            <xsd:element name="trace" type="Trace"/>
+            <xsd:element name="tfTree" type="TFTree"/>
+        </xsd:choice>
+    </xsd:complexType>
+    <xsd:element name="testForm" type="TestForm"/>
+</xsd:schema>

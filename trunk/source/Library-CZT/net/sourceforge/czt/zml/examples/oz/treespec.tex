@@ -1,0 +1,178 @@
+\documentclass{article}
+\usepackage{ltcadiz}
+\begin{document}
+\begin{center}
+\begin{large}
+Object-Z Specification of {\em IntTree}
+\end{large}
+\end{center}
+
+\begin{zsection}
+  \SECTION treespec \parents oz\_toolkit, standard\_toolkit
+\end{zsection}
+
+\noindent
+The class {\em IntTree} provides access to a binary tree of integers that
+can be accessed through a cursor, which keeps track of the ``current node.''
+The class {\em Node} represents a node in the tree, which is either a
+``null'' node, or consists of a value and a left and right child.
+In {\em IntTree}, the free type $DIR$ represents a ``direction'', which
+is either $PARENT$, $LEFT$ (child), or $RIGHT$ (child).
+The attribute $root$ represents the root node of the tree
+and $curr$ the current node.
+Initially the tree consists of a single node, the root node, whose value
+is 0.
+The function $addChild(d,v)$ adds a child node to the current node in
+direction $d$; the value of the child node is $v$ and the current node
+is set to the new node.
+If a child already exists in direction $d$, then $addChild(d,v)$ signals
+the exception $NodeExc$, and if an attempt is made to add a parent to the
+root node then it signals $RootNodeExc$.
+The function $clear$ removes the left and right sub-tree from the current node.
+$setRoot$ moves the cursor to the root node of the tree.
+The function $setValue(v)$ sets the value of the current node to $v$ and
+$getValue$ returns the value of the current node.
+The function $canMove(d)$ returns whether you can move in direction $d$
+from the current node, and $moveCurrent(d)$ moves the cursor in direction
+$d$, signaling $NotNodeExc$ if you cannot move in that direction.
+
+\begin{zed}
+Node == NullNode \classuni ValNode
+\end{zed}
+
+\begin{class}{NullNode}
+\begin{state}
+	\Delta \\
+	subnodes : \finset Node
+\where
+	subnodes = \{ self \}
+\end{state}
+\end{class}
+
+\begin{class}{ValNode}
+\begin{state}
+        val : \num \\
+	left, right : Node\copyright \\
+	\Delta \\
+	subnodes : \finset Node
+\where
+	\langle left.subnodes, \{ self \}, right.subnodes \rangle
+		\partition subnodes
+\end{state}\\
+\begin{init}
+        val = 0 \\
+	left \in NullNode \\
+	right \in NullNode
+\end{init}\\
+\begin{op}{setNode}
+        \Delta (val,left,right) \\
+	v? : \num ; \\
+	l?, r? : Node
+\where
+        val' = v? \\
+        left' = l? \\
+        right' = r?
+\end{op}
+\end{class}
+
+
+\begin{class}{IntTree}
+\visibility (DIR,\Init,addChild,clear,setRoot,setValue,getValue,canMove,moveCurrent) \\
+DIR ::= PARENT | LEFT | RIGHT\classbreak
+\begin{axdef}
+	canMoveFunc: DIR \cross Node \cross Node \fun \bool
+\where
+	\forall d: DIR; root,curr: Node @ canMoveFunc (d,root,curr) = true \iff \\
+                \t2 curr \in ValNode \land\\
+		\t2 (d = PARENT \land root \neq curr \lor \\
+		\t2 d = LEFT \land curr.left \notin NullNode \lor \\
+		\t2 d = RIGHT \land curr.right \notin NullNode)
+\end{axdef}\classbreak
+\begin{state}
+	root, curr : Node
+\where
+	curr \in root.subnodes
+\end{state}\classbreak
+\begin{init}
+	root \in ValNode \\
+        root.\Init \\
+        curr = root
+\end{init}\classbreak
+\begin{op}{addChildAux}
+        \Delta (curr) \\
+	newnode : ValNode \\
+	null1,null2 : NullNode \\
+	oldleft,oldright: Node \\
+	oldval: \num
+\where
+	\{ newnode \} \cap root.subnodes = \emptyset \\
+	\{ null1,null2 \} \cap root.subnodes = \emptyset \\
+	null1 \neq null2 \\
+	curr' = newnode \\
+        curr \in ValNode \implies\\
+           oldleft = curr.left \land oldright = curr.right \land oldval = curr.val
+\end{op}\classbreak
+addChild \sdef addChildAux @ ([curr \in ValNode] \land\\
+	\t2 (newnode.setNode[null1/l?,null2/r?]) \land \\
+	\t2 (([ d? : DIR | d? = LEFT ]
+		\land curr.setNode[oldval/v?,newnode/l?,oldright/r?]) \gch \\
+	\t2 ([ d? : DIR | d? = RIGHT ]
+		\land curr.setNode[oldval/v?,oldleft/l?,newnode/r?])))\\
+\begin{op}{addChildNodeExc}
+        d? : DIR\\
+        v? : \num
+\where
+        canMoveFunc (d?,root,curr)
+\end{op}\classbreak
+\begin{op}{addChildRootNodeExc}
+        d? : DIR; \\
+        v? : \num
+\where
+        d? = PARENT \land curr = root
+\end{op}\classbreak
+\begin{op}{clearAux}
+	null1,null2 : NullNode \\
+	oldval: \num
+\where
+	\{ null1,null2 \} \cap root.subnodes = \emptyset \\
+	null1 \neq null2 \\
+	curr \in ValNode \land oldval = curr.val \lor\\
+        curr \in NullNode
+\end{op}\classbreak
+clear \sdef clearAux @ ([curr \in ValNode] @ curr.setNode[oldval/v?,null1/l?,null2/r?]) \\
+\begin{op}{setRoot}
+        \Delta (curr)
+\where
+	curr' = root
+\end{op}\classbreak
+setValue \sdef [ l, r : Node | curr \in ValNode \land l =
+  curr.left \land r = curr.right ] @ curr.setNode[l/l?,r/r?]
+\classbreak
+\begin{op}{getValue}
+        v! : \num
+\where
+        curr \in ValNode \implies v! = curr.val
+\end{op}\classbreak
+\begin{op}{canMove}
+	d? : DIR \\
+        v! : \bool
+\where
+	v! = canMoveFunc(d?,root,curr)
+\end{op}\classbreak
+\begin{op}{moveCurrent}
+        \Delta (curr) \\
+        d? : DIR
+\where
+	d? = PARENT \implies
+		\exists n : root.subnodes | n \in ValNode \implies  n.left = curr \lor n.right = curr
+			@ curr' = n \\
+	d? = LEFT \implies curr \in ValNode \land curr' = curr.left \\
+	d? = RIGHT \implies curr \in ValNode \land curr' = curr.right
+\end{op}\classbreak
+\begin{op}{moveCurrentNotNodeExc}
+        d? : DIR
+\where
+	\lnot canMoveFunc (d?,curr,root)
+\end{op}
+\end{class}
+\end{document}

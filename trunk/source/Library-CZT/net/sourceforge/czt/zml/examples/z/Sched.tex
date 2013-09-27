@@ -1,0 +1,645 @@
+\documentclass{article}
+\usepackage{ltcadiz}
+\begin{document}
+
+This is a specification of a simple scheduler and assembler. The
+system contains a set of registers and a block of memory. Processes
+can be created, with each containing a sequence on instructions that
+are executed on the system. The instruction format is a simplified
+format of the Intel x86 architecture. Processes are scheduled based on
+the credit system that is found in the Linux 2.0 kernel.
+
+This specification was written as a test spec for the CZT project. As
+a result, there are parts that may appear to be specified in a strange
+way - this is to test out the tools on a large set of Z.
+
+\begin{zsection}
+  \SECTION Stack \parents standard\_toolkit
+\end{zsection}
+
+A generic stack.
+
+\begin{zed}
+  Stack[X] == [stack : \seq X]\\
+  InitStack[X] == [Stack[X] | stack = \emptyset]
+\end{zed}
+
+\begin{schema}{PushStack}[X]
+  \Delta Stack[X]\\
+  x? : X
+\where
+  stack' = stack \cat \langle x? \rangle
+\end{schema}
+
+\begin{schema}{PopStack}[X]
+  \Delta Stack[X]\\
+  x! : X
+\where
+  stack' \cat \langle x! \rangle = stack
+\end{schema}
+
+
+\begin{zsection}
+  \SECTION Definitions \parents standard\_toolkit
+\end{zsection}
+
+Firstly, we define some basic types and functions that are used
+throughout the specification.
+
+$singleton$ is the set of all sets whose size is less than or equal to~$1$.
+This is included only to have a generic axiom definition.
+
+\begin{zed}
+  \relation (singleton~\_~)
+\end{zed}
+
+\begin{gendef}[X]
+  singleton~\_ : \power (\power X)
+\where
+  \forall s : \power X @ singleton~s \iff \#s \leq 1
+\end{gendef}
+
+The basic type of this system is a word, which specifically, is an
+unsigned octet. An unsigned word is used so references to memory etc a
+1-relative.
+
+\begin{zed}
+  WORD == 0 \upto 255
+\end{zed}
+
+Then, we define the size of the memory block, and give it a value for
+animation purposes.
+
+\begin{axdef}
+  mem\_size : WORD
+\where
+  mem\_size = 100
+\end{axdef}
+
+A $LABEL$ is used to label instructions for $jump$ instructions etc,
+although 'jump' hasn't been specified yet.
+
+\begin{zed}
+  [LABEL]
+\end{zed}
+
+Now we define the different instructions, as well as their operands. A
+$CONSTANT$ is used both as a constant value, as well as a memory
+reference for load and store instructions.
+
+\begin{zed}
+  INST\_NAME ::= \\
+    \t1 add | sub | divide | mult | push | pop |
+      load | store | loadConst | print \\
+  OPERAND ::= AX | BX | CX | DX | constant \ldata WORD \rdata\\
+  REGISTER == \{ AX, BX, CX, DX \}\\
+  CONSTANT == OPERAND \setminus REGISTER
+\end{zed}
+
+An instruction is specified as a instruction name, a sequence of
+operands, and optionally, a label.
+
+\begin{schema}{Instruction}
+  label : \power LABEL \\
+  name : INST\_NAME \\
+  params : \seq OPERAND
+\where
+  singleton~label
+\end{schema}
+
+\begin{zsection}
+  \SECTION System \parents Definitions, Stack
+\end{zsection}
+
+The system consists of a set of registers, and a block of
+memory. There is also a buffer for displaying output.
+
+\begin{zed}
+  REGISTERS == REGISTER \fun OPERAND\\
+  MEMORY == 1 \upto mem\_size \pfun WORD    
+\end{zed}
+
+\begin{schema}{System}
+  registers : REGISTERS\\
+  memory : MEMORY\\
+  output : \seq WORD
+\end{schema}
+
+Initially, all registers and memory hold the minimum $WORD$ value. The
+output buffer is empty.
+
+\begin{schema}{InitSystem}
+  System
+\where
+  registers = \{ r : REGISTER @ r \mapsto constant(min(WORD)) \}\\
+  memory = \{ m : 1 \upto mem\_size @ m \mapsto min(WORD) \}\\
+  output = \langle \rangle
+\end{schema}
+
+The system can have arithmetic and memory instructions.
+
+\begin{zed}
+  Arith\_Inst == [Instruction | \# params = 2 \land params(1) \in REGISTER]\\
+  Add\_Inst == [Arith\_Inst| name = add]\\
+  Sub\_Inst == [Arith\_Inst | name = sub]\\
+  Mult\_Inst == [Arith\_Inst | name = mult]\\
+  Div\_Inst == [Arith\_Inst | name = divide]
+\end{zed}
+
+\begin{zed}
+  Memory\_Inst == [Instruction | \# params = 2 \land params(1) \in REGISTER \\
+    \t1 \land params(2) \in CONSTANT]\\
+  Load\_Inst == [Memory\_Inst | name = load]\\
+  LoadConst\_Inst == [Memory\_Inst | name = loadConst]\\
+  Store\_Inst == [Memory\_Inst | name = store]
+\end{zed}
+
+A print instruction prints the value of a register.
+
+\begin{zed}
+  Print\_Inst == [Instruction | \# params = 1]
+\end{zed}
+
+$val$ maps constants to their value, and $dereference$ dereferences
+the value of a register, transitively if required.
+
+\begin{axdef}
+  val : CONSTANT \fun WORD\\
+  dereference : OPERAND \cross REGISTERS \fun WORD
+\where
+  \forall c : CONSTANT @ \\
+    \t1 (\exists n : WORD @ c = constant(n) \land val(c) = n)\\
+  \forall a : OPERAND ; r : REGISTERS @ \\
+    \t1 dereference(a,r) = \\
+      \t2 \IF a \in REGISTER \THEN dereference(r(a),r) \ELSE val(a)
+\end{axdef}
+
+The specification of the arithmetic instructions.
+
+\begin{schema}{Add}
+  \Delta System\\
+  Add\_Inst
+\where
+  \exists o_1 == dereference(params(1), registers);\\
+    \t1 o_2 == dereference(params(2), registers) @\\
+    \t1 registers' = registers \oplus 
+      \{ params(1) \mapsto constant(o_1 + o_2) \}\\
+  memory' = memory\\
+  output' = output
+\end{schema}
+
+\begin{schema}{Sub}
+  \Delta System\\
+  Sub\_Inst
+\where
+  \exists o_1 == dereference(params(1), registers);\\
+    \t1 o_2 == dereference(params(2), registers) @\\
+    \t1 registers' = registers \oplus 
+      \{ params(1) \mapsto constant(o_1 - o_2) \}\\
+  memory' = memory\\
+  output' = output
+\end{schema}
+
+\begin{schema}{Mult}
+  \Delta System\\
+  Mult\_Inst
+\where
+  \exists o_1 == dereference(params(1), registers);\\
+    \t1 o_2 == dereference(params(2), registers) @\\
+    \t1 registers' = registers \oplus 
+      \{ params(1) \mapsto constant(o_1 * o_2) \}\\
+  memory' = memory\\
+  output' = output
+\end{schema}
+
+\begin{schema}{Div}
+  \Delta System\\
+  Div\_Inst
+\where
+  \exists o_1 == dereference(params(1), registers);\\
+    \t1 o_2 == dereference(params(2), registers) @\\
+    \t1 registers' = registers \oplus 
+      \{ params(1) \mapsto constant(o_1 \div o_2) \}\\
+  memory' = memory\\
+  output' = output
+\end{schema}
+
+The {\tt load} operation loads a constant from memory. The second
+parameter is an index to the memory location from which the constant
+is loaded.
+
+\begin{schema}{Load}
+  \Delta System\\
+  Load\_Inst
+\where
+  \exists o_2 == val(params(2)) @\\
+    \t1 registers' = registers \oplus \\
+      \t2 \{ params(1) \mapsto constant(memory(o_2)) \}\\
+  memory' = memory\\
+  output' = output
+\end{schema}
+
+{\tt loadConst} loads a constant into a register. The second parameter
+the constant to be loaded.
+
+\begin{schema}{Load\_Const}
+  \Delta System\\
+  LoadConst\_Inst
+\where
+  \exists o_2 == val(params(2)) @\\
+    \t1 registers' = registers \oplus \{ params(1) \mapsto constant(o_2) \}\\
+  memory' = memory\\
+  output' = output
+\end{schema}
+
+Store the value of a register in memory.
+
+\begin{schema}{Store}
+  \Delta System\\
+  Store\_Inst
+\where
+  \exists o_1 == dereference(params(1), registers);\\
+    \t1 o_2 == val(params(2)) @\\
+      \t2 memory' = memory \oplus \{ o_2 \mapsto o_1 \}\\
+  registers' = registers\\
+  output' = output
+\end{schema}
+
+\begin{schema}{Print}
+  \Xi System\\
+  Print\_Inst
+\where
+  output' = output \cat \langle dereference(params(1), registers) \rangle\\
+  registers' = registers\\
+  memory' = memory
+\end{schema}
+
+\begin{zed}
+  Stack\_Inst == [Instruction | \#params = 1 ]\\
+  Push\_Inst == [Stack\_Inst | name = push ]\\
+  Pop\_Inst == [Stack\_Inst | name = pop]
+\end{zed}
+
+The specification of the stack instructions on the system.
+
+\begin{schema}{Push0}
+  \Xi System\\
+  PushStack[WORD]\\
+  Push\_Inst
+\where
+  x? = dereference(params(1), registers)
+\end{schema}
+
+\begin{schema}{Pop0}
+  \Delta System\\
+  PopStack[WORD]\\
+  Pop\_Inst
+\where
+  registers' = registers \oplus \{ params(1) \mapsto constant(x!) \}\\
+  memory' = memory\\
+  output' = output
+\end{schema}
+
+\begin{zed}
+  Push == Push0 \project [ System ; Stack [WORD] ]\\
+  Pop == Pop0 \project [System ; Stack [WORD] ]
+\end{zed}
+
+This executes an instruction on the on the system. $inst?$ is the
+instruction to execute, and $base?$ is the base memory value of the
+executing process. If the instruction is a {\tt load} or {\tt store}
+instruction, the memory reference must offset using the base value.
+
+\begin{schema}{exec\_inst}
+  \Delta System\\
+  inst? : Instruction\\
+  base? : 1 \upto mem\_size
+\where
+  \exists label : \power LABEL; name : INST\_NAME; params : \seq OPERAND |\\
+    \t1 label = inst?.label \land name = inst?.name \land \\
+    \t1 params = inst?.params @\\
+      \t2 Add \lor Sub \lor Mult \lor Div \lor\\
+      \t2 Print \lor Load\_Const \lor\\
+      \t2 name \in \{load,store\} \implies (\exists p : \seq OPERAND |\\
+        \t3 p = \langle params(1), \\
+          \t4 constant(val(params(2))+base?) \rangle @\\
+        \t3 Load [p/params] \lor Store [p/params] )
+\end{schema}
+
+\begin{zsection}
+  \SECTION Scheduler \parents System
+\end{zsection}
+
+This part of the specification is the scheduler.
+
+Here, we declare the set of process IDs, the priority values, and the
+default number of credits a process receives when it is created.
+
+\begin{zed}
+  Pid == \nat\\
+  Priority == \negate 19 \upto 19\\
+  Default\_Credits == 10 
+\end{zed}
+
+The possible status that a process can hold.
+
+\begin{zed}
+  Status ::= pWaiting | pReady | pRunning
+\end{zed}
+
+A process consists of a process ID, a status, a number of credits, and
+a priority. Each process has a sequence of instructions to be executed
+on the assembler, with a pointer to the current instruction. The
+memory that a process can occupy is between a base and limit
+value. Instructions must only access memory with a value less than the
+limit, but they know nothing about the base value - this is added onto
+the memory index provided by the instruction when an instruction is
+executed. Each procss also contains a stack and values for all
+registers, which are used to store values when the process is
+suspended.
+
+\begin{schema}{Processes}
+  pids : \power Pid\\
+  status : Pid \pfun Status\\
+  credits : Pid \pfun \nat\\
+  priority : Pid \pfun Priority\\
+  instructions : Pid \pfun (\seq Instruction)\\
+  inst\_pointer : Pid \pfun \nat_1\\    
+  base, limit : Pid \pfun WORD\\
+  pregisters : Pid \pfun REGISTERS\\
+  pstack : Pid \pfun Stack[WORD]
+\where
+  pids = \dom(status) = \dom(credits) = \dom(priority) =\\
+    \t1 \dom(instructions) = \dom(inst\_pointer) = \dom(base) =\\
+    \t1 \dom(limit) = \dom(pstack)\\
+  \forall pid : pids @ inst\_pointer(pid) \leq \#(instructions(pid))\\
+  \forall pid : pids @ base(pid) + limit(pid) \leq mem\_size
+\end{schema}
+
+The $sort$ function takes the credits and priorities of all processes,
+and returns a sequence of process IDS sorted firstly by their credits
+(the more credits a process has, the higher preference they get), and
+if the credits are equal, then their priority. If the priority is
+equal, then the order is non-deterministic.
+
+\begin{axdef}
+  sort : (Pid \pfun \nat) \cross (Pid \pfun Priority) \pfun \iseq Pid
+\where
+  sort =
+    (\lambda credits : (Pid \pfun \nat); priority :(Pid \pfun Priority) |\\
+    \t2 \dom(credits) = \dom(priority) @\\
+    \t2 (\mu s : \iseq Pid | \ran(s) = \dom(credits) \land\\
+      \t3 (\forall i : 1 \upto \#s - 1 @\\
+        \t4 credits(s(i)) > credits(s(i+1)) \lor\\
+        \t4 (credits(s(i)) = credits(s(i+1)) \land\\
+        \t4 \ priority(s(i)) > priority(s(i)))) @ s))
+\end{axdef}
+
+To interrupt a process during execution, the kernel must be in $kernel$ mode.
+
+\begin{zed}
+  Mode ::= user | kernel
+\end{zed}
+
+For the scheduler, we track which mode the operating system is in, as
+well as declaring three ``secondary'' variables, $waiting$, $running$,
+and $ready$, to keep the sets of waiting running, and ready variables
+respecitvely. In fact, $ready$ is a sequence, and is ordered based on
+the credits that each process has. A process with more credits will
+have a higher priority. This is fair scheduling, because at each timer
+interrupt (the $tick$ operation specified below), the current process
+losses one credit, therefore, process spending a lot of time executing
+will eventually have a low priority.
+
+\begin{schema}{Scheduler}
+  Processes\\
+  System\\
+  Stack[WORD]\\
+  mode : Mode\\
+  waiting, running : \power Pid\\
+  ready : \iseq Pid
+\where
+  \# running \leq 1\\
+  waiting \cap running \cap \ran ready = \emptyset\\
+  waiting \cup running \cup \ran ready = pids\\
+  waiting = \{ p : pids | (status \inv) (pWaiting) = p\}\\
+  running = \{ p : pids | (status \inv) (pRunning) = p\}\\
+  ready = sort((waiting \cup running) \ndres credits, \\
+    \t1 (waiting \cup running) \ndres priority)\\
+  \forall r : \ran(ready) @ status(r) = pReady\\
+  \forall r : running @ credits(r) > 0
+\end{schema}
+
+This uses semicolons as conjunctions for predicates, which conforms to
+the grammar in the ISO standard, but according to the list of
+differences between ZRM and ISO Z on Ian Toyn's website, semicolons
+can no longer be used to conjoin predicates.
+
+\begin{schema}{InitScheduler}
+    Scheduler\\
+    InitStack[WORD]\\
+    InitSystem
+\where
+    pids = \emptyset~; status = \emptyset~; priority = \emptyset\\
+    credits = \emptyset~; instructions = \emptyset~; inst\_pointer = \emptyset\\
+    waiting = \emptyset~; running = \emptyset~; ready = \langle \rangle\\
+    base = \{\}~; limit = \{\}~; pregisters = \{\}\\
+    mode = user
+\end{schema}
+
+$newProcess$ creates a new process with a unique process ID and a
+specified priority, and places this new process on the ready queue.
+
+\begin{schema}{create\_new\_process}
+  \Delta Scheduler\\
+  \Xi System\\
+  priority? : Priority\\
+  instructions? : \seq Instruction\\
+  base?, limit? : WORD\\
+  pid! : Pid
+\where
+  pid! \notin pids\\
+  status' = status \cup \{ pid! \mapsto pReady \}\\
+  credits' = credits \cup \{ pid! \mapsto Default\_Credits \}\\
+  priority' = priority \cup \{ pid! \mapsto priority? \}\\
+  instructions' = instructions \cup \{ pid! \mapsto instructions? \}\\
+  inst\_pointer' = inst\_pointer \cup \{ pid! \mapsto 1 \}\\
+  base' = base \cup \{ pid! \mapsto base? \}\\
+  limit' = limit \cup \{ pid! \mapsto limit? \}\\
+  pregisters' =\\
+    \t1 pregisters \cup \{ pid! \mapsto \{ r : REGISTER @ \\
+      \t2 r \mapsto constant(min(WORD)) \} \}\\
+  pstack' =
+    pstack \cup \{ pid! \mapsto (\lblot stack == \langle \rangle \rblot) \}\\
+    pids' = pids \cup \{pid!\}
+\end{schema}
+
+We define a schema that contains only the variables that do not change
+when a reschedule occurs.
+
+\begin{zed}
+  RescheduleChange == \\
+    \t1 Scheduler \hide (status, running, ready, waiting, credits)
+\end{zed}
+
+A reschedule occurs when all ready processes have no credits. Every
+process, not just the ready processes, have their credits
+re-calculated using the formula $credits = credits/2 + priority$. This
+implies that the ready process with the highest priority will be the
+next process executed.
+
+\begin{schema}{reschedule}
+  \Delta Scheduler\\
+  \Xi RescheduleChange
+\where
+  ready \neq \emptyset\\
+  \forall r : \ran(ready) @ credits(r) = 0 \implies\\
+    \t1 credits' =
+      \{ p : pids @ p \mapsto (credits(p) \div 2) + priority(p) \} \land\\
+    \t1 status' = status\\
+  \lnot (\forall r : \ran(ready) @ credits(r) = 0) \implies\\
+    \t1 status' = status \oplus \{ head(ready) \mapsto pRunning \} \land\\ 
+    \t1 credits' = credits
+\end{schema}
+
+We declare a new schema that contains only the state variables that do
+not change when a status change occurs.
+
+\begin{zed}
+  StatusChange == Scheduler \hide\\
+    \t1 (status, running, waiting, ready, registers, pregisters, pstack)
+\end{zed}
+
+Interrupts the currently executing process if the new process is of a
+higher priority then the current process and the kernel is in $kernel$
+mode.
+
+\begin{schema}{interrupt}
+  \Delta Scheduler\\
+  \Xi StatusChange\\
+  create\_new\_process
+\where
+  mode = kernel\\
+  running = \emptyset\lor(\exists p : running @ priority?\geq priority(p))\\
+  \exists r : running @\\
+    \t1 status'=status\oplus\{ pid!\mapsto pRunning, r\mapsto pReady \}\land\\
+    \t1 pregisters' = pregisters \oplus \{ r \mapsto registers \} \land\\
+    \t1 \theta Stack~' = pstack(r)\\
+  registers' = pregisters(pid!)
+\end{schema}
+
+Remove the currently running process and put it back in the ready queue.
+
+\begin{schema}{remove\_running\_process}
+  \Delta Scheduler\\
+  \Xi StatusChange
+\where
+  \exists pid == (\mu r : running) @\\
+    \t1 status' = status \oplus \{ pid \mapsto pReady \} \land\\
+    \t1 pregisters' = pregisters \oplus \{ pid \mapsto registers \} \land\\
+    \t1 pstack' = pstack \oplus \{ pid \mapsto \theta Stack~' \}
+\end{schema}
+
+A process becomes blocked if it is waiting on a resource such a an IO
+device, or waiting on another process 
+
+\begin{zed}
+  block\_process == remove\_running\_process \semi reschedule
+\end{zed}
+
+We declare a schema containing only the variables that change for an
+unblock.
+
+\begin{zed}
+  UnblockProcessChange == Scheduler \hide (status, running, ready, waiting)
+\end{zed}
+
+Unblocks a process that is blocked by another process.
+
+\begin{schema}{unblock\_process}
+  \Delta Scheduler\\
+  \Xi UnblockProcessChange\\
+  pid? : Pid\\
+\where
+  pid? \in pids\\
+  status(pid?) = pWaiting\\
+  running=\emptyset \iff status'=status \oplus \{ pid? \mapsto pRunning \}\\
+  running \neq \emptyset \iff status' = status \oplus \{ pid? \mapsto pReady \}
+\end{schema}
+
+Remove a process from the system
+
+\begin{schema}{remove\_process}
+  \Delta Scheduler\\
+  \Xi Stack[WORD]\\
+  \Xi System\\
+  pid? : Pid
+\where
+  pid? \in pids\\
+  pids' = pids \setminus \{ pid? \}\\
+  status' = \{ pid? \} \ndres status\\
+  credits' = \{ pid? \} \ndres credits\\
+  priority' = \{ pid? \} \ndres priority\\
+  instructions' = \{ pid? \} \ndres instructions\\
+  inst\_pointer' = \{ pid? \} \ndres inst\_pointer\\
+  base'  = \{ pid? \} \ndres base\\
+  limit'  = \{ pid? \} \ndres limit\\
+  pregisters' = \{ pid? \} \ndres pregisters\\
+  pstack' = \{ pid? \} \ndres pstack
+\end{schema}
+
+Update the details in the process table when each instruction is
+executed, as well as communicate the current instruction and the base
+value for the current process.
+
+\begin{zed}
+  ChangeInstPointer == Scheduler \hide (inst\_pointer)
+\end{zed}
+
+\begin{schema}{update\_process\_table}
+  \Delta Scheduler\\
+  inst! : Instruction\\
+  base! : WORD
+\where
+  running \neq \emptyset\\
+  (\exists pid == (\mu r : running) @\\
+    \t1 inst! = head(instructions(pid)) \land\\
+    \t1 base! = base(pid) \land\\
+    \t1 (inst\_pointer(pid) = \#(instructions(pid)) \implies\\
+      \t2 remove\_process[pid/pid?]) \land\\
+    \t1 inst\_pointer(pid) < \#(instructions(pid)) \implies\\
+      \t2 inst\_pointer' = \\
+        \t3 inst\_pointer \oplus \{ pid \mapsto inst\_pointer(pid) + 1 \})\\
+   \theta ChangeInstPointer = \theta ChangeInstPointer~'
+\end{schema}
+
+\begin{zed}
+  next == exec\_inst \pipe update\_process\_table \semi\\
+    \t2 ([\Delta Scheduler | running = \emptyset] \land reschedule) \lor\\
+    \t2 ([\Xi Scheduler | running \neq \emptyset])
+\end{zed}
+
+\begin{zed}
+  idle0 == \lnot \pre next
+\end{zed}
+
+\begin{schema}{idle}
+  \Xi Scheduler\\
+  inst? : Instruction\\
+  base? : WORD
+\where
+  idle0
+\end{schema}
+
+\begin{zed}
+  tick == next \lor idle
+\end{zed}
+
+\begin{zed}
+  \vdash? (\forall n : \nat_1 @ n > 0)
+\end{zed}
+\begin{zed}
+  [X] \vdash? \forall x : \power X @ \#x \leq 1 \iff singleton~x
+\end{zed}
+
+\end{document}

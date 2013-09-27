@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<AndPred xmlns="http://czt.sourceforge.net/zml"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xmlns:xhtml="http://www.w3.org/1999/xhtml"
+  xsi:schemaLocation="http://czt.sourceforge.net/zml
+                      http://czt.sourceforge.net/zml/Z_2_1.xsd">
+  <TruePred/>
+  <MemPred Mixfix="true">
+    <ApplExpr Mixfix="true">
+      <RefExpr Mixfix="false" Explicit="false">
+        <ZName>
+          <Word> _ + _ </Word>
+          <ZStrokeList/>
+        </ZName>
+        <ZExprList/>
+      </RefExpr>
+      <TupleExpr>
+        <ZExprList>
+          <NumExpr>
+            <ZNumeral Value="1"/>
+          </NumExpr>
+          <NumExpr>
+            <ZNumeral Value="2"/>
+          </NumExpr>
+        </ZExprList>
+      </TupleExpr>
+    </ApplExpr>
+    <SetExpr>
+      <ZExprList>
+        <NumExpr>
+          <ZNumeral Value="3"/>
+        </NumExpr>
+      </ZExprList>
+    </SetExpr>
+  </MemPred>
+</AndPred>

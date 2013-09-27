@@ -1,0 +1,459 @@
+<!DOCTYPE HTML SYSTEM>
+<html>
+<head>
+<title>help</title>
+<style>
+<!--
+.subtitle {
+	background-color: #CCCCFF;
+	border-top-style: solid;
+	border-right-style: solid;
+	border-bottom-style: solid;
+	border-left-style: solid;
+	border-top-width: 1px;
+	border-right-width: 1px;
+	border-bottom-width: 1px;
+	border-left-width: 1px;
+	padding: 0%;
+	margin: 0%;
+	color: #990000;
+}
+a:link {
+	text-decoration: none;
+}
+a:visited {
+	text-decoration: none;
+}
+a:hover {
+	text-decoration: none;
+	color: #99CCFF;
+}
+a:active {
+	text-decoration: none;
+}
+-->
+</style>
+</head>
+ <body>
+
+   <h1 align="center">Community Z Tools HELP</h1>
+   <hr>
+<div class="subtitle"><h2><a name="gettingstarted">Getting Started</a></h2></div>
+<p>This guide introduces you to using this graphical user interface of the 
+Community Z Tools (CZT). The tutorials in this guide lead you through the 
+process of analysis which includes parsing, type checking and
+animation of specifications.
+
+   
+   <h3><a name="contents">Contents</a></h3>
+   <ol>
+	<li><strong>Overview</strong>
+	  <ol>
+	  	<li><a href="#introduction">Introduction</a></li>
+		<li><a href="#background">Background</a></li>
+		<li><a href="#objectives">CZT Objectives</a></li>
+                <li><a href="#formalspec">Formal Specification</a></li>
+	  </ol>	
+	</li>
+	<li><strong>Basic software operations</strong>
+		<ol>
+		<li><a href="#openfile">Opening and Parsing a file (specification)</a></li>
+   		<li><a href="#specifyingoptions">Specifying the Language and Mark-up 
+   			to parse a file with</a></li>
+   		<li><a href="#typechecking">Type-Checking</a></li>
+   		<li><a href="#exploringstructure">Exploring the Structure of a 
+   			Specification</a></li>
+   		<li><a href="#exporting">Exporting a file</a></li>
+   		<li><a href="#closing">Closing the workspace</a></li>
+   		</ol>
+	</li>
+    <li><a href="#zlive"><strong>ZLive Animator</strong></a></li>
+    <li><strong>Appendix</strong>
+      <ol>
+        <li><a href="#extensionsupport">Supported file Extensions</a></li>
+        <li><a href="#runningcmdline">Running CZT as a commandline tool</a></li>
+	<li><a href="#glossary">Glossary</a></li>
+	<li>For more information go to the CZT website at 
+		<strong><a href="http://czt.sourceforge.net">http://czt.sourceforge.net</a></strong></li>
+      </ol>
+    </li>
+   </ol>
+
+   <div class="subtitle"><h3>1. Overview</h3></div>
+   <div class=""><h4><a name="introduction">1.1 Introduction</a></h4></div><hr>
+   
+   <p>The Community Z Tools (CZT) project is building a set of tools for
+   editing, typechecking and animating formal specifications written in the
+   Z specification language, with some support for Z extensions such as 
+   Object-Z and Circus.</p>
+
+<p align="center"><a href="#contents">Back to Contents</a></p>
+   <div class=""><h4><a name="background">1.2 Background</a></h4></div><hr>
+   <p>(Adapted from Andrew Martin's  original CZT proposal)</p>
+<p>The Z specification language was adopted as an ISO standard in 2002.
+It can be used to precisely specify the requirements or behaviour of systems,
+and analyze that behaviour via proof, animation, test generation etc.</p>
+
+<p align="center"><a href="#contents">Back to Contents</a></p>
+
+<div class=""><h4><a name="objectives">1.3 CZT Objectives</a></h4></div><hr>
+   <p>Our objectives are to encourage interchange between existing Z tools
+   (via a standard XML interchange format for Z), and to provide open-source
+   libraries for building and integrating new Z tools.  The software we are 
+   building includes:</p>
+<ul>
+<li> An XML Schema mark-up for Z.</li>
+<li> Java classes for Z annotated syntax trees (AST).</li>
+<li> Java classes for converting between XML and Java AST.</li>
+<li> Java libraries for the common operations needed in every Z tool 
+	(mark-up-converters, parser, type-checker, etc.).  A paper describing
+	these has been presented at ZB2005.</li>
+<li> A Z animation tool called ZLive, with a customisable graphical 
+	user interface.</li>
+<li> Export tools, to output Z in other notations or for other Z tools.</li>
+<li> Extended versions of the libraries and tools to support Z extensions 
+	such as Object-Z and Circus.</li>
+</ul>
+<p align="center"><a href="#contents">Back to Contents</a></p>
+
+<div class=""><h4><a name="formalspec">1.4 Formal Specification</a></h4></div><hr>
+<p><i>From Wikipedia (http://en.wikipedia.org/wiki/Formal_specification), 
+	the free encyclopedia</i></p>
+
+<p><i>''A formal specification is a mathematical description of software
+	or hardware that may be used to develop an implementation.  It describes
+	what the system should do, not (necessarily) how the system should do it.
+	Given such a specification, it is possible to use formal verification
+	techniques to demonstrate that a candidate system design is correct
+	with respect to the specification.  This has the advantage that
+	incorrect candidate system designs can be revised before a major
+	investment has been made in actually implementing the design.
+	An alternative approach is to use provably correct refinement
+	steps to transform a specification into a design, and ultimately
+	into an actual implementation, that is correct by construction.''</i></p>
+
+<p><i>''The Z notation is an example of a leading formal specification 
+	language. Others include the Specification Language(VDM-SL) of the
+	Vienna Development Method and the Abstract Machine Notation (AMN)
+	of the B-Method.''</i></p>
+
+<p align="center"><a href="#contents">Back to Contents</a></p>
+
+   <div class="subtitle"><h3><a name="basics">2. Basic software operations</a></h3></div>
+   
+   <div class=""><h4><a name="openfile">2.1 Opening and Parsing a file (specification)</a></h4></div><hr>
+   
+   <p><i>Z specifications like programming languages can be parsed and
+   checked for errors, this may include checking for semantics and syntax
+   errors and also during the process of parsing a specification, the
+   contents contained within it can be determined.</i>
+   
+   <p>From the main window click <strong>File, </strong>then click 
+   <strong>Open</strong>, a 'Specification' dialog will pop up.
+   Then click <strong>"..."</strong>, an open dialog will pop up, choose
+   the file and click <strong>Open</strong>, then click <strong>OK</strong>s 
+   to open and parse the file with default settings.  Alternatively, you
+   can <strong>type in the full path</strong> of a file in the 
+   <strong>Specification</strong> text area and click <strong>OK</strong>.
+   
+   <p align="center"><a href="#contents">Back to Contents</a></p>
+   
+   <div class=""><h4><a name="specifyingoptions">2.2 Specifying the Language and Mark-up to parse a file with</a></h4></div><hr>
+   
+   <p><i>Z specifications can be represented and encoded in different ways.
+   There are many different dialects (languages) that the user can choose
+   to write Z specifications in, therefore in order for CZT to parse a
+   specification the user must let CZT know what dialect they are using.
+   Similarly, the user must let CZT know how their specification is 
+   encoded (mark-up) so that CZT knows how to decoded it for parsing.</i></p>
+   
+   <p>Follow the steps to <strong>Opening a file</strong> "except" before
+   clicking on <strong>OK</strong>, click on the <strong>Language</strong>
+   drop down menu and choose <strong>Standard Z, Object Z, Z Rules, or
+   Circus </strong>as the language to parse the file with.</p>
+   
+   <p>By clicking on the <strong>Markup</strong> drop down menu you
+   can choose <strong>Latex, UTF8, UTF16 or XML</strong> as the mark-up
+   to parse the file with.</p>
+   
+   <p>Click <strong>OK</strong>.</p>
+   
+   <p><i>Note: These options are chosen automatically depending on the
+   file extension of the file being opened if it has a common extension.
+   Choosing the wrong encoding may result with errors and/or no Z
+   sections found since CZT is expecting to look for information in
+   one way and the file being represented in another.  Files without
+   obvious extensions will not have all options chosen automatically
+   (For example *.zml can be written in any language which cannot be
+   easily determined).</i></p>
+   
+   <p align="center"><a href="#contents">Back to Contents</a></p>
+   
+   <div class=""><h4><a name="typechecking">2.3 Type-Checking</a></h4></div><hr>
+   <p><i>Type-checking is the process of verifying that variable types
+   are compatible in expressions which may use different types to form
+   an expression.</i></p>
+   
+   <p><i>A general example:</i></p>
+   
+   <table border='1' cellpadding="20">
+   <tr><td><strong>{1,3,5} = {(1,3),(1,4)}</strong></td></tr>
+   </table>
+   <p><i>This term has type errors since a set of integers cannot be
+   compared to a set of pairs</i></p>
+   
+   <p>To perform <strong>type-checking</strong>, follow the steps to
+   <strong>Opening a file</strong> except <strong>before</strong>
+   clicking on <strong>OK, </strong>make sure the <strong>Typecheck?</strong>
+   Checkbox is checked.  If the box is checked then type-checking will
+   be performed on the specification otherwise the specification would
+   not be type-checked.</p>
+   
+   <p align="center"><a href="#contents">Back to Contents</a></p>
+   
+   <div class=""><h4><a name="exploringstructure">2.4 Exploring the Structure of a Specification</a></h4></div><hr>
+   
+   <p>Once a specification has been opened and parsed, the structure of
+   the specification is <strong>displayed in a tree</strong> format on
+   the <strong>Specification Structure Explorer</strong> panel allowing
+   the user to inspect the <strong>sections and paragraphs</strong>
+   contained in the specification by <strong>expanding or collapsing</strong>
+   the tree.</p>
+   
+   <p align="center"><a href="#contents">Back to Contents</a></p>
+   
+   <div class=""><h4><a name="exporting">2.5 Exporting a file</a></h4></div><hr>
+   
+   <p><i>The goal of providing different mark-ups for Z specifications is
+   to make it easier for tools to exchange annotated specifications.
+   For example, a specification might be parsed and typechecked by
+   one tool, then passed to another tool (in XML format) which expands
+   schema calculus and puts predicates into disjunctive normal form,
+   then passed to another tool (in XML format) which generates test
+   cases from each disjunct. The XML format is simply a textual
+   representation of the annotated syntax tree of the Z specification.</i></p>
+   
+   <p>From the main window click <strong>File</strong>, then click
+   <strong>Export to</strong>, then click <strong>Latex, Unicode8,
+   Unicode16</strong> or <strong>XML</strong> to export to the
+   preferred mark-up. Then a save dialog will pop up requesting
+   a file name (a suggested file name will be provided) and once
+   a file name is entered click <strong>Save.</strong></p>
+   
+   <p><i>Note: The user can use any file extension when exporting,
+   the resulting file will remain as the mark-up the user chose to
+   export to in the first place.</i></p>
+   
+   <p align="center"><a href="#contents">Back to Contents</a></p>
+
+
+   <div class=""><h4><a name="closing">2.6 Closing the workspace</a></h4></div><hr>
+   
+   <p><i>Closing the workspace will give the user the interface CZT
+   initially starts with, this includes clearing the 
+   <strong>Specification Structure Explorer</strong> and clearing the 
+   <strong>Output</strong> area.</i></p>
+   
+   <p>From the main window click <strong>File</strong>, then click 
+   <strong>Close</strong></p>
+   
+   <p align="center"><a href="#contents">Back to Contents</a></p>
+
+
+    <div class="subtitle"><h3><a name="zlive">3. ZLive Animator</a></h3></div>
+    
+    <p><i>ZLive is an animator for evaluating Z expressions, predicates
+    and schemas.  It can be used to execute some schemas, to test that
+    given values satisfy a schema, or to generate all solutions of a
+    set or schema.</i></p>
+    
+    <p>There are <strong>two ways</strong> to run ZLive, one of which
+    is <strong>ZLiveDefault</strong> and can be run
+    <strong>independently</strong> but <strong>commands are 
+    limited</strong> to general commands which do not correspond
+    to a specification and the <strong>other way</strong> is to run
+    the <strong>ZLive Animator</strong> which <strong>requires</strong>
+    the user to open a specification before it can be run.</p>
+    
+    <p>To run <strong>ZLiveDefault</strong>, click <strong>Animate</strong>
+    then click <strong>Start ZLive Default</strong></p>
+    
+    <p>To run <strong>ZLive Animator</strong>, click <strong>Animate</strong>
+    then click <strong>Start ZLive Animator with</strong> and
+    <strong>choose a section</strong> to animate</p>
+    
+    <p>Interaction with ZLive animation is done through the 
+    <strong>''Output''</strong> window</p>
+    
+    <p>For a full <strong>list of commands</strong> type 
+    "<strong>help</strong>" on the ZLive prompt</p>
+    
+    <p><i>Note: Running the <strong>ZLive Animator</strong> causes 
+    the current specification to be parsed again.  Also the ZLive 
+    Animator can be similarly started by ZLiveDefault by loading
+    a specification from it and setting the section.</i></p>
+    
+    <p align="center"><a href="#contents">Back to Contents</a></p>
+    
+    
+    <div class="subtitle"><h3>4. Appendix</h3></div>    
+   <div class=""><h4><a name="extensionsupport">4.1 Supported file Extensions</a></h4></div><hr>
+   
+   <p>In general, CZT supports <strong>all types</strong> of files
+   with <strong>any kind of extension</strong> as long as it contains
+   content that can be read as Z specifications. The most
+   <strong>common</strong> CZT associated file extensions are:</p>
+   <p>
+   <table border="1" cellpadding="3" cellspacing="3">
+   <tr>
+   	<td>Extension</td>
+	<td>Language</td>
+	<td>Mark-up</td>
+   </tr>
+   <tr>
+   	<td>zed</td>
+	<td>Standard Z</td>
+	<td>Latex</td>
+   </tr>
+   <tr>
+   	<td>zed8</td>
+	<td>Standard Z</td>
+	<td>Unicode (UTF8)</td>
+   </tr>
+   <tr>
+   	<td>zed16</td>
+	<td>Standard Z</td>
+	<td>Unicode (UTF16)</td>
+   </tr>
+   <tr>
+   	<td>oz</td>
+	<td>Object Z</td>
+	<td>Latex</td>
+   </tr>
+   <tr>
+   	<td>oz8</td>
+	<td>Object Z</td>
+	<td>Unicode (UTF8)</td>
+   </tr>
+   <tr>
+   	<td>oz16</td>
+	<td>Object Z</td>
+	<td>Unicode (UTF16)</td>
+   </tr>
+   <tr>
+   	<td>Circus</td>
+	<td>Circus</td>
+	<td>Latex</td>
+   </tr>
+   <tr>
+   	<td>Circus8</td>
+	<td>Circus</td>
+	<td>Unicode (UTF8)</td>
+   </tr>
+   <tr>
+   	<td>Circus16</td>
+	<td>Circus</td>
+	<td>Unicode (UTF16)</td>
+   </tr>
+   <tr>
+   	<td>zedpatt</td>
+	<td>Z Rules</td>
+	<td>Latex</td>
+   </tr>
+   <tr>
+   	<td>zedpatt8</td>
+	<td>Z Rules</td>
+	<td>Unicode (UTF8)</td>
+   </tr>
+   <tr>
+   	<td>zedpatt16</td>
+	<td>Z Rules</td>
+	<td>Unicode (UTF16)</td>
+   </tr>
+   <tr>
+   	<td>tex</td>
+	<td>Standard Z</td>
+	<td>Latex</td>
+   </tr>
+   <tr>
+   	<td>zml</td>
+	<td>[Undefined]</td>
+	<td>XML</td>
+   </tr>
+   </table>
+
+   <p>When browsing for a file you can filter out files with uncommon
+   extensions by clicking on the <strong>Files of Type</strong> drop
+   down menu and select <strong>Common CZT files</strong> or specify
+   it to display <strong>All Files</strong> (does not display hidden
+   files).  This can be useful when your specification files are mixed
+   in a folder with files of other types</p>
+   
+   <p align="center"><a href="#contents">Back to Contents</a></p>
+   
+  <div>
+    
+   <div class=""><h4><a name="runningcmdline">4.2 Running CZT as a command line tool</a></h4></div><hr>
+    
+   <p>CZT was originally developed for commandline and required users
+   to enter specific commands into the commandline for desired outcomes
+   <p><strong>The jar file CZT_HOME/lib/czt.jar can be executed and
+   used as a command line tool by calling</strong></p>
+   
+   <table border='1' cellpadding="20">
+     <tr><td><strong>java -jar czt.jar</strong></td></tr>
+   </table>
+   <p>followed by arguments.  Calling it without arguments invokes the
+   CZT graphical user interface.  The command line tool can be used
+   in two different ways.</p>
+   
+   <p>Firstly, it can be called with the file name as argument,
+   preceded by optional  flags.  This file is then parsed and
+   typechecked and errors, if present, are reported.
+   By specifying an output file using the -o flag, a specification
+   can be translated into a different mark-up.  The mark-up of a
+   file (input or output) is determined by its file ending.  For
+   example, to translate a file in LaTeX mark-up into Unicode, call</p>
+   <table border='1' cellpadding="20">
+     <tr><td><strong>java -jar czt.jar -o file.utf8 file.tex</strong></td></tr>
+   </table>
+   <p>See the usage information to get a list of supported mark-ups and
+   file endings.  There are other various flags that control the parsing
+   behaviour; see the usage message to get more information about those.</p>
+   
+   <p>Secondly,  the command line tool can be used to call other CZT
+   tools like, for example, the Z animator ZLive.  This is done by
+   giving the name of the  CZT tool as first argument followed by the
+   arguments for the selected  tool. For example, the animator is started
+   using</p>
+   <table border='1' cellpadding="20">
+     <tr><td><strong>java -jar czt.jar zlive</strong></td></tr>
+   </table>
+   <p>For <strong>more help</strong>, type "-help" without quotes
+   as the argument when starting CZT</p>
+   
+   </div><p align="center"><a href="#contents">Back to Contents</a></p>
+   
+   
+ <div class=""><h4><a name="glossary">4.3 Glossary</a></h4></div><hr>
+ 
+ <p><strong>Language</strong> many different languages can be used to
+ construct Z specifications some of which are Standard Z, Object Z,
+ Circus and Z Rules.</p>
+ 
+ <p><strong>Mark-up</strong> is a way of representing the same information
+ in a different format.  For example, a specification written in LaTeX can
+ also be represented in XML.</p>
+ 
+ <p><strong>Paragraph</strong> a Z construct which defines
+ <strong>names</strong> and <strong>constants</strong></p>
+ 
+ <p><strong>Section</strong> contains paragraphs and can have parents
+ that are in separate files</p>
+ 
+ <p><strong>Specification</strong> see <a href="#formalspec">Formal
+ Specification</a></p>
+  
+ <p align="center"><a href="#contents">Back to Contents</a></p>
+ </body>
+</html>

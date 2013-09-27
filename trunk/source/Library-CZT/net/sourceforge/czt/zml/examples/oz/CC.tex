@@ -1,0 +1,55 @@
+\documentclass[12pt]{article}
+\usepackage{oz}
+
+
+\begin{document}
+\title{Credit Card Examples}
+\author{Roger Duke \and Gordon Rose}
+\date{}
+\maketitle
+
+This was written by Roger Duke and Gordon Rose, but I have made
+minor changes to fit the ISO-Z standard LaTeX
+
+\begin{zsection}
+  \SECTION CreditCard \parents standard\_toolkit, oz\_toolkit
+\end{zsection}
+
+\begin{class}{CreditCard} 
+\also
+        \project (limit, balance, Init, withdraw, deposit, withdrawAvail) \\
+        \begin{axdef}
+		limit : \nat
+	\where
+		limit \in \{ 1000, 2000, 5000 \}
+	\end{axdef}\classbreak
+	\begin{state}
+		balance : \num
+	\where
+		balance + limit \geq 0
+	\end{state} \classbreak
+	\begin{init}
+		balance = 0
+	\end{init} \classbreak
+	\begin{op}{withdraw}
+		\Delta (balance) \\
+		amount? : \nat
+	\where
+		amount? \leq balance + limit \\
+		balance' = balance - amount?
+	\end{op} \classbreak
+	\begin{op}{deposit}
+		\Delta (balance) \\
+		amount? : \nat
+	\where
+		balance' = balance + amount?
+	\end{op} \classbreak
+	\begin{op}{withdrawAvail}
+		\Delta (balance) \\
+		amount! : \nat
+	\where
+		amount! = balance + limit \\
+		balance' = \negate limit
+	\end{op}	
+\end{class}
+\end{document}

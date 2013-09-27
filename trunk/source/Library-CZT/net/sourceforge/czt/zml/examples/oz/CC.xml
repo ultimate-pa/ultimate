@@ -1,0 +1,935 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Spec Version="2.1" xsi:schemaLocation="http://czt.sourceforge.net/zml http://czt.sourceforge.net/zml/Z_2_1.xsd" xmlns:ns2="http://czt.sourceforge.net/object-z" xmlns="http://czt.sourceforge.net/zml" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <NarrSect>
+        <Anns>
+            <LocAnn Start="0" Loc="CC.tex" Line="0" Length="262" Col="0"/>
+        </Anns>
+        <Content xsi:type="xs:string" xmlns:xs="http://www.w3.org/2001/XMLSchema">\documentclass[12pt]{article}
+\usepackage{oz}
+
+
+\begin{document}
+\title{Credit Card Examples}
+\author{Roger Duke \and Gordon Rose}
+\date{}
+\maketitle
+
+This was written by Roger Duke and Gordon Rose, but I have made
+minor changes to fit the ISO-Z standard LaTeX
+
+</Content>
+    </NarrSect>
+    <ZSect>
+        <Anns>
+            <LocAnn Start="262" Loc="CC.tex" Line="13" Length="898" Col="0"/>
+        </Anns>
+        <Name>CreditCard</Name>
+        <Parent>
+            <Anns>
+                <LocAnn Start="310" Loc="CC.tex" Line="14" Length="17" Col="31"/>
+            </Anns>
+            <Word>standard_toolkit</Word>
+        </Parent>
+        <Parent>
+            <Anns>
+                <LocAnn Start="329" Loc="CC.tex" Line="14" Length="11" Col="50"/>
+            </Anns>
+            <Word>oz_toolkit</Word>
+        </Parent>
+        <ZParaList>
+            <LatexMarkupPara/>
+            <NarrPara>
+                <Anns>
+                    <LocAnn Start="355" Loc="CC.tex" Line="15" Length="2" Col="14"/>
+                </Anns>
+                <Content xsi:type="xs:string" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+
+</Content>
+            </NarrPara>
+            <ns2:ClassPara>
+                <Anns>
+                    <LocAnn Start="371" Loc="CC.tex" Line="17" Length="773" Col="14"/>
+                </Anns>
+                <ZName>
+                    <Anns>
+                        <LocAnn Start="371" Loc="CC.tex" Line="17" Length="10" Col="14"/>
+                    </Anns>
+                    <Word>CreditCard</Word>
+                    <ZStrokeList/>
+                </ZName>
+                <ns2:VisibilityList>
+                    <ZName>
+                        <Anns>
+                            <LocAnn Start="408" Loc="CC.tex" Line="19" Length="5" Col="18"/>
+                        </Anns>
+                        <Word>limit</Word>
+                        <ZStrokeList/>
+                    </ZName>
+                    <ZName>
+                        <Anns>
+                            <LocAnn Start="415" Loc="CC.tex" Line="19" Length="7" Col="25"/>
+                        </Anns>
+                        <Word>balance</Word>
+                        <ZStrokeList/>
+                    </ZName>
+                    <ZName>
+                        <Anns>
+                            <LocAnn Loc="CC.tex"/>
+                        </Anns>
+                        <Word>Init</Word>
+                        <ZStrokeList/>
+                    </ZName>
+                    <ZName>
+                        <Anns>
+                            <LocAnn Start="430" Loc="CC.tex" Line="19" Length="8" Col="40"/>
+                        </Anns>
+                        <Word>withdraw</Word>
+                        <ZStrokeList/>
+                    </ZName>
+                    <ZName>
+                        <Anns>
+                            <LocAnn Start="440" Loc="CC.tex" Line="19" Length="7" Col="50"/>
+                        </Anns>
+                        <Word>deposit</Word>
+                        <ZStrokeList/>
+                    </ZName>
+                    <ZName>
+                        <Anns>
+                            <LocAnn Start="449" Loc="CC.tex" Line="19" Length="13" Col="59"/>
+                        </Anns>
+                        <Word>withdrawAvail</Word>
+                        <ZStrokeList/>
+                    </ZName>
+                </ns2:VisibilityList>
+                <ZExprList/>
+                <AxPara Box="AxBox">
+                    <Anns>
+                        <LocAnn Start="475" Loc="CC.tex" Line="20" Length="84" Col="8"/>
+                    </Anns>
+                    <ZNameList/>
+                    <ZSchText>
+                        <Anns>
+                            <LocAnn Start="491" Loc="CC.tex" Length="55"/>
+                        </Anns>
+                        <ZDeclList>
+                            <Anns>
+                                <LocAnn Start="491" Loc="CC.tex" Length="12"/>
+                            </Anns>
+                            <VarDecl>
+                                <Anns>
+                                    <LocAnn Start="491" Loc="CC.tex" Length="12"/>
+                                </Anns>
+                                <ZNameList>
+                                    <ZName>
+                                        <Anns>
+                                            <LocAnn Start="491" Loc="CC.tex" Line="21" Length="5" Col="2"/>
+                                        </Anns>
+                                        <Word>limit</Word>
+                                        <ZStrokeList/>
+                                    </ZName>
+                                </ZNameList>
+                                <RefExpr Mixfix="false" Explicit="false">
+                                    <Anns>
+                                        <LocAnn Start="499" Loc="CC.tex" Line="21" Length="4" Col="10"/>
+                                    </Anns>
+                                    <ZName>
+                                        <Anns>
+                                            <LocAnn Start="499" Loc="CC.tex" Line="21" Length="4" Col="10"/>
+                                        </Anns>
+                                        <Word>ℕ</Word>
+                                        <ZStrokeList/>
+                                    </ZName>
+                                    <ZExprList/>
+                                </RefExpr>
+                            </VarDecl>
+                        </ZDeclList>
+                        <MemPred Mixfix="false">
+                            <Anns>
+                                <LocAnn Start="514" Loc="CC.tex" Length="32"/>
+                            </Anns>
+                            <RefExpr Mixfix="false" Explicit="false">
+                                <Anns>
+                                    <LocAnn Start="514" Loc="CC.tex" Line="23" Length="5" Col="2"/>
+                                </Anns>
+                                <ZName>
+                                    <Anns>
+                                        <LocAnn Start="514" Loc="CC.tex" Line="23" Length="5" Col="2"/>
+                                    </Anns>
+                                    <Word>limit</Word>
+                                    <ZStrokeList/>
+                                </ZName>
+                                <ZExprList/>
+                            </RefExpr>
+                            <SetExpr>
+                                <Anns>
+                                    <LocAnn Start="524" Loc="CC.tex" Line="23" Length="22" Col="12"/>
+                                </Anns>
+                                <ZExprList>
+                                    <NumExpr>
+                                        <Anns>
+                                            <LocAnn Start="527" Loc="CC.tex" Line="23" Length="4" Col="15"/>
+                                        </Anns>
+                                        <ZNumeral Value="1000">
+                                            <Anns>
+                                                <LocAnn Start="527" Loc="CC.tex" Line="23" Length="4" Col="15"/>
+                                            </Anns>
+                                        </ZNumeral>
+                                    </NumExpr>
+                                    <NumExpr>
+                                        <Anns>
+                                            <LocAnn Start="533" Loc="CC.tex" Line="23" Length="4" Col="21"/>
+                                        </Anns>
+                                        <ZNumeral Value="2000">
+                                            <Anns>
+                                                <LocAnn Start="533" Loc="CC.tex" Line="23" Length="4" Col="21"/>
+                                            </Anns>
+                                        </ZNumeral>
+                                    </NumExpr>
+                                    <NumExpr>
+                                        <Anns>
+                                            <LocAnn Start="539" Loc="CC.tex" Line="23" Length="4" Col="27"/>
+                                        </Anns>
+                                        <ZNumeral Value="5000">
+                                            <Anns>
+                                                <LocAnn Start="539" Loc="CC.tex" Line="23" Length="4" Col="27"/>
+                                            </Anns>
+                                        </ZNumeral>
+                                    </NumExpr>
+                                </ZExprList>
+                            </SetExpr>
+                        </MemPred>
+                    </ZSchText>
+                </AxPara>
+                <ns2:State Box="SchBox">
+                    <Anns>
+                        <LocAnn Start="572" Loc="CC.tex" Line="25" Length="76" Col="1"/>
+                    </Anns>
+                    <ns2:PrimaryDecl>
+                        <ZDeclList>
+                            <Anns>
+                                <LocAnn Loc="CC.tex"/>
+                            </Anns>
+                            <VarDecl>
+                                <Anns>
+                                    <LocAnn Start="588" Loc="CC.tex" Length="14"/>
+                                </Anns>
+                                <ZNameList>
+                                    <ZName>
+                                        <Anns>
+                                            <LocAnn Start="588" Loc="CC.tex" Line="26" Length="7" Col="2"/>
+                                        </Anns>
+                                        <Word>balance</Word>
+                                        <ZStrokeList/>
+                                    </ZName>
+                                </ZNameList>
+                                <RefExpr Mixfix="false" Explicit="false">
+                                    <Anns>
+                                        <LocAnn Start="598" Loc="CC.tex" Line="26" Length="4" Col="12"/>
+                                    </Anns>
+                                    <ZName>
+                                        <Anns>
+                                            <LocAnn Start="598" Loc="CC.tex" Line="26" Length="4" Col="12"/>
+                                        </Anns>
+                                        <Word>ℤ</Word>
+                                        <ZStrokeList/>
+                                    </ZName>
+                                    <ZExprList/>
+                                </RefExpr>
+                            </VarDecl>
+                        </ZDeclList>
+                    </ns2:PrimaryDecl>
+                    <ns2:SecondaryDecl>
+                        <ZDeclList/>
+                    </ns2:SecondaryDecl>
+                    <MemPred Mixfix="true">
+                        <Anns>
+                            <LocAnn Start="613" Loc="CC.tex" Length="22"/>
+                        </Anns>
+                        <TupleExpr>
+                            <ZExprList>
+                                <ApplExpr Mixfix="true">
+                                    <Anns>
+                                        <LocAnn Start="613" Loc="CC.tex" Length="15"/>
+                                    </Anns>
+                                    <RefExpr Mixfix="false" Explicit="false">
+                                        <Anns>
+                                            <LocAnn Start="621" Loc="CC.tex" Line="28" Length="1" Col="10"/>
+                                        </Anns>
+                                        <ZName>
+                                            <Anns>
+                                                <LocAnn Start="621" Loc="CC.tex" Line="28" Length="1" Col="10"/>
+                                            </Anns>
+                                            <Word> _ + _ </Word>
+                                            <ZStrokeList/>
+                                        </ZName>
+                                        <ZExprList/>
+                                    </RefExpr>
+                                    <TupleExpr>
+                                        <ZExprList>
+                                            <RefExpr Mixfix="false" Explicit="false">
+                                                <Anns>
+                                                    <LocAnn Start="613" Loc="CC.tex" Line="28" Length="7" Col="2"/>
+                                                </Anns>
+                                                <ZName>
+                                                    <Anns>
+                                                        <LocAnn Start="613" Loc="CC.tex" Line="28" Length="7" Col="2"/>
+                                                    </Anns>
+                                                    <Word>balance</Word>
+                                                    <ZStrokeList/>
+                                                </ZName>
+                                                <ZExprList/>
+                                            </RefExpr>
+                                            <RefExpr Mixfix="false" Explicit="false">
+                                                <Anns>
+                                                    <LocAnn Start="623" Loc="CC.tex" Line="28" Length="5" Col="12"/>
+                                                </Anns>
+                                                <ZName>
+                                                    <Anns>
+                                                        <LocAnn Start="623" Loc="CC.tex" Line="28" Length="5" Col="12"/>
+                                                    </Anns>
+                                                    <Word>limit</Word>
+                                                    <ZStrokeList/>
+                                                </ZName>
+                                                <ZExprList/>
+                                            </RefExpr>
+                                        </ZExprList>
+                                    </TupleExpr>
+                                </ApplExpr>
+                                <NumExpr>
+                                    <Anns>
+                                        <LocAnn Start="634" Loc="CC.tex" Line="28" Length="1" Col="23"/>
+                                    </Anns>
+                                    <ZNumeral Value="0">
+                                        <Anns>
+                                            <LocAnn Start="634" Loc="CC.tex" Line="28" Length="1" Col="23"/>
+                                        </Anns>
+                                    </ZNumeral>
+                                </NumExpr>
+                            </ZExprList>
+                        </TupleExpr>
+                        <RefExpr Mixfix="false" Explicit="false">
+                            <Anns>
+                                <LocAnn Start="629" Loc="CC.tex" Line="28" Length="4" Col="18"/>
+                            </Anns>
+                            <ZName>
+                                <Anns>
+                                    <LocAnn Start="629" Loc="CC.tex" Line="28" Length="4" Col="18"/>
+                                </Anns>
+                                <Word> _ ≥ _ </Word>
+                                <ZStrokeList/>
+                            </ZName>
+                            <ZExprList/>
+                        </RefExpr>
+                    </MemPred>
+                </ns2:State>
+                <ns2:InitialState Box="SchBox">
+                    <Anns>
+                        <LocAnn Start="662" Loc="CC.tex" Line="30" Length="38" Col="1"/>
+                    </Anns>
+                    <MemPred Mixfix="true">
+                        <Anns>
+                            <LocAnn Start="677" Loc="CC.tex" Length="11"/>
+                        </Anns>
+                        <RefExpr Mixfix="false" Explicit="false">
+                            <Anns>
+                                <LocAnn Start="677" Loc="CC.tex" Line="31" Length="7" Col="2"/>
+                            </Anns>
+                            <ZName>
+                                <Anns>
+                                    <LocAnn Start="677" Loc="CC.tex" Line="31" Length="7" Col="2"/>
+                                </Anns>
+                                <Word>balance</Word>
+                                <ZStrokeList/>
+                            </ZName>
+                            <ZExprList/>
+                        </RefExpr>
+                        <SetExpr>
+                            <ZExprList>
+                                <NumExpr>
+                                    <Anns>
+                                        <LocAnn Start="687" Loc="CC.tex" Line="31" Length="1" Col="12"/>
+                                    </Anns>
+                                    <ZNumeral Value="0">
+                                        <Anns>
+                                            <LocAnn Start="687" Loc="CC.tex" Line="31" Length="1" Col="12"/>
+                                        </Anns>
+                                    </ZNumeral>
+                                </NumExpr>
+                            </ZExprList>
+                        </SetExpr>
+                    </MemPred>
+                </ns2:InitialState>
+                <ns2:Operation Box="SchBox">
+                    <Anns>
+                        <LocAnn Start="714" Loc="CC.tex" Line="33" Length="142" Col="1"/>
+                    </Anns>
+                    <ZName>
+                        <Anns>
+                            <LocAnn Start="725" Loc="CC.tex" Line="33" Length="8" Col="12"/>
+                        </Anns>
+                        <Word>withdraw</Word>
+                        <ZStrokeList/>
+                    </ZName>
+                    <ns2:AnonOpExpr>
+                        <ns2:OpText>
+                            <ns2:DeltaList>
+                                <Anns>
+                                    <LocAnn Start="737" Loc="CC.tex" Line="34" Length="16" Col="2"/>
+                                </Anns>
+                                <ZName>
+                                    <Anns>
+                                        <LocAnn Start="745" Loc="CC.tex" Line="34" Length="7" Col="10"/>
+                                    </Anns>
+                                    <Word>balance</Word>
+                                    <ZStrokeList/>
+                                </ZName>
+                            </ns2:DeltaList>
+                            <ZSchText>
+                                <ZDeclList>
+                                    <Anns>
+                                        <LocAnn Start="759" Loc="CC.tex" Length="14"/>
+                                    </Anns>
+                                    <VarDecl>
+                                        <Anns>
+                                            <LocAnn Start="759" Loc="CC.tex" Length="14"/>
+                                        </Anns>
+                                        <ZNameList>
+                                            <ZName>
+                                                <Anns>
+                                                    <LocAnn Start="759" Loc="CC.tex" Line="35" Length="7" Col="2"/>
+                                                </Anns>
+                                                <Word>amount</Word>
+                                                <ZStrokeList>
+                                                    <InStroke/>
+                                                </ZStrokeList>
+                                            </ZName>
+                                        </ZNameList>
+                                        <RefExpr Mixfix="false" Explicit="false">
+                                            <Anns>
+                                                <LocAnn Start="769" Loc="CC.tex" Line="35" Length="4" Col="12"/>
+                                            </Anns>
+                                            <ZName>
+                                                <Anns>
+                                                    <LocAnn Start="769" Loc="CC.tex" Line="35" Length="4" Col="12"/>
+                                                </Anns>
+                                                <Word>ℕ</Word>
+                                                <ZStrokeList/>
+                                            </ZName>
+                                            <ZExprList/>
+                                        </RefExpr>
+                                    </VarDecl>
+                                </ZDeclList>
+                                <AndPred And="NL">
+                                    <Anns>
+                                        <LocAnn Start="784" Loc="CC.tex" Length="62"/>
+                                    </Anns>
+                                    <MemPred Mixfix="true">
+                                        <Anns>
+                                            <LocAnn Start="784" Loc="CC.tex" Line="37" Length="28" Col="2"/>
+                                        </Anns>
+                                        <TupleExpr>
+                                            <ZExprList>
+                                                <RefExpr Mixfix="false" Explicit="false">
+                                                    <Anns>
+                                                        <LocAnn Start="784" Loc="CC.tex" Line="37" Length="7" Col="2"/>
+                                                    </Anns>
+                                                    <ZName>
+                                                        <Anns>
+                                                            <LocAnn Start="784" Loc="CC.tex" Line="37" Length="7" Col="2"/>
+                                                        </Anns>
+                                                        <Word>amount</Word>
+                                                        <ZStrokeList>
+                                                            <InStroke/>
+                                                        </ZStrokeList>
+                                                    </ZName>
+                                                    <ZExprList/>
+                                                </RefExpr>
+                                                <ApplExpr Mixfix="true">
+                                                    <Anns>
+                                                        <LocAnn Start="797" Loc="CC.tex" Length="15"/>
+                                                    </Anns>
+                                                    <RefExpr Mixfix="false" Explicit="false">
+                                                        <Anns>
+                                                            <LocAnn Start="805" Loc="CC.tex" Line="37" Length="1" Col="23"/>
+                                                        </Anns>
+                                                        <ZName>
+                                                            <Anns>
+                                                                <LocAnn Start="805" Loc="CC.tex" Line="37" Length="1" Col="23"/>
+                                                            </Anns>
+                                                            <Word> _ + _ </Word>
+                                                            <ZStrokeList/>
+                                                        </ZName>
+                                                        <ZExprList/>
+                                                    </RefExpr>
+                                                    <TupleExpr>
+                                                        <ZExprList>
+                                                            <RefExpr Mixfix="false" Explicit="false">
+                                                                <Anns>
+                                                                    <LocAnn Start="797" Loc="CC.tex" Line="37" Length="7" Col="15"/>
+                                                                </Anns>
+                                                                <ZName>
+                                                                    <Anns>
+                                                                        <LocAnn Start="797" Loc="CC.tex" Line="37" Length="7" Col="15"/>
+                                                                    </Anns>
+                                                                    <Word>balance</Word>
+                                                                    <ZStrokeList/>
+                                                                </ZName>
+                                                                <ZExprList/>
+                                                            </RefExpr>
+                                                            <RefExpr Mixfix="false" Explicit="false">
+                                                                <Anns>
+                                                                    <LocAnn Start="807" Loc="CC.tex" Line="37" Length="5" Col="25"/>
+                                                                </Anns>
+                                                                <ZName>
+                                                                    <Anns>
+                                                                        <LocAnn Start="807" Loc="CC.tex" Line="37" Length="5" Col="25"/>
+                                                                    </Anns>
+                                                                    <Word>limit</Word>
+                                                                    <ZStrokeList/>
+                                                                </ZName>
+                                                                <ZExprList/>
+                                                            </RefExpr>
+                                                        </ZExprList>
+                                                    </TupleExpr>
+                                                </ApplExpr>
+                                            </ZExprList>
+                                        </TupleExpr>
+                                        <RefExpr Mixfix="false" Explicit="false">
+                                            <Anns>
+                                                <LocAnn Start="792" Loc="CC.tex" Line="37" Length="4" Col="10"/>
+                                            </Anns>
+                                            <ZName>
+                                                <Anns>
+                                                    <LocAnn Start="792" Loc="CC.tex" Line="37" Length="4" Col="10"/>
+                                                </Anns>
+                                                <Word> _ ≤ _ </Word>
+                                                <ZStrokeList/>
+                                            </ZName>
+                                            <ZExprList/>
+                                        </RefExpr>
+                                    </MemPred>
+                                    <MemPred Mixfix="true">
+                                        <Anns>
+                                            <LocAnn Start="818" Loc="CC.tex" Length="28"/>
+                                        </Anns>
+                                        <RefExpr Mixfix="false" Explicit="false">
+                                            <Anns>
+                                                <LocAnn Start="818" Loc="CC.tex" Line="38" Length="8" Col="2"/>
+                                            </Anns>
+                                            <ZName>
+                                                <Anns>
+                                                    <LocAnn Start="818" Loc="CC.tex" Line="38" Length="8" Col="2"/>
+                                                </Anns>
+                                                <Word>balance</Word>
+                                                <ZStrokeList>
+                                                    <NextStroke/>
+                                                </ZStrokeList>
+                                            </ZName>
+                                            <ZExprList/>
+                                        </RefExpr>
+                                        <SetExpr>
+                                            <ZExprList>
+                                                <ApplExpr Mixfix="true">
+                                                    <Anns>
+                                                        <LocAnn Start="829" Loc="CC.tex" Length="17"/>
+                                                    </Anns>
+                                                    <RefExpr Mixfix="false" Explicit="false">
+                                                        <Anns>
+                                                            <LocAnn Start="837" Loc="CC.tex" Line="38" Length="1" Col="21"/>
+                                                        </Anns>
+                                                        <ZName>
+                                                            <Anns>
+                                                                <LocAnn Start="837" Loc="CC.tex" Line="38" Length="1" Col="21"/>
+                                                            </Anns>
+                                                            <Word> _ − _ </Word>
+                                                            <ZStrokeList/>
+                                                        </ZName>
+                                                        <ZExprList/>
+                                                    </RefExpr>
+                                                    <TupleExpr>
+                                                        <ZExprList>
+                                                            <RefExpr Mixfix="false" Explicit="false">
+                                                                <Anns>
+                                                                    <LocAnn Start="829" Loc="CC.tex" Line="38" Length="7" Col="13"/>
+                                                                </Anns>
+                                                                <ZName>
+                                                                    <Anns>
+                                                                        <LocAnn Start="829" Loc="CC.tex" Line="38" Length="7" Col="13"/>
+                                                                    </Anns>
+                                                                    <Word>balance</Word>
+                                                                    <ZStrokeList/>
+                                                                </ZName>
+                                                                <ZExprList/>
+                                                            </RefExpr>
+                                                            <RefExpr Mixfix="false" Explicit="false">
+                                                                <Anns>
+                                                                    <LocAnn Start="839" Loc="CC.tex" Line="38" Length="7" Col="23"/>
+                                                                </Anns>
+                                                                <ZName>
+                                                                    <Anns>
+                                                                        <LocAnn Start="839" Loc="CC.tex" Line="38" Length="7" Col="23"/>
+                                                                    </Anns>
+                                                                    <Word>amount</Word>
+                                                                    <ZStrokeList>
+                                                                        <InStroke/>
+                                                                    </ZStrokeList>
+                                                                </ZName>
+                                                                <ZExprList/>
+                                                            </RefExpr>
+                                                        </ZExprList>
+                                                    </TupleExpr>
+                                                </ApplExpr>
+                                            </ZExprList>
+                                        </SetExpr>
+                                    </MemPred>
+                                </AndPred>
+                            </ZSchText>
+                        </ns2:OpText>
+                    </ns2:AnonOpExpr>
+                </ns2:Operation>
+                <ns2:Operation Box="SchBox">
+                    <Anns>
+                        <LocAnn Start="870" Loc="CC.tex" Line="40" Length="107" Col="1"/>
+                    </Anns>
+                    <ZName>
+                        <Anns>
+                            <LocAnn Start="881" Loc="CC.tex" Line="40" Length="7" Col="12"/>
+                        </Anns>
+                        <Word>deposit</Word>
+                        <ZStrokeList/>
+                    </ZName>
+                    <ns2:AnonOpExpr>
+                        <ns2:OpText>
+                            <ns2:DeltaList>
+                                <Anns>
+                                    <LocAnn Start="892" Loc="CC.tex" Line="41" Length="16" Col="2"/>
+                                </Anns>
+                                <ZName>
+                                    <Anns>
+                                        <LocAnn Start="900" Loc="CC.tex" Line="41" Length="7" Col="10"/>
+                                    </Anns>
+                                    <Word>balance</Word>
+                                    <ZStrokeList/>
+                                </ZName>
+                            </ns2:DeltaList>
+                            <ZSchText>
+                                <ZDeclList>
+                                    <Anns>
+                                        <LocAnn Start="914" Loc="CC.tex" Length="14"/>
+                                    </Anns>
+                                    <VarDecl>
+                                        <Anns>
+                                            <LocAnn Start="914" Loc="CC.tex" Length="14"/>
+                                        </Anns>
+                                        <ZNameList>
+                                            <ZName>
+                                                <Anns>
+                                                    <LocAnn Start="914" Loc="CC.tex" Line="42" Length="7" Col="2"/>
+                                                </Anns>
+                                                <Word>amount</Word>
+                                                <ZStrokeList>
+                                                    <InStroke/>
+                                                </ZStrokeList>
+                                            </ZName>
+                                        </ZNameList>
+                                        <RefExpr Mixfix="false" Explicit="false">
+                                            <Anns>
+                                                <LocAnn Start="924" Loc="CC.tex" Line="42" Length="4" Col="12"/>
+                                            </Anns>
+                                            <ZName>
+                                                <Anns>
+                                                    <LocAnn Start="924" Loc="CC.tex" Line="42" Length="4" Col="12"/>
+                                                </Anns>
+                                                <Word>ℕ</Word>
+                                                <ZStrokeList/>
+                                            </ZName>
+                                            <ZExprList/>
+                                        </RefExpr>
+                                    </VarDecl>
+                                </ZDeclList>
+                                <MemPred Mixfix="true">
+                                    <Anns>
+                                        <LocAnn Start="939" Loc="CC.tex" Length="28"/>
+                                    </Anns>
+                                    <RefExpr Mixfix="false" Explicit="false">
+                                        <Anns>
+                                            <LocAnn Start="939" Loc="CC.tex" Line="44" Length="8" Col="2"/>
+                                        </Anns>
+                                        <ZName>
+                                            <Anns>
+                                                <LocAnn Start="939" Loc="CC.tex" Line="44" Length="8" Col="2"/>
+                                            </Anns>
+                                            <Word>balance</Word>
+                                            <ZStrokeList>
+                                                <NextStroke/>
+                                            </ZStrokeList>
+                                        </ZName>
+                                        <ZExprList/>
+                                    </RefExpr>
+                                    <SetExpr>
+                                        <ZExprList>
+                                            <ApplExpr Mixfix="true">
+                                                <Anns>
+                                                    <LocAnn Start="950" Loc="CC.tex" Length="17"/>
+                                                </Anns>
+                                                <RefExpr Mixfix="false" Explicit="false">
+                                                    <Anns>
+                                                        <LocAnn Start="958" Loc="CC.tex" Line="44" Length="1" Col="21"/>
+                                                    </Anns>
+                                                    <ZName>
+                                                        <Anns>
+                                                            <LocAnn Start="958" Loc="CC.tex" Line="44" Length="1" Col="21"/>
+                                                        </Anns>
+                                                        <Word> _ + _ </Word>
+                                                        <ZStrokeList/>
+                                                    </ZName>
+                                                    <ZExprList/>
+                                                </RefExpr>
+                                                <TupleExpr>
+                                                    <ZExprList>
+                                                        <RefExpr Mixfix="false" Explicit="false">
+                                                            <Anns>
+                                                                <LocAnn Start="950" Loc="CC.tex" Line="44" Length="7" Col="13"/>
+                                                            </Anns>
+                                                            <ZName>
+                                                                <Anns>
+                                                                    <LocAnn Start="950" Loc="CC.tex" Line="44" Length="7" Col="13"/>
+                                                                </Anns>
+                                                                <Word>balance</Word>
+                                                                <ZStrokeList/>
+                                                            </ZName>
+                                                            <ZExprList/>
+                                                        </RefExpr>
+                                                        <RefExpr Mixfix="false" Explicit="false">
+                                                            <Anns>
+                                                                <LocAnn Start="960" Loc="CC.tex" Line="44" Length="7" Col="23"/>
+                                                            </Anns>
+                                                            <ZName>
+                                                                <Anns>
+                                                                    <LocAnn Start="960" Loc="CC.tex" Line="44" Length="7" Col="23"/>
+                                                                </Anns>
+                                                                <Word>amount</Word>
+                                                                <ZStrokeList>
+                                                                    <InStroke/>
+                                                                </ZStrokeList>
+                                                            </ZName>
+                                                            <ZExprList/>
+                                                        </RefExpr>
+                                                    </ZExprList>
+                                                </TupleExpr>
+                                            </ApplExpr>
+                                        </ZExprList>
+                                    </SetExpr>
+                                </MemPred>
+                            </ZSchText>
+                        </ns2:OpText>
+                    </ns2:AnonOpExpr>
+                </ns2:Operation>
+                <ns2:Operation Box="SchBox">
+                    <Anns>
+                        <LocAnn Start="991" Loc="CC.tex" Line="46" Length="140" Col="1"/>
+                    </Anns>
+                    <ZName>
+                        <Anns>
+                            <LocAnn Start="1002" Loc="CC.tex" Line="46" Length="13" Col="12"/>
+                        </Anns>
+                        <Word>withdrawAvail</Word>
+                        <ZStrokeList/>
+                    </ZName>
+                    <ns2:AnonOpExpr>
+                        <ns2:OpText>
+                            <ns2:DeltaList>
+                                <Anns>
+                                    <LocAnn Start="1019" Loc="CC.tex" Line="47" Length="16" Col="2"/>
+                                </Anns>
+                                <ZName>
+                                    <Anns>
+                                        <LocAnn Start="1027" Loc="CC.tex" Line="47" Length="7" Col="10"/>
+                                    </Anns>
+                                    <Word>balance</Word>
+                                    <ZStrokeList/>
+                                </ZName>
+                            </ns2:DeltaList>
+                            <ZSchText>
+                                <ZDeclList>
+                                    <Anns>
+                                        <LocAnn Start="1041" Loc="CC.tex" Length="14"/>
+                                    </Anns>
+                                    <VarDecl>
+                                        <Anns>
+                                            <LocAnn Start="1041" Loc="CC.tex" Length="14"/>
+                                        </Anns>
+                                        <ZNameList>
+                                            <ZName>
+                                                <Anns>
+                                                    <LocAnn Start="1041" Loc="CC.tex" Line="48" Length="7" Col="2"/>
+                                                </Anns>
+                                                <Word>amount</Word>
+                                                <ZStrokeList>
+                                                    <OutStroke/>
+                                                </ZStrokeList>
+                                            </ZName>
+                                        </ZNameList>
+                                        <RefExpr Mixfix="false" Explicit="false">
+                                            <Anns>
+                                                <LocAnn Start="1051" Loc="CC.tex" Line="48" Length="4" Col="12"/>
+                                            </Anns>
+                                            <ZName>
+                                                <Anns>
+                                                    <LocAnn Start="1051" Loc="CC.tex" Line="48" Length="4" Col="12"/>
+                                                </Anns>
+                                                <Word>ℕ</Word>
+                                                <ZStrokeList/>
+                                            </ZName>
+                                            <ZExprList/>
+                                        </RefExpr>
+                                    </VarDecl>
+                                </ZDeclList>
+                                <AndPred And="NL">
+                                    <Anns>
+                                        <LocAnn Start="1066" Loc="CC.tex" Length="55"/>
+                                    </Anns>
+                                    <MemPred Mixfix="true">
+                                        <Anns>
+                                            <LocAnn Start="1066" Loc="CC.tex" Length="25"/>
+                                        </Anns>
+                                        <RefExpr Mixfix="false" Explicit="false">
+                                            <Anns>
+                                                <LocAnn Start="1066" Loc="CC.tex" Line="50" Length="7" Col="2"/>
+                                            </Anns>
+                                            <ZName>
+                                                <Anns>
+                                                    <LocAnn Start="1066" Loc="CC.tex" Line="50" Length="7" Col="2"/>
+                                                </Anns>
+                                                <Word>amount</Word>
+                                                <ZStrokeList>
+                                                    <OutStroke/>
+                                                </ZStrokeList>
+                                            </ZName>
+                                            <ZExprList/>
+                                        </RefExpr>
+                                        <SetExpr>
+                                            <ZExprList>
+                                                <ApplExpr Mixfix="true">
+                                                    <Anns>
+                                                        <LocAnn Start="1076" Loc="CC.tex" Length="15"/>
+                                                    </Anns>
+                                                    <RefExpr Mixfix="false" Explicit="false">
+                                                        <Anns>
+                                                            <LocAnn Start="1084" Loc="CC.tex" Line="50" Length="1" Col="20"/>
+                                                        </Anns>
+                                                        <ZName>
+                                                            <Anns>
+                                                                <LocAnn Start="1084" Loc="CC.tex" Line="50" Length="1" Col="20"/>
+                                                            </Anns>
+                                                            <Word> _ + _ </Word>
+                                                            <ZStrokeList/>
+                                                        </ZName>
+                                                        <ZExprList/>
+                                                    </RefExpr>
+                                                    <TupleExpr>
+                                                        <ZExprList>
+                                                            <RefExpr Mixfix="false" Explicit="false">
+                                                                <Anns>
+                                                                    <LocAnn Start="1076" Loc="CC.tex" Line="50" Length="7" Col="12"/>
+                                                                </Anns>
+                                                                <ZName>
+                                                                    <Anns>
+                                                                        <LocAnn Start="1076" Loc="CC.tex" Line="50" Length="7" Col="12"/>
+                                                                    </Anns>
+                                                                    <Word>balance</Word>
+                                                                    <ZStrokeList/>
+                                                                </ZName>
+                                                                <ZExprList/>
+                                                            </RefExpr>
+                                                            <RefExpr Mixfix="false" Explicit="false">
+                                                                <Anns>
+                                                                    <LocAnn Start="1086" Loc="CC.tex" Line="50" Length="5" Col="22"/>
+                                                                </Anns>
+                                                                <ZName>
+                                                                    <Anns>
+                                                                        <LocAnn Start="1086" Loc="CC.tex" Line="50" Length="5" Col="22"/>
+                                                                    </Anns>
+                                                                    <Word>limit</Word>
+                                                                    <ZStrokeList/>
+                                                                </ZName>
+                                                                <ZExprList/>
+                                                            </RefExpr>
+                                                        </ZExprList>
+                                                    </TupleExpr>
+                                                </ApplExpr>
+                                            </ZExprList>
+                                        </SetExpr>
+                                    </MemPred>
+                                    <MemPred Mixfix="true">
+                                        <Anns>
+                                            <LocAnn Start="1097" Loc="CC.tex" Length="24"/>
+                                        </Anns>
+                                        <RefExpr Mixfix="false" Explicit="false">
+                                            <Anns>
+                                                <LocAnn Start="1097" Loc="CC.tex" Line="51" Length="8" Col="2"/>
+                                            </Anns>
+                                            <ZName>
+                                                <Anns>
+                                                    <LocAnn Start="1097" Loc="CC.tex" Line="51" Length="8" Col="2"/>
+                                                </Anns>
+                                                <Word>balance</Word>
+                                                <ZStrokeList>
+                                                    <NextStroke/>
+                                                </ZStrokeList>
+                                            </ZName>
+                                            <ZExprList/>
+                                        </RefExpr>
+                                        <SetExpr>
+                                            <ZExprList>
+                                                <ApplExpr Mixfix="true">
+                                                    <Anns>
+                                                        <LocAnn Start="1108" Loc="CC.tex" Line="51" Length="13" Col="13"/>
+                                                    </Anns>
+                                                    <RefExpr Mixfix="false" Explicit="false">
+                                                        <Anns>
+                                                            <LocAnn Start="1108" Loc="CC.tex" Line="51" Length="7" Col="13"/>
+                                                        </Anns>
+                                                        <ZName>
+                                                            <Anns>
+                                                                <LocAnn Start="1108" Loc="CC.tex" Line="51" Length="7" Col="13"/>
+                                                            </Anns>
+                                                            <Word>- _ </Word>
+                                                            <ZStrokeList/>
+                                                        </ZName>
+                                                        <ZExprList/>
+                                                    </RefExpr>
+                                                    <RefExpr Mixfix="false" Explicit="false">
+                                                        <Anns>
+                                                            <LocAnn Start="1116" Loc="CC.tex" Line="51" Length="5" Col="21"/>
+                                                        </Anns>
+                                                        <ZName>
+                                                            <Anns>
+                                                                <LocAnn Start="1116" Loc="CC.tex" Line="51" Length="5" Col="21"/>
+                                                            </Anns>
+                                                            <Word>limit</Word>
+                                                            <ZStrokeList/>
+                                                        </ZName>
+                                                        <ZExprList/>
+                                                    </RefExpr>
+                                                </ApplExpr>
+                                            </ZExprList>
+                                        </SetExpr>
+                                    </MemPred>
+                                </AndPred>
+                            </ZSchText>
+                        </ns2:OpText>
+                    </ns2:AnonOpExpr>
+                </ns2:Operation>
+            </ns2:ClassPara>
+            <NarrPara>
+                <Anns>
+                    <LocAnn Start="1144" Loc="CC.tex" Line="53" Length="16" Col="11"/>
+                </Anns>
+                <Content xsi:type="xs:string" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+\end{document}
+</Content>
+            </NarrPara>
+        </ZParaList>
+    </ZSect>
+</Spec>

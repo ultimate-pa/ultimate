@@ -1,0 +1,56 @@
+\documentclass{article}
+
+\usepackage{vmargin}
+\usepackage{circus}
+
+\setpapersize{A4}
+%\setmarginsrb{leftmargin}{topmargin}{rightmargin}{bottommargin}{headheight}{headsep}{footheight}{footskip}
+%\setmarginsrb{20mm}{10mm}{20mm}{10mm}{12pt}{11mm}{0pt}{11mm}
+%\setmarginsrb{25mm}{20mm}{25mm}{20mm}{12pt}{11mm}{0pt}{10mm}
+\setmarginsrb{40mm}{20mm}{40mm}{20mm}{12pt}{11mm}{0pt}{10mm}
+
+\begin{document}
+
+\title{\Circus\ Cookie Machine}
+\author{Leonardo Freitas}
+\date{February 2007}
+
+\maketitle
+
+Examples from Manuela Xavier MSc thesis.
+
+\begin{zsection}
+  \SECTION\ circus\_cookies \parents\ circus\_toolkit
+\end{zsection}
+
+\begin{zed}
+   COOKIE ::= ok | notok
+\end{zed}
+
+\begin{circus}
+   \circchannel\ in, change: \nat \\
+   \circchannel\ out: COOKIE
+\end{circus}
+
+\begin{axdef}
+   cookieValue, cookieQuantity: \nat
+\end{axdef} 
+
+\begin{circus}
+    \circprocess\ CookieMachine \circdef \circbegin \\    
+    \circstate\ State ~~==~~ [~ money, quantity: \nat ~]  \\   
+    InitState ~~==~~ [~ State~' | money' = 0 \land quantity' = cookieQuantity ~] \\
+    InputMoney ~~==~~ [~ \Delta State; x?: \nat | money \leq cookieValue \land money' = money + x? ~] \\
+    Input ~~\circdef~~ \lcircguard money \leq cookieValue \rcircguard  \circguard\ in~?x \then InputMoney \\
+    OutputCookieOk ~~==~~ [~ \Delta State; o!: COOKIE | money \geq cookieValue \land 
+        quantity > 0 \land money' = money - cookieValue \land quantity' = quantity - 1\land o! = ok ~] \\
+    OutputCookieNotOk ~~==~~ [~ \Delta State; o!: COOKIE | money \geq cookieValue \land
+        quantity = 0 \land money' = money \land o! = notok ~] \\
+    OutputCookie ~~==~~ OutputCookieOk \lor OutputCookieNotOk \\
+    Output ~~\circdef~~ \lcircguard money \geq cookieValue \rcircguard \circguard\ \\
+        \t1 (\circvar\ o: COOKIE @ OutputCookie \circseq (out~!o \then change~!money \then Skip)) \\
+    \t1 @ StateInit \circseq (\circmu\ X @ (Input \extchoice Output) \circseq X) \\
+   \circend
+\end{circus}
+
+\end{document}

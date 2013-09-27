@@ -1,0 +1,15 @@
+Manifest-Version: 1.0
+Main-Class: pea_to_boogie.main.Main
+Class-Path: ./jarfiles/antlr-runtime-3.2.jar ./jarfiles/log4j-1.2.15.jar ./jarfiles/czt_1_5_0_bin.jar ./jarfiles/xerces.jar ./jarfiles/apache-log4j-extras-1.1.jar
+Bundle-ManifestVersion: 2
+Bundle-Name: PEAtoBoogie
+Bundle-SymbolicName: PEAtoBoogie;singleton:=true
+Bundle-Version: 0.0.1
+Bundle-Activator: pea_to_boogie.Activator
+Require-Bundle: UltimateCore;bundle-version="0.0.1",
+ Library-log4j;bundle-version="1.2.15",
+ Library-PEA;bundle-version="89.0.0",
+ Library-srParse;bundle-version="1.0.0",
+ Library-AntLR;bundle-version="3.2.0"
+Bundle-ActivationPolicy: lazy
+Bundle-RequiredExecutionEnvironment: JavaSE-1.7

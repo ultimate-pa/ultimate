@@ -1,0 +1,191 @@
+-----------------------------------------------------------------------------
+-- A REACTIVE BUFFER    - Case Study                                                                                    -
+-- Action Refinement: controller and ring partitions                                                -
+-- Example extracted from the paper "A Refinement Strategy for Circus"          -
+-----------------------------------------------------------------------------
+
+You must always include the circus\_toolkit, and also check inside
+it to see the LaTeX commands the parser recognises (or to create
+your own commands)
+
+\begin{zsection}
+  \SECTION\ mysection \parents\ circus\_toolkit
+\end{zsection}
+
+\begin{axdef}
+ maxbuff, maxring : \nat
+\end{axdef}
+
+\begin{circus}
+ \circchannel\ input, output : \nat
+\end{circus}
+
+\begin{circus}
+ \circchannel\ write, read : (1 \upto maxring) \cross \nat
+\end{circus}
+
+\begin{circus}
+ \circchannel\ read\_1 : (1 \upto maxring)
+\end{circus}
+
+\begin{circus}
+ \circchannel\ read\_2 : \nat
+\end{circus}
+
+Unfortunately boxed processes (those spread across multiple
+begin/end Circus) are not yet available. You need to define your
+processes within one environment only. The only real problem is for
+axiomatic definitions (that I am looking into now). Schemas can be
+given horizontally.
+
+I know it doesn't typeset nicely. This boxed-process feature will be
+available soon. The bottom line is that apart from
+
+\begin{circus}
+    \circprocess\ Buffer \circdef \circbegin \\
+    %Schemas are given with == in the Z Std, the 2 hard spaces (~~) are optional
+    ControllerState ~~==~~ [~ cache : \nat
+        \\%
+        size: 0 \upto maxbuff
+        \\%
+        ringsize : 0 \upto maxring
+        \\%
+        top, bot : 1 \upto maxring
+        |
+        (ringsize \mod maxring) = ((top - bot) \mod maxring)
+        \\%
+        ringsize = size-1
+        ~] \\
+    RingState ~~== ~~ [~ ring : \seq \nat | \#~ring = maxring ~] \\
+    CBufferState ~~==~~ (ControllerState \lor RingState) \\
+    \circstate\  CBufferState \\
+    ControllerInit ~~==~~ [~ ControllerState~'; RingState~' | (size'=0) \land (bot'=1) \land (top'=1) ~] \\
+    CacheInput~~==~~ [~ \Delta ControllerState;
+        \\%
+        \Xi RingState
+        \\%
+        x?:\nat
+        |
+        (size = 0) \land (size' = 1)
+        \\%
+        (cache' = x?) \land (bot' = bot) \land (top' = top) ~]\\
+    StoreInput ~~==~~ [~ \Delta CBufferState
+        \\%
+        x?: \nat
+        |
+        (0 < size) \land (size < maxbuff)
+        \\%
+        (size' = size+1) \land (cache'=cache)
+        \\%
+        (bot'=bot) \land (top'=(top \mod maxring)+1)
+        \\%
+        ring' = ring \oplus \{ top \mapsto x? \} ~] \\
+    StoreInputController ~~==~~ [~ \Delta ControllerState
+        \\%
+        \Xi RingState
+        |
+        (0 < size) \land (size < maxbuff)
+        \\%
+        (size' = size+1) \land (cache'=cache)
+        \\%
+        (bot'=bot) \land (top'=(top \mod maxring)+1) ~] \\
+    %Actions and circus staff need \circdef rather than \defs or ==
+    InputController ~~\circdef~~ \\
+        % the \t1 is optional, just to show it accepts tabulation
+
+        % because guards are "Predicate", and predicates can be
+        % parenthesised, we need a different token for disambiguation.
+        % so, every guard REQUIRES a \lcircguard pred \rcircguard \circguard A
+
+        % like for variable names, channel names can accept ?/!/'
+        % so the hard space is needed to indicate this is input prefix
+        % the choice of restricting channel names not to have ?/!/' is not
+        % as straightforward as it sounds, and it does not solve the problem anyway.
+        \t1 \lcircguard size < maxbuff \rcircguard \circguard input~?x \then
+            (\lcircguard size = 0 \rcircguard \circguard CacheInput
+            \extchoice
+             \lcircguard size > 0 \rcircguard \circguard write.top~!x \then StoreInputController
+            ) \\
+    CInput \circdef \\
+        \t1 \lcircguard size < maxbuff \rcircguard \circguard input~?x \then
+            (\lcircguard size = 0 \rcircguard \circguard CacheInput)
+            \extchoice
+            (\lcircguard size > 0 \rcircguard \circguard StoreInput) \\
+    NoNewCache ~~==~~ [~ \Delta ControllerState
+            \\%
+            \Xi RingState
+        |
+            size = 1
+            \\%
+            size' = 0 \land cache' = cache
+            \\%
+            bot' = bot \land top' = top ~] \\
+    StoreNewCache ~~==~~ [~ \Delta CBufferState
+        |
+            size > 1
+            \\
+            % function application DO REQUIRE hard spaces.
+            % otherwise, ring~bot is treated as ringbot
+            size' = size-1 \land cache' = ring~bot
+            \\
+            bot' = (bot \mod maxring)+1 \land top' = top
+            \\
+            ring' = ring ~] \\
+    StoreNewCacheController ~~==~~ [~     \Delta ControllerState
+            \\%
+            \Xi RingState
+            \\%
+            x? : \nat
+        |
+            size > 1
+            \\%
+            size' = size-1 \land cache' = x?
+            \\%
+            bot' = (bot \mod maxring)+1 \land top' = top ~] \\
+        % new hard line (\\, \also) after \circdef is optional
+    OutputController ~~\circdef~~
+            \t1 \lcircguard size > 0 \rcircguard \circguard output~!cache \then
+            (\lcircguard size > 1 \rcircguard \circguard read.bot~?x \then StoreNewCacheController)
+            \extchoice
+            (\lcircguard size = 1 \rcircguard \circguard NoNewCache) \\
+    COutput ~~\circdef~~
+            \t1 \lcircguard size > 0 \rcircguard \circguard output~!cache \then
+            (\lcircguard size > 1 \rcircguard \circguard StoreNewCache)
+            \extchoice
+            (\lcircguard size = 1 \rcircguard \circguard NoNewCache) \\
+    % You should be careful with the precedences. See the process.tex for this, and then
+    % properly include the parenthesis. See the Z standard precedence table for Z,
+    % and FDR manual for CSP precedence.
+
+    % Sequential composition IS NOT semicolon. This creates too many conflicts with Z.
+    % We need a different LaTeX markup. It typesets just like ";", however.
+
+    % missing parenthesis errors are the harder to find and the worst in error generation!
+    ControllerAction \circdef ControllerInit \circseq (\circmu\ X @ ((InputController \extchoice OutputController) \circseq X)) \\
+
+    StoreRingCmd == [~
+            \Xi ControllerState
+            \\%
+            \Delta RingState
+            \\%
+            i? : 1 \upto maxring
+            \\%
+            x? : \nat
+        |
+            ring' = ring \oplus \{ i? \mapsto x? \} ~] \\
+
+   StoreRing \circdef write~?i~?x \then StoreRingCmd \\
+   NewCacheRing \circdef read~?i~!(ring~i) \then Skip \\
+
+   RingAction \circdef \circmu\ X @ ((StoreRing \extchoice NewCacheRing) \circseq X) \\
+    \t1 @
+
+   % The production is : circusAction:cal LPAR:lp nameSet:nsl BAR channelSet:cs BAR nameSet:nsr RPAR:rp circusAction:car
+   % Why did you use two (identical) channelSets as if it was an Alphabetised parallel action (which does not exist)?
+   (ControllerAction \lpar
+        \{ size, ringsize, cache, top, bot \} |
+        \lchanset write, read \rchanset |
+        \{ ring \} \rpar
+    RingAction) \circhide \lchanset write, read \rchanset \\
+    \circend
+\end{circus}

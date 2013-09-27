@@ -1,0 +1,168 @@
+\documentclass[draft,a4paper,10pt,wd]{isov2}
+\usepackage{ltcadiz}
+\begin{document}
+\normannex{Mathematical toolkit}
+\sclause{Functions}
+
+\begin{zsection}
+\SECTION function\_toolkit \parents relation\_toolkit
+\end{zsection}
+
+\ssclause{Partial functions}
+
+%%Zinchar \pfun U+21F8
+\begin{zed}
+\generic 5 \rightassoc (\_ \pfun \_)
+\end{zed}
+
+\begin{zed}
+X \pfun Y == \{~ f : X \rel Y | \forall p , q : f | p.1 = q.1 @ p.2 = q.2 ~\}
+\end{zed}
+
+$X \pfun Y$ is the set of all partial functions from $X$ to $Y$,
+that is, the set of all relations between $X$ and $Y$ such that
+each $x$ in $X$ is related to at most one $y$ in $Y$.
+The terms ``function'' and ``partial function'' are synonymous.
+
+\ssclause{Partial injections}
+
+%%Zinchar \pinj U+2914
+\begin{zed}
+\generic 5 \rightassoc (\_ \pinj \_)
+\end{zed}
+
+\begin{zed}
+X \pinj Y == \{~ f : X \rel Y | \forall p, q : f @ p.1 = q.1 \iff p.2 = q.2 ~\}
+\end{zed}
+
+$X \pinj Y$ is the set of partial injections from $X$ to $Y$,
+that is, the set of all relations between $X$ and $Y$ such that
+each $x$ in $X$ is related to no more than one $y$ in $Y$,
+and each $y$ in $Y$ is related to no more than one $x$ in $X$.
+The terms ``injection'' and ``partial injection'' are synonymous.
+
+\ssclause{Total injections}
+
+%%Zinchar \inj U+21A3
+\begin{zed}
+\generic 5 \rightassoc (\_ \inj \_)
+\end{zed}
+
+\begin{zed}
+X \inj Y == ( X \pinj Y ) \cap ( X \fun Y )
+\end{zed}
+
+$X \inj Y$ is the set of total injections from $X$ to $Y$,
+that is, the set of injections from $X$ to $Y$
+that are also total functions from $X$ to $Y$.
+
+\ssclause{Partial surjections}
+
+%%Zinchar \psurj U+2900
+\begin{zed}
+\generic 5 \rightassoc (\_ \psurj \_)
+\end{zed}
+
+\begin{zed}
+X \psurj Y == \{~ f : X \pfun Y | \ran f = Y ~\}
+\end{zed}
+
+$X \psurj Y$ is the set of partial surjections from $X$ to $Y$,
+that is, the set of functions from $X$ to $Y$
+whose range is equal to $Y$.
+The terms ``surjection'' and ``partial surjection'' are synonymous.
+
+\ssclause{Total surjections}
+
+%%Zinchar \surj U+21A0
+\begin{zed}
+\generic 5 \rightassoc (\_ \surj \_)
+\end{zed}
+
+\begin{zed}
+X \surj Y == ( X \psurj Y) \cap ( X \fun Y )
+\end{zed}
+
+$X \surj Y$ is the set of total surjections from $X$ to $Y$,
+that is, the set of surjections from $X$ to $Y$
+that are also total functions from $X$ to $Y$.
+
+\ssclause{Bijections}
+
+%%Zinchar \bij U+2916
+\begin{zed}
+\generic 5 \rightassoc (\_ \bij \_)
+\end{zed}
+
+\begin{zed}
+X \bij Y == ( X \surj Y ) \cap ( X \inj Y )
+\end{zed}
+
+$X \bij Y$ is the set of bijections from $X$ to $Y$,
+that is, the set of total surjections from $X$ to $Y$
+that are also total injections from $X$ to $Y$.
+
+\ssclause{Finite functions}
+
+%%Zinchar \ffun U+21FB
+\begin{zed}
+\generic 5 \rightassoc (\_ \ffun \_)
+\end{zed}
+
+\begin{zed}
+X \ffun Y == (X \pfun Y) \cap \finset (X \cross Y)
+\end{zed}
+
+The finite functions from $X$ to $Y$ are the functions from $X$ to $Y$
+that are also finite sets.
+
+\ssclause{Finite injections}
+
+%%Zinchar \finj U+2915
+\begin{zed}
+\generic 5 \rightassoc (\_ \finj \_)
+\end{zed}
+
+\begin{zed}
+X \finj Y == ( X \ffun Y ) \cap ( X \pinj Y )
+\end{zed}
+
+The finite injections from $X$ to $Y$ are the injections from $X$ to $Y$
+that are also finite functions from $X$ to $Y$.
+
+\ssclause{Disjointness}
+
+%%Zpreword \disjoint disjoint
+\begin{zed}
+\relation (\disjoint \_)
+\end{zed}
+
+\begin{gendef}[L,X]
+\disjoint \_ : \power ( L \rel \power X )
+\where
+\forall f : L \rel \power X @
+\disjoint f \iff ( \forall p , q : f | p \neq q @ p.2 \cap q.2 = \emptyset )
+\end{gendef}
+
+A labelled family of sets is disjoint precisely when any
+distinct pair yields sets with no members in common.
+
+\ssclause{Partitions}
+
+%%Zinword \partition partition
+\begin{zed}
+\relation (\_ \partition \_)
+\end{zed}
+
+\begin{gendef}[L,X]
+\_ \partition \_ : ( L \rel \power X ) \rel \power X
+\where
+\forall f : L \rel \power X ; a : \power X @
+f \partition a \iff \disjoint f \land \bigcup ( \ran f ) = a
+\end{gendef}
+
+A labelled family of sets $f$ partitions a set $a$
+precisely when $f$ is disjoint and the union of all the sets in $f$
+is $a$.
+
+\end{document}

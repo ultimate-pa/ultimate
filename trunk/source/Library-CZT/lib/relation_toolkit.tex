@@ -1,0 +1,275 @@
+\documentclass[draft,a4paper,10pt,wd]{isov2}
+\usepackage{ltcadiz}
+\begin{document}
+\normannex{Mathematical toolkit}
+\sclause{More notations for relations}
+
+\begin{zsection}
+\SECTION relation\_toolkit \parents set\_toolkit
+\end{zsection}
+
+\ssclause{First component projection}
+
+\begin{gendef}[X,Y]
+first : X \cross Y  \fun X
+\where
+\forall x : X; y : Y @ first~(x,y) = x
+\end{gendef}
+
+For any ordered pair $(x,y)$,
+$first~(x,y)$ is the $x$ component of the pair.
+
+\ssclause{Second component projection}
+
+\begin{gendef}[X,Y]
+second : X \cross Y \fun Y
+\where
+\forall x : X; y : Y @ second~(x,y) = y
+\end{gendef}
+
+For any ordered pair $(x,y)$,
+$second~(x,y)$ is the $y$ component of the pair.
+
+\ssclause{Maplet}
+
+%%Zinchar \mapsto U+21A6
+\begin{zed}
+\function 10 \leftassoc (\_ \mapsto \_)
+\end{zed}
+
+\begin{gendef}[X,Y]
+\_ \mapsto \_ : X \cross Y \fun X \cross Y
+\where
+\forall x : X ; y : Y @ x \mapsto y = ( x , y )
+\end{gendef}
+
+The maplet forms an ordered pair from two values;
+$x \mapsto y$ is just another notation for $(x, y)$.
+
+\ssclause{Domain}
+
+%%Zpreword \dom dom
+\begin{gendef}[X,Y]
+\dom : (X \rel Y) \fun \power X
+\where
+\forall r : X \rel Y @ \dom r = \{~ p : r @ p.1 ~\}
+\end{gendef}
+
+The domain of a relation $r$ is the set of first components of the ordered
+pairs in $r$.
+
+\ssclause{Range}
+
+%%Zpreword \ran ran
+\begin{gendef}[X,Y]
+\ran : (X \rel Y) \fun \power Y
+\where
+\forall r : X \rel Y @ \ran r = \{~ p : r @ p.2 ~\}
+\end{gendef}
+
+The range of a relation $r$ is the set of second components of the ordered
+pairs in $r$.
+
+\ssclause{Identity relation}
+
+%%Zpreword \id id
+\begin{zed}
+\generic (\id \_)
+\end{zed}
+
+\begin{zed}
+\id X == \{~ x : X @ x \mapsto x ~\}
+\end{zed}
+
+The identity relation on a set $X$ is the relation that relates every
+member of $X$ to itself.
+
+\ssclause{Relational composition}
+
+%%Zinchar \comp U+2A3E
+\begin{zed}
+\function 40 \leftassoc (\_ \comp \_)
+\end{zed}
+
+\begin{gendef}[X,Y,Z]
+\_ \comp \_ : (X \rel Y) \cross (Y \rel Z) \fun (X \rel Z)
+\where
+\forall r : X \rel Y ; s : Y \rel Z @
+ r \comp s = \{~ p : r ; q : s | p.2 = q.1 @ p.1 \mapsto q.2 ~\}
+\end{gendef}
+
+The relational composition of a relation $r : X \rel Y$ and $s : Y \rel Z$
+is a relation of type $X \rel Z$ formed by taking
+all the pairs $p$ of $r$ and $q$ of $s$,
+where the second component of $p$ is equal to the first component of $q$,
+and relating the first component of $p$ with the second component of $q$.
+
+\ssclause{Functional composition}
+
+%%Zinchar \circ U+2218
+\begin{zed}
+\function 40 \leftassoc (\_ \circ \_)
+\end{zed}
+
+\begin{gendef}[X,Y,Z]
+\_ \circ \_ : (Y \rel Z) \cross (X \rel Y) \fun (X \rel Z)
+\where
+\forall r : X \rel Y ; s : Y \rel Z @ s \circ r = r \comp s
+\end{gendef}
+
+The functional composition of $s$ and $r$ is the same as
+the relational composition of $r$ and $s$.
+
+\ssclause{Domain restriction}
+
+%%Zinchar \dres U+25C1
+\begin{zed}
+\function 65 \rightassoc (\_ \dres \_)
+\end{zed}
+
+\begin{gendef}[X,Y]
+\_ \dres \_ : \power X \cross ( X \rel Y ) \fun ( X \rel Y )
+\where
+\forall a : \power X ; r : X \rel Y @ a \dres r = \{~ p : r | p.1 \in a ~\}
+\end{gendef}
+
+The domain restriction of a relation $r : X \rel Y$ by a set $a : \power X$ is
+the set of pairs in $r$ whose first components are in $a$.
+
+\ssclause{Range restriction}
+
+%%Zinchar \rres U+25B7
+\begin{zed}
+\function 60 \leftassoc (\_ \rres \_)
+\end{zed}
+
+\begin{gendef}[X,Y]
+\_ \rres \_ : ( X \rel Y) \cross \power Y \fun ( X \rel Y )
+\where
+\forall r : X \rel Y ; b : \power Y @ r \rres b = \{~ p : r | p.2 \in b ~\}
+\end{gendef}
+
+The range restriction of a relation $r : X \rel Y$ by a set $b : \power Y$ is
+the set of pairs in $r$ whose second components are in $b$.
+
+\ssclause{Domain subtraction}
+
+%%Zinchar \ndres U+2A64
+\begin{zed}
+\function 65 \rightassoc (\_ \ndres \_)
+\end{zed}
+
+\begin{gendef}[X,Y]
+\_ \ndres \_ : \power X \cross ( X \rel Y ) \fun ( X \rel Y )
+\where
+\forall a : \power X ; r : X \rel Y @ a \ndres r = \{~ p : r | p.1 \notin a ~\}
+\end{gendef}
+
+The domain subtraction of a relation $r : X \rel Y$ by
+a set $a : \power X$
+is the set of pairs in $r$ whose first components are not in $a$.
+
+\ssclause{Range subtraction}
+
+%%Zinchar \nrres U+2A65
+\begin{zed}
+\function 60 \leftassoc (\_ \nrres \_)
+\end{zed}
+
+\begin{gendef}[X,Y]
+\_ \nrres \_ : ( X \rel Y) \cross \power Y \fun ( X \rel Y )
+\where
+\forall r : X \rel Y ; b : \power Y @
+r \nrres b = \{~ p : r | p.2 \notin b ~\}
+\end{gendef}
+
+The range subtraction of a relation $r : X \rel Y$ by a set $b : \power Y$
+is the set of pairs in $r$ whose second components are not in $b$.
+
+\ssclause{Relational inversion}
+
+%%Zpostchar \inv U+223C
+\begin{zed}
+\function (\_ \inv)
+\end{zed}
+
+\begin{gendef}[X,Y]
+\_ \inv : ( X \rel Y ) \fun ( Y \rel X )
+\where
+\forall r : X \rel Y @ r \inv = \{~ p : r @ p.2 \mapsto p.1 ~\}
+\end{gendef}
+
+The inverse of a relation is the relation obtained by reversing every
+ordered pair in the relation.
+
+\ssclause{Relational image}
+
+%%Zinchar \limg U+2987
+%%Zpostchar \rimg U+2988
+\begin{zed}
+\function (\_ \limg \_ \rimg)
+\end{zed}
+
+\begin{gendef}[X,Y]
+\_ \limg \_ \rimg : ( X \rel Y ) \cross \power X \fun \power Y
+\where
+\forall r : X \rel Y ; a : \power X @ r \limg a \rimg = \{~ p : r | p.1 \in a @ p.2 ~\}
+\end{gendef}
+
+The relational image of a set $a : \power X$ through a relation $r : X \rel Y$
+is the set of values of type $Y$ that are related under $r$ to a value in $a$.
+
+\ssclause{Overriding}
+
+%%Zinchar \oplus U+2295
+\begin{zed}
+\function 50 \leftassoc (\_ \oplus \_)
+\end{zed}
+
+\begin{gendef}[X,Y]
+\_ \oplus \_ : ( X \rel Y ) \cross ( X \rel Y ) \fun ( X \rel Y )
+\where
+\forall r , s : X \rel Y @ r \oplus s = ( ( \dom s ) \ndres r ) \cup s
+\end{gendef}
+
+If $r$ and $s$ are both relations between $X$ and $Y$,
+the overriding of $r$ by $s$
+is the whole of $s$ together with those members of $r$
+that have no first components that are in the domain of $s$.
+
+\ssclause{Transitive closure}
+
+%%Zpostword \plus ^+
+\begin{zed}
+\function (\_ \plus)
+\end{zed}
+
+\begin{gendef}[X]
+\_ \plus : ( X \rel X ) \fun (X \rel X )
+\where
+\forall r : X \rel X @
+r \plus = \bigcap \{~ s : X \rel X | r \subseteq s \land r \comp s \subseteq s ~\}
+\end{gendef}
+
+The transitive closure of a relation $r : X \rel X$ is
+the smallest set that contains $r$ and
+is closed under the action of composing $r$ with its members.
+
+\ssclause{Reflexive transitive closure}
+
+%%Zpostword \star ^*
+\begin{zed}
+\function (\_ \star)
+\end{zed}
+
+\begin{gendef}[X]
+\_ \star : ( X \rel X ) \fun (X \rel X )
+\where
+\forall r : X \rel X @ r \star = r \plus \cup \id X
+\end{gendef}
+
+The reflexive transitive closure of a relation $r : X \rel X$ is the
+relation formed by extending the transitive closure of $r$ by the identity
+relation on $X$.
+
+\end{document}

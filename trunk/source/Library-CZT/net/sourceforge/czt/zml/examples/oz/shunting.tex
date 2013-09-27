@@ -1,0 +1,109 @@
+\documentclass{article}
+\usepackage{ltcadiz}
+\begin{document}
+\noindent
+
+\begin{zsection}
+  \SECTION shunting \parents oz\_toolkit, standard\_toolkit
+\end{zsection}
+
+First, we begin by defining the set of positions on the board. We define
+the numbering on the board as if it were a square (6x7), but don't include
+the positions not on the board. Hence define
+\begin{zed}
+  Posn == \{3,4,10,11\} \cup (15 \upto 28) \cup \{31,32,38,39\}
+\end{zed}
+
+We then define a relationship $next$, between cell positions, which
+indicates the neighbours of cells.
+\begin{zed}
+ \relation (\varg next \varg)
+\end{zed}
+
+\begin{axdef}
+  \varg next \varg : Posn \rel Posn
+\where
+  \forall m,n: Posn @ \\
+    \t1 m~next~n \iff \\
+       \t2 m - n \in \{ \negate 7, 7 \} \lor \\
+       \t2 (m - n \in \{ \negate 1 , 1 \} \land m \div 7 = n \div 7)
+\end{axdef}
+
+Next, we define the class $Circle$, which represents a circle on the
+board. To move the circle, a direction is entered. Hence, we define the
+$DIR$, which represents directions.
+
+\begin{zed}
+  DIR ::= LEFT | RIGHT | UP | DOWN
+\end{zed}
+
+\begin{class}{Circle}
+\also
+\begin{state}
+  posn: Posn
+\end{state} \classbreak
+\begin{op}{move}
+  \Delta(posn) \\
+  d? : DIR
+\where
+  posn~next~posn' \\
+  d? = LEFT \implies posn' = posn - 1 \\
+  d? = RIGHT \implies posn' = posn + 1 \\
+  d? = UP \implies posn' = posn - 7 \\
+  d? = DOWN \implies posn = posn + 7 \\
+\end{op}
+\end{class}
+
+Now, we define a class $BlackCircle$ that extends the $Circle$ class to
+represent a black circle by including a $count$ for the number of times a
+circle is moved.
+
+\begin{class}{BlackCircle}
+\also
+Circle\\
+\begin{state}
+  count: \nat
+\end{state} \classbreak
+\begin{init}
+  count = 0
+\end{init} \classbreak
+\begin{op}{move}
+  \Delta(count)
+\where
+  count' = count + 1
+\end{op}
+\end{class}
+
+Now, we define the $Shunting$ class, which maintains the state of the
+board.
+
+\begin{class}{Shunting}
+\also
+\begin{state}
+  black: BlackCircle \\
+  white: \power Circle \\
+\where
+  \#white = 4 \\
+  \forall m,n: white @ \\
+      \t1 (m \neq n \iff m.posn \neq n.posn) \land \\
+      \t1 m.posn \neq black.posn
+\end{state} \classbreak
+\begin{init}
+  black.posn = 22 \\
+  \{w: white @ w.posn\} = \{18,23,27,32\} \\ 
+\end{init} \classbreak
+\begin{op}{end}
+  count! : \nat
+\where
+  \{w: white @ w.posn\} = \{17,18,24,25\} \\
+  count! = black.count
+\end{op}  \classbreak
+move \sdef black.move \land\\
+         \t2 ( \dgch u, t : white | t.posn = black'.posn \land
+                u \neq t \land u.posn \neq t.posn @\\
+		\t3 t.move\\
+		\t2 \gch \\
+		\t2 end )
+\end{class}
+
+\end{document}

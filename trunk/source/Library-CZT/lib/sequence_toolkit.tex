@@ -1,0 +1,360 @@
+\documentclass[draft,a4paper,10pt,wd]{isov2}
+\usepackage{ltcadiz}
+\begin{document}
+\normannex{Mathematical toolkit}
+\sclause{Sequences}
+
+\begin{zsection}
+\SECTION sequence\_toolkit \parents function\_toolkit, number\_toolkit
+\end{zsection}
+
+\ssclause{Number range}
+
+%%Zinword \upto ..
+\begin{zed}
+\function 20 \leftassoc (\_ \upto \_)
+\end{zed}
+
+\begin{axdef}
+\_ \upto \_ : \arithmos \cross \arithmos \pfun \power \arithmos
+\where
+(\num \cross \num) \dres (\_ \upto \_) \in \num \cross \num \fun \power \num
+\also
+\forall i , j : \num @ i \upto j = \{~ k : \num | i \leq k \leq j ~\}
+\end{axdef}
+
+The number range from $i$ to $j$ is the set of all integers
+greater than or equal to $i$,
+which are also less than or equal to $j$.
+
+\ssclause{Iteration}
+
+\begin{gendef}[X]
+iter : \num \fun (X \rel X) \fun (X \rel X)
+\where
+\forall r : X \rel X @ iter ~ 0 ~ r = \id X
+\also
+\forall r : X \rel X; n : \nat @ iter~(n+1)~r = r \comp (iter~n~r)
+\also
+\forall r : X \rel X; n : \nat @ iter~(\negate n)~r = iter~n~(r \inv)
+\end{gendef}
+
+$iter$ is the iteration function for a relation.
+The iteration of a relation $r : X \rel X$ for zero times is the
+identity relation on $X$.
+The iteration of a relation $r : X \rel X$ for $n+1$ times is the
+composition of the relation with its iteration $n$ times.
+The iteration of a relation $r : X \rel X$ for $\negate n$ times is the
+iteration for $n$ times of the inverse of the relation.
+
+\begin{zed}
+\function (\_~^{~\_~})
+\end{zed}
+
+\begin{gendef}[X]
+\_~^{~\_~} : (X \rel X) \cross \num \fun (X \rel X)
+\where
+\forall r : X \rel X; n : \nat @ r~^{~n~} = iter~n~r
+\end{gendef}
+
+$iter~n~r$ may be written as $r ^{ n }$.
+
+\ssclause{Number of members of a set}
+
+%%Zprechar \# U+0023
+\begin{zed}
+\function (\# \_)
+\end{zed}
+
+\begin{gendef}[X]
+\# \_ : \finset X \fun \nat
+\where
+\forall a : \finset X @ \# a = (\mu n : \nat | ( \exists f : 1 \upto n \inj a @ \ran f = a ) )
+\end{gendef}
+
+The number of members of a finite set is the upper limit of the number
+range starting at $1$ that can be put into bijection with the set.
+
+\ssclause{Minimum}
+
+\begin{zed}
+\function (min~\_)
+\end{zed}
+
+\begin{axdef}
+min~\_ : \power \arithmos \pfun \arithmos
+\where
+\power \num \dres (min~\_) = \{~ a : \power \num ; m : \num | m \in a \land ( \forall n : a @ m \leq n ) @ a \mapsto m ~\}
+\end{axdef}
+
+If a set of integers has a member that is less than or equal
+to all members of that set,
+that member is its minimum.
+
+\ssclause{Maximum}
+
+\begin{zed}
+\function (max~\_)
+\end{zed}
+
+\begin{axdef}
+max~\_ : \power \arithmos \pfun \arithmos
+\where
+\power \num \dres (max~\_) = \{~ a : \power \num ; m : \num | m \in a \land ( \forall n : a @ n \leq m ) @ a \mapsto m ~\}
+\end{axdef}
+
+If a set of integers has a member that is greater than or equal
+to all members of that set,
+that member is its maximum.
+
+\ssclause{Finite sequences}
+
+%%Zpreword \seq seq
+\begin{zed}
+\generic (\seq \_)
+\end{zed}
+
+\begin{zed}
+\seq X == \{~ f : \nat \ffun X | \dom f = 1 \upto \# f ~\}
+\end{zed}
+
+A finite sequence is a finite indexed set of values of the same type,
+whose domain is a contiguous set of positive integers starting at $1$.
+
+$\seq X$ is the set of all finite sequences of values of $X$,
+that is, of finite functions from the set $1 \upto n$,
+for some $n$, to elements of $X$.
+
+\ssclause{Non-empty finite sequences}
+
+\begin{zed}
+\seq_1 X == \seq X \setminus \{ \emptyset \}
+\end{zed}
+
+$\seq_1 X$ is the set of all non-empty finite sequences of values of $X$.
+
+\ssclause{Injective sequences}
+
+%%Zpreword \iseq iseq
+\begin{zed}
+\generic (\iseq \_)
+\end{zed}
+
+\begin{zed}
+\iseq X == \seq X \cap (\nat \pinj X)
+\end{zed}
+
+$\iseq X$ is the set of all injective finite sequences of values of $X$,
+that is, of finite sequences over $X$ that are also injections.
+
+\ssclause{Sequence brackets}
+
+%%Zprechar \langle U+27E8
+%%Zpostchar \rangle U+27E9
+\begin{zed}
+\function (\langle \listarg \rangle)
+\end{zed}
+
+\begin{zed}
+\langle \listarg \rangle [ X ]  == \lambda s : \seq X @ s
+\end{zed}
+
+The brackets $\langle$ and $\rangle$ can be used for enumerated sequences.
+
+\ssclause{Concatenation}
+
+%%Zinchar \cat U+2040
+\begin{zed}
+\function 30 \leftassoc (\_ \cat \_)
+\end{zed}
+
+
+\begin{gendef}[X]
+\_ \cat \_ : \seq X \cross \seq X \fun \seq X
+\where
+\forall s , t : \seq X @
+s \cat t = s \cup \{~ n : \dom t @ n + \# s \mapsto t~n ~\}
+\end{gendef}
+
+Concatenation is a function of a pair of finite sequences of
+values of the same type whose result is a sequence that
+begins with all elements of the first sequence and
+continues with all elements of the second sequence.
+
+\ssclause{Reverse}
+
+\begin{gendef}[X]
+rev : \seq X \fun \seq X
+\where
+\forall s : \seq X @ rev~s = \lambda n : \dom s @ s ( \# s - n + 1 )
+\end{gendef}
+
+The reverse of a sequence is the sequence obtained by taking its
+elements in the opposite order.
+
+\ssclause{Head of a sequence}
+
+\begin{gendef}[X]
+head : \seq_1 X \fun X
+\where
+\forall s : \seq_1 X @ head~s = s~1
+\end{gendef}
+
+If $s$ is a non-empty sequence of values,
+then $head~s$ is the value that is first in the sequence.
+
+\ssclause{Last of a sequence}
+
+\begin{gendef}[X]
+last : \seq_1 X \fun X
+\where
+\forall s : \seq_1 X @ last~s = s ( \# s )
+\end{gendef}
+
+If $s$ is a non-empty sequence of values,
+then $last~s$ is the value that is last in the sequence.
+
+\ssclause{Tail of a sequence}
+
+\begin{gendef}[X]
+tail : \seq_1 X \fun \seq X
+\where
+\forall s : \seq_1 X @ tail~s = \lambda n : 1 \upto (\# s - 1) @ s ( n + 1 )
+\end{gendef}
+
+If $s$ is a non-empty sequence of values,
+then $tail~s$ is the sequence of values that is obtained from $s$
+by discarding the first element and renumbering the remainder.
+
+\ssclause{Front of a sequence}
+
+\begin{gendef}[X]
+front : \seq_1 X \fun \seq X
+\where
+\forall s : \seq_1 X @ front~s = \{ \# s \} \ndres s
+\end{gendef}
+
+If $s$ is a non-empty sequence of values,
+then $front~s$ is the sequence of values that is obtained from $s$
+by discarding the last element.
+
+\ssclause{Squashing}
+
+\begin{gendef}[X]
+squash : ( \num \ffun X ) \fun \seq X
+\where
+\forall f : \num \ffun X @ squash~f =
+	\{~ p : f @ \# \{~ i : \dom f | i \leq p.1 ~\} \mapsto p.2 ~\}
+\end{gendef}
+
+$squash$ takes a finite function $f : \num \ffun X$
+and renumbers its domain to produce a finite sequence.
+
+\ssclause{Extraction}
+
+%%Zinchar \extract U+21BF
+\begin{zed}
+\function 45 \rightassoc (\_ \extract \_)
+\end{zed}
+
+\begin{gendef}[X]
+\_ \extract \_ : \power \num \cross \seq X \fun \seq X
+\where
+\forall a : \power \num ; s : \seq X @
+	a \extract s = squash ( a \dres s )
+\end{gendef}
+
+The extraction of a set $a$ of indices from a sequence
+is the sequence obtained from the original by discarding any indices
+that are not in the set $a$,
+then renumbering the remainder.
+
+\ssclause{Filtering}
+
+%%Zinchar \filter U+21BE
+\begin{zed}
+\function 40 \leftassoc (\_ \filter \_)
+\end{zed}
+
+\begin{gendef}[X]
+\_ \filter \_ : \seq X \cross \power X \fun \seq X
+\where
+\forall s : \seq X ; a : \power X @
+	s \filter a = squash ( s \rres a )
+\end{gendef}
+
+The filter of a sequence by a set $a$
+is the sequence obtained from the original by discarding any members
+that are not in the set $a$,
+then renumbering the remainder.
+
+\ssclause{Prefix relation}
+
+%%Zinword \prefix prefix
+\begin{zed}
+\relation (\_ \prefix \_)
+\end{zed}
+
+\begin{gendef}[X]
+\_ \prefix \_ : \seq X \rel \seq X
+\where
+\forall s,t: \seq X @
+s \prefix t \iff s \subseteq t
+\end{gendef}
+
+A sequence $s$ is a prefix of another sequence $t$
+if it forms the front portion of $t$.
+
+\ssclause{Suffix relation}
+
+%%Zinword \suffix suffix
+\begin{zed}
+\relation (\_ \suffix \_)
+\end{zed}
+
+\begin{gendef}[X]
+\_ \suffix \_ : \seq X \rel \seq X
+\where
+\forall s,t: \seq X @
+s \suffix t \iff ( \exists u: \seq X @ u \cat s = t)
+\end{gendef}
+
+A sequence $s$ is a suffix of another sequence $t$
+if it forms the end portion of $t$.
+
+\ssclause{Infix relation}
+
+%%Zinword \infix infix
+\begin{zed}
+\relation (\_ \infix \_)
+\end{zed}
+
+\begin{gendef}[X]
+\_ \infix \_ : \seq X \rel \seq X
+\where
+\forall s,t: \seq X @
+s \infix t \iff ( \exists u,v: \seq X @ u \cat s \cat v = t)
+\end{gendef}
+
+A sequence $s$ is an infix of another sequence $t$
+if it forms a mid portion of $t$.
+
+\ssclause{Distributed concatenation}
+
+%%Zinword \dcat {\cat}/
+\begin{gendef}[X]
+\dcat : \seq \seq X \fun \seq X
+\where
+\dcat \langle \rangle = \langle \rangle
+\also
+\forall s : \seq X @ \dcat \langle s \rangle = s
+\also
+\forall q , r : \seq \seq X @ \dcat ( q \cat r ) = ( \dcat q ) \cat ( \dcat r )
+\end{gendef}
+
+The distributed concatenation of a sequence $t$
+of sequences of values of type $X$
+is the sequence of values of type $X$
+that is obtained by concatenating the members of $t$ in order.
+
+\end{document}

@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Spec Version="2.1" xsi:schemaLocation="http://czt.sourceforge.net/zml http://czt.sourceforge.net/zml/Z_2_0.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://czt.sourceforge.net/zml">
+    <ZSect>
+        <Anns>
+            <LocAnn Col="0" Length="88" Line="0" Loc="lib/standard_toolkit.tex" Start="0"/>
+        </Anns>
+        <Name>standard_toolkit</Name>
+        <Parent>
+            <Anns>
+                <LocAnn Col="38" Length="17" Line="1" Loc="lib/standard_toolkit.tex" Start="55"/>
+            </Anns>
+            <Word>sequence_toolkit</Word>
+        </Parent>
+        <ZParaList>
+            <LatexMarkupPara/>
+            <NarrPara>
+                <Anns>
+                    <LocAnn Col="14" Length="1" Line="2" Loc="lib/standard_toolkit.tex" Start="87"/>
+                </Anns>
+                <Content>
+</Content>
+            </NarrPara>
+        </ZParaList>
+    </ZSect>
+</Spec>
+
