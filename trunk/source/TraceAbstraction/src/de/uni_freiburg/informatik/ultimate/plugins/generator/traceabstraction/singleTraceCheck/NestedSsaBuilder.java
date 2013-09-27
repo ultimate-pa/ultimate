@@ -246,7 +246,7 @@ public class NestedSsaBuilder {
 			
 			for (int i=numberPendingContexts-1; i>=0; i--) {
 				int pendingReturnPosition = pendingReturns.get(i);
-				m_PendingContext2PendingReturn.put(i, pendingReturnPosition);
+				m_PendingContext2PendingReturn.put(startOfCallingContext, pendingReturnPosition);
 				Return ret = (Return) m_TraceWF.getTrace().getSymbol(pendingReturnPosition);
 				Call correspondingCall = ret.getCorrespondingCall();
 				{
@@ -304,7 +304,7 @@ public class NestedSsaBuilder {
 			
 			TransFormula tf;
 			if (m_TraceWF.getTrace().isCallPosition(i)) {
-				tf = m_TraceWF.getGlobalVarAssignment(i);
+				tf = m_TraceWF.getLocalVarAssignment(i);
 			} else {
 				tf = m_TraceWF.getFormulaFromNonCallPos(i);
 			}
