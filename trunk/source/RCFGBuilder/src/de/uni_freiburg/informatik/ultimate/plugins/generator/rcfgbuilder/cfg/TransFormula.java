@@ -455,11 +455,12 @@ public class TransFormula implements Serializable {
 		formula = der.eliminate(auxVars, formula);
 		if (simplify) {
 			formula = (new SimplifyDDA(script)).getSimplifiedTerm(formula);
-		}
-		LBool isSat = Util.checkSat(script, formula);
-		if (isSat == LBool.UNSAT) {
-			s_Logger.warn("CodeBlock already infeasible");
-			formula = script.term("false");
+		} else {
+			LBool isSat = Util.checkSat(script, formula);
+			if (isSat == LBool.UNSAT) {
+				s_Logger.warn("CodeBlock already infeasible");
+				formula = script.term("false");
+			}
 		}
 		removesuperfluousVariables(inVars, outVars, auxVars, formula);
 		

@@ -15,6 +15,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
+import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.simplification.SimplifyDDA;
 import de.uni_freiburg.informatik.ultimate.model.BoogieLocation;
 import de.uni_freiburg.informatik.ultimate.model.ILocation;
@@ -172,17 +173,23 @@ public class TransFormulaBuilder {
 		Set<TermVariable> auxVars = m_Boogie2smt.getAuxVars();
 		Term formula = m_Boogie2smt.getAssumes();
 		formula = eliminateAuxVars(m_Boogie2smt.getAssumes(),auxVars);
-		if (simplify) {
-			try {
+
+		try {
+			if (simplify) {
 				formula = (new SimplifyDDA(m_Boogie2smt.getScript())).
 						getSimplifiedTerm(formula);
-			}
-			catch (SMTLIBException e) {
-				if (e.getMessage().equals("Unsupported non-linear arithmetic")) {
-					reportUnsupportedSyntax(cb, new BoogieLocation("",0,0,0,0, false),e.getMessage());
+			} else {
+				LBool isSat = Util.checkSat(m_Boogie2smt.getScript(), formula);
+				if (isSat == LBool.UNSAT) {
+					formula = m_Boogie2smt.getScript().term("false");
 				}
-				throw e;
 			}
+		}
+		catch (SMTLIBException e) {
+			if (e.getMessage().equals("Unsupported non-linear arithmetic")) {
+				reportUnsupportedSyntax(cb, new BoogieLocation("",0,0,0,0, false),e.getMessage());
+			}
+			throw e;
 		}
 		Infeasibility infeasibility;
 		if (formula == m_Boogie2smt.getScript().term("false")) {
