@@ -49,6 +49,7 @@ public interface ILocation {
 	 * If this {@code Location} is no auxiliary location the <i>origin</i> is
 	 * the location itself.
 	 */
+	@Deprecated
 	public ILocation getOrigin();
 	
 	
@@ -57,6 +58,7 @@ public interface ILocation {
 	 * Textual description of the type of specification which is checked here.
 	 * E.g., "NullPointerException", "AssertStatement" etc.
 	 */
+	@Deprecated
 	public Check checkedSpecification();
 	
 	
@@ -65,5 +67,6 @@ public interface ILocation {
 	 * 
 	 * @return true iff this Location represents a loop.
 	 */
+	@Deprecated
 	public boolean isLoop();
 }
