@@ -93,6 +93,18 @@ public class ElimStore {
 			m_Script.pop(1);
 		}
 		
+		/*
+		 * Add this information about inequality because it could be lost during
+		 * our following substitutions. E.g. the formula
+		 * a[i] = 0 && a[j] = 1
+		 * implies i != j
+		 * However i!=j is not implied any more if replace a[i] by 0.
+		 */
+		for (Term distinctIndex : distinctIndices) {
+			others.add(m_Script.term("not", m_Script.term("=", distinctIndex, m_WriteIndex)));
+		}
+		othersT = Util.and(m_Script, others.toArray(new Term[0]));
+		
 
 		int numberOfdisjuncts = (int) Math.pow(2,unknownIndices.size());
 		Term[] disjuncts = new Term[numberOfdisjuncts];
