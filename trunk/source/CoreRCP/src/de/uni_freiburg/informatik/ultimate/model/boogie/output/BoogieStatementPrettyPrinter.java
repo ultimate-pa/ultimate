@@ -1,6 +1,5 @@
-package de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder;
+package de.uni_freiburg.informatik.ultimate.model.boogie.output;
 
-import de.uni_freiburg.informatik.ultimate.boogie.printer.BoogieOutput;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
 

@@ -1,7 +1,7 @@
 /**
  * Boogie printer observer.
  */
-package de.uni_freiburg.informatik.ultimate.boogie.printer;
+package de.uni_freiburg.informatik.ultimate.model.boogie.output;
 
 import java.io.PrintWriter;
 
