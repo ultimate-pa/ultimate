@@ -513,14 +513,18 @@ public class NestedSsaBuilder {
 		
 		private Term getCurrentVarVersion(BoogieVar bv) {
 			if (bv.isOldvar()) {
-				if (modifiedInCurrentCallingContext(bv)){
-					return getVarVersion(bv, startOfCallingContext);
+				if (currentGlobalVarVersion.containsKey(bv)) {
+					return currentGlobalVarVersion.get(bv);
 				} else {
-					// use the nonOldVersion
-					return getCurrentVarVersion(m_SmtManager.getNonOldVar(bv));
+					return setCurrentVarVersion(bv, startOfCallingContext);
 				}
-			}
-			else if (bv.isGlobal()) {
+//				if (modifiedInCurrentCallingContext(bv)){
+//					return getVarVersion(bv, startOfCallingContext);
+//				} else {
+//					// use the nonOldVersion
+//					return getCurrentVarVersion(m_SmtManager.getNonOldVar(bv));
+//				}
+			} else if (bv.isGlobal()) {
 				if (currentGlobalVarVersion.containsKey(bv)) {
 					return currentGlobalVarVersion.get(bv);
 				}
@@ -535,8 +539,7 @@ public class NestedSsaBuilder {
 					}
 					
 				}
-			}
-			else { //case varName is no global var
+			} else { //case varName is no global var
 				if (currentLocalVarVersion.containsKey(bv)) {
 					return currentLocalVarVersion.get(bv);
 				}
