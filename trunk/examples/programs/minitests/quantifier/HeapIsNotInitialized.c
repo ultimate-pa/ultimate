@@ -5,8 +5,8 @@
  * 
  */
 
-int main() {
+int nonMain() {
     int *p = malloc(sizeof(int));
-    free(p);
-    *p = 3;
+    // @assert *p == 0;
+    return 0;
 }

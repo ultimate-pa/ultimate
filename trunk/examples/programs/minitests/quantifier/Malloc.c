@@ -5,7 +5,7 @@
  * 
  */
 
-int main() {
+int nonMain() {
     int *p = malloc(sizeof(int));
     return 0;
 }

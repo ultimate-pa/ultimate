@@ -7,10 +7,8 @@
 
 int main() {
     int *p = malloc(sizeof(int));
-//    int *q = malloc(sizeof(int));
-    p = 3;
-//    q = 5;
-	free(p);
-//	free(q);
-    return 0;
+    int *q = malloc(sizeof(int));
+    // @assert  p != q;
+    free(p);
+    free(q);
 }

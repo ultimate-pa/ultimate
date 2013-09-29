@@ -6,7 +6,7 @@
  */
 
 int main() {
-    int *p = malloc(sizeof(int));
-    free(p);
+    int *p;
+    p = 4;
     *p = 3;
 }
