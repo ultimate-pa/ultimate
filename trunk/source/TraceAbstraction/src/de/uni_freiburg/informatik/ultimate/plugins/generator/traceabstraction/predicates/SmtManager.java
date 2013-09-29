@@ -1405,7 +1405,7 @@ public class SmtManager {
 								s_Logger.warn("Transition "+ transAnnot + " from " +
 										sf1 + " to " + sf2 + " not inductive");
 								result = false;
-								assert !assertInductivity || result : "anti inductivity failed";
+								assert !assertInductivity || result : "inductivity failed";
 							}
 							break;
 						}
@@ -1447,7 +1447,7 @@ public class SmtManager {
 								s_Logger.warn("Transition "+ transAnnot + " from " +
 										sf1 + " to " + sf2 + " not inductive");
 								result = false;
-								assert !assertInductivity || result : "anti inductivity failed";
+								assert !assertInductivity || result : "inductivity failed";
 							}
 							break;
 						}
@@ -1493,7 +1493,7 @@ public class SmtManager {
 									s_Logger.warn("Transition "+ transAnnot + " from " +
 											sf1 + " to " + sf2 + " not inductive");
 									result = false;
-									assert !assertInductivity || result : "anti inductivity failed";
+									assert !assertInductivity || result : "inductivity failed";
 								}
 								break;
 							}
