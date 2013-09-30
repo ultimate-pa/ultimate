@@ -60,13 +60,15 @@ public class PeaToBoogie implements ISource {
 
 	@Override
 	public IElement parseAST(File file) throws Exception {
+		String inputPath = file.getAbsolutePath();
     	m_FileNames = new ArrayList<String>();
-    	m_FileNames.add(file.getAbsolutePath());
-    	s_Logger.info("Parsing: '"+file.getAbsolutePath()+"'");
-    	Vector<srParsePattern> patterns = new ReqToPEA().genPatterns(file.getAbsolutePath());
+    	m_FileNames.add(inputPath);
+    	s_Logger.info("Parsing: '"+inputPath+"'");
+    	Vector<srParsePattern> patterns = new ReqToPEA().genPatterns(inputPath);
     	PhaseEventAutomata[] pea = new ReqToPEA().genPEA(patterns);
     	int combinationNum = Math.min(pea.length, 3); //TODO preference
  		translator.setCombinationNum(combinationNum);
+ 		translator.setInputFilePath(inputPath);
  		Unit unit = translator.genBoogie(pea);	
  		return new WrapperNode(null, unit);
 	}

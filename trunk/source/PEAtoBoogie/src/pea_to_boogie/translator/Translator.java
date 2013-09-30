@@ -4,14 +4,16 @@ import java.util.*;
 import pea.*;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.*;
 import de.uni_freiburg.informatik.ultimate.model.*;
-import de.uni_freiburg.informatik.ultimate.model.boogie.output.*;
-import java.io.FileWriter;
-import java.io.PrintWriter; 
 import pea_to_boogie.generator.*;
 /**
  * This class translates a phase event automaton to an equivalent Boogie code.
  */
 public class Translator {
+	
+	/**
+	 * The name of the input file containing the requirements/peas.
+	 */
+	public String inputFilePath;
 
     /**
      * The address of the Boogie text file.
@@ -55,6 +57,24 @@ public class Translator {
      * The value of combinations of automata. 
      */
     public int combinationNum;
+    
+    /**
+     * The boogie locations used to annotate the boogie code.
+     * This array contains the location for requirement reqNr in
+     * index reqNr+1 and the location for code that is not 
+     * specific to any requirements in index 0.
+     */
+    public BoogieLocation[] boogieLocations;
+    
+    /**
+     * Set the input file name.  This is used to annotate the
+     * Boogie code with the right file name.  The Location object
+     * should contain the name of the original file name.  
+     * @param The input file name.
+     */
+    public void setInputFilePath(String path) {
+    	this.inputFilePath = path;
+    }
     /**
      * Assign an address to the boogieFilePath.  
      * @param The address of a Boogie text file.
@@ -82,12 +102,9 @@ public class Translator {
     public void genGlobVars() {
     	
        try {
-          BoogieLocation blUnit = new BoogieLocation (getBoogieFilePath(),
-       		   0, 0, 0, 0, null);
-          BoogieLocation blVar = new BoogieLocation (getBoogieFilePath(),
-       		   0, 0, 0, 0, blUnit);
-          BoogieLocation blPrimType = new BoogieLocation (getBoogieFilePath(),
-          		   0, 0, 0, 0, blVar);
+          BoogieLocation blUnit = boogieLocations[0];
+          BoogieLocation blVar = blUnit;
+          BoogieLocation blPrimType = blUnit;
          
           for (int i = 0; i < this.automata.length; i++) {
         	    List<String> tempClocks = this.automata[i].getClocks();
@@ -205,34 +222,22 @@ public class Translator {
      * @return time passing statement. 
      */
     public Statement genClockPlusDelta(String clockId, BoogieLocation bl) {
-    	BoogieLocation blAssign = new BoogieLocation (getBoogieFilePath(),
-     		   0, 0, 0, 0, bl);
-		BoogieLocation blLHS = new BoogieLocation (getBoogieFilePath(),
-	      		   0, 0, 0, 0, blAssign);
-	    BoogieLocation blRHS = new BoogieLocation (getBoogieFilePath(),
-	       		   0, 0, 0, 0, blAssign);
-	    VariableLHS clockVar = new VariableLHS(blLHS, clockId);
+	    VariableLHS clockVar = new VariableLHS(bl, clockId);
 	    
-		BoogieLocation blPlusLHS = new BoogieLocation (getBoogieFilePath(),
-	      		   0, 0, 0, 0, blRHS);
-	    BoogieLocation blPlusRHS = new BoogieLocation (getBoogieFilePath(),
-	       		   0, 0, 0, 0, blRHS);	     	
-	    IdentifierExpression clockID = new IdentifierExpression(blPlusLHS, clockId);
-	    IdentifierExpression deltaID = new IdentifierExpression(blPlusRHS, "delta");
-	    BinaryExpression binaryExpr = new BinaryExpression(blRHS, BinaryExpression.Operator.ARITHPLUS,
+	    IdentifierExpression clockID = new IdentifierExpression(bl, clockId);
+	    IdentifierExpression deltaID = new IdentifierExpression(bl, "delta");
+	    BinaryExpression binaryExpr = new BinaryExpression(bl, BinaryExpression.Operator.ARITHPLUS,
 	    		clockID, deltaID);
 	    LeftHandSide[] lhs = new LeftHandSide[1];
 	    lhs[0] = clockVar;
 	    Expression[] expr = new Expression[1];
 	    expr[0] = binaryExpr;
-	    AssignmentStatement assignment = new AssignmentStatement(blAssign, lhs, expr);
+	    AssignmentStatement assignment = new AssignmentStatement(bl, lhs, expr);
 	    
     	return assignment;
     }
     public Statement[] genDelay(BoogieLocation bl) {
     	
-    	BoogieLocation blVarsHavoc = new BoogieLocation (getBoogieFilePath(),
-        		   0, 0, 0, 0, bl);
     	List<String> havocIds = new ArrayList<String>();
     	for (int i = 0; i < this.primedVars.size(); i++) {
     		havocIds.add(this.primedVars.get(i));
@@ -242,24 +247,16 @@ public class Translator {
     	}
     	havocIds.add("delta");   	
      	String[] ids =  havocIds.toArray(new String[havocIds.size()]);
-     	HavocStatement havocSmt = new HavocStatement(blVarsHavoc, ids);    	
-     	BoogieLocation blDeltaAssume = new BoogieLocation (getBoogieFilePath(),
-     		   0, 0, 0, 0, bl);
-		BoogieLocation blLHS = new BoogieLocation (getBoogieFilePath(),
-	      		   0, 0, 0, 0, blDeltaAssume);
-	    BoogieLocation blRHS = new BoogieLocation (getBoogieFilePath(),
-	       		   0, 0, 0, 0, blDeltaAssume);	     	
-	    IdentifierExpression identifier = new IdentifierExpression(blLHS, "delta");
-	    RealLiteral realLiteral = new RealLiteral(blRHS, Double.toString(0.0));
+     	HavocStatement havocSmt = new HavocStatement(bl, ids);    	
+	    IdentifierExpression identifier = new IdentifierExpression(bl, "delta");
+	    RealLiteral realLiteral = new RealLiteral(bl, Double.toString(0.0));
 	    BinaryExpression binaryExpr = new BinaryExpression(bl, BinaryExpression.Operator.COMPGT,
 	    		identifier, realLiteral);
-    	AssumeStatement assumeDelta = new AssumeStatement(blDeltaAssume, binaryExpr);
+    	AssumeStatement assumeDelta = new AssumeStatement(bl, binaryExpr);
     	
-    	BoogieLocation blClockPlusDelta = new BoogieLocation (getBoogieFilePath(),
-     		   0, 0, 0, 0, bl);
     	Statement[] smtArray = new Statement[this.clockIds.size()];
     	for (int i = 0; i < this.clockIds.size(); i++) {
-    		smtArray[i] = genClockPlusDelta(this.clockIds.get(i), blClockPlusDelta);
+    		smtArray[i] = genClockPlusDelta(this.clockIds.get(i), bl);
     	}    	  	
     	Statement[] statements = new Statement[smtArray.length + 2];
     	statements[0] = havocSmt;
@@ -271,29 +268,18 @@ public class Translator {
     	return statements;
     }
     public Expression genIfCons (int phaseIndex, int autIndex, BoogieLocation bl) {
-    	BoogieLocation blConOperator = new BoogieLocation (getBoogieFilePath(),
-        		   0, 0, 0, 0, bl);
-    	BoogieLocation blLHS = new BoogieLocation (getBoogieFilePath(),
-     		   0, 0, 0, 0, blConOperator);
-    	BoogieLocation blRHS = new BoogieLocation (getBoogieFilePath(),
-      		   0, 0, 0, 0, blConOperator);
-    	
-    	IdentifierExpression identifier = new IdentifierExpression(blLHS, "pc"+autIndex);
-    	IntegerLiteral intLiteral = new IntegerLiteral(blRHS, 
+    	IdentifierExpression identifier = new IdentifierExpression(bl, "pc"+autIndex);
+    	IntegerLiteral intLiteral = new IntegerLiteral(bl, 
     			Integer.toString(phaseIndex));
-    	BinaryExpression ifCon = new BinaryExpression(blConOperator, BinaryExpression.Operator.COMPEQ,
+    	BinaryExpression ifCon = new BinaryExpression(bl, BinaryExpression.Operator.COMPEQ,
     			identifier, intLiteral);
     	return ifCon;
     }
     public Statement[] genIfSmtDelayBody(Phase phase, BoogieLocation bl) {
-     	BoogieLocation blAssumeClInv = new BoogieLocation (getBoogieFilePath(),
-      		   0, 0, 0, 0, bl);
-     	BoogieLocation blAssumeStateInv = new BoogieLocation (getBoogieFilePath(),
-       		   0, 0, 0, 0, bl);     	
- 	    Expression expr	= new CDDTranslator().CDD_To_Boogie(phase.getClockInvariant(),getBoogieFilePath(), blAssumeClInv);
-     	AssumeStatement assumeClInv = new AssumeStatement(blAssumeClInv, expr);
-     	expr = new CDDTranslator().CDD_To_Boogie(phase.getStateInvariant(),getBoogieFilePath(), blAssumeStateInv);
-     	AssumeStatement assumeStateInv = new AssumeStatement(blAssumeStateInv, expr);
+ 	    Expression expr	= new CDDTranslator().CDD_To_Boogie(phase.getClockInvariant(),getBoogieFilePath(), bl);
+     	AssumeStatement assumeClInv = new AssumeStatement(bl, expr);
+     	expr = new CDDTranslator().CDD_To_Boogie(phase.getStateInvariant(),getBoogieFilePath(), bl);
+     	AssumeStatement assumeStateInv = new AssumeStatement(bl, expr);
      	Statement[] statements = new Statement[2];
     	statements[0] = assumeClInv;
     	statements[1] = assumeStateInv;
@@ -302,19 +288,17 @@ public class Translator {
     public Statement joinIfSmts (Statement[] statements, BoogieLocation bl) {
     	
     	List<Statement> smtList = new ArrayList<Statement>();
-    	BoogieLocation blIfSmt = new BoogieLocation (getBoogieFilePath(),
-       		   0, 0, 0, 0, bl);
     	for (int i = 0; i < statements.length; i++) {
     		IfStatement oldIfSmt = (IfStatement)statements[i];
     		if (smtList.size() == 0) {
     	     Statement[] emptyArray = new Statement[0];
-           	 IfStatement newIfSmt = new IfStatement(blIfSmt, oldIfSmt.getCondition(), 
+           	 IfStatement newIfSmt = new IfStatement(bl, oldIfSmt.getCondition(), 
            			  oldIfSmt.getThenPart(), emptyArray);	
            	smtList.add(newIfSmt);
     		} else {
     			Statement[] smt = new Statement[1];
     			smt[0] = smtList.get(smtList.size()-1);
-              	IfStatement newIfSmt = new IfStatement(blIfSmt, oldIfSmt.getCondition(), 
+              	IfStatement newIfSmt = new IfStatement(bl, oldIfSmt.getCondition(), 
               			  oldIfSmt.getThenPart(), smt);
               	smtList.add(newIfSmt);
     		}
@@ -325,24 +309,20 @@ public class Translator {
     public Statement joinInnerIfSmts (Statement[] statements, BoogieLocation bl) {
     	
     	List<Statement> smtList = new ArrayList<Statement>();
-    	BoogieLocation blIfSmt = new BoogieLocation (getBoogieFilePath(),
-       		   0, 0, 0, 0, bl);
     	for (int i = 0; i < statements.length; i++) {
     		IfStatement oldIfSmt = (IfStatement)statements[i];
     		if (smtList.size() == 0) {
-    	     BoogieLocation blAssumeFalse = new BoogieLocation (getBoogieFilePath(),
-    	       		   0, 0, 0, 0, bl);
-    	     BooleanLiteral bLiteral = new BooleanLiteral(blAssumeFalse, false);
-    	     AssumeStatement assumeFalse = new AssumeStatement(blAssumeFalse, bLiteral);	
+    	     BooleanLiteral bLiteral = new BooleanLiteral(bl, false);
+    	     AssumeStatement assumeFalse = new AssumeStatement(bl, bLiteral);	
     	     Statement[] smt = new Statement[1];
     	     smt[0] = assumeFalse;
-    	     IfStatement newIfSmt = new IfStatement(blIfSmt, oldIfSmt.getCondition(), 
+    	     IfStatement newIfSmt = new IfStatement(bl, oldIfSmt.getCondition(), 
            			  oldIfSmt.getThenPart(), smt);	
            	smtList.add(newIfSmt);
     		} else {
     			Statement[] smt = new Statement[1];
     			smt[0] = smtList.get(smtList.size()-1);
-              	IfStatement newIfSmt = new IfStatement(blIfSmt, oldIfSmt.getCondition(), 
+              	IfStatement newIfSmt = new IfStatement(bl, oldIfSmt.getCondition(), 
               			  oldIfSmt.getThenPart(), smt);
               	smtList.add(newIfSmt);
     		}
@@ -355,13 +335,9 @@ public class Translator {
     	Phase[] phases = automaton.getPhases();
     	Statement[] statements = new Statement[phases.length];
     	for (int i = 0; i < phases.length; i++) {
-    	  BoogieLocation blIfSmt = new BoogieLocation (getBoogieFilePath(),
-        		   0, 0, 0, 0, bl);
-     	  BoogieLocation blIfStmCon = new BoogieLocation (getBoogieFilePath(),
-         		   0, 0, 0, 0, bl);
-     	  Expression ifCon = genIfCons(i, autIndex, blIfStmCon);
+     	  Expression ifCon = genIfCons(i, autIndex, bl);
      	  Statement [] emptyArray = new Statement[0];
-     	  IfStatement ifStatement = new IfStatement(blIfSmt, ifCon, 
+     	  IfStatement ifStatement = new IfStatement(bl, ifCon, 
      			  genIfSmtDelayBody(phases[i],bl), emptyArray);
      	 statements[i] = ifStatement;
     	}
@@ -369,40 +345,28 @@ public class Translator {
     	return statement;
     }
     public Statement genReset(String resetVar, BoogieLocation bl) {
-    	BoogieLocation blAssign = new BoogieLocation (getBoogieFilePath(),
-     		   0, 0, 0, 0, bl);
-		BoogieLocation blLHS = new BoogieLocation (getBoogieFilePath(),
-	      		   0, 0, 0, 0, blAssign);
-	    BoogieLocation blRHS = new BoogieLocation (getBoogieFilePath(),
-	       		   0, 0, 0, 0, blAssign);
-	    VariableLHS reset = new VariableLHS(blLHS, resetVar);
+	    VariableLHS reset = new VariableLHS(bl, resetVar);
      	
-    	RealLiteral realLiteral = new RealLiteral(blRHS, 
+    	RealLiteral realLiteral = new RealLiteral(bl, 
     			Double.toString(0.0));
 	    LeftHandSide[] lhs = new LeftHandSide[1];
 	    lhs[0] = reset;
 	    Expression[] expr = new Expression[1];
 	    expr[0] = realLiteral;
-	    AssignmentStatement assignment = new AssignmentStatement(blAssign, lhs, expr);
+	    AssignmentStatement assignment = new AssignmentStatement(bl, lhs, expr);
 	    
     	return assignment;
     }
     public Statement genPCAssign(int autIndex, int phaseIndex, BoogieLocation bl) {
-    	BoogieLocation blAssign = new BoogieLocation (getBoogieFilePath(),
-     		   0, 0, 0, 0, bl);
-		BoogieLocation blLHS = new BoogieLocation (getBoogieFilePath(),
-	      		   0, 0, 0, 0, blAssign);
-	    BoogieLocation blRHS = new BoogieLocation (getBoogieFilePath(),
-	       		   0, 0, 0, 0, blAssign);
-	    VariableLHS pc = new VariableLHS(blLHS, "pc"+autIndex);
+	    VariableLHS pc = new VariableLHS(bl, "pc"+autIndex);
      	
-    	IntegerLiteral intLiteral = new IntegerLiteral(blRHS, 
+    	IntegerLiteral intLiteral = new IntegerLiteral(bl, 
     			Integer.toString(phaseIndex));
 	    LeftHandSide[] lhs = new LeftHandSide[1];
 	    lhs[0] = pc;
 	    Expression[] expr = new Expression[1];
 	    expr[0] = intLiteral;
-	    AssignmentStatement assignment = new AssignmentStatement(blAssign, lhs, expr);
+	    AssignmentStatement assignment = new AssignmentStatement(bl, lhs, expr);
 	    
     	return assignment;
     }
@@ -411,13 +375,11 @@ public class Translator {
     		int autIndex, BoogieLocation bl) {
            	
     	List<Statement> smtList = new ArrayList<Statement>();
-    	BoogieLocation blAssumeGuard = new BoogieLocation (getBoogieFilePath(),
-       		   0, 0, 0, 0, bl);      	
     //	StringLiteral strLiteral = new StringLiteral(blAssumeGuard, 
   	//    		CDDTranslation.CDD_To_Boogie(transition.getGuard()));
     	Expression expr	= new CDDTranslator().CDD_To_Boogie(transition.getGuard(),getBoogieFilePath(),
-    			blAssumeGuard);
-      	AssumeStatement assumeGuard = new AssumeStatement(blAssumeGuard, expr);     	 
+    			bl);
+      	AssumeStatement assumeGuard = new AssumeStatement(bl, expr);     	 
       	smtList.add(assumeGuard);
         if (transition.getResets().length != 0) {
         	String[] resets = transition.getResets();
@@ -442,13 +404,9 @@ public class Translator {
     	Statement[] statements = new Statement[phase.getTransitions().size()];
     	List<Transition> transitions = phase.getTransitions();
     	for (int i = 0; i < transitions.size(); i++) {
-      	  BoogieLocation blIfSmt = new BoogieLocation (getBoogieFilePath(),
-          		   0, 0, 0, 0, bl);
-       	  BoogieLocation blIfStmCon = new BoogieLocation (getBoogieFilePath(),
-           		   0, 0, 0, 0, bl);
-          WildcardExpression wce = new WildcardExpression(blIfStmCon);
+          WildcardExpression wce = new WildcardExpression(bl);
        	  Statement[] emptyArray = new Statement[0];
-       	  IfStatement ifStatement = new IfStatement(blIfSmt, wce, 
+       	  IfStatement ifStatement = new IfStatement(bl, wce, 
        			 genInnerIfBody(automaton, transitions.get(i), autIndex, bl), emptyArray);
        	 statements[i] = ifStatement;
       	}
@@ -461,15 +419,11 @@ public class Translator {
     	Phase[] phases = automaton.getPhases();
     	Statement[] statements = new Statement[phases.length];
     	for (int i = 0; i < phases.length; i++) {
-    	  BoogieLocation blIfSmt = new BoogieLocation (getBoogieFilePath(),
-        		   0, 0, 0, 0, bl);
-     	  BoogieLocation blIfStmCon = new BoogieLocation (getBoogieFilePath(),
-         		   0, 0, 0, 0, bl);
-     	  Expression ifCon = genIfCons(i, autIndex, blIfStmCon);
+     	  Expression ifCon = genIfCons(i, autIndex, bl);
      	  Statement[] emptyArray = new Statement[0];
      	  Statement[] outerIfBodySmt = new Statement[1];
      	  outerIfBodySmt[0] = genOuterIfBody(automaton, phases[i], autIndex, bl);
-     	  IfStatement ifStatement = new IfStatement(blIfSmt, ifCon, 
+     	  IfStatement ifStatement = new IfStatement(bl, ifCon, 
      			 outerIfBodySmt, emptyArray);
      	 statements[i] = ifStatement;
     	}
@@ -480,32 +434,24 @@ public class Translator {
     public List<Statement> genStateVarsAssign(BoogieLocation bl){
       List<Statement> statements = new ArrayList<Statement>();
       for(int i = 0; i < this.stateVars.size(); i++) { 
-    	BoogieLocation blAssign = new BoogieLocation (getBoogieFilePath(),
-      		   0, 0, 0, 0, bl);
- 		BoogieLocation blLHS = new BoogieLocation (getBoogieFilePath(),
- 	      		   0, 0, 0, 0, blAssign);
- 	    BoogieLocation blRHS = new BoogieLocation (getBoogieFilePath(),
- 	       		   0, 0, 0, 0, blAssign);
- 	    VariableLHS lhsVar = new VariableLHS(blLHS, this.stateVars.get(i));
-    	IdentifierExpression rhs = new IdentifierExpression(blRHS, this.primedVars.get(i));
+ 	    VariableLHS lhsVar = new VariableLHS(bl, this.stateVars.get(i));
+    	IdentifierExpression rhs = new IdentifierExpression(bl, this.primedVars.get(i));
  	    LeftHandSide[] lhs = new LeftHandSide[1];
  	    lhs[0] = lhsVar;
 	    Expression[] expr = new Expression[1];
 	    expr[0] = rhs;
- 	    AssignmentStatement assignment = new AssignmentStatement(blAssign, lhs, expr);
+ 	    AssignmentStatement assignment = new AssignmentStatement(bl, lhs, expr);
  	    statements.add(assignment);
       }
     	return statements;
     }
     public Statement genAssertSmt(List<Integer> permutation, BoogieLocation bl) {
-     	BoogieLocation blAssert = new BoogieLocation (getBoogieFilePath(),
-      		   0, 0, 0, 0, bl);
      	ConditionGenerator conGen = new ConditionGenerator();
      	conGen.setTranslator(this);
      	Expression expr = conGen.nonDLCGenerator(this.automata, permutation, 
-     			getBoogieFilePath(), blAssert);
+     			getBoogieFilePath(), bl);
      	if (expr == null) return null;
- 	    AssertStatement assertSmt = new AssertStatement(blAssert, expr);
+ 	    AssertStatement assertSmt = new AssertStatement(bl, expr);
     	return assertSmt;
     }
     /**
@@ -563,15 +509,10 @@ public class Translator {
      *        The while-statement.
      */
     public Statement genWhileSmt (BoogieLocation bl) {
-    	BoogieLocation blWhile = new BoogieLocation (getBoogieFilePath(),
-       		   0, 0, 0, 0, bl);
-          	    	
-    	BoogieLocation blWildcardExp = new BoogieLocation (getBoogieFilePath(),
-        		   0, 0, 0, 0, blWhile);
-    	WildcardExpression wce = new WildcardExpression(blWildcardExp);
+    	WildcardExpression wce = new WildcardExpression(bl);
     	LoopInvariantSpecification[] invariants = new LoopInvariantSpecification[0];
-    	WhileStatement whileStatement = new WhileStatement(blWhile, wce,invariants, 
-    			genWhileBody (blWhile));
+    	WhileStatement whileStatement = new WhileStatement(bl, wce,invariants, 
+    			genWhileBody (bl));
     	return whileStatement;
     }
     public Expression genPcExpr(Phase[] phases,Phase[] initialPhases, int autIndex, BoogieLocation bl) {
@@ -586,21 +527,13 @@ public class Translator {
     	}
     	for (int i = 0; i < phases.length; i++) {
 	      if (phases[i].isInit) {	
-    		BoogieLocation blLHS = new BoogieLocation (getBoogieFilePath(),
- 	      		   0, 0, 0, 0, bl);
- 	     	BoogieLocation blRHS = new BoogieLocation (getBoogieFilePath(),
- 	       		   0, 0, 0, 0, bl);	     	
- 	     	IdentifierExpression identifier = new IdentifierExpression(blLHS, "pc"+autIndex);
- 	     	IntegerLiteral intLiteral = new IntegerLiteral(blRHS, Integer.toString(i));
+ 	     	IdentifierExpression identifier = new IdentifierExpression(bl, "pc"+autIndex);
+ 	     	IntegerLiteral intLiteral = new IntegerLiteral(bl, Integer.toString(i));
  	     	BinaryExpression binaryExpr = new BinaryExpression(bl, BinaryExpression.Operator.COMPEQ,
  	     			identifier, intLiteral);
     		if (exprList.size() == 0) {
               exprList.add(binaryExpr);
     		} else {
-    	    	blLHS = new BoogieLocation (getBoogieFilePath(),
-    	 	      		   0, 0, 0, 0, bl);
-    	 	    blRHS = new BoogieLocation (getBoogieFilePath(),
-    	 	       		   0, 0, 0, 0, bl);
      	        binaryExpr = new BinaryExpression(bl, BinaryExpression.Operator.LOGICOR,
      	     			exprList.get(exprList.size()-1), binaryExpr);
      	        exprList.add(binaryExpr);
@@ -610,23 +543,18 @@ public class Translator {
     	return exprList.get(exprList.size()-1);
     } 
     public Statement[] genInitialPhasesSmts (BoogieLocation bl) {
-    	BoogieLocation blPCHavoc = new BoogieLocation (getBoogieFilePath(),
-       		   0, 0, 0, 0, bl);
     	String[] ids = new String[this.pcIds.size()];
     	for (int i = 0; i < this.pcIds.size(); i++) {
     		ids[i] = this.pcIds.get(i);
     	}
-    	HavocStatement pcHavoc = new HavocStatement(blPCHavoc, ids);
+    	HavocStatement pcHavoc = new HavocStatement(bl, ids);
     	
-    	BoogieLocation blPCassume = new BoogieLocation (getBoogieFilePath(),
-        		   0, 0, 0, 0, bl);
-
     	List<Expression> pcExprs = new ArrayList<Expression>();
     	for (int i = 0; i < this.automata.length; i++) {
-    		pcExprs.add(genPcExpr(this.automata[i].getPhases(), this.automata[i].getInit(), i, blPCassume));
+    		pcExprs.add(genPcExpr(this.automata[i].getPhases(), this.automata[i].getInit(), i, bl));
     	}
     	
-    	AssumeStatement assumeSmt = new AssumeStatement(blPCassume, genCNF(pcExprs, blPCassume));
+    	AssumeStatement assumeSmt = new AssumeStatement(bl, genCNF(pcExprs, bl));
     	
     	Statement[] statements = new Statement[2];
     	statements[0] = pcHavoc;
@@ -635,25 +563,15 @@ public class Translator {
     }
     public Expression genClockInit (BoogieLocation bl) {
     	List<Expression> exprList = new ArrayList<Expression>();
-    	BoogieLocation blClockExpr = new BoogieLocation (getBoogieFilePath(),
-       		   0, 0, 0, 0, bl);
     	for (int i = 0; i < this.clockIds.size(); i++) {
-	    	BoogieLocation blLHS = new BoogieLocation (getBoogieFilePath(),
- 	      		   0, 0, 0, 0, blClockExpr);
- 	     	BoogieLocation blRHS = new BoogieLocation (getBoogieFilePath(),
- 	       		   0, 0, 0, 0, blClockExpr);	     	
- 	     	IdentifierExpression identifier = new IdentifierExpression(blLHS, this.clockIds.get(i));
- 	     	RealLiteral realLiteral = new RealLiteral(blRHS, Double.toString(0));
- 	     	BinaryExpression binaryExpr = new BinaryExpression(blClockExpr, BinaryExpression.Operator.COMPEQ,
+ 	     	IdentifierExpression identifier = new IdentifierExpression(bl, this.clockIds.get(i));
+ 	     	RealLiteral realLiteral = new RealLiteral(bl, Double.toString(0));
+ 	     	BinaryExpression binaryExpr = new BinaryExpression(bl, BinaryExpression.Operator.COMPEQ,
  	     			identifier, realLiteral);
     		if (exprList.size() == 0) {
               exprList.add(binaryExpr);
     		} else {
-    	    	blLHS = new BoogieLocation (getBoogieFilePath(),
-    	 	      		   0, 0, 0, 0, blClockExpr);
-    	 	    blRHS = new BoogieLocation (getBoogieFilePath(),
-    	 	       		   0, 0, 0, 0, blClockExpr);
-     	        binaryExpr = new BinaryExpression(blClockExpr, BinaryExpression.Operator.LOGICAND,
+     	        binaryExpr = new BinaryExpression(bl, BinaryExpression.Operator.LOGICAND,
      	     			exprList.get(exprList.size()-1), binaryExpr);
      	        exprList.add(binaryExpr);
     		}
@@ -662,14 +580,10 @@ public class Translator {
     	return exprList.get(exprList.size()-1);
     }
     public Statement[] genClockInitSmts (BoogieLocation bl) { 
-    	BoogieLocation blClockHavoc = new BoogieLocation (getBoogieFilePath(),
-        		   0, 0, 0, 0, bl);
-     	HavocStatement clockHavoc = new HavocStatement(blClockHavoc, 
+     	HavocStatement clockHavoc = new HavocStatement(bl, 
      			this.clockIds.toArray(new String[this.clockIds.size()]));
      	
-     	BoogieLocation blClockAssume = new BoogieLocation (getBoogieFilePath(),
-         		   0, 0, 0, 0, bl);
-     	AssumeStatement assumeSmt = new AssumeStatement(blClockAssume, genClockInit(blClockAssume));
+     	AssumeStatement assumeSmt = new AssumeStatement(bl, genClockInit(bl));
      	
      	Statement[] statements = new Statement[2];
      	statements[0] = clockHavoc;
@@ -704,16 +618,9 @@ public class Translator {
      * The unit is sent to the print process. The result is a Boogie text file. 
      */
     public Unit genProc () {
-    	BoogieLocation blProc = new BoogieLocation (getBoogieFilePath(),
-     		   0, 0, 0, 0, unit.getLocation());
-        
-        BoogieLocation blModifies = new BoogieLocation (getBoogieFilePath(),
-       		   0, 0, 0, 0, blProc);
-        
-        BoogieLocation blProcBody = new BoogieLocation (getBoogieFilePath(),
-     		   0, 0, 0, 0, blProc);       
+    	BoogieLocation bl = boogieLocations[0];
         VariableDeclaration[] localVars = new VariableDeclaration[0];
-        Body body = new Body(blProcBody, localVars, genProcBodySmts (blProcBody));         
+        Body body = new Body(bl, localVars, genProcBodySmts (bl));         
         List<String> modifiedVarsList = new ArrayList<String>();
         for (int i = 0; i < this.clockIds.size(); i++) {
         	modifiedVarsList.add(this.clockIds.get(i));
@@ -735,21 +642,34 @@ public class Translator {
         for (int i = 0; i < modifiedVars.length; i++) {
         	modifiedVars[i] = modifiedVarsList.get(i);
         }       
-        ModifiesSpecification mod = new ModifiesSpecification(blModifies, false, modifiedVars);
+        ModifiesSpecification mod = new ModifiesSpecification(bl, false, modifiedVars);
         ModifiesSpecification[] modArray = new ModifiesSpecification[1];
         modArray[0] = mod;
         Attribute[] attribute = new Attribute[0];
         String[] typeParams = new String[0];
         VarList[] inParams = new VarList[0];
         VarList[] outParams = new VarList[0];
-        Procedure proc = new Procedure(blProc, attribute, "myProcedure", typeParams, inParams, outParams, modArray, body);
+        Procedure proc = new Procedure(bl, attribute, "myProcedure", typeParams, inParams, outParams, modArray, body);
         decList.add(proc);
         Declaration[] decArray = decList.toArray(new Declaration[decList.size()]); 
         unit.setDeclarations(decArray);
         return unit;
   }  
 
+    public void initBoogieLocations(int count) {
+    	if (inputFilePath == null)
+    		inputFilePath = boogieFilePath;
+    	boogieLocations = new BoogieLocation[count+1];
+		boogieLocations[0] =
+				new BoogieLocation(inputFilePath, 1, count, 0, 100, false);
+    	for (int i= 0; i < count; i++) {
+    		boogieLocations[i+1] =
+    				new BoogieLocation(inputFilePath, i+1, i+1, 0, 100, false);
+    	}
+    }
+    
 	public Unit genBoogie (PhaseEventAutomata[] automata) {
+		initBoogieLocations(automata.length);
  
         this.automata = automata;
 		genGlobVars ();          
