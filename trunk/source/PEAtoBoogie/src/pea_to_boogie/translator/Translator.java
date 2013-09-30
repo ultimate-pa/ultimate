@@ -445,7 +445,7 @@ public class Translator {
       }
     	return statements;
     }
-    public Statement genAssertSmt(List<Integer> permutation, BoogieLocation bl) {
+    public Statement genAssertSmt(int[] permutation, BoogieLocation bl) {
      	ConditionGenerator conGen = new ConditionGenerator();
      	conGen.setTranslator(this);
      	Expression expr = conGen.nonDLCGenerator(this.automata, permutation, 
@@ -470,26 +470,17 @@ public class Translator {
     	for (int i = 0; i < this.automata.length; i++) {    
     	    smtList.add(genIfSmtDelay(this.automata[i], i, bl));   	    
     	}
-    	List<Integer> myList = new ArrayList<Integer>(); 
+    	int[] automataIndices = new int[automata.length];
     	for(int i = 0; i < this.automata.length; i++) {
-    		myList.add(i);
+    		automataIndices[i] = i;
     	}
-    	List<List<Integer>> permutation = new Permutation().permutation(myList, this.combinationNum);
-/*
-		for (int i = 0; i < permutation.size(); i++) {
-			 myList = permutation.get(i);   		
-			for(int j = 0; j < myList.size(); j++) {
-				System.out.println(myList.get(j));
-			}
-			System.out.println("////////////////////////////////////////////");
-		}
-*/      for (int i = 0; i < permutation.size(); i++) {
-    	 Statement assertSmt = genAssertSmt(permutation.get(i), bl);
-    	 if (assertSmt == null) continue;
-    	 smtList.add(assertSmt);
-        }
+    	for (int[] subset : new Permutation().subArrays(automataIndices, this.combinationNum)) {
+    		Statement assertSmt = genAssertSmt(subset, bl);
+    		if (assertSmt != null)
+    			smtList.add(assertSmt);
+    	}
     	for (int i = 0; i < this.automata.length; i++) { 
-    	    smtList.add(genOuterIfTransition(this.automata[i], i, bl));   	    
+    		smtList.add(genOuterIfTransition(this.automata[i], i, bl));   	    
     	}
    	    if (this.stateVars.size() != 0) {
    	    	List<Statement> stateVarsAssigns = genStateVarsAssign(bl);

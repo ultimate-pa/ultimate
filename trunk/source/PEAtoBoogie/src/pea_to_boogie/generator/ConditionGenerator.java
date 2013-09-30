@@ -3,122 +3,69 @@ import pea.*;
 import pea_to_boogie.translator.CDDTranslator;
 import pea_to_boogie.translator.Translator;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.*;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.model.*;
 
 import java.util.*;
 public class ConditionGenerator {
     public Translator translator;
-    public Expression nonDLCGenerator (PhaseEventAutomata[] automata, List<Integer> automataPermutation, String fileName, 
+    public Expression nonDLCGenerator (PhaseEventAutomata[] automata, int[] automataPermutation, String fileName, 
 			BoogieLocation bl) {
 
-	    BoogieLocation blAssert = new BoogieLocation (fileName,
-      		   0, 0, 0, 0, bl);
-	    
-		 
-		Expression result = new BooleanLiteral(blAssert, true);
-		List<List<Integer>> phasePermutations = new ArrayList<List<Integer>>();
-		for(int i = automataPermutation.size(); i > 0; i--) {
-			PhaseEventAutomata automaton = automata[automataPermutation.get(i - 1)];
-			Phase[] phases = automaton.getPhases(); 
-			List<Integer> tempList = new ArrayList<Integer>();
-			for(int j = 0; j < phases.length; j++) {
-				tempList.add(j);
-			}
-			phasePermutations.add(tempList);
+		int[][] phases = new int[automataPermutation.length][];
+		for (int i = 0; i < automataPermutation.length; i++) {
+			PhaseEventAutomata automaton = automata[automataPermutation[i]];
+			int phaseCount = automaton.getPhases().length;
+			phases[i] = new int[phaseCount];
+			for (int j = 0; j < phaseCount; j++)
+				phases[i][j] = j;
 		}
 		
-		phasePermutations = new Permutation().allPermutations(phasePermutations, 1);
-		
-		if (automataPermutation.size() == 1) {
-
-        	PhaseEventAutomata automaton = automata[automataPermutation.get(0)];
-        	Phase[] phases = automaton.getPhases(); 
-        	List<CDD> cddList = new ArrayList<CDD>();
-        	int trueCounter = 0;
-        	int trueRemoval = 0;
-        	for (int i = 0; i < phases.length; i++) {
-
-           		List<Transition> transitions = phases[i].getTransitions();
-           		for (int k = 0; k < transitions.size(); k++) {
-                     CDD cddInner = genIntersectionAll (genGuardANDPrimedStInv(transitions.get(k)),
-                    		   genStrictInv(transitions.get(k)));
-                     cddList.add(cddInner);
-            	}
-           	  CDD cdd = genOr(cddList, 1);
-           	  cdd = new VarRemoval().excludeEventsAndPrimedVars(cdd, this.translator.primedVars);
-           	  if (cdd == CDD.TRUE) {
-           		  trueRemoval++;
-           		  continue;
-           	  }
-           	  trueCounter ++;
-           	  Expression impliesRHS = new CDDTranslator().CDD_To_Boogie(cdd, fileName, blAssert);
-              Expression implies = new BinaryExpression(blAssert, BinaryExpression.Operator.LOGICIMPLIES,
-      				 genPCCompEQ(automataPermutation.get(0), i, fileName, blAssert), impliesRHS);
-              cddList.clear();
-              if (trueCounter == 1) {
-            	  result = implies;
-              }
-              else {
-           	      result = new BinaryExpression(blAssert, BinaryExpression.Operator.LOGICAND,
-     				 implies, result);
-              }
-        	}
-        	if (trueRemoval == phases.length) return null; // thereby, ignoring 'assert true'. 
-        } 
-        else { // automata in parallel
-        int trueCounter = 0;
-        int trueRemoval = 0;
-		for (int i = 0; i < phasePermutations.size(); i++) {
-            List<Integer> list = new ArrayList<Integer>();
-            list = phasePermutations.get(i);
-    		List<CDD> cddListInner = new ArrayList<CDD>();
-    		List<CDD> cddListOuter = new ArrayList<CDD>();
-    		Expression impliesLHS = new BooleanLiteral(blAssert, true);
-        	for (int j = 0; j < list.size(); j++) {
-        		PhaseEventAutomata automaton = automata[automataPermutation.get(j)];
-        		Phase[] phases = automaton.getPhases(); 
-        		Phase phase = phases[list.get(j)];
+		List<int[]> phasePermutations = new Permutation().crossProduct(phases);
+		List<Expression> conditions = new ArrayList<Expression>();
+		for (int[] vector : phasePermutations) {
+			assert(vector.length == automataPermutation.length);
+			CDD cddOuter = CDD.TRUE;
+    		List<Expression> impliesLHS = new ArrayList<Expression>();
+        	for (int j = 0; j < vector.length; j++) {
+    			CDD cddInner = CDD.FALSE;
+        		PhaseEventAutomata automaton = automata[automataPermutation[j]];
+        		Phase phase = automaton.getPhases()[vector[j]];
            		List<Transition> transitions = phase.getTransitions();
            		for (int k = 0; k < transitions.size(); k++) {
-                     CDD cddInner = genIntersectionAll(genGuardANDPrimedStInv(transitions.get(k)),
-                    		   genStrictInv(transitions.get(k)));  
-                   
-                     cddListInner.add(cddInner);
+           			cddInner = cddInner
+           				.or(genIntersectionAll(genGuardANDPrimedStInv(transitions.get(k)),
+                    		   genStrictInv(transitions.get(k))));  
             	}
-           		CDD OrCDDInner = genOr(cddListInner, 1);
-           		cddListOuter.add(OrCDDInner);
-           		cddListInner.clear();
-           		if (j == 0) {
-           			impliesLHS = genPCCompEQ(automataPermutation.get(j), list.get(j), fileName, blAssert);
-           		}
-           		else {
-            	    impliesLHS = new BinaryExpression(blAssert, BinaryExpression.Operator.LOGICAND,
-       				    genPCCompEQ(automataPermutation.get(j), list.get(j), fileName, blAssert), impliesLHS); 
-           		}
+           		cddOuter = cddOuter.and(cddInner);
+           		impliesLHS.add(genPCCompEQ(automataPermutation[j], vector[j], fileName, bl));
         	}
-        	    CDD AndCDDOuter = genAnd(cddListOuter, 1);
-        	    CDD cdd = new VarRemoval().excludeEventsAndPrimedVars(AndCDDOuter, this.translator.primedVars);
-        	    if (cdd == CDD.TRUE) {
-        	    	trueRemoval++;
-        	    	continue;
-        	    }
-        	    trueCounter ++;
-             	Expression impliesRHS = new CDDTranslator().CDD_To_Boogie(cdd, fileName, blAssert);
-                Expression implies = new BinaryExpression(blAssert, BinaryExpression.Operator.LOGICIMPLIES,
-                		  impliesLHS , impliesRHS);
-                if (trueCounter == 1) {
-                	result = implies;
-                }else {
-                    result = new BinaryExpression(blAssert, BinaryExpression.Operator.LOGICAND,
-         		       implies, result);
-                }
-        }
-		if (trueRemoval == phasePermutations.size()) return null;
-       }
-      return result;
-        
+       	    CDD cdd = new VarRemoval().excludeEventsAndPrimedVars(cddOuter, this.translator.primedVars);
+       	    if (cdd == CDD.TRUE) {
+       	    	continue;
+       	    }
+       	    Expression impliesRHS = new CDDTranslator().CDD_To_Boogie(cdd, fileName, bl);
+       	    Expression implies = new BinaryExpression(bl, BinaryExpression.Operator.LOGICIMPLIES,
+       	    		buildBinaryExpression(bl, BinaryExpression.Operator.LOGICAND, impliesLHS), impliesRHS);
+       	    conditions.add(implies);
+		}
+		if (conditions.isEmpty())
+			return null;
+		return buildBinaryExpression(bl, BinaryExpression.Operator.LOGICAND, conditions);
 	}
- /*   
+    
+    private Expression buildBinaryExpression(BoogieLocation bl,
+			Operator op, List<Expression> conditions) {
+    	assert (!conditions.isEmpty());
+    	int offset = conditions.size() - 1;
+    	Expression result = conditions.get(offset);
+    	while (offset > 0) {
+    		offset--;
+    		result = new BinaryExpression(bl, op, conditions.get(offset), result);
+    	}
+		return result;
+	}
+	/*   
 	public Expression nonDLCGeneratorToy (PhaseEventAutomata[] automata, String fileName, 
 			BoogieLocation bl) {
 
@@ -187,38 +134,9 @@ public class ConditionGenerator {
 	//	cdd = new VarRemoval().varRemoval(cdd, this.translator.primedVars, this.translator.eventVars);
 		return cdd;
 	}
-	public CDD genOr(List<CDD> list, int counter) {
-		if(list.size() == 0) {
-			return CDD.FALSE; // in practice all phases have at least one transition (self loop). 
-		}
-		if(list.size() == 1) {
-			return list.get(0);
-		}
-		if(counter == list.size()) {
-			return list.get(counter - 1);
-		}
-		CDD result = list.get(counter - 1);
-		result = result.or(genOr(list, counter + 1));
-		return result;
-	}
-	public CDD genAnd(List<CDD> list, int counter) {
-		if(list.size() == 0) {
-			return CDD.FALSE; // in practice all phases have at least one transition (self loop). 
-		}
-		if(counter == list.size()) {
-			return list.get(counter - 1);
-		}
-		CDD result = list.get(counter - 1);
-		result = result.and(genAnd(list, counter + 1));
-		return result;
-	}
     public Expression genPCCompEQ(int autIndex, int phaseIndex, String fileName, BoogieLocation bl) {
-		    BoogieLocation blLHS = new BoogieLocation (fileName,
-	      		   0, 0, 0, 0, bl);
-	     	BoogieLocation blRHS = new BoogieLocation (fileName,
-	       		   0, 0, 0, 0, bl);
-	     	IdentifierExpression identifier = new IdentifierExpression(blLHS, "pc"+autIndex);
-	     	IntegerLiteral intLiteral = new IntegerLiteral(blRHS, Integer.toString(phaseIndex));
+	     	IdentifierExpression identifier = new IdentifierExpression(bl, "pc"+autIndex);
+	     	IntegerLiteral intLiteral = new IntegerLiteral(bl, Integer.toString(phaseIndex));
 	     	BinaryExpression binaryExpr = new BinaryExpression(bl, BinaryExpression.Operator.COMPEQ,
 	     			identifier, intLiteral);
     	 return binaryExpr;  	    
