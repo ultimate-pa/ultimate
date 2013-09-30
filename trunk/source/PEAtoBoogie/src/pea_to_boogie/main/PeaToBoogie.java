@@ -23,8 +23,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Unit;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.wrapper.WrapperNode;
 
 public class PeaToBoogie implements ISource {
-    protected static Logger s_Logger = UltimateServices.getInstance().getLogger(Activator.s_PLUGIN_ID);;
-    Translator translator = new Translator();
+    protected static Logger s_Logger = UltimateServices.getInstance().getLogger(Activator.s_PLUGIN_ID);
     List<String> m_FileNames;
 
 	@Override
@@ -60,6 +59,7 @@ public class PeaToBoogie implements ISource {
 
 	@Override
 	public IElement parseAST(File file) throws Exception {
+		Translator translator = new Translator();
 		String inputPath = file.getAbsolutePath();
     	m_FileNames = new ArrayList<String>();
     	m_FileNames.add(inputPath);
