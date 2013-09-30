@@ -7,6 +7,7 @@ import java.io.IOException;
 
 import org.apache.log4j.Logger;
 import org.eclipse.core.runtime.preferences.ConfigurationScope;
+import org.eclipse.jface.preference.BooleanFieldEditor;
 import org.eclipse.jface.preference.FieldEditorPreferencePage;
 import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.jface.preference.RadioGroupFieldEditor;
@@ -53,6 +54,10 @@ public class PreferencePage extends FieldEditorPreferencePage implements
      */
     public static final String LABEL_MAINPROC = "Checked method. Library mode if empty.";
 
+    public static final String NAME_CHECK_POINTER_VALIDITY = "CheckPointerValidity";
+    public static final String LABEL_CHECK_POINTER_VALIDITY = "Check if pointer is valid before each access";
+    
+
     /**
      * Constructor calling super constructor and initializing preferences.
      */
@@ -88,6 +93,12 @@ public class PreferencePage extends FieldEditorPreferencePage implements
         checkedMethod.setEmptyStringAllowed(true);
         checkedMethod.setTextLimit(40);
         addField(checkedMethod);
+        
+		BooleanFieldEditor checkPointerValidity = new BooleanFieldEditor(
+				NAME_CHECK_POINTER_VALIDITY,
+				LABEL_CHECK_POINTER_VALIDITY,
+				getFieldEditorParent());
+		addField(checkPointerValidity);
     }
 
     @Override

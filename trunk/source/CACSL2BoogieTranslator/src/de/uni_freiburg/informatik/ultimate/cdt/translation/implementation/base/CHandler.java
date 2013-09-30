@@ -60,6 +60,8 @@ import org.eclipse.cdt.core.dom.ast.IASTTypeIdExpression;
 import org.eclipse.cdt.core.dom.ast.IASTUnaryExpression;
 import org.eclipse.cdt.core.dom.ast.IASTWhileStatement;
 import org.eclipse.cdt.internal.core.dom.parser.c.CASTDesignatedInitializer;
+import org.eclipse.core.runtime.preferences.ConfigurationScope;
+import org.eclipse.core.runtime.preferences.IEclipsePreferences;
 
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CACSLLocation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.SymbolTable;
@@ -137,7 +139,9 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.WhileStatement;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.Backtranslator;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.PreferencePage;
 import de.uni_freiburg.informatik.ultimate.result.Check;
 import de.uni_freiburg.informatik.ultimate.result.SyntaxErrorResult.SyntaxErrorType;
 
@@ -227,7 +231,11 @@ public class CHandler implements ICHandler {
         this.functionHandler = new FunctionHandler();
         this.postProcessor = new PostProcessor();
         this.structHandler = new StructHandler();
-        this.memoryHandler = new MemoryHandler();
+        IEclipsePreferences prefs = ConfigurationScope.INSTANCE
+        		.getNode(Activator.s_PLUGIN_ID);
+        boolean checkPointerValidity = Boolean.valueOf(
+        		prefs.get(PreferencePage.NAME_CHECK_POINTER_VALIDITY, "false"));
+        this.memoryHandler = new MemoryHandler(checkPointerValidity);
         this.symbolTable = new SymbolTable(main);
         this.functions = new HashMap<String, FunctionDeclaration>();
         this.globalVariables = new HashMap<Declaration, CType>();
@@ -1088,7 +1096,8 @@ public class CHandler implements ICHandler {
                 if (idx.getType() instanceof InferredType
                         && ((InferredType) idx.getType()).getType() == Type.Pointer) {
                     // TODO : I think this is redundant!
-                    o.stmt.add(memoryHandler.checkValidityOfAccess(idx));
+                	// Matthias agreed and commented the following line
+                    // o.stmt.add(memoryHandler.checkValidityOfAccess(idx));
                 }
                 ResultExpression rex = new ResultExpression(o.stmt, access,
                         o.decl, o.auxVars);

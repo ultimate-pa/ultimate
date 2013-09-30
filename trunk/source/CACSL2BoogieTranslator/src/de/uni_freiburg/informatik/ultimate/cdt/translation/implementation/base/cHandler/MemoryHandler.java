@@ -108,11 +108,16 @@ public class MemoryHandler {
      * TODO: details
      */
 	private static final boolean m_AddImplementation = false;
+	
+	
+	private final boolean m_CheckPointerValidity;
 
     /**
      * Constructor.
+     * @param checkPointerValidity 
      */
-    public MemoryHandler() {
+    public MemoryHandler(boolean checkPointerValidity) {
+    	this.m_CheckPointerValidity = checkPointerValidity;
         this.sizeofConsts = new HashSet<String>();
         this.axioms = new HashSet<Axiom>();
         this.constants = new HashSet<ConstDeclaration>();
@@ -257,11 +262,18 @@ public class MemoryHandler {
             for (int j = 0; j < modified.length; j++) {
                 modified[j] = SFO.MEMORY + "_" + tName[j];
             }
-            Specification[] swrite = new Specification[3 + modified.length];
-            int sidx = 0;
-            // requires #valid[#ptr!base];
-            swrite[sidx++] = new RequiresSpecification(l, false,
-                    new ArrayAccessExpression(l, boolIT, valid, idcWrite));
+            Specification[] swrite;
+            if (m_CheckPointerValidity) {
+            	swrite = new Specification[3 + modified.length];
+            } else {
+            	swrite = new Specification[1 + modified.length];
+            }
+             int sidx = 0;
+            if (m_CheckPointerValidity) {
+            	// requires #valid[#ptr!base];
+            	swrite[sidx++] = new RequiresSpecification(l, false,
+            			new ArrayAccessExpression(l, boolIT, valid, idcWrite));
+            }
             // modifies #memory_int, #memory_bool, #memory_$Pointer$,
             // #memory_real;
             swrite[sidx++] = new ModifiesSpecification(l, false, modified);
@@ -273,11 +285,13 @@ public class MemoryHandler {
             Expression length = new ArrayAccessExpression(l,
                     new IdentifierExpression(l, SFO.LENGTH),
                     new Expression[] { ptrBase });
-            swrite[sidx++] = new RequiresSpecification(l, false,
-                    new BinaryExpression(l, Operator.COMPLEQ,
-                            new BinaryExpression(l, Operator.ARITHPLUS,
-                                    new IdentifierExpression(l, SFO.SIZEOF
-                                            + tName[i]), ptrOff), length));
+            if (m_CheckPointerValidity) {
+            	swrite[sidx++] = new RequiresSpecification(l, false,
+            			new BinaryExpression(l, Operator.COMPLEQ,
+            					new BinaryExpression(l, Operator.ARITHPLUS,
+            							new IdentifierExpression(l, SFO.SIZEOF
+            									+ tName[i]), ptrOff), length));
+            }
             for (int j = 0; j < modified.length; j++) {
                 // ensures #memory_int == old(#valid)[~addr!base := false];
                 Expression memA = new IdentifierExpression(l, SFO.MEMORY + "_"
@@ -346,24 +360,34 @@ public class MemoryHandler {
                     new String[] { inPtr }, POINTER_TYPE) };
             VarList[] outRead = new VarList[] { new VarList(l,
                     new String[] { value }, ts[i]) };
-            Specification[] sread = new Specification[] {
-                    // requires #valid[#ptr!base];
-                    new RequiresSpecification(l, false,
-                            new ArrayAccessExpression(l, boolIT, valid,
-                                    idcWrite)),
-                    // requires #sizeof~$Pointer$ + #ptr!offset <=
-                    // #length[#ptr!base];
-                    new RequiresSpecification(l, false, new BinaryExpression(l,
-                            Operator.COMPLEQ, new BinaryExpression(l,
-                                    Operator.ARITHPLUS,
-                                    new IdentifierExpression(l, SFO.SIZEOF
-                                            + tName[i]), ptrOff), length)) };
+            Specification[] sread;
+            if (m_CheckPointerValidity) {
+            	sread = new Specification[3];
+            	// requires #valid[#ptr!base];
+            	sread[1] =  new RequiresSpecification(l, false,
+            			new ArrayAccessExpression(l, boolIT, valid,
+            					idcWrite));
+            	// requires #sizeof~$Pointer$ + #ptr!offset <=
+            	// #length[#ptr!base];
+
+            	sread[2] = new RequiresSpecification(l, false, new BinaryExpression(l,
+            			Operator.COMPLEQ, new BinaryExpression(l,
+            					Operator.ARITHPLUS,
+            					new IdentifierExpression(l, SFO.SIZEOF
+            							+ tName[i]), ptrOff), length));
+            } else {
+            	sread = new Specification[1];
+            }
+        	Expression arr = new IdentifierExpression(l, SFO.MEMORY + "_"
+        			+ tName[i]);
+        	Expression arrE = new ArrayAccessExpression(l, arr, idc);
+        	Expression valueE = new IdentifierExpression(l, value);
+            Expression equality = new BinaryExpression(l, Operator.COMPEQ, valueE, arrE);
+            sread[0] = new EnsuresSpecification(l, false, equality);
+            
             decl.add(new Procedure(l, new Attribute[0], nread, new String[0],
                     inRead, outRead, sread, null));
             if (m_AddImplementation) {
-            	Expression arr = new IdentifierExpression(l, SFO.MEMORY + "_"
-            			+ tName[i]);
-            	Expression arrE = new ArrayAccessExpression(l, arr, idc);
             	Statement[] readBlock = new Statement[] { new AssignmentStatement(
             			l, new LeftHandSide[] { new VariableLHS(l, value) },
             			new Expression[] { arrE }) };
