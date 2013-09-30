@@ -16,20 +16,5 @@ public class PluginTest extends TestCase {
 		assertNotSame("", result);
 	}
 	
-	
-	public void testForumulaToAst()
-	{
-		WrapLTL2Never wrap = new WrapLTL2Never();
-		
-		AstNode ast = null;
-		try {
-			ast = wrap.ltl2Ast("[] a");
-		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-			assertTrue(false);
-		}
-		assertNotSame(null, ast);
-	}
 
 }

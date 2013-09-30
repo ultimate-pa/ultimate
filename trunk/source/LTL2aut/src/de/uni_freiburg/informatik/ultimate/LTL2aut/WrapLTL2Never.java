@@ -8,6 +8,7 @@ import java.io.InputStreamReader;
 import org.apache.commons.io.IOUtils;
 
 import de.uni_freiburg.informatik.ultimate.LTL2aut.ast.AstNode;
+import de.uni_freiburg.informatik.ultimate.LTL2aut.preferences.PreferencePage;
 
 /**
  * This class handles the communication of with the external tool 
@@ -26,12 +27,12 @@ public class WrapLTL2Never {
 	/**
 	 * location of the ltl to Büchi tool
 	 */
-	public File toolLocatoin = new File("C:\\ltl2ba.exe");
+	//public File toolLocatoin = new File("C:\\ltl2ba.exe");
 	/**
 	 * Command line options to start the ltl to Büchi tool.
 	 * Use $1 as a placeholder for the ltl formula.
 	 */
-	public String commandLineArgument = " -f \" $1 \"";
+	//public String commandLineArgument = " -f \" $1 \"";
 	
 	/**
 	 * Returns a Büchi automaton for the ltl formula as a promela never claim.
@@ -46,7 +47,7 @@ public class WrapLTL2Never {
 		String result = "";
 		
 	      String line;
-	      Process p = Runtime.getRuntime().exec(this.toolLocatoin + this.commandLineArgument.replace("$1", ltlFormula));
+	      Process p = Runtime.getRuntime().exec( PreferencePage.TOOLLOCATION + PreferencePage.COMMANDLINEARGUMENT.replace("$1", ltlFormula));
 	      BufferedReader bri = new BufferedReader
 	        (new InputStreamReader(p.getInputStream()));
 	      
