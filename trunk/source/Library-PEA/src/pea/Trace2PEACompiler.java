@@ -97,10 +97,7 @@ public class Trace2PEACompiler {
      * @see PropertyConfigurator
      */
     public Trace2PEACompiler(String loggerName) {
-        URL url = getClass().getResource(PhaseEventAutomata.LOGCONFIGFILE);
-        PropertyConfigurator.configure(url);
-
-	this.logger = Logger.getLogger(loggerName);
+    	this.logger = Logger.getLogger(loggerName);
 
         this.allPhases = new TreeMap<PhaseBits,Phase>();
         this.todo = new LinkedList<PhaseBits>();
