@@ -9,8 +9,8 @@ int nonMain(int *p, int *q) {
 	*p = 23;
 	*q = 42;
 	if (*p == 42) {
-		// @assert p == q;
+		//@ assert p == q;
 	} else {
-		// @assert p != q;
+		//@ assert p != q;
 	}
 }
