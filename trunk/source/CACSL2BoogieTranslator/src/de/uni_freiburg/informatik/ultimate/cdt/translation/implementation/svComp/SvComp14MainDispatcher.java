@@ -1,5 +1,5 @@
 /**
- * Main Handler for SV-COMP 204.
+ * Main Handler for SV-COMP 2014.
  */
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.svComp;
 
@@ -24,7 +24,7 @@ public class SvComp14MainDispatcher extends MainDispatcher {
     @Override
     protected void init() {
         sideEffectHandler = new SideEffectHandler();
-        cHandler = new SvCompCHandler(this, backtranslator);
+        cHandler = new SvComp14CHandler(this, backtranslator);
         typeHandler = new SVCompTypeHandler();
         acslHandler = new ACSLHandler();
         nameHandler = new NameHandler();
