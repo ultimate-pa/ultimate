@@ -21,6 +21,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.M
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.IncorrectSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.TypeErrorException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.svComp.SvComp14MainDispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.svComp.SvCompMainDispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
@@ -95,8 +96,11 @@ public class CACSL2BoogieTranslatorObserver implements IUnmanagedObserver {
             case BASE:
                 main = new MainDispatcher(backtranslator);
                 break;
-            case SV_COMP:
+            case SV_COMP13:
                 main = new SvCompMainDispatcher(backtranslator);
+                break;
+            case SV_COMP14:
+                main = new SvComp14MainDispatcher(backtranslator);
                 break;
             default:
                 throw new IllegalArgumentException("Unknown mode.");
