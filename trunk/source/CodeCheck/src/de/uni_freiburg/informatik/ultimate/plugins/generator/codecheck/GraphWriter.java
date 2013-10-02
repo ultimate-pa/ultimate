@@ -47,8 +47,8 @@ public class GraphWriter {
 
 	String imagePath;
 
-//	boolean m_dontWrite = true;
-	boolean m_dontWrite = false;
+	boolean m_dontWrite = true;
+//	boolean m_dontWrite = false;
 	
 	int _graphCounter = 0;
 
