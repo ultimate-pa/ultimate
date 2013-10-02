@@ -28,6 +28,8 @@ public class VarRename {
 	
 	public String getShortName( String varname )
 	{
+		return varname;
+		/*
 		//return varname;
 		Integer n=vars.get( varname );
 		if( n==null )
@@ -36,6 +38,7 @@ public class VarRename {
 			n=(Integer)num++;
 		}
 		return "V"+n;
+		*/
 	}
 	
 	

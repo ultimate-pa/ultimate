@@ -455,7 +455,7 @@ public class srParsePattern {
 		{
 			String res=new String();
 			
-			res="it is always the case that if \""+cdds.get(3)+"\" holds and is succeeded by \""+cdds.get(2)+"\", then \""+cdds.get(1)+"\" eventually holds after \""+cdds.get(0)+"";
+			res="it is always the case that if \""+cdds.get(3)+"\" holds and is succeeded by \""+cdds.get(2)+"\", then \""+cdds.get(1)+"\" eventually holds after \""+cdds.get(0)+"\"";
 			
 			return res;
 		}
