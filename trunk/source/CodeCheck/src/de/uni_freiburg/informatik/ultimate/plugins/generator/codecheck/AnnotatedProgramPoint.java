@@ -62,20 +62,19 @@ public class AnnotatedProgramPoint extends ModifiableExplicitEdgesMultigraph<Ann
 	 * @param newPred the predicate of the new copy
 	 * @param copyOutgoingEdges if true, the hyperedges will be copied
 	 */
-//	public AnnotatedProgramPoint(AnnotatedProgramPoint oldApp, IPredicate newPred, boolean copyOutgoingEdges) {
-//		this(newPred, oldApp._programPoint);
-//		if(copyOutgoingEdges) {
-//			for (int i = 0; i < oldApp.getOutgoingNodes().size(); i++) {
-//				CodeBlock edgeLabel = oldApp.getOutgoingEdgeLabels().get(i);
-//				if (edgeLabel instanceof Return)
-//					this.connectOutgoingWithReturn(oldApp.getOutgoingNodes().get(i), 
-//							(Return) edgeLabel, 
-//							oldApp.getOutgoingReturnCallPreds().get(i));
-//				else
-//					this.connectOutgoing(oldApp.getOutgoingNodes().get(i), edgeLabel);
-//			}
-//		}
-//	}
+	public AnnotatedProgramPoint(AnnotatedProgramPoint oldApp, IPredicate newPred, boolean copyOutgoingEdges) {
+		this(newPred, oldApp._programPoint);
+		if(copyOutgoingEdges) {
+			for (AppEdge oldOutEdge : oldApp.getOutgoingEdges()) {
+				if (oldOutEdge instanceof AppHyperEdge) {
+					this.connectOutgoingReturn(oldOutEdge.getTarget(), 
+							((AppHyperEdge) oldOutEdge).getHier(), (Return) oldOutEdge.getStatement());
+				} else {
+					this.connectOutgoing(oldOutEdge.getTarget(), oldOutEdge.getStatement());
+				}
+			}
+		}
+	}
 
 
 	public IPredicate getPredicate() {
@@ -144,4 +143,55 @@ public class AnnotatedProgramPoint extends ModifiableExplicitEdgesMultigraph<Ann
 //	    outEdge.getTarget().mIncomingEdges.remove(outEdge);//TODO: maybe make them HashSets??
 //	    this.mOutgoingEdges.remove(outEdge);
 //	}
+	
+	//formerly removed now there again.. --> impulse-specific stuff
+	
+	private ArrayList<AnnotatedProgramPoint> copies = new ArrayList<AnnotatedProgramPoint>();
+	private ArrayList<AnnotatedProgramPoint> newCopies = new ArrayList<AnnotatedProgramPoint>();
+	private AnnotatedProgramPoint cloneSource;
+
+	/**
+	 * Adds an APP to the list of new copies of this APP.
+	 * @param copy the APP that will be added as a copy to this APP
+	 */
+	public void addCopy(AnnotatedProgramPoint copy) {
+		newCopies.add(copy);
+	}
+
+	/**
+	 * Moves new copies to the list of old copies.
+	 */
+	public void updateCopies() {
+		copies.addAll(newCopies);
+		newCopies.clear();
+	}
+
+	/**
+	 * Sets the clone source of this APP. The clone source is the APP copies to form this APP.
+	 * @param source the APP that should be declared to be the clone source
+	 */
+	public void setCloneSource(AnnotatedProgramPoint source) {
+		cloneSource = source;
+	}
+
+	/**
+	 * Gets a list of all the copies of this APP.
+	 * @return returns a list of copies of this APP
+	 */
+	public ArrayList<AnnotatedProgramPoint> getCopies() {
+		ArrayList<AnnotatedProgramPoint> ret = new ArrayList<AnnotatedProgramPoint>();
+		ret.addAll(copies);
+		ret.addAll(newCopies);
+		return ret;
+	}
+
+	/**
+	 * Gets a clone of the list of new copies of this APP.
+	 * @return returns a list of new copies of this APP
+	 */
+	public ArrayList<AnnotatedProgramPoint> getNewCopies() {
+		ArrayList<AnnotatedProgramPoint> ret = new ArrayList<AnnotatedProgramPoint>();
+		ret.addAll(newCopies);
+		return ret;
+	}
 }

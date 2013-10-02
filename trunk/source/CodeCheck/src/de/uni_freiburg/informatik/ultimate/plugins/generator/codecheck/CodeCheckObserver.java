@@ -171,8 +171,8 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 	
 	public boolean process(IElement root) {
 		//FIXME
-		checker = Checker.ULTIMATE;
-//		checker = Checker.IMPULSE;
+//		checker = Checker.ULTIMATE;
+		checker = Checker.IMPULSE;
 		initialize(root);
 		
 		final boolean loop_forever = true; // for DEBUG

@@ -79,60 +79,29 @@ public class ImpulseChecker extends CodeChecker {
 	 * @see #copyNode(AnnotatedProgramPoint, IPredicate)
 	 * @see #defaultRedirectEdges(AnnotatedProgramPoint[],AnnotatedProgramPoint[])
 	 * @see #redirectEdges(AnnotatedProgramPoint[])
-	 * @param errorTrace the infeasible error trace found by the emptiness check
+	 * @param errorRun the infeasible error trace found by the emptiness check
 	 * @param interpolants the list of interpolants attached to the nodes of the infeasible error trace
 	 * @param procedureRoot the procedure root, not needed, exists only because of inheritance
 	 * @return always returns true
 	 */
-	public boolean codeCheck(NestedRun<CodeBlock, AnnotatedProgramPoint> errorTrace, IPredicate[] interpolants, AnnotatedProgramPoint procedureRoot) {
-		AnnotatedProgramPoint[] nodes = errorTrace.getStateSequence().toArray(new AnnotatedProgramPoint[0]);
-		/* //Debugging
-		ArrayList <AnnotatedProgramPoint> errorTraceDBG = new ArrayList<AnnotatedProgramPoint>();
-		Collections.addAll(errorTraceDBG, nodes);
-		CodeCheckObserver.s_Logger.debug(String.format("Error: %s\n", errorTraceDBG));
-		
-		ArrayList <IPredicate> interpolantsDBG = new ArrayList<IPredicate>();
-		Collections.addAll(interpolantsDBG, interpolants);
-		CodeCheckObserver.s_Logger.debug(String.format("Inters: %s\n", interpolantsDBG));
-		*/
-		NestedWord<CodeBlock> nestedWords = errorTrace.getWord();
+	public boolean codeCheck(NestedRun<CodeBlock, AnnotatedProgramPoint> errorRun, IPredicate[] interpolants, AnnotatedProgramPoint procedureRoot) {
+		AnnotatedProgramPoint[] nodes = errorRun.getStateSequence().toArray(new AnnotatedProgramPoint[0]);
+		//Debugging
+//		debug1(interpolants, nodes);
 		
 		//Debugging
-		/*
-		System.err.printf("nodes length : %d, nestedwords length : %d\n", nodes.length, nestedWords.length());
-		for (int i = 0; i < nestedWords.length(); i++) {
-			try {
-				System.err.println(nestedWords.getCallPosition(i));
-			}
-			catch (Exception e) {
-				try {
-					System.err.println(nestedWords.getReturnPosition(i));
-				}
-				catch (Exception f) {
-					System.err.println("Null");
-				}
-			}
-		}
-		
-		
-		for (int i = 0; i < nodes.length - 1; i++) {
-			if (nodes[i].getOutgoingEdgeLabel(nodes[i+1]) instanceof Return)
-				System.err.println("FoundReturnEdge at " + i);
-			else if (nodes[i].getOutgoingEdgeLabel(nodes[i+1]) instanceof Call)
-				System.err.println("FoundCallEdge at " + i);
-		}
-		*/
+//		debug2(nodes, errorRun.getWord());
 		
 		AnnotatedProgramPoint[] copies = new AnnotatedProgramPoint[interpolants.length];
 		for(int i = 0; i < copies.length; ++i) {
 			copies[i] = copyNode(nodes[i+1], interpolants[i]);
 		}
 		
-		defaultRedirectEdges(nodes, nestedWords, copies);
-		redirectEdges(copies);
+		defaultRedirectEdges(nodes, errorRun, copies);
+		redirectEdges(copies, errorRun);
 		
-//		for (AnnotatedProgramPoint node : nodes) //FIXME ..
-//			node.updateCopies();
+		for (AnnotatedProgramPoint node : nodes)
+			node.updateCopies();
 		
 		return true;
 		
@@ -160,9 +129,9 @@ public class ImpulseChecker extends CodeChecker {
 			return newNode;
 		
 		// If no old node is found, a new one is created using the constructor which copies outgoing edges
-//		newNode = new AnnotatedProgramPoint(oldNode, newPredicate, true); //FIXME
-//		oldNode.addCopy(newNode);
-//		newNode.setCloneSource(oldNode);
+		newNode = new AnnotatedProgramPoint(oldNode, newPredicate, true);
+		oldNode.addCopy(newNode);
+		newNode.setCloneSource(oldNode);
 
 		// We update the LocationPredicate map with the new node, to make sure that no duplicate will be created after that.
 		LocationPredicates.get(programPoint).put(newPredicate, newNode);
@@ -177,29 +146,40 @@ public class ImpulseChecker extends CodeChecker {
 	 * the edge then is found and redirected
 	 * @see #findTargetInTree(AnnotatedProgramPoint, AnnotatedProgramPoint)
 	 * @param nodes the nodes of the error trace
-	 * @param nestedWord the nested word of the error trace, used to get call predecessors of return edges
+	 * @param errorRun the nested word of the error trace, used to get call predecessors of return edges
 	 * @param copies the copies along the error trace
 	 * @return always returns true
 	 */
-	private boolean defaultRedirectEdges(AnnotatedProgramPoint[] nodes, NestedWord<CodeBlock> nestedWord, AnnotatedProgramPoint[] copies) {
+	private boolean defaultRedirectEdges(AnnotatedProgramPoint[] nodes, 
+			NestedRun<CodeBlock, AnnotatedProgramPoint> errorRun, AnnotatedProgramPoint[] copies) {
+		//TODO: für Impulse braucht man wohl den error run im sinne von AppEdges -- zumindst für das default redirecting
+		 // kann man rekonstruieren aus den beiden angrenzenden Knoten, dem label aus dem errorRun und ggf der NestingRelation
+		 // --> lohnt sich's?
+		
+		AppEdge firstEdge = reconstructWhichEdge(nodes[0], nodes[1], errorRun.getSymbol(0), null);
 		
 		//Redirect First Edge
-		redirectEdge(nodes[0], nodes[1], copies[0]); 
+//		redirectEdge(nodes[0], nodes[1], copies[0]); 
+		redirectEdge(firstEdge, copies[0]); 
 		
 		//redirect intermediate edges
 		for(int i = 1; i < copies.length; ++i) {
-//			if(nodes[i].getNewCopies().contains(copies[i-1])) {//FIXME
-//				// if the source node is a new copy, then we redirect right away.
-////				if (copies[i-1].getOutgoingEdgeLabel(nodes[i+1]) instanceof Return) { //--> commented out as the return case moved into redirectEdge
-////					// if the edge is a hyper edge, then we need to find the call pred.
-////					AnnotatedProgramPoint callPred = nodes[nestedWord.getCallPosition(i)];
-////					// System.err.printf("Removing return edge %d:%d -> %d", i, nestedWords.getCallPosition(i), i+1); // for debugging
-////					redirectHyperEdgeDestination(copies[i-1], callPred, nodes[i+1], copies[i]);
-////				}
-////				else
-//					redirectEdge(copies[i-1], nodes[i+1], copies[i]);
-//			}
-//			else {
+			if(nodes[i].getNewCopies().contains(copies[i-1])) {
+				// if the source node is a new copy, then we redirect right away.
+//				if (copies[i-1].getOutgoingEdgeLabel(nodes[i+1]) instanceof Return) { //--> commented out as the return case moved into redirectEdge
+//					// if the edge is a hyper edge, then we need to find the call pred.
+//					AnnotatedProgramPoint callPred = nodes[nestedWord.getCallPosition(i)];
+//					// System.err.printf("Removing return edge %d:%d -> %d", i, nestedWords.getCallPosition(i), i+1); // for debugging
+//					redirectHyperEdgeDestination(copies[i-1], callPred, nodes[i+1], copies[i]);
+//				}
+				AppEdge edge = reconstructWhichEdge(copies[i-1], nodes[i+1], errorRun.getWord().getSymbol(i), 
+							errorRun.getWord().getSymbol(i) instanceof Return ? 
+									errorRun.getStateAtPosition(errorRun.getWord().getCallPosition(i)) : 
+										null);
+//				redirectEdge(copies[i-1], nodes[i+1], copies[i]);
+				redirectEdge(edge, copies[i]);
+			}
+			else {
 				// if the source node is not a new copy, but a similar one,
 				// then we find the old edge that should be redirected, and then decide whether to redirect or not.
 				AnnotatedProgramPoint source = copies[i-1];
@@ -216,16 +196,14 @@ public class ImpulseChecker extends CodeChecker {
 					boolean randomlyDecide = false;
 					randomlyDecide &= (Math.random() * 2) >= 1;
 					if(alwaysRedirect || randomlyDecide || isStrongerPredicate(newDest, oldDest)) {
-//						if (source.getOutgoingEdgeLabel(oldDest) instanceof Return) {
-//							// if the edge is a hyper edge, then we need to find the call pred.
-//							AnnotatedProgramPoint callPred = nodes[nestedWord.getCallPosition(i)];
-//							// System.err.printf("Removing return edge %d:%d -> %d", i, nestedWords.getCallPosition(i), i+1); // for debugging
-//							redirectHyperEdgeDestination(source, callPred, oldDest, newDest);
-//						}
-//						else
-							redirectEdge(source, oldDest, newDest);
+						AppEdge edge = reconstructWhichEdge(source, oldDest, errorRun.getWord().getSymbol(i), 
+							errorRun.getWord().getSymbol(i) instanceof Return ? 
+									errorRun.getStateAtPosition(errorRun.getWord().getCallPosition(i)) : 
+										null);
+//						redirectEdge(source, oldDest, newDest);
+						redirectEdge(edge, newDest);
 					}
-//				}
+				}
 			}
 		}
 		
@@ -238,47 +216,61 @@ public class ImpulseChecker extends CodeChecker {
 //				// System.err.printf("Removing return edge %d:%d -> %d", nodes.length-2, nestedWords.getCallPosition(nodes.length-2), nodes.length-1); //for debugging
 //				lastNode.removeOutgoingReturnCallPred(errorLocation, callPred);
 //			}
-//			else
-//			lastNode.disconnectOutgoing(errorLocation);//FIXME
+//			else						
+			AppEdge edge = reconstructWhichEdge(lastNode, errorLocation, errorRun.getWord().getSymbol(nodes.length - 2), 
+							errorRun.getWord().getSymbol(nodes.length - 2) instanceof Return ? 
+									errorRun.getStateAtPosition(errorRun.getWord().getCallPosition(nodes.length - 2)) : 
+										null);
+//			lastNode.disconnectOutgoing(errorLocation);
+			edge.disconnect();
 		}
 		
 		return true;
 	}
 
+	private AppEdge reconstructWhichEdge(AnnotatedProgramPoint source, AnnotatedProgramPoint target, CodeBlock statement,
+			AnnotatedProgramPoint hier) {
+		for (AppEdge ae : source.getOutgoingEdges()) {
+			if (ae.getTarget().equals(target) && ae.getStatement().equals(statement)) {
+				if (ae instanceof AppHyperEdge) {
+					AppHyperEdge ahe = (AppHyperEdge) ae;
+					if (ahe.getHier().equals(hier))
+						return ae;
+				} else 
+					return ae;
+			} 
+		}
+		assert false;
+		return null;
+	}
+
 	/**
 	 * Redirects the outgoing edges of new copies from old nodes to one of their copies, in case a valid target is found.
 	 * @param newCopies the copies along the error trace
+	 * @param errorRun 
 	 * @return always returns true
 	 */
-	private boolean redirectEdges(AnnotatedProgramPoint[] newCopies) {
+	private boolean redirectEdges(AnnotatedProgramPoint[] newCopies, NestedRun<CodeBlock,AnnotatedProgramPoint> errorRun) {
 
-		for (AnnotatedProgramPoint source : newCopies) {
-			AnnotatedProgramPoint[] successorNodes = source.getOutgoingNodes().toArray(new AnnotatedProgramPoint[]{});
-			for (AnnotatedProgramPoint oldDest : successorNodes) {
-				
-				
-//				// For each new copy, and for each of it's outgoing nodes, we search for a better redirection target
-//				if(source.getOutgoingEdgeLabel(oldDest) instanceof Return) {
-//					// If the edge is a return edge, then each hyper edge is checked for redirection
-//					AnnotatedProgramPoint[] callPreds;
-//					callPreds = source.getCallPredsOfOutgoingReturnTarget(oldDest).toArray(new AnnotatedProgramPoint[]{});
-//					if(callPreds != null) {
-//						for (AnnotatedProgramPoint callPred : callPreds) {
-//							// we use the target finder to find us the best redirection target. 
-//							// if it returns null, then no better target is found and we don't redirect.
-//							AnnotatedProgramPoint newDest = redirectionTargetFinder.findReturnRedirectionTarget(source, callPred, oldDest);
-//							if (newDest != null)
-//								redirectHyperEdgeDestination(source, callPred, oldDest, newDest);
-//						}
-//					}
-//				}
-//				else {
-					// For normal edges, we use the target finder to find us the redirection target, and redirect.
-					AnnotatedProgramPoint newDest = redirectionTargetFinder.findRedirectionTarget(source, oldDest);
-					if(newDest != null)
-						redirectEdge(source, oldDest, newDest);
-					//TODO: treat return edges --> maybe just adapt the redirectionTargetFinder
-//				}
+//		for (AnnotatedProgramPoint source : newCopies) {
+		for (int i = 0; i < newCopies.length; i++) {
+			AnnotatedProgramPoint source = newCopies[i];
+			
+//			AnnotatedProgramPoint[] successorNodes = source.getOutgoingNodes().toArray(new AnnotatedProgramPoint[]{});
+			AppEdge[] outEdges = source.getOutgoingEdges().toArray(new AppEdge[]{});
+//			for (AnnotatedProgramPoint oldDest : successorNodes) {
+			for (AppEdge outEdge : outEdges) {
+
+//				AnnotatedProgramPoint newDest = redirectionTargetFinder.findRedirectionTarget(source, oldDest);
+				AnnotatedProgramPoint newDest = redirectionTargetFinder.findRedirectionTarget(outEdge);
+				if(newDest != null) {
+//					AppEdge edge = reconstructWhichEdge(source, oldDest, errorRun.getWord().getSymbol(i), 
+//							errorRun.getWord().getSymbol(i) instanceof Return ? 
+//									errorRun.getStateAtPosition(errorRun.getWord().getCallPosition(i)) : 
+//										null);
+					redirectEdge(outEdge, newDest);
+				}
+				//TODO: treat return edges --> maybe just adapt the redirectionTargetFinder
 			}
 		}
 		return true;
@@ -292,70 +284,32 @@ public class ImpulseChecker extends CodeChecker {
 	 * @param newDest the new destination the edge will be redirected to
 	 * @return returns false if there is no edge to be redirected, otherwise true
 	 */
-	private boolean redirectEdge(AnnotatedProgramPoint source,
-			AnnotatedProgramPoint oldDest,
-			AnnotatedProgramPoint newDest) {
+	private boolean redirectEdge(AppEdge edge, AnnotatedProgramPoint newDest) {
+//			AnnotatedProgramPoint source,
+//			AnnotatedProgramPoint oldDest,
+//			AnnotatedProgramPoint newDest) {
+		AnnotatedProgramPoint source = edge.getSource();
+		AnnotatedProgramPoint oldDest = edge.getTarget();
 			
 		if(oldDest == newDest) // IF the new Dest is the same as the old Dest, then nothing needs to be done
 			return true;
 			
-//		CodeBlock label = source.getOutgoingEdgeLabel(oldDest); //FIXME
-//		if(label == null)
-//			return false;
-//
-//		if (label instanceof Return) {
-//			source.connectOutgoingWithReturn(newDest, (Return) label, 
-//					source.getOutgoingReturnCallPreds().get(source.getOutgoingNodes().indexOf(oldDest)));
-//		} else {
-//			source.connectOutgoing(newDest, label);
-//		}
-//		
-////		// Usually I make sure not to use this method if it's a return edge. But I wrote this part anyway for future uses maybe
-////		if(label instanceof Return) { 
-////			 HashSet<AnnotatedProgramPoint> callPreds = source.getCallPredsOfOutgoingReturnTarget(oldDest);
-////			 for(AnnotatedProgramPoint callPred : callPreds)
-////				 source.addOutGoingReturnCallPred(newDest, callPred);
-////		}
-//		
-//		source.disconnectOutgoing(oldDest);
-		
+		CodeBlock label = edge.getStatement();
+		if(label == null) {
+			assert false; // does this happen? when?
+			return false;
+		}
+
+		if (label instanceof Return) {
+			source.connectOutgoingReturn(newDest,
+					((AppHyperEdge) edge).getHier(), (Return) edge.getStatement());
+		} else {
+			source.connectOutgoing(newDest, label);
+		}
+
+		edge.disconnect();
 		return true;
-		
 	}
-	
-//	/**
-//	 * Redirects a hyper edge from it's old destination to another destination.
-//	 * @param source the source of the hyper edge
-//	 * @param callPred the call predecessor of the hyper edge
-//	 * @param oldDest the old destination of the hyper edge
-//	 * @param newDest the new destination the hyper edge will be redirected to
-//	 * @return returns false if there is no hyper edge to be redirected, otherwise true
-//	 */
-//	private boolean redirectHyperEdgeDestination(AnnotatedProgramPoint source, AnnotatedProgramPoint callPred,
-//			AnnotatedProgramPoint oldDest,
-//			AnnotatedProgramPoint newDest) {
-//		
-//		if(oldDest == newDest) // IF the new Dest is the same as the old Dest, then nothing needs to be done
-//			return true;
-//		
-//		CodeBlock label = source.getOutgoingEdgeLabel(oldDest);
-//		if(label == null || !(label instanceof Return))
-//			return false;
-//
-//		// We add the label of the hyper edge via the connectTo method.
-//		// If the already exists, the connectTo method will detect that and create no duplicates
-//		source.connectTo(newDest, label);
-//
-//		source.addOutGoingReturnCallPred(newDest, callPred);
-//		source.removeOutgoingReturnCallPred(oldDest, callPred);
-//
-//		// If that was the last hyper edge connecting the source and old destination, then the 2 are disconnected.
-//		if(source.getCallPredsOfOutgoingReturnTarget(oldDest) == null)
-//			source.disconnectOutgoing(oldDest);
-//		
-//		return true;
-//		
-//	}
 	
 	/**
 	 * Search for an edge between the source and the root or one of its children.
@@ -369,11 +323,48 @@ public class ImpulseChecker extends CodeChecker {
 		// It's a tree, no cycles, so we don't need a list for visited nodes.
 		if(source.getOutgoingNodes().contains(root))
 			return root;
-//		for(AnnotatedProgramPoint child : root.getCopies()) { //FIXME
-//			AnnotatedProgramPoint res = findTargetInTree(source, child);
-//			if(res != null)
-//				return res;
-//		}
+		for(AnnotatedProgramPoint child : root.getCopies()) {
+			AnnotatedProgramPoint res = findTargetInTree(source, child);
+			if(res != null)
+				return res;
+		}
 		return null;
+	}	
+	
+	private void debug1(IPredicate[] interpolants, AnnotatedProgramPoint[] nodes) {
+		ArrayList <AnnotatedProgramPoint> errorTraceDBG = new ArrayList<AnnotatedProgramPoint>();
+		Collections.addAll(errorTraceDBG, nodes);
+		CodeCheckObserver.s_Logger.debug(String.format("Error: %s\n", errorTraceDBG));
+		
+		ArrayList <IPredicate> interpolantsDBG = new ArrayList<IPredicate>();
+		Collections.addAll(interpolantsDBG, interpolants);
+		CodeCheckObserver.s_Logger.debug(String.format("Inters: %s\n", interpolantsDBG));
 	}
+		
+	private void debug2(AnnotatedProgramPoint[] nodes,
+			NestedWord<CodeBlock> nestedWords) {
+		System.err.printf("nodes length : %d, nestedwords length : %d\n", nodes.length, nestedWords.length());
+		for (int i = 0; i < nestedWords.length(); i++) {
+			try {
+				System.err.println(nestedWords.getCallPosition(i));
+			}
+			catch (Exception e) {
+				try {
+					System.err.println(nestedWords.getReturnPosition(i));
+				}
+				catch (Exception f) {
+					System.err.println("Null");
+				}
+			}
+		}
+		
+//		for (int i = 0; i < nodes.length - 1; i++) {
+//			if (nodes[i].getOutgoingEdgeLabel(nodes[i+1]) instanceof Return)
+//				System.err.println("FoundReturnEdge at " + i);
+//			else if (nodes[i].getOutgoingEdgeLabel(nodes[i+1]) instanceof Call)
+//				System.err.println("FoundCallEdge at " + i);
+//		}
+	}
+
+
 }
