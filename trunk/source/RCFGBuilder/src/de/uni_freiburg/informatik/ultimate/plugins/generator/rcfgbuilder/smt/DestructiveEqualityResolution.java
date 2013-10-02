@@ -203,10 +203,12 @@ public class DestructiveEqualityResolution {
 					throw new UnsupportedOperationException(
 							"QE for universal quantified arrays not implemented yet.");
 				}
-				Term elim = (new ElimStore(script)).elim(tv, result);
+				Term elim = (new ElimStore2(script)).elim(tv, result);
 				if (elim != null) {
 					it.remove();
 					result = elim;
+				} else {
+					result.toString();
 				}
 			}
 		}

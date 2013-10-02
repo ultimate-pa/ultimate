@@ -161,14 +161,15 @@ public class ElimStore2 {
 				ApplicationTerm oldSelectTerm = arrayReads.get(distTerm);
 				assert oldSelectTerm.getFunction().getName().equals("select");
 				assert oldSelectTerm.getParameters().length == 2;
-				assert oldSelectTerm.getParameters()[0] == oldArr;
-				Set<ApplicationTerm> selectTermsInIndex = 
-						(new ApplicationTermFinder("select")).findMatchingSubterms(oldSelectTerm.getParameters()[0]);
-				if (!selectTermsInIndex.isEmpty()) {
-					throw new UnsupportedOperationException("select in index not supported");
-				}
+				//TODO: check if select that we need
+//				assert oldSelectTerm.getParameters()[0] == oldArr;
+//				Set<ApplicationTerm> selectTermsInIndex = 
+//						(new ApplicationTermFinder("select")).findMatchingSubterms(oldSelectTerm.getParameters()[0]);
+//				if (!selectTermsInIndex.isEmpty()) {
+//					throw new UnsupportedOperationException("select in index not supported");
+//				}
 				//TODO: depends on dimension
-				Term newSelectTerm = m_Script.term("select", m_NewArray, oldSelectTerm.getParameters()[1]);
+				Term newSelectTerm = multiDimensionalSelect(m_NewArray, distTerm);
 				substitutionMapping.put(oldSelectTerm, newSelectTerm);
 			}
 		}
@@ -197,7 +198,7 @@ public class ElimStore2 {
 		Term result = (new SafeSubstitution(m_Script, substitutionMapping)).transform(othersT);
 		Term newData = (new SafeSubstitution(m_Script, substitutionMapping)).transform(m_Data);
 		//TODO: select for store for multi dimension
-		Term t = null;
+		Term t = m_Script.term("=", multiDimensionalSelect(m_NewArray, m_WriteIndex), newData);
 		//Term t = m_Script.term("=", m_Script.term("select", m_NewArray, m_WriteIndex), newData);
 		result = Util.and(m_Script, result, t);
 		
@@ -209,6 +210,17 @@ public class ElimStore2 {
 					throw new UnsupportedOperationException();
 				}
 			}
+		}
+		return result;
+	}
+	
+	
+	private Term multiDimensionalSelect(Term arr, Term[] index) {
+		assert index.length > 0;
+		assert arr.getSort().isArraySort();
+		Term result = arr;
+		for (int i=0; i<index.length; i++) {
+			result = m_Script.term("select", result, index[i]);
 		}
 		return result;
 	}
@@ -240,6 +252,10 @@ public class ElimStore2 {
 			Set<ApplicationTerm> selectTerms, int dimension) {
 		Map<Term[],ApplicationTerm> arrayReads = new HashMap<Term[],ApplicationTerm>();
 		for (ApplicationTerm selectTerm : selectTerms) {
+			if (selectTerm.getFunction().getReturnSort().isArraySort()) {
+				// this is only a select nested in some other select or store
+				continue;
+			}
 			Term[] index = new Term[dimension];
 			if (dimension == 1) {
 				if (selectTerm.getParameters()[0].equals(arrayTv)) {
@@ -247,7 +263,7 @@ public class ElimStore2 {
 					arrayReads.put(index, selectTerm);
 				}
 			} else if (dimension == 2) {
-				Term innerSelect = selectTerm.getParameters()[1];
+				Term innerSelect = selectTerm.getParameters()[0];
 				ApplicationTerm innerSelectApp = (ApplicationTerm) innerSelect;
 				if (!innerSelectApp.getFunction().getName().equals("select")) {
 					throw new UnsupportedOperationException();
