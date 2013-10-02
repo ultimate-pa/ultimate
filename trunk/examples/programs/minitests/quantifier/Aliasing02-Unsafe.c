@@ -8,5 +8,7 @@
 int nonMain(int *p, int *q) {
 	*p = 23;
 	*q = 42;
-	//@ assert *p == 23;
+	if (*p == 23) {
+		//@ assert \false;
+	}
 }
