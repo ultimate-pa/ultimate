@@ -307,9 +307,8 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 //					UltimateServices.getInstance().getTranslatorSequence(),
 //					null, null);
 			
-			List<CodeBlock> failurePath = AnnotateAndAsserter.constructFailureTrace(realErrorRun.getWord(), m_smtManager);
 			reportCounterexampleResult(realErrorRun.getWord().getSymbol(realErrorRun.getWord().length() - 1),
-					AbstractCegarLoop.trace2path(failurePath), realErrorProgramExecution);
+					AbstractCegarLoop.trace2path(realErrorFailurePath) , realErrorProgramExecution);
 		
 //			UltimateServices.getInstance().reportResult(Activator.s_PLUGIN_ID, result);
 		} else {
