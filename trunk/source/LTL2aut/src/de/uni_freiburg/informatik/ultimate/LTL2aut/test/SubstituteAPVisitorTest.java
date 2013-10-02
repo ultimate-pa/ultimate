@@ -51,7 +51,7 @@ public class SubstituteAPVisitorTest extends TestCase {
 			parserAP pAP = new parserAP(lexerAP);
 			AstNode nodea = (AstNode)pAP.parse().value;
 
-			if (nodea instanceof AtomicProposition)
+			if (nodea instanceof AtomicProposition) 
 				apmap.put(((AtomicProposition) nodea).getIdent(), nodea.getOutgoingNodes().get(0));	
 		}
 		

@@ -21,4 +21,9 @@ public class LabeledBlock extends AstNode {
 			children += node.toString();
 		return this.value.toString()+":\n"+ children + "\n";
 	}
+	
+	public AstNode getValue()
+	{
+		return this.value;
+	}
 }

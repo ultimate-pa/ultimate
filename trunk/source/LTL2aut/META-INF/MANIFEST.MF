@@ -12,3 +12,4 @@ Bundle-ActivationPolicy: lazy
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
 Import-Package: org.apache.commons.io,
  org.junit
+Export-Package: de.uni_freiburg.informatik.ultimate.LTL2aut.ast

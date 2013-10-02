@@ -47,7 +47,8 @@ public class WrapLTL2Never {
 		String result = "";
 		
 	      String line;
-	      Process p = Runtime.getRuntime().exec( PreferencePage.TOOLLOCATION + PreferencePage.COMMANDLINEARGUMENT.replace("$1", ltlFormula));
+	      System.out.println(PreferencePage.TOOLLOCATION + PreferencePage.COMMANDLINEARGUMENT.replace("\\","").replace("$1", ltlFormula));
+	      Process p = Runtime.getRuntime().exec( PreferencePage.TOOLLOCATION + PreferencePage.COMMANDLINEARGUMENT.replace("\\","").replace("$1", ltlFormula));
 	      BufferedReader bri = new BufferedReader
 	        (new InputStreamReader(p.getInputStream()));
 	      
@@ -57,7 +58,7 @@ public class WrapLTL2Never {
 	      }
 	      bri.close();
 	      p.waitFor();
-	    
+
 	    return result;
 	}
 	
@@ -77,7 +78,7 @@ public class WrapLTL2Never {
 		AstNode n = null;
 		//try
 			Lexer lexer = new Lexer(file);
-			parser p = new parser(lexer);
+			parser p = new parser(lexer); 
 			n = (AstNode)p.parse().value;
 
 		

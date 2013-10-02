@@ -10,6 +10,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.LTL2aut.ast.AstNode;
@@ -30,7 +31,7 @@ public class LTL2aut implements ISource {
 	public int init(Object params) {
 		// TODO Auto-generated method stub
 		return 0;
-	}
+	} 
 
 	@Override
 	public String getName() {
@@ -62,7 +63,7 @@ public class LTL2aut implements ISource {
 
 	@Override
 	public IElement parseAST(File[] files) throws Exception {
-		return null;
+		return this.parseAST(files[0]);
 	}
 
 	@Override
@@ -77,25 +78,24 @@ public class LTL2aut implements ISource {
 		
 		WrapLTL2Never wrap = new WrapLTL2Never();	
 		AstNode node = wrap.ltl2Ast(line);
-		// parse aps
-		Map aps = new HashMap<String,AstNode>();
-		line = br.readLine();
+		
+		
+		//  get atomic propositions
+		HashMap<String, AstNode> aps = new HashMap<String,AstNode>();
+		line = br.readLine(); 
 		while(line != null){
-			//parse the atomic propositions from the following lines
-			line = br.readLine();
-			String linea = br.readLine();
-			
-			fs = new FileInputStream(file);
-			br = new BufferedReader(new InputStreamReader(fs));
-	
-			WrapLTL2Never wrapa = new WrapLTL2Never();	
-			AstNode nodea = wrapa.ltl2Ast(linea);
-			
+			LexerAP lexer = new LexerAP(new InputStreamReader(IOUtils.toInputStream(line)));
+			parserAP p = new parserAP(lexer);
+			AstNode nodea = (AstNode)p.parse().value;			
 			// append node to dictionary of atomic propositions
 			if (nodea instanceof AtomicProposition)
-				aps.put(((AtomicProposition) nodea).getIdent(), nodea.getOutgoingNodes().get(0));	
-		}
+				aps.put(((AtomicProposition) nodea).getIdent(), nodea.getOutgoingNodes().get(0));
 			
+			line = br.readLine();
+		}
+		//substitute aps
+		SubstituteAPVisitor vis = new SubstituteAPVisitor(aps, node);
+		
 		return node;
 	}
 
