@@ -1,0 +1,16 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: BuchiProgramProduct
+Bundle-SymbolicName: BuchiProgramProduct;singleton:=true
+Bundle-Version: 0.0.1
+Bundle-Activator: de.uni_freiburg.informatik.ultimate.BuchiProgramProduct.Activator
+Require-Bundle: Library-log4j,
+ UltimateCore,
+ JavaCup;bundle-version="1.0.0",
+ Library-junit;bundle-version="4.11.0"
+Bundle-ActivationPolicy: lazy
+Bundle-RequiredExecutionEnvironment: JavaSE-1.6
+Import-Package: de.uni_freiburg.informatik.ultimate.LTL2aut.ast,
+ de.uni_freiburg.informatik.ultimate.automata.nwalibrary,
+ org.apache.commons.io,
+ org.junit

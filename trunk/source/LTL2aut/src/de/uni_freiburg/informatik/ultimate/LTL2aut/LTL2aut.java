@@ -12,24 +12,31 @@ import java.util.Map;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.log4j.Logger;
+import org.eclipse.core.runtime.preferences.IEclipsePreferences;
+import org.eclipse.core.runtime.preferences.IScopeContext;
 
 import de.uni_freiburg.informatik.ultimate.LTL2aut.ast.AstNode;
 import de.uni_freiburg.informatik.ultimate.LTL2aut.ast.AtomicProposition;
+import de.uni_freiburg.informatik.ultimate.access.IObserver;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
+import de.uni_freiburg.informatik.ultimate.ep.interfaces.IGenerator;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.ISource;
 import de.uni_freiburg.informatik.ultimate.model.GraphType;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
+import de.uni_freiburg.informatik.ultimate.model.MarkedTrace;
 import de.uni_freiburg.informatik.ultimate.model.TokenMap;
 
-public class LTL2aut implements ISource {
+public class LTL2aut implements IGenerator {
 	
 	 protected static Logger Logger = UltimateServices.getInstance().getLogger(Activator.PLUGIN_ID);
 
 	 protected List<String> m_FileNames = new ArrayList<String>();
 	 
+	 private DummyLTL2autObserver obs;
+	 
 	@Override
 	public int init(Object params) {
-		// TODO Auto-generated method stub
+		this.obs = new DummyLTL2autObserver(); 
 		return 0;
 	} 
 
@@ -44,6 +51,68 @@ public class LTL2aut implements ISource {
 	}
 
 	@Override
+	public GraphType getOutputDefinition() {
+		List<String> filenames = new ArrayList<String>();
+		filenames.add("Hardcoded");
+		
+		return new GraphType(Activator.PLUGIN_ID, GraphType.Type.AST, filenames);
+	}
+
+	@Override
+	public List<MarkedTrace> getMarkedTraces() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public boolean isGuiRequired() {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	@Override
+	public void setTokenMap(TokenMap tokenMap) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public QueryKeyword getQueryKeyword() {
+		return QueryKeyword.LAST;
+	}
+
+	@Override
+	public List<String> getDesiredToolID() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public void setInputDefinition(GraphType graphType) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public List<IObserver> getObservers() {
+		ArrayList<IObserver> observers = new ArrayList<IObserver>();
+		observers.add(this.obs);
+		return observers;
+	}
+
+	@Override
+	public IEclipsePreferences[] getPreferences(IScopeContext cs,
+			IScopeContext is) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public IElement getModel() {
+		return this.obs.node;
+	}
+
+	/*@Override
 	public boolean parseable(File[] files) {
         for (File f : files) {
             if (!parseable(f)) { return false; }
@@ -125,6 +194,6 @@ public class LTL2aut implements ISource {
 	public void setPreludeFile(File prelude) {
 		// TODO Auto-generated method stub
 		
-	}
+	}*/
 
 }
