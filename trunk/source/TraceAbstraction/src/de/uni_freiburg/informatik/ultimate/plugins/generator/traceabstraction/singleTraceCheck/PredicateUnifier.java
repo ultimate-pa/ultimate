@@ -70,7 +70,7 @@ import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
 		 * @param vars The BoogieVars of the TermVariables contained in term.
 		 * @param proc All procedures of which vars contains local variables.
 		 */
-		IPredicate getOrConstructPredicate(Term term, Set<BoogieVar> vars, String[] procs) {
+		public IPredicate getOrConstructPredicate(Term term, Set<BoogieVar> vars, String[] procs) {
 			if (term instanceof AnnotatedTerm) {
 				AnnotatedTerm annotatedTerm = (AnnotatedTerm) term;
 				Annotation[] annotations = annotatedTerm.getAnnotations();
