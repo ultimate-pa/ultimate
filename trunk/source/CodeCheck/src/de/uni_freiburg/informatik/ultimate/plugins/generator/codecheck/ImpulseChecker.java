@@ -14,8 +14,10 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Pro
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.TAPreferences;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.EdgeChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.PredicateUnifier;
 
 
 
@@ -38,11 +40,14 @@ public class ImpulseChecker extends CodeChecker {
 	 * @param m_taPrefs TAPreferences
 	 * @param m_originalRoot the original RootNode
 	 * @param m_graphRoot the ImpRootNode
+	 * @param m_predicateUnifier 
+	 * @param m_edgeChecker 
 	 * @param m_graphWriter 
 	 */
 	public ImpulseChecker(IElement root, SmtManager m_smtManager, IPredicate m_truePredicate, IPredicate m_falsePredicate, 
-			TAPreferences m_taPrefs, RootNode m_originalRoot, ImpRootNode m_graphRoot, GraphWriter graphWriter) {
-		super(root, m_smtManager, m_truePredicate, m_falsePredicate, m_taPrefs, m_originalRoot, m_graphRoot, graphWriter);
+			TAPreferences m_taPrefs, RootNode m_originalRoot, ImpRootNode m_graphRoot, GraphWriter graphWriter, EdgeChecker edgeChecker, PredicateUnifier predicateUnifier) {
+		super(root, m_smtManager, m_truePredicate, m_falsePredicate, m_taPrefs, m_originalRoot, 
+				m_graphRoot, graphWriter, edgeChecker, predicateUnifier);
 		redirectionTargetFinder = new RedirectionTargetFinder(this);
 		LocationPredicates = new HashMap<ProgramPoint, HashMap<IPredicate,AnnotatedProgramPoint>>();
 		initializeLocationPredicates(m_graphRoot);

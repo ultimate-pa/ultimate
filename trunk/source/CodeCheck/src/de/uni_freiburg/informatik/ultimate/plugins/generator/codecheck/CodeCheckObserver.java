@@ -33,11 +33,13 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.prefere
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbstractCegarLoop;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.EdgeChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.AnnotateAndAsserter;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceChecker;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceCheckerSpWp;
 import de.uni_freiburg.informatik.ultimate.result.CounterExampleResult;
 import de.uni_freiburg.informatik.ultimate.result.IProgramExecution;
 import de.uni_freiburg.informatik.ultimate.result.IResult;
@@ -51,44 +53,36 @@ import org.apache.log4j.Logger;
  * Auto-Generated Stub for the plug-in's Observer
  */
 
-enum Checker {
-	ULTIMATE, IMPULSE
-}
-
+enum Checker { ULTIMATE, IMPULSE }
 enum Result { CORRECT, TIMEOUT , MAXEDITERATIONS , UNKNOWN , INCORRECT }
+enum SolverAndInterpolator { SMTINTERPOL, Z3SPWP }
 
 public class CodeCheckObserver implements IUnmanagedObserver {
 
-	private Checker checker;
 	public static Logger s_Logger = UltimateServices.getInstance().getLogger(Activator.s_PLUGIN_ID);
 	private CodeChecker codeChecker;
 	
-	public RootNode m_originalRoot;
-	public TAPreferences m_taPrefs;
+	RootNode m_originalRoot;
+	TAPreferences m_taPrefs;
 	
-	public SmtManager m_smtManager;
-	public IPredicate m_truePredicate;
-	public IPredicate m_falsePredicate;
+	SmtManager m_smtManager;
+	IPredicate m_truePredicate;
+	IPredicate m_falsePredicate;
+	PredicateUnifier m_predicateUnifier;
+	EdgeChecker m_edgeChecker;
 	
 	GraphWriter m_graphWriter;
-	String m_dotGraphPath = "C:/temp/codeCheckGraphs";
+//	String m_dotGraphPath = "C:/temp/codeCheckGraphs";
+	String m_dotGraphPath = "";
+	
+	SolverAndInterpolator solverAndInterpolator = SolverAndInterpolator.SMTINTERPOL;
+	
+	private Checker checker = Checker.ULTIMATE;
 	
 	public ImpRootNode m_graphRoot;
 
 	private static final boolean DEBUG = false;
-	
-	private PrintWriter dumpInitialize() { // copied from Impulse, needed for trace checker
-		File file = 
-				new File(m_taPrefs.dumpPath() + "/" + ".txt");
-		FileWriter fileWriter;
-		try {
-			fileWriter = new FileWriter(file);
-			return new PrintWriter(fileWriter);
-		} catch (IOException e) {
-			e.printStackTrace();
-		} 
-		return null;
-	}
+
 	/**
 	 * Given a graph root, copy all the nodes and the corresponding connections.
 	 * @param root
@@ -136,6 +130,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 	 * @return
 	 */
 	public boolean initialize(IElement root) {
+		
 		m_originalRoot = (RootNode) root;
 		RootAnnot rootAnnot = m_originalRoot.getRootAnnot();
 		m_taPrefs = rootAnnot.getTaPrefs();
@@ -146,6 +141,9 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 		m_truePredicate = m_smtManager.newTruePredicate();
 		m_falsePredicate = m_smtManager.newFalsePredicate();
 		
+		m_predicateUnifier = new PredicateUnifier(m_smtManager, m_truePredicate, m_falsePredicate);
+		m_edgeChecker = new EdgeChecker(m_smtManager, rootAnnot.getModGlobVarManager());
+		
 		m_graphWriter = new GraphWriter(m_dotGraphPath, 
 				true, true, true, false, m_smtManager.getScript());
 		
@@ -153,9 +151,13 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 		m_graphRoot = r2ar.convert(m_originalRoot, m_truePredicate);
 		removeSummaryEdges();
 		if (checker == Checker.IMPULSE) {
-			codeChecker = new ImpulseChecker(root, m_smtManager, m_truePredicate, m_falsePredicate, m_taPrefs, m_originalRoot, m_graphRoot, m_graphWriter);
+			codeChecker = new ImpulseChecker(
+					root, m_smtManager, m_truePredicate, m_falsePredicate, m_taPrefs, 
+					m_originalRoot, m_graphRoot, m_graphWriter, m_edgeChecker, m_predicateUnifier);
 		} else {
-			codeChecker = new UltimateChecker(root, m_smtManager, m_truePredicate, m_falsePredicate, m_taPrefs, m_originalRoot, m_graphRoot, m_graphWriter);
+			codeChecker = new UltimateChecker(
+					root, m_smtManager, m_truePredicate, m_falsePredicate, m_taPrefs, 
+					m_originalRoot, m_graphRoot, m_graphWriter, m_edgeChecker, m_predicateUnifier);
 		}
 		return false;
 	}
@@ -182,9 +184,6 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 	}
 	
 	public boolean process(IElement root) {
-		//FIXME
-		checker = Checker.ULTIMATE;
-//		checker = Checker.IMPULSE;
 		initialize(root);
 		
 		final boolean loop_forever = true; // for DEBUG
@@ -194,7 +193,6 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 		
 		m_graphWriter.writeGraphAsImage(originalGraphCopy, 
 				String.format("graph_%s_original", m_graphWriter._graphCounter));
-
 
 		int noOfProcedures = m_graphRoot.getOutgoingNodes().size();
 //		noOfProcedures = 1;//TODO add SV-comp mode where only main is checked
@@ -234,17 +232,31 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 						String.format("graph_%s_%s_foundEP", m_graphWriter._graphCounter, procedureRoot.toString().substring(0, 5)), 
 						errorRun.getStateSequence().toArray(new AnnotatedProgramPoint[]{}));
 					
-					TraceChecker traceChecker = new TraceChecker(
-							m_truePredicate, // checks whether the trace is feasible, i.e. the formula is satisfiable
-							m_falsePredicate,  //return LBool.UNSAT if trace is infeasible
-							null,
-							errorRun.getWord(),
-							m_smtManager, 
-							m_originalRoot.getRootAnnot().getModGlobVarManager());
+					TraceChecker traceChecker = null;
+					switch (solverAndInterpolator) {
+					case SMTINTERPOL :
+						traceChecker = new TraceChecker(
+								m_truePredicate, // checks whether the trace is feasible, i.e. the formula is satisfiable
+								m_falsePredicate,  //return LBool.UNSAT if trace is infeasible
+								null,
+								errorRun.getWord(),
+								m_smtManager, 
+								m_originalRoot.getRootAnnot().getModGlobVarManager());
+						break;
+					case Z3SPWP :
+						traceChecker = new TraceCheckerSpWp(
+								m_truePredicate, // checks whether the trace is feasible, i.e. the formula is satisfiable
+								m_falsePredicate,  //return LBool.UNSAT if trace is infeasible
+								errorRun.getWord(),
+								m_smtManager, 
+								m_originalRoot.getRootAnnot().getModGlobVarManager());
+						break;
+					}
+
 					LBool isSafe = traceChecker.isCorrect();
 					if(isSafe == LBool.UNSAT) { //trace is infeasible
-						PredicateUnifier pu = new PredicateUnifier(m_smtManager, m_truePredicate, m_falsePredicate);
-						traceChecker.computeInterpolants(new TraceChecker.AllIntegers(), pu);
+//						PredicateUnifier pu = new PredicateUnifier(m_smtManager, m_truePredicate, m_falsePredicate);
+						traceChecker.computeInterpolants(new TraceChecker.AllIntegers(), m_predicateUnifier);
 						IPredicate[] interpolants = traceChecker.getInterpolants();
 						codeChecker.codeCheck(errorRun, interpolants, procedureRoot);
 					} else { // trace is feasible
@@ -286,7 +298,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 
 		s_Logger.info("PC#: " + m_smtManager.getInterpolQueries());
 		s_Logger.info("TIME#: " + m_smtManager.getInterpolQuriesTime());
-//		s_Logger.info("ManipulationTIME#: " + m_smtManager.getTraceCheckTime());
+		s_Logger.info("ManipulationTIME#: " + m_smtManager.getTraceCheckTime());
 		s_Logger.info("EC#: " + m_smtManager.getNontrivialSatQueries());
 		s_Logger.info("TIME#: " + m_smtManager.getSatCheckTime());
 //		s_Logger.info("ManipulationTIME#: "	+ m_smtManager.getCodeBlockCheckTime());

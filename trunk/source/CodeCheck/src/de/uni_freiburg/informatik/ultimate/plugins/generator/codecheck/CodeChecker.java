@@ -11,32 +11,40 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.TAPreferences;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.EdgeChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager.TermVarsProc;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.PredicateUnifier;
 
 
 public abstract class CodeChecker {
 
 
-	public RootNode m_originalRoot;
-	public TAPreferences m_taPrefs;
-	public SmtManager m_smtManager;
-	public ImpRootNode m_graphRoot;
+	RootNode m_originalRoot;
+	TAPreferences m_taPrefs;
+	SmtManager m_smtManager;
+	ImpRootNode m_graphRoot;
 
-	public IPredicate m_truePredicate;
-	public IPredicate m_falsePredicate;
+	IPredicate m_truePredicate;
+	IPredicate m_falsePredicate;
+	
+	EdgeChecker m_edgeChecker;
+	PredicateUnifier m_predicateUnifier;
 	
 	protected GraphWriter _graphWriter;
 	
-	public CodeChecker(IElement root, SmtManager m_smtManager, IPredicate m_truePredicate, IPredicate m_falsePredicate, 
-			TAPreferences m_taPrefs, RootNode m_originalRoot, ImpRootNode m_graphRoot, GraphWriter graphWriter) {
-		this.m_smtManager = m_smtManager;
-		this.m_truePredicate = m_truePredicate;
-		this.m_falsePredicate = m_falsePredicate;
-		this.m_taPrefs = m_taPrefs;
-		this.m_originalRoot = m_originalRoot;
-		this.m_graphRoot = m_graphRoot;
+	public CodeChecker(IElement root, SmtManager smtManager, IPredicate truePredicate, IPredicate falsePredicate, 
+			TAPreferences taPrefs, RootNode originalRoot, ImpRootNode graphRoot, GraphWriter graphWriter, EdgeChecker edgeChecker, PredicateUnifier predicateUnifier) {
+		this.m_smtManager = smtManager;
+		this.m_truePredicate = truePredicate;
+		this.m_falsePredicate = falsePredicate;
+		this.m_taPrefs = taPrefs;
+		this.m_originalRoot = originalRoot;
+		this.m_graphRoot = graphRoot;
+		
+		this.m_edgeChecker = edgeChecker;
+		this.m_predicateUnifier = predicateUnifier;
 		
 		this._graphWriter = graphWriter;
 	}
@@ -50,7 +58,8 @@ public abstract class CodeChecker {
 	 */
 	protected IPredicate conjugatePredicates(IPredicate a, IPredicate b) {
 		TermVarsProc tvp = m_smtManager.and(a, b);
-		return m_smtManager.newPredicate(tvp.getFormula(), tvp.getProcedures(), tvp.getVars(), tvp.getClosedFormula());
+		return m_predicateUnifier.getOrConstructPredicate(tvp.getFormula(), tvp.getVars(), tvp.getProcedures());
+//		return m_smtManager.newPredicate(tvp.getFormula(), tvp.getProcedures(), tvp.getVars(), tvp.getClosedFormula());
 	}
 	
 	/**
@@ -59,7 +68,8 @@ public abstract class CodeChecker {
 	 */
 	protected IPredicate negatePredicate(IPredicate a) {
 		TermVarsProc tvp = m_smtManager.not(a);
-		return m_smtManager.newPredicate(tvp.getFormula(), tvp.getProcedures(), tvp.getVars(), tvp.getClosedFormula());
+		return m_predicateUnifier.getOrConstructPredicate(tvp.getFormula(), tvp.getVars(), tvp.getProcedures());
+//		return m_smtManager.newPredicate(tvp.getFormula(), tvp.getProcedures(), tvp.getVars(), tvp.getClosedFormula());
 	}
 
 	/**
@@ -74,7 +84,7 @@ public abstract class CodeChecker {
 			AnnotatedProgramPoint destinationNode) {
 		if (edgeLabel instanceof DummyCodeBlock)
 			return false;
-		System.out.print(".");
+//		System.out.print(".");
 		
 		if (edgeLabel instanceof Call) 
 			return m_smtManager.isInductiveCall(sourceNode.getPredicate(), (Call) edgeLabel, negatePredicate(destinationNode.getPredicate())) != LBool.UNSAT;
@@ -92,8 +102,11 @@ public abstract class CodeChecker {
 	 */
 	protected boolean isSatRetEdge(AnnotatedProgramPoint sourceNode, Return edgeLabel,
 			AnnotatedProgramPoint destinationNode, AnnotatedProgramPoint callNode) {
-		System.out.print(".");
-		return m_smtManager.isInductiveReturn(sourceNode.getPredicate(), callNode.getPredicate(), (Return) edgeLabel, negatePredicate(destinationNode.getPredicate())) != LBool.UNSAT;
+//		System.out.print(".");
+		return m_smtManager.isInductiveReturn(sourceNode.getPredicate(), 
+				callNode.getPredicate(), 
+				(Return) edgeLabel, 
+				negatePredicate(destinationNode.getPredicate())) != LBool.UNSAT;
 	}
 	
 	protected void connectOutgoingIfSat(AnnotatedProgramPoint source,
@@ -113,7 +126,7 @@ public abstract class CodeChecker {
 			AnnotatedProgramPoint destinationNode) {
 		if (edgeLabel instanceof DummyCodeBlock)
 			return false;
-		System.out.print(".");
+//		System.out.print(".");
 		
 		if (edgeLabel instanceof Call) 
 			return m_smtManager.isInductiveCall(sourceNode.getPredicate(), (Call) edgeLabel, destinationNode.getPredicate()) == LBool.UNSAT;
