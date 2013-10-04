@@ -161,15 +161,8 @@ public class ElimStore2 {
 				ApplicationTerm oldSelectTerm = arrayReads.get(distTerm);
 				assert oldSelectTerm.getFunction().getName().equals("select");
 				assert oldSelectTerm.getParameters().length == 2;
-				//TODO: check if select that we need
-//				assert oldSelectTerm.getParameters()[0] == oldArr;
-//				Set<ApplicationTerm> selectTermsInIndex = 
-//						(new ApplicationTermFinder("select")).findMatchingSubterms(oldSelectTerm.getParameters()[0]);
-//				if (!selectTermsInIndex.isEmpty()) {
-//					throw new UnsupportedOperationException("select in index not supported");
-//				}
-				//TODO: depends on dimension
-				Term newSelectTerm = multiDimensionalSelect(m_NewArray, distTerm);
+				assert isMultiDimensionalSelect(oldSelectTerm, oldArr, m_WriteIndex.length);
+				Term newSelectTerm = buildMultiDimensionalSelect(m_NewArray, distTerm);
 				substitutionMapping.put(oldSelectTerm, newSelectTerm);
 			}
 		}
@@ -198,7 +191,7 @@ public class ElimStore2 {
 		Term result = (new SafeSubstitution(m_Script, substitutionMapping)).transform(othersT);
 		Term newData = (new SafeSubstitution(m_Script, substitutionMapping)).transform(m_Data);
 		//TODO: select for store for multi dimension
-		Term t = m_Script.term("=", multiDimensionalSelect(m_NewArray, m_WriteIndex), newData);
+		Term t = m_Script.term("=", buildMultiDimensionalSelect(m_NewArray, m_WriteIndex), newData);
 		//Term t = m_Script.term("=", m_Script.term("select", m_NewArray, m_WriteIndex), newData);
 		result = Util.and(m_Script, result, t);
 		
@@ -215,7 +208,33 @@ public class ElimStore2 {
 	}
 	
 	
-	private Term multiDimensionalSelect(Term arr, Term[] index) {
+	/**
+	 * Return true if this is a nested select on arr.
+	 * Throws exception if an index contains a select.
+	 */
+	private boolean isMultiDimensionalSelect(Term term, Term arr, int dimension) {
+		Term subterm = term;
+		for (int i=0; i<dimension; i++) {
+			if (!(term instanceof ApplicationTerm)) {
+				return false;
+			}
+			ApplicationTerm subtermApp = (ApplicationTerm) subterm;
+			if (!subtermApp.getFunction().getName().equals("select")) {
+				return false;
+			}
+			subterm = subtermApp.getParameters()[0];
+			Term index = subtermApp.getParameters()[1];
+			Set<ApplicationTerm> selectTermsInIndex = 
+					(new ApplicationTermFinder("select")).findMatchingSubterms(index);
+			if (!selectTermsInIndex.isEmpty()) {
+				throw new UnsupportedOperationException("select in index not supported");
+			}
+		}
+		return subterm.equals(arr);
+	}
+	
+	
+	private Term buildMultiDimensionalSelect(Term arr, Term[] index) {
 		assert index.length > 0;
 		assert arr.getSort().isArraySort();
 		Term result = arr;
