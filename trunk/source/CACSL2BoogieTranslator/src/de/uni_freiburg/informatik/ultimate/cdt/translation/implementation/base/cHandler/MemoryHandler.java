@@ -701,7 +701,7 @@ public class MemoryHandler {
         ILocation loc = new CACSLLocation(declSpec);
         InferredType intIt = new InferredType(Type.Integer);
         ResultTypes rt = (ResultTypes) main.dispatch(declSpec);
-        String constId = getSizeOfId(rt.cvar);
+        String constId = SFO.SIZEOF + rt.cvar.toString().toLowerCase();
         return new IdentifierExpression(loc, intIt, constId);
     }
 
@@ -769,7 +769,7 @@ public class MemoryHandler {
         assert cvar != null;
         ILocation loc = cvar.getCASTLocation();
         ASTType intT = new PrimitiveType(loc, SFO.INT);
-        String id = getSizeOfId(cvar);
+        String id = SFO.SIZEOF + cvar.toString().toLowerCase();
         IdentifierExpression idex = new IdentifierExpression(loc, id);
         Attribute[] attr = new Attribute[0];
         if (!sizeofConsts.contains(id)) {
@@ -834,19 +834,6 @@ public class MemoryHandler {
         return idex;
     }
     
-    /**
-     * Given a CType return the identifier of the corresponding sizeOf constant.
-     */
-    private String getSizeOfId(CType cvar) {
-    	String result;
-    	if (cvar.toString().equals("INT")) {
-    		result = SFO.SIZEOF + SFO.INT;
-    	} else {
-    		throw new UnsupportedOperationException("not yet implemented");
-    	}
-    	return result;
-    }
-
     /**
      * Checks, if an accessed pointer points to a valid location in memory.
      * 
