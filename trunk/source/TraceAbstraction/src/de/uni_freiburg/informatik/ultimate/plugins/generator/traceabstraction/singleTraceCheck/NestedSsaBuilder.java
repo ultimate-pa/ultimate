@@ -198,9 +198,6 @@ public class NestedSsaBuilder {
 	
 
 	public NestedSsaBuilder(NestedWord<CodeBlock> trace,
-							IPredicate precondition,
-							IPredicate postcondition,
-							SortedMap<Integer, IPredicate> pendingContexts,
 							SmtManager smtManager,
 							DefaultTransFormulas defaultTransFormulas) {
 		m_Script = smtManager.getScript();

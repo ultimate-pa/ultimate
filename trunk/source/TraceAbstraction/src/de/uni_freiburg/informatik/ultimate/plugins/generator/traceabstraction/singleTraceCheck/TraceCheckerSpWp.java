@@ -136,7 +136,7 @@ public class TraceCheckerSpWp extends TraceChecker {
 					localVarAssignmentAtCallInUnsatCore, 
 					oldVarAssignmentAtCallInUnsatCore);
 			rv = new RelevantTransFormulas(trace,
-					m_Precondition, m_Postcondition, null,
+					m_Precondition, m_Postcondition, m_PendingContexts,
 					codeBlocksInUnsatCore,
 					m_ModifiedGlobals,
 					localVarAssignmentAtCallInUnsatCore,
@@ -144,7 +144,7 @@ public class TraceCheckerSpWp extends TraceChecker {
 					m_SmtManager);
 		} else {
 			rv = new RelevantTransFormulas(trace,
-					m_Precondition, m_Postcondition, null,
+					m_Precondition, m_Postcondition, m_PendingContexts,
 					unsat_coresAsSet,
 					m_ModifiedGlobals,
 					m_SmtManager,

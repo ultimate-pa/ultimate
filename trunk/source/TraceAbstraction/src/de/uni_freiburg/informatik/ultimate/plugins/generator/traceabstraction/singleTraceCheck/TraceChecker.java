@@ -1,6 +1,5 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck;
 
-import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -134,9 +133,13 @@ public class TraceChecker {
 		m_Trace = trace;
 		m_Precondition = precondition;
 		m_Postcondition = postcondition;
-		m_PendingContexts = pendingContexts;
+		if (pendingContexts == null) {
+			m_PendingContexts = new TreeMap<Integer, IPredicate>();
+		} else {
+			m_PendingContexts = pendingContexts;
+		}
 		m_DefaultTransFormulas = new DefaultTransFormulas(m_Trace, 
-				precondition, postcondition, pendingContexts, m_ModifiedGlobals, false);
+				m_Precondition, m_Postcondition, m_PendingContexts, m_ModifiedGlobals, false);
 		m_IsSafe = checkTrace();
 	}
 	
@@ -191,8 +194,8 @@ public class TraceChecker {
 	private LBool checkTrace() {
 		LBool isSafe;
 		m_SmtManager.startTraceCheck();
-		NestedSsaBuilder nsb = new NestedSsaBuilder(m_Trace, m_Precondition, 
-				m_Postcondition, m_PendingContexts, m_SmtManager, m_DefaultTransFormulas);
+		NestedSsaBuilder nsb = new NestedSsaBuilder(m_Trace, m_SmtManager, 
+				m_DefaultTransFormulas);
 		NestedSsa ssa = nsb.getSsa();
 		try {
 			m_AAA = getAnnotateAndAsserter(ssa);

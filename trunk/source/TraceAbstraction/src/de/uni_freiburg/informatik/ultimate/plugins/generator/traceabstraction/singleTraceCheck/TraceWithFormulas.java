@@ -42,6 +42,7 @@ public abstract class TraceWithFormulas<TF, SF> {
 		m_NestedWord = nestedWord;
 		m_Precondition = precondition;
 		m_Postcondition = postcondition;
+		assert pendingContexts != null;
 		m_PendingContexts = pendingContexts;
 	}
 	
