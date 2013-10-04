@@ -179,10 +179,9 @@ public class ImpulseObserver implements IUnmanagedObserver {
 						"graph_" + (++m_gwCounter) + "_ep", errorNWP.getFirst());
 
 				TraceChecker traceChecker = new TraceChecker(m_truePredicate, 
-						isPEL ? pEL.getPredicate() : m_falsePredicate, 
+						isPEL ? pEL.getPredicate() : m_falsePredicate, null,
 								errorNWP.getSecond(), m_smtManager, 
-						m_originalRoot.getRootAnnot().getModGlobVarManager(), 
-						dumpInitialize());
+						m_originalRoot.getRootAnnot().getModGlobVarManager());
 				LBool isSafe = traceChecker.isCorrect();
 				m_pathChecks++;
 

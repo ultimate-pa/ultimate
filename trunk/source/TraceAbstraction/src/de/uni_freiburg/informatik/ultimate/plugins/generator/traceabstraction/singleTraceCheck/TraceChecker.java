@@ -104,13 +104,6 @@ public class TraceChecker {
 	protected final ModifiableGlobalVariableManager m_ModifiedGlobals;
 	
 	
-	/**
-	 * Verbose debugging output is written to this PrintWriter. If null no
-	 * debugging output is written.
-	 */
-	private final PrintWriter m_DebugPW;
-	
-
 	protected final NestedWord<CodeBlock> m_Trace;
 	protected final IPredicate m_Precondition;
 	protected final IPredicate m_Postcondition;
@@ -125,47 +118,19 @@ public class TraceChecker {
 	protected final DefaultTransFormulas m_DefaultTransFormulas;
 	
 	
-	
 	/**
-	 * Check if trace fulfills specification given by precondition and
-	 * postcondition. 
-	 * 
-	 */
-	public TraceChecker(IPredicate precondition, IPredicate postcondition,
-			NestedWord<CodeBlock> trace,
-			SmtManager smtManager,
-						ModifiableGlobalVariableManager modifiedGlobals,
-		 				PrintWriter debugPW) {
-		m_SmtManager = smtManager;
-		m_PredicateUnifier = new PredicateUnifier(m_SmtManager);
-		m_ModifiedGlobals = modifiedGlobals;
-		m_DebugPW = debugPW;
-		m_Trace = trace;
-		m_Precondition = precondition;
-		m_Postcondition = postcondition;
-		m_PendingContexts = new TreeMap<Integer, IPredicate>();
-		m_DefaultTransFormulas = new DefaultTransFormulas(m_Trace, 
-				precondition, postcondition, m_PendingContexts, m_ModifiedGlobals, false);
-		m_IsSafe = checkTrace();
-	}
-	
-	
-	/**
-	 * Like three-argument-checkTrace-Method above but for traces that contain
-	 * pending returns. The pendingContext maps the positions of pending returns
-	 * to predicates which define possible variable valuations in the context to
-	 * which the return leads the trace.
-	 * 
+	 * Check if trace fulfills specification given by precondition, 
+	 * postcondition and pending contexts. The pendingContext maps the positions
+	 * of pending returns to predicates which define possible variable 
+	 * valuations in the context to which the return leads the trace.
 	 */
 	public TraceChecker(IPredicate precondition, IPredicate postcondition,
 			SortedMap<Integer, IPredicate> pendingContexts, NestedWord<CodeBlock> trace,
 			SmtManager smtManager,
-			ModifiableGlobalVariableManager modifiedGlobals,
-			PrintWriter debugPW) {
+			ModifiableGlobalVariableManager modifiedGlobals) {
 		m_SmtManager = smtManager;
 		m_PredicateUnifier = new PredicateUnifier(m_SmtManager);
 		m_ModifiedGlobals = modifiedGlobals;
-		m_DebugPW = debugPW;
 		m_Trace = trace;
 		m_Precondition = precondition;
 		m_Postcondition = postcondition;
@@ -190,7 +155,6 @@ public class TraceChecker {
 		m_SmtManager = smtManager;
 		m_PredicateUnifier = new PredicateUnifier(m_SmtManager);
 		m_ModifiedGlobals = modifiedGlobals;
-		m_DebugPW = null;
 		m_Trace = trace;
 		m_Precondition = precondition;
 		m_Postcondition = postcondition;
@@ -528,7 +492,7 @@ public class TraceChecker {
 
 			TraceChecker tc = new TraceChecker(precondition, 
 					interpolantAtReturnPosition, pendingContexts, subtrace, 
-					m_SmtManager, m_ModifiedGlobals, m_DebugPW);
+					m_SmtManager, m_ModifiedGlobals, null);
 			LBool isSafe = tc.isCorrect();
 			assert isSafe == LBool.UNSAT;
 			

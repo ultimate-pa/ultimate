@@ -38,9 +38,8 @@ public class PredicateAbstractionCegarLoop extends BasicCegarLoop {
 		IPredicate precondition = super.m_SmtManager.newTruePredicate();
 		IPredicate postcondition = super.m_SmtManager.newFalsePredicate();
 		m_TraceChecker = new TraceChecker(precondition, 
-				postcondition, new NestedWord(m_Counterexample.getWord()), m_SmtManager,
-				m_RootNode.getRootAnnot().getModGlobVarManager(),
-				m_IterationPW);
+				postcondition, null, new NestedWord(m_Counterexample.getWord()), m_SmtManager,
+				m_RootNode.getRootAnnot().getModGlobVarManager());
 
 		LBool feasibility = m_TraceChecker.isCorrect();
 		if (feasibility != LBool.UNSAT) {

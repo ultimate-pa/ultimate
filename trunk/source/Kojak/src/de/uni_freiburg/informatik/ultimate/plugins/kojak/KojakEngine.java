@@ -112,9 +112,8 @@ public class KojakEngine {
 	
 	private IPredicate[] getInterpolants(NestedWord<CodeBlock> errorPathNW) {
 		TraceChecker traceChecker = new TraceChecker(mTruePredicate, 
-				mFalsePredicate, errorPathNW, mSmtManager, 
-				mOriginalRoot.getRootAnnot().getModGlobVarManager(), 
-				dumpInitialize());
+				mFalsePredicate, null, errorPathNW, mSmtManager, 
+				mOriginalRoot.getRootAnnot().getModGlobVarManager());
 		
 		LBool isSafe = traceChecker.isCorrect();
 		if(isSafe == LBool.UNSAT) {

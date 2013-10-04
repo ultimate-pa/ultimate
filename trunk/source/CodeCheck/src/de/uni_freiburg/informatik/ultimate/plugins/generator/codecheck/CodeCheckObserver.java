@@ -237,10 +237,10 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 					TraceChecker traceChecker = new TraceChecker(
 							m_truePredicate, // checks whether the trace is feasible, i.e. the formula is satisfiable
 							m_falsePredicate,  //return LBool.UNSAT if trace is infeasible
+							null,
 							errorRun.getWord(),
 							m_smtManager, 
-							m_originalRoot.getRootAnnot().getModGlobVarManager(), 
-							dumpInitialize());
+							m_originalRoot.getRootAnnot().getModGlobVarManager());
 					LBool isSafe = traceChecker.isCorrect();
 					if(isSafe == LBool.UNSAT) { //trace is infeasible
 						PredicateUnifier pu = new PredicateUnifier(m_smtManager, m_truePredicate, m_falsePredicate);

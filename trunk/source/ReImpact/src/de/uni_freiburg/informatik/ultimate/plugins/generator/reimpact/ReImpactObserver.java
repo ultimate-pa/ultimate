@@ -273,9 +273,8 @@ public class ReImpactObserver implements IUnmanagedObserver {
 						errorPath.getFirst(), errorPathAsNestedWord);
 
 		TraceChecker traceChecker = new TraceChecker(m_truePredicate, 
-				m_falsePredicate, errorNWP.getSecond(), m_smtManager, 
-				m_rootAnnot.getModGlobVarManager(),
-				dumpInitialize());
+				m_falsePredicate, null, errorNWP.getSecond(), m_smtManager, 
+				m_rootAnnot.getModGlobVarManager());
 		LBool isSafe = traceChecker.isCorrect();
 		m_pathChecks++;
 		
@@ -601,8 +600,8 @@ public class ReImpactObserver implements IUnmanagedObserver {
 				prolongNestedWordUnwNodePair(v, x);
 		
 		TraceChecker traceChecker = new TraceChecker(v.getPredicate(), 
-				w.getPredicate(), newPathNWP.getSecond(), m_smtManager, 
-				m_rootAnnot.getModGlobVarManager(), dumpInitialize());
+				w.getPredicate(), null, newPathNWP.getSecond(), m_smtManager, 
+				m_rootAnnot.getModGlobVarManager());
 		
 		LBool isSafe = traceChecker.isCorrect();
 		

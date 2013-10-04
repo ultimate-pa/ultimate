@@ -257,8 +257,8 @@ public class BinaryStatePredicateManager {
 		if (isTrue(siPred)) {
 			siPred = truePredicate;
 		}
-		traceChecker = new TraceChecker(truePredicate, siPred, stem, m_SmtManager,
-				rootAnnot.getModGlobVarManager(), null);
+		traceChecker = new TraceChecker(truePredicate, siPred, null, stem, m_SmtManager,
+				rootAnnot.getModGlobVarManager());
 		LBool stemCheck = traceChecker.isCorrect();
 		if (stemCheck == LBool.UNSAT) {
 			traceChecker.unlockSmtManager();
@@ -267,8 +267,8 @@ public class BinaryStatePredicateManager {
 		} else {
 			result = false;			
 		}
-		traceChecker = new TraceChecker(siPred, siPred, stem, m_SmtManager,
-				rootAnnot.getModGlobVarManager(), null);
+		traceChecker = new TraceChecker(siPred, siPred, null, stem, m_SmtManager,
+				rootAnnot.getModGlobVarManager());
 		LBool loopCheck = traceChecker.isCorrect();
 		if (loopCheck == LBool.UNSAT) {
 			traceChecker.unlockSmtManager();
@@ -282,8 +282,7 @@ public class BinaryStatePredicateManager {
 	
 	public boolean checkRankDecrease(NestedWord<CodeBlock> loop, RootAnnot rootAnnot) {
 		TraceChecker traceChecker = new TraceChecker(m_RankEqualityAndSi, 
-				m_RankDecrease, loop, m_SmtManager,	rootAnnot.getModGlobVarManager(),
-				null);
+				m_RankDecrease, null, loop, m_SmtManager,	rootAnnot.getModGlobVarManager());
 		LBool loopCheck = traceChecker.isCorrect();
 		traceChecker.unlockSmtManager();
 		if (loopCheck == LBool.UNSAT) {

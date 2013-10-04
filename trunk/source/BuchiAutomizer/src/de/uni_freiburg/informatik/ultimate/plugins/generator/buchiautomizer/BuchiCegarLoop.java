@@ -393,9 +393,8 @@ public class BuchiCegarLoop {
 			LBool feasibility;
 			m_ConcatenatedCounterexample = stem;
 			m_TraceChecker = new TraceChecker(m_TruePredicate, 
-					m_FalsePredicate, m_ConcatenatedCounterexample.getWord(), 
-					m_SmtManager, m_RootNode.getRootAnnot().getModGlobVarManager(),
-					null);
+					m_FalsePredicate, null, m_ConcatenatedCounterexample.getWord(), 
+					m_SmtManager, m_RootNode.getRootAnnot().getModGlobVarManager());
 			feasibility = m_TraceChecker.isCorrect();
 			if (feasibility == LBool.UNSAT) {
 				s_Logger.info("stem already infeasible");
@@ -403,9 +402,8 @@ public class BuchiCegarLoop {
 				m_TraceChecker.unlockSmtManager();
 				m_ConcatenatedCounterexample = loop;
 				m_TraceChecker = new TraceChecker(m_TruePredicate, 
-						m_FalsePredicate, m_ConcatenatedCounterexample.getWord(),
-						m_SmtManager, m_RootNode.getRootAnnot().getModGlobVarManager(),
-						null);
+						m_FalsePredicate, null, m_ConcatenatedCounterexample.getWord(),
+						m_SmtManager, m_RootNode.getRootAnnot().getModGlobVarManager());
 				feasibility = m_TraceChecker.isCorrect();
 				if (feasibility == LBool.UNSAT) {
 					s_Logger.info("loop already infeasible");
@@ -413,9 +411,8 @@ public class BuchiCegarLoop {
 					m_TraceChecker.unlockSmtManager();
 					m_ConcatenatedCounterexample = stem.concatenate(loop);
 					m_TraceChecker = new TraceChecker(m_TruePredicate, 
-							m_FalsePredicate, m_ConcatenatedCounterexample.getWord(), 
-							m_SmtManager, m_RootNode.getRootAnnot().getModGlobVarManager(),
-							null);
+							m_FalsePredicate, null, m_ConcatenatedCounterexample.getWord(), 
+							m_SmtManager, m_RootNode.getRootAnnot().getModGlobVarManager());
 					feasibility = m_TraceChecker.isCorrect();
 
 				}
@@ -689,9 +686,8 @@ public class BuchiCegarLoop {
 //					m_RootNode.getRootAnnot().getEntryNodes(),
 //					null);
 			m_TraceChecker = new TraceChecker(m_Bspm.getStemPrecondition(), 
-					m_Bspm.getStemPostcondition(), stem, m_SmtManager,
-					buchiModGlobalVarManager,
-					null);
+					m_Bspm.getStemPostcondition(), null, stem, m_SmtManager,
+					buchiModGlobalVarManager);
 			LBool stemCheck = m_TraceChecker.isCorrect();
 			IPredicate[] stemInterpolants;
 			if (stemCheck == LBool.UNSAT) {
@@ -706,9 +702,8 @@ public class BuchiCegarLoop {
 			PredicateUnifier pu = new PredicateUnifier(m_SmtManager, 
 					m_Bspm.getRankEqAndSi(), m_Bspm.getHondaPredicate());
 			m_TraceChecker = new TraceChecker(m_Bspm.getRankEqAndSi(), 
-					m_Bspm.getHondaPredicate(), loop, m_SmtManager,
-					buchiModGlobalVarManager,
-					null);
+					m_Bspm.getHondaPredicate(), null, loop, m_SmtManager,
+					buchiModGlobalVarManager);
 			LBool loopCheck = m_TraceChecker.isCorrect();
 			IPredicate[] loopInterpolants;
 			if (loopCheck == LBool.UNSAT) {
