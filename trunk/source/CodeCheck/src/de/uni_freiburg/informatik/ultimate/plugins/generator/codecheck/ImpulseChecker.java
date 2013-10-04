@@ -306,10 +306,10 @@ public class ImpulseChecker extends CodeChecker {
 		}
 
 		if (label instanceof Return) {
-			source.connectOutgoingReturn(newDest,
-					((AppHyperEdge) edge).getHier(), (Return) edge.getStatement());
+			source.connectOutgoingReturn(
+					((AppHyperEdge) edge).getHier(), (Return) edge.getStatement(), newDest);
 		} else {
-			source.connectOutgoing(newDest, label);
+			source.connectOutgoing(label, newDest);
 		}
 
 		edge.disconnect();
