@@ -114,10 +114,10 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 			for (AppEdge outEdge : oldNode.getOutgoingEdges()) {
 				if (outEdge instanceof AppHyperEdge) {
 					AppHyperEdge outHypEdge = (AppHyperEdge) outEdge;
-					newNode.connectOutgoingReturn(copy.get(outHypEdge.getTarget()), 
-							copy.get(outHypEdge.getHier()), (Return) outHypEdge.getStatement());
+					newNode.connectOutgoingReturn(copy.get(outHypEdge.getHier()), 
+							(Return) outHypEdge.getStatement(), copy.get(outHypEdge.getTarget()));
 				} else {
-					newNode.connectOutgoing(copy.get(outEdge.getTarget()), outEdge.getStatement());
+					newNode.connectOutgoing(outEdge.getStatement(), copy.get(outEdge.getTarget()));
 				}
 			}
 		}

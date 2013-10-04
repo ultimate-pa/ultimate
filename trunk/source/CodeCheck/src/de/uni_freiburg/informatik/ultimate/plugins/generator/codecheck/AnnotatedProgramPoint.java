@@ -67,10 +67,11 @@ public class AnnotatedProgramPoint extends ModifiableExplicitEdgesMultigraph<Ann
 		if(copyOutgoingEdges) {
 			for (AppEdge oldOutEdge : oldApp.getOutgoingEdges()) {
 				if (oldOutEdge instanceof AppHyperEdge) {
-					this.connectOutgoingReturn(oldOutEdge.getTarget(), 
-							((AppHyperEdge) oldOutEdge).getHier(), (Return) oldOutEdge.getStatement());
+					this.connectOutgoingReturn( 
+							((AppHyperEdge) oldOutEdge).getHier(), 
+							(Return) oldOutEdge.getStatement(), oldOutEdge.getTarget());
 				} else {
-					this.connectOutgoing(oldOutEdge.getTarget(), oldOutEdge.getStatement());
+					this.connectOutgoing(oldOutEdge.getStatement(), oldOutEdge.getTarget());
 				}
 			}
 		}
@@ -121,15 +122,15 @@ public class AnnotatedProgramPoint extends ModifiableExplicitEdgesMultigraph<Ann
 	}
 	
 	
-	public void connectOutgoing(AnnotatedProgramPoint target, CodeBlock statement) {
+	public void connectOutgoing(CodeBlock statement, AnnotatedProgramPoint target) {
 		assert !(statement instanceof Return);
 		AppEdge edge = new AppEdge(this, statement, target);
 		this.mOutgoingEdges.add(edge);
 		target.mIncomingEdges.add(edge);
 	}
 	
-	public void connectOutgoingReturn(AnnotatedProgramPoint target, AnnotatedProgramPoint hier, 
-			Return returnStm) {
+	public void connectOutgoingReturn(AnnotatedProgramPoint hier, 
+			Return returnStm, AnnotatedProgramPoint target) {
 		AppHyperEdge hyperEdge = new AppHyperEdge(this, hier, returnStm, target);
 		hier._outgoingHyperEdges.add(hyperEdge);
 		this.mOutgoingEdges.add(hyperEdge);

@@ -71,56 +71,6 @@ public abstract class CodeChecker {
 		return m_predicateUnifier.getOrConstructPredicate(tvp.getFormula(), tvp.getVars(), tvp.getProcedures());
 //		return m_smtManager.newPredicate(tvp.getFormula(), tvp.getProcedures(), tvp.getVars(), tvp.getClosedFormula());
 	}
-
-	/**
-	 * Check if an edge between two AnnotatedProgramPoints is satisfiable or not, works with
-	 * the cases if the edge is a normal edge or a call edge.
-	 * @param sourceNode
-	 * @param edgeLabel
-	 * @param destinationNode
-	 * @return
-	 */
-	protected boolean isSatEdge(AnnotatedProgramPoint sourceNode, CodeBlock edgeLabel,
-			AnnotatedProgramPoint destinationNode) {
-		if (edgeLabel instanceof DummyCodeBlock)
-			return false;
-//		System.out.print(".");
-		
-		if (edgeLabel instanceof Call) 
-			return m_smtManager.isInductiveCall(sourceNode.getPredicate(), (Call) edgeLabel, negatePredicate(destinationNode.getPredicate())) != LBool.UNSAT;
-		
-		return m_smtManager.isInductive(sourceNode.getPredicate(), edgeLabel, negatePredicate(destinationNode.getPredicate())) != LBool.UNSAT;
-	}
-	
-	/**
-	 * Check if a return edge between two AnnotatedProgramPoints is satisfiable or not.
-	 * @param sourceNode
-	 * @param edgeLabel
-	 * @param destinationNode
-	 * @param callNode
-	 * @return
-	 */
-	protected boolean isSatRetEdge(AnnotatedProgramPoint sourceNode, Return edgeLabel,
-			AnnotatedProgramPoint destinationNode, AnnotatedProgramPoint callNode) {
-//		System.out.print(".");
-		return m_smtManager.isInductiveReturn(sourceNode.getPredicate(), 
-				callNode.getPredicate(), 
-				(Return) edgeLabel, 
-				negatePredicate(destinationNode.getPredicate())) != LBool.UNSAT;
-	}
-	
-	protected void connectOutgoingIfSat(AnnotatedProgramPoint source,
-			CodeBlock statement, AnnotatedProgramPoint target) {
-		if (isSatEdge(source, statement, target))
-			source.connectOutgoing(target, statement);
-	}
-
-	protected void connectOutgoingReturnIfSat(AnnotatedProgramPoint source,
-			AnnotatedProgramPoint hier, Return statement,
-			AnnotatedProgramPoint target) {
-		if (isSatRetEdge(source, statement, target, hier))
-			source.connectOutgoingReturn(target, hier, statement);
-	}	
 	
 	protected boolean isValidEdge(AnnotatedProgramPoint sourceNode, CodeBlock edgeLabel,
 			AnnotatedProgramPoint destinationNode) {

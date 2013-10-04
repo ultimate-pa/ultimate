@@ -6,10 +6,13 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map.Entry;
 
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
+import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
@@ -27,6 +30,9 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
  */
 public class UltimateChecker extends CodeChecker {
 
+	HashMap<AnnotatedProgramPoint, HashMap<CodeBlock, AnnotatedProgramPoint>> _pre2stm2post_toConnectIfSat;
+	HashMap<AnnotatedProgramPoint, HashMap<AnnotatedProgramPoint, HashMap<Return, AnnotatedProgramPoint>>> _pre2hier2stm2post_toConnectIfSat;
+	
 	public UltimateChecker(IElement root, SmtManager m_smtManager,
 			IPredicate m_truePredicate, IPredicate m_falsePredicate,
 			TAPreferences m_taPrefs, RootNode m_originalRoot,
@@ -73,6 +79,7 @@ public class UltimateChecker extends CodeChecker {
 			
 			oldInEdge.disconnect();
 		}
+		
 		//connect successors of old node to new nodes, disconnect them from old node
 		AppEdge[] oldOutEdges = oldNode.getOutgoingEdges().toArray(new AppEdge[]{});
 		for (AppEdge oldOutEdge : oldOutEdges) {
@@ -134,37 +141,6 @@ public class UltimateChecker extends CodeChecker {
 		}
 	}
 	
-//	private boolean hiersHaveReturnPredSetCorrect(
-//			AbstractCollection<AnnotatedProgramPoint> possibleReturnPreds) {
-//		boolean result = true;
-//		for (AnnotatedProgramPoint node : possibleReturnPreds)
-//			for (AnnotatedProgramPoint hier : node.getOutgoingReturnCallPreds())
-//				if (hier != null)
-//					result &= hier.getNodesThatThisIsReturnCallPredOf()
-//							.contains(node);
-//		if (!result)
-//			_graphWriter.writeGraphAsImage(m_graphRoot, "graph_err");
-//		return result;
-//	}
-
-//	private boolean listsAreOfEqualSize(AnnotatedProgramPoint[][] newNodes,
-//			int interpolantsCount) {
-//		boolean result = true;
-//		for (int i = 0; i < interpolantsCount; ++i) {
-//			for (AnnotatedProgramPoint node : newNodes[i]) {
-//				if (node != null) {
-//					result &= node.m_outgoingReturnCallPreds.size() == node
-//							.getOutgoingNodes().size()
-//							&& node.getOutgoingNodes().size() == node
-//									.getOutgoingEdgeLabels().size();
-//				}
-//			}
-//		}
-//		return result;
-//	}
-
-
-
 	/**
 	 * Given an error trace with the corresponding interpolants, then it
 	 * modifies the graph accordingly.
@@ -185,35 +161,99 @@ public class UltimateChecker extends CodeChecker {
 		Collections.addAll(interpolantsDBG, interpolants);
 		CodeCheckObserver.s_Logger.debug(String.format("Inters: %s\n",
 				interpolantsDBG));
+		
+		
 
 		for (int i = 0; i < interpolants.length; i++) {
-//			splitNode(nodes[i + 1], new IPredicate[] { interpolants[i] });
+//			_pre2stm2post_toConnectIfSat = 
+//					new HashMap<AnnotatedProgramPoint, 
+//					HashMap<CodeBlock,AnnotatedProgramPoint>>();
+//			_pre2hier2stm2post_toConnectIfSat = 
+//					new HashMap<AnnotatedProgramPoint, 
+//					HashMap<AnnotatedProgramPoint,
+//					HashMap<Return,AnnotatedProgramPoint>>>();
 			splitNode(nodes[i + 1], interpolants[i]);
-		}
+//			makeConnections();
+		} 
+		
 		return true;
-
-		// HashMap <AnnotatedProgramPoint, HashSet <AnnotatedProgramPoint>>
-		// nodesClones = new HashMap <AnnotatedProgramPoint, HashSet
-		// <AnnotatedProgramPoint>>();
-		// HashMap <AnnotatedProgramPoint, HashSet <IPredicate>> map = new
-		// HashMap <AnnotatedProgramPoint, HashSet <IPredicate>>();
-		//
-		//
-		// for (int i = 0; i < interpolants.length; ++i) {
-		// if (!map.containsKey(nodes[i + 1])) {
-		// map.put(nodes[i + 1], new HashSet<IPredicate>());
-		// }
-		// map.get(nodes[i + 1]).add(interpolants[i]);
-		// }
-		// // Split each node with the corresponding interpolant(s) in the error
-		// trace.
-		// for (AnnotatedProgramPoint node : map.keySet()) {
-		// if (node == procedureRoot) {
-		// map.get(node).add(m_truePredicate);
-		// }
-		// splitNode(node, map.get(node).toArray(new IPredicate[]{}),
-		// nodesClones);
-		// }
-		// return true;
 	}
+	
+	private void makeConnections() {
+		for (Entry<AnnotatedProgramPoint, HashMap<CodeBlock, AnnotatedProgramPoint>> pre2  
+				: _pre2stm2post_toConnectIfSat.entrySet()) 
+			for (Entry<CodeBlock, AnnotatedProgramPoint> stm2 
+					: pre2.getValue().entrySet()) 
+				if (isSatEdge(pre2.getKey(), stm2.getKey(), stm2.getValue())) 
+					pre2.getKey().connectOutgoing(stm2.getKey(), stm2.getValue());
+		
+		for (Entry<AnnotatedProgramPoint, HashMap<AnnotatedProgramPoint, HashMap<Return, AnnotatedProgramPoint>>> pre2
+				: _pre2hier2stm2post_toConnectIfSat.entrySet())
+			for (Entry<AnnotatedProgramPoint, HashMap<Return, AnnotatedProgramPoint>> hier2  
+					: pre2.getValue().entrySet()) 
+				for (Entry<Return, AnnotatedProgramPoint> stm2 
+						: hier2.getValue().entrySet()) 
+					if (isSatRetEdge(pre2.getKey(), hier2.getKey(), stm2.getKey(), stm2.getValue())) 
+						pre2.getKey().connectOutgoingReturn(hier2.getKey(), stm2.getKey(), stm2.getValue());	
+	}
+
+		/**
+	 * Check if an edge between two AnnotatedProgramPoints is satisfiable or not, works with
+	 * the cases if the edge is a normal edge or a call edge.
+	 * @param sourceNode
+	 * @param edgeLabel
+	 * @param destinationNode
+	 * @return
+	 */
+	protected boolean isSatEdge(AnnotatedProgramPoint sourceNode, CodeBlock edgeLabel,
+			AnnotatedProgramPoint destinationNode) {
+		if (edgeLabel instanceof DummyCodeBlock)
+			return false;
+//		System.out.print(".");
+		
+		if (edgeLabel instanceof Call) 
+			return m_smtManager.isInductiveCall(sourceNode.getPredicate(), (Call) edgeLabel, negatePredicate(destinationNode.getPredicate())) != LBool.UNSAT;
+		
+		return m_smtManager.isInductive(sourceNode.getPredicate(), edgeLabel, negatePredicate(destinationNode.getPredicate())) != LBool.UNSAT;
+	}
+	
+	/**
+	 * Check if a return edge between two AnnotatedProgramPoints is satisfiable or not.
+	 * @param sourceNode
+	 * @param edgeLabel
+	 * @param destinationNode
+	 * @param callNode
+	 * @return
+	 */
+	protected boolean isSatRetEdge(AnnotatedProgramPoint sourceNode, AnnotatedProgramPoint callNode, Return edgeLabel,
+			AnnotatedProgramPoint destinationNode) {
+//		System.out.print(".");
+		return m_smtManager.isInductiveReturn(sourceNode.getPredicate(), 
+				callNode.getPredicate(), 
+				(Return) edgeLabel, 
+				negatePredicate(destinationNode.getPredicate())) != LBool.UNSAT;
+	}
+	
+	protected void connectOutgoingIfSat(AnnotatedProgramPoint source,
+			CodeBlock statement, AnnotatedProgramPoint target) {
+//		if (_pre2stm2post_toConnectIfSat.get(source) == null)
+//			_pre2stm2post_toConnectIfSat.put(source, new HashMap<CodeBlock, AnnotatedProgramPoint>());
+//		_pre2stm2post_toConnectIfSat.get(source).put(statement, target);
+		
+		if (isSatEdge(source, statement, target))
+			source.connectOutgoing(statement, target);
+	}
+
+	protected void connectOutgoingReturnIfSat(AnnotatedProgramPoint source,
+			AnnotatedProgramPoint hier, Return statement,
+			AnnotatedProgramPoint target) {
+//		if (_pre2hier2stm2post_toConnectIfSat.get(source) == null)
+//			_pre2hier2stm2post_toConnectIfSat.put(source, new HashMap<AnnotatedProgramPoint, HashMap<Return,AnnotatedProgramPoint>>());
+//		if (_pre2hier2stm2post_toConnectIfSat.get(source).get(hier) == null)
+//			_pre2hier2stm2post_toConnectIfSat.get(source).put(hier, new HashMap<Return, AnnotatedProgramPoint>());
+//		_pre2hier2stm2post_toConnectIfSat.get(source).get(hier).put(statement, target);
+		
+		if (isSatRetEdge(source, hier, statement, target))
+			source.connectOutgoingReturn(hier, statement, target);
+	}	
 }
