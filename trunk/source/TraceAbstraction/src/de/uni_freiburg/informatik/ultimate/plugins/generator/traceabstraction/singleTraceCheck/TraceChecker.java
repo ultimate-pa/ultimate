@@ -144,10 +144,7 @@ public class TraceChecker {
 	}
 	
 	/**
-	 * Like three-argument-checkTrace-Method above but for traces which contain
-	 * pending returns. The pendingContext maps the positions of pending returns
-	 * to predicates which define possible variable valuations in the context to
-	 * which the return leads the trace.
+	 * Commit additionally the DefaultTransFormulas 
 	 * 
 	 */
 	private TraceChecker(IPredicate precondition, IPredicate postcondition,
@@ -495,7 +492,7 @@ public class TraceChecker {
 
 			TraceChecker tc = new TraceChecker(precondition, 
 					interpolantAtReturnPosition, pendingContexts, subtrace, 
-					m_SmtManager, m_ModifiedGlobals, null);
+					m_SmtManager, m_ModifiedGlobals);
 			LBool isSafe = tc.isCorrect();
 			assert isSafe == LBool.UNSAT;
 			
