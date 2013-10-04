@@ -48,9 +48,8 @@ public class TraceCheckerSpWp extends TraceChecker {
 
 	public TraceCheckerSpWp(IPredicate precondition, IPredicate postcondition,
 			NestedWord<CodeBlock> trace, SmtManager smtManager,
-			ModifiableGlobalVariableManager modifiedGlobals,
-			PrintWriter debugPW) {
-		super(precondition, postcondition, trace, smtManager, modifiedGlobals, debugPW);
+			ModifiableGlobalVariableManager modifiedGlobals) {
+		super(precondition, postcondition, null, trace, smtManager, modifiedGlobals);
 	}
 
 	@Override
@@ -351,7 +350,8 @@ public class TraceCheckerSpWp extends TraceChecker {
 	 * TODO: documentation
 	 */
 	private boolean stillInfeasible(RelevantTransFormulas rv) {
-		TraceChecker tc = new TraceChecker(rv.getPrecondition(), rv.getPostcondition(), rv.getTrace(), m_SmtManager, m_ModifiedGlobals, null);
+		TraceChecker tc = new TraceChecker(rv.getPrecondition(), 
+				rv.getPostcondition(), null, rv.getTrace(), m_SmtManager, m_ModifiedGlobals);
 		tc.unlockSmtManager();
 		boolean result = (tc.isCorrect() == LBool.UNSAT);
 		return result;
