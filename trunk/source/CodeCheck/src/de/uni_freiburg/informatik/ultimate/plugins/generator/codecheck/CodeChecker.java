@@ -29,7 +29,7 @@ public abstract class CodeChecker {
 	IPredicate m_truePredicate;
 	IPredicate m_falsePredicate;
 	
-	EdgeChecker m_edgeChecker;
+	EdgeChecker _edgeChecker;
 	PredicateUnifier m_predicateUnifier;
 	
 	protected GraphWriter _graphWriter;
@@ -43,7 +43,7 @@ public abstract class CodeChecker {
 		this.m_originalRoot = originalRoot;
 		this.m_graphRoot = graphRoot;
 		
-		this.m_edgeChecker = edgeChecker;
+		this._edgeChecker = edgeChecker;
 		this.m_predicateUnifier = predicateUnifier;
 		
 		this._graphWriter = graphWriter;
@@ -72,6 +72,15 @@ public abstract class CodeChecker {
 //		return m_smtManager.newPredicate(tvp.getFormula(), tvp.getProcedures(), tvp.getVars(), tvp.getClosedFormula());
 	}
 	
+	/**
+	 * Given a predicate, return a predicate which is the negation of it, not showing it to the PredicateUnifier
+	 * @param a : The Predicate.
+	 */
+	protected IPredicate negatePredicateNoPU(IPredicate a) {
+		TermVarsProc tvp = m_smtManager.not(a);
+//		return m_predicateUnifier.getOrConstructPredicate(tvp.getFormula(), tvp.getVars(), tvp.getProcedures());
+		return m_smtManager.newPredicate(tvp.getFormula(), tvp.getProcedures(), tvp.getVars(), tvp.getClosedFormula());
+	}
 	protected boolean isValidEdge(AnnotatedProgramPoint sourceNode, CodeBlock edgeLabel,
 			AnnotatedProgramPoint destinationNode) {
 		if (edgeLabel instanceof DummyCodeBlock)
