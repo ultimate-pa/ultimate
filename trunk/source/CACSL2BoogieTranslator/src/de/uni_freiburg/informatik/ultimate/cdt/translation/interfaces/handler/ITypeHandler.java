@@ -112,7 +112,7 @@ public interface ITypeHandler extends IHandler {
      *            the type of the variable.
      * @return the expression to be used
      */
-    public Expression checkBooleanAssignment(ILocation loc, ASTType type,
+    public Expression convertArith2Boolean(ILocation loc, ASTType type,
             Expression expr);
 
     /**

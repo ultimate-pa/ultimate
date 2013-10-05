@@ -647,7 +647,7 @@ public class CHandler implements ICHandler {
                         ResultExpression rExpr = ((ResultExpression) (main
                                 .dispatch(d.getInitializer())));
                         auxVars.putAll(rExpr.auxVars);
-                        rExpr.expr = main.typeHandler.checkBooleanAssignment(
+                        rExpr.expr = main.typeHandler.convertArith2Boolean(
                                 loc, type, rExpr.expr);
                         Expression[] rhs = new Expression[] { rExpr.expr };
                         VariableLHS[] lhs = new VariableLHS[] { new VariableLHS(
@@ -894,8 +894,9 @@ public class CHandler implements ICHandler {
             case IASTUnaryExpression.op_not:
             	InferredType iType = (InferredType) o.expr.getType();
             	if (iType.getType() == InferredType.Type.Boolean) {
-                    return new ResultExpression(o.stmt, new UnaryExpression(loc, tBool,
-                            UnaryExpression.Operator.LOGICNEG, o.expr), o.decl, o.auxVars);
+                    return new ResultExpression(o.stmt,
+                    		wrapNegation(loc, tBool, o.expr),
+                    		o.decl, o.auxVars);
             	} else if (iType.getType() == InferredType.Type.Integer) {
             		IntegerLiteral zero = new IntegerLiteral(loc, SFO.NR0);
             		IntegerLiteral one = new IntegerLiteral(loc, SFO.NR1);
@@ -1093,12 +1094,14 @@ public class CHandler implements ICHandler {
                 o.stmt.addAll(a.stmt);
                 o.decl.addAll(a.decl);
                 o.auxVars.putAll(a.auxVars);
+                // TODO : I think this is redundant!
+            	// Matthias agreed and commented out
+                /*
                 if (idx.getType() instanceof InferredType
                         && ((InferredType) idx.getType()).getType() == Type.Pointer) {
-                    // TODO : I think this is redundant!
-                	// Matthias agreed and commented the following line
-                    // o.stmt.add(memoryHandler.checkValidityOfAccess(idx));
+                    o.stmt.add(memoryHandler.checkValidityOfAccess(idx));
                 }
+                */
                 ResultExpression rex = new ResultExpression(o.stmt, access,
                         o.decl, o.auxVars);
                 return rex;
@@ -1148,7 +1151,7 @@ public class CHandler implements ICHandler {
                 || l.expr instanceof ArrayAccessExpression
                 || l.expr instanceof StructAccessExpression) {
             if (r.expr instanceof IntegerLiteral && l.expr.getType() != null) {
-                r.expr = main.typeHandler.checkBooleanAssignment(loc,
+                r.expr = main.typeHandler.convertArith2Boolean(loc,
                         new PrimitiveType(loc, l.expr.getType(), l.expr
                                 .getType().toString()), r.expr);
             }
@@ -1220,42 +1223,46 @@ public class CHandler implements ICHandler {
             case IASTBinaryExpression.op_equals:
                 stmt.addAll(l.stmt);
                 stmt.addAll(r.stmt);
-                return new ResultExpression(stmt,
-                        new BinaryExpression(loc, tBool,
-                                BinaryExpression.Operator.COMPEQ, l.expr,
-                                r.expr), decl, auxVars);
+                return new ResultExpression(stmt, wrapBoolean2Int(loc,
+                        tBool, BinaryExpression.Operator.COMPEQ, l.expr,
+                        r.expr), decl, auxVars);
             case IASTBinaryExpression.op_greaterEqual:
                 stmt.addAll(l.stmt);
                 stmt.addAll(r.stmt);
-                return new ResultExpression(stmt, new BinaryExpression(loc,
-                        tBool, BinaryExpression.Operator.COMPGEQ, l.expr,
+                return new ResultExpression(stmt, wrapBoolean2Int(loc,
+                		tBool, BinaryExpression.Operator.COMPGEQ, l.expr,
                         r.expr), decl, auxVars);
             case IASTBinaryExpression.op_greaterThan:
                 stmt.addAll(l.stmt);
                 stmt.addAll(r.stmt);
-                return new ResultExpression(stmt,
-                        new BinaryExpression(loc, tBool,
-                                BinaryExpression.Operator.COMPGT, l.expr,
-                                r.expr), decl, auxVars);
+                return new ResultExpression(stmt, wrapBoolean2Int(loc,
+                		tBool, BinaryExpression.Operator.COMPGT, l.expr,
+                        r.expr), decl, auxVars);
             case IASTBinaryExpression.op_lessEqual:
                 stmt.addAll(l.stmt);
                 stmt.addAll(r.stmt);
-                return new ResultExpression(stmt, new BinaryExpression(loc,
-                        tBool, BinaryExpression.Operator.COMPLEQ, l.expr,
+                return new ResultExpression(stmt,  wrapBoolean2Int(loc,
+                		tBool, BinaryExpression.Operator.COMPLEQ, l.expr,
                         r.expr), decl, auxVars);
             case IASTBinaryExpression.op_lessThan:
                 stmt.addAll(l.stmt);
                 stmt.addAll(r.stmt);
-                return new ResultExpression(stmt,
-                        new BinaryExpression(loc, tBool,
-                                BinaryExpression.Operator.COMPLT, l.expr,
-                                r.expr), decl, auxVars);
+                return new ResultExpression(stmt, wrapBoolean2Int(loc,
+                		tBool, BinaryExpression.Operator.COMPLT, l.expr,
+                        r.expr), decl, auxVars);
             case IASTBinaryExpression.op_logicalAnd:
                 stmt.addAll(l.stmt);
                 if (r.auxVars.isEmpty() && l.auxVars.isEmpty()) {
                 	//no need for shortcut
-                	return new ResultExpression(stmt, new BinaryExpression(loc,
-                			tBool, Operator.LOGICAND, l.expr, r.expr), decl, auxVars);
+                	return new ResultExpression(stmt, wrapBoolean2Int(loc,
+                    		tBool, BinaryExpression.Operator.LOGICAND,
+                    		main.typeHandler.convertArith2Boolean(
+                    				loc, new PrimitiveType(loc, SFO.BOOL),
+                    				unwrapInt2BooleanExpr(l.expr)),
+                            main.typeHandler.convertArith2Boolean(
+                            		loc, new PrimitiveType(loc, SFO.BOOL),
+                            		unwrapInt2BooleanExpr(r.expr))),
+                            decl, auxVars);
                 }
                 // create and add tmp var #t~AND~UID
                 String resName = main.nameHandler
@@ -1275,7 +1282,7 @@ public class CHandler implements ICHandler {
                 stmt.add(aStat);
                 // if (left) {#t~AND~UID = right;}
                 // if (#t~AND~UID) { ... }
-                r.expr = main.typeHandler.checkBooleanAssignment(loc,
+                r.expr = main.typeHandler.convertArith2Boolean(loc,
                         new PrimitiveType(loc, SFO.BOOL), r.expr);
                 ArrayList<Statement> outerThenPart = new ArrayList<Statement>();
                 outerThenPart.addAll(r.stmt);
@@ -1283,7 +1290,7 @@ public class CHandler implements ICHandler {
                         .add(new AssignmentStatement(loc,
                                 new LeftHandSide[] { lhs },
                                 new Expression[] { r.expr }));
-                l.expr = main.typeHandler.checkBooleanAssignment(loc,
+                l.expr = main.typeHandler.convertArith2Boolean(loc,
                         new PrimitiveType(loc, SFO.BOOL), l.expr);
                 IfStatement ifStatement = new IfStatement(loc, l.expr,
                         outerThenPart.toArray(new Statement[0]),
@@ -1310,13 +1317,13 @@ public class CHandler implements ICHandler {
                         loc,
                         new LeftHandSide[] { lhs },
                         new Expression[] { new BooleanLiteral(loc, tBool, true) }) };
-                r.expr = main.typeHandler.checkBooleanAssignment(loc,
+                r.expr = main.typeHandler.convertArith2Boolean(loc,
                         new PrimitiveType(loc, SFO.BOOL), r.expr);
                 ArrayList<Statement> elsePart = new ArrayList<Statement>();
                 elsePart.addAll(r.stmt);
                 elsePart.add(new AssignmentStatement(loc,
                         new LeftHandSide[] { lhs }, new Expression[] { r.expr }));
-                l.expr = main.typeHandler.checkBooleanAssignment(loc,
+                l.expr = main.typeHandler.convertArith2Boolean(loc,
                         new PrimitiveType(loc, SFO.BOOL), l.expr);
                 ifStatement = new IfStatement(loc, l.expr, thenPart,
                         elsePart.toArray(new Statement[0]));
@@ -1328,9 +1335,8 @@ public class CHandler implements ICHandler {
                 stmt.addAll(l.stmt);
                 stmt.addAll(r.stmt);
                 assert (main.isAuxVarMapcomplete(decl, auxVars)) : "unhavoced auxvars";
-                return new ResultExpression(stmt, new BinaryExpression(loc,
-                        tBool, BinaryExpression.Operator.COMPNEQ, l.expr,
-                        r.expr), decl, auxVars);
+                return new ResultExpression(stmt, wrapBoolean2Int(loc, tBool,
+                		BinaryExpression.Operator.COMPNEQ, l.expr, r.expr), decl, auxVars);
             case IASTBinaryExpression.op_minus:
             case IASTBinaryExpression.op_plus:
             case IASTBinaryExpression.op_modulo:
@@ -1659,8 +1665,9 @@ public class CHandler implements ICHandler {
         ArrayList<Declaration> decl = new ArrayList<Declaration>();
         ArrayList<Statement> stmt = new ArrayList<Statement>();
 
-        ResultExpression condResult = ((ResultExpression) main.dispatch(node
-                .getConditionExpression()));
+        ResultExpression condResult = unwrapInt2BooleanResExpr(
+        		(ResultExpression) main.dispatch(
+        				node.getConditionExpression()));
         Expression cond = condResult.expr;
         decl.addAll(condResult.decl);
         stmt.addAll(condResult.stmt);
@@ -1708,7 +1715,7 @@ public class CHandler implements ICHandler {
         }
         assert thenStmt != null;
         assert elseStmt != null;
-        cond = main.typeHandler.checkBooleanAssignment(loc, new PrimitiveType(
+        cond = main.typeHandler.convertArith2Boolean(loc, new PrimitiveType(
                 loc, SFO.BOOL), cond);
         // TODO : handle if(pointer), if(pointer==NULL) and if(pointer==0)
         stmt.add(new IfStatement(loc, cond, thenStmt.toArray(new Statement[0]),
@@ -1774,7 +1781,8 @@ public class CHandler implements ICHandler {
             // translate condition
             IASTExpression cCondExpr = forStmt.getConditionExpression();
             if (cCondExpr != null)
-                condResult = ((ResultExpression) main.dispatch(cCondExpr));
+                condResult = unwrapInt2BooleanResExpr(
+                		(ResultExpression) main.dispatch(cCondExpr));
             else
                 condResult = new ResultExpression(new BooleanLiteral(loc,
                         new InferredType(Type.Boolean), true),
@@ -1829,7 +1837,7 @@ public class CHandler implements ICHandler {
         }
 
         decl.addAll(condResult.decl);
-        condResult.expr = main.typeHandler.checkBooleanAssignment(loc,
+        condResult.expr = main.typeHandler.convertArith2Boolean(loc,
                 new PrimitiveType(loc, SFO.BOOL), condResult.expr);
         IfStatement ifStmt;
         {
@@ -1894,8 +1902,8 @@ public class CHandler implements ICHandler {
 
     @Override
     public Result visit(Dispatcher main, IASTWhileStatement node) {
-        ResultExpression condResult = ((ResultExpression) main.dispatch(node
-                .getCondition()));
+        ResultExpression condResult = unwrapInt2BooleanResExpr(
+        		(ResultExpression) main.dispatch(node.getCondition()));
         Result bodyResult = main.dispatch(node.getBody());
         return handleLoops(main, node, bodyResult, condResult);
     }
@@ -1907,8 +1915,8 @@ public class CHandler implements ICHandler {
 
     @Override
     public Result visit(Dispatcher main, IASTDoStatement node) {
-        ResultExpression condResult = ((ResultExpression) main.dispatch(node
-                .getCondition()));
+        ResultExpression condResult = unwrapInt2BooleanResExpr(
+        		(ResultExpression) main.dispatch(node.getCondition()));
         Result bodyResult = main.dispatch(node.getBody());
         return handleLoops(main, node, bodyResult, condResult);
     }
@@ -2222,7 +2230,7 @@ public class CHandler implements ICHandler {
         VariableDeclaration tmpVar = SFO.getTempVarVariableDeclaration(tmpName, tmpIType, loc);
         decl.add(tmpVar);
         Expression condition = reLocCond.expr;
-        condition = main.typeHandler.checkBooleanAssignment(loc, new PrimitiveType(
+        condition = main.typeHandler.convertArith2Boolean(loc, new PrimitiveType(
                 loc, SFO.BOOL), condition);
         List<Statement> ifStatements = new ArrayList<Statement>();
         {
@@ -2345,6 +2353,114 @@ public class CHandler implements ICHandler {
         String msg = "Unsupported boogie AST node type: " + node.getClass();
         Dispatcher.error(loc, SyntaxErrorType.UnsupportedSyntax, msg);
         throw new UnsupportedSyntaxException(msg);
+    }
+
+    /**
+     * Wraps a Boolean expression into a Boogie if-then-else expression of type
+     * integer. Special handling for negation. Example:
+     * 
+     * Input: <code>x == 0</code>
+     * Output: <code>(x == 0) ? 1 : 0</code>
+     * 
+     * @param loc location
+     * @param tBool type (Boolean)
+     * @param op operator (binary except for negation (then null))
+     * @param lexpr left expression
+     * @param rexpr right expression (null for negation)
+     * @return wrapped expression
+     * 
+     * @author Christian
+     */
+    private Expression wrapBoolean2Int(final CACSLLocation loc,
+    		final InferredType tBool, final Operator op,
+    		final Expression lexpr, final Expression rexpr) {
+		return new IfThenElseExpression(loc,
+    			new BinaryExpression(loc, tBool, op, lexpr, rexpr),
+				new IntegerLiteral(loc, SFO.NR1),
+    			new IntegerLiteral(loc, SFO.NR0));
+	}
+
+    /**
+     * Handler for negation. If the operand is already wrapped, unwrap it.
+     * Else wrap it.
+     * @see wrapBoolean2Int, unwrapInt2Boolean
+     * 
+     * @param loc location
+     * @param tBool type (Boolean)
+     * @param expr expression
+     * @return wrapped or unwrapped expression
+     * 
+     * @author Christian
+     */
+	private Expression wrapNegation(final CACSLLocation loc,
+			final InferredType tBool, final Expression expr) {
+		// negation of already wrapped expression -> unwrap it again to Boolean
+		final Expression unwrapped = unwrapInt2BooleanHelper(expr);
+		if (unwrapped != null) {
+			return unwrapped;
+		}
+		// negation of base type -> wrap it to integer
+		return wrapBoolean2Int(loc, tBool, Operator.COMPEQ,
+				expr, new IntegerLiteral(loc, SFO.NR0));
+	}
+
+    /**
+     * Tries to unwrap a result expression that was wrapped before.
+     * 
+     * @param expr expression
+     * @return unwrapped expression or old expression
+     * 
+     * @author Christian
+     */
+    private ResultExpression unwrapInt2BooleanResExpr(
+    		final ResultExpression rex) {
+    	final Expression unwrapped = unwrapInt2BooleanHelper(rex.expr);
+    	if (unwrapped != null) {
+    		return new ResultExpression(
+    				rex.stmt, unwrapped, rex.decl, rex.auxVars);
+    	}
+    	return rex;
+    }
+
+    /**
+     * Tries to unwrap an expression that was wrapped before.
+     * 
+     * @param expr expression
+     * @return unwrapped expression or old expression
+     * 
+     * @author Christian
+     */
+    private Expression unwrapInt2BooleanExpr(final Expression expr) {
+    	final Expression unwrapped = unwrapInt2BooleanHelper(expr);
+    	if (unwrapped != null) {
+    		return unwrapped;
+    	}
+    	return expr;
+    }
+    
+    /**
+     * Checks whether a given expression is wrapped or not.
+     * In this case returns the unwrapped expression.
+     * 
+     * @param expr expression
+     * @return unwrapped expression or null
+     * 
+     * @author Christian
+     */
+    private Expression unwrapInt2BooleanHelper(final Expression expr) {
+    	if (expr instanceof IfThenElseExpression) {
+			final IfThenElseExpression iteEx = (IfThenElseExpression)expr;
+			final Expression thenPart = iteEx.getThenPart();
+			if ((thenPart instanceof IntegerLiteral) &&
+				(((IntegerLiteral)thenPart).getValue() == SFO.NR1)) {
+				final Expression elsePart = iteEx.getElsePart();
+				if ((elsePart instanceof IntegerLiteral) &&
+						(((IntegerLiteral)elsePart).getValue() == SFO.NR0)) {
+					return iteEx.getCondition();
+				}
+			}
+    	}
+    	return null;
     }
 
     @Override

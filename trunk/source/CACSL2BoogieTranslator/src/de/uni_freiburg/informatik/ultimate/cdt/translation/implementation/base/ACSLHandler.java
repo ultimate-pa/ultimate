@@ -200,7 +200,7 @@ public class ACSLHandler implements IACSLHandler {
         Expression left = (Expression) main.dispatch(node.getLeft()).node;
         Expression right = (Expression) main.dispatch(node.getRight()).node;
         if (left.getType() != null) {
-            right = main.typeHandler.checkBooleanAssignment(loc,
+            right = main.typeHandler.convertArith2Boolean(loc,
                     new PrimitiveType(loc, left.getType(), left.getType()
                             .toString()), right);
         }

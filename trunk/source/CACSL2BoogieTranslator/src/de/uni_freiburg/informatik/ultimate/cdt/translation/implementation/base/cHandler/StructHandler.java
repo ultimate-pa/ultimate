@@ -121,7 +121,7 @@ public class StructHandler {
                 assert fId != null;
                 LeftHandSide assLhs = new StructLHS(loc,
                         new InferredType(fType), lhs, fId);
-                relr.expr = main.typeHandler.checkBooleanAssignment(loc, fType,
+                relr.expr = main.typeHandler.convertArith2Boolean(loc, fType,
                         relr.expr);
                 stmt.add(new AssignmentStatement(loc,
                         new LeftHandSide[] { assLhs },

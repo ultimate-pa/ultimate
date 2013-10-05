@@ -404,7 +404,7 @@ public class SvCompCHandler extends CHandler {
                     } else { // it should be a "normal variable"
                         ResultExpression rExpr = ((ResultExpression) (main
                                 .dispatch(d.getInitializer())));
-                        rExpr.expr = main.typeHandler.checkBooleanAssignment(
+                        rExpr.expr = main.typeHandler.convertArith2Boolean(
                                 loc, type, rExpr.expr);
                         Expression[] rhs = new Expression[] { rExpr.expr };
                         VariableLHS[] lhs = new VariableLHS[] { new VariableLHS(

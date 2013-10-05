@@ -402,7 +402,7 @@ public class TypeHandler implements ITypeHandler {
     }
 
     @Override
-    public Expression checkBooleanAssignment(ILocation loc, ASTType type,
+    public Expression convertArith2Boolean(ILocation loc, ASTType type,
             Expression e) {
         if (e == null) {
             String msg = "Incorrect syntax! An expression is expected here!";
@@ -449,7 +449,7 @@ public class TypeHandler implements ITypeHandler {
                 }
             }
         } else if (type != null && type instanceof ArrayType) {
-            return checkBooleanAssignment(loc,
+            return convertArith2Boolean(loc,
                     ((ArrayType) type).getValueType(), e);
         }
         return e;

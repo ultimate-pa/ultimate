@@ -120,7 +120,7 @@ public class ArrayHandler {
                             Type.Integer), indices[i] + SFO.EMPTY);
 
                 stmt.add(cvar.getAccessAsserts(loc, idc));
-                relr.expr = main.typeHandler.checkBooleanAssignment(loc,
+                relr.expr = main.typeHandler.convertArith2Boolean(loc,
                         valueType, relr.expr);
                 stmt.add(new AssignmentStatement(loc,
                         new LeftHandSide[] { new ArrayLHS(loc, lhs, idc) },

@@ -631,7 +631,7 @@ public class FunctionHandler {
 			if (procedures.containsKey(methodName)
 					&& procedures.get(methodName).getInParams() != null
 					&& i < procedures.get(methodName).getInParams().length) {
-				in.expr = main.typeHandler.checkBooleanAssignment(loc,
+				in.expr = main.typeHandler.convertArith2Boolean(loc,
 						procedures.get(methodName).getInParams()[i].getType(),
 						in.expr);
 			}
@@ -730,7 +730,7 @@ public class FunctionHandler {
 			} else {
 				String id = outParams[0].getIdentifiers()[0];
 				VariableLHS[] lhs = new VariableLHS[] { new VariableLHS(loc, id) };
-				rhs = main.typeHandler.checkBooleanAssignment(loc,
+				rhs = main.typeHandler.convertArith2Boolean(loc,
 						outParams[0].getType(), rhs);
 				stmtList.add(new AssignmentStatement(loc, lhs,
 						new Expression[] { rhs }));
