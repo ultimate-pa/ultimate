@@ -14,8 +14,11 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.IOpWithDelayedDeadEndRemoval.UpDownEntry;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.model.IAnnotations;
+import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootAnnot;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.ISLPredicate;
@@ -36,26 +39,33 @@ public class HoareAnnotationFragments {
 	private static Logger s_Logger = 
 			UltimateServices.getInstance().getLogger(Activator.s_PLUGIN_ID);
 
-	private final Map<ProgramPoint, Map<IPredicate, Collection<IPredicate>>> m_ProgPoint2Context2State = 
+	protected Map<ProgramPoint, Map<IPredicate, Collection<IPredicate>>> m_ProgPoint2Context2State = 
 			new HashMap<ProgramPoint, Map<IPredicate, Collection<IPredicate>>>();
-	private final Map<IPredicate, IPredicate> m_Context2Entry = 
+	protected Map<IPredicate, IPredicate> m_Context2Entry = 
 			new HashMap<IPredicate, IPredicate>();
-	private final Map<ProgramPoint, Collection<IPredicate>> m_ProgPoint2StatesWithEmptyContext = 
+	protected Map<ProgramPoint, Collection<IPredicate>> m_ProgPoint2StatesWithEmptyContext = 
 			new HashMap<ProgramPoint, Collection<IPredicate>>();
-	private final Map<IPredicate, Collection<ProgramPoint>> m_Context2ProgPoint = 
+	protected Map<IPredicate, Collection<ProgramPoint>> m_Context2ProgPoint = 
 			new HashMap<IPredicate, Collection<ProgramPoint>>();
 	private final Set<IPredicate> m_ReplacedContexts = 
 			new HashSet<IPredicate>();
 	
 	private final RootAnnot m_rootAnnot;
 	private final SmtManager m_SmtManager;
+	
+	/**
+	 * What is the precondition for a context?
+	 * Strongest postcondition or entry given by automaton?
+	 */
+	private final boolean m_UseEntry;
 
 	
 	
 	
-	public HoareAnnotationFragments(RootAnnot rootAnnot, SmtManager smtManager) {
+	public HoareAnnotationFragments(RootAnnot rootAnnot, SmtManager smtManager, boolean useEntry) {
 		this.m_rootAnnot = rootAnnot;
 		this.m_SmtManager = smtManager;
+		this.m_UseEntry = useEntry;
 	}
 
 	/**
@@ -296,7 +306,12 @@ public class HoareAnnotationFragments {
 					formulaForContext = m_SmtManager.newPredicate(tvp.getFormula(), 
 							tvp.getProcedures(), tvp.getVars(), tvp.getClosedFormula());
 				}
-				ISLPredicate precondForContext = (ISLPredicate) m_Context2Entry.get(context);
+				IPredicate precondForContext;
+					if (m_UseEntry || containsAnOldVar(context)) {
+						precondForContext = m_Context2Entry.get(context);
+					} else {
+						precondForContext = smtManager.strongestPostcondition(context, getCall((ISLPredicate) context), true);
+					}
 				precondForContext = smtManager.renameGlobalsToOldGlobals(precondForContext);
 				addFormulasToLocNodes(pp, precondForContext, formulaForContext);
 			}
@@ -315,6 +330,33 @@ public class HoareAnnotationFragments {
 			}
 
 		}
+	}
+	
+	private Call getCall(ISLPredicate pred) {
+		ProgramPoint pp = pred.getProgramPoint();
+		Call result = null;
+		for (RCFGEdge edge  : pp.getOutgoingEdges()) {
+			if (edge instanceof Call) {
+				if (result == null) {
+					result = (Call) edge;
+				} else {
+					throw new UnsupportedOperationException("several outgoing calls");
+				}
+			}
+		}
+		if (result == null) {
+			throw new AssertionError("no outgoing call");
+		}
+		return result;
+	}
+	
+	private boolean containsAnOldVar(IPredicate p) {
+		for (BoogieVar bv : p.getVars()) {
+			if (bv.isOldvar()) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 }
