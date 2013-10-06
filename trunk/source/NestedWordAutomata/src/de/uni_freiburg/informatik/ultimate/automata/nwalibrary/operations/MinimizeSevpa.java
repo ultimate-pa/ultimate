@@ -24,6 +24,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.SummaryReturnTransition;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.MinimizeSevpa.EquivalenceClass;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 
 /**
@@ -2997,8 +2998,12 @@ public class MinimizeSevpa<LETTER,STATE> implements IOperation<LETTER,STATE> {
 
 			@Override
 			public STATE get(Object key) {
-				return m_Partition.m_mapState2EquivalenceClass.get(key).
-															getRepresentative();
+				EquivalenceClass eqClass = m_Partition.m_mapState2EquivalenceClass.get(key);
+				if (eqClass == null) {
+					return null;
+				} else {
+					return eqClass.getRepresentative();
+				}
 			}
 
 			@Override
