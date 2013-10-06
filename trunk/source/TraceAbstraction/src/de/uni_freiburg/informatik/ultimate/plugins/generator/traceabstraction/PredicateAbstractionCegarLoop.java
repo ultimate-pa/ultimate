@@ -24,7 +24,7 @@ public class PredicateAbstractionCegarLoop extends BasicCegarLoop {
 			Collection<ProgramPoint> errorLocs) {
 	
 		super(name, rootNode, smtManager, timingStatistics, taPrefs, errorLocs);
-		m_Haf = new HoareAnnotationFragments(rootNode.getRootAnnot(),super.m_SmtManager);
+		m_Haf = new HoareAnnotationFragments2(rootNode.getRootAnnot(),super.m_SmtManager, !m_RemoveDeadEnds);
 	}
 	
 	

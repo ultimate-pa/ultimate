@@ -25,7 +25,7 @@ public class PredicateFactoryRefinement extends PredicateFactory {
 	protected final Map<String,Map<String,ProgramPoint>> m_locNodes;
 	protected int m_Iteration;
 	protected final HoareAnnotationFragments m_HoareAnnotationFragments;
-	private final boolean m_MaintainHoareAnnotationFragments;
+	private final boolean m_MaintainHoareAnnotationFragments = false;
 	
 	
 	public PredicateFactoryRefinement(Map<String,Map<String,ProgramPoint>> locNodes,
@@ -35,7 +35,7 @@ public class PredicateFactoryRefinement extends PredicateFactory {
 							HoareAnnotationFragments haf) {
 		super(smtManager, taPrefs);
 		m_locNodes = locNodes;
-		m_MaintainHoareAnnotationFragments = maintainHoareAnnotationFragments;
+//		m_MaintainHoareAnnotationFragments = maintainHoareAnnotationFragments;
 		m_HoareAnnotationFragments = haf;
 	}
 

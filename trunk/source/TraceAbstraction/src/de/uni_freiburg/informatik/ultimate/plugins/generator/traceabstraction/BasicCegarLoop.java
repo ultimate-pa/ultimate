@@ -11,6 +11,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.Automaton2UltimateModel;
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.IDoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.Accepts;
@@ -57,10 +58,10 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 	
 	private final static boolean differenceInsteadOfIntersection = true;
 	
-	private final static boolean m_RemoveDeadEnds = true;
+	protected final static boolean m_RemoveDeadEnds = true;
 
 	
-	protected HoareAnnotationFragments m_Haf;
+	protected HoareAnnotationFragments2 m_Haf;
 
 	protected RunAnalyzer m_RunAnalyzer;
 
@@ -79,7 +80,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 	
 		super(name, rootNode, smtManager, taPrefs, errorLocs);
 		m_TimingStatistics = timingStatistics;
-		m_Haf = new HoareAnnotationFragments(rootNode.getRootAnnot(),super.m_SmtManager);
+		m_Haf = new HoareAnnotationFragments2(rootNode.getRootAnnot(),super.m_SmtManager, !m_RemoveDeadEnds);
 		m_StateFactoryForRefinement = new PredicateFactoryRefinement(
 				m_RootNode.getRootAnnot().getProgramPoints(),
 				super.m_SmtManager,
@@ -103,6 +104,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		
 		m_Abstraction = cFG2NestedWordAutomaton.getNestedWordAutomaton(
 						super.m_RootNode, m_StateFactoryForRefinement, super.m_ErrorLocs);
+		new HoareAnnotationExtractor((INestedWordAutomatonOldApi<CodeBlock, IPredicate>) m_Abstraction, m_Haf);
 	}
 	
 	
@@ -221,34 +223,23 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		
 		m_TimingStatistics.startDifference();
 		boolean explointSigmaStarConcatOfIA = !m_Pref.computeHoareAnnotation();
-		
 		PredicateFactory predicateFactory = (PredicateFactory) m_Abstraction.getStateFactory();
-		
 		INestedWordAutomatonOldApi<CodeBlock, IPredicate> oldAbstraction = 
 				(INestedWordAutomatonOldApi<CodeBlock, IPredicate>) m_Abstraction;
-		Map<IPredicate, Set<IPredicate>> removedDoubleDeckers = null;
-		Map<IPredicate, IPredicate> context2entry = null;
 		EdgeChecker edgeChecker = new EdgeChecker(m_SmtManager, 
 				m_RootNode.getRootAnnot().getModGlobVarManager());
 		if (differenceInsteadOfIntersection) {
 			s_Logger.debug("Start constructing difference");
 			assert(oldAbstraction.getStateFactory() == m_InterpolAutomaton.getStateFactory());
-			
-			IOpWithDelayedDeadEndRemoval<CodeBlock, IPredicate> diff;
-			
+			Difference<CodeBlock, IPredicate> diff;
 			switch (m_Pref.determinization()) {
 			case POWERSET:
 				PowersetDeterminizer<CodeBlock, IPredicate> psd = 
 					new PowersetDeterminizer<CodeBlock, IPredicate>(m_InterpolAutomaton, true);
-				if (m_Pref.differenceSenwa()) {
-					diff = new DifferenceSenwa<CodeBlock, IPredicate>(
-								oldAbstraction, m_InterpolAutomaton, psd, false);
-				} else {
 					diff = new Difference<CodeBlock, IPredicate>(
 							oldAbstraction, m_InterpolAutomaton, psd, 
 							m_StateFactoryForRefinement,
 							explointSigmaStarConcatOfIA);
-				}
 			break;
 			case BESTAPPROXIMATION:	
 				BestApproximationDeterminizer bed = 
@@ -276,15 +267,10 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 			case EAGERPOST:	
 				PostDeterminizer epd = new PostDeterminizer(edgeChecker, m_Pref, 
 									m_InterpolAutomaton,true);
-				if (m_Pref.differenceSenwa()) {
-					diff = new DifferenceSenwa<CodeBlock, IPredicate>(
-							oldAbstraction, m_InterpolAutomaton, epd, false);
-				} else {
 					diff = new Difference<CodeBlock, IPredicate>(
 							oldAbstraction, m_InterpolAutomaton, epd, 
 							m_StateFactoryForRefinement,
 							explointSigmaStarConcatOfIA);
-				}
 					s_Logger.info("Internal Transitions: " 
 							+ epd.m_AnswerInternalAutomaton + " answers given by automaton " 
 							+ epd.m_AnswerInternalCache + " answers given by cache " 
@@ -306,15 +292,10 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 			case LAZYPOST:	
 				PostDeterminizer lpd = new PostDeterminizer(edgeChecker,	m_Pref, 
 									m_InterpolAutomaton,false);
-				if (m_Pref.differenceSenwa()) {
-					diff = new DifferenceSenwa<CodeBlock, IPredicate>(
-							oldAbstraction, m_InterpolAutomaton, lpd, false);
-				} else {
 					diff = new Difference<CodeBlock, IPredicate>(
 							oldAbstraction, m_InterpolAutomaton, lpd, 
 							m_StateFactoryForRefinement,
 							explointSigmaStarConcatOfIA);
-				}
 				
 					s_Logger.info("Internal Transitions: " 
 							+ lpd.m_AnswerInternalAutomaton + " answers given by automaton " 
@@ -337,15 +318,10 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 			case SELFLOOP:
 				SelfloopDeterminizer sed = new SelfloopDeterminizer(
 						m_SmtManager, m_Pref, m_InterpolAutomaton);
-				if (m_Pref.differenceSenwa()) {
-					diff = new DifferenceSenwa<CodeBlock, IPredicate>(
-							oldAbstraction, m_InterpolAutomaton, sed, false);
-				} else {
 					diff = new Difference<CodeBlock, IPredicate>(
 							oldAbstraction, m_InterpolAutomaton, sed, 
 							m_StateFactoryForRefinement,
 							explointSigmaStarConcatOfIA);
-				}
 				s_Logger.info("Internal Selfloops: "+ sed.m_InternalSelfloop 
 						+ " Internal NonSelfloops " + sed.m_InternalNonSelfloop);
 				s_Logger.info("Call Selfloops: " + sed.m_CallSelfloop 
@@ -356,29 +332,23 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 			case STRONGESTPOST:
 				StrongestPostDeterminizer spd = new StrongestPostDeterminizer(
 						edgeChecker, m_Pref, m_InterpolAutomaton);
-				if (m_Pref.differenceSenwa()) {
-					diff = new DifferenceSenwa<CodeBlock, IPredicate>(
-							oldAbstraction, m_InterpolAutomaton, spd, false);
-				} else {
 					diff = new Difference<CodeBlock, IPredicate>(
 							oldAbstraction, m_InterpolAutomaton, spd, 
 							m_StateFactoryForRefinement,
 							explointSigmaStarConcatOfIA);
-				}
 			break;
 			default:
 				throw new UnsupportedOperationException();
 			}
+			
+			if (m_Pref.computeHoareAnnotation()) {
+				m_Haf.updateOnIntersection(diff.getFst2snd2res(), (IDoubleDeckerAutomaton<CodeBlock, IPredicate>) diff.getResult());
+			}
+			
 			if (m_RemoveDeadEnds) {
 				diff.removeDeadEnds();
 			}
-			if (m_RemoveDeadEnds && m_Pref.computeHoareAnnotation()) {
-				m_Haf.wipeReplacedContexts();
-				m_Haf.addDeadEndDoubleDeckers(diff);
-			}
 
-				
-				
 			m_Abstraction = (IAutomaton<CodeBlock, IPredicate>) diff.getResult();
 			m_DeadEndRemovalTime = diff.getDeadEndRemovalTime();
 			if (m_Pref.dumpAutomata()) {
@@ -406,8 +376,9 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 					new IntersectDD<CodeBlock, IPredicate>(
 							false, oldAbstraction, nia);
 			if (m_RemoveDeadEnds && m_Pref.computeHoareAnnotation()) {
-				m_Haf.wipeReplacedContexts();
-				m_Haf.addDeadEndDoubleDeckers(intersect);
+				throw new UnsupportedOperationException();
+//				m_Haf.wipeReplacedContexts();
+//				m_Haf.addDeadEndDoubleDeckers(intersect);
 			}
 			if (m_RemoveDeadEnds) {
 				intersect.removeDeadEnds();
@@ -433,7 +404,12 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 			long startTime = System.currentTimeMillis();
 			int oldSize = m_Abstraction.size();
 			INestedWordAutomatonOldApi<CodeBlock, IPredicate> newAbstraction = (INestedWordAutomatonOldApi<CodeBlock, IPredicate>) m_Abstraction;
-			Collection<Set<IPredicate>> partition = computePartition(newAbstraction);
+			Collection<Set<IPredicate>> partition;
+			if (m_RemoveDeadEnds) {
+				partition = computePartition(newAbstraction); 
+			} else {
+				partition = computePartitionDistinguishFinalNonFinal(newAbstraction);
+			}
 			boolean shrinkNwa = m_Pref.cutOffRequiresSameTransition();
 			INestedWordAutomatonOldApi<CodeBlock, IPredicate> minimized;
 			if (shrinkNwa) {
@@ -442,14 +418,16 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 				minimized = (new RemoveUnreachable<CodeBlock, IPredicate>(minimizeOp.getResult())).getResult();
 				if (m_Pref.computeHoareAnnotation()) {
 					Map<IPredicate, IPredicate> oldState2newState = minimizeOp.getOldState2newState();
-					m_Haf.updateContexts(oldState2newState);
+					m_Haf.updateOnMinimization(oldState2newState, (IDoubleDeckerAutomaton<CodeBlock, IPredicate>) minimized);
+//					m_Haf.updateContexts(oldState2newState);
 				}
 			} else {
 				MinimizeSevpa<CodeBlock, IPredicate> minimizeOp = new MinimizeSevpa<CodeBlock, IPredicate>(newAbstraction, partition, false, false, m_StateFactoryForRefinement);
 				minimized = minimizeOp.getResult();
 				if (m_Pref.computeHoareAnnotation()) {
 					Map<IPredicate, IPredicate> oldState2newState = minimizeOp.getOldState2newState();
-					m_Haf.updateContexts(oldState2newState);
+					m_Haf.updateOnMinimization(oldState2newState, (IDoubleDeckerAutomaton<CodeBlock, IPredicate>) minimized);
+//					m_Haf.updateContexts(oldState2newState);
 				}
 
 			}
@@ -485,18 +463,41 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 	
 	
 	
+	
+	private static Collection<Set<IPredicate>> computePartitionDistinguishFinalNonFinal(INestedWordAutomatonOldApi<CodeBlock, IPredicate> automaton) {
+		s_Logger.info("Start computation of initial partition.");
+		Collection<IPredicate> states = automaton.getStates();
+		Map<ProgramPoint, Set<IPredicate>> pp2pFin = new HashMap<ProgramPoint, Set<IPredicate>>();
+		Map<ProgramPoint, Set<IPredicate>> pp2pNonFin = new HashMap<ProgramPoint, Set<IPredicate>>();
+		for (IPredicate p : states) {
+			ISLPredicate sp = (ISLPredicate) p;
+			if (automaton.isFinal(sp)) {
+				pigeonHole(pp2pFin, sp);
+			} else {
+				pigeonHole(pp2pNonFin, sp);
+			}
+
+		}
+		Collection<Set<IPredicate>> partition = new ArrayList<Set<IPredicate>>();
+		for (ProgramPoint pp : pp2pFin.keySet()) {
+			Set<IPredicate> statesWithSamePP = pp2pFin.get(pp);
+			partition.add(statesWithSamePP);
+		}
+		for (ProgramPoint pp : pp2pNonFin.keySet()) {
+			Set<IPredicate> statesWithSamePP = pp2pNonFin.get(pp);
+			partition.add(statesWithSamePP);
+		}
+		s_Logger.info("Finished computation of initial partition.");
+		return partition;
+	}
+	
 	private static Collection<Set<IPredicate>> computePartition(INestedWordAutomatonOldApi<CodeBlock, IPredicate> automaton) {
 		s_Logger.info("Start computation of initial partition.");
 		Collection<IPredicate> states = automaton.getStates();
 		Map<ProgramPoint, Set<IPredicate>> pp2p = new HashMap<ProgramPoint, Set<IPredicate>>();
 		for (IPredicate p : states) {
 			ISLPredicate sp = (ISLPredicate) p;
-			Set<IPredicate> statesWithSamePP = pp2p.get(sp.getProgramPoint());
-			if (statesWithSamePP == null) {
-				statesWithSamePP = new HashSet<IPredicate>();
-				pp2p.put(sp.getProgramPoint(), statesWithSamePP);
-			}
-			statesWithSamePP.add(p);
+			pigeonHole(pp2p, sp);
 		}
 		Collection<Set<IPredicate>> partition = new ArrayList<Set<IPredicate>>();
 		for (ProgramPoint pp : pp2p.keySet()) {
@@ -505,6 +506,20 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		}
 		s_Logger.info("Finished computation of initial partition.");
 		return partition;
+	}
+
+
+	/**
+	 * Pigeon-hole (german: einsortieren) predicates according to their ProgramPoint
+	 */
+	private static void pigeonHole(Map<ProgramPoint, Set<IPredicate>> pp2p,
+			ISLPredicate sp) {
+		Set<IPredicate> statesWithSamePP = pp2p.get(sp.getProgramPoint());
+		if (statesWithSamePP == null) {
+			statesWithSamePP = new HashSet<IPredicate>();
+			pp2p.put(sp.getProgramPoint(), statesWithSamePP);
+		}
+		statesWithSamePP.add(sp);
 	}
 	
 	private boolean eachStateIsFinal(Collection<IPredicate> states, INestedWordAutomatonOldApi<CodeBlock, IPredicate> automaton) {
@@ -600,7 +615,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 	protected void computeCFGHoareAnnotation() {
 		INestedWordAutomatonOldApi<CodeBlock, IPredicate> abstraction = 
 				(INestedWordAutomatonOldApi<CodeBlock, IPredicate>) m_Abstraction;
-		new HoareAnnotationExtractor(abstraction, m_Haf);
+//		new HoareAnnotationExtractor(abstraction, m_Haf);
 		m_Haf.addHoareAnnotationToCFG(m_SmtManager);
 	}
 	
