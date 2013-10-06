@@ -61,6 +61,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.NamedType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.PrimitiveType;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.RealLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StructLHS;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StructType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.TypeDeclaration;
@@ -428,11 +429,15 @@ public class TypeHandler implements ITypeHandler {
                                 // everything is ok ...
                                 break;
                             case Integer:
-                            case Real:
                                 e = new BinaryExpression(loc, new InferredType(
                                         InferredType.Type.Boolean),
                                         BinaryExpression.Operator.COMPNEQ, e,
                                         new IntegerLiteral(loc, SFO.NR0));
+                            case Real:
+                                e = new BinaryExpression(loc, new InferredType(
+                                        InferredType.Type.Boolean),
+                                        BinaryExpression.Operator.COMPNEQ, e,
+                                        new RealLiteral(loc, SFO.NR0F));
                                 break;
                             case Unknown:
                             default:
