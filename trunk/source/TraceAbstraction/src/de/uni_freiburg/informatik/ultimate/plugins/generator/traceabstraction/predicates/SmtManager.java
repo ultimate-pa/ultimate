@@ -1653,9 +1653,9 @@ public class SmtManager {
 	 * Construct Predicate which represents the same Predicate as ps, but
 	 * where all globalVars are renamed to oldGlobalVars.
 	 */
-	public ISLPredicate renameGlobalsToOldGlobals(ISLPredicate ps) {
+	public IPredicate renameGlobalsToOldGlobals(IPredicate ps) {
 		if (isDontCare(ps)){
-			return this.newDontCarePredicate(ps.getProgramPoint());
+			throw new UnsupportedOperationException("don't cat not expected");
 		}
 		
 		Set<BoogieVar> allVars = ps.getVars();
@@ -1677,9 +1677,10 @@ public class SmtManager {
 			}
 		}
 		Term renamedFormula = (new Substitution(substitutionMapping, m_Script)).transform(ps.getFormula());
+		renamedFormula = simplify(renamedFormula);
 		SmtManager.TermVarsProc tvp = this.computeTermVarsProc(renamedFormula);
-		SPredicate result = this.newSPredicate(ps.getProgramPoint(), 
-				renamedFormula, tvp.getProcedures(),
+		IPredicate result = this.newPredicate( renamedFormula,
+				tvp.getProcedures(), 
 				tvp.getVars(), tvp.getClosedFormula());
 		return result;
 	}
