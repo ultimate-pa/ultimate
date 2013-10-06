@@ -33,7 +33,7 @@ public class IntersectNwa<LETTER, STATE> implements INestedWordAutomatonSimple<L
 	private Set<STATE> m_InitialStates;
 	
 	
-	private class ProductState {
+	public class ProductState {
 		private final STATE m_fst;
 		private final STATE m_snd;
 		private final STATE m_res;
@@ -83,6 +83,15 @@ public class IntersectNwa<LETTER, STATE> implements INestedWordAutomatonSimple<L
 		m_AssumeInSndNonFinalIsTrap = assumeInSndNonFinalIsTrap;
 		m_EmptyStackState = m_StateFactory.createEmptyStackState();
 	}
+	
+	
+
+
+	public Map<STATE, Map<STATE, ProductState>> getFst2snd2res() {
+		return m_fst2snd2res;
+	}
+
+
 
 
 	private Set<STATE> constructInitialState() {

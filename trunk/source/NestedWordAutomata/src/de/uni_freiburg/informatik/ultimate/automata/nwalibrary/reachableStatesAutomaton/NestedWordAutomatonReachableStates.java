@@ -586,12 +586,13 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 	}
 	
 	
-
+	
 	public Set<STATE> getDownStates(STATE state) {
 		StateContainer<LETTER, STATE> cont = m_States.get(state);
 		return cont.getDownStates().keySet();
 	}
 	
+	@Override
 	public boolean isDoubleDecker(STATE up, STATE down) {
 		return getDownStates(up).contains(down);
 	}
