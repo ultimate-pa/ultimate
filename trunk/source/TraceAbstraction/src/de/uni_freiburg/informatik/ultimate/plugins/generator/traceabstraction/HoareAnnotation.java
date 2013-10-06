@@ -125,9 +125,11 @@ public class HoareAnnotation extends SPredicate {
 	
 	private void computeFormula() {
 		for (Term precond : getPrecondition2Invariant().keySet()) {
-			Term precondTerm = Util.implies(m_SmtManager.getScript(),precond, 
-					getPrecondition2Invariant().get(precond));
-			s_Logger.debug("In "+ this + " holds " + getPrecondition2Invariant().get(precond) + " for precond " + precond);
+			Term invariant = getPrecondition2Invariant().get(precond);
+			invariant = m_SmtManager.simplify(invariant);
+			Term precondTerm = Util.implies(m_SmtManager.getScript(),precond, invariant
+					);
+			s_Logger.debug("In "+ this + " holds " + invariant + " for precond " + precond);
 			 m_Formula = Util.and(m_SmtManager.getScript(), m_Formula, precondTerm);	 
 		}
 		m_Formula = m_SmtManager.substituteOldVarsOfNonModifiableGlobals(
