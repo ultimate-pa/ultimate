@@ -345,11 +345,22 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 				m_Haf.updateOnIntersection(diff.getFst2snd2res(), (IDoubleDeckerAutomaton<CodeBlock, IPredicate>) diff.getResult());
 			}
 			
+			if (m_Pref.computeHoareAnnotation()) {
+				assert (m_SmtManager.checkInductivity(diff.getResult(), false, true));
+			}
+			
 			if (m_RemoveDeadEnds) {
 				diff.removeDeadEnds();
 			}
+			
+
 
 			m_Abstraction = (IAutomaton<CodeBlock, IPredicate>) diff.getResult();
+			
+			if (m_Pref.computeHoareAnnotation()) {
+				assert (m_SmtManager.checkInductivity(m_Abstraction, false, true));
+			}
+			
 			m_DeadEndRemovalTime = diff.getDeadEndRemovalTime();
 			if (m_Pref.dumpAutomata()) {
 				String filename = "InterpolantAutomaton_Iteration" + m_Iteration; 
@@ -415,6 +426,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 			if (shrinkNwa) {
 				ShrinkNwa<CodeBlock, IPredicate> minimizeOp = new ShrinkNwa<CodeBlock, IPredicate>(
 						newAbstraction, partition, m_StateFactoryForRefinement, true, false, false, 200, false, 0, false, false);
+				assert minimizeOp.checkResult(predicateFactory) : "minimization unsound";
 				minimized = (new RemoveUnreachable<CodeBlock, IPredicate>(minimizeOp.getResult())).getResult();
 				if (m_Pref.computeHoareAnnotation()) {
 					Map<IPredicate, IPredicate> oldState2newState = minimizeOp.getOldState2newState();
@@ -426,12 +438,18 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 				minimized = minimizeOp.getResult();
 				if (m_Pref.computeHoareAnnotation()) {
 					Map<IPredicate, IPredicate> oldState2newState = minimizeOp.getOldState2newState();
+					minimized = (new RemoveUnreachable<CodeBlock, IPredicate>(minimized)).getResult();
 					m_Haf.updateOnMinimization(oldState2newState, (IDoubleDeckerAutomaton<CodeBlock, IPredicate>) minimized);
 //					m_Haf.updateContexts(oldState2newState);
 				}
 
 			}
 			int newSize = minimized.size();
+			
+			if (m_Pref.computeHoareAnnotation()) {
+				assert (m_SmtManager.checkInductivity(minimized, false, true));
+			}
+			
 			m_Abstraction = minimized;
 			m_MinimizationTime += (System.currentTimeMillis() - startTime);
 			if (oldSize != 0 && oldSize < newSize) {
