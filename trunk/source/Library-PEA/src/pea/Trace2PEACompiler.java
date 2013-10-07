@@ -314,7 +314,7 @@ public class Trace2PEACompiler {
                 && (canPossiblySeep & (1 << lastphase)) != 0) {
             lastphase=lastphase-1;
         }
-        this.logger.info("Lastphase = " + lastphase);
+        this.logger.debug("Lastphase = " + lastphase);
     }
 
     /**
@@ -387,7 +387,7 @@ public class Trace2PEACompiler {
             CDD stateInv, String[] resets, PhaseBits destBits) {
         Phase dest;
         if (allPhases.containsKey(destBits)) {
-            this.logger.info("Destination phase already exists");
+            this.logger.debug("Destination phase already exists");
             dest = (Phase) allPhases.get(destBits);
         } else {
             CDD clockInv = CDD.TRUE;
@@ -415,7 +415,7 @@ public class Trace2PEACompiler {
                 }
             }
 
-            this.logger.info("Creating destination phase");
+            this.logger.debug("Creating destination phase");
             dest = new Phase(destBits.toString(), stateInv, clockInv);
             allPhases.put(destBits, dest);
             todo.add(destBits);
@@ -423,7 +423,7 @@ public class Trace2PEACompiler {
         guard = guard.assume(dest.getStateInvariant().prime());
         guard = guard.assume(src.getClockInvariant());
 
-        this.logger.info("Creating transition to destination phase");
+        this.logger.debug("Creating transition to destination phase");
         //JF: only state invariants need to be primed. So, we prime the state
         //    invariants in recursiveBuildTrans.
         //Transition t = src.addTransition(dest, guard.prime(), resets);
@@ -483,7 +483,7 @@ public class Trace2PEACompiler {
             // (this.buildTotal==true)
             //the phase needs to be constructed.
             if (this.buildTotal || ((active & (1 << (p - 1))) == 0)) {
-                this.logger.info("Adding new transition");
+                this.logger.debug("Adding new transition");
                 buildNewTrans(srcBits, src, guard, stateInv, resets,
                         new PhaseBits(active, exactbound, waiting));
             }
@@ -743,7 +743,7 @@ public class Trace2PEACompiler {
 	     * 
 	     */
 
-            this.logger.info("Trying to add transitions from start state");
+            this.logger.debug("Trying to add transitions from start state");
 	    start = new Phase(Trace2PEACompiler.START + "_" + this.name,
 			      CDD.TRUE, CDD.TRUE);
 	    start.addTransition(start, noSyncEvent.prime(), new String[0]);
@@ -761,7 +761,7 @@ public class Trace2PEACompiler {
 				new String[0], 0, 0, 0, 0);
 	    
 	    this.init = new Phase[] { start};
-            this.logger.info("Adding transitions from start state successful");
+            this.logger.debug("Adding transitions from start state successful");
         } else {
 	    this.logger.debug("Bulding initial transitions");
 	    Phase dummyinit = new Phase("dummyinit", CDD.TRUE, CDD.TRUE);
@@ -836,7 +836,7 @@ public class Trace2PEACompiler {
 	    phases[phaseNr++] = (Phase) iter.next();
 	}
 	if (exitSync != null) {
-	    this.logger.info("Trying to add transitions to final state");
+	    this.logger.debug("Trying to add transitions to final state");
 	    phases[phaseNr++] = buildExitSyncTransitions();
 	    finalPhases[0] = phases[phaseNr-1];
 	}
