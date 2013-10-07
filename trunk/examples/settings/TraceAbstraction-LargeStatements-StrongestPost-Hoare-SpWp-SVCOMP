@@ -21,7 +21,7 @@ file_export_version=3.0
 #Tue Aug 06 03:12:09 CEST 2013
 file_export_version=3.0
 /configuration/CACSL2BoogieTranslator/CheckedMethod=main
-/configuration/CACSL2BoogieTranslator/Translation-Mode=SV_COMP
+/configuration/CACSL2BoogieTranslator/Translation-Mode=SV_COMP13
 \!/configuration/CACSL2BoogieTranslator=
 #Tue Aug 06 03:12:09 CEST 2013
 file_export_version=3.0
@@ -40,3 +40,4 @@ file_export_version=3.0
 /configuration/RCFGBuilder/HoareAnnotation=true
 /configuration/RCFGBuilder/Interpolants=StrongestPostcondition&WeakestPrecondition
 /configuration/RCFGBuilder/cutOff=false
+/configuration/RCFGBuilder/BlockSize=sequence of program statements
