@@ -16,7 +16,7 @@ import pea.*;
 import srParse.*;
 
 public class ReqToPEA {
-    public List<srParsePattern> genPatterns(String reqFileName) throws ENotDeclaredIdentifier {
+    public List<srParsePattern> genPatterns(String reqFileName) {
     	try {
     		ReqParser parser = new ReqParser(reqFileName);
     		Symbol goal = parser.parse();

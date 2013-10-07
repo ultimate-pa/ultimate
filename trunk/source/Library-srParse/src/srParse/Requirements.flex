@@ -15,6 +15,7 @@ import java_cup.runtime.Symbol;
 %line
 %column
 %ignorecase
+%public
 
 %{
   private StringBuffer string = new StringBuffer();

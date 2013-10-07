@@ -14,5 +14,4 @@ Export-Package: srParse;
    org.antlr.runtime,
    PatternLanguage"
 Require-Bundle: Library-PEA;bundle-version="89.0.0",
- Library-AntLR;bundle-version="3.2.0",
  JavaCup;bundle-version="1.0.0"

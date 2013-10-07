@@ -10,7 +10,6 @@ Require-Bundle: UltimateCore;bundle-version="0.0.1",
  Library-log4j;bundle-version="1.2.15",
  Library-PEA;bundle-version="89.0.0",
  Library-srParse;bundle-version="1.0.0",
- Library-AntLR;bundle-version="3.2.0",
  JavaCup;bundle-version="1.0.0"
 Bundle-ActivationPolicy: lazy
 Bundle-RequiredExecutionEnvironment: JavaSE-1.7

@@ -2,7 +2,6 @@ package srParse;
 
 import java.util.*;
 
-import PatternLanguage.PL_initiatedPattern;
 import pea.*;
 import pea.reqCheck.PatternToPEA;
 
@@ -15,8 +14,6 @@ public class srParsePattern {
 	}
 
 	private int duration;
-	
-	private boolean doThrow=false;
 	
 	protected static CDD q_cdd_default = BooleanDecision.create("Q");
 	protected static CDD r_cdd_default = BooleanDecision.create("R");
@@ -84,7 +81,7 @@ public class srParsePattern {
 		return true;
 	}
 	
-	public void mergeCDDs( Vector<CDD> cdds ) throws ENotDeclaredIdentifier
+	public void mergeCDDs( Vector<CDD> cdds )
 	{
 		int i;
 		
@@ -106,18 +103,6 @@ public class srParsePattern {
 		pattern.transform();
 		
 		return pea;
-	}
-	
-	public PL_initiatedPattern getInitiatedPattern()
-	{
-		Vector<CDD> cs;
-		cs=(Vector<CDD>)cdds.clone();
-		cs.add(scope.getCdd1());
-		cs.add(scope.getCdd2());
-		
-		PL_initiatedPattern pat=new PL_initiatedPattern( toString(), cs );
-		
-		return pat;
 	}
 	
 	protected PatternToPEA peaTransformator;
@@ -663,7 +648,7 @@ public class srParsePattern {
 		return scope;
 	}
 
-	public void setScope(srParseScope scope) throws ENotDeclaredIdentifier 
+	public void setScope(srParseScope scope) 
 	{
 		this.scope = scope;
 	}		
@@ -674,13 +659,13 @@ public class srParsePattern {
 		pattern=null;
 	}
 	
-	public srParsePattern(  srParseScope scope ) throws ENotDeclaredIdentifier
+	public srParsePattern(  srParseScope scope )
 	{
 		setScope( scope );
 		pattern=null;
 	}
 	
-	public srParsePattern(  srParseScope scope, PatternType pattern ) throws ENotDeclaredIdentifier
+	public srParsePattern(  srParseScope scope, PatternType pattern )
 	{
 		setScope( scope );
 		this.pattern=pattern;

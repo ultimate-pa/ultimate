@@ -11,11 +11,10 @@ import pea.PhaseEventAutomata;
 import pea.modelchecking.PEAXML2JConverter;
 import pea_to_boogie.translator.Translator;
 import req_to_pea.ReqToPEA;
-import srParse.ENotDeclaredIdentifier;
 import srParse.srParsePattern;
 public class Main{
 
-	public static void main (String args[]) throws ENotDeclaredIdentifier{
+	public static void main (String args[]) {
 		 if (args.length < 2) {
 			 System.err.println("USAGE: pea_to_boogie.main file.req {file.bpl combinationNumber | file.xml}");
 			 return;
