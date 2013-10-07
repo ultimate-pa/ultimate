@@ -102,6 +102,9 @@ public class FunctionHandler {
 	 * need a special treatment, as they are assumed to be returning int!
 	 */
 	private HashSet<String> methodsCalledBeforeDeclared;
+	
+	
+	private final static boolean m_CheckMemoryLeakAtEndOfMain = false;
 
 	/**
 	 * Constructor.
@@ -436,16 +439,18 @@ public class FunctionHandler {
 			if (main.isMMRequired()
 					&& (main.getCheckedMethod() == SFO.EMPTY || main
 							.getCheckedMethod().equals(mId))) {
-				// add a specification to check for memory leaks
-				Expression vIe = new IdentifierExpression(loc, SFO.VALID);
-				int nrSpec = spec.length;
-				ILocation ensLoc = new CACSLLocation(loc, new Check(
-						Check.Spec.MEMORY_LEAK));
-				spec = Arrays.copyOf(spec, nrSpec + 1);
-				spec[nrSpec] = new EnsuresSpecification(ensLoc, false,
-						new BinaryExpression(loc, Operator.COMPEQ, vIe,
-								new UnaryExpression(loc,
-										UnaryExpression.Operator.OLD, vIe)));
+				if(m_CheckMemoryLeakAtEndOfMain) {
+					// add a specification to check for memory leaks
+					Expression vIe = new IdentifierExpression(loc, SFO.VALID);
+					int nrSpec = spec.length;
+					ILocation ensLoc = new CACSLLocation(loc, new Check(
+							Check.Spec.MEMORY_LEAK));
+					spec = Arrays.copyOf(spec, nrSpec + 1);
+					spec[nrSpec] = new EnsuresSpecification(ensLoc, false,
+							new BinaryExpression(loc, Operator.COMPEQ, vIe,
+									new UnaryExpression(loc,
+											UnaryExpression.Operator.OLD, vIe)));
+				}
 			}
 			declarations.add(new Procedure(loc, procDecl.getAttributes(), mId,
 					procDecl.getTypeParams(), procDecl.getInParams(), procDecl
