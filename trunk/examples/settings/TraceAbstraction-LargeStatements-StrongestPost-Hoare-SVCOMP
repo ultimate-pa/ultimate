@@ -5,4 +5,4 @@ file_export_version=3.0
 /configuration/RCFGBuilder/HoareAnnotation=true
 /configuration/RCFGBuilder/cutOff=false
 /configuration/CACSL2BoogieTranslator/CheckedMethod=main
-/configuration/CACSL2BoogieTranslator/Translation-Mode=SV_COMP13
+/configuration/CACSL2BoogieTranslator/Translation-Mode=SV_COMP14
