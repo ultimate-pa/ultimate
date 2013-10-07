@@ -95,8 +95,10 @@ public class HoareAnnotationFragments2 extends HoareAnnotationFragments {
 				for (IPredicate oldPred : entry.getValue()) {
 					Collection<IPredicate> newPreds = update.getNewPredicates(oldPred);
 					if (newContexts == null) {
-						assert newPreds == null : "context removed before state";
-						super.addDoubleDecker(oldContext, oldPred, null);
+						// do nothing
+						// oldContext was removed
+						// oldPred might have been still there and got replaced
+						// by a new ones, but only for a different down state.
 					} else {
 						for (IPredicate newContext : newContexts) {
 							if (newPreds == null) {
