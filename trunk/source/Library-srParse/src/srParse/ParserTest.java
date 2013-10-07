@@ -20,7 +20,7 @@ public class ParserTest {
 	static String patterns[] = {
 		"it is never the case that p holds",
 		"it is always the case that p holds",
-		"it is always the case that if p holds and is succeeded by q, then r eventually holds after s",
+		"it is always the case that if p holds and is succeeded by q then r eventually holds after s",
 		"it is always the case that if p holds then q holds as well",
 		"transitions to states in which p holds occur at most twice",
 		"P eventually holds"
@@ -64,7 +64,7 @@ public class ParserTest {
 		ParserTest test = new ParserTest();
 		for (String s: scopes) { 
 			for (String p: patterns) {
-				test.testOldParser(s+", "+p+".\n");
+				test.testNewParser(s+", "+p+".\n");
 			}
 		}
 	}

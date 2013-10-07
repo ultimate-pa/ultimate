@@ -7,7 +7,8 @@ Bundle-ClassPath: Library-srParse.jar,
  src/caseStudies,
  antlr-runtime-3.2.jar
 Export-Package: srParse;
-  uses:="org.antlr.runtime.debug,
+  uses:="java_cup.runtime,
+   org.antlr.runtime.debug,
    pea,
    pea.reqCheck,
    org.antlr.runtime,

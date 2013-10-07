@@ -94,20 +94,8 @@ public class srParsePattern {
 		if( this.cdds==null )
 			this.cdds=new Vector<CDD>();
 			
-		srParseController cont = srParseController.getInstance();
-			
 		for(i=0;i<cdds.size();i++)
 		{
-			if( cont.isStrictSyntax() )
-			{
-				if( !subExpressionsContained( cdds.get(i), cont.getVariables() ) )
-				{
-					System.err.println( "srParse: not declared ID: " + cdds.get(i) );
-					if( doThrow )
-						throw new ENotDeclaredIdentifier();
-				}
-			}
-				
 			this.cdds.add(cdds.get(i));
 		}
 	}
@@ -678,27 +666,7 @@ public class srParsePattern {
 	public void setScope(srParseScope scope) throws ENotDeclaredIdentifier 
 	{
 		this.scope = scope;
-		
-		if( scope.getCdd1()!=null )
-		{
-			if( !subExpressionsContained( scope.getCdd1(), srParseController.getInstance().getVariables() ) )
-			{
-				System.err.println( "srParse: not declared ID: " + scope.getCdd1() );
-				if( doThrow )
-					throw new ENotDeclaredIdentifier();
-			}
-		}
-		
-		if( scope.getCdd2()!=null )
-		{
-			if( !subExpressionsContained( scope.getCdd2(), srParseController.getInstance().getVariables() ) )
-			{
-				System.err.println( "srParse: not declared ID: " + scope.getCdd2() );
-				if( doThrow )
-					throw new ENotDeclaredIdentifier();
-			}
-		}
-	}
+	}		
 
 	public srParsePattern()
 	{

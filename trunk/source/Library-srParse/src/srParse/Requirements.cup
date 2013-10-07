@@ -1,5 +1,7 @@
 package srParse;
 
+import java.io.IOException;
+import java.io.FileReader;
 import java.util.Vector;
 import java_cup.runtime.Symbol;
 
@@ -15,6 +17,11 @@ parser code {:
 	String filename;
 	Symbol lookahead;
 	String error;
+	
+	public ReqParser(String filename) throws IOException {
+		this(new ReqLexer(new FileReader(filename)));
+		setFileName(filename);
+	}
 
 	public void setFileName(String filename) {
 		this.filename = filename;
@@ -104,7 +111,7 @@ non terminal srParsePattern property;
 non terminal srParsePattern pattern, orderpattern, realtimepattern;
 non terminal srParseScope scope;
 non terminal srParsePattern[] patternset;
-non terminal int duration;
+non terminal int duration, num;
 
 precedence left LOR;
 precedence left LAND;
@@ -271,8 +278,11 @@ cid ::= ID
       | cid:c IDDOT ID:id {: RESULT= c + "." + id; :}
       ;
 
-duration ::= NUMBER:n TIME UNITS {: RESULT = n; :}
-           | NUMBER:n USEC {: RESULT = n; :}
-           | NUMBER:n MSEC {: RESULT = n*1000; :}
-           | NUMBER:n SEC {: RESULT = n*1000000; :}
+duration ::= num:n TIME UNITS {: RESULT = n; :}
+           | num:n USEC {: RESULT = n; :}
+           | num:n MSEC {: RESULT = n*1000; :}
+           | num:n SEC {: RESULT = n*1000000; :}
            ;
+           
+num ::= NUMBER
+      | QUOTE NUMBER:n QUOTE {: RESULT = n; :};
