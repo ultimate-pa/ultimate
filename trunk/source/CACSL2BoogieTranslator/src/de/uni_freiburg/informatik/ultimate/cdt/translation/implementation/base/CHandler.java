@@ -1157,6 +1157,7 @@ public class CHandler implements ICHandler {
             }
         }
         InferredType tBool = new InferredType(InferredType.Type.Boolean);
+        InferredType tInt = new InferredType(InferredType.Type.Integer);
 
         switch (node.getOperator()) {
             case IASTBinaryExpression.op_assign:
@@ -1252,8 +1253,9 @@ public class CHandler implements ICHandler {
                         r.expr), decl, auxVars);
             case IASTBinaryExpression.op_logicalAnd:
                 stmt.addAll(l.stmt);
-                if (r.auxVars.isEmpty() && l.auxVars.isEmpty()) {
-                	//no need for shortcut
+                if (false && r.auxVars.isEmpty() && l.auxVars.isEmpty()) {
+                	// no auxVar in operands, hence no side effects in operands
+                	// we can directly combine operands with LOGICAND
                 	return new ResultExpression(stmt, wrapBoolean2Int(loc,
                     		tBool, BinaryExpression.Operator.LOGICAND,
                     		main.typeHandler.convertArith2Boolean(
@@ -1274,17 +1276,16 @@ public class CHandler implements ICHandler {
                 auxVars.put(tmpVar, loc);
                 decl.add(tmpVar);
                 // #t~AND~UID = false
-                lhs = new VariableLHS(loc, tBool, resName);
-                Expression[] rhs = new Expression[] { new BooleanLiteral(loc,
-                        tBool, false) };
+                lhs = new VariableLHS(loc, tInt, resName);
+                Expression[] rhs = new Expression[] { new IntegerLiteral(loc,
+                        tInt, "0") };
                 AssignmentStatement aStat = new AssignmentStatement(loc,
                         new LeftHandSide[] { lhs }, rhs);
                 stmt.add(aStat);
                 // if (left) {#t~AND~UID = right;}
                 // if (#t~AND~UID) { ... }
                 r.expr = main.typeHandler.convertArith2Boolean(loc,
-                        new PrimitiveType(loc, SFO.BOOL),
-                        unwrapInt2BooleanExpr(r.expr));
+                        new PrimitiveType(loc, SFO.BOOL), r.expr);
                 ArrayList<Statement> outerThenPart = new ArrayList<Statement>();
                 outerThenPart.addAll(r.stmt);
                 outerThenPart
@@ -1292,8 +1293,7 @@ public class CHandler implements ICHandler {
                                 new LeftHandSide[] { lhs },
                                 new Expression[] { r.expr }));
                 l.expr = main.typeHandler.convertArith2Boolean(loc,
-                        new PrimitiveType(loc, SFO.BOOL),
-                        unwrapInt2BooleanExpr(l.expr));
+                        new PrimitiveType(loc, SFO.BOOL), l.expr);
                 IfStatement ifStatement = new IfStatement(loc, l.expr,
                         outerThenPart.toArray(new Statement[0]),
                         new Statement[0]);
@@ -1302,6 +1302,19 @@ public class CHandler implements ICHandler {
                         tBool, resName), decl, auxVars);
             case IASTBinaryExpression.op_logicalOr:
                 stmt.addAll(l.stmt);
+                if (false && r.auxVars.isEmpty() && l.auxVars.isEmpty()) {
+                	// no auxVar in operands, hence no side effects in operands
+                	// we can directly combine operands with LOGICOR
+                	return new ResultExpression(stmt, wrapBoolean2Int(loc,
+                    		tBool, BinaryExpression.Operator.LOGICOR,
+                    		main.typeHandler.convertArith2Boolean(
+                    				loc, new PrimitiveType(loc, SFO.BOOL),
+                    				unwrapInt2BooleanExpr(l.expr)),
+                            main.typeHandler.convertArith2Boolean(
+                            		loc, new PrimitiveType(loc, SFO.BOOL),
+                            		unwrapInt2BooleanExpr(r.expr))),
+                            decl, auxVars);
+                }
                 // create and add tmp var #t~OR~UID
                 resName = main.nameHandler
                         .getTempVarUID(SFO.AUXVAR.SHORTCIRCUIT);
@@ -1312,23 +1325,21 @@ public class CHandler implements ICHandler {
                 auxVars.put(tmpVar, loc);
                 decl.add(tmpVar);
                 // #t~OR~UID = false
-                lhs = new VariableLHS(loc, tBool, tempVar.getIdentifiers()[0]);
+                lhs = new VariableLHS(loc, tInt, tempVar.getIdentifiers()[0]);
                 // if (left) {#t~OR~UID = true;} else {#t~OR~UID = right}}
                 // if (#t~OR~UID) { ... }
                 Statement[] thenPart = new Statement[] { new AssignmentStatement(
                         loc,
                         new LeftHandSide[] { lhs },
-                        new Expression[] { new BooleanLiteral(loc, tBool, true) }) };
+                        new Expression[] { new IntegerLiteral(loc, tInt, "1") }) };
                 r.expr = main.typeHandler.convertArith2Boolean(loc,
-                        new PrimitiveType(loc, SFO.BOOL),
-                        unwrapInt2BooleanExpr(r.expr));
+                        new PrimitiveType(loc, SFO.BOOL), r.expr);
                 ArrayList<Statement> elsePart = new ArrayList<Statement>();
                 elsePart.addAll(r.stmt);
                 elsePart.add(new AssignmentStatement(loc,
                         new LeftHandSide[] { lhs }, new Expression[] { r.expr }));
                 l.expr = main.typeHandler.convertArith2Boolean(loc,
-                        new PrimitiveType(loc, SFO.BOOL),
-                        unwrapInt2BooleanExpr(l.expr));
+                        new PrimitiveType(loc, SFO.BOOL),l.expr);
                 ifStatement = new IfStatement(loc, l.expr, thenPart,
                         elsePart.toArray(new Statement[0]));
                 stmt.add(ifStatement);
