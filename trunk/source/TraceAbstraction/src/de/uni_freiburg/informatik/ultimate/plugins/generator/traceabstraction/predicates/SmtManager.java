@@ -2370,9 +2370,11 @@ public class SmtManager {
 			TransFormula callTF,
 			TransFormula globalVarsAssignments) {
 		
-		Map<TermVariable, Term> globalVarsToRenameInCallerAndReturnPred = new HashMap<TermVariable, Term>();
+		Map<TermVariable, Term> varsToRenameInCallerAndReturnPred = new HashMap<TermVariable, Term>();
 		Map<TermVariable, Term> varsToRenameInReturnPred = new HashMap<TermVariable, Term>();
 		Map<TermVariable, Term> varsToRenameInCallerPred = new HashMap<TermVariable, Term>();
+//		Set<BoogieVar> returnerPredVars = returnerPred.getVars();
+//		Set<BoogieVar> callerPredVars = callerPred.getVars();
 		Set<TermVariable> varsToQuantify = new HashSet<TermVariable>();
 		// 1. Compute those global variable assignments, i.e. x_global = old(x_global) if x_global is
 		// a global variable.
@@ -2381,7 +2383,7 @@ public class SmtManager {
 		Map<TermVariable, Term> substitution = new HashMap<TermVariable, Term>();
 		for (BoogieVar bv : globalVarsAssignments.getInVars().keySet()) {
 			TermVariable freshVar = getFreshTermVariable(bv.getIdentifier(), bv.getTermVariable().getSort());
-			globalVarsToRenameInCallerAndReturnPred.put(bv.getTermVariable(), freshVar);
+			varsToRenameInCallerAndReturnPred.put(bv.getTermVariable(), freshVar);
 			varsToQuantify.add(freshVar);
 			substitution.put(globalVarsAssignments.getInVars().get(bv), bv.getTermVariable());
 		}
@@ -2400,7 +2402,7 @@ public class SmtManager {
 		substitution.clear();
 		for (BoogieVar bv : returnTF.getInVars().keySet()) {
 			TermVariable freshVar = getFreshTermVariable(bv.getIdentifier(), bv.getTermVariable().getSort());
-			varsToRenameInReturnPred.put(bv.getTermVariable(), freshVar);
+			varsToRenameInCallerAndReturnPred.put(bv.getTermVariable(), freshVar);
 			varsToQuantify.add(freshVar);
 			substitution.put(returnTF.getInVars().get(bv), bv.getTermVariable());
 		}
@@ -2408,49 +2410,26 @@ public class SmtManager {
 		substitution.clear();
 		// 2.2 We rename the outvars to freshvars and quantify them
 		for (BoogieVar bv : returnTF.getOutVars().keySet()) {
-			if (!bv.isGlobal()) {
+			if (varsToRenameInCallerAndReturnPred.containsKey(bv.getTermVariable())) {
+				substitution.put(returnTF.getOutVars().get(bv), varsToRenameInCallerAndReturnPred.get(bv.getTermVariable()));
+			} else {
 				TermVariable freshVar = getFreshTermVariable(bv.getIdentifier(), bv.getTermVariable().getSort());
-				varsToRenameInReturnPred.put(bv.getTermVariable(), freshVar);
+				varsToRenameInCallerAndReturnPred.put(bv.getTermVariable(), freshVar);
 				substitution.put(returnTF.getOutVars().get(bv), freshVar);
 				varsToQuantify.add(freshVar);
-			} else {
-				if (varsToRenameInReturnPred.containsKey(bv.getTermVariable())) {
-					substitution.put(returnTF.getOutVars().get(bv), varsToRenameInReturnPred.get(bv.getTermVariable()));
-				} else {
-					TermVariable freshVar = getFreshTermVariable(bv.getIdentifier(), bv.getTermVariable().getSort());
-					varsToRenameInReturnPred.put(bv.getTermVariable(), freshVar);
-					substitution.put(returnTF.getOutVars().get(bv), freshVar);
-					varsToQuantify.add(freshVar);
-				}
 			}
 		}
 		Term retTermInVarsRenamedOutVarsRenamed = new Substitution(substitution, m_Script).transform(retTermInVarsRenamed);
 		// Rename the invars of the Call and quantify them
 		substitution.clear();
 		for (BoogieVar bv : callTF.getInVars().keySet()) {
-			if (!bv.isGlobal()) {
-				TermVariable freshVar = null;
-				if (varsToRenameInCallerPred.containsKey(bv.getTermVariable())) {
-					freshVar = (TermVariable) varsToRenameInCallerPred.get(bv.getTermVariable());
-				} else {
-					freshVar = getFreshTermVariable(bv.getIdentifier(), bv.getTermVariable().getSort());
-				}
-				if (freshVar != null) {
-					globalVarsToRenameInCallerAndReturnPred.put(bv.getTermVariable(), freshVar);
-					substitution.put(callTF.getInVars().get(bv), freshVar);
-					varsToQuantify.add(freshVar);
-				} else {
-					varsToQuantify.add(returnTF.getOutVars().get(bv));
-				}
+			if (varsToRenameInCallerAndReturnPred.containsKey(bv.getTermVariable())) {
+				substitution.put(callTF.getInVars().get(bv), varsToRenameInCallerAndReturnPred.get(bv.getTermVariable()));
 			} else {
-				if (varsToRenameInCallerPred.containsKey(bv.getTermVariable())) {
-					substitution.put(callTF.getInVars().get(bv), varsToRenameInCallerPred.get(bv.getTermVariable()));
-				} else {
-					TermVariable freshVar = getFreshTermVariable(bv.getIdentifier(), bv.getTermVariable().getSort());
-					substitution.put(callTF.getInVars().get(bv), freshVar);
-					varsToQuantify.add(freshVar);
-				}
-					
+				TermVariable freshVar = getFreshTermVariable(bv.getIdentifier(), bv.getTermVariable().getSort());
+				substitution.put(callTF.getInVars().get(bv), freshVar);
+				varsToRenameInCallerAndReturnPred.put(bv.getTermVariable(), freshVar);
+				varsToQuantify.add(freshVar);
 			}
 		}
 		Term callTF_InVarsRenamed = new Substitution(substitution, m_Script).transform(callTF.getFormula());
@@ -2462,33 +2441,39 @@ public class SmtManager {
 		}
 		Term callTFRenamed = new Substitution(substitution, m_Script).transform(callTF_InVarsRenamed);
 		
-		Term retPredRenamed = new Substitution(globalVarsToRenameInCallerAndReturnPred, m_Script).transform(returnerPred.getFormula());
-		Term callerPredRenamed = new Substitution(globalVarsToRenameInCallerAndReturnPred, m_Script).transform(callerPred.getFormula());
+//		Term retPredRenamed = new Substitution(varsToRenameInCallerAndReturnPred, m_Script).transform(returnerPred.getFormula());
+//		Term callerPredRenamed = new Substitution(varsToRenameInCallerAndReturnPred, m_Script).transform(callerPred.getFormula());
 		// Quantify all the other local vars.
 		for (BoogieVar bv : returnerPred.getVars()) {
 			if (bv.isOldvar()) {
-				if (!globalVarsToRenameInCallerAndReturnPred.containsKey(bv.getTermVariable())) {
+				if (!varsToRenameInCallerAndReturnPred.containsKey(bv.getTermVariable())) {
 //					TermVariable freshVar = getFreshTermVariable(bv.getIdentifier(), bv.getTermVariable().getSort());
+					if (!varsToRenameInReturnPred.containsKey(bv.getTermVariable())) {
+						TermVariable freshVar = getFreshTermVariable(bv.getIdentifier(), bv.getTermVariable().getSort());
+						varsToRenameInReturnPred.put(bv.getTermVariable(), freshVar);
+						varsToQuantify.add(freshVar);
+					}
 				}
+			} else if (!bv.isGlobal()){
+				if (!varsToRenameInCallerAndReturnPred.containsKey(bv.getTermVariable())) {
+					TermVariable freshVar = getFreshTermVariable(bv.getIdentifier(), bv.getTermVariable().getSort());
+					varsToRenameInCallerAndReturnPred.put(bv.getTermVariable(), freshVar);
+					varsToQuantify.add(freshVar);
+				}
+				
 			}
 		}
-		retPredRenamed = new Substitution(varsToRenameInReturnPred, m_Script).transform(retPredRenamed);
-		List<TermVariable> freeVarsOfCallerPred = new ArrayList<TermVariable>();
-		Collections.addAll(freeVarsOfCallerPred, callerPredRenamed.getFreeVars());
-		varsToRenameInCallerPred.clear();
-		varsToRenameInReturnPred.clear();
+		
 		for (BoogieVar bv : callerPred.getVars()) {
-			if (freeVarsOfCallerPred.contains(bv.getTermVariable())) {
+			if (!varsToRenameInCallerAndReturnPred.containsKey(bv.getTermVariable())) {
 				TermVariable freshVar = getFreshTermVariable(bv.getIdentifier(), bv.getTermVariable().getSort());
-				varsToRenameInCallerPred.put(bv.getTermVariable(), freshVar);
+				varsToRenameInCallerAndReturnPred.put(bv.getTermVariable(), freshVar);
 				varsToQuantify.add(freshVar);
-				if (bv.isOldvar()) {
-					varsToRenameInReturnPred.put(bv.getTermVariable(), freshVar);
-				}
 			}
+				
 		}
-		callerPredRenamed = new Substitution(varsToRenameInCallerPred, m_Script).transform(callerPredRenamed); 
-		retPredRenamed  = new Substitution(varsToRenameInReturnPred, m_Script).transform(retPredRenamed);
+		Term retPredRenamed = new Substitution(varsToRenameInCallerAndReturnPred, m_Script).transform(returnerPred.getFormula());
+		Term callerPredRenamed = new Substitution(varsToRenameInCallerAndReturnPred, m_Script).transform(callerPred.getFormula());
 		
 		// Add aux vars to quantify them
 		varsToQuantify.addAll(callTF.getAuxVars());

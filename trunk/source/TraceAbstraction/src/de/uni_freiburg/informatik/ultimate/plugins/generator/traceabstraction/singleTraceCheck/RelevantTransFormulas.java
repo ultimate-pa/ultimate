@@ -88,7 +88,6 @@ public class RelevantTransFormulas extends TraceWithFormulas<TransFormula, IPred
 		
 	}
 	
-	
 	private void generateRelevantTransFormulas(Set<CodeBlock> unsat_core, 
 			boolean[] localVarAssignmentsAtCallInUnsatCore,
 			boolean[] oldVarAssignmentAtCallInUnsatCore,
@@ -230,7 +229,7 @@ public class RelevantTransFormulas extends TraceWithFormulas<TransFormula, IPred
 		return new TransFormula(formula,
 				invars,
 				outvars,
-				new HashSet<TermVariable>(), 
+				auxVars, 
 				tf.getBranchEncoders(),
 				tf.isInfeasible(),
 				closedFormula);
