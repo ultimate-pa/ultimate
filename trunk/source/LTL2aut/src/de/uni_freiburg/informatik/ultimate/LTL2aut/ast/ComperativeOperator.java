@@ -25,4 +25,8 @@ public class ComperativeOperator extends AstNode {
 		return this.getOutgoingNodes().get(0).toString() + op + this.getOutgoingNodes().get(1).toString();
 	}
 
+	public ComperativeType getType()
+	{
+		return this.type;
+	}
 }

@@ -13,5 +13,10 @@ public class BoolLiteral extends AstNode {
 	{
 		return Boolean.toString(this.value);
 	}
+	
+	public boolean getValue()
+	{
+		return this.value;
+	}
 
 }

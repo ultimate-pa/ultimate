@@ -37,5 +37,10 @@ public class BinaryOperator extends AstNode {
 		result += " )";
 		return result;
 	}
+	
+	public BinaryType getType()
+	{
+		return this.type;
+	}
 
 }
