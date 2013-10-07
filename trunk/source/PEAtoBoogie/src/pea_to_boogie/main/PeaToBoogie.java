@@ -23,11 +23,10 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.wrapper.WrapperNode;
 
 public class PeaToBoogie implements ISource {
     protected static Logger s_Logger = UltimateServices.getInstance().getLogger(Activator.s_PLUGIN_ID);
-    List<String> m_FileNames;
+    List<String> m_FileNames = new ArrayList<String>();
 
 	@Override
 	public int init(Object params) {
-    	m_FileNames = new ArrayList<String>();
 		return 0;
 	}
 
