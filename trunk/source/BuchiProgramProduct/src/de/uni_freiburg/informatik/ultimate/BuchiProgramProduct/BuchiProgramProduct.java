@@ -110,7 +110,7 @@ public class BuchiProgramProduct implements IGenerator {
 
 	@Override
 	public IElement getModel() {
-		// TODO Auto-generated method stub
+		//this.bpo.prod.getRCFG();
 		return null;
 	}
 

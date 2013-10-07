@@ -12,12 +12,20 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomat
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.model.GraphType;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Unit;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.wrapper.ASTNode;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.wrapper.WrapperNode;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 
 public class BuchiProductObserver implements IUnmanagedObserver {
+	
+	private NestedWordAutomaton<ASTNode, String> aut = null; 
+	private RootNode rcfg = null;
+	
+	public Product prod;
 
 
-	@Override
+	@Override 
 	public void init() {
 		// TODO Auto-generated method stub
 		
@@ -38,35 +46,48 @@ public class BuchiProductObserver implements IUnmanagedObserver {
 	@Override
 	public boolean performedChanges() {
 		// TODO Auto-generated method stub
-		return false;
+		return false;  
 	}
 
 	@Override
 	public boolean process(IElement root) {
+		if (this.aut != null && this.rcfg != null)
+		{
+			//TODO: product
+			System.out.println("------------------PRODUCTCALC----------------------");
+			
+			try{
+			this.prod = new Product(this.aut, this.rcfg);
+			} catch (Exception e){
+				System.out.println("ERROR:\n" + e.toString());
+			}
+			
+			return false;
+		}
 		
-		
-		
-		if (root instanceof NeverStatement)
+		if (root instanceof NeverStatement &&  this.aut == null)
 		{
 			System.out.println("----------NEVER------------");
 			//build and get automaton
+			try{
 			Never2Automaton nta = new Never2Automaton((AstNode)root);
-			NestedWordAutomaton<AstNode,String> aut = nta.getAutomaton();
-			
-			List<String> modelDescs = UltimateServices.getInstance().getAllModels();
-			for (String m: modelDescs)
-			{
-				GraphType gt = UltimateServices.getInstance().getGraphTypeFromStringModelId(m);
-				System.out.println(gt.getFileNames());
+			this.aut = nta.getAutomaton();
+			}catch(Exception e){ 
+				//TODO: log something
+				System.out.println("ERROR:\n" + e.toString());
 			}
-		}	
-		if(root instanceof WrapperNode)
-		{
-			System.out.println("----------BOOGIE------------");
 			
-			return false;
-		} else
-			return true;
+			//GraphType modelDescs = UltimateServices.getInstance().;
+			
+		}	
+		if(root instanceof RootNode && this.rcfg == null )
+		{
+			System.out.println("----------RootNode------------");
+			this.rcfg = ((RootNode)root);
+			
+		} 
+				
+		return true;
 		
 		
 	}
