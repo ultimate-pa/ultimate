@@ -433,6 +433,7 @@ public class TypeHandler implements ITypeHandler {
                                         InferredType.Type.Boolean),
                                         BinaryExpression.Operator.COMPNEQ, e,
                                         new IntegerLiteral(loc, SFO.NR0));
+                                break;
                             case Real:
                                 e = new BinaryExpression(loc, new InferredType(
                                         InferredType.Type.Boolean),
