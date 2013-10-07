@@ -58,6 +58,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BooleanLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IfThenElseExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.NamedType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.PrimitiveType;
@@ -429,11 +430,22 @@ public class TypeHandler implements ITypeHandler {
                                 // everything is ok ...
                                 break;
                             case Integer:
-                                e = new BinaryExpression(loc, new InferredType(
-                                        InferredType.Type.Boolean),
-                                        BinaryExpression.Operator.COMPNEQ, e,
-                                        new IntegerLiteral(loc, SFO.NR0));
-                                break;
+                            	/*
+                                 * try to unwrap formerly introduced
+                                 * if-then-else wrapper
+                                 */
+                                final Expression unwrappedInt =
+                                		unwrapInt2BooleanExpr(e);
+                                if (unwrappedInt != null) {
+                                	e = unwrappedInt;
+                                }
+                                else {
+	                            	e = new BinaryExpression(loc, new InferredType(
+	                                        InferredType.Type.Boolean),
+	                                        BinaryExpression.Operator.COMPNEQ, e,
+	                                        new IntegerLiteral(loc, SFO.NR0));
+                                }
+                        	    break;
                             case Real:
                                 e = new BinaryExpression(loc, new InferredType(
                                         InferredType.Type.Boolean),
@@ -459,6 +471,47 @@ public class TypeHandler implements ITypeHandler {
                     ((ArrayType) type).getValueType(), e);
         }
         return e;
+    }
+    
+    /**
+     * Tries to unwrap an expression that was wrapped before.
+     * 
+     * @param expr expression
+     * @return unwrapped expression or old expression
+     * 
+     * @author Christian
+     */
+    protected Expression unwrapInt2BooleanExpr(final Expression expr) {
+    	final Expression unwrapped = unwrapInt2BooleanHelper(expr);
+    	if (unwrapped != null) {
+    		return unwrapped;
+    	}
+    	return null;
+    }
+    
+    /**
+     * Checks whether a given integer expression is wrapped or not.
+     * In this case returns the unwrapped expression.
+     * 
+     * @param expr expression
+     * @return unwrapped expression or null
+     * 
+     * @author Christian
+     */
+    private Expression unwrapInt2BooleanHelper(final Expression expr) {
+    	if (expr instanceof IfThenElseExpression) {
+			final IfThenElseExpression iteEx = (IfThenElseExpression)expr;
+			final Expression thenPart = iteEx.getThenPart();
+			if ((thenPart instanceof IntegerLiteral) &&
+				(((IntegerLiteral)thenPart).getValue() == SFO.NR1)) {
+				final Expression elsePart = iteEx.getElsePart();
+				if ((elsePart instanceof IntegerLiteral) &&
+						(((IntegerLiteral)elsePart).getValue() == SFO.NR0)) {
+					return iteEx.getCondition();
+				}
+			}
+    	}
+    	return null;
     }
 
     @Override
