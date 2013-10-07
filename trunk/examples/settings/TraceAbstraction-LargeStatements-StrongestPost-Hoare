@@ -3,3 +3,5 @@ file_export_version=3.0
 /configuration/RCFGBuilder/BlockSize=loop free block
 /configuration/RCFGBuilder/Timeout=10
 /configuration/RCFGBuilder/HoareAnnotation=true
+/configuration/CACSL2BoogieTranslator/CheckedMethod=main
+/configuration/CACSL2BoogieTranslator/Translation-Mode=SV_COMP13
