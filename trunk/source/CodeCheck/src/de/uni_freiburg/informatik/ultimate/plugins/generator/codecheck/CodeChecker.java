@@ -1,16 +1,17 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck;
 
+import java.util.HashMap;
 import java.util.HashSet;
 
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.EdgeChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
@@ -32,6 +33,10 @@ public abstract class CodeChecker {
 	EdgeChecker _edgeChecker;
 	PredicateUnifier m_predicateUnifier;
 	
+	//stats
+	int memoizationHitsSat = 0;
+	int memoizationHitsUnsat = 0;
+	
 	protected GraphWriter _graphWriter;
 	
 	public CodeChecker(IElement root, SmtManager smtManager, IPredicate truePredicate, IPredicate falsePredicate, 
@@ -49,7 +54,15 @@ public abstract class CodeChecker {
 		this._graphWriter = graphWriter;
 	}
 	
-	public abstract boolean codeCheck(NestedRun<CodeBlock, AnnotatedProgramPoint> errorRun, IPredicate[] interpolants, AnnotatedProgramPoint procedureRoot);
+	public abstract boolean codeCheck(NestedRun<CodeBlock, AnnotatedProgramPoint> errorRun, 
+			IPredicate[] interpolants, AnnotatedProgramPoint procedureRoot);
+
+	public abstract boolean codeCheck(
+	NestedRun<CodeBlock, AnnotatedProgramPoint> errorRun,
+	IPredicate[] interpolants,
+	AnnotatedProgramPoint procedureRoot,
+	HashMap<IPredicate,HashMap<CodeBlock,HashSet<IPredicate>>> _satTriples,
+	HashMap<IPredicate,HashMap<CodeBlock,HashSet<IPredicate>>> _unsatTriples) ;
 
 	/**
 	 * Given 2 predicates, return a predicate which is the conjunction of both.

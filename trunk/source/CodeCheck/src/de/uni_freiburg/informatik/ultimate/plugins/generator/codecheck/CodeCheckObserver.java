@@ -20,6 +20,10 @@ import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.ILocation;
 import de.uni_freiburg.informatik.ultimate.model.ITranslator;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.preferences.PreferenceValues.PredicateUnification;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.preferences.PreferenceValues.SolverAndInterpolator;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.TAPreferences;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.PreferenceValues.Solver;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.Backtranslator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.RcfgProgramExecution;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.boogie.BoogieProgramExecution;
@@ -29,8 +33,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Ret
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootAnnot;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.PreferenceValues.Solver;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbstractCegarLoop;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.EdgeChecker;
@@ -55,7 +57,7 @@ import org.apache.log4j.Logger;
 
 enum Checker { ULTIMATE, IMPULSE }
 enum Result { CORRECT, TIMEOUT , MAXEDITERATIONS , UNKNOWN , INCORRECT }
-enum SolverAndInterpolator { SMTINTERPOL, Z3SPWP }
+
 
 public class CodeCheckObserver implements IUnmanagedObserver {
 
@@ -64,6 +66,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 	
 	RootNode m_originalRoot;
 	TAPreferences m_taPrefs;
+	ImpRootNode m_graphRoot;
 	
 	SmtManager m_smtManager;
 	IPredicate m_truePredicate;
@@ -71,59 +74,22 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 	PredicateUnifier m_predicateUnifier;
 	EdgeChecker m_edgeChecker;
 	
-	GraphWriter m_graphWriter;
+	//default configuration
+	GraphWriter _graphWriter;
 //	String m_dotGraphPath = "C:/temp/codeCheckGraphs";
-	String m_dotGraphPath = "";
-	
+	String _dotGraphPath = "";
 	SolverAndInterpolator solverAndInterpolator = SolverAndInterpolator.SMTINTERPOL;
+	PredicateUnification predicateUnification = PredicateUnification.PER_VERIFICATION;
+	Checker checker = Checker.ULTIMATE;
+	boolean _memoizeNormalEdgeChecks = true;
+	boolean _memoizeReturnEdgeChecks = true;
+
+	HashMap<IPredicate, HashMap<CodeBlock, HashSet<IPredicate>>> _satTriples;
+	HashMap<IPredicate, HashMap<CodeBlock, HashSet<IPredicate>>> _unsatTriples;
 	
-	private Checker checker = Checker.ULTIMATE;
-	
-	public ImpRootNode m_graphRoot;
 
 	private static final boolean DEBUG = false;
 
-	/**
-	 * Given a graph root, copy all the nodes and the corresponding connections.
-	 * @param root
-	 * @return
-	 */
-	public ImpRootNode copyGraph(ImpRootNode root) {
-		HashMap <AnnotatedProgramPoint, AnnotatedProgramPoint> copy = new HashMap<AnnotatedProgramPoint, AnnotatedProgramPoint>();
-		ImpRootNode newRoot = new ImpRootNode(root.getRootAnnot());
-		copy.put(root, newRoot);
-		Stack <AnnotatedProgramPoint> stack = new Stack<AnnotatedProgramPoint>();
-		for (AnnotatedProgramPoint child : root.getOutgoingNodes()) {
-			stack.add(child);
-		}
-		while (!stack.isEmpty()) {
-			AnnotatedProgramPoint current = stack.pop();
-			if (copy.containsKey(current))
-				continue;
-			copy.put(current, new AnnotatedProgramPoint(current));
-			List <AnnotatedProgramPoint> nextNodes = current.getOutgoingNodes();
-			for (AnnotatedProgramPoint nextNode : nextNodes) {
-				if (!copy.containsKey(nextNode)) {
-					stack.add(nextNode);
-				}
-			}
-		}
-		for (Entry<AnnotatedProgramPoint, AnnotatedProgramPoint> entry : copy.entrySet()) {
-			AnnotatedProgramPoint oldNode = entry.getKey();
-			AnnotatedProgramPoint newNode = entry.getValue();
-			for (AppEdge outEdge : oldNode.getOutgoingEdges()) {
-				if (outEdge instanceof AppHyperEdge) {
-					AppHyperEdge outHypEdge = (AppHyperEdge) outEdge;
-					newNode.connectOutgoingReturn(copy.get(outHypEdge.getHier()), 
-							(Return) outHypEdge.getStatement(), copy.get(outHypEdge.getTarget()));
-				} else {
-					newNode.connectOutgoing(outEdge.getStatement(), copy.get(outEdge.getTarget()));
-				}
-			}
-		}
-		return newRoot;
-	}
-	
 	/**
 	 * Initialize all the required objects in the implementation.
 	 * @param root
@@ -144,7 +110,12 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 		m_predicateUnifier = new PredicateUnifier(m_smtManager, m_truePredicate, m_falsePredicate);
 		m_edgeChecker = new EdgeChecker(m_smtManager, rootAnnot.getModGlobVarManager());
 		
-		m_graphWriter = new GraphWriter(m_dotGraphPath, 
+		if (_memoizeNormalEdgeChecks) {
+			_satTriples = new HashMap<IPredicate, HashMap<CodeBlock, HashSet<IPredicate>>>();
+			_unsatTriples = new HashMap<IPredicate, HashMap<CodeBlock, HashSet<IPredicate>>>();
+		}
+			
+		_graphWriter = new GraphWriter(_dotGraphPath, 
 				true, true, true, false, m_smtManager.getScript());
 		
 		RCFG2AnnotatedRCFG r2ar = new RCFG2AnnotatedRCFG(m_smtManager);
@@ -153,11 +124,11 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 		if (checker == Checker.IMPULSE) {
 			codeChecker = new ImpulseChecker(
 					root, m_smtManager, m_truePredicate, m_falsePredicate, m_taPrefs, 
-					m_originalRoot, m_graphRoot, m_graphWriter, m_edgeChecker, m_predicateUnifier);
+					m_originalRoot, m_graphRoot, _graphWriter, m_edgeChecker, m_predicateUnifier);
 		} else {
 			codeChecker = new UltimateChecker(
 					root, m_smtManager, m_truePredicate, m_falsePredicate, m_taPrefs, 
-					m_originalRoot, m_graphRoot, m_graphWriter, m_edgeChecker, m_predicateUnifier);
+					m_originalRoot, m_graphRoot, _graphWriter, m_edgeChecker, m_predicateUnifier);
 		}
 		return false;
 	}
@@ -191,8 +162,8 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 		
 		ImpRootNode originalGraphCopy = copyGraph(m_graphRoot);
 		
-		m_graphWriter.writeGraphAsImage(originalGraphCopy, 
-				String.format("graph_%s_original", m_graphWriter._graphCounter));
+		_graphWriter.writeGraphAsImage(originalGraphCopy, 
+				String.format("graph_%s_original", _graphWriter._graphCounter));
 
 		int noOfProcedures = m_graphRoot.getOutgoingNodes().size();
 //		noOfProcedures = 1;//TODO add SV-comp mode where only main is checked
@@ -221,15 +192,15 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 						emptinessCheck.checkForEmptiness(procedureRoot);
 				
 				if (errorRun == null) {
-					m_graphWriter.writeGraphAsImage(procedureRoot, 
-						String.format("graph_%s_%s_noEP", m_graphWriter._graphCounter, procedureRoot.toString().substring(0, 5)));
+					_graphWriter.writeGraphAsImage(procedureRoot, 
+						String.format("graph_%s_%s_noEP", _graphWriter._graphCounter, procedureRoot.toString().substring(0, 5)));
 					// if an error trace doesn't exist, return safe
 					s_Logger.info("This Program is SAFE, Check terminated with " + iterationsCount + " iterations.");
 					break;
 				} else {
 					s_Logger.info("Error Path is FOUND.");
-					m_graphWriter.writeGraphAsImage(procedureRoot, 
-						String.format("graph_%s_%s_foundEP", m_graphWriter._graphCounter, procedureRoot.toString().substring(0, 5)), 
+					_graphWriter.writeGraphAsImage(procedureRoot, 
+						String.format("graph_%s_%s_foundEP", _graphWriter._graphCounter, procedureRoot.toString().substring(0, 5)), 
 						errorRun.getStateSequence().toArray(new AnnotatedProgramPoint[]{}));
 					
 					TraceChecker traceChecker = null;
@@ -258,7 +229,10 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 //						PredicateUnifier pu = new PredicateUnifier(m_smtManager, m_truePredicate, m_falsePredicate);
 						traceChecker.computeInterpolants(new TraceChecker.AllIntegers(), m_predicateUnifier);
 						IPredicate[] interpolants = traceChecker.getInterpolants();
-						codeChecker.codeCheck(errorRun, interpolants, procedureRoot);
+						if (_memoizeNormalEdgeChecks)
+							codeChecker.codeCheck(errorRun, interpolants, procedureRoot, _satTriples, _unsatTriples);
+						else
+							codeChecker.codeCheck(errorRun, interpolants, procedureRoot);
 					} else { // trace is feasible
 						s_Logger.info("This program is UNSAFE, Check terminated with " + iterationsCount + " iterations.");
 						allSafe = false;
@@ -302,6 +276,8 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 		s_Logger.info("EC#: " + m_smtManager.getNontrivialSatQueries());
 		s_Logger.info("TIME#: " + m_smtManager.getSatCheckTime());
 //		s_Logger.info("ManipulationTIME#: "	+ m_smtManager.getCodeBlockCheckTime());
+		s_Logger.info("MemoizationHitsSat: " + codeChecker.memoizationHitsSat);
+		s_Logger.info("MemoizationHitsUnsat: " + codeChecker.memoizationHitsUnsat);
 
 		if (overallResult == Result.CORRECT) {
 			PositiveResult<CodeBlock> result = new PositiveResult<CodeBlock>(
@@ -334,6 +310,47 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 		return false;
 	}
 	
+	/**
+	 * Given a graph root, copy all the nodes and the corresponding connections.
+	 * @param root
+	 * @return
+	 */
+	public ImpRootNode copyGraph(ImpRootNode root) {
+		HashMap <AnnotatedProgramPoint, AnnotatedProgramPoint> copy = new HashMap<AnnotatedProgramPoint, AnnotatedProgramPoint>();
+		ImpRootNode newRoot = new ImpRootNode(root.getRootAnnot());
+		copy.put(root, newRoot);
+		Stack <AnnotatedProgramPoint> stack = new Stack<AnnotatedProgramPoint>();
+		for (AnnotatedProgramPoint child : root.getOutgoingNodes()) {
+			stack.add(child);
+		}
+		while (!stack.isEmpty()) {
+			AnnotatedProgramPoint current = stack.pop();
+			if (copy.containsKey(current))
+				continue;
+			copy.put(current, new AnnotatedProgramPoint(current));
+			List <AnnotatedProgramPoint> nextNodes = current.getOutgoingNodes();
+			for (AnnotatedProgramPoint nextNode : nextNodes) {
+				if (!copy.containsKey(nextNode)) {
+					stack.add(nextNode);
+				}
+			}
+		}
+		for (Entry<AnnotatedProgramPoint, AnnotatedProgramPoint> entry : copy.entrySet()) {
+			AnnotatedProgramPoint oldNode = entry.getKey();
+			AnnotatedProgramPoint newNode = entry.getValue();
+			for (AppEdge outEdge : oldNode.getOutgoingEdges()) {
+				if (outEdge instanceof AppHyperEdge) {
+					AppHyperEdge outHypEdge = (AppHyperEdge) outEdge;
+					newNode.connectOutgoingReturn(copy.get(outHypEdge.getHier()), 
+							(Return) outHypEdge.getStatement(), copy.get(outHypEdge.getTarget()));
+				} else {
+					newNode.connectOutgoing(outEdge.getStatement(), copy.get(outEdge.getTarget()));
+				}
+			}
+		}
+		return newRoot;
+	}
+
 	private void reportCounterexampleResult(CodeBlock position, List<ILocation> failurePath, 
 			IProgramExecution<RcfgElement, Expression> pe) {
 		ILocation errorLoc = failurePath.get(failurePath.size()-1);

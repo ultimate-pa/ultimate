@@ -8,12 +8,12 @@ import java.util.HashSet;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.EdgeChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
@@ -111,7 +111,18 @@ public class ImpulseChecker extends CodeChecker {
 		return true;
 		
 	}
-	
+		
+	@Override
+	public boolean codeCheck(
+			NestedRun<CodeBlock, AnnotatedProgramPoint> errorRun,
+			IPredicate[] interpolants,
+			AnnotatedProgramPoint procedureRoot,
+			HashMap<IPredicate, HashMap<CodeBlock, HashSet<IPredicate>>> _satTriples,
+			HashMap<IPredicate, HashMap<CodeBlock, HashSet<IPredicate>>> _unsatTriples) {
+		// TODO Auto-generated method stub --> make use of memoization maps
+		return this.codeCheck(errorRun, interpolants, procedureRoot);
+	}
+
 	/**
 	 * Given an old node and an interpolant, this method returns a copy of the node.
 	 * The new copy will have all outgoing edges and hyper edges of the copied node.

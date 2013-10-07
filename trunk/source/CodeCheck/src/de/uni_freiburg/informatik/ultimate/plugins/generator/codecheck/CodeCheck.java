@@ -9,6 +9,8 @@ import de.uni_freiburg.informatik.ultimate.model.GraphType;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.MarkedTrace;
 import de.uni_freiburg.informatik.ultimate.model.TokenMap;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.preferences.PreferenceValues.EdgeCheckOptimization;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.preferences.PreferenceValues.PredicateUnification;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 
 import org.apache.log4j.Logger;
@@ -32,7 +34,7 @@ public class CodeCheck implements IGenerator {
 	
 	private static Logger s_Logger = UltimateServices.getInstance().getLogger(Activator.s_PLUGIN_ID);
 	
-	
+	EdgeCheckOptimization edgeCheckOptimization = EdgeCheckOptimization.SDEC;
 	
 	/* (non-Javadoc)
 	 * @see de.uni_freiburg.informatik.ultimate.ep.interfaces.IRCPPlugin#getName()
