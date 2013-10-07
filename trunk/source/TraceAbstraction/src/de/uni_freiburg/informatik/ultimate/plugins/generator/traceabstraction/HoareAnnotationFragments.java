@@ -307,7 +307,7 @@ public class HoareAnnotationFragments {
 							tvp.getProcedures(), tvp.getVars(), tvp.getClosedFormula());
 				}
 				IPredicate precondForContext;
-					if (m_UseEntry || containsAnOldVar(context)) {
+					if (true || m_UseEntry || containsAnOldVar(context)) {
 						precondForContext = m_Context2Entry.get(context);
 					} else {
 						precondForContext = smtManager.strongestPostcondition(context, getCall((ISLPredicate) context), true);
