@@ -3,7 +3,6 @@ package pea_to_boogie.main;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Vector;
 
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
@@ -64,7 +63,7 @@ public class PeaToBoogie implements ISource {
     	m_FileNames = new ArrayList<String>();
     	m_FileNames.add(inputPath);
     	s_Logger.info("Parsing: '"+inputPath+"'");
-    	Vector<srParsePattern> patterns = new ReqToPEA().genPatterns(inputPath);
+    	List<srParsePattern> patterns = new ReqToPEA().genPatterns(inputPath);
     	PhaseEventAutomata[] pea = new ReqToPEA().genPEA(patterns);
     	int combinationNum = Math.min(pea.length, 3); //TODO preference
  		translator.setCombinationNum(combinationNum);
