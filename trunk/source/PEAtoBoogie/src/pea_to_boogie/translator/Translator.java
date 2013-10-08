@@ -5,6 +5,8 @@ import pea.*;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.*;
 import de.uni_freiburg.informatik.ultimate.model.*;
 import pea_to_boogie.generator.*;
+import req_to_pea.ReqToPEA;
+import srParse.srParsePattern;
 /**
  * This class translates a phase event automaton to an equivalent Boogie code.
  */
@@ -54,6 +56,11 @@ public class Translator {
      */
     public PhaseEventAutomata[] automata;
     /**
+     * The array of input requirements.
+     */
+    public srParsePattern[] mRequirements;
+    
+    /**
      * The value of combinations of automata. 
      */
     public int combinationNum;
@@ -75,6 +82,10 @@ public class Translator {
     public void setInputFilePath(String path) {
     	this.inputFilePath = path;
     }
+    public String getInputFilePath() {
+    	return inputFilePath;
+    }
+    
     /**
      * Assign an address to the boogieFilePath.  
      * @param The address of a Boogie text file.
@@ -451,7 +462,9 @@ public class Translator {
      	Expression expr = conGen.nonDLCGenerator(this.automata, permutation, 
      			getBoogieFilePath(), bl);
      	if (expr == null) return null;
- 	    AssertStatement assertSmt = new AssertStatement(bl, expr);
+     	ReqCheck check = new ReqCheck(ReqCheck.ReqSpec.RTINCONSISTENT, permutation, this);
+     	ReqLocation loc = new ReqLocation(check);
+ 	    AssertStatement assertSmt = new AssertStatement(loc, expr);
     	return assertSmt;
     }
     /**
@@ -657,6 +670,15 @@ public class Translator {
     		boogieLocations[i+1] =
     				new BoogieLocation(inputFilePath, i+1, i+1, 0, 100, false);
     	}
+    }
+    
+    public srParsePattern getRequirement(int i){
+    	return mRequirements[i];
+    }
+    
+    public Unit genBoogie (srParsePattern[] patterns) {
+    	this.mRequirements = patterns;
+		return genBoogie(new ReqToPEA().genPEA(patterns));
     }
     
 	public Unit genBoogie (PhaseEventAutomata[] automata) {

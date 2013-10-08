@@ -16,19 +16,19 @@ import pea.*;
 import srParse.*;
 
 public class ReqToPEA {
-    public List<srParsePattern> genPatterns(String reqFileName) {
+    public srParsePattern[] genPatterns(String reqFileName) {
     	try {
     		ReqParser parser = new ReqParser(reqFileName);
     		Symbol goal = parser.parse();
     		srParsePattern[] patterns = (srParsePattern[]) goal.value;
-    		return Arrays.asList(patterns);
+    		return patterns;
     	} catch (Exception ex) {
     		ex.printStackTrace();
-    		return new Vector<srParsePattern>();
+    		return new srParsePattern[0];
     	}
     }
     
-	public PhaseEventAutomata[] genPEA(List<srParsePattern> patterns){
+	public PhaseEventAutomata[] genPEA(srParsePattern[] patterns){
 		List<PhaseEventAutomata> peaList = new ArrayList<PhaseEventAutomata>();
 			
 		PatternToPEA peaTrans=new PatternToPEA();
@@ -46,7 +46,7 @@ public class ReqToPEA {
 	    return peaArray;	
 	}
 
-	public void genPEAforUPPAAL(List<srParsePattern> patterns, String xmlFilePath) {
+	public void genPEAforUPPAAL(srParsePattern[] patterns, String xmlFilePath) {
 
 		PhaseEventAutomata pea=null;				
 		

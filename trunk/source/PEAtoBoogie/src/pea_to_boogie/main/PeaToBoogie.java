@@ -62,12 +62,11 @@ public class PeaToBoogie implements ISource {
     	m_FileNames = new ArrayList<String>();
     	m_FileNames.add(inputPath);
     	s_Logger.info("Parsing: '"+inputPath+"'");
-    	List<srParsePattern> patterns = new ReqToPEA().genPatterns(inputPath);
-    	PhaseEventAutomata[] pea = new ReqToPEA().genPEA(patterns);
-    	int combinationNum = Math.min(pea.length, 3); //TODO preference
+    	srParsePattern[] patterns = new ReqToPEA().genPatterns(inputPath);
+    	int combinationNum = Math.min(patterns.length, 3); //TODO preference
  		translator.setCombinationNum(combinationNum);
  		translator.setInputFilePath(inputPath);
- 		Unit unit = translator.genBoogie(pea);	
+ 		Unit unit = translator.genBoogie(patterns);	
  		return new WrapperNode(null, unit);
 	}
 
