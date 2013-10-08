@@ -22,6 +22,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.rankingf
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.templates.AffineTemplate;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.templates.LexicographicTemplate;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.templates.MultiphaseTemplate;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.templates.PiecewiseTemplate;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.templates.RankingFunctionTemplate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
@@ -70,6 +71,10 @@ public class LassoRankerObserver implements IUnmanagedObserver {
 		}
 		if (Preferences.use_multiphase_template) {
 			m_templates.add(new MultiphaseTemplate(Preferences.multiphase_template_phases));
+		}
+		if (Preferences.use_piecewise_template) {
+			s_Logger.error("Piecewise Template is currently broken. :'("); // FIXME
+			m_templates.add(new PiecewiseTemplate(Preferences.piecewise_template_pieces));
 		}
 		if (Preferences.use_lex_template) {
 			m_templates.add(new LexicographicTemplate(Preferences.lex_template_functions));

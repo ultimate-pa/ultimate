@@ -101,7 +101,7 @@ public class Preferences implements Serializable {
 	/**
 	 * Try to instantiate the piecewise template?
 	 */
-	public static final boolean use_piecewise_template = true; // Default: true
+	public static final boolean use_piecewise_template = false; // Default: true
 	
 	/**
 	 * How many pieces in the piecewise template?
