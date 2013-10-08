@@ -14,7 +14,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.DestructiveEqualityResolution.EqualityInformation;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.PartialQuantifierElimination.EqualityInformation;
 import de.uni_freiburg.informatik.ultimate.util.ScopedHashMap;
 import de.uni_freiburg.informatik.ultimate.util.UnionFind;
 
@@ -33,7 +33,7 @@ public class ElimStore2 {
 	private Term m_NewArray;
 	public Term elim(TermVariable oldArr, Term term) {
 		assert oldArr.getSort().isArraySort();
-		Term[] conjuncts = DestructiveEqualityResolution.getConjuncts(term);
+		Term[] conjuncts = PartialQuantifierElimination.getConjuncts(term);
 		HashSet<Term> others = new HashSet<Term>();
 		for (Term conjunct : conjuncts) {
 			if (m_NewArray == null) {
@@ -60,7 +60,7 @@ public class ElimStore2 {
 			// replace array reads by equal terms
 			Map<Term, Term> substitutionMapping = new HashMap<Term, Term>();
 			for (Term select : arrayReads.values()) {
-				EqualityInformation eqInfo = DestructiveEqualityResolution.getEqinfo(m_Script, select, others.toArray(new Term[0]), QuantifiedFormula.EXISTS);
+				EqualityInformation eqInfo = PartialQuantifierElimination.getEqinfo(m_Script, select, others.toArray(new Term[0]), QuantifiedFormula.EXISTS);
 				if (eqInfo == null) {
 					return null;
 				} else {
@@ -176,7 +176,7 @@ public class ElimStore2 {
 		for (Term[] equivalentIndexRep : equivalentIndices) {
 			for(Term[] writeIndexEqTerm : uf.getEquivalenceClassMembers(equivalentIndexRep)) {
 				Term select = arrayReads.get(writeIndexEqTerm);
-				EqualityInformation eqInfo = DestructiveEqualityResolution.getEqinfo(m_Script, select, others.toArray(new Term[0]), QuantifiedFormula.EXISTS);
+				EqualityInformation eqInfo = PartialQuantifierElimination.getEqinfo(m_Script, select, others.toArray(new Term[0]), QuantifiedFormula.EXISTS);
 				Term replacement;
 				if (eqInfo == null) {
 					TermVariable auxVar = writeIndexEqTerm[0].getTheory().createFreshTermVariable("arrayElim", select.getSort());
@@ -196,9 +196,9 @@ public class ElimStore2 {
 		result = Util.and(m_Script, result, t);
 		
 		if (!newAuxVars.isEmpty()) {
-			result = DestructiveEqualityResolution.derSimple(m_Script, QuantifiedFormula.EXISTS, result, newAuxVars);
+			result = PartialQuantifierElimination.derSimple(m_Script, QuantifiedFormula.EXISTS, result, newAuxVars);
 			if (!newAuxVars.isEmpty()) {
-				result = DestructiveEqualityResolution.updSimple(m_Script, QuantifiedFormula.EXISTS, result, newAuxVars);
+				result = PartialQuantifierElimination.updSimple(m_Script, QuantifiedFormula.EXISTS, result, newAuxVars);
 				if (!newAuxVars.isEmpty()) {
 					throw new UnsupportedOperationException();
 				}

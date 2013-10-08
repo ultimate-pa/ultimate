@@ -38,7 +38,7 @@ import de.uni_freiburg.informatik.ultimate.util.UnionFind;
  * Therefore we use that the term ∃v.v=c∧φ[v] is equivalent to term φ[c].
  * Resp. we use that the term ∀v.v!=c∨φ[v] is equivalent to term φ[c].
  */
-public class DestructiveEqualityResolution {
+public class PartialQuantifierElimination {
 	
 	static boolean USE_UPD = true;
 	static boolean USE_SOS = true;
@@ -117,10 +117,11 @@ public class DestructiveEqualityResolution {
 			return result;
 		}
 		
+		Term termAfterUPD = null;
 		// apply Unconnected Parameter Deletion
 		if (USE_UPD) {
 			Set<TermVariable> remainingAfterUPD = new HashSet<TermVariable>();
-			Term termAfterUPD;
+			
 			Term[] oldParams;
 			if (quantifier == QuantifiedFormula.EXISTS) {
 				oldParams = getDisjuncts(result);
@@ -179,13 +180,21 @@ public class DestructiveEqualityResolution {
 				throw new AssertionError("unknown quantifier");
 			}
 			remainingVars = remainingAfterSOS;
-			termAfterSOS = (new SimplifyDDA(script)).getSimplifiedTerm(termAfterSOS);
+//			termAfterSOS = (new SimplifyDDA(script)).getSimplifiedTerm(termAfterSOS);
 			result = termAfterSOS;
 		}
 		
 		if (remainingVars.isEmpty()) {
 			return result;
-		} 
+		}
+		
+		// simplification
+		result = (new SimplifyDDA(script)).getSimplifiedTerm(result);
+		remainingVars.retainAll(Arrays.asList(result.getFreeVars()));
+		
+		if (remainingVars.isEmpty()) {
+			return result;
+		}
 		
 		return script.quantifier(quantifier, 
 					remainingVars.toArray(new TermVariable[0]), result, patterns);

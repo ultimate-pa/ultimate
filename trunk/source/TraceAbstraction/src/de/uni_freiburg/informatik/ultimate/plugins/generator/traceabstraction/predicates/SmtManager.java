@@ -46,7 +46,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Sum
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.TransFormula;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.TransFormula.Infeasibility;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.PreferenceValues.Solver;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.DestructiveEqualityResolution;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.HoareAnnotation;
@@ -1723,7 +1723,7 @@ public class SmtManager {
 		Set<BoogieVar> relevantVars = rvar.getRelevantVariables()[posToComputePredicateFor];
 		Set<TermVariable> irrelevantVars = computeIrrelevantVariables(relevantVars, p);
 		
-		Term formula = DestructiveEqualityResolution.quantifier(m_Script, quantifier,
+		Term formula = PartialQuantifierElimination.quantifier(m_Script, quantifier,
 				irrelevantVars.toArray(new TermVariable[0]), p.getFormula(), (Term[][]) null);
 		return constructIPredicate(formula);
 	}
@@ -1817,7 +1817,7 @@ public class SmtManager {
 		varsToQuantify.addAll(tf.getAuxVars());
 		
 		if (varsToQuantify.size() > 0) {
-			result = DestructiveEqualityResolution.quantifier(m_Script, Script.EXISTS,
+			result = PartialQuantifierElimination.quantifier(m_Script, Script.EXISTS,
 					varsToQuantify.toArray(new TermVariable[varsToQuantify.size()]), result, (Term[][]) null);
 		}
 		return constructIPredicate(result);
@@ -1967,7 +1967,7 @@ public class SmtManager {
 					globalVarsInVarsRenamedOutVarsRenamed);
 			varsToQuantifyPendingCall.addAll(varsToQuantifyNonModOldVars);
 			varsToQuantifyPendingCall.addAll(allAuxVars);
-			Term result = DestructiveEqualityResolution.quantifier(m_Script,
+			Term result = PartialQuantifierElimination.quantifier(m_Script,
 					Script.EXISTS,
 					varsToQuantifyPendingCall.toArray(new TermVariable[varsToQuantifyPendingCall.size()]),
 					predANDCallANDGlobalVars, (Term[][])null);
@@ -1976,7 +1976,7 @@ public class SmtManager {
 			Term predRenamed = new Substitution(varsToRenameInPredNonPendingCall, m_Script).transform(predNonModOldVarsRenamed);
 			varsToQuantifyNonPendingCall.addAll(varsToQuantifyNonModOldVars);
 			varsToQuantifyNonPendingCall.addAll(allAuxVars);
-			Term result = DestructiveEqualityResolution.quantifier(m_Script, 
+			Term result = PartialQuantifierElimination.quantifier(m_Script, 
 					Script.EXISTS,
 					varsToQuantifyNonPendingCall.toArray(new TermVariable[varsToQuantifyNonPendingCall.size()]),
 					Util.and(m_Script, predRenamed, globalVarsInVarsRenamedOutVarsRenamed),
@@ -2156,18 +2156,18 @@ public class SmtManager {
 		Term callerPredVarsRenamedToFreshVars = new Substitution(varsToRenameInCallerPred, m_Script).transform(callerPred.getFormula());
 		
 		// 1. CalleePredRenamed and loc vars quantified
-		Term calleePredRenamedQuantified = DestructiveEqualityResolution.quantifier(m_Script,
+		Term calleePredRenamedQuantified = PartialQuantifierElimination.quantifier(m_Script,
 				Script.EXISTS,
 				varsToQuantifyInCalleePred.toArray(new TermVariable[varsToQuantifyInCalleePred.size()]),
 				calleePredVarsRenamedOldVarsToFreshVars,(Term[][])null);
 		// 2. CallTF and callerPred
-		Term calleRPredANDCallTFRenamedQuantified = DestructiveEqualityResolution.quantifier(m_Script,
+		Term calleRPredANDCallTFRenamedQuantified = PartialQuantifierElimination.quantifier(m_Script,
 				Script.EXISTS,
 				varsToQuantifyInCallerPredAndCallTF.toArray(new TermVariable[varsToQuantifyInCallerPredAndCallTF.size()]),
 				Util.and(m_Script, callerPredVarsRenamedToFreshVars, callTermRenamed),(Term[][])null);
 		// 3. Result
 		varsToQuantifyOverAll.addAll(allAuxVars);
-		Term result = DestructiveEqualityResolution.quantifier(m_Script,
+		Term result = PartialQuantifierElimination.quantifier(m_Script,
 				Script.EXISTS,
 				varsToQuantifyOverAll.toArray(new TermVariable[varsToQuantifyOverAll.size()]),
 				Util.and(m_Script, calleePredRenamedQuantified, retTermRenamed,
@@ -2240,7 +2240,7 @@ public class SmtManager {
 		// Add aux-vars to quantified vars
 		varsToQuantify.addAll(tf.getAuxVars());
 		if (varsToQuantify.size() > 0) {
-			result = DestructiveEqualityResolution.quantifier(m_Script, Script.FORALL,
+			result = PartialQuantifierElimination.quantifier(m_Script, Script.FORALL,
 					varsToQuantify.toArray(new TermVariable[varsToQuantify.size()]),
 					result, (Term[][]) null);
 //			result = m_Script.quantifier(Script.FORALL,
@@ -2343,7 +2343,7 @@ public class SmtManager {
 					calleePredRenamed);
 			varsToQuantify.addAll(call_TF.getAuxVars());
 			if (varsToQuantify.size() > 0) {
-				result = DestructiveEqualityResolution.quantifier(m_Script, Script.FORALL,
+				result = PartialQuantifierElimination.quantifier(m_Script, Script.FORALL,
 						varsToQuantify.toArray(new TermVariable[varsToQuantify.size()]),
 						result, (Term[][])null);
 			}
@@ -2487,7 +2487,7 @@ public class SmtManager {
 		varsToQuantify.addAll(callTF.getAuxVars());
 		varsToQuantify.addAll(globalVarsAssignments.getAuxVars());
 		if (varsToQuantify.size() > 0) {
-			resultQuantified = DestructiveEqualityResolution.quantifier(m_Script, Script.FORALL,
+			resultQuantified = PartialQuantifierElimination.quantifier(m_Script, Script.FORALL,
 					varsToQuantify.toArray(new TermVariable[varsToQuantify.size()]),
 					result, (Term[][])null);
 //			resultQuantified = m_Script.quantifier(Script.FORALL, 

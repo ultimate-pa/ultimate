@@ -6,7 +6,7 @@ import java.util.Map;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.TransFormula;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.DestructiveEqualityResolution;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 
@@ -26,8 +26,8 @@ public class AnnotateAndAsserterConjuncts extends AnnotateAndAsserter {
 	 * @return
 	 */
 	private Term annotateAndAssertConjuncts(String name, Term original,	Term indexed) {
-		Term[] originalConjuncts = DestructiveEqualityResolution.getConjuncts(original);
-		Term[] indexedConjuncts = DestructiveEqualityResolution.getConjuncts(indexed);
+		Term[] originalConjuncts = PartialQuantifierElimination.getConjuncts(original);
+		Term[] indexedConjuncts = PartialQuantifierElimination.getConjuncts(indexed);
 		assert originalConjuncts.length == indexedConjuncts.length : 
 			"number of original and indexed conjuncts differ";
 		Term[] annotatedConjuncts = new Term[originalConjuncts.length];
