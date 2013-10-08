@@ -2045,8 +2045,7 @@ public class SmtManager {
 		
 		// Collect the local variables of called proc
 		for (BoogieVar bv : calleePred.getVars()) {
-			if (globalVarsAssignment.getInVars().containsKey(bv) ||
-					globalVarsAssignment.getOutVars().containsKey(bv)) {
+			if (bv.isGlobal() || bv.isOldvar()) {
 				continue;
 			}
 			if (ret_TF.getOutVars().containsKey(bv)) {

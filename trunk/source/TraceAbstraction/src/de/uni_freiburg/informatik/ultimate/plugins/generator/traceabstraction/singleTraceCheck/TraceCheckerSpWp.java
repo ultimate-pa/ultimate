@@ -10,6 +10,9 @@ import java.util.SortedMap;
 
 import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
+import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
+import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
+import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -245,6 +248,15 @@ public class TraceCheckerSpWp extends TraceChecker {
 					if ((m_InterpolantsWp.length - call_pos) >= call_pos) {
 						TransFormula summary = computeSummaryForTrace(getSubTrace(0, call_pos, trace), rv, 0);
 						callerPred = m_SmtManager.strongestPostcondition(m_Precondition, summary);
+						// If callerPred contains quantifier, compute it via the 2nd method
+						if(formulaContainsExistentialQuantifier(callerPred.getFormula())) {
+							// TODO: Check whether this is correct!
+							summary = computeSummaryForTrace(getSubTrace(call_pos, m_InterpolantsWp.length - 1, trace), callTF,
+									rv.getFormulaFromNonCallPos(m_InterpolantsWp.length), 
+									globalVarsAssignments,
+									rv, call_pos);
+							callerPred = m_SmtManager.weakestPrecondition(m_Postcondition, summary);
+						}
 					} else {
 						// If the sub-trace between call_pos and returnPos (here: i) is shorter, than compute the
 						// callerPred in this way.
@@ -345,7 +357,25 @@ public class TraceCheckerSpWp extends TraceChecker {
 			m_Interpolants = m_InterpolantsWp;
 		}
 	}
-
+	private boolean formulaContainsExistentialQuantifier(Term formula) {
+		if (formula instanceof ApplicationTerm) {
+			Term[] parameters = ((ApplicationTerm) formula).getParameters();
+			for (int i = 0; i < parameters.length; i++) {
+				if (formulaContainsExistentialQuantifier(parameters[i])) {
+					return true;
+				}
+			}
+		} else if (formula instanceof QuantifiedFormula) {
+			if (((QuantifiedFormula) formula).getQuantifier() == QuantifiedFormula.EXISTS) {
+				return true;
+			} else {
+				return false;
+			}
+		}
+		return false;
+	}
+	
+	
 	/**
 	 * TODO: documentation
 	 */
