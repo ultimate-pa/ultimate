@@ -9,6 +9,7 @@
  */
 
 procedure main() returns (x: int, y: int, z: int) {
+    assume(true);
     while (x > 0 && y > 0 && z > 0) {
         if (y > x) {
             y := z;
