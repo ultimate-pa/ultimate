@@ -91,7 +91,14 @@ public class DNF implements PreProcessor {
 				if ((notTerm instanceof TermVariable)) {
 					clauses.add(notTerm);
 				} else if (notTerm instanceof ApplicationTerm) {
-					clauses.add(negateAtom((ApplicationTerm) notTerm));
+					// TODO: propagate negation
+					if (((ApplicationTerm) notTerm).getFunction().getName().equals("and")) {
+						for (Term param : ((ApplicationTerm) notTerm).getParameters()) {
+							clauses.add(negateAtom((ApplicationTerm) param));
+						}
+					} else {
+						clauses.add(negateAtom((ApplicationTerm) notTerm));
+					}
 				} else {
 					throw new TermException("Expected an ApplicationTerm or "
 							+ "TermVariable after negation", appt);

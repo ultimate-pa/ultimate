@@ -23,7 +23,7 @@ public class Preferences implements Serializable {
 	 * 
 	 * @see num_non_strict_invariants
 	 */
-	public static int num_strict_invariants = 1; // Default: 1
+	public static int num_strict_invariants = 0; // Default: 1
 	
 	/**
 	 * Number of non-strict supporting invariants for each Motzkin
@@ -36,7 +36,7 @@ public class Preferences implements Serializable {
 	 * 
 	 * @see num_strict_invariants
 	 */
-	public static int num_non_strict_invariants = 1; // Default: 1
+	public static int num_non_strict_invariants = 0; // Default: 1
 	
 	/**
 	 * Only consider non-decreasing invariants.
@@ -86,7 +86,7 @@ public class Preferences implements Serializable {
 	/**
 	 * How many phases in the multiphase template?
 	 */
-	public static final int multiphase_template_phases = 3; // Default: 3
+	public static final int multiphase_template_phases = 2; // Default: 3
 	
 	/**
 	 * Try to instantiate the lexicographic template?
