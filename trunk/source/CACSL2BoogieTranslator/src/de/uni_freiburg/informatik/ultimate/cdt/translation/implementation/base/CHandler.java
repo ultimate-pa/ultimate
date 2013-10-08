@@ -893,18 +893,38 @@ public class CHandler implements ICHandler {
                         o.auxVars);
             case IASTUnaryExpression.op_not:
             	InferredType iType = (InferredType) o.expr.getType();
+            	// boolean <code>p</code> becomes <code>!p ? 1 : 0</code>
             	if (iType.getType() == InferredType.Type.Boolean) {
                     return new ResultExpression(o.stmt,
-                    		wrapNegation(loc, tBool, o.expr),
+                    		wrapBoolean2Int(loc, new UnaryExpression(loc,
+                    				UnaryExpression.Operator.LOGICNEG, o.expr)),
                     		o.decl, o.auxVars);
             	} else if (iType.getType() == InferredType.Type.Integer) {
-            		IntegerLiteral zero = new IntegerLiteral(loc, SFO.NR0);
-            		IntegerLiteral one = new IntegerLiteral(loc, SFO.NR1);
-            		BinaryExpression compareToZero = new BinaryExpression(
-            				loc, tBool, BinaryExpression.Operator.COMPEQ, o.expr,
-                            zero);
-            		return new ResultExpression(o.stmt, new IfThenElseExpression(
-            				loc, tInt, compareToZero, one, zero), o.decl, o.auxVars);
+            		// unwrap if possible
+            		if (main.typeHandler instanceof TypeHandler) {
+            			final Expression unwrapped =
+            					((TypeHandler)main.typeHandler).
+            							unwrapInt2Boolean(o.expr);
+            			if (unwrapped != null) {
+            				/*
+            				 * int <code>x</code> of form <code>y ? 1 : 0</code>
+            				 * becomes <code>!y ? 1 : 0</code>
+            				 */
+            				return new ResultExpression(o.stmt,
+            						wrapBoolean2Int(loc,
+            								new UnaryExpression(loc,
+                            				UnaryExpression.Operator.LOGICNEG,
+                            				unwrapped)),
+            						o.decl, o.auxVars);
+            			}
+            		}
+            		
+            		// int <code>x</code> becomes <code>x == 0 ? 1 : 0</code>
+            		return new ResultExpression(o.stmt,
+            				wrapBinaryBoolean2Int(loc,
+            						BinaryExpression.Operator.COMPEQ, o.expr,
+            						new IntegerLiteral(loc, tInt, SFO.NR0)),
+            				o.decl, o.auxVars);
             	} else {
             		throw new UnsupportedOperationException(
             				"only bool and int at the moment");
@@ -1224,40 +1244,40 @@ public class CHandler implements ICHandler {
             case IASTBinaryExpression.op_equals:
                 stmt.addAll(l.stmt);
                 stmt.addAll(r.stmt);
-                return new ResultExpression(stmt, wrapBoolean2Int(loc,
-                        tBool, BinaryExpression.Operator.COMPEQ, l.expr,
+                return new ResultExpression(stmt, wrapBinaryBoolean2Int(loc,
+                        BinaryExpression.Operator.COMPEQ, l.expr,
                         r.expr), decl, auxVars);
             case IASTBinaryExpression.op_greaterEqual:
                 stmt.addAll(l.stmt);
                 stmt.addAll(r.stmt);
-                return new ResultExpression(stmt, wrapBoolean2Int(loc,
-                		tBool, BinaryExpression.Operator.COMPGEQ, l.expr,
+                return new ResultExpression(stmt, wrapBinaryBoolean2Int(loc,
+                		BinaryExpression.Operator.COMPGEQ, l.expr,
                         r.expr), decl, auxVars);
             case IASTBinaryExpression.op_greaterThan:
                 stmt.addAll(l.stmt);
                 stmt.addAll(r.stmt);
-                return new ResultExpression(stmt, wrapBoolean2Int(loc,
-                		tBool, BinaryExpression.Operator.COMPGT, l.expr,
+                return new ResultExpression(stmt, wrapBinaryBoolean2Int(loc,
+                		BinaryExpression.Operator.COMPGT, l.expr,
                         r.expr), decl, auxVars);
             case IASTBinaryExpression.op_lessEqual:
                 stmt.addAll(l.stmt);
                 stmt.addAll(r.stmt);
-                return new ResultExpression(stmt,  wrapBoolean2Int(loc,
-                		tBool, BinaryExpression.Operator.COMPLEQ, l.expr,
+                return new ResultExpression(stmt,  wrapBinaryBoolean2Int(loc,
+                		BinaryExpression.Operator.COMPLEQ, l.expr,
                         r.expr), decl, auxVars);
             case IASTBinaryExpression.op_lessThan:
                 stmt.addAll(l.stmt);
                 stmt.addAll(r.stmt);
-                return new ResultExpression(stmt, wrapBoolean2Int(loc,
-                		tBool, BinaryExpression.Operator.COMPLT, l.expr,
+                return new ResultExpression(stmt, wrapBinaryBoolean2Int(loc,
+                		BinaryExpression.Operator.COMPLT, l.expr,
                         r.expr), decl, auxVars);
             case IASTBinaryExpression.op_logicalAnd:
                 stmt.addAll(l.stmt);
-                if (false && r.auxVars.isEmpty() && l.auxVars.isEmpty()) {
+                if (r.auxVars.isEmpty() && l.auxVars.isEmpty()) {
                 	// no auxVar in operands, hence no side effects in operands
                 	// we can directly combine operands with LOGICAND
-                	return new ResultExpression(stmt, wrapBoolean2Int(loc,
-                    		tBool, BinaryExpression.Operator.LOGICAND,
+                	return new ResultExpression(stmt, wrapBinaryBoolean2Int(loc,
+                    		BinaryExpression.Operator.LOGICAND,
                     		main.typeHandler.convertArith2Boolean(
                     				loc, new PrimitiveType(loc, SFO.BOOL),
                     				l.expr),
@@ -1302,11 +1322,11 @@ public class CHandler implements ICHandler {
                         tBool, resName), decl, auxVars);
             case IASTBinaryExpression.op_logicalOr:
                 stmt.addAll(l.stmt);
-                if (false && r.auxVars.isEmpty() && l.auxVars.isEmpty()) {
+                if (r.auxVars.isEmpty() && l.auxVars.isEmpty()) {
                 	// no auxVar in operands, hence no side effects in operands
                 	// we can directly combine operands with LOGICOR
-                	return new ResultExpression(stmt, wrapBoolean2Int(loc,
-                    		tBool, BinaryExpression.Operator.LOGICOR,
+                	return new ResultExpression(stmt, wrapBinaryBoolean2Int(loc,
+                    		BinaryExpression.Operator.LOGICOR,
                     		main.typeHandler.convertArith2Boolean(
                     				loc, new PrimitiveType(loc, SFO.BOOL),
                     				l.expr),
@@ -1350,8 +1370,8 @@ public class CHandler implements ICHandler {
                 stmt.addAll(l.stmt);
                 stmt.addAll(r.stmt);
                 assert (main.isAuxVarMapcomplete(decl, auxVars)) : "unhavoced auxvars";
-                return new ResultExpression(stmt, wrapBoolean2Int(loc,
-                		tBool, BinaryExpression.Operator.COMPNEQ, l.expr,
+                return new ResultExpression(stmt, wrapBinaryBoolean2Int(loc,
+                		BinaryExpression.Operator.COMPNEQ, l.expr,
                 		r.expr), decl, auxVars);
             case IASTBinaryExpression.op_minus:
             case IASTBinaryExpression.op_plus:
@@ -2370,79 +2390,41 @@ public class CHandler implements ICHandler {
     }
 
     /**
-     * Wraps a Boolean expression into a Boogie if-then-else expression of type
-     * integer. Special handling for negation. Example:
+     * Wraps a binary Boolean expression into a Boogie if-then-else expression
+     * of type integer.
      * 
+     * {@link wrapBinaryBoolean2Int(loc, expr)}
+     * @param loc location
+     * @param op binary operator
+     * @param lexpr left expression
+     * @param rexpr right expression
+     * @return wrapped expression
+     * @author Christian
+     */
+    private Expression wrapBinaryBoolean2Int(final CACSLLocation loc,
+    		final Operator op, final Expression lexpr, final Expression rexpr) {
+		return wrapBoolean2Int(loc, new BinaryExpression(loc,
+				new InferredType(Type.Boolean), op, lexpr, rexpr));
+	}
+    
+    /**
+     * Wraps a Boolean expression into a Boogie if-then-else expression of type
+     * integer. Example:
      * Input: <code>x == 0</code>
      * Output: <code>(x == 0) ? 1 : 0</code>
      * 
      * @param loc location
-     * @param tBool type (Boolean)
-     * @param op operator (binary except for negation (then null))
-     * @param lexpr left expression
-     * @param rexpr right expression (null for negation)
+     * @param expr Boolean expression
      * @return wrapped expression
-     * 
      * @author Christian
      */
-    protected Expression wrapBoolean2Int(final CACSLLocation loc,
-    		final InferredType tBool, final Operator op,
-    		final Expression lexpr, final Expression rexpr) {
+    private Expression wrapBoolean2Int(final CACSLLocation loc,
+    		final Expression expr) {
 		return new IfThenElseExpression(loc, new InferredType(Type.Integer),
-    			new BinaryExpression(loc, tBool, op, lexpr, rexpr),
-				new IntegerLiteral(loc, SFO.NR1),
+    			expr,
+    			new IntegerLiteral(loc, SFO.NR1),
     			new IntegerLiteral(loc, SFO.NR0));
 	}
-
-    /**
-     * Handler for negation. If the operand is already wrapped, unwrap it.
-     * Else wrap it.
-     * @see wrapBoolean2Int, unwrapInt2Boolean
-     * 
-     * @param loc location
-     * @param tBool type (Boolean)
-     * @param expr expression
-     * @return wrapped or unwrapped expression
-     * 
-     * @author Christian
-     */
-    protected Expression wrapNegation(final CACSLLocation loc,
-			final InferredType tBool, final Expression expr) {
-		// negation of already wrapped expression -> unwrap it again to Boolean
-		final Expression unwrapped = unwrapInt2BooleanHelper(expr);
-		if (unwrapped != null) {
-			// FIXME wrong, negate this!
-			return unwrapped;
-		}
-		// negation of base type -> wrap it to integer
-		return wrapBoolean2Int(loc, tBool, Operator.COMPEQ,
-				expr, new IntegerLiteral(loc, SFO.NR0));
-	}
-    
-    /**
-     * Checks whether a given expression is wrapped or not.
-     * In this case returns the unwrapped expression.
-     * 
-     * @param expr expression
-     * @return unwrapped expression or null
-     * 
-     * @author Christian
-     */
-    protected Expression unwrapInt2BooleanHelper(final Expression expr) {
-    	if (expr instanceof IfThenElseExpression) {
-			final IfThenElseExpression iteEx = (IfThenElseExpression)expr;
-			final Expression thenPart = iteEx.getThenPart();
-			if ((thenPart instanceof IntegerLiteral) &&
-				(((IntegerLiteral)thenPart).getValue() == SFO.NR1)) {
-				final Expression elsePart = iteEx.getElsePart();
-				if ((elsePart instanceof IntegerLiteral) &&
-						(((IntegerLiteral)elsePart).getValue() == SFO.NR0)) {
-					return iteEx.getCondition();
-				}
-			}
-    	}
-    	return null;
-    }
 
     @Override
     public SymbolTable getSymbolTable() {

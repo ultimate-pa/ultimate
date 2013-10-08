@@ -435,7 +435,7 @@ public class TypeHandler implements ITypeHandler {
                                  * if-then-else wrapper
                                  */
                                 final Expression unwrappedInt =
-                                		unwrapInt2BooleanExpr(e);
+                                		unwrapInt2Boolean(e);
                                 if (unwrappedInt != null) {
                                 	e = unwrappedInt;
                                 }
@@ -474,31 +474,15 @@ public class TypeHandler implements ITypeHandler {
     }
     
     /**
-     * Tries to unwrap an expression that was wrapped before.
+     * Tries to unwrap an expression that was wrapped before. That is, it checks
+     * whether a given integer expression is wrapped in an if-then-else
+     * expression or not.
      * 
      * @param expr expression
-     * @return unwrapped expression or old expression
-     * 
+     * @return unwrapped expression or null if not wrapped
      * @author Christian
      */
-    protected Expression unwrapInt2BooleanExpr(final Expression expr) {
-    	final Expression unwrapped = unwrapInt2BooleanHelper(expr);
-    	if (unwrapped != null) {
-    		return unwrapped;
-    	}
-    	return null;
-    }
-    
-    /**
-     * Checks whether a given integer expression is wrapped or not.
-     * In this case returns the unwrapped expression.
-     * 
-     * @param expr expression
-     * @return unwrapped expression or null
-     * 
-     * @author Christian
-     */
-    private Expression unwrapInt2BooleanHelper(final Expression expr) {
+    protected Expression unwrapInt2Boolean(final Expression expr) {
     	if (expr instanceof IfThenElseExpression) {
 			final IfThenElseExpression iteEx = (IfThenElseExpression)expr;
 			final Expression thenPart = iteEx.getThenPart();
