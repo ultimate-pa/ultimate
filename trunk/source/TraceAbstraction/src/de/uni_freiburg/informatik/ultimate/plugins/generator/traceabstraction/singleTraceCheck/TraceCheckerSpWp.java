@@ -46,8 +46,8 @@ public class TraceCheckerSpWp extends TraceChecker {
 	private static boolean m_useUnsatCoreOfFineGranularity = true;
 	private static boolean m_ComputeInterpolantsSp = true;
 	private static boolean m_ComputeInterpolantsFp = true;
-	private static boolean m_ComputeInterpolantsBp = !true;
-	private static boolean m_ComputeInterpolantsWp = !true;
+	private static boolean m_ComputeInterpolantsBp = true;
+	private static boolean m_ComputeInterpolantsWp = true;
 
 	public TraceCheckerSpWp(IPredicate precondition, IPredicate postcondition,
 			NestedWord<CodeBlock> trace, SmtManager smtManager,
@@ -448,7 +448,7 @@ public class TraceCheckerSpWp extends TraceChecker {
 			s_Logger.debug("SP {" + interpolantsSP[i] + "} ==> WP {" + interpolantsWP[i] + "} is " + 
 						(result == LBool.UNSAT ? "valid" :
 						(result == LBool.SAT ? "not valid" : result)));
-			assert(result == LBool.UNSAT || result == LBool.UNKNOWN);	
+			assert(result == LBool.UNSAT || result == LBool.UNKNOWN) : "checkSPImpliesWP failed";	
 		}
 	}
 	
