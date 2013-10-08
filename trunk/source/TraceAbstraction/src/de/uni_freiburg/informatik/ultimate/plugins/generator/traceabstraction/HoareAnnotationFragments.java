@@ -1,6 +1,5 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -87,7 +86,7 @@ public class HoareAnnotationFragments {
 			Collection<IPredicate> oldStates = context2states.get(psOld);
 			assert (oldStates != null);
 			assert (!oldStates.isEmpty());
-			Collection<IPredicate> newStates = new ArrayList<IPredicate>();
+			Collection<IPredicate> newStates = new HashSet<IPredicate>();
 			newStates.addAll(oldStates);
 			context2states.put(psNew, newStates);
 			Collection<ProgramPoint> progpoints = m_Context2ProgPoint.get(psNew);
@@ -133,7 +132,7 @@ public class HoareAnnotationFragments {
 		if (down == emtpy) {
 			Collection<IPredicate> statesWithEmtpyContext = m_ProgPoint2StatesWithEmptyContext.get(pp);
 			if (statesWithEmtpyContext == null) {
-				statesWithEmtpyContext = new ArrayList<IPredicate>();
+				statesWithEmtpyContext = new HashSet<IPredicate>();
 				m_ProgPoint2StatesWithEmptyContext.put(pp,statesWithEmtpyContext);
 			}
 			statesWithEmtpyContext.add(up);
@@ -145,7 +144,7 @@ public class HoareAnnotationFragments {
 			}
 			Collection<IPredicate> states = context2states.get(down);
 			if (states == null) {
-				states = new ArrayList<IPredicate>();
+				states = new HashSet<IPredicate>();
 				context2states.put(down, states);
 			}
 			states.add(up);

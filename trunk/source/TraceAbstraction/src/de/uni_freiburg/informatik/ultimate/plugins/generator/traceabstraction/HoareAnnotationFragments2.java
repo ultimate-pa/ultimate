@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.IDoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
@@ -79,10 +80,14 @@ public class HoareAnnotationFragments2 extends HoareAnnotationFragments {
 			for (IPredicate oldPred : pp2s.getValue()) {
 				Collection<IPredicate> newPreds = update.getNewPredicates(oldPred);
 				if (newPreds == null) {
+					// predicate that has already been removed
 					super.addDoubleDecker(null, oldPred, null);
 				} else {
 					for (IPredicate newPred : newPreds) {
-						super.addDoubleDecker(null, newPred, null);
+						Set<IPredicate> contexts = abstraction.getDownStates(newPred);
+						for (IPredicate context : contexts) {
+							super.addDoubleDecker(context, newPred, abstraction.getEmptyStackState());
+						}
 					}
 				}
 			}
@@ -93,22 +98,29 @@ public class HoareAnnotationFragments2 extends HoareAnnotationFragments {
 				IPredicate oldContext = entry.getKey();
 				Collection<IPredicate> newContexts = update.getNewPredicates(oldContext);
 				for (IPredicate oldPred : entry.getValue()) {
-					Collection<IPredicate> newPreds = update.getNewPredicates(oldPred);
 					if (newContexts == null) {
-						// do nothing
-						// oldContext was removed
-						// oldPred might have been still there and got replaced
-						// by a new ones, but only for a different down state.
+						// double decker that has already been removed because
+						// down state was removed (e.g., not on any accepting 
+						// run any more.
+						super.addDoubleDecker(oldContext, oldPred, null);
+					}
+					Collection<IPredicate> newPreds = update.getNewPredicates(oldPred);
+					if (newPreds == null) {
+						if (newContexts == null) {
+							// do nothing, we took already care of this case
+							// above
+						} else {
+							// double decker where only up state was removed so
+							// far. We have to update down state
+							for (IPredicate context : newContexts) {
+								super.addDoubleDecker(context, oldPred, null);
+							}
+						}
 					} else {
-						for (IPredicate newContext : newContexts) {
-							if (newPreds == null) {
-								super.addDoubleDecker(newContext, oldPred, null);
-							} else {
-								for (IPredicate newPred : newPreds) {
-									if (abstraction.isDoubleDecker(newPred, newContext)) {
-										super.addDoubleDecker(newContext, newPred, null);
-									}
-								}
+						for (IPredicate newPred : newPreds) {
+							Set<IPredicate> contexts = abstraction.getDownStates(newPred);
+							for (IPredicate context : contexts) {
+								super.addDoubleDecker(context, newPred, abstraction.getEmptyStackState());
 							}
 						}
 					}

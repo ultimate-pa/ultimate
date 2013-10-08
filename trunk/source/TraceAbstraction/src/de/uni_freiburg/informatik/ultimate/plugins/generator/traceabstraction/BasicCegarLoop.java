@@ -104,7 +104,9 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		
 		m_Abstraction = cFG2NestedWordAutomaton.getNestedWordAutomaton(
 						super.m_RootNode, m_StateFactoryForRefinement, super.m_ErrorLocs);
-		new HoareAnnotationExtractor((INestedWordAutomatonOldApi<CodeBlock, IPredicate>) m_Abstraction, m_Haf);
+		if (m_Pref.computeHoareAnnotation()) {
+			new HoareAnnotationExtractor((INestedWordAutomatonOldApi<CodeBlock, IPredicate>) m_Abstraction, m_Haf);
+		}
 	}
 	
 	
