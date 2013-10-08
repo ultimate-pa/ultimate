@@ -8,6 +8,8 @@ int main()
     //@ assert i == 0;
     i = !i;
     //@ assert i != 0;
+    i = !(!!(0 == !0));
+    //@ assert i != 0;
     
     
     /* binary Boolean operators */
@@ -32,12 +34,14 @@ int main()
     //@ assert i == 0;
     
     
-    /* logical AND (expects Booleans) */
+    /* logical AND/OR (expects Booleans) */
     
     
     i = 0;
     i = (0 == 0) && (0 != 0) && !i;
     //@ assert i == 0;
+    i = !(0 + 1) || 0 || (1 == 1);
+    //@ assert i == 1;
     
     
     /* if */
