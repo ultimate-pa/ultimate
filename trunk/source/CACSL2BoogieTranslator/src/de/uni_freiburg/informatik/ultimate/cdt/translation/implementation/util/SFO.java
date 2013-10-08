@@ -190,7 +190,13 @@ public final class SFO {
 	    * Auxiliary variable used to model temporary results of the ternary 
 	    * conditional expression, e.g., (x > 0) ? 23 : 42;
 	    */
-	   ITE("ite");
+	   ITE("ite"),
+	   
+	   /**
+	    * Auxiliary variable used for arrow operator (field access of 
+	    * dereferenced pointer.
+	    */
+	   ARROW("arrow");
 	   
 	   String m_Id;
 	   
