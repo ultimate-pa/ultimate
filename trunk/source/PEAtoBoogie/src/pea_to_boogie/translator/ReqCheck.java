@@ -1,10 +1,11 @@
 package pea_to_boogie.translator;
 
-import srParse.srParsePattern;
 import de.uni_freiburg.informatik.ultimate.result.Check;
 
 public class ReqCheck extends Check {
 	
+	private static final long serialVersionUID = 6800618860906443122L;
+
 	enum ReqSpec {
 		RTINCONSISTENT,
 		VACUOUS,
