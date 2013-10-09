@@ -33,9 +33,18 @@ public abstract class CodeChecker {
 	EdgeChecker _edgeChecker;
 	PredicateUnifier m_predicateUnifier;
 	
+	boolean _memoizeNormalEdgeChecks = false;
+	boolean _memoizeReturnEdgeChecks = false;
+	HashMap<IPredicate,HashMap<CodeBlock,HashSet<IPredicate>>> _satTriples;
+	HashMap<IPredicate,HashMap<CodeBlock,HashSet<IPredicate>>> _unsatTriples;
+	HashMap<IPredicate, HashMap<IPredicate, HashMap<CodeBlock, HashSet<IPredicate>>>> _satQuadruples;
+	HashMap<IPredicate, HashMap<IPredicate, HashMap<CodeBlock, HashSet<IPredicate>>>> _unsatQuadruples;
+	
 	//stats
 	int memoizationHitsSat = 0;
 	int memoizationHitsUnsat = 0;
+	int memoizationReturnHitsSat = 0;
+	int memoizationReturnHitsUnsat = 0;
 	
 	protected GraphWriter _graphWriter;
 	
@@ -58,12 +67,21 @@ public abstract class CodeChecker {
 			IPredicate[] interpolants, AnnotatedProgramPoint procedureRoot);
 
 	public abstract boolean codeCheck(
-	NestedRun<CodeBlock, AnnotatedProgramPoint> errorRun,
-	IPredicate[] interpolants,
-	AnnotatedProgramPoint procedureRoot,
-	HashMap<IPredicate,HashMap<CodeBlock,HashSet<IPredicate>>> _satTriples,
-	HashMap<IPredicate,HashMap<CodeBlock,HashSet<IPredicate>>> _unsatTriples) ;
+			NestedRun<CodeBlock, AnnotatedProgramPoint> errorRun,
+			IPredicate[] interpolants,
+			AnnotatedProgramPoint procedureRoot,
+			HashMap<IPredicate,HashMap<CodeBlock,HashSet<IPredicate>>> _satTriples,
+			HashMap<IPredicate,HashMap<CodeBlock,HashSet<IPredicate>>> _unsatTriples);
 
+	public abstract boolean codeCheck(
+			NestedRun<CodeBlock, AnnotatedProgramPoint> errorRun,
+			IPredicate[] interpolants,
+			AnnotatedProgramPoint procedureRoot,
+			HashMap<IPredicate, HashMap<CodeBlock, HashSet<IPredicate>>> _satTriples,
+			HashMap<IPredicate, HashMap<CodeBlock, HashSet<IPredicate>>> _unsatTriples,
+			HashMap<IPredicate, HashMap<IPredicate, HashMap<CodeBlock, HashSet<IPredicate>>>> _satQuadruples,
+			HashMap<IPredicate, HashMap<IPredicate, HashMap<CodeBlock, HashSet<IPredicate>>>> _unsatQuadruples); 
+		
 	/**
 	 * Given 2 predicates, return a predicate which is the conjunction of both.
 	 * @param a : The first Predicate.

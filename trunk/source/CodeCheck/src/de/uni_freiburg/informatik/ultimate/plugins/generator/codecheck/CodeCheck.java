@@ -117,7 +117,6 @@ public class CodeCheck implements IGenerator {
 	 */
 	@Override
 	public IElement getModel() {
-		// TODO Auto-generated method stub
 		return m_Observer.getRoot();
 	}
 	
@@ -140,7 +139,6 @@ public class CodeCheck implements IGenerator {
 	@Override
 	public IEclipsePreferences[] getPreferences(IScopeContext cs,
 			IScopeContext is) {
-		// TODO Auto-generated method stub
-		return null;
+		return new IEclipsePreferences[] {cs.getNode(s_PLUGIN_ID)};
 	}
 }

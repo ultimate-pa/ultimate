@@ -123,6 +123,19 @@ public class ImpulseChecker extends CodeChecker {
 		return this.codeCheck(errorRun, interpolants, procedureRoot);
 	}
 
+	@Override
+	public boolean codeCheck(
+			NestedRun<CodeBlock, AnnotatedProgramPoint> errorRun,
+			IPredicate[] interpolants,
+			AnnotatedProgramPoint procedureRoot,
+			HashMap<IPredicate, HashMap<CodeBlock, HashSet<IPredicate>>> _satTriples,
+			HashMap<IPredicate, HashMap<CodeBlock, HashSet<IPredicate>>> _unsatTriples,
+			HashMap<IPredicate, HashMap<IPredicate, HashMap<CodeBlock, HashSet<IPredicate>>>> _satQuadruples,
+			HashMap<IPredicate, HashMap<IPredicate, HashMap<CodeBlock, HashSet<IPredicate>>>> _unsatQuadruples) {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
 	/**
 	 * Given an old node and an interpolant, this method returns a copy of the node.
 	 * The new copy will have all outgoing edges and hyper edges of the copied node.

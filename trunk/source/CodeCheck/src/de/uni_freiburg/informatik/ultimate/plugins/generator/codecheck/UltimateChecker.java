@@ -32,11 +32,6 @@ public class UltimateChecker extends CodeChecker {
 
 	HashMap<AnnotatedProgramPoint, HashMap<CodeBlock, AnnotatedProgramPoint>> _pre2stm2post_toConnectIfSat;
 	HashMap<AnnotatedProgramPoint, HashMap<AnnotatedProgramPoint, HashMap<Return, AnnotatedProgramPoint>>> _pre2hier2stm2post_toConnectIfSat;
-	private HashMap<IPredicate,HashMap<CodeBlock,HashSet<IPredicate>>> _satTriples;
-	private HashMap<IPredicate,HashMap<CodeBlock,HashSet<IPredicate>>> _unsatTriples;
-	private boolean _memoizeNormalEdgeChecks = false;
-	
-
 	
 	public UltimateChecker(IElement root, SmtManager m_smtManager,
 			IPredicate m_truePredicate, IPredicate m_falsePredicate,
@@ -638,7 +633,7 @@ public class UltimateChecker extends CodeChecker {
 		
 		
 
-		int splitMode = 0;
+		int splitMode = 1;
 		for (int i = 0; i < interpolants.length; i++) {
 //			_pre2stm2post_toConnectIfSat = 
 //					new HashMap<AnnotatedProgramPoint, 
@@ -677,6 +672,21 @@ public class UltimateChecker extends CodeChecker {
 		return this.codeCheck(errorRun, interpolants, procedureRoot);
 	}
 
+	@Override
+	public boolean codeCheck(
+			NestedRun<CodeBlock, AnnotatedProgramPoint> errorRun,
+			IPredicate[] interpolants,
+			AnnotatedProgramPoint procedureRoot,
+			HashMap<IPredicate, HashMap<CodeBlock, HashSet<IPredicate>>> satTriples,
+			HashMap<IPredicate, HashMap<CodeBlock, HashSet<IPredicate>>> unsatTriples,
+			HashMap<IPredicate, HashMap<IPredicate, HashMap<CodeBlock, HashSet<IPredicate>>>> satQuadruples,
+			HashMap<IPredicate, HashMap<IPredicate, HashMap<CodeBlock, HashSet<IPredicate>>>> unsatQuadruples) {
+		this._memoizeReturnEdgeChecks = true;
+		this._satQuadruples = satQuadruples;
+		this._unsatQuadruples = unsatQuadruples;
+		return this.codeCheck(errorRun, interpolants, procedureRoot, satTriples, unsatTriples);
+	}
+
 	private void makeConnections() {
 		for (Entry<AnnotatedProgramPoint, HashMap<CodeBlock, AnnotatedProgramPoint>> pre2  
 				: _pre2stm2post_toConnectIfSat.entrySet()) 
@@ -691,7 +701,7 @@ public class UltimateChecker extends CodeChecker {
 					: pre2.getValue().entrySet()) 
 				for (Entry<Return, AnnotatedProgramPoint> stm2 
 						: hier2.getValue().entrySet()) 
-					if (isSatRetEdge(pre2.getKey(), hier2.getKey(), stm2.getKey(), stm2.getValue())) 
+					if (isSatRetEdge(pre2.getKey().getPredicate(), hier2.getKey().getPredicate(), stm2.getKey(), stm2.getValue().getPredicate())) 
 						pre2.getKey().connectOutgoingReturn(hier2.getKey(), stm2.getKey(), stm2.getValue());	
 	}
 
@@ -743,19 +753,43 @@ public class UltimateChecker extends CodeChecker {
 	
 	/**
 	 * Check if a return edge between two AnnotatedProgramPoints is satisfiable or not.
-	 * @param sourceNode
-	 * @param edgeLabel
+	 * @param preCondition
+	 * @param statement
 	 * @param destinationNode
-	 * @param callNode
+	 * @param hier
 	 * @return
 	 */
-	protected boolean isSatRetEdge(AnnotatedProgramPoint sourceNode, AnnotatedProgramPoint callNode, Return edgeLabel,
-			AnnotatedProgramPoint destinationNode) {
-//		System.out.print(".");
-		return m_smtManager.isInductiveReturn(sourceNode.getPredicate(), 
-				callNode.getPredicate(), 
-				(Return) edgeLabel, 
-				negatePredicateNoPU(destinationNode.getPredicate())) != LBool.UNSAT;
+	protected boolean isSatRetEdge(IPredicate preCondition, IPredicate hier, Return statement,
+			IPredicate postCondition) {
+		if (_memoizeReturnEdgeChecks) {
+			if (_satQuadruples.get(preCondition) != null
+					&& _satQuadruples.get(preCondition).get(hier) != null
+					&& _satQuadruples.get(preCondition).get(hier).get(statement) != null
+					&& _satQuadruples.get(preCondition).get(hier).get(statement).contains(postCondition)) {
+				memoizationReturnHitsSat++;
+				return true;
+			}
+			if (_unsatQuadruples.get(preCondition) != null
+					&& _unsatQuadruples.get(preCondition).get(hier) != null
+					&& _unsatQuadruples.get(preCondition).get(hier).get(statement) != null
+					&& _unsatQuadruples.get(preCondition).get(hier).get(statement).contains(postCondition)) {
+				memoizationReturnHitsUnsat++;
+				return false;
+			}
+		}
+			
+		boolean result = m_smtManager.isInductiveReturn(preCondition, 
+				hier, 
+				(Return) statement, 
+				negatePredicateNoPU(postCondition)) != LBool.UNSAT;
+		
+		if (_memoizeReturnEdgeChecks)
+			if (result)
+				addSatQuadruple(preCondition, hier, statement, postCondition);
+			else
+				addUnsatQuadruple(preCondition, hier, statement, postCondition);
+		
+		return result;
 	}
 	
 	protected void connectOutgoingIfSat(AnnotatedProgramPoint source,
@@ -777,7 +811,7 @@ public class UltimateChecker extends CodeChecker {
 //			_pre2hier2stm2post_toConnectIfSat.get(source).put(hier, new HashMap<Return, AnnotatedProgramPoint>());
 //		_pre2hier2stm2post_toConnectIfSat.get(source).get(hier).put(statement, target);
 		
-		if (isSatRetEdge(source, hier, statement, target))
+		if (isSatRetEdge(source.getPredicate(), hier.getPredicate(), statement, target.getPredicate()))
 			source.connectOutgoingReturn(hier, statement, target);
 	}	
 	
@@ -795,5 +829,25 @@ public class UltimateChecker extends CodeChecker {
 		if (_unsatTriples.get(pre).get(stm) == null)
 			_unsatTriples.get(pre).put(stm, new HashSet<IPredicate>());
 		_unsatTriples.get(pre).get(stm).add(post);
+	}
+	
+	void addSatQuadruple(IPredicate pre, IPredicate hier, CodeBlock stm, IPredicate post) {
+		if (_satQuadruples.get(pre) == null)
+			_satQuadruples.put(pre, new HashMap<IPredicate, HashMap<CodeBlock, HashSet<IPredicate>>>());
+		if (_satQuadruples.get(pre).get(hier) == null)
+			_satQuadruples.get(pre).put(hier, new HashMap<CodeBlock, HashSet<IPredicate>>());
+		if (_satQuadruples.get(pre).get(hier).get(stm) == null)
+			_satQuadruples.get(pre).get(hier).put(stm, new HashSet<IPredicate>());
+		_satQuadruples.get(pre).get(hier).get(stm).add(post);
+	}
+	
+	void addUnsatQuadruple(IPredicate pre, IPredicate hier, CodeBlock stm, IPredicate post) {
+		if (_unsatQuadruples.get(pre) == null)
+			_unsatQuadruples.put(pre, new HashMap<IPredicate, HashMap<CodeBlock, HashSet<IPredicate>>>());
+		if (_unsatQuadruples.get(pre).get(hier) == null)
+			_unsatQuadruples.get(pre).put(hier, new HashMap<CodeBlock, HashSet<IPredicate>>());
+		if (_unsatQuadruples.get(pre).get(hier).get(stm) == null)
+			_unsatQuadruples.get(pre).get(hier).put(stm, new HashSet<IPredicate>());
+		_unsatQuadruples.get(pre).get(hier).get(stm).add(post);
 	}
 }
