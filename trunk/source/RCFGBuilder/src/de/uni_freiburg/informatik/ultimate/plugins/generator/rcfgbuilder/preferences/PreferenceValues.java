@@ -76,8 +76,6 @@ public class PreferenceValues {
 		"Minimize abstraction";
 	public static final String LABEL_CONCURRENCY =
 		"Automaton type used in concurrency analysis";
-	public static final String LABEL_MAINPROC =
-			"Main procedure. Library mode if empty.";
 	public static final String LABEL_Order = 
 			"Order in Petri net unfolding";
 	public static final String LABEL_cutOff = 

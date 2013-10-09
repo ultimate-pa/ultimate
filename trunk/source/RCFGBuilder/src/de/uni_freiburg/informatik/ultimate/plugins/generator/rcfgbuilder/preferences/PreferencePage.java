@@ -61,14 +61,6 @@ public class PreferencePage extends FieldEditorPreferencePage
 		addField(errorsAtOnce);
 		
 		
-		StringFieldEditor mode = new StringFieldEditor(
-				PreferenceValues.NAME_MAINPROC,
-				PreferenceValues.LABEL_MAINPROC,
-				getFieldEditorParent());
-		mode.setEmptyStringAllowed(true);
-		mode.setTextLimit(40);
-		addField(mode);
-		
 		BooleanFieldEditor preserveGotoEdges = new BooleanFieldEditor(
 				PreferenceValues.NAME_PreserveGotoEdges,
 				PreferenceValues.LABEL_PreserveGotoEdges,

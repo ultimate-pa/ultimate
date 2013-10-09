@@ -48,7 +48,6 @@ public class PreferenceInitializer extends AbstractPreferenceInitializer {
 		preferences.setDefault(PreferenceValues.NAME_DETERMINIZATION, PreferenceValues.DEF_DETERMINIZATION);
 		preferences.setDefault(PreferenceValues.NAME_MINIMIZE, PreferenceValues.DEF_MINIMIZE);
 		preferences.setDefault(PreferenceValues.NAME_CONCURRENCY, PreferenceValues.DEF_CONCURRENCY);
-		preferences.setDefault(PreferenceValues.NAME_MAINPROC, "");
 		preferences.setDefault(PreferenceValues.NAME_Order, PreferenceValues.DEF_Order);
 		preferences.setDefault(PreferenceValues.NAME_cutOff, PreferenceValues.DEF_cutOff);
 		preferences.setDefault(PreferenceValues.NAME_unfolding2Net, PreferenceValues.DEF_unfolding2Net);

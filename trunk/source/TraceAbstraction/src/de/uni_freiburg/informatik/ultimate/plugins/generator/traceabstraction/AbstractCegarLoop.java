@@ -277,7 +277,7 @@ public abstract class AbstractCegarLoop {
 		s_Logger.info("Interprodecural is " + m_Pref.interprocedural());		
 		s_Logger.info("Solver is " + m_Pref.solver());
 		s_Logger.info("Hoare is " + m_Pref.computeHoareAnnotation());
-		s_Logger.info("Compute interpolants for " + m_Pref.interpolatedLocs());
+		s_Logger.info("Compute interpolants for " + m_Pref.interpolation());
 		s_Logger.info("Backedges2True is " + m_Pref.edges2True());
 		s_Logger.info("Backedges is " + m_Pref.interpolantAutomaton());
 		s_Logger.info("Determinization is " + m_Pref.determinization());

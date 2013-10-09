@@ -74,6 +74,7 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 		settings += " Hoare:"+ taPrefs.computeHoareAnnotation();
 		settings += " " + (taPrefs.differenceSenwa() ? "SeNWA" : "NWA");
 		settings += " Solver:" + taPrefs.solver();
+		settings += " Interpolation:"+ taPrefs.interpolation();
 		settings += " Determinization: " + taPrefs.determinization();
 		settings += " Letter:" + taPrefs.letter();
 		settings += " Timeout:" + taPrefs.timeout();

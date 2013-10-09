@@ -15,7 +15,7 @@ public class TAPreferences {
 	private final int m_MaxIterations;
 	private final int m_watchIteration;
 	private final Artifact m_Artifact;
-	private final INTERPOLATION m_interpolatedLocs;
+	private final INTERPOLATION m_Interpolation;
 	private final boolean m_Edges2True;
 	private final InterpolantAutomaton m_InterpolantAutomaton;
 	private final boolean m_DumpFormulas;
@@ -76,7 +76,7 @@ public class TAPreferences {
 		m_Hoare = m_Prefs.getBoolean(PreferenceValues.NAME_HOARE, PreferenceValues.DEF_HOARE);
 
 		String prefInterpolants = m_Prefs.get(PreferenceValues.NAME_INTERPOLATED_LOCS, PreferenceValues.DEF_INTERPOLANTS.toString());
-		m_interpolatedLocs = INTERPOLATION.valueOf(prefInterpolants);
+		m_Interpolation = INTERPOLATION.valueOf(prefInterpolants);
 
 
 		m_Edges2True = m_Prefs.getBoolean(PreferenceValues.NAME_EDGES2TRUE, PreferenceValues.DEF_EDGES2TRUE);
@@ -244,8 +244,8 @@ public class TAPreferences {
 	/**
 	 * @return the interpolatedLocs
 	 */
-	public INTERPOLATION interpolatedLocs() {
-		return m_interpolatedLocs;
+	public INTERPOLATION interpolation() {
+		return m_Interpolation;
 	}
 
 
