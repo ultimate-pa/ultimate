@@ -63,7 +63,10 @@ files=`find . -name "*.bpl" -o -name "*.c"|sort`
 
 for f in $files;
 do
-
+    # stores filename if filename contains substring safe (resp. unsafe), is empty otherwise
+    FILENAME_SAFE=`echo "$f" | grep -i "safe"`
+    FILENAME_UNSAFE=`echo "$f" | grep -i "unsafe"`
+    # stores the first line of $f if this line contains one of the following keywords, is empty otherwise
     KEYWORD_SYNTAX=`head -n 1 "$f" | grep "#Syntax"`
     KEYWORD_MSAFE=`head -n 1 "$f" | grep "#mSafe"`
     KEYWORD_MUNSAFE=`head -n 1 "$f" | grep "#mUnsafe"`
@@ -71,29 +74,47 @@ do
     KEYWORD_IUNSAFE=`head -n 1 "$f" | grep "#iUnsafe"`
     VCCPRELUDE=`head -n 1 "$f" | grep "#VccPrelude"`
 
+    # stores "1" if program is safe (resp. unsafe), is empty otherwise
     PROGRAM_SAFE=
     PROGRAM_UNSAFE=
+    WHO_DEFINED_SOLUTION="No solution given. "
+    
+    if [ "$FILENAME_SAFE" ]; then
+		WHO_DEFINED_SOLUTION="Solution given by filename is: "
+		if [ "$FILENAME_UNSAFE" ]; then
+			PROGRAM_UNSAFE="1"
+		else
+			PROGRAM_SAFE="1"
+		fi
+	else 
+		if [ "$KEYWORD_MSAFE" ]; then 
+		WHO_DEFINED_SOLUTION="Solution given by EvrenKeyword is: "
+		PROGRAM_SAFE="1"
+		PROGRAM_UNSAFE=
+		fi
 
-    if [ "$KEYWORD_MSAFE" ]; then 
-	PROGRAM_SAFE="1"
-	PROGRAM_UNSAFE=
+		if [ "$KEYWORD_MUNSAFE" ]; then 
+		WHO_DEFINED_SOLUTION="Solution given by EvrenKeyword is: "
+		PROGRAM_SAFE=
+		PROGRAM_UNSAFE="1"
+		fi
+
+		if [ "$KEYWORD_ISAFE" ]; then 
+		WHO_DEFINED_SOLUTION="Solution given by EvrenKeyword is: "
+		PROGRAM_SAFE="1"
+		PROGRAM_UNSAFE=
+		fi
+
+		if [ "$KEYWORD_IUNSAFE" ]; then 
+		WHO_DEFINED_SOLUTION="Solution given by EvrenKeyword is: "
+		PROGRAM_SAFE=
+		PROGRAM_UNSAFE="1"
+		fi
     fi
 
-    if [ "$KEYWORD_MUNSAFE" ]; then 
-	PROGRAM_SAFE=
-	PROGRAM_UNSAFE="1"
-    fi
-
-    if [ "$KEYWORD_ISAFE" ]; then 
-	PROGRAM_SAFE="1"
-	PROGRAM_UNSAFE=
-    fi
-
-    if [ "$KEYWORD_IUNSAFE" ]; then 
-	PROGRAM_SAFE=
-	PROGRAM_UNSAFE="1"
-    fi
-
+	echo "$WHO_DEFINED_SOLUTION"
+	echo "$FILENAME_SAFE"
+	echo "$FILENAME_UNSAFE"
 
     for triple in $triples
     do
@@ -294,18 +315,18 @@ do
 	    if [ "$KEYWORD_SYNTAX" ]; then
 		printf "Success."
 		printf "Ultimate says: Syntax error. "
-		printf "User annotation says: Syntax error.\n"
+		printf "$WHO_DEFINED_SOLUTION Syntax error.\n"
 		continue;
 	    fi
 	    if [ "$PROGRAM_UNSAFE" -o "$PROGRAM_SAFE" -o "$VCCPRELUDE" ]; then
 		printf "!!!FAIL!!! "
 		printf "Ultimate says: Syntax error. "
-		printf "User annotation does not mention any syntax errors \n"
+		printf "Solution does not mention any syntax errors \n"
 		continue;
 	    fi
 	    printf "!Warning! "
 	    printf "Ultimate says: Syntax error. "
-	    printf "No user annotation given.\n"
+	    printf "$WHO_DEFINED_SOLUTION\n"
 	    continue;
 	fi
 
@@ -327,18 +348,18 @@ do
 	    if [ "$PROGRAM_SAFE" ]; then
 		printf "Success. "
 		printf "TraceAbstraction terminated after $RUNTIME and says: Program is safe. "
-		printf "User annotation says: Program is safe.\n"
+		printf "$WHO_DEFINED_SOLUTION Program is safe.\n"
 		continue;
 	    fi
 	    if [ "$PROGRAM_UNSAFE" ]; then
 		printf "!!!FAIL!!! "
 		printf "TraceAbstraction terminated after $RUNTIME and says: Program is safe. "
-		printf "User annotation says: Program is unsafe.\n"
+		printf "$WHO_DEFINED_SOLUTION Program is unsafe.\n"
 		continue;
 	    fi
 	    printf "!Warning! "
 	    printf "TraceAbstraction terminated after $RUNTIME and says: Program is safe. "
-	    printf "No user annotation given.\n"
+	    printf "$WHO_DEFINED_SOLUTION \n"
 	    continue;
 	fi
 
@@ -346,18 +367,18 @@ do
 	    if [ "$PROGRAM_UNSAFE" ]; then
 		printf "Success. "
 		printf "TraceAbstraction terminated after $RUNTIME and says: Program is unsafe. "
-		printf "User annotation says: Program is unsafe.\n"
+		printf "$WHO_DEFINED_SOLUTION Program is unsafe.\n"
 		continue;
 	    fi
 	    if [ "$PROGRAM_SAFE" ]; then
 		printf "!!!FAIL!!! "
 		printf "TraceAbstraction terminated after $RUNTIME and says: Program is unsafe. "
-		printf "User annotation says: Program is safe.\n"
+		printf "$WHO_DEFINED_SOLUTION Program is safe.\n"
 		continue;
 	    fi
 	    printf "!Warning! "
 	    printf "TraceAbstraction terminated after $RUNTIME and says: Program is unsafe. "
-	    printf "No user annotation given.\n"
+	    printf "$WHO_DEFINED_SOLUTION \n"
 	    continue;
 	fi
 
@@ -365,18 +386,18 @@ do
 	    if [ "$PROGRAM_UNSAFE" ]; then
 		printf "!Warning!"
 		printf "TraceAbstraction terminated after $RUNTIME and says: Can not determine feasibility of counterexample."
-		printf "User annotation says: Program is unsafe.\n"
+		printf "$WHO_DEFINED_SOLUTION Program is unsafe.\n"
 		continue;
 	    fi
 	    if [ "$PROGRAM_SAFE" ]; then
 		printf "!Warning! "
 		printf "TraceAbstraction terminated after $RUNTIME and says: Can not determine feasibility of counterexample."
-		printf "User annotation says: Program is safe.\n"
+		printf "$WHO_DEFINED_SOLUTION Program is safe.\n"
 		continue;
 	    fi
 	    printf "!Warning! "
 	    printf "TraceAbstraction terminated after $RUNTIME and says: Can not determine feasibility of counterexample."
-	    printf "No user annotation given.\n"
+	    printf "$WHO_DEFINED_SOLUTION \n"
 	    continue;
 	fi
 
