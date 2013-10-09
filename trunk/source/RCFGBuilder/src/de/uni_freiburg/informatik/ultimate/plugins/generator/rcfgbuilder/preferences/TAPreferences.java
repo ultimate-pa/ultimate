@@ -26,8 +26,6 @@ public class TAPreferences {
 	private final boolean m_Hoare;
 	private final Concurrency m_Concurrency;
 	private final boolean m_SeperateViolationCheck = true;
-	private final boolean m_MainMode;
-	private final String m_MainProcedure;
 	private IEclipsePreferences m_Prefs;
 
 
@@ -150,16 +148,6 @@ public class TAPreferences {
 				artifact() == Artifact.INTERPOLANT_AUTOMATON )) {
 			throw new IllegalArgumentException("There is no interpolant" +
 					"automaton in iteration 0.");
-		}
-		
-		String mainProc = m_Prefs.get(PreferenceValues.NAME_MAINPROC, PreferenceValues.DEF_MAINPROC);
-		if (mainProc.equals("")) {
-			m_MainMode = false;
-			m_MainProcedure = null;
-		}
-		else {
-			m_MainMode = true;
-			m_MainProcedure = mainProc;
 		}
 		
 	}
@@ -334,16 +322,6 @@ public class TAPreferences {
 	}
 
 
-	public boolean isMainMode() {
-		return m_MainMode;
-	}
-
-
-	public String getMainProcedure() {
-		return m_MainProcedure;
-	}
-	
-	
 	public boolean cutOffRequiresSameTransition() {
 		return m_Prefs.getBoolean(PreferenceValues.NAME_cutOff, PreferenceValues.DEF_cutOff);
 	}

@@ -25,7 +25,6 @@ public class PreferenceValues {
 	public static String NAME_DIFFERENCE_SENWA = "DifferenceSenwa";
 	public static String NAME_MINIMIZE = "Minimize";
 	public static String NAME_CONCURRENCY = "Concurrency";
-	public static String NAME_MAINPROC = "MainProcedure";
 	public static String NAME_AllErrorsAtOnce = "AllErrorsAtOnce";
 	public static final String NAME_Order = "Order";
 	public static final String NAME_cutOff = "cutOff";
@@ -145,7 +144,6 @@ public class PreferenceValues {
 	public static final boolean DEF_DIFFERENCE_SENWA = false;
 	public static final boolean DEF_MINIMIZE = true;
 	public static final String DEF_CONCURRENCY = VALUE_PETRI_NET;
-	public static final String DEF_MAINPROC = "";
 	public static final boolean DEF_AllErrorsAtOnce = true;
 
 
