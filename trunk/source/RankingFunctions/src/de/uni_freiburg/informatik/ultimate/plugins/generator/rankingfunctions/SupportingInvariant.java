@@ -11,6 +11,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
+import de.uni_freiburg.informatik.ultimate.logic.UtilExperimental;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Smt2Boogie;
@@ -141,8 +142,8 @@ public class SupportingInvariant implements Serializable {
 			rhs.add(script.numeral(m_constant.abs()));
 		}
 		summands.add(script.numeral(m_constant));
-		Term lhsTerm = Util.sum(script, lhs.toArray(new Term[0]));
-		Term rhsTerm = Util.sum(script, rhs.toArray(new Term[0]));
+		Term lhsTerm = UtilExperimental.sum(script, lhs.toArray(new Term[0]));
+		Term rhsTerm = UtilExperimental.sum(script, rhs.toArray(new Term[0]));
 		return script.term(">=", lhsTerm, rhsTerm);
 	}
 	

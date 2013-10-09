@@ -20,11 +20,10 @@ package de.uni_freiburg.informatik.ultimate.logic;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
+import java.util.LinkedHashSet;
 
 import de.uni_freiburg.informatik.ultimate.util.ScopedHashMap;
 import de.uni_freiburg.informatik.ultimate.util.UnifyHash;
@@ -165,7 +164,7 @@ public class Theory {
 	private Term simplifyAndOr(FunctionSymbol connector, Term... subforms)
 	{
 		Term neutral = (connector == m_And ? TRUE : FALSE);
-		List<Term> formulas = new ArrayList<Term>();
+		LinkedHashSet<Term> formulas = new LinkedHashSet<Term>();
 		
 		for (Term f : subforms) {
 			if (f == TRUE || f == FALSE) {
@@ -179,17 +178,15 @@ public class Theory {
 			if (f instanceof ApplicationTerm
 				&& ((ApplicationTerm) f).getFunction() == connector) {
 				for (Term subf : ((ApplicationTerm) f).getParameters())
-					if (!formulas.contains(subf))
-						formulas.add(subf);
-			} else if (!formulas.contains(f)) {
+					formulas.add(subf);
+			} else
 				formulas.add(f);
-			}
 		}
 		if (formulas.size() <= 1) {
 			if (formulas.isEmpty())
 				return neutral;
 			else
-				return formulas.get(0);
+				return formulas.iterator().next();
 		}
 		Term[] arrforms = formulas.toArray(new Term[formulas.size()]);
 		return term(connector, arrforms);

@@ -10,6 +10,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
+import de.uni_freiburg.informatik.ultimate.logic.UtilExperimental;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Smt2Boogie;
@@ -139,7 +140,7 @@ public class AffineFunction implements Serializable {
 					entry.getKey().getTermVariable(), entry.getValue()));
 		}
 		summands.add(script.numeral(m_constant));
-		return Util.sum(script, summands.toArray(new Term[0]));
+		return UtilExperimental.sum(script, summands.toArray(new Term[0]));
 	}
 	
 	/**
