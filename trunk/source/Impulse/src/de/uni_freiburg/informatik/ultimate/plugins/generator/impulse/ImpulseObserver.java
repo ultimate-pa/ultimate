@@ -30,6 +30,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Roo
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.TAPreferences;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.PreferenceValues.INTERPOLATION;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.PreferenceValues.Solver;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IPredicate;
@@ -188,7 +189,7 @@ public class ImpulseObserver implements IUnmanagedObserver {
 
 				if(isSafe == LBool.UNSAT) {
 					PredicateUnifier pu = new PredicateUnifier(m_smtManager, m_truePredicate, m_falsePredicate);
-					traceChecker.computeInterpolants(new TraceChecker.AllIntegers(), pu);
+					traceChecker.computeInterpolants(new TraceChecker.AllIntegers(), pu, INTERPOLATION.Craig_TreeInterpolation);
 					IPredicate[] interpolants = traceChecker.getInterpolants();
 
 					boolean writeDetailedGraphs = true;

@@ -1,20 +1,16 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck;
 
-import java.io.PrintWriter;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import java.util.SortedMap;
 
 import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
-import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
-import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
@@ -26,7 +22,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Seq
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.TransFormula;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.PartialQuantifierElimination;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.PreferenceValues.INTERPOLATION;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.EdgeChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
@@ -42,13 +38,13 @@ public class TraceCheckerSpWp extends TraceChecker {
 	protected IPredicate[] m_InterpolantsBp;
 	
 	
-	private static boolean m_useUnsatCore = true;
-	private static boolean m_useUnsatCoreOfFineGranularity = true;
-	private static boolean m_ComputeInterpolantsSp = true;
-	private static boolean m_ComputeInterpolantsFp = true;
-	private static boolean m_ComputeInterpolantsBp = true;
-	private static boolean m_ComputeInterpolantsWp = true;
-
+	private final static boolean m_useUnsatCore = true;
+	private final static boolean m_useUnsatCoreOfFineGranularity = true;
+	private boolean m_ComputeInterpolantsSp;
+	private boolean m_ComputeInterpolantsFp;
+	private boolean m_ComputeInterpolantsBp;
+	private boolean m_ComputeInterpolantsWp;
+	
 	public TraceCheckerSpWp(IPredicate precondition, IPredicate postcondition,
 			NestedWord<CodeBlock> trace, SmtManager smtManager,
 			ModifiableGlobalVariableManager modifiedGlobals) {
@@ -57,8 +53,31 @@ public class TraceCheckerSpWp extends TraceChecker {
 
 	@Override
 	public void computeInterpolants(Set<Integer> interpolatedPositions, 
-			PredicateUnifier predicateUnifier) {
+			PredicateUnifier predicateUnifier, INTERPOLATION interpolation) {
+		switch (interpolation) {
+			case ForwardPredicates:
+				m_ComputeInterpolantsSp = true;
+				m_ComputeInterpolantsFp = true;
+				m_ComputeInterpolantsWp = false;
+				m_ComputeInterpolantsBp = false;
+				break;
+			case BackwardPredicates:
+				m_ComputeInterpolantsSp = false;
+				m_ComputeInterpolantsFp = false;
+				m_ComputeInterpolantsWp = true;
+				m_ComputeInterpolantsBp = true;
+				break;
+			case FPandSP:
+				m_ComputeInterpolantsSp = true;
+				m_ComputeInterpolantsFp = true;
+				m_ComputeInterpolantsWp = true;
+				m_ComputeInterpolantsBp = true;
+				break;
+			default:
+				throw new UnsupportedOperationException("unsupportedInterpolation");
+			}
 		m_PredicateUnifier = predicateUnifier;
+		
 		if (m_useUnsatCore) {
 			computeInterpolantsWithUsageOfUnsatCore(interpolatedPositions);
 		} else {
@@ -107,11 +126,11 @@ public class TraceCheckerSpWp extends TraceChecker {
 	}
 	
 	
-	public static boolean interpolantsSPComputed() {
+	public boolean interpolantsSPComputed() {
 		return m_ComputeInterpolantsSp;
 	}
 
-	public static boolean interpolantsWPComputed() {
+	public boolean interpolantsWPComputed() {
 		return m_ComputeInterpolantsWp;
 	}
 

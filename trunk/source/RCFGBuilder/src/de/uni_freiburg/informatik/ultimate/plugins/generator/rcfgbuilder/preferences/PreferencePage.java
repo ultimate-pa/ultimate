@@ -18,6 +18,7 @@ import org.eclipse.ui.IWorkbenchPreferencePage;
 import org.eclipse.ui.preferences.ScopedPreferenceStore;
 
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.Activator;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.PreferenceValues.INTERPOLATION;
 
 /**
  * this calls contributes to the extensionpoint:
@@ -130,15 +131,19 @@ public class PreferencePage extends FieldEditorPreferencePage
 				PreferenceValues.LABEL_HOARE,
 				getFieldEditorParent());
 		addField(hoare); 
-
-		ComboFieldEditor interpolants = new ComboFieldEditor(
-				PreferenceValues.NAME_INTERPOLATED_LOCS,
-				PreferenceValues.LABEL_INTERPOLATED_LOCS, 
-				new String[][]{{PreferenceValues.VALUE_ITP_GUESS, PreferenceValues.VALUE_ITP_GUESS},
-						{PreferenceValues.VALUE_ITP_WP, PreferenceValues.VALUE_ITP_WP},
-						{PreferenceValues.VALUE_CUTPOINTS, PreferenceValues.VALUE_CUTPOINTS},
-						{PreferenceValues.VALUE_ALL_LOC, PreferenceValues.VALUE_ALL_LOC}},
-				getFieldEditorParent());
+		
+		ComboFieldEditor interpolants; {
+			String[][] entryNamesAndValues = new String[INTERPOLATION.values().length][2];
+			for (int i=0; i<INTERPOLATION.values().length; i++) {
+				entryNamesAndValues[i][0] = INTERPOLATION.values()[i].toString();
+				entryNamesAndValues[i][1] = INTERPOLATION.values()[i].toString();
+			}
+			interpolants = new ComboFieldEditor(
+					PreferenceValues.NAME_INTERPOLATED_LOCS,
+					PreferenceValues.LABEL_INTERPOLATED_LOCS, 
+					entryNamesAndValues,
+					getFieldEditorParent());
+		}
 		addField(interpolants);
 		
 		BooleanFieldEditor edges2True = new BooleanFieldEditor(

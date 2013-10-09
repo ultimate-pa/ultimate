@@ -17,7 +17,6 @@ import de.uni_freiburg.informatik.ultimate.model.ILocation;
 import de.uni_freiburg.informatik.ultimate.model.ITranslator;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Procedure;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.wrapper.ASTNode;
 import de.uni_freiburg.informatik.ultimate.model.boogie.output.BoogieStatementPrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.Backtranslator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.boogie.BoogieProgramExecution;
@@ -29,11 +28,11 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Roo
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.TAPreferences.InterpolantAutomaton;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.TAPreferences.InterpolatedLocs;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbstractCegarLoop.Result;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.result.CounterExampleResult;
 import de.uni_freiburg.informatik.ultimate.result.GenericResult;
+import de.uni_freiburg.informatik.ultimate.result.GenericResult.Severity;
 import de.uni_freiburg.informatik.ultimate.result.IProgramExecution;
 import de.uni_freiburg.informatik.ultimate.result.IResult;
 import de.uni_freiburg.informatik.ultimate.result.InvariantResult;
@@ -41,7 +40,6 @@ import de.uni_freiburg.informatik.ultimate.result.PositiveResult;
 import de.uni_freiburg.informatik.ultimate.result.ProcedureContractResult;
 import de.uni_freiburg.informatik.ultimate.result.TimeoutResult;
 import de.uni_freiburg.informatik.ultimate.result.UnprovableResult;
-import de.uni_freiburg.informatik.ultimate.result.GenericResult.Severity;
 
 /**
  * Auto-Generated Stub for the plug-in's Observer
@@ -241,9 +239,6 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 		AbstractCegarLoop abstractCegarLoop;
 		if (taPrefs.interpolantAutomaton() == InterpolantAutomaton.TOTALINTERPOLATION) {
 			abstractCegarLoop = new CegarLoopSequentialWithBackedges(name, 
-					root, smtManager, timingStatistics,taPrefs, errorLocs);
-		} else if (taPrefs.interpolatedLocs() == InterpolatedLocs.GUESS) {
-			abstractCegarLoop = new PredicateAbstractionCegarLoop(name, 
 					root, smtManager, timingStatistics,taPrefs, errorLocs);
 		} else {
 			abstractCegarLoop = new BasicCegarLoop(name, 

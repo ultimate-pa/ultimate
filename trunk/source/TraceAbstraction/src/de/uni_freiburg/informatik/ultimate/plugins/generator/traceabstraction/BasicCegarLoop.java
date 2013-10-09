@@ -11,7 +11,6 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.Automaton2UltimateModel;
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.IDoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.Accepts;
@@ -31,10 +30,10 @@ import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.PreferenceValues.INTERPOLATION;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.TAPreferences.Artifact;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.TAPreferences.InterpolantAutomaton;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.TAPreferences.InterpolatedLocs;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.InterpolantAutomataTransitionAppender.BestApproximationDeterminizer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.InterpolantAutomataTransitionAppender.PostDeterminizer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.InterpolantAutomataTransitionAppender.SelfloopDeterminizer;
@@ -141,14 +140,23 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		m_TimingStatistics.startTraceCheck();
 		IPredicate truePredicate = m_SmtManager.newTruePredicate();
 		IPredicate falsePredicate = m_SmtManager.newFalsePredicate();
-		if (m_Pref.interpolatedLocs() == InterpolatedLocs.WP) {
+		
+		switch (m_Pref.interpolatedLocs()) {
+		case Craig_NestedInterpolation:
+		case Craig_TreeInterpolation:
+			m_TraceChecker = new TraceChecker(truePredicate, falsePredicate, 
+					null, NestedWord.nestedWord(m_Counterexample.getWord()),m_SmtManager,
+					m_RootNode.getRootAnnot().getModGlobVarManager());
+			break;
+		case ForwardPredicates:
+		case BackwardPredicates:
+		case FPandSP:
 			m_TraceChecker = new TraceCheckerSpWp(truePredicate, falsePredicate, 
 					NestedWord.nestedWord(m_Counterexample.getWord()),m_SmtManager,
 					m_RootNode.getRootAnnot().getModGlobVarManager());
-		} else {
-			m_TraceChecker = new TraceChecker(truePredicate, falsePredicate, 
-					null, NestedWord.nestedWord(m_Counterexample.getWord()),	m_SmtManager,
-					m_RootNode.getRootAnnot().getModGlobVarManager());
+			break;
+		default:
+			throw new UnsupportedOperationException("unsupported interpolation");
 		}
 		LBool feasibility = m_TraceChecker.isCorrect();
 		if (feasibility != LBool.UNSAT) {
@@ -176,7 +184,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 			AllIntegers allInt = new TraceChecker.AllIntegers();
 			PredicateUnifier predicateUnifier = new PredicateUnifier(m_SmtManager,
 					truePredicate, falsePredicate);
-			m_TraceChecker.computeInterpolants(allInt, predicateUnifier);
+			m_TraceChecker.computeInterpolants(allInt, predicateUnifier, m_Pref.interpolatedLocs());
 		}
 		m_TimingStatistics.finishTraceCheck();
 		return feasibility;

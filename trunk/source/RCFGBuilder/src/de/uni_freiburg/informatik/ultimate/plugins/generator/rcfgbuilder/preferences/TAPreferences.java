@@ -4,6 +4,7 @@ import org.eclipse.core.runtime.preferences.ConfigurationScope;
 import org.eclipse.core.runtime.preferences.IEclipsePreferences;
 
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.Activator;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.PreferenceValues.INTERPOLATION;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.PreferenceValues.Solver;
 
 
@@ -14,7 +15,7 @@ public class TAPreferences {
 	private final int m_MaxIterations;
 	private final int m_watchIteration;
 	private final Artifact m_Artifact;
-	private final InterpolatedLocs m_interpolatedLocs;
+	private final INTERPOLATION m_interpolatedLocs;
 	private final boolean m_Edges2True;
 	private final InterpolantAutomaton m_InterpolantAutomaton;
 	private final boolean m_DumpFormulas;
@@ -32,7 +33,6 @@ public class TAPreferences {
 
 
 	public enum Artifact { ABSTRACTION, INTERPOLANT_AUTOMATON, NEG_INTERPOLANT_AUTOMATON, RCFG }
-	public enum InterpolatedLocs { ALL, CUTPOINTS, GUESS, WP }
 	public enum InterpolantAutomaton { CANONICAL, TOTALINTERPOLATION, SINGLETRACE, TWOTRACK }
 	public enum Determinization { POWERSET, BESTAPPROXIMATION, SELFLOOP, STRONGESTPOST, EAGERPOST, LAZYPOST }
 	public enum Concurrency { FINITE_AUTOMATA, PETRI_NET }
@@ -75,22 +75,8 @@ public class TAPreferences {
 		
 		m_Hoare = m_Prefs.getBoolean(PreferenceValues.NAME_HOARE, PreferenceValues.DEF_HOARE);
 
-		String prefInterpolants = m_Prefs.get(PreferenceValues.NAME_INTERPOLATED_LOCS, PreferenceValues.DEF_INTERPOLANTS);
-		if (prefInterpolants.equals(PreferenceValues.VALUE_CUTPOINTS)) {
-			m_interpolatedLocs = InterpolatedLocs.CUTPOINTS;
-		}
-		else if (prefInterpolants.equals(PreferenceValues.VALUE_ALL_LOC)) {
-			m_interpolatedLocs = InterpolatedLocs.ALL;
-		}
-		else if (prefInterpolants.equals(PreferenceValues.VALUE_ITP_GUESS)) {
-			m_interpolatedLocs = InterpolatedLocs.GUESS;
-		}
-		else if (prefInterpolants.equals(PreferenceValues.VALUE_ITP_WP)) {
-			m_interpolatedLocs = InterpolatedLocs.WP;
-		}
-		else {
-			throw new IllegalArgumentException();
-		}
+		String prefInterpolants = m_Prefs.get(PreferenceValues.NAME_INTERPOLATED_LOCS, PreferenceValues.DEF_INTERPOLANTS.toString());
+		m_interpolatedLocs = INTERPOLATION.valueOf(prefInterpolants);
 
 
 		m_Edges2True = m_Prefs.getBoolean(PreferenceValues.NAME_EDGES2TRUE, PreferenceValues.DEF_EDGES2TRUE);
@@ -258,7 +244,7 @@ public class TAPreferences {
 	/**
 	 * @return the interpolatedLocs
 	 */
-	public InterpolatedLocs interpolatedLocs() {
+	public INTERPOLATION interpolatedLocs() {
 		return m_interpolatedLocs;
 	}
 

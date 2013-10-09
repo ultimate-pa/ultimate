@@ -7,7 +7,6 @@ import java.util.List;
 import java.util.Map.Entry;
 import java.util.Stack;
 
-
 import de.uni_freiburg.informatik.ultimate.access.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.access.WalkerOptions;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
@@ -21,6 +20,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.preferenc
 import de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.preferences.PreferenceValues.PredicateUnification;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.preferences.PreferenceValues.SolverAndInterpolator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.TAPreferences;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.PreferenceValues.INTERPOLATION;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.PreferenceValues.Solver;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.Backtranslator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.RcfgProgramExecution;
@@ -280,7 +280,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 						if (_predicateUnification == PredicateUnification.PER_ITERATION) 
 							_predicateUnifier = new PredicateUnifier(m_smtManager, m_truePredicate, m_falsePredicate);
 						
-						traceChecker.computeInterpolants(new TraceChecker.AllIntegers(), _predicateUnifier);
+						traceChecker.computeInterpolants(new TraceChecker.AllIntegers(), _predicateUnifier, INTERPOLATION.Craig_TreeInterpolation);
 						IPredicate[] interpolants = traceChecker.getInterpolants();
 						if (_memoizeNormalEdgeChecks && _memoizeReturnEdgeChecks)
 							codeChecker.codeCheck(errorRun, interpolants, procedureRoot, 

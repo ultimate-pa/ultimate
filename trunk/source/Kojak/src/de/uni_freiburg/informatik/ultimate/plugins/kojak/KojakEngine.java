@@ -22,6 +22,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCF
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.TAPreferences;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.PreferenceValues.INTERPOLATION;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.BasicPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IPredicate;
@@ -118,7 +119,7 @@ public class KojakEngine {
 		LBool isSafe = traceChecker.isCorrect();
 		if(isSafe == LBool.UNSAT) {
 			PredicateUnifier pu = new PredicateUnifier(mSmtManager, mTruePredicate, mFalsePredicate);
-			traceChecker.computeInterpolants(new TraceChecker.AllIntegers(), pu);
+			traceChecker.computeInterpolants(new TraceChecker.AllIntegers(), pu, INTERPOLATION.Craig_TreeInterpolation);
 			IPredicate[] interpolants = traceChecker.getInterpolants();
 			return interpolants;
 		}

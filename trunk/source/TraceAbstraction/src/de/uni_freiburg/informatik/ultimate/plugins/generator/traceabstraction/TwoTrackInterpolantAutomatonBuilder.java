@@ -66,7 +66,7 @@ public class TwoTrackInterpolantAutomatonBuilder {
 		
 		for (int i=0; i<m_NestedWord.length(); i++) {
 			if (i < (m_NestedWord.length() - 1)) {
-				if (TraceCheckerSpWp.interpolantsSPComputed()) {
+				if (m_TraceCheckerSpWp.interpolantsSPComputed()) {
 				// 1. Add a state which contains the assertion computed via SP
 					boolean isFinal = isFalsePredicate(m_TraceCheckerSpWp.getInterpolanstsSPAtPosition(i));
 					if (!m_TTIA.getStates().contains(m_TraceCheckerSpWp.getInterpolanstsSPAtPosition(i))) {
@@ -74,7 +74,7 @@ public class TwoTrackInterpolantAutomatonBuilder {
 					}
 				}
 				// 2. Add a state which contains the assertion computed via WP
-				if (TraceCheckerSpWp.interpolantsWPComputed()) {
+				if (m_TraceCheckerSpWp.interpolantsWPComputed()) {
 					boolean isFinal = isFalsePredicate(m_TraceCheckerSpWp.getInterpolanstsWPAtPosition(i));
 					if (!m_TTIA.getStates().contains(m_TraceCheckerSpWp.getInterpolanstsWPAtPosition(i))) {
 						m_TTIA.addState(false, isFinal, m_TraceCheckerSpWp.getInterpolanstsWPAtPosition(i));
@@ -82,7 +82,7 @@ public class TwoTrackInterpolantAutomatonBuilder {
 				}
 			}
 			if (i == 0) {
-				if (TraceCheckerSpWp.interpolantsSPComputed()) {
+				if (m_TraceCheckerSpWp.interpolantsSPComputed()) {
 					addTransition(m_TraceCheckerSpWp.getPrecondition(), i,
 							m_TraceCheckerSpWp.getInterpolanstsSPAtPosition(i));
 					// Try to add a self-loop labelled with stmt i on the current state 
@@ -97,7 +97,7 @@ public class TwoTrackInterpolantAutomatonBuilder {
 				}
 				
 				
-				if (TraceCheckerSpWp.interpolantsWPComputed()) {
+				if (m_TraceCheckerSpWp.interpolantsWPComputed()) {
 					addTransition(m_TraceCheckerSpWp.getPrecondition(), i,
 							m_TraceCheckerSpWp.getInterpolanstsWPAtPosition(i));
 					// Try to add a self-loop labelled with stmt i on the current state 
@@ -112,7 +112,7 @@ public class TwoTrackInterpolantAutomatonBuilder {
 				}
 				
 			} else if (i == (m_NestedWord.length() - 1)) {
-				if (TraceCheckerSpWp.interpolantsSPComputed()) {
+				if (m_TraceCheckerSpWp.interpolantsSPComputed()) {
 					addTransition(m_TraceCheckerSpWp.getInterpolanstsSPAtPosition(i-1), i,
 							m_TraceCheckerSpWp.getPostcondition());
 					// Try to add a self-loop labelled with stmt i on the current state 
@@ -121,7 +121,7 @@ public class TwoTrackInterpolantAutomatonBuilder {
 								m_TraceCheckerSpWp.getInterpolanstsSPAtPosition(i));
 					}
 				}
-				if (TraceCheckerSpWp.interpolantsWPComputed()) {
+				if (m_TraceCheckerSpWp.interpolantsWPComputed()) {
 					addTransition(m_TraceCheckerSpWp.getInterpolanstsWPAtPosition(i-1), i,
 							m_TraceCheckerSpWp.getPostcondition());
 					// Try to add a self-loop labelled with stmt i on the current state 
@@ -131,7 +131,7 @@ public class TwoTrackInterpolantAutomatonBuilder {
 					}
 				}
 			} else {
-				if (TraceCheckerSpWp.interpolantsSPComputed()) {
+				if (m_TraceCheckerSpWp.interpolantsSPComputed()) {
 					addTransition(m_TraceCheckerSpWp.getInterpolanstsSPAtPosition(i-1), i,
 							m_TraceCheckerSpWp.getInterpolanstsSPAtPosition(i));
 					if (selfLoopAllowed(m_TraceCheckerSpWp.getInterpolanstsSPAtPosition(i), i)) {
@@ -143,7 +143,7 @@ public class TwoTrackInterpolantAutomatonBuilder {
 								m_TraceCheckerSpWp.getInterpolanstsSPAtPosition(i));
 					}
 				}
-				if (TraceCheckerSpWp.interpolantsWPComputed()) {
+				if (m_TraceCheckerSpWp.interpolantsWPComputed()) {
 					addTransition(m_TraceCheckerSpWp.getInterpolanstsWPAtPosition(i-1), i,
 							m_TraceCheckerSpWp.getInterpolanstsWPAtPosition(i));
 					// Try to add a self-loop labelled with stmt i on the current state 
@@ -158,7 +158,7 @@ public class TwoTrackInterpolantAutomatonBuilder {
 				}
 				// 1. Try to add a transition from state annotated with the assertion computed via SP to
 				// to a state annotated with the assertion computed via WP.
-				if (TraceCheckerSpWp.interpolantsSPComputed() && TraceCheckerSpWp.interpolantsWPComputed()) {
+				if (m_TraceCheckerSpWp.interpolantsSPComputed() && m_TraceCheckerSpWp.interpolantsWPComputed()) {
 					if (transitionFromSPtoWPOrVVAllowed(m_TraceCheckerSpWp.getInterpolanstsSPAtPosition(i),
 							i,
 							m_TraceCheckerSpWp.getInterpolanstsWPAtPosition(i),true)) { 
@@ -168,7 +168,7 @@ public class TwoTrackInterpolantAutomatonBuilder {
 				}
 				// 2. Try to add a transition from state annotated with the assertion computed via WP to
 				// to a state annotated with the assertion computed via SP.
-				if (TraceCheckerSpWp.interpolantsSPComputed() && TraceCheckerSpWp.interpolantsWPComputed()) {
+				if (m_TraceCheckerSpWp.interpolantsSPComputed() && m_TraceCheckerSpWp.interpolantsWPComputed()) {
 					if (transitionFromSPtoWPOrVVAllowed(m_TraceCheckerSpWp.getInterpolanstsWPAtPosition(i),
 							i,
 							m_TraceCheckerSpWp.getInterpolanstsSPAtPosition(i),false)) { 

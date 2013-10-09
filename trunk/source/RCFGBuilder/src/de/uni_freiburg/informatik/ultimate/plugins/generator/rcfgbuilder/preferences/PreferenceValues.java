@@ -89,7 +89,7 @@ public class PreferenceValues {
 	public static final String LABEL_PreserveGotoEdges =
 			"Preserve Goto-Edges in RCFG";
 
-	
+	public enum INTERPOLATION { Craig_NestedInterpolation, Craig_TreeInterpolation, ForwardPredicates, BackwardPredicates, FPandSP };
 	
 	public static final String VALUE_LETTER_STATEMENT = "single program statement";
 	public static final String VALUE_LETTER_SEQUENCE = "sequence of program statements";
@@ -100,8 +100,8 @@ public class PreferenceValues {
 	public static final String VALUE_RCFG = "RecursiveControlFlowGraph";
 	public static final String VALUE_INTERPOLANT_AUTOMATON = "InterpolantAutomaton";
 	public static final String VALUE_NEG_INTERPOLANT_AUTOMATON = "NegatedInterpolantAutomaton";
-	public static final String VALUE_ALL_LOC = "Craig - all locations";
-	public static final String VALUE_CUTPOINTS = "Craig - Cutpoints";
+//	public static final String VALUE_ALL_LOC = "Craig - all locations";
+//	public static final String VALUE_CUTPOINTS = "Craig - Cutpoints";
 	public static final String VALUE_ITP_WP = "StrongestPostcondition&WeakestPrecondition";
 	public static final String VALUE_ITP_GUESS = "Guess Interpolants";
 	public static final String VALUE_InterpolantAutomaton_SingleTrace = "SingleTrace";
@@ -136,7 +136,7 @@ public class PreferenceValues {
 	public static final String DEF_ARTIFACT	= VALUE_RCFG;
 	public static final int DEF_WATCHITERATION = 1000;
 	public static final boolean DEF_HOARE = false;
-	public static final String DEF_INTERPOLANTS = VALUE_ALL_LOC;
+	public static final INTERPOLATION DEF_INTERPOLANTS = INTERPOLATION.Craig_NestedInterpolation;
 	public static final boolean DEF_EDGES2TRUE = false;
 	public static final String DEF_ADDITIONAL_EDGES = VALUE_InterpolantAutomaton_Canonical;
 	public static final boolean DEF_DUMPSCRIPT = false;

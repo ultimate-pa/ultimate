@@ -28,6 +28,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.TransFormula;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.PreferenceValues.INTERPOLATION;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
@@ -323,22 +324,34 @@ public class TraceChecker {
 	 * <p>
 	 * interpolatedPositions has to be sorted (ascending) and its entries have
 	 * to be smaller than or equal to m_Trace.size() 
-	 * 
 	 * @param predicateUnifier A PredicateUnifier in which precondition, 
 	 * postcondition and all pending contexts are representatives.
+	 * @param interpolation TODO
 	 */
 	
 	public void computeInterpolants(Set<Integer> interpolatedPositions,
-										PredicateUnifier predicateUnifier) {
+										PredicateUnifier predicateUnifier, 
+										INTERPOLATION interpolation) {
 		m_PredicateUnifier = predicateUnifier;
 		assert predicateUnifier.isRepresentative(m_Precondition);
 		assert predicateUnifier.isRepresentative(m_Postcondition);
 		for (IPredicate pred : m_PendingContexts.values()) {
 			assert predicateUnifier.isRepresentative(pred);
 		}
-		computeInterpolants_Recursive(interpolatedPositions, predicateUnifier);
+		switch (interpolation) {
+		case Craig_NestedInterpolation:
+			computeInterpolants_Recursive(interpolatedPositions, predicateUnifier);
+			break;
+		case Craig_TreeInterpolation:
+			computeInterpolants_Tree(interpolatedPositions, predicateUnifier);
+			break;
+		default:
+			throw new UnsupportedOperationException("unsupportedInterpolation");
+		}
 		
-		boolean testRelevantVars = true;
+		// TODO: we used the following to check correctness of our relevant
+		// variables
+		boolean testRelevantVars = !false;
 		if (testRelevantVars) {
 			RelevantVariables rv = new RelevantVariables(m_DefaultTransFormulas);
 			for (int i=0; i<m_Interpolants.length; i++) {

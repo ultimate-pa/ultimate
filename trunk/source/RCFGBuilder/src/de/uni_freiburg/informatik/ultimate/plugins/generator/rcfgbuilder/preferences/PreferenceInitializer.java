@@ -36,7 +36,7 @@ public class PreferenceInitializer extends AbstractPreferenceInitializer {
 		preferences.setDefault(PreferenceValues.NAME_HOARE, PreferenceValues.DEF_HOARE);
 		preferences.setDefault(PreferenceValues.NAME_ARTIFACT, PreferenceValues.DEF_ARTIFACT);
 		preferences.setDefault(PreferenceValues.NAME_WATCHITERATION, PreferenceValues.DEF_WATCHITERATION);
-		preferences.setDefault(PreferenceValues.NAME_INTERPOLATED_LOCS, PreferenceValues.DEF_INTERPOLANTS);
+		preferences.setDefault(PreferenceValues.NAME_INTERPOLATED_LOCS, PreferenceValues.DEF_INTERPOLANTS.toString());
 		preferences.setDefault(PreferenceValues.NAME_EDGES2TRUE, PreferenceValues.DEF_EDGES2TRUE);
 		preferences.setDefault(PreferenceValues.NAME_InterpolantAutomaton, PreferenceValues.DEF_ADDITIONAL_EDGES);
 		preferences.setDefault(PreferenceValues.NAME_DUMPSCRIPT, PreferenceValues.DEF_DUMPSCRIPT);

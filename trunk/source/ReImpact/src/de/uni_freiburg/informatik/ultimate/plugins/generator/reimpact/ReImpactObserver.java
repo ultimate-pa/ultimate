@@ -42,6 +42,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Sta
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.TransFormula;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.TAPreferences;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.PreferenceValues.INTERPOLATION;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.PreferenceValues.Solver;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.PredicateUnifier;
@@ -280,7 +281,7 @@ public class ReImpactObserver implements IUnmanagedObserver {
 		
 		if (isSafe == LBool.UNSAT) {
 			PredicateUnifier pu = new PredicateUnifier(m_smtManager, m_truePredicate, m_falsePredicate);
-			traceChecker.computeInterpolants(new TraceChecker.AllIntegers(), pu);
+			traceChecker.computeInterpolants(new TraceChecker.AllIntegers(), pu, INTERPOLATION.Craig_TreeInterpolation);
 			IPredicate[] interpolants = traceChecker.getInterpolants();
 			refineTrace(errorNWP, interpolants);
 			setPreCallNodeImportantFlags(errorNWP.getFirst(), 0, getFirstPendingReturnIndex(nestingRelation));
@@ -607,7 +608,7 @@ public class ReImpactObserver implements IUnmanagedObserver {
 		
 		if (isSafe == LBool.UNSAT) {
 			PredicateUnifier pu = new PredicateUnifier(m_smtManager, v.getPredicate(), w.getPredicate());
-			traceChecker.computeInterpolants(new TraceChecker.AllIntegers(), pu);
+			traceChecker.computeInterpolants(new TraceChecker.AllIntegers(), pu, INTERPOLATION.Craig_TreeInterpolation);
 			IPredicate[] interpolants = traceChecker.getInterpolants();
 			refineTrace(newPathNWP, interpolants);
 			p_cover(v, w); //FIXME: cover does an implication check which is not necessary, here

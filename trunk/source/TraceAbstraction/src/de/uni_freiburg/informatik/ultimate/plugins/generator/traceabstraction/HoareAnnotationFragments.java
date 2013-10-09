@@ -12,7 +12,6 @@ import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.automata.HashRelation;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.IDoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IntersectNwa;
@@ -99,8 +98,10 @@ public class HoareAnnotationFragments {
 	private void update(
 			Update update, 
 			INestedWordAutomatonSimple<CodeBlock, IPredicate> abstraction) {
-		Map<IPredicate, HashRelation<ProgramPoint, IPredicate>> oldLiveContexts2ProgPoint2Preds = m_LiveContexts2ProgPoint2Preds;
-		m_LiveContexts2ProgPoint2Preds = new HashMap<IPredicate, HashRelation<ProgramPoint, IPredicate>>();
+		Map<IPredicate, HashRelation<ProgramPoint, IPredicate>> oldLiveContexts2ProgPoint2Preds = 
+				m_LiveContexts2ProgPoint2Preds;
+		m_LiveContexts2ProgPoint2Preds = 
+				new HashMap<IPredicate, HashRelation<ProgramPoint, IPredicate>>();
 		for (Entry<IPredicate, HashRelation<ProgramPoint, IPredicate>> contextHrPair : oldLiveContexts2ProgPoint2Preds.entrySet()) {
 			IPredicate oldContext = contextHrPair.getKey();
 			List<IPredicate> newContexts = update.getNewPredicates(oldContext);

@@ -59,6 +59,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Roo
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.SequentialComposition;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.TransFormula;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.TransFormula.Infeasibility;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.PreferenceValues.INTERPOLATION;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.PreferenceValues.Solver;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.TAPreferences.Artifact;
@@ -424,7 +425,7 @@ public class BuchiCegarLoop {
 			AllIntegers allInt = new TraceChecker.AllIntegers();
 			PredicateUnifier pu = new PredicateUnifier(m_SmtManager, 
 					m_TruePredicate, m_FalsePredicate);
-			m_TraceChecker.computeInterpolants(allInt, pu);
+			m_TraceChecker.computeInterpolants(allInt, pu, INTERPOLATION.Craig_TreeInterpolation);
 			constructInterpolantAutomaton(m_TraceChecker);
 			EdgeChecker ec = new EdgeChecker(m_SmtManager, buchiModGlobalVarManager);
 			PostDeterminizer spd = new PostDeterminizer(
@@ -693,7 +694,7 @@ public class BuchiCegarLoop {
 			if (stemCheck == LBool.UNSAT) {
 				PredicateUnifier pu = new PredicateUnifier(m_SmtManager, 
 						m_Bspm.getStemPrecondition(), m_Bspm.getStemPostcondition());
-				m_TraceChecker.computeInterpolants(new TraceChecker.AllIntegers(), pu);
+				m_TraceChecker.computeInterpolants(new TraceChecker.AllIntegers(), pu, INTERPOLATION.Craig_TreeInterpolation);
 				stemInterpolants = m_TraceChecker.getInterpolants();
 			} else {
 				throw new AssertionError();
@@ -707,7 +708,7 @@ public class BuchiCegarLoop {
 			LBool loopCheck = m_TraceChecker.isCorrect();
 			IPredicate[] loopInterpolants;
 			if (loopCheck == LBool.UNSAT) {
-				m_TraceChecker.computeInterpolants(new TraceChecker.AllIntegers(), pu);
+				m_TraceChecker.computeInterpolants(new TraceChecker.AllIntegers(), pu, INTERPOLATION.Craig_TreeInterpolation);
 				loopInterpolants = m_TraceChecker.getInterpolants();
 			} else {
 				throw new AssertionError();
