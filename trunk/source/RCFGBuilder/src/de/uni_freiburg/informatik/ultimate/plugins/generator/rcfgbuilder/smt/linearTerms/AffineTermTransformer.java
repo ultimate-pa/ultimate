@@ -39,6 +39,7 @@ public class AffineTermTransformer extends TermTransformer {
 			String funName = appTerm.getFunction().getName();
 			if (isAffineSymbol(funName)) {
 				super.convert(term);
+				return;
 			} else  {
 				AffineTerm result = new AffineTerm(appTerm);
 				setResult(result);
