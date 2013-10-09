@@ -37,8 +37,12 @@ public class PreferenceInitializer extends AbstractPreferenceInitializer {
 		
 		preferences.setDefault(PreferenceValues.NAME_SOLVERANDINTERPOLATOR, 
 				PreferenceValues.DEF_SOLVERANDINTERPOLATOR.toString());
+		preferences.setDefault(PreferenceValues.NAME_INTERPOLATIONMODE,
+				PreferenceValues.DEF_INTERPOLATIONMODE.toString());
 		preferences.setDefault(PreferenceValues.NAME_PREDICATEUNIFICATION, 
 				PreferenceValues.DEF_PREDICATEUNIFICATION.toString());
+		preferences.setDefault(PreferenceValues.NAME_EDGECHECKOPTIMIZATION,
+				PreferenceValues.DEF_EDGECHECKOPTIMIZATION.toString());
 		
 		preferences.setDefault(PreferenceValues.NAME_GRAPHWRITERPATH, PreferenceValues.DEF_GRAPHWRITERPATH);
 

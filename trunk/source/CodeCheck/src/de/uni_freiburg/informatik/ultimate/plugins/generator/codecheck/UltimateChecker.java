@@ -12,11 +12,14 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.preferences.PreferenceValues.EdgeCheckOptimization;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.preferences.PreferenceValues.PredicateUnification;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.TransFormula.Infeasibility;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.EdgeChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
@@ -154,46 +157,11 @@ public class UltimateChecker extends CodeChecker {
 			
 			if (oldInEdge instanceof AppHyperEdge) {
 				AnnotatedProgramPoint hier = ((AppHyperEdge) oldInEdge).getHier();
-				if (_edgeChecker.sdecReturn(source.getPredicate(), 
-						hier.getPredicate(), statement, 
-						negatePredicateNoPU(newNode1.getPredicate())) == LBool.SAT)
-					source.connectOutgoingReturn(hier, (Return) statement, newNode1);
-				else
-					connectOutgoingReturnIfSat(source, hier, (Return) statement, newNode1);	
-				if (_edgeChecker.sdecReturn(source.getPredicate(), 
-						hier.getPredicate(), statement, 
-						negatePredicateNoPU(newNode2.getPredicate())) == LBool.SAT)
-					source.connectOutgoingReturn(hier, (Return) statement, newNode2);
-				else
-					connectOutgoingReturnIfSat(source, hier, (Return) statement, newNode2);	
-//				connectOutgoingReturnIfSat(source, hier, (Return) statement, newNode1);
-//				connectOutgoingReturnIfSat(source, hier, (Return) statement, newNode2);
+				sdecConnectOutgoingReturnIfSat(source, hier, (Return) statement, newNode1);
+				sdecConnectOutgoingReturnIfSat(source, hier, (Return) statement, newNode2);
 			} else {
-				if (statement instanceof Call) {
-					if (_edgeChecker.sdecCall(source.getPredicate(), statement, 
-							negatePredicateNoPU(newNode1.getPredicate())) == LBool.SAT)
-						source.connectOutgoing(statement, newNode1);
-					else
-						connectOutgoingIfSat(source, statement, newNode1);
-					if (_edgeChecker.sdecCall(source.getPredicate(), statement, 
-							negatePredicateNoPU(newNode2.getPredicate())) == LBool.SAT)
-						source.connectOutgoing(statement, newNode2);
-					else
-						connectOutgoingIfSat(source, statement, newNode2);
-				} else {
-					if (_edgeChecker.sdecInteral(source.getPredicate(), statement, 
-							negatePredicateNoPU(newNode1.getPredicate())) == LBool.SAT)
-						source.connectOutgoing(statement, newNode1);
-					else
-						connectOutgoingIfSat(source, statement, newNode1);
-					if (_edgeChecker.sdecInteral(source.getPredicate(), statement, 
-							negatePredicateNoPU(newNode2.getPredicate())) == LBool.SAT)
-						source.connectOutgoing(statement, newNode2);
-					else
-						connectOutgoingIfSat(source, statement, newNode2);	
-				}
-//				connectOutgoingIfSat(source, statement, newNode1);
-//				connectOutgoingIfSat(source, statement, newNode2);
+				sdecConnectOutgoingIfSat(source, statement, newNode1);
+				sdecConnectOutgoingIfSat(source, statement, newNode2);
 			}
 			
 			oldInEdge.disconnect();
@@ -211,44 +179,11 @@ public class UltimateChecker extends CodeChecker {
 			
 			if (oldOutEdge instanceof AppHyperEdge) {
 				AnnotatedProgramPoint hier = ((AppHyperEdge) oldOutEdge).getHier();
-				if (_edgeChecker.sdecReturn(newNode1.getPredicate(), hier.getPredicate(),
-						statement, negatePredicateNoPU(target.getPredicate())) == LBool.SAT)
-					newNode1.connectOutgoingReturn(hier, (Return) statement, target);
-				else
-					connectOutgoingReturnIfSat(newNode1, hier, (Return) statement, target);	
-				if (_edgeChecker.sdecReturn(newNode2.getPredicate(), hier.getPredicate(),
-						statement, negatePredicateNoPU(target.getPredicate())) == LBool.SAT)
-					newNode2.connectOutgoingReturn(hier, (Return) statement, target);
-				else
-					connectOutgoingReturnIfSat(newNode2, hier, (Return) statement, target);	
-//				connectOutgoingReturnIfSat(newNode1, hier, (Return) statement, target);
-//				connectOutgoingReturnIfSat(newNode2, hier, (Return) statement, target);
+				sdecConnectOutgoingReturnIfSat(newNode1, hier, (Return) statement, target);
+				sdecConnectOutgoingReturnIfSat(newNode2, hier, (Return) statement, target);
 			} else {
-				if (statement instanceof Call) {
-					if (_edgeChecker.sdecCall(newNode1.getPredicate(), statement, 
-							negatePredicateNoPU(target.getPredicate())) == LBool.SAT)
-						newNode1.connectOutgoing(statement, target);
-					else
-						connectOutgoingIfSat(newNode1, statement, target);
-					if (_edgeChecker.sdecCall(newNode2.getPredicate(), statement, 
-							negatePredicateNoPU(target.getPredicate())) == LBool.SAT)
-						newNode2.connectOutgoing(statement, target);
-					else
-						connectOutgoingIfSat(newNode2, statement, target);
-				} else {
-					if (_edgeChecker.sdecInteral(newNode1.getPredicate(), statement, 
-							negatePredicateNoPU(target.getPredicate())) == LBool.SAT)
-						newNode1.connectOutgoing(statement, target);
-					else
-						connectOutgoingIfSat(newNode1, statement, target);
-					if (_edgeChecker.sdecInteral(newNode2.getPredicate(), statement, 
-							negatePredicateNoPU(target.getPredicate())) == LBool.SAT)
-						newNode2.connectOutgoing(statement, target);
-					else
-						connectOutgoingIfSat(newNode2, statement, target);
-				}
-//				connectOutgoingIfSat(newNode1, statement, target);
-//				connectoutgoingifsat(newnode2, statement, target);
+				sdecConnectOutgoingIfSat(newNode1, statement, target);
+				sdecConnectOutgoingIfSat(newNode2, statement, target);
 			}
 			
 			oldOutEdge.disconnect();
@@ -265,122 +200,15 @@ public class UltimateChecker extends CodeChecker {
 			
 			if (oldOutEdge instanceof AppHyperEdge) {
 				AnnotatedProgramPoint hier = ((AppHyperEdge) oldOutEdge).getHier();
-//				if (_edgeChecker.sdecReturnSelfloopPre(newNode1.getPredicate(), (Return) statement) 
-//						== LBool.SAT)
-//					newNode1.connectOutgoingReturn(hier, (Return) statement, newNode1);
-//				else
-//					connectOutgoingReturnIfSat(newNode1, hier, (Return) statement, newNode1);	
-//				if (_edgeChecker.sdecReturnSelfloopPre(newNode2.getPredicate(), (Return) statement) 
-//						== LBool.SAT)
-//					newNode2.connectOutgoingReturn(hier, (Return) statement, newNode2);
-//				else
-//					connectOutgoingReturnIfSat(newNode2, hier, (Return) statement, newNode2);	
-				if (_edgeChecker.sdecReturn(newNode1.getPredicate(), hier.getPredicate(),
-						statement, negatePredicateNoPU(newNode1.getPredicate())) == LBool.SAT)
-					newNode1.connectOutgoingReturn(hier, (Return) statement, newNode1);
-				else
-					connectOutgoingReturnIfSat(newNode1, hier, (Return) statement, newNode1);	
-				if (_edgeChecker.sdecReturn(newNode2.getPredicate(), hier.getPredicate(),
-						statement, 
-						negatePredicateNoPU(newNode2.getPredicate())) == LBool.SAT)
-					newNode2.connectOutgoingReturn(hier, (Return) statement, newNode2);
-				else
-					connectOutgoingReturnIfSat(newNode2, hier, (Return) statement, newNode2);		
-				
-				if (_edgeChecker.sdecReturn(newNode1.getPredicate(), hier.getPredicate(),
-						statement, negatePredicateNoPU(newNode2.getPredicate())) == LBool.SAT)
-					newNode1.connectOutgoingReturn(hier, (Return) statement, newNode2);
-				else
-					connectOutgoingReturnIfSat(newNode1, hier, (Return) statement, newNode2);	
-				if (_edgeChecker.sdecReturn(newNode2.getPredicate(), hier.getPredicate(),
-						statement, 
-						negatePredicateNoPU(newNode1.getPredicate())) == LBool.SAT)
-					newNode2.connectOutgoingReturn(hier, (Return) statement, newNode1);
-				else
-					connectOutgoingReturnIfSat(newNode2, hier, (Return) statement, newNode1);		
-//				connectOutgoingReturnIfSat(newNode1, hier, (Return) statement, newNode1);
-//				connectOutgoingReturnIfSat(newNode1, hier, (Return) statement, newNode2);
-//				connectOutgoingReturnIfSat(newNode2, hier, (Return) statement, newNode1);
-//				connectOutgoingReturnIfSat(newNode2, hier, (Return) statement, newNode2);
+				sdecConnectOutgoingReturnIfSat(newNode1, hier, (Return) statement, newNode1);
+				sdecConnectOutgoingReturnIfSat(newNode1, hier, (Return) statement, newNode2);
+				sdecConnectOutgoingReturnIfSat(newNode2, hier, (Return) statement, newNode1);
+				sdecConnectOutgoingReturnIfSat(newNode2, hier, (Return) statement, newNode2);
 			} else {
-				if (statement instanceof Call) {
-//					if (_edgeChecker.sdecCallSelfloop(newNode1.getPredicate(), statement)
-//							== LBool.SAT)
-//						newNode1.connectOutgoing(statement, newNode1);
-//					else
-//						connectOutgoingIfSat(newNode1, statement, newNode1);
-//					if (_edgeChecker.sdecCallSelfloop(newNode2.getPredicate(), statement)
-//							== LBool.SAT)
-//						newNode2.connectOutgoing(statement, newNode2);
-//					else
-//						connectOutgoingIfSat(newNode2, statement, newNode2);
-					if (_edgeChecker.sdecCall(newNode1.getPredicate(), statement, 
-							negatePredicateNoPU(newNode1.getPredicate()))
-							== LBool.SAT)
-						newNode1.connectOutgoing(statement, newNode1);
-					else
-						connectOutgoingIfSat(newNode1, statement, newNode1);		
-					if (_edgeChecker.sdecCall(newNode2.getPredicate(), statement, 
-							negatePredicateNoPU(newNode2.getPredicate()))
-							== LBool.SAT)
-						newNode2.connectOutgoing(statement, newNode2);
-					else
-						connectOutgoingIfSat(newNode2, statement, newNode2);		
-					
-					if (_edgeChecker.sdecCall(newNode1.getPredicate(), statement, 
-							negatePredicateNoPU(newNode2.getPredicate()))
-							== LBool.SAT)
-						newNode1.connectOutgoing(statement, newNode2);
-					else
-						connectOutgoingIfSat(newNode1, statement, newNode2);		
-					if (_edgeChecker.sdecCall(newNode2.getPredicate(), statement, 
-							negatePredicateNoPU(newNode1.getPredicate()))
-							== LBool.SAT)
-						newNode2.connectOutgoing(statement, newNode1);
-					else
-						connectOutgoingIfSat(newNode2, statement, newNode1);		
-				} else {
-//					if (_edgeChecker.sdecInternalSelfloop(newNode1.getPredicate(), statement)
-//							== LBool.SAT)
-//						newNode1.connectOutgoing(statement, newNode1);
-//					else
-//						connectOutgoingIfSat(newNode1, statement, newNode1);
-//					if (_edgeChecker.sdecInternalSelfloop(newNode2.getPredicate(), statement)
-//							== LBool.SAT)
-//						newNode2.connectOutgoing(statement, newNode2);
-//					else
-//						connectOutgoingIfSat(newNode2, statement, newNode2);
-					if (_edgeChecker.sdecInteral(newNode1.getPredicate(), statement, 
-							negatePredicateNoPU(newNode1.getPredicate()))
-							== LBool.SAT)
-						newNode1.connectOutgoing(statement, newNode1);
-					else
-						connectOutgoingIfSat(newNode1, statement, newNode1);		
-					if (_edgeChecker.sdecInteral(newNode2.getPredicate(), statement, 
-							negatePredicateNoPU(newNode2.getPredicate()))
-							== LBool.SAT)
-						newNode2.connectOutgoing(statement, newNode2);
-					else
-						connectOutgoingIfSat(newNode2, statement, newNode2);		
-					
-					if (_edgeChecker.sdecInteral(newNode1.getPredicate(), statement, 
-							negatePredicateNoPU(newNode2.getPredicate()))
-							== LBool.SAT)
-						newNode1.connectOutgoing(statement, newNode2);
-					else
-						connectOutgoingIfSat(newNode1, statement, newNode2);		
-					if (_edgeChecker.sdecInteral(newNode2.getPredicate(), statement, 
-							negatePredicateNoPU(newNode1.getPredicate()))
-							== LBool.SAT)
-						newNode2.connectOutgoing(statement, newNode1);
-					else
-						connectOutgoingIfSat(newNode2, statement, newNode1);		
-				}
-				
-//				connectOutgoingIfSat(newNode1, statement, newNode1);
-//				connectOutgoingIfSat(newNode1, statement, newNode2);
-//				connectOutgoingIfSat(newNode2, statement, newNode1);
-//				connectOutgoingIfSat(newNode2, statement, newNode2);
+				sdecConnectOutgoingIfSat(newNode1, statement, newNode1);
+				sdecConnectOutgoingIfSat(newNode1, statement, newNode2);
+				sdecConnectOutgoingIfSat(newNode2, statement, newNode1);
+				sdecConnectOutgoingIfSat(newNode2, statement, newNode2);
 			}
 			
 			oldOutEdge.disconnect();
@@ -393,223 +221,492 @@ public class UltimateChecker extends CodeChecker {
 			AnnotatedProgramPoint target = oldOutHypEdge.getTarget();
 			Return statement = (Return) oldOutHypEdge.getStatement();
 			
-			if (_edgeChecker.sdecReturn(source.getPredicate(), 
-					newNode1.getPredicate(), statement, negatePredicateNoPU(target.getPredicate())) == LBool.SAT)
-				source.connectOutgoingReturn(newNode1, statement, target);
-			else
-				connectOutgoingReturnIfSat(source, newNode1, statement, target);	
-			if (_edgeChecker.sdecReturn(source.getPredicate(), 
-					newNode2.getPredicate(), statement, negatePredicateNoPU(target.getPredicate())) == LBool.SAT)
-				source.connectOutgoingReturn(newNode2, statement, target);
-			else
-				connectOutgoingReturnIfSat(source, newNode2, statement, target);	
-//			connectOutgoingReturnIfSat(source, newNode1, statement, target);
-//			connectOutgoingReturnIfSat(source, newNode2, statement, target);
+			sdecConnectOutgoingReturnIfSat(source, newNode1, statement, target);
+			sdecConnectOutgoingReturnIfSat(source, newNode2, statement, target);
 			
 			oldOutHypEdge.disconnect();
 		}
 	}
-	
-	/**
-	 * Given a node and a corresponding interpolants, then split the node with
-	 * annotating the interpolants according to the algorithm of ULtimate model
-	 * checker. The nodes generated from split are added to the hashMap
-	 * nodesClones.
-	 * 
-	 * @param oldNode
-	 * @param interpolant
-	 * @return
-	 */
-	private void splitNode_EdgeChecker(AnnotatedProgramPoint oldNode, IPredicate predicate) {
-		//make two new nodes
-		AnnotatedProgramPoint newNode1 = new AnnotatedProgramPoint(oldNode, 
-				conjugatePredicates(oldNode.getPredicate(), predicate));
-		AnnotatedProgramPoint newNode2 = new AnnotatedProgramPoint(oldNode, conjugatePredicates(
-						oldNode.getPredicate(),	negatePredicateNoPU(predicate)));
-		
-		AnnotatedProgramPoint[] newNodes = new AnnotatedProgramPoint[] { newNode1, newNode2 };
-		
-		//connect predecessors of old node to new nodes, disconnect them from old node
-		AppEdge[] oldInEdges = oldNode.getIncomingEdges().toArray(new AppEdge[]{});
-		for (AppEdge oldInEdge : oldInEdges) {
-			AnnotatedProgramPoint source = oldInEdge.getSource();
-			CodeBlock statement = oldInEdge.getStatement();
-			//deal with self loops elsewhere
-			if (source.equals(oldNode))
-				continue;	
-			if (statement instanceof DummyCodeBlock) {
-				oldInEdge.disconnect();
-				continue;
-			}
-			
-			_edgeChecker.assertCodeBlock(statement);
-			_edgeChecker.assertPrecondition(source.getPredicate());
-			
-			if (oldInEdge instanceof AppHyperEdge) {
-				AnnotatedProgramPoint hier = ((AppHyperEdge) oldInEdge).getHier();
-				_edgeChecker.assertHierPred(hier.getPredicate());
-				if (_edgeChecker.postReturnImplies(negatePredicateNoPU(newNode1.getPredicate())) != LBool.UNSAT)
-						source.connectOutgoingReturn(hier, (Return) statement, newNode1);	
-				if (_edgeChecker.postReturnImplies(negatePredicateNoPU(newNode2.getPredicate())) != LBool.UNSAT)
-						source.connectOutgoingReturn(hier, (Return) statement, newNode2);
-//				connectOutgoingReturnIfSat(source, hier, (Return) statement, newNode1);
-//				connectOutgoingReturnIfSat(source, hier, (Return) statement, newNode2);
-				_edgeChecker.unAssertHierPred();
-			} else {
-				if (statement instanceof Call) {
-					if (_edgeChecker.postCallImplies(negatePredicateNoPU(newNode1.getPredicate())) != LBool.UNSAT)
-						source.connectOutgoing(statement, newNode1);
-					if (_edgeChecker.postCallImplies(negatePredicateNoPU(newNode2.getPredicate())) != LBool.UNSAT)
-						source.connectOutgoing(statement, newNode2);
-				} else {
-					if (_edgeChecker.postInternalImplies(negatePredicateNoPU(newNode1.getPredicate())) != LBool.UNSAT)
-						source.connectOutgoing(statement, newNode1);
-					if (_edgeChecker.postInternalImplies(negatePredicateNoPU(newNode2.getPredicate())) != LBool.UNSAT)
-						source.connectOutgoing(statement, newNode2);	
-				}
-//				connectOutgoingIfSat(source, statement, newNode1);
-//				connectOutgoingIfSat(source, statement, newNode2);
-			}
-	
+//	private void splitNode_sdec(AnnotatedProgramPoint oldNode, IPredicate predicate) {
+//		//make two new nodes
+//		AnnotatedProgramPoint newNode1 = new AnnotatedProgramPoint(oldNode, 
+//				conjugatePredicates(oldNode.getPredicate(), predicate));
+//		AnnotatedProgramPoint newNode2 = new AnnotatedProgramPoint(oldNode, conjugatePredicates(
+//						oldNode.getPredicate(),	negatePredicateNoPU(predicate)));
+//		
+//		//connect predecessors of old node to new nodes, disconnect them from old node
+//		AppEdge[] oldInEdges = oldNode.getIncomingEdges().toArray(new AppEdge[]{});
+//		for (AppEdge oldInEdge : oldInEdges) {
+//			AnnotatedProgramPoint source = oldInEdge.getSource();
+//			CodeBlock statement = oldInEdge.getStatement();
+//			
+//			//deal with self loops elsewhere
+//			if (source.equals(oldNode))
+//				continue;
+//			if (statement instanceof DummyCodeBlock) {
+//				oldInEdge.disconnect();
+//				continue;
+//			}
+//			
 //			if (oldInEdge instanceof AppHyperEdge) {
 //				AnnotatedProgramPoint hier = ((AppHyperEdge) oldInEdge).getHier();
-//				connectOutgoingReturnIfSat(source, hier, (Return) statement, newNode1);
-//				connectOutgoingReturnIfSat(source, hier, (Return) statement, newNode2);
+//				if (_edgeChecker.sdecReturn(source.getPredicate(), 
+//						hier.getPredicate(), statement, 
+//						negatePredicateNoPU(newNode1.getPredicate())) == LBool.SAT)
+//					source.connectOutgoingReturn(hier, (Return) statement, newNode1);
+//				else
+//					connectOutgoingReturnIfSat(source, hier, (Return) statement, newNode1);	
+//				if (_edgeChecker.sdecReturn(source.getPredicate(), 
+//						hier.getPredicate(), statement, 
+//						negatePredicateNoPU(newNode2.getPredicate())) == LBool.SAT)
+//					source.connectOutgoingReturn(hier, (Return) statement, newNode2);
+//				else
+//					connectOutgoingReturnIfSat(source, hier, (Return) statement, newNode2);	
+////				connectOutgoingReturnIfSat(source, hier, (Return) statement, newNode1);
+////				connectOutgoingReturnIfSat(source, hier, (Return) statement, newNode2);
 //			} else {
-//				connectOutgoingIfSat(source, statement, newNode1);
-//				connectOutgoingIfSat(source, statement, newNode2);
+//				if (statement instanceof Call) {
+//					if (_edgeChecker.sdecCall(source.getPredicate(), statement, 
+//							negatePredicateNoPU(newNode1.getPredicate())) == LBool.SAT)
+//						source.connectOutgoing(statement, newNode1);
+//					else
+//						connectOutgoingIfSat(source, statement, newNode1);
+//					if (_edgeChecker.sdecCall(source.getPredicate(), statement, 
+//							negatePredicateNoPU(newNode2.getPredicate())) == LBool.SAT)
+//						source.connectOutgoing(statement, newNode2);
+//					else
+//						connectOutgoingIfSat(source, statement, newNode2);
+//				} else {
+//					sdecConnectOutgoingIfSat(source, statement, newNode1);
+////					if (sdecReturnsSat(source.getPredicate(), statement, newNode1.getPredicate()))
+//////							_edgeChecker.sdecInteral(source.getPredicate(), statement, newNode1.getPredicate()) == LBool.SAT)
+////						source.connectOutgoing(statement, newNode1);
+////					else
+////						connectOutgoingIfSat(source, statement, newNode1);
+//					if (_edgeChecker.sdecInteral(source.getPredicate(), statement, 
+//							negatePredicateNoPU(newNode2.getPredicate())) == LBool.SAT)
+//						source.connectOutgoing(statement, newNode2);
+//					else
+//						connectOutgoingIfSat(source, statement, newNode2);	
+//				}
+////				connectOutgoingIfSat(source, statement, newNode1);
+////				connectOutgoingIfSat(source, statement, newNode2);
 //			}
+//			
+//			oldInEdge.disconnect();
+//		}
+//		
+//		//connect successors of old node to new nodes, disconnect them from old node
+//		AppEdge[] oldOutEdges = oldNode.getOutgoingEdges().toArray(new AppEdge[]{});
+//		for (AppEdge oldOutEdge : oldOutEdges) {
+//			AnnotatedProgramPoint target = oldOutEdge.getTarget();
+//			CodeBlock statement = oldOutEdge.getStatement();
+//			
+//			//deal with self loops elsewhere
+//			if (target.equals(oldNode))
+//				continue;
+//			
+//			if (oldOutEdge instanceof AppHyperEdge) {
+//				AnnotatedProgramPoint hier = ((AppHyperEdge) oldOutEdge).getHier();
+//				if (_edgeChecker.sdecReturn(newNode1.getPredicate(), hier.getPredicate(),
+//						statement, negatePredicateNoPU(target.getPredicate())) == LBool.SAT)
+//					newNode1.connectOutgoingReturn(hier, (Return) statement, target);
+//				else
+//					connectOutgoingReturnIfSat(newNode1, hier, (Return) statement, target);	
+//				if (_edgeChecker.sdecReturn(newNode2.getPredicate(), hier.getPredicate(),
+//						statement, negatePredicateNoPU(target.getPredicate())) == LBool.SAT)
+//					newNode2.connectOutgoingReturn(hier, (Return) statement, target);
+//				else
+//					connectOutgoingReturnIfSat(newNode2, hier, (Return) statement, target);	
+////				connectOutgoingReturnIfSat(newNode1, hier, (Return) statement, target);
+////				connectOutgoingReturnIfSat(newNode2, hier, (Return) statement, target);
+//			} else {
+//				if (statement instanceof Call) {
+//					if (_edgeChecker.sdecCall(newNode1.getPredicate(), statement, 
+//							negatePredicateNoPU(target.getPredicate())) == LBool.SAT)
+//						newNode1.connectOutgoing(statement, target);
+//					else
+//						connectOutgoingIfSat(newNode1, statement, target);
+//					if (_edgeChecker.sdecCall(newNode2.getPredicate(), statement, 
+//							negatePredicateNoPU(target.getPredicate())) == LBool.SAT)
+//						newNode2.connectOutgoing(statement, target);
+//					else
+//						connectOutgoingIfSat(newNode2, statement, target);
+//				} else {
+//					if (_edgeChecker.sdecInteral(newNode1.getPredicate(), statement, 
+//							negatePredicateNoPU(target.getPredicate())) == LBool.SAT)
+//						newNode1.connectOutgoing(statement, target);
+//					else
+//						connectOutgoingIfSat(newNode1, statement, target);
+//					if (_edgeChecker.sdecInteral(newNode2.getPredicate(), statement, 
+//							negatePredicateNoPU(target.getPredicate())) == LBool.SAT)
+//						newNode2.connectOutgoing(statement, target);
+//					else
+//						connectOutgoingIfSat(newNode2, statement, target);
+//				}
+////				connectOutgoingIfSat(newNode1, statement, target);
+////				connectoutgoingifsat(newnode2, statement, target);
+//			}
+//			
+//			oldOutEdge.disconnect();
+//		}
+//		
+//		//deal with self loops
+//		for (AppEdge oldOutEdge : oldOutEdges) {
+//			AnnotatedProgramPoint target = oldOutEdge.getTarget();
+//			CodeBlock statement = oldOutEdge.getStatement();
+//			
+//			//already dealt with non self loops and disconnected those edges
+//			if (target == null)
+//				continue;		
+//			
+//			if (oldOutEdge instanceof AppHyperEdge) {
+//				AnnotatedProgramPoint hier = ((AppHyperEdge) oldOutEdge).getHier();
+////				if (_edgeChecker.sdecReturnSelfloopPre(newNode1.getPredicate(), (Return) statement) 
+////						== LBool.SAT)
+////					newNode1.connectOutgoingReturn(hier, (Return) statement, newNode1);
+////				else
+////					connectOutgoingReturnIfSat(newNode1, hier, (Return) statement, newNode1);	
+////				if (_edgeChecker.sdecReturnSelfloopPre(newNode2.getPredicate(), (Return) statement) 
+////						== LBool.SAT)
+////					newNode2.connectOutgoingReturn(hier, (Return) statement, newNode2);
+////				else
+////					connectOutgoingReturnIfSat(newNode2, hier, (Return) statement, newNode2);	
+//				if (_edgeChecker.sdecReturn(newNode1.getPredicate(), hier.getPredicate(),
+//						statement, negatePredicateNoPU(newNode1.getPredicate())) == LBool.SAT)
+//					newNode1.connectOutgoingReturn(hier, (Return) statement, newNode1);
+//				else
+//					connectOutgoingReturnIfSat(newNode1, hier, (Return) statement, newNode1);	
+//				if (_edgeChecker.sdecReturn(newNode2.getPredicate(), hier.getPredicate(),
+//						statement, 
+//						negatePredicateNoPU(newNode2.getPredicate())) == LBool.SAT)
+//					newNode2.connectOutgoingReturn(hier, (Return) statement, newNode2);
+//				else
+//					connectOutgoingReturnIfSat(newNode2, hier, (Return) statement, newNode2);		
+//				
+//				if (_edgeChecker.sdecReturn(newNode1.getPredicate(), hier.getPredicate(),
+//						statement, negatePredicateNoPU(newNode2.getPredicate())) == LBool.SAT)
+//					newNode1.connectOutgoingReturn(hier, (Return) statement, newNode2);
+//				else
+//					connectOutgoingReturnIfSat(newNode1, hier, (Return) statement, newNode2);	
+//				if (_edgeChecker.sdecReturn(newNode2.getPredicate(), hier.getPredicate(),
+//						statement, 
+//						negatePredicateNoPU(newNode1.getPredicate())) == LBool.SAT)
+//					newNode2.connectOutgoingReturn(hier, (Return) statement, newNode1);
+//				else
+//					connectOutgoingReturnIfSat(newNode2, hier, (Return) statement, newNode1);		
+////				connectOutgoingReturnIfSat(newNode1, hier, (Return) statement, newNode1);
+////				connectOutgoingReturnIfSat(newNode1, hier, (Return) statement, newNode2);
+////				connectOutgoingReturnIfSat(newNode2, hier, (Return) statement, newNode1);
+////				connectOutgoingReturnIfSat(newNode2, hier, (Return) statement, newNode2);
+//			} else {
+//				if (statement instanceof Call) {
+////					if (_edgeChecker.sdecCallSelfloop(newNode1.getPredicate(), statement)
+////							== LBool.SAT)
+////						newNode1.connectOutgoing(statement, newNode1);
+////					else
+////						connectOutgoingIfSat(newNode1, statement, newNode1);
+////					if (_edgeChecker.sdecCallSelfloop(newNode2.getPredicate(), statement)
+////							== LBool.SAT)
+////						newNode2.connectOutgoing(statement, newNode2);
+////					else
+////						connectOutgoingIfSat(newNode2, statement, newNode2);
+//					if (_edgeChecker.sdecCall(newNode1.getPredicate(), statement, 
+//							negatePredicateNoPU(newNode1.getPredicate()))
+//							== LBool.SAT)
+//						newNode1.connectOutgoing(statement, newNode1);
+//					else
+//						connectOutgoingIfSat(newNode1, statement, newNode1);		
+//					if (_edgeChecker.sdecCall(newNode2.getPredicate(), statement, 
+//							negatePredicateNoPU(newNode2.getPredicate()))
+//							== LBool.SAT)
+//						newNode2.connectOutgoing(statement, newNode2);
+//					else
+//						connectOutgoingIfSat(newNode2, statement, newNode2);		
+//					
+//					if (_edgeChecker.sdecCall(newNode1.getPredicate(), statement, 
+//							negatePredicateNoPU(newNode2.getPredicate()))
+//							== LBool.SAT)
+//						newNode1.connectOutgoing(statement, newNode2);
+//					else
+//						connectOutgoingIfSat(newNode1, statement, newNode2);		
+//					if (_edgeChecker.sdecCall(newNode2.getPredicate(), statement, 
+//							negatePredicateNoPU(newNode1.getPredicate()))
+//							== LBool.SAT)
+//						newNode2.connectOutgoing(statement, newNode1);
+//					else
+//						connectOutgoingIfSat(newNode2, statement, newNode1);		
+//				} else {
+////					if (_edgeChecker.sdecInternalSelfloop(newNode1.getPredicate(), statement)
+////							== LBool.SAT)
+////						newNode1.connectOutgoing(statement, newNode1);
+////					else
+////						connectOutgoingIfSat(newNode1, statement, newNode1);
+////					if (_edgeChecker.sdecInternalSelfloop(newNode2.getPredicate(), statement)
+////							== LBool.SAT)
+////						newNode2.connectOutgoing(statement, newNode2);
+////					else
+////						connectOutgoingIfSat(newNode2, statement, newNode2);
+//					if (_edgeChecker.sdecInteral(newNode1.getPredicate(), statement, 
+//							negatePredicateNoPU(newNode1.getPredicate()))
+//							== LBool.SAT)
+//						newNode1.connectOutgoing(statement, newNode1);
+//					else
+//						connectOutgoingIfSat(newNode1, statement, newNode1);		
+//					if (_edgeChecker.sdecInteral(newNode2.getPredicate(), statement, 
+//							negatePredicateNoPU(newNode2.getPredicate()))
+//							== LBool.SAT)
+//						newNode2.connectOutgoing(statement, newNode2);
+//					else
+//						connectOutgoingIfSat(newNode2, statement, newNode2);		
+//					
+//					if (_edgeChecker.sdecInteral(newNode1.getPredicate(), statement, 
+//							negatePredicateNoPU(newNode2.getPredicate()))
+//							== LBool.SAT)
+//						newNode1.connectOutgoing(statement, newNode2);
+//					else
+//						connectOutgoingIfSat(newNode1, statement, newNode2);		
+//					if (_edgeChecker.sdecInteral(newNode2.getPredicate(), statement, 
+//							negatePredicateNoPU(newNode1.getPredicate()))
+//							== LBool.SAT)
+//						newNode2.connectOutgoing(statement, newNode1);
+//					else
+//						connectOutgoingIfSat(newNode2, statement, newNode1);		
+//				}
+//				
+////				connectOutgoingIfSat(newNode1, statement, newNode1);
+////				connectOutgoingIfSat(newNode1, statement, newNode2);
+////				connectOutgoingIfSat(newNode2, statement, newNode1);
+////				connectOutgoingIfSat(newNode2, statement, newNode2);
+//			}
+//			
+//			oldOutEdge.disconnect();
+//		}
+//		
+//		//duplicate outgoing hyperedges
+//		AppHyperEdge[] oldOutHypEdges = oldNode.getOutgoingHyperEdges().toArray(new AppHyperEdge[]{});
+//		for (AppHyperEdge oldOutHypEdge : oldOutHypEdges) {
+//			AnnotatedProgramPoint source = oldOutHypEdge.getSource();
+//			AnnotatedProgramPoint target = oldOutHypEdge.getTarget();
+//			Return statement = (Return) oldOutHypEdge.getStatement();
+//			
+//			if (_edgeChecker.sdecReturn(source.getPredicate(), 
+//					newNode1.getPredicate(), statement, negatePredicateNoPU(target.getPredicate())) == LBool.SAT)
+//				source.connectOutgoingReturn(newNode1, statement, target);
+//			else
+//				connectOutgoingReturnIfSat(source, newNode1, statement, target);	
+//			if (_edgeChecker.sdecReturn(source.getPredicate(), 
+//					newNode2.getPredicate(), statement, negatePredicateNoPU(target.getPredicate())) == LBool.SAT)
+//				source.connectOutgoingReturn(newNode2, statement, target);
+//			else
+//				connectOutgoingReturnIfSat(source, newNode2, statement, target);	
+////			connectOutgoingReturnIfSat(source, newNode1, statement, target);
+////			connectOutgoingReturnIfSat(source, newNode2, statement, target);
+//			
+//			oldOutHypEdge.disconnect();
+//		}
+//	}
+	
+	/**
+		 * Given a node and a corresponding interpolants, then split the node with
+		 * annotating the interpolants according to the algorithm of ULtimate model
+		 * checker. The nodes generated from split are added to the hashMap
+		 * nodesClones.
+		 * 
+		 * @param oldNode
+		 * @param interpolant
+		 * @return
+		 */
+		private void splitNode_EdgeChecker(AnnotatedProgramPoint oldNode, IPredicate predicate) {
+			//make two new nodes
+			AnnotatedProgramPoint newNode1 = new AnnotatedProgramPoint(oldNode, 
+					conjugatePredicates(oldNode.getPredicate(), predicate));
+			AnnotatedProgramPoint newNode2 = new AnnotatedProgramPoint(oldNode, conjugatePredicates(
+							oldNode.getPredicate(),	negatePredicateNoPU(predicate)));
 			
-			oldInEdge.disconnect();
-			_edgeChecker.unAssertPrecondition();
-			_edgeChecker.unAssertCodeBlock();
-		}
-		
-		
-		
-		//connect successors of old node to new nodes, disconnect them from old node
-		AppEdge[] oldOutEdges = oldNode.getOutgoingEdges().toArray(new AppEdge[]{});
-		for (int i = 0; i < 2; i++) {
-//			_edgeChecker.assertPrecondition(newNodes[i].getPredicate());
-			for (AppEdge oldOutEdge : oldOutEdges) {
-				AnnotatedProgramPoint target = oldOutEdge.getTarget();
-				CodeBlock statement = oldOutEdge.getStatement();
-
+			AnnotatedProgramPoint[] newNodes = new AnnotatedProgramPoint[] { newNode1, newNode2 };
+			
+			//connect predecessors of old node to new nodes, disconnect them from old node
+			AppEdge[] oldInEdges = oldNode.getIncomingEdges().toArray(new AppEdge[]{});
+			for (AppEdge oldInEdge : oldInEdges) {
+				AnnotatedProgramPoint source = oldInEdge.getSource();
+				CodeBlock statement = oldInEdge.getStatement();
 				//deal with self loops elsewhere
-				if (target.equals(oldNode))
+				if (source.equals(oldNode))
+					continue;	
+				if (statement instanceof DummyCodeBlock) {
+					oldInEdge.disconnect();
 					continue;
-				_edgeChecker.assertCodeBlock(statement);
-				_edgeChecker.assertPrecondition(newNodes[i].getPredicate());
-
-				if (oldOutEdge instanceof AppHyperEdge) {
-					AnnotatedProgramPoint hier = ((AppHyperEdge) oldOutEdge).getHier();
-					_edgeChecker.assertHierPred(hier.getPredicate());
-					if (_edgeChecker.postReturnImplies(negatePredicateNoPU(target.getPredicate())) != LBool.UNSAT)
-						newNodes[i].connectOutgoingReturn(hier, (Return) statement, target);	
-					//				connectOutgoingReturnIfSat(newNode2, hier, (Return) statement, target);
-					_edgeChecker.unAssertHierPred();
-				} else {
-					if (statement instanceof Call) {
-						if (_edgeChecker.postCallImplies(negatePredicateNoPU(target.getPredicate())) != LBool.UNSAT)
-							newNodes[i].connectOutgoing(statement, target);
-					} else {
-						if (_edgeChecker.postInternalImplies(negatePredicateNoPU(target.getPredicate())) != LBool.UNSAT)
-							newNodes[i].connectOutgoing(statement, target);
-					}
-					//				connectOutgoingIfSat(newNode2, statement, target);
 				}
-
-				if (i == 1)
-					oldOutEdge.disconnect();
-				_edgeChecker.unAssertCodeBlock();		
-				_edgeChecker.unAssertPrecondition();
-
-				//			if (oldOutEdge instanceof AppHyperEdge) {
-				//				AnnotatedProgramPoint hier = ((AppHyperEdge) oldOutEdge).getHier();
-				//				connectOutgoingReturnIfSat(newNode1, hier, (Return) statement, target);
-				//			} else {
-				//				connectOutgoingIfSat(newNode1, statement, target);
-				//			}
-			}
-//			_edgeChecker.unAssertPrecondition();
-		}
-
-		
-		//deal with self loops
-		for (int i = 0; i < 2; i++) {
-//			_edgeChecker.assertPrecondition(newNodes[i].getPredicate());
-			for (AppEdge oldOutEdge : oldOutEdges) {
-				AnnotatedProgramPoint target = oldOutEdge.getTarget();
-				CodeBlock statement = oldOutEdge.getStatement();
-				//already dealt with non self loops and disconnected those edges
-				if (target == null)
-					continue;		
 				
 				_edgeChecker.assertCodeBlock(statement);
-				_edgeChecker.assertPrecondition(newNodes[i].getPredicate());
-
-				if (oldOutEdge instanceof AppHyperEdge) {
-					AnnotatedProgramPoint hier = ((AppHyperEdge) oldOutEdge).getHier();
+				_edgeChecker.assertPrecondition(source.getPredicate());
+				
+				if (oldInEdge instanceof AppHyperEdge) {
+					AnnotatedProgramPoint hier = ((AppHyperEdge) oldInEdge).getHier();
 					_edgeChecker.assertHierPred(hier.getPredicate());
 					if (_edgeChecker.postReturnImplies(negatePredicateNoPU(newNode1.getPredicate())) != LBool.UNSAT)
-						newNodes[i].connectOutgoingReturn(hier, (Return) statement, newNode1);
+							source.connectOutgoingReturn(hier, (Return) statement, newNode1);	
 					if (_edgeChecker.postReturnImplies(negatePredicateNoPU(newNode2.getPredicate())) != LBool.UNSAT)
-						newNodes[i].connectOutgoingReturn(hier, (Return) statement, newNode2);
+							source.connectOutgoingReturn(hier, (Return) statement, newNode2);
+	//				connectOutgoingReturnIfSat(source, hier, (Return) statement, newNode1);
+	//				connectOutgoingReturnIfSat(source, hier, (Return) statement, newNode2);
 					_edgeChecker.unAssertHierPred();
-//					connectOutgoingReturnIfSat(newNode1, hier, (Return) statement, newNode1);
-//					connectOutgoingReturnIfSat(newNode1, hier, (Return) statement, newNode2);
-//					connectOutgoingReturnIfSat(newNode2, hier, (Return) statement, newNode1);
-//					connectOutgoingReturnIfSat(newNode2, hier, (Return) statement, newNode2);
 				} else {
 					if (statement instanceof Call) {
-						if  (_edgeChecker.postCallImplies(negatePredicateNoPU(newNode1.getPredicate())) != LBool.UNSAT)
-							newNodes[i].connectOutgoing(statement, newNode1);
-						if  (_edgeChecker.postCallImplies(negatePredicateNoPU(newNode2.getPredicate())) != LBool.UNSAT)
-							newNodes[i].connectOutgoing(statement, newNode2);
+						if (_edgeChecker.postCallImplies(negatePredicateNoPU(newNode1.getPredicate())) != LBool.UNSAT)
+							source.connectOutgoing(statement, newNode1);
+						if (_edgeChecker.postCallImplies(negatePredicateNoPU(newNode2.getPredicate())) != LBool.UNSAT)
+							source.connectOutgoing(statement, newNode2);
 					} else {
-						if  (_edgeChecker.postInternalImplies(negatePredicateNoPU(newNode1.getPredicate())) != LBool.UNSAT)
-							newNodes[i].connectOutgoing(statement, newNode1);
-						if  (_edgeChecker.postInternalImplies(negatePredicateNoPU(newNode2.getPredicate())) != LBool.UNSAT)
-							newNodes[i].connectOutgoing(statement, newNode2);
+						if (_edgeChecker.postInternalImplies(negatePredicateNoPU(newNode1.getPredicate())) != LBool.UNSAT)
+							source.connectOutgoing(statement, newNode1);
+						if (_edgeChecker.postInternalImplies(negatePredicateNoPU(newNode2.getPredicate())) != LBool.UNSAT)
+							source.connectOutgoing(statement, newNode2);	
 					}
-//					connectOutgoingIfSat(newNode1, statement, newNode1);
-//					connectOutgoingIfSat(newNode1, statement, newNode2);
-//					connectOutgoingIfSat(newNode2, statement, newNode1);
-//					connectOutgoingIfSat(newNode2, statement, newNode2);
+	//				connectOutgoingIfSat(source, statement, newNode1);
+	//				connectOutgoingIfSat(source, statement, newNode2);
 				}
-				_edgeChecker.unAssertCodeBlock();
-				_edgeChecker.unAssertPrecondition();
-				if (i == 1)
-					oldOutEdge.disconnect();
-			}
-//			_edgeChecker.unAssertPrecondition();
-		}
 		
-		//duplicate outgoing hyperedges
-		AppHyperEdge[] oldOutHypEdges = oldNode.getOutgoingHyperEdges().toArray(new AppHyperEdge[]{});
-		for (AppHyperEdge oldOutHypEdge : oldOutHypEdges) {
-			AnnotatedProgramPoint source = oldOutHypEdge.getSource();
-			AnnotatedProgramPoint target = oldOutHypEdge.getTarget();
-			Return statement = (Return) oldOutHypEdge.getStatement();
-			
-			_edgeChecker.assertCodeBlock(statement);
-			_edgeChecker.assertPrecondition(source.getPredicate());
-			
-			for (int i = 0; i < 2; i++) {
-				_edgeChecker.assertHierPred(newNodes[i].getPredicate());
-				if (_edgeChecker.postReturnImplies(negatePredicateNoPU(target.getPredicate())) != LBool.UNSAT)
-					source.connectOutgoingReturn(newNodes[i], statement, target);
-				_edgeChecker.unAssertHierPred();
+	//			if (oldInEdge instanceof AppHyperEdge) {
+	//				AnnotatedProgramPoint hier = ((AppHyperEdge) oldInEdge).getHier();
+	//				connectOutgoingReturnIfSat(source, hier, (Return) statement, newNode1);
+	//				connectOutgoingReturnIfSat(source, hier, (Return) statement, newNode2);
+	//			} else {
+	//				connectOutgoingIfSat(source, statement, newNode1);
+	//				connectOutgoingIfSat(source, statement, newNode2);
+	//			}
+				
+				oldInEdge.disconnect();
+				_edgeChecker.unAssertPrecondition();
+				_edgeChecker.unAssertCodeBlock();
 			}
-//			connectOutgoingReturnIfSat(source, newNode1, statement, target);
-//			connectOutgoingReturnIfSat(source, newNode2, statement, target);
 			
-			oldOutHypEdge.disconnect();
-			_edgeChecker.unAssertPrecondition();
-			_edgeChecker.unAssertCodeBlock();
-		}
-	}
+			
+			
+			//connect successors of old node to new nodes, disconnect them from old node
+			AppEdge[] oldOutEdges = oldNode.getOutgoingEdges().toArray(new AppEdge[]{});
+			for (int i = 0; i < 2; i++) {
+	//			_edgeChecker.assertPrecondition(newNodes[i].getPredicate());
+				for (AppEdge oldOutEdge : oldOutEdges) {
+					AnnotatedProgramPoint target = oldOutEdge.getTarget();
+					CodeBlock statement = oldOutEdge.getStatement();
 	
+					//deal with self loops elsewhere
+					if (target.equals(oldNode))
+						continue;
+					_edgeChecker.assertCodeBlock(statement);
+					_edgeChecker.assertPrecondition(newNodes[i].getPredicate());
+	
+					if (oldOutEdge instanceof AppHyperEdge) {
+						AnnotatedProgramPoint hier = ((AppHyperEdge) oldOutEdge).getHier();
+						_edgeChecker.assertHierPred(hier.getPredicate());
+						if (_edgeChecker.postReturnImplies(negatePredicateNoPU(target.getPredicate())) != LBool.UNSAT)
+							newNodes[i].connectOutgoingReturn(hier, (Return) statement, target);	
+						//				connectOutgoingReturnIfSat(newNode2, hier, (Return) statement, target);
+						_edgeChecker.unAssertHierPred();
+					} else {
+						if (statement instanceof Call) {
+							if (_edgeChecker.postCallImplies(negatePredicateNoPU(target.getPredicate())) != LBool.UNSAT)
+								newNodes[i].connectOutgoing(statement, target);
+						} else {
+							if (_edgeChecker.postInternalImplies(negatePredicateNoPU(target.getPredicate())) != LBool.UNSAT)
+								newNodes[i].connectOutgoing(statement, target);
+						}
+						//				connectOutgoingIfSat(newNode2, statement, target);
+					}
+	
+					if (i == 1)
+						oldOutEdge.disconnect();
+					_edgeChecker.unAssertCodeBlock();		
+					_edgeChecker.unAssertPrecondition();
+	
+					//			if (oldOutEdge instanceof AppHyperEdge) {
+					//				AnnotatedProgramPoint hier = ((AppHyperEdge) oldOutEdge).getHier();
+					//				connectOutgoingReturnIfSat(newNode1, hier, (Return) statement, target);
+					//			} else {
+					//				connectOutgoingIfSat(newNode1, statement, target);
+					//			}
+				}
+	//			_edgeChecker.unAssertPrecondition();
+			}
+	
+			
+			//deal with self loops
+			for (int i = 0; i < 2; i++) {
+	//			_edgeChecker.assertPrecondition(newNodes[i].getPredicate());
+				for (AppEdge oldOutEdge : oldOutEdges) {
+					AnnotatedProgramPoint target = oldOutEdge.getTarget();
+					CodeBlock statement = oldOutEdge.getStatement();
+					//already dealt with non self loops and disconnected those edges
+					if (target == null)
+						continue;		
+					
+					_edgeChecker.assertCodeBlock(statement);
+					_edgeChecker.assertPrecondition(newNodes[i].getPredicate());
+	
+					if (oldOutEdge instanceof AppHyperEdge) {
+						AnnotatedProgramPoint hier = ((AppHyperEdge) oldOutEdge).getHier();
+						_edgeChecker.assertHierPred(hier.getPredicate());
+						if (_edgeChecker.postReturnImplies(negatePredicateNoPU(newNode1.getPredicate())) != LBool.UNSAT)
+							newNodes[i].connectOutgoingReturn(hier, (Return) statement, newNode1);
+						if (_edgeChecker.postReturnImplies(negatePredicateNoPU(newNode2.getPredicate())) != LBool.UNSAT)
+							newNodes[i].connectOutgoingReturn(hier, (Return) statement, newNode2);
+						_edgeChecker.unAssertHierPred();
+	//					connectOutgoingReturnIfSat(newNode1, hier, (Return) statement, newNode1);
+	//					connectOutgoingReturnIfSat(newNode1, hier, (Return) statement, newNode2);
+	//					connectOutgoingReturnIfSat(newNode2, hier, (Return) statement, newNode1);
+	//					connectOutgoingReturnIfSat(newNode2, hier, (Return) statement, newNode2);
+					} else {
+						if (statement instanceof Call) {
+							if  (_edgeChecker.postCallImplies(negatePredicateNoPU(newNode1.getPredicate())) != LBool.UNSAT)
+								newNodes[i].connectOutgoing(statement, newNode1);
+							if  (_edgeChecker.postCallImplies(negatePredicateNoPU(newNode2.getPredicate())) != LBool.UNSAT)
+								newNodes[i].connectOutgoing(statement, newNode2);
+						} else {
+							if  (_edgeChecker.postInternalImplies(negatePredicateNoPU(newNode1.getPredicate())) != LBool.UNSAT)
+								newNodes[i].connectOutgoing(statement, newNode1);
+							if  (_edgeChecker.postInternalImplies(negatePredicateNoPU(newNode2.getPredicate())) != LBool.UNSAT)
+								newNodes[i].connectOutgoing(statement, newNode2);
+						}
+	//					connectOutgoingIfSat(newNode1, statement, newNode1);
+	//					connectOutgoingIfSat(newNode1, statement, newNode2);
+	//					connectOutgoingIfSat(newNode2, statement, newNode1);
+	//					connectOutgoingIfSat(newNode2, statement, newNode2);
+					}
+					_edgeChecker.unAssertCodeBlock();
+					_edgeChecker.unAssertPrecondition();
+					if (i == 1)
+						oldOutEdge.disconnect();
+				}
+	//			_edgeChecker.unAssertPrecondition();
+			}
+			
+			//duplicate outgoing hyperedges
+			AppHyperEdge[] oldOutHypEdges = oldNode.getOutgoingHyperEdges().toArray(new AppHyperEdge[]{});
+			for (AppHyperEdge oldOutHypEdge : oldOutHypEdges) {
+				AnnotatedProgramPoint source = oldOutHypEdge.getSource();
+				AnnotatedProgramPoint target = oldOutHypEdge.getTarget();
+				Return statement = (Return) oldOutHypEdge.getStatement();
+				
+				_edgeChecker.assertCodeBlock(statement);
+				_edgeChecker.assertPrecondition(source.getPredicate());
+				
+				for (int i = 0; i < 2; i++) {
+					_edgeChecker.assertHierPred(newNodes[i].getPredicate());
+					if (_edgeChecker.postReturnImplies(negatePredicateNoPU(target.getPredicate())) != LBool.UNSAT)
+						source.connectOutgoingReturn(newNodes[i], statement, target);
+					_edgeChecker.unAssertHierPred();
+				}
+	//			connectOutgoingReturnIfSat(source, newNode1, statement, target);
+	//			connectOutgoingReturnIfSat(source, newNode2, statement, target);
+				
+				oldOutHypEdge.disconnect();
+				_edgeChecker.unAssertPrecondition();
+				_edgeChecker.unAssertCodeBlock();
+			}
+		}
+
 	/**
 	 * Given an error trace with the corresponding interpolants, then it
 	 * modifies the graph accordingly.
@@ -631,9 +728,7 @@ public class UltimateChecker extends CodeChecker {
 		CodeCheckObserver.s_Logger.debug(String.format("Inters: %s\n",
 				interpolantsDBG));
 		
-		
-
-		int splitMode = 1;
+		EdgeCheckOptimization splitMode = GlobalSettings._instance._edgeCheckOptimization;
 		for (int i = 0; i < interpolants.length; i++) {
 //			_pre2stm2post_toConnectIfSat = 
 //					new HashMap<AnnotatedProgramPoint, 
@@ -643,15 +738,17 @@ public class UltimateChecker extends CodeChecker {
 //					HashMap<AnnotatedProgramPoint,
 //					HashMap<Return,AnnotatedProgramPoint>>>();
 			switch (splitMode) {
-			case 0:
+			case NONE:
 				splitNode_Normal(nodes[i + 1], interpolants[i]);
 				break;
-			case 1:
+			case SDEC:
 				splitNode_sdec(nodes[i + 1], interpolants[i]);
 				break;
-			case 2:
+			case PUSHPOP:
 				splitNode_EdgeChecker(nodes[i + 1], interpolants[i]);
 				break;
+			case PUSHPOP_SDEC:
+				assert false;
 			}
 //			makeConnections();
 		} 
@@ -666,7 +763,6 @@ public class UltimateChecker extends CodeChecker {
 			AnnotatedProgramPoint procedureRoot,
 			HashMap<IPredicate, HashMap<CodeBlock, HashSet<IPredicate>>> satTriples,
 			HashMap<IPredicate, HashMap<CodeBlock, HashSet<IPredicate>>> unsatTriples) {
-		this._memoizeNormalEdgeChecks = true;
 		this._satTriples = satTriples;
 		this._unsatTriples = unsatTriples;
 		return this.codeCheck(errorRun, interpolants, procedureRoot);
@@ -681,7 +777,6 @@ public class UltimateChecker extends CodeChecker {
 			HashMap<IPredicate, HashMap<CodeBlock, HashSet<IPredicate>>> unsatTriples,
 			HashMap<IPredicate, HashMap<IPredicate, HashMap<CodeBlock, HashSet<IPredicate>>>> satQuadruples,
 			HashMap<IPredicate, HashMap<IPredicate, HashMap<CodeBlock, HashSet<IPredicate>>>> unsatQuadruples) {
-		this._memoizeReturnEdgeChecks = true;
 		this._satQuadruples = satQuadruples;
 		this._unsatQuadruples = unsatQuadruples;
 		return this.codeCheck(errorRun, interpolants, procedureRoot, satTriples, unsatTriples);
@@ -719,7 +814,7 @@ public class UltimateChecker extends CodeChecker {
 			return false;
 //		System.out.print(".");
 		
-		if (_memoizeNormalEdgeChecks) {
+		if (GlobalSettings._instance._memoizeNormalEdgeChecks) {
 			if (_satTriples.get(preCondition) != null
 					&& _satTriples.get(preCondition).get(statement) != null
 					&& _satTriples.get(preCondition).get(statement).contains(postCondition)) {
@@ -742,7 +837,7 @@ public class UltimateChecker extends CodeChecker {
 			result = m_smtManager.isInductive(preCondition, statement, 
 					negatePredicateNoPU(postCondition)) != LBool.UNSAT;
 		
-		if (_memoizeNormalEdgeChecks)
+		if (GlobalSettings._instance._memoizeNormalEdgeChecks)
 			if (result)
 				addSatTriple(preCondition, statement, postCondition);
 			else 
@@ -761,7 +856,7 @@ public class UltimateChecker extends CodeChecker {
 	 */
 	protected boolean isSatRetEdge(IPredicate preCondition, IPredicate hier, Return statement,
 			IPredicate postCondition) {
-		if (_memoizeReturnEdgeChecks) {
+		if (GlobalSettings._instance._memoizeReturnEdgeChecks) {
 			if (_satQuadruples.get(preCondition) != null
 					&& _satQuadruples.get(preCondition).get(hier) != null
 					&& _satQuadruples.get(preCondition).get(hier).get(statement) != null
@@ -783,7 +878,7 @@ public class UltimateChecker extends CodeChecker {
 				(Return) statement, 
 				negatePredicateNoPU(postCondition)) != LBool.UNSAT;
 		
-		if (_memoizeReturnEdgeChecks)
+		if (GlobalSettings._instance._memoizeReturnEdgeChecks)
 			if (result)
 				addSatQuadruple(preCondition, hier, statement, postCondition);
 			else
@@ -815,6 +910,105 @@ public class UltimateChecker extends CodeChecker {
 			source.connectOutgoingReturn(hier, statement, target);
 	}	
 	
+	private void sdecConnectOutgoingIfSat(AnnotatedProgramPoint source, CodeBlock statement,
+			AnnotatedProgramPoint target) {
+		//assuming any not-NONE PredicateUnifier at least has true & false
+		
+		//TODO: check for quantified formulas
+		
+		boolean satResult = false;
+		
+		if (GlobalSettings._instance._predicateUnification != PredicateUnification.NONE) 
+			if (source.getPredicate().equals(this.m_falsePredicate))
+				satResult = false;
+			else if (statement.getTransitionFormula().isInfeasible() == Infeasibility.INFEASIBLE)
+				satResult = false;
+			else if (target.getPredicate().equals(this.m_falsePredicate))
+				satResult = false;
+			else
+				if ((statement instanceof Call ? 
+						_edgeChecker.sdecCall(source.getPredicate(), statement, target.getPredicate()) :
+						_edgeChecker.sdecInteral(source.getPredicate(), statement, target.getPredicate()))
+						== LBool.SAT)
+					satResult = true;
+				else
+					if (isSatEdge(source.getPredicate(), statement, target.getPredicate()))
+						satResult = true;
+		else
+			if (m_smtManager.checkSatWithFreeVars(source.getPredicate().getFormula()) == LBool.UNSAT)
+				satResult = false;
+			else if (statement.getTransitionFormula().isInfeasible() == Infeasibility.INFEASIBLE)
+				satResult = false;
+			else if (m_smtManager.checkSatWithFreeVars(target.getPredicate().getFormula()) == LBool.UNSAT) 
+				satResult = false;
+			else				
+				if ((statement instanceof Call ? 
+						_edgeChecker.sdecCall(source.getPredicate(), statement, target.getPredicate()) :
+						_edgeChecker.sdecInteral(source.getPredicate(), statement, target.getPredicate()))
+						== LBool.SAT)
+					satResult = true;
+				else
+					if (isSatEdge(source.getPredicate(), statement, target.getPredicate()))
+						satResult = true;
+					
+		if (satResult) {
+			source.connectOutgoing(statement, target);
+			if (GlobalSettings._instance._memoizeNormalEdgeChecks)
+				addSatTriple(source.getPredicate(), statement, target.getPredicate());
+		} else
+			if (GlobalSettings._instance._memoizeNormalEdgeChecks)
+				addUnsatTriple(source.getPredicate(), statement, target.getPredicate());
+	}
+
+	private void sdecConnectOutgoingReturnIfSat(AnnotatedProgramPoint source, AnnotatedProgramPoint hier,
+				Return statement, AnnotatedProgramPoint target) {
+		boolean satResult = false;
+		
+		//TODO: check for quantified formulas
+		
+		//assuming any not-NONE PredicateUnifier at least has true & false
+		if (GlobalSettings._instance._predicateUnification != PredicateUnification.NONE) 
+			if (source.getPredicate().equals(this.m_falsePredicate))
+				satResult = false;
+			else if (hier.getPredicate().equals(this.m_falsePredicate))
+				satResult = false;
+			else if (statement.getTransitionFormula().isInfeasible() == Infeasibility.INFEASIBLE) //FIXME
+				satResult = false;
+			else if (target.getPredicate().equals(this.m_falsePredicate)) //checking for sat of conjunction --> negating implicitly
+				satResult = false;
+			else
+				if (_edgeChecker.sdecReturn(source.getPredicate(), hier.getPredicate(), statement, target.getPredicate()) 
+						== LBool.SAT)
+						satResult = true;
+				else
+					if (isSatRetEdge(source.getPredicate(), hier.getPredicate(), statement, target.getPredicate()))
+						satResult = true;
+		else
+			if (m_smtManager.checkSatWithFreeVars(source.getPredicate().getFormula()) == LBool.UNSAT)
+				satResult = false;
+			else if (m_smtManager.checkSatWithFreeVars(hier.getPredicate().getFormula()) == LBool.UNSAT)
+				satResult = false;
+			else if (statement.getTransitionFormula().isInfeasible() == Infeasibility.INFEASIBLE) 
+				satResult = false;
+			else if (m_smtManager.checkSatWithFreeVars(target.getPredicate().getFormula()) == LBool.UNSAT)
+				satResult = false;
+			else				
+				if (_edgeChecker.sdecReturn(source.getPredicate(), hier.getPredicate(), statement, target.getPredicate()) 
+						== LBool.SAT)
+					satResult = true;
+				else
+					if (isSatRetEdge(source.getPredicate(), hier.getPredicate(), statement, target.getPredicate()))
+						satResult = true;
+			
+		if (satResult) {
+			source.connectOutgoingReturn(hier, statement, target);
+			if (GlobalSettings._instance._memoizeReturnEdgeChecks)
+				addSatTriple(source.getPredicate(), statement, target.getPredicate());
+		} else
+			if (GlobalSettings._instance._memoizeReturnEdgeChecks)
+				addUnsatTriple(source.getPredicate(), statement, target.getPredicate());
+	}
+
 	void addSatTriple(IPredicate pre, CodeBlock stm, IPredicate post) {
 		if (_satTriples.get(pre) == null)
 			_satTriples.put(pre, new HashMap<CodeBlock, HashSet<IPredicate>>());

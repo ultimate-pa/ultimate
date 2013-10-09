@@ -17,6 +17,7 @@ import de.uni_freiburg.informatik.ultimate.model.ILocation;
 import de.uni_freiburg.informatik.ultimate.model.ITranslator;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.preferences.PreferenceValues;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.preferences.PreferenceValues.EdgeCheckOptimization;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.preferences.PreferenceValues.PredicateUnification;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.preferences.PreferenceValues.SolverAndInterpolator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.TAPreferences;
@@ -73,16 +74,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 	PredicateUnifier _predicateUnifier;
 	EdgeChecker m_edgeChecker;
 	
-	//default configuration
 	GraphWriter _graphWriter;
-//	String m_dotGraphPath = "C:/temp/codeCheckGraphs";
-	String _dotGraphPath = "";
-	SolverAndInterpolator _solverAndInterpolator = SolverAndInterpolator.SMTINTERPOL;
-	PredicateUnification _predicateUnification = PredicateUnification.PER_VERIFICATION;
-	Checker checker = Checker.ULTIMATE;
-	boolean _checkOnlyMain = true;
-	boolean _memoizeNormalEdgeChecks = true;
-	boolean _memoizeReturnEdgeChecks = true;
 
 	HashMap<IPredicate, HashMap<CodeBlock, HashSet<IPredicate>>> _satTriples;
 	HashMap<IPredicate, HashMap<CodeBlock, HashSet<IPredicate>>> _unsatTriples;
@@ -112,21 +104,21 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 		_predicateUnifier = new PredicateUnifier(m_smtManager, m_truePredicate, m_falsePredicate);
 		m_edgeChecker = new EdgeChecker(m_smtManager, rootAnnot.getModGlobVarManager());
 		
-		if (_memoizeNormalEdgeChecks) {
+		if (GlobalSettings._instance._memoizeNormalEdgeChecks) {
 			_satTriples = new HashMap<IPredicate, HashMap<CodeBlock, HashSet<IPredicate>>>();
 			_unsatTriples = new HashMap<IPredicate, HashMap<CodeBlock, HashSet<IPredicate>>>();
 		}
-		if (_memoizeReturnEdgeChecks) {
+		if (GlobalSettings._instance._memoizeReturnEdgeChecks) {
 			_satQuadruples = new HashMap<IPredicate, HashMap<IPredicate,HashMap<CodeBlock,HashSet<IPredicate>>>>();
 			_unsatQuadruples = new HashMap<IPredicate, HashMap<IPredicate,HashMap<CodeBlock,HashSet<IPredicate>>>>();
 		}
-		_graphWriter = new GraphWriter(_dotGraphPath, 
+		_graphWriter = new GraphWriter(GlobalSettings._instance._dotGraphPath, 
 				true, true, true, false, m_smtManager.getScript());
 		
 		RCFG2AnnotatedRCFG r2ar = new RCFG2AnnotatedRCFG(m_smtManager);
 		m_graphRoot = r2ar.convert(m_originalRoot, m_truePredicate);
 		removeSummaryEdges();
-		if (checker == Checker.IMPULSE) {
+		if (GlobalSettings._instance.checker == Checker.IMPULSE) {
 			codeChecker = new ImpulseChecker(
 					root, m_smtManager, m_truePredicate, m_falsePredicate, m_taPrefs, 
 					m_originalRoot, m_graphRoot, _graphWriter, m_edgeChecker, _predicateUnifier);
@@ -141,26 +133,48 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 	private void readPreferencePage() {
 		IEclipsePreferences prefs = ConfigurationScope.INSTANCE.getNode(Activator.s_PLUGIN_ID);
 		
-		_memoizeNormalEdgeChecks = prefs.getBoolean(PreferenceValues.NAME_MEMOIZENORMALEDGECHECKS, 
-				PreferenceValues.DEF_MEMOIZENORMALEDGECHECKS);
-		_memoizeReturnEdgeChecks = prefs.getBoolean(PreferenceValues.NAME_MEMOIZERETURNEDGECHECKS, 
-				PreferenceValues.DEF_MEMOIZERETURNEDGECHECKS);
+		GlobalSettings.init();
 		
+		GlobalSettings._instance._memoizeNormalEdgeChecks = prefs.getBoolean(PreferenceValues.NAME_MEMOIZENORMALEDGECHECKS, 
+				PreferenceValues.DEF_MEMOIZENORMALEDGECHECKS);
+		GlobalSettings._instance._memoizeReturnEdgeChecks = prefs.getBoolean(PreferenceValues.NAME_MEMOIZERETURNEDGECHECKS, 
+				PreferenceValues.DEF_MEMOIZERETURNEDGECHECKS);
+		GlobalSettings._instance._checkOnlyMain = prefs.getBoolean(PreferenceValues.NAME_ONLYMAINPROCEDURE, 
+				PreferenceValues.DEF_ONLYMAINPROCEDURE);
+				
 		String solverString = prefs.get(PreferenceValues.NAME_SOLVERANDINTERPOLATOR, 
 				PreferenceValues.DEF_SOLVERANDINTERPOLATOR.toString());
 		if (solverString.equals(PreferenceValues.VALUE_SOLVERANDINTERPOLATOR_SMTINTERPOL.toString()))
-			_solverAndInterpolator = SolverAndInterpolator.SMTINTERPOL;
+			GlobalSettings._instance._solverAndInterpolator = SolverAndInterpolator.SMTINTERPOL;
 		else if (solverString.equals(PreferenceValues.VALUE_SOLVERANDINTERPOLATOR_Z3SPWP.toString()))
-			_solverAndInterpolator = SolverAndInterpolator.Z3SPWP;
+			GlobalSettings._instance._solverAndInterpolator = SolverAndInterpolator.Z3SPWP;
+		
+		String interpolationModeString = prefs.get(PreferenceValues.NAME_INTERPOLATIONMODE,
+				PreferenceValues.DEF_INTERPOLATIONMODE.toString());
+		if (interpolationModeString.equals(PreferenceValues.VALUE_INTERPOLATIONMODE_TREE.toString()))
+			GlobalSettings._instance._interpolationMode = INTERPOLATION.Craig_TreeInterpolation;
+		else if (interpolationModeString.equals(PreferenceValues.VALUE_INTERPOLATIONMODE_NESTED.toString()))
+			GlobalSettings._instance._interpolationMode = INTERPOLATION.Craig_NestedInterpolation;
 		
 		String predicateUnificationString = prefs.get(PreferenceValues.NAME_PREDICATEUNIFICATION, 
 				PreferenceValues.DEF_PREDICATEUNIFICATION.toString());
 		if (predicateUnificationString.equals(PreferenceValues.VALUE_PREDICATEUNIFICATION_PERVERIFICATION.toString()))
-			_predicateUnification = PredicateUnification.PER_VERIFICATION;
+			GlobalSettings._instance._predicateUnification = PredicateUnification.PER_VERIFICATION;
 		else if (predicateUnificationString.equals(PreferenceValues.VALUE_PREDICATEUNIFICATION_PERITERATION.toString()))
-			_predicateUnification = PredicateUnification.PER_ITERATION;
+			GlobalSettings._instance._predicateUnification = PredicateUnification.PER_ITERATION;
 		else if (predicateUnificationString.equals(PreferenceValues.VALUE_PREDICATEUNIFICATION_NONE.toString()))
-			_predicateUnification = PredicateUnification.NONE;
+			GlobalSettings._instance._predicateUnification = PredicateUnification.NONE;
+		
+		String edgeCheckOptimizationString = prefs.get(PreferenceValues.NAME_EDGECHECKOPTIMIZATION, 
+				PreferenceValues.DEF_EDGECHECKOPTIMIZATION.toString());
+		if (edgeCheckOptimizationString.equals(PreferenceValues.VALUE_EDGECHECKOPTIMIZATION_NONE.toString()))
+			GlobalSettings._instance._edgeCheckOptimization = EdgeCheckOptimization.NONE;
+		else if (edgeCheckOptimizationString.equals(PreferenceValues.VALUE_EDGECHECKOPTIMIZATION_SDEC.toString()))
+			GlobalSettings._instance._edgeCheckOptimization = EdgeCheckOptimization.SDEC;
+		else if (edgeCheckOptimizationString.equals(PreferenceValues.VALUE_EDGECHECKOPTIMIZATION_PUSHPOP.toString()))
+			GlobalSettings._instance._edgeCheckOptimization = EdgeCheckOptimization.PUSHPOP;
+		else if (edgeCheckOptimizationString.equals(PreferenceValues.VALUE_EDGECHECKOPTIMIZATION_PUSHPOPSDEC.toString()))
+			GlobalSettings._instance._edgeCheckOptimization = EdgeCheckOptimization.PUSHPOP_SDEC;
 	}
 	
 	private void removeSummaryEdges() {
@@ -196,7 +210,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 				String.format("graph_%s_original", _graphWriter._graphCounter));
 
 		ArrayList<AnnotatedProgramPoint> procRootsToCheck = new ArrayList<AnnotatedProgramPoint>();
-		if (_checkOnlyMain) {
+		if (GlobalSettings._instance._checkOnlyMain) {
 			for (AnnotatedProgramPoint procRoot : m_graphRoot.getOutgoingNodes()) {
 				if (procRoot.getProgramPoint().getProcedure().equalsIgnoreCase("main")) {
 					procRootsToCheck.add(procRoot);
@@ -253,7 +267,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 						errorRun.getStateSequence().toArray(new AnnotatedProgramPoint[]{}));
 					
 					TraceChecker traceChecker = null;
-					switch (_solverAndInterpolator) {
+					switch (GlobalSettings._instance._solverAndInterpolator) {
 					case SMTINTERPOL :
 						traceChecker = new TraceChecker(
 								m_truePredicate, // checks whether the trace is feasible, i.e. the formula is satisfiable
@@ -277,15 +291,27 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 
 					LBool isSafe = traceChecker.isCorrect();
 					if(isSafe == LBool.UNSAT) { //trace is infeasible
-						if (_predicateUnification == PredicateUnification.PER_ITERATION) 
+						if (GlobalSettings._instance._predicateUnification == PredicateUnification.PER_ITERATION) 
 							_predicateUnifier = new PredicateUnifier(m_smtManager, m_truePredicate, m_falsePredicate);
 						
-						traceChecker.computeInterpolants(new TraceChecker.AllIntegers(), _predicateUnifier, INTERPOLATION.Craig_TreeInterpolation);
+						switch (GlobalSettings._instance._solverAndInterpolator) {
+						case SMTINTERPOL:
+							traceChecker.computeInterpolants(new TraceChecker.AllIntegers(), _predicateUnifier, 
+								GlobalSettings._instance._interpolationMode);
+							break;
+						case Z3SPWP:
+							traceChecker.computeInterpolants(new TraceChecker.AllIntegers(), _predicateUnifier, 
+								INTERPOLATION.BackwardPredicates);
+							break;
+						}
+						
 						IPredicate[] interpolants = traceChecker.getInterpolants();
-						if (_memoizeNormalEdgeChecks && _memoizeReturnEdgeChecks)
+						if (GlobalSettings._instance._memoizeNormalEdgeChecks 
+								&& GlobalSettings._instance._memoizeReturnEdgeChecks)
 							codeChecker.codeCheck(errorRun, interpolants, procedureRoot, 
 									_satTriples, _unsatTriples, _satQuadruples, _unsatQuadruples);
-						else if (_memoizeNormalEdgeChecks && !_memoizeReturnEdgeChecks)
+						else if (GlobalSettings._instance._memoizeNormalEdgeChecks 
+								&& !GlobalSettings._instance._memoizeReturnEdgeChecks)
 							codeChecker.codeCheck(errorRun, interpolants, procedureRoot, _satTriples, _unsatTriples);
 						else
 							codeChecker.codeCheck(errorRun, interpolants, procedureRoot);

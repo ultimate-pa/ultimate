@@ -69,6 +69,16 @@ public class PreferencePage extends FieldEditorPreferencePage
 		getFieldEditorParent());
 		addField(solverandinterpolator);	
 		
+		ComboFieldEditor interpolationmode = new ComboFieldEditor(
+		PreferenceValues.NAME_INTERPOLATIONMODE, 
+		PreferenceValues.LABEL_INTERPOLATIONMODE,
+		new String[][]{{PreferenceValues.VALUE_INTERPOLATIONMODE_TREE.toString(), 
+			PreferenceValues.VALUE_INTERPOLATIONMODE_TREE.toString()},
+				{PreferenceValues.VALUE_INTERPOLATIONMODE_NESTED.toString(), 
+				PreferenceValues.VALUE_INTERPOLATIONMODE_NESTED.toString()}},
+		getFieldEditorParent());
+		addField(interpolationmode);	
+		
 		ComboFieldEditor predicateUnification = new ComboFieldEditor(
 		PreferenceValues.NAME_PREDICATEUNIFICATION, 
 		PreferenceValues.LABEL_PREDICATEUNIFICATION,
@@ -80,6 +90,20 @@ public class PreferencePage extends FieldEditorPreferencePage
 				PreferenceValues.VALUE_PREDICATEUNIFICATION_NONE.toString()}},
 		getFieldEditorParent());
 		addField(predicateUnification);	
+		
+		ComboFieldEditor edgeCheckOptimization = new ComboFieldEditor(
+		PreferenceValues.NAME_EDGECHECKOPTIMIZATION, 
+		PreferenceValues.LABEL_EDGECHECKOPTIMIZATION,
+		new String[][]{{PreferenceValues.VALUE_EDGECHECKOPTIMIZATION_NONE.toString(), 
+			PreferenceValues.VALUE_EDGECHECKOPTIMIZATION_NONE.toString()},
+				{PreferenceValues.VALUE_EDGECHECKOPTIMIZATION_SDEC.toString(), 
+				PreferenceValues.VALUE_EDGECHECKOPTIMIZATION_SDEC.toString()},
+				{PreferenceValues.VALUE_EDGECHECKOPTIMIZATION_PUSHPOP.toString(), 
+				PreferenceValues.VALUE_EDGECHECKOPTIMIZATION_PUSHPOP.toString()},
+				{PreferenceValues.VALUE_EDGECHECKOPTIMIZATION_PUSHPOPSDEC.toString(), 
+				PreferenceValues.VALUE_EDGECHECKOPTIMIZATION_PUSHPOPSDEC.toString()}},
+		getFieldEditorParent());
+		addField(edgeCheckOptimization);	
 		
 		StringFieldEditor graphWriterPath = new StringFieldEditor(
 				PreferenceValues.NAME_GRAPHWRITERPATH,

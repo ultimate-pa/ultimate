@@ -33,8 +33,6 @@ public abstract class CodeChecker {
 	EdgeChecker _edgeChecker;
 	PredicateUnifier m_predicateUnifier;
 	
-	boolean _memoizeNormalEdgeChecks = false;
-	boolean _memoizeReturnEdgeChecks = false;
 	HashMap<IPredicate,HashMap<CodeBlock,HashSet<IPredicate>>> _satTriples;
 	HashMap<IPredicate,HashMap<CodeBlock,HashSet<IPredicate>>> _unsatTriples;
 	HashMap<IPredicate, HashMap<IPredicate, HashMap<CodeBlock, HashSet<IPredicate>>>> _satQuadruples;
