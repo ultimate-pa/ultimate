@@ -68,7 +68,7 @@ public class PredicateFactoryRefinement extends PredicateFactory {
 		}
 		
 		if (m_MaintainHoareAnnotationFragments) {
-			m_HoareAnnotationFragments.announceReplacement(p1, result);
+//			m_HoareAnnotationFragments.announceReplacement(p1, result);
 		}
 		return result;
 	}

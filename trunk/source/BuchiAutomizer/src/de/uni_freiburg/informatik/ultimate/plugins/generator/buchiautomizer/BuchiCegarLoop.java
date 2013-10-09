@@ -209,7 +209,7 @@ public class BuchiCegarLoop {
 					m_SmtManager,
 					m_Pref);
 			
-			m_Haf = new HoareAnnotationFragments(rootNode.getRootAnnot(),m_SmtManager, true);
+			m_Haf = new HoareAnnotationFragments(rootNode.getRootAnnot(),m_SmtManager);
 			m_StateFactoryForRefinement = new PredicateFactoryRefinement(
 					m_RootNode.getRootAnnot().getProgramPoints(),
 					m_SmtManager,
@@ -320,7 +320,7 @@ public class BuchiCegarLoop {
 						INestedWordAutomatonOldApi<CodeBlock, IPredicate> minimized = minimizeOp.getResult();
 						if (m_Pref.computeHoareAnnotation()) {
 							Map<IPredicate, IPredicate> oldState2newState = minimizeOp.getOldState2newState();
-							m_Haf.updateContexts(oldState2newState);
+							throw new AssertionError("not supported");
 						}
 						m_Abstraction = minimized;
 						s_Logger.info("Abstraction has " + m_Abstraction.sizeInformation());

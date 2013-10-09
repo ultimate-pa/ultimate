@@ -1,14 +1,21 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 
-import java.util.Collection;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
-import java.util.Set;
+import java.util.Map.Entry;
 
 import org.apache.log4j.Logger;
 
+import de.uni_freiburg.informatik.ultimate.automata.HashRelation;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.IDoubleDeckerAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingCallTransition;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IntersectNwa;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.IOpWithDelayedDeadEndRemoval;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.IOpWithDelayedDeadEndRemoval.UpDownEntry;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
@@ -38,16 +45,15 @@ public class HoareAnnotationFragments {
 	private static Logger s_Logger = 
 			UltimateServices.getInstance().getLogger(Activator.s_PLUGIN_ID);
 
-	protected Map<ProgramPoint, Map<IPredicate, Collection<IPredicate>>> m_ProgPoint2Context2State = 
-			new HashMap<ProgramPoint, Map<IPredicate, Collection<IPredicate>>>();
-	protected Map<IPredicate, IPredicate> m_Context2Entry = 
+	private final Map<IPredicate, HashRelation<ProgramPoint, IPredicate>> m_DeadContexts2ProgPoint2Preds = 
+			new HashMap<IPredicate, HashRelation<ProgramPoint, IPredicate>>();
+	private Map<IPredicate, HashRelation<ProgramPoint, IPredicate>> m_LiveContexts2ProgPoint2Preds = 
+			new HashMap<IPredicate, HashRelation<ProgramPoint, IPredicate>>();
+	private final HashMap<IPredicate, IPredicate> m_Context2Entry = 
 			new HashMap<IPredicate, IPredicate>();
-	protected Map<ProgramPoint, Collection<IPredicate>> m_ProgPoint2StatesWithEmptyContext = 
-			new HashMap<ProgramPoint, Collection<IPredicate>>();
-	protected Map<IPredicate, Collection<ProgramPoint>> m_Context2ProgPoint = 
-			new HashMap<IPredicate, Collection<ProgramPoint>>();
-	private final Set<IPredicate> m_ReplacedContexts = 
-			new HashSet<IPredicate>();
+	
+	private final HashRelation<ProgramPoint, IPredicate> m_ProgPoint2StatesWithEmptyContext = 
+			new HashRelation<ProgramPoint, IPredicate>();
 	
 	private final RootAnnot m_rootAnnot;
 	private final SmtManager m_SmtManager;
@@ -61,182 +67,219 @@ public class HoareAnnotationFragments {
 	
 	
 	
-	public HoareAnnotationFragments(RootAnnot rootAnnot, SmtManager smtManager, boolean useEntry) {
+	public HoareAnnotationFragments(RootAnnot rootAnnot, SmtManager smtManager) {
 		this.m_rootAnnot = rootAnnot;
 		this.m_SmtManager = smtManager;
-		this.m_UseEntry = useEntry;
+		this.m_UseEntry = true;
+	}
+
+
+	
+	
+
+	
+	public void updateOnIntersection(
+			Map<IPredicate, Map<IPredicate, IntersectNwa<CodeBlock,IPredicate>.ProductState>> fst2snd2res, 
+			INestedWordAutomatonSimple<CodeBlock, IPredicate> abstraction) {
+			Update update = new IntersectionUpdate(fst2snd2res);
+			update(update,abstraction);
+	}
+	
+	
+	public void updateOnMinimization(
+			Map<IPredicate, IPredicate> old2New, 
+			INestedWordAutomatonSimple<CodeBlock, IPredicate> abstraction) {
+			Update update = new MinimizationUpdate(old2New);
+			update(update,abstraction);
+	}
+	
+	
+	
+	
+	private void update(
+			Update update, 
+			INestedWordAutomatonSimple<CodeBlock, IPredicate> abstraction) {
+		Map<IPredicate, HashRelation<ProgramPoint, IPredicate>> oldLiveContexts2ProgPoint2Preds = m_LiveContexts2ProgPoint2Preds;
+		m_LiveContexts2ProgPoint2Preds = new HashMap<IPredicate, HashRelation<ProgramPoint, IPredicate>>();
+		for (Entry<IPredicate, HashRelation<ProgramPoint, IPredicate>> contextHrPair : oldLiveContexts2ProgPoint2Preds.entrySet()) {
+			IPredicate oldContext = contextHrPair.getKey();
+			List<IPredicate> newContexts = update.getNewPredicates(oldContext);
+			if (newContexts == null) {
+				assert !m_DeadContexts2ProgPoint2Preds.containsKey(oldContext);
+				m_DeadContexts2ProgPoint2Preds.put(oldContext, contextHrPair.getValue());
+			} else {
+				IPredicate oldEntry = m_Context2Entry.get(oldContext);
+				m_Context2Entry.remove(oldContext);
+				for (int i=0; i<newContexts.size(); i++) {
+					final HashRelation<ProgramPoint, IPredicate> hr;
+					if (i== newContexts.size()-1) {
+						// last iteration, we can use the original hr instead of copy
+						hr = contextHrPair.getValue();
+					} else {
+						hr = new HashRelation<ProgramPoint, IPredicate>();
+						hr.addAll(contextHrPair.getValue());
+					}
+					m_LiveContexts2ProgPoint2Preds.put(newContexts.get(i), hr);
+					IPredicate entry = getEntry(abstraction, newContexts.get(i));
+					if (entry == null) {
+						m_Context2Entry.put(newContexts.get(i), oldEntry);
+					} else {
+						m_Context2Entry.put(newContexts.get(i), entry);
+					}
+				}
+			}
+		}
 	}
 
 	/**
-	 * Announce that during abstraction refinement state psOld of the old
-	 * abstraction was replaced by psNew of the new abstraction. All Invariants
-	 * which were assigned to psOld will be assigned to psNew. The entry of
-	 * psNew is set to null to indicate that we don't know the entry yet. psOld
-	 * is added to the set of replaced contexts. Should be called while doing an
-	 * abstraction refinement.
+	 * Get the unique call successor of a state newContext.
+	 * Return null if there is no call successor.
+	 * Throw exception if call successor is not unique.
 	 */
-	public void announceReplacement(IPredicate psOld, IPredicate psNew) {
-		if (!m_Context2ProgPoint.containsKey(psOld)) {
-			return;
-		}
-		Collection<ProgramPoint> programPoints = m_Context2ProgPoint.get(psOld);
-		for (ProgramPoint pp : programPoints) {
-			Map<IPredicate, Collection<IPredicate>> context2states = 
-					m_ProgPoint2Context2State.get(pp);
-			Collection<IPredicate> oldStates = context2states.get(psOld);
-			assert (oldStates != null);
-			assert (!oldStates.isEmpty());
-			Collection<IPredicate> newStates = new HashSet<IPredicate>();
-			newStates.addAll(oldStates);
-			context2states.put(psNew, newStates);
-			Collection<ProgramPoint> progpoints = m_Context2ProgPoint.get(psNew);
-			if (progpoints == null) {
-				progpoints = new HashSet<ProgramPoint>();
-				m_Context2ProgPoint.put(psNew, progpoints);
+	private IPredicate getEntry(
+			INestedWordAutomatonSimple<CodeBlock, IPredicate> abstraction,
+			IPredicate newContext) {
+		Iterator<OutgoingCallTransition<CodeBlock, IPredicate>> it = 
+				abstraction.callSuccessors(newContext).iterator();
+		if (!it.hasNext()) {
+			return null;
+		} else {
+			OutgoingCallTransition<CodeBlock, IPredicate> outCall = it.next();
+			IPredicate newEntry = outCall.getSucc();
+			if (it.hasNext()) {
+				throw new UnsupportedOperationException(
+						"Unable to compute Hoare annotation if state has several outgoging calls");
 			}
-			progpoints.add(pp);
-			m_ReplacedContexts.add(psOld);
-
-			IPredicate oldEntry = m_Context2Entry.get(psOld);
-			// use the oldEntry. Necessary in cases where the entry has already
-			// been removed. If the oldEntry is still there (and was replaced by
-			// a different state the entry of psNew will be updated when this
-			// entry is removed.
-			m_Context2Entry.put(psNew, oldEntry);
-
+			return newEntry;
 		}
 	}
-
-	/**
-	 * Remove all contexts that have been marked as replaced. Should be called
-	 * after a refinement step.
-	 */
-	public void wipeReplacedContexts() {
-		for (IPredicate context : m_ReplacedContexts) {
-			assert !m_Context2ProgPoint.get(context).isEmpty();
-			Collection<ProgramPoint> programPoints = m_Context2ProgPoint.get(context);
-			for (ProgramPoint pp : programPoints) {
-				Map<IPredicate, Collection<IPredicate>> context2states = 
-						m_ProgPoint2Context2State.get(pp);
-				Collection<IPredicate> removedContext = context2states.remove(context);
-				assert (removedContext != null);
-			}
-			m_Context2Entry.remove(context);
-			m_Context2ProgPoint.remove(context);
-		}
-		m_ReplacedContexts.clear();
+	
+	
+	interface Update {
+		List<IPredicate> getNewPredicates(IPredicate oldPredicate);
 	}
+	
+	private class IntersectionUpdate implements Update {
 
-	public void addDoubleDecker(IPredicate down, IPredicate up,IPredicate emtpy) {
+		private final Map<IPredicate, Map<IPredicate, IntersectNwa<CodeBlock,IPredicate>.ProductState>> m_Fst2snd2res;
+		
+		public IntersectionUpdate(
+				Map<IPredicate, Map<IPredicate, IntersectNwa<CodeBlock,IPredicate>.ProductState>> fst2snd2res) {
+			m_Fst2snd2res = fst2snd2res;
+		}
+
+		@Override
+		public List<IPredicate> getNewPredicates(IPredicate oldPredicate) {
+			Map<IPredicate, IntersectNwa<CodeBlock,IPredicate>.ProductState> mapping = m_Fst2snd2res.get(oldPredicate);
+			if (mapping == null) {
+				return null;
+			} else {
+				List<IPredicate> result = new ArrayList<IPredicate>();
+				for (Entry<IPredicate, IntersectNwa<CodeBlock,IPredicate>.ProductState> entry  : mapping.entrySet()) {
+					result.add(entry.getValue().getRes());
+				}
+				return result;
+			}
+		}
+	}
+	
+	
+	private class MinimizationUpdate implements Update {
+
+		private final Map<IPredicate, IPredicate> m_Old2New;
+		
+		public MinimizationUpdate(Map<IPredicate, IPredicate> old2New) {
+			super();
+			m_Old2New = old2New;
+		}
+
+		@Override
+		public List<IPredicate> getNewPredicates(IPredicate oldPredicate) {
+			IPredicate newPredicate = m_Old2New.get(oldPredicate);
+			if (newPredicate == null) {
+				return null;
+			} else {
+				List<IPredicate> result = Collections.singletonList(newPredicate);
+				return result;
+			}
+		}
+	}
+	
+	
+	void addDoubleDecker(IPredicate down, IPredicate up, IPredicate emtpy) {
 		ProgramPoint pp = ((SPredicate) up).getProgramPoint();
 		if (down == emtpy) {
-			Collection<IPredicate> statesWithEmtpyContext = m_ProgPoint2StatesWithEmptyContext.get(pp);
-			if (statesWithEmtpyContext == null) {
-				statesWithEmtpyContext = new HashSet<IPredicate>();
-				m_ProgPoint2StatesWithEmptyContext.put(pp,statesWithEmtpyContext);
-			}
-			statesWithEmtpyContext.add(up);
+			m_ProgPoint2StatesWithEmptyContext.addPair(pp, up);
 		} else {
-			Map<IPredicate, Collection<IPredicate>> context2states = m_ProgPoint2Context2State.get(pp);
-			if (context2states == null) {
-				context2states = new HashMap<IPredicate, Collection<IPredicate>>();
-				m_ProgPoint2Context2State.put(pp, context2states);
+			HashRelation<ProgramPoint, IPredicate> pp2preds = m_LiveContexts2ProgPoint2Preds.get(down);
+			if (pp2preds == null) {
+				pp2preds = new HashRelation<ProgramPoint, IPredicate>();
+				m_LiveContexts2ProgPoint2Preds.put(down, pp2preds);
 			}
-			Collection<IPredicate> states = context2states.get(down);
-			if (states == null) {
-				states = new HashSet<IPredicate>();
-				context2states.put(down, states);
-			}
-			states.add(up);
-
-			Collection<ProgramPoint> programPoints = m_Context2ProgPoint.get(down);
-			if (programPoints == null) {
-				programPoints = new HashSet<ProgramPoint>();
-				m_Context2ProgPoint.put(down, programPoints);
-			}
-			programPoints.add(pp);
+			pp2preds.addPair(pp, up);
 		}
 	}
 	
 	
-	/**
-	 * Replace all contexts in the preimage of oldState2newState by the
-	 * image of oldState2newState. 
-	 * The mapping oldState2newState might "merge
-	 * states" (map several to one). In this case the states/ProgramPoints of 
-	 * the new context are the union of the states/ProgramPoints of the old
-	 * contexts.
-	 * 
-	 */
-	public void updateContexts(Map<IPredicate, IPredicate> oldState2newState) {
-		assert (m_ReplacedContexts.isEmpty()) : "seems there is already an update going on";
-		for (IPredicate pOld : oldState2newState.keySet()) {
-			if (m_Context2ProgPoint.containsKey(pOld)) {
-				IPredicate pNew = oldState2newState.get(pOld);
-				updateContext(pOld, pNew);
-			}
-		}
-	}
-
-	/**
-	 * Replace the context oldContext by newContext.
-	 * If newContext already exists, add the states/ProgramPoints of the old 
-	 * context to the states/ProgramPoints the new context.
-	 */
-	private void updateContext(IPredicate oldContext, IPredicate newContext) {
-		Collection<ProgramPoint> ppsOfContext = m_Context2ProgPoint.get(oldContext);
-		for (ProgramPoint pp : ppsOfContext) {
-			assert(m_ProgPoint2Context2State.containsKey(pp));
-			Map<IPredicate, Collection<IPredicate>> context2State = 
-					m_ProgPoint2Context2State.get(pp);
-			Collection<IPredicate> statesOfNewContext = context2State.get(newContext);
-			if (statesOfNewContext == null) {
-				statesOfNewContext = new HashSet<IPredicate>();
-				context2State.put(newContext, statesOfNewContext);
-			}
-			assert(context2State.containsKey(oldContext));
-			Collection<IPredicate> statesOfOldContext = context2State.get(oldContext);
-			statesOfNewContext.addAll(statesOfOldContext);
-			context2State.remove(oldContext);
-		}
-		m_Context2ProgPoint.remove(oldContext);
-		m_Context2ProgPoint.put(newContext, ppsOfContext);
+	
+	
+	public void addHoareAnnotationToCFG(SmtManager smtManager) {
+		IPredicate precondForContext = m_SmtManager.newTruePredicate();
+		addHoareAnnotationForContext(smtManager, precondForContext, m_ProgPoint2StatesWithEmptyContext);
 		
-		// as mentioned in some comment above
-		// use the oldEntry. Necessary in cases where the entry has already
-		// been removed. If the oldEntry is still there (and was replaced by
-		// a different state the entry of psNew will be updated when this
-		// entry is removed.
-		assert (m_Context2Entry.containsKey(oldContext));
-		IPredicate entryOfContext = m_Context2Entry.get(oldContext);
-		m_Context2Entry.remove(oldContext);
-		m_Context2Entry.put(newContext, entryOfContext);
+		for (IPredicate context : m_DeadContexts2ProgPoint2Preds.keySet()) {
+			if (true || m_UseEntry || containsAnOldVar(context)) {
+				precondForContext = m_Context2Entry.get(context);
+			} else {
+				precondForContext = smtManager.strongestPostcondition(context, getCall((ISLPredicate) context), true);
+			}
+			precondForContext = smtManager.renameGlobalsToOldGlobals(precondForContext);
+			HashRelation<ProgramPoint, IPredicate> pp2preds = m_DeadContexts2ProgPoint2Preds.get(context);
+			addHoareAnnotationForContext(smtManager, precondForContext,
+					pp2preds);
+		}
+		
+		for (IPredicate context : m_LiveContexts2ProgPoint2Preds.keySet()) {
+			if (true || m_UseEntry || containsAnOldVar(context)) {
+				precondForContext = m_Context2Entry.get(context);
+			} else {
+				precondForContext = smtManager.strongestPostcondition(context, getCall((ISLPredicate) context), true);
+			}
+			precondForContext = smtManager.renameGlobalsToOldGlobals(precondForContext);
+			HashRelation<ProgramPoint, IPredicate> pp2preds = m_LiveContexts2ProgPoint2Preds.get(context);
+			addHoareAnnotationForContext(smtManager, precondForContext,
+					pp2preds);
+		}
 	}
+
+	/**
+	 * @param smtManager
+	 * @param precondForContext
+	 * @param pp2preds
+	 */
+	private void addHoareAnnotationForContext(SmtManager smtManager,
+			IPredicate precondForContext,
+			HashRelation<ProgramPoint, IPredicate> pp2preds) {
+		for (ProgramPoint pp : pp2preds.getDomain()) {
+			IPredicate formulaForPP = m_SmtManager.newFalsePredicate();
+			for (IPredicate pred : pp2preds.getImage(pp)) {
+				TermVarsProc tvp = smtManager.or(formulaForPP, pred);
+				formulaForPP = m_SmtManager.newPredicate(tvp.getFormula(), 
+						tvp.getProcedures(), tvp.getVars(), tvp.getClosedFormula());
+			}
+			addFormulasToLocNodes(pp, precondForContext, formulaForPP);
+		}
+	}
+
+	
+	
 	
 	
 	
 	
 
-//	public static Predicate computeProcedureEntryForCaller(
-//			Predicate down,
-//			NestedWordAutomaton<TransAnnot, Predicate> nwa) {
-//		Collection<TransAnnot> calls = nwa.symbolsCall(down);
-//		if (calls.size() < 1) {
-//			throw new AssertionError(
-//					"each down state should have outgoing call");
-//		}
-//		Collection<Predicate> callSuccs = new ArrayList<Predicate>();
-//		for (TransAnnot call : calls) {
-//			callSuccs.addAll(nwa.succCall(down, call));
-//		}
-//		if (callSuccs.size() != 1) {
-//			throw new AssertionError(
-//					"unable to determine successor, I have problems if location has several outgoing calls");
-//		}
-//		return callSuccs.iterator().next();
-//	}
 	
-	public void addContextEntryPair(IPredicate context, IPredicate entry) {
+	void addContextEntryPair(IPredicate context, IPredicate entry) {
 //		Predicate oldEntry = m_Context2Entry.get(context);
 //		assert( oldEntry == null || oldEntry == entry);
 		m_Context2Entry.put(context, entry);
@@ -244,20 +287,6 @@ public class HoareAnnotationFragments {
 	
 	
 
-//	public void addDoubleDeckers(
-//			Map<Predicate, Set<Predicate>> removedDoubleDeckers,
-//			Predicate emptyStack) {
-//		for (Predicate up : removedDoubleDeckers.keySet()) {
-//			for (Predicate down : removedDoubleDeckers.get(up)) {
-//				addDoubleDecker(down, up, emptyStack);
-//			}
-//		}
-//
-//	}
-//
-//	public void addContext2Entry(Map<Predicate, Predicate> context2entry) {
-//		m_Context2Entry.putAll(context2entry);
-//	}
 	
 	private void addFormulasToLocNodes(ProgramPoint pp, IPredicate context, 
 			IPredicate current) {
@@ -273,49 +302,9 @@ public class HoareAnnotationFragments {
 			hoareAnnot = (HoareAnnotation) taAnnot;
 		}
 		hoareAnnot.addInvariant(context, current);
-		
-//		RCfgState rcfgstate = locNode.getStateAnnot();
-//		rcfgstate.addInvariant(context, current);
 	}
 
-	
-	public void addHoareAnnotationToCFG(SmtManager smtManager) {
-		
-		for (ProgramPoint pp : m_ProgPoint2StatesWithEmptyContext.keySet()) {
-			IPredicate formulaForEmptyContext = m_SmtManager.newFalsePredicate();
-			Collection<IPredicate> statesWithEmptyContxt = 
-					m_ProgPoint2StatesWithEmptyContext.get(pp);
-			for (IPredicate state : statesWithEmptyContxt) {
-				TermVarsProc tvp = smtManager.or(formulaForEmptyContext, state);
-				formulaForEmptyContext = m_SmtManager.newPredicate(tvp.getFormula(), 
-						tvp.getProcedures(), tvp.getVars(), tvp.getClosedFormula());
-			}
-			IPredicate precondForContext = m_SmtManager.newTruePredicate();
-			addFormulasToLocNodes(pp, precondForContext, formulaForEmptyContext);
-		}	
 
-		for (ProgramPoint pp : m_ProgPoint2Context2State.keySet()) {
-			Map<IPredicate, Collection<IPredicate>> context2states = 
-					m_ProgPoint2Context2State.get(pp);
-			for (IPredicate context : context2states.keySet()) {
-				IPredicate formulaForContext = m_SmtManager.newFalsePredicate();
-				Collection<IPredicate> states = context2states.get(context);
-				for (IPredicate state : states) {
-					TermVarsProc tvp = smtManager.or(formulaForContext, state);
-					formulaForContext = m_SmtManager.newPredicate(tvp.getFormula(), 
-							tvp.getProcedures(), tvp.getVars(), tvp.getClosedFormula());
-				}
-				IPredicate precondForContext;
-					if (true || m_UseEntry || containsAnOldVar(context)) {
-						precondForContext = m_Context2Entry.get(context);
-					} else {
-						precondForContext = smtManager.strongestPostcondition(context, getCall((ISLPredicate) context), true);
-					}
-				precondForContext = smtManager.renameGlobalsToOldGlobals(precondForContext);
-				addFormulasToLocNodes(pp, precondForContext, formulaForContext);
-			}
-		}
-	}
 
 	public void addDeadEndDoubleDeckers(
 			IOpWithDelayedDeadEndRemoval<CodeBlock, IPredicate> diff) throws OperationCanceledException {
