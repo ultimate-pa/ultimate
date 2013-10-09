@@ -67,7 +67,10 @@ echo "testing different interpolations"
 trunk/examples/toolchains/TraceAbstractionTestDir.sh 20 trunk/examples/programs \
 "TraceAbstraction.xml;TraceAbstractionC.xml;Automizer-MlbeSeq-Nested-Hoare" \
 "TraceAbstraction.xml;TraceAbstractionC.xml;Automizer-MlbeSeq-Tree-Hoare" \
-"TraceAbstraction.xml;TraceAbstractionC.xml;Automizer-MlbeSeq-ForwardPredicates-Hoare"
+"TraceAbstraction.xml;TraceAbstractionC.xml;Automizer-MlbeSeq-ForwardPredicates-Hoare" \
+"TraceAbstraction.xml;TraceAbstractionC.xml;Automizer-MlbeLoop-Nested-Hoare" \
+"TraceAbstraction.xml;TraceAbstractionC.xml;Automizer-MlbeLoop-Tree-Hoare" \
+"TraceAbstraction.xml;TraceAbstractionC.xml;Automizer-MlbeLoop-ForwardPredicates-Hoare"
 fi
 
 
