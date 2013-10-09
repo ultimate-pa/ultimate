@@ -112,10 +112,6 @@ do
 		fi
     fi
 
-	echo "$WHO_DEFINED_SOLUTION"
-	echo "$FILENAME_SAFE"
-	echo "$FILENAME_UNSAFE"
-
     for triple in $triples
     do
 	IFS=';' read -ra tripleArray <<< "$triple"

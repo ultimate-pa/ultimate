@@ -73,7 +73,37 @@ trunk/examples/toolchains/TraceAbstractionTestDir.sh 20 trunk/examples/programs 
 "TraceAbstraction.xml;TraceAbstractionC.xml;Automizer-MlbeLoop-ForwardPredicates-Hoare"
 fi
 
-
+if [ "$1" = "6" ]; then
+echo "testing different interpolations on SV-COMP examples"
+trunk/examples/toolchains/TraceAbstractionTestDir.sh 120 trunk/examples/svcomp13/ssh-simplified/ \
+"TraceAbstraction.xml;TraceAbstractionC.xml;Automizer-MlbeSeq-Nested-SVCOMP" \
+"TraceAbstraction.xml;TraceAbstractionC.xml;Automizer-MlbeSeq-Tree-SVCOMP" \
+"TraceAbstraction.xml;TraceAbstractionC.xml;Automizer-MlbeSeq-ForwardPredicates-SVCOMP" \
+"TraceAbstraction.xml;TraceAbstractionC.xml;Automizer-MlbeLoop-Nested-SVCOMP" \
+"TraceAbstraction.xml;TraceAbstractionC.xml;Automizer-MlbeLoop-Tree-SVCOMP" \
+"TraceAbstraction.xml;TraceAbstractionC.xml;Automizer-MlbeLoop-ForwardPredicates-SVCOMP"
+trunk/examples/toolchains/TraceAbstractionTestDir.sh 120 trunk/examples/svcomp13/ntdrivers-simplified \
+"TraceAbstraction.xml;TraceAbstractionC.xml;Automizer-MlbeSeq-Nested-SVCOMP" \
+"TraceAbstraction.xml;TraceAbstractionC.xml;Automizer-MlbeSeq-Tree-SVCOMP" \
+"TraceAbstraction.xml;TraceAbstractionC.xml;Automizer-MlbeSeq-ForwardPredicates-SVCOMP" \
+"TraceAbstraction.xml;TraceAbstractionC.xml;Automizer-MlbeLoop-Nested-SVCOMP" \
+"TraceAbstraction.xml;TraceAbstractionC.xml;Automizer-MlbeLoop-Tree-SVCOMP" \
+"TraceAbstraction.xml;TraceAbstractionC.xml;Automizer-MlbeLoop-ForwardPredicates-SVCOMP"
+trunk/examples/toolchains/TraceAbstractionTestDir.sh 120 trunk/examples/svcomp13/systemc \
+"TraceAbstraction.xml;TraceAbstractionC.xml;Automizer-MlbeSeq-Nested-SVCOMP" \
+"TraceAbstraction.xml;TraceAbstractionC.xml;Automizer-MlbeSeq-Tree-SVCOMP" \
+"TraceAbstraction.xml;TraceAbstractionC.xml;Automizer-MlbeSeq-ForwardPredicates-SVCOMP" \
+"TraceAbstraction.xml;TraceAbstractionC.xml;Automizer-MlbeLoop-Nested-SVCOMP" \
+"TraceAbstraction.xml;TraceAbstractionC.xml;Automizer-MlbeLoop-Tree-SVCOMP" \
+"TraceAbstraction.xml;TraceAbstractionC.xml;Automizer-MlbeLoop-ForwardPredicates-SVCOMP"
+trunk/examples/toolchains/TraceAbstractionTestDir.sh 120 trunk/examples/programs \
+"TraceAbstraction.xml;TraceAbstractionC.xml;Automizer-MlbeSeq-Nested-SVCOMP" \
+"TraceAbstraction.xml;TraceAbstractionC.xml;Automizer-MlbeSeq-Tree-SVCOMP" \
+"TraceAbstraction.xml;TraceAbstractionC.xml;Automizer-MlbeSeq-ForwardPredicates-SVCOMP" \
+"TraceAbstraction.xml;TraceAbstractionC.xml;Automizer-MlbeLoop-Nested-SVCOMP" \
+"TraceAbstraction.xml;TraceAbstractionC.xml;Automizer-MlbeLoop-Tree-SVCOMP" \
+"TraceAbstraction.xml;TraceAbstractionC.xml;Automizer-MlbeLoop-ForwardPredicates-SVCOMP"
+fi
 
 
 #trunk/examples/toolchains/TraceAbstractionTestDir.sh 1000 trunk/examples/svcomp13/systemc \
