@@ -82,7 +82,8 @@ public class RcfgProgramExecutionBuilder {
 	
 	void addValueAtVarAssignmentPosition(BoogieVar bv, int index, Expression value) {
 		assert index >= -1;
-		assert index == -1 || isReAssigned(bv, index);
+		assert index == -1 || isReAssigned(bv, index) : 
+			"oldVar in procedure where it is not modified?";
 		Map<Integer, Expression> pos2value = m_var2pos2value.get(bv);
 		if (pos2value == null) {
 			pos2value = new HashMap<Integer, Expression>();
