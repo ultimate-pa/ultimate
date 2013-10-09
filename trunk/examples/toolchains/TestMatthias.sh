@@ -61,6 +61,18 @@ trunk/examples/toolchains/TraceAbstractionTestDir.sh 1000 trunk/examples/program
  "TraceAbstraction.xml;TraceAbstractionC.xml;TraceAbstraction-LargeStatements-StrongestPost-Hoare-SVCOMP" 
 fi
 
+
+if [ "$1" = "5" ]; then
+echo "testing different interpolations"
+trunk/examples/toolchains/TraceAbstractionTestDir.sh 20 trunk/examples/programs \
+"TraceAbstraction.xml;TraceAbstractionC.xml;Automizer-MlbeSeq-Nested-Hoare" \
+"TraceAbstraction.xml;TraceAbstractionC.xml;Automizer-MlbeSeq-Tree-Hoare" \
+"TraceAbstraction.xml;TraceAbstractionC.xml;Automizer-MlbeSeq-ForwardPredicates-Hoare"
+fi
+
+
+
+
 #trunk/examples/toolchains/TraceAbstractionTestDir.sh 1000 trunk/examples/svcomp13/systemc \
 #"TraceAbstraction.xml;TraceAbstractionC.xml;TraceAbstraction-svcomp-StrongestMinimize" \
 # "TraceAbstraction.xml;TraceAbstractionC.xml;TraceAbstraction-svcomp-EagerMinimize" \
