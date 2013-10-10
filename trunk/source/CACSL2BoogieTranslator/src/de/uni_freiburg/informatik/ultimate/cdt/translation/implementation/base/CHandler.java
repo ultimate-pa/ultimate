@@ -593,15 +593,15 @@ public class CHandler implements ICHandler {
                 assert resType.getType() != null;
                 String bId = main.nameHandler.getUniqueIdentifier(node, cId,
                         symbolTable.getCompoundCounter());
+                ResultTypes checkedType = checkForPointer(main,
+                        d.getPointerOperators(), resType);
                 if (main.typeHandler.isStructDeclaration()) {
                     // store C variable information into this result, as this is
                     // a struct field! We need this information to build the
                     // structs C variable information recursively.
                     assert resType.cvar != null;
-                    result.declCTypes.add(resType.cvar);
+                    result.declCTypes.add(checkedType.cvar);
                 }
-                ResultTypes checkedType = checkForPointer(main,
-                        d.getPointerOperators(), resType);
                 ASTType type = checkedType.getType();
                 CType cvar = checkedType.cvar;
                 VarList var = new VarList(loc, new String[] { bId }, type);
