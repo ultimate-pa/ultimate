@@ -133,6 +133,7 @@ public class InferredType implements IType {
             case Pointer:
                 return SFO.POINTER;
             case Struct:
+            	return Type.Struct.toString();
             case Unknown:
             default:
                 break;
