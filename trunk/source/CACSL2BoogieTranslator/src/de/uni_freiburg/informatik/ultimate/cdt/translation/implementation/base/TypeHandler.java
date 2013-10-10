@@ -28,6 +28,7 @@ import org.eclipse.cdt.core.dom.ast.IArrayType;
 import org.eclipse.cdt.core.dom.ast.IBasicType;
 import org.eclipse.cdt.core.dom.ast.ITypedef;
 import org.eclipse.cdt.internal.core.dom.parser.c.CASTTypedefNameSpecifier;
+import org.eclipse.cdt.internal.core.dom.parser.c.CPointerType;
 
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CACSLLocation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.SymbolTable;
@@ -493,13 +494,17 @@ public class TypeHandler implements ITypeHandler {
     @Override
     public InferredType visit(Dispatcher main,
             org.eclipse.cdt.core.dom.ast.IType type) {
-        // Handle the generic case of IType, if the specific case is not yet
-        // implemented
-        String msg = "TypeHandler: Not yet implemented: "
-                + type.getClass().toString();
-        // TODO : no idea what location should be set to ...
-        Dispatcher.error(null, SyntaxErrorType.UnsupportedSyntax, msg);
-        return new InferredType(Type.Unknown);
+    	if (type instanceof CPointerType) {
+    		return new InferredType(Type.Pointer);
+    	} else {
+    		// Handle the generic case of IType, if the specific case is not yet
+    		// implemented
+    		String msg = "TypeHandler: Not yet implemented: "
+    				+ type.getClass().toString();
+    		// TODO : no idea what location should be set to ...
+    		Dispatcher.error(null, SyntaxErrorType.UnsupportedSyntax, msg);
+    		return new InferredType(Type.Unknown);
+    	}
     }
 
     @Override

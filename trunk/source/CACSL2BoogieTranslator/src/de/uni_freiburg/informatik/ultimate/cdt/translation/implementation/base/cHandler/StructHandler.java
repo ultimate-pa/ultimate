@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.eclipse.cdt.core.dom.ast.IASTFieldReference;
+import org.eclipse.cdt.core.dom.ast.IType;
 import org.eclipse.cdt.internal.core.dom.parser.c.CASTDesignatedInitializer;
 import org.eclipse.cdt.internal.core.dom.parser.c.CASTFieldDesignator;
 
@@ -179,7 +180,7 @@ public class StructHandler {
         ResultExpression rex = (ResultExpression) r;
         String field = node.getFieldName().getRawSignature();
         // get the type for the accessed field
-        InferredType it = main.dispatch(node.getExpressionType());
+        InferredType it = main.dispatch(node.getExpressionType()); 
         StructAccessExpression sae = new StructAccessExpression(
                 new CACSLLocation(node), it, rex.expr, field);
 		assert (main.isAuxVarMapcomplete(rex.decl, rex.auxVars));
@@ -261,11 +262,11 @@ public class StructHandler {
             stmt.add(baseEquality);
             stmt.add(offsetEquality);
             stmt.addAll(call.stmt);
-//            stmt.addAll(Dispatcher.createHavocsForAuxVars(auxVars));
-//            auxVars = new HashMap<VariableDeclaration, CACSLLocation>();
             decl.addAll(call.decl);
             auxVars.putAll(call.auxVars);
-            return new ResultExpression(stmt, call.expr, decl, auxVars);
+            ResultExpression result = new ResultExpression(stmt, call.expr, decl, auxVars);
+            result.cType = ((CStruct) pointsToType).getFieldType(field);
+            return result;
         }
     	
 
