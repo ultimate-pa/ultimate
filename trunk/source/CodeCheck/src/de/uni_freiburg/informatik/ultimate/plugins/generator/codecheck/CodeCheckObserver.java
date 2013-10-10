@@ -301,7 +301,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 							break;
 						case Z3SPWP:
 							traceChecker.computeInterpolants(new TraceChecker.AllIntegers(), _predicateUnifier, 
-								INTERPOLATION.BackwardPredicates);
+								INTERPOLATION.ForwardPredicates);
 							break;
 						}
 						
