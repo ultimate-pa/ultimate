@@ -102,7 +102,4 @@ public abstract class TraceWithFormulas<TF, SF> {
 	
 	protected abstract TF getOldVarAssignmentFromValidPos(int i);
 	
-	public abstract TF getInitialOldVarAssignment();
-
-
 }

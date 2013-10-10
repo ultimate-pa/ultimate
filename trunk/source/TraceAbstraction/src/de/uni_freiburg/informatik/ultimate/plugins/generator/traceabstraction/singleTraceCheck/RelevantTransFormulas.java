@@ -237,7 +237,7 @@ public class RelevantTransFormulas extends TraceWithFormulas<TransFormula, IPred
 
 	@Override
 	public Set<Integer> callPositions() {
-		return super.getTrace().computeCallPositions();
+		return super.getTrace().getCallPositions();
 	}
 
 	@Override
@@ -259,11 +259,4 @@ public class RelevantTransFormulas extends TraceWithFormulas<TransFormula, IPred
 	protected TransFormula getOldVarAssignmentFromValidPos(int i) {
 		return m_OldVarsAssignmentTransFormulasAtCall.get(i);
 	}
-
-	@Override
-	public TransFormula getInitialOldVarAssignment() {
-		// TODO ask Matthias
-		throw new UnsupportedOperationException("not implemented yet");
-	}
-
 }

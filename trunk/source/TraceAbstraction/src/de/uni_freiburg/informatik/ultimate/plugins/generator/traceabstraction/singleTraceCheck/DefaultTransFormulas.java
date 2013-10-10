@@ -26,7 +26,7 @@ public class DefaultTransFormulas extends TraceWithFormulas<TransFormula, IPredi
 			boolean withBranchEncoders) {
 		super(nestedWord, precondition, postcondition, pendingContexts);
 		m_ModifiableGlobalVariableManager = modifiableGlobalVariableManager;
-		m_CallPositions = super.getTrace().computeCallPositions();
+		m_CallPositions = super.getTrace().getCallPositions();
 		m_WithBranchEncoders = withBranchEncoders;
 	}
 	
@@ -92,18 +92,6 @@ public class DefaultTransFormulas extends TraceWithFormulas<TransFormula, IPredi
 		String calledProcedure = call.getCallStatement().getMethodName();
 		return calledProcedure;
 	}
-
-	@Override
-	public TransFormula getInitialOldVarAssignment() {
-		ProgramPoint pp = (ProgramPoint) super.getTrace().getSymbol(0).getSource();
-		String proc = pp.getProcedure();
-		return m_ModifiableGlobalVariableManager.getOldVarsAssignment(proc);
-	}
-
-
-
-	
-
 
 
 }

@@ -107,8 +107,8 @@ public class AnnotateAndAsserter {
 				assert annotatedTerms[i] != null;
 			}
 			
-			assert callPositions.containsAll(m_Trace.computeCallPositions());
-			assert m_Trace.computeCallPositions().containsAll(callPositions);
+			assert callPositions.containsAll(m_Trace.getCallPositions());
+			assert m_Trace.getCallPositions().containsAll(callPositions);
 			
 
 			SortedMap<Integer, Term> annotatedPendingContexts = new TreeMap<Integer,Term>();

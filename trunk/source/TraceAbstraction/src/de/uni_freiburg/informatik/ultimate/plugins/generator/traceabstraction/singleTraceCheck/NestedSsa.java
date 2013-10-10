@@ -85,8 +85,7 @@ public class NestedSsa extends TraceWithFormulas<Term, Term> {
 
 	@Override
 	public Set<Integer> callPositions() {
-		System.out.println("necessary?");
-		return super.getTrace().computeCallPositions();
+		return super.getTrace().getCallPositions();
 	}
 
 	@Override
@@ -111,12 +110,6 @@ public class NestedSsa extends TraceWithFormulas<Term, Term> {
 
 	public TraceWithFormulas<TransFormula, IPredicate> getTransFormulas() {
 		return m_TransFormulas;
-	}
-
-	@Override
-	public Term getInitialOldVarAssignment() {
-		// TODO ask Matthias
-		throw new UnsupportedOperationException("not implemented yet");
 	}
 
 }

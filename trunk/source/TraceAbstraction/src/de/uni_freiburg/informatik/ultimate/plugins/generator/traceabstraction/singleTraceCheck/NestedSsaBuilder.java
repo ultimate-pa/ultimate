@@ -554,7 +554,10 @@ public class NestedSsaBuilder {
 			if (startOfCallingContext >= 0) {
 				oldVarAssignment = m_TraceWF.getOldVarAssignment(startOfCallingContext);
 			} else if (startOfCallingContext == -1) {
-				oldVarAssignment = m_TraceWF.getInitialOldVarAssignment();
+				// from some point of view each variable is modified in the 
+				// initial calling context, because variables get their
+				// initial values here
+				return true;
 			} else {
 				assert startOfCallingContext < -1;
 				int pendingReturnPosition = m_PendingContext2PendingReturn.get(startOfCallingContext);
