@@ -16,8 +16,12 @@ int main() {
 	fraction x = { 2, 5 };
 //	int a = x.denom;
 	x.denom = 7;
-	fraction* p = malloc(sizeof(fraction));
-//	fraction* p;
-//	int a = p->num + 384;
+//	fraction* p = malloc(sizeof(fraction));
+	fraction* p;
+	if (p->num == 3) {
+		a = p->num + 384;
+		//@ assert a == 387;
+	}
+	
 
 }
