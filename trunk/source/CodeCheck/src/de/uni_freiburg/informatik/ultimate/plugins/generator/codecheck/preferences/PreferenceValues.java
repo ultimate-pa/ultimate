@@ -17,7 +17,7 @@ public class PreferenceValues {
 	public static String NAME_MEMOIZERETURNEDGECHECKS = "memoizeReturnEdgeChecks";
 
 	public static String NAME_SOLVERANDINTERPOLATOR = "SolverAndInterpolator";
-	public static String NAME_INTERPOLATIONMODE = "SolverAndInterpolator";
+	public static String NAME_INTERPOLATIONMODE = "InterpolationMode";
 	public static String NAME_PREDICATEUNIFICATION = "PredicateUnificationMode";
 	public static String NAME_EDGECHECKOPTIMIZATION = "EdgeCheckOptimizationMode";
 	
