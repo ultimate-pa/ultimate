@@ -71,6 +71,8 @@ public class NestedWord<LETTER> extends Word<LETTER> {
 	
 
 	private int[] m_NestingRelation;
+
+	private Set<Integer> m_CallPositions;
 	
 	
 	/**
@@ -158,7 +160,14 @@ public class NestedWord<LETTER> extends Word<LETTER> {
 		return this.m_NestingRelation;
 	}
 	
-	public Set<Integer> computeCallPositions() {
+	public Set<Integer> getCallPositions() {
+		if (m_CallPositions == null) {
+			m_CallPositions = computeCallPositions();
+		}
+		return m_CallPositions;
+	}
+	
+	private Set<Integer> computeCallPositions() {
 		Set<Integer> result = new HashSet<Integer>();
 		for (int i=0; i<m_NestingRelation.length; i++) {
 			if (isCallPosition(i)) {
