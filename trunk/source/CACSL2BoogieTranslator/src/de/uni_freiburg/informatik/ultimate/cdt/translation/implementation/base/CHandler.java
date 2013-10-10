@@ -1365,10 +1365,8 @@ public class CHandler implements ICHandler {
                 stmt.add(ifStatement);
                 assert (main.isAuxVarMapcomplete(decl, auxVars)) : "unhavoced auxvars";
                 return new ResultExpression(stmt,
-                		main.typeHandler.convertArith2Boolean(loc,
-		        				new PrimitiveType(loc, SFO.BOOL),
-		        				new IdentifierExpression(loc, tInt, resName)),
-        				decl, auxVars);
+                		new IdentifierExpression(loc, tInt, resName), decl,
+                		auxVars);
             case IASTBinaryExpression.op_notequals:
                 stmt.addAll(l.stmt);
                 stmt.addAll(r.stmt);
