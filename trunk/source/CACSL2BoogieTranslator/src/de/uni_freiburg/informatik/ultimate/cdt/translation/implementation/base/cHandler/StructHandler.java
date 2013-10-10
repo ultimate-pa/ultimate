@@ -11,8 +11,10 @@ import org.eclipse.cdt.internal.core.dom.parser.c.CASTFieldDesignator;
 
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CACSLLocation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.InferredType;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.InferredType.Type;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CArray;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CNamed;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CStruct;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.IncorrectSyntaxException;
@@ -25,8 +27,12 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssignmentStatement;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssumeStatement;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.LeftHandSide;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StructAccessExpression;
@@ -163,9 +169,10 @@ public class StructHandler {
      *            a reference to the main dispatcher.
      * @param node
      *            the node to translate.
+     * @param memoryHandler 
      * @return the translation results.
      */
-    public Result handleFieldReference(Dispatcher main, IASTFieldReference node) {
+    public Result handleFieldReference(Dispatcher main, IASTFieldReference node, MemoryHandler memoryHandler) {
         CACSLLocation loc = new CACSLLocation(node);
         Result r = main.dispatch(node.getFieldOwner());
         assert r instanceof ResultExpression;
@@ -182,6 +189,9 @@ public class StructHandler {
         if (cvar instanceof CNamed) {
             cvar = ((CNamed) cvar).getUnderlyingType();
         }
+        if (cvar instanceof CPointer) {
+        	return handleArrowOperation(loc, rex, main, memoryHandler, field, it);
+        }
         if (cvar == null || !(cvar instanceof CStruct)) {
             String msg = "Incorrect or unexpected field owner!";
             Dispatcher.error(loc, SyntaxErrorType.IncorrectSyntax, msg);
@@ -190,6 +200,75 @@ public class StructHandler {
         result.cType = ((CStruct) cvar).getFieldType(field);
         return result;
     }
+        
+        
+        
+        /**
+         * We have field access of the form p->f where p points to a 
+         * struct STRU. 
+         * Our result is a auxiliary variable #t~arrow. The code of this field
+         * access is preceded by the following statements.
+         *  
+         * assume(auxPointer!base = p!base);
+         * assume(auxPointer!offset = #offset~STRUid~f);
+         * call #t~arrow := read~TYPf(auxPointer)
+         *     
+         * where 
+         * - TYPf is the type of the field f
+         * - #t~arrow is a fresh auxiliary variable of type TYPf
+         * - auxPointer is fresh auxiliary variable of type $Pointer$
+         * - STRUid is the identifier of the struct STRU
+         * 
+         */
+        Result handleArrowOperation(CACSLLocation loc, ResultExpression rex, Dispatcher main, MemoryHandler memoryHandler, String field, InferredType it) {
+        	CType pointsToType = ((CPointer) rex.cType).pointsToType; 
+        	if (pointsToType instanceof CNamed) {
+        		pointsToType = ((CNamed) pointsToType).getUnderlyingType();
+        	}
+            if (pointsToType == null || !(pointsToType instanceof CStruct)) {
+                String msg = "Incorrect or unexpected field owner!";
+                Dispatcher.error(loc, SyntaxErrorType.IncorrectSyntax, msg);
+                throw new IncorrectSyntaxException(msg);
+            }
+            ArrayList<Statement> stmt = new ArrayList<Statement>();
+            ArrayList<Declaration> decl = new ArrayList<Declaration>();
+            Map<VariableDeclaration, CACSLLocation> auxVars = new HashMap<VariableDeclaration, CACSLLocation>();
+            stmt.addAll(rex.stmt);
+            decl.addAll(rex.decl);
+            auxVars.putAll(rex.auxVars);
+            
+            String auxPointerId = main.nameHandler.getTempVarUID(SFO.AUXVAR.ARROW);
+            VariableDeclaration vd = SFO.getTempVarVariableDeclaration(auxPointerId, new InferredType(Type.Pointer), loc);
+            auxVars.put(vd, loc);
+            IdentifierExpression auxPointer = new IdentifierExpression(loc, new InferredType(Type.Pointer), auxPointerId);
+            
+            AssumeStatement baseEquality;
+            {
+                StructAccessExpression lhs = new StructAccessExpression(loc, new InferredType(Type.Integer), auxPointer, SFO.POINTER_BASE);
+                StructAccessExpression rhs = new StructAccessExpression(loc, new InferredType(Type.Integer), rex.expr, SFO.POINTER_BASE);
+                baseEquality = new AssumeStatement(loc, new BinaryExpression(loc, new InferredType(Type.Boolean), Operator.COMPEQ, lhs, rhs));
+            }
+            AssumeStatement offsetEquality;
+            {
+            	StructAccessExpression lhs = new StructAccessExpression(loc, new InferredType(Type.Integer), auxPointer, SFO.POINTER_OFFSET);
+            	String offset = SFO.OFFSET + pointsToType.toString() + "~" + field;
+            	
+            	IdentifierExpression rhs = new IdentifierExpression(loc, offset);
+            	offsetEquality = new AssumeStatement(loc, new BinaryExpression(loc, new InferredType(Type.Boolean), Operator.COMPEQ, lhs, rhs));
+            }
+            ResultExpression call = memoryHandler.getReadCall(main, it, auxPointer);
+            decl.add(vd);
+            stmt.add(baseEquality);
+            stmt.add(offsetEquality);
+            stmt.addAll(call.stmt);
+//            stmt.addAll(Dispatcher.createHavocsForAuxVars(auxVars));
+//            auxVars = new HashMap<VariableDeclaration, CACSLLocation>();
+            decl.addAll(call.decl);
+            auxVars.putAll(call.auxVars);
+            return new ResultExpression(stmt, call.expr, decl, auxVars);
+        }
+    	
+
 
     /**
      * Handle IASTDesignatedInitializer.

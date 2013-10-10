@@ -43,7 +43,8 @@ public class ResultExpression extends Result {
 	public CType cType;
 	
 	/**
-	 * TODO: Doku
+	 * Auxiliary variables occurring in this result. The variable declaration
+	 * of the var is mapped to the exact location for that it was constructed.
 	 */
 	public final Map<VariableDeclaration, CACSLLocation> auxVars;
 

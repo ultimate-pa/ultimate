@@ -310,7 +310,8 @@ public abstract class Dispatcher {
     }
     
 	/**
-	 * TODO: Doku
+	 * Create a havoc statement for each variable in auxVars. (Does not modify
+	 * this auxVars map)
 	 */
 	public static List<HavocStatement> createHavocsForAuxVars( 
 			Map<VariableDeclaration, CACSLLocation> auxVars) {

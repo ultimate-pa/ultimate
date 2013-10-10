@@ -2318,7 +2318,7 @@ public class CHandler implements ICHandler {
 
     @Override
     public Result visit(Dispatcher main, IASTFieldReference node) {
-        return structHandler.handleFieldReference(main, node);
+        return structHandler.handleFieldReference(main, node, memoryHandler);
     }
 
     @Override
