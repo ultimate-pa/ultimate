@@ -114,6 +114,17 @@ public interface ITypeHandler extends IHandler {
      */
     public Expression convertArith2Boolean(ILocation loc, ASTType type,
             Expression expr);
+    
+    /**
+     * Tries to unwrap an expression that was wrapped before. That is, it checks
+     * whether a given integer expression is wrapped in an if-then-else
+     * expression or not.
+     * 
+     * @param expr expression
+     * @return unwrapped expression or null if not wrapped
+     * @author Christian
+     */
+    public Expression unwrapInt2Boolean(final Expression expr);
 
     /**
      * Translates an CDT IType to a Boogie type.

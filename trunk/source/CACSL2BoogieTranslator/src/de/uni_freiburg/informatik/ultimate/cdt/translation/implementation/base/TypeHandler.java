@@ -472,17 +472,9 @@ public class TypeHandler implements ITypeHandler {
         }
         return e;
     }
-    
-    /**
-     * Tries to unwrap an expression that was wrapped before. That is, it checks
-     * whether a given integer expression is wrapped in an if-then-else
-     * expression or not.
-     * 
-     * @param expr expression
-     * @return unwrapped expression or null if not wrapped
-     * @author Christian
-     */
-    protected Expression unwrapInt2Boolean(final Expression expr) {
+
+    @Override
+    public Expression unwrapInt2Boolean(final Expression expr) {
     	if (expr instanceof IfThenElseExpression) {
 			final IfThenElseExpression iteEx = (IfThenElseExpression)expr;
 			final Expression thenPart = iteEx.getThenPart();

@@ -901,23 +901,20 @@ public class CHandler implements ICHandler {
                     		o.decl, o.auxVars);
             	} else if (iType.getType() == InferredType.Type.Integer) {
             		// unwrap if possible
-            		if (main.typeHandler instanceof TypeHandler) {
-            			final Expression unwrapped =
-            					((TypeHandler)main.typeHandler).
-            							unwrapInt2Boolean(o.expr);
-            			if (unwrapped != null) {
-            				/*
-            				 * int <code>x</code> of form <code>y ? 1 : 0</code>
-            				 * becomes <code>!y ? 1 : 0</code>
-            				 */
-            				return new ResultExpression(o.stmt,
-            						wrapBoolean2Int(loc,
-            								new UnaryExpression(loc,
-                            				UnaryExpression.Operator.LOGICNEG,
-                            				unwrapped)),
-            						o.decl, o.auxVars);
-            			}
-            		}
+        			final Expression unwrapped =
+        					main.typeHandler.unwrapInt2Boolean(o.expr);
+        			if (unwrapped != null) {
+        				/*
+        				 * int <code>x</code> of form <code>y ? 1 : 0</code>
+        				 * becomes <code>!y ? 1 : 0</code>
+        				 */
+        				return new ResultExpression(o.stmt,
+        						wrapBoolean2Int(loc,
+        								new UnaryExpression(loc,
+                        				UnaryExpression.Operator.LOGICNEG,
+                        				unwrapped)),
+        						o.decl, o.auxVars);
+        			}
             		
             		// int <code>x</code> becomes <code>x == 0 ? 1 : 0</code>
             		return new ResultExpression(o.stmt,
@@ -1176,7 +1173,7 @@ public class CHandler implements ICHandler {
                                 .getType().toString()), r.expr);
             }
         }
-        InferredType tBool = new InferredType(InferredType.Type.Boolean);
+
         InferredType tInt = new InferredType(InferredType.Type.Integer);
 
         switch (node.getOperator()) {
@@ -1318,8 +1315,11 @@ public class CHandler implements ICHandler {
                         outerThenPart.toArray(new Statement[0]),
                         new Statement[0]);
                 stmt.add(ifStatement);
-                return new ResultExpression(stmt, new IdentifierExpression(loc,
-                        tBool, resName), decl, auxVars);
+                return new ResultExpression(stmt,
+                		main.typeHandler.convertArith2Boolean(loc,
+                				new PrimitiveType(loc, SFO.BOOL),
+                				new IdentifierExpression(loc, tInt, resName)),
+        				decl, auxVars);
             case IASTBinaryExpression.op_logicalOr:
                 stmt.addAll(l.stmt);
                 if (r.auxVars.isEmpty() && l.auxVars.isEmpty()) {
@@ -1364,8 +1364,11 @@ public class CHandler implements ICHandler {
                         elsePart.toArray(new Statement[0]));
                 stmt.add(ifStatement);
                 assert (main.isAuxVarMapcomplete(decl, auxVars)) : "unhavoced auxvars";
-                return new ResultExpression(stmt, new IdentifierExpression(loc,
-                        tBool, resName), decl, auxVars);
+                return new ResultExpression(stmt,
+                		main.typeHandler.convertArith2Boolean(loc,
+		        				new PrimitiveType(loc, SFO.BOOL),
+		        				new IdentifierExpression(loc, tInt, resName)),
+        				decl, auxVars);
             case IASTBinaryExpression.op_notequals:
                 stmt.addAll(l.stmt);
                 stmt.addAll(r.stmt);
