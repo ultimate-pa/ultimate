@@ -1,0 +1,11 @@
+/*
+ * Syntax Error in SvCompHandler:
+ * (type instanceof CArray)
+ */
+int main ()
+{
+    int arr[2];
+    int *bound = sizeof(*arr);
+    
+    return 0;
+}
