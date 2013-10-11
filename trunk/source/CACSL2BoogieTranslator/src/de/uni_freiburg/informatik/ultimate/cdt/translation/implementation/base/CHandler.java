@@ -1228,8 +1228,20 @@ public class CHandler implements ICHandler {
                 }
                 stmt.addAll(l.stmt);
                 LeftHandSide lhs = BoogieASTUtil.getLHSforExpression(l.expr);
+                
+                // wrap bool to int
+                final Expression wrapped;
+                if (lhs.getType().toString().equals(SFO.INT) &&
+                		r.expr.getType().toString().equals(SFO.BOOL)) {
+                	wrapped = wrapBoolean2Int(loc, r.expr);
+                }
+                else {
+                	wrapped = r.expr;
+                }
+                
                 AssignmentStatement aStmt = new AssignmentStatement(loc,
-                        new LeftHandSide[] { lhs }, new Expression[] { r.expr });
+                        new LeftHandSide[] { lhs },
+                        new Expression[] { wrapped });
                 stmt.add(aStmt);
                 functionHandler.checkIfModifiedGlobal(main,
                         BoogieASTUtil.getLHSId(lhs), loc);
