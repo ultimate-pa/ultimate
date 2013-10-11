@@ -15,6 +15,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomat
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssertStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssumeStatement;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BooleanLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.wrapper.ASTNode;
@@ -25,6 +26,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Ret
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootAnnot;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
 
 /**
  * This class is implementing the Buchi program product, multiplying
@@ -56,10 +58,12 @@ public class Product {
 		this.createEdges();
 	}
 	
+	/**
+	 * creates the crossproduct of all edges of every node of both automata
+	 * @throws Exception
+	 */
 	private void createEdges() throws Exception
 	{
-		String key;		//name of product node per iteration
-		ProgramPoint ncp;
 		ProgramPoint targetpp, currentpp;
 		
 		//for Node x Node 
@@ -67,34 +71,79 @@ public class Product {
 			for(String n: this.aut.getStates()){
 				currentpp = this.nodes.get(this.StateNameGenerator(pp.getLocationName(), n));
 				// For Edge of Node x Edge of node
-				for(RCFGEdge rcfgEdge: pp.getOutgoingEdges())
-					for(OutgoingInternalTransition<ASTNode, String> autTrans: this.aut.internalSuccessors(n)){
-						targetpp = this.nodes.get(
-								this.StateNameGenerator(
-										((ProgramPoint)rcfgEdge.getTarget()).getLocationName(),
-										autTrans.getSucc().toString()
-										));
+				for(RCFGEdge rcfgEdge: pp.getOutgoingEdges())								
 						//distinguish between the different Edges of the RCFG in the input
-						if(rcfgEdge instanceof StatementSequence) {
-							ArrayList<Statement> stmts = new ArrayList<Statement>();
-							stmts.addAll(((StatementSequence)rcfgEdge).getStatements());
-							stmts.add(new AssumeStatement(null, ((Expression)autTrans.getLetter())));
-							new StatementSequence(
+						if (rcfgEdge instanceof Call){
+							//Call does not change anything on the global variables, therefore  we can just
+							//take the call from the original program, the logical autaton is paused on 
+							//that edges.
+							targetpp = this.nodes.get(
+									this.StateNameGenerator(
+											((ProgramPoint)rcfgEdge.getTarget()).getLocationName(),n));
+							new Call(
 									currentpp, 
-									targetpp, 
-									stmts,
-									null);
-						} else if (rcfgEdge instanceof Call)
-							continue;
-						else if (rcfgEdge instanceof Return)
-							continue;
-						else
-							throw new Exception("RCFG Edgetype " + rcfgEdge.getClass() + " wird aktuell noch nicht unterstützt...");
+									targetpp,
+									((Call) rcfgEdge).getCallStatement()
+									);
+						} else if (rcfgEdge instanceof Return) {
+							//The calls used for the returns are dummy calls, that have nothing common with the original 
+							//call except the caller location, that has to be popped from the stack.
+							//The target pp and call statement are never used and therefore left blank
 							
+							//for all possible call origins: CallPP x LTLStates be able to return
+							for(String nn: this.aut.getStates()){
+								targetpp = this.nodes.get(
+										this.StateNameGenerator(
+												((ProgramPoint)rcfgEdge.getTarget()).getLocationName(),n));
+								new Return(
+										currentpp,
+										targetpp,
+										new Call(
+												this.nodes.get(
+															this.StateNameGenerator(
+																	((ProgramPoint)((Return)rcfgEdge).getSource()).getLocationName(),
+																	nn)), 
+												null,
+												null)
+										);
+							}
+						} else if (rcfgEdge instanceof Summary) {
+							//Summary summarizes a call compuation and return from another procedure
+							//therefore it is handled like another procedure by ignoring its influence on
+							//the program state and skipping the step on the logical autoamton.
+							targetpp = this.nodes.get(
+									this.StateNameGenerator(
+											((ProgramPoint)rcfgEdge.getTarget()).getLocationName(),n));
+							new Summary(
+									currentpp, 
+									targetpp,
+									((Summary) rcfgEdge).getCallStatement(),
+									false
+									);
+							
+						} else if(rcfgEdge instanceof StatementSequence){
+							for(OutgoingInternalTransition<ASTNode, String> autTrans: this.aut.internalSuccessors(n)){
+								targetpp = this.nodes.get(
+										this.StateNameGenerator(
+												((ProgramPoint)rcfgEdge.getTarget()).getLocationName(),
+												autTrans.getSucc().toString()
+												));
+								//append statements of rcfg and ltl
+								ArrayList<Statement> stmts = new ArrayList<Statement>();
+								stmts.addAll(((StatementSequence)rcfgEdge).getStatements());
+								stmts.add(new AssumeStatement(null, ((Expression)autTrans.getLetter())));
+								//edge
+								new StatementSequence(
+										currentpp, 
+										targetpp, 
+										stmts,
+										null);
+							}
+						} else
+							throw new Exception("RCFG Edgetype " + rcfgEdge.getClass() + " is currently not supported.");		
 					}
 			}
 				
-		}
 	}
 	
 	/**
@@ -103,7 +152,6 @@ public class Product {
 	 */
 	private void createProductStates()
 	{
-		String key;		//name of product node per iteration
 		ProgramPoint ncp;
 		
 		for(ProgramPoint pp: this.RCFGLocations){
@@ -145,48 +193,15 @@ public class Product {
 			//if (!this.RCFGLocations.contains(cp))
 				this.RCFGLocations.add(cp);
 			for (RCFGEdge p: cp.getOutgoingEdges())
-				if(!(this.RCFGLocations.contains(cp) || unhandledLocations.contains(cp)))
-					unhandledLocations.offer(cp);
-		}
-		
-		/*Collection<String> autNodes = this.aut.getStates();
-		HashSet<String> done = new HashSet<String>();
-		
-		Queue<ProgramPoint> unhandledLocations = new ArrayDeque<ProgramPoint>();
-		//initialize queue with everything node following the root node
-		for (RCFGEdge p: ((RootNode)this.rcfg).getOutgoingEdges())
-			unhandledLocations.offer((ProgramPoint) p.getTarget());
-		
-		//as long as there are unmultiplied nodes
-		ProgramPoint cp; 
-		String key;		//name of product node per iteration
-		ProgramPoint ncp;
-		while( unhandledLocations.peek() != null)
-		{
-			cp = unhandledLocations.poll();
-			for(String an: autNodes){
-				key = this.StateNameGenerator(cp.getLocationName(), an);
-				if (!this.nodes.containsKey(key)){
-					//create new ProgramPoint conserving the properties of the old
-					ncp = new ProgramPoint
-									(		
-									cp.getPosition(),
-									cp.getPosition(),
-									false,
-									cp.getAstNode(),
-									null,
-									null 
-									);
-					this.nodes.put(key, ncp);
-				}
-				//create all outgoing Nodes from the current node
-				for (RCFGEdge p: cp.getOutgoingEdges())
-					if (!this.nodes.containsKey(key)){
-						unhandledLocations.offer((ProgramPoint) p.getTarget());
-				//create all edges
+				if(!(this.RCFGLocations.contains(p.getTarget()) || unhandledLocations.contains(p.getTarget())))
+					unhandledLocations.offer((ProgramPoint)p.getTarget());
+			
+			//append selfloopst o leafs of the rcfg
+			if (cp.getOutgoingEdges().size() == 0)
+			{
+				new StatementSequence(cp, cp, new AssumeStatement(null, new BooleanLiteral(null, true)));
 			}
-				
-		}*/
+		}
 	}
 
 	
