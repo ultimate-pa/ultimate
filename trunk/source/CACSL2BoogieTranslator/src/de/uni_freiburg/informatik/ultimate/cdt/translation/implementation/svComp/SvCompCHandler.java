@@ -167,7 +167,10 @@ public class SvCompCHandler extends CHandler {
                 auxVars.putAll(in.auxVars);
             }
             assert args.size() == 1; // according to SV-Comp specification!
-            stmt.add(new AssumeStatement(loc, args.get(0)));
+            stmt.add(new AssumeStatement(loc, main.typeHandler.
+            		convertArith2Boolean(loc, new PrimitiveType(loc,
+    						new InferredType(Type.Boolean), SFO.BOOL),
+    						args.get(0))));
             assert (main.isAuxVarMapcomplete(decl, auxVars));
             return new ResultExpression(stmt, expr, decl, auxVars);
         }
