@@ -106,6 +106,25 @@ trunk/examples/toolchains/TraceAbstractionTestDir.sh 120 trunk/examples/programs
 fi
 
 
+if [ "$1" = "7" ]; then
+echo "testing SmtInterpol vs. Z3 on SV-COMP examples"
+trunk/examples/toolchains/TraceAbstractionTestDir.sh 120 trunk/examples/c/ssh-simplified/ \
+"TraceAbstraction.xml;TraceAbstractionC.xml;Automizer-UnsatCoreSmtInterpolZ3/Automizer-MlbeLoop-ForwardPredicates-SmtInterpol-SVCOMP" \
+"TraceAbstraction.xml;TraceAbstractionC.xml;Automizer-UnsatCoreSmtInterpolZ3/Automizer-MlbeLoop-ForwardPredicates-Z3-SVCOMP"
+trunk/examples/toolchains/TraceAbstractionTestDir.sh 120 trunk/examples/c/ntdrivers-simplified \
+"TraceAbstraction.xml;TraceAbstractionC.xml;Automizer-UnsatCoreSmtInterpolZ3/Automizer-MlbeLoop-ForwardPredicates-SmtInterpol-SVCOMP" \
+"TraceAbstraction.xml;TraceAbstractionC.xml;Automizer-UnsatCoreSmtInterpolZ3/Automizer-MlbeLoop-ForwardPredicates-Z3-SVCOMP"
+trunk/examples/toolchains/TraceAbstractionTestDir.sh 120 trunk/examples/c/systemc \
+"TraceAbstraction.xml;TraceAbstractionC.xml;Automizer-UnsatCoreSmtInterpolZ3/Automizer-MlbeLoop-ForwardPredicates-SmtInterpol-SVCOMP" \
+"TraceAbstraction.xml;TraceAbstractionC.xml;Automizer-UnsatCoreSmtInterpolZ3/Automizer-MlbeLoop-ForwardPredicates-Z3-SVCOMP"
+trunk/examples/toolchains/TraceAbstractionTestDir.sh 120 trunk/examples/programs \
+"TraceAbstraction.xml;TraceAbstractionC.xml;Automizer-UnsatCoreSmtInterpolZ3/Automizer-MlbeLoop-ForwardPredicates-SmtInterpol-SVCOMP" \
+"TraceAbstraction.xml;TraceAbstractionC.xml;Automizer-UnsatCoreSmtInterpolZ3/Automizer-MlbeLoop-ForwardPredicates-Z3-SVCOMP"
+fi
+
+
+
+
 #trunk/examples/toolchains/TraceAbstractionTestDir.sh 1000 trunk/examples/svcomp13/systemc \
 #"TraceAbstraction.xml;TraceAbstractionC.xml;TraceAbstraction-svcomp-StrongestMinimize" \
 # "TraceAbstraction.xml;TraceAbstractionC.xml;TraceAbstraction-svcomp-EagerMinimize" \
