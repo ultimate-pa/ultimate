@@ -10,21 +10,16 @@ typedef struct {
 } fraction;
 
 typedef struct {
+      int color;
       fraction frac;
-} fstruct;
-
-typedef struct {
-      fraction* frac;
-} pstruct;
-
+} colorWithFieldFraction;
 
 
 int main() {
-	int* i;
-	int a = *i;
-	fraction* p;
-//	fstruct* fs;
-	fstruct* ps;
-	a = ps->frac->num;
-	//@ assert a == 387;
+	colorWithFieldFraction* p;
+	p->frac.num = 23;
+	int a = p->frac.num;
+	//@ assert a == 23;
+	int b = (*p).frac.num;
+	//@ assert b == 23;
 }

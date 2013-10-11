@@ -11,17 +11,10 @@ typedef struct {
 } fraction;
 
 int main() {
-	int* i;
-	int a = *i;
-	fraction x = { 2, 5 };
-//	int a = x.denom;
-	x.denom = 7;
-//	fraction* p = malloc(sizeof(fraction));
 	fraction* p;
-	if (p->num == 3) {
-		a = p->num + 384;
-		//@ assert a == 387;
-	}
-	
-
+	int a;
+	a = p->num;
+	int b;
+	b = (*p).num;
+	//@ assert a == b;
 }
