@@ -6,7 +6,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.eclipse.cdt.core.dom.ast.IASTFieldReference;
-import org.eclipse.cdt.core.dom.ast.IType;
 import org.eclipse.cdt.internal.core.dom.parser.c.CASTDesignatedInitializer;
 import org.eclipse.cdt.internal.core.dom.parser.c.CASTFieldDesignator;
 
@@ -23,6 +22,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.except
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.Result;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ResultExpression;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ResultExpressionListRec;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ResultExpressionPointerDereference;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ASTType;
@@ -175,100 +175,110 @@ public class StructHandler {
      */
     public Result handleFieldReference(Dispatcher main, IASTFieldReference node, MemoryHandler memoryHandler) {
         CACSLLocation loc = new CACSLLocation(node);
+    	String field = node.getFieldName().getRawSignature();
+        // get the type for the accessed field
+        InferredType it = main.dispatch(node.getExpressionType()); 
         Result r = main.dispatch(node.getFieldOwner());
         assert r instanceof ResultExpression;
         ResultExpression rex = (ResultExpression) r;
-        String field = node.getFieldName().getRawSignature();
-        // get the type for the accessed field
-        InferredType it = main.dispatch(node.getExpressionType()); 
-        StructAccessExpression sae = new StructAccessExpression(
-                new CACSLLocation(node), it, rex.expr, field);
-		assert (main.isAuxVarMapcomplete(rex.decl, rex.auxVars));
-        ResultExpression result = new ResultExpression(rex.stmt, sae, rex.decl, rex.auxVars);
-        main.cHandler.getSymbolTable();
-        CType cvar = rex.cType;
-        if (cvar instanceof CNamed) {
-            cvar = ((CNamed) cvar).getUnderlyingType();
+        if ((r instanceof ResultExpressionPointerDereference) || node.isPointerDereference()) {
+        	// field we want to access is on the heap
+            /*
+             * We have field access of the form p->f where p points to a 
+             * struct STRU. 
+             * Our result is a auxiliary variable #t~arrow. The code of this field
+             * access is preceded by the following statements.
+             *  
+             * assume(auxPointer!base = p!base);
+             * assume(auxPointer!offset = #offset~STRUid~f);
+             * call #t~arrow := read~TYPf(auxPointer)
+             *     
+             * where 
+             * - TYPf is the type of the field f
+             * - #t~arrow is a fresh auxiliary variable of type TYPf
+             * - auxPointer is fresh auxiliary variable of type $Pointer$
+             * - STRUid is the identifier of the struct STRU
+             * 
+             */
+        	Expression addressBaseOfFieldOwner;
+        	Expression addressOffsetOfFieldOwner;
+        	CType fieldOwnerPointsToType;
+        	if (node.isPointerDereference()) {
+        		fieldOwnerPointsToType = ((CPointer) rex.cType).pointsToType; 
+        		addressBaseOfFieldOwner = new StructAccessExpression(loc, rex.expr, SFO.POINTER_BASE);
+        		addressOffsetOfFieldOwner = null;
+        	} else {
+        		fieldOwnerPointsToType = rex.cType;
+        		ResultExpressionPointerDereference repd = (ResultExpressionPointerDereference) rex;
+        		addressBaseOfFieldOwner = repd.m_PointerBase;
+        		addressOffsetOfFieldOwner = repd.m_PointerOffet;
+        	}
+			if (fieldOwnerPointsToType instanceof CNamed) {
+				fieldOwnerPointsToType = ((CNamed) fieldOwnerPointsToType).getUnderlyingType();
+			}
+			if (fieldOwnerPointsToType == null || !(fieldOwnerPointsToType instanceof CStruct)) {
+			    String msg = "Incorrect or unexpected field owner!";
+			    Dispatcher.error(loc, SyntaxErrorType.IncorrectSyntax, msg);
+			    throw new IncorrectSyntaxException(msg);
+			}
+			ArrayList<Statement> stmt = new ArrayList<Statement>();
+			ArrayList<Declaration> decl = new ArrayList<Declaration>();
+			Map<VariableDeclaration, CACSLLocation> auxVars = new HashMap<VariableDeclaration, CACSLLocation>();
+			stmt.addAll(rex.stmt);
+			decl.addAll(rex.decl);
+			auxVars.putAll(rex.auxVars);
+			
+			String auxPointerId = main.nameHandler.getTempVarUID(SFO.AUXVAR.ARROW);
+			VariableDeclaration vd = SFO.getTempVarVariableDeclaration(auxPointerId, new InferredType(Type.Pointer), loc);
+			auxVars.put(vd, loc);
+			IdentifierExpression auxPointer = new IdentifierExpression(loc, new InferredType(Type.Pointer), auxPointerId);
+			
+			AssumeStatement baseEquality;
+			{
+			    StructAccessExpression lhs = new StructAccessExpression(loc, new InferredType(Type.Integer), auxPointer, SFO.POINTER_BASE);
+			    Expression rhs = addressBaseOfFieldOwner;
+			    baseEquality = new AssumeStatement(loc, new BinaryExpression(loc, new InferredType(Type.Boolean), Operator.COMPEQ, lhs, rhs));
+			}
+
+			StructAccessExpression lhs = new StructAccessExpression(loc, new InferredType(Type.Integer), auxPointer, SFO.POINTER_OFFSET);
+			assert addressOffsetOfFieldOwner == null : "not implemented yet.";
+			String offset = SFO.OFFSET + fieldOwnerPointsToType.toString() + "~" + field;
+			IdentifierExpression newOffset = new IdentifierExpression(loc, offset);
+			AssumeStatement offsetEquality = new AssumeStatement(loc, new BinaryExpression(loc, new InferredType(Type.Boolean), Operator.COMPEQ, lhs, newOffset));
+			ResultExpression call = memoryHandler.getReadCall(main, it, auxPointer);
+			decl.add(vd);
+			stmt.add(baseEquality);
+			stmt.add(offsetEquality);
+			stmt.addAll(call.stmt);
+			decl.addAll(call.decl);
+			auxVars.putAll(call.auxVars);
+			ResultExpression result = new ResultExpressionPointerDereference(stmt, call.expr, decl, auxVars, addressBaseOfFieldOwner, addressOffsetOfFieldOwner);
+			result.cType = ((CStruct) fieldOwnerPointsToType).getFieldType(field);
+			return result;
+
+        	
+        } else {
+        	StructAccessExpression sae = new StructAccessExpression(
+        			new CACSLLocation(node), it, rex.expr, field);
+        	assert (main.isAuxVarMapcomplete(rex.decl, rex.auxVars));
+        	ResultExpression result = new ResultExpression(rex.stmt, sae, rex.decl, rex.auxVars);
+        	main.cHandler.getSymbolTable();
+        	CType cvar = rex.cType;
+			if (cvar instanceof CNamed) {
+				cvar = ((CNamed) cvar).getUnderlyingType();
+			}
+        	if (cvar == null || !(cvar instanceof CStruct)) {
+        		String msg = "Incorrect or unexpected field owner!";
+        		Dispatcher.error(loc, SyntaxErrorType.IncorrectSyntax, msg);
+        		throw new IncorrectSyntaxException(msg);
+        	}
+        	result.cType = ((CStruct) cvar).getFieldType(field);
+        	return result;
         }
-        if (cvar instanceof CPointer) {
-        	return handleArrowOperation(loc, rex, main, memoryHandler, field, it);
-        }
-        if (cvar == null || !(cvar instanceof CStruct)) {
-            String msg = "Incorrect or unexpected field owner!";
-            Dispatcher.error(loc, SyntaxErrorType.IncorrectSyntax, msg);
-            throw new IncorrectSyntaxException(msg);
-        }
-        result.cType = ((CStruct) cvar).getFieldType(field);
-        return result;
     }
         
         
         
-        /**
-         * We have field access of the form p->f where p points to a 
-         * struct STRU. 
-         * Our result is a auxiliary variable #t~arrow. The code of this field
-         * access is preceded by the following statements.
-         *  
-         * assume(auxPointer!base = p!base);
-         * assume(auxPointer!offset = #offset~STRUid~f);
-         * call #t~arrow := read~TYPf(auxPointer)
-         *     
-         * where 
-         * - TYPf is the type of the field f
-         * - #t~arrow is a fresh auxiliary variable of type TYPf
-         * - auxPointer is fresh auxiliary variable of type $Pointer$
-         * - STRUid is the identifier of the struct STRU
-         * 
-         */
-        Result handleArrowOperation(CACSLLocation loc, ResultExpression rex, Dispatcher main, MemoryHandler memoryHandler, String field, InferredType it) {
-        	CType pointsToType = ((CPointer) rex.cType).pointsToType; 
-        	if (pointsToType instanceof CNamed) {
-        		pointsToType = ((CNamed) pointsToType).getUnderlyingType();
-        	}
-            if (pointsToType == null || !(pointsToType instanceof CStruct)) {
-                String msg = "Incorrect or unexpected field owner!";
-                Dispatcher.error(loc, SyntaxErrorType.IncorrectSyntax, msg);
-                throw new IncorrectSyntaxException(msg);
-            }
-            ArrayList<Statement> stmt = new ArrayList<Statement>();
-            ArrayList<Declaration> decl = new ArrayList<Declaration>();
-            Map<VariableDeclaration, CACSLLocation> auxVars = new HashMap<VariableDeclaration, CACSLLocation>();
-            stmt.addAll(rex.stmt);
-            decl.addAll(rex.decl);
-            auxVars.putAll(rex.auxVars);
-            
-            String auxPointerId = main.nameHandler.getTempVarUID(SFO.AUXVAR.ARROW);
-            VariableDeclaration vd = SFO.getTempVarVariableDeclaration(auxPointerId, new InferredType(Type.Pointer), loc);
-            auxVars.put(vd, loc);
-            IdentifierExpression auxPointer = new IdentifierExpression(loc, new InferredType(Type.Pointer), auxPointerId);
-            
-            AssumeStatement baseEquality;
-            {
-                StructAccessExpression lhs = new StructAccessExpression(loc, new InferredType(Type.Integer), auxPointer, SFO.POINTER_BASE);
-                StructAccessExpression rhs = new StructAccessExpression(loc, new InferredType(Type.Integer), rex.expr, SFO.POINTER_BASE);
-                baseEquality = new AssumeStatement(loc, new BinaryExpression(loc, new InferredType(Type.Boolean), Operator.COMPEQ, lhs, rhs));
-            }
-            AssumeStatement offsetEquality;
-            {
-            	StructAccessExpression lhs = new StructAccessExpression(loc, new InferredType(Type.Integer), auxPointer, SFO.POINTER_OFFSET);
-            	String offset = SFO.OFFSET + pointsToType.toString() + "~" + field;
-            	
-            	IdentifierExpression rhs = new IdentifierExpression(loc, offset);
-            	offsetEquality = new AssumeStatement(loc, new BinaryExpression(loc, new InferredType(Type.Boolean), Operator.COMPEQ, lhs, rhs));
-            }
-            ResultExpression call = memoryHandler.getReadCall(main, it, auxPointer);
-            decl.add(vd);
-            stmt.add(baseEquality);
-            stmt.add(offsetEquality);
-            stmt.addAll(call.stmt);
-            decl.addAll(call.decl);
-            auxVars.putAll(call.auxVars);
-            ResultExpression result = new ResultExpression(stmt, call.expr, decl, auxVars);
-            result.cType = ((CStruct) pointsToType).getFieldType(field);
-            return result;
-        }
-    	
 
 
     /**

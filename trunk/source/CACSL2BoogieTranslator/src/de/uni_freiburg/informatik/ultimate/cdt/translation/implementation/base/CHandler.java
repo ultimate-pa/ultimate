@@ -86,6 +86,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ResultExpression;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ResultExpressionList;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ResultExpressionListRec;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ResultExpressionPointerDereference;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ResultSkip;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ResultTypes;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.BoogieASTUtil;
@@ -1087,11 +1088,13 @@ public class CHandler implements ICHandler {
                     throw new UnsupportedSyntaxException(msg);
                 }
                 cvar = ((CPointer) cvar).pointsToType;
+            	Expression pointerBase = new StructAccessExpression(
+            			loc, tInt, o.expr, SFO.POINTER_BASE);
                 if (!(cvar instanceof CPrimitive)) {
-                    String msg = "Pointers on non primitive types not yet supported!";
-                    Dispatcher.error(loc, SyntaxErrorType.UnsupportedSyntax,
-                            msg);
-                    throw new UnsupportedSyntaxException(msg);
+                	ResultExpression rex = new ResultExpressionPointerDereference(
+                			o.stmt, null, o.decl, o.auxVars, pointerBase, null);
+                	rex.cType = cvar;
+                	return rex;
                 }
                 InferredType t = tInt;
                 switch ((((CPrimitive) cvar)).getType()) {
@@ -1111,16 +1114,9 @@ public class CHandler implements ICHandler {
                 o.stmt.addAll(a.stmt);
                 o.decl.addAll(a.decl);
                 o.auxVars.putAll(a.auxVars);
-                // TODO : I think this is redundant!
-            	// Matthias agreed and commented out
-                /*
-                if (idx.getType() instanceof InferredType
-                        && ((InferredType) idx.getType()).getType() == Type.Pointer) {
-                    o.stmt.add(memoryHandler.checkValidityOfAccess(idx));
-                }
-                */
-                ResultExpression rex = new ResultExpression(o.stmt, access,
-                        o.decl, o.auxVars);
+                ResultExpression rex = new ResultExpressionPointerDereference(o.stmt, access,
+                        o.decl, o.auxVars, pointerBase, null);
+                rex.cType = cvar;
                 return rex;
             case IASTUnaryExpression.op_amper:
                 decl = new ArrayList<Declaration>();
