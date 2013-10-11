@@ -1078,9 +1078,17 @@ public class CHandler implements ICHandler {
                             msg);
                     throw new UnsupportedSyntaxException(msg);
                 }
-                String cId = symbolTable.getCID4BoogieID(
+                CType cvar;
+                if (o instanceof ResultExpressionPointerDereference) {
+                	// if parent is field dereference we get the cvar from the
+                	// result expression
+                	cvar = o.cType;
+                	assert (cvar instanceof CPointer);
+                } else {
+                	String cId = symbolTable.getCID4BoogieID(
                         ((IdentifierExpression) idx).getIdentifier(), loc);
-                CType cvar = symbolTable.get(cId, loc).getCVariable();
+                	cvar = symbolTable.get(cId, loc).getCVariable();
+                }
                 if (!(cvar instanceof CPointer)) {
                     String msg = "Type error!";
                     Dispatcher.error(loc, SyntaxErrorType.UnsupportedSyntax,
@@ -1175,6 +1183,39 @@ public class CHandler implements ICHandler {
         switch (node.getOperator()) {
             case IASTBinaryExpression.op_assign:
                 stmt.addAll(r.stmt);
+                if (l instanceof ResultExpressionPointerDereference) {
+                	ResultExpressionPointerDereference repd = 
+                			(ResultExpressionPointerDereference) l;
+                	assert (node.getOperand1() instanceof IASTUnaryExpression
+                            && ((IASTUnaryExpression) node.getOperand1())
+                            .getOperator() == IASTUnaryExpression.op_star)
+                            || (node.getOperand1() instanceof IASTFieldReference);
+                	
+                    stmt.addAll(l.stmt);
+                    auxVars.putAll(l.auxVars);
+                    
+                    ResultExpression auxPointer = structHandler.auxilliaryPointer(
+                    		main, loc, repd.m_PointerBase, repd.m_PointerOffet);
+                    
+        			stmt.addAll(auxPointer.stmt);
+        			decl.addAll(auxPointer.decl);
+        			auxVars.putAll(auxPointer.auxVars);
+                    
+                    ResultExpression rex = memoryHandler.getWriteCall(auxPointer.expr,
+                            r.expr);
+                    stmt.addAll(rex.stmt);
+                    decl.addAll(rex.decl);
+                    auxVars.putAll(rex.auxVars);
+                    for (String t : new String[] { SFO.INT, SFO.POINTER,
+                            SFO.REAL, SFO.BOOL }) {
+                        functionHandler.getModifiedGlobals()
+                                .get(functionHandler.getCurrentProcedureID())
+                                .add(SFO.MEMORY + "_" + t);
+                    }
+                    assert (main.isAuxVarMapcomplete(decl, auxVars)) : "unhavoced auxvars";
+                    return new ResultExpression(stmt, rex.expr, decl, auxVars);
+                }
+                
                 if (node.getOperand1() instanceof IASTUnaryExpression
                         && ((IASTUnaryExpression) node.getOperand1())
                                 .getOperator() == IASTUnaryExpression.op_star) {

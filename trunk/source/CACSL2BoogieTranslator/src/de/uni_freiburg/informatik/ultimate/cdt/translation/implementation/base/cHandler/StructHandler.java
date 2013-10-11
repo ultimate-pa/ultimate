@@ -34,6 +34,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression.Ope
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IdentifierExpression;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.LeftHandSide;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StructAccessExpression;
@@ -221,6 +222,10 @@ public class StructHandler {
 			    Dispatcher.error(loc, SyntaxErrorType.IncorrectSyntax, msg);
 			    throw new IncorrectSyntaxException(msg);
 			}
+			assert addressOffsetOfFieldOwner == null : "not implemented yet.";
+			String offset = SFO.OFFSET + fieldOwnerPointsToType.toString() + "~" + field;
+			IdentifierExpression newOffset = new IdentifierExpression(loc, offset);
+			
 			ArrayList<Statement> stmt = new ArrayList<Statement>();
 			ArrayList<Declaration> decl = new ArrayList<Declaration>();
 			Map<VariableDeclaration, CACSLLocation> auxVars = new HashMap<VariableDeclaration, CACSLLocation>();
@@ -228,31 +233,19 @@ public class StructHandler {
 			decl.addAll(rex.decl);
 			auxVars.putAll(rex.auxVars);
 			
-			String auxPointerId = main.nameHandler.getTempVarUID(SFO.AUXVAR.ARROW);
-			VariableDeclaration vd = SFO.getTempVarVariableDeclaration(auxPointerId, new InferredType(Type.Pointer), loc);
-			auxVars.put(vd, loc);
-			IdentifierExpression auxPointer = new IdentifierExpression(loc, new InferredType(Type.Pointer), auxPointerId);
+			ResultExpression auxPointer = auxilliaryPointer(main, loc, addressBaseOfFieldOwner, newOffset);
 			
-			AssumeStatement baseEquality;
-			{
-			    StructAccessExpression lhs = new StructAccessExpression(loc, new InferredType(Type.Integer), auxPointer, SFO.POINTER_BASE);
-			    Expression rhs = addressBaseOfFieldOwner;
-			    baseEquality = new AssumeStatement(loc, new BinaryExpression(loc, new InferredType(Type.Boolean), Operator.COMPEQ, lhs, rhs));
-			}
+			stmt.addAll(auxPointer.stmt);
+			decl.addAll(auxPointer.decl);
+			auxVars.putAll(auxPointer.auxVars);
 
-			StructAccessExpression lhs = new StructAccessExpression(loc, new InferredType(Type.Integer), auxPointer, SFO.POINTER_OFFSET);
-			assert addressOffsetOfFieldOwner == null : "not implemented yet.";
-			String offset = SFO.OFFSET + fieldOwnerPointsToType.toString() + "~" + field;
-			IdentifierExpression newOffset = new IdentifierExpression(loc, offset);
-			AssumeStatement offsetEquality = new AssumeStatement(loc, new BinaryExpression(loc, new InferredType(Type.Boolean), Operator.COMPEQ, lhs, newOffset));
-			ResultExpression call = memoryHandler.getReadCall(main, it, auxPointer);
-			decl.add(vd);
-			stmt.add(baseEquality);
-			stmt.add(offsetEquality);
+			ResultExpression call = memoryHandler.getReadCall(main, it, auxPointer.expr);
+			
 			stmt.addAll(call.stmt);
 			decl.addAll(call.decl);
 			auxVars.putAll(call.auxVars);
-			ResultExpression result = new ResultExpressionPointerDereference(stmt, call.expr, decl, auxVars, addressBaseOfFieldOwner, addressOffsetOfFieldOwner);
+			
+			ResultExpression result = new ResultExpressionPointerDereference(stmt, call.expr, decl, auxVars, addressBaseOfFieldOwner, newOffset);
 			result.cType = ((CStruct) fieldOwnerPointsToType).getFieldType(field);
 			return result;
 
@@ -277,6 +270,35 @@ public class StructHandler {
         }
     }
         
+    public ResultExpression auxilliaryPointer(Dispatcher main, CACSLLocation loc, Expression addressBase, Expression addressOffset) {
+    	
+		ArrayList<Statement> stmt = new ArrayList<Statement>();
+		ArrayList<Declaration> decl = new ArrayList<Declaration>();
+		Map<VariableDeclaration, CACSLLocation> auxVars = new HashMap<VariableDeclaration, CACSLLocation>();
+		String auxPointerId = main.nameHandler.getTempVarUID(SFO.AUXVAR.ARROW);
+		VariableDeclaration vd = SFO.getTempVarVariableDeclaration(auxPointerId, new InferredType(Type.Pointer), loc);
+		decl.add(vd);
+		auxVars.put(vd, loc);
+		IdentifierExpression auxPointer = new IdentifierExpression(loc, new InferredType(Type.Pointer), auxPointerId);
+		AssumeStatement baseEquality;
+		{
+		    StructAccessExpression lhs = new StructAccessExpression(loc, new InferredType(Type.Integer), auxPointer, SFO.POINTER_BASE);
+		    Expression rhs = addressBase;
+		    baseEquality = new AssumeStatement(loc, new BinaryExpression(loc, new InferredType(Type.Boolean), Operator.COMPEQ, lhs, rhs));
+		}
+		stmt.add(baseEquality);
+		AssumeStatement offsetEquality;
+		{
+			StructAccessExpression lhs = new StructAccessExpression(loc, new InferredType(Type.Integer), auxPointer, SFO.POINTER_OFFSET);
+			Expression rhs = addressOffset;
+			if (rhs == null) {
+				rhs = new IntegerLiteral(loc, new InferredType(Type.Integer), "0");
+			}
+			offsetEquality = new AssumeStatement(loc, new BinaryExpression(loc, new InferredType(Type.Boolean), Operator.COMPEQ, lhs, rhs));
+		}
+		stmt.add(offsetEquality);
+		return new ResultExpression(stmt, auxPointer, decl, auxVars);
+    }
         
         
 
