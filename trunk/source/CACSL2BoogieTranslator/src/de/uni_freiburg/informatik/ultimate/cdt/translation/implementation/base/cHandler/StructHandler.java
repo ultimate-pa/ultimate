@@ -183,6 +183,12 @@ public class StructHandler {
         assert r instanceof ResultExpression;
         ResultExpression rex = (ResultExpression) r;
         if ((r instanceof ResultExpressionPointerDereference) || node.isPointerDereference()) {
+			ArrayList<Statement> stmt = new ArrayList<Statement>();
+			ArrayList<Declaration> decl = new ArrayList<Declaration>();
+			Map<VariableDeclaration, CACSLLocation> auxVars = new HashMap<VariableDeclaration, CACSLLocation>();
+			stmt.addAll(rex.stmt);
+			decl.addAll(rex.decl);
+			auxVars.putAll(rex.auxVars);
         	// field we want to access is on the heap
             /*
              * We have field access of the form p->f where p points to a 
@@ -211,8 +217,22 @@ public class StructHandler {
         	} else {
         		fieldOwnerPointsToType = rex.cType;
         		ResultExpressionPointerDereference repd = (ResultExpressionPointerDereference) rex;
-        		addressBaseOfFieldOwner = repd.m_PointerBase;
-        		addressOffsetOfFieldOwner = repd.m_PointerOffet;
+        		if (repd.m_PointerBase == null) {
+        			addressBaseOfFieldOwner = new StructAccessExpression(loc, repd.m_Pointer, SFO.POINTER_BASE);
+        			addressOffsetOfFieldOwner = new StructAccessExpression(loc, repd.m_Pointer, SFO.POINTER_OFFSET);
+        		} else {
+        			addressBaseOfFieldOwner = repd.m_PointerBase;
+        			addressOffsetOfFieldOwner = repd.m_PointerOffet;
+        		}
+        		if (repd.m_CallResult != null) {
+        			boolean removed;
+        			removed = stmt.remove(repd.m_ReadCall);
+        			assert removed;
+        			removed = decl.remove(repd.m_CallResult);
+        			assert removed;
+        			CACSLLocation value = auxVars.remove(repd.m_CallResult);
+        			assert value != null;
+        		}
         	}
 			if (fieldOwnerPointsToType instanceof CNamed) {
 				fieldOwnerPointsToType = ((CNamed) fieldOwnerPointsToType).getUnderlyingType();
@@ -226,26 +246,21 @@ public class StructHandler {
 			String offset = SFO.OFFSET + fieldOwnerPointsToType.toString() + "~" + field;
 			IdentifierExpression newOffset = new IdentifierExpression(loc, offset);
 			
-			ArrayList<Statement> stmt = new ArrayList<Statement>();
-			ArrayList<Declaration> decl = new ArrayList<Declaration>();
-			Map<VariableDeclaration, CACSLLocation> auxVars = new HashMap<VariableDeclaration, CACSLLocation>();
-			stmt.addAll(rex.stmt);
-			decl.addAll(rex.decl);
-			auxVars.putAll(rex.auxVars);
-			
 			ResultExpression auxPointer = auxilliaryPointer(main, loc, addressBaseOfFieldOwner, newOffset);
 			
 			stmt.addAll(auxPointer.stmt);
 			decl.addAll(auxPointer.decl);
 			auxVars.putAll(auxPointer.auxVars);
 
-			ResultExpression call = memoryHandler.getReadCall(main, it, auxPointer.expr);
+			ResultExpressionPointerDereference call = memoryHandler.getReadCall(main, it, auxPointer.expr);
 			
 			stmt.addAll(call.stmt);
 			decl.addAll(call.decl);
 			auxVars.putAll(call.auxVars);
 			
-			ResultExpression result = new ResultExpressionPointerDereference(stmt, call.expr, decl, auxVars, addressBaseOfFieldOwner, newOffset);
+			ResultExpression result = new ResultExpressionPointerDereference(
+					stmt, call.expr, decl, auxVars, addressBaseOfFieldOwner, 
+					newOffset, call.m_ReadCall, call.m_CallResult);
 			result.cType = ((CStruct) fieldOwnerPointsToType).getFieldType(field);
 			return result;
 
@@ -269,7 +284,15 @@ public class StructHandler {
         	return result;
         }
     }
-        
+    
+    
+    /**
+     * Construct a pointer whose address is (addressBase,addressOffset).
+     * The result has expression auxPointer and the following Boogie code.
+     * var auxPointer:$Pointer$
+     * assume auxPointer!base == addressBase 
+     * assume auxPointer!offset == addressOffset 
+     */
     public ResultExpression auxilliaryPointer(Dispatcher main, CACSLLocation loc, Expression addressBase, Expression addressOffset) {
     	
 		ArrayList<Statement> stmt = new ArrayList<Statement>();

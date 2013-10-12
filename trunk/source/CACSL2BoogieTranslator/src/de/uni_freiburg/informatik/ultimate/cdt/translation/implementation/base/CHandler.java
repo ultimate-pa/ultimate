@@ -1100,7 +1100,7 @@ public class CHandler implements ICHandler {
             			loc, tInt, o.expr, SFO.POINTER_BASE);
                 if (!(cvar instanceof CPrimitive)) {
                 	ResultExpression rex = new ResultExpressionPointerDereference(
-                			o.stmt, null, o.decl, o.auxVars, pointerBase, null);
+                			o.stmt, null, o.decl, o.auxVars, pointerBase, null, null, null);
                 	rex.cType = cvar;
                 	return rex;
                 }
@@ -1117,13 +1117,12 @@ public class CHandler implements ICHandler {
                         break;
                     default:
                 }
-                ResultExpression a = memoryHandler.getReadCall(main, t, idx);
-                Expression access = a.expr;
-                o.stmt.addAll(a.stmt);
-                o.decl.addAll(a.decl);
-                o.auxVars.putAll(a.auxVars);
-                ResultExpression rex = new ResultExpressionPointerDereference(o.stmt, access,
-                        o.decl, o.auxVars, pointerBase, null);
+                ResultExpressionPointerDereference repd = 
+                		memoryHandler.getReadCall(main, t, idx);
+                ResultExpression rex = repd;
+                rex.stmt.addAll(o.stmt);
+                rex.decl.addAll(o.decl);
+                rex.auxVars.putAll(o.auxVars);
                 rex.cType = cvar;
                 return rex;
             case IASTUnaryExpression.op_amper:
@@ -1132,8 +1131,17 @@ public class CHandler implements ICHandler {
                 auxVars = new HashMap<VariableDeclaration, CACSLLocation>();
                 // TODO : type not always Pointer!?
                 t = new InferredType(Type.Pointer);
-                ResultExpression read = memoryHandler.getReadCall(main, t,
+                ResultExpressionPointerDereference read = memoryHandler.getReadCall(main, t,
                         o.expr);
+        		if (read.m_CallResult != null) {
+        			boolean removed;
+        			removed = stmt.remove(read.m_ReadCall);
+        			assert removed;
+        			removed = decl.remove(read.m_CallResult);
+        			assert removed;
+        			CACSLLocation value = auxVars.remove(read.m_CallResult);
+        			assert value != null;
+        		}
                 stmt.addAll(o.stmt);
                 decl.addAll(o.decl);
                 auxVars.putAll(o.auxVars);

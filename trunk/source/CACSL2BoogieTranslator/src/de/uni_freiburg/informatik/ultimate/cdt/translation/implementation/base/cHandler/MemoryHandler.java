@@ -25,6 +25,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.IncorrectSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ResultExpression;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ResultExpressionPointerDereference;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ResultTypes;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.BoogieASTUtil;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
@@ -872,7 +873,7 @@ public class MemoryHandler {
      * @return all declarations and statements required to perform the read,
      *         plus an identifierExpression holding the read value.
      */
-    public ResultExpression getReadCall(final Dispatcher main,
+    public ResultExpressionPointerDereference getReadCall(final Dispatcher main,
             final InferredType it, final Expression tPointer) {
         assert tPointer.getType() instanceof InferredType
                 && ((InferredType) tPointer.getType()).getType() == Type.Pointer;
@@ -912,11 +913,13 @@ public class MemoryHandler {
         auxVars.put(tVarDecl, loc);
         decl.add(tVarDecl);
         String[] lhs = new String[] { tmpId };
-        stmt.add(new CallStatement(loc, false, lhs, "read~" + t,
-                new Expression[] { tPointer }));
+        CallStatement call = new CallStatement(loc, false, lhs, "read~" + t,
+                new Expression[] { tPointer });
+        stmt.add(call);
 		assert (main.isAuxVarMapcomplete(decl, auxVars));
-        return new ResultExpression(stmt, new IdentifierExpression(loc, it,
-                tmpId), decl, auxVars);
+        return new ResultExpressionPointerDereference(stmt, 
+        		new IdentifierExpression(loc, it, tmpId), decl, auxVars, 
+        		tPointer, call, tVarDecl);
     }
 
     /**
