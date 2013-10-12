@@ -224,15 +224,7 @@ public class StructHandler {
         			addressBaseOfFieldOwner = repd.m_PointerBase;
         			addressOffsetOfFieldOwner = repd.m_PointerOffet;
         		}
-        		if (repd.m_CallResult != null) {
-        			boolean removed;
-        			removed = stmt.remove(repd.m_ReadCall);
-        			assert removed;
-        			removed = decl.remove(repd.m_CallResult);
-        			assert removed;
-        			CACSLLocation value = auxVars.remove(repd.m_CallResult);
-        			assert value != null;
-        		}
+        		repd.removePointerDereference();
         	}
 			if (fieldOwnerPointsToType instanceof CNamed) {
 				fieldOwnerPointsToType = ((CNamed) fieldOwnerPointsToType).getUnderlyingType();

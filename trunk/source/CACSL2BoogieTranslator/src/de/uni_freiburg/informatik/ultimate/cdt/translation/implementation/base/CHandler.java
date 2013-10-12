@@ -1133,15 +1133,7 @@ public class CHandler implements ICHandler {
                 t = new InferredType(Type.Pointer);
                 ResultExpressionPointerDereference read = memoryHandler.getReadCall(main, t,
                         o.expr);
-        		if (read.m_CallResult != null) {
-        			boolean removed;
-        			removed = stmt.remove(read.m_ReadCall);
-        			assert removed;
-        			removed = decl.remove(read.m_CallResult);
-        			assert removed;
-        			CACSLLocation value = auxVars.remove(read.m_CallResult);
-        			assert value != null;
-        		}
+                read.removePointerDereference();
                 stmt.addAll(o.stmt);
                 decl.addAll(o.decl);
                 auxVars.putAll(o.auxVars);
@@ -1201,6 +1193,16 @@ public class CHandler implements ICHandler {
                 	
                     stmt.addAll(l.stmt);
                     auxVars.putAll(l.auxVars);
+                    
+            		if (repd.m_CallResult != null) {
+            			boolean removed;
+            			removed = stmt.remove(repd.m_ReadCall);
+            			assert removed;
+            			removed = decl.remove(repd.m_CallResult);
+            			assert removed;
+            			CACSLLocation value = auxVars.remove(repd.m_CallResult);
+            			assert value != null;
+            		}
                     
                     ResultExpression auxPointer = structHandler.auxilliaryPointer(
                     		main, loc, repd.m_PointerBase, repd.m_PointerOffet);

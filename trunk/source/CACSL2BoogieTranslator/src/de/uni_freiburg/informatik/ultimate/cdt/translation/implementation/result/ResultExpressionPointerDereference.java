@@ -61,5 +61,26 @@ public class ResultExpressionPointerDereference extends ResultExpression {
 	}
 	
 	
+	/**
+	 * Remove from this ResultExpression
+	 * <ul>
+	 * <li> the declaration of the auxiliary variable that will store the result
+	 * value of the read call
+	 * <li> the statement that represents the read call
+	 * <li> the auxiliary variable from the super.auxVars mapping
+	 *    
+	 */
+	public void removePointerDereference() {
+		if (m_CallResult != null) {
+			boolean removed;
+			removed = stmt.remove(m_ReadCall);
+			assert removed;
+			removed = decl.remove(m_CallResult);
+			assert removed;
+			CACSLLocation value = auxVars.remove(m_CallResult);
+			assert value != null;
+		}
+	}
+	
 
 }
