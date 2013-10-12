@@ -379,6 +379,7 @@ public class TraceCheckerSpWp extends TraceChecker {
 	
 	private void selectInterpolantsOfBothType() {
 		assert m_InterpolantsFp.length == m_InterpolantsBp.length;
+		m_Interpolants = new IPredicate[m_InterpolantsBp.length];
 		int i = 0; // position of predicate computed by strongest post-condition
 		int j = m_InterpolantsBp.length; // position of predicate computed by weakest precondition
 		while (i != j) {
