@@ -23,6 +23,8 @@ import de.uni_freiburg.informatik.ultimate.logic.ReasonUnknown;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
+import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
+import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
@@ -1523,14 +1525,19 @@ public class SmtManager {
 	
 	
 	
-	
-
-	
-	
-	
-	
-	
-	
+	private Integer quantifiersContainedInFormula(Term formula, Set<TermVariable> quantifiedVariables) {
+		Integer quantifier = null;
+		if (formula instanceof ApplicationTerm) {
+			Term[] parameters = ((ApplicationTerm) formula).getParameters();
+			for (int i = 0; i < parameters.length; i++) {
+				quantifier = quantifiersContainedInFormula(parameters[i], quantifiedVariables);
+			}
+		} else if (formula instanceof QuantifiedFormula) {
+			quantifier = ((QuantifiedFormula) formula).getQuantifier();
+			Collections.addAll(quantifiedVariables, ((QuantifiedFormula) formula).getVariables());
+		}
+		return quantifier;
+	}
 	
 	
 	
@@ -1685,13 +1692,25 @@ public class SmtManager {
 		return result;
 	}
 	
-	private IPredicate constructIPredicate(Term formula) {
+	private IPredicate constructBasicPredicate(Term formula) {
 		// Compute the set of BoogieVars, the procedures and the term
 		TermVarsProc tvp = computeTermVarsProc(formula);
 		// Compute a closed formula version of result, it is needed for newPredicate.
 		Term closed_formula = SmtManager.computeClosedFormula(formula, tvp.getVars(), m_Script);
 		return newPredicate(formula, tvp.getProcedures(), tvp.getVars(), closed_formula);
 	}
+	
+	private IPredicate constructBasicPredicateExplicitQuantifier(Term formula, int quantifier, 
+			Set<TermVariable> quantifiedVariables) {
+		// Compute the set of BoogieVars, the procedures and the term
+		TermVarsProc tvp = computeTermVarsProc(formula);
+		// Compute a closed formula version of result, it is needed for newPredicate.
+		Term closed_formula = SmtManager.computeClosedFormula(formula, tvp.getVars(), m_Script);
+		return new BasicPredicateExplicitQuantifier(m_SerialNumber++, tvp.getProcedures(), 
+				formula, tvp.getVars(), closed_formula, quantifier, quantifiedVariables);
+	}
+	
+	
 	
 	private Set<TermVariable> computeIrrelevantVariables(Set<BoogieVar> relevantVars, IPredicate p) {
 		Set<TermVariable> result = new HashSet<TermVariable>();
@@ -1709,7 +1728,7 @@ public class SmtManager {
 				posOfPredicate + 1,
 				Script.EXISTS);
 	}
-
+	
 	/**
 	 * @param rvar
 	 * @param posToComputePredicateFor
@@ -1725,7 +1744,13 @@ public class SmtManager {
 		
 		Term formula = PartialQuantifierElimination.quantifier(m_Script, quantifier,
 				irrelevantVars.toArray(new TermVariable[0]), p.getFormula(), (Term[][]) null);
-		return constructIPredicate(formula);
+		Set<TermVariable> quantifiedVariables = new HashSet<TermVariable>();
+		Integer quantifierContainedInFormula = quantifiersContainedInFormula(formula, quantifiedVariables);
+		if (quantifierContainedInFormula == null) {
+			return constructBasicPredicate(formula);
+		} else {
+			return constructBasicPredicateExplicitQuantifier(formula, quantifierContainedInFormula, quantifiedVariables);
+		}
 	}
 	
 	
@@ -1820,7 +1845,13 @@ public class SmtManager {
 			result = PartialQuantifierElimination.quantifier(m_Script, Script.EXISTS,
 					varsToQuantify.toArray(new TermVariable[varsToQuantify.size()]), result, (Term[][]) null);
 		}
-		return constructIPredicate(result);
+		Set<TermVariable> quantifiedVariables = new HashSet<TermVariable>();
+		Integer quantifier = quantifiersContainedInFormula(result, quantifiedVariables);
+		if (quantifier == null) {
+			return constructBasicPredicate(result);
+		} else {
+			return constructBasicPredicateExplicitQuantifier(result, quantifier, quantifiedVariables);
+		}
 	}
 	
 	/**
@@ -1971,7 +2002,14 @@ public class SmtManager {
 					Script.EXISTS,
 					varsToQuantifyPendingCall.toArray(new TermVariable[varsToQuantifyPendingCall.size()]),
 					predANDCallANDGlobalVars, (Term[][])null);
-			return constructIPredicate(result);
+			
+			Set<TermVariable> quantifiedVariables = new HashSet<TermVariable>();
+			Integer quantifier = quantifiersContainedInFormula(result, quantifiedVariables);
+			if (quantifier == null) {
+				return constructBasicPredicate(result);
+			} else {
+				return constructBasicPredicateExplicitQuantifier(result, quantifier, quantifiedVariables);
+			}
 		} else {
 			Term predRenamed = new Substitution(varsToRenameInPredNonPendingCall, m_Script).transform(predNonModOldVarsRenamed);
 			varsToQuantifyNonPendingCall.addAll(varsToQuantifyNonModOldVars);
@@ -1981,7 +2019,13 @@ public class SmtManager {
 					varsToQuantifyNonPendingCall.toArray(new TermVariable[varsToQuantifyNonPendingCall.size()]),
 					Util.and(m_Script, predRenamed, globalVarsInVarsRenamedOutVarsRenamed),
 					(Term[][])null);
-			return constructIPredicate(result);
+			Set<TermVariable> quantifiedVariables = new HashSet<TermVariable>();
+			Integer quantifier = quantifiersContainedInFormula(result, quantifiedVariables);
+			if (quantifier == null) {
+				return constructBasicPredicate(result);
+			} else {
+				return constructBasicPredicateExplicitQuantifier(result, quantifier, quantifiedVariables);
+			}
 		}
 	}
 	
@@ -2173,7 +2217,14 @@ public class SmtManager {
 				Util.and(m_Script, calleePredRenamedQuantified, retTermRenamed,
 						calleRPredANDCallTFRenamedQuantified),
 				(Term[][])null);
-		return constructIPredicate(result);
+		
+		Set<TermVariable> quantifiedVariables = new HashSet<TermVariable>();
+		Integer quantifier = quantifiersContainedInFormula(result, quantifiedVariables);
+		if (quantifier == null) {
+			return constructBasicPredicate(result);
+		} else {
+			return constructBasicPredicateExplicitQuantifier(result, quantifier, quantifiedVariables);
+		}
 	}
 
 	/**
@@ -2247,7 +2298,13 @@ public class SmtManager {
 //					varsToQuantify.toArray(new TermVariable[varsToQuantify.size()]),
 //					result, (Term[][]) null);
 		} 
-		return constructIPredicate(result);
+		Set<TermVariable> quantifiedVariables = new HashSet<TermVariable>();
+		Integer quantifier = quantifiersContainedInFormula(result, quantifiedVariables);
+		if (quantifier == null) {
+			return constructBasicPredicate(result);
+		} else {
+			return constructBasicPredicateExplicitQuantifier(result, quantifier, quantifiedVariables);
+		}
 	}
 	
 	/**
@@ -2347,17 +2404,25 @@ public class SmtManager {
 						varsToQuantify.toArray(new TermVariable[varsToQuantify.size()]),
 						result, (Term[][])null);
 			}
-			return constructIPredicate(result);
+			Set<TermVariable> quantifiedVariables = new HashSet<TermVariable>();
+			Integer quantifier = quantifiersContainedInFormula(result, quantifiedVariables);
+			if (quantifier == null) {
+				return constructBasicPredicate(result);
+			} else {
+				return constructBasicPredicateExplicitQuantifier(result, quantifier, quantifiedVariables);
+			}
 		} else {
 			throw new UnsupportedOperationException("WP for non-pending Call is not implemented yet!");
 		}
 	}
 	
+	@Deprecated
 	public IPredicate weakestPrecondition(IPredicate returnerPred, IPredicate callerPred, Return ret) {
 		return weakestPrecondition(returnerPred, callerPred, ret.getTransitionFormula(), ret.getCorrespondingCall().getTransitionFormula(),
 				m_ModifiableGlobals.getGlobalVarsAssignment(ret.getCorrespondingCall().getCallStatement().getMethodName()));
 		
 	}
+	
 	
 	
 	/**
@@ -2495,7 +2560,13 @@ public class SmtManager {
 //					result, (Term[][])null);
 			
 		}
-		return constructIPredicate(resultQuantified);
+		Set<TermVariable> quantifiedVariables = new HashSet<TermVariable>();
+		Integer quantifier = quantifiersContainedInFormula(resultQuantified, quantifiedVariables);
+		if (quantifier == null) {
+			return constructBasicPredicate(resultQuantified);
+		} else {
+			return constructBasicPredicateExplicitQuantifier(resultQuantified, quantifier, quantifiedVariables);
+		}
 	}
 	
 	//FIXME: does not work im SmtInterpol2

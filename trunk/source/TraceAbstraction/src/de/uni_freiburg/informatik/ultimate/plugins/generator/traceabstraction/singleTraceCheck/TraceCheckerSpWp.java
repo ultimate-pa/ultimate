@@ -23,6 +23,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Sta
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.TransFormula;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.PreferenceValues.INTERPOLATION;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.BasicPredicateExplicitQuantifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.EdgeChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
@@ -268,8 +269,7 @@ public class TraceCheckerSpWp extends TraceChecker {
 						TransFormula summary = computeSummaryForTrace(getSubTrace(0, call_pos, trace), rv, 0);
 						callerPred = m_SmtManager.strongestPostcondition(m_Precondition, summary);
 						// If callerPred contains quantifier, compute it via the 2nd method
-						if(formulaContainsExistentialQuantifier(callerPred.getFormula())) {
-							// TODO: Check whether this is correct!
+						if(callerPred instanceof BasicPredicateExplicitQuantifier) {
 							summary = computeSummaryForTrace(getSubTrace(call_pos, m_InterpolantsWp.length - 1, trace), callTF,
 									rv.getFormulaFromNonCallPos(m_InterpolantsWp.length), 
 									globalVarsAssignments,
@@ -323,13 +323,11 @@ public class TraceCheckerSpWp extends TraceChecker {
 					TransFormula callTF = rv.getLocalVarAssignment(call_pos);
 					TransFormula globalVarsAssignments = rv.getGlobalVarAssignment(call_pos);
 					
-					if ((i - call_pos) >= call_pos) {
-						TransFormula summary = computeSummaryForTrace(getSubTrace(0, call_pos, trace), rv, 0);
-						callerPred = m_SmtManager.strongestPostcondition(m_Precondition, summary);
-					} else {
-						// If the sub-trace between call_pos and returnPos (here: i) is shorter, then compute the
-						// callerPred in this way.
-						TransFormula summary = computeSummaryForTrace(getSubTrace(call_pos, i, trace), callTF,
+					TransFormula summary = computeSummaryForTrace(getSubTrace(0, call_pos, trace), rv, 0);
+					callerPred = m_SmtManager.strongestPostcondition(m_Precondition, summary);
+					// If callerPred contains quantifier, compute it via the 2nd method
+					if(callerPred instanceof BasicPredicateExplicitQuantifier) {
+						summary = computeSummaryForTrace(getSubTrace(call_pos, i, trace), callTF,
 								rv.getFormulaFromNonCallPos(i+1), 
 								globalVarsAssignments,
 								rv, call_pos);
@@ -367,7 +365,9 @@ public class TraceCheckerSpWp extends TraceChecker {
 		if (m_ComputeInterpolantsSp && m_ComputeInterpolantsWp) {
 			checkSPImpliesWP(m_InterpolantsSp, m_InterpolantsWp);
 		}
-		if (m_ComputeInterpolantsFp) {
+		if (m_ComputeInterpolantsFp && m_ComputeInterpolantsBp) {
+			selectInterpolantsOfBothType();
+		} else if (m_ComputeInterpolantsFp) {
 			m_Interpolants = m_InterpolantsFp;
 		} else if (m_ComputeInterpolantsSp) {
 			m_Interpolants = m_InterpolantsSp;
@@ -376,6 +376,33 @@ public class TraceCheckerSpWp extends TraceChecker {
 			m_Interpolants = m_InterpolantsWp;
 		}
 	}
+	
+	private void selectInterpolantsOfBothType() {
+		assert m_InterpolantsFp.length == m_InterpolantsBp.length;
+		int i = 0; // position of predicate computed by strongest post-condition
+		int j = m_InterpolantsBp.length; // position of predicate computed by weakest precondition
+		while (i != j) {
+			if (!(m_InterpolantsBp[j-1] instanceof BasicPredicateExplicitQuantifier)) {
+				m_Interpolants[j-1] = m_InterpolantsBp[j-1];
+				j--;
+			} else if (!(m_InterpolantsFp[i] instanceof BasicPredicateExplicitQuantifier)) {
+				m_Interpolants[i] = m_InterpolantsFp[i];
+				i++;
+			} else {
+				int numOfQuantifiedVarsInFp = ((BasicPredicateExplicitQuantifier) m_InterpolantsFp[i]).getQuantifiedVariables().size();
+				int numOfQuantifiedVarsInBp = ((BasicPredicateExplicitQuantifier) m_InterpolantsBp[j-1]).getQuantifiedVariables().size();
+				if (numOfQuantifiedVarsInFp < numOfQuantifiedVarsInBp) {
+					m_Interpolants[i] = m_InterpolantsFp[i];
+					i++;
+				} else {
+					m_Interpolants[j-1] = m_InterpolantsBp[j-1];
+					j--;
+				}
+			}
+		}
+	}
+	
+	@Deprecated
 	private boolean formulaContainsExistentialQuantifier(Term formula) {
 		if (formula instanceof ApplicationTerm) {
 			Term[] parameters = ((ApplicationTerm) formula).getParameters();

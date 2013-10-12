@@ -9,6 +9,10 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 
 public class BasicPredicateExplicitQuantifier extends BasicPredicate {
 	
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -2401826317961930222L;
 	private final int m_Quantifier;
 	private final Set<TermVariable> m_QuantifiedVariables;
 
