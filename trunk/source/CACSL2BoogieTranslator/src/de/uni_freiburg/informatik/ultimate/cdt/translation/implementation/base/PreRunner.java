@@ -8,6 +8,7 @@ import java.util.HashSet;
 import org.eclipse.cdt.core.dom.ast.ASTVisitor;
 import org.eclipse.cdt.core.dom.ast.IASTArrayDeclarator;
 import org.eclipse.cdt.core.dom.ast.IASTArraySubscriptExpression;
+import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
 import org.eclipse.cdt.core.dom.ast.IASTCompoundStatement;
 import org.eclipse.cdt.core.dom.ast.IASTDeclaration;
 import org.eclipse.cdt.core.dom.ast.IASTDeclarator;
@@ -84,10 +85,11 @@ public class PreRunner extends ASTVisitor {
 
     @Override
     public int visit(IASTExpression expression) {
+ 
         if (expression instanceof IASTUnaryExpression) {
             ILocation loc = new CACSLLocation(expression);
             IASTUnaryExpression ue = (IASTUnaryExpression) expression;
-            if (ue.getOperator() == IASTUnaryExpression.op_amper) {
+            if (ue.getOperator() == IASTUnaryExpression.op_amper) {// every variable that is addressoffed has to be on the heap
                 IASTNode operand = ue.getOperand();
                 // add the operand to VariablesOnHeap!
                 String n;
@@ -101,7 +103,7 @@ public class PreRunner extends ASTVisitor {
                     throw new UnsupportedSyntaxException(m);
                 }
                 this.isMMRequired = true;
-                this.variablesOnHeap.add(get(n, loc));
+                this.variablesOnHeap.add(get(n, loc));//TODO why put the location of expression, not operand, here?
             } else if (!this.isMMRequired
                     && ue.getOperator() == IASTUnaryExpression.op_star) {
                 this.isMMRequired = true;

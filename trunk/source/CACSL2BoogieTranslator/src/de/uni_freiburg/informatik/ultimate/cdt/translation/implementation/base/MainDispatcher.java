@@ -169,6 +169,7 @@ import de.uni_freiburg.informatik.ultimate.model.acsl.ast.TypeInvariant;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.ValidExpression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.WildcardExpression;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.Backtranslator;
 import de.uni_freiburg.informatik.ultimate.result.SyntaxErrorResult.SyntaxErrorType;
 
@@ -199,7 +200,23 @@ public class MainDispatcher extends Dispatcher {
      * Variables that need some special memory handling.
      */
     private HashSet<IASTDeclaration> variablesOnHeap;
+    
+    //begin alex
+    private HashSet<VariableDeclaration> _boogieDeclarationsOfVariablesOnHeap;
 
+    void addBoogieDeclarationOfVariableOnHeap(VariableDeclaration vd) {
+    	if (_boogieDeclarationsOfVariablesOnHeap == null)
+    		_boogieDeclarationsOfVariablesOnHeap = new HashSet<VariableDeclaration>();
+    	_boogieDeclarationsOfVariablesOnHeap.add(vd);
+    }
+    
+    boolean getBoogieDeclarationsOfVariablesOnHeapContains(VariableDeclaration vd) {
+    	if (_boogieDeclarationsOfVariablesOnHeap == null)
+    		return false;
+    	return _boogieDeclarationsOfVariablesOnHeap.contains(vd);
+    }
+    
+    //end alex
 
     public MainDispatcher(Backtranslator backtranslator) {
 		super(backtranslator);
@@ -230,6 +247,11 @@ public class MainDispatcher extends Dispatcher {
         tu.accept(pr);
         variablesOnHeap = pr.getVarsForHeap();
         isMMRequired = pr.isMMRequired();
+        
+        if (isMMRequired) {
+        	PreRunner2 pr2 = new PreRunner2(variablesOnHeap);
+        	tu.accept(pr2);
+        }
     }
 
     @Override

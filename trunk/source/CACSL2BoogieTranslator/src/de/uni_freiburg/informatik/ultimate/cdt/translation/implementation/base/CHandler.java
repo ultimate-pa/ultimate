@@ -3,9 +3,11 @@
  */
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base;
 
+import java.security.CryptoPrimitive;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -594,8 +596,20 @@ public class CHandler implements ICHandler {
                 assert resType.getType() != null;
                 String bId = main.nameHandler.getUniqueIdentifier(node, cId,
                         symbolTable.getCompoundCounter());
-                ResultTypes checkedType = checkForPointer(main,
+                
+                //alex begin
+                ResultTypes checkedType = null;
+                if (((MainDispatcher) main).getVariablesForHeap().contains(node)) { //the declared variable will be addressoffed in the program
+                	ASTType t = MemoryHandler.POINTER_TYPE;
+                	CType cvar = new CPointer(resType.cvar);
+                	checkedType = new ResultTypes(t, false, false, cvar);
+                } else {
+                //alex end
+                
+                checkedType = checkForPointer(main,
                         d.getPointerOperators(), resType);
+                } // real end alex
+                
                 if (main.typeHandler.isStructDeclaration()) {
                     // store C variable information into this result, as this is
                     // a struct field! We need this information to build the
@@ -621,6 +635,13 @@ public class CHandler implements ICHandler {
                 } else {
                     result.decl.add(decl);
                 }
+                
+                //begin alex
+                if (((MainDispatcher) main).getVariablesForHeap().contains(node)) { //the declared variable will be addressoffed in the program
+                	((MainDispatcher) main).addBoogieDeclarationOfVariableOnHeap(decl);
+                }
+            	//end alex
+                	
                 // Handle initializer clause
                 if (d.getInitializer() != null) {
                     if (type instanceof StructType) {
@@ -722,6 +743,7 @@ public class CHandler implements ICHandler {
             CType cvar = new CPointer(resType.cvar);
             return new ResultTypes(t, resType.isConst, resType.isVoid, cvar);
         }
+//        if (((MainDispatcher) main).getVariablesForHeap().contains(arg0))
         return resType;
     }
 
@@ -875,6 +897,35 @@ public class CHandler implements ICHandler {
                 new IdentifierExpression(loc, t, bId),
                 new HashMap<VariableDeclaration, CACSLLocation>(0));
         result.cType = symbolTable.get(cId, loc).getCVariable();
+        
+        //begin alex
+        if (((MainDispatcher) main).getBoogieDeclarationsOfVariablesOnHeapContains(
+        		(VariableDeclaration) symbolTable.get(cId, loc).getDecl())) {
+        	CType pointerTargetType = (((CPointer) result.cType).pointsToType);
+        	InferredType it = new InferredType(Type.Pointer);
+//        	InferredType it = null;
+//        	if (pointerTargetType instanceof CPrimitive && ((CPrimitive) pointerTargetType).getType() == CPrimitive.PRIMITIVE.INT) {
+//	        	 it = new InferredType(Type.Integer);
+//        	} else {
+//        		assert false;
+//        	}
+        	ResultExpressionPointerDereference temp = memoryHandler.getReadCall(main, it, result.expr);
+//        	result.stmt.addAll(temp.stmt);
+//        	result.decl.addAll(temp.decl);
+//        	result.auxVars.putAll(temp.auxVars);
+//        	result.declCTypes.addAll(temp.declCTypes);
+    		ResultExpressionPointerDereference repd = temp;
+//    				new ResultExpressionPointerDereference(
+//    				result.stmt, temp.expr, result.decl, result.auxVars, 
+//    				result.expr, temp.stmt.get(0), (VariableDeclaration) temp.decl.get(0));
+//    				result.stmt, temp.expr, result.decl, result.auxVars, result.expr,temp.stmt, temp.decl);
+//    				temp.stmt, temp.expr, temp.decl, temp.auxVars, result.expr, null);
+//    				result.stmt, temp.expr, result.decl, result.auxVars, result.expr, null);
+    		
+    		return repd;
+    	}   
+        //end alex
+
         return result;
     }
     
@@ -1126,21 +1177,34 @@ public class CHandler implements ICHandler {
                 rex.cType = cvar;
                 return rex;
             case IASTUnaryExpression.op_amper:
-                decl = new ArrayList<Declaration>();
-                stmt = new ArrayList<Statement>();
-                auxVars = new HashMap<VariableDeclaration, CACSLLocation>();
-                // TODO : type not always Pointer!?
-                t = new InferredType(Type.Pointer);
-                ResultExpressionPointerDereference read = memoryHandler.getReadCall(main, t,
-                        o.expr);
-                read.removePointerDereference();
-                stmt.addAll(o.stmt);
-                decl.addAll(o.decl);
-                auxVars.putAll(o.auxVars);
-                stmt.addAll(read.stmt);
-                decl.addAll(read.decl);
-                auxVars.putAll(read.auxVars);
-                return new ResultExpression(stmt, read.expr, decl, auxVars);
+            	// begin alex
+            	ResultExpressionPointerDereference repde =  (ResultExpressionPointerDereference) o;
+            	ResultExpression r = null;
+            	if (repde.m_Pointer == null && repde.m_PointerOffet == null) {
+            		r = new ResultExpression(repde.m_PointerBase, Collections.<VariableDeclaration, CACSLLocation> emptyMap());
+            	} else if (repde.m_Pointer != null) {
+            		r = new ResultExpression(repde.m_Pointer, Collections.<VariableDeclaration, CACSLLocation> emptyMap());
+            	} else {
+            		assert false;
+            	}
+            	return r;
+            	
+            	//end alex
+            	//von Markus oder so
+//                decl = new ArrayList<Declaration>();
+//                stmt = new ArrayList<Statement>();
+//                auxVars = new HashMap<VariableDeclaration, CACSLLocation>();
+//                // TODO : type not always Pointer!?
+//                t = new InferredType(Type.Pointer);
+//                ResultExpression read = memoryHandler.getReadCall(main, t,
+//                        o.expr);
+//                stmt.addAll(o.stmt);
+//                decl.addAll(o.decl);
+//                auxVars.putAll(o.auxVars);
+//                stmt.addAll(read.stmt);
+//                decl.addAll(read.decl);
+//                auxVars.putAll(read.auxVars);
+//                return new ResultExpression(stmt, read.expr, decl, auxVars);
             case IASTUnaryExpression.op_alignOf:
             case IASTUnaryExpression.op_tilde:
             default:
@@ -1184,46 +1248,60 @@ public class CHandler implements ICHandler {
             case IASTBinaryExpression.op_assign:
                 stmt.addAll(r.stmt);
                 if (l instanceof ResultExpressionPointerDereference) {
-                	ResultExpressionPointerDereference repd = 
+                	ResultExpressionPointerDereference repdL = 
                 			(ResultExpressionPointerDereference) l;
                 	assert (node.getOperand1() instanceof IASTUnaryExpression
                             && ((IASTUnaryExpression) node.getOperand1())
                             .getOperator() == IASTUnaryExpression.op_star)
-                            || (node.getOperand1() instanceof IASTFieldReference);
-                	
-                    stmt.addAll(l.stmt);
-                    auxVars.putAll(l.auxVars);
-                    
-            		if (repd.m_CallResult != null) {
-            			boolean removed;
-            			removed = stmt.remove(repd.m_ReadCall);
-            			assert removed;
-            			removed = decl.remove(repd.m_CallResult);
-            			assert removed;
-            			CACSLLocation value = auxVars.remove(repd.m_CallResult);
-            			assert value != null;
-            		}
-                    
-                    ResultExpression auxPointer = structHandler.auxilliaryPointer(
-                    		main, loc, repd.m_PointerBase, repd.m_PointerOffet);
-                    
-        			stmt.addAll(auxPointer.stmt);
-        			decl.addAll(auxPointer.decl);
-        			auxVars.putAll(auxPointer.auxVars);
-                    
-                    ResultExpression rex = memoryHandler.getWriteCall(auxPointer.expr,
-                            r.expr);
-                    stmt.addAll(rex.stmt);
-                    decl.addAll(rex.decl);
-                    auxVars.putAll(rex.auxVars);
-                    for (String t : new String[] { SFO.INT, SFO.POINTER,
-                            SFO.REAL, SFO.BOOL }) {
-                        functionHandler.getModifiedGlobals()
-                                .get(functionHandler.getCurrentProcedureID())
-                                .add(SFO.MEMORY + "_" + t);
-                    }
-                    assert (main.isAuxVarMapcomplete(decl, auxVars)) : "unhavoced auxvars";
-                    return new ResultExpression(stmt, rex.expr, decl, auxVars);
+                            || (node.getOperand1() instanceof IASTFieldReference)
+                            || ((MainDispatcher) main).getBoogieDeclarationsOfVariablesOnHeapContains( //added by alex
+                            		(VariableDeclaration) symbolTable.get(node.getOperand1().getRawSignature(), loc).getDecl());
+                	if (((MainDispatcher) main).getBoogieDeclarationsOfVariablesOnHeapContains( //added by alex
+                            		(VariableDeclaration) symbolTable.get(node.getOperand1().getRawSignature(), loc).getDecl())) {
+//                		if (r.expr instanceof Expression)
+                		ResultExpression rex = null;
+//                		if (node.getOperand2().getExpressionType().toString().equals("int")) {
+//                			StructAccessExpression sae = new StructAccessExpression(loc, r.expr, "base");
+//                			sae.setType(new InferredType(Type.Integer));
+//                			rex = memoryHandler.getWriteCall(repdL.m_Pointer, sae);
+//                		} else {
+                			rex = memoryHandler.getWriteCall(repdL.m_Pointer, r.expr);
+//                		}
+                		stmt.addAll(rex.stmt);
+                		decl.addAll(rex.decl);
+                		auxVars.putAll(rex.auxVars);
+                		for (String t : new String[] { SFO.INT, SFO.POINTER,
+                				SFO.REAL, SFO.BOOL }) {
+                			functionHandler.getModifiedGlobals()
+                			.get(functionHandler.getCurrentProcedureID())
+                			.add(SFO.MEMORY + "_" + t);
+                		}
+                		return new ResultExpression(stmt, rex.expr, decl, auxVars);
+                	} else {
+                		stmt.addAll(l.stmt);
+                		auxVars.putAll(l.auxVars);
+
+                		ResultExpression auxPointer = structHandler.auxilliaryPointer(
+                				main, loc, repdL.m_PointerBase, repdL.m_PointerOffet);
+
+                		stmt.addAll(auxPointer.stmt);
+                		decl.addAll(auxPointer.decl);
+                		auxVars.putAll(auxPointer.auxVars);
+
+                		ResultExpression rex = memoryHandler.getWriteCall(auxPointer.expr,
+                				r.expr);
+                		stmt.addAll(rex.stmt);
+                		decl.addAll(rex.decl);
+                		auxVars.putAll(rex.auxVars);
+                		for (String t : new String[] { SFO.INT, SFO.POINTER,
+                				SFO.REAL, SFO.BOOL }) {
+                			functionHandler.getModifiedGlobals()
+                			.get(functionHandler.getCurrentProcedureID())
+                			.add(SFO.MEMORY + "_" + t);
+                		}
+                		assert (main.isAuxVarMapcomplete(decl, auxVars)) : "unhavoced auxvars";
+                		return new ResultExpression(stmt, rex.expr, decl, auxVars);
+                	}
                 }
                 
                 if (node.getOperand1() instanceof IASTUnaryExpression
