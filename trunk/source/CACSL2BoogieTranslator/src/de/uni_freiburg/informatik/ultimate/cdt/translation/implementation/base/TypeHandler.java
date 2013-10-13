@@ -64,11 +64,13 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.NamedType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.PrimitiveType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.RealLiteral;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StringLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StructLHS;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StructType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.TypeDeclaration;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableDeclaration;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.wrapper.ASTNode;
 import de.uni_freiburg.informatik.ultimate.result.SyntaxErrorResult.SyntaxErrorType;
 
 /**
@@ -273,10 +275,17 @@ public class TypeHandler implements ITypeHandler {
         main.cHandler.addSizeOfConstants(result.cvar);
         return result;
     }
+    
+    
 
+    
+    
     @Override
     public Result visit(Dispatcher main, IASTElaboratedTypeSpecifier node) {
         CACSLLocation loc = new CACSLLocation(node);
+        if (isSelfReferencingPointerToStruct(node)) {
+        	return auxiliaryResultForSelfReferencingStruct(loc, node);
+        }
         if (node.getKind() == IASTElaboratedTypeSpecifier.k_struct
                 || node.getKind() == IASTElaboratedTypeSpecifier.k_enum) {
             String type = node.getName().getRawSignature();
@@ -320,7 +329,7 @@ public class TypeHandler implements ITypeHandler {
                 if (!key.equals(SFO.EMPTY))
                     typedef.put(key, r);
             }
-            main.cHandler.addSizeOfConstants(r.cvar);
+           	main.cHandler.addSizeOfConstants(r.cvar);
             return r;
         }
         String msg = "Not yet implemented: Spec [" + node.getKind() + "] of "
@@ -328,7 +337,51 @@ public class TypeHandler implements ITypeHandler {
         Dispatcher.error(loc, SyntaxErrorType.UnsupportedSyntax, msg);
         throw new UnsupportedSyntaxException(msg);
     }
-
+    
+    /**
+     * Returns true if node is a field of struct which points to the struct 
+     * itself. E.g.
+     * struct listElement {
+     *    int data;
+     *    struct listElement *le;
+     *    }
+     */
+    private boolean isSelfReferencingPointerToStruct(IASTElaboratedTypeSpecifier node) {
+    	if (node.getKind() != IASTElaboratedTypeSpecifier.k_struct) {
+    		return false;
+    	}
+    	if (!(node.getParent().getParent() instanceof IASTCompositeTypeSpecifier)) {
+    		return false;
+    	}
+    	String parentId = ((IASTCompositeTypeSpecifier) 
+    			node.getParent().getParent()).getName().getRawSignature();
+    	if (parentId.equals(node.getName().getRawSignature())) {
+    		return true;
+    	}
+    	return false;
+    }
+    
+    /**
+     * Returns an auxiliary result for the case where we have a field of a 
+     * struct that points to the struct itself. E.g.
+     * struct listElement {
+     *    int data;
+     *    struct listElement *le;
+     *    }
+     * This result is used for the type of the inner element.
+     */
+    private ResultTypes auxiliaryResultForSelfReferencingStruct(
+    				CACSLLocation loc, IASTElaboratedTypeSpecifier node) {
+    	String aux = "auxiliaryResultForSelfReferencingStruct";
+    	String[] fName = { aux };
+    	CType[] ftype = { };
+    	CStruct cStruct = new CStruct((IASTDeclSpecifier) 
+    			node.getParent().getParent(), fName, ftype);
+    	ASTType auxType = new StructType(loc, new VarList[0]);
+    	return new ResultTypes(auxType, false, false, cStruct);
+    }
+    
+    
     @Override
     public Result visit(Dispatcher main, IASTCompositeTypeSpecifier node) {
         CACSLLocation loc = new CACSLLocation(node);
