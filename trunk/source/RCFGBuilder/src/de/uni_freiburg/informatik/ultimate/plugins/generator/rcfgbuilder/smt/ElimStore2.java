@@ -52,6 +52,9 @@ public class ElimStore2 {
 		Term othersT = Util.and(m_Script, others.toArray(new Term[0]));
 		Set<ApplicationTerm> selectTerms = 
 				(new ApplicationTermFinder("select")).findMatchingSubterms(term);
+		if (m_WriteIndex == null) {
+			throw new AssertionError("not yet implemented case in array quantifier elimination");
+		}
 		Map<Term[], ApplicationTerm> arrayReads =
 				getArrayReads(oldArr, selectTerms, m_WriteIndex.length);
 		
