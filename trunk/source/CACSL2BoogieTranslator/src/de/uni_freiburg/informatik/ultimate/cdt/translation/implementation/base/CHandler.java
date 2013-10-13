@@ -88,6 +88,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ResultExpressionList;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ResultExpressionListRec;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ResultExpressionPointerDereference;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ResultExpressionPointerDereferenceBO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ResultSkip;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ResultTypes;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.BoogieASTUtil;
@@ -1147,11 +1148,9 @@ public class CHandler implements ICHandler {
                     throw new UnsupportedSyntaxException(msg);
                 }
                 cvar = ((CPointer) cvar).pointsToType;
-            	Expression pointerBase = new StructAccessExpression(
-            			loc, tInt, o.expr, SFO.POINTER_BASE);
                 if (!(cvar instanceof CPrimitive)) {
                 	ResultExpression rex = new ResultExpressionPointerDereference(
-                			o.stmt, null, o.decl, o.auxVars, pointerBase, null, null, null);
+                			o.stmt, null, o.decl, o.auxVars, o.expr, null, null);
                 	rex.cType = cvar;
                 	return rex;
                 }
@@ -1178,14 +1177,16 @@ public class CHandler implements ICHandler {
                 return rex;
             case IASTUnaryExpression.op_amper:
             	// begin alex
-            	ResultExpressionPointerDereference repde =  (ResultExpressionPointerDereference) o;
-            	ResultExpression r = null;
-            	if (repde.m_Pointer == null && repde.m_PointerOffet == null) {
-            		r = new ResultExpression(repde.m_PointerBase, Collections.<VariableDeclaration, CACSLLocation> emptyMap());
-            	} else if (repde.m_Pointer != null) {
-            		r = new ResultExpression(repde.m_Pointer, Collections.<VariableDeclaration, CACSLLocation> emptyMap());
+            	ResultExpressionPointerDereference repde = (ResultExpressionPointerDereference) o;
+            	ResultExpression r;
+            	if (repde instanceof ResultExpressionPointerDereferenceBO) {
+            		ResultExpressionPointerDereferenceBO repdbo = (ResultExpressionPointerDereferenceBO) repde;
+            		r = new ResultExpression(repdbo.m_PointerBase, Collections.<VariableDeclaration, CACSLLocation> emptyMap());
+            		// Matthias: (2013-10-14 01:00)
+            		// I think the preceeding line should be replaced by the following line
+            		// r = memoryHandler.auxilliaryPointer(main, loc, repdbo.m_PointerBase, repdbo.m_PointerOffset);
             	} else {
-            		assert false;
+            		r = new ResultExpression(repde.m_Pointer, Collections.<VariableDeclaration, CACSLLocation> emptyMap());
             	}
             	return r;
             	
@@ -1278,16 +1279,19 @@ public class CHandler implements ICHandler {
                 		stmt.addAll(l.stmt);
                 		auxVars.putAll(l.auxVars);
 
-                		Expression pointer = repdL.m_Pointer;
-                		if (pointer == null) {
-                        ResultExpression auxPointer = structHandler.auxilliaryPointer(
-                        	main, loc, repdL.m_PointerBase, repdL.m_PointerOffet);
-                        	stmt.addAll(auxPointer.stmt);
-                        	decl.addAll(auxPointer.decl);
-                        	auxVars.putAll(auxPointer.auxVars);
-                        	pointer = auxPointer.expr;
+                		Expression pointer;
+                		if (repdL instanceof ResultExpressionPointerDereferenceBO) {
+                			ResultExpressionPointerDereferenceBO repdboL = 
+                					(ResultExpressionPointerDereferenceBO) repdL;
+                            ResultExpression auxPointer = memoryHandler.auxilliaryPointer(
+                                	main, loc, repdboL.m_PointerBase, repdboL.m_PointerOffset);
+                                	stmt.addAll(auxPointer.stmt);
+                                	decl.addAll(auxPointer.decl);
+                                	auxVars.putAll(auxPointer.auxVars);
+                                	pointer = auxPointer.expr;
+                		} else {
+                			pointer = repdL.expr;
                 		}
-                        
                         ResultExpression rex = memoryHandler.getWriteCall(pointer,
                                 r.expr);
                 		stmt.addAll(rex.stmt);

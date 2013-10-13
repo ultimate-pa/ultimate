@@ -26,6 +26,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.except
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ResultExpression;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ResultExpressionPointerDereference;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ResultExpressionPointerDereferenceBO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ResultTypes;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.BoogieASTUtil;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
@@ -876,6 +877,54 @@ public class MemoryHandler {
                 new Check(Check.Spec.INVALID_MEMORY_ACCESS));
         return new AssertStatement(assertLoc, formula);
     }
+    
+    
+    /**
+     * Construct a pointer whose address is (addressBase,addressOffset).
+     * The result has expression auxPointer and the following Boogie code.
+     * var auxPointer:$Pointer$
+     * assume auxPointer!base == addressBase 
+     * assume auxPointer!offset == addressOffset 
+     */
+    public ResultExpression auxilliaryPointer(Dispatcher main, CACSLLocation loc,
+    		Expression addressBase, Expression addressOffset) {
+    	assert addressBase != null : "no base address";
+    	
+		ArrayList<Statement> stmt = new ArrayList<Statement>();
+		ArrayList<Declaration> decl = new ArrayList<Declaration>();
+		Map<VariableDeclaration, CACSLLocation> auxVars = 
+				new HashMap<VariableDeclaration, CACSLLocation>();
+		String auxPointerId = main.nameHandler.getTempVarUID(SFO.AUXVAR.ARROW);
+		VariableDeclaration vd = SFO.getTempVarVariableDeclaration(
+				auxPointerId, new InferredType(Type.Pointer), loc);
+		decl.add(vd);
+		auxVars.put(vd, loc);
+		IdentifierExpression auxPointer = new IdentifierExpression(loc, 
+				new InferredType(Type.Pointer), auxPointerId);
+		AssumeStatement baseEquality;
+		{
+		    StructAccessExpression lhs = new StructAccessExpression(loc, 
+		    		new InferredType(Type.Integer), auxPointer, SFO.POINTER_BASE);
+		    Expression rhs = addressBase;
+		    baseEquality = new AssumeStatement(loc, new BinaryExpression(loc, 
+		    		new InferredType(Type.Boolean), Operator.COMPEQ, lhs, rhs));
+		}
+		stmt.add(baseEquality);
+		AssumeStatement offsetEquality;
+		{
+			StructAccessExpression lhs = new StructAccessExpression(loc, 
+					new InferredType(Type.Integer), auxPointer, SFO.POINTER_OFFSET);
+			Expression rhs = addressOffset;
+			if (rhs == null) {
+				rhs = new IntegerLiteral(loc, new InferredType(Type.Integer), "0");
+			}
+			offsetEquality = new AssumeStatement(loc, new BinaryExpression(loc, 
+					new InferredType(Type.Boolean), Operator.COMPEQ, lhs, rhs));
+		}
+		stmt.add(offsetEquality);
+		return new ResultExpression(stmt, auxPointer, decl, auxVars);
+    }
+    
 
     /**
      * Generates a call of the read procedure and writes the returned value to a
@@ -939,6 +988,40 @@ public class MemoryHandler {
         		new IdentifierExpression(loc, it, tmpId), decl, auxVars, 
         		tPointer, call, tVarDecl);
     }
+    
+    /**
+     * Additional getReadCall method for the special case where the pointer is
+     * given by base and offset.
+     */
+    public ResultExpressionPointerDereference getReadCall(final Dispatcher main,
+            final InferredType it, CACSLLocation loc, final Expression pointerBase, 
+            final Expression pointerOffset) {
+    	ResultExpression auxPointer = auxilliaryPointer(main, loc, pointerBase, pointerOffset);
+    	ResultExpressionPointerDereference call = getReadCall(main, it, auxPointer.expr);
+        ArrayList<Statement> stmt = new ArrayList<Statement>();
+        ArrayList<Declaration> decl = new ArrayList<Declaration>();
+		Map<VariableDeclaration, CACSLLocation> auxVars = 
+				new HashMap<VariableDeclaration, CACSLLocation>();
+		stmt.addAll(auxPointer.stmt);
+		stmt.addAll(call.stmt);
+		decl.addAll(auxPointer.decl);
+		decl.addAll(call.decl);
+		auxVars.putAll(auxPointer.auxVars);
+		auxVars.putAll(auxPointer.auxVars);
+		assert auxPointer.stmt.size() == 2;
+		AssumeStatement baseEquality = (AssumeStatement) auxPointer.stmt.get(0);
+		AssumeStatement offsetEquality = (AssumeStatement) auxPointer.stmt.get(1);
+		assert auxPointer.decl.size() == 1;
+		VariableDeclaration auxPointerDecl = (VariableDeclaration) auxPointer.decl.get(0);
+		ResultExpressionPointerDereferenceBO result = 
+				new ResultExpressionPointerDereferenceBO(stmt, call.expr, decl,
+				auxVars, auxPointer.expr, call.m_ReadCall, call.m_CallResult, 
+				auxPointerDecl,	pointerBase, pointerOffset, baseEquality, offsetEquality);
+		return result;
+    	
+    }
+    
+    
 
     /**
      * Generates a procedure call to writeT(val, ptr), writing val to the

@@ -11,7 +11,6 @@ import org.eclipse.cdt.internal.core.dom.parser.c.CASTFieldDesignator;
 
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CACSLLocation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.InferredType;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.InferredType.Type;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CArray;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CNamed;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
@@ -23,12 +22,12 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ResultExpression;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ResultExpressionListRec;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ResultExpressionPointerDereference;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ResultExpressionPointerDereferenceBO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssignmentStatement;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Declaration;
@@ -185,7 +184,8 @@ public class StructHandler {
         if ((r instanceof ResultExpressionPointerDereference) || node.isPointerDereference()) {
 			ArrayList<Statement> stmt = new ArrayList<Statement>();
 			ArrayList<Declaration> decl = new ArrayList<Declaration>();
-			Map<VariableDeclaration, CACSLLocation> auxVars = new HashMap<VariableDeclaration, CACSLLocation>();
+			Map<VariableDeclaration, CACSLLocation> auxVars = 
+					new HashMap<VariableDeclaration, CACSLLocation>();
 			stmt.addAll(rex.stmt);
 			decl.addAll(rex.decl);
 			auxVars.putAll(rex.auxVars);
@@ -212,17 +212,24 @@ public class StructHandler {
         	CType fieldOwnerPointsToType;
         	if (node.isPointerDereference()) {
         		fieldOwnerPointsToType = ((CPointer) rex.cType).pointsToType; 
-        		addressBaseOfFieldOwner = new StructAccessExpression(loc, rex.expr, SFO.POINTER_BASE);
-        		addressOffsetOfFieldOwner = null;
+        		addressBaseOfFieldOwner = new StructAccessExpression(loc, 
+        				rex.expr, SFO.POINTER_BASE);
+        		addressOffsetOfFieldOwner = new IntegerLiteral(loc, SFO.NR0);
         	} else {
         		fieldOwnerPointsToType = rex.cType;
-        		ResultExpressionPointerDereference repd = (ResultExpressionPointerDereference) rex;
-        		if (repd.m_PointerBase == null) {
-        			addressBaseOfFieldOwner = new StructAccessExpression(loc, repd.m_Pointer, SFO.POINTER_BASE);
-        			addressOffsetOfFieldOwner = new StructAccessExpression(loc, repd.m_Pointer, SFO.POINTER_OFFSET);
+        		ResultExpressionPointerDereference repd = 
+        				(ResultExpressionPointerDereference) rex;
+        		if (repd instanceof ResultExpressionPointerDereferenceBO) {
+        			ResultExpressionPointerDereferenceBO repdbo = 
+        					(ResultExpressionPointerDereferenceBO) repd;
+        			addressBaseOfFieldOwner = repdbo.m_PointerBase;
+        			addressOffsetOfFieldOwner = repdbo.m_PointerOffset;
         		} else {
-        			addressBaseOfFieldOwner = repd.m_PointerBase;
-        			addressOffsetOfFieldOwner = repd.m_PointerOffet;
+        			addressBaseOfFieldOwner = new StructAccessExpression(loc, 
+        					repd.m_Pointer, SFO.POINTER_BASE);
+        			addressOffsetOfFieldOwner = new StructAccessExpression(loc, 
+        					repd.m_Pointer, SFO.POINTER_OFFSET);
+        			
         		}
         		repd.removePointerDereference();
         	}
@@ -234,25 +241,17 @@ public class StructHandler {
 			    Dispatcher.error(loc, SyntaxErrorType.IncorrectSyntax, msg);
 			    throw new IncorrectSyntaxException(msg);
 			}
-			assert addressOffsetOfFieldOwner == null : "not implemented yet.";
 			String offset = SFO.OFFSET + fieldOwnerPointsToType.toString() + "~" + field;
-			IdentifierExpression newOffset = new IdentifierExpression(loc, offset);
-			
-			ResultExpression auxPointer = auxilliaryPointer(main, loc, addressBaseOfFieldOwner, newOffset);
-			
-			stmt.addAll(auxPointer.stmt);
-			decl.addAll(auxPointer.decl);
-			auxVars.putAll(auxPointer.auxVars);
-
-			ResultExpressionPointerDereference call = memoryHandler.getReadCall(main, it, auxPointer.expr);
-			
-			stmt.addAll(call.stmt);
-			decl.addAll(call.decl);
-			auxVars.putAll(call.auxVars);
-			
-			ResultExpression result = new ResultExpressionPointerDereference(
-					stmt, call.expr, decl, auxVars, addressBaseOfFieldOwner, 
-					newOffset, call.m_ReadCall, call.m_CallResult);
+			IdentifierExpression additionalOffset = new IdentifierExpression(loc, offset);
+			Expression newOffset;
+			if (isZero(addressOffsetOfFieldOwner)) {
+				newOffset = additionalOffset;
+			} else {
+				newOffset = new BinaryExpression(loc, Operator.ARITHPLUS, 
+						addressOffsetOfFieldOwner, additionalOffset);
+			}
+			ResultExpression result = memoryHandler.getReadCall(main, it, loc, 
+					addressBaseOfFieldOwner, newOffset);
 			result.cType = ((CStruct) fieldOwnerPointsToType).getFieldType(field);
 			return result;
 
@@ -277,47 +276,19 @@ public class StructHandler {
         }
     }
     
-    
     /**
-     * Construct a pointer whose address is (addressBase,addressOffset).
-     * The result has expression auxPointer and the following Boogie code.
-     * var auxPointer:$Pointer$
-     * assume auxPointer!base == addressBase 
-     * assume auxPointer!offset == addressOffset 
+     * Returns true iff expr is IntegerLiteral "0".
      */
-    public ResultExpression auxilliaryPointer(Dispatcher main, CACSLLocation loc, Expression addressBase, Expression addressOffset) {
-    	assert addressBase != null : "no base address";
-    	
-		ArrayList<Statement> stmt = new ArrayList<Statement>();
-		ArrayList<Declaration> decl = new ArrayList<Declaration>();
-		Map<VariableDeclaration, CACSLLocation> auxVars = new HashMap<VariableDeclaration, CACSLLocation>();
-		String auxPointerId = main.nameHandler.getTempVarUID(SFO.AUXVAR.ARROW);
-		VariableDeclaration vd = SFO.getTempVarVariableDeclaration(auxPointerId, new InferredType(Type.Pointer), loc);
-		decl.add(vd);
-		auxVars.put(vd, loc);
-		IdentifierExpression auxPointer = new IdentifierExpression(loc, new InferredType(Type.Pointer), auxPointerId);
-		AssumeStatement baseEquality;
-		{
-		    StructAccessExpression lhs = new StructAccessExpression(loc, new InferredType(Type.Integer), auxPointer, SFO.POINTER_BASE);
-		    Expression rhs = addressBase;
-		    baseEquality = new AssumeStatement(loc, new BinaryExpression(loc, new InferredType(Type.Boolean), Operator.COMPEQ, lhs, rhs));
-		}
-		stmt.add(baseEquality);
-		AssumeStatement offsetEquality;
-		{
-			StructAccessExpression lhs = new StructAccessExpression(loc, new InferredType(Type.Integer), auxPointer, SFO.POINTER_OFFSET);
-			Expression rhs = addressOffset;
-			if (rhs == null) {
-				rhs = new IntegerLiteral(loc, new InferredType(Type.Integer), "0");
-			}
-			offsetEquality = new AssumeStatement(loc, new BinaryExpression(loc, new InferredType(Type.Boolean), Operator.COMPEQ, lhs, rhs));
-		}
-		stmt.add(offsetEquality);
-		return new ResultExpression(stmt, auxPointer, decl, auxVars);
+    private boolean isZero(Expression expr) {
+    	if (expr instanceof IntegerLiteral) {
+    		IntegerLiteral il = (IntegerLiteral) expr;
+    		return il.getValue().equals(SFO.NR0);
+    	} else {
+    		return false;
+    	}
     }
-        
-        
-
+    
+    
 
     /**
      * Handle IASTDesignatedInitializer.

@@ -26,9 +26,6 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableDeclaration;
  */
 public class ResultExpressionPointerDereference extends ResultExpression {
 	
-	public final Expression m_PointerBase;
-	public final Expression m_PointerOffet;
-	
 	public final Expression m_Pointer;
 	
 	public final Statement m_ReadCall;
@@ -36,31 +33,14 @@ public class ResultExpressionPointerDereference extends ResultExpression {
 
 	public ResultExpressionPointerDereference(ArrayList<Statement> stmt,
 			Expression expr, ArrayList<Declaration> decl,
-			Map<VariableDeclaration, CACSLLocation> auxVars,
-			Expression pointerBase, Expression pointerOffet,
+			Map<VariableDeclaration, CACSLLocation> auxVars, Expression pointer,
 			Statement readCall, VariableDeclaration callResult) {
-		super(stmt, expr, decl, auxVars);
-		m_PointerBase = pointerBase;
-		m_PointerOffet = pointerOffet;
-		m_ReadCall = readCall;
-		m_CallResult = callResult;
-		m_Pointer = null;
-	}
-
-	public ResultExpressionPointerDereference(ArrayList<Statement> stmt,
-			Expression expr, ArrayList<Declaration> decl,
-			Map<VariableDeclaration, CACSLLocation> auxVars,
-			Expression pointer, Statement readCall,
-			VariableDeclaration callResult) {
 		super(stmt, expr, decl, auxVars);
 		m_Pointer = pointer;
 		m_ReadCall = readCall;
 		m_CallResult = callResult;
-		m_PointerBase = null;
-		m_PointerOffet = null;
 	}
-	
-	
+
 	/**
 	 * Remove from this ResultExpression
 	 * <ul>
