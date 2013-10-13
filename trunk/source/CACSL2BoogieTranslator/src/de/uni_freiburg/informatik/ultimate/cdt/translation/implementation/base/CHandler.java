@@ -905,7 +905,7 @@ public class CHandler implements ICHandler {
         	InferredType it = null;
         	if (pointerTargetType instanceof CPrimitive && ((CPrimitive) pointerTargetType).getType() == CPrimitive.PRIMITIVE.INT) {
 	        	 it = new InferredType(Type.Integer);
-        	} else {
+        	} else {//TODO add capability for other types (and maybe a more elegant solution for checking
         		assert false;
         	}
         	ResultExpressionPointerDereference temp = memoryHandler.getReadCall(main, it, result.expr);
@@ -1253,9 +1253,11 @@ public class CHandler implements ICHandler {
                             && ((IASTUnaryExpression) node.getOperand1())
                             .getOperator() == IASTUnaryExpression.op_star)
                             || (node.getOperand1() instanceof IASTFieldReference)
-                            || ((MainDispatcher) main).getBoogieDeclarationsOfVariablesOnHeapContains( //added by alex
-                            		(VariableDeclaration) symbolTable.get(node.getOperand1().getRawSignature(), loc).getDecl());
-                	if (((MainDispatcher) main).getBoogieDeclarationsOfVariablesOnHeapContains( //added by alex
+                            || (node.getOperand1() instanceof IASTIdExpression && 
+                            		((MainDispatcher) main).getBoogieDeclarationsOfVariablesOnHeapContains( //added by alex
+                            		(VariableDeclaration) symbolTable.get(node.getOperand1().getRawSignature(), loc).getDecl()));
+                	if (node.getOperand1() instanceof IASTIdExpression &&
+                			((MainDispatcher) main).getBoogieDeclarationsOfVariablesOnHeapContains( //added by alex
                             		(VariableDeclaration) symbolTable.get(node.getOperand1().getRawSignature(), loc).getDecl())) {
                 		ResultExpression rex = null;
                 		
