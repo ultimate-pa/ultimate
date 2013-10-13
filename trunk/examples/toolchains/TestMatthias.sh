@@ -1,17 +1,9 @@
 #!/bin/bash
 
 if [ "$1" = "0" ]; then
-echo "testing our example programs with different block encodings"
-trunk/examples/toolchains/TraceAbstractionTestDir.sh 20 trunk/examples/programs \
-"TraceAbstraction.xml;TraceAbstractionC.xml;TraceAbstraction-LargeStatements-EagerPost-Hoare" \
-"TraceAbstractionWithBlockEncoding.xml;TraceAbstractionCWithBlockEncoding.xml;TraceAbstraction-BlockEncoding-EagerPost-Hoare" \
-"TraceAbstractionWithBlockEncoding.xml;TraceAbstractionCWithBlockEncoding.xml;TraceAbstraction-BlockEncodingNoParallel-EagerPost-Hoare" \
-"TraceAbstraction.xml;TraceAbstractionC.xml;TraceAbstraction-LargeStatements-Lazypost-Hoare" \
-"TraceAbstractionWithBlockEncoding.xml;TraceAbstractionCWithBlockEncoding.xml;TraceAbstraction-BlockEncoding-Lazypost-Hoare" \
-"TraceAbstractionWithBlockEncoding.xml;TraceAbstractionCWithBlockEncoding.xml;TraceAbstraction-BlockEncodingNoParallel-Lazypost-Hoare" \
-"TraceAbstraction.xml;TraceAbstractionC.xml;TraceAbstraction-LargeStatements-StrongestPost-Hoare" \
-"TraceAbstractionWithBlockEncoding.xml;TraceAbstractionCWithBlockEncoding.xml;TraceAbstraction-BlockEncoding-StrongestPost-Hoare" \
-"TraceAbstractionWithBlockEncoding.xml;TraceAbstractionCWithBlockEncoding.xml;TraceAbstraction-BlockEncodingNoParallel-StrongestPost-Hoare"
+echo "testing minitests"
+trunk/examples/toolchains/TraceAbstractionTestDir.sh 20 trunk/examples/programs/minitests/quantifier \
+"TraceAbstraction.xml;TraceAbstractionC.xml;Automizer-simpleTest-SVCOMP"
 fi
 
 
