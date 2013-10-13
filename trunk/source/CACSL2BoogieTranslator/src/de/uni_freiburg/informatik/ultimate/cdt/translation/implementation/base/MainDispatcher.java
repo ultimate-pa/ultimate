@@ -247,11 +247,6 @@ public class MainDispatcher extends Dispatcher {
         tu.accept(pr);
         variablesOnHeap = pr.getVarsForHeap();
         isMMRequired = pr.isMMRequired();
-        
-        if (isMMRequired) {
-        	PreRunner2 pr2 = new PreRunner2(variablesOnHeap);
-        	tu.accept(pr2);
-        }
     }
 
     @Override

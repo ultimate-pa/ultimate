@@ -1100,10 +1100,13 @@ public class Application implements IApplication, ICore {
 				ps.exportPreferences(cs.getNode("SMTInterface"), fis, null);
 				ps.exportPreferences(is.getNode("SMTInterface"), fis, null);
 				for (ITool tool : m_AllTools) {
+					s_Logger.debug("Trying to save preferences for tool " + tool.getName());
 					IEclipsePreferences[] prefs = tool.getPreferences(cs,is);
 					if (prefs != null) {
-						for (IEclipsePreferences p : prefs)
+						for (IEclipsePreferences p : prefs) {
 							ps.exportPreferences(p,fis,null);
+						}
+						s_Logger.debug("Saving preferences succeeded");
 					}
 				}
 			} catch (Exception e) {

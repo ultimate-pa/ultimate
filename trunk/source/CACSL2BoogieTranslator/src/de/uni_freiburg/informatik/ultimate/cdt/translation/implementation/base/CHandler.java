@@ -902,13 +902,13 @@ public class CHandler implements ICHandler {
         if (((MainDispatcher) main).getBoogieDeclarationsOfVariablesOnHeapContains(
         		(VariableDeclaration) symbolTable.get(cId, loc).getDecl())) {
         	CType pointerTargetType = (((CPointer) result.cType).pointsToType);
-        	InferredType it = new InferredType(Type.Pointer);
-//        	InferredType it = null;
-//        	if (pointerTargetType instanceof CPrimitive && ((CPrimitive) pointerTargetType).getType() == CPrimitive.PRIMITIVE.INT) {
-//	        	 it = new InferredType(Type.Integer);
-//        	} else {
-//        		assert false;
-//        	}
+//        	InferredType it = new InferredType(Type.Pointer);
+        	InferredType it = null;
+        	if (pointerTargetType instanceof CPrimitive && ((CPrimitive) pointerTargetType).getType() == CPrimitive.PRIMITIVE.INT) {
+	        	 it = new InferredType(Type.Integer);
+        	} else {
+        		assert false;
+        	}
         	ResultExpressionPointerDereference temp = memoryHandler.getReadCall(main, it, result.expr);
 //        	result.stmt.addAll(temp.stmt);
 //        	result.decl.addAll(temp.decl);
@@ -1258,15 +1258,10 @@ public class CHandler implements ICHandler {
                             		(VariableDeclaration) symbolTable.get(node.getOperand1().getRawSignature(), loc).getDecl());
                 	if (((MainDispatcher) main).getBoogieDeclarationsOfVariablesOnHeapContains( //added by alex
                             		(VariableDeclaration) symbolTable.get(node.getOperand1().getRawSignature(), loc).getDecl())) {
-//                		if (r.expr instanceof Expression)
                 		ResultExpression rex = null;
-//                		if (node.getOperand2().getExpressionType().toString().equals("int")) {
-//                			StructAccessExpression sae = new StructAccessExpression(loc, r.expr, "base");
-//                			sae.setType(new InferredType(Type.Integer));
-//                			rex = memoryHandler.getWriteCall(repdL.m_Pointer, sae);
-//                		} else {
-                			rex = memoryHandler.getWriteCall(repdL.m_Pointer, r.expr);
-//                		}
+                		
+                		rex = memoryHandler.getWriteCall(repdL.m_Pointer, r.expr);
+                		
                 		stmt.addAll(rex.stmt);
                 		decl.addAll(rex.decl);
                 		auxVars.putAll(rex.auxVars);
