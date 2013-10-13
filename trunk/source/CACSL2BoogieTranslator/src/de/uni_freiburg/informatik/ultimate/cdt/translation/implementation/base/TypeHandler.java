@@ -187,7 +187,9 @@ public class TypeHandler implements ITypeHandler {
             for (IASTDeclarator cDecl : ((IASTSimpleDeclaration) node
                     .getParent()).getDeclarators()) {
                 String typedefId = cDecl.getName().getRawSignature();
-                typedef.put(typedefId, result);
+                ResultTypes checkedResult = main.cHandler.checkForPointer(main, cDecl.getPointerOperators(), result);
+                typedef.put(typedefId, checkedResult);
+                
             }
             // TODO : add an axiom for sizeOf(typedefId) == sizeOf(result.t);?
             // I think, the axiom is not required, as we resolve the type
