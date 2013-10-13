@@ -3,7 +3,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base;
 
-import java.security.CryptoPrimitive;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
