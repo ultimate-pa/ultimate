@@ -2,10 +2,13 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+
+import org.eclipse.cdt.internal.core.dom.parser.c.CPointerType;
 
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CACSLLocation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CHandler;
@@ -13,6 +16,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.InferredType.Type;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CArray;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CNamed;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CStruct;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
@@ -40,6 +44,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.LeftHandSide;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.LoopInvariantSpecification;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ModifiesSpecification;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.NamedType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.PrimitiveType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Procedure;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.RealLiteral;
@@ -358,7 +363,14 @@ public class PostProcessor {
 					auxVars.putAll(r.auxVars);
 				}
 			}
-		} else {
+		} else if ((at instanceof NamedType) && 
+				((NamedType) at).getName().equals(SFO.POINTER)){
+			assert lCvar instanceof CPointer;
+			//result is pointer to 0
+			Expression nullPointer = new IdentifierExpression(loc, at.getBoogieType(), SFO.NULL);
+			return new ResultExpression(nullPointer, auxVars);
+		}
+		else {
 			String msg = "Unknown type - don't know how to initialize!";
 			Dispatcher.error(loc, SyntaxErrorType.UnsupportedSyntax, msg);
 			throw new UnsupportedSyntaxException(msg);
