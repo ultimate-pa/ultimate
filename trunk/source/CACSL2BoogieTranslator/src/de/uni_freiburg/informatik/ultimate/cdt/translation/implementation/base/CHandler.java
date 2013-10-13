@@ -1275,15 +1275,17 @@ public class CHandler implements ICHandler {
                 		stmt.addAll(l.stmt);
                 		auxVars.putAll(l.auxVars);
 
-                		ResultExpression auxPointer = structHandler.auxilliaryPointer(
-                				main, loc, repdL.m_PointerBase, repdL.m_PointerOffet);
-
-                		stmt.addAll(auxPointer.stmt);
-                		decl.addAll(auxPointer.decl);
-                		auxVars.putAll(auxPointer.auxVars);
-
-                		ResultExpression rex = memoryHandler.getWriteCall(auxPointer.expr,
-                				r.expr);
+                		Expression pointer = repdL.m_Pointer;
+                		if (pointer == null) {
+                        ResultExpression auxPointer = structHandler.auxilliaryPointer(
+                        	main, loc, repdL.m_PointerBase, repdL.m_PointerOffet);
+                        	stmt.addAll(auxPointer.stmt);
+                        	decl.addAll(auxPointer.decl);
+                        	auxVars.putAll(auxPointer.auxVars);
+                		}
+                        
+                        ResultExpression rex = memoryHandler.getWriteCall(pointer,
+                                r.expr);
                 		stmt.addAll(rex.stmt);
                 		decl.addAll(rex.decl);
                 		auxVars.putAll(rex.auxVars);

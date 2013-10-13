@@ -286,6 +286,7 @@ public class StructHandler {
      * assume auxPointer!offset == addressOffset 
      */
     public ResultExpression auxilliaryPointer(Dispatcher main, CACSLLocation loc, Expression addressBase, Expression addressOffset) {
+    	assert addressBase != null : "no base address";
     	
 		ArrayList<Statement> stmt = new ArrayList<Statement>();
 		ArrayList<Declaration> decl = new ArrayList<Declaration>();
