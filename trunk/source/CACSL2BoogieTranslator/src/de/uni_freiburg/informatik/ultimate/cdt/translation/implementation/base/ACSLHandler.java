@@ -12,6 +12,7 @@ import org.eclipse.cdt.core.dom.ast.IASTFunctionDefinition;
 import org.eclipse.cdt.core.dom.ast.IASTNode;
 
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CACSLLocation;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.MemoryHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.InferredType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.SymbolTableValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.IncorrectSyntaxException;
@@ -19,6 +20,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.except
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.Result;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ResultContract;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ResultExpressionPointerDereference;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.BoogieASTUtil;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
@@ -64,6 +66,8 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Specification;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StructAccessExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StructLHS;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.UnaryExpression;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VarList;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.result.Check;
 import de.uni_freiburg.informatik.ultimate.result.SyntaxErrorResult.SyntaxErrorType;
 
@@ -333,6 +337,8 @@ public class ACSLHandler implements IACSLHandler {
                 throw new TypeErrorException(msg);
         }
         IType type = new InferredType(InferredType.Type.Unknown);
+        String cId = main.cHandler.getSymbolTable()
+                    .getCID4BoogieID(id, loc);
         if (specType != ACSLHandler.SPEC_TYPE.REQUIRES
                 && specType != ACSLHandler.SPEC_TYPE.ENSURES) {
             // TODO : the translation is sometimes wrong, for requires and
@@ -343,15 +349,34 @@ public class ACSLHandler implements IACSLHandler {
             // This cannot be solved by just appending "#in~" to all
             // identifiers, since the identifier could also refer to a global
             // variable! However, we don't know that at this moment!
-            String cId = main.cHandler.getSymbolTable()
-                    .getCID4BoogieID(id, loc);
+
             if (main.cHandler.getSymbolTable().containsKey(cId)) {
                 ASTType astt = main.cHandler.getSymbolTable()
                         .getTypeOfVariable(cId, loc);
                 type = new InferredType(astt);
             }
         }
-        return new Result(new IdentifierExpression(loc, type, id));
+        Result result = new Result(new IdentifierExpression(loc, type, id));
+        
+        //begin alex
+        MainDispatcher mainDis = (MainDispatcher) main;
+        if (mainDis.cHandler.getSymbolTable().containsCSymbol(cId)) {
+        	VariableDeclaration vd = 
+        			(VariableDeclaration) mainDis.cHandler.getSymbolTable().get(cId, null).getDecl();
+        	if (mainDis.getBoogieDeclarationsOfVariablesOnHeapContains(vd)) {
+        		assert vd.getVariables().length == 1;//should be the case for now
+        		ResultExpressionPointerDereference repd = ((CHandler) mainDis.cHandler).memoryHandler.getReadCall(
+        				main, new InferredType(vd.getVariables()[0].getType()), new IdentifierExpression(loc, type, id));
+
+        		assert false : "this does not work yet, because the ACSLHandler does not seem to consider decl, stmt, .. of a Result";
+        		repd.node = repd.expr;
+        		return repd;
+        	}
+        }
+        //end alex
+        
+//        return new Result(new IdentifierExpression(loc, type, id));
+        return result;
     }
 
     @Override

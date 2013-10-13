@@ -171,7 +171,8 @@ public class CHandler implements ICHandler {
     /**
      * Memory handler.
      */
-    protected MemoryHandler memoryHandler;
+//    protected MemoryHandler memoryHandler;
+    public MemoryHandler memoryHandler; //alex..
     /**
      * Post processor.
      */
