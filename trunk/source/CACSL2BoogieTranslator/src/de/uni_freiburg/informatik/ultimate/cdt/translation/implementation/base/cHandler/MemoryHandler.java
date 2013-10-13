@@ -608,7 +608,7 @@ public class MemoryHandler {
         String cId = main.cHandler.getSymbolTable().getCID4BoogieID(bId, loc);
         CType cvar = main.cHandler.getSymbolTable().get(cId, loc)
                 .getCVariable();
-        if (!(cvar instanceof CPointer)) {
+        if (!isPointer(cvar)) {
             String msg = "Cannot free the non pointer variable " + cId;
             Dispatcher.error(loc, SyntaxErrorType.IncorrectSyntax, msg);
             throw new IncorrectSyntaxException(msg);
@@ -633,6 +633,24 @@ public class MemoryHandler {
 				new HashMap<VariableDeclaration, CACSLLocation>(0);
 		assert (main.isAuxVarMapcomplete(decl, emptyAuxVars));
         return new ResultExpression(stmt, null, decl, emptyAuxVars);
+    }
+    
+    /**
+     * Returns true iff ctype is
+     * <ul>
+     * <li> of type CPointer or
+     * <li> of type CNamed and the mapped type is CPointer.
+     * </ul>
+     */
+    private boolean isPointer(CType ctype) {
+    	if (ctype instanceof CPointer) {
+    		return true;
+    	} else if (ctype instanceof CNamed) {
+    		CNamed cnamed = (CNamed) ctype;
+    		return (cnamed.getMappedType() instanceof CPointer);
+    	} else {
+    		return false;
+    	}
     }
 
     /**
