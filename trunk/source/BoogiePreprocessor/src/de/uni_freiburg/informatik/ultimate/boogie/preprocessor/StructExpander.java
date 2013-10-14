@@ -41,6 +41,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Procedure;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Specification;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StructAccessExpression;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StructConstructor;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StructLHS;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.TypeDeclaration;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.UnaryExpression;
@@ -51,6 +52,81 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.wrapper.WrapperNode;
 
 /**
+ * This class removes our Boogie syntax extension of structs and
+ * creates a plain Boogie code without the struct extension.
+ * 
+ * The extensions for struct we support are:
+ * New ASTType:
+ * <pre>StructType ::= fields : VarList[]<pre>
+ * 
+ * New LeftHandSide:
+ * <pre>StructLHS ::=  struct: LeftHandSide, field:String</pre>
+ * 
+ * New Expressions:
+ * <pre>StructAccessExpression ::=  struct : Expression, field:String
+ * StructConstructor ::= fieldIdentifiers : String[], fieldValues : Expression[]</pre>
+ * Also, IdentifierExpression and VariableLHS can refer to struct
+ * typed variables.  And functions can take struct typed parameters
+ * and return struct typed values.
+ * 
+ * The semantic type of a boogie.ast.StructType is represented by 
+ * boogie.type.StructType. This contains an array of fieldNames (String) 
+ * and an array of fieldTypes (BoogieType) of the same length.
+ * Two struct types are identical if they declare the same names of the 
+ * same types in the same order.  The field types can also be struct typed
+ * and one can build arrays over structs and structs over arrays.
+ * 
+ * This class gets rids of structs by flattening them and replacing them
+ * by the finite list of values.
+ * 
+ * If a struct type is used as index type of an array, it is replaced
+ * by a multidimensional array, one index type for every element in the
+ * struct, forgetting the names of the fields.
+ * E.g., <code>[{a:int,b:real]int</code> is transformed to
+ * <code>[int,real]int</code>
+ * If a struct type is used as element type of an array, the struct is
+ * pulled to the outside, hence it is a struct of arrays, all with the
+ * same index type and the element type of the corresponding field.
+ * E.g., <code>[int]{a:int,b:real}</code> is transformed to
+ * <code>{a:[int]int, b:[int]real}</code>
+ * A struct type in a struct is flattened and the field names are combined
+ * with DOT. e.g. the type <code>{ a : int, b: { x:int, y:int}}</code>
+ * is flattened to <code>{ a: int, b.x : int, b.y : int}</code>.
+ * After these transformation a type can contain a struct type only on
+ * the outside. 
+ *
+ * For every variable declaration occuring in the BoogieAST with a
+ * struct type, we create one variable for each field, e.g.
+ * <code>var x,y: {a:int,b:real}, z:real;<code>
+ * is transformed to
+ * <code>var x.a:int, x.b:real, y.a:int, y.b:real, z:real</code>.
+ * This also includes the variable lists used for input parameters 
+ * in function and procedure declarations and for output parameters
+ * in procedures.  
+ * 
+ * A function returning a struct is replaced by several functions, one
+ * for each field.  The name also uses the DOT, e.g.,
+ * <code>function f () : {a:int,b:real}<code>
+ *  is expanded to
+ * <code>function f.a () : int; function f.b():real}<code>
+ * 
+ * In assignments and procedure calls (which are also assignments), the
+ * left-hand-sides that are of struct type are expanded to a list of
+ * left-hand-sides, one for each field.
+ * An expression of a struct type is replaced by a list of expressions
+ * one for each field.
+ * 
+ * The expansion of expression of struct types works as follows:
+ * An IdentifierExpression is expanded to one IdentifierExpression for
+ * every field, matching the way the variable declaration is expanded.
+ * An FunctionApplication is expanded into a list of FunctionApplication
+ * one for each field.  The function parameters are just duplicated.
+ * An array access is expanded recursively, e.g., if <code>expr<code> 
+ * expands to <code>e1,...,en<code>, <code>expr[i]<code> expands to
+ * <code>e1[i],...,en[i]<code>
+ * 
+ * 
+ * 
  * @author Markus Lindenmann
  * @date 26.08.2012
  */
@@ -756,12 +832,12 @@ public class StructExpander extends BoogieTransformer implements
     }
 
     /**
-     * Expands the given expression iff the underlying type is a struct.
-     * Otherwise e is returned as is.
+     * Expands the given expression in case the underlying type is a struct.
+     * Otherwise this returns a singleton list with the processsed expression.
      * 
-     * @param e
-     *            the expression to expand.
-     * @return the expansion of the given expression, if required, or e.
+     * @param e  the expression to expand.
+     * @return A list containing an expanded expression for every field
+     *   in the type of the original expression.
      */
     private ArrayList<Expression> expandExpression(Expression e) {
         ArrayList<Expression> newExprs = new ArrayList<Expression>();
@@ -838,6 +914,13 @@ public class StructExpander extends BoogieTransformer implements
                 newExprs.add(j);
             }
             return newExprs;
+        } else if (e instanceof StructConstructor) {
+        	Expression[] values = ((StructConstructor) e).getFieldValues();
+        	ArrayList<Expression> result = new ArrayList<Expression>();
+        	for (Expression val : values) {
+        		result.addAll(expandExpression(val));
+        	}
+        	return result;
         }
         newExprs.add(processExpression(e));
         return newExprs;
