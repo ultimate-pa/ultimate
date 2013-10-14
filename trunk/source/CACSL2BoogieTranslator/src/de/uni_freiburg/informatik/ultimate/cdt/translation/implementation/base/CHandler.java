@@ -1249,6 +1249,7 @@ public class CHandler implements ICHandler {
             case IASTBinaryExpression.op_assign:
                 stmt.addAll(r.stmt);
                 if (l instanceof ResultExpressionPointerDereference) {
+                	// case where left hand side is dereferenced pointer
                 	ResultExpressionPointerDereference repdL = 
                 			(ResultExpressionPointerDereference) l;
                 	assert (node.getOperand1() instanceof IASTUnaryExpression
@@ -1311,25 +1312,7 @@ public class CHandler implements ICHandler {
                 if (node.getOperand1() instanceof IASTUnaryExpression
                         && ((IASTUnaryExpression) node.getOperand1())
                                 .getOperator() == IASTUnaryExpression.op_star) {
-                    ResultExpression o = (ResultExpression) main
-                            .dispatch(((IASTUnaryExpression) node.getOperand1())
-                                    .getOperand());
-                    stmt.addAll(o.stmt);
-                    decl.addAll(o.decl);
-                    auxVars.putAll(o.auxVars);
-                    ResultExpression rex = memoryHandler.getWriteCall(o.expr,
-                            r.expr);
-                    stmt.addAll(rex.stmt);
-                    decl.addAll(rex.decl);
-                    auxVars.putAll(rex.auxVars);
-                    for (String t : new String[] { SFO.INT, SFO.POINTER,
-                            SFO.REAL, SFO.BOOL }) {
-                        functionHandler.getModifiedGlobals()
-                                .get(functionHandler.getCurrentProcedureID())
-                                .add(SFO.MEMORY + "_" + t);
-                    }
-                    assert (main.isAuxVarMapcomplete(decl, auxVars)) : "unhavoced auxvars";
-                    return new ResultExpression(stmt, rex.expr, decl, auxVars);
+                	throw new AssertionError("this case should have already been handeled above");
                 } else if (l.expr.getType() instanceof InferredType
                         && ((InferredType) l.expr.getType()).getType() == Type.Pointer
                         && r.expr.getType() instanceof InferredType
@@ -1642,6 +1625,20 @@ public class CHandler implements ICHandler {
                 Dispatcher.error(loc, SyntaxErrorType.UnsupportedSyntax, msg);
                 throw new UnsupportedSyntaxException(msg);
         }
+    }
+    
+    /**
+     * Transform int result to a pointer. The base address the resulting 
+     * pointer is 0, the int becomes the offset of the pointer.
+     * @param rex
+     */
+    private void transformIntResult2PointerResult(Dispatcher main, CACSLLocation loc, ResultExpression rex) {
+    	Expression zero = new IntegerLiteral(loc, SFO.NR0);
+    	ResultExpression auxPointer = memoryHandler.auxilliaryPointer(main, loc, zero, rex.expr);
+    	rex.decl.addAll(auxPointer.decl);
+    	rex.stmt.addAll(auxPointer.stmt);
+    	rex.auxVars.putAll(auxPointer.auxVars);
+    	rex.expr = auxPointer.expr;
     }
 
     /**
