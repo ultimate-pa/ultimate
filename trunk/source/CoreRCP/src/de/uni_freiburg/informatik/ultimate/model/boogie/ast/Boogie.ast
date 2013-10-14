@@ -155,6 +155,10 @@ Expression ::=
 	        supported in Boogie.  A string literal never has a type. */
 	    StringLiteral }
 		value   : String
+	| { /** Represents a struct constructor. */
+		StructConstructor }
+		fieldIdentifiers : String[]
+		fieldValues      : Expression[] 
 	| { IdentifierExpression }
 		identifier : String
 	| { FunctionApplication }

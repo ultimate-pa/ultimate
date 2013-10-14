@@ -272,6 +272,19 @@ public class BoogieOutput {
 		} else if (expr instanceof StringLiteral) {
 			sb.append('"').append(((StringLiteral) expr).getValue())
 					.append('"');
+		} else if (expr instanceof StructConstructor) {
+			StructConstructor struct = (StructConstructor) expr;
+			String comma = "";
+			sb.append("{ ");
+			String[] fieldNames = struct.getFieldIdentifiers();
+			Expression[] fieldExprs = struct.getFieldValues();
+			for (int i = 0; i < fieldNames.length; i++) {
+				sb.append(comma).append(fieldNames[i]);
+				sb.append(": ");
+				appendExpression(sb, fieldExprs[i]);
+				comma = ", ";
+			}
+			sb.append(" }");
 		} else if (expr instanceof WildcardExpression) {
 			sb.append("*");
 		} else if (expr instanceof IdentifierExpression) {

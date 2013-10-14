@@ -3,7 +3,7 @@
 package de.uni_freiburg.informatik.ultimate.boogie.parser;
 import java.util.Collections;
 import java.util.List;
-import java.util.LinkedList;
+import java.util.ArrayList;
 import java_cup.runtime.Symbol;
 import de.uni_freiburg.informatik.ultimate.boogie.parser.BoogieSymbolFactory.BoogieSymbol;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.*;
@@ -66,6 +66,17 @@ action code {:
 	                   startLine, endLine, startColumn, endColumn, isLoop);
 	}
 	
+	public StructConstructor createStruct(ILocation loc, List<NamedExpression> content) {
+		String[] fieldNames = new String[content.size()];
+		Expression[] fieldExprs = new Expression[content.size()];
+		int i = 0;
+		for (NamedExpression ne : content) {
+			fieldNames[i] = ne.getName();
+			fieldExprs[i] = ne.getExpression();
+			i++;
+		}
+		return new StructConstructor(loc, fieldNames, fieldExprs);
+	}
 :}
 
 /*init with {: getScanner().init(); :} */
@@ -167,6 +178,7 @@ non terminal List<VarList> idsTypeCommaPlus, idsTypeCommaStar;
 non terminal List<VarList> idsTypeWhereCommaPlus, idsTypeWhereCommaStar;
 non terminal VarList idsType, idsTypeWhere;
 non terminal Expression whereClauseOpt;
+non terminal List<NamedExpression> idsExprCommaPlus;
 
 /* The grammar */
 
@@ -176,7 +188,7 @@ program ::=
 	;
 
 declStar ::=
-      /* empty */ {: RESULT = new LinkedList<Declaration>(); :}
+      /* empty */ {: RESULT = new ArrayList<Declaration>(); :}
     | declStar:p decl:d {: p.add(d); RESULT = p; :}
     | declStar:p error {: RESULT = p; :} 
     ;
@@ -231,7 +243,7 @@ parentEdgeCommaStar ::=
 	;
 parentEdgeCommaPlus ::=
 	  parentEdge: p
-		{: RESULT = new LinkedList<ParentEdge>(); RESULT.add(p); :}
+		{: RESULT = new ArrayList<ParentEdge>(); RESULT.add(p); :}
 	| parentEdgeCommaPlus:pel COMMA parentEdge:p
 		{: RESULT = pel; RESULT.add(p); :}
 	;
@@ -241,8 +253,8 @@ parentEdge ::=
 
 /* axiom decl */
 axiomDecl ::=
-	AXIOM:x attributes:attr expr:e SEMI
-	{: RESULT = new Axiom(getLocation(x$,e$,false), attr, e); :}
+	AXIOM:x attributeStar:attr expr:e SEMI
+	{: RESULT = new Axiom(getLocation(x$,e$,false), attr.toArray(new NamedAttribute[attr.size()]), e); :}
 	;
 	
 /* function decl */
@@ -262,7 +274,7 @@ fargCommaStar ::=
 	| fargCommaPlus:f {: RESULT = f; :}
 	;
 fargCommaPlus ::=
-	farg:f {: RESULT = new LinkedList<VarList>(); RESULT.add(f); :}
+	farg:f {: RESULT = new ArrayList<VarList>(); RESULT.add(f); :}
 	| fargCommaPlus:fl COMMA farg:f {: RESULT = fl; RESULT.add(f); :}
 	;
 returnSpec ::=
@@ -314,7 +326,7 @@ ioutparmOpt ::=
 	  {: RESULT = l; :}
 	;
 specStar ::=
-	  /* empty */ {: RESULT = new LinkedList<Specification>(); :}
+	  /* empty */ {: RESULT = new ArrayList<Specification>(); :}
 	| specStar:l spec:s {: RESULT = l; l.add(s); :}
 	; 
 spec ::=
@@ -335,11 +347,11 @@ attributes ::=
 	attributeStar:as {: RESULT = as.toArray(new NamedAttribute[as.size()]); :};
 
 attributeStar ::=
-	/* empty */ {: RESULT = new LinkedList<NamedAttribute>(); :}
+	/* empty */ {: RESULT = new ArrayList<NamedAttribute>(); :}
 	| attributeStar:as attribute:a {: as.add(a); RESULT = as; :}
 	;
 attrtriggers ::=
-	/* empty */ {: RESULT = new LinkedList<Attribute>(); :}
+	/* empty */ {: RESULT = new ArrayList<Attribute>(); :}
 	| attrtriggers:as attribute:a {: as.add(a); RESULT = as; :}
 	| attrtriggers:as trigger:t {: as.add(t); RESULT = as; :}
 	;
@@ -352,7 +364,7 @@ attrArgCommaStar ::=
 	| attrArgCommaPlus:al
 	;
 attrArgCommaPlus ::=
-	attrArg:a {: RESULT = new LinkedList<Expression>(); RESULT.add(a); :}
+	attrArg:a {: RESULT = new ArrayList<Expression>(); RESULT.add(a); :}
 	| attrArgCommaPlus:al COMMA attrArg:a {: RESULT = al; al.add(a); :}
 	;
 	
@@ -369,7 +381,7 @@ trigger ::=
 /* types */
 
 typeCommaList ::= 
-	  type:t {: RESULT = new LinkedList<ASTType>(); RESULT.add(t); :}
+	  type:t {: RESULT = new ArrayList<ASTType>(); RESULT.add(t); :}
 	| typeCommaList:tl COMMA type:t {: tl.add(t); RESULT = tl; :}
 	;
 type ::= 
@@ -402,12 +414,12 @@ typeArgsOpt ::=
 	  {: RESULT = tal.toArray(new String[tal.size()]); :}
 	;
 typeCtorArgsOpt ::=
-	  /* empty */ {:RESULT = new LinkedList<ASTType>(); :}
+	  /* empty */ {:RESULT = new ArrayList<ASTType>(); :}
 	| typeAtom:ta typeCtorArgsOpt:tl {:  tl.add(0, ta); RESULT = tl; :}
 	| ID:i typeCtorArgsOpt:tl
 	  {: tl.add(0, new NamedType(getLocation(i$,tl$,false), i, new ASTType[0])); RESULT = tl; :}
 	| mapType:t
-	  {: RESULT = new LinkedList<ASTType>(); RESULT.add(t); :}
+	  {: RESULT = new ArrayList<ASTType>(); RESULT.add(t); :}
 	; 
 
 /* expressions */
@@ -419,7 +431,7 @@ exprCommaStar ::=
 
 exprCommaPlus ::=
 	  expr:e
-	  {: RESULT = new LinkedList<Expression>(); RESULT.add(e); :}
+	  {: RESULT = new ArrayList<Expression>(); RESULT.add(e); :}
 	| exprCommaPlus:el COMMA expr:e
 	  {: el.add(e); RESULT = el; :}
 	;
@@ -528,6 +540,8 @@ expr9 ::=
 	  {: RESULT = new QuantifierExpression(getLocation(q$,e$,false), q, ta, vars.toArray(new VarList[vars.size()]), a.toArray(new Attribute[a.size()]), e); :}
 	| IF expr:c THEN expr:t ELSE expr:e 
 	  {: RESULT = new IfThenElseExpression(getLocation(c$,e$,false), c, t, e); :}
+	| LBRC:l idsExprCommaPlus:f RBRC:r
+	  {: RESULT = createStruct(getLocation(l$,r$,false), f); :}
 	| LPAR expr:e RPAR
 	  {:RESULT = e;:}
 	;
@@ -642,6 +656,8 @@ expr9NI ::=
 	  {: RESULT = new UnaryExpression(getLocation(e$,e$,false), UnaryExpression.Operator.OLD, e); :}
 	| LPAR quant:q typeArgsOpt:ta idsTypeCommaPlus:vars QSEP attrtriggers:a expr:e RPAR
 	  {: RESULT = new QuantifierExpression(getLocation(q$,e$,false), q, ta, vars.toArray(new VarList[vars.size()]), a.toArray(new Attribute[a.size()]), e); :}
+	| LBRC:l idsExprCommaPlus:f RBRC:r
+	  {: RESULT = createStruct(getLocation(l$,r$,false), f); :}
 	| LPAR expr:e RPAR
 	  {:RESULT = e;:}
 	;
@@ -656,7 +672,7 @@ body ::= LBRC localVarDeclStar:lv stmtList:s RBRC
 			 s.toArray(new Statement[s.size()])); :}
 	;
 localVarDeclStar ::=
-	  /* empty */ {: RESULT = new LinkedList<VariableDeclaration>(); :}
+	  /* empty */ {: RESULT = new ArrayList<VariableDeclaration>(); :}
 	| localVarDeclStar:lvl localVarDecl:lv {: lvl.add(lv); RESULT = lvl; :}
 	;
 localVarDecl ::=
@@ -664,7 +680,7 @@ localVarDecl ::=
 	  {: RESULT = new VariableDeclaration(getLocation(x$,i$,false), attr, i.toArray(new VarList[i.size()])); :}
 	;
 stmtList ::=
-	  /* empty */ {: RESULT = new LinkedList<Statement>(); :}
+	  /* empty */ {: RESULT = new ArrayList<Statement>(); :}
     | stmtList:l stmt:s {: l.add(s); RESULT = l; :}
     //| stmtList:l error {: RESULT = l; :}
 	;
@@ -713,7 +729,7 @@ blockStmt ::=
 	  {: RESULT = s.toArray(new Statement[s.size()]); :}
 	;
 loopInvStar ::=
-	  /* empty */ {: RESULT = new LinkedList<LoopInvariantSpecification>(); :}
+	  /* empty */ {: RESULT = new ArrayList<LoopInvariantSpecification>(); :}
 	| loopInvStar:l loopInv:i {: RESULT = l; l.add(i); :}
 	;
 loopInv ::=
@@ -723,7 +739,7 @@ loopInv ::=
 	
 lhsCommaPlus ::=
 	lhs:e
-	  {: RESULT = new LinkedList<LeftHandSide>(); RESULT.add(e); :}
+	  {: RESULT = new ArrayList<LeftHandSide>(); RESULT.add(e); :}
 	| lhsCommaPlus:l COMMA lhs:e
 	  {: RESULT = l; l.add(e); :}
 	;
@@ -741,7 +757,7 @@ wildcardExprCommaStar ::=
 	;
 wildcardExprCommaPlus ::=
 	wildcardExpr:e
-	  {: RESULT = new LinkedList<Expression>(); RESULT.add(e); :}
+	  {: RESULT = new ArrayList<Expression>(); RESULT.add(e); :}
 	| wildcardExprCommaPlus:l COMMA wildcardExpr:e
 	  {: RESULT = l; l.add(e); :}
 	;
@@ -754,7 +770,7 @@ wildcardExpr ::=
         
 idStar ::= 
 	  /*empty*/
-	  {: RESULT = new LinkedList<String>(); :} 
+	  {: RESULT = new ArrayList<String>(); :} 
 	| idStar:il ID:i
 	  {: il.add(i); RESULT = il; :} 
     ;
@@ -764,7 +780,7 @@ idCommaStar ::=
 	;
 idCommaPlus ::= 
 	  ID:i
-	  {: RESULT = new LinkedList<String>(); RESULT.add(i); :} 
+	  {: RESULT = new ArrayList<String>(); RESULT.add(i); :} 
 	| idCommaPlus:il COMMA ID:i
 	  {: il.add(i); RESULT = il; :} 
     ;
@@ -775,7 +791,7 @@ idsTypeCommaStar ::=
 	;
 idsTypeCommaPlus ::=
       idsType:i
-      {: RESULT = new LinkedList<VarList>(); RESULT.add(i); :}
+      {: RESULT = new ArrayList<VarList>(); RESULT.add(i); :}
     | idsTypeCommaPlus:il COMMA idsType:i
       {: RESULT = il; RESULT.add(i); :}
     ;
@@ -789,7 +805,7 @@ idsTypeWhereCommaStar ::=
 	;
 idsTypeWhereCommaPlus ::=
       idsTypeWhere:i
-      {: RESULT = new LinkedList<VarList>(); RESULT.add(i); :}
+      {: RESULT = new ArrayList<VarList>(); RESULT.add(i); :}
     | idsTypeWhereCommaPlus:il COMMA idsTypeWhere:i
       {: RESULT = il; RESULT.add(i); :}
     ;
@@ -800,3 +816,11 @@ whereClauseOpt ::=
 	  /* empty */ {: RESULT = null; :}
 	| WHERE expr:e {: RESULT = e; :}
 	;
+
+idsExprCommaPlus ::=
+      ID:i COLON expr:e
+      {: RESULT = new ArrayList<NamedExpression>(); RESULT.add(new NamedExpression(i, e)); :}
+    | idsExprCommaPlus:il COMMA ID:i COLON expr:e
+      {: RESULT = il; RESULT.add(new NamedExpression(i, e)); :}
+    ;
+	

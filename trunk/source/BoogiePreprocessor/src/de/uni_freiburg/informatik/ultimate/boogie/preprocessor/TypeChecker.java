@@ -65,6 +65,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Specification;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StringLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StructAccessExpression;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StructConstructor;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StructLHS;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Trigger;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.UnaryExpression;
@@ -358,6 +359,14 @@ public class TypeChecker implements IUnmanagedObserver {
         } else if (expr instanceof BitvecLiteral) {
             BitvecLiteral bvlit = (BitvecLiteral) expr;
             resultType = BoogieType.createBitvectorType(bvlit.getLength());
+        } else if (expr instanceof StructConstructor) {
+            StructConstructor struct = (StructConstructor) expr;
+            Expression[] fieldExprs = struct.getFieldValues();
+            BoogieType[] fieldTypes = new BoogieType[fieldExprs.length];
+            for (int i = 0; i < fieldExprs.length; i++) {
+            	fieldTypes[i] = typecheckExpression(fieldExprs[i]);
+            }
+            resultType = BoogieType.createStructType(struct.getFieldIdentifiers(), fieldTypes);
         } else if (expr instanceof IdentifierExpression) {
             IdentifierExpression idexpr = (IdentifierExpression) expr;
             String name = idexpr.getIdentifier();
