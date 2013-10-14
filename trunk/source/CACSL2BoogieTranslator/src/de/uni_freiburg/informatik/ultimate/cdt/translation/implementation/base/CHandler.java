@@ -1290,7 +1290,7 @@ public class CHandler implements ICHandler {
                                 	auxVars.putAll(auxPointer.auxVars);
                                 	pointer = auxPointer.expr;
                 		} else {
-                			pointer = repdL.expr;
+                			pointer = repdL.m_Pointer;
                 		}
                         ResultExpression rex = memoryHandler.getWriteCall(pointer,
                                 r.expr);
