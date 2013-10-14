@@ -28,7 +28,7 @@ public class SvComp14MainDispatcher extends MainDispatcher {
         typeHandler = new SVCompTypeHandler();
         acslHandler = new ACSLHandler();
         nameHandler = new NameHandler();
-        preprocessorHandler = new PreprocessorHandler();
+        preprocessorHandler = new SvComp14PreprocessorHandler();
         backtranslator.setBoogie2C(nameHandler.getBoogie2C());
         REPORT_WARNINGS = false;
     }
