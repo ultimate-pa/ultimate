@@ -214,7 +214,8 @@ public class StructHandler {
         		fieldOwnerPointsToType = ((CPointer) rex.cType).pointsToType; 
         		addressBaseOfFieldOwner = new StructAccessExpression(loc, 
         				rex.expr, SFO.POINTER_BASE);
-        		addressOffsetOfFieldOwner = new IntegerLiteral(loc, SFO.NR0);
+        		addressOffsetOfFieldOwner = new StructAccessExpression(loc, 
+        				rex.expr, SFO.POINTER_OFFSET);
         	} else {
         		fieldOwnerPointsToType = rex.cType;
         		ResultExpressionPointerDereference repd = 
