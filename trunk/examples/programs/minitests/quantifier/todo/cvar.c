@@ -1,4 +1,8 @@
 /*
+ * 
+ * Date: October 2013
+ * Author: Christian Schilling
+ * 
  * AssertionError in MemoryHandler:
  * assert cvar != null;
  * 

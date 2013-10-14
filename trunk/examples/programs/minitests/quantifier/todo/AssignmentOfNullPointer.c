@@ -9,7 +9,8 @@ int nonMain() {
     int* a; // some auxiliary statement to obtain memory model
     int b = *a; // some auxiliary statement to obtain memory model
 	
-    int *p = 0;
+    int *p;
+	p = 0;
 	
     return 0;
 }

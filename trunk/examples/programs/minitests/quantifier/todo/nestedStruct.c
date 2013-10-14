@@ -1,4 +1,6 @@
 /*
+ * Date: October 2013
+ * Author: Christian Schilling
  * Syntax Error in TypeHandler:
  * (type instanceof CStruct)
  * -> not implemented

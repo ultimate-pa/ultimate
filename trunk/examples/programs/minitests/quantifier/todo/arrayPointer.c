@@ -1,4 +1,7 @@
 /*
+ * Date: October 2013
+ * Author: Christian Schilling
+ * 
  * Syntax Error in SvCompHandler:
  * (type instanceof CArray)
  */
