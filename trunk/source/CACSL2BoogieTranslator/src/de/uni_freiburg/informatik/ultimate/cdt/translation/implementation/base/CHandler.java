@@ -672,6 +672,14 @@ public class CHandler implements ICHandler {
                         auxVars.putAll(rExpr.auxVars);
                         rExpr.expr = main.typeHandler.convertArith2Boolean(
                                 loc, type, rExpr.expr);
+                        if (lhsIsPointerAndRhsIsInt(cvar, rExpr.expr)) {
+                        	ResultExpression auxPointer = 
+                        			getPointerFromInt(main, loc, rExpr.expr);
+                        	rExpr.stmt.addAll(auxPointer.stmt);
+                        	rExpr.decl.addAll(auxPointer.decl);
+                        	rExpr.auxVars.putAll(auxVars);
+                        	rExpr.expr = auxPointer.expr;
+                        }
                         Expression[] rhs = new Expression[] { rExpr.expr };
                         VariableLHS[] lhs = new VariableLHS[] { new VariableLHS(
                                 loc, bId) };
@@ -681,11 +689,15 @@ public class CHandler implements ICHandler {
                         if (resType.cvar.isStatic() && !isGlobal) {
                             staticVarStorage.decl.addAll(rExpr.decl);
                             staticVarStorage.stmt.addAll(rExpr.stmt);
+                            staticVarStorage.auxVars.putAll(rExpr.auxVars);
                             staticVarStorage.stmt.add(as);
+//                            staticVarStorage.stmt.addAll(Dispatcher.createHavocsForAuxVars(auxVars));
                         } else {
                             result.decl.addAll(rExpr.decl);
                             result.stmt.addAll(rExpr.stmt);
+                            result.auxVars.putAll(rExpr.auxVars);
                             result.stmt.add(as);
+ //                           result.stmt.addAll(Dispatcher.createHavocsForAuxVars(auxVars));
                         }
                     }
                 } else if (!cvar.isGlobalVariable() && !cvar.isStatic()) {
@@ -1322,25 +1334,11 @@ public class CHandler implements ICHandler {
                     // String msg = "Using integer value as pointer!";
                     // Dispatcher.warn(loc, SyntaxErrorType.TypeError, msg);
                     // FIXME: Assign constant pointer t={0, r.expr }.
-                    String tmpId = main.nameHandler
-                            .getTempVarUID(SFO.AUXVAR.CONSTPOINTER);
-                    InferredType tmpIType = new InferredType(Type.Pointer);
-                    Expression idEx = new IdentifierExpression(loc,
-                            new InferredType(Type.Pointer), tmpId);
-                    VariableDeclaration tmpVar = SFO.getTempVarVariableDeclaration(tmpId, tmpIType, loc);
-                    auxVars.put(tmpVar, loc);
-                    decl.add(tmpVar);
-                    stmt.add(new AssignmentStatement(
-                            loc,
-                            new LeftHandSide[] { new StructLHS(loc,
-                                    new VariableLHS(loc, tmpId), SFO.POINTER_BASE) },
-                            new Expression[] { new IntegerLiteral(loc, SFO.NR0) }));
-                    stmt.add(new AssignmentStatement(loc,
-                            new LeftHandSide[] { new StructLHS(loc,
-                                    new VariableLHS(loc, tmpId),
-                                    SFO.POINTER_OFFSET) },
-                            new Expression[] { r.expr }));
-                    r.expr = idEx;
+                	ResultExpression auxPointer = getPointerFromInt(main, loc, r.expr);
+                	stmt.addAll(auxPointer.stmt);
+                	decl.addAll(auxPointer.decl);
+                	auxVars.putAll(auxPointer.auxVars);
+                	r.expr = auxPointer.expr;
                 }
                 stmt.addAll(l.stmt);
                 LeftHandSide lhs = BoogieASTUtil.getLHSforExpression(l.expr);
@@ -1627,18 +1625,29 @@ public class CHandler implements ICHandler {
         }
     }
     
+  
     /**
-     * Transform int result to a pointer. The base address the resulting 
-     * pointer is 0, the int becomes the offset of the pointer.
-     * @param rex
+     * Transform an int expression to a pointer. The base address of the 
+     * resulting pointer is 0,  the int expression becomes the offset of the pointer.
      */
-    private void transformIntResult2PointerResult(Dispatcher main, CACSLLocation loc, ResultExpression rex) {
+    private ResultExpression getPointerFromInt(Dispatcher main, CACSLLocation loc, Expression intExpr) {
+    	assert ((InferredType) intExpr.getType()).getType().equals(Type.Integer);
     	Expression zero = new IntegerLiteral(loc, SFO.NR0);
-    	ResultExpression auxPointer = memoryHandler.auxilliaryPointer(main, loc, zero, rex.expr);
-    	rex.decl.addAll(auxPointer.decl);
-    	rex.stmt.addAll(auxPointer.stmt);
-    	rex.auxVars.putAll(auxPointer.auxVars);
-    	rex.expr = auxPointer.expr;
+    	ResultExpression auxPointer = memoryHandler.auxilliaryPointer(main, loc, zero, intExpr);
+    	return auxPointer;
+    }
+    
+    /**
+     * Given the cvar of a left hand side and the expression of a right hand
+     * side (of an equality). Return true if lhs is a Pointer and the rhs is an
+     * int.
+     */
+    private boolean lhsIsPointerAndRhsIsInt(CType cvar, Expression rhs) {
+    	if (!(cvar instanceof CPointer)) {
+    		return false;
+    	}
+    	InferredType it = (InferredType) rhs.getType();
+    	return it.getType().equals(Type.Integer);
     }
 
     /**
