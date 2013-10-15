@@ -36,11 +36,18 @@ int main() {
 	
 	int nodeSize = sizeof(node);
 	//@ assert nodeSize > 0;
-	int ptrSize = sizeof(node*);
-	//@ assert ptrSize > 0;
 	
+	int ptrSize = sizeof(int*);
+	//@ assert ptrSize > 0;
 	//@ assert nodeSize >= intSize + ptrSize;
-	// assert nodeSize > ptrSize;
+	// @assert nodeSize > ptrSize;
+	
+	int listSize = sizeof(List);
+	//@ assert ptrSize == ptrSize;
+	
+	int nodePtrSize = sizeof(node*);
+	//@ assert nodePtrSize == ptrSize
+
 }
 
 
