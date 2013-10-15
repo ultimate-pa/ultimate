@@ -213,7 +213,7 @@ public class ArrayHandler {
 				new HashMap<VariableDeclaration, CACSLLocation>();
         String cId = d.getName().getRawSignature();
         String bId = main.nameHandler.getUniqueIdentifier(node, cId,
-                main.cHandler.getSymbolTable().getCompoundCounter());
+                main.cHandler.getSymbolTable().getCompoundCounter(), false);
         Result res = main.dispatch(node.getDeclSpecifier());
         assert res instanceof ResultSkip || res instanceof ResultTypes;
         if (res instanceof ResultSkip)

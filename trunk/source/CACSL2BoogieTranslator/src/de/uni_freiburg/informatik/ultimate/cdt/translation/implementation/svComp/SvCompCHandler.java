@@ -28,6 +28,7 @@ import org.eclipse.cdt.core.dom.ast.IASTUnaryExpression;
 
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CACSLLocation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CHandler;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.MainDispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.InferredType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.InferredType.Type;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CNamed;
@@ -332,7 +333,8 @@ public class SvCompCHandler extends CHandler {
                 // Get the type of this variable
                 assert resType.getType() != null;
                 String bId = main.nameHandler.getUniqueIdentifier(node, cId,
-                        symbolTable.getCompoundCounter());
+                        symbolTable.getCompoundCounter(), 
+                        ((MainDispatcher) main).getVariablesForHeap().contains(node));//TODO: unsure here, about the last arg
                 ASTType type = resType.getType();
                 if (main.typeHandler.isStructDeclaration()) {
                     // store C variable information into this result, as this is
