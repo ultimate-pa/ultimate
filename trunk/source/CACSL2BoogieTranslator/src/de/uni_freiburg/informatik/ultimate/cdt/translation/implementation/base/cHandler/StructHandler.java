@@ -207,62 +207,10 @@ public class StructHandler {
              * - STRUid is the identifier of the struct STRU
              * 
              */
-        	Expression addressBaseOfFieldOwner;
-        	Expression addressOffsetOfFieldOwner;
-        	CType fieldOwnerPointsToType;
-        	if (node.isPointerDereference()) {
-        		CType fieldOwnerType = rex.cType;
-        		if (fieldOwnerType instanceof CNamed) {
-        			fieldOwnerType = ((CNamed) fieldOwnerType).getMappedType();
-        		}
-        		if (fieldOwnerType instanceof CPointer) {
-        			fieldOwnerPointsToType = ((CPointer) fieldOwnerType).pointsToType;
-        		} else {
-        			throw new IllegalArgumentException("unsupported pointer type " + rex.cType);
-        		}
-        		addressBaseOfFieldOwner = new StructAccessExpression(loc, 
-        				rex.expr, SFO.POINTER_BASE);
-        		addressOffsetOfFieldOwner = new StructAccessExpression(loc, 
-        				rex.expr, SFO.POINTER_OFFSET);
-        	} else {
-        		fieldOwnerPointsToType = rex.cType;
-        		ResultExpressionPointerDereference repd = 
-        				(ResultExpressionPointerDereference) rex;
-        		if (repd instanceof ResultExpressionPointerDereferenceBO) {
-        			ResultExpressionPointerDereferenceBO repdbo = 
-        					(ResultExpressionPointerDereferenceBO) repd;
-        			addressBaseOfFieldOwner = repdbo.m_PointerBase;
-        			addressOffsetOfFieldOwner = repdbo.m_PointerOffset;
-        		} else {
-        			addressBaseOfFieldOwner = new StructAccessExpression(loc, 
-        					repd.m_Pointer, SFO.POINTER_BASE);
-        			addressOffsetOfFieldOwner = new StructAccessExpression(loc, 
-        					repd.m_Pointer, SFO.POINTER_OFFSET);
-        			
-        		}
-        		repd.removePointerDereference();
-        	}
-			if (fieldOwnerPointsToType instanceof CNamed) {
-				fieldOwnerPointsToType = ((CNamed) fieldOwnerPointsToType).getUnderlyingType();
-			}
-			if (fieldOwnerPointsToType == null || !(fieldOwnerPointsToType instanceof CStruct)) {
-			    String msg = "Incorrect or unexpected field owner!";
-			    Dispatcher.error(loc, SyntaxErrorType.IncorrectSyntax, msg);
-			    throw new IncorrectSyntaxException(msg);
-			}
-			String offset = SFO.OFFSET + fieldOwnerPointsToType.toString() + "~" + field;
-			IdentifierExpression additionalOffset = new IdentifierExpression(loc, offset);
-			Expression newOffset;
-			if (isZero(addressOffsetOfFieldOwner)) {
-				newOffset = additionalOffset;
-			} else {
-				newOffset = new BinaryExpression(loc, Operator.ARITHPLUS, 
-						addressOffsetOfFieldOwner, additionalOffset);
-			}
-			ResultExpression result = memoryHandler.getReadCall(main, it, loc, 
-					addressBaseOfFieldOwner, newOffset);
-			result.cType = ((CStruct) fieldOwnerPointsToType).getFieldType(field);
-			return result;
+			boolean isPointerDeref = node.isPointerDereference();
+			
+        	return readFieldAtAddress(main, memoryHandler, loc, field, it, rex,
+					isPointerDeref);
 
         	
         } else {
@@ -284,6 +232,69 @@ public class StructHandler {
         	return result;
         }
     }
+
+	public Result readFieldAtAddress(Dispatcher main,
+			MemoryHandler memoryHandler, CACSLLocation loc, String field,
+			InferredType it, ResultExpression rex, boolean isLeftOfAnArrow) {
+		Expression addressBaseOfFieldOwner;
+		Expression addressOffsetOfFieldOwner;
+		CType fieldOwnerPointsToType;
+		if (isLeftOfAnArrow) {
+			CType fieldOwnerType = rex.cType;
+			if (fieldOwnerType instanceof CNamed) {
+				fieldOwnerType = ((CNamed) fieldOwnerType).getMappedType();
+			}
+			if (fieldOwnerType instanceof CPointer) {
+				fieldOwnerPointsToType = ((CPointer) fieldOwnerType).pointsToType;
+			} else {
+				throw new IllegalArgumentException("unsupported pointer type " + rex.cType);
+			}
+			addressBaseOfFieldOwner = new StructAccessExpression(loc, 
+					rex.expr, SFO.POINTER_BASE);
+			addressOffsetOfFieldOwner = new StructAccessExpression(loc, 
+					rex.expr, SFO.POINTER_OFFSET);
+		} else {
+			fieldOwnerPointsToType = rex.cType;
+			ResultExpressionPointerDereference repd = 
+					(ResultExpressionPointerDereference) rex;
+			if (repd instanceof ResultExpressionPointerDereferenceBO) {
+				ResultExpressionPointerDereferenceBO repdbo = 
+						(ResultExpressionPointerDereferenceBO) repd;
+				addressBaseOfFieldOwner = repdbo.m_PointerBase;
+				addressOffsetOfFieldOwner = repdbo.m_PointerOffset;
+			} else {
+				addressBaseOfFieldOwner = new StructAccessExpression(loc, 
+						repd.m_Pointer, SFO.POINTER_BASE);
+				addressOffsetOfFieldOwner = new StructAccessExpression(loc, 
+						repd.m_Pointer, SFO.POINTER_OFFSET);
+				
+			}
+			//we may use the same pointer for many struct fields an only want to remove the call once
+			if (repd.stmt.size() != 0)
+				repd.removePointerDereference();
+		}
+		if (fieldOwnerPointsToType instanceof CNamed) {
+			fieldOwnerPointsToType = ((CNamed) fieldOwnerPointsToType).getUnderlyingType();
+		}
+		if (fieldOwnerPointsToType == null || !(fieldOwnerPointsToType instanceof CStruct)) {
+		    String msg = "Incorrect or unexpected field owner!";
+		    Dispatcher.error(loc, SyntaxErrorType.IncorrectSyntax, msg);
+		    throw new IncorrectSyntaxException(msg);
+		}
+		String offset = SFO.OFFSET + fieldOwnerPointsToType.toString() + "~" + field;
+		IdentifierExpression additionalOffset = new IdentifierExpression(loc, offset);
+		Expression newOffset;
+		if (isZero(addressOffsetOfFieldOwner)) {
+			newOffset = additionalOffset;
+		} else {
+			newOffset = new BinaryExpression(loc, Operator.ARITHPLUS, 
+					addressOffsetOfFieldOwner, additionalOffset);
+		}
+		ResultExpression result = memoryHandler.getReadCall(main, it, loc, 
+				addressBaseOfFieldOwner, newOffset);
+		result.cType = ((CStruct) fieldOwnerPointsToType).getFieldType(field);
+		return result;
+	}
     
     /**
      * Returns true iff expr is IntegerLiteral "0".

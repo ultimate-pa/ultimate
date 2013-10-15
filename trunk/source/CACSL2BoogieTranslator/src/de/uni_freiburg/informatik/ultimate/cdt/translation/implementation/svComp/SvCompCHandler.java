@@ -332,7 +332,7 @@ public class SvCompCHandler extends CHandler {
                 // Get the type of this variable
                 assert resType.getType() != null;
                 String bId = main.nameHandler.getUniqueIdentifier(node, cId,
-                        symbolTable.getCompoundCounter());
+                        symbolTable.getCompoundCounter(), false);
                 ASTType type = resType.getType();
                 if (main.typeHandler.isStructDeclaration()) {
                     // store C variable information into this result, as this is

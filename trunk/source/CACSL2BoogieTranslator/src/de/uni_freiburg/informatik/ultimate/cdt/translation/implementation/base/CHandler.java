@@ -134,6 +134,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Specification;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StringLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StructAccessExpression;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StructConstructor;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StructLHS;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StructType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.UnaryExpression;
@@ -619,15 +620,18 @@ public class CHandler implements ICHandler {
                 }
             	// standard variable case
             	else {
+            		//true iff the declared variable will be addressoffed in the program (alex)
+            		boolean putOnHeap = ((MainDispatcher) main).getVariablesForHeap().contains(node);
+            		
 	                String cId = d.getName().getRawSignature();
 	                // Get the type of this variable
 	                assert resType.getType() != null;
 	                String bId = main.nameHandler.getUniqueIdentifier(node, cId,
-	                        symbolTable.getCompoundCounter());
+	                        symbolTable.getCompoundCounter(), putOnHeap);
 	                
 	                //alex begin
 	                ResultTypes checkedType = null;
-	                if (((MainDispatcher) main).getVariablesForHeap().contains(node)) { //the declared variable will be addressoffed in the program
+	                if (putOnHeap) { 
 	                	ASTType t = MemoryHandler.POINTER_TYPE;
 	                	CType cvar = new CPointer(resType.cvar);
 	                	checkedType = new ResultTypes(t, false, false, cvar);
@@ -811,7 +815,7 @@ public class CHandler implements ICHandler {
         CEnum cEnum = (CEnum) rt.cvar;
         CACSLLocation loc = new CACSLLocation(node);
         String enumId = main.nameHandler.getUniqueIdentifier(node,
-                cEnum.getIdentifier(), symbolTable.getCompoundCounter());
+                cEnum.getIdentifier(), symbolTable.getCompoundCounter(), false);
         Expression oldValue = null;
         Expression[] enumDomain = new Expression[cEnum.getFieldCount()];
         for (int i = 0; i < cEnum.getFieldCount(); i++) {
@@ -855,7 +859,7 @@ public class CHandler implements ICHandler {
             String cId = d.getName().getRawSignature();
             // declare an integer variable
             String bId = main.nameHandler.getUniqueIdentifier(node, cId,
-                    symbolTable.getCompoundCounter());
+                    symbolTable.getCompoundCounter(), false);
             InferredType it = new InferredType(Type.Integer);
             VarList vl = new VarList(loc, new String[] { bId },
                     new PrimitiveType(loc, it, SFO.INT));
@@ -948,27 +952,59 @@ public class CHandler implements ICHandler {
         if (((MainDispatcher) main).getBoogieDeclarationsOfVariablesOnHeapContains(
         		(VariableDeclaration) symbolTable.get(cId, loc).getDecl())) {
         	CType pointerTargetType = (((CPointer) result.cType).pointsToType);
-//        	InferredType it = new InferredType(Type.Pointer);
+        	//        	InferredType it = new InferredType(Type.Pointer);
         	InferredType it = null;
         	if (pointerTargetType instanceof CPrimitive && ((CPrimitive) pointerTargetType).getType() == CPrimitive.PRIMITIVE.INT) {
-	        	 it = new InferredType(Type.Integer);
+        		it = new InferredType(Type.Integer);
+        		ResultExpressionPointerDereference repd = memoryHandler.getReadCall(main, it, result.expr);
+        		return repd;
+        	} else if (pointerTargetType instanceof CNamed) {
+        		//dereference of the pointer to our heapvariable
+        		InferredType ptrType = new InferredType(Type.Pointer); 
+        		ResultExpressionPointerDereference r = memoryHandler.getReadCall(main, ptrType, result.expr);
+        		r.cType = pointerTargetType;
+        		Statement readCall = r.stmt.get(0);
+        		VariableDeclaration callResult = (VariableDeclaration) r.decl.get(0);
+
+        		//prepare the parts of the final result
+        		ArrayList<Statement> stmts = new ArrayList<Statement>();
+        		ArrayList<Declaration> decls = new ArrayList<Declaration>();
+        		HashMap<VariableDeclaration, CACSLLocation> auxVars = new HashMap<VariableDeclaration, CACSLLocation>();
+
+        		StructConstructor sc = null;
+        		assert getSymbolTable().get(pointerTargetType.toString(), loc).getDecl() instanceof VariableDeclaration;
+        		VariableDeclaration vd = (VariableDeclaration) getSymbolTable().get(pointerTargetType.toString(), loc).getDecl();
+        		assert vd.getVariables().length == 1;
+        		if (vd.getVariables()[0].getType() instanceof StructType) {
+        			ArrayList<String> fieldIdentifiers = new ArrayList<String>();
+        			ArrayList<Expression> fieldValues = new ArrayList<Expression>();
+
+        			VarList[] fields = ((StructType) vd.getVariables()[0].getType()).getFields();
+        			for (VarList field : fields) {
+        				assert field.getIdentifiers().length == 1;//TODO
+        				String fieldId = field.getIdentifiers()[0];
+        				fieldIdentifiers.add(fieldId);
+
+        				InferredType fieldType = new InferredType(field.getType());
+
+        				ResultExpression fieldRead = 
+        						(ResultExpression) structHandler.readFieldAtAddress(
+        								main, memoryHandler, loc, fieldId, fieldType, r, false);
+
+        				stmts.addAll(fieldRead.stmt);
+        				decls.addAll(fieldRead.decl);
+        				auxVars.putAll(fieldRead.auxVars);
+
+        				fieldValues.add(fieldRead.expr);
+
+        			}
+        			sc = new StructConstructor(loc, fieldIdentifiers.toArray(new String[0]), fieldValues.toArray(new Expression[0]));
+        		}
+        		return new ResultExpressionPointerDereference(stmts, sc, decls, auxVars, r.m_Pointer, readCall, callResult);
         	} else {//TODO add capability for other types (and maybe a more elegant solution for checking
         		assert false;
+        		return null;
         	}
-        	ResultExpressionPointerDereference temp = memoryHandler.getReadCall(main, it, result.expr);
-//        	result.stmt.addAll(temp.stmt);
-//        	result.decl.addAll(temp.decl);
-//        	result.auxVars.putAll(temp.auxVars);
-//        	result.declCTypes.addAll(temp.declCTypes);
-    		ResultExpressionPointerDereference repd = temp;
-//    				new ResultExpressionPointerDereference(
-//    				result.stmt, temp.expr, result.decl, result.auxVars, 
-//    				result.expr, temp.stmt.get(0), (VariableDeclaration) temp.decl.get(0));
-//    				result.stmt, temp.expr, result.decl, result.auxVars, result.expr,temp.stmt, temp.decl);
-//    				temp.stmt, temp.expr, temp.decl, temp.auxVars, result.expr, null);
-//    				result.stmt, temp.expr, result.decl, result.auxVars, result.expr, null);
-    		
-    		return repd;
     	}   
         //end alex
 
