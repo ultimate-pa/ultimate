@@ -727,7 +727,7 @@ public class CHandler implements ICHandler {
 	                        auxVars.putAll(rExpr.auxVars);
 	                        rExpr.expr = main.typeHandler.convertArith2Boolean(
 	                                loc, type, rExpr.expr);
-	                        if (lhsIsPointerAndRhsIsInt(cvar, rExpr.expr)) { 
+	                        if (cTypeIsPointerAndExpressionIsInt(cvar, rExpr.expr)) { 
 	                        	ResultExpression auxPointer =
 	                         			getPointerFromInt(main, loc, rExpr.expr); 
 	                         	rExpr.stmt.addAll(auxPointer.stmt); 
@@ -1732,11 +1732,19 @@ public class CHandler implements ICHandler {
      * side (of an equality). Return true if lhs is a Pointer and the rhs is an
      * int.
      */
-    private boolean lhsIsPointerAndRhsIsInt(CType cvar, Expression rhs) {
+    private boolean cTypeIsPointerAndExpressionIsInt(CType cvar, Expression expr) {
     	if (!(cvar instanceof CPointer)) {
-    		return false;
+        	if (cvar instanceof CNamed) {
+        		CType mappedType = ((CNamed) cvar).getMappedType();
+        		assert !(mappedType instanceof CNamed) : "CNamed maps to CNamed";
+            	if (!(mappedType instanceof CPointer)) {
+            		return false;
+            	}
+        	} else {
+        		return false;
+        	}
     	}
-    	InferredType it = (InferredType) rhs.getType();
+    	InferredType it = (InferredType) expr.getType();
     	return it.getType().equals(Type.Integer);
     }
 
