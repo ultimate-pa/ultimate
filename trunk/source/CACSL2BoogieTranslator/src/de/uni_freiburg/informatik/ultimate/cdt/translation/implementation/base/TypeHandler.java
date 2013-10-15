@@ -82,6 +82,12 @@ import de.uni_freiburg.informatik.ultimate.result.SyntaxErrorResult.SyntaxErrorT
 public class TypeHandler implements ITypeHandler {
     /**
      * Map to resolve typedefs.
+     * Matthias: I think this name is misleading. We use this not only to store
+     * explicit typedefs, but also to store structs like the following.
+     * struct fraction {
+	 *   int numerator;
+	 *   int denominator;
+     * }
      */
     private final Map<String, ResultTypes> typedef;
     /**
@@ -431,6 +437,7 @@ public class TypeHandler implements ITypeHandler {
         CType cvar = new CStruct(node, fNames.toArray(new String[0]),
                 fTypes.toArray(new CType[0]));
         ResultTypes result = new ResultTypes(type, false, false, cvar);
+        String cId = node.getName().getRawSignature();
         if (node.getStorageClass() == IASTDeclSpecifier.sc_typedef) {
             // TYPEDEF Struct Type
             for (IASTDeclarator cDecl : ((IASTSimpleDeclaration) node
@@ -438,12 +445,11 @@ public class TypeHandler implements ITypeHandler {
                 String typedefId = cDecl.getName().getRawSignature();
                 typedef.put(typedefId, result);
             }
-            // TODO : add an axiom for sizeOf(typedefId) == sizeOf(result.t);?
-            // I think, the axiom is not required, as we resolve the type
-            // anyway?
-            return new ResultSkip();
+            if (typedef.containsKey(cId)) {
+            	// the type itself was already defined
+            	return new ResultSkip();
+            }
         }
-        String cId = node.getName().getRawSignature();
         ArrayList<TypeDeclaration> tds = new ArrayList<TypeDeclaration>();
         String name = "STRUCT~" + cId;
         if (undefStructs.contains(name)) {
