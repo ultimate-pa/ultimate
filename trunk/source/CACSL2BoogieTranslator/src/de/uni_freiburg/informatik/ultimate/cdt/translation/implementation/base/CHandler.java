@@ -548,42 +548,34 @@ public class CHandler implements ICHandler {
     @Override
     public Result visit(Dispatcher main, IASTSimpleDeclaration node) {
         CACSLLocation loc = new CACSLLocation(node);
-        Map<VariableDeclaration, CACSLLocation> auxVars = new HashMap<VariableDeclaration, CACSLLocation>();
-        if (node.getDeclarators() != null && node.getDeclarators().length > 0) {
-            // we decide on the first declarator ... [0] does NOT mean, that
-            // only the first declarator is handled!
-            IASTDeclarator cDecl = node.getDeclarators()[0];
-            if (cDecl instanceof IASTFunctionDeclarator) {
-                return functionHandler.handleFunctionDeclaration(main,
-                        contract, node);
-            } else if (cDecl instanceof IASTArrayDeclarator) {
-                return arrayHandler.handleArrayDeclaration(main, structHandler,
-                        node, globalVariables, globalVariablesInits);
-            }
-            if (node.getDeclSpecifier() == null) {
-                String msg = "This statement can be removed!";
-                Dispatcher.unsoundnessWarning(loc, msg, "empty!");
-                return new ResultSkip();
-            }
+        if (node.getDeclSpecifier() == null) {
+            String msg = "This statement can be removed!";
+            Dispatcher.unsoundnessWarning(loc, msg, "empty!");
+            return new ResultSkip();
         }
-        if (node.getDeclSpecifier() instanceof IASTEnumerationSpecifier) {
+    	/*
+    	 * TODO Christian: to be modified/tested
+    	 */
+    	// enum case
+    	if (node.getDeclSpecifier() instanceof IASTEnumerationSpecifier) {
             return handleEnumDeclaration(main, node);
         }
-        // Here we handle "normal variable" declaration, all other cases
-        // should be caught before
+        
         Result r = main.dispatch(node.getDeclSpecifier());
         assert r instanceof ResultSkip || r instanceof ResultTypes;
         if (r instanceof ResultSkip)
             return r;
         if (r instanceof ResultTypes) {
             ResultTypes resType = (ResultTypes) r;
-            Map<VariableDeclaration, CACSLLocation> emptyAuxVars = new HashMap<VariableDeclaration, CACSLLocation>(
-                    0);
+            Map<VariableDeclaration, CACSLLocation> auxVars =
+            		new HashMap<VariableDeclaration, CACSLLocation>();
+            Map<VariableDeclaration, CACSLLocation> emptyAuxVars =
+            		new HashMap<VariableDeclaration, CACSLLocation>(0);
             ResultExpression result = new ResultExpression(null, emptyAuxVars);
             ResultExpression staticVarStorage = new ResultExpression(null,
                     emptyAuxVars);
             boolean isGlobal = node.getParent() == node.getTranslationUnit();
-            if (node.getParent() == node.getTranslationUnit()) {
+            if (isGlobal) {
                 result.decl.addAll(resType.typeDeclarations);
             } else if (!resType.typeDeclarations.isEmpty()) {
                 // FIXME : check if typedef can occur locally at all!
@@ -591,124 +583,167 @@ public class CHandler implements ICHandler {
                 Dispatcher.error(loc, SyntaxErrorType.UnsupportedSyntax, msg);
                 throw new UnsupportedSyntaxException(msg);
             }
+            
+        	assert (node.getDeclarators() != null &&
+        			node.getDeclarators().length > 0);
+        	int index = -1;
+        	/**
+        	 * Christian:
+        	 * C allows several declarations of "similar" types in one go.
+        	 * For instance:
+        	 * <code>int a, b[2];</code>
+        	 * Here <code>a</code> has type <code>int</code> and <code>b</code>
+        	 * has type <code>int[]</code>. To solve this, the declaration
+        	 * items are visited one after another.
+        	 */
             for (IASTDeclarator d : node.getDeclarators()) {
-                String cId = d.getName().getRawSignature();
-                // Get the type of this variable
-                assert resType.getType() != null;
-                String bId = main.nameHandler.getUniqueIdentifier(node, cId,
-                        symbolTable.getCompoundCounter());
-                
-                //alex begin
-                ResultTypes checkedType = null;
-                if (((MainDispatcher) main).getVariablesForHeap().contains(node)) { //the declared variable will be addressoffed in the program
-                	ASTType t = MemoryHandler.POINTER_TYPE;
-                	CType cvar = new CPointer(resType.cvar);
-                	checkedType = new ResultTypes(t, false, false, cvar);
-                } else {
-                //alex end
-                
-                checkedType = checkForPointer(main,
-                        d.getPointerOperators(), resType);
-                } // real end alex
-                
-                if (main.typeHandler.isStructDeclaration()) {
-                    // store C variable information into this result, as this is
-                    // a struct field! We need this information to build the
-                    // structs C variable information recursively.
-                    assert resType.cvar != null;
-                    result.declCTypes.add(checkedType.cvar);
+            	++index;
+            	// TODO Christian: to be modified/tested
+            	// function case
+            	if (d instanceof IASTFunctionDeclarator) {
+                	Result rFunc = functionHandler.handleFunctionDeclaration(main,
+                            contract, node, index);
+                	assert (rFunc instanceof ResultSkip);
+                	// do nothing here
                 }
-                ASTType type = checkedType.getType();
-                CType cvar = checkedType.cvar;
-                VarList var = new VarList(loc, new String[] { bId }, type);
-                Attribute[] attr = new Attribute[0];
-                if (resType.isConst) {
-                    String msg = "Const declaration dropped!";
-                    Dispatcher.error(loc, SyntaxErrorType.UnsupportedSyntax,
-                            msg);
+            	// array case
+            	else if (d instanceof IASTArrayDeclarator) {
+                	Result rArray = arrayHandler.handleArrayDeclaration(main,
+                			structHandler, node, globalVariables,
+                			globalVariablesInits, index);
+                	if (rArray instanceof ResultExpression) {
+                    	result.decl.addAll(((ResultExpression)rArray).decl);
+                	}
+                	else {
+                		assert (rArray instanceof ResultSkip);
+                		// do nothing here
+                	}
                 }
-                VariableDeclaration decl = new VariableDeclaration(loc, attr,
-                        new VarList[] { var });
-                symbolTable.put(cId, new SymbolTableValue(bId, decl, isGlobal,
-                        cvar));
-                if (cvar.isStatic() && !isGlobal) {
-                    staticVarStorage.decl.add(decl);
-                } else {
-                    result.decl.add(decl);
-                }
-                
-                //begin alex
-                if (((MainDispatcher) main).getVariablesForHeap().contains(node)) { //the declared variable will be addressoffed in the program
-                	((MainDispatcher) main).addBoogieDeclarationOfVariableOnHeap(decl);
-                }
-            	//end alex
-                	
-                // Handle initializer clause
-                if (d.getInitializer() != null) {
-                    if (type instanceof StructType) {
-                        Result initializer = main.dispatch(d.getInitializer());
-                        assert initializer instanceof ResultExpressionListRec;
-                        ResultExpressionListRec relr = ((ResultExpressionListRec) initializer);
-                        VariableLHS lhs = new VariableLHS(loc,
-                                new InferredType(type), bId);
-                        if (cvar instanceof CNamed) {
-                            cvar = ((CNamed) cvar).getUnderlyingType();
-                        }
-                        assert cvar instanceof CStruct;
-                        ResultExpression init = structHandler.handleStructInit(
-                                main, arrayHandler, loc, (StructType) type,
-                                (CStruct) cvar, lhs, relr,
-                                new ArrayList<Integer>(), -1);
-                        auxVars.putAll(init.auxVars);
-                        assert init.expr == null && init.decl.isEmpty();
-                        if (resType.cvar.isStatic() && !isGlobal) {
-                            staticVarStorage.stmt.addAll(init.stmt);
-                        } else {
-                            result.stmt.addAll(init.stmt);
-                        }
-                    } else { // it should be a "normal variable"
-                        ResultExpression rExpr = ((ResultExpression) (main
-                                .dispatch(d.getInitializer())));
-                        auxVars.putAll(rExpr.auxVars);
-                        rExpr.expr = main.typeHandler.convertArith2Boolean(
-                                loc, type, rExpr.expr);
-                        if (lhsIsPointerAndRhsIsInt(cvar, rExpr.expr)) {
-                        	ResultExpression auxPointer = 
-                        			getPointerFromInt(main, loc, rExpr.expr);
-                        	rExpr.stmt.addAll(auxPointer.stmt);
-                        	rExpr.decl.addAll(auxPointer.decl);
-                        	rExpr.auxVars.putAll(auxVars);
-                        	rExpr.expr = auxPointer.expr;
-                        }
-                        Expression[] rhs = new Expression[] { rExpr.expr };
-                        VariableLHS[] lhs = new VariableLHS[] { new VariableLHS(
-                                loc, bId) };
-                        AssignmentStatement as = new AssignmentStatement(loc,
-                                lhs, rhs);
-                        // TODO: Ask Markus where I should havoc temp aux vars.
-                        if (resType.cvar.isStatic() && !isGlobal) {
-                            staticVarStorage.decl.addAll(rExpr.decl);
-                            staticVarStorage.stmt.addAll(rExpr.stmt);
-                            staticVarStorage.auxVars.putAll(rExpr.auxVars);
-                            staticVarStorage.stmt.add(as);
-//                            staticVarStorage.stmt.addAll(Dispatcher.createHavocsForAuxVars(auxVars));
-                        } else {
-                            result.decl.addAll(rExpr.decl);
-                            result.stmt.addAll(rExpr.stmt);
-                            result.auxVars.putAll(rExpr.auxVars);
-                            result.stmt.add(as);
- //                           result.stmt.addAll(Dispatcher.createHavocsForAuxVars(auxVars));
-                        }
-                    }
-                } else if (!cvar.isGlobalVariable() && !cvar.isStatic()) {
-                    // if not initialized directly and if not global and not
-                    // static. This is required, since this variable could be
-                    // within a loop and needs to be havoc'ed to represent C's
-                    // behavior!
-                    result.stmt.add(new HavocStatement(loc,
-                            new String[] { bId }));
-                }
+            	// standard variable case
+            	else {
+	                String cId = d.getName().getRawSignature();
+	                // Get the type of this variable
+	                assert resType.getType() != null;
+	                String bId = main.nameHandler.getUniqueIdentifier(node, cId,
+	                        symbolTable.getCompoundCounter());
+	                
+	                //alex begin
+	                ResultTypes checkedType = null;
+	                if (((MainDispatcher) main).getVariablesForHeap().contains(node)) { //the declared variable will be addressoffed in the program
+	                	ASTType t = MemoryHandler.POINTER_TYPE;
+	                	CType cvar = new CPointer(resType.cvar);
+	                	checkedType = new ResultTypes(t, false, false, cvar);
+	                } else {
+	                //alex end
+	                
+	                checkedType = checkForPointer(main,
+	                        d.getPointerOperators(), resType);
+	                } // real end alex
+	                
+	                if (main.typeHandler.isStructDeclaration()) {
+	                    /*
+	                     * store C variable information into this result, as
+	                     * this is a struct field! We need this information to
+	                     * build the structs C variable information recursively.
+	                     */
+	                    assert resType.cvar != null;
+	                    result.declCTypes.add(checkedType.cvar);
+	                }
+	                ASTType type = checkedType.getType();
+	                CType cvar = checkedType.cvar;
+	                VarList var = new VarList(loc, new String[] { bId }, type);
+	                Attribute[] attr = new Attribute[0];
+	                if (resType.isConst) {
+	                    String msg = "Const declaration dropped!";
+	                    Dispatcher.error(loc, SyntaxErrorType.UnsupportedSyntax,
+	                            msg);
+	                }
+	                VariableDeclaration decl = new VariableDeclaration(loc, attr,
+	                        new VarList[] { var });
+	                symbolTable.put(cId, new SymbolTableValue(bId, decl, isGlobal,
+	                        cvar));
+	                if (cvar.isStatic() && !isGlobal) {
+	                    staticVarStorage.decl.add(decl);
+	                } else {
+	                    result.decl.add(decl);
+	                }
+	                
+	                //begin alex
+	                if (((MainDispatcher) main).getVariablesForHeap().contains(node)) { //the declared variable will be addressoffed in the program
+	                	((MainDispatcher) main).addBoogieDeclarationOfVariableOnHeap(decl);
+	                }
+	            	//end alex
+	                	
+	                // Handle initializer clause
+	                if (d.getInitializer() != null) {
+	                    if (type instanceof StructType) {
+	                        Result initializer = main.dispatch(d.getInitializer());
+	                        assert initializer instanceof ResultExpressionListRec;
+	                        ResultExpressionListRec relr = ((ResultExpressionListRec) initializer);
+	                        VariableLHS lhs = new VariableLHS(loc,
+	                                new InferredType(type), bId);
+	                        if (cvar instanceof CNamed) {
+	                            cvar = ((CNamed) cvar).getUnderlyingType();
+	                        }
+	                        assert cvar instanceof CStruct;
+	                        ResultExpression init = structHandler.handleStructInit(
+	                                main, arrayHandler, loc, (StructType) type,
+	                                (CStruct) cvar, lhs, relr,
+	                                new ArrayList<Integer>(), -1);
+	                        auxVars.putAll(init.auxVars);
+	                        assert init.expr == null && init.decl.isEmpty();
+	                        if (resType.cvar.isStatic() && !isGlobal) {
+	                            staticVarStorage.stmt.addAll(init.stmt);
+	                        } else {
+	                            result.stmt.addAll(init.stmt);
+	                        }
+	                    } else { // it should be a "normal variable"
+	                        ResultExpression rExpr = ((ResultExpression) (main
+	                                .dispatch(d.getInitializer())));
+	                        auxVars.putAll(rExpr.auxVars);
+	                        rExpr.expr = main.typeHandler.convertArith2Boolean(
+	                                loc, type, rExpr.expr);
+	                        if (lhsIsPointerAndRhsIsInt(cvar, rExpr.expr)) { 
+	                        	ResultExpression auxPointer =
+	                         			getPointerFromInt(main, loc, rExpr.expr); 
+	                         	rExpr.stmt.addAll(auxPointer.stmt); 
+	                        	rExpr.decl.addAll(auxPointer.decl); 
+	                        	rExpr.auxVars.putAll(auxVars); 
+	                         	rExpr.expr = auxPointer.expr; 
+	                        }
+	                        Expression[] rhs = new Expression[] { rExpr.expr };
+	                        VariableLHS[] lhs = new VariableLHS[] { new VariableLHS(
+	                                loc, bId) };
+	                        AssignmentStatement as = new AssignmentStatement(loc,
+	                                lhs, rhs);
+	                        // TODO: Ask Markus where I should havoc temp aux vars.
+	                        if (resType.cvar.isStatic() && !isGlobal) {
+	                            staticVarStorage.decl.addAll(rExpr.decl);
+	                            staticVarStorage.stmt.addAll(rExpr.stmt);
+	                            staticVarStorage.auxVars.putAll(rExpr.auxVars);
+	                            staticVarStorage.stmt.add(as);
+//	                            staticVarStorage.stmt.addAll(Dispatcher.createHavocsForAuxVars(auxVars));
+	                        } else {
+	                            result.decl.addAll(rExpr.decl);
+	                            result.stmt.addAll(rExpr.stmt);
+	                            result.auxVars.putAll(rExpr.auxVars);
+	                            result.stmt.add(as);
+//	                            result.stmt.addAll(Dispatcher.createHavocsForAuxVars(auxVars));
+	                        }
+	                    }
+	                } else if (!cvar.isGlobalVariable() && !cvar.isStatic()) {
+	                    /*
+	                     * if not initialized directly and if not global and not
+	                     * static. This is required, since this variable could
+	                     * be within a loop and needs to be havoc'ed to
+	                     * represent C's behavior!
+	                     */
+	                    result.stmt.add(new HavocStatement(loc,
+	                            new String[] { bId }));
+	                }
+            	}
             }
+            // TODO Christian: any changes needed here?
             if (resType.cvar.isStatic() && !isGlobal) {
                 assert staticVarStorage.decl.size() > 0;
                 for (Declaration d : staticVarStorage.decl) {
@@ -958,7 +993,7 @@ public class CHandler implements ICHandler {
                         o.auxVars);
             case IASTUnaryExpression.op_not:
             	InferredType iType = (InferredType) o.expr.getType();
-            	// boolean <code>p</code> becomes <code>!p ? 1 : 0</code>
+            	/** boolean <code>p</code> becomes <code>!p ? 1 : 0</code> */
             	if (iType.getType() == InferredType.Type.Boolean) {
                     return new ResultExpression(o.stmt,
                     		wrapBoolean2Int(loc, new UnaryExpression(loc,
@@ -969,7 +1004,7 @@ public class CHandler implements ICHandler {
         			final Expression unwrapped =
         					main.typeHandler.unwrapInt2Boolean(o.expr);
         			if (unwrapped != null) {
-        				/*
+        				/**
         				 * int <code>x</code> of form <code>y ? 1 : 0</code>
         				 * becomes <code>!y ? 1 : 0</code>
         				 */
@@ -981,7 +1016,7 @@ public class CHandler implements ICHandler {
         						o.decl, o.auxVars);
         			}
             		
-            		// int <code>x</code> becomes <code>x == 0 ? 1 : 0</code>
+            		/** int <code>x</code> becomes <code>x == 0 ? 1 : 0</code> */
             		return new ResultExpression(o.stmt,
             				wrapBinaryBoolean2Int(loc,
             						BinaryExpression.Operator.COMPEQ, o.expr,
@@ -1630,10 +1665,10 @@ public class CHandler implements ICHandler {
      * Transform an int expression to a pointer. The base address of the 
      * resulting pointer is 0,  the int expression becomes the offset of the pointer.
      */
-    private ResultExpression getPointerFromInt(Dispatcher main, CACSLLocation loc, Expression intExpr) {
+    private ResultExpression getPointerFromInt(Dispatcher main, CACSLLocation loc, Expression intExpr) { 
     	assert ((InferredType) intExpr.getType()).getType().equals(Type.Integer);
     	Expression zero = new IntegerLiteral(loc, SFO.NR0);
-    	ResultExpression auxPointer = memoryHandler.auxilliaryPointer(main, loc, zero, intExpr);
+    	ResultExpression auxPointer = memoryHandler.auxilliaryPointer(main, loc, zero, intExpr); 
     	return auxPointer;
     }
     

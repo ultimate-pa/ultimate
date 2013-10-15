@@ -181,9 +181,21 @@ public class FunctionHandler {
 	 */
 	public Result handleFunctionDeclaration(Dispatcher main,
 			List<ACSLNode> contract, IASTSimpleDeclaration node) {
+		return handleFunctionDeclaration(main, contract, node, 0);
+	}
+	
+	/**
+	 * Has additional index.
+	 * 
+	 * @see handleFunctionDeclaration()
+	 * @param index index of the declaration list
+	 */
+	public Result handleFunctionDeclaration(Dispatcher main,
+			List<ACSLNode> contract, IASTSimpleDeclaration node,
+			int index) {
 		CACSLLocation loc = new CACSLLocation(node);
-		assert node.getDeclarators().length == 1;
-		IASTDeclarator cDecl = node.getDeclarators()[0];
+		assert (index >= 0 && index < node.getDeclarators().length);
+        IASTDeclarator cDecl = node.getDeclarators()[index];
 		assert cDecl instanceof IASTFunctionDeclarator;
 		String methodName = cDecl.getName().getRawSignature();
 		// begin new scope for retranslation of ACSL specification

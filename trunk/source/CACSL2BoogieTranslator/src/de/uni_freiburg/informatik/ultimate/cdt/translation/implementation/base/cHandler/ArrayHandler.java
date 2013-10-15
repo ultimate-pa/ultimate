@@ -187,9 +187,24 @@ public class ArrayHandler {
             StructHandler structHandler, IASTSimpleDeclaration node,
             HashMap<Declaration, CType> globalVariables,
             HashMap<Declaration, ArrayList<Statement>> globalVariablesInits) {
+    	return handleArrayDeclaration(main, structHandler, node,
+    			globalVariables, globalVariablesInits, 0);
+    }
+    
+    /**
+     * Has additional index.
+     * 
+	 * @see handleArrayDeclaration()
+	 * @param index index of the declaration list
+	 */
+    public Result handleArrayDeclaration(Dispatcher main,
+            StructHandler structHandler, IASTSimpleDeclaration node,
+            HashMap<Declaration, CType> globalVariables,
+            HashMap<Declaration, ArrayList<Statement>> globalVariablesInits,
+            int index) {
         CACSLLocation loc = new CACSLLocation(node);
-        assert node.getDeclarators().length == 1;
-        IASTDeclarator cDecl = node.getDeclarators()[0];
+        assert (index >= 0 && index < node.getDeclarators().length);
+        IASTDeclarator cDecl = node.getDeclarators()[index];
         assert cDecl instanceof IASTArrayDeclarator;
         IASTArrayDeclarator d = (IASTArrayDeclarator) cDecl;
         ArrayList<Declaration> decl = new ArrayList<Declaration>();
