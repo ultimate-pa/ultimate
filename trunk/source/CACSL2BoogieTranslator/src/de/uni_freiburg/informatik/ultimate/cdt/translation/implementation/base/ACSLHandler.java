@@ -68,6 +68,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StructLHS;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableDeclaration;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.result.Check;
 import de.uni_freiburg.informatik.ultimate.result.SyntaxErrorResult.SyntaxErrorType;
 
@@ -454,7 +455,7 @@ public class ACSLHandler implements IACSLHandler {
             }
         }
         ModifiesSpecification req = new ModifiesSpecification(loc, false,
-                identifiers.toArray(new String[0]));
+                identifiers.toArray(new VariableLHS[0]));
         return new ResultContract(new Specification[] { req });
     }
 

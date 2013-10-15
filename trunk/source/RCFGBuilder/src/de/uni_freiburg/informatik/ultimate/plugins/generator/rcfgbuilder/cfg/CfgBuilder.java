@@ -383,7 +383,8 @@ public class CfgBuilder {
 			}
 			else if (spec instanceof ModifiesSpecification) {
 				ModifiesSpecification modSpec = (ModifiesSpecification) spec;
-				for (String ident : modSpec.getIdentifiers()) {
+				for (VariableLHS var: modSpec.getIdentifiers()) {
+					String ident = var.getIdentifier();
 					if (!m_RootAnnot.m_GlobalVars.containsKey(ident)) {
 						throw new IllegalArgumentException("Procedure "
 								+ procName + " modifies global variable "+ ident

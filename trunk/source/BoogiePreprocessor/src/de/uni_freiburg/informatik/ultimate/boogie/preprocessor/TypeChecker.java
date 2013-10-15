@@ -22,7 +22,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.type.PrimitiveType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.StructType;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
-import de.uni_freiburg.informatik.ultimate.model.ILocation;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayAccessExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayLHS;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayStoreExpression;
@@ -281,7 +280,15 @@ public class TypeChecker implements IUnmanagedObserver {
                 resultType = errorType;
             } else {
                 StructType str = (StructType) e;
-                resultType = str.getFieldType(sae.getField());
+                resultType = null;
+                for (int i = 0; i < str.getFieldCount(); i++)
+                	if (str.getFieldIds()[i].equals(sae.getField()))
+                		resultType = str.getFieldType(i);
+                if (resultType == null) {
+                    typeError(expr,
+                            "Type check failed (field "+sae.getField()+" not in struct): " + expr);
+                    resultType = errorType;
+                }
             }
         } else if (expr instanceof ArrayAccessExpression) {
             ArrayAccessExpression aaexpr = (ArrayAccessExpression) expr;
@@ -363,10 +370,13 @@ public class TypeChecker implements IUnmanagedObserver {
             StructConstructor struct = (StructConstructor) expr;
             Expression[] fieldExprs = struct.getFieldValues();
             BoogieType[] fieldTypes = new BoogieType[fieldExprs.length];
+            boolean hasError = false;
             for (int i = 0; i < fieldExprs.length; i++) {
             	fieldTypes[i] = typecheckExpression(fieldExprs[i]);
+            	hasError |= fieldTypes[i] == errorType;
             }
-            resultType = BoogieType.createStructType(struct.getFieldIdentifiers(), fieldTypes);
+            resultType = hasError ? errorType
+            		: BoogieType.createStructType(struct.getFieldIdentifiers(), fieldTypes);
         } else if (expr instanceof IdentifierExpression) {
             IdentifierExpression idexpr = (IdentifierExpression) expr;
             String name = idexpr.getIdentifier();
@@ -473,8 +483,16 @@ public class TypeChecker implements IUnmanagedObserver {
                             "Type check failed (not a struct): " + lhs);
                 resultType = errorType;
             } else {
-                StructType strType = (StructType) type;
-                resultType = strType.getFieldType(slhs.getField());
+                StructType str = (StructType) type;
+                resultType = null;
+                for (int i = 0; i < str.getFieldCount(); i++)
+                	if (str.getFieldIds()[i].equals(slhs.getField()))
+                		resultType = str.getFieldType(i);
+                if (resultType == null) {
+                    typeError(lhs,
+                            "Type check failed (field "+slhs.getField()+" not in struct): " + lhs);
+                    resultType = errorType;
+                }
             }
         } else if (lhs instanceof ArrayLHS) {
             ArrayLHS alhs = (ArrayLHS) lhs;
@@ -645,12 +663,8 @@ public class TypeChecker implements IUnmanagedObserver {
         varScopes.push(scope);
         BoogieType valueType = typecheckExpression(funcDecl.getBody());
         if (!valueType.equals(errorType)
-                && !valueType.equals(fs.getResultType()))
-            typeError(funcDecl, funcDecl.getLocation()
-                    .getFileName()
-                    + ":"
-                    + funcDecl.getLocation().getStartLine()
-                    + ": Return type of function doesn't match body");
+            && !valueType.equals(fs.getResultType()))
+            typeError(funcDecl, "Return type of function doesn't match body");
         varScopes.pop();
         typeManager.popTypeScope();
     }
@@ -734,7 +748,8 @@ public class TypeChecker implements IUnmanagedObserver {
                             "Ensures clause is not boolean: " + s);
             } else if (s instanceof ModifiesSpecification) {
                 Set<String> modifiedGlobals = m_Proc2ModfiedGlobals.get(name);
-                for (String id : ((ModifiesSpecification) s).getIdentifiers()) {
+                for (VariableLHS var : ((ModifiesSpecification) s).getIdentifiers()) {
+                	String id = var.getIdentifier();
                     if (!m_Globals.contains(id)) {
                         typeError(s, "Modifies clause contains "
                                 + id + " which is not a global variable");
@@ -808,8 +823,8 @@ public class TypeChecker implements IUnmanagedObserver {
                         + statement);
             }
         } else if (statement instanceof HavocStatement) {
-            for (String id : ((HavocStatement) statement).getIdentifiers()) {
-                checkVarModification(statement, id);
+            for (VariableLHS id : ((HavocStatement) statement).getIdentifiers()) {
+            	typecheckLeftHandSide(id);
             }
         } else if (statement instanceof AssignmentStatement) {
             AssignmentStatement astmt = (AssignmentStatement) statement;
@@ -922,7 +937,7 @@ public class TypeChecker implements IUnmanagedObserver {
                 }
             }
             VariableInfo[] outParams = procInfo.getOutParams();
-            String[] lhs = call.getLhs();
+            VariableLHS[] lhs = call.getLhs();
             if (lhs.length != outParams.length) {
                 typeError(statement,
                         "Number of output variables do not match in "
@@ -930,15 +945,13 @@ public class TypeChecker implements IUnmanagedObserver {
             } else {
                 for (int i = 0; i < lhs.length; i++) {
                     for (int j = 0; j < i; j++) {
-                        if (lhs[i].equals(lhs[j]))
+                        if (lhs[i].getIdentifier().equals(lhs[j].getIdentifier()))
                             typeError(statement,
                                     "Variable appears multiple times in assignment: "
                                             + statement);
                     }
-                    checkVarModification(statement, lhs[i]);
-                    VariableInfo info = findVariable(lhs[i]);
-                    if (!outParams[i].getType().unify(info.getType(),
-                            typeParams)) {
+                	BoogieType type = typecheckLeftHandSide(lhs[i]);
+                    if (!outParams[i].getType().unify(type, typeParams)) {
                         typeError(statement,
                                 "Type mismatch (output parameter " + i
                                         + ") in " + statement);
@@ -1225,7 +1238,7 @@ public class TypeChecker implements IUnmanagedObserver {
                 SyntaxErrorType.TypeError);
         result.setLongDescription(message);
         UltimateServices.getInstance().getLogger(Activator.PLUGIN_ID)
-                .error(message);
+                .error(astNode.getLocation() + ": " + message);
         UltimateServices us = UltimateServices.getInstance();
         us.reportResult(Activator.PLUGIN_ID, result);
         us.cancelToolchain();

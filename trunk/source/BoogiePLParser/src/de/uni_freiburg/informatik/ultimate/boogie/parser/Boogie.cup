@@ -173,9 +173,11 @@ non terminal Statement[] elseOpt;
 non terminal List<LoopInvariantSpecification> loopInvStar;
 non terminal LoopInvariantSpecification loopInv;
 
-non terminal List<String> idStar, idCommaStar, idCommaPlus;
+non terminal List<String> idStar, idCommaPlus;
 non terminal List<VarList> idsTypeCommaPlus, idsTypeCommaStar;
 non terminal List<VarList> idsTypeWhereCommaPlus, idsTypeWhereCommaStar;
+non terminal List<VariableLHS> varCommaStar, varCommaPlus;
+non terminal VariableLHS var;
 non terminal VarList idsType, idsTypeWhere;
 non terminal Expression whereClauseOpt;
 non terminal List<NamedExpression> idsExprCommaPlus;
@@ -334,8 +336,8 @@ spec ::=
 	  {: RESULT = new RequiresSpecification(getLocation(free$,semi$,false), free, e); :}
 	| freeOpt:free ENSURES expr:e SEMI:semi
 	  {: RESULT = new EnsuresSpecification(getLocation(free$,semi$,false), free, e); :}
-	| freeOpt:free MODIFIES idCommaStar:l SEMI:semi
-	  {: RESULT = new ModifiesSpecification(getLocation(free$,semi$,false), free, l.toArray(new String[l.size()])); :}
+	| freeOpt:free MODIFIES varCommaStar:l SEMI:semi
+	  {: RESULT = new ModifiesSpecification(getLocation(free$,semi$,false), free, l.toArray(new VariableLHS[l.size()])); :}
 	;
 freeOpt ::=
 	  /* empty */ {: RESULT = false; :}
@@ -691,18 +693,18 @@ stmt ::=
 	  {: RESULT = new AssertStatement(getLocation(x$,e$,false), e); :}
 	| ASSUME:x expr:e SEMI
 	  {: RESULT = new AssumeStatement(getLocation(x$,e$,false), e); :}
-	| HAVOC:x idCommaPlus:i SEMI
-	  {: RESULT = new HavocStatement(getLocation(x$,i$,false), i.toArray(new String[i.size()])); :}
+	| HAVOC:x varCommaPlus:i SEMI
+	  {: RESULT = new HavocStatement(getLocation(x$,i$,false), i.toArray(new VariableLHS[i.size()])); :}
 	| lhsCommaPlus:lhs COLONEQUALS exprCommaPlus:rhs SEMI
 	  {: RESULT = new AssignmentStatement
 		(getLocation(lhs$,rhs$,false), lhs.toArray(new LeftHandSide[lhs.size()]), rhs.toArray(new Expression[rhs.size()])); :}
 	| CALL:x ID:m LPAR:y exprCommaStar:e RPAR SEMI
-	  {: RESULT = new CallStatement(getLocation(x$,e$,false), false, new String[0], m, e.toArray(new Expression[e.size()])); :}
+	  {: RESULT = new CallStatement(getLocation(x$,e$,false), false, new VariableLHS[0], m, e.toArray(new Expression[e.size()])); :}
 
-	| CALL:x idCommaPlus:ass COLONEQUALS ID:m LPAR exprCommaStar:p RPAR SEMI
-	  {: RESULT = new CallStatement(getLocation(x$,p$,false), false, ass.toArray(new String[ass.size()]), m, p.toArray(new Expression[p.size()])); :}
+	| CALL:x varCommaPlus:ass COLONEQUALS ID:m LPAR exprCommaStar:p RPAR SEMI
+	  {: RESULT = new CallStatement(getLocation(x$,p$,false), false, ass.toArray(new VariableLHS[ass.size()]), m, p.toArray(new Expression[p.size()])); :}
 	| CALL:x FORALL:z ID:m LPAR wildcardExprCommaStar:e RPAR SEMI
-	  {: RESULT = new CallStatement(getLocation(x$,e$,false), true, new String[0], m, e.toArray(new Expression[e.size()])); :}
+	  {: RESULT = new CallStatement(getLocation(x$,e$,false), true, new VariableLHS[0], m, e.toArray(new Expression[e.size()])); :}
 	| ifStmt:s
 	| WHILE:x LPAR wildcardExpr:c RPAR loopInvStar:inv blockStmt:block
 	  {: RESULT = new WhileStatement(getLocation(x$,block$,true), c, inv.toArray(new LoopInvariantSpecification[inv.size()]), block); :}
@@ -774,15 +776,24 @@ idStar ::=
 	| idStar:il ID:i
 	  {: il.add(i); RESULT = il; :} 
     ;
-idCommaStar ::=
-	/* empty */ {: RESULT = Collections.emptyList(); :}
-	| idCommaPlus:l
-	;
 idCommaPlus ::= 
 	  ID:i
 	  {: RESULT = new ArrayList<String>(); RESULT.add(i); :} 
 	| idCommaPlus:il COMMA ID:i
 	  {: il.add(i); RESULT = il; :} 
+    ;
+varCommaStar ::=
+	/* empty */ {: RESULT = Collections.emptyList(); :}
+	| varCommaPlus:l
+	;
+varCommaPlus ::= 
+	  var:i
+	  {: RESULT = new ArrayList<VariableLHS>(); RESULT.add(i); :} 
+	| varCommaPlus:il COMMA var:i
+	  {: il.add(i); RESULT = il; :} 
+    ;
+var ::= ID:i
+        {: RESULT = new VariableLHS(getLocation(i$, i$, false), i); :}
     ;
 
 idsTypeCommaStar ::=

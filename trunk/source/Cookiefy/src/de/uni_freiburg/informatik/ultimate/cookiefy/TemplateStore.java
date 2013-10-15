@@ -239,14 +239,17 @@ public class TemplateStore {
 	 */
 	private Statement[] andTemplate(String contextPath, Procedure p,
 			int currentLine) {
+		VariableLHS[] ret = new VariableLHS[] {
+				new VariableLHS(LocationProvider.getLocation(), "ret")
+		};
 		// left branch call
 		Statement[] lcallL = new Statement[] { new CallStatement(
-				LocationProvider.getLocation(), false, new String[] { "ret" },
+				LocationProvider.getLocation(), false, ret,
 				this.methodeNameGen(p, contextPath, "L"),
 				this.concatToEncArgs(p)) };
 		// right branch call
 		Statement[] lcallR = new Statement[] { new CallStatement(
-				LocationProvider.getLocation(), false, new String[] { "ret" },
+				LocationProvider.getLocation(), false, ret,
 				this.methodeNameGen(p, contextPath, "R"),
 				this.concatToEncArgs(p)) };
 
@@ -387,6 +390,19 @@ public class TemplateStore {
 
 		return agAST;
 	}
+	
+	/**
+	 * Convert an array of strings into VariableLHS needed for call and havoc.
+	 * We use the LocationProvider to generate locations.
+	 * @param ids the array of variable identifiers.
+	 * @return the corresponding array of VariableLHS objects (type is not set).
+	 */
+	private VariableLHS[] makeVariableLHS(String[] ids) {
+		VariableLHS[] result = new VariableLHS[ids.length];
+		for (int i = 0; i < ids.length; i++)
+			result[i] = new VariableLHS(LocationProvider.getLocation(), ids[i]);
+		return result;
+	}
 
 	/**
 	 * returns the code for a logical call according to "Cookiefy"
@@ -399,8 +415,11 @@ public class TemplateStore {
 	 */
 	private Statement lcall(String contextPath, Procedure p, int currentLine,
 			String branch, Expression pp) {
+		VariableLHS[] ret = new VariableLHS[] {
+				new VariableLHS(LocationProvider.getLocation(), "ret")
+		};
 		return new CallStatement(LocationProvider.getLocation(), false,
-				new String[] { "ret" }, this.methodeNameGen(p, contextPath,
+				ret, this.methodeNameGen(p, contextPath,
 						branch), this.concatToEncArgs(p, pp));
 	}
 
@@ -513,8 +532,8 @@ public class TemplateStore {
 			}
 			Helper.addVarListToIdentifierList(parameters, v);
 			// havoc this global variable
-			statements.add(new HavocStatement(LocationProvider.getLocation(), v
-					.getIdentifiers()));
+			statements.add(new HavocStatement(LocationProvider.getLocation(), 
+					makeVariableLHS(v.getIdentifiers())));
 		}
 		// stacks (add to parameters)
 		for (VarList v : this.stack.getVariables()) {
@@ -539,13 +558,15 @@ public class TemplateStore {
 				localVars.toArray(new VariableDeclaration[localVars.size()]),
 				new Statement[] {
 						new HavocStatement(LocationProvider.getLocation(),
+								makeVariableLHS(
 								modifiesIdentifiers
 										.toArray(new String[modifiesIdentifiers
-												.size()])),
+												.size()]))),
 						// this.getHavocCallStatement(new Expression[0], main,
 						// "T", new IntegerLiteral("0")),
 						new CallStatement(LocationProvider.getLocation(),
-								false, new String[] { "CookiefyRet" },
+								false, 
+								makeVariableLHS(new String[] { "CookiefyRet" }),
 								this.methodeNameGenPrepare(main, "T", ""),
 								parameters.toArray(new Expression[parameters
 										.size()])),
@@ -915,15 +936,15 @@ public class TemplateStore {
 		// declaration is done in the procedure declaration
 		// havoc Vars
 		for (VarList v : pPrime.getInParams())
-			body.add(new HavocStatement(LocationProvider.getLocation(), v
-					.getIdentifiers()));
+			body.add(new HavocStatement(LocationProvider.getLocation(), 
+					makeVariableLHS(v.getIdentifiers())));
 		for (VarList v : pPrime.getOutParams())
-			body.add(new HavocStatement(LocationProvider.getLocation(), v
-					.getIdentifiers()));
+			body.add(new HavocStatement(LocationProvider.getLocation(),
+					makeVariableLHS(v.getIdentifiers())));
 		for (VariableDeclaration vd : pPrime.getBody().getLocalVars())
 			for (VarList v : vd.getVariables())
-				body.add(new HavocStatement(LocationProvider.getLocation(), v
-						.getIdentifiers()));
+				body.add(new HavocStatement(LocationProvider.getLocation(),
+						makeVariableLHS(v.getIdentifiers())));
 
 		// copy arguments to vars
 		for (VarList v : pPrime.getInParams())
@@ -938,7 +959,7 @@ public class TemplateStore {
 
 		// call procedure
 		body.add(new CallStatement(LocationProvider.getLocation(), false,
-				new String[] { "ret" }, this.methodeNameGen(pPrime, path, ""),
+				makeVariableLHS(new String[] { "ret" }), this.methodeNameGen(pPrime, path, ""),
 				this.concatToEncArgs(pPrime)));
 
 		return new Procedure(LocationProvider.getLocation(), new Attribute[0],
@@ -1203,7 +1224,7 @@ public class TemplateStore {
 		params.add(new IntegerLiteral(LocationProvider.getLocation(), "0"));
 
 		return new CallStatement(LocationProvider.getLocation(), false,
-				new String[] { "ret" }, this.methodeNameGenPrepare(pPrime,
+				makeVariableLHS(new String[] { "ret" }), this.methodeNameGenPrepare(pPrime,
 						path, ""),
 				params.toArray(new Expression[params.size()]));
 
@@ -1244,7 +1265,7 @@ public class TemplateStore {
 			}
 
 		return new CallStatement(LocationProvider.getLocation(), false,
-				new String[] { "ret" }, "preturn_" + path,
+				makeVariableLHS(new String[] { "ret" }), "preturn_" + path,
 				params.toArray(new Expression[params.size()]));
 
 	}
@@ -1302,7 +1323,7 @@ public class TemplateStore {
 							new Statement[] {
 							// the actual call doing the returning... wtf
 							new CallStatement(LocationProvider.getLocation(),
-									false, new String[] { "ret" }, this
+									false, makeVariableLHS(new String[] { "ret" }), this
 											.methodeNameGen(p, path, ""), this
 											.stackPop(p)) }, new Statement[] {}
 

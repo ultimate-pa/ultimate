@@ -181,8 +181,10 @@ public class CookiefyAlgorithm implements IUnmanagedObserver {
 					String retValName = "retVal_"
 							+ ((PrimitiveType) p.getOutParams()[0].getType())
 									.getName();
+					VariableLHS retVal = 
+						new VariableLHS(LocationProvider.getLocation(), retValName);
 					specs.add(new ModifiesSpecification(LocationProvider
-							.getLocation(), false, new String[] { retValName }));
+							.getLocation(), false, new VariableLHS[] { retVal }));
 				}
 
 				// create procedure
@@ -276,9 +278,7 @@ public class CookiefyAlgorithm implements IUnmanagedObserver {
 						String globVarName = "retVal_" + ptype.getName();
 						statements.add(new AssignmentStatement(LocationProvider
 								.getLocation(),
-								new LeftHandSide[] { new VariableLHS(
-										LocationProvider.getLocation(), call
-												.getLhs()[0]) },
+								new LeftHandSide[] { call.getLhs()[0] },
 								new Expression[] { new IdentifierExpression(
 										LocationProvider.getLocation(),
 										globVarName) }));

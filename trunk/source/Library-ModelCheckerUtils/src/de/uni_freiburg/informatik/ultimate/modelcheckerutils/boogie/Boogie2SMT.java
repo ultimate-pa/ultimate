@@ -1028,7 +1028,8 @@ public class Boogie2SMT {
 
 	public void addHavoc(HavocStatement havoc) {
 		//ArrayList<TermVariable> vars = new ArrayList<TermVariable>(); 
-		for (String id : havoc.getIdentifiers()) {
+		for (VariableLHS lhs : havoc.getIdentifiers()) {
+			String id = lhs.getIdentifier();
 			BoogieVar boogieVar = m_CurrentLocals.containsKey(id) ? 
 					m_CurrentLocals.get(id) : globals.get(id);
 			assert (boogieVar != null);
@@ -1098,18 +1099,19 @@ public class Boogie2SMT {
 		HashMap<String, Term> substitution = new HashMap<String, Term>();
 		Expression[] arguments = call.getArguments();
 		int offset;
-		String[] lhs = call.getLhs();
+		VariableLHS[] lhs = call.getLhs();
 		offset = 0;
 		ArrayList<BoogieVar> havocVars = new ArrayList<BoogieVar>();
 		for (VarList vl: procedure.getOutParams()) {
 			for (String id : vl.getIdentifiers()) {
 //				BoogieVar outParam = locals.get(id);
 //				assert (outParam != null);
-				BoogieVar callLhsVar = m_CurrentLocals.containsKey(lhs[offset]) ? 
-						m_CurrentLocals.get(lhs[offset]) : globals.get(lhs[offset]);
+				String name = lhs[offset].getIdentifier();
+				BoogieVar callLhsVar = m_CurrentLocals.containsKey(name) ? 
+						m_CurrentLocals.get(name) : globals.get(name);
 				assert (callLhsVar != null);
 				
-				substitution.put(id, getSmtIdentifier(lhs[offset], vl));
+				substitution.put(id, getSmtIdentifier(name, vl));
 				havocVars.add(callLhsVar);
 				offset++;
 			}
@@ -1125,7 +1127,8 @@ public class Boogie2SMT {
 		
 		for (Specification spec: procedure.getSpecification()){
 			if (spec instanceof ModifiesSpecification){
-				for (String id: ((ModifiesSpecification) spec).getIdentifiers()) {
+				for (VariableLHS var: ((ModifiesSpecification) spec).getIdentifiers()) {
+					String id = var.getIdentifier();
 					BoogieVar boogieVar = globals.get(id);
 					Sort sort = m_Smt2Boogie.getSort(boogieVar.getIType(), spec);
 //					String inName = "v_"+quoteId(boogieVar.getIdentifier())+"_"+

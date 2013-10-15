@@ -198,14 +198,14 @@ public class SvCompCHandler extends CHandler {
             }
             InferredType type = new InferredType(Type.Integer);
             ASTType tempType = new PrimitiveType(loc, type, type.toString());
-            String[] tId = new String[] { main.nameHandler.getTempVarUID(SFO.AUXVAR.NONDET) };
+            String tId = main.nameHandler.getTempVarUID(SFO.AUXVAR.NONDET);
             VariableDeclaration tVarDecl = new VariableDeclaration(
             		loc, new Attribute[0],
-                    new VarList[] { new VarList(loc, tId, tempType) });
+                    new VarList[] { new VarList(loc, new String[] {tId}, tempType) });
             auxVars.put(tVarDecl, loc);
             decl.add(tVarDecl);
-            stmt.add(new HavocStatement(loc, tId));
-            expr = new IdentifierExpression(loc, type, tId[0]);
+            stmt.add(new HavocStatement(loc, new VariableLHS[] { new VariableLHS(loc, tId)}));
+            expr = new IdentifierExpression(loc, type, tId);
             assert (main.isAuxVarMapcomplete(decl, auxVars));
             return new ResultExpression(stmt, expr, decl, auxVars);
         }

@@ -1,6 +1,9 @@
 package de.uni_freiburg.informatik.ultimate.boogie.type;
 import java.util.ArrayList;
 
+import de.uni_freiburg.informatik.ultimate.model.ILocation;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ASTType;
+
 public class ArrayType extends BoogieType {
 	/**
 	 * long serialVersionUID
@@ -197,6 +200,19 @@ public class ArrayType extends BoogieType {
 		if (needParentheses)
 			sb.append(")");
 		return sb.toString();
+	}
+	
+	@Override
+	protected ASTType toASTType(ILocation loc, int depth) {
+		String[] typeParams = new String[numPlaceholders];
+		for (int i = 0; i < numPlaceholders; i++)
+			typeParams[i] = "$"+(depth+i);
+		ASTType[] astIndexTypes = new ASTType[indexTypes.length];
+		for (int i = 0; i < indexTypes.length; i++)
+			astIndexTypes[i] = indexTypes[i].toASTType(loc, depth + numPlaceholders);
+		ASTType astValueType = valueType.toASTType(loc, depth + numPlaceholders);
+		return new de.uni_freiburg.informatik.ultimate.model.boogie.ast.
+			ArrayType(loc, this, typeParams, astIndexTypes, astValueType);
 	}
 	
 	//@Override

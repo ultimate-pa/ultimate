@@ -494,7 +494,7 @@ public final class DSITransformerObserver extends BoogieTransformer implements
 	 * @return an integer representing the type of procedure identified
 	 */
 	private int processProcedure(ProcedureContainer p,
-			Collection<VariableDeclaration> vardecls, Set<String> modifies,
+			Collection<VariableDeclaration> vardecls, Set<VariableLHS> modifies,
 			Collection<Statement> statements) {
 
 		procedureIDPrefix = p.getIdentifier() + "_";
@@ -607,10 +607,10 @@ public final class DSITransformerObserver extends BoogieTransformer implements
 
 		// Havoc the parameters (except for the structure)
 		if (parms.size() > 0) {
-			String[] parmsArray = new String[parms.size()];
+			VariableLHS[] parmsArray = new VariableLHS[parms.size()];
 			int i = 0;
 			for (String id : parms)
-				parmsArray[i++] = procedureIDPrefix + id;
+				parmsArray[i++] = new VariableLHS(loccationOfP, procedureIDPrefix + id);
 			result.add(new HavocStatement(loccationOfP, parmsArray));
 		}
 
@@ -620,7 +620,7 @@ public final class DSITransformerObserver extends BoogieTransformer implements
 		// end.
 		for (Specification s : p.declaration.getSpecification()) {
 			if (s instanceof ModifiesSpecification)
-				for (String id : ((ModifiesSpecification) s).getIdentifiers())
+				for (VariableLHS id : ((ModifiesSpecification) s).getIdentifiers())
 					modifies.add(id);
 			else if (s instanceof RequiresSpecification) {
 				AssumeStatement newAssume = new AssumeStatement(
@@ -743,7 +743,7 @@ public final class DSITransformerObserver extends BoogieTransformer implements
 		// Set of the specifications to add to the new procedure
 		Collection<Specification> procSpecs = new ArrayList<Specification>();
 		// List of global variables modified by the new procedure
-		Set<String> procModifies = new HashSet<String>();
+		Set<VariableLHS> procModifies = new HashSet<VariableLHS>();
 
 		// List of the newly created procedure's initializing statements
 		List<Statement> initStatements = new ArrayList<Statement>();
@@ -882,7 +882,7 @@ public final class DSITransformerObserver extends BoogieTransformer implements
 		// Create the Modifies clause
 		if (procModifies.size() > 0)
 			procSpecs.add(new ModifiesSpecification(null, false, procModifies
-					.toArray(new String[procModifies.size()])));
+					.toArray(new VariableLHS[procModifies.size()])));
 		// Finally return the new procedure
 		return new Procedure(new BoogieLocation("",-1,-1,-1,-1,null), new Attribute[0], structureProcID,
 				new String[0], new VarList[0], new VarList[0], procSpecs
@@ -907,21 +907,6 @@ public final class DSITransformerObserver extends BoogieTransformer implements
 					newlabels[i] = procedureIDPrefix + st.getLabels()[i];
 				return new GotoStatement(st.getLocation(),
 						newlabels);
-			}
-			if (statement instanceof CallStatement) {
-				CallStatement call = (CallStatement) statement;
-				Expression[] args = call.getArguments();
-				Expression[] newArgs = processExpressions(args);
-				String[] lhs = call.getLhs();
-				String[] newLhs = new String[lhs.length];
-
-				for (int i = 0; i < lhs.length; i++)
-					if (procLocals.containsKey(lhs[i]))
-						newLhs[i] = procLocals.get(lhs[i]);
-
-				if (args != newArgs || lhs != newLhs)
-					return new CallStatement(call.getLocation(), call.isForall(), newLhs, call
-							.getMethodName(), newArgs);
 			}
 			if (supressResultAssignments
 					&& statement instanceof AssignmentStatement) {

@@ -2,6 +2,9 @@ package de.uni_freiburg.informatik.ultimate.boogie.type;
 
 import java.util.ArrayList;
 
+import de.uni_freiburg.informatik.ultimate.model.ILocation;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ASTType;
+
 /**
  * A Constructed type is a 
  * @author hoenicke
@@ -118,6 +121,10 @@ public class ConstructedType extends BoogieType {
 	public BoogieType getParameter(int i) {
 		return parameters[i];
 	}
+	
+	public int getParameterCount() {
+		return parameters.length;
+	}
 
 	/**
 	 * Computes a string representation.  It uses depth to compute artificial
@@ -139,6 +146,15 @@ public class ConstructedType extends BoogieType {
 		if (needParentheses)
 			sb.append(")");
 		return sb.toString();
+	}
+	
+	@Override
+	protected ASTType toASTType(ILocation loc, int depth) {
+		ASTType[] astParamTypes = new ASTType[parameters.length];
+		for (int i = 0; i < parameters.length; i++)
+			astParamTypes[i] = parameters[i].toASTType(loc, depth);
+		return new de.uni_freiburg.informatik.ultimate.model.boogie.ast.
+			NamedType(loc, this, constr.getName(), astParamTypes);
 	}
 	
 	//@Override

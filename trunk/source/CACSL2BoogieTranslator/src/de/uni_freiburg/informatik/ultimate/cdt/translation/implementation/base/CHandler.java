@@ -741,7 +741,7 @@ public class CHandler implements ICHandler {
 	                     * represent C's behavior!
 	                     */
 	                    result.stmt.add(new HavocStatement(loc,
-	                            new String[] { bId }));
+	                            new VariableLHS[] { new VariableLHS(loc, bId) }));
 	                }
             	}
             }

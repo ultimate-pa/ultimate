@@ -260,9 +260,9 @@ public class MemoryHandler {
             Expression addrBase = new StructAccessExpression(l, intIT, addr,
                     SFO.POINTER_BASE);
             Expression[] idcWrite = new Expression[] { addrBase };
-            String[] modified = new String[tName.length];
+            VariableLHS[] modified = new VariableLHS[tName.length];
             for (int j = 0; j < modified.length; j++) {
-                modified[j] = SFO.MEMORY + "_" + tName[j];
+                modified[j] = new VariableLHS(l, SFO.MEMORY + "_" + tName[j]);
             }
             Specification[] swrite;
             if (m_CheckPointerValidity) {
@@ -348,7 +348,7 @@ public class MemoryHandler {
             					new Expression[] { idVal });
             		} else {
             			writeBlock[k] = new HavocStatement(l,
-            					new String[] { tmpVar });
+            					new VariableLHS[] { new VariableLHS(l, tmpVar) });
             			writeBlock[++k] = new AssignmentStatement(l, arrL,
             					new Expression[] { new IdentifierExpression(l,
             							tmpVar) });
@@ -440,7 +440,7 @@ public class MemoryHandler {
                                 tuLoc, UnaryExpression.Operator.OLD, valid),
                                 idcFree, bLFalse))),
                 new ModifiesSpecification(tuLoc, false,
-                        new String[] { SFO.VALID }) };
+                        new VariableLHS[] { new VariableLHS(tuLoc, SFO.VALID) }) };
         decl.add(new Procedure(tuLoc, new Attribute[0], SFO.FREE,
                 new String[0], new VarList[] { new VarList(tuLoc,
                         new String[] { ADDR }, POINTER_TYPE) }, new VarList[0],
@@ -528,8 +528,9 @@ public class MemoryHandler {
                         new ArrayStoreExpression(tuLoc, new UnaryExpression(
                                 tuLoc, UnaryExpression.Operator.OLD, length),
                                 idcMalloc, size)));
-        specMalloc[6] = new ModifiesSpecification(tuLoc, false, new String[] {
-                SFO.VALID, SFO.LENGTH });
+        specMalloc[6] = new ModifiesSpecification(tuLoc, false, new VariableLHS[] {
+                new VariableLHS(tuLoc, SFO.VALID), 
+                new VariableLHS(tuLoc, SFO.LENGTH) });
         decl.add(new Procedure(tuLoc, new Attribute[0], SFO.MALLOC,
                 new String[0], new VarList[] { new VarList(tuLoc,
                         new String[] { SIZE }, intType) },
@@ -618,7 +619,7 @@ public class MemoryHandler {
         // ~free(E);
         ArrayList<Statement> stmt = new ArrayList<Statement>();
         ArrayList<Declaration> decl = new ArrayList<Declaration>();
-        stmt.add(new CallStatement(loc, false, new String[0], SFO.FREE,
+        stmt.add(new CallStatement(loc, false, new VariableLHS[0], SFO.FREE,
                 new Expression[] { e }));
         // add required information to function handler.
         if (fh.getCurrentProcedureID() != null) {
@@ -690,7 +691,7 @@ public class MemoryHandler {
         VariableDeclaration tVarDecl = SFO.getTempVarVariableDeclaration(tmpId, tmpIType, loc);
         auxVars.put(tVarDecl, loc);
         decl.add(tVarDecl);
-        stmt.add(new CallStatement(loc, false, new String[] { tmpId },
+        stmt.add(new CallStatement(loc, false, new VariableLHS[] { new VariableLHS(loc, tmpId) },
                 SFO.MALLOC, args));
         Expression e = new IdentifierExpression(loc, it, tmpId);
         // add required information to function handler.
@@ -979,7 +980,7 @@ public class MemoryHandler {
         VariableDeclaration tVarDecl = SFO.getTempVarVariableDeclaration(tmpId, it, loc);
         auxVars.put(tVarDecl, loc);
         decl.add(tVarDecl);
-        String[] lhs = new String[] { tmpId };
+        VariableLHS[] lhs = new VariableLHS[] { new VariableLHS(loc, tmpId) };
         CallStatement call = new CallStatement(loc, false, lhs, "read~" + t,
                 new Expression[] { tPointer });
         stmt.add(call);
@@ -1067,7 +1068,7 @@ public class MemoryHandler {
         }
         assert t != SFO.EMPTY;
 
-        String[] lhs = new String[] {};
+        VariableLHS[] lhs = new VariableLHS[0];
         stmt.add(new CallStatement(loc, false, lhs, "write~" + t,
                 new Expression[] { val, tPointer }));
 		Map<VariableDeclaration, CACSLLocation> emptyAuxVars = 

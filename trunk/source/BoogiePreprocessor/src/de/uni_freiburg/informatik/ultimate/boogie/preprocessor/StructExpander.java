@@ -3,51 +3,40 @@
  */
 package de.uni_freiburg.informatik.ultimate.boogie.preprocessor;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 
 import de.uni_freiburg.informatik.ultimate.access.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.access.WalkerOptions;
 import de.uni_freiburg.informatik.ultimate.boogie.type.ArrayType;
+import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.ConstructedType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.PrimitiveType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.StructType;
+import de.uni_freiburg.informatik.ultimate.boogie.type.TypeConstructor;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.ILocation;
 import de.uni_freiburg.informatik.ultimate.model.IType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieTransformer;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayAccessExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayLHS;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayStoreExpression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssignmentStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Attribute;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression.Operator;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Body;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.FunctionApplication;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.FunctionDeclaration;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.HavocStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IdentifierExpression;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IfThenElseExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.LeftHandSide;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ModifiesSpecification;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Procedure;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Specification;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StructAccessExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StructConstructor;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StructLHS;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.TypeDeclaration;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Unit;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VarList;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.wrapper.WrapperNode;
 
@@ -127,169 +116,159 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.wrapper.WrapperNode;
  * 
  * 
  * 
- * @author Markus Lindenmann
+ * @author Markus Lindenmann, Jochen Hoenicke
  * @date 26.08.2012
  */
 public class StructExpander extends BoogieTransformer implements
         IUnmanagedObserver {
     /**
-     * String holding ~.
-     */
-    private static final String TILDE = "~";
-    /**
      * String holding a period / dot.
      */
     private static final String DOT = ".";
+    
     /**
-     * Empty String.
+     * The cache used by flattenType to prevent repeated work.
      */
-    private static final String EMPTY_STRING = "";
+    private HashMap<BoogieType, BoogieType> m_FlattenCache;
     /**
-     * Holds all identifiers, that are of type struct or struct[].
+     * This map remembers the created struct types.
+     * For named type parameters that have struct type, we create a new
+     * pseudo type struct~f1~f2, where f1,f2 are the names of the field
+     * and that takes the types of f1 and f2 as parameters.  This is used
+     * to instantiate these type parameters.
+     * E.g. the type <code>Field {a:int, b:real}</code> is flattened
+     * to <code>Field (struct~a~b int real)</code>.  We need to remember
+     * to add the type declaration
+     * <pre>type struct~a~b $0 $1;</pre>
+     * which is remembered in this map.
      */
-    private HashMap<String, IType> globalStructTypes;
-    /**
-     * Holds all identifiers, that are of type struct or struct[].
-     */
-    private HashMap<String, IType> localStructTypes;
+    private HashMap<String, TypeConstructor> m_StructTypes;
 
     /**
-     * Converts an IType to a corresponding ASTType.
-     * 
-     * @param t
-     *            the IType to convert.
-     * @param loc
-     *            the location for the new ASTTypes.
-     * @return the generated ASTType.
+     * Create a new struct wrapper type and register the corresponding
+     * type constructor, unless that is already present.  The input type
+     * must already be flattened, i.e., the field types do not contain
+     * any structs.
+     * @param st the struct type for which a wrapper is created.
+     * @returns a new constructed type for this struct type.
      */
-    private ASTType getASTType(IType t, ILocation loc) {
-        IType type = t;
-        if (type instanceof ConstructedType) {
-            type = ((ConstructedType) type).getUnderlyingType();
-        }
-        if (type instanceof PrimitiveType) {
-            PrimitiveType pt = (PrimitiveType) type;
-            return new de.uni_freiburg.informatik.ultimate.model.boogie.ast.PrimitiveType(
-                    loc, pt, pt.toString());
-        } else if (type instanceof ArrayType) {
-            ArrayType at = (ArrayType) type;
-            ASTType vt = getASTType(at.getValueType(), loc);
-            ASTType[] idc = new ASTType[at.getIndexCount()];
-            for (int i = 0; i < at.getIndexCount(); i++) {
-                idc[i] = getASTType(at.getIndexType(i), loc);
-            }
-            return new de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayType(
-                    loc, type, new String[0], idc, vt);
-        } else if (type instanceof StructType) {
-            StructType st = (StructType) type;
-            VarList[] fields = new VarList[st.getFieldCount()];
-            for (int i = 0; i < st.getFieldCount(); i++) {
-                fields[i] = new VarList(loc,
-                        new String[] { st.getFieldIds()[i] }, getASTType(
-                                st.getFieldTypes()[i], loc));
-            }
-            return new de.uni_freiburg.informatik.ultimate.model.boogie.ast.StructType(
-                    loc, type, fields);
-        } else {
-            assert false;
-            throw new UnsupportedOperationException("Not yet implemented!");
-        }
+    private BoogieType createStructWrapperType(StructType st) {
+		StringBuilder sb = new StringBuilder();
+		sb.append("struct");
+		for (String f : st.getFieldIds())
+			sb.append('~').append(f);
+		String name = sb.toString();
+		TypeConstructor tc = m_StructTypes.get(name);
+		if (tc == null) {
+			int[] paramOrder = new int[st.getFieldCount()];
+			for (int i= 0; i < paramOrder.length; i++)
+				paramOrder[i] = i;
+			tc = new TypeConstructor(name, st.isFinite(), st.getFieldCount(), paramOrder);
+			m_StructTypes.put(name, tc);
+		}
+		BoogieType[] types = new BoogieType[st.getFieldCount()];
+		for (int i = 0; i< types.length; i++)
+			types[i] = st.getFieldType(i);
+		return BoogieType.createConstructedType(tc, types);
     }
-
+    
     /**
-     * Checks all array indices, whether one is of struct type.
-     * 
-     * @param t
-     *            the type to check.
-     * @return true iff t is an ArrayType and at least one index is of struct
-     *         type.
+     * Convert a type to a flattened type, where there is a single 
+     * struct type at the outside.  arrays of structs are converted
+     * to structs of arrays and nested structs are flattened.
+     * We work on BoogieType and use getUnderlyingType() so that we 
+     * do not need to handle type aliases. 
+     * @param itype  the type that should be flattened.  This must
+     *   be a BoogieType, but we want to avoid casts everywhere.
+     * @return the flattened type as BoogieType.
      */
-    private static boolean isAnIndexAStruct(final IType t) {
-        IType it = t;
-        if (it instanceof ConstructedType)
-            it = ((ConstructedType) it).getUnderlyingType();
-        if (it instanceof ArrayType) {
-            ArrayType at = (ArrayType) it;
-            for (int i = 0; i < at.getIndexCount(); i++) {
-                if (isNamedTypeStructOrStructArray(at.getIndexType(i))) {
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
-
-    /**
-     * Checks all array indices, whether one is of struct type.
-     * 
-     * @param aae
-     *            the array access expression to check.
-     * @return true iff t is an ArrayType and at least one index is of struct
-     *         type.
-     */
-    private static boolean isAnIndexAStruct(final ArrayAccessExpression aae) {
-        for (Expression e : aae.getIndices()) {
-            if (isNamedTypeStructOrStructArray(e.getType())) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    /**
-     * Checks whether the type is an ArrayType, and if the valueType is instance
-     * of StructType.
-     * 
-     * @param t
-     *            the type to check.
-     * @return true iff (type is an ArrayType and valueType is StructType).
-     */
-    private static boolean isArrayOfStruct(final IType t) {
-        if (t instanceof ArrayType) {
-            IType vt = ((ArrayType) t).getValueType();
-            if (vt instanceof ConstructedType) {
-                vt = ((ConstructedType) vt).getUnderlyingType();
-            }
-            if (vt instanceof StructType) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    /**
-     * Determines, whether the given type is a NamedType and referring to a type
-     * using structs.
-     * 
-     * @param t
-     *            the type to decide on.
-     * @return true iff the underlying type is using structs.
-     */
-    private static boolean isNamedTypeStructOrStructArray(final IType t) {
-        if (t instanceof StructType)
-            return true;
-        if (isArrayOfStruct(t))
-            return true;
-        if (t instanceof ConstructedType) {
-            ConstructedType ct = (ConstructedType) t;
-            if (ct.getUnderlyingType() instanceof StructType)
-                return true;
-            if (isArrayOfStruct(ct))
-                return true;
-        }
-        return false;
+    private BoogieType flattenType(IType itype) {
+    	BoogieType result;
+    	BoogieType type = ((BoogieType)itype).getUnderlyingType();
+    	if (m_FlattenCache.containsKey(type))
+    		return m_FlattenCache.get(type);
+    	if (type instanceof PrimitiveType) {
+    		result = type;
+    	} else if (type instanceof ConstructedType) {
+    		ConstructedType ctype = (ConstructedType) type;
+    		int numParams = ctype.getParameterCount();
+    		BoogieType[] paramTypes = new BoogieType[numParams];
+    		for (int i = 0; i < paramTypes.length; i++) {
+    			paramTypes[i] = flattenType(ctype.getParameter(i));
+    			if (paramTypes[i] instanceof StructType) {
+    				StructType st = (StructType) paramTypes[i];
+    				paramTypes[i] = createStructWrapperType(st);
+    			}
+    		}
+    		result = BoogieType.createConstructedType(ctype.getConstr(), paramTypes);
+    	} else if (type instanceof ArrayType) {
+    		ArrayType at = (ArrayType) type;
+        	ArrayList<BoogieType> flattenedIndices = new ArrayList<BoogieType>();
+    		for (int i = 0; i < at.getIndexCount(); i++) {
+        		BoogieType flat = flattenType(at.getIndexType(i));
+        		if (flat instanceof StructType) {
+        			StructType st = (StructType) flat;
+        			for (int j = 0; j < st.getFieldCount(); j++)
+        				flattenedIndices.add(st.getFieldType(j));
+        		} else {
+        			flattenedIndices.add(flat);
+        		}
+        	}
+    		BoogieType[] indexTypes = flattenedIndices.toArray
+    				(new BoogieType[flattenedIndices.size()]);
+    		BoogieType valueType = at.getValueType();
+    		if (valueType instanceof StructType) {
+    			StructType st = (StructType) valueType;
+    			String[] names = st.getFieldIds();
+    			BoogieType[] resultTypes = new BoogieType[names.length];
+    			for (int i = 0; i < names.length; i++) {
+    				resultTypes[i] = BoogieType.createArrayType
+    						(at.getNumPlaceholders(), 
+    						indexTypes, st.getFieldType(i));
+    			}
+    			result = BoogieType.createStructType(names, resultTypes);
+    		} else {
+    			result = BoogieType.createArrayType(at.getNumPlaceholders(), 
+    					indexTypes, valueType);
+    		}
+    	} else if (type instanceof StructType) {
+    		StructType stype = (StructType) type;
+    		ArrayList<String> allNames = new ArrayList<String>();
+    		ArrayList<BoogieType> allTypes = new ArrayList<BoogieType>();
+    		for (int i = 0; i < stype.getFieldCount(); i++) {
+    			String id = stype.getFieldIds()[i];
+    			BoogieType bt = flattenType(stype.getFieldType(i));
+    			if (bt instanceof StructType) {
+    				StructType st = (StructType) bt;
+    				for (int j = 0; j < st.getFieldCount(); j++) {
+    					allNames.add(id + DOT + st.getFieldIds()[j]);
+    					allTypes.add(st.getFieldType(j));
+    				}
+    			} else {
+    				allNames.add(id);
+    				allTypes.add(bt);
+    			}
+    		}
+    		String[] names = allNames.toArray(new String[allNames.size()]);
+    		BoogieType[] types = allTypes.toArray(new BoogieType[allTypes.size()]);
+    		result = BoogieType.createStructType(names, types);
+    	} else {
+    		throw new AssertionError("Unknown ASTType "+type);
+    	}
+    	m_FlattenCache.put(type, result);
+    	return result;
     }
 
     @Override
     public void init() {
-        this.globalStructTypes = new HashMap<String, IType>();
-        this.localStructTypes = new HashMap<String, IType>();
+    	this.m_FlattenCache = new HashMap<BoogieType, BoogieType>();
+    	this.m_StructTypes = new HashMap<String, TypeConstructor>();
     }
 
     @Override
     public void finish() {
-        this.globalStructTypes = null;
-        this.localStructTypes = null;
+        this.m_FlattenCache = null;
+        this.m_StructTypes = null;
     }
 
     @Override
@@ -302,20 +281,31 @@ public class StructExpander extends BoogieTransformer implements
         return true;
     }
 
+    /**
+     * Process the boogie code.
+     */
     @Override
     public boolean process(IElement root) {
         if (root instanceof WrapperNode) {
             Unit unit = (Unit) ((WrapperNode) root).getBacking();
-            ArrayList<Declaration> newDecls = new ArrayList<Declaration>();
+            ArrayDeque<Declaration> newDecls = new ArrayDeque<Declaration>();
             for (Declaration d : unit.getDeclarations()) {
                 if (d instanceof FunctionDeclaration) {
-                    ArrayList<Declaration> funcs = expandFunctionDeclaration((FunctionDeclaration) d);
-                    newDecls.addAll(funcs);
+                    Declaration[] funcs = expandFunctionDeclaration((FunctionDeclaration) d);
+                    newDecls.addAll(Arrays.asList(funcs));
                 } else {
                     Declaration decl = processDeclaration(d);
                     if (decl != null)
                         newDecls.add(decl);
                 }
+            }
+            for (TypeConstructor tc : m_StructTypes.values()) {
+            	String[] typeParams = new String[tc.getParamCount()];
+            	for (int i = 0; i < typeParams.length; i++) 
+            		typeParams[i] = "$"+i;
+            	Declaration d = new TypeDeclaration(unit.getLocation(), 
+            		new Attribute[0], tc.isFinite(), tc.getName(), typeParams);
+            	newDecls.addFirst(d);
             }
             unit.setDeclarations(newDecls.toArray(new Declaration[0]));
             return false;
@@ -323,607 +313,335 @@ public class StructExpander extends BoogieTransformer implements
         return true;
     }
 
-    @Override
-    protected Specification processSpecification(Specification spec) {
-        if (spec instanceof ModifiesSpecification) {
-            HashSet<String> newIdsList = new HashSet<String>();
-            String[] ids = ((ModifiesSpecification) spec).getIdentifiers();
-            for (String id : ids) {
-                if (globalStructTypes.containsKey(id)) {
-                    IType varType = globalStructTypes.get(id);
-                    IdentifierExpression idEx = new IdentifierExpression(
-                            spec.getLocation(), varType, id);
-                    for (Expression ide : expandExpression(idEx))
-                        newIdsList.add(((IdentifierExpression) ide)
-                                .getIdentifier());
-                } else
-                    newIdsList.add(id);
-            }
-            String[] newIds = newIdsList.toArray(new String[0]);
-            if (ids != newIds)
-                return new ModifiesSpecification(spec.getLocation(),
-                        spec.isFree(), newIds);
-            return spec;
-        }
-        return super.processSpecification(spec);
-    }
-
-    @Override
-    protected Expression[] processExpressions(Expression[] exprs) {
-        ArrayList<Expression> newExprs = new ArrayList<Expression>(exprs.length);
-        for (Expression e : exprs)
-            newExprs.addAll(expandExpression(e));
-        Expression[] nExprs = newExprs.toArray(new Expression[0]);
-        if (Arrays.equals(nExprs, exprs))
-            return exprs;
-        return nExprs;
-    }
-
-    @Override
-    protected Statement processStatement(final Statement statement) {
-        if (statement instanceof AssignmentStatement) {
-            AssignmentStatement assign = (AssignmentStatement) statement;
-            assert assign.getLhs().length == assign.getRhs().length;
-            ArrayList<LeftHandSide> newLhs = new ArrayList<LeftHandSide>();
-            Expression[] newRhs = processExpressions(assign.getRhs());
-            for (int i = 0; i < assign.getLhs().length; i++) {
-                LeftHandSide lhs = processLeftHandSide(assign.getLhs()[i]);
-                assert lhs instanceof VariableLHS || lhs instanceof ArrayLHS;
-                IType it = lhs.getType();
-                if (it instanceof ConstructedType
-                        && isNamedTypeStructOrStructArray(it))
-                    it = ((ConstructedType) it).getUnderlyingType();
-                if (it instanceof StructType || isArrayOfStruct(it)) {
-                    if (lhs instanceof VariableLHS) {
-                        String id = ((VariableLHS) lhs).getIdentifier();
-                        ILocation loc = lhs.getLocation();
-                        ArrayList<IdentifierExpression> ies = expandIType(loc,
-                                lhs.getType(), id);
-                        for (IdentifierExpression ie : ies)
-                            newLhs.add(new VariableLHS(loc, ie.getType(), ie
-                                    .getIdentifier()));
-                    } else if (lhs instanceof ArrayLHS) {
-                        assert lhs instanceof ArrayLHS;
-                        LeftHandSide array = ((ArrayLHS) lhs).getArray();
-                        assert array instanceof VariableLHS;
-                        String id = ((VariableLHS) array).getIdentifier();
-                        Expression[] idc = processExpressions(((ArrayLHS) lhs)
-                                .getIndices());
-                        ILocation loc = lhs.getLocation();
-                        ArrayList<IdentifierExpression> ies = expandIType(loc,
-                                lhs.getType(), id);
-                        for (IdentifierExpression ie : ies) {
-                            VariableLHS nVLhs = new VariableLHS(loc,
-                                    ie.getType(), ie.getIdentifier());
-                            newLhs.add(new ArrayLHS(loc, nVLhs, idc));
-                        }
-                    } else {
-                        throw new AssertionError(
-                                "Something went wrong during struct expansion");
-                    }
-                } else {
-                    newLhs.add(processLeftHandSide(lhs));
-                }
-            }
-            return new AssignmentStatement(assign.getLocation(),
-                    newLhs.toArray(new LeftHandSide[0]), newRhs);
-        } else if (statement instanceof CallStatement) {
-            CallStatement cStmt = (CallStatement) statement;
-            ILocation loc = cStmt.getLocation();
-            ArrayList<String> newLhsL = new ArrayList<String>();
-            for (String id : cStmt.getLhs()) {
-                IType varType = null;
-                if (localStructTypes.containsKey(id)) {
-                    varType = localStructTypes.get(id);
-                } else if (globalStructTypes.containsKey(id)) {
-                    varType = globalStructTypes.get(id);
-                } else {
-                    newLhsL.add(id);
-                    continue;
-                }
-                IdentifierExpression idEx = new IdentifierExpression(loc,
-                        varType, id);
-                for (Expression ide : expandExpression(idEx))
-                    newLhsL.add(((IdentifierExpression) ide).getIdentifier());
-            }
-            String[] newLhs = newLhsL.toArray(new String[0]);
-            Expression[] newArgs = processExpressions(cStmt.getArguments());
-            if (newLhs.equals(cStmt.getLhs())
-                    && newArgs.equals(cStmt.getArguments())) {
-                return cStmt;
-            }
-            return new CallStatement(cStmt.getLocation(), cStmt.isForall(),
-                    newLhs, cStmt.getMethodName(), newArgs);
-        } else if (statement instanceof HavocStatement) {
-            HavocStatement hStmt = (HavocStatement) statement;
-            ILocation loc = hStmt.getLocation();
-            ArrayList<String> newIdsL = new ArrayList<String>();
-            for (String id : hStmt.getIdentifiers()) {
-                IType varType = null;
-                if (localStructTypes.containsKey(id)) {
-                    varType = localStructTypes.get(id);
-                } else if (globalStructTypes.containsKey(id)) {
-                    varType = globalStructTypes.get(id);
-                } else {
-                    newIdsL.add(id);
-                    continue;
-                }
-                IdentifierExpression idEx = new IdentifierExpression(loc,
-                        varType, id);
-                for (Expression ide : expandExpression(idEx))
-                    newIdsL.add(((IdentifierExpression) ide).getIdentifier());
-            }
-            String[] newIds = newIdsL.toArray(new String[0]);
-            if (Arrays.equals(newIds, hStmt.getIdentifiers())) {
-                return hStmt;
-            }
-            return new HavocStatement(loc, newIds);
-        }
-        return super.processStatement(statement);
-    }
-
-    @Override
-    protected LeftHandSide processLeftHandSide(final LeftHandSide lhs) {
-        if (lhs instanceof StructLHS
-                || (lhs instanceof ArrayLHS && ((ArrayLHS) lhs).getArray() instanceof StructLHS)) {
-            LeftHandSide l = lhs;
-            ArrayList<String> lhsList = new ArrayList<String>();
-            ArrayList<Expression> arrayIndices = new ArrayList<Expression>();
-            while (l instanceof ArrayLHS || l instanceof StructLHS) {
-                if (l instanceof ArrayLHS) {
-                    ArrayLHS alhs = (ArrayLHS) l;
-                    if (alhs.getIndices() != null)
-                        arrayIndices.addAll(Arrays
-                                .asList(processExpressions(alhs.getIndices())));
-                    l = alhs.getArray();
-                } else if (l instanceof StructLHS) {
-                    StructLHS slhs = (StructLHS) l;
-                    lhsList.add(slhs.getField());
-                    l = slhs.getStruct();
-                }
-            }
-            assert l instanceof VariableLHS;
-            lhsList.add(((VariableLHS) l).getIdentifier());
-            Collections.reverse(lhsList);
-
-            StringBuilder sb = new StringBuilder();
-            final String sep = DOT;
-            for (String s : lhsList)
-                sb.append(sep).append(s);
-            sb.replace(0, 1, EMPTY_STRING);
-            VariableLHS vlhs = new VariableLHS(lhs.getLocation(), sb.toString());
-            if (!arrayIndices.isEmpty()) {
-                return new ArrayLHS(lhs.getLocation(), vlhs,
-                        arrayIndices.toArray(new Expression[0]));
-            }
-            return vlhs;
-        }
-        return super.processLeftHandSide(lhs);
-    }
-
+    /**
+     * Process declarations.  This will just remove type declarations
+     * that are no longer valid since they declare struct types.
+     * @param d the declaration to process.
+     * @returns the same declaration, or null if it should be removed.
+     */
     @Override
     protected Declaration processDeclaration(final Declaration d) {
-        if (d instanceof VariableDeclaration) {
-            return expandVariableDeclaration((VariableDeclaration) d, true);
-        } else if (d instanceof Procedure) {
-            localStructTypes.clear();
-            Procedure p = (Procedure) d;
-            VarList[] in = processVarLists(p.getInParams());
-            VarList[] out = processVarLists(p.getOutParams());
-            Specification[] specs = p.getSpecification();
-            Specification[] newSpecs = specs != null ? processSpecifications(specs)
-                    : null;
-            Body body = p.getBody();
-            Body newBody = body != null ? processBody(body) : null;
-            Attribute[] newAttrs = processAttributes(p.getAttributes());
-            return new Procedure(p.getLocation(), newAttrs, p.getIdentifier(),
-                    p.getTypeParams(), in, out, newSpecs, newBody);
-        } else if (d instanceof TypeDeclaration
-                && (((TypeDeclaration) d).getSynonym() != null && isNamedTypeStructOrStructArray(((TypeDeclaration) d)
-                        .getSynonym().getBoogieType()))) {
-            return null;
+        if (d instanceof TypeDeclaration) {
+        	TypeDeclaration td = (TypeDeclaration) d;
+        	if (td.getSynonym() != null) {
+        		BoogieType bt = flattenType(td.getSynonym().getBoogieType());
+        		if (bt instanceof StructType)
+        			return null;
+        		if (bt.equals(td.getSynonym().getBoogieType()))
+        			return td;
+        		return new TypeDeclaration(
+        				td.getLocation(), td.getAttributes(), td.isFinite(), 
+       					td.getIdentifier(), td.getTypeParams(), 
+       					bt.toASTType(td.getLocation()));
+        	}
         }
         return super.processDeclaration(d);
     }
 
-    @Override
-    protected VariableDeclaration processLocalVariableDeclaration(
-            final VariableDeclaration local) {
-        return (VariableDeclaration) expandVariableDeclaration(local, false);
-    }
 
-    @Override
-    protected Expression processExpression(final Expression expr) {
-        if (expr instanceof StructAccessExpression
-                || (expr instanceof ArrayAccessExpression && ((ArrayAccessExpression) expr)
-                        .getArray() instanceof StructAccessExpression)) {
-            Expression e = expr;
-            ArrayList<String> lhsList = new ArrayList<String>();
-            ArrayList<Expression> arrayIndices = new ArrayList<Expression>();
-            while (e instanceof ArrayAccessExpression
-                    || e instanceof StructAccessExpression) {
-                if (e instanceof ArrayAccessExpression) {
-                    ArrayAccessExpression aae = (ArrayAccessExpression) e;
-                    if (aae.getIndices() != null)
-                        arrayIndices.addAll(Arrays
-                                .asList(processExpressions(aae.getIndices())));
-                    e = aae.getArray();
-                } else if (e instanceof StructAccessExpression) {
-                    StructAccessExpression sae = (StructAccessExpression) e;
-                    lhsList.add(sae.getField());
-                    e = sae.getStruct();
-                }
-            }
-            assert e instanceof IdentifierExpression;
-            lhsList.add(((IdentifierExpression) e).getIdentifier());
-            Collections.reverse(lhsList);
-
-            StringBuilder sb = new StringBuilder();
-            for (String s : lhsList)
-                sb.append(DOT).append(s);
-            sb.replace(0, 1, EMPTY_STRING);
-            Expression ide = new IdentifierExpression(expr.getLocation(),
-                    expr.getType(), sb.toString());
-            if (!arrayIndices.isEmpty())
-                return new ArrayAccessExpression(e.getLocation(),
-                        expr.getType(), ide,
-                        arrayIndices.toArray(new Expression[0]));
-            return ide;
-        } else if (expr instanceof BinaryExpression) {
-            BinaryExpression binexp = (BinaryExpression) expr;
-            Operator op = binexp.getOperator();
-            if (op == Operator.COMPEQ || op == Operator.COMPNEQ) {
-                ILocation loc = expr.getLocation();
-                Expression left = processExpression(binexp.getLeft());
-                Expression right = processExpression(binexp.getRight());
-                assert left.getType() == right.getType();
-                Expression[] r, l;
-                r = processExpressions(new Expression[] { left });
-                l = processExpressions(new Expression[] { right });
-                assert r.length == l.length;
-                Operator concat;
-                if (binexp.getOperator() == Operator.COMPEQ) {
-                    concat = Operator.LOGICAND;
-                } else {
-                    concat = Operator.LOGICOR;
-                }
-                BinaryExpression bex = null;
-                IType b = binexp.getType();
-                for (int i = 0; i < r.length; i++) {
-                    BinaryExpression inner = new BinaryExpression(loc, b, op,
-                            l[i], r[i]);
-                    if (i != 0) {
-                        bex = new BinaryExpression(loc, b, concat, bex, inner);
-                    } else {
-                        bex = inner;
-                    }
-                }
-                assert bex != null;
-                return bex;
-            }
-        }
-        return super.processExpression(expr);
-    }
-
+    /**
+     * Processes a list of varLists.  This will expand declarations of
+     * structs into declarations for all fields in the struct.  It is
+     * used for procedure and function parameters, and local and global 
+     * variables. 
+     * 
+     * @param vls the list of varlist to process.
+     * @return The expanded varlist. 
+     */
     @Override
     protected VarList[] processVarLists(VarList[] vls) {
-        boolean changed = false;
-        ArrayList<VarList> newVls = new ArrayList<VarList>();
-        for (int i = 0; i < vls.length; i++) {
-            IType it = vls[i].getType().getBoogieType();
-            if (it instanceof ConstructedType
-                    && isNamedTypeStructOrStructArray(it))
-                it = ((ConstructedType) it).getUnderlyingType();
-            if (it instanceof StructType) {
-                newVls.addAll(expandStructTypeVarList(vls[i], EMPTY_STRING));
-                changed = true;
-            } else if (isArrayOfStruct(it)) {
-                newVls.addAll(expandStructArrayTypeVarList(vls[i], EMPTY_STRING));
-                changed = true;
-            } else {
-                VarList newVL = processVarList(vls[i]);
-                newVls.add(newVL);
-                if (newVL != vls[i])
-                    changed = true;
-            }
-        }
-        return changed ? newVls.toArray(new VarList[0]) : vls;
+    	ArrayList<VarList> flat = new ArrayList<VarList>();
+    	for (VarList vl : vls) {
+    		flat.addAll(Arrays.asList(expandVarList(vl)));
+    	}
+    	if (flat.equals(Arrays.asList(vls)))
+    		return vls;
+    	return flat.toArray(new VarList[flat.size()]);
     }
 
     /**
-     * Handles a variable declaration.
+     * Expands a single var list.  This will expand declarations of
+     * structs into declarations for all fields in the struct.
+     * If the declared variables have a struct type, it creates one
+     * declaration for every variable and every field in the struct.  
      * 
-     * @param d
-     *            the VariableDeclaration to process.
-     * @param isGlobal
-     *            whether the declaration is global or local.
-     * @return the processed variable declaration.
+     * @param input the var list to expand.
+     * @return The expanded varlist. 
      */
-    private Declaration expandVariableDeclaration(final VariableDeclaration d,
-            boolean isGlobal) {
-        ArrayList<VarList> vars = new ArrayList<VarList>();
-        boolean changed = false;
-        for (VarList vl : ((VariableDeclaration) d).getVariables()) {
-            IType it = vl.getType().getBoogieType();
-            if (isNamedTypeStructOrStructArray(it) || isAnIndexAStruct(it)) {
-                changed = true;
-                if (it instanceof ConstructedType
-                        && isNamedTypeStructOrStructArray(it))
-                    it = ((ConstructedType) it).getUnderlyingType();
-                if (isGlobal)
-                    for (String id : vl.getIdentifiers())
-                        globalStructTypes.put(id, it);
-                else
-                    for (String id : vl.getIdentifiers())
-                        localStructTypes.put(id, it);
-                if (it instanceof StructType)
-                    vars.addAll(expandStructTypeVarList(vl, EMPTY_STRING));
-                else
-                    vars.addAll(expandStructArrayTypeVarList(vl, EMPTY_STRING));
-            } else {
-                vars.add(processVarList(vl));
-            }
-        }
-        if (changed) {
-            return new VariableDeclaration(d.getLocation(), d.getAttributes(),
-                    vars.toArray(new VarList[0]));
-        }
-        return super.processDeclaration(d);
+    private VarList[] expandVarList(VarList input) {
+    	IType oldType = input.getType().getBoogieType();
+    	BoogieType bt = flattenType(oldType);
+    	
+    	if (bt instanceof StructType) {
+    		StructType st = (StructType) bt;
+    		VarList[] newVarList = 
+    				new VarList[input.getIdentifiers().length * st.getFieldCount()];
+    		int i = 0;
+    		for (String id: input.getIdentifiers()) {
+    			for (int j = 0; j < st.getFieldCount(); j++) {
+    				newVarList[i++] = new VarList(input.getLocation(),
+    					new String[] { id + DOT + st.getFieldIds()[j] }, 
+    					st.getFieldType(j).toASTType(input.getLocation()));
+    			}
+    		}
+        	return newVarList;
+    	} else {
+        	if (bt.equals(oldType))
+        		return new VarList[] {input};
+    		return new VarList[] {
+    			new VarList(input.getLocation(), input.getIdentifiers(),
+    					bt.toASTType(input.getLocation()))
+    		};
+    	}
     }
 
     /**
-     * Handles a array with value or index type struct.
-     * 
-     * @param vl
-     *            the variable list.
-     * @param pre
-     *            the String prefix previously calculated.
-     * @return expanded variable lists.
+     * Process expressions.  Mainly this flattens the expression types, but
+     * it will also remove StructAccessExpression.  It must only be called
+     * for expression that are not of a struct type after flattening.
+     * @param expr the expression that should be processed.
+     * @returns the struct-free expression.
      */
-    private ArrayList<VarList> expandStructArrayTypeVarList(final VarList vl,
-            final String pre) {
-        IType it = vl.getType().getBoogieType();
-        assert isArrayOfStruct(it) || isAnIndexAStruct(it);
-        ILocation loc = vl.getLocation();
-        de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayType at = (de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayType) getASTType(
-                it, loc);
-        ArrayList<VarList> flatFields;
-        if (it instanceof StructType || isArrayOfStruct(it)) {
-            flatFields = expandStructTypeVarList(vl, pre);
-        } else {
-            flatFields = new ArrayList<VarList>();
-            assert it instanceof ArrayType;
-            ASTType valueType = ((de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayType) vl
-                    .getType()).getValueType();
-            VarList value = new VarList(loc, vl.getIdentifiers(), valueType);
-            flatFields.add(value);
-        }
-        ArrayList<ASTType> idcL = new ArrayList<ASTType>();
-        for (ASTType ti : at.getIndexTypes()) {
-            if (isNamedTypeStructOrStructArray(ti.getBoogieType())) {
-                ArrayList<IdentifierExpression> ies = expandIType(loc,
-                        ti.getBoogieType(), EMPTY_STRING);
-                for (IdentifierExpression ie : ies) {
-                    idcL.add(getASTType(ie.getType(), loc));
-                }
-            } else {
-                idcL.add(ti);
-            }
-        }
-        ASTType[] idc = idcL.toArray(new ASTType[0]);
-        ArrayList<VarList> vars = new ArrayList<VarList>();
-        for (VarList vlf : flatFields) {
-            if (vlf.getType() instanceof de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayType) {
-                de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayType fieldArray = (de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayType) vlf
-                        .getType();
-                ArrayList<ASTType> eIdcL = new ArrayList<ASTType>();
-                eIdcL.addAll(idcL);
-                eIdcL.addAll(Arrays.asList(fieldArray.getIndexTypes()));
-                ASTType[] eIdc = eIdcL.toArray(new ASTType[0]);
-                vars.add(new VarList(
-                        loc,
-                        vlf.getIdentifiers(),
-                        new de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayType(
-                                loc, at.getTypeParams(), eIdc, fieldArray
-                                        .getValueType())));
-            } else {
-                vars.add(new VarList(
-                        loc,
-                        vlf.getIdentifiers(),
-                        new de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayType(
-                                loc, at.getTypeParams(), idc, vlf.getType())));
-            }
-        }
-        return vars;
+    @Override
+    protected Expression processExpression(final Expression expr) {
+        if (expr instanceof StructAccessExpression) {
+        	StructAccessExpression sae = (StructAccessExpression) expr;
+        	Expression[] exprs = expandExpression(sae.getStruct());
+        	StructType subType = (StructType) flattenType(sae.getStruct().getType());
+        	String[] fields = subType.getFieldIds();
+        	assert (fields.length == exprs.length);
+        	for (int i = 0; i < fields.length; i++) {
+        		if (fields[i].equals(sae.getField()))
+        			return exprs[i];
+        	}
+        	throw new RuntimeException("Field name not found in "+expr);
+        } 
+        Expression result = super.processExpression(expr);
+        result.setType(flattenType(expr.getType()));
+        return result;
     }
-
-    /**
-     * Handles a struct typed variable list.
-     * 
-     * @param vl
-     *            the variable list.
-     * @param pre
-     *            the String prefix previously calculated.
-     * @return expanded variable lists.
-     */
-    private ArrayList<VarList> expandStructTypeVarList(final VarList vl,
-            final String pre) {
-        IType it = vl.getType().getBoogieType();
-        ILocation loc = vl.getLocation();
-        if (it instanceof ConstructedType) {
-            it = ((ConstructedType) it).getUnderlyingType();
-        }
-        assert it instanceof StructType || isArrayOfStruct(it);
-        StructType st = null;
-        if (it instanceof StructType) {
-            st = (StructType) it;
-        } else if (isArrayOfStruct(it)) {
-            IType t = ((ArrayType) it).getValueType();
-            if (t instanceof ConstructedType) {
-                t = ((ConstructedType) t).getUnderlyingType();
-            }
-            st = (StructType) t;
-        }
-        assert st != null;
-        de.uni_freiburg.informatik.ultimate.model.boogie.ast.StructType struct = (de.uni_freiburg.informatik.ultimate.model.boogie.ast.StructType) getASTType(
-                st, loc);
-        ArrayList<VarList> vars = new ArrayList<VarList>();
-        for (String s : vl.getIdentifiers()) {
-            for (VarList f : struct.getFields()) {
-                for (String vlfid : f.getIdentifiers()) {
-                    StringBuilder sb = new StringBuilder(pre).append(s).append(
-                            DOT);
-                    if (f.getType() instanceof de.uni_freiburg.informatik.ultimate.model.boogie.ast.StructType) {
-                        vars.addAll(expandStructTypeVarList(f, sb.toString()));
-                    } else if (isArrayOfStruct(f.getType().getBoogieType())) {
-                        vars.addAll(expandStructArrayTypeVarList(f,
-                                sb.toString()));
-                    } else {
-                        VarList vlf = processVarList(f);
-                        sb.append(vlfid);
-                        vars.add(new VarList(vlf.getLocation(),
-                                new String[] { sb.toString() }, vlf.getType()));
-                    }
-                }
-            }
-        }
-        return vars;
-    }
-
-    /**
-     * Expands a boogie type. E.g. struct -> all fields OR Struct[] -> arrays of
-     * struct fields.
-     * 
-     * @param loc
-     *            location for new identifier expressions.
-     * @param bt
-     *            the type.
-     * @param pre
-     *            previously calculated, left side id.
-     * @return a list of id expressions.
-     */
-    private ArrayList<IdentifierExpression> expandIType(ILocation loc,
-            final IType bt, String pre) {
-        ArrayList<IdentifierExpression> ies = new ArrayList<IdentifierExpression>();
-        IType ibt = bt;
-        if (ibt instanceof ConstructedType)
-            ibt = ((ConstructedType) ibt).getUnderlyingType();
-        if (ibt instanceof StructType || isArrayOfStruct(ibt)) {
-            StructType st = null;
-            if (ibt instanceof StructType) {
-                st = (StructType) ibt;
-            } else if (isArrayOfStruct(ibt)) {
-                IType t = ((ArrayType) ibt).getValueType();
-                if (t instanceof ConstructedType) {
-                    t = ((ConstructedType) t).getUnderlyingType();
-                }
-                st = (StructType) t;
-            }
-            assert st != null;
-            String acc = new StringBuilder(pre).append(DOT).toString();
-            for (String f : st.getFieldIds()) {
-                String fieldAcc = new StringBuilder(acc).append(f).toString();
-                ies.addAll(expandIType(loc, st.getFieldType(f), fieldAcc));
-            }
-        } else {
-            ies.add(new IdentifierExpression(loc, ibt, pre));
-        }
-        return ies;
-    }
-
     /**
      * Expands the given expression in case the underlying type is a struct.
-     * Otherwise this returns a singleton list with the processsed expression.
+     * In this case it returns an array of processed expression, one for 
+     * each field.  Otherwise this returns a singleton list with the 
+     * processsed expression.  The processed expressions are guaranteed to 
+     * not contain any struct operations.
      * 
      * @param e  the expression to expand.
      * @return A list containing an expanded expression for every field
-     *   in the type of the original expression.
+     *   in the flattened type of the original expression.
      */
-    private ArrayList<Expression> expandExpression(Expression e) {
-        ArrayList<Expression> newExprs = new ArrayList<Expression>();
+    private Expression[] expandExpression(Expression e) {
+    	BoogieType bt = flattenType(e.getType());
+    	if (! (bt instanceof StructType)) {
+    		// quick check, if process expression can be used.
+    		return new Expression[] { processExpression(e) };
+    	}
+
+    	StructType st = (StructType) bt;
         if (e instanceof IdentifierExpression) {
-            if (!isNamedTypeStructOrStructArray(e.getType())) {
-                newExprs.add((IdentifierExpression) processExpression(e));
-            } else {
-                String id = ((IdentifierExpression) e).getIdentifier();
-                newExprs.addAll(expandIType(e.getLocation(), e.getType(), id));
-            }
-            return newExprs;
-        } else if (e instanceof ArrayAccessExpression
-                && (e.getType() instanceof StructType || isAnIndexAStruct((ArrayAccessExpression) e))) {
-            // e.g. d[0] = e[1], where both are structs!
+        	String id = ((IdentifierExpression) e).getIdentifier();
+    		Expression[] flattened = new Expression[st.getFieldCount()];
+    		for (int i = 0; i < flattened.length; i++) {
+    			String ident = id + DOT + st.getFieldIds()[i];
+    			IType type = st.getFieldType(i);
+    			flattened[i] =
+    					new IdentifierExpression(e.getLocation(), type, ident);
+    		}
+    		return flattened;
+        } else if (e instanceof ArrayAccessExpression) {
             ArrayAccessExpression aae = (ArrayAccessExpression) e;
-            Expression left = processExpression(aae.getArray());
-            assert left instanceof IdentifierExpression;
-            IdentifierExpression leftIe = (IdentifierExpression) left;
-            Expression[] newIdc = processExpressions(aae.getIndices());
-            ArrayList<IdentifierExpression> ies = expandIType(
-                    aae.getLocation(), aae.getType(), leftIe.getIdentifier());
-            for (IdentifierExpression ie : ies)
-                newExprs.add(new ArrayAccessExpression(aae.getLocation(), ie
-                        .getType(), ie, newIdc));
-            return newExprs;
-        } else if (e instanceof FunctionApplication
-                && isNamedTypeStructOrStructArray(((FunctionApplication) e)
-                        .getType())) {
-            // we found a function call returning struct
-            // struct s := func(); => s!f1, s!f2 := funcf1(), funcf2();
-            FunctionApplication oldFA = (FunctionApplication) e;
-            ILocation loc = e.getLocation();
-            ArrayList<IdentifierExpression> ies = expandIType(loc, e.getType(),
-                    EMPTY_STRING);
-            for (IdentifierExpression ie : ies) {
-                assert ie.getIdentifier().startsWith(DOT);
-                String id = ie.getIdentifier().substring(1);
-                Expression[] args = processExpressions(oldFA.getArguments());
-                Expression fa = new FunctionApplication(loc, ie.getType(),
-                        oldFA.getIdentifier() + TILDE + id, args);
-                newExprs.add(fa);
-            }
-            return newExprs;
-        } else if (e instanceof ArrayStoreExpression
-                && (e.getType() instanceof StructType || isAnIndexAStruct(e
-                        .getType()))) {
-            ArrayStoreExpression ase = (ArrayStoreExpression) e;
-            Expression left = processExpression(ase.getArray());
-            Expression i = left;
-            if (i instanceof UnaryExpression) {
-                i = ((UnaryExpression) i).getExpr();
-            }
-            assert i instanceof IdentifierExpression;
-            IdentifierExpression leftIe = (IdentifierExpression) i;
-            Expression[] newIdc = processExpressions(ase.getIndices());
-            Expression[] newVal = processExpressions(new Expression[] { ase
-                    .getValue() });
-            ILocation l = ase.getLocation();
-            ArrayList<IdentifierExpression> ies = expandIType(l, ase.getType(),
-                    leftIe.getIdentifier());
-            assert ies.size() == newVal.length;
-            for (int k = 0; k < ies.size(); k++) {
-                Expression ie = ies.get(k);
-                Expression val = newVal[k];
-                Expression newArray; 
-                if (left instanceof UnaryExpression) {
-                	newArray = new UnaryExpression(l, left.getType(),
-                            ((UnaryExpression) left).getOperator(), ie);
-                } else {
-                	newArray = ie;
-                }
-            	Expression j = new ArrayStoreExpression(l, newArray.getType(), 
-            			newArray, newIdc, val);
-                newExprs.add(j);
-            }
-            return newExprs;
-        } else if (e instanceof StructConstructor) {
-        	Expression[] values = ((StructConstructor) e).getFieldValues();
-        	ArrayList<Expression> result = new ArrayList<Expression>();
-        	for (Expression val : values) {
-        		result.addAll(expandExpression(val));
+        	Expression[] arrays = expandExpression(aae.getArray());
+        	Expression[] indices = processExpressions(aae.getIndices());
+        	Expression[] result = new Expression[arrays.length];
+        	assert (st.getFieldCount() == result.length);
+        	for (int i = 0; i < result.length; i++) {
+        		IType resultType = st.getFieldType(i); 
+       			result[i] = new ArrayAccessExpression
+       				(aae.getLocation(), resultType, arrays[i], indices);
         	}
         	return result;
+        } else if (e instanceof FunctionApplication) {
+        	FunctionApplication app = (FunctionApplication) e;
+        	Expression[] args = processExpressions(app.getArguments());
+        	Expression[] result = new Expression[st.getFieldCount()];
+        	for (int i = 0; i < result.length; i++) {
+        		String funcName = app.getIdentifier() + DOT + st.getFieldIds()[i]; 
+        		IType resultType = st.getFieldType(i);
+        		result[i] = new FunctionApplication
+        				(app.getLocation(), resultType, funcName, args);
+        	}
+        	return result;
+        } else if (e instanceof ArrayStoreExpression) {
+            ArrayStoreExpression ase = (ArrayStoreExpression) e;
+        	Expression[] arrays = expandExpression(ase.getArray());
+        	Expression[] indices = processExpressions(ase.getIndices());
+        	Expression[] values = expandExpression(ase.getValue());
+        	Expression[] result = new Expression[arrays.length];
+        	assert (st.getFieldCount() == result.length);
+        	for (int i = 0; i < result.length; i++) {
+        		IType resultType = st.getFieldType(i);
+        		result[i] = new ArrayStoreExpression
+       				(ase.getLocation(), resultType, 
+       				arrays[i], indices, values[i]);
+        	}
+        	return result;
+        } else if (e instanceof StructConstructor) {
+        	return processExpressions(((StructConstructor) e).getFieldValues());
+        } else if (e instanceof StructAccessExpression) {
+        	StructAccessExpression sae = (StructAccessExpression) e;
+        	Expression[] exprs = expandExpression(sae.getStruct());
+        	StructType subType = (StructType) flattenType(sae.getStruct().getType());
+        	String field = sae.getField();
+        	int start = -1, end = -1;
+        	for (int i = 0; i < subType.getFieldCount(); i++) {
+        		if (subType.getFieldIds()[i].startsWith(field+DOT)) {
+        			if (start == -1)
+        				start = i;
+        			end = i;
+        		}
+        	}
+        	if (start == -1)
+        		throw new RuntimeException("Field name not found in "+e);
+        	Expression[] result = new Expression[end-start+1];
+        	System.arraycopy(exprs, start, result, 0, end - start + 1);
+        	return result;
+        } else if (e instanceof IfThenElseExpression) {
+        	IfThenElseExpression ite = (IfThenElseExpression) e;
+        	Expression[] thens = expandExpression(ite.getThenPart());
+        	Expression[] elses = expandExpression(ite.getElsePart());
+        	assert (thens.length == elses.length);
+        	Expression[] result = new Expression[thens.length];
+        	for (int i = 0; i < result.length; i++) {
+        		assert (thens[i].getType().equals(elses[i].getType()));
+        		result[i] = new IfThenElseExpression
+        			(ite.getLocation(), thens[i].getType(),
+        			 ite.getCondition(), thens[i], elses[i]);
+        	}
+        	return result;
+        } else {
+        	throw new AssertionError("Strange struct type expression "+e);
         }
-        newExprs.add(processExpression(e));
-        return newExprs;
+    }
+
+    /**
+     * Processes a list of expressions.  This will expand expression that
+     * have a struct type to multiple expression, one for each field.  This
+     * can thus be used to expand procedure and function arguments and the 
+     * right hand sides of assignments.
+     * 
+     * @param e  the expression list to process.
+     * @return A list containing the processed expression.  This expands
+     *   expression of struct type into multiple expressions. 
+     */
+    @Override
+    protected Expression[] processExpressions(Expression[] exprs) {
+    	ArrayList<Expression> flat = new ArrayList<Expression>();
+    	for (Expression e : exprs) {
+    		flat.addAll(Arrays.asList(expandExpression(e)));
+    	}
+    	return flat.toArray(new Expression[flat.size()]);
+    }
+
+    /**
+     * Processes a single left hand side.  This must only be called
+     * for left hand sides that are not of struct type.  
+     * 
+     * @param lhs  the left hand sides to process.
+     * @return The processed lhs. 
+     */
+    @Override
+    protected LeftHandSide processLeftHandSide(LeftHandSide lhs) {
+    	if (lhs instanceof StructLHS) {
+    		StructLHS slhs = (StructLHS) lhs;
+    		LeftHandSide[] allFields = expandLeftHandSide(slhs.getStruct());
+    		StructType st = (StructType) flattenType(slhs.getStruct().getType());
+    		for (int i = 0; i < st.getFieldCount(); i++) {
+    			if (st.getFieldIds()[i].equals(slhs.getField()))
+    				return allFields[i];
+    		}
+    		throw new RuntimeException("Field name not found in "+lhs);
+    	}
+    	LeftHandSide result = super.processLeftHandSide(lhs);
+    	result.setType(flattenType(lhs.getType()));
+    	return result;
+    }
+    
+    /**
+     * Processes a single left hand side and expands it.  This will
+     * expand an lhs if it has struct type into one for each field.
+     * 
+     * @param lhs  the left hand sides to process.
+     * @return The expanded lhs. 
+     */
+    private LeftHandSide[] expandLeftHandSide(LeftHandSide lhs) {
+    	BoogieType bt = flattenType(lhs.getType());
+    	if (! (bt instanceof StructType)) {
+    		// quick check, if process expression can be used.
+    		return new LeftHandSide[] { processLeftHandSide(lhs) };
+    	}
+    	StructType st = (StructType) bt;
+
+        if (lhs instanceof VariableLHS) {
+        	String id = ((VariableLHS) lhs).getIdentifier();
+        	VariableLHS[] flattened = new VariableLHS[st.getFieldCount()];
+        	for (int i = 0; i < flattened.length; i++) {
+        		String ident = id + DOT + st.getFieldIds()[i];
+        		IType type = st.getFieldType(i);
+        		flattened[i] =
+        			new VariableLHS(lhs.getLocation(), type, ident);
+        	}
+        	return flattened;
+        } else if (lhs instanceof ArrayLHS) {
+            ArrayLHS alhs = (ArrayLHS) lhs;
+        	LeftHandSide[] arrays = expandLeftHandSide(alhs.getArray());
+        	Expression[] indices = processExpressions(alhs.getIndices());
+        	LeftHandSide[] result = new LeftHandSide[arrays.length];
+        	for (int i = 0; i < result.length; i++) {
+        		IType resultType = st.getFieldType(i);
+        		result[i] = new ArrayLHS
+        				(alhs.getLocation(), resultType, arrays[i], indices);
+        	}
+        	return result;
+        } else if (lhs instanceof StructLHS) {
+        	StructLHS slhs = (StructLHS) lhs;
+        	LeftHandSide[] allFields = expandLeftHandSide(slhs.getStruct());
+        	StructType subType = (StructType) flattenType(slhs.getStruct().getType());
+        	assert (subType.getFieldCount() == allFields.length);
+        	int start = -1, end = -1;
+        	for (int i = 0; i < subType.getFieldCount(); i++) {
+        		if (subType.getFieldIds()[i].startsWith(slhs.getField()+DOT)) {
+        			if (start == -1)
+        				start = i;
+        			end = i;
+        		}
+        	}
+        	if (start == -1)
+        		throw new RuntimeException("Field name not found in "+lhs);
+        	LeftHandSide[] result = new LeftHandSide[end-start+1];
+        	System.arraycopy(allFields, start, result, 0, end - start + 1);
+        	return result;
+        } else {
+        	throw new AssertionError("Strange LHS "+lhs);
+        }
+    }
+    
+    /**
+     * Processes a list of left hand sides.  This will expand lhs that
+     * have a struct type to multiple lhs, one for each field.  This
+     * can thus be used to expand the lhs of an assignment of procedure
+     * call or the havoc or modified list.
+     * 
+     * @param lhss  the list of left hand sides to process.
+     * @return A list containing the processed lhs. 
+     */
+    @Override
+    protected LeftHandSide[] processLeftHandSides(LeftHandSide[] lhss) {
+    	ArrayList<LeftHandSide> flat = new ArrayList<LeftHandSide>();
+    	for (LeftHandSide e : lhss) {
+    		flat.addAll(Arrays.asList(expandLeftHandSide(e)));
+    	}
+    	return flat.toArray(new LeftHandSide[flat.size()]);
     }
 
     /**
@@ -954,31 +672,33 @@ public class StructExpander extends BoogieTransformer implements
      *            the function declaration to expand.
      * @return new function declarations.
      */
-    private ArrayList<Declaration> expandFunctionDeclaration(
+    private Declaration[] expandFunctionDeclaration(
             final FunctionDeclaration funDecl) {
-        ArrayList<Declaration> decl = new ArrayList<Declaration>();
-        VarList[] in = processVarLists(funDecl.getInParams());
-        VarList out = funDecl.getOutParam();
-        if (isNamedTypeStructOrStructArray(out.getType().getBoogieType())) {
-            // declare function for each return value!
-            ILocation loc = out.getLocation();
-            ArrayList<IdentifierExpression> ies = expandIType(loc, out
-                    .getType().getBoogieType(), EMPTY_STRING);
-            for (IdentifierExpression ie : ies) {
-                assert ie.getIdentifier().startsWith(DOT);
-                assert funDecl.getBody() == null;
-                String id = ie.getIdentifier().substring(1);
-                ASTType t = getASTType(ie.getType(), loc);
-                out = new VarList(loc, new String[] { id }, t);
-                decl.add(new FunctionDeclaration(funDecl.getLocation(), funDecl
-                        .getAttributes(), funDecl.getIdentifier() + TILDE + id,
-                        funDecl.getTypeParams(), in, out));
-            }
-        } else {
-            decl.add(new FunctionDeclaration(funDecl.getLocation(), funDecl
-                    .getAttributes(), funDecl.getIdentifier(), funDecl
-                    .getTypeParams(), in, out, funDecl.getBody()));
-        }
-        return decl;
+    	IType retType = funDecl.getOutParam().getType().getBoogieType();
+    	BoogieType bt = flattenType(retType);
+    	if (!(bt instanceof StructType)) {
+    		// quick check, if processDeclaration can be used.
+    		return new Declaration[] { processDeclaration(funDecl) };
+    	}
+    	StructType st = (StructType) bt;
+    	Declaration[] newDecls = new Declaration[st.getFieldCount()];
+    	Expression[] bodies;
+    	if (funDecl.getBody() == null)
+    		bodies = new Expression[st.getFieldCount()];
+    	else
+    		bodies = expandExpression(funDecl.getBody());
+    	VarList[] newInParams = processVarLists(funDecl.getInParams());
+    	
+    	for (int i = 0; i < newDecls.length; i++) {
+    		ILocation loc = funDecl.getOutParam().getLocation(); 
+        	VarList newOutParam = new VarList
+        		(loc, funDecl.getOutParam().getIdentifiers(), 
+        		 st.getFieldType(i).toASTType(loc));
+    		newDecls[i] = new FunctionDeclaration
+    			(funDecl.getLocation(), funDecl.getAttributes(),
+    			funDecl.getIdentifier() + DOT + st.getFieldIds()[i],
+    			funDecl.getTypeParams(),  newInParams, newOutParam, bodies[i]);
+    	}
+    	return newDecls;
     }
 }

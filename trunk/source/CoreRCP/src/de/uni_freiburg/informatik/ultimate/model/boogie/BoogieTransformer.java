@@ -20,10 +20,12 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.EnsuresSpecification
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.FunctionApplication;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.FunctionDeclaration;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.HavocStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IfStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IfThenElseExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.LeftHandSide;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.LoopInvariantSpecification;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ModifiesSpecification;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.NamedAttribute;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.NamedType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Procedure;
@@ -36,6 +38,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.TypeDeclaration;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableDeclaration;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.WhileStatement;
 
 /**
@@ -301,14 +304,21 @@ public abstract class BoogieTransformer {
 			if (expr != newExpr)
 				return new AssumeStatement(
 						statement.getLocation(), newExpr);
+		} else if (statement instanceof HavocStatement) {
+			HavocStatement havoc = (HavocStatement) statement;
+			VariableLHS[] ids = havoc.getIdentifiers();
+			VariableLHS[] newIds = processVariableLHSs(ids);
+			if (ids != newIds)
+				return new HavocStatement(havoc.getLocation(), newIds);
 		} else if (statement instanceof CallStatement) {
 			CallStatement call = (CallStatement) statement;
 			Expression[] args = call.getArguments();
 			Expression[] newArgs = processExpressions(args);
-			if (args != newArgs)
-				return new CallStatement(call.getLocation(), 
-						call.isForall(),
-						call.getLhs(), call.getMethodName(), newArgs);
+			VariableLHS[] lhs = call.getLhs();
+			VariableLHS[] newLhs = processVariableLHSs(lhs);
+			if (args != newArgs || lhs != newLhs)
+				return new CallStatement(call.getLocation(), call.isForall(),
+						newLhs, call.getMethodName(), newArgs);
 		} else if (statement instanceof IfStatement) {
 			IfStatement ifstmt = (IfStatement) statement;
 			Expression cond = ifstmt.getCondition();
@@ -382,7 +392,7 @@ public abstract class BoogieTransformer {
 	}
 	
 	/**
-	 * Process the left hand sides (of an assignement).  Calls processLeftHandSide for
+	 * Process the left hand sides (of an assignment).  Calls processLeftHandSide for
 	 * each element in the array. 
 	 * @param lhs the left hand sides to process.
 	 * @return processed left hand sides.
@@ -396,6 +406,21 @@ public abstract class BoogieTransformer {
 				changed = true;
 		}
 		return changed ? newLhs : lhs;
+	}
+
+	/**
+	 * Process the left hand sides (of a call or havoc, or modifies specification). 
+	 * Default implementation calls processLeftHandSides and casts back to VariableLHS. 
+	 * @param lhs the left hand sides to process.
+	 * @return processed left hand sides.
+	 */
+	protected VariableLHS[] processVariableLHSs(VariableLHS[] lhs) {
+		LeftHandSide[] newLhs = processLeftHandSides(lhs);
+		if (newLhs == lhs)
+			return lhs;
+		VariableLHS[] nnewLhs = new VariableLHS[newLhs.length];
+		System.arraycopy(newLhs, 0, nnewLhs, 0, newLhs.length);
+		return nnewLhs;
 	}
 
 	/**
@@ -421,6 +446,14 @@ public abstract class BoogieTransformer {
 				return new RequiresSpecification(
 						spec.getLocation(), 
 						spec.isFree(), newExpr);
+			}
+		} else if (spec instanceof ModifiesSpecification) {
+			VariableLHS[] ids = ((ModifiesSpecification) spec).getIdentifiers();
+			VariableLHS[] newIds = processVariableLHSs(ids);
+			if (ids != newIds) {
+				return new ModifiesSpecification(
+						spec.getLocation(), 
+						spec.isFree(), newIds);
 			}
 		}
 		return spec;
@@ -571,7 +604,7 @@ public abstract class BoogieTransformer {
 			if (cond != ite.getCondition()
 			    || thenPart != ite.getThenPart()
 			    || elsePart != ite.getElsePart())
-				return new IfThenElseExpression(ite.getLocation(), ite.getType(), cond, thenPart, elsePart);
+				return new IfThenElseExpression(ite.getLocation(), thenPart.getType(), cond, thenPart, elsePart);
 		} else if (expr instanceof QuantifierExpression) {
 			QuantifierExpression quant = (QuantifierExpression) expr;
 			Attribute[] attrs = quant.getAttributes();

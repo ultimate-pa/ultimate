@@ -1,5 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.boogie.preprocessor;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.ListIterator;
 import java.util.Stack;
@@ -133,15 +134,18 @@ public class TypeManager {
     }
 
     private BoogieType resolveStructType(StructType type, boolean markUsed) {
-        String[] fNames = new String[type.getFields().length];
-        BoogieType[] fTypes = new BoogieType[type.getFields().length];
+    	ArrayList<String> names = new ArrayList<String>(type.getFields().length); 
+    	ArrayList<BoogieType> types = new ArrayList<BoogieType>(type.getFields().length); 
 
         for (int i = 0; i < type.getFields().length; i++) {
+        	BoogieType fieldType = resolveType(type.getFields()[i].getType(), markUsed); 
             for (String id : type.getFields()[i].getIdentifiers()) {
-                fNames[i] = id;
-                fTypes[i] = resolveType(type.getFields()[i].getType(), markUsed);
+            	names.add(id);
+                types.add(fieldType); 
             }
         }
+        String[] fNames = names.toArray(new String[names.size()]);
+        BoogieType[] fTypes = types.toArray(new BoogieType[types.size()]);
         return BoogieType.createStructType(fNames, fTypes);
     }
 

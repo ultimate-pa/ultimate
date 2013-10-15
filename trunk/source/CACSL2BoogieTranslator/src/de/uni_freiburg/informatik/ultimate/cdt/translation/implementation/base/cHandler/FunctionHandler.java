@@ -228,10 +228,10 @@ public class FunctionHandler {
 				if (spec[i] instanceof ModifiesSpecification) {
 					modifiedGlobalsIsUserDefined.add(methodName);
 					ModifiesSpecification ms = (ModifiesSpecification) spec[i];
-					modifiedGlobals.put(
-							methodName,
-							new HashSet<String>(Arrays.asList(ms
-									.getIdentifiers())));
+					HashSet<String> modifiedSet = new HashSet<String>();
+					for (VariableLHS var : ms.getIdentifiers()) 
+						modifiedSet.add(var.getIdentifier());
+					modifiedGlobals.put(methodName, modifiedSet);
 				}
 			}
 
@@ -446,7 +446,7 @@ public class FunctionHandler {
 				int nrSpec = spec.length;
 				spec = Arrays.copyOf(spec, nrSpec + 1);
 				spec[nrSpec] = new ModifiesSpecification(loc, false,
-						currModClause.toArray(new String[0]));
+						currModClause.toArray(new VariableLHS[0]));
 			}
 			if (main.isMMRequired()
 					&& (main.getCheckedMethod() == SFO.EMPTY || main
@@ -664,7 +664,7 @@ public class FunctionHandler {
 			VarList[] type = procedures.get(methodName).getOutParams();
 			if (type.length == 0) { // void
 				// C has only one return statement -> no need for forall
-				call = new CallStatement(loc, false, new String[0], methodName,
+				call = new CallStatement(loc, false, new VariableLHS[0], methodName,
 						args.toArray(new Expression[0]));
 			} else if (type.length == 1) { // one return value
 				String tmpId = main.nameHandler
@@ -674,7 +674,8 @@ public class FunctionHandler {
 				VariableDeclaration tmpVar = SFO.getTempVarVariableDeclaration(tmpId, tmpIType, loc); 
 				auxVars.put(tmpVar, loc);
 				decl.add(tmpVar);
-				call = new CallStatement(loc, false, new String[] { tmpId },
+				VariableLHS tmpLhs = new VariableLHS(loc, tmpId);
+				call = new CallStatement(loc, false, new VariableLHS[] { tmpLhs },
 						methodName, args.toArray(new Expression[0]));
 			} else { // unsupported!
 				String msg = "Cannot handle multiple out params! "
@@ -697,7 +698,8 @@ public class FunctionHandler {
 					new Attribute[0], new VarList[] { tempVar });
 			auxVars.put(tmpVar, loc);
 			decl.add(tmpVar);
-			call = new CallStatement(loc, false, new String[] { ident },
+			VariableLHS lhs = new VariableLHS(loc, ident);
+			call = new CallStatement(loc, false, new VariableLHS[] { lhs },
 					methodName, args.toArray(new Expression[0]));
 		}
 		stmt.add(call);
@@ -726,7 +728,8 @@ public class FunctionHandler {
 				.getIdentifier()) && currentProcedureIsVoid) {
 			// void method that was assumed to be returning int! -> return int
 			String id = outParams[0].getIdentifiers()[0];
-			Statement havoc = new HavocStatement(loc, new String[] { id });
+			VariableLHS lhs = new VariableLHS(loc, id);
+			Statement havoc = new HavocStatement(loc, new VariableLHS[] { lhs });
 			stmtList.add(havoc);
 		} else if (node.getReturnValue() != null) {
 			ResultExpression exprResult = (ResultExpression) main.dispatch(node

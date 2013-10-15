@@ -298,7 +298,7 @@ public class TransFormulaBuilder {
 				String outTvName = callee + "_" + outVar + "_" + "OutParam";
 				TermVariable outTv = m_Boogie2smt.getScript().variable(outTvName, sort);
 				inVars.put(outBoogieVar,outTv);
-				String resVar = st.getLhs()[offset];
+				String resVar = st.getLhs()[offset].getIdentifier();
 				BoogieVar resBoogieVar;
 				{
 					resBoogieVar = m_Boogie2smt.getLocalBoogieVar(caller, resVar);

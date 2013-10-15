@@ -71,8 +71,6 @@ public class BoogiePreprocessor implements IAnalysis {
         ArrayList<IObserver> observers = new ArrayList<IObserver>();
         observers.add(new TypeChecker());
         observers.add(new StructExpander());
-        // TODO : remove, if confident, that StructExpander works correctly!
-        observers.add(new TypeChecker());
         observers.add(new UnstructureCode());
         observers.add(new FunctionInliner());
         observers.add(new ConstExpander());

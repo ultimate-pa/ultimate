@@ -2,6 +2,9 @@ package de.uni_freiburg.informatik.ultimate.boogie.type;
 
 import java.util.ArrayList;
 
+import de.uni_freiburg.informatik.ultimate.model.ILocation;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ASTType;
+
 public class PrimitiveType extends BoogieType {
 	/**
 	 * long serialVersionUID
@@ -68,7 +71,13 @@ public class PrimitiveType extends BoogieType {
 					
 		}
 	}
-
+	
+	@Override
+	protected ASTType toASTType(ILocation loc, int depth) {
+		return new de.uni_freiburg.informatik.ultimate.model.boogie.ast.
+			PrimitiveType(loc, this, toString(depth, false));
+	}
+	
 	//@Override
 	protected boolean unify(int depth, BoogieType other,
 			BoogieType[] substitution) {

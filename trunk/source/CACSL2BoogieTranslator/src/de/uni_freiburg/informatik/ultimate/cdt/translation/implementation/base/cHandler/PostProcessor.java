@@ -212,7 +212,7 @@ public class PostProcessor {
 		initializedGlobals.addAll(uninitGlobalVars);
 		Specification[] specsInit = new Specification[1];
 		specsInit[0] = new ModifiesSpecification(loc, false,
-				initializedGlobals.toArray(new String[0]));
+				initializedGlobals.toArray(new VariableLHS[0]));
 		decl.add(new Procedure(loc, new Attribute[0], SFO.INIT, new String[0],
 				new VarList[0], new VarList[0], specsInit, null));
 		Body initBody = new Body(loc,
@@ -406,7 +406,7 @@ public class PostProcessor {
 			ArrayList<Statement> startStmt = new ArrayList<Statement>();
 			ArrayList<VariableDeclaration> startDecl = new ArrayList<VariableDeclaration>();
 			Specification[] specsStart = new Specification[1];
-			startStmt.add(new CallStatement(loc, false, new String[0],
+			startStmt.add(new CallStatement(loc, false, new VariableLHS[0],
 					SFO.INIT, new Expression[0]));
 			VarList[] out = procedures.get(checkMethod).getOutParams();
 			VarList[] in = procedures.get(checkMethod).getInParams();
@@ -435,17 +435,19 @@ public class PostProcessor {
 						new Attribute[0], new VarList[] { tempVar });
 				startDecl.add(tmpVar);
 				startStmt.add(new CallStatement(loc, false,
-						new String[] { checkMethodRet }, checkMethod, args
-								.toArray(new Expression[0])));
+						new VariableLHS[] { new VariableLHS(loc, checkMethodRet) }, 
+						checkMethod, args.toArray(new Expression[0])));
 			} else { // void
-				startStmt.add(new CallStatement(loc, false, new String[0],
+				startStmt.add(new CallStatement(loc, false, new VariableLHS[0],
 						checkMethod, args.toArray(new Expression[0])));
 			}
-			HashSet<String> startModifiesClause = new HashSet<String>();
-			startModifiesClause.addAll(initializedGlobals);
-			startModifiesClause.addAll(modifiedGlobals.get(checkMethod));
+			HashSet<VariableLHS> startModifiesClause = new HashSet<VariableLHS>();
+			for (String id: initializedGlobals)
+				startModifiesClause.add(new VariableLHS(loc, id));
+			for (String id: modifiedGlobals.get(checkMethod))
+				startModifiesClause.add(new VariableLHS(loc, id));
 			specsStart[0] = new ModifiesSpecification(loc, false,
-					startModifiesClause.toArray(new String[0]));
+					startModifiesClause.toArray(new VariableLHS[0]));
 			decl.add(new Procedure(loc, new Attribute[0], SFO.START,
 					new String[0], new VarList[0], new VarList[0], specsStart,
 					null));

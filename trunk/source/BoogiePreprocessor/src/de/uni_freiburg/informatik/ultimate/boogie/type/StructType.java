@@ -6,6 +6,10 @@ package de.uni_freiburg.informatik.ultimate.boogie.type;
 import java.util.ArrayList;
 import java.util.Arrays;
 
+import de.uni_freiburg.informatik.ultimate.model.ILocation;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ASTType;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VarList;
+
 /**
  * Class representing a struct type.
  * 
@@ -170,6 +174,17 @@ public class StructType extends BoogieType {
     }
 
     /**
+     * Returns the type of the field at the given index.
+     * 
+     * @param idx
+     *            the fields index.
+     * @return the field type.
+     */
+    public BoogieType getFieldType(int idx) {
+        return fTypes[idx];
+    }
+
+    /**
      * Returns the set of fields in this struct.
      * 
      * @return the set of fields in this struct.
@@ -205,7 +220,17 @@ public class StructType extends BoogieType {
             sb.append(")");
         return sb.toString();
     }
-
+    
+	@Override
+	protected ASTType toASTType(ILocation loc, int depth) {
+		VarList[] varlist = new VarList[fNames.length];
+		for (int i = 0; i < fNames.length; i++)
+			varlist[i] = new VarList(loc, new String[] { fNames[i] }, 
+					fTypes[i].toASTType(loc, depth));
+		return new de.uni_freiburg.informatik.ultimate.model.boogie.ast.
+			StructType(loc, this, varlist);
+	}
+	
     @Override
     public boolean isFinite() {
         if (realType != this)

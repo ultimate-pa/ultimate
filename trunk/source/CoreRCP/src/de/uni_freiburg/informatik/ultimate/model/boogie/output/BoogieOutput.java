@@ -323,17 +323,9 @@ public class BoogieOutput {
 				}
 				sb.append(">");
 			}
-			String comma = " ";
-			for (VarList vl : quant.getParameters()) {
-				sb.append(comma);
-				comma = "";
-				for (String id : vl.getIdentifiers()) {
-					sb.append(comma).append(id);
-					comma = ",";
-				}
-				sb.append(" : ");
-				appendType(sb, vl.getType(), 0);
-				comma = ", ";
+			if (quant.getParameters().length > 0) {
+				sb.append(" ");
+				appendVarList(sb, quant.getParameters());
 			}
 			sb.append(" :: ");
 			appendAttributes(sb, quant.getAttributes());
@@ -395,19 +387,7 @@ public class BoogieOutput {
 			if (precedence > 1)
 				sb.append("(");
 			sb.append("{ ");
-			String comma = "";
-			for (VarList vl : st.getFields()) {
-				sb.append(comma);
-				for (int i = 0; i < vl.getIdentifiers().length; i++) {
-					sb.append(vl.getIdentifiers()[i]);
-					if (i < vl.getIdentifiers().length - 1) {
-						sb.append(",");
-					}
-				}
-				sb.append(":");
-				appendType(sb, vl.getType(), 0);
-				comma = ", ";
-			}
+			appendVarList(sb, st.getFields());
 			sb.append(" }");
 			if (precedence > 1)
 				sb.append(")");
@@ -451,6 +431,36 @@ public class BoogieOutput {
 	
 	public void appendExpression(StringBuilder sb, Expression expr) {
 		appendExpression(sb, expr, 0);
+	}
+	
+	/**
+	 * Append the string representation of vls (comma separated list
+	 * of declarations) to the stringbuilder sb.
+	 * @param sb the string builder where we append to
+	 * @param vls the variable declaration that are appended.
+	 */
+	public void appendVarList(StringBuilder sb, VarList[] vls) {
+		String comma = "";
+		for (VarList vl : vls) {
+			sb.append(comma);
+			if (vl.getIdentifiers().length > 0) {
+				/* identifiers array can only be empty for
+				 * function parameters (unnamed parameter).  
+				 */
+				String subcomma = "";
+				for (String id : vl.getIdentifiers()) {
+					sb.append(subcomma).append(id);
+					subcomma = ", ";
+				}
+				sb.append(" : ");
+			}
+			appendType(sb, vl.getType(), 0);
+			if (vl.getWhereClause() != null) {
+				sb.append(" where ");
+				appendExpression(sb, vl.getWhereClause(), 0);
+			}
+			comma = ", ";
+		}
 	}
 
 	/**
@@ -497,19 +507,9 @@ public class BoogieOutput {
 			sb.append(">");
 		}
 		sb.append("(");
-		String comma = "";
-		for (VarList vl : decl.getInParams()) {
-			sb.append(comma);
-			if (vl.getIdentifiers().length > 0)
-				sb.append(vl.getIdentifiers()[0]).append(":");
-			appendType(sb, vl.getType(), 0);
-			comma = ", ";
-		}
+		appendVarList(sb, decl.getInParams());
 		sb.append(") returns (");
-		VarList vl = decl.getOutParam();
-		if (vl.getIdentifiers().length > 0)
-			sb.append(vl.getIdentifiers()[0]).append(":");
-		appendType(sb, vl.getType(), 0);
+		appendVarList(sb, new VarList[] { decl.getOutParam() });
 		sb.append(")");
 		if (decl.getBody() != null) {
 			sb.append(" { ");
@@ -544,38 +544,9 @@ public class BoogieOutput {
 			sb.append(">");
 		}
 		sb.append("(");
-		String comma = "";
-		for (VarList vl : decl.getInParams()) {
-			sb.append(comma);
-			if (vl.getIdentifiers().length > 0) {
-				for (int i = 0; i < vl.getIdentifiers().length; i++) {
-					sb.append(vl.getIdentifiers()[i]);
-					if (i < vl.getIdentifiers().length - 1) {
-						sb.append(",");
-					}
-				}
-				sb.append(":");
-			}
-			appendType(sb, vl.getType(), 0);
-			if (vl.getWhereClause() != null) {
-				sb.append(" where ");
-				appendExpression(sb, vl.getWhereClause(), 0);
-			}
-			comma = ", ";
-		}
+		appendVarList(sb, decl.getInParams());
 		sb.append(") returns (");
-		comma = "";
-		for (VarList vl : decl.getOutParams()) {
-			sb.append(comma);
-			if (vl.getIdentifiers().length > 0)
-				sb.append(vl.getIdentifiers()[0]).append(":");
-			appendType(sb, vl.getType(), 0);
-			if (vl.getWhereClause() != null) {
-				sb.append(" where ");
-				appendExpression(sb, vl.getWhereClause(), 0);
-			}
-			comma = ", ";
-		}
+		appendVarList(sb, decl.getOutParams());
 		sb.append(")");
 		if (decl.getBody() == null)
 			sb.append(";");
@@ -612,8 +583,8 @@ public class BoogieOutput {
 		} else if (spec instanceof ModifiesSpecification) {
 			sb.append("modifies ");
 			String comma = "";
-			for (String id : ((ModifiesSpecification) spec).getIdentifiers()) {
-				sb.append(comma).append(id);
+			for (VariableLHS id : ((ModifiesSpecification) spec).getIdentifiers()) {
+				sb.append(comma).append(id.getIdentifier());
 				comma = ", ";
 			}
 		} else {
@@ -683,8 +654,8 @@ public class BoogieOutput {
 			HavocStatement havoc = (HavocStatement) s;
 			sb.append("havoc ");
 			String comma = "";
-			for (String id : havoc.getIdentifiers()) {
-				sb.append(comma).append(id);
+			for (VariableLHS id : havoc.getIdentifiers()) {
+				sb.append(comma).append(id.getIdentifier());
 				comma = ", ";
 			}
 			sb.append(";");
@@ -712,8 +683,8 @@ public class BoogieOutput {
 				sb.append("forall ");
 			if (call.getLhs().length > 0) {
 				comma = "";
-				for (String lhs : call.getLhs()) {
-					sb.append(comma).append(lhs);
+				for (VariableLHS lhs : call.getLhs()) {
+					sb.append(comma).append(lhs.getIdentifier());
 					comma = ", ";
 				}
 				sb.append(" := ");
@@ -874,22 +845,7 @@ public class BoogieOutput {
 		StringBuilder sb = new StringBuilder();
 		sb.append(indent).append("var ");
 		appendAttributes(sb, decl.getAttributes());
-		String comma = "";
-		for (VarList vl : decl.getVariables()) {
-			sb.append(comma);
-			comma = "";
-			for (String id : vl.getIdentifiers()) {
-				sb.append(comma).append(id);
-				comma = ", ";
-			}
-			sb.append(" : ");
-			appendType(sb, vl.getType(), 0);
-			if (vl.getWhereClause() != null) {
-				sb.append(" where ");
-				appendExpression(sb, vl.getWhereClause(), 0);
-			}
-			comma = ", ";
-		}
+		appendVarList(sb, decl.getVariables());
 		sb.append(";");
 		m_Writer.println(sb.toString());
 	}
@@ -906,17 +862,10 @@ public class BoogieOutput {
 		appendAttributes(sb, decl.getAttributes());
 		if (decl.isUnique())
 			sb.append("unique ");
-		VarList vl = decl.getVarList();
-		String comma = "";
-		for (String id : vl.getIdentifiers()) {
-			sb.append(comma).append(id);
-			comma = ", ";
-		}
-		sb.append(" : ");
-		appendType(sb, vl.getType(), 0);
+		appendVarList(sb, new VarList[] { decl.getVarList() });
 		if (decl.getParentInfo() != null) {
 			sb.append(" <:");
-			comma = " ";
+			String comma = " ";
 			for (ParentEdge edge : decl.getParentInfo()) {
 				sb.append(comma);
 				if (edge.isUnique())

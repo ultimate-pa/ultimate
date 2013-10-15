@@ -203,7 +203,7 @@ Specification ::=
 	| { EnsuresSpecification}
 		formula: Expression
 	| { ModifiesSpecification}
-		identifiers : String[]
+		identifiers : VariableLHS[]
 	| { LoopInvariantSpecification }
 		formula : Expression
 	);
@@ -221,13 +221,13 @@ Statement ::=
 	| { AssumeStatement }
 		formula : Expression
 	| { HavocStatement }
-		identifiers : String[]
+		identifiers : VariableLHS[]
 	| { AssignmentStatement }
 		lhs     : LeftHandSide[]
 		rhs     : Expression[]
 	| { CallStatement }
 		isForall  : boolean
-		lhs       : String[]
+		lhs       : VariableLHS[]
 		methodName: String
 		arguments : Expression[]
 	| { IfStatement }

@@ -2,6 +2,9 @@ package de.uni_freiburg.informatik.ultimate.boogie.type;
 
 import java.util.ArrayList;
 
+import de.uni_freiburg.informatik.ultimate.model.ILocation;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ASTType;
+
 /**
  * A placeholder type represents a type bounded by some outer type parameters, 
  * like by an ArrayType, by a function signature, a procedure signature or a
@@ -165,6 +168,12 @@ public class PlaceholderType extends BoogieType {
 			return "$"+paramNumber;
 		else
 			return "$_"+(-paramNumber);
+	}
+	
+	@Override
+	protected ASTType toASTType(ILocation loc, int depth) {
+		return new de.uni_freiburg.informatik.ultimate.model.boogie.ast.
+			NamedType(loc, this, toString(depth, false), new ASTType[0]);
 	}
 	
 	//@Override

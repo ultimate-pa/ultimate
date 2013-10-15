@@ -249,15 +249,15 @@ public class Translator {
     }
     public Statement[] genDelay(BoogieLocation bl) {
     	
-    	List<String> havocIds = new ArrayList<String>();
+    	List<VariableLHS> havocIds = new ArrayList<VariableLHS>();
     	for (int i = 0; i < this.primedVars.size(); i++) {
-    		havocIds.add(this.primedVars.get(i));
+    		havocIds.add(new VariableLHS(bl, this.primedVars.get(i)));
     	}
     	for (int i = 0; i < this.eventVars.size(); i++) {
-    		havocIds.add(this.eventVars.get(i));
+    		havocIds.add(new VariableLHS(bl, this.eventVars.get(i)));
     	}
-    	havocIds.add("delta");   	
-     	String[] ids =  havocIds.toArray(new String[havocIds.size()]);
+    	havocIds.add(new VariableLHS(bl, "delta"));   	
+     	VariableLHS[] ids =  havocIds.toArray(new VariableLHS[havocIds.size()]);
      	HavocStatement havocSmt = new HavocStatement(bl, ids);    	
 	    IdentifierExpression identifier = new IdentifierExpression(bl, "delta");
 	    RealLiteral realLiteral = new RealLiteral(bl, Double.toString(0.0));
@@ -547,9 +547,9 @@ public class Translator {
     	return exprList.get(exprList.size()-1);
     } 
     public Statement[] genInitialPhasesSmts (BoogieLocation bl) {
-    	String[] ids = new String[this.pcIds.size()];
+    	VariableLHS[] ids = new VariableLHS[this.pcIds.size()];
     	for (int i = 0; i < this.pcIds.size(); i++) {
-    		ids[i] = this.pcIds.get(i);
+    		ids[i] = new VariableLHS(bl, this.pcIds.get(i));
     	}
     	HavocStatement pcHavoc = new HavocStatement(bl, ids);
     	
@@ -583,10 +583,12 @@ public class Translator {
 
     	return exprList.get(exprList.size()-1);
     }
-    public Statement[] genClockInitSmts (BoogieLocation bl) { 
-     	HavocStatement clockHavoc = new HavocStatement(bl, 
-     			this.clockIds.toArray(new String[this.clockIds.size()]));
-     	
+    public Statement[] genClockInitSmts (BoogieLocation bl) {
+    	VariableLHS[] clocks = new VariableLHS[clockIds.size()];
+    	int i=0;
+    	for (String clkId : this.clockIds)
+    		clocks[i++] = new VariableLHS(bl, clkId);
+     	HavocStatement clockHavoc = new HavocStatement(bl, clocks); 
      	AssumeStatement assumeSmt = new AssumeStatement(bl, genClockInit(bl));
      	
      	Statement[] statements = new Statement[2];
@@ -642,9 +644,9 @@ public class Translator {
         for (int i = 0; i < this.eventVars.size(); i++) {
         	modifiedVarsList.add(this.eventVars.get(i));
         }
-        String[] modifiedVars = new String[modifiedVarsList.size()];
+        VariableLHS[] modifiedVars = new VariableLHS[modifiedVarsList.size()];
         for (int i = 0; i < modifiedVars.length; i++) {
-        	modifiedVars[i] = modifiedVarsList.get(i);
+        	modifiedVars[i] = new VariableLHS(bl, modifiedVarsList.get(i));
         }       
         ModifiesSpecification mod = new ModifiesSpecification(bl, false, modifiedVars);
         ModifiesSpecification[] modArray = new ModifiesSpecification[1];

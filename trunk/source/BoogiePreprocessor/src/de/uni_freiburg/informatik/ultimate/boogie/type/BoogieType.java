@@ -3,7 +3,9 @@ package de.uni_freiburg.informatik.ultimate.boogie.type;
 import java.util.ArrayList;
 import java.util.Arrays;
 
+import de.uni_freiburg.informatik.ultimate.model.ILocation;
 import de.uni_freiburg.informatik.ultimate.model.IType;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.util.UnifyHash;
 
 /**
@@ -345,12 +347,33 @@ public abstract class BoogieType implements IType {
     protected abstract String toString(int depth, boolean needParentheses);
 
     /**
+     * Computes an AST type representation. It uses depth to compute artificial
+     * names for the placeholders.
+     * 
+     * @param depth
+     *            the number of placeholders outside this expression.
+     * @param needParentheses
+     *            true if parentheses should be set for constructed types
+     * @return a string representation of this type.
+     */
+    protected abstract ASTType toASTType(ILocation loc, int depth);
+
+    /**
      * Computes a string representation.
      * 
      * @return a string representation of this type.
      */
     public String toString() {
         return toString(0, false);
+    }
+
+    /**
+     * Computes an AST type representation.
+     * 
+     * @return the AST type representation of this type.
+     */
+    public ASTType toASTType(ILocation loc) {
+        return toASTType(loc, 0);
     }
 
     /**

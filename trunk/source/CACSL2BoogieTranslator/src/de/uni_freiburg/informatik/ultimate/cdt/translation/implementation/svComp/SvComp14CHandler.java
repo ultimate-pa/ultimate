@@ -40,6 +40,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.PrimitiveType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableDeclaration;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.Backtranslator;
 import de.uni_freiburg.informatik.ultimate.result.Check;
 import de.uni_freiburg.informatik.ultimate.result.Check.Spec;
@@ -174,14 +175,14 @@ public class SvComp14CHandler extends CHandler {
             }
             InferredType type = new InferredType(Type.Integer);
             ASTType tempType = new PrimitiveType(loc, type, type.toString());
-            String[] tId = new String[] { main.nameHandler.getTempVarUID(SFO.AUXVAR.NONDET) };
+            String tId = main.nameHandler.getTempVarUID(SFO.AUXVAR.NONDET);
             VariableDeclaration tVarDecl = new VariableDeclaration(
             		loc, new Attribute[0],
-                    new VarList[] { new VarList(loc, tId, tempType) });
+                    new VarList[] { new VarList(loc, new String[] {tId}, tempType) });
             auxVars.put(tVarDecl, loc);
             decl.add(tVarDecl);
-            stmt.add(new HavocStatement(loc, tId));
-            expr = new IdentifierExpression(loc, type, tId[0]);
+            stmt.add(new HavocStatement(loc, new VariableLHS[] { new VariableLHS(loc, tId)}));
+            expr = new IdentifierExpression(loc, type, tId);
             assert (main.isAuxVarMapcomplete(decl, auxVars));
             return new ResultExpression(stmt, expr, decl, auxVars);
         }
