@@ -211,7 +211,15 @@ public class StructHandler {
         	Expression addressOffsetOfFieldOwner;
         	CType fieldOwnerPointsToType;
         	if (node.isPointerDereference()) {
-        		fieldOwnerPointsToType = ((CPointer) rex.cType).pointsToType; 
+        		CType fieldOwnerType = rex.cType;
+        		if (fieldOwnerType instanceof CNamed) {
+        			fieldOwnerType = ((CNamed) fieldOwnerType).getMappedType();
+        		}
+        		if (fieldOwnerType instanceof CPointer) {
+        			fieldOwnerPointsToType = ((CPointer) fieldOwnerType).pointsToType;
+        		} else {
+        			throw new IllegalArgumentException("unsupported pointer type " + rex.cType);
+        		}
         		addressBaseOfFieldOwner = new StructAccessExpression(loc, 
         				rex.expr, SFO.POINTER_BASE);
         		addressOffsetOfFieldOwner = new StructAccessExpression(loc, 
