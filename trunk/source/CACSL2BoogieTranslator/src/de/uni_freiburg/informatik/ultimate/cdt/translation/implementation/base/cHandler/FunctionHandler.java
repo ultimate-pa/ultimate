@@ -311,7 +311,7 @@ public class FunctionHandler {
 						.getCID4BoogieID(bId, loc);
 				// Copy of inparam that is writeable
 				String auxInvar = main.nameHandler.getUniqueIdentifier(parent,
-						cId, 0, false);
+						cId, 0);
 				VarList var = new VarList(loc, new String[] { auxInvar },
 						varList.getType());
 				VariableDeclaration inVarDecl = new VariableDeclaration(loc,

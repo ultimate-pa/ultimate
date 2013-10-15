@@ -95,35 +95,15 @@ public class PreRunner extends ASTVisitor {
                 String n;
                 if (operand instanceof IASTIdExpression) {
                     n = ue.getOperand().getRawSignature();
-                 // TODO : add other cases! ie. structs, where the &-operator
+                } // TODO : add other cases! ie. structs, where the &-operator
                   // is applied to one field, etc
-                } else if ((operand instanceof IASTUnaryExpression) 
-                		&& ((IASTUnaryExpression) operand).getOperand() instanceof IASTFieldReference
-                		) {
-                	if (((IASTFieldReference) ((IASTUnaryExpression) operand).getOperand()).isPointerDereference()) {
-                		n = null; //already on the heap (a pointer), do nothing
-                	} else {
-                		IASTExpression owner = ((IASTFieldReference) ((IASTUnaryExpression) operand).getOperand()).getFieldOwner();
-                		owner = removeBrackets(owner);
-                		if (owner instanceof IASTIdExpression) {
-                			n = owner.getRawSignature();
-                		} else if (owner instanceof IASTUnaryExpression 
-                				&& ((IASTUnaryExpression) owner).getOperator() == IASTUnaryExpression.op_star) { 
-                			n = null; // already on the heap
-                		} else {
-                			String m = "PR: Unsupported operand in UnarayExpression!";
-                			Dispatcher.error(loc, SyntaxErrorType.UnsupportedSyntax, m);
-                			throw new UnsupportedSyntaxException(m);
-                		}
-                	}
-                } else {
+                else {
                     String m = "PR: Unsupported operand in UnarayExpression!";
                     Dispatcher.error(loc, SyntaxErrorType.UnsupportedSyntax, m);
                     throw new UnsupportedSyntaxException(m);
                 }
                 this.isMMRequired = true;
-                if (n != null)
-                	this.variablesOnHeap.add(get(n, loc));//TODO why put the location of expression, not operand, here?
+                this.variablesOnHeap.add(get(n, loc));//TODO why put the location of expression, not operand, here?
             } else if (!this.isMMRequired
                     && ue.getOperator() == IASTUnaryExpression.op_star) {
                 this.isMMRequired = true;
@@ -157,15 +137,6 @@ public class PreRunner extends ASTVisitor {
             }
         }
         return super.visit(expression);
-    }
-    
-    IASTExpression removeBrackets(IASTExpression exp) {
-    	IASTExpression result = exp;
-    	while (result instanceof IASTUnaryExpression 
-    			&& ((IASTUnaryExpression) result).getOperator() == IASTUnaryExpression.op_bracketedPrimary) {
-    		result = ((IASTUnaryExpression) result).getOperand();
-    	}
-    	return result;
     }
 
     @Override

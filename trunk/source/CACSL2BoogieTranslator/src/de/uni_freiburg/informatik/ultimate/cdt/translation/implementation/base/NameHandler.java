@@ -50,7 +50,7 @@ public class NameHandler implements INameHandler {
 	private Boogie2C boogie2C = new Boogie2C();
 
 	@Override
-	public String getUniqueIdentifier(IASTNode scope, String cId, int compCnt, boolean putOnHeap) {
+	public String getUniqueIdentifier(IASTNode scope, String cId, int compCnt) {
 		final String boogieId;
 		{ //special case struct field identifier
 			// if some parent is IASTCompositeTypeSpecifier we need indentifier for 
@@ -69,15 +69,12 @@ public class NameHandler implements INameHandler {
 		}
 		assert cId.length() > 0 : "Emtpy C identifier";
 		assert (compCnt >= 0);
-		// if the variable is put on heap by us because it is addressoffed at some
-		// point, we put an "@" into its name
-		String heapStr = putOnHeap ? "#" : "";
 		// add tilde to identifier and the compound counter if variable is not 
 		// used in the lowest compound nesting level (compCnt==0)
 		if (compCnt > 0) {
-			boogieId = "~" + heapStr +  cId + "~" + compCnt;
+			boogieId = "~" + cId + "~" + compCnt;
 		} else {
-			boogieId = "~" + heapStr + cId;
+			boogieId = "~" + cId;
 		}
 		boogie2C.putVar(boogieId, cId);
 		return boogieId;

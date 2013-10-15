@@ -27,7 +27,7 @@ public interface INameHandler extends IHandler {
      *            the counter value of the compoundCntUID
      * @return an unique identifier.
      */
-    public String getUniqueIdentifier(IASTNode scope, String cId, int compCnt, boolean putOnHeap);
+    public String getUniqueIdentifier(IASTNode scope, String cId, int compCnt);
 
     /**
      * Creates a unique identifier for temporary variables.
