@@ -14,9 +14,9 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher
 public class SVCompTypeHandler extends TypeHandler {
     @Override
     public Result visit(Dispatcher main, IASTElaboratedTypeSpecifier node) {
-        if (node.getKind() != IASTElaboratedTypeSpecifier.k_struct) {
-            return new ResultSkip();
-        }
+//        if (node.getKind() != IASTElaboratedTypeSpecifier.k_struct) {
+//            return new ResultSkip();
+//        }
         return super.visit(main, node);
     }
 }
