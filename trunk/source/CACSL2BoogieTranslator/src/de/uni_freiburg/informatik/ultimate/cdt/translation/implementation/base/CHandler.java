@@ -584,8 +584,6 @@ public class CHandler implements ICHandler {
                 throw new UnsupportedSyntaxException(msg);
             }
             
-        	assert (node.getDeclarators() != null &&
-        			node.getDeclarators().length > 0);
         	int index = -1;
         	/**
         	 * Christian:
