@@ -290,8 +290,22 @@ public class StructHandler {
 			newOffset = new BinaryExpression(loc, Operator.ARITHPLUS, 
 					addressOffsetOfFieldOwner, additionalOffset);
 		}
-		ResultExpression result = memoryHandler.getReadCall(main, it, loc, 
-				addressBaseOfFieldOwner, newOffset);
+		ResultExpressionPointerDereferenceBO call = (ResultExpressionPointerDereferenceBO) 
+				memoryHandler.getReadCall(main, it, loc, addressBaseOfFieldOwner, newOffset);
+        ArrayList<Statement> stmt = new ArrayList<Statement>();
+        ArrayList<Declaration> decl = new ArrayList<Declaration>();
+		Map<VariableDeclaration, CACSLLocation> auxVars = 
+				new HashMap<VariableDeclaration, CACSLLocation>();
+		stmt.addAll(call.stmt);
+		decl.addAll(call.decl);
+		auxVars.putAll(call.auxVars);
+		stmt.addAll(rex.stmt);
+		decl.addAll(rex.decl);
+		auxVars.putAll(rex.auxVars);
+		ResultExpression result = new ResultExpressionPointerDereferenceBO(stmt,
+				call.expr, decl, auxVars, call.m_Pointer, call.m_ReadCall, 
+				call.m_CallResult, call.m_AuxPointer, call.m_PointerBase, 
+				call.m_PointerOffset, call.m_BaseEquality, call.m_OffsetEquality);
 		result.cType = ((CStruct) fieldOwnerPointsToType).getFieldType(field);
 		return result;
 	}
