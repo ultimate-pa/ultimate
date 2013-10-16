@@ -1,5 +1,11 @@
 #!/bin/bash
 
+if [ "$1" = "svcompfolder" ]; then
+echo "specified folder in a test setting"
+trunk/examples/toolchains/TraceAbstractionTestDir.sh 20 $2 \
+"TraceAbstraction.xml;TraceAbstractionC.xml;Automizer-simpleTest-SVCOMP"
+fi
+
 if [ "$1" = "0" ]; then
 echo "testing minitests"
 trunk/examples/toolchains/TraceAbstractionTestDir.sh 20 trunk/examples/programs/minitests/quantifier \
