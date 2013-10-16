@@ -24,6 +24,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayAccessExpressio
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayLHS;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayStoreExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Attribute;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.FunctionApplication;
@@ -415,7 +416,30 @@ public class StructExpander extends BoogieTransformer implements
         			return exprs[i];
         	}
         	throw new RuntimeException("Field name not found in "+expr);
-        } 
+        }
+        if (expr instanceof BinaryExpression) {
+        	BinaryExpression binexpr = (BinaryExpression) expr;
+        	BinaryExpression.Operator op = binexpr.getOperator(); 
+        	if (op == BinaryExpression.Operator.COMPEQ
+        		|| op == BinaryExpression.Operator.COMPNEQ) {
+        		Expression[] left = expandExpression(binexpr.getLeft());
+        		Expression[] right = expandExpression(binexpr.getRight());
+        		assert(left.length == right.length && left.length > 0);
+        		BinaryExpression.Operator andOp =
+        				op == BinaryExpression.Operator.COMPEQ
+        						? BinaryExpression.Operator.LOGICAND
+        						: BinaryExpression.Operator.LOGICOR;
+        		int i = left.length - 1;
+        		Expression result = 
+        			new BinaryExpression(expr.getLocation(), expr.getType(), op, left[i], right[i]);
+        		while (i-- > 0) {
+        			result = new BinaryExpression(expr.getLocation(), expr.getType(), andOp,
+        				new BinaryExpression(expr.getLocation(), expr.getType(), op, left[i], right[i]),
+        				result);
+        		}
+        		return result;
+        	}
+        }
         Expression result = super.processExpression(expr);
         result.setType(flattenType(expr.getType()));
         return result;
