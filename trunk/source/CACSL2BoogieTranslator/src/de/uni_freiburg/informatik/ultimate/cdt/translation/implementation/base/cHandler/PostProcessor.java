@@ -211,8 +211,12 @@ public class PostProcessor {
 		}
 		initializedGlobals.addAll(uninitGlobalVars);
 		Specification[] specsInit = new Specification[1];
-		specsInit[0] = new ModifiesSpecification(loc, false,
-				initializedGlobals.toArray(new VariableLHS[0]));
+		VariableLHS[] modifyList = new VariableLHS[initializedGlobals.size()];
+		int i = 0;
+		for (String var: initializedGlobals) {
+			modifyList[i++] = new VariableLHS(loc, var);
+		}
+		specsInit[0] = new ModifiesSpecification(loc, false, modifyList);
 		decl.add(new Procedure(loc, new Attribute[0], SFO.INIT, new String[0],
 				new VarList[0], new VarList[0], specsInit, null));
 		Body initBody = new Body(loc,

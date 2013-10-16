@@ -445,8 +445,12 @@ public class FunctionHandler {
 				modifiedGlobals.put(mId, currModClause);
 				int nrSpec = spec.length;
 				spec = Arrays.copyOf(spec, nrSpec + 1);
-				spec[nrSpec] = new ModifiesSpecification(loc, false,
-						currModClause.toArray(new VariableLHS[0]));
+				VariableLHS[] modifyList = new VariableLHS[currModClause.size()];
+				int i = 0;
+				for (String var: currModClause) {
+					modifyList[i++] = new VariableLHS(loc, var);
+				}
+				spec[nrSpec] = new ModifiesSpecification(loc, false, modifyList);
 			}
 			if (main.isMMRequired()
 					&& (main.getCheckedMethod() == SFO.EMPTY || main
