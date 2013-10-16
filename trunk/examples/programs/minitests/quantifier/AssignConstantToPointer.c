@@ -33,9 +33,9 @@ int main() {
     
     //@ assert r == s;
     
-//    if (p != 0) {
-        // assert \false;
-//    }
+    if (p != 0) {
+        //@ assert \false;
+    }
 
     return 0;
 }
