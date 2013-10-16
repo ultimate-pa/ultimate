@@ -21,6 +21,7 @@ public class PreferencePage extends FieldEditorPreferencePage implements IWorkbe
 	
 	public static String TOOLLOCATION = "C:\\ltl2ba.exe";
 	public static String COMMANDLINEARGUMENT = " -f \\\" $1 \\\"";
+	public static String PROPPATH = "";
 
 	public PreferencePage(){
 		super(GRID);
@@ -42,6 +43,13 @@ public class PreferencePage extends FieldEditorPreferencePage implements IWorkbe
 				getFieldEditorParent()
 				);
 		addField(toolArguments);
+		
+		FileFieldEditor propPath = new FileFieldEditor(
+				PROPPATH,
+				"*.ltl file location:",
+				getFieldEditorParent());
+		addField(propPath);
+		
 	}
 	
 	public boolean performOk() {
@@ -57,7 +65,8 @@ public class PreferencePage extends FieldEditorPreferencePage implements IWorkbe
 	public void init(IWorkbench workbench) {
 		setDescription("Set the properties for the LTLxBA tool to wrap by this plugin.\n"
 				+ "-Tools known to work with the wrapper are LTL2BA, LTL3BA\n"
-				+ "-As commandline string working with both tools: '-f \" $1 \"' "
+				+ "-As commandline string working with both tools: '-f \"!( $1 )\"' "
+				+ "-Don't foget to negate the formula here!"
 				+ "(use #1 as placeholder for the LTL formula)\n");
 		
 	}

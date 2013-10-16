@@ -49,7 +49,7 @@ public class DummyLTL2autObserver implements IUnmanagedObserver {
 
 	@Override
 	public boolean process(IElement root) {
-		try{ //BECAUSE SO!
+		try{
 			
 		/*m_FileNames.add(file.getName());
 		

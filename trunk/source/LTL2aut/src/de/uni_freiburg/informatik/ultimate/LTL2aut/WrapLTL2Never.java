@@ -32,7 +32,7 @@ public class WrapLTL2Never {
 	 * Command line options to start the ltl to Büchi tool.
 	 * Use $1 as a placeholder for the ltl formula.
 	 */
-	//public String commandLineArgument = " -f \" $1 \"";
+	//public String commandLineArgument = " -f \"!( $1 )\"";
 	
 	/**
 	 * Returns a Büchi automaton for the ltl formula as a promela never claim.
