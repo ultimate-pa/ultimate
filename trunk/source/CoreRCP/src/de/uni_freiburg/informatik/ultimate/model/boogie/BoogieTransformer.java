@@ -559,29 +559,18 @@ public abstract class BoogieTransformer {
 		} else if (expr instanceof ArrayAccessExpression) {
 			ArrayAccessExpression aaexpr = (ArrayAccessExpression) expr;
 			Expression arr = processExpression(aaexpr.getArray());
-			boolean changed = arr != aaexpr.getArray();
 			Expression[] indices = aaexpr.getIndices();
-			Expression[] newIndices = new Expression[indices.length];
-			for (int i = 0; i < indices.length; i++) {
-				newIndices[i] = processExpression(indices[i]);
-				if (newIndices[i] != indices[i])
-					changed = true;
-			}
-			if (changed)
+			Expression[] newIndices = processExpressions(indices);
+			if (arr != aaexpr.getArray() || indices != newIndices)
 				return new ArrayAccessExpression(aaexpr.getLocation(), aaexpr.getType(), arr, newIndices);
 		} else if (expr instanceof ArrayStoreExpression) {
 			ArrayStoreExpression aaexpr = (ArrayStoreExpression) expr;
 			Expression arr = processExpression(aaexpr.getArray());
 			Expression value = processExpression(aaexpr.getValue());
-			boolean changed = arr != aaexpr.getArray() || value != aaexpr.getValue();
 			Expression[] indices = aaexpr.getIndices();
-			Expression[] newIndices = new Expression[indices.length];
-			for (int i = 0; i < indices.length; i++) {
-				newIndices[i] = processExpression(indices[i]);
-				if (newIndices[i] != indices[i])
-					changed = true;
-			}
-			if (changed)
+			Expression[] newIndices = processExpressions(indices);
+			if (arr != aaexpr.getArray() || indices != newIndices 
+				|| value != aaexpr.getValue())
 				return new ArrayStoreExpression(aaexpr.getLocation(), aaexpr.getType(), arr, newIndices, value);
 		} else if (expr instanceof BitVectorAccessExpression) {
 			BitVectorAccessExpression bvaexpr = 

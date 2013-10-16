@@ -165,7 +165,7 @@ public class StructExpander extends BoogieTransformer implements
 			int[] paramOrder = new int[st.getFieldCount()];
 			for (int i= 0; i < paramOrder.length; i++)
 				paramOrder[i] = i;
-			tc = new TypeConstructor(name, st.isFinite(), st.getFieldCount(), paramOrder);
+			tc = new TypeConstructor(name, false, st.getFieldCount(), paramOrder);
 			m_StructTypes.put(name, tc);
 		}
 		BoogieType[] types = new BoogieType[st.getFieldCount()];
