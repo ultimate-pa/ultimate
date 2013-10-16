@@ -411,6 +411,11 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 		String longDescription = "Ultimate Automizer took " + time + "ms";
 		longDescription += timingStatistics.printTimingStatistics();
 		s_Logger.warn(longDescription);
+		if (root.getOutgoingNodes().isEmpty()) {
+			s_Logger.warn("No procedure was checked. I don't know any location."
+					+ "Will not report any timing statistics.");
+			return;
+		}
 		RCFGNode someNode = root.getOutgoingNodes().iterator().next();
 		GenericResult<RcfgElement> res = new GenericResult<RcfgElement>(
 				someNode, Activator.s_PLUGIN_NAME, 
