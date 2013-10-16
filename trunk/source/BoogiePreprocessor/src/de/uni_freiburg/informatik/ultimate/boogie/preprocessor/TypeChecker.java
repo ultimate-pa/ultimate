@@ -461,6 +461,8 @@ public class TypeChecker implements IUnmanagedObserver {
             varScopes.pop();
             typeManager.popTypeScope();
             resultType = boolType;
+        } else if (expr instanceof WildcardExpression) {
+        	resultType = boolType;
         } else {
             throw new IllegalStateException("Unknown expression node " + expr);
         }
@@ -755,6 +757,7 @@ public class TypeChecker implements IUnmanagedObserver {
                                 + id + " which is not a global variable");
                     }
                     modifiedGlobals.add(id);
+                    var.setType(findVariable(id).getType());
                 }
             } else {
                 internalError("Unknown Procedure specification: " + s);
@@ -865,22 +868,18 @@ public class TypeChecker implements IUnmanagedObserver {
             /* Nothing to check */
         } else if (statement instanceof IfStatement) {
             IfStatement ifstmt = (IfStatement) statement;
-            if (!(ifstmt.getCondition() instanceof WildcardExpression)) {
-                BoogieType t = typecheckExpression(ifstmt.getCondition());
-                if (!t.equals(boolType) && !t.equals(errorType))
-                    typeError(statement,
-                            "Condition is not boolean: " + statement);
-            }
+            BoogieType t = typecheckExpression(ifstmt.getCondition());
+            if (!t.equals(boolType) && !t.equals(errorType))
+            	typeError(statement,
+            			"Condition is not boolean: " + statement);
             typecheckBlock(outer, allLabels, ifstmt.getThenPart());
             typecheckBlock(outer, allLabels, ifstmt.getElsePart());
         } else if (statement instanceof WhileStatement) {
             WhileStatement whilestmt = (WhileStatement) statement;
-            if (!(whilestmt.getCondition() instanceof WildcardExpression)) {
-                BoogieType t = typecheckExpression(whilestmt.getCondition());
-                if (!t.equals(boolType) && !t.equals(errorType))
-                    typeError(statement,
-                            "Condition is not boolean: " + statement);
-            }
+            BoogieType t = typecheckExpression(whilestmt.getCondition());
+            if (!t.equals(boolType) && !t.equals(errorType))
+            	typeError(statement,
+            			"Condition is not boolean: " + statement);
             for (Specification inv : whilestmt.getInvariants()) {
                 if (inv instanceof LoopInvariantSpecification) {
                     typecheckExpression(((LoopInvariantSpecification) inv)
@@ -926,9 +925,11 @@ public class TypeChecker implements IUnmanagedObserver {
             }
             for (int i = 0; i < arguments.length; i++) {
                 if (call.isForall()) {
-                    /* check for wildcard expresion and just skip them. */
-                    if (arguments[i] instanceof WildcardExpression)
+                    /* check for wildcard expression and just skip them. */
+                    if (arguments[i] instanceof WildcardExpression) {
+                        arguments[i].setType(inParams[i].getType());
                         continue;
+                    }
                 }
                 BoogieType t = typecheckExpression(arguments[i]);
                 if (!inParams[i].getType().unify(t, typeParams)) {
