@@ -1008,6 +1008,7 @@ public class MemoryHandler {
 		decl.addAll(auxPointer.decl);
 		decl.addAll(call.decl);
 		auxVars.putAll(auxPointer.auxVars);
+		stmt.addAll(Dispatcher.createHavocsForAuxVars(auxPointer.auxVars));
 		auxVars.putAll(call.auxVars);
 		assert auxPointer.stmt.size() == 2;
 		AssumeStatement baseEquality = (AssumeStatement) auxPointer.stmt.get(0);

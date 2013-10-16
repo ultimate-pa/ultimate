@@ -1878,7 +1878,6 @@ public class CHandler implements ICHandler {
                 ArrayList<Declaration> decl = new ArrayList<Declaration>(
                         rExp.decl);
                 assert (main.isAuxVarMapcomplete(decl, rExp.auxVars));
-                stmt.addAll(Dispatcher.createHavocsForAuxVars(rExp.auxVars));
                 Map<VariableDeclaration, CACSLLocation> emptyAuxVars = new HashMap<VariableDeclaration, CACSLLocation>(
                         0);
                 return new ResultExpression(stmt, null, decl, emptyAuxVars);

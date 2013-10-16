@@ -296,12 +296,12 @@ public class StructHandler {
         ArrayList<Declaration> decl = new ArrayList<Declaration>();
 		Map<VariableDeclaration, CACSLLocation> auxVars = 
 				new HashMap<VariableDeclaration, CACSLLocation>();
-		stmt.addAll(call.stmt);
-		decl.addAll(call.decl);
-		auxVars.putAll(call.auxVars);
 		stmt.addAll(rex.stmt);
 		decl.addAll(rex.decl);
 		auxVars.putAll(rex.auxVars);
+		stmt.addAll(call.stmt);
+		decl.addAll(call.decl);
+		auxVars.putAll(call.auxVars);
 		ResultExpression result = new ResultExpressionPointerDereferenceBO(stmt,
 				call.expr, decl, auxVars, call.m_Pointer, call.m_ReadCall, 
 				call.m_CallResult, call.m_AuxPointer, call.m_PointerBase, 
