@@ -45,13 +45,13 @@ fi
 
 if [ "$1" = "4" ]; then
 echo "testing TraceCheckerSpWp for SVCOMP"
-trunk/examples/toolchains/TraceAbstractionTestDir.sh 1000 trunk/examples/svcomp13/ssh-simplified/ \
+trunk/examples/toolchains/TraceAbstractionTestDir.sh 1000 trunk/examples/svcomp/ssh-simplified/ \
  "TraceAbstraction.xml;TraceAbstractionC.xml;TraceAbstraction-LargeStatements-StrongestPost-Hoare-SpWp-SVCOMP" \
  "TraceAbstraction.xml;TraceAbstractionC.xml;TraceAbstraction-LargeStatements-StrongestPost-Hoare-SVCOMP" 
-trunk/examples/toolchains/TraceAbstractionTestDir.sh 1000 trunk/examples/svcomp13/ntdrivers-simplified \
+trunk/examples/toolchains/TraceAbstractionTestDir.sh 1000 trunk/examples/svcomp/ntdrivers-simplified \
  "TraceAbstraction.xml;TraceAbstractionC.xml;TraceAbstraction-LargeStatements-StrongestPost-Hoare-SpWp-SVCOMP" \
  "TraceAbstraction.xml;TraceAbstractionC.xml;TraceAbstraction-LargeStatements-StrongestPost-Hoare-SVCOMP" 
-trunk/examples/toolchains/TraceAbstractionTestDir.sh 1000 trunk/examples/svcomp13/systemc \
+trunk/examples/toolchains/TraceAbstractionTestDir.sh 1000 trunk/examples/svcomp/systemc \
  "TraceAbstraction.xml;TraceAbstractionC.xml;TraceAbstraction-LargeStatements-StrongestPost-Hoare-SpWp-SVCOMP" \
  "TraceAbstraction.xml;TraceAbstractionC.xml;TraceAbstraction-LargeStatements-StrongestPost-Hoare-SVCOMP" 
 trunk/examples/toolchains/TraceAbstractionTestDir.sh 1000 trunk/examples/programs \
@@ -73,21 +73,21 @@ fi
 
 if [ "$1" = "6" ]; then
 echo "testing different interpolations on SV-COMP examples"
-trunk/examples/toolchains/TraceAbstractionTestDir.sh 120 trunk/examples/svcomp13/ssh-simplified/ \
+trunk/examples/toolchains/TraceAbstractionTestDir.sh 120 trunk/examples/svcomp/ssh-simplified/ \
 "TraceAbstraction.xml;TraceAbstractionC.xml;Automizer-MlbeSeq-Nested-SVCOMP" \
 "TraceAbstraction.xml;TraceAbstractionC.xml;Automizer-MlbeSeq-Tree-SVCOMP" \
 "TraceAbstraction.xml;TraceAbstractionC.xml;Automizer-MlbeSeq-ForwardPredicates-SVCOMP" \
 "TraceAbstraction.xml;TraceAbstractionC.xml;Automizer-MlbeLoop-Nested-SVCOMP" \
 "TraceAbstraction.xml;TraceAbstractionC.xml;Automizer-MlbeLoop-Tree-SVCOMP" \
 "TraceAbstraction.xml;TraceAbstractionC.xml;Automizer-MlbeLoop-ForwardPredicates-SVCOMP"
-trunk/examples/toolchains/TraceAbstractionTestDir.sh 120 trunk/examples/svcomp13/ntdrivers-simplified \
+trunk/examples/toolchains/TraceAbstractionTestDir.sh 120 trunk/examples/svcomp/ntdrivers-simplified \
 "TraceAbstraction.xml;TraceAbstractionC.xml;Automizer-MlbeSeq-Nested-SVCOMP" \
 "TraceAbstraction.xml;TraceAbstractionC.xml;Automizer-MlbeSeq-Tree-SVCOMP" \
 "TraceAbstraction.xml;TraceAbstractionC.xml;Automizer-MlbeSeq-ForwardPredicates-SVCOMP" \
 "TraceAbstraction.xml;TraceAbstractionC.xml;Automizer-MlbeLoop-Nested-SVCOMP" \
 "TraceAbstraction.xml;TraceAbstractionC.xml;Automizer-MlbeLoop-Tree-SVCOMP" \
 "TraceAbstraction.xml;TraceAbstractionC.xml;Automizer-MlbeLoop-ForwardPredicates-SVCOMP"
-trunk/examples/toolchains/TraceAbstractionTestDir.sh 120 trunk/examples/svcomp13/systemc \
+trunk/examples/toolchains/TraceAbstractionTestDir.sh 120 trunk/examples/svcomp/systemc \
 "TraceAbstraction.xml;TraceAbstractionC.xml;Automizer-MlbeSeq-Nested-SVCOMP" \
 "TraceAbstraction.xml;TraceAbstractionC.xml;Automizer-MlbeSeq-Tree-SVCOMP" \
 "TraceAbstraction.xml;TraceAbstractionC.xml;Automizer-MlbeSeq-ForwardPredicates-SVCOMP" \
@@ -123,31 +123,31 @@ fi
 
 
 
-#trunk/examples/toolchains/TraceAbstractionTestDir.sh 1000 trunk/examples/svcomp13/systemc \
+#trunk/examples/toolchains/TraceAbstractionTestDir.sh 1000 trunk/examples/svcomp/systemc \
 #"TraceAbstraction.xml;TraceAbstractionC.xml;TraceAbstraction-svcomp-StrongestMinimize" \
 # "TraceAbstraction.xml;TraceAbstractionC.xml;TraceAbstraction-svcomp-EagerMinimize" \
 # "TraceAbstraction.xml;TraceAbstractionC.xml;TraceAbstraction-svcomp-LazyMinimize" \
 
-#trunk/examples/toolchains/TraceAbstractionTestDir.sh 1000 trunk/examples/svcomp13/ssh-simplified/ \
+#trunk/examples/toolchains/TraceAbstractionTestDir.sh 1000 trunk/examples/svcomp/ssh-simplified/ \
 # "TraceAbstraction.xml;TraceAbstractionC.xml;TraceAbstraction-svcomp-LargeStrongest" \
 # "TraceAbstractionWithBlockEncoding.xml;TraceAbstractionCWithBlockEncoding.xml;TraceAbstraction-svcomp-BlockEncodingStrongest" 
-#trunk/examples/toolchains/TraceAbstractionTestDir.sh 1000 trunk/examples/svcomp13/ntdrivers-simplified \
+#trunk/examples/toolchains/TraceAbstractionTestDir.sh 1000 trunk/examples/svcomp/ntdrivers-simplified \
 # "TraceAbstraction.xml;TraceAbstractionC.xml;TraceAbstraction-svcomp-LargeStrongest" \
 # "TraceAbstractionWithBlockEncoding.xml;TraceAbstractionCWithBlockEncoding.xml;TraceAbstraction-svcomp-BlockEncodingStrongest" 
-#trunk/examples/toolchains/TraceAbstractionTestDir.sh 1000 trunk/examples/svcomp13/systemc \
+#trunk/examples/toolchains/TraceAbstractionTestDir.sh 1000 trunk/examples/svcomp/systemc \
 # "TraceAbstraction.xml;TraceAbstractionC.xml;TraceAbstraction-svcomp-LargeStrongest" \
 # "TraceAbstractionWithBlockEncoding.xml;TraceAbstractionCWithBlockEncoding.xml;TraceAbstraction-svcomp-BlockEncodingStrongest" 
 #trunk/examples/toolchains/TraceAbstractionTestDir.sh 1000 trunk/examples/programs \
 # "TraceAbstraction.xml;TraceAbstractionC.xml;TraceAbstraction-svcomp-LargeStrongest" \
 # "TraceAbstractionWithBlockEncoding.xml;TraceAbstractionCWithBlockEncoding.xml;TraceAbstraction-svcomp-BlockEncodingStrongest" 
 
-# trunk/examples/toolchains/TraceAbstractionTestDir.sh 1000 trunk/examples/svcomp13/ssh-simplified/ \
+# trunk/examples/toolchains/TraceAbstractionTestDir.sh 1000 trunk/examples/svcomp/ssh-simplified/ \
 # "TraceAbstraction.xml;TraceAbstractionC.xml;TraceAbstraction-svcomp-LargeStrongest" \
 # "TraceAbstraction.xml;TraceAbstractionC.xml;TraceAbstraction-svcomp-LargeStrongestMinimizeSevpa"
-# trunk/examples/toolchains/TraceAbstractionTestDir.sh 1000 trunk/examples/svcomp13/ntdrivers-simplified \
+# trunk/examples/toolchains/TraceAbstractionTestDir.sh 1000 trunk/examples/svcomp/ntdrivers-simplified \
 # "TraceAbstraction.xml;TraceAbstractionC.xml;TraceAbstraction-svcomp-LargeStrongest" \
 # "TraceAbstraction.xml;TraceAbstractionC.xml;TraceAbstraction-svcomp-LargeStrongestMinimizeSevpa"
-# trunk/examples/toolchains/TraceAbstractionTestDir.sh 1000 trunk/examples/svcomp13/systemc \
+# trunk/examples/toolchains/TraceAbstractionTestDir.sh 1000 trunk/examples/svcomp/systemc \
 # "TraceAbstraction.xml;TraceAbstractionC.xml;TraceAbstraction-svcomp-LargeStrongest" \
 # "TraceAbstraction.xml;TraceAbstractionC.xml;TraceAbstraction-svcomp-LargeStrongestMinimizeSevpa"
 # trunk/examples/toolchains/TraceAbstractionTestDir.sh 1000 trunk/examples/programs \
@@ -155,17 +155,17 @@ fi
 # "TraceAbstraction.xml;TraceAbstractionC.xml;TraceAbstraction-svcomp-LargeStrongestMinimizeSevpa"
 
 
-#trunk/examples/toolchains/TraceAbstractionTestDir.sh 1000 trunk/examples/svcomp13/ssh-simplified/ \
+#trunk/examples/toolchains/TraceAbstractionTestDir.sh 1000 trunk/examples/svcomp/ssh-simplified/ \
 # "TraceAbstraction.xml;TraceAbstractionC.xml;TraceAbstraction-svcomp-LargeStrongest" \
 # "TraceAbstractionWithBlockEncoding.xml;TraceAbstractionCWithBlockEncoding.xml;TraceAbstraction-svcomp-BlockEncodingStrongest" \
 # "TraceAbstraction.xml;TraceAbstractionC.xml;TraceAbstraction-svcomp-LargeLazy" \
 # "TraceAbstractionWithBlockEncoding.xml;TraceAbstractionCWithBlockEncoding.xml;TraceAbstraction-svcomp-BlockEncodingLazy" 
-#trunk/examples/toolchains/TraceAbstractionTestDir.sh 1000 trunk/examples/svcomp13/ntdrivers-simplified \
+#trunk/examples/toolchains/TraceAbstractionTestDir.sh 1000 trunk/examples/svcomp/ntdrivers-simplified \
 # "TraceAbstraction.xml;TraceAbstractionC.xml;TraceAbstraction-svcomp-LargeStrongest" \
 # "TraceAbstractionWithBlockEncoding.xml;TraceAbstractionCWithBlockEncoding.xml;TraceAbstraction-svcomp-BlockEncodingStrongest" \
 # "TraceAbstraction.xml;TraceAbstractionC.xml;TraceAbstraction-svcomp-LargeLazy" \
 # "TraceAbstractionWithBlockEncoding.xml;TraceAbstractionCWithBlockEncoding.xml;TraceAbstraction-svcomp-BlockEncodingLazy"
-#trunk/examples/toolchains/TraceAbstractionTestDir.sh 1000 trunk/examples/svcomp13/systemc \
+#trunk/examples/toolchains/TraceAbstractionTestDir.sh 1000 trunk/examples/svcomp/systemc \
 # "TraceAbstraction.xml;TraceAbstractionC.xml;TraceAbstraction-svcomp-LargeStrongest" \
 # "TraceAbstractionWithBlockEncoding.xml;TraceAbstractionCWithBlockEncoding.xml;TraceAbstraction-svcomp-BlockEncodingStrongest" \
 # "TraceAbstraction.xml;TraceAbstractionC.xml;TraceAbstraction-svcomp-LargeLazy" \
@@ -182,5 +182,5 @@ fi
 #  "BuchiAutomizer.xml;BuchiAutomizerC.xml;BuchiAutomizer"
 # trunk/examples/toolchains/TraceAbstractionTestDir.sh 20 trunk/examples/terminator \
 #  "BuchiAutomizer.xml;BuchiAutomizerC.xml;BuchiAutomizer"
-# trunk/examples/toolchains/TraceAbstractionTestDir.sh 20 trunk/examples/svcomp13 \
+# trunk/examples/toolchains/TraceAbstractionTestDir.sh 20 trunk/examples/svcomp \
 #  "BuchiAutomizer.xml;BuchiAutomizerC.xml;BuchiAutomizer"
