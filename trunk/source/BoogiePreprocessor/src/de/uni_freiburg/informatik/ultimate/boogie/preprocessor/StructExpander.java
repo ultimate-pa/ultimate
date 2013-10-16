@@ -36,6 +36,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StructAccessExpressi
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StructConstructor;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StructLHS;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.TypeDeclaration;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Unit;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableLHS;
@@ -541,6 +542,18 @@ public class StructExpander extends BoogieTransformer implements
         		result[i] = new IfThenElseExpression
         			(ite.getLocation(), thens[i].getType(),
         			 ite.getCondition(), thens[i], elses[i]);
+        	}
+        	return result;
+        } else if (e instanceof UnaryExpression) {
+        	/* this can only be an "old" expression */
+        	UnaryExpression uexpr = (UnaryExpression) e;
+        	assert (uexpr.getOperator() == UnaryExpression.Operator.OLD);
+        	Expression[] subExprs = expandExpression(uexpr.getExpr());
+        	Expression[] result = new Expression[subExprs.length];
+        	for (int i = 0; i < result.length; i++) {
+        		result[i] = new UnaryExpression
+        				(e.getLocation(), subExprs[i].getType(),
+        				 uexpr.getOperator(), subExprs[i]);
         	}
         	return result;
         } else {
