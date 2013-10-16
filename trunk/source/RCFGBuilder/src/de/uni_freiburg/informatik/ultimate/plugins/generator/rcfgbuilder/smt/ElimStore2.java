@@ -6,6 +6,9 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import org.apache.log4j.Logger;
+
+import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -14,13 +17,16 @@ import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.PartialQuantifierElimination.EqualityInformation;
+import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
 import de.uni_freiburg.informatik.ultimate.util.ScopedHashMap;
 import de.uni_freiburg.informatik.ultimate.util.UnionFind;
 
 public class ElimStore2 {
 	
-	
+	private static Logger s_Logger = 
+			UltimateServices.getInstance().getLogger(Activator.PLUGIN_ID);
 
 	public ElimStore2(Script script) {
 		super();
@@ -53,7 +59,9 @@ public class ElimStore2 {
 		Set<ApplicationTerm> selectTerms = 
 				(new ApplicationTermFinder("select")).findMatchingSubterms(term);
 		if (m_WriteIndex == null) {
-			throw new AssertionError("not yet implemented case in array quantifier elimination");
+			s_Logger.warn(new DebugMessage("not yet implemented case in "
+					+ "array quantifier elimination. Formula {0}" , term));
+			return term;
 		}
 		Map<Term[], ApplicationTerm> arrayReads =
 				getArrayReads(oldArr, selectTerms, m_WriteIndex.length);
