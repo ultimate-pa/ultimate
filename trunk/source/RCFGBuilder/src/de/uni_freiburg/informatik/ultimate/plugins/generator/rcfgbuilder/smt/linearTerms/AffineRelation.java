@@ -71,8 +71,10 @@ public class AffineRelation {
 				lhsSummands.add(m_AffineTerm.getConstant().toTerm(m_AffineTerm.getSort()));
 			}
 		}
-		Term lhsTerm = UtilExperimental.sum(script, lhsSummands.toArray(new Term[0]));
-		Term rhsTerm = UtilExperimental.sum(script, rhsSummands.toArray(new Term[0]));
+		Term lhsTerm = UtilExperimental.sum(script, m_AffineTerm.getSort(), 
+				lhsSummands.toArray(new Term[0]));
+		Term rhsTerm = UtilExperimental.sum(script, m_AffineTerm.getSort(), 
+				rhsSummands.toArray(new Term[0]));
 		Term result = script.term(m_FunctionSymbolName, lhsTerm, rhsTerm);
 		assert isEquivalent(script, m_OriginalTerm, result) == LBool.UNSAT : 
 			"transformation to positive normal form unsound";
@@ -111,7 +113,8 @@ public class AffineRelation {
 						"where desired variable is on left hand side");
 			}
 		}
-		Term rhsTerm = UtilExperimental.sum(script, rhsSummands.toArray(new Term[0]));
+		Term rhsTerm = UtilExperimental.sum(script, m_AffineTerm.getSort(), 
+				rhsSummands.toArray(new Term[0]));
 		Term result = script.term(m_FunctionSymbolName, term, rhsTerm);
 		assert isEquivalent(script, m_OriginalTerm, result) == LBool.UNSAT;
 		return result;

@@ -12,7 +12,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.logic.UtilExperimental;
 
 
@@ -178,7 +177,7 @@ public class AffineTerm extends Term {
 			Term coeff = script.numeral(entry.getValue().numerator());
 			summands[i] = script.term("*", coeff, entry.getKey());
 		}
-		Term result = UtilExperimental.sum(script, summands);
+		Term result = UtilExperimental.sum(script, m_Sort, summands);
 		return result;
 	}
 	
