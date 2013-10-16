@@ -4,26 +4,45 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 
 import de.uni_freiburg.informatik.ultimate.BuchiProgramProduct.Product;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.*;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence;
 import junit.framework.TestCase;
 
 public class TestProduct extends TestCase {
-	
-	public void testStatemultiplication()
-	{
-		/*
-		
-		
-		
-		
-		
-		
-		
-		Product p = new Product()
-		
-		Field field = p.getClass().getDeclaredField("nodes");
-		field.setAccessible(true);*/
-		
-		
-	}
+
+		public void  testBasicProduct()
+		{
+			//bulid f2
+			//nodes do not contain any statements even if its possible via RCFG
+			/*ProgramPoint p1f1 = new ProgramPoint("1f2","f2", false,
+					null,null,null);
+			
+			
+			new AssignmentStatement(null, new LeftHandSide[]{},
+					new Expression[]{new BinaryExpression()});
+			
+			
+			
+			
+			StatementSequence s1f2 = new StatementSequence(p1f1, p1f1, null , null);
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			WrapperNode wn = new WrapperNode(null, );
+			*/
+			
+			
+		}
 
 }

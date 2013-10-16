@@ -51,13 +51,14 @@ public class BuchiProductObserver implements IUnmanagedObserver {
 
 	@Override
 	public boolean process(IElement root) {
+		
+		//execute product
 		if (this.aut != null && this.rcfg != null)
 		{
-			//TODO: product
 			System.out.println("------------------PRODUCTCALC----------------------");
 			
 			try{
-			this.prod = new Product(this.aut, this.rcfg);
+				this.prod = new Product(this.aut, this.rcfg);
 			} catch (Exception e){
 				System.out.println("ERROR:\n" + e.toString());
 			}
@@ -65,13 +66,15 @@ public class BuchiProductObserver implements IUnmanagedObserver {
 			return false;
 		}
 		
+		
+		//collect root nodes of graphs
 		if (root instanceof NeverStatement &&  this.aut == null)
 		{
 			System.out.println("----------NEVER------------");
 			//build and get automaton
 			try{
-			Never2Automaton nta = new Never2Automaton((AstNode)root);
-			this.aut = nta.getAutomaton();
+				Never2Automaton nta = new Never2Automaton((AstNode)root);
+				this.aut = nta.getAutomaton();
 			}catch(Exception e){ 
 				//TODO: log something
 				System.out.println("ERROR:\n" + e.toString());

@@ -24,8 +24,10 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Pro
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootAnnot;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence.Origin;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
 
 /**
@@ -44,7 +46,7 @@ public class Product {
 	
 	private HashMap<String,ProgramPoint> nodes = new HashMap<String, ProgramPoint>();
 	
-	private ProgramPoint main;
+	private RootNode main = new RootNode(null);
 
 	
 	
@@ -137,7 +139,7 @@ public class Product {
 										currentpp, 
 										targetpp, 
 										stmts,
-										null);
+										Origin.IMPLEMENTATION);
 							}
 						} else
 							throw new Exception("RCFG Edgetype " + rcfgEdge.getClass() + " is currently not supported.");		
@@ -169,7 +171,7 @@ public class Product {
 				
 			// acceptance and inital states
 			if (pp.getLocationName() == "mainENTRY" && this.aut.getInitialStates().contains(n))
-				this.main = ncp;
+				new RootEdge(this.main, ncp);
 			}	
 				
 		}
@@ -217,7 +219,7 @@ public class Product {
 		return name1 + "__" + name2;
 	}
 	
-	public ProgramPoint getRCFG()
+	public RootNode getRCFG()
 	{
 		return this.main;
 	}

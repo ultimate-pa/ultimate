@@ -110,8 +110,7 @@ public class BuchiProgramProduct implements IGenerator {
 
 	@Override
 	public IElement getModel() {
-		//this.bpo.prod.getRCFG();
-		return null;
+		return this.bpo.prod.getRCFG();
 	}
 
 	@Override
