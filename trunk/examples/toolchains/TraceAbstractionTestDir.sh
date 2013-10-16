@@ -63,9 +63,11 @@ files=`find . -name "*.bpl" -o -name "*.c"|sort`
 
 for f in $files;
 do
-    # stores filename if filename contains substring safe (resp. unsafe), is empty otherwise
+    # stores if filename contains substring safe (resp. unsafe), is empty otherwise
     FILENAME_SAFE=`echo "$f" | grep -i "safe"`
     FILENAME_UNSAFE=`echo "$f" | grep -i "unsafe"`
+    FILENAME_TRUE=`echo "$f" | grep -i "true"`
+    FILENAME_FALSE=`echo "$f" | grep -i "false"`
     # stores the first line of $f if this line contains one of the following keywords, is empty otherwise
     KEYWORD_SYNTAX=`head -n 1 "$f" | grep "#Syntax"`
     KEYWORD_MSAFE=`head -n 1 "$f" | grep "#mSafe"`
@@ -87,6 +89,18 @@ do
 			PROGRAM_SAFE="1"
 		fi
 	else 
+		if [ "$FILENAME_TRUE" ]; then 
+		WHO_DEFINED_SOLUTION="Solution given by filename is: "
+		PROGRAM_SAFE="1"
+		PROGRAM_UNSAFE=
+		fi
+
+		if [ "$FILENAME_FALSE" ]; then 
+		WHO_DEFINED_SOLUTION="Solution given by filename is: "
+		PROGRAM_SAFE=
+		PROGRAM_UNSAFE="1"
+		fi
+		
 		if [ "$KEYWORD_MSAFE" ]; then 
 		WHO_DEFINED_SOLUTION="Solution given by EvrenKeyword is: "
 		PROGRAM_SAFE="1"
