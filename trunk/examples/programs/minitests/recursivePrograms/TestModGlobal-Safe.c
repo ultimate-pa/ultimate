@@ -11,7 +11,7 @@ int callee() {
     } else {
         g++;
     }
-    return;
+    return 0;
 }
 
 int main() {

@@ -11,7 +11,7 @@ int callee() {
     } else {
         delay();
     }
-    return;
+    return 0;
 }
 
 int main() {

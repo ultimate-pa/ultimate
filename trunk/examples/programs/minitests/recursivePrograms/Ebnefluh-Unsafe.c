@@ -5,7 +5,7 @@
 int g;
 
 int stechelberg() {
-  return;
+  return 0;
 }
 
 int lauterbrunnen() {
@@ -15,7 +15,7 @@ int lauterbrunnen() {
     } else {
         stechelberg();
     }
-    return;
+    return 0;
 }
 
 int main() {
