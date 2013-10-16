@@ -4,6 +4,11 @@
 
 int g;
 
+int delay() {
+    int delayVar;
+    delayVar++;
+}
+
 int callee() {
     int nondet;
     int res;
@@ -20,7 +25,3 @@ int main() {
     //@ assert a == g;
 }
 
-int delay() {
-    int delayVar;
-    delayVar++;
-}
