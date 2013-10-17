@@ -61,7 +61,7 @@ public class ElimStore2 {
 		if (m_WriteIndex == null) {
 			s_Logger.warn(new DebugMessage("not yet implemented case in "
 					+ "array quantifier elimination. Formula {0}" , term));
-			return term;
+			return null;
 		}
 		Map<Term[], ApplicationTerm> arrayReads =
 				getArrayReads(oldArr, selectTerms, m_WriteIndex.length);
