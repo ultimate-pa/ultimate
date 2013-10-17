@@ -56,13 +56,25 @@ public class ElimStore2 {
 			others.add(conjunct);
 		}
 		Term othersT = Util.and(m_Script, others.toArray(new Term[0]));
-		Set<ApplicationTerm> selectTerms = 
-				(new ApplicationTermFinder("select")).findMatchingSubterms(term);
-		if (m_WriteIndex == null) {
+		Set<ApplicationTerm> selectTermsInData = 
+				(new ApplicationTermFinder("select")).findMatchingSubterms(m_Data);
+		if (m_WriteIndex == null || !selectTermsInData.isEmpty()) {
 			s_Logger.warn(new DebugMessage("not yet implemented case in "
 					+ "array quantifier elimination. Formula {0}" , term));
 			return null;
 		}
+		for (Term index : m_WriteIndex) {
+			Set<ApplicationTerm> selectTermsInIndex = 
+				(new ApplicationTermFinder("select")).findMatchingSubterms(index);
+			if (!selectTermsInIndex.isEmpty()) {
+				s_Logger.warn(new DebugMessage("not yet implemented case in "
+						+ "array quantifier elimination. Formula {0}" , term));
+				return null;
+			}
+
+		}
+		Set<ApplicationTerm> selectTerms = 
+				(new ApplicationTermFinder("select")).findMatchingSubterms(term);
 		Map<Term[], ApplicationTerm> arrayReads =
 				getArrayReads(oldArr, selectTerms, m_WriteIndex.length);
 		
