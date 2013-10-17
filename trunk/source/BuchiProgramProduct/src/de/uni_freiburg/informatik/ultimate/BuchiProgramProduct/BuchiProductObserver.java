@@ -52,6 +52,12 @@ public class BuchiProductObserver implements IUnmanagedObserver {
 	@Override
 	public boolean process(IElement root) {
 		
+		
+		/*GraphType inRcfg = UltimateServices.getInstance().getGraphTypeByCreatorPluginId("RCFGBuilder");
+		GraphType inAut = UltimateServices.getInstance().getGraphTypeByCreatorPluginId("de.uni_freiburg.informatik.ultimate.LTL2Aut");
+		
+		this.rcfg = UltimateServices.getInstance(). .getClass()...*/
+		
 		//execute product
 		if (this.aut != null && this.rcfg != null)
 		{
@@ -64,8 +70,10 @@ public class BuchiProductObserver implements IUnmanagedObserver {
 			}
 			
 			return false;
-		}
-		
+		} /*else {
+			throw new Exception("There where no fitting models for the Product");
+		}*/
+
 		
 		//collect root nodes of graphs
 		if (root instanceof NeverStatement &&  this.aut == null)
