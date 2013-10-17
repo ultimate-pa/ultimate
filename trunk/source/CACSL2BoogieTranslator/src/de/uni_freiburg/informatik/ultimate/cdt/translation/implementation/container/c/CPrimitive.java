@@ -32,10 +32,10 @@ public class CPrimitive extends CType {
          * C type : double.
          */
         DOUBLE,
-        /**
-         * C type : *.
-         */
-        POINTER,
+//        /**
+//         * C type : *.
+//         */
+//        POINTER,
         /**
          * C type : void.
          */
@@ -62,6 +62,11 @@ public class CPrimitive extends CType {
      * The C type of the variable.
      */
     private final PRIMITIVE type;
+    
+    public CPrimitive(PRIMITIVE type) {
+    	super(null);
+    	this.type = type;
+    }
 
     /**
      * Constructor.

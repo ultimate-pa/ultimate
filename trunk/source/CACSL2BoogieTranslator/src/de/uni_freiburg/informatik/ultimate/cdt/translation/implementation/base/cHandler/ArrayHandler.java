@@ -24,6 +24,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.IncorrectSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LocalLValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.Result;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ResultExpression;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ResultExpressionListRec;
@@ -86,7 +87,7 @@ public class ArrayHandler {
      * @return a list of assert and assign statements. Maybe there are also some
      *         declarations of temp. vars.
      */
-    public ResultExpression handleArrayInit(Dispatcher main,
+    public ResultExpression handleArrayInit(Dispatcher main, MemoryHandler memoryHandler,
             StructHandler structHandler, final CACSLLocation loc, ArrayType at,
             CArray cvar, final LeftHandSide lhs, ResultExpressionListRec relr,
             int[] indices, int pos) {
@@ -107,12 +108,15 @@ public class ArrayHandler {
         ArrayList<Declaration> decl = new ArrayList<Declaration>();
 		Map<VariableDeclaration, CACSLLocation> auxVars = 
 				new HashMap<VariableDeclaration, CACSLLocation>();
+		
+		relr = relr.switchToRValue(main, memoryHandler, structHandler, loc);
+		
         if (relr.list == null) {
             if (relr.decl != null)
                 decl.addAll(relr.decl);
             if (relr.stmt != null)
                 stmt.addAll(relr.stmt);
-            if (relr.expr != null) {
+            if (relr.lrVal != null) {
                 // relr.expr -> assert + assign!
                 Expression[] idc = new Expression[indices.length];
                 for (int i = 0; i < indices.length; i++)
@@ -120,14 +124,14 @@ public class ArrayHandler {
                             Type.Integer), indices[i] + SFO.EMPTY);
 
                 stmt.add(cvar.getAccessAsserts(loc, idc));
-                relr.expr = main.typeHandler.convertArith2Boolean(loc,
-                        valueType, relr.expr);
+                Expression expr = main.typeHandler.convertArith2Boolean(loc,
+                        valueType, relr.lrVal.getValue());
                 stmt.add(new AssignmentStatement(loc,
                         new LeftHandSide[] { new ArrayLHS(loc, lhs, idc) },
-                        new Expression[] { relr.expr }));
+                        new Expression[] { expr }));
             }
         } else {
-            for (ResultExpressionListRec child : relr.list) {
+            for (ResultExpressionListRec child : relr.list) {//TODO revise
                 ++indices[pos + 1];
                 ResultExpression r;
                 if (valueType instanceof StructType) {
@@ -146,13 +150,13 @@ public class ArrayHandler {
                     assert cvar.getValueType() instanceof CStruct;
                     // TODO : could also be a named type, that needs to be
                     // resolved!
-                    r = structHandler.handleStructInit(main, this, loc,
+                    r = structHandler.handleStructInit(main, memoryHandler, structHandler, this, loc,
                             (StructType) valueType, (CStruct) cvar
                                     .getValueType(),
                             new ArrayLHS(loc, lhs, idc), child,
                             new ArrayList<Integer>(), -1);
                 } else {
-                    r = handleArrayInit(main, structHandler, loc, at, cvar,
+                    r = handleArrayInit(main, memoryHandler, structHandler, loc, at, cvar,
                             lhs, child, indices, pos + 1);
                 }
                 decl.addAll(r.decl);
@@ -183,11 +187,11 @@ public class ArrayHandler {
      *            the variables, that need to be declared globally.
      * @return the handled Result.
      */
-    public Result handleArrayDeclaration(Dispatcher main,
+    public Result handleArrayDeclaration(Dispatcher main, MemoryHandler memoryHandler,  
             StructHandler structHandler, IASTSimpleDeclaration node,
             HashMap<Declaration, CType> globalVariables,
             HashMap<Declaration, ArrayList<Statement>> globalVariablesInits) {
-    	return handleArrayDeclaration(main, structHandler, node,
+    	return handleArrayDeclaration(main, memoryHandler, structHandler, node,
     			globalVariables, globalVariablesInits, 0);
     }
     
@@ -197,7 +201,7 @@ public class ArrayHandler {
 	 * @see handleArrayDeclaration()
 	 * @param index index of the declaration list
 	 */
-    public Result handleArrayDeclaration(Dispatcher main,
+    public Result handleArrayDeclaration(Dispatcher main, MemoryHandler memoryHandler,
             StructHandler structHandler, IASTSimpleDeclaration node,
             HashMap<Declaration, CType> globalVariables,
             HashMap<Declaration, ArrayList<Statement>> globalVariablesInits,
@@ -212,7 +216,7 @@ public class ArrayHandler {
 		Map<VariableDeclaration, CACSLLocation> auxVars = 
 				new HashMap<VariableDeclaration, CACSLLocation>();
         String cId = d.getName().getRawSignature();
-        String bId = main.nameHandler.getUniqueIdentifier(node, cId,
+        String bId = main.nameHandler.getUniqueIdentifier(node, cId, //TODO: are all our arrays on the heap or what??
                 main.cHandler.getSymbolTable().getCompoundCounter(), false);
         Result res = main.dispatch(node.getDeclSpecifier());
         assert res instanceof ResultSkip || res instanceof ResultTypes;
@@ -231,12 +235,12 @@ public class ArrayHandler {
                     Result r = main.dispatch(m.getConstantExpression());
                     assert r instanceof ResultExpression;
                     ResultExpression rex = (ResultExpression) r;
-                    assert rex.expr != null;
+                    assert rex.lrVal != null;
                     stmt.addAll(rex.stmt);
                     decl.addAll(rex.decl);
                     auxVars.putAll(rex.auxVars);
-                    if (rex.expr instanceof IntegerLiteral) {
-                        dimensions.add(rex.expr);
+                    if (rex.lrVal.getValue() instanceof IntegerLiteral) {
+                        dimensions.add(rex.lrVal.getValue());
                     } else {
                         // use a variable to store the current value!
                         String tmpName = main.nameHandler.getTempVarUID(SFO.AUXVAR.ARRAYDIM);
@@ -248,7 +252,7 @@ public class ArrayHandler {
                                 new LeftHandSide[] { new VariableLHS(loc,
                                         new InferredType(Type.Integer),
                                         tmpName) },
-                                new Expression[] { rex.expr }));
+                                new Expression[] { rex.lrVal.getValue() }));
                         dimensions.add(new IdentifierExpression(loc, tmpName));
                     }
                 } else {
@@ -294,8 +298,9 @@ public class ArrayHandler {
             Arrays.fill(idx, -1);
             CArray cvar = new CArray(node.getDeclSpecifier(),
                     dimensions.toArray(new Expression[0]), resType.cvar);
-            ResultExpression rex = handleArrayInit(main, structHandler, loc,
-                    at, cvar, arr, relr, idx, -1);
+            ResultExpression rex = handleArrayInit(main, memoryHandler, structHandler, loc,
+                    at, cvar, arr, relr, idx, -1)
+                    .switchToRValue(main, memoryHandler, structHandler, loc);
             if (resType.cvar.isStatic() && !isGlobal) {
                 assert rex.decl.isEmpty();
                 decl.addAll(rex.decl);
@@ -337,8 +342,8 @@ public class ArrayHandler {
      *            the node to translate.
      * @return the translation result.
      */
-    public Result handleArraySubscriptionExpression(Dispatcher main,
-            IASTArraySubscriptExpression node) {
+    public Result handleArraySubscriptionExpression(Dispatcher main, MemoryHandler memoryHandler,
+    		StructHandler structHandler, IASTArraySubscriptExpression node) {
         CACSLLocation loc = new CACSLLocation(node);
         ArrayList<Declaration> decl = new ArrayList<Declaration>();
         ArrayList<Statement> stmt = new ArrayList<Statement>();
@@ -351,55 +356,58 @@ public class ArrayHandler {
             assert arr instanceof IASTArraySubscriptExpression;
             ResultExpression arg = ((ResultExpression) main
                     .dispatch(((IASTArraySubscriptExpression) arr)
-                            .getArgument()));
-            args.push(arg.expr);
+                            .getArgument())).switchToRValue(main, memoryHandler, structHandler, loc);
+            args.push(arg.lrVal.getValue());
             stmt.addAll(arg.stmt);
             decl.addAll(arg.decl);
             auxVars.putAll(arg.auxVars);
             arr = ((IASTArraySubscriptExpression) arr).getArrayExpression();
         } while (arr instanceof IASTArraySubscriptExpression);
 
-        Result idExprRes = main.dispatch(arr);
-        assert idExprRes instanceof ResultExpression;
-        ResultExpression rexId = ((ResultExpression) idExprRes);
-        Expression subExpr = rexId.expr;
+        ResultExpression rexId = ((ResultExpression) main.dispatch(arr))
+        		.switchToRValue(main, memoryHandler, structHandler, loc);
+        Expression subExpr = rexId.lrVal.getValue();
         assert rexId.cType != null;
-        assert rexId.cType instanceof CArray;
         CArray cType = (CArray) rexId.cType;
 
-        Expression expr;
+//        Expression expr;
+        LeftHandSide lhs = null;
         Expression[] idx = new Expression[args.size()];
         Collections.reverse(args);
         args.toArray(idx);
         if (subExpr instanceof IdentifierExpression) {
-            IdentifierExpression idEx = (IdentifierExpression) subExpr;
+//            IdentifierExpression idEx = (IdentifierExpression) subExpr;
+        	VariableLHS vlhs = new VariableLHS(loc, subExpr.getType(), 
+        			((IdentifierExpression) subExpr).getIdentifier());
             String cId = main.cHandler.getSymbolTable().getCID4BoogieID(
-                    idEx.getIdentifier(), loc);
+                    vlhs.getIdentifier(), loc);
             stmt.add(cType.getAccessAsserts(loc, idx));
-            expr = new ArrayAccessExpression(loc,
-                    new InferredType(main.cHandler.getSymbolTable()
-                            .getTypeOfVariable(cId, loc)), idEx, idx);
+//            expr = new ArrayAccessExpression(loc,
+//                    new InferredType(main.cHandler.getSymbolTable()
+//                            .getTypeOfVariable(cId, loc)), idEx, idx);
+           lhs = new ArrayLHS(loc, 
+        		   new InferredType(main.cHandler.getSymbolTable()
+        				   .getTypeOfVariable(cId, loc)),
+        				   vlhs,
+        				   idx);
         } else if (subExpr instanceof StructAccessExpression) {
             StructAccessExpression sae = (StructAccessExpression) subExpr;
-            StructLHS lhs = (StructLHS) BoogieASTUtil.getLHSforExpression(sae);
+            StructLHS slhs = (StructLHS) BoogieASTUtil.getLHSforExpression(sae);
             ASTType t = main.typeHandler.getTypeOfStructLHS(
-                    main.cHandler.getSymbolTable(), loc, lhs);
+                    main.cHandler.getSymbolTable(), loc, slhs);
             if (!(t instanceof ArrayType)) {
                 String msg = "Type mismatch - cannot take index on a not-array element!";
                 Dispatcher.error(loc, SyntaxErrorType.IncorrectSyntax, msg);
                 throw new IncorrectSyntaxException(msg);
             }
             stmt.add(cType.getAccessAsserts(loc, idx));
-            expr = new ArrayAccessExpression(loc, sae.getType(), sae, idx);
+//            expr = new ArrayAccessExpression(loc, sae.getType(), sae, idx);
+            lhs = new ArrayLHS(loc, sae.getType(), slhs, idx);
         } else {
             String msg = "Unexpected result type on left side of array!";
             Dispatcher.error(loc, SyntaxErrorType.UnsupportedSyntax, msg);
             throw new UnsupportedSyntaxException(msg);
         }
-        ResultExpression result = new ResultExpression(expr, auxVars);
-        result.cType = cType.getValueType();
-        result.stmt.addAll(stmt);
-        result.decl.addAll(decl);
-        return result;
+        return new ResultExpression(stmt, new LocalLValue(lhs), decl, auxVars, cType.getValueType());
     }
 }

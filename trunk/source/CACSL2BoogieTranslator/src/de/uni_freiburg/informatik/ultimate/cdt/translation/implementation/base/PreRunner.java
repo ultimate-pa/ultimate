@@ -71,7 +71,7 @@ public class PreRunner extends ASTVisitor {
      *         model.
      */
     public HashSet<IASTDeclaration> getVarsForHeap() {
-        return variablesOnHeap;
+    	return variablesOnHeap;
     }
 
     /**
@@ -80,30 +80,46 @@ public class PreRunner extends ASTVisitor {
      * @return true if the MM is required.
      */
     public boolean isMMRequired() {
-        return this.isMMRequired;
+    	return this.isMMRequired;
     }
 
     @Override
     public int visit(IASTExpression expression) {
- 
-        if (expression instanceof IASTUnaryExpression) {
-            ILocation loc = new CACSLLocation(expression);
-            IASTUnaryExpression ue = (IASTUnaryExpression) expression;
-            if (ue.getOperator() == IASTUnaryExpression.op_amper) {// every variable that is addressoffed has to be on the heap
-                IASTNode operand = ue.getOperand();
-                // add the operand to VariablesOnHeap!
-                String n;
-                if (operand instanceof IASTIdExpression) {
-                    n = ue.getOperand().getRawSignature();
-                } // TODO : add other cases! ie. structs, where the &-operator
-                  // is applied to one field, etc
-                else {
-                    String m = "PR: Unsupported operand in UnaryExpression!";
-                    Dispatcher.error(loc, SyntaxErrorType.UnsupportedSyntax, m);
-                    throw new UnsupportedSyntaxException(m);
+
+    	if (expression instanceof IASTUnaryExpression) {
+    		ILocation loc = new CACSLLocation(expression);
+    		IASTUnaryExpression ue = (IASTUnaryExpression) expression;
+    		if (ue.getOperator() == IASTUnaryExpression.op_amper) {// every variable that is addressoffed has to be on the heap
+    			IASTNode operand = ue.getOperand();
+    			// add the operand to VariablesOnHeap!
+    			String n = null;
+    			if (operand instanceof IASTIdExpression) {
+    				n = ue.getOperand().getRawSignature();
+    			} // TODO : add other cases! ie. structs, where the &-operator
+    			// is applied to one field, etc
+    			else if ((operand instanceof IASTUnaryExpression) 
+    					&& ((IASTUnaryExpression) operand).getOperand() instanceof IASTFieldReference
+    					) {
+    				if (((IASTFieldReference) ((IASTUnaryExpression) operand).getOperand()).isPointerDereference()) {
+    					n = null; //already on the heap (a pointer), do nothing
+    				} else {
+    					IASTExpression owner = ((IASTFieldReference) ((IASTUnaryExpression) operand).getOperand()).getFieldOwner();
+    					owner = removeBrackets(owner);
+    					if (owner instanceof IASTIdExpression) {
+    						n = owner.getRawSignature();
+    					} else if (owner instanceof IASTUnaryExpression 
+    							&& ((IASTUnaryExpression) owner).getOperator() == IASTUnaryExpression.op_star) { 
+    						n = null; // already on the heap
+    					} else {
+    						String m = "PR: Unsupported operand in UnaryExpression!";
+    						Dispatcher.error(loc, SyntaxErrorType.UnsupportedSyntax, m);
+    						throw new UnsupportedSyntaxException(m);
+    					}
+    				}
                 }
                 this.isMMRequired = true;
-                this.variablesOnHeap.add(get(n, loc));//TODO why put the location of expression, not operand, here?
+                if (n != null)
+                	this.variablesOnHeap.add(get(n, loc));//TODO why put the location of expression, not operand, here?
             } else if (!this.isMMRequired
                     && ue.getOperator() == IASTUnaryExpression.op_star) {
                 this.isMMRequired = true;
@@ -184,6 +200,15 @@ public class PreRunner extends ASTVisitor {
         return super.visit(statement);
     }
 
+    IASTExpression removeBrackets(IASTExpression exp) {
+    	IASTExpression result = exp;
+    	while (result instanceof IASTUnaryExpression 
+    			&& ((IASTUnaryExpression) result).getOperator() == IASTUnaryExpression.op_bracketedPrimary) {
+    		result = ((IASTUnaryExpression) result).getOperand();
+    	}
+    	return result;
+    }
+    
     /**
      * Getter to access the symbol table.
      * 

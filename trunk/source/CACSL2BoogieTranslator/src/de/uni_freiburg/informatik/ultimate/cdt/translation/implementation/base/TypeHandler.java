@@ -403,7 +403,8 @@ public class TypeHandler implements ITypeHandler {
             if (r instanceof ResultExpression) {
                 ResultExpression rex = (ResultExpression) r;
                 //assert rex.stmt == null || rex.stmt.isEmpty();
-                assert rex.expr == null;
+                assert rex.lrVal == null;
+//                assert rex.expr == null;
                 assert rex.declCTypes.size() == rex.decl.size();
                 int i = 0;
                 for (Declaration field : rex.decl) {

@@ -28,6 +28,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.IncorrectSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.Result;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ResultContract;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ResultExpression;
@@ -594,14 +595,15 @@ public class FunctionHandler {
 	 * 
 	 * @param main
 	 *            a reference to the main dispatcher.
-	 * @param mH
+	 * @param memoryHandler
 	 *            a reference to the memory Handler.
 	 * @param node
 	 *            the node to translate.
 	 * @return the translation result.
 	 */
 	public Result handleFunctionCallExpression(Dispatcher main,
-			MemoryHandler mH, IASTFunctionCallExpression node) {
+			MemoryHandler memoryHandler, StructHandler structHandler, 
+			IASTFunctionCallExpression node) {
 		CACSLLocation loc = new CACSLLocation(node, new Check(
 				Check.Spec.PRE_CONDITION));
 		String methodName = node.getFunctionNameExpression().getRawSignature();
@@ -609,20 +611,25 @@ public class FunctionHandler {
 			assert node.getArguments().length == 1;
 			Result sizeRes = main.dispatch(node.getArguments()[0]);
 			assert sizeRes instanceof ResultExpression;
-			ResultExpression sizeRex = (ResultExpression) sizeRes;
-			return mH.getMallocCall(main, this, sizeRex.expr, loc);
+			ResultExpression sizeRex = ((ResultExpression) sizeRes)
+					.switchToRValue(main, memoryHandler, structHandler, loc);
+//			return memoryHandler.getMallocCall(main, this, sizeRex.expr, loc);
+			return memoryHandler.getMallocCall(main, this, sizeRex.lrVal.getValue(), loc);
 		}
 		if (methodName.equals("free")) {
 			assert node.getArguments().length == 1;
 			Result pRes = main.dispatch(node.getArguments()[0]);
 			assert pRes instanceof ResultExpression;
-			ResultExpression pRex = (ResultExpression) pRes;
-			return mH.getFreeCall(main, this, pRex.expr, loc);
+			ResultExpression pRex = ((ResultExpression) pRes)
+					.switchToRValue(main, memoryHandler, structHandler, loc);
+//			return memoryHandler.getFreeCall(main, this, pRex.expr, loc);
+			return memoryHandler.getFreeCall(main, this, pRex.lrVal.getValue(), loc);
 		}
 
 		ArrayList<Statement> stmt = new ArrayList<Statement>();
 		ArrayList<Declaration> decl = new ArrayList<Declaration>();
-		Map<VariableDeclaration, CACSLLocation> auxVars = new HashMap<VariableDeclaration, CACSLLocation>();
+		Map<VariableDeclaration, CACSLLocation> auxVars = 
+				new HashMap<VariableDeclaration, CACSLLocation>();
 		Expression expr = null;
 
 		callGraph.get(currentProcedure.getIdentifier()).add(methodName);
@@ -640,27 +647,31 @@ public class FunctionHandler {
 			} // else: this means param of declaration is void and parameter
 				// list of call is empty! --> OK
 		}
-		int i = 0;
-		for (IASTInitializerClause inParam : node.getArguments()) {
-			ResultExpression in = ((ResultExpression) main.dispatch(inParam));
-			if (in.expr == null) {
+//		int i = 0;
+//		for (IASTInitializerClause inParam : node.getArguments()) {
+		for (int i = 0; i < node.getArguments().length; i++) {
+			IASTInitializerClause inParam = node.getArguments()[i];
+			ResultExpression in = ((ResultExpression) main.dispatch(inParam))
+					.switchToRValue(main, memoryHandler, structHandler, loc);
+			if (in.lrVal.getValue() == null) {
 				String msg = "Incorrect or invalid in-parameter! "
 						+ loc.toString();
 				Dispatcher.error(loc, SyntaxErrorType.IncorrectSyntax, msg);
 				throw new IncorrectSyntaxException(msg);
 			}
+			Expression arg = null;
 			if (procedures.containsKey(methodName)
 					&& procedures.get(methodName).getInParams() != null
 					&& i < procedures.get(methodName).getInParams().length) {
-				in.expr = main.typeHandler.convertArith2Boolean(loc,
+				arg = main.typeHandler.convertArith2Boolean(loc,
 						procedures.get(methodName).getInParams()[i].getType(),
-						in.expr);
+						in.lrVal.getValue());
 			}
-			args.add(in.expr);
+			args.add(arg);
 			stmt.addAll(in.stmt);
 			decl.addAll(in.decl);
 			auxVars.putAll(in.auxVars);
-			i++;
+//			i++;
 		}
 
 		Statement call;
@@ -708,7 +719,7 @@ public class FunctionHandler {
 		}
 		stmt.add(call);
 		assert (main.isAuxVarMapcomplete(decl, auxVars));
-		return new ResultExpression(stmt, expr, decl, auxVars);
+		return new ResultExpression(stmt, new RValue(expr), decl, auxVars);
 	}
 
 	/**
@@ -720,13 +731,13 @@ public class FunctionHandler {
 	 *            the node to translate.
 	 * @return the translation result.
 	 */
-	public Result handleReturnStatement(Dispatcher main,
-			IASTReturnStatement node) {
-		ArrayList<Statement> stmtList = new ArrayList<Statement>();
-		ArrayList<Declaration> dclList = new ArrayList<Declaration>();
+	public Result handleReturnStatement(Dispatcher main, MemoryHandler memoryHandler,
+			StructHandler structHandler, IASTReturnStatement node) {
+		ArrayList<Statement> stmt = new ArrayList<Statement>();
+		ArrayList<Declaration> decl = new ArrayList<Declaration>();
 		Map<VariableDeclaration, CACSLLocation> auxVars = new HashMap<VariableDeclaration, CACSLLocation>();
 		// The ReturnValue could be empty!
-		ILocation loc = new CACSLLocation(node);
+		CACSLLocation loc = new CACSLLocation(node);
 		VarList[] outParams = this.currentProcedure.getOutParams();
 		if (methodsCalledBeforeDeclared.contains(currentProcedure
 				.getIdentifier()) && currentProcedureIsVoid) {
@@ -734,13 +745,13 @@ public class FunctionHandler {
 			String id = outParams[0].getIdentifiers()[0];
 			VariableLHS lhs = new VariableLHS(loc, id);
 			Statement havoc = new HavocStatement(loc, new VariableLHS[] { lhs });
-			stmtList.add(havoc);
+			stmt.add(havoc);
 		} else if (node.getReturnValue() != null) {
-			ResultExpression exprResult = (ResultExpression) main.dispatch(node
-					.getReturnValue());
-			Expression rhs = (Expression) exprResult.expr;
-			stmtList.addAll(exprResult.stmt);
-			dclList.addAll(exprResult.decl);
+			ResultExpression exprResult = ((ResultExpression) main.dispatch(node
+					.getReturnValue())).switchToRValue(main, memoryHandler, structHandler, loc);
+			Expression rhs = (Expression) exprResult.lrVal.getValue();
+			stmt.addAll(exprResult.stmt);
+			decl.addAll(exprResult.decl);
 			auxVars.putAll(exprResult.auxVars);
 			if (outParams.length == 0) {
 				// void method which is returning something! We remove the
@@ -756,15 +767,15 @@ public class FunctionHandler {
 				VariableLHS[] lhs = new VariableLHS[] { new VariableLHS(loc, id) };
 				rhs = main.typeHandler.convertArith2Boolean(loc,
 						outParams[0].getType(), rhs);
-				stmtList.add(new AssignmentStatement(loc, lhs,
+				stmt.add(new AssignmentStatement(loc, lhs,
 						new Expression[] { rhs }));
 			}
 		}
-		stmtList.addAll(Dispatcher.createHavocsForAuxVars(auxVars));
-		stmtList.add(new ReturnStatement(loc));
+		stmt.addAll(Dispatcher.createHavocsForAuxVars(auxVars));
+		stmt.add(new ReturnStatement(loc));
 		Map<VariableDeclaration, CACSLLocation> emptyAuxVars = new HashMap<VariableDeclaration, CACSLLocation>(
 				0);
-		return new ResultExpression(stmtList, null, dclList, emptyAuxVars);
+		return new ResultExpression(stmt, null, decl, emptyAuxVars);
 	}
 
 	/**

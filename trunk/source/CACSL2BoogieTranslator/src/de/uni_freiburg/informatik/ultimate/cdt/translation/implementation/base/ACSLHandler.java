@@ -6,21 +6,23 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Stack;
 
 import org.eclipse.cdt.core.dom.ast.IASTFunctionDefinition;
 import org.eclipse.cdt.core.dom.ast.IASTNode;
 
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CACSLLocation;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.MemoryHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.InferredType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.SymbolTableValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.IncorrectSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.TypeErrorException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.HeapLValue;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LRValue;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LocalLValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.Result;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ResultContract;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ResultExpressionPointerDereference;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.BoogieASTUtil;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
@@ -293,7 +295,7 @@ public class ACSLHandler implements IACSLHandler {
             Dispatcher main,
             de.uni_freiburg.informatik.ultimate.model.acsl.ast.IdentifierExpression node) {
         String id = SFO.EMPTY;
-        ILocation loc = new CACSLLocation(node);
+        CACSLLocation loc = new CACSLLocation(node);
         switch (specType) {
             case ASSIGNS:
                 // modifies case in boogie, should be always global!
@@ -337,6 +339,8 @@ public class ACSLHandler implements IACSLHandler {
                 Dispatcher.error(loc, SyntaxErrorType.TypeError, msg);
                 throw new TypeErrorException(msg);
         }
+        
+        
         IType type = new InferredType(InferredType.Type.Unknown);
         String cId = main.cHandler.getSymbolTable()
                     .getCID4BoogieID(id, loc);
@@ -357,27 +361,17 @@ public class ACSLHandler implements IACSLHandler {
                 type = new InferredType(astt);
             }
         }
-        Result result = new Result(new IdentifierExpression(loc, type, id));
         
-        //begin alex
-        MainDispatcher mainDis = (MainDispatcher) main;
-        if (mainDis.cHandler.getSymbolTable().containsCSymbol(cId)) {
-        	VariableDeclaration vd = 
-        			(VariableDeclaration) mainDis.cHandler.getSymbolTable().get(cId, null).getDecl();
-        	if (mainDis.getBoogieDeclarationsOfVariablesOnHeapContains(vd)) {
-        		assert vd.getVariables().length == 1;//should be the case for now
-        		ResultExpressionPointerDereference repd = ((CHandler) mainDis.cHandler).memoryHandler.getReadCall(
-        				main, new InferredType(vd.getVariables()[0].getType()), new IdentifierExpression(loc, type, id));
-
-        		assert false : "this does not work yet, because the ACSLHandler does not seem to consider decl, stmt, .. of a Result";
-        		repd.node = repd.expr;
-        		return repd;
-        	}
+        LRValue lrVal;
+        if (((CHandler) main.cHandler).isHeapVar(main, loc, cId)) {
+            IdentifierExpression idExp = new IdentifierExpression(loc, type, id);
+        	lrVal = new HeapLValue(idExp);
+        } else {
+            VariableLHS idLhs = new VariableLHS(loc, type, id);
+        	lrVal = new LocalLValue(idLhs);
         }
-        //end alex
         
-//        return new Result(new IdentifierExpression(loc, type, id));
-        return result;
+        return new Result(lrVal.getValue());
     }
 
     @Override

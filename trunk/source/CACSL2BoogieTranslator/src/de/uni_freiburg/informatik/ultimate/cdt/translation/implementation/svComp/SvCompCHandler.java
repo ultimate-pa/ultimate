@@ -36,6 +36,8 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.SymbolTableValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.IncorrectSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LRValue;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.Result;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ResultExpression;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ResultExpressionListRec;
@@ -148,20 +150,20 @@ public class SvCompCHandler extends CHandler {
         ArrayList<Declaration> decl = new ArrayList<Declaration>();
 		Map<VariableDeclaration, CACSLLocation> auxVars = 
 				new HashMap<VariableDeclaration, CACSLLocation>();
-        Expression expr = null;
+        LRValue resultValue = null;
 
         if (methodName.equals(ASSUME_STRING)) {
             ArrayList<Expression> args = new ArrayList<Expression>();
             for (IASTInitializerClause inParam : node.getArguments()) {
                 ResultExpression in = ((ResultExpression) main
-                        .dispatch(inParam));
-                if (in.expr == null) {
+                        .dispatch(inParam)).switchToRValue(main, memoryHandler, structHandler, loc);
+                if (in.lrVal.getValue() == null) {
                     String msg = "Incorrect or invalid in-parameter! "
                             + loc.toString();
                     Dispatcher.error(loc, SyntaxErrorType.IncorrectSyntax, msg);
                     throw new IncorrectSyntaxException(msg);
                 }
-                args.add(in.expr);
+                args.add(in.lrVal.getValue());
                 stmt.addAll(in.stmt);
                 decl.addAll(in.decl);
                 auxVars.putAll(in.auxVars);
@@ -172,7 +174,7 @@ public class SvCompCHandler extends CHandler {
     						new InferredType(Type.Boolean), SFO.BOOL),
     						args.get(0))));
             assert (main.isAuxVarMapcomplete(decl, auxVars));
-            return new ResultExpression(stmt, expr, decl, auxVars);
+            return new ResultExpression(stmt, resultValue, decl, auxVars);
         }
         for (String t : NONDET_TYPE_STRINGS)
             if (methodName.equals(NONDET_STRING + t)) {
@@ -186,9 +188,9 @@ public class SvCompCHandler extends CHandler {
                 VariableDeclaration tVarDecl = SFO.getTempVarVariableDeclaration(tmpName, type, loc);
                 decl.add(tVarDecl);
                 auxVars.put(tVarDecl, loc);
-                expr = new IdentifierExpression(loc, type, tmpName );
+                resultValue = new RValue(new IdentifierExpression(loc, type, tmpName));
                 assert (main.isAuxVarMapcomplete(decl, auxVars));
-                return new ResultExpression(stmt, expr, decl, auxVars);
+                return new ResultExpression(stmt, resultValue, decl, auxVars);
             }
         if (methodName.equals("printf")) {
             // skip if parent of parent is CompoundStatement
@@ -205,9 +207,9 @@ public class SvCompCHandler extends CHandler {
             auxVars.put(tVarDecl, loc);
             decl.add(tVarDecl);
             stmt.add(new HavocStatement(loc, new VariableLHS[] { new VariableLHS(loc, tId)}));
-            expr = new IdentifierExpression(loc, type, tId);
+            resultValue = new RValue(new IdentifierExpression(loc, type, tId));
             assert (main.isAuxVarMapcomplete(decl, auxVars));
-            return new ResultExpression(stmt, expr, decl, auxVars);
+            return new ResultExpression(stmt, resultValue, decl, auxVars);
         }
         return super.visit(main, node);
     }
@@ -274,7 +276,7 @@ public class SvCompCHandler extends CHandler {
             } else if (cDecl instanceof IASTArrayDeclarator) {
                 // extracted for readability only ... could be in lined again
                 return arrayHandler
-                        .handleArrayDeclaration(main, structHandler, node,
+                        .handleArrayDeclaration(main, memoryHandler, structHandler, node,
                                 super.globalVariables,
                                 super.globalVariablesInits);
             }
@@ -393,11 +395,12 @@ public class SvCompCHandler extends CHandler {
                             }
                             assert cvar instanceof CStruct;
                             ResultExpression init = structHandler
-                                    .handleStructInit(main, arrayHandler, loc,
+                                    .handleStructInit(main, memoryHandler, structHandler, arrayHandler, loc,
                                             (StructType) type, (CStruct) cvar,
                                             lhs, relr,
-                                            new ArrayList<Integer>(), -1);
-                            assert init.expr == null && init.decl.isEmpty();
+                                            new ArrayList<Integer>(), -1)
+                                            .switchToRValue(main, memoryHandler, structHandler, loc);
+                            assert init.lrVal.getValue() == null && init.decl.isEmpty();
                             if (resType.cvar.isStatic() && !isGlobal) {
                                 staticVarStorage.stmt.addAll(init.stmt);
                             } else {
@@ -406,10 +409,10 @@ public class SvCompCHandler extends CHandler {
                         }
                     } else { // it should be a "normal variable"
                         ResultExpression rExpr = ((ResultExpression) (main
-                                .dispatch(d.getInitializer())));
-                        rExpr.expr = main.typeHandler.convertArith2Boolean(
-                                loc, type, rExpr.expr);
-                        Expression[] rhs = new Expression[] { rExpr.expr };
+                                .dispatch(d.getInitializer()))).switchToRValue(main, memoryHandler, structHandler, loc);
+                        rExpr.lrVal = new RValue(main.typeHandler.convertArith2Boolean(
+                                loc, type, rExpr.lrVal.getValue()));
+                        Expression[] rhs = new Expression[] { rExpr.lrVal.getValue() };
                         VariableLHS[] lhs = new VariableLHS[] { new VariableLHS(
                                 loc, bId) };
                         AssignmentStatement as = new AssignmentStatement(loc,
@@ -474,10 +477,10 @@ public class SvCompCHandler extends CHandler {
                 for (int i = 1; i < chars.length; i++) {
                     someIntValue += Integer.valueOf(chars[i]);
                 }
-                return new ResultExpression(new IntegerLiteral(loc,
-                        new InferredType(InferredType.Type.Integer),
-                        String.valueOf(someIntValue)),
-                        new HashMap<VariableDeclaration, CACSLLocation>(0));
+                return new ResultExpression(new RValue(new IntegerLiteral(loc,
+                		new InferredType(InferredType.Type.Integer),
+                		String.valueOf(someIntValue))),
+                		new HashMap<VariableDeclaration, CACSLLocation>(0));
         }
         return super.visit(main, node);
     }

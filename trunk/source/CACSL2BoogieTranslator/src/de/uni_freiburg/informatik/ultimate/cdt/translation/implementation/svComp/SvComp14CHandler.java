@@ -20,6 +20,8 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.C
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.InferredType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.InferredType.Type;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.IncorrectSyntaxException;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LRValue;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.Result;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ResultExpression;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ResultSkip;
@@ -125,20 +127,20 @@ public class SvComp14CHandler extends CHandler {
         ArrayList<Declaration> decl = new ArrayList<Declaration>();
 		Map<VariableDeclaration, CACSLLocation> auxVars = 
 				new HashMap<VariableDeclaration, CACSLLocation>();
-        Expression expr = null;
+        LRValue returnValue = null;
 
         if (methodName.equals(ASSUME_STRING)) {
             ArrayList<Expression> args = new ArrayList<Expression>();
             for (IASTInitializerClause inParam : node.getArguments()) {
                 ResultExpression in = ((ResultExpression) main
-                        .dispatch(inParam));
-                if (in.expr == null) {
+                        .dispatch(inParam)).switchToRValue(main, memoryHandler, structHandler, loc);
+                if (in.lrVal.getValue() == null) {
                     String msg = "Incorrect or invalid in-parameter! "
                             + loc.toString();
                     Dispatcher.error(loc, SyntaxErrorType.IncorrectSyntax, msg);
                     throw new IncorrectSyntaxException(msg);
                 }
-                args.add(in.expr);
+                args.add(in.lrVal.getValue());
                 stmt.addAll(in.stmt);
                 decl.addAll(in.decl);
                 auxVars.putAll(in.auxVars);
@@ -149,7 +151,7 @@ public class SvComp14CHandler extends CHandler {
     						new InferredType(Type.Boolean), SFO.BOOL),
     						args.get(0))));
             assert (main.isAuxVarMapcomplete(decl, auxVars));
-            return new ResultExpression(stmt, expr, decl, auxVars);
+            return new ResultExpression(stmt, returnValue, decl, auxVars);
         }
         for (String t : NONDET_TYPE_STRINGS)
             if (methodName.equals(NONDET_STRING + t)) {
@@ -163,9 +165,9 @@ public class SvComp14CHandler extends CHandler {
                 VariableDeclaration tVarDecl = SFO.getTempVarVariableDeclaration(tmpName, type, loc);
                 decl.add(tVarDecl);
                 auxVars.put(tVarDecl, loc);
-                expr = new IdentifierExpression(loc, type, tmpName );
+                returnValue = new RValue(new IdentifierExpression(loc, type, tmpName));
                 assert (main.isAuxVarMapcomplete(decl, auxVars));
-                return new ResultExpression(stmt, expr, decl, auxVars);
+                return new ResultExpression(stmt, returnValue, decl, auxVars);
             }
         if (methodName.equals("printf")) {
             // skip if parent of parent is CompoundStatement
@@ -182,9 +184,9 @@ public class SvComp14CHandler extends CHandler {
             auxVars.put(tVarDecl, loc);
             decl.add(tVarDecl);
             stmt.add(new HavocStatement(loc, new VariableLHS[] { new VariableLHS(loc, tId)}));
-            expr = new IdentifierExpression(loc, type, tId);
+            returnValue = new RValue(new IdentifierExpression(loc, type, tId));
             assert (main.isAuxVarMapcomplete(decl, auxVars));
-            return new ResultExpression(stmt, expr, decl, auxVars);
+            return new ResultExpression(stmt, returnValue, decl, auxVars);
         }
         return super.visit(main, node);
     }

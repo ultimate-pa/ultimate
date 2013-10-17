@@ -20,6 +20,8 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CStruct;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LRValue;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ResultExpression;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.BoogieASTUtil;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
@@ -371,7 +373,7 @@ public class PostProcessor {
 				((NamedType) at).getName().equals(SFO.POINTER)){
 			assert lCvar instanceof CPointer;
 			//result is pointer to 0
-			Expression nullPointer = new IdentifierExpression(loc, at.getBoogieType(), SFO.NULL);
+			LRValue nullPointer = new RValue(new IdentifierExpression(loc, at.getBoogieType(), SFO.NULL));
 			return new ResultExpression(nullPointer, auxVars);
 		}
 		else {

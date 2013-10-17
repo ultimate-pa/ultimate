@@ -13,7 +13,6 @@ import org.eclipse.cdt.core.dom.ast.IASTExpression;
 import org.eclipse.cdt.core.dom.ast.IASTLiteralExpression;
 
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CACSLLocation;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.InferredType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.InferredType.Type;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CArray;
@@ -24,9 +23,9 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.IncorrectSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.HeapLValue;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ResultExpression;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ResultExpressionPointerDereference;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ResultExpressionPointerDereferenceBO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ResultTypes;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.BoogieASTUtil;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
@@ -63,6 +62,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.RequiresSpecificatio
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Specification;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StructAccessExpression;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StructConstructor;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StructType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.TypeDeclaration;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.UnaryExpression;
@@ -662,7 +662,7 @@ public class MemoryHandler {
      *            a reference to the main dispatcher.
      * @param fh
      *            a reference to the FunctionHandler - required to add
-     *            informations to the call graph.
+     *            information to the call graph.
      * @param size
      *            the expression referring to size of the memory to be
      *            allocated.
@@ -706,7 +706,7 @@ public class MemoryHandler {
             fh.getCallGraph().get(fh.getCurrentProcedureID()).add(SFO.MALLOC);
         }
 		assert (main.isAuxVarMapcomplete(decl, auxVars));
-        return new ResultExpression(stmt, e, decl, auxVars);
+        return new ResultExpression(stmt, new HeapLValue(e), decl, auxVars);
     }
 
     /**
@@ -737,7 +737,8 @@ public class MemoryHandler {
      */
     public Expression getSizeOf(Dispatcher main, IASTExpression ex) {
         ResultExpression rex = (ResultExpression) main.dispatch(ex);
-        Expression e = rex.expr;
+        Expression e = rex.lrVal.getValue();
+//        Expression e = rex.expr;
         ILocation loc = e.getLocation();
         if (e instanceof IdentifierExpression
                 || e instanceof StructAccessExpression
@@ -882,48 +883,20 @@ public class MemoryHandler {
     
     /**
      * Construct a pointer whose address is (addressBase,addressOffset).
-     * The result has expression auxPointer and the following Boogie code.
-     * var auxPointer:$Pointer$
-     * assume auxPointer!base == addressBase 
-     * assume auxPointer!offset == addressOffset 
+     * The result is the boogie expression <code>{ base : addressBasse, offset : addressOffset}</code>. 
      */
-    public ResultExpression auxilliaryPointer(Dispatcher main, CACSLLocation loc,
+    public ResultExpression auxiliaryPointer(Dispatcher main, CACSLLocation loc,
     		Expression addressBase, Expression addressOffset) {
     	assert addressBase != null : "no base address";
+		if (addressOffset == null)
+			addressOffset = new IntegerLiteral(loc, new InferredType(Type.Integer), "0");
     	
-		ArrayList<Statement> stmt = new ArrayList<Statement>();
-		ArrayList<Declaration> decl = new ArrayList<Declaration>();
 		Map<VariableDeclaration, CACSLLocation> auxVars = 
 				new HashMap<VariableDeclaration, CACSLLocation>();
-		String auxPointerId = main.nameHandler.getTempVarUID(SFO.AUXVAR.ARROW);
-		VariableDeclaration vd = SFO.getTempVarVariableDeclaration(
-				auxPointerId, new InferredType(Type.Pointer), loc);
-		decl.add(vd);
-		auxVars.put(vd, loc);
-		IdentifierExpression auxPointer = new IdentifierExpression(loc, 
-				new InferredType(Type.Pointer), auxPointerId);
-		AssumeStatement baseEquality;
-		{
-		    StructAccessExpression lhs = new StructAccessExpression(loc, 
-		    		new InferredType(Type.Integer), auxPointer, SFO.POINTER_BASE);
-		    Expression rhs = addressBase;
-		    baseEquality = new AssumeStatement(loc, new BinaryExpression(loc, 
-		    		new InferredType(Type.Boolean), Operator.COMPEQ, lhs, rhs));
-		}
-		stmt.add(baseEquality);
-		AssumeStatement offsetEquality;
-		{
-			StructAccessExpression lhs = new StructAccessExpression(loc, 
-					new InferredType(Type.Integer), auxPointer, SFO.POINTER_OFFSET);
-			Expression rhs = addressOffset;
-			if (rhs == null) {
-				rhs = new IntegerLiteral(loc, new InferredType(Type.Integer), "0");
-			}
-			offsetEquality = new AssumeStatement(loc, new BinaryExpression(loc, 
-					new InferredType(Type.Boolean), Operator.COMPEQ, lhs, rhs));
-		}
-		stmt.add(offsetEquality);
-		return new ResultExpression(stmt, auxPointer, decl, auxVars);
+		Expression auxPointer = new StructConstructor(loc, 
+				new String[] { SFO.POINTER_BASE,  SFO.POINTER_OFFSET },
+				new Expression[] { addressBase, addressOffset });
+		return new ResultExpression(new RValue(auxPointer), auxVars);
     }
     
 
@@ -935,14 +908,16 @@ public class MemoryHandler {
      * @param main
      *            a reference to the main dispatcher.
      * @param it
-     *            the type to read.
+     *            the Heap-type to read.
      * @param tPointer
      *            the address to read from.
+     * @param pointerCType
+     *            the CType of the pointer in tPointer
      * @return all declarations and statements required to perform the read,
      *         plus an identifierExpression holding the read value.
      */
-    public ResultExpressionPointerDereference getReadCall(final Dispatcher main,
-            final InferredType it, final Expression tPointer) {
+    public ResultExpression getReadCall(final Dispatcher main,
+            final InferredType it, final Expression tPointer, CType pointerCType) {
         assert tPointer.getType() instanceof InferredType
                 && ((InferredType) tPointer.getType()).getType() == Type.Pointer;
         // assert #valid[tPointer!base];
@@ -984,45 +959,46 @@ public class MemoryHandler {
         CallStatement call = new CallStatement(loc, false, lhs, "read~" + t,
                 new Expression[] { tPointer });
         stmt.add(call);
+        CType resultCType = ((CPointer) pointerCType).pointsToType;
 		assert (main.isAuxVarMapcomplete(decl, auxVars));
-        return new ResultExpressionPointerDereference(stmt, 
-        		new IdentifierExpression(loc, it, tmpId), decl, auxVars, 
-        		tPointer, call, tVarDecl);
+        return new ResultExpression(stmt, 
+        		new RValue(new IdentifierExpression(loc, it, tmpId)),
+        		decl, auxVars, resultCType);
     }
     
-    /**
-     * Additional getReadCall method for the special case where the pointer is
-     * given by base and offset.
-     */
-    public ResultExpressionPointerDereference getReadCall(final Dispatcher main,
-            final InferredType it, CACSLLocation loc, final Expression pointerBase, 
-            final Expression pointerOffset) {
-    	ResultExpression auxPointer = auxilliaryPointer(main, loc, pointerBase, pointerOffset);
-    	ResultExpressionPointerDereference call = getReadCall(main, it, auxPointer.expr);
-        ArrayList<Statement> stmt = new ArrayList<Statement>();
-        ArrayList<Declaration> decl = new ArrayList<Declaration>();
-		Map<VariableDeclaration, CACSLLocation> auxVars = 
-				new HashMap<VariableDeclaration, CACSLLocation>();
-		stmt.addAll(auxPointer.stmt);
-		stmt.addAll(call.stmt);
-		decl.addAll(auxPointer.decl);
-		decl.addAll(call.decl);
-		auxVars.putAll(auxPointer.auxVars);
-		stmt.addAll(Dispatcher.createHavocsForAuxVars(auxPointer.auxVars));
-		auxVars.putAll(call.auxVars);
-		assert auxPointer.stmt.size() == 2;
-		AssumeStatement baseEquality = (AssumeStatement) auxPointer.stmt.get(0);
-		AssumeStatement offsetEquality = (AssumeStatement) auxPointer.stmt.get(1);
-		assert auxPointer.decl.size() == 1;
-		VariableDeclaration auxPointerDecl = (VariableDeclaration) auxPointer.decl.get(0);
-		ResultExpressionPointerDereferenceBO result = 
-				new ResultExpressionPointerDereferenceBO(stmt, call.expr, decl,
-				auxVars, auxPointer.expr, call.m_ReadCall, call.m_CallResult, 
-				auxPointerDecl,	pointerBase, pointerOffset, baseEquality, offsetEquality);
-		return result;
-    	
-    }
-    
+//    /**
+//     * Additional getReadCall method for the special case where the pointer is
+//     * given by base and offset.
+//     */
+//    public ResultExpressionPointerDereference getReadCall(final Dispatcher main,
+//            final InferredType it, CACSLLocation loc, final Expression pointerBase, 
+//            final Expression pointerOffset) {
+//    	ResultExpression auxPointer = auxilliaryPointer(main, loc, pointerBase, pointerOffset);
+//    	ResultExpressionPointerDereference call = getReadCall(main, it, auxPointer.expr);
+//        ArrayList<Statement> stmt = new ArrayList<Statement>();
+//        ArrayList<Declaration> decl = new ArrayList<Declaration>();
+//		Map<VariableDeclaration, CACSLLocation> auxVars = 
+//				new HashMap<VariableDeclaration, CACSLLocation>();
+//		stmt.addAll(auxPointer.stmt);
+//		stmt.addAll(call.stmt);
+//		decl.addAll(auxPointer.decl);
+//		decl.addAll(call.decl);
+//		auxVars.putAll(auxPointer.auxVars);
+//		stmt.addAll(Dispatcher.createHavocsForAuxVars(auxPointer.auxVars));
+//		auxVars.putAll(call.auxVars);
+//		assert auxPointer.stmt.size() == 2;
+//		AssumeStatement baseEquality = (AssumeStatement) auxPointer.stmt.get(0);
+//		AssumeStatement offsetEquality = (AssumeStatement) auxPointer.stmt.get(1);
+//		assert auxPointer.decl.size() == 1;
+//		VariableDeclaration auxPointerDecl = (VariableDeclaration) auxPointer.decl.get(0);
+//		ResultExpressionPointerDereferenceBO result = 
+//				new ResultExpressionPointerDereferenceBO(stmt, call.expr, decl,
+//				auxVars, auxPointer.expr, call.m_ReadCall, call.m_CallResult, 
+//				auxPointerDecl,	pointerBase, pointerOffset, baseEquality, offsetEquality);
+//		return result;
+//    	
+//    }
+//    
     
 
     /**

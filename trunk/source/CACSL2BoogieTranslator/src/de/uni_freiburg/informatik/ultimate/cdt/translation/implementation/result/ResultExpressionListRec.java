@@ -8,6 +8,10 @@ import java.util.HashMap;
 import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CACSLLocation;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.MemoryHandler;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.StructHandler;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
@@ -51,15 +55,15 @@ public class ResultExpressionListRec extends ResultExpression {
      * 
      * @param stmt
      *            the statement list to hold.
-     * @param expr
+     * @param lrVal
      *            the expression list to hold.
      * @param decl
      *            the declaration list to hold.
      */
-    public ResultExpressionListRec(ArrayList<Statement> stmt, Expression expr,
+    public ResultExpressionListRec(ArrayList<Statement> stmt, LRValue lrVal,
             ArrayList<Declaration> decl, 
             Map<VariableDeclaration, CACSLLocation> auxVars) {
-        this(null, stmt, expr, decl, auxVars);
+        this(null, stmt, lrVal, decl, auxVars);
     }
 
     /**
@@ -69,16 +73,33 @@ public class ResultExpressionListRec extends ResultExpression {
      *            the name of the field e.g. in designated initializers.
      * @param stmt
      *            the statement list to hold.
-     * @param expr
+     * @param lrVal
      *            the expression list to hold.
      * @param decl
      *            the declaration list to hold.
      */
     public ResultExpressionListRec(String field, ArrayList<Statement> stmt,
-            Expression expr, ArrayList<Declaration> decl, 
+            LRValue lrVal, ArrayList<Declaration> decl, 
             Map<VariableDeclaration, CACSLLocation> auxVars) {
-        super(stmt, expr, decl, auxVars);
+        super(stmt, lrVal, decl, auxVars);
         this.field = field;
-        this.list = null;
+        this.list = new ArrayList<ResultExpressionListRec>();
+    }
+    
+    
+    @Override
+    public ResultExpressionListRec switchToRValue(Dispatcher main,
+    		MemoryHandler memoryHandler, StructHandler structHandler,
+    		CACSLLocation loc) {
+    	ResultExpression re = super.switchToRValue(main, memoryHandler, structHandler, loc);
+    	
+    	ArrayList<ResultExpressionListRec> newList = new ArrayList<ResultExpressionListRec>();
+    	if (list != null) {
+    		for (ResultExpressionListRec innerRerl : this.list) 
+    			newList.add(innerRerl.switchToRValue(main, memoryHandler, structHandler, loc));
+    	}
+    	ResultExpressionListRec rerl = new ResultExpressionListRec(this.field, re.stmt, re.lrVal, re.decl, re.auxVars);
+    	rerl.list.addAll(newList);
+    	return rerl;
     }
 }

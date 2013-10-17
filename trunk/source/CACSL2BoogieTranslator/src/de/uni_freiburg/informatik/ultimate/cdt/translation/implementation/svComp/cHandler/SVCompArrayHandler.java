@@ -6,6 +6,7 @@ import org.eclipse.cdt.core.dom.ast.IASTArraySubscriptExpression;
 
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CACSLLocation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.ArrayHandler;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.MemoryHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.StructHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CArray;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.Result;
@@ -23,19 +24,19 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
  */
 public class SVCompArrayHandler extends ArrayHandler {
     @Override
-    public ResultExpression handleArrayInit(Dispatcher main,
+    public ResultExpression handleArrayInit(Dispatcher main, MemoryHandler memoryHandler,
             StructHandler structHandler, CACSLLocation loc, ArrayType at,
             CArray cvar, LeftHandSide lhs, ResultExpressionListRec relr,
             int[] indices, int pos) {
-        return filterAsserts(super.handleArrayInit(main, structHandler, loc,
+        return filterAsserts(super.handleArrayInit(main, memoryHandler, structHandler, loc,
                 at, cvar, lhs, relr, indices, pos));
     }
 
     @Override
-    public Result handleArraySubscriptionExpression(Dispatcher main,
-            IASTArraySubscriptExpression node) {
+    public Result handleArraySubscriptionExpression(Dispatcher main, MemoryHandler memoryHandler,
+    		StructHandler structHandler, IASTArraySubscriptExpression node) {
         return filterAsserts(super
-                .handleArraySubscriptionExpression(main, node));
+                .handleArraySubscriptionExpression(main, memoryHandler, structHandler, node));
     }
 
     /**
