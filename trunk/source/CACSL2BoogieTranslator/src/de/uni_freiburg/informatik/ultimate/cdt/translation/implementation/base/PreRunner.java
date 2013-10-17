@@ -98,7 +98,7 @@ public class PreRunner extends ASTVisitor {
                 } // TODO : add other cases! ie. structs, where the &-operator
                   // is applied to one field, etc
                 else {
-                    String m = "PR: Unsupported operand in UnarayExpression!";
+                    String m = "PR: Unsupported operand in UnaryExpression!";
                     Dispatcher.error(loc, SyntaxErrorType.UnsupportedSyntax, m);
                     throw new UnsupportedSyntaxException(m);
                 }
