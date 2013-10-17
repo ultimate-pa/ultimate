@@ -456,6 +456,7 @@ keyword ::= KEYWORD | keywordAttr | keywordTheoryLogic | keywordOption |
 
 errorResponse ::= UNSUPPORTED {: if (true) throw new UnsupportedOperationException(); :}
                 | LPAR ERRORSYM STRING:err RPAR {: if (true) throw new SMTLIBException(err); :}
+                | EOF {: if (true) throw new SMTLIBException("EOF"); :}
                 ;
 
 genResponse ::= SUCCESS
