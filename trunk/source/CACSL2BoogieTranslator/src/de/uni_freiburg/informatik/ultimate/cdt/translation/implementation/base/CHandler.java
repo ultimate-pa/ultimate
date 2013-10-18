@@ -73,6 +73,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.c
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.InferredType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.InferredType.Type;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.SymbolTableValue;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CArray;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CEnum;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CNamed;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
@@ -133,6 +134,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.RealLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Specification;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StringLiteral;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StructConstructor;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StructType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Unit;
@@ -155,588 +157,621 @@ import de.uni_freiburg.informatik.ultimate.result.SyntaxErrorResult.SyntaxErrorT
  * @date 01.02.2012
  */
 public class CHandler implements ICHandler {
-    /**
-     * Array handler.
-     */
-    protected ArrayHandler arrayHandler;
-    /**
-     * Function handler.
-     */
-    protected FunctionHandler functionHandler;
-    /**
-     * Struct handler.
-     */
-    protected StructHandler structHandler;
-    /**
-     * Memory handler.
-     */
-//    protected MemoryHandler memoryHandler;
-    public MemoryHandler memoryHandler; //alex..
-    /**
-     * Post processor.
-     */
-    protected PostProcessor postProcessor;
-    /**
-     * Holds the next ACSL node in the decorator tree.
-     */
-    private NextACSL acsl;
-    /**
-     * Contract for next procedure
-     */
-    protected List<ACSLNode> contract;
-    /**
-     * The symbol table for the translation.
-     */
-    protected SymbolTable symbolTable;
-    /**
-     * Names of all bitwise operation that occurred in the program.
-     */
-    protected HashMap<String, FunctionDeclaration> functions;
-    /**
-     * A set holding declarations of global variables required for variables,
-     * declared locally in C but required to be global in Boogie. e.g. constants
-     * for enums or local static variables. Each declaration can have a set of
-     * initialization statements.
-     */
-    protected HashMap<Declaration, CType> globalVariables;
-    /**
-     * A list of C variables for each declaration in
-     * <code>globalVariables</code>.
-     */
-    protected HashMap<Declaration, ArrayList<Statement>> globalVariablesInits;
-    /**
-     * A collection of axioms generated during translation process.
-     */
-    protected HashSet<Axiom> axioms;
+	/**
+	 * Array handler.
+	 */
+	protected ArrayHandler arrayHandler;
+	/**
+	 * Function handler.
+	 */
+	protected FunctionHandler functionHandler;
+	/**
+	 * Struct handler.
+	 */
+	protected StructHandler structHandler;
+	/**
+	 * Memory handler.
+	 */
+	//    protected MemoryHandler memoryHandler;
+	public MemoryHandler memoryHandler; //alex..
+	/**
+	 * Post processor.
+	 */
+	protected PostProcessor postProcessor;
+	/**
+	 * Holds the next ACSL node in the decorator tree.
+	 */
+	private NextACSL acsl;
+	/**
+	 * Contract for next procedure
+	 */
+	protected List<ACSLNode> contract;
+	/**
+	 * The symbol table for the translation.
+	 */
+	protected SymbolTable symbolTable;
+	/**
+	 * Names of all bitwise operation that occurred in the program.
+	 */
+	protected HashMap<String, FunctionDeclaration> functions;
+	/**
+	 * A set holding declarations of global variables required for variables,
+	 * declared locally in C but required to be global in Boogie. e.g. constants
+	 * for enums or local static variables. Each declaration can have a set of
+	 * initialization statements.
+	 */
+	protected HashMap<Declaration, CType> globalVariables;
+	/**
+	 * A list of C variables for each declaration in
+	 * <code>globalVariables</code>.
+	 */
+	protected HashMap<Declaration, ArrayList<Statement>> globalVariablesInits;
+	/**
+	 * A collection of axioms generated during translation process.
+	 */
+	protected HashSet<Axiom> axioms;
 
-    /**
-     * Translation from Boogie to C for traces and expressions.
-     */
-    protected final Backtranslator backtranslator;
-    
-    /**
-     * If set to true and the program contains an error label ULTIMATE shows
-     * a warning that suggests a different translation mode.
-     */
-    protected final boolean m_ErrorLabelWarning;
+	/**
+	 * Translation from Boogie to C for traces and expressions.
+	 */
+	protected final Backtranslator backtranslator;
 
-    /**
-     * Constructor.
-     * 
-     * @param main
-     *            a reference to the main dispatcher.
-     * @param backtranslator
-     *            a reference to the Backtranslator object.
-     */
-    public CHandler(Dispatcher main, Backtranslator backtranslator, boolean errorLabelWarning) {
-        this.arrayHandler = new ArrayHandler();
-        this.functionHandler = new FunctionHandler();
-        this.postProcessor = new PostProcessor();
-        this.structHandler = new StructHandler();
-        IEclipsePreferences prefs = ConfigurationScope.INSTANCE
-        		.getNode(Activator.s_PLUGIN_ID);
-        boolean checkPointerValidity = Boolean.valueOf(
-        		prefs.get(PreferencePage.NAME_CHECK_POINTER_VALIDITY, "false"));
-        this.memoryHandler = new MemoryHandler(checkPointerValidity);
-        this.symbolTable = new SymbolTable(main);
-        this.functions = new HashMap<String, FunctionDeclaration>();
-        this.globalVariables = new HashMap<Declaration, CType>();
-        this.globalVariablesInits = new HashMap<Declaration, ArrayList<Statement>>();
-        this.axioms = new HashSet<Axiom>();
-        this.backtranslator = backtranslator;
-        this.contract = new ArrayList<ACSLNode>();
-        this.m_ErrorLabelWarning = errorLabelWarning;
-    }
+	/**
+	 * If set to true and the program contains an error label ULTIMATE shows
+	 * a warning that suggests a different translation mode.
+	 */
+	protected final boolean m_ErrorLabelWarning;
+	private HashSet<String> boogieIdsOfHeapVars;
 
-    @Override
-    public Result visit(Dispatcher main, IASTNode node) {
-        String errorMsg = "CHandler: Not yet implemented: \""
-                + node.getRawSignature() + "\" (Type: "
-                + node.getClass().getName() + ")";
-        Dispatcher.error(new CACSLLocation(node),
-                SyntaxErrorType.UnsupportedSyntax, errorMsg);
-        throw new UnsupportedSyntaxException(errorMsg);
-    }
+	/**
+	 * Constructor.
+	 * 
+	 * @param main
+	 *            a reference to the main dispatcher.
+	 * @param backtranslator
+	 *            a reference to the Backtranslator object.
+	 */
+	public CHandler(Dispatcher main, Backtranslator backtranslator, boolean errorLabelWarning) {
+		this.arrayHandler = new ArrayHandler();
+		this.functionHandler = new FunctionHandler();
+		this.postProcessor = new PostProcessor();
+		this.structHandler = new StructHandler();
+		IEclipsePreferences prefs = ConfigurationScope.INSTANCE
+				.getNode(Activator.s_PLUGIN_ID);
+		boolean checkPointerValidity = Boolean.valueOf(
+				prefs.get(PreferencePage.NAME_CHECK_POINTER_VALIDITY, "false"));
+		this.memoryHandler = new MemoryHandler(checkPointerValidity);
+		this.symbolTable = new SymbolTable(main);
+		this.functions = new HashMap<String, FunctionDeclaration>();
+		this.globalVariables = new HashMap<Declaration, CType>();
+		this.globalVariablesInits = new HashMap<Declaration, ArrayList<Statement>>();
+		this.axioms = new HashSet<Axiom>();
+		this.backtranslator = backtranslator;
+		this.contract = new ArrayList<ACSLNode>();
+		this.m_ErrorLabelWarning = errorLabelWarning;
+		
+		this.boogieIdsOfHeapVars = new HashSet<String>();
+	}
 
-    /**
-     * @deprecated is not supported in this handler! Do not use!
-     */
-    @Override
-    public Result visit(Dispatcher main, ACSLNode node) {
-        throw new UnsupportedOperationException(
-                "Implementation Error: Use ACSLHandler for: " + node.getClass());
-    }
+	@Override
+	public Result visit(Dispatcher main, IASTNode node) {
+		String errorMsg = "CHandler: Not yet implemented: \""
+				+ node.getRawSignature() + "\" (Type: "
+				+ node.getClass().getName() + ")";
+		Dispatcher.error(new CACSLLocation(node),
+				SyntaxErrorType.UnsupportedSyntax, errorMsg);
+		throw new UnsupportedSyntaxException(errorMsg);
+	}
 
-    /**
-     * Checks ACSL for the next element and whether it must be added at the
-     * place where this method is called.
-     * 
-     * @param main
-     *            the main dispatcher.
-     * @param stmt
-     *            the statement list where the acsl should be appended - this is
-     *            assumed to be <code>null</code> when called from within the
-     *            <i>translation unit</i>.
-     * @param next
-     *            the current child node of a translation unit of compound
-     *            statement that will be added next. Should be <code>null</code>
-     *            when called at the end of <i>compound statement</i>.
-     * @param parent
-     *            the parent node of the current ACSL node. This should only be
-     *            set if called at the end of a <i>compound statement</i> and
-     *            <code>null</code> otherwise.
-     */
-    private void checkForACSL(Dispatcher main, ArrayList<Statement> stmt,
-            IASTNode next, IASTNode parent) {
-        if (acsl != null) {
-            if (acsl.successorCNode == null) {
-                if (parent != null && stmt != null && next == null) {
-                    // ACSL at the end of a function
-                    for (ACSLNode acslNode : acsl.acsl) {
-                        if (parent.getFileLocation().getEndingLineNumber() <= acslNode
-                                .getStartingLineNumber()) {
-                            return; // handle later ...
-                        }
-                        Result acslResult = main.dispatch(acslNode);
-                        if (acslResult.node instanceof Statement) {
-                            if (parent.getFileLocation().getEndingLineNumber() >= acslNode
-                                    .getEndingLineNumber()
-                                    && parent.getFileLocation()
-                                            .getStartingLineNumber() <= acslNode
-                                            .getStartingLineNumber()) {
-                                stmt.add((Statement) acslResult.node);
-                                try {
-                                    acsl = main.nextACSLStatement();
-                                } catch (ParseException e1) {
-                                    String msg = "Skipped a ACSL node due to: "
-                                            + e1.getMessage();
-                                    Dispatcher.error(new CACSLLocation(parent),
-                                            SyntaxErrorType.UnsupportedSyntax,
-                                            msg);
-                                }
-                            }
-                        } else {
-                            String msg = "Unexpected ACSL comment: "
-                                    + acslResult.node.getClass();
-                            Dispatcher.error(new CACSLLocation(parent),
-                                    SyntaxErrorType.IncorrectSyntax, msg);
-                            throw new IncorrectSyntaxException(msg);
-                        }
-                    }
-                } // ELSE:
-                  // ACSL for next compound statement -> handle it next call
-                  // or in case of translation unit, ACSL in an unexpected
-                  // location!
-            } else if (acsl.successorCNode.equals(next)) {
-                assert contract.isEmpty();
-                for (ACSLNode acslNode : acsl.acsl) {
-                    if (stmt != null) {
-                        // this means we are in a compound statement
-                        if (acslNode instanceof Contract || acslNode instanceof LoopAnnot) {
-                            // Loop contract
-                            contract.add(acslNode);
-                        } else if (acslNode instanceof CodeAnnot) {
-                            Result acslResult = main.dispatch(acslNode);
-                            stmt.add((Statement) acslResult.node);
-                        } else {
-                            String msg = "Unexpected ACSL comment: "
-                                    + acslNode.getClass();
-                            Dispatcher.error(new CACSLLocation(next),
-                                    SyntaxErrorType.IncorrectSyntax, msg);
-                            throw new IncorrectSyntaxException(msg);
-                        }
-                    } else {
-                        // this means we are in the translation unit
-                        if (acslNode instanceof Contract || acslNode instanceof LoopAnnot) {
-                            // Function contract
-                            contract.add(acslNode);
-                        }
-                    }
-                }
-                try {
-                    acsl = main.nextACSLStatement();
-                } catch (ParseException e1) {
-                    String msg = "Skipped a ACSL node due to: "
-                            + e1.getMessage();
-                    Dispatcher.error(new CACSLLocation(parent),
-                            SyntaxErrorType.UnsupportedSyntax, msg);
-                }
-            }
-        }
-    }
+	/**
+	 * @deprecated is not supported in this handler! Do not use!
+	 */
+	@Override
+	public Result visit(Dispatcher main, ACSLNode node) {
+		throw new UnsupportedOperationException(
+				"Implementation Error: Use ACSLHandler for: " + node.getClass());
+	}
 
-    @Override
-    public Result visit(Dispatcher main, IASTTranslationUnit node) {
-        for (IASTPreprocessorStatement preS : node
-                .getAllPreprocessorStatements()) {
-            Result r = main.dispatch(preS);
-            if (!(r instanceof ResultSkip)) {
-                throw new UnsupportedOperationException("Not yet implemented");
-            }
-        }
-        ILocation loc = new CACSLLocation(node);
-        try {
-            acsl = main.nextACSLStatement();
-        } catch (ParseException e1) {
-            String msg = "Skipped a ACSL node due to: " + e1.getMessage();
-            Dispatcher.error(loc, SyntaxErrorType.UnsupportedSyntax, msg);
-        }
-        ArrayList<Declaration> decl = new ArrayList<Declaration>();
-        ArrayList<String> uninitGlobalVars = new ArrayList<String>();
-        ArrayList<Statement> initStatements = new ArrayList<Statement>();
-        for (IASTNode child : node.getChildren()) {
-            checkForACSL(main, null, child, null);
-            Result childRes = main.dispatch(child);
-            if (childRes instanceof ResultExpression) {
-                // we have to add a global variable
-                ResultExpression resExp = ((ResultExpression) childRes);
-                decl.addAll(resExp.decl);
-                initStatements.addAll(resExp.stmt);
-            } else {
-                if (childRes instanceof ResultSkip)
-                    continue;
-                assert childRes.getClass() == Result.class;
-                assert childRes.node != null;
-                decl.add((Declaration) childRes.node);
-            }
-        }
-        // Collect all global variables.
-        for (Declaration d : decl) {
-            if (d instanceof VariableDeclaration) {
-                VariableDeclaration varDecl = (VariableDeclaration) d;
-                VarList[] vars = varDecl.getVariables();
-                for (VarList var : vars) {
-                    for (String id : var.getIdentifiers()) {
-                        uninitGlobalVars.add(id);
-                    }
-                }
-            }
-        }
-        for (Statement s : initStatements) {
-            if (s instanceof AssignmentStatement) {
-                AssignmentStatement as = (AssignmentStatement) s;
-                for (LeftHandSide lhs : as.getLhs()) {
-                    String varId = BoogieASTUtil.getLHSId(lhs);
-                    if (symbolTable.containsBoogieSymbol(varId)) {
-                        String cId = symbolTable.getCID4BoogieID(varId, loc);
-                        ASTType at = symbolTable.getTypeOfVariable(cId, loc);
-                        if (!(at instanceof StructType || at instanceof ArrayType)) {
-                            uninitGlobalVars.remove(varId);
-                        }
-                    } else {
-                        uninitGlobalVars.remove(varId);
-                    }
-                    // otherwise, we will init them with "0" and append the
-                    // given initialization later on - s.t. all global vars
-                    // are fully initialized!
-                }
-            }
-        }
-        for (Declaration d : globalVariables.keySet()) {
-            assert d instanceof ConstDeclaration
-                    || d instanceof VariableDeclaration;
-            decl.add(d);
-            if (d instanceof VariableDeclaration) {
-                VariableDeclaration vd = (VariableDeclaration) d;
-                ASTType at = vd.getVariables()[0].getType();
-                if (globalVariablesInits.get(d) == null
-                        || globalVariablesInits.get(d).isEmpty()
-                        || at instanceof StructType || at instanceof ArrayType) {
-                    for (VarList vl : vd.getVariables()) {
-                        for (String id : vl.getIdentifiers()) {
-                            // if the following assert fails, we have to change
-                            // the name of static variables to something unique!
-                            // However, this should already be true, as their
-                            // names are scoped and should start with a tilde!
-                            assert !symbolTable.containsCSymbol(id);
-                            // the following put is a requirement of the
-                            // post processor. However, these variables are not
-                            // in this scope/"global" in the original sense of
-                            // the symbol table! It is assumed, that the symbol
-                            // table is not used for further translation steps
-                            // after this location!
-                            symbolTable.put(id, new SymbolTableValue(id, vd,
-                                    true, globalVariables.get(d)));
-                            uninitGlobalVars.add(id);
-                        }
-                    }
-                } else if (globalVariablesInits.get(d) != null
-                        && !globalVariablesInits.get(d).isEmpty()) {
-                    initStatements.addAll(globalVariablesInits.get(d));
-                }
-            }
-        }
-        decl.addAll(memoryHandler.declareMemoryModelInfrastructure(main, loc));
-        decl.addAll(axioms);
-        if (!functionHandler.isEveryCalledProcedureDeclared()) {
-            String msg = "A method was called but never declared!";
-            Dispatcher.error(loc, SyntaxErrorType.IncorrectSyntax, msg);
-            throw new IncorrectSyntaxException(msg);
-        }
-        // handle proc. declaration & resolve their transitive modified globals
-        decl.addAll(functionHandler.calculateTransitiveModifiesClause(main));
-        decl.addAll(postProcessor.postProcess(main, loc, arrayHandler,
-                initStatements, functionHandler.getProcedures(),
-                functionHandler.getModifiedGlobals(),
-                main.typeHandler.getUndefinedTypes(), this.functions.values(),
-                uninitGlobalVars));
-        return new Result(new Unit(loc, decl.toArray(new Declaration[0])));
-    }
+	/**
+	 * Checks ACSL for the next element and whether it must be added at the
+	 * place where this method is called.
+	 * 
+	 * @param main
+	 *            the main dispatcher.
+	 * @param stmt
+	 *            the statement list where the acsl should be appended - this is
+	 *            assumed to be <code>null</code> when called from within the
+	 *            <i>translation unit</i>.
+	 * @param next
+	 *            the current child node of a translation unit of compound
+	 *            statement that will be added next. Should be <code>null</code>
+	 *            when called at the end of <i>compound statement</i>.
+	 * @param parent
+	 *            the parent node of the current ACSL node. This should only be
+	 *            set if called at the end of a <i>compound statement</i> and
+	 *            <code>null</code> otherwise.
+	 */
+	private void checkForACSL(Dispatcher main, ArrayList<Statement> stmt,
+			IASTNode next, IASTNode parent) {
+		if (acsl != null) {
+			if (acsl.successorCNode == null) {
+				if (parent != null && stmt != null && next == null) {
+					// ACSL at the end of a function
+					for (ACSLNode acslNode : acsl.acsl) {
+						if (parent.getFileLocation().getEndingLineNumber() <= acslNode
+								.getStartingLineNumber()) {
+							return; // handle later ...
+						}
+						Result acslResult = main.dispatch(acslNode);
+						if (acslResult.node instanceof Statement) {
+							if (parent.getFileLocation().getEndingLineNumber() >= acslNode
+									.getEndingLineNumber()
+									&& parent.getFileLocation()
+									.getStartingLineNumber() <= acslNode
+									.getStartingLineNumber()) {
+								stmt.add((Statement) acslResult.node);
+								try {
+									acsl = main.nextACSLStatement();
+								} catch (ParseException e1) {
+									String msg = "Skipped a ACSL node due to: "
+											+ e1.getMessage();
+									Dispatcher.error(new CACSLLocation(parent),
+											SyntaxErrorType.UnsupportedSyntax,
+											msg);
+								}
+							}
+						} else {
+							String msg = "Unexpected ACSL comment: "
+									+ acslResult.node.getClass();
+							Dispatcher.error(new CACSLLocation(parent),
+									SyntaxErrorType.IncorrectSyntax, msg);
+							throw new IncorrectSyntaxException(msg);
+						}
+					}
+				} // ELSE:
+				// ACSL for next compound statement -> handle it next call
+				// or in case of translation unit, ACSL in an unexpected
+				// location!
+			} else if (acsl.successorCNode.equals(next)) {
+				assert contract.isEmpty();
+				for (ACSLNode acslNode : acsl.acsl) {
+					if (stmt != null) {
+						// this means we are in a compound statement
+						if (acslNode instanceof Contract || acslNode instanceof LoopAnnot) {
+							// Loop contract
+							contract.add(acslNode);
+						} else if (acslNode instanceof CodeAnnot) {
+							Result acslResult = main.dispatch(acslNode);
+							stmt.add((Statement) acslResult.node);
+						} else {
+							String msg = "Unexpected ACSL comment: "
+									+ acslNode.getClass();
+							Dispatcher.error(new CACSLLocation(next),
+									SyntaxErrorType.IncorrectSyntax, msg);
+							throw new IncorrectSyntaxException(msg);
+						}
+					} else {
+						// this means we are in the translation unit
+						if (acslNode instanceof Contract || acslNode instanceof LoopAnnot) {
+							// Function contract
+							contract.add(acslNode);
+						}
+					}
+				}
+				try {
+					acsl = main.nextACSLStatement();
+				} catch (ParseException e1) {
+					String msg = "Skipped a ACSL node due to: "
+							+ e1.getMessage();
+					Dispatcher.error(new CACSLLocation(parent),
+							SyntaxErrorType.UnsupportedSyntax, msg);
+				}
+			}
+		}
+	}
 
-    @Override
-    public Result visit(Dispatcher main, IASTFunctionDefinition node) {
-        return functionHandler.handleFunctionDefinition(main, node);
-    }
+	@Override
+	public Result visit(Dispatcher main, IASTTranslationUnit node) {
+		for (IASTPreprocessorStatement preS : node
+				.getAllPreprocessorStatements()) {
+			Result r = main.dispatch(preS);
+			if (!(r instanceof ResultSkip)) {
+				throw new UnsupportedOperationException("Not yet implemented");
+			}
+		}
+		ILocation loc = new CACSLLocation(node);
+		try {
+			acsl = main.nextACSLStatement();
+		} catch (ParseException e1) {
+			String msg = "Skipped a ACSL node due to: " + e1.getMessage();
+			Dispatcher.error(loc, SyntaxErrorType.UnsupportedSyntax, msg);
+		}
+		ArrayList<Declaration> decl = new ArrayList<Declaration>();
+		ArrayList<String> uninitGlobalVars = new ArrayList<String>();
+		ArrayList<Statement> initStatements = new ArrayList<Statement>();
+		for (IASTNode child : node.getChildren()) {
+			checkForACSL(main, null, child, null);
+			Result childRes = main.dispatch(child);
+			if (childRes instanceof ResultExpression) {
+				// we have to add a global variable
+				ResultExpression resExp = ((ResultExpression) childRes);
+				decl.addAll(resExp.decl);
+				initStatements.addAll(resExp.stmt);
+			} else {
+				if (childRes instanceof ResultSkip)
+					continue;
+				assert childRes.getClass() == Result.class;
+				assert childRes.node != null;
+				decl.add((Declaration) childRes.node);
+			}
+		}
+		// Collect all global variables.
+		for (Declaration d : decl) {
+			if (d instanceof VariableDeclaration) {
+				VariableDeclaration varDecl = (VariableDeclaration) d;
+				VarList[] vars = varDecl.getVariables();
+				for (VarList var : vars) {
+					for (String id : var.getIdentifiers()) {
+						uninitGlobalVars.add(id);
+					}
+				}
+			}
+		}
+		for (Statement s : initStatements) {
+			if (s instanceof AssignmentStatement) {
+				AssignmentStatement as = (AssignmentStatement) s;
+				for (LeftHandSide lhs : as.getLhs()) {
+					String varId = BoogieASTUtil.getLHSId(lhs);
+					if (symbolTable.containsBoogieSymbol(varId)) {
+						String cId = symbolTable.getCID4BoogieID(varId, loc);
+						ASTType at = symbolTable.getTypeOfVariable(cId, loc);
+						if (!(at instanceof StructType || at instanceof ArrayType)) {
+							uninitGlobalVars.remove(varId);
+						}
+					} else {
+						uninitGlobalVars.remove(varId);
+					}
+					// otherwise, we will init them with "0" and append the
+					// given initialization later on - s.t. all global vars
+					// are fully initialized!
+				}
+			}
+		}
+		for (Declaration d : globalVariables.keySet()) {
+			assert d instanceof ConstDeclaration
+			|| d instanceof VariableDeclaration;
+			decl.add(d);
+			if (d instanceof VariableDeclaration) {
+				VariableDeclaration vd = (VariableDeclaration) d;
+				ASTType at = vd.getVariables()[0].getType();
+				if (globalVariablesInits.get(d) == null
+						|| globalVariablesInits.get(d).isEmpty()
+						|| at instanceof StructType || at instanceof ArrayType) {
+					for (VarList vl : vd.getVariables()) {
+						for (String id : vl.getIdentifiers()) {
+							// if the following assert fails, we have to change
+							// the name of static variables to something unique!
+							// However, this should already be true, as their
+							// names are scoped and should start with a tilde!
+							assert !symbolTable.containsCSymbol(id);
+							// the following put is a requirement of the
+							// post processor. However, these variables are not
+							// in this scope/"global" in the original sense of
+							// the symbol table! It is assumed, that the symbol
+							// table is not used for further translation steps
+							// after this location!
+							symbolTable.put(id, new SymbolTableValue(id, vd,
+									true, globalVariables.get(d)));
+							uninitGlobalVars.add(id);
+						}
+					}
+				} else if (globalVariablesInits.get(d) != null
+						&& !globalVariablesInits.get(d).isEmpty()) {
+					initStatements.addAll(globalVariablesInits.get(d));
+				}
+			}
+		}
+		decl.addAll(memoryHandler.declareMemoryModelInfrastructure(main, loc));
+		decl.addAll(axioms);
+		if (!functionHandler.isEveryCalledProcedureDeclared()) {
+			String msg = "A method was called but never declared!";
+			Dispatcher.error(loc, SyntaxErrorType.IncorrectSyntax, msg);
+			throw new IncorrectSyntaxException(msg);
+		}
+		// handle proc. declaration & resolve their transitive modified globals
+		decl.addAll(functionHandler.calculateTransitiveModifiesClause(main));
+		decl.addAll(postProcessor.postProcess(main, loc, arrayHandler,
+				initStatements, functionHandler.getProcedures(),
+				functionHandler.getModifiedGlobals(),
+				main.typeHandler.getUndefinedTypes(), this.functions.values(),
+				uninitGlobalVars));
+		return new Result(new Unit(loc, decl.toArray(new Declaration[0])));
+	}
 
-    /**
-     * Whether or not a new Scope should be started for this compound statement.
-     * 
-     * @param env
-     *            the environment in which the CompoundStatement is.
-     * @return whether to open a new scope in the symbol table or not.
-     */
-    private static boolean isNewScopeRequired(final IASTNode env) {
-        return !(env instanceof IASTForStatement)
-                && !(env instanceof IASTFunctionDefinition);
-    }
+	@Override
+	public Result visit(Dispatcher main, IASTFunctionDefinition node) {
+		return functionHandler.handleFunctionDefinition(main, node);
+	}
 
-    @Override
-    public Result visit(Dispatcher main, IASTCompoundStatement node) {
-        ILocation loc = new CACSLLocation(node);
-        ArrayList<Declaration> decl = new ArrayList<Declaration>();
-        ArrayList<VariableDeclaration> lVarDecl = new ArrayList<VariableDeclaration>();
-        ArrayList<Statement> stmt = new ArrayList<Statement>();
-        IASTNode parent = node.getParent();
-        if (parent instanceof IASTFunctionDefinition) {
-            functionHandler.handleFunctionsInParams(main, loc, decl, stmt,
-                    parent);
-        }
-        if (isNewScopeRequired(parent))
-            symbolTable.beginScope();
+	/**
+	 * Whether or not a new Scope should be started for this compound statement.
+	 * 
+	 * @param env
+	 *            the environment in which the CompoundStatement is.
+	 * @return whether to open a new scope in the symbol table or not.
+	 */
+	private static boolean isNewScopeRequired(final IASTNode env) {
+		return !(env instanceof IASTForStatement)
+				&& !(env instanceof IASTFunctionDefinition);
+	}
 
-        for (IASTNode child : node.getChildren()) {
-            checkForACSL(main, stmt, child, null);
-            Result r = main.dispatch(child);
-            if (r instanceof ResultExpression) {
-                ResultExpression res = (ResultExpression) r;
-                // assert (res.auxVars.isEmpty()) : "unhavoced auxvars";
-                for (Declaration d : res.decl) {
-                    if (d instanceof VariableDeclaration) {
-                        lVarDecl.add((VariableDeclaration) d);
-                    }
-                }
-                decl.addAll(res.decl);
-                stmt.addAll(res.stmt);
-            }
-            if (r.node != null && r.node instanceof Body) {
-                // already have a unique naming for variables! --> unfold
-                Body b = ((Body) r.node);
-                decl.addAll(Arrays.asList(b.getLocalVars()));
-                stmt.addAll(Arrays.asList(b.getBlock()));
-            }
-        }
-        checkForACSL(main, stmt, null, node);
-        if (isNewScopeRequired(parent))
-            symbolTable.endScope();
-        return new Result(new Body(loc,
-                decl.toArray(new VariableDeclaration[0]),
-                stmt.toArray(new Statement[0])));
-    }
+	@Override
+	public Result visit(Dispatcher main, IASTCompoundStatement node) {
+		ILocation loc = new CACSLLocation(node);
+		ArrayList<Declaration> decl = new ArrayList<Declaration>();
+		ArrayList<VariableDeclaration> lVarDecl = new ArrayList<VariableDeclaration>();
+		ArrayList<Statement> stmt = new ArrayList<Statement>();
+		IASTNode parent = node.getParent();
+		if (parent instanceof IASTFunctionDefinition) {
+			functionHandler.handleFunctionsInParams(main, loc, decl, stmt,
+					parent);
+		}
+		if (isNewScopeRequired(parent))
+			symbolTable.beginScope();
 
-    @Override
-    public Result visit(Dispatcher main, IASTSimpleDeclaration node) {
-        CACSLLocation loc = new CACSLLocation(node);
-        if (node.getDeclSpecifier() == null) {
-            String msg = "This statement can be removed!";
-            Dispatcher.unsoundnessWarning(loc, msg, "empty!");
-            return new ResultSkip();
-        }
-    	/*
-    	 * TODO Christian: to be modified/tested
-    	 */
-    	// enum case
-    	if (node.getDeclSpecifier() instanceof IASTEnumerationSpecifier) {
-            return handleEnumDeclaration(main, node);
-        }
-        
-        Result r = main.dispatch(node.getDeclSpecifier());
-        assert r instanceof ResultSkip || r instanceof ResultTypes;
-        if (r instanceof ResultSkip)
-            return r;
-        if (r instanceof ResultTypes) {
-            ResultTypes resType = (ResultTypes) r;
-            Map<VariableDeclaration, CACSLLocation> auxVars =
-            		new HashMap<VariableDeclaration, CACSLLocation>();
-            Map<VariableDeclaration, CACSLLocation> emptyAuxVars =
-            		new HashMap<VariableDeclaration, CACSLLocation>(0);
-            ResultExpression result = new ResultExpression(null, emptyAuxVars);
-            ResultExpression staticVarStorage = new ResultExpression(null,
-                    emptyAuxVars);
-            boolean isGlobal = node.getParent() == node.getTranslationUnit();
-            if (isGlobal) {
-                result.decl.addAll(resType.typeDeclarations);
-            } else if (!resType.typeDeclarations.isEmpty()) {
-                // FIXME : check if typedef can occur locally at all!
-                String msg = "Unexpected location for a typedef!";
-                Dispatcher.error(loc, SyntaxErrorType.UnsupportedSyntax, msg);
-                throw new UnsupportedSyntaxException(msg);
-            }
-            
-        	int index = -1;
-        	/**
-        	 * Christian:
-        	 * C allows several declarations of "similar" types in one go.
-        	 * For instance:
-        	 * <code>int a, b[2];</code>
-        	 * Here <code>a</code> has type <code>int</code> and <code>b</code>
-        	 * has type <code>int[]</code>. To solve this, the declaration
-        	 * items are visited one after another.
-        	 */
-            for (IASTDeclarator d : node.getDeclarators()) {
-            	++index;
-            	// TODO Christian: to be modified/tested
-            	// function case
-            	if (d instanceof IASTFunctionDeclarator) {
-                	Result rFunc = functionHandler.handleFunctionDeclaration(main,
-                            contract, node, index);
-                	assert (rFunc instanceof ResultSkip);
-                	// do nothing here
-                }
-            	// array case
-            	else if (d instanceof IASTArrayDeclarator) {
-                	Result rArray = arrayHandler.handleArrayDeclaration(main,
-                			memoryHandler, structHandler, node, globalVariables,
-                			globalVariablesInits, index);
-                	if (rArray instanceof ResultExpression) {
-                    	result.decl.addAll(((ResultExpression)rArray).decl);
-                	}
-                	else {
-                		assert (rArray instanceof ResultSkip);
-                		// do nothing here
-                	}
-                }
-            	// standard variable case
-            	else {
-            		//true iff the declared variable will be addressoffed in the program (alex)
-            		boolean putOnHeap = ((MainDispatcher) main).getVariablesForHeap().contains(node);
-            		
-	                String cId = d.getName().getRawSignature();
-	                // Get the type of this variable
-	                assert resType.getType() != null;
-	                String bId = main.nameHandler.getUniqueIdentifier(node, cId,
-	                        symbolTable.getCompoundCounter(), putOnHeap);
-	                
-	                //alex begin
-	                ResultTypes checkedType = null;
-	                if (putOnHeap) { 
-	                	ASTType t = MemoryHandler.POINTER_TYPE;
-	                	CType cvar = new CPointer(resType.cvar);
-	                	checkedType = new ResultTypes(t, false, false, cvar);
-	                } else {
-	                //alex end
-	                
-	                checkedType = checkForPointer(main,
-	                        d.getPointerOperators(), resType);
-	                } // real end alex
-	                
-	                if (main.typeHandler.isStructDeclaration()) {
-	                    /*
-	                     * store C variable information into this result, as
-	                     * this is a struct field! We need this information to
-	                     * build the structs C variable information recursively.
-	                     */
-	                    assert resType.cvar != null;
-	                    result.declCTypes.add(checkedType.cvar);
-	                }
-	                ASTType type = checkedType.getType();
-	                CType cvar = checkedType.cvar;
-	                VarList var = new VarList(loc, new String[] { bId }, type);
-	                Attribute[] attr = new Attribute[0];
-	                if (resType.isConst) {
-	                    String msg = "Const declaration dropped!";
-	                    Dispatcher.error(loc, SyntaxErrorType.UnsupportedSyntax,
-	                            msg);
-	                }
-	                VariableDeclaration decl = new VariableDeclaration(loc, attr,
-	                        new VarList[] { var });
-	                symbolTable.put(cId, new SymbolTableValue(bId, decl, isGlobal,
-	                        cvar));
-	                if (cvar.isStatic() && !isGlobal) {
-	                    staticVarStorage.decl.add(decl);
-	                } else {
-	                    result.decl.add(decl);
-	                }
-	                
-	                //begin alex
-	                if (((MainDispatcher) main).getVariablesForHeap().contains(node)) { //the declared variable will be addressoffed in the program
-	                	((MainDispatcher) main).addBoogieDeclarationOfVariableOnHeap(decl);
-	                }
-	            	//end alex
+		for (IASTNode child : node.getChildren()) {
+			checkForACSL(main, stmt, child, null);
+			Result r = main.dispatch(child);
+			if (r instanceof ResultExpression) {
+				ResultExpression res = (ResultExpression) r;
+				// assert (res.auxVars.isEmpty()) : "unhavoced auxvars";
+				for (Declaration d : res.decl) {
+					if (d instanceof VariableDeclaration) {
+						lVarDecl.add((VariableDeclaration) d);
+					}
+				}
+				decl.addAll(res.decl);
+				stmt.addAll(res.stmt);
+			}
+			if (r.node != null && r.node instanceof Body) {
+				// already have a unique naming for variables! --> unfold
+				Body b = ((Body) r.node);
+				decl.addAll(Arrays.asList(b.getLocalVars()));
+				stmt.addAll(Arrays.asList(b.getBlock()));
+			}
+		}
+		checkForACSL(main, stmt, null, node);
+		if (isNewScopeRequired(parent))
+			symbolTable.endScope();
+		return new Result(new Body(loc,
+				decl.toArray(new VariableDeclaration[0]),
+				stmt.toArray(new Statement[0])));
+	}
+
+	@Override
+	public Result visit(Dispatcher main, IASTSimpleDeclaration node) {
+		CACSLLocation loc = new CACSLLocation(node);
+		if (node.getDeclSpecifier() == null) {
+			String msg = "This statement can be removed!";
+			Dispatcher.unsoundnessWarning(loc, msg, "empty!");
+			return new ResultSkip();
+		}
+		/*
+		 * TODO Christian: to be modified/tested
+		 */
+		// enum case
+		if (node.getDeclSpecifier() instanceof IASTEnumerationSpecifier) {
+			return handleEnumDeclaration(main, node);
+		}
+
+		Result r = main.dispatch(node.getDeclSpecifier());
+		assert r instanceof ResultSkip || r instanceof ResultTypes;
+		if (r instanceof ResultSkip)
+			return r;
+		if (r instanceof ResultTypes) {
+			ResultTypes resType = (ResultTypes) r;
+			Map<VariableDeclaration, CACSLLocation> auxVars =
+					new HashMap<VariableDeclaration, CACSLLocation>();
+			Map<VariableDeclaration, CACSLLocation> emptyAuxVars =
+					new HashMap<VariableDeclaration, CACSLLocation>(0);
+			ResultExpression result = new ResultExpression(null, emptyAuxVars);
+			ResultExpression staticVarStorage = new ResultExpression(null,
+					emptyAuxVars);
+			boolean isGlobal = node.getParent() == node.getTranslationUnit();
+			if (isGlobal) {
+				result.decl.addAll(resType.typeDeclarations);
+			} else if (!resType.typeDeclarations.isEmpty()) {
+				// FIXME : check if typedef can occur locally at all!
+				String msg = "Unexpected location for a typedef!";
+						Dispatcher.error(loc, SyntaxErrorType.UnsupportedSyntax, msg);
+						throw new UnsupportedSyntaxException(msg);
+			}
+
+			int index = -1;
+			/**
+			 * Christian:
+			 * C allows several declarations of "similar" types in one go.
+			 * For instance:
+			 * <code>int a, b[2];</code>
+			 * Here <code>a</code> has type <code>int</code> and <code>b</code>
+			 * has type <code>int[]</code>. To solve this, the declaration
+			 * items are visited one after another.
+			 */
+			for (IASTDeclarator d : node.getDeclarators()) {
+				++index;
+				// TODO Christian: to be modified/tested
+				// function case
+				if (d instanceof IASTFunctionDeclarator) {
+					Result rFunc = functionHandler.handleFunctionDeclaration(main,
+							contract, node, index);
+					assert (rFunc instanceof ResultSkip);
+					// do nothing here
+				}
+				// array case
+				else if (d instanceof IASTArrayDeclarator) {
+					Result rArray = arrayHandler.handleArrayDeclaration(main,
+							memoryHandler, structHandler, node, globalVariables,
+							globalVariablesInits, index);
+					if (rArray instanceof ResultExpression) {
+						result.decl.addAll(((ResultExpression)rArray).decl);
+					}
+					else {
+						assert (rArray instanceof ResultSkip);
+						// do nothing here
+					}
+				}
+				// standard variable case
+				else {
+					//true iff the declared variable will be addressoffed in the program (alex)
+					boolean putOnHeap = ((MainDispatcher) main).getVariablesForHeap().contains(node);
+
+					String cId = d.getName().getRawSignature();
+					// Get the type of this variable
+					assert resType.getType() != null;
+					String bId = main.nameHandler.getUniqueIdentifier(node, cId,
+							symbolTable.getCompoundCounter(), putOnHeap);
+
+					if (putOnHeap)
+						boogieIdsOfHeapVars.add(bId);//store it independent from the symbol table
+					
+					ResultTypes checkedType = checkForPointer(main,
+							d.getPointerOperators(), resType);
+
+					if (main.typeHandler.isStructDeclaration()) {
+						//							if (resultCType instanceof CStruct) { //better??
+						/*
+						 * store C variable information into this result, as
+						 * this is a struct field! We need this information to
+						 * build the structs C variable information recursively.
+						 */
+						assert resType.cvar != null;
+						result.declCTypes.add(checkedType.cvar);
+					}
+					ASTType type = checkedType.getType();
+					
+					CType cvar = checkedType.cvar;
+					if (isHeapVar(bId)) {
+						cvar = new CPointer(cvar);
+					}
+					
+					VarList var = new VarList(loc, new String[] { bId }, type);
+					Attribute[] attr = new Attribute[0];
+					if (resType.isConst) {
+						String msg = "Const declaration dropped!";
+						Dispatcher.error(loc, SyntaxErrorType.UnsupportedSyntax,
+								msg);
+					}
+					VariableDeclaration decl = new VariableDeclaration(loc, attr,
+							new VarList[] { var });
+					symbolTable.put(cId, new SymbolTableValue(bId, decl, isGlobal,
+							cvar));
+					if (cvar.isStatic() && !isGlobal) {
+						staticVarStorage.decl.add(decl);
+					} else {
+						result.decl.add(decl);
+					}
+					
+					CType resultCType = null;
+					if (cvar != null) {
+						resultCType = isHeapVar(bId) ? ((CPointer)cvar).pointsToType : cvar;
+						resultCType = resultCType instanceof CNamed ? 
+								((CNamed) resultCType).getUnderlyingType() : 
+									result.cType;
+					}
+					
+//					//begin alex
+//					if (((MainDispatcher) main).getVariablesForHeap().contains(node)) { //the declared variable will be addressoffed in the program
+//						((MainDispatcher) main).addBoogieDeclarationOfVariableOnHeap(decl);
+//					}
+//					//end alex
 	                	
 	                // Handle initializer clause
 	                if (d.getInitializer() != null) {
-	                    if (type instanceof StructType) {
-	                        Result initializer = main.dispatch(d.getInitializer());
-	                        assert initializer instanceof ResultExpressionListRec;
-	                        ResultExpressionListRec relr = ((ResultExpressionListRec) initializer);
-	                        VariableLHS lhs = new VariableLHS(loc,
-	                                new InferredType(type), bId);
-	                        if (cvar instanceof CNamed) {
-	                            cvar = ((CNamed) cvar).getUnderlyingType();
-	                        }
-	                        assert cvar instanceof CStruct;
-	                        ResultExpression init = structHandler.handleStructInit(
-	                                main, memoryHandler, structHandler, arrayHandler, loc, (StructType) type,
-	                                (CStruct) cvar, lhs, relr,
-	                                new ArrayList<Integer>(), -1);
-	                        auxVars.putAll(init.auxVars);
-	                        assert init.lrVal.getValue() == null && init.decl.isEmpty();
-	                        if (resType.cvar.isStatic() && !isGlobal) {
-	                            staticVarStorage.stmt.addAll(init.stmt);
-	                        } else {
-	                            result.stmt.addAll(init.stmt);
-	                        }
-	                    } else { // it should be a "normal variable"
-	                        ResultExpression rExpr = ((ResultExpression) (main
-	                                .dispatch(d.getInitializer())));
-	                        rExpr.switchToRValue(main, memoryHandler, structHandler, loc);
-	                        auxVars.putAll(rExpr.auxVars);
-	                        Expression rExprExpr = main.typeHandler.convertArith2Boolean(
-	                                loc, type, rExpr.lrVal.getValue());
-	                        Expression[] rhs = new Expression[] { rExprExpr };
-	                        VariableLHS[] lhs = new VariableLHS[] { new VariableLHS(
-	                                loc, bId) };
-	                        AssignmentStatement as = new AssignmentStatement(loc,
-	                                lhs, rhs);
-	                        // TODO: Ask Markus where I should havoc temp aux vars.
-	                        if (resType.cvar.isStatic() && !isGlobal) {
-	                            staticVarStorage.decl.addAll(rExpr.decl);
-	                            staticVarStorage.stmt.addAll(rExpr.stmt);
-	                            staticVarStorage.auxVars.putAll(rExpr.auxVars);
-	                            staticVarStorage.stmt.add(as);
-//	                            staticVarStorage.stmt.addAll(Dispatcher.createHavocsForAuxVars(auxVars));
-	                        } else {
-	                            result.decl.addAll(rExpr.decl);
-	                            result.stmt.addAll(rExpr.stmt);
-	                            result.auxVars.putAll(rExpr.auxVars);
-	                            result.stmt.add(as);
-//	                            result.stmt.addAll(Dispatcher.createHavocsForAuxVars(auxVars));
-	                        }
-	                    }
+//	                    if (type instanceof StructType) {
+//	                        Result initializer = main.dispatch(d.getInitializer());
+//	                        assert initializer instanceof ResultExpressionListRec;
+//	                        ResultExpressionListRec relr = ((ResultExpressionListRec) initializer);
+//	                        VariableLHS lhs = new VariableLHS(loc,
+//	                                new InferredType(type), bId);
+//	                        if (cvar instanceof CNamed) {
+//	                            cvar = ((CNamed) cvar).getUnderlyingType();
+//	                        }
+//	                        assert cvar instanceof CStruct;
+//	                        ResultExpression init = structHandler.handleStructInit(
+//	                                main, memoryHandler, structHandler, arrayHandler, loc, (StructType) type,
+//	                                (CStruct) cvar, lhs, relr,
+//	                                new ArrayList<Integer>(), -1);
+//	                        auxVars.putAll(init.auxVars);
+//	                        assert init.lrVal.getValue() == null && init.decl.isEmpty();
+//	                        if (resType.cvar.isStatic() && !isGlobal) {
+//	                            staticVarStorage.stmt.addAll(init.stmt);
+//	                        } else {
+//	                            result.stmt.addAll(init.stmt);
+//	                        }
+//	                    } else { // it should be a "normal variable"
+	                	ResultExpression rExpr = ((ResultExpression) (main
+	                			.dispatch(d.getInitializer())));
+	                	rExpr = rExpr.switchToRValue(main, memoryHandler, structHandler, loc);
+
+//	                	auxVars.putAll(rExpr.auxVars);
+
+	                	Expression rExprExpr = null;
+	                	if (resultCType instanceof CStruct) {//TODO: convertArith2.. stuff
+	                		ResultExpression structCons = makeStructConstructorFromRERL(loc,
+	                				(ResultExpressionListRec) rExpr, (CStruct) resultCType);
+	                		rExprExpr = structCons.lrVal.getValue();
+	                	} else {
+	                		rExprExpr = main.typeHandler.convertArith2Boolean(
+	                			loc, type, rExpr.lrVal.getValue());
+	                	}
+
+
+//	                	Expression[] rhs = new Expression[] { rExprExpr };
+//	                	VariableLHS[] lhs = new VariableLHS[] { new VariableLHS(
+//	                			loc, bId) };
+//	                	AssignmentStatement as = new AssignmentStatement(loc,
+//	                			lhs, rhs);
+	                	
+	                	LRValue lrVal = isHeapVar(bId) ?
+	                			new HeapLValue(new IdentifierExpression(loc,  bId)) :
+	                				new LocalLValue(new VariableLHS(loc, bId));
+	                	ResultExpression assignment = makeAssignment(loc, rExpr.stmt, lrVal, new RValue(rExprExpr),
+	                			rExpr.decl, rExpr.auxVars, resultCType);
+	                	// TODO: Ask Markus where I should havoc temp aux vars.
+	                	if (resType.cvar.isStatic() && !isGlobal) {
+//	                		staticVarStorage.decl.addAll(rExpr.decl);
+//	                		staticVarStorage.stmt.addAll(rExpr.stmt);
+//	                		staticVarStorage.auxVars.putAll(rExpr.auxVars);
+//	                		staticVarStorage.stmt.add(as);
+	                		staticVarStorage.stmt.addAll(assignment.stmt);
+	                		staticVarStorage.decl.addAll(assignment.decl);
+	                		staticVarStorage.auxVars.putAll(assignment.auxVars);
+	                		//	                            staticVarStorage.stmt.addAll(Dispatcher.createHavocsForAuxVars(auxVars));
+	                	} else {
+//	                		result.decl.addAll(rExpr.decl);
+//	                		result.stmt.addAll(rExpr.stmt);
+//	                		result.auxVars.putAll(rExpr.auxVars);
+//	                		result.stmt.add(as);
+	                		result.decl.addAll(assignment.decl);
+	                		result.stmt.addAll(assignment.stmt);
+	                		result.auxVars.putAll(assignment.auxVars);
+	                		//	                            result.stmt.addAll(Dispatcher.createHavocsForAuxVars(auxVars));
+	                	}
+	                	//	                    }
 	                } else if (!cvar.isGlobalVariable() && !cvar.isStatic()) {
-	                    /*
-	                     * if not initialized directly and if not global and not
-	                     * static. This is required, since this variable could
-	                     * be within a loop and needs to be havoc'ed to
-	                     * represent C's behavior!
-	                     */
-	                    result.stmt.add(new HavocStatement(loc,
-	                            new VariableLHS[] { new VariableLHS(loc, bId) }));
+	                	/*
+	                	 * if not initialized directly and if not global and not
+	                	 * static. This is required, since this variable could
+	                	 * be within a loop and needs to be havoc'ed to
+	                	 * represent C's behavior!
+	                	 */
+	                	result.stmt.add(new HavocStatement(loc,
+	                			new VariableLHS[] { new VariableLHS(loc, bId) }));
 	                }
-            	}
-            }
-            // TODO Christian: any changes needed here?
-            if (resType.cvar.isStatic() && !isGlobal) {
+				}
+			}
+			// TODO Christian: any changes needed here?
+			if (resType.cvar.isStatic() && !isGlobal) {
                 assert staticVarStorage.decl.size() > 0;
                 for (Declaration d : staticVarStorage.decl) {
                     globalVariables.put(d, resType.cvar);
@@ -771,7 +806,72 @@ public class CHandler implements ICHandler {
         throw new UnsupportedSyntaxException(msg);
     }
 
-    @Override
+	private ResultExpression makeStructConstructorFromRERL(ILocation loc,
+			ResultExpressionListRec rerl, CStruct structType) {
+		
+		if (rerl.lrVal != null) //we have an identifier (or sth else too?)
+			return new ResultExpression(rerl.stmt, rerl.lrVal, rerl.decl, rerl.auxVars, rerl.cType);
+		
+		//everything for the new Result
+		ArrayList<Statement> newStmt = new ArrayList<Statement>();
+		ArrayList<Declaration> newDecl = new ArrayList<Declaration>();
+		HashMap<VariableDeclaration, CACSLLocation> newAuxVars = new HashMap<VariableDeclaration, CACSLLocation>();
+
+		String[] fieldIds = structType.getFieldIds();
+		CType[] fieldTypes = structType.getFieldTypes();
+
+		//the new Arrays for the StructConstructor
+		ArrayList<String> fieldIdentifiers = new ArrayList<String>();
+		ArrayList<Expression> fieldValues = new ArrayList<Expression>();
+
+		for (int i = 0; i < fieldIds.length; i++) {
+			fieldIdentifiers.add(fieldIds[i]);
+
+			CType underlyingType;
+			if (fieldTypes[i] instanceof CNamed)
+				underlyingType = ((CNamed) fieldTypes[i]).getUnderlyingType();
+			else
+				underlyingType = fieldTypes[i];
+
+			ResultExpression fieldRead = null; 
+			if(underlyingType instanceof CPrimitive) {
+				fieldRead = rerl.list.get(i);
+				newStmt.addAll(fieldRead.stmt);
+				newDecl.addAll(fieldRead.decl);
+				newAuxVars.putAll(fieldRead.auxVars);
+			} else if (underlyingType instanceof CPointer) {
+				fieldRead = rerl.list.get(i);
+				newStmt.addAll(fieldRead.stmt);
+				newDecl.addAll(fieldRead.decl);
+				newAuxVars.putAll(fieldRead.auxVars);
+			} else if (underlyingType instanceof CArray) {
+				throw new UnsupportedSyntaxException("..");
+			} else if (underlyingType instanceof CEnum) {
+				throw new UnsupportedSyntaxException("..");
+			} else if (underlyingType instanceof CStruct) {
+				fieldRead = makeStructConstructorFromRERL(loc, rerl.list.get(i), (CStruct) underlyingType);//todo: better location
+				newStmt.addAll(fieldRead.stmt);
+				newDecl.addAll(fieldRead.decl);
+				newAuxVars.putAll(fieldRead.auxVars);
+			} else if (underlyingType instanceof CNamed) {
+				assert false : "This should not be the case as we took the underlying type.";
+			} else {
+				throw new UnsupportedSyntaxException("..");
+			}	
+
+			assert fieldRead.lrVal instanceof RValue; //should be guaranteed by readFieldInTheStructAtAddress(..)
+			fieldValues.add(((RValue) fieldRead.lrVal).getValue());
+
+		}
+		StructConstructor sc = new StructConstructor(loc, 
+				fieldIdentifiers.toArray(new String[0]), 
+				fieldValues.toArray(new Expression[0]));
+
+		ResultExpression result = new ResultExpression(newStmt, new RValue(sc), newDecl, newAuxVars, structType);
+		return result;
+	}
+
+	@Override
     public ResultTypes checkForPointer(Dispatcher main,
             IASTPointerOperator[] pointerOps, ResultTypes resType) {
         if (pointerOps.length != 0) {
@@ -937,7 +1037,7 @@ public class CHandler implements ICHandler {
         CType cT = symbolTable.get(cId, loc).getCVariable();
         
         LRValue lrVal = null;
-        if (isHeapVar(main, loc, cId)) {
+        if (isHeapVar(bId)) {
             IdentifierExpression idExp = new IdentifierExpression(loc, t, bId);
         	lrVal = new HeapLValue(idExp);
         	cT = ((CPointer) cT).pointsToType;
@@ -1009,11 +1109,15 @@ public class CHandler implements ICHandler {
 
         return result;
     }
+    
+    boolean isHeapVar(String boogieId) {
+    	return boogieIdsOfHeapVars.contains(boogieId);
+    }
 
-	boolean isHeapVar(Dispatcher main, CACSLLocation loc, String cId) {
-		return ((MainDispatcher) main).getBoogieDeclarationsOfVariablesOnHeapContains(
-        		(VariableDeclaration) symbolTable.get(cId, loc).getDecl());
-	}
+//	boolean isHeapVar(Dispatcher main, CACSLLocation loc, String cId) {
+//		return ((MainDispatcher) main).getBoogieDeclarationsOfVariablesOnHeapContains(
+//        		(VariableDeclaration) symbolTable.get(cId, loc).getDecl());
+//	}
     
     @Override
     public Result visit(Dispatcher main, IASTUnaryExpression node) {

@@ -362,8 +362,10 @@ public class ACSLHandler implements IACSLHandler {
             }
         }
         
+        //FIXME: dereferencing does not work for ACSL yet, because we cannot pass 
+        // the necessary auxiliary statements on.
         LRValue lrVal;
-        if (((CHandler) main.cHandler).isHeapVar(main, loc, cId)) {
+        if (((CHandler) main.cHandler).isHeapVar(id)) {
             IdentifierExpression idExp = new IdentifierExpression(loc, type, id);
         	lrVal = new HeapLValue(idExp);
         } else {

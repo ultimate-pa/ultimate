@@ -19,6 +19,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CEnum;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CNamed;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CStruct;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.IncorrectSyntaxException;
@@ -917,9 +918,10 @@ public class MemoryHandler {
      *         plus an identifierExpression holding the read value.
      */
     public ResultExpression getReadCall(final Dispatcher main,
-            final InferredType it, final Expression tPointer, CType pointerCType) {
-        assert tPointer.getType() instanceof InferredType
-                && ((InferredType) tPointer.getType()).getType() == Type.Pointer;
+            final InferredType it, 
+            final Expression tPointer, CPointer pointerCType) {
+//        assert tPointer.getType() instanceof InferredType
+//                && ((InferredType) tPointer.getType()).getType() == Type.Pointer;
         // assert #valid[tPointer!base];
         // tmp = "read_$Pointer$(tPointer);"
         ArrayList<Statement> stmt = new ArrayList<Statement>();
@@ -927,30 +929,31 @@ public class MemoryHandler {
 		Map<VariableDeclaration, CACSLLocation> auxVars = 
 				new HashMap<VariableDeclaration, CACSLLocation>();
         CACSLLocation loc = (CACSLLocation) tPointer.getLocation();
-        String t = SFO.EMPTY;
-        switch (it.getType()) {
-            case Boolean:
-                t = SFO.BOOL;
-                break;
-            case Integer:
-                t = SFO.INT;
-                break;
-            case Pointer:
-                t = SFO.POINTER;
-                break;
-            case Real:
-                t = SFO.REAL;
-                break;
-            case String:
-            case Struct:
-            case Unknown:
-            case Void:
-            default:
-                String m = "Can't read the given type!";
-                Dispatcher.error(loc, SyntaxErrorType.UnsupportedSyntax, m);
-                throw new UnsupportedSyntaxException(m);
-        }
-        assert t != SFO.EMPTY;
+//        String t = SFO.EMPTY;
+//        switch (it.getType()) {
+//            case Boolean:
+//                t = SFO.BOOL;
+//                break;
+//            case Integer:
+//                t = SFO.INT;
+//                break;
+//            case Pointer:
+//                t = SFO.POINTER;
+//                break;
+//            case Real:
+//                t = SFO.REAL;
+//                break;
+//            case String:
+//            case Struct:
+//            case Unknown:
+//            case Void:
+//            default:
+//                String m = "Can't read the given type!";
+//                Dispatcher.error(loc, SyntaxErrorType.UnsupportedSyntax, m);
+//                throw new UnsupportedSyntaxException(m);
+//        }
+//        assert t != SFO.EMPTY;
+        String t = getHeapTypeStringOfCType(pointerCType.pointsToType);
         String tmpId = main.nameHandler.getTempVarUID(SFO.AUXVAR.MEMREAD);
         VariableDeclaration tVarDecl = SFO.getTempVarVariableDeclaration(tmpId, it, loc);
         auxVars.put(tVarDecl, loc);
@@ -962,8 +965,37 @@ public class MemoryHandler {
         CType resultCType = ((CPointer) pointerCType).pointsToType;
 		assert (main.isAuxVarMapcomplete(decl, auxVars));
         return new ResultExpression(stmt, 
-        		new RValue(new IdentifierExpression(loc, it, tmpId)),
+        		new RValue(new IdentifierExpression(loc, tmpId)),
         		decl, auxVars, resultCType);
+    }
+    
+    String getHeapTypeStringOfCType(CType ct) {
+    	String result = null;
+    	if (ct instanceof CPrimitive) {
+			CPrimitive cp = (CPrimitive) ct;
+			switch (cp.getType()) {
+			case INT:
+				result = SFO.INT;
+				break;
+			case BOOL:
+			case CHAR:
+			default:
+				throw new UnsupportedSyntaxException("..");
+			}
+		} else if (ct instanceof CPointer) {
+			result = SFO.POINTER;
+		} else if (ct instanceof CArray) {
+				throw new UnsupportedSyntaxException("..");
+		} else if (ct instanceof CEnum) {
+				throw new UnsupportedSyntaxException("..");
+		} else if (ct instanceof CStruct) {
+				throw new UnsupportedSyntaxException("..");
+		} else if (ct instanceof CNamed) {
+			assert false : "This should not be the case as we took the underlying type.";
+		} else {
+			throw new UnsupportedSyntaxException("..");
+		}
+    	return result;
     }
     
 //    /**
@@ -1013,8 +1045,8 @@ public class MemoryHandler {
      */
     public ResultExpression getWriteCall(final Expression tPointer,
             final Expression val) {
-        assert tPointer.getType() instanceof InferredType
-                && ((InferredType) tPointer.getType()).getType() == Type.Pointer;
+//        assert tPointer.getType() instanceof InferredType
+//                && ((InferredType) tPointer.getType()).getType() == Type.Pointer;
         assert val.getType() instanceof InferredType;
         ILocation loc = tPointer.getLocation();
         InferredType it = (InferredType) val.getType();
