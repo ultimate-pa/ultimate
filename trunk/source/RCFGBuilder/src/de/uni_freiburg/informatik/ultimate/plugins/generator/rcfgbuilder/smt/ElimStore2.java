@@ -58,7 +58,7 @@ public class ElimStore2 {
 		Term othersT = Util.and(m_Script, others.toArray(new Term[0]));
 		Set<ApplicationTerm> selectTermsInData = 
 				(new ApplicationTermFinder("select")).findMatchingSubterms(m_Data);
-		if (m_WriteIndex == null || !selectTermsInData.isEmpty()) {
+		if (m_WriteIndex == null) {
 			s_Logger.warn(new DebugMessage("not yet implemented case in "
 					+ "array quantifier elimination. Formula {0}" , term));
 			return null;
@@ -501,17 +501,8 @@ public class ElimStore2 {
 		public Term getData() {
 			return m_Data;
 		}
-
-		public int getDimension(Sort sort) {
-			if (sort.isArraySort()) {
-				Sort[] arg = sort.getArguments();
-				assert arg.length == 2;
-				return 1 + getDimension(arg[1]);
-			} else {
-				return 0;
-			}
-		}
 	}
+	
 	
 	private static class ArrayUpdateException extends Exception {
 
@@ -520,6 +511,71 @@ public class ElimStore2 {
 		public ArrayUpdateException(String message) {
 			super(message);
 		}
-
 	}
+	
+	
+	public static int getDimension(Sort sort) {
+		if (sort.isArraySort()) {
+			Sort[] arg = sort.getArguments();
+			assert arg.length == 2;
+			return 1 + getDimension(arg[1]);
+		} else {
+			return 0;
+		}
+	}
+	
+	
+	/**
+	 * Given a (possibly nested) array a, this is a data structure for terms of
+	 * the form  (select (select a i1) i2)  
+	 *
+	 */
+	private static class ArrayRead {
+		private final TermVariable m_Array;
+		private final Term[] m_Index;
+		private final Term m_SelectTerm;
+		
+		public ArrayRead(Term term, TermVariable tv) throws ArrayReadException {
+			m_SelectTerm = term;
+			int dimension = getDimension(tv.getSort());
+			m_Index = new Term[dimension];			
+			for (int i = dimension-1; i>=0; i--) {
+				if (!(term instanceof ApplicationTerm)) {
+					throw new ArrayReadException("no ApplicationTerm");
+				}
+				ApplicationTerm appTerm = (ApplicationTerm) term;
+				if (!appTerm.getFunction().getName().equals("select")) {
+					throw new ArrayReadException("no select");
+				}
+				assert appTerm.getParameters().length == 2;
+				m_Index[i] = appTerm.getParameters()[1];
+				term = appTerm.getParameters()[0];
+			}
+			if (!tv.equals(term)) {
+				throw new ArrayReadException("different array");
+			} else  {
+				m_Array = tv;
+			}
+		}
+	}
+	
+	
+	private static class ArrayReadException extends Exception {
+
+		private static final long serialVersionUID = -628021699371967800L;
+
+		public ArrayReadException(String message) {
+			super(message);
+		}
+	}
+	
+	
+	private static class ImpliedReadInformation {
+		
+		public ImpliedReadInformation(ArrayRead ar1, ArrayRead ar2, 
+				Term context, Map<TermVariable, Term> mapping) {
+			
+		}
+	}
+	
 }
