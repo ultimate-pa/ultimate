@@ -46,10 +46,10 @@ public class NestedSsaBuilder {
 									new HashMap<BoogieVar,Term>();
 	Integer startOfCallingContext;
 	
-	final Map<BoogieVar,Map<Integer,Term>> m_IndexedVarRepresentative =
-			new HashMap<BoogieVar,Map<Integer,Term>>();
+	final Map<BoogieVar,TreeMap<Integer,Term>> m_IndexedVarRepresentative =
+			new HashMap<BoogieVar,TreeMap<Integer,Term>>();
 	
-	public Map<BoogieVar, Map<Integer, Term>> getIndexedVarRepresentative() {
+	public Map<BoogieVar, TreeMap<Integer, Term>> getIndexedVarRepresentative() {
 		return m_IndexedVarRepresentative;
 	}
 	
@@ -210,10 +210,10 @@ public class NestedSsaBuilder {
 
 
 	private Term getVarVersion(BoogieVar varName, int index) {
-		Map<Integer, Term> index2constant = m_IndexedVarRepresentative.get(varName);
+		TreeMap<Integer, Term> index2constant = m_IndexedVarRepresentative.get(varName);
 
 		if (index2constant == null) {
-			index2constant = new HashMap<Integer, Term>();
+			index2constant = new TreeMap<Integer, Term>();
 			m_IndexedVarRepresentative.put(varName,index2constant);
 		}
 		Term constant = index2constant.get(index);

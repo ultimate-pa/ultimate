@@ -116,6 +116,9 @@ public class TraceChecker {
 	protected RcfgProgramExecution m_RcfgProgramExecution;
 	
 	protected final DefaultTransFormulas m_DefaultTransFormulas;
+
+
+	protected NestedSsaBuilder m_Nsb;
 	
 	
 	/**
@@ -192,9 +195,9 @@ public class TraceChecker {
 	private LBool checkTrace() {
 		LBool isSafe;
 		m_SmtManager.startTraceCheck();
-		NestedSsaBuilder nsb = new NestedSsaBuilder(m_Trace, m_SmtManager, 
+		m_Nsb = new NestedSsaBuilder(m_Trace, m_SmtManager, 
 				m_DefaultTransFormulas);
-		NestedSsa ssa = nsb.getSsa();
+		NestedSsa ssa = m_Nsb.getSsa();
 		try {
 			m_AAA = getAnnotateAndAsserter(ssa);
 			m_AAA.buildAnnotatedSsaAndAssertTerms();
@@ -225,7 +228,7 @@ public class TraceChecker {
 				assert tc.isCorrect() == LBool.SAT;
 				m_RcfgProgramExecution = tc.getRcfgProgramExecution();
 			} else {
-				m_RcfgProgramExecution = computeRcfgProgramExecution(nsb);
+				m_RcfgProgramExecution = computeRcfgProgramExecution(m_Nsb);
 			}
 		}
 		return isSafe;
