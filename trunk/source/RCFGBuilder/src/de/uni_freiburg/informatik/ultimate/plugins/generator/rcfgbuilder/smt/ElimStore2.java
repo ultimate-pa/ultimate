@@ -1,5 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt;
 
+import java.security.KeyStore.Builder;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -372,7 +373,7 @@ public class ElimStore2 {
 		}
 	}
 	
-	private Term buildPairwiseEquality(Term[] first, Term[] second) {
+	Term buildPairwiseEquality(Term[] first, Term[] second) {
 		assert first.length == second.length;
 		Term[] equivalent = new Term[first.length];
 		for (int i=0; i<first.length; i++) {
@@ -530,7 +531,7 @@ public class ElimStore2 {
 	 * the form  (select (select a i1) i2)  
 	 *
 	 */
-	private static class ArrayRead {
+	private class ArrayRead {
 		private final TermVariable m_Array;
 		private final Term[] m_Index;
 		private final Term m_SelectTerm;
@@ -557,7 +558,24 @@ public class ElimStore2 {
 				m_Array = tv;
 			}
 		}
+
+		public TermVariable getArray() {
+			return m_Array;
+		}
+
+		public Term[] getIndex() {
+			return m_Index;
+		}
+
+		public Term getSelectTerm() {
+			return m_SelectTerm;
+		}
+		
+		
+		
 	}
+	
+	
 	
 	
 	private static class ArrayReadException extends Exception {
@@ -570,11 +588,15 @@ public class ElimStore2 {
 	}
 	
 	
-	private static class ImpliedReadInformation {
+	private class ImpliedReadInformation {
+		Term m_ValueEquivalence;
+		Term m_IndexEquivalence;
 		
-		public ImpliedReadInformation(ArrayRead ar1, ArrayRead ar2, 
+		public ImpliedReadInformation(ArrayRead ar1, Term equalTerm1,
+				ArrayRead ar2, Term equalTerm2, 
 				Term context, Map<TermVariable, Term> mapping) {
-			
+			m_IndexEquivalence = buildPairwiseEquality(ar1.getIndex(), ar2.getIndex());
+			m_ValueEquivalence = m_Script.term("=", equalTerm1, equalTerm2);
 		}
 	}
 	
