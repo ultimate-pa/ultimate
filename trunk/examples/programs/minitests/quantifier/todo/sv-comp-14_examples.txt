@@ -1,0 +1,361 @@
+probably none works:
+--------------------
+--------------------
+ddv-machzwd (&, pointer function)
+ldv-challenges (&)
+ldv-commit-tester (&, pointer function)
+ldv-consumption (&)
+[2013] ldv-drivers (&)
+ldv-linux-3.0 (&)
+[2013] ldv-linux-3.4 (&)
+ldv-linux-3.4-simple (&, pointer function)
+ldv-linux-3.7.3 - (&)
+memsafety-ext (&, NullPointerException)
+ntdrivers (&, #pragma)
+product-lines (#pragma)
+pthread*/seq-* (threading)
+ssh (cvar == null (pointer as function parameter))
+--------------------
+--------------------
+
+mixed:
+------
+------
+bitvector (35):
+
+4 wrong result
+modulus_true, num_*, parity_*
+
+24 unknown
+- all others -
+
+5 bit complement
+soft_*
+
+2 SMTLIBException (Parser)
+jain_1_safe, jain_2_safe
+
+---
+
+bitvector-regression (13):
+
+6 wrong result
+implicitunsignedconversion_*, signextension_*, signextension2_*
+
+4 assert false
+pointer_*
+
+2 bit complement
+integerpromotion_*
+
+1 implicit cast (float to int)
+implicitfloatconversion_*
+
+---
+
+eca (133) [exemplarisch immer nur *_00 getestet]:
+
+126 unknown
+- all others -
+
+7 SMTLIBException (parser)
+Problem13_*
+
+---
+
+heap-manipulation (18):
+
+2 #define function
+tree_*
+
+2 #ifndef
+sll_to_dll_rev_false, sll_to_dll_rev_true
+
+6 &
+bubble_sort_linux_false, bubble_sort_linux_true, merge_*
+
+2 assert false
+bubble_sort_linux_false.cil, bubble_sort_linux_true.cil
+
+2 NullPointerException
+dll_of_dll_false, dll_of_dll_true
+
+2 pointer function
+dll_of_dll_false.cil, dll_of_dll_true.cil
+
+2 pointer void
+sll_to_dll_rev_false.cil, sll_to_dll_rev_true.cil
+
+---
+
+ldv-regression (94):
+
+15 working
+alias_*, just_*, nested_structure_noptr_true.cil, oomInt.c_true_1.cil,
+structure_assignment.c_true.cil, test02_false, test12_false, test13_true,
+test17_true, test_cut_*, test_while_*
+
+5 wrong result
+test01_true, test03_true, test04_true, test19_true, test20_true
+
+1 & undeclared
+test18_true
+
+19 & unsupported
+- all others -
+
+10 assert false
+mutex_lock_struct.c_false.cil, mutex_lock_struct.c_true_1.cil,
+nested_structure.c_true.cil, nested_structure_ptr.c_true.cil,
+nested_structure_ptr_true.cil, nested_structure_true.cil, test28_*,
+test_union_cast.c_true_1.cil, test_union_cast-2_true.cil
+
+3 auxiliary boogie variable
+stateful_check_false.cil, test15_true, test16_true
+
+6 auxVarMap
+test05_true, test06_false, test07_true, test08_false, test09_true, test10_true
+
+1 const
+test_overflow.c_true.cil
+
+2 IllegalArgumentException
+nested_structure_noptr.c_true.cil, nested_structure_noptr_true
+
+1 NullPointerException
+stateful_check_false
+
+4 pointer comparison with 0
+test11_true, test14_true, test_malloc-1_true, test_malloc-2_true
+
+1 pointer function
+callfpointer*
+
+1 pointer type mismatch
+test_malloc-2_true.cil
+
+1 pointer pointer (**)
+sizeofparameters_test.c_true.cil
+
+9 pointer void
+1_3.c_*, alt_*, ex3_*, fo_*, recursive_*, rule60_*, test_malloc-1_true.cil
+
+5 quantifier unsupported
+mutex_lock_int*, oomInt.c_true.cil, volatile_*
+
+2 struct initialization (expression == null)
+nested_structure_ptr_true, nested_structure_true
+
+2 undeclared identifier
+test21_*
+
+6 union
+test29_*, test_union.c_true.cil, test_union.c_true_1.cil,
+test_union_cast-1_true, test_union_cast-1_true.cil
+
+---
+
+list-ext-properties (20):
+
+1 working
+test-0019_false-valid-memtrack
+
+1 wrong result
+test-0019_true
+
+4 & unsupported
+test-0214_true, test-0217_true, test-0504_true, test-0513_true
+
+2 NullPointerException
+test-0232_*
+
+3 pointer array
+960521-1_*
+
+6 pointer comparison with 0
+- all others -
+
+3 pointer void
+test-0158_*
+
+---
+
+list-properties (17):
+
+11 pointer comparison with 0
+- all others -
+
+6 function pointer
+*.cil
+
+---
+
+locks (13):
+
+2 working
+test_locks_5_true, test_locks_6_true
+
+11 unknown
+- all others -
+
+---
+
+loops (72):
+
+18 working
+- all others -
+
+2 wrong result
+count_up_down_true, trex03_true
+
+14 unknown
+eureka_01_*, n.c40_true, nec40_true, sum0*, sum_array_true
+
+2 #ifndef
+veris.c_OpenSER__cases1_stripFullBoth_arr_true,
+verisec_OpenSER__cases1_stripFullBoth_arr_false
+
+1 &
+n.c24_true
+
+2 arrow (->) implementation error
+veris.c_sendmail__tTflag_arr_one_loop_true,
+verisec_sendmail__tTflag_arr_one_loop_true
+
+1 assert false
+bubble_sort_false
+
+2 auxVarMap
+eureka_05_true, terminator_01_true
+
+2 char escape
+invert_*
+
+1 cvar == null (pointer as function parameter)
+s3_false
+
+12 main() Type
+array_*, matrix_true, string_*, terminator_01_false, terminator_02_*,
+terminator_03_*, vogal_*
+
+2 NULL
+list_*
+
+4 pointer array
+bubble_sort_safe, linear_*
+
+3 array initialization
+compact_false, heavy_*
+
+2 sizeof pointer
+veris.c_NetBSD-libc__loop_true, verisec_NetBSD-libc__loop_true
+
+3 SVCOMP - Result
+for_bounded_*, insertion_*
+
+---
+
+memsafety (36):
+
+4 #define function
+test-0102_false-valid-memtrack, test-0102_true, test-0134_true,
+test-0137_false-valid-deref
+
+15 &
+- all others -
+
+1 __SIZE_TYPE__
+20051113-1.c_false-valid-memtrack
+
+1 IllegalArgumentException
+20020406-1_false-valid-memtrack
+
+3 NullPointerException
+test-0232_*
+
+4 NULL
+lockfree-*
+
+3 pointer array
+960521-1_*
+
+5 pointer void
+test-0019_*, test-0158_*
+
+---
+
+ntdrivers-simplified (10):
+
+10 unknown
+- all -
+
+---
+
+recursive (35):
+
+5 working
+EvenOdd03_false, gcd01_true, gcd, McCarthy91_*
+
+25 unknown
+- all others -
+
+1 implementation
+Fibonacci04_false
+
+4 value == null
+Ackermann02_false, Ackermann_false, Addition02_false, Addition_false
+
+---
+
+ssh-simplified (26):
+
+24 unknown
+- all others -
+
+2 pointer void
+s3_clnt_3_false.cil, s3_clnt_3_true.cil
+
+---
+
+systemc (64):
+
+64 unknown
+- all -
+
+--------------------------------------------
+error                                           example (* = TODO)
+
+#define function                                defineFunction
+#ifndef                                         ---
+& undeclared                                    *
+& unsupported                                   *
+__SIZE_TYPE__                                   sizeType
+array initialization                            arrayInitialization
+arrow (->) implementation error                 *
+assert false                                    *
+auxiliary boogie variable                       *
+auxVarMap                                       *
+bit complement                                  bitComplement
+char escape                                     charEscape
+const                                           const
+cvar == null (pointer as function parameter)    cvar
+IllegalArgumentException                        *
+implementation                                  --- (error in example)
+implicit cast (float to int)                    implicitCast
+main() Type                                     mainNoType
+NULL                                            null
+NullPointerException                            *
+pointer array                                   arrayAsPointer
+pointer comparison with 0                       pointerCompare0
+pointer function                                ---
+pointer pointer (**)                            pointerPointer
+pointer type mismatch                           pointerTypeMismatch
+pointer void                                    pointerVoid
+quantifier unsupported                          ---
+sizeof pointer                                  sizeofPointer
+SMTLIBException (Parser)                        --- (something with __VERIFIER_nondet_int?; nondeterministic errors)
+struct initialization (expression == null)      structInitialization
+SVCOMP - Result                                 *
+undeclared identifier                           undeclaredIdentifier
+union                                           ---
+value == null                                   *
