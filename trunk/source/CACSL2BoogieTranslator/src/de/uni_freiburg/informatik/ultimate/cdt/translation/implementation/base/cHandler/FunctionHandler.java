@@ -647,8 +647,6 @@ public class FunctionHandler {
 			} // else: this means param of declaration is void and parameter
 				// list of call is empty! --> OK
 		}
-//		int i = 0;
-//		for (IASTInitializerClause inParam : node.getArguments()) {
 		for (int i = 0; i < node.getArguments().length; i++) {
 			IASTInitializerClause inParam = node.getArguments()[i];
 			ResultExpression in = ((ResultExpression) main.dispatch(inParam))
@@ -666,12 +664,14 @@ public class FunctionHandler {
 				arg = main.typeHandler.convertArith2Boolean(loc,
 						procedures.get(methodName).getInParams()[i].getType(),
 						in.lrVal.getValue());
+			} else {
+				throw new UnsupportedSyntaxException("procedure not found in procedure list, " +
+						"maybe not declared at call position?");
 			}
 			args.add(arg);
 			stmt.addAll(in.stmt);
 			decl.addAll(in.decl);
 			auxVars.putAll(in.auxVars);
-//			i++;
 		}
 
 		Statement call;

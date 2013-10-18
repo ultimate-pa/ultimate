@@ -1151,6 +1151,7 @@ public class CHandler implements ICHandler {
                         node.getOperand())), emptyAuxVars);
             case IASTUnaryExpression.op_star:
             {
+            	assert rop.cType instanceof CPointer : "type error: expected pointer , got " + rop.cType.toString();
                 Expression addr = rop.lrVal.getValue();
                 return new ResultExpression(rop.stmt, new HeapLValue(addr), rop.decl, 
                 		rop.auxVars, ((CPointer)rop.cType).pointsToType);
@@ -1261,14 +1262,15 @@ public class CHandler implements ICHandler {
     			.add(SFO.MEMORY + "_" + t);
     		}
     		return new ResultExpression(stmt, rValue, decl, auxVars, cType);
-    	} else {
+    	} else if (lrVal instanceof LocalLValue){
     		LocalLValue lValue = (LocalLValue) lrVal;
     		stmt.add(new AssignmentStatement(loc, new LeftHandSide[]{lValue.getLHS()}, 
     				new Expression[] {rValue.getValue()}));
 //            functionHandler.checkIfModifiedGlobal(main,
 //                    BoogieASTUtil.getLHSId(lValue.getLHS()), loc);
     		return new ResultExpression(stmt, new RValue(lValue.getValue()), decl, auxVars, cType);
-    	}
+    	} else
+    		throw new AssertionError("Type error: trying to assign to an RValue in Statement" + loc.toString());
 	}
 
 	@Override
@@ -1296,7 +1298,7 @@ public class CHandler implements ICHandler {
             case IASTBinaryExpression.op_assign:
             	stmt.addAll(l.stmt);
             	stmt.addAll(rr.stmt);
-            	decl.addAll(rr.decl);
+            	decl = rr.decl; //should contain the decl from r, duplication if we did addAll
             	auxVars.putAll(rr.auxVars);
             	ResultExpression rex = makeAssignment(loc, stmt, l.lrVal, (RValue) rr.lrVal, decl, auxVars, r.cType);
                 return rex;
