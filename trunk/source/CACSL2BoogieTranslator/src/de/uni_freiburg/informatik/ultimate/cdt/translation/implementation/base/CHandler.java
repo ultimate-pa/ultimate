@@ -679,36 +679,9 @@ public class CHandler implements ICHandler {
 									resultCType;
 					}
 					
-//					//begin alex
-//					if (((MainDispatcher) main).getVariablesForHeap().contains(node)) { //the declared variable will be addressoffed in the program
-//						((MainDispatcher) main).addBoogieDeclarationOfVariableOnHeap(decl);
-//					}
-//					//end alex
-	                	
 	                // Handle initializer clause
 	                if (d.getInitializer() != null) {
-//	                    if (type instanceof StructType) {
-//	                        Result initializer = main.dispatch(d.getInitializer());
-//	                        assert initializer instanceof ResultExpressionListRec;
-//	                        ResultExpressionListRec relr = ((ResultExpressionListRec) initializer);
-//	                        VariableLHS lhs = new VariableLHS(loc,
-//	                                new InferredType(type), bId);
-//	                        if (cvar instanceof CNamed) {
-//	                            cvar = ((CNamed) cvar).getUnderlyingType();
-//	                        }
-//	                        assert cvar instanceof CStruct;
-//	                        ResultExpression init = structHandler.handleStructInit(
-//	                                main, memoryHandler, structHandler, arrayHandler, loc, (StructType) type,
-//	                                (CStruct) cvar, lhs, relr,
-//	                                new ArrayList<Integer>(), -1);
-//	                        auxVars.putAll(init.auxVars);
-//	                        assert init.lrVal.getValue() == null && init.decl.isEmpty();
-//	                        if (resType.cvar.isStatic() && !isGlobal) {
-//	                            staticVarStorage.stmt.addAll(init.stmt);
-//	                        } else {
-//	                            result.stmt.addAll(init.stmt);
-//	                        }
-//	                    } else { // it should be a "normal variable"
+
 	                	ResultExpression rExpr = ((ResultExpression) (main
 	                			.dispatch(d.getInitializer())));
 	                	rExpr.cType = resultCType;
@@ -727,11 +700,6 @@ public class CHandler implements ICHandler {
 	                	}
 
 
-//	                	Expression[] rhs = new Expression[] { rExprExpr };
-//	                	VariableLHS[] lhs = new VariableLHS[] { new VariableLHS(
-//	                			loc, bId) };
-//	                	AssignmentStatement as = new AssignmentStatement(loc,
-//	                			lhs, rhs);
 	                	
 	                	LRValue lrVal = isHeapVar(bId) ?
 	                			new HeapLValue(new IdentifierExpression(loc,  bId)) :
@@ -740,19 +708,11 @@ public class CHandler implements ICHandler {
 	                			rExpr.decl, rExpr.auxVars, resultCType);
 	                	// TODO: Ask Markus where I should havoc temp aux vars.
 	                	if (resType.cvar.isStatic() && !isGlobal) {
-//	                		staticVarStorage.decl.addAll(rExpr.decl);
-//	                		staticVarStorage.stmt.addAll(rExpr.stmt);
-//	                		staticVarStorage.auxVars.putAll(rExpr.auxVars);
-//	                		staticVarStorage.stmt.add(as);
 	                		staticVarStorage.stmt.addAll(assignment.stmt);
 	                		staticVarStorage.decl.addAll(assignment.decl);
 	                		staticVarStorage.auxVars.putAll(assignment.auxVars);
 	                		//	                            staticVarStorage.stmt.addAll(Dispatcher.createHavocsForAuxVars(auxVars));
 	                	} else {
-//	                		result.decl.addAll(rExpr.decl);
-//	                		result.stmt.addAll(rExpr.stmt);
-//	                		result.auxVars.putAll(rExpr.auxVars);
-//	                		result.stmt.add(as);
 	                		result.decl.addAll(assignment.decl);
 	                		result.stmt.addAll(assignment.stmt);
 	                		result.auxVars.putAll(assignment.auxVars);
