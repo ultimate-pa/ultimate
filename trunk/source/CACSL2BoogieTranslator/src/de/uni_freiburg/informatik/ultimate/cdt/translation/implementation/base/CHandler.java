@@ -676,7 +676,7 @@ public class CHandler implements ICHandler {
 						resultCType = isHeapVar(bId) ? ((CPointer)cvar).pointsToType : cvar;
 						resultCType = resultCType instanceof CNamed ? 
 								((CNamed) resultCType).getUnderlyingType() : 
-									result.cType;
+									resultCType;
 					}
 					
 //					//begin alex
@@ -711,6 +711,7 @@ public class CHandler implements ICHandler {
 //	                    } else { // it should be a "normal variable"
 	                	ResultExpression rExpr = ((ResultExpression) (main
 	                			.dispatch(d.getInitializer())));
+	                	rExpr.cType = resultCType;
 	                	rExpr = rExpr.switchToRValue(main, memoryHandler, structHandler, loc);
 
 //	                	auxVars.putAll(rExpr.auxVars);
@@ -735,7 +736,7 @@ public class CHandler implements ICHandler {
 	                	LRValue lrVal = isHeapVar(bId) ?
 	                			new HeapLValue(new IdentifierExpression(loc,  bId)) :
 	                				new LocalLValue(new VariableLHS(loc, bId));
-	                	ResultExpression assignment = makeAssignment(loc, rExpr.stmt, lrVal, new RValue(rExprExpr),
+	                	ResultExpression assignment = makeAssignment(main, loc, rExpr.stmt, lrVal, new RValue(rExprExpr),
 	                			rExpr.decl, rExpr.auxVars, resultCType);
 	                	// TODO: Ask Markus where I should havoc temp aux vars.
 	                	if (resType.cvar.isStatic() && !isGlobal) {
@@ -1200,7 +1201,7 @@ public class CHandler implements ICHandler {
                 stmt.add(new AssignmentStatement(loc,
                         new LeftHandSide[] { new VariableLHS(loc, tmpIType,
                                 tmpName) }, new Expression[] { rvalue}));
-                RValue tmpRValue = new RValue(new IdentifierExpression(loc, tmpName));
+                RValue tmpRValue = new RValue(new IdentifierExpression(loc, tmpIType, tmpName));
                 BinaryExpression.Operator op;
                 if (node.getOperator() == IASTUnaryExpression.op_postFixIncr) {
                     op = BinaryExpression.Operator.ARITHPLUS;
@@ -1209,7 +1210,8 @@ public class CHandler implements ICHandler {
                 }
                 Expression rhs = new BinaryExpression(loc, tInt, op, tmpRValue.getValue(), nr1);
                 assert !(o.lrVal instanceof RValue);
-                ResultExpression assign = makeAssignment(loc, stmt, o.lrVal, new RValue(rhs), decl, auxVars, o.cType);
+                ResultExpression assign = makeAssignment(main, loc, stmt, o.lrVal, 
+                		new RValue(rhs), decl, auxVars, o.cType);
                 return new ResultExpression(assign.stmt, tmpRValue, 
                 		assign.decl, assign.auxVars, assign.cType);
             }
@@ -1241,8 +1243,8 @@ public class CHandler implements ICHandler {
                         new LeftHandSide[] { new VariableLHS(loc, tmpIType,
                                 tmpName) }, new Expression[] { rhs }));
                 assert !(o.lrVal instanceof RValue);
-                RValue tmpRValue = new RValue(new IdentifierExpression(loc, tmpName));
-                ResultExpression assign = makeAssignment(loc, stmt, o.lrVal, tmpRValue, decl, auxVars, o.cType);
+                RValue tmpRValue = new RValue(new IdentifierExpression(loc, tmpIType, tmpName));
+                ResultExpression assign = makeAssignment(main, loc, stmt, o.lrVal, tmpRValue, decl, auxVars, o.cType);
                 return new ResultExpression(assign.stmt, tmpRValue, 
                 		assign.decl, assign.auxVars, assign.cType);
             }
@@ -1348,7 +1350,7 @@ public class CHandler implements ICHandler {
         }
     }
 
-    private ResultExpression makeAssignment(ILocation loc, ArrayList<Statement> stmt,
+    private ResultExpression makeAssignment(Dispatcher main, ILocation loc, ArrayList<Statement> stmt,
 			LRValue lrVal, RValue rValue, ArrayList<Declaration> decl,
 			Map<VariableDeclaration, CACSLLocation> auxVars, CType cType) {
     	if (lrVal instanceof HeapLValue) {
@@ -1359,6 +1361,7 @@ public class CHandler implements ICHandler {
     		stmt.addAll(rex.stmt);
     		decl.addAll(rex.decl);
     		auxVars.putAll(rex.auxVars);
+//    		addHeapModifiedGlobals(); //method unneccessary if only called here..
     		for (String t : new String[] { SFO.INT, SFO.POINTER,
     				SFO.REAL, SFO.BOOL }) {
     			functionHandler.getModifiedGlobals()
@@ -1370,8 +1373,8 @@ public class CHandler implements ICHandler {
     		LocalLValue lValue = (LocalLValue) lrVal;
     		stmt.add(new AssignmentStatement(loc, new LeftHandSide[]{lValue.getLHS()}, 
     				new Expression[] {rValue.getValue()}));
-//            functionHandler.checkIfModifiedGlobal(main,
-//                    BoogieASTUtil.getLHSId(lValue.getLHS()), loc);
+            functionHandler.checkIfModifiedGlobal(main,
+                    BoogieASTUtil.getLHSId(lValue.getLHS()), loc);
     		return new ResultExpression(stmt, new RValue(lValue.getValue()), decl, auxVars, cType);
     	} else
     		throw new AssertionError("Type error: trying to assign to an RValue in Statement" + loc.toString());
@@ -1404,7 +1407,7 @@ public class CHandler implements ICHandler {
             	stmt.addAll(rr.stmt);
             	decl = rr.decl; //should contain the decl from r, duplication if we did addAll
             	auxVars.putAll(rr.auxVars);
-            	ResultExpression rex = makeAssignment(loc, stmt, l.lrVal, (RValue) rr.lrVal, decl, auxVars, r.cType);
+            	ResultExpression rex = makeAssignment(main, loc, stmt, l.lrVal, (RValue) rr.lrVal, decl, auxVars, r.cType);
                 return rex;
             case IASTBinaryExpression.op_equals:
             case IASTBinaryExpression.op_greaterEqual:
@@ -1541,6 +1544,10 @@ public class CHandler implements ICHandler {
             case IASTBinaryExpression.op_divide: {
                 stmt.addAll(rl.stmt);
                 stmt.addAll(rr.stmt);
+                decl.addAll(rl.decl);
+                decl.addAll(rr.decl);
+                auxVars.putAll(rl.auxVars);
+                auxVars.putAll(rr.auxVars);
                 //TODO handle pointer arithmetic.
                 if (node.getOperator() == IASTBinaryExpression.op_divide) {
                     CACSLLocation assertLoc = new CACSLLocation(node,
@@ -1563,6 +1570,10 @@ public class CHandler implements ICHandler {
             case IASTBinaryExpression.op_plusAssign: {
                 stmt.addAll(rl.stmt);
                 stmt.addAll(rr.stmt);
+                decl.addAll(rl.decl);
+                decl.addAll(rr.decl);
+                auxVars.putAll(rl.auxVars);
+                auxVars.putAll(rr.auxVars);
                 //TODO handle pointer arithmetic.
                 if (node.getOperator() == IASTBinaryExpression.op_divideAssign) {
                     CACSLLocation assertLoc = new CACSLLocation(node,
@@ -1575,7 +1586,7 @@ public class CHandler implements ICHandler {
                 }
                 Expression be = createArithmeticExpression(node.getOperator(),
                 		rl.lrVal.getValue(), rr.lrVal.getValue(), loc);
-                return makeAssignment(loc, stmt, l.lrVal, new RValue(be), decl, auxVars, l.cType);
+                return makeAssignment(main, loc, stmt, l.lrVal, new RValue(be), decl, auxVars, l.cType);
             }
             case IASTBinaryExpression.op_binaryAnd:
             case IASTBinaryExpression.op_binaryOr:
@@ -1584,6 +1595,10 @@ public class CHandler implements ICHandler {
             case IASTBinaryExpression.op_shiftRight: {
                 stmt.addAll(rl.stmt);
                 stmt.addAll(rr.stmt);
+                decl.addAll(rl.decl);
+                decl.addAll(rr.decl);
+                auxVars.putAll(rl.auxVars);
+                auxVars.putAll(rr.auxVars);
                 Expression bwexpr = createBitwiseExpression(node.getOperator(),
                 		rl.lrVal.getValue(), rr.lrVal.getValue(), loc);
                 return new ResultExpression(stmt, new RValue(bwexpr), decl, auxVars, rl.cType);
@@ -1596,9 +1611,13 @@ public class CHandler implements ICHandler {
             case IASTBinaryExpression.op_binaryXorAssign: {
                 stmt.addAll(rl.stmt);
                 stmt.addAll(rr.stmt);
+                decl.addAll(rl.decl);
+                decl.addAll(rr.decl);
+                auxVars.putAll(rl.auxVars);
+                auxVars.putAll(rr.auxVars);
                 Expression bwexpr = createBitwiseExpression(
                         node.getOperator(), rl.lrVal.getValue(), rr.lrVal.getValue(), loc);
-                return makeAssignment(loc, stmt, l.lrVal, new RValue(bwexpr), decl, auxVars, l.cType);
+                return makeAssignment(main, loc, stmt, l.lrVal, new RValue(bwexpr), decl, auxVars, l.cType);
             }
             default:
                 String msg = "Unknown or unsupported unary operation";
@@ -2565,6 +2584,15 @@ public class CHandler implements ICHandler {
     			new IntegerLiteral(loc, SFO.NR1),
     			new IntegerLiteral(loc, SFO.NR0));
 	}
+    
+    void addHeapModifiedGlobals() {
+    	for (String t : new String[] { SFO.INT, SFO.POINTER,
+    			SFO.REAL, SFO.BOOL }) {
+    		functionHandler.getModifiedGlobals()
+    		.get(functionHandler.getCurrentProcedureID())
+    		.add(SFO.MEMORY + "_" + t);
+    	}
+    }
 
     @Override
     public SymbolTable getSymbolTable() {

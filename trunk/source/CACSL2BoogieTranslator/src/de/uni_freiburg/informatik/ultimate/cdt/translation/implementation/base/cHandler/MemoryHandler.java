@@ -707,7 +707,8 @@ public class MemoryHandler {
             fh.getCallGraph().get(fh.getCurrentProcedureID()).add(SFO.MALLOC);
         }
 		assert (main.isAuxVarMapcomplete(decl, auxVars));
-        return new ResultExpression(stmt, new HeapLValue(e), decl, auxVars);
+//        return new ResultExpression(stmt, new HeapLValue(e), decl, auxVars);
+        return new ResultExpression(stmt, new RValue(e), decl, auxVars);
     }
 
     /**
@@ -920,8 +921,8 @@ public class MemoryHandler {
     public ResultExpression getReadCall(final Dispatcher main,
             final InferredType it, 
             final Expression tPointer, CPointer pointerCType) {
-//        assert tPointer.getType() instanceof InferredType
-//                && ((InferredType) tPointer.getType()).getType() == Type.Pointer;
+        assert tPointer.getType() instanceof InferredType
+                && ((InferredType) tPointer.getType()).getType() == Type.Pointer;
         // assert #valid[tPointer!base];
         // tmp = "read_$Pointer$(tPointer);"
         ArrayList<Statement> stmt = new ArrayList<Statement>();
@@ -958,14 +959,14 @@ public class MemoryHandler {
         VariableDeclaration tVarDecl = SFO.getTempVarVariableDeclaration(tmpId, it, loc);
         auxVars.put(tVarDecl, loc);
         decl.add(tVarDecl);
-        VariableLHS[] lhs = new VariableLHS[] { new VariableLHS(loc, tmpId) };
+        VariableLHS[] lhs = new VariableLHS[] { new VariableLHS(loc, it, tmpId) };
         CallStatement call = new CallStatement(loc, false, lhs, "read~" + t,
                 new Expression[] { tPointer });
         stmt.add(call);
         CType resultCType = ((CPointer) pointerCType).pointsToType;
 		assert (main.isAuxVarMapcomplete(decl, auxVars));
         return new ResultExpression(stmt, 
-        		new RValue(new IdentifierExpression(loc, tmpId)),
+        		new RValue(new IdentifierExpression(loc, it, tmpId)),
         		decl, auxVars, resultCType);
     }
     

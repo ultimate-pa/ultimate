@@ -150,8 +150,8 @@ public class ResultExpression extends Result {
 			return rex;
 		} else {
 			HeapLValue hlv = (HeapLValue) lrVal;
-			SymbolTable sT = ((MainDispatcher) main).cHandler.getSymbolTable();
-			Expression value = hlv.getAddress();
+//			SymbolTable sT = ((MainDispatcher) main).cHandler.getSymbolTable();
+//			Expression value = hlv.getAddress();
 			
 			//retain already created stmt, decl, auxVars
 			ArrayList<Statement> newStmt = new ArrayList<Statement>(this.stmt);
@@ -174,15 +174,13 @@ public class ResultExpression extends Result {
 					heapReadType = new InferredType(Type.Integer);
 					rex = memoryHandler.getReadCall(
 							main, heapReadType, hlv.getAddress(), new CPointer(this.cType));
-//					newStmt.addAll(readResult.stmt);
-//					newDecl.addAll(readResult.decl);
-//					newAuxVars.putAll(readResult.auxVars);	
-//					newValue = (RValue) readResult.lrVal;
+					newStmt.addAll(rex.stmt);
+					newDecl.addAll(rex.decl);
+					newAuxVars.putAll(rex.auxVars);	
+					newValue = (RValue) rex.lrVal;
 					break;
 				case BOOL:
-					break;
 				case CHAR:
-					break;
 				default:
 					throw new UnsupportedSyntaxException("..");
 				}
@@ -193,14 +191,16 @@ public class ResultExpression extends Result {
 				CStruct structType = (CStruct) underlyingType;
 				rex = readStructFromHeap(main, structHandler, memoryHandler, loc, 
 						hlv.getAddress(), structType);
+				newStmt.addAll(rex.stmt);
+				newDecl.addAll(rex.decl);
+				newAuxVars.putAll(rex.auxVars);	
+				newValue = (RValue) rex.lrVal;	
 			} else if (underlyingType instanceof CNamed) {
 				assert false : "This should not be the case as we took the underlying type.";
 			} else {
 				throw new UnsupportedSyntaxException("..");
 			}
-			
-//			rex = new ResultExpression(newStmt, newValue, newDecl, newAuxVars);
-//			rex.cType = this.cType;
+			rex = new ResultExpression(newStmt, newValue, newDecl, newAuxVars, rex.cType);
 			return rex;
 		}
 	}
