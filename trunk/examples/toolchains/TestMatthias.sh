@@ -121,6 +121,22 @@ trunk/examples/toolchains/TraceAbstractionTestDir.sh 120 trunk/examples/programs
 fi
 
 
+if [ "$1" = "buchiAutomizer0" ]; then
+echo "buchiAutomizer for folder $2"
+trunk/examples/toolchains/TraceAbstractionTestDir.sh 120 "$2" \
+ "BuchiAutomizerWithBlockEncoding.xml;BuchiAutomizerCWithBlockEncoding.xml;BuchiAutomizer/BuchiAutomizerBE"
+fi
+
+if [ "$1" = "buchiAutomizer1" ]; then
+trunk/examples/toolchains/TraceAbstractionTestDir.sh 20 trunk/examples/rank \
+ "BuchiAutomizer.xml;BuchiAutomizerC.xml;BuchiAutomizer"
+trunk/examples/toolchains/TraceAbstractionTestDir.sh 20 trunk/examples/programs \
+ "BuchiAutomizer.xml;BuchiAutomizerC.xml;BuchiAutomizer"
+trunk/examples/toolchains/TraceAbstractionTestDir.sh 20 trunk/examples/terminator \
+ "BuchiAutomizer.xml;BuchiAutomizerC.xml;BuchiAutomizer"
+trunk/examples/toolchains/TraceAbstractionTestDir.sh 20 trunk/examples/svcomp \
+ "BuchiAutomizer.xml;BuchiAutomizerC.xml;BuchiAutomizer"
+fi
 
 
 #trunk/examples/toolchains/TraceAbstractionTestDir.sh 1000 trunk/examples/svcomp/systemc \
@@ -176,11 +192,4 @@ fi
 # "TraceAbstraction.xml;TraceAbstractionC.xml;TraceAbstraction-svcomp-LargeLazy" \
 # "TraceAbstractionWithBlockEncoding.xml;TraceAbstractionCWithBlockEncoding.xml;TraceAbstraction-svcomp-BlockEncodingLazy" 
 
-# trunk/examples/toolchains/TraceAbstractionTestDir.sh 20 trunk/examples/rank \
-#  "BuchiAutomizer.xml;BuchiAutomizerC.xml;BuchiAutomizer"
-# trunk/examples/toolchains/TraceAbstractionTestDir.sh 20 trunk/examples/programs \
-#  "BuchiAutomizer.xml;BuchiAutomizerC.xml;BuchiAutomizer"
-# trunk/examples/toolchains/TraceAbstractionTestDir.sh 20 trunk/examples/terminator \
-#  "BuchiAutomizer.xml;BuchiAutomizerC.xml;BuchiAutomizer"
-# trunk/examples/toolchains/TraceAbstractionTestDir.sh 20 trunk/examples/svcomp \
-#  "BuchiAutomizer.xml;BuchiAutomizerC.xml;BuchiAutomizer"
+
