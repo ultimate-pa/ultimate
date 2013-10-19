@@ -1,0 +1,38 @@
+#Sat Oct 19 14:16:28 CEST 2013
+file_export_version=3.0
+/instance/UltimateCore/ultimate.logging.tools=info
+\!/instance/UltimateCore=
+/instance/UltimateCore/ultimate.logging.tooldetails=SmtInterpol\=Warn;SMTInterface\=Warn;Groundifier\=Warn;
+@UltimateCore=0.0.1
+/instance/UltimateCore/ultimate.logging.plugins=info
+#Sat Oct 19 14:16:28 CEST 2013
+/configuration/AutomataScriptInterpreter/Timeout=600000
+file_export_version=3.0
+/configuration/AutomataScriptInterpreter/Path=dump
+\!/configuration/AutomataScriptInterpreter=
+#Sat Oct 19 14:16:28 CEST 2013
+file_export_version=3.0
+/configuration/BlockEncoding/MinimizeCall=true
+/configuration/BlockEncoding/RatingBoundary=0
+\!/configuration/BlockEncoding=
+/configuration/BlockEncoding/RatingStrategy=2
+#Sat Oct 19 14:16:28 CEST 2013
+file_export_version=3.0
+/configuration/CACSL2BoogieTranslator/CheckedMethod=main
+\!/configuration/CACSL2BoogieTranslator=
+#Sat Oct 19 14:16:28 CEST 2013
+file_export_version=3.0
+/configuration/JungVisualization/shapeForNodePreference=RoundRectangle
+\!/configuration/JungVisualization=
+#Sat Oct 19 14:16:28 CEST 2013
+file_export_version=3.0
+\!/configuration/NestedWordAutomata=
+/configuration/NestedWordAutomata/writeToFile=true
+/configuration/NestedWordAutomata/path=dump
+#Sat Oct 19 14:16:28 CEST 2013
+file_export_version=3.0
+/configuration/RCFGBuilder/BlockSize=single program statement
+/configuration/RCFGBuilder/Timeout=60
+\!/configuration/RCFGBuilder=
+/configuration/RCFGBuilder/PreserveGotoEdges=true
+/configuration/RCFGBuilder/Determinization=EagerPost
