@@ -187,10 +187,10 @@ public class BuchiCegarLoop {
 
 		
 
-		private static final boolean m_ReduceAbstractionSize = !true;
-		private static final boolean m_Eager = true;
-		private static final boolean m_Difference = true;
-		private static final boolean m_UseDoubleDeckers = !true;
+		private final boolean m_ReduceAbstractionSize = true;
+		private final boolean m_Eager = true;
+		private final boolean m_Difference = true;
+		private final boolean m_UseDoubleDeckers = !true;
 
 		public BuchiCegarLoop(RootNode rootNode,
 				SmtManager smtManager,
@@ -328,9 +328,9 @@ public class BuchiCegarLoop {
 					}
 
 
-					if (m_Pref.computeHoareAnnotation()) {
-						assert (m_SmtManager.checkInductivity(m_Abstraction, false, true));
-					}
+//					if (m_Pref.computeHoareAnnotation()) {
+//						assert (m_SmtManager.checkInductivity(m_Abstraction, false, true));
+//					}
 
 					if (m_Iteration <= m_Pref.watchIteration() && m_Pref.artifact() == Artifact.ABSTRACTION) {
 						m_ArtifactAutomaton = m_Abstraction;
