@@ -30,6 +30,45 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Ac
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 
+
+/**
+ * A trace has single static assignment form (SSA) is each variable is assigned
+ * exactly once ( http://en.wikipedia.org/wiki/Static_single_assignment_form).
+ * 
+ * This class transforms a trace to an SSA representation by renaming variables.
+ * 
+ * Roughly variable x is renamed to x_j, where j is the position where j is the
+ * last position where x obtained a new value.
+ *
+ * We use the SSA for checking satisfiability with an SMT solver, therefore we
+ * represent the indexed variables by constants.
+ * Furthermore we replace all auxiliary variables and branch encoders in the
+ * TransFormulas by fresh constants.
+ * 
+ * We rename inVars of a variable x at trace position i+1 according to the 
+ * following scheme.
+ * <ul>
+ * <li> if x is local:
+ * we rename the inVar to x_j, where j is the largest position <= i in the same 
+ * calling context, where x is assigned. If x was not assigned in this calling 
+ * context up to position i, j is the start of the calling context.
+ * <li> if x is global and not oldvar:
+ * we rename the inVar to x_j, where j is the largest position <=i where x is
+ * assigned. If x was not assigned up to position i, j is the start of the
+ * lowest calling context (which is -1 if there are no pending returns and
+ * numberOfPendingReturns-1 otherwise).
+ * <li> if x is global and oldvar:
+ * if x is modifiable in the current calling context we rename the inVar to x_j,
+ * where j is the start of the current calling context,
+ * if x is not modifiable in the current calling context we threat this variable
+ * as a non-oldVar 
+ * </ul>
+ * If x is assigned at position i+1, we rename the outVar to x_{x+1}.
+ * If x in not assigned at position i+1, the outVar does not exist or coincides
+ * with the inVar and was already renamed above.
+ * @author Matthias Heizmann
+ *
+ */
 public class NestedSsaBuilder {
 	
 	private static Logger s_Logger = 
