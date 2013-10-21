@@ -1722,10 +1722,8 @@ public class SmtManager {
 		return result;
 	}
 	
-	public IPredicate computeForwardRelevantPredicate(IPredicate sp, RelevantVariables rvar, 
-			int posOfPredicate) {
-		return computeRelevantPredicateHelper(sp, rvar,
-				posOfPredicate + 1,
+	public IPredicate computeForwardRelevantPredicate(IPredicate sp, Set<BoogieVar> relevantVars) {
+		return computeRelevantPredicateHelper(sp, relevantVars,
 				Script.EXISTS);
 	}
 	
@@ -1736,12 +1734,9 @@ public class SmtManager {
 	 * @return
 	 */
 	private IPredicate computeRelevantPredicateHelper(IPredicate p,
-			RelevantVariables rvar, int posToComputePredicateFor,
+			Set<BoogieVar> relevantVars,
 			int quantifier) {
-		
-		Set<BoogieVar> relevantVars = rvar.getRelevantVariables()[posToComputePredicateFor];
 		Set<TermVariable> irrelevantVars = computeIrrelevantVariables(relevantVars, p);
-		
 		Term formula = PartialQuantifierElimination.quantifier(m_Script, quantifier,
 				irrelevantVars.toArray(new TermVariable[0]), p.getFormula(), (Term[][]) null);
 		Set<TermVariable> quantifiedVariables = new HashSet<TermVariable>();
@@ -1754,9 +1749,8 @@ public class SmtManager {
 	}
 	
 	
-	public IPredicate computeBackwardRelevantPredicate(IPredicate wp, RelevantVariables rvar, 
-			int posOfPredicate) {
-		return computeRelevantPredicateHelper(wp, rvar, posOfPredicate + 1, Script.FORALL);
+	public IPredicate computeBackwardRelevantPredicate(IPredicate wp, Set<BoogieVar> relevantVars) {
+		return computeRelevantPredicateHelper(wp, relevantVars, Script.FORALL);
 	}
 	
 	/**

@@ -12,6 +12,7 @@ import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.InterproceduralSequentialComposition;
@@ -41,6 +42,10 @@ public class TraceCheckerSpWp extends TraceChecker {
 	
 	private final static boolean m_useUnsatCore = true;
 	private final static boolean m_useUnsatCoreOfFineGranularity = true;
+	// The following two variables indicate which strategy of computing the relevant variables along a trace
+	// should be used. If both are true, then the live variables are used.
+	private final static boolean m_useLiveVariables = true;
+	private final static boolean m_useRelevantVariables = m_useLiveVariables;
 	private boolean m_ComputeInterpolantsSp;
 	private boolean m_ComputeInterpolantsFp;
 	private boolean m_ComputeInterpolantsBp;
@@ -174,7 +179,20 @@ public class TraceCheckerSpWp extends TraceChecker {
 					(AnnotateAndAsserterConjuncts)m_AAA);
 			assert stillInfeasible(rv);
 		}
-		RelevantVariables rvar = new RelevantVariables(rv);
+//		RelevantVariables rvar = new RelevantVariables(rv);
+//		LiveVariables lvar = new LiveVariables(trace, m_SmtManager, m_DefaultTransFormulas);
+		Set<BoogieVar>[] relevantVars;
+		
+		if (m_useLiveVariables) {
+			if (m_Nsb instanceof LiveVariables) {
+				relevantVars = ((LiveVariables) m_Nsb).getLiveVariables();
+			} else {
+				throw new UnsupportedOperationException("The strategy of live variables is turned on," 
+						+"but the NestedSsaBuilder is not type of LiveVariables");
+			}
+		} else if (m_useRelevantVariables) {
+			relevantVars = (new RelevantVariables(rv)).getRelevantVariables();
+		}
 		
 		if (m_ComputeInterpolantsSp) {
 			m_InterpolantsSp = new IPredicate[trace.length()-1];
@@ -235,7 +253,7 @@ public class TraceCheckerSpWp extends TraceChecker {
 					tracePostcondition, "SP with unsat core");
 			if (m_ComputeInterpolantsFp) {
 				s_Logger.debug("Computing forward relevant predicates...");
-				computeForwardRelevantPredicates(rvar);
+				computeForwardRelevantPredicates(relevantVars);
 				s_Logger.debug("Checking inductivity of forward relevant predicates...");
 				checkInterpolantsCorrect(m_InterpolantsFp, trace, tracePrecondition,
 						tracePostcondition, "FP");
@@ -355,7 +373,7 @@ public class TraceCheckerSpWp extends TraceChecker {
 					tracePostcondition, "WP with unsat core");
 			if (m_ComputeInterpolantsBp) {
 				s_Logger.debug("Computing backward relevant predicates...");
-				computeBackwardRelevantPredicates(rvar);
+				computeBackwardRelevantPredicates(relevantVars);
 				s_Logger.debug("Checking inductivity of backward relevant predicates...");
 				checkInterpolantsCorrect(m_InterpolantsBp, trace, tracePrecondition,
 						tracePostcondition, "BP");
@@ -468,21 +486,21 @@ public class TraceCheckerSpWp extends TraceChecker {
 		return codeBlocksInUnsatCore;
 	}
 
-	private void computeForwardRelevantPredicates(RelevantVariables rvar) {
+	private void computeForwardRelevantPredicates(Set<BoogieVar>[] relevantVars) {
 		assert m_InterpolantsSp != null : "Interpolants SP_i have not been computed!";
 		m_InterpolantsFp = new IPredicate[m_InterpolantsSp.length];
 		for (int i = 0; i < m_InterpolantsSp.length; i++) {
-			IPredicate p = m_SmtManager.computeForwardRelevantPredicate(m_InterpolantsSp[i], rvar, i);
+			IPredicate p = m_SmtManager.computeForwardRelevantPredicate(m_InterpolantsSp[i], relevantVars[i+1]);
 			m_InterpolantsFp[i] = m_PredicateUnifier.getOrConstructPredicate(p.getFormula(),
 					p.getVars(), p.getProcedures());
 		}
 	}
 	
-	private void computeBackwardRelevantPredicates(RelevantVariables rvar) {
+	private void computeBackwardRelevantPredicates(Set<BoogieVar>[] relevantVars) {
 		assert m_InterpolantsWp != null : "Interpolants WP_i have not been computed!";
 		m_InterpolantsBp = new IPredicate[m_InterpolantsWp.length];
 		for (int i = 0; i < m_InterpolantsWp.length; i++) {
-			IPredicate p = m_SmtManager.computeBackwardRelevantPredicate(m_InterpolantsWp[i], rvar, i);
+			IPredicate p = m_SmtManager.computeBackwardRelevantPredicate(m_InterpolantsWp[i], relevantVars[i+1]);
 			m_InterpolantsBp[i]  = m_PredicateUnifier.getOrConstructPredicate(p.getFormula(),
 					p.getVars(), p.getProcedures());
 		}

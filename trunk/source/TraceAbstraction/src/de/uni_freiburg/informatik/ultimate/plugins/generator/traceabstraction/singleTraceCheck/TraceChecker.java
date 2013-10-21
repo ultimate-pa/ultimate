@@ -195,8 +195,9 @@ public class TraceChecker {
 	private LBool checkTrace() {
 		LBool isSafe;
 		m_SmtManager.startTraceCheck();
-		m_Nsb = new NestedSsaBuilder(m_Trace, m_SmtManager, 
-				m_DefaultTransFormulas);
+//		m_Nsb = new NestedSsaBuilder(m_Trace, m_SmtManager, 
+//				m_DefaultTransFormulas);
+		m_Nsb = new LiveVariables(m_Trace, m_SmtManager, m_DefaultTransFormulas);
 		NestedSsa ssa = m_Nsb.getSsa();
 		try {
 			m_AAA = getAnnotateAndAsserter(ssa);

@@ -88,13 +88,13 @@ public class NestedSsaBuilder {
 	 * Map local or oldVar BoogieVar bv to the constant bv_j that represents bv
 	 * at the moment. 
 	 */
-	private Map<BoogieVar,Term> currentLocalAndOldVarVersion;
+	protected Map<BoogieVar,Term> currentLocalAndOldVarVersion;
 	
 	/**
 	 * Stores current versions for local or oldVar that are not visible at the
 	 * moment.
 	 */
-	final private Stack<Map<BoogieVar,Term>> currentVersionStack =
+	protected final Stack<Map<BoogieVar,Term>> currentVersionStack =
 			new Stack<Map<BoogieVar,Term>>();
 	
 
@@ -109,29 +109,29 @@ public class NestedSsaBuilder {
 		return m_IndexedVarRepresentative;
 	}
 	
-	private final Map<Term,BoogieVar> m_Constants2BoogieVar = new HashMap<Term,BoogieVar>();
+	protected final Map<Term,BoogieVar> m_Constants2BoogieVar = new HashMap<Term,BoogieVar>();
 
-	private final TraceWithFormulas<TransFormula, IPredicate> m_TraceWF;
+	protected final TraceWithFormulas<TransFormula, IPredicate> m_TraceWF;
 	
-	private final SsaData m_SsaData;
+	protected final SsaData m_SsaData;
 	
 	private final ModifiableGlobalVariableManager m_ModGlobVarManager;
 	
 
 	
-	private NestedSsa m_Ssa;
+	protected NestedSsa m_Ssa;
 	
 	public NestedSsa getSsa() {
 		return m_Ssa;
 	}
 	
-	private String m_currentProcedure;
+	protected String m_currentProcedure;
 
 	/**
 	 * maps position of pending context to position of pending return
 	 * the positions of pending contexts are -2,-3,-4,...
 	 */
-	private final Map<Integer,Integer> m_PendingContext2PendingReturn = 
+	protected final Map<Integer,Integer> m_PendingContext2PendingReturn = 
 			new HashMap<Integer,Integer>();
 	
 
@@ -326,7 +326,7 @@ public class NestedSsaBuilder {
 	 * Set new var version for all globals that are modifiable by the current
 	 * procedure.
 	 */
-	private void reVersionModifiableGlobals() {
+	protected void reVersionModifiableGlobals() {
 		Set<BoogieVar> modifiable = m_ModGlobVarManager.getGlobalVarsAssignment(
 				m_currentProcedure).getAssignedVars();
 		for (BoogieVar bv : modifiable) {
@@ -339,7 +339,7 @@ public class NestedSsaBuilder {
 	 * Set new var version for all oldVars that are modifiable by the current
 	 * procedure.
 	 */
-	private void reVersionModifiableOldVars() {
+	protected void reVersionModifiableOldVars() {
 		Set<BoogieVar> modifiable = m_ModGlobVarManager.getOldVarsAssignment(
 				m_currentProcedure).getAssignedVars();
 		for (BoogieVar bv : modifiable) {
@@ -371,7 +371,7 @@ public class NestedSsaBuilder {
 	
 	
 
-	private class VariableVersioneer {
+	class VariableVersioneer {
 		private final TransFormula m_TF;
 		private final IPredicate m_Pred;
 		private final Map<TermVariable, Term> m_SubstitutionMapping = 
@@ -557,7 +557,7 @@ public class NestedSsaBuilder {
 
 		
 		@Deprecated //pendingContexts is now Map
-		private List<Integer> positionsOfPendingReturns(NestedWord<CodeBlock> nw) {
+		protected List<Integer> positionsOfPendingReturns(NestedWord<CodeBlock> nw) {
 			List<Integer> result = new ArrayList<Integer>();
 			for (int i=0; i<nw.length(); i++) {
 				if (nw.isPendingReturn(i)) {
@@ -571,7 +571,7 @@ public class NestedSsaBuilder {
 		/**
 		 * Buffer to collect information needed to construt a SSA.
 		 */
-		private class SsaData {
+		class SsaData {
 			/**
 			 * SSA form of Precondition.
 			 * Original precondition where all variables get index -1.  
