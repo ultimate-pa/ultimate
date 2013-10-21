@@ -864,6 +864,10 @@ public class FunctionHandler {
 		return this.currentProcedure.getIdentifier();
 	}
 
+	public boolean noCurrentProcedure() {
+		return this.currentProcedure == null;
+	}
+	
 	/**
 	 * Getter for the call graph.
 	 * 

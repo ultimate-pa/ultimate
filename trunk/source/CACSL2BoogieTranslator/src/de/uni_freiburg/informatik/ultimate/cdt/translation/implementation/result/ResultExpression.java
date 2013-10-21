@@ -137,6 +137,18 @@ public class ResultExpression extends Result {
 		this.auxVars = auxVars;
 	}
 	
+	public ResultExpression(
+			LRValue lrVal,
+			CType cType) {
+		super(null);
+		this.stmt = new ArrayList<Statement>();
+		this.lrVal = lrVal;
+		this.cType = cType;
+		this.decl = new ArrayList<Declaration>();
+		this.declCTypes = new ArrayList<CType>();
+		this.auxVars = new HashMap<VariableDeclaration, CACSLLocation>();
+	}
+		
 	public ResultExpression switchToRValue(Dispatcher main, MemoryHandler memoryHandler, 
 			StructHandler structHandler, CACSLLocation loc) {
 		ResultExpression rex = null;
