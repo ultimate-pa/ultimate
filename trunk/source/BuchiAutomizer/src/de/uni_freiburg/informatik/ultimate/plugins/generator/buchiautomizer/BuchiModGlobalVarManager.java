@@ -93,7 +93,7 @@ public class BuchiModGlobalVarManager extends ModifiableGlobalVariableManager {
 	
 	
 	private TransFormula constructGlobalVarsAssignment(String proc) {
-		TransFormula without = super.getOldVarsAssignment(proc);
+		TransFormula without = super.getGlobalVarsAssignment(proc);
 		
 		Term formula = without.getFormula();
 		Map<BoogieVar, TermVariable> inVars = 
