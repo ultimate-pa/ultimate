@@ -19,6 +19,12 @@ public class DefaultTransFormulas extends TraceWithFormulas<TransFormula, IPredi
 	private final Set<Integer> m_CallPositions;
 	private final boolean m_WithBranchEncoders;
 	
+	
+	
+	public ModifiableGlobalVariableManager getModifiableGlobalVariableManager() {
+		return m_ModifiableGlobalVariableManager;
+	}
+
 	public DefaultTransFormulas(NestedWord<CodeBlock> nestedWord, 
 			IPredicate precondition, IPredicate postcondition,
 			SortedMap<Integer, IPredicate> pendingContexts,
