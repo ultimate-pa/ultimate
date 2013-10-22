@@ -123,6 +123,28 @@ public class BuchiModGlobalVarManager extends ModifiableGlobalVariableManager {
 	public Term oldVarEquality(BoogieVar var, BoogieVar oldVar) {
 		return m_Script.term("=", var.getTermVariable(), oldVar.getTermVariable());
 	}
+
+
+	@Override
+	public Map<String, BoogieVar> getGlobals() {
+		HashMap<String, BoogieVar> result = 
+				new HashMap<String, BoogieVar>(super.getGlobals());
+		result.put(m_OldRank.getIdentifier(),m_OldRank);
+		result.put(m_Unseeded.getIdentifier(),m_Unseeded);
+		return result;
+	}
+
+
+	@Override
+	public Map<String, BoogieVar> getOldGlobals() {
+		HashMap<String, BoogieVar> result = 
+				new HashMap<String, BoogieVar>(super.getOldGlobals());
+		result.put(m_OldRankOldVar.getIdentifier(),m_OldRankOldVar);
+		result.put(m_UnseededOldVar.getIdentifier(),m_UnseededOldVar);
+		return result;
+	}
+	
+	
 	
 	
 }

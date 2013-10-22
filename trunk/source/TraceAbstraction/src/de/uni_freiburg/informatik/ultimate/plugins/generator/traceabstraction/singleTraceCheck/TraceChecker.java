@@ -470,7 +470,8 @@ public class TraceChecker {
 
 			Call call = (Call) m_Trace.getSymbol(nonPendingCall);
 			String calledMethod = call.getCallStatement().getMethodName();
-			IPredicate oldVarsEquality = m_SmtManager.getOldVarsEquality(calledMethod);
+			IPredicate oldVarsEquality = m_SmtManager.getOldVarsEquality(
+					calledMethod, m_ModifiedGlobals);
 			
 			IPredicate precondition = m_PredicateUnifier.getOrConstructPredicate(
 					oldVarsEquality.getFormula(), oldVarsEquality.getVars(), 

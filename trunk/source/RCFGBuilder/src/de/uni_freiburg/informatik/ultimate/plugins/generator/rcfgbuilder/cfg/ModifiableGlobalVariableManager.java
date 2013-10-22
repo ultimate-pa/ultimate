@@ -1,5 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -174,6 +175,20 @@ public class ModifiableGlobalVariableManager {
 		TransFormula result = new TransFormula(old2globFormula, old2globInVars, old2globOutVars,
 				auxVars, branchEncoders, TransFormula.Infeasibility.UNPROVEABLE,closedFormula);
 		return result;
+	}
+	
+	/**
+	 * Return global variables;
+	 */
+	public Map<String, BoogieVar> getGlobals() {
+		return m_Boogie2smt.getSmt2Boogie().getGlobals();
+	}
+	
+	/**
+	 * Return global oldvars;
+	 */
+	public Map<String, BoogieVar> getOldGlobals() {
+		return m_Boogie2smt.getSmt2Boogie().getOldGlobals();
 	}
 
 }

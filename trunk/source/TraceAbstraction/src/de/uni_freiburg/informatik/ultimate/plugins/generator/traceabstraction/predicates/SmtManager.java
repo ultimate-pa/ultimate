@@ -270,19 +270,19 @@ public class SmtManager {
 		return result;
 	}
 	
-	
 	/**
 	 * Returns a predicate which states that old(g)=g for all global variables
-	 * g that are modified by procedure proc. 
+	 * g that are modifiable by procedure proc according to 
+	 * ModifiableGlobalVariableManager modGlobVarManager.
 	 */
-	public IPredicate getOldVarsEquality(String proc) {
-		Set<BoogieVar> modifiableGlobals = m_ModifiableGlobals.getModifiedBoogieVars(proc);
+	public IPredicate getOldVarsEquality(String proc, 
+			ModifiableGlobalVariableManager modGlobVarManager) {
 		Set<BoogieVar> vars = new HashSet<BoogieVar>();
 		Term term = getScript().term("true");
-		for (BoogieVar bv : modifiableGlobals) {
+		for (String id : modGlobVarManager.getGlobals().keySet()) {
+			BoogieVar bv = modGlobVarManager.getGlobals().get(id);
 			vars.add(bv);
-			BoogieVar bvOld = getSmt2Boogie()
-					.getOldGlobals().get(bv.getIdentifier());
+			BoogieVar bvOld = modGlobVarManager.getOldGlobals().get(id);
 			vars.add(bvOld);
 			TermVariable tv = bv.getTermVariable();
 			TermVariable tvOld = bvOld.getTermVariable();
@@ -293,6 +293,7 @@ public class SmtManager {
 		IPredicate result = newPredicate(term, procs, vars, 
 				computeClosedFormula(term, vars, getScript())); 
 		return result;
+		
 	}
 	
 
