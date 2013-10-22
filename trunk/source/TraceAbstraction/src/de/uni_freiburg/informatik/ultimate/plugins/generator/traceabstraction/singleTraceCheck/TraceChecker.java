@@ -353,21 +353,31 @@ public class TraceChecker {
 			throw new UnsupportedOperationException("unsupportedInterpolation");
 		}
 		
-		// TODO: we used the following to check correctness of our relevant
-		// variables
-		boolean testRelevantVars = !false;
-		if (testRelevantVars) {
-			RelevantVariables rv = new RelevantVariables(m_DefaultTransFormulas);
-			for (int i=0; i<m_Interpolants.length; i++) {
-				IPredicate itp = m_Interpolants[i];
-				Set<BoogieVar> vars = itp.getVars();
-				Set<BoogieVar> frel = rv.getForwardRelevantVariables()[i+1];
-				Set<BoogieVar> brel = rv.getBackwardRelevantVariables()[i+1];
-				assert (frel.containsAll(vars)) : "forward relevant variables wrong";
-				assert (brel.containsAll(vars)) : "backward relevant variables wrong";;
+		//TODO: remove this if relevant variables are definitely correct.
+		assert testRelevantVars() : "bug in relevant varialbes";
+	}
+
+	private boolean testRelevantVars() {
+		boolean result = true; 
+		RelevantVariables rv = new RelevantVariables(m_DefaultTransFormulas);
+		for (int i=0; i<m_Interpolants.length; i++) {
+			IPredicate itp = m_Interpolants[i];
+			Set<BoogieVar> vars = itp.getVars();
+			Set<BoogieVar> frel = rv.getForwardRelevantVariables()[i+1];
+			Set<BoogieVar> brel = rv.getBackwardRelevantVariables()[i+1];
+			if (!frel.containsAll(vars)) {
+				s_Logger.warn("forward relevant variables wrong");
+				result = false;
+			}
+			if (!brel.containsAll(vars)) {
+				s_Logger.warn("backward relevant variables wrong");
+				result = false;
 			}
 		}
+		return result;
 	}
+	
+	
 	
 	public Word<CodeBlock> getTrace() {
 		return m_Trace;
