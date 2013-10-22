@@ -86,8 +86,8 @@ public interface ICHandler extends IHandler {
     /**
      * Checks resType, whether it needs some special treatment for pointers,
      * according the value in pointerOps.
-     * 
-     * TODO : no idea, if this is still required!
+     * Also in case the flag putOnHeap is set -- which is the case for our special
+     * HeapVariables.
      * 
      * @param main
      *            a reference to the main Dispatcher.
@@ -95,10 +95,12 @@ public interface ICHandler extends IHandler {
      *            the pointer operator array.
      * @param resType
      *            the type to check.
+     * @param putOnHeap
+     *            indicates whether we are dealing with a HeapVar
      * @return the checked ResultTypes object.
      */
     public ResultTypes checkForPointer(Dispatcher main,
-            IASTPointerOperator[] pointerOps, ResultTypes resType);
+            IASTPointerOperator[] pointerOps, ResultTypes resType, boolean putOnHeap);
 
     /**
      * Translates an IASTTranslationUnit.

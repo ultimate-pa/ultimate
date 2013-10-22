@@ -63,6 +63,8 @@ import org.eclipse.cdt.internal.core.dom.parser.c.CASTDesignatedInitializer;
 import org.eclipse.core.runtime.preferences.ConfigurationScope;
 import org.eclipse.core.runtime.preferences.IEclipsePreferences;
 
+import sun.reflect.generics.reflectiveObjects.NotImplementedException;
+
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CACSLLocation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.SymbolTable;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.ArrayHandler;
@@ -635,9 +637,15 @@ public class CHandler implements ICHandler {
 					if (putOnHeap)
 						boogieIdsOfHeapVars.add(bId);//store it independent from the symbol table
 					
+					//changes the type into pointer -- in case of an actual pointer decl or a heapVar
 					ResultTypes checkedType = checkForPointer(main,
-							d.getPointerOperators(), resType);
-
+							d.getPointerOperators(), resType, putOnHeap);
+					CType cvar = checkedType.cvar;
+//					if (isHeapVar(bId)) { //already done in checkforPointer
+//						cvar = new CPointer(cvar);
+////						checkedType = new ResultTypes(null, checkedType.isConst, checkedType.isVoid, cvar);
+//					}
+					
 					if (main.typeHandler.isStructDeclaration()) {
 						//							if (resultCType instanceof CStruct) { //better??
 						/*
@@ -648,13 +656,8 @@ public class CHandler implements ICHandler {
 						assert resType.cvar != null;
 						result.declCTypes.add(checkedType.cvar);
 					}
+					
 					ASTType type = checkedType.getType();
-					
-					CType cvar = checkedType.cvar;
-					if (isHeapVar(bId)) {
-						cvar = new CPointer(cvar);
-					}
-					
 					VarList var = new VarList(loc, new String[] { bId }, type);
 					Attribute[] attr = new Attribute[0];
 					if (resType.isConst) {
@@ -840,8 +843,8 @@ public class CHandler implements ICHandler {
 
 	@Override
     public ResultTypes checkForPointer(Dispatcher main,
-            IASTPointerOperator[] pointerOps, ResultTypes resType) {
-        if (pointerOps.length != 0) {
+            IASTPointerOperator[] pointerOps, ResultTypes resType, boolean putOnHeap) {
+        if (putOnHeap || pointerOps.length != 0) {
             // TODO : not sure, if this is enough!
             // There could be multiple PointerOperators (i.e.
             // IASTPointer) - what does that mean for the translation?
@@ -850,7 +853,6 @@ public class CHandler implements ICHandler {
             CType cvar = new CPointer(resType.cvar);
             return new ResultTypes(t, resType.isConst, resType.isVoid, cvar);
         }
-//        if (((MainDispatcher) main).getVariablesForHeap().contains(arg0))
         return resType;
     }
 
@@ -1005,9 +1007,13 @@ public class CHandler implements ICHandler {
         
         LRValue lrVal = null;
         if (isHeapVar(bId)) {
+        	// cType has to be set to the type of the dereferenced expression
+        	// while the inferredType of the inner expression has to remain Pointer
+        	// (intuition: t is the type of the address inside the heapLval while cT is the 
+        	// type after the switch to an RValue
+        	cT = ((CPointer) cT).pointsToType; 
             IdentifierExpression idExp = new IdentifierExpression(loc, t, bId);
         	lrVal = new HeapLValue(idExp);
-        	cT = ((CPointer) cT).pointsToType;
         } else {
             VariableLHS idLhs = new VariableLHS(loc, t, bId);
         	lrVal = new LocalLValue(idLhs);

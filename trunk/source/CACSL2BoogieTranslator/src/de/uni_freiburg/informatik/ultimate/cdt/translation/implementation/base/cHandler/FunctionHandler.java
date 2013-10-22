@@ -257,7 +257,7 @@ public class FunctionHandler {
 		} else {
 			// we found a type, so node is type ASTType
 			ResultTypes checkedType = main.cHandler.checkForPointer(main,
-					node.getDeclarators()[0].getPointerOperators(), returnType);
+					node.getDeclarators()[0].getPointerOperators(), returnType, false);
 			ASTType type = checkedType.getType();
 			out[0] = new VarList(loc, new String[] { SFO.RES }, type);
 		}
@@ -496,7 +496,7 @@ public class FunctionHandler {
 		ResultTypes resType = (ResultTypes) main.dispatch(node
 				.getDeclSpecifier());
 		ResultTypes checkedType = main.cHandler.checkForPointer(main, node
-				.getDeclarator().getPointerOperators(), resType);
+				.getDeclarator().getPointerOperators(), resType, false);
 		ASTType type = checkedType.getType();
 		if (!checkedType.isVoid) { // void, so there are no out vars
 			out = new VarList[1];
@@ -810,7 +810,7 @@ public class FunctionHandler {
 					.dispatch(dec.getDeclSpecifier());
 			IASTDeclarator d = dec.getDeclarator();
 			ResultTypes checkedType = main.cHandler.checkForPointer(main,
-					d.getPointerOperators(), rt);
+					d.getPointerOperators(), rt, false);
 			CType cvar = checkedType.cvar;
 			ASTType type = checkedType.getType();
 			if (!(checkedType.isVoid && !(cvar instanceof CPointer))) {

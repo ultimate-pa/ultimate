@@ -196,7 +196,8 @@ public class TypeHandler implements ITypeHandler {
             for (IASTDeclarator cDecl : ((IASTSimpleDeclaration) node
                     .getParent()).getDeclarators()) {
                 String typedefId = cDecl.getName().getRawSignature();
-                ResultTypes checkedResult = main.cHandler.checkForPointer(main, cDecl.getPointerOperators(), result);
+                ResultTypes checkedResult = main.cHandler.checkForPointer(main, 
+                		cDecl.getPointerOperators(), result, false);
                 typedef.put(typedefId, checkedResult);
                 
             }
@@ -448,7 +449,7 @@ public class TypeHandler implements ITypeHandler {
                     .getParent()).getDeclarators()) {
                 String typedefId = cDecl.getName().getRawSignature();
                 ResultTypes checkedResult = main.cHandler.checkForPointer(main, 
-                		cDecl.getPointerOperators(), result);
+                		cDecl.getPointerOperators(), result, false);
                 typedef.put(typedefId, checkedResult);
             }
             if (typedef.containsKey(cId)) {
