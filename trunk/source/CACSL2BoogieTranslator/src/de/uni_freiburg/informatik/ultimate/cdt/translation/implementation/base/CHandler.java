@@ -1304,11 +1304,8 @@ public class CHandler implements ICHandler {
                 .getOperand1());
         ResultExpression r = (ResultExpression) main.dispatch(node
                 .getOperand2());
-        decl.addAll(l.decl);
-        decl.addAll(r.decl);
-        auxVars.putAll(l.auxVars);
-        auxVars.putAll(r.auxVars);
-        assert (main.isAuxVarMapcomplete(decl, auxVars)) : "unhavoced auxvars";
+
+//        assert (main.isAuxVarMapcomplete(decl, auxVars)) : "unhavoced auxvars";
 
         InferredType tInt = new InferredType(InferredType.Type.Integer);
     	ResultExpression rl = l.switchToRValue(main, memoryHandler, structHandler, loc);
@@ -1336,10 +1333,10 @@ public class CHandler implements ICHandler {
 
             	stmt.addAll(l.stmt);
             	stmt.addAll(rr.stmt);
-            	decl = rr.decl; //should contain the decl from r, duplication if we did addAll
             	decl.addAll(l.decl);
-            	auxVars = rr.auxVars;
+            	decl.addAll(rr.decl);
             	auxVars.putAll(l.auxVars);
+            	auxVars.putAll(rr.auxVars);
             	ResultExpression rex = makeAssignment(main, loc, stmt, l.lrVal, rightSide, decl, auxVars, r.cType);
                 return rex;
             }
@@ -1375,7 +1372,11 @@ public class CHandler implements ICHandler {
             	}
             	stmt.addAll(rl.stmt);
                 stmt.addAll(rr.stmt);
-                
+                decl.addAll(rl.decl);
+            	decl.addAll(rr.decl);
+            	auxVars.putAll(rl.auxVars);
+            	auxVars.putAll(rr.auxVars);
+            	
                 Expression expr = null;
             	if (rl.cType instanceof CPointer
             			&& rr.cType instanceof CPrimitive
@@ -1393,7 +1394,12 @@ public class CHandler implements ICHandler {
             }
             case IASTBinaryExpression.op_logicalAnd: {
                 stmt.addAll(rl.stmt);
-
+                stmt.addAll(rr.stmt);
+                decl.addAll(rl.decl);
+            	decl.addAll(rr.decl);
+            	auxVars.putAll(rl.auxVars);
+            	auxVars.putAll(rr.auxVars);
+            	
                 if (rr.stmt.isEmpty()) {
                 	// no statements in right operands, hence no side effects in operand
                 	// we can directly combine operands with LOGICAND
@@ -1442,7 +1448,12 @@ public class CHandler implements ICHandler {
             }
             case IASTBinaryExpression.op_logicalOr: {
                 stmt.addAll(rl.stmt);
-
+                stmt.addAll(rr.stmt);
+                decl.addAll(rl.decl);
+            	decl.addAll(rr.decl);
+            	auxVars.putAll(rl.auxVars);
+            	auxVars.putAll(rr.auxVars);
+            	
                 if (rr.stmt.isEmpty()) {
                 	Expression lBool = main.typeHandler.convertArith2Boolean(
 						loc, new PrimitiveType(loc, SFO.BOOL),
