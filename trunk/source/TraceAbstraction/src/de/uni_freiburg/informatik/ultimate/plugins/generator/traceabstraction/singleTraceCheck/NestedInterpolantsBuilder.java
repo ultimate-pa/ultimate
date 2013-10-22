@@ -183,7 +183,14 @@ public class NestedInterpolantsBuilder {
 		}
 		Term[] interpolInput = this.interpolInput.toArray(new Term[0]);
 		//add precondition to first term
-		interpolInput[0] = Util.and(m_Script, interpolInput[0], m_AnnotSSA.getPrecondition());
+		// special case: if first position is non pending call, then we add the
+		// precondition to the corresponding return. 
+		if (m_Trace.isCallPosition(0) && !m_Trace.isPendingCall(0)) {
+			int correspondingReturn = m_Trace.getReturnPosition(0);
+			interpolInput[correspondingReturn] = Util.and(m_Script, interpolInput[correspondingReturn], m_AnnotSSA.getPrecondition());
+		} else {
+			interpolInput[0] = Util.and(m_Script, interpolInput[0], m_AnnotSSA.getPrecondition());
+		}
 		//add negated postcondition to last term
 		interpolInput[interpolInput.length-1] = Util.and(m_Script, interpolInput[interpolInput.length-1], m_AnnotSSA.getPostcondition());
 		
