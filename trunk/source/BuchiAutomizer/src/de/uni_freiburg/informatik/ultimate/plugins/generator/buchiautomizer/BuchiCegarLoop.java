@@ -708,7 +708,7 @@ public class BuchiCegarLoop {
 			LBool loopCheck = m_TraceChecker.isCorrect();
 			IPredicate[] loopInterpolants;
 			if (loopCheck == LBool.UNSAT) {
-				m_TraceChecker.computeInterpolants(new TraceChecker.AllIntegers(), pu, INTERPOLATION.Craig_NestedInterpolation);
+				m_TraceChecker.computeInterpolants(new TraceChecker.AllIntegers(), pu, INTERPOLATION.Craig_TreeInterpolation);
 				loopInterpolants = m_TraceChecker.getInterpolants();
 			} else {
 				throw new AssertionError();
