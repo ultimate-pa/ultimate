@@ -197,6 +197,13 @@ public class ResultExpression extends Result {
 					throw new UnsupportedSyntaxException("..");
 				}
 			} else if (underlyingType instanceof CPointer) {
+				heapReadType = new InferredType(Type.Pointer);
+				rex = memoryHandler.getReadCall(
+						main, heapReadType, hlv.getAddress(), new CPointer(this.cType));
+				newStmt.addAll(rex.stmt);
+				newDecl.addAll(rex.decl);
+				newAuxVars.putAll(rex.auxVars);	
+				newValue = (RValue) rex.lrVal;
 			} else if (underlyingType instanceof CArray) {
 			} else if (underlyingType instanceof CEnum) {
 			} else if (underlyingType instanceof CStruct) {
