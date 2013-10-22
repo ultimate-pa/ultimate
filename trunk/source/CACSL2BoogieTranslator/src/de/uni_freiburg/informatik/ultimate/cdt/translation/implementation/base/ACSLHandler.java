@@ -450,8 +450,12 @@ public class ACSLHandler implements IACSLHandler {
                         + e.getClass());
             }
         }
+        VariableLHS[] identifiersVarLHS = new VariableLHS[identifiers.size()];
+        for (int i = 0; i < identifiers.size(); i++)
+        	identifiersVarLHS[i] = new VariableLHS(loc, identifiers.get(i));
+        	
         ModifiesSpecification req = new ModifiesSpecification(loc, false,
-                identifiers.toArray(new VariableLHS[0]));
+                identifiersVarLHS);
         return new ResultContract(new Specification[] { req });
     }
 

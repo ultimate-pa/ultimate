@@ -1330,6 +1330,10 @@ public class CHandler implements ICHandler {
             			&& rr.cType instanceof CPrimitive
             			&& ((CPrimitive) rr.cType).getType() == PRIMITIVE.INT) 
             		rightSide = rrRValAsPointer;
+            	else if (l.cType instanceof CPrimitive 
+            			&& ((CPrimitive) l.cType).getType() == PRIMITIVE.BOOL)
+            		rightSide = new RValue(main.typeHandler.convertArith2Boolean(loc, 
+            				new PrimitiveType(loc, SFO.BOOL), rightSide.getValue()));
 
             	stmt.addAll(l.stmt);
             	stmt.addAll(rr.stmt);
@@ -2415,12 +2419,12 @@ public class CHandler implements ICHandler {
         Result rPositive = main.dispatch(node.getPositiveResultExpression());
         assert rPositive instanceof ResultExpression;
         ResultExpression rePositive = (ResultExpression) rPositive;
-        rePositive = reLocCond.switchToRValue(main, memoryHandler, structHandler, loc);
+        rePositive = rePositive.switchToRValue(main, memoryHandler, structHandler, loc);
         
         Result rNegative = main.dispatch(node.getNegativeResultExpression());
         assert rNegative instanceof ResultExpression;
         ResultExpression reNegative = (ResultExpression) rNegative;
-        reNegative = reLocCond.switchToRValue(main, memoryHandler, structHandler, loc);
+        reNegative = reNegative.switchToRValue(main, memoryHandler, structHandler, loc);
         
         ArrayList<Statement> stmt = new ArrayList<Statement>();
         ArrayList<Declaration> decl = new ArrayList<Declaration>();
