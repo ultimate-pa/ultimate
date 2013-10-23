@@ -101,7 +101,7 @@ public class CfgBuilder {
 	
 	
 	public static final String Z3_COMMAND =
-			"z3 AUTO_CONFIG=false SMTLIB2_COMPLIANT=true smt.mbqi=true -memory:256 -smt2 -in";
+			"z3 SMTLIB2_COMPLIANT=true -memory:256 -smt2 -in";
 	
 	/**
      * Root Node of this Ultimate model. I use this to store information that
