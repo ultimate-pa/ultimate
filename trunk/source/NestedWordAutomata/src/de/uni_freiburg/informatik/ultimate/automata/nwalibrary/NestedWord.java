@@ -3,6 +3,7 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.TreeMap;
 
 import de.uni_freiburg.informatik.ultimate.automata.Word;
 
@@ -73,6 +74,8 @@ public class NestedWord<LETTER> extends Word<LETTER> {
 	private int[] m_NestingRelation;
 
 	private Set<Integer> m_CallPositions;
+	
+	private TreeMap<Integer, LETTER> m_PendingReturns;
 	
 	
 	/**
@@ -172,6 +175,23 @@ public class NestedWord<LETTER> extends Word<LETTER> {
 		for (int i=0; i<m_NestingRelation.length; i++) {
 			if (isCallPosition(i)) {
 				result.add(i);
+			}
+		}
+		return result;
+	}
+	
+	public TreeMap<Integer, LETTER> getPendingReturns() {
+		if (m_PendingReturns == null) {
+			m_PendingReturns = computePendingReturnPositions();
+		}
+		return m_PendingReturns;
+	}
+	
+	private TreeMap<Integer, LETTER> computePendingReturnPositions() {
+		TreeMap<Integer, LETTER> result = new TreeMap<Integer, LETTER>();
+		for (int i=0; i<m_NestingRelation.length; i++) {
+			if (isReturnPosition(i) && isPendingReturn(i)) {
+				result.put(i, m_Word[i]);
 			}
 		}
 		return result;
