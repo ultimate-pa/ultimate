@@ -12,7 +12,7 @@ public class ImpRootNode extends AnnotatedProgramPoint {
 	private static final long serialVersionUID = 1L;
 
 	public ImpRootNode(RootAnnot rootAnnot) {
-		super(null,new ProgramPoint("root", "", false, null, null, null));
+		super(null,new ProgramPoint("root", "", false, null, null));
 		getPayload().getAnnotations().put(Activator.PLUGIN_ID, rootAnnot);
 		
 	}

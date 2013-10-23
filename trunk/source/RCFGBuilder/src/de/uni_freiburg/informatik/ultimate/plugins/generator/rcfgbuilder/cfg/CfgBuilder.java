@@ -294,13 +294,13 @@ public class CfgBuilder {
 			Body body = m_RootAnnot.m_Implementation.get(procName).getBody();
 			Statement firstStatement = body.getBlock()[0];
 			ProgramPoint entryNode =
-				new ProgramPoint(procName + "ENTRY",procName,false,firstStatement,null,m_Script);
+				new ProgramPoint(procName + "ENTRY",procName,false,firstStatement,null);
 			m_RootAnnot.m_entryNode.put(procName, entryNode);
 			ProgramPoint finalNode = 
-				new ProgramPoint(procName + "FINAL",procName,false, null, null,m_Script);
+				new ProgramPoint(procName + "FINAL",procName,false, null, null);
 			m_RootAnnot.m_finalNode.put(procName, finalNode);
 			ProgramPoint exitNode =
-				new ProgramPoint(procName + "EXIT",procName,false,null,null,m_Script);
+				new ProgramPoint(procName + "EXIT",procName,false,null,null);
 			m_RootAnnot.m_exitNode.put(procName, exitNode);
 
 			new RootEdge(m_Graphroot,m_RootAnnot.m_entryNode.get(procName));
@@ -809,7 +809,7 @@ public class CfgBuilder {
 					procName,
 					true,
 					astNode,
-					null,m_Script);
+					null);
 			m_procLocNodes.put(errorLocLabel, errorLocNode);
 			errorNodes.add(errorLocNode);
 			return errorLocNode;
@@ -1120,7 +1120,7 @@ public class CfgBuilder {
 			}
 			else {
 				ProgramPoint locNode = 
-					new ProgramPoint(labelName,m_currentProcedureName,false,st,null,m_Script);
+					new ProgramPoint(labelName,m_currentProcedureName,false,st,null);
 				m_label2LocNodes.put(labelName, locNode);
 				m_procLocNodes.put(labelName, locNode);
 				s_Logger.debug("LocNode for "+labelName+" has not" +
@@ -1184,7 +1184,7 @@ public class CfgBuilder {
 										 		  m_currentProcedureName,
 										 		  false,
 										 		  st,
-										 		  (CodeBlock)m_current,m_Script);
+										 		  (CodeBlock)m_current);
 					m_procLocNodes.put(locName, locNode);
 					StatementSequence codeBlock = new StatementSequence(locNode, null,st, origin);
 					m_Edges.add(codeBlock);
@@ -1208,7 +1208,7 @@ public class CfgBuilder {
 									 		  m_currentProcedureName,
 									 		  false,
 									 		  st,
-									 		  (CodeBlock)m_current,m_Script);
+									 		  (CodeBlock)m_current);
 				m_procLocNodes.put(locName, locNode);
 				m_current = locNode;
 			}
@@ -1246,7 +1246,7 @@ public class CfgBuilder {
 	                    			  m_currentProcedureName,
 	                    			  false,
 									  st,
-									  (CodeBlock)m_current,m_Script);
+									  (CodeBlock)m_current);
 				m_procLocNodes.put(locName, locNode);
 			}
 			else if (m_current instanceof ProgramPoint) {
@@ -1280,7 +1280,7 @@ public class CfgBuilder {
 	 				   				  m_currentProcedureName,
 	 				   				  false,
 	 				   				  st,
-						   			  (CodeBlock)m_current,m_Script);
+						   			  (CodeBlock)m_current);
 				m_procLocNodes.put(locName, locNode);
 			}
 			else if (m_current instanceof ProgramPoint) {
@@ -1295,7 +1295,7 @@ public class CfgBuilder {
 	                 						 m_currentProcedureName,
 	                 						 false,
 	                 						 st,
-	                 						 null,m_Script);
+	                 						 null);
 			m_procLocNodes.put(locName, returnNode);
 			//add summary edge
 			String callee = st.getMethodName();

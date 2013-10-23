@@ -40,13 +40,16 @@
 				<!-- We need to say which products will be build and assign each of them 
 					a unique attachId (dont know why, it just is) -->
 				<configuration>
+					<formats>
+						<linux>tar.gz</linux>
+					</formats>
 					<products>
 						<product>
-							<id>UltimateProductCommandLine</id>
-							<attachId>UltimateCL</attachId>
+							<id>CLI-E3</id>
+							<attachId>UltimateCLI</attachId>
 						</product>
 						<product>
-							<id>UltimateProductDebug</id>
+							<id>Debug-E3</id>
 							<attachId>UltimateDebug</attachId>
 						</product>
 					</products>

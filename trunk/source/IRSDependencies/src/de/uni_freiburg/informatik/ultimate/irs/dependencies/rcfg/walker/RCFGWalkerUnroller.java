@@ -233,7 +233,7 @@ public class RCFGWalkerUnroller extends RCFGWalker {
 
 			if (current.mBacking instanceof Return) {
 				mCalls.push(((Return) current.mBacking)
-						.getCorrespondingCallAnnot());
+						.getCorrespondingCall());
 				mGraphs.push(mGraph);
 				String old = mGraph.values().toString();
 				mGraph = current.mLastGraphState;
@@ -345,7 +345,7 @@ public class RCFGWalkerUnroller extends RCFGWalker {
 				return false;
 			} else {
 				// TODO: search for the last return; necessary?
-				return ((Return) next).getCorrespondingCallAnnot().equals(
+				return ((Return) next).getCorrespondingCall().equals(
 						mCalls.peek());
 			}
 		}

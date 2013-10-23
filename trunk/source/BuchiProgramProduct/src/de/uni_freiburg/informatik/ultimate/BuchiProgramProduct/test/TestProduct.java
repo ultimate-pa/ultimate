@@ -1,12 +1,5 @@
 package de.uni_freiburg.informatik.ultimate.BuchiProgramProduct.test;
 
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
-
-import de.uni_freiburg.informatik.ultimate.BuchiProgramProduct.Product;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.*;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence;
 import junit.framework.TestCase;
 
 public class TestProduct extends TestCase {

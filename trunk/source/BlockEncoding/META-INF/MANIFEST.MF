@@ -5,12 +5,15 @@ Bundle-SymbolicName: BlockEncoding;singleton:=true
 Bundle-Version: 0.0.1
 Bundle-Activator: de.uni_freiburg.informatik.ultimate.plugins.generator.blockendcoding.Activator
 Require-Bundle: UltimateCore,
- Library-log4j;bundle-version="1.2.15",
+ Library-log4j,
  Library-ModelCheckerUtils,
- Library-junit;bundle-version="4.11.0",
- RCFGBuilder;bundle-version="0.0.1"
+ RCFGBuilder
 Bundle-ActivationPolicy: lazy
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
 Export-Package: de.uni_freiburg.informatik.ultimate.blockencoding.model,
  de.uni_freiburg.informatik.ultimate.blockencoding.model.interfaces,
  de.uni_freiburg.informatik.ultimate.blockencoding.rating.util
+Import-Package: junit.framework,
+ org.junit,
+ org.junit.runner,
+ org.junit.runner.notification

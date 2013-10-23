@@ -1,6 +1,5 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg;
 
-import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.model.ILocation;
 import de.uni_freiburg.informatik.ultimate.model.Payload;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssertStatement;
@@ -36,7 +35,7 @@ public class ProgramPoint extends RCFGNode {
 	final private boolean m_IsErrorLocation;
 
 	public ProgramPoint(String position, String procedure, boolean isErrorLoc,
-			ASTNode astNode, CodeBlock codeBlock, Script script) {
+			ASTNode astNode, CodeBlock codeBlock) {
 		super();
 		this.m_Procedure = procedure;
 		this.m_Position = position;

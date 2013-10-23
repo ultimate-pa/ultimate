@@ -2,10 +2,12 @@ package de.uni_freiburg.informatik.ultimate.access;
 
 import java.util.List;
 
+import org.eclipse.core.runtime.Assert;
+
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.IPayload;
 
-import org.eclipse.core.runtime.Assert;
+
 
 /**
  * 

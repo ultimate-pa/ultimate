@@ -1,16 +1,10 @@
 package de.uni_freiburg.informatik.ultimate.BuchiProgramProduct.test;
 
-import static org.junit.Assert.*;
-
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.Set;
 
 import junit.framework.TestCase;
-
-import org.junit.Test;
-import org.junit.runners.JUnit4;
 
 import de.uni_freiburg.informatik.ultimate.BuchiProgramProduct.Never2Automaton;
 import de.uni_freiburg.informatik.ultimate.LTL2aut.ast.*;

@@ -7,10 +7,10 @@
 	<packaging>pom</packaging>
 
 	<properties>
-		<tycho-version>0.15.0</tycho-version>
-		
+		<tycho-version>0.18.1</tycho-version>
+
 		<workspaceDir>${basedir}/..</workspaceDir>
-		
+
 		<cupDir>${workspaceDir}/JavaCup/target/classes</cupDir>
 		<flexBinary>${workspaceDir}/JavaCup/JFlex.jar</flexBinary>
 		<astbuilderBinaries>${workspaceDir}/ASTBuilder/target/classes</astbuilderBinaries>
@@ -36,12 +36,14 @@
 			<layout>p2</layout>
 			<url>http://download.eclipse.org/releases/indigo</url>
 		</repository>
-        <repository>
-            <id>javaxRepository</id>
-            <name>Java.net Repository for Maven</name>
-             <url>https://maven.java.net/content/repositories/releases/javax/</url>
-            <layout>default</layout>
-         </repository>
+		<!-- <repository> <id>eclipse-kepler</id> <layout>p2</layout> <url>http://download.eclipse.org/releases/kepler</url> 
+			</repository> -->
+		<repository>
+			<id>javaxRepository</id>
+			<name>Java.net Repository for Maven</name>
+			<url>https://maven.java.net/content/repositories/releases/javax/</url>
+			<layout>default</layout>
+		</repository>
 	</repositories>
 
 	<build>
@@ -52,7 +54,7 @@
 				<artifactId>tycho-maven-plugin</artifactId>
 				<version>${tycho-version}</version>
 				<extensions>true</extensions>
-				
+
 			</plugin>
 			<plugin>
 				<groupId>org.eclipse.tycho</groupId>
@@ -125,33 +127,26 @@
 	</build>
 
 	<modules>
+		<module>../BA_SiteRepository</module>
+		<module>../BA_FeatureUltimateDebug</module>
+		<module>../BA_FeatureUltimateCommandLine</module>
+		<module>../BA_FeatureDependenciesCommandlineE3</module>
+
 		<module>../CoreRCP</module>
 		<module>../GuiRCP</module>
 		<module>../BoogiePLParser</module>
 		<module>../BoogiePreprocessor</module>
 		<module>../BoogiePrinter</module>
-		
-		<module>../PrefuseVisualization</module>
 		<module>../SmtInterpol</module>
 		<module>../TraceAbstraction</module>
 		<module>../TraceAbstractionConcurrent</module>
 		<module>../JavaCup</module>
-		
 		<module>../RCFGBuilder</module>
-		
 		<module>../NestedWordAutomata</module>
-
 		<module>../CodeCheck</module>
-		
 		<module>../Library-log4j</module>
-		<module>../Library-prefuse</module>
-		<module>../BA_FeatureUltimate</module>
-		<module>../BA_SiteRepository</module>
-		<module>../SMTSolverBridge</module>
-		<module>../BA_FeatureUltimateCommandLine</module>
 		<module>../ACSLParser</module>
-		<module>../ConsoleOut</module>
-		<!-- <module>../ReImpact</module> -->
+		<module>../SMTSolverBridge</module>
 		<module>../Library-Batik</module>
 		<module>../Library-Jung</module>
 		<module>../CDTDummyParser</module>
@@ -159,22 +154,15 @@
 		<module>../CDTPlugin</module>
 		<module>../InteractiveConsole</module>
 		<module>../CACSL2BoogieTranslator</module>
-		
 		<module>../ASTBuilder</module>
 		<module>../JungVisualization</module>
 		<module>../RankingFunctions</module>
 		<module>../LassoRanker</module>
 		<module>../WebUltimateBridge</module>
 		<module>../Library-ModelCheckerUtils</module>
-		
 		<module>../AutomataScriptParser</module>
 		<module>../AutomataScriptInterpreter</module>
-		<module>../Library-hamcrest</module>
-		<module>../Library-junit</module>
 		<module>../BlockEncoding</module>
 		<module>../BuchiAutomizer</module>
 	</modules>
-
-
-
 </project>

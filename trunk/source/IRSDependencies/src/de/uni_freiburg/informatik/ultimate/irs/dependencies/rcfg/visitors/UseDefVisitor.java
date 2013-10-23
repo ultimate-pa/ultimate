@@ -113,8 +113,8 @@ public class UseDefVisitor extends RCFGVisitor {
 
 		} else if (stmt instanceof CallStatement) {
 			CallStatement call = (CallStatement) stmt;
-			for (String id : call.getLhs()) {
-				uds.Def.add(id);
+			for (VariableLHS id : call.getLhs()) {
+				uds.Def.add(id.toString());
 			}
 			for (Expression exp : call.getArguments()) {
 				uds = uds.merge(processExpression(exp));
@@ -125,8 +125,8 @@ public class UseDefVisitor extends RCFGVisitor {
 			return uds;
 
 		} else if (stmt instanceof HavocStatement) {
-			for (String id : ((HavocStatement) stmt).getIdentifiers()) {
-				uds.Def.add(id);
+			for (VariableLHS id : ((HavocStatement) stmt).getIdentifiers()) {
+				uds.Def.add(id.toString());
 			}
 			return uds;
 

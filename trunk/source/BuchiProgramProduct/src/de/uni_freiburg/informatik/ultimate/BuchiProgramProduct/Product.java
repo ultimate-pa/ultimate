@@ -165,7 +165,6 @@ public class Product {
 									pp.getPosition(),
 									false,
 									pp.getAstNode(),
-									null,
 									null 
 									));
 				

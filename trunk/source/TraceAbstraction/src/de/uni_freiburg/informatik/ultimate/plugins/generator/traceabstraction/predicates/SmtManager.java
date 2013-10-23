@@ -2861,7 +2861,7 @@ public class SmtManager {
 	
 	public ISLPredicate newEmptyStackPredicate() {
 		ProgramPoint pp = new ProgramPoint("noCaller", "noCaller", false, 
-				null, null, getScript());
+				null, null);
 //		m_SmtManager.getScript().variable(
 //	"emptyStack", m_SmtManager.getScript().sort("Bool"));
 		return newSPredicate(pp, m_EmptyStackTerm, m_NoProcedure, m_EmptyVars, m_EmptyStackTerm);

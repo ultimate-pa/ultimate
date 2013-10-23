@@ -3,7 +3,6 @@ package de.uni_freiburg.informatik.ultimate.LTL2aut.test;
 import java.io.IOException;
 
 import de.uni_freiburg.informatik.ultimate.LTL2aut.WrapLTL2Never;
-import de.uni_freiburg.informatik.ultimate.LTL2aut.ast.AstNode;
 import junit.framework.TestCase;
 
 public class PluginTest extends TestCase {

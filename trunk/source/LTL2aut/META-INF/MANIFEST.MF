@@ -6,10 +6,11 @@ Bundle-Version: 0.0.1
 Bundle-Activator: de.uni_freiburg.informatik.ultimate.LTL2aut.Activator
 Require-Bundle: Library-log4j,
  UltimateCore,
- JavaCup;bundle-version="1.0.0",
- Library-junit;bundle-version="4.11.0"
+ JavaCup
 Bundle-ActivationPolicy: lazy
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
-Import-Package: org.apache.commons.io,
- org.junit
+Import-Package: junit.framework,
+ org.apache.commons.io,
+ org.junit,
+ org.junit.runner
 Export-Package: de.uni_freiburg.informatik.ultimate.LTL2aut.ast
