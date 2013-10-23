@@ -102,7 +102,7 @@ terminal LAND, LOR, LNOT;
 terminal LPAR, RPAR, QUOTE;
 terminal String BINOP;
 terminal String ID;
-terminal int NUMBER;
+terminal Integer NUMBER;
 
 /* Non-terminals */
 non terminal CDD expression, expr;
@@ -111,7 +111,7 @@ non terminal srParsePattern property;
 non terminal srParsePattern pattern, orderpattern, realtimepattern;
 non terminal srParseScope scope;
 non terminal srParsePattern[] patternset;
-non terminal int duration, num;
+non terminal Integer duration, num;
 
 precedence left LOR;
 precedence left LAND;
