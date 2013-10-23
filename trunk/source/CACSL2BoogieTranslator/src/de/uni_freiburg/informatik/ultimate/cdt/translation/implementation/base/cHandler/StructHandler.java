@@ -215,10 +215,10 @@ public class StructHandler {
 //        	Result r = readFieldInTheStructAtAddress(main, memoryHandler, loc, field, fieldType,
 //        			fieldOwnerHlv.getAddress(), fieldOwnerRex.cType);
 
-        	Expression newPointer = ResultExpression.constructPointerFromBaseAndOffset(
-        			ResultExpression.getPointerBaseAddress(fieldOwnerHlv.getAddress(), loc),
+        	Expression newPointer = MemoryHandler.constructPointerFromBaseAndOffset(
+        			MemoryHandler.getPointerBaseAddress(fieldOwnerHlv.getAddress(), loc),
         			new BinaryExpression(loc, new InferredType(Type.Integer), BinaryExpression.Operator.ARITHPLUS, 
-        					ResultExpression.getPointerOffset(fieldOwnerHlv.getAddress(), loc),
+        					MemoryHandler.getPointerOffset(fieldOwnerHlv.getAddress(), loc),
         					getStructOffsetConstantExpression(loc, field, cStructType)),
         			loc);
         	
@@ -376,7 +376,7 @@ public class StructHandler {
 					addressOffsetOfFieldOwner, additionalOffset);
 		}
 		StructConstructor newPointer = 
-				ResultExpression.constructPointerFromBaseAndOffset(addressBaseOfFieldOwner, newOffset, loc);
+				MemoryHandler.constructPointerFromBaseAndOffset(addressBaseOfFieldOwner, newOffset, loc);
 		
 		CType resultType = structType.getFieldType(field);
 		

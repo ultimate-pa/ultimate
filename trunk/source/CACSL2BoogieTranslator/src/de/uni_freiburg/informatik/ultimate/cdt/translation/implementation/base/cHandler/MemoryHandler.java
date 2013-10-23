@@ -1127,4 +1127,18 @@ public class MemoryHandler {
 				new HashMap<VariableDeclaration, CACSLLocation>(0);
         return new ResultExpression(stmt, null, decl, emptyAuxVars);
     }
+    
+    
+	public static StructAccessExpression getPointerBaseAddress(Expression pointer, CACSLLocation loc) {
+		return new StructAccessExpression(loc, new InferredType(Type.Integer), pointer, "base");
+	}
+	
+	public static StructAccessExpression getPointerOffset(Expression pointer, CACSLLocation loc) {
+		return new StructAccessExpression(loc, new InferredType(Type.Integer), pointer, "offset");
+	}
+	
+	public static StructConstructor constructPointerFromBaseAndOffset(Expression base, Expression offset, CACSLLocation loc) {
+		return new StructConstructor(loc, new InferredType(Type.Pointer), 
+				new String[]{"base", "offset"}, new Expression[]{base, offset}); 
+	}
 }

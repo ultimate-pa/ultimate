@@ -697,7 +697,7 @@ public class CHandler implements ICHandler {
 	                		rExprExpr = structCons.lrVal.getValue();
 	                	} if (rExpr.cType instanceof CPointer 
 	                			&& rExpr.lrVal.getValue() instanceof IntegerLiteral) {
-	                		rExprExpr = ResultExpression.constructPointerFromBaseAndOffset(
+	                		rExprExpr = MemoryHandler.constructPointerFromBaseAndOffset(
 	                				new IntegerLiteral(loc, new InferredType(Type.Integer), "0"),
 	                				rExpr.lrVal.getValue(), loc);
 	                	} else {
@@ -1329,12 +1329,17 @@ public class CHandler implements ICHandler {
         switch (node.getOperator()) {
             case IASTBinaryExpression.op_assign: {
             	RValue rightSide = (RValue) rr.lrVal;
-            	if (l.cType instanceof CPointer 
+            	
+            	CType lType = l.cType;
+            	if (lType instanceof CNamed)
+            		lType = ((CNamed) lType).getUnderlyingType();
+            	
+            	if (lType instanceof CPointer 
             			&& rr.cType instanceof CPrimitive
             			&& ((CPrimitive) rr.cType).getType() == PRIMITIVE.INT) 
             		rightSide = rrRValAsPointer;
-            	else if (l.cType instanceof CPrimitive 
-            			&& ((CPrimitive) l.cType).getType() == PRIMITIVE.BOOL)
+            	else if (lType instanceof CPrimitive 
+            			&& ((CPrimitive) lType).getType() == PRIMITIVE.BOOL)
             		rightSide = new RValue(main.typeHandler.convertArith2Boolean(loc, 
             				new PrimitiveType(loc, SFO.BOOL), rightSide.getValue()));
 
@@ -1630,11 +1635,11 @@ public class CHandler implements ICHandler {
 			Expression ptrRex, Expression intRex) {
 //		assert operator == IASTBinaryExpression.op_plus 
 //				|| operator == IASTBinaryExpression.op_minus : "Trying pointer arithmetic with wrong operator";
-		Expression pointerOffset = ResultExpression.getPointerOffset(ptrRex, loc);
+		Expression pointerOffset = MemoryHandler.getPointerOffset(ptrRex, loc);
 		Expression sum = createArithmeticExpression(
 		    operator, pointerOffset, intRex, loc);
-		Expression pointerBase = ResultExpression.getPointerBaseAddress(ptrRex, loc);
-		StructConstructor newPointer = ResultExpression.constructPointerFromBaseAndOffset(pointerBase, sum, loc);
+		Expression pointerBase = MemoryHandler.getPointerBaseAddress(ptrRex, loc);
+		StructConstructor newPointer = MemoryHandler.constructPointerFromBaseAndOffset(pointerBase, sum, loc);
 //		assert (main.isAuxVarMapcomplete(decl, auxVars)) : "unhavoced auxvars";
 //		return new ResultExpression(stmt, new RValue(newPointer), decl, auxVars,
 //				ptrRex.cType);//FIXME (in fact we don't know the exact pointer type, right?)
