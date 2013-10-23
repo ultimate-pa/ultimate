@@ -26,6 +26,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.Sub
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
+import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
 
 
 /**
@@ -453,8 +454,13 @@ public class NestedSsaBuilder {
 				if (bv.isOldvar()) {
 					result = currentLocalAndOldVarVersion.get(bv);
 					if (result == null) {
-						throw new UnsupportedOperationException(
-								"not yet implemented: old var of non-modifialbe");
+						assert m_ModGlobVarManager.getOldVarsAssignment(
+								m_currentProcedure).getAssignedVars().contains(bv) 
+								: "unable to find oldvar " + bv;
+						throw new UnsupportedOperationException("oldvar " + bv +
+								" occurs in procedure " + m_currentProcedure + 
+								" but " + bv.getIdentifier() + 
+								" is not modifiable in this procedure");
 					}
 				} else {
 					result = currentGlobalVarVersion.get(bv);
