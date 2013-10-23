@@ -158,7 +158,7 @@ public abstract class CodeBlock extends RCFGEdge {
 		return getSerialNumer();
 	}
 
-	public void connectSource(RCFGNode source) {
+	public final void connectSource(RCFGNode source) {
 		if (source != null) {
 			setSource(source);
 			source.addOutgoing(this);
@@ -166,7 +166,7 @@ public abstract class CodeBlock extends RCFGEdge {
 		}
 	}
 
-	public void connectTarget(RCFGNode target) {
+	public final void connectTarget(RCFGNode target) {
 		if (target != null) {
 			setTarget(target);
 			target.addIncoming(this);

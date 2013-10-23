@@ -276,10 +276,10 @@ public class InterpolantAutomataBuilder {
 			// workaround for the concurrent model checker, where emptiness check
 			// does not yet return places
 			if (m_StateSequence == null) {
-				return new ProgramPoint("dummy", "dummy", false, null, null);
+				return new ProgramPoint("dummy", "dummy", false, null);
 			}
 			if (m_StateSequence.get(i) == null) {
-				return new ProgramPoint("dummy", "dummy", false, null, null);
+				return new ProgramPoint("dummy", "dummy", false, null);
 			}
 			return ((ISLPredicate) m_StateSequence.get(i)).getProgramPoint();
 		}

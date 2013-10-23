@@ -35,7 +35,7 @@ public class ProgramPoint extends RCFGNode {
 	final private boolean m_IsErrorLocation;
 
 	public ProgramPoint(String position, String procedure, boolean isErrorLoc,
-			ASTNode astNode, CodeBlock codeBlock) {
+			ASTNode astNode) {
 		super();
 		this.m_Procedure = procedure;
 		this.m_Position = position;
@@ -54,9 +54,6 @@ public class ProgramPoint extends RCFGNode {
 		String name = "Procedure: " + m_Procedure + "Position: " + m_Position;
 		mPayload.setName(name);
 
-		if (codeBlock != null) {
-			codeBlock.connectTarget(this);
-		}
 	}
 
 	/**

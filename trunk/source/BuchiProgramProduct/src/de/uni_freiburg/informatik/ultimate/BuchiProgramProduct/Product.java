@@ -164,9 +164,7 @@ public class Product {
 									pp.getPosition(),
 									pp.getPosition(),
 									false,
-									pp.getAstNode(),
-									null 
-									));
+									pp.getAstNode()));
 				
 			// acceptance and inital states
 			if (pp.getLocationName() == "mainENTRY" && this.aut.getInitialStates().contains(n))

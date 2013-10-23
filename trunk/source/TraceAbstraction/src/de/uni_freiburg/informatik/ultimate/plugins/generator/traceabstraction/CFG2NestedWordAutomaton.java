@@ -98,8 +98,7 @@ public class CFG2NestedWordAutomaton {
 		}
 		while (!queue.isEmpty()) {
 			ProgramPoint currentNode = queue.removeFirst();
-			
-			if (currentNode.getOutgoingNodes() != null)
+			if (currentNode.getOutgoingNodes() != null) {
 				for (RCFGNode node : currentNode.getOutgoingNodes()) {
 					ProgramPoint nextNode = (ProgramPoint) node;
 					if ( !allNodes.contains(nextNode)) {
@@ -107,6 +106,7 @@ public class CFG2NestedWordAutomaton {
 						queue.add(nextNode);
 					}
 				}
+			}
 		}
 		
 		

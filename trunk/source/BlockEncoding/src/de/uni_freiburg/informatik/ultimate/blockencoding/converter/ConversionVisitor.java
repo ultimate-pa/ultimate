@@ -304,7 +304,7 @@ public class ConversionVisitor implements IMinimizationVisitor {
 			}
 			ProgramPoint newNode = new ProgramPoint(node.getOriginalNode()
 					.getPosition(), node.getOriginalNode().getProcedure(), node
-					.getOriginalNode().isErrorLocation(), astNode, null);
+					.getOriginalNode().isErrorLocation(), astNode);
 			refNodeMap.put(node, newNode);
 			// to reset the rootAnnot, we need to keep a map from the original
 			// program points, to the new ones. And since we only create
