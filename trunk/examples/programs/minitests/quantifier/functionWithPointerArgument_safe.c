@@ -1,3 +1,7 @@
+int add(int x, int* y) {
+	return x + *y;
+}
+
 int main() {
 	int v; 
 	int* addrV;
@@ -12,6 +16,4 @@ int main() {
 	return 0;
 }
 
-int add(int x, int* y) {
-	return x + *y;
-}
+
