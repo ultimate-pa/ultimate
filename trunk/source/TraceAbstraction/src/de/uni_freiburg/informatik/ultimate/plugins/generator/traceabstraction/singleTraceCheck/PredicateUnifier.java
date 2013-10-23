@@ -184,8 +184,11 @@ import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
 			case SAT:
 				return false;
 			case UNKNOWN:
-				TraceChecker.s_Logger.warn(new DebugMessage("assuming that {0} is not equivalent to false", term));
-				return false;
+				TraceChecker.s_Logger.warn(new DebugMessage(
+						"assuming that {0} is not equivalent to false", term));
+				//return false;
+				throw new UnsupportedOperationException("Unable to decide if " +
+						term + " is equivalent to false");
 			default:
 				throw new AssertionError();
 			}
@@ -200,8 +203,11 @@ import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
 			case SAT:
 				return false;
 			case UNKNOWN:
-				TraceChecker.s_Logger.warn(new DebugMessage("assuming that {0} is not equivalent to true", term));
-				return false;
+				TraceChecker.s_Logger.warn(new DebugMessage(
+						"assuming that {0} is not equivalent to true", term));
+				//return false;
+				throw new UnsupportedOperationException("Unable to decide if " +
+						term + " is equivalent to true");
 			default:
 				throw new AssertionError();
 			}
