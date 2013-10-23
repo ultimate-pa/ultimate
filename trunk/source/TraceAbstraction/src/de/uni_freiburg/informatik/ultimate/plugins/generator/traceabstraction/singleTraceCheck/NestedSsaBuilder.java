@@ -124,6 +124,10 @@ public class NestedSsaBuilder {
 		return m_Ssa;
 	}
 	
+	public ModifiableNestedFormulas<Map<TermVariable,Term>, Map<TermVariable,Term>> getVariable2Constant() {
+		return m_Variable2Constant;
+	}
+	
 	protected String m_currentProcedure;
 
 	/**
