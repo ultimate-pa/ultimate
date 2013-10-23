@@ -26,22 +26,20 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
  *
  * @param <TF> Type of the formulas along the trace.
  */
-public abstract class TraceWithFormulas<TF, SF> {
+public abstract class NestedFormulas<TF, SF> {
 	
 	private final NestedWord<CodeBlock> m_NestedWord;
-	private final SF m_Precondition;
-	private final SF m_Postcondition;
+	private SF m_Precondition;
+	private SF m_Postcondition;
 	private final SortedMap<Integer, SF> m_PendingContexts;
 	
 	public final NestedWord<CodeBlock> getTrace() {
 		return m_NestedWord;
 	}
 	
-	public TraceWithFormulas(NestedWord<CodeBlock> nestedWord, 
-			SF precondition, SF postcondition, SortedMap<Integer, SF> pendingContexts) {
+	public NestedFormulas(NestedWord<CodeBlock> nestedWord,
+			SortedMap<Integer, SF> pendingContexts) {
 		m_NestedWord = nestedWord;
-		m_Precondition = precondition;
-		m_Postcondition = postcondition;
 		assert pendingContexts != null;
 		m_PendingContexts = pendingContexts;
 	}
@@ -50,15 +48,34 @@ public abstract class TraceWithFormulas<TF, SF> {
 		return m_Precondition;
 	}
 	
+	public void setPrecondition(SF sf) {
+		assert m_Precondition == null : "already set";
+		m_Precondition = sf;
+	}
+	
 	public final SF getPostcondition() {
 		return m_Postcondition;
 	}
 	
-	public final SortedMap<Integer, SF> getPendingContexts() {
-		return m_PendingContexts;
+	public void setPostcondition(SF sf) {
+		assert m_Postcondition == null : "already set";
+		m_Postcondition = sf;
 	}
 	
-	public abstract Set<Integer> callPositions();
+	public SF getPendingContext(int i) {
+		assert m_NestedWord.isPendingReturn(i) : "no pending return";
+		return m_PendingContexts.get(i);
+	}
+	
+	public void setPendingContext(int i, SF sf) {
+		assert !m_PendingContexts.containsKey(i) : "already set";
+		assert m_NestedWord.isPendingReturn(i) : "no pending return";
+		m_PendingContexts.put(i, sf);
+	}
+	
+	public final Set<Integer> callPositions() {
+		return m_NestedWord.getCallPositions();
+	}
 	
 	
 	public final TF getFormulaFromNonCallPos(int i) {

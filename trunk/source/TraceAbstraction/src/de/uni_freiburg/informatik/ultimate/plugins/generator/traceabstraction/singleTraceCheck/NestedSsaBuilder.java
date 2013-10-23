@@ -1,11 +1,8 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.SortedMap;
 import java.util.Stack;
 import java.util.TreeMap;
 
@@ -110,18 +107,20 @@ public class NestedSsaBuilder {
 	}
 	
 	protected final Map<Term,BoogieVar> m_Constants2BoogieVar = new HashMap<Term,BoogieVar>();
-
-	protected final TraceWithFormulas<TransFormula, IPredicate> m_TraceWF;
 	
-	protected final SsaData m_SsaData;
+
+	public Map<Term, BoogieVar> getConstants2BoogieVar() {
+		return m_Constants2BoogieVar;
+	}
+
+	protected final NestedFormulas<TransFormula, IPredicate> m_Formulas;
+	
+	protected final ModifiableNestedFormulas<Term, Term> m_Ssa;
+	protected final ModifiableNestedFormulas<Map<TermVariable,Term>, Map<TermVariable,Term>> m_Variable2Constant;
 	
 	private final ModifiableGlobalVariableManager m_ModGlobVarManager;
 	
-
-	
-	protected NestedSsa m_Ssa;
-	
-	public NestedSsa getSsa() {
+	public NestedFormulas<Term, Term> getSsa() {
 		return m_Ssa;
 	}
 	
@@ -140,9 +139,10 @@ public class NestedSsaBuilder {
 							DefaultTransFormulas defaultTransFormulas) {
 		m_Script = smtManager.getScript();
 		m_SmtManager = smtManager;
-		m_TraceWF = defaultTransFormulas;
+		m_Formulas = defaultTransFormulas;
 		m_ModGlobVarManager = defaultTransFormulas.getModifiableGlobalVariableManager();
-		m_SsaData = new SsaData();
+		m_Ssa = new ModifiableNestedFormulas<Term, Term>(trace, new TreeMap<Integer, Term>());
+		m_Variable2Constant = new ModifiableNestedFormulas<Map<TermVariable,Term>, Map<TermVariable,Term>>(trace, new TreeMap<Integer, Map<TermVariable,Term>>());
 		buildSSA();
 	}
 	
@@ -153,22 +153,16 @@ public class NestedSsaBuilder {
 		 * Furthermore we need the oldVarAssignment and the globalVarAssignment
 		 * they will link the pending context with the pending return.
 		 */
-		final int numberPendingContexts = m_TraceWF.getPendingContexts().size();
-		final List<Integer> pendingReturns;
-		if (numberPendingContexts > 0) {
-			pendingReturns = positionsOfPendingReturns(m_TraceWF.getTrace());
-		} else {
-			pendingReturns = new ArrayList<Integer>(0);
-		}
-		assert pendingReturns.size() == numberPendingContexts;
+		final Integer[] pendingReturns = m_Formulas.getTrace().getPendingReturns().keySet().toArray(new Integer[0]);
+		final int numberPendingContexts = pendingReturns.length;
 
 		startOfCallingContext = -1 - numberPendingContexts;
 		currentLocalAndOldVarVersion = new HashMap<BoogieVar,Term>();
 
 		for (int i=numberPendingContexts-1; i>=0; i--) {
-			final int pendingReturnPosition = pendingReturns.get(i);
+			final int pendingReturnPosition = pendingReturns[i];
 			m_PendingContext2PendingReturn.put(startOfCallingContext, pendingReturnPosition);
-			Return ret = (Return) m_TraceWF.getTrace().getSymbol(pendingReturnPosition);
+			Return ret = (Return) m_Formulas.getTrace().getSymbol(pendingReturnPosition);
 			Call correspondingCall = ret.getCorrespondingCall();
 			m_currentProcedure = getProcedureBefore(correspondingCall);
 			
@@ -179,18 +173,18 @@ public class NestedSsaBuilder {
 				// have already been reversioned at the last oldVarAssignment
 			}
 			
-			IPredicate pendingContext = m_TraceWF.getPendingContexts().get(pendingReturnPosition);
+			IPredicate pendingContext = m_Formulas.getPendingContext(pendingReturnPosition);
 			VariableVersioneer pendingContextVV = new VariableVersioneer(pendingContext);
 			pendingContextVV.versionPredicate();
-			Term versioneeredContext = pendingContextVV.getVersioneeredTerm();
-			m_SsaData.putPendingContext(pendingReturnPosition, versioneeredContext);
+			m_Ssa.setPendingContext(pendingReturnPosition, pendingContextVV.getVersioneeredTerm());
+			m_Variable2Constant.setPendingContext(pendingReturnPosition, pendingContextVV.getSubstitutionMapping());
 			
 			TransFormula localVarAssignment = correspondingCall.getTransitionFormula();
 			VariableVersioneer initLocalVarsVV = new VariableVersioneer(localVarAssignment);
 			initLocalVarsVV.versionInVars();
 
 			String calledProcedure = correspondingCall.getCallStatement().getMethodName();
-			TransFormula oldVarAssignment = m_TraceWF.getOldVarAssignment(pendingReturnPosition);
+			TransFormula oldVarAssignment = m_Formulas.getOldVarAssignment(pendingReturnPosition);
 			VariableVersioneer initOldVarsVV = new VariableVersioneer(oldVarAssignment);
 			initOldVarsVV.versionInVars();
 
@@ -207,8 +201,10 @@ public class NestedSsaBuilder {
 			initOldVarsVV.versionAssignedVars(startOfCallingContext);
 			initLocalVarsVV.versionAssignedVars(startOfCallingContext);
 
-			m_SsaData.putOldVarAssign(pendingReturnPosition, initOldVarsVV.getVersioneeredTerm());
-			m_SsaData.putLocalVarAssign(pendingReturnPosition, initLocalVarsVV.getVersioneeredTerm());
+			m_Ssa.setOldVarAssignmentAtPos(pendingReturnPosition, initOldVarsVV.getVersioneeredTerm());
+			m_Variable2Constant.setOldVarAssignmentAtPos(pendingReturnPosition, initOldVarsVV.getSubstitutionMapping());
+			m_Ssa.setLocalVarAssignmentAtPos(pendingReturnPosition, initLocalVarsVV.getVersioneeredTerm());
+			m_Variable2Constant.setLocalVarAssignmentAtPos(pendingReturnPosition, initLocalVarsVV.getSubstitutionMapping());
 		}
 				
 		assert (startOfCallingContext == -1);
@@ -220,67 +216,69 @@ public class NestedSsaBuilder {
 		 */
 		if (m_currentProcedure == null) {
 			assert numberPendingContexts == 0;
-			CodeBlock firstCodeBlock = m_TraceWF.getTrace().getSymbolAt(0);
+			CodeBlock firstCodeBlock = m_Formulas.getTrace().getSymbolAt(0);
 			m_currentProcedure = getProcedureBefore(firstCodeBlock);
 		}
 		reVersionModifiableGlobals();
-		if (pendingReturns.isEmpty()) {
+		if (pendingReturns.length == 0) {
 			reVersionModifiableOldVars();
 		} else {
 			// have already been reversioned at the last oldVarAssignment
 		}
-		VariableVersioneer precondVV = new VariableVersioneer(m_TraceWF.getPrecondition());
+		VariableVersioneer precondVV = new VariableVersioneer(m_Formulas.getPrecondition());
 		precondVV.versionPredicate();
-		Term versioneeredPrecondition = precondVV.getVersioneeredTerm();
-		m_SsaData.setPrecondition(versioneeredPrecondition);
+		m_Ssa.setPrecondition(precondVV.getVersioneeredTerm());
+		m_Variable2Constant.setPrecondition(precondVV.getSubstitutionMapping());
 		
 		
 		/*
 		 * Step 3: We rename the TransFormulas of the traces CodeBlocks
 		 */
 		int numberOfPendingCalls = 0;
-		for (int i=0; i < m_TraceWF.getTrace().length(); i++) {
-			CodeBlock symbol = m_TraceWF.getTrace().getSymbolAt(i);
+		for (int i=0; i < m_Formulas.getTrace().length(); i++) {
+			CodeBlock symbol = m_Formulas.getTrace().getSymbolAt(i);
 			assert (!(symbol instanceof GotoEdge)) : "TraceChecker does not support GotoEdges";
 			
 			TransFormula tf;
-			if (m_TraceWF.getTrace().isCallPosition(i)) {
-				tf = m_TraceWF.getLocalVarAssignment(i);
+			if (m_Formulas.getTrace().isCallPosition(i)) {
+				tf = m_Formulas.getLocalVarAssignment(i);
 			} else {
-				tf = m_TraceWF.getFormulaFromNonCallPos(i);
+				tf = m_Formulas.getFormulaFromNonCallPos(i);
 			}
 			
 			VariableVersioneer tfVV = new VariableVersioneer(tf);
 			tfVV.versionInVars();
 			
-			if (m_TraceWF.getTrace().isCallPosition(i)) {
+			if (m_Formulas.getTrace().isCallPosition(i)) {
 				assert (symbol instanceof Call) : 
 					"current implementation supports only Call";
-				if (m_TraceWF.getTrace().isPendingCall(i)) {
+				if (m_Formulas.getTrace().isPendingCall(i)) {
 					numberOfPendingCalls++;
 				}
 				Call call = (Call) symbol;
 				String calledProcedure = call.getCallStatement().getMethodName();
 				m_currentProcedure = calledProcedure;
-				TransFormula oldVarAssignment = m_TraceWF.getOldVarAssignment(i);
+				TransFormula oldVarAssignment = m_Formulas.getOldVarAssignment(i);
 				VariableVersioneer initOldVarsVV = 
 											new VariableVersioneer(oldVarAssignment);
 				initOldVarsVV.versionInVars();
 				startOfCallingContextStack.push(startOfCallingContext);
 				startOfCallingContext = i;
 				initOldVarsVV.versionAssignedVars(i);
-				m_SsaData.putOldVarAssign(i, initOldVarsVV.getVersioneeredTerm());
+				m_Ssa.setOldVarAssignmentAtPos(i, initOldVarsVV.getVersioneeredTerm());
+				m_Variable2Constant.setOldVarAssignmentAtPos(i, initOldVarsVV.getSubstitutionMapping());
 
-				TransFormula globalVarAssignment = m_TraceWF.getGlobalVarAssignment(i);
+				TransFormula globalVarAssignment = m_Formulas.getGlobalVarAssignment(i);
 				VariableVersioneer initGlobalVarsVV = 
 						new VariableVersioneer(globalVarAssignment);
 				initGlobalVarsVV.versionInVars();
 				initGlobalVarsVV.versionAssignedVars(i);
-				m_SsaData.putGlobalVarAssign(i, initGlobalVarsVV.getVersioneeredTerm());
+				m_Ssa.setGlobalVarAssignmentAtPos(i, initGlobalVarsVV.getVersioneeredTerm());
+				m_Variable2Constant.setGlobalVarAssignmentAtPos(i, initGlobalVarsVV.getSubstitutionMapping());
 				currentVersionStack.push(currentLocalAndOldVarVersion);
 				currentLocalAndOldVarVersion = new HashMap<BoogieVar,Term>();
 			}
-			if (m_TraceWF.getTrace().isReturnPosition(i)) {
+			if (m_Formulas.getTrace().isReturnPosition(i)) {
 				Return ret = (Return) symbol;
 				m_currentProcedure = ret.getCallerProgramPoint().getProcedure();
 				currentLocalAndOldVarVersion = currentVersionStack.pop();
@@ -289,11 +287,13 @@ public class NestedSsaBuilder {
 			tfVV.versionAssignedVars(i);
 			tfVV.versionBranchEncoders(i);
 			tfVV.replaceAuxVars();
-			if (m_TraceWF.getTrace().isCallPosition(i)) {
-				m_SsaData.putLocalVarAssign(i, tfVV.getVersioneeredTerm());
+			if (m_Formulas.getTrace().isCallPosition(i)) {
+				m_Ssa.setLocalVarAssignmentAtPos(i, tfVV.getVersioneeredTerm());
+				m_Variable2Constant.setLocalVarAssignmentAtPos(i, tfVV.getSubstitutionMapping());
 			}
 			else {
-				m_SsaData.putNonCallFormula(i, tfVV.getVersioneeredTerm());
+				m_Ssa.setFormulaAtNonCallPos(i, tfVV.getVersioneeredTerm());
+				m_Variable2Constant.setFormulaAtNonCallPos(i, tfVV.getSubstitutionMapping());
 			}
 		}
 		
@@ -303,22 +303,14 @@ public class NestedSsaBuilder {
 		assert numberOfPendingCalls > 0 || startOfCallingContext == -1 - numberPendingContexts;
 		assert numberOfPendingCalls == 0 || numberPendingContexts == 0;
 
-		VariableVersioneer postCondVV = new VariableVersioneer(m_TraceWF.getPostcondition());
+		VariableVersioneer postCondVV = new VariableVersioneer(m_Formulas.getPostcondition());
 		postCondVV.versionPredicate();
-		Term versioneeredPostcondition = postCondVV.getVersioneeredTerm();
-		m_SsaData.setPostcondition(versioneeredPostcondition);
+		m_Ssa.setPostcondition(postCondVV.getVersioneeredTerm());
+		m_Variable2Constant.setPostcondition(postCondVV.getSubstitutionMapping());
 		
 		
 
-		m_Ssa = new NestedSsa(
-		m_TraceWF,
-		m_SsaData.getPrecondition(),
-		m_SsaData.getPostcondition(),
-		m_SsaData.getTerms(),
-		m_SsaData.getLocalVarAssignmentAtCall(),
-		m_SsaData.getGlobalOldVarAssignmentAtCall(),
-		m_SsaData.getPendingContexts(),
-		m_Constants2BoogieVar);
+
 	}
 
 
@@ -534,7 +526,7 @@ public class NestedSsaBuilder {
 			}
 			TransFormula oldVarAssignment;
 			if (startOfCallingContext >= 0) {
-				oldVarAssignment = m_TraceWF.getOldVarAssignment(startOfCallingContext);
+				oldVarAssignment = m_Formulas.getOldVarAssignment(startOfCallingContext);
 			} else if (startOfCallingContext == -1) {
 				// from some point of view each variable is modified in the 
 				// initial calling context, because variables get their
@@ -543,7 +535,7 @@ public class NestedSsaBuilder {
 			} else {
 				assert startOfCallingContext < -1;
 				int pendingReturnPosition = m_PendingContext2PendingReturn.get(startOfCallingContext);
-				oldVarAssignment = m_TraceWF.getOldVarAssignment(pendingReturnPosition);
+				oldVarAssignment = m_Formulas.getOldVarAssignment(pendingReturnPosition);
 			}
 			boolean isModified;
 			if (bv.isOldvar()) {
@@ -553,147 +545,4 @@ public class NestedSsaBuilder {
 			}
 			return isModified;
 		}
-		
-
-		
-		@Deprecated //pendingContexts is now Map
-		protected List<Integer> positionsOfPendingReturns(NestedWord<CodeBlock> nw) {
-			List<Integer> result = new ArrayList<Integer>();
-			for (int i=0; i<nw.length(); i++) {
-				if (nw.isPendingReturn(i)) {
-					result.add(i);
-				}
-			}
-			return result;
-		}
-	
-		
-		/**
-		 * Buffer to collect information needed to construt a SSA.
-		 */
-		class SsaData {
-			/**
-			 * SSA form of Precondition.
-			 * Original precondition where all variables get index -1.  
-			 */
-			private Term m_Precondition;
-			
-			/**
-			 * SSA form of Postcondition. 
-			 * Original postcondition where all variables get as index the last position
-			 * of the trace where this variable has been modified (with respect to 
-			 * calling context).  
-			 */
-			private Term m_Postcondition;
-			
-			/**
-			 * If index i is an internal position or a return transition in the
-			 * nested trace Term[i] represents the i-th statement.
-			 * If index i is a call position Term[i] represents the assignment 
-			 * {@code g_1,...,g_n := old(g_1),...,old(g_n)} where g_1,...,g_n are the
-			 * global variables modified by the called procedure.  
-			 */
-			private final Term[] m_Terms;
-			
-			/**
-			 * Maps a call position to a formula that represents the assignment 
-			 * {@code x_1,...,x_n := t_1,...,t_n} where x_1,...,x_n are the parameters
-			 * of the callee and t_1,...,t_n are the arguments of the caller.
-			 */
-			private final Map<Integer,Term> m_LocalVarAssignmentAtCall;
-			
-			/**
-			 * Maps a call position to a formula that represents the assignment 
-			 * {@code old(g_1),...,old(g_n) := g_1,...,g_n} where g_1,...,g_n are the
-			 * global variables modified by the called procedure.  
-			 */
-			private final Map<Integer,Term> m_GlobalOldVarAssignmentAtCall;
-			
-			
-			/**
-			 * Maps a pending return position to a formula which represents the state of
-			 * the procedure to which is returned before the return.
-			 */
-			private final SortedMap<Integer,Term> m_PendingContexts;
-			
-			public SsaData() {
-				m_Terms = new Term[m_TraceWF.getTrace().length()];
-				m_LocalVarAssignmentAtCall = new HashMap<Integer,Term>();
-				m_GlobalOldVarAssignmentAtCall = new HashMap<Integer,Term>();
-				m_PendingContexts = new TreeMap<Integer,Term>();
-			}
-
-
-			public Term getPrecondition() {
-				return m_Precondition;
-			}
-
-
-			public void setPrecondition(Term precondition) {
-				m_Precondition = precondition;
-			}
-
-
-			public Term getPostcondition() {
-				return m_Postcondition;
-			}
-
-
-			public void setPostcondition(Term postcondition) {
-				m_Postcondition = postcondition;
-			}
-
-
-			public Term[] getTerms() {
-				return m_Terms;
-			}
-
-
-			public Map<Integer, Term> getLocalVarAssignmentAtCall() {
-				return m_LocalVarAssignmentAtCall;
-			}
-
-
-			public Map<Integer, Term> getGlobalOldVarAssignmentAtCall() {
-				return m_GlobalOldVarAssignmentAtCall;
-			}
-
-
-			public SortedMap<Integer, Term> getPendingContexts() {
-				return m_PendingContexts;
-			}
-
-
-			public void putOldVarAssign(Integer pos, Term term) {
-				assert m_TraceWF.getTrace().isCallPosition(pos) || m_TraceWF.getTrace().isPendingReturn(pos);
-				assert m_GlobalOldVarAssignmentAtCall.get(pos) == null;
-				m_GlobalOldVarAssignmentAtCall.put(pos, term);
-			}
-			
-			public void putLocalVarAssign(Integer pos, Term term) {
-				assert m_TraceWF.getTrace().isCallPosition(pos) || m_TraceWF.getTrace().isPendingReturn(pos);
-				assert m_LocalVarAssignmentAtCall.get(pos) == null;
-				m_LocalVarAssignmentAtCall.put(pos, term);
-			}
-			
-			public void putGlobalVarAssign(Integer pos, Term term) {
-				assert m_TraceWF.getTrace().isCallPosition(pos);
-				assert m_Terms[pos] == null;
-				m_Terms[pos] = term;
-			}
-			
-			public void putNonCallFormula(Integer pos, Term term) {
-				assert !m_TraceWF.getTrace().isCallPosition(pos);
-				assert m_Terms[pos] == null;
-				m_Terms[pos] = term;
-				
-			}
-			
-			public void putPendingContext(Integer pendingReturnPos, Term term) {
-				assert m_TraceWF.getTrace().isPendingReturn(pendingReturnPos);
-				assert !m_PendingContexts.containsKey(pendingReturnPos);
-				m_PendingContexts.put(pendingReturnPos, term);
-			}
-		}
-
 }

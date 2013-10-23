@@ -1,6 +1,5 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck;
 
-import java.util.Set;
 import java.util.SortedMap;
 
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
@@ -8,15 +7,13 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cal
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.InterproceduralSequentialComposition;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ModifiableGlobalVariableManager;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.TransFormula;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IPredicate;
 
-public class DefaultTransFormulas extends TraceWithFormulas<TransFormula, IPredicate> {
+public class DefaultTransFormulas extends NestedFormulas<TransFormula, IPredicate> {
 	
 	private final ModifiableGlobalVariableManager m_ModifiableGlobalVariableManager;
-	private final Set<Integer> m_CallPositions;
 	private final boolean m_WithBranchEncoders;
 	
 	
@@ -30,9 +27,10 @@ public class DefaultTransFormulas extends TraceWithFormulas<TransFormula, IPredi
 			SortedMap<Integer, IPredicate> pendingContexts,
 			ModifiableGlobalVariableManager modifiableGlobalVariableManager,
 			boolean withBranchEncoders) {
-		super(nestedWord, precondition, postcondition, pendingContexts);
+		super(nestedWord, pendingContexts);
+		super.setPrecondition(precondition);
+		super.setPostcondition(postcondition);
 		m_ModifiableGlobalVariableManager = modifiableGlobalVariableManager;
-		m_CallPositions = super.getTrace().getCallPositions();
 		m_WithBranchEncoders = withBranchEncoders;
 	}
 	
@@ -40,11 +38,6 @@ public class DefaultTransFormulas extends TraceWithFormulas<TransFormula, IPredi
 		return m_WithBranchEncoders;
 	}
 	
-	@Override
-	public Set<Integer> callPositions() {
-		return m_CallPositions;
-	}
-
 	@Override
 	protected TransFormula getFormulaFromValidNonCallPos(int i) {
 		CodeBlock cb = super.getTrace().getSymbolAt(i);

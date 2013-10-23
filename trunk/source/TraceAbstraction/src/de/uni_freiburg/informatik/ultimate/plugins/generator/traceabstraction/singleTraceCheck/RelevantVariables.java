@@ -19,13 +19,13 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
  */
 public class RelevantVariables {
 
-	public final TraceWithFormulas<TransFormula, IPredicate> m_TraceWithFormulas;
+	public final NestedFormulas<TransFormula, IPredicate> m_TraceWithFormulas;
 	public final Set<BoogieVar>[] m_ForwardRelevantVariables;
 	public final Set<BoogieVar>[] m_BackwardRelevantVariables;
 	public final Set<BoogieVar>[] m_RelevantVariables;
 	
 
-	public RelevantVariables(TraceWithFormulas<TransFormula, IPredicate> traceWithFormulas) {
+	public RelevantVariables(NestedFormulas<TransFormula, IPredicate> traceWithFormulas) {
 		super();
 		m_TraceWithFormulas = traceWithFormulas;
 		m_ForwardRelevantVariables = new Set[m_TraceWithFormulas.getTrace().length()+1];

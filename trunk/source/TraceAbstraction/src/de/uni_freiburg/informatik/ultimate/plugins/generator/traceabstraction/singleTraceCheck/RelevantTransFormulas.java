@@ -26,7 +26,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
  * @author musab@informatik.uni-freiburg.de
  *
  */
-public class RelevantTransFormulas extends TraceWithFormulas<TransFormula, IPredicate> {
+public class RelevantTransFormulas extends NestedFormulas<TransFormula, IPredicate> {
 	
 	/**
 	 * If index i is an internal position or a return transition in the
@@ -62,7 +62,9 @@ public class RelevantTransFormulas extends TraceWithFormulas<TransFormula, IPred
 			boolean[] localVarAssignmentsAtCallInUnsatCore,
 			boolean[] oldVarAssignmentAtCallInUnsatCore,
 			SmtManager smtManager) {
-		super(nestedTrace, precondition, postcondition, pendingContexts);
+		super(nestedTrace, pendingContexts);
+		super.setPrecondition(precondition);
+		super.setPostcondition(postcondition);
 		m_TransFormulas = new TransFormula[nestedTrace.length()];
 		m_GlobalAssignmentTransFormulaAtCall = new HashMap<Integer, TransFormula>();
 		m_OldVarsAssignmentTransFormulasAtCall = new HashMap<Integer, TransFormula>();
@@ -79,7 +81,9 @@ public class RelevantTransFormulas extends TraceWithFormulas<TransFormula, IPred
 			ModifiableGlobalVariableManager modGlobalVarManager,
 			SmtManager smtManager,
 			AnnotateAndAsserterConjuncts aac) {
-		super(nestedTrace, precondition, postcondition, pendingContexts);
+		super(nestedTrace, pendingContexts);
+		super.setPrecondition(precondition);
+		super.setPostcondition(postcondition);
 		m_TransFormulas = new TransFormula[nestedTrace.length()];
 		m_GlobalAssignmentTransFormulaAtCall = new HashMap<Integer, TransFormula>();
 		m_OldVarsAssignmentTransFormulasAtCall = new HashMap<Integer, TransFormula>();
@@ -233,11 +237,6 @@ public class RelevantTransFormulas extends TraceWithFormulas<TransFormula, IPred
 				tf.getBranchEncoders(),
 				tf.isInfeasible(),
 				closedFormula);
-	}
-
-	@Override
-	public Set<Integer> callPositions() {
-		return super.getTrace().getCallPositions();
 	}
 
 	@Override

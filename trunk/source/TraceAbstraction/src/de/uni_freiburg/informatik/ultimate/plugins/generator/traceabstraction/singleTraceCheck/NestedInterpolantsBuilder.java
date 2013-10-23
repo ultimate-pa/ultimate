@@ -46,7 +46,7 @@ public class NestedInterpolantsBuilder {
 
 //	private TAPreferences m_Pref = null;
 	
-	private NestedSsa m_AnnotSSA;
+	private NestedFormulas<Term, Term> m_AnnotSSA;
 	
 	private final PredicateUnifier m_PredicateBuilder;
 
@@ -69,7 +69,8 @@ public class NestedInterpolantsBuilder {
 	private final boolean m_TreeInterpolation;
 
 	public NestedInterpolantsBuilder(SmtManager smtManager,
-								 	NestedSsa annotatdSsa,
+									NestedFormulas<Term, Term> annotatdSsa,
+								 	Map<Term,BoogieVar> m_constants2BoogieVar,
 								 	PredicateUnifier predicateBuilder,
 								 	Set<Integer> interpolatedPositions,
 								 	boolean treeInterpolation) {
@@ -79,7 +80,7 @@ public class NestedInterpolantsBuilder {
 		m_PredicateBuilder = predicateBuilder;
 		m_AnnotSSA = annotatdSsa;
 		m_CraigInterpolants = new Term[m_AnnotSSA.getTrace().length()-1];
-		m_sfmv = new PredicateConstructionVisitor(m_AnnotSSA.getConstants2BoogieVar());
+		m_sfmv = new PredicateConstructionVisitor(m_constants2BoogieVar);
 		m_InterpolatedPositions = interpolatedPositions;
 		m_Trace = annotatdSsa.getTrace();
 
@@ -131,7 +132,7 @@ public class NestedInterpolantsBuilder {
 						newInterpolInputFormula(i);
 						addToLastInterpolInputFormula(m_AnnotSSA.getLocalVarAssignment(i));
 						addToLastInterpolInputFormula(m_AnnotSSA.getOldVarAssignment(i));
-						addToLastInterpolInputFormula(m_AnnotSSA.getPendingContexts().get(i));
+						addToLastInterpolInputFormula(m_AnnotSSA.getPendingContext(i));
 					} else {
 						startOfCurrentSubtree = m_startOfSubtreeStack.pop();
 						newInterpolInputFormula(i);
@@ -162,7 +163,7 @@ public class NestedInterpolantsBuilder {
 						addToLastInterpolInputFormula(m_AnnotSSA.getFormulaFromNonCallPos(i));
 						addToLastInterpolInputFormula(m_AnnotSSA.getLocalVarAssignment(i));
 						addToLastInterpolInputFormula(m_AnnotSSA.getOldVarAssignment(i));
-						addToLastInterpolInputFormula(m_AnnotSSA.getPendingContexts().get(i));
+						addToLastInterpolInputFormula(m_AnnotSSA.getPendingContext(i));
 					} else {
 						startOfCurrentSubtree = m_startOfSubtreeStack.pop();
 						addToLastInterpolInputFormula(m_AnnotSSA.getFormulaFromNonCallPos(i));

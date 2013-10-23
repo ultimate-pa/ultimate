@@ -195,10 +195,10 @@ public class TraceChecker {
 	private LBool checkTrace() {
 		LBool isSafe;
 		m_SmtManager.startTraceCheck();
-//		m_Nsb = new NestedSsaBuilder(m_Trace, m_SmtManager, 
-//				m_DefaultTransFormulas);
-		m_Nsb = new LiveVariables(m_Trace, m_SmtManager, m_DefaultTransFormulas);
-		NestedSsa ssa = m_Nsb.getSsa();
+		m_Nsb = new NestedSsaBuilder(m_Trace, m_SmtManager, 
+				m_DefaultTransFormulas);
+//		m_Nsb = new LiveVariables(m_Trace, m_SmtManager, m_DefaultTransFormulas);
+		NestedFormulas<Term, Term> ssa = m_Nsb.getSsa();
 		try {
 			m_AAA = getAnnotateAndAsserter(ssa);
 			m_AAA.buildAnnotatedSsaAndAssertTerms();
@@ -218,12 +218,12 @@ public class TraceChecker {
 						m_DefaultTransFormulas.getTrace(), 
 						m_DefaultTransFormulas.getPrecondition(), 
 						m_DefaultTransFormulas.getPostcondition(), 
-						m_DefaultTransFormulas.getPendingContexts(), 
+						m_PendingContexts, 
 						m_ModifiedGlobals, true);
 				TraceChecker tc = new TraceChecker(
 						m_DefaultTransFormulas.getPrecondition(), 
 						m_DefaultTransFormulas.getPostcondition(), 
-						m_DefaultTransFormulas.getPendingContexts(), 
+						m_PendingContexts, 
 						m_DefaultTransFormulas.getTrace(), m_SmtManager, 
 						m_ModifiedGlobals, withBE);
 				assert tc.isCorrect() == LBool.SAT;
@@ -272,7 +272,7 @@ public class TraceChecker {
 		return rpeb.getRcfgProgramExecution();
 	}
 	
-	protected AnnotateAndAsserter getAnnotateAndAsserter(NestedSsa ssa) {
+	protected AnnotateAndAsserter getAnnotateAndAsserter(NestedFormulas<Term, Term> ssa) {
 		return new AnnotateAndAsserter(m_SmtManager, ssa);
 	}
 	
@@ -425,7 +425,7 @@ public class TraceChecker {
 			throw new AssertionError("You already computed interpolants");
 		}
 		NestedInterpolantsBuilder nib = new NestedInterpolantsBuilder(
-				m_SmtManager, m_AAA.getAnnotatedSsa(), m_PredicateUnifier, 
+				m_SmtManager, m_AAA.getAnnotatedSsa(), m_Nsb.getConstants2BoogieVar(), m_PredicateUnifier, 
 				interpolatedPositions, true);
 		m_Interpolants = nib.getNestedInterpolants();
 		assert !inductivityOfSequenceCanBeRefuted();
@@ -461,7 +461,7 @@ public class TraceChecker {
 		
 		NestedInterpolantsBuilder nib = 
 				new NestedInterpolantsBuilder(m_SmtManager,
-						m_AAA.getAnnotatedSsa(), 
+						m_AAA.getAnnotatedSsa(), m_Nsb.getConstants2BoogieVar(),
 						m_PredicateUnifier, newInterpolatedPositions, false);
 		m_Interpolants = nib.getNestedInterpolants();
 		IPredicate oldPrecondition = m_Precondition;

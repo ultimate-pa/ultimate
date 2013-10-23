@@ -44,8 +44,8 @@ public class TraceCheckerSpWp extends TraceChecker {
 	private final static boolean m_useUnsatCoreOfFineGranularity = true;
 	// The following two variables indicate which strategy of computing the relevant variables along a trace
 	// should be used. If both are true, then the live variables are used.
-	private final static boolean m_useLiveVariables = true;
-	private final static boolean m_useRelevantVariables = m_useLiveVariables;
+	private final static boolean m_useLiveVariables = !true;
+	private final static boolean m_useRelevantVariables = true;
 	private boolean m_ComputeInterpolantsSp;
 	private boolean m_ComputeInterpolantsFp;
 	private boolean m_ComputeInterpolantsBp;
@@ -181,7 +181,7 @@ public class TraceCheckerSpWp extends TraceChecker {
 		}
 //		RelevantVariables rvar = new RelevantVariables(rv);
 //		LiveVariables lvar = new LiveVariables(trace, m_SmtManager, m_DefaultTransFormulas);
-		Set<BoogieVar>[] relevantVars;
+		Set<BoogieVar>[] relevantVars = null;
 		
 		if (m_useLiveVariables) {
 			if (m_Nsb instanceof LiveVariables) {
@@ -781,9 +781,9 @@ public class TraceCheckerSpWp extends TraceChecker {
 	
 	
 	@Override
-	protected AnnotateAndAsserter getAnnotateAndAsserter(NestedSsa ssa) {
+	protected AnnotateAndAsserter getAnnotateAndAsserter(NestedFormulas<Term, Term> ssa) {
 		if (m_useUnsatCoreOfFineGranularity) {
-			return new AnnotateAndAsserterConjuncts(m_SmtManager, ssa); 
+			return new AnnotateAndAsserterConjuncts(m_SmtManager, ssa, m_DefaultTransFormulas); 
 		} else {
 			return new AnnotateAndAsserter(m_SmtManager, ssa);
 		}
