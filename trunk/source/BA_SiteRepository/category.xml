@@ -3,7 +3,10 @@
    <feature url="features/BA_FeatureUltimateCommandLine_0.0.1.jar" id="BA_FeatureUltimateCommandLine" version="0.0.1">
       <category name="ultimate.category"/>
    </feature>
-   <feature url="features/BA_FeatureUltimate_0.0.1.jar" id="BA_FeatureUltimate" version="0.0.1" os="linux,win32" arch="x86,x86_64">
+   <feature url="features/BA_FeatureDependenciesCommandlineE3_0.0.1.jar" id="BA_FeatureDependenciesCommandlineE3" version="0.0.1">
+      <category name="ultimate.category"/>
+   </feature>
+   <feature url="features/BA_FeatureUltimateDebug_0.0.1.jar" id="BA_FeatureUltimateDebug" version="0.0.1" os="linux,win32,macosx" arch="x86,x86_64">
       <category name="ultimate.category"/>
    </feature>
    <category-def name="ultimate.category" label="Ultimate"/>
