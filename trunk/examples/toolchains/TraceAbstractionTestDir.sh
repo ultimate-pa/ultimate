@@ -41,17 +41,21 @@ settings=
 
 
 #------------------------------------------------------------------------------
-# set Machine to x86_64 or x86 depending on architecture
+# determine processor architecture string
 #------------------------------------------------------------------------------
-Machine=`uname -m`;
-if [ $Machine == "i686" ]; then
-    Machine=x86;
+if [ "`uname -m`" = "i686" ]; then
+	arch="x86"
+elif [ "`uname -m`" = "x86_64" ]; then
+	arch="x86_64"
+else
+	echo "Unknown processor architecture."
+	exit 1
 fi
 
 #------------------------------------------------------------------------------
 # assume that the executable is in following directory
 #------------------------------------------------------------------------------
-UltimateEXE="trunk/source/BA_SiteRepository/target/products/UltimateProductCommandLine/linux/gtk/$Machine/Ultimate";
+UltimateEXE="trunk/source/BA_SiteRepository/target/products/CLI-E3/linux/gtk/$arch/Ultimate";
 if [ ! -e "$UltimateEXE" ]; then
     echo "unable to find Ultimate executable $UltimateEXE"
     exit

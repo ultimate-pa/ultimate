@@ -16,7 +16,7 @@ fi
 
 
 Ultimate_PATH=`pwd`;
-Ultimate_BIN="trunk/source/BA_SiteRepository/target/products/UltimateProductCommandLine/linux/gtk/$arch/Ultimate"
+UltimateEXE="trunk/source/BA_SiteRepository/target/products/CLI-E3/linux/gtk/$arch/Ultimate";
 
 TestDir="trunk/examples/rank/"
 TOOLCHAIN="$Ultimate_PATH/trunk/examples/toolchains/RankSynthesizer.xml"

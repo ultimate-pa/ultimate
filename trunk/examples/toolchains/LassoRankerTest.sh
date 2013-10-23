@@ -16,7 +16,7 @@ fi
 
 
 Ultimate_PATH=`pwd`
-Ultimate_BIN="$Ultimate_PATH/source/BA_SiteRepository/target/products/UltimateProductCommandLine/linux/gtk/$arch/Ultimate"
+Ultimate_BIN="$Ultimate_PATH/source/BA_SiteRepository/target/products/CLI-E3/linux/gtk/$arch/Ultimate"
 
 TestDir="$Ultimate_PATH/examples/rank/"
 TOOLCHAIN="$Ultimate_PATH/examples/toolchains/LassoRanker.xml"

@@ -1,6 +1,6 @@
 #!/bin/bash
 Ultimate_PATH=`pwd`;
-UltimateEXE="trunk/source/BA_SiteRepository/target/products/UltimateProductCommandLine/linux/gtk/x86/Ultimate"
+UltimateEXE="trunk/source/BA_SiteRepository/target/products/CLI-E3/linux/gtk/x86/Ultimate"
 TimeLimit=1000;
 
 cd "$1"
