@@ -695,7 +695,7 @@ public class CHandler implements ICHandler {
 							ResultExpression structCons = makeStructConstructorFromRERL(loc,
 									(ResultExpressionListRec) rExpr, (CStruct) resultCType);
 							rExprExpr = structCons.lrVal.getValue();
-						} if (rExpr.cType instanceof CPointer 
+						} else if (resultCType instanceof CPointer 
 								&& rExpr.lrVal.getValue() instanceof IntegerLiteral) {
 							rExprExpr = MemoryHandler.constructPointerFromBaseAndOffset(
 									new IntegerLiteral(loc, new InferredType(Type.Integer), "0"),
@@ -830,7 +830,7 @@ public class CHandler implements ICHandler {
 			fieldValues.add(((RValue) fieldRead.lrVal).getValue());
 
 		}
-		StructConstructor sc = new StructConstructor(loc, 
+		StructConstructor sc = new StructConstructor(loc, new InferredType(Type.Struct),
 				fieldIdentifiers.toArray(new String[0]), 
 				fieldValues.toArray(new Expression[0]));
 
@@ -1291,7 +1291,6 @@ public class CHandler implements ICHandler {
 		CType rType = r.cType;
 		if (rType instanceof CNamed)
 			rType = ((CNamed) rType).getUnderlyingType();
-		assert rType.equals(rr.cType) : "switchToRval does not change cType, right??";
 
 		switch (node.getOperator()) {
 		case IASTBinaryExpression.op_assign: {
