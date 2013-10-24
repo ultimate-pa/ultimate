@@ -1,0 +1,12 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: CoreRCPTest
+Bundle-SymbolicName: CoreRCPTest
+Bundle-Version: 0.0.1
+Bundle-ActivationPolicy: lazy
+Fragment-Host: UltimateCore;bundle-version="0.0.1"
+Bundle-RequiredExecutionEnvironment: JavaSE-1.6
+Require-Bundle: Library-junit-helper,
+ Library-log4j
+Import-Package: org.junit,
+ org.junit.runner

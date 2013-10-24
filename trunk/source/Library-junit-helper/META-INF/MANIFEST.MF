@@ -1,0 +1,11 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: Library-junit-helper
+Bundle-SymbolicName: Library-junit-helper;singleton:=true
+Bundle-Version: 0.0.1
+Bundle-RequiredExecutionEnvironment: JavaSE-1.6
+Export-Package: de.uni_freiburg.informatik.junit_helper,
+ de.uni_freiburg.informatik.junit_helper.categories
+Import-Package: org.junit,
+ org.junit.runners,
+ org.junit.runners.model
