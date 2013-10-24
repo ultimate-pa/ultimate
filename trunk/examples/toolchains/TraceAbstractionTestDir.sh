@@ -61,6 +61,30 @@ if [ ! -e "$UltimateEXE" ]; then
     exit
 fi
 
+#------------------------------------------------------------------------------
+# set enable assertions
+#------------------------------------------------------------------------------
+UltimateINI="trunk/source/BA_SiteRepository/target/products/CLI-E3/linux/gtk/$arch/Ultimate.ini";
+if [ ! -e "$UltimateINI" ]; then
+    echo "unable to find Ultimate.ini $UltimateINI"
+    exit
+fi
+
+# detect if -da is already set
+DA=`grep "\-da$" "$UltimateINI"`
+if [ "$DA" ]; then
+	echo "assertions disabled - while writing this script this was not expected"
+	exit
+fi
+
+# add -ea if not already added
+EA=`grep "\-ea" "$UltimateINI"`
+if [ ! "$EA" ]; then
+	echo "-ea" >> "$UltimateINI"
+	echo "adding -ea to $UltimateINI"
+fi
+
+
 cd "$examplesFolder"
 #for f in `ls *.bpl`;
 files=`find . -name "*.bpl" -o -name "*.c"|sort`
