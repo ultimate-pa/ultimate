@@ -299,6 +299,15 @@ public class ElimStore2 {
 				// this is only a select nested in some other select or store
 				continue;
 			}
+			try {
+				ArrayRead ar = new ArrayRead(selectTerm, arrayTv);
+				ar.toString();
+				//TODO: not every read is illegal
+			} catch (ArrayReadException e) {
+				throw new AssertionError("illegal read");
+			}
+			
+			
 			Term[] index = new Term[dimension];
 			if (dimension == 1) {
 				if (selectTerm.getParameters()[0].equals(arrayTv)) {
@@ -542,18 +551,18 @@ public class ElimStore2 {
 			m_Index = new Term[dimension];			
 			for (int i = dimension-1; i>=0; i--) {
 				if (!(term instanceof ApplicationTerm)) {
-					throw new ArrayReadException("no ApplicationTerm");
+					throw new ArrayReadException(false, "no ApplicationTerm");
 				}
 				ApplicationTerm appTerm = (ApplicationTerm) term;
 				if (!appTerm.getFunction().getName().equals("select")) {
-					throw new ArrayReadException("no select");
+					throw new ArrayReadException(false, "no select");
 				}
 				assert appTerm.getParameters().length == 2;
 				m_Index[i] = appTerm.getParameters()[1];
 				term = appTerm.getParameters()[0];
 			}
 			if (!tv.equals(term)) {
-				throw new ArrayReadException("different array");
+				throw new ArrayReadException(true, "different array");
 			} else  {
 				m_Array = tv;
 			}
@@ -581,22 +590,40 @@ public class ElimStore2 {
 	private static class ArrayReadException extends Exception {
 
 		private static final long serialVersionUID = -628021699371967800L;
+		private final boolean m_DifferentArray;
 
-		public ArrayReadException(String message) {
+		public ArrayReadException(boolean differentArray, String message) {
 			super(message);
+			m_DifferentArray = differentArray;
+		}
+		
+		public boolean reasonIsDifferentArray() {
+			return m_DifferentArray;
 		}
 	}
 	
 	
+	/**
+	 * Only necessary for optimization where we determine which additional
+	 * implied information is really needed.
+	 *
+	 */
 	private class ImpliedReadInformation {
 		Term m_ValueEquivalence;
 		Term m_IndexEquivalence;
 		
 		public ImpliedReadInformation(ArrayRead ar1, Term equalTerm1,
 				ArrayRead ar2, Term equalTerm2, 
-				Term context, Map<TermVariable, Term> mapping) {
+				Term context, ScopedHashMap<TermVariable, Term> tv2constant) {
 			m_IndexEquivalence = buildPairwiseEquality(ar1.getIndex(), ar2.getIndex());
 			m_ValueEquivalence = m_Script.term("=", equalTerm1, equalTerm2);
+			
+			m_Script.push(1);
+			tv2constant.beginScope();
+			assertTermWithTvs(tv2constant, m_Script, context);
+			LBool sat = m_Script.checkSat();
+			tv2constant.endScope();
+			m_Script.pop(1);
 		}
 	}
 	
