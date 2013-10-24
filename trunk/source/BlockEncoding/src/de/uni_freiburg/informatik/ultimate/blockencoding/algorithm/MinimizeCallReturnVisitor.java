@@ -78,6 +78,11 @@ public class MinimizeCallReturnVisitor implements IMinimizationVisitor {
 		List<IMinimizedEdge> incomingEdgeList = new ArrayList<IMinimizedEdge>(
 				node.getMinimalIncomingEdgeLevel());
 		for (IMinimizedEdge edge : incomingEdgeList) {
+			// Check if predecessor has successors. This is not the case
+			// if predecessor is deadcode.
+			if (predecessorSuccIsNull(edge)) {
+				continue;
+			}
 			if (edge.isBasicEdge()
 					&& ((IBasicEdge) edge).getOriginalEdge() instanceof Call) {
 				// now we found an Call-Edge, so this method is called
@@ -153,6 +158,16 @@ public class MinimizeCallReturnVisitor implements IMinimizationVisitor {
 		}
 		// No Call-Edges, nothing to do here
 		return;
+	}
+	
+	/**
+	 * Does the predecessor of edge have successors? This is not the case if the
+	 * predecessor is deadcode, but edge was added because it is a call.
+	 * Added by Matthias 24.10.2013
+	 */
+	private boolean predecessorSuccIsNull(IMinimizedEdge edge) {
+		MinimizedNode predecessor = edge.getSource();
+		return predecessor.getOutgoingEdges() == null;
 	}
 
 	/**
