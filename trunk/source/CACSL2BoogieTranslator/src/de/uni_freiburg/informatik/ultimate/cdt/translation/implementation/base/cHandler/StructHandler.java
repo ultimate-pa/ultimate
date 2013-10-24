@@ -188,9 +188,8 @@ public class StructHandler {
      */
     public Result handleFieldReference(Dispatcher main, IASTFieldReference node, MemoryHandler memoryHandler) {
     	CACSLLocation loc = new CACSLLocation(node);
-    	String field = node.getFieldName().getRawSignature();
+    	String field = node.getFieldName().toString();
         // get the type for the accessed field
-        InferredType fieldType = main.dispatch(node.getExpressionType()); 
         Result fieldOwner = main.dispatch(node.getFieldOwner());
         assert fieldOwner instanceof ResultExpression;
         ResultExpression foRex = (ResultExpression) fieldOwner;
@@ -201,6 +200,8 @@ public class StructHandler {
         		((CPointer)foRex.cType).pointsToType :
         			foRex.cType);
         CStruct cStructType = (CStruct) (type instanceof CNamed ? ((CNamed) type).getUnderlyingType() : type);
+        CType cFieldType = cStructType.getFieldType(field);
+        InferredType fieldType = new InferredType(cFieldType);
         
         if (node.isPointerDereference()) {
         	ResultExpression rFieldOwnerRex = foRex.switchToRValue(main, memoryHandler, this, loc);
@@ -212,9 +213,6 @@ public class StructHandler {
         if (foRex.lrVal instanceof HeapLValue) {
         	HeapLValue fieldOwnerHlv = (HeapLValue) foRex.lrVal;
         	
-//        	Result r = readFieldInTheStructAtAddress(main, memoryHandler, loc, field, fieldType,
-//        			fieldOwnerHlv.getAddress(), fieldOwnerRex.cType);
-
         	Expression newPointer = MemoryHandler.constructPointerFromBaseAndOffset(
         			MemoryHandler.getPointerBaseAddress(fieldOwnerHlv.getAddress(), loc),
         			new BinaryExpression(loc, new InferredType(Type.Integer), BinaryExpression.Operator.ARITHPLUS, 
@@ -234,133 +232,21 @@ public class StructHandler {
         			lVal.getLHS(), field);
         	newValue = new LocalLValue(slhs);
         }
-        return new ResultExpression(foRex.stmt, newValue, foRex.decl, foRex.auxVars, cStructType.getFieldType(field));
+        return new ResultExpression(foRex.stmt, newValue, foRex.decl, foRex.auxVars, cFieldType);
     }
-//    public Result handleFieldReference(Dispatcher main, IASTFieldReference node, MemoryHandler memoryHandler) {
-//        CACSLLocation loc = new CACSLLocation(node);
-//    	String field = node.getFieldName().getRawSignature();
-//        // get the type for the accessed field
-//        InferredType it = main.dispatch(node.getExpressionType()); 
-//        Result r = main.dispatch(node.getFieldOwner());
-//        assert r instanceof ResultExpression;
-//        ResultExpression rex = (ResultExpression) r;
-//        if ((r instanceof ResultExpressionPointerDereference) || node.isPointerDereference()) {
-//			ArrayList<Statement> stmt = new ArrayList<Statement>();
-//			ArrayList<Declaration> decl = new ArrayList<Declaration>();
-//			Map<VariableDeclaration, CACSLLocation> auxVars = 
-//					new HashMap<VariableDeclaration, CACSLLocation>();
-//			stmt.addAll(rex.stmt);
-//			decl.addAll(rex.decl);
-//			auxVars.putAll(rex.auxVars);
-//        	// field we want to access is on the heap
-//            /*
-//             * We have field access of the form p->f where p points to a 
-//             * struct STRU. 
-//             * Our result is a auxiliary variable #t~arrow. The code of this field
-//             * access is preceded by the following statements.
-//             *  
-//             * assume(auxPointer!base = p!base);
-//             * assume(auxPointer!offset = #offset~STRUid~f);
-//             * call #t~arrow := read~TYPf(auxPointer)
-//             *     
-//             * where 
-//             * - TYPf is the type of the field f
-//             * - #t~arrow is a fresh auxiliary variable of type TYPf
-//             * - auxPointer is fresh auxiliary variable of type $Pointer$
-//             * - STRUid is the identifier of the struct STRU
-//             * 
-//             */
-//			boolean isPointerDeref = node.isPointerDereference();
-//			
-////        	return readFieldAtAddress(main, memoryHandler, loc, field, it, rex,
-////					isPointerDeref);
-//			CType pointerTargetType = null;
-//			HeapLValue hlv = (HeapLValue) rex.lrVal;
-//			if (isPointerDeref) {
-//				hlv.addressIsValue();
-//				pointerTargetType = ((CPointer) rex.cType).pointsToType;
-//			} else {
-//				pointerTargetType = rex.cType;
-//			}
-//			
-//			ResultExpression readField = (ResultExpression) readFieldAtAddress(
-//					main, memoryHandler, loc, field, it, rex.lrVal.getValue(), pointerTargetType);
-//
-//			readField.stmt.addAll(stmt);
-//			readField.decl.addAll(decl);
-//			readField.auxVars.putAll(auxVars);
-//			return readField;
-//        } else {
-//        	StructAccessExpression sae = new StructAccessExpression(
-//        			new CACSLLocation(node), it, rex.expr, field);
-//        	assert (main.isAuxVarMapcomplete(rex.decl, rex.auxVars));
-//        	ResultExpression result = new ResultExpression(rex.stmt, sae, rex.decl, rex.auxVars);
-//        	main.cHandler.getSymbolTable();
-//        	CType cvar = rex.cType;
-//			if (cvar instanceof CNamed) {
-//				cvar = ((CNamed) cvar).getUnderlyingType();
-//			}
-//        	if (cvar == null || !(cvar instanceof CStruct)) {
-//        		String msg = "Incorrect or unexpected field owner!";
-//        		Dispatcher.error(loc, SyntaxErrorType.IncorrectSyntax, msg);
-//        		throw new IncorrectSyntaxException(msg);
-//        	}
-//        	result.cType = ((CStruct) cvar).getFieldType(field);
-//        	return result;
-//        }
-//    }
+
 
 	public Result readFieldInTheStructAtAddress(Dispatcher main,
 			MemoryHandler memoryHandler, CACSLLocation loc, String field,
 			InferredType it, Expression structAddress, CStruct structType) {
-//			InferredType it, Expression pointerOrAddress, CType cType, boolean isLeftOfAnArrow) {
-//			InferredType it, ResultExpression rex, boolean isLeftOfAnArrow) {
 		Expression addressBaseOfFieldOwner;
 		Expression addressOffsetOfFieldOwner;
-//		if (isLeftOfAnArrow) {
-//			CType fieldOwnerType = cType;
-////			CType fieldOwnerType = rex.cType;
-//			if (fieldOwnerType instanceof CNamed) {
-//				fieldOwnerType = ((CNamed) fieldOwnerType).getUnderlyingType();
-////				fieldOwnerType = ((CNamed) fieldOwnerType).getMappedType();
-//			}
-//			if (fieldOwnerType instanceof CPointer) {
-//				fieldOwnerPointsToType = ((CPointer) fieldOwnerType).pointsToType;
-//			} else {
-//				throw new IllegalArgumentException("unsupported pointer type " + cType);
-////				throw new IllegalArgumentException("unsupported pointer type " + rex.cType);
-//			}
-//			addressBaseOfFieldOwner = new StructAccessExpression(loc, 
-//					pointerOrAddress, SFO.POINTER_BASE);
-////					rex.expr, SFO.POINTER_BASE);
-//			addressOffsetOfFieldOwner = new StructAccessExpression(loc, 
-//					pointerOrAddress, SFO.POINTER_OFFSET);
-////					rex.expr, SFO.POINTER_OFFSET);
-//		} else {
-//			fieldOwnerPointsToType = rex.cType;
-//			ResultExpressionPointerDereference repd = 
-//					(ResultExpressionPointerDereference) rex;
-//			if (repd instanceof ResultExpressionPointerDereferenceBO) {
-//				ResultExpressionPointerDereferenceBO repdbo = 
-//						(ResultExpressionPointerDereferenceBO) repd;
-//				addressBaseOfFieldOwner = repdbo.m_PointerBase;
-//				addressOffsetOfFieldOwner = repdbo.m_PointerOffset;
-//			} else {
+
 			addressBaseOfFieldOwner = new StructAccessExpression(loc, 
 					structAddress, SFO.POINTER_BASE);
-//					repd.m_Pointer, SFO.POINTER_BASE);
 			addressOffsetOfFieldOwner = new StructAccessExpression(loc, 
 					structAddress, SFO.POINTER_OFFSET);
-//					repd.m_Pointer, SFO.POINTER_OFFSET);
 
-//			}
-			//we may use the same pointer for many struct fields an only want to remove the call once
-//			if (repd.stmt.size() != 0)
-//				repd.removePointerDereference();
-//		}
-//		if (fieldOwnerPointsToType instanceof CNamed) {
-//			fieldOwnerPointsToType = ((CNamed) fieldOwnerPointsToType).getUnderlyingType();
-//		}
 		if (structType == null || !(structType instanceof CStruct)) {
 		    String msg = "Incorrect or unexpected field owner!";
 		    Dispatcher.error(loc, SyntaxErrorType.IncorrectSyntax, msg);
@@ -386,16 +272,9 @@ public class StructHandler {
         ArrayList<Declaration> decl = new ArrayList<Declaration>();
 		Map<VariableDeclaration, CACSLLocation> auxVars = 
 				new HashMap<VariableDeclaration, CACSLLocation>();
-//		stmt.addAll(rex.stmt);//do this outside of this method
-//		decl.addAll(rex.decl);
-//		auxVars.putAll(rex.auxVars);
 		stmt.addAll(call.stmt);
 		decl.addAll(call.decl);
 		auxVars.putAll(call.auxVars);
-//		ResultExpression result = new ResultExpressionPointerDereferenceBO(stmt,
-//				call.expr, decl, auxVars, call.m_Pointer, call.m_ReadCall, 
-//				call.m_CallResult, call.m_AuxPointer, call.m_PointerBase, 
-//				call.m_PointerOffset, call.m_BaseEquality, call.m_OffsetEquality);
 		ResultExpression result = new ResultExpression(stmt, new RValue(call.lrVal.getValue()), decl, auxVars);
 		result.cType = resultType;
 		return result;

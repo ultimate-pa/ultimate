@@ -10,9 +10,11 @@ import java.util.Map;
 import java.util.Queue;
 
 import org.eclipse.cdt.core.dom.ast.IASTDeclarator;
+import org.eclipse.cdt.core.dom.ast.IASTExpression;
 import org.eclipse.cdt.core.dom.ast.IASTFunctionCallExpression;
 import org.eclipse.cdt.core.dom.ast.IASTFunctionDeclarator;
 import org.eclipse.cdt.core.dom.ast.IASTFunctionDefinition;
+import org.eclipse.cdt.core.dom.ast.IASTIdExpression;
 import org.eclipse.cdt.core.dom.ast.IASTInitializerClause;
 import org.eclipse.cdt.core.dom.ast.IASTNode;
 import org.eclipse.cdt.core.dom.ast.IASTParameterDeclaration;
@@ -606,7 +608,14 @@ public class FunctionHandler {
 			IASTFunctionCallExpression node) {
 		CACSLLocation loc = new CACSLLocation(node, new Check(
 				Check.Spec.PRE_CONDITION));
-		String methodName = node.getFunctionNameExpression().getRawSignature();
+		IASTExpression functionName = node.getFunctionNameExpression();
+		if (!(functionName instanceof IASTIdExpression)) {
+			String msg = "Function pointer or similar is not supported. "
+					+ loc.toString();
+			Dispatcher.error(loc, SyntaxErrorType.IncorrectSyntax, msg);
+			throw new IncorrectSyntaxException(msg);
+		}
+		String methodName = ((IASTIdExpression) functionName).getName().toString();
 		if (methodName.equals("malloc")) {
 			assert node.getArguments().length == 1;
 			Result sizeRes = main.dispatch(node.getArguments()[0]);

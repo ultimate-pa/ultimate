@@ -6,6 +6,14 @@
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container;
 
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.MemoryHandler;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CArray;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CEnum;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CNamed;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CStruct;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.model.IType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ASTType;
@@ -108,6 +116,41 @@ public class InferredType implements IType {
                 }
             }
         }
+    }
+    
+    public InferredType(CType cType) {
+    	CType underlyingType = cType;
+    	if (underlyingType instanceof CNamed)
+    		underlyingType = ((CNamed) cType).getUnderlyingType();
+		
+		if (underlyingType instanceof CPrimitive) {
+			CPrimitive cp = (CPrimitive) cType;
+			switch (cp.getType()) {
+			case INT:
+				type = Type.Integer;
+				break;
+			case BOOL:
+				type = Type.Boolean;
+				break;
+			case CHAR:
+				type = Type.String;
+				break;
+			default:
+				throw new UnsupportedSyntaxException("..");
+			}
+		} else if (underlyingType instanceof CPointer) {
+			type = Type.Pointer;
+		} else if (underlyingType instanceof CArray) {
+			type = Type.Pointer;
+		} else if (underlyingType instanceof CEnum) {
+			type = Type.Integer;
+		} else if (underlyingType instanceof CStruct) {
+			type = Type.Struct;
+		} else if (underlyingType instanceof CNamed) {
+			assert false : "This should not be the case as we took the underlying type.";
+		} else {
+			throw new UnsupportedSyntaxException("..");
+		}	
     }
 
     /**
