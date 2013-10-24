@@ -165,7 +165,8 @@ public class PreRunner extends ASTVisitor {
 
                 //--> that's the simple solution, if there are pointers declared, we introduce the (full) memory model
                 // might be done better in the future..
-                if (d.getPointerOperators() != null) 
+                if (d.getPointerOperators() != null
+                		&& d.getPointerOperators().length != 0) 
                 	isMMRequired = true;
             }
 
