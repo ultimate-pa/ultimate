@@ -30,6 +30,7 @@ import org.eclipse.cdt.core.dom.ast.ITypedef;
 import org.eclipse.cdt.internal.core.dom.parser.c.CASTTypedefNameSpecifier;
 import org.eclipse.cdt.internal.core.dom.parser.c.CPointerType;
 
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.MemoryHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CACSLLocation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.SymbolTable;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.InferredType;
@@ -520,6 +521,12 @@ public class TypeHandler implements ITypeHandler {
                                         InferredType.Type.Boolean),
                                         BinaryExpression.Operator.COMPNEQ, e,
                                         new RealLiteral(loc, SFO.NR0F));
+                                break;
+                            case Pointer:
+                                e = new BinaryExpression(loc, new InferredType(
+                                        InferredType.Type.Boolean),
+                                        BinaryExpression.Operator.COMPNEQ, e,
+                                        MemoryHandler.constructNullPointer(loc));
                                 break;
                             case Unknown:
                             default:

@@ -1137,8 +1137,13 @@ public class MemoryHandler {
 		return new StructAccessExpression(loc, new InferredType(Type.Integer), pointer, "offset");
 	}
 	
-	public static StructConstructor constructPointerFromBaseAndOffset(Expression base, Expression offset, CACSLLocation loc) {
+	public static StructConstructor constructPointerFromBaseAndOffset(Expression base, Expression offset, ILocation loc) {
 		return new StructConstructor(loc, new InferredType(Type.Pointer), 
 				new String[]{"base", "offset"}, new Expression[]{base, offset}); 
 	}
+	
+	public static StructConstructor constructNullPointer(ILocation loc) {
+	    return new StructConstructor(loc, new InferredType(Type.Pointer), 
+                new String[]{"base", "offset"}, new Expression[]{new IntegerLiteral(loc, "0"), new IntegerLiteral(loc, "0")}); 
+    }
 }
