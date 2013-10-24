@@ -1117,7 +1117,7 @@ public class CHandler implements ICHandler {
 							tmpName) }, new Expression[] { rvalue}));
 			RValue tmpRValue = new RValue(new IdentifierExpression(loc, tmpIType, tmpName));
 			int op;
-			if (node.getOperator() == IASTUnaryExpression.op_prefixIncr) 
+			if (node.getOperator() == IASTUnaryExpression.op_postFixIncr) 
 				op = IASTBinaryExpression.op_plus;
 			else 
 				op = IASTBinaryExpression.op_minus;
