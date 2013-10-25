@@ -46,4 +46,13 @@ public class UtilExperimental {
 			return script.term("+", summands);
 		}
 	}
+	
+	
+	public static Term binaryEquality(Script script, Term lhs, Term rhs) {
+		if (lhs == rhs) {
+			return script.term("true");
+		} else {
+			return script.term("=", lhs, rhs);
+		}
+	}
 }

@@ -1,6 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt;
 
-import java.security.KeyStore.Builder;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -18,6 +18,8 @@ import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
+import de.uni_freiburg.informatik.ultimate.logic.UtilExperimental;
+import de.uni_freiburg.informatik.ultimate.logic.simplification.SimplifyDDA;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.PartialQuantifierElimination.EqualityInformation;
 import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
@@ -60,9 +62,10 @@ public class ElimStore2 {
 		Set<ApplicationTerm> selectTermsInData = 
 				(new ApplicationTermFinder("select")).findMatchingSubterms(m_Data);
 		if (m_WriteIndex == null) {
-			s_Logger.warn(new DebugMessage("not yet implemented case in "
-					+ "array quantifier elimination. Formula {0}" , term));
-			return null;
+			return selectElim(oldArr, term, m_Script);
+//			s_Logger.warn(new DebugMessage("not yet implemented case in "
+//					+ "array quantifier elimination. Formula {0}" , term));
+//			return null;
 		}
 		for (Term index : m_WriteIndex) {
 			Set<ApplicationTerm> selectTermsInIndex = 
@@ -76,14 +79,15 @@ public class ElimStore2 {
 		}
 		Set<ApplicationTerm> selectTerms = 
 				(new ApplicationTermFinder("select")).findMatchingSubterms(term);
-		Map<Term[], ApplicationTerm> arrayReads =
-				getArrayReads(oldArr, selectTerms, m_WriteIndex.length);
+		Map<Term[], ArrayRead> arrayReads =
+				getArrayReads(oldArr, selectTerms);
 		
 		if (m_NewArray == null) {
 			// no store
 			// replace array reads by equal terms
 			Map<Term, Term> substitutionMapping = new HashMap<Term, Term>();
-			for (Term select : arrayReads.values()) {
+			for (ArrayRead ar : arrayReads.values()) {
+				Term select = ar.getSelectTerm();
 				EqualityInformation eqInfo = PartialQuantifierElimination.getEqinfo(m_Script, select, others.toArray(new Term[0]), QuantifiedFormula.EXISTS);
 				if (eqInfo == null) {
 					return null;
@@ -127,7 +131,7 @@ public class ElimStore2 {
 		 * However i!=j is not implied any more if replace a[i] by 0.
 		 */
 		for (Term[] distinctIndex : distinctIndices) {
-			others.add(m_Script.term("not", buildPairwiseEquality(distinctIndex, m_WriteIndex)));
+			others.add(m_Script.term("not", buildPairwiseEquality(distinctIndex, m_WriteIndex, m_Script)));
 		}
 		othersT = Util.and(m_Script, others.toArray(new Term[0]));
 		
@@ -147,10 +151,10 @@ public class ElimStore2 {
 				assert (digitOfKAtPosI == 0 || digitOfKAtPosI == 1);
 				boolean assumeEqual = (digitOfKAtPosI == 0);
 				if (assumeEqual) {
-					conj[i] = buildPairwiseEquality(unknownIndicesArray[i], m_WriteIndex);
+					conj[i] = buildPairwiseEquality(unknownIndicesArray[i], m_WriteIndex, m_Script);
 					equivalentIndicesForDisjunct.add(unknownIndicesArray[i]);
 				} else {
-					conj[i] = m_Script.term("not", buildPairwiseEquality(unknownIndicesArray[i], m_WriteIndex));
+					conj[i] = m_Script.term("not", buildPairwiseEquality(unknownIndicesArray[i], m_WriteIndex, m_Script));
 					distinctIndicesForDisjunct.add(unknownIndicesArray[i]);
 				}
 			}
@@ -159,6 +163,41 @@ public class ElimStore2 {
 			disjuncts[k] = Util.and(m_Script, conj);
 		}
 		return Util.or(m_Script, disjuncts);
+	}
+
+	private static Term selectElim(TermVariable oldArr, Term term, Script script) {
+		Set<ApplicationTerm> selectTerms = 
+				(new ApplicationTermFinder("select")).findMatchingSubterms(term);
+		Term[] conjunction = PartialQuantifierElimination.getConjuncts(term);
+		Map<Term[], ArrayRead> arrayReads =	getArrayReads(oldArr, selectTerms);
+		ArrayRead[] all = arrayReads.values().toArray(new ArrayRead[0]);
+		EqualityInformation[] eqInfos = new EqualityInformation[all.length];
+		
+		for (int i=0; i<all.length; i++) {
+			eqInfos[i] = PartialQuantifierElimination.getEqinfo(
+					script, all[i].getSelectTerm(), conjunction, QuantifiedFormula.EXISTS);
+			if (eqInfos[i] == null) {
+				return null;
+			}
+		}
+		ArrayList<Term> additionalConjuncs = new ArrayList<Term>();
+		Map<Term, Term> mapping = new HashMap<Term, Term>();
+		for (int i=0; i<all.length; i++) {
+			for (int j=i+1; j<all.length; j++) {
+				Term indexEquality = buildPairwiseEquality(all[i].getIndex(), all[j].getIndex(), script);
+				Term valueEquality = UtilExperimental.binaryEquality(script, eqInfos[i].getTerm(), eqInfos[j].getTerm());
+				Term conjunct = Util.or(script, Util.not(script, indexEquality),valueEquality);
+				additionalConjuncs.add(conjunct);
+			}
+			mapping.put(all[i].getSelectTerm(), eqInfos[i].getTerm());
+		}
+		SafeSubstitution subst = new SafeSubstitution(script, mapping);
+		term = subst.transform(term);
+		Term newConjuncts = Util.and(script, additionalConjuncs.toArray(new Term[0]));
+		newConjuncts = subst.transform(newConjuncts);
+		Term result = Util.and(script, term, newConjuncts);
+		result = (new SimplifyDDA(script)).getSimplifiedTerm(result);
+		return result;
 	}
 
 	/**
@@ -172,7 +211,7 @@ public class ElimStore2 {
 	 * @return
 	 */
 	private Term buildDisjunct(TermVariable oldArr, HashSet<Term> others,
-			Term othersT, Map<Term[], ApplicationTerm> arrayReads,
+			Term othersT, Map<Term[], ArrayRead> arrayReads,
 			HashSet<Term[]> distinctIndices, UnionFind<Term[]> uf,
 			HashSet<Term[]> equivalentIndices) {
 		/*
@@ -182,7 +221,7 @@ public class ElimStore2 {
 		Map<Term,Term> substitutionMapping = new HashMap<Term,Term>();
 		for (Term[] distinctIndexRep : distinctIndices) {
 			for (Term distTerm[] : uf.getEquivalenceClassMembers(distinctIndexRep)) {
-				ApplicationTerm oldSelectTerm = arrayReads.get(distTerm);
+				ApplicationTerm oldSelectTerm = arrayReads.get(distTerm).getSelectTerm();
 				assert oldSelectTerm.getFunction().getName().equals("select");
 				assert oldSelectTerm.getParameters().length == 2;
 				assert isMultiDimensionalSelect(oldSelectTerm, oldArr, m_WriteIndex.length);
@@ -199,7 +238,7 @@ public class ElimStore2 {
 		Set<TermVariable> newAuxVars = new HashSet<TermVariable>();
 		for (Term[] equivalentIndexRep : equivalentIndices) {
 			for(Term[] writeIndexEqTerm : uf.getEquivalenceClassMembers(equivalentIndexRep)) {
-				Term select = arrayReads.get(writeIndexEqTerm);
+				Term select = arrayReads.get(writeIndexEqTerm).getSelectTerm();
 				EqualityInformation eqInfo = PartialQuantifierElimination.getEqinfo(m_Script, select, others.toArray(new Term[0]), QuantifiedFormula.EXISTS);
 				Term replacement;
 				if (eqInfo == null) {
@@ -291,9 +330,9 @@ public class ElimStore2 {
 	 * @param selectTerms a[i], 
 	 * @return
 	 */
-	private Map<Term[], ApplicationTerm> getArrayReads(TermVariable arrayTv,
-			Set<ApplicationTerm> selectTerms, int dimension) {
-		Map<Term[],ApplicationTerm> arrayReads = new HashMap<Term[],ApplicationTerm>();
+	private static Map<Term[], ArrayRead> getArrayReads(TermVariable arrayTv,
+			Set<ApplicationTerm> selectTerms) {
+		Map<Term[],ArrayRead> arrayReads = new HashMap<Term[],ArrayRead>();
 		for (ApplicationTerm selectTerm : selectTerms) {
 			if (selectTerm.getFunction().getReturnSort().isArraySort()) {
 				// this is only a select nested in some other select or store
@@ -301,32 +340,10 @@ public class ElimStore2 {
 			}
 			try {
 				ArrayRead ar = new ArrayRead(selectTerm, arrayTv);
-				ar.toString();
-				//TODO: not every read is illegal
+				arrayReads.put(ar.getIndex(), ar);
 			} catch (ArrayReadException e) {
-				throw new AssertionError("illegal read");
-			}
-			
-			
-			Term[] index = new Term[dimension];
-			if (dimension == 1) {
-				if (selectTerm.getParameters()[0].equals(arrayTv)) {
-					index[0] = selectTerm.getParameters()[1];
-					arrayReads.put(index, selectTerm);
-				}
-			} else if (dimension == 2) {
-				Term innerSelect = selectTerm.getParameters()[0];
-				ApplicationTerm innerSelectApp = (ApplicationTerm) innerSelect;
-				if (!innerSelectApp.getFunction().getName().equals("select")) {
-					throw new UnsupportedOperationException();
-				}
-				if (innerSelectApp.getParameters()[0].equals(arrayTv)) {
-					index[0] = innerSelectApp.getParameters()[1];
-					index[1] = selectTerm.getParameters()[1];
-					arrayReads.put(index, selectTerm);
-				}
-			} else {
-				throw new UnsupportedOperationException("dim>2 not implemented");
+				// select on different array
+				continue;
 			}
 		}
 		return arrayReads;
@@ -342,7 +359,7 @@ public class ElimStore2 {
 			assert representative != null;
 			assert representative.length == term.length;
 			Term negated = m_Script.term("not", 
-					buildPairwiseEquality(representative, term));
+					buildPairwiseEquality(representative, term, m_Script));
 			m_Script.push(1);
 			tv2constant.beginScope();
 			assertTermWithTvs(tv2constant, m_Script, negated);
@@ -366,7 +383,7 @@ public class ElimStore2 {
 				// this equivalence class
 				continue;
 			}
-			Term test = buildPairwiseEquality(representative, term);
+			Term test = buildPairwiseEquality(representative, term, m_Script);
 			m_Script.push(1);
 			tv2constant.beginScope();
 			assertTermWithTvs(tv2constant, m_Script, test);
@@ -382,13 +399,13 @@ public class ElimStore2 {
 		}
 	}
 	
-	Term buildPairwiseEquality(Term[] first, Term[] second) {
+	static Term buildPairwiseEquality(Term[] first, Term[] second, Script script) {
 		assert first.length == second.length;
 		Term[] equivalent = new Term[first.length];
 		for (int i=0; i<first.length; i++) {
-			equivalent[i] = m_Script.term("=", first[i], second[i]);
+			equivalent[i] = script.term("=", first[i], second[i]);
 		}
-		return Util.and(m_Script, equivalent);
+		return Util.and(script, equivalent);
 	}
 	
 	/**
@@ -540,13 +557,16 @@ public class ElimStore2 {
 	 * the form  (select (select a i1) i2)  
 	 *
 	 */
-	private class ArrayRead {
+	private static class ArrayRead {
 		private final TermVariable m_Array;
 		private final Term[] m_Index;
-		private final Term m_SelectTerm;
+		private final ApplicationTerm m_SelectTerm;
 		
 		public ArrayRead(Term term, TermVariable tv) throws ArrayReadException {
-			m_SelectTerm = term;
+			if (!(term instanceof ApplicationTerm)) {
+				throw new ArrayReadException(false, "no ApplicationTerm");
+			}
+			m_SelectTerm = (ApplicationTerm) term;
 			int dimension = getDimension(tv.getSort());
 			m_Index = new Term[dimension];			
 			for (int i = dimension-1; i>=0; i--) {
@@ -576,7 +596,7 @@ public class ElimStore2 {
 			return m_Index;
 		}
 
-		public Term getSelectTerm() {
+		public ApplicationTerm getSelectTerm() {
 			return m_SelectTerm;
 		}
 		
@@ -615,7 +635,7 @@ public class ElimStore2 {
 		public ImpliedReadInformation(ArrayRead ar1, Term equalTerm1,
 				ArrayRead ar2, Term equalTerm2, 
 				Term context, ScopedHashMap<TermVariable, Term> tv2constant) {
-			m_IndexEquivalence = buildPairwiseEquality(ar1.getIndex(), ar2.getIndex());
+			m_IndexEquivalence = buildPairwiseEquality(ar1.getIndex(), ar2.getIndex(), m_Script);
 			m_ValueEquivalence = m_Script.term("=", equalTerm1, equalTerm2);
 			
 			m_Script.push(1);
