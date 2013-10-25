@@ -1,5 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result;
 
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 
 public abstract class LRValue {
@@ -13,6 +14,8 @@ public abstract class LRValue {
 	}
 	
 	public abstract Expression getValue();
+	
+	public CType cType;
 	
 	public String toString() {
 		if (this instanceof HeapLValue)

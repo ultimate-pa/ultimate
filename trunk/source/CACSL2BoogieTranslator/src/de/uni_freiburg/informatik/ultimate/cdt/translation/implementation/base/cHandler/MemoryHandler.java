@@ -8,11 +8,13 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 
+import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
 import org.eclipse.cdt.core.dom.ast.IASTDeclSpecifier;
 import org.eclipse.cdt.core.dom.ast.IASTExpression;
 import org.eclipse.cdt.core.dom.ast.IASTLiteralExpression;
 
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CACSLLocation;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.InferredType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.InferredType.Type;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CArray;
@@ -708,7 +710,7 @@ public class MemoryHandler {
         }
 		assert (main.isAuxVarMapcomplete(decl, auxVars));
 //        return new ResultExpression(stmt, new HeapLValue(e), decl, auxVars);
-        return new ResultExpression(stmt, new RValue(e), decl, auxVars);
+        return new ResultExpression(stmt, new RValue(e, new CPointer(null)), decl, auxVars);//FIXME pointsToType??
     }
 
     /**
@@ -883,23 +885,23 @@ public class MemoryHandler {
     }
     
     
-    /**
-     * Construct a pointer whose address is (addressBase,addressOffset).
-     * The result is the boogie expression <code>{ base : addressBasse, offset : addressOffset}</code>. 
-     */
-    public ResultExpression auxiliaryPointer(Dispatcher main, CACSLLocation loc,
-    		Expression addressBase, Expression addressOffset) {
-    	assert addressBase != null : "no base address";
-		if (addressOffset == null)
-			addressOffset = new IntegerLiteral(loc, new InferredType(Type.Integer), "0");
-    	
-		Map<VariableDeclaration, CACSLLocation> auxVars = 
-				new HashMap<VariableDeclaration, CACSLLocation>();
-		Expression auxPointer = new StructConstructor(loc, 
-				new String[] { SFO.POINTER_BASE,  SFO.POINTER_OFFSET },
-				new Expression[] { addressBase, addressOffset });
-		return new ResultExpression(new RValue(auxPointer), auxVars);
-    }
+//    /**
+//     * Construct a pointer whose address is (addressBase,addressOffset).
+//     * The result is the boogie expression <code>{ base : addressBasse, offset : addressOffset}</code>. 
+//     */
+//    public ResultExpression auxiliaryPointer(Dispatcher main, CACSLLocation loc,
+//    		Expression addressBase, Expression addressOffset) {
+//    	assert addressBase != null : "no base address";
+//		if (addressOffset == null)
+//			addressOffset = new IntegerLiteral(loc, new InferredType(Type.Integer), "0");
+//    	
+//		Map<VariableDeclaration, CACSLLocation> auxVars = 
+//				new HashMap<VariableDeclaration, CACSLLocation>();
+//		Expression auxPointer = new StructConstructor(loc, 
+//				new String[] { SFO.POINTER_BASE,  SFO.POINTER_OFFSET },
+//				new Expression[] { addressBase, addressOffset });
+//		return new ResultExpression(new RValue(auxPointer), auxVars);
+//    }
     
 
     /**
@@ -954,7 +956,8 @@ public class MemoryHandler {
 //                throw new UnsupportedSyntaxException(m);
 //        }
 //        assert t != SFO.EMPTY;
-        String t = getHeapTypeStringOfCType(pointerCType.pointsToType);
+        CType resultCType = pointerCType.pointsToType;
+        String t = getHeapTypeStringOfCType(resultCType);
         String tmpId = main.nameHandler.getTempVarUID(SFO.AUXVAR.MEMREAD);
         VariableDeclaration tVarDecl = SFO.getTempVarVariableDeclaration(tmpId, it, loc);
         auxVars.put(tVarDecl, loc);
@@ -963,11 +966,10 @@ public class MemoryHandler {
         CallStatement call = new CallStatement(loc, false, lhs, "read~" + t,
                 new Expression[] { tPointer });
         stmt.add(call);
-        CType resultCType = ((CPointer) pointerCType).pointsToType;
 		assert (main.isAuxVarMapcomplete(decl, auxVars));
         return new ResultExpression(stmt, 
-        		new RValue(new IdentifierExpression(loc, it, tmpId)),
-        		decl, auxVars, resultCType);
+        		new RValue(new IdentifierExpression(loc, it, tmpId), resultCType),
+        		decl, auxVars);
     }
     
     String getHeapTypeStringOfCType(CType ct) {
@@ -1044,46 +1046,93 @@ public class MemoryHandler {
      *            the value to write.
      * @return the required Statements to perform the write.
      */
-    public ResultExpression getWriteCall(final Expression tPointer,
-            final Expression val) {
+//    public ResultExpression getWriteCall(final Expression tPointer, final Expression val) {
+    public ArrayList<Statement> getWriteCall(HeapLValue hlv, RValue rval) {
 //        assert tPointer.getType() instanceof InferredType
 //                && ((InferredType) tPointer.getType()).getType() == Type.Pointer;
-        assert val.getType() instanceof InferredType;
-        ILocation loc = tPointer.getLocation();
-        InferredType it = (InferredType) val.getType();
+//        assert val.getType() instanceof InferredType;
+        ILocation loc = hlv.getAddress().getLocation();
         ArrayList<Statement> stmt = new ArrayList<Statement>();
-        ArrayList<Declaration> decl = new ArrayList<Declaration>();
+//        ArrayList<Declaration> decl = new ArrayList<Declaration>();
+//        Map<VariableDeclaration, CACSLLocation> emptyAuxVars = 
+//				new HashMap<VariableDeclaration, CACSLLocation>(0);   
+        
+        CType rType = rval.cType;
+        if (rType instanceof CNamed)
+        	rType = ((CNamed) rType).getUnderlyingType();
+        
         String t = SFO.EMPTY;
-        switch (it.getType()) {
-            case Boolean:
-                t = SFO.BOOL;
-                break;
-            case Integer:
-                t = SFO.INT;
-                break;
-            case Pointer:
-                t = SFO.POINTER;
-                break;
-            case Real:
-                t = SFO.REAL;
-                break;
-            case String:
-            case Struct:
-            case Unknown:
-            case Void:
-            default:
-                String m = "Can't read the given type!";
-                Dispatcher.error(loc, SyntaxErrorType.UnsupportedSyntax, m);
-                throw new UnsupportedSyntaxException(m);
-        }
-        assert t != SFO.EMPTY;
+        if (rType instanceof CPrimitive) {
+        	switch (((CPrimitive) rType).getType()) {
+        	case INT:
+        		t = SFO.INT;	        
+        		stmt.add(new CallStatement(loc, false, new VariableLHS[0], "write~" + t,
+        				new Expression[] { rval.getValue(), hlv.getAddress() }));
+        		break;
+        	case BOOL:
+        		break;
+        	case CHAR:
+        		break;
+        	default:
+        		throw new UnsupportedSyntaxException("we don't recognize this type");
+        	}
+        } else if (rType instanceof CPointer) {
+        	t = SFO.POINTER;	        
+        		stmt.add(new CallStatement(loc, false, new VariableLHS[0], "write~" + t,
+        				new Expression[] { rval.getValue(), hlv.getAddress() }));
+        } else if (rType instanceof CStruct) {
+        	CStruct rStructType = (CStruct) rType;
+        	for (String fieldId : rStructType.getFieldIds()) {
+        		CType fieldType = rStructType.getFieldType(fieldId);
+        		StructAccessExpression sae = new StructAccessExpression(loc, 
+        				rval.getValue(), fieldId);
+        		Expression fieldOffset = 
+						StructHandler.getStructOffsetConstantExpression(loc, fieldId, rStructType);
+        		Expression newOffset = CHandler.createArithmeticExpression(IASTBinaryExpression.op_plus, 
+        				getPointerOffset(hlv.getAddress(), loc), 
+        				fieldOffset, loc);
+        		HeapLValue fieldHlv = new HeapLValue(
+        				constructPointerFromBaseAndOffset(getPointerBaseAddress(hlv.getAddress(), loc),
+        				newOffset, loc), fieldType);
+        		stmt.addAll(getWriteCall(fieldHlv, new RValue(sae, fieldType)));
+        	}
+        	
+        } else if (rType instanceof CArray) {
+        	
+        } else
+        	throw new UnsupportedSyntaxException("we don't recognize this type");
+        
+//        String t = SFO.EMPTY;
+//        switch (it.getType()) {
+//            case Boolean:
+//                t = SFO.BOOL;
+//                break;
+//            case Integer:
+//                t = SFO.INT;
+//                break;
+//            case Pointer:
+//                t = SFO.POINTER;
+//                break;
+//            case Real:
+//                t = SFO.REAL;
+//                break;
+//            case String:
+//            case Struct:
+//            case Unknown:
+//            case Void:
+//            default:
+//                String m = "Can't read the given type!";
+//                Dispatcher.error(loc, SyntaxErrorType.UnsupportedSyntax, m);
+//                throw new UnsupportedSyntaxException(m);
+//        }
+//        assert t != SFO.EMPTY;
 
-        VariableLHS[] lhs = new VariableLHS[0];
-        stmt.add(new CallStatement(loc, false, lhs, "write~" + t,
-                new Expression[] { val, tPointer }));
-		Map<VariableDeclaration, CACSLLocation> emptyAuxVars = 
-				new HashMap<VariableDeclaration, CACSLLocation>(0);
-        return new ResultExpression(stmt, null, decl, emptyAuxVars);
+//        VariableLHS[] lhs = new VariableLHS[0];
+//        stmt.add(new CallStatement(loc, false, lhs, "write~" + t,
+//                new Expression[] { val, tPointer }));
+		
+        return stmt;
+//        return new ResultExpression(stmt, null, decl, emptyAuxVars);
     }
 
     /**
@@ -1129,11 +1178,11 @@ public class MemoryHandler {
     }
     
     
-	public static StructAccessExpression getPointerBaseAddress(Expression pointer, CACSLLocation loc) {
+	public static StructAccessExpression getPointerBaseAddress(Expression pointer, ILocation loc) {
 		return new StructAccessExpression(loc, new InferredType(Type.Integer), pointer, "base");
 	}
 	
-	public static StructAccessExpression getPointerOffset(Expression pointer, CACSLLocation loc) {
+	public static StructAccessExpression getPointerOffset(Expression pointer, ILocation loc) {
 		return new StructAccessExpression(loc, new InferredType(Type.Integer), pointer, "offset");
 	}
 	

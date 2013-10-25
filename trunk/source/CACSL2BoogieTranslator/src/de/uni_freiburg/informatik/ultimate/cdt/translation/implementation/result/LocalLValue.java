@@ -1,5 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result;
 
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayAccessExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayLHS;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
@@ -20,8 +21,9 @@ public class LocalLValue extends LRValue {
 	 * 
 	 * @param expr
 	 */
-	public LocalLValue(LeftHandSide lhs) {
+	public LocalLValue(LeftHandSide lhs, CType cType) {
 		this.lhs = lhs;
+		this.cType = cType;
 	}
 
 	public LeftHandSide getLHS() {

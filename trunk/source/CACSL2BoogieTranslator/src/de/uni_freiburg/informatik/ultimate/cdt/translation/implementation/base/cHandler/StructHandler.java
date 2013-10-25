@@ -31,6 +31,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ResultExpressionListRec;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
+import de.uni_freiburg.informatik.ultimate.model.ILocation;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssignmentStatement;
@@ -95,7 +96,7 @@ public class StructHandler {
 		relr = relr.switchToRValue(main, memoryHandler, structHandler, loc);//TODO right?
 
         String fId = null;
-        ASTType fType = null;
+        ASTType fieldType = null;
         if (pos >= 0) {
             if (relr.field != null) {
                 fId = relr.field;
@@ -103,11 +104,11 @@ public class StructHandler {
                 for (VarList f : t.getFields()) {
                     assert f.getIdentifiers().length == 1;
                     if (f.getIdentifiers()[0].equals(fId)) {
-                        fType = f.getType();
+                        fieldType = f.getType();
                         break;
                     }
                 }
-                if (fType == null) {
+                if (fieldType == null) {
                     String msg = "Field '" + fId + "' not found in type + '"
                             + t + "'";
                     Dispatcher.error(loc, SyntaxErrorType.IncorrectSyntax, msg);
@@ -120,11 +121,11 @@ public class StructHandler {
                 assert field.getIdentifiers().length == 1;
                 fId = field.getIdentifiers()[0];
                 assert !fId.equals(SFO.EMPTY);
-                fType = field.getType();
-                assert fType != null;
+                fieldType = field.getType();
+                assert fieldType != null;
             }
-            if (fType instanceof StructType)
-                t = (StructType) fType;
+            if (fieldType instanceof StructType)
+                t = (StructType) fieldType;
         }
 
         if (relr.list == null) {
@@ -133,15 +134,15 @@ public class StructHandler {
             if (relr.stmt != null)
                 stmt.addAll(relr.stmt);
             if (relr.lrVal.getValue() != null) {
-                assert fType != null;
+                assert fieldType != null;
                 assert fId != null;
                 LeftHandSide assLhs = new StructLHS(loc,
-                        new InferredType(fType), lhs, fId);
+                        new InferredType(fieldType), lhs, fId);
                 //FIXME: do we need a switchtoRValue here? --> there might be a deref inside, right?..
 //                relr.lrVal = new RValue(main.typeHandler.convertArith2Boolean(loc, fType,
 //                        relr.lrVal.getValue()));
-                relr.lrVal = new RValue(main.typeHandler.convertArith2Boolean(loc, fType,
-                        relr.lrVal.getValue())); 
+                relr.lrVal = new RValue(main.typeHandler.convertArith2Boolean(loc, fieldType,
+                        relr.lrVal.getValue()), null);  //FIXME: CType??
 //                relr = relr.switchToRValue(main, ((CHandler) (((MainDispatcher) main).cHandler)).memoryHandler, this, loc);
                 stmt.add(new AssignmentStatement(loc,
                         new LeftHandSide[] { assLhs },
@@ -155,11 +156,11 @@ public class StructHandler {
                 LeftHandSide newLhs = (fId != null ? new StructLHS(loc, lhs,
                         fId) : lhs);
                 ResultExpression r;
-                if (fType instanceof ArrayType) {
-                    int[] indices = new int[((ArrayType) fType).getIndexTypes().length];
+                if (fieldType instanceof ArrayType) {
+                    int[] indices = new int[((ArrayType) fieldType).getIndexTypes().length];
                     Arrays.fill(indices, -1);
                     r = arrayHandler.handleArrayInit(main, memoryHandler, this, loc,
-                            ((ArrayType) fType),
+                            ((ArrayType) fieldType),
                             (CArray) cvar.getFieldType(fId), newLhs, child,
                             indices, -1);
                 } else {
@@ -196,18 +197,18 @@ public class StructHandler {
         
         LRValue newValue = null;
         
-        CType type = (node.isPointerDereference() ?
-        		((CPointer)foRex.cType).pointsToType :
-        			foRex.cType);
-        CStruct cStructType = (CStruct) (type instanceof CNamed ? ((CNamed) type).getUnderlyingType() : type);
+        CType foType = (node.isPointerDereference() ?
+        		((CPointer)foRex.lrVal.cType).pointsToType :
+        			foRex.lrVal.cType);
+        CStruct cStructType = (CStruct) (foType instanceof CNamed ? ((CNamed) foType).getUnderlyingType() : foType);
         CType cFieldType = cStructType.getFieldType(field);
         InferredType fieldType = new InferredType(cFieldType);
         
         if (node.isPointerDereference()) {
         	ResultExpression rFieldOwnerRex = foRex.switchToRValue(main, memoryHandler, this, loc);
         	Expression address = rFieldOwnerRex.lrVal.getValue();
-        	foRex = new ResultExpression(rFieldOwnerRex.stmt, new HeapLValue(address), 
-        			rFieldOwnerRex.decl, rFieldOwnerRex.auxVars, rFieldOwnerRex.cType);
+        	foRex = new ResultExpression(rFieldOwnerRex.stmt, new HeapLValue(address, rFieldOwnerRex.lrVal.cType), 
+        			rFieldOwnerRex.decl, rFieldOwnerRex.auxVars);
         }
         
         if (foRex.lrVal instanceof HeapLValue) {
@@ -220,19 +221,19 @@ public class StructHandler {
         					getStructOffsetConstantExpression(loc, field, cStructType)),
         			loc);
         	
-        	newValue = new HeapLValue(newPointer);
+        	newValue = new HeapLValue(newPointer, cFieldType);
         } else if (foRex.lrVal instanceof RValue) {
         	RValue rVal = (RValue) foRex.lrVal;
         	StructAccessExpression sexpr = new StructAccessExpression(loc, fieldType, 
         			rVal.getValue(), field);
-        	newValue = new RValue(sexpr);
+        	newValue = new RValue(sexpr, cFieldType);
         } else { 
         	LocalLValue lVal = (LocalLValue) foRex.lrVal;
         	StructLHS slhs = new StructLHS(loc, fieldType, 
         			lVal.getLHS(), field);
-        	newValue = new LocalLValue(slhs);
+        	newValue = new LocalLValue(slhs, cFieldType);
         }
-        return new ResultExpression(foRex.stmt, newValue, foRex.decl, foRex.auxVars, cFieldType);
+        return new ResultExpression(foRex.stmt, newValue, foRex.decl, foRex.auxVars);
     }
 
 
@@ -275,13 +276,12 @@ public class StructHandler {
 		stmt.addAll(call.stmt);
 		decl.addAll(call.decl);
 		auxVars.putAll(call.auxVars);
-		ResultExpression result = new ResultExpression(stmt, new RValue(call.lrVal.getValue()), decl, auxVars);
-		result.cType = resultType;
+		ResultExpression result = new ResultExpression(stmt, new RValue(call.lrVal.getValue(), resultType), decl, auxVars);
 		return result;
 	}
 
-	public IdentifierExpression getStructOffsetConstantExpression(
-			CACSLLocation loc, String fieldId, CType structCType) {
+	public static IdentifierExpression getStructOffsetConstantExpression(
+			ILocation loc, String fieldId, CType structCType) {
 		String offset = SFO.OFFSET + structCType.toString() + "~" + fieldId;
 		IdentifierExpression additionalOffset = new IdentifierExpression(loc, offset);
 		return additionalOffset;

@@ -19,6 +19,9 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CACSLL
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.InferredType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.InferredType.Type;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.PRIMITIVE;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.IncorrectSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LRValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
@@ -156,16 +159,19 @@ public class SvComp14CHandler extends CHandler {
         for (String t : NONDET_TYPE_STRINGS)
             if (methodName.equals(NONDET_STRING + t)) {
                 final InferredType type; 
+                CType cType;
                 if (t.equals("float")) {
                 	type = new InferredType(Type.Real);
+                	cType = new CPrimitive(PRIMITIVE.FLOAT);
                 } else {
                 	type = new InferredType(Type.Integer);
+                	cType = new CPrimitive(PRIMITIVE.INT);
                 }
                 String tmpName = main.nameHandler.getTempVarUID(SFO.AUXVAR.NONDET);
                 VariableDeclaration tVarDecl = SFO.getTempVarVariableDeclaration(tmpName, type, loc);
                 decl.add(tVarDecl);
                 auxVars.put(tVarDecl, loc);
-                returnValue = new RValue(new IdentifierExpression(loc, type, tmpName));
+                returnValue = new RValue(new IdentifierExpression(loc, type, tmpName), cType);
                 assert (main.isAuxVarMapcomplete(decl, auxVars));
                 return new ResultExpression(stmt, returnValue, decl, auxVars);
             }
@@ -184,7 +190,7 @@ public class SvComp14CHandler extends CHandler {
             auxVars.put(tVarDecl, loc);
             decl.add(tVarDecl);
             stmt.add(new HavocStatement(loc, new VariableLHS[] { new VariableLHS(loc, tId)}));
-            returnValue = new RValue(new IdentifierExpression(loc, type, tId));
+            returnValue = new RValue(new IdentifierExpression(loc, type, tId), null);
             assert (main.isAuxVarMapcomplete(decl, auxVars));
             return new ResultExpression(stmt, returnValue, decl, auxVars);
         }

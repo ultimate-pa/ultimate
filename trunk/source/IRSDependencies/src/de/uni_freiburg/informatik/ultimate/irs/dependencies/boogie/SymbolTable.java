@@ -14,7 +14,7 @@ public class SymbolTable
 
 	public SymbolTable()
 	{
-		mScopes = new HashMap<>();
+		mScopes = new HashMap<String, HashMap<String, CompleteBoogieVar>>();
 	}
 
 	void addLocalVariable(String identifier, String procedure, IType type)
@@ -31,7 +31,7 @@ public class SymbolTable
 			scope = mScopes.get(procedure);
 		}
 		else {
-			scope = new HashMap<>();
+			scope = new HashMap<String, CompleteBoogieVar>();
 			mScopes.put(procedure, scope);
 		}
 		scope.put(identifier, var);
@@ -45,7 +45,7 @@ public class SymbolTable
 			scope = mScopes.get(sGlobalScopeIdentifier);
 		}
 		else {
-			scope = new HashMap<>();
+			scope = new HashMap<String, CompleteBoogieVar>();
 			mScopes.put(sGlobalScopeIdentifier, scope);
 		}
 		scope.put(identifier, var);
@@ -83,7 +83,7 @@ public class SymbolTable
 	}
 	
 	public List<CompleteBoogieVar> getVariables(String procedureName){
-		List<CompleteBoogieVar> rtrList = new LinkedList<>();
+		List<CompleteBoogieVar> rtrList = new LinkedList<CompleteBoogieVar>();
 		HashMap<String, CompleteBoogieVar> scope;
 		if (mScopes.containsKey(sGlobalScopeIdentifier)) {
 			scope = mScopes.get(sGlobalScopeIdentifier);

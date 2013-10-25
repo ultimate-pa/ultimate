@@ -1,5 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result;
 
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 
 public class RValue extends LRValue {
@@ -12,8 +13,9 @@ public class RValue extends LRValue {
 	 * memory cell may only be read.
 	 * @param value
 	 */
-	public RValue(Expression value) {
+	public RValue(Expression value, CType cType) {
 		this.value = value;
+		this.cType = cType;
 	}
 
 	public Expression getValue() {

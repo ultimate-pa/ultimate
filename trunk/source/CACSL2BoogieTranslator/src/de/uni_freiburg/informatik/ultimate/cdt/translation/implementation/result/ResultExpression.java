@@ -62,10 +62,10 @@ public class ResultExpression extends Result {
 	 * A description of the C variable.
 	 */
 	public final ArrayList<CType> declCTypes;
-	/**
-	 * The description of the C type of this expression.
-	 */
-	public CType cType;
+//	/**
+//	 * The description of the C type of this expression.
+//	 */
+//	public CType cType; //--> moved to LRValue
 
 	/**
 	 * Auxiliary variables occurring in this result. The variable declaration
@@ -95,29 +95,6 @@ public class ResultExpression extends Result {
 		this.declCTypes = new ArrayList<CType>();
 		this.auxVars = auxVars;
 	}
-	/**
-	 * Constructor.
-	 * 
-	 * @param stmt
-	 *            the statement list to hold
-	 * @param expr
-	 *            the expression list to hold
-	 * @param decl
-	 *            the declaration list to hold
-	 */
-	public ResultExpression(ArrayList<Statement> stmt, //Expression expr,
-			LRValue lrVal,
-			ArrayList<Declaration> decl,
-			Map<VariableDeclaration, CACSLLocation> auxVars, CType cType) {
-		super(null);
-		this.stmt = stmt;
-		//		this.expr = expr;
-		this.lrVal = lrVal;
-		this.decl = decl;
-		this.declCTypes = new ArrayList<CType>();
-		this.auxVars = auxVars;
-		this.cType = cType;
-	}
 
 	/**
 	 * Constructor for only one element
@@ -138,12 +115,10 @@ public class ResultExpression extends Result {
 	}
 
 	public ResultExpression(
-			LRValue lrVal,
-			CType cType) {
+			LRValue lrVal) {
 		super(null);
 		this.stmt = new ArrayList<Statement>();
 		this.lrVal = lrVal;
-		this.cType = cType;
 		this.decl = new ArrayList<Declaration>();
 		this.declCTypes = new ArrayList<CType>();
 		this.auxVars = new HashMap<VariableDeclaration, CACSLLocation>();
@@ -158,7 +133,7 @@ public class ResultExpression extends Result {
 			return this;
 		else if (lrVal instanceof LocalLValue) {
 			rex = new ResultExpression(
-					this.stmt, new RValue(((LocalLValue) lrVal).getValue()), this.decl, this.auxVars, this.cType);
+					this.stmt, new RValue(((LocalLValue) lrVal).getValue(), lrVal.cType), this.decl, this.auxVars);
 			return rex;
 		} else {
 			HeapLValue hlv = (HeapLValue) lrVal;
@@ -174,18 +149,18 @@ public class ResultExpression extends Result {
 
 			InferredType heapReadType = null;
 
-			CType underlyingType = this.cType instanceof CNamed ? 
-					((CNamed) this.cType).getUnderlyingType() :
-						this.cType;
+			CType underlyingType = this.lrVal.cType instanceof CNamed ? 
+					((CNamed) this.lrVal.cType).getUnderlyingType() :
+						this.lrVal.cType;
 
 					if (underlyingType instanceof CPrimitive) {
-						CPrimitive cp = (CPrimitive) this.cType;
+						CPrimitive cp = (CPrimitive) this.lrVal.cType;
 						ResultExpression readResult;
 						switch (cp.getType()) {
 						case INT:
 							heapReadType = new InferredType(Type.Integer);
 							rex = memoryHandler.getReadCall(
-									main, heapReadType, hlv.getAddress(), new CPointer(this.cType));
+									main, heapReadType, hlv.getAddress(), new CPointer(this.lrVal.cType));
 							newStmt.addAll(rex.stmt);
 							newDecl.addAll(rex.decl);
 							newAuxVars.putAll(rex.auxVars);	
@@ -199,7 +174,7 @@ public class ResultExpression extends Result {
 					} else if (underlyingType instanceof CPointer) {
 						heapReadType = new InferredType(Type.Pointer);
 						rex = memoryHandler.getReadCall(
-								main, heapReadType, hlv.getAddress(), new CPointer(this.cType));
+								main, heapReadType, hlv.getAddress(), new CPointer(this.lrVal.cType));
 						newStmt.addAll(rex.stmt);
 						newDecl.addAll(rex.decl);
 						newAuxVars.putAll(rex.auxVars);	
@@ -219,7 +194,7 @@ public class ResultExpression extends Result {
 					} else {
 						throw new UnsupportedSyntaxException("..");
 					}
-					rex = new ResultExpression(newStmt, newValue, newDecl, newAuxVars, rex.cType);
+					rex = new ResultExpression(newStmt, newValue, newDecl, newAuxVars);
 					return rex;
 		}
 	}
@@ -308,7 +283,7 @@ public class ResultExpression extends Result {
 			} else if (underlyingType instanceof CStruct) {
 				//sae = {base: currentStructBaseAddress, offset: currentStructOffset + thisFieldOffset }
 				Expression innerStructOffset = 
-						structHandler.getStructOffsetConstantExpression(loc, fieldIds[i], underlyingType);
+						StructHandler.getStructOffsetConstantExpression(loc, fieldIds[i], underlyingType);
 				Expression innerStructAddress = MemoryHandler.constructPointerFromBaseAndOffset(currentStructBaseAddress, 
 						new BinaryExpression(loc, BinaryExpression.Operator.ARITHPLUS, 
 								currentStructOffset, 
@@ -336,8 +311,7 @@ public class ResultExpression extends Result {
 				fieldIdentifiers.toArray(new String[0]), 
 				fieldValues.toArray(new Expression[0]));
 
-		result = new ResultExpression(newStmt, new RValue(sc), newDecl, newAuxVars);
-		result.cType = structType;
+		result = new ResultExpression(newStmt, new RValue(sc, structType), newDecl, newAuxVars);
 
 		return result;
 	}

@@ -15,6 +15,7 @@ import org.eclipse.cdt.core.dom.ast.IASTNode;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CACSLLocation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.InferredType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.SymbolTableValue;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.IncorrectSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.TypeErrorException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
@@ -344,6 +345,7 @@ public class ACSLHandler implements IACSLHandler {
         IType type = new InferredType(InferredType.Type.Unknown);
         String cId = main.cHandler.getSymbolTable()
                     .getCID4BoogieID(id, loc);
+        CType cType = null;
         if (specType != ACSLHandler.SPEC_TYPE.REQUIRES
                 && specType != ACSLHandler.SPEC_TYPE.ENSURES) {
             // TODO : the translation is sometimes wrong, for requires and
@@ -358,6 +360,7 @@ public class ACSLHandler implements IACSLHandler {
             if (main.cHandler.getSymbolTable().containsKey(cId)) {
                 ASTType astt = main.cHandler.getSymbolTable()
                         .getTypeOfVariable(cId, loc);
+                cType = main.cHandler.getSymbolTable().get(cId, loc).getCVariable();
                 type = new InferredType(astt);
             }
         }
@@ -367,10 +370,10 @@ public class ACSLHandler implements IACSLHandler {
         LRValue lrVal;
         if (((CHandler) main.cHandler).isHeapVar(id)) {
             IdentifierExpression idExp = new IdentifierExpression(loc, type, id);
-        	lrVal = new HeapLValue(idExp);
+        	lrVal = new HeapLValue(idExp, cType);
         } else {
             VariableLHS idLhs = new VariableLHS(loc, type, id);
-        	lrVal = new LocalLValue(idLhs);
+        	lrVal = new LocalLValue(idLhs, cType);
         }
         
         return new Result(lrVal.getValue());

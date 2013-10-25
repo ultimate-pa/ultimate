@@ -373,7 +373,8 @@ public class PostProcessor {
 				((NamedType) at).getName().equals(SFO.POINTER)){
 			assert lCvar instanceof CPointer;
 			//result is pointer to 0
-			LRValue nullPointer = new RValue(new IdentifierExpression(loc, at.getBoogieType(), SFO.NULL));
+			LRValue nullPointer = new RValue(new IdentifierExpression(loc, at.getBoogieType(), SFO.NULL), 
+					new CPointer(null));
 			return new ResultExpression(nullPointer, auxVars);
 		}
 		else {

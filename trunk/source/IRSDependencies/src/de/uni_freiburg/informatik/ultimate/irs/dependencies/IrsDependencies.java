@@ -25,7 +25,7 @@ public class IrsDependencies implements IAnalysis {
 	protected final SymbolTableCreator mSymbolTableCreator;
 
 	public IrsDependencies() {
-		mObservers = new LinkedList<>();
+		mObservers = new LinkedList<IObserver>();
 		mSymbolTableCreator = new SymbolTableCreator();
 	}
 

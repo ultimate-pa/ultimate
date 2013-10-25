@@ -608,14 +608,17 @@ public class FunctionHandler {
 			IASTFunctionCallExpression node) {
 		CACSLLocation loc = new CACSLLocation(node, new Check(
 				Check.Spec.PRE_CONDITION));
-		IASTExpression functionName = node.getFunctionNameExpression();
+		IASTExpression functionName = node.getFunctionNameExpression(); 
 		if (!(functionName instanceof IASTIdExpression)) {
 			String msg = "Function pointer or similar is not supported. "
 					+ loc.toString();
 			Dispatcher.error(loc, SyntaxErrorType.IncorrectSyntax, msg);
 			throw new IncorrectSyntaxException(msg);
 		}
+		//don't use getRawSignature because it refers to the code before preprocessing 
+		// f.i. we get a wrong methodname here in defineFunction.c, because of a #define in the original code
 		String methodName = ((IASTIdExpression) functionName).getName().toString();
+		
 		if (methodName.equals("malloc")) {
 			assert node.getArguments().length == 1;
 			Result sizeRes = main.dispatch(node.getArguments()[0]);
@@ -727,8 +730,9 @@ public class FunctionHandler {
 					methodName, args.toArray(new Expression[0]));
 		}
 		stmt.add(call);
+		CType returnType = main.cHandler.getSymbolTable().get(methodName, loc).getCVariable();
 		assert (main.isAuxVarMapcomplete(decl, auxVars));
-		return new ResultExpression(stmt, new RValue(expr), decl, auxVars);
+		return new ResultExpression(stmt, new RValue(expr, returnType), decl, auxVars);
 	}
 
 	/**
@@ -823,7 +827,8 @@ public class FunctionHandler {
 			CType cvar = checkedType.cvar;
 			ASTType type = checkedType.getType();
 			if (!(checkedType.isVoid && !(cvar instanceof CPointer))) {
-				String cId = dec.getDeclarator().getName().getRawSignature();
+//				String cId = dec.getDeclarator().getName().getRawSignature();
+				String cId = dec.getDeclarator().getName().toString();
 				if (cId.equals(SFO.EMPTY)) {
 					cId = SFO.UNNAMED
 							+ dec.getDeclarator().getName().hashCode();

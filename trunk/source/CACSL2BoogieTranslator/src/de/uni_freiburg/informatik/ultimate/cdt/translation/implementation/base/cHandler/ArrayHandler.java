@@ -367,8 +367,8 @@ public class ArrayHandler {
         ResultExpression rexId = ((ResultExpression) main.dispatch(arr))
         		.switchToRValue(main, memoryHandler, structHandler, loc);
         Expression subExpr = rexId.lrVal.getValue();
-        assert rexId.cType != null;
-        CArray cType = (CArray) rexId.cType;
+        assert rexId.lrVal.cType != null;
+        CArray cType = (CArray) rexId.lrVal.cType;
 
 //        Expression expr;
         LeftHandSide lhs = null;
@@ -408,6 +408,6 @@ public class ArrayHandler {
             Dispatcher.error(loc, SyntaxErrorType.UnsupportedSyntax, msg);
             throw new UnsupportedSyntaxException(msg);
         }
-        return new ResultExpression(stmt, new LocalLValue(lhs), decl, auxVars, cType.getValueType());
+        return new ResultExpression(stmt, new LocalLValue(lhs, cType.getValueType()), decl, auxVars);
     }
 }

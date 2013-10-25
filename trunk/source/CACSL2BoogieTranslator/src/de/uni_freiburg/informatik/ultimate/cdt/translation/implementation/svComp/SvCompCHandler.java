@@ -31,8 +31,10 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.C
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.InferredType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.InferredType.Type;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CNamed;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CStruct;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.PRIMITIVE;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.SymbolTableValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.IncorrectSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
@@ -179,16 +181,19 @@ public class SvCompCHandler extends CHandler {
         for (String t : NONDET_TYPE_STRINGS)
             if (methodName.equals(NONDET_STRING + t)) {
                 final InferredType type; 
+                CType cType;
                 if (t.equals("float")) {
                 	type = new InferredType(Type.Real);
+                	cType = new CPrimitive(PRIMITIVE.FLOAT);
                 } else {
                 	type = new InferredType(Type.Integer);
+                	cType = new CPrimitive(PRIMITIVE.INT);
                 }
                 String tmpName = main.nameHandler.getTempVarUID(SFO.AUXVAR.NONDET);
                 VariableDeclaration tVarDecl = SFO.getTempVarVariableDeclaration(tmpName, type, loc);
                 decl.add(tVarDecl);
                 auxVars.put(tVarDecl, loc);
-                resultValue = new RValue(new IdentifierExpression(loc, type, tmpName));
+                resultValue = new RValue(new IdentifierExpression(loc, type, tmpName), cType);
                 assert (main.isAuxVarMapcomplete(decl, auxVars));
                 return new ResultExpression(stmt, resultValue, decl, auxVars);
             }
@@ -207,7 +212,7 @@ public class SvCompCHandler extends CHandler {
             auxVars.put(tVarDecl, loc);
             decl.add(tVarDecl);
             stmt.add(new HavocStatement(loc, new VariableLHS[] { new VariableLHS(loc, tId)}));
-            resultValue = new RValue(new IdentifierExpression(loc, type, tId));
+            resultValue = new RValue(new IdentifierExpression(loc, type, tId), null);
             assert (main.isAuxVarMapcomplete(decl, auxVars));
             return new ResultExpression(stmt, resultValue, decl, auxVars);
         }
@@ -411,7 +416,7 @@ public class SvCompCHandler extends CHandler {
                         ResultExpression rExpr = ((ResultExpression) (main
                                 .dispatch(d.getInitializer()))).switchToRValue(main, memoryHandler, structHandler, loc);
                         rExpr.lrVal = new RValue(main.typeHandler.convertArith2Boolean(
-                                loc, type, rExpr.lrVal.getValue()));
+                                loc, type, rExpr.lrVal.getValue()), rExpr.lrVal.cType);
                         Expression[] rhs = new Expression[] { rExpr.lrVal.getValue() };
                         VariableLHS[] lhs = new VariableLHS[] { new VariableLHS(
                                 loc, bId) };
@@ -479,7 +484,7 @@ public class SvCompCHandler extends CHandler {
                 }
                 return new ResultExpression(new RValue(new IntegerLiteral(loc,
                 		new InferredType(InferredType.Type.Integer),
-                		String.valueOf(someIntValue))),
+                		String.valueOf(someIntValue)), new CPrimitive(PRIMITIVE.INT)),
                 		new HashMap<VariableDeclaration, CACSLLocation>(0));
         }
         return super.visit(main, node);
