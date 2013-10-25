@@ -106,6 +106,7 @@ public class FunctionHandler {
 	 */
 	private HashSet<String> methodsCalledBeforeDeclared;
 	
+	private HashMap<String, CType> procedureToReturnCType;
 	
 	private final static boolean m_CheckMemoryLeakAtEndOfMain = false;
 
@@ -118,6 +119,7 @@ public class FunctionHandler {
 		this.modifiedGlobals = new HashMap<String, HashSet<String>>();
 		this.methodsCalledBeforeDeclared = new HashSet<String>();
 		this.procedures = new HashMap<String, Procedure>();
+		this.procedureToReturnCType = new HashMap<String, CType>();
 		this.modifiedGlobalsIsUserDefined = new HashSet<String>();
 	}
 
@@ -272,6 +274,7 @@ public class FunctionHandler {
 		Procedure proc = new Procedure(loc, attr, methodName, typeParams, in,
 				out, spec, null);
 		procedures.put(methodName, proc);
+		procedureToReturnCType.put(methodName, returnType.cvar);
 		// end scope for retranslation of ACSL specification
 		main.cHandler.getSymbolTable().endScope();
 		return new ResultSkip();
@@ -491,12 +494,13 @@ public class FunctionHandler {
 			IASTFunctionDefinition node) {
 		main.cHandler.getSymbolTable().beginScope();
 		ILocation loc = new CACSLLocation(node);
-		String methodName = node.getDeclarator().getName().getRawSignature();
+		String methodName = node.getDeclarator().getName().toString();
 		VarList[] in = ((ResultVarList) main.dispatch(node.getDeclarator())).varList;
 		VarList[] out = new VarList[0]; // at most one out param in C
 		// we check the type via typeHandler
 		ResultTypes resType = (ResultTypes) main.dispatch(node
 				.getDeclSpecifier());
+		procedureToReturnCType.put(methodName, resType.cvar);
 		ResultTypes checkedType = main.cHandler.checkForPointer(main, node
 				.getDeclarator().getPointerOperators(), resType, false);
 		ASTType type = checkedType.getType();
@@ -730,7 +734,7 @@ public class FunctionHandler {
 					methodName, args.toArray(new Expression[0]));
 		}
 		stmt.add(call);
-		CType returnType = main.cHandler.getSymbolTable().get(methodName, loc).getCVariable();
+		CType returnType = procedureToReturnCType.get(methodName);
 		assert (main.isAuxVarMapcomplete(decl, auxVars));
 		return new ResultExpression(stmt, new RValue(expr, returnType), decl, auxVars);
 	}

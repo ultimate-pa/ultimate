@@ -197,12 +197,15 @@ public class StructHandler {
         
         LRValue newValue = null;
         
-        CType foType = (node.isPointerDereference() ?
-        		((CPointer)foRex.lrVal.cType).pointsToType :
-        			foRex.lrVal.cType);
+        CType foType = foRex.lrVal.cType;
+        if (foType instanceof CNamed)
+        	foType = ((CNamed) foType).getUnderlyingType();
+        foType = (node.isPointerDereference() ?
+        		((CPointer)foType).pointsToType :
+        			foType);
         CStruct cStructType = (CStruct) (foType instanceof CNamed ? ((CNamed) foType).getUnderlyingType() : foType);
         CType cFieldType = cStructType.getFieldType(field);
-        InferredType fieldType = new InferredType(cFieldType);
+        InferredType fieldIt = new InferredType(cFieldType);
         
         if (node.isPointerDereference()) {
         	ResultExpression rFieldOwnerRex = foRex.switchToRValue(main, memoryHandler, this, loc);
@@ -224,12 +227,12 @@ public class StructHandler {
         	newValue = new HeapLValue(newPointer, cFieldType);
         } else if (foRex.lrVal instanceof RValue) {
         	RValue rVal = (RValue) foRex.lrVal;
-        	StructAccessExpression sexpr = new StructAccessExpression(loc, fieldType, 
+        	StructAccessExpression sexpr = new StructAccessExpression(loc, fieldIt, 
         			rVal.getValue(), field);
         	newValue = new RValue(sexpr, cFieldType);
         } else { 
         	LocalLValue lVal = (LocalLValue) foRex.lrVal;
-        	StructLHS slhs = new StructLHS(loc, fieldType, 
+        	StructLHS slhs = new StructLHS(loc, fieldIt, 
         			lVal.getLHS(), field);
         	newValue = new LocalLValue(slhs, cFieldType);
         }
