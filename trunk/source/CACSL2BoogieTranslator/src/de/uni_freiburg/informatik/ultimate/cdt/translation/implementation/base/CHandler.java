@@ -997,7 +997,20 @@ public class CHandler implements ICHandler {
 	@Override
 	public Result visit(Dispatcher main, IASTIdExpression node) {
 		CACSLLocation loc = new CACSLLocation(node);
-		String cId = node.getName().getRawSignature();
+		String cId = node.getName().toString();
+		
+		// Christian: special case: 'NULL'
+		if (cId.equals("NULL")) {
+		    // TODO CType is set to 'pointer to integer', is this correct...?
+	        CType ctype = new CPointer(new CPrimitive(PRIMITIVE.INT));
+		    
+		    return new ResultExpression(new ArrayList<Statement>(0),
+	                new RValue(new IdentifierExpression(loc,
+	                        new InferredType(Type.Pointer), SFO.NULL), ctype),
+	                new ArrayList<Declaration>(0),
+	                new HashMap<VariableDeclaration, CACSLLocation>(0));
+		}
+		
 		ASTType astt = symbolTable.getTypeOfVariable(cId, loc);
 		InferredType t = new InferredType(astt);
 		String bId = symbolTable.get(cId, loc).getBoogieName();
