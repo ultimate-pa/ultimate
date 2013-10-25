@@ -54,7 +54,8 @@ public class DummyLTL2autObserver implements IUnmanagedObserver {
 		/*m_FileNames.add(file.getName());
 		
 		FileInputStream fs = new FileInputStream(file);*/
-		String file = "[] a \n a: x > y";
+		//String file = "a U [] b \n a: x > y";
+		String file = "[] a \n a: bla = bla";
 		
 		BufferedReader br = new BufferedReader(new InputStreamReader(IOUtils.toInputStream(file)));
 		
