@@ -4,6 +4,9 @@ import java_cup.runtime.*;
 import de.uni_freiburg.informatik.ultimate.LTL2aut.ast.*;
 import java.util.ArrayList;
 
+parser parserAP;
+option symbols=symbolsAP;
+
 /* exprinals (tokens returned by the scanner). */
 terminal           	COLON, LPAR, RPAR, PLUS, MINUS , TIMES, EQUALS, GREATER, GEQ, UMINUS, TRUE, FALSE;
 terminal String 			NAME;

@@ -5,27 +5,26 @@
 		Build File for Compiler Project
 	</description>
 
-
 	<target name="generate_parser">
-		
-		<echo>AutPromela.cup</echo>
-		<java classname="java_cup.Main" classpath="${cupDir}" fork="true">
-			<arg value="AutPromela.cup" />
-		</java>
 		
 		<echo>AutPromela.flex</echo>
 		<java jar="${flexJar}" fork="true">
 			<arg value="AutPromela.flex" />
 		</java>
 		
-		<echo>Apformula.cup</echo>
+		<echo>AutPromela.cup</echo>
 		<java classname="java_cup.Main" classpath="${cupDir}" fork="true">
-			<arg value="Apformula.cup" />
+			<arg value="AutPromela.cup" />
 		</java>
 		
 		<echo>Apformula.flex</echo>
 		<java jar="${flexJar}" fork="true">
 			<arg value="Apformula.flex" />
+		</java>
+		
+		<echo>Apformula.cup</echo>
+		<java classname="java_cup.Main" classpath="${cupDir}" fork="true">
+			<arg value="Apformula.cup" />
 		</java>
 
 	</target>

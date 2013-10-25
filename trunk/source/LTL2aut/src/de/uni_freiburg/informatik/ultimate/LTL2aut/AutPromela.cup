@@ -8,11 +8,14 @@ import java.util.ArrayList;
 terminal           	NEVER, LCB, RCB, IF, FI, SKIP, GOTO, TO, SEMICOLON, COLON, TRUE; 				
 terminal 			AND, OR, LPAR , RPAR, NOT;
 terminal String    	NAME;
+/* Dummy terminal with low precedence */
+terminal            LOW;
 
 /* Non-terminals */
 non terminal AstNode     		 name, claim, lblock, prop, ap, and, or;
 non terminal ArrayList<AstNode>  options, stmtlist ;
 
+precedence left LOW;
 precedence left AND, OR;
 precedence left NOT;
 
@@ -65,9 +68,9 @@ options ::= COLON COLON prop:n TO GOTO name:m options:o
 		
 /* logic grammar part*/	
 prop ::= and:a
-	{:RESULT = a;:}
+	{:RESULT = a;:} %prec LOW
 	| or:o
-	{:RESULT = o;:}
+	{:RESULT = o;:} %prec LOW
 	| NOT prop:p
 	{: RESULT = new Not(p); :}
 	| LPAR prop:p RPAR
