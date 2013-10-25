@@ -710,7 +710,7 @@ public class MemoryHandler {
         }
 		assert (main.isAuxVarMapcomplete(decl, auxVars));
 //        return new ResultExpression(stmt, new HeapLValue(e), decl, auxVars);
-        return new ResultExpression(stmt, new RValue(e, new CPointer(null)), decl, auxVars);//FIXME pointsToType??
+        return new ResultExpression(stmt, new RValue(e, null), decl, auxVars);//FIXME pointsToType??
     }
 
     /**
@@ -932,30 +932,6 @@ public class MemoryHandler {
 		Map<VariableDeclaration, CACSLLocation> auxVars = 
 				new HashMap<VariableDeclaration, CACSLLocation>();
         CACSLLocation loc = (CACSLLocation) tPointer.getLocation();
-//        String t = SFO.EMPTY;
-//        switch (it.getType()) {
-//            case Boolean:
-//                t = SFO.BOOL;
-//                break;
-//            case Integer:
-//                t = SFO.INT;
-//                break;
-//            case Pointer:
-//                t = SFO.POINTER;
-//                break;
-//            case Real:
-//                t = SFO.REAL;
-//                break;
-//            case String:
-//            case Struct:
-//            case Unknown:
-//            case Void:
-//            default:
-//                String m = "Can't read the given type!";
-//                Dispatcher.error(loc, SyntaxErrorType.UnsupportedSyntax, m);
-//                throw new UnsupportedSyntaxException(m);
-//        }
-//        assert t != SFO.EMPTY;
         CType resultCType = pointerCType.pointsToType;
         String t = getHeapTypeStringOfCType(resultCType);
         String tmpId = main.nameHandler.getTempVarUID(SFO.AUXVAR.MEMREAD);
@@ -1001,61 +977,22 @@ public class MemoryHandler {
     	return result;
     }
     
-//    /**
-//     * Additional getReadCall method for the special case where the pointer is
-//     * given by base and offset.
-//     */
-//    public ResultExpressionPointerDereference getReadCall(final Dispatcher main,
-//            final InferredType it, CACSLLocation loc, final Expression pointerBase, 
-//            final Expression pointerOffset) {
-//    	ResultExpression auxPointer = auxilliaryPointer(main, loc, pointerBase, pointerOffset);
-//    	ResultExpressionPointerDereference call = getReadCall(main, it, auxPointer.expr);
-//        ArrayList<Statement> stmt = new ArrayList<Statement>();
-//        ArrayList<Declaration> decl = new ArrayList<Declaration>();
-//		Map<VariableDeclaration, CACSLLocation> auxVars = 
-//				new HashMap<VariableDeclaration, CACSLLocation>();
-//		stmt.addAll(auxPointer.stmt);
-//		stmt.addAll(call.stmt);
-//		decl.addAll(auxPointer.decl);
-//		decl.addAll(call.decl);
-//		auxVars.putAll(auxPointer.auxVars);
-//		stmt.addAll(Dispatcher.createHavocsForAuxVars(auxPointer.auxVars));
-//		auxVars.putAll(call.auxVars);
-//		assert auxPointer.stmt.size() == 2;
-//		AssumeStatement baseEquality = (AssumeStatement) auxPointer.stmt.get(0);
-//		AssumeStatement offsetEquality = (AssumeStatement) auxPointer.stmt.get(1);
-//		assert auxPointer.decl.size() == 1;
-//		VariableDeclaration auxPointerDecl = (VariableDeclaration) auxPointer.decl.get(0);
-//		ResultExpressionPointerDereferenceBO result = 
-//				new ResultExpressionPointerDereferenceBO(stmt, call.expr, decl,
-//				auxVars, auxPointer.expr, call.m_ReadCall, call.m_CallResult, 
-//				auxPointerDecl,	pointerBase, pointerOffset, baseEquality, offsetEquality);
-//		return result;
-//    	
-//    }
-//    
-    
 
     /**
      * Generates a procedure call to writeT(val, ptr), writing val to the
      * according memory array.
+     * (for the C-methode the argument order is value, target, for this
+     * method it's the other way around)
      * 
-     * @param tPointer
-     *            the location to write to.
-     * @param val
+     * @param hlv
+     *            the HeapLvalue containing the address to write to
+     * @param rval
      *            the value to write.
      * @return the required Statements to perform the write.
      */
-//    public ResultExpression getWriteCall(final Expression tPointer, final Expression val) {
     public ArrayList<Statement> getWriteCall(HeapLValue hlv, RValue rval) {
-//        assert tPointer.getType() instanceof InferredType
-//                && ((InferredType) tPointer.getType()).getType() == Type.Pointer;
-//        assert val.getType() instanceof InferredType;
         ILocation loc = hlv.getAddress().getLocation();
         ArrayList<Statement> stmt = new ArrayList<Statement>();
-//        ArrayList<Declaration> decl = new ArrayList<Declaration>();
-//        Map<VariableDeclaration, CACSLLocation> emptyAuxVars = 
-//				new HashMap<VariableDeclaration, CACSLLocation>(0);   
         
         CType rType = rval.cType;
         if (rType instanceof CNamed)
@@ -1098,41 +1035,11 @@ public class MemoryHandler {
         	}
         	
         } else if (rType instanceof CArray) {
-        	
+        	throw new UnsupportedSyntaxException("todo: write to arrays on the heap");
         } else
         	throw new UnsupportedSyntaxException("we don't recognize this type");
-        
-//        String t = SFO.EMPTY;
-//        switch (it.getType()) {
-//            case Boolean:
-//                t = SFO.BOOL;
-//                break;
-//            case Integer:
-//                t = SFO.INT;
-//                break;
-//            case Pointer:
-//                t = SFO.POINTER;
-//                break;
-//            case Real:
-//                t = SFO.REAL;
-//                break;
-//            case String:
-//            case Struct:
-//            case Unknown:
-//            case Void:
-//            default:
-//                String m = "Can't read the given type!";
-//                Dispatcher.error(loc, SyntaxErrorType.UnsupportedSyntax, m);
-//                throw new UnsupportedSyntaxException(m);
-//        }
-//        assert t != SFO.EMPTY;
-
-//        VariableLHS[] lhs = new VariableLHS[0];
-//        stmt.add(new CallStatement(loc, false, lhs, "write~" + t,
-//                new Expression[] { val, tPointer }));
 		
         return stmt;
-//        return new ResultExpression(stmt, null, decl, emptyAuxVars);
     }
 
     /**

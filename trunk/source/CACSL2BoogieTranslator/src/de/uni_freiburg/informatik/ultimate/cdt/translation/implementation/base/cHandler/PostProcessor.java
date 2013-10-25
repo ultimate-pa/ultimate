@@ -374,7 +374,7 @@ public class PostProcessor {
 			assert lCvar instanceof CPointer;
 			//result is pointer to 0
 			LRValue nullPointer = new RValue(new IdentifierExpression(loc, at.getBoogieType(), SFO.NULL), 
-					new CPointer(null));
+					null);
 			return new ResultExpression(nullPointer, auxVars);
 		}
 		else {
