@@ -42,10 +42,7 @@ public class TraceCheckerSpWp extends TraceChecker {
 	
 	private final static boolean m_useUnsatCore = true;
 	private final static boolean m_useUnsatCoreOfFineGranularity = true;
-	// The following two variables indicate which strategy of computing the relevant variables along a trace
-	// should be used. If both are true, then the live variables are used.
 	private final static boolean m_useLiveVariables = !true;
-	private final static boolean m_useRelevantVariables = true;
 	private boolean m_ComputeInterpolantsSp;
 	private boolean m_ComputeInterpolantsFp;
 	private boolean m_ComputeInterpolantsBp;
@@ -179,22 +176,29 @@ public class TraceCheckerSpWp extends TraceChecker {
 					(AnnotateAndAsserterConjuncts)m_AAA);
 			assert stillInfeasible(rv);
 		}
-//		RelevantVariables rvar = new RelevantVariables(rv);
-//		LiveVariables lvar = new LiveVariables(trace, m_SmtManager, m_DefaultTransFormulas);
-		Set<BoogieVar>[] relevantVars = null;
+		RelevantVariables rvar = new RelevantVariables(rv);
+		LiveVariables lvar = new LiveVariables(m_Nsb.getVariable2Constant(), m_Nsb.getConstants2BoogieVar());
+		Set<BoogieVar>[] relevantVarsToUseForFPBP = null;
 		
 		if (m_useLiveVariables) {
-			if (m_Nsb instanceof LiveVariables) {
-				relevantVars = ((LiveVariables) m_Nsb).getLiveVariables();
-			} else {
-				throw new UnsupportedOperationException("The strategy of live variables is turned on," 
-						+"but the NestedSsaBuilder is not type of LiveVariables");
-			}
-		} else if (m_useRelevantVariables) {
-			relevantVars = (new RelevantVariables(rv)).getRelevantVariables();
+			relevantVarsToUseForFPBP = lvar.getLiveVariables();
+			assert liveVariablesSubSetOfRelevantVariables(rvar.getRelevantVariables(), lvar.getLiveVariables());
+		} else {
+			relevantVarsToUseForFPBP = rvar.getRelevantVariables();
 		}
 		
-		if (m_ComputeInterpolantsSp) {
+		if (m_ComputeInterpolantsFp) {
+			s_Logger.debug("Computing forward relevant predicates...");
+			computeForwardRelevantPredicates(relevantVarsToUseForFPBP, rv, trace, tracePrecondition);
+			s_Logger.debug("Checking predicates with strongest postcondition...");
+			checkInterpolantsCorrect(m_InterpolantsSp, trace, tracePrecondition, 
+					tracePostcondition, "SP with unsat core");
+			s_Logger.debug("Checking inductivity of forward relevant predicates...");
+			checkInterpolantsCorrect(m_InterpolantsFp, trace, tracePrecondition,
+					tracePostcondition, "FP");
+		}
+		
+		if (m_ComputeInterpolantsSp && !m_ComputeInterpolantsFp) {
 			m_InterpolantsSp = new IPredicate[trace.length()-1];
 
 			s_Logger.debug("Computing strongest postcondition for given trace ...");
@@ -251,13 +255,7 @@ public class TraceCheckerSpWp extends TraceChecker {
 			s_Logger.debug("Checking strongest postcondition...");
 			checkInterpolantsCorrect(m_InterpolantsSp, trace, tracePrecondition, 
 					tracePostcondition, "SP with unsat core");
-			if (m_ComputeInterpolantsFp) {
-				s_Logger.debug("Computing forward relevant predicates...");
-				computeForwardRelevantPredicates(relevantVars);
-				s_Logger.debug("Checking inductivity of forward relevant predicates...");
-				checkInterpolantsCorrect(m_InterpolantsFp, trace, tracePrecondition,
-						tracePostcondition, "FP");
-			}
+			
 		}
 		if (m_ComputeInterpolantsWp) {
 			m_InterpolantsWp = new IPredicate[trace.length()-1];
@@ -373,7 +371,7 @@ public class TraceCheckerSpWp extends TraceChecker {
 					tracePostcondition, "WP with unsat core");
 			if (m_ComputeInterpolantsBp) {
 				s_Logger.debug("Computing backward relevant predicates...");
-				computeBackwardRelevantPredicates(relevantVars);
+				computeBackwardRelevantPredicates(relevantVarsToUseForFPBP);
 				s_Logger.debug("Checking inductivity of backward relevant predicates...");
 				checkInterpolantsCorrect(m_InterpolantsBp, trace, tracePrecondition,
 						tracePostcondition, "BP");
@@ -393,6 +391,15 @@ public class TraceCheckerSpWp extends TraceChecker {
 			assert m_InterpolantsWp != null;
 			m_Interpolants = m_InterpolantsWp;
 		}
+	}
+	
+	private boolean liveVariablesSubSetOfRelevantVariables(Set<BoogieVar>[] relevantVars, Set<BoogieVar>[] liveVariables) {
+		boolean result = true;
+		assert (relevantVars.length+1) == liveVariables.length;
+		for (int i = 0; i < relevantVars.length; i++) {
+			result &= relevantVars[i].containsAll(liveVariables[i+1]);
+		}
+		return result;
 	}
 	
 	private void selectInterpolantsOfBothType() {
@@ -494,6 +501,73 @@ public class TraceCheckerSpWp extends TraceChecker {
 			m_InterpolantsFp[i] = m_PredicateUnifier.getOrConstructPredicate(p.getFormula(),
 					p.getVars(), p.getProcedures());
 		}
+	}
+	
+	/**
+	 * Compute forward relevant predicates for each position directly after the strongest post-condition has been
+	 * computed. Formally, we have
+	 * FP[i] = EXISTS irrelevantVars[i]. strongest-post(FP[i-1], relevantTransformulas[i]) 
+	 */
+	private void computeForwardRelevantPredicates(Set<BoogieVar>[] relevantVars, RelevantTransFormulas rv,
+			NestedWord<CodeBlock> trace,
+			IPredicate tracePrecondition) {
+		m_InterpolantsSp = new IPredicate[trace.length() - 1];
+		m_InterpolantsFp = new IPredicate[m_InterpolantsSp.length];
+		
+		if (trace.length() > 1) {
+			if (trace.getSymbol(0) instanceof Call) {
+				IPredicate p = m_SmtManager.strongestPostcondition(tracePrecondition,
+						rv.getLocalVarAssignment(0),
+						rv.getGlobalVarAssignment(0),
+						rv.getOldVarAssignment(0),
+						trace.isPendingCall(0));							
+				m_InterpolantsSp[0] = m_PredicateUnifier.getOrConstructPredicate(p.getFormula(), p.getVars(),
+						p.getProcedures());
+			} else {
+				IPredicate p = m_SmtManager.strongestPostcondition(tracePrecondition,
+						rv.getFormulaFromNonCallPos(0));
+				m_InterpolantsSp[0] = m_PredicateUnifier.getOrConstructPredicate(p.getFormula(), p.getVars(),
+						p.getProcedures());
+			}
+			IPredicate fp = m_SmtManager.computeForwardRelevantPredicate(m_InterpolantsSp[0], relevantVars[0]);
+			m_InterpolantsFp[0] = m_PredicateUnifier.getOrConstructPredicate(fp.getFormula(), fp.getVars(), fp.getProcedures());
+		}
+		
+		for (int i=1; i<m_InterpolantsSp.length; i++) {
+			if (trace.getSymbol(i) instanceof Call) {
+				IPredicate p = m_SmtManager.strongestPostcondition(m_InterpolantsFp[i-1],
+						rv.getLocalVarAssignment(i),
+						rv.getGlobalVarAssignment(i),
+						rv.getOldVarAssignment(i),
+						((NestedWord<CodeBlock>) trace).isPendingCall(i));
+					m_InterpolantsSp[i] = m_PredicateUnifier.getOrConstructPredicate(p.getFormula(), p.getVars(),
+							p.getProcedures());
+			} else if (trace.getSymbol(i) instanceof Return) {
+					int call_pos = ((NestedWord<CodeBlock>)trace).getCallPosition(i);
+					assert call_pos >= 0 && call_pos <= i : "Bad call position!";
+					IPredicate callerPred = tracePrecondition;
+					if (call_pos > 0) {
+						callerPred = m_InterpolantsFp[call_pos - 1];
+					}
+					IPredicate p = m_SmtManager.strongestPostcondition(m_InterpolantsFp[i-1], 
+							callerPred,
+							rv.getFormulaFromNonCallPos(i),
+							rv.getLocalVarAssignment(call_pos),
+							rv.getGlobalVarAssignment(call_pos)
+							);
+					m_InterpolantsSp[i] = m_PredicateUnifier.getOrConstructPredicate(p.getFormula(), p.getVars(),
+							p.getProcedures());
+
+			} else {
+					IPredicate p = m_SmtManager.strongestPostcondition(m_InterpolantsFp[i-1],
+							rv.getFormulaFromNonCallPos(i));
+					m_InterpolantsSp[i] = m_PredicateUnifier.getOrConstructPredicate(p.getFormula(), p.getVars(),
+							p.getProcedures());
+			}
+			IPredicate fp = m_SmtManager.computeForwardRelevantPredicate(m_InterpolantsSp[i], relevantVars[i]);
+			m_InterpolantsFp[i] = m_PredicateUnifier.getOrConstructPredicate(fp.getFormula(), fp.getVars(), fp.getProcedures());
+		}
+		
 	}
 	
 	private void computeBackwardRelevantPredicates(Set<BoogieVar>[] relevantVars) {
