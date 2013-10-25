@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<launchConfiguration type="org.eclipse.ant.AntBuilderLaunchConfigurationType">
+<booleanAttribute key="org.eclipse.ant.ui.ATTR_TARGETS_UPDATED" value="true"/>
+<booleanAttribute key="org.eclipse.ant.ui.DEFAULT_VM_INSTALL" value="false"/>
+<stringAttribute key="org.eclipse.debug.core.ATTR_REFRESH_SCOPE" value="${working_set:&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;&#13;&#10;&lt;resources&gt;&#13;&#10;&lt;item path=&quot;/LTL2aut&quot; type=&quot;4&quot;/&gt;&#13;&#10;&lt;/resources&gt;}"/>
+<booleanAttribute key="org.eclipse.debug.ui.ATTR_LAUNCH_IN_BACKGROUND" value="false"/>
+<stringAttribute key="org.eclipse.jdt.launching.CLASSPATH_PROVIDER" value="org.eclipse.ant.ui.AntClasspathProvider"/>
+<booleanAttribute key="org.eclipse.jdt.launching.DEFAULT_CLASSPATH" value="true"/>
+<stringAttribute key="org.eclipse.jdt.launching.PROJECT_ATTR" value="LTL2aut"/>
+<mapAttribute key="org.eclipse.ui.externaltools.ATTR_ANT_PROPERTIES">
+<mapEntry key="eclipse.home" value="C:\Users\firefox\Desktop\Diverses\Downloads\ultimate stuff\eclipse"/>
+<mapEntry key="eclipse.pdebuild.home" value="/C:/Users/firefox/Desktop/Diverses/Downloads/ultimate stuff/eclipse/plugins/org.eclipse.pde.build_3.8.100.v20130514-1028/./"/>
+<mapEntry key="eclipse.pdebuild.scripts" value="/C:/Users/firefox/Desktop/Diverses/Downloads/ultimate stuff/eclipse/plugins/org.eclipse.pde.build_3.8.100.v20130514-1028/scripts/"/>
+<mapEntry key="eclipse.pdebuild.templates" value="/C:/Users/firefox/Desktop/Diverses/Downloads/ultimate stuff/eclipse/plugins/org.eclipse.pde.build_3.8.100.v20130514-1028/templates/"/>
+<mapEntry key="eclipse.running" value="true"/>
+<mapEntry key="workspacedir" value="${workspace_loc}"/>
+</mapAttribute>
+<stringAttribute key="org.eclipse.ui.externaltools.ATTR_BUILD_SCOPE" value="${working_set:&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;&#13;&#10;&lt;resources&gt;&#13;&#10;&lt;item path=&quot;/LTL2aut/src/de/uni_freiburg/informatik/ultimate/LTL2aut/Apformula.cup&quot; type=&quot;1&quot;/&gt;&#13;&#10;&lt;item path=&quot;/LTL2aut/src/de/uni_freiburg/informatik/ultimate/LTL2aut/Apformula.flex&quot; type=&quot;1&quot;/&gt;&#13;&#10;&lt;item path=&quot;/LTL2aut/src/de/uni_freiburg/informatik/ultimate/LTL2aut/AutPromela.cup&quot; type=&quot;1&quot;/&gt;&#13;&#10;&lt;item path=&quot;/LTL2aut/src/de/uni_freiburg/informatik/ultimate/LTL2aut/AutPromela.flex&quot; type=&quot;1&quot;/&gt;&#13;&#10;&lt;item path=&quot;/LTL2aut/src/de/uni_freiburg/informatik/ultimate/LTL2aut/build-parser.xml&quot; type=&quot;1&quot;/&gt;&#13;&#10;&lt;/resources&gt;}"/>
+<stringAttribute key="org.eclipse.ui.externaltools.ATTR_LOCATION" value="${workspace_loc:/LTL2aut/src/de/uni_freiburg/informatik/ultimate/LTL2aut/build-parser.xml}"/>
+<stringAttribute key="org.eclipse.ui.externaltools.ATTR_RUN_BUILD_KINDS" value="full,incremental,auto,"/>
+<booleanAttribute key="org.eclipse.ui.externaltools.ATTR_TRIGGERS_CONFIGURED" value="true"/>
+<stringAttribute key="org.eclipse.ui.externaltools.ATTR_WORKING_DIRECTORY" value="${workspace_loc:/LTL2aut/src/de/uni_freiburg/informatik/ultimate/LTL2aut/}"/>
+</launchConfiguration>
