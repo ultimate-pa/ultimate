@@ -2197,6 +2197,13 @@ public class CHandler implements ICHandler {
 		decl.addAll(l.decl);
 		auxVars.putAll(l.auxVars);
 		Expression switchArg = l.lrVal.getValue();
+		
+	    // Christian: Boolean expression must be wrapped
+        if (((InferredType)switchArg.getType()).getType() ==
+                InferredType.Type.Boolean) {
+            switchArg = wrapBoolean2Int(loc, l.lrVal.getValue());
+        }
+        
 		Expression cond = null;
 		boolean isFirst = true;
 		String breakLabelName = "SWITCH~BREAK~" + node.hashCode();
