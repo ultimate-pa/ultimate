@@ -79,6 +79,11 @@ public class BoogieVar implements Serializable {
 	public String getIdentifier() {
 		return m_Identifier;
 	}
+	
+	/**
+	 * Returns the procedure in which this variable was declared. If this a 
+	 * global variable, then null is returned.
+	 */
 	public String getProcedure() {
 		return m_Procedure;
 	}
