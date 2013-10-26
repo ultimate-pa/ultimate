@@ -1385,7 +1385,7 @@ public class CHandler implements ICHandler {
 		}
 		case IASTBinaryExpression.op_logicalAnd: {
 			stmt.addAll(rl.stmt);
-			stmt.addAll(rr.stmt);
+			// NOTE: no rr.stmt
 			decl.addAll(rl.decl);
 			decl.addAll(rr.decl);
 			auxVars.putAll(rl.auxVars);
@@ -1439,7 +1439,7 @@ public class CHandler implements ICHandler {
 		}
 		case IASTBinaryExpression.op_logicalOr: {
 			stmt.addAll(rl.stmt);
-			stmt.addAll(rr.stmt);
+			// NOTE: no rr.stmt
 			decl.addAll(rl.decl);
 			decl.addAll(rr.decl);
 			auxVars.putAll(rl.auxVars);
