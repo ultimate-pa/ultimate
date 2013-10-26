@@ -1421,14 +1421,30 @@ public class CHandler implements ICHandler {
 					new PrimitiveType(loc, SFO.BOOL),
 					tmpRval);
 			// #t~AND~UID = left
+			
+			// Christian: wrap assignments
+            Expression wrapped = rl.lrVal.getValue();
+            if (((InferredType)wrapped.getType()).getType() ==
+                    InferredType.Type.Boolean) {
+                wrapped = wrapBoolean2Int(loc, wrapped);
+            }
+			
 			AssignmentStatement aStat = new AssignmentStatement(loc,
-					new LeftHandSide[] { lhs }, new Expression[] { rl.lrVal.getValue() });
+					new LeftHandSide[] { lhs }, new Expression[] { wrapped });
 			stmt.add(aStat);
 			// if (#t~AND~UID) {#t~AND~UID = right;}
 			ArrayList<Statement> outerThenPart = new ArrayList<Statement>();
 			outerThenPart.addAll(rr.stmt);
+            
+            // Christian: wrap assignments
+            wrapped = rr.lrVal.getValue();
+            if (((InferredType)wrapped.getType()).getType() ==
+                    InferredType.Type.Boolean) {
+                wrapped = wrapBoolean2Int(loc, wrapped);
+            }
+            
 			outerThenPart.add(new AssignmentStatement(loc,
-					new LeftHandSide[] { lhs }, new Expression[] { rr.lrVal.getValue() }));
+					new LeftHandSide[] { lhs }, new Expression[] { wrapped }));
 			IfStatement ifStatement = new IfStatement(loc, tmpRval,
 					outerThenPart.toArray(new Statement[0]),
 					new Statement[0]);
@@ -1475,14 +1491,30 @@ public class CHandler implements ICHandler {
 					new PrimitiveType(loc, SFO.BOOL),
 					tmpRval);
 			// #t~OR~UID = left
+			
+			// Christian: wrap assignments
+			Expression wrapped = rl.lrVal.getValue();
+			if (((InferredType)wrapped.getType()).getType() ==
+                    InferredType.Type.Boolean) {
+			    wrapped = wrapBoolean2Int(loc, wrapped);
+			}
+			
 			AssignmentStatement aStat = new AssignmentStatement(loc,
-					new LeftHandSide[] { lhs }, new Expression[] { rl.lrVal.getValue() });
+					new LeftHandSide[] { lhs }, new Expression[] { wrapped });
 			stmt.add(aStat);
 			// if (#t~OR~UID) {} else {#t~OR~UID = right;}
 			ArrayList<Statement> outerElsePart = new ArrayList<Statement>();
 			outerElsePart.addAll(rr.stmt);
+			
+			// Christian: wrap assignments
+			wrapped = rr.lrVal.getValue();
+			if (((InferredType)wrapped.getType()).getType() ==
+	                InferredType.Type.Boolean) {
+                wrapped = wrapBoolean2Int(loc, wrapped);
+            }
+			
 			outerElsePart.add(new AssignmentStatement(loc,
-					new LeftHandSide[] { lhs }, new Expression[] { rr.lrVal.getValue() }));
+					new LeftHandSide[] { lhs }, new Expression[] { wrapped }));
 			IfStatement ifStatement = new IfStatement(loc, tmpRval,
 					new Statement[0], outerElsePart.toArray(new Statement[0]));
 			stmt.add(ifStatement);
