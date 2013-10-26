@@ -67,7 +67,7 @@ public class NameHandler implements INameHandler {
 				curr = curr.getParent();
 			}
 		}
-		assert cId.length() > 0 : "Emtpy C identifier";
+		assert cId.length() > 0 : "Empty C identifier";
 		assert (compCnt >= 0);
 		// mark variables that we put on the heap manually (bc they are addressoffed)
 		// with a "#"
