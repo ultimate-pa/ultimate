@@ -529,7 +529,8 @@ public class TraceCheckerSpWp extends TraceChecker {
 				m_InterpolantsSp[0] = m_PredicateUnifier.getOrConstructPredicate(p.getFormula(), p.getVars(),
 						p.getProcedures());
 			}
-			IPredicate fp = m_SmtManager.computeForwardRelevantPredicate(m_InterpolantsSp[0], relevantVars[0]);
+			//FIXME: Matthias added +1 to relevantVars[0+1]
+			IPredicate fp = m_SmtManager.computeForwardRelevantPredicate(m_InterpolantsSp[0], relevantVars[0+1]);
 			m_InterpolantsFp[0] = m_PredicateUnifier.getOrConstructPredicate(fp.getFormula(), fp.getVars(), fp.getProcedures());
 		}
 		
@@ -564,7 +565,8 @@ public class TraceCheckerSpWp extends TraceChecker {
 					m_InterpolantsSp[i] = m_PredicateUnifier.getOrConstructPredicate(p.getFormula(), p.getVars(),
 							p.getProcedures());
 			}
-			IPredicate fp = m_SmtManager.computeForwardRelevantPredicate(m_InterpolantsSp[i], relevantVars[i]);
+			//FIXME: Matthias added +1 to relevantVars[i+1]
+			IPredicate fp = m_SmtManager.computeForwardRelevantPredicate(m_InterpolantsSp[i], relevantVars[i+1]);
 			m_InterpolantsFp[i] = m_PredicateUnifier.getOrConstructPredicate(fp.getFormula(), fp.getVars(), fp.getProcedures());
 		}
 		
