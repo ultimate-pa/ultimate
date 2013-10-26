@@ -169,7 +169,7 @@ public class NestedSsaBuilder {
 			m_PendingContext2PendingReturn.put(startOfCallingContext, pendingReturnPosition);
 			Return ret = (Return) m_Formulas.getTrace().getSymbol(pendingReturnPosition);
 			Call correspondingCall = ret.getCorrespondingCall();
-			m_currentProcedure = getProcedureBefore(correspondingCall);
+			m_currentProcedure = correspondingCall.getPreceedingProcedure();
 			
 			reVersionModifiableGlobals();
 			if (i== numberPendingContexts-1) {
@@ -222,7 +222,7 @@ public class NestedSsaBuilder {
 		if (m_currentProcedure == null) {
 			assert numberPendingContexts == 0;
 			CodeBlock firstCodeBlock = m_Formulas.getTrace().getSymbolAt(0);
-			m_currentProcedure = getProcedureBefore(firstCodeBlock);
+			m_currentProcedure = firstCodeBlock.getPreceedingProcedure();
 		}
 		reVersionModifiableGlobals();
 		if (pendingReturns.length == 0) {
@@ -345,17 +345,7 @@ public class NestedSsaBuilder {
 	}
 	
 	
-	/**
-	 * Returns the procedure in which a system is before executing the 
-	 * CodeBlock cb.
-	 * If cb is a call, the result is the name of the caller, if cb is a return
-	 * the result is the callee (from that we return.
-	 */
-	public String getProcedureBefore(CodeBlock cb) {
-		ProgramPoint pp = (ProgramPoint) cb.getSource();
-		return pp.getProcedure();
-	}
-	
+
 
 	/**
 	 * Compute identifier of the Constant that represents the branch encoder tv
