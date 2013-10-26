@@ -7,7 +7,7 @@
 // for _Bool and we do not yet support casts.
 
 int main() {
-    int x = 1;
+    int x = 0;
     int a[1];
     a[0] = 42;
     int z = a[x++];
