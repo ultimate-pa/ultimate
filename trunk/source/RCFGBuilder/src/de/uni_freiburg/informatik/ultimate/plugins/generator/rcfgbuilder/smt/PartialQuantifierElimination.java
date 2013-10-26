@@ -212,7 +212,7 @@ public class PartialQuantifierElimination {
 					throw new UnsupportedOperationException(
 							"QE for universal quantified arrays not implemented yet.");
 				}
-				Term elim = (new ElimStore2(script)).elim(tv, result);
+				Term elim = (new ElimStore3(script)).elim(tv, result);
 				if (elim != null) {
 					it.remove();
 					result = elim;

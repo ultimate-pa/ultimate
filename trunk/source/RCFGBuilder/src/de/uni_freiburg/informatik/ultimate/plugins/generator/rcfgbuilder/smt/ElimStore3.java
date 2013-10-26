@@ -1,6 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -69,27 +70,29 @@ public class ElimStore3 {
 		
 		Script script = m_Script;
 		Set<ApplicationTerm> selectTerms = 
-				(new ApplicationTermFinder("select")).findMatchingSubterms(othersT);
+				(new ApplicationTermFinder("select")).findMatchingSubterms(term);
 		Term[] conjunction = PartialQuantifierElimination.getConjuncts(othersT);
 		Map<Term[], ArrayRead> arrayReads =	getArrayReads(oldArr, selectTerms);
 		ArrayRead[] all = arrayReads.values().toArray(new ArrayRead[0]);
 		Term[] eqInfos = new Term[all.length];
 		//FIXME: disallow eqValues with same array
-		HashSet<Term> newAuxVars = new HashSet<Term>();
+		Set<TermVariable> newAuxVars = new HashSet<TermVariable>();
 		for (int i=0; i<all.length; i++) {
-			eqInfos[i] = PartialQuantifierElimination.getEqinfo(
-					script, all[i].getSelectTerm(), conjunction, QuantifiedFormula.EXISTS).getTerm();
-			if (eqInfos[i] == null) {
+			EqualityInformation eqInfo = PartialQuantifierElimination.getEqinfo(
+					script, all[i].getSelectTerm(), conjunction, QuantifiedFormula.EXISTS); 
+			if (eqInfo == null) {
 				Term select = all[i].getSelectTerm();
 				TermVariable auxVar = select.getTheory().createFreshTermVariable("arrayElim", select.getSort());
 				newAuxVars.add(auxVar);
 				eqInfos[i] = auxVar;
+			} else {
+				eqInfos[i] = eqInfo.getTerm();
 			}
 		}
 		ArrayList<Term> additionalConjuncs = new ArrayList<Term>();
 		Map<Term, Term> mapping = new HashMap<Term, Term>();
 		for (int i=0; i<all.length; i++) {
-			Term indexEquality = buildPairwiseEquality(all[i].getIndex(), m_WriteIndex, script);
+			Term indexEquality = Util.and(m_Script, buildPairwiseEquality(all[i].getIndex(), m_WriteIndex, null, script));
 			Term newSelect = buildMultiDimensionalSelect(m_NewArray, all[i].getIndex());
 			Term valueEquality = UtilExperimental.binaryEquality(script, newSelect, eqInfos[i]);
 			Term conjunct = Util.or(script, indexEquality, valueEquality);
@@ -97,6 +100,20 @@ public class ElimStore3 {
 			mapping.put(all[i].getSelectTerm(), eqInfos[i]);
 		}
 		SafeSubstitution subst = new SafeSubstitution(script, mapping);
+		{
+			Term[][] indices = new Term[all.length][];
+			Term[] values = new Term[all.length];
+			for (int i=0; i<all.length; i++) {
+				indices[i] = substitutionElementwise(all[i].getIndex(), subst);
+				values[i] = subst.transform(eqInfos[i]);
+			}
+			for (int i=0; i<all.length; i++) {
+				Term newConjunct = 
+						indexValueConnection(indices[i], values[i], indices, values, i+1, script);
+				additionalConjuncs.add(newConjunct);
+			}
+		}
+
 		othersT = subst.transform(othersT);
 		Term newConjuncts = Util.and(script, additionalConjuncs.toArray(new Term[0]));
 		newConjuncts = subst.transform(newConjuncts);
@@ -105,6 +122,23 @@ public class ElimStore3 {
 		Term result = Util.and(script, othersT, newConjuncts, writeSubstituent);
 		result = subst.transform(result);
 		result = (new SimplifyDDA(script)).getSimplifiedTerm(result);
+		if (!newAuxVars.isEmpty()) {
+			result = PartialQuantifierElimination.derSimple(m_Script, QuantifiedFormula.EXISTS, result, newAuxVars);
+			if (!newAuxVars.isEmpty()) {
+				result = PartialQuantifierElimination.updSimple(m_Script, QuantifiedFormula.EXISTS, result, newAuxVars);
+				if (!newAuxVars.isEmpty()) {
+					throw new UnsupportedOperationException("Unable to eliminate newly introduced variable");
+				}
+			}
+		}
+		return result;
+	}
+	
+	private static Term[] substitutionElementwise(Term[] subtituents, SafeSubstitution subst) {
+		Term[] result = new Term[subtituents.length];
+		for (int i=0; i<subtituents.length; i++) {
+			result[i] = subst.transform(subtituents[i]);
+		}
 		return result;
 	}
 
@@ -127,7 +161,7 @@ public class ElimStore3 {
 		Map<Term, Term> mapping = new HashMap<Term, Term>();
 		for (int i=0; i<all.length; i++) {
 			for (int j=i+1; j<all.length; j++) {
-				Term indexEquality = buildPairwiseEquality(all[i].getIndex(), all[j].getIndex(), script);
+				Term indexEquality = Util.and(script, buildPairwiseEquality(all[i].getIndex(), all[j].getIndex(), null, script));
 				Term valueEquality = UtilExperimental.binaryEquality(script, eqInfos[i].getTerm(), eqInfos[j].getTerm());
 				Term conjunct = Util.or(script, Util.not(script, indexEquality),valueEquality);
 				additionalConjuncs.add(conjunct);
@@ -140,6 +174,22 @@ public class ElimStore3 {
 		newConjuncts = subst.transform(newConjuncts);
 		Term result = Util.and(script, term, newConjuncts);
 		result = (new SimplifyDDA(script)).getSimplifiedTerm(result);
+		return result;
+	}
+	
+	public static Term indexValueConnection(Term[] ourIndex, Term ourValue, 
+			Term[][] othersIndices, Term[] othersValues, int othersPosition, Script script) {
+		assert othersIndices.length == othersValues.length;
+		ArrayList<Term> additionalConjuncs = new ArrayList<Term>();
+		for (int i=othersPosition; i<othersIndices.length; i++) {
+			Term[] othersIndex = othersIndices[i];
+			assert ourIndex.length == othersIndex.length;
+			Term indexEquality = Util.and(script, buildPairwiseEquality(ourIndex, othersIndices[i], null, script));
+			Term valueEquality = UtilExperimental.binaryEquality(script, ourValue, othersValues[i]);
+			Term conjunct = Util.or(script, Util.not(script, indexEquality),valueEquality);
+			additionalConjuncs.add(conjunct);
+		}
+		Term result = Util.and(script, additionalConjuncs.toArray(new Term[0]));
 		return result;
 	}
 
@@ -302,7 +352,7 @@ public class ElimStore3 {
 			assert representative != null;
 			assert representative.length == term.length;
 			Term negated = m_Script.term("not", 
-					buildPairwiseEquality(representative, term, m_Script));
+					Util.and(m_Script, buildPairwiseEquality(representative, term, null, m_Script)));
 			m_Script.push(1);
 			tv2constant.beginScope();
 			assertTermWithTvs(tv2constant, m_Script, negated);
@@ -326,7 +376,7 @@ public class ElimStore3 {
 				// this equivalence class
 				continue;
 			}
-			Term test = buildPairwiseEquality(representative, term, m_Script);
+			Term test = Util.and(m_Script, buildPairwiseEquality(representative, term, null, m_Script));
 			m_Script.push(1);
 			tv2constant.beginScope();
 			assertTermWithTvs(tv2constant, m_Script, test);
@@ -342,13 +392,28 @@ public class ElimStore3 {
 		}
 	}
 	
-	static Term buildPairwiseEquality(Term[] first, Term[] second, Script script) {
+	/**
+	 * Given two lists of terms and a subsitution subst
+	 * return the following conjunctions
+	 * subst(first_1) == subst(second_1), ... ,subst(first_n) == subst(second_n)
+	 * if subst is null we use the identity function.  
+	 */
+	static Term[] buildPairwiseEquality(Term[] first, Term[] second, 
+			SafeSubstitution subst, Script script) {
 		assert first.length == second.length;
 		Term[] equivalent = new Term[first.length];
 		for (int i=0; i<first.length; i++) {
-			equivalent[i] = script.term("=", first[i], second[i]);
+			Term firstTerm, secondTerm;
+			if (subst == null) {
+				firstTerm = first[i];
+				secondTerm = second[i];
+			} else {
+				firstTerm = subst.transform(first[i]);
+				secondTerm = subst.transform(second[i]);
+			}
+			equivalent[i] = script.term("=", firstTerm, secondTerm);
 		}
-		return Util.and(script, equivalent);
+		return equivalent;
 	}
 	
 	/**
@@ -543,6 +608,10 @@ public class ElimStore3 {
 			return m_SelectTerm;
 		}
 		
+		@Override
+		public String toString() {
+			return m_SelectTerm.toString();
+		}
 		
 		
 	}
@@ -578,7 +647,7 @@ public class ElimStore3 {
 		public ImpliedReadInformation(ArrayRead ar1, Term equalTerm1,
 				ArrayRead ar2, Term equalTerm2, 
 				Term context, ScopedHashMap<TermVariable, Term> tv2constant) {
-			m_IndexEquivalence = buildPairwiseEquality(ar1.getIndex(), ar2.getIndex(), m_Script);
+			m_IndexEquivalence = Util.and(m_Script, ElimStore3.buildPairwiseEquality(ar1.getIndex(), ar2.getIndex(), null, m_Script));
 			m_ValueEquivalence = m_Script.term("=", equalTerm1, equalTerm2);
 			
 			m_Script.push(1);
