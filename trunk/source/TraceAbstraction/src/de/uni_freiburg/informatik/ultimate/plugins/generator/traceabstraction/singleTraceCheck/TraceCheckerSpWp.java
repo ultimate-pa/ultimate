@@ -42,7 +42,7 @@ public class TraceCheckerSpWp extends TraceChecker {
 	
 	private final static boolean m_useUnsatCore = true;
 	private final static boolean m_useUnsatCoreOfFineGranularity = true;
-	private final static boolean m_useLiveVariables = !true;
+	private final static boolean m_useLiveVariables = true;
 	private boolean m_ComputeInterpolantsSp;
 	private boolean m_ComputeInterpolantsFp;
 	private boolean m_ComputeInterpolantsBp;
@@ -177,22 +177,25 @@ public class TraceCheckerSpWp extends TraceChecker {
 			assert stillInfeasible(rv);
 		}
 		RelevantVariables rvar = new RelevantVariables(rv);
-		LiveVariables lvar = new LiveVariables(m_Nsb.getVariable2Constant(), m_Nsb.getConstants2BoogieVar());
+		LiveVariables lvar = new LiveVariables(m_Nsb.getVariable2Constant(), m_Nsb.getConstants2BoogieVar(),
+				m_Nsb.getIndexedVarRepresentative(),
+				m_SmtManager);
+		
 		Set<BoogieVar>[] relevantVarsToUseForFPBP = null;
 		
 		if (m_useLiveVariables) {
 			relevantVarsToUseForFPBP = lvar.getLiveVariables();
-			assert liveVariablesSubSetOfRelevantVariables(rvar.getRelevantVariables(), lvar.getLiveVariables());
+//			assert liveVariablesSubSetOfRelevantVariables(rvar.getRelevantVariables(), lvar.getLiveVariables());
 		} else {
 			relevantVarsToUseForFPBP = rvar.getRelevantVariables();
 		}
 		
+//		 assert liveVariablesSubSetOfRelevantVariables(rvar.getRelevantVariables(), lvar.getLiveVariables()) : 
+//			"LiveVariables are not subsets of RelevantVariables";
+		
 		if (m_ComputeInterpolantsFp) {
 			s_Logger.debug("Computing forward relevant predicates...");
 			computeForwardRelevantPredicates(relevantVarsToUseForFPBP, rv, trace, tracePrecondition);
-			s_Logger.debug("Checking predicates with strongest postcondition...");
-			checkInterpolantsCorrect(m_InterpolantsSp, trace, tracePrecondition, 
-					tracePostcondition, "SP with unsat core");
 			s_Logger.debug("Checking inductivity of forward relevant predicates...");
 			checkInterpolantsCorrect(m_InterpolantsFp, trace, tracePrecondition,
 					tracePostcondition, "FP");
@@ -529,8 +532,7 @@ public class TraceCheckerSpWp extends TraceChecker {
 				m_InterpolantsSp[0] = m_PredicateUnifier.getOrConstructPredicate(p.getFormula(), p.getVars(),
 						p.getProcedures());
 			}
-			//FIXME: Matthias added +1 to relevantVars[0+1]
-			IPredicate fp = m_SmtManager.computeForwardRelevantPredicate(m_InterpolantsSp[0], relevantVars[0+1]);
+			IPredicate fp = m_SmtManager.computeForwardRelevantPredicate(m_InterpolantsSp[0], relevantVars[1]);
 			m_InterpolantsFp[0] = m_PredicateUnifier.getOrConstructPredicate(fp.getFormula(), fp.getVars(), fp.getProcedures());
 		}
 		
@@ -565,7 +567,6 @@ public class TraceCheckerSpWp extends TraceChecker {
 					m_InterpolantsSp[i] = m_PredicateUnifier.getOrConstructPredicate(p.getFormula(), p.getVars(),
 							p.getProcedures());
 			}
-			//FIXME: Matthias added +1 to relevantVars[i+1]
 			IPredicate fp = m_SmtManager.computeForwardRelevantPredicate(m_InterpolantsSp[i], relevantVars[i+1]);
 			m_InterpolantsFp[i] = m_PredicateUnifier.getOrConstructPredicate(fp.getFormula(), fp.getVars(), fp.getProcedures());
 		}

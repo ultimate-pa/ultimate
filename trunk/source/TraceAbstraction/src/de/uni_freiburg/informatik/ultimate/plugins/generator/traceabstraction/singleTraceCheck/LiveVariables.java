@@ -36,12 +36,18 @@ public class LiveVariables {
 	private Set<BoogieVar>[] m_LiveVariables;
 	private Map<Term,BoogieVar> m_Constants2BoogieVar;
 	private ModifiableNestedFormulas<Map<TermVariable,Term>, Map<TermVariable,Term>> m_TraceWithConstants;
+	private Map<BoogieVar, TreeMap<Integer, Term>> m_IndexedVarRepresentative;
+	private SmtManager m_SmtManager;
 	
 	public LiveVariables(ModifiableNestedFormulas<Map<TermVariable,Term>, Map<TermVariable,Term>> traceWithConstants,
-			Map<Term,BoogieVar> constants2BoogieVar) {
+			Map<Term,BoogieVar> constants2BoogieVar,
+			Map<BoogieVar, TreeMap<Integer, Term>> indexedVarRepresentative,
+			SmtManager smtManager) {
 		// Initialize members
 		m_Constants2BoogieVar = constants2BoogieVar;
 		m_TraceWithConstants = traceWithConstants;
+		m_IndexedVarRepresentative = indexedVarRepresentative;
+		m_SmtManager = smtManager;
 		// We don't need the constants for the post-condition, because we do not compute
 		// live variables for the post-condition
 		m_ConstantsForEachPosition = new Collection[traceWithConstants.getTrace().length() + 1];
@@ -49,7 +55,7 @@ public class LiveVariables {
 		m_BackwardLiveConstants = new Set[m_ForwardLiveConstants.length];
 		m_LiveConstants = new Set[m_ForwardLiveConstants.length];
 		m_LiveVariables = new Set[m_ForwardLiveConstants.length];
-		fetchConstantsForEachPosition();
+		
 		computeLiveVariables();
 	}
 	
@@ -66,14 +72,12 @@ public class LiveVariables {
 			constants = new HashSet<Term>();
 			if (m_TraceWithConstants.getTrace().isCallPosition(i)) {
 				assert m_ConstantsForEachPosition[i+1] == null : "constants for position " +(i+1)+ " already fetched!";
-//				constants.addAll(m_TraceWithConstants.getLocalVarAssignment(i).values());
+				constants.addAll(m_TraceWithConstants.getLocalVarAssignment(i).values());
 				constants.addAll(m_TraceWithConstants.getGlobalVarAssignment(i).values());
+				constants.addAll(m_TraceWithConstants.getOldVarAssignment(i).values());
 			} else if (m_TraceWithConstants.getTrace().isReturnPosition(i)) {
 				assert m_ConstantsForEachPosition[i+1] == null : "constants for position " +(i+1)+ " already fetched!";
 				constants.addAll(m_TraceWithConstants.getFormulaFromNonCallPos(i).values());
-				int call_pos = m_TraceWithConstants.getTrace().getCallPosition(i);
-				constants.addAll(m_TraceWithConstants.getOldVarAssignment(call_pos).values());
-				// TODO : add localvarassignment
 			} else {
 				assert m_ConstantsForEachPosition[i+1] == null : "constants for position " +(i+1)+ " already fetched!";
 				constants.addAll(m_TraceWithConstants.getFormulaFromNonCallPos(i).values());
@@ -83,17 +87,40 @@ public class LiveVariables {
 	}
 
 	private void computeLiveVariables() {
-		computeForwardLiveConstants();
-		computeBackwardLiveConstants();
-		assert m_LiveConstants != null;
-		// Compute live constants using forward live constants and backward live constants.
-		for (int i = 0; i < m_ForwardLiveConstants.length; i++) {
-			assert m_LiveConstants[i] == null : "Live constants already computed!";
-			m_ForwardLiveConstants[i].retainAll(m_BackwardLiveConstants[i]);
-			m_LiveConstants[i] = m_ForwardLiveConstants[i];
-		}
+		fetchConstantsForEachPosition();
+		computeLiveConstants();
+//		assert m_LiveConstants != null;
+//		// Compute live constants using forward live constants and backward live constants.
+//		for (int i = 0; i < m_ForwardLiveConstants.length; i++) {
+//			assert m_LiveConstants[i] == null : "Live constants already computed!";
+//			m_ForwardLiveConstants[i].retainAll(m_BackwardLiveConstants[i]);
+//			m_LiveConstants[i] = m_ForwardLiveConstants[i];
+//		}
 		
 		generateLiveVariablesFromLiveConstants();
+	}
+	
+	private void computeLiveConstants() {
+		assert m_LiveConstants != null;
+		m_LiveConstants[m_LiveConstants.length - 1] = new HashSet<Term>();
+		for (int i = m_ConstantsForEachPosition.length - 1; i >= 0; i--) {
+			Set<Term> liveConstants = new HashSet<Term>();
+			Set<Term> liveConstantsTemp = new HashSet<Term>();
+			liveConstantsTemp.addAll(m_ConstantsForEachPosition[i]);
+			liveConstantsTemp.addAll(m_LiveConstants[i+1]);
+			for (Term t : liveConstantsTemp) {
+				BoogieVar bv = m_Constants2BoogieVar.get(t);
+				Map<Integer, Term> indexedVar = m_IndexedVarRepresentative.get(bv);
+				if (indexedVar.containsKey(i)) {
+					if (!t.equals(indexedVar.get(i))) {
+						liveConstants.add(t);
+					}
+				} else {
+					liveConstants.add(t);
+				}
+			}
+			m_LiveConstants[i] = liveConstants;  
+		}
 	}
 	
 	private void generateLiveVariablesFromLiveConstants() {
@@ -102,7 +129,20 @@ public class LiveVariables {
 		for (int i = 1; i < m_LiveConstants.length; i++) {
 			Set<BoogieVar> liveVars = new HashSet<BoogieVar>();
 			for (Term t : m_LiveConstants[i]) {
-				liveVars.add(m_Constants2BoogieVar.get(t));
+				BoogieVar bv = m_Constants2BoogieVar.get(t);
+				if (bv.isGlobal()) {
+					liveVars.add(bv);
+					if (bv.isOldvar()) {
+						liveVars.add(m_SmtManager.getNonOldVar(bv));
+					} else {
+						liveVars.add(m_SmtManager.getOldVar(bv));
+					}
+				} else {
+					CodeBlock cb = m_TraceWithConstants.getTrace().getSymbolAt(i-1);
+					if (cb.getSucceedingProcedure().equals(bv.getProcedure())) {
+						liveVars.add(bv);
+					}
+				}
 			}
 			m_LiveVariables[i] = liveVars;
 		}
@@ -119,6 +159,7 @@ public class LiveVariables {
 	 * <li> if statement[i] is ReturnStatement
 	 * <ul> <li> FLC[i] = constantsAtPosition[i] union FLC[correspondingCallPosition]
 	 */
+	@Deprecated
 	private void computeForwardLiveConstants() {
 		assert m_ForwardLiveConstants != null;
 		assert m_ConstantsForEachPosition != null;
@@ -158,6 +199,7 @@ public class LiveVariables {
 	 * <li> if statement[i] is a non-pending CallStatement
 	 * <ul> <li> BLC[i] = constantsAtPosition[i] union BLC[correspondingReturnPosition] </ul>
 	 */
+	@Deprecated
 	private void computeBackwardLiveConstants() {
 		assert m_BackwardLiveConstants != null;
 		m_BackwardLiveConstants[m_BackwardLiveConstants.length - 1] = 
