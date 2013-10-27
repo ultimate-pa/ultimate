@@ -7,6 +7,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import org.apache.log4j.Logger;
 
@@ -262,12 +263,10 @@ public class HoareAnnotationFragments {
 			IPredicate precondForContext,
 			HashRelation<ProgramPoint, IPredicate> pp2preds) {
 		for (ProgramPoint pp : pp2preds.getDomain()) {
-			IPredicate formulaForPP = m_SmtManager.newFalsePredicate();
-			for (IPredicate pred : pp2preds.getImage(pp)) {
-				TermVarsProc tvp = smtManager.or(formulaForPP, pred);
-				formulaForPP = m_SmtManager.newPredicate(tvp.getFormula(), 
-						tvp.getProcedures(), tvp.getVars(), tvp.getClosedFormula());
-			}
+			IPredicate[] preds = pp2preds.getImage(pp).toArray(new IPredicate[0]);
+			TermVarsProc tvp = smtManager.or(preds);
+			IPredicate formulaForPP = m_SmtManager.newPredicate(tvp.getFormula(), 
+					tvp.getProcedures(), tvp.getVars(), tvp.getClosedFormula());
 			addFormulasToLocNodes(pp, precondForContext, formulaForPP);
 		}
 	}
