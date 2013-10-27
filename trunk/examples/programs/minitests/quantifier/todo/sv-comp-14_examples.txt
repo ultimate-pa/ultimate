@@ -1,26 +1,3 @@
-probably none works:
---------------------
---------------------
-ddv-machzwd (&, pointer function)
-ldv-challenges (&)
-ldv-commit-tester (&, pointer function)
-ldv-consumption (&)
-[2013] ldv-drivers (&)
-ldv-linux-3.0 (&)
-[2013] ldv-linux-3.4 (&)
-ldv-linux-3.4-simple (&, pointer function)
-ldv-linux-3.7.3 - (&)
-memsafety-ext (&, NullPointerException)
-ntdrivers (&, #pragma)
-product-lines (#pragma)
-pthread*/seq-* (threading)
-ssh (cvar == null (pointer as function parameter))
---------------------
---------------------
-
-mixed:
-------
-------
 bitvector (35):
 
 4 wrong result
@@ -32,7 +9,7 @@ modulus_true, num_*, parity_*
 5 bit complement
 soft_*
 
-2 SMTLIBException (Parser)
+2 StrongestPostDeterminizer.reviewInductiveInternal() [nondeterministic]
 jain_1_safe, jain_2_safe
 
 ---
@@ -42,7 +19,7 @@ bitvector-regression (13):
 6 wrong result
 implicitunsignedconversion_*, signextension_*, signextension2_*
 
-4 assert false
+4 ResultExpression.switchToRValue() (char)
 pointer_*
 
 2 bit complement
@@ -53,31 +30,32 @@ implicitfloatconversion_*
 
 ---
 
-eca (133) [exemplarisch immer nur *_00 getestet]:
+ddv-machzwd (13):
 
-126 unknown
+13 pointer function
+- all -
+
+---
+
+eca (133) [only checked *_00]:
+
+42 unknown
+Problem01_*, Problem02_*, Problem03_*, Problem10_*, Problem11_*, Problem15_*
+
+91 function call before declaration
 - all others -
-
-7 SMTLIBException (parser)
-Problem13_*
 
 ---
 
 heap-manipulation (18):
 
-2 #define function
+2 #define -> type error
 tree_*
 
 2 #ifndef
 sll_to_dll_rev_false, sll_to_dll_rev_true
 
-6 &
-bubble_sort_linux_false, bubble_sort_linux_true, merge_*
-
-2 assert false
-bubble_sort_linux_false.cil, bubble_sort_linux_true.cil
-
-2 NullPointerException
+2 HeapLValues must be converted to RValue first.
 dll_of_dll_false, dll_of_dll_true
 
 2 pointer function
@@ -86,207 +64,291 @@ dll_of_dll_false.cil, dll_of_dll_true.cil
 2 pointer void
 sll_to_dll_rev_false.cil, sll_to_dll_rev_true.cil
 
+2 LIST_HEAD
+bubble_sort_linux_false, bubble_sort_linux_true
+
+2 struct initialization with pointer to itself
+bubble_sort_linux_false.cil, bubble_sort_linux_true.cil
+
+4 struct pointer as function parameter not recognized
+merge_*
+
+---
+
+ldv-challenges (15):
+
+15 pointer function
+- all -
+
+---
+
+ldv-commit-tester (62):
+
+62 pointer function
+- all -
+
+---
+
+ldv-consumption (164):
+
+164 pointer function
+- all -
+
+---
+
+ldv-linux-3.0 (41):
+
+41 pointer function
+- all -
+
+---
+
+ldv-linux-3.4-simple (1155):
+
+1155 pointer function
+- all -
+
+---
+
+ldv-linux-3.7.3 (11):
+
+11 pointer function
+- all -
+
 ---
 
 ldv-regression (94):
 
-15 working
-alias_*, just_*, nested_structure_noptr_true.cil, oomInt.c_true_1.cil,
-structure_assignment.c_true.cil, test02_false, test12_false, test13_true,
-test17_true, test_cut_*, test_while_*
+4 working
+just_*, test02_false, test12_false, test26_false
 
-5 wrong result
-test01_true, test03_true, test04_true, test19_true, test20_true
-
-1 & undeclared
-test18_true
-
-19 & unsupported
-- all others -
-
-10 assert false
-mutex_lock_struct.c_false.cil, mutex_lock_struct.c_true_1.cil,
+11 wrong result
 nested_structure.c_true.cil, nested_structure_ptr.c_true.cil,
-nested_structure_ptr_true.cil, nested_structure_true.cil, test28_*,
-test_union_cast.c_true_1.cil, test_union_cast-2_true.cil
+nested_structure_ptr_true, nested_structure_true, test01_true, test03_true,
+test04_true, test11_true, test14_true, test20_true, test_malloc-2_true
 
-3 auxiliary boogie variable
-stateful_check_false.cil, test15_true, test16_true
+24 unknown
+alias_of_return.c_true_1.cil, alias_of_return_2.c_true_1.cil, mutex_*,
+nested_structure_noptr*, oomInt.c_*, stateful_check_false.cil, structure_*,
+test13_true, test15_true, test16_true, test17_true, test26_true
+test_cut_*, test_malloc-1_true, test_while_*, volatile_*
+
+2 Address of something that is not on the heap
+test30_*
+
+6 array cast fail
+test24_*, test25_*, test27_*
+
+2 equals checks for the same object
+test28_*
 
 6 auxVarMap
 test05_true, test06_false, test07_true, test08_false, test09_true, test10_true
 
-1 const
-test_overflow.c_true.cil
+2 cvar == null (pointer as function parameter)
+rule57_*
 
-2 IllegalArgumentException
-nested_structure_noptr.c_true.cil, nested_structure_noptr_true
+3 double
+test_union_cast.c_true.cil, test_union_cast-2_*
+
+1 function parameter (a pointer) not recognized
+test18_true
 
 1 NullPointerException
 stateful_check_false
 
-4 pointer comparison with 0
-test11_true, test14_true, test_malloc-1_true, test_malloc-2_true
-
 1 pointer function
 callfpointer*
 
-1 pointer type mismatch
-test_malloc-2_true.cil
-
-1 pointer pointer (**)
+1 pointer struct I
 sizeofparameters_test.c_true.cil
 
-9 pointer void
-1_3.c_*, alt_*, ex3_*, fo_*, recursive_*, rule60_*, test_malloc-1_true.cil
+10 pointer void
+1_3.c_*, alt_*, ex3_*, fo_*, recursive_*, rule60_*, test_address*,
+test_malloc-1_true.cil, 
 
-5 quantifier unsupported
-mutex_lock_int*, oomInt.c_true.cil, volatile_*
+1 StringLiteral
+test_overflow.c_true.cil
 
-2 struct initialization (expression == null)
-nested_structure_ptr_true, nested_structure_true
+2 struct rex.declCTypes.size() == rex.decl.size()
+test23_*
 
-2 undeclared identifier
-test21_*
+2 type error: expected pointer, got INT
+nested_structure_ptr_true.cil, nested_structure_true.cil
 
-6 union
-test29_*, test_union.c_true.cil, test_union.c_true_1.cil,
-test_union_cast-1_true, test_union_cast-1_true.cil
+8 type mismatch (TODO)
+alias_of_return.c_true.cil, alias_of_return_2.c_true.cil,
+test_malloc-2_true.cil, test19_true, test21_*, test22_*
+
+7 union
+test_union.c_*, test_union_cast-1_*, test_union_cast.c_true_1.cil, test29_*
 
 ---
 
 list-ext-properties (20):
 
 1 working
-test-0019_false-valid-memtrack
+list_false
 
-1 wrong result
-test-0019_true
+3 unknown
+list_flag_*, list_true
 
-4 & unsupported
-test-0214_true, test-0217_true, test-0504_true, test-0513_true
-
-2 NullPointerException
-test-0232_*
-
-3 pointer array
+3 array cast fail
 960521-1_*
 
-6 pointer comparison with 0
-- all others -
+2 empty enum identifier
+test-0214_true, test-0217_true
+
+2 HeapLValues must be converted to RValue first.
+test_0232_*
+
+2 pointer type
+test-0504_true, test-0513_true
 
 3 pointer void
 test-0158_*
+
+4 struct constructor type
+simple_*, test-0019_*
 
 ---
 
 list-properties (17):
 
-11 pointer comparison with 0
+9 unknown
 - all others -
 
-6 function pointer
+6 pointer function
 *.cil
+
+2 struct constructor type
+simple_*
 
 ---
 
 locks (13):
 
-2 working
-test_locks_5_true, test_locks_6_true
-
-11 unknown
-- all others -
+13 unknown
+- all -
 
 ---
 
 loops (72):
 
-18 working
-- all others -
+5 working
+nec11_*, terminator_02_false, trex02_false, trex03_false,
+while_infinite_loop_4_*
+
+35 unknown
+array_*, trex02_true, trex04_*, for_*, insertion_*, list_*, matrix_*, n.c11_*,
+n.c40_*, nec20_*, nec40_*, sum*, terminator_02_true, terminator_03_*,
+while_infinite_loop_1_*, while_infinite_loop_2_*, while_infinite_loop_3_*
 
 2 wrong result
 count_up_down_true, trex03_true
-
-14 unknown
-eureka_01_*, n.c40_true, nec40_true, sum0*, sum_array_true
 
 2 #ifndef
 veris.c_OpenSER__cases1_stripFullBoth_arr_true,
 verisec_OpenSER__cases1_stripFullBoth_arr_false
 
-1 &
-n.c24_true
-
-2 arrow (->) implementation error
-veris.c_sendmail__tTflag_arr_one_loop_true,
-verisec_sendmail__tTflag_arr_one_loop_true
-
-1 assert false
+1 assert()
 bubble_sort_false
 
-2 auxVarMap
-eureka_05_true, terminator_01_true
+3 array cast fail
+bubble_sort_true, linear_*
 
-2 char escape
-invert_*
+1 array initialization
+compact_false
+
+4 ArrayIndexOutOfBoundsException
+heavy_*, eureka_01_*, 
+
+4 auxVarMap
+eureka_05_*, terminator_01_*, n.c24_*
+
+6 char escape
+invert_*, string_*, vogal_*
 
 1 cvar == null (pointer as function parameter)
 s3_false
 
-12 main() Type
-array_*, matrix_true, string_*, terminator_01_false, terminator_02_*,
-terminator_03_*, vogal_*
-
-2 NULL
-list_*
-
-4 pointer array
-bubble_sort_safe, linear_*
-
-3 array initialization
-compact_false, heavy_*
-
-2 sizeof pointer
+2 type cast exception
 veris.c_NetBSD-libc__loop_true, verisec_NetBSD-libc__loop_true
 
-3 SVCOMP - Result
-for_bounded_*, insertion_*
+6 type mismatch (TODO)
+trex01_*, lu*, veris.c_sendmail__tTflag_arr_one_loop_true,
+verisec_sendmail__tTflag_arr_one_loop_true
 
 ---
 
 memsafety (36):
 
-4 #define function
-test-0102_false-valid-memtrack, test-0102_true, test-0134_true,
-test-0137_false-valid-deref
+1 #if
+test-0102_false-valid-memtrack
 
-15 &
-- all others -
-
-1 __SIZE_TYPE__
-20051113-1.c_false-valid-memtrack
-
-1 IllegalArgumentException
-20020406-1_false-valid-memtrack
-
-3 NullPointerException
-test-0232_*
-
-4 NULL
-lockfree-*
-
-3 pointer array
+3 array cast fail
 960521-1_*
+
+3 empty enum identifier
+test-0214_true, test-0217_true, test-0218_true
+
+4 HeapLValues must be converted to RValue first.
+test-0232_*, test-0521_true
+
+2 pointer function
+test-0134_true, test-0137_false-valid-deref
+
+2 pointer struct II
+20020406-1_false-valid-memtrack, test-0102_true
+
+6 pointer type
+lockfree-*, test-0504_*, test-0513_*
 
 5 pointer void
 test-0019_*, test-0158_*
+
+9 size_t
+test-0219_true, test-0220_true, test-0234_*, test-0235_*, test-0236_*,
+test-0237_*
+
+1 struct rex.declCTypes.size() == rex.decl.size()
+20051113-1.c_false-valid-memtrack
+
+---
+
+memsafety-ext (8):
+
+1 char
+dll_extends_pointer_true
+
+7 HeapLValues must be converted to RValue first.
+- all others -
+
+---
+
+ntdrivers (10):
+
+5 #pragma
+- all others -
+
+3 pointer function
+cdaudio_*, kbfiltr_*
+
+2 typedef/struct?
+parport_*
 
 ---
 
 ntdrivers-simplified (10):
 
-10 unknown
+10 function call before declaration
+- all -
+
+---
+
+product-lines (597):
+
+597 #pragma
 - all -
 
 ---
@@ -304,6 +366,13 @@ Fibonacci04_false
 
 4 value == null
 Ackermann02_false, Ackermann_false, Addition02_false, Addition_false
+
+---
+
+ssh (36):
+
+36 cvar == null (pointer as function parameter)
+- all -
 
 ---
 
@@ -325,37 +394,40 @@ systemc (64):
 --------------------------------------------
 error                                           example (* = TODO)
 
-#define function                                defineFunction
+#define -> type error                           *
 #ifndef                                         ---
-& undeclared                                    *
-& unsupported                                   *
-__SIZE_TYPE__                                   sizeType
+#pragma                                         *
+Address of something that is not on the heap    *
+array cast fail                                 *
 array initialization                            arrayInitialization
-arrow (->) implementation error                 *
-assert false                                    *
-auxiliary boogie variable                       *
 auxVarMap                                       *
 bit complement                                  bitComplement
+char                                            *
 char escape                                     charEscape
 const                                           const
 cvar == null (pointer as function parameter)    cvar
-IllegalArgumentException                        *
+double                                          *
+equals checks for the same object               *
+function call before declaration                ---
+function parameter (a pointer) not recognized   *
+HeapLValues must be converted to RValue first.  ---
 implementation                                  --- (error in example)
 implicit cast (float to int)                    implicitCast
-main() Type                                     mainNoType
-NULL                                            null
 NullPointerException                            *
 pointer array                                   arrayAsPointer
-pointer comparison with 0                       pointerCompare0
 pointer function                                ---
-pointer pointer (**)                            pointerPointer
-pointer type mismatch                           pointerTypeMismatch
+pointer struct I                                *
+pointer struct II                                *
 pointer void                                    pointerVoid
-quantifier unsupported                          ---
-sizeof pointer                                  sizeofPointer
-SMTLIBException (Parser)                        --- (something with __VERIFIER_nondet_int?; nondeterministic errors)
-struct initialization (expression == null)      structInitialization
-SVCOMP - Result                                 *
-undeclared identifier                           undeclaredIdentifier
+ResultExpression.switchToRValue() (char)        ---
+StringLiteral                                   *
+StrongestPostDeterminizer.
+        reviewInductiveInternal()
+                [nondeterministic]              *
+struct initialization with pointer to itself    *
+struct pointer as function parameter
+        not recognized                          *
+struct rex.declCTypes.size() == rex.decl.size() *
+typedef/struct?                                 *
 union                                           ---
 value == null                                   *
