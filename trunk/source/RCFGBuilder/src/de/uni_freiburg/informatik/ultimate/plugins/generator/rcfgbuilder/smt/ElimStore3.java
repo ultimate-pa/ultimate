@@ -26,8 +26,13 @@ import de.uni_freiburg.informatik.ultimate.util.UnionFind;
 
 /**
  * 
- * TODO 
- * @author matthias
+ * TODO:
+ * - elimination and output of remaining vars
+ * - nested store
+ * - storeTo and storeFrom (LBE)
+ * - index equality testing
+ * - documentation
+ * @author Matthias Heizmann
  *
  */
 public class ElimStore3 {
@@ -64,42 +69,38 @@ public class ElimStore3 {
 			others.add(conjunct);
 		}
 		Term othersT = Util.and(m_Script, others.toArray(new Term[0]));
-		Set<ApplicationTerm> selectTermsInData = 
-				(new ApplicationTermFinder("select")).findMatchingSubterms(m_Data);
-		if (m_WriteIndex == null) {
-			return selectElim(oldArr, conjuncts, m_Script);
-//			s_Logger.warn(new DebugMessage("not yet implemented case in "
-//					+ "array quantifier elimination. Formula {0}" , term));
-//			return null;
-		} 
+
+		boolean write = (m_WriteIndex != null);
+		
 		Script script = m_Script;;
 		IndicesAndValues iav = new IndicesAndValues(oldArr, conjuncts);
+
+		SafeSubstitution subst = new SafeSubstitution(script, iav.getMapping());
 		
-		ArrayList<Term> additionalConjuncsFromStore = new ArrayList<Term>();
-		for (int i=0; i<iav.getIndices().length; i++) {
-			Term newSelect = buildMultiDimensionalSelect(m_NewArray, iav.getIndices()[i]);
-			IndexValueConnection ivc = new IndexValueConnection(iav.getIndices()
-					[i], m_WriteIndex, iav.getValues()[i], newSelect, false);
-			Term conjunct = ivc.getTerm();
-			additionalConjuncsFromStore.add(conjunct);
-			if (ivc.indexInequality() && !ivc.indexEquality()) {
-				assert !ivc.indexInequality() : "term would be false!";
-				// case where we have valueEquality hat is not true
-				// do something useful...
-				// e.g., mark newSelect as occurring or mark auxVar as 
-				// equal to something
+		Term intermediateResult = subst.transform(othersT);
+		if (write) {
+			ArrayList<Term> additionalConjuncsFromStore = new ArrayList<Term>();
+			for (int i=0; i<iav.getIndices().length; i++) {
+				Term newSelect = buildMultiDimensionalSelect(m_NewArray, iav.getIndices()[i]);
+				IndexValueConnection ivc = new IndexValueConnection(iav.getIndices()
+						[i], m_WriteIndex, iav.getValues()[i], newSelect, false);
+				Term conjunct = ivc.getTerm();
+				additionalConjuncsFromStore.add(conjunct);
+				if (ivc.indexInequality() && !ivc.indexEquality()) {
+					assert !ivc.indexInequality() : "term would be false!";
+					// case where we have valueEquality hat is not true
+					// do something useful...
+					// e.g., mark newSelect as occurring or mark auxVar as 
+					// equal to something
+				}
 			}
+			Term newConjunctsFromStore = Util.and(script, additionalConjuncsFromStore.toArray(new Term[0]));
+			Term newData = subst.transform(m_Data);
+			Term newWriteIndex[] = substitutionElementwise(m_WriteIndex, subst);
+			Term writeSubstituent = m_Script.term("=", buildMultiDimensionalSelect(m_NewArray, newWriteIndex), newData); 
+			intermediateResult = Util.and(m_Script, intermediateResult, writeSubstituent, newConjunctsFromStore);
 		}
 		
-		SafeSubstitution subst = new SafeSubstitution(script, iav.getMapping());
-		Term newOthers = subst.transform(othersT);
-		Term newData = subst.transform(m_Data);
-		Term newWriteIndex[] = substitutionElementwise(m_WriteIndex, subst);
-		Term writeSubstituent = m_Script.term("=", buildMultiDimensionalSelect(m_NewArray, newWriteIndex), newData); 
-
-		Term newConjunctsFromStore = Util.and(script, additionalConjuncsFromStore.toArray(new Term[0]));
-		newConjunctsFromStore = subst.transform(newConjunctsFromStore);
-		Term intermediateResult = Util.and(m_Script, newOthers, writeSubstituent, newConjunctsFromStore);
 		
 		ArrayList<Term> additionalConjuncsFromSelect = new ArrayList<Term>();
 		{
@@ -109,8 +110,6 @@ public class ElimStore3 {
 				indices[i] = substitutionElementwise(iav.getIndices()[i], subst);
 				values[i] = subst.transform(iav.getValues()[i]);
 			}
-//			indices[iav.getIndices().length] = newWriteIndex;
-//			values[iav.getIndices().length] = newData;
 			
 			for (int i=0; i<indices.length; i++) {
 				Term newConjunct = 
@@ -124,19 +123,8 @@ public class ElimStore3 {
 		result = (new SimplifyDDA(script)).getSimplifiedTerm(result);
 		Set<TermVariable> remainingAuxVars = iav.getNewAuxVars();
 		
-		result = (new PartialQuantifierElimination()).quantifier(m_Script, quantifier, iav.getNewAuxVars().toArray(new TermVariable[0]), result);
+		result = PartialQuantifierElimination.quantifier(m_Script, quantifier, iav.getNewAuxVars().toArray(new TermVariable[0]), result);
 		return result;
-		
-//		if (!iav.getNewAuxVars().isEmpty()) {
-//			result = PartialQuantifierElimination.derSimple(m_Script, QuantifiedFormula.EXISTS, result, iav.getNewAuxVars());
-//			if (!iav.getNewAuxVars().isEmpty()) {
-//				result = PartialQuantifierElimination.updSimple(m_Script, QuantifiedFormula.EXISTS, result, iav.getNewAuxVars());
-//				if (!iav.getNewAuxVars().isEmpty()) {
-//					throw new UnsupportedOperationException("Unable to eliminate newly introduced variable");
-//				}
-//			}
-//		}
-//		return result;
 	}
 	
 	private static Term[] substitutionElementwise(Term[] subtituents, SafeSubstitution subst) {
