@@ -217,7 +217,9 @@ public class PartialQuantifierElimination {
 					it.remove();
 					result = elim;
 				} else {
-					result.toString();
+					elim = (new ElimStore3(script)).elim(tv, result);
+					throw new UnsupportedOperationException(
+							"unable to eliminate array");
 				}
 			}
 		}
@@ -522,7 +524,7 @@ public class PartialQuantifierElimination {
 			throw new AssertionError("unknown quantifier");
 		}
 		Term result;
-		EqualityInformation eqInfo = getEqinfo(script, tv, oldParams, quantifier);
+		EqualityInformation eqInfo = getEqinfo(script, tv, oldParams, null, quantifier);
 		if (eqInfo == null) {
 			s_Logger.debug(new DebugMessage("not eliminated quantifier via DER for {0}", tv));
 			result = null;
@@ -551,12 +553,13 @@ public class PartialQuantifierElimination {
 	
 	/**
 	 * Check all terms in context if they are an equality of the form
-	 * givenTerm == t
-	 * if this is the case return corresponding equality information,
-	 * otherwise return null
+	 * givenTerm == t, such that t does not contain the subterm forbiddenTerm.
+	 * If this is the case return corresponding equality information,
+	 * otherwise return null.
+	 * If forbiddenTerm is null all subterms in t are allowed.
 	 */
 	public static EqualityInformation getEqinfo(Script script, Term givenTerm,
-			Term[] context, int quantifier) {
+			Term[] context, Term forbiddenTerm, int quantifier) {
 		for (int i=0; i<context.length; i++) {
 			if (!(context[i] instanceof ApplicationTerm)) {
 				continue;
@@ -569,10 +572,8 @@ public class PartialQuantifierElimination {
 					if (appTerm.getParameters().length != 2) {
 						throw new UnsupportedOperationException();
 					}
-					//TODO test this here
 					lhs = appTerm.getParameters()[0];
 					rhs = appTerm.getParameters()[1];
-					
 				} else {
 					continue;
 				}
@@ -604,10 +605,14 @@ public class PartialQuantifierElimination {
 				throw new AssertionError("unknown quantifier");
 			}
 			if (lhs.equals(givenTerm) && !isSubterm(givenTerm, rhs)) {
-				return new EqualityInformation(i, givenTerm, rhs);
+				if (forbiddenTerm == null || !isSubterm(forbiddenTerm, rhs)) {
+					return new EqualityInformation(i, givenTerm, rhs);
+				}
 			}
 			if (rhs.equals(givenTerm) && !isSubterm(givenTerm, lhs)) {
-				return new EqualityInformation(i, givenTerm, lhs);
+				if (forbiddenTerm == null || !isSubterm(forbiddenTerm, lhs)) {
+					return new EqualityInformation(i, givenTerm, lhs);
+				}
 			}			
 			boolean allowRewrite = true;
 			if (allowRewrite) {
@@ -619,14 +624,19 @@ public class PartialQuantifierElimination {
 						continue;
 					}
 					if (affRel.isVariable(givenTerm)) {
-						ApplicationTerm eqTerm;
+						Term equalTerm;
 						try {
-							eqTerm = (ApplicationTerm) affRel.onLeftHandSideOnly(script, givenTerm);
+							ApplicationTerm equality = affRel.onLeftHandSideOnly(script, givenTerm);
+							equalTerm = equality.getParameters()[1];
 						} catch (NotAffineException e) {
 							// no representation where var is on lhs
 							continue;
 						}
-						return new EqualityInformation(i, givenTerm, eqTerm.getParameters()[1]);
+						if (isSubterm(forbiddenTerm, equalTerm)) {
+							continue;
+						} else {
+							return new EqualityInformation(i, givenTerm, equalTerm);
+						}
 					}
 				}
 			}

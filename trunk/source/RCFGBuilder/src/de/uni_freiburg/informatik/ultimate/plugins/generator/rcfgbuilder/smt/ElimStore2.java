@@ -88,7 +88,8 @@ public class ElimStore2 {
 			Map<Term, Term> substitutionMapping = new HashMap<Term, Term>();
 			for (ArrayRead ar : arrayReads.values()) {
 				Term select = ar.getSelectTerm();
-				EqualityInformation eqInfo = PartialQuantifierElimination.getEqinfo(m_Script, select, others.toArray(new Term[0]), QuantifiedFormula.EXISTS);
+				EqualityInformation eqInfo = PartialQuantifierElimination.getEqinfo(
+						m_Script, select, others.toArray(new Term[0]), null, QuantifiedFormula.EXISTS);
 				if (eqInfo == null) {
 					return null;
 				} else {
@@ -175,7 +176,7 @@ public class ElimStore2 {
 		
 		for (int i=0; i<all.length; i++) {
 			eqInfos[i] = PartialQuantifierElimination.getEqinfo(
-					script, all[i].getSelectTerm(), conjunction, QuantifiedFormula.EXISTS);
+					script, all[i].getSelectTerm(), conjunction, null, QuantifiedFormula.EXISTS);
 			if (eqInfos[i] == null) {
 				return null;
 			}
@@ -239,7 +240,8 @@ public class ElimStore2 {
 		for (Term[] equivalentIndexRep : equivalentIndices) {
 			for(Term[] writeIndexEqTerm : uf.getEquivalenceClassMembers(equivalentIndexRep)) {
 				Term select = arrayReads.get(writeIndexEqTerm).getSelectTerm();
-				EqualityInformation eqInfo = PartialQuantifierElimination.getEqinfo(m_Script, select, others.toArray(new Term[0]), QuantifiedFormula.EXISTS);
+				EqualityInformation eqInfo = PartialQuantifierElimination.getEqinfo(
+						m_Script, select, others.toArray(new Term[0]), null, QuantifiedFormula.EXISTS);
 				Term replacement;
 				if (eqInfo == null) {
 					TermVariable auxVar = writeIndexEqTerm[0].getTheory().createFreshTermVariable("arrayElim", select.getSort());

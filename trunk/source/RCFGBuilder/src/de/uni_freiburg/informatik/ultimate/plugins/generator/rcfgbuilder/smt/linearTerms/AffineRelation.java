@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map.Entry;
 
+import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
@@ -81,7 +82,7 @@ public class AffineRelation {
 		return result;
 	}
 	
-	public Term onLeftHandSideOnly(Script script, Term term) throws NotAffineException {
+	public ApplicationTerm onLeftHandSideOnly(Script script, Term term) throws NotAffineException {
 		assert m_AffineTerm.getVariable2Coefficient().containsKey(term);
 		Rational termsCoeff = m_AffineTerm.getVariable2Coefficient().get(term);
 		if (termsCoeff.equals(Rational.ZERO)) {
@@ -115,7 +116,8 @@ public class AffineRelation {
 		}
 		Term rhsTerm = UtilExperimental.sum(script, m_AffineTerm.getSort(), 
 				rhsSummands.toArray(new Term[0]));
-		Term result = script.term(m_FunctionSymbolName, term, rhsTerm);
+		ApplicationTerm result = (ApplicationTerm) script.term(
+										m_FunctionSymbolName, term, rhsTerm);
 		assert isEquivalent(script, m_OriginalTerm, result) == LBool.UNSAT;
 		return result;
 	}
