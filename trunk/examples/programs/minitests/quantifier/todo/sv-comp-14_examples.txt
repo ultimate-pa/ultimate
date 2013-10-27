@@ -145,8 +145,14 @@ test28_*
 6 auxVarMap
 test05_true, test06_false, test07_true, test08_false, test09_true, test10_true
 
+1 cast int pointer to uint
+test_malloc-2_true.cil
+
 2 cvar == null (pointer as function parameter)
 rule57_*
+
+1 dereferencing fails
+test19_true
 
 3 double
 test_union_cast.c_true.cil, test_union_cast-2_*
@@ -156,6 +162,9 @@ test18_true
 
 1 NullPointerException
 stateful_check_false
+
+2 pointer as offset
+alias_of_return.c_true.cil, alias_of_return_2.c_true.cil
 
 1 pointer function
 callfpointer*
@@ -176,9 +185,8 @@ test23_*
 2 type error: expected pointer, got INT
 nested_structure_ptr_true.cil, nested_structure_true.cil
 
-8 type mismatch (TODO)
-alias_of_return.c_true.cil, alias_of_return_2.c_true.cil,
-test_malloc-2_true.cil, test19_true, test21_*, test22_*
+4 __VERIFIER_nondet_pointer() has type int
+test21_*, test22_*
 
 7 union
 test_union.c_*, test_union_cast-1_*, test_union_cast.c_true_1.cil, test29_*
@@ -272,12 +280,18 @@ invert_*, string_*, vogal_*
 1 cvar == null (pointer as function parameter)
 s3_false
 
+2 integer literal implicit cast
+lu*
+
+2 pointer vs. array
+veris.c_sendmail__tTflag_arr_one_loop_true,
+verisec_sendmail__tTflag_arr_one_loop_true
+
 2 type cast exception
 veris.c_NetBSD-libc__loop_true, verisec_NetBSD-libc__loop_true
 
-6 type mismatch (TODO)
-trex01_*, lu*, veris.c_sendmail__tTflag_arr_one_loop_true,
-verisec_sendmail__tTflag_arr_one_loop_true
+2 type mismatch (TODO)
+trex01_*
 
 ---
 
@@ -402,10 +416,12 @@ array cast fail                                 *
 array initialization                            arrayInitialization
 auxVarMap                                       *
 bit complement                                  bitComplement
+cast int pointer to uint                        *
 char                                            *
 char escape                                     charEscape
 const                                           const
 cvar == null (pointer as function parameter)    cvar
+dereferencing fails                             *
 double                                          *
 equals checks for the same object               *
 function call before declaration                ---
@@ -413,12 +429,15 @@ function parameter (a pointer) not recognized   *
 HeapLValues must be converted to RValue first.  ---
 implementation                                  --- (error in example)
 implicit cast (float to int)                    implicitCast
+integer literal implicit cast                   *
 NullPointerException                            *
 pointer array                                   arrayAsPointer
+pointer as offset                               *
 pointer function                                ---
 pointer struct I                                *
-pointer struct II                                *
+pointer struct II                               *
 pointer void                                    pointerVoid
+pointer vs. array                               *
 ResultExpression.switchToRValue() (char)        ---
 StringLiteral                                   *
 StrongestPostDeterminizer.
@@ -431,3 +450,4 @@ struct rex.declCTypes.size() == rex.decl.size() *
 typedef/struct?                                 *
 union                                           ---
 value == null                                   *
+__VERIFIER_nondet_pointer() has type int        *
