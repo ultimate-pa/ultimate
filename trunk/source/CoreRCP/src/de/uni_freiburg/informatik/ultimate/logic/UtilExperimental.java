@@ -47,23 +47,45 @@ public class UtilExperimental {
 		}
 	}
 	
-	
+	/**
+	 * Returns the equality ("=" lhs rhs), or true resp. false if some simple
+	 * checks detect validity or unsatisfiablity of the equality.
+	 */
 	public static Term binaryEquality(Script script, Term lhs, Term rhs) {
 		if (lhs == rhs) {
 			return script.term("true");
-		} else if (isIntLiteral(rhs) && isIntLiteral(lhs)) {
+		} else if (twoConstantTermsWithDifferentValue(lhs, rhs)) {
 			return script.term("false");
 		} else {
 			return script.term("=", lhs, rhs);
 		}
 	}
 	
-	private static boolean isIntLiteral(Term term) {
-		if (term instanceof ConstantTerm) {
-			return term.getSort().getName().equals("Int"); 
-		} else {
+	
+	/**
+	 * Returns true iff. fst and snd are different literals of the same sort
+	 * and this sort is "Bool" or numeric ("Int" or "Real").
+	 * @exception Throws UnsupportedOperationException if both arguments do not
+	 * have the same Sort.
+	 */
+	private static boolean twoConstantTermsWithDifferentValue(Term fst, Term snd) {
+		if (!fst.getSort().equals(snd.getSort())) {
+			throw new UnsupportedOperationException("arguments sort different");
+		}
+		if (!(fst instanceof ConstantTerm)) {
 			return false;
 		}
+		if (!(snd instanceof ConstantTerm)) {
+			return false;
+		}
+		if (!fst.getSort().isNumericSort() && 
+				!fst.getSort().getName().equals("Bool")) {
+			return false;
+		}
+		ConstantTerm fstConst = (ConstantTerm) fst;
+		ConstantTerm sndConst = (ConstantTerm) snd;
+		return !fstConst.getValue().equals(sndConst.getValue());
+		
 	}
 			
 }

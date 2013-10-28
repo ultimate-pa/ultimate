@@ -11,6 +11,10 @@ import de.uni_freiburg.informatik.ultimate.model.AbstractAnnotations;
  */
 public class Check extends AbstractAnnotations {
 	
+	public static final String getIdentifier() {
+		return Check.class.getName();
+	}
+	
 	private static final long serialVersionUID = -3753413284642976683L;
 
 	public enum Spec {
