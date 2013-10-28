@@ -109,8 +109,6 @@ public class ElimStore3 {
 					}
 				} catch (ArrayUpdateException e) {
 					others.add(conjunct);
-					assert (new ApplicationTermFinder("store")).
-					findMatchingSubterms(conjunct).isEmpty() : "detected unsupported store";
 				}
 			}
 			if (writtenFrom != null) {
@@ -153,8 +151,8 @@ public class ElimStore3 {
 						[i], writeInto.getIndex(), iav.getValues()[i], newSelect, false);
 				Term conjunct = ivc.getTerm();
 				additionalConjuncsFromStore.add(conjunct);
-				if (ivc.indexInequality() && !ivc.indexEquality()) {
-					assert !ivc.indexInequality() : "term would be false!";
+				if (ivc.indexInequality() && !ivc.valueEquality()) {
+					assert !ivc.valueInequality() : "term would be false!";
 					// case where we have valueEquality hat is not true
 					// do something useful...
 					// e.g., mark newSelect as occurring or mark auxVar as 
@@ -418,7 +416,7 @@ public class ElimStore3 {
 				firstTerm = subst.transform(first[i]);
 				secondTerm = subst.transform(second[i]);
 			}
-			equivalent[i] = script.term("=", firstTerm, secondTerm);
+			equivalent[i] = UtilExperimental.binaryEquality(script, firstTerm, secondTerm); 
 		}
 		return equivalent;
 	}
@@ -442,11 +440,12 @@ public class ElimStore3 {
 	}
 	
 	/**
-	 * Represents Term of the form a = ("store", a', k, data)
+	 * Represents Term of the form a = ("store", a', k, data), where a and
+	 * a' are both TermVariables.
 	 */
 	private static class ArrayUpdate {
-		private final Term m_OldArray;
-		private final Term m_NewArray;
+		private final TermVariable m_OldArray;
+		private final TermVariable m_NewArray;
 		private final Term[] m_Index;
 		private final Term m_Data;
 		
@@ -485,46 +484,16 @@ public class ElimStore3 {
 			assert allegedStoreTerm.getFunction().getName().equals("store");
 			assert allegedStoreTerm.getParameters().length == 3;
 			assert m_NewArray.getSort() == allegedStoreTerm.getSort();
-			int dimension = getDimension(m_NewArray.getSort());
-			m_Index = new Term[dimension];
-			m_Index[0] = allegedStoreTerm.getParameters()[1];
-			if (dimension == 1) {
-				m_OldArray = isArrayWithSort(
-						allegedStoreTerm.getParameters()[0], m_NewArray.getSort());
-				if (m_OldArray == null) {
-					throw new ArrayUpdateException("oldArray no TermVariable");
-				}
-				m_Data = allegedStoreTerm.getParameters()[2];
-			} else {
-				if (dimension != 2) {
-					throw new UnsupportedOperationException("dimension > 2 not implemented yet");
-				}
-				Term innnerStore = allegedStoreTerm.getParameters()[2];
-				if (!(innnerStore instanceof ApplicationTerm)) {
-					throw new ArrayUpdateException("no ApplicationTerm");
-				}
-				ApplicationTerm innerStoreApp = (ApplicationTerm) innnerStore;
-				if (!allegedStoreTerm.getFunction().getName().equals("store")) {
-					throw new ArrayUpdateException("no store term");
-				}
-				assert innerStoreApp.getParameters().length == 3;
-				Term select = innerStoreApp.getParameters()[0];
-				ApplicationTerm selectApp = (ApplicationTerm) select;
-				if (!selectApp.getFunction().getName().equals("select")) {
-					throw new ArrayUpdateException("no select term");
-				}
-				assert selectApp.getParameters().length == 2;
-				m_OldArray = isArrayWithSort(
-						selectApp.getParameters()[0], m_NewArray.getSort());
-				if (m_OldArray == null) {
-					throw new ArrayUpdateException("oldArray no TermVariable");
-				}
-				if (!selectApp.getParameters()[1].equals(m_Index[0])) {
-					throw new ArrayUpdateException("different index");
-				}
-				m_Index[1] = innerStoreApp.getParameters()[1];
-				m_Data = innerStoreApp.getParameters()[2];
+			
+			ArrayStoreDef asd;
+			try {
+				asd = new ArrayStoreDef(allegedStoreTerm);
+			} catch (ArrayReadException e) {
+				throw new ArrayUpdateException(e.getMessage());
 			}
+			m_OldArray = isArrayWithSort(asd.getArray(), m_NewArray.getSort());
+			m_Index = asd.getIndex();
+			m_Data = asd.getData();
 		}
 		
 		/**
@@ -557,13 +526,18 @@ public class ElimStore3 {
 		 * If term is a term variable of Sort sort, return term as TermVariable,
 		 * return null otherwise.
 		 */
-		Term isArrayWithSort(Term term, Sort sort) {
-			if (term.getSort().equals(sort)) {
-				return term;
+		TermVariable isArrayWithSort(Term term, Sort sort) {
+			if (term instanceof TermVariable) {
+				if (term.getSort().equals(sort)) {
+					return (TermVariable) term;
+				} else {
+					return null;
+				}
 			} else {
 				return null;
 			}
-		} 
+		}
+		
 		public Term getOldArray() {
 			return m_OldArray;
 		}
