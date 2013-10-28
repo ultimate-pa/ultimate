@@ -1,4 +1,4 @@
-bitvector (35):
+[10098] bitvector (35):
 
 1 working
 byte_add_false
@@ -23,10 +23,10 @@ jain_1_safe, jain_2_safe
 
 ---
 
-bitvector-regression (13):
+[10098] bitvector-regression (13):
 
 6 wrong result
-implicitunsignedconversion_*, signextension_*, signextension2_*
+implicitunsignedconversion_*, signextension*
 
 4 ResultExpression.switchToRValue() (char)
 pointer_*
@@ -56,31 +56,23 @@ Problem01_*, Problem02_*, Problem03_*, Problem10_*, Problem11_*, Problem15_*
 
 ---
 
-heap-manipulation (18):
+[10098] heap-manipulation (18):
 
-2 #define -> type error
-tree_*
+4 #define -> error
+bubble_sort_linux_false, bubble_sort_linux_true, tree_*
 
 2 #ifndef
 sll_to_dll_rev_false, sll_to_dll_rev_true
 
-1 cvar == null (pointer as function parameter)
-dll_of_dll_false.cil
-
 2 HeapLValues must be converted to RValue first.
 dll_of_dll_false, dll_of_dll_true
 
-1 pointer function
+4 pointer function
+bubble_sort_linux_false.cil, bubble_sort_linux_true.cil, dll_of_dll_false.cil,
 dll_of_dll_true.cil
 
 2 pointer void
 sll_to_dll_rev_false.cil, sll_to_dll_rev_true.cil
-
-2 LIST_HEAD
-bubble_sort_linux_false, bubble_sort_linux_true
-
-2 struct initialization with pointer to itself
-bubble_sort_linux_false.cil, bubble_sort_linux_true.cil
 
 4 struct pointer as function parameter not recognized
 merge_*
@@ -205,7 +197,7 @@ test_union.c_*, test_union_cast-1_*, test_union_cast.c_true_1.cil, test29_*
 
 ---
 
-list-ext-properties (20):
+[10098] list-ext-properties (20):
 
 1 working
 list_false
@@ -219,6 +211,9 @@ list_flag_*, list_true
 2 empty enum identifier
 test-0214_true, test-0217_true
 
+4 getWriteCall type
+simple_*, test-0019_*
+
 2 HeapLValues must be converted to RValue first.
 test_0232_*
 
@@ -228,21 +223,18 @@ test-0504_true, test-0513_true
 3 pointer void
 test-0158_*
 
-4 struct constructor type
-simple_*, test-0019_*
-
 ---
 
-list-properties (17):
+[10098] list-properties (17):
 
 9 unknown
 - all others -
 
-6 pointer function
-*.cil
+2 getWriteCall type
+simple_false, simple_true
 
-2 struct constructor type
-simple_*
+6 pointer void
+*.cil
 
 ---
 
@@ -342,7 +334,7 @@ test-0237_*
 
 ---
 
-memsafety-ext (8):
+[10098] memsafety-ext (8):
 
 1 char
 dll_extends_pointer_true
@@ -352,7 +344,7 @@ dll_extends_pointer_true
 
 ---
 
-ntdrivers (10):
+[10098] ntdrivers (10):
 
 5 #pragma
 - all others -
@@ -365,9 +357,9 @@ parport_*
 
 ---
 
-ntdrivers-simplified (10):
+[10098] ntdrivers-simplified (10):
 
-10 function call before declaration
+10 pointer void
 - all -
 
 ---
@@ -420,26 +412,27 @@ systemc (64):
 --------------------------------------------
 error                                           count   example (* = TODO)
 
-pointer function                                1474    ---
+pointer function                                1469    ---
 #pragma                                         602     *
-function call before declaration                101     ---
-cvar == null (pointer as function parameter)    40      cvar
-pointer void                                    22      pointerVoid
+function call before declaration                91      ---
+cvar == null (pointer as function parameter)    39      cvar
+pointer void                                    40      pointerVoid
 array cast fail                                 15      *
+HeapLValues must be converted to RValue first.  15      *
 auxVarMap                                       10      *
-HeapLValues must be converted to RValue first.  15      ---
+LiveVariables NPE                               12      *
 bit complement                                  7       bitComplement
 union                                           7       ---
 char escape                                     6       charEscape
+#define -> error                                4       *
 #ifndef                                         4       ---
-ResultExpression.switchToRValue() (char)        4       ---
+getWriteCall type                               4       *
+ResultExpression.switchToRValue() (char)        4       *
 struct pointer as function parameter
         not recognized                          4       *
 value == null                                   4       *
 __VERIFIER_nondet_pointer() has type int        4       *
 double                                          3       *
-
-#define -> type error                           2       *
 Address of something that is not on the heap    2       *
 equals checks for the same object               2       *
 integer literal implicit cast                   2       *
@@ -450,7 +443,6 @@ pointer vs. array                               2       *
 StrongestPostDeterminizer.
         reviewInductiveInternal()
                 [nondeterministic]              2       *
-struct initialization with pointer to itself    2       *
 struct rex.declCTypes.size() == rex.decl.size() 2       *
 typedef/struct?                                 2       *
 array initialization                            1       arrayInitialization
@@ -460,6 +452,7 @@ dereferencing fails                             1       *
 function parameter (a pointer) not recognized   1       *
 implementation                                  1       --- (error in example)
 implicit cast (float to int)                    1       implicitCast
+m_RcfgProgramExecution != null                  1       *
 NullPointerException                            1       *
 pointer struct I                                1       *
 StringLiteral                                   1       *
