@@ -78,6 +78,8 @@ public class LiveVariables {
 			} else if (m_TraceWithConstants.getTrace().isReturnPosition(i)) {
 				assert m_ConstantsForEachPosition[i+1] == null : "constants for position " +(i+1)+ " already fetched!";
 				constants.addAll(m_TraceWithConstants.getFormulaFromNonCallPos(i).values());
+				int call_pos = m_TraceWithConstants.getTrace().getCallPosition(i);
+				constants.addAll(m_TraceWithConstants.getLocalVarAssignment(call_pos).values());
 			} else {
 				assert m_ConstantsForEachPosition[i+1] == null : "constants for position " +(i+1)+ " already fetched!";
 				constants.addAll(m_TraceWithConstants.getFormulaFromNonCallPos(i).values());
