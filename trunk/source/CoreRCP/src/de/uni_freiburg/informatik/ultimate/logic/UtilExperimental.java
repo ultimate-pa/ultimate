@@ -51,8 +51,19 @@ public class UtilExperimental {
 	public static Term binaryEquality(Script script, Term lhs, Term rhs) {
 		if (lhs == rhs) {
 			return script.term("true");
+		} else if (isIntLiteral(rhs) && isIntLiteral(lhs)) {
+			return script.term("false");
 		} else {
 			return script.term("=", lhs, rhs);
 		}
 	}
+	
+	private static boolean isIntLiteral(Term term) {
+		if (term instanceof ConstantTerm) {
+			return term.getSort().getName().equals("Int"); 
+		} else {
+			return false;
+		}
+	}
+			
 }
