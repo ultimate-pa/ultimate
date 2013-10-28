@@ -1,13 +1,22 @@
 bitvector (35):
 
-4 wrong result
-modulus_true, num_*, parity_*
+1 working
+byte_add_false
 
-24 unknown
-- all others -
+6 wrong result
+byte_add_1*, byte_add_1*, modulus_*, num_*, parity_*
+
+8 unknown
+gcd_2_*, gcd_3_*, gcd_4_*, interleave_*, jain_4_*, jain_5_*, jain_6_*, jain_7_*
 
 5 bit complement
 soft_*
+
+12 LiveVariables NPE
+s3_*
+
+1 m_RcfgProgramExecution != null
+gcd_1_*
 
 2 StrongestPostDeterminizer.reviewInductiveInternal() [nondeterministic]
 jain_1_safe, jain_2_safe
@@ -55,11 +64,14 @@ tree_*
 2 #ifndef
 sll_to_dll_rev_false, sll_to_dll_rev_true
 
+1 cvar == null (pointer as function parameter)
+dll_of_dll_false.cil
+
 2 HeapLValues must be converted to RValue first.
 dll_of_dll_false, dll_of_dll_true
 
-2 pointer function
-dll_of_dll_false.cil, dll_of_dll_true.cil
+1 pointer function
+dll_of_dll_true.cil
 
 2 pointer void
 sll_to_dll_rev_false.cil, sll_to_dll_rev_true.cil
@@ -406,48 +418,48 @@ systemc (64):
 - all -
 
 --------------------------------------------
-error                                           example (* = TODO)
+error                                           count   example (* = TODO)
 
-#define -> type error                           *
-#ifndef                                         ---
-#pragma                                         *
-Address of something that is not on the heap    *
-array cast fail                                 *
-array initialization                            arrayInitialization
-auxVarMap                                       *
-bit complement                                  bitComplement
-cast int pointer to uint                        *
-char                                            *
-char escape                                     charEscape
-const                                           const
-cvar == null (pointer as function parameter)    cvar
-dereferencing fails                             *
-double                                          *
-equals checks for the same object               *
-function call before declaration                ---
-function parameter (a pointer) not recognized   *
-HeapLValues must be converted to RValue first.  ---
-implementation                                  --- (error in example)
-implicit cast (float to int)                    implicitCast
-integer literal implicit cast                   *
-NullPointerException                            *
-pointer array                                   arrayAsPointer
-pointer as offset                               *
-pointer function                                ---
-pointer struct I                                *
-pointer struct II                               *
-pointer void                                    pointerVoid
-pointer vs. array                               *
-ResultExpression.switchToRValue() (char)        ---
-StringLiteral                                   *
+pointer function                                1474    ---
+#pragma                                         602     *
+function call before declaration                101     ---
+cvar == null (pointer as function parameter)    40      cvar
+pointer void                                    22      pointerVoid
+array cast fail                                 15      *
+auxVarMap                                       10      *
+HeapLValues must be converted to RValue first.  15      ---
+bit complement                                  7       bitComplement
+union                                           7       ---
+char escape                                     6       charEscape
+#ifndef                                         4       ---
+ResultExpression.switchToRValue() (char)        4       ---
+struct pointer as function parameter
+        not recognized                          4       *
+value == null                                   4       *
+__VERIFIER_nondet_pointer() has type int        4       *
+double                                          3       *
+
+#define -> type error                           2       *
+Address of something that is not on the heap    2       *
+equals checks for the same object               2       *
+integer literal implicit cast                   2       *
+LIST_HEAD                                       2       *
+pointer as offset                               2       *
+pointer struct II                               2       *
+pointer vs. array                               2       *
 StrongestPostDeterminizer.
         reviewInductiveInternal()
-                [nondeterministic]              *
-struct initialization with pointer to itself    *
-struct pointer as function parameter
-        not recognized                          *
-struct rex.declCTypes.size() == rex.decl.size() *
-typedef/struct?                                 *
-union                                           ---
-value == null                                   *
-__VERIFIER_nondet_pointer() has type int        *
+                [nondeterministic]              2       *
+struct initialization with pointer to itself    2       *
+struct rex.declCTypes.size() == rex.decl.size() 2       *
+typedef/struct?                                 2       *
+array initialization                            1       arrayInitialization
+cast int pointer to uint                        1       *
+char                                            1       *
+dereferencing fails                             1       *
+function parameter (a pointer) not recognized   1       *
+implementation                                  1       --- (error in example)
+implicit cast (float to int)                    1       implicitCast
+NullPointerException                            1       *
+pointer struct I                                1       *
+StringLiteral                                   1       *
