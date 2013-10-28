@@ -500,7 +500,13 @@ public class ArrayHandler {
 			ArrayList<Statement> arrayWrites = initArray(memoryHandler, sizeConstantsAsInt, sizeConstants, init.list, 0,
 					arrayId.getValue(), sizeOfCell, loc);
 			stmt.addAll(arrayWrites);
-
+			
+			for (String t : new String[] { SFO.INT, SFO.POINTER,
+					SFO.REAL, SFO.BOOL }) {
+				functionHandler.getModifiedGlobals()
+				.get(functionHandler.getCurrentProcedureID())
+				.add(SFO.MEMORY + "_" + t);
+			}
 		}
 		return new ResultExpression(stmt, arrayId, decl, auxVars);
 	}
@@ -567,8 +573,8 @@ public class ArrayHandler {
 								loc);	
 				newStartAddressOffsetInner = 
 						CHandler.createArithmeticExpression(IASTBinaryExpression.op_plus,
-						blockOffset,
 						newStartAddressOffsetInner,
+						blockOffset,
 						loc);	
 					
 				arrayWrites.addAll(

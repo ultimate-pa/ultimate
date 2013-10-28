@@ -779,7 +779,7 @@ public class CHandler implements ICHandler {
 				}
 				assert staticVarStorage.stmt.isEmpty();
 			}
-			result.stmt.addAll(Dispatcher.createHavocsForAuxVars(auxVars));
+			result.stmt.addAll(Dispatcher.createHavocsForAuxVars(result.auxVars));
 			return result;
 		}
 		String msg = "Unknown result type: " + r.getClass();
