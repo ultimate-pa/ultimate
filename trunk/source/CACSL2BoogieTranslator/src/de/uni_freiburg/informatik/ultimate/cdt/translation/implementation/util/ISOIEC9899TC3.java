@@ -57,15 +57,68 @@ public final class ISOIEC9899TC3 {
      * @return the parsed value
      */
     public static final String handleCharConstant(String val, ILocation loc) {
-        String value = val;
+        int value;
         if (val.startsWith("L")) {
             // ignore wide character prefix
-            value = val.substring(1, val.length());
+            val = val.substring(1, val.length());
             Dispatcher.unsoundnessWarning(loc,
                     "Char-Sequence wide character suffix L dropped",
                     IGNORED_SUFFIX);
         }
-        return value;
+		if (!val.startsWith("'") || !val.endsWith("'")) {
+			throw new UnsupportedOperationException();
+		}
+			
+        if (val.charAt(1) == '\\') {
+        	switch (val.charAt(2)) {
+        	case '\'': 
+        	case '\"': 
+        	case '?': 
+        	case '\\': 
+        		value = (int) val.charAt(2);
+        		break;
+        	case 'a':
+        		value = 7;
+        		break;
+        	case 'b': 
+        		value = 8;
+        		break;
+        	case 'f':
+        		value = 12;
+        		break;
+        	case 'n':
+        		value = 10;
+        		break;
+        	case 'r': 
+        		value = 13;
+        		break;
+        	case 't':
+        		value = 9;
+        		break;
+        	case 'v': 
+        		value = 11;
+        		break;
+        	case '0': 
+        	case '1': 
+        	case '2': 
+        	case '3':
+        	case '4': 
+        	case '5': 
+        	case '6': 
+        	case '7':
+        		value = Integer.valueOf(val.substring(2, val.length()-1), 8);
+        		break;
+        	case 'x':
+        		value = Integer.valueOf(val.substring(3, val.length()-1), 16);
+        		break;
+        	default:
+        		throw new UnsupportedOperationException();
+        	}
+        } else if (val.length() == 3)
+        	value = (int) val.charAt(1);
+        else 
+    		throw new UnsupportedOperationException();
+        return String.valueOf(value);
     }
 
     /**

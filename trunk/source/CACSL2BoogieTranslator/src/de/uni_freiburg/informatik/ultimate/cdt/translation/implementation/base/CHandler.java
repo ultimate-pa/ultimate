@@ -974,10 +974,6 @@ public class CHandler implements ICHandler {
 		case IASTLiteralExpression.lk_char_constant:
 			val = new String(node.getValue());
 			val = ISOIEC9899TC3.handleCharConstant(val, loc);
-			assert val.length() == 3;
-			assert val.startsWith("'");
-			assert val.endsWith("'");
-			val = SFO.EMPTY + (int) val.charAt(1);
 			return new ResultExpression(new RValue(new IntegerLiteral(loc,
 					new InferredType(InferredType.Type.Integer), val),
 					new CPrimitive(PRIMITIVE.CHAR)));
