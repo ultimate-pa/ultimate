@@ -89,6 +89,10 @@ public abstract class CType {
         assert cDeclSpec.getParent() instanceof IASTDeclaration;
         return (IASTDeclaration) cDeclSpec.getParent();
     }
+    
+    public IASTDeclSpecifier getDeclSpec() {
+    	return cDeclSpec;
+    }
 
     /**
      * Returns the location of the C variable declaration.

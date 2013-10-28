@@ -949,9 +949,13 @@ public class MemoryHandler {
     }
     
     String getHeapTypeStringOfCType(CType ct) {
+    	CType ut = ct;
+    	if (ut instanceof CNamed)
+    		ut = ((CNamed) ut).getUnderlyingType();
+    	
     	String result = null;
-    	if (ct instanceof CPrimitive) {
-			CPrimitive cp = (CPrimitive) ct;
+    	if (ut instanceof CPrimitive) {
+			CPrimitive cp = (CPrimitive) ut;
 			switch (cp.getType()) {
 			case INT:
 				result = SFO.INT;
@@ -961,15 +965,18 @@ public class MemoryHandler {
 			default:
 				throw new UnsupportedSyntaxException("..");
 			}
-		} else if (ct instanceof CPointer) {
+		} else if (ut instanceof CPointer) {
 			result = SFO.POINTER;
-		} else if (ct instanceof CArray) {
+		} else if (ut instanceof CArray) {
+			if (((CArray) ut).getDimensions().length == 0)
+				return getHeapTypeStringOfCType(((CArray) ut).getValueType());
+			else
+				throw new UnsupportedSyntaxException(".."); //not yet treated (as in switchToRValue..)
+		} else if (ut instanceof CEnum) {
 				throw new UnsupportedSyntaxException("..");
-		} else if (ct instanceof CEnum) {
+		} else if (ut instanceof CStruct) {
 				throw new UnsupportedSyntaxException("..");
-		} else if (ct instanceof CStruct) {
-				throw new UnsupportedSyntaxException("..");
-		} else if (ct instanceof CNamed) {
+		} else if (ut instanceof CNamed) {
 			assert false : "This should not be the case as we took the underlying type.";
 		} else {
 			throw new UnsupportedSyntaxException("..");

@@ -126,16 +126,30 @@ public class PreRunner extends ASTVisitor {
             }
         }
         if (expression instanceof IASTIdExpression) {
-            String n = expression.getRawSignature();
-            IASTDeclaration d = sT.get(n); // don't check contains here!
+            String identifier = ((IASTIdExpression) expression).getName().toString();
+            IASTDeclaration d = sT.get(identifier); // don't check contains here!
             if (d instanceof IASTSimpleDeclaration) {
-                if (((IASTSimpleDeclaration) d).getDeclarators()[0] instanceof IASTArrayDeclarator) {
-                    if (!(expression.getParent() instanceof IASTArraySubscriptExpression)) {
-                        // if idex is an array and there is no array sub expr!
-                        this.variablesOnHeap.add(d);
-                        this.isMMRequired = true;
-                    }
-                }
+            	IASTSimpleDeclaration sd = (IASTSimpleDeclaration) d;
+            	for (IASTDeclarator dec : sd.getDeclarators()) {
+            		if (dec instanceof IASTArrayDeclarator) {
+            			String decName = dec.getName().toString();
+            			if (decName.equals(identifier)) {
+            				if (!(expression.getParent() instanceof IASTArraySubscriptExpression)) {
+            					// if idex is an array and there is no array sub expr!
+            					//this.variablesOnHeap.add(d); //FIXME: if we want arrays that are not on the heap uncoment/rewrite this
+//            					this.isMMRequired = true;
+            					//                    }
+            				}
+            			}
+            		}
+            		//                if (.getDeclarators()[0] instanceof IASTArrayDeclarator) {
+            		//                    if (!(expression.getParent() instanceof IASTArraySubscriptExpression)) {
+            		//                        // if idex is an array and there is no array sub expr!
+            		//                        this.variablesOnHeap.add(d);
+            		//                        this.isMMRequired = true;
+            		//                    }
+            		//                }
+            	}
             }
         }
         if (expression instanceof IASTFieldReference) {
@@ -168,6 +182,8 @@ public class PreRunner extends ASTVisitor {
                 if (d.getPointerOperators() != null
                 		&& d.getPointerOperators().length != 0) 
                 	isMMRequired = true;
+                if (d instanceof IASTArrayDeclarator)
+                	isMMRequired = true;//FIXME: right all arrays are on the heap -- change this in case of a change of mind
             }
 
         }

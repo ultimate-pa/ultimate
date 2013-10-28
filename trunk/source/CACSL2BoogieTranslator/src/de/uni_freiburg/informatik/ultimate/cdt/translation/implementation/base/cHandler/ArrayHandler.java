@@ -10,9 +10,13 @@ import java.util.Stack;
 import org.eclipse.cdt.core.dom.ast.IASTArrayDeclarator;
 import org.eclipse.cdt.core.dom.ast.IASTArrayModifier;
 import org.eclipse.cdt.core.dom.ast.IASTArraySubscriptExpression;
+import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
+import org.eclipse.cdt.core.dom.ast.IASTDeclSpecifier;
 import org.eclipse.cdt.core.dom.ast.IASTDeclarator;
 import org.eclipse.cdt.core.dom.ast.IASTExpression;
 import org.eclipse.cdt.core.dom.ast.IASTSimpleDeclaration;
+import org.eclipse.cdt.internal.core.dom.parser.c.CASTLiteralExpression;
+import org.eclipse.cdt.internal.core.dom.parser.c.CArrayType;
 
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CACSLLocation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CHandler;
@@ -24,7 +28,10 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.IncorrectSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.HeapLValue;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LRValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LocalLValue;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.Result;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ResultExpression;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ResultExpressionListRec;
@@ -33,6 +40,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.BoogieASTUtil;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
+import de.uni_freiburg.informatik.ultimate.model.ILocation;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayAccessExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayLHS;
@@ -47,6 +55,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.LeftHandSide;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.PrimitiveType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StructAccessExpression;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StructConstructor;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StructLHS;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StructType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VarList;
@@ -410,4 +419,179 @@ public class ArrayHandler {
         }
         return new ResultExpression(stmt, new LocalLValue(lhs, cType.getValueType()), decl, auxVars);
     }
+
+	public ResultExpression handleArrayDeclarationOnHeap(Dispatcher main,
+			MemoryHandler memoryHandler, StructHandler structHandler,
+			FunctionHandler functionHandler, HashMap<Declaration, CType> globalVariables,
+			HashMap<Declaration, ArrayList<Statement>> globalVariablesInits,
+			IASTArrayDeclarator d, IASTDeclSpecifier iastDeclSpecifier, ResultTypes resType, CACSLLocation loc) {
+		
+		ArrayList<Statement> stmt = new ArrayList<Statement>();
+		ArrayList<Declaration> decl = new ArrayList<Declaration>();
+		HashMap<VariableDeclaration, CACSLLocation> auxVars =
+				new HashMap<VariableDeclaration, CACSLLocation>();
+		LRValue arrayPointer = null;
+		
+		Expression sizeOfCell = memoryHandler.getSizeOf(main, iastDeclSpecifier);
+		
+		ArrayList<Expression> sizeConstants = new ArrayList<Expression>();
+		ArrayList<Integer> sizeConstantsAsInt = new ArrayList<Integer>();
+//		ArrayList<ASTType> astIndexTypes = new ArrayList<ASTType>();
+		Expression overallSize = new IntegerLiteral(loc, new InferredType(Type.Integer), "1");
+		Integer overallSizeAsInt = 1;
+		for (IASTArrayModifier am : d.getArrayModifiers()) {
+			ResultExpression constEx = (ResultExpression) main.
+					dispatch(am.getConstantExpression());
+//			constEx = constEx.switchToRValue(main, //just to be safe..
+//					memoryHandler, structHandler, loc);
+			assert constEx.lrVal instanceof RValue : "we only allow arrays of constant size";
+			sizeConstants.add(constEx.lrVal.getValue());
+			if (constEx.lrVal.getValue() instanceof IntegerLiteral) {
+				Integer constAsInt =  Integer.parseInt(((IntegerLiteral) constEx.lrVal.getValue()).getValue());
+				sizeConstantsAsInt.add(constAsInt);
+				overallSizeAsInt = overallSizeAsInt * constAsInt;
+			} else {
+				overallSizeAsInt = 0;
+				assert false : "expecting only int constants for array size";
+			}
+			
+			overallSize = CHandler.createArithmeticExpression(IASTBinaryExpression.op_multiply, 
+					overallSize, constEx.lrVal.getValue(), loc);//
+		}
+		
+		ResultExpression mallocCall = null;
+		Expression mallocSize = null;
+		if (overallSizeAsInt != 0) {
+			mallocSize = CHandler.createArithmeticExpression(IASTBinaryExpression.op_multiply, 
+					new IntegerLiteral(loc, new InferredType(Type.Integer), overallSizeAsInt.toString()),
+					sizeOfCell,
+					loc);
+		} else {
+			mallocSize = CHandler.createArithmeticExpression(IASTBinaryExpression.op_multiply, 
+					overallSize,
+					sizeOfCell,
+					loc);
+		}
+		mallocCall = memoryHandler.getMallocCall(main, functionHandler, 
+					mallocSize, loc);	
+		
+		stmt.addAll(mallocCall.stmt);
+		decl.addAll(mallocCall.decl);
+		auxVars.putAll(mallocCall.auxVars);
+		arrayPointer = mallocCall.lrVal;
+		arrayPointer.cType = new CArray(iastDeclSpecifier, 
+				sizeConstants.toArray(new Expression[0]), resType.cvar);
+		
+		//handle initialization
+		if (d.getInitializer() != null) {			
+			if (overallSizeAsInt == 0)
+				assert false : "not yet implemented";
+			
+			ResultExpressionListRec init = (ResultExpressionListRec) main.dispatch(d.getInitializer());
+			ArrayList<Statement> arrayWrites = initArray(memoryHandler, sizeConstantsAsInt, init.list, 0,
+					arrayPointer.getValue(), sizeOfCell);
+			stmt.addAll(arrayWrites);
+
+		}
+		return new ResultExpression(stmt, arrayPointer, decl, auxVars);
+	}
+	
+//	FIXME: a little inconsistent: here, we assume non-variable sizeConstants while not doing so at arraySubscriptExs
+	private ArrayList<Statement> initArray(
+			MemoryHandler memoryHandler, ArrayList<Integer> sizeConstantsAsInt,
+			ArrayList<ResultExpressionListRec> list, int depth, Expression startAddress, Expression sizeOfCell) {
+		ArrayList<Statement> arrayWrites = new ArrayList<Statement>();
+		Integer currentSize = sizeConstantsAsInt.get(depth);
+		if (depth == sizeConstantsAsInt.size() - 1) {
+			RValue val = null;
+			
+			for (int i = 0; i < currentSize; i++) {
+				if (list.size() > i)
+					val = (RValue) list.get(i).lrVal; //if not enough values are given, fill the rest with the last
+				
+				
+				Expression writeLocation = CHandler.createArithmeticExpression(IASTBinaryExpression.op_multiply, 
+						new IntegerLiteral(null, new InferredType(Type.Integer), new Integer(i).toString()), 
+						sizeOfCell,
+						null);	
+				
+				arrayWrites.addAll(memoryHandler.getWriteCall(new HeapLValue(writeLocation, null), val));
+			}
+			
+		} else {
+			for (int i = 0; i < currentSize; i++) { 
+				arrayWrites.addAll(
+						initArray(memoryHandler, sizeConstantsAsInt, list.get(i).list, depth + 1,
+						startAddress, sizeOfCell)); 
+			}
+		}
+		return arrayWrites;
+	}
+
+	public Result handleArrayOnHeapSubscriptionExpression(Dispatcher main,
+			MemoryHandler memoryHandler, StructHandler structHandler,
+			IASTArraySubscriptExpression node) {
+		ILocation loc = new CACSLLocation(node);
+		ResultExpression subScript = (ResultExpression) main.dispatch(node.getArgument());
+		ResultExpression array = (ResultExpression) main.dispatch(node.getArrayExpression());
+		
+		CArray arrayCType = null;
+			
+		if (node.getArrayExpression() instanceof IASTArraySubscriptExpression) {
+			arrayCType = (CArray) array.lrVal.cType;
+		} else { // we have reached the innermost subscript
+			arrayCType = (CArray) main.cHandler.getSymbolTable().get(
+					main.cHandler.getSymbolTable().getCID4BoogieID(
+							((IdentifierExpression) array.lrVal.getValue()).getIdentifier(), null), null).getCVariable();
+		}
+		
+		ArrayList<Expression> newDimensions = new ArrayList<Expression>(Arrays.asList(arrayCType.getDimensions()));
+			newDimensions.remove(0);//FIXME: first or last??
+			CArray outerArrayCType = new CArray(
+					arrayCType.getDeclSpec(), newDimensions.toArray(new Expression[0]), arrayCType.getValueType());
+			
+			Expression offset = subScript.lrVal.getValue();
+			offset = computeSubscriptMultiplier(main, memoryHandler, loc,
+					arrayCType, offset);	
+			
+			Expression arrayBase = null;
+			Expression arrayOffset = null;
+			if (node.getArrayExpression() instanceof IASTArraySubscriptExpression) {
+				HeapLValue arrayHlv = (HeapLValue) array.lrVal;
+				StructConstructor ptr = (StructConstructor) arrayHlv.getAddress();
+				arrayBase = ptr.getFieldValues()[0];
+				arrayOffset = ptr.getFieldValues()[1];
+			} else{
+				Expression arrayAddress = array.lrVal.getValue();
+				arrayBase = MemoryHandler.getPointerBaseAddress(arrayAddress, loc);
+				arrayOffset = MemoryHandler.getPointerOffset(arrayAddress, loc);
+			}
+			
+			
+			offset = CHandler.createArithmeticExpression(IASTBinaryExpression.op_plus,
+					arrayOffset,
+					offset, 
+					loc);	
+			
+			Expression newPointer = MemoryHandler
+					.constructPointerFromBaseAndOffset(arrayBase, offset, loc);
+			
+			return new ResultExpression(new HeapLValue(newPointer, outerArrayCType));
+	}
+
+	private Expression computeSubscriptMultiplier(Dispatcher main,
+			MemoryHandler memoryHandler, ILocation loc, CArray arrayCType,
+			Expression offset) {
+		for (int i = 1; i < arrayCType.getDimensions().length; i++) {
+			offset = CHandler.createArithmeticExpression(IASTBinaryExpression.op_multiply,
+					offset, 
+					arrayCType.getDimensions()[i], 
+					loc);
+		}
+		offset = CHandler.createArithmeticExpression(IASTBinaryExpression.op_multiply,
+				offset, 
+				memoryHandler.getSizeOf(main, arrayCType.getDeclSpec()), 
+				loc);
+		return offset;
+	}
 }

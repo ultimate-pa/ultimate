@@ -599,59 +599,65 @@ public class CHandler implements ICHandler {
 			 */
 			for (IASTDeclarator d : node.getDeclarators()) {
 				++index;
+				assert resType.getType() != null;
+				
+				//true iff the declared variable will be addressoffed in the program (alex)
+				boolean putOnHeap = ((MainDispatcher) main).getVariablesForHeap().contains(node);
+				String cId = d.getName().toString();
+				String bId = main.nameHandler.getUniqueIdentifier(node, cId,
+						symbolTable.getCompoundCounter(), putOnHeap);
+				if (putOnHeap)
+					boogieIdsOfHeapVars.add(bId);//store it independent from the symbol table
+
+				
+				
 				// TODO Christian: to be modified/tested
-				// function case
 				if (d instanceof IASTFunctionDeclarator) {
 					Result rFunc = functionHandler.handleFunctionDeclaration(main,
 							contract, node, index);
 					assert (rFunc instanceof ResultSkip);
-					// do nothing here
-				}
-				// array case
-				else if (d instanceof IASTArrayDeclarator) {
-					Result rArray = arrayHandler.handleArrayDeclaration(main,
-							memoryHandler, structHandler, node, globalVariables,
-							globalVariablesInits, index);
-					if (rArray instanceof ResultExpression) {
-						result.decl.addAll(((ResultExpression)rArray).decl);
+				} else if (d instanceof IASTArrayDeclarator) {
+//					Result rArray = arrayHandler.handleArrayDeclaration(main,
+//							memoryHandler, structHandler, node, globalVariables,
+//							globalVariablesInits, index);
+					ResultExpression rArray = arrayHandler.handleArrayDeclarationOnHeap(main,
+							memoryHandler, structHandler, functionHandler, globalVariables,
+							globalVariablesInits, (IASTArrayDeclarator) d, node.getDeclSpecifier(), resType, loc);
+					result.stmt.addAll(rArray.stmt);
+					result.decl.addAll(rArray.decl);
+					result.auxVars.putAll(rArray.auxVars);
+					result.lrVal = rArray.lrVal;
+					
+					CType arrayType = result.lrVal.cType;
+					
+					ASTType type = resType.getType();
+					VarList var = new VarList(loc, new String[] { bId }, type);
+					Attribute[] attr = new Attribute[0];
+					if (resType.isConst) {
+						String msg = "Const declaration dropped!";
+						Dispatcher.warn(loc, msg,//SyntaxErrorType.UnsupportedSyntax,
+								msg);
 					}
-					else {
-						assert (rArray instanceof ResultSkip);
-						// do nothing here
-					}
-				}
-				// standard variable case
-				else {
-					//true iff the declared variable will be addressoffed in the program (alex)
-					boolean putOnHeap = ((MainDispatcher) main).getVariablesForHeap().contains(node);
-
-					String cId = d.getName().getRawSignature();
-					// Get the type of this variable
-					assert resType.getType() != null;
-					String bId = main.nameHandler.getUniqueIdentifier(node, cId,
-							symbolTable.getCompoundCounter(), putOnHeap);
-
-					if (putOnHeap)
-						boogieIdsOfHeapVars.add(bId);//store it independent from the symbol table
-
+					VariableDeclaration decl = new VariableDeclaration(loc, attr,
+							new VarList[] { var });
+					symbolTable.put(cId, new SymbolTableValue(bId, decl, isGlobal,
+							arrayType));
+					
+				} else {// standard variable case
+					ResultTypes checkedType = null;
 					//changes the type into pointer -- in case of an actual pointer decl or a heapVar
-					ResultTypes checkedType = checkForPointer(main,
+					checkedType = checkForPointer(main,
 							d.getPointerOperators(), resType, putOnHeap);
-					CType cvar = checkedType.cvar;
-					//					if (isHeapVar(bId)) { //already done in checkforPointer
-					//						cvar = new CPointer(cvar);
-					////						checkedType = new ResultTypes(null, checkedType.isConst, checkedType.isVoid, cvar);
-					//					}
 
+					CType cvar = checkedType.cvar;
 					if (main.typeHandler.isStructDeclaration()) {
-						//							if (resultCType instanceof CStruct) { //better??
 						/*
 						 * store C variable information into this result, as
 						 * this is a struct field! We need this information to
 						 * build the structs C variable information recursively.
 						 */
 						assert resType.cvar != null;
-						result.declCTypes.add(checkedType.cvar);
+						result.declCTypes.add(cvar);
 					}
 
 					ASTType type = checkedType.getType();
@@ -671,7 +677,6 @@ public class CHandler implements ICHandler {
 					} else {
 						result.decl.add(decl);
 					}
-
 					CType resultCType = null;
 					if (cvar != null) {
 						resultCType = isHeapVar(bId) ? ((CPointer)cvar).pointsToType : cvar;
@@ -1292,15 +1297,13 @@ public class CHandler implements ICHandler {
 		ResultExpression rr = r.switchToRValue(main, memoryHandler, structHandler, loc);
 
 		// for implicit casts of Integers to Pointers
-		RValue rlRValAsPointer = new RValue(new StructConstructor(loc, new InferredType(Type.Pointer), 
-				new String[]{"base", "offset"}, new Expression[]{
+		RValue rlRValAsPointer = new RValue(MemoryHandler.constructPointerFromBaseAndOffset(
 			new IntegerLiteral(loc, new InferredType(Type.Integer), "0"), 
-			rl.lrVal.getValue()}), null);
+			rl.lrVal.getValue(), loc), null);
 
-		RValue rrRValAsPointer = new RValue(new StructConstructor(loc, new InferredType(Type.Pointer), 
-				new String[]{"base", "offset"}, new Expression[]{
+		RValue rrRValAsPointer = new RValue(MemoryHandler.constructPointerFromBaseAndOffset(
 			new IntegerLiteral(loc, new InferredType(Type.Integer), "0"), 
-			rr.lrVal.getValue()}), null);
+			rr.lrVal.getValue(), loc), null);
 
 		CType lType = l.lrVal.cType;
 		if (lType instanceof CNamed)
@@ -2509,8 +2512,10 @@ public class CHandler implements ICHandler {
 
 	@Override
 	public Result visit(Dispatcher main, IASTArraySubscriptExpression node) {
+//		return arrayHandler
+//				.handleArraySubscriptionExpression(main, memoryHandler, structHandler, node);
 		return arrayHandler
-				.handleArraySubscriptionExpression(main, memoryHandler, structHandler, node);
+				.handleArrayOnHeapSubscriptionExpression(main, memoryHandler, structHandler, node);
 	}
 
 	@Override

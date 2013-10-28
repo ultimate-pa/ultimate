@@ -180,6 +180,18 @@ public class ResultExpression extends Result {
 						newAuxVars.putAll(rex.auxVars);	
 						newValue = (RValue) rex.lrVal;
 					} else if (underlyingType instanceof CArray) {
+						CArray caType = (CArray) underlyingType;
+						if (caType.getDimensions().length == 0) {
+							heapReadType = new InferredType(caType.getValueType());
+							rex = memoryHandler.getReadCall(
+									main, heapReadType, hlv.getAddress(), new CPointer(this.lrVal.cType));
+							newStmt.addAll(rex.stmt);
+							newDecl.addAll(rex.decl);
+							newAuxVars.putAll(rex.auxVars);	
+							newValue = (RValue) rex.lrVal;
+						} else //referring not to a "smallest" entry in the array -- is that allowed?
+							throw new UnsupportedSyntaxException(".."); 
+							
 					} else if (underlyingType instanceof CEnum) {
 					} else if (underlyingType instanceof CStruct) {
 						CStruct structType = (CStruct) underlyingType;
