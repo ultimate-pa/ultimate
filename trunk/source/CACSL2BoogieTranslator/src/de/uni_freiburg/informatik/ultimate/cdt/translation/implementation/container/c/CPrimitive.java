@@ -222,4 +222,18 @@ public class CPrimitive extends CType {
     public String toString() {
         return type.toString();
     }
+    
+    @Override
+    public boolean equals(Object o) {
+        if (!(o instanceof CType)) {
+            return false;
+        }
+        CType oType = super.getUnderlyingType((CType)o);
+        if (oType instanceof CPrimitive) {
+            return type == ((CPrimitive)oType).type;
+        }
+        else {
+            return false;
+        }
+    }
 }

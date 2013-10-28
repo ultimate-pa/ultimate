@@ -64,4 +64,12 @@ public class CNamed extends CType {
     public String toString() {
         return getName();
     }
+    
+    @Override
+    public boolean equals(Object o) {
+        if (!(o instanceof CType)) {
+            return false;
+        }
+        return getUnderlyingType().equals(o);
+    }
 }

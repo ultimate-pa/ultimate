@@ -100,4 +100,37 @@ public class CEnum extends CType {
         id.append("#");
         return id.toString();
     }
+    
+    @Override
+    public boolean equals(Object o) {
+        if (!(o instanceof CType)) {
+            return false;
+        }
+        CType oType = super.getUnderlyingType((CType)o);
+        if (!(oType instanceof CEnum)) {
+            return false;
+        }
+        
+        CEnum oEnum = (CEnum)oType;
+        if (!(identifier.equals(oEnum.identifier))) {
+            return false;
+        }
+        if (fNames.length != oEnum.fNames.length) {
+            return false;
+        }
+        for (int i = fNames.length - 1; i >= 0; ++i) {
+            if (!(fNames[i].equals(oEnum.fNames[i]))) {
+                return false;
+            }
+        }
+        if (fValues.length != oEnum.fValues.length) {
+            return false;
+        }
+        for (int i = fValues.length - 1; i >= 0; ++i) {
+            if (!(fValues[i].equals(oEnum.fValues[i]))) {
+                return false;
+            }
+        }
+        return true;
+    }
 }

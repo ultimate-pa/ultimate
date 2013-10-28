@@ -30,4 +30,18 @@ public class CPointer extends CType {
     public String toString() {
         return SFO.POINTER;
     }
+    
+    @Override
+    public boolean equals(Object o) {
+        if (!(o instanceof CType)) {
+            return false;
+        }
+        CType oType = super.getUnderlyingType((CType)o);
+        if (oType instanceof CPointer) {
+            return pointsToType.equals(((CPointer)oType).pointsToType);
+        }
+        else {
+            return false;
+        }
+    }
 }

@@ -122,4 +122,29 @@ public class CArray extends CType {
         id.append("#");
         return id.toString();
     }
+    
+    @Override
+    public boolean equals(Object o) {
+        if (!(o instanceof CType)) {
+            return false;
+        }
+        CType oType = super.getUnderlyingType((CType)o);
+        if (!(oType instanceof CArray)) {
+            return false;
+        }
+        
+        CArray oArr = (CArray)oType;
+        if (!(valueType.equals(oArr.valueType))) {
+            return false;
+        }
+        if (dimensions.length != oArr.dimensions.length) {
+            return false;
+        }
+        for (int i = dimensions.length - 1; i >= 0; ++i) {
+            if (!(dimensions[i].equals(oArr.dimensions[i]))) {
+                return false;
+            }
+        }
+        return true;
+    }
 }

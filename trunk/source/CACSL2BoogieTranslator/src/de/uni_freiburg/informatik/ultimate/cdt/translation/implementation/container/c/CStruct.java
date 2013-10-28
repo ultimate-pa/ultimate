@@ -93,4 +93,34 @@ public class CStruct extends CType {
         id.append("#");
         return id.toString();
     }
+    
+    @Override
+    public boolean equals(Object o) {
+        if (!(o instanceof CType)) {
+            return false;
+        }
+        CType oType = super.getUnderlyingType((CType)o);
+        if (!(oType instanceof CStruct)) {
+            return false;
+        }
+        
+        CStruct oStruct = (CStruct)oType;
+        if (fNames.length != oStruct.fNames.length) {
+            return false;
+        }
+        for (int i = fNames.length - 1; i >= 0; ++i) {
+            if (!(fNames[i].equals(oStruct.fNames[i]))) {
+                return false;
+            }
+        }
+        if (fTypes.length != oStruct.fTypes.length) {
+            return false;
+        }
+        for (int i = fTypes.length - 1; i >= 0; ++i) {
+            if (!(fTypes[i].equals(oStruct.fTypes[i]))) {
+                return false;
+            }
+        }
+        return true;
+    }
 }
