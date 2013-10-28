@@ -1,6 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -45,48 +46,96 @@ public class ElimStore3 {
 	private final int quantifier = QuantifiedFormula.EXISTS;
 	private final Script m_Script;
 	
-	public Term elim(TermVariable oldArr, Term term, final Set<TermVariable> newAuxVars) {
-		assert oldArr.getSort().isArraySort();
-		Term[] conjuncts = PartialQuantifierElimination.getConjuncts(term);
-		
-		ArrayUpdate writeInto = null;
-		ArrayUpdate writtenFrom = null;
-		HashSet<Term> others = new HashSet<Term>();
-		
-		for (Term conjunct : conjuncts) {
+	
+	private ArrayStoreDef getArrayStore(Term array, Term term) {
+		Set<ApplicationTerm> storeTerms = 
+				(new ApplicationTermFinder("store")).findMatchingSubterms(term);
+		ArrayStoreDef result = null;
+		for (Term storeTerm : storeTerms) {
+			ArrayStoreDef asd;
 			try {
-				ArrayUpdate au = new ArrayUpdate(conjunct);
-				if (au.getOldArray().equals(oldArr)) {
-					if (writeInto != null) {
-						throw new UnsupportedOperationException(
-								"unsupported: write into several arrays");
-					}
-					writeInto = au;
-					if (au.getNewArray().equals(oldArr)) {
-						throw new UnsupportedOperationException(
-								"unsupported: self update");
-					}
-				} else if (au.getNewArray().equals(oldArr)) {
-					if (writtenFrom != null) {
-						throw new UnsupportedOperationException(
-								"unsupported: written from several arrayas");
-					}
-					writtenFrom = au;
-					others.add(conjunct);
+				asd = new ArrayStoreDef(storeTerm);
+			} catch (ArrayReadException e) {
+				throw new UnsupportedOperationException("unexpected store term");
+			}
+			if (asd.getArray().equals(array)) {
+				if (result != null) {
+					throw new UnsupportedOperationException("unsupported: several stores");
 				} else {
-					others.add(conjunct);
+					result = asd;
 				}
-			} catch (ArrayUpdateException e) {
-				others.add(conjunct);
-				assert (new ApplicationTermFinder("store")).
-					findMatchingSubterms(conjunct).isEmpty() : "detected unsupported store";
 			}
 		}
-		if (writtenFrom != null) {
-			throw new UnsupportedOperationException("not yet implemented: written from");
-		}
+		return result;
+	}
+	
+	public Term elim(TermVariable oldArr, Term term, final Set<TermVariable> newAuxVars) {
+		ArrayUpdate writeInto = null;
+		ArrayUpdate writtenFrom = null;
+		Term[] conjuncts;
+		Term othersT;
 		
-		Term othersT = Util.and(m_Script, others.toArray(new Term[0]));
+		while (true) {
+			assert oldArr.getSort().isArraySort();
+			conjuncts = PartialQuantifierElimination.getConjuncts(term);
+
+			ArrayStoreDef store = getArrayStore(oldArr, term);
+
+
+			HashSet<Term> others = new HashSet<Term>();
+
+			for (Term conjunct : conjuncts) {
+				try {
+					ArrayUpdate au = new ArrayUpdate(conjunct);
+					if (au.getOldArray().equals(oldArr)) {
+						if (writeInto != null) {
+							throw new UnsupportedOperationException(
+									"unsupported: write into several arrays");
+						}
+						writeInto = au;
+						if (au.getNewArray().equals(oldArr)) {
+							throw new UnsupportedOperationException(
+									"unsupported: self update");
+						}
+					} else if (au.getNewArray().equals(oldArr)) {
+						if (writtenFrom != null) {
+							throw new UnsupportedOperationException(
+									"unsupported: written from several arrayas");
+						}
+						writtenFrom = au;
+						others.add(conjunct);
+					} else {
+						others.add(conjunct);
+					}
+				} catch (ArrayUpdateException e) {
+					others.add(conjunct);
+					assert (new ApplicationTermFinder("store")).
+					findMatchingSubterms(conjunct).isEmpty() : "detected unsupported store";
+				}
+			}
+			if (writtenFrom != null) {
+				throw new UnsupportedOperationException("not yet implemented: written from");
+			}
+
+			othersT = Util.and(m_Script, others.toArray(new Term[0]));
+
+			if (store != null && writeInto == null) {
+				TermVariable auxArray = oldArr.getTheory().createFreshTermVariable("arrayElim", oldArr.getSort());
+				Map<Term,Term> auxMap = Collections.singletonMap((Term)store.getStoreTerm(), (Term)auxArray);
+				SafeSubstitution subst = new SafeSubstitution(m_Script, auxMap);
+				Term auxTerm = subst.transform(term);
+				Term auxVarDef = m_Script.term("=", auxArray, store.getStoreTerm());
+				auxTerm = Util.and(m_Script, auxTerm, auxVarDef);
+				Set<TermVariable> auxAuxVars = new HashSet<TermVariable>();
+				Term auxRes = elim(oldArr, auxTerm, newAuxVars);
+				
+				term = auxRes;
+				oldArr = auxArray;
+				newAuxVars.addAll(auxAuxVars);
+			} else {
+				break;
+			}
+		}
 
 		boolean write = (writeInto != null);
 		
@@ -396,8 +445,8 @@ public class ElimStore3 {
 	 * Represents Term of the form a = ("store", a', k, data)
 	 */
 	private static class ArrayUpdate {
-		private final TermVariable m_OldArray;
-		private final TermVariable m_NewArray;
+		private final Term m_OldArray;
+		private final Term m_NewArray;
 		private final Term[] m_Index;
 		private final Term m_Data;
 		
@@ -508,17 +557,13 @@ public class ElimStore3 {
 		 * If term is a term variable of Sort sort, return term as TermVariable,
 		 * return null otherwise.
 		 */
-		TermVariable isArrayWithSort(Term term, Sort sort) {
-			if (term instanceof TermVariable) {
-				if (term.getSort().equals(sort)) {
-					return (TermVariable) term;
-				} else {
-					return null;
-				}
+		Term isArrayWithSort(Term term, Sort sort) {
+			if (term.getSort().equals(sort)) {
+				return term;
 			} else {
 				return null;
 			}
-		}
+		} 
 		public Term getOldArray() {
 			return m_OldArray;
 		}
@@ -561,18 +606,20 @@ public class ElimStore3 {
 	 *
 	 */
 	private static class ArrayRead {
-		private final TermVariable m_Array;
+		private final Term m_Array;
 		private final Term[] m_Index;
 		private final ApplicationTerm m_SelectTerm;
 		
-		public ArrayRead(Term term, TermVariable tv) throws ArrayReadException {
+		public ArrayRead(Term term, Term array) throws ArrayReadException {
 			if (!(term instanceof ApplicationTerm)) {
 				throw new ArrayReadException(false, "no ApplicationTerm");
 			}
 			m_SelectTerm = (ApplicationTerm) term;
-			int dimension = getDimension(tv.getSort());
-			m_Index = new Term[dimension];			
-			for (int i = dimension-1; i>=0; i--) {
+			int dimensionArray = getDimension(array.getSort());
+			int dimensionResult = getDimension(m_SelectTerm.getSort());
+			int numberOfIndices = dimensionArray - dimensionResult;
+			m_Index = new Term[numberOfIndices];			
+			for (int i = numberOfIndices-1; i>=0; i--) {
 				if (!(term instanceof ApplicationTerm)) {
 					throw new ArrayReadException(false, "no ApplicationTerm");
 				}
@@ -584,14 +631,14 @@ public class ElimStore3 {
 				m_Index[i] = appTerm.getParameters()[1];
 				term = appTerm.getParameters()[0];
 			}
-			if (!tv.equals(term)) {
+			if (!array.equals(term)) {
 				throw new ArrayReadException(true, "different array");
 			} else  {
-				m_Array = tv;
+				m_Array = array;
 			}
 		}
 
-		public TermVariable getArray() {
+		public Term getArray() {
 			return m_Array;
 		}
 
@@ -607,8 +654,6 @@ public class ElimStore3 {
 		public String toString() {
 			return m_SelectTerm.toString();
 		}
-		
-		
 	}
 	
 	
@@ -625,6 +670,88 @@ public class ElimStore3 {
 		
 		public boolean reasonIsDifferentArray() {
 			return m_DifferentArray;
+		}
+	}
+	
+	
+	/**
+	 * Given a (possibly nested) array a, this is a data structure for terms of
+	 * the form  (select (select a i1) i2)  
+	 *
+	 */
+	private static class ArrayStoreDef {
+		private Term m_Array;
+		private final Term[] m_Index;
+		private final Term m_Data;
+		private final ApplicationTerm m_StoreTerm;
+		
+		public ArrayStoreDef(Term term) throws ArrayReadException {
+			if (!term.getSort().isArraySort()) {
+				throw new ArrayReadException(false, "no Array");
+			}
+			if (!(term instanceof ApplicationTerm)) {
+				throw new ArrayReadException(false, "no ApplicationTerm");
+			}
+			m_StoreTerm = (ApplicationTerm) term;
+			int dimension = getDimension(term.getSort());
+			m_Index = new Term[dimension];			
+			for (int i=0; i<dimension; i++) {
+				if (!(term instanceof ApplicationTerm)) {
+					throw new ArrayReadException(false, "no ApplicationTerm");
+				}
+				ApplicationTerm appTerm = (ApplicationTerm) term;
+				if (!appTerm.getFunction().getName().equals("store")) {
+					throw new ArrayReadException(false, "no store");
+				}
+				assert appTerm.getParameters().length == 3;
+				if (i == 0) {
+					m_Array = appTerm.getParameters()[0];
+					assert m_Array.getSort() == m_StoreTerm.getSort();
+				} else {
+					assert checkSelect(i, appTerm.getParameters()[0]);
+				}
+				m_Index[i] = appTerm.getParameters()[1];
+				term = appTerm.getParameters()[2];
+			}
+			m_Data = term;
+		}
+		
+		private boolean checkSelect(int i, Term select) {
+			boolean result = true;
+			ArrayRead ar;
+			try {
+				ar = new ArrayRead(select, m_Array);
+			} catch (ArrayReadException e) {
+				return false;
+			}
+			result &= ar.getArray().equals(m_Array);
+			for (int j=0; j<i; j++) {
+				result &= ar.getIndex()[j] == m_Index[j];
+			}
+			return result;
+		}
+		
+		
+		
+		public Term getArray() {
+			return m_Array;
+		}
+
+		public Term[] getIndex() {
+			return m_Index;
+		}
+
+		public Term getData() {
+			return m_Data;
+		}
+
+		public ApplicationTerm getStoreTerm() {
+			return m_StoreTerm;
+		}
+
+		@Override
+		public String toString() {
+			return m_StoreTerm.toString();
 		}
 	}
 	
