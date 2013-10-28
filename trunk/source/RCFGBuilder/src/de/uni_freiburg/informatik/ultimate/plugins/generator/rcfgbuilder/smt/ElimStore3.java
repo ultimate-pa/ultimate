@@ -492,6 +492,9 @@ public class ElimStore3 {
 				throw new ArrayUpdateException(e.getMessage());
 			}
 			m_OldArray = isArrayWithSort(asd.getArray(), m_NewArray.getSort());
+			if (m_OldArray == null) {
+				throw new ArrayUpdateException("no term variable");
+			}
 			m_Index = asd.getIndex();
 			m_Data = asd.getData();
 		}
