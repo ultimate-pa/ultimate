@@ -129,6 +129,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Label;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.LeftHandSide;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.LoopInvariantSpecification;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.NamedType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.PrimitiveType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.RealLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Specification;
@@ -622,7 +623,8 @@ public class CHandler implements ICHandler {
 //							globalVariablesInits, index);
 					ResultExpression rArray = arrayHandler.handleArrayDeclarationOnHeap(main,
 							memoryHandler, structHandler, functionHandler, globalVariables,
-							globalVariablesInits, (IASTArrayDeclarator) d, node.getDeclSpecifier(), resType, loc);
+							globalVariablesInits, (IASTArrayDeclarator) d, node.getDeclSpecifier(), resType,
+							bId, loc);
 					result.stmt.addAll(rArray.stmt);
 					result.decl.addAll(rArray.decl);
 					result.auxVars.putAll(rArray.auxVars);
@@ -630,7 +632,9 @@ public class CHandler implements ICHandler {
 					
 					CType arrayType = result.lrVal.cType;
 					
-					ASTType type = resType.getType();
+//					ASTType type = new PrimitiveType(loc, new InferredType(Type.Pointer), SFO.POINTER);
+					ASTType type = new NamedType(loc, new InferredType(Type.Pointer), SFO.POINTER, new ASTType[0]);
+//					ASTType type = resType.getType();
 					VarList var = new VarList(loc, new String[] { bId }, type);
 					Attribute[] attr = new Attribute[0];
 					if (resType.isConst) {
@@ -642,7 +646,11 @@ public class CHandler implements ICHandler {
 							new VarList[] { var });
 					symbolTable.put(cId, new SymbolTableValue(bId, decl, isGlobal,
 							arrayType));
-					
+					if (arrayType.isStatic() && !isGlobal) {
+						staticVarStorage.decl.add(decl);
+					} else {
+						result.decl.add(decl);
+					}
 				} else {// standard variable case
 					ResultTypes checkedType = null;
 					//changes the type into pointer -- in case of an actual pointer decl or a heapVar
