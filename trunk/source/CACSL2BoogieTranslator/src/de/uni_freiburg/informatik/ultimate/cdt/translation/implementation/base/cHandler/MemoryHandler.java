@@ -239,7 +239,17 @@ public class MemoryHandler {
                 realType };
         assert tName.length == ts.length;
         for (int i = 0; i < tName.length; i++) {
-            declareSizeOf(l, tName[i]);
+        	//The name of the sizeof constants is determined by the name of the
+        	//Ctype. Names of primitive CTypes are written in uppercase.
+        	//Names of our boogie types are written in lowercase.
+        	//Our convention is to use uppercase.
+        	String CtypeCompatibleId;
+        	if (tName[i].equals(SFO.POINTER)) {
+        		CtypeCompatibleId = SFO.POINTER;
+        	} else {
+        		CtypeCompatibleId = tName[i].toUpperCase();
+        	}
+            declareSizeOf(l, CtypeCompatibleId);
             // var #memory_tName[i] : [$Pointer$]ts[i];
             ASTType memoryType = new ArrayType(l, new String[0],
                     new ASTType[] { POINTER_TYPE }, ts[i]);
@@ -295,7 +305,7 @@ public class MemoryHandler {
             			new BinaryExpression(l, Operator.COMPLEQ,
             					new BinaryExpression(l, Operator.ARITHPLUS,
             							new IdentifierExpression(l, SFO.SIZEOF
-            									+ tName[i]), ptrOff), length));
+            							+ CtypeCompatibleId), ptrOff), length));
             }
             for (int j = 0; j < modified.length; j++) {
                 // ensures #memory_int == old(#valid)[~addr!base := false];
@@ -379,7 +389,7 @@ public class MemoryHandler {
             			Operator.COMPLEQ, new BinaryExpression(l,
             					Operator.ARITHPLUS,
             					new IdentifierExpression(l, SFO.SIZEOF
-            							+ tName[i]), ptrOff), length));
+            							+ CtypeCompatibleId), ptrOff), length));
             } else {
             	sread = new Specification[1];
             }
