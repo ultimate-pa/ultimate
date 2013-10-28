@@ -40,7 +40,7 @@ int main() {
 	int ptrSize = sizeof(int*);
 	//@ assert ptrSize > 0;
 	//@ assert nodeSize >= intSize + ptrSize;
-	// @assert nodeSize > ptrSize;
+	//@ assert nodeSize > ptrSize;
 	
 	int listSize = sizeof(List);
 	//@ assert ptrSize == ptrSize;
