@@ -2,8 +2,8 @@ package de.uni_freiburg.informatik.ultimate.gui.advisors;
 
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.ICore;
 import de.uni_freiburg.informatik.ultimate.gui.GuiController;
+import de.uni_freiburg.informatik.ultimate.gui.TrayIconNotifier;
 import de.uni_freiburg.informatik.ultimate.gui.interfaces.IImageKeys;
-import de.uni_freiburg.informatik.ultimate.plugins.ResultNotifier;
 
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.swt.SWT;
@@ -28,21 +28,31 @@ import org.eclipse.ui.plugin.AbstractUIPlugin;
 /**
  * 
  * @author ortolf
- *
+ * 
  */
 public class ApplicationWorkbenchWindowAdvisor extends WorkbenchWindowAdvisor {
 
-	private final ICore icc;
+	private final ICore mCore;
+	private TrayItem mTrayItem;
+	private Image mTrayImage;
+	private TrayIconNotifier mTrayIconNotifier;
 
 	public ApplicationWorkbenchWindowAdvisor(
-			IWorkbenchWindowConfigurer configurer, ICore icc) {
+			IWorkbenchWindowConfigurer configurer, ICore icc,
+			TrayIconNotifier notifier) {
 		super(configurer);
-		this.icc = icc;
+		mCore = icc;
+		mTrayIconNotifier = notifier;
+
+	}
+
+	public TrayItem getTrayItem() {
+		return mTrayItem;
 	}
 
 	public ActionBarAdvisor createActionBarAdvisor(
 			IActionBarConfigurer configurer) {
-		return new ApplicationActionBarAdvisor(configurer, icc);
+		return new ApplicationActionBarAdvisor(configurer, mCore);
 	}
 
 	public void preWindowOpen() {
@@ -59,26 +69,31 @@ public class ApplicationWorkbenchWindowAdvisor extends WorkbenchWindowAdvisor {
 
 	public void postWindowOpen() {
 		super.postWindowOpen();
-		/* greetz to Mr. Ortolf: Tray items are sh*** ;-) */
 		final IWorkbenchWindow window = getWindowConfigurer().getWindow();
-		trayItem = initTaskItem(window);
-		if (trayItem != null) {
+		if (initTaskItem(window)) {
 			hookMinimized(window);
 		}
 	}
 
-	private TrayItem trayItem;
+	public void dispose() {
+		if (mTrayImage != null) {
+			mTrayImage.dispose();
 
-	private Image trayImage;
+		}
+		if (mTrayItem != null) {
+			mTrayItem.dispose();
+		}
+	}
 
 	private void hookMinimized(final IWorkbenchWindow window) {
 		window.getShell().addShellListener(new ShellAdapter() {
 			public void shellIconified(ShellEvent e) {
-				if( !ResultNotifier.isResultDisplayActive() )
+				if (!mTrayIconNotifier.isResultDisplayActive()) {
 					window.getShell().setVisible(false);
+				}
 			}
 		});
-		trayItem.addListener(SWT.DefaultSelection, new Listener() {
+		mTrayItem.addListener(SWT.DefaultSelection, new Listener() {
 			public void handleEvent(Event e) {
 				Shell shell = window.getShell();
 				if (!shell.isVisible()) {
@@ -94,56 +109,43 @@ public class ApplicationWorkbenchWindowAdvisor extends WorkbenchWindowAdvisor {
 		});
 	}
 
-	private TrayItem initTaskItem(IWorkbenchWindow window) {
+	/**
+	 * Returns true if the tray icon was initialized successfully, false
+	 * otherwise
+	 * 
+	 * @param window
+	 * @return
+	 */
+	private boolean initTaskItem(IWorkbenchWindow window) {
 		final Tray tray = window.getShell().getDisplay().getSystemTray();
-		if (tray == null)
-			return null;
-		TrayItem trayItem = new TrayItem(tray, SWT.NONE);
+		if (tray == null) {
+			return false;
+		}
+		mTrayItem = new TrayItem(tray, SWT.NONE);
 		ImageDescriptor id = AbstractUIPlugin.imageDescriptorFromPlugin(
-				GuiController.s_PLUGIN_ID, IImageKeys.TRAYICON);
-		trayImage = id.createImage();
-		trayItem.setImage(trayImage);
-		trayItem.setToolTipText("Ultimate Model Checker");
-		ResultNotifier.setTrayItem(trayItem);
-		final Menu menu = new Menu (window.getShell(), SWT.POP_UP);
-		final MenuItem exit = new MenuItem(menu,SWT.PUSH);
+				GuiController.sPLUGINID, IImageKeys.TRAYICON);
+		mTrayImage = id.createImage();
+		mTrayItem.setImage(mTrayImage);
+		mTrayItem.setToolTipText("Ultimate Model Checker");
+
+		final Menu menu = new Menu(window.getShell(), SWT.POP_UP);
+		final MenuItem exit = new MenuItem(menu, SWT.PUSH);
 		exit.setText("Exit Ultimate");
 		exit.addListener(SWT.Selection, new Listener() {
 			public void handleEvent(Event event) {
 				exit.dispose();
 				menu.dispose();
-				getWindowConfigurer().getWorkbenchConfigurer().getWorkbench().close();
+				getWindowConfigurer().getWorkbenchConfigurer().getWorkbench()
+						.close();
 			}
 		});
-		trayItem.addListener (SWT.MenuDetect, new Listener () {
-			public void handleEvent (Event event) {
-				menu.setVisible (true);
+		mTrayItem.addListener(SWT.MenuDetect, new Listener() {
+			public void handleEvent(Event event) {
+				menu.setVisible(true);
 			}
 		});
 
-		return trayItem;
-	}
-
-	/*
-	 * private void hookPopupMenu(final IWorkbenchWindow window ){
-	 * trayItem.addListener(SWT.MenuDetect, new Listener(){ public void
-	 * handleEvent(Event event){ MenuManager trayMenu= new MenuManager(); Menu
-	 * menu= trayMenu.createContextMenu(window.getShell());
-	 * 
-	 * actionBarAdvisor. } });
-	 *  }
-	 */
-
-	public void postWindowClose() {
-		super.postWindowClose();
-
-	}
-
-	public void dispose() {
-		if (trayImage != null) {
-			trayImage.dispose();
-			trayItem.dispose();
-		}
+		return true;
 	}
 
 }

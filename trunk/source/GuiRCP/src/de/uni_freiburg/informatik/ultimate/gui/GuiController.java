@@ -5,7 +5,18 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+
 import javax.xml.bind.JAXBException;
+
+import org.apache.log4j.Logger;
+import org.eclipse.jface.dialogs.MessageDialog;
+import org.eclipse.swt.SWT;
+import org.eclipse.swt.widgets.Display;
+import org.eclipse.swt.widgets.FileDialog;
+import org.eclipse.swt.widgets.Shell;
+import org.eclipse.ui.PlatformUI;
+import org.xml.sax.SAXException;
+
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.Toolchain;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.IController;
@@ -17,163 +28,162 @@ import de.uni_freiburg.informatik.ultimate.gui.dialogs.AnalysisChooseDialog;
 import de.uni_freiburg.informatik.ultimate.gui.dialogs.ModelChooseDialog;
 import de.uni_freiburg.informatik.ultimate.gui.dialogs.ParserChooseDialog;
 
-import org.apache.log4j.Logger;
-import org.eclipse.jface.dialogs.MessageDialog;
-import org.eclipse.swt.SWT;
-import org.eclipse.swt.widgets.Display;
-import org.eclipse.swt.widgets.FileDialog;
-import org.eclipse.swt.widgets.Shell;
-import org.eclipse.ui.PlatformUI;
-import org.xml.sax.SAXException;
-
-
 /**
+ * GUIController is the IController implementation of the UltimateDebug GUI
  * 
- * gui Controller implemnts IController.
+ * @author Christian Ortolf, Daniel Dietsch
  * 
- * on init  the gui is created
- * so a user can choose files he wants to have parse
- * 
- * the other methods will pop up dialogs for the user
- * so he can Controlle  what the core does
- * 
- * @author Christian Ortolf
- *
  */
 public class GuiController implements IController {
 
-	public static final String s_PLUGIN_ID = "UltimateGui";//"de.uni_freiburg.informatik.ultimate.gui.GuiController";
-	public static final String s_PLUGIN_NAME = "Gui Controller";
-	private static Logger m_Logger = UltimateServices.getInstance().getControllerLogger();
+	public static final String sPLUGINID = "UltimateGui";
+	public static final String sPLUGINNAME = "Gui Controller";
 	
-	/**
-	 * a parent shell for Dialog initialisation
-	 */
-	private Display m_Display;
+	private Logger mLogger;
+	private Display mDisplay;
+
+	private volatile ISource mParser;
+	private volatile Toolchain mTools;
+	private volatile List<String> mModels;
+
+	private ICore mCore;
+	private TrayIconNotifier mTrayIconNotifier;
 
 	/**
-	 * a comvariable for useParser() .
-	 */
-	private volatile ISource m_Parser;
-
-	//private volatile List<ITool> m_Tools;
-	
-	private volatile Toolchain m_Tools;
-	
-	private volatile List<String> m_Models;
-
-	
-	/**
-	 * Initialization of Controller.
-	 * gui is created
-	 * note that if you call This method  
-	 * your thread will block here until the gui is closed
+	 * Initialization of Controller. The GUI is created here. Note: This methods
+	 * blocks until the GUI is closed.
+	 * 
 	 * @return the exit code for the application
 	 */
 	public int init(Object controlledCore) {
-		ICore core;
+		mLogger = UltimateServices.getInstance().getControllerLogger();
 		if (!(controlledCore instanceof ICore)) {
+			mLogger.fatal("Initialization failed because no ICore instance was supplied");
 			return -1;
-		} else {
-			core = (ICore) controlledCore;
 		}
 
-		m_Display = PlatformUI.createDisplay();
-		//m_Tools = new ArrayList<ITool>();
-		
-		m_Parser = null;
-		m_Models = new ArrayList<String>();
-		m_Logger.debug("Creating Workbench ...");
-		m_Logger
-				.debug("--------------------------------------------------------------------------------");
-		int returnCode = -1;
-		ApplicationWorkbenchAdvisor advisor = new ApplicationWorkbenchAdvisor(core);
-		if (m_Display != null && advisor !=null) {
+		mCore = (ICore) controlledCore;
 
+		mDisplay = PlatformUI.createDisplay();
+
+		mParser = null;
+		mModels = new ArrayList<String>();
+		mLogger.debug("Creating Workbench ...");
+		mLogger.debug("--------------------------------------------------------------------------------");
+		int returnCode = -1;
+		ApplicationWorkbenchAdvisor workbenchAdvisor = new ApplicationWorkbenchAdvisor();
+		if (mDisplay != null && workbenchAdvisor != null) {
+			mTrayIconNotifier = new TrayIconNotifier(workbenchAdvisor);
+			workbenchAdvisor.init(mCore, mTrayIconNotifier);
 			try {
-				returnCode = PlatformUI.createAndRunWorkbench(m_Display,
-						advisor);
+				returnCode = PlatformUI.createAndRunWorkbench(mDisplay,
+						workbenchAdvisor);
 				return returnCode;
 			} catch (Exception ex) {
-				m_Logger.fatal("An exception occured", ex);
+				mLogger.fatal("An exception occured", ex);
 				return returnCode;
 			}
 
 		} else {
-			m_Logger
-					.fatal("PlatformUI.createDisplay() delivered null-value, cannot create workbench, exiting...");
+			mLogger.fatal("PlatformUI.createDisplay() delivered null-value, cannot create workbench, exiting...");
 
 		}
 		return returnCode;
 	}
 
 	public synchronized ISource selectParser(final Collection<ISource> parsers) {
-		
-		m_Display.syncExec(new Runnable() {
+
+		mDisplay.syncExec(new Runnable() {
 			public void run() {
-				Shell shell = new Shell(m_Display);
-				m_Parser = new ParserChooseDialog(shell, parsers).open();
+				Shell shell = new Shell(mDisplay);
+				mParser = new ParserChooseDialog(shell, parsers).open();
 			}
 		});
-		return m_Parser;
+		return mParser;
 	}
 
 	@SuppressWarnings("unchecked")
 	public synchronized Toolchain selectTools(final List<ITool> t) {
-		return selectTools(t,Collections.EMPTY_LIST);
+		return selectTools(t, Collections.EMPTY_LIST);
 	}
-	
-	public synchronized Toolchain selectTools(final List<ITool> t,final List<ITool> previous) {
-		m_Display.syncExec(new Runnable() {
+
+	public synchronized Toolchain selectTools(final List<ITool> t,
+			final List<ITool> previous) {
+		mDisplay.syncExec(new Runnable() {
 			public void run() {
-				Shell shell = new Shell(m_Display);
+				Shell shell = new Shell(mDisplay);
 				try {
-					m_Tools = new AnalysisChooseDialog(shell, t,previous).open();
+					mTools = new AnalysisChooseDialog(shell, t, previous)
+							.open();
 				} catch (FileNotFoundException e) {
-					MessageDialog.openError(shell,
-											"An error occured", "Toolchain XML file was not found.");
-						
+					MessageDialog.openError(shell, "An error occured",
+							"Toolchain XML file was not found.");
+
 				} catch (JAXBException e) {
-					MessageDialog.openError(shell,
-							"An error occured", "Toolchain XML file could not be validated.");
+					MessageDialog.openError(shell, "An error occured",
+							"Toolchain XML file could not be validated.");
 				} catch (SAXException e) {
-					MessageDialog.openError(shell,
-							"An error occured", "Toolchain XML file could not be properly parsed.");
+					MessageDialog.openError(shell, "An error occured",
+							"Toolchain XML file could not be properly parsed.");
 				}
 			}
 		});
-		return m_Tools;
+		return mTools;
 	}
 
 	public synchronized List<String> selectModel(final List<String> modelNames) {
-		
-		m_Display.syncExec(new Runnable() {
+
+		mDisplay.syncExec(new Runnable() {
 			public void run() {
-				Shell shell = new Shell(m_Display);
-				m_Models = new ModelChooseDialog(shell, modelNames,"Choose the model").open();
+				Shell shell = new Shell(mDisplay);
+				mModels = new ModelChooseDialog(shell, modelNames,
+						"Choose the model").open();
 			}
 		});
-		return m_Models;
-	}	
-	
+		return mModels;
+	}
+
 	public String getName() {
-		return s_PLUGIN_NAME;
+		return sPLUGINNAME;
 	}
 
 	public String getPluginID() {
-		return s_PLUGIN_ID;
+		return sPLUGINID;
 	}
 
 	@Override
 	public String getLoadPrefName() {
-		FileDialog fd = new FileDialog(m_Display.getActiveShell(),SWT.OPEN);
+		FileDialog fd = new FileDialog(mDisplay.getActiveShell(), SWT.OPEN);
 		return fd.open();
 	}
 
 	@Override
 	public String getSavePrefName() {
-		FileDialog fd = new FileDialog(m_Display.getActiveShell(),SWT.SAVE);
+		FileDialog fd = new FileDialog(mDisplay.getActiveShell(), SWT.SAVE);
 		return fd.open();
+	}
+
+	@Override
+	public void displayToolchainResultProgramIncorrect() {
+		mTrayIconNotifier.showTrayBalloon("Program is incorrect",
+				"Ultimate proved your program to be incorrect!",
+				SWT.ICON_WARNING);
+
+	}
+
+	@Override
+	public void displayToolchainResultProgramCorrect() {
+		mTrayIconNotifier.showTrayBalloon("Program is correct",
+				"Ultimate proved your program to be correct!",
+				SWT.ICON_INFORMATION);
+	}
+
+	@Override
+	public void displayToolchainResultProgramUnknown(String description) {
+		mTrayIconNotifier.showTrayBalloon("Program could not be checked",
+				"Ultimate could not prove your program: " + description,
+				SWT.ICON_INFORMATION);
+
 	}
 
 }

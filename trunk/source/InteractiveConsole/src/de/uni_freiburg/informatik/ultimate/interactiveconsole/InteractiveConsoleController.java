@@ -252,5 +252,23 @@ public class InteractiveConsoleController implements IController {
 		m_Filename = filename;
 	}
 
+	@Override
+	public void displayToolchainResultProgramIncorrect() {
+		// TODO Auto-generated method stub
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public void displayToolchainResultProgramCorrect() {
+		// TODO Auto-generated method stub
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public void displayToolchainResultProgramUnknown(String description) {
+		// TODO Auto-generated method stub
+		throw new UnsupportedOperationException();
+	}
+
 	
 }

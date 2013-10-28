@@ -877,7 +877,7 @@ public class Application implements IApplication, ICore {
 		}
 		m_CurrentToolchainMonitor = monitor;
 		m_ToolchainWalker.walk(monitor);
-		ResultNotifier.processResults();
+		new ResultNotifier(m_Controller).processResults();
 		m_StoredToolchainUse.clearStore();
 
 		s_Logger.info("Finished executing Toolchain !");

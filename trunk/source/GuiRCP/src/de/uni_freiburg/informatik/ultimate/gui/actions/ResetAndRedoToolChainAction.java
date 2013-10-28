@@ -52,7 +52,7 @@ public class ResetAndRedoToolChainAction extends Action implements IWorkbenchAct
         this.core = icore;
         setId(ID);
         setText(LABEL);
-        setImageDescriptor(AbstractUIPlugin.imageDescriptorFromPlugin(GuiController.s_PLUGIN_ID,
+        setImageDescriptor(AbstractUIPlugin.imageDescriptorFromPlugin(GuiController.sPLUGINID,
                 IImageKeys.REEXEC));
 	}
 
@@ -70,7 +70,7 @@ public class ResetAndRedoToolChainAction extends Action implements IWorkbenchAct
 				null : new PreludeProvider(prelude.getAbsolutePath());
 			if (!rerun) {
 			InstanceScope iscope = new InstanceScope();
-	        IEclipsePreferences prefscope = iscope.getNode(GuiController.s_PLUGIN_ID);
+	        IEclipsePreferences prefscope = iscope.getNode(GuiController.sPLUGINID);
 	        String filterpath = prefscope.get(IPreferencesKeys.LASTPATH, null);
 	        if (filterpath != null) {
 	        	File inputfile = new File(filterpath);

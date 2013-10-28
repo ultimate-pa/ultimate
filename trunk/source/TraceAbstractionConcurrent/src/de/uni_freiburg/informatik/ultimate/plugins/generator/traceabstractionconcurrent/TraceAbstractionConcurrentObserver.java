@@ -163,21 +163,25 @@ public class TraceAbstractionConcurrentObserver implements IUnmanagedObserver {
 		switch (result) {
 		case SAFE:
 			s_Logger.warn("Program is correct");
-			ResultNotifier.programCorrect();
+			//FIXME This is not the right way to tell the core about results
+//			ResultNotifier.programCorrect();
 			break;
 		case UNSAFE:
 			s_Logger.warn("Program is incorrect");
-			ResultNotifier.programIncorrect();
+			//FIXME This is not the right way to tell the core about results
+//			ResultNotifier.programIncorrect();
 			break;
 		case TIMEOUT:
 			s_Logger.warn("Insufficient iterations to proof correctness");
-			ResultNotifier
-					.programUnknown("Insufficient iterations to proof correctness");
+			//FIXME This is not the right way to tell the core about results
+//			ResultNotifier
+//					.programUnknown("Insufficient iterations to proof correctness");
 			break;
 		case UNKNOWN:
 			s_Logger.warn("Program might be incorrect, check conterexample.");
-			ResultNotifier.programUnknown("Program might be incorrect, check"
-					+ " conterexample.");
+			//FIXME This is not the right way to tell the core about results
+//			ResultNotifier.programUnknown("Program might be incorrect, check"
+//					+ " conterexample.");
 			break;
 		}
 	

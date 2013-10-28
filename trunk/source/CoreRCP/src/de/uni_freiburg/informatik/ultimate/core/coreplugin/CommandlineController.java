@@ -210,4 +210,25 @@ public class CommandlineController implements IController {
 		return null;
 	}
 
+	@Override
+	public void displayToolchainResultProgramIncorrect() {
+		throw new UnsupportedOperationException();
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void displayToolchainResultProgramCorrect() {
+		throw new UnsupportedOperationException();
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void displayToolchainResultProgramUnknown(String description) {
+		throw new UnsupportedOperationException();
+		// TODO Auto-generated method stub
+		
+	}
+
 }

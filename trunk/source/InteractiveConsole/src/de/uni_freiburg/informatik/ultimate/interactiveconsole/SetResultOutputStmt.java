@@ -1,10 +1,5 @@
 package de.uni_freiburg.informatik.ultimate.interactiveconsole;
 
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.PrintWriter;
-
-import de.uni_freiburg.informatik.ultimate.plugins.ResultNotifier;
 
 public class SetResultOutputStmt extends Stmt {
 
@@ -16,11 +11,9 @@ public class SetResultOutputStmt extends Stmt {
 	
 	@Override
 	public void execute() {
-		try {
-			ResultNotifier.setResultWriter(new PrintWriter(new FileWriter(filename)));
-		} catch (IOException ioexc) {
-			ioexc.printStackTrace(System.err);
-		}
+		//TODO: Config log4j such that logs are written to file 
+//			ResultNotifier.setResultWriter(new PrintWriter(new FileWriter(filename)));
+		System.err.println("Config log4j such that logs are written to file ");
 	}
 
 }

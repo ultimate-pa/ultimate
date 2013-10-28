@@ -79,7 +79,7 @@ public class LoadSourceFilesAction extends Action implements IWorkbenchAction {
         this.m_Core = icore;
         setId(s_ID);
         setText(s_DIALOG_NAME);
-        setImageDescriptor(AbstractUIPlugin.imageDescriptorFromPlugin(GuiController.s_PLUGIN_ID,
+        setImageDescriptor(AbstractUIPlugin.imageDescriptorFromPlugin(GuiController.sPLUGINID,
                 IImageKeys.LOADSOURCEFILES));
         
     }
@@ -132,8 +132,8 @@ public class LoadSourceFilesAction extends Action implements IWorkbenchAction {
             //names[sourceCount++] = source.getName();
         }
         InstanceScope iscope = new InstanceScope();
-        ScopedPreferenceStore store = new ScopedPreferenceStore(iscope,GuiController.s_PLUGIN_ID);
-        IEclipsePreferences prefscope = iscope.getNode(GuiController.s_PLUGIN_ID);
+        ScopedPreferenceStore store = new ScopedPreferenceStore(iscope,GuiController.sPLUGINID);
+        IEclipsePreferences prefscope = iscope.getNode(GuiController.sPLUGINID);
         String filterpath = prefscope.get(IPreferencesKeys.LASTPATH, null);
 		fd.setFilterExtensions(extensions.toArray(new String[extensions.size()]));
 		fd.setFilterNames(names.toArray(new String[names.size()]));

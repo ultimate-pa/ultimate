@@ -1,7 +1,7 @@
 /*
  * Project:	CoreRCP
  * Package:	de.uni_freiburg.informatik.ultimate.core.coreplugin.preferences
- * File:	AbstractDetailsPreferencePage.java created on Feb 5, 2010 by Bj�rn Buchhold
+ * File:	AbstractDetailsPreferencePage.java created on Feb 5, 2010 by Bjï¿½rn Buchhold
  *
  */
 package de.uni_freiburg.informatik.ultimate.core.coreplugin.preferences;

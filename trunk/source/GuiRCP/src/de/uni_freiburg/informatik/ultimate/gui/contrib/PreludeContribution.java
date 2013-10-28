@@ -37,7 +37,7 @@ public class PreludeContribution extends WorkbenchWindowControlContribution {
 	private void init() {
 		s_me = this;
 		InstanceScope iscope = new InstanceScope();
-        IEclipsePreferences prefscope = iscope.getNode(GuiController.s_PLUGIN_ID);
+        IEclipsePreferences prefscope = iscope.getNode(GuiController.sPLUGINID);
         m_preludeFile = prefscope.get(IPreferencesKeys.PRELUDEFILE, null);
         if (m_preludeFile != null) {
 	        File tmp = new File(m_preludeFile);
@@ -51,8 +51,8 @@ public class PreludeContribution extends WorkbenchWindowControlContribution {
 	@Override
 	public void dispose() {
 		InstanceScope iscope = new InstanceScope();
-        ScopedPreferenceStore store = new ScopedPreferenceStore(iscope,GuiController.s_PLUGIN_ID);
-        IEclipsePreferences prefscope = iscope.getNode(GuiController.s_PLUGIN_ID);
+        ScopedPreferenceStore store = new ScopedPreferenceStore(iscope,GuiController.sPLUGINID);
+        IEclipsePreferences prefscope = iscope.getNode(GuiController.sPLUGINID);
         if (m_preludeFile != null)
         	prefscope.put(IPreferencesKeys.PRELUDEFILE,m_preludeFile);
         else

@@ -1,9 +1,13 @@
 package de.uni_freiburg.informatik.ultimate.gui.advisors;
 
+import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.ICore;
+import de.uni_freiburg.informatik.ultimate.gui.TrayIconNotifier;
 import de.uni_freiburg.informatik.ultimate.gui.UltimateDefaultPerspective;
 
+import org.apache.log4j.Logger;
 import org.eclipse.core.runtime.Platform;
+import org.eclipse.swt.widgets.TrayItem;
 import org.eclipse.ui.application.IWorkbenchConfigurer;
 import org.eclipse.ui.application.IWorkbenchWindowConfigurer;
 import org.eclipse.ui.application.WorkbenchAdvisor;
@@ -11,33 +15,51 @@ import org.eclipse.ui.application.WorkbenchWindowAdvisor;
 
 /**
  * 
- * @author Ortolf
- *
+ * @author Ortolf, Dietsch
+ * 
  */
 public class ApplicationWorkbenchAdvisor extends WorkbenchAdvisor {
 
-	private static final String PERSPECTIVE_ID = UltimateDefaultPerspective.ID;
+	private final Logger mLogger;
+	private ICore mCore;
+	private ApplicationWorkbenchWindowAdvisor mApplicationWorkbenchWindowAdvisor;
+	private TrayIconNotifier mTrayIconNotifier;
 
-	private final ICore icc;
-
-	public ApplicationWorkbenchAdvisor(ICore icc) {
-		this.icc = icc;
+	public ApplicationWorkbenchAdvisor() {
+		mLogger = UltimateServices.getInstance().getControllerLogger();
 	}
 
+	public void init(ICore icc, TrayIconNotifier notifier){
+		mCore = icc;
+		mTrayIconNotifier = notifier;
+	}
+	
 	public WorkbenchWindowAdvisor createWorkbenchWindowAdvisor(
 			IWorkbenchWindowConfigurer configurer) {
-		return new ApplicationWorkbenchWindowAdvisor(configurer, icc);
+		mLogger.debug("Requesting WorkbenchWindowAdvisor");
+		
+		if(mCore == null || mTrayIconNotifier == null){
+			throw new IllegalStateException("mCore or mTrayIconNotifier are null; maybe you did not call init()?");
+		}
+		
+		if (mApplicationWorkbenchWindowAdvisor == null) {
+			mLogger.debug("Creating WorkbenchWindowAdvisor...");
+			mApplicationWorkbenchWindowAdvisor = new ApplicationWorkbenchWindowAdvisor(
+					configurer, mCore, mTrayIconNotifier);
+		}
+		return mApplicationWorkbenchWindowAdvisor;
 	}
 
 	public String getInitialWindowPerspectiveId() {
-		return PERSPECTIVE_ID;
+		return UltimateDefaultPerspective.ID;
 	}
 
-	//@Override
 	public void initialize(IWorkbenchConfigurer configurer) {
 		super.initialize(configurer);
 		configurer.setSaveAndRestore(!Platform.inDevelopmentMode());
-		
+	}
 
+	public TrayItem getTrayItem() {
+		return mApplicationWorkbenchWindowAdvisor.getTrayItem();
 	}
 }

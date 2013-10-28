@@ -184,4 +184,22 @@ public class ExtExecutionController implements IController {
 				"This Method should never be called for this controller!");
 	}
 
+	@Override
+	public void displayToolchainResultProgramIncorrect() {
+		// TODO Auto-generated method stub
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public void displayToolchainResultProgramCorrect() {
+		// TODO Auto-generated method stub
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public void displayToolchainResultProgramUnknown(String description) {
+		// TODO Auto-generated method stub
+		throw new UnsupportedOperationException();
+	}
+
 }

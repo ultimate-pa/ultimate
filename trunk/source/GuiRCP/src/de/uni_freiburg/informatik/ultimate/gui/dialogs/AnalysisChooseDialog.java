@@ -246,8 +246,8 @@ public class AnalysisChooseDialog extends Dialog {
 			public void widgetSelected(final SelectionEvent e) {
 
 				InstanceScope iscope = new InstanceScope();
-		        ScopedPreferenceStore store = new ScopedPreferenceStore(iscope,GuiController.s_PLUGIN_ID);
-		        IEclipsePreferences prefscope = iscope.getNode(GuiController.s_PLUGIN_ID);
+		        ScopedPreferenceStore store = new ScopedPreferenceStore(iscope,GuiController.sPLUGINID);
+		        IEclipsePreferences prefscope = iscope.getNode(GuiController.sPLUGINID);
 		        String filterpath = prefscope.get(IPreferencesKeys.LASTTOOLCHAINPATH, null);
 				
 				String[] extensions = new String[1];

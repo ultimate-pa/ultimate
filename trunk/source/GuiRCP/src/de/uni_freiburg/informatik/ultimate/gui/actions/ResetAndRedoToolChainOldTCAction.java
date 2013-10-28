@@ -60,7 +60,7 @@ public class ResetAndRedoToolChainOldTCAction extends Action implements IWorkben
         this.core = icore;
         setId(ID);
         setText(LABEL);
-        setImageDescriptor(AbstractUIPlugin.imageDescriptorFromPlugin(GuiController.s_PLUGIN_ID,
+        setImageDescriptor(AbstractUIPlugin.imageDescriptorFromPlugin(GuiController.sPLUGINID,
                 IImageKeys.REEXECOLDTC));
 	}
 
@@ -78,7 +78,7 @@ public class ResetAndRedoToolChainOldTCAction extends Action implements IWorkben
 				null : new PreludeProvider(prelude.getAbsolutePath());
 			if (!rerun) {
 			InstanceScope iscope = new InstanceScope();
-	        IEclipsePreferences prefscope = iscope.getNode(GuiController.s_PLUGIN_ID);
+	        IEclipsePreferences prefscope = iscope.getNode(GuiController.sPLUGINID);
     		String toolchainxml = prefscope.get(IPreferencesKeys.LASTTOOLCHAINPATH, null);
     		if (toolchainxml != null) {
     			try {
@@ -156,8 +156,8 @@ public class ResetAndRedoToolChainOldTCAction extends Action implements IWorkben
             //names[sourceCount++] = source.getName();
         }
         InstanceScope iscope = new InstanceScope();
-        ScopedPreferenceStore store = new ScopedPreferenceStore(iscope,GuiController.s_PLUGIN_ID);
-        IEclipsePreferences prefscope = iscope.getNode(GuiController.s_PLUGIN_ID);
+        ScopedPreferenceStore store = new ScopedPreferenceStore(iscope,GuiController.sPLUGINID);
+        IEclipsePreferences prefscope = iscope.getNode(GuiController.sPLUGINID);
         String filterpath = prefscope.get(IPreferencesKeys.LASTPATH, null);
 		fd.setFilterExtensions(extensions.toArray(new String[extensions.size()]));
 		fd.setFilterNames(names.toArray(new String[names.size()]));

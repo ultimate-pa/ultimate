@@ -2,14 +2,13 @@ package de.uni_freiburg.informatik.ultimate.ep.interfaces;
 
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.Toolchain;
 
 /**
- * This is the interface that all plugins providing a gui or commandline
- * user interface to Ultimate should adhere to.
- * 
+ * This is the interface that all plugins providing a user interface to Ultimate
+ * should implement. UltimateCore should always use methods in this interface,
+ * and if necessary, extend it to request user interaction.
  * 
  * @author all
  * 
@@ -17,29 +16,29 @@ import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.Toolchain;
 public interface IController extends IRCPPlugin {
 
 	/**
-	 * Here the controller tells the caller what parser to use. Usually, 
-	 * the core will try to determine that automatically. This should only
-	 * be called if that is not possible and hence the user's opinion is
-	 * needed.
+	 * Here the controller tells the caller what parser to use. Usually, the
+	 * core will try to determine that automatically. This should only be called
+	 * if that is not possible and hence the user's opinion is needed.
 	 * 
-	 * @param parser providing parsers 
+	 * @param parser
+	 *            providing parsers
 	 * @return what parser should be used null if the toolchain should be
 	 *         interrupted
 	 */
 	ISource selectParser(Collection<ISource> parser);
 
 	/**
-	 * Here the controller tells the caller what toolchain to use. 
+	 * Here the controller tells the caller what toolchain to use.
 	 * 
-	 * @param tools available tools
+	 * @param tools
+	 *            available tools
 	 * @return the desired toolchain as instance of Toolchain
 	 */
 	Toolchain selectTools(List<ITool> tools);
-	
-	
+
 	/**
-	 * Here the controller tells the caller (usually the core)
-	 * what model out of a set of model ids the user has chosen.
+	 * Here the controller tells the caller (usually the core) what model out of
+	 * a set of model ids the user has chosen.
 	 * 
 	 * @param modelNames
 	 * @return string with model id
@@ -47,7 +46,26 @@ public interface IController extends IRCPPlugin {
 	List<String> selectModel(List<String> modelNames);
 
 	String getLoadPrefName();
-	
+
 	String getSavePrefName();
 	
+	
+	
+	/**
+	 * Should be called to notify the user that the toolchain proved the program to be incorrect  
+	 */
+	void displayToolchainResultProgramIncorrect();
+	
+	/**
+	 * Should be called to notify the user that the toolchain proved the program to be correct
+	 */
+	void displayToolchainResultProgramCorrect();
+	
+	/**
+	 * Should be called to notify the user that the toolchain failed to prove the program correct or incorrect    
+	 */
+	void displayToolchainResultProgramUnknown(String description);
+	
+	
+
 }
