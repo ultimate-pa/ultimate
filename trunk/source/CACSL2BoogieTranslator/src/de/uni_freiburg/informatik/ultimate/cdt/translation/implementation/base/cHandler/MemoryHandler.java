@@ -806,7 +806,8 @@ public class MemoryHandler {
         ILocation loc = cvar.getCASTLocation();
         ASTType intT = new PrimitiveType(loc, SFO.INT);
         String id = SFO.SIZEOF + cvar.toString();
-        IdentifierExpression idex = new IdentifierExpression(loc, id);
+        IdentifierExpression idex = new IdentifierExpression(
+        		loc, new InferredType(Type.Integer), id);
         Attribute[] attr = new Attribute[0];
         if (!sizeofConsts.contains(id)) {
             this.constants.add(new ConstDeclaration(loc, attr, false,
