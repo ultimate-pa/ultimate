@@ -49,15 +49,15 @@ public class Check extends AbstractAnnotations {
 	    /**
 	     * Tried to access unallocated memory.
 	     */
-	    UNALLOCATED_MEMORY,
+	    MEMORY_DEREFERENCE,
 	    /**
 	     * Memory leak detected. I.e. missing free!
 	     */
 	    MEMORY_LEAK,
 	    /**
-	     * Invalid memory access (i.e. invalid read or write).
+	     * Free of unallocated pointer.
 	     */
-	    INVALID_MEMORY_ACCESS,
+	    MEMORY_FREE,
 	    /**
 	     * Error label reachable. 
 	     */
@@ -100,12 +100,12 @@ public class Check extends AbstractAnnotations {
 			return "division by zero can never occur";
 		case INTEGER_OVERFLOW:
 			return "integer overflow can never occur";
-		case UNALLOCATED_MEMORY:
+		case MEMORY_DEREFERENCE:
 			return "pointer dereference always succeeds";
 		case MEMORY_LEAK:
+			return "all allocated memory was freed";
+		case MEMORY_FREE:
 			return "free always succeeds";
-		case INVALID_MEMORY_ACCESS:
-			return "memory access is always valid";
 		case ERROR_LABEL:
 			return "ERROR label is not reachable";
 		case UNKNOWN:
@@ -131,12 +131,12 @@ public class Check extends AbstractAnnotations {
 			return "possible division by zero";
 		case INTEGER_OVERFLOW:
 			return "integer overflow possible";
-		case UNALLOCATED_MEMORY:
+		case MEMORY_DEREFERENCE:
 			return "pointer dereference may fail";
 		case MEMORY_LEAK:
+			return "not all allocated memory was freed";
+		case MEMORY_FREE:
 			return "free of unallocated memory possible";
-		case INVALID_MEMORY_ACCESS:
-			return "memory access might be invalid";
 		case ERROR_LABEL:
 			return "ERROR label is reachable";
 		case UNKNOWN:

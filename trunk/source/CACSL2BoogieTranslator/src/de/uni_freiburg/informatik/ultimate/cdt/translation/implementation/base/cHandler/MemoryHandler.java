@@ -800,29 +800,29 @@ public class MemoryHandler {
         return idex;
     }
     
-    /**
-     * Checks, if an accessed pointer points to a valid location in memory.
-     * 
-     * @param idx
-     *            the pointer to check.
-     * @return an assert statement that checks, whether the accessed memory
-     *         location is valid.
-     */
-    public Statement checkValidityOfAccess(Expression idx) {
-        assert idx.getType() instanceof InferredType
-                && ((InferredType) idx.getType()).getType() == Type.Pointer;
-        // assert #valid[idx!base];
-        ILocation loc = idx.getLocation();
-        Expression array = new IdentifierExpression(loc, SFO.VALID);
-        Expression idxBase = new StructAccessExpression(loc, idx,
-                SFO.POINTER_BASE);
-        Expression formula = new ArrayAccessExpression(loc, array,
-                new Expression[] { idxBase });
-        assert loc instanceof CACSLLocation;
-        CACSLLocation assertLoc = new CACSLLocation((CACSLLocation) loc,
-                new Check(Check.Spec.INVALID_MEMORY_ACCESS));
-        return new AssertStatement(assertLoc, formula);
-    }
+//    /**
+//     * Checks, if an accessed pointer points to a valid location in memory.
+//     * 
+//     * @param idx
+//     *            the pointer to check.
+//     * @return an assert statement that checks, whether the accessed memory
+//     *         location is valid.
+//     */
+//    public Statement checkValidityOfAccess(Expression idx) {
+//        assert idx.getType() instanceof InferredType
+//                && ((InferredType) idx.getType()).getType() == Type.Pointer;
+//        // assert #valid[idx!base];
+//        ILocation loc = idx.getLocation();
+//        Expression array = new IdentifierExpression(loc, SFO.VALID);
+//        Expression idxBase = new StructAccessExpression(loc, idx,
+//                SFO.POINTER_BASE);
+//        Expression formula = new ArrayAccessExpression(loc, array,
+//                new Expression[] { idxBase });
+//        assert loc instanceof CACSLLocation;
+//        CACSLLocation assertLoc = new CACSLLocation((CACSLLocation) loc,
+//                new Check(Check.Spec.INVALID_MEMORY_ACCESS));
+//        return new AssertStatement(assertLoc, formula);
+//    }
     
     
 //    /**

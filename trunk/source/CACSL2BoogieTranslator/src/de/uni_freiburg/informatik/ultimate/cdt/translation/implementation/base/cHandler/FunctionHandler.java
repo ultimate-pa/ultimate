@@ -465,13 +465,15 @@ public class FunctionHandler {
 					// add a specification to check for memory leaks
 					Expression vIe = new IdentifierExpression(loc, SFO.VALID);
 					int nrSpec = spec.length;
-					ILocation ensLoc = new CACSLLocation(loc, new Check(
-							Check.Spec.MEMORY_LEAK));
+					Check check = new Check(Check.Spec.MEMORY_LEAK);
+					ILocation ensLoc = new CACSLLocation(loc, check);
 					spec = Arrays.copyOf(spec, nrSpec + 1);
 					spec[nrSpec] = new EnsuresSpecification(ensLoc, false,
 							new BinaryExpression(loc, Operator.COMPEQ, vIe,
 									new UnaryExpression(loc,
 											UnaryExpression.Operator.OLD, vIe)));
+					spec[nrSpec].getPayload().getAnnotations().put(
+							Check.getIdentifier(), check);
 				}
 			}
 			declarations.add(new Procedure(loc, procDecl.getAttributes(), mId,
