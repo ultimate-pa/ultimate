@@ -9,7 +9,7 @@
    <extension
          point="org.eclipse.ui.preferencePages">
       <page
-            category="de.uni_freiburg.informatik.ultimate.cdt.Preferences"
+            category="de.uni_freiburg.informatik.ultimate.gui.preferencepages.ToolsPreferencePage"
             class="de.uni_freiburg.informatik.ultimate.cdt.parser.preferences.PreferencePage"
             id="CDTParser.page1"
             name="CDT Parser">

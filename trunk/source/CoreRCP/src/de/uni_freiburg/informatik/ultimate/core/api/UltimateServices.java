@@ -17,10 +17,7 @@ import org.eclipse.jface.preference.PreferencePage;
 
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.Application;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.Application.Ultimate_Mode;
-import de.uni_freiburg.informatik.ultimate.core.coreplugin.preferences.IPreferenceConstants;
-import de.uni_freiburg.informatik.ultimate.core.coreplugin.preferences.LoggingDetailsPreferencePage;
-import de.uni_freiburg.informatik.ultimate.core.coreplugin.preferences.LoggingPreferencePage;
-import de.uni_freiburg.informatik.ultimate.core.coreplugin.preferences.LoggingToolsPreferencePage;
+import de.uni_freiburg.informatik.ultimate.core.coreplugin.preferences.constants.PreferenceConstants;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.IStorable;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.ITool;
 import de.uni_freiburg.informatik.ultimate.logging.UltimateLoggerFactory;
@@ -270,7 +267,7 @@ public class UltimateServices {
 	 */
 	public Logger getLoggerForExternalTool(String id) {
 		return UltimateLoggerFactory.getInstance().getLoggerById(
-				IPreferenceConstants.EXTERNAL_TOOLS_PREFIX + id);
+				PreferenceConstants.EXTERNAL_TOOLS_PREFIX + id);
 	}
 
 	/**

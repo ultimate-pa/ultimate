@@ -14,7 +14,7 @@
  <extension
        point="org.eclipse.ui.preferencePages">
            <page
-                 category="de.uni_freiburg.informatik.ultimate.core.coreplugin.preferences.ToolsPreferencePage"
+                 category="de.uni_freiburg.informatik.ultimate.gui.preferencepages.ToolsPreferencePage"
                  class="de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.PreferencePage"
                  id="de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.PreferencePage"
                  name="RCFGBuilder">

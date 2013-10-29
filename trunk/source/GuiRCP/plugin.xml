@@ -54,4 +54,56 @@
          </toolbar>
       </menuContribution>
    </extension>
+   
+   <extension point="org.eclipse.ui.preferencePages">
+      <page
+            class="de.uni_freiburg.informatik.ultimate.gui.preferencepages.UltimatePreferencePage"
+            id="de.uni_freiburg.informatik.ultimate.gui.preferencepages.UltimatePreferencePage"
+            name="Ultimate Preferences"/>
+      <page
+            category="de.uni_freiburg.informatik.ultimate.gui.preferencepages.UltimatePreferencePage"
+            class="de.uni_freiburg.informatik.ultimate.gui.preferencepages.OutputPreferencePage"
+            id="de.uni_freiburg.informatik.ultimate.gui.preferencepages.OutputPreferencePage"
+            name="Output Plugins"/>
+      <page
+            category="de.uni_freiburg.informatik.ultimate.gui.preferencepages.UltimatePreferencePage"
+            class="de.uni_freiburg.informatik.ultimate.gui.preferencepages.ToolsPreferencePage"
+            id="de.uni_freiburg.informatik.ultimate.gui.preferencepages.ToolsPreferencePage"
+            name="Tool Plugins"/>            
+      <page
+            category="de.uni_freiburg.informatik.ultimate.gui.preferencepages.UltimatePreferencePage"
+            class="de.uni_freiburg.informatik.ultimate.gui.preferencepages.CorePreferencePage"
+            id="de.uni_freiburg.informatik.ultimate.gui.preferencepages.CorePreferencePage"
+            name="Core Preferences"/>
+      <page
+            category="de.uni_freiburg.informatik.ultimate.gui.preferencepages.CorePreferencePage"
+            class="de.uni_freiburg.informatik.ultimate.gui.preferencepages.LoggingPreferencePage"
+            id="de.uni_freiburg.informatik.ultimate.gui.preferencepages.LoggingPreferencePage"
+            name="Log Levels" />
+      
+      <page
+            category="de.uni_freiburg.informatik.ultimate.gui.preferencepages.LoggingPreferencePage"
+            class="de.uni_freiburg.informatik.ultimate.gui.preferencepages.LoggingDetailsPreferencePage"
+            id="de.uni_freiburg.informatik.ultimate.gui.preferencepages.LoggingDetailsPreferencePage"
+            name="Plug-in-specific Log Levels" />
+      
+      <page
+            category="de.uni_freiburg.informatik.ultimate.gui.preferencepages.LoggingPreferencePage"
+            class="de.uni_freiburg.informatik.ultimate.gui.preferencepages.LoggingToolsPreferencePage"
+            id="de.uni_freiburg.informatik.ultimate.gui.preferencepages.LoggingToolsPreferencePage"
+            name="Log Levels for external tools" />
+      
+      <page
+            category="de.uni_freiburg.informatik.ultimate.gui.preferencepages.CorePreferencePage"
+            class="de.uni_freiburg.informatik.ultimate.gui.preferencepages.ModelManagerPreferencePage"
+            id="de.uni_freiburg.informatik.ultimate.gui.preferencepages.ModelManagerPreferencePage"
+            name="Model Manager" />
+      
+      <page
+            category="de.uni_freiburg.informatik.ultimate.gui.preferencepages.CorePreferencePage"
+            class="de.uni_freiburg.informatik.ultimate.gui.preferencepages.LogFilePreferencePage"
+            id="de.uni_freiburg.informatik.ultimate.gui.preferencepages.LogFilePreferencePage"
+            name="Log File" />      
+   </extension>
+   
 </plugin>

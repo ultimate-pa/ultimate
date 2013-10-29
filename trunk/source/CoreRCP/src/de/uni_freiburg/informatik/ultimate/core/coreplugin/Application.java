@@ -24,18 +24,21 @@ import org.eclipse.core.runtime.jobs.IJobChangeEvent;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.core.runtime.jobs.JobChangeAdapter;
 import org.eclipse.core.runtime.preferences.ConfigurationScope;
+import org.eclipse.core.runtime.preferences.DefaultScope;
 import org.eclipse.core.runtime.preferences.IEclipsePreferences;
 import org.eclipse.core.runtime.preferences.IPreferencesService;
 import org.eclipse.core.runtime.preferences.IScopeContext;
 import org.eclipse.core.runtime.preferences.InstanceScope;
 import org.eclipse.equinox.app.IApplication;
 import org.eclipse.equinox.app.IApplicationContext;
+import org.eclipse.jface.util.IPropertyChangeListener;
+import org.eclipse.jface.util.PropertyChangeEvent;
+import org.eclipse.ui.preferences.ScopedPreferenceStore;
 import org.xml.sax.SAXException;
 
 import de.uni_freiburg.informatik.ultimate.core.api.PreludeProvider;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
-import de.uni_freiburg.informatik.ultimate.core.coreplugin.preferences.IPreferenceConstants;
-import de.uni_freiburg.informatik.ultimate.core.coreplugin.preferences.LoggingPreferencePage;
+import de.uni_freiburg.informatik.ultimate.core.coreplugin.preferences.constants.PreferenceConstants;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.PluginType;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.SubchainType;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.Toolchain;
@@ -46,6 +49,7 @@ import de.uni_freiburg.informatik.ultimate.ep.interfaces.ICore;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.IGenerator;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.ILoggingWindow;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.IOutput;
+import de.uni_freiburg.informatik.ultimate.ep.interfaces.IRCPPlugin;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.ISource;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.ITool;
 import de.uni_freiburg.informatik.ultimate.logging.UltimateLoggerFactory;
@@ -91,107 +95,68 @@ public class Application implements IApplication, ICore {
 		EXTERNAL_EXECUTION
 	}
 
-	/**
-	 * Ultimate's running mode
-	 */
-	private Ultimate_Mode m_CoreMode;
+	private Ultimate_Mode mCoreMode;
 
-	/**
-	 * Log4j-Logger.
-	 */
-	private static Logger s_Logger;
+	private Logger mLogger;
 
-	/**
-	 * Array where all output plugins are hold.
-	 */
-	private ArrayList<IOutput> m_OutputPlugins;
+	private ArrayList<IOutput> mOutputPlugins;
 
-	/**
-	 * a collection where all transformer plugins are held
-	 * 
-	 */
-	private ArrayList<IGenerator> m_GeneratorPlugins;
+	private ArrayList<IGenerator> mGeneratorPlugins;
 
-	/**
-	 * a collection where all analysis plugins are held
-	 * 
-	 */
-	private ArrayList<IAnalysis> m_AnalysisPlugins;
+	private ArrayList<IAnalysis> mAnalysisPlugins;
 
-	/**
-	 * a controller provided by some plug-in implementing the IController
-	 * interface, or just the fall-back command-line controller
-	 */
-	private IController m_Controller;
+	private IController mCurrentController;
 
-	/**
-	 * 
-	 * a collection where all parser plugins are held.
-	 */
-	private ArrayList<ISource> m_SourcePlugins;
+	private ArrayList<ISource> mSourcePlugins;
 
-	/**
-	 * the currently selected parser, can be modified by public methods in ICore
-	 */
-	private ISource m_StoredParser;
+	private ISource mCurrentParser;
 
-	/**
-	 * the currently selected boogie files, can also be modified by public
-	 * methods in ICore
-	 */
-	private File m_StoredFiles;
+	private File mCurrentFiles;
 
-	/**
-	 * the currently active toolchain guess what: you can modify this one using
-	 * a public method defined in ICore!
-	 */
-	private Toolchain m_StoredToolchainUse;
+	private Toolchain mCurrentToolchain;
 
-	/**
-	 * a collection of all available tools
-	 */
-	private ArrayList<ITool> m_AllTools;
+	private ArrayList<ITool> mTools;
 
 	/**
 	 * the same content as m_AllTools, but as a mapping of tool ids to the
 	 * actual tools
 	 */
-	private HashMap<String, ITool> m_Id2Plugin;
+	private HashMap<String, ITool> mIdToTool;
 
-	private Benchmark m_Bench;
+	private Benchmark mBenchmark;
 
 	/**
-	 * the chamber is used to store all different modells of the framework. he
-	 * should also provide save and load functions and is responisble for memory
+	 * mModelManager is used to store all different models of the framework. It
+	 * should also provide save and load functions and is responsible for memory
 	 * management
 	 */
-	private IModelManager m_ModelManager;
+	private IModelManager mModelManager;
 
 	/**
 	 * What arguments were passed to the Ultimate RCP product before start-up?
 	 */
-	private CommandLineParser m_CmdLineArgs;
+	private CommandLineParser mCmdLineArgs;
 
-	private ToolchainWalker m_ToolchainWalker;
+	private ToolchainWalker mToolchainWalker;
 
-	private IProgressMonitor m_CurrentToolchainMonitor;
-	private long m_Deadline = Long.MAX_VALUE;
+	private IProgressMonitor mCurrentToolchainMonitor;
+	private long mDeadline = Long.MAX_VALUE;
 	/**
 	 * Only for EXTERNAL_EXECUTION mode.
 	 */
-	private File m_ToolchainXML;
+	private File mToolchainXML;
 	/**
 	 * Only for EXTERNAL_EXECUTION mode.
 	 */
-	private File m_SettingsFile;
+	private File mSettingsFile;
 	/**
 	 * Only for EXTERNAL_EXECUTION mode.
 	 */
-	private File m_InputFile;
+	private File mInputFile;
 	/**
 	 * Only for EXTERNAL_EXECUTION mode.
 	 */
-	private Object m_ParsedAST;
+	private Object mParsedAST;
 
 	/**
 	 * This Default-Constructor is needed to start up the application
@@ -211,7 +176,7 @@ public class Application implements IApplication, ICore {
 			throw new IllegalArgumentException(
 					"We expect EXTERNAL_EXECUTION mode here!");
 		}
-		this.m_CoreMode = mode;
+		this.mCoreMode = mode;
 	}
 
 	/**
@@ -226,16 +191,13 @@ public class Application implements IApplication, ICore {
 	 */
 	@Override
 	public final Object start(IApplicationContext context) throws Exception {
-		if (m_CoreMode == Ultimate_Mode.EXTERNAL_EXECUTION) {
-			new LoggingPreferencePage();
+
+		if (mCoreMode == Ultimate_Mode.EXTERNAL_EXECUTION) {
 			init();
 
-			if (m_SettingsFile != null) {
-				loadPreferencesInternal(m_SettingsFile.getPath());
+			if (mSettingsFile != null) {
+				loadPreferencesInternal(mSettingsFile.getPath());
 			}
-
-			// Add log-File support if defined in the preferences
-			UltimateLoggerFactory.getInstance().appendLogFile();
 
 			// throwing classes exported by plugins into arraylists
 			loadExtension();
@@ -244,16 +206,16 @@ public class Application implements IApplication, ICore {
 			initiateToolMaps();
 
 			// run previously chosen command line controller
-			Object returnCode = m_Controller.init(this);
-			s_Logger.info("Exiting Ultimate with returncode " + returnCode);
+			Object returnCode = mCurrentController.init(this);
+			mLogger.info("Exiting Ultimate with returncode " + returnCode);
 
 			// before we quit Ultimate, do we have to clear the model store?
 			boolean store_mm = InstanceScope.INSTANCE.getNode(
 					Activator.s_PLUGIN_ID).getBoolean(
-					IPreferenceConstants.PREFID_MM_DROP_MODELS, true);
+					PreferenceConstants.PREFID_MM_DROP_MODELS, true);
 			if (store_mm) {
-				for (String s : this.m_ModelManager.getItemNames()) {
-					this.m_ModelManager.removeItem(s);
+				for (String s : this.mModelManager.getItemNames()) {
+					this.mModelManager.removeItem(s);
 				}
 			}
 
@@ -261,19 +223,19 @@ public class Application implements IApplication, ICore {
 			return IApplication.EXIT_OK;
 		}
 		// parser command line parameters
-		m_CmdLineArgs = new CommandLineParser();
-		m_CmdLineArgs.parse(Platform.getCommandLineArgs());
+		mCmdLineArgs = new CommandLineParser();
+		mCmdLineArgs.parse(Platform.getCommandLineArgs());
 
 		// determine Ultimate's mode
-		if (m_CmdLineArgs.getInteractiveSwitch()) {
-			this.m_CoreMode = Ultimate_Mode.INTERACTIVE;
-		} else if (m_CmdLineArgs.getExitSwitch()) {
-			m_CmdLineArgs.printUsage();
+		if (mCmdLineArgs.getInteractiveSwitch()) {
+			this.mCoreMode = Ultimate_Mode.INTERACTIVE;
+		} else if (mCmdLineArgs.getExitSwitch()) {
+			mCmdLineArgs.printUsage();
 			return IApplication.EXIT_OK;
-		} else if (!m_CmdLineArgs.getConsoleSwitch()) {
-			this.m_CoreMode = Ultimate_Mode.USEGUI;
-		} else if (m_CmdLineArgs.getConsoleSwitch()) {
-			this.m_CoreMode = Ultimate_Mode.FALLBACK_CMDLINE;
+		} else if (!mCmdLineArgs.getConsoleSwitch()) {
+			this.mCoreMode = Ultimate_Mode.USEGUI;
+		} else if (mCmdLineArgs.getConsoleSwitch()) {
+			this.mCoreMode = Ultimate_Mode.FALLBACK_CMDLINE;
 		}
 
 		// if you need to debug the commandline...
@@ -282,13 +244,10 @@ public class Application implements IApplication, ICore {
 		// initializing variables, loggers,...
 		init();
 
-		String settingsfile = m_CmdLineArgs.getSettings();
+		String settingsfile = mCmdLineArgs.getSettings();
 		if (settingsfile != null) {
 			loadPreferencesInternal(settingsfile);
 		}
-
-		// Add log-File support if defined in the preferences
-		UltimateLoggerFactory.getInstance().appendLogFile();
 
 		// throwing classes exported by plugins into arraylists
 		loadExtension();
@@ -299,22 +258,23 @@ public class Application implements IApplication, ICore {
 		// at this point a gui or a cmd line controller may already be set.
 		// if no controller is set, the default cmd line controller
 		// without interactive mode is used as a fallback
-		if (this.m_CoreMode == Ultimate_Mode.USEGUI && m_Controller != null) {
+		if (this.mCoreMode == Ultimate_Mode.USEGUI
+				&& mCurrentController != null) {
 			this.initializeGUI();
-		} else if (m_Controller != null) {
+		} else if (mCurrentController != null) {
 			// run previously chosen command line controller
-			Object returnCode = m_Controller.init(this);
-			s_Logger.info("Preparing to exit Ultimate with return code "
+			Object returnCode = mCurrentController.init(this);
+			mLogger.info("Preparing to exit Ultimate with return code "
 					+ returnCode);
 		}
 
 		// before we quit Ultimate, do we have to clear the model store?
 		boolean store_mm = InstanceScope.INSTANCE
 				.getNode(Activator.s_PLUGIN_ID).getBoolean(
-						IPreferenceConstants.PREFID_MM_DROP_MODELS, true);
+						PreferenceConstants.PREFID_MM_DROP_MODELS, true);
 		if (store_mm) {
-			for (String s : this.m_ModelManager.getItemNames()) {
-				this.m_ModelManager.removeItem(s);
+			for (String s : this.mModelManager.getItemNames()) {
+				this.mModelManager.removeItem(s);
 			}
 		}
 		// this must be returned
@@ -323,15 +283,15 @@ public class Application implements IApplication, ICore {
 	}
 
 	private void initializeGUI() {
-		s_Logger.info("Initializing GUI ...");
-		if (m_Controller == null) {
-			s_Logger.fatal("No GUI controller present although initializeGUI() was called !");
+		mLogger.info("Initializing GUI ...");
+		if (mCurrentController == null) {
+			mLogger.fatal("No GUI controller present although initializeGUI() was called !");
 			throw new NullPointerException(
 					"No GUI controller present although initializeGUI() was called !");
 		}
 		loadGuiLoggingWindow(Platform.getExtensionRegistry());
-		Object returnCode = m_Controller.init(this);
-		s_Logger.info("Preparing to exit Ultimate with return code "
+		Object returnCode = mCurrentController.init(this);
+		mLogger.info("Preparing to exit Ultimate with return code "
 				+ returnCode);
 	}
 
@@ -345,34 +305,36 @@ public class Application implements IApplication, ICore {
 		UltimateServices.createInstance(this);
 
 		// Here we set the parsed AST for the cdt plugin
-		UltimateServices.getInstance().setParsedAST(m_ParsedAST);
+		UltimateServices.getInstance().setParsedAST(mParsedAST);
 
-		s_Logger = UltimateServices.getInstance().getLogger(
+		mLogger = UltimateServices.getInstance().getLogger(
 				Activator.s_PLUGIN_ID);
 
-		s_Logger.info("Initializing application");
+		attachLogPreferenceChangeListenerToPlugin(Activator.s_PLUGIN_ID);
+
+		mLogger.info("Initializing application");
 
 		// get tmp directory, use JAVA tmp dir by default
 		String tmp_dir = InstanceScope.INSTANCE.getNode(Activator.s_PLUGIN_ID)
-				.get(IPreferenceConstants.PREFID_MM_TMPDIRECTORY,
+				.get(PreferenceConstants.PREFID_MM_TMPDIRECTORY,
 						System.getProperty("java.io.tmpdir"));
 
-		m_ModelManager = new PersistenceAwareModelManager(tmp_dir);
-		m_OutputPlugins = new ArrayList<IOutput>();
-		m_SourcePlugins = new ArrayList<ISource>();
-		m_GeneratorPlugins = new ArrayList<IGenerator>();
-		m_AnalysisPlugins = new ArrayList<IAnalysis>();
+		mModelManager = new PersistenceAwareModelManager(tmp_dir);
+		mOutputPlugins = new ArrayList<IOutput>();
+		mSourcePlugins = new ArrayList<ISource>();
+		mGeneratorPlugins = new ArrayList<IGenerator>();
+		mAnalysisPlugins = new ArrayList<IAnalysis>();
 
-		m_Id2Plugin = new HashMap<String, ITool>();
-		m_StoredParser = null;
-		m_StoredFiles = null;
-		m_Bench = new Benchmark();
+		mIdToTool = new HashMap<String, ITool>();
+		mCurrentParser = null;
+		mCurrentFiles = null;
+		mBenchmark = new Benchmark();
 		// initialize walker with common variables
-		m_ToolchainWalker = new ToolchainWalker(this, m_Bench, m_ModelManager,
-				m_Id2Plugin);
+		mToolchainWalker = new ToolchainWalker(this, mBenchmark, mModelManager,
+				mIdToTool);
 
-		UltimateServices.getInstance().setModelManager(m_ModelManager);
-		final Logger tmp = s_Logger;
+		UltimateServices.getInstance().setModelManager(mModelManager);
+		final Logger tmp = mLogger;
 		Job.getJobManager().addJobChangeListener(new JobChangeAdapter() {
 
 			@Override
@@ -386,8 +348,50 @@ public class Application implements IApplication, ICore {
 			}
 
 		});
-		s_Logger.info("--------------------------------------------------------------------------------");
+		mLogger.info("--------------------------------------------------------------------------------");
 
+	}
+
+	private void attachLogPreferenceChangeListenerToActivePlugins() {
+
+		attachLogPreferenceChangeListenerToPlugin(mCurrentController
+				.getPluginID());
+
+		for (IRCPPlugin t : mOutputPlugins) {
+			attachLogPreferenceChangeListenerToPlugin(t.getPluginID());
+		}
+		for (IRCPPlugin t : mSourcePlugins) {
+			attachLogPreferenceChangeListenerToPlugin(t.getPluginID());
+		}
+		for (IRCPPlugin t : mGeneratorPlugins) {
+			attachLogPreferenceChangeListenerToPlugin(t.getPluginID());
+		}
+
+		for (IRCPPlugin t : mAnalysisPlugins) {
+			attachLogPreferenceChangeListenerToPlugin(t.getPluginID());
+		}
+
+	}
+
+	private void attachLogPreferenceChangeListenerToPlugin(String pluginId) {
+		// first, attach a listener to get informed whenever preferences change
+		ScopedPreferenceStore preferencesInstance = new ScopedPreferenceStore(
+				InstanceScope.INSTANCE, pluginId);
+		preferencesInstance
+				.addPropertyChangeListener(new LogPreferenceChangeListener(
+						"Instance", pluginId));
+
+		ScopedPreferenceStore preferencesConfiguration = new ScopedPreferenceStore(
+				ConfigurationScope.INSTANCE, pluginId);
+		preferencesConfiguration
+				.addPropertyChangeListener(new LogPreferenceChangeListener(
+						"Configuration", pluginId));
+
+		ScopedPreferenceStore preferencesDefault = new ScopedPreferenceStore(
+				DefaultScope.INSTANCE, pluginId);
+		preferencesDefault
+				.addPropertyChangeListener(new LogPreferenceChangeListener(
+						"Default", pluginId));
 	}
 
 	/**
@@ -396,15 +400,16 @@ public class Application implements IApplication, ICore {
 	 */
 	private void loadExtension() {
 		IExtensionRegistry reg = Platform.getExtensionRegistry();
-		s_Logger.info("Loading Plugins...");
+		mLogger.info("Loading Plugins...");
 		loadControllerPlugins(reg);
 		loadOutputPlugins(reg);
 		loadSourcePlugins(reg);
 
 		loadGeneratorPlugins(reg);
 		loadAnalysisPlugins(reg);
-		s_Logger.info("Finished loading Plugins !");
-		s_Logger.info("--------------------------------------------------------------------------------");
+		attachLogPreferenceChangeListenerToActivePlugins();
+		mLogger.info("Finished loading Plugins !");
+		mLogger.info("--------------------------------------------------------------------------------");
 	}
 
 	/**
@@ -423,7 +428,7 @@ public class Application implements IApplication, ICore {
 	private void loadControllerPlugins(IExtensionRegistry reg) {
 
 		boolean usegui = false;
-		if (this.m_CoreMode == Ultimate_Mode.USEGUI) {
+		if (this.mCoreMode == Ultimate_Mode.USEGUI) {
 			usegui = true;
 		}
 
@@ -441,28 +446,28 @@ public class Application implements IApplication, ICore {
 		}
 
 		if (usegui) {
-			s_Logger.info("Getting present graphical controllers ("
+			mLogger.info("Getting present graphical controllers ("
 					+ suitableControllers.size() + ")");
 		} else {
-			s_Logger.info("Getting present non-graphical controllers ("
+			mLogger.info("Getting present non-graphical controllers ("
 					+ suitableControllers.size() + ")");
 		}
 
 		try {
 
-			this.m_Controller = chooseController(suitableControllers);
+			this.mCurrentController = chooseController(suitableControllers);
 
 		} catch (FileNotFoundException e) {
-			s_Logger.error("The specified file " + e.getMessage()
+			mLogger.error("The specified file " + e.getMessage()
 					+ " was not found or couldn't be read.");
-			this.m_CmdLineArgs.printUsage();
-			s_Logger.info("Exiting Ultimate.");
+			this.mCmdLineArgs.printUsage();
+			mLogger.info("Exiting Ultimate.");
 		} catch (JAXBException e) {
-			s_Logger.error("There was an error processing the XML file. Please make sure that it validates against toolchain.xsd.");
-			s_Logger.info("Exiting Ultimate.");
+			mLogger.error("There was an error processing the XML file. Please make sure that it validates against toolchain.xsd.");
+			mLogger.info("Exiting Ultimate.");
 		} catch (SAXException e) {
-			s_Logger.error("There was an error parsing the XML file. Please make sure that it validates against toolchain.xsd.");
-			s_Logger.info("Exiting Ultimate.");
+			mLogger.error("There was an error parsing the XML file. Please make sure that it validates against toolchain.xsd.");
+			mLogger.info("Exiting Ultimate.");
 		}
 
 	}
@@ -487,17 +492,17 @@ public class Application implements IApplication, ICore {
 			throws FileNotFoundException, JAXBException, SAXException {
 
 		// for external execution we need a "special" controller
-		if (this.m_CoreMode == Ultimate_Mode.EXTERNAL_EXECUTION) {
-			return new ExtExecutionController(this.m_ToolchainXML.getPath(),
-					this.m_InputFile);
+		if (this.mCoreMode == Ultimate_Mode.EXTERNAL_EXECUTION) {
+			return new ExtExecutionController(this.mToolchainXML.getPath(),
+					this.mInputFile);
 		}
 
 		// command-line controller desired, return it
-		if (this.m_CoreMode == Ultimate_Mode.FALLBACK_CMDLINE)
-			return new CommandlineController(this.m_CmdLineArgs);
+		if (this.mCoreMode == Ultimate_Mode.FALLBACK_CMDLINE)
+			return new CommandlineController(this.mCmdLineArgs);
 
 		// if in interactive mode, search for suitable controller
-		if (this.m_CoreMode == Ultimate_Mode.INTERACTIVE) {
+		if (this.mCoreMode == Ultimate_Mode.INTERACTIVE) {
 			for (IConfigurationElement element : suitableControllers) {
 
 				// in interactive mode return interactive controller
@@ -509,26 +514,28 @@ public class Application implements IApplication, ICore {
 						return (IController) element
 								.createExecutableExtension("class");
 					} catch (CoreException e1) {
-						s_Logger.error("The desired controller for the interactive console could not be loaded!");
+						mLogger.error("The desired controller for the interactive console could not be loaded!");
 					}
 			}
 		}
 
-		if (this.m_CoreMode == Ultimate_Mode.USEGUI) {
+		if (this.mCoreMode == Ultimate_Mode.USEGUI) {
 			int availableControllersCount = suitableControllers.size();
 			if (availableControllersCount == 1) {
 				try {
 					return (IController) (suitableControllers.get(0)
 							.createExecutableExtension("class"));
 				} catch (CoreException e) {
-					s_Logger.error("The desired gui controller could not be loaded!");
+					mLogger.error("The desired gui controller could not be loaded!");
 				}
 			} else if (availableControllersCount > 1) {
-				//TODO remove the whole code when refactoring is complete (every controller in its own plugin) 
-				// removed ControllerChooseDialog. It seems not necessary to be able to choose between different controllers at runtime.  
-//				ControllerChooseDialog chooser = new ControllerChooseDialog(
-//						suitableControllers);
-//				int return_value = chooser.open();
+				// TODO remove the whole code when refactoring is complete
+				// (every controller in its own plugin)
+				// removed ControllerChooseDialog. It seems not necessary to be
+				// able to choose between different controllers at runtime.
+				// ControllerChooseDialog chooser = new ControllerChooseDialog(
+				// suitableControllers);
+				// int return_value = chooser.open();
 				int return_value = 0;
 				if (return_value >= 0) {
 					try {
@@ -536,16 +543,16 @@ public class Application implements IApplication, ICore {
 								.get(return_value)
 								.createExecutableExtension("class"));
 					} catch (CoreException e) {
-						s_Logger.error("The desired gui controller could not be loaded!");
+						mLogger.error("The desired gui controller could not be loaded!");
 					}
 				}
 			} else {
-				s_Logger.error("CoreMode is USEGUI, but no usable GUI controller could be found.");		
+				mLogger.error("CoreMode is USEGUI, but no usable GUI controller could be found.");
 			}
 		}
-		
-		s_Logger.warn("Could not load a suitable controller. Falling back to default command line controller");
-		return new CommandlineController(this.m_CmdLineArgs);
+
+		mLogger.warn("Could not load a suitable controller. Falling back to default command line controller");
+		return new CommandlineController(this.mCmdLineArgs);
 	}
 
 	/**
@@ -561,22 +568,22 @@ public class Application implements IApplication, ICore {
 	private void loadOutputPlugins(IExtensionRegistry reg) {
 		IConfigurationElement[] configElements_out = reg
 				.getConfigurationElementsFor(ExtensionPoints.EP_OUTPUT);
-		s_Logger.debug("We have " + configElements_out.length
+		mLogger.debug("We have " + configElements_out.length
 				+ " possible Output plugin(s)");
 		for (IConfigurationElement element : configElements_out) {
 			try {
 				IOutput output = (IOutput) element
 						.createExecutableExtension("class");
 				// skip gui plug-ins if not running in GUI mode
-				if (!(output.isGuiRequired() && this.m_CoreMode != Ultimate_Mode.USEGUI))
-					m_OutputPlugins.add(output);
+				if (!(output.isGuiRequired() && this.mCoreMode != Ultimate_Mode.USEGUI))
+					mOutputPlugins.add(output);
 				else
-					s_Logger.error("Can't load a gui plugin in command-line mode!");
+					mLogger.error("Can't load a gui plugin in command-line mode!");
 			} catch (CoreException e) {
-				s_Logger.error("Can't load a Output Plugin !", e);
+				mLogger.error("Can't load a Output Plugin !", e);
 			}
 		}
-		s_Logger.info("Loaded " + m_OutputPlugins.size() + " Output Plugins");
+		mLogger.info("Loaded " + mOutputPlugins.size() + " Output Plugins");
 	}
 
 	/**
@@ -591,18 +598,18 @@ public class Application implements IApplication, ICore {
 	private void loadSourcePlugins(IExtensionRegistry reg) {
 		IConfigurationElement[] configElements_source = reg
 				.getConfigurationElementsFor(ExtensionPoints.EP_SOURCE);
-		s_Logger.debug("We have " + configElements_source.length
+		mLogger.debug("We have " + configElements_source.length
 				+ " possible Source plugin(s)");
 		for (IConfigurationElement element : configElements_source) {
 			try {
 				ISource source = (ISource) element
 						.createExecutableExtension("class");
-				m_SourcePlugins.add(source);
+				mSourcePlugins.add(source);
 			} catch (CoreException e) {
-				s_Logger.error("Can't load a Source Plugin !", e);
+				mLogger.error("Can't load a Source Plugin !", e);
 			}
 		}
-		s_Logger.info("Loaded " + m_SourcePlugins.size() + " Source Plugins");
+		mLogger.info("Loaded " + mSourcePlugins.size() + " Source Plugins");
 
 	}
 
@@ -623,15 +630,16 @@ public class Application implements IApplication, ICore {
 				IGenerator generator = (IGenerator) element
 						.createExecutableExtension("class");
 				// skip gui plug-ins if not running in GUI mode
-				if (!(generator.isGuiRequired() && this.m_CoreMode != Ultimate_Mode.USEGUI))
-					m_GeneratorPlugins.add(generator);
-				else
-					s_Logger.error("Can't load a gui plugin in command-line mode!");
+				if (!(generator.isGuiRequired() && this.mCoreMode != Ultimate_Mode.USEGUI)) {
+					mGeneratorPlugins.add(generator);
+				} else {
+					mLogger.error("Can't load a gui plugin in command-line mode!");
+				}
 			} catch (CoreException e) {
-				s_Logger.error("Can't load a Generator Plugin !", e);
+				mLogger.error("Can't load a Generator Plugin !", e);
 			}
 		}
-		s_Logger.info("Loaded " + m_GeneratorPlugins.size()
+		mLogger.info("Loaded " + mGeneratorPlugins.size()
 				+ " Generator Plugins");
 	}
 
@@ -647,23 +655,22 @@ public class Application implements IApplication, ICore {
 	private void loadAnalysisPlugins(IExtensionRegistry reg) {
 		IConfigurationElement[] configElements_out = reg
 				.getConfigurationElementsFor(ExtensionPoints.EP_ANALYSIS);
-		s_Logger.debug("We have " + configElements_out.length
+		mLogger.debug("We have " + configElements_out.length
 				+ " possible analysis plugin(s)");
 		for (IConfigurationElement element : configElements_out) {
 			try {
 				IAnalysis analysis = (IAnalysis) element
 						.createExecutableExtension("class");
 				// skip gui plug-ins if not running in GUI mode
-				if (!(analysis.isGuiRequired() && this.m_CoreMode != Ultimate_Mode.USEGUI))
-					m_AnalysisPlugins.add(analysis);
+				if (!(analysis.isGuiRequired() && this.mCoreMode != Ultimate_Mode.USEGUI))
+					mAnalysisPlugins.add(analysis);
 				else
-					s_Logger.error("Can't load a gui plugin in command-line mode!");
+					mLogger.error("Can't load a gui plugin in command-line mode!");
 			} catch (CoreException e) {
-				s_Logger.error("Can't load an analysis Plugin !", e);
+				mLogger.error("Can't load an analysis Plugin !", e);
 			}
 		}
-		s_Logger.info("Loaded " + m_AnalysisPlugins.size()
-				+ " analysis Plugins");
+		mLogger.info("Loaded " + mAnalysisPlugins.size() + " analysis Plugins");
 	}
 
 	/**
@@ -672,36 +679,36 @@ public class Application implements IApplication, ICore {
 	 * used in a toolchain.
 	 */
 	private void initializePlugins() {
-		s_Logger.info("Initializing Plugins...");
+		mLogger.info("Initializing Plugins...");
 
 		// re-initialize already opened plugins
-		if (this.m_ToolchainWalker.getOpenPlugins().size() != 0) {
-			for (String s : this.m_ToolchainWalker.getOpenPlugins().keySet()) {
-				ITool t = m_Id2Plugin.get(s);
+		if (this.mToolchainWalker.getOpenPlugins().size() != 0) {
+			for (String s : this.mToolchainWalker.getOpenPlugins().keySet()) {
+				ITool t = mIdToTool.get(s);
 				if (t != null)
 					t.init(null);
 			}
 		} else {
-			for (IOutput out : m_OutputPlugins) {
-				s_Logger.info("Initializing " + out.getName() + "...");
+			for (IOutput out : mOutputPlugins) {
+				mLogger.info("Initializing " + out.getName() + "...");
 				out.init(null);
 			}
-			for (IGenerator trans : m_GeneratorPlugins) {
-				s_Logger.info("Initializing " + trans.getName() + "...");
+			for (IGenerator trans : mGeneratorPlugins) {
+				mLogger.info("Initializing " + trans.getName() + "...");
 				trans.init(null);
 			}
-			for (IAnalysis trans : m_AnalysisPlugins) {
-				s_Logger.info("Initializing " + trans.getName() + "...");
+			for (IAnalysis trans : mAnalysisPlugins) {
+				mLogger.info("Initializing " + trans.getName() + "...");
 				trans.init(null);
 			}
 		}
-		for (ISource source : m_SourcePlugins) {
-			s_Logger.info("Initializing " + source.getName() + "...");
+		for (ISource source : mSourcePlugins) {
+			mLogger.info("Initializing " + source.getName() + "...");
 			source.init(null);
 		}
 
-		s_Logger.info("Finished initializing Plugins !");
-		s_Logger.info("--------------------------------------------------------------------------------");
+		mLogger.info("Finished initializing Plugins !");
+		mLogger.info("--------------------------------------------------------------------------------");
 	}
 
 	/**
@@ -738,9 +745,9 @@ public class Application implements IApplication, ICore {
 				// use the root logger to have this appender in all child
 				// loggers
 				Logger.getRootLogger().addAppender(loggingWindow);
-				s_Logger.info("Activated GUI Logging Window for Log4j Subsystem");
+				mLogger.info("Activated GUI Logging Window for Log4j Subsystem");
 			} catch (CoreException e) {
-				s_Logger.error("Could not load the logging window", e);
+				mLogger.error("Could not load the logging window", e);
 			}
 		}
 	}
@@ -754,8 +761,8 @@ public class Application implements IApplication, ICore {
 	public void resetCore() {
 		initializePlugins();
 		resetMemoryManager();
-		this.m_Bench.reset();
-		this.m_ToolchainWalker.reset();
+		this.mBenchmark.reset();
+		this.mToolchainWalker.reset();
 	}
 
 	/*
@@ -767,7 +774,7 @@ public class Application implements IApplication, ICore {
 	 */
 	@Override
 	public void setInputFile(File files) {
-		this.m_StoredFiles = files;
+		this.mCurrentFiles = files;
 	}
 
 	/*
@@ -779,25 +786,25 @@ public class Application implements IApplication, ICore {
 	 */
 	@Override
 	public boolean initiateParser(PreludeProvider preludefile) {
-		this.m_StoredParser = selectParser(this.m_StoredFiles);
+		this.mCurrentParser = selectParser(this.mCurrentFiles);
 
-		if (m_StoredParser == null) {
-			s_Logger.warn("Parser is NULL, aborting...");
+		if (mCurrentParser == null) {
+			mLogger.warn("Parser is NULL, aborting...");
 			return false;
 		}
 
 		// set prelude file if present
 		if (preludefile != null)
-			this.m_StoredParser.setPreludeFile(preludefile.getPreludeFile());
+			this.mCurrentParser.setPreludeFile(preludefile.getPreludeFile());
 		else
-			this.m_StoredParser.setPreludeFile(null);
+			this.mCurrentParser.setPreludeFile(null);
 
-		if (this.m_StoredParser.getOutputDefinition() == null) {
-			s_Logger.fatal("ISource returned invalid Output Definition, aborting...");
+		if (this.mCurrentParser.getOutputDefinition() == null) {
+			mLogger.fatal("ISource returned invalid Output Definition, aborting...");
 			return false;
 		}
 
-		s_Logger.info("Parser successfully initiated...");
+		mLogger.info("Parser successfully initiated...");
 
 		return true;
 	}
@@ -811,24 +818,24 @@ public class Application implements IApplication, ICore {
 	 */
 	@Override
 	public void letCoreRunParser() throws Exception {
-		boolean rtr_value = m_ModelManager.addItem(
-				runParser(this.m_StoredFiles, this.m_StoredParser),
-				this.m_StoredParser.getOutputDefinition());
+		boolean rtr_value = mModelManager.addItem(
+				runParser(this.mCurrentFiles, this.mCurrentParser),
+				this.mCurrentParser.getOutputDefinition());
 
-		s_Logger.debug("DataSafe ADD Operation successful: " + rtr_value);
+		mLogger.debug("DataSafe ADD Operation successful: " + rtr_value);
 	}
 
 	private void initiateToolMaps() {
 		// create list with all available tools
-		this.m_AllTools = new ArrayList<ITool>();
-		m_AllTools.addAll(m_OutputPlugins);
-		m_AllTools.addAll(m_GeneratorPlugins);
-		m_AllTools.addAll(m_AnalysisPlugins);
+		this.mTools = new ArrayList<ITool>();
+		mTools.addAll(mOutputPlugins);
+		mTools.addAll(mGeneratorPlugins);
+		mTools.addAll(mAnalysisPlugins);
 
 		// "reverse index", mapping plug-ids to actual tools
 		// needed for processing plugin statements in toolchains
-		for (ITool tool : m_AllTools) {
-			this.m_Id2Plugin.put(tool.getPluginID(), tool);
+		for (ITool tool : mTools) {
+			this.mIdToTool.put(tool.getPluginID(), tool);
 		}
 	}
 
@@ -842,26 +849,26 @@ public class Application implements IApplication, ICore {
 	@Override
 	public Toolchain makeToolSelection() {
 
-		if (m_AllTools.isEmpty()) {
-			s_Logger.warn("There are no plugins present, returning null tools.");
+		if (mTools.isEmpty()) {
+			mLogger.warn("There are no plugins present, returning null tools.");
 			return null;
 		}
 
 		// present selection dialog
-		Toolchain tmp = m_Controller.selectTools(m_AllTools);
+		Toolchain tmp = mCurrentController.selectTools(mTools);
 		if (tmp == null) {
 			/* dialog was aborted */
-			s_Logger.warn("Dialog was aborted, returning null tools.");
+			mLogger.warn("Dialog was aborted, returning null tools.");
 			return null;
 		}
 		if (!checkToolchain(tmp.getToolchain().getPluginOrSubchain())) {
-			s_Logger.warn("Invalid toolchain selection, returning null tools.");
+			mLogger.warn("Invalid toolchain selection, returning null tools.");
 			return null;
 		}
 
-		s_Logger.info("Returning lots of tools...");
-		this.m_StoredToolchainUse = tmp;
-		return this.m_StoredToolchainUse;
+		mLogger.info("Returning lots of tools...");
+		this.mCurrentToolchain = tmp;
+		return this.mCurrentToolchain;
 	}
 
 	/*
@@ -874,18 +881,18 @@ public class Application implements IApplication, ICore {
 	@Override
 	public IStatus processToolchain(IProgressMonitor monitor) throws Exception {
 
-		if (m_ModelManager.size() < 1) {
-			s_Logger.error("no model present, aborting...");
+		if (mModelManager.size() < 1) {
+			mLogger.error("no model present, aborting...");
 			throw new Exception("There is no model present");
 		}
-		m_CurrentToolchainMonitor = monitor;
-		m_ToolchainWalker.walk(monitor);
-		new ResultNotifier(m_Controller).processResults();
-		m_StoredToolchainUse.clearStore();
+		mCurrentToolchainMonitor = monitor;
+		mToolchainWalker.walk(monitor);
+		new ResultNotifier(mCurrentController).processResults();
+		mCurrentToolchain.clearStore();
 
-		s_Logger.info("Finished executing Toolchain !");
-		m_Bench.report();
-		s_Logger.info("--------------------------------------------------------------------------------");
+		mLogger.info("Finished executing Toolchain !");
+		mBenchmark.report();
+		mLogger.info("--------------------------------------------------------------------------------");
 
 		return Status.OK_STATUS;
 	}
@@ -896,10 +903,10 @@ public class Application implements IApplication, ICore {
 		IElement root = null;
 		// parse the files to Graph
 		try {
-			s_Logger.info("Parsing single file ...");
-			m_Bench.start("Parser");
+			mLogger.info("Parsing single file ...");
+			mBenchmark.start("Parser");
 			root = parser.parseAST(file);
-			m_Bench.stop();
+			mBenchmark.stop();
 
 			/*
 			 * for testing purposes only for(ISerialization ser :
@@ -908,7 +915,7 @@ public class Application implements IApplication, ICore {
 			 * System.out.println(in.toString()); }
 			 */
 		} catch (Exception e) {
-			s_Logger.fatal("Parsing gives Exception", e);
+			mLogger.fatal("Parsing gives Exception", e);
 			resetMemoryManager();
 		}
 		return root;
@@ -920,21 +927,20 @@ public class Application implements IApplication, ICore {
 		ArrayList<ISource> usableParsers = new ArrayList<ISource>();
 		ISource parser = null;
 
-		s_Logger.debug("We have " + m_SourcePlugins.size()
-				+ " parsers present.");
+		mLogger.debug("We have " + mSourcePlugins.size() + " parsers present.");
 
 		// how many of these parsers can be used on our input file?
-		for (ISource p : m_SourcePlugins) {
+		for (ISource p : mSourcePlugins) {
 			if (p.parseable(files)) {
-				s_Logger.info("Parser " + p.getName() + " is usable.");
+				mLogger.info("Parser " + p.getName() + " is usable.");
 				usableParsers.add(p);
 			}
 		}
 
 		boolean showusableparser = ConfigurationScope.INSTANCE.getNode(
 				Activator.s_PLUGIN_ID).getBoolean(
-				IPreferenceConstants.s_NAME_SHOWUSABLEPARSER,
-				IPreferenceConstants.s_VALUE_SHOWUSABLEPARSER_DEFAULT);
+				PreferenceConstants.NAME_SHOWUSABLEPARSER,
+				PreferenceConstants.VALUE_SHOWUSABLEPARSER_DEFAULT);
 
 		// if only parser can be used, choose it!
 		if (usableParsers.size() == 1 && !showusableparser) {
@@ -943,26 +949,26 @@ public class Application implements IApplication, ICore {
 			return null;
 		} else {
 			// otherwise use parser choosing mechanism provided by Controller
-			parser = m_Controller.selectParser(usableParsers);
+			parser = mCurrentController.selectParser(usableParsers);
 		}
 
 		return parser;
 	}
 
 	private void resetMemoryManager() {
-		if (!m_ModelManager.isEmpty()) {
-			s_Logger.info("Clearing model...");
+		if (!mModelManager.isEmpty()) {
+			mLogger.info("Clearing model...");
 			try {
-				m_ModelManager.persistAll(false);
+				mModelManager.persistAll(false);
 			} catch (StoreObjectException e) {
-				s_Logger.error("Failed to persist Models", e);
+				mLogger.error("Failed to persist Models", e);
 			}
 		}
 		return;
 	}
 
 	public void stop() {
-		s_Logger.warn("Received 'Stop'-Command, ignoring...");
+		mLogger.warn("Received 'Stop'-Command, ignoring...");
 	}
 
 	/**
@@ -971,10 +977,10 @@ public class Application implements IApplication, ICore {
 	 * @return the m_ActiveControllerId
 	 */
 	public String getActiveControllerId() {
-		if (this.m_Controller == null) {
+		if (this.mCurrentController == null) {
 			return Activator.s_PLUGIN_ID;
 		}
-		return this.m_Controller.getPluginID();
+		return this.mCurrentController.getPluginID();
 	}
 
 	/**
@@ -983,7 +989,7 @@ public class Application implements IApplication, ICore {
 	 * @return the m_StoredToolchainUse
 	 */
 	public Toolchain getStoredToolchainUse() {
-		return this.m_StoredToolchainUse;
+		return this.mCurrentToolchain;
 	}
 
 	/**
@@ -992,7 +998,7 @@ public class Application implements IApplication, ICore {
 	 * @return the m_allTools
 	 */
 	public ArrayList<ITool> getAllTools() {
-		return this.m_AllTools;
+		return this.mTools;
 	}
 
 	/**
@@ -1001,7 +1007,7 @@ public class Application implements IApplication, ICore {
 	 * @return the m_CoreMode
 	 */
 	public Ultimate_Mode getCoreMode() {
-		return this.m_CoreMode;
+		return this.mCoreMode;
 	}
 
 	/**
@@ -1009,15 +1015,15 @@ public class Application implements IApplication, ICore {
 	 */
 
 	protected Toolchain getToolchain() {
-		return this.m_StoredToolchainUse;
+		return this.mCurrentToolchain;
 	}
 
 	protected IController getController() {
-		return this.m_Controller;
+		return this.mCurrentController;
 	}
 
 	protected ISource getParser() {
-		return this.m_StoredParser;
+		return this.mCurrentParser;
 	}
 
 	/**
@@ -1032,8 +1038,8 @@ public class Application implements IApplication, ICore {
 		for (Object o : chain) {
 			if (o instanceof PluginType) {
 				PluginType plugin = (PluginType) o;
-				if (!m_Id2Plugin.containsKey(plugin.getId())) {
-					s_Logger.error("Did not find plugin with id \""
+				if (!mIdToTool.containsKey(plugin.getId())) {
+					mLogger.error("Did not find plugin with id \""
 							+ plugin.getId() + "\". Skipping execution...");
 					return false;
 				}
@@ -1049,22 +1055,22 @@ public class Application implements IApplication, ICore {
 
 	@Override
 	public boolean canRerun() {
-		return m_StoredToolchainUse != null;
+		return mCurrentToolchain != null;
 	}
 
 	@Override
 	public boolean hasInputFiles() {
-		return m_StoredFiles != null;
+		return mCurrentFiles != null;
 	}
 
 	@Override
 	public void setToolchain(Toolchain toolchain) {
-		m_StoredToolchainUse = toolchain;
+		mCurrentToolchain = toolchain;
 	}
 
 	@Override
 	public void loadPreferences() {
-		loadPreferencesInternal(m_Controller.getLoadPrefName());
+		loadPreferencesInternal(mCurrentController.getLoadPrefName());
 	}
 
 	private void loadPreferencesInternal(String filename) {
@@ -1073,17 +1079,17 @@ public class Application implements IApplication, ICore {
 				FileInputStream fis = new FileInputStream(filename);
 				if (!Platform.getPreferencesService().importPreferences(fis)
 						.isOK())
-					s_Logger.warn("Failed to load preferences");
+					mLogger.warn("Failed to load preferences");
 			} catch (Exception e) {
-				s_Logger.warn("Could not load preferences", e);
+				mLogger.warn("Could not load preferences", e);
 			}
 		}
 	}
 
 	@Override
 	public void savePreferences() {
-		String filename = m_Controller.getSavePrefName();
-		if (filename != null && !filename.isEmpty() && !m_AllTools.isEmpty()) {
+		String filename = mCurrentController.getSavePrefName();
+		if (filename != null && !filename.isEmpty() && !mTools.isEmpty()) {
 			try {
 				FileOutputStream fis = new FileOutputStream(filename);
 				IPreferencesService ps = Platform.getPreferencesService();
@@ -1093,33 +1099,25 @@ public class Application implements IApplication, ICore {
 						null);
 				ps.exportPreferences(is.getNode(Activator.s_PLUGIN_ID), fis,
 						null);
-				/*
-				 * FIXME This is a total hack, but I don't know right now how to
-				 * save preferences for the SMTInterface...
-				 */
-				ps.exportPreferences(cs.getNode("SMTInterface"), fis, null);
-				ps.exportPreferences(is.getNode("SMTInterface"), fis, null);
-				for (ITool tool : m_AllTools) {
-					s_Logger.debug("Trying to save preferences for tool "
+
+				for (ITool tool : mTools) {
+
+					mLogger.debug("Trying to save preferences for tool "
 							+ tool.getName());
 					IEclipsePreferences[] prefs = tool.getPreferences(cs, is);
 					if (prefs != null) {
 						for (IEclipsePreferences p : prefs) {
 							ps.exportPreferences(p, fis, null);
 						}
-						s_Logger.debug("Saving preferences succeeded");
+						mLogger.debug("Saving preferences succeeded");
 					}
 				}
+				fis.flush();
+				fis.close();
 			} catch (Exception e) {
-				s_Logger.warn("Could not load preferences", e);
+				mLogger.warn("Could not load preferences", e);
 			}
 		}
-	}
-
-	@Override
-	public void getAllPreferences() {
-		// TODO Auto-generated method stub
-
 	}
 
 	/**
@@ -1127,28 +1125,28 @@ public class Application implements IApplication, ICore {
 	 * exceeded.
 	 */
 	public boolean continueProcessing() {
-		if (m_CurrentToolchainMonitor.isCanceled()) {
+		if (mCurrentToolchainMonitor.isCanceled()) {
 			return false;
 		}
-		return System.currentTimeMillis() < m_Deadline;
+		return System.currentTimeMillis() < mDeadline;
 	}
 
 	public void setSubtask(String task) {
-		m_CurrentToolchainMonitor.subTask(task);
+		mCurrentToolchainMonitor.subTask(task);
 	}
 
 	/**
 	 * Set point in time where the toolchain should be stopped.
 	 */
 	public void setDeadline(long date) {
-		m_Deadline = date;
+		mDeadline = date;
 	}
 
 	/**
 	 * @return the m_ToolchainXML
 	 */
 	public File getToolchainXML() {
-		return m_ToolchainXML;
+		return mToolchainXML;
 	}
 
 	/**
@@ -1156,14 +1154,14 @@ public class Application implements IApplication, ICore {
 	 *            the m_ToolchainXML to set
 	 */
 	public void setToolchainXML(File m_ToolchainXML) {
-		this.m_ToolchainXML = m_ToolchainXML;
+		this.mToolchainXML = m_ToolchainXML;
 	}
 
 	/**
 	 * @return the m_SettingsFile
 	 */
 	public File getSettingsFile() {
-		return m_SettingsFile;
+		return mSettingsFile;
 	}
 
 	/**
@@ -1171,14 +1169,14 @@ public class Application implements IApplication, ICore {
 	 *            the m_SettingsFile to set
 	 */
 	public void setSettingsFile(File m_SettingsFile) {
-		this.m_SettingsFile = m_SettingsFile;
+		this.mSettingsFile = m_SettingsFile;
 	}
 
 	/**
 	 * @return the m_InputFile
 	 */
 	public File getInputFile() {
-		return m_InputFile;
+		return mInputFile;
 	}
 
 	/**
@@ -1186,14 +1184,14 @@ public class Application implements IApplication, ICore {
 	 *            the m_InputFile to set
 	 */
 	public void setM_InputFile(File m_InputFile) {
-		this.m_InputFile = m_InputFile;
+		this.mInputFile = m_InputFile;
 	}
 
 	/**
 	 * @return the m_ParsedAST
 	 */
 	public Object getParsedAST() {
-		return m_ParsedAST;
+		return mParsedAST;
 	}
 
 	/**
@@ -1201,11 +1199,32 @@ public class Application implements IApplication, ICore {
 	 *            the m_ParsedAST to set
 	 */
 	public void setM_ParsedAST(Object m_ParsedAST) {
-		this.m_ParsedAST = m_ParsedAST;
+		this.mParsedAST = m_ParsedAST;
 	}
 
 	public void cancelToolchain() {
-		m_ToolchainWalker.requestCancel();
+		mToolchainWalker.requestCancel();
+	}
+
+	private class LogPreferenceChangeListener implements
+			IPropertyChangeListener {
+
+		private String mScope;
+		private String mPluginID;
+
+		private LogPreferenceChangeListener(String scope, String pluginID) {
+			mScope = scope;
+			mPluginID = pluginID;
+		}
+
+		@Override
+		public void propertyChange(PropertyChangeEvent event) {
+			
+			mLogger.debug("[" + mPluginID + " (" + mScope + ")] Preference \""
+					+ event.getProperty() + "\" changed: "
+					+ event.getOldValue() + " -> " + event.getNewValue());
+		}
+
 	}
 
 }

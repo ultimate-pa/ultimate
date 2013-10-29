@@ -9,7 +9,7 @@
    </extension>
    <extension point="org.eclipse.ui.preferencePages">
       <page
-            category="de.uni_freiburg.informatik.ultimate.core.coreplugin.preferences.ToolsPreferencePage"
+            category="de.uni_freiburg.informatik.ultimate.gui.preferencepages.ToolsPreferencePage"
             class="de.uni_freiburg.informatik.ultimate.boogie.DSITransformer.preferences.PreferencePage"
             id="de.uni_freiburg.informatik.ultimate.boogie.DSITransformer.preferences.PreferencePage"
             name="Data Structure Invariants">

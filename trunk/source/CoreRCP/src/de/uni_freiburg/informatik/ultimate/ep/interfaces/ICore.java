@@ -87,6 +87,4 @@ public interface ICore {
 	
 	void loadPreferences();
 
-	/*TODO*/void getAllPreferences();
-	
 }

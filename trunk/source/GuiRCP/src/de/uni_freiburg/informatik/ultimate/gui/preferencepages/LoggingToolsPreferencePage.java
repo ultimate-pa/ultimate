@@ -1,12 +1,26 @@
-package de.uni_freiburg.informatik.ultimate.core.coreplugin.preferences;
+package de.uni_freiburg.informatik.ultimate.gui.preferencepages;
 
+import java.util.StringTokenizer;
+
+import org.eclipse.core.runtime.preferences.InstanceScope;
 import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.swt.widgets.List;
 import org.eclipse.ui.IWorkbenchPreferencePage;
+import org.eclipse.ui.preferences.ScopedPreferenceStore;
+
+import de.uni_freiburg.informatik.ultimate.core.coreplugin.preferences.constants.PreferenceConstants;
 
 public class LoggingToolsPreferencePage extends AbstractDetailsPreferencePage
 		implements IWorkbenchPreferencePage {
 
+	
+	private ScopedPreferenceStore mPreferenceStore;
+
+	public LoggingToolsPreferencePage() {
+		mPreferenceStore = new ScopedPreferenceStore(InstanceScope.INSTANCE,
+				PreferenceConstants.PLUGINID);
+	}
+	
 	/*
 	 * (non-Javadoc)
 	 * 
@@ -16,7 +30,7 @@ public class LoggingToolsPreferencePage extends AbstractDetailsPreferencePage
 	 */
 	@Override
 	protected IPreferenceStore getCorrectPreferenceStore() {
-		return LoggingToolDetailsPreferenceWrapper.getPrefStore();
+		return mPreferenceStore;
 	}
 
 	/*
@@ -28,8 +42,8 @@ public class LoggingToolsPreferencePage extends AbstractDetailsPreferencePage
 	 */
 	@Override
 	protected String[] getDefaults() {
-		return LoggingToolDetailsPreferenceWrapper
-				.getDefaultLoggingToolDetailsPreference();
+		return convert(mPreferenceStore
+				.getDefaultString(PreferenceConstants.PREFID_TOOLDETAILS));
 	}
 
 	/*
@@ -41,7 +55,7 @@ public class LoggingToolsPreferencePage extends AbstractDetailsPreferencePage
 	 */
 	@Override
 	protected String getInvalidEntryMessage() {
-		return IPreferenceConstants.INVALID_TOOL_ENTRY;
+		return PreferenceConstants.INVALID_TOOL_ENTRY;
 	}
 
 	/*
@@ -53,8 +67,8 @@ public class LoggingToolsPreferencePage extends AbstractDetailsPreferencePage
 	 */
 	@Override
 	protected String[] getPreferenceAsStringArray() {
-		return LoggingToolDetailsPreferenceWrapper
-				.getLoggingToolDetailsPreference();
+		return convert(mPreferenceStore
+				.getString(PreferenceConstants.PREFID_TOOLDETAILS));
 	}
 
 	/*
@@ -66,8 +80,13 @@ public class LoggingToolsPreferencePage extends AbstractDetailsPreferencePage
 	 */
 	@Override
 	protected void setThePreference(String[] items) {
-		LoggingToolDetailsPreferenceWrapper
-				.setLoggingToolDeatilsPreference(items);
+		StringBuffer buffer = new StringBuffer();
+		for (int i = 0; i < items.length; i++) {
+			buffer.append(items[i]);
+			buffer.append(PreferenceConstants.VALUE_DELIMITER_LOGGING_PREF);
+		}
+		mPreferenceStore.setValue(PreferenceConstants.PREFID_TOOLDETAILS, buffer
+				.toString());
 	}
 
 	/* (non-Javadoc)
@@ -75,12 +94,28 @@ public class LoggingToolsPreferencePage extends AbstractDetailsPreferencePage
 	 */
 	@Override
 	protected String getInfoContent(List detailList) {
-		return IPreferenceConstants.EMPTY_STRING;
+		return PreferenceConstants.EMPTY_STRING;
 	}
 
 	@Override
 	protected String[] getComboSupply() {
 		return new String[0];
+	}
+	
+	/**
+	 * Converts IPreferenceConstants.VALUE_DELIMITER_LOGGING_PREF delimited
+	 * String to a String array.
+	 */
+	private static String[] convert(String preferenceValue) {
+		StringTokenizer tokenizer = new StringTokenizer(preferenceValue,
+				PreferenceConstants.VALUE_DELIMITER_LOGGING_PREF);
+		int tokenCount = tokenizer.countTokens();
+		String[] elements = new String[tokenCount];
+		for (int i = 0; i < tokenCount; i++) {
+			elements[i] = tokenizer.nextToken();
+		}
+
+		return elements;
 	}
 
 

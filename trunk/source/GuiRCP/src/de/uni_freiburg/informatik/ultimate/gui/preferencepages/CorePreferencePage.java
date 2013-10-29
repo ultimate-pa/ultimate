@@ -1,9 +1,10 @@
-package de.uni_freiburg.informatik.ultimate.core.coreplugin.preferences;
+package de.uni_freiburg.informatik.ultimate.gui.preferencepages;
 
 import java.io.IOException;
 
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.Activator;
+import de.uni_freiburg.informatik.ultimate.core.coreplugin.preferences.constants.PreferenceConstants;
 
 import org.apache.log4j.Logger;
 import org.eclipse.core.runtime.preferences.ConfigurationScope;
@@ -42,13 +43,13 @@ public class CorePreferencePage extends FieldEditorPreferencePage
 	//@Override
 	protected void createFieldEditors() {
 		//a Field editor for files... there are several other FieldEditors availabel
-		BooleanFieldEditor showusableparser = new BooleanFieldEditor(IPreferenceConstants.s_NAME_SHOWUSABLEPARSER,
-				IPreferenceConstants.s_LABEL_SHOWUSABLEPARSER,getFieldEditorParent());
+		BooleanFieldEditor showusableparser = new BooleanFieldEditor(PreferenceConstants.NAME_SHOWUSABLEPARSER,
+				PreferenceConstants.LABEL_SHOWUSABLEPARSER,getFieldEditorParent());
 
 		addField(showusableparser);
 		
-		BooleanFieldEditor showResultNotifierPopUp = new BooleanFieldEditor(IPreferenceConstants.s_NAME_SHOWRESULTNOTIFIERPOPUP,
-				IPreferenceConstants.s_LABEL_SHOWRESULTNOTIFIERPOPUP,getFieldEditorParent());
+		BooleanFieldEditor showResultNotifierPopUp = new BooleanFieldEditor(PreferenceConstants.NAME_SHOWRESULTNOTIFIERPOPUP,
+				PreferenceConstants.LABEL_SHOWRESULTNOTIFIERPOPUP,getFieldEditorParent());
 
 		addField(showResultNotifierPopUp); 
 	}

@@ -8,7 +8,7 @@
    <extension
          point="org.eclipse.ui.preferencePages">
       <page
-            category="de.uni_freiburg.informatik.ultimate.core.coreplugin.preferences.OutputPreferencePage"
+            category="de.uni_freiburg.informatik.ultimate.gui.preferencepages.OutputPreferencePage"
             class="de.uni_freiburg.informatik.ultimate.boogie.printer.preferences.PreferencePage"
             id="de.uni_freiburg.informatik.ultimate.boogie.printer.preferences.PreferencePage"
             name="Boogie Printer">

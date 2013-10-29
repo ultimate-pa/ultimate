@@ -10,6 +10,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.StringTokenizer;
 
 import org.apache.log4j.ConsoleAppender;
 import org.apache.log4j.FileAppender;
@@ -19,14 +20,13 @@ import org.apache.log4j.PatternLayout;
 import org.apache.log4j.spi.LoggerRepository;
 import org.eclipse.core.runtime.preferences.InstanceScope;
 import org.eclipse.jface.preference.IPreferenceStore;
+import org.eclipse.jface.util.IPropertyChangeListener;
+import org.eclipse.jface.util.PropertyChangeEvent;
 import org.eclipse.ui.preferences.ScopedPreferenceStore;
 
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.Activator;
-import de.uni_freiburg.informatik.ultimate.core.coreplugin.preferences.IPreferenceConstants;
-import de.uni_freiburg.informatik.ultimate.core.coreplugin.preferences.LogFilePreferencePage;
-import de.uni_freiburg.informatik.ultimate.core.coreplugin.preferences.LoggingDetailsPreferenceWrapper;
-import de.uni_freiburg.informatik.ultimate.core.coreplugin.preferences.LoggingToolDetailsPreferenceWrapper;
+import de.uni_freiburg.informatik.ultimate.core.coreplugin.preferences.constants.PreferenceConstants;
 
 /**
  * UltimateLoggers
@@ -39,9 +39,9 @@ public class UltimateLoggerFactory {
 	/**
 	 * the singleton
 	 */
-	private static UltimateLoggerFactory instance;
+	private static UltimateLoggerFactory sInstance;
 
-	private IPreferenceStore preferenceStore;
+	private IPreferenceStore mPreferenceStore;
 	private List<String> presentLoggers;
 	private FileAppender logFile;
 
@@ -51,10 +51,24 @@ public class UltimateLoggerFactory {
 	public static final String LOGGER_NAME_TOOLS = "tools";
 
 	private UltimateLoggerFactory() {
-		this.preferenceStore = new ScopedPreferenceStore(
-				InstanceScope.INSTANCE, Activator.s_PLUGIN_ID);
+		mPreferenceStore = new ScopedPreferenceStore(InstanceScope.INSTANCE,
+				Activator.s_PLUGIN_ID);
 		initializeLog4J();
-		updateLoggerHierarchie();
+		refreshPropertiesLoggerHierarchie();
+		refreshPropertiesAppendLogFile();
+
+		// FIXME: Care! Check which properties are relevant for logging and
+		// exactly when we have to reload
+		// we do not care what property changes, we just reload the logging
+		// stuff every time
+		mPreferenceStore
+				.addPropertyChangeListener(new IPropertyChangeListener() {
+					@Override
+					public void propertyChange(PropertyChangeEvent event) {
+						refreshPropertiesLoggerHierarchie();
+						refreshPropertiesAppendLogFile();
+					}
+				});
 	}
 
 	/**
@@ -79,28 +93,25 @@ public class UltimateLoggerFactory {
 
 	}
 
-	public void appendLogFile() {
+	private void refreshPropertiesAppendLogFile() {
 		// if log-file should be used, it will be appended here
-		if (preferenceStore.getBoolean(IPreferenceConstants.PREFID_LOGFILE)) {
+		if (mPreferenceStore.getBoolean(PreferenceConstants.PREFID_LOGFILE)) {
 			// if there is already a log file, we remove it!
 			if (logFile != null) {
 				Logger.getRootLogger().removeAppender(logFile);
 				logFile = null;
 			}
-			String logName = preferenceStore
-					.getString(IPreferenceConstants.PREFID_LOGFILE_NAME);
-			String logDir = preferenceStore
-					.getString(IPreferenceConstants.PREFID_LOGFILE_DIR);
-			if (logName.isEmpty() || logDir.isEmpty()) {
-				logName = LogFilePreferencePage.DEFAULT_LOGFILE;
-				logDir = LogFilePreferencePage.DEFAULT_LOGFILE_DIR;
-			}
+			String logName = mPreferenceStore
+					.getString(PreferenceConstants.PREFID_LOGFILE_NAME);
+			String logDir = mPreferenceStore
+					.getString(PreferenceConstants.PREFID_LOGFILE_DIR);
+
 			try {
 				PatternLayout layout = new PatternLayout(
 						de.uni_freiburg.informatik.ultimate.plugins.Constants
 								.getLoggerPattern());
-				boolean append = preferenceStore
-						.getBoolean(IPreferenceConstants.PREFID_APPEXLOGFILE);
+				boolean append = mPreferenceStore
+						.getBoolean(PreferenceConstants.PREFID_APPEXLOGFILE);
 				logFile = new FileAppender(layout, logDir + File.separator
 						+ logName + ".log", append);
 				Logger.getRootLogger().addAppender(logFile);
@@ -126,10 +137,10 @@ public class UltimateLoggerFactory {
 	 */
 	public static UltimateLoggerFactory getInstance() {
 		// lazily initialize the factory
-		if (instance == null) {
-			instance = new UltimateLoggerFactory();
+		if (sInstance == null) {
+			sInstance = new UltimateLoggerFactory();
 		}
-		return instance;
+		return sInstance;
 	}
 
 	/**
@@ -152,7 +163,7 @@ public class UltimateLoggerFactory {
 	 *         tool.
 	 */
 	private boolean isExternalTool(String id) {
-		return id.startsWith(IPreferenceConstants.EXTERNAL_TOOLS_PREFIX);
+		return id.startsWith(PreferenceConstants.EXTERNAL_TOOLS_PREFIX);
 	}
 
 	/**
@@ -189,14 +200,11 @@ public class UltimateLoggerFactory {
 		return Logger.getLogger(LOGGER_NAME_PLUGINS);
 	}
 
-	/**
-	 * void buildLoggerHierarchie
-	 */
-	public void updateLoggerHierarchie() {
+	private void refreshPropertiesLoggerHierarchie() {
 		presentLoggers = new LinkedList<String>();
 		Logger rootLogger = Logger.getRootLogger();
-		rootLogger.setLevel(Level.toLevel(preferenceStore
-				.getString(IPreferenceConstants.PREFID_ROOT)));
+		rootLogger.setLevel(Level.toLevel(mPreferenceStore
+				.getString(PreferenceConstants.PREFID_ROOT)));
 
 		// now create children of the rootLogger
 
@@ -204,55 +212,97 @@ public class UltimateLoggerFactory {
 		LoggerRepository rootRepos = rootLogger.getLoggerRepository();
 		Logger pluginsLogger = rootRepos.getLogger(LOGGER_NAME_PLUGINS);
 		presentLoggers.add(LOGGER_NAME_PLUGINS);
-		String pluginslevel = preferenceStore
-				.getString(IPreferenceConstants.PREFID_PLUGINS);
+		String pluginslevel = mPreferenceStore
+				.getString(PreferenceConstants.PREFID_PLUGINS);
 		if (!pluginslevel.isEmpty())
 			pluginsLogger.setLevel(Level.toLevel(pluginslevel));
 
 		// external tools
 		Logger toolslog = rootRepos.getLogger(LOGGER_NAME_TOOLS);
 		presentLoggers.add(LOGGER_NAME_TOOLS);
-		String toolslevel = preferenceStore
-				.getString(IPreferenceConstants.PREFID_TOOLS);
+		String toolslevel = mPreferenceStore
+				.getString(PreferenceConstants.PREFID_TOOLS);
 		if (!toolslevel.isEmpty())
 			toolslog.setLevel(Level.toLevel(toolslevel));
 
 		// controller
 		Logger controllogger = rootRepos.getLogger(LOGGER_NAME_CONTROLLER);
-		String controllevel = preferenceStore
-				.getString(IPreferenceConstants.PREFID_CONTROLLER);
+		String controllevel = mPreferenceStore
+				.getString(PreferenceConstants.PREFID_CONTROLLER);
 		if (!controllevel.isEmpty())
 			controllogger.setLevel(Level.toLevel(controllevel));
 		presentLoggers.add(LOGGER_NAME_CONTROLLER);
 
 		// core
 		Logger corelogger = rootRepos.getLogger(Activator.s_PLUGIN_ID);
-		String corelevel = preferenceStore
-				.getString(IPreferenceConstants.PREFID_CORE);
+		String corelevel = mPreferenceStore
+				.getString(PreferenceConstants.PREFID_CORE);
 		if (!corelevel.isEmpty())
 			corelogger.setLevel(Level.toLevel(corelevel));
 		presentLoggers.add(Activator.s_PLUGIN_ID);
 
 		// create children for plug-ins
 		LoggerRepository piRepos = pluginsLogger.getLoggerRepository();
-		String[] plugins = LoggingDetailsPreferenceWrapper.getAllKeys();
+		String[] plugins = getAllKeys();
 
 		for (String plugin : plugins) {
 			Logger logger = piRepos.getLogger(LOGGER_NAME_PLUGINS + "."
 					+ plugin);
-			logger.setLevel(Level.toLevel(LoggingDetailsPreferenceWrapper
-					.getLogLevel(plugin)));
+			logger.setLevel(Level.toLevel(getLogLevel(plugin)));
 			presentLoggers.add(logger.getName());
 		}
 
 		// create child loggers for external tools
 		LoggerRepository toolRepos = toolslog.getLoggerRepository();
-		String[] tools = LoggingToolDetailsPreferenceWrapper.getAllKeys();
+		String[] tools = getAllKeys();
 		for (String tool : tools) {
 			Logger logger = toolRepos.getLogger(LOGGER_NAME_TOOLS + "." + tool);
-			logger.setLevel(Level.toLevel(LoggingToolDetailsPreferenceWrapper
-					.getLogLevel(tool)));
+			logger.setLevel(Level.toLevel(getLogLevel(tool)));
 			presentLoggers.add(logger.getName());
 		}
+	}
+
+	/**
+	 * String getLogLevel gets a log level for a certain plug-in
+	 * 
+	 * @param id
+	 *            the id of the plug in
+	 * @return the log level or null if no log-level is directly associated
+	 */
+	private String getLogLevel(String id) {
+		String[] pref = getLoggingDetailsPreference();
+		for (String string : pref) {
+			if (string.startsWith(id + "=")) {
+				return string.substring(string.lastIndexOf("=") + 1);
+			}
+		}
+		return null;
+	}
+
+	private String[] getLoggingDetailsPreference() {
+		return convert(mPreferenceStore
+				.getString(PreferenceConstants.PREFID_DETAILS));
+	}
+
+	private String[] getAllKeys() {
+		String[] pref = convert(mPreferenceStore
+				.getString(PreferenceConstants.PREFID_DETAILS));
+		String[] retVal = new String[pref.length];
+		for (int i = 0; i < retVal.length; i++) {
+			retVal[i] = pref[i].substring(0, pref[i].lastIndexOf("="));
+		}
+		return retVal;
+	}
+
+	private String[] convert(String preferenceValue) {
+		StringTokenizer tokenizer = new StringTokenizer(preferenceValue,
+				PreferenceConstants.VALUE_DELIMITER_LOGGING_PREF);
+		int tokenCount = tokenizer.countTokens();
+		String[] elements = new String[tokenCount];
+		for (int i = 0; i < tokenCount; i++) {
+			elements[i] = tokenizer.nextToken();
+		}
+
+		return elements;
 	}
 }

@@ -1,15 +1,9 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences;
 
-
-
 import org.eclipse.core.runtime.preferences.AbstractPreferenceInitializer;
-import org.eclipse.core.runtime.preferences.ConfigurationScope;
 import org.eclipse.core.runtime.preferences.DefaultScope;
-import org.eclipse.core.runtime.preferences.IEclipsePreferences;
 import org.eclipse.ui.preferences.ScopedPreferenceStore;
-
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.Activator;
-
 
 /**
  * Provides default values for the preference page.
@@ -20,11 +14,7 @@ public class PreferenceInitializer extends AbstractPreferenceInitializer {
 
 	@Override
 	public void initializeDefaultPreferences() {
-		//obtain the default scope
-		DefaultScope defaultscope = new DefaultScope();
-//		IEclipsePreferences defaults = defaultscope.getNode(Activator.s_PLUGIN_ID);
-		ScopedPreferenceStore preferences = new ScopedPreferenceStore(defaultscope,Activator.PLUGIN_ID);
-
+		ScopedPreferenceStore preferences = new ScopedPreferenceStore(DefaultScope.INSTANCE,Activator.PLUGIN_ID);
 
 		//set the default values
 		preferences.setDefault(PreferenceValues.NAME_INTERPROCEDUTAL, PreferenceValues.DEF_INTERPROCEDUTAL);

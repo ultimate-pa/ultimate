@@ -4,11 +4,11 @@
  * File:	AbstractDetailsPreferencePage.java created on Feb 5, 2010 by Bjï¿½rn Buchhold
  *
  */
-package de.uni_freiburg.informatik.ultimate.core.coreplugin.preferences;
+package de.uni_freiburg.informatik.ultimate.gui.preferencepages;
 
 import java.util.Arrays;
 
-import de.uni_freiburg.informatik.ultimate.logging.UltimateLoggerFactory;
+import de.uni_freiburg.informatik.ultimate.core.coreplugin.preferences.constants.PreferenceConstants;
 
 import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.jface.preference.PreferencePage;
@@ -172,7 +172,7 @@ public abstract class AbstractDetailsPreferencePage extends PreferencePage
 		}
 		String logLevel = text.substring(eqIndex + 1).toUpperCase();
 
-		if (!Arrays.asList(IPreferenceConstants.VALUE_VALID_LOG_LEVELS)
+		if (!Arrays.asList(PreferenceConstants.VALUE_VALID_LOG_LEVELS)
 				.contains(logLevel)) {
 			raiseInvalidLogLevelError();
 			return false;
@@ -199,7 +199,7 @@ public abstract class AbstractDetailsPreferencePage extends PreferencePage
 	 * void raiseInvalidLogLevelError
 	 */
 	private void raiseInvalidLogLevelError() {
-		setErrorMessage(IPreferenceConstants.INVALID_LOGLEVEL);
+		setErrorMessage(PreferenceConstants.INVALID_LOGLEVEL);
 	}
 
 	/*
@@ -233,9 +233,7 @@ public abstract class AbstractDetailsPreferencePage extends PreferencePage
 	 */
 	public boolean performOk() {
 		setThePreference(detailList.getItems());
-		boolean retVal = super.performOk();
-		UltimateLoggerFactory.getInstance().updateLoggerHierarchie();
-		return retVal;
+		return super.performOk();
 	}
 
 	/**
