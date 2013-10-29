@@ -133,8 +133,12 @@ public class ACSLHandler implements IACSLHandler {
         if (node instanceof CodeAnnotStmt) {
             Result formula = main.dispatch(((Assertion) ((CodeAnnotStmt) node)
                     .getCodeStmt()).getFormula());
-            return new Result(new AssertStatement(new CACSLLocation(node,
-                    new Check(Check.Spec.ASSERT)), ((Expression) formula.node)));
+            Check check = new Check(Check.Spec.ASSERT);
+            AssertStatement assertStmt = new AssertStatement(
+                    new CACSLLocation(node, check),
+                    ((Expression) formula.node));
+            check.addToNodeAnnot(assertStmt);
+            return new Result(assertStmt);
         }
         // TODO : other cases
         String msg = "ACSLHandler: Not yet implemented: " + node.toString();
@@ -407,10 +411,11 @@ public class ACSLHandler implements IACSLHandler {
     public Result visit(Dispatcher main, Requires node) {
         specType = ACSLHandler.SPEC_TYPE.REQUIRES;
         Expression formula = (Expression) main.dispatch(node.getFormula()).node;
-        ILocation reqLoc = new CACSLLocation(node, new Check(
-                Check.Spec.PRE_CONDITION));
+        Check check = new Check(Check.Spec.PRE_CONDITION);
+        ILocation reqLoc = new CACSLLocation(node, check);
         RequiresSpecification req = new RequiresSpecification(reqLoc, false,
                 formula);
+        check.addToNodeAnnot(req);
         return new ResultContract(new Specification[] { req });
     }
 
@@ -429,10 +434,11 @@ public class ACSLHandler implements IACSLHandler {
         }
         specType = ACSLHandler.SPEC_TYPE.ENSURES;
         Expression formula = (Expression) main.dispatch(e).node;
-        ILocation ensLoc = new CACSLLocation(node, new Check(
-                Check.Spec.POST_CONDITION));
+        Check check = new Check(Check.Spec.POST_CONDITION);
+        ILocation ensLoc = new CACSLLocation(node, check);
         EnsuresSpecification ens = new EnsuresSpecification(ensLoc, false,
                 formula);
+        check.addToNodeAnnot(ens);
         return new ResultContract(new Specification[] { ens });
     }
 
@@ -493,10 +499,11 @@ public class ACSLHandler implements IACSLHandler {
         Result res = main.dispatch(node.getFormula());
         assert res != null && res.node != null;
         assert res.node instanceof Expression;
-        ILocation invLoc = new CACSLLocation(node, new Check(
-                Check.Spec.INVARIANT));
+        Check check = new Check(Check.Spec.INVARIANT);
+        ILocation invLoc = new CACSLLocation(node, check);
         LoopInvariantSpecification lis = new LoopInvariantSpecification(invLoc,
                 false, (Expression) res.node);
+        check.addToNodeAnnot(lis);
         return new Result(lis);
     }
 

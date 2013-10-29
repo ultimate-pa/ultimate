@@ -1594,13 +1594,15 @@ public class CHandler implements ICHandler {
 			auxVars.putAll(rr.auxVars);
 
 			if (node.getOperator() == IASTBinaryExpression.op_divide) {
-				CACSLLocation assertLoc = new CACSLLocation(node,
-						new Check(Check.Spec.DIVISION_BY_ZERO));
-				stmt.add(new AssertStatement(assertLoc,
-						new BinaryExpression(assertLoc,
-								BinaryExpression.Operator.COMPNEQ,
-								new IntegerLiteral(assertLoc, SFO.NR0),
-								rr.lrVal.getValue())));
+			    Check check = new Check(Check.Spec.DIVISION_BY_ZERO);
+				CACSLLocation assertLoc = new CACSLLocation(node, check);
+				AssertStatement assertStmt = new AssertStatement(assertLoc,
+                        new BinaryExpression(assertLoc,
+                                BinaryExpression.Operator.COMPNEQ,
+                                new IntegerLiteral(assertLoc, SFO.NR0),
+                                rr.lrVal.getValue()));
+				check.addToNodeAnnot(assertStmt);
+				stmt.add(assertStmt);
 			}
 
 			Expression expr = null;
@@ -1634,13 +1636,15 @@ public class CHandler implements ICHandler {
 			auxVars.putAll(rr.auxVars);
 
 			if (node.getOperator() == IASTBinaryExpression.op_divideAssign) {
-				CACSLLocation assertLoc = new CACSLLocation(node,
-						new Check(Check.Spec.DIVISION_BY_ZERO));
-				stmt.add(new AssertStatement(assertLoc,
-						new BinaryExpression(assertLoc,
-								BinaryExpression.Operator.COMPNEQ,
-								new IntegerLiteral(assertLoc, SFO.NR0),
-								rr.lrVal.getValue())));
+			    Check check = new Check(Check.Spec.DIVISION_BY_ZERO);
+				CACSLLocation assertLoc = new CACSLLocation(node, check);
+				AssertStatement assertStmt = new AssertStatement(assertLoc,
+                        new BinaryExpression(assertLoc,
+                                BinaryExpression.Operator.COMPNEQ,
+                                new IntegerLiteral(assertLoc, SFO.NR0),
+                                rr.lrVal.getValue()));
+				check.addToNodeAnnot(assertStmt);
+				stmt.add(assertStmt);
 			}
 			// handle pointer arithmetic.
 			Expression rightHandside = null;

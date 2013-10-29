@@ -94,10 +94,13 @@ public class SvComp14CHandler extends CHandler {
     public Result visit(Dispatcher main, IASTGotoStatement node) {
         String label = node.getName().toString();
         if (label.equals(ERROR_STRING)) {
-            CACSLLocation loc = new CACSLLocation(node, new Check(Spec.ERROR_LABEL));
+            Check check = new Check(Spec.ERROR_LABEL);
+            CACSLLocation loc = new CACSLLocation(node, check);
             ArrayList<Statement> stmt = new ArrayList<Statement>();
-            stmt.add(new AssertStatement(loc, new BooleanLiteral(loc,
-                    new InferredType(Type.Boolean), false)));
+            AssertStatement assertStmt = new AssertStatement(loc, new BooleanLiteral(loc,
+                    new InferredType(Type.Boolean), false));
+            check.addToNodeAnnot(assertStmt);
+            stmt.add(assertStmt);
             return new ResultExpression(stmt, null,
                     new ArrayList<Declaration>(),
                     new HashMap<VariableDeclaration, CACSLLocation>(0));
@@ -110,9 +113,13 @@ public class SvComp14CHandler extends CHandler {
         ResultExpression r = (ResultExpression) super.visit(main, node);
         String label = node.getName().toString();
         if (label.equals(ERROR_STRING)) {
-            CACSLLocation loc = new CACSLLocation(node, new Check(Spec.ERROR_LABEL));
-            r.stmt.add(1, new AssertStatement(loc, new BooleanLiteral(loc,
-                    new InferredType(Type.Boolean), false)));
+            Check check = new Check(Spec.ERROR_LABEL);
+            CACSLLocation loc = new CACSLLocation(node, check);
+            AssertStatement assertStmt = new AssertStatement(loc,
+                    new BooleanLiteral(loc, new InferredType(Type.Boolean),
+                            false));
+            check.addToNodeAnnot(assertStmt);
+            r.stmt.add(1, assertStmt);
         }
         return r;
     }

@@ -109,8 +109,11 @@ public class CArray extends CType {
         if (conjunction == null) {
             conjunction = new BooleanLiteral(loc, true);
         }
-        return new AssertStatement(new CACSLLocation(loc, new Check(
-                Check.Spec.ARRAY_INDEX)), conjunction);
+        Check check = new Check(Check.Spec.ARRAY_INDEX);
+        AssertStatement assertStmt = new AssertStatement(
+                new CACSLLocation(loc, check), conjunction);
+        check.addToNodeAnnot(assertStmt);
+        return assertStmt;
     }
 
     @Override

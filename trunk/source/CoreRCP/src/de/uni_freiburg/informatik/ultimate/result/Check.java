@@ -1,6 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.result;
 
 import de.uni_freiburg.informatik.ultimate.model.AbstractAnnotations;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.wrapper.ASTNode;
 
 /**
  * Specification that should be checked at position 
@@ -10,11 +11,6 @@ import de.uni_freiburg.informatik.ultimate.model.AbstractAnnotations;
  * @author Matthias Heizmann
  */
 public class Check extends AbstractAnnotations {
-	
-	public static final String getIdentifier() {
-		return Check.class.getName();
-	}
-	
 	private static final long serialVersionUID = -3753413284642976683L;
 
 	public enum Spec {
@@ -158,5 +154,14 @@ public class Check extends AbstractAnnotations {
 		else
 			throw new UnsupportedOperationException("Unknown field "+field);
 	}
-	
+
+    /**
+     * Adds this Check object to the annotations of an ASTNode.
+     * 
+     * @param node the ASTNode
+     * @author Christian
+     */
+    public final void addToNodeAnnot(ASTNode node) {
+        node.getPayload().getAnnotations().put(Check.class.getName(), this);
+    }
 }

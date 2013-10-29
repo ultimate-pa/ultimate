@@ -472,8 +472,7 @@ public class FunctionHandler {
 							new BinaryExpression(loc, Operator.COMPEQ, vIe,
 									new UnaryExpression(loc,
 											UnaryExpression.Operator.OLD, vIe)));
-					spec[nrSpec].getPayload().getAnnotations().put(
-							Check.getIdentifier(), check);
+					check.addToNodeAnnot(spec[nrSpec]);
 				}
 			}
 			declarations.add(new Procedure(loc, procDecl.getAttributes(), mId,
@@ -612,8 +611,9 @@ public class FunctionHandler {
 	public Result handleFunctionCallExpression(Dispatcher main,
 			MemoryHandler memoryHandler, StructHandler structHandler, 
 			IASTFunctionCallExpression node) {
-		CACSLLocation loc = new CACSLLocation(node, new Check(
-				Check.Spec.PRE_CONDITION));
+	    // TODO Christian: no node to add, right?
+	    Check check = new Check(Check.Spec.PRE_CONDITION);
+		CACSLLocation loc = new CACSLLocation(node, check);
 		IASTExpression functionName = node.getFunctionNameExpression(); 
 		if (!(functionName instanceof IASTIdExpression)) {
 			String msg = "Function pointer or similar is not supported. "
