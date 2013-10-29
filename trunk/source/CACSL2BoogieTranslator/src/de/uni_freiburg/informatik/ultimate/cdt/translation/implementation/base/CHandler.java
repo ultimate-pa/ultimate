@@ -407,20 +407,21 @@ public class CHandler implements ICHandler {
 				decl.add((Declaration) childRes.node);
 			}
 		}
-		// function pointers
-		String[] constants = new String[
+		
+		// Christian: function pointers
+        String[] constants = new String[
                 ((MainDispatcher) main).getFunctionPointers().size()];
 		int i = 0;
 		for (final String cId : ((MainDispatcher) main).
 		        getFunctionPointers().keySet()) {
 		    constants[i++] = SFO.FUNCTION_ADDRESS + cId;
 		}
-		
-		// Christian: function pointers
-		VarList varList = new VarList(loc, constants,
-                new PrimitiveType(loc, new InferredType(Type.Pointer), SFO.POINTER));
-		decl.add(new ConstDeclaration(loc, new Attribute[0], true,
-                varList, null, false));
+		if (constants.length > 0) {
+    		VarList varList = new VarList(loc, constants,
+                    new NamedType(loc, new InferredType(Type.Pointer), SFO.POINTER, new ASTType[0]));
+    		decl.add(new ConstDeclaration(loc, new Attribute[0], true,
+                    varList, null, false));
+		}
 		
 		// Collect all global variables.
 		for (Declaration d : decl) {

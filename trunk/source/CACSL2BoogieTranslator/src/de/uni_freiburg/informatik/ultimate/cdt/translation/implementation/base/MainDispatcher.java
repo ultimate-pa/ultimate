@@ -260,7 +260,12 @@ public class MainDispatcher extends Dispatcher {
         tu.accept(pr);
         variablesOnHeap = pr.getVarsForHeap();
         functionsOnHeap = pr.getFunctionPointers();
-        isMMRequired = pr.isMMRequired();
+        if (functionsOnHeap.size() > 0) {
+            isMMRequired = true;
+        }
+        else {
+            isMMRequired = pr.isMMRequired();
+        }
     }
 
     @Override
