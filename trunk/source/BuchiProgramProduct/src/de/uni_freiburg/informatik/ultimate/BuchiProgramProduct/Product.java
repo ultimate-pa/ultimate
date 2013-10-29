@@ -125,7 +125,7 @@ public class Product {
 								targetpp = this.nodes.get(
 										this.StateNameGenerator(
 												((ProgramPoint)rcfgEdge.getTarget()).getLocationName(),n));
-								new Return(
+								Return r = new Return(
 										currentpp,
 										helper,
 										new Call(
@@ -134,7 +134,7 @@ public class Product {
 																	((ProgramPoint)((Return)rcfgEdge).getSource()).getLocationName(),
 																	nn)), 
 												null,
-												null)
+												((Return)rcfgEdge).getCallStatement())
 										);
 							}
 							//From the helpernode, the original call target is connected with a new
