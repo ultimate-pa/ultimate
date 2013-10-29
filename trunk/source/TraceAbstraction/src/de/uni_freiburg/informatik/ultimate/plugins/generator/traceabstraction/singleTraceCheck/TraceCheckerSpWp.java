@@ -43,6 +43,7 @@ public class TraceCheckerSpWp extends TraceChecker {
 	private final static boolean m_useUnsatCore = true;
 	private final static boolean m_useUnsatCoreOfFineGranularity = true;
 	private final static boolean m_useLiveVariables = true;
+	private final static boolean m_LogNumberOfConjuncts = true;
 	private boolean m_ComputeInterpolantsSp;
 	private boolean m_ComputeInterpolantsFp;
 	private boolean m_ComputeInterpolantsBp;
@@ -153,6 +154,15 @@ public class TraceCheckerSpWp extends TraceChecker {
 		NestedWord<CodeBlock> trace = m_Trace;
 		unlockSmtManager();
 		RelevantTransFormulas rv = null;
+		
+		if (m_LogNumberOfConjuncts) {
+			if (m_AAA instanceof AnnotateAndAsserterConjuncts) {
+				int totalNumberOfConjunctsInTrace = ((AnnotateAndAsserterConjuncts)m_AAA).getAnnotated2Original().keySet().size();
+				s_Logger.debug("Total number of conjuncts in trace: " +  totalNumberOfConjunctsInTrace);
+				s_Logger.debug("Number of conjuncts in unsatisfiable core: " + unsat_coresAsSet.size());
+			}
+		}
+		
 		if (!m_useUnsatCoreOfFineGranularity) {
 			boolean[] localVarAssignmentAtCallInUnsatCore = new boolean[trace.length()];
 			boolean[] oldVarAssignmentAtCallInUnsatCore = new boolean[trace.length()];
