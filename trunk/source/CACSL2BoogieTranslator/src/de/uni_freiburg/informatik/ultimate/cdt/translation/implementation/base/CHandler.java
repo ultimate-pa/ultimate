@@ -1207,8 +1207,8 @@ public class CHandler implements ICHandler {
 		case IASTUnaryExpression.op_sizeof:
 			Map<VariableDeclaration, CACSLLocation> emptyAuxVars = new HashMap<VariableDeclaration, CACSLLocation>(
 					0);
-			return new ResultExpression(new RValue(memoryHandler.getSizeOf(main,
-					node.getOperand()), new CPrimitive(PRIMITIVE.INT)), emptyAuxVars);
+			return new ResultExpression(new RValue(memoryHandler.calculateSizeOf(oType),
+					new CPrimitive(PRIMITIVE.INT)), emptyAuxVars);
 		case IASTUnaryExpression.op_star:
 		{
 			assert rop.lrVal.cType instanceof CPointer : "type error: expected pointer , got " + 

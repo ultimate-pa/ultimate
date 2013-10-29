@@ -435,7 +435,6 @@ public class ArrayHandler {
 				new HashMap<VariableDeclaration, CACSLLocation>();
 		LRValue arrayPointer = null;
 		
-		Expression sizeOfCell = memoryHandler.getSizeOf(main, iastDeclSpecifier);
 		
 		ArrayList<Expression> sizeConstants = new ArrayList<Expression>();
 		ArrayList<Integer> sizeConstantsAsInt = new ArrayList<Integer>();
@@ -461,6 +460,8 @@ public class ArrayHandler {
 			overallSize = CHandler.createArithmeticExpression(IASTBinaryExpression.op_multiply, 
 					overallSize, constEx.lrVal.getValue(), loc);//
 		}
+		
+		Expression sizeOfCell = memoryHandler.calculateSizeOf(resType.cvar);
 		
 		ResultExpression mallocCall = null;
 		Expression mallocSize = null;
@@ -651,7 +652,7 @@ public class ArrayHandler {
 		}
 		offset = CHandler.createArithmeticExpression(IASTBinaryExpression.op_multiply,
 				offset, 
-				memoryHandler.getSizeOf(main, arrayCType.getDeclSpec()), 
+				memoryHandler.calculateSizeOf(arrayCType.getValueType()), 
 				loc);
 		return offset;
 	}
