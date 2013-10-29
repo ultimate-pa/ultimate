@@ -1712,7 +1712,10 @@ public class SmtManager {
 	}
 	
 	
-	
+	/**
+	 * Compute the irrelevant variables of the given predicate p. 
+	 * A variable is irrelevant, if it isn't contained in the given set of relevantVars.
+	 */
 	private Set<TermVariable> computeIrrelevantVariables(Set<BoogieVar> relevantVars, IPredicate p) {
 		Set<TermVariable> result = new HashSet<TermVariable>();
 		for (BoogieVar bv : p.getVars()) {
@@ -1729,10 +1732,7 @@ public class SmtManager {
 	}
 	
 	/**
-	 * @param rvar
-	 * @param posToComputePredicateFor
-	 * @param sp
-	 * @return
+	 * Computes a predicate from the given predicate p, such that all irrelevant variables are quantified.
 	 */
 	private IPredicate computeRelevantPredicateHelper(IPredicate p,
 			Set<BoogieVar> relevantVars,

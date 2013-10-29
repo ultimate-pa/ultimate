@@ -30,6 +30,19 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 
 public class TraceCheckerSpWp extends TraceChecker {
+	/*
+	 * Settings for SVComp:
+	 * m_useUnsatCore = true;
+	 * m_useUnsatCoreOfFineGranularity = true;
+	 * m_useLiveVariables = true;
+	 * m_LogInformation = false;
+	 * m_CollectInformationAboutQuantifiedPredicates = false;
+	 * m_ComputeInterpolantsSp = true;
+	 * m_ComputeInterpolantsFp = true;
+	 * m_ComputeInterpolantsBp = false;
+	 * m_ComputeInterpolantsWp = false;
+	 */
+	
 	
 	protected IPredicate[] m_InterpolantsSp;
 	protected IPredicate[] m_InterpolantsWp;
@@ -43,7 +56,13 @@ public class TraceCheckerSpWp extends TraceChecker {
 	private final static boolean m_useUnsatCore = true;
 	private final static boolean m_useUnsatCoreOfFineGranularity = true;
 	private final static boolean m_useLiveVariables = true;
-	private final static boolean m_LogNumberOfConjuncts = true;
+	private final static boolean m_LogInformation = true;
+	private final static boolean m_CollectInformationAboutQuantifiedPredicates = true;
+	// m_NumberOfQuantifierFreePredicates[0] : #quantified predicates of SP
+	// m_NumberOfQuantifierFreePredicates[1] : #quantified predicates of FP
+	// m_NumberOfQuantifierFreePredicates[2] : #quantified predicates of WP
+	// m_NumberOfQuantifierFreePredicates[3] : #quantified predicates of BP
+	private int[] m_NumberOfQuantifiedPredicates;
 	private boolean m_ComputeInterpolantsSp;
 	private boolean m_ComputeInterpolantsFp;
 	private boolean m_ComputeInterpolantsBp;
@@ -53,6 +72,7 @@ public class TraceCheckerSpWp extends TraceChecker {
 			NestedWord<CodeBlock> trace, SmtManager smtManager,
 			ModifiableGlobalVariableManager modifiedGlobals) {
 		super(precondition, postcondition, null, trace, smtManager, modifiedGlobals);
+		m_NumberOfQuantifiedPredicates = new int[4];
 	}
 
 	@Override
@@ -139,6 +159,7 @@ public class TraceCheckerSpWp extends TraceChecker {
 	}
 
 	private void computeInterpolantsWithUsageOfUnsatCore(Set<Integer> interpolatedPositions) {
+		m_NumberOfQuantifiedPredicates = new int[4];
 		
 		Term[] unsat_core = m_SmtManager.getScript().getUnsatCore();
 		
@@ -155,7 +176,7 @@ public class TraceCheckerSpWp extends TraceChecker {
 		unlockSmtManager();
 		RelevantTransFormulas rv = null;
 		
-		if (m_LogNumberOfConjuncts) {
+		if (m_LogInformation) {
 			if (m_AAA instanceof AnnotateAndAsserterConjuncts) {
 				int totalNumberOfConjunctsInTrace = ((AnnotateAndAsserterConjuncts)m_AAA).getAnnotated2Original().keySet().size();
 				s_Logger.debug("Total number of conjuncts in trace: " +  totalNumberOfConjunctsInTrace);
@@ -186,29 +207,31 @@ public class TraceCheckerSpWp extends TraceChecker {
 					(AnnotateAndAsserterConjuncts)m_AAA);
 			assert stillInfeasible(rv);
 		}
-		RelevantVariables rvar = new RelevantVariables(rv);
-		LiveVariables lvar = new LiveVariables(m_Nsb.getVariable2Constant(), m_Nsb.getConstants2BoogieVar(),
-				m_Nsb.getIndexedVarRepresentative(),
-				m_SmtManager);
-		
 		Set<BoogieVar>[] relevantVarsToUseForFPBP = null;
 		
 		if (m_useLiveVariables) {
+			LiveVariables lvar = new LiveVariables(m_Nsb.getVariable2Constant(), m_Nsb.getConstants2BoogieVar(),
+					m_Nsb.getIndexedVarRepresentative(),
+					m_SmtManager);
 			relevantVarsToUseForFPBP = lvar.getLiveVariables();
-//			assert liveVariablesSubSetOfRelevantVariables(rvar.getRelevantVariables(), lvar.getLiveVariables());
 		} else {
+			RelevantVariables rvar = new RelevantVariables(rv);
 			relevantVarsToUseForFPBP = rvar.getRelevantVariables();
 		}
 		
-//		 assert liveVariablesSubSetOfRelevantVariables(rvar.getRelevantVariables(), lvar.getLiveVariables()) : 
-//			"LiveVariables are not subsets of RelevantVariables";
 		
 		if (m_ComputeInterpolantsFp) {
 			s_Logger.debug("Computing forward relevant predicates...");
 			computeForwardRelevantPredicates(relevantVarsToUseForFPBP, rv, trace, tracePrecondition);
 			s_Logger.debug("Checking inductivity of forward relevant predicates...");
-			checkInterpolantsCorrect(m_InterpolantsFp, trace, tracePrecondition,
-					tracePostcondition, "FP");
+			assert checkInterpolantsCorrect(m_InterpolantsFp, trace, tracePrecondition,
+					tracePostcondition, "FP") : "invalid Hoare triple in FP";
+		}
+		
+		if (m_LogInformation) {
+			s_Logger.debug("Length of trace:" + trace.length());
+			s_Logger.debug("#quantifiedPredicates in SP: " + m_NumberOfQuantifiedPredicates[0]);
+			s_Logger.debug("#quantifiedPredicates in FP: " + m_NumberOfQuantifiedPredicates[1]);
 		}
 		
 		if (m_ComputeInterpolantsSp && !m_ComputeInterpolantsFp) {
@@ -266,8 +289,8 @@ public class TraceCheckerSpWp extends TraceChecker {
 				}
 			}
 			s_Logger.debug("Checking strongest postcondition...");
-			checkInterpolantsCorrect(m_InterpolantsSp, trace, tracePrecondition, 
-					tracePostcondition, "SP with unsat core");
+			assert checkInterpolantsCorrect(m_InterpolantsSp, trace, tracePrecondition, 
+					tracePostcondition, "SP with unsat core") : "invalid Hoare triple in SP with unsat core";
 			
 		}
 		if (m_ComputeInterpolantsWp) {
@@ -380,14 +403,14 @@ public class TraceCheckerSpWp extends TraceChecker {
 			}
 
 			s_Logger.debug("Checking weakest precondition...");
-			checkInterpolantsCorrect(m_InterpolantsWp, trace, tracePrecondition,
-					tracePostcondition, "WP with unsat core");
+			assert checkInterpolantsCorrect(m_InterpolantsWp, trace, tracePrecondition,
+					tracePostcondition, "WP with unsat core") : "invalid Hoare triple in WP with unsat core";
 			if (m_ComputeInterpolantsBp) {
 				s_Logger.debug("Computing backward relevant predicates...");
 				computeBackwardRelevantPredicates(relevantVarsToUseForFPBP);
 				s_Logger.debug("Checking inductivity of backward relevant predicates...");
-				checkInterpolantsCorrect(m_InterpolantsBp, trace, tracePrecondition,
-						tracePostcondition, "BP");
+				assert checkInterpolantsCorrect(m_InterpolantsBp, trace, tracePrecondition,
+						tracePostcondition, "BP") : "invalid Hoare triple in BP";
 			}
 
 		}
@@ -404,15 +427,6 @@ public class TraceCheckerSpWp extends TraceChecker {
 			assert m_InterpolantsWp != null;
 			m_Interpolants = m_InterpolantsWp;
 		}
-	}
-	
-	private boolean liveVariablesSubSetOfRelevantVariables(Set<BoogieVar>[] relevantVars, Set<BoogieVar>[] liveVariables) {
-		boolean result = true;
-		assert (relevantVars.length+1) == liveVariables.length;
-		for (int i = 0; i < relevantVars.length; i++) {
-			result &= relevantVars[i].containsAll(liveVariables[i+1]);
-		}
-		return result;
 	}
 	
 	private void selectInterpolantsOfBothType() {
@@ -440,6 +454,8 @@ public class TraceCheckerSpWp extends TraceChecker {
 			}
 		}
 	}
+	
+	
 	
 	@Deprecated
 	private boolean formulaContainsExistentialQuantifier(Term formula) {
@@ -528,6 +544,7 @@ public class TraceCheckerSpWp extends TraceChecker {
 		m_InterpolantsFp = new IPredicate[m_InterpolantsSp.length];
 		
 		if (trace.length() > 1) {
+			IPredicate sp = null;
 			if (trace.getSymbol(0) instanceof Call) {
 				IPredicate p = m_SmtManager.strongestPostcondition(tracePrecondition,
 						rv.getLocalVarAssignment(0),
@@ -537,24 +554,33 @@ public class TraceCheckerSpWp extends TraceChecker {
 				m_InterpolantsSp[0] = m_PredicateUnifier.getOrConstructPredicate(p.getFormula(), p.getVars(),
 						p.getProcedures());
 			} else {
-				IPredicate p = m_SmtManager.strongestPostcondition(tracePrecondition,
+				sp = m_SmtManager.strongestPostcondition(tracePrecondition,
 						rv.getFormulaFromNonCallPos(0));
-				m_InterpolantsSp[0] = m_PredicateUnifier.getOrConstructPredicate(p.getFormula(), p.getVars(),
-						p.getProcedures());
+				m_InterpolantsSp[0] = m_PredicateUnifier.getOrConstructPredicate(sp.getFormula(), sp.getVars(),
+						sp.getProcedures());
 			}
 			IPredicate fp = m_SmtManager.computeForwardRelevantPredicate(m_InterpolantsSp[0], relevantVars[1]);
 			m_InterpolantsFp[0] = m_PredicateUnifier.getOrConstructPredicate(fp.getFormula(), fp.getVars(), fp.getProcedures());
+			if (m_CollectInformationAboutQuantifiedPredicates) {
+				if (sp instanceof BasicPredicateExplicitQuantifier) {
+					m_NumberOfQuantifiedPredicates[0]++;
+				}
+				if (fp instanceof BasicPredicateExplicitQuantifier) {
+					m_NumberOfQuantifiedPredicates[1]++;
+				}
+			}
 		}
 		
 		for (int i=1; i<m_InterpolantsSp.length; i++) {
+			IPredicate sp = null;
 			if (trace.getSymbol(i) instanceof Call) {
-				IPredicate p = m_SmtManager.strongestPostcondition(m_InterpolantsFp[i-1],
+				 sp = m_SmtManager.strongestPostcondition(m_InterpolantsFp[i-1],
 						rv.getLocalVarAssignment(i),
 						rv.getGlobalVarAssignment(i),
 						rv.getOldVarAssignment(i),
 						((NestedWord<CodeBlock>) trace).isPendingCall(i));
-					m_InterpolantsSp[i] = m_PredicateUnifier.getOrConstructPredicate(p.getFormula(), p.getVars(),
-							p.getProcedures());
+					m_InterpolantsSp[i] = m_PredicateUnifier.getOrConstructPredicate(sp.getFormula(), sp.getVars(),
+							sp.getProcedures());
 			} else if (trace.getSymbol(i) instanceof Return) {
 					int call_pos = ((NestedWord<CodeBlock>)trace).getCallPosition(i);
 					assert call_pos >= 0 && call_pos <= i : "Bad call position!";
@@ -562,26 +588,35 @@ public class TraceCheckerSpWp extends TraceChecker {
 					if (call_pos > 0) {
 						callerPred = m_InterpolantsFp[call_pos - 1];
 					}
-					IPredicate p = m_SmtManager.strongestPostcondition(m_InterpolantsFp[i-1], 
+					sp = m_SmtManager.strongestPostcondition(m_InterpolantsFp[i-1], 
 							callerPred,
 							rv.getFormulaFromNonCallPos(i),
 							rv.getLocalVarAssignment(call_pos),
 							rv.getGlobalVarAssignment(call_pos)
 							);
-					m_InterpolantsSp[i] = m_PredicateUnifier.getOrConstructPredicate(p.getFormula(), p.getVars(),
-							p.getProcedures());
+					m_InterpolantsSp[i] = m_PredicateUnifier.getOrConstructPredicate(sp.getFormula(), sp.getVars(),
+							sp.getProcedures());
 
 			} else {
-					IPredicate p = m_SmtManager.strongestPostcondition(m_InterpolantsFp[i-1],
+					sp = m_SmtManager.strongestPostcondition(m_InterpolantsFp[i-1],
 							rv.getFormulaFromNonCallPos(i));
-					m_InterpolantsSp[i] = m_PredicateUnifier.getOrConstructPredicate(p.getFormula(), p.getVars(),
-							p.getProcedures());
+					m_InterpolantsSp[i] = m_PredicateUnifier.getOrConstructPredicate(sp.getFormula(), sp.getVars(),
+							sp.getProcedures());
 			}
 			IPredicate fp = m_SmtManager.computeForwardRelevantPredicate(m_InterpolantsSp[i], relevantVars[i+1]);
 			m_InterpolantsFp[i] = m_PredicateUnifier.getOrConstructPredicate(fp.getFormula(), fp.getVars(), fp.getProcedures());
+			if (m_CollectInformationAboutQuantifiedPredicates) {
+				if (sp != null && sp instanceof BasicPredicateExplicitQuantifier) {
+					m_NumberOfQuantifiedPredicates[0]++;
+				}
+				if (fp instanceof BasicPredicateExplicitQuantifier) {
+					m_NumberOfQuantifiedPredicates[1]++;
+				}
+			}
 		}
 		
 	}
+	
 	
 	private void computeBackwardRelevantPredicates(Set<BoogieVar>[] relevantVars) {
 		assert m_InterpolantsWp != null : "Interpolants WP_i have not been computed!";
@@ -683,8 +718,8 @@ public class TraceCheckerSpWp extends TraceChecker {
 				}
 			}
 			s_Logger.debug("Checking strongest postcondition...");
-			checkInterpolantsCorrect(m_InterpolantsSp, trace, tracePrecondition, 
-					tracePostcondition, "sp without unsat core");
+			assert checkInterpolantsCorrect(m_InterpolantsSp, trace, tracePrecondition, 
+					tracePostcondition, "sp without unsat core") : "invalid Hoare triple in sp without unsat core";
 		}
 
 		if (m_ComputeInterpolantsWp) {
@@ -776,8 +811,8 @@ public class TraceCheckerSpWp extends TraceChecker {
 //				}
 //			}
 			s_Logger.debug("Checking weakest precondition...");
-			checkInterpolantsCorrect(m_InterpolantsWp, trace, tracePrecondition, 
-					tracePostcondition, "wp without unsat core");
+			assert checkInterpolantsCorrect(m_InterpolantsWp, trace, tracePrecondition, 
+					tracePostcondition, "wp without unsat core") : "invalid Hoare triple in wp without unsat core";
 		}
 		if (m_ComputeInterpolantsSp) {
 			m_Interpolants = m_InterpolantsSp;
@@ -787,30 +822,24 @@ public class TraceCheckerSpWp extends TraceChecker {
 		}
 	}
 
-	void checkInterpolantsCorrect(IPredicate[] interpolants,
+	boolean checkInterpolantsCorrect(IPredicate[] interpolants,
 								  Word<CodeBlock> trace, 
 								  IPredicate tracePrecondition, 
 								  IPredicate tracePostcondition,
 								  String computation) {
 		LBool result;
-//		result = isHoareTriple(0, tracePrecondition, tracePostcondition, 
-//				interpolants, trace);
-//		assert result == LBool.UNSAT || result == LBool.UNKNOWN;
 		for (int i=-1; i<interpolants.length; i++) {
 			 result = isHoareTriple(i+1, tracePrecondition, tracePostcondition, 
 						interpolants, trace);
 			 if (result == LBool.SAT) {
 				 s_Logger.debug("Trace length: " + trace.length());
-				 s_Logger.debug("Stmt: " + i);
+				 s_Logger.debug("Stmt: " + (i+1));
+				 return false;
 			 }
 			 assert result == LBool.UNSAT || result == LBool.UNKNOWN : 
 				 "invalid Hoare triple in " + computation;
 		}
-//		if (trace.length() > 1) {
-//			result = isHoareTriple(interpolants.length, tracePrecondition, 
-//					tracePostcondition,	interpolants, trace);
-//			assert result == LBool.UNSAT || result == LBool.UNKNOWN;
-//		}
+		return true;
 	}
 	
 	private IPredicate getInterpolantAtPosition(int i, IPredicate tracePrecondition,

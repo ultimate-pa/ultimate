@@ -89,7 +89,6 @@ public class RelevantTransFormulas extends NestedFormulas<TransFormula, IPredica
 		m_OldVarsAssignmentTransFormulasAtCall = new HashMap<Integer, TransFormula>();
 		m_SmtManager = smtManager;
 		generateRelevantTransFormulas(unsat_core, modGlobalVarManager, aac);
-		
 	}
 	
 	private void generateRelevantTransFormulas(Set<CodeBlock> unsat_core, 
