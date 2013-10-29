@@ -897,11 +897,12 @@ public class MemoryHandler {
     	if (ut instanceof CPrimitive) {
 			CPrimitive cp = (CPrimitive) ut;
 			switch (cp.getType()) {
+			case CHAR:
 			case INT:
 				result = SFO.INT;
 				break;
 			case BOOL:
-			case CHAR:
+				throw new UnsupportedSyntaxException("..");
 			default:
 				throw new UnsupportedSyntaxException("..");
 			}
@@ -948,15 +949,13 @@ public class MemoryHandler {
         String t = SFO.EMPTY;
         if (rType instanceof CPrimitive) {
         	switch (((CPrimitive) rType).getType()) {
+        	case CHAR:
         	case INT:
         		t = SFO.INT;	        
         		stmt.add(new CallStatement(loc, false, new VariableLHS[0], "write~" + t,
         				new Expression[] { rval.getValue(), hlv.getAddress() }));
         		break;
         	case BOOL:
-        		break;
-        	case CHAR:
-        		break;
         	default:
         		throw new UnsupportedSyntaxException("we don't recognize this type");
         	}

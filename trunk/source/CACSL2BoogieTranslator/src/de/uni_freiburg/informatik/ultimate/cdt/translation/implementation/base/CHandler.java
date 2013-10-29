@@ -616,7 +616,7 @@ public class CHandler implements ICHandler {
 			 */
 			for (IASTDeclarator d : node.getDeclarators()) {
 				++index;
-				assert resType.getType() != null;
+				assert resType.getType() != null || resType.isVoid;
 				
 				//true iff the declared variable will be addressoffed in the program (alex)
 				boolean putOnHeap = ((MainDispatcher) main).getVariablesForHeap().contains(node);
@@ -1242,11 +1242,31 @@ public class CHandler implements ICHandler {
 					new CPrimitive(PRIMITIVE.INT)), emptyAuxVars);
 		case IASTUnaryExpression.op_star:
 		{
-			assert rop.lrVal.cType instanceof CPointer : "type error: expected pointer , got " + 
-					rop.lrVal.cType.toString();
-		Expression addr = rop.lrVal.getValue();
-		return new ResultExpression(rop.stmt, new HeapLValue(addr, ((CPointer)rop.lrVal.cType).pointsToType), rop.decl, 
-				rop.auxVars);
+			Expression addr = rop.lrVal.getValue();
+			if (rop.lrVal.cType instanceof CArray) {
+				CArray arrayCType = (CArray) rop.lrVal.cType;
+				//FIXME: type like this??
+				ArrayList<Expression> dims = new ArrayList<Expression>(
+						Arrays.asList(arrayCType.getDimensions()));
+				dims.remove(0);
+				CType newCType = null;
+				if (dims.size() == 0)
+					newCType = arrayCType.getValueType();
+				else	
+					newCType = new CArray(arrayCType.getDeclSpec(), 
+							dims.toArray(new Expression[0]), arrayCType.getValueType());
+				return new ResultExpression(rop.stmt, 
+					new HeapLValue(addr, newCType), 
+					rop.decl, 
+					rop.auxVars);
+			} else {
+				assert rop.lrVal.cType instanceof CPointer : "type error: expected pointer , got " + 
+						rop.lrVal.cType.toString();
+				return new ResultExpression(rop.stmt, 
+					new HeapLValue(addr, ((CPointer)rop.lrVal.cType).pointsToType), 
+					rop.decl, 
+					rop.auxVars);
+			}
 		}
 		case IASTUnaryExpression.op_amper:
 			if (o.lrVal instanceof HeapLValue) {
@@ -1332,14 +1352,7 @@ public class CHandler implements ICHandler {
 		ResultExpression rl = l.switchToRValue(main, memoryHandler, structHandler, loc);
 		ResultExpression rr = r.switchToRValue(main, memoryHandler, structHandler, loc);
 
-		// for implicit casts of Integers to Pointers
-		RValue rlRValAsPointer = new RValue(MemoryHandler.constructPointerFromBaseAndOffset(
-			new IntegerLiteral(loc, new InferredType(Type.Integer), "0"), 
-			rl.lrVal.getValue(), loc), null);
 
-		RValue rrRValAsPointer = new RValue(MemoryHandler.constructPointerFromBaseAndOffset(
-			new IntegerLiteral(loc, new InferredType(Type.Integer), "0"), 
-			rr.lrVal.getValue(), loc), null);
 
 		CType lType = l.lrVal.cType;
 		if (lType instanceof CNamed)
@@ -1352,14 +1365,14 @@ public class CHandler implements ICHandler {
 		case IASTBinaryExpression.op_assign: {
 			RValue rightSide = (RValue) rr.lrVal;
 
-			if (lType instanceof CPointer 
-					&& rType instanceof CPrimitive
-					&& ((CPrimitive) rType).getType() == PRIMITIVE.INT) 
-				rightSide = rrRValAsPointer;
-			else if (lType instanceof CPrimitive 
-					&& ((CPrimitive) lType).getType() == PRIMITIVE.BOOL)
-				rightSide = new RValue(main.typeHandler.convertArith2Boolean(loc, 
-						new PrimitiveType(loc, SFO.BOOL), rightSide.getValue()), lType);
+//			if (lType instanceof CPointer  //TODO move casts to makeAssingment and function calls (maybe)
+//					&& rType instanceof CPrimitive
+//					&& ((CPrimitive) rType).getType() == PRIMITIVE.INT) 
+//				rightSide = rrRValAsPointer;
+//			else if (lType instanceof CPrimitive 
+//					&& ((CPrimitive) lType).getType() == PRIMITIVE.BOOL)
+//				rightSide = new RValue(main.typeHandler.convertArith2Boolean(loc, 
+//						new PrimitiveType(loc, SFO.BOOL), rightSide.getValue()), lType);
 
 			stmt.addAll(l.stmt);
 			stmt.addAll(rr.stmt);
@@ -1411,10 +1424,16 @@ public class CHandler implements ICHandler {
 			if (lType instanceof CPointer
 					&& rType instanceof CPrimitive
 					&& ((CPrimitive) rType).getType() == PRIMITIVE.INT) {
+				RValue rrRValAsPointer = new RValue(MemoryHandler.constructPointerFromBaseAndOffset(
+						new IntegerLiteral(loc, new InferredType(Type.Integer), "0"), 
+						rr.lrVal.getValue(), loc), null);
 				expr = new BinaryExpression(loc, new InferredType(Type.Boolean), op, rl.lrVal.getValue(), rrRValAsPointer.getValue());
 			} else if (rType instanceof CPointer
 					&& lType instanceof CPrimitive
 					&& ((CPrimitive) lType).getType() == PRIMITIVE.INT) {
+				RValue rlRValAsPointer = new RValue(MemoryHandler.constructPointerFromBaseAndOffset(
+						new IntegerLiteral(loc, new InferredType(Type.Integer), "0"), 
+						rl.lrVal.getValue(), loc), null);
 				expr = new BinaryExpression(loc, new InferredType(Type.Boolean), op, rlRValAsPointer.getValue(), rr.lrVal.getValue());
 			} else {
 				expr = wrapBinaryBoolean2Int(loc, op, 
@@ -2464,7 +2483,27 @@ public class CHandler implements ICHandler {
 
 	@Override
 	public Result visit(Dispatcher main, IASTCastExpression node) {
-		Result expr = main.dispatch(node.getOperand());
+		ResultExpression expr = (ResultExpression) main.dispatch(node.getOperand());
+		
+		//TODO: check validity of cast?
+		
+		ResultTypes resTypes = (ResultTypes) main.dispatch(node.getTypeId().getDeclSpecifier());
+		int noPtrOps = node.getTypeId().getAbstractDeclarator().getPointerOperators().length; //FIXME: ??
+		
+		CType newCType = resTypes.cvar;
+		for (int i = 0; i < noPtrOps; i++) 
+			newCType = new CPointer(newCType);
+		
+		expr.lrVal.cType = newCType;
+		InferredType it = new InferredType(newCType);
+		
+		if (expr.lrVal instanceof HeapLValue) 
+			((HeapLValue) expr.lrVal).getAddress().setType(it);
+		else if (expr.lrVal instanceof LocalLValue)
+			((LocalLValue) expr.lrVal).getLHS().setType(it);
+		else 
+			expr.lrVal.getValue().setType(it);
+		
 		// TODO : review decision to only drop casts!
 		// This can of course lead to type errors (e.g. int i = 1.0f;)
 		String msg = "Ignored cast! At line: "

@@ -680,10 +680,11 @@ public class FunctionHandler {
 				arg = main.typeHandler.convertArith2Boolean(loc,
 						procedures.get(methodName).getInParams()[i].getType(),
 						in.lrVal.getValue());
-			} else {
-				throw new UnsupportedSyntaxException("procedure not found in procedure list, " +
-						"maybe not declared at call position?");
-			}
+			} 
+//			else {
+//				throw new UnsupportedSyntaxException("procedure not found in procedure list, " +
+//						"maybe not declared at call position?");
+//			}
 			args.add(arg);
 			stmt.addAll(in.stmt);
 			decl.addAll(in.decl);

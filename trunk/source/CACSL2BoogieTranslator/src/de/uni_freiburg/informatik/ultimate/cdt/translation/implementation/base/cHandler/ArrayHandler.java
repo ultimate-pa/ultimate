@@ -444,8 +444,8 @@ public class ArrayHandler {
 		for (IASTArrayModifier am : d.getArrayModifiers()) {
 			ResultExpression constEx = (ResultExpression) main.
 					dispatch(am.getConstantExpression());
-//			constEx = constEx.switchToRValue(main, //just to be safe..
-//					memoryHandler, structHandler, loc);
+			constEx = constEx.switchToRValue(main, //just to be safe..
+					memoryHandler, structHandler, loc);
 			assert constEx.lrVal instanceof RValue : "we only allow arrays of constant size";
 			sizeConstants.add(constEx.lrVal.getValue());
 			if (constEx.lrVal.getValue() instanceof IntegerLiteral) {
@@ -454,7 +454,7 @@ public class ArrayHandler {
 				overallSizeAsInt = overallSizeAsInt * constAsInt;
 			} else {
 				overallSizeAsInt = 0;
-				assert false : "expecting only int constants for array size";//TODO ..
+//				assert false : "expecting only int constants for array size";//TODO ..
 			}
 			
 			overallSize = CHandler.createArithmeticExpression(IASTBinaryExpression.op_multiply, 
@@ -494,9 +494,10 @@ public class ArrayHandler {
 		
 		//handle initialization
 		if (d.getInitializer() != null) {			
-			if (overallSizeAsInt == 0)
-				assert false : "not yet implemented";
-			
+//			if (overallSizeAsInt == 0) {
+//				assert false : "not yet implemented";
+			//not using the ints but making boogie computations right now..
+			//however for initialisation we need a size, of course..
 			ResultExpressionListRec init = (ResultExpressionListRec) main.dispatch(d.getInitializer());
 			ArrayList<Statement> arrayWrites = initArray(memoryHandler, sizeConstantsAsInt, sizeConstants, init.list, 0,
 					arrayId.getValue(), sizeOfCell, loc);

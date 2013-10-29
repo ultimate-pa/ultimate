@@ -166,6 +166,10 @@ public class ResultExpression extends Result {
 							newAuxVars.putAll(rex.auxVars);	
 							newValue = (RValue) rex.lrVal;
 							break;
+						case VOID:
+							//(in this case we return nothing, because this should not be read anyway..)
+//							throw new UnsupportedSyntaxException("void should have been cast before dereferencing");
+							break;
 						case BOOL:
 						case CHAR:
 						default:
