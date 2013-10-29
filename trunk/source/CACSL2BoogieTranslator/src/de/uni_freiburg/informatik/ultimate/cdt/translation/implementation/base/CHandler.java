@@ -6,6 +6,7 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -2592,10 +2593,12 @@ public class CHandler implements ICHandler {
 		ILocation loc = new CACSLLocation(node);
 		switch (node.getOperator()) {
 		case IASTTypeIdExpression.op_sizeof:
-			Map<VariableDeclaration, CACSLLocation> emptyAuxVars = new HashMap<VariableDeclaration, CACSLLocation>(
-					0);
-			return new ResultExpression(new RValue(memoryHandler.getSizeOf(main, node
-					.getTypeId().getDeclSpecifier()), new CPrimitive(PRIMITIVE.INT)), emptyAuxVars);
+			ResultTypes rt = (ResultTypes) main.dispatch(
+					node.getTypeId().getDeclSpecifier());
+			ResultTypes checked = checkForPointer(main, node.getTypeId().
+					getAbstractDeclarator().getPointerOperators(), rt, false);
+			return new ResultExpression(new RValue(memoryHandler.
+					calculateSizeOf(checked.cvar), new CPrimitive(PRIMITIVE.INT)));
 		default:
 			break;
 		}
