@@ -20,6 +20,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.wrapper.ASTNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
@@ -76,30 +77,57 @@ public class Product {
 				for(RCFGEdge rcfgEdge: pp.getOutgoingEdges())								
 						//distinguish between the different Edges of the RCFG in the input
 						if (rcfgEdge instanceof Call){
-							//Call does not change anything on the global variables, therefore  we can just
-							//take the call from the original program, the logical autaton is paused on 
-							//that edges.
-							targetpp = this.nodes.get(
-									this.StateNameGenerator(
-											((ProgramPoint)rcfgEdge.getTarget()).getLocationName(),n));
+							//Call has to have a helper node, so that first the call can targeta
+							//the helper node	
+							ProgramPoint helper = new ProgramPoint(
+										"h_"+currentpp.getPosition(),
+										currentpp.getProcedure(), 
+										false, 
+										currentpp.getAstNode());
+							
 							new Call(
 									currentpp, 
-									targetpp,
+									helper,
 									((Call) rcfgEdge).getCallStatement()
 									);
+							//From the helpernode, the original call target is connected with a new
+							//edge with the fitting assumption of the call. The edge is calculated 
+							//like any other edge in the graph.
+							for(OutgoingInternalTransition<ASTNode, String> autTrans: this.aut.internalSuccessors(n)){
+								targetpp = this.nodes.get(
+										this.StateNameGenerator(
+												((ProgramPoint)rcfgEdge.getTarget()).getLocationName(),
+												autTrans.getSucc().toString()
+												));
+							
+								ArrayList<Statement> stmts = new ArrayList<Statement>();
+								stmts.add(new AssumeStatement(null, ((Expression)autTrans.getLetter())));
+								//edge
+								new StatementSequence(
+										helper, 
+										targetpp, 
+										stmts,
+										Origin.IMPLEMENTATION);	
+							}
 						} else if (rcfgEdge instanceof Return) {
 							//The calls used for the returns are dummy calls, that have nothing common with the original 
 							//call except the caller location, that has to be popped from the stack.
 							//The target pp and call statement are never used and therefore left blank
 							
-							//for all possible call origins: CallPP x LTLStates be able to return
+							//for all possible call origins: CallPP x LTLStates be able to return to the helper state
+							ProgramPoint helper = new ProgramPoint(
+									"h_"+currentpp.getPosition(),
+									currentpp.getProcedure(), 
+									false, 
+									currentpp.getAstNode());
+							
 							for(String nn: this.aut.getStates()){
 								targetpp = this.nodes.get(
 										this.StateNameGenerator(
 												((ProgramPoint)rcfgEdge.getTarget()).getLocationName(),n));
 								new Return(
 										currentpp,
-										targetpp,
+										helper,
 										new Call(
 												this.nodes.get(
 															this.StateNameGenerator(
@@ -109,20 +137,62 @@ public class Product {
 												null)
 										);
 							}
+							//From the helpernode, the original call target is connected with a new
+							//edge with the fitting assumption of the call. The edge is calculated 
+							//like any other edge in the graph.
+							for(OutgoingInternalTransition<ASTNode, String> autTrans: this.aut.internalSuccessors(n)){
+								targetpp = this.nodes.get(
+										this.StateNameGenerator(
+												((ProgramPoint)rcfgEdge.getTarget()).getLocationName(),
+												autTrans.getSucc().toString()
+												));
+							
+								ArrayList<Statement> stmts = new ArrayList<Statement>();
+								stmts.add(new AssumeStatement(null, ((Expression)autTrans.getLetter())));
+								//edge
+								new StatementSequence(
+										helper, 
+										targetpp, 
+										stmts,
+										Origin.IMPLEMENTATION);	
+							}
 						} else if (rcfgEdge instanceof Summary) {
 							//Summary summarizes a call compuation and return from another procedure
-							//therefore it is handled like another procedure by ignoring its influence on
-							//the program state and skipping the step on the logical autoamton.
-							targetpp = this.nodes.get(
-									this.StateNameGenerator(
-											((ProgramPoint)rcfgEdge.getTarget()).getLocationName(),n));
+							//It - like calls and returns that also can take no assumtion edge on
+							//its own - is handled like a call edge, first the summary to a helper node
+							//then the helper node x Loc_psi to the original target
+							ProgramPoint helper = new ProgramPoint(
+									"h_summary_"+currentpp.getPosition(),
+									currentpp.getProcedure(), 
+									false, 
+									currentpp.getAstNode());
+
 							new Summary(
 									currentpp, 
-									targetpp,
+									helper,
 									((Summary) rcfgEdge).getCallStatement(),
 									false
 									);
 							
+							//From the helpernode, the original summary target is connected with a new
+							//edge with the fitting assumption of the call. The edge is calculated 
+							//like any other edge in the graph.
+							for(OutgoingInternalTransition<ASTNode, String> autTrans: this.aut.internalSuccessors(n)){
+								targetpp = this.nodes.get(
+										this.StateNameGenerator(
+												((ProgramPoint)rcfgEdge.getTarget()).getLocationName(),
+												autTrans.getSucc().toString()
+												));
+							
+								ArrayList<Statement> stmts = new ArrayList<Statement>();
+								stmts.add(new AssumeStatement(null, ((Expression)autTrans.getLetter())));
+								//edge
+								new StatementSequence(
+										helper, 
+										targetpp, 
+										stmts,
+										Origin.IMPLEMENTATION);	
+							}
 						} else if(rcfgEdge instanceof StatementSequence){
 							for(OutgoingInternalTransition<ASTNode, String> autTrans: this.aut.internalSuccessors(n)){
 								targetpp = this.nodes.get(
@@ -157,18 +227,23 @@ public class Product {
 		ProgramPoint ncp;
 		
 		for(ProgramPoint pp: this.RCFGLocations){
-			for(String n: this.aut.getStates()){
-				this.nodes.put(this.StateNameGenerator(pp.getLocationName(), n), 
-					ncp = new ProgramPoint
+			for(String n: this.aut.getStates()){ 
+				ncp = new ProgramPoint
 									(		
-									pp.getPosition(),
+									this.StateNameGenerator(pp.getLocationName(), n),
 									pp.getPosition(),
 									false,
-									pp.getAstNode()));
+									pp.getAstNode());
+				
+				this.nodes.put(this.StateNameGenerator(pp.getLocationName(), n), ncp);
 				
 			// acceptance and inital states
-			if (pp.getLocationName() == "mainENTRY" && this.aut.getInitialStates().contains(n))
-				new RootEdge(this.main, ncp);
+			if (pp.getLocationName().equals("mainENTRY"))
+				if (this.aut.getInitialStates().contains(n))
+					new RootEdge(this.main, ncp);
+			//if (this.aut.getFinalStates().contains(n))
+			//	ncp.
+			
 			}	
 				
 		}

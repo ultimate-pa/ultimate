@@ -170,10 +170,19 @@ public class Never2Automaton{
 			default:
 				throw new Exception("Binary Operator unknown");
 			}
-			return new BinaryExpression(null, null, op, 
+			BinaryExpression b;
+			b = new BinaryExpression(null, null, op, 
 					this.toBoogieAst(branch.getOutgoingNodes().get(0)), 
 					this.toBoogieAst(branch.getOutgoingNodes().get(1)));
-				
+			if (branch.getOutgoingNodes().size() > 2){
+				for(int i = 2; i < branch.getOutgoingNodes().size(); i++){
+					b = new BinaryExpression(null, null, op, 
+							b, 
+							this.toBoogieAst(branch.getOutgoingNodes().get(i)));	
+				}
+			}
+			return b;
+					
 		} else if (branch instanceof BoolLiteral)
 			return new BooleanLiteral(null, ((BoolLiteral)branch).getValue());
 		else if (branch instanceof ComperativeOperator){

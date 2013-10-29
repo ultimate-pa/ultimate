@@ -45,8 +45,10 @@ public class BuchiProgramProduct implements IGenerator {
 
 	@Override
 	public GraphType getOutputDefinition() {
-		// TODO Auto-generated method stub
-		return null;
+		List<String> filenames = new ArrayList<String>();
+		filenames.add("Product");
+		
+		return new GraphType(Activator.PLUGIN_ID, GraphType.Type.OTHER, filenames);
 	}
 
 	@Override
