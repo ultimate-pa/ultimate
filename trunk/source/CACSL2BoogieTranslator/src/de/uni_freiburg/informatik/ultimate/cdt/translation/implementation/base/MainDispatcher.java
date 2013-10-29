@@ -5,6 +5,7 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base;
 
 import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 
@@ -200,6 +201,18 @@ public class MainDispatcher extends Dispatcher {
      * Variables that need some special memory handling.
      */
     private HashSet<IASTDeclaration> variablesOnHeap;
+    /**
+     * Functions used as pointer.
+     */
+    private HashMap<String, IASTFunctionDefinition> functionsOnHeap;
+    
+    /**
+     * @return a map of functions used as pointers.
+     * @author Christian
+     */
+    public HashMap<String, IASTFunctionDefinition> getFunctionPointers() {
+        return functionsOnHeap;
+    }
     
     //begin alex
     private HashSet<VariableDeclaration> _boogieDeclarationsOfVariablesOnHeap;
@@ -246,6 +259,7 @@ public class MainDispatcher extends Dispatcher {
         PreRunner pr = new PreRunner();
         tu.accept(pr);
         variablesOnHeap = pr.getVarsForHeap();
+        functionsOnHeap = pr.getFunctionPointers();
         isMMRequired = pr.isMMRequired();
     }
 

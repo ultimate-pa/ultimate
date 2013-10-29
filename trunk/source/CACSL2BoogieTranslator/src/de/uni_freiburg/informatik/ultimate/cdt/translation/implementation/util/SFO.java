@@ -130,6 +130,10 @@ public final class SFO {
      * Identifier of the null pointer.
      */
     public static final String NULL = "#NULL";
+    /**
+     * Identifier for function pointers. 
+     */
+    public static final String FUNCTION_ADDRESS = "#funAddr~";
 
     	
    /**

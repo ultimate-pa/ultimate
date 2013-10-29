@@ -6,7 +6,6 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -63,6 +62,7 @@ import org.eclipse.cdt.core.dom.ast.IASTWhileStatement;
 import org.eclipse.cdt.internal.core.dom.parser.c.CASTDesignatedInitializer;
 import org.eclipse.core.runtime.preferences.ConfigurationScope;
 import org.eclipse.core.runtime.preferences.IEclipsePreferences;
+
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CACSLLocation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.SymbolTable;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.ArrayHandler;
@@ -407,6 +407,21 @@ public class CHandler implements ICHandler {
 				decl.add((Declaration) childRes.node);
 			}
 		}
+		// function pointers
+		String[] constants = new String[
+                ((MainDispatcher) main).getFunctionPointers().size()];
+		int i = 0;
+		for (final String cId : ((MainDispatcher) main).
+		        getFunctionPointers().keySet()) {
+		    constants[i++] = SFO.FUNCTION_ADDRESS + cId;
+		}
+		
+		// Christian: function pointers
+		VarList varList = new VarList(loc, constants,
+                new PrimitiveType(loc, new InferredType(Type.Pointer), SFO.POINTER));
+		decl.add(new ConstDeclaration(loc, new Attribute[0], true,
+                varList, null, false));
+		
 		// Collect all global variables.
 		for (Declaration d : decl) {
 			if (d instanceof VariableDeclaration) {
@@ -1021,14 +1036,30 @@ public class CHandler implements ICHandler {
 	                new HashMap<VariableDeclaration, CACSLLocation>(0));
 		}
 		
-		ASTType astt = symbolTable.getTypeOfVariable(cId, loc);
-		InferredType t = new InferredType(astt);
-		String bId = symbolTable.get(cId, loc).getBoogieName();
-
-		CType cT = symbolTable.get(cId, loc).getCVariable();
+		InferredType t;
+		String bId;
+		CType cT;
+		boolean useHeap;
+		
+		// Christian: function name, handle separately
+		IASTFunctionDefinition funDef =
+		        ((MainDispatcher) main).getFunctionPointers().get(cId);
+		if (funDef != null) {
+            cT = new CPointer(new CPrimitive(funDef.getDeclSpecifier()));
+		    t = new InferredType(cT);
+    		bId = SFO.FUNCTION_ADDRESS + cId;
+    		useHeap = true;
+		}
+		else {
+    		ASTType astt = symbolTable.getTypeOfVariable(cId, loc);
+    		t = new InferredType(astt);
+    		bId = symbolTable.get(cId, loc).getBoogieName();
+    		cT = symbolTable.get(cId, loc).getCVariable();
+    		useHeap = isHeapVar(bId);
+		}
 
 		LRValue lrVal = null;
-		if (isHeapVar(bId)) {
+		if (useHeap) {
 			// cType has to be set to the type of the dereferenced expression
 			// while the inferredType of the inner expression has to remain Pointer
 			// (intuition: t is the type of the address inside the heapLval while cT is the 

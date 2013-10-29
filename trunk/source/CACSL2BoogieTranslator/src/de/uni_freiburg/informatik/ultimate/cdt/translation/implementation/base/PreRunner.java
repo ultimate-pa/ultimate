@@ -1,14 +1,11 @@
-/**
- * 
- */
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base;
 
+import java.util.HashMap;
 import java.util.HashSet;
 
 import org.eclipse.cdt.core.dom.ast.ASTVisitor;
 import org.eclipse.cdt.core.dom.ast.IASTArrayDeclarator;
 import org.eclipse.cdt.core.dom.ast.IASTArraySubscriptExpression;
-import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
 import org.eclipse.cdt.core.dom.ast.IASTCompoundStatement;
 import org.eclipse.cdt.core.dom.ast.IASTDeclaration;
 import org.eclipse.cdt.core.dom.ast.IASTDeclarator;
@@ -43,6 +40,14 @@ public class PreRunner extends ASTVisitor {
      */
     private HashSet<IASTDeclaration> variablesOnHeap;
     /**
+     * The table containing all functions.
+     */
+    private HashMap<String, IASTFunctionDefinition> functionTable;
+    /**
+     * The table containing functions which are used as function pointers.
+     */
+    private HashMap<String, IASTFunctionDefinition> functionPointers;
+    /**
      * The symbol table during the translation.
      */
     ScopedHashMap<String, IASTDeclaration> sT;
@@ -61,6 +66,8 @@ public class PreRunner extends ASTVisitor {
         this.isMMRequired = false;
         this.sT = new ScopedHashMap<String, IASTDeclaration>();
         this.variablesOnHeap = new HashSet<IASTDeclaration>();
+        this.functionTable = new HashMap<String, IASTFunctionDefinition>();
+        this.functionPointers = new HashMap<String, IASTFunctionDefinition>();
     }
 
     /**
@@ -72,6 +79,14 @@ public class PreRunner extends ASTVisitor {
      */
     public HashSet<IASTDeclaration> getVarsForHeap() {
     	return variablesOnHeap;
+    }
+    
+    /**
+     * @return a map of functions used as pointers.
+     * @author Christian
+     */
+    public HashMap<String, IASTFunctionDefinition> getFunctionPointers() {
+        return functionPointers;
     }
 
     /**
@@ -118,8 +133,15 @@ public class PreRunner extends ASTVisitor {
     				}
                 }
                 this.isMMRequired = true;
-                if (n != null)
-                	this.variablesOnHeap.add(get(n, loc));//TODO why put the location of expression, not operand, here?
+                if (n != null) {
+                    IASTFunctionDefinition function = functionTable.get(n);
+                    if (function != null) {
+                        functionPointers.put(n, function);
+                    }
+                    else {
+                        this.variablesOnHeap.add(get(n, loc));//TODO why put the location of expression, not operand, here?
+                    }
+                }
             } else if (!this.isMMRequired
                     && ue.getOperator() == IASTUnaryExpression.op_star) {
                 this.isMMRequired = true;
@@ -188,6 +210,8 @@ public class PreRunner extends ASTVisitor {
 
         }
         if (declaration instanceof IASTFunctionDefinition) {
+            IASTFunctionDefinition funDef = (IASTFunctionDefinition)declaration;
+            functionTable.put(funDef.getDeclarator().getName().toString(), funDef);
             sT.beginScope();
             int nr = super.visit(declaration);
             sT.endScope();
