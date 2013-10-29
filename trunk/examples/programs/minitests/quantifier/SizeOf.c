@@ -24,17 +24,14 @@ typedef struct node {
 } *List;
 
 int main() {
-    int* a; // some auxiliary statement to obtain memory model
-    int b = *a; // some auxiliary statement to obtain memory model
-    
     int fractionSize = sizeof(fraction);
 	int intSize = sizeof(int);
-    //@ assert fractionSize >= 2 * intSize;
+    //@ assert fractionSize >= intSize;
 	
 	int bruchSize = sizeof(bruch);
 	//@ assert bruchSize == fractionSize;
 	
-	int nodeSize = sizeof(node);
+	int nodeSize = sizeof(struct node);
 	//@ assert nodeSize > 0;
 	
 	int ptrSize = sizeof(int*);
@@ -45,8 +42,8 @@ int main() {
 	int listSize = sizeof(List);
 	//@ assert ptrSize == ptrSize;
 	
-	int nodePtrSize = sizeof(node*);
-	//@ assert nodePtrSize == ptrSize
+	int nodePtrSize = sizeof(struct node*);
+	//@ assert nodePtrSize == ptrSize;
 
 }
 
