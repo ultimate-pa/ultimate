@@ -112,13 +112,18 @@ public class LiveVariables {
 			liveConstantsTemp.addAll(m_LiveConstants[i+1]);
 			for (Term t : liveConstantsTemp) {
 				BoogieVar bv = m_Constants2BoogieVar.get(t);
-				Map<Integer, Term> indexedVar = m_IndexedVarRepresentative.get(bv);
-				if (indexedVar.containsKey(i)) {
-					if (!t.equals(indexedVar.get(i))) {
+				if (bv == null) {
+					// do nothing, t is only the corresponding constant of an 
+					// auxiliary variable
+				} else {
+					Map<Integer, Term> indexedVar = m_IndexedVarRepresentative.get(bv);
+					if (indexedVar.containsKey(i)) {
+						if (!t.equals(indexedVar.get(i))) {
+							liveConstants.add(t);
+						}
+					} else {
 						liveConstants.add(t);
 					}
-				} else {
-					liveConstants.add(t);
 				}
 			}
 			m_LiveConstants[i] = liveConstants;  
