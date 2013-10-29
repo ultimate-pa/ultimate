@@ -1,5 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.boogie.preprocessor;
 
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.ListIterator;
@@ -12,6 +13,7 @@ import de.uni_freiburg.informatik.ultimate.access.WalkerOptions;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.model.BoogieLocation;
+import de.uni_freiburg.informatik.ultimate.model.IAnnotations;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.ILocation;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayAccessExpression;
@@ -38,6 +40,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Unit;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.WhileStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.WildcardExpression;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.wrapper.ASTNode;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.wrapper.WrapperNode;
 
 /**
@@ -212,6 +215,7 @@ public class UnstructureCode implements IUnmanagedObserver {
 	 * @param s  The current statement that should be converted (not a label).
 	 */
 	private void unstructureStatement(BreakInfo outer, Statement s) {
+		HashMap<String, IAnnotations> annot = getAnnotationsOrNull(s);
 		if (s instanceof GotoStatement || s instanceof ReturnStatement) {
 			m_flatStatements.add(s);
 			m_reachable = false;			
@@ -222,8 +226,10 @@ public class UnstructureCode implements IUnmanagedObserver {
 			BreakInfo dest = findLabel(label);
 			if (dest.destLabel == null)
 				dest.destLabel = generateLabel();
-			m_flatStatements.add(new GotoStatement(s.getLocation(), 
-					new String[] {dest.destLabel}));
+			GotoStatement gotoStatement = new GotoStatement(s.getLocation(), 
+					new String[] {dest.destLabel});
+			addAnnotations(annot, gotoStatement);
+			m_flatStatements.add(gotoStatement);
 			m_reachable = false;
 		} else if (s instanceof WhileStatement) {
 			WhileStatement stmt = (WhileStatement) s;
@@ -329,6 +335,7 @@ public class UnstructureCode implements IUnmanagedObserver {
 			m_flatStatements.add(s);
 		}
 	}
+
 		
 	private String generateLabel() {
 		return s_labelPrefix + (m_labelNr++);
@@ -353,6 +360,28 @@ public class UnstructureCode implements IUnmanagedObserver {
 	@Deprecated
 	private boolean getDefaultPerformedChanges() {
 		return false;
+	}
+	
+	
+	/**
+	 * Add all annotation from annot to node if annot != null.
+	 */
+	public static void addAnnotations(HashMap<String, IAnnotations> annot,
+			ASTNode node) {
+		if (annot != null) {
+			node.getPayload().getAnnotations().putAll(annot);
+		}
+	}
+
+	/**
+	 * Return the annotations of node if any exists, return null otherwise.
+	 */
+	public static HashMap<String, IAnnotations> getAnnotationsOrNull(ASTNode node) {
+		if (node.getPayload().hasAnnotation()) {
+			return node.getPayload().getAnnotations();
+		} else {
+			return null;
+		}
 	}
 
 	

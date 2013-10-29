@@ -211,6 +211,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 						m_Iteration, m_IterationPW);
 			m_InterpolAutomaton = iab.buildInterpolantAutomaton(
 				m_Abstraction, m_Abstraction.getStateFactory());
+			s_Logger.info("Interpolatants " + m_InterpolAutomaton.getStates());
 		}
 		m_TimingStatistics.finishBasicInterpolantAutomaton();		
 		assert(m_InterpolAutomaton.accepts(m_Counterexample.getWord())) :
