@@ -62,9 +62,10 @@ public class UtilExperimental {
 	}
 	
 	
+	
 	/**
-	 * Returns true iff. fst and snd are different literals of the same sort
-	 * and this sort is "Bool" or numeric ("Int" or "Real").
+	 * Returns true iff. fst and snd are different literals of the same numeric
+	 * sort ("Int" or "Real").
 	 * @exception Throws UnsupportedOperationException if both arguments do not
 	 * have the same Sort.
 	 */
@@ -78,12 +79,16 @@ public class UtilExperimental {
 		if (!(snd instanceof ConstantTerm)) {
 			return false;
 		}
-		if (!fst.getSort().isNumericSort() && 
-				!fst.getSort().getName().equals("Bool")) {
+		if (!fst.getSort().isNumericSort()) {
 			return false;
 		}
 		ConstantTerm fstConst = (ConstantTerm) fst;
 		ConstantTerm sndConst = (ConstantTerm) snd;
+		Object fstValue = fstConst.getValue();
+		Object sndValue = sndConst.getValue();
+		if (fstValue.getClass() != sndValue.getClass()) {
+			return false;
+		}
 		return !fstConst.getValue().equals(sndConst.getValue());
 		
 	}
