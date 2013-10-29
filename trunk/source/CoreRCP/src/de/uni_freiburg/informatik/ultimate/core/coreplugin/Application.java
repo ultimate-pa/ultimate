@@ -524,9 +524,12 @@ public class Application implements IApplication, ICore {
 					s_Logger.error("The desired gui controller could not be loaded!");
 				}
 			} else if (availableControllersCount > 1) {
-				ControllerChooseDialog chooser = new ControllerChooseDialog(
-						suitableControllers);
-				int return_value = chooser.open();
+				//TODO remove the whole code when refactoring is complete (every controller in its own plugin) 
+				// removed ControllerChooseDialog. It seems not necessary to be able to choose between different controllers at runtime.  
+//				ControllerChooseDialog chooser = new ControllerChooseDialog(
+//						suitableControllers);
+//				int return_value = chooser.open();
+				int return_value = 0;
 				if (return_value >= 0) {
 					try {
 						return (IController) (suitableControllers

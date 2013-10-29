@@ -1,5 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.gui;
 
+import org.eclipse.core.runtime.Platform;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.SelectionEvent;
@@ -12,32 +13,33 @@ import org.eclipse.swt.widgets.ToolTip;
 import org.eclipse.swt.widgets.TrayItem;
 import org.eclipse.ui.PlatformUI;
 
+import de.uni_freiburg.informatik.ultimate.core.coreplugin.preferences.IPreferenceConstants;
 import de.uni_freiburg.informatik.ultimate.gui.advisors.ApplicationWorkbenchAdvisor;
 
 public class TrayIconNotifier {
 
 	private ApplicationWorkbenchAdvisor mWorkbenchAdvisor;
 	private boolean mIsResultDisplayActive;
-	
-	TrayIconNotifier(ApplicationWorkbenchAdvisor workbenchAdvisor){
+
+	TrayIconNotifier(ApplicationWorkbenchAdvisor workbenchAdvisor) {
 		mWorkbenchAdvisor = workbenchAdvisor;
 		mIsResultDisplayActive = false;
 	}
-	
-	public boolean isResultDisplayActive(){
+
+	public boolean isResultDisplayActive() {
 		return mIsResultDisplayActive;
 	}
-	
-	private boolean isTrayBalloonEnabled() {
-		// ConfigurationScope.INSTANCE.getNode(Activator.s_PLUGIN_ID).getBoolean(
-		// IPreferenceConstants.s_NAME_SHOWRESULTNOTIFIERPOPUP,
-		// IPreferenceConstants.s_VALUE_SHOWRESULTNOTIFIERPOPUP_DEFAULT);
 
-		return true;
+	private boolean isTrayBalloonEnabled() {
+		return Platform.getPreferencesService().getBoolean("UltimateCore",
+				IPreferenceConstants.s_NAME_SHOWRESULTNOTIFIERPOPUP,
+				IPreferenceConstants.s_VALUE_SHOWRESULTNOTIFIERPOPUP_DEFAULT,
+				null);
+
 	}
-	
-	void showTrayBalloon(final String shortMessage,
-			final String longMessage, final int style) {
+
+	void showTrayBalloon(final String shortMessage, final String longMessage,
+			final int style) {
 		if (!isTrayBalloonEnabled()) {
 			return;
 		}
@@ -117,6 +119,5 @@ public class TrayIconNotifier {
 		display.wake();
 
 	}
-
 
 }

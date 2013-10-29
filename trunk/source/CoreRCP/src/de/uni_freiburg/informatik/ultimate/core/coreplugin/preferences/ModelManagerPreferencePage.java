@@ -26,7 +26,7 @@ public class ModelManagerPreferencePage extends FieldEditorPreferencePage
 implements IWorkbenchPreferencePage {
 
 	private static IPreferenceStore prefStore = new ScopedPreferenceStore(
-			new InstanceScope(), Activator.s_PLUGIN_ID);
+			InstanceScope.INSTANCE , Activator.s_PLUGIN_ID);
 
 	boolean tmp_dir_change = false;
 	
