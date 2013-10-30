@@ -28,6 +28,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.EdgeChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
+import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
 
 public class TraceCheckerSpWp extends TraceChecker {
 	/*
@@ -230,6 +231,7 @@ public class TraceCheckerSpWp extends TraceChecker {
 		
 		if (m_LogInformation) {
 			s_Logger.debug("Length of trace:" + trace.length());
+//			new DebugMessage("#quantifiedPredicates in SP: {0}", m_NumberOfQuantifiedPredicates[0]);
 			s_Logger.debug("#quantifiedPredicates in SP: " + m_NumberOfQuantifiedPredicates[0]);
 			s_Logger.debug("#quantifiedPredicates in FP: " + m_NumberOfQuantifiedPredicates[1]);
 		}
@@ -879,7 +881,7 @@ public class TraceCheckerSpWp extends TraceChecker {
 			result = ec.postReturnImplies(post);
 			ec.unAssertHierPred();
 		} else if (cb instanceof InterproceduralSequentialComposition) {
-			throw new UnsupportedOperationException("not yet inplemented");
+			result = ec.postInternalImplies(post); 
 		} else {
 			assert (cb instanceof SequentialComposition) || 
 				(cb instanceof ParallelComposition) || 
