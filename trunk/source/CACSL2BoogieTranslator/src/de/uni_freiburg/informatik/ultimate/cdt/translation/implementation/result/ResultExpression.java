@@ -3,35 +3,30 @@
  */
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result;
 
-import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CACSLLocation;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.SymbolTable;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.MainDispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.MemoryHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.StructHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.InferredType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.InferredType.Type;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.SymbolTableValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CArray;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CEnum;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CNamed;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.PRIMITIVE;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CStruct;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
 import de.uni_freiburg.informatik.ultimate.model.ILocation;
+import de.uni_freiburg.informatik.ultimate.model.annotations.Overapprox;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StructAccessExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StructConstructor;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableDeclaration;
 
@@ -67,12 +62,43 @@ public class ResultExpression extends Result {
 //	 * The description of the C type of this expression.
 //	 */
 //	public CType cType; //--> moved to LRValue
+	/**
+	 * An overapproximation flag.
+	 */
+	public final Overapprox overapproximation;
 
 	/**
 	 * Auxiliary variables occurring in this result. The variable declaration
 	 * of the var is mapped to the exact location for that it was constructed.
 	 */
 	public final Map<VariableDeclaration, CACSLLocation> auxVars;
+
+	/**
+     * Constructor.
+     * 
+     * @param stmt
+     *            the statement list to hold
+     * @param expr
+     *            the expression list to hold
+     * @param decl
+     *            the declaration list to hold
+     * @param overapproximation
+     *            true if overapproximation is used
+     */
+    public ResultExpression(ArrayList<Statement> stmt, //Expression expr,
+            LRValue lrVal,
+            ArrayList<Declaration> decl,
+            Map<VariableDeclaration, CACSLLocation> auxVars,
+            Overapprox overapproximation) {
+        super(null);
+        this.stmt = stmt;
+        //      this.expr = expr;
+        this.lrVal = lrVal;
+        this.decl = decl;
+        this.declCTypes = new ArrayList<CType>();
+        this.auxVars = auxVars;
+        this.overapproximation = overapproximation;
+    }
 
 	/**
 	 * Constructor.
@@ -88,13 +114,8 @@ public class ResultExpression extends Result {
 			LRValue lrVal,
 			ArrayList<Declaration> decl,
 			Map<VariableDeclaration, CACSLLocation> auxVars) {
-		super(null);
-		this.stmt = stmt;
-		//		this.expr = expr;
-		this.lrVal = lrVal;
-		this.decl = decl;
-		this.declCTypes = new ArrayList<CType>();
-		this.auxVars = auxVars;
+		this(stmt, lrVal, decl, auxVars, null);
+//      this.expr = expr;
 	}
 
 	/**
@@ -106,23 +127,15 @@ public class ResultExpression extends Result {
 	public ResultExpression(//Expression expr,
 			LRValue lrVal,
 			Map<VariableDeclaration, CACSLLocation> auxVars) {
-		super(null);
-		this.stmt = new ArrayList<Statement>();
+	    this(new ArrayList<Statement>(), lrVal, new ArrayList<Declaration>(),
+	            auxVars);
 		//		this.expr = expr;
-		this.lrVal = lrVal;
-		this.decl = new ArrayList<Declaration>();
-		this.declCTypes = new ArrayList<CType>();
-		this.auxVars = auxVars;
 	}
 
 	public ResultExpression(
 			LRValue lrVal) {
-		super(null);
-		this.stmt = new ArrayList<Statement>();
-		this.lrVal = lrVal;
-		this.decl = new ArrayList<Declaration>();
-		this.declCTypes = new ArrayList<CType>();
-		this.auxVars = new HashMap<VariableDeclaration, CACSLLocation>();
+	    this(new ArrayList<Statement>(), lrVal, new ArrayList<Declaration>(),
+	            new HashMap<VariableDeclaration, CACSLLocation>());
 	}
 
 	public ResultExpression switchToRValue(Dispatcher main, MemoryHandler memoryHandler, 
