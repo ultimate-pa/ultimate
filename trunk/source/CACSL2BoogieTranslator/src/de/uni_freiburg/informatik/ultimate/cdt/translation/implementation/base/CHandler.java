@@ -1177,19 +1177,18 @@ public class CHandler implements ICHandler {
 				op = IASTBinaryExpression.op_plus;
 			else 
 				op = IASTBinaryExpression.op_minus;
-			Expression rhs = null;
+			RValue rhs = null;
 			if (oType instanceof CPointer)
 				rhs = doPointerArith(main, op,
 						loc,
-						tmpRValue.getValue(),
-						nr1);
-			//							.lrVal.getValue();
+						(RValue) tmpRValue,
+						new RValue(nr1, new CPrimitive(PRIMITIVE.INT)));
 			else
-				rhs = createArithmeticExpression(op, tmpRValue.getValue(), nr1, loc);
+				rhs = new RValue(createArithmeticExpression(op, tmpRValue.getValue(), nr1, loc), o.lrVal.cType);
 
 			assert !(o.lrVal instanceof RValue);
 			ResultExpression assign = makeAssignment(main, loc, stmt, o.lrVal, 
-					new RValue(rhs, o.lrVal.cType), decl, auxVars);//, o.lrVal.cType);
+					rhs, decl, auxVars);//, o.lrVal.cType);
 			return new ResultExpression(assign.stmt, tmpRValue, 
 					assign.decl, assign.auxVars);
 		}
@@ -1216,18 +1215,18 @@ public class CHandler implements ICHandler {
 			else 
 				op = IASTBinaryExpression.op_minus;
 
-			Expression rhs = null;
+			RValue rhs = null;
 			if (oType instanceof CPointer)
 				rhs = doPointerArith(main, op,  
-						loc, o.lrVal.getValue(),
-						nr1);
+						loc, (RValue) o.lrVal,
+						new RValue(nr1, new CPrimitive(PRIMITIVE.INT)));
 			//							.lrVal.getValue();
 			else
-				rhs = createArithmeticExpression(op, rvalue, nr1, loc);
+				rhs = new RValue(createArithmeticExpression(op, rvalue, nr1, loc), o.lrVal.cType);
 
 			stmt.add(new AssignmentStatement(loc,
 					new LeftHandSide[] { new VariableLHS(loc, tmpIType,
-							tmpName) }, new Expression[] { rhs }));
+							tmpName) }, new Expression[] { rhs.getValue() }));
 			assert !(o.lrVal instanceof RValue);
 			RValue tmpRValue = new RValue(new IdentifierExpression(loc, tmpIType, tmpName), o.lrVal.cType);
 			ResultExpression assign = makeAssignment(main, loc, stmt, o.lrVal, tmpRValue, decl, auxVars);//, o.lrVal.cType);
@@ -1598,23 +1597,23 @@ public class CHandler implements ICHandler {
 				stmt.add(assertStmt);
 			}
 
-			Expression expr = null;
+			RValue rval = null;
 			if (lType instanceof CPointer
 					&& rType instanceof CPrimitive
 					&& ((CPrimitive) rType).getType() == PRIMITIVE.INT) {
-				expr = doPointerArith(main, node.getOperator(), 
-						loc, rl.lrVal.getValue(), rr.lrVal.getValue());
+				rval = doPointerArith(main, node.getOperator(), 
+						loc, ((RValue) rl.lrVal), ((RValue) rr.lrVal));
 			} else if (rType instanceof CPointer
 					&& lType instanceof CPrimitive
 					&& ((CPrimitive) lType).getType() == PRIMITIVE.INT) {
-				expr = doPointerArith(main, node.getOperator(), loc, rr.lrVal.getValue(),
-						rl.lrVal.getValue());
+				rval = doPointerArith(main, node.getOperator(), loc, (RValue) rr.lrVal,
+						(RValue) rl.lrVal);
 			} else {
-				expr = createArithmeticExpression(
-						node.getOperator(), rl.lrVal.getValue(), rr.lrVal.getValue(), loc);
+				rval = new RValue(createArithmeticExpression(
+						node.getOperator(), rl.lrVal.getValue(), rr.lrVal.getValue(), loc), rl.lrVal.cType); 
 			}
 			assert (main.isAuxVarMapcomplete(decl, auxVars)) : "unhavoced auxvars";
-			return new ResultExpression(stmt, new RValue(expr, rl.lrVal.cType), decl, auxVars);
+			return new ResultExpression(stmt, rval, decl, auxVars);
 		}
 		case IASTBinaryExpression.op_minusAssign:
 		case IASTBinaryExpression.op_multiplyAssign:
@@ -1640,7 +1639,7 @@ public class CHandler implements ICHandler {
 				stmt.add(assertStmt);
 			}
 			// handle pointer arithmetic.
-			Expression rightHandside = null;
+			RValue rightHandside = null;
 			if (lType instanceof CPointer
 					&& rType instanceof CPrimitive
 					&& ((CPrimitive) rType).getType() == PRIMITIVE.INT) {
@@ -1649,12 +1648,12 @@ public class CHandler implements ICHandler {
 				//                		throw new AssertionError("Type Error: trying to do pointer arithmetic" +
 				//                				"with some other operator than + or -");
 				rightHandside = doPointerArith(main, node.getOperator(), 
-						loc, rl.lrVal.getValue(), rr.lrVal.getValue());
+						loc, (RValue) rl.lrVal, (RValue) rr.lrVal);
 			} else {
-				rightHandside = createArithmeticExpression(node.getOperator(),
-						rl.lrVal.getValue(), rr.lrVal.getValue(), loc);
+				rightHandside = new RValue(createArithmeticExpression(node.getOperator(),
+						rl.lrVal.getValue(), rr.lrVal.getValue(), loc), rr.lrVal.cType);
 			}
-			return makeAssignment(main, loc, stmt, l.lrVal, new RValue(rightHandside, rr.lrVal.cType), 
+			return makeAssignment(main, loc, stmt, l.lrVal, rightHandside,
 					decl, auxVars);//, l.lrVal.cType);
 		}
 		case IASTBinaryExpression.op_binaryAnd:
@@ -1696,35 +1695,30 @@ public class CHandler implements ICHandler {
 		}
 	}
 
-	private Expression doPointerArith(Dispatcher main, int operator,
-			//			ArrayList<Declaration> decl, ArrayList<Statement> stmt,
-			//			Map<VariableDeclaration, CACSLLocation> auxVars, 
-			CACSLLocation loc,
-			Expression ptrRex, Expression intRex) {
-		//		assert operator == IASTBinaryExpression.op_plus 
-		//				|| operator == IASTBinaryExpression.op_minus : "Trying pointer arithmetic with wrong operator";
-		Expression pointerOffset = MemoryHandler.getPointerOffset(ptrRex, loc);
-		Expression sum = createArithmeticExpression(
-				operator, pointerOffset, intRex, loc);
-		Expression pointerBase = MemoryHandler.getPointerBaseAddress(ptrRex, loc);
-		StructConstructor newPointer = MemoryHandler.constructPointerFromBaseAndOffset(pointerBase, sum, loc);
-		//		assert (main.isAuxVarMapcomplete(decl, auxVars)) : "unhavoced auxvars";
-		//		return new ResultExpression(stmt, new RValue(newPointer), decl, auxVars,
-		//				ptrRex.cType);//FIXME (in fact we don't know the exact pointer type, right?)
-		return newPointer;
-	}
-
-//	/**
-//	 * Transform an int expression to a pointer. The base address of the 
-//	 * resulting pointer is 0,  the int expression becomes the offset of the pointer.
-//	 */
-//	private ResultExpression getPointerFromInt(Dispatcher main, CACSLLocation loc, Expression intExpr) { 
-//		assert ((InferredType) intExpr.getType()).getType().equals(Type.Integer);
-//		Expression zero = new IntegerLiteral(loc, SFO.NR0);
-//		ResultExpression auxPointer = memoryHandler.auxiliaryPointer(main, loc, zero, intExpr); 
-//		return auxPointer;
+//	public Expression doPointerArith(Dispatcher main, int operator,
+//			ILocation loc,
+//			Expression ptrRex, Expression intRex) {
+//		Expression pointerOffset = MemoryHandler.getPointerOffset(ptrRex, loc);
+//		Expression sum = createArithmeticExpression(
+//				operator, pointerOffset, intRex, loc);
+//		Expression pointerBase = MemoryHandler.getPointerBaseAddress(ptrRex, loc);
+//		StructConstructor newPointer = MemoryHandler.constructPointerFromBaseAndOffset(pointerBase, sum, loc);
+//		return newPointer;
 //	}
-
+	
+	public RValue doPointerArith(Dispatcher main, int operator,
+			ILocation loc,
+			RValue ptr, RValue integer) {
+		Expression pointerOffset = MemoryHandler.getPointerOffset(ptr.getValue(), loc);
+		Expression timesSizeOf = createArithmeticExpression(IASTBinaryExpression.op_multiply, integer.getValue(), 
+				memoryHandler.calculateSizeOf(((CPointer) ptr.cType).pointsToType), 
+				loc);
+		Expression sum = createArithmeticExpression(
+				operator, pointerOffset, timesSizeOf, loc);
+		Expression pointerBase = MemoryHandler.getPointerBaseAddress(ptr.getValue(), loc);
+		StructConstructor newPointer = MemoryHandler.constructPointerFromBaseAndOffset(pointerBase, sum, loc);
+		return new RValue(newPointer, ptr.cType);
+	}
 	/**
 	 * Given the cvar of a left hand side and the expression of a right hand
 	 * side (of an equality). Return true if lhs is a Pointer and the rhs is an

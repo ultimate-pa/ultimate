@@ -241,7 +241,7 @@ public class StructHandler {
 
 
 	public Result readFieldInTheStructAtAddress(Dispatcher main,
-			MemoryHandler memoryHandler, CACSLLocation loc, String field,
+			MemoryHandler memoryHandler, ILocation loc, String field,
 			InferredType it, Expression structAddress, CStruct structType) {
 		Expression addressBaseOfFieldOwner;
 		Expression addressOffsetOfFieldOwner;

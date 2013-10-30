@@ -26,6 +26,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
+import de.uni_freiburg.informatik.ultimate.model.ILocation;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
@@ -125,7 +126,7 @@ public class ResultExpression extends Result {
 	}
 
 	public ResultExpression switchToRValue(Dispatcher main, MemoryHandler memoryHandler, 
-			StructHandler structHandler, CACSLLocation loc) {
+			StructHandler structHandler, ILocation loc) {
 		ResultExpression rex = null;
 		if (lrVal == null)
 			return this;
@@ -228,7 +229,7 @@ public class ResultExpression extends Result {
 	 * fill the items inside the StructConstructor correctly
 	 */
 	ResultExpression readStructFromHeap(Dispatcher main, 
-			StructHandler structHandler, MemoryHandler memoryHandler, CACSLLocation loc,
+			StructHandler structHandler, MemoryHandler memoryHandler, ILocation loc,
 			Expression structOnHeapAddress, CStruct structType) {
 		ResultExpression result = null;
 
