@@ -1081,6 +1081,12 @@ public class CHandler implements ICHandler {
 								BinaryExpression.Operator.COMPEQ, rop.lrVal.getValue(),
 								new IntegerLiteral(loc, tInt, SFO.NR0)), rop.lrVal.cType),
 								o.decl, o.auxVars);
+			} else if (oType instanceof CPointer) {
+				return new ResultExpression(rop.stmt,
+						new RValue(wrapBinaryBoolean2Int(loc,
+								BinaryExpression.Operator.COMPEQ, rop.lrVal.getValue(),
+								MemoryHandler.constructNullPointer(loc)), rop.lrVal.cType),
+								o.decl, o.auxVars);
 			} else {
 				throw new UnsupportedOperationException(
 						"only bool and int at the moment");
