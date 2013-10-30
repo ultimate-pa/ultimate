@@ -1,8 +1,10 @@
 package de.uni_freiburg.informatik.ultimate.model.annotations;
 
-import java.util.Arrays;
+import java.util.Collections;
+import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.model.AbstractAnnotations;
+import de.uni_freiburg.informatik.ultimate.model.ILocation;
 import de.uni_freiburg.informatik.ultimate.result.Check;
 
 /**
@@ -16,11 +18,15 @@ public class Overapprox extends AbstractAnnotations {
 	public static final String BITVEC = "bitvector operation";
 	public static final String FUNC_POINTER = "call of function pointer";
 	
-	private final String[] m_Reasons;
+	private final Map<String, ILocation> m_Reason2Loc;
 	
-	public Overapprox(String... resons) {
-		m_Reasons = resons;
+	public Overapprox(Map<String, ILocation> reason2Loc) {
+		m_Reason2Loc = reason2Loc;
 	}
+	
+	public Overapprox(String reason, ILocation loc) {
+        m_Reason2Loc = Collections.singletonMap(reason, loc);
+    }
 
 	public static final String getIdentifier() {
 		return Check.class.getName();
@@ -44,7 +50,7 @@ public class Overapprox extends AbstractAnnotations {
 	@Override
 	protected Object getFieldValue(String field) {
 		if (field == "Reason for overapproximation")
-			return Arrays.toString(m_Reasons);
+			return m_Reason2Loc.keySet();
 		else
 			throw new UnsupportedOperationException("Unknown field "+field);
 	}

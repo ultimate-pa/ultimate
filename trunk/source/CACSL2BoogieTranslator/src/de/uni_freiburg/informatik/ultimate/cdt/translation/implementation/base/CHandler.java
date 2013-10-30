@@ -411,12 +411,12 @@ public class CHandler implements ICHandler {
 		// Christian: function pointers
         String[] constants = new String[
                 ((MainDispatcher) main).getFunctionPointers().size()];
-		int i = 0;
-		for (final String cId : ((MainDispatcher) main).
-		        getFunctionPointers().keySet()) {
-		    constants[i++] = SFO.FUNCTION_ADDRESS + cId;
-		}
 		if (constants.length > 0) {
+	        int i = 0;
+	        for (final String cId : ((MainDispatcher) main).
+	                getFunctionPointers().keySet()) {
+	            constants[i++] = SFO.FUNCTION_ADDRESS + cId;
+	        }
     		VarList varList = new VarList(loc, constants,
                     MemoryHandler.POINTER_TYPE);
 //                    new NamedType(loc, new InferredType(Type.Pointer), SFO.POINTER, new ASTType[0]));//changed by alex, I think we want it that way
