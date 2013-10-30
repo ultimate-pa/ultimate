@@ -100,33 +100,6 @@ public interface ITypeHandler extends IHandler {
     public Result visit(Dispatcher main, IASTCompositeTypeSpecifier node);
 
     /**
-     * Type handling for int vs bool, since bools are integers in C99 -> we have
-     * to translate this special case into BooleanLiterals. If we are in a
-     * boolean context, all int != 0 are true, else false.
-     * 
-     * @param expr
-     *            the expression to assign
-     * @param loc
-     *            the CACSLLocation
-     * @param type
-     *            the type of the variable.
-     * @return the expression to be used
-     */
-    public Expression convertArith2Boolean(ILocation loc, ASTType type,
-            Expression expr);
-    
-    /**
-     * Tries to unwrap an expression that was wrapped before. That is, it checks
-     * whether a given integer expression is wrapped in an if-then-else
-     * expression or not.
-     * 
-     * @param expr expression
-     * @return unwrapped expression or null if not wrapped
-     * @author Christian
-     */
-    public Expression unwrapInt2Boolean(final Expression expr);
-
-    /**
      * Translates an CDT IType to a Boogie type.
      * 
      * @param main

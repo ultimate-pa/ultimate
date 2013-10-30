@@ -30,6 +30,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ResultSkip;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.svComp.cHandler.SVCompArrayHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.svComp.cHandler.SVCompFunctionHandler;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.ConvExpr;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ASTType;
@@ -156,10 +157,8 @@ public class SvComp14CHandler extends CHandler {
                 auxVars.putAll(in.auxVars);
             }
             assert args.size() == 1; // according to SV-Comp specification!
-            stmt.add(new AssumeStatement(loc, main.typeHandler.
-            		convertArith2Boolean(loc, new PrimitiveType(loc,
-    						new InferredType(Type.Boolean), SFO.BOOL),
-    						args.get(0))));
+            stmt.add(new AssumeStatement(loc,
+            		ConvExpr.toBoolean(loc, args.get(0))));
             assert (main.isAuxVarMapcomplete(decl, auxVars));
             return new ResultExpression(stmt, returnValue, decl, auxVars);
         }

@@ -48,6 +48,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.svComp.cHandler.SVCompArrayHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.svComp.cHandler.SVCompFunctionHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.BoogieASTUtil;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.ConvExpr;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
 import de.uni_freiburg.informatik.ultimate.model.ILocation;
@@ -178,10 +179,8 @@ public class SvCompCHandler extends CHandler {
                 auxVars.putAll(in.auxVars);
             }
             assert args.size() == 1; // according to SV-Comp specification!
-            stmt.add(new AssumeStatement(loc, main.typeHandler.
-            		convertArith2Boolean(loc, new PrimitiveType(loc,
-    						new InferredType(Type.Boolean), SFO.BOOL),
-    						args.get(0))));
+            stmt.add(new AssumeStatement(loc, 
+            		ConvExpr.toBoolean(loc, args.get(0))));
             assert (main.isAuxVarMapcomplete(decl, auxVars));
             return new ResultExpression(stmt, resultValue, decl, auxVars);
         }
@@ -423,8 +422,6 @@ public class SvCompCHandler extends CHandler {
                     } else { // it should be a "normal variable"
                         ResultExpression rExpr = ((ResultExpression) (main
                                 .dispatch(d.getInitializer()))).switchToRValue(main, memoryHandler, structHandler, loc);
-                        rExpr.lrVal = new RValue(main.typeHandler.convertArith2Boolean(
-                                loc, type, rExpr.lrVal.getValue()), rExpr.lrVal.cType);
                         Expression[] rhs = new Expression[] { rExpr.lrVal.getValue() };
                         VariableLHS[] lhs = new VariableLHS[] { new VariableLHS(
                                 loc, bId) };

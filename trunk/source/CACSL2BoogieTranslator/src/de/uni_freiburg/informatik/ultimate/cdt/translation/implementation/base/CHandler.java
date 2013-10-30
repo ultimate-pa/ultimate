@@ -95,6 +95,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ResultSkip;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ResultTypes;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.BoogieASTUtil;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.ConvExpr;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.ISOIEC9899TC3;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
@@ -733,8 +734,9 @@ public class CHandler implements ICHandler {
 									new IntegerLiteral(loc, new InferredType(Type.Integer), "0"),
 									rExpr.lrVal.getValue(), loc);
 						} else {
-							rExprExpr = main.typeHandler.convertArith2Boolean(
-									loc, type, rExpr.lrVal.getValue());
+							rExprExpr = ConvExpr.doStrangeThings(type, rExpr.lrVal.getValue());
+//								rExprExpr = main.typeHandler.convertArith2Boolean(
+//										loc, type, rExpr.lrVal.getValue());
 						}
 
 
@@ -1048,49 +1050,35 @@ public class CHandler implements ICHandler {
 							rop.decl,
 							rop.auxVars);
 		case IASTUnaryExpression.op_not:
-			InferredType iType = (InferredType) rop.lrVal.getValue().getType();
 			/** boolean <code>p</code> becomes <code>!p ? 1 : 0</code> */
-			if (iType.getType() == InferredType.Type.Boolean) {
-				return new ResultExpression(rop.stmt,
-						new RValue(wrapBoolean2Int(loc, new UnaryExpression(loc,
-								UnaryExpression.Operator.LOGICNEG, rop.lrVal.getValue())), rop.lrVal.cType),
-								rop.decl, rop.auxVars);
-			} else if (iType.getType() == InferredType.Type.Integer) {
-				// unwrap if possible
-				final Expression unwrapped =
-						main.typeHandler.unwrapInt2Boolean(rop.lrVal.getValue());
+			/**
+			 * int <code>x</code> of form <code>y ? 1 : 0</code>
+			 * becomes <code>!y ? 1 : 0</code>
+			 */
+			/** int <code>x</code> becomes <code>x == 0 ? 1 : 0</code> */
+			InferredType iType = (InferredType) rop.lrVal.getValue().getType();
+			final Expression positive;
+			if (iType.getType() == InferredType.Type.Integer) {
+				// if expr is int we first check if it has the form
+				// (unwrapped ? 1 : 0) 
+				final Expression unwrapped = ConvExpr.unwrapInt2Boolean(rop.lrVal.getValue());
 				if (unwrapped != null) {
-					/**
-					 * int <code>x</code> of form <code>y ? 1 : 0</code>
-					 * becomes <code>!y ? 1 : 0</code>
-					 */
-					return new ResultExpression(rop.stmt,
-							new RValue(wrapBoolean2Int(loc,
-									new UnaryExpression(loc, 
-											UnaryExpression.Operator.LOGICNEG,
-											unwrapped)), 
-									rop.lrVal.cType
-									),
-									rop.decl, 
-									rop.auxVars);
+					positive = unwrapped;
+				} else {
+					positive = rop.lrVal.getValue();
 				}
-
-				/** int <code>x</code> becomes <code>x == 0 ? 1 : 0</code> */
-				return new ResultExpression(rop.stmt,
-						new RValue(wrapBinaryBoolean2Int(loc,
-								BinaryExpression.Operator.COMPEQ, rop.lrVal.getValue(),
-								new IntegerLiteral(loc, tInt, SFO.NR0)), rop.lrVal.cType),
-								o.decl, o.auxVars);
-			} else if (oType instanceof CPointer) {
-				return new ResultExpression(rop.stmt,
-						new RValue(wrapBinaryBoolean2Int(loc,
-								BinaryExpression.Operator.COMPEQ, rop.lrVal.getValue(),
-								MemoryHandler.constructNullPointer(loc)), rop.lrVal.cType),
-								o.decl, o.auxVars);
 			} else {
-				throw new UnsupportedOperationException(
-						"only bool and int at the moment");
+				positive = rop.lrVal.getValue();
 			}
+			Expression negated = new UnaryExpression(loc,
+					new InferredType(InferredType.Type.Boolean),
+					UnaryExpression.Operator.LOGICNEG,
+					ConvExpr.toBoolean(loc, positive));
+			ResultExpression re = new ResultExpression(
+					new RValue(wrapBoolean2Int(loc, negated), 
+							new CPrimitive(PRIMITIVE.INT)));
+			re.addAll(rop);
+			return re;
 		case IASTUnaryExpression.op_plus:
 			return new ResultExpression(rop.stmt, rop.lrVal, rop.decl, rop.auxVars);
 		case IASTUnaryExpression.op_postFixIncr:
@@ -1226,6 +1214,15 @@ public class CHandler implements ICHandler {
 			Dispatcher.error(loc, SyntaxErrorType.UnsupportedSyntax, msg);
 			throw new UnsupportedSyntaxException(msg);
 		}
+	}
+	
+	
+	private ResultExpression convertToBoolean(CACSLLocation loc, ResultExpression rop) {
+		return new ResultExpression(rop.stmt,
+				new RValue(wrapBinaryBoolean2Int(loc,
+						BinaryExpression.Operator.COMPEQ, rop.lrVal.getValue(),
+						MemoryHandler.constructNullPointer(loc)), rop.lrVal.cType),
+						rop.decl, rop.auxVars);
 	}
 
 	private ResultExpression makeAssignment(Dispatcher main, ILocation loc, ArrayList<Statement> stmt,
@@ -1393,12 +1390,8 @@ public class CHandler implements ICHandler {
 			if (rr.stmt.isEmpty()) {
 				// no statements in right operands, hence no side effects in operand
 				// we can directly combine operands with LOGICAND
-				Expression lBool = main.typeHandler.convertArith2Boolean(
-						loc, new PrimitiveType(loc, SFO.BOOL),
-						rl.lrVal.getValue());
-				Expression rBool = main.typeHandler.convertArith2Boolean(
-						loc, new PrimitiveType(loc, SFO.BOOL),
-						rr.lrVal.getValue());
+				Expression lBool = ConvExpr.toBoolean(loc, rl.lrVal.getValue());
+				Expression rBool = ConvExpr.toBoolean(loc, rr.lrVal.getValue());
 				return new ResultExpression(stmt, 
 						new RValue(wrapBinaryBoolean2Int(loc,
 								BinaryExpression.Operator.LOGICAND,
@@ -1416,9 +1409,7 @@ public class CHandler implements ICHandler {
 			decl.add(tmpVar);
 			VariableLHS lhs = new VariableLHS(loc, tInt, resName);
 			Expression tmpRval = new IdentifierExpression(loc, tInt, resName);
-			tmpRval = main.typeHandler.convertArith2Boolean(loc,
-					new PrimitiveType(loc, SFO.BOOL),
-					tmpRval);
+			tmpRval = ConvExpr.toBoolean(loc, tmpRval);
 			// #t~AND~UID = left
 			
 			// Christian: wrap assignments
@@ -1461,12 +1452,8 @@ public class CHandler implements ICHandler {
 			auxVars.putAll(rr.auxVars);
 
 			if (rr.stmt.isEmpty()) {
-				Expression lBool = main.typeHandler.convertArith2Boolean(
-						loc, new PrimitiveType(loc, SFO.BOOL),
-						rl.lrVal.getValue());
-				Expression rBool = main.typeHandler.convertArith2Boolean(
-						loc, new PrimitiveType(loc, SFO.BOOL),
-						rr.lrVal.getValue());
+				Expression lBool = ConvExpr.toBoolean(loc, rl.lrVal.getValue());
+				Expression rBool = ConvExpr.toBoolean(loc, rr.lrVal.getValue());
 				// no auxVar in operands, hence no side effects in operands
 				// we can directly combine operands with LOGICOR
 				return new ResultExpression(stmt,
@@ -1486,9 +1473,7 @@ public class CHandler implements ICHandler {
 			decl.add(tmpVar);
 			VariableLHS lhs = new VariableLHS(loc, tInt, resName);
 			Expression tmpRval = new IdentifierExpression(loc, tInt, resName);
-			tmpRval = main.typeHandler.convertArith2Boolean(loc,
-					new PrimitiveType(loc, SFO.BOOL),
-					tmpRval);
+			tmpRval = ConvExpr.toBoolean(loc, tmpRval);
 			// #t~OR~UID = left
 			
 			// Christian: wrap assignments
@@ -1940,8 +1925,7 @@ public class CHandler implements ICHandler {
 		}
 		assert thenStmt != null;
 		assert elseStmt != null;
-		cond = main.typeHandler.convertArith2Boolean(loc, new PrimitiveType(
-				loc, SFO.BOOL), cond);
+		cond = ConvExpr.toBoolean(loc, cond);
 		// TODO : handle if(pointer), if(pointer==NULL) and if(pointer==0)
 		stmt.add(new IfStatement(loc, cond, thenStmt.toArray(new Statement[0]),
 				elseStmt.toArray(new Statement[0])));
@@ -2062,8 +2046,7 @@ public class CHandler implements ICHandler {
 
 		condResult = condResult.switchToRValue(main, memoryHandler, structHandler, loc);
 		decl.addAll(condResult.decl);
-		Expression condExpr = main.typeHandler.convertArith2Boolean(loc,
-				new PrimitiveType(loc, SFO.BOOL), condResult.lrVal.getValue());
+		Expression condExpr = ConvExpr.toBoolean(loc, condResult.lrVal.getValue());
 		IfStatement ifStmt;
 		{
 			Expression cond = new UnaryExpression(loc,
@@ -2486,8 +2469,7 @@ public class CHandler implements ICHandler {
 		VariableDeclaration tmpVar = SFO.getTempVarVariableDeclaration(tmpName, tmpIType, loc);
 		decl.add(tmpVar);
 		Expression condition = reLocCond.lrVal.getValue();
-		condition = main.typeHandler.convertArith2Boolean(loc, new PrimitiveType(
-				loc, SFO.BOOL), condition);
+		condition = ConvExpr.toBoolean(loc, condition);
 		List<Statement> ifStatements = new ArrayList<Statement>();
 		{
 			ifStatements.addAll(rePositive.stmt);

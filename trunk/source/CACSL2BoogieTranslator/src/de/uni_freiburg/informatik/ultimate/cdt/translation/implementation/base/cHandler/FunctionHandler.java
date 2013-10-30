@@ -39,12 +39,14 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ResultSkip;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ResultTypes;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ResultVarList;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.ConvExpr;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.TarjanSCC;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
 import de.uni_freiburg.informatik.ultimate.model.ILocation;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLNode;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ASTType;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssignmentStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression;
@@ -680,9 +682,12 @@ public class FunctionHandler {
 			if (procedures.containsKey(methodName)
 					&& procedures.get(methodName).getInParams() != null
 					&& i < procedures.get(methodName).getInParams().length) {
-				arg = main.typeHandler.convertArith2Boolean(loc,
+				arg = ConvExpr.doStrangeThings(
 						procedures.get(methodName).getInParams()[i].getType(),
 						in.lrVal.getValue());
+//				arg = main.typeHandler.convertArith2Boolean(loc,
+//						procedures.get(methodName).getInParams()[i].getType(),
+//						in.lrVal.getValue());
 			} 
 //			else {
 //				throw new UnsupportedSyntaxException("procedure not found in procedure list, " +
@@ -788,8 +793,7 @@ public class FunctionHandler {
 			} else {
 				String id = outParams[0].getIdentifiers()[0];
 				VariableLHS[] lhs = new VariableLHS[] { new VariableLHS(loc, id) };
-				rhs = main.typeHandler.convertArith2Boolean(loc,
-						outParams[0].getType(), rhs);
+				rhs = ConvExpr.doStrangeThings(outParams[0].getType(), rhs);
 				stmt.add(new AssignmentStatement(loc, lhs,
 						new Expression[] { rhs }));
 			}

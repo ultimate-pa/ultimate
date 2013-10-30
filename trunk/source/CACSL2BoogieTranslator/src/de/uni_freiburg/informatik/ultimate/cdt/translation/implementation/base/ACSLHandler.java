@@ -25,6 +25,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.Result;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ResultContract;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.BoogieASTUtil;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.ConvExpr;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.IACSLHandler;
@@ -208,13 +209,13 @@ public class ACSLHandler implements IACSLHandler {
     public Result visit(
             Dispatcher main,
             de.uni_freiburg.informatik.ultimate.model.acsl.ast.BinaryExpression node) {
-        ILocation loc = new CACSLLocation(node);
+    	CACSLLocation loc = new CACSLLocation(node);
         Expression left = (Expression) main.dispatch(node.getLeft()).node;
         Expression right = (Expression) main.dispatch(node.getRight()).node;
-        if (left.getType() != null) {
-            right = main.typeHandler.convertArith2Boolean(loc,
-                    new PrimitiveType(loc, left.getType(), left.getType()
-                            .toString()), right);
+        if (left.getType() != null && 
+        		left.getType().equals(new InferredType(InferredType.Type.Boolean))) {
+        	//convert to boolean if neccessary
+            right = ConvExpr.toBoolean(loc, right);
         }
         Operator op = getBoogieBinaryExprOperator(node.getOperator());
         if (op != null) {
