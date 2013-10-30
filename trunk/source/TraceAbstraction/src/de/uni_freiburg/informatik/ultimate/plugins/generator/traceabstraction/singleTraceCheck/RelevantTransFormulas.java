@@ -19,6 +19,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cal
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.util.DAGSize;
 
 
 /**
@@ -53,6 +54,13 @@ public class RelevantTransFormulas extends NestedFormulas<TransFormula, IPredica
 	
 	
 	private final SmtManager m_SmtManager;
+	
+	private final static boolean s_ComputeSumSizeFormulasInUnsatCore = false;
+	
+	/**
+	 * Sum of the size of all formulas that are in the unsatisfiable core.
+	 */
+	private int m_SumSizeFormulasInUnsatCore = 0; 
 	
 	public RelevantTransFormulas(NestedWord<CodeBlock> nestedTrace,
 			IPredicate precondition, IPredicate postcondition,
@@ -180,7 +188,11 @@ public class RelevantTransFormulas extends NestedFormulas<TransFormula, IPredica
 		Set<Term> conjunctsInUnsatCore = new HashSet<Term>(conjuncts_annot.length);
 		for (int j = 0; j < conjuncts_annot.length; j++) {
 			if (unsat_core.contains(conjuncts_annot[j])) {
-				conjunctsInUnsatCore.add(annot2Original.get(conjuncts_annot[j]));
+				Term original = annot2Original.get(conjuncts_annot[j]);
+				if (s_ComputeSumSizeFormulasInUnsatCore) {
+					m_SumSizeFormulasInUnsatCore += (new DAGSize()).size(original);
+				}
+				conjunctsInUnsatCore.add(original);
 			}
 		}
 		return conjunctsInUnsatCore;
