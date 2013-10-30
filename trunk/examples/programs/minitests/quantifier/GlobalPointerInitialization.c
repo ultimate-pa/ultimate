@@ -7,11 +7,11 @@
  * 
  */
 
+int i;
 int *p;
 
 int main() {
-	// insert some check that tests that p is indeed 0
-	
-	int* a; // some auxiliary statement to obtain memory model
-    int b = *a; // some auxiliary statement to obtain memory model
+	if (p != 0) {
+	  //@ assert \false;
+	}
 }
