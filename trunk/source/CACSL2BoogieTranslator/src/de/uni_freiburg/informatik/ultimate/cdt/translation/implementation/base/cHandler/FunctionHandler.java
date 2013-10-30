@@ -885,7 +885,10 @@ public class FunctionHandler {
 	 * @return the identifier of the current procedure.
 	 */
 	public String getCurrentProcedureID() {
-		return this.currentProcedure.getIdentifier();
+		if (currentProcedure == null)
+			return null;
+		else
+			return this.currentProcedure.getIdentifier();
 	}
 
 	public boolean noCurrentProcedure() {

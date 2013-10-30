@@ -12,6 +12,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.c
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.StructHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
+import de.uni_freiburg.informatik.ultimate.model.ILocation;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
@@ -90,7 +91,7 @@ public class ResultExpressionListRec extends ResultExpression {
     @Override
     public ResultExpressionListRec switchToRValue(Dispatcher main,
     		MemoryHandler memoryHandler, StructHandler structHandler,
-    		CACSLLocation loc) {
+    		ILocation loc) {
     	ResultExpression re = super.switchToRValue(main, memoryHandler, structHandler, loc);
     	
     	ArrayList<ResultExpressionListRec> newList = new ArrayList<ResultExpressionListRec>();
