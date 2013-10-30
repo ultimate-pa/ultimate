@@ -418,7 +418,8 @@ public class CHandler implements ICHandler {
 		}
 		if (constants.length > 0) {
     		VarList varList = new VarList(loc, constants,
-                    new NamedType(loc, new InferredType(Type.Pointer), SFO.POINTER, new ASTType[0]));
+                    MemoryHandler.POINTER_TYPE);
+//                    new NamedType(loc, new InferredType(Type.Pointer), SFO.POINTER, new ASTType[0]));//changed by alex, I think we want it that way
     		decl.add(new ConstDeclaration(loc, new Attribute[0], true,
                     varList, null, false));
 		}
@@ -650,7 +651,8 @@ public class CHandler implements ICHandler {
 					CType arrayType = result.lrVal.cType;
 					
 //					ASTType type = new PrimitiveType(loc, new InferredType(Type.Pointer), SFO.POINTER);
-					ASTType type = new NamedType(loc, new InferredType(Type.Pointer), SFO.POINTER, new ASTType[0]);
+					ASTType type = MemoryHandler.POINTER_TYPE;
+//					ASTType type = new NamedType(loc, new InferredType(Type.Pointer), SFO.POINTER, new ASTType[0]);
 //					ASTType type = resType.getType();
 					VarList var = new VarList(loc, new String[] { bId }, type);
 					Attribute[] attr = new Attribute[0];
@@ -1914,6 +1916,7 @@ public class CHandler implements ICHandler {
 				ArrayList<Declaration> decl = new ArrayList<Declaration>(
 						rExp.decl);
 				assert (main.isAuxVarMapcomplete(decl, rExp.auxVars));
+				stmt.addAll(Dispatcher.createHavocsForAuxVars(res.auxVars)); //alex: inserted this .. why wasn't it here before???
 				Map<VariableDeclaration, CACSLLocation> emptyAuxVars = new HashMap<VariableDeclaration, CACSLLocation>(
 						0);
 				return new ResultExpression(stmt, null, decl, emptyAuxVars);

@@ -157,6 +157,7 @@ public class ResultExpression extends Result {
 						CPrimitive cp = (CPrimitive) this.lrVal.cType;
 						ResultExpression readResult;
 						switch (cp.getType()) {
+						case CHAR:
 						case INT:
 							heapReadType = new InferredType(Type.Integer);
 							rex = memoryHandler.getReadCall(
@@ -171,7 +172,6 @@ public class ResultExpression extends Result {
 //							throw new UnsupportedSyntaxException("void should have been cast before dereferencing");
 							break;
 						case BOOL:
-						case CHAR:
 						default:
 							throw new UnsupportedSyntaxException("..");
 						}
