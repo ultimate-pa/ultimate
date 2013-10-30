@@ -60,7 +60,8 @@ public class RelevantTransFormulas extends NestedFormulas<TransFormula, IPredica
 	/**
 	 * Sum of the size of all formulas that are in the unsatisfiable core.
 	 */
-	private int m_SumSizeFormulasInUnsatCore = 0; 
+	private int m_SumSizeFormulasInUnsatCore = 0;
+	private int m_SumSizeFormulasNotInUnsatCore = 0; 
 	
 	public RelevantTransFormulas(NestedWord<CodeBlock> nestedTrace,
 			IPredicate precondition, IPredicate postcondition,
@@ -193,6 +194,11 @@ public class RelevantTransFormulas extends NestedFormulas<TransFormula, IPredica
 					m_SumSizeFormulasInUnsatCore += (new DAGSize()).size(original);
 				}
 				conjunctsInUnsatCore.add(original);
+			} else {
+				if (s_ComputeSumSizeFormulasInUnsatCore) {
+					Term original = annot2Original.get(conjuncts_annot[j]);
+					m_SumSizeFormulasNotInUnsatCore += (new DAGSize()).size(original);
+				}
 			}
 		}
 		return conjunctsInUnsatCore;
