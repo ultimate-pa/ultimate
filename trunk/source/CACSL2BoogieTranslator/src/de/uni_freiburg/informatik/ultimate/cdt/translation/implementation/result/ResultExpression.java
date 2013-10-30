@@ -64,6 +64,7 @@ public class ResultExpression extends Result {
 //	 * The description of the C type of this expression.
 //	 */
 //	public CType cType; //--> moved to LRValue
+
 	/**
 	 * An overapproximation flag.
 	 */
@@ -74,6 +75,22 @@ public class ResultExpression extends Result {
 	 * of the var is mapped to the exact location for that it was constructed.
 	 */
 	public final Map<VariableDeclaration, CACSLLocation> auxVars;
+	
+	
+	/**
+	 * Use this to lock this ResultExpression. If the ResultExpression is locked
+	 * its fields should not obtain new elements any more.
+	 */
+	private boolean m_Locked = false;
+	
+	/**
+	 * Lock this ResultExpression after usage to forbid that someone switches
+	 * to RValue.
+	 */
+	public void lock() {
+		m_Locked = true;
+	}
+
 
 	/**
      * Constructor.
@@ -148,6 +165,9 @@ public class ResultExpression extends Result {
 
 	public ResultExpression switchToRValue(Dispatcher main, MemoryHandler memoryHandler, 
 			StructHandler structHandler, ILocation loc) {
+		if (m_Locked) {
+			throw new AssertionError("this ResultExpression is already locked");
+		}
 		ResultExpression rex = null;
 		if (lrVal == null)
 			return this;
@@ -352,6 +372,19 @@ public class ResultExpression extends Result {
 		result = new ResultExpression(newStmt, new RValue(sc, structType), newDecl, newAuxVars);
 
 		return result;
+	}
+	
+	
+	/**
+	 * Add all declaration, statements, auxvars, etc. from another 
+	 * ResultExpression. Lock the other ResultExpression afterwards to indicate
+	 * that the other Result expression should not be used any more. 
+	 */
+	public void addAll(ResultExpression re) {
+		this.decl.addAll(re.decl);
+		this.stmt.addAll(re.stmt);
+		this.auxVars.putAll(re.auxVars);
+		re.lock();
 	}
 }
 
