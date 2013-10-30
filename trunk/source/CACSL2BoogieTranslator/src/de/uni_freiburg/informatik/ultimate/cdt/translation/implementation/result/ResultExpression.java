@@ -5,6 +5,8 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.resul
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CACSLLocation;
@@ -65,7 +67,7 @@ public class ResultExpression extends Result {
 	/**
 	 * An overapproximation flag.
 	 */
-	public final Overapprox overapproximation;
+	public final List<Overapprox> overapprList;
 
 	/**
 	 * Auxiliary variables occurring in this result. The variable declaration
@@ -97,7 +99,13 @@ public class ResultExpression extends Result {
         this.decl = decl;
         this.declCTypes = new ArrayList<CType>();
         this.auxVars = auxVars;
-        this.overapproximation = overapproximation;
+        if (overapproximation != null) {
+            this.overapprList = new LinkedList<Overapprox>();
+            this.overapprList.add(overapproximation);
+        }
+        else {
+            this.overapprList = null;
+        }
     }
 
 	/**
