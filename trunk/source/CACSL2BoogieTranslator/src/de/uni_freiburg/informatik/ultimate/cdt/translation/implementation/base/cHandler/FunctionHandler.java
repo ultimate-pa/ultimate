@@ -675,7 +675,7 @@ public class FunctionHandler {
 				Dispatcher.error(loc, SyntaxErrorType.IncorrectSyntax, msg);
 				throw new IncorrectSyntaxException(msg);
 			}
-			Expression arg = null;
+			Expression arg = in.lrVal.getValue();
 			if (procedures.containsKey(methodName)
 					&& procedures.get(methodName).getInParams() != null
 					&& i < procedures.get(methodName).getInParams().length) {
