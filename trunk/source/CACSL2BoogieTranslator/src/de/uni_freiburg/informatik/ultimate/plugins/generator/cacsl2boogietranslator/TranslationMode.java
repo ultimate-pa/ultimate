@@ -13,10 +13,6 @@ public enum TranslationMode {
      */
     BASE("&Default translation"),
     /**
-     * Mode for the Software Verification Competition 2013.
-     */
-    SV_COMP13("&SV-COMP 2013 features"),
-    /**
      * Mode for the Software Verification Competition 2014.
      */
     SV_COMP14("&SV-COMP 2014 features");;

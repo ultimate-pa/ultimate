@@ -11,6 +11,7 @@ public class SvComp14PreprocessorHandler extends PreprocessorHandler {
 
 	@Override
 	public Result visit(Dispatcher main, IASTPreprocessorIncludeStatement node) {
+		// Ignore #include in our sv-comp mode
 		return new ResultSkip();
 	}
 	
