@@ -209,13 +209,13 @@ public class SvComp14CHandler extends CHandler {
 
     @Override
     public Result visit(Dispatcher main, IASTBinaryExpression node) {
-        if (node.getOperator() == IASTBinaryExpression.op_assign
-                && node.getOperand2() instanceof IASTFunctionCallExpression
-                && ((IASTFunctionCallExpression) node.getOperand2())
-                        .getFunctionNameExpression().getRawSignature()
-                        .equalsIgnoreCase("malloc")) {
-            return new ResultSkip();
-        } // else
+//        if (node.getOperator() == IASTBinaryExpression.op_assign
+//                && node.getOperand2() instanceof IASTFunctionCallExpression
+//                && ((IASTFunctionCallExpression) node.getOperand2())
+//                        .getFunctionNameExpression().getRawSignature()
+//                        .equalsIgnoreCase("malloc")) {
+//            return new ResultSkip();
+//        } // else
         Result r = super.visit(main, node);
         if (node.getOperator() == IASTBinaryExpression.op_divide
                 || node.getOperator() == IASTBinaryExpression.op_divideAssign) {
