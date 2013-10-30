@@ -105,6 +105,7 @@ import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLNode;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.CodeAnnot;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.Contract;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.LoopAnnot;
+import de.uni_freiburg.informatik.ultimate.model.annotations.Overapprox;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssertStatement;
@@ -130,7 +131,6 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Label;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.LeftHandSide;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.LoopInvariantSpecification;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.NamedType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.PrimitiveType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.RealLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Specification;
@@ -1230,7 +1230,7 @@ public class CHandler implements ICHandler {
 
 	private ResultExpression makeAssignment(Dispatcher main, ILocation loc, ArrayList<Statement> stmt,
 			LRValue lrVal, RValue rVal, ArrayList<Declaration> decl,
-			Map<VariableDeclaration, CACSLLocation> auxVars) {
+			Map<VariableDeclaration, CACSLLocation> auxVars, Overapprox overapprox) {
 
 		RValue rightHandSide = rVal;
 		
@@ -1254,7 +1254,7 @@ public class CHandler implements ICHandler {
 				.add(SFO.MEMORY + "_" + t);
 			}
 			
-			return new ResultExpression(stmt, rightHandSide, decl, auxVars);
+			return new ResultExpression(stmt, rightHandSide, decl, auxVars, overapprox);
 		} else if (lrVal instanceof LocalLValue){
 			LocalLValue lValue = (LocalLValue) lrVal;
 			stmt.add(new AssignmentStatement(loc, new LeftHandSide[]{lValue.getLHS()}, 
@@ -1264,9 +1264,15 @@ public class CHandler implements ICHandler {
 				functionHandler.checkIfModifiedGlobal(main,
 						BoogieASTUtil.getLHSId(lValue.getLHS()), loc);
 //			return new ResultExpression(stmt, new RValue(lValue.getValue(), cType), decl, auxVars);
-			return new ResultExpression(stmt, lValue, decl, auxVars);
+			return new ResultExpression(stmt, lValue, decl, auxVars, overapprox);
 		} else
 			throw new AssertionError("Type error: trying to assign to an RValue in Statement" + loc.toString());
+	}
+	
+	private ResultExpression makeAssignment(Dispatcher main, ILocation loc, ArrayList<Statement> stmt,
+            LRValue lrVal, RValue rVal, ArrayList<Declaration> decl,
+            Map<VariableDeclaration, CACSLLocation> auxVars) {
+	    return makeAssignment(main, loc, stmt, lrVal, rVal, decl, auxVars, null);
 	}
 
 	@Override
@@ -1611,7 +1617,8 @@ public class CHandler implements ICHandler {
 			auxVars.putAll(rr.auxVars);
 			Expression bwexpr = createBitwiseExpression(node.getOperator(),
 					rl.lrVal.getValue(), rr.lrVal.getValue(), loc);
-			return new ResultExpression(stmt, new RValue(bwexpr, rl.lrVal.cType), decl, auxVars);
+			return new ResultExpression(stmt, new RValue(bwexpr, rl.lrVal.cType),
+			        decl, auxVars, new Overapprox(Overapprox.BITVEC, loc));
 		}
 		case IASTBinaryExpression.op_shiftLeftAssign:
 		case IASTBinaryExpression.op_shiftRightAssign:
@@ -1628,7 +1635,7 @@ public class CHandler implements ICHandler {
 			Expression bwexpr = createBitwiseExpression(
 					node.getOperator(), rl.lrVal.getValue(), rr.lrVal.getValue(), loc);
 			return makeAssignment(main, loc, stmt, l.lrVal, new RValue(bwexpr, rr.lrVal.cType), 
-					decl, auxVars);//, l.lrVal.cType);
+					decl, auxVars, new Overapprox(Overapprox.BITVEC, loc));//, l.lrVal.cType);
 		}
 		default:
 			String msg = "Unknown or unsupported unary operation";
