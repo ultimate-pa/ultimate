@@ -706,7 +706,10 @@ public class CHandler implements ICHandler {
 					}
 					CType resultCType = null;
 					if (cvar != null) {
-						resultCType = isHeapVar(bId) ? ((CPointer)cvar).pointsToType : cvar;
+						if (isHeapVar(bId) || checkedType.getType() == MemoryHandler.POINTER_TYPE )
+							resultCType = ((CPointer)cvar).pointsToType;	
+						else
+							resultCType = cvar;
 						resultCType = resultCType instanceof CNamed ? 
 								((CNamed) resultCType).getUnderlyingType() : 
 									resultCType;
@@ -715,12 +718,9 @@ public class CHandler implements ICHandler {
 					// Handle initializer clause
 					if (d.getInitializer() != null) {
 
-						ResultExpression rExpr = ((ResultExpression) (main
-								.dispatch(d.getInitializer())));
-//						rExpr.lrVal.cType = resultCType;
+						ResultExpression rExpr = 
+								((ResultExpression) (main.dispatch(d.getInitializer())));
 						rExpr = rExpr.switchToRValue(main, memoryHandler, structHandler, loc);
-
-						//	                	auxVars.putAll(rExpr.auxVars);
 
 						Expression rExprExpr = null;
 						if (resultCType instanceof CStruct) {
@@ -739,25 +739,23 @@ public class CHandler implements ICHandler {
 
 
 
-						LRValue lrVal = isHeapVar(bId) ?
-								new HeapLValue(new IdentifierExpression(loc, new InferredType(Type.Pointer),  bId), 
-										resultCType) :
-									new LocalLValue(new VariableLHS(loc, new InferredType(type), bId), resultCType);
-								ResultExpression assignment = makeAssignment(main, loc, rExpr.stmt, lrVal, 
-										new RValue(rExprExpr, resultCType), rExpr.decl, rExpr.auxVars, resultCType);
-								// TODO: Ask Markus where I should havoc temp aux vars.
-								if (resType.cvar.isStatic() && !isGlobal) {
-									staticVarStorage.stmt.addAll(assignment.stmt);
-									staticVarStorage.decl.addAll(assignment.decl);
-									staticVarStorage.auxVars.putAll(assignment.auxVars);
-									//	                            staticVarStorage.stmt.addAll(Dispatcher.createHavocsForAuxVars(auxVars));
-								} else {
-									result.decl.addAll(assignment.decl);
-									result.stmt.addAll(assignment.stmt);
-									result.auxVars.putAll(assignment.auxVars);
-									//	                            result.stmt.addAll(Dispatcher.createHavocsForAuxVars(auxVars));
-								}
-								//	                    }
+						LRValue lrVal = null;
+						if (isHeapVar(bId) || checkedType.getType() == MemoryHandler.POINTER_TYPE) 
+							lrVal = new HeapLValue(new IdentifierExpression(loc, new InferredType(Type.Pointer),  bId), resultCType);
+						else 
+							lrVal = new LocalLValue(new VariableLHS(loc, new InferredType(type), bId), resultCType);
+						
+						ResultExpression assignment = makeAssignment(main, loc, rExpr.stmt, lrVal, 
+								new RValue(rExprExpr, resultCType), rExpr.decl, rExpr.auxVars);
+						if (resType.cvar.isStatic() && !isGlobal) {
+							staticVarStorage.stmt.addAll(assignment.stmt);
+							staticVarStorage.decl.addAll(assignment.decl);
+							staticVarStorage.auxVars.putAll(assignment.auxVars);
+						} else {
+							result.decl.addAll(assignment.decl);
+							result.stmt.addAll(assignment.stmt);
+							result.auxVars.putAll(assignment.auxVars);
+						}
 					} else if (!cvar.isGlobalVariable() && !cvar.isStatic()) {
 						/*
 						 * if not initialized directly and if not global and not
@@ -1191,7 +1189,7 @@ public class CHandler implements ICHandler {
 
 			assert !(o.lrVal instanceof RValue);
 			ResultExpression assign = makeAssignment(main, loc, stmt, o.lrVal, 
-					new RValue(rhs, o.lrVal.cType), decl, auxVars, o.lrVal.cType);
+					new RValue(rhs, o.lrVal.cType), decl, auxVars);//, o.lrVal.cType);
 			return new ResultExpression(assign.stmt, tmpRValue, 
 					assign.decl, assign.auxVars);
 		}
@@ -1232,7 +1230,7 @@ public class CHandler implements ICHandler {
 							tmpName) }, new Expression[] { rhs }));
 			assert !(o.lrVal instanceof RValue);
 			RValue tmpRValue = new RValue(new IdentifierExpression(loc, tmpIType, tmpName), o.lrVal.cType);
-			ResultExpression assign = makeAssignment(main, loc, stmt, o.lrVal, tmpRValue, decl, auxVars, o.lrVal.cType);
+			ResultExpression assign = makeAssignment(main, loc, stmt, o.lrVal, tmpRValue, decl, auxVars);//, o.lrVal.cType);
 			return new ResultExpression(assign.stmt, tmpRValue, 
 					assign.decl, assign.auxVars);
 		}
@@ -1291,38 +1289,30 @@ public class CHandler implements ICHandler {
 
 	private ResultExpression makeAssignment(Dispatcher main, ILocation loc, ArrayList<Statement> stmt,
 			LRValue lrVal, RValue rVal, ArrayList<Declaration> decl,
-			Map<VariableDeclaration, CACSLLocation> auxVars, CType cType) {
+			Map<VariableDeclaration, CACSLLocation> auxVars) {
 
 		RValue rightHandSide = rVal;
+		
+		//TODO make implicit casts here
 		//		IType lType = lrVal.getValue().getType();
 		//		IType rType = rVal.getValue().getType();
-		//
-		//		if (!lType.equals(rType)) {
-		//			if (lType.equals(new InferredType(Type.Integer))
-		//					&& rType.equals(new InferredType(Type.Real))) {
-		//				RealLiteral rl = (RealLiteral) rVal.getValue();
-		//				String intString = rl.getValue().split(".")[0];
-		//				rightHandSide = new Int
-		//			}
-		//		}
 
 		if (lrVal instanceof HeapLValue) {
-			// case where left hand side is dereferenced pointer
 			HeapLValue hlv = (HeapLValue) lrVal; 
 			ResultExpression rex = new ResultExpression(memoryHandler.getWriteCall(hlv, rVal), null, 
 					new ArrayList<Declaration>(), new HashMap<VariableDeclaration, CACSLLocation>(0));
-//			ResultExpression rex = memoryHandler.getWriteCall(hlv.getAddress(), rightHandSide.getValue());
 
 			stmt.addAll(rex.stmt);
 			decl.addAll(rex.decl);
 			auxVars.putAll(rex.auxVars);
-			//    		addHeapModifiedGlobals(); //method unneccessary if only called here..
+			
 			for (String t : new String[] { SFO.INT, SFO.POINTER,
 					SFO.REAL, SFO.BOOL }) {
 				functionHandler.getModifiedGlobals()
 				.get(functionHandler.getCurrentProcedureID())
 				.add(SFO.MEMORY + "_" + t);
 			}
+			
 			return new ResultExpression(stmt, rightHandSide, decl, auxVars);
 		} else if (lrVal instanceof LocalLValue){
 			LocalLValue lValue = (LocalLValue) lrVal;
@@ -1332,7 +1322,8 @@ public class CHandler implements ICHandler {
 			if (!functionHandler.noCurrentProcedure())
 				functionHandler.checkIfModifiedGlobal(main,
 						BoogieASTUtil.getLHSId(lValue.getLHS()), loc);
-			return new ResultExpression(stmt, new RValue(lValue.getValue(), cType), decl, auxVars);
+//			return new ResultExpression(stmt, new RValue(lValue.getValue(), cType), decl, auxVars);
+			return new ResultExpression(stmt, lValue, decl, auxVars);
 		} else
 			throw new AssertionError("Type error: trying to assign to an RValue in Statement" + loc.toString());
 	}
@@ -1383,7 +1374,7 @@ public class CHandler implements ICHandler {
 			decl.addAll(rr.decl);
 			auxVars.putAll(l.auxVars);
 			auxVars.putAll(rr.auxVars);
-			ResultExpression rex = makeAssignment(main, loc, stmt, l.lrVal, rightSide, decl, auxVars, r.lrVal.cType);
+			ResultExpression rex = makeAssignment(main, loc, stmt, l.lrVal, rightSide, decl, auxVars);//, r.lrVal.cType);
 			return rex;
 		}
 		case IASTBinaryExpression.op_equals:
@@ -1664,7 +1655,7 @@ public class CHandler implements ICHandler {
 						rl.lrVal.getValue(), rr.lrVal.getValue(), loc);
 			}
 			return makeAssignment(main, loc, stmt, l.lrVal, new RValue(rightHandside, rr.lrVal.cType), 
-					decl, auxVars, l.lrVal.cType);
+					decl, auxVars);//, l.lrVal.cType);
 		}
 		case IASTBinaryExpression.op_binaryAnd:
 		case IASTBinaryExpression.op_binaryOr:
@@ -1696,7 +1687,7 @@ public class CHandler implements ICHandler {
 			Expression bwexpr = createBitwiseExpression(
 					node.getOperator(), rl.lrVal.getValue(), rr.lrVal.getValue(), loc);
 			return makeAssignment(main, loc, stmt, l.lrVal, new RValue(bwexpr, rr.lrVal.cType), 
-					decl, auxVars, l.lrVal.cType);
+					decl, auxVars);//, l.lrVal.cType);
 		}
 		default:
 			String msg = "Unknown or unsupported unary operation";
