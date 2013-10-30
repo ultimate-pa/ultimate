@@ -75,10 +75,10 @@ public class BoogiePreprocessor implements IAnalysis {
     public List<IObserver> getObservers() {
         ArrayList<IObserver> observers = new ArrayList<IObserver>();
         observers.add(new TypeChecker());
+        observers.add(new ConstExpander());
         observers.add(new StructExpander());
         observers.add(new UnstructureCode());
         observers.add(new FunctionInliner());
-        observers.add(new ConstExpander());
         return observers;
     }
 

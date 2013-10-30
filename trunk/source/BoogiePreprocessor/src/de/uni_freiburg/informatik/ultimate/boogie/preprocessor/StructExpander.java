@@ -25,6 +25,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayLHS;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayStoreExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ConstDeclaration;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.FunctionApplication;
@@ -292,14 +293,8 @@ public class StructExpander extends BoogieTransformer implements
             Unit unit = (Unit) ((WrapperNode) root).getBacking();
             ArrayDeque<Declaration> newDecls = new ArrayDeque<Declaration>();
             for (Declaration d : unit.getDeclarations()) {
-                if (d instanceof FunctionDeclaration) {
-                    Declaration[] funcs = expandFunctionDeclaration((FunctionDeclaration) d);
-                    newDecls.addAll(Arrays.asList(funcs));
-                } else {
-                    Declaration decl = processDeclaration(d);
-                    if (decl != null)
-                        newDecls.add(decl);
-                }
+                Declaration[] funcs = expandDeclaration(d);
+                newDecls.addAll(Arrays.asList(funcs));
             }
             for (TypeConstructor tc : m_StructTypes.values()) {
             	String[] typeParams = new String[tc.getParamCount()];
@@ -314,32 +309,6 @@ public class StructExpander extends BoogieTransformer implements
         }
         return true;
     }
-
-    /**
-     * Process declarations.  This will just remove type declarations
-     * that are no longer valid since they declare struct types.
-     * @param d the declaration to process.
-     * @returns the same declaration, or null if it should be removed.
-     */
-    @Override
-    protected Declaration processDeclaration(final Declaration d) {
-        if (d instanceof TypeDeclaration) {
-        	TypeDeclaration td = (TypeDeclaration) d;
-        	if (td.getSynonym() != null) {
-        		BoogieType bt = flattenType(td.getSynonym().getBoogieType());
-        		if (bt instanceof StructType)
-        			return null;
-        		if (bt.equals(td.getSynonym().getBoogieType()))
-        			return td;
-        		return new TypeDeclaration(
-        				td.getLocation(), td.getAttributes(), td.isFinite(), 
-       					td.getIdentifier(), td.getTypeParams(), 
-       					bt.toASTType(td.getLocation()));
-        	}
-        }
-        return super.processDeclaration(d);
-    }
-
 
     /**
      * Processes a list of varLists.  This will expand declarations of
@@ -682,7 +651,8 @@ public class StructExpander extends BoogieTransformer implements
     }
 
     /**
-     * Expand function declaration s.t.:
+     * Expand function and constant declarations.
+     * For a function declaration:
      * <ul>
      * <li>iff return value is of struct type: declare a function for each
      * struct field recursively. <br />
@@ -705,37 +675,69 @@ public class StructExpander extends BoogieTransformer implements
      * <li>otherwise: return function declaration as is.</li>
      * <ul>
      * 
-     * @param funDecl
-     *            the function declaration to expand.
-     * @return new function declarations.
+     * @param decl
+     *            the declaration to expand.
+     * @return new declarations.
      */
-    private Declaration[] expandFunctionDeclaration(
-            final FunctionDeclaration funDecl) {
-    	IType retType = funDecl.getOutParam().getType().getBoogieType();
-    	BoogieType bt = flattenType(retType);
-    	if (!(bt instanceof StructType)) {
-    		// quick check, if processDeclaration can be used.
-    		return new Declaration[] { processDeclaration(funDecl) };
-    	}
-    	StructType st = (StructType) bt;
-    	Declaration[] newDecls = new Declaration[st.getFieldCount()];
-    	Expression[] bodies;
-    	if (funDecl.getBody() == null)
-    		bodies = new Expression[st.getFieldCount()];
-    	else
-    		bodies = expandExpression(funDecl.getBody());
-    	VarList[] newInParams = processVarLists(funDecl.getInParams());
-    	
-    	for (int i = 0; i < newDecls.length; i++) {
-    		ILocation loc = funDecl.getOutParam().getLocation(); 
-        	VarList newOutParam = new VarList
-        		(loc, funDecl.getOutParam().getIdentifiers(), 
-        		 st.getFieldType(i).toASTType(loc));
-    		newDecls[i] = new FunctionDeclaration
-    			(funDecl.getLocation(), funDecl.getAttributes(),
-    			funDecl.getIdentifier() + DOT + st.getFieldIds()[i],
-    			funDecl.getTypeParams(),  newInParams, newOutParam, bodies[i]);
-    	}
-    	return newDecls;
+    private Declaration[] expandDeclaration(Declaration decl) {
+        if (decl instanceof FunctionDeclaration) {
+            FunctionDeclaration funDecl = (FunctionDeclaration) decl;
+            IType retType = funDecl.getOutParam().getType().getBoogieType();
+            BoogieType bt = flattenType(retType);
+            if (!(bt instanceof StructType)) {
+                // quick check, if processDeclaration can be used.
+                return new Declaration[] { processDeclaration(funDecl) };
+            }
+            StructType st = (StructType) bt;
+            Declaration[] newDecls = new Declaration[st.getFieldCount()];
+            Expression[] bodies;
+            if (funDecl.getBody() == null)
+                bodies = new Expression[st.getFieldCount()];
+            else
+                bodies = expandExpression(funDecl.getBody());
+            VarList[] newInParams = processVarLists(funDecl.getInParams());
+
+            for (int i = 0; i < newDecls.length; i++) {
+                ILocation loc = funDecl.getOutParam().getLocation(); 
+                VarList newOutParam = new VarList
+                        (loc, funDecl.getOutParam().getIdentifiers(), 
+                                st.getFieldType(i).toASTType(loc));
+                newDecls[i] = new FunctionDeclaration
+                        (funDecl.getLocation(), funDecl.getAttributes(),
+                                funDecl.getIdentifier() + DOT + st.getFieldIds()[i],
+                                funDecl.getTypeParams(),  newInParams, newOutParam, bodies[i]);
+            }
+            return newDecls;
+        } else if (decl instanceof ConstDeclaration) {
+            ConstDeclaration cdecl = (ConstDeclaration) decl;
+            VarList varList = cdecl.getVarList();
+            VarList[] newVarList = expandVarList(varList);
+            if (newVarList.length == 1 && newVarList[0] == varList)
+                return new Declaration[] { decl };
+            
+            Declaration[] newDecls = new Declaration[newVarList.length];
+            for (int i = 0; i < newDecls.length; i++){
+                newDecls[i] = new ConstDeclaration(cdecl.getLocation(),
+                        cdecl.getAttributes(), cdecl.isUnique(), newVarList[i], 
+                        cdecl.getParentInfo(), cdecl.isComplete());
+            }
+            return newDecls;
+        } else if (decl instanceof TypeDeclaration) {
+            TypeDeclaration td = (TypeDeclaration) decl;
+            Declaration result = td;
+            if (td.getSynonym() != null) {
+                BoogieType bt = flattenType(td.getSynonym().getBoogieType());
+                if (bt instanceof StructType)
+                    return new Declaration[0];
+                if (!bt.equals(td.getSynonym().getBoogieType()))
+                    result = new TypeDeclaration(
+                        td.getLocation(), td.getAttributes(), td.isFinite(), 
+                        td.getIdentifier(), td.getTypeParams(), 
+                        bt.toASTType(td.getLocation()));
+            }
+            return new Declaration[] { result };
+        } else {
+            return new Declaration[] { processDeclaration(decl) };
+        }
     }
 }
