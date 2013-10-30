@@ -161,6 +161,20 @@ public class PostProcessor {
 			Collection<String> uninitGlobalVars) {
 		ArrayList<Declaration> decl = new ArrayList<Declaration>();
 		ArrayList<VariableDeclaration> initDecl = new ArrayList<VariableDeclaration>();
+		if (main.isMMRequired()) {
+			LeftHandSide[] lhs = new LeftHandSide[] { new ArrayLHS(loc,
+					new VariableLHS(loc, SFO.VALID),
+					new Expression[] { new IntegerLiteral(loc, SFO.NR0) }) };
+			Expression[] rhs = new Expression[] { new BooleanLiteral(loc, false) };
+			initStatements.add(0, new AssignmentStatement(loc, lhs, rhs));
+			initializedGlobals.add(SFO.VALID);
+
+			VariableLHS slhs = new VariableLHS(loc, SFO.NULL);
+			initStatements.add(0, new AssignmentStatement(loc, 
+					new LeftHandSide[] { slhs }, 
+					new Expression[] { MemoryHandler.constructNullPointer(loc)}));
+			initializedGlobals.add(SFO.NULL);
+		}
 		for (Statement stmt : initStatements) {
 			if (stmt instanceof AssignmentStatement) {
 				AssignmentStatement ass = (AssignmentStatement) stmt;
@@ -184,32 +198,11 @@ public class PostProcessor {
 			LeftHandSide lhs = new VariableLHS(lloc, new InferredType(at), bId);
 			ResultExpression r = initVar(lloc, main, arrayHandler, lhs, at,
 					cvar);
-			initStatements.addAll(0, r.stmt);
+			initStatements.addAll(r.stmt);
 			for (Declaration d : r.decl) {
 				assert d instanceof VariableDeclaration;
 				initDecl.add((VariableDeclaration) d);
 			}
-		}
-		if (main.isMMRequired()) {
-			LeftHandSide[] lhs = new LeftHandSide[] { new ArrayLHS(loc,
-					new VariableLHS(loc, SFO.VALID),
-					new Expression[] { new IntegerLiteral(loc, SFO.NR0) }) };
-			Expression[] rhs = new Expression[] { new BooleanLiteral(loc, false) };
-			initStatements.add(new AssignmentStatement(loc, lhs, rhs));
-			initializedGlobals.add(SFO.VALID);
-
-			VariableLHS slhs = new VariableLHS(loc, SFO.NULL);
-			LeftHandSide[] lhsNullB = new LeftHandSide[] { new StructLHS(loc,
-					slhs, SFO.POINTER_BASE) };
-			// LeftHandSide[] lhsNullO = new LeftHandSide[]{
-			// new StructLHS(loc, slhs, SFO.POINTER_OFFSET)
-			// };
-			Expression[] rhsNull = new Expression[] { new IntegerLiteral(loc,
-					SFO.NR0) };
-			initStatements.add(new AssignmentStatement(loc, lhsNullB, rhsNull));
-			// initStatements.add(new AssignmentStatement(loc, lhsNullO,
-			// rhsNull));
-			initializedGlobals.add(SFO.NULL);
 		}
 		initializedGlobals.addAll(uninitGlobalVars);
 		Specification[] specsInit = new Specification[1];
@@ -375,7 +368,8 @@ public class PostProcessor {
 			//result is pointer to 0
 			LRValue nullPointer = new RValue(new IdentifierExpression(loc, at.getBoogieType(), SFO.NULL), 
 					null);
-			return new ResultExpression(nullPointer, auxVars);
+			stmt.add(new AssignmentStatement(loc, new LeftHandSide[] { lhs },
+					new Expression[] { nullPointer.getValue() } ));
 		}
 		else {
 			String msg = "Unknown type - don't know how to initialize!";
@@ -383,6 +377,7 @@ public class PostProcessor {
 			throw new UnsupportedSyntaxException(msg);
 		}
 		assert (main.isAuxVarMapcomplete(decl, auxVars));
+		// LRValue is null because it is not needed, we need only the statement.
 		return new ResultExpression(stmt, null, decl, auxVars);
 	}
 
