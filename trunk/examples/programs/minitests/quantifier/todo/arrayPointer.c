@@ -8,7 +8,7 @@
 int main ()
 {
     int arr[2];
-    int *bound = sizeof(*arr);
-    
+    int *bound;
+    *bound = sizeof(*arr);
     return 0;
 }
