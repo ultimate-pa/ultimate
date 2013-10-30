@@ -101,21 +101,15 @@ public class BoogiePreprocessor implements IAnalysis {
 
     /**
      * Add all annotation from annot to node. annot should not be null.
+     * 
+     * @param from node to take annotations from
+     * @param to node to add annotations to
+     * @author Christian & Matthias
      */
-    public static void addAnnotations(HashMap<String, IAnnotations> annot,
-            ASTNode node) {
-        assert (annot != null);
-        node.getPayload().getAnnotations().putAll(annot);
-    }
-
-    /**
-     * Return the annotations of node if any exists, return null otherwise.
-     */
-    public static HashMap<String, IAnnotations> getAnnotationsOrNull(ASTNode node) {
-        if (node.getPayload().hasAnnotation()) {
-            return node.getPayload().getAnnotations();
-        } else {
-            return null;
+    public static void passAnnotations(ASTNode from, ASTNode to) {
+        if (from.getPayload().hasAnnotation()) {
+            to.getPayload().getAnnotations().putAll(
+                    from.getPayload().getAnnotations());
         }
     }
 }

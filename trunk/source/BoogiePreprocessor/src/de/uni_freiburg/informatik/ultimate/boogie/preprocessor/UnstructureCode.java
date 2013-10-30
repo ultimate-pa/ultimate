@@ -217,8 +217,6 @@ public class UnstructureCode implements IUnmanagedObserver {
 	 * @param s  The current statement that should be converted (not a label).
 	 */
 	private void unstructureStatement(BreakInfo outer, Statement s) {
-		HashMap<String, IAnnotations> annot =
-		        BoogiePreprocessor.getAnnotationsOrNull(s);
 		if (s instanceof GotoStatement || s instanceof ReturnStatement) {
 			m_flatStatements.add(s);
 			m_reachable = false;			
@@ -229,7 +227,7 @@ public class UnstructureCode implements IUnmanagedObserver {
 			BreakInfo dest = findLabel(label);
 			if (dest.destLabel == null)
 				dest.destLabel = generateLabel();
-			addStmtAndAnnots(annot, new GotoStatement(s.getLocation(),
+			addStmtAndAnnots(s, new GotoStatement(s.getLocation(),
 			        new String[] {dest.destLabel}));
 			m_reachable = false;
 		} else if (s instanceof WhileStatement) {
@@ -258,31 +256,31 @@ public class UnstructureCode implements IUnmanagedObserver {
 			addLabel(new Label(loopLocation, head));
 			for (LoopInvariantSpecification spec : stmt.getInvariants()) {
 				if (spec.isFree()) {
-				    addStmtAndAnnots(annot, new AssumeStatement(
+				    addStmtAndAnnots(s, new AssumeStatement(
                             spec.getLocation(), spec.getFormula()));
 				} else {
-				    addStmtAndAnnots(annot, new AssertStatement(
+				    addStmtAndAnnots(s, new AssertStatement(
                             spec.getLocation(), spec.getFormula()));
 				}
 			}
-			addStmtAndAnnots(annot, new GotoStatement(
+			addStmtAndAnnots(s, new GotoStatement(
                     s.getLocation(), new String[] {body, done}));
-			addStmtAndAnnots(annot, new Label(s.getLocation(), body));
+			addStmtAndAnnots(s, new Label(s.getLocation(), body));
 			if (! (stmt.getCondition() instanceof WildcardExpression)) {
-			    addStmtAndAnnots(annot, new AssumeStatement(
+			    addStmtAndAnnots(s, new AssumeStatement(
                         stmt.getLocation(), stmt.getCondition()));
 			}
 			outer.breakLabels.add("*");
 			unstructureBlock(stmt.getBody());
 			if (m_reachable) {
-			    addStmtAndAnnots(annot, new GotoStatement(
+			    addStmtAndAnnots(s, new GotoStatement(
 			            s.getLocation(), new String[] { head }));
 			}
 			m_reachable = false;
 			
 			if (! (stmt.getCondition() instanceof WildcardExpression)) {
-			    addStmtAndAnnots(annot, new Label(s.getLocation(), done));
-				addStmtAndAnnots(annot, new AssumeStatement(stmt.getLocation(),
+			    addStmtAndAnnots(s, new Label(s.getLocation(), done));
+				addStmtAndAnnots(s, new AssumeStatement(stmt.getLocation(),
                         new UnaryExpression(stmt.getCondition().getLocation(),
                                 BoogieType.boolType, UnaryExpression.Operator.LOGICNEG, 
                                 stmt.getCondition())));
@@ -292,24 +290,24 @@ public class UnstructureCode implements IUnmanagedObserver {
 			IfStatement stmt = (IfStatement) s;
 			String thenLabel = generateLabel();
 			String elseLabel = generateLabel();
-			addStmtAndAnnots(annot, new GotoStatement(stmt.getLocation(),
+			addStmtAndAnnots(s, new GotoStatement(stmt.getLocation(),
                     new String[] { thenLabel, elseLabel }));
-			addStmtAndAnnots(annot, new Label(s.getLocation(), thenLabel));
+			addStmtAndAnnots(s, new Label(s.getLocation(), thenLabel));
 			if (! (stmt.getCondition() instanceof WildcardExpression)) {
-			    addStmtAndAnnots(annot, new AssumeStatement(stmt.getLocation(),
+			    addStmtAndAnnots(s, new AssumeStatement(stmt.getLocation(),
                         stmt.getCondition()));
 			}
 			unstructureBlock(stmt.getThenPart());
 			if (m_reachable) {
 				if (outer.destLabel == null)
 					outer.destLabel = generateLabel();
-				addStmtAndAnnots(annot, new GotoStatement(
+				addStmtAndAnnots(s, new GotoStatement(
                         s.getLocation(), new String[] { outer.destLabel }));
 			}
 			m_reachable = true;
-			addStmtAndAnnots(annot, new Label(s.getLocation(), elseLabel));
+			addStmtAndAnnots(s, new Label(s.getLocation(), elseLabel));
 			if (! (stmt.getCondition() instanceof WildcardExpression)) {
-			    addStmtAndAnnots(annot, new AssumeStatement(stmt.getLocation(),
+			    addStmtAndAnnots(s, new AssumeStatement(stmt.getLocation(),
                         new UnaryExpression(stmt.getCondition().getLocation(),
                                 BoogieType.boolType,
                                 UnaryExpression.Operator.LOGICNEG, 
@@ -345,14 +343,14 @@ public class UnstructureCode implements IUnmanagedObserver {
 	 * 
 	 * @param annotations annotations
 	 * @param statement new statement to add
-	 * @author Christian
+	 * @author Christian & Matthias
 	 */
-	private void addStmtAndAnnots(HashMap<String, IAnnotations> annotations,
-	        Statement statement) {
-	    if (annotations != null) {
-	        BoogiePreprocessor.addAnnotations(annotations, statement);
-	    }
-        m_flatStatements.add(statement);
+	private void addStmtAndAnnots(Statement sourceStmt, Statement newStmt) {
+	    // adds annotations from old statement to new statement (if any)
+	    BoogiePreprocessor.passAnnotations(sourceStmt, newStmt);
+	    
+	    // adds new statement to list
+        m_flatStatements.add(newStmt);
     }
 
     private String generateLabel() {
