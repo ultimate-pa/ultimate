@@ -285,12 +285,12 @@ public class SvCompCHandler extends CHandler {
                         return new ResultSkip(); // handled in assignment stmt!
                 return functionHandler.handleFunctionDeclaration(main,
                         super.contract, node);
-            } else if (cDecl instanceof IASTArrayDeclarator) {
-                // extracted for readability only ... could be in lined again
-                return arrayHandler
-                        .handleArrayDeclaration(main, memoryHandler, structHandler, node,
-                                super.globalVariables,
-                                super.globalVariablesInits);
+//            } else if (cDecl instanceof IASTArrayDeclarator) {
+//                // extracted for readability only ... could be in lined again
+//                return arrayHandler
+//                        .handleArrayDeclaration(main, memoryHandler, structHandler, node,
+//                                super.globalVariables,
+//                                super.globalVariablesInits);
             }
             if (node.getDeclSpecifier() == null) {
                 String msg = "This statement can be removed!";
@@ -406,12 +406,13 @@ public class SvCompCHandler extends CHandler {
                                 cvar = ((CNamed) cvar).getUnderlyingType();
                             }
                             assert cvar instanceof CStruct;
-                            ResultExpression init = structHandler
-                                    .handleStructInit(main, memoryHandler, structHandler, arrayHandler, loc,
-                                            (StructType) type, (CStruct) cvar,
-                                            lhs, relr,
-                                            new ArrayList<Integer>(), -1)
-                                            .switchToRValue(main, memoryHandler, structHandler, loc);
+//                            ResultExpression init = structHandler
+//                                    .handleStructInit(main, memoryHandler, arrayHandler, loc,
+//                                            (StructType) type, (CStruct) cvar,
+//                                            lhs, relr,
+//                                            new ArrayList<Integer>(), -1)
+//                                            .switchToRValue(main, memoryHandler, structHandler, loc);
+                            ResultExpression init = null;
                             assert init.lrVal.getValue() == null && init.decl.isEmpty();
                             if (resType.cvar.isStatic() && !isGlobal) {
                                 staticVarStorage.stmt.addAll(init.stmt);

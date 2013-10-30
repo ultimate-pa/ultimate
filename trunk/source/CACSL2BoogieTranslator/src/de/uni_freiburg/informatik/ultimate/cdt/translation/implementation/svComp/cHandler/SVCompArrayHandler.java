@@ -23,21 +23,21 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
  * @date 12.10.2012
  */
 public class SVCompArrayHandler extends ArrayHandler {
-    @Override
-    public ResultExpression handleArrayInit(Dispatcher main, MemoryHandler memoryHandler,
-            StructHandler structHandler, CACSLLocation loc, ArrayType at,
-            CArray cvar, LeftHandSide lhs, ResultExpressionListRec relr,
-            int[] indices, int pos) {
-        return filterAsserts(super.handleArrayInit(main, memoryHandler, structHandler, loc,
-                at, cvar, lhs, relr, indices, pos));
-    }
+//    @Override
+//    public ResultExpression handleArrayInit(Dispatcher main, MemoryHandler memoryHandler,
+//            StructHandler structHandler, CACSLLocation loc, ArrayType at,
+//            CArray cvar, LeftHandSide lhs, ResultExpressionListRec relr,
+//            int[] indices, int pos) {
+//        return filterAsserts(super.handleArrayInit(main, memoryHandler, structHandler, loc,
+//                at, cvar, lhs, relr, indices, pos));
+//    }
 
-    @Override
-    public Result handleArraySubscriptionExpression(Dispatcher main, MemoryHandler memoryHandler,
-    		StructHandler structHandler, IASTArraySubscriptExpression node) {
-        return filterAsserts(super
-                .handleArraySubscriptionExpression(main, memoryHandler, structHandler, node));
-    }
+//    @Override
+//    public Result handleArraySubscriptionExpression(Dispatcher main, MemoryHandler memoryHandler,
+//    		StructHandler structHandler, IASTArraySubscriptExpression node) {
+//        return filterAsserts(super
+//                .handleArraySubscriptionExpression(main, memoryHandler, structHandler, node));
+//    }
 
     /**
      * Removes AssertStatements from this results Statement list.

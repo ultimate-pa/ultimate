@@ -724,7 +724,7 @@ public class CHandler implements ICHandler {
 
 						Expression rExprExpr = null;
 						if (resultCType instanceof CStruct) {
-							ResultExpression structCons = makeStructConstructorFromRERL(loc,
+							ResultExpression structCons = structHandler.makeStructConstructorFromRERL(loc,
 									(ResultExpressionListRec) rExpr, (CStruct) resultCType);
 							rExprExpr = structCons.lrVal.getValue();
 						} else if (resultCType instanceof CPointer 
@@ -804,71 +804,7 @@ public class CHandler implements ICHandler {
 		throw new UnsupportedSyntaxException(msg);
 	}
 
-	private ResultExpression makeStructConstructorFromRERL(ILocation loc,
-			ResultExpressionListRec rerl, CStruct structType) {
 
-		if (rerl.lrVal != null) //we have an identifier (or sth else too?)
-			return new ResultExpression(rerl.stmt, rerl.lrVal, rerl.decl, rerl.auxVars);
-
-		//everything for the new Result
-		ArrayList<Statement> newStmt = new ArrayList<Statement>();
-		ArrayList<Declaration> newDecl = new ArrayList<Declaration>();
-		HashMap<VariableDeclaration, CACSLLocation> newAuxVars = new HashMap<VariableDeclaration, CACSLLocation>();
-
-		String[] fieldIds = structType.getFieldIds();
-		CType[] fieldTypes = structType.getFieldTypes();
-
-		//the new Arrays for the StructConstructor
-		ArrayList<String> fieldIdentifiers = new ArrayList<String>();
-		ArrayList<Expression> fieldValues = new ArrayList<Expression>();
-
-		for (int i = 0; i < fieldIds.length; i++) {
-			fieldIdentifiers.add(fieldIds[i]);
-
-			CType underlyingType;
-			if (fieldTypes[i] instanceof CNamed)
-				underlyingType = ((CNamed) fieldTypes[i]).getUnderlyingType();
-			else
-				underlyingType = fieldTypes[i];
-
-			ResultExpression fieldRead = null; 
-			if(underlyingType instanceof CPrimitive) {
-				fieldRead = rerl.list.get(i);
-				newStmt.addAll(fieldRead.stmt);
-				newDecl.addAll(fieldRead.decl);
-				newAuxVars.putAll(fieldRead.auxVars);
-			} else if (underlyingType instanceof CPointer) {
-				fieldRead = rerl.list.get(i);
-				newStmt.addAll(fieldRead.stmt);
-				newDecl.addAll(fieldRead.decl);
-				newAuxVars.putAll(fieldRead.auxVars);
-			} else if (underlyingType instanceof CArray) {
-				throw new UnsupportedSyntaxException("..");
-			} else if (underlyingType instanceof CEnum) {
-				throw new UnsupportedSyntaxException("..");
-			} else if (underlyingType instanceof CStruct) {
-				fieldRead = makeStructConstructorFromRERL(loc, rerl.list.get(i), (CStruct) underlyingType);//todo: better location
-				newStmt.addAll(fieldRead.stmt);
-				newDecl.addAll(fieldRead.decl);
-				newAuxVars.putAll(fieldRead.auxVars);
-			} else if (underlyingType instanceof CNamed) {
-				assert false : "This should not be the case as we took the underlying type.";
-			} else {
-				throw new UnsupportedSyntaxException("..");
-			}	
-
-			assert fieldRead.lrVal instanceof RValue; //should be guaranteed by readFieldInTheStructAtAddress(..)
-			fieldValues.add(((RValue) fieldRead.lrVal).getValue());
-
-		}
-		StructConstructor sc = new StructConstructor(loc, new InferredType(Type.Struct),
-				fieldIdentifiers.toArray(new String[0]), 
-				fieldValues.toArray(new Expression[0]));
-
-		ResultExpression result = new ResultExpression(newStmt, new RValue(sc, structType), 
-				newDecl, newAuxVars);
-		return result;
-	}
 
 	@Override
 	public ResultTypes checkForPointer(Dispatcher main,
