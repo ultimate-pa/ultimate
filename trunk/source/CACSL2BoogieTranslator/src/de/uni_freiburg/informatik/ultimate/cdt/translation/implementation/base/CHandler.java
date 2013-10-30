@@ -706,7 +706,7 @@ public class CHandler implements ICHandler {
 					}
 					CType resultCType = null;
 					if (cvar != null) {
-						if (isHeapVar(bId) || checkedType.getType() == MemoryHandler.POINTER_TYPE )
+						if (isHeapVar(bId))// || checkedType.getType() == MemoryHandler.POINTER_TYPE )
 							resultCType = ((CPointer)cvar).pointsToType;	
 						else
 							resultCType = cvar;
@@ -740,7 +740,7 @@ public class CHandler implements ICHandler {
 
 
 						LRValue lrVal = null;
-						if (isHeapVar(bId) || checkedType.getType() == MemoryHandler.POINTER_TYPE) 
+						if (isHeapVar(bId))// || checkedType.getType() == MemoryHandler.POINTER_TYPE)  //if int pointers were initialized with ints..
 							lrVal = new HeapLValue(new IdentifierExpression(loc, new InferredType(Type.Pointer),  bId), resultCType);
 						else 
 							lrVal = new LocalLValue(new VariableLHS(loc, new InferredType(type), bId), resultCType);
@@ -1028,7 +1028,7 @@ public class CHandler implements ICHandler {
 		// Christian: special case: 'NULL'
 		if (cId.equals("NULL")) {
 		    // TODO CType is set to 'pointer to integer', is this correct...?
-	        CType ctype = new CPointer(new CPrimitive(PRIMITIVE.INT));
+	        CType ctype = new CPointer(new CPrimitive(PRIMITIVE.VOID));
 		    
 		    return new ResultExpression(new ArrayList<Statement>(0),
 	                new RValue(new IdentifierExpression(loc,

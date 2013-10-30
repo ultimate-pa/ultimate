@@ -64,7 +64,7 @@ public class CDTParser implements ISource {
 	 * Public constructor of this parser.
 	 */
 	public CDTParser() {
-		m_FileTypes = new String[] { "c" };
+		m_FileTypes = new String[] { "c", "i" };
 	}
 
 	/*
