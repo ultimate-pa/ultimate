@@ -26,6 +26,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.NaiveDestructiveEqualityResolution;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.Substitution;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.normalForms.Cnf;
 
 /**
  * Represents the transition of a program or a transition system as an SMT
@@ -66,6 +67,8 @@ public class TransFormula implements Serializable {
 			UltimateServices.getInstance().getLogger(Activator.PLUGIN_ID);
 
 	private static int s_FreshVarNumber = 10000; 
+	
+	private final static boolean s_TransformToCNF = false;
 	
 	private final Term m_Formula;
 	private final Set<TermVariable> m_Vars;
@@ -470,6 +473,10 @@ public class TransFormula implements Serializable {
 		} else {
 			infeasibility = Infeasibility.UNPROVEABLE;
 		}
+		
+		if (s_TransformToCNF) {
+			formula = (new Cnf(script)).transform(formula);
+		}
 
 		Term closedFormula = computeClosedFormula(formula, 
 				inVars, outVars, auxVars, boogie2smt);
@@ -870,6 +877,9 @@ public class TransFormula implements Serializable {
 		}
 		TransFormula.removeSuperfluousVars(resultFormula, 
 				newInVars, newOutVars, auxVars);
+		if (s_TransformToCNF) {
+			resultFormula = (new Cnf(script)).transform(resultFormula);
+		}
 		Term closedFormula = computeClosedFormula(resultFormula, 
 				newInVars, newOutVars, auxVars, boogie2smt);
 		return new TransFormula(resultFormula, newInVars, newOutVars, auxVars, 
