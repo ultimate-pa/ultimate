@@ -613,7 +613,6 @@ public class FunctionHandler {
 	public Result handleFunctionCallExpression(Dispatcher main,
 			MemoryHandler memoryHandler, StructHandler structHandler, 
 			IASTFunctionCallExpression node) {
-	    // TODO Christian: no node to add, right?
 	    Check check = new Check(Check.Spec.PRE_CONDITION);
 		CACSLLocation loc = new CACSLLocation(node, check);
 		IASTExpression functionName = node.getFunctionNameExpression(); 

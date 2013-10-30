@@ -1,6 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.boogie.preprocessor;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 import org.eclipse.core.runtime.preferences.IEclipsePreferences;
@@ -9,8 +10,12 @@ import org.eclipse.core.runtime.preferences.IScopeContext;
 import de.uni_freiburg.informatik.ultimate.access.IObserver;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.IAnalysis;
 import de.uni_freiburg.informatik.ultimate.model.GraphType;
+import de.uni_freiburg.informatik.ultimate.model.IAnnotations;
 import de.uni_freiburg.informatik.ultimate.model.MarkedTrace;
 import de.uni_freiburg.informatik.ultimate.model.TokenMap;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.GotoStatement;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.wrapper.ASTNode;
 
 /**
  * This class initializes the boogie preprocessor.
@@ -92,5 +97,25 @@ public class BoogiePreprocessor implements IAnalysis {
     public IEclipsePreferences[] getPreferences(IScopeContext cs,
             IScopeContext is) {
         return new IEclipsePreferences[] { cs.getNode(s_PLUGIN_ID) };
+    }
+
+    /**
+     * Add all annotation from annot to node. annot should not be null.
+     */
+    public static void addAnnotations(HashMap<String, IAnnotations> annot,
+            ASTNode node) {
+        assert (annot != null);
+        node.getPayload().getAnnotations().putAll(annot);
+    }
+
+    /**
+     * Return the annotations of node if any exists, return null otherwise.
+     */
+    public static HashMap<String, IAnnotations> getAnnotationsOrNull(ASTNode node) {
+        if (node.getPayload().hasAnnotation()) {
+            return node.getPayload().getAnnotations();
+        } else {
+            return null;
+        }
     }
 }

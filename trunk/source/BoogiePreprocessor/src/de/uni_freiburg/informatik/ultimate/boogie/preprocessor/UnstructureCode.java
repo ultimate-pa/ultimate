@@ -140,6 +140,7 @@ public class UnstructureCode implements IUnmanagedObserver {
 		unstructureBlock(body.getBlock());
 		
 		/* If the last block doesn't have a goto or a return, add a return statement */
+		// TODO Christian: add annotations? how?
 		if (m_reachable)
 			m_flatStatements.add(new ReturnStatement(proc.getLocation()));
 		body.setBlock(m_flatStatements.toArray(new Statement[m_flatStatements.size()]));
@@ -147,6 +148,7 @@ public class UnstructureCode implements IUnmanagedObserver {
 	
 	private void addLabel(Label lab) {
 		/* Check if we are inside a block and thus need to add a goto to this block */
+	 // TODO Christian: add annotations? how?
 		if (m_reachable && m_flatStatements.size() > 0
 				&& !(m_flatStatements.getLast() instanceof Label)) {
 			m_flatStatements.add
@@ -215,7 +217,8 @@ public class UnstructureCode implements IUnmanagedObserver {
 	 * @param s  The current statement that should be converted (not a label).
 	 */
 	private void unstructureStatement(BreakInfo outer, Statement s) {
-		HashMap<String, IAnnotations> annot = getAnnotationsOrNull(s);
+		HashMap<String, IAnnotations> annot =
+		        BoogiePreprocessor.getAnnotationsOrNull(s);
 		if (s instanceof GotoStatement || s instanceof ReturnStatement) {
 			m_flatStatements.add(s);
 			m_reachable = false;			
@@ -226,10 +229,8 @@ public class UnstructureCode implements IUnmanagedObserver {
 			BreakInfo dest = findLabel(label);
 			if (dest.destLabel == null)
 				dest.destLabel = generateLabel();
-			GotoStatement gotoStatement = new GotoStatement(s.getLocation(), 
-					new String[] {dest.destLabel});
-			addAnnotations(annot, gotoStatement);
-			m_flatStatements.add(gotoStatement);
+			addStmtAndAnnots(annot, new GotoStatement(s.getLocation(),
+			        new String[] {dest.destLabel}));
 			m_reachable = false;
 		} else if (s instanceof WhileStatement) {
 			WhileStatement stmt = (WhileStatement) s;
@@ -257,60 +258,63 @@ public class UnstructureCode implements IUnmanagedObserver {
 			addLabel(new Label(loopLocation, head));
 			for (LoopInvariantSpecification spec : stmt.getInvariants()) {
 				if (spec.isFree()) {
-					m_flatStatements.add(
-							new AssumeStatement(spec.getLocation(),
-									spec.getFormula()));
+				    addStmtAndAnnots(annot, new AssumeStatement(
+                            spec.getLocation(), spec.getFormula()));
 				} else {
-					m_flatStatements.add(
-							new AssertStatement(spec.getLocation(),
-									spec.getFormula()));
+				    addStmtAndAnnots(annot, new AssertStatement(
+                            spec.getLocation(), spec.getFormula()));
 				}
 			}
-			m_flatStatements.add(new GotoStatement(s.getLocation(), new String[] {body, done}));
-			m_flatStatements.add(new Label(s.getLocation(), body));
-			if (! (stmt.getCondition() instanceof WildcardExpression))
-				m_flatStatements.add(new AssumeStatement(stmt.getLocation(),
-						stmt.getCondition()));
+			addStmtAndAnnots(annot, new GotoStatement(
+                    s.getLocation(), new String[] {body, done}));
+			addStmtAndAnnots(annot, new Label(s.getLocation(), body));
+			if (! (stmt.getCondition() instanceof WildcardExpression)) {
+			    addStmtAndAnnots(annot, new AssumeStatement(
+                        stmt.getLocation(), stmt.getCondition()));
+			}
 			outer.breakLabels.add("*");
 			unstructureBlock(stmt.getBody());
-			if (m_reachable)
-				m_flatStatements.add
-					(new GotoStatement(s.getLocation(), new String[] { head }));
+			if (m_reachable) {
+			    addStmtAndAnnots(annot, new GotoStatement(
+			            s.getLocation(), new String[] { head }));
+			}
 			m_reachable = false;
 			
 			if (! (stmt.getCondition() instanceof WildcardExpression)) {
-				m_flatStatements.add(new Label(s.getLocation(), done));
-				m_flatStatements.add(new AssumeStatement(stmt.getLocation(),
-						new UnaryExpression(stmt.getCondition().getLocation(),
-								BoogieType.boolType, UnaryExpression.Operator.LOGICNEG, 
-								stmt.getCondition())));
+			    addStmtAndAnnots(annot, new Label(s.getLocation(), done));
+				addStmtAndAnnots(annot, new AssumeStatement(stmt.getLocation(),
+                        new UnaryExpression(stmt.getCondition().getLocation(),
+                                BoogieType.boolType, UnaryExpression.Operator.LOGICNEG, 
+                                stmt.getCondition())));
 				m_reachable = true;
 			}
 		} else if (s instanceof IfStatement) {
 			IfStatement stmt = (IfStatement) s;
 			String thenLabel = generateLabel();
 			String elseLabel = generateLabel();
-			m_flatStatements.add
-			(new GotoStatement(stmt.getLocation(),
-					new String[] { thenLabel, elseLabel }));
-			m_flatStatements.add(new Label(s.getLocation(), thenLabel));
-			if (! (stmt.getCondition() instanceof WildcardExpression))
-				m_flatStatements.add(new AssumeStatement(stmt.getLocation(),
-						stmt.getCondition()));
+			addStmtAndAnnots(annot, new GotoStatement(stmt.getLocation(),
+                    new String[] { thenLabel, elseLabel }));
+			addStmtAndAnnots(annot, new Label(s.getLocation(), thenLabel));
+			if (! (stmt.getCondition() instanceof WildcardExpression)) {
+			    addStmtAndAnnots(annot, new AssumeStatement(stmt.getLocation(),
+                        stmt.getCondition()));
+			}
 			unstructureBlock(stmt.getThenPart());
 			if (m_reachable) {
 				if (outer.destLabel == null)
 					outer.destLabel = generateLabel();
-				m_flatStatements.add
-					(new GotoStatement(s.getLocation(), new String[] { outer.destLabel }));
+				addStmtAndAnnots(annot, new GotoStatement(
+                        s.getLocation(), new String[] { outer.destLabel }));
 			}
 			m_reachable = true;
-			m_flatStatements.add(new Label(s.getLocation(), elseLabel));
-			if (! (stmt.getCondition() instanceof WildcardExpression))
-				m_flatStatements.add(new AssumeStatement(stmt.getLocation(),
-						new UnaryExpression(stmt.getCondition().getLocation(),
-								BoogieType.boolType, UnaryExpression.Operator.LOGICNEG, 
-								stmt.getCondition())));
+			addStmtAndAnnots(annot, new Label(s.getLocation(), elseLabel));
+			if (! (stmt.getCondition() instanceof WildcardExpression)) {
+			    addStmtAndAnnots(annot, new AssumeStatement(stmt.getLocation(),
+                        new UnaryExpression(stmt.getCondition().getLocation(),
+                                BoogieType.boolType,
+                                UnaryExpression.Operator.LOGICNEG, 
+                                stmt.getCondition())));
+			}
 			unstructureBlock(stmt.getElsePart());
 		} else {
 			if (s instanceof AssignmentStatement) {
@@ -336,8 +340,22 @@ public class UnstructureCode implements IUnmanagedObserver {
 		}
 	}
 
-		
-	private String generateLabel() {
+	/**
+	 * Adds a new statement to the list and also adds all annotations.
+	 * 
+	 * @param annotations annotations
+	 * @param statement new statement to add
+	 * @author Christian
+	 */
+	private void addStmtAndAnnots(HashMap<String, IAnnotations> annotations,
+	        Statement statement) {
+	    if (annotations != null) {
+	        BoogiePreprocessor.addAnnotations(annotations, statement);
+	    }
+        m_flatStatements.add(statement);
+    }
+
+    private String generateLabel() {
 		return s_labelPrefix + (m_labelNr++);
 	}
 
@@ -361,29 +379,4 @@ public class UnstructureCode implements IUnmanagedObserver {
 	private boolean getDefaultPerformedChanges() {
 		return false;
 	}
-	
-	
-	/**
-	 * Add all annotation from annot to node if annot != null.
-	 */
-	public static void addAnnotations(HashMap<String, IAnnotations> annot,
-			ASTNode node) {
-		if (annot != null) {
-			node.getPayload().getAnnotations().putAll(annot);
-		}
-	}
-
-	/**
-	 * Return the annotations of node if any exists, return null otherwise.
-	 */
-	public static HashMap<String, IAnnotations> getAnnotationsOrNull(ASTNode node) {
-		if (node.getPayload().hasAnnotation()) {
-			return node.getPayload().getAnnotations();
-		} else {
-			return null;
-		}
-	}
-
-	
-
 }
