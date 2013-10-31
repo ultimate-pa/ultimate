@@ -268,9 +268,19 @@ public class ResultExpression extends Result {
 			StructHandler structHandler, MemoryHandler memoryHandler, ILocation loc,
 			Expression structOnHeapAddress, CStruct structType) {
 		ResultExpression result = null;
-
-		Expression currentStructBaseAddress = MemoryHandler.getPointerBaseAddress(structOnHeapAddress, loc);
-		Expression currentStructOffset = MemoryHandler.getPointerOffset(structOnHeapAddress, loc);
+		
+		Expression startAddress = structOnHeapAddress;
+		Expression currentStructBaseAddress = null;
+		Expression currentStructOffset = null;
+		if (startAddress instanceof StructConstructor) {
+			currentStructBaseAddress = ((StructConstructor) startAddress).getFieldValues()[0];
+			currentStructOffset = ((StructConstructor) startAddress).getFieldValues()[1];
+		} else {
+			currentStructBaseAddress = MemoryHandler.getPointerBaseAddress(startAddress, loc);
+			currentStructOffset = MemoryHandler.getPointerOffset(startAddress, loc);
+		}
+//		Expression currentStructBaseAddress = MemoryHandler.getPointerBaseAddress(structOnHeapAddress, loc);
+//		Expression currentStructOffset = MemoryHandler.getPointerOffset(structOnHeapAddress, loc);
 
 		//everything for the new Result
 		ArrayList<Statement> newStmt = new ArrayList<Statement>();
@@ -329,7 +339,8 @@ public class ResultExpression extends Result {
 			} else if (underlyingType instanceof CStruct) {
 				//sae = {base: currentStructBaseAddress, offset: currentStructOffset + thisFieldOffset }
 				Expression innerStructOffset = 
-						StructHandler.getStructOffsetConstantExpression(loc, fieldIds[i], underlyingType);
+						StructHandler.getStructOffsetConstantExpression(loc, fieldIds[i], structType);
+//						StructHandler.getStructOffsetConstantExpression(loc, fieldIds[i], underlyingType);
 				Expression innerStructAddress = MemoryHandler.constructPointerFromBaseAndOffset(currentStructBaseAddress, 
 						new BinaryExpression(loc, BinaryExpression.Operator.ARITHPLUS, 
 								currentStructOffset, 

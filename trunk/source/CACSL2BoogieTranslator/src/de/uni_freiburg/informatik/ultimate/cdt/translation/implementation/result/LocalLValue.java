@@ -1,5 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result;
 
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayAccessExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayLHS;
@@ -30,26 +31,7 @@ public class LocalLValue extends LRValue {
 		return lhs;
 	}
 
-	private Expression convertToExpression(LeftHandSide lhs) {
-		if (lhs instanceof VariableLHS) {
-			return new IdentifierExpression(lhs.getLocation(), lhs.getType(),
-					((VariableLHS) lhs).getIdentifier());
-		} else if (lhs instanceof ArrayLHS) {
-			ArrayLHS alhs = (ArrayLHS) lhs;
-			Expression array = convertToExpression(alhs.getArray());
-			return new ArrayAccessExpression(alhs.getLocation(), alhs.getType(), array,
-					alhs.getIndices());
-		} else if (lhs instanceof StructLHS) {
-			StructLHS slhs = (StructLHS) lhs;
-			Expression struct = convertToExpression(slhs.getStruct());
-			return new StructAccessExpression(slhs.getLocation(), slhs.getType(), struct,
-					slhs.getField());
-		} else {
-			throw new AssertionError("Strange LeftHandSide " + lhs);
-		}
-	}
-
 	public Expression getValue() {
-		return convertToExpression(lhs);
+		return CHandler.convertLHSToExpression(lhs);
 	}
 }

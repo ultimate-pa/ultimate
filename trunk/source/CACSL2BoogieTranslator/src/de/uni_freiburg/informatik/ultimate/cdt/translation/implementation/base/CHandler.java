@@ -116,6 +116,8 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Axiom;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression.Operator;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayAccessExpression;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayLHS;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Body;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BooleanLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BreakStatement;
@@ -138,7 +140,9 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.RealLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Specification;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StringLiteral;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StructAccessExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StructConstructor;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StructLHS;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StructType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Unit;
@@ -501,7 +505,7 @@ public class CHandler implements ICHandler {
 		}
 		// handle proc. declaration & resolve their transitive modified globals
 		decl.addAll(functionHandler.calculateTransitiveModifiesClause(main));
-		decl.addAll(postProcessor.postProcess(main, loc, arrayHandler,
+		decl.addAll(postProcessor.postProcess(main, loc, memoryHandler, arrayHandler, structHandler,
 				initStatements, functionHandler.getProcedures(),
 				functionHandler.getModifiedGlobals(),
 				main.typeHandler.getUndefinedTypes(), this.functions.values(),
@@ -737,7 +741,7 @@ public class CHandler implements ICHandler {
 
 						Expression rExprExpr = null;
 						if (resultCType instanceof CStruct) {
-							ResultExpression structCons = structHandler.makeStructConstructorFromRERL(loc,
+							ResultExpression structCons = structHandler.makeStructConstructorFromRERL(main, loc, memoryHandler, arrayHandler,
 									(ResultExpressionListRec) rExpr, (CStruct) resultCType);
 							rExprExpr = structCons.lrVal.getValue();
 						} else if (resultCType instanceof CPointer 
@@ -1120,6 +1124,7 @@ public class CHandler implements ICHandler {
 			decl.add(tmpVar);
 			stmt.addAll(rop.stmt);
 			decl.addAll(rop.decl);
+			auxVars.putAll(rop.auxVars);
 			overappr.addAll(rop.overappr);
 			stmt.add(new AssignmentStatement(loc,
 					new LeftHandSide[] { new VariableLHS(loc, tmpIType,
@@ -1163,6 +1168,7 @@ public class CHandler implements ICHandler {
 			decl.add(tmpVar);
 			stmt.addAll(rop.stmt);
 			decl.addAll(rop.decl);
+			auxVars.putAll(rop.auxVars);
 			overappr.addAll(rop.overappr);
 			int op;
 			if (node.getOperator() == IASTUnaryExpression.op_prefixIncr) 
@@ -1396,14 +1402,14 @@ public class CHandler implements ICHandler {
 					&& ((CPrimitive) rType).getType() == PRIMITIVE.INT) {
 				RValue rrRValAsPointer = new RValue(MemoryHandler.constructPointerFromBaseAndOffset(
 						new IntegerLiteral(loc, new InferredType(Type.Integer), "0"), 
-						rr.lrVal.getValue(), loc), null);
+						rr.lrVal.getValue(), loc), new CPointer(new CPrimitive(PRIMITIVE.VOID)));
 				expr = new BinaryExpression(loc, new InferredType(Type.Boolean), op, rl.lrVal.getValue(), rrRValAsPointer.getValue());
 			} else if (rType instanceof CPointer
 					&& lType instanceof CPrimitive
 					&& ((CPrimitive) lType).getType() == PRIMITIVE.INT) {
 				RValue rlRValAsPointer = new RValue(MemoryHandler.constructPointerFromBaseAndOffset(
 						new IntegerLiteral(loc, new InferredType(Type.Integer), "0"), 
-						rl.lrVal.getValue(), loc), null);
+						rl.lrVal.getValue(), loc), new CPrimitive(PRIMITIVE.VOID));
 				expr = new BinaryExpression(loc, new InferredType(Type.Boolean), op, rlRValAsPointer.getValue(), rr.lrVal.getValue());
 			} else {
 				expr = wrapBinaryBoolean2Int(loc, op, 
@@ -1690,13 +1696,28 @@ public class CHandler implements ICHandler {
 	public RValue doPointerArith(Dispatcher main, int operator,
 			ILocation loc,
 			RValue ptr, RValue integer) {
-		Expression pointerOffset = MemoryHandler.getPointerOffset(ptr.getValue(), loc);
+		Expression startAddress = ptr.getValue();
+		Expression newStartAddressBase = null;
+		Expression newStartAddressOffset = null;
+		if (startAddress instanceof StructConstructor) {
+			newStartAddressBase = ((StructConstructor) startAddress).getFieldValues()[0];
+			newStartAddressOffset = ((StructConstructor) startAddress).getFieldValues()[1];
+		} else {
+			newStartAddressBase = MemoryHandler.getPointerBaseAddress(startAddress, loc);
+			newStartAddressOffset = MemoryHandler.getPointerOffset(startAddress, loc);
+		}
+//		Expression pointerOffset = MemoryHandler.getPointerOffset(ptr.getValue(), loc);
+		Expression pointerBase = newStartAddressBase;
+		Expression pointerOffset = newStartAddressOffset;
+//		Expression timesSizeOf = createArithmeticExpression(IASTBinaryExpression.op_multiply, integer.getValue(), 
+//				memoryHandler.calculateSizeOf(((CPointer) ptr.cType).pointsToType), 
+//				loc);
 		Expression timesSizeOf = createArithmeticExpression(IASTBinaryExpression.op_multiply, integer.getValue(), 
 				memoryHandler.calculateSizeOf(((CPointer) ptr.cType).pointsToType), 
 				loc);
 		Expression sum = createArithmeticExpression(
 				operator, pointerOffset, timesSizeOf, loc);
-		Expression pointerBase = MemoryHandler.getPointerBaseAddress(ptr.getValue(), loc);
+//		Expression pointerBase = MemoryHandler.getPointerBaseAddress(ptr.getValue(), loc);
 		StructConstructor newPointer = MemoryHandler.constructPointerFromBaseAndOffset(pointerBase, sum, loc);
 		return new RValue(newPointer, ptr.cType);
 	}
@@ -2734,5 +2755,54 @@ public class CHandler implements ICHandler {
 	@Override
 	public void addSizeOfConstants(CType cvar) {
 		memoryHandler.calculateSizeOf(cvar);
+	}
+	
+	public static Expression getInitExpr(CType cType) {
+		CType ut = cType.getUnderlyingType();
+		InferredType it = new InferredType(ut);
+		
+		if (ut instanceof CPrimitive) {
+			switch (((CPrimitive) ut).getType()) {
+			case CHAR:
+			case CHAR16:
+			case CHAR32:
+			case WCHAR:
+			case INT:
+				return new IntegerLiteral(null, it, SFO.NR0);
+			case DOUBLE:
+			case FLOAT:
+				return new RealLiteral(null, it, SFO.NR0F);
+			case VOID:
+				default:
+				throw new AssertionError("unknown type to init");
+			}
+		} else if (ut instanceof CPointer) {
+			return new IdentifierExpression(null, it, SFO.NULL);
+		} else if (ut instanceof CArray) {
+				throw new AssertionError("wrong type to init");
+		} else if (ut instanceof CStruct) {
+				throw new AssertionError("wrong type to init");
+		} else {
+				throw new AssertionError("wrong type to init");
+		}
+	}
+	
+	public static Expression convertLHSToExpression(LeftHandSide lhs) {
+		if (lhs instanceof VariableLHS) {
+			return new IdentifierExpression(lhs.getLocation(), lhs.getType(),
+					((VariableLHS) lhs).getIdentifier());
+		} else if (lhs instanceof ArrayLHS) {
+			ArrayLHS alhs = (ArrayLHS) lhs;
+			Expression array = convertLHSToExpression(alhs.getArray());
+			return new ArrayAccessExpression(alhs.getLocation(), alhs.getType(), array,
+					alhs.getIndices());
+		} else if (lhs instanceof StructLHS) {
+			StructLHS slhs = (StructLHS) lhs;
+			Expression struct = convertLHSToExpression(slhs.getStruct());
+			return new StructAccessExpression(slhs.getLocation(), slhs.getType(), struct,
+					slhs.getField());
+		} else {
+			throw new AssertionError("Strange LeftHandSide " + lhs);
+		}
 	}
 }

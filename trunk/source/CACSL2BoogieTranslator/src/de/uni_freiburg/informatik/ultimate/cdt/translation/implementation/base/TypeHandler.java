@@ -320,11 +320,12 @@ public class TypeHandler implements ITypeHandler {
                     // type anyway?
                     return new ResultSkip();
                 }
-                ResultTypes originalType = typedef.get(type);
-                CNamed named = new CNamed(node, originalType.cvar);
-                ResultTypes r = new ResultTypes(new NamedType(loc, name,
-                        new ASTType[0]), false, false, named);
-                return r;
+//                ResultTypes originalType = typedef.get(type);
+//                CNamed named = new CNamed(node, originalType.cvar);
+//                ResultTypes r = new ResultTypes(new NamedType(loc, name,
+//                        new ASTType[0]), false, false, named);
+//                return r;
+                return typedef.get(type);
             }
 
             undefStructs.add(name);
@@ -453,7 +454,7 @@ public class TypeHandler implements ITypeHandler {
         CType cvar = new CStruct(node, fNames.toArray(new String[0]),
                 fTypes.toArray(new CType[0]));
         ResultTypes result = new ResultTypes(type, false, false, cvar);
-        String cId = node.getName().getRawSignature();
+        String cId = node.getName().toString();
         if (node.getStorageClass() == IASTDeclSpecifier.sc_typedef) {
             // TYPEDEF Struct Type
             for (IASTDeclarator cDecl : ((IASTSimpleDeclaration) node
@@ -463,10 +464,10 @@ public class TypeHandler implements ITypeHandler {
                 		cDecl.getPointerOperators(), result, false);
                 typedef.put(typedefId, checkedResult);
             }
-            if (typedef.containsKey(cId)) {
+//            if (typedef.containsKey(cId)) {
             	// the type itself was already defined
             	return new ResultSkip();
-            }
+//            }
         }
         ArrayList<TypeDeclaration> tds = new ArrayList<TypeDeclaration>();
         String name = "STRUCT~" + cId;

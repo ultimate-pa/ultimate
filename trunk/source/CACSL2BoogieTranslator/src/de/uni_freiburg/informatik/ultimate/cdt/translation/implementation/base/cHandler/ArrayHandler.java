@@ -3,6 +3,7 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 
 import org.eclipse.cdt.core.dom.ast.IASTArrayDeclarator;
 import org.eclipse.cdt.core.dom.ast.IASTArrayModifier;
@@ -15,7 +16,9 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.C
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.InferredType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.InferredType.Type;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CArray;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CNamed;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CStruct;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
@@ -49,6 +52,20 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableLHS;
  * @date 12.10.2012
  */
 public class ArrayHandler {
+	
+	boolean modifyingTheHeapGlobally = false;
+	
+	public HashSet<String> getModifiedGlobals() {
+		HashSet<String> set = new HashSet<String>();
+		if (modifyingTheHeapGlobally) {
+			for (String t : new String[] { SFO.INT, SFO.POINTER,
+					SFO.REAL, SFO.BOOL }) {
+				set.add(SFO.MEMORY + "_" + t);
+			}
+			set.add(SFO.LENGTH);
+		}
+		return set;
+	}
 
 	public ResultExpression handleArrayDeclarationOnHeap(Dispatcher main,
 			MemoryHandler memoryHandler, StructHandler structHandler,
@@ -106,8 +123,8 @@ public class ArrayHandler {
 			
 			//evaluate the initializer and fill the heapspace of the array
 			ResultExpressionListRec init = (ResultExpressionListRec) main.dispatch(d.getInitializer());
-			ArrayList<Statement> arrayWrites = initArray(memoryHandler, structHandler, loc, init.list, 
-					arrayId.getValue(), sizeOfCell, arrayType);
+			ArrayList<Statement> arrayWrites = initArray(main, memoryHandler, structHandler, loc, init.list, 
+					arrayId.getValue(), arrayType);
 			stmt.addAll(arrayWrites);
 
 			if (functionHandler.getCurrentProcedureID() != null) {
@@ -118,20 +135,20 @@ public class ArrayHandler {
 					.add(SFO.MEMORY + "_" + t);
 				}
 			} else { //our initialized array belongs to a global variable
-				//TODO -- handle globals?? or is it done via the symbolTable?? what with statics??
+				modifyingTheHeapGlobally = true;
 			}
 		}
 		return new ResultExpression(stmt, arrayId, decl, auxVars, overappr);
 //		return new ResultExpression(stmt, arrayId, decl, auxVars);
 	}
 
-	//	FIXME: a little inconsistent: here, we assume non-variable, simple sizeConstants while not doing so at arraySubscriptExs
-	private ArrayList<Statement> initArray(MemoryHandler memoryHandler, StructHandler structHandler, ILocation loc, 
-			ArrayList<ResultExpressionListRec> list, Expression startAddress, Expression sizeOfCell, 
+	public ArrayList<Statement> initArray(Dispatcher main, MemoryHandler memoryHandler, StructHandler structHandler, ILocation loc, 
+			ArrayList<ResultExpressionListRec> list, Expression startAddress, //Expression sizeOfCell, 
 			CArray arrayType) {
 		ArrayList<Statement> arrayWrites = new ArrayList<Statement>();
 		
 //		Integer currentSizeInt = sizeConstantsAsInt.get(depth);
+		Expression sizeOfCell = memoryHandler.calculateSizeOf(arrayType.getValueType()); 
 		Expression[] dimensions = arrayType.getDimensions();
 		Integer currentSizeInt = null;
 		try {
@@ -155,12 +172,29 @@ public class ArrayHandler {
 			RValue val = null;
 
 			for (int i = 0; i < currentSizeInt; i++) {
-				if (list.size() > i) {
+				if (list != null && list.size() > i) {
 					if (list.get(i).lrVal == null) { //TODO: we may need to pass statements, decls, ...
-						assert arrayType.getValueType() instanceof CStruct;
-						val = (RValue) structHandler.makeStructConstructorFromRERL(loc, list.get(i), (CStruct) arrayType.getValueType()).lrVal;
+						assert arrayType.getValueType().getUnderlyingType() instanceof CStruct;
+						val = (RValue) structHandler.makeStructConstructorFromRERL(main, loc, memoryHandler, this, list.get(i), 
+								(CStruct) arrayType.getValueType().getUnderlyingType()).lrVal;
 					} else
 						val = (RValue) list.get(i).lrVal; //if not enough values are given, fill the rest with the last
+				} else if (list == null) {
+					CType valueType = arrayType.getValueType().getUnderlyingType();
+							
+					if (valueType instanceof CArray) {
+						assert false : "this should not be the case as we are in the inner/outermost array right??";
+					} else if  (valueType instanceof CStruct) {
+						ResultExpression sInit = structHandler.makeStructConstructorFromRERL(main, loc, memoryHandler, this, null, (CStruct) valueType);
+						arrayWrites.addAll(sInit.stmt);
+						assert sInit.decl.size() == 0 && sInit.auxVars.size() == 0 : "==> change return type of initArray..";
+						val = (RValue) sInit.lrVal;
+					} else if (valueType instanceof CPrimitive 
+							|| valueType instanceof CPointer) {
+						val = new RValue(CHandler.getInitExpr(valueType), valueType);
+					} else {
+						throw new UnsupportedSyntaxException("trying to init unknown type");
+					}
 				}
 
 
@@ -209,12 +243,12 @@ public class ArrayHandler {
 						arrayType.getValueType());
 
 				arrayWrites.addAll(
-						initArray(memoryHandler, structHandler, loc, list.get(i).list,
+						initArray(main, memoryHandler, structHandler, loc, list.get(i).list,
 								MemoryHandler.constructPointerFromBaseAndOffset(
 										newStartAddressBase,
 										newStartAddressOffsetInner, 
 										loc),
-										sizeOfCell, innerArrayType)); 
+										innerArrayType)); 
 			}
 		}
 		return arrayWrites;
@@ -234,10 +268,10 @@ public class ArrayHandler {
 
 
 		ResultExpression subscriptR = subscript.switchToRValue(main, memoryHandler, structHandler, loc);
-		stmt.addAll(subscript.stmt);
-		decl.addAll(subscript.decl);
-		auxVars.putAll(subscript.auxVars);
-		overappr.addAll(subscript.overappr);
+		stmt.addAll(subscriptR.stmt);
+		decl.addAll(subscriptR.decl);
+		auxVars.putAll(subscriptR.auxVars);
+		overappr.addAll(subscriptR.overappr);
 			
 		//catch the case where we are doing a subscript on a pointer
 		if (array.lrVal.cType instanceof CPointer) {
@@ -287,9 +321,21 @@ public class ArrayHandler {
 			decl.addAll(arrayR.decl);
 			auxVars.putAll(arrayR.auxVars);
 	
-			Expression arrayAddress = arrayR.lrVal.getValue();
-			arrayBase = MemoryHandler.getPointerBaseAddress(arrayAddress, loc);
-			arrayOffset = MemoryHandler.getPointerOffset(arrayAddress, loc);
+//			Expression arrayAddress = arrayR.lrVal.getValue();
+			
+			Expression startAddress = arrayR.lrVal.getValue();
+			arrayBase = null;
+			arrayOffset = null;
+			if (startAddress instanceof StructConstructor) {
+				arrayBase = ((StructConstructor) startAddress).getFieldValues()[0];
+				arrayOffset = ((StructConstructor) startAddress).getFieldValues()[1];
+			} else {
+				arrayBase = MemoryHandler.getPointerBaseAddress(startAddress, loc);
+				arrayOffset = MemoryHandler.getPointerOffset(startAddress, loc);
+			}	
+			
+//			arrayBase = MemoryHandler.getPointerBaseAddress(arrayAddress, loc);
+//			arrayOffset = MemoryHandler.getPointerOffset(arrayAddress, loc);
 		}
 
 		offset = CHandler.createArithmeticExpression(IASTBinaryExpression.op_plus,

@@ -1095,16 +1095,29 @@ public class MemoryHandler {
         } else if (rType instanceof CStruct) {
         	CStruct rStructType = (CStruct) rType;
         	for (String fieldId : rStructType.getFieldIds()) {
+        		Expression startAddress = hlv.getAddress();
+    			Expression newStartAddressBase = null;
+    			Expression newStartAddressOffset = null;
+    			if (startAddress instanceof StructConstructor) {
+    				newStartAddressBase = ((StructConstructor) startAddress).getFieldValues()[0];
+    				newStartAddressOffset = ((StructConstructor) startAddress).getFieldValues()[1];
+    			} else {
+    				newStartAddressBase = MemoryHandler.getPointerBaseAddress(startAddress, loc);
+    				newStartAddressOffset = MemoryHandler.getPointerOffset(startAddress, loc);
+    			}
+        		
         		CType fieldType = rStructType.getFieldType(fieldId);
         		StructAccessExpression sae = new StructAccessExpression(loc, 
         				rval.getValue(), fieldId);
         		Expression fieldOffset = 
 						StructHandler.getStructOffsetConstantExpression(loc, fieldId, rStructType);
         		Expression newOffset = CHandler.createArithmeticExpression(IASTBinaryExpression.op_plus, 
-        				getPointerOffset(hlv.getAddress(), loc), 
+        				newStartAddressOffset,
+//        				getPointerOffset(hlv.getAddress(), loc), 
         				fieldOffset, loc);
         		HeapLValue fieldHlv = new HeapLValue(
-        				constructPointerFromBaseAndOffset(getPointerBaseAddress(hlv.getAddress(), loc),
+        				constructPointerFromBaseAndOffset(newStartAddressBase,
+//        						getPointerBaseAddress(hlv.getAddress(), loc),
         				newOffset, loc), fieldType);
         		stmt.addAll(getWriteCall(fieldHlv, new RValue(sae, fieldType)));
         	}

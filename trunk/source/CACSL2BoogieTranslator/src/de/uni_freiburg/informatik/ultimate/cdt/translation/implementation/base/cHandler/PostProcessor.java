@@ -17,6 +17,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CArray;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CNamed;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CStruct;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
@@ -89,8 +90,10 @@ public class PostProcessor {
 	 *            a reference to the main dispatcher.
 	 * @param loc
 	 *            the location of the translation unit.
+	 * @param memoryHandler 
 	 * @param arrayHandler
 	 *            a reference to the arrayHandler.
+	 * @param structHandler 
 	 * @param initStatements
 	 *            a list of all global init statements.
 	 * @param procedures
@@ -106,7 +109,7 @@ public class PostProcessor {
 	 * @return a declaration list holding the init() and start() procedure.
 	 */
 	public ArrayList<Declaration> postProcess(Dispatcher main, ILocation loc,
-			ArrayHandler arrayHandler, ArrayList<Statement> initStatements,
+			MemoryHandler memoryHandler, ArrayHandler arrayHandler, StructHandler structHandler, ArrayList<Statement> initStatements,
 			HashMap<String, Procedure> procedures,
 			HashMap<String, HashSet<String>> modifiedGlobals,
 			Set<String> undefinedTypes,
@@ -114,7 +117,7 @@ public class PostProcessor {
 			Collection<String> uninitGlobalVars) {
 		ArrayList<Declaration> decl = new ArrayList<Declaration>();
 		decl.addAll(declareUndefinedTypes(loc, undefinedTypes));
-		decl.addAll(createUltimateInitProcedure(loc, main, arrayHandler,
+		decl.addAll(createUltimateInitProcedure(loc, main, memoryHandler, arrayHandler, structHandler,
 				initStatements, uninitGlobalVars));
 		decl.addAll(createUltimateStartProcedure(main, loc, procedures,
 				modifiedGlobals));
@@ -148,8 +151,10 @@ public class PostProcessor {
 	 *            the location of the translation unit. declaration.
 	 * @param main
 	 *            a reference to the main dispatcher.
+	 * @param memoryHandler 
 	 * @param arrayHandler
 	 *            a reference to the arrayHandler.
+	 * @param structHandler 
 	 * @param initStatements
 	 *            a list of all global init statements.
 	 * @param uninitGlobalVars
@@ -157,8 +162,8 @@ public class PostProcessor {
 	 * @return a list the initialized variables.
 	 */
 	private ArrayList<Declaration> createUltimateInitProcedure(ILocation loc,
-			Dispatcher main, ArrayHandler arrayHandler,
-			ArrayList<Statement> initStatements,
+			Dispatcher main, MemoryHandler memoryHandler, ArrayHandler arrayHandler,
+			StructHandler structHandler, ArrayList<Statement> initStatements,
 			Collection<String> uninitGlobalVars) {
 		ArrayList<Declaration> decl = new ArrayList<Declaration>();
 		ArrayList<VariableDeclaration> initDecl = new ArrayList<VariableDeclaration>();
@@ -197,7 +202,8 @@ public class PostProcessor {
 			CType cvar = main.cHandler.getSymbolTable().get(cId, lloc)
 					.getCVariable();
 			LeftHandSide lhs = new VariableLHS(lloc, new InferredType(at), bId);
-			ResultExpression r = initVar(lloc, main, arrayHandler, lhs, at,
+			ResultExpression r = initVar(lloc, main, memoryHandler, arrayHandler, structHandler, lhs, 
+//					at,
 					cvar);
 			initStatements.addAll(r.stmt);
 			for (Declaration d : r.decl) {
@@ -206,6 +212,9 @@ public class PostProcessor {
 			}
 		}
 		initializedGlobals.addAll(uninitGlobalVars);
+		
+		initializedGlobals.addAll(arrayHandler.getModifiedGlobals());//alex: array on heap initialization means Ultimate.init has to modify it..
+		
 		Specification[] specsInit = new Specification[1];
 		VariableLHS[] modifyList = new VariableLHS[initializedGlobals.size()];
 		int i = 0;
@@ -250,8 +259,10 @@ public class PostProcessor {
 	 *            the location of the variables declaration.
 	 * @param main
 	 *            a reference to the main dispatcher.
+	 * @param memoryHandler 
 	 * @param arrayHandler
 	 *            a reference to the arrayHandler.
+	 * @param structHandler 
 	 * @param lhs
 	 *            the LeftHandSide to initialize.
 	 * @param at
@@ -261,121 +272,133 @@ public class PostProcessor {
 	 * 
 	 * @return a set of Statements, assigning values to the variables.
 	 */
-	private ResultExpression initVar(final CACSLLocation loc, Dispatcher main,
-			final ArrayHandler arrayHandler, final LeftHandSide lhs,
-			final ASTType at, CType cvar) {
-		CType lCvar = cvar;
-		if (cvar instanceof CNamed) {
-			lCvar = ((CNamed) cvar).getUnderlyingType();
-		}
+	public ResultExpression initVar(final CACSLLocation loc, Dispatcher main,
+			MemoryHandler memoryHandler, final ArrayHandler arrayHandler, StructHandler structHandler, final LeftHandSide lhs,
+//			final ASTType at, 
+			CType cvar) {
+		CType lCvar = cvar.getUnderlyingType();
+//		if (cvar instanceof CNamed) {
+//			lCvar = ((CNamed) cvar).getUnderlyingType();
+//		}
 		ArrayList<Statement> stmt = new ArrayList<Statement>();
 		ArrayList<Declaration> decl = new ArrayList<Declaration>();
 		Map<VariableDeclaration, CACSLLocation> auxVars = new HashMap<VariableDeclaration, CACSLLocation>();
 		ArrayList<Overapprox> overappr = new ArrayList<Overapprox>();
-		if (at instanceof PrimitiveType) {
-			InferredType it = new InferredType(at);
-			InferredType.Type t = it.getType();
-			ArrayList<Expression> rhs = new ArrayList<Expression>();
-			switch (t) {
-			case Boolean:
-				rhs.add(new BooleanLiteral(loc, it, false));
-				break;
-			case Integer:
+		InferredType it = new InferredType(lCvar);
+		ArrayList<Expression> rhs = new ArrayList<Expression>();
+		if (lCvar instanceof CPrimitive) {
+			switch (((CPrimitive) lCvar).getType()) {
+			case CHAR:
+			case CHAR16:
+			case CHAR32:
+			case WCHAR:
+			case INT:
 				rhs.add(new IntegerLiteral(loc, it, SFO.NR0));
 				break;
-			case Real:
+			case DOUBLE:
+			case FLOAT:
 				rhs.add(new RealLiteral(loc, it, SFO.NR0F));
-				break;
-			default:
-				throw new AssertionError("There are no Strings in Boogie ...");
-
+			case VOID:
+				default:
+				throw new AssertionError("unknown type to init");
 			}
 			stmt.add(new AssignmentStatement(loc, new LeftHandSide[] { lhs },
 					rhs.toArray(new Expression[0])));
-		} else if (at instanceof ArrayType) {
-			assert lCvar instanceof CArray;
-			ArrayList<IdentifierExpression> tempIdc = new ArrayList<IdentifierExpression>();
-			Expression[] arrSize = ((CArray) lCvar).getDimensions();
-			Expression nr0 = new IntegerLiteral(loc, SFO.NR0);
-			for (int i = 0; i < arrSize.length; i++) {
-				String tempVarName = main.nameHandler
-						.getTempVarUID(SFO.AUXVAR.ARRAYINIT);
-				InferredType tempVarIType = new InferredType(Type.Integer);
-				tempIdc.add(new IdentifierExpression(loc, tempVarIType,
-						tempVarName));
-				VariableDeclaration tVarDecl = SFO
-						.getTempVarVariableDeclaration(tempVarName,
-								tempVarIType, loc);
-				auxVars.put(tVarDecl, loc);
-				decl.add(tVarDecl);
-				if (i == 0) {
-					stmt.add(new AssignmentStatement(loc,
-							new LeftHandSide[] { new VariableLHS(loc,
-									tempVarName) }, new Expression[] { nr0 }));
-				}
+//		} else if (at instanceof ArrayType) {
+		} else if (lCvar instanceof CArray) {
+			stmt.addAll(arrayHandler.initArray(main, memoryHandler, structHandler, loc, null, 
+					CHandler.convertLHSToExpression(lhs),
+					(CArray) lCvar));
+//			ArrayList<IdentifierExpression> tempIdc = new ArrayList<IdentifierExpression>();
+//			Expression[] arrSize = ((CArray) lCvar).getDimensions();
+//			Expression nr0 = new IntegerLiteral(loc, SFO.NR0);
+//			for (int i = 0; i < arrSize.length; i++) {
+//				String tempVarName = main.nameHandler
+//						.getTempVarUID(SFO.AUXVAR.ARRAYINIT);
+//				InferredType tempVarIType = new InferredType(Type.Integer);
+//				tempIdc.add(new IdentifierExpression(loc, tempVarIType,
+//						tempVarName));
+//				VariableDeclaration tVarDecl = SFO
+//						.getTempVarVariableDeclaration(tempVarName,
+//								tempVarIType, loc);
+//				auxVars.put(tVarDecl, loc);
+//				decl.add(tVarDecl);
+//				if (i == 0) {
+//					stmt.add(new AssignmentStatement(loc,
+//							new LeftHandSide[] { new VariableLHS(loc,
+//									tempVarName) }, new Expression[] { nr0 }));
+//				}
+//			}
+//			assert arrSize.length == tempIdc.size();
+//			ArrayList<Statement> whileBody = new ArrayList<Statement>();
+//			ArrayLHS arrLhs = new ArrayLHS(loc, new InferredType(at), lhs,
+//					tempIdc.toArray(new Expression[0]));
+//			ResultExpression r = initVar(loc, main, arrayHandler, arrLhs,
+//					((ArrayType) at).getValueType(),
+//					((CArray) lCvar).getValueType());
+//			decl.addAll(r.decl);
+//			auxVars.putAll(r.auxVars);
+//			overappr.addAll(r.overappr);
+//			WhileStatement ws = null;
+//			Expression nr1 = new IntegerLiteral(loc, SFO.NR1);
+//			for (int i = arrSize.length - 1; i >= 0; i--) {
+//				if (i == arrSize.length - 1) {
+//					whileBody.addAll(r.stmt);
+//				} else {
+//					VariableLHS tmpLhsNext = new VariableLHS(loc, tempIdc.get(
+//							i + 1).getIdentifier());
+//					whileBody.add(new AssignmentStatement(loc,
+//							new LeftHandSide[] { tmpLhsNext },
+//							new Expression[] { nr0 }));
+//					whileBody.add(ws);
+//				}
+//				VariableLHS tmpLhs = new VariableLHS(loc, tempIdc.get(i)
+//						.getIdentifier());
+//				whileBody.add(new AssignmentStatement(loc,
+//						new LeftHandSide[] { tmpLhs },
+//						new Expression[] { new BinaryExpression(loc,
+//								new InferredType(Type.Integer),
+//								Operator.ARITHPLUS, tempIdc.get(i), nr1) }));
+//				ws = new WhileStatement(loc, new BinaryExpression(loc,
+//						new InferredType(Type.Integer),
+//						BinaryExpression.Operator.COMPLT, tempIdc.get(i),
+//						arrSize[i]), new LoopInvariantSpecification[0],
+//						whileBody.toArray(new Statement[0]));
+//				whileBody.clear();
+//
+//			}
+//			stmt.add(ws);
+//		} else if (at instanceof StructType) {
+		} else if (lCvar instanceof CStruct) {
+			
+			CStruct structType = (CStruct) lCvar;
+			//			for (VarList vl : ((StructType) at).getFields()) {
+			for (String fieldId : ((CStruct) lCvar).getFieldIds()) {
+				ResultExpression r = initVar(loc, main, memoryHandler, arrayHandler, structHandler,
+						new StructLHS(loc, lhs, fieldId), 
+						structType.getFieldType(fieldId));
+				decl.addAll(r.decl);
+				stmt.addAll(r.stmt);
+				auxVars.putAll(r.auxVars);
+				overappr.addAll(r.overappr);
 			}
-			assert arrSize.length == tempIdc.size();
-			ArrayList<Statement> whileBody = new ArrayList<Statement>();
-			ArrayLHS arrLhs = new ArrayLHS(loc, new InferredType(at), lhs,
-					tempIdc.toArray(new Expression[0]));
-			ResultExpression r = initVar(loc, main, arrayHandler, arrLhs,
-					((ArrayType) at).getValueType(),
-					((CArray) lCvar).getValueType());
-			decl.addAll(r.decl);
-			auxVars.putAll(r.auxVars);
-			overappr.addAll(r.overappr);
-			WhileStatement ws = null;
-			Expression nr1 = new IntegerLiteral(loc, SFO.NR1);
-			for (int i = arrSize.length - 1; i >= 0; i--) {
-				if (i == arrSize.length - 1) {
-					whileBody.addAll(r.stmt);
-				} else {
-					VariableLHS tmpLhsNext = new VariableLHS(loc, tempIdc.get(
-							i + 1).getIdentifier());
-					whileBody.add(new AssignmentStatement(loc,
-							new LeftHandSide[] { tmpLhsNext },
-							new Expression[] { nr0 }));
-					whileBody.add(ws);
-				}
-				VariableLHS tmpLhs = new VariableLHS(loc, tempIdc.get(i)
-						.getIdentifier());
-				whileBody.add(new AssignmentStatement(loc,
-						new LeftHandSide[] { tmpLhs },
-						new Expression[] { new BinaryExpression(loc,
-								new InferredType(Type.Integer),
-								Operator.ARITHPLUS, tempIdc.get(i), nr1) }));
-				ws = new WhileStatement(loc, new BinaryExpression(loc,
-						new InferredType(Type.Integer),
-						BinaryExpression.Operator.COMPLT, tempIdc.get(i),
-						arrSize[i]), new LoopInvariantSpecification[0],
-						whileBody.toArray(new Statement[0]));
-				whileBody.clear();
-
-			}
-			stmt.add(ws);
-		} else if (at instanceof StructType) {
-			assert lCvar instanceof CStruct;
-			for (VarList vl : ((StructType) at).getFields()) {
-				for (String id : vl.getIdentifiers()) {
-					ResultExpression r = initVar(loc, main, arrayHandler,
-							new StructLHS(loc, lhs, id), vl.getType(),
-							((CStruct) lCvar).getFieldType(id));
-					decl.addAll(r.decl);
-					stmt.addAll(r.stmt);
-					auxVars.putAll(r.auxVars);
-					overappr.addAll(r.overappr);
-				}
-			}
-		} else if ((at instanceof NamedType) && 
-				((NamedType) at).getName().equals(SFO.POINTER)){
-			assert lCvar instanceof CPointer || lCvar instanceof CArray; //FIXME is this correct? -- for arrays on the heap i mean..
-			//result is pointer to 0
-			LRValue nullPointer = new RValue(new IdentifierExpression(loc, at.getBoogieType(), SFO.NULL), 
+//		} else if ((at instanceof NamedType) && 
+		} else if (lCvar instanceof CPointer) {
+			LRValue nullPointer = new RValue(new IdentifierExpression(loc, new InferredType(lCvar), SFO.NULL), 
 					null);
 			stmt.add(new AssignmentStatement(loc, new LeftHandSide[] { lhs },
 					new Expression[] { nullPointer.getValue() } ));
-		}
-		else {
+	
+//		} else if ((at instanceof NamedType) && 
+//				((NamedType) at).getName().equals(SFO.POINTER)){
+//			assert lCvar instanceof CPointer || lCvar instanceof CArray; //FIXME is this correct? -- for arrays on the heap i mean..
+//			//result is pointer to 0
+//			LRValue nullPointer = new RValue(new IdentifierExpression(loc, at.getBoogieType(), SFO.NULL), 
+//					null);
+//			stmt.add(new AssignmentStatement(loc, new LeftHandSide[] { lhs },
+//					new Expression[] { nullPointer.getValue() } ));
+//		}
+		} else {
 			String msg = "Unknown type - don't know how to initialize!";
 			Dispatcher.error(loc, SyntaxErrorType.UnsupportedSyntax, msg);
 			throw new UnsupportedSyntaxException(msg);
