@@ -1261,6 +1261,12 @@ public class CHandler implements ICHandler {
 		//TODO make implicit casts here
 		//		IType lType = lrVal.getValue().getType();
 		//		IType rType = rVal.getValue().getType();
+//        if (lType instanceof CPointer
+//                && rType instanceof CPrimitive
+//                && ((CPrimitive) rType).getType() == PRIMITIVE.INT) 
+//            rightHandSide = new RValue(MemoryHandler.constructPointerFromBaseAndOffset(
+//                    new IntegerLiteral(loc, new InferredType(Type.Integer), "0"), 
+//                    rVal.getValue(), loc), null);
 
 		if (lrVal instanceof HeapLValue) {
 			HeapLValue hlv = (HeapLValue) lrVal; 

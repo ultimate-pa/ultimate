@@ -124,7 +124,7 @@ public class InferredType implements IType {
     		underlyingType = ((CNamed) cType).getUnderlyingType();
 		
 		if (underlyingType instanceof CPrimitive) {
-			CPrimitive cp = (CPrimitive) cType;
+			CPrimitive cp = (CPrimitive) underlyingType;
 			switch (cp.getType()) {
 			case INT:
 				type = Type.Integer;

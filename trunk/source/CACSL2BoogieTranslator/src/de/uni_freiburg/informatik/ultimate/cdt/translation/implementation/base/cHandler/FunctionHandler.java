@@ -259,7 +259,10 @@ public class FunctionHandler {
 		// we check the type via typeHandler
 		ResultTypes returnType = (ResultTypes) main.dispatch(node
 				.getDeclSpecifier());
-		if (returnType.isVoid) {
+		ResultTypes checkedType = main.cHandler.checkForPointer(main,
+                node.getDeclarators()[0].getPointerOperators(), returnType, false);
+        if (returnType.isVoid &&
+                !(checkedType.cvar instanceof CPointer)) {
 			if (methodsCalledBeforeDeclared.contains(methodName)) {
 				// this method was assumed to return int -> return int
 				out[0] = new VarList(loc, new String[] { SFO.RES },
@@ -271,8 +274,6 @@ public class FunctionHandler {
 			}
 		} else {
 			// we found a type, so node is type ASTType
-			ResultTypes checkedType = main.cHandler.checkForPointer(main,
-					node.getDeclarators()[0].getPointerOperators(), returnType, false);
 			ASTType type = checkedType.getType();
 			out[0] = new VarList(loc, new String[] { SFO.RES }, type);
 		}
