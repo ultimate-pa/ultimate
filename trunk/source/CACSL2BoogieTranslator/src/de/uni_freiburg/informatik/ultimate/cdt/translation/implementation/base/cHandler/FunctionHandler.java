@@ -724,14 +724,12 @@ public class FunctionHandler {
 			}
 			Expression arg = in.lrVal.getValue();
 			
-			// FIXME Christian
 			if (in.lrVal.cType instanceof CPrimitive &&
 			        ((CPrimitive)in.lrVal.cType).getType() == PRIMITIVE.INT) {
 			    if (procedureToParamCType.get(methodName).get(i) instanceof
 			            CPointer) {
 			        arg = MemoryHandler.constructPointerFromBaseAndOffset(
-			                new IntegerLiteral(loc, "0"),
-			                arg, loc);
+			                new IntegerLiteral(loc, "0"), arg, loc);
 			    }
 			} 
 //			else {
