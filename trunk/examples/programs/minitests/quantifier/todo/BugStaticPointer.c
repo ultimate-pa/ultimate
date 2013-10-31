@@ -2,10 +2,10 @@
 // Matthias Heizmann
 // static struct structType* not treated as static
 
-struct structType{
+typedef struct {
 	int x;
 	int y;
-};
+} structType;
 
 void localPrimitives(int);
 
@@ -16,9 +16,6 @@ int main() {
 	}
 }
 
-static int foo(static int i) {
-
-}
 
 
 void localPrimitives(int i) {
@@ -26,11 +23,14 @@ void localPrimitives(int i) {
 	static int x = 1;
 	static struct structType* p = 0;
 	if (i > 0) {
-		*p = 3;
+	  if (p != 0) {
+		//@ assert \false;
+	  }
 	}
-	p = malloc(sizeof(struct structType));
+//	p = malloc(sizeof(struct structType));
 	//@ assert s == i;
 	//@ assert x == i + 1;
 	s++;
 	x++;
+//	p++;
 }
