@@ -5,6 +5,7 @@ import java.io.IOException;
 
 import org.apache.log4j.Logger;
 import org.eclipse.core.runtime.preferences.ConfigurationScope;
+import org.eclipse.core.runtime.preferences.InstanceScope;
 import org.eclipse.jface.preference.BooleanFieldEditor;
 import org.eclipse.jface.preference.ComboFieldEditor;
 import org.eclipse.jface.preference.DirectoryFieldEditor;
@@ -30,7 +31,7 @@ public class PreferencePage extends FieldEditorPreferencePage
 	public static final Logger logger =  Logger.getLogger(PreferencePage.class);
 	
 	
-	private static final ScopedPreferenceStore preferences = new ScopedPreferenceStore(new ConfigurationScope(),Activator.s_PLUGIN_ID);
+	private static final ScopedPreferenceStore preferences = new ScopedPreferenceStore(InstanceScope.INSTANCE,Activator.s_PLUGIN_ID);
 
 	public PreferencePage(){
 		super(GRID);

@@ -31,6 +31,8 @@ import org.apache.batik.svggen.SVGGraphics2D;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.preferences.ConfigurationScope;
 import org.eclipse.core.runtime.preferences.IEclipsePreferences;
+import org.eclipse.core.runtime.preferences.IScopeContext;
+import org.eclipse.core.runtime.preferences.InstanceScope;
 import org.eclipse.jface.action.IAction;
 import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.ui.IWorkbenchPage;
@@ -171,7 +173,7 @@ public class MenuActions implements IWorkbenchWindowActionDelegate {
 	 * Exports the graph of the active editor part to a SVG format and saves it.
 	 */
 	public static void exportAsSVG() {
-		ConfigurationScope scope = new ConfigurationScope();
+		IScopeContext scope = InstanceScope.INSTANCE;
 		IEclipsePreferences prefs = scope.getNode(Activator.PLUGIN_ID);
 
 		String svgFilePath = prefs.get(PreferenceValues.NAME_PATH,

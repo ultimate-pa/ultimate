@@ -974,7 +974,7 @@ public class Application implements IApplication, ICore, IRCPPlugin {
 			}
 		}
 
-		boolean showusableparser = ConfigurationScope.INSTANCE.getNode(
+		boolean showusableparser = InstanceScope.INSTANCE.getNode(
 				Activator.s_PLUGIN_ID).getBoolean(
 				CorePreferenceInitializer.LABEL_SHOWUSABLEPARSER,
 				CorePreferenceInitializer.VALUE_SHOWUSABLEPARSER_DEFAULT);

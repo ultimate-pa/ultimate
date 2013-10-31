@@ -55,6 +55,8 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.wrapper.WrapperNode;
 import org.apache.log4j.Logger;
 import org.eclipse.core.runtime.preferences.ConfigurationScope;
 import org.eclipse.core.runtime.preferences.IEclipsePreferences;
+import org.eclipse.core.runtime.preferences.IScopeContext;
+import org.eclipse.core.runtime.preferences.InstanceScope;
 
 /**
  * This class transforms the procedures in the input AST into a single procedure
@@ -308,7 +310,7 @@ public final class DSITransformerObserver extends BoogieTransformer implements
 		procedures = new HashMap<String, ProcedureContainer>();
 
 		// Retrieve settings from the Preferences Page
-		ConfigurationScope scope = new ConfigurationScope();
+		IScopeContext scope = InstanceScope.INSTANCE;
 		IEclipsePreferences prefs = scope.getNode(Activator.s_PLUGIN_ID);
 
 		trimAfterWrap = prefs.getBoolean(PreferenceValues.NAME_TRIMWRAP,

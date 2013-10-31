@@ -2,6 +2,8 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.prefer
 
 import org.eclipse.core.runtime.preferences.ConfigurationScope;
 import org.eclipse.core.runtime.preferences.IEclipsePreferences;
+import org.eclipse.core.runtime.preferences.IScopeContext;
+import org.eclipse.core.runtime.preferences.InstanceScope;
 
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.PreferenceValues.INTERPOLATION;
@@ -40,7 +42,7 @@ public class TAPreferences {
 	
 	public TAPreferences() {
 	
-		ConfigurationScope scope = new ConfigurationScope();
+		IScopeContext scope = InstanceScope.INSTANCE;
 		m_Prefs = scope.getNode(Activator.PLUGIN_ID);
 
 		m_Interprocedural = m_Prefs.getBoolean(PreferenceValues.NAME_INTERPROCEDUTAL, PreferenceValues.DEF_INTERPROCEDUTAL);

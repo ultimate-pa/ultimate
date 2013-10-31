@@ -3,6 +3,7 @@ package de.uni_freiburg.informatik.ultimate.automata;
 import org.apache.log4j.Logger;
 import org.eclipse.core.runtime.Plugin;
 import org.eclipse.core.runtime.preferences.ConfigurationScope;
+import org.eclipse.core.runtime.preferences.InstanceScope;
 import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.ui.plugin.AbstractUIPlugin;
@@ -37,7 +38,7 @@ public class Activator extends Plugin {
 	public void start(BundleContext context) throws Exception {
 		super.start(context);
 		plugin = this;
-		preferences = new ScopedPreferenceStore(new ConfigurationScope(),Activator.PLUGIN_ID);
+		preferences = new ScopedPreferenceStore(InstanceScope.INSTANCE,Activator.PLUGIN_ID);
 	}
 
 	/*

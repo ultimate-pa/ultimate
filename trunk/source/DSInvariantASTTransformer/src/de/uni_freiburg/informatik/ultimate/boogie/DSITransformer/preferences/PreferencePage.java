@@ -6,6 +6,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.DSITransformer.Activator;
 
 import org.apache.log4j.Logger;
 import org.eclipse.core.runtime.preferences.ConfigurationScope;
+import org.eclipse.core.runtime.preferences.InstanceScope;
 import org.eclipse.jface.preference.BooleanFieldEditor;
 import org.eclipse.jface.preference.FieldEditorPreferencePage;
 import org.eclipse.jface.preference.StringFieldEditor;
@@ -32,7 +33,7 @@ public class PreferencePage extends FieldEditorPreferencePage implements
 
 	public PreferencePage() {
 		super(GRID);
-		preferences = new ScopedPreferenceStore(new ConfigurationScope(),
+		preferences = new ScopedPreferenceStore(InstanceScope.INSTANCE,
 				Activator.s_PLUGIN_ID);
 		setPreferenceStore(preferences);
 

@@ -3,6 +3,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.output.jungvisualization.pre
 import de.uni_freiburg.informatik.ultimate.plugins.output.jungvisualization.Activator;
 
 import org.eclipse.core.runtime.preferences.ConfigurationScope;
+import org.eclipse.core.runtime.preferences.InstanceScope;
 import org.eclipse.swt.graphics.RGB;
 import org.eclipse.ui.preferences.ScopedPreferenceStore;
 
@@ -14,7 +15,7 @@ import org.eclipse.ui.preferences.ScopedPreferenceStore;
 public class PreferenceValues {
 	
 	public static ScopedPreferenceStore Preference = new ScopedPreferenceStore(
-			new ConfigurationScope(), Activator.PLUGIN_ID);
+			InstanceScope.INSTANCE, Activator.PLUGIN_ID);
 	
     //NAMES
 	public static final String NAME_PATH = "pathPreference";

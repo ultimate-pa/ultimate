@@ -4,6 +4,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.automatascriptinte
 
 import org.eclipse.core.runtime.Plugin;
 import org.eclipse.core.runtime.preferences.ConfigurationScope;
+import org.eclipse.core.runtime.preferences.InstanceScope;
 import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.ui.preferences.ScopedPreferenceStore;
 import org.osgi.framework.BundleContext;
@@ -38,7 +39,7 @@ public class Activator extends Plugin {
 	public void start(BundleContext context) throws Exception {
 		super.start(context);
 		m_Plugin = this;
-		preferences = new ScopedPreferenceStore(new ConfigurationScope(),Activator.s_PLUGIN_ID);
+		preferences = new ScopedPreferenceStore(InstanceScope.INSTANCE,Activator.s_PLUGIN_ID);
 	}
 
 	/*

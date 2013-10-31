@@ -1,8 +1,10 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences;
 
 import java.io.IOException;
+
 import org.apache.log4j.Logger;
 import org.eclipse.core.runtime.preferences.ConfigurationScope;
+import org.eclipse.core.runtime.preferences.InstanceScope;
 import org.eclipse.jface.preference.BooleanFieldEditor;
 import org.eclipse.jface.preference.ComboFieldEditor;
 import org.eclipse.jface.preference.DirectoryFieldEditor;
@@ -11,6 +13,7 @@ import org.eclipse.jface.preference.IntegerFieldEditor;
 import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.IWorkbenchPreferencePage;
 import org.eclipse.ui.preferences.ScopedPreferenceStore;
+
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.PreferenceValues.INTERPOLATION;
 
@@ -25,7 +28,7 @@ public class PreferencePage extends FieldEditorPreferencePage
 	public static final Logger logger =  Logger.getLogger(PreferencePage.class);
 	
 	
-	private static final ScopedPreferenceStore preferences = new ScopedPreferenceStore(new ConfigurationScope(),Activator.PLUGIN_ID);
+	private static final ScopedPreferenceStore preferences = new ScopedPreferenceStore(InstanceScope.INSTANCE,Activator.PLUGIN_ID);
 
 	public PreferencePage(){
 		super(GRID);

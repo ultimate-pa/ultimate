@@ -9,6 +9,8 @@ import java.util.Date;
 import org.apache.log4j.Logger;
 import org.eclipse.core.runtime.preferences.ConfigurationScope;
 import org.eclipse.core.runtime.preferences.IEclipsePreferences;
+import org.eclipse.core.runtime.preferences.IScopeContext;
+import org.eclipse.core.runtime.preferences.InstanceScope;
 
 import de.uni_freiburg.informatik.ultimate.automata.AtsDefinitionPrinter.Labeling;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
@@ -300,7 +302,7 @@ public class ResultChecker<LETTER,STATE> {
     }
     
     public static void writeToFileIfPreferred(String filenamePrefix, String message, IAutomaton... automata) {
-		ConfigurationScope scope = new ConfigurationScope();
+		IScopeContext scope = InstanceScope.INSTANCE;
 		IEclipsePreferences prefs = scope.getNode(Activator.PLUGIN_ID);
 		boolean writeToFile = prefs.getBoolean(PreferenceConstants.Name_Write, PreferenceConstants.Default_Write);
 		if (writeToFile) {

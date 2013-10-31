@@ -12,13 +12,14 @@ import java.awt.geom.RoundRectangle2D;
 import de.uni_freiburg.informatik.ultimate.model.structure.VisualizationEdge;
 import de.uni_freiburg.informatik.ultimate.model.structure.VisualizationNode;
 import de.uni_freiburg.informatik.ultimate.plugins.output.jungvisualization.Activator;
-
 import de.uni_freiburg.informatik.ultimate.plugins.output.jungvisualization.preferences.PreferenceValues;
 
 import org.apache.commons.collections15.Transformer;
 import org.apache.commons.collections15.functors.ConstantTransformer;
 import org.eclipse.core.runtime.preferences.ConfigurationScope;
 import org.eclipse.core.runtime.preferences.IEclipsePreferences;
+import org.eclipse.core.runtime.preferences.IScopeContext;
+import org.eclipse.core.runtime.preferences.InstanceScope;
 import org.eclipse.jface.preference.PreferenceConverter;
 import org.eclipse.swt.graphics.RGB;
 import org.eclipse.ui.preferences.ScopedPreferenceStore;
@@ -77,7 +78,7 @@ public class GraphProperties {
 	@SuppressWarnings("unchecked")
 	public void setGraphProperties(VisualizationViewer<VisualizationNode, VisualizationEdge> vv,
 			Graph<VisualizationNode, VisualizationEdge> graph, VisualizationNode rootNode) {
-		ConfigurationScope scope = new ConfigurationScope();
+		IScopeContext scope = InstanceScope.INSTANCE;
 		IEclipsePreferences prefs = scope.getNode(Activator.PLUGIN_ID);
 		ScopedPreferenceStore store = PreferenceValues.Preference;
 		final Font font = vv.getFont();
