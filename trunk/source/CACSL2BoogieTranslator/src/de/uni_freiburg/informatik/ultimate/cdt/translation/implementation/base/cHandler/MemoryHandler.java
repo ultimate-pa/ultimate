@@ -483,12 +483,11 @@ public class MemoryHandler {
      *            the location for the new nodes.
      * @return declaration and implementation of procedure <code>~free</code>
      */
-    private static ArrayList<Declaration> declareFree(final ILocation tuLoc) {
+    private ArrayList<Declaration> declareFree(final ILocation tuLoc) {
         InferredType intIT = new InferredType(Type.Integer);
         InferredType boolIT = new InferredType(Type.Boolean);
         ArrayList<Declaration> decl = new ArrayList<Declaration>();
         // procedure ~free(~addr:$Pointer$) returns();
-        // requires ~addr!offset = 0;
         // requires #valid[~addr!base];
         // ensures #valid = old(valid)[~addr!base := false];
         // modifies #valid;
@@ -501,24 +500,36 @@ public class MemoryHandler {
         Expression addrBase = new StructAccessExpression(tuLoc, intIT, addr,
                 SFO.POINTER_BASE);
         Expression[] idcFree = new Expression[] { addrBase };
-        Specification[] specFree = new Specification[] {
-                new RequiresSpecification(tuLoc, false, new BinaryExpression(
-                        tuLoc, Operator.COMPEQ, addrOffset, nr0)),
-                new RequiresSpecification(
-                        tuLoc,
-                        false,
-                        new ArrayAccessExpression(tuLoc, boolIT, valid, idcFree)),
-                new EnsuresSpecification(tuLoc, false, new BinaryExpression(
-                        tuLoc, Operator.COMPEQ, valid,
-                        new ArrayStoreExpression(tuLoc, new UnaryExpression(
-                                tuLoc, UnaryExpression.Operator.OLD, valid),
-                                idcFree, bLFalse))),
-                new ModifiesSpecification(tuLoc, false,
-                        new VariableLHS[] { new VariableLHS(tuLoc, SFO.VALID) }) };
+        
+        ArrayList<Specification> specFree = new ArrayList<Specification>();
+        
+        if (m_PointerValidity == ASSUME || m_PointerValidity == CHECKandASSUME) {
+        	Check check = new Check(Spec.MEMORY_FREE);
+        	boolean free = (m_PointerValidity == ASSUME);
+        	RequiresSpecification offsetZero = new RequiresSpecification(
+        			tuLoc, free, new BinaryExpression(tuLoc, Operator.COMPEQ, 
+        					addrOffset, nr0));
+            check.addToNodeAnnot(offsetZero);
+            specFree.add(offsetZero);
+            RequiresSpecification baseValid = new RequiresSpecification(
+                    tuLoc,
+                    free,
+                    new ArrayAccessExpression(tuLoc, boolIT, valid, idcFree));
+            check.addToNodeAnnot(baseValid);
+            specFree.add(baseValid);
+            specFree.add(new EnsuresSpecification(tuLoc, false, new BinaryExpression(
+                    tuLoc, Operator.COMPEQ, valid,
+                    new ArrayStoreExpression(tuLoc, new UnaryExpression(
+                            tuLoc, UnaryExpression.Operator.OLD, valid),
+                            idcFree, bLFalse))));
+            specFree.add(new ModifiesSpecification(tuLoc, false,
+                    new VariableLHS[] { new VariableLHS(tuLoc, SFO.VALID) }));
+        }
         decl.add(new Procedure(tuLoc, new Attribute[0], SFO.FREE,
                 new String[0], new VarList[] { new VarList(tuLoc,
                         new String[] { ADDR }, POINTER_TYPE) }, new VarList[0],
-                specFree, null));
+                specFree.toArray(new Specification[0]), null));
+        
         if (m_AddImplementation) {
         	// procedure ~free(~addr:$Pointer$) returns() {
         	// #valid[~addr!base] := false;
