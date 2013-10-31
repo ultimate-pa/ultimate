@@ -3,6 +3,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c;
 
+import org.eclipse.cdt.core.dom.ast.IASTElaboratedTypeSpecifier;
+import org.eclipse.cdt.core.dom.ast.IASTName;
 import org.eclipse.cdt.core.dom.ast.IASTNamedTypeSpecifier;
 
 /**
@@ -27,6 +29,12 @@ public class CNamed extends CType {
         super(decl);
         this.mappedType = mappedType;
     }
+    
+    
+    public CNamed(IASTElaboratedTypeSpecifier decl, CType mappedType) {
+    	super(decl);
+    	this.mappedType = mappedType;
+    }
 
     /**
      * Getter for the named declaration's name.
@@ -34,8 +42,16 @@ public class CNamed extends CType {
      * @return the named declaration's name.
      */
     public String getName() {
-        IASTNamedTypeSpecifier nts = (IASTNamedTypeSpecifier) super.cDeclSpec;
-        return nts.getName().getRawSignature();
+    	IASTName name;
+		if (super.cDeclSpec instanceof IASTNamedTypeSpecifier) {
+    		name = ((IASTNamedTypeSpecifier) super.cDeclSpec).getName();
+    		
+    	} else if (super.cDeclSpec instanceof IASTElaboratedTypeSpecifier) {
+    		name = ((IASTNamedTypeSpecifier) super.cDeclSpec).getName();
+    	} else {
+    		throw new AssertionError("illegal decl");
+    	}
+        return name.getRawSignature();
     }
 
     /**
