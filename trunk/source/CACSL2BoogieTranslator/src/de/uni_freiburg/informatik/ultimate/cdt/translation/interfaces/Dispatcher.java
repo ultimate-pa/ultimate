@@ -13,6 +13,7 @@ import org.eclipse.cdt.core.dom.ast.IASTPreprocessorStatement;
 import org.eclipse.cdt.core.dom.ast.IType;
 import org.eclipse.core.runtime.preferences.ConfigurationScope;
 import org.eclipse.core.runtime.preferences.IEclipsePreferences;
+import org.eclipse.core.runtime.preferences.InstanceScope;
 
 import de.uni_freiburg.informatik.ultimate.cdt.decorator.DecoratorNode;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CACSLLocation;
@@ -282,7 +283,7 @@ public abstract class Dispatcher {
      * @return the checked method's name.
      */
     public String getCheckedMethod() {
-        IEclipsePreferences prefs = ConfigurationScope.INSTANCE
+        IEclipsePreferences prefs = InstanceScope.INSTANCE
                 .getNode(Activator.s_PLUGIN_ID);
         String checkMethod = SFO.EMPTY;
         try {

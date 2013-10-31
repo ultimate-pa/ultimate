@@ -15,6 +15,7 @@ import org.eclipse.equinox.app.IApplication;
 import de.uni_freiburg.informatik.ultimate.core.api.PreludeProvider;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.Toolchain;
+import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.IController;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.ICore;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.ISource;
@@ -268,6 +269,18 @@ public class InteractiveConsoleController implements IController {
 	public void displayToolchainResultProgramUnknown(String description) {
 		// TODO Auto-generated method stub
 		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public void displayException(String description, Exception ex) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public UltimatePreferenceInitializer getPreferences() {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 	

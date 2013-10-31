@@ -10,6 +10,7 @@ import org.eclipse.core.runtime.preferences.IScopeContext;
 import de.uni_freiburg.informatik.ultimate.access.IObserver;
 import de.uni_freiburg.informatik.ultimate.cookiefy.Activator;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
+import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.IGenerator;
 import de.uni_freiburg.informatik.ultimate.model.GraphType;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
@@ -110,6 +111,12 @@ public class CookiefyPlugin implements IGenerator {
 	@Override
 	public String getPluginID() {
 		return s_PLUGIN_ID;
+	}
+
+	@Override
+	public UltimatePreferenceInitializer getPreferences() {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 }

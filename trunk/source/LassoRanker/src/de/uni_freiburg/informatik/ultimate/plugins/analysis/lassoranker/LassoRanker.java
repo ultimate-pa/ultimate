@@ -4,6 +4,7 @@ import java.util.Collections;
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.access.IObserver;
+import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.IAnalysis;
 import de.uni_freiburg.informatik.ultimate.model.GraphType;
 import de.uni_freiburg.informatik.ultimate.model.MarkedTrace;
@@ -106,6 +107,12 @@ public class LassoRanker implements IAnalysis {
 	@Override
 	public IEclipsePreferences[] getPreferences(IScopeContext cs,
 			IScopeContext is) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public UltimatePreferenceInitializer getPreferences() {
 		// TODO Auto-generated method stub
 		return null;
 	}

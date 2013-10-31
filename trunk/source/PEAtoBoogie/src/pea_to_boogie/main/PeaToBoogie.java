@@ -12,8 +12,8 @@ import pea_to_boogie.Activator;
 import pea_to_boogie.translator.Translator;
 import req_to_pea.ReqToPEA;
 import srParse.srParsePattern;
-
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
+import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.ISource;
 import de.uni_freiburg.informatik.ultimate.model.GraphType;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
@@ -102,6 +102,12 @@ public class PeaToBoogie implements ISource {
 	public void setPreludeFile(File prelude) {
 		// TODO Auto-generated method stub
 
+	}
+
+	@Override
+	public UltimatePreferenceInitializer getPreferences() {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 }

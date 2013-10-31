@@ -66,6 +66,13 @@ public interface IController extends IRCPPlugin {
 	 */
 	void displayToolchainResultProgramUnknown(String description);
 	
+	/**
+	 * Is called by the core if the controller should display an exception to the user 
+	 * 
+	 * @param description
+	 * @param ex
+	 */
+	void displayException(String description, Exception ex);
 	
 
 }

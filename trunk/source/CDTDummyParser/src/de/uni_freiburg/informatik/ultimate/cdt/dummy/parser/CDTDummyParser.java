@@ -11,6 +11,7 @@ import org.apache.log4j.Logger;
 import org.eclipse.cdt.core.dom.ast.IASTTranslationUnit;
 
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
+import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.ISource;
 import de.uni_freiburg.informatik.ultimate.model.GraphType;
 import de.uni_freiburg.informatik.ultimate.model.INode;
@@ -215,5 +216,11 @@ public class CDTDummyParser implements ISource {
 	@Override
 	public void setPreludeFile(File prelude) {
 		// not required
+	}
+
+	@Override
+	public UltimatePreferenceInitializer getPreferences() {
+		// TODO Auto-generated method stub
+		return null;
 	}
 }

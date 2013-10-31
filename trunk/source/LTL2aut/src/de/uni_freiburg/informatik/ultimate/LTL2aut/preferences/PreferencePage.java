@@ -4,6 +4,7 @@ import java.io.IOException;
 
 import org.apache.log4j.Logger;
 import org.eclipse.core.runtime.preferences.ConfigurationScope;
+import org.eclipse.core.runtime.preferences.InstanceScope;
 import org.eclipse.jface.preference.DirectoryFieldEditor;
 import org.eclipse.jface.preference.FieldEditorPreferencePage;
 import org.eclipse.jface.preference.FileFieldEditor;
@@ -25,7 +26,7 @@ public class PreferencePage extends FieldEditorPreferencePage implements IWorkbe
 
 	public PreferencePage(){
 		super(GRID);
-		preferences = new ScopedPreferenceStore(ConfigurationScope.INSTANCE, Activator.PLUGIN_ID);
+		preferences = new ScopedPreferenceStore(InstanceScope.INSTANCE, Activator.PLUGIN_ID);
 		setPreferenceStore(preferences);
 	}
 	

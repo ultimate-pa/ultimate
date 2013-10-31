@@ -18,7 +18,6 @@ import javax.xml.validation.SchemaFactory;
 import org.eclipse.core.runtime.FileLocator;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.Platform;
-import org.eclipse.ui.internal.util.BundleUtility;
 import org.osgi.framework.Bundle;
 import org.xml.sax.SAXException;
 
@@ -54,6 +53,10 @@ public class Toolchain {
 	        this.m_Storage = new HashMap<String, IStorable>();
 	    }
 	    
+	    private boolean isReady(Bundle bundle){
+	    	return bundle != null && (bundle.getState() & (Bundle.RESOLVED | Bundle.STARTING | Bundle.ACTIVE | Bundle.STOPPING)) != 0;
+	    }
+	    
 	    /**
 	     * This constructor creates a toolchain from an XML file.
 	     * 
@@ -69,7 +72,8 @@ public class Toolchain {
 
 	    	// all this effort just for validating the input XML file...
 	    	Bundle bundle = Platform.getBundle(Activator.s_PLUGIN_ID);
-	        if (!BundleUtility.isReady(bundle)) {
+	    	
+	        if (!isReady(bundle)) {
 				System.err.println("Bundle not ready");
 			}
 

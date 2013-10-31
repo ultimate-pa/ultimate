@@ -17,6 +17,7 @@ import org.eclipse.core.runtime.preferences.IScopeContext;
 
 import de.uni_freiburg.informatik.ultimate.access.IObserver;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
+import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.IGenerator;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.ISource;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.ITool.QueryKeyword;
@@ -28,7 +29,7 @@ import de.uni_freiburg.informatik.ultimate.model.TokenMap;
 
 /**
  * This plugin implements the product algorithm described in the Masterthesis 
- *  "Automatische Generierungvon Büchi-Programmen".
+ *  "Automatische Generierungvon Bï¿½chi-Programmen".
  *  
  *  
  * @author Langenfeld
@@ -117,6 +118,12 @@ public class BuchiProgramProduct implements IGenerator {
 
 	@Override
 	public List<String> getDesiredToolID() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public UltimatePreferenceInitializer getPreferences() {
 		// TODO Auto-generated method stub
 		return null;
 	}

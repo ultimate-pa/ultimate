@@ -56,6 +56,24 @@
    </extension>
    
    <extension point="org.eclipse.ui.preferencePages">
+         <page
+            class="de.uni_freiburg.informatik.ultimate.gui.preferencepages.UltimatePreferencePage"
+            id="GeneratedUltimatePreferences"
+            name="Generated Ultimate Preferences"/>
+   
+    <page
+            category="GeneratedUltimatePreferences"
+            class="de.uni_freiburg.informatik.ultimate.gui.preferencepages.OutputPreferencePage"
+            id="OutputPlugins"
+            name="Output Plugins"/>
+      <page
+            category="GeneratedUltimatePreferences"
+            class="de.uni_freiburg.informatik.ultimate.gui.preferencepages.ToolsPreferencePage"
+            id="ToolPlugins"
+            name="Tool Plugins"/>            
+
+   
+   
       <page
             class="de.uni_freiburg.informatik.ultimate.gui.preferencepages.UltimatePreferencePage"
             id="de.uni_freiburg.informatik.ultimate.gui.preferencepages.UltimatePreferencePage"
@@ -103,7 +121,8 @@
             category="de.uni_freiburg.informatik.ultimate.gui.preferencepages.CorePreferencePage"
             class="de.uni_freiburg.informatik.ultimate.gui.preferencepages.LogFilePreferencePage"
             id="de.uni_freiburg.informatik.ultimate.gui.preferencepages.LogFilePreferencePage"
-            name="Log File" />      
+            name="Log File" />
+
    </extension>
    
 </plugin>

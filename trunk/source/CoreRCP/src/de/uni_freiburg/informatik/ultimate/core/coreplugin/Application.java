@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -26,22 +27,24 @@ import org.eclipse.core.runtime.jobs.JobChangeAdapter;
 import org.eclipse.core.runtime.preferences.ConfigurationScope;
 import org.eclipse.core.runtime.preferences.DefaultScope;
 import org.eclipse.core.runtime.preferences.IEclipsePreferences;
+import org.eclipse.core.runtime.preferences.IEclipsePreferences.IPreferenceChangeListener;
+import org.eclipse.core.runtime.preferences.IEclipsePreferences.PreferenceChangeEvent;
 import org.eclipse.core.runtime.preferences.IPreferencesService;
 import org.eclipse.core.runtime.preferences.IScopeContext;
 import org.eclipse.core.runtime.preferences.InstanceScope;
 import org.eclipse.equinox.app.IApplication;
 import org.eclipse.equinox.app.IApplicationContext;
-import org.eclipse.jface.util.IPropertyChangeListener;
-import org.eclipse.jface.util.PropertyChangeEvent;
-import org.eclipse.ui.preferences.ScopedPreferenceStore;
+import org.osgi.service.prefs.BackingStoreException;
 import org.xml.sax.SAXException;
 
 import de.uni_freiburg.informatik.ultimate.core.api.PreludeProvider;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
-import de.uni_freiburg.informatik.ultimate.core.coreplugin.preferences.constants.PreferenceConstants;
+import de.uni_freiburg.informatik.ultimate.core.coreplugin.preferences.CorePreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.PluginType;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.SubchainType;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.Toolchain;
+import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
 import de.uni_freiburg.informatik.ultimate.ep.ExtensionPoints;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.IAnalysis;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.IController;
@@ -66,7 +69,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.ResultNotifier;
  * 
  * @author Jakob, Dietsch, Bjoern Buchhold, Christian Simon
  */
-public class Application implements IApplication, ICore {
+public class Application implements IApplication, ICore, IRCPPlugin {
 
 	/**
 	 * In what mode is Ultimate supposed tu run? With a GUI? With an interactive
@@ -210,9 +213,9 @@ public class Application implements IApplication, ICore {
 			mLogger.info("Exiting Ultimate with returncode " + returnCode);
 
 			// before we quit Ultimate, do we have to clear the model store?
-			boolean store_mm = InstanceScope.INSTANCE.getNode(
-					Activator.s_PLUGIN_ID).getBoolean(
-					PreferenceConstants.PREFID_MM_DROP_MODELS, true);
+			boolean store_mm = new UltimatePreferenceStore(
+					Activator.s_PLUGIN_ID)
+					.getBoolean(CorePreferenceInitializer.LABEL_MM_DROP_MODELS);
 			if (store_mm) {
 				for (String s : this.mModelManager.getItemNames()) {
 					this.mModelManager.removeItem(s);
@@ -271,7 +274,7 @@ public class Application implements IApplication, ICore {
 		// before we quit Ultimate, do we have to clear the model store?
 		boolean store_mm = InstanceScope.INSTANCE
 				.getNode(Activator.s_PLUGIN_ID).getBoolean(
-						PreferenceConstants.PREFID_MM_DROP_MODELS, true);
+						CorePreferenceInitializer.LABEL_MM_DROP_MODELS, true);
 		if (store_mm) {
 			for (String s : this.mModelManager.getItemNames()) {
 				this.mModelManager.removeItem(s);
@@ -310,14 +313,15 @@ public class Application implements IApplication, ICore {
 		mLogger = UltimateServices.getInstance().getLogger(
 				Activator.s_PLUGIN_ID);
 
-		attachLogPreferenceChangeListenerToPlugin(Activator.s_PLUGIN_ID);
-
 		mLogger.info("Initializing application");
-
+		mLogger.debug("--------------------------------------------------------------------------------");
+		attachLogPreferenceChangeListenerToPlugin(Activator.s_PLUGIN_ID);
+		mLogger.debug("UltimateCore Default Settings");
+		logDefaultPreferences(Activator.s_PLUGIN_ID);
+		mLogger.debug("--------------------------------------------------------------------------------");
 		// get tmp directory, use JAVA tmp dir by default
-		String tmp_dir = InstanceScope.INSTANCE.getNode(Activator.s_PLUGIN_ID)
-				.get(PreferenceConstants.PREFID_MM_TMPDIRECTORY,
-						System.getProperty("java.io.tmpdir"));
+		String tmp_dir = new UltimatePreferenceStore(Activator.s_PLUGIN_ID)
+				.getString(CorePreferenceInitializer.LABEL_MM_TMPDIRECTORY);
 
 		mModelManager = new PersistenceAwareModelManager(tmp_dir);
 		mOutputPlugins = new ArrayList<IOutput>();
@@ -352,45 +356,78 @@ public class Application implements IApplication, ICore {
 
 	}
 
-	private void attachLogPreferenceChangeListenerToActivePlugins() {
+	/**
+	 * Attaches Listener to all preferences and all scopes of all plugins to
+	 * notify developers about changing preferences and prints loaded default
+	 * values for all plugins
+	 */
+	private void checkPreferencesForActivePlugins() {
 
+		mLogger.debug("--------------------------------------------------------------------------------");
+		mLogger.debug("Loaded default settings");
 		attachLogPreferenceChangeListenerToPlugin(mCurrentController
 				.getPluginID());
+		logDefaultPreferences(mCurrentController.getPluginID());
 
 		for (IRCPPlugin t : mOutputPlugins) {
 			attachLogPreferenceChangeListenerToPlugin(t.getPluginID());
+			logDefaultPreferences(t.getPluginID());
 		}
 		for (IRCPPlugin t : mSourcePlugins) {
 			attachLogPreferenceChangeListenerToPlugin(t.getPluginID());
+			logDefaultPreferences(t.getPluginID());
 		}
 		for (IRCPPlugin t : mGeneratorPlugins) {
 			attachLogPreferenceChangeListenerToPlugin(t.getPluginID());
+			logDefaultPreferences(t.getPluginID());
 		}
 
 		for (IRCPPlugin t : mAnalysisPlugins) {
 			attachLogPreferenceChangeListenerToPlugin(t.getPluginID());
+			logDefaultPreferences(t.getPluginID());
 		}
+		mLogger.debug("--------------------------------------------------------------------------------");
 
 	}
 
+	private void logDefaultPreferences(String pluginID) {
+		UltimatePreferenceStore ups = new UltimatePreferenceStore(pluginID);
+		try {
+			IEclipsePreferences defaults = ups.getDefaultEclipsePreferences();
+			for (String key : defaults.keys()) {
+				mLogger.debug("[" + pluginID + " (Default)] Preference \""
+						+ key + "\" = " + defaults.get(key, "NOT DEFINED"));
+			}
+		} catch (BackingStoreException e) {
+			mLogger.debug("An exception occurred during printing of default preferences for plugin "
+					+ pluginID + ":" + e.getMessage());
+		}
+	}
+
+	/**
+	 * Attaches Listener to all preferences and all scopes of all plugins to
+	 * notify developers about changing preferences
+	 * 
+	 * @param pluginId
+	 */
 	private void attachLogPreferenceChangeListenerToPlugin(String pluginId) {
-		// first, attach a listener to get informed whenever preferences change
-		ScopedPreferenceStore preferencesInstance = new ScopedPreferenceStore(
-				InstanceScope.INSTANCE, pluginId);
-		preferencesInstance
-				.addPropertyChangeListener(new LogPreferenceChangeListener(
+
+		IEclipsePreferences instancePrefs = InstanceScope.INSTANCE
+				.getNode(pluginId);
+		instancePrefs
+				.addPreferenceChangeListener(new LogPreferenceChangeListener(
 						"Instance", pluginId));
 
-		ScopedPreferenceStore preferencesConfiguration = new ScopedPreferenceStore(
-				ConfigurationScope.INSTANCE, pluginId);
-		preferencesConfiguration
-				.addPropertyChangeListener(new LogPreferenceChangeListener(
+		IEclipsePreferences configPrefs = ConfigurationScope.INSTANCE
+				.getNode(pluginId);
+		configPrefs
+				.addPreferenceChangeListener(new LogPreferenceChangeListener(
 						"Configuration", pluginId));
 
-		ScopedPreferenceStore preferencesDefault = new ScopedPreferenceStore(
-				DefaultScope.INSTANCE, pluginId);
-		preferencesDefault
-				.addPropertyChangeListener(new LogPreferenceChangeListener(
+		IEclipsePreferences defaultPrefs = DefaultScope.INSTANCE
+				.getNode(pluginId);
+		defaultPrefs
+				.addPreferenceChangeListener(new LogPreferenceChangeListener(
 						"Default", pluginId));
 	}
 
@@ -407,7 +444,7 @@ public class Application implements IApplication, ICore {
 
 		loadGeneratorPlugins(reg);
 		loadAnalysisPlugins(reg);
-		attachLogPreferenceChangeListenerToActivePlugins();
+		checkPreferencesForActivePlugins();
 		mLogger.info("Finished loading Plugins !");
 		mLogger.info("--------------------------------------------------------------------------------");
 	}
@@ -939,8 +976,8 @@ public class Application implements IApplication, ICore {
 
 		boolean showusableparser = ConfigurationScope.INSTANCE.getNode(
 				Activator.s_PLUGIN_ID).getBoolean(
-				PreferenceConstants.NAME_SHOWUSABLEPARSER,
-				PreferenceConstants.VALUE_SHOWUSABLEPARSER_DEFAULT);
+				CorePreferenceInitializer.LABEL_SHOWUSABLEPARSER,
+				CorePreferenceInitializer.VALUE_SHOWUSABLEPARSER_DEFAULT);
 
 		// if only parser can be used, choose it!
 		if (usableParsers.size() == 1 && !showusableparser) {
@@ -1074,12 +1111,17 @@ public class Application implements IApplication, ICore {
 	}
 
 	private void loadPreferencesInternal(String filename) {
+
 		if (filename != null && !filename.isEmpty()) {
+			mLogger.info("Loading settings from " + filename);
 			try {
 				FileInputStream fis = new FileInputStream(filename);
-				if (!Platform.getPreferencesService().importPreferences(fis)
-						.isOK())
+
+				if (!UltimatePreferenceStore.importPreferences(fis).isOK()) {
 					mLogger.warn("Failed to load preferences");
+				} else {
+					mLogger.debug("Loading preferences was successful");
+				}
 			} catch (Exception e) {
 				mLogger.warn("Could not load preferences", e);
 			}
@@ -1092,32 +1134,55 @@ public class Application implements IApplication, ICore {
 		if (filename != null && !filename.isEmpty() && !mTools.isEmpty()) {
 			try {
 				FileOutputStream fis = new FileOutputStream(filename);
-				IPreferencesService ps = Platform.getPreferencesService();
-				IScopeContext cs = ConfigurationScope.INSTANCE;
-				IScopeContext is = InstanceScope.INSTANCE;
-				ps.exportPreferences(cs.getNode(Activator.s_PLUGIN_ID), fis,
-						null);
-				ps.exportPreferences(is.getNode(Activator.s_PLUGIN_ID), fis,
-						null);
 
-				for (ITool tool : mTools) {
-
-					mLogger.debug("Trying to save preferences for tool "
-							+ tool.getName());
-					IEclipsePreferences[] prefs = tool.getPreferences(cs, is);
-					if (prefs != null) {
-						for (IEclipsePreferences p : prefs) {
-							ps.exportPreferences(p, fis, null);
-						}
-						mLogger.debug("Saving preferences succeeded");
-					}
+				for (IRCPPlugin plugin : getPlugins()) {
+					new UltimatePreferenceStore(plugin.getPluginID())
+							.exportPreferences(fis);
 				}
+
 				fis.flush();
 				fis.close();
-			} catch (Exception e) {
-				mLogger.warn("Could not load preferences", e);
+			} catch (FileNotFoundException e) {
+				mLogger.warn("Saving preferences failed with exception: ", e);
+			} catch (IOException e) {
+				mLogger.warn("Saving preferences failed with exception: ", e);
+			} catch (CoreException e) {
+				mLogger.warn("Saving preferences failed with exception: ", e);
 			}
 		}
+
+		// old variant:
+		// String filename = mCurrentController.getSavePrefName();
+		// if (filename != null && !filename.isEmpty() && !mTools.isEmpty()) {
+		// String toolName = "";
+		// try {
+		// FileOutputStream fis = new FileOutputStream(filename);
+		// IPreferencesService ps = Platform.getPreferencesService();
+		// IScopeContext cs = ConfigurationScope.INSTANCE;
+		// IScopeContext is = InstanceScope.INSTANCE;
+		// ps.exportPreferences(cs.getNode(Activator.s_PLUGIN_ID), fis,
+		// null);
+		// ps.exportPreferences(is.getNode(Activator.s_PLUGIN_ID), fis,
+		// null);
+		//
+		// for (ITool tool : mTools) {
+		// toolName = tool.getName();
+		// mLogger.debug("Saving preferences for tool " + toolName
+		// + " ...");
+		// IEclipsePreferences[] prefs = tool.getPreferences(cs, is);
+		// if (prefs != null) {
+		// for (IEclipsePreferences p : prefs) {
+		// ps.exportPreferences(p, fis, null);
+		// }
+		// }
+		// }
+		// fis.flush();
+		// fis.close();
+		// } catch (Exception e) {
+		// mLogger.warn("Saving preferences failed at " + toolName
+		// + " with exception: ", e);
+		// }
+		// }
 	}
 
 	/**
@@ -1206,25 +1271,72 @@ public class Application implements IApplication, ICore {
 		mToolchainWalker.requestCancel();
 	}
 
-	private class LogPreferenceChangeListener implements
-			IPropertyChangeListener {
+	public class LogPreferenceChangeListener implements
+			IPreferenceChangeListener {
 
 		private String mScope;
 		private String mPluginID;
+		private UltimatePreferenceStore mDefaults;
 
-		private LogPreferenceChangeListener(String scope, String pluginID) {
+		public LogPreferenceChangeListener(String scope, String pluginID) {
 			mScope = scope;
 			mPluginID = pluginID;
+			mDefaults = new UltimatePreferenceStore(Activator.s_PLUGIN_ID);
 		}
 
 		@Override
-		public void propertyChange(PropertyChangeEvent event) {
-			
+		public void preferenceChange(PreferenceChangeEvent event) {
+
+			String oldValue;
+			String newValue;
+			if (event.getOldValue() == null) {
+				oldValue = mDefaults.getString(event.getKey());
+			} else {
+				oldValue = event.getOldValue().toString();
+			}
+
+			if (event.getNewValue() == null) {
+				newValue = mDefaults.getString(event.getKey());
+			} else {
+				newValue = event.getNewValue().toString();
+			}
+
 			mLogger.debug("[" + mPluginID + " (" + mScope + ")] Preference \""
-					+ event.getProperty() + "\" changed: "
-					+ event.getOldValue() + " -> " + event.getNewValue());
+					+ event.getKey() + "\" changed: " + oldValue + " -> "
+					+ newValue);
 		}
 
+	}
+
+	@Override
+	public IRCPPlugin[] getPlugins() {
+		ArrayList<IRCPPlugin> rtr = new ArrayList<IRCPPlugin>();
+		rtr.addAll(mTools);
+		rtr.addAll(mSourcePlugins);
+		rtr.add(this);
+		rtr.add(mCurrentController);
+		return rtr.toArray(new IRCPPlugin[rtr.size()]);
+	}
+
+	@Override
+	public int init(Object params) {
+		throw new UnsupportedOperationException(
+				"The core does not initialize itself");
+	}
+
+	@Override
+	public String getName() {
+		return Activator.s_PLUGIN_NAME;
+	}
+
+	@Override
+	public String getPluginID() {
+		return Activator.s_PLUGIN_ID;
+	}
+
+	@Override
+	public UltimatePreferenceInitializer getPreferences() {
+		return new CorePreferenceInitializer();
 	}
 
 }

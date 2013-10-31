@@ -8,6 +8,7 @@ import java.io.IOException;
 import org.apache.log4j.Logger;
 import org.eclipse.core.runtime.preferences.ConfigurationScope;
 import org.eclipse.core.runtime.preferences.IEclipsePreferences;
+import org.eclipse.core.runtime.preferences.InstanceScope;
 import org.eclipse.jface.preference.BooleanFieldEditor;
 import org.eclipse.jface.preference.DirectoryFieldEditor;
 import org.eclipse.jface.preference.FieldEditorPreferencePage;
@@ -64,7 +65,7 @@ public class PreferencePage extends FieldEditorPreferencePage implements
 	 */
 	public PreferencePage() {
 		super(GRID);
-		preferences = new ScopedPreferenceStore(ConfigurationScope.INSTANCE,
+		preferences = new ScopedPreferenceStore(InstanceScope.INSTANCE,
 				Activator.s_PLUGIN_ID);
 		setPreferenceStore(preferences);
 	}
@@ -161,22 +162,22 @@ public class PreferencePage extends FieldEditorPreferencePage implements
 	}
 
 	public static String getDumpPath() {
-		return ConfigurationScope.INSTANCE.getNode(Activator.s_PLUGIN_ID).get(
+		return InstanceScope.INSTANCE.getNode(Activator.s_PLUGIN_ID).get(
 				DUMP_PATH_NAME, DUMP_PATH_DEFAULT);
 	}
 
 	public static String getFilename() {
-		return ConfigurationScope.INSTANCE.getNode(Activator.s_PLUGIN_ID).get(
+		return InstanceScope.INSTANCE.getNode(Activator.s_PLUGIN_ID).get(
 				FILE_NAME_NAME, FILE_NAME_DEFAULT);
 	}
 
 	public static boolean getUseUniqueFilename() {
-		return ConfigurationScope.INSTANCE.getNode(Activator.s_PLUGIN_ID)
+		return InstanceScope.INSTANCE.getNode(Activator.s_PLUGIN_ID)
 				.getBoolean(UNIQUE_NAME_NAME, UNIQUE_NAME_DEFAULT);
 	}
 
 	public static boolean getSaveInSourceDirectory() {
-		return ConfigurationScope.INSTANCE.getNode(Activator.s_PLUGIN_ID)
+		return InstanceScope.INSTANCE.getNode(Activator.s_PLUGIN_ID)
 				.getBoolean(SAVE_IN_SOURCE_DIRECTORY_NAME,
 						SAVE_IN_SOURCE_DIRECTORY_DEFAULT);
 	}

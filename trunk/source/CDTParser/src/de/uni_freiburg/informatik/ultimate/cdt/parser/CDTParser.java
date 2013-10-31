@@ -29,9 +29,11 @@ import org.eclipse.cdt.internal.core.indexer.StandaloneIndexerFallbackReaderFact
 import org.eclipse.cdt.internal.core.parser.scanner.CPreprocessor;
 import org.eclipse.core.runtime.preferences.ConfigurationScope;
 import org.eclipse.core.runtime.preferences.IEclipsePreferences;
+import org.eclipse.core.runtime.preferences.InstanceScope;
 
 import de.uni_freiburg.informatik.ultimate.cdt.parser.preferences.PreferencePage;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
+import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.ISource;
 import de.uni_freiburg.informatik.ultimate.model.GraphType;
 import de.uni_freiburg.informatik.ultimate.model.INode;
@@ -164,7 +166,7 @@ public class CDTParser implements ISource {
 		FileContent fContent = FileContent.createForExternalFileLocation(file
 				.getAbsolutePath());
 
-		IEclipsePreferences prefs = ConfigurationScope.INSTANCE
+		IEclipsePreferences prefs = InstanceScope.INSTANCE
 				.getNode(Activator.PLUGIN_ID);
 		String path = prefs.get(PreferencePage.INCLUDE_PATHS, "");
 		String[] includePaths;
@@ -290,5 +292,11 @@ public class CDTParser implements ISource {
 	@Override
 	public void setPreludeFile(File prelude) {
 		// not required
+	}
+
+	@Override
+	public UltimatePreferenceInitializer getPreferences() {
+		// TODO Auto-generated method stub
+		return null;
 	}
 }

@@ -10,6 +10,7 @@ import org.eclipse.cdt.core.dom.ast.IASTTranslationUnit;
 import org.eclipse.cdt.core.parser.util.ASTPrinter;
 import org.eclipse.core.runtime.preferences.ConfigurationScope;
 import org.eclipse.core.runtime.preferences.IEclipsePreferences;
+import org.eclipse.core.runtime.preferences.InstanceScope;
 
 import de.uni_freiburg.informatik.ultimate.access.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.access.WalkerOptions;
@@ -79,7 +80,7 @@ public class CACSL2BoogieTranslatorObserver implements IUnmanagedObserver {
 
         // translate to Boogie
         Dispatcher main;
-        IEclipsePreferences prefs = ConfigurationScope.INSTANCE
+        IEclipsePreferences prefs = InstanceScope.INSTANCE
                 .getNode(Activator.s_PLUGIN_ID);
         TranslationMode mode = TranslationMode.BASE;
         try {

@@ -8,7 +8,8 @@ import org.eclipse.swt.widgets.List;
 import org.eclipse.ui.IWorkbenchPreferencePage;
 import org.eclipse.ui.preferences.ScopedPreferenceStore;
 
-import de.uni_freiburg.informatik.ultimate.core.coreplugin.preferences.constants.PreferenceConstants;
+import de.uni_freiburg.informatik.ultimate.core.coreplugin.preferences.CorePreferenceInitializer;
+
 
 public class LoggingToolsPreferencePage extends AbstractDetailsPreferencePage
 		implements IWorkbenchPreferencePage {
@@ -18,7 +19,7 @@ public class LoggingToolsPreferencePage extends AbstractDetailsPreferencePage
 
 	public LoggingToolsPreferencePage() {
 		mPreferenceStore = new ScopedPreferenceStore(InstanceScope.INSTANCE,
-				PreferenceConstants.PLUGINID);
+				CorePreferenceInitializer.PLUGINID);
 	}
 	
 	/*
@@ -43,7 +44,7 @@ public class LoggingToolsPreferencePage extends AbstractDetailsPreferencePage
 	@Override
 	protected String[] getDefaults() {
 		return convert(mPreferenceStore
-				.getDefaultString(PreferenceConstants.PREFID_TOOLDETAILS));
+				.getDefaultString(CorePreferenceInitializer.PREFID_TOOLDETAILS));
 	}
 
 	/*
@@ -55,7 +56,7 @@ public class LoggingToolsPreferencePage extends AbstractDetailsPreferencePage
 	 */
 	@Override
 	protected String getInvalidEntryMessage() {
-		return PreferenceConstants.INVALID_TOOL_ENTRY;
+		return CorePreferenceInitializer.INVALID_TOOL_ENTRY;
 	}
 
 	/*
@@ -68,7 +69,7 @@ public class LoggingToolsPreferencePage extends AbstractDetailsPreferencePage
 	@Override
 	protected String[] getPreferenceAsStringArray() {
 		return convert(mPreferenceStore
-				.getString(PreferenceConstants.PREFID_TOOLDETAILS));
+				.getString(CorePreferenceInitializer.PREFID_TOOLDETAILS));
 	}
 
 	/*
@@ -83,9 +84,9 @@ public class LoggingToolsPreferencePage extends AbstractDetailsPreferencePage
 		StringBuffer buffer = new StringBuffer();
 		for (int i = 0; i < items.length; i++) {
 			buffer.append(items[i]);
-			buffer.append(PreferenceConstants.VALUE_DELIMITER_LOGGING_PREF);
+			buffer.append(CorePreferenceInitializer.VALUE_DELIMITER_LOGGING_PREF);
 		}
-		mPreferenceStore.setValue(PreferenceConstants.PREFID_TOOLDETAILS, buffer
+		mPreferenceStore.setValue(CorePreferenceInitializer.PREFID_TOOLDETAILS, buffer
 				.toString());
 	}
 
@@ -94,7 +95,7 @@ public class LoggingToolsPreferencePage extends AbstractDetailsPreferencePage
 	 */
 	@Override
 	protected String getInfoContent(List detailList) {
-		return PreferenceConstants.EMPTY_STRING;
+		return CorePreferenceInitializer.EMPTY_STRING;
 	}
 
 	@Override
@@ -103,12 +104,12 @@ public class LoggingToolsPreferencePage extends AbstractDetailsPreferencePage
 	}
 	
 	/**
-	 * Converts IPreferenceConstants.VALUE_DELIMITER_LOGGING_PREF delimited
+	 * Converts ICorePreferenceStore.VALUE_DELIMITER_LOGGING_PREF delimited
 	 * String to a String array.
 	 */
 	private static String[] convert(String preferenceValue) {
 		StringTokenizer tokenizer = new StringTokenizer(preferenceValue,
-				PreferenceConstants.VALUE_DELIMITER_LOGGING_PREF);
+				CorePreferenceInitializer.VALUE_DELIMITER_LOGGING_PREF);
 		int tokenCount = tokenizer.countTokens();
 		String[] elements = new String[tokenCount];
 		for (int i = 0; i < tokenCount; i++) {

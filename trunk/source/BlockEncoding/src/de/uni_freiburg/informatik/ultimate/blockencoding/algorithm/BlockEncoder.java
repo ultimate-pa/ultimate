@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import org.apache.log4j.Logger;
 import org.eclipse.core.runtime.preferences.ConfigurationScope;
 import org.eclipse.core.runtime.preferences.IEclipsePreferences;
+import org.eclipse.core.runtime.preferences.InstanceScope;
 
 import de.uni_freiburg.informatik.ultimate.blockencoding.model.BlockEncodingAnnotation;
 import de.uni_freiburg.informatik.ultimate.blockencoding.model.MinimizedNode;
@@ -67,7 +68,7 @@ public class BlockEncoder {
 		// initialize the statistics
 		EncodingStatistics.init();
 		// We need to know, which rating strategy should be chosen
-		IEclipsePreferences prefs = ConfigurationScope.INSTANCE
+		IEclipsePreferences prefs = InstanceScope.INSTANCE
 				.getNode(Activator.s_PLUGIN_ID);
 		RatingFactory.getInstance().setRatingStrategy(
 				prefs.get(PreferencePage.NAME_STRATEGY, "0"));

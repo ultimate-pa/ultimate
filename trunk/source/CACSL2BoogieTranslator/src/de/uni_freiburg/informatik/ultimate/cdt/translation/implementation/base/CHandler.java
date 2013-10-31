@@ -62,6 +62,7 @@ import org.eclipse.cdt.core.dom.ast.IASTWhileStatement;
 import org.eclipse.cdt.internal.core.dom.parser.c.CASTDesignatedInitializer;
 import org.eclipse.core.runtime.preferences.ConfigurationScope;
 import org.eclipse.core.runtime.preferences.IEclipsePreferences;
+import org.eclipse.core.runtime.preferences.InstanceScope;
 
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CACSLLocation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.SymbolTable;
@@ -239,7 +240,7 @@ public class CHandler implements ICHandler {
 		this.functionHandler = new FunctionHandler();
 		this.postProcessor = new PostProcessor();
 		this.structHandler = new StructHandler();
-		IEclipsePreferences prefs = ConfigurationScope.INSTANCE
+		IEclipsePreferences prefs = InstanceScope.INSTANCE
 				.getNode(Activator.s_PLUGIN_ID);
 		boolean checkPointerValidity = Boolean.valueOf(
 				prefs.get(PreferencePage.NAME_CHECK_POINTER_VALIDITY, "false"));

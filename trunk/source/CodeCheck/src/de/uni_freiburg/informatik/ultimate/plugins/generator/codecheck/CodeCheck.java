@@ -12,6 +12,7 @@ import de.uni_freiburg.informatik.ultimate.model.TokenMap;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.preferences.PreferenceValues.EdgeCheckOptimization;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.preferences.PreferenceValues.PredicateUnification;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
+import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceInitializer;
 
 import org.apache.log4j.Logger;
 import org.eclipse.core.runtime.preferences.IEclipsePreferences;
@@ -140,5 +141,11 @@ public class CodeCheck implements IGenerator {
 	public IEclipsePreferences[] getPreferences(IScopeContext cs,
 			IScopeContext is) {
 		return new IEclipsePreferences[] {cs.getNode(s_PLUGIN_ID)};
+	}
+
+	@Override
+	public UltimatePreferenceInitializer getPreferences() {
+		// TODO Auto-generated method stub
+		return null;
 	}
 }

@@ -1,5 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.ep.interfaces;
 
+import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceInitializer;
+
 /**
  * @author partial
  *
@@ -22,4 +24,9 @@ public interface IRCPPlugin {
 	 * @return String containing Plugin ID
 	 */
 	String getPluginID();
+	
+	/**
+	 * 
+	 */
+	UltimatePreferenceInitializer getPreferences();
 }

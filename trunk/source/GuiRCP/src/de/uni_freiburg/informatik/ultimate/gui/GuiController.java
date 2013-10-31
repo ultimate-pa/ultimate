@@ -4,6 +4,7 @@ import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 
 import javax.xml.bind.JAXBException;
@@ -19,8 +20,11 @@ import org.xml.sax.SAXException;
 
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.Toolchain;
+import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceItem;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.IController;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.ICore;
+import de.uni_freiburg.informatik.ultimate.ep.interfaces.IRCPPlugin;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.ISource;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.ITool;
 import de.uni_freiburg.informatik.ultimate.gui.advisors.ApplicationWorkbenchAdvisor;
@@ -38,7 +42,9 @@ public class GuiController implements IController {
 
 	public static final String sPLUGINID = "UltimateGui";
 	public static final String sPLUGINNAME = "Gui Controller";
-	
+
+	private static HashMap<String, UltimatePreferenceItem[]> sUltimatePreferences;
+
 	private Logger mLogger;
 	private Display mDisplay;
 
@@ -63,7 +69,7 @@ public class GuiController implements IController {
 		}
 
 		mCore = (ICore) controlledCore;
-
+		initializeUltimatePreferenceMap(mCore);
 		mDisplay = PlatformUI.createDisplay();
 
 		mParser = null;
@@ -74,10 +80,11 @@ public class GuiController implements IController {
 		ApplicationWorkbenchAdvisor workbenchAdvisor = new ApplicationWorkbenchAdvisor();
 		if (mDisplay != null && workbenchAdvisor != null) {
 			mTrayIconNotifier = new TrayIconNotifier(workbenchAdvisor);
-			workbenchAdvisor.init(mCore, mTrayIconNotifier);
+			workbenchAdvisor.init(mCore, mTrayIconNotifier, this);
 			try {
 				returnCode = PlatformUI.createAndRunWorkbench(mDisplay,
 						workbenchAdvisor);
+				mLogger.debug("GUI return code: " + returnCode);
 				return returnCode;
 			} catch (Exception ex) {
 				mLogger.fatal("An exception occured", ex);
@@ -185,5 +192,39 @@ public class GuiController implements IController {
 				SWT.ICON_INFORMATION);
 
 	}
+
+	@Override
+	public void displayException(final String description, final Exception ex) {
+		mDisplay.asyncExec(new Runnable() {
+			public void run() {
+				Shell shell = new Shell(mDisplay);
+				MessageDialog.openError(shell, "An error occured", description
+						+ ex.getMessage());
+			}
+		});
+
+	}
+
+	@Override
+	public UltimatePreferenceInitializer getPreferences() {
+		return null;
+	}
+	
+	public static HashMap<String, UltimatePreferenceItem[]> getUltimatePreferences(){
+		return sUltimatePreferences;
+	}
+	
+	private void initializeUltimatePreferenceMap(ICore core) {
+		sUltimatePreferences = new HashMap<String, UltimatePreferenceItem[]>();
+		for (IRCPPlugin plugin : core.getPlugins()) {
+			UltimatePreferenceInitializer upi = plugin.getPreferences();
+			if (upi != null) {
+				sUltimatePreferences.put(plugin.getPluginID(),
+						upi.getDefaultPreferences());
+			}
+		}
+	}
+
+
 
 }

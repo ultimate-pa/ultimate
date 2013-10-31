@@ -13,7 +13,7 @@ import java.util.ArrayList;
 import org.eclipse.core.runtime.FileLocator;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.Platform;
-import org.eclipse.core.runtime.preferences.ConfigurationScope;
+import org.eclipse.core.runtime.preferences.InstanceScope;
 import org.eclipse.jface.preference.ComboFieldEditor;
 import org.eclipse.jface.preference.FieldEditorPreferencePage;
 import org.eclipse.ui.IWorkbench;
@@ -47,7 +47,7 @@ public class PreferencePage extends FieldEditorPreferencePage implements
 	 */
 	public PreferencePage() {
 		super(GRID);
-		preferences = new ScopedPreferenceStore(ConfigurationScope.INSTANCE,
+		preferences = new ScopedPreferenceStore(InstanceScope.INSTANCE,
 				Activator.PLUGIN_ID);
 		setPreferenceStore(preferences);
 	}

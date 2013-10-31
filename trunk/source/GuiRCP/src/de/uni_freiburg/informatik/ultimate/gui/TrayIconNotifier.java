@@ -13,7 +13,7 @@ import org.eclipse.swt.widgets.ToolTip;
 import org.eclipse.swt.widgets.TrayItem;
 import org.eclipse.ui.PlatformUI;
 
-import de.uni_freiburg.informatik.ultimate.core.coreplugin.preferences.constants.PreferenceConstants;
+import de.uni_freiburg.informatik.ultimate.core.coreplugin.preferences.CorePreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.gui.advisors.ApplicationWorkbenchAdvisor;
 
 public class TrayIconNotifier {
@@ -32,8 +32,8 @@ public class TrayIconNotifier {
 
 	private boolean isTrayBalloonEnabled() {
 		return Platform.getPreferencesService().getBoolean("UltimateCore",
-				PreferenceConstants.NAME_SHOWRESULTNOTIFIERPOPUP,
-				PreferenceConstants.VALUE_SHOWRESULTNOTIFIERPOPUP_DEFAULT,
+				CorePreferenceInitializer.LABEL_SHOWRESULTNOTIFIERPOPUP,
+				CorePreferenceInitializer.VALUE_SHOWRESULTNOTIFIERPOPUP_DEFAULT,
 				null);
 
 	}

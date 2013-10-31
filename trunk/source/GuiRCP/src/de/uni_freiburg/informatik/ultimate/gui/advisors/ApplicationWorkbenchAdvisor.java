@@ -1,9 +1,11 @@
 package de.uni_freiburg.informatik.ultimate.gui.advisors;
 
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
+import de.uni_freiburg.informatik.ultimate.ep.interfaces.IController;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.ICore;
 import de.uni_freiburg.informatik.ultimate.gui.TrayIconNotifier;
 import de.uni_freiburg.informatik.ultimate.gui.UltimateDefaultPerspective;
+import de.uni_freiburg.informatik.ultimate.gui.preferencepages.UltimatePreferencePageFactory;
 
 import org.apache.log4j.Logger;
 import org.eclipse.core.runtime.Platform;
@@ -24,14 +26,17 @@ public class ApplicationWorkbenchAdvisor extends WorkbenchAdvisor {
 	private ICore mCore;
 	private ApplicationWorkbenchWindowAdvisor mApplicationWorkbenchWindowAdvisor;
 	private TrayIconNotifier mTrayIconNotifier;
+	private IController mController;
 
 	public ApplicationWorkbenchAdvisor() {
 		mLogger = UltimateServices.getInstance().getControllerLogger();
 	}
 
-	public void init(ICore icc, TrayIconNotifier notifier){
+	public void init(ICore icc, TrayIconNotifier notifier,IController controller){
 		mCore = icc;
 		mTrayIconNotifier = notifier;
+		mController = controller;
+		
 	}
 	
 	public WorkbenchWindowAdvisor createWorkbenchWindowAdvisor(
@@ -45,7 +50,7 @@ public class ApplicationWorkbenchAdvisor extends WorkbenchAdvisor {
 		if (mApplicationWorkbenchWindowAdvisor == null) {
 			mLogger.debug("Creating WorkbenchWindowAdvisor...");
 			mApplicationWorkbenchWindowAdvisor = new ApplicationWorkbenchWindowAdvisor(
-					configurer, mCore, mTrayIconNotifier);
+					configurer, mCore, mTrayIconNotifier,mController);			
 		}
 		return mApplicationWorkbenchWindowAdvisor;
 	}
@@ -62,4 +67,9 @@ public class ApplicationWorkbenchAdvisor extends WorkbenchAdvisor {
 	public TrayItem getTrayItem() {
 		return mApplicationWorkbenchWindowAdvisor.getTrayItem();
 	}
+
+	
+	
+	
+	
 }

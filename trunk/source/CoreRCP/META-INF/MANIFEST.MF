@@ -5,8 +5,9 @@ Bundle-Name: CoreRCP Plug-in
 Bundle-SymbolicName: UltimateCore;singleton:=true
 Bundle-Version: 0.0.1
 Bundle-Activator: de.uni_freiburg.informatik.ultimate.core.coreplugin.Activator
-Require-Bundle: org.eclipse.ui;bundle-version="3.7.0";visibility:=reexport,
- org.eclipse.core.runtime;bundle-version="3.7.0";visibility:=reexport,
+Require-Bundle: org.eclipse.core.runtime;bundle-version="3.7.0";visibility:=reexport,
+ org.eclipse.jface;bundle-version="3.9.0";visibility:=reexport,
+ org.eclipse.ui.workbench;visibility:=reexport,
  Library-log4j,
  ASTBuilder
 Bundle-ActivationPolicy: lazy
@@ -14,8 +15,9 @@ Export-Package: de.uni_freiburg.informatik.ultimate.access,
  de.uni_freiburg.informatik.ultimate.access.walker,
  de.uni_freiburg.informatik.ultimate.core.api,
  de.uni_freiburg.informatik.ultimate.core.coreplugin,
- de.uni_freiburg.informatik.ultimate.core.coreplugin.preferences.constants,
+ de.uni_freiburg.informatik.ultimate.core.coreplugin.preferences,
  de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain,
+ de.uni_freiburg.informatik.ultimate.core.preferences,
  de.uni_freiburg.informatik.ultimate.ep,
  de.uni_freiburg.informatik.ultimate.ep.interfaces;uses:="org.apache.log4j,de.uni_freiburg.informatik.ultimate.model,de.uni_freiburg.informatik.ultimate.model.persistent",
  de.uni_freiburg.informatik.ultimate.logic,

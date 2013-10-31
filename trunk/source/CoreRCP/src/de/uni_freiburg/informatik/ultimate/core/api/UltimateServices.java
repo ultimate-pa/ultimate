@@ -12,12 +12,10 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.log4j.Logger;
-import org.eclipse.jface.preference.IPreferenceStore;
-import org.eclipse.jface.preference.PreferencePage;
 
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.Application;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.Application.Ultimate_Mode;
-import de.uni_freiburg.informatik.ultimate.core.coreplugin.preferences.constants.PreferenceConstants;
+import de.uni_freiburg.informatik.ultimate.core.coreplugin.preferences.CorePreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.IStorable;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.ITool;
 import de.uni_freiburg.informatik.ultimate.logging.UltimateLoggerFactory;
@@ -234,9 +232,7 @@ public class UltimateServices {
 	 * Gets the correct logger for an asking plug-in This method should be
 	 * called by all plug-ins that extend {@link ITool} and by the Core Plugin
 	 * and want to access their {@link Logger}. Appenders are set as defaults
-	 * and log levels are set using Eclipse {@link IPreferenceStore} and the
-	 * {@link PreferencePage}s: {@link LoggingDetailsPreferencePage} and
-	 * {@link LoggingPreferencePage} <br/>
+	 * and log levels are set using preferences <br/>
 	 * <br/>
 	 * <b>Usage:</b> Most tools can use their Activator.s_PLUGIN_ID as argument<br/>
 	 * <br/>
@@ -253,9 +249,7 @@ public class UltimateServices {
 	/**
 	 * Gets the correct logger for an asking external tool This method should be
 	 * called by all external tools that want to access their {@link Logger}.
-	 * Appenders are set as defaults and log levels are set using the Eclipse
-	 * {@link IPreferenceStore} and the {@link PreferencePage}s:
-	 * {@link LoggingToolsPreferencePage} and {@link LoggingPreferencePage} <br/>
+	 * Appenders are set as defaults and log levels are set using the preferences
 	 * <br/>
 	 * 
 	 * Not to be used for plug-ins!
@@ -267,15 +261,14 @@ public class UltimateServices {
 	 */
 	public Logger getLoggerForExternalTool(String id) {
 		return UltimateLoggerFactory.getInstance().getLoggerById(
-				PreferenceConstants.EXTERNAL_TOOLS_PREFIX + id);
+				CorePreferenceInitializer.EXTERNAL_TOOLS_PREFIX + id);
 	}
 
 	/**
 	 * Gets the correct logger for the controller plug-in. This method should be
 	 * called by all controller plug-ins that want to access their
 	 * {@link Logger}. Appenders are set as defaults and log levels are set
-	 * using the Eclipse {@link IPreferenceStore} and the {@link PreferencePage}
-	 * : {@link LoggingPreferencePage} <br/>
+	 * using the Eclipse IPreferenceStore 
 	 * <br/>
 	 * 
 	 * @return Logger for the current controller.

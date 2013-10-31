@@ -6,8 +6,10 @@ import java.util.List;
 import org.eclipse.core.runtime.preferences.ConfigurationScope;
 import org.eclipse.core.runtime.preferences.IEclipsePreferences;
 import org.eclipse.core.runtime.preferences.IScopeContext;
+import org.eclipse.core.runtime.preferences.InstanceScope;
 
 import de.uni_freiburg.informatik.ultimate.access.IObserver;
+import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.IGenerator;
 import de.uni_freiburg.informatik.ultimate.model.GraphType;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
@@ -122,7 +124,7 @@ public class BlockEncoding implements IGenerator {
 	// @Override
 	public List<IObserver> getObservers() {
 		ArrayList<IObserver> observers = new ArrayList<IObserver>();
-		IEclipsePreferences prefs = ConfigurationScope.INSTANCE
+		IEclipsePreferences prefs = InstanceScope.INSTANCE
 				.getNode(Activator.s_PLUGIN_ID);
 		if (prefs.getBoolean(PreferencePage.NAME_EXECUTETESTS, false)) {
 			observers.add(m_ExecuteUnitTestObserver);
@@ -157,7 +159,7 @@ public class BlockEncoding implements IGenerator {
 	 */
 	@Override
 	public IElement getModel() {
-		IEclipsePreferences prefs = ConfigurationScope.INSTANCE
+		IEclipsePreferences prefs = InstanceScope.INSTANCE
 				.getNode(Activator.s_PLUGIN_ID);
 		if (prefs.getBoolean(PreferencePage.NAME_EXECUTETESTS, false)) {
 			return m_ExecuteUnitTestObserver.getRoot();
@@ -192,5 +194,11 @@ public class BlockEncoding implements IGenerator {
 	public IEclipsePreferences[] getPreferences(IScopeContext cs,
 			IScopeContext is) {
 		return new IEclipsePreferences[] { cs.getNode(s_PLUGIN_ID) };
+	}
+
+	@Override
+	public UltimatePreferenceInitializer getPreferences() {
+		// TODO Auto-generated method stub
+		return null;
 	}
 }

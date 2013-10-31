@@ -3,7 +3,7 @@ package de.uni_freiburg.informatik.ultimate.gui.preferencepages;
 import java.util.StringTokenizer;
 
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
-import de.uni_freiburg.informatik.ultimate.core.coreplugin.preferences.constants.PreferenceConstants;
+import de.uni_freiburg.informatik.ultimate.core.coreplugin.preferences.CorePreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.ITool;
 
 import org.eclipse.core.runtime.preferences.InstanceScope;
@@ -17,7 +17,7 @@ public class LoggingDetailsPreferencePage extends AbstractDetailsPreferencePage 
 
 	public LoggingDetailsPreferencePage() {
 		mPreferenceStore = new ScopedPreferenceStore(InstanceScope.INSTANCE,
-				PreferenceConstants.PLUGINID);
+				CorePreferenceInitializer.PLUGINID);
 	}
 
 	/*
@@ -40,7 +40,7 @@ public class LoggingDetailsPreferencePage extends AbstractDetailsPreferencePage 
 	@Override
 	protected String[] getDefaults() {
 		return convert(mPreferenceStore
-				.getDefaultString(PreferenceConstants.PREFID_DETAILS));
+				.getDefaultString(CorePreferenceInitializer.PREFID_DETAILS));
 	}
 
 	/*
@@ -51,7 +51,7 @@ public class LoggingDetailsPreferencePage extends AbstractDetailsPreferencePage 
 	 */
 	@Override
 	protected String getInvalidEntryMessage() {
-		return PreferenceConstants.INVALID_ENTRY;
+		return CorePreferenceInitializer.INVALID_ENTRY;
 	}
 
 	/*
@@ -63,7 +63,7 @@ public class LoggingDetailsPreferencePage extends AbstractDetailsPreferencePage 
 	@Override
 	protected String[] getPreferenceAsStringArray() {
 		return convert(mPreferenceStore
-				.getString(PreferenceConstants.PREFID_DETAILS));
+				.getString(CorePreferenceInitializer.PREFID_DETAILS));
 	}
 
 	/*
@@ -77,9 +77,9 @@ public class LoggingDetailsPreferencePage extends AbstractDetailsPreferencePage 
 		StringBuffer buffer = new StringBuffer();
 		for (int i = 0; i < items.length; i++) {
 			buffer.append(items[i]);
-			buffer.append(PreferenceConstants.VALUE_DELIMITER_LOGGING_PREF);
+			buffer.append(CorePreferenceInitializer.VALUE_DELIMITER_LOGGING_PREF);
 		}
-		mPreferenceStore.setValue(PreferenceConstants.PREFID_DETAILS, buffer
+		mPreferenceStore.setValue(CorePreferenceInitializer.PREFID_DETAILS, buffer
 				.toString());
 	}
 
@@ -91,9 +91,9 @@ public class LoggingDetailsPreferencePage extends AbstractDetailsPreferencePage 
 	 */
 	@Override
 	protected String getInfoContent(List detailList) {
-		String response = PreferenceConstants.ALL_PLUGINS_PRESENT;
+		String response = CorePreferenceInitializer.ALL_PLUGINS_PRESENT;
 		StringBuffer invalidPluginIds = new StringBuffer();
-		invalidPluginIds.append(PreferenceConstants.PLUGINS_NOT_PRESENT);
+		invalidPluginIds.append(CorePreferenceInitializer.PLUGINS_NOT_PRESENT);
 		boolean error = false;
 		for (String line : detailList.getItems()) {
 			String pluginId = line.substring(0, line.lastIndexOf("="));
@@ -133,7 +133,7 @@ public class LoggingDetailsPreferencePage extends AbstractDetailsPreferencePage 
 
 	private static String[] convert(String preferenceValue) {
 		StringTokenizer tokenizer = new StringTokenizer(preferenceValue,
-				PreferenceConstants.VALUE_DELIMITER_LOGGING_PREF);
+				CorePreferenceInitializer.VALUE_DELIMITER_LOGGING_PREF);
 		int tokenCount = tokenizer.countTokens();
 		String[] elements = new String[tokenCount];
 		for (int i = 0; i < tokenCount; i++) {

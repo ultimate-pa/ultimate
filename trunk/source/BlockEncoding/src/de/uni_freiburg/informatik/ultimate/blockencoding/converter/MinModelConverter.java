@@ -10,6 +10,7 @@ import java.util.HashSet;
 import org.apache.log4j.Logger;
 import org.eclipse.core.runtime.preferences.ConfigurationScope;
 import org.eclipse.core.runtime.preferences.IEclipsePreferences;
+import org.eclipse.core.runtime.preferences.InstanceScope;
 
 import de.uni_freiburg.informatik.ultimate.blockencoding.model.BlockEncodingAnnotation;
 import de.uni_freiburg.informatik.ultimate.blockencoding.model.MinimizedNode;
@@ -102,7 +103,7 @@ public class MinModelConverter {
 	 * @return gets the rating boundary
 	 */
 	private IRatingHeuristic getRatingHeuristic() {
-		IEclipsePreferences prefs = ConfigurationScope.INSTANCE
+		IEclipsePreferences prefs = InstanceScope.INSTANCE
 				.getNode(Activator.s_PLUGIN_ID);
 		String prefValue = prefs.get(PreferencePage.NAME_RATINGBOUND, "");
 		RatingStrategy strategy = RatingStrategy.values()[Integer

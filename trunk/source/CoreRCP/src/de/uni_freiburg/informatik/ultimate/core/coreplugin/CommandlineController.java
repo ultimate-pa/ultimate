@@ -15,6 +15,7 @@ import de.uni_freiburg.informatik.ultimate.core.api.PreludeProvider;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.Toolchain;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.ToolchainJob;
+import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.IController;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.ICore;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.ISource;
@@ -99,7 +100,7 @@ public class CommandlineController implements IController {
 		}
 		
 		try {
-			ToolchainJob tcj = new ToolchainJob("Processing Toolchain", core, null, 
+			ToolchainJob tcj = new ToolchainJob("Processing Toolchain", core, this, 
 					this.m_Boogie, ToolchainJob.Chain_Mode.RUN_TOOLCHAIN, this.m_PreludeFile);
 			tcj.schedule();
 			// in non-GUI mode, we must wait until job has finished!
@@ -224,6 +225,18 @@ public class CommandlineController implements IController {
 	public void displayToolchainResultProgramUnknown(String description) {
 		System.out.println("RESULT: Ultimate could not prove your program: " 
 				+ description);
+	}
+
+	@Override
+	public void displayException(String description, Exception ex) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public UltimatePreferenceInitializer getPreferences() {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 }

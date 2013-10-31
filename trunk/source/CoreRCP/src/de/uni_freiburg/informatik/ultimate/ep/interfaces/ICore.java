@@ -87,4 +87,6 @@ public interface ICore {
 	
 	void loadPreferences();
 
+	IRCPPlugin[] getPlugins();
+
 }

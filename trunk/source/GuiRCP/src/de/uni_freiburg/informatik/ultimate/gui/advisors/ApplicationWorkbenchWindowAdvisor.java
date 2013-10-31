@@ -1,9 +1,11 @@
 package de.uni_freiburg.informatik.ultimate.gui.advisors;
 
+import de.uni_freiburg.informatik.ultimate.ep.interfaces.IController;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.ICore;
 import de.uni_freiburg.informatik.ultimate.gui.GuiController;
 import de.uni_freiburg.informatik.ultimate.gui.TrayIconNotifier;
 import de.uni_freiburg.informatik.ultimate.gui.interfaces.IImageKeys;
+import de.uni_freiburg.informatik.ultimate.gui.preferencepages.UltimatePreferencePageFactory;
 
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.swt.SWT;
@@ -33,16 +35,18 @@ import org.eclipse.ui.plugin.AbstractUIPlugin;
 public class ApplicationWorkbenchWindowAdvisor extends WorkbenchWindowAdvisor {
 
 	private final ICore mCore;
+	private final IController mController;
 	private TrayItem mTrayItem;
 	private Image mTrayImage;
 	private TrayIconNotifier mTrayIconNotifier;
 
 	public ApplicationWorkbenchWindowAdvisor(
 			IWorkbenchWindowConfigurer configurer, ICore icc,
-			TrayIconNotifier notifier) {
+			TrayIconNotifier notifier, IController controller) {
 		super(configurer);
 		mCore = icc;
 		mTrayIconNotifier = notifier;
+		mController = controller;
 
 	}
 
@@ -52,7 +56,7 @@ public class ApplicationWorkbenchWindowAdvisor extends WorkbenchWindowAdvisor {
 
 	public ActionBarAdvisor createActionBarAdvisor(
 			IActionBarConfigurer configurer) {
-		return new ApplicationActionBarAdvisor(configurer, mCore);
+		return new ApplicationActionBarAdvisor(configurer, mCore, mController);
 	}
 
 	public void preWindowOpen() {
@@ -73,6 +77,7 @@ public class ApplicationWorkbenchWindowAdvisor extends WorkbenchWindowAdvisor {
 		if (initTaskItem(window)) {
 			hookMinimized(window);
 		}
+		new UltimatePreferencePageFactory(mCore).createPreferencePages();
 	}
 
 	public void dispose() {

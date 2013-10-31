@@ -2,7 +2,7 @@ package de.uni_freiburg.informatik.ultimate.gui.preferencepages;
 
 
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.Activator;
-import de.uni_freiburg.informatik.ultimate.core.coreplugin.preferences.constants.PreferenceConstants;
+import de.uni_freiburg.informatik.ultimate.core.coreplugin.preferences.CorePreferenceInitializer;
 
 import org.eclipse.core.runtime.preferences.InstanceScope;
 import org.eclipse.jface.preference.BooleanFieldEditor;
@@ -35,13 +35,13 @@ implements IWorkbenchPreferencePage {
 	@Override
 	protected void createFieldEditors() {
 		
-		BooleanFieldEditor dropModels = new BooleanFieldEditor(PreferenceConstants.PREFID_MM_DROP_MODELS,
-															   PreferenceConstants.LABEL_MM_DROPMODELS,
+		BooleanFieldEditor dropModels = new BooleanFieldEditor(CorePreferenceInitializer.LABEL_MM_DROP_MODELS,
+															   CorePreferenceInitializer.LABEL_MM_DROP_MODELS,
 															   getFieldEditorParent());
 		
 		
-		DirectoryFieldEditor tmpDir = new DirectoryFieldEditor(PreferenceConstants.PREFID_MM_TMPDIRECTORY,
-															   PreferenceConstants.LABEL_MM_TMPDIRECTORY,
+		DirectoryFieldEditor tmpDir = new DirectoryFieldEditor(CorePreferenceInitializer.LABEL_MM_TMPDIRECTORY,
+															   CorePreferenceInitializer.LABEL_MM_TMPDIRECTORY,
 															   getFieldEditorParent());
 		addField(dropModels);
 		addField(tmpDir);
@@ -63,7 +63,6 @@ implements IWorkbenchPreferencePage {
 	@Override
 	public void init(IWorkbench workbench) {
 		// set the defaults
-		prefStore.setDefault(PreferenceConstants.PREFID_MM_DROP_MODELS, PreferenceConstants.DEFAULT_MM_DROP_MODELS);
 		setPreferenceStore(prefStore);
 
 	}

@@ -9,6 +9,7 @@ import org.eclipse.core.runtime.preferences.IScopeContext;
 
 import de.uni_freiburg.informatik.ultimate.access.IObserver;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
+import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.IAnalysis;
 import de.uni_freiburg.informatik.ultimate.irs.dependencies.observers.ASTDependencyFinder;
 import de.uni_freiburg.informatik.ultimate.irs.dependencies.observers.DependencyFinder;
@@ -105,6 +106,12 @@ public class IrsDependencies implements IAnalysis {
 	@Override
 	public String getPluginID() {
 		return Activator.PLUGIN_ID;
+	}
+
+	@Override
+	public UltimatePreferenceInitializer getPreferences() {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 }

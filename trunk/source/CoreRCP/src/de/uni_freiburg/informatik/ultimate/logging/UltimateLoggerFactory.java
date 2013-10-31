@@ -18,15 +18,13 @@ import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PatternLayout;
 import org.apache.log4j.spi.LoggerRepository;
-import org.eclipse.core.runtime.preferences.InstanceScope;
-import org.eclipse.jface.preference.IPreferenceStore;
-import org.eclipse.jface.util.IPropertyChangeListener;
-import org.eclipse.jface.util.PropertyChangeEvent;
-import org.eclipse.ui.preferences.ScopedPreferenceStore;
+import org.eclipse.core.runtime.preferences.IEclipsePreferences.IPreferenceChangeListener;
+import org.eclipse.core.runtime.preferences.IEclipsePreferences.PreferenceChangeEvent;
 
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.Activator;
-import de.uni_freiburg.informatik.ultimate.core.coreplugin.preferences.constants.PreferenceConstants;
+import de.uni_freiburg.informatik.ultimate.core.coreplugin.preferences.CorePreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
 
 /**
  * UltimateLoggers
@@ -41,7 +39,7 @@ public class UltimateLoggerFactory {
 	 */
 	private static UltimateLoggerFactory sInstance;
 
-	private IPreferenceStore mPreferenceStore;
+	private UltimatePreferenceStore mPreferenceStore;
 	private List<String> presentLoggers;
 	private FileAppender logFile;
 
@@ -51,8 +49,9 @@ public class UltimateLoggerFactory {
 	public static final String LOGGER_NAME_TOOLS = "tools";
 
 	private UltimateLoggerFactory() {
-		mPreferenceStore = new ScopedPreferenceStore(InstanceScope.INSTANCE,
-				Activator.s_PLUGIN_ID);
+
+		mPreferenceStore = new UltimatePreferenceStore(Activator.s_PLUGIN_ID);
+
 		initializeLog4J();
 		refreshPropertiesLoggerHierarchie();
 		refreshPropertiesAppendLogFile();
@@ -62,9 +61,9 @@ public class UltimateLoggerFactory {
 		// we do not care what property changes, we just reload the logging
 		// stuff every time
 		mPreferenceStore
-				.addPropertyChangeListener(new IPropertyChangeListener() {
+				.addPreferenceChangeListener(new IPreferenceChangeListener() {
 					@Override
-					public void propertyChange(PropertyChangeEvent event) {
+					public void preferenceChange(PreferenceChangeEvent event) {
 						refreshPropertiesLoggerHierarchie();
 						refreshPropertiesAppendLogFile();
 					}
@@ -95,23 +94,25 @@ public class UltimateLoggerFactory {
 
 	private void refreshPropertiesAppendLogFile() {
 		// if log-file should be used, it will be appended here
-		if (mPreferenceStore.getBoolean(PreferenceConstants.PREFID_LOGFILE)) {
+
+		if (mPreferenceStore
+				.getBoolean(CorePreferenceInitializer.LABEL_LOGFILE)) {
 			// if there is already a log file, we remove it!
 			if (logFile != null) {
 				Logger.getRootLogger().removeAppender(logFile);
 				logFile = null;
 			}
 			String logName = mPreferenceStore
-					.getString(PreferenceConstants.PREFID_LOGFILE_NAME);
+					.getString(CorePreferenceInitializer.LABEL_LOGFILE_NAME);
 			String logDir = mPreferenceStore
-					.getString(PreferenceConstants.PREFID_LOGFILE_DIR);
+					.getString(CorePreferenceInitializer.LABEL_LOGFILE_DIR);
 
 			try {
 				PatternLayout layout = new PatternLayout(
 						de.uni_freiburg.informatik.ultimate.plugins.Constants
 								.getLoggerPattern());
 				boolean append = mPreferenceStore
-						.getBoolean(PreferenceConstants.PREFID_APPEXLOGFILE);
+						.getBoolean(CorePreferenceInitializer.LABEL_APPEXLOGFILE);
 				logFile = new FileAppender(layout, logDir + File.separator
 						+ logName + ".log", append);
 				Logger.getRootLogger().addAppender(logFile);
@@ -163,7 +164,7 @@ public class UltimateLoggerFactory {
 	 *         tool.
 	 */
 	private boolean isExternalTool(String id) {
-		return id.startsWith(PreferenceConstants.EXTERNAL_TOOLS_PREFIX);
+		return id.startsWith(CorePreferenceInitializer.EXTERNAL_TOOLS_PREFIX);
 	}
 
 	/**
@@ -204,7 +205,7 @@ public class UltimateLoggerFactory {
 		presentLoggers = new LinkedList<String>();
 		Logger rootLogger = Logger.getRootLogger();
 		rootLogger.setLevel(Level.toLevel(mPreferenceStore
-				.getString(PreferenceConstants.PREFID_ROOT)));
+				.getString(CorePreferenceInitializer.PREFID_ROOT)));
 
 		// now create children of the rootLogger
 
@@ -213,7 +214,7 @@ public class UltimateLoggerFactory {
 		Logger pluginsLogger = rootRepos.getLogger(LOGGER_NAME_PLUGINS);
 		presentLoggers.add(LOGGER_NAME_PLUGINS);
 		String pluginslevel = mPreferenceStore
-				.getString(PreferenceConstants.PREFID_PLUGINS);
+				.getString(CorePreferenceInitializer.PREFID_PLUGINS);
 		if (!pluginslevel.isEmpty())
 			pluginsLogger.setLevel(Level.toLevel(pluginslevel));
 
@@ -221,14 +222,14 @@ public class UltimateLoggerFactory {
 		Logger toolslog = rootRepos.getLogger(LOGGER_NAME_TOOLS);
 		presentLoggers.add(LOGGER_NAME_TOOLS);
 		String toolslevel = mPreferenceStore
-				.getString(PreferenceConstants.PREFID_TOOLS);
+				.getString(CorePreferenceInitializer.PREFID_TOOLS);
 		if (!toolslevel.isEmpty())
 			toolslog.setLevel(Level.toLevel(toolslevel));
 
 		// controller
 		Logger controllogger = rootRepos.getLogger(LOGGER_NAME_CONTROLLER);
 		String controllevel = mPreferenceStore
-				.getString(PreferenceConstants.PREFID_CONTROLLER);
+				.getString(CorePreferenceInitializer.PREFID_CONTROLLER);
 		if (!controllevel.isEmpty())
 			controllogger.setLevel(Level.toLevel(controllevel));
 		presentLoggers.add(LOGGER_NAME_CONTROLLER);
@@ -236,7 +237,7 @@ public class UltimateLoggerFactory {
 		// core
 		Logger corelogger = rootRepos.getLogger(Activator.s_PLUGIN_ID);
 		String corelevel = mPreferenceStore
-				.getString(PreferenceConstants.PREFID_CORE);
+				.getString(CorePreferenceInitializer.PREFID_CORE);
 		if (!corelevel.isEmpty())
 			corelogger.setLevel(Level.toLevel(corelevel));
 		presentLoggers.add(Activator.s_PLUGIN_ID);
@@ -281,12 +282,12 @@ public class UltimateLoggerFactory {
 
 	private String[] getLoggingDetailsPreference() {
 		return convert(mPreferenceStore
-				.getString(PreferenceConstants.PREFID_DETAILS));
+				.getString(CorePreferenceInitializer.PREFID_DETAILS));
 	}
 
 	private String[] getAllKeys() {
 		String[] pref = convert(mPreferenceStore
-				.getString(PreferenceConstants.PREFID_DETAILS));
+				.getString(CorePreferenceInitializer.PREFID_DETAILS));
 		String[] retVal = new String[pref.length];
 		for (int i = 0; i < retVal.length; i++) {
 			retVal[i] = pref[i].substring(0, pref[i].lastIndexOf("="));
@@ -296,7 +297,7 @@ public class UltimateLoggerFactory {
 
 	private String[] convert(String preferenceValue) {
 		StringTokenizer tokenizer = new StringTokenizer(preferenceValue,
-				PreferenceConstants.VALUE_DELIMITER_LOGGING_PREF);
+				CorePreferenceInitializer.VALUE_DELIMITER_LOGGING_PREF);
 		int tokenCount = tokenizer.countTokens();
 		String[] elements = new String[tokenCount];
 		for (int i = 0; i < tokenCount; i++) {

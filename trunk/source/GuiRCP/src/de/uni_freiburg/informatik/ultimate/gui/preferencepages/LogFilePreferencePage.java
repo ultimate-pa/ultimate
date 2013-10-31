@@ -16,7 +16,8 @@ import org.eclipse.ui.IWorkbenchPreferencePage;
 import org.eclipse.ui.preferences.ScopedPreferenceStore;
 
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.Activator;
-import de.uni_freiburg.informatik.ultimate.core.coreplugin.preferences.constants.PreferenceConstants;
+import de.uni_freiburg.informatik.ultimate.core.coreplugin.preferences.CorePreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Label;
 
 /**
  * The preference page to set up the creation of a log file for Ultimate Output.
@@ -40,17 +41,12 @@ public class LogFilePreferencePage extends FieldEditorPreferencePage implements
 	 */
 	private final ScopedPreferenceStore preferences;
 
-	public static final String DEFAULT_LOGFILE = "UltimateLogOutput";
-
-	public static final String DEFAULT_LOGFILE_DIR = Platform
-			.getInstanceLocation().getURL().getPath();
-
 	public LogFilePreferencePage() {
 		super(GRID);
 		preferences = new ScopedPreferenceStore(InstanceScope.INSTANCE,
 				Activator.s_PLUGIN_ID);
 		setPreferenceStore(preferences);
-		this.setDescription(PreferenceConstants.DESC_LOGFILE);
+		this.setDescription(CorePreferenceInitializer.DESC_LOGFILE);
 	}
 
 	/*
@@ -64,32 +60,29 @@ public class LogFilePreferencePage extends FieldEditorPreferencePage implements
 	protected void createFieldEditors() {
 		// Basic check-box for enabling the logging into a file
 		BooleanFieldEditor logFile = new BooleanFieldEditor(
-				PreferenceConstants.PREFID_LOGFILE,
-				PreferenceConstants.LABEL_LOGFILE, getFieldEditorParent());
+				CorePreferenceInitializer.LABEL_LOGFILE,
+				CorePreferenceInitializer.LABEL_LOGFILE, getFieldEditorParent());
 		addField(logFile);
 		
 		// Basic check-box for enabling appending to the existing log file
 		// ---> this is needed for running Ultimate in EXTERNAL_EXECUTION_MODE
 		BooleanFieldEditor appendExLogFile = new BooleanFieldEditor(
-				PreferenceConstants.PREFID_APPEXLOGFILE,
-				PreferenceConstants.LABEL_APPEXLOGFILE, getFieldEditorParent());
+				CorePreferenceInitializer.LABEL_APPEXLOGFILE,
+				CorePreferenceInitializer.LABEL_APPEXLOGFILE, getFieldEditorParent());
 		addField(appendExLogFile);
-		preferences.setDefault(PreferenceConstants.PREFID_APPEXLOGFILE, false);
 		
 		// the name of the log file
 		StringFieldEditor nameLogFile = new StringFieldEditor(
-				PreferenceConstants.PREFID_LOGFILE_NAME,
-				PreferenceConstants.LABEL_LOGFILE_NAME, getFieldEditorParent());
+				CorePreferenceInitializer.LABEL_LOGFILE_NAME,
+				CorePreferenceInitializer.LABEL_LOGFILE_NAME, getFieldEditorParent());
 		addField(nameLogFile);
-		preferences.setDefault(PreferenceConstants.PREFID_LOGFILE_NAME,
-				DEFAULT_LOGFILE);
+
 		// the directory of the log file
 		DirectoryFieldEditor dirLogFile = new DirectoryFieldEditor(
-				PreferenceConstants.PREFID_LOGFILE_DIR,
-				PreferenceConstants.LABEL_LOGFILE_DIR, getFieldEditorParent());
+				CorePreferenceInitializer.LABEL_LOGFILE_DIR,
+				CorePreferenceInitializer.LABEL_LOGFILE_DIR, getFieldEditorParent());
 		addField(dirLogFile);
-		preferences.setDefault(PreferenceConstants.PREFID_LOGFILE_DIR,
-				DEFAULT_LOGFILE_DIR);
+
 	}
 
 	@Override

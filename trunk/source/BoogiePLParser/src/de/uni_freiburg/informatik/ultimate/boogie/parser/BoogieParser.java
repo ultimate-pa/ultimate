@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
+import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.ISource;
 import de.uni_freiburg.informatik.ultimate.model.BoogieLocation;
 import de.uni_freiburg.informatik.ultimate.model.GraphType;
@@ -292,5 +293,11 @@ public class BoogieParser implements ISource {
 			s_Logger.fatal("syntax error: ", e);
 			throw new RuntimeException(e);
 		}
+	}
+
+	@Override
+	public UltimatePreferenceInitializer getPreferences() {
+		// TODO Auto-generated method stub
+		return null;
 	}
 }

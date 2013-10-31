@@ -4,10 +4,11 @@ import java.io.IOException;
 
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.Activator;
-import de.uni_freiburg.informatik.ultimate.core.coreplugin.preferences.constants.PreferenceConstants;
+import de.uni_freiburg.informatik.ultimate.core.coreplugin.preferences.CorePreferenceInitializer;
 
 import org.apache.log4j.Logger;
 import org.eclipse.core.runtime.preferences.ConfigurationScope;
+import org.eclipse.core.runtime.preferences.InstanceScope;
 import org.eclipse.jface.preference.BooleanFieldEditor;
 import org.eclipse.jface.preference.FieldEditorPreferencePage;
 import org.eclipse.ui.IWorkbench;
@@ -35,7 +36,7 @@ public class CorePreferencePage extends FieldEditorPreferencePage
 
 	public CorePreferencePage(){
 		super(GRID);
-		m_Preference = new ScopedPreferenceStore(ConfigurationScope.INSTANCE,Activator.s_PLUGIN_ID);
+		m_Preference = new ScopedPreferenceStore(InstanceScope.INSTANCE,Activator.s_PLUGIN_ID);
 		setPreferenceStore(m_Preference);
 
 		
@@ -43,13 +44,13 @@ public class CorePreferencePage extends FieldEditorPreferencePage
 	//@Override
 	protected void createFieldEditors() {
 		//a Field editor for files... there are several other FieldEditors availabel
-		BooleanFieldEditor showusableparser = new BooleanFieldEditor(PreferenceConstants.NAME_SHOWUSABLEPARSER,
-				PreferenceConstants.LABEL_SHOWUSABLEPARSER,getFieldEditorParent());
+		BooleanFieldEditor showusableparser = new BooleanFieldEditor(CorePreferenceInitializer.LABEL_SHOWUSABLEPARSER,
+				CorePreferenceInitializer.LABEL_SHOWUSABLEPARSER,getFieldEditorParent());
 
 		addField(showusableparser);
 		
-		BooleanFieldEditor showResultNotifierPopUp = new BooleanFieldEditor(PreferenceConstants.NAME_SHOWRESULTNOTIFIERPOPUP,
-				PreferenceConstants.LABEL_SHOWRESULTNOTIFIERPOPUP,getFieldEditorParent());
+		BooleanFieldEditor showResultNotifierPopUp = new BooleanFieldEditor(CorePreferenceInitializer.LABEL_SHOWRESULTNOTIFIERPOPUP,
+				CorePreferenceInitializer.LABEL_SHOWRESULTNOTIFIERPOPUP,getFieldEditorParent());
 
 		addField(showResultNotifierPopUp); 
 	}

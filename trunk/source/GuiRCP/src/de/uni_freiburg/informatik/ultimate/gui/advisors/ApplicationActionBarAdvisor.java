@@ -1,5 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.gui.advisors;
 
+import de.uni_freiburg.informatik.ultimate.ep.interfaces.IController;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.ICore;
 import de.uni_freiburg.informatik.ultimate.gui.actions.LoadSettingsAction;
 import de.uni_freiburg.informatik.ultimate.gui.actions.LoadSourceFilesAction;
@@ -13,9 +14,7 @@ import org.eclipse.jface.action.IMenuManager;
 import org.eclipse.jface.action.IToolBarManager;
 import org.eclipse.jface.action.MenuManager;
 import org.eclipse.jface.action.Separator;
-
 import org.eclipse.jface.action.ToolBarManager;
-
 import org.eclipse.ui.IWorkbenchActionConstants;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.actions.ActionFactory;
@@ -31,48 +30,26 @@ import org.eclipse.ui.application.IActionBarConfigurer;
  */
 public class ApplicationActionBarAdvisor extends ActionBarAdvisor {
 
-	/**
-	 * out interface with the core.
-	 */
-	private ICore icc;
+	private ICore mCore;
+	private IController mController;
 
-	/**
-	 * standard Exit Action.
-	 */
 	private IWorkbenchAction exitAction;
 
-	/**
-	 * standard aboutAction.
-	 */
 	private IWorkbenchAction aboutAction;
 
-	/**
-	 * standard preference action
-	 */
 	private IWorkbenchAction preferenceAction;
-	/**
-	 * our homegrown actions.
-	 */
-	private IWorkbenchAction /*openPreferencesDialog, openDottyGraphFromFile,*/
-			loadSourceFiles;
 
+	// custom actions
+	private IWorkbenchAction loadSourceFiles;
 	private IWorkbenchAction resetAndReRun;
-	
-	private IWorkbenchAction resetAndReRunNewTC,resetAndReRunOldTC;
-	
-	private IWorkbenchAction loadSettings,saveSettings;
-	/**
-	 * standard constructor.
-	 * 
-	 * @param configurer
-	 *            our configurer..
-	 * @param isc
-	 *            the steerable core for communication and action initilization
-	 */
+	private IWorkbenchAction resetAndReRunNewTC, resetAndReRunOldTC;
+	private IWorkbenchAction loadSettings, saveSettings;
+
 	public ApplicationActionBarAdvisor(IActionBarConfigurer configurer,
-			ICore icc) {
+			ICore icc, IController controller) {
 		super(configurer);
-		this.icc = icc;
+		this.mCore = icc;
+		mController = controller;
 	}
 
 	/**
@@ -89,23 +66,26 @@ public class ApplicationActionBarAdvisor extends ActionBarAdvisor {
 		preferenceAction = ActionFactory.PREFERENCES.create(window);
 		register(preferenceAction);
 
-		//openPreferencesDialog = new OpenPreferencesDialogAction(window);
-		//register(openPreferencesDialog);
+		// openPreferencesDialog = new OpenPreferencesDialogAction(window);
+		// register(openPreferencesDialog);
 
-		//openDottyGraphFromFile = new OpenDottyGraphFromFileAction(window);
-		//register(openDottyGraphFromFile);
+		// openDottyGraphFromFile = new OpenDottyGraphFromFileAction(window);
+		// register(openDottyGraphFromFile);
 
-		loadSourceFiles = new LoadSourceFilesAction(window, icc);
+		loadSourceFiles = new LoadSourceFilesAction(window, mCore, mController);
 		register(loadSourceFiles);
-		resetAndReRun = new ResetAndRedoToolChainAction(window,icc);
+		resetAndReRun = new ResetAndRedoToolChainAction(window, mCore,
+				mController);
 		register(resetAndReRun);
-		resetAndReRunNewTC = new ResetAndRedoToolChainNewTCAction(window,icc);
+		resetAndReRunNewTC = new ResetAndRedoToolChainNewTCAction(window, mCore,
+				mController);
 		register(resetAndReRunNewTC);
-		resetAndReRunOldTC = new ResetAndRedoToolChainOldTCAction(window,icc);
+		resetAndReRunOldTC = new ResetAndRedoToolChainOldTCAction(window, mCore,
+				mController);
 		register(resetAndReRunOldTC);
-		loadSettings = new LoadSettingsAction(window, icc);
+		loadSettings = new LoadSettingsAction(window, mCore);
 		register(loadSettings);
-		saveSettings = new SaveSettingsAction(window, icc);
+		saveSettings = new SaveSettingsAction(window, mCore);
 		register(saveSettings);
 	}
 
@@ -118,13 +98,13 @@ public class ApplicationActionBarAdvisor extends ActionBarAdvisor {
 		final MenuManager fileMenu = new MenuManager("&File", "file");
 
 		fileMenu.add(loadSourceFiles);
-		//fileMenu.add(openDottyGraphFromFile);
+		// fileMenu.add(openDottyGraphFromFile);
 
-//		fileMenu.add(preferenceAction);
+		// fileMenu.add(preferenceAction);
 		fileMenu.add(new Separator(IWorkbenchActionConstants.MB_ADDITIONS));
 		fileMenu.add(new Separator());
 		fileMenu.add(exitAction);
-		
+
 		MenuManager settingsMenu = new MenuManager("&Settings", "settings");
 		settingsMenu.add(preferenceAction);
 		settingsMenu.add(new Separator());
@@ -152,7 +132,7 @@ public class ApplicationActionBarAdvisor extends ActionBarAdvisor {
 		toolBar.add(resetAndReRunOldTC);
 		toolBar.add(loadSettings);
 		toolBar.add(saveSettings);
-		//toolBar.add(openDottyGraphFromFile);
+		// toolBar.add(openDottyGraphFromFile);
 
 		toolBar.add(new Separator(IWorkbenchActionConstants.MB_ADDITIONS));
 

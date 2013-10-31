@@ -8,7 +8,7 @@ package de.uni_freiburg.informatik.ultimate.gui.preferencepages;
 
 import java.util.Arrays;
 
-import de.uni_freiburg.informatik.ultimate.core.coreplugin.preferences.constants.PreferenceConstants;
+import de.uni_freiburg.informatik.ultimate.core.coreplugin.preferences.CorePreferenceInitializer;
 
 import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.jface.preference.PreferencePage;
@@ -172,7 +172,7 @@ public abstract class AbstractDetailsPreferencePage extends PreferencePage
 		}
 		String logLevel = text.substring(eqIndex + 1).toUpperCase();
 
-		if (!Arrays.asList(PreferenceConstants.VALUE_VALID_LOG_LEVELS)
+		if (!Arrays.asList(CorePreferenceInitializer.VALUE_VALID_LOG_LEVELS)
 				.contains(logLevel)) {
 			raiseInvalidLogLevelError();
 			return false;
@@ -199,7 +199,7 @@ public abstract class AbstractDetailsPreferencePage extends PreferencePage
 	 * void raiseInvalidLogLevelError
 	 */
 	private void raiseInvalidLogLevelError() {
-		setErrorMessage(PreferenceConstants.INVALID_LOGLEVEL);
+		setErrorMessage(CorePreferenceInitializer.INVALID_LOGLEVEL);
 	}
 
 	/*

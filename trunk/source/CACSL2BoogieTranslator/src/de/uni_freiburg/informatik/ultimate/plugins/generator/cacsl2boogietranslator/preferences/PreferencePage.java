@@ -7,6 +7,7 @@ import java.io.IOException;
 
 import org.apache.log4j.Logger;
 import org.eclipse.core.runtime.preferences.ConfigurationScope;
+import org.eclipse.core.runtime.preferences.InstanceScope;
 import org.eclipse.jface.preference.BooleanFieldEditor;
 import org.eclipse.jface.preference.FieldEditorPreferencePage;
 import org.eclipse.jface.preference.IPreferenceStore;
@@ -63,7 +64,7 @@ public class PreferencePage extends FieldEditorPreferencePage implements
      */
     public PreferencePage() {
         super(GRID);
-        preferences = new ScopedPreferenceStore(ConfigurationScope.INSTANCE,
+        preferences = new ScopedPreferenceStore(InstanceScope.INSTANCE,
                 Activator.s_PLUGIN_ID);
         setPreferenceStore(preferences);
     }

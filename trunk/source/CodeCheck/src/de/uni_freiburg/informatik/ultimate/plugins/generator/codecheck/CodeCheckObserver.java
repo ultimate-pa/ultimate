@@ -49,6 +49,7 @@ import de.uni_freiburg.informatik.ultimate.result.UnprovableResult;
 import org.apache.log4j.Logger;
 import org.eclipse.core.runtime.preferences.ConfigurationScope;
 import org.eclipse.core.runtime.preferences.IEclipsePreferences;
+import org.eclipse.core.runtime.preferences.InstanceScope;
 
 
 /**
@@ -131,7 +132,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 	}
 
 	private void readPreferencePage() {
-		IEclipsePreferences prefs = ConfigurationScope.INSTANCE.getNode(Activator.s_PLUGIN_ID);
+		IEclipsePreferences prefs = InstanceScope.INSTANCE.getNode(Activator.s_PLUGIN_ID);
 		
 		GlobalSettings.init();
 		

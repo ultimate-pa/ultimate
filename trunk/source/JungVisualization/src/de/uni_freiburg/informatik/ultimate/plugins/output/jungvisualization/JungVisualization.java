@@ -7,6 +7,7 @@ import org.eclipse.core.runtime.preferences.IEclipsePreferences;
 import org.eclipse.core.runtime.preferences.IScopeContext;
 
 import de.uni_freiburg.informatik.ultimate.access.IObserver;
+import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.IOutput;
 import de.uni_freiburg.informatik.ultimate.model.GraphType;
 import de.uni_freiburg.informatik.ultimate.model.MarkedTrace;
@@ -92,6 +93,12 @@ public class JungVisualization implements IOutput {
 	@Override
 	public IEclipsePreferences[] getPreferences(IScopeContext cs, IScopeContext is) {
 		return new IEclipsePreferences[] {cs.getNode(PLUGIN_ID)};
+	}
+
+	@Override
+	public UltimatePreferenceInitializer getPreferences() {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 }

@@ -5,6 +5,7 @@ import java.io.File;
 import de.uni_freiburg.informatik.ultimate.core.api.PreludeProvider;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.Activator;
+import de.uni_freiburg.informatik.ultimate.ep.interfaces.IController;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.ICore;
 
 import org.apache.log4j.Logger;
@@ -12,8 +13,6 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.Job;
-import org.eclipse.jface.dialogs.MessageDialog;
-import org.eclipse.ui.IWorkbenchWindow;
 
 /**
  * This class implements an Eclipse Job processing a Ultimate toolchain using
@@ -35,16 +34,16 @@ public class ToolchainJob extends Job {
 		RUN_TOOLCHAIN, RUN_NEWTOOLCHAIN, RERUN_TOOLCHAIN, RUN_OLDTOOLCHAIN
 	};
 
-	private Chain_Mode m_JobMode;
+	private Chain_Mode mJobMode;
 
-	private ICore m_Core;
-	private IWorkbenchWindow m_Window;
-	private File m_InputFile;
+	private ICore mCore;
+	private IController mController;
+	private Logger mLogger;
+	private File mInputFile;
 
-	private Toolchain m_Chain;
-	private static Logger s_logger = UltimateServices.getInstance().getLogger(
-			Activator.s_PLUGIN_ID);
-	private PreludeProvider m_PreludeFile;
+	private Toolchain mChain;
+
+	private PreludeProvider mPreludeFile;
 
 	/**
 	 * Constructor for the new toolchain job to be executed.
@@ -52,28 +51,29 @@ public class ToolchainJob extends Job {
 	 * @param name
 	 *            - How do we want to call the job? Will be display in the
 	 *            status bar!
-	 * @param mCore
+	 * @param core
 	 *            - Reference to currently active Ultimate Core.
 	 * @param mWorkbenchWindow
 	 *            - Do we have a workbench window? 'null' is fine!
-	 * @param mBoogie
+	 * @param boogieFiles
 	 *            - array of input boogie files
 	 * @param mode_arg
 	 *            - The desired mode for toolchain execution. See Chain_Mode.
 	 * @param preludefile
 	 *            - Do we want a prelude file to be passed to the parser?
 	 */
-	public ToolchainJob(String name, ICore mCore,
-			IWorkbenchWindow mWorkbenchWindow, File mBoogie,
-			Chain_Mode mode_arg, PreludeProvider preludefile) {
+	public ToolchainJob(String name, ICore core, IController controller,
+			File boogieFiles, Chain_Mode mode_arg, PreludeProvider preludefile) {
 		super(name);
 		setUser(true);
 		setSystem(false);
-		this.m_Core = mCore;
-		this.m_Window = mWorkbenchWindow;
-		this.m_InputFile = mBoogie;
-		this.m_JobMode = mode_arg;
-		this.m_PreludeFile = preludefile;
+		mCore = core;
+		mController = controller;
+		mInputFile = boogieFiles;
+		mJobMode = mode_arg;
+		mPreludeFile = preludefile;
+		mLogger = UltimateServices.getInstance().getLogger(
+				Activator.s_PLUGIN_ID);
 	}
 
 	@Override
@@ -87,56 +87,46 @@ public class ToolchainJob extends Job {
 			UltimateServices.getInstance().initializeResultMap();
 			UltimateServices.getInstance().initializeTranslatorSequence();
 
-			if ((this.m_JobMode == Chain_Mode.RERUN_TOOLCHAIN || this.m_JobMode == Chain_Mode.RUN_OLDTOOLCHAIN)
-					&& !this.m_Core.canRerun()) {
+			if ((this.mJobMode == Chain_Mode.RERUN_TOOLCHAIN || this.mJobMode == Chain_Mode.RUN_OLDTOOLCHAIN)
+					&& !this.mCore.canRerun()) {
 				throw new Exception(
 						"Rerun called without previous run! Aborting...");
 			}
 			// all modes requires this
-			this.m_Core.resetCore();
+			this.mCore.resetCore();
 
 			// only RUN_TOOLCHAIN and RUN_OLDTOOLCHAIN require this
-			if (this.m_JobMode == Chain_Mode.RUN_TOOLCHAIN
-					|| this.m_JobMode == Chain_Mode.RUN_OLDTOOLCHAIN) {
-				this.m_Core.setInputFile(m_InputFile);
+			if (this.mJobMode == Chain_Mode.RUN_TOOLCHAIN
+					|| this.mJobMode == Chain_Mode.RUN_OLDTOOLCHAIN) {
+				this.mCore.setInputFile(mInputFile);
 
 			}
 
 			// all but RERUN_TOOLCHAIN require this!
-			if (this.m_JobMode != Chain_Mode.RERUN_TOOLCHAIN) {
-				retval = this.m_Core.initiateParser(this.m_PreludeFile);
+			if (this.mJobMode != Chain_Mode.RERUN_TOOLCHAIN) {
+				retval = this.mCore.initiateParser(this.mPreludeFile);
 				if (!retval)
 					throw new Exception();
 			}
 
 			// only RUN_TOOLCHAIN and RUN_NEWTOOLCHAIN require this
-			if (this.m_JobMode == Chain_Mode.RUN_TOOLCHAIN
-					|| this.m_JobMode == Chain_Mode.RUN_NEWTOOLCHAIN) {
-				this.m_Chain = this.m_Core.makeToolSelection();
-				if (this.m_Chain == null) {
-					s_logger.warn("Toolchain selection failed, aborting...");
-					return new Status(Status.CANCEL, Activator.s_PLUGIN_ID, "Toolchain selection canceled");
+			if (this.mJobMode == Chain_Mode.RUN_TOOLCHAIN
+					|| this.mJobMode == Chain_Mode.RUN_NEWTOOLCHAIN) {
+				this.mChain = this.mCore.makeToolSelection();
+				if (this.mChain == null) {
+					mLogger.warn("Toolchain selection failed, aborting...");
+					return new Status(Status.CANCEL, Activator.s_PLUGIN_ID,
+							"Toolchain selection canceled");
 				}
 			}
 
-			this.m_Core.letCoreRunParser();
+			this.mCore.letCoreRunParser();
 
-			returnstatus = this.m_Core.processToolchain(monitor);
+			returnstatus = this.mCore.processToolchain(monitor);
 
 		} catch (final Exception e) {
-			if (m_Window != null) {
-				m_Window.getShell().getDisplay().asyncExec(new Runnable() {
-					public void run() {
-						MessageDialog.openError(m_Window.getShell(),
-								"An error occured",
-								"Toolchain throws exception: " + e.getMessage());
-					}
-				});
-			} else {
-				System.err
-						.println("An error occurred, the toolchain has thrown an exception: "
-								+ e.getMessage());
-			}
+			mLogger.fatal("The toolchain threw an exception:" + e.getMessage());
+			mController.displayException("The toolchain threw an exception", e);
 			returnstatus = Status.CANCEL_STATUS;
 			e.printStackTrace();
 		} finally {

@@ -23,6 +23,7 @@ import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.preferences.ConfigurationScope;
 import org.eclipse.core.runtime.preferences.IEclipsePreferences;
+import org.eclipse.core.runtime.preferences.InstanceScope;
 import org.eclipse.ui.IViewPart;
 import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.PartInitException;
@@ -100,7 +101,7 @@ public class UltimateCChecker extends AbstractFullAstChecker {
 		app.setM_InputFile(dummyFile);
 		// Third thing is that we have to set the toolchain
 		File toolChain = null;
-		IEclipsePreferences prefs = ConfigurationScope.INSTANCE
+		IEclipsePreferences prefs = InstanceScope.INSTANCE
 				.getNode(Activator.PLUGIN_ID);
 		String selectedToolchain = prefs.get(PreferencePage.TOOLCHAIN_SELECTION_TEXT, "");
 		

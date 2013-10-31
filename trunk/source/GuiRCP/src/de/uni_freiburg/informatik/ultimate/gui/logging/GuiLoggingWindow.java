@@ -12,9 +12,9 @@ import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.progress.UIJob;
-
 import org.apache.log4j.WriterAppender;
 
+import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.ILoggingWindow;
 import de.uni_freiburg.informatik.ultimate.gui.views.LoggingView;
 
@@ -148,5 +148,11 @@ public class GuiLoggingWindow extends WriterAppender implements ILoggingWindow {
 
 	public String getPluginID() {
 		return this.pluginID;
+	}
+
+	@Override
+	public UltimatePreferenceInitializer getPreferences() {
+		// TODO Auto-generated method stub
+		return null;
 	}	
 }

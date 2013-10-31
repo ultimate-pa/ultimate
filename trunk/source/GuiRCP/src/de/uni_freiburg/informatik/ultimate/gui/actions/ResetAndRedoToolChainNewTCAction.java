@@ -6,6 +6,7 @@ import java.io.File;
 import de.uni_freiburg.informatik.ultimate.core.api.PreludeProvider;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.ToolchainJob;
+import de.uni_freiburg.informatik.ultimate.ep.interfaces.IController;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.ICore;
 import de.uni_freiburg.informatik.ultimate.gui.GuiController;
 import de.uni_freiburg.informatik.ultimate.gui.contrib.PreludeContribution;
@@ -14,6 +15,7 @@ import de.uni_freiburg.informatik.ultimate.gui.interfaces.IPreferencesKeys;
 
 import org.apache.log4j.Logger;
 import org.eclipse.core.runtime.preferences.IEclipsePreferences;
+import org.eclipse.core.runtime.preferences.IScopeContext;
 import org.eclipse.core.runtime.preferences.InstanceScope;
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.action.IAction;
@@ -35,13 +37,15 @@ public class ResetAndRedoToolChainNewTCAction extends Action implements IWorkben
 	public static final String ID = "de.uni_freiburg.informatik.ultimate.gui.ResetAndRedoToolChainNewTCAction";
 	private static final String LABEL = "Execute new Toolchain on file(s)";
 
-	private IWorkbenchWindow workbenchWindow;
+	private IWorkbenchWindow mWorkbenchWindow;
 	private static Logger logger = UltimateServices.getInstance().getControllerLogger();
-	private ICore core;
+	private ICore mCore;
+	private IController mController;
 
-	public ResetAndRedoToolChainNewTCAction(final IWorkbenchWindow window, final ICore icore) {
-		this.workbenchWindow = window;
-        this.core = icore;
+	public ResetAndRedoToolChainNewTCAction(final IWorkbenchWindow window, final ICore icore,final IController controller) {
+		mWorkbenchWindow = window;
+        mCore = icore;
+        mController = controller;
         setId(ID);
         setText(LABEL);
         setImageDescriptor(AbstractUIPlugin.imageDescriptorFromPlugin(GuiController.sPLUGINID,
@@ -56,31 +60,31 @@ public class ResetAndRedoToolChainNewTCAction extends Action implements IWorkben
 	 * @see IWorkbenchWindowActionDelegate#run
 	 */
 	public final void run() {
-		boolean rerun = core.hasInputFiles();
+		boolean rerun = mCore.hasInputFiles();
 		File prelude = PreludeContribution.getPreludeFile();
 		PreludeProvider preludeprovider = prelude == null ? 
 				null : new PreludeProvider(prelude.getAbsolutePath());
 			if (!rerun) {
-			InstanceScope iscope = new InstanceScope();
+			IScopeContext iscope = InstanceScope.INSTANCE;
 	        IEclipsePreferences prefscope = iscope.getNode(GuiController.sPLUGINID);
 	        String filterpath = prefscope.get(IPreferencesKeys.LASTPATH, null);
 	        if (filterpath != null) {
 	        	File inputfile = new File(filterpath);
 	        	if (inputfile.canRead()) {
-        			core.setInputFile(inputfile);
+        			mCore.setInputFile(inputfile);
         			// In this case, we have to initiate the parser!
-        			core.initiateParser(preludeprovider);
+        			mCore.initiateParser(preludeprovider);
         			rerun = true;
 	        	}
 	        }
         }
 		if (!rerun) {
-			workbenchWindow.getWorkbench().getDisplay().asyncExec(
+			mWorkbenchWindow.getWorkbench().getDisplay().asyncExec(
 					new Runnable() {
 
 						@Override
 						public void run() {
-							MessageDialog.openError(workbenchWindow.getShell(),
+							MessageDialog.openError(mWorkbenchWindow.getShell(),
 									"Error Occurred",
 									"Please run a toolchain on a file before "+
 									"trying to run a different toolchain on "+
@@ -100,7 +104,7 @@ public class ResetAndRedoToolChainNewTCAction extends Action implements IWorkben
 //		for (IEditorReference editor : workbenchWindow.getActivePage().getEditorReferences()){
 //			workbenchWindow.getActivePage().closeEditor(editor.getEditor(false), false);
 //		}
-		ToolchainJob tcj = new ToolchainJob("Processing Toolchain", this.core, this.workbenchWindow, null, 
+		ToolchainJob tcj = new ToolchainJob("Processing Toolchain", mCore, mController, null, 
 				ToolchainJob.Chain_Mode.RUN_NEWTOOLCHAIN, preludeprovider);
 		tcj.schedule();
 		
