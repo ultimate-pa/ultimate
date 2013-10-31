@@ -149,10 +149,10 @@ public abstract class CType {
      * @param cType CType object
      * @return the underlying type in case of CNamed, else the input object
      */
-    public CType getUnderlyingType(CType cType) {
-        if (cType instanceof CNamed) {
-            return ((CNamed) cType).getUnderlyingType();
+    public CType getUnderlyingType() {
+        if (this instanceof CNamed) {
+            return ((CNamed) this).getUnderlyingType();
         }
-        return cType;
+        return this;
     }
 }

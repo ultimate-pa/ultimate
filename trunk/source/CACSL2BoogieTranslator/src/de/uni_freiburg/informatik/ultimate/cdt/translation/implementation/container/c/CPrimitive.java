@@ -228,7 +228,7 @@ public class CPrimitive extends CType {
         if (!(o instanceof CType)) {
             return false;
         }
-        CType oType = super.getUnderlyingType((CType)o);
+        CType oType = ((CType)o).getUnderlyingType();
         if (oType instanceof CPrimitive) {
             return type == ((CPrimitive)oType).type;
         }

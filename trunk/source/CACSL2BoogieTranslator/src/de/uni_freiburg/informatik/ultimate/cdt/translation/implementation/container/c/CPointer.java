@@ -36,7 +36,7 @@ public class CPointer extends CType {
         if (!(o instanceof CType)) {
             return false;
         }
-        CType oType = super.getUnderlyingType((CType)o);
+        CType oType = ((CType)o).getUnderlyingType();
         if (oType instanceof CPointer) {
             return pointsToType.equals(((CPointer)oType).pointsToType);
         }
