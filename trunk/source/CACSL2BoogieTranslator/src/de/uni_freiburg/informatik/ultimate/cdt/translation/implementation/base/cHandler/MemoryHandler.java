@@ -806,26 +806,30 @@ public class MemoryHandler {
                 this.axioms.add(new Axiom(loc, attr, f));
             } else if (cvar instanceof CStruct) {
                 CStruct cs = (CStruct) cvar;
-                Expression nextOffset = new IntegerLiteral(loc, SFO.NR0);
-                for (int i = 0; i < cs.getFieldCount(); i++) {
-                    CType csf = cs.getFieldTypes()[i];
-                    String csfId = cs.getFieldIds()[i];
-                    String oId = SFO.OFFSET + cvar.toString() + "~" + csfId;
-                    this.constants.add(new ConstDeclaration(loc, attr, false,
-                            new VarList(loc, new String[] { oId }, intT), null,
-                            false));
-                    Expression offIdEx = new IdentifierExpression(loc, oId);
-                    Expression f = new BinaryExpression(loc, Operator.COMPEQ,
-                            offIdEx, nextOffset);
-                    this.axioms.add(new Axiom(loc, attr, f));
-                    Expression fieldSize = calculateSizeOf(csf);
-                    nextOffset = new BinaryExpression(loc, Operator.ARITHPLUS,
-                            nextOffset, fieldSize);
+                if (cs.isIncomplete()) {
+                	// do nothing
+                } else {
+                	Expression nextOffset = new IntegerLiteral(loc, SFO.NR0);
+                	for (int i = 0; i < cs.getFieldCount(); i++) {
+                		CType csf = cs.getFieldTypes()[i];
+                		String csfId = cs.getFieldIds()[i];
+                		String oId = SFO.OFFSET + cvar.toString() + "~" + csfId;
+                		this.constants.add(new ConstDeclaration(loc, attr, false,
+                				new VarList(loc, new String[] { oId }, intT), null,
+                				false));
+                		Expression offIdEx = new IdentifierExpression(loc, oId);
+                		Expression f = new BinaryExpression(loc, Operator.COMPEQ,
+                				offIdEx, nextOffset);
+                		this.axioms.add(new Axiom(loc, attr, f));
+                		Expression fieldSize = calculateSizeOf(csf);
+                		nextOffset = new BinaryExpression(loc, Operator.ARITHPLUS,
+                				nextOffset, fieldSize);
+                	}
+                	// add an axiom : sizeof cvar (>)= nextOffset
+                	Expression f = new BinaryExpression(loc, Operator.COMPGEQ,
+                			idex, nextOffset);
+                	this.axioms.add(new Axiom(loc, attr, f));
                 }
-                // add an axiom : sizeof cvar (>)= nextOffset
-                Expression f = new BinaryExpression(loc, Operator.COMPGEQ,
-                        idex, nextOffset);
-                this.axioms.add(new Axiom(loc, attr, f));
             } else if (cvar instanceof CNamed) {
                 // add an axiom, binding the sizeof of the named type to
                 // the sizeof of the underlying type

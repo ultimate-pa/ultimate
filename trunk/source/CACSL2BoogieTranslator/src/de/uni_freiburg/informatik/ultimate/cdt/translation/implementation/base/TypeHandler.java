@@ -303,6 +303,7 @@ public class TypeHandler implements ITypeHandler {
         if (node.getKind() == IASTElaboratedTypeSpecifier.k_struct
                 || node.getKind() == IASTElaboratedTypeSpecifier.k_enum) {
             String type = node.getName().getRawSignature();
+            String name = "STRUCT~" + type;
             if (typedef.containsKey(type)) {
                 if (node.getStorageClass() == IASTDeclSpecifier.sc_typedef) {
                     assert node.getParent() instanceof IASTSimpleDeclaration;
@@ -319,13 +320,21 @@ public class TypeHandler implements ITypeHandler {
                     // type anyway?
                     return new ResultSkip();
                 }
-                return typedef.get(type);
+                ResultTypes originalType = typedef.get(type);
+                CNamed named = new CNamed(node, originalType.cvar);
+                ResultTypes r = new ResultTypes(new NamedType(loc, name,
+                        new ASTType[0]), false, false, named);
+                return r;
             }
-            String name = "STRUCT~" + type;
+
             undefStructs.add(name);
-            ResultTypes r = new ResultTypes(new NamedType(loc, name,
-                    new ASTType[0]), false, false, null);
+//            ResultTypes r = new ResultTypes(new NamedType(loc, name,
+//                    new ASTType[0]), false, false, null);
             // FIXME : not sure, if null is a good idea!
+            CStruct struct = new CStruct(node, true);
+            ResultTypes r = new ResultTypes(new NamedType(loc, name,
+                  new ASTType[0]), false, false, struct);
+            
             IASTDeclarator[] decls;
             if (node.getParent() instanceof IASTSimpleDeclaration) {
                 decls = ((IASTSimpleDeclaration) node.getParent())
