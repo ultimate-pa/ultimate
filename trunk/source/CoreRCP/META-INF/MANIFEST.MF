@@ -6,7 +6,7 @@ Bundle-SymbolicName: UltimateCore;singleton:=true
 Bundle-Version: 0.0.1
 Bundle-Activator: de.uni_freiburg.informatik.ultimate.core.coreplugin.Activator
 Require-Bundle: org.eclipse.core.runtime;bundle-version="3.7.0";visibility:=reexport,
- org.eclipse.jface;bundle-version="3.9.0";visibility:=reexport,
+ org.eclipse.jface;visibility:=reexport,
  org.eclipse.ui.workbench;visibility:=reexport,
  Library-log4j,
  ASTBuilder
