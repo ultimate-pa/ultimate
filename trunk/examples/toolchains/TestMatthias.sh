@@ -1,5 +1,19 @@
 #!/bin/bash
 
+
+if [ "$1" = "svcompAlex" ]; then
+echo "specified folder in a test setting"
+trunk/examples/toolchains/TraceAbstractionTestDir.sh 20 $2 \
+"Kojak.xml;KojakC.xml;AlexSVCOMP"
+fi
+
+if [ "$1" = "svcompMatthias" ]; then
+echo "specified folder in a test setting"
+trunk/examples/toolchains/TraceAbstractionTestDir.sh 20 $2 \
+"TraceAbstraction.xml;TraceAbstractionC.xml;Automizer-simpleTest-SVCOMP"
+fi
+
+
 if [ "$1" = "svcompfolder" ]; then
 echo "specified folder in a test setting"
 trunk/examples/toolchains/TraceAbstractionTestDir.sh 20 $2 \

@@ -3,7 +3,6 @@ file_export_version=3.0
 /configuration/CACSL2BoogieTranslator/CheckPointerValidity=false
 /configuration/CACSL2BoogieTranslator/Translation-Mode=SV_COMP14
 /configuration/RCFGBuilder/Solver=Z3
-/configuration/RCFGBuilder/BlockSize=single program statement
 /configuration/RCFGBuilder/Interpolants=ForwardPredicates
 /configuration/RCFGBuilder/HoareAnnotation=true
 /configuration/RCFGBuilder/Timeout=10
