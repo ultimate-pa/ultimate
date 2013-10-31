@@ -727,8 +727,9 @@ public class FunctionHandler {
 			
 			if (in.lrVal.cType instanceof CPrimitive &&
 			        ((CPrimitive)in.lrVal.cType).getType() == PRIMITIVE.INT) {
-			    if (procedureToParamCType.get(methodName).get(i) instanceof
-			            CPointer) {
+			    if (procedureToParamCType.containsKey(methodName) &&
+			            (procedureToParamCType.get(methodName).get(i) instanceof
+			            CPointer)) {
 			        arg = MemoryHandler.constructPointerFromBaseAndOffset(
 			                new IntegerLiteral(loc, "0"), arg, loc);
 			    }
