@@ -225,10 +225,14 @@ test-0158_*
 
 ---
 
-[10098] list-properties (17):
+[10104] list-properties (17):
 
-9 unknown
-- all others -
+3 working
+alternating_list_false, list_flag_false, splice_false
+
+6 unknown
+alternating_list_true, list_false, list_flag_true, list_true,
+simple_built_from_end_true, splice_true
 
 2 getWriteCall type
 simple_false, simple_true
@@ -269,8 +273,14 @@ bubble_sort_false
 3 array cast fail
 bubble_sort_true, linear_*
 
+2 array dynamic size
+invert_*
+
 1 array initialization
 compact_false
+
+2 array NullPointerException
+vogal_*
 
 4 ArrayIndexOutOfBoundsException
 heavy_*, eureka_01_*, 
@@ -278,11 +288,11 @@ heavy_*, eureka_01_*,
 4 auxVarMap
 eureka_05_*, terminator_01_*, n.c24_*
 
-6 char escape
-invert_*, string_*, vogal_*
-
 1 cvar == null (pointer as function parameter)
 s3_false
+
+2 function void
+string_*
 
 2 integer literal implicit cast
 lu*
@@ -415,15 +425,14 @@ error                                           count   example (* = TODO)
 pointer function                                1469    ---
 #pragma                                         602     *
 function call before declaration                91      ---
-cvar == null (pointer as function parameter)    39      cvar
 pointer void                                    40      pointerVoid
+cvar == null (pointer as function parameter)    39      cvar
 array cast fail                                 15      *
 HeapLValues must be converted to RValue first.  15      *
 auxVarMap                                       10      *
 LiveVariables NPE                               12      *
 bit complement                                  7       bitComplement
 union                                           7       ---
-char escape                                     6       charEscape
 #define -> error                                4       *
 #ifndef                                         4       ---
 getWriteCall type                               4       *
@@ -434,7 +443,10 @@ value == null                                   4       *
 __VERIFIER_nondet_pointer() has type int        4       *
 double                                          3       *
 Address of something that is not on the heap    2       *
+array dynamic size                              2       *
+array NullPointerException                      2       *
 equals checks for the same object               2       *
+function void                                   2       *
 integer literal implicit cast                   2       *
 LIST_HEAD                                       2       *
 pointer as offset                               2       *
