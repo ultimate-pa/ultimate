@@ -2,4 +2,5 @@
 	<plugin id="de.uni_freiburg.informatik.ultimate.boogie.preprocessor"/>
 	<plugin id="RCFGBuilder"/>
 	<plugin id="Impulse"/>
+	<plugin id="JungVisualization"/>
 </toolchain>

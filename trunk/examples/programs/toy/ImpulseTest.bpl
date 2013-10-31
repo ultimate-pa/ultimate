@@ -1,3 +1,6 @@
+//#mSafe
+//author: nutz
+//toy example that exposes a problem with the simple redirecting strategy in the impulse algorithm
 procedure foo() {
 	var x,y,a,f:int;
 	x:=0;

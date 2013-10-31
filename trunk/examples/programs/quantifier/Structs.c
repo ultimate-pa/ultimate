@@ -46,7 +46,9 @@ element0 globalStruct;
 void test0(void) {
 	d = e;
 	d[0] = e[0];
-	//@ assert e[0].a == 0;
+	if (e[0].a != 0) {
+		//@ assert \false;
+	}
 	asf acc0 = { .nr = 0 };
 	asf acc1 = { .nr = 0, .nr0 = 1 };
 	asf acc2 = { 3, 4 };
@@ -90,13 +92,17 @@ void test1(void) {
 	test1Helper(++t1.b);
 	t1.b--;
 	--t1.b;
-	//@ assert t1.b == 0;
+	if (t1.b != 0) {
+		//@ assert \false;
+	}
 	t1.a[0] = 0;
 	test1Helper(t1.a[0]++);
 	test1Helper(++t1.a[0]);
 	t1.a[0]--;
 	--t1.a[0];
-	//@ assert t1.a[0] == 0;
+	if (t1.a[0] != 0) {
+		//@ assert \false;
+	}
 	int x = 10;
 	int xOld = x;
 	x += t1.b;
@@ -108,17 +114,23 @@ void test1(void) {
 	test1Helper(++t2[0].b);
 	t2[0].b--;
 	--t2[0].b;
-	//@ assert t2[0].b == 0;
+	if (t2[0].b != 0) {
+		//@ assert \false;
+	}
 	t2[0].a[0] = 0;
 	t2[0].a[0]++;
 	++t2[0].a[0];
 	t2[0].a[0]--;
 	--t2[0].a[0];
-	//@ assert t2[0].a[0] == 0;
+	if (t2[0].a[0] != 0) {
+		//@ assert \false;
+	}
 	x = 10;
 	xOld = x;
 	x += t2[0].b;
-	//@ assert x == t2[0].b + xOld;
+	if (x != t2[0].b + xOld) {
+		//@ assert \false;
+	}
 }
 
 int main() {
