@@ -40,10 +40,10 @@ public class CPrimitive extends CType {
          * C type : void.
          */
         VOID,
-        /**
-         * C type : _Bool.
-         */
-        BOOL,
+//        /**
+//         * C type : _Bool.
+//         */
+//        BOOL,
         /**
          * C type : ?.
          */
@@ -80,7 +80,7 @@ public class CPrimitive extends CType {
             IASTSimpleDeclSpecifier sds = (IASTSimpleDeclSpecifier) cDeclSpec;
             switch (sds.getType()) {
                 case IASTSimpleDeclSpecifier.t_bool:
-                    this.type = PRIMITIVE.BOOL;
+                    this.type = PRIMITIVE.INT;
                     break;
                 case IASTSimpleDeclSpecifier.t_char:
                     this.type = PRIMITIVE.CHAR;

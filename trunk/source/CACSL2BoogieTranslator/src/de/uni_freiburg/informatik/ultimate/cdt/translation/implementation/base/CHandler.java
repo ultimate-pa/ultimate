@@ -590,13 +590,12 @@ public class CHandler implements ICHandler {
 			return r;
 		if (r instanceof ResultTypes) {
 			ResultTypes resType = (ResultTypes) r;
-			Map<VariableDeclaration, CACSLLocation> auxVars =
-					new HashMap<VariableDeclaration, CACSLLocation>();
-			Map<VariableDeclaration, CACSLLocation> emptyAuxVars =
-					new HashMap<VariableDeclaration, CACSLLocation>(0);
-			ResultExpression result = new ResultExpression(null, emptyAuxVars);
-			ResultExpression staticVarStorage = new ResultExpression(null,
-					emptyAuxVars);
+//			Map<VariableDeclaration, CACSLLocation> auxVars =
+//					new HashMap<VariableDeclaration, CACSLLocation>();
+//			Map<VariableDeclaration, CACSLLocation> emptyAuxVars =
+//					new HashMap<VariableDeclaration, CACSLLocation>(0);
+			ResultExpression result = new ResultExpression(null);
+			ResultExpression staticVarStorage = new ResultExpression(null);
 			boolean isGlobal = node.getParent() == node.getTranslationUnit();
 			if (isGlobal) {
 				result.decl.addAll(resType.typeDeclarations);
@@ -644,12 +643,13 @@ public class CHandler implements ICHandler {
 							memoryHandler, structHandler, functionHandler, globalVariables,
 							globalVariablesInits, (IASTArrayDeclarator) d, node.getDeclSpecifier(), resType,
 							bId, loc);
+					CType arrayType = rArray.lrVal.cType;
+					
 					result.stmt.addAll(rArray.stmt);
 					result.decl.addAll(rArray.decl);
 					result.auxVars.putAll(rArray.auxVars);
-					result.lrVal = rArray.lrVal;
+//					result.lrVal = rArray.lrVal;
 					
-					CType arrayType = result.lrVal.cType;
 					
 //					ASTType type = new PrimitiveType(loc, new InferredType(Type.Pointer), SFO.POINTER);
 					ASTType type = MemoryHandler.POINTER_TYPE;
@@ -666,6 +666,17 @@ public class CHandler implements ICHandler {
 							new VarList[] { var });
 					symbolTable.put(cId, new SymbolTableValue(bId, decl, isGlobal,
 							arrayType));
+					
+					if (main.typeHandler.isStructDeclaration()) {
+						/*
+						 * store C variable information into this result, as
+						 * this is a struct field! We need this information to
+						 * build the structs C variable information recursively.
+						 */
+						assert arrayType != null;
+						result.declCTypes.add(arrayType);
+					}
+					
 					if (arrayType.isStatic() && !isGlobal) {
 						staticVarStorage.decl.add(decl);
 					} else {
@@ -946,11 +957,11 @@ public class CHandler implements ICHandler {
 		case IASTLiteralExpression.lk_false:
 			return new ResultExpression(new RValue(new BooleanLiteral(loc,
 					new InferredType(InferredType.Type.Boolean), false),
-					new CPrimitive(PRIMITIVE.BOOL)));
+					new CPrimitive(PRIMITIVE.INT)));
 		case IASTLiteralExpression.lk_true:
 			return new ResultExpression(new RValue(new BooleanLiteral(loc,
 					new InferredType(InferredType.Type.Boolean), true),
-					new CPrimitive(PRIMITIVE.BOOL)));
+					new CPrimitive(PRIMITIVE.INT)));
 		default:
 			String msg = "Unknown or unsupported kind of IASTLiteralExpression";
 			Dispatcher.error(loc, SyntaxErrorType.UnsupportedSyntax, msg);
@@ -1098,6 +1109,7 @@ public class CHandler implements ICHandler {
 			decl.add(tmpVar);
 			stmt.addAll(rop.stmt);
 			decl.addAll(rop.decl);
+			auxVars.putAll(rop.auxVars);
 			stmt.add(new AssignmentStatement(loc,
 					new LeftHandSide[] { new VariableLHS(loc, tmpIType,
 							tmpName) }, new Expression[] { rvalue}));
@@ -1139,6 +1151,7 @@ public class CHandler implements ICHandler {
 			decl.add(tmpVar);
 			stmt.addAll(rop.stmt);
 			decl.addAll(rop.decl);
+			auxVars.putAll(rop.auxVars);
 			int op;
 			if (node.getOperator() == IASTUnaryExpression.op_prefixIncr) 
 				op = IASTBinaryExpression.op_plus;
@@ -1279,10 +1292,8 @@ public class CHandler implements ICHandler {
 		Map<VariableDeclaration, CACSLLocation> auxVars = new HashMap<VariableDeclaration, CACSLLocation>();
 		CACSLLocation loc = new CACSLLocation(node);
 
-		ResultExpression l = (ResultExpression) main.dispatch(node
-				.getOperand1());
-		ResultExpression r = (ResultExpression) main.dispatch(node
-				.getOperand2());
+		ResultExpression l = (ResultExpression) main.dispatch(node.getOperand1());
+		ResultExpression r = (ResultExpression) main.dispatch(node.getOperand2());
 
 		//        assert (main.isAuxVarMapcomplete(decl, auxVars)) : "unhavoced auxvars";
 
@@ -1377,7 +1388,7 @@ public class CHandler implements ICHandler {
 				expr = wrapBinaryBoolean2Int(loc, op, 
 						rl.lrVal.getValue(), rr.lrVal.getValue());
 			}
-			return new ResultExpression(stmt, new RValue(expr, new CPrimitive(PRIMITIVE.BOOL)), decl, auxVars);
+			return new ResultExpression(stmt, new RValue(expr, new CPrimitive(PRIMITIVE.INT)), decl, auxVars);
 		}
 		case IASTBinaryExpression.op_logicalAnd: {
 			stmt.addAll(rl.stmt);

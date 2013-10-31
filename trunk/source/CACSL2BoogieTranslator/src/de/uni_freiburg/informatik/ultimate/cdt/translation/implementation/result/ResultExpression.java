@@ -213,7 +213,7 @@ public class ResultExpression extends Result {
 							//(in this case we return nothing, because this should not be read anyway..)
 //							throw new UnsupportedSyntaxException("void should have been cast before dereferencing");
 							break;
-						case BOOL:
+//						case BOOL:
 						default:
 							throw new UnsupportedSyntaxException("..");
 						}
@@ -227,17 +227,15 @@ public class ResultExpression extends Result {
 						newValue = (RValue) rex.lrVal;
 					} else if (underlyingType instanceof CArray) {
 						CArray caType = (CArray) underlyingType;
-						if (caType.getDimensions().length == 0) {
-							heapReadType = new InferredType(caType.getValueType());
-							rex = memoryHandler.getReadCall(
-									main, heapReadType, hlv.getAddress(), new CPointer(this.lrVal.cType));
-							newStmt.addAll(rex.stmt);
-							newDecl.addAll(rex.decl);
-							newAuxVars.putAll(rex.auxVars);	
-							newValue = (RValue) rex.lrVal;
-						} else //referring not to a "smallest" entry in the array -- is that allowed?
-							throw new UnsupportedSyntaxException(".."); 
-							
+						assert caType.getDimensions().length > 0 : "the outermost subscript should have removed the arrayType";
+//						heapReadType = new InferredType(caType.getValueType());
+						heapReadType = new InferredType(Type.Pointer);
+						rex = memoryHandler.getReadCall(
+								main, heapReadType, hlv.getAddress(), new CPointer(this.lrVal.cType));
+						newStmt.addAll(rex.stmt);
+						newDecl.addAll(rex.decl);
+						newAuxVars.putAll(rex.auxVars);	
+						newValue = (RValue) rex.lrVal;
 					} else if (underlyingType instanceof CEnum) {
 					} else if (underlyingType instanceof CStruct) {
 						CStruct structType = (CStruct) underlyingType;
@@ -301,20 +299,13 @@ public class ResultExpression extends Result {
 			ResultExpression fieldRead = null; 
 			if(underlyingType instanceof CPrimitive) {
 				InferredType typeOnHeap = null;
-				CPrimitive cp = (CPrimitive) fieldTypes[i];
+				CPrimitive cp = (CPrimitive) underlyingType;
 				switch (cp.getType()) {
+				case CHAR:
 				case INT:
 					typeOnHeap = new InferredType(Type.Integer);
 					break;
-					//				case POINTER:						
-					//					typeOnHeap = new InferredType(Type.Pointer);
-					//					break;
-				case BOOL:
-					throw new UnsupportedSyntaxException("..");
-					//					break;
-				case CHAR:
-					throw new UnsupportedSyntaxException("..");
-					//					break;
+//				case BOOL:
 				default:
 					throw new UnsupportedSyntaxException("..");
 				}

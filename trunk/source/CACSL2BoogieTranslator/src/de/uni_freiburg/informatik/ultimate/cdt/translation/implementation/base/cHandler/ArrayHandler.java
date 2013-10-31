@@ -93,59 +93,59 @@ public class ArrayHandler {
 					dispatch(am.getConstantExpression());
 			constEx = constEx.switchToRValue(main, //just to be safe..
 					memoryHandler, structHandler, loc);
-			assert constEx.lrVal instanceof RValue : "we only allow arrays of constant size";
+//			assert constEx.lrVal instanceof RValue : "we only allow arrays of constant size";
 			sizeConstants.add(constEx.lrVal.getValue());
-			
-			Integer constAsInt =  Integer.parseInt(((IntegerLiteral) constEx.lrVal.getValue()).getValue());
-		
-
+//			Integer constAsInt =  Integer.parseInt(((IntegerLiteral) constEx.lrVal.getValue()).getValue());
 			overallSize = CHandler.createArithmeticExpression(IASTBinaryExpression.op_multiply, 
 					overallSize, constEx.lrVal.getValue(), loc);//
 		}
 
 		Expression sizeOfCell = memoryHandler.calculateSizeOf(resType.cvar);
-
-		ResultExpression mallocCall = null;
-		Expression mallocSize = null;
-		mallocSize = CHandler.createArithmeticExpression(IASTBinaryExpression.op_multiply, 
-				overallSize,
-				sizeOfCell,
-				loc);
-		mallocCall = memoryHandler.getMallocCall(main, functionHandler, 
-				mallocSize, loc);	
-
-		stmt.addAll(mallocCall.stmt);
-		decl.addAll(mallocCall.decl);
-		auxVars.putAll(mallocCall.auxVars);
-		arrayPointer = mallocCall.lrVal;
-		arrayPointer.cType = new CArray(iastDeclSpecifier,  //TODO: think about this type things
+		CArray arrayType = new CArray(iastDeclSpecifier,  //TODO: think about this type things
 				sizeConstants.toArray(new Expression[0]), resType.cvar);
-
-		LocalLValue arrayId = new LocalLValue(new VariableLHS(loc, new InferredType(Type.Pointer), bId), arrayPointer.cType);
-		Statement assingPtrToArray = new AssignmentStatement(loc, 
-				new LeftHandSide[]{ arrayId.getLHS() }, 
-				new Expression[]{ arrayPointer.getValue() });
-		stmt.add(assingPtrToArray);
+		LocalLValue arrayId = new LocalLValue(new VariableLHS(loc, new InferredType(Type.Pointer), bId), arrayType);
 
 		//handle initialization
 		if (d.getInitializer() != null) {			
-			//			if (overallSizeAsInt == 0) {
-			//				assert false : "not yet implemented";
-			//not using the ints but making boogie computations right now..
-			//however for initialisation we need a size, of course..
+			//malloc the space on the heap for the array
+			ResultExpression mallocCall = null;
+			Expression mallocSize = null;
+			mallocSize = CHandler.createArithmeticExpression(IASTBinaryExpression.op_multiply, 
+					overallSize,
+					sizeOfCell,
+					loc);
+			mallocCall = memoryHandler.getMallocCall(main, functionHandler, 
+					mallocSize, loc);	
+			stmt.addAll(mallocCall.stmt);
+			decl.addAll(mallocCall.decl);
+			auxVars.putAll(mallocCall.auxVars);
+			arrayPointer = mallocCall.lrVal;
+			arrayPointer.cType = arrayType;
+			
+			Statement assingPtrToArray = new AssignmentStatement(loc, 
+					new LeftHandSide[]{ arrayId.getLHS() }, 
+					new Expression[]{ arrayPointer.getValue() });
+			stmt.add(assingPtrToArray);
+			
+			//evaluate the initializer and fill the heapspace of the array
 			ResultExpressionListRec init = (ResultExpressionListRec) main.dispatch(d.getInitializer());
 			ArrayList<Statement> arrayWrites = initArray(memoryHandler, structHandler, loc, init.list, 
 					arrayId.getValue(), sizeOfCell, (CArray) arrayPointer.cType);
 			stmt.addAll(arrayWrites);
 
-			for (String t : new String[] { SFO.INT, SFO.POINTER,
-					SFO.REAL, SFO.BOOL }) {
-				functionHandler.getModifiedGlobals()
-				.get(functionHandler.getCurrentProcedureID())
-				.add(SFO.MEMORY + "_" + t);
+			if (functionHandler.getCurrentProcedureID() != null) {
+				for (String t : new String[] { SFO.INT, SFO.POINTER,
+						SFO.REAL, SFO.BOOL }) {
+					functionHandler.getModifiedGlobals()
+					.get(functionHandler.getCurrentProcedureID())
+					.add(SFO.MEMORY + "_" + t);
+				}
+			} else { //our initialized array belongs to a global variable
+				//TODO -- handle globals?? or is it done via the symbolTable?? what with statics??
 			}
 		}
 		return new ResultExpression(stmt, arrayId, decl, auxVars);
+//		return new ResultExpression(stmt, arrayId, decl, auxVars);
 	}
 
 	//	FIXME: a little inconsistent: here, we assume non-variable, simple sizeConstants while not doing so at arraySubscriptExs
@@ -253,17 +253,20 @@ public class ArrayHandler {
 		ArrayList<Statement> stmt = new ArrayList<Statement>();
 		ArrayList<Declaration> decl = new ArrayList<Declaration>();
 		HashMap<VariableDeclaration, CACSLLocation> auxVars = new HashMap<VariableDeclaration, CACSLLocation>();
-		stmt.addAll(subscript.stmt);
-		stmt.addAll(array.stmt);
-		decl.addAll(subscript.decl);
-		decl.addAll(array.decl);
-		auxVars.putAll(subscript.auxVars);
-		auxVars.putAll(array.auxVars);
 
+
+		ResultExpression subscriptR = subscript.switchToRValue(main, memoryHandler, structHandler, loc);
+		stmt.addAll(subscript.stmt);
+		decl.addAll(subscript.decl);
+		auxVars.putAll(subscript.auxVars);
+			
 		//catch the case where we are doing a subscript on a pointer
 		if (array.lrVal.cType instanceof CPointer) {
 			ResultExpression arrayR = array.switchToRValue(main, memoryHandler, structHandler, loc);
-			ResultExpression subscriptR = subscript.switchToRValue(main, memoryHandler, structHandler, loc);
+			stmt.addAll(arrayR.stmt);
+			decl.addAll(arrayR.decl);
+			auxVars.putAll(arrayR.auxVars);
+			
 			RValue newPointer = ((CHandler) main.cHandler).doPointerArith(main, IASTBinaryExpression.op_plus, loc, 
 					(RValue) arrayR.lrVal, (RValue) subscriptR.lrVal);
 			HeapLValue newHlv = new HeapLValue(newPointer.getValue(), ((CPointer) array.lrVal.cType).pointsToType);
@@ -271,37 +274,43 @@ public class ArrayHandler {
 		}
 		
 		// we really have an array
-		CArray arrayCType = null;
-		if (node.getArrayExpression() instanceof IASTArraySubscriptExpression) {
-			arrayCType = (CArray) array.lrVal.cType;
-		} else { // we have reached the innermost subscript
-			arrayCType = (CArray) main.cHandler.getSymbolTable().get(
-					main.cHandler.getSymbolTable().getCID4BoogieID(
-							((IdentifierExpression) array.lrVal.getValue()).getIdentifier(), null), null).getCVariable();
-		}
+		CArray arrayCType = (CArray) array.lrVal.cType;
 
 		ArrayList<Expression> newDimensions = new ArrayList<Expression>(Arrays.asList(arrayCType.getDimensions()));
 		newDimensions.remove(0);//FIXME: first or last??
-		CArray outerArrayCType = new CArray(
+		CType newCType = null;
+		if (newDimensions.size() == 0)
+			newCType = arrayCType.getValueType();
+		else
+			newCType = new CArray(
 				arrayCType.getDeclSpec(), newDimensions.toArray(new Expression[0]), arrayCType.getValueType());
+	
 
-		Expression offset = subscript.lrVal.getValue();
+		Expression offset = subscriptR.lrVal.getValue();
 		offset = computeSubscriptMultiplier(main, memoryHandler, loc,
 				arrayCType, offset);	
 
 		Expression arrayBase = null;
 		Expression arrayOffset = null;
 		if (node.getArrayExpression() instanceof IASTArraySubscriptExpression) {
+			stmt.addAll(array.stmt);
+			decl.addAll(array.decl);
+			auxVars.putAll(array.auxVars);
+			
 			HeapLValue arrayHlv = (HeapLValue) array.lrVal;
 			StructConstructor ptr = (StructConstructor) arrayHlv.getAddress();
 			arrayBase = ptr.getFieldValues()[0];
 			arrayOffset = ptr.getFieldValues()[1];
 		} else{
-			Expression arrayAddress = array.lrVal.getValue();
+			ResultExpression arrayR = array.switchToRValue(main, memoryHandler, structHandler, loc);
+			stmt.addAll(arrayR.stmt);
+			decl.addAll(arrayR.decl);
+			auxVars.putAll(arrayR.auxVars);
+	
+			Expression arrayAddress = arrayR.lrVal.getValue();
 			arrayBase = MemoryHandler.getPointerBaseAddress(arrayAddress, loc);
 			arrayOffset = MemoryHandler.getPointerOffset(arrayAddress, loc);
 		}
-
 
 		offset = CHandler.createArithmeticExpression(IASTBinaryExpression.op_plus,
 				arrayOffset,
@@ -311,7 +320,7 @@ public class ArrayHandler {
 		Expression newPointer = MemoryHandler
 				.constructPointerFromBaseAndOffset(arrayBase, offset, loc);
 
-		return new ResultExpression(stmt, new HeapLValue(newPointer, outerArrayCType), decl, auxVars);
+		return new ResultExpression(stmt, new HeapLValue(newPointer, newCType), decl, auxVars);
 	}
 
 	private Expression computeSubscriptMultiplier(Dispatcher main,

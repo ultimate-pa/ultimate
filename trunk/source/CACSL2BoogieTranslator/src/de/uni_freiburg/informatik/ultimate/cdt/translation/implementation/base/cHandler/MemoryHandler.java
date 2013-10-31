@@ -901,18 +901,18 @@ public class MemoryHandler {
 			case INT:
 				result = SFO.INT;
 				break;
-			case BOOL:
-				throw new UnsupportedSyntaxException("usupported cType " + ct);
+//			case BOOL:
 			default:
 				throw new UnsupportedSyntaxException("usupported cType " + ct);
 			}
 		} else if (ut instanceof CPointer) {
 			result = SFO.POINTER;
 		} else if (ut instanceof CArray) {
-			if (((CArray) ut).getDimensions().length == 0)
-				return getHeapTypeStringOfCType(((CArray) ut).getValueType());
-			else
-				throw new UnsupportedSyntaxException("usupported cType " + ct); //not yet treated (as in switchToRValue..)
+			result = SFO.POINTER;
+//			if (((CArray) ut).getDimensions().length == 0)
+//				return getHeapTypeStringOfCType(((CArray) ut).getValueType());
+//			else
+//				throw new UnsupportedSyntaxException("usupported cType " + ct); //not yet treated (as in switchToRValue..)
 		} else if (ut instanceof CEnum) {
 				throw new UnsupportedSyntaxException("usupported cType " + ct);
 		} else if (ut instanceof CStruct) {
@@ -955,7 +955,7 @@ public class MemoryHandler {
         		stmt.add(new CallStatement(loc, false, new VariableLHS[0], "write~" + t,
         				new Expression[] { rval.getValue(), hlv.getAddress() }));
         		break;
-        	case BOOL:
+//        	case BOOL:
         	default:
         		throw new UnsupportedSyntaxException("we don't recognize this type");
         	}
