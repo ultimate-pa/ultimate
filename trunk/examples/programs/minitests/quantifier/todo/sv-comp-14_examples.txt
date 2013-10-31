@@ -71,7 +71,7 @@ dll_of_dll_false, dll_of_dll_true
 bubble_sort_linux_false.cil, bubble_sort_linux_true.cil, dll_of_dll_false.cil,
 dll_of_dll_true.cil
 
-2 pointer void
+2 pointer void assignment int
 sll_to_dll_rev_false.cil, sll_to_dll_rev_true.cil
 
 4 struct pointer as function parameter not recognized
@@ -161,6 +161,9 @@ test19_true
 3 double
 test_union_cast.c_true.cil, test_union_cast-2_*
 
+1 empty identifier
+fo_*, 
+
 1 function parameter (a pointer) not recognized
 test18_true
 
@@ -176,9 +179,14 @@ callfpointer*
 1 pointer struct I
 sizeofparameters_test.c_true.cil
 
-10 pointer void
-1_3.c_*, alt_*, ex3_*, fo_*, recursive_*, rule60_*, test_address*,
-test_malloc-1_true.cil, 
+4 pointer void assignment int
+1_3.c_*, rule60_list.c_true.cil, test_address*, test_malloc-1_true.cil
+
+4 pointer void return value
+alt_*, recursive_*, rule60_list2*
+
+1 getReadCall() assertion
+ex3_*, 
 
 1 StringLiteral
 test_overflow.c_true.cil
@@ -208,8 +216,11 @@ list_flag_*, list_true
 3 array cast fail
 960521-1_*
 
-2 empty enum identifier
+2 empty identifier
 test-0214_true, test-0217_true
+
+3 free with field access
+test-0158_*
 
 4 getWriteCall type
 simple_*, test-0019_*
@@ -219,9 +230,6 @@ test_0232_*
 
 2 pointer type
 test-0504_true, test-0513_true
-
-3 pointer void
-test-0158_*
 
 ---
 
@@ -234,11 +242,11 @@ alternating_list_false, list_flag_false, splice_false
 alternating_list_true, list_false, list_flag_true, list_true,
 simple_built_from_end_true, splice_true
 
+6 empty identifier
+*.cil
+
 2 getWriteCall type
 simple_false, simple_true
-
-6 pointer void
-*.cil
 
 ---
 
@@ -257,7 +265,7 @@ while_infinite_loop_4_*
 
 35 unknown
 array_*, trex02_true, trex04_*, for_*, insertion_*, list_*, matrix_*, n.c11_*,
-n.c40_*, nec20_*, nec40_*, sum*, terminator_02_true, terminator_03_*,
+n.c40_*, nec20_*, nec40_*, sum*, string_*, terminator_02_true, terminator_03_*,
 while_infinite_loop_1_*, while_infinite_loop_2_*, while_infinite_loop_3_*
 
 2 wrong result
@@ -291,9 +299,6 @@ eureka_05_*, terminator_01_*, n.c24_*
 1 cvar == null (pointer as function parameter)
 s3_false
 
-2 function void
-string_*
-
 2 integer literal implicit cast
 lu*
 
@@ -317,7 +322,10 @@ test-0102_false-valid-memtrack
 3 array cast fail
 960521-1_*
 
-3 empty enum identifier
+5 CType == null
+test-0019_*, test-0158_*
+
+3 empty identifier
 test-0214_true, test-0217_true, test-0218_true
 
 4 HeapLValues must be converted to RValue first.
@@ -331,9 +339,6 @@ test-0134_true, test-0137_false-valid-deref
 
 6 pointer type
 lockfree-*, test-0504_*, test-0513_*
-
-5 pointer void
-test-0019_*, test-0158_*
 
 9 size_t
 test-0219_true, test-0220_true, test-0234_*, test-0235_*, test-0236_*,
@@ -367,9 +372,9 @@ parport_*
 
 ---
 
-[10098] ntdrivers-simplified (10):
+[10175] ntdrivers-simplified (10):
 
-10 pointer void
+10 unknown
 - all -
 
 ---
@@ -381,7 +386,7 @@ product-lines (597):
 
 ---
 
-recursive (35):
+[10175] recursive (35):
 
 5 working
 EvenOdd03_false, gcd01_true, gcd, McCarthy91_*
@@ -392,29 +397,29 @@ EvenOdd03_false, gcd01_true, gcd, McCarthy91_*
 1 implementation
 Fibonacci04_false
 
-4 value == null
+4 value == null (RcfgProgramExecutionBuilder)
 Ackermann02_false, Ackermann_false, Addition02_false, Addition_false
 
 ---
 
-ssh (36):
+[10175] ssh (36):
 
-36 cvar == null (pointer as function parameter)
+36 union
 - all -
 
 ---
 
-ssh-simplified (26):
+[10175] ssh-simplified (26):
 
 24 unknown
 - all others -
 
-2 pointer void
+2 pointer void assignment int
 s3_clnt_3_false.cil, s3_clnt_3_true.cil
 
 ---
 
-systemc (64):
+[10175] systemc (64):
 
 64 unknown
 - all -
@@ -425,23 +430,27 @@ error                                           count   example (* = TODO)
 pointer function                                1469    ---
 #pragma                                         602     *
 function call before declaration                91      ---
-pointer void                                    40      pointerVoid
-cvar == null (pointer as function parameter)    39      cvar
+union                                           43      ---
 array cast fail                                 15      *
 HeapLValues must be converted to RValue first.  15      *
-auxVarMap                                       10      *
+empty identifier                                12      *
 LiveVariables NPE                               12      *
+auxVarMap                                       10      *
+pointer void assignment int                     8       *
 bit complement                                  7       bitComplement
-union                                           7       ---
+CType == null                                   5       *
 #define -> error                                4       *
 #ifndef                                         4       ---
 getWriteCall type                               4       *
 ResultExpression.switchToRValue() (char)        4       *
+pointer void return value                       4       *
 struct pointer as function parameter
         not recognized                          4       *
-value == null                                   4       *
+value == null (RcfgProgramExecutionBuilder)     4       *
 __VERIFIER_nondet_pointer() has type int        4       *
+cvar == null (pointer as function parameter)    3       cvar
 double                                          3       *
+free with field access                          3       *
 Address of something that is not on the heap    2       *
 array dynamic size                              2       *
 array NullPointerException                      2       *
@@ -462,6 +471,7 @@ cast int pointer to uint                        1       *
 char                                            1       *
 dereferencing fails                             1       *
 function parameter (a pointer) not recognized   1       *
+getReadCall() assertion                         1       *
 implementation                                  1       --- (error in example)
 implicit cast (float to int)                    1       implicitCast
 m_RcfgProgramExecution != null                  1       *
