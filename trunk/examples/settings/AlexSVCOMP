@@ -1,0 +1,23 @@
+#Thu Oct 31 17:45:09 CET 2013
+file_export_version=3.0
+/configuration/JungVisualization/shapeForNodePreference=RoundRectangle
+\!/configuration/JungVisualization=
+#Thu Oct 31 17:45:09 CET 2013
+/configuration/CodeCheck/onlyMainProcedure=true
+file_export_version=3.0
+\!/configuration/CodeCheck=
+/configuration/CodeCheck/SolverAndInterpolator=Z3SPWP
+#Thu Oct 31 17:45:09 CET 2013
+file_export_version=3.0
+/configuration/CACSL2BoogieTranslator/CheckedMethod=main
+/configuration/CACSL2BoogieTranslator/CheckPointerValidity=true
+/configuration/CACSL2BoogieTranslator/Translation-Mode=SV_COMP14
+\!/configuration/CACSL2BoogieTranslator=
+#Thu Oct 31 17:45:09 CET 2013
+file_export_version=3.0
+/configuration/RCFGBuilder/AllErrorsAtOnce=false
+/configuration/RCFGBuilder/Solver=Z3
+/configuration/RCFGBuilder/BlockSize=single program statement
+\!/configuration/RCFGBuilder=
+/configuration/RCFGBuilder/PreserveGotoEdges=true
+/configuration/RCFGBuilder/Interpolants=ForwardPredicates
