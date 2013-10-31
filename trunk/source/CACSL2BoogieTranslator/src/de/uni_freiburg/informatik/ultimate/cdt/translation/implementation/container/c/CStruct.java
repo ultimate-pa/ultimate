@@ -20,8 +20,17 @@ public class CStruct extends CType {
      * Field types.
      */
     private final CType[] fTypes;
-
+    
     /**
+     * Indicates if this represents an incomplete type.
+     */
+    private final boolean isIncomplete;
+
+    public boolean isIncomplete() {
+		return isIncomplete;
+	}
+
+	/**
      * Constructor.
      * 
      * @param fNames
@@ -36,6 +45,17 @@ public class CStruct extends CType {
         super(cDeclSpec);
         this.fNames = fNames;
         this.fTypes = fTypes;
+        this.isIncomplete = false;
+    }
+    
+    public CStruct(IASTDeclSpecifier cDeclSpec, boolean isIncomplete) {
+        super(cDeclSpec);
+        if (!isIncomplete) {
+        	throw new AssertionError("use different constructor for non-incomplete types");
+        }
+        this.fNames = null;
+        this.fTypes = null;
+        this.isIncomplete = isIncomplete;
     }
 
     /**
@@ -83,15 +103,19 @@ public class CStruct extends CType {
 
     @Override
     public String toString() {
-        StringBuilder id = new StringBuilder("STRUCT#");
-        for (int i = 0; i < getFieldCount(); i++) {
-            id.append("?");
-            id.append(fNames[i]);
-            id.append("~");
-            id.append(fTypes[i].toString());
-        }
-        id.append("#");
-        return id.toString();
+    	if (isIncomplete) {
+    		return "STRUCT#~incomplete";
+    	} else {
+    		StringBuilder id = new StringBuilder("STRUCT#");
+    		for (int i = 0; i < getFieldCount(); i++) {
+    			id.append("?");
+    			id.append(fNames[i]);
+    			id.append("~");
+    			id.append(fTypes[i].toString());
+    		}
+    		id.append("#");
+    		return id.toString();
+    	}
     }
     
     @Override
