@@ -47,7 +47,7 @@ public class CNamed extends CType {
     		name = ((IASTNamedTypeSpecifier) super.cDeclSpec).getName();
     		
     	} else if (super.cDeclSpec instanceof IASTElaboratedTypeSpecifier) {
-    		name = ((IASTNamedTypeSpecifier) super.cDeclSpec).getName();
+    		name = ((IASTElaboratedTypeSpecifier) super.cDeclSpec).getName();
     	} else {
     		throw new AssertionError("illegal decl");
     	}
