@@ -21,6 +21,7 @@ import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.logic.LoggingScript;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.model.BoogieLocation;
+import de.uni_freiburg.informatik.ultimate.model.IAnnotations;
 import de.uni_freiburg.informatik.ultimate.model.IEdge;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.IType;
@@ -973,6 +974,7 @@ public class CfgBuilder {
 			for (EnsuresSpecification spec : ensures) {
 				AssumeStatement st = new AssumeStatement(
 						locationCopy(spec.getLocation()), spec.getFormula());
+				passAllAnnotations(spec, st);
 				m_Backtranslator.putAux(st, spec);
 				processAssuAssiHavoStatement(st,Origin.ENSURES);
 				m_LastSt = st;
@@ -993,10 +995,12 @@ public class CfgBuilder {
 					AssumeStatement assumeSt;
 					assumeSt = new AssumeStatement(
 							locationCopy(spec.getLocation()), getNegation(specExpr));
+					passAllAnnotations(assumeSt, assumeSt);
 					m_Backtranslator.putAux(assumeSt, assumeSt);
 					ProgramPoint errorLocNode = addErrorNode(m_currentProcedureName, spec);
 					CodeBlock assumeEdge = new StatementSequence(finalNode, 
 							errorLocNode, assumeSt, Origin.ENSURES);
+					passAllAnnotations(spec, assumeEdge);
 					m_Edges.add(assumeEdge);
 				}
 			}
@@ -1016,6 +1020,7 @@ public class CfgBuilder {
 				for (RequiresSpecification spec : requires) {
 					AssumeStatement st = new AssumeStatement(
 							locationCopy(spec.getLocation()), spec.getFormula());
+					passAllAnnotations(spec, st);
 					m_Backtranslator.putAux(st, spec);
 					processAssuAssiHavoStatement(st,Origin.REQUIRES);
 					m_LastSt = st;
@@ -1169,6 +1174,7 @@ public class CfgBuilder {
 			}
 			if (m_current instanceof ProgramPoint) {
 				StatementSequence codeBlock = new StatementSequence((ProgramPoint) m_current, null, st, origin);
+				passAllAnnotations(st, codeBlock);
 				m_Edges.add(codeBlock);
 				m_current = codeBlock; 
 			}
@@ -1186,6 +1192,7 @@ public class CfgBuilder {
 					((CodeBlock)m_current).connectTarget(locNode);
 					m_procLocNodes.put(locName, locNode);
 					StatementSequence codeBlock = new StatementSequence(locNode, null,st, origin);
+					passAllAnnotations(st, codeBlock);
 					m_Edges.add(codeBlock);
 					m_current = codeBlock; 
 				}
@@ -1215,15 +1222,19 @@ public class CfgBuilder {
 			Expression assertion = ((AssertStatement) st).getFormula();
 			AssumeStatement assumeError = new AssumeStatement(
 					locationCopy(st.getLocation()), getNegation(assertion));
+			passAllAnnotations(st, assumeError);
 			m_Backtranslator.putAux(assumeError, st);
 			ProgramPoint errorLocNode = addErrorNode(m_currentProcedureName, st);
 			StatementSequence assumeErrorCB = 
 					new StatementSequence(locNode, errorLocNode, assumeError, Origin.ASSERT);
+			passAllAnnotations(st, assumeErrorCB);
 			m_Edges.add(assumeErrorCB);
 			AssumeStatement assumeSafe = new AssumeStatement(
 					locationCopy(st.getLocation()),assertion);
+			passAllAnnotations(st, assumeSafe);
 			m_Backtranslator.putAux(assumeSafe, st);
 			StatementSequence assumeSafeCB = new StatementSequence(locNode, null, assumeSafe, Origin.ASSERT);
+			passAllAnnotations(st, assumeSafeCB);
 			//add a new TransEdge labeled with st as successor of the
 			//last constructed LocNode
 			m_Edges.add(assumeSafeCB);
@@ -1300,10 +1311,12 @@ public class CfgBuilder {
 			Summary summaryEdge;
 			if (m_RootAnnot.m_Implementation.containsKey(callee)) {
 				summaryEdge = new Summary(locNode, returnNode, st, true);
+				passAllAnnotations(st, summaryEdge);
 				m_ImplementationSummarys.add(summaryEdge);
 			}
 			else {
 				summaryEdge = new Summary(locNode, returnNode, st, false);
+				passAllAnnotations(st, summaryEdge);
 			}
 			m_Edges.add(summaryEdge);
 			m_current = returnNode;
@@ -1332,10 +1345,12 @@ public class CfgBuilder {
 									proc).getResult());
 					AssumeStatement assumeSt;
 					assumeSt = new AssumeStatement(st.getLocation(),violatedRequires);
+					passAllAnnotations(st, assumeSt);
 					m_Backtranslator.putAux(assumeSt, spec);
 					ProgramPoint errorLocNode = addErrorNode(m_currentProcedureName, st);
 					StatementSequence errorCB = new StatementSequence(
 							locNode, errorLocNode, assumeSt, Origin.REQUIRES);
+					passAllAnnotations(st, errorCB);
 					m_Edges.add(errorCB);
 				}
 			}
@@ -1613,5 +1628,22 @@ public class CfgBuilder {
 		return new BoogieLocation(loc.getFileName(), 
 				loc.getStartLine(),	loc.getEndLine(), 
 				loc.getStartColumn(), loc.getEndColumn(), loc);
+	}
+	
+	
+	
+	
+	private static void passAllAnnotations(ASTNode node, CodeBlock cb) {
+		if (node.getPayload().hasAnnotation()) {
+			HashMap<String, IAnnotations> annots = node.getPayload().getAnnotations();
+			cb.getPayload().getAnnotations().putAll(annots);
+		}
+	}
+	
+	private static void passAllAnnotations(ASTNode node, Statement st) {
+		if (node.getPayload().hasAnnotation()) {
+			HashMap<String, IAnnotations> annots = node.getPayload().getAnnotations();
+			st.getPayload().getAnnotations().putAll(annots);
+		}
 	}
 }
