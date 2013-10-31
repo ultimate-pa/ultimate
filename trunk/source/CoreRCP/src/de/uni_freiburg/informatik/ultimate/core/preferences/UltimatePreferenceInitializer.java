@@ -44,7 +44,7 @@ public abstract class UltimatePreferenceInitializer extends
 			switch (item.getType()) {
 			case Boolean:
 				defaults.putBoolean(item.getLabel(),
-						(boolean) item.getDefaultValue());
+						(Boolean) item.getDefaultValue());
 				break;
 			case Directory:
 			case String:
