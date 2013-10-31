@@ -13,13 +13,17 @@ import org.eclipse.cdt.core.dom.ast.IASTExpression;
 import org.eclipse.cdt.core.dom.ast.IASTFieldReference;
 import org.eclipse.cdt.core.dom.ast.IASTForStatement;
 import org.eclipse.cdt.core.dom.ast.IASTFunctionCallExpression;
+import org.eclipse.cdt.core.dom.ast.IASTFunctionDeclarator;
 import org.eclipse.cdt.core.dom.ast.IASTFunctionDefinition;
 import org.eclipse.cdt.core.dom.ast.IASTIdExpression;
 import org.eclipse.cdt.core.dom.ast.IASTNode;
+import org.eclipse.cdt.core.dom.ast.IASTParameterDeclaration;
+import org.eclipse.cdt.core.dom.ast.IASTPointerOperator;
 import org.eclipse.cdt.core.dom.ast.IASTSimpleDeclaration;
 import org.eclipse.cdt.core.dom.ast.IASTStatement;
 import org.eclipse.cdt.core.dom.ast.IASTSwitchStatement;
 import org.eclipse.cdt.core.dom.ast.IASTUnaryExpression;
+import org.eclipse.cdt.internal.core.dom.parser.c.CASTFunctionDeclarator;
 import org.eclipse.cdt.internal.core.dom.parser.c.CASTSimpleDeclaration;
 
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CACSLLocation;
@@ -212,6 +216,21 @@ public class PreRunner extends ASTVisitor {
         if (declaration instanceof IASTFunctionDefinition) {
             IASTFunctionDefinition funDef = (IASTFunctionDefinition)declaration;
             functionTable.put(funDef.getDeclarator().getName().toString(), funDef);
+            if (funDef.getDeclarator() instanceof CASTFunctionDeclarator) {
+                CASTFunctionDeclarator dec =
+                        (CASTFunctionDeclarator)funDef.getDeclarator();
+                for (IASTParameterDeclaration param : dec.getParameters()) {
+                    IASTPointerOperator[] pointerOps =
+                            param.getDeclarator().getPointerOperators();
+                    //--> that's the simple solution, if there are pointers declared,
+                    // we introduce the (full) memory model
+                    // might be done better in the future..
+                    if (pointerOps != null && pointerOps.length != 0) 
+                        isMMRequired = true;
+                    if (param instanceof IASTArrayDeclarator)
+                        isMMRequired = true;//FIXME: right all arrays are on the heap -- change this in case of a change of mind
+                }
+            }
             sT.beginScope();
             int nr = super.visit(declaration);
             sT.endScope();

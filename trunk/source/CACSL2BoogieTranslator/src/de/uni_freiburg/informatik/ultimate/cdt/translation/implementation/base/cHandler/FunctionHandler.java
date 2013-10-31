@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Queue;
 
+import org.eclipse.cdt.core.dom.ast.IASTDeclSpecifier;
 import org.eclipse.cdt.core.dom.ast.IASTDeclarator;
 import org.eclipse.cdt.core.dom.ast.IASTExpression;
 import org.eclipse.cdt.core.dom.ast.IASTFunctionCallExpression;
@@ -21,7 +22,9 @@ import org.eclipse.cdt.core.dom.ast.IASTParameterDeclaration;
 import org.eclipse.cdt.core.dom.ast.IASTReturnStatement;
 import org.eclipse.cdt.core.dom.ast.IASTSimpleDeclaration;
 import org.eclipse.cdt.internal.core.dom.parser.c.CASTFunctionDeclarator;
+import org.eclipse.cdt.internal.core.dom.rewrite.astwriter.DeclSpecWriter;
 
+import de.uni_freiburg.informatik.ultimate.cdt.decorator.DecoratorNode;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CACSLLocation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.InferredType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.InferredType.Type;
@@ -59,6 +62,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.EnsuresSpecification
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.HavocStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IdentifierExpression;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.LeftHandSide;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ModifiesSpecification;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.PrimitiveType;
@@ -112,6 +116,7 @@ public class FunctionHandler {
 	private HashSet<String> methodsCalledBeforeDeclared;
 	
 	private HashMap<String, CType> procedureToReturnCType;
+	private HashMap<String, ArrayList<CType>> procedureToParamCType;
 	
 	private final static boolean m_CheckMemoryLeakAtEndOfMain = false;
 
@@ -125,6 +130,7 @@ public class FunctionHandler {
 		this.methodsCalledBeforeDeclared = new HashSet<String>();
 		this.procedures = new HashMap<String, Procedure>();
 		this.procedureToReturnCType = new HashMap<String, CType>();
+		this.procedureToParamCType = new HashMap<String, ArrayList<CType>>(); 
 		this.modifiedGlobalsIsUserDefined = new HashSet<String>();
 	}
 
@@ -280,6 +286,25 @@ public class FunctionHandler {
 				out, spec, null);
 		procedures.put(methodName, proc);
 		procedureToReturnCType.put(methodName, returnType.cvar);
+		
+		// fill map of parameter types
+		ArrayList<CType> paramTypes =
+		        new ArrayList<CType>(proc.getInParams().length);
+		procedureToParamCType.put(methodName, paramTypes);
+		IASTDeclarator[] decls = node.getDeclarators();
+		assert (decls.length == 1) :
+		    "We do not support multiple function declarations.";
+		IASTParameterDeclaration[] funDec =
+		        ((CASTFunctionDeclarator)decls[0]).getParameters();
+		for (int i = 0; i < funDec.length; ++i) {
+		    IASTDeclSpecifier declSpec = funDec[i].getDeclSpecifier();
+		    IASTDeclarator declarator = funDec[i].getDeclarator();
+		    ResultTypes resType = (ResultTypes) main.dispatch(declSpec);
+		    resType = main.cHandler.checkForPointer(
+		            main, declarator.getPointerOperators(), resType, false);
+		    paramTypes.add(i, resType.cvar);
+		}
+		
 		// end scope for retranslation of ACSL specification
 		main.cHandler.getSymbolTable().endScope();
 		return new ResultSkip();
@@ -507,6 +532,23 @@ public class FunctionHandler {
 		ResultTypes resType = (ResultTypes) main.dispatch(node
 				.getDeclSpecifier());
 		procedureToReturnCType.put(methodName, resType.cvar);
+		
+		// fill map of parameter types
+        ArrayList<CType> paramTypes =
+                new ArrayList<CType>();
+        procedureToParamCType.put(methodName, paramTypes);
+        IASTDeclarator decls = node.getDeclarator();
+        IASTParameterDeclaration[] funDec =
+                ((CASTFunctionDeclarator)decls).getParameters();
+        for (int i = 0; i < funDec.length; ++i) {
+            IASTDeclSpecifier declSpec = funDec[i].getDeclSpecifier();
+            IASTDeclarator declarator = funDec[i].getDeclarator();
+            ResultTypes paramResType = (ResultTypes) main.dispatch(declSpec);
+            paramResType = main.cHandler.checkForPointer(
+                    main, declarator.getPointerOperators(), paramResType, false);
+            paramTypes.add(i, paramResType.cvar);
+        }
+        
 		ResultTypes checkedType = main.cHandler.checkForPointer(main, node
 				.getDeclarator().getPointerOperators(), resType, false);
 		ASTType type = checkedType.getType();
@@ -681,15 +723,16 @@ public class FunctionHandler {
 				throw new IncorrectSyntaxException(msg);
 			}
 			Expression arg = in.lrVal.getValue();
-			if (procedures.containsKey(methodName)
-					&& procedures.get(methodName).getInParams() != null
-					&& i < procedures.get(methodName).getInParams().length) {
-				arg = ConvExpr.doStrangeThings(
-						procedures.get(methodName).getInParams()[i].getType(),
-						in.lrVal.getValue());
-//				arg = main.typeHandler.convertArith2Boolean(loc,
-//						procedures.get(methodName).getInParams()[i].getType(),
-//						in.lrVal.getValue());
+			
+			// FIXME Christian
+			if (in.lrVal.cType instanceof CPrimitive &&
+			        ((CPrimitive)in.lrVal.cType).getType() == PRIMITIVE.INT) {
+			    if (procedureToParamCType.get(methodName).get(i) instanceof
+			            CPointer) {
+			        arg = MemoryHandler.constructPointerFromBaseAndOffset(
+			                new IntegerLiteral(loc, "0"),
+			                arg, loc);
+			    }
 			} 
 //			else {
 //				throw new UnsupportedSyntaxException("procedure not found in procedure list, " +
@@ -797,7 +840,6 @@ public class FunctionHandler {
 			} else {
 				String id = outParams[0].getIdentifiers()[0];
 				VariableLHS[] lhs = new VariableLHS[] { new VariableLHS(loc, id) };
-				rhs = ConvExpr.doStrangeThings(outParams[0].getType(), rhs);
 				stmt.add(new AssignmentStatement(loc, lhs,
 						new Expression[] { rhs }));
 			}
