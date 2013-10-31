@@ -129,9 +129,10 @@ public class InferredType implements IType {
 			case INT:
 				type = Type.Integer;
 				break;
-//			case BOOL:
-//				type = Type.Boolean;
-//				break;
+			case FLOAT:
+			case DOUBLE:
+				type = Type.Real;
+				break;
 			case CHAR:
 				type = Type.String;
 				break;

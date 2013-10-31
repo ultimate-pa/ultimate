@@ -92,22 +92,22 @@ public class ArrayHandler {
 					sizeOfCell,
 					loc);
 			mallocCall = memoryHandler.getMallocCall(main, functionHandler, 
-					mallocSize, loc);	
+					mallocSize, arrayId, loc);	
 			stmt.addAll(mallocCall.stmt);
 			decl.addAll(mallocCall.decl);
 			auxVars.putAll(mallocCall.auxVars);
-			arrayPointer = mallocCall.lrVal;
-			arrayPointer.cType = arrayType;
+//			arrayPointer = mallocCall.lrVal;
+//			arrayPointer.cType = arrayType;
 			
-			Statement assingPtrToArray = new AssignmentStatement(loc, 
-					new LeftHandSide[]{ arrayId.getLHS() }, 
-					new Expression[]{ arrayPointer.getValue() });
-			stmt.add(assingPtrToArray);
+//			Statement assingPtrToArray = new AssignmentStatement(loc, 
+//					new LeftHandSide[]{ arrayId.getLHS() }, 
+//					new Expression[]{ arrayPointer.getValue() });
+//			stmt.add(assingPtrToArray);
 			
 			//evaluate the initializer and fill the heapspace of the array
 			ResultExpressionListRec init = (ResultExpressionListRec) main.dispatch(d.getInitializer());
 			ArrayList<Statement> arrayWrites = initArray(memoryHandler, structHandler, loc, init.list, 
-					arrayId.getValue(), sizeOfCell, (CArray) arrayPointer.cType);
+					arrayId.getValue(), sizeOfCell, arrayType);
 			stmt.addAll(arrayWrites);
 
 			if (functionHandler.getCurrentProcedureID() != null) {

@@ -368,7 +368,7 @@ public class PostProcessor {
 			}
 		} else if ((at instanceof NamedType) && 
 				((NamedType) at).getName().equals(SFO.POINTER)){
-			assert lCvar instanceof CPointer;
+			assert lCvar instanceof CPointer || lCvar instanceof CArray; //FIXME is this correct? -- for arrays on the heap i mean..
 			//result is pointer to 0
 			LRValue nullPointer = new RValue(new IdentifierExpression(loc, at.getBoogieType(), SFO.NULL), 
 					null);

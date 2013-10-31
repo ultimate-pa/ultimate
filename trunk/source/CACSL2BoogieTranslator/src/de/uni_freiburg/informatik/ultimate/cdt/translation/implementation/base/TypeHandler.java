@@ -143,14 +143,15 @@ public class TypeHandler implements ITypeHandler {
                 // so we simply have no result variable.
                 result = (new ResultTypes(null, false, true, cvar));
                 break;
-            case IASTSimpleDeclSpecifier.t_bool:
-                // so bool is clearly a primitive type
-                result = (new ResultTypes(new PrimitiveType(new CACSLLocation(
-                        node), SFO.BOOL), node.isConst(), false, cvar));
-                break;
+//            case IASTSimpleDeclSpecifier.t_bool:
+//                // so bool is clearly a primitive type
+//                result = (new ResultTypes(new PrimitiveType(new CACSLLocation(
+//                        node), SFO.BOOL), node.isConst(), false, cvar));
+//                break;
             case IASTSimpleDeclSpecifier.t_unspecified:
             	Dispatcher.warn(new CACSLLocation(node), "unspecified type, defaulting to int", 
             			"unspecified type, defaulting to int");
+            case IASTSimpleDeclSpecifier.t_bool:
             case IASTSimpleDeclSpecifier.t_int:
                 // so int is also a primitive type
                 // NOTE: in a extended implementation we should
