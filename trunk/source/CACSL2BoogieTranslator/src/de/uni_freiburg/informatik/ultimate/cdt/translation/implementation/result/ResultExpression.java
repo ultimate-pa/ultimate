@@ -121,7 +121,7 @@ public class ResultExpression extends Result {
             LRValue lrVal,
             ArrayList<Declaration> decl,
             Map<VariableDeclaration, CACSLLocation> auxVars) {
-        this(new ArrayList<Statement>(), lrVal, decl,
+        this(stmt, lrVal, decl,
                 auxVars, new ArrayList<Overapprox>());
     }
 
