@@ -2,33 +2,22 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
-import java.util.Map;
-import java.util.Stack;
 
 import org.eclipse.cdt.core.dom.ast.IASTArrayDeclarator;
 import org.eclipse.cdt.core.dom.ast.IASTArrayModifier;
 import org.eclipse.cdt.core.dom.ast.IASTArraySubscriptExpression;
 import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
 import org.eclipse.cdt.core.dom.ast.IASTDeclSpecifier;
-import org.eclipse.cdt.core.dom.ast.IASTDeclarator;
-import org.eclipse.cdt.core.dom.ast.IASTExpression;
-import org.eclipse.cdt.core.dom.ast.IASTSimpleDeclaration;
-import org.eclipse.cdt.internal.core.dom.parser.c.CASTLiteralExpression;
-import org.eclipse.cdt.internal.core.dom.parser.c.CArrayType;
 
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CACSLLocation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CHandler;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.MainDispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.InferredType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.InferredType.Type;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.SymbolTableValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CArray;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CStruct;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.IncorrectSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.HeapLValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LRValue;
@@ -37,34 +26,21 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.Result;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ResultExpression;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ResultExpressionListRec;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ResultSkip;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ResultTypes;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.BoogieASTUtil;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
 import de.uni_freiburg.informatik.ultimate.model.ILocation;
-import de.uni_freiburg.informatik.ultimate.model.acsl.ast.BinaryExpression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ASTType;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayAccessExpression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayLHS;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayType;
+import de.uni_freiburg.informatik.ultimate.model.annotations.Overapprox;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssignmentStatement;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.LeftHandSide;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.PrimitiveType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StructAccessExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StructConstructor;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StructLHS;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StructType;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableLHS;
-import de.uni_freiburg.informatik.ultimate.result.SyntaxErrorResult.SyntaxErrorType;
 
 /**
  * Class that handles translation of arrays.
@@ -84,6 +60,7 @@ public class ArrayHandler {
 		ArrayList<Declaration> decl = new ArrayList<Declaration>();
 		HashMap<VariableDeclaration, CACSLLocation> auxVars =
 				new HashMap<VariableDeclaration, CACSLLocation>();
+		ArrayList<Overapprox> overappr = new ArrayList<Overapprox>();
 		LRValue arrayPointer = null;
 
 		ArrayList<Expression> sizeConstants = new ArrayList<Expression>();
@@ -144,7 +121,7 @@ public class ArrayHandler {
 				//TODO -- handle globals?? or is it done via the symbolTable?? what with statics??
 			}
 		}
-		return new ResultExpression(stmt, arrayId, decl, auxVars);
+		return new ResultExpression(stmt, arrayId, decl, auxVars, overappr);
 //		return new ResultExpression(stmt, arrayId, decl, auxVars);
 	}
 
@@ -253,12 +230,14 @@ public class ArrayHandler {
 		ArrayList<Statement> stmt = new ArrayList<Statement>();
 		ArrayList<Declaration> decl = new ArrayList<Declaration>();
 		HashMap<VariableDeclaration, CACSLLocation> auxVars = new HashMap<VariableDeclaration, CACSLLocation>();
+		ArrayList<Overapprox> overappr = new ArrayList<Overapprox>();
 
 
 		ResultExpression subscriptR = subscript.switchToRValue(main, memoryHandler, structHandler, loc);
 		stmt.addAll(subscript.stmt);
 		decl.addAll(subscript.decl);
 		auxVars.putAll(subscript.auxVars);
+		overappr.addAll(subscript.overappr);
 			
 		//catch the case where we are doing a subscript on a pointer
 		if (array.lrVal.cType instanceof CPointer) {
@@ -266,11 +245,12 @@ public class ArrayHandler {
 			stmt.addAll(arrayR.stmt);
 			decl.addAll(arrayR.decl);
 			auxVars.putAll(arrayR.auxVars);
+			overappr.addAll(arrayR.overappr);
 			
 			RValue newPointer = ((CHandler) main.cHandler).doPointerArith(main, IASTBinaryExpression.op_plus, loc, 
 					(RValue) arrayR.lrVal, (RValue) subscriptR.lrVal);
 			HeapLValue newHlv = new HeapLValue(newPointer.getValue(), ((CPointer) array.lrVal.cType).pointsToType);
-			return new ResultExpression(stmt, newHlv, decl, auxVars);
+			return new ResultExpression(stmt, newHlv, decl, auxVars, overappr);
 		}
 		
 		// we really have an array

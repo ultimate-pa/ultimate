@@ -5,6 +5,7 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.resul
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CACSLLocation;
@@ -13,6 +14,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.c
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
 import de.uni_freiburg.informatik.ultimate.model.ILocation;
+import de.uni_freiburg.informatik.ultimate.model.annotations.Overapprox;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
@@ -63,8 +65,9 @@ public class ResultExpressionListRec extends ResultExpression {
      */
     public ResultExpressionListRec(ArrayList<Statement> stmt, LRValue lrVal,
             ArrayList<Declaration> decl, 
-            Map<VariableDeclaration, CACSLLocation> auxVars) {
-        this(null, stmt, lrVal, decl, auxVars);
+            Map<VariableDeclaration, CACSLLocation> auxVars,
+            List<Overapprox> overappr) {
+        this(null, stmt, lrVal, decl, auxVars, overappr);
     }
 
     /**
@@ -81,8 +84,9 @@ public class ResultExpressionListRec extends ResultExpression {
      */
     public ResultExpressionListRec(String field, ArrayList<Statement> stmt,
             LRValue lrVal, ArrayList<Declaration> decl, 
-            Map<VariableDeclaration, CACSLLocation> auxVars) {
-        super(stmt, lrVal, decl, auxVars);
+            Map<VariableDeclaration, CACSLLocation> auxVars,
+            List<Overapprox> overappr) {
+        super(stmt, lrVal, decl, auxVars, overappr);
         this.field = field;
         this.list = new ArrayList<ResultExpressionListRec>();
     }
@@ -99,7 +103,8 @@ public class ResultExpressionListRec extends ResultExpression {
     		for (ResultExpressionListRec innerRerl : this.list) 
     			newList.add(innerRerl.switchToRValue(main, memoryHandler, structHandler, loc));
     	}
-    	ResultExpressionListRec rerl = new ResultExpressionListRec(this.field, re.stmt, re.lrVal, re.decl, re.auxVars);
+    	ResultExpressionListRec rerl = new ResultExpressionListRec(this.field,
+    	        re.stmt, re.lrVal, re.decl, re.auxVars, re.overappr);
     	rerl.list.addAll(newList);
     	return rerl;
     }

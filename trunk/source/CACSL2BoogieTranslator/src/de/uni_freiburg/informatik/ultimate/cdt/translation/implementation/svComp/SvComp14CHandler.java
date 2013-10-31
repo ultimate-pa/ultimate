@@ -33,6 +33,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.svComp
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.ConvExpr;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
+import de.uni_freiburg.informatik.ultimate.model.annotations.Overapprox;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssertStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssumeStatement;
@@ -138,6 +139,7 @@ public class SvComp14CHandler extends CHandler {
         ArrayList<Declaration> decl = new ArrayList<Declaration>();
 		Map<VariableDeclaration, CACSLLocation> auxVars = 
 				new HashMap<VariableDeclaration, CACSLLocation>();
+		ArrayList<Overapprox> overappr = new ArrayList<Overapprox>();
         LRValue returnValue = null;
 
         if (methodName.equals(ASSUME_STRING)) {
@@ -155,12 +157,14 @@ public class SvComp14CHandler extends CHandler {
                 stmt.addAll(in.stmt);
                 decl.addAll(in.decl);
                 auxVars.putAll(in.auxVars);
+                overappr.addAll(in.overappr);
             }
             assert args.size() == 1; // according to SV-Comp specification!
             stmt.add(new AssumeStatement(loc,
             		ConvExpr.toBoolean(loc, args.get(0))));
             assert (main.isAuxVarMapcomplete(decl, auxVars));
-            return new ResultExpression(stmt, returnValue, decl, auxVars);
+            return new ResultExpression(stmt, returnValue, decl, auxVars,
+                    overappr);
         }
         for (String t : NONDET_TYPE_STRINGS)
             if (methodName.equals(NONDET_STRING + t)) {
@@ -179,7 +183,8 @@ public class SvComp14CHandler extends CHandler {
                 auxVars.put(tVarDecl, loc);
                 returnValue = new RValue(new IdentifierExpression(loc, type, tmpName), cType);
                 assert (main.isAuxVarMapcomplete(decl, auxVars));
-                return new ResultExpression(stmt, returnValue, decl, auxVars);
+                return new ResultExpression(stmt, returnValue, decl, auxVars,
+                        overappr);
             }
         if (methodName.equals("printf")) {
             // skip if parent of parent is CompoundStatement
@@ -198,7 +203,8 @@ public class SvComp14CHandler extends CHandler {
             stmt.add(new HavocStatement(loc, new VariableLHS[] { new VariableLHS(loc, tId)}));
             returnValue = new RValue(new IdentifierExpression(loc, type, tId), null);
             assert (main.isAuxVarMapcomplete(decl, auxVars));
-            return new ResultExpression(stmt, returnValue, decl, auxVars);
+            return new ResultExpression(stmt, returnValue, decl, auxVars,
+                    overappr);
         }
         return super.visit(main, node);
     }

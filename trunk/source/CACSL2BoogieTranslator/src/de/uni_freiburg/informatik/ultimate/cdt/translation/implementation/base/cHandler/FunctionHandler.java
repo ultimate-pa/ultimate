@@ -45,6 +45,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.T
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
 import de.uni_freiburg.informatik.ultimate.model.ILocation;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLNode;
+import de.uni_freiburg.informatik.ultimate.model.annotations.Overapprox;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssignmentStatement;
@@ -651,6 +652,7 @@ public class FunctionHandler {
 		ArrayList<Declaration> decl = new ArrayList<Declaration>();
 		Map<VariableDeclaration, CACSLLocation> auxVars = 
 				new HashMap<VariableDeclaration, CACSLLocation>();
+		ArrayList<Overapprox> overappr = new ArrayList<Overapprox>();
 		Expression expr = null;
 
 		callGraph.get(currentProcedure.getIdentifier()).add(methodName);
@@ -697,6 +699,7 @@ public class FunctionHandler {
 			stmt.addAll(in.stmt);
 			decl.addAll(in.decl);
 			auxVars.putAll(in.auxVars);
+			overappr.addAll(in.overappr);
 		}
 
 		Statement call;
@@ -747,7 +750,8 @@ public class FunctionHandler {
 				new CPrimitive(PRIMITIVE.INT) : 
 					procedureToReturnCType.get(methodName);
 		assert (main.isAuxVarMapcomplete(decl, auxVars));
-		return new ResultExpression(stmt, new RValue(expr, returnCType), decl, auxVars);
+		return new ResultExpression(stmt, new RValue(expr, returnCType), decl,
+		        auxVars, overappr);
 	}
 
 	/**
@@ -800,8 +804,8 @@ public class FunctionHandler {
 		}
 		stmt.addAll(Dispatcher.createHavocsForAuxVars(auxVars));
 		stmt.add(new ReturnStatement(loc));
-		Map<VariableDeclaration, CACSLLocation> emptyAuxVars = new HashMap<VariableDeclaration, CACSLLocation>(
-				0);
+		Map<VariableDeclaration, CACSLLocation> emptyAuxVars =
+		        new HashMap<VariableDeclaration, CACSLLocation>(0);
 		return new ResultExpression(stmt, null, decl, emptyAuxVars);
 	}
 

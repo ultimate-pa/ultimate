@@ -28,6 +28,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.S
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.IHandler;
 import de.uni_freiburg.informatik.ultimate.model.ILocation;
+import de.uni_freiburg.informatik.ultimate.model.annotations.Overapprox;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayLHS;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayType;
@@ -270,6 +271,7 @@ public class PostProcessor {
 		ArrayList<Statement> stmt = new ArrayList<Statement>();
 		ArrayList<Declaration> decl = new ArrayList<Declaration>();
 		Map<VariableDeclaration, CACSLLocation> auxVars = new HashMap<VariableDeclaration, CACSLLocation>();
+		ArrayList<Overapprox> overappr = new ArrayList<Overapprox>();
 		if (at instanceof PrimitiveType) {
 			InferredType it = new InferredType(at);
 			InferredType.Type t = it.getType();
@@ -321,6 +323,7 @@ public class PostProcessor {
 					((CArray) lCvar).getValueType());
 			decl.addAll(r.decl);
 			auxVars.putAll(r.auxVars);
+			overappr.addAll(r.overappr);
 			WhileStatement ws = null;
 			Expression nr1 = new IntegerLiteral(loc, SFO.NR1);
 			for (int i = arrSize.length - 1; i >= 0; i--) {
@@ -360,6 +363,7 @@ public class PostProcessor {
 					decl.addAll(r.decl);
 					stmt.addAll(r.stmt);
 					auxVars.putAll(r.auxVars);
+					overappr.addAll(r.overappr);
 				}
 			}
 		} else if ((at instanceof NamedType) && 
@@ -378,7 +382,7 @@ public class PostProcessor {
 		}
 		assert (main.isAuxVarMapcomplete(decl, auxVars));
 		// LRValue is null because it is not needed, we need only the statement.
-		return new ResultExpression(stmt, null, decl, auxVars);
+		return new ResultExpression(stmt, null, decl, auxVars, overappr);
 	}
 
 	/**

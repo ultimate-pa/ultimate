@@ -5,7 +5,6 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.resul
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
@@ -66,9 +65,9 @@ public class ResultExpression extends Result {
 //	public CType cType; //--> moved to LRValue
 
 	/**
-	 * An overapproximation flag.
+	 * A list of overapproximation flags.
 	 */
-	public final List<Overapprox> overapprList;
+	public final List<Overapprox> overappr;
 
 	/**
 	 * Auxiliary variables occurring in this result. The variable declaration
@@ -91,7 +90,6 @@ public class ResultExpression extends Result {
 		m_Locked = true;
 	}
 
-
 	/**
      * Constructor.
      * 
@@ -101,14 +99,14 @@ public class ResultExpression extends Result {
      *            the expression list to hold
      * @param decl
      *            the declaration list to hold
-     * @param overapproximation
-     *            true if overapproximation is used
+     * @param overapproxList
+     *            list of overapproximation flags
      */
     public ResultExpression(ArrayList<Statement> stmt, //Expression expr,
             LRValue lrVal,
             ArrayList<Declaration> decl,
             Map<VariableDeclaration, CACSLLocation> auxVars,
-            Overapprox overapproximation) {
+            List<Overapprox> overapproxList) {
         super(null);
         this.stmt = stmt;
         //      this.expr = expr;
@@ -116,52 +114,38 @@ public class ResultExpression extends Result {
         this.decl = decl;
         this.declCTypes = new ArrayList<CType>();
         this.auxVars = auxVars;
-        if (overapproximation != null) {
-            this.overapprList = new LinkedList<Overapprox>();
-            this.overapprList.add(overapproximation);
-        }
-        else {
-            this.overapprList = null;
-        }
+        this.overappr = overapproxList;
+    }
+    
+    public ResultExpression(ArrayList<Statement> stmt, //Expression expr,
+            LRValue lrVal,
+            ArrayList<Declaration> decl,
+            Map<VariableDeclaration, CACSLLocation> auxVars) {
+        this(new ArrayList<Statement>(), lrVal, decl,
+                auxVars, new ArrayList<Overapprox>());
     }
 
-	/**
-	 * Constructor.
-	 * 
-	 * @param stmt
-	 *            the statement list to hold
-	 * @param expr
-	 *            the expression list to hold
-	 * @param decl
-	 *            the declaration list to hold
-	 */
-	public ResultExpression(ArrayList<Statement> stmt, //Expression expr,
-			LRValue lrVal,
-			ArrayList<Declaration> decl,
-			Map<VariableDeclaration, CACSLLocation> auxVars) {
-		this(stmt, lrVal, decl, auxVars, null);
-//      this.expr = expr;
-	}
-
-	/**
-	 * Constructor for only one element
-	 * 
-	 * @param expr
-	 *            the expression to add
-	 */
 	public ResultExpression(//Expression expr,
 			LRValue lrVal,
-			Map<VariableDeclaration, CACSLLocation> auxVars) {
+			Map<VariableDeclaration, CACSLLocation> auxVars,
+			List<Overapprox> overapproxList) {
 	    this(new ArrayList<Statement>(), lrVal, new ArrayList<Declaration>(),
-	            auxVars);
+	            auxVars, overapproxList);
 		//		this.expr = expr;
 	}
+	
+	public ResultExpression(//Expression expr,
+            LRValue lrVal,
+            Map<VariableDeclaration, CACSLLocation> auxVars) {
+        this(new ArrayList<Statement>(), lrVal, new ArrayList<Declaration>(),
+                auxVars);
+        //      this.expr = expr;
+    }
 
-	public ResultExpression(
-			LRValue lrVal) {
-	    this(new ArrayList<Statement>(), lrVal, new ArrayList<Declaration>(),
-	            new HashMap<VariableDeclaration, CACSLLocation>());
-	}
+    public ResultExpression(
+            LRValue lrVal) {
+        this(lrVal, new HashMap<VariableDeclaration, CACSLLocation>());
+    }
 
 	public ResultExpression switchToRValue(Dispatcher main, MemoryHandler memoryHandler, 
 			StructHandler structHandler, ILocation loc) {
@@ -175,7 +159,9 @@ public class ResultExpression extends Result {
 			return this;
 		else if (lrVal instanceof LocalLValue) {
 			rex = new ResultExpression(
-					this.stmt, new RValue(((LocalLValue) lrVal).getValue(), lrVal.cType), this.decl, this.auxVars);
+					this.stmt, new RValue(((LocalLValue) lrVal).getValue(),
+					        lrVal.cType), this.decl, this.auxVars,
+					        this.overappr);
 			return rex;
 		} else {
 			HeapLValue hlv = (HeapLValue) lrVal;
@@ -250,7 +236,8 @@ public class ResultExpression extends Result {
 					} else {
 						throw new UnsupportedSyntaxException("..");
 					}
-					rex = new ResultExpression(newStmt, newValue, newDecl, newAuxVars);
+					rex = new ResultExpression(newStmt, newValue, newDecl,
+					        newAuxVars, this.overappr);
 					return rex;
 		}
 	}
@@ -360,7 +347,8 @@ public class ResultExpression extends Result {
 				fieldIdentifiers.toArray(new String[0]), 
 				fieldValues.toArray(new Expression[0]));
 
-		result = new ResultExpression(newStmt, new RValue(sc, structType), newDecl, newAuxVars);
+		result = new ResultExpression(newStmt, new RValue(sc, structType),
+		        newDecl, newAuxVars, this.overappr);
 
 		return result;
 	}

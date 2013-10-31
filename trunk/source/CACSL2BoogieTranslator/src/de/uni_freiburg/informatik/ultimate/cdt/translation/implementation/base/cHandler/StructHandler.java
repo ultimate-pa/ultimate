@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.eclipse.cdt.core.dom.ast.IASTFieldReference;
@@ -34,6 +35,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
 import de.uni_freiburg.informatik.ultimate.model.ILocation;
+import de.uni_freiburg.informatik.ultimate.model.annotations.Overapprox;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssignmentStatement;
@@ -278,10 +280,14 @@ public class StructHandler {
 		ArrayList<Declaration> decl = new ArrayList<Declaration>();
 		Map<VariableDeclaration, CACSLLocation> auxVars = 
 				new HashMap<VariableDeclaration, CACSLLocation>();
+		List<Overapprox> overappr = new ArrayList<Overapprox>();
 		stmt.addAll(call.stmt);
 		decl.addAll(call.decl);
 		auxVars.putAll(call.auxVars);
-		ResultExpression result = new ResultExpression(stmt, new RValue(call.lrVal.getValue(), resultType), decl, auxVars);
+		overappr.addAll(call.overappr);
+		ResultExpression result = new ResultExpression(stmt,
+		        new RValue(call.lrVal.getValue(), resultType), decl, auxVars,
+		        overappr);
 		return result;
 	}
 
@@ -338,7 +344,8 @@ public class StructHandler {
 			//            return new ResultExpressionListRec(id, relr.stmt, relr.expr,
 			//                    relr.decl, relr.auxVars);
 			return new ResultExpressionListRec(id, relr.stmt, relr.lrVal,
-					relr.decl, relr.auxVars).switchToRValue(main, memoryHandler, structHandler, loc);
+					relr.decl, relr.auxVars, relr.overappr).switchToRValue(
+					        main, memoryHandler, structHandler, loc);
 		} else if (r instanceof ResultExpression) {
 			ResultExpression rex = (ResultExpression) r;
 			//            return new ResultExpressionListRec(id, rex.stmt, rex.expr, rex.decl, rex.auxVars);
@@ -354,12 +361,15 @@ public class StructHandler {
 			ResultExpressionListRec rerl, CStruct structType) {
 
 		if (rerl.lrVal != null) //we have an identifier (or sth else too?)
-			return new ResultExpression(rerl.stmt, rerl.lrVal, rerl.decl, rerl.auxVars);
+			return new ResultExpression(rerl.stmt, rerl.lrVal, rerl.decl,
+			        rerl.auxVars, rerl.overappr);
 
 		//everything for the new Result
 		ArrayList<Statement> newStmt = new ArrayList<Statement>();
 		ArrayList<Declaration> newDecl = new ArrayList<Declaration>();
-		HashMap<VariableDeclaration, CACSLLocation> newAuxVars = new HashMap<VariableDeclaration, CACSLLocation>();
+		HashMap<VariableDeclaration, CACSLLocation> newAuxVars =
+		        new HashMap<VariableDeclaration, CACSLLocation>();
+		List<Overapprox> newOverappr = new ArrayList<Overapprox>();
 		
 		String[] fieldIds = structType.getFieldIds();
 		CType[] fieldTypes = structType.getFieldTypes();
@@ -409,6 +419,7 @@ public class StructHandler {
 			newStmt.addAll(fieldContents.stmt);
 			newDecl.addAll(fieldContents.decl);
 			newAuxVars.putAll(fieldContents.auxVars);
+			newOverappr.addAll(fieldContents.overappr);
 			assert fieldContents.lrVal instanceof RValue; //should be guaranteed by readFieldInTheStructAtAddress(..)
 			fieldValues.add(((RValue) fieldContents.lrVal).getValue());
 		}
@@ -416,8 +427,8 @@ public class StructHandler {
 				fieldIdentifiers.toArray(new String[0]), 
 				fieldValues.toArray(new Expression[0]));
 
-		ResultExpression result = new ResultExpression(newStmt, new RValue(sc, structType), 
-				newDecl, newAuxVars);
+		ResultExpression result = new ResultExpression(newStmt,
+		        new RValue(sc, structType), newDecl, newAuxVars, newOverappr);
 		return result;
 	} 
 }

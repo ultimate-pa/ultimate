@@ -34,6 +34,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.B
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
 import de.uni_freiburg.informatik.ultimate.model.ILocation;
+import de.uni_freiburg.informatik.ultimate.model.annotations.Overapprox;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayAccessExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayLHS;
@@ -697,6 +698,7 @@ public class MemoryHandler {
         ArrayList<Declaration> decl = new ArrayList<Declaration>();
 		Map<VariableDeclaration, CACSLLocation> auxVars = 
 				new HashMap<VariableDeclaration, CACSLLocation>();
+		ArrayList<Overapprox> overappr = new ArrayList<Overapprox>();
         InferredType it = new InferredType(Type.Pointer);
         Expression[] args = new Expression[] { size };
         String tmpId = main.nameHandler.getTempVarUID(SFO.AUXVAR.MALLOC);
@@ -720,7 +722,8 @@ public class MemoryHandler {
         }
 		assert (main.isAuxVarMapcomplete(decl, auxVars));
 //        return new ResultExpression(stmt, new HeapLValue(e), decl, auxVars);
-        return new ResultExpression(stmt, new RValue(e, null), decl, auxVars);//FIXME pointsToType??
+        return new ResultExpression(stmt, new RValue(e, null), decl, auxVars,
+                overappr);//FIXME pointsToType??
     }
 
     /**
@@ -871,6 +874,7 @@ public class MemoryHandler {
         ArrayList<Declaration> decl = new ArrayList<Declaration>();
 		Map<VariableDeclaration, CACSLLocation> auxVars = 
 				new HashMap<VariableDeclaration, CACSLLocation>();
+		ArrayList<Overapprox> overappr = new ArrayList<Overapprox>();
         CACSLLocation loc = (CACSLLocation) tPointer.getLocation();
         CType resultCType = pointerCType.pointsToType;
         String t = getHeapTypeStringOfCType(resultCType);
@@ -885,7 +889,7 @@ public class MemoryHandler {
 		assert (main.isAuxVarMapcomplete(decl, auxVars));
         return new ResultExpression(stmt, 
         		new RValue(new IdentifierExpression(loc, it, tmpId), resultCType),
-        		decl, auxVars);
+        		decl, auxVars, overappr);
     }
     
     String getHeapTypeStringOfCType(CType ct) {
