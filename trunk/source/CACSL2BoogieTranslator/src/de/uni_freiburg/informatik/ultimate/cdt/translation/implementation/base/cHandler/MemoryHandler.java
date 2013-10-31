@@ -952,6 +952,10 @@ public class MemoryHandler {
 			case INT:
 				result = SFO.INT;
 				break;
+			case FLOAT:
+			case DOUBLE:
+			    result = SFO.REAL;
+			    break;
 //			case BOOL:
 			default:
 				throw new UnsupportedSyntaxException("usupported cType " + ct);
