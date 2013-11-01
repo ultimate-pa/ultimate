@@ -1118,7 +1118,7 @@ public class Application implements IApplication, ICore, IRCPPlugin {
 				if (!UltimatePreferenceStore.importPreferences(fis).isOK()) {
 					mLogger.warn("Failed to load preferences");
 				} else {
-					mLogger.debug("Loading preferences was successful");
+					mLogger.info("Loading preferences was successful");
 				}
 			} catch (Exception e) {
 				mLogger.warn("Could not load preferences", e);
