@@ -1,19 +1,17 @@
-[10098] bitvector (35):
+[10214] bitvector (35):
 
-1 working
-byte_add_false
+2 overapproximation flag
+modulus_*, parity_*
 
-6 wrong result
-byte_add_1*, byte_add_1*, modulus_*, num_*, parity_*
+20 unknown
+gcd_2_*, gcd_3_*, gcd_4_*, interleave_*, jain_4_*, jain_5_*, jain_6_*, jain_7_*,
+s3_*
 
-8 unknown
-gcd_2_*, gcd_3_*, gcd_4_*, interleave_*, jain_4_*, jain_5_*, jain_6_*, jain_7_*
+5 bitwise operation with non-integer
+byte_add_*, num_*
 
 5 bit complement
 soft_*
-
-12 LiveVariables NPE
-s3_*
 
 1 m_RcfgProgramExecution != null
 gcd_1_*
@@ -23,13 +21,18 @@ jain_1_safe, jain_2_safe
 
 ---
 
-[10098] bitvector-regression (13):
+[10215] bitvector-regression (13):
 
-6 wrong result
-implicitunsignedconversion_*, signextension*
+1 working
+pointer_extension_true
 
-4 ResultExpression.switchToRValue() (char)
-pointer_*
+5 overapproximation flag
+implicitunsignedconversion_true, pointer_extension3_false,
+pointer_extension_false, signextension2_true, signextension_true
+
+4 wrong result
+implicitunsignedconversion_false, pointer_extension2_false,
+signextension2_false, signextension_false
 
 2 bit complement
 integerpromotion_*
@@ -438,6 +441,7 @@ LiveVariables NPE                               12      *
 auxVarMap                                       10      *
 pointer void assignment int                     8       *
 bit complement                                  7       bitComplement
+bitwise operation with non-integer              5       *
 CType == null                                   5       *
 #define -> error                                4       *
 #ifndef                                         4       ---
