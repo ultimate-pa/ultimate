@@ -74,7 +74,7 @@ public class CorePreferenceInitializer extends UltimatePreferenceInitializer {
 	
 	//Core
 	public static final String LABEL_SHOWUSABLEPARSER = "Show usable parsers";
-	public static final boolean VALUE_SHOWUSABLEPARSER_DEFAULT = true;
+	public static final boolean VALUE_SHOWUSABLEPARSER_DEFAULT = false;
 
 	public static final String LABEL_SHOWRESULTNOTIFIERPOPUP = "Show Result in Pop-Up Window after Toolchain Execution";
 	public static final boolean VALUE_SHOWRESULTNOTIFIERPOPUP_DEFAULT = false;

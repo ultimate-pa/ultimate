@@ -1132,6 +1132,7 @@ public class Application implements IApplication, ICore, IRCPPlugin {
 	public void savePreferences() {
 		String filename = mCurrentController.getSavePrefName();
 		if (filename != null && !filename.isEmpty() && !mTools.isEmpty()) {
+			mLogger.info("Saving preferences to file " + filename);
 			try {
 				FileOutputStream fis = new FileOutputStream(filename);
 

@@ -96,7 +96,7 @@ public class UltimatePreferenceStore {
 	public void exportPreferences(OutputStream outputStream)
 			throws CoreException {
 		Platform.getPreferencesService().exportPreferences(mCurrentPreferences,
-				null, outputStream);
+				outputStream,null);
 	}
 
 	public static IStatus importPreferences(InputStream inputStream)
