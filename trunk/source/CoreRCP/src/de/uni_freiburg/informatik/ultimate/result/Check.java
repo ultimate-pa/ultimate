@@ -13,6 +13,10 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.wrapper.ASTNode;
 public class Check extends AbstractAnnotations {
 	private static final long serialVersionUID = -3753413284642976683L;
 
+	public static String getIdentifier() {
+		return Check.class.getName();
+	}
+	
 	public enum Spec {
 	    /**
 	     * Array Index out of bounds error.
@@ -162,6 +166,6 @@ public class Check extends AbstractAnnotations {
      * @author Christian
      */
     public final void addToNodeAnnot(ASTNode node) {
-        node.getPayload().getAnnotations().put(Check.class.getName(), this);
+        node.getPayload().getAnnotations().put(getIdentifier(), this);
     }
 }
