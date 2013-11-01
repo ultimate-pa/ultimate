@@ -1,0 +1,49 @@
+#Fri Nov 01 21:05:00 CET 2013
+file_export_version=3.0
+@BlockEncoding=0.0.1
+\!/instance/BlockEncoding=
+/instance/BlockEncoding/UseStatisticBasedHeuristic=true
+/instance/BlockEncoding/RatingStrategy=4
+#Fri Nov 01 21:05:00 CET 2013
+\!/instance/BoogiePrinter=
+file_export_version=3.0
+/instance/BoogiePrinter/SaveInSource=true
+@BoogiePrinter=0.0.1
+#Fri Nov 01 21:05:00 CET 2013
+/instance/CACSL2BoogieTranslator/Checked\ method.\ Library\ mode\ if\ empty.=main
+/instance/CACSL2BoogieTranslator/Check\ if\ pointer\ is\ valid\ before\ each\ access=true
+/instance/CACSL2BoogieTranslator/CheckedMethod=main
+/instance/CACSL2BoogieTranslator/CheckPointerValidity=false
+/instance/CACSL2BoogieTranslator/Translation-Mode=SV_COMP14
+file_export_version=3.0
+\!/instance/CACSL2BoogieTranslator=
+@CACSL2BoogieTranslator=0.0.1
+/instance/CACSL2BoogieTranslator/Translation\ Mode\:=SV_COMP14
+#Fri Nov 01 21:05:00 CET 2013
+\!/instance/JungVisualization=
+file_export_version=3.0
+/instance/JungVisualization/shapeForNodePreference=RoundRectangle
+/instance/JungVisualization/annotatedEdgesPreference=true
+@JungVisualization=0.0.1
+#Fri Nov 01 21:05:00 CET 2013
+file_export_version=3.0
+/instance/RCFGBuilder/Interpolants=ForwardPredicates
+\!/instance/RCFGBuilder=
+/instance/RCFGBuilder/Timeout=100000
+/instance/RCFGBuilder/Solver=Z3
+@RCFGBuilder=0.0.1
+#Fri Nov 01 21:05:00 CET 2013
+file_export_version=3.0
+/instance/UltimateCore/ultimate.logging.tools=info
+\!/instance/UltimateCore=
+/instance/UltimateCore/Drop\ models\ when\ Ultimate\ exits=false
+/instance/UltimateCore/Show\ usable\ parsers=false
+/instance/UltimateCore/ultimate.logging.tooldetails=SmtInterpol\=Warn;SMTInterface\=Warn;Groundifier\=Warn;
+@UltimateCore=0.0.1
+/instance/UltimateCore/ultimate.logging.plugins=debug
+#Fri Nov 01 21:05:00 CET 2013
+file_export_version=3.0
+\!/instance/UltimateGui=
+/instance/UltimateGui/LASTTOOLCHAINPATH=/home/matthias/stalin/trunk/examples/toolchains/TraceAbstractionC.xml
+/instance/UltimateGui/LASTPATH=/home/matthias/stalin/trunk/examples/svcomp/locks/test_locks_5_true.c
+@UltimateGui=0.0.1
