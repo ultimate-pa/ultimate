@@ -245,16 +245,16 @@ public class Application implements IApplication, ICore, IRCPPlugin {
 		// initializing variables, loggers,...
 		init();
 
-		String settingsfile = mCmdLineArgs.getSettings();
-		if (settingsfile != null) {
-			loadPreferencesInternal(settingsfile);
-		}
-
 		// throwing classes exported by plugins into arraylists
 		loadExtension();
 
 		// initialize the tools map
 		initiateToolMaps();
+
+		String settingsfile = mCmdLineArgs.getSettings();
+		if (settingsfile != null) {
+			loadPreferencesInternal(settingsfile);
+		}
 
 		// at this point a gui or a cmd line controller may already be set.
 		// if no controller is set, the default cmd line controller
@@ -270,9 +270,9 @@ public class Application implements IApplication, ICore, IRCPPlugin {
 		}
 
 		// before we quit Ultimate, do we have to clear the model store?
-		boolean store_mm = InstanceScope.INSTANCE
-				.getNode(Activator.s_PLUGIN_ID).getBoolean(
-						CorePreferenceInitializer.LABEL_MM_DROP_MODELS, true);
+		boolean store_mm = new UltimatePreferenceStore(Activator.s_PLUGIN_ID)
+				.getBoolean(CorePreferenceInitializer.LABEL_MM_DROP_MODELS,
+						true);
 		if (store_mm) {
 			for (String s : this.mModelManager.getItemNames()) {
 				this.mModelManager.removeItem(s);
