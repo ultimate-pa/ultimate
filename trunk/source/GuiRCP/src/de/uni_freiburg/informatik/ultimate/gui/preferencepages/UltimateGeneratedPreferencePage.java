@@ -9,6 +9,7 @@ import org.eclipse.jface.preference.DirectoryFieldEditor;
 import org.eclipse.jface.preference.FieldEditor;
 import org.eclipse.jface.preference.FieldEditorPreferencePage;
 import org.eclipse.jface.preference.IntegerFieldEditor;
+import org.eclipse.jface.preference.PathEditor;
 import org.eclipse.jface.preference.RadioGroupFieldEditor;
 import org.eclipse.jface.preference.StringFieldEditor;
 import org.eclipse.jface.util.PropertyChangeEvent;
@@ -74,6 +75,9 @@ public class UltimateGeneratedPreferencePage extends FieldEditorPreferencePage
 				break;
 			case Radio:
 				editor = createRadioGroupFieldEditor(item);
+				break;
+			case Path:
+				editor = createPathFieldEditor(item);
 				break;
 			default:
 				throw new UnsupportedOperationException(
@@ -142,11 +146,13 @@ public class UltimateGeneratedPreferencePage extends FieldEditorPreferencePage
 						((IntegerFieldEditor) editor).getIntValue());
 				break;
 			case Directory:
+			case Path:
 			case String:
 				validateField(
 						(IUltimatePreferenceItemValidator<String>) validator,
 						((StringFieldEditor) editor).getStringValue());
 				break;
+			
 			case Label:
 			case Combo:
 			case Radio:
@@ -171,6 +177,13 @@ public class UltimateGeneratedPreferencePage extends FieldEditorPreferencePage
 			setErrorMessage(null);
 			setValid(true);
 		}
+	}
+
+	private PathEditor createPathFieldEditor(UltimatePreferenceItem<?> item) {
+		PathEditor editor = new PathEditor(item.getLabel(), item.getLabel(),
+				item.getLabel(), getFieldEditorParent());
+		addField(editor);
+		return editor;
 	}
 
 	private RadioGroupFieldEditor createRadioGroupFieldEditor(

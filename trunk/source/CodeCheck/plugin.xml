@@ -10,12 +10,5 @@
           class="de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.preferences.PreferenceInitializer">
     </initializer>
  </extension>
- <extension point="org.eclipse.ui.preferencePages">
-           <page
-                 category="de.uni_freiburg.informatik.ultimate.gui.preferencepages.ToolsPreferencePage"
-                 class="de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.preferences.PreferencePage"
-                 id="de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.preferences.PreferencePage"
-                 name="CodeCheck">
-    </page>
- </extension>
+
 </plugin>

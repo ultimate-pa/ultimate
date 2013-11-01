@@ -60,23 +60,27 @@
             class="de.uni_freiburg.informatik.ultimate.gui.preferencepages.UltimateCategoryPreferencePage"
             id="GeneratedUltimatePreferences"
             name="Generated Ultimate Preferences"/>
-   
-    <page
+                     <page
             category="GeneratedUltimatePreferences"
             class="de.uni_freiburg.informatik.ultimate.gui.preferencepages.UltimateCategoryPreferencePage"
-            id="OutputPlugins"
-            name="Output Plugins"/>
+            id="Core"
+            name="Core"/>  
+     <page
+            category="GeneratedUltimatePreferences"
+            class="de.uni_freiburg.informatik.ultimate.gui.preferencepages.UltimateCategoryPreferencePage"
+            id="SourcePlugins"
+            name="Source Plugins"/> 
       <page
             category="GeneratedUltimatePreferences"
             class="de.uni_freiburg.informatik.ultimate.gui.preferencepages.UltimateCategoryPreferencePage"
             id="ToolPlugins"
             name="Tool Plugins"/>    
-            
-                  <page
+                <page
             category="GeneratedUltimatePreferences"
             class="de.uni_freiburg.informatik.ultimate.gui.preferencepages.UltimateCategoryPreferencePage"
-            id="Core"
-            name="Core"/>          
+            id="OutputPlugins"
+            name="Output Plugins"/>
+        
 
    
    

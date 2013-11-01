@@ -1,51 +1,103 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.preferences;
 
-
-
-import org.eclipse.core.runtime.preferences.AbstractPreferenceInitializer;
-import org.eclipse.core.runtime.preferences.ConfigurationScope;
-import org.eclipse.core.runtime.preferences.DefaultScope;
-import org.eclipse.core.runtime.preferences.IEclipsePreferences;
-import org.eclipse.ui.preferences.ScopedPreferenceStore;
-
+import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceItem;
+import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceItem.IUltimatePreferenceItemValidator;
+import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceItem.PreferenceType;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.Activator;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.preferences.PreferenceValues;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.PreferenceInitializer.INTERPOLATION;
 
-
-/**
- * Provides default values for the preference page.
- * @see {@link AbstractPreferenceInitializer}{@link #initializeDefaultPreferences()}
- */
-
-public class PreferenceInitializer extends AbstractPreferenceInitializer {
+public class PreferenceInitializer extends UltimatePreferenceInitializer {
 
 	@Override
-	public void initializeDefaultPreferences() {
-		//obtain the default scope
-		DefaultScope defaultscope = new DefaultScope();
-//		IEclipsePreferences defaults = defaultscope.getNode(Activator.s_PLUGIN_ID);
-		ScopedPreferenceStore preferences = new ScopedPreferenceStore(defaultscope,Activator.s_PLUGIN_ID);
+	protected UltimatePreferenceItem<?>[] initDefaultPreferences() {
+		return new UltimatePreferenceItem<?>[] {
+				new UltimatePreferenceItem<Boolean>(LABEL_ONLYMAINPROCEDURE,
+						DEF_ONLYMAINPROCEDURE, PreferenceType.Boolean),
+				new UltimatePreferenceItem<Boolean>(
+						LABEL_MEMOIZENORMALEDGECHECKS,
+						DEF_MEMOIZENORMALEDGECHECKS, PreferenceType.Boolean),
+				new UltimatePreferenceItem<Boolean>(
+						LABEL_MEMOIZERETURNEDGECHECKS,
+						DEF_MEMOIZERETURNEDGECHECKS, PreferenceType.Boolean),
+				new UltimatePreferenceItem<SolverAndInterpolator>(
+						LABEL_SOLVERANDINTERPOLATOR, DEF_SOLVERANDINTERPOLATOR,
+						PreferenceType.Combo, SolverAndInterpolator.values()),
+				new UltimatePreferenceItem<INTERPOLATION>(
+						LABEL_INTERPOLATIONMODE, DEF_INTERPOLATIONMODE,
+						PreferenceType.Combo, INTERPOLATION.values()),
+				new UltimatePreferenceItem<PredicateUnification>(
+						LABEL_PREDICATEUNIFICATION, DEF_PREDICATEUNIFICATION,
+						PreferenceType.Combo, PredicateUnification.values()),
+				new UltimatePreferenceItem<EdgeCheckOptimization>(
+						LABEL_EDGECHECKOPTIMIZATION, DEF_EDGECHECKOPTIMIZATION,
+						PreferenceType.Combo, EdgeCheckOptimization.values()),
+				new UltimatePreferenceItem<String>(LABEL_GRAPHWRITERPATH,
+						DEF_GRAPHWRITERPATH, PreferenceType.Directory),
+				new UltimatePreferenceItem<Integer>(LABEL_TIMEOUT, DEF_TIMEOUT,
+						PreferenceType.Integer,
+						new IUltimatePreferenceItemValidator.IntegerValidator(
+								0, 1000000)),
 
-
-		//set the default values
-		preferences.setDefault(PreferenceValues.NAME_ONLYMAINPROCEDURE, 
-				PreferenceValues.DEF_ONLYMAINPROCEDURE);
-		preferences.setDefault(PreferenceValues.NAME_MEMOIZENORMALEDGECHECKS, 
-				PreferenceValues.DEF_MEMOIZENORMALEDGECHECKS);
-		preferences.setDefault(PreferenceValues.NAME_MEMOIZERETURNEDGECHECKS, 
-				PreferenceValues.DEF_MEMOIZERETURNEDGECHECKS);
-		
-		preferences.setDefault(PreferenceValues.NAME_SOLVERANDINTERPOLATOR, 
-				PreferenceValues.DEF_SOLVERANDINTERPOLATOR.toString());
-		preferences.setDefault(PreferenceValues.NAME_INTERPOLATIONMODE,
-				PreferenceValues.DEF_INTERPOLATIONMODE.toString());
-		preferences.setDefault(PreferenceValues.NAME_PREDICATEUNIFICATION, 
-				PreferenceValues.DEF_PREDICATEUNIFICATION.toString());
-		preferences.setDefault(PreferenceValues.NAME_EDGECHECKOPTIMIZATION,
-				PreferenceValues.DEF_EDGECHECKOPTIMIZATION.toString());
-		
-		preferences.setDefault(PreferenceValues.NAME_GRAPHWRITERPATH, PreferenceValues.DEF_GRAPHWRITERPATH);
-
+		};
 	}
+
+	@Override
+	protected String getPlugID() {
+		return Activator.s_PLUGIN_ID;
+	}
+
+	@Override
+	public String getPreferencePageTitle() {
+		return "CodeCheck";
+	}
+
+	public enum SolverAndInterpolator {
+		SMTINTERPOL, Z3SPWP
+	}
+
+	public enum EdgeCheckOptimization {
+		NONE, PUSHPOP, SDEC, PUSHPOP_SDEC
+	}
+
+	public enum PredicateUnification {
+		PER_ITERATION, PER_VERIFICATION, NONE
+	}
+
+	public enum Solver {
+		Z3, SMTInterpol
+	}
+
+	/*
+	 * labels for the different preferencess
+	 */
+	public static final String LABEL_ONLYMAINPROCEDURE = "only verify starting from main procedure";
+	public static final String LABEL_MEMOIZENORMALEDGECHECKS = "memoize already made edge checks for non-return edges";
+	public static final String LABEL_MEMOIZERETURNEDGECHECKS = "memoize already made edge checks for return edges";
+
+	public static final String LABEL_SOLVERANDINTERPOLATOR = "Interpolating solver";
+	public static final String LABEL_INTERPOLATIONMODE = "tree interpolation mode for smtinterpol \n (internal: tree, a la matthias: nested)";
+	public static final String LABEL_PREDICATEUNIFICATION = "Predicate Unification Mode";
+	public static final String LABEL_EDGECHECKOPTIMIZATION = "EdgeCheck Optimization Mode";
+
+	public static final String LABEL_GRAPHWRITERPATH = "write dot graph files here (empty for don't write)";
+
+	public static final String LABEL_TIMEOUT = "Timeout in seconds";
+
+	// /*
+	// * default values for the different preferences
+	// */
+	public static final boolean DEF_ONLYMAINPROCEDURE = false;
+	public static final boolean DEF_MEMOIZENORMALEDGECHECKS = true;
+	public static final boolean DEF_MEMOIZERETURNEDGECHECKS = true;
+
+	public static final SolverAndInterpolator DEF_SOLVERANDINTERPOLATOR = SolverAndInterpolator.SMTINTERPOL;
+	public static final INTERPOLATION DEF_INTERPOLATIONMODE = INTERPOLATION.Craig_TreeInterpolation;
+	public static final PredicateUnification DEF_PREDICATEUNIFICATION = PredicateUnification.PER_ITERATION;
+	public static final EdgeCheckOptimization DEF_EDGECHECKOPTIMIZATION = EdgeCheckOptimization.NONE;
+
+	public static final String DEF_GRAPHWRITERPATH = "";
+
+	public static final int DEF_TIMEOUT = 1000;
 
 }

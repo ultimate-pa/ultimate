@@ -12,6 +12,7 @@ import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceIt
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.ICore;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.IOutput;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.IRCPPlugin;
+import de.uni_freiburg.informatik.ultimate.ep.interfaces.ISource;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.ITool;
 
 public class UltimatePreferencePageFactory {
@@ -38,6 +39,9 @@ public class UltimatePreferencePageFactory {
 					}
 					if(plugin instanceof ICore){
 						parentNodeID = "Core";
+					}
+					if(plugin instanceof ISource){
+						parentNodeID = "SourcePlugins";
 					}
 
 					createPreferencePage(plugin.getPluginID(),
