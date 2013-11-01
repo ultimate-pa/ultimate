@@ -122,6 +122,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayLHS;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Body;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BooleanLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BreakStatement;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ConstDeclaration;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
@@ -444,9 +445,16 @@ public class CHandler implements ICHandler {
 			}
 		}
 		for (Statement s : initStatements) {
+			LeftHandSide[] lhss = null;
 			if (s instanceof AssignmentStatement) {
 				AssignmentStatement as = (AssignmentStatement) s;
-				for (LeftHandSide lhs : as.getLhs()) {
+				lhss = as.getLhs();
+			} else if (s instanceof CallStatement) {
+				CallStatement cs = (CallStatement) s;
+				lhss = cs.getLhs();
+			}	
+			if (lhss != null) {
+				for (LeftHandSide lhs : lhss) {
 					String varId = BoogieASTUtil.getLHSId(lhs);
 					if (symbolTable.containsBoogieSymbol(varId)) {
 						String cId = symbolTable.getCID4BoogieID(varId, loc);
@@ -646,8 +654,9 @@ public class CHandler implements ICHandler {
 //							memoryHandler, structHandler, node, globalVariables,
 //							globalVariablesInits, index);
 					ResultExpression rArray = arrayHandler.handleArrayDeclarationOnHeap(main,
-							memoryHandler, structHandler, functionHandler, globalVariables,
-							globalVariablesInits, (IASTArrayDeclarator) d, node.getDeclSpecifier(), resType,
+							memoryHandler, structHandler, functionHandler,// globalVariables,
+							//globalVariablesInits, 
+							(IASTArrayDeclarator) d, node.getDeclSpecifier(), resType,
 							bId, loc);
 					CType arrayType = rArray.lrVal.cType;
 					
@@ -674,10 +683,8 @@ public class CHandler implements ICHandler {
 							arrayType));
 					
 					if (main.typeHandler.isStructDeclaration()) {
-						/*
-						 * store C variable information into this result, as
-						 * this is a struct field! We need this information to
-						 * build the structs C variable information recursively.
+						/* store C variable information into this result, as this is a struct field! 
+						 * We need this information to build the structs C variable information recursively.
 						 */
 						assert arrayType != null;
 						result.declCTypes.add(arrayType);
@@ -685,6 +692,9 @@ public class CHandler implements ICHandler {
 					
 					if (staticStorageClass(node) && !isGlobal) {
 						staticVarStorage.decl.add(decl);
+						globalVariables.put(decl, arrayType);
+						if (d.getInitializer() != null)
+							globalVariablesInits.put(decl, result.stmt);
 					} else {
 						result.decl.add(decl);
 					}

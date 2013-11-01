@@ -54,23 +54,23 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableLHS;
 public class ArrayHandler {
 	
 	boolean modifyingTheHeapGlobally = false;
+	HashSet<String> modifiedGlobals = new HashSet<String>();
 	
 	public HashSet<String> getModifiedGlobals() {
-		HashSet<String> set = new HashSet<String>();
 		if (modifyingTheHeapGlobally) {
 			for (String t : new String[] { SFO.INT, SFO.POINTER,
 					SFO.REAL, SFO.BOOL }) {
-				set.add(SFO.MEMORY + "_" + t);
+				modifiedGlobals.add(SFO.MEMORY + "_" + t);
 			}
-			set.add(SFO.LENGTH);
+			modifiedGlobals.add(SFO.LENGTH);
 		}
-		return set;
+		return modifiedGlobals;
 	}
 
 	public ResultExpression handleArrayDeclarationOnHeap(Dispatcher main,
 			MemoryHandler memoryHandler, StructHandler structHandler,
-			FunctionHandler functionHandler, HashMap<Declaration, CType> globalVariables,
-			HashMap<Declaration, ArrayList<Statement>> globalVariablesInits,
+			FunctionHandler functionHandler, //HashMap<Declaration, CType> globalVariables,
+			//HashMap<Declaration, ArrayList<Statement>> globalVariablesInits,
 			IASTArrayDeclarator d, IASTDeclSpecifier iastDeclSpecifier, ResultTypes resType, String bId, CACSLLocation loc) {
 
 		ArrayList<Statement> stmt = new ArrayList<Statement>();
@@ -136,6 +136,7 @@ public class ArrayHandler {
 				}
 			} else { //our initialized array belongs to a global variable
 				modifyingTheHeapGlobally = true;
+				modifiedGlobals.add(bId);
 			}
 		}
 		return new ResultExpression(stmt, arrayId, decl, auxVars, overappr);
