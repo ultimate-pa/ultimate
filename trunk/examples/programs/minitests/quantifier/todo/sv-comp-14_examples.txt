@@ -316,7 +316,7 @@ trex01_*
 
 ---
 
-memsafety (36):
+[10224] memsafety (36):
 
 1 working
 20051113-1.c_false-valid-memtrack, lockfree-3.0_true
