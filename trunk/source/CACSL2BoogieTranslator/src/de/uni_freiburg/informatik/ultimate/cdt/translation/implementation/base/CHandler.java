@@ -750,18 +750,19 @@ public class CHandler implements ICHandler {
 								((ResultExpression) (main.dispatch(d.getInitializer())));
 						rExpr = rExpr.switchToRValue(main, memoryHandler, structHandler, loc);
 
-						Expression rExprExpr = null;
+						RValue rVal = null;
 						if (resultCType instanceof CStruct) {
 							ResultExpression structCons = structHandler.makeStructConstructorFromRERL(main, loc, memoryHandler, arrayHandler,
-									(ResultExpressionListRec) rExpr, (CStruct) resultCType);
-							rExprExpr = structCons.lrVal.getValue();
-						} else if (resultCType instanceof CPointer 
-								&& rExpr.lrVal.getValue() instanceof IntegerLiteral) {
-							rExprExpr = MemoryHandler.constructPointerFromBaseAndOffset(
-									new IntegerLiteral(loc, new InferredType(Type.Integer), "0"),
-									rExpr.lrVal.getValue(), loc);
+									(ResultExpressionListRec) rExpr, (CStruct) resultCType).switchToRValue(main, memoryHandler, structHandler, loc);
+							rVal = (RValue) structCons.lrVal;
+//						} else if (resultCType instanceof CPointer 
+//								&& rExpr.lrVal.getValue() instanceof IntegerLiteral) {
+//							rExprExpr = MemoryHandler.constructPointerFromBaseAndOffset(
+//									new IntegerLiteral(loc, new InferredType(Type.Integer), "0"),
+//									rExpr.lrVal.getValue(), loc);
 						} else {
-							rExprExpr = ConvExpr.doStrangeThings(type, rExpr.lrVal.getValue());
+						    rVal = (RValue) rExpr.lrVal;
+//							rExprExpr = ConvExpr.doStrangeThings(type, rExpr.lrVal.getValue());
 //								rExprExpr = main.typeHandler.convertArith2Boolean(
 //										loc, type, rExpr.lrVal.getValue());
 						}
@@ -776,7 +777,7 @@ public class CHandler implements ICHandler {
 						
 						ResultExpression assignment = makeAssignment(
 						        main, loc, rExpr.stmt, lrVal,
-						        new RValue(rExprExpr, resultCType), rExpr.decl,
+						        rVal, rExpr.decl,
 						        rExpr.auxVars, rExpr.overappr);
 						if (staticStorageClass(node) && !isGlobal) {
 							staticVarStorage.stmt.addAll(assignment.stmt);
@@ -1281,15 +1282,46 @@ public class CHandler implements ICHandler {
 			List<Overapprox> overapprox) {
 		RValue rightHandSide = rVal;
 		
-		//TODO make implicit casts here
-		//		IType lType = lrVal.getValue().getType();
-		//		IType rType = rVal.getValue().getType();
-//        if (lType instanceof CPointer
-//                && rType instanceof CPrimitive
-//                && ((CPrimitive) rType).getType() == PRIMITIVE.INT) 
-//            rightHandSide = new RValue(MemoryHandler.constructPointerFromBaseAndOffset(
-//                    new IntegerLiteral(loc, new InferredType(Type.Integer), "0"), 
-//                    rVal.getValue(), loc), null);
+		/*
+		 * implicit and some explicit casts here
+		 * TODO Alex+Christian: Only handles integer literals and variables.
+		 * This fixes most issues, but is surely no general solution.
+		 */
+		CType lType = lrVal.cType;
+		CType rType = rVal.cType;
+        Expression rExpr = rVal.getValue();
+		boolean convertToPointer = false;
+        if (lType instanceof CPointer) {
+            if (rType instanceof CPointer) {
+                if (rExpr instanceof IntegerLiteral) {
+                    convertToPointer = true;
+                }
+                else if (rExpr instanceof IdentifierExpression) {
+                    String varId = ((IdentifierExpression)rExpr).getIdentifier();
+                    if (symbolTable.containsBoogieSymbol(varId)) {
+                        String cId = symbolTable.getCID4BoogieID(varId, loc);
+                        CType cType = symbolTable.get(cId, loc).getCVariable();
+                        if (cType instanceof CPrimitive &&
+                                ((CPrimitive)cType).getType() == PRIMITIVE.INT) {
+                            convertToPointer = true;
+                        }
+                    }
+                }
+            }
+            else if (rType instanceof CPrimitive &&
+                    ((CPrimitive) rType).getType() == PRIMITIVE.INT) {
+                convertToPointer = true;
+            }
+        }
+        // convert to pointer
+        if (convertToPointer) {
+            rightHandSide = new RValue(
+                    MemoryHandler.constructPointerFromBaseAndOffset(
+                    new IntegerLiteral(
+                            loc, new InferredType(Type.Integer), "0"),
+                        rExpr, loc),
+                    null);
+        }
 
 		if (lrVal instanceof HeapLValue) {
 			HeapLValue hlv = (HeapLValue) lrVal; 
