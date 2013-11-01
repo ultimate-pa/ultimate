@@ -11,6 +11,7 @@ import de.uni_freiburg.informatik.ultimate.access.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.access.WalkerOptions;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
+import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.ILocation;
@@ -20,9 +21,9 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.preferenc
 import de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.preferences.PreferenceValues.EdgeCheckOptimization;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.preferences.PreferenceValues.PredicateUnification;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.preferences.PreferenceValues.SolverAndInterpolator;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.PreferenceInitializer.INTERPOLATION;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.PreferenceInitializer.Solver;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.TAPreferences;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.PreferenceValues.INTERPOLATION;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.PreferenceValues.Solver;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.Backtranslator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.RcfgProgramExecution;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.boogie.BoogieProgramExecution;
@@ -47,9 +48,6 @@ import de.uni_freiburg.informatik.ultimate.result.PositiveResult;
 import de.uni_freiburg.informatik.ultimate.result.UnprovableResult;
 
 import org.apache.log4j.Logger;
-import org.eclipse.core.runtime.preferences.ConfigurationScope;
-import org.eclipse.core.runtime.preferences.IEclipsePreferences;
-import org.eclipse.core.runtime.preferences.InstanceScope;
 
 
 /**
@@ -141,7 +139,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 	}
 
 	private void readPreferencePage() {
-		IEclipsePreferences prefs = InstanceScope.INSTANCE.getNode(Activator.s_PLUGIN_ID);
+		UltimatePreferenceStore prefs = new UltimatePreferenceStore(Activator.s_PLUGIN_ID);
 		
 		GlobalSettings.init();
 		
@@ -152,21 +150,21 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 		GlobalSettings._instance._checkOnlyMain = prefs.getBoolean(PreferenceValues.NAME_ONLYMAINPROCEDURE, 
 				PreferenceValues.DEF_ONLYMAINPROCEDURE);
 				
-		String solverString = prefs.get(PreferenceValues.NAME_SOLVERANDINTERPOLATOR, 
+		String solverString = prefs.getString(PreferenceValues.NAME_SOLVERANDINTERPOLATOR, 
 				PreferenceValues.DEF_SOLVERANDINTERPOLATOR.toString());
 		if (solverString.equals(PreferenceValues.VALUE_SOLVERANDINTERPOLATOR_SMTINTERPOL.toString()))
 			GlobalSettings._instance._solverAndInterpolator = SolverAndInterpolator.SMTINTERPOL;
 		else if (solverString.equals(PreferenceValues.VALUE_SOLVERANDINTERPOLATOR_Z3SPWP.toString()))
 			GlobalSettings._instance._solverAndInterpolator = SolverAndInterpolator.Z3SPWP;
 		
-		String interpolationModeString = prefs.get(PreferenceValues.NAME_INTERPOLATIONMODE,
+		String interpolationModeString = prefs.getString(PreferenceValues.NAME_INTERPOLATIONMODE,
 				PreferenceValues.DEF_INTERPOLATIONMODE.toString());
 		if (interpolationModeString.equals(PreferenceValues.VALUE_INTERPOLATIONMODE_TREE.toString()))
 			GlobalSettings._instance._interpolationMode = INTERPOLATION.Craig_TreeInterpolation;
 		else if (interpolationModeString.equals(PreferenceValues.VALUE_INTERPOLATIONMODE_NESTED.toString()))
 			GlobalSettings._instance._interpolationMode = INTERPOLATION.Craig_NestedInterpolation;
 		
-		String predicateUnificationString = prefs.get(PreferenceValues.NAME_PREDICATEUNIFICATION, 
+		String predicateUnificationString = prefs.getString(PreferenceValues.NAME_PREDICATEUNIFICATION, 
 				PreferenceValues.DEF_PREDICATEUNIFICATION.toString());
 		if (predicateUnificationString.equals(PreferenceValues.VALUE_PREDICATEUNIFICATION_PERVERIFICATION.toString()))
 			GlobalSettings._instance._predicateUnification = PredicateUnification.PER_VERIFICATION;
@@ -175,7 +173,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 		else if (predicateUnificationString.equals(PreferenceValues.VALUE_PREDICATEUNIFICATION_NONE.toString()))
 			GlobalSettings._instance._predicateUnification = PredicateUnification.NONE;
 		
-		String edgeCheckOptimizationString = prefs.get(PreferenceValues.NAME_EDGECHECKOPTIMIZATION, 
+		String edgeCheckOptimizationString = prefs.getString(PreferenceValues.NAME_EDGECHECKOPTIMIZATION, 
 				PreferenceValues.DEF_EDGECHECKOPTIMIZATION.toString());
 		if (edgeCheckOptimizationString.equals(PreferenceValues.VALUE_EDGECHECKOPTIMIZATION_NONE.toString()))
 			GlobalSettings._instance._edgeCheckOptimization = EdgeCheckOptimization.NONE;

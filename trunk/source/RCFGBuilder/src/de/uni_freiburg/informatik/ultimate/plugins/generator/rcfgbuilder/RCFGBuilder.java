@@ -9,10 +9,9 @@ import de.uni_freiburg.informatik.ultimate.model.GraphType;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.MarkedTrace;
 import de.uni_freiburg.informatik.ultimate.model.TokenMap;
-import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.PreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceInitializer;
 
-import org.apache.log4j.Logger;
 import org.eclipse.core.runtime.preferences.IEclipsePreferences;
 import org.eclipse.core.runtime.preferences.IScopeContext;
 
@@ -30,9 +29,6 @@ public class RCFGBuilder implements IGenerator {
 	
 	private RCFGBuilderObserver m_Observer;
 	private GraphType m_InputDefinition;
-	
-	private static Logger s_Logger = UltimateServices.getInstance().getLogger(Activator.PLUGIN_ID);
-	
 	
 	
 	/* (non-Javadoc)
@@ -145,7 +141,6 @@ public class RCFGBuilder implements IGenerator {
 
 	@Override
 	public UltimatePreferenceInitializer getPreferences() {
-		// TODO Auto-generated method stub
-		return null;
+		return new PreferenceInitializer();
 	}
 }

@@ -3,7 +3,7 @@ package de.uni_freiburg.informatik.ultimate.core.preferences;
 public class UltimatePreferenceItem<T> {
 
 	public enum PreferenceType {
-		Boolean, Directory, String, Label, Combo, Radio
+		Boolean, Directory, String, Label, Combo, Radio, Integer
 	}
 
 	private String mLabel;
@@ -11,11 +11,16 @@ public class UltimatePreferenceItem<T> {
 	private PreferenceType mType;
 	private T[] mChoices;
 	private boolean mUseCustomPreferencePage;
-	private UltimatePreferenceItemValidator<T> mPreferenceValidator;
+	private IUltimatePreferenceItemValidator<T> mPreferenceValidator;
+
+	public UltimatePreferenceItem(String label, T defaultValue,
+			PreferenceType type) {
+		this(label, defaultValue, type, false, null, null);
+	}
 
 	public UltimatePreferenceItem(String label, T defaultValue,
 			PreferenceType type, T[] choices,
-			UltimatePreferenceItemValidator<T> preferenceValidator) {
+			IUltimatePreferenceItemValidator<T> preferenceValidator) {
 		this(label, defaultValue, type, false, choices, preferenceValidator);
 	}
 
@@ -25,8 +30,14 @@ public class UltimatePreferenceItem<T> {
 	}
 
 	public UltimatePreferenceItem(String label, T defaultValue,
+			PreferenceType type,
+			IUltimatePreferenceItemValidator<T> preferenceValidator) {
+		this(label, defaultValue, type, false, null, preferenceValidator);
+	}
+
+	public UltimatePreferenceItem(String label, T defaultValue,
 			PreferenceType type, boolean useCustomPreferencePage, T[] choices,
-			UltimatePreferenceItemValidator<T> preferenceValidator) {
+			IUltimatePreferenceItemValidator<T> preferenceValidator) {
 		mLabel = label;
 		mDefaultValue = defaultValue;
 		mType = type;
@@ -92,19 +103,42 @@ public class UltimatePreferenceItem<T> {
 		return rtr;
 	}
 
-	public UltimatePreferenceItemValidator<T> getPreferenceValidator() {
+	public IUltimatePreferenceItemValidator<T> getPreferenceValidator() {
 		return mPreferenceValidator;
 	}
 
 	public void setPreferenceValidator(
-			UltimatePreferenceItemValidator<T> preferenceValidator) {
+			IUltimatePreferenceItemValidator<T> preferenceValidator) {
 		mPreferenceValidator = preferenceValidator;
 	}
 
-	public interface UltimatePreferenceItemValidator<T> {
+	public interface IUltimatePreferenceItemValidator<T> {
 		public boolean isValid(T value);
 
 		public String getInvalidValueErrorMessage(T value);
+
+		public class IntegerValidator implements
+				IUltimatePreferenceItemValidator<Integer> {
+
+			private int mMin;
+			private int mMax;
+
+			public IntegerValidator(int min, int max) {
+				mMin = min;
+				mMax = max;
+			}
+
+			@Override
+			public boolean isValid(Integer value) {
+				return mMin <= value && value <= mMax;
+			}
+
+			@Override
+			public String getInvalidValueErrorMessage(Integer value) {
+				return "Valid range is " + mMin + " <= value <= " + mMax;
+			}
+
+		}
 	}
 
 }

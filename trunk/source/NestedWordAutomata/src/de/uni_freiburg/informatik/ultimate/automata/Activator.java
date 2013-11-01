@@ -1,16 +1,10 @@
 package de.uni_freiburg.informatik.ultimate.automata;
 
-import org.apache.log4j.Logger;
 import org.eclipse.core.runtime.Plugin;
-import org.eclipse.core.runtime.preferences.ConfigurationScope;
 import org.eclipse.core.runtime.preferences.InstanceScope;
 import org.eclipse.jface.preference.IPreferenceStore;
-import org.eclipse.jface.resource.ImageDescriptor;
-import org.eclipse.ui.plugin.AbstractUIPlugin;
 import org.eclipse.ui.preferences.ScopedPreferenceStore;
 import org.osgi.framework.BundleContext;
-
-import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 
 /**
  * The activator class controls the plug-in life cycle

@@ -6,25 +6,24 @@ import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceIt
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceItem.PreferenceType;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.blockendcoding.Activator;
 
-public class PreferenceInitializer extends
-		UltimatePreferenceInitializer {
+public class PreferenceInitializer extends UltimatePreferenceInitializer {
 
 	@Override
 	protected UltimatePreferenceItem<?>[] initDefaultPreferences() {
 		return new UltimatePreferenceItem[] {
 				new UltimatePreferenceItem<Boolean>(LABEL_CALLMINIMIZE, false,
-						PreferenceType.Boolean, null),
+						PreferenceType.Boolean),
 				new UltimatePreferenceItem<Boolean>(LABEL_EXECUTETESTS, false,
-						PreferenceType.Boolean, null),
+						PreferenceType.Boolean),
 				new UltimatePreferenceItem<RatingStrategy>(LABEL_STRATEGY,
 						RatingStrategy.DEFAULT, PreferenceType.Combo,
 						RatingStrategy.values()),
 				new UltimatePreferenceItem<Boolean>(LABEL_USESTATHEURISTIC,
-						false, PreferenceType.Boolean, null),
+						false, PreferenceType.Boolean),
 				new UltimatePreferenceItem<Boolean>(LABEL_USEDYNAMICHEURISTIC,
-						false, PreferenceType.Boolean, null),
+						false, PreferenceType.Boolean),
 				new UltimatePreferenceItem<String>(LABEL_RATINGBOUND, "",
-						PreferenceType.String, null),
+						PreferenceType.String),
 
 		};
 	}

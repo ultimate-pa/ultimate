@@ -6,15 +6,6 @@
       </impl>
    </extension>
  <extension
-       point="org.eclipse.ui.preferencePages">
-    <page
-          category="de.uni_freiburg.informatik.ultimate.gui.preferencepages.ToolsPreferencePage"
-          class="de.uni_freiburg.informatik.ultimate.plugins.generator.automatascriptinterpreter.preferences.PreferencePage"
-          id="de.uni_freiburg.informatik.ultimate.plugins.generator.automatascriptinterpreter.preferences.PreferencePage"
-          name="Automata Script Interpreter Preferences">
-    </page>
- </extension>
- <extension
        point="org.eclipse.core.runtime.preferences">
     <initializer
           class="de.uni_freiburg.informatik.ultimate.plugins.generator.automatascriptinterpreter.preferences.PreferenceInitializer">

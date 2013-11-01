@@ -10,13 +10,15 @@ public class PreferenceInitializer extends UltimatePreferenceInitializer {
 
 	@Override
 	protected UltimatePreferenceItem<?>[] initDefaultPreferences() {
-		return new UltimatePreferenceItem<?>[] { 
-				new UltimatePreferenceItem<TranslationMode>(
-				LABEL_MODE, TranslationMode.BASE, PreferenceType.Radio,
-				TranslationMode.values()),
-				new UltimatePreferenceItem<String>(LABEL_MAINPROC, "", PreferenceType.String, null),
-				new UltimatePreferenceItem<Boolean>(LABEL_CHECK_POINTER_VALIDITY, false, PreferenceType.Boolean, null),
-		};
+		return new UltimatePreferenceItem<?>[] {
+				new UltimatePreferenceItem<TranslationMode>(LABEL_MODE,
+						TranslationMode.BASE, PreferenceType.Radio,
+						TranslationMode.values()),
+				new UltimatePreferenceItem<String>(LABEL_MAINPROC, "",
+						PreferenceType.String),
+				new UltimatePreferenceItem<Boolean>(
+						LABEL_CHECK_POINTER_VALIDITY, false,
+						PreferenceType.Boolean), };
 	}
 
 	@Override

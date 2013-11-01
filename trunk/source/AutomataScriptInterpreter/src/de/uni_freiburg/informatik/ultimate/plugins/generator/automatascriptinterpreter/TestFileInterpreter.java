@@ -22,22 +22,18 @@ import java.util.Set;
 
 import org.apache.log4j.Logger;
 import org.eclipse.core.runtime.FileLocator;
-import org.eclipse.core.runtime.preferences.ConfigurationScope;
-import org.eclipse.core.runtime.preferences.IEclipsePreferences;
-import org.eclipse.core.runtime.preferences.IScopeContext;
-import org.eclipse.core.runtime.preferences.InstanceScope;
 
-import de.uni_freiburg.informatik.ultimate.plugins.generator.automatascriptinterpreter.preferences.PreferenceConstants;
 import de.uni_freiburg.informatik.ultimate.automata.AtsDefinitionPrinter;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
-import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StringFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.NestedLassoWord;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
+import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
 import de.uni_freiburg.informatik.ultimate.model.ILocation;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.automatascriptinterpreter.preferences.PreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AtsASTNode;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AutomataScriptLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.AssignmentExpression;
@@ -631,14 +627,10 @@ public class TestFileInterpreter {
 	}
 	
 	private void readPreferences() {
-		IScopeContext scope = InstanceScope.INSTANCE;
-		IEclipsePreferences prefs = scope.getNode(Activator.s_PLUGIN_ID);
-		m_timeout = prefs.getInt(PreferenceConstants.Name_Timeout, 
-				PreferenceConstants.Default_Timeout);
-		m_printAutomataToFile = prefs.getBoolean(PreferenceConstants.Name_WriteToFile, 
-				PreferenceConstants.Default_WriteToFile);
-		m_path = prefs.get(PreferenceConstants.Name_Path, 
-				PreferenceConstants.Default_Path);
+		UltimatePreferenceStore prefs = new UltimatePreferenceStore(Activator.s_PLUGIN_ID);
+		m_timeout = prefs.getInt(PreferenceInitializer.Name_Timeout);
+		m_printAutomataToFile = prefs.getBoolean(PreferenceInitializer.Name_WriteToFile);
+		m_path = prefs.getString(PreferenceInitializer.Name_Path);
 	}
 	
 	

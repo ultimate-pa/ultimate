@@ -3,13 +3,12 @@ package de.uni_freiburg.informatik.ultimate.core.coreplugin.preferences;
 import java.util.Arrays;
 
 import org.eclipse.core.runtime.Platform;
-import org.eclipse.jface.preference.StringFieldEditor;
 
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.Activator;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceItem;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceItem.PreferenceType;
-import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceItem.UltimatePreferenceItemValidator;
+import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceItem.IUltimatePreferenceItemValidator;
 
 /**
  * CorePreferenceInitializer implements UltimatePreferenceStore for
@@ -30,34 +29,33 @@ public class CorePreferenceInitializer extends UltimatePreferenceInitializer {
 
 				// Core
 				new UltimatePreferenceItem<Boolean>(LABEL_SHOWUSABLEPARSER,
-						VALUE_SHOWUSABLEPARSER_DEFAULT, PreferenceType.Boolean,
-						null),
+						VALUE_SHOWUSABLEPARSER_DEFAULT, PreferenceType.Boolean),
 				new UltimatePreferenceItem<Boolean>(
 						LABEL_SHOWRESULTNOTIFIERPOPUP,
 						VALUE_SHOWRESULTNOTIFIERPOPUP_DEFAULT,
-						PreferenceType.Boolean, null),
+						PreferenceType.Boolean),
 
 				// Log files
 				new UltimatePreferenceItem<String>(DESC_LOGFILE, null,
-						PreferenceType.Label, null),
+						PreferenceType.Label),
 				new UltimatePreferenceItem<Boolean>(LABEL_LOGFILE,
-						VALUE_LOGFILE, PreferenceType.Boolean, null),
+						VALUE_LOGFILE, PreferenceType.Boolean),
 				new UltimatePreferenceItem<Boolean>(LABEL_APPEXLOGFILE,
-						VALUE_APPEXLOGFILE, PreferenceType.Boolean, null),
+						VALUE_APPEXLOGFILE, PreferenceType.Boolean),
 				new UltimatePreferenceItem<String>(LABEL_LOGFILE_NAME,
-						VALUE_LOGFILE_NAME, PreferenceType.String, null),
+						VALUE_LOGFILE_NAME, PreferenceType.String),
 				new UltimatePreferenceItem<String>(LABEL_LOGFILE_DIR,
-						VALUE_LOGFILE_DIR, PreferenceType.Directory, null),
+						VALUE_LOGFILE_DIR, PreferenceType.Directory),
 
 				// ModelManager
 				new UltimatePreferenceItem<Boolean>(LABEL_MM_DROP_MODELS,
-						VALUE_MM_DROP_MODELS, PreferenceType.Boolean, null),
+						VALUE_MM_DROP_MODELS, PreferenceType.Boolean),
 				new UltimatePreferenceItem<String>(LABEL_MM_TMPDIRECTORY,
-						VALUE_MM_TMPDIRECTORY, PreferenceType.Directory, null),
+						VALUE_MM_TMPDIRECTORY, PreferenceType.Directory),
 
 				// Log levels
 				new UltimatePreferenceItem<String>(LOGGING_PREFERENCES_DESC,
-						null, PreferenceType.Label, null),
+						null, PreferenceType.Label),
 				new UltimatePreferenceItem<String>(LABEL_ROOT_PREF,
 						VALUE_DEFAULT_LOGGING_PREF, PreferenceType.String,
 						null, new LogLevelValidator()),
@@ -86,14 +84,14 @@ public class CorePreferenceInitializer extends UltimatePreferenceInitializer {
 	protected String getPlugID() {
 		return Activator.s_PLUGIN_ID;
 	}
-	
+
 	@Override
 	public String getPreferencePageTitle() {
 		return "General";
 	}
 
 	private class LogLevelValidator implements
-			UltimatePreferenceItemValidator<String> {
+			IUltimatePreferenceItemValidator<String> {
 		@Override
 		public boolean isValid(String value) {
 			String s = value.toUpperCase();

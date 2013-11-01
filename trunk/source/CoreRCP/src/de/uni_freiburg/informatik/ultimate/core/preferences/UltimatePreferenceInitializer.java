@@ -46,6 +46,10 @@ public abstract class UltimatePreferenceInitializer extends
 				defaults.putBoolean(item.getLabel(),
 						(Boolean) item.getDefaultValue());
 				break;
+			case Integer:
+				defaults.putInt(item.getLabel(),
+						(Integer) item.getDefaultValue());
+				break;
 			case Directory:
 			case String:
 			case Combo:

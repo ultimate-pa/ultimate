@@ -8,6 +8,7 @@ import org.eclipse.jface.preference.ComboFieldEditor;
 import org.eclipse.jface.preference.DirectoryFieldEditor;
 import org.eclipse.jface.preference.FieldEditor;
 import org.eclipse.jface.preference.FieldEditorPreferencePage;
+import org.eclipse.jface.preference.IntegerFieldEditor;
 import org.eclipse.jface.preference.RadioGroupFieldEditor;
 import org.eclipse.jface.preference.StringFieldEditor;
 import org.eclipse.jface.util.PropertyChangeEvent;
@@ -16,7 +17,7 @@ import org.eclipse.ui.IWorkbenchPreferencePage;
 import org.eclipse.ui.preferences.ScopedPreferenceStore;
 
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceItem;
-import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceItem.UltimatePreferenceItemValidator;
+import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceItem.IUltimatePreferenceItemValidator;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
 
 public class UltimateGeneratedPreferencePage extends FieldEditorPreferencePage
@@ -55,6 +56,9 @@ public class UltimateGeneratedPreferencePage extends FieldEditorPreferencePage
 			switch (item.getType()) {
 			case Label:
 				editor = createLabel(item.getLabel());
+				break;
+			case Integer:
+				editor = createIntegerFieldEditor(item.getLabel());
 				break;
 			case Boolean:
 				editor = createBooleanFieldEditor(item.getLabel());
@@ -112,7 +116,6 @@ public class UltimateGeneratedPreferencePage extends FieldEditorPreferencePage
 		try {
 			mPreferenceStore.save();
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		return super.performOk();
@@ -125,18 +128,25 @@ public class UltimateGeneratedPreferencePage extends FieldEditorPreferencePage
 			if (preferenceDescriptor == null) {
 				return;
 			}
-			UltimatePreferenceItemValidator<?> validator = preferenceDescriptor
+			IUltimatePreferenceItemValidator<?> validator = preferenceDescriptor
 					.getPreferenceValidator();
 			switch (preferenceDescriptor.getType()) {
 			case Boolean:
 				validateField(
-						(UltimatePreferenceItemValidator<Boolean>) validator,
+						(IUltimatePreferenceItemValidator<Boolean>) validator,
 						((BooleanFieldEditor) editor).getBooleanValue());
+				break;
+			case Integer:
+				validateField(
+						(IUltimatePreferenceItemValidator<Integer>) validator,
+						((IntegerFieldEditor) editor).getIntValue());
+				break;
 			case Directory:
 			case String:
 				validateField(
-						(UltimatePreferenceItemValidator<String>) validator,
+						(IUltimatePreferenceItemValidator<String>) validator,
 						((StringFieldEditor) editor).getStringValue());
+				break;
 			case Label:
 			case Combo:
 			case Radio:
@@ -153,7 +163,7 @@ public class UltimateGeneratedPreferencePage extends FieldEditorPreferencePage
 	}
 
 	private <T> void validateField(
-			UltimatePreferenceItemValidator<T> validator, T value) {
+			IUltimatePreferenceItemValidator<T> validator, T value) {
 		if (!validator.isValid(value)) {
 			setErrorMessage(validator.getInvalidValueErrorMessage(value));
 			setValid(false);
@@ -163,9 +173,10 @@ public class UltimateGeneratedPreferencePage extends FieldEditorPreferencePage
 		}
 	}
 
-	private RadioGroupFieldEditor createRadioGroupFieldEditor(UltimatePreferenceItem<?> item) {
-		RadioGroupFieldEditor editor = new RadioGroupFieldEditor(item.getLabel(),
-				item.getLabel(), 1,
+	private RadioGroupFieldEditor createRadioGroupFieldEditor(
+			UltimatePreferenceItem<?> item) {
+		RadioGroupFieldEditor editor = new RadioGroupFieldEditor(
+				item.getLabel(), item.getLabel(), 1,
 				item.getComboFieldEntries(), getFieldEditorParent());
 		editor.loadDefault();
 		addField(editor);
@@ -178,6 +189,14 @@ public class UltimateGeneratedPreferencePage extends FieldEditorPreferencePage
 				getFieldEditorParent());
 		addField(comboEditor);
 		return comboEditor;
+	}
+
+	private IntegerFieldEditor createIntegerFieldEditor(String label) {
+		IntegerFieldEditor editor = new IntegerFieldEditor(label, label,
+				getFieldEditorParent());
+		editor.setValidRange(Integer.MIN_VALUE, Integer.MAX_VALUE);
+		addField(editor);
+		return editor;
 	}
 
 	private BooleanFieldEditor createBooleanFieldEditor(String label) {
