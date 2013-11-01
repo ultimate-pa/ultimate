@@ -19,10 +19,10 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Roo
 
 public class BuchiProductObserver implements IUnmanagedObserver {
 	
-	private NestedWordAutomaton<ASTNode, String> aut = null; 
+	private NestedWordAutomaton<ASTNode, String> automaton = null; 
 	private RootNode rcfg = null;
 	
-	public Product prod;
+	public Product product;
 
 
 	@Override 
@@ -50,47 +50,43 @@ public class BuchiProductObserver implements IUnmanagedObserver {
 	}
 
 	@Override
+	/**
+	 * Collect one RCFG and one LTL2Aut.AST and execute the product 
+	 * algorithm on them.
+	 */
 	public boolean process(IElement root) {
 		
-		
-		/*GraphType inRcfg = UltimateServices.getInstance().getGraphTypeByCreatorPluginId("RCFGBuilder");
-		GraphType inAut = UltimateServices.getInstance().getGraphTypeByCreatorPluginId("de.uni_freiburg.informatik.ultimate.LTL2Aut");
-		
-		this.rcfg = UltimateServices.getInstance(). .getClass()...*/
-		
-		//execute product
-		if (this.aut != null && this.rcfg != null)
+		//if everything is found, execute produrct
+		if (this.automaton != null && this.rcfg != null)
 		{
 			System.out.println("------------------PRODUCTCALC----------------------");
 			
 			try{
-				this.prod = new Product(this.aut, this.rcfg);
+				this.product = new Product(this.automaton, this.rcfg);
 			} catch (Exception e){
+				//TODO: log something
 				System.out.println("ERROR:\n" + e.toString());
 			}
 			
 			return false;
-		} /*else {
-			throw new Exception("There where no fitting models for the Product");
-		}*/
+		}
 
 		
-		//collect root nodes of graphs
-		if (root instanceof NeverStatement &&  this.aut == null)
+		//collect root nodes of Buechi automaton
+		if (root instanceof NeverStatement &&  this.automaton == null)
 		{
 			System.out.println("----------NEVER------------");
 			//build and get automaton
 			try{
 				Never2Automaton nta = new Never2Automaton((AstNode)root);
-				this.aut = nta.getAutomaton();
+				this.automaton = nta.getAutomaton();
 			}catch(Exception e){ 
 				//TODO: log something
 				System.out.println("ERROR:\n" + e.toString());
 			}
 			
-			//GraphType modelDescs = UltimateServices.getInstance().;
-			
-		}	
+		}
+		//collect root node of program's RCFG
 		if(root instanceof RootNode && this.rcfg == null )
 		{
 			System.out.println("----------RootNode------------");

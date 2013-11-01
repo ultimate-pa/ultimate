@@ -41,7 +41,7 @@ public class Never2Automaton{
 	
 	private AstNode ast;
 	
-	private NestedWordAutomaton<ASTNode, String> aut;
+	private NestedWordAutomaton<ASTNode, String> automaton;
 	
 	/**
 	 * The Never2Automaton instance will build a Büchi automaton
@@ -54,7 +54,7 @@ public class Never2Automaton{
 		this.ast = ast;
 		
 		
-		this.aut = new NestedWordAutomaton<ASTNode,String>(
+		this.automaton = new NestedWordAutomaton<ASTNode,String>(
 				this.collectAlphabet(), 
 				null, //call
 				null, //return
@@ -70,7 +70,7 @@ public class Never2Automaton{
 	 */
 	public NestedWordAutomaton<ASTNode, String> getAutomaton()
 	{
-		return this.aut;
+		return this.automaton;
 	}
 	
 	/**
@@ -86,7 +86,7 @@ public class Never2Automaton{
 		if (branch instanceof LabeledBlock) 			//add nodes
 		{
 			String n = ((Name)((LabeledBlock)branch).getValue()).getIdent();
-			this.aut.addState(n.endsWith("init"), n.startsWith("accept"), n);
+			this.automaton.addState(n.endsWith("init"), n.startsWith("accept"), n);
 			for(AstNode a: branch.getOutgoingNodes())
 				this.collectStates(a, n);
 		}
@@ -94,7 +94,7 @@ public class Never2Automaton{
 			return;
 		else if (branch instanceof SkipStatement) {
 			//case " accept_all: skip
-			this.aut.addInternalTransition(pred, new BooleanLiteral(null, true), pred);
+			this.automaton.addInternalTransition(pred, new BooleanLiteral(null, true), pred);
 			return;
 		} else if (branch instanceof Name)
 			return;
@@ -103,7 +103,7 @@ public class Never2Automaton{
 			ASTNode cond = this.toBoogieAst(((OptionStatement)branch).getCondition());
 			//			  option.body                     		 .goto					    .name
 			String succ = ((Name)branch.getOutgoingNodes().get(0).getOutgoingNodes().get(0)).getIdent();
-			this.aut.addInternalTransition(pred, cond, succ);
+			this.automaton.addInternalTransition(pred, cond, succ);
 		}
 		else
 		{

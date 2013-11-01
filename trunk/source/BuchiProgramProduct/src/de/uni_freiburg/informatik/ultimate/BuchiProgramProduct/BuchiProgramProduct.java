@@ -29,7 +29,7 @@ import de.uni_freiburg.informatik.ultimate.model.TokenMap;
 
 /**
  * This plugin implements the product algorithm described in the Masterthesis 
- *  "Automatische Generierungvon B�chi-Programmen".
+ *  "Automatische Generierungvon Buchi-Programmen".
  *  
  *  
  * @author Langenfeld
@@ -42,7 +42,7 @@ public class BuchiProgramProduct implements IGenerator {
 
 	 protected List<String> m_FileNames = new ArrayList<String>();
 	 
-	 private BuchiProductObserver bpo;
+	 private BuchiProductObserver buchiProductObserver;
 
 	@Override
 	public GraphType getOutputDefinition() {
@@ -84,7 +84,7 @@ public class BuchiProgramProduct implements IGenerator {
 	@Override
 	public List<IObserver> getObservers() {
 		ArrayList<IObserver> observers = new ArrayList<IObserver>();
-		observers.add(this.bpo);
+		observers.add(this.buchiProductObserver);
 		return observers;
 	}
 
@@ -97,7 +97,7 @@ public class BuchiProgramProduct implements IGenerator {
 
 	@Override
 	public int init(Object params) {
-		this.bpo = new BuchiProductObserver();
+		this.buchiProductObserver = new BuchiProductObserver();
 		return 0;
 	}
 
@@ -113,7 +113,7 @@ public class BuchiProgramProduct implements IGenerator {
 
 	@Override
 	public IElement getModel() {
-		return this.bpo.prod.getRCFG();
+		return this.buchiProductObserver.product.getRCFG();
 	}
 
 	@Override
