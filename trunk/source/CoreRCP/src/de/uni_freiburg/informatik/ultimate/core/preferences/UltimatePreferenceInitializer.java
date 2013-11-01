@@ -19,7 +19,7 @@ import org.osgi.service.prefs.BackingStoreException;
 public abstract class UltimatePreferenceInitializer extends
 		AbstractPreferenceInitializer {
 
-	private final UltimatePreferenceItem[] mPreferenceDescriptors;
+	private final UltimatePreferenceItem<?>[] mPreferenceDescriptors;
 	private final UltimatePreferenceStore mPreferenceStore;
 
 	public UltimatePreferenceInitializer() {
@@ -40,7 +40,7 @@ public abstract class UltimatePreferenceInitializer extends
 		IEclipsePreferences defaults = mPreferenceStore
 				.getDefaultEclipsePreferences();
 
-		for (UltimatePreferenceItem item : mPreferenceDescriptors) {
+		for (UltimatePreferenceItem<?> item : mPreferenceDescriptors) {
 			switch (item.getType()) {
 			case Boolean:
 				defaults.putBoolean(item.getLabel(),
@@ -48,7 +48,9 @@ public abstract class UltimatePreferenceInitializer extends
 				break;
 			case Directory:
 			case String:
-				defaults.put(item.getLabel(), (String) item.getDefaultValue());
+			case Combo:
+			case Radio:
+				defaults.put(item.getLabel(), item.getDefaultValue().toString());
 				break;
 			case Label:
 				// A Label is not really a preference; its just nice for
@@ -72,7 +74,7 @@ public abstract class UltimatePreferenceInitializer extends
 
 	}
 
-	public UltimatePreferenceItem[] getDefaultPreferences() {
+	public UltimatePreferenceItem<?>[] getDefaultPreferences() {
 		return mPreferenceDescriptors;
 	}
 
@@ -88,7 +90,7 @@ public abstract class UltimatePreferenceInitializer extends
 	 * 
 	 * @return
 	 */
-	protected abstract UltimatePreferenceItem[] initDefaultPreferences();
+	protected abstract UltimatePreferenceItem<?>[] initDefaultPreferences();
 
 	/**
 	 * Should return the ID of the implementing plugin.
@@ -96,5 +98,12 @@ public abstract class UltimatePreferenceInitializer extends
 	 * @return
 	 */
 	protected abstract String getPlugID();
+
+	/**
+	 * Should return the title of the preference page node
+	 * 
+	 * @return
+	 */
+	public abstract String getPreferencePageTitle() ;
 
 }

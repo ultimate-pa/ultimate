@@ -8,9 +8,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 
 import org.apache.log4j.Logger;
-import org.eclipse.core.runtime.preferences.ConfigurationScope;
-import org.eclipse.core.runtime.preferences.IEclipsePreferences;
-import org.eclipse.core.runtime.preferences.InstanceScope;
 
 import de.uni_freiburg.informatik.ultimate.blockencoding.model.BlockEncodingAnnotation;
 import de.uni_freiburg.informatik.ultimate.blockencoding.model.MinimizedNode;
@@ -21,9 +18,10 @@ import de.uni_freiburg.informatik.ultimate.blockencoding.rating.interfaces.IRati
 import de.uni_freiburg.informatik.ultimate.blockencoding.rating.metrics.RatingFactory.RatingStrategy;
 import de.uni_freiburg.informatik.ultimate.blockencoding.rating.util.EncodingStatistics;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
+import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.blockendcoding.Activator;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.blockendcoding.preferences.PreferencePage;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.blockendcoding.preferences.PreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootAnnot;
@@ -103,17 +101,20 @@ public class MinModelConverter {
 	 * @return gets the rating boundary
 	 */
 	private IRatingHeuristic getRatingHeuristic() {
-		IEclipsePreferences prefs = InstanceScope.INSTANCE
-				.getNode(Activator.s_PLUGIN_ID);
-		String prefValue = prefs.get(PreferencePage.NAME_RATINGBOUND, "");
-		RatingStrategy strategy = RatingStrategy.values()[Integer
-				.parseInt(prefs.get(PreferencePage.NAME_STRATEGY, "0"))];
+		UltimatePreferenceStore prefs = new UltimatePreferenceStore(
+				Activator.s_PLUGIN_ID);
+		String prefValue = prefs
+				.getString(PreferenceInitializer.LABEL_RATINGBOUND);
+		RatingStrategy strategy = prefs.getEnum(
+				PreferenceInitializer.LABEL_STRATEGY,
+				RatingStrategy.class);
 		// if there is no boundary value given, we do Large Block Encoding
 		if (strategy == RatingStrategy.LARGE_BLOCK) {
 			return null;
 		}
 		// check if we should use the statistic based heuristic
-		if (prefs.getBoolean(PreferencePage.NAME_USESTATHEURISTIC, false)) {
+		if (prefs
+				.getBoolean(PreferenceInitializer.LABEL_USESTATHEURISTIC)) {
 			StatisticBasedHeuristic heuristic = new StatisticBasedHeuristic(
 					strategy);
 			// maybe the case that there is no supported heuristic, then we use
@@ -123,8 +124,8 @@ public class MinModelConverter {
 			}
 			heuristic.init(prefValue);
 			return heuristic;
-		} else if (prefs.getBoolean(PreferencePage.NAME_USEDYNAMICHEURISTIC,
-				false)) {
+		} else if (prefs
+				.getBoolean(PreferenceInitializer.LABEL_USEDYNAMICHEURISTIC)) {
 			DynamicHeuristic heuristic = new DynamicHeuristic(strategy);
 			// maybe the case that there is no supported heuristic, then we use
 			// Large Block Encoding

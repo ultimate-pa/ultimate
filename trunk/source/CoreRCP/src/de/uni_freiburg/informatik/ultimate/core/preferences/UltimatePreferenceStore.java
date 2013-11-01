@@ -2,6 +2,7 @@ package de.uni_freiburg.informatik.ultimate.core.preferences;
 
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.UnknownFormatConversionException;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IStatus;
@@ -25,12 +26,6 @@ public class UltimatePreferenceStore {
 		mPluginID = pluginID;
 		mCurrentPreferences = InstanceScope.INSTANCE.getNode(mPluginID);
 		mDefaultPreferences = DefaultScope.INSTANCE.getNode(mPluginID);
-	}
-
-	public void addPreferenceChangeListener(
-			IPreferenceChangeListener iPreferenceChangeListener) {
-		mCurrentPreferences
-				.addPreferenceChangeListener(iPreferenceChangeListener);
 	}
 
 	/**
@@ -66,12 +61,157 @@ public class UltimatePreferenceStore {
 				mDefaultPreferences.get(key, defaultValue));
 	}
 
+	/**
+	 * Retrieves a preference value of type T, where T is a subtype of Enum,
+	 * from the store. If the key is neither in the current store nor in the
+	 * default store, an UnknownFormatConversionException is returned.
+	 * 
+	 * @param key
+	 * @param enumType
+	 * @return
+	 * @throws UnknownFormatConversionException
+	 */
+	public <T extends Enum<T>> T getEnum(String key, Class<T> enumType)
+			throws UnknownFormatConversionException {
+
+		String strValue = getString(key);
+		if (strValue.isEmpty()) {
+			throw new UnknownFormatConversionException("String " + strValue
+					+ " cannot be converted to type " + enumType);
+		} else {
+			return Enum.valueOf(enumType, strValue);
+		}
+	}
+
+	/**
+	 * Retrieves a preference value of type T, where T is a subtype of Enum,
+	 * from the store. If the key is neither in the current store nor in the
+	 * default store, defaultValue is returned.
+	 * 
+	 * @param key
+	 * @param defaultValue
+	 * @param enumType
+	 * @return
+	 */
+	public <T extends Enum<T>> T getEnum(String key, T defaultValue,
+			Class<T> enumType) {
+
+		String strValue = getString(key);
+		if (strValue.isEmpty()) {
+			return defaultValue;
+		} else {
+			return Enum.valueOf(enumType, strValue);
+		}
+	}
+
+	/**
+	 * Retrieves a preference value of type byte[] from the store. If the key is
+	 * neither in the current store nor in the default store, an empty byte
+	 * array of length 0 is returned.
+	 * 
+	 * @param key
+	 * @return
+	 */
+	public byte[] getByteArray(String key) {
+		return getByteArray(key, new byte[0]);
+	}
+
+	public byte[] getByteArray(String key, byte[] defaultValue) {
+		return mCurrentPreferences.getByteArray(key,
+				mDefaultPreferences.getByteArray(key, defaultValue));
+	}
+
+	/**
+	 * Retrieves a preference value of type double from the store. If the key is
+	 * neither in the current store nor in the default store, 0.0d is returned.
+	 * 
+	 * @param key
+	 * @return
+	 */
+	public double getDouble(String key) {
+		return getDouble(key, 0.0d);
+	}
+
+	public double getDouble(String key, double defaultValue) {
+		return mCurrentPreferences.getDouble(key,
+				mDefaultPreferences.getDouble(key, defaultValue));
+	}
+
+	/**
+	 * Retrieves a preference value of type float from the store. If the key is
+	 * neither in the current store nor in the default store, 0.0f is returned.
+	 * 
+	 * @param key
+	 * @return
+	 */
+	public float getFloat(String key) {
+		return getFloat(key, 0.0f);
+	}
+
+	public float getFloat(String key, float defaultValue) {
+		return mCurrentPreferences.getFloat(key,
+				mDefaultPreferences.getFloat(key, defaultValue));
+	}
+
+	/**
+	 * Retrieves a preference value of type int from the store. If the key is
+	 * neither in the current store nor in the default store, 0 is returned.
+	 * 
+	 * @param key
+	 * @return
+	 */
+	public int getInt(String key) {
+		return getInt(key, 0);
+	}
+
+	public int getInt(String key, int defaultValue) {
+		return mCurrentPreferences.getInt(key,
+				mDefaultPreferences.getInt(key, defaultValue));
+	}
+
+	/**
+	 * Retrieves a preference value of type long from the store. If the key is
+	 * neither in the current store nor in the default store, 0L is returned.
+	 * 
+	 * @param key
+	 * @return
+	 */
+	public long getLong(String key) {
+		return getLong(key, 0L);
+	}
+
+	public long getLong(String key, long defaultValue) {
+		return mCurrentPreferences.getLong(key,
+				mDefaultPreferences.getLong(key, defaultValue));
+	}
+
+	public void addPreferenceChangeListener(
+			IPreferenceChangeListener iPreferenceChangeListener) {
+		mCurrentPreferences
+				.addPreferenceChangeListener(iPreferenceChangeListener);
+	}
+
 	public IEclipsePreferences getDefaultEclipsePreferences() {
 		return mDefaultPreferences;
 	}
 
 	public IEclipsePreferences getEclipsePreferences() {
 		return mCurrentPreferences;
+	}
+
+	public IScopeContext getScopeContext() {
+		return InstanceScope.INSTANCE;
+	}
+
+	public void exportPreferences(OutputStream outputStream)
+			throws CoreException {
+		Platform.getPreferencesService().exportPreferences(mCurrentPreferences,
+				outputStream, null);
+	}
+
+	public static IStatus importPreferences(InputStream inputStream)
+			throws CoreException {
+		return Platform.getPreferencesService().importPreferences(inputStream);
 	}
 
 	public String getDefaultPreferencesString() {
@@ -87,21 +227,6 @@ public class UltimatePreferenceStore {
 			return e.getMessage();
 		}
 		return sb.toString();
-	}
-
-	public IScopeContext getScopeContext() {
-		return InstanceScope.INSTANCE;
-	}
-
-	public void exportPreferences(OutputStream outputStream)
-			throws CoreException {
-		Platform.getPreferencesService().exportPreferences(mCurrentPreferences,
-				outputStream,null);
-	}
-
-	public static IStatus importPreferences(InputStream inputStream)
-			throws CoreException {
-		return Platform.getPreferencesService().importPreferences(inputStream);
 	}
 
 }

@@ -3,11 +3,13 @@ package de.uni_freiburg.informatik.ultimate.core.coreplugin.preferences;
 import java.util.Arrays;
 
 import org.eclipse.core.runtime.Platform;
+import org.eclipse.jface.preference.StringFieldEditor;
 
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.Activator;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceItem;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceItem.PreferenceType;
+import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceItem.UltimatePreferenceItemValidator;
 
 /**
  * CorePreferenceInitializer implements UltimatePreferenceStore for
@@ -23,36 +25,56 @@ import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceIt
 public class CorePreferenceInitializer extends UltimatePreferenceInitializer {
 
 	@Override
-	protected UltimatePreferenceItem[] initDefaultPreferences() {
+	protected UltimatePreferenceItem<?>[] initDefaultPreferences() {
 		return new UltimatePreferenceItem[] {
 
 				// Core
-				new UltimatePreferenceItem(LABEL_SHOWUSABLEPARSER,
+				new UltimatePreferenceItem<Boolean>(LABEL_SHOWUSABLEPARSER,
 						VALUE_SHOWUSABLEPARSER_DEFAULT, PreferenceType.Boolean,
 						null),
-				new UltimatePreferenceItem(LABEL_SHOWRESULTNOTIFIERPOPUP,
+				new UltimatePreferenceItem<Boolean>(
+						LABEL_SHOWRESULTNOTIFIERPOPUP,
 						VALUE_SHOWRESULTNOTIFIERPOPUP_DEFAULT,
 						PreferenceType.Boolean, null),
 
 				// Log files
-				new UltimatePreferenceItem(DESC_LOGFILE, null,
+				new UltimatePreferenceItem<String>(DESC_LOGFILE, null,
 						PreferenceType.Label, null),
-				new UltimatePreferenceItem(LABEL_LOGFILE, VALUE_LOGFILE,
-						PreferenceType.Boolean, null),
-				new UltimatePreferenceItem(LABEL_APPEXLOGFILE,
+				new UltimatePreferenceItem<Boolean>(LABEL_LOGFILE,
+						VALUE_LOGFILE, PreferenceType.Boolean, null),
+				new UltimatePreferenceItem<Boolean>(LABEL_APPEXLOGFILE,
 						VALUE_APPEXLOGFILE, PreferenceType.Boolean, null),
-				new UltimatePreferenceItem(LABEL_LOGFILE_NAME,
+				new UltimatePreferenceItem<String>(LABEL_LOGFILE_NAME,
 						VALUE_LOGFILE_NAME, PreferenceType.String, null),
-				new UltimatePreferenceItem(LABEL_LOGFILE_DIR,
+				new UltimatePreferenceItem<String>(LABEL_LOGFILE_DIR,
 						VALUE_LOGFILE_DIR, PreferenceType.Directory, null),
 
 				// ModelManager
-				new UltimatePreferenceItem(LABEL_MM_DROP_MODELS,
+				new UltimatePreferenceItem<Boolean>(LABEL_MM_DROP_MODELS,
 						VALUE_MM_DROP_MODELS, PreferenceType.Boolean, null),
-				new UltimatePreferenceItem(LABEL_MM_TMPDIRECTORY,
+				new UltimatePreferenceItem<String>(LABEL_MM_TMPDIRECTORY,
 						VALUE_MM_TMPDIRECTORY, PreferenceType.Directory, null),
 
-		// Log levels
+				// Log levels
+				new UltimatePreferenceItem<String>(LOGGING_PREFERENCES_DESC,
+						null, PreferenceType.Label, null),
+				new UltimatePreferenceItem<String>(LABEL_ROOT_PREF,
+						VALUE_DEFAULT_LOGGING_PREF, PreferenceType.String,
+						null, new LogLevelValidator()),
+				new UltimatePreferenceItem<String>(LABEL_CORE_PREF,
+						VALUE_DEFAULT_LOGGING_PREF, PreferenceType.String,
+						null, new LogLevelValidator()),
+				new UltimatePreferenceItem<String>(LABEL_CONTROLLER_PREF,
+						VALUE_DEFAULT_LOGGING_PREF, PreferenceType.String,
+						null, new LogLevelValidator()),
+				new UltimatePreferenceItem<String>(LABEL_PLUGINS_PREF,
+						VALUE_DEFAULT_LOGGING_PREF, PreferenceType.String,
+						null, new LogLevelValidator()),
+				new UltimatePreferenceItem<String>(LABEL_TOOLS_PREF,
+						VALUE_DEFAULT_LOGGING_PREF, PreferenceType.String,
+						null, new LogLevelValidator()),
+				new UltimatePreferenceItem<String>(PREFID_DETAILS, "",
+						PreferenceType.String, true, null, null),
 
 		// Log levels for external tools
 
@@ -65,21 +87,45 @@ public class CorePreferenceInitializer extends UltimatePreferenceInitializer {
 		return Activator.s_PLUGIN_ID;
 	}
 	
+	@Override
+	public String getPreferencePageTitle() {
+		return "General";
+	}
+
+	private class LogLevelValidator implements
+			UltimatePreferenceItemValidator<String> {
+		@Override
+		public boolean isValid(String value) {
+			String s = value.toUpperCase();
+			return s.equals(VALUE_TRACE_LOGGING_PREF)
+					|| s.equals(VALUE_DEBUG_LOGGING_PREF)
+					|| s.equals(VALUE_INFO_LOGGING_PREF)
+					|| s.equals(VALUE_WARN_LOGGING_PREF)
+					|| s.equals(VALUE_ERROR_LOGGING_PREF)
+					|| s.equals(VALUE_FATAL_LOGGING_PREF);
+		}
+
+		@Override
+		public String getInvalidValueErrorMessage(String value) {
+			return INVALID_LOGLEVEL;
+		}
+	}
+
 	public static final String PLUGINID = Activator.s_PLUGIN_ID;
 	public static final String PLUGINNAME = Activator.s_PLUGIN_NAME;
 
 	/**
 	 * Preference Label/Value pairs
 	 */
-	
-	//Core
+
+	// Core
 	public static final String LABEL_SHOWUSABLEPARSER = "Show usable parsers";
 	public static final boolean VALUE_SHOWUSABLEPARSER_DEFAULT = false;
 
 	public static final String LABEL_SHOWRESULTNOTIFIERPOPUP = "Show Result in Pop-Up Window after Toolchain Execution";
 	public static final boolean VALUE_SHOWRESULTNOTIFIERPOPUP_DEFAULT = false;
 
-	//Log level 
+	// Log level
 	public static final String DESC_LOGFILE = "The basic preferences for creating a log file (like enabled, name, directory)";
 
 	public static final String LABEL_LOGFILE = "Create a Logfile";
@@ -95,13 +141,14 @@ public class CorePreferenceInitializer extends UltimatePreferenceInitializer {
 	public static final String VALUE_LOGFILE_DIR = Platform
 			.getInstanceLocation().getURL().getPath();
 
-	//Model manager
+	// Model manager
 	public static final String LABEL_MM_DROP_MODELS = "Drop models when Ultimate exits";
 	public static final boolean VALUE_MM_DROP_MODELS = true;
 
 	public static final String LABEL_MM_TMPDIRECTORY = "Repository Directory";
-	public static final String VALUE_MM_TMPDIRECTORY = System.getProperty("java.io.tmpdir"); 
-			
+	public static final String VALUE_MM_TMPDIRECTORY = System
+			.getProperty("java.io.tmpdir");
+
 	public static final String PREFID_ROOT = "ultimate.logging.root";
 	public static final String PREFID_CORE = "ultimate.logging.core";
 	public static final String PREFID_CONTROLLER = "ultimate.logging.controller";
@@ -113,13 +160,13 @@ public class CorePreferenceInitializer extends UltimatePreferenceInitializer {
 	public static final String EXTERNAL_TOOLS_PREFIX = "external.";
 
 	public static final String LABEL_ROOT_PREF = "Root Log Level";
-	public static final String LABEL_TOOLS_PREF = " Log Level for External Tools";
+	public static final String LABEL_TOOLS_PREF = "Log Level for External Tools";
 	public static final String LABEL_CORE_PREF = "Log Level for Core Plugin";
 	public static final String LABEL_CONTROLLER_PREF = "Log Level for Controller Plugin";
 	public static final String LABEL_PLUGINS_PREF = "Log Level for Plugins";
 	public static final String LABEL_PLUGIN_DETAIL_PREF = "Log Levels for Specific Plug-ins";
 
-	public static final String VALUE_DEFAULT_LOGGING_PREF = "";
+	public static final String VALUE_DEFAULT_LOGGING_PREF = "DEBUG";
 	public static final String VALUE_FATAL_LOGGING_PREF = "FATAL";
 	public static final String VALUE_ERROR_LOGGING_PREF = "ERROR";
 	public static final String VALUE_WARN_LOGGING_PREF = "WARN";
@@ -139,7 +186,7 @@ public class CorePreferenceInitializer extends UltimatePreferenceInitializer {
 			+ Arrays.toString(VALUE_VALID_LOG_LEVELS);
 	public static final String INVALID_ENTRY = "Entry has to be of the form: \"<plug-in id>=<log level>\"";
 	public static final String INVALID_TOOL_ENTRY = "Entry has to be of the form: \"<tool id>=<log level>\"";
-	public static final String LOGGING_PREFERENCES_DESC = "Specify log levels for the certail plug-ins.\n \n Note that there is a hierarchy and specifying a less strict level for children will have no effect";
+	public static final String LOGGING_PREFERENCES_DESC = "Specify log levels for the certail plug-ins.\nNote that there is a hierarchy and specifying a less strict level for children will have no effect";
 	public static final String ALL_PLUGINS_PRESENT = "All entered Plug-ins are in fact present!";
 	public static final String PLUGINS_NOT_PRESENT = "The following Plug-ins are not present at the moment: \n";
 	public static final String EMPTY_STRING = "";

@@ -1,5 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.gui.preferencepages;
 
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.Queue;
 
@@ -24,7 +25,7 @@ public class UltimatePreferencePageFactory {
 	public void createPreferencePages() {
 		for (IRCPPlugin plugin : mCore.getPlugins()) {
 			if (plugin.getPreferences() != null) {
-				UltimatePreferenceItem[] preferenceItems = plugin
+				UltimatePreferenceItem<?>[] preferenceItems = plugin
 						.getPreferences().getDefaultPreferences();
 				if (preferenceItems != null) {
 					String parentNodeID = "GeneratedUltimatePreferences";
@@ -35,16 +36,31 @@ public class UltimatePreferencePageFactory {
 					if (plugin instanceof IOutput) {
 						parentNodeID = "OutputPlugins";
 					}
+					if(plugin instanceof ICore){
+						parentNodeID = "Core";
+					}
 
 					createPreferencePage(plugin.getPluginID(),
-							plugin.getName(), preferenceItems, parentNodeID);
+							plugin.getPreferences().getPreferencePageTitle(),
+							filterPreferences(preferenceItems), parentNodeID);
 				}
 			}
 		}
 	}
 
+	private UltimatePreferenceItem<?>[] filterPreferences(
+			UltimatePreferenceItem<?>[] items) {
+		ArrayList<UltimatePreferenceItem<?>> list = new ArrayList<UltimatePreferenceItem<?>>();
+		for (UltimatePreferenceItem<?> item : items) {
+			if (!item.getUseCustomPreferencePage()) {
+				list.add(item);
+			}
+		}
+		return list.toArray(new UltimatePreferenceItem[list.size()]);
+	}
+
 	private void createPreferencePage(String pluginID, String title,
-			UltimatePreferenceItem[] preferenceItems, String parentNodeID) {
+			UltimatePreferenceItem<?>[] preferenceItems, String parentNodeID) {
 		UltimateGeneratedPreferencePage page = new UltimateGeneratedPreferencePage(
 				pluginID, title, preferenceItems);
 

@@ -5,13 +5,9 @@
       <impl class="de.uni_freiburg.informatik.ultimate.plugins.generator.blockendcoding.BlockEncoding">
       </impl>
    </extension>
- <extension
-       point="org.eclipse.ui.preferencePages">
-    <page
-          category="de.uni_freiburg.informatik.ultimate.gui.preferencepages.ToolsPreferencePage"
-          class="de.uni_freiburg.informatik.ultimate.plugins.generator.blockendcoding.preferences.PreferencePage"
-          id="BlockEncoding.page1"
-          name="BlockEncoding">
-    </page>
- </extension>
+ 
+    <extension point="org.eclipse.core.runtime.preferences">
+      <initializer class="de.uni_freiburg.informatik.ultimate.plugins.generator.blockendcoding.preferences.PreferenceInitializer"/>
+   </extension>
+ 
 </plugin>

@@ -3,19 +3,18 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.blockendcoding;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.eclipse.core.runtime.preferences.ConfigurationScope;
 import org.eclipse.core.runtime.preferences.IEclipsePreferences;
 import org.eclipse.core.runtime.preferences.IScopeContext;
-import org.eclipse.core.runtime.preferences.InstanceScope;
 
 import de.uni_freiburg.informatik.ultimate.access.IObserver;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.IGenerator;
 import de.uni_freiburg.informatik.ultimate.model.GraphType;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.MarkedTrace;
 import de.uni_freiburg.informatik.ultimate.model.TokenMap;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.blockendcoding.preferences.PreferencePage;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.blockendcoding.preferences.PreferenceInitializer;
 
 /**
  * Main class of Plug-In BlockEndcoding
@@ -124,9 +123,8 @@ public class BlockEncoding implements IGenerator {
 	// @Override
 	public List<IObserver> getObservers() {
 		ArrayList<IObserver> observers = new ArrayList<IObserver>();
-		IEclipsePreferences prefs = InstanceScope.INSTANCE
-				.getNode(Activator.s_PLUGIN_ID);
-		if (prefs.getBoolean(PreferencePage.NAME_EXECUTETESTS, false)) {
+		UltimatePreferenceStore prefs = new UltimatePreferenceStore(Activator.s_PLUGIN_ID);
+		if (prefs.getBoolean(PreferenceInitializer.LABEL_EXECUTETESTS)) {
 			observers.add(m_ExecuteUnitTestObserver);
 		} else {
 			observers.add(m_BlockEncodingObserver);
@@ -159,9 +157,8 @@ public class BlockEncoding implements IGenerator {
 	 */
 	@Override
 	public IElement getModel() {
-		IEclipsePreferences prefs = InstanceScope.INSTANCE
-				.getNode(Activator.s_PLUGIN_ID);
-		if (prefs.getBoolean(PreferencePage.NAME_EXECUTETESTS, false)) {
+		UltimatePreferenceStore prefs = new UltimatePreferenceStore(Activator.s_PLUGIN_ID);
+		if (prefs.getBoolean(PreferenceInitializer.LABEL_EXECUTETESTS)) {
 			return m_ExecuteUnitTestObserver.getRoot();
 		} else {
 			if (m_ConversionObserver.getRoot() == null) {
@@ -198,7 +195,6 @@ public class BlockEncoding implements IGenerator {
 
 	@Override
 	public UltimatePreferenceInitializer getPreferences() {
-		// TODO Auto-generated method stub
-		return null;
+		return new PreferenceInitializer();
 	}
 }

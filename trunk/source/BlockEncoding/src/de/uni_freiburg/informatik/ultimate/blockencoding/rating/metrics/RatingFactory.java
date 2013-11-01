@@ -99,6 +99,10 @@ public class RatingFactory {
 					"There is something wrong, with the enum setup");
 		}
 	}
+	
+	public void setRatingStrategy(RatingStrategy strat){
+		strategy = strat;
+	}
 
 	/**
 	 * Creates a rating for a given minimized edge. In order to do this, there

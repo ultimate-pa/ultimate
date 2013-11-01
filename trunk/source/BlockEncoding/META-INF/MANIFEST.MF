@@ -11,8 +11,7 @@ Require-Bundle: UltimateCore,
 Bundle-ActivationPolicy: lazy
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
 Export-Package: de.uni_freiburg.informatik.ultimate.blockencoding.model,
- de.uni_freiburg.informatik.ultimate.blockencoding.model.interfaces,
- de.uni_freiburg.informatik.ultimate.blockencoding.rating.util
+ de.uni_freiburg.informatik.ultimate.blockencoding.model.interfaces
 Import-Package: junit.framework,
  org.junit,
  org.junit.runner,

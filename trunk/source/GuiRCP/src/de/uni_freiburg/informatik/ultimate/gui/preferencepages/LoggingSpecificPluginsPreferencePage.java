@@ -11,11 +11,11 @@ import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.swt.widgets.List;
 import org.eclipse.ui.preferences.ScopedPreferenceStore;
 
-public class LoggingDetailsPreferencePage extends AbstractDetailsPreferencePage {
+public class LoggingSpecificPluginsPreferencePage extends AbstractDetailsPreferencePage {
 
 	private ScopedPreferenceStore mPreferenceStore;
 
-	public LoggingDetailsPreferencePage() {
+	public LoggingSpecificPluginsPreferencePage() {
 		mPreferenceStore = new ScopedPreferenceStore(InstanceScope.INSTANCE,
 				CorePreferenceInitializer.PLUGINID);
 	}

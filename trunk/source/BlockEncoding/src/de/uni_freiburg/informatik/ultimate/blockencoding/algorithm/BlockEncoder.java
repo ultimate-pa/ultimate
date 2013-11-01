@@ -6,18 +6,17 @@ package de.uni_freiburg.informatik.ultimate.blockencoding.algorithm;
 import java.util.ArrayList;
 
 import org.apache.log4j.Logger;
-import org.eclipse.core.runtime.preferences.ConfigurationScope;
-import org.eclipse.core.runtime.preferences.IEclipsePreferences;
-import org.eclipse.core.runtime.preferences.InstanceScope;
 
 import de.uni_freiburg.informatik.ultimate.blockencoding.model.BlockEncodingAnnotation;
 import de.uni_freiburg.informatik.ultimate.blockencoding.model.MinimizedNode;
 import de.uni_freiburg.informatik.ultimate.blockencoding.rating.metrics.RatingFactory;
+import de.uni_freiburg.informatik.ultimate.blockencoding.rating.metrics.RatingFactory.RatingStrategy;
 import de.uni_freiburg.informatik.ultimate.blockencoding.rating.util.EncodingStatistics;
 import de.uni_freiburg.informatik.ultimate.blockencoding.test.visitor.TestMinimizationVisitor;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
+import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.blockendcoding.Activator;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.blockendcoding.preferences.PreferencePage;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.blockendcoding.preferences.PreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootEdge;
@@ -68,12 +67,14 @@ public class BlockEncoder {
 		// initialize the statistics
 		EncodingStatistics.init();
 		// We need to know, which rating strategy should be chosen
-		IEclipsePreferences prefs = InstanceScope.INSTANCE
-				.getNode(Activator.s_PLUGIN_ID);
+		UltimatePreferenceStore prefs = new UltimatePreferenceStore(
+				Activator.s_PLUGIN_ID);
 		RatingFactory.getInstance().setRatingStrategy(
-				prefs.get(PreferencePage.NAME_STRATEGY, "0"));
-		shouldMinimizeCallReturn = prefs.getBoolean(
-				PreferencePage.NAME_CALLMINIMIZE, false);
+				prefs.getEnum(
+						PreferenceInitializer.LABEL_STRATEGY,
+						RatingStrategy.class));
+		shouldMinimizeCallReturn = prefs
+				.getBoolean(PreferenceInitializer.LABEL_CALLMINIMIZE);
 		// Initialize the Visitors, which apply the minimization rules
 		mbVisitor = new MinimizeBranchVisitor(s_Logger);
 		mlVisitor = new MinimizeLoopVisitor(s_Logger);

@@ -11,13 +11,13 @@ import org.eclipse.ui.preferences.ScopedPreferenceStore;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.preferences.CorePreferenceInitializer;
 
 
-public class LoggingToolsPreferencePage extends AbstractDetailsPreferencePage
+public class LoggingExternalToolsPreferencePage extends AbstractDetailsPreferencePage
 		implements IWorkbenchPreferencePage {
 
 	
 	private ScopedPreferenceStore mPreferenceStore;
 
-	public LoggingToolsPreferencePage() {
+	public LoggingExternalToolsPreferencePage() {
 		mPreferenceStore = new ScopedPreferenceStore(InstanceScope.INSTANCE,
 				CorePreferenceInitializer.PLUGINID);
 	}

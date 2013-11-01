@@ -6,7 +6,7 @@ import org.eclipse.swt.widgets.Control;
 import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.IWorkbenchPreferencePage;
 
-public class ToolsPreferencePage extends PreferencePage implements IWorkbenchPreferencePage{
+public class UltimateCategoryPreferencePage extends PreferencePage implements IWorkbenchPreferencePage{
 
 	@Override
 	public void init(IWorkbench workbench) {
@@ -19,5 +19,6 @@ public class ToolsPreferencePage extends PreferencePage implements IWorkbenchPre
 		// TODO Auto-generated method stub
 		return null;
 	}
+
 
 }
