@@ -2693,11 +2693,12 @@ public class CHandler implements ICHandler {
 		expr.lrVal.cType = newCType;
 		InferredType it = new InferredType(newCType);
 		
-		if (expr.lrVal instanceof HeapLValue) 
-			((HeapLValue) expr.lrVal).getAddress().setType(it);
-		else if (expr.lrVal instanceof LocalLValue)
+//		if (expr.lrVal instanceof HeapLValue) 
+//			((HeapLValue) expr.lrVal).getAddress().setType(it);
+//		else 
+		if (expr.lrVal instanceof LocalLValue)
 			((LocalLValue) expr.lrVal).getLHS().setType(it);
-		else 
+		else if (expr.lrVal instanceof RValue)
 			expr.lrVal.getValue().setType(it);
 		
 		// TODO : review decision to only drop casts!
