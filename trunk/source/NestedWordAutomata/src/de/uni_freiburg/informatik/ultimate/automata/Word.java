@@ -1,5 +1,9 @@
 package de.uni_freiburg.informatik.ultimate.automata;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
 
 	public class Word<Symbol> {
 
@@ -52,6 +56,11 @@ package de.uni_freiburg.informatik.ultimate.automata;
 			}
 			return new Word<Symbol>(concatenationSymbols);
 		}		
+		
+		
+		public List<Symbol> lettersAsList() {
+			return Arrays.asList(m_Word);
+		}
 
 		@Override
 		public String toString() {

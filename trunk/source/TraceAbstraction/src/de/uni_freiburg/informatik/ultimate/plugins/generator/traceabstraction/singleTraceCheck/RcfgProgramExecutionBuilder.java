@@ -150,17 +150,11 @@ public class RcfgProgramExecutionBuilder {
 			ProgramState<Expression> pps = new ProgramState<Expression>(variable2Values);
 			partialProgramStateMapping.put(i, pps);
 		}
-		return new RcfgProgramExecution(nestedWord2list(m_Trace), partialProgramStateMapping, m_BranchEncoders);
+		return new RcfgProgramExecution(m_Trace.lettersAsList(), partialProgramStateMapping, m_BranchEncoders);
 		
 	}
 	
-	private static <E> List<E> nestedWord2list(NestedWord<E> nw) {
-		List<E> result = new ArrayList<E>(nw.length());
-		for (int i=0; i<nw.length(); i++) {
-			result.add(nw.getSymbolAt(i));
-		}
-		return result;
-	}
+
 
 
 

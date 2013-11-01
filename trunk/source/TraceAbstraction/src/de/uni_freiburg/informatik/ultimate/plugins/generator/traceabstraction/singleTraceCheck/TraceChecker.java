@@ -2,6 +2,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.s
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -32,6 +33,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.prefere
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
+import de.uni_freiburg.informatik.ultimate.result.IProgramExecution.ProgramState;
 
 
 /**
@@ -231,6 +233,11 @@ public class TraceChecker {
 			} else {
 				m_RcfgProgramExecution = computeRcfgProgramExecution(m_Nsb);
 			}
+		} else if (isSafe == LBool.UNKNOWN) {
+			Map<Integer, ProgramState<Expression>> emptyMap = Collections.emptyMap();
+			m_RcfgProgramExecution = new RcfgProgramExecution(
+					m_DefaultTransFormulas.getTrace().lettersAsList(), 
+					emptyMap, new Map[0]);
 		}
 		return isSafe;
 	}
@@ -615,6 +622,11 @@ public class TraceChecker {
 	public List<CodeBlock> getFailurePath() {
 		if (m_Trace == null) {
 			throw new AssertionError("Check a trace first");
+		}
+		//TODO: implement solution for this
+		if (isCorrect() == LBool.UNKNOWN) {
+			throw new UnsupportedOperationException("not yet implmented: "
+					+ "failure path if trace feasibility is unknown");
 		}
 		List<CodeBlock> result = 
 				AnnotateAndAsserter.constructFailureTrace(m_Trace, m_SmtManager);
