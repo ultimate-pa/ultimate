@@ -360,6 +360,7 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 		List<ITranslator<?, ?, ?, ?>> translatorSequence = UltimateServices.getInstance().getTranslatorSequence();
 		if (pe.isOverapproximation()) {
 			reportUnproveableResult(position, failurePath);
+			return;
 		}
 		CounterExampleResult<RcfgElement> ctxRes = new CounterExampleResult<RcfgElement>(
 				position,
