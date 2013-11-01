@@ -19,13 +19,9 @@ public class UltimatePreferenceStore {
 	// private Logger mLogger;
 	private final String mPluginID;
 
-	private final IEclipsePreferences mCurrentPreferences;
-	private final IEclipsePreferences mDefaultPreferences;
 
 	public UltimatePreferenceStore(String pluginID) {
 		mPluginID = pluginID;
-		mCurrentPreferences = InstanceScope.INSTANCE.getNode(mPluginID);
-		mDefaultPreferences = DefaultScope.INSTANCE.getNode(mPluginID);
 	}
 
 	/**
@@ -41,8 +37,8 @@ public class UltimatePreferenceStore {
 	}
 
 	public boolean getBoolean(String key, boolean defaultValue) {
-		return mCurrentPreferences.getBoolean(key,
-				mDefaultPreferences.getBoolean(key, defaultValue));
+		return InstanceScope.INSTANCE.getNode(mPluginID).getBoolean(key,
+				DefaultScope.INSTANCE.getNode(mPluginID).getBoolean(key, defaultValue));
 	}
 
 	/**
@@ -57,8 +53,8 @@ public class UltimatePreferenceStore {
 	}
 
 	public String getString(String key, String defaultValue) {
-		return mCurrentPreferences.get(key,
-				mDefaultPreferences.get(key, defaultValue));
+		return InstanceScope.INSTANCE.getNode(mPluginID).get(key,
+				DefaultScope.INSTANCE.getNode(mPluginID).get(key, defaultValue));
 	}
 
 	/**
@@ -117,8 +113,8 @@ public class UltimatePreferenceStore {
 	}
 
 	public byte[] getByteArray(String key, byte[] defaultValue) {
-		return mCurrentPreferences.getByteArray(key,
-				mDefaultPreferences.getByteArray(key, defaultValue));
+		return InstanceScope.INSTANCE.getNode(mPluginID).getByteArray(key,
+				DefaultScope.INSTANCE.getNode(mPluginID).getByteArray(key, defaultValue));
 	}
 
 	/**
@@ -133,8 +129,8 @@ public class UltimatePreferenceStore {
 	}
 
 	public double getDouble(String key, double defaultValue) {
-		return mCurrentPreferences.getDouble(key,
-				mDefaultPreferences.getDouble(key, defaultValue));
+		return InstanceScope.INSTANCE.getNode(mPluginID).getDouble(key,
+				DefaultScope.INSTANCE.getNode(mPluginID).getDouble(key, defaultValue));
 	}
 
 	/**
@@ -149,8 +145,8 @@ public class UltimatePreferenceStore {
 	}
 
 	public float getFloat(String key, float defaultValue) {
-		return mCurrentPreferences.getFloat(key,
-				mDefaultPreferences.getFloat(key, defaultValue));
+		return InstanceScope.INSTANCE.getNode(mPluginID).getFloat(key,
+				DefaultScope.INSTANCE.getNode(mPluginID).getFloat(key, defaultValue));
 	}
 
 	/**
@@ -165,8 +161,8 @@ public class UltimatePreferenceStore {
 	}
 
 	public int getInt(String key, int defaultValue) {
-		return mCurrentPreferences.getInt(key,
-				mDefaultPreferences.getInt(key, defaultValue));
+		return InstanceScope.INSTANCE.getNode(mPluginID).getInt(key,
+				DefaultScope.INSTANCE.getNode(mPluginID).getInt(key, defaultValue));
 	}
 
 	/**
@@ -181,22 +177,22 @@ public class UltimatePreferenceStore {
 	}
 
 	public long getLong(String key, long defaultValue) {
-		return mCurrentPreferences.getLong(key,
-				mDefaultPreferences.getLong(key, defaultValue));
+		return InstanceScope.INSTANCE.getNode(mPluginID).getLong(key,
+				DefaultScope.INSTANCE.getNode(mPluginID).getLong(key, defaultValue));
 	}
 
 	public void addPreferenceChangeListener(
 			IPreferenceChangeListener iPreferenceChangeListener) {
-		mCurrentPreferences
+		InstanceScope.INSTANCE.getNode(mPluginID)
 				.addPreferenceChangeListener(iPreferenceChangeListener);
 	}
 
 	public IEclipsePreferences getDefaultEclipsePreferences() {
-		return mDefaultPreferences;
+		return DefaultScope.INSTANCE.getNode(mPluginID);
 	}
 
 	public IEclipsePreferences getEclipsePreferences() {
-		return mCurrentPreferences;
+		return InstanceScope.INSTANCE.getNode(mPluginID);
 	}
 
 	public IScopeContext getScopeContext() {
@@ -205,7 +201,7 @@ public class UltimatePreferenceStore {
 
 	public void exportPreferences(OutputStream outputStream)
 			throws CoreException {
-		Platform.getPreferencesService().exportPreferences(mCurrentPreferences,
+		Platform.getPreferencesService().exportPreferences(InstanceScope.INSTANCE.getNode(mPluginID),
 				outputStream, null);
 	}
 
@@ -217,9 +213,9 @@ public class UltimatePreferenceStore {
 	public String getDefaultPreferencesString() {
 		StringBuilder sb = new StringBuilder();
 		try {
-			for (String key : mDefaultPreferences.keys()) {
+			for (String key : DefaultScope.INSTANCE.getNode(mPluginID).keys()) {
 				sb.append(key).append("=")
-						.append(mDefaultPreferences.get(key, "NO DEFAULT SET"))
+						.append(DefaultScope.INSTANCE.getNode(mPluginID).get(key, "NO DEFAULT SET"))
 						.append("\n");
 			}
 		} catch (BackingStoreException e) {

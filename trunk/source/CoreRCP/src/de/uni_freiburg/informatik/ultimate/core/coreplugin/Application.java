@@ -1289,13 +1289,13 @@ public class Application implements IApplication, ICore, IRCPPlugin {
 			String oldValue;
 			String newValue;
 			if (event.getOldValue() == null) {
-				oldValue = mDefaults.getString(event.getKey());
+				oldValue = new UltimatePreferenceStore(Activator.s_PLUGIN_ID).getString(event.getKey());
 			} else {
 				oldValue = event.getOldValue().toString();
 			}
 
 			if (event.getNewValue() == null) {
-				newValue = mDefaults.getString(event.getKey());
+				newValue = new UltimatePreferenceStore(Activator.s_PLUGIN_ID).getString(event.getKey());
 			} else {
 				newValue = event.getNewValue().toString();
 			}
