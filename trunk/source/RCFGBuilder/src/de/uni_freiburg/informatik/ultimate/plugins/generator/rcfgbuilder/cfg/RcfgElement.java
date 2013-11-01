@@ -1,5 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg;
 
-public interface RcfgElement {
+import de.uni_freiburg.informatik.ultimate.model.IElement;
+
+public interface RcfgElement extends IElement {
 
 }

@@ -26,6 +26,7 @@ import de.uni_freiburg.informatik.ultimate.model.IEdge;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.IType;
 import de.uni_freiburg.informatik.ultimate.model.ILocation;
+import de.uni_freiburg.informatik.ultimate.model.ModelUtils;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssertStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssignmentStatement;
@@ -102,7 +103,7 @@ public class CfgBuilder {
 	
 	
 	public static final String Z3_COMMAND =
-			"z3 SMTLIB2_COMPLIANT=true -memory:2560 -smt2 -in";
+			"z3 SMTLIB2_COMPLIANT=true -memory:256 -smt2 -in";
 	
 	/**
      * Root Node of this Ultimate model. I use this to store information that
@@ -1001,6 +1002,7 @@ public class CfgBuilder {
 					CodeBlock assumeEdge = new StatementSequence(finalNode, 
 							errorLocNode, assumeSt, Origin.ENSURES);
 					passAllAnnotations(spec, assumeEdge);
+					passAllAnnotations(spec, errorLocNode);
 					m_Edges.add(assumeEdge);
 				}
 			}
@@ -1227,6 +1229,7 @@ public class CfgBuilder {
 			ProgramPoint errorLocNode = addErrorNode(m_currentProcedureName, st);
 			StatementSequence assumeErrorCB = 
 					new StatementSequence(locNode, errorLocNode, assumeError, Origin.ASSERT);
+			passAllAnnotations(st, errorLocNode);
 			passAllAnnotations(st, assumeErrorCB);
 			m_Edges.add(assumeErrorCB);
 			AssumeStatement assumeSafe = new AssumeStatement(
@@ -1350,7 +1353,8 @@ public class CfgBuilder {
 					ProgramPoint errorLocNode = addErrorNode(m_currentProcedureName, st);
 					StatementSequence errorCB = new StatementSequence(
 							locNode, errorLocNode, assumeSt, Origin.REQUIRES);
-					passAllAnnotations(st, errorCB);
+					passAllAnnotations(spec, errorCB);
+					passAllAnnotations(spec, errorLocNode);
 					m_Edges.add(errorCB);
 				}
 			}
@@ -1633,7 +1637,7 @@ public class CfgBuilder {
 	
 	
 	
-	private static void passAllAnnotations(ASTNode node, CodeBlock cb) {
+	private static void passAllAnnotations(ASTNode node, RcfgElement cb) {
 		if (node.getPayload().hasAnnotation()) {
 			HashMap<String, IAnnotations> annots = node.getPayload().getAnnotations();
 			cb.getPayload().getAnnotations().putAll(annots);
