@@ -13,7 +13,6 @@ import org.eclipse.cdt.core.dom.ast.IASTExpression;
 import org.eclipse.cdt.core.dom.ast.IASTFieldReference;
 import org.eclipse.cdt.core.dom.ast.IASTForStatement;
 import org.eclipse.cdt.core.dom.ast.IASTFunctionCallExpression;
-import org.eclipse.cdt.core.dom.ast.IASTFunctionDeclarator;
 import org.eclipse.cdt.core.dom.ast.IASTFunctionDefinition;
 import org.eclipse.cdt.core.dom.ast.IASTIdExpression;
 import org.eclipse.cdt.core.dom.ast.IASTNode;
@@ -220,6 +219,8 @@ public class PreRunner extends ASTVisitor {
                 CASTFunctionDeclarator dec =
                         (CASTFunctionDeclarator)funDef.getDeclarator();
                 for (IASTParameterDeclaration param : dec.getParameters()) {
+                    String key = param.getDeclarator().getName().getRawSignature();
+                    sT.put(key, declaration);
                     IASTPointerOperator[] pointerOps =
                             param.getDeclarator().getPointerOperators();
                     //--> that's the simple solution, if there are pointers declared,
