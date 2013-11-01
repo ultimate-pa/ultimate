@@ -12,6 +12,7 @@ import de.uni_freiburg.informatik.ultimate.access.WalkerOptions;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.model.BoogieLocation;
+import de.uni_freiburg.informatik.ultimate.model.IAnnotations;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.ILocation;
 import de.uni_freiburg.informatik.ultimate.model.ITranslator;
@@ -31,6 +32,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.prefere
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.TAPreferences.InterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbstractCegarLoop.Result;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.RcfgProgramExecutionBuilder;
+import de.uni_freiburg.informatik.ultimate.result.Check;
 import de.uni_freiburg.informatik.ultimate.result.CounterExampleResult;
 import de.uni_freiburg.informatik.ultimate.result.GenericResult;
 import de.uni_freiburg.informatik.ultimate.result.GenericResult.Severity;
@@ -339,7 +342,7 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 						Activator.s_PLUGIN_NAME,
 						UltimateServices.getInstance().getTranslatorSequence(),
 						origin);
-				String pMessage = origin.checkedSpecification().getPositiveMessage();
+				String pMessage = getCheckedSpecification(errorLoc).getPositiveMessage();
 				pResult.setShortDescription(pMessage);
 				pMessage += " (line " + origin.getStartLine() + ")";			
 				reportResult(pResult);
@@ -350,6 +353,7 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 	
 	private void reportCounterexampleResult(CodeBlock position, List<ILocation> failurePath, 
 			RcfgProgramExecution pe) {
+		ProgramPoint errorPP = (ProgramPoint) position.getTarget();
 		ILocation errorLoc = failurePath.get(failurePath.size()-1);
 		ILocation origin = errorLoc.getOrigin();
 		
@@ -362,7 +366,7 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 				Activator.s_PLUGIN_NAME,
 				translatorSequence,
 				origin, null);
-		String ctxMessage = origin.checkedSpecification().getNegativeMessage();
+		String ctxMessage = getCheckedSpecification(errorPP).getNegativeMessage();
 		ctxRes.setShortDescription(ctxMessage);		
 		ctxMessage += " (line " + origin.getStartLine() + ")";
 		Backtranslator backtrans = (Backtranslator) translatorSequence.get(translatorSequence.size()-1);
@@ -378,7 +382,7 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 		for (ProgramPoint errorLoc : errorLocs) {
 			ILocation origin = errorLoc.getAstNode().getLocation().getOrigin();
 			String timeOutMessage = "Unable to prove that " +
-					origin.checkedSpecification().getPositiveMessage();
+					getCheckedSpecification(errorLoc).getPositiveMessage();
 			timeOutMessage += " (line " + origin.getStartLine() + ")";
 			TimeoutResult<RcfgElement> timeOutRes = new TimeoutResult<RcfgElement>(
 					errorLoc,
@@ -392,6 +396,7 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 	}
 		
 	private void reportUnproveableResult(CodeBlock position, List<ILocation> failurePath) {
+		ProgramPoint errorPP = (ProgramPoint) position.getTarget();
 		ILocation errorLoc = failurePath.get(failurePath.size()-1);
 		ILocation origin = errorLoc.getOrigin();
 		UnprovableResult<RcfgElement> uknRes = new UnprovableResult<RcfgElement>(
@@ -401,7 +406,7 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 				origin);
 		uknRes.setFailurePath(failurePath);
 		String uknMessage = "Unable to prove that " + 
-				origin.checkedSpecification().getPositiveMessage();
+				getCheckedSpecification(errorPP).getPositiveMessage();
 		uknRes.setShortDescription(uknMessage);
 		uknMessage += " (line " + origin.getStartLine() + ")";
 		uknRes.setLongDescription(failurePath.toString());
@@ -427,6 +432,17 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 				someNode.getPayload().getLocation(),
 				shortDescription, longDescription, Severity.INFO);
 		reportResult(res);
+	}
+	
+	/**
+	 * Return the checked specification that is checked at the error location.
+	 */
+	private static Check getCheckedSpecification(ProgramPoint errorLoc) {
+		if (errorLoc.getPayload().hasAnnotation()) {
+			IAnnotations check = errorLoc.getPayload().getAnnotations().get(Check.getIdentifier());
+			return (Check) check;
+		}
+		return errorLoc.getAstNode().getLocation().getOrigin().checkedSpecification();
 	}
 	
 	
