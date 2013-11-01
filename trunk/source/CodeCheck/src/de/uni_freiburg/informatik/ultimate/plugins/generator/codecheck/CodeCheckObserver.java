@@ -116,9 +116,18 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 		_graphWriter = new GraphWriter(GlobalSettings._instance._dotGraphPath, 
 				true, true, true, false, m_smtManager.getScript());
 		
+	
 		RCFG2AnnotatedRCFG r2ar = new RCFG2AnnotatedRCFG(m_smtManager);
 		m_graphRoot = r2ar.convert(m_originalRoot, m_truePredicate);
+		
+		_graphWriter.writeGraphAsImage(m_graphRoot,
+				String.format("graph_%s_originalAfterConversion", _graphWriter._graphCounter));
+		
 		removeSummaryEdges();
+		
+		_graphWriter.writeGraphAsImage(m_graphRoot,
+				String.format("graph_%s_originalSummaryEdgesRemoved", _graphWriter._graphCounter));
+	
 		if (GlobalSettings._instance.checker == Checker.IMPULSE) {
 			codeChecker = new ImpulseChecker(
 					root, m_smtManager, m_truePredicate, m_falsePredicate, m_taPrefs, 
@@ -189,7 +198,8 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 			for (AppEdge outEdge : outEdges) {
 				AnnotatedProgramPoint successor = outEdge.getTarget();
 				if (outEdge.getStatement() instanceof Summary) {
-					outEdge.disconnect();
+					if (((Summary) outEdge.getStatement()).calledProcedureHasImplementation())
+						outEdge.disconnect();
 				}
 				if(!visited.contains(successor)) {
 					visited.add(successor);

@@ -14,7 +14,8 @@ public class GlobalSettings {
 	
 	
     boolean svcomp2014Mode = true;
-	String _dotGraphPath = "C:/temp/codeCheckGraphs";
+	String _dotGraphPath = "";
+//	String _dotGraphPath = "C:/temp/codeCheckGraphs";
 	SolverAndInterpolator _solverAndInterpolator = SolverAndInterpolator.SMTINTERPOL;
 	INTERPOLATION _interpolationMode = INTERPOLATION.Craig_TreeInterpolation;
 	PredicateUnification _predicateUnification = PredicateUnification.PER_VERIFICATION;
