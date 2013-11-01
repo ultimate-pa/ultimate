@@ -211,7 +211,14 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 				String.format("graph_%s_original", _graphWriter._graphCounter));
 
 		ArrayList<AnnotatedProgramPoint> procRootsToCheck = new ArrayList<AnnotatedProgramPoint>();
-		if (GlobalSettings._instance._checkOnlyMain) {
+		if (GlobalSettings._instance.svcomp2014Mode) {
+			for (AnnotatedProgramPoint procRoot : m_graphRoot.getOutgoingNodes()) {
+				if (procRoot.getProgramPoint().getProcedure().startsWith("ULTIMATE.start")) {
+					procRootsToCheck.add(procRoot);
+					break;
+				}
+			}	
+		} else if (GlobalSettings._instance._checkOnlyMain) {
 			for (AnnotatedProgramPoint procRoot : m_graphRoot.getOutgoingNodes()) {
 				if (procRoot.getProgramPoint().getProcedure().equalsIgnoreCase("main")) {
 					procRootsToCheck.add(procRoot);
@@ -417,8 +424,10 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 			for (AppEdge outEdge : oldNode.getOutgoingEdges()) {
 				if (outEdge instanceof AppHyperEdge) {
 					AppHyperEdge outHypEdge = (AppHyperEdge) outEdge;
-					newNode.connectOutgoingReturn(copy.get(outHypEdge.getHier()), 
-							(Return) outHypEdge.getStatement(), copy.get(outHypEdge.getTarget()));
+					AnnotatedProgramPoint hier = copy.get(outHypEdge.getHier());
+					if (hier != null)
+						newNode.connectOutgoingReturn(hier,
+								(Return) outHypEdge.getStatement(), copy.get(outHypEdge.getTarget()));
 				} else {
 					newNode.connectOutgoing(outEdge.getStatement(), copy.get(outEdge.getTarget()));
 				}

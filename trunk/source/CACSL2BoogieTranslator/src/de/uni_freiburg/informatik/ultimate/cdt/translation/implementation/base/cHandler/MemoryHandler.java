@@ -815,9 +815,9 @@ public class MemoryHandler {
 				new HashMap<VariableDeclaration, CACSLLocation>();
         InferredType it = new InferredType(Type.Pointer);
         Expression[] args = new Expression[] { size };
-        String tmpId = main.nameHandler.getTempVarUID(SFO.AUXVAR.MALLOC);
         
         //TODO: extract this block and the one below to make the other getMallocCall nicer
+        String tmpId = main.nameHandler.getTempVarUID(SFO.AUXVAR.MALLOC);
 //        InferredType tmpIType = new InferredType(Type.Pointer);
 //        VariableDeclaration tVarDecl = SFO.getTempVarVariableDeclaration(tmpId, tmpIType, loc);
 //        auxVars.put(tVarDecl, loc);

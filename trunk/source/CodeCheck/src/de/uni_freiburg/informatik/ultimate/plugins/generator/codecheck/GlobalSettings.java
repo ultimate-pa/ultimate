@@ -11,6 +11,9 @@ public class GlobalSettings {
 	
 		//default configuration
 //	String m_dotGraphPath = "C:/temp/codeCheckGraphs";
+	
+	
+    boolean svcomp2014Mode = true;
 	String _dotGraphPath = "";
 	SolverAndInterpolator _solverAndInterpolator = SolverAndInterpolator.SMTINTERPOL;
 	INTERPOLATION _interpolationMode = INTERPOLATION.Craig_TreeInterpolation;

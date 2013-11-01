@@ -422,13 +422,21 @@ public class StructHandler {
 					fieldContents = new ResultExpression(new RValue(
 							MemoryHandler.constructNullPointer(loc), underlyingType));
 			} else if (underlyingType instanceof CArray) {
+				ArrayList<Statement> fieldStmt = new ArrayList<Statement>();
+				ArrayList<Declaration> fieldDecl = new ArrayList<Declaration>();
+				HashMap<VariableDeclaration, CACSLLocation> fieldAuxVars =
+						new HashMap<VariableDeclaration, CACSLLocation>();
+				
 				String tmpId = main.nameHandler.getTempVarUID(SFO.AUXVAR.ARRAYINIT);
 				InferredType tmpIType = new InferredType(Type.Pointer);
 				VariableDeclaration tVarDecl = SFO.getTempVarVariableDeclaration(tmpId, tmpIType, loc);
-				newAuxVars.put(tVarDecl, (CACSLLocation) loc);
-				newDecl.add(tVarDecl);
-				arrayHandler.initArray(main, memoryHandler, this, loc, null, new IdentifierExpression(loc, tmpIType, tmpId), 
-						(CArray) underlyingType);
+				fieldAuxVars.put(tVarDecl, (CACSLLocation) loc);
+				fieldDecl.add(tVarDecl);
+				Expression fieldEx = new IdentifierExpression(loc, tmpIType, tmpId);
+				fieldStmt.addAll(arrayHandler.initArray(main, memoryHandler, this, loc, null, fieldEx, 
+						(CArray) underlyingType));
+				
+				fieldContents = new ResultExpression(fieldStmt, new RValue(fieldEx, underlyingType), fieldDecl, fieldAuxVars);
 			} else if (underlyingType instanceof CEnum) {
 				throw new UnsupportedSyntaxException("..");
 			} else if (underlyingType instanceof CStruct) {

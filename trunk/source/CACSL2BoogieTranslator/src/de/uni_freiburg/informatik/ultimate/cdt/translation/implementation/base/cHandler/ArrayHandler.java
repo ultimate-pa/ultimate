@@ -78,7 +78,6 @@ public class ArrayHandler {
 		HashMap<VariableDeclaration, CACSLLocation> auxVars =
 				new HashMap<VariableDeclaration, CACSLLocation>();
 		ArrayList<Overapprox> overappr = new ArrayList<Overapprox>();
-		LRValue arrayPointer = null;
 
 		ArrayList<Expression> sizeConstants = new ArrayList<Expression>();
 		Expression overallSize = new IntegerLiteral(loc, new InferredType(Type.Integer), "1");
@@ -95,24 +94,26 @@ public class ArrayHandler {
 		}
 
 		Expression sizeOfCell = memoryHandler.calculateSizeOf(resType.cvar);
-		CArray arrayType = new CArray(iastDeclSpecifier,  //TODO: think about this type things
+		CArray arrayType = new CArray(iastDeclSpecifier,  //TODO: think about these type things
 				sizeConstants.toArray(new Expression[0]), resType.cvar);
 		LocalLValue arrayId = new LocalLValue(new VariableLHS(loc, new InferredType(Type.Pointer), bId), arrayType);
 
+		//malloc the space on the heap for the array
+		ResultExpression mallocCall = null;
+		Expression mallocSize = null;
+		mallocSize = CHandler.createArithmeticExpression(IASTBinaryExpression.op_multiply, 
+				overallSize,
+				sizeOfCell,
+				loc);
+		mallocCall = memoryHandler.getMallocCall(main, functionHandler, 
+				mallocSize, arrayId, loc);	
+		stmt.addAll(mallocCall.stmt);
+		decl.addAll(mallocCall.decl);
+		auxVars.putAll(mallocCall.auxVars);
+		
 		//handle initialization
 		if (d.getInitializer() != null) {			
-			//malloc the space on the heap for the array
-			ResultExpression mallocCall = null;
-			Expression mallocSize = null;
-			mallocSize = CHandler.createArithmeticExpression(IASTBinaryExpression.op_multiply, 
-					overallSize,
-					sizeOfCell,
-					loc);
-			mallocCall = memoryHandler.getMallocCall(main, functionHandler, 
-					mallocSize, arrayId, loc);	
-			stmt.addAll(mallocCall.stmt);
-			decl.addAll(mallocCall.decl);
-			auxVars.putAll(mallocCall.auxVars);
+
 //			arrayPointer = mallocCall.lrVal;
 //			arrayPointer.cType = arrayType;
 			
@@ -173,16 +174,16 @@ public class ArrayHandler {
 			RValue val = null;
 
 			for (int i = 0; i < currentSizeInt; i++) {
-				if (list != null && list.size() > i) {
-					if (list.get(i).lrVal == null) { //TODO: we may need to pass statements, decls, ...
-						assert arrayType.getValueType().getUnderlyingType() instanceof CStruct;
-						val = (RValue) structHandler.makeStructConstructorFromRERL(main, loc, memoryHandler, this, list.get(i), 
-								(CStruct) arrayType.getValueType().getUnderlyingType()).lrVal;
-					} else
-						val = (RValue) list.get(i).lrVal; //if not enough values are given, fill the rest with the last
+				if (list != null && list.size() > i && list.get(i).lrVal != null) {//TODO: we may need to pass statements, decls, ...
+//					if (list.get(i).lrVal == null) { 
+//						assert arrayType.getValueType().getUnderlyingType() instanceof CStruct;
+//						val = (RValue) structHandler.makeStructConstructorFromRERL(main, loc, memoryHandler, this, list.get(i), 
+//								(CStruct) arrayType.getValueType().getUnderlyingType()).lrVal;
+//					} else
+					val = (RValue) list.get(i).lrVal; //if not enough values are given, fill the rest with the last
 				} else if (list == null) {
 					CType valueType = arrayType.getValueType().getUnderlyingType();
-							
+
 					if (valueType instanceof CArray) {
 						assert false : "this should not be the case as we are in the inner/outermost array right??";
 					} else if  (valueType instanceof CStruct) {
