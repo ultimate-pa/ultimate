@@ -155,9 +155,9 @@ public class FunctionHandler {
 		cName = main.cHandler.getSymbolTable().getCID4BoogieID(searchString,
 				errLoc);
 		String cId = currentProcedure.getIdentifier();
-		CType cvar = main.cHandler.getSymbolTable().get(cName, errLoc)
-				.getCVariable();
-		if (cvar != null && cvar.isStatic()) {
+		SymbolTableValue stValue = main.cHandler.getSymbolTable().get(cName, errLoc);
+		CType cvar = stValue.getCVariable();
+		if (cvar != null && stValue.isStatic()) {
 			modifiedGlobals.get(cId).add(searchString);
 			return;
 		}
@@ -366,7 +366,7 @@ public class FunctionHandler {
 				// Overwrite the information in the symbolTable for cId, s.t. it
 				// points to the locally declared variable.
 				main.cHandler.getSymbolTable().put(cId,
-						new SymbolTableValue(auxInvar, inVarDecl, false, cvar));
+						new SymbolTableValue(auxInvar, inVarDecl, false, cvar, false));
 			}
 		}
 	}
@@ -904,7 +904,7 @@ public class FunctionHandler {
 				VariableDeclaration decl = new VariableDeclaration(loc,
 						new Attribute[0], new VarList[] { vl });
 				main.cHandler.getSymbolTable().put(cId,
-						new SymbolTableValue(boogieId, decl, false, cvar));
+						new SymbolTableValue(boogieId, decl, false, cvar, false));
 				list.add(vl);
 			}
 		}

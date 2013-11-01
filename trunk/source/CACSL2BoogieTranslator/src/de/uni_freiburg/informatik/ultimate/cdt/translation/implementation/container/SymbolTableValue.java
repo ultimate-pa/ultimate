@@ -29,6 +29,11 @@ public class SymbolTableValue {
      * The description of the C variable.
      */
     private final CType cvar;
+    
+    /**
+     * True iff this C variable has static storage class.
+     */
+    private final boolean isStatic;
 
     /**
      * Constructor.
@@ -44,13 +49,14 @@ public class SymbolTableValue {
      *            a description of the C variable.
      */
     public SymbolTableValue(String bId, Declaration decl,
-            boolean isGlobal, CType cvar) {
+            boolean isGlobal, CType cvar, boolean isStatic) {
         assert bId != null && !bId.equals(SFO.EMPTY);
         this.boogieName = bId;
         assert decl != null;
         this.decl = decl;
         this.isGlobalVar = isGlobal;
         this.cvar = cvar;
+        this.isStatic = isStatic;
     }
 
     /**
@@ -87,5 +93,9 @@ public class SymbolTableValue {
      */
     public CType getCVariable() {
         return this.cvar;
+    }
+    
+    public boolean isStatic() {
+    	return this.isStatic;
     }
 }

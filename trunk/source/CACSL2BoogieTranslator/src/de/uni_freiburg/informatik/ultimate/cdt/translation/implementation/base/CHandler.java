@@ -492,7 +492,7 @@ public class CHandler implements ICHandler {
 							// table is not used for further translation steps
 							// after this location!
 							symbolTable.put(id, new SymbolTableValue(id, vd,
-									true, globalVariables.get(d)));
+									true, globalVariables.get(d), false));
 							uninitGlobalVars.add(id);
 						}
 					}
@@ -678,7 +678,7 @@ public class CHandler implements ICHandler {
 					VariableDeclaration decl = new VariableDeclaration(loc, attr,
 							new VarList[] { var });
 					symbolTable.put(cId, new SymbolTableValue(bId, decl, isGlobal,
-							arrayType));
+							arrayType, staticStorageClass(node)));
 					
 					if (main.typeHandler.isStructDeclaration()) {
 						/* store C variable information into this result, as this is a struct field! 
@@ -724,7 +724,7 @@ public class CHandler implements ICHandler {
 					VariableDeclaration decl = new VariableDeclaration(loc, attr,
 							new VarList[] { var });
 					symbolTable.put(cId, new SymbolTableValue(bId, decl, isGlobal,
-							cvar));
+							cvar, staticStorageClass(node)));
 					if (staticStorageClass(node) && !isGlobal) {
 						staticVarStorage.decl.add(decl);
 					} else {
@@ -974,7 +974,8 @@ public class CHandler implements ICHandler {
 			enumDomain[i] = newValue;
 			axioms.add(new Axiom(loc, new Attribute[0], new BinaryExpression(
 					loc, Operator.COMPEQ, l, newValue)));
-			symbolTable.put(fId, new SymbolTableValue(bId, cd, true, cEnum));
+			symbolTable.put(fId, new SymbolTableValue(bId, cd, true, cEnum, 
+					staticStorageClass(node)));
 		}
 		ArrayList<Declaration> decl = new ArrayList<Declaration>();
 		ArrayList<Statement> stmt = new ArrayList<Statement>();
@@ -992,7 +993,8 @@ public class CHandler implements ICHandler {
 			VariableDeclaration vd = new VariableDeclaration(loc,
 					new Attribute[0], new VarList[] { vl });
 			decl.add(vd);
-			symbolTable.put(cId, new SymbolTableValue(bId, vd, isGlobal, null));
+			symbolTable.put(cId, new SymbolTableValue(bId, vd, isGlobal, null, 
+					staticStorageClass(node)));
 			// initialize variable
 			if (d.getInitializer() != null) {
 				Result init = main.dispatch(d.getInitializer());
