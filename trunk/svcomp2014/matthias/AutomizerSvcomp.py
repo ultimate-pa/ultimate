@@ -10,9 +10,9 @@ settingsFileMemSafety = 'AutomizerSvcomp.settings'
 safetyString = 'Ultimate proved your program to be correct'
 unsafetyString = 'Ultimate proved your program to be incorrect'
 unknownSafetyString = 'Ultimate could not prove your program'
-memDerefString = 'adouifohsdf'
-memFreeString = 'sadhfio'
-memLeakString = 'dajfh' 
+memDerefString = 'pointer dereference may fail'
+memFreeString = 'free of unallocated memory possible'
+memLeakString = 'not all allocated memory was freed' 
 
 #parse command line arguments
 if (len(sys.argv) != 4):
@@ -62,9 +62,9 @@ while True:
 	sys.stdout.write('.')
 	#print(line)
 	if (line.find(safetyString) != -1):
-		safetyResult = 'SAFE'
+		safetyResult = 'TRUE'
 	if (line.find(unsafetyString) != -1):
-		safetyResult = 'UNSAFE'
+		safetyResult = 'FALSE'
 	if (line.find(unknownSafetyString) != -1):
 		safetyResult = 'UNKNOWN'
 	if (line.find(memDerefString) != -1):
@@ -78,12 +78,12 @@ while True:
 		break
 
 #summarize results
-if safetyResult == 'UNSAFE':
+if safetyResult == 'FALSE':
 	outputFile = open(outputFileName, 'w')
 	outputFile.write(ultimateOutput) 
 	
 print('\nexecution finished normally') 
-print('Safety Result:') 
+print('Result:') 
 print(safetyResult)
 print('Memsafety Result:')
 print(memResult)
