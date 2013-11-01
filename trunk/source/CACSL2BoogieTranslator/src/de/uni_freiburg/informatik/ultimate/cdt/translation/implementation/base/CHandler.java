@@ -767,9 +767,9 @@ public class CHandler implements ICHandler {
 									Statement assignment = new AssignmentStatement(loc, 
 											new LeftHandSide[] {arrayId.getLHS()}, 
 											new Expression[] { new IdentifierExpression(loc, ((VariableLHS) tmpLval.getLHS()).getIdentifier())});
+									HashMap<String, IAnnotations> annots = assignment.getPayload().getAnnotations();
 									for (Overapprox overapprItem : mallocCall.overappr) {
-										assignment.getPayload().getAnnotations().put(
-												Overapprox.getIdentifier(),
+										annots.put(Overapprox.getIdentifier(),
 												overapprItem);
 									}
 
@@ -1001,8 +1001,13 @@ public class CHandler implements ICHandler {
 				decl.addAll(i.decl);
 				stmt.addAll(i.stmt);
 				VariableLHS lhs = new VariableLHS(loc, bId);
-				stmt.add(new AssignmentStatement(loc,
-						new LeftHandSide[] { lhs }, new Expression[] { i.lrVal.getValue() }));
+				AssignmentStatement assign = new AssignmentStatement(loc,
+                        new LeftHandSide[] { lhs }, new Expression[] { i.lrVal.getValue() });
+				HashMap<String, IAnnotations> annots = assign.getPayload().getAnnotations();
+                for (Overapprox overapprItem : overapprox) {
+                    annots.put(Overapprox.getIdentifier(), overapprItem);
+                }
+				stmt.add(assign);
 				auxVars.putAll(i.auxVars);
 				overapprox.addAll(i.overappr);
 			}
@@ -1207,9 +1212,14 @@ public class CHandler implements ICHandler {
 			decl.addAll(rop.decl);
 			auxVars.putAll(rop.auxVars);
 			overappr.addAll(rop.overappr);
-			stmt.add(new AssignmentStatement(loc,
+			AssignmentStatement assignStmt = new AssignmentStatement(loc,
 					new LeftHandSide[] { new VariableLHS(loc, tmpIType,
-							tmpName) }, new Expression[] { rvalue}));
+							tmpName) }, new Expression[] { rvalue});
+			HashMap<String, IAnnotations> annots = assignStmt.getPayload().getAnnotations();
+            for (Overapprox overapprItem : overappr) {
+                annots.put(Overapprox.getIdentifier(), overapprItem);
+            }
+            stmt.add(assignStmt);
 			RValue tmpRValue = new RValue(new IdentifierExpression(loc, tmpIType, tmpName), o.lrVal.cType);
 			int op;
 			if (node.getOperator() == IASTUnaryExpression.op_postFixIncr) 
@@ -1267,9 +1277,14 @@ public class CHandler implements ICHandler {
 			else
 				rhs = new RValue(createArithmeticExpression(op, rvalue, nr1, loc), o.lrVal.cType);
 
-			stmt.add(new AssignmentStatement(loc,
+			AssignmentStatement assignStmt = new AssignmentStatement(loc,
 					new LeftHandSide[] { new VariableLHS(loc, tmpIType,
-							tmpName) }, new Expression[] { rhs.getValue() }));
+							tmpName) }, new Expression[] { rhs.getValue() });
+			HashMap<String, IAnnotations> annots = assignStmt.getPayload().getAnnotations();
+            for (Overapprox overapprItem : overappr) {
+                annots.put(Overapprox.getIdentifier(), overapprItem);
+            }
+            stmt.add(assignStmt);
 			assert !(o.lrVal instanceof RValue);
 			RValue tmpRValue = new RValue(new IdentifierExpression(loc, tmpIType, tmpName), o.lrVal.cType);
 			ResultExpression assign = makeAssignment(main, loc, stmt, o.lrVal,
@@ -1344,7 +1359,7 @@ public class CHandler implements ICHandler {
 	private ResultExpression makeAssignment(Dispatcher main, ILocation loc, ArrayList<Statement> stmt,
 			LRValue lrVal, RValue rVal, ArrayList<Declaration> decl,
 			Map<VariableDeclaration, CACSLLocation> auxVars,
-			List<Overapprox> overapprox) {
+			List<Overapprox> overappr) {
 		RValue rightHandSide = rVal;
 		
 		/*
@@ -1392,12 +1407,12 @@ public class CHandler implements ICHandler {
 			HeapLValue hlv = (HeapLValue) lrVal; 
 			ResultExpression rex = new ResultExpression(memoryHandler.getWriteCall(hlv, rVal), null, 
 					new ArrayList<Declaration>(), new HashMap<VariableDeclaration, CACSLLocation>(0),
-					overapprox);
+					overappr);
 
 			stmt.addAll(rex.stmt);
 			decl.addAll(rex.decl);
 			auxVars.putAll(rex.auxVars);
-			overapprox.addAll(rex.overappr);
+			overappr.addAll(rex.overappr);
 			
 			for (String t : new String[] { SFO.INT, SFO.POINTER,
 					SFO.REAL, SFO.BOOL }) {
@@ -1406,17 +1421,22 @@ public class CHandler implements ICHandler {
 				.add(SFO.MEMORY + "_" + t);
 			}
 			
-			return new ResultExpression(stmt, rightHandSide, decl, auxVars, overapprox);
+			return new ResultExpression(stmt, rightHandSide, decl, auxVars, overappr);
 		} else if (lrVal instanceof LocalLValue){
 			LocalLValue lValue = (LocalLValue) lrVal;
-			stmt.add(new AssignmentStatement(loc, new LeftHandSide[]{lValue.getLHS()}, 
-					new Expression[] {rightHandSide.getValue()}));
+			AssignmentStatement assignStmt = new AssignmentStatement(loc, new LeftHandSide[]{lValue.getLHS()}, 
+					new Expression[] {rightHandSide.getValue()});
+			HashMap<String, IAnnotations> annots = assignStmt.getPayload().getAnnotations();
+            for (Overapprox overapprItem : overappr) {
+                annots.put(Overapprox.getIdentifier(), overapprItem);
+            }
+            stmt.add(assignStmt);
 
 			if (!functionHandler.noCurrentProcedure())
 				functionHandler.checkIfModifiedGlobal(main,
 						BoogieASTUtil.getLHSId(lValue.getLHS()), loc);
 //			return new ResultExpression(stmt, new RValue(lValue.getValue(), cType), decl, auxVars);
-			return new ResultExpression(stmt, lValue, decl, auxVars, overapprox);
+			return new ResultExpression(stmt, lValue, decl, auxVars, overappr);
 		} else
 			throw new AssertionError("Type error: trying to assign to an RValue in Statement" + loc.toString());
 	}
@@ -1427,7 +1447,7 @@ public class CHandler implements ICHandler {
 		ArrayList<Statement> stmt = new ArrayList<Statement>();
 		Map<VariableDeclaration, CACSLLocation> auxVars = new HashMap<VariableDeclaration, CACSLLocation>();
 		CACSLLocation loc = new CACSLLocation(node);
-		List<Overapprox> overapprox = new ArrayList<Overapprox>();
+		List<Overapprox> overappr = new ArrayList<Overapprox>();
 
 		ResultExpression l = (ResultExpression) main.dispatch(node.getOperand1());
 		ResultExpression r = (ResultExpression) main.dispatch(node.getOperand2());
@@ -1466,9 +1486,9 @@ public class CHandler implements ICHandler {
 			decl.addAll(rr.decl);
 			auxVars.putAll(l.auxVars);
 			auxVars.putAll(rr.auxVars);
-			overapprox.addAll(l.overappr);
-			overapprox.addAll(rr.overappr);
-			ResultExpression rex = makeAssignment(main, loc, stmt, l.lrVal, rightSide, decl, auxVars, overapprox);//, r.lrVal.cType);
+			overappr.addAll(l.overappr);
+			overappr.addAll(rr.overappr);
+			ResultExpression rex = makeAssignment(main, loc, stmt, l.lrVal, rightSide, decl, auxVars, overappr);//, r.lrVal.cType);
 			return rex;
 		}
 		case IASTBinaryExpression.op_equals:
@@ -1507,8 +1527,8 @@ public class CHandler implements ICHandler {
 			decl.addAll(rr.decl);
 			auxVars.putAll(rl.auxVars);
 			auxVars.putAll(rr.auxVars);
-			overapprox.addAll(rl.overappr);
-			overapprox.addAll(rr.overappr);
+			overappr.addAll(rl.overappr);
+			overappr.addAll(rr.overappr);
 
 			Expression expr = null;
 			if (lType instanceof CPointer
@@ -1530,7 +1550,7 @@ public class CHandler implements ICHandler {
 						rl.lrVal.getValue(), rr.lrVal.getValue());
 			}
 			return new ResultExpression(stmt, new RValue(expr,
-			        new CPrimitive(PRIMITIVE.INT)), decl, auxVars, overapprox);
+			        new CPrimitive(PRIMITIVE.INT)), decl, auxVars, overappr);
 		}
 		case IASTBinaryExpression.op_logicalAnd: {
 			stmt.addAll(rl.stmt);
@@ -1539,8 +1559,8 @@ public class CHandler implements ICHandler {
 			decl.addAll(rr.decl);
 			auxVars.putAll(rl.auxVars);
 			auxVars.putAll(rr.auxVars);
-			overapprox.addAll(rl.overappr);
-			overapprox.addAll(rr.overappr);
+			overappr.addAll(rl.overappr);
+			overappr.addAll(rr.overappr);
 
 			if (rr.stmt.isEmpty()) {
 				// no statements in right operands, hence no side effects in operand
@@ -1551,7 +1571,7 @@ public class CHandler implements ICHandler {
 						new RValue(wrapBinaryBoolean2Int(loc,
 								BinaryExpression.Operator.LOGICAND,
 								lBool, rBool), new CPrimitive(CPrimitive.PRIMITIVE.INT)),
-								decl, auxVars, overapprox);
+								decl, auxVars, overappr);
 			}
 			// create and add tmp var #t~AND~UID
 			String resName = main.nameHandler
@@ -1576,6 +1596,10 @@ public class CHandler implements ICHandler {
 			
 			AssignmentStatement aStat = new AssignmentStatement(loc,
 					new LeftHandSide[] { lhs }, new Expression[] { wrapped });
+			HashMap<String, IAnnotations> annots = aStat.getPayload().getAnnotations();
+            for (Overapprox overapprItem : overappr) {
+                annots.put(Overapprox.getIdentifier(), overapprItem);
+            }
 			stmt.add(aStat);
 			// if (#t~AND~UID) {#t~AND~UID = right;}
 			ArrayList<Statement> outerThenPart = new ArrayList<Statement>();
@@ -1593,10 +1617,14 @@ public class CHandler implements ICHandler {
 			IfStatement ifStatement = new IfStatement(loc, tmpRval,
 					outerThenPart.toArray(new Statement[0]),
 					new Statement[0]);
+			annots = ifStatement.getPayload().getAnnotations();
+            for (Overapprox overapprItem : overappr) {
+                annots.put(Overapprox.getIdentifier(), overapprItem);
+            }
 			stmt.add(ifStatement);
 			return new ResultExpression(stmt,
 					new RValue(tmpRval, new CPrimitive(CPrimitive.PRIMITIVE.INT)),
-					decl, auxVars, overapprox);
+					decl, auxVars, overappr);
 		}
 		case IASTBinaryExpression.op_logicalOr: {
 			stmt.addAll(rl.stmt);
@@ -1605,8 +1633,8 @@ public class CHandler implements ICHandler {
 			decl.addAll(rr.decl);
 			auxVars.putAll(rl.auxVars);
 			auxVars.putAll(rr.auxVars);
-			overapprox.addAll(rl.overappr);
-			overapprox.addAll(rr.overappr);
+			overappr.addAll(rl.overappr);
+			overappr.addAll(rr.overappr);
 
 			if (rr.stmt.isEmpty()) {
 				Expression lBool = ConvExpr.toBoolean(loc, rl.lrVal.getValue());
@@ -1617,7 +1645,7 @@ public class CHandler implements ICHandler {
 						new RValue(wrapBinaryBoolean2Int(loc,
 								BinaryExpression.Operator.LOGICOR,
 								lBool, rBool), new CPrimitive(CPrimitive.PRIMITIVE.INT)),
-								decl, auxVars, overapprox);
+								decl, auxVars, overappr);
 			}
 			// create and add tmp var #t~OR~UID
 			String resName = main.nameHandler
@@ -1642,6 +1670,11 @@ public class CHandler implements ICHandler {
 			
 			AssignmentStatement aStat = new AssignmentStatement(loc,
 					new LeftHandSide[] { lhs }, new Expression[] { wrapped });
+			HashMap<String, IAnnotations> annots =
+			        aStat.getPayload().getAnnotations();
+			for (Overapprox overapproxItem : overappr) {
+			    annots.put(Overapprox.getIdentifier(), overapproxItem);
+			}
 			stmt.add(aStat);
 			// if (#t~OR~UID) {} else {#t~OR~UID = right;}
 			ArrayList<Statement> outerElsePart = new ArrayList<Statement>();
@@ -1658,10 +1691,14 @@ public class CHandler implements ICHandler {
 					new LeftHandSide[] { lhs }, new Expression[] { wrapped }));
 			IfStatement ifStatement = new IfStatement(loc, tmpRval,
 					new Statement[0], outerElsePart.toArray(new Statement[0]));
-			stmt.add(ifStatement);
+			annots = ifStatement.getPayload().getAnnotations();
+            for (Overapprox overapprItem : overappr) {
+                annots.put(Overapprox.getIdentifier(), overapprItem);
+            }
+            stmt.add(ifStatement);
 			return new ResultExpression(stmt,
 					new RValue(tmpRval, new CPrimitive(CPrimitive.PRIMITIVE.INT)),
-					decl, auxVars, overapprox);
+					decl, auxVars, overappr);
 		}
 		case IASTBinaryExpression.op_minus:
 		case IASTBinaryExpression.op_plus:
@@ -1674,8 +1711,8 @@ public class CHandler implements ICHandler {
 			decl.addAll(rr.decl);
 			auxVars.putAll(rl.auxVars);
 			auxVars.putAll(rr.auxVars);
-            overapprox.addAll(rl.overappr);
-            overapprox.addAll(rr.overappr);
+            overappr.addAll(rl.overappr);
+            overappr.addAll(rr.overappr);
 
 			if (node.getOperator() == IASTBinaryExpression.op_divide) {
 			    Check check = new Check(Check.Spec.DIVISION_BY_ZERO);
@@ -1685,6 +1722,11 @@ public class CHandler implements ICHandler {
                                 BinaryExpression.Operator.COMPNEQ,
                                 new IntegerLiteral(assertLoc, SFO.NR0),
                                 rr.lrVal.getValue()));
+				HashMap<String, IAnnotations> annots = assertStmt.getPayload().getAnnotations();
+	            for (Overapprox overapprItem : overappr) {
+	                annots.put(Overapprox.getIdentifier(), overapprItem);
+	            }
+	            stmt.add(assertStmt);
 				check.addToNodeAnnot(assertStmt);
 				stmt.add(assertStmt);
 			}
@@ -1705,7 +1747,7 @@ public class CHandler implements ICHandler {
 						node.getOperator(), rl.lrVal.getValue(), rr.lrVal.getValue(), loc), rl.lrVal.cType); 
 			}
 			assert (main.isAuxVarMapcomplete(decl, auxVars)) : "unhavoced auxvars";
-			return new ResultExpression(stmt, rval, decl, auxVars, overapprox);
+			return new ResultExpression(stmt, rval, decl, auxVars, overappr);
 		}
 		case IASTBinaryExpression.op_minusAssign:
 		case IASTBinaryExpression.op_multiplyAssign:
@@ -1718,8 +1760,8 @@ public class CHandler implements ICHandler {
 			decl.addAll(rr.decl);
 			auxVars.putAll(rl.auxVars);
 			auxVars.putAll(rr.auxVars);
-            overapprox.addAll(rl.overappr);
-            overapprox.addAll(rr.overappr);
+            overappr.addAll(rl.overappr);
+            overappr.addAll(rr.overappr);
 
 			if (node.getOperator() == IASTBinaryExpression.op_divideAssign) {
 			    Check check = new Check(Check.Spec.DIVISION_BY_ZERO);
@@ -1729,6 +1771,10 @@ public class CHandler implements ICHandler {
                                 BinaryExpression.Operator.COMPNEQ,
                                 new IntegerLiteral(assertLoc, SFO.NR0),
                                 rr.lrVal.getValue()));
+				HashMap<String, IAnnotations> annots = assertStmt.getPayload().getAnnotations();
+                for (Overapprox overapprItem : overappr) {
+                    annots.put(Overapprox.getIdentifier(), overapprItem);
+                }
 				check.addToNodeAnnot(assertStmt);
 				stmt.add(assertStmt);
 			}
@@ -1748,7 +1794,7 @@ public class CHandler implements ICHandler {
 						rl.lrVal.getValue(), rr.lrVal.getValue(), loc), rr.lrVal.cType);
 			}
 			return makeAssignment(main, loc, stmt, l.lrVal, rightHandside,
-					decl, auxVars, overapprox);//, l.lrVal.cType);
+					decl, auxVars, overappr);//, l.lrVal.cType);
 		}
 		case IASTBinaryExpression.op_binaryAnd:
 		case IASTBinaryExpression.op_binaryOr:
@@ -1761,13 +1807,13 @@ public class CHandler implements ICHandler {
 			decl.addAll(rr.decl);
 			auxVars.putAll(rl.auxVars);
 			auxVars.putAll(rr.auxVars);
-            overapprox.addAll(rl.overappr);
-            overapprox.addAll(rr.overappr);
-            overapprox.add(new Overapprox(Overapprox.BITVEC, loc));
+            overappr.addAll(rl.overappr);
+            overappr.addAll(rr.overappr);
+            overappr.add(new Overapprox(Overapprox.BITVEC, loc));
 			Expression bwexpr = createBitwiseExpression(node.getOperator(),
 					rl.lrVal.getValue(), rr.lrVal.getValue(), loc);
 			return new ResultExpression(stmt, new RValue(bwexpr, rl.lrVal.cType),
-			        decl, auxVars, overapprox);
+			        decl, auxVars, overappr);
 		}
 		case IASTBinaryExpression.op_shiftLeftAssign:
 		case IASTBinaryExpression.op_shiftRightAssign:
@@ -1781,13 +1827,13 @@ public class CHandler implements ICHandler {
 			decl.addAll(rr.decl);
 			auxVars.putAll(rl.auxVars);
 			auxVars.putAll(rr.auxVars);
-            overapprox.addAll(rl.overappr);
-            overapprox.addAll(rr.overappr);
-            overapprox.add(new Overapprox(Overapprox.BITVEC, loc));
+            overappr.addAll(rl.overappr);
+            overappr.addAll(rr.overappr);
+            overappr.add(new Overapprox(Overapprox.BITVEC, loc));
 			Expression bwexpr = createBitwiseExpression(
 					node.getOperator(), rl.lrVal.getValue(), rr.lrVal.getValue(), loc);
 			return makeAssignment(main, loc, stmt, l.lrVal, new RValue(bwexpr, rr.lrVal.cType), 
-					decl, auxVars, overapprox);//, l.lrVal.cType);
+					decl, auxVars, overappr);//, l.lrVal.cType);
 		}
 		default:
 			String msg = "Unknown or unsupported unary operation";
@@ -2115,8 +2161,13 @@ public class CHandler implements ICHandler {
 		assert elseStmt != null;
 		cond = ConvExpr.toBoolean(loc, cond);
 		// TODO : handle if(pointer), if(pointer==NULL) and if(pointer==0)
-		stmt.add(new IfStatement(loc, cond, thenStmt.toArray(new Statement[0]),
-				elseStmt.toArray(new Statement[0])));
+		IfStatement ifStmt = new IfStatement(loc, cond, thenStmt.toArray(new Statement[0]),
+				elseStmt.toArray(new Statement[0]));
+		HashMap<String, IAnnotations> annots = ifStmt.getPayload().getAnnotations();
+        for (Overapprox overapprItem : overappr) {
+            annots.put(Overapprox.getIdentifier(), overapprItem);
+        }
+        stmt.add(ifStmt);
 		Map<VariableDeclaration, CACSLLocation> emptyAuxVars = new HashMap<VariableDeclaration, CACSLLocation>(
 				0);
 		return new ResultExpression(stmt, null, decl, emptyAuxVars, overappr);
@@ -2443,6 +2494,10 @@ public class CHandler implements ICHandler {
 						IfStatement ifStmt = new IfStatement(locC, cond,
 								ifBlock.toArray(new Statement[0]),
 								new Statement[0]);
+						HashMap<String, IAnnotations> annots = ifStmt.getPayload().getAnnotations();
+		                for (Overapprox overapprItem : res.overappr) {
+		                    annots.put(Overapprox.getIdentifier(), overapprItem);
+		                }
 						stmt.add(ifStmt);
 					}
 					isFirst = false;
@@ -2482,6 +2537,10 @@ public class CHandler implements ICHandler {
 		if (ifBlock.size() > 0) {
 			IfStatement ifStmt = new IfStatement(loc, cond,
 					ifBlock.toArray(new Statement[0]), new Statement[0]);
+			HashMap<String, IAnnotations> annots = ifStmt.getPayload().getAnnotations();
+            for (Overapprox overapprItem : overappr) {
+                annots.put(Overapprox.getIdentifier(), overapprItem);
+            }
 			stmt.add(ifStmt);
 		}
 		checkForACSL(main, stmt, null, node);
@@ -2686,9 +2745,13 @@ public class CHandler implements ICHandler {
 		{
 			ifStatements.addAll(rePositive.stmt);
 			LeftHandSide[] lhs = { new VariableLHS(loc, tmpName) };
-			AssignmentStatement assign = new AssignmentStatement(loc, lhs, 
+			AssignmentStatement assignStmt = new AssignmentStatement(loc, lhs, 
 					new Expression[] { rePositive.lrVal.getValue() });
-			ifStatements.add(assign);
+			HashMap<String, IAnnotations> annots = assignStmt.getPayload().getAnnotations();
+            for (Overapprox overapprItem : overappr) {
+                annots.put(Overapprox.getIdentifier(), overapprItem);
+            }
+			ifStatements.add(assignStmt);
 			List<HavocStatement> havocAuxVars = Dispatcher
 					.createHavocsForAuxVars(rePositive.auxVars);
 			ifStatements.addAll(havocAuxVars);
