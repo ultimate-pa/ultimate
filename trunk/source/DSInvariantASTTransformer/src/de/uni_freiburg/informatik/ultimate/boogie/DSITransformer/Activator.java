@@ -1,13 +1,12 @@
 package de.uni_freiburg.informatik.ultimate.boogie.DSITransformer;
 
-import org.eclipse.jface.resource.ImageDescriptor;
-import org.eclipse.ui.plugin.AbstractUIPlugin;
+import org.eclipse.core.runtime.Plugin;
 import org.osgi.framework.BundleContext;
 
 /**
  * The activator class controls the plug-in life cycle
  */
-public class Activator extends AbstractUIPlugin {
+public class Activator extends Plugin {
 
 	// The plug-in ID
 	public static final String s_PLUGIN_ID = "DSITransformer";
@@ -48,14 +47,5 @@ public class Activator extends AbstractUIPlugin {
 		return s_plugin;
 	}
 
-	/**
-	 * Returns an image descriptor for the image file at the given
-	 * plug-in relative path
-	 *
-	 * @param path the path
-	 * @return the image descriptor
-	 */
-	public static ImageDescriptor getImageDescriptor(String path) {
-		return imageDescriptorFromPlugin(s_PLUGIN_ID, path);
-	}
+
 }

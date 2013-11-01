@@ -10,8 +10,9 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.access.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.access.WalkerOptions;
-import de.uni_freiburg.informatik.ultimate.boogie.DSITransformer.preferences.PreferenceValues;
+import de.uni_freiburg.informatik.ultimate.boogie.DSITransformer.preferences.PreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
+import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
 import de.uni_freiburg.informatik.ultimate.model.BoogieLocation;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.INode;
@@ -54,10 +55,6 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression.Ope
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.wrapper.WrapperNode;
 
 import org.apache.log4j.Logger;
-import org.eclipse.core.runtime.preferences.ConfigurationScope;
-import org.eclipse.core.runtime.preferences.IEclipsePreferences;
-import org.eclipse.core.runtime.preferences.IScopeContext;
-import org.eclipse.core.runtime.preferences.InstanceScope;
 
 /**
  * This class transforms the procedures in the input AST into a single procedure
@@ -109,7 +106,7 @@ public final class DSITransformerObserver extends BoogieTransformer implements
 			return 0;
 		}
 	}
-	
+
 	/**
 	 * Looks recursively for the occurrence of $ptr(TYPE, PARM) in an
 	 * expression. Given the type to look for and the list of parameters returns
@@ -144,8 +141,8 @@ public final class DSITransformerObserver extends BoogieTransformer implements
 		 * (non-Javadoc)
 		 * 
 		 * @see
-		 * de.uni_freiburg.informatik.ultimate.model.boogie.BoogieTransformer#processExpression(local
-		 * .ultimate.model.boogie.ast.Expression)
+		 * de.uni_freiburg.informatik.ultimate.model.boogie.BoogieTransformer
+		 * #processExpression(local .ultimate.model.boogie.ast.Expression)
 		 */
 		@Override
 		protected Expression processExpression(Expression expr) {
@@ -188,7 +185,7 @@ public final class DSITransformerObserver extends BoogieTransformer implements
 		}
 
 	}
-	
+
 	private static final int PROC_NOT_VALID = 0;
 	private static final int PROC_INITIALIZER = 1;
 	private static final int PROC_MODIFIER = 2;
@@ -311,21 +308,22 @@ public final class DSITransformerObserver extends BoogieTransformer implements
 		procedures = new HashMap<String, ProcedureContainer>();
 
 		// Retrieve settings from the Preferences Page
-		IScopeContext scope = InstanceScope.INSTANCE;
-		IEclipsePreferences prefs = scope.getNode(Activator.s_PLUGIN_ID);
+		UltimatePreferenceStore prefs = new UltimatePreferenceStore(
+				Activator.s_PLUGIN_ID);
 
-		trimAfterWrap = prefs.getBoolean(PreferenceValues.NAME_TRIMWRAP,
+		trimAfterWrap = prefs.getBoolean(PreferenceInitializer.LABEL_TRIMWRAP,
 				trimAfterWrap);
 
-		structureType = prefs.get(PreferenceValues.NAME_STRUCTURETYPE,
-				structureType);
-		structureProcID = prefs.get(PreferenceValues.NAME_PROCEDUREID,
-				structureProcID);
-		allFunctions = prefs.getBoolean(PreferenceValues.NAME_ALLFUNCTIONS,
-				PreferenceValues.VALUE_ALLFUNCTIONS_DEFAULT);
+		structureType = prefs.getString(
+				PreferenceInitializer.LABEL_STRUCTURETYPE, structureType);
+		structureProcID = prefs.getString(
+				PreferenceInitializer.LABEL_PROCEDUREID, structureProcID);
+		allFunctions = prefs.getBoolean(
+				PreferenceInitializer.LABEL_ALLFUNCTIONS,
+				PreferenceInitializer.VALUE_ALLFUNCTIONS_DEFAULT);
 		leaveOriginalProcedures = prefs.getBoolean(
-				PreferenceValues.NAME_LEAVEPROCEDURES,
-				PreferenceValues.VALUE_LEAVEPROCEDURES);
+				PreferenceInitializer.LABEL_LEAVEPROCEDURES,
+				PreferenceInitializer.VALUE_LEAVEPROCEDURES);
 
 		s_Logger.info("Generating procedure '" + structureProcID + "'.");
 
@@ -395,9 +393,8 @@ public final class DSITransformerObserver extends BoogieTransformer implements
 								if (pCont.declaration == null)
 									pCont.declaration = pCont.implementation;
 
-								s_Logger
-										.debug("Found procedure implementation: "
-												+ proc.getIdentifier());
+								s_Logger.debug("Found procedure implementation: "
+										+ proc.getIdentifier());
 							}
 						}
 					}
@@ -438,8 +435,8 @@ public final class DSITransformerObserver extends BoogieTransformer implements
 	 * 
 	 * (non-Javadoc)
 	 * 
-	 * @see
-	 * de.uni_freiburg.informatik.ultimate.model.boogie.BoogieTransformer#processExpression(de.uni_freiburg.informatik.ultimate
+	 * @see de.uni_freiburg.informatik.ultimate.model.boogie.BoogieTransformer#
+	 * processExpression(de.uni_freiburg.informatik.ultimate
 	 * .model.boogie.ast.Expression)
 	 */
 	@Override
@@ -451,8 +448,9 @@ public final class DSITransformerObserver extends BoogieTransformer implements
 					// IdentifierExpressions
 					// that are on the
 					// list of locals
-					IdentifierExpression result = new IdentifierExpression(null,
-							e.getType(), procLocals.get(e.getIdentifier()));
+					IdentifierExpression result = new IdentifierExpression(
+							null, e.getType(),
+							procLocals.get(e.getIdentifier()));
 					ModelUtils.mergeAnnotations(expr, result);
 
 					s_Logger.debug("Renamed in expression: "
@@ -467,17 +465,16 @@ public final class DSITransformerObserver extends BoogieTransformer implements
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see
-	 * de.uni_freiburg.informatik.ultimate.model.boogie.BoogieTransformer#processLeftHandSide(local
-	 * .ultimate.model.boogie.ast.LeftHandSide)
+	 * @see de.uni_freiburg.informatik.ultimate.model.boogie.BoogieTransformer#
+	 * processLeftHandSide(local .ultimate.model.boogie.ast.LeftHandSide)
 	 */
 	@Override
 	protected LeftHandSide processLeftHandSide(LeftHandSide lhs) {
 		if (!processingProcedure || lhs instanceof ArrayLHS
 				|| !procLocals.containsKey(((VariableLHS) lhs).getIdentifier()))
 			return super.processLeftHandSide(lhs);
-		VariableLHS newLhs = new VariableLHS(null, procLocals.get(((VariableLHS) lhs)
-				.getIdentifier()));
+		VariableLHS newLhs = new VariableLHS(null,
+				procLocals.get(((VariableLHS) lhs).getIdentifier()));
 		ModelUtils.mergeAnnotations(lhs, newLhs);
 		return newLhs;
 	}
@@ -500,8 +497,8 @@ public final class DSITransformerObserver extends BoogieTransformer implements
 	 * @return an integer representing the type of procedure identified
 	 */
 	private int processProcedure(ProcedureContainer p,
-			Collection<VariableDeclaration> vardecls, Set<VariableLHS> modifies,
-			Collection<Statement> statements) {
+			Collection<VariableDeclaration> vardecls,
+			Set<VariableLHS> modifies, Collection<Statement> statements) {
 
 		procedureIDPrefix = p.getIdentifier() + "_";
 		procExitLabel = structureProcID + "$" + procedureIDPrefix + "exit";
@@ -533,8 +530,10 @@ public final class DSITransformerObserver extends BoogieTransformer implements
 				parms.add(parm);
 				procLocals.put(parm, procedureIDPrefix + parm);
 				// Also rename the corresponding parameter in the implementation
-				procLocals.put(p.implementation.getInParams()[pIdx]
-						.getIdentifiers()[idIdx], procedureIDPrefix + parm);
+				procLocals
+						.put(p.implementation.getInParams()[pIdx]
+								.getIdentifiers()[idIdx], procedureIDPrefix
+								+ parm);
 				parmCorrespondences
 						.put(parm, p.implementation.getInParams()[pIdx]
 								.getIdentifiers()[idIdx]);
@@ -592,18 +591,18 @@ public final class DSITransformerObserver extends BoogieTransformer implements
 					ids.add(v);
 			}
 			if (ids.size() > 0) {
-				newList = new VarList(null, ids.toArray(new String[ids.size()]), l
-						.getType());
+				newList = new VarList(null,
+						ids.toArray(new String[ids.size()]), l.getType());
 				newLists.add(newList);
 			}
 		}
 
-		ILocation loccationOfP = new BoogieLocation(p.getFilename(), p.getLineNr(), 
-													-1, -1, -1, null);
+		ILocation loccationOfP = new BoogieLocation(p.getFilename(),
+				p.getLineNr(), -1, -1, -1, null);
 		if (newLists.size() > 0) {
-			vardecls.add(new VariableDeclaration(loccationOfP, 
-					(Attribute[]) new NamedAttribute[0],
-					newLists.toArray(new VarList[newLists.size()])));
+			vardecls.add(new VariableDeclaration(loccationOfP,
+					(Attribute[]) new NamedAttribute[0], newLists
+							.toArray(new VarList[newLists.size()])));
 		}
 
 		// Create the list of the statements to be returned
@@ -616,7 +615,8 @@ public final class DSITransformerObserver extends BoogieTransformer implements
 			VariableLHS[] parmsArray = new VariableLHS[parms.size()];
 			int i = 0;
 			for (String id : parms)
-				parmsArray[i++] = new VariableLHS(loccationOfP, procedureIDPrefix + id);
+				parmsArray[i++] = new VariableLHS(loccationOfP,
+						procedureIDPrefix + id);
 			result.add(new HavocStatement(loccationOfP, parmsArray));
 		}
 
@@ -626,7 +626,8 @@ public final class DSITransformerObserver extends BoogieTransformer implements
 		// end.
 		for (Specification s : p.declaration.getSpecification()) {
 			if (s instanceof ModifiesSpecification)
-				for (VariableLHS id : ((ModifiesSpecification) s).getIdentifiers())
+				for (VariableLHS id : ((ModifiesSpecification) s)
+						.getIdentifiers())
 					modifies.add(id);
 			else if (s instanceof RequiresSpecification) {
 				AssumeStatement newAssume = new AssumeStatement(
@@ -636,8 +637,8 @@ public final class DSITransformerObserver extends BoogieTransformer implements
 				result.add(newAssume);
 			} else if (s instanceof EnsuresSpecification) {
 				if (!((EnsuresSpecification) s).isFree()) {
-					AssertStatement newAssert = new AssertStatement(s
-							.getLocation(),
+					AssertStatement newAssert = new AssertStatement(
+							s.getLocation(),
 							processExpression(((EnsuresSpecification) s)
 									.getFormula()));
 					postConditions.add(newAssert);
@@ -658,10 +659,10 @@ public final class DSITransformerObserver extends BoogieTransformer implements
 		if (p.declaration.getOutParams().length > 0) {
 			VarList[] resultList = new VarList[1];
 			String[] resultStringList = { procedureIDPrefix + "$result" };
-			resultList[0] = new VarList(null, resultStringList, p.declaration
-					.getOutParams()[0].getType());
-			vardecls.add(new VariableDeclaration(loccationOfP, 
-												new Attribute[0], resultList));
+			resultList[0] = new VarList(null, resultStringList,
+					p.declaration.getOutParams()[0].getType());
+			vardecls.add(new VariableDeclaration(loccationOfP,
+					new Attribute[0], resultList));
 		}
 
 		Statement[] block = newBody.getBlock();
@@ -714,8 +715,7 @@ public final class DSITransformerObserver extends BoogieTransformer implements
 		// Add the postconditions as asserts
 		result.addAll(postConditions);
 		// Add the final jump to the loop head
-		result.add(new GotoStatement(null, 
-				new String[] { procLoopStartLabel }));
+		result.add(new GotoStatement(null, new String[] { procLoopStartLabel }));
 
 		// We're done with this procedure
 		processingProcedure = false;
@@ -768,8 +768,8 @@ public final class DSITransformerObserver extends BoogieTransformer implements
 			if ((procType = processProcedure(p, localVars, procModifies,
 					localStatements)) != PROC_NOT_VALID) {
 
-				Statement label = new Label(new BoogieLocation(p.getFilename(),-2,-2,-2,-2,null), procPrefix
-						+ p.getIdentifier());
+				Statement label = new Label(new BoogieLocation(p.getFilename(),
+						-2, -2, -2, -2, null), procPrefix + p.getIdentifier());
 				// Add the label to the corresponding group
 				if (allFunctions || procType == PROC_MODIFIER) {
 					procLabels.add(procPrefix + p.getIdentifier());
@@ -782,13 +782,16 @@ public final class DSITransformerObserver extends BoogieTransformer implements
 				// function
 				if (allFunctions)
 					statements
-							.add(new AssumeStatement(null, 
-									new BinaryExpression(null,
+							.add(new AssumeStatement(
+									null,
+									new BinaryExpression(
+											null,
 											Operator.COMPEQ,
-											new FunctionApplication(null,
+											new FunctionApplication(
+													null,
 													"action",
-													new Expression[] { new IdentifierExpression(null,
-															"$counter") }),
+													new Expression[] { new IdentifierExpression(
+															null, "$counter") }),
 											new IntegerLiteral(null, Integer
 													.toString(procCounter++)))));
 				// Add the statements
@@ -809,18 +812,20 @@ public final class DSITransformerObserver extends BoogieTransformer implements
 			idArray = new String[] { structureVarID };
 		else
 			idArray = new String[] { structureVarID, "$counter" };
-		VarList structPtr = new VarList(null, idArray, new PrimitiveType(null, "int"));
+		VarList structPtr = new VarList(null, idArray, new PrimitiveType(null,
+				"int"));
 		// Careful, should be bound with a RealType
 		VarList[] strPtrDecl;
 		strPtrDecl = new VarList[] { structPtr };
 
-		procVars.add(new VariableDeclaration(new BoogieLocation("",-5,-5,-5,-5,null),
-				(Attribute[]) new NamedAttribute[0], strPtrDecl));
+		procVars.add(new VariableDeclaration(new BoogieLocation("", -5, -5, -5,
+				-5, null), (Attribute[]) new NamedAttribute[0], strPtrDecl));
 
 		// Now collect the statements in the right order
 		List<Statement> procStatements = new ArrayList<Statement>();
 		// Add the init label
-		procStatements.add(new Label(new BoogieLocation("",-4,-4,-4,-4,null), procInitLabel));
+		procStatements.add(new Label(new BoogieLocation("", -4, -4, -4, -4,
+				null), procInitLabel));
 
 		// Create the expression that represents the invariant
 		// $inv($s, $ptr(THE_TYPE, structureVarID), THE_TYPE);
@@ -828,28 +833,35 @@ public final class DSITransformerObserver extends BoogieTransformer implements
 		Expression closedExp = new FunctionApplication(null, "$closed",
 				new Expression[] {
 						new IdentifierExpression(null, "$s"),
-						new FunctionApplication(null, "$ptr", new Expression[] {
-								new IdentifierExpression(null, structureType),
-								new IdentifierExpression(null, structureVarID) }) });
+						new FunctionApplication(null, "$ptr",
+								new Expression[] {
+										new IdentifierExpression(null,
+												structureType),
+										new IdentifierExpression(null,
+												structureVarID) }) });
 
 		Expression ownerExp = new FunctionApplication(null, "$owner",
 				new Expression[] {
 						new IdentifierExpression(null, "$s"),
-						new FunctionApplication(null, "$ptr", new Expression[] {
-								new IdentifierExpression(null, structureType),
-								new IdentifierExpression(null, structureVarID) }) });
+						new FunctionApplication(null, "$ptr",
+								new Expression[] {
+										new IdentifierExpression(null,
+												structureType),
+										new IdentifierExpression(null,
+												structureVarID) }) });
 
-		Expression ownedExp = new BinaryExpression(null, 
+		Expression ownedExp = new BinaryExpression(null,
 				BinaryExpression.Operator.COMPEQ, ownerExp,
 				new FunctionApplication(null, "$me", new Expression[0]));
 
-		Expression inv = new BinaryExpression(null, 
+		Expression inv = new BinaryExpression(null,
 				BinaryExpression.Operator.LOGICAND, closedExp, ownedExp);
 
 		if (!allFunctions) {
 			if (initLabels.size() > 0) { // Add the initializer procedures
-				GotoStatement initGoto = new GotoStatement(new BoogieLocation("",-3,-3,-3,-3,null), initLabels
-						.toArray(new String[initLabels.size()]));
+				GotoStatement initGoto = new GotoStatement(new BoogieLocation(
+						"", -3, -3, -3, -3, null),
+						initLabels.toArray(new String[initLabels.size()]));
 				procStatements.add(initGoto);
 				procStatements.addAll(initStatements);
 			} else
@@ -857,13 +869,14 @@ public final class DSITransformerObserver extends BoogieTransformer implements
 		}
 
 		// Add the start label
-		procStatements.add(new Label(new BoogieLocation("",-4,-4,-4,-4,null), procLoopStartLabel));
+		procStatements.add(new Label(new BoogieLocation("", -4, -4, -4, -4,
+				null), procLoopStartLabel));
 
 		// Increment the counter (for the action(ctr))
 		if (allFunctions)
-			procStatements.add(new AssignmentStatement(null, 
+			procStatements.add(new AssignmentStatement(null,
 					new LeftHandSide[] { new VariableLHS(null, "$counter") },
-					new Expression[] { new BinaryExpression(null, 
+					new Expression[] { new BinaryExpression(null,
 							BinaryExpression.Operator.ARITHPLUS,
 							new IdentifierExpression(null, "$counter"),
 							new IntegerLiteral(null, "1")) }));
@@ -873,46 +886,50 @@ public final class DSITransformerObserver extends BoogieTransformer implements
 		// procStatements.add(new AssertStatement(null, null, inv));
 
 		// Create the initial GOTO statement
-		GotoStatement initGoto = new GotoStatement(new BoogieLocation("",-3,-3,-3,-3,null), procLabels
-				.toArray(new String[procLabels.size()]));
+		GotoStatement initGoto = new GotoStatement(new BoogieLocation("", -3,
+				-3, -3, -3, null), procLabels.toArray(new String[procLabels
+				.size()]));
 		procStatements.add(initGoto);
 		// Add the procedure bodies
 		procStatements.addAll(statements);
 		// Add the exit label
-		procStatements.add(new Label(new BoogieLocation("",-4,-4,-4,-4,null), procLoopEndLabel));
+		procStatements.add(new Label(new BoogieLocation("", -4, -4, -4, -4,
+				null), procLoopEndLabel));
 		// Create the procedure's body
-		Body procBody = new Body(null, procVars
-				.toArray(new VariableDeclaration[procVars.size()]),
+		Body procBody = new Body(null,
+				procVars.toArray(new VariableDeclaration[procVars.size()]),
 				procStatements.toArray(new Statement[statements.size()]));
 		// Create the Modifies clause
 		if (procModifies.size() > 0)
 			procSpecs.add(new ModifiesSpecification(null, false, procModifies
 					.toArray(new VariableLHS[procModifies.size()])));
 		// Finally return the new procedure
-		return new Procedure(new BoogieLocation("",-1,-1,-1,-1,null), new Attribute[0], structureProcID,
-				new String[0], new VarList[0], new VarList[0], procSpecs
-						.toArray(new Specification[procSpecs.size()]), procBody);
+		return new Procedure(new BoogieLocation("", -1, -1, -1, -1, null),
+				new Attribute[0], structureProcID, new String[0],
+				new VarList[0], new VarList[0],
+				procSpecs.toArray(new Specification[procSpecs.size()]),
+				procBody);
 	}
 
 	@Override
 	protected Statement processStatement(Statement statement) {
 		if (processingProcedure) {
-		    Statement newStatement = null;
+			Statement newStatement = null;
 			if (statement instanceof ReturnStatement) {
 				String[] labels = { procExitLabel };
-				newStatement = new GotoStatement(statement.getLocation(), labels);
+				newStatement = new GotoStatement(statement.getLocation(),
+						labels);
 			}
 			if (statement instanceof Label) {
-			    newStatement = new Label(statement.getLocation(), procedureIDPrefix
-								+ ((Label) statement).getName());
+				newStatement = new Label(statement.getLocation(),
+						procedureIDPrefix + ((Label) statement).getName());
 			}
 			if (statement instanceof GotoStatement) {
 				GotoStatement st = (GotoStatement) statement;
 				String[] newlabels = new String[st.getLabels().length];
 				for (int i = 0; i < newlabels.length; i++)
 					newlabels[i] = procedureIDPrefix + st.getLabels()[i];
-				newStatement = new GotoStatement(st.getLocation(),
-						newlabels);
+				newStatement = new GotoStatement(st.getLocation(), newlabels);
 			}
 			if (supressResultAssignments
 					&& statement instanceof AssignmentStatement) {
@@ -920,13 +937,15 @@ public final class DSITransformerObserver extends BoogieTransformer implements
 				if (assign.getLhs()[0] instanceof VariableLHS) {
 					VariableLHS var = (VariableLHS) assign.getLhs()[0];
 					if (var.getIdentifier().equals("$result"))
-					    newStatement = new Label(statement.getLocation(), procedureIDPrefix
-								+ Integer.toString(statement.getLocation().getStartLine()));
+						newStatement = new Label(statement.getLocation(),
+								procedureIDPrefix
+										+ Integer.toString(statement
+												.getLocation().getStartLine()));
 				}
 			}
 			if (newStatement != null) {
-			    ModelUtils.mergeAnnotations(statement, newStatement);
-			    return newStatement;
+				ModelUtils.mergeAnnotations(statement, newStatement);
+				return newStatement;
 			}
 		}
 		return super.processStatement(statement);
@@ -935,8 +954,8 @@ public final class DSITransformerObserver extends BoogieTransformer implements
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see
-	 * de.uni_freiburg.informatik.ultimate.model.boogie.BoogieTransformer#processVarList(de.uni_freiburg.informatik.ultimate
+	 * @see de.uni_freiburg.informatik.ultimate.model.boogie.BoogieTransformer#
+	 * processVarList(de.uni_freiburg.informatik.ultimate
 	 * .model.boogie.ast.VarList)
 	 */
 	@Override
@@ -959,9 +978,9 @@ public final class DSITransformerObserver extends BoogieTransformer implements
 					newids[i] = ids[i];
 			}
 			if (changed || newType != type || newWhere != where) {
-			    VarList newVl = new VarList(null, newids, newType, newWhere);
-			    ModelUtils.mergeAnnotations(newVl, vl);
-			    return newVl;
+				VarList newVl = new VarList(null, newids, newType, newWhere);
+				ModelUtils.mergeAnnotations(newVl, vl);
+				return newVl;
 			}
 			return vl;
 		}

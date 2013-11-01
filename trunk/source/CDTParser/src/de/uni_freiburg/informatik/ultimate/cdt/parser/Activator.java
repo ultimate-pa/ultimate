@@ -3,7 +3,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.cdt.parser;
 
-import org.eclipse.ui.plugin.AbstractUIPlugin;
+import org.eclipse.core.runtime.Plugin;
 import org.osgi.framework.BundleContext;
 
 /**
@@ -12,7 +12,7 @@ import org.osgi.framework.BundleContext;
  * @author Stefan Wissert
  * @date 03.02.2012
  */
-public class Activator extends AbstractUIPlugin {
+public class Activator extends Plugin {
 	/**
 	 * The plug-in ID.
 	 */

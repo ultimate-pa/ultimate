@@ -2,8 +2,6 @@ package de.uni_freiburg.informatik.ultimate.automata;
 
 import org.eclipse.core.runtime.Plugin;
 import org.eclipse.core.runtime.preferences.InstanceScope;
-import org.eclipse.jface.preference.IPreferenceStore;
-import org.eclipse.ui.preferences.ScopedPreferenceStore;
 import org.osgi.framework.BundleContext;
 
 /**
@@ -17,7 +15,6 @@ public class Activator extends Plugin {
 	// The shared instance
 	private static Activator plugin;
 	
-	private static ScopedPreferenceStore preferences; 
 	
 	/**
 	 * The constructor
@@ -32,7 +29,6 @@ public class Activator extends Plugin {
 	public void start(BundleContext context) throws Exception {
 		super.start(context);
 		plugin = this;
-		preferences = new ScopedPreferenceStore(InstanceScope.INSTANCE,Activator.PLUGIN_ID);
 	}
 
 	/*
@@ -53,7 +49,5 @@ public class Activator extends Plugin {
 		return plugin;
 	}
 	
-	public IPreferenceStore getPreferenceStore() {
-		return preferences;
-	}
+	
 }

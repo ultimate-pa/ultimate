@@ -7,12 +7,5 @@
    <extension point="org.eclipse.core.runtime.preferences">
       <initializer class="de.uni_freiburg.informatik.ultimate.boogie.DSITransformer.preferences.PreferenceInitializer"/>
    </extension>
-   <extension point="org.eclipse.ui.preferencePages">
-      <page
-            category="de.uni_freiburg.informatik.ultimate.gui.preferencepages.ToolsPreferencePage"
-            class="de.uni_freiburg.informatik.ultimate.boogie.DSITransformer.preferences.PreferencePage"
-            id="de.uni_freiburg.informatik.ultimate.boogie.DSITransformer.preferences.PreferencePage"
-            name="Data Structure Invariants">
-      </page>
-   </extension>
+
 </plugin>

@@ -12,7 +12,7 @@ import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.access.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.access.WalkerOptions;
-import de.uni_freiburg.informatik.ultimate.boogie.printer.preferences.PreferencePage;
+import de.uni_freiburg.informatik.ultimate.boogie.printer.preferences.PreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.*;
@@ -57,25 +57,25 @@ public class BoogiePrinterObserver implements IUnmanagedObserver {
 		String filename;
 		File f;
 
-		if (PreferencePage.getSaveInSourceDirectory()) {
+		if (PreferenceInitializer.getSaveInSourceDirectory()) {
 			path = new File(root.getPayload().getLocation().getFileName())
 					.getParent();
 			if(path == null){
 				s_Logger.warn("Model does not provide a valid source location, falling back to default dump path...");
-				path = PreferencePage.getDumpPath();
+				path = PreferenceInitializer.getDumpPath();
 			}
 		} else {
-			path = PreferencePage.getDumpPath();
+			path = PreferenceInitializer.getDumpPath();
 		}
 
 		try {
-			if (PreferencePage.getUseUniqueFilename()) {
+			if (PreferenceInitializer.getUseUniqueFilename()) {
 				f = File.createTempFile("BoogiePrinter_"
 						+ new File(root.getPayload().getLocation()
 								.getFileName()).getName() + "_UID", ".bpl",
 						new File(path));
 			} else {
-				filename = PreferencePage.getFilename();
+				filename = PreferenceInitializer.getFilename();
 				f = new File(path + File.separatorChar + filename);
 				if (f.isFile() && f.canWrite() || !f.exists()) {
 					if (f.exists()) {

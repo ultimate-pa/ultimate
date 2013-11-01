@@ -18,7 +18,8 @@ Require-Bundle: UltimateCore,
  org.eclipse.ui.console;bundle-version="3.5.100",
  CACSL2BoogieTranslator;bundle-version="0.0.1",
  BoogiePreprocessor;bundle-version="0.0.1",
- org.eclipse.ui.navigator;bundle-version="3.5.100"
+ org.eclipse.ui,
+ org.eclipse.ui.navigator
 Bundle-ActivationPolicy: lazy
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
 Bundle-ClassPath: .

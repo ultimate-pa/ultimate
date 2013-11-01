@@ -1,6 +1,3 @@
-/**
- * 
- */
 package de.uni_freiburg.informatik.ultimate.cdt.views.variableassignment;
 
 import java.util.Map;
