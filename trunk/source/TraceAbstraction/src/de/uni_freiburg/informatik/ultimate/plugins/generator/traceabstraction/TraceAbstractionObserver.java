@@ -19,6 +19,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Procedure;
 import de.uni_freiburg.informatik.ultimate.model.boogie.output.BoogieStatementPrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.Backtranslator;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.RcfgProgramExecution;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.boogie.BoogieProgramExecution;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
@@ -348,11 +349,14 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 	}
 	
 	private void reportCounterexampleResult(CodeBlock position, List<ILocation> failurePath, 
-			IProgramExecution<RcfgElement, Expression> pe) {
+			RcfgProgramExecution pe) {
 		ILocation errorLoc = failurePath.get(failurePath.size()-1);
 		ILocation origin = errorLoc.getOrigin();
 		
 		List<ITranslator<?, ?, ?, ?>> translatorSequence = UltimateServices.getInstance().getTranslatorSequence();
+		if (pe.isOverapproximation()) {
+			reportUnproveableResult(position, failurePath);
+		}
 		CounterExampleResult<RcfgElement> ctxRes = new CounterExampleResult<RcfgElement>(
 				position,
 				Activator.s_PLUGIN_NAME,

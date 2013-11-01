@@ -80,6 +80,10 @@ public class LiveVariables {
 				constants.addAll(m_TraceWithConstants.getFormulaFromNonCallPos(i).values());
 				int call_pos = m_TraceWithConstants.getTrace().getCallPosition(i);
 				constants.addAll(m_TraceWithConstants.getLocalVarAssignment(call_pos).values());
+				// Following two lines were added by Matthias to be sure that 
+				// we do not miss a variable. Maybe not necessary.
+				constants.addAll(m_TraceWithConstants.getGlobalVarAssignment(call_pos).values());
+				constants.addAll(m_TraceWithConstants.getOldVarAssignment(call_pos).values());
 			} else {
 				assert m_ConstantsForEachPosition[i+1] == null : "constants for position " +(i+1)+ " already fetched!";
 				constants.addAll(m_TraceWithConstants.getFormulaFromNonCallPos(i).values());
