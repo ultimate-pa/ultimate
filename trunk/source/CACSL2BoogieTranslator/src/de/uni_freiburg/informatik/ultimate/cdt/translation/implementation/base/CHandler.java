@@ -742,9 +742,9 @@ public class CHandler implements ICHandler {
 					}
 					
 					LocalLValue thisLVal = new LocalLValue(new VariableLHS(loc, new InferredType(resultCType), bId), resultCType);
-					if (!isGlobal) {
+					if (resultCType instanceof CStruct) {
 						//when declaring a local struct that contains an array (on the heap) we have to malloc for that array
-						if (resultCType instanceof CStruct) {
+						if (!isGlobal) {
 							String[] fieldIds = ((CStruct) resultCType).getFieldIds();
 							for (String fieldId : fieldIds) {
 								CType fieldType = ((CStruct) resultCType).getFieldType(fieldId).getUnderlyingType();
@@ -753,7 +753,7 @@ public class CHandler implements ICHandler {
 									InferredType tmpIType = new InferredType(Type.Pointer);
 									VariableDeclaration tVarDecl = SFO.getTempVarVariableDeclaration(tmpId, tmpIType, loc);
 									LocalLValue tmpLval = new LocalLValue(new VariableLHS(loc, tmpIType, tmpId), fieldType);
-									
+
 									LocalLValue arrayId = new LocalLValue(
 											new StructLHS(loc, 
 													new InferredType(Type.Pointer), 
@@ -763,16 +763,16 @@ public class CHandler implements ICHandler {
 											memoryHandler.calculateSizeOf(fieldType), 
 											tmpLval,//arrayId, 
 											loc);	
-									
+
 									Statement assignment = new AssignmentStatement(loc, 
 											new LeftHandSide[] {arrayId.getLHS()}, 
 											new Expression[] { new IdentifierExpression(loc, ((VariableLHS) tmpLval.getLHS()).getIdentifier())});
 									for (Overapprox overapprItem : mallocCall.overappr) {
-									    assignment.getPayload().getAnnotations().put(
-									            Overapprox.getIdentifier(),
-									            overapprItem);
+										assignment.getPayload().getAnnotations().put(
+												Overapprox.getIdentifier(),
+												overapprItem);
 									}
-									
+
 									if (staticStorageClass(node)) {
 										staticVarStorage.stmt.addAll(mallocCall.stmt);
 										staticVarStorage.stmt.add(assignment);
@@ -788,24 +788,25 @@ public class CHandler implements ICHandler {
 									}
 								}
 							}
-						}
 
-					} else {
-						ResultExpression initRex = new ResultExpression(null);
-						ResultExpression structCons = structHandler.makeStructConstructorFromRERL(main, loc, memoryHandler, arrayHandler, null, (CStruct) resultCType);
-						initRex.stmt.addAll(structCons.stmt);
-						initRex.decl.addAll(structCons.decl);
-						initRex.auxVars.putAll(structCons.auxVars);
-						initRex.overappr.addAll(structCons.overappr);
-						initRex.lrVal = (RValue) structCons.lrVal;
-						ResultExpression assignment = makeAssignment(
-						        main, loc, initRex.stmt, thisLVal,
-						        (RValue) initRex.lrVal, initRex.decl,
-						        initRex.auxVars, initRex.overappr);	
-						result.decl.addAll(assignment.decl);
-						result.stmt.addAll(assignment.stmt);
-						result.auxVars.putAll(assignment.auxVars);
-						result.overappr.addAll(assignment.overappr);
+						} else {
+							ResultExpression initRex = new ResultExpression(null);
+							ResultExpression structCons = structHandler.makeStructConstructorFromRERL(main, 
+									loc, memoryHandler, arrayHandler, null, (CStruct) resultCType);
+							initRex.stmt.addAll(structCons.stmt);
+							initRex.decl.addAll(structCons.decl);
+							initRex.auxVars.putAll(structCons.auxVars);
+							initRex.overappr.addAll(structCons.overappr);
+							initRex.lrVal = (RValue) structCons.lrVal;
+							ResultExpression assignment = makeAssignment(
+									main, loc, initRex.stmt, thisLVal,
+									(RValue) initRex.lrVal, initRex.decl,
+									initRex.auxVars, initRex.overappr);	
+							result.decl.addAll(assignment.decl);
+							result.stmt.addAll(assignment.stmt);
+							result.auxVars.putAll(assignment.auxVars);
+							result.overappr.addAll(assignment.overappr);
+						}
 					}
 					
 					// Handle initializer clause
