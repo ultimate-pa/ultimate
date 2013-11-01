@@ -36,8 +36,8 @@
    </plugins>
 
    <features>
-      <feature id="BA_FeatureDependenciesCommandlineE3" version="0.0.1"/>
       <feature id="BA_FeatureUltimateDebug" version="0.0.1"/>
+      <feature id="BA_FeatureDependenciesDebugE3" version="0.0.1"/>
    </features>
 
    <configurations>
