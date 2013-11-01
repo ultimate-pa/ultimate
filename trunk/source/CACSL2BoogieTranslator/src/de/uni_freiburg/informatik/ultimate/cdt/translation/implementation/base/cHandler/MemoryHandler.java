@@ -343,7 +343,7 @@ public class MemoryHandler {
             	check.addToNodeAnnot(specValid);
             	swrite.add(specValid);
             }
-            
+            swrite.add(new ModifiesSpecification(l, false, modified));
             for (int j = 0; j < modified.length; j++) {
                 // ensures #memory_int == old(#valid)[~addr!base := false];
                 Expression memA = new IdentifierExpression(l, SFO.MEMORY + "_"
@@ -378,6 +378,7 @@ public class MemoryHandler {
                                                     UnaryExpression.Operator.OLD,
                                                     memA), idc, aae))));
                 }
+                
             }
             decl.add(new Procedure(l, new Attribute[0], nwrite, new String[0],
                     inWrite, new VarList[0], swrite.toArray(new Specification[0]), null));
