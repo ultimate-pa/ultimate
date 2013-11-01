@@ -1,9 +1,12 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.model.IAnnotations;
+import de.uni_freiburg.informatik.ultimate.model.annotations.Overapprox;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.output.BoogieStatementPrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
@@ -15,6 +18,7 @@ public class RcfgProgramExecution implements IProgramExecution<RcfgElement, Expr
 	private final List<CodeBlock> m_Trace;
 	private final Map<Integer, ProgramState<Expression>> m_PartialProgramStateMapping;
 	private final Map<TermVariable, Boolean>[] m_BranchEncoders;
+	private final boolean m_Overapproximation;
 	
 	
 
@@ -26,8 +30,16 @@ public class RcfgProgramExecution implements IProgramExecution<RcfgElement, Expr
 		m_Trace = trace;
 		m_PartialProgramStateMapping = partialProgramStateMapping;
 		m_BranchEncoders = branchEncoders;
+		m_Overapproximation = containsOverapproximationFlag(trace);
 	}
 	
+	
+	/**
+	 * Returns true if this trace is an overapproximation of the original trace.
+	 */
+	public boolean isOverapproximation() {
+		return m_Overapproximation;
+	}
 
 	public Map<TermVariable, Boolean>[] getBranchEncoders() {
 		return m_BranchEncoders;
@@ -54,6 +66,19 @@ public class RcfgProgramExecution implements IProgramExecution<RcfgElement, Expr
 	@Override
 	public ProgramState<Expression> getInitialProgramState() {
 		return m_PartialProgramStateMapping.get(-1);
+	}
+	
+	private boolean containsOverapproximationFlag(List<CodeBlock> trace) {
+		for (CodeBlock cb : trace) {
+			if (cb.getPayload().hasAnnotation()) {
+				HashMap<String, IAnnotations> annotations = 
+						cb.getPayload().getAnnotations();
+				if (annotations.containsKey(Overapprox.getIdentifier())) {
+					return true;
+				}
+			}
+		}
+		return false;
 	}
 	
 	private String ppstoString(ProgramState<Expression> pps) {
