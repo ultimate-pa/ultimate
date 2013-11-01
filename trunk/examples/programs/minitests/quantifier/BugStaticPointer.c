@@ -23,7 +23,7 @@ void localPrimitives(int i) {
 	static int x = 1;
 	static struct structType* p = 0;
 	if (i > 0) {
-	  if (p != 0) {
+	  if (p == 0) {
 		//@ assert \false;
 	  }
 	}
@@ -32,5 +32,5 @@ void localPrimitives(int i) {
 	//@ assert x == i + 1;
 	s++;
 	x++;
-//	p++;
+	p++;
 }
