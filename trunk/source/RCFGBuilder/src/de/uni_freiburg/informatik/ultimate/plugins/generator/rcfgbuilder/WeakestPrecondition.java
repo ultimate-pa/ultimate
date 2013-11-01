@@ -2,6 +2,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder;
 
 import java.util.HashMap;
 
+import de.uni_freiburg.informatik.ultimate.model.ModelUtils;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieTransformer;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayAccessExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayStoreExpression;
@@ -50,6 +51,7 @@ public class WeakestPrecondition extends BoogieTransformer {
 	
 	@Override
 	protected Expression processExpression(Expression expr) {
+	    Expression newExpr = null;
 		if (expr instanceof IdentifierExpression) {
 			IdentifierExpression iExpr = (IdentifierExpression) expr;
 			Expression substitute = name2expression.get(iExpr.getIdentifier());
@@ -57,18 +59,18 @@ public class WeakestPrecondition extends BoogieTransformer {
 				return expr;
 			}
 			else {
-				return substitute;
+			    newExpr = substitute;
 			}
 		}
 		else if (expr instanceof UnaryExpression) {
 			UnaryExpression unexp = (UnaryExpression) expr;
 			if (unexp.getOperator() == Operator.OLD) {
-				return unexp.getExpr();
+			    newExpr = unexp.getExpr();
 			}
 			else {
 				Expression subexpr = processExpression(unexp.getExpr());
 				if (subexpr != unexp.getExpr()) {
-					return new UnaryExpression(subexpr.getLocation(), unexp.getType(),
+				    newExpr = new UnaryExpression(subexpr.getLocation(), unexp.getType(),
 							unexp.getOperator(), subexpr);
 				}
 
@@ -81,14 +83,14 @@ public class WeakestPrecondition extends BoogieTransformer {
 			Expression right = processExpression(binexp.getRight());
 			if (left != binexp.getLeft()
 				|| right != binexp.getRight()) {
-				return new BinaryExpression(expr.getLocation(), binexp.getType(),
+			    newExpr = new BinaryExpression(expr.getLocation(), binexp.getType(),
 						binexp.getOperator(), left, right);
 			}
 		} else if (expr instanceof UnaryExpression) {
 			UnaryExpression unexp = (UnaryExpression) expr;
 			Expression subexpr = processExpression(unexp.getExpr());
 			if (subexpr != unexp.getExpr()) {
-				return new UnaryExpression(expr.getLocation(), unexp.getType(),
+			    newExpr = new UnaryExpression(expr.getLocation(), unexp.getType(),
 						unexp.getOperator(), subexpr);
 			}
 		} else if (expr instanceof ArrayAccessExpression) {
@@ -103,7 +105,7 @@ public class WeakestPrecondition extends BoogieTransformer {
 					changed = true;
 			}
 			if (changed)
-				return new ArrayAccessExpression(expr.getLocation(), aaexpr.getType(), arr, newIndices);
+			    newExpr = new ArrayAccessExpression(expr.getLocation(), aaexpr.getType(), arr, newIndices);
 		} else if (expr instanceof ArrayStoreExpression) {
 			ArrayStoreExpression aaexpr = (ArrayStoreExpression) expr;
 			Expression arr = processExpression(aaexpr.getArray());
@@ -117,20 +119,20 @@ public class WeakestPrecondition extends BoogieTransformer {
 					changed = true;
 			}
 			if (changed)
-				return new ArrayStoreExpression(expr.getLocation(), aaexpr.getType(), arr, newIndices, value);
+			    newExpr = new ArrayStoreExpression(expr.getLocation(), aaexpr.getType(), arr, newIndices, value);
 		} else if (expr instanceof BitVectorAccessExpression) {
 			BitVectorAccessExpression bvaexpr = 
 				(BitVectorAccessExpression) expr;
 			Expression bv = processExpression(bvaexpr.getBitvec());
 			if (bv != bvaexpr.getBitvec())
-				return new BitVectorAccessExpression(expr.getLocation(), bvaexpr.getType(), bv, 
+			    newExpr = new BitVectorAccessExpression(expr.getLocation(), bvaexpr.getType(), bv, 
 						bvaexpr.getEnd(), bvaexpr.getStart());
 		} else if (expr instanceof FunctionApplication) {
 			FunctionApplication app = (FunctionApplication) expr;
 			String name = app.getIdentifier();
 			Expression[] args = processExpressions(app.getArguments());
 			if (args != app.getArguments())
-				return new FunctionApplication(expr.getLocation(), app.getType(), name, args);
+			    newExpr = new FunctionApplication(expr.getLocation(), app.getType(), name, args);
 		} else if (expr instanceof IfThenElseExpression) {
 			IfThenElseExpression ite = (IfThenElseExpression) expr;
 			Expression cond = processExpression(ite.getCondition());
@@ -139,7 +141,7 @@ public class WeakestPrecondition extends BoogieTransformer {
 			if (cond != ite.getCondition()
 			    || thenPart != ite.getThenPart()
 			    || elsePart != ite.getElsePart())
-				return new IfThenElseExpression(expr.getLocation(), ite.getType(), cond, thenPart, elsePart);
+			    newExpr = new IfThenElseExpression(expr.getLocation(), ite.getType(), cond, thenPart, elsePart);
 		} else if (expr instanceof QuantifierExpression) {
 			QuantifierExpression quant = (QuantifierExpression) expr;
 			Attribute[] attrs = quant.getAttributes();
@@ -150,10 +152,16 @@ public class WeakestPrecondition extends BoogieTransformer {
 			if (subform != quant.getSubformula()
 				|| attrs != newAttrs
 				|| params != newParams)
-				return new QuantifierExpression(expr.getLocation(), quant.getType(), quant.isUniversal(), 
+			    newExpr = new QuantifierExpression(expr.getLocation(), quant.getType(), quant.isUniversal(), 
 						quant.getTypeParams(), newParams, newAttrs, subform);
 		}
-		return expr;
+		if (newExpr == null) {
+		    return expr;
+		}
+		else {
+		    ModelUtils.mergeAnnotations(expr, newExpr);
+		    return newExpr;
+		}
 	}
 	
 	public Expression getResult() {

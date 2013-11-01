@@ -1,5 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.model.boogie;
 
+import de.uni_freiburg.informatik.ultimate.model.ModelUtils;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayAccessExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayLHS;
@@ -69,21 +70,25 @@ public abstract class BoogieTransformer {
 	protected Declaration processDeclaration(Declaration decl) {
 		Attribute[] attrs = decl.getAttributes();
 		Attribute[] newAttrs = processAttributes(attrs);
+		Declaration newDecl = null;
 		if (decl instanceof TypeDeclaration) {
 			TypeDeclaration tdecl = (TypeDeclaration) decl;
 			ASTType syntype = tdecl.getSynonym();
 			ASTType newSyntype = syntype != null ? processType(syntype) : null;
-			if (newAttrs != attrs || newSyntype != syntype)
-				return new TypeDeclaration(tdecl.getLocation(),
-						newAttrs, tdecl.isFinite(), tdecl.getIdentifier(), tdecl.getTypeParams(), 
-						newSyntype);
+			if (newAttrs != attrs || newSyntype != syntype) {
+			    newDecl = new TypeDeclaration(tdecl.getLocation(),
+                        newAttrs, tdecl.isFinite(), tdecl.getIdentifier(),
+                        tdecl.getTypeParams(), newSyntype);
+            }
 		} else if (decl instanceof ConstDeclaration) {
 			ConstDeclaration cdecl = (ConstDeclaration) decl;
 			VarList varList = cdecl.getVarList();
 			VarList newVarList = processVarList(varList);
-			if (newAttrs != attrs || newVarList != varList)
-				return new ConstDeclaration(cdecl.getLocation(),
-						newAttrs, cdecl.isUnique(), newVarList, cdecl.getParentInfo(), cdecl.isComplete());
+			if (newAttrs != attrs || newVarList != varList) {
+			    newDecl = new ConstDeclaration(cdecl.getLocation(),
+						newAttrs, cdecl.isUnique(), newVarList, cdecl.getParentInfo(),
+						cdecl.isComplete());
+            }
 		} else if (decl instanceof FunctionDeclaration) {
 			FunctionDeclaration fdecl = (FunctionDeclaration) decl;
 			VarList[] ins = fdecl.getInParams();
@@ -94,7 +99,7 @@ public abstract class BoogieTransformer {
 			Expression newBody = body != null ? processExpression(body) : null;
 			if (newIns != ins || newOut != out
 					|| newBody != body || newAttrs != attrs) {
-				return  new FunctionDeclaration(fdecl.getLocation(), 
+			    newDecl = new FunctionDeclaration(fdecl.getLocation(), 
 						newAttrs, fdecl.getIdentifier(), 
 						fdecl.getTypeParams(), 
 						newIns, newOut, newBody);
@@ -102,8 +107,9 @@ public abstract class BoogieTransformer {
 		} else if (decl instanceof Axiom) {
 			Expression ax = ((Axiom)decl).getFormula();
 			Expression newAx = processExpression(ax);
-			if (ax != newAx || attrs != newAttrs)
-				return new Axiom(decl.getLocation(), newAttrs, newAx);
+			if (ax != newAx || attrs != newAttrs) {
+			    newDecl = new Axiom(decl.getLocation(), newAttrs, newAx);
+            }
 		} else if (decl instanceof Procedure) {
 			Procedure proc = (Procedure) decl;
 			VarList[] ins = proc.getInParams();
@@ -115,21 +121,30 @@ public abstract class BoogieTransformer {
 			Body body = proc.getBody();
 			Body newBody = body != null ? processBody(body) : null;
 			if (newAttrs != attrs || newBody != body || newSpecs != specs
-				|| newIns != ins || newOuts != outs)
-				return new Procedure(proc.getLocation(),
+				|| newIns != ins || newOuts != outs) {
+			    newDecl = new Procedure(proc.getLocation(),
 						newAttrs, proc.getIdentifier(), 
 						proc.getTypeParams(), 
 						newIns, newOuts, 
 						newSpecs, newBody);
+            }
 		} else if (decl instanceof VariableDeclaration) {
 			VarList[] vls = ((VariableDeclaration) decl).getVariables();
 			VarList[] newVls = processVarLists(vls); 
-			if (attrs != newAttrs || vls != newVls)
-				return new VariableDeclaration(
+			if (attrs != newAttrs || vls != newVls) {
+			    newDecl = new VariableDeclaration(
 						decl.getLocation(),
 						newAttrs, newVls);
+			}
 		}
-		return decl;
+		
+		if (newDecl == null) {
+		    return decl;
+		}
+		else {
+            ModelUtils.mergeAnnotations(decl, newDecl);
+            return newDecl;
+		}
 	}
 
 	/**
@@ -156,6 +171,7 @@ public abstract class BoogieTransformer {
 	 * @return the processed type.
 	 */
 	protected ASTType processType(ASTType type) {
+	    ASTType newType = null;
 		if (type instanceof ArrayType) {
 			ArrayType arrtype = (ArrayType) type;
 			ASTType[] indexTypes = arrtype.getIndexTypes();
@@ -164,16 +180,22 @@ public abstract class BoogieTransformer {
 			ASTType   newValueType  = processType(valueType);
 			if (newIndexTypes != indexTypes
 				|| newValueType != valueType)
-				return new ArrayType(arrtype.getLocation(), arrtype.getBoogieType(),
+				newType = new ArrayType(arrtype.getLocation(), arrtype.getBoogieType(),
 						arrtype.getTypeParams(), newIndexTypes, newValueType);
 		} else if (type instanceof NamedType) {
 			NamedType ntype = (NamedType) type;
 			ASTType[] argTypes = ntype.getTypeArgs();
 			ASTType[] newArgTypes = processTypes(argTypes);
 			if (newArgTypes != argTypes)
-				return new NamedType(ntype.getLocation(), ntype.getBoogieType(), ntype.getName(), newArgTypes);
+			    newType = new NamedType(ntype.getLocation(), ntype.getBoogieType(), ntype.getName(), newArgTypes);
 		}
-		return type;
+		if (newType == null) {
+		    return type;
+		}
+		else {
+		    ModelUtils.mergeAnnotations(type, newType);
+            return newType;
+		}
 	}
 
 	/**
@@ -204,8 +226,12 @@ public abstract class BoogieTransformer {
 		ASTType newType = processType(type);
 		Expression where = vl.getWhereClause();
 		Expression newWhere = where != null ? processExpression(where) : null;
-		if (newType != type || newWhere != where)
-			return new VarList(vl.getLocation(), vl.getIdentifiers(), newType, newWhere); 
+		if (newType != type || newWhere != where) {
+		    VarList newVl = new VarList(vl.getLocation(), vl.getIdentifiers(),
+		            newType, newWhere);
+		    ModelUtils.mergeAnnotations(vl, newVl);
+		    return newVl;
+		}
 		return vl;
 	}
 
@@ -221,8 +247,11 @@ public abstract class BoogieTransformer {
 		
 		Statement[] statements = body.getBlock();
 		Statement[] newStatements = processStatements(statements);
-		if (newLocals != locals || newStatements != statements)
-			return new Body(body.getLocation(), newLocals, newStatements);
+		if (newLocals != locals || newStatements != statements) {
+			Body newBody = new Body(body.getLocation(), newLocals, newStatements);
+            ModelUtils.mergeAnnotations(body, newBody);
+            return newBody;
+		}
 		return body;
 	}
 
@@ -238,7 +267,9 @@ public abstract class BoogieTransformer {
 		VarList[] vl = local.getVariables();
 		VarList[] newVl = processVarLists(vl);
 		if (vl != newVl || attrs != newAttrs) {
-			return new VariableDeclaration(local.getLocation(),	newAttrs, newVl);
+			VariableDeclaration newLocal = new VariableDeclaration(local.getLocation(), newAttrs, newVl);
+			ModelUtils.mergeAnnotations(local, newLocal);
+            return newLocal;
 		}
 		return local;
 	}
@@ -282,11 +313,12 @@ public abstract class BoogieTransformer {
 	 * @return processed statement.
 	 */
 	protected Statement processStatement(Statement statement) {
+	    Statement newStatement = null;
 		if (statement instanceof AssertStatement) {
 			Expression expr = ((AssertStatement) statement).getFormula();
 			Expression newExpr = processExpression(expr);
 			if (expr != newExpr)
-				return new AssertStatement(
+			    newStatement = new AssertStatement(
 						statement.getLocation(), newExpr);
 		} else if (statement instanceof AssignmentStatement) {
 			AssignmentStatement assign = (AssignmentStatement) statement;
@@ -295,21 +327,21 @@ public abstract class BoogieTransformer {
 			Expression[] rhs = assign.getRhs();
 			Expression[] newRhs = processExpressions(rhs);
 			if (lhs != newLhs || rhs != newRhs)
-				return new AssignmentStatement(
+			    newStatement = new AssignmentStatement(
 						statement.getLocation(), 
 						newLhs, newRhs);
 		} else if (statement instanceof AssumeStatement) {
 			Expression expr = ((AssumeStatement) statement).getFormula();
 			Expression newExpr = processExpression(expr);
 			if (expr != newExpr)
-				return new AssumeStatement(
+			    newStatement = new AssumeStatement(
 						statement.getLocation(), newExpr);
 		} else if (statement instanceof HavocStatement) {
 			HavocStatement havoc = (HavocStatement) statement;
 			VariableLHS[] ids = havoc.getIdentifiers();
 			VariableLHS[] newIds = processVariableLHSs(ids);
 			if (ids != newIds)
-				return new HavocStatement(havoc.getLocation(), newIds);
+			    newStatement = new HavocStatement(havoc.getLocation(), newIds);
 		} else if (statement instanceof CallStatement) {
 			CallStatement call = (CallStatement) statement;
 			Expression[] args = call.getArguments();
@@ -317,7 +349,7 @@ public abstract class BoogieTransformer {
 			VariableLHS[] lhs = call.getLhs();
 			VariableLHS[] newLhs = processVariableLHSs(lhs);
 			if (args != newArgs || lhs != newLhs)
-				return new CallStatement(call.getLocation(), call.isForall(),
+			    newStatement = new CallStatement(call.getLocation(), call.isForall(),
 						newLhs, call.getMethodName(), newArgs);
 		} else if (statement instanceof IfStatement) {
 			IfStatement ifstmt = (IfStatement) statement;
@@ -328,7 +360,7 @@ public abstract class BoogieTransformer {
 			Statement[] elses = ifstmt.getElsePart();
 			Statement[] newElses = processStatements(elses);
 			if (newCond != cond || newThens != thens || newElses != elses)
-				return new IfStatement(ifstmt.getLocation(),
+			    newStatement = new IfStatement(ifstmt.getLocation(),
 						newCond, newThens, newElses);
 		} else if (statement instanceof WhileStatement) {
 			WhileStatement whilestmt = (WhileStatement) statement;
@@ -339,12 +371,18 @@ public abstract class BoogieTransformer {
 			Statement[] body = whilestmt.getBody();
 			Statement[] newBody = processStatements(body);
 			if (newCond != cond || newInvs != invs || newBody != body)
-				return new WhileStatement(
+			    newStatement = new WhileStatement(
 						whilestmt.getLocation(),
 						newCond, newInvs, newBody);
 		}
-		/* No recursion for label, havoc, break, return and goto */ 
-		return statement;
+		if (newStatement == null) {
+    		/* No recursion for label, havoc, break, return and goto */ 
+    		return statement;
+		}
+		else {
+            ModelUtils.mergeAnnotations(statement, newStatement);
+            return newStatement;
+		}
 	}
 
 	/**
@@ -385,8 +423,11 @@ public abstract class BoogieTransformer {
 			LeftHandSide newArray = processLeftHandSide(array);
 			Expression[] indices = alhs.getIndices();
 			Expression[] newIndices = processExpressions(indices);
-			if (array != newArray || indices != newIndices)
-				return new ArrayLHS(lhs.getLocation(), alhs.getType(), newArray, newIndices);
+			if (array != newArray || indices != newIndices) {
+				LeftHandSide newLhs = new ArrayLHS(lhs.getLocation(), alhs.getType(), newArray, newIndices);
+				ModelUtils.mergeAnnotations(lhs, newLhs);
+				return newLhs;
+			}
 		}
 		return lhs;
 	}
@@ -431,11 +472,12 @@ public abstract class BoogieTransformer {
 	 * @return processed specification.
 	 */
 	protected Specification processSpecification(Specification spec) {
+	    Specification newSpec = null;
 		if (spec instanceof EnsuresSpecification) {
 			Expression expr = ((EnsuresSpecification) spec).getFormula();
 			Expression newExpr = processExpression(expr);
 			if (expr != newExpr) {
-				return new EnsuresSpecification(
+			    newSpec = new EnsuresSpecification(
 						spec.getLocation(), 
 						spec.isFree(), newExpr);
 			}
@@ -443,7 +485,7 @@ public abstract class BoogieTransformer {
 			Expression expr = ((RequiresSpecification) spec).getFormula();
 			Expression newExpr = processExpression(expr);
 			if (expr != newExpr) {
-				return new RequiresSpecification(
+			    newSpec = new RequiresSpecification(
 						spec.getLocation(), 
 						spec.isFree(), newExpr);
 			}
@@ -451,12 +493,18 @@ public abstract class BoogieTransformer {
 			VariableLHS[] ids = ((ModifiesSpecification) spec).getIdentifiers();
 			VariableLHS[] newIds = processVariableLHSs(ids);
 			if (ids != newIds) {
-				return new ModifiesSpecification(
+			    newSpec = new ModifiesSpecification(
 						spec.getLocation(), 
 						spec.isFree(), newIds);
 			}
 		}
-		return spec;
+		if (newSpec == null) {
+		    return spec;
+		}
+		else {
+		    ModelUtils.mergeAnnotations(spec, newSpec);
+		    return newSpec;
+		}
 	}
 
 	/**
@@ -484,6 +532,7 @@ public abstract class BoogieTransformer {
 	 * @return processed attribute.
 	 */
 	protected Attribute processAttribute(Attribute attr) {
+	    Attribute newAttr = null;
 		if (attr instanceof Trigger) {
 			Expression[] exprs = ((Trigger)attr).getTriggers();
 			Expression[] newExprs = processExpressions(exprs);
@@ -493,10 +542,16 @@ public abstract class BoogieTransformer {
 			Expression[] exprs = ((NamedAttribute)attr).getValues();
 			Expression[] newExprs = processExpressions(exprs);
 			if (newExprs != exprs)
-				return new NamedAttribute(attr.getLocation(),
+			    newAttr = new NamedAttribute(attr.getLocation(),
 						((NamedAttribute)attr).getName(), newExprs);
 		}
-		return attr;
+		if (newAttr == null) {
+            return attr;
+        }
+        else {
+            ModelUtils.mergeAnnotations(attr, newAttr);
+            return newAttr;
+        }
 	}
 	
 	/**
@@ -540,20 +595,21 @@ public abstract class BoogieTransformer {
 	 * @return processed expression.
 	 */
 	protected Expression processExpression(Expression expr) {
+	    Expression newExpr = null;
 		if (expr instanceof BinaryExpression) {
 			BinaryExpression binexp = (BinaryExpression) expr;
 			Expression left = processExpression(binexp.getLeft());
 			Expression right = processExpression(binexp.getRight());
 			if (left != binexp.getLeft()
 				|| right != binexp.getRight()) {
-				return new BinaryExpression(expr.getLocation(), binexp.getType(),
+			    newExpr = new BinaryExpression(expr.getLocation(), binexp.getType(),
 						binexp.getOperator(), left, right);
 			}
 		} else if (expr instanceof UnaryExpression) {
 			UnaryExpression unexp = (UnaryExpression) expr;
 			Expression subexpr = processExpression(unexp.getExpr());
 			if (subexpr != unexp.getExpr()) {
-				return new UnaryExpression(expr.getLocation(), unexp.getType(),
+			    newExpr = new UnaryExpression(expr.getLocation(), unexp.getType(),
 						unexp.getOperator(), subexpr);
 			}
 		} else if (expr instanceof ArrayAccessExpression) {
@@ -562,7 +618,7 @@ public abstract class BoogieTransformer {
 			Expression[] indices = aaexpr.getIndices();
 			Expression[] newIndices = processExpressions(indices);
 			if (arr != aaexpr.getArray() || indices != newIndices)
-				return new ArrayAccessExpression(aaexpr.getLocation(), aaexpr.getType(), arr, newIndices);
+			    newExpr = new ArrayAccessExpression(aaexpr.getLocation(), aaexpr.getType(), arr, newIndices);
 		} else if (expr instanceof ArrayStoreExpression) {
 			ArrayStoreExpression aaexpr = (ArrayStoreExpression) expr;
 			Expression arr = processExpression(aaexpr.getArray());
@@ -571,20 +627,20 @@ public abstract class BoogieTransformer {
 			Expression[] newIndices = processExpressions(indices);
 			if (arr != aaexpr.getArray() || indices != newIndices 
 				|| value != aaexpr.getValue())
-				return new ArrayStoreExpression(aaexpr.getLocation(), aaexpr.getType(), arr, newIndices, value);
+			    newExpr = new ArrayStoreExpression(aaexpr.getLocation(), aaexpr.getType(), arr, newIndices, value);
 		} else if (expr instanceof BitVectorAccessExpression) {
 			BitVectorAccessExpression bvaexpr = 
 				(BitVectorAccessExpression) expr;
 			Expression bv = processExpression(bvaexpr.getBitvec());
 			if (bv != bvaexpr.getBitvec())
-				return new BitVectorAccessExpression(bvaexpr.getLocation(), bvaexpr.getType(), bv, 
+			    newExpr = new BitVectorAccessExpression(bvaexpr.getLocation(), bvaexpr.getType(), bv, 
 						bvaexpr.getEnd(), bvaexpr.getStart());
 		} else if (expr instanceof FunctionApplication) {
 			FunctionApplication app = (FunctionApplication) expr;
 			String name = app.getIdentifier();
 			Expression[] args = processExpressions(app.getArguments());
 			if (args != app.getArguments())
-				return new FunctionApplication(app.getLocation(),app.getType(), name, args);
+			    newExpr = new FunctionApplication(app.getLocation(),app.getType(), name, args);
 		} else if (expr instanceof IfThenElseExpression) {
 			IfThenElseExpression ite = (IfThenElseExpression) expr;
 			Expression cond = processExpression(ite.getCondition());
@@ -593,7 +649,7 @@ public abstract class BoogieTransformer {
 			if (cond != ite.getCondition()
 			    || thenPart != ite.getThenPart()
 			    || elsePart != ite.getElsePart())
-				return new IfThenElseExpression(ite.getLocation(), thenPart.getType(), cond, thenPart, elsePart);
+			    newExpr = new IfThenElseExpression(ite.getLocation(), thenPart.getType(), cond, thenPart, elsePart);
 		} else if (expr instanceof QuantifierExpression) {
 			QuantifierExpression quant = (QuantifierExpression) expr;
 			Attribute[] attrs = quant.getAttributes();
@@ -604,12 +660,18 @@ public abstract class BoogieTransformer {
 			if (subform != quant.getSubformula()
 				|| attrs != newAttrs
 				|| params != newParams)
-				return new QuantifierExpression(quant.getLocation(),quant.getType(), quant.isUniversal(), 
+			    newExpr = new QuantifierExpression(quant.getLocation(),quant.getType(), quant.isUniversal(), 
 						quant.getTypeParams(), newParams, newAttrs, subform);
 		}
-		/* BooleanLiteral, IntegerLiteral, BitvecLiteral, StringLiteral, IdentifierExpression
-		 * and WildcardExpression do not need recursion.
-		 */ 
-		return expr;
+		if (newExpr == null) {
+    		/* BooleanLiteral, IntegerLiteral, BitvecLiteral, StringLiteral, IdentifierExpression
+    		 * and WildcardExpression do not need recursion.
+    		 */ 
+    		return expr;
+		}
+		else {
+		    ModelUtils.mergeAnnotations(expr, newExpr);
+		    return newExpr;
+		}
 	}
 }

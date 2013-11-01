@@ -3,6 +3,7 @@ package de.uni_freiburg.informatik.ultimate.boogie.preprocessor;
 import de.uni_freiburg.informatik.ultimate.access.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.access.WalkerOptions;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
+import de.uni_freiburg.informatik.ultimate.model.ModelUtils;
 import de.uni_freiburg.informatik.ultimate.boogie.type.PrimitiveType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieTransformer;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Attribute;
@@ -235,12 +236,13 @@ public class FunctionInliner extends BoogieTransformer
 	 * a name declared in the outer scope. 
 	 */
 	public Expression processExpression(Expression expr) {
+	    Expression newExpr = null;
 		if (expr instanceof IdentifierExpression) {
 			// rename identifiers according to the renaming map in the scope.
 			String name = ((IdentifierExpression) expr).getIdentifier();
 			Expression renamed = currentScope.lookupRenaming(name);
 			if (renamed != null)
-				return renamed;
+			    newExpr = renamed;
 		} else if (expr instanceof FunctionApplication) {
 			// inline function applications
 			FunctionApplication app = (FunctionApplication) expr;
@@ -261,7 +263,7 @@ public class FunctionInliner extends BoogieTransformer
 				}
 				Expression newBody = processExpression(fdecl.getBody());
 				currentScope = currentScope.getParent();
-				return newBody;
+				newExpr = newBody;
 			}
 		} else if (expr instanceof QuantifierExpression) {
 			// check that quantified variables are unique
@@ -299,11 +301,17 @@ public class FunctionInliner extends BoogieTransformer
 			currentScope = currentScope.getParent();
 			if (vl == newVl && subform == qexpr.getSubformula() && attrs == qexpr.getAttributes())
 				return expr;
-			return new QuantifierExpression(qexpr.getLocation(), qexpr.getType(), qexpr.isUniversal(), 
+			newExpr = new QuantifierExpression(qexpr.getLocation(), qexpr.getType(), qexpr.isUniversal(), 
 					qexpr.getTypeParams(), newVl, attrs,
 					subform);
 		}
-		return super.processExpression(expr);
+		if (newExpr == null) {
+		    return super.processExpression(expr);
+		}
+		else {
+		    ModelUtils.mergeAnnotations(expr, newExpr);
+		    return newExpr;
+		}
 	}
 
 	@Override

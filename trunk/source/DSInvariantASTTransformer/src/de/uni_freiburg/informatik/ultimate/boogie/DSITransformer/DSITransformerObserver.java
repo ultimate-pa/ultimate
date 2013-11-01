@@ -16,6 +16,7 @@ import de.uni_freiburg.informatik.ultimate.model.BoogieLocation;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.INode;
 import de.uni_freiburg.informatik.ultimate.model.ILocation;
+import de.uni_freiburg.informatik.ultimate.model.ModelUtils;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieTransformer;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayLHS;
@@ -452,6 +453,7 @@ public final class DSITransformerObserver extends BoogieTransformer implements
 					// list of locals
 					IdentifierExpression result = new IdentifierExpression(null,
 							e.getType(), procLocals.get(e.getIdentifier()));
+					ModelUtils.mergeAnnotations(expr, result);
 
 					s_Logger.debug("Renamed in expression: "
 							+ procLocals.get(e.getIdentifier()));
@@ -474,8 +476,10 @@ public final class DSITransformerObserver extends BoogieTransformer implements
 		if (!processingProcedure || lhs instanceof ArrayLHS
 				|| !procLocals.containsKey(((VariableLHS) lhs).getIdentifier()))
 			return super.processLeftHandSide(lhs);
-		return new VariableLHS(null, procLocals.get(((VariableLHS) lhs)
+		VariableLHS newLhs = new VariableLHS(null, procLocals.get(((VariableLHS) lhs)
 				.getIdentifier()));
+		ModelUtils.mergeAnnotations(lhs, newLhs);
+		return newLhs;
 	}
 
 	/**
@@ -710,9 +714,8 @@ public final class DSITransformerObserver extends BoogieTransformer implements
 		// Add the postconditions as asserts
 		result.addAll(postConditions);
 		// Add the final jump to the loop head
-		result
-				.add(new GotoStatement(null, 
-						new String[] { procLoopStartLabel }));
+		result.add(new GotoStatement(null, 
+				new String[] { procLoopStartLabel }));
 
 		// We're done with this procedure
 		processingProcedure = false;
@@ -894,12 +897,13 @@ public final class DSITransformerObserver extends BoogieTransformer implements
 	@Override
 	protected Statement processStatement(Statement statement) {
 		if (processingProcedure) {
+		    Statement newStatement = null;
 			if (statement instanceof ReturnStatement) {
 				String[] labels = { procExitLabel };
-				return new GotoStatement(statement.getLocation(), labels);
+				newStatement = new GotoStatement(statement.getLocation(), labels);
 			}
 			if (statement instanceof Label) {
-				return new Label(statement.getLocation(), procedureIDPrefix
+			    newStatement = new Label(statement.getLocation(), procedureIDPrefix
 								+ ((Label) statement).getName());
 			}
 			if (statement instanceof GotoStatement) {
@@ -907,7 +911,7 @@ public final class DSITransformerObserver extends BoogieTransformer implements
 				String[] newlabels = new String[st.getLabels().length];
 				for (int i = 0; i < newlabels.length; i++)
 					newlabels[i] = procedureIDPrefix + st.getLabels()[i];
-				return new GotoStatement(st.getLocation(),
+				newStatement = new GotoStatement(st.getLocation(),
 						newlabels);
 			}
 			if (supressResultAssignments
@@ -916,9 +920,13 @@ public final class DSITransformerObserver extends BoogieTransformer implements
 				if (assign.getLhs()[0] instanceof VariableLHS) {
 					VariableLHS var = (VariableLHS) assign.getLhs()[0];
 					if (var.getIdentifier().equals("$result"))
-						return new Label(statement.getLocation(), procedureIDPrefix
+					    newStatement = new Label(statement.getLocation(), procedureIDPrefix
 								+ Integer.toString(statement.getLocation().getStartLine()));
 				}
+			}
+			if (newStatement != null) {
+			    ModelUtils.mergeAnnotations(statement, newStatement);
+			    return newStatement;
 			}
 		}
 		return super.processStatement(statement);
@@ -950,8 +958,11 @@ public final class DSITransformerObserver extends BoogieTransformer implements
 				} else
 					newids[i] = ids[i];
 			}
-			if (changed || newType != type || newWhere != where)
-				return new VarList(null, newids, newType, newWhere);
+			if (changed || newType != type || newWhere != where) {
+			    VarList newVl = new VarList(null, newids, newType, newWhere);
+			    ModelUtils.mergeAnnotations(newVl, vl);
+			    return newVl;
+			}
 			return vl;
 		}
 		return super.processVarList(vl);

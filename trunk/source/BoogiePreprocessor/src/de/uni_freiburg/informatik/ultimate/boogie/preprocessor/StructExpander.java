@@ -19,6 +19,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.type.TypeConstructor;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.ILocation;
 import de.uni_freiburg.informatik.ultimate.model.IType;
+import de.uni_freiburg.informatik.ultimate.model.ModelUtils;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieTransformer;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayAccessExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayLHS;
@@ -375,6 +376,7 @@ public class StructExpander extends BoogieTransformer implements
      */
     @Override
     protected Expression processExpression(final Expression expr) {
+        Expression newExpr = null;
         if (expr instanceof StructAccessExpression) {
         	StructAccessExpression sae = (StructAccessExpression) expr;
         	Expression[] exprs = expandExpression(sae.getStruct());
@@ -382,8 +384,11 @@ public class StructExpander extends BoogieTransformer implements
         	String[] fields = subType.getFieldIds();
         	assert (fields.length == exprs.length);
         	for (int i = 0; i < fields.length; i++) {
-        		if (fields[i].equals(sae.getField()))
-        			return exprs[i];
+        		if (fields[i].equals(sae.getField())) {
+        		    newExpr = exprs[i];
+        		    ModelUtils.mergeAnnotations(expr, newExpr);
+        		    return newExpr;
+        		}
         	}
         	throw new RuntimeException("Field name not found in "+expr);
         }
@@ -407,12 +412,18 @@ public class StructExpander extends BoogieTransformer implements
         				new BinaryExpression(expr.getLocation(), expr.getType(), op, left[i], right[i]),
         				result);
         		}
-        		return result;
+        		newExpr = result;
         	}
         }
-        Expression result = super.processExpression(expr);
-        result.setType(flattenType(expr.getType()));
-        return result;
+        if (newExpr == null) {
+            Expression result = super.processExpression(expr);
+            result.setType(flattenType(expr.getType()));
+            return result;
+        }
+        else {
+            ModelUtils.mergeAnnotations(expr, newExpr);
+            return newExpr;
+        }
     }
     /**
      * Expands the given expression in case the underlying type is a struct.
@@ -563,8 +574,11 @@ public class StructExpander extends BoogieTransformer implements
     		LeftHandSide[] allFields = expandLeftHandSide(slhs.getStruct());
     		StructType st = (StructType) flattenType(slhs.getStruct().getType());
     		for (int i = 0; i < st.getFieldCount(); i++) {
-    			if (st.getFieldIds()[i].equals(slhs.getField()))
-    				return allFields[i];
+    			if (st.getFieldIds()[i].equals(slhs.getField())) {
+    			    LeftHandSide newLhs = allFields[i];
+    			    ModelUtils.mergeAnnotations(lhs, newLhs);
+    			    return newLhs;
+    			}
     		}
     		throw new RuntimeException("Field name not found in "+lhs);
     	}

@@ -2,6 +2,7 @@ package de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie;
 
 import java.util.HashMap;
 
+import de.uni_freiburg.informatik.ultimate.model.ModelUtils;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieTransformer;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.EnsuresSpecification;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
@@ -88,13 +89,17 @@ public class RenameProcedureSpec extends BoogieTransformer {
 		return changed ? specs : oldSpecs;
 	}
 	
+	@Override
 	public Expression processExpression(Expression expr) {
 		/* TODO: handle name conflicts in quantifiers */
 		if (expr instanceof IdentifierExpression) {
 			IdentifierExpression id = (IdentifierExpression) expr;
 			String newName = renaming.get(id.getIdentifier());
-			if (newName != null)
-				return new IdentifierExpression(expr.getLocation(), expr.getType(), newName);
+			if (newName != null) {
+			    IdentifierExpression newExpr = new IdentifierExpression(expr.getLocation(), expr.getType(), newName);
+			    ModelUtils.mergeAnnotations(expr, newExpr);
+			    return newExpr;
+			}
 			return expr;
 		} else
 			return super.processExpression(expr);
