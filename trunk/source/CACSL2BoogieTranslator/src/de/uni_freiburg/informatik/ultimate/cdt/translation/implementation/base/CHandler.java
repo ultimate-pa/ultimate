@@ -102,6 +102,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.I
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ICHandler;
+import de.uni_freiburg.informatik.ultimate.model.IAnnotations;
 import de.uni_freiburg.informatik.ultimate.model.ILocation;
 import de.uni_freiburg.informatik.ultimate.model.IType;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLNode;
@@ -663,6 +664,7 @@ public class CHandler implements ICHandler {
 					result.stmt.addAll(rArray.stmt);
 					result.decl.addAll(rArray.decl);
 					result.auxVars.putAll(rArray.auxVars);
+					result.overappr.addAll(rArray.overappr);
 //					result.lrVal = rArray.lrVal;
 					
 					
@@ -766,20 +768,27 @@ public class CHandler implements ICHandler {
 											tmpLval,//arrayId, 
 											loc);	
 									
-									Statement assingment = new AssignmentStatement(loc, 
+									Statement assignment = new AssignmentStatement(loc, 
 											new LeftHandSide[] {arrayId.getLHS()}, 
 											new Expression[] { new IdentifierExpression(loc, ((VariableLHS) tmpLval.getLHS()).getIdentifier())});
+									for (Overapprox overapprItem : mallocCall.overappr) {
+									    assignment.getPayload().getAnnotations().put(
+									            Overapprox.getIdentifier(),
+									            overapprItem);
+									}
 									
 									if (staticStorageClass(node)) {
 										staticVarStorage.stmt.addAll(mallocCall.stmt);
-										staticVarStorage.stmt.add(assingment);
+										staticVarStorage.stmt.add(assignment);
 										staticVarStorage.decl.add(tVarDecl);
 										staticVarStorage.auxVars.put(tVarDecl, loc);
+										staticVarStorage.overappr.addAll(mallocCall.overappr);
 									} else {
 										result.stmt.addAll(mallocCall.stmt);
-										result.stmt.add(assingment);
+										result.stmt.add(assignment);
 										result.decl.add(tVarDecl);
 										result.auxVars.put(tVarDecl, loc);
+										result.overappr.addAll(mallocCall.overappr);
 									}
 								}
 							}
@@ -800,6 +809,7 @@ public class CHandler implements ICHandler {
 						result.decl.addAll(assignment.decl);
 						result.stmt.addAll(assignment.stmt);
 						result.auxVars.putAll(assignment.auxVars);
+						result.overappr.addAll(assignment.overappr);
 					}
 					
 					// Handle initializer clause
@@ -838,10 +848,12 @@ public class CHandler implements ICHandler {
 							staticVarStorage.stmt.addAll(assignment.stmt);
 							staticVarStorage.decl.addAll(assignment.decl);
 							staticVarStorage.auxVars.putAll(assignment.auxVars);
+							staticVarStorage.overappr.addAll(assignment.overappr);
 						} else {
 							result.decl.addAll(assignment.decl);
 							result.stmt.addAll(assignment.stmt);
 							result.auxVars.putAll(assignment.auxVars);
+							result.overappr.addAll(assignment.overappr);
 						}
 					} else if (!cvar.isGlobalVariable() && !staticStorageClass(node)) {
 						/*
@@ -1387,6 +1399,7 @@ public class CHandler implements ICHandler {
 			stmt.addAll(rex.stmt);
 			decl.addAll(rex.decl);
 			auxVars.putAll(rex.auxVars);
+			overapprox.addAll(rex.overappr);
 			
 			for (String t : new String[] { SFO.INT, SFO.POINTER,
 					SFO.REAL, SFO.BOOL }) {
@@ -2280,11 +2293,17 @@ public class CHandler implements ICHandler {
 			clearContract(); // take care for behavior and completeness
 		}
 
-		stmt.add(new WhileStatement(loc, new BooleanLiteral(loc,
-				new InferredType(Type.Boolean), true), spec, bodyBlock
-				.toArray(new Statement[0])));
-		Map<VariableDeclaration, CACSLLocation> emptyAuxVars = new HashMap<VariableDeclaration, CACSLLocation>(
-				0);
+		WhileStatement whileStmt = new WhileStatement(loc, new BooleanLiteral(loc,
+                new InferredType(Type.Boolean), true), spec, bodyBlock
+                .toArray(new Statement[0]));
+		HashMap<String, IAnnotations> annots =
+		        whileStmt.getPayload().getAnnotations();
+		for (Overapprox overapprItem : overappr) {
+		    annots.put(Overapprox.getIdentifier(), overapprItem);
+		}
+		stmt.add(whileStmt);
+		Map<VariableDeclaration, CACSLLocation> emptyAuxVars =
+		        new HashMap<VariableDeclaration, CACSLLocation>(0);
 		assert (symbolTable.getActiveScopeNum() == scopeDepth);
 		return new ResultExpression(stmt, null, decl, emptyAuxVars, overappr);
 	}
@@ -2695,6 +2714,10 @@ public class CHandler implements ICHandler {
 		Statement ifStatement = new IfStatement(loc, condition, 
 				ifStatements.toArray(new Statement[0]), 
 				elseStatements.toArray(new Statement[0]));
+		HashMap<String, IAnnotations> annots = ifStatement.getPayload().getAnnotations();
+		for (Overapprox overapprItem : overappr) {
+            annots.put(Overapprox.getIdentifier(), overapprItem);
+        }
 		stmt.add(ifStatement);
 
 		IdentifierExpression tmpExpr = new IdentifierExpression(loc, tmpName);

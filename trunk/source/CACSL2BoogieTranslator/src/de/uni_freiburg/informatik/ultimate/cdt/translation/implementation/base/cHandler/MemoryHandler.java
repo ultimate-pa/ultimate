@@ -1007,6 +1007,10 @@ public class MemoryHandler {
         VariableLHS[] lhs = new VariableLHS[] { new VariableLHS(loc, it, tmpId) };
         CallStatement call = new CallStatement(loc, false, lhs, "read~" + t,
                 new Expression[] { tPointer });
+        for (Overapprox overapprItem : overappr) {
+            call.getPayload().getAnnotations().put(Overapprox.getIdentifier(),
+                    overapprItem);
+        }
         stmt.add(call);
 		assert (main.isAuxVarMapcomplete(decl, auxVars));
         return new ResultExpression(stmt, 
