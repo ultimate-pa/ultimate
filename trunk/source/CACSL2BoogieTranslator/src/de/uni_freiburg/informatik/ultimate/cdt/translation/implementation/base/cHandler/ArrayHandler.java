@@ -174,14 +174,15 @@ public class ArrayHandler {
 			RValue val = null;
 
 			for (int i = 0; i < currentSizeInt; i++) {
-				if (list != null && list.size() > i && list.get(i).lrVal != null) {//TODO: we may need to pass statements, decls, ...
+				//TODO: we may need to pass statements, decls, ...
+				if (list != null && list.size() > i && list.get(i).lrVal != null) {
 //					if (list.get(i).lrVal == null) { 
 //						assert arrayType.getValueType().getUnderlyingType() instanceof CStruct;
 //						val = (RValue) structHandler.makeStructConstructorFromRERL(main, loc, memoryHandler, this, list.get(i), 
 //								(CStruct) arrayType.getValueType().getUnderlyingType()).lrVal;
 //					} else
 					val = (RValue) list.get(i).lrVal; //if not enough values are given, fill the rest with the last
-				} else if (list == null) {
+				} else {
 					CType valueType = arrayType.getValueType().getUnderlyingType();
 
 					if (valueType instanceof CArray) {

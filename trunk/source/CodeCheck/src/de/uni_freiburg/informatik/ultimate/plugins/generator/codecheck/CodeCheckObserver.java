@@ -205,10 +205,13 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 		final boolean loop_forever = true; // for DEBUG
 		final int iterationsLimit = 0; // for DEBUG
 		
+		_graphWriter.writeGraphAsImage(m_graphRoot,
+				String.format("graph_%s_original", _graphWriter._graphCounter));
+		
 		ImpRootNode originalGraphCopy = copyGraph(m_graphRoot);
 		
 		_graphWriter.writeGraphAsImage(originalGraphCopy, 
-				String.format("graph_%s_original", _graphWriter._graphCounter));
+				String.format("graph_%s_originalCopied", _graphWriter._graphCounter));
 
 		ArrayList<AnnotatedProgramPoint> procRootsToCheck = new ArrayList<AnnotatedProgramPoint>();
 		if (GlobalSettings._instance.svcomp2014Mode) {

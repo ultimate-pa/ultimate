@@ -433,7 +433,12 @@ public class StructHandler {
 				fieldAuxVars.put(tVarDecl, (CACSLLocation) loc);
 				fieldDecl.add(tVarDecl);
 				Expression fieldEx = new IdentifierExpression(loc, tmpIType, tmpId);
-				fieldStmt.addAll(arrayHandler.initArray(main, memoryHandler, this, loc, null, fieldEx, 
+				
+				ResultExpressionListRec arrayInitRerl = null;
+				if (i < rerl.list.size())
+					arrayInitRerl = rerl.list.get(i);
+				
+				fieldStmt.addAll(arrayHandler.initArray(main, memoryHandler, this, loc, arrayInitRerl.list, fieldEx, 
 						(CArray) underlyingType));
 				
 				fieldContents = new ResultExpression(fieldStmt, new RValue(fieldEx, underlyingType), fieldDecl, fieldAuxVars);
