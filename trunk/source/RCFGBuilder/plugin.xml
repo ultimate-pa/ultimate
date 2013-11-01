@@ -11,13 +11,5 @@
           class="de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.PreferenceInitializer">
     </initializer>
  </extension>
- <extension
-       point="org.eclipse.ui.preferencePages">
-           <page
-                 category="de.uni_freiburg.informatik.ultimate.gui.preferencepages.ToolsPreferencePage"
-                 class="de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.PreferencePage"
-                 id="de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.PreferencePage"
-                 name="RCFGBuilder">
-    </page>
- </extension>
+
 </plugin>
