@@ -4,7 +4,8 @@ Bundle-Name: CACSL2BoogieTranslator
 Bundle-SymbolicName: CACSL2BoogieTranslator;singleton:=true
 Bundle-Version: 0.0.1
 Bundle-Activator: de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.Activator
-Require-Bundle: Library-log4j,
+Require-Bundle: org.eclipse.ui;bundle-version="3.7.0",
+ Library-log4j,
  UltimateCore,
  org.eclipse.cdt.core;bundle-version="5.3.1",
  ACSLParser

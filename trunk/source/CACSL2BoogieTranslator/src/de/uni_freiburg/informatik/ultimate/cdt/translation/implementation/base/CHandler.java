@@ -20,6 +20,7 @@ import org.eclipse.cdt.core.dom.ast.IASTCaseStatement;
 import org.eclipse.cdt.core.dom.ast.IASTCastExpression;
 import org.eclipse.cdt.core.dom.ast.IASTCompoundStatement;
 import org.eclipse.cdt.core.dom.ast.IASTConditionalExpression;
+import org.eclipse.cdt.core.dom.ast.IASTDeclSpecifier;
 import org.eclipse.cdt.core.dom.ast.IASTDeclarationStatement;
 import org.eclipse.cdt.core.dom.ast.IASTDeclarator;
 import org.eclipse.cdt.core.dom.ast.IASTDefaultStatement;
@@ -682,7 +683,7 @@ public class CHandler implements ICHandler {
 						result.declCTypes.add(arrayType);
 					}
 					
-					if (arrayType.isStatic() && !isGlobal) {
+					if (staticStorageClass(node) && !isGlobal) {
 						staticVarStorage.decl.add(decl);
 					} else {
 						result.decl.add(decl);
@@ -716,7 +717,7 @@ public class CHandler implements ICHandler {
 							new VarList[] { var });
 					symbolTable.put(cId, new SymbolTableValue(bId, decl, isGlobal,
 							cvar));
-					if (cvar.isStatic() && !isGlobal) {
+					if (staticStorageClass(node) && !isGlobal) {
 						staticVarStorage.decl.add(decl);
 					} else {
 						result.decl.add(decl);
@@ -767,7 +768,7 @@ public class CHandler implements ICHandler {
 						        main, loc, rExpr.stmt, lrVal,
 						        new RValue(rExprExpr, resultCType), rExpr.decl,
 						        rExpr.auxVars, rExpr.overappr);
-						if (resType.cvar.isStatic() && !isGlobal) {
+						if (staticStorageClass(node) && !isGlobal) {
 							staticVarStorage.stmt.addAll(assignment.stmt);
 							staticVarStorage.decl.addAll(assignment.decl);
 							staticVarStorage.auxVars.putAll(assignment.auxVars);
@@ -776,7 +777,7 @@ public class CHandler implements ICHandler {
 							result.stmt.addAll(assignment.stmt);
 							result.auxVars.putAll(assignment.auxVars);
 						}
-					} else if (!cvar.isGlobalVariable() && !cvar.isStatic()) {
+					} else if (!cvar.isGlobalVariable() && !staticStorageClass(node)) {
 						/*
 						 * if not initialized directly and if not global and not
 						 * static. This is required, since this variable could
@@ -789,7 +790,7 @@ public class CHandler implements ICHandler {
 				}
 			}
 			// TODO Christian: any changes needed here?
-			if (resType.cvar.isStatic() && !isGlobal) {
+			if (staticStorageClass(node) && !isGlobal) {
 				assert staticVarStorage.decl.size() > 0;
 				for (Declaration d : staticVarStorage.decl) {
 					globalVariables.put(d, resType.cvar);
@@ -823,6 +824,11 @@ public class CHandler implements ICHandler {
 		Dispatcher.error(loc, SyntaxErrorType.UnsupportedSyntax, msg);
 		throw new UnsupportedSyntaxException(msg);
 	}
+	
+	private static boolean staticStorageClass(IASTSimpleDeclaration node) {
+		return node.getDeclSpecifier().getStorageClass() == IASTDeclSpecifier.sc_static;
+	}
+	
 
 
 
