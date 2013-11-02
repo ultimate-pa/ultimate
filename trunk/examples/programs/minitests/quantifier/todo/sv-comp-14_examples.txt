@@ -42,11 +42,11 @@ implicitfloatconversion_*
 
 ---
 
-[10219] ddv-machzwd (13):
+[10257] ddv-machzwd (13):
 
 -- Translation:
 
-13 struct type
+13 incomplete struct
 - all -
 
 ---
@@ -473,7 +473,7 @@ pointer function                                ?       ---
 [#pragma                                        597]    *
 incomplete types                                52      *
 union                                           37      ---
-struct type                                     13      *
+incomplete struct                               13      incompleteStruct
 array cast fail                                 12      *
 empty identifier                                12      *
 LiveVariables NPE                               12      *

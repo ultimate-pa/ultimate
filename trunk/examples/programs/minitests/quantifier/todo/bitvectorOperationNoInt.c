@@ -1,5 +1,5 @@
 /*
- * Date: October 2013
+ * Date: November 2013
  * Author: Christian Schilling
  * 
  * bitvector operation with non-integer operands
