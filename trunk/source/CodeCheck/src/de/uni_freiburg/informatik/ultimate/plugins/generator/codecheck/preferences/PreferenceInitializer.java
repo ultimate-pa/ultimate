@@ -91,7 +91,7 @@ public class PreferenceInitializer extends UltimatePreferenceInitializer {
 	public static final boolean DEF_MEMOIZENORMALEDGECHECKS = true;
 	public static final boolean DEF_MEMOIZERETURNEDGECHECKS = true;
 
-	public static final SolverAndInterpolator DEF_SOLVERANDINTERPOLATOR = SolverAndInterpolator.SMTINTERPOL;
+	public static final SolverAndInterpolator DEF_SOLVERANDINTERPOLATOR = SolverAndInterpolator.Z3SPWP;
 	public static final INTERPOLATION DEF_INTERPOLATIONMODE = INTERPOLATION.Craig_TreeInterpolation;
 	public static final PredicateUnification DEF_PREDICATEUNIFICATION = PredicateUnification.PER_ITERATION;
 	public static final EdgeCheckOptimization DEF_EDGECHECKOPTIMIZATION = EdgeCheckOptimization.NONE;
