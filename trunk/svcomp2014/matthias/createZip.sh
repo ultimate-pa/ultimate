@@ -5,4 +5,5 @@ cp ../LICENSE* automizer/
 cp ../../examples/toolchains/TraceAbstractionC.xml automizer/
 cp ../../examples/settings/AutomizerSvcomp.settings automizer/
 cp AutomizerSvcomp.py automizer/
+cp Ultimate.ini automizer/
 zip UltimateCommandline.zip -r automizer/*
