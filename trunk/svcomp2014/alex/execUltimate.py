@@ -10,12 +10,12 @@ settingsFileMemSafety = '/storage/stalin/trunk/examples/settings/AutomizerSvcomp
 safetyString = 'Ultimate proved your program to be correct'
 unsafetyString = 'Ultimate proved your program to be incorrect'
 unknownSafetyString = 'Ultimate could not prove your program'
-memDerefString = 'there is a mem-deref error'
-memFreeString = 'there is a mem-free error'
-memLeakString = 'there is a mem-memtrack error' 
+memDerefUltimateString = 'pointer dereference may fail'
+memFreeUltimateString = 'free of unallocated memory possible'
+memMemtrackUltimateString = 'not all allocated memory was freed' 
 memDerefResult = 'valid-deref'
 memFreeResult = 'valid-free'
-memLeakResult = 'valid-memtrack'
+memMemtrackResult = 'valid-memtrack'
 
 
 #parse command line arguments
@@ -77,12 +77,12 @@ while True:
 		safetyResult = 'FALSE'
 	if (line.find(unknownSafetyString) != -1):
 		safetyResult = 'UNKNOWN'
-	if (line.find(memDerefString) != -1):
+	if (line.find(memDerefUltimateString) != -1):
 		memResult = memDerefResult
-	if (line.find(memFreeString) != -1):
+	if (line.find(memFreeUltimateString) != -1):
 		memResult = memFreeResult
-	if (line.find(memLeakString) != -1):
-		memResult = memLeakResult
+	if (line.find(memMemtrackUltimateString) != -1):
+		memResult = memMemtrackResult
 	if (line == ''):
 		print('wrong executable or arguments?')
 		break

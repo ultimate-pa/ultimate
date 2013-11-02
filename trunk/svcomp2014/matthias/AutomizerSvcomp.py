@@ -10,14 +10,13 @@ settingsFileMemSafety = 'AutomizerSvcomp.settings'
 safetyString = 'Ultimate proved your program to be correct'
 unsafetyString = 'Ultimate proved your program to be incorrect'
 unknownSafetyString = 'Ultimate could not prove your program'
-ultimateValidDeref = 'pointer dereference may fail'
-ultimateValidFree = 'free of unallocated memory possible'
-ultimateValidMemtrack = 'not all allocated memory was freed' 
+memDerefUltimateString = 'pointer dereference may fail'
+memFreeUltimateString = 'free of unallocated memory possible'
+memMemtrackUltimateString = 'not all allocated memory was freed' 
+memDerefResult = 'valid-deref'
+memFreeResult = 'valid-free'
+memMemtrackResult = 'valid-memtrack'
 
-#strings for SV-COMP output
-svcompValidDeref = 'valid-deref'
-svcompValidFree = 'valid-free'
-svcompValidMemtrack = 'valid-memtrack' 
 
 #parse command line arguments
 if (len(sys.argv) != 4):
@@ -46,15 +45,20 @@ else:
 	settingsArgument = '--settings ' + settingsFileErrorReachability
 
 
-
 #execute ultimate
 ultimateCall = ultimateBin 
 ultimateCall += ' ' + toolchain  
 ultimateCall += ' ' +  cFile
 ultimateCall += ' ' +  settingsArgument
-print(ultimateCall)
 
-ultimateProcess = subprocess.Popen(ultimateCall, stdin=subprocess.PIPE, stdout = subprocess.PIPE, stderr = subprocess.PIPE, shell=True)
+#print('Calling Ultimate with: ' + ultimateCall)
+
+try:
+	ultimateProcess = subprocess.Popen(ultimateCall, stdin=subprocess.PIPE, stdout = subprocess.PIPE, stderr = subprocess.PIPE, shell=True)
+except:
+	print('error trying to open subprocess')
+	sys.exit(0)
+
 
 safetyResult = 'UNKNOWN'
 memResult = 'NONE'
@@ -62,33 +66,39 @@ memResult = 'NONE'
 #poll the output
 ultimateOutput = ''
 while True:
-	line = ultimateProcess.stdout.readline()
+	line = ultimateProcess.stdout.readline().decode('utf-8')
 	ultimateOutput += line
 	sys.stdout.write('.')
-	#print(line)
+	#sys.stdout.write('Ultimate: ' + line)
+	sys.stdout.flush()
 	if (line.find(safetyString) != -1):
 		safetyResult = 'TRUE'
 	if (line.find(unsafetyString) != -1):
 		safetyResult = 'FALSE'
 	if (line.find(unknownSafetyString) != -1):
 		safetyResult = 'UNKNOWN'
-	if (line.find(ultimateValidDeref) != -1):
-		memResult = 'MEMDEREF'
-	if (line.find(ultimateValidFree) != -1):
-		memResult = 'MEMFREE'
-	if (line.find(ultimateValidMemtrack) != -1):
-		memResult = 'MEMLEAK'
-
+	if (line.find(memDerefUltimateString) != -1):
+		memResult = memDerefResult
+	if (line.find(memFreeUltimateString) != -1):
+		memResult = memFreeResult
+	if (line.find(memMemtrackUltimateString) != -1):
+		memResult = memMemtrackResult
+	if (line == ''):
+		print('wrong executable or arguments?')
+		break
 	if (line.find('Closed successfully') != -1):
+		print('\nexecution finished normally') 
 		break
 
 #summarize results
 if safetyResult == 'FALSE':
+	print('writing output to file {}'.format(outputFileName))
 	outputFile = open(outputFileName, 'w')
 	outputFile.write(ultimateOutput) 
 	
-print('\nexecution finished normally') 
+if (memSafetyMode and safetyResult == 'FALSE'):
+	result = 'FALSE({})'.format(memResult)
+else:
+	result = safetyResult
 print('Result:') 
-print(safetyResult)
-print('Memsafety Result:')
-print(memResult)
+print(result)
