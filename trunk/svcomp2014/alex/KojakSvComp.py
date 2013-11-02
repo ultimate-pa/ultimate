@@ -17,7 +17,7 @@ memDerefResult = 'valid-deref'
 memFreeResult = 'valid-free'
 memMemtrackResult = 'valid-memtrack'
 
-alwaysWriteUltimateOutputToFile = True
+alwaysWriteUltimateOutputToFile = False
 
 #parse command line arguments
 if (len(sys.argv) != 4):
