@@ -159,6 +159,8 @@ public class Application implements IApplication, ICore, IRCPPlugin {
 	 */
 	private Object mParsedAST;
 
+	private HashMap<String, LogPreferenceChangeListener> mActivePreferenceListener;
+
 	/**
 	 * This Default-Constructor is needed to start up the application
 	 */
@@ -312,15 +314,12 @@ public class Application implements IApplication, ICore, IRCPPlugin {
 				Activator.s_PLUGIN_ID);
 
 		mLogger.info("Initializing application");
-		mLogger.debug("--------------------------------------------------------------------------------");
-		attachLogPreferenceChangeListenerToPlugin(Activator.s_PLUGIN_ID);
-		mLogger.debug("UltimateCore Default Settings");
-		logDefaultPreferences(Activator.s_PLUGIN_ID);
-		mLogger.debug("--------------------------------------------------------------------------------");
+
 		// get tmp directory, use JAVA tmp dir by default
 		String tmp_dir = new UltimatePreferenceStore(Activator.s_PLUGIN_ID)
 				.getString(CorePreferenceInitializer.LABEL_MM_TMPDIRECTORY);
 
+		mActivePreferenceListener = new HashMap<String, LogPreferenceChangeListener>();
 		mModelManager = new PersistenceAwareModelManager(tmp_dir);
 		mOutputPlugins = new ArrayList<IOutput>();
 		mSourcePlugins = new ArrayList<ISource>();
@@ -361,8 +360,9 @@ public class Application implements IApplication, ICore, IRCPPlugin {
 	 */
 	private void checkPreferencesForActivePlugins() {
 
-		mLogger.debug("--------------------------------------------------------------------------------");
-		mLogger.debug("Loaded default settings");
+		attachLogPreferenceChangeListenerToPlugin(Activator.s_PLUGIN_ID);
+		logDefaultPreferences(Activator.s_PLUGIN_ID);
+
 		attachLogPreferenceChangeListenerToPlugin(mCurrentController
 				.getPluginID());
 		logDefaultPreferences(mCurrentController.getPluginID());
@@ -384,7 +384,6 @@ public class Application implements IApplication, ICore, IRCPPlugin {
 			attachLogPreferenceChangeListenerToPlugin(t.getPluginID());
 			logDefaultPreferences(t.getPluginID());
 		}
-		mLogger.debug("--------------------------------------------------------------------------------");
 
 	}
 
@@ -392,9 +391,10 @@ public class Application implements IApplication, ICore, IRCPPlugin {
 		UltimatePreferenceStore ups = new UltimatePreferenceStore(pluginID);
 		try {
 			IEclipsePreferences defaults = ups.getDefaultEclipsePreferences();
+			String prefix = "[" + pluginID + " (Current)] Preference \"";
 			for (String key : defaults.keys()) {
-				mLogger.debug("[" + pluginID + " (Default)] Preference \""
-						+ key + "\" = " + defaults.get(key, "NOT DEFINED"));
+				mLogger.debug(prefix + key + "\" = "
+						+ ups.getString(key, "NOT DEFINED"));
 			}
 		} catch (BackingStoreException e) {
 			mLogger.debug("An exception occurred during printing of default preferences for plugin "
@@ -410,23 +410,40 @@ public class Application implements IApplication, ICore, IRCPPlugin {
 	 */
 	private void attachLogPreferenceChangeListenerToPlugin(String pluginId) {
 
-		IEclipsePreferences instancePrefs = InstanceScope.INSTANCE
-				.getNode(pluginId);
-		instancePrefs
-				.addPreferenceChangeListener(new LogPreferenceChangeListener(
-						"Instance", pluginId));
+		LogPreferenceChangeListener instanceListener = retrieveListener(
+				pluginId, "Instance");
+		LogPreferenceChangeListener configListener = retrieveListener(pluginId,
+				"Configuration");
+		LogPreferenceChangeListener defaultListener = retrieveListener(
+				pluginId, "Default");
+		
+		InstanceScope.INSTANCE.getNode(pluginId)
+				.removePreferenceChangeListener(instanceListener);
+		InstanceScope.INSTANCE.getNode(pluginId).addPreferenceChangeListener(
+				instanceListener);
 
-		IEclipsePreferences configPrefs = ConfigurationScope.INSTANCE
-				.getNode(pluginId);
-		configPrefs
-				.addPreferenceChangeListener(new LogPreferenceChangeListener(
-						"Configuration", pluginId));
+		ConfigurationScope.INSTANCE.getNode(pluginId)
+				.removePreferenceChangeListener(configListener);
+		ConfigurationScope.INSTANCE.getNode(pluginId)
+				.addPreferenceChangeListener(configListener);
 
-		IEclipsePreferences defaultPrefs = DefaultScope.INSTANCE
-				.getNode(pluginId);
-		defaultPrefs
-				.addPreferenceChangeListener(new LogPreferenceChangeListener(
-						"Default", pluginId));
+		DefaultScope.INSTANCE.getNode(pluginId).removePreferenceChangeListener(
+				defaultListener);
+		DefaultScope.INSTANCE.getNode(pluginId).addPreferenceChangeListener(
+				defaultListener);
+	}
+
+	private LogPreferenceChangeListener retrieveListener(String pluginID,
+			String scope) {
+		String listenerID = pluginID + scope;
+		if (mActivePreferenceListener.containsKey(listenerID)) {
+			return mActivePreferenceListener.get(listenerID);
+		} else {
+			LogPreferenceChangeListener listener = new LogPreferenceChangeListener(
+					scope, pluginID);
+			mActivePreferenceListener.put(listenerID, listener);
+			return listener;
+		}
 	}
 
 	/**
@@ -442,7 +459,10 @@ public class Application implements IApplication, ICore, IRCPPlugin {
 
 		loadGeneratorPlugins(reg);
 		loadAnalysisPlugins(reg);
+		mLogger.debug("--------------------------------------------------------------------------------");
+		mLogger.debug("Loaded default settings");
 		checkPreferencesForActivePlugins();
+		mLogger.debug("--------------------------------------------------------------------------------");
 		mLogger.info("Finished loading Plugins !");
 		mLogger.info("--------------------------------------------------------------------------------");
 	}
@@ -1111,18 +1131,30 @@ public class Application implements IApplication, ICore, IRCPPlugin {
 	private void loadPreferencesInternal(String filename) {
 
 		if (filename != null && !filename.isEmpty()) {
+			mLogger.debug("--------------------------------------------------------------------------------");
 			mLogger.info("Loading settings from " + filename);
 			try {
 				FileInputStream fis = new FileInputStream(filename);
-
-				if (!UltimatePreferenceStore.importPreferences(fis).isOK()) {
-					mLogger.warn("Failed to load preferences");
+				IStatus status = UltimatePreferenceStore.importPreferences(fis);
+				if (!status.isOK()) {
+					mLogger.warn("Failed to load preferences. Status is: "
+							+ status);
+					mLogger.warn("Did not attach debug property logger");
 				} else {
+					checkPreferencesForActivePlugins();
 					mLogger.info("Loading preferences was successful");
+
 				}
 			} catch (Exception e) {
-				mLogger.warn("Could not load preferences", e);
+				mLogger.error(
+						"Could not load preferences because of exception: ", e);
+				mLogger.warn("Did not attach debug property logger");
+			} finally {
+				mLogger.debug("--------------------------------------------------------------------------------");
 			}
+
+		} else {
+			mLogger.info("Loading settings from empty filename is not possible");
 		}
 	}
 
@@ -1275,36 +1307,23 @@ public class Application implements IApplication, ICore, IRCPPlugin {
 
 		private String mScope;
 		private String mPluginID;
-		private UltimatePreferenceStore mDefaults;
+		private UltimatePreferenceStore mPreferences;
+		private String mPrefix;
 
 		public LogPreferenceChangeListener(String scope, String pluginID) {
 			mScope = scope;
 			mPluginID = pluginID;
-			mDefaults = new UltimatePreferenceStore(Activator.s_PLUGIN_ID);
+			mPreferences = new UltimatePreferenceStore(mPluginID);
+			mPrefix = "[" + mPluginID + " (" + mScope + ")] Preference \"";
 		}
 
 		@Override
 		public void preferenceChange(PreferenceChangeEvent event) {
-
-			String oldValue;
-			String newValue;
-			if (event.getOldValue() == null) {
-				oldValue = new UltimatePreferenceStore(Activator.s_PLUGIN_ID).getString(event.getKey());
-			} else {
-				oldValue = event.getOldValue().toString();
-			}
-
-			if (event.getNewValue() == null) {
-				newValue = new UltimatePreferenceStore(Activator.s_PLUGIN_ID).getString(event.getKey());
-			} else {
-				newValue = event.getNewValue().toString();
-			}
-
-			mLogger.debug("[" + mPluginID + " (" + mScope + ")] Preference \""
-					+ event.getKey() + "\" changed: " + oldValue + " -> "
-					+ newValue);
+			mLogger.debug(mPrefix + event.getKey() + "\" changed: "
+					+ event.getOldValue() + " -> " + event.getNewValue()
+					+ " (actual value in store: "
+					+ mPreferences.getString(event.getKey()) + ")");
 		}
-
 	}
 
 	@Override
