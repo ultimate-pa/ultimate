@@ -18,6 +18,11 @@ public class Overapprox extends AbstractAnnotations {
 	public static final String BITVEC = "bitvector operation";
 	public static final String FUNC_POINTER = "call of function pointer";
 	
+	
+	public static final String getIdentifier() {
+		return Overapprox.class.getName();
+	}
+	
 	private final Map<String, ILocation> m_Reason2Loc;
 	
 	public Overapprox(Map<String, ILocation> reason2Loc) {
@@ -28,10 +33,6 @@ public class Overapprox extends AbstractAnnotations {
         m_Reason2Loc = Collections.singletonMap(reason, loc);
     }
 
-	public static final String getIdentifier() {
-		return Overapprox.class.getName();
-	}
-	
 	private static final long serialVersionUID = -575969312624287029L;
 
 	/**
