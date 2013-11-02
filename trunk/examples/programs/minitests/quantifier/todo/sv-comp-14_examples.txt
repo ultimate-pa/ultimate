@@ -58,7 +58,7 @@ implicitfloatconversion_*
 
 ---
 
-[10219] heap-manipulation (18):
+[10259] heap-manipulation (18):
 
 -- Translation:
 
@@ -74,29 +74,28 @@ sll_to_dll_rev_false, sll_to_dll_rev_true
 2 function parameter addressoffed
 merge_sort_false.cil, merge_sort_true.cil
 
-2 function not defined
+2 global struct initialization
 bubble_sort_linux_false.cil, bubble_sort_linux_true.cil
 
 2 pointer void assignment int
 sll_to_dll_rev_false.cil, sll_to_dll_rev_true.cil
 
-2 struct members
+2 struct pointer dereference
 tree_*
 
-4 void
+4 void pointer addressoffed
 dll_*
 
 ---
 
-[10219] ldv-challenges (15):
+[10259] ldv-challenges (15):
 
 -- Translation:
 
-9 union
+14 union
 - all others -
 
-6 function parameter addressoffed
-linux-3.8-rc1-32_7a-drivers--scsi--mpt2sas*, linux-3.8-rc1-32_7a-drivers--usb*,
+1 incomplete types
 main7-*
 
 ---
@@ -471,26 +470,26 @@ StrongestPostDeterminizer.reviewInductiveInternal()
 
 pointer function                                ?       ---
 [#pragma                                        597]    *
-incomplete types                                52      *
-union                                           37      ---
+incomplete types                                53      *
+union                                           42      ---
 incomplete struct                               13      incompleteStruct
 array cast fail                                 12      *
 empty identifier                                12      *
 LiveVariables NPE                               12      *
 auxVarMap                                       10      *
 getWriteCall() rType == null                    9       *
-function parameter addressoffed                 8       *
 pointer void assignment int                     8       *
 bit complement                                  7       bitComplement
 HeapLValues must be converted to RValue first.  6       *
 bitvector operation with non-integer            5       bitvectorOperationNoInt
 struct rex.declCTypes.size() == rex.decl.size() 5       *
-#define -> error                                4       *
+#define -> error                                4       define
 ResultExpression.switchToRValue() (char)        4       *
 pointer void return value                       4       *
 value == null (RcfgProgramExecutionBuilder)     4       *
-void                                            4       *
+void pointer addressoffed                       4       voidPointerAddressof
 __VERIFIER_nondet_pointer() has type int        4       *
+ClassCastException: ResultExpressionListRec     3       *
 cvar == null (pointer as function parameter)    3       cvar
 double                                          3       *
 free with field access                          3       *
@@ -499,16 +498,16 @@ Address of something that is not on the heap    2       *
 array dynamic size                              2       *
 array NullPointerException                      2       *
 assert rop.lrVal.cType instanceof CPointer      2       *
-ClassCastException: ResultExpressionListRec     3       *
 equals checks for the same object               2       *
+function parameter addressoffed                 2       *
 function void                                   2       *
-function not defined                            2       *
 getWriteCall type                               2       *
+global struct initialization                    2       globalStructInit
 integer literal implicit cast                   2       *
 LIST_HEAD                                       2       *
 pointer as offset                               2       *
 pointer vs. array                               2       *
-struct members                                  2       *
+struct pointer dereference                      2       structPointerDereference
 array initialization                            1       arrayInitialization
 cast int pointer to uint                        1       *
 dereferencing fails                             1       *
