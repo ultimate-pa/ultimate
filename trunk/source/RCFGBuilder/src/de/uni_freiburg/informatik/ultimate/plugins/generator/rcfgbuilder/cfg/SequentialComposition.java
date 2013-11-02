@@ -3,6 +3,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg;
 import java.util.ArrayList;
 import java.util.List;
 
+import de.uni_freiburg.informatik.ultimate.model.ModelUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 
 
@@ -82,6 +83,7 @@ public class SequentialComposition extends CodeBlock {
 			codeBlocks[i].disconnectSource();
 			codeBlocks[i].disconnectTarget();
 			prettyPrinted.append(codeBlocks[i].getPrettyPrintedStatements());
+			ModelUtils.mergeAnnotations(codeBlocks[i], this);
 		}
 		checkNumberOfCallsAndReturns(numberCalls, numberReturns);
 		m_TransitionFormula = getInterproceduralTransFormula(boogie2smt, modGlobVarManager, simplify, false, codeBlocks);

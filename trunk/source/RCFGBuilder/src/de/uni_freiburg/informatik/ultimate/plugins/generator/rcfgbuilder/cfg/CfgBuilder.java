@@ -1178,8 +1178,10 @@ public class CfgBuilder {
 			}
 			else if (m_current instanceof CodeBlock) {
 				if (m_RootAnnot.getTaPrefs().letter() == Letter.SEQUENCE || m_RootAnnot.getTaPrefs().letter() == Letter.BLOCK) {
-					((StatementSequence) m_current).addStatement(st);
-					((StatementSequence) m_current).updatePayloadName();
+					StatementSequence stSeq = (StatementSequence) m_current;
+					stSeq.addStatement(st);
+					stSeq.updatePayloadName();
+					passAllAnnotations(st, stSeq);
 				}
 				else {
 					String locName = getLocName(st.getLocation());

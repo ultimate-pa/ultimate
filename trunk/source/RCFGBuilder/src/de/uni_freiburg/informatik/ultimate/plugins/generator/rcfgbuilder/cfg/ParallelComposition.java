@@ -6,6 +6,7 @@ import java.util.Map;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.model.ModelUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 
 
@@ -83,6 +84,7 @@ public class ParallelComposition extends CodeBlock {
 			TermVariable tv = script.variable(varname, boolSort);
 			branchIndicator[i] = tv;
 			m_BranchIndicator2CodeBlock.put(branchIndicator[i], codeBlocks[i]);
+			ModelUtils.mergeAnnotations(codeBlocks[i], this);
 		}
 		m_PrettyPrinted = prettyPrinted;
 		
