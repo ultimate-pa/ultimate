@@ -2,17 +2,21 @@ import sys
 import subprocess
 
 #locations of files
-ultimateBin = './trunk/source/BA_SiteRepository/target/products/CLI-E3/linux/gtk/x86_64/Ultimate'
-toolchain = './trunk/examples/toolchains/TraceAbstractionC.xml'
+ultimateBin = '/storage/stalin/trunk/source/BA_SiteRepository/target/products/CLI-E3/linux/gtk/x86_64/Ultimate'
+toolchain = '/storage/stalin/trunk/examples/toolchains/TraceAbstractionC.xml'
 settingsFileErrorReachability = '/storage/stalin/trunk/examples/settings/AutomizerSvcomp.settings'
 settingsFileMemSafety = '/storage/stalin/trunk/examples/settings/AutomizerSvcomp.settings'
 #special strings in ultimate output
 safetyString = 'Ultimate proved your program to be correct'
 unsafetyString = 'Ultimate proved your program to be incorrect'
 unknownSafetyString = 'Ultimate could not prove your program'
-memDerefString = 'adouifohsdf'
-memFreeString = 'sadhfio'
-memLeakString = 'dajfh' 
+memDerefString = 'there is a mem-deref error'
+memFreeString = 'there is a mem-free error'
+memLeakString = 'there is a mem-memtrack error' 
+memDerefResult = 'valid-deref'
+memFreeResult = 'valid-free'
+memLeakResult = 'valid-memtrack'
+
 
 #parse command line arguments
 if (len(sys.argv) != 4):
@@ -41,14 +45,20 @@ else:
 	settingsArgument = '--settings ' + settingsFileErrorReachability
 
 
-
 #execute ultimate
 ultimateCall = ultimateBin 
 ultimateCall += ' ' + toolchain  
 ultimateCall += ' ' +  cFile
 ultimateCall += ' ' +  settingsArgument
 
-ultimateProcess = subprocess.Popen(ultimateCall, stdin=subprocess.PIPE, stdout = subprocess.PIPE, stderr = subprocess.PIPE, shell=True)
+#print('Calling Ultimate with: ' + ultimateCall)
+
+try:
+	ultimateProcess = subprocess.Popen(ultimateCall, stdin=subprocess.PIPE, stdout = subprocess.PIPE, stderr = subprocess.PIPE, shell=True)
+except:
+	print('error trying to open subprocess')
+	sys.exit(0)
+
 
 safetyResult = 'UNKNOWN'
 memResult = 'NONE'
@@ -59,29 +69,35 @@ while True:
 	line = ultimateProcess.stdout.readline()
 	ultimateOutput += line
 	sys.stdout.write('.')
+	#sys.stdout.write('Ultimate: ' + line)
 	if (line.find(safetyString) != -1):
-		safetyResult = 'SAFE'
+		safetyResult = 'TRUE'
 	if (line.find(unsafetyString) != -1):
-		safetyResult = 'UNSAFE'
+		safetyResult = 'FALSE'
 	if (line.find(unknownSafetyString) != -1):
 		safetyResult = 'UNKNOWN'
 	if (line.find(memDerefString) != -1):
-		memResult = 'MEMDEREF'
+		memResult = memDerefResult
 	if (line.find(memFreeString) != -1):
-		memResult = 'MEMFREE'
+		memResult = memFreeResult
 	if (line.find(memLeakString) != -1):
-		memResult = 'MEMLEAK'
-
+		memResult = memLeakResult
+	if (line == ''):
+		print('wrong executable or arguments?')
+		break
 	if (line.find('Closed successfully') != -1):
+		print('\nexecution finished normally') 
 		break
 
 #summarize results
-if safetyResult == 'UNSAFE':
+if safetyResult == 'FALSE':
+	print('writing output to file {}'.format(outputFileName))
 	outputFile = open(outputFileName, 'w')
 	outputFile.write(ultimateOutput) 
 	
-print('\nexecution finished normally') 
-print('Safety Result:') 
-print(safetyResult)
-print('Memsafety Result:')
-print(memResult)
+if (memSafetyMode and safetyResult == 'FALSE'):
+	result = 'FALSE({})'.format(memResult)
+else:
+	result = safetyResult
+print('Result:') 
+print(result)
