@@ -112,7 +112,7 @@ public class RcfgProgramExecutionBuilder {
 				return indexWhereVarWasAssignedTheLastTime(bv, pos - 1);
 			} else {
 				int callPos = m_Trace.getCallPosition(pos);
-				return indexWhereVarWasAssignedTheLastTime(bv, callPos);
+				return indexWhereVarWasAssignedTheLastTime(bv, callPos - 1);
 			}
 		} else {
 			throw new AssertionError();
