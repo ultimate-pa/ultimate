@@ -4,8 +4,8 @@ import subprocess
 #locations of files
 ultimateBin = '/storage/stalin/trunk/source/BA_SiteRepository/target/products/CLI-E3/linux/gtk/x86_64/Ultimate'
 toolchain = '/storage/stalin/trunk/examples/toolchains/TraceAbstractionC.xml'
-settingsFileErrorReachability = '/storage/stalin/trunk/examples/settings/AutomizerSvcomp.settings'
-settingsFileMemSafety = '/storage/stalin/trunk/examples/settings/AutomizerSvcomp.settings'
+settingsFileErrorReachability = './KojakSvComp2014.settings'
+settingsFileMemSafety = './KojakSvComp2014.settings'
 #special strings in ultimate output
 safetyString = 'Ultimate proved your program to be correct'
 unsafetyString = 'Ultimate proved your program to be incorrect'
@@ -17,6 +17,7 @@ memDerefResult = 'valid-deref'
 memFreeResult = 'valid-free'
 memMemtrackResult = 'valid-memtrack'
 
+alwaysWriteUltimateOutputToFile = True
 
 #parse command line arguments
 if (len(sys.argv) != 4):
@@ -91,10 +92,10 @@ while True:
 		break
 
 #summarize results
-if safetyResult == 'FALSE':
+if safetyResult == 'FALSE' or alwaysWriteUltimateOutputToFile:
 	print('writing output to file {}'.format(outputFileName))
-	outputFile = open(outputFileName, 'w')
-	outputFile.write(ultimateOutput) 
+	outputFile = open(outputFileName, 'wb')
+	outputFile.write(ultimateOutput.encode('utf-8'))
 	
 if (memSafetyMode and safetyResult == 'FALSE'):
 	result = 'FALSE({})'.format(memResult)
