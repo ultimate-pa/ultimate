@@ -66,10 +66,11 @@ memResult = 'NONE'
 #poll the output
 ultimateOutput = ''
 while True:
-	line = ultimateProcess.stdout.readline()
+	line = ultimateProcess.stdout.readline().decode('utf-8')
 	ultimateOutput += line
 	sys.stdout.write('.')
 	#sys.stdout.write('Ultimate: ' + line)
+	sys.stdout.flush()
 	if (line.find(safetyString) != -1):
 		safetyResult = 'TRUE'
 	if (line.find(unsafetyString) != -1):
