@@ -107,7 +107,7 @@ public class Backtranslator extends DefaultTranslator<
 		}
 		for (int i=0; i<rcfgProgramExecution.getLength(); i++) {
 			CodeBlock codeBlock = rcfgProgramExecution.getTraceElement(i);
-			addToFailurePath(codeBlock, trace, rcfgProgramExecution.getBranchEncoders()[i]);
+			toList(codeBlock, trace, rcfgProgramExecution.getBranchEncoders()[i]);
 			int posInNewTrace = trace.size()-1;
 			ProgramState<Expression> programState = rcfgProgramExecution.getProgramState(i);
 			programStateMapping.put(posInNewTrace, programState);
@@ -117,36 +117,56 @@ public class Backtranslator extends DefaultTranslator<
 	
 	
 	/**
-	 * Recursive method used by getFailurePath
+	 * Transform a single (possibly large) CodeBlock to a list of Statements
+	 * and add these Statements to the stList.
+	 * If
+	 * <ul> 
+	 * <li> if the CodeBlock contains a single Statement we add this statement
+	 * <li> if the CodeBlock is a StatementsSequence we add all statements
+	 * <li> if the CodeBlock is a SequentialComposition we call this method
+	 * recursively
+	 * <li> if the CodeBlock is a ParallelComposition we ask the branchEncoders
+	 * mapping on which branch we call this method recursively.
+	 * If the branchEncoders mapping is null (occurs e.g., for traces whose
+	 * feasibility can not be determined) we call this method recursively on
+	 * some branch.
+	 * </ul> 
 	 */
-	private static void addToFailurePath(CodeBlock codeBlock, 
-			List<Statement> trace, Map<TermVariable, Boolean> branchEncoders) {
+	private static void toList(CodeBlock codeBlock, 
+			List<Statement> stList, Map<TermVariable, Boolean> branchEncoders) {
 		if (codeBlock instanceof Call) {
 			Statement st = ((Call) codeBlock).getCallStatement();
-			trace.add(st);
+			stList.add(st);
 		} else if (codeBlock instanceof Return) {
 			Statement st = ((Return) codeBlock).getCallStatement();
-			trace.add(st);
+			stList.add(st);
 		} else if (codeBlock instanceof Summary) {
 			Statement st = ((Summary) codeBlock).getCallStatement();
-			trace.add(st);
+			stList.add(st);
 		} else if (codeBlock instanceof StatementSequence) {
 			List<Statement> stmtsOfTrans = ((StatementSequence) codeBlock).getStatements();
 			for (Statement st : stmtsOfTrans) {
-				trace.add(st);
+				stList.add(st);
 			}
 		} else if (codeBlock instanceof SequentialComposition) {
 			SequentialComposition seqComp = (SequentialComposition) codeBlock;
 			for (CodeBlock cb : seqComp.getCodeBlocks()) {
-				addToFailurePath(cb, trace, branchEncoders);
+				toList(cb, stList, branchEncoders);
 			}
 		} else if (codeBlock instanceof ParallelComposition) {
 			ParallelComposition parComp = (ParallelComposition) codeBlock;
-			for (Entry<TermVariable, CodeBlock> entry  : parComp.getBranchIndicator2CodeBlock().entrySet()) {
-				boolean taken = branchEncoders.get(entry.getKey());
-				if(taken) {
-					addToFailurePath(entry.getValue(), trace, branchEncoders);
-					return;
+			Map<TermVariable, CodeBlock> bi2cb = parComp.getBranchIndicator2CodeBlock();
+			if (branchEncoders == null) {
+				CodeBlock someBranch = bi2cb.
+						entrySet().iterator().next().getValue();
+				toList(someBranch, stList, branchEncoders);
+			} else {
+				for (Entry<TermVariable, CodeBlock> entry  : bi2cb.entrySet()) {
+					boolean taken = branchEncoders.get(entry.getKey());
+					if(taken) {
+						toList(entry.getValue(), stList, branchEncoders);
+						return;
+					}
 				}
 			}
 			throw new AssertionError("no branch was taken");
