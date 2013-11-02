@@ -11,6 +11,10 @@ import de.uni_freiburg.informatik.ultimate.result.Check;
  */
 public class InvariantRequest extends AbstractAnnotations {
 	
+	public static final String getIdentifier() {
+		return InvariantRequest.class.getName();
+	}
+	
 	public static final String LOOPENTRY = "loop entry";
 	
 	private final String[] m_Reasons;
@@ -19,10 +23,6 @@ public class InvariantRequest extends AbstractAnnotations {
 		m_Reasons = resons;
 	}
 
-	public static final String getIdentifier() {
-		return Check.class.getName();
-	}
-	
 	private static final long serialVersionUID = -575969312624287029L;
 
 	/**

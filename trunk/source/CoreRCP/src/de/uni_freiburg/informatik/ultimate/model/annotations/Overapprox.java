@@ -29,7 +29,7 @@ public class Overapprox extends AbstractAnnotations {
     }
 
 	public static final String getIdentifier() {
-		return Check.class.getName();
+		return Overapprox.class.getName();
 	}
 	
 	private static final long serialVersionUID = -575969312624287029L;
