@@ -10,9 +10,14 @@ settingsFileMemSafety = 'AutomizerSvcomp.settings'
 safetyString = 'Ultimate proved your program to be correct'
 unsafetyString = 'Ultimate proved your program to be incorrect'
 unknownSafetyString = 'Ultimate could not prove your program'
-memDerefString = 'pointer dereference may fail'
-memFreeString = 'free of unallocated memory possible'
-memLeakString = 'not all allocated memory was freed' 
+ultimateValidDeref = 'pointer dereference may fail'
+ultimateValidFree = 'free of unallocated memory possible'
+ultimateValidMemtrack = 'not all allocated memory was freed' 
+
+#strings for SV-COMP output
+svcompValidDeref = 'valid-deref'
+svcompValidFree = 'valid-free'
+svcompValidMemtrack = 'valid-memtrack' 
 
 #parse command line arguments
 if (len(sys.argv) != 4):
@@ -67,11 +72,11 @@ while True:
 		safetyResult = 'FALSE'
 	if (line.find(unknownSafetyString) != -1):
 		safetyResult = 'UNKNOWN'
-	if (line.find(memDerefString) != -1):
+	if (line.find(ultimateValidDeref) != -1):
 		memResult = 'MEMDEREF'
-	if (line.find(memFreeString) != -1):
+	if (line.find(ultimateValidFree) != -1):
 		memResult = 'MEMFREE'
-	if (line.find(memLeakString) != -1):
+	if (line.find(ultimateValidMemtrack) != -1):
 		memResult = 'MEMLEAK'
 
 	if (line.find('Closed successfully') != -1):
