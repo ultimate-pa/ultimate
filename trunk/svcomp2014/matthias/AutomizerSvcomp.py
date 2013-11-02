@@ -17,6 +17,7 @@ memDerefResult = 'valid-deref'
 memFreeResult = 'valid-free'
 memMemtrackResult = 'valid-memtrack'
 
+alwaysWriteUltimateOutputToFile = False
 
 #parse command line arguments
 if (len(sys.argv) != 4):
@@ -91,10 +92,10 @@ while True:
 		break
 
 #summarize results
-if safetyResult == 'FALSE':
+if safetyResult == 'FALSE' or alwaysWriteUltimateOutputToFile:
 	print('writing output to file {}'.format(outputFileName))
-	outputFile = open(outputFileName, 'w')
-	outputFile.write(ultimateOutput) 
+	outputFile = open(outputFileName, 'wb')
+	outputFile.write(ultimateOutput.encode('utf-8'))
 	
 if (memSafetyMode and safetyResult == 'FALSE'):
 	result = 'FALSE({})'.format(memResult)
