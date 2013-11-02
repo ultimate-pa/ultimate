@@ -1,38 +1,38 @@
-[10214] bitvector (35):
+[10251] bitvector (35):
+
+1 working
+jain_1_safe
 
 2 overapproximation flag
 modulus_*, parity_*
 
-20 unknown
-gcd_2_*, gcd_3_*, gcd_4_*, interleave_*, jain_4_*, jain_5_*, jain_6_*, jain_7_*,
-s3_*
+21 unknown
+gcd_2_*, gcd_3_*, gcd_4_*, interleave_*, jain_2_*, jain_4_*, jain_5_*, jain_6_*,
+jain_7_*, s3_*
 
-5 bitwise operation with non-integer
+1 TraceChecker.getFailurePath()
+gcd_1_*
+
+-- Translation:
+
+5 bitvector operation with non-integer
 byte_add_*, num_*
 
 5 bit complement
 soft_*
 
-1 m_RcfgProgramExecution != null
-gcd_1_*
-
-2 StrongestPostDeterminizer.reviewInductiveInternal() [nondeterministic]
-jain_1_safe, jain_2_safe
-
 ---
 
-[10215] bitvector-regression (13):
+[10251] bitvector-regression (13):
 
-1 working
-pointer_extension_true
+4 working
+pointer_extension3_*, pointer_extension_*
 
-5 overapproximation flag
-implicitunsignedconversion_true, pointer_extension3_false,
-pointer_extension_false, signextension2_true, signextension_true
+7 wrong result
+implicitunsignedconversion_*, pointer_extension2_*, signextension2_*,
+signextension_*
 
-4 wrong result
-implicitunsignedconversion_false, pointer_extension2_false,
-signextension2_false, signextension_false
+-- Translation:
 
 2 bit complement
 integerpromotion_*
@@ -43,6 +43,8 @@ implicitfloatconversion_*
 ---
 
 [10219] ddv-machzwd (13):
+
+-- Translation:
 
 13 struct type
 - all -
@@ -57,6 +59,8 @@ implicitfloatconversion_*
 ---
 
 [10219] heap-manipulation (18):
+
+-- Translation:
 
 2 #define -> error
 bubble_sort_linux_false, bubble_sort_linux_true
@@ -86,6 +90,8 @@ dll_*
 
 [10219] ldv-challenges (15):
 
+-- Translation:
+
 9 union
 - all others -
 
@@ -97,12 +103,16 @@ main7-*
 
 ldv-commit-tester (62):
 
+-- Translation:
+
 62 pointer function
 - all -
 
 ---
 
 ldv-consumption (164):
+
+-- Translation:
 
 164 pointer function
 - all -
@@ -111,6 +121,8 @@ ldv-consumption (164):
 
 ldv-linux-3.0 (41):
 
+-- Translation:
+
 41 pointer function
 - all -
 
@@ -118,12 +130,16 @@ ldv-linux-3.0 (41):
 
 ldv-linux-3.4-simple (1155):
 
+-- Translation:
+
 1155 pointer function
 - all -
 
 ---
 
 [10219] ldv-linux-3.7.3 (11):
+
+-- Translation:
 
 11 union
 - all -
@@ -145,6 +161,8 @@ alias_of_return.c_true_1.cil, alias_of_return_2.c_true_1.cil, mutex_*,
 nested_structure_noptr*, oomInt.c_*, stateful_check_false.cil, structure_*,
 test13_true, test15_true, test16_true, test17_true, test26_true
 test_cut_*, test_malloc-1_true, test_while_*, volatile_*
+
+-- Translation:
 
 2 Address of something that is not on the heap
 test30_*
@@ -222,6 +240,8 @@ list_false
 3 unknown
 list_flag_*, list_true
 
+-- Translation:
+
 3 array cast fail
 960521-1_*
 
@@ -272,6 +292,8 @@ while_infinite_loop_1_*, while_infinite_loop_2_*, while_infinite_loop_3_*
 
 2 wrong result
 count_up_down_true, trex03_true
+
+-- Translation:
 
 2 #ifndef
 veris.c_OpenSER__cases1_stripFullBoth_arr_true,
@@ -324,6 +346,8 @@ trex01_*
 4 wrong result
 960521-1_false-valid-free, lockfree-3.1*, lockfree-3.2*, lockfree-3.3*
 
+-- Translation:
+
 2 #define -> error
 test-0134_true, test-0137_false-valid-deref
 
@@ -359,12 +383,16 @@ test-0102_*
 
 [10224] memsafety-ext (8):
 
+-- Translation:
+
 7 getWriteCall() rType == null
 - all others -
 
 ---
 
 [10224] ntdrivers (10):
+
+-- Translation:
 
 10 union
 - all -
@@ -379,6 +407,8 @@ test-0102_*
 ---
 
 product-lines (597):
+
+-- Translation:
 
 597 #pragma
 - all -
@@ -396,6 +426,8 @@ gcd01_true, gcd
 26 unknown
 - all others -
 
+-- Translation:
+
 1 implementation
 Fibonacci04_false
 
@@ -406,6 +438,8 @@ Ackermann02_false, Ackermann_false, Addition02_false, Addition_false
 
 [10224] ssh (36):
 
+-- Translation:
+
 36 incomplete type
 - all -
 
@@ -415,6 +449,8 @@ Ackermann02_false, Ackermann_false, Addition02_false, Addition_false
 
 24 unknown
 - all others -
+
+-- Translation:
 
 2 pointer void assignment int
 s3_clnt_3_false.cil, s3_clnt_3_true.cil
@@ -428,6 +464,10 @@ s3_clnt_3_false.cil, s3_clnt_3_true.cil
 
 --------------------------------------------
 error                                           count   example (* = TODO)
+
+Matthias:
+StrongestPostDeterminizer.reviewInductiveInternal()
+
 
 pointer function                                ?       ---
 [#pragma                                        597]    *
@@ -443,7 +483,7 @@ function parameter addressoffed                 8       *
 pointer void assignment int                     8       *
 bit complement                                  7       bitComplement
 HeapLValues must be converted to RValue first.  6       *
-bitwise operation with non-integer              5       *
+bitvector operation with non-integer            5       bitvectorOperationNoInt
 struct rex.declCTypes.size() == rex.decl.size() 5       *
 #define -> error                                4       *
 ResultExpression.switchToRValue() (char)        4       *
@@ -468,10 +508,7 @@ integer literal implicit cast                   2       *
 LIST_HEAD                                       2       *
 pointer as offset                               2       *
 pointer vs. array                               2       *
-StrongestPostDeterminizer.
-        reviewInductiveInternal()
-                [nondeterministic]              2       *
-struct members                                  2
+struct members                                  2       *
 array initialization                            1       arrayInitialization
 cast int pointer to uint                        1       *
 dereferencing fails                             1       *
@@ -484,4 +521,5 @@ NullPointerException                            1       *
 pointer struct I                                1       *
 pointer struct II                               1       *
 StringLiteral                                   1       *
+TraceChecker.getFailurePath()                   1       ?
 TypeHandler.visit(IASTElaboratedTypeSpecifier)  1       *
