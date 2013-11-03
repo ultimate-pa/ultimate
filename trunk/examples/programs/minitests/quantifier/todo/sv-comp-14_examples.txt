@@ -267,31 +267,28 @@ test_union.c_*, test_union_cast-1_*, test_union_cast.c_true_1.cil, test29_*
 
 [10098] list-ext-properties (20):
 
-1 working
-list_false
-
-3 unknown
-list_flag_*, list_true
+1 unknown
+960521-1_false-valid-free
 
 -- Translation:
 
-3 array cast fail
-960521-1_*
-
-2 empty identifier
-test-0214_true, test-0217_true
-
-3 free with field access
+3 array in struct in struct
 test-0158_*
 
-4 getWriteCall type
-simple_*, test-0019_*
+2 auxVar wrong type
+test-0019_*
 
-2 HeapLValues must be converted to RValue first.
-test_0232_*
+2 empty identifier
+test-0214_*, test-0217_*
 
-2 pointer type
-test-0504_true, test-0513_true
+2 memory access with struct operation
+960521-1_false-valid-deref, 960521-1_true
+
+4 struct pointer dereference
+test_0232_*, test_0504_*, test_0513_*
+
+6 typedef hides inner struct
+list_*, simple_*
 
 ---
 
@@ -493,7 +490,7 @@ s3_clnt_3_false.cil, s3_clnt_3_true.cil
 - all -
 
 --------------------------------------------
-error                                           count   example (* = TODO)
+error                                           count   example (* = TODO, ** = up-to-date)
 
 Matthias:
 StrongestPostDeterminizer.reviewInductiveInternal()
@@ -501,18 +498,19 @@ StrongestPostDeterminizer.reviewInductiveInternal()
 
 union                                           82      ---
 incomplete struct                               70      incompleteStruct
-incomplete types                                55      *
-array cast fail                                 12      *
-empty identifier                                12      *
-LiveVariables NPE                               12      *
+incomplete types                                55      **
+empty identifier                                12      **
+array in struct in struct                       11      arrayInStructInStruct
 auxVarMap                                       10      *
+array cast fail                                 9       *
 getWriteCall() rType == null                    9       *
-array in struct in struct                       8       arrayInStructInStruct
 pointer void assignment int                     8       *
 bit complement                                  7       bitComplement
-HeapLValues must be converted to RValue first.  6       *
+struct pointer dereference                      6       structPointerDereference
+typedef hides inner struct                      6       typedefHidesInnerStruct
 bitvector operation with non-integer            5       bitvectorOperationNoInt
 #define -> error                                4       define
+HeapLValues must be converted to RValue first.  4       *
 ResultExpression.switchToRValue() (char)        4       *
 pointer void return value                       4       *
 value == null (RcfgProgramExecutionBuilder)     4       *
@@ -521,7 +519,6 @@ __VERIFIER_nondet_pointer() has type int        4       *
 ClassCastException: ResultExpressionListRec     3       *
 cvar == null (pointer as function parameter)    3       cvar
 double                                          3       *
-free with field access                          3       *
 #ifndef                                         2       ---
 Address of something that is not on the heap    2       *
 array dynamic size                              2       *
@@ -530,15 +527,14 @@ assert rop.lrVal.cType instanceof CPointer      2       *
 equals checks for the same object               2       *
 function parameter addressoffed                 2       *
 function void                                   2       *
-getWriteCall type                               2       *
 global struct initialization                    2       globalStructInit
 integer literal implicit cast                   2       *
-LIST_HEAD                                       2       *
+memory access with struct operation             2       memoryAccessStruct
 pointer as offset                               2       *
 pointer vs. array                               2       *
-struct pointer dereference                      2       structPointerDereference
+auxVar wrong type                               2       auxVarType
 array initialization                            1       arrayInitialization
-assert mapped.typeDeclarations.isEmpty()        1       *
+assert mapped.typeDeclarations.isEmpty()        1       **
 cast int pointer to uint                        1       *
 dereferencing fails                             1       *
 function parameter (a pointer) not recognized   1       *
