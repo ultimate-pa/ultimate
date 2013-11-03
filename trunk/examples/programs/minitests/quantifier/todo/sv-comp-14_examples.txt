@@ -104,16 +104,12 @@ main7-*
 
 -- Translation:
 
-25 union
-m0_false_drivers-block-*, m0_false_drivers-net-slip-*,
-m0_false_drivers-staging-*, m0_false_drivers-usb-*,
-m0_true_drivers-hwmon-pmbus-*, m0_true_drivers-net-forcedeth-*,
-m0_true_drivers-net-slip-*, m0_true_drivers-staging-*,
-m0_true_drivers-usb-*, m0_true_sound-core-*, main3_true_arch-*, main4_true_*
-
 3 array in struct in struct
 m0_false_drivers-hwmon-*, m0_true_drivers-hwmon-ibmpex-*,
 m0_true_drivers-hwmon-s3c-*
+
+1 assert mapped.typeDeclarations.isEmpty()
+m0_false_drivers-net-b44-*
 
 31 incomplete struct
 m0_false_drivers-media-*, m0_false_drivers-scsi-*, m0_false_sound-*,
@@ -123,38 +119,54 @@ m0_true_drivers-media-video-cx88-cx8802-ko-*, m0_true_drivers-net-myri10ge-*,
 m0_true_sound-oss-*, main0_*, main1_*, main2_*, main3_false_*,
 main3_true_drivers-*, main4_false_*, main7_*, main8_*
 
-1 assert mapped.typeDeclarations.isEmpty()
-m0_false_drivers-net-b44-*
-
 2 incomplete types
 m0_true_drivers-media-video-cx88-cx88-blackbird-*
+
+25 union
+m0_false_drivers-block-*, m0_false_drivers-net-slip-*,
+m0_false_drivers-staging-*, m0_false_drivers-usb-*,
+m0_true_drivers-hwmon-pmbus-*, m0_true_drivers-net-forcedeth-*,
+m0_true_drivers-net-slip-*, m0_true_drivers-staging-*,
+m0_true_drivers-usb-*, m0_true_sound-core-*, main3_true_arch-*, main4_true_*
 
 ---
 
 ldv-consumption (164):
 
--- Translation:
-
-164 pointer function
-- all -
+TODO
 
 ---
 
-ldv-linux-3.0 (41):
+[10266] ldv-linux-3.0 (41):
 
 -- Translation:
 
-41 pointer function
-- all -
+15 union
+module_get_put-drivers-block-drbd-*, module_get_put-drivers-block-loop*,
+module_get_put-drivers-block-pktcdvd*, module_get_put-drivers-bluetooth-*,
+module_get_put-drivers-char-*, module_get_put-drivers-gpu-*,
+module_get_put-drivers-net-atl1c-*, module_get_put-drivers-net-ppp_*,
+module_get_put-drivers-scsi-*, module_get_put-drivers-tty-*,
+usb_urb-drivers-media-video-*, usb_urb-drivers-usb-misc-*,
+usb_urb-drivers-vhost-*
+
+26 incomplete struct
+module_get_put-drivers-atm-*, module_get_put-drivers-block-paride*,
+module_get_put-drivers-hid-*, module_get_put-drivers-hwmon-*,
+module_get_put-drivers-isdn-*, module_get_put-drivers-net-pppox*,
+module_get_put-drivers-net-sis900*, module_get_put-drivers-net-wan-*,
+module_get_put-drivers-staging-*, module_get_put-drivers-usb-*,
+module_get_put-drivers-video-*, usb_urb-drivers-hid-*,
+usb_urb-drivers-input-*, usb_urb-drivers-media-dvb-*, usb_urb-drivers-misc-*,
+usb_urb-drivers-mtd-*, usb_urb-drivers-net-*, usb_urb-drivers-scsi-*,
+usb_urb-drivers-staging-*, usb_urb-drivers-usb-serial-*, usb_urb-drivers-uwb-*,
+usb_urb-drivers-video-*
 
 ---
 
 ldv-linux-3.4-simple (1155):
 
--- Translation:
-
-1155 pointer function
-- all -
+TODO
 
 ---
 
@@ -429,10 +441,7 @@ test-0102_*
 
 product-lines (597):
 
--- Translation:
-
-597 #pragma
-- all -
+TODO
 
 ---
 
@@ -490,9 +499,9 @@ Matthias:
 StrongestPostDeterminizer.reviewInductiveInternal()
 
 
+union                                           82      ---
+incomplete struct                               70      incompleteStruct
 incomplete types                                55      *
-union                                           67      ---
-incomplete struct                               44      incompleteStruct
 array cast fail                                 12      *
 empty identifier                                12      *
 LiveVariables NPE                               12      *
