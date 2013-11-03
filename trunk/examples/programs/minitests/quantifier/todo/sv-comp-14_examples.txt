@@ -100,12 +100,34 @@ main7-*
 
 ---
 
-ldv-commit-tester (62):
+[10265] ldv-commit-tester (62):
 
 -- Translation:
 
-62 pointer function
-- all -
+25 union
+m0_false_drivers-block-*, m0_false_drivers-net-slip-*,
+m0_false_drivers-staging-*, m0_false_drivers-usb-*,
+m0_true_drivers-hwmon-pmbus-*, m0_true_drivers-net-forcedeth-*,
+m0_true_drivers-net-slip-*, m0_true_drivers-staging-*,
+m0_true_drivers-usb-*, m0_true_sound-core-*, main3_true_arch-*, main4_true_*
+
+3 array in struct in struct
+m0_false_drivers-hwmon-*, m0_true_drivers-hwmon-ibmpex-*,
+m0_true_drivers-hwmon-s3c-*
+
+31 incomplete struct
+m0_false_drivers-media-*, m0_false_drivers-scsi-*, m0_false_sound-*,
+m0_true_drivers-media-radio-*, m0_true_drivers-media-rc-*,
+m0_true_drivers-media-video-cx88-cx88-dvb-*,
+m0_true_drivers-media-video-cx88-cx8802-ko-*, m0_true_drivers-net-myri10ge-*,
+m0_true_sound-oss-*, main0_*, main1_*, main2_*, main3_false_*,
+main3_true_drivers-*, main4_false_*, main7_*, main8_*
+
+1 assert mapped.typeDeclarations.isEmpty()
+m0_false_drivers-net-b44-*
+
+2 incomplete types
+m0_true_drivers-media-video-cx88-cx88-blackbird-*
 
 ---
 
@@ -217,7 +239,7 @@ ex3_*,
 1 StringLiteral
 test_overflow.c_true.cil
 
-2 struct rex.declCTypes.size() == rex.decl.size()
+2 array in struct in struct
 test23_*
 
 2 type error: expected pointer, got INT
@@ -372,7 +394,7 @@ test-0232_*, test-0504_*, test-0513_*
 test-0219_true, test-0220_true, test-0234_*, test-0235_*, test-0236_*,
 test-0237_*
 
-3 struct rex.declCTypes.size() == rex.decl.size()
+3 array in struct in struct
 test-0158_*
 
 2 TypeHandler.visit(Dispatcher main, IASTElaboratedTypeSpecifier node)
@@ -389,7 +411,7 @@ test-0102_*
 
 ---
 
-[10224] ntdrivers (10):
+[10265] ntdrivers (10):
 
 -- Translation:
 
@@ -398,7 +420,7 @@ test-0102_*
 
 ---
 
-[10224] ntdrivers-simplified (10):
+[10265] ntdrivers-simplified (10):
 
 10 unknown
 - all -
@@ -468,21 +490,19 @@ Matthias:
 StrongestPostDeterminizer.reviewInductiveInternal()
 
 
-pointer function                                ?       ---
-[#pragma                                        597]    *
-incomplete types                                53      *
-union                                           42      ---
-incomplete struct                               13      incompleteStruct
+incomplete types                                55      *
+union                                           67      ---
+incomplete struct                               44      incompleteStruct
 array cast fail                                 12      *
 empty identifier                                12      *
 LiveVariables NPE                               12      *
 auxVarMap                                       10      *
 getWriteCall() rType == null                    9       *
+array in struct in struct                       8       arrayInStructInStruct
 pointer void assignment int                     8       *
 bit complement                                  7       bitComplement
 HeapLValues must be converted to RValue first.  6       *
 bitvector operation with non-integer            5       bitvectorOperationNoInt
-struct rex.declCTypes.size() == rex.decl.size() 5       *
 #define -> error                                4       define
 ResultExpression.switchToRValue() (char)        4       *
 pointer void return value                       4       *
@@ -509,6 +529,7 @@ pointer as offset                               2       *
 pointer vs. array                               2       *
 struct pointer dereference                      2       structPointerDereference
 array initialization                            1       arrayInitialization
+assert mapped.typeDeclarations.isEmpty()        1       *
 cast int pointer to uint                        1       *
 dereferencing fails                             1       *
 function parameter (a pointer) not recognized   1       *
