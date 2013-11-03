@@ -8,7 +8,7 @@ import java.util.Map;
 import de.uni_freiburg.informatik.ultimate.LTL2aut.ast.*;
 
 /**
- * Substitute the identiefiers inside an AST of a Promela Büchi automaton description
+ * Substitute the identifiers inside an AST of a Promela Büchi automaton description
  * by the correct atomic propositions.
  * 
  * @author Langenfeld
@@ -22,8 +22,8 @@ public class SubstituteAPVisitor {
 	
 	/**
 	 * 	Go visit and replace
-	 * @param aps: map Ident->Ast of the atomic propositions
-	 * @param ast: ast of the Promela description of the büchi automaton 
+	 * @param aps: map ident->Ast of the atomic propositions
+	 * @param ast: ast of the Promela description of the Büchi automaton 
 	 */
 	public SubstituteAPVisitor(Map<String, AstNode> aps, AstNode ast)
 	{
@@ -45,6 +45,10 @@ public class SubstituteAPVisitor {
 		}
 	}
 	
+	
+	/*
+	 * search for all occurences of an identiefier known to be an atomic proposition
+	 */
 	private void visit(AstNode node, AstNode parent)
 	{
 		if (node instanceof BoolLiteral)
@@ -65,6 +69,7 @@ public class SubstituteAPVisitor {
 		}
 		else
 		{
+			//blindly visit everything else
 			for(AstNode a: node.getOutgoingNodes())
 				this.visit(a, node);
 		}

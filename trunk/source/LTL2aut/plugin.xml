@@ -5,14 +5,11 @@
          point="de.uni_freiburg.informatik.ultimate.ep.generator">
       <impl class="de.uni_freiburg.informatik.ultimate.LTL2aut.LTL2aut"/>
    </extension>
-   <extension
-         point="org.eclipse.ui.preferencePages">
-      <page
-            category="de.uni_freiburg.informatik.ultimate.gui.preferencepages.ToolsPreferencePage"
-            class="de.uni_freiburg.informatik.ultimate.LTL2aut.preferences.PreferencePage"
-            id="LTL2aut.prefpage"
-            name="LTL2aut">
-      </page>
-   </extension>
+ <extension
+       point="org.eclipse.core.runtime.preferences">
+    <initializer
+          class="de.uni_freiburg.informatik.ultimate.LTL2aut.preferences.PreferenceInitializer">
+    </initializer>
+ </extension>
 
 </plugin>

@@ -12,9 +12,17 @@ import de.uni_freiburg.informatik.ultimate.access.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.access.WalkerOptions;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 
+
+/**
+ * This class reads a definition of a property in ltl and returns 
+ * the AST of the description of the LTL formula as a Buchi automaton.
+ * 
+ * @author Langenfeld
+ *
+ */
 public class DummyLTL2autObserver implements IUnmanagedObserver {
 
-	public AstNode node;
+	public AstNode rootNode;
 	
 	@Override
 	public void init() {
@@ -42,42 +50,56 @@ public class DummyLTL2autObserver implements IUnmanagedObserver {
 
 	@Override
 	public boolean process(IElement root) {
-		try{
-			
+				
+		//code for parsing of input file if this is going to be a source plugin
 		/*m_FileNames.add(file.getName());
-		
 		FileInputStream fs = new FileInputStream(file);*/
-		//String file = "a U [] b \n a: x > y";
-		String file = "[] a \n a: bla = bla";
-		
-		BufferedReader br = new BufferedReader(new InputStreamReader(IOUtils.toInputStream(file)));
-		
-		//read the LTLT formula and pass it to the parser
-		String line = br.readLine();
-		
-		WrapLTL2Never wrap = new WrapLTL2Never();	
-		AstNode node = wrap.ltl2Ast(line);
-		
-		
-		//  get atomic propositions
-		HashMap<String, AstNode> aps = new HashMap<String,AstNode>();
-		line = br.readLine(); 
-		while(line != null){
-			LexerAP lexer = new LexerAP(new InputStreamReader(IOUtils.toInputStream(line)));
-			parserAP p = new parserAP(lexer);
-			AstNode nodea = (AstNode)p.parse().value;			
-			// append node to dictionary of atomic propositions
-			if (nodea instanceof AtomicProposition)
-				aps.put(((AtomicProposition) nodea).getIdent(), nodea.getOutgoingNodes().get(0));
 			
+		//String fileContent = "a U [] b \n a: x > y";
+		//String fileContent = "a U [] b";
+		String fileContent = "[] a";
+		
+		AstNode node;
+		String line;
+		
+		BufferedReader br = new BufferedReader(new InputStreamReader(IOUtils.toInputStream(fileContent)));
+		try{	
+			//read the LTLT formula from the first line and pass it to the parser
 			line = br.readLine();
+	
+			//translate to ba with external tool and get AST
+			WrapLTL2Never wrap = new WrapLTL2Never();	
+			node = wrap.ltl2Ast(line);
+		}catch(Exception e){
+			System.out.println("Something went wrong with ltl2aut");
+			//TODO: log error to console (not implemented because logger breaks tests, rethrowing error breaks interface!)
+			return false;
 		}
-		//substitute aps
-		SubstituteAPVisitor vis = new SubstituteAPVisitor(aps, node);
-		
-		this.node = node;
-		
-		}catch(Exception e){}
+			
+		try{
+			//Read following lines and get Atomic Props
+			HashMap<String, AstNode> aps = new HashMap<String,AstNode>(); //ident -> propostition
+			line = br.readLine(); 
+			while(line != null){
+				LexerAP lexer = new LexerAP(new InputStreamReader(IOUtils.toInputStream(line)));
+				parserAP p = new parserAP(lexer);
+				AstNode nodea = (AstNode)p.parse().value;			
+				// append node to dictionary of atomic propositions
+				if (nodea instanceof AtomicProposition)
+					aps.put(((AtomicProposition) nodea).getIdent(), nodea.getOutgoingNodes().get(0));
+				
+				line = br.readLine();
+			}
+			//substitute props in AST
+			SubstituteAPVisitor vis = new SubstituteAPVisitor(aps, node);
+			
+			this.rootNode = node;
+			
+		}catch(Exception e){
+			System.out.println("Something went wrong parsing");
+			//TODO: log error to console (not implemented because logger breaks tests, rethrowing error breaks interface!)
+			return false;
+		}
 		
 		
 		return false;

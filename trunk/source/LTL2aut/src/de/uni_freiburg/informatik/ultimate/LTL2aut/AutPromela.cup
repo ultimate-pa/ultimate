@@ -27,7 +27,7 @@ claim ::= NEVER LCB stmtlist:s RCB
 		NeverStatement n = new NeverStatement();
 		n.addAllOutgoing(s);
 		RESULT = n;
-		 :};
+		 :}; 
 		
 stmtlist ::= lblock:b1 stmtlist:b2
 		{: 
@@ -76,8 +76,8 @@ prop ::= and:a
 	| LPAR prop:p RPAR
 	{: RESULT = p; :}
 	| ap:a
-	{: RESULT = a; :};
-	
+	{: RESULT = a; :}; 
+	 
 and ::= and:a AND prop:p
 		{: 
 		a.addOutgoing(p);

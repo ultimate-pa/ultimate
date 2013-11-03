@@ -17,6 +17,7 @@ import org.eclipse.core.runtime.preferences.IScopeContext;
 
 import de.uni_freiburg.informatik.ultimate.LTL2aut.ast.AstNode;
 import de.uni_freiburg.informatik.ultimate.LTL2aut.ast.AtomicProposition;
+import de.uni_freiburg.informatik.ultimate.LTL2aut.preferences.PreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.access.IObserver;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceInitializer;
@@ -102,21 +103,18 @@ public class LTL2aut implements IGenerator {
 	}
 
 	@Override
-	public IEclipsePreferences[] getPreferences(IScopeContext cs,
-			IScopeContext is) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
 	public IElement getModel() {
-		return this.obs.node;
+		return this.obs.rootNode;
+	}
+	
+	@Override
+	public IEclipsePreferences[] getPreferences(IScopeContext cs, IScopeContext is) {
+		return new IEclipsePreferences[] {cs.getNode(Activator.PLUGIN_ID)};
 	}
 
 	@Override
 	public UltimatePreferenceInitializer getPreferences() {
-		// TODO Auto-generated method stub
-		return null;
+		return new PreferenceInitializer();
 	}
 
 	/*@Override

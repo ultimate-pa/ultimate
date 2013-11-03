@@ -8,7 +8,8 @@ import java.io.InputStreamReader;
 import org.apache.commons.io.IOUtils;
 
 import de.uni_freiburg.informatik.ultimate.LTL2aut.ast.AstNode;
-import de.uni_freiburg.informatik.ultimate.LTL2aut.preferences.PreferencePage;
+import de.uni_freiburg.informatik.ultimate.LTL2aut.preferences.PreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
 
 /**
  * This class handles the communication of with the external tool 
@@ -44,13 +45,15 @@ public class WrapLTL2Never {
 	 */
 	public String execLTLXBA(String ltlFormula) throws IOException, InterruptedException
 	{
+		UltimatePreferenceStore prefs = new UltimatePreferenceStore(Activator.PLUGIN_ID);
 		String result = "";
 		
 	      String line;
-	      System.out.println(PreferencePage.TOOLLOCATION + PreferencePage.COMMANDLINEARGUMENT.replace("\\","").replace("$1", ltlFormula));
-	      Process p = Runtime.getRuntime().exec( PreferencePage.TOOLLOCATION + PreferencePage.COMMANDLINEARGUMENT.replace("\\","").replace("$1", ltlFormula));
-	      BufferedReader bri = new BufferedReader
-	        (new InputStreamReader(p.getInputStream()));
+	      System.out.println(  prefs.getString(PreferenceInitializer.LABEL_TOOLLOCATION)+" "
+	    		  + prefs.getString(PreferenceInitializer.LABEL_TOOLARGUMENT).replace("$1", ltlFormula));
+	      Process p = Runtime.getRuntime().exec( prefs.getString(PreferenceInitializer.LABEL_TOOLLOCATION)+" "
+	    		  + prefs.getString(PreferenceInitializer.LABEL_TOOLARGUMENT).replace("$1", ltlFormula));
+	      BufferedReader bri = new BufferedReader(new InputStreamReader(p.getInputStream()));
 	      
 	      while ((line = bri.readLine()) != null) {
 	        //System.out.println(line);

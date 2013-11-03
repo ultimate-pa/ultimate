@@ -28,7 +28,7 @@ import java_cup.runtime.*;
       private Symbol symbol(int type, int value) {
     return new Symbol(type, yyline, yycolumn, value);
   }
-%}
+%} 
 
 LineTerminator = \r|\n|\r\n
 InputCharacter = [^\r\n]

@@ -21,7 +21,7 @@ public class ParserTest extends TestCase {
 					+ 	"	{\n"
 					+ 	"	Node_1:\n"
 					+ 	"		if\n"
-					+ 	"		::  (((a && (!b) && c) || d || (!f))) ->  goto bla\n"
+					+ 	"		::  (((a && (!b) && c) || ((!b) && c && d) || (!f))) ->  goto bla\n"
 					+	 "		:: 	(d) ->  goto blubber\n"
 					+ 	"		fi;\n"
 					+ 	"	bla:\n"
@@ -32,6 +32,8 @@ public class ParserTest extends TestCase {
 			Lexer lexer = new Lexer(file);
 			parser p = new parser(lexer);
 			AstNode n = (AstNode)p.parse().value;
+			
+			System.out.println(n.toString());
 	
 			assertEquals(code.replaceAll("\\s", "")
 					, n.toString().replaceAll("\\s", ""));
