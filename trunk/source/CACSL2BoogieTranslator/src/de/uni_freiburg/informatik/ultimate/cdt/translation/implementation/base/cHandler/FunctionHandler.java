@@ -46,6 +46,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.C
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.TarjanSCC;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
+import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
 import de.uni_freiburg.informatik.ultimate.model.ILocation;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLNode;
 import de.uni_freiburg.informatik.ultimate.model.annotations.Overapprox;
@@ -74,6 +75,9 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableLHS;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.Activator;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.TranslationMode;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.PreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.result.Check;
 import de.uni_freiburg.informatik.ultimate.result.SyntaxErrorResult.SyntaxErrorType;
 
@@ -118,7 +122,7 @@ public class FunctionHandler {
 	private HashMap<String, CType> procedureToReturnCType;
 	private HashMap<String, ArrayList<CType>> procedureToParamCType;
 	
-	private final static boolean m_CheckMemoryLeakAtEndOfMain = false;
+	private final boolean m_CheckMemoryLeakAtEndOfMain;
 
 	/**
 	 * Constructor.
@@ -132,6 +136,9 @@ public class FunctionHandler {
 		this.procedureToReturnCType = new HashMap<String, CType>();
 		this.procedureToParamCType = new HashMap<String, ArrayList<CType>>(); 
 		this.modifiedGlobalsIsUserDefined = new HashSet<String>();
+		m_CheckMemoryLeakAtEndOfMain = 
+				(new UltimatePreferenceStore(Activator.s_PLUGIN_ID)).
+				getBoolean(PreferenceInitializer.LABEL_CHECK_MemoryLeakInMain);
 	}
 
 	/**

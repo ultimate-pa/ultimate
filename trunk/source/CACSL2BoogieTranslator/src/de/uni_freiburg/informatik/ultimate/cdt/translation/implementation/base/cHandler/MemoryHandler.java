@@ -6,12 +6,10 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 
 import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
-import org.eclipse.cdt.core.dom.ast.IASTDeclSpecifier;
-import org.eclipse.cdt.core.dom.ast.IASTExpression;
-import org.eclipse.cdt.core.dom.ast.IASTLiteralExpression;
 
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CACSLLocation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CHandler;
@@ -30,10 +28,10 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LocalLValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ResultExpression;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ResultTypes;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.BoogieASTUtil;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
+import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
 import de.uni_freiburg.informatik.ultimate.model.ILocation;
 import de.uni_freiburg.informatik.ultimate.model.annotations.Overapprox;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ASTType;
@@ -41,7 +39,6 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayAccessExpressio
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayLHS;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayStoreExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayType;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssertStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssignmentStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Attribute;
@@ -74,6 +71,10 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableLHS;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.Activator;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.PreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.PreferenceInitializer.POINTER_ALLOCATED;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.PreferenceInitializer.POINTER_BASE_VALIDITY;
 import de.uni_freiburg.informatik.ultimate.result.Check;
 import de.uni_freiburg.informatik.ultimate.result.Check.Spec;
 import de.uni_freiburg.informatik.ultimate.result.SyntaxErrorResult.SyntaxErrorType;
@@ -118,12 +119,10 @@ public class MemoryHandler {
 	private static final boolean m_AddImplementation = false;
 	
 	
-	private final byte m_PointerValidity;
-	private final byte m_PointerLength;
-	
-	public static byte IGNORE = 0;
-	public static byte ASSUME = 1;
-	public static byte CHECKandASSUME = 2;
+	private final POINTER_BASE_VALIDITY m_PointerBaseValidity;
+	private final POINTER_ALLOCATED m_PointerAllocated;
+	private final boolean m_CheckFreeValid;
+	private final boolean m_CheckMallocNonNegative;
 	
 
     /**
@@ -131,16 +130,21 @@ public class MemoryHandler {
      * @param checkPointerValidity 
      */
     public MemoryHandler(boolean checkPointerValidity) {
-    	if (checkPointerValidity) {
-    		m_PointerValidity = CHECKandASSUME;
-    		m_PointerLength = CHECKandASSUME;
-    	} else {
-    		m_PointerValidity = IGNORE;
-    		m_PointerLength = IGNORE;
-    	}
         this.sizeofConsts = new HashSet<String>();
         this.axioms = new HashSet<Axiom>();
         this.constants = new HashSet<ConstDeclaration>();
+    	m_PointerBaseValidity = 
+				(new UltimatePreferenceStore(Activator.s_PLUGIN_ID)).
+				getEnum(PreferenceInitializer.LABEL_CHECK_POINTER_VALIDITY, POINTER_BASE_VALIDITY.class);
+    	m_PointerAllocated = 
+				(new UltimatePreferenceStore(Activator.s_PLUGIN_ID)).
+				getEnum(PreferenceInitializer.LABEL_CHECK_POINTER_ALLOC, POINTER_ALLOCATED.class);
+    	m_CheckFreeValid = 
+				(new UltimatePreferenceStore(Activator.s_PLUGIN_ID)).
+				getBoolean(PreferenceInitializer.LABEL_CHECK_FREE_VALID);
+		m_CheckMallocNonNegative = 
+				(new UltimatePreferenceStore(Activator.s_PLUGIN_ID)).
+				getBoolean(PreferenceInitializer.LABEL_CHECK_MallocNonNegative);
     }
 
     /**
@@ -296,15 +300,16 @@ public class MemoryHandler {
             
             ArrayList<Specification> swrite = new ArrayList<Specification>();
             
-            if (m_PointerValidity == CHECKandASSUME || m_PointerValidity == ASSUME) {
+            if (m_PointerBaseValidity == POINTER_BASE_VALIDITY.ASSERTandASSUME 
+            		|| m_PointerBaseValidity == POINTER_BASE_VALIDITY.ASSUME) {
             	// requires #valid[#ptr!base];
             	RequiresSpecification specValid;
-            	if (m_PointerValidity == CHECKandASSUME) {
+            	if (m_PointerBaseValidity == POINTER_BASE_VALIDITY.ASSERTandASSUME) {
             		specValid = new RequiresSpecification(l, false,
                 			new ArrayAccessExpression(l, boolIT, valid,
                 					idcWrite));
             	} else {
-            		assert m_PointerValidity == ASSUME;
+            		assert m_PointerBaseValidity == POINTER_BASE_VALIDITY.ASSUME;
             		specValid = new RequiresSpecification(l, true,
                 			new ArrayAccessExpression(l, boolIT, valid,
                 					idcWrite));
@@ -321,18 +326,19 @@ public class MemoryHandler {
                     new IdentifierExpression(l, SFO.LENGTH),
                     new Expression[] { ptrBase });
             
-            if (m_PointerLength == CHECKandASSUME || m_PointerLength == ASSUME) {
+            if (m_PointerAllocated == POINTER_ALLOCATED.ASSERTandASSUME 
+            		|| m_PointerAllocated == POINTER_ALLOCATED.ASSUME) {
             	// requires #sizeof~$Pointer$ + #ptr!offset <=
             	// #length[#ptr!base];
             	RequiresSpecification specValid;
-            	if (m_PointerLength == CHECKandASSUME) {
+            	if (m_PointerAllocated == POINTER_ALLOCATED.ASSERTandASSUME) {
             		specValid = new RequiresSpecification(l, false,
                 			new BinaryExpression(l, Operator.COMPLEQ,
                 					new BinaryExpression(l, Operator.ARITHPLUS,
                 							new IdentifierExpression(l, SFO.SIZEOF
                 							+ CtypeCompatibleId), ptrOff), length));
             	} else {
-            		assert m_PointerLength == ASSUME;
+            		assert m_PointerAllocated == POINTER_ALLOCATED.ASSUME;
             		specValid = new RequiresSpecification(l, true,
                 			new BinaryExpression(l, Operator.COMPLEQ,
                 					new BinaryExpression(l, Operator.ARITHPLUS,
@@ -415,15 +421,16 @@ public class MemoryHandler {
                     new String[] { value }, ts[i]) };
             ArrayList<Specification> sread = new ArrayList<Specification>();
             
-            if (m_PointerValidity == CHECKandASSUME || m_PointerValidity == ASSUME) {
+            if (m_PointerBaseValidity == POINTER_BASE_VALIDITY.ASSERTandASSUME 
+            		|| m_PointerBaseValidity == POINTER_BASE_VALIDITY.ASSUME) {
             	// requires #valid[#ptr!base];
             	RequiresSpecification specValid;
-            	if (m_PointerValidity == CHECKandASSUME) {
+            	if (m_PointerBaseValidity == POINTER_BASE_VALIDITY.ASSERTandASSUME) {
             		specValid = new RequiresSpecification(l, false,
                 			new ArrayAccessExpression(l, boolIT, valid,
                 					idcWrite));
             	} else {
-            		assert m_PointerValidity == ASSUME;
+            		assert m_PointerBaseValidity == POINTER_BASE_VALIDITY.ASSUME;
             		specValid = new RequiresSpecification(l, true,
                 			new ArrayAccessExpression(l, boolIT, valid,
                 					idcWrite));
@@ -433,18 +440,19 @@ public class MemoryHandler {
             	sread.add(specValid);
             }
             
-            if (m_PointerLength == CHECKandASSUME || m_PointerLength == ASSUME) {
+            if (m_PointerAllocated == POINTER_ALLOCATED.ASSERTandASSUME || 
+            		m_PointerAllocated == POINTER_ALLOCATED.ASSUME) {
             	// requires #sizeof~$Pointer$ + #ptr!offset <=
             	// #length[#ptr!base];
             	RequiresSpecification specValid;
-            	if (m_PointerLength == CHECKandASSUME) {
+            	if (m_PointerAllocated == POINTER_ALLOCATED.ASSERTandASSUME) {
             		specValid = new RequiresSpecification(l, false, new BinaryExpression(l,
                 			Operator.COMPLEQ, new BinaryExpression(l,
                 					Operator.ARITHPLUS,
                 					new IdentifierExpression(l, SFO.SIZEOF
                 							+ CtypeCompatibleId), ptrOff), length));
             	} else {
-            		assert m_PointerLength == ASSUME;
+            		assert m_PointerAllocated == POINTER_ALLOCATED.ASSUME;
             		specValid = new RequiresSpecification(l, true, new BinaryExpression(l,
                 			Operator.COMPLEQ, new BinaryExpression(l,
                 					Operator.ARITHPLUS,
@@ -504,9 +512,9 @@ public class MemoryHandler {
         
         ArrayList<Specification> specFree = new ArrayList<Specification>();
         
-        if (m_PointerValidity == ASSUME || m_PointerValidity == CHECKandASSUME) {
+        if (m_CheckFreeValid) {
         	Check check = new Check(Spec.MEMORY_FREE);
-        	boolean free = (m_PointerValidity == ASSUME);
+        	boolean free = true;
         	RequiresSpecification offsetZero = new RequiresSpecification(
         			tuLoc, free, new BinaryExpression(tuLoc, Operator.COMPEQ, 
         					addrOffset, nr0));
@@ -560,7 +568,7 @@ public class MemoryHandler {
      *            the location for the new nodes.
      * @return declaration and implementation of procedure <code>~malloc</code>
      */
-    private static ArrayList<Declaration> declareMalloc(final ILocation tuLoc) {
+    private ArrayList<Declaration> declareMalloc(final ILocation tuLoc) {
         InferredType pointerIT = new InferredType(Type.Pointer);
         InferredType intIT = new InferredType(Type.Integer);
         InferredType boolIT = new InferredType(Type.Boolean);
@@ -588,40 +596,45 @@ public class MemoryHandler {
                 tuLoc, intIT, res, SFO.POINTER_BASE) };
         Expression bLTrue = new BooleanLiteral(tuLoc, boolIT, true);
         IdentifierExpression size = new IdentifierExpression(tuLoc, intIT, SIZE);
-        Specification[] specMalloc = new Specification[7];
-        specMalloc[0] = new RequiresSpecification(tuLoc, false,
-                new BinaryExpression(tuLoc, Operator.COMPGEQ, size, nr0));
-        specMalloc[1] = new EnsuresSpecification(tuLoc, false,
+        List<Specification> specMalloc = new ArrayList<Specification>();
+        if (m_CheckMallocNonNegative) {
+        	RequiresSpecification nonNegative = new RequiresSpecification(tuLoc,
+        			false, new BinaryExpression(tuLoc, Operator.COMPGEQ, size, nr0));
+        	nonNegative.getPayload().getAnnotations().put(
+        		Check.getIdentifier(), new Check(Check.Spec.MALLOC_NONNEGATIVE));
+        	specMalloc.add(nonNegative);
+        }
+        specMalloc.add(new EnsuresSpecification(tuLoc, false,
                 new BinaryExpression(tuLoc, Operator.COMPEQ,
                         new ArrayAccessExpression(tuLoc, new UnaryExpression(
                                 tuLoc, UnaryExpression.Operator.OLD, valid),
-                                idcMalloc), bLFalse));
-        specMalloc[2] = new EnsuresSpecification(tuLoc, false,
+                                idcMalloc), bLFalse)));
+        specMalloc.add(new EnsuresSpecification(tuLoc, false,
                 new BinaryExpression(tuLoc, Operator.COMPEQ, valid,
                         new ArrayStoreExpression(tuLoc, new UnaryExpression(
                                 tuLoc, UnaryExpression.Operator.OLD, valid),
-                                idcMalloc, bLTrue)));
-        specMalloc[3] = new EnsuresSpecification(tuLoc, false,
+                                idcMalloc, bLTrue))));
+        specMalloc.add(new EnsuresSpecification(tuLoc, false,
                 new BinaryExpression(tuLoc, Operator.COMPEQ,
                         new StructAccessExpression(tuLoc, intIT, res,
-                                SFO.POINTER_OFFSET), nr0));
-        specMalloc[4] = new EnsuresSpecification(tuLoc, false,
+                                SFO.POINTER_OFFSET), nr0)));
+        specMalloc.add(new EnsuresSpecification(tuLoc, false,
                 new BinaryExpression(tuLoc, Operator.COMPNEQ,
                         new StructAccessExpression(tuLoc, intIT, res,
-                                SFO.POINTER_BASE), nr0));
-        specMalloc[5] = new EnsuresSpecification(tuLoc, false,
+                                SFO.POINTER_BASE), nr0)));
+        specMalloc.add(new EnsuresSpecification(tuLoc, false,
                 new BinaryExpression(tuLoc, Operator.COMPEQ, length,
                         new ArrayStoreExpression(tuLoc, new UnaryExpression(
                                 tuLoc, UnaryExpression.Operator.OLD, length),
-                                idcMalloc, size)));
-        specMalloc[6] = new ModifiesSpecification(tuLoc, false, new VariableLHS[] {
+                                idcMalloc, size))));
+        specMalloc.add(new ModifiesSpecification(tuLoc, false, new VariableLHS[] {
                 new VariableLHS(tuLoc, SFO.VALID), 
-                new VariableLHS(tuLoc, SFO.LENGTH) });
+                new VariableLHS(tuLoc, SFO.LENGTH) }));
         decl.add(new Procedure(tuLoc, new Attribute[0], SFO.MALLOC,
                 new String[0], new VarList[] { new VarList(tuLoc,
                         new String[] { SIZE }, intType) },
                 new VarList[] { new VarList(tuLoc, new String[] { SFO.RES },
-                        POINTER_TYPE) }, specMalloc, null));
+                        POINTER_TYPE) }, specMalloc.toArray(new Specification[0]), null));
         if (m_AddImplementation) {
         	// procedure ~malloc(~size:int) returns (#res:pointer) {
         	// var ~addr : pointer;

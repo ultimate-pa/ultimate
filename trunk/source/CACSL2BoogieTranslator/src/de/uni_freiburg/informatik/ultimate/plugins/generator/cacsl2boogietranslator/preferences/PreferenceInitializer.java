@@ -8,6 +8,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietransla
 
 public class PreferenceInitializer extends UltimatePreferenceInitializer {
 
+
 	@Override
 	protected UltimatePreferenceItem<?>[] initDefaultPreferences() {
 		return new UltimatePreferenceItem<?>[] {
@@ -16,9 +17,24 @@ public class PreferenceInitializer extends UltimatePreferenceInitializer {
 						TranslationMode.values()),
 				new UltimatePreferenceItem<String>(LABEL_MAINPROC, "",
 						PreferenceType.String),
+				new UltimatePreferenceItem<POINTER_BASE_VALIDITY>(
+						LABEL_CHECK_POINTER_VALIDITY, 
+							POINTER_BASE_VALIDITY.ASSERTandASSUME,
+							PreferenceType.Combo, POINTER_BASE_VALIDITY.values()),
+				new UltimatePreferenceItem<POINTER_ALLOCATED>(
+							LABEL_CHECK_POINTER_ALLOC, 
+							POINTER_ALLOCATED.ASSERTandASSUME,
+							PreferenceType.Combo, POINTER_ALLOCATED.values()),
 				new UltimatePreferenceItem<Boolean>(
-						LABEL_CHECK_POINTER_VALIDITY, false,
-						PreferenceType.Boolean), };
+						LABEL_CHECK_FREE_VALID, true,
+						PreferenceType.Boolean),
+				new UltimatePreferenceItem<Boolean>(
+						LABEL_CHECK_MemoryLeakInMain, true,
+						PreferenceType.Boolean),
+				new UltimatePreferenceItem<Boolean>(
+						LABEL_CHECK_MallocNonNegative, true,
+						PreferenceType.Boolean) 
+		};
 	}
 
 	@Override
@@ -33,6 +49,15 @@ public class PreferenceInitializer extends UltimatePreferenceInitializer {
 
 	public static final String LABEL_MODE = "Translation Mode:";
 	public static final String LABEL_MAINPROC = "Checked method. Library mode if empty.";
-	public static final String LABEL_CHECK_POINTER_VALIDITY = "Check if pointer is valid before each access";
+	public static final String LABEL_CHECK_POINTER_VALIDITY = "Pointer base address is valid at dereference";
+	public enum POINTER_BASE_VALIDITY { IGNORE, ASSUME, ASSERTandASSUME }
+	public static final String LABEL_CHECK_POINTER_ALLOC = "Pointer to allocated memory at dereference";
+	public enum POINTER_ALLOCATED { IGNORE, ASSUME, ASSERTandASSUME }
+	public static final String LABEL_CHECK_FREE_VALID = "Check if freed pointer was valid";
+	public static final String LABEL_CHECK_MemoryLeakInMain = "Check for the main procedure if all allocated memory was freed";
+	public static final String LABEL_CHECK_MallocNonNegative = "Check if the input of malloc is non-negative";
+
+	
+	
 
 }
