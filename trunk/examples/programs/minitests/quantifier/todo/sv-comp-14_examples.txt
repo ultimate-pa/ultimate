@@ -265,7 +265,7 @@ test_union.c_*, test_union_cast-1_*, test_union_cast.c_true_1.cil, test29_*
 
 ---
 
-[10098] list-ext-properties (20):
+[10266] list-ext-properties (20):
 
 1 unknown
 960521-1_false-valid-free
@@ -292,17 +292,17 @@ list_*, simple_*
 
 ---
 
-[10219] list-properties (17):
+[10270] list-properties (17):
 
 6 empty identifier
 *.cil
 
-11 incomplete types
-alternating_list_false, alternating_list_true
+11 typedef hides inner struct
+- all others -
 
 ---
 
-[10224] locks (13):
+[10270] locks (13):
 
 13 unknown
 - all -
@@ -442,13 +442,11 @@ TODO
 
 ---
 
-[10224] recursive (35):
+[10270] recursive (35):
 
-2 overapproximation flag 
-EvenOdd03_false, McCarthy91_false,
-
-2 working
-gcd01_true, gcd
+8 working
+Ackermann02_false, Ackermann_false, Addition02_false, Addition_false,
+EvenOdd03_false, gcd01_true, gcd, McCarthy91_false
 
 26 unknown
 - all others -
@@ -457,9 +455,6 @@ gcd01_true, gcd
 
 1 implementation
 Fibonacci04_false
-
-4 value == null (RcfgProgramExecutionBuilder)
-Ackermann02_false, Ackermann_false, Addition02_false, Addition_false
 
 ---
 
@@ -498,7 +493,8 @@ StrongestPostDeterminizer.reviewInductiveInternal()
 
 union                                           82      ---
 incomplete struct                               70      incompleteStruct
-incomplete types                                55      **
+incomplete types                                44      **
+typedef hides inner struct                      17      typedefHidesInnerStruct
 empty identifier                                12      **
 array in struct in struct                       11      arrayInStructInStruct
 auxVarMap                                       10      *
@@ -507,13 +503,11 @@ getWriteCall() rType == null                    9       *
 pointer void assignment int                     8       *
 bit complement                                  7       bitComplement
 struct pointer dereference                      6       structPointerDereference
-typedef hides inner struct                      6       typedefHidesInnerStruct
 bitvector operation with non-integer            5       bitvectorOperationNoInt
 #define -> error                                4       define
 HeapLValues must be converted to RValue first.  4       *
 ResultExpression.switchToRValue() (char)        4       *
 pointer void return value                       4       *
-value == null (RcfgProgramExecutionBuilder)     4       *
 void pointer addressoffed                       4       voidPointerAddressof
 __VERIFIER_nondet_pointer() has type int        4       *
 ClassCastException: ResultExpressionListRec     3       *
