@@ -221,7 +221,7 @@ public class RelevantVariables {
 		Set<BoogieVar> modifiableGlobals = 
 				m_TraceWithFormulas.getGlobalVarAssignment(i).getOutVars().keySet();
 		Set<BoogieVar> oldVarsOfModifiableGlobals = 
-				m_TraceWithFormulas.getGlobalVarAssignment(i).getOutVars().keySet();
+				m_TraceWithFormulas.getOldVarAssignment(i).getOutVars().keySet();
 		Set<BoogieVar> varsThatWeHaveToAdd = new HashSet<BoogieVar>();
 		for (BoogieVar bv : relevantVariablesBeforeCall) {
 			if (bv.isGlobal()) {
