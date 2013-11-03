@@ -69,6 +69,7 @@ public class PartialQuantifierElimination {
 	
 	public static Term elim(Script script, int quantifier, 
 			final Set<TermVariable> eliminatees, final Term term) {
+		Set<TermVariable> originalEliminatees = new HashSet(eliminatees);
 
 		Set<TermVariable> occuringVars = 
 				new HashSet<TermVariable>(Arrays.asList(term.getFreeVars()));
@@ -103,9 +104,9 @@ public class PartialQuantifierElimination {
 		
 		
 		// apply Destructive Equality Resolution
+		Term termAfterDER;
 		{
 			Set<TermVariable> remainingAfterDER = new HashSet<TermVariable>();
-			Term termAfterDER;
 			Term[] oldParams;
 			if (quantifier == QuantifiedFormula.EXISTS) {
 				oldParams = getDisjuncts(result);
@@ -137,9 +138,9 @@ public class PartialQuantifierElimination {
 		
 		
 		// apply Unconnected Parameter Deletion
+		Term termAfterUPD = null;
 		if (USE_UPD) {
 			Set<TermVariable> remainingAfterUPD = new HashSet<TermVariable>();
-			Term termAfterUPD = null;
 			Term[] oldParams;
 			if (quantifier == QuantifiedFormula.EXISTS) {
 				oldParams = getDisjuncts(result);
@@ -211,10 +212,15 @@ public class PartialQuantifierElimination {
 		result = (new SimplifyDDA(script)).getSimplifiedTerm(result);
 		eliminatees.retainAll(Arrays.asList(result.getFreeVars()));
 		
+		assert Arrays.asList(result.getFreeVars()).containsAll(eliminatees) : 
+			"superficial variables";
+		
 		if (!eliminateesBeforeSOS.containsAll(eliminatees)) {
 			//SOS introduced new variables that should be eliminated
-			result = elim(script, quantifier, eliminatees, result); 
+			result = elim(script, quantifier, eliminatees, result);
 		} 
+		assert Arrays.asList(result.getFreeVars()).containsAll(eliminatees) : 
+			"superficial variables";
 		return result;
 	}
 	
