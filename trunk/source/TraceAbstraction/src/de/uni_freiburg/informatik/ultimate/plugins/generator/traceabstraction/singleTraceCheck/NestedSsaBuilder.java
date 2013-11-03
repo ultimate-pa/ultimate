@@ -269,6 +269,10 @@ public class NestedSsaBuilder {
 				initOldVarsVV.versionInVars();
 				startOfCallingContextStack.push(startOfCallingContext);
 				startOfCallingContext = i;
+				
+				currentVersionStack.push(currentLocalAndOldVarVersion);
+				currentLocalAndOldVarVersion = new HashMap<BoogieVar,Term>();
+				
 				initOldVarsVV.versionAssignedVars(i);
 				m_Ssa.setOldVarAssignmentAtPos(i, initOldVarsVV.getVersioneeredTerm());
 				m_Variable2Constant.setOldVarAssignmentAtPos(i, initOldVarsVV.getSubstitutionMapping());
@@ -280,8 +284,7 @@ public class NestedSsaBuilder {
 				initGlobalVarsVV.versionAssignedVars(i);
 				m_Ssa.setGlobalVarAssignmentAtPos(i, initGlobalVarsVV.getVersioneeredTerm());
 				m_Variable2Constant.setGlobalVarAssignmentAtPos(i, initGlobalVarsVV.getSubstitutionMapping());
-				currentVersionStack.push(currentLocalAndOldVarVersion);
-				currentLocalAndOldVarVersion = new HashMap<BoogieVar,Term>();
+
 			}
 			if (m_Formulas.getTrace().isReturnPosition(i)) {
 				Return ret = (Return) symbol;
