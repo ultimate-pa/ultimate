@@ -16,6 +16,7 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.TransFormula;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CfgBuilder.GotoEdge;
@@ -33,16 +34,18 @@ public class LiveVariables {
 	private Set<Term>[] m_LiveConstants;
 	private Set<Term>[] m_ForwardLiveConstants;
 	private Set<Term>[] m_BackwardLiveConstants;
+	//m_LiveVariables[i] are the live variables _before_ statements i
 	private Set<BoogieVar>[] m_LiveVariables;
 	private Map<Term,BoogieVar> m_Constants2BoogieVar;
 	private ModifiableNestedFormulas<Map<TermVariable,Term>, Map<TermVariable,Term>> m_TraceWithConstants;
 	private Map<BoogieVar, TreeMap<Integer, Term>> m_IndexedVarRepresentative;
 	private SmtManager m_SmtManager;
+	private ModifiableGlobalVariableManager m_modifiableGlobals;
 	
 	public LiveVariables(ModifiableNestedFormulas<Map<TermVariable,Term>, Map<TermVariable,Term>> traceWithConstants,
 			Map<Term,BoogieVar> constants2BoogieVar,
 			Map<BoogieVar, TreeMap<Integer, Term>> indexedVarRepresentative,
-			SmtManager smtManager) {
+			SmtManager smtManager, ModifiableGlobalVariableManager modifiedGlobals) {
 		// Initialize members
 		m_Constants2BoogieVar = constants2BoogieVar;
 		m_TraceWithConstants = traceWithConstants;
@@ -55,6 +58,7 @@ public class LiveVariables {
 		m_BackwardLiveConstants = new Set[m_ForwardLiveConstants.length];
 		m_LiveConstants = new Set[m_ForwardLiveConstants.length];
 		m_LiveVariables = new Set[m_ForwardLiveConstants.length];
+		m_modifiableGlobals = modifiedGlobals;
 		
 		computeLiveVariables();
 	}
@@ -157,7 +161,57 @@ public class LiveVariables {
 			}
 			m_LiveVariables[i] = liveVars;
 		}
+		for (int i = 1; i < m_LiveConstants.length-1; i++) {
+			if (m_TraceWithConstants.getTrace().isCallPosition(i-1)) {
+				if(!m_TraceWithConstants.getTrace().isPendingCall(i-1)) {
+					addNonModifiableGlobalsAlongCalledProcedure(m_LiveVariables[i-1], i-1);
+				}
+			}
+		}
 	}
+	
+	
+	
+	/**
+	 * Relevant variables directly before the call that are global are also 
+	 * relevant during the whole procedure. Variables that are modifiable by the
+	 * procedure (and corresponding oldvars) have already been added (we have
+	 * to add the others.  
+	 */
+	private void addNonModifiableGlobalsAlongCalledProcedure(
+			Set<BoogieVar> relevantVariablesBeforeCall, int i) {
+		assert m_TraceWithConstants.getTrace().isCallPosition(i);
+		assert !m_TraceWithConstants.getTrace().isPendingCall(i);
+		Call call = (Call) m_TraceWithConstants.getTrace().getSymbol(i);
+		String proc = call.getCallStatement().getMethodName();
+		Set<BoogieVar> modifiableGlobals = 
+				m_modifiableGlobals.getGlobalVarsAssignment(proc).getOutVars().keySet();
+		Set<BoogieVar> oldVarsOfModifiableGlobals = 
+				m_modifiableGlobals.getOldVarsAssignment(proc).getOutVars().keySet();
+		Set<BoogieVar> varsThatWeHaveToAdd = new HashSet<BoogieVar>();
+		for (BoogieVar bv : relevantVariablesBeforeCall) {
+			if (bv.isGlobal()) {
+				if (bv.isOldvar()) {
+					if (!oldVarsOfModifiableGlobals.contains(bv)) {
+						varsThatWeHaveToAdd.add(bv);
+					}
+				} else {
+					if (!modifiableGlobals.contains(bv)) {
+						varsThatWeHaveToAdd.add(bv);
+					}
+				}
+			}
+		}
+		if (!varsThatWeHaveToAdd.isEmpty()) {
+			int returnPosition = m_TraceWithConstants.getTrace().getReturnPosition(i);
+			for (int pos = i+1; pos<=returnPosition; pos++) {
+				assert m_LiveVariables[pos-1].containsAll(varsThatWeHaveToAdd);
+				m_LiveVariables[pos].addAll(varsThatWeHaveToAdd);
+			}
+		}
+	}
+	
+	
 
 	
 	/**
