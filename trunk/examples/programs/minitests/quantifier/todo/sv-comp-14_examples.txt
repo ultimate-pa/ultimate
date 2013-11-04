@@ -6,9 +6,9 @@ jain_1_safe
 2 overapproximation flag
 modulus_*, parity_*
 
-21 unknown
+26 unknown
 gcd_2_*, gcd_3_*, gcd_4_*, interleave_*, jain_2_*, jain_4_*, jain_5_*, jain_6_*,
-jain_7_*, s3_*
+jain_7_*, s3_*, soft_*
 
 1 TraceChecker.getFailurePath()
 gcd_1_*
@@ -18,9 +18,6 @@ gcd_1_*
 5 bitvector operation with non-integer
 byte_add_*, num_*
 
-5 bit complement
-soft_*
-
 ---
 
 [10251] bitvector-regression (13):
@@ -28,14 +25,14 @@ soft_*
 4 working
 pointer_extension3_*, pointer_extension_*
 
+2 no result
+integerpromotion_*
+
 7 wrong result
 implicitunsignedconversion_*, pointer_extension2_*, signextension2_*,
 signextension_*
 
 -- Translation:
-
-2 bit complement
-integerpromotion_*
 
 1 implicit cast (float to int)
 implicitfloatconversion_*
@@ -473,7 +470,6 @@ typedef hides inner struct                      17      typedefHidesInnerStruct
 empty identifier                                13      *
 array in struct in struct                       9       arrayInStructInStruct
 getWriteCall() rType == null                    9       *
-bit complement                                  7       bitComplement
 type error: expected pointer, got INT           7       pointerTypeError
 struct pointer dereference                      6       structPointerDereference
 #define -> error                                5       define
