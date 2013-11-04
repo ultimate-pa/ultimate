@@ -132,7 +132,7 @@ public class CStruct extends CType {
         if (fNames.length != oStruct.fNames.length) {
             return false;
         }
-        for (int i = fNames.length - 1; i >= 0; ++i) {
+        for (int i = fNames.length - 1; i >= 0; --i) {
             if (!(fNames[i].equals(oStruct.fNames[i]))) {
                 return false;
             }
@@ -140,7 +140,7 @@ public class CStruct extends CType {
         if (fTypes.length != oStruct.fTypes.length) {
             return false;
         }
-        for (int i = fTypes.length - 1; i >= 0; ++i) {
+        for (int i = fTypes.length - 1; i >= 0; --i) {
             if (!(fTypes[i].equals(oStruct.fTypes[i]))) {
                 return false;
             }

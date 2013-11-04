@@ -118,7 +118,7 @@ public class CEnum extends CType {
         if (fNames.length != oEnum.fNames.length) {
             return false;
         }
-        for (int i = fNames.length - 1; i >= 0; ++i) {
+        for (int i = fNames.length - 1; i >= 0; --i) {
             if (!(fNames[i].equals(oEnum.fNames[i]))) {
                 return false;
             }
@@ -126,7 +126,7 @@ public class CEnum extends CType {
         if (fValues.length != oEnum.fValues.length) {
             return false;
         }
-        for (int i = fValues.length - 1; i >= 0; ++i) {
+        for (int i = fValues.length - 1; i >= 0; --i) {
             if (!(fValues[i].equals(oEnum.fValues[i]))) {
                 return false;
             }

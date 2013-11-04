@@ -143,7 +143,7 @@ public class CArray extends CType {
         if (dimensions.length != oArr.dimensions.length) {
             return false;
         }
-        for (int i = dimensions.length - 1; i >= 0; ++i) {
+        for (int i = dimensions.length - 1; i >= 0; --i) {
             if (!(dimensions[i].equals(oArr.dimensions[i]))) {
                 return false;
             }
