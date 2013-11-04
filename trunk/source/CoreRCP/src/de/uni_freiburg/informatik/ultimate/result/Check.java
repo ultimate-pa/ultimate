@@ -59,6 +59,10 @@ public class Check extends AbstractAnnotations {
 	     */
 	    MEMORY_FREE,
 	    /**
+	     * Free of unallocated pointer.
+	     */
+	    MALLOC_NONNEGATIVE,
+	    /**
 	     * Error label reachable. 
 	     */
 	    ERROR_LABEL,
@@ -106,6 +110,8 @@ public class Check extends AbstractAnnotations {
 			return "all allocated memory was freed";
 		case MEMORY_FREE:
 			return "free always succeeds";
+		case MALLOC_NONNEGATIVE:
+			return "input of malloc is always non-negative";
 		case ERROR_LABEL:
 			return "ERROR label is not reachable";
 		case UNKNOWN:
@@ -137,6 +143,8 @@ public class Check extends AbstractAnnotations {
 			return "not all allocated memory was freed";
 		case MEMORY_FREE:
 			return "free of unallocated memory possible";
+		case MALLOC_NONNEGATIVE:
+			return "input of malloc could be negative";
 		case ERROR_LABEL:
 			return "ERROR label is reachable";
 		case UNKNOWN:
