@@ -1344,8 +1344,15 @@ public class CHandler implements ICHandler {
 			} else {
 				throw new AssertionError("Address of something that is not on the heap.");
 			}
-		case IASTUnaryExpression.op_alignOf:
 		case IASTUnaryExpression.op_tilde:
+		    List<Overapprox> overappr = new ArrayList<Overapprox>();
+		    overappr.addAll(o.overappr);
+		    overappr.add(new Overapprox(Overapprox.BITVEC, loc));
+            Expression bwexpr = createBitwiseExpression(node.getOperator(),
+                    null, o.lrVal.getValue(), loc);
+            return new ResultExpression(o.stmt, new RValue(bwexpr, o.lrVal.cType),
+                    o.decl, o.auxVars, overappr);
+        case IASTUnaryExpression.op_alignOf:
 		default:
 			String msg = "Unknown or unsupported unary operation: "
 					+ node.getOperator();
@@ -1986,52 +1993,75 @@ public class CHandler implements ICHandler {
 	 */
 	private Expression createBitwiseExpression(int op, Expression left,
 			Expression right, CACSLLocation loc) {
-		String operatorName;
-		switch (op) {
-		case IASTBinaryExpression.op_binaryAnd:
-		case IASTBinaryExpression.op_binaryAndAssign:
-			operatorName = "bitwiseAnd";
-			break;
-		case IASTBinaryExpression.op_binaryOr:
-		case IASTBinaryExpression.op_binaryOrAssign:
-			operatorName = "bitwiseOr";
-			break;
-		case IASTBinaryExpression.op_binaryXor:
-		case IASTBinaryExpression.op_binaryXorAssign:
-			operatorName = "bitwiseXor";
-			break;
-		case IASTBinaryExpression.op_shiftLeft:
-		case IASTBinaryExpression.op_shiftLeftAssign:
-			operatorName = "shiftLeft";
-			break;
-		case IASTBinaryExpression.op_shiftRight:
-		case IASTBinaryExpression.op_shiftRightAssign:
-			operatorName = "shiftRight";
-			break;
-		default:
-			String msg = "Unknown or unsupported arithmetic expression";
-			Dispatcher.error(loc, SyntaxErrorType.UnsupportedSyntax, msg);
-			throw new UnsupportedSyntaxException(msg);
-		}
-		InferredType lt = (InferredType) left.getType();
+	    String operatorName;
+        boolean isUnary = (left == null && op == IASTUnaryExpression.op_tilde);
+        if (isUnary) {
+            operatorName = "bitwiseComplement";
+	    }
+        else {
+    		switch (op) {
+    		case IASTBinaryExpression.op_binaryAnd:
+    		case IASTBinaryExpression.op_binaryAndAssign:
+    			operatorName = "bitwiseAnd";
+    			break;
+    		case IASTBinaryExpression.op_binaryOr:
+    		case IASTBinaryExpression.op_binaryOrAssign:
+    			operatorName = "bitwiseOr";
+    			break;
+    		case IASTBinaryExpression.op_binaryXor:
+    		case IASTBinaryExpression.op_binaryXorAssign:
+    			operatorName = "bitwiseXor";
+    			break;
+    		case IASTBinaryExpression.op_shiftLeft:
+    		case IASTBinaryExpression.op_shiftLeftAssign:
+    			operatorName = "shiftLeft";
+    			break;
+    		case IASTBinaryExpression.op_shiftRight:
+    		case IASTBinaryExpression.op_shiftRightAssign:
+    			operatorName = "shiftRight";
+    			break;
+    		default:
+    			String msg = "Unknown or unsupported arithmetic expression";
+    			Dispatcher.error(loc, SyntaxErrorType.UnsupportedSyntax, msg);
+    			throw new UnsupportedSyntaxException(msg);
+    		}
+        }
 		InferredType rt = (InferredType) right.getType();
-		if (lt.getType() != InferredType.Type.Integer
-				|| rt.getType() != InferredType.Type.Integer) {
-			String msg = "Operands of bitwise operators have to have type int";
-			Dispatcher.error(loc, SyntaxErrorType.IncorrectSyntax, msg);
-			throw new IncorrectSyntaxException(msg);
+		if (! isUnary) {
+    		InferredType lt = (InferredType) left.getType();
+            if (lt.getType() != InferredType.Type.Integer
+    				|| rt.getType() != InferredType.Type.Integer) {
+    			String msg = "Operands of bitwise operators have to have type int";
+    			Dispatcher.error(loc, SyntaxErrorType.IncorrectSyntax, msg);
+    			throw new IncorrectSyntaxException(msg);
+    		}
 		}
 		if (!this.functions.containsKey(operatorName)) {
-			ASTType intType = new PrimitiveType(loc, SFO.INT);
-			VarList a = new VarList(loc, new String[] { "a" }, intType);
-			VarList b = new VarList(loc, new String[] { "b" }, intType);
-			VarList out = new VarList(loc, new String[] { "out" }, intType);
-			FunctionDeclaration d = new FunctionDeclaration(loc,
-					new Attribute[0], "~" + operatorName, new String[0],
-					new VarList[] { a, b }, out);
-			this.functions.put(operatorName, d);
+		    FunctionDeclaration d;
+		    ASTType intType = new PrimitiveType(loc, SFO.INT);
+		    VarList b = new VarList(loc, new String[] { "b" }, intType);
+            VarList out = new VarList(loc, new String[] { "out" }, intType);
+            if (isUnary) {
+                d = new FunctionDeclaration(loc,
+                        new Attribute[0], "~" + operatorName, new String[0],
+                        new VarList[] { b }, out);
+		    }
+		    else {
+    			VarList a = new VarList(loc, new String[] { "a" }, intType);
+    			d = new FunctionDeclaration(loc,
+    					new Attribute[0], "~" + operatorName, new String[0],
+    					new VarList[] { a, b }, out);
+		    }
+		    this.functions.put(operatorName, d);
 		}
-		Expression[] arguments = { left, right };
+		Expression[] arguments = new Expression[isUnary ? 1 : 2];
+		if (isUnary) {
+		    arguments[0] = right;
+		}
+		else {
+		    arguments[0] = left;
+		    arguments[1] = right;
+		}
 		InferredType resultType = new InferredType(InferredType.Type.Integer);
 		return new FunctionApplication(loc, resultType, "~" + operatorName,
 				arguments);
