@@ -211,20 +211,20 @@ public class TypeHandler implements ITypeHandler {
         CACSLLocation loc = new CACSLLocation(node);
         if (node instanceof CASTTypedefNameSpecifier) {
             node = (CASTTypedefNameSpecifier) node;
-            String type = node.getName().getRawSignature();
+            String type = node.getName().toString();
             String id;
             if (node.getParent() instanceof IASTSimpleDeclaration) {
                 id = ((IASTSimpleDeclaration) node.getParent())
-                        .getDeclarators()[0].getName().getRawSignature();
+                        .getDeclarators()[0].getName().toString();
             } else if (node.getParent() instanceof IASTParameterDeclaration) {
                 id = ((IASTParameterDeclaration) node.getParent())
-                        .getDeclarator().getName().getRawSignature();
+                        .getDeclarator().getName().toString();
             } else if (node.getParent() instanceof IASTFunctionDefinition) {
                 id = ((IASTFunctionDefinition) node.getParent())
-                        .getDeclarator().getName().getRawSignature();
+                        .getDeclarator().getName().toString();
             } else if (node.getParent() instanceof IASTTypeId) {
                 id = ((IASTTypeId) node.getParent()).getAbstractDeclarator()
-                        .getName().getRawSignature();
+                        .getName().toString();
             } else {
                 String msg = "The context of this IASTNamedTypeSpecifier is unexpected! ["
                         + node.getParent().getClass() + "]";

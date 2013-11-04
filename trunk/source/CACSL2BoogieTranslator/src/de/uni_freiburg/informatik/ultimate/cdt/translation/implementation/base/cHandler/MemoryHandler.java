@@ -22,6 +22,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CStruct;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.PRIMITIVE;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.IncorrectSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.HeapLValue;
@@ -771,49 +772,68 @@ public class MemoryHandler {
      */
     public ResultExpression getMallocCall(Dispatcher main, FunctionHandler fh,
             Expression size, CACSLLocation loc) {
-        if (!(size.getType() instanceof InferredType)
-                || ((InferredType) size.getType()).getType() != Type.Integer) {
-            String msg = "Invalid parameter for " + SFO.MALLOC;
-            Dispatcher.error(loc, SyntaxErrorType.IncorrectSyntax, msg);
-            throw new IncorrectSyntaxException(msg);
-        }
-        // Further checks are done in the precondition of ~malloc()!
-        // ~malloc(SIZE);
-        ArrayList<Statement> stmt = new ArrayList<Statement>();
-        ArrayList<Declaration> decl = new ArrayList<Declaration>();
-		Map<VariableDeclaration, CACSLLocation> auxVars = 
-				new HashMap<VariableDeclaration, CACSLLocation>();
-		ArrayList<Overapprox> overappr = new ArrayList<Overapprox>();
-        InferredType it = new InferredType(Type.Pointer);
-        Expression[] args = new Expression[] { size };
-        String tmpId = main.nameHandler.getTempVarUID(SFO.AUXVAR.MALLOC);
+    	String tmpId = main.nameHandler.getTempVarUID(SFO.AUXVAR.MALLOC);
         InferredType tmpIType = new InferredType(Type.Pointer);
         VariableDeclaration tVarDecl = SFO.getTempVarVariableDeclaration(tmpId, tmpIType, loc);
-        auxVars.put(tVarDecl, loc);
-        decl.add(tVarDecl);
-        stmt.add(new CallStatement(loc, false, new VariableLHS[] { new VariableLHS(loc, tmpId) },
-                SFO.MALLOC, args));
-        Expression e = new IdentifierExpression(loc, it, tmpId);
-        // add required information to function handler.
-        if (fh.getCurrentProcedureID() != null) {
-            HashSet<String> mgM = new HashSet<String>();
-            mgM.add(SFO.VALID);
-            mgM.add(SFO.LENGTH);
-            if (!fh.getModifiedGlobals().containsKey(SFO.MALLOC)) {
-                fh.getModifiedGlobals().put(SFO.MALLOC, mgM);
-                fh.getCallGraph().put(SFO.MALLOC, new HashSet<String>());
-            }
-            fh.getCallGraph().get(fh.getCurrentProcedureID()).add(SFO.MALLOC);
-        }
-		assert (main.isAuxVarMapcomplete(decl, auxVars));
-//        return new ResultExpression(stmt, new HeapLValue(e), decl, auxVars);
-        return new ResultExpression(stmt, new RValue(e, null), decl, auxVars,
-                overappr);//FIXME pointsToType??
+//        auxVars.put(tVarDecl, loc);
+//        decl.add(tVarDecl);
+//        Expression e = new IdentifierExpression(loc, it, tmpId);
+        
+        ResultExpression mallocRex = getMallocCall(main, fh, size, 
+        		new LocalLValue(new VariableLHS(loc, tmpIType, tmpId), 
+        				new CPointer(new CPrimitive(PRIMITIVE.VOID))), loc);
+        
+        mallocRex.auxVars.put(tVarDecl, loc);
+        mallocRex.decl.add(tVarDecl);
+        
+        
+		assert (main.isAuxVarMapcomplete(mallocRex.decl, mallocRex.auxVars));
+		return mallocRex;
+//        if (!(size.getType() instanceof InferredType)
+//                || ((InferredType) size.getType()).getType() != Type.Integer) {
+//            String msg = "Invalid parameter for " + SFO.MALLOC;
+//            Dispatcher.error(loc, SyntaxErrorType.IncorrectSyntax, msg);
+//            throw new IncorrectSyntaxException(msg);
+//        }
+//        // Further checks are done in the precondition of ~malloc()!
+//        // ~malloc(SIZE);
+//        ArrayList<Statement> stmt = new ArrayList<Statement>();
+//        ArrayList<Declaration> decl = new ArrayList<Declaration>();
+//		Map<VariableDeclaration, CACSLLocation> auxVars = 
+//				new HashMap<VariableDeclaration, CACSLLocation>();
+//		ArrayList<Overapprox> overappr = new ArrayList<Overapprox>();
+//        InferredType it = new InferredType(Type.Pointer);
+//        Expression[] args = new Expression[] { size };
+//        String tmpId = main.nameHandler.getTempVarUID(SFO.AUXVAR.MALLOC);
+//        InferredType tmpIType = new InferredType(Type.Pointer);
+//        VariableDeclaration tVarDecl = SFO.getTempVarVariableDeclaration(tmpId, tmpIType, loc);
+//        auxVars.put(tVarDecl, loc);
+//        decl.add(tVarDecl);
+//        stmt.add(new CallStatement(loc, false, new VariableLHS[] { new VariableLHS(loc, tmpId) },
+//                SFO.MALLOC, args));
+//        Expression e = new IdentifierExpression(loc, it, tmpId);
+//        // add required information to function handler.
+//        if (fh.getCurrentProcedureID() != null) {
+//            HashSet<String> mgM = new HashSet<String>();
+//            mgM.add(SFO.VALID);
+//            mgM.add(SFO.LENGTH);
+//            if (!fh.getModifiedGlobals().containsKey(SFO.MALLOC)) {
+//                fh.getModifiedGlobals().put(SFO.MALLOC, mgM);
+//                fh.getCallGraph().put(SFO.MALLOC, new HashSet<String>());
+//            }
+//            fh.getCallGraph().get(fh.getCurrentProcedureID()).add(SFO.MALLOC);
+//        } else { //we are initialzing something global
+//        	
+//        }
+//		assert (main.isAuxVarMapcomplete(decl, auxVars));
+////        return new ResultExpression(stmt, new HeapLValue(e), decl, auxVars);
+//        return new ResultExpression(stmt, new RValue(e, null), decl, auxVars,
+//                overappr);//FIXME pointsToType??
     }
 
     public ResultExpression getMallocCall(Dispatcher main,
 			FunctionHandler fh, Expression size,
-			LocalLValue arrayId, CACSLLocation loc) {
+			LocalLValue arrayId, ILocation loc) {
     	if (!(size.getType() instanceof InferredType)
     			|| ((InferredType) size.getType()).getType() != Type.Integer) {
     		String msg = "Invalid parameter for " + SFO.MALLOC;
@@ -830,7 +850,7 @@ public class MemoryHandler {
         Expression[] args = new Expression[] { size };
         
         //TODO: extract this block and the one below to make the other getMallocCall nicer
-        String tmpId = main.nameHandler.getTempVarUID(SFO.AUXVAR.MALLOC);
+//        String tmpId = main.nameHandler.getTempVarUID(SFO.AUXVAR.MALLOC);
 //        InferredType tmpIType = new InferredType(Type.Pointer);
 //        VariableDeclaration tVarDecl = SFO.getTempVarVariableDeclaration(tmpId, tmpIType, loc);
 //        auxVars.put(tVarDecl, loc);
@@ -852,6 +872,11 @@ public class MemoryHandler {
                 fh.getCallGraph().put(SFO.MALLOC, new HashSet<String>());
             }
             fh.getCallGraph().get(fh.getCurrentProcedureID()).add(SFO.MALLOC);
+//        } else { //we are initializing something global -- in Ultimate.init
+//        	HashSet<String> cgInit = fh.getCallGraph().get(SFO.INIT);
+//        	if (cgInit == null)
+//        		fh.getCallGraph().put(SFO.INIT, new HashSet<String>());
+//            fh.getCallGraph().get(SFO.INIT).add(SFO.MALLOC);
         }
 		assert (main.isAuxVarMapcomplete(decl, auxVars));
         return new ResultExpression(stmt, arrayId, decl, auxVars);//FIXME pointsToType??

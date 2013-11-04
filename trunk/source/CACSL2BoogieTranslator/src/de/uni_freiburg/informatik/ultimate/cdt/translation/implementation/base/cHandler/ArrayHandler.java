@@ -125,20 +125,20 @@ public class ArrayHandler {
 			//evaluate the initializer and fill the heapspace of the array
 			ResultExpressionListRec init = (ResultExpressionListRec) main.dispatch(d.getInitializer());
 			ArrayList<Statement> arrayWrites = initArray(main, memoryHandler, structHandler, loc, init.list, 
-					arrayId.getValue(), arrayType);
+					arrayId.getValue(), functionHandler, arrayType);
 			stmt.addAll(arrayWrites);
 
-			if (functionHandler.getCurrentProcedureID() != null) {
-				for (String t : new String[] { SFO.INT, SFO.POINTER,
-						SFO.REAL, SFO.BOOL }) {
-					functionHandler.getModifiedGlobals()
-					.get(functionHandler.getCurrentProcedureID())
-					.add(SFO.MEMORY + "_" + t);
-				}
-			} else { //our initialized array belongs to a global variable
-				modifyingTheHeapGlobally = true;
-				modifiedGlobals.add(bId);
-			}
+//			if (functionHandler.getCurrentProcedureID() != null) {
+//				for (String t : new String[] { SFO.INT, SFO.POINTER,
+//						SFO.REAL, SFO.BOOL }) {
+//					functionHandler.getModifiedGlobals()
+//					.get(functionHandler.getCurrentProcedureID())
+//					.add(SFO.MEMORY + "_" + t);
+//				}
+//			} else { //our initialized array belongs to a global variable
+//				modifyingTheHeapGlobally = true;
+//				modifiedGlobals.add(bId);
+//			}
 		}
 		return new ResultExpression(stmt, arrayId, decl, auxVars, overappr);
 //		return new ResultExpression(stmt, arrayId, decl, auxVars);
@@ -146,8 +146,15 @@ public class ArrayHandler {
 
 	public ArrayList<Statement> initArray(Dispatcher main, MemoryHandler memoryHandler, StructHandler structHandler, ILocation loc, 
 			ArrayList<ResultExpressionListRec> list, Expression startAddress, //Expression sizeOfCell, 
-			CArray arrayType) {
+			FunctionHandler functionHandler, CArray arrayType) {
 		ArrayList<Statement> arrayWrites = new ArrayList<Statement>();
+		
+		for (String t : new String[] { SFO.INT, SFO.POINTER,
+				SFO.REAL, SFO.BOOL }) {
+			functionHandler.getModifiedGlobals()
+			.get(functionHandler.getCurrentProcedureID())
+			.add(SFO.MEMORY + "_" + t);
+		}
 		
 //		Integer currentSizeInt = sizeConstantsAsInt.get(depth);
 		Expression sizeOfCell = memoryHandler.calculateSizeOf(arrayType.getValueType()); 
@@ -188,7 +195,8 @@ public class ArrayHandler {
 					if (valueType instanceof CArray) {
 						assert false : "this should not be the case as we are in the inner/outermost array right??";
 					} else if  (valueType instanceof CStruct) {
-						ResultExpression sInit = structHandler.makeStructConstructorFromRERL(main, loc, memoryHandler, this, null, (CStruct) valueType);
+						ResultExpression sInit = structHandler.makeStructConstructorFromRERL(main, loc, memoryHandler, this, functionHandler, 
+								null, (CStruct) valueType);
 						arrayWrites.addAll(sInit.stmt);
 						assert sInit.decl.size() == 0 && sInit.auxVars.size() == 0 : "==> change return type of initArray..";
 						val = (RValue) sInit.lrVal;
@@ -251,7 +259,7 @@ public class ArrayHandler {
 										newStartAddressBase,
 										newStartAddressOffsetInner, 
 										loc),
-										innerArrayType)); 
+										functionHandler, innerArrayType)); 
 			}
 		}
 		return arrayWrites;

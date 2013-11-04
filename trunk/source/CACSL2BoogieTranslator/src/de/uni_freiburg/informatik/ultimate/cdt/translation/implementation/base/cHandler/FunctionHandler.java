@@ -220,7 +220,7 @@ public class FunctionHandler {
 		assert (index >= 0 && index < node.getDeclarators().length);
         IASTDeclarator cDecl = node.getDeclarators()[index];
 		assert cDecl instanceof IASTFunctionDeclarator;
-		String methodName = cDecl.getName().getRawSignature();
+		String methodName = cDecl.getName().toString();
 		// begin new scope for retranslation of ACSL specification
 		main.cHandler.getSymbolTable().beginScope();
 		ResultVarList res = ((ResultVarList) main.dispatch(cDecl));
@@ -650,6 +650,20 @@ public class FunctionHandler {
 		currentProcedureIsVoid = false;
 		main.cHandler.getSymbolTable().endScope();
 		return new Result(impl);
+	}
+	
+	void beginUltimateInit(Dispatcher main, ILocation loc) {
+		main.cHandler.getSymbolTable().beginScope();
+		callGraph.put(SFO.INIT, new HashSet<String>());
+		currentProcedure = new Procedure(loc, new Attribute[0], SFO.INIT, new String[0], new VarList[0], new VarList[0], new Specification[0], null);
+		procedures.put(SFO.INIT, currentProcedure);
+		modifiedGlobals.put(currentProcedure.getIdentifier(),
+				new HashSet<String>());
+	}
+	
+	void endUltimateInit(Dispatcher main, Procedure initDecl) {
+		procedures.put(SFO.INIT, initDecl);
+		main.cHandler.getSymbolTable().endScope();
 	}
 
 	/**

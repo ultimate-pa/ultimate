@@ -374,7 +374,7 @@ public class StructHandler {
 	}
 
 	public ResultExpression makeStructConstructorFromRERL(Dispatcher main, ILocation loc, MemoryHandler memoryHandler, ArrayHandler arrayHandler,
-			ResultExpressionListRec rerlIn, CStruct structType) {
+			FunctionHandler functionHandler, ResultExpressionListRec rerlIn, CStruct structType) {
 		ResultExpressionListRec rerl = null;
 		if (rerlIn == null)
 			rerl = new ResultExpressionListRec();
@@ -439,7 +439,7 @@ public class StructHandler {
 					arrayInitRerl = rerl.list.get(i);
 				
 				fieldStmt.addAll(arrayHandler.initArray(main, memoryHandler, this, loc, arrayInitRerl.list, fieldEx, 
-						(CArray) underlyingType));
+						functionHandler, (CArray) underlyingType));
 				
 				fieldContents = new ResultExpression(fieldStmt, new RValue(fieldEx, underlyingType), fieldDecl, fieldAuxVars);
 			} else if (underlyingType instanceof CEnum) {
@@ -447,10 +447,10 @@ public class StructHandler {
 			} else if (underlyingType instanceof CStruct) {
 				if (i < rerl.list.size())
 					fieldContents = makeStructConstructorFromRERL(main, loc, memoryHandler, arrayHandler, 
-							rerl.list.get(i), (CStruct) underlyingType);
+							functionHandler, rerl.list.get(i), (CStruct) underlyingType);
 				else
 					fieldContents = makeStructConstructorFromRERL(main, loc, memoryHandler, arrayHandler,
-							new ResultExpressionListRec(), (CStruct) underlyingType);	
+							functionHandler, new ResultExpressionListRec(), (CStruct) underlyingType);	
 			} else if (underlyingType instanceof CNamed) {
 				assert false : "This should not be the case as we took the underlying type.";
 			} else {
