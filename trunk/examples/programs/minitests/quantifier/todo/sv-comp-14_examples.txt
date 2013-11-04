@@ -184,7 +184,7 @@ TODO
 19 working
 1_3.c_*, just_*, mutex_lock_int.c_false.cil, mutex_lock_struct.c_false.cil,
 nested_structure_noptr*, oomInt.c_*, rule57_ebda_blast.c_false.cil, structure_*,
-test08_*, test24_false, test25_false, test28_false, test_cut_*,
+test08_*, test22_true, test24_false, test25_false, test28_false, test_cut_*,
 test_malloc-1_true, test_while_*
 
 27 wrong result
@@ -194,17 +194,14 @@ nested_structure.c_true.cil, nested_structure_ptr.c_true.cil,
 nested_structure_ptr_true, nested_structure_true,
 rule57_ebda_blast.c_true_1.cil, test03_*, test04_*, test07_*, test09_*,
 test11_*, test13_*, test14_*, test15_*, test16_*, test19_*, test20_*,
-test24_true, test25_true, test28_true, test_address*, test_malloc-1_true.cil,
-volatile_*
+test22_true, test24_true, test25_true, test28_true, test_address*,
+test_malloc-1_true.cil, volatile_*
 
 7 NestedSsaBuilder
 sizeofparameters_test.c_true.cil, test01_*, test02_*, test12_*, test17_*,
-test_malloc-2_true, test_malloc-2_true.cil
+test21_*, test_malloc-2_true, test_malloc-2_true.cil
 
 -- Translation:
-
-4 __VERIFIER_nondet_pointer() has type int
-test21_*, test22_*
 
 4 Address of something that is not on the heap
 test_union_cast-2_true, test18_*, test30_*
@@ -485,7 +482,6 @@ pointer void return value                       5       pointerVoidReturnType
 Address of something that is not on the heap    4       xxx
 missing modifies                                4       modifies1, modifies2
 void pointer addressoffed                       4       voidPointerAddressof
-__VERIFIER_nondet_pointer() has type int        4       xxx
 ClassCastException: ResultExpressionListRec     3       *
 #ifndef                                         2       ---
 array no size but initialization                2       arrayNoSize
@@ -504,7 +500,7 @@ TypeHandler.visit(IASTElaboratedTypeSpecifier)  2       *
 array cast fail                                 1       arrayAsParam
 assert mapped.typeDeclarations.isEmpty()        1       *
 continue                                        1       continue
-double                                          1       xxx
+double                                          1       double
 function pointer used                           1       xxx
 hexadecimals                                    1       xxx
 implementation                                  1       --- (error in example)
