@@ -460,7 +460,7 @@ s3_clnt_3_false.cil, s3_clnt_3_true.cil
 - all -
 
 --------------------------------------------
-error                                           count   example (*/xxx = TODO)
+error                                           count   example (* = TODO)
 
 Matthias:
 StrongestPostDeterminizer.reviewInductiveInternal()
@@ -474,12 +474,12 @@ empty identifier                                13      *
 array in struct in struct                       9       arrayInStructInStruct
 getWriteCall() rType == null                    9       *
 bit complement                                  7       bitComplement
-type error: expected pointer, got INT           7       xxx
+type error: expected pointer, got INT           7       pointerTypeError
 struct pointer dereference                      6       structPointerDereference
 #define -> error                                5       define
 bitvector operation with non-integer            5       bitvectorOperationNoInt
 pointer void return value                       5       pointerVoidReturnType
-Address of something that is not on the heap    4       xxx
+Address of something that is not on the heap    4       *
 missing modifies                                4       modifies1, modifies2
 void pointer addressoffed                       4       voidPointerAddressof
 ClassCastException: ResultExpressionListRec     3       *
@@ -494,18 +494,18 @@ global struct initialization                    2       globalStructInit
 memory access with struct operation             2       memoryAccessStruct
 pointer as offset                               2       pointerAsOffset
 pointer casts weird                             2       pointerWeird
-pointer fields renamed                          2       xxx
-pointer struct I                                2       xxx
+pointer fields renamed                          2       *
+pointer struct I                                2       *
 TypeHandler.visit(IASTElaboratedTypeSpecifier)  2       *
 array cast fail                                 1       arrayAsParam
 assert mapped.typeDeclarations.isEmpty()        1       *
 continue                                        1       continue
 double                                          1       double
-function pointer used                           1       xxx
-hexadecimals                                    1       xxx
+function pointer used                           1       *
+hexadecimals                                    1       *
 implementation                                  1       --- (error in example)
 implicit cast (float to int)                    1       implicitCast
 pointer struct II                               1       *
-StringLiteral                                   1       xxx
+StringLiteral                                   1       *
 TraceChecker.getFailurePath()                   1       ?
 void function call ITE                          1       voidFunctionITE
