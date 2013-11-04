@@ -216,10 +216,10 @@ fo_*, stateful_check_false.cil
 test_union_cast.c_true.cil
 
 1 function pointer used
+callfpointer*
 
 2 pointer as offset
 alias_of_return.c_true.cil, alias_of_return_2.c_true.cil
-callfpointer*
 
 2 pointer fields renamed
 test26_*
@@ -492,7 +492,7 @@ float                                           2       float
 function parameter addressoffed                 2       *
 global struct initialization                    2       globalStructInit
 memory access with struct operation             2       memoryAccessStruct
-pointer as offset                               2       xxx
+pointer as offset                               2       pointerAsOffset
 pointer casts weird                             2       pointerWeird
 pointer fields renamed                          2       xxx
 pointer struct I                                2       xxx
