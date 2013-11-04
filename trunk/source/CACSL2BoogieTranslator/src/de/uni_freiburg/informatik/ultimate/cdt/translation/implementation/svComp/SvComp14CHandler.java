@@ -19,6 +19,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CACSLL
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.InferredType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.InferredType.Type;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.PRIMITIVE;
@@ -173,6 +174,9 @@ public class SvComp14CHandler extends CHandler {
                 if (t.equals("float")) {
                 	type = new InferredType(Type.Real);
                 	cType = new CPrimitive(PRIMITIVE.FLOAT);
+                } else if (t.equals("pointer")) {
+                    type = new InferredType(Type.Pointer);
+                    cType = new CPointer(new CPrimitive(PRIMITIVE.VOID));
                 } else {
                 	type = new InferredType(Type.Integer);
                 	cType = new CPrimitive(PRIMITIVE.INT);
