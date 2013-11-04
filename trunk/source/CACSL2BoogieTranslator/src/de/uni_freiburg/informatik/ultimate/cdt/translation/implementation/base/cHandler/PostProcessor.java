@@ -227,7 +227,7 @@ public class PostProcessor {
 		specsInit[0] = new ModifiesSpecification(loc, false, modifyList);
 		Procedure initProcedureDecl = new Procedure(loc, new Attribute[0], SFO.INIT, new String[0],
 				new VarList[0], new VarList[0], specsInit, null);
-		decl.add(initProcedureDecl);
+//		decl.add(initProcedureDecl);
 		Body initBody = new Body(loc,
 				initDecl.toArray(new VariableDeclaration[0]),
 				initStatements.toArray(new Statement[0]));
