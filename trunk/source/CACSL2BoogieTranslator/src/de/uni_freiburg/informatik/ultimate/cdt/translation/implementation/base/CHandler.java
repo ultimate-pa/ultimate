@@ -2724,14 +2724,14 @@ public class CHandler implements ICHandler {
 		 * Christian: pointer cast
 		 * currently only allowed to integers and other pointers
 		 */
-		if (expr.lrVal.cType instanceof CPointer) {
+		if (expr.lrVal.cType.getUnderlyingType() instanceof CPointer) {
 		    // cast from pointer to integer
 		    if (newCType instanceof CPrimitive &&
 		            ((CPrimitive)newCType).getType() == PRIMITIVE.INT) {
 		        Expression e = MemoryHandler.getPointerOffset(expr.lrVal.getValue(), loc);
 		        expr.lrVal = new RValue(e, newCType);
 		    }
-		    else if (!(newCType instanceof CPointer)) {
+		    else if (!(newCType.getUnderlyingType() instanceof CPointer)) {
                 throw new UnsupportedSyntaxException(
                         "Explicit cast from pointer not supported.");
             }
