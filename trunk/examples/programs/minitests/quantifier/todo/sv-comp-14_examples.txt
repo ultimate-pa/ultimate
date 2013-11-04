@@ -77,7 +77,7 @@ merge_sort_false.cil, merge_sort_true.cil
 2 global struct initialization
 bubble_sort_linux_false.cil, bubble_sort_linux_true.cil
 
-2 pointer void assignment int
+2 pointer casts weird
 sll_to_dll_rev_false.cil, sll_to_dll_rev_true.cil
 
 2 struct pointer dereference
@@ -181,23 +181,25 @@ TODO
 
 [10278] ldv-regression (94):
 
-18 working
+19 working
 1_3.c_*, just_*, mutex_lock_int.c_false.cil, mutex_lock_struct.c_false.cil,
-nested_structure_noptr*, oomInt.c_*, structure_*, test08_*, test24_false,
-test25_false, test28_false, test_cut_*, test_malloc-1_true, test_while_*
+nested_structure_noptr*, oomInt.c_*, rule57_ebda_blast.c_false.cil, structure_*,
+test08_*, test24_false, test25_false, test28_false, test_cut_*,
+test_malloc-1_true, test_while_*
 
-24 wrong result
+27 wrong result
 alias_of_return.c_true_1.cil, alias_of_return_2.c_true_1.cil,
 mutex_lock_int.c_true_1.cil, mutex_lock_struct.c_true_1.cil,
 nested_structure.c_true.cil, nested_structure_ptr.c_true.cil,
-nested_structure_ptr_true, nested_structure_true, test03_true, test04_true,
-test07_true, test09_true, test11_true, test13_true, test14_true, test15_true,
-test16_true, test19_true, test20_true, test24_true, test25_true, test28_true,
+nested_structure_ptr_true, nested_structure_true,
+rule57_ebda_blast.c_true_1.cil, test03_*, test04_*, test07_*, test09_*,
+test11_*, test13_*, test14_*, test15_*, test16_*, test19_*, test20_*,
+test24_true, test25_true, test28_true, test_address*, test_malloc-1_true.cil,
 volatile_*
 
-6 NestedSsaBuilder
+7 NestedSsaBuilder
 sizeofparameters_test.c_true.cil, test01_*, test02_*, test12_*, test17_*,
-test_malloc-2_true
+test_malloc-2_true, test_malloc-2_true.cil
 
 -- Translation:
 
@@ -228,9 +230,8 @@ test26_*
 2 pointer struct I
 test27_*
 
-7 pointer void assignment int
-rule57_*, rule60_list.c_true.cil, test_address*, test_malloc-1_true.cil,
-test_malloc-2_true.cil
+1 TODO for Alex
+rule60_list.c_true.cil
 
 5 pointer void return value
 alt_*, ex3_*, recursive_*, rule60_list2*
@@ -446,14 +447,12 @@ Fibonacci04_false
 
 ---
 
-[10224] ssh-simplified (26):
+[10282] ssh-simplified (26):
 
 24 unknown
 - all others -
 
--- Translation:
-
-2 pointer void assignment int
+2 NestedSsaBuilder
 s3_clnt_3_false.cil, s3_clnt_3_true.cil
 
 ---
@@ -475,7 +474,6 @@ incomplete struct                               70      incompleteStruct
 incomplete types                                45      *
 typedef hides inner struct                      17      typedefHidesInnerStruct
 empty identifier                                13      *
-pointer void assignment int                     11      xxx
 array in struct in struct                       9       arrayInStructInStruct
 getWriteCall() rType == null                    9       *
 bit complement                                  7       bitComplement
@@ -499,6 +497,7 @@ function parameter addressoffed                 2       *
 global struct initialization                    2       globalStructInit
 memory access with struct operation             2       memoryAccessStruct
 pointer as offset                               2       xxx
+pointer casts weird                             2       pointerWeird
 pointer fields renamed                          2       xxx
 pointer struct I                                2       xxx
 TypeHandler.visit(IASTElaboratedTypeSpecifier)  2       *
