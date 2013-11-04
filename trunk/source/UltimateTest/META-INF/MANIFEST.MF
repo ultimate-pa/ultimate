@@ -1,13 +1,14 @@
 Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
-Bundle-Name: CoreRCPTest
-Bundle-SymbolicName: CoreRCPTest
+Bundle-Name: UltimateTest
+Bundle-SymbolicName: UltimateTest;singleton:=true
 Bundle-Version: 0.0.1
-Bundle-ActivationPolicy: lazy
-Fragment-Host: UltimateCore;bundle-version="0.0.1"
+Fragment-Host: UltimateCore
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
+Bundle-ActivationPolicy: lazy
 Require-Bundle: Library-junit-helper,
  Library-log4j
 Import-Package: de.uni_freiburg.informatik.ultimate.core.coreplugin,
  org.junit,
- org.junit.runner
+ org.junit.runner,
+ org.junit.runners

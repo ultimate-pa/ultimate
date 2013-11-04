@@ -8,10 +8,12 @@ package de.uni_freiburg.informatik.ultimate.logging;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.StringTokenizer;
 
+import org.apache.log4j.Appender;
 import org.apache.log4j.ConsoleAppender;
 import org.apache.log4j.FileAppender;
 import org.apache.log4j.Level;
@@ -42,17 +44,21 @@ public class UltimateLoggerFactory {
 	private UltimatePreferenceStore mPreferenceStore;
 	private List<String> presentLoggers;
 	private FileAppender logFile;
+	private ConsoleAppender mConsoleAppender;
 
 	public static final String LOGGER_NAME_CORE = "ultimate";
 	public static final String LOGGER_NAME_CONTROLLER = "controller";
 	public static final String LOGGER_NAME_PLUGINS = "plugins";
 	public static final String LOGGER_NAME_TOOLS = "tools";
 
+	private ArrayList<Appender> mAdditionalAppenders;
+	
 	private UltimateLoggerFactory() {
 
 		mPreferenceStore = new UltimatePreferenceStore(Activator.s_PLUGIN_ID);
-
-		initializeLog4J();
+		mAdditionalAppenders = new ArrayList<Appender>();
+		
+		initializeAppenders();
 		refreshPropertiesLoggerHierarchie();
 		refreshPropertiesAppendLogFile();
 
@@ -64,26 +70,61 @@ public class UltimateLoggerFactory {
 				.addPreferenceChangeListener(new IPreferenceChangeListener() {
 					@Override
 					public void preferenceChange(PreferenceChangeEvent event) {
+						//do things if it concerns the loggers 
+						switch (event.getKey()) {
+						case CorePreferenceInitializer.LABEL_LOG4J_PATTERN:
+						case CorePreferenceInitializer.LABEL_LOGFILE:
+						case CorePreferenceInitializer.LABEL_LOGFILE_NAME:
+						case CorePreferenceInitializer.LABEL_LOGFILE_DIR:
+						case CorePreferenceInitializer.LABEL_APPEXLOGFILE:
+						case CorePreferenceInitializer.EXTERNAL_TOOLS_PREFIX:
+						case CorePreferenceInitializer.PREFID_ROOT:
+						case CorePreferenceInitializer.PREFID_PLUGINS:
+						case CorePreferenceInitializer.PREFID_TOOLS:
+						case CorePreferenceInitializer.PREFID_CONTROLLER:
+						case CorePreferenceInitializer.PREFID_CORE:
+						case CorePreferenceInitializer.PREFID_DETAILS:
+							break;
+						default:
+							return;
+						}
+
+						initializeAppenders();
 						refreshPropertiesLoggerHierarchie();
 						refreshPropertiesAppendLogFile();
+						getInstance().getLoggerById(Activator.s_PLUGIN_ID)
+								.debug("Logger refreshed");
 					}
 				});
 	}
 
-	/**
-	 * void initializeLog4J
-	 */
-	private void initializeLog4J() {
+	public void addAppender(Appender appender){
+		mAdditionalAppenders.add(appender);
+		Logger.getRootLogger().addAppender(appender);
+	}
+	
+	public void removeAppender(Appender appender){
+		mAdditionalAppenders.remove(appender);
+		Logger.getRootLogger().removeAppender(appender);
+	}
+	
+	
+	private void initializeAppenders() {
 
 		try {
+			if(mConsoleAppender != null){
+				Logger.getRootLogger().removeAppender(mConsoleAppender);
+			}
+
 			// defining format of logging output
 			PatternLayout layout = new PatternLayout(
-					de.uni_freiburg.informatik.ultimate.plugins.Constants
-							.getLoggerPattern());
+					mPreferenceStore
+							.getString(CorePreferenceInitializer.LABEL_LOG4J_PATTERN));
 
 			// attaching output to console (stout)
-			ConsoleAppender consoleAppender = new ConsoleAppender(layout);
-			Logger.getRootLogger().addAppender(consoleAppender);
+			mConsoleAppender = new ConsoleAppender(layout);
+			Logger.getRootLogger().addAppender(mConsoleAppender);
+			
 
 		} catch (Exception ex) {
 			System.err.println("Error while initializing logger: " + ex);
@@ -97,7 +138,8 @@ public class UltimateLoggerFactory {
 
 		if (mPreferenceStore
 				.getBoolean(CorePreferenceInitializer.LABEL_LOGFILE)) {
-			// if there is already a log file, we remove it!
+			// if there is already a log file, we remove the corresponding
+			// appender!
 			if (logFile != null) {
 				Logger.getRootLogger().removeAppender(logFile);
 				logFile = null;
@@ -109,8 +151,8 @@ public class UltimateLoggerFactory {
 
 			try {
 				PatternLayout layout = new PatternLayout(
-						de.uni_freiburg.informatik.ultimate.plugins.Constants
-								.getLoggerPattern());
+						mPreferenceStore
+								.getString(CorePreferenceInitializer.LABEL_LOG4J_PATTERN));
 				boolean append = mPreferenceStore
 						.getBoolean(CorePreferenceInitializer.LABEL_APPEXLOGFILE);
 				logFile = new FileAppender(layout, logDir + File.separator

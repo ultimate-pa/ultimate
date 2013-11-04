@@ -53,6 +53,10 @@ public class CorePreferenceInitializer extends UltimatePreferenceInitializer {
 				new UltimatePreferenceItem<String>(LABEL_MM_TMPDIRECTORY,
 						VALUE_MM_TMPDIRECTORY, PreferenceType.Directory),
 
+						
+						new UltimatePreferenceItem<String>(LABEL_LOG4J_PATTERN,
+								"%d{ISO8601} %-5p [%F:%L]: %m%n", PreferenceType.String),		
+						
 				// Log levels
 				new UltimatePreferenceItem<String>(LOGGING_PREFERENCES_DESC,
 						null, PreferenceType.Label),
@@ -123,6 +127,9 @@ public class CorePreferenceInitializer extends UltimatePreferenceInitializer {
 	public static final String LABEL_SHOWRESULTNOTIFIERPOPUP = "Show Result in Pop-Up Window after Toolchain Execution";
 	public static final boolean VALUE_SHOWRESULTNOTIFIERPOPUP_DEFAULT = false;
 
+	//Log4j pattern
+	public static final String LABEL_LOG4J_PATTERN = "Logger pattern: ";
+	
 	// Log level
 	public static final String DESC_LOGFILE = "The basic preferences for creating a log file (like enabled, name, directory)";
 

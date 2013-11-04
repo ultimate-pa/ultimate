@@ -11,7 +11,6 @@ import de.uni_freiburg.informatik.ultimate.model.UniversalTokens;
  * @author  bisser
  */
 public class Constants {
-    private static String s_LoggerPattern = "%d{ISO8601} %-5p [%F:%L]: %m%n";
     private static String s_FileSeparator = ", ";
     private static String s_UndefinedTokenName = UniversalTokens.UNDEFINED.toString();
     private static final String s_PathSeparator = File.pathSeparator;
@@ -32,21 +31,6 @@ public class Constants {
         s_UndefinedTokenName = tokenUndefined;
     }
 
-    /**
-	 * @return  the lOG4J_PATTERN
-	 * @uml.property  name="lOG4J_PATTERN"
-	 */
-    public static String getLoggerPattern() {
-        return s_LoggerPattern;
-    }
-
-    /**
-	 * @param log4j_pattern  the lOG4J_PATTERN to set
-	 * @uml.property  name="lOG4J_PATTERN"
-	 */
-    public static void setLoggerPattern(String log4j_pattern) {
-        s_LoggerPattern = log4j_pattern;
-    }
 
     /**
      * Gets a separator for files, this is just cosmetic

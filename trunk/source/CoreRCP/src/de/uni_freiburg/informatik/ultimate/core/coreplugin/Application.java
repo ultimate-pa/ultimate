@@ -58,7 +58,6 @@ import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.IModelManager;
 import de.uni_freiburg.informatik.ultimate.model.PersistenceAwareModelManager;
 import de.uni_freiburg.informatik.ultimate.model.repository.StoreObjectException;
-import de.uni_freiburg.informatik.ultimate.plugins.Constants;
 import de.uni_freiburg.informatik.ultimate.plugins.ResultNotifier;
 
 /**
@@ -363,9 +362,13 @@ public class Application implements IApplication, ICore, IRCPPlugin {
 		attachLogPreferenceChangeListenerToPlugin(Activator.s_PLUGIN_ID);
 		logDefaultPreferences(Activator.s_PLUGIN_ID);
 
-		attachLogPreferenceChangeListenerToPlugin(mCurrentController
-				.getPluginID());
-		logDefaultPreferences(mCurrentController.getPluginID());
+		if (mCurrentController == null) {
+			mLogger.warn("CurrentController is null (CurrentMode: "+mCoreMode+")");
+		} else {
+			attachLogPreferenceChangeListenerToPlugin(mCurrentController
+					.getPluginID());
+			logDefaultPreferences(mCurrentController.getPluginID());
+		}
 
 		for (IRCPPlugin t : mOutputPlugins) {
 			attachLogPreferenceChangeListenerToPlugin(t.getPluginID());
@@ -416,7 +419,7 @@ public class Application implements IApplication, ICore, IRCPPlugin {
 				"Configuration");
 		LogPreferenceChangeListener defaultListener = retrieveListener(
 				pluginId, "Default");
-		
+
 		InstanceScope.INSTANCE.getNode(pluginId)
 				.removePreferenceChangeListener(instanceListener);
 		InstanceScope.INSTANCE.getNode(pluginId).addPreferenceChangeListener(
@@ -794,8 +797,11 @@ public class Application implements IApplication, ICore, IRCPPlugin {
 						.createExecutableExtension("class");
 				loggingWindow.init(null);
 				// and add to plugin ArrayList
-				loggingWindow.setLayout(new PatternLayout(Constants
-						.getLoggerPattern()));
+				loggingWindow
+						.setLayout(new PatternLayout(
+								new UltimatePreferenceStore(
+										Activator.s_PLUGIN_ID)
+										.getString(CorePreferenceInitializer.LABEL_LOG4J_PATTERN)));
 
 				// use the root logger to have this appender in all child
 				// loggers
@@ -1232,7 +1238,7 @@ public class Application implements IApplication, ICore, IRCPPlugin {
 	}
 
 	/**
-	 * Set point in time where the toolchain should be stopped.
+	 * Set time limit in ms, after which the toolchain should be stopped.
 	 */
 	public void setDeadline(long date) {
 		mDeadline = date;
