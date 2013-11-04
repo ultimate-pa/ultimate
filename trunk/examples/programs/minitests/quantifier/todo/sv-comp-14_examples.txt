@@ -179,89 +179,74 @@ TODO
 
 ---
 
-[TODO] ldv-regression (94):
+[10278] ldv-regression (94):
 
-4 working
-just_*, test02_false, test12_false, test26_false
+18 working
+1_3.c_*, just_*, mutex_lock_int.c_false.cil, mutex_lock_struct.c_false.cil,
+nested_structure_noptr*, oomInt.c_*, structure_*, test08_*, test24_false,
+test25_false, test28_false, test_cut_*, test_malloc-1_true, test_while_*
 
-11 wrong result
+24 wrong result
+alias_of_return.c_true_1.cil, alias_of_return_2.c_true_1.cil,
+mutex_lock_int.c_true_1.cil, mutex_lock_struct.c_true_1.cil,
 nested_structure.c_true.cil, nested_structure_ptr.c_true.cil,
-nested_structure_ptr_true, nested_structure_true, test01_true, test03_true,
-test04_true, test11_true, test14_true, test20_true, test_malloc-2_true
+nested_structure_ptr_true, nested_structure_true, test03_true, test04_true,
+test07_true, test09_true, test11_true, test13_true, test14_true, test15_true,
+test16_true, test19_true, test20_true, test24_true, test25_true, test28_true,
+volatile_*
 
-24 unknown
-alias_of_return.c_true_1.cil, alias_of_return_2.c_true_1.cil, mutex_*,
-nested_structure_noptr*, oomInt.c_*, stateful_check_false.cil, structure_*,
-test13_true, test15_true, test16_true, test17_true, test26_true
-test_cut_*, test_malloc-1_true, test_while_*, volatile_*
+6 NestedSsaBuilder
+sizeofparameters_test.c_true.cil, test01_*, test02_*, test12_*, test17_*,
+test_malloc-2_true
 
 -- Translation:
-
-2 Address of something that is not on the heap
-test30_*
-
-6 array cast fail
-test24_*, test25_*, test27_*
-
-2 equals checks for the same object
-test28_*
-
-6 auxVarMap
-test05_true, test06_false, test07_true, test08_false, test09_true, test10_true
-
-1 cast int pointer to uint
-test_malloc-2_true.cil
-
-2 cvar == null (pointer as function parameter)
-rule57_*
-
-1 dereferencing fails
-test19_true
-
-3 double
-test_union_cast.c_true.cil, test_union_cast-2_*
-
-1 empty identifier
-fo_*, 
-
-1 function parameter (a pointer) not recognized
-test18_true
-
-1 NullPointerException
-stateful_check_false
-
-2 pointer as offset
-alias_of_return.c_true.cil, alias_of_return_2.c_true.cil
-
-1 pointer function
-callfpointer*
-
-1 pointer struct I
-sizeofparameters_test.c_true.cil
-
-4 pointer void assignment int
-1_3.c_*, rule60_list.c_true.cil, test_address*, test_malloc-1_true.cil
-
-4 pointer void return value
-alt_*, recursive_*, rule60_list2*
-
-1 getReadCall() assertion
-ex3_*, 
-
-1 StringLiteral
-test_overflow.c_true.cil
-
-2 array in struct in struct
-test23_*
-
-2 type error: expected pointer, got INT
-nested_structure_ptr_true.cil, nested_structure_true.cil
 
 4 __VERIFIER_nondet_pointer() has type int
 test21_*, test22_*
 
+4 Address of something that is not on the heap
+test_union_cast-2_true, test18_*, test30_*
+
+1 double
+test_union_cast-2_true.cil
+
+2 empty identifier
+fo_*, stateful_check_false.cil
+
+1 hexadecimals
+test_union_cast.c_true.cil
+
+1 function pointer used
+
+2 pointer as offset
+alias_of_return.c_true.cil, alias_of_return_2.c_true.cil
+callfpointer*
+
+2 pointer fields renamed
+test26_*
+
+2 pointer struct I
+test27_*
+
+7 pointer void assignment int
+rule57_*, rule60_list.c_true.cil, test_address*, test_malloc-1_true.cil,
+test_malloc-2_true.cil
+
+5 pointer void return value
+alt_*, ex3_*, recursive_*, rule60_list2*
+
+1 StringLiteral
+test_overflow*
+
+7 type error: expected pointer, got INT
+nested_structure_ptr_true.cil, nested_structure_true.cil, test05_*, test06_*,
+test10_*, test23_*
+
 7 union
 test_union.c_*, test_union_cast-1_*, test_union_cast.c_true_1.cil, test29_*
+
+1 void function call ITE
+stateful_check_false
 
 ---
 
@@ -479,7 +464,7 @@ s3_clnt_3_false.cil, s3_clnt_3_true.cil
 - all -
 
 --------------------------------------------
-error                                           count   example (* = TODO, ** = up-to-date)
+error                                           count   example (*/xxx = TODO)
 
 Matthias:
 StrongestPostDeterminizer.reviewInductiveInternal()
@@ -487,52 +472,45 @@ StrongestPostDeterminizer.reviewInductiveInternal()
 
 union                                           82      ---
 incomplete struct                               70      incompleteStruct
-incomplete types                                45      **
+incomplete types                                45      *
 typedef hides inner struct                      17      typedefHidesInnerStruct
-empty identifier                                12      **
-array in struct in struct                       11      arrayInStructInStruct
+empty identifier                                13      *
+pointer void assignment int                     11      xxx
+array in struct in struct                       9       arrayInStructInStruct
 getWriteCall() rType == null                    9       *
-pointer void assignment int                     8       *
-array cast fail                                 7       arrayAsParam
 bit complement                                  7       bitComplement
-auxVarMap                                       6       *
+type error: expected pointer, got INT           7       xxx
 struct pointer dereference                      6       structPointerDereference
 #define -> error                                5       define
 bitvector operation with non-integer            5       bitvectorOperationNoInt
-HeapLValues must be converted to RValue first.  4       *
+pointer void return value                       5       pointerVoidReturnType
+Address of something that is not on the heap    4       xxx
 missing modifies                                4       modifies1, modifies2
-pointer void return value                       4       *
-ResultExpression.switchToRValue() (char)        4       *
 void pointer addressoffed                       4       voidPointerAddressof
-__VERIFIER_nondet_pointer() has type int        4       *
+__VERIFIER_nondet_pointer() has type int        4       xxx
 ClassCastException: ResultExpressionListRec     3       *
-double                                          3       *
 #ifndef                                         2       ---
-Address of something that is not on the heap    2       *
 array no size but initialization                2       arrayNoSize
 array size is an expression                     2       arraySizeExpression
 assert rop.lrVal.cType instanceof CPointer      2       *
-cvar == null (pointer as function parameter)    2       cvar
-equals checks for the same object               2       *
+auxVar wrong type                               2       auxVarType
 float                                           2       float
 function parameter addressoffed                 2       *
-function void                                   2       *
 global struct initialization                    2       globalStructInit
 memory access with struct operation             2       memoryAccessStruct
-pointer as offset                               2       *
-auxVar wrong type                               2       auxVarType
-assert mapped.typeDeclarations.isEmpty()        1       **
-cast int pointer to uint                        1       *
+pointer as offset                               2       xxx
+pointer fields renamed                          2       xxx
+pointer struct I                                2       xxx
+TypeHandler.visit(IASTElaboratedTypeSpecifier)  2       *
+array cast fail                                 1       arrayAsParam
+assert mapped.typeDeclarations.isEmpty()        1       *
 continue                                        1       continue
-dereferencing fails                             1       *
-function parameter (a pointer) not recognized   1       *
-getReadCall() assertion                         1       *
+double                                          1       xxx
+function pointer used                           1       xxx
+hexadecimals                                    1       xxx
 implementation                                  1       --- (error in example)
 implicit cast (float to int)                    1       implicitCast
-m_RcfgProgramExecution != null                  1       *
-NullPointerException                            1       *
-pointer struct I                                1       *
 pointer struct II                               1       *
-StringLiteral                                   1       *
+StringLiteral                                   1       xxx
 TraceChecker.getFailurePath()                   1       ?
-TypeHandler.visit(IASTElaboratedTypeSpecifier)  1       *
+void function call ITE                          1       voidFunctionITE
