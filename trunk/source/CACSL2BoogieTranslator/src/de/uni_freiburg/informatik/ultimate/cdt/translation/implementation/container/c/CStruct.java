@@ -15,16 +15,16 @@ public class CStruct extends CType {
     /**
      * Field names.
      */
-    private final String[] fNames;
+    private String[] fNames;
     /**
      * Field types.
      */
-    private final CType[] fTypes;
+    private  CType[] fTypes;
     
     /**
      * Indicates if this represents an incomplete type.
      */
-    private final boolean isIncomplete;
+    private boolean isIncomplete;
 
     public boolean isIncomplete() {
 		return isIncomplete;
@@ -147,4 +147,17 @@ public class CStruct extends CType {
         }
         return true;
     }
+
+    /**
+     * 
+     * @param cvar
+     */
+	public void complete(CStruct cvar) {
+		if (!isIncomplete()) {
+			throw new AssertionError("only incomplete structs can be completed");
+		}
+		isIncomplete = false;
+		fNames = cvar.fNames;
+		fTypes = cvar.fTypes;
+	}
 }

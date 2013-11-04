@@ -82,19 +82,14 @@ import de.uni_freiburg.informatik.ultimate.result.SyntaxErrorResult.SyntaxErrorT
  */
 public class TypeHandler implements ITypeHandler {
     /**
-     * Map to resolve typedefs.
-     * Matthias: I think this name is misleading. We use this not only to store
-     * explicit typedefs, but also to store structs like the following.
-     * struct fraction {
-	 *   int numerator;
-	 *   int denominator;
-     * }
+     * Maps the cIdentifier of a struct, enumeration, or union (when this is
+     *  implemented) to the ResultType that represents this type at the moment
      */
-    private final Map<String, ResultTypes> typedef;
+    private final Map<String, ResultTypes> m_DefinedTypes;
     /**
      * Undefined struct types.
      */
-    private HashSet<String> undefStructs;
+    private HashSet<String> m_IncompleteType;
     /**
      * counting levels of struct declaration.
      */
@@ -104,8 +99,8 @@ public class TypeHandler implements ITypeHandler {
      * Constructor.
      */
     public TypeHandler() {
-        this.typedef = new HashMap<String, ResultTypes>();
-        this.undefStructs = new HashSet<String>();
+        this.m_DefinedTypes = new HashMap<String, ResultTypes>();
+        this.m_IncompleteType = new HashSet<String>();
     }
 
     @Override
@@ -137,7 +132,8 @@ public class TypeHandler implements ITypeHandler {
         CType cvar = new CPrimitive(node);
         // we have model.boogie.ast.PrimitiveType, which should
         // only contain BOOL, INT, REAL ...
-        switch (node.getType()) {
+        CACSLLocation loc = new CACSLLocation(node);
+		switch (node.getType()) {
             case IASTSimpleDeclSpecifier.t_void:
                 // there is no void in Boogie,
                 // so we simply have no result variable.
@@ -149,32 +145,28 @@ public class TypeHandler implements ITypeHandler {
 //                        node), SFO.BOOL), node.isConst(), false, cvar));
 //                break;
             case IASTSimpleDeclSpecifier.t_unspecified:
-            	Dispatcher.warn(new CACSLLocation(node), "unspecified type, defaulting to int", 
+            	Dispatcher.warn(loc, "unspecified type, defaulting to int", 
             			"unspecified type, defaulting to int");
             case IASTSimpleDeclSpecifier.t_bool:
             case IASTSimpleDeclSpecifier.t_int:
                 // so int is also a primitive type
                 // NOTE: in a extended implementation we should
                 // handle here different types of int (short, long,...)
-                result = (new ResultTypes(new PrimitiveType(new CACSLLocation(
-                        node), SFO.INT), node.isConst(), false, cvar));
+                result = (new ResultTypes(new PrimitiveType(loc, SFO.INT), node.isConst(), false, cvar));
                 break;
             case IASTSimpleDeclSpecifier.t_double:
                 // floating point number are not supported by Ultimate,
                 // somehow we treat it here as REALs
-                result = (new ResultTypes(new PrimitiveType(new CACSLLocation(
-                        node), SFO.REAL), node.isConst(), false, cvar));
+                result = (new ResultTypes(new PrimitiveType(loc, SFO.REAL), node.isConst(), false, cvar));
                 break;
             case IASTSimpleDeclSpecifier.t_float:
                 // floating point number are not supported by Ultimate,
                 // somehow we treat it here as REALs
-                result = (new ResultTypes(new PrimitiveType(new CACSLLocation(
-                        node), SFO.REAL), node.isConst(), false, cvar));
+                result = (new ResultTypes(new PrimitiveType(loc, SFO.REAL), node.isConst(), false, cvar));
                 break;
             case IASTSimpleDeclSpecifier.t_char:
                 // how to handle chars? Will use int ...
-                result = (new ResultTypes(new PrimitiveType(new CACSLLocation(
-                        node), SFO.INT), node.isConst(), false, cvar));
+                result = (new ResultTypes(new PrimitiveType(loc, SFO.INT), node.isConst(), false, cvar));
                 break;
             default:
                 // long, long long, and short are the same as int, iff there are
@@ -182,14 +174,14 @@ public class TypeHandler implements ITypeHandler {
                 if (node.isLongLong() || node.isLong() || node.isShort()
                         || node.isUnsigned()) {
                     result = (new ResultTypes(new PrimitiveType(
-                            new CACSLLocation(node), SFO.INT), node.isConst(),
+                            loc, SFO.INT), node.isConst(),
                             false, cvar));
                     break;
                 }
                 // if we do not find a type we cancel with Exception
                 String msg = "TypeHandler: We do not support this type!"
                         + node.getType();
-                Dispatcher.error(new CACSLLocation(node),
+                Dispatcher.error(loc,
                         SyntaxErrorType.UnsupportedSyntax, msg);
                 throw new UnsupportedSyntaxException(msg);
         }
@@ -200,7 +192,7 @@ public class TypeHandler implements ITypeHandler {
                 String typedefId = cDecl.getName().getRawSignature();
                 ResultTypes checkedResult = main.cHandler.checkForPointer(main, 
                 		cDecl.getPointerOperators(), result, false);
-                typedef.put(typedefId, checkedResult);
+                m_DefinedTypes.put(typedefId, checkedResult);
                 
             }
             // TODO : add an axiom for sizeOf(typedefId) == sizeOf(result.t);?
@@ -240,12 +232,12 @@ public class TypeHandler implements ITypeHandler {
                 throw new UnsupportedSyntaxException(msg);
             }
             if ((node.getStorageClass() != IASTDeclSpecifier.sc_typedef)) {
-                if (!typedef.containsKey(type)) {
+                if (!m_DefinedTypes.containsKey(type)) {
                     String msg = "Typedef missing for: " + type;
                     Dispatcher.error(loc, SyntaxErrorType.IncorrectSyntax, msg);
                     throw new IncorrectSyntaxException(msg);
                 }
-                ResultTypes mapped = typedef.get(type);
+                ResultTypes mapped = m_DefinedTypes.get(type);
                 CNamed cvar = new CNamed(node, mapped.cvar);
                 assert mapped.typeDeclarations.isEmpty();
                 ResultTypes res = new ResultTypes(mapped.getType(),
@@ -255,7 +247,7 @@ public class TypeHandler implements ITypeHandler {
                 }
                 return res;
             }
-            typedef.put(id, typedef.get(type));
+            m_DefinedTypes.put(id, m_DefinedTypes.get(type));
             // TODO : add an axiom for sizeOf(typedefId) == sizeOf(result.t);?
             // I think, the axiom is not required, as we resolve the type
             // anyway?
@@ -284,7 +276,7 @@ public class TypeHandler implements ITypeHandler {
         ASTType at = new PrimitiveType(loc, it, SFO.INT);
         ResultTypes result = new ResultTypes(at, false, false, cEnum);
         if (!enumId.equals(SFO.EMPTY)) {
-            typedef.put(enumId, result);
+            m_DefinedTypes.put(enumId, result);
         }
         main.cHandler.addSizeOfConstants(result.cvar);
         return result;
@@ -297,14 +289,11 @@ public class TypeHandler implements ITypeHandler {
     @Override
     public Result visit(Dispatcher main, IASTElaboratedTypeSpecifier node) {
         CACSLLocation loc = new CACSLLocation(node);
-        if (isSelfReferencingPointerToStruct(node)) {
-        	return auxiliaryResultForSelfReferencingStruct(loc, node);
-        }
         if (node.getKind() == IASTElaboratedTypeSpecifier.k_struct
                 || node.getKind() == IASTElaboratedTypeSpecifier.k_enum) {
             String type = node.getName().getRawSignature();
             String name = "STRUCT~" + type;
-            if (typedef.containsKey(type)) {
+            if (m_DefinedTypes.containsKey(type)) {
                 if (node.getStorageClass() == IASTDeclSpecifier.sc_typedef) {
                     assert node.getParent() instanceof IASTSimpleDeclaration;
                     IASTDeclarator[] decls = ((IASTSimpleDeclaration) node
@@ -312,7 +301,7 @@ public class TypeHandler implements ITypeHandler {
                     for (IASTDeclarator decl : decls) {
                         String key = decl.getName().getRawSignature();
                         if (!key.equals(SFO.EMPTY))
-                            typedef.put(key, typedef.get(type));
+                            m_DefinedTypes.put(key, m_DefinedTypes.get(type));
                     }
                     // TODO : add an axiom for sizeOf(typedefId) ==
                     // sizeOf(result.t);?
@@ -325,35 +314,46 @@ public class TypeHandler implements ITypeHandler {
 //                ResultTypes r = new ResultTypes(new NamedType(loc, name,
 //                        new ASTType[0]), false, false, named);
 //                return r;
-                return typedef.get(type);
+                return m_DefinedTypes.get(type);
             }
 
-            undefStructs.add(name);
+            // This is a definition of an incomplete struct or enum.
+            m_IncompleteType.add(name);
+// 			FIXME : not sure, if null is a good idea!
 //            ResultTypes r = new ResultTypes(new NamedType(loc, name,
 //                    new ASTType[0]), false, false, null);
-            // FIXME : not sure, if null is a good idea!
+            if (node.getKind() == IASTElaboratedTypeSpecifier.k_enum) {
+            	throw new UnsupportedOperationException("TODO: support incomplete enums");
+            }
             CStruct struct = new CStruct(node, true);
             ResultTypes r = new ResultTypes(new NamedType(loc, name,
                   new ASTType[0]), false, false, struct);
             
-            IASTDeclarator[] decls;
-            if (node.getParent() instanceof IASTSimpleDeclaration) {
-                decls = ((IASTSimpleDeclaration) node.getParent())
-                        .getDeclarators();
-            } else if (node.getParent() instanceof IASTParameterDeclaration) {
-                decls = new IASTDeclarator[] { ((IASTParameterDeclaration) node
-                        .getParent()).getDeclarator() };
-            } else {
-                String msg = "Unepected parent for IASTElaboratedTypeSpecifier";
-                Dispatcher.error(loc, SyntaxErrorType.UnsupportedSyntax, msg);
-                throw new UnsupportedSyntaxException(msg);
-            }
-            for (IASTDeclarator decl : decls) {
-                String key = decl.getName().getRawSignature();
-                if (!key.equals(SFO.EMPTY))
-                    typedef.put(key, r);
-            }
-           	main.cHandler.addSizeOfConstants(r.cvar);
+
+            m_DefinedTypes.put(type, r);
+// 	I think the following is obsolete, we always want to add the defined type.
+//  Maybe the following was relevant for enums.             
+//            IASTDeclarator[] decls;
+//            if (node.getParent() instanceof IASTSimpleDeclaration) {
+//                decls = ((IASTSimpleDeclaration) node.getParent())
+//                        .getDeclarators();
+//            } else if (node.getParent() instanceof IASTParameterDeclaration) {
+//                decls = new IASTDeclarator[] { ((IASTParameterDeclaration) node
+//                        .getParent()).getDeclarator() };
+//            } else {
+//                String msg = "Unepected parent for IASTElaboratedTypeSpecifier";
+//                Dispatcher.error(loc, SyntaxErrorType.UnsupportedSyntax, msg);
+//                throw new UnsupportedSyntaxException(msg);
+//            }
+//            for (IASTDeclarator decl : decls) {
+//                String key = decl.getName().getRawSignature();
+//                if (!key.equals(SFO.EMPTY))
+//                    m_DefinedTypes.put(key, r);
+//            }
+            
+            
+// do not add incompletes to sizeOf constants!
+//          	main.cHandler.addSizeOfConstants(r.cvar);
             return r;
         }
         String msg = "Not yet implemented: Spec [" + node.getKind() + "] of "
@@ -362,49 +362,7 @@ public class TypeHandler implements ITypeHandler {
         throw new UnsupportedSyntaxException(msg);
     }
     
-    /**
-     * Returns true if node is a field of struct which points to the struct 
-     * itself. E.g.
-     * struct listElement {
-     *    int data;
-     *    struct listElement *le;
-     *    }
-     */
-    private boolean isSelfReferencingPointerToStruct(IASTElaboratedTypeSpecifier node) {
-    	if (node.getKind() != IASTElaboratedTypeSpecifier.k_struct) {
-    		return false;
-    	}
-    	if (!(node.getParent().getParent() instanceof IASTCompositeTypeSpecifier)) {
-    		return false;
-    	}
-    	String parentId = ((IASTCompositeTypeSpecifier) 
-    			node.getParent().getParent()).getName().getRawSignature();
-    	if (parentId.equals(node.getName().getRawSignature())) {
-    		return true;
-    	}
-    	return false;
-    }
-    
-    /**
-     * Returns an auxiliary result for the case where we have a field of a 
-     * struct that points to the struct itself. E.g.
-     * struct listElement {
-     *    int data;
-     *    struct listElement *le;
-     *    }
-     * This result is used for the type of the inner element.
-     */
-    private ResultTypes auxiliaryResultForSelfReferencingStruct(
-    				CACSLLocation loc, IASTElaboratedTypeSpecifier node) {
-    	String aux = "auxiliaryResultForSelfReferencingStruct";
-    	String[] fName = { aux };
-    	CType[] ftype = { };
-    	CStruct cStruct = new CStruct((IASTDeclSpecifier) 
-    			node.getParent().getParent(), fName, ftype);
-    	ASTType auxType = new StructType(loc, new VarList[0]);
-    	return new ResultTypes(auxType, false, false, cStruct);
-    }
-    
+  
     
     @Override
     public Result visit(Dispatcher main, IASTCompositeTypeSpecifier node) {
@@ -451,7 +409,7 @@ public class TypeHandler implements ITypeHandler {
         }
         structCounter--;
         ASTType type = new StructType(loc, fields.toArray(new VarList[0]));
-        CType cvar = new CStruct(node, fNames.toArray(new String[0]),
+        CStruct cvar = new CStruct(node, fNames.toArray(new String[0]),
                 fTypes.toArray(new CType[0]));
         ResultTypes result = new ResultTypes(type, false, false, cvar);
         String cId = node.getName().toString();
@@ -462,23 +420,28 @@ public class TypeHandler implements ITypeHandler {
                 String typedefId = cDecl.getName().getRawSignature();
                 ResultTypes checkedResult = main.cHandler.checkForPointer(main, 
                 		cDecl.getPointerOperators(), result, false);
-                typedef.put(typedefId, checkedResult);
+                m_DefinedTypes.put(typedefId, checkedResult);
             }
-//            if (typedef.containsKey(cId)) {
+            if (m_DefinedTypes.containsKey(cId)) {
             	// the type itself was already defined
             	return new ResultSkip();
-//            }
+            }
         }
-        ArrayList<TypeDeclaration> tds = new ArrayList<TypeDeclaration>();
+//        ArrayList<TypeDeclaration> tds = new ArrayList<TypeDeclaration>();
         String name = "STRUCT~" + cId;
-        if (undefStructs.contains(name)) {
-            undefStructs.remove(name);
-            tds.add(new TypeDeclaration(loc, new Attribute[0], false, name,
-                    new String[0], type));
+        if (m_IncompleteType.contains(name)) {
+            m_IncompleteType.remove(name);
+            ResultTypes incompleteType = m_DefinedTypes.get(cId);
+            CStruct incompleteStruct = (CStruct) incompleteType.cvar;
+            incompleteStruct.complete(cvar);
+//            Matthias: 3.11.2013 I think the following is not supported
+//			  because Alex and Jochen have removed type declarations for structs            
+//            tds.add(new TypeDeclaration(loc, new Attribute[0], false, name,
+//                    new String[0], type));
         }
-        result.addTypeDeclarations(tds);
+//        result.addTypeDeclarations(tds);
         if (!cId.equals(SFO.EMPTY)) {
-            typedef.put(cId, result);
+            m_DefinedTypes.put(cId, result);
         }
         main.cHandler.addSizeOfConstants(result.cvar);
         return result;
@@ -502,13 +465,13 @@ public class TypeHandler implements ITypeHandler {
 
     @Override
     public InferredType visit(Dispatcher main, ITypedef type) {
-        if (!typedef.containsKey(type.getName())) {
+        if (!m_DefinedTypes.containsKey(type.getName())) {
             String msg = "Unknown C typedef: " + type.getName();
             // TODO : no idea what location should be set to ...
             Dispatcher.error(null, SyntaxErrorType.IncorrectSyntax, msg);
             throw new IncorrectSyntaxException(msg);
         }
-        return new InferredType(typedef.get(type.getName()).getType());
+        return new InferredType(m_DefinedTypes.get(type.getName()).getType());
     }
 
     @Override
@@ -593,6 +556,6 @@ public class TypeHandler implements ITypeHandler {
 
     @Override
     public Set<String> getUndefinedTypes() {
-        return undefStructs;
+        return m_IncompleteType;
     }
 }
