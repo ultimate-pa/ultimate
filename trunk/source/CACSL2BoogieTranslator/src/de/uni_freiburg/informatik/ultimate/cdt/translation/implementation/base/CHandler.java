@@ -1860,19 +1860,10 @@ public class CHandler implements ICHandler {
 	public RValue doPointerArith(Dispatcher main, int operator,
 			ILocation loc,
 			RValue ptr, RValue integer) {
-		Expression startAddress = ptr.getValue();
-		Expression newStartAddressBase = null;
-		Expression newStartAddressOffset = null;
-		if (startAddress instanceof StructConstructor) {
-			newStartAddressBase = ((StructConstructor) startAddress).getFieldValues()[0];
-			newStartAddressOffset = ((StructConstructor) startAddress).getFieldValues()[1];
-		} else {
-			newStartAddressBase = MemoryHandler.getPointerBaseAddress(startAddress, loc);
-			newStartAddressOffset = MemoryHandler.getPointerOffset(startAddress, loc);
-		}
+	    Expression startAddress = ptr.getValue();
+	    Expression pointerBase = MemoryHandler.getPointerBaseAddress(startAddress, loc);
+	    Expression pointerOffset = MemoryHandler.getPointerOffset(startAddress, loc);
 //		Expression pointerOffset = MemoryHandler.getPointerOffset(ptr.getValue(), loc);
-		Expression pointerBase = newStartAddressBase;
-		Expression pointerOffset = newStartAddressOffset;
 //		Expression timesSizeOf = createArithmeticExpression(IASTBinaryExpression.op_multiply, integer.getValue(), 
 //				memoryHandler.calculateSizeOf(((CPointer) ptr.cType).pointsToType), 
 //				loc);
@@ -2682,6 +2673,8 @@ public class CHandler implements ICHandler {
 	@Override
 	public Result visit(Dispatcher main, IASTCastExpression node) {
 		ResultExpression expr = (ResultExpression) main.dispatch(node.getOperand());
+        ILocation loc = new CACSLLocation(node);
+		expr = expr.switchToRValue(main, memoryHandler, structHandler, loc);
 		
 		//TODO: check validity of cast?
 		
@@ -2692,23 +2685,30 @@ public class CHandler implements ICHandler {
 		for (int i = 0; i < noPtrOps; i++) 
 			newCType = new CPointer(newCType);
 		
+		/*
+		 * Christian: pointer cast
+		 * currently only allowed to integers and other pointers
+		 */
+		if (expr.lrVal.cType instanceof CPointer) {
+		    // cast from pointer to integer
+		    if (newCType instanceof CPrimitive &&
+		            ((CPrimitive)newCType).getType() == PRIMITIVE.INT) {
+		        Expression e = MemoryHandler.getPointerOffset(expr.lrVal.getValue(), loc);
+		        expr.lrVal = new RValue(e, newCType);
+		    }
+		    else if (!(newCType instanceof CPointer)) {
+                throw new UnsupportedSyntaxException(
+                        "Explicit cast from pointer not supported.");
+            }
+		}
+		
 		expr.lrVal.cType = newCType;
-		InferredType it = new InferredType(newCType);
+		expr.lrVal.getValue().setType(new InferredType(newCType));
 		
-//		if (expr.lrVal instanceof HeapLValue) 
-//			((HeapLValue) expr.lrVal).getAddress().setType(it);
-//		else 
-		if (expr.lrVal instanceof LocalLValue)
-			((LocalLValue) expr.lrVal).getLHS().setType(it);
-		else if (expr.lrVal instanceof RValue)
-			expr.lrVal.getValue().setType(it);
-		
-		// TODO : review decision to only drop casts!
-		// This can of course lead to type errors (e.g. int i = 1.0f;)
-		String msg = "Ignored cast! At line: "
-				+ node.getFileLocation().getStartingLineNumber();
-		Dispatcher.unsoundnessWarning(new CACSLLocation(node), msg,
-				"Ignored cast!");
+//		String msg = "Ignored cast! At line: "
+//				+ node.getFileLocation().getStartingLineNumber();
+//		Dispatcher.unsoundnessWarning(loc, msg,
+//				"Ignored cast!");
 		return expr;
 	}
 

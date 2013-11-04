@@ -1191,11 +1191,17 @@ public class MemoryHandler {
     }
     
     
-	public static StructAccessExpression getPointerBaseAddress(Expression pointer, ILocation loc) {
+	public static Expression getPointerBaseAddress(Expression pointer, ILocation loc) {
+	    if (pointer instanceof StructConstructor) {
+            return ((StructConstructor) pointer).getFieldValues()[0];
+        }
 		return new StructAccessExpression(loc, new InferredType(Type.Integer), pointer, "base");
 	}
 	
-	public static StructAccessExpression getPointerOffset(Expression pointer, ILocation loc) {
+	public static Expression getPointerOffset(Expression pointer, ILocation loc) {
+	    if (pointer instanceof StructConstructor) {
+            return ((StructConstructor) pointer).getFieldValues()[1];
+        }
 		return new StructAccessExpression(loc, new InferredType(Type.Integer), pointer, "offset");
 	}
 	
