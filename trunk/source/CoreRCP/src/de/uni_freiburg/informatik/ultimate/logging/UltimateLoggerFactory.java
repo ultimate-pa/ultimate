@@ -71,24 +71,23 @@ public class UltimateLoggerFactory {
 					@Override
 					public void preferenceChange(PreferenceChangeEvent event) {
 						//do things if it concerns the loggers 
-						switch (event.getKey()) {
-						case CorePreferenceInitializer.LABEL_LOG4J_PATTERN:
-						case CorePreferenceInitializer.LABEL_LOGFILE:
-						case CorePreferenceInitializer.LABEL_LOGFILE_NAME:
-						case CorePreferenceInitializer.LABEL_LOGFILE_DIR:
-						case CorePreferenceInitializer.LABEL_APPEXLOGFILE:
-						case CorePreferenceInitializer.EXTERNAL_TOOLS_PREFIX:
-						case CorePreferenceInitializer.PREFID_ROOT:
-						case CorePreferenceInitializer.PREFID_PLUGINS:
-						case CorePreferenceInitializer.PREFID_TOOLS:
-						case CorePreferenceInitializer.PREFID_CONTROLLER:
-						case CorePreferenceInitializer.PREFID_CORE:
-						case CorePreferenceInitializer.PREFID_DETAILS:
-							break;
-						default:
+						String ek = event.getKey();
+						if (ek.equals(CorePreferenceInitializer.LABEL_LOG4J_PATTERN)
+								|| ek.equals(CorePreferenceInitializer.LABEL_LOGFILE)
+								|| ek.equals(CorePreferenceInitializer.LABEL_LOGFILE_NAME)
+								|| ek.equals(CorePreferenceInitializer.LABEL_LOGFILE_DIR)
+								|| ek.equals(CorePreferenceInitializer.LABEL_APPEXLOGFILE)
+								|| ek.equals(CorePreferenceInitializer.EXTERNAL_TOOLS_PREFIX)
+								|| ek.equals(CorePreferenceInitializer.PREFID_ROOT)
+								|| ek.equals(CorePreferenceInitializer.PREFID_PLUGINS)
+								|| ek.equals(CorePreferenceInitializer.PREFID_TOOLS)
+								|| ek.equals(CorePreferenceInitializer.PREFID_CONTROLLER)
+								|| ek.equals(CorePreferenceInitializer.PREFID_CORE)
+								|| ek.equals(CorePreferenceInitializer.PREFID_DETAILS)) {
+							//do nothing
+						} else {
 							return;
 						}
-
 						initializeAppenders();
 						refreshPropertiesLoggerHierarchie();
 						refreshPropertiesAppendLogFile();
