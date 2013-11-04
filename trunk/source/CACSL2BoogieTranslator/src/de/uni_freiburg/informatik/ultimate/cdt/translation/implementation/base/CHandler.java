@@ -635,7 +635,16 @@ public class CHandler implements ICHandler {
 				
 				//true iff the declared variable will be addressoffed in the program (alex)
 				boolean putOnHeap = ((MainDispatcher) main).getVariablesForHeap().contains(node);
-				String cId = d.getName().toString();
+				
+				/*
+				 * unwrap nested declaraters (e.g., int ((x)) = 0) to get a
+				 * nonempty cId
+				 */
+				IASTDeclarator declaraterForCid = d;
+				while (declaraterForCid.getNestedDeclarator() != null) {
+					declaraterForCid = declaraterForCid.getNestedDeclarator();
+				}
+				String cId = declaraterForCid.getName().toString();
 				String bId = main.nameHandler.getUniqueIdentifier(node, cId,
 						symbolTable.getCompoundCounter(), putOnHeap);
 				if (putOnHeap)
