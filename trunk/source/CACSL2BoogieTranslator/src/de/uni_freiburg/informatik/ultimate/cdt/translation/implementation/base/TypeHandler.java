@@ -309,12 +309,11 @@ public class TypeHandler implements ITypeHandler {
                     // type anyway?
                     return new ResultSkip();
                 }
-//                ResultTypes originalType = typedef.get(type);
-//                CNamed named = new CNamed(node, originalType.cvar);
-//                ResultTypes r = new ResultTypes(new NamedType(loc, name,
-//                        new ASTType[0]), false, false, named);
-//                return r;
-                return m_DefinedTypes.get(type);
+                ResultTypes originalType = m_DefinedTypes.get(type);
+                ResultTypes withoutBoogieTypedef = new ResultTypes(
+                		originalType.getType(), originalType.isConst, 
+                		originalType.isVoid, originalType.cvar);
+                return withoutBoogieTypedef;
             }
 
             // This is a definition of an incomplete struct or enum.
@@ -408,11 +407,20 @@ public class TypeHandler implements ITypeHandler {
             }
         }
         structCounter--;
-        ASTType type = new StructType(loc, fields.toArray(new VarList[0]));
+        String cId = node.getName().toString();
+        String name = "STRUCT~" + cId;
+        NamedType namedType = new NamedType(loc, name,
+                new ASTType[0]);
+                
+//        ASTType type = new StructType(loc, fields.toArray(new VarList[0]));
+//        TypeDeclaration structDeclaration = new TypeDeclaration(loc, new Attribute[0], false,
+//                SFO.POINTER, new String[0], new StructType(loc, fields.toArray(new VarList[0])));
+        
+        ASTType type = namedType;
         CStruct cvar = new CStruct(node, fNames.toArray(new String[0]),
                 fTypes.toArray(new CType[0]));
         ResultTypes result = new ResultTypes(type, false, false, cvar);
-        String cId = node.getName().toString();
+        
         if (node.getStorageClass() == IASTDeclSpecifier.sc_typedef) {
             // TYPEDEF Struct Type
             for (IASTDeclarator cDecl : ((IASTSimpleDeclaration) node
@@ -427,8 +435,8 @@ public class TypeHandler implements ITypeHandler {
             	return new ResultSkip();
             }
         }
-//        ArrayList<TypeDeclaration> tds = new ArrayList<TypeDeclaration>();
-        String name = "STRUCT~" + cId;
+        ArrayList<TypeDeclaration> tds = new ArrayList<TypeDeclaration>();
+        
         if (m_IncompleteType.contains(name)) {
             m_IncompleteType.remove(name);
             ResultTypes incompleteType = m_DefinedTypes.get(cId);
@@ -436,10 +444,12 @@ public class TypeHandler implements ITypeHandler {
             incompleteStruct.complete(cvar);
 //            Matthias: 3.11.2013 I think the following is not supported
 //			  because Alex and Jochen have removed type declarations for structs            
-//            tds.add(new TypeDeclaration(loc, new Attribute[0], false, name,
-//                    new String[0], type));
+
         }
-//        result.addTypeDeclarations(tds);
+        tds.add(new TypeDeclaration(loc, new Attribute[0], false, name,
+                new String[0], new StructType(loc, fields.toArray(new VarList[0]))));
+        result.addTypeDeclarations(tds);
+        
         if (!cId.equals(SFO.EMPTY)) {
             m_DefinedTypes.put(cId, result);
         }

@@ -175,7 +175,8 @@ public class MemoryHandler {
         VarList[] fields = new VarList[] { fBase, fOffset };
         ASTType pointerType = new StructType(tuLoc, new InferredType(
                 Type.Struct), fields);
-        decl.add(new TypeDeclaration(tuLoc, new Attribute[0], true,
+        // Pointer is non-finite, right? (ZxZ)..
+        decl.add(new TypeDeclaration(tuLoc, new Attribute[0], false, 
                 SFO.POINTER, new String[0], pointerType));
         // NULL Pointer
         decl.add(new VariableDeclaration(tuLoc, new Attribute[0],

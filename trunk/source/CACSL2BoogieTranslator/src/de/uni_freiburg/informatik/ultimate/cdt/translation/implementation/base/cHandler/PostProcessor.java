@@ -329,7 +329,7 @@ public class PostProcessor {
 			
 			stmt.add(assign);
 			decl.add(tVarDecl);
-			mallocRex.auxVars.put(tVarDecl, loc);
+			auxVars.put(tVarDecl, loc);
 			
 			stmt.addAll(arrayHandler.initArray(main, memoryHandler, structHandler, loc, null, 
 					CHandler.convertLHSToExpression(lhs),
