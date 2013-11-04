@@ -8,6 +8,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.M
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.NameHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.PreprocessorHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.SideEffectHandler;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TypeHandler;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.Backtranslator;
 
 /**
@@ -25,7 +26,7 @@ public class SvComp14MainDispatcher extends MainDispatcher {
     protected void init() {
         sideEffectHandler = new SideEffectHandler();
         cHandler = new SvComp14CHandler(this, backtranslator);
-        typeHandler = new SVCompTypeHandler();
+        typeHandler = new TypeHandler();
         acslHandler = new ACSLHandler();
         nameHandler = new NameHandler();
         preprocessorHandler = new SvComp14PreprocessorHandler();
