@@ -1586,6 +1586,7 @@ public class CHandler implements ICHandler {
 			decl.add(tmpVar);
 			VariableLHS lhs = new VariableLHS(loc, tInt, resName);
 			Expression tmpRval = new IdentifierExpression(loc, tInt, resName);
+			Expression resRval = tmpRval;
 			tmpRval = ConvExpr.toBoolean(loc, tmpRval);
 			// #t~AND~UID = left
 			
@@ -1625,7 +1626,7 @@ public class CHandler implements ICHandler {
             }
 			stmt.add(ifStatement);
 			return new ResultExpression(stmt,
-					new RValue(tmpRval, new CPrimitive(CPrimitive.PRIMITIVE.INT)),
+					new RValue(resRval, new CPrimitive(CPrimitive.PRIMITIVE.INT)),
 					decl, auxVars, overappr);
 		}
 		case IASTBinaryExpression.op_logicalOr: {
@@ -1660,6 +1661,7 @@ public class CHandler implements ICHandler {
 			decl.add(tmpVar);
 			VariableLHS lhs = new VariableLHS(loc, tInt, resName);
 			Expression tmpRval = new IdentifierExpression(loc, tInt, resName);
+			Expression resRval = tmpRval;
 			tmpRval = ConvExpr.toBoolean(loc, tmpRval);
 			// #t~OR~UID = left
 			
@@ -1699,7 +1701,7 @@ public class CHandler implements ICHandler {
             }
             stmt.add(ifStatement);
 			return new ResultExpression(stmt,
-					new RValue(tmpRval, new CPrimitive(CPrimitive.PRIMITIVE.INT)),
+					new RValue(resRval, new CPrimitive(CPrimitive.PRIMITIVE.INT)),
 					decl, auxVars, overappr);
 		}
 		case IASTBinaryExpression.op_minus:
