@@ -507,6 +507,13 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 	}
 
 	private void reportResult(IResult res) {
+		if (res instanceof CounterExampleResult<?>) {
+			System.out.println("Error path start");
+			for (ILocation loc : ((CounterExampleResult<?>) res).getFailurePath()) {
+				System.out.println(loc.toString());
+			}
+			System.out.println("Error path end");
+		}
 		UltimateServices.getInstance().reportResult(Activator.s_PLUGIN_ID, res);
 	}
 
