@@ -77,10 +77,10 @@ public class UltimateTest {
 						getPathFromTrunk("..\\..\\svcomp"),
 						new HashMap<String, String>() {
 							{
-//								put("MemorySafety",
-//										getPathFromTrunk("examples\\settings\\AlexSVCOMPmemsafety"));
-								put("Simple",
-										getPathFromTrunk("examples\\settings\\AlexSVCOMPstandard"));
+								put("MemorySafety",
+										getPathFromTrunk("examples\\settings\\AlexSVCOMPmemsafety"));
+//								put("Simple",
+//										getPathFromTrunk("examples\\settings\\AlexSVCOMPstandard"));
 //								put("ControlFlowInteger",
 //										getPathFromTrunk("examples\\settings\\AlexSVCOMPstandard"));
 							}
@@ -93,10 +93,10 @@ public class UltimateTest {
 						getPathFromTrunk("..\\..\\svcomp"),
 						new HashMap<String, String>() {
 							{
-//								put("MemorySafety",
-//										getPathFromTrunk("examples\\settings\\AutomizerSvcompSafety1Minute.bpl"));
-								put("Simple",
+								put("MemorySafety",
 										getPathFromTrunk("examples\\settings\\AutomizerSvcompSafety1Minute.bpl"));
+//								put("Simple",
+//										getPathFromTrunk("examples\\settings\\AutomizerSvcompSafety1Minute.bpl"));
 //								put("ControlFlowInteger",
 //										getPathFromTrunk("examples\\settings\\AutomizerSvcompSafety1Minute.bpl"));
 							}
