@@ -122,7 +122,7 @@ public class UltimateTest {
 		mIsLast = isLast;
 	}
 
-	@Parameters(name = "{index} : {0}")
+	@Parameters
 	public static Collection<Object[]> loadTestFiles() {
 
 		ArrayList<Object[]> rtr = new ArrayList<Object[]>();
