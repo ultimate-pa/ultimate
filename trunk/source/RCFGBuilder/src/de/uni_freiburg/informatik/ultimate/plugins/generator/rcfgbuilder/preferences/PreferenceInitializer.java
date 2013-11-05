@@ -55,6 +55,6 @@ public class PreferenceInitializer extends UltimatePreferenceInitializer {
 	public static final String LABEL_RemoveGotoEdges = "Remove goto edges from RCFG";
 	public static final String LABEL_DumpToFile = "Dump SMT script to file";
 	public static final String LABEL_Path = "To the following directory";
-	public static final String DEF_Path = "./dump/";
+	public static final String DEF_Path = "";
 	
 }
