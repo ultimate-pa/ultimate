@@ -2731,21 +2731,30 @@ public class CHandler implements ICHandler {
 		for (int i = 0; i < noPtrOps; i++) 
 			newCType = new CPointer(newCType);
 		
-		/*
-		 * Christian: pointer cast
-		 * currently only allowed to integers and other pointers
-		 */
-		if (expr.lrVal.cType.getUnderlyingType() instanceof CPointer) {
+		// cast pointer -> integer/other pointer
+		CType underlyingType = expr.lrVal.cType.getUnderlyingType();
+		if (underlyingType instanceof CPointer) {
 		    // cast from pointer to integer
 		    if (newCType instanceof CPrimitive &&
 		            ((CPrimitive)newCType).getType() == PRIMITIVE.INT) {
 		        Expression e = MemoryHandler.getPointerOffset(expr.lrVal.getValue(), loc);
 		        expr.lrVal = new RValue(e, newCType);
 		    }
+		    // cast from pointer to pointer is ignored
 		    else if (!(newCType.getUnderlyingType() instanceof CPointer)) {
                 throw new UnsupportedSyntaxException(
                         "Explicit cast from pointer not supported.");
             }
+		}
+		// cast integer -> pointer
+		else if (underlyingType instanceof CPrimitive) {
+		    CPrimitive cprim = (CPrimitive)underlyingType;
+		    if (cprim.getType() == PRIMITIVE.INT &&
+		            newCType instanceof CPointer) {
+		        Expression e = MemoryHandler.constructPointerFromBaseAndOffset(
+		                new IntegerLiteral(loc, "0"), expr.lrVal.getValue(), loc);
+		        expr.lrVal = new RValue(e, newCType);
+		    }
 		}
 		
 		expr.lrVal.cType = newCType;
