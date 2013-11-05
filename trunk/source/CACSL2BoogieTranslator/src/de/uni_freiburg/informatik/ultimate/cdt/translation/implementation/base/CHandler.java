@@ -2972,15 +2972,10 @@ public class CHandler implements ICHandler {
 	}
 	
 	/**
-	 * Adds a Boogie ID to the heap variables.
-	 * The Boogie ID is retrieved from the symbol table via the input
-	 * parameters.
-	 * 
-	 * @param cId ID from C
-	 * @param loc location
+	 * @param bId Boogie ID
 	 */
-	public void addBoogieIdsOfHeapVars(String cId, ILocation loc) {
-	    boogieIdsOfHeapVars.add(symbolTable.get(cId, loc).getBoogieName());
+	public void addBoogieIdsOfHeapVars(String bId) {
+	    boogieIdsOfHeapVars.add(bId);
 	}
 
 //	void addHeapModifiedGlobals() {

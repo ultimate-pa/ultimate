@@ -35,6 +35,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.IncorrectSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.HeapLValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LRValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LocalLValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
@@ -359,29 +360,63 @@ public class FunctionHandler {
 	 * @param parent
 	 */
 	public void handleFunctionsInParams(Dispatcher main, ILocation loc,
-			ArrayList<VariableDeclaration> decl, ArrayList<Statement> stmt,
-			IASTNode parent) {
-		for (VarList varList : currentProcedure.getInParams()) {
+			ArrayList<Declaration> decl, ArrayList<Statement> stmt,
+			IASTFunctionDefinition parent) {
+	    VarList[] varListArray = currentProcedure.getInParams();
+	    IASTParameterDeclaration[] paramDecs =
+                ((CASTFunctionDeclarator)parent.getDeclarator()).getParameters();
+	    assert varListArray.length == paramDecs.length;
+		for (int i = 0; i < paramDecs.length; ++i) {
+		    VarList varList  = varListArray[i];
+		    IASTParameterDeclaration paramDec  = paramDecs[i];
 			for (final String bId : varList.getIdentifiers()) {
 				final String cId = main.cHandler.getSymbolTable()
 						.getCID4BoogieID(bId, loc);
+				final boolean isOnHeap = ((MainDispatcher) main).
+				        getVariablesForHeap().contains(paramDec);
 				// Copy of inparam that is writeable
 				String auxInvar = main.nameHandler.getUniqueIdentifier(parent,
-						cId, 0, false);
-				VarList var = new VarList(loc, new String[] { auxInvar },
-						varList.getType());
+						cId, 0, isOnHeap);
+				ASTType type = varList.getType();
+				if (isOnHeap) {
+				    type = MemoryHandler.POINTER_TYPE;
+	                ((CHandler)main.cHandler).addBoogieIdsOfHeapVars(
+	                        auxInvar);
+				}
+				VarList var = new VarList(loc, new String[] { auxInvar }, type);
 				VariableDeclaration inVarDecl = new VariableDeclaration(loc,
 						new Attribute[0], new VarList[] { var });
 				decl.add(inVarDecl);
-				VariableLHS tempLHS = new VariableLHS(loc,
-						var.getIdentifiers()[0]);
-				stmt.add(new AssignmentStatement(loc,
-						new LeftHandSide[] { tempLHS },
-						new Expression[] { new IdentifierExpression(loc, bId) }));
-
+				
+                CType cvar = main.cHandler.getSymbolTable().get(cId, loc)
+                        .getCVariable();
+                if (isOnHeap) {
+                    cvar = new CPointer(cvar);
+                }
+                
+				VariableLHS tempLHS = new VariableLHS(loc, auxInvar);
+				IdentifierExpression rhsId = new IdentifierExpression(loc, bId);
+				if (isOnHeap) {
+				    LocalLValue llv = new LocalLValue(tempLHS, cvar);
+				    // malloc
+				    addMallocedAuxPointer(main, llv);
+				    // dereference
+                    HeapLValue hlv = new HeapLValue(llv.getValue(), cvar);
+                    ArrayList<Declaration> decls = new ArrayList<Declaration>();
+                    ResultExpression assign = ((CHandler) main.cHandler).
+                        makeAssignment(main, loc, stmt, hlv,
+                            new RValue(rhsId, ((CPointer)cvar).pointsToType),
+                            decls,
+                            new HashMap<VariableDeclaration, CACSLLocation>(),
+                            new ArrayList<Overapprox>());
+                    stmt = assign.stmt;
+                    decl = assign.decl;
+                } else {
+        			stmt.add(new AssignmentStatement(loc,
+        					new LeftHandSide[] { tempLHS },
+        					new Expression[] { rhsId }));
+                }
 				assert main.cHandler.getSymbolTable().containsCSymbol(cId);
-				CType cvar = main.cHandler.getSymbolTable().get(cId, loc)
-						.getCVariable();
 				// Overwrite the information in the symbolTable for cId, s.t. it
 				// points to the locally declared variable.
 				main.cHandler.getSymbolTable().put(cId,
@@ -571,9 +606,6 @@ public class FunctionHandler {
                     main, declarator.getPointerOperators(), paramResType, false);
             if (isOnHeap) {
                 paramTypes.add(i, new CPointer(paramResType.cvar));
-//                FIXME
-                ((CHandler)main.cHandler).addBoogieIdsOfHeapVars(
-                        declarator.getName().toString(), loc);
             }
             else {
                 paramTypes.add(i, paramResType.cvar);
@@ -676,8 +708,7 @@ public class FunctionHandler {
          * 3) add statements and declarations to new body
 		 */
 		ArrayList<Statement> stmts = new ArrayList<Statement>();
-		ArrayList<VariableDeclaration> decls =
-		        new ArrayList<VariableDeclaration>();
+		ArrayList<Declaration> decls = new ArrayList<Declaration>();
 		// 1)
 		handleFunctionsInParams(main, loc, decls, stmts, node);
 		// 2)
