@@ -1,4 +1,4 @@
-[10251] bitvector (35):
+[10318] bitvector (35):
 
 1 working
 jain_1_safe
@@ -20,7 +20,7 @@ byte_add_*, num_*
 
 ---
 
-[10251] bitvector-regression (13):
+[10318] bitvector-regression (13):
 
 4 working
 pointer_extension3_*, pointer_extension_*
@@ -29,8 +29,7 @@ pointer_extension3_*, pointer_extension_*
 integerpromotion_*
 
 7 wrong result
-implicitunsignedconversion_*, pointer_extension2_*, signextension2_*,
-signextension_*
+implicitunsignedconversion_*, pointer_extension2_*, signextension*
 
 -- Translation:
 
