@@ -146,8 +146,8 @@ public class CArray extends CType {
     }
     
     /**
-     * Computes the result of a basic arithmetic expression and
-     * returns an Expression object containing the IntegerLiteral.
+     * Computes the result of an integer arithmetic expression and
+     * returns an the IntegerLiteral.
      * 
      * @param loc location
      * @param e arithmetic expression in the integers
@@ -160,7 +160,8 @@ public class CArray extends CType {
     }
     
     /**
-     * Helper method for computation of arithmetic result.
+     * Helper method for the computation of an arithmetic result from
+     * expressions.
      * 
      * @param e expression (unary or binary)
      * @return the result as an int
