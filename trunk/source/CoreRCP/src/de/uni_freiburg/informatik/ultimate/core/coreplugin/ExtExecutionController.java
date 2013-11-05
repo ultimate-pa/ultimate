@@ -188,19 +188,16 @@ public class ExtExecutionController implements IController {
 	@Override
 	public void displayToolchainResultProgramIncorrect() {
 		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException();
 	}
 
 	@Override
 	public void displayToolchainResultProgramCorrect() {
 		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException();
 	}
 
 	@Override
 	public void displayToolchainResultProgramUnknown(String description) {
 		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException();
 	}
 
 	@Override

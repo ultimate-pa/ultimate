@@ -1,94 +1,160 @@
 package de.uni_freiburg.informatik.ultimatetest;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.fail;
 
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Calendar;
+import java.util.Arrays;
 import java.util.Collection;
-import java.util.List;
-import java.util.Map.Entry;
+import java.util.HashMap;
+import java.util.HashSet;
 
 import org.apache.log4j.FileAppender;
-import org.apache.log4j.Logger;
 import org.apache.log4j.PatternLayout;
+import org.junit.After;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
 
-import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.Application;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.Application.Ultimate_Mode;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.preferences.CorePreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
 import de.uni_freiburg.informatik.ultimate.logging.UltimateLoggerFactory;
-import de.uni_freiburg.informatik.ultimate.result.IResult;
-import de.uni_freiburg.informatik.ultimate.result.NoResult;
-import de.uni_freiburg.informatik.ultimate.result.SyntaxErrorResult;
-import de.uni_freiburg.informatik.ultimate.result.TimeoutResult;
 
 @RunWith(Parameterized.class)
 public class UltimateTest {
 
 	// just add to this method (for now)
 
-	public static UltimateTestDescriptor[] getDescriptors() {
-		return new UltimateTestDescriptor[] { new UltimateTestDescriptor(
-				"F:\\repos\\ultimate fresher co\\trunk\\examples\\settings\\AutomizerSvcomp.settings",
-				"F:\\repos\\ultimate fresher co\\trunk\\examples\\toolchains\\TraceAbstractionCWithBlockEncoding.xml",
-				"F:\\repos\\svcomp\\ldv-challenges", ".c", 5000) };
+	public static UltimateTestDescriptor[] getDescriptors() throws Exception {
+		// return new UltimateTestDescriptor[] {
+		// new UltimateTestDescriptor(
+		// "F:\\repos\\ultimate fresher co\\trunk\\examples\\settings\\AutomizerSvcomp.settings",
+		// "F:\\repos\\ultimate fresher co\\trunk\\examples\\toolchains\\TraceAbstractionCWithBlockEncoding.xml",
+		// "F:\\repos\\svcomp\\ldv-challenges", new String[] { ".c", ".i" },
+		// 5000),
+
+		// new UltimateTestDescriptor(
+		// getPathFromTrunk("examples\\settings\\AutomizerSvcomp.settings"),
+		// getPathFromTrunk("examples\\toolchains\\TraceAbstractionCWithBlockEncoding.xml"),
+		// getPathFromTrunk("examples\\programs\\minitests\\quantifier"),
+		// new String[] { ".c", ".i" }, 5000)
+
+		// new SVCOMP14TestDescriptor(
+		// getPathFromTrunk("examples\\settings\\AutomizerSvcomp.settings"),
+		// getPathFromTrunk("examples\\toolchains\\TraceAbstractionCWithBlockEncoding.xml"),
+		// getPathFromTrunk("examples\\programs\\minitests\\quantifier\\todo"),
+		// 5000, "Some"),
+
+		// new SVCOMP14TestDescriptor(
+		// getPathFromTrunk("examples\\settings\\AlexSVCOMPstandard"),
+		// getPathFromTrunk("examples\\toolchains\\KojakC.xml"),
+		// getPathFromTrunk("examples\\programs\\minitests"),
+		// 5000, "Some")
+
+		// new UltimateTestDescriptor(
+		// getPathFromTrunk("examples\\settings\\AutomizerSvcomp.settings"),
+		// getPathFromTrunk("examples\\toolchains\\TraceAbstractionCWithBlockEncoding.xml"),
+		// getPathFromTrunk("..\\..\\svcomp"),
+		// new String[] { ".c", ".i" }, 5000)
+
+		// };
+
+		/*
+		 * SVCOMP 14 Categories: BitVectors Concurrency ControlFlowInteger
+		 * DeviceDrivers64 DriverChallenges HeapManipulation Loops MemorySafety
+		 * ProductLines Recursive Sequentialized Simple Stateful
+		 */
+
+		ArrayList<UltimateTestDescriptor> all = new ArrayList<UltimateTestDescriptor>();
+
+		UltimateTestDescriptor[] alex = SVCOMP14TestDescriptor
+				.createDescriptorsFromSVCOMPRootDirectory(
+						getPathFromTrunk("..\\..\\svcomp"),
+						new HashMap<String, String>() {
+							{
+//								put("MemorySafety",
+//										getPathFromTrunk("examples\\settings\\AlexSVCOMPmemsafety"));
+//								put("Simple",
+//										getPathFromTrunk("examples\\settings\\AlexSVCOMPstandard"));
+								put("ControlFlowInteger",
+										getPathFromTrunk("examples\\settings\\AlexSVCOMPstandard"));
+							}
+						},
+						getPathFromTrunk("examples\\toolchains\\KojakC.xml"),
+						30000,"CodeCheck");
+
+		UltimateTestDescriptor[] matthias = SVCOMP14TestDescriptor
+				.createDescriptorsFromSVCOMPRootDirectory(
+						getPathFromTrunk("..\\..\\svcomp"),
+						new HashMap<String, String>() {
+							{
+//								put("MemorySafety",
+//										getPathFromTrunk("examples\\settings\\AutomizerSvcompSafety1Minute.bpl"));
+//								put("Simple",
+//										getPathFromTrunk("examples\\settings\\AutomizerSvcompSafety1Minute.bpl"));
+								put("ControlFlowInteger",
+										getPathFromTrunk("examples\\settings\\AutomizerSvcompSafety1Minute.bpl"));
+							}
+						},
+						getPathFromTrunk("examples\\toolchains\\TraceAbstractionC.xml"),
+						30000,"Automizer");
+
+		all.addAll(Arrays.asList(alex));
+		all.addAll(Arrays.asList(matthias));
+
+		return all.toArray(new UltimateTestDescriptor[all.size()]);
+
 	}
 
 	// ignore everything below
 
+	private static HashSet<TestSummary> sTestSummaries = new HashSet<TestSummary>();
 	private UltimateTestDescriptor mDescriptor;
+	private boolean mIsLast;
 
-	public UltimateTest(UltimateTestDescriptor descriptor) {
+	public UltimateTest(UltimateTestDescriptor descriptor, boolean isLast) {
 		mDescriptor = descriptor;
+		mIsLast = isLast;
 	}
 
 	@Parameters(name = "{index} : {0}")
 	public static Collection<Object[]> loadTestFiles() {
-		ArrayList<Object[]> rtr = new ArrayList<Object[]>();
-		UltimateTestDescriptor[] descriptors = getDescriptors();
 
+		ArrayList<Object[]> rtr = new ArrayList<Object[]>();
+		UltimateTestDescriptor[] descriptors;
+		try {
+			descriptors = getDescriptors();
+		} catch (Exception e) {
+			e.printStackTrace();
+			return null;
+		}
 		for (UltimateTestDescriptor descriptor : descriptors) {
-			Collection<File> files = walk(descriptor.getPathInputFile(),
-					descriptor.getFileEnding());
+			Collection<File> files = descriptor.getFiles();
+
 			for (File f : files) {
-				rtr.add(new Object[] { descriptor.copy(f.getAbsolutePath()) });
+				rtr.add(new Object[] { descriptor.copy(f.getAbsolutePath()),
+						false });
 			}
 		}
+		rtr.get(rtr.size() - 1)[1] = true;
 		return rtr;
 	}
 
-	private static Collection<File> walk(File root, String endings) {
-		ArrayList<File> rtr = new ArrayList<File>();
-		File[] list = root.listFiles();
-
-		if (list == null) {
-			return rtr;
-		}
-
-		for (File f : list) {
-			if (f.isDirectory()) {
-				rtr.addAll(walk(f, endings));
-			} else {
-				if (endings == null || f.getAbsolutePath().endsWith(endings)) {
-					rtr.add(f);
-				}
-			}
-		}
-		return rtr;
+	private static String getPathFromTrunk(String path) {
+		File trunk = new File(System.getProperty("user.dir")).getParentFile()
+				.getParentFile();
+		File relative = new File(trunk.getAbsolutePath() + File.separator
+				+ path);
+		return relative.getAbsolutePath();
 	}
 
 	@Test
 	public void testSingleFile() {
-
 		Application ultimate = new Application(Ultimate_Mode.EXTERNAL_EXECUTION);
 		ultimate.setM_InputFile(mDescriptor.getPathInputFile());
 		ultimate.setDeadline(mDescriptor.getDeadline());
@@ -101,68 +167,59 @@ public class UltimateTest {
 					new PatternLayout(
 							new UltimatePreferenceStore(ultimate.getPluginID())
 									.getString(CorePreferenceInitializer.LABEL_LOG4J_PATTERN)),
-					generateLogFilename());
+					mDescriptor.generateLogFilename());
 			UltimateLoggerFactory.getInstance().addAppender(appender);
 		} catch (IOException e1) {
 			e1.printStackTrace();
+			UltimateLoggerFactory.getInstance().removeAppender(appender);
 			fail("Could not create log file");
 		}
 
 		try {
 			ultimate.start(null);
+			boolean fail = mDescriptor.testFailed();
 			UltimateLoggerFactory.getInstance().removeAppender(appender);
-			if (testFailed()) {
+			if (fail) {
 				fail();
 			}
-
 		} catch (Exception e) {
 			e.printStackTrace();
+			UltimateLoggerFactory.getInstance().removeAppender(appender);
 			fail("Ultimate should run without exception");
 		}
-
-
 	}
 
-	public String generateLogFilename() {
+	@After
+	public void writeSummary() {
+		sTestSummaries.add(mDescriptor.getSummary());
 
-		DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd-HH-mm-ss");
+		if (!mIsLast) {
+			return;
+		}
 
-		String s = mDescriptor.getPathInputFile().getParent()
-				+ File.separator
-				+ "UltimateTest "
-				+ dateFormat.format(Calendar.getInstance().getTime())
-				+ " "
-				+ mDescriptor.getPathInputFile().getName()
-						.replaceAll(mDescriptor.getFileEnding(), "") + ".log";
-		s = s.replaceAll(" ", "_");
-		return s;
-	}
+		System.out.println("Writing "+sTestSummaries.size()+" summaries");
+		for (TestSummary summary : sTestSummaries) {
+			File logFile = summary.getSummaryLogFile();
+			if (logFile == null) {
+				return;
+			}
 
-	public boolean testFailed() {
-		Logger log = UltimateLoggerFactory.getInstance().getLoggerById(
-				"UltimateTest");
-		log.debug("========== TEST RESULTS ==========");
-		log.debug("Results for " + mDescriptor.getPathInputFile());
-		boolean fail = false;
-		for (Entry<String, List<IResult>> entry : UltimateServices
-				.getInstance().getResultMap().entrySet()) {
-			int i = 0;
-			for (IResult result : entry.getValue()) {
-				log.debug("[" + i + "] " + entry.getKey() + " --> ["
-						+ result.getClass().getSimpleName() + "] "
-						// + result.getLocation().toString() + " "
-						+ result.getLongDescription());
-				++i;
-				if (result instanceof SyntaxErrorResult
-						|| result instanceof TimeoutResult
-						|| result instanceof NoResult) {
-					fail = true;
-				}
+			String summaryLog = summary.getSummaryLog();
+			if (summaryLog == null || summaryLog.isEmpty()) {
+				return;
+			}
+
+			try {
+				FileWriter fw = new FileWriter(logFile);
+				System.out.println("Writing test summary log for " + summary
+						+ " to " + logFile);
+				fw.write(summaryLog);
+				fw.close();
+			} catch (IOException e) {
+				e.printStackTrace();
 			}
 		}
-		
-		log.debug("========== END ==========");
-		return fail;
+
 	}
 
 }

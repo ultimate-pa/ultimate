@@ -197,15 +197,15 @@ public class Application implements IApplication, ICore, IRCPPlugin {
 		if (mCoreMode == Ultimate_Mode.EXTERNAL_EXECUTION) {
 			init();
 
+			// throwing classes exported by plugins into arraylists
+			loadExtension();
+			
+			// initialize the tools map
+			initiateToolMaps();
+			
 			if (mSettingsFile != null) {
 				loadPreferencesInternal(mSettingsFile.getPath());
 			}
-
-			// throwing classes exported by plugins into arraylists
-			loadExtension();
-
-			// initialize the tools map
-			initiateToolMaps();
 
 			// run previously chosen command line controller
 			Object returnCode = mCurrentController.init(this);
