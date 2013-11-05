@@ -8,14 +8,17 @@ import org.eclipse.cdt.core.dom.ast.IASTDeclSpecifier;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CACSLLocation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.InferredType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.IncorrectSyntaxException;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
+import de.uni_freiburg.informatik.ultimate.model.ILocation;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssertStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BooleanLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IntegerLiteral;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.result.Check;
 import de.uni_freiburg.informatik.ultimate.result.SyntaxErrorResult.SyntaxErrorType;
 
@@ -121,13 +124,18 @@ public class CArray extends CType {
         StringBuilder id = new StringBuilder("ARRAY#");
         StringBuilder dimString = new StringBuilder("_");
         for (Expression dim : getDimensions()) {
-        	if (dim instanceof IntegerLiteral) {
-        		dimString.append(((IntegerLiteral) dim).getValue());
-        		dimString.append("_");
-        	} else {
-        		dimString = new StringBuilder("incomplete");
-        		break;
-        	}
+            if (dim instanceof BinaryExpression ||
+                    dim instanceof UnaryExpression) {
+                dim = getArithmeticResultAsIntegerLiteral(dim);
+            }
+            if (dim instanceof IntegerLiteral) {
+                dimString.append(((IntegerLiteral) dim).getValue());
+                dimString.append("_");
+            }
+            else {
+                dimString = new StringBuilder("incomplete");
+                break;
+            }
         }
 //        id.append(getDimensions().length);
         id.append(dimString.toString());
@@ -137,6 +145,63 @@ public class CArray extends CType {
         return id.toString();
     }
     
+    /**
+     * Computes the result of a basic arithmetic expression and
+     * returns an Expression object containing the IntegerLiteral.
+     * 
+     * @param loc location
+     * @param e arithmetic expression in the integers
+     * @return expression of the resulting integer
+     */
+    private IntegerLiteral getArithmeticResultAsIntegerLiteral(Expression e) {
+        assert (e instanceof UnaryExpression || e instanceof BinaryExpression);
+        return new IntegerLiteral(e.getLocation(),
+                Integer.toString(getArithmeticResultAsInteger(e)));
+    }
+    
+    /**
+     * Helper method for computation of arithmetic result.
+     * 
+     * @param e expression (unary or binary)
+     * @return the result as an int
+     */
+    private int getArithmeticResultAsInteger(Expression e) {
+        assert (e instanceof UnaryExpression || e instanceof BinaryExpression);
+        if (e instanceof BinaryExpression) {
+            BinaryExpression be = (BinaryExpression)e;
+            BinaryExpression.Operator operator = be.getOperator();
+            int left = getArithmeticResultAsInteger(be.getLeft());
+            int right = getArithmeticResultAsInteger(be.getRight());
+            if (operator.equals(Operator.ARITHPLUS)) {
+                return left + right;
+            }
+            else if (operator.equals(Operator.ARITHMINUS)) {
+                return left - right;
+            }
+            else if (operator.equals(Operator.ARITHMUL)) {
+                return left * right;
+            }
+            else if (operator.equals(Operator.ARITHDIV)) {
+                return left / right;
+            }
+            else if (operator.equals(Operator.ARITHMOD)) {
+                return left % right;
+            }
+            else {
+                throw new UnsupportedSyntaxException(
+                        "arithmetic expression with oeprator " + operator);
+            }
+        } else {
+            UnaryExpression ue = (UnaryExpression)e;
+            UnaryExpression.Operator operator = ue.getOperator();
+            if (! operator.equals(UnaryExpression.Operator.ARITHNEGATIVE)) {
+                throw new UnsupportedSyntaxException(
+                        "arithmetic expression with oeprator " + operator);
+            }
+            return 0 - getArithmeticResultAsInteger(ue.getExpr());
+        }
+    }
+
     @Override
     public boolean equals(Object o) {
         if (!(o instanceof CType)) {
