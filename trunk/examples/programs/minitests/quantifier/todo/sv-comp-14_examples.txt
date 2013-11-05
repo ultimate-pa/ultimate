@@ -88,10 +88,10 @@ dll_*
 
 -- Translation:
 
-14 union
+14 assert rex.declCTypes.size() == rex.decl.size()
 - all others -
 
-1 incomplete types
+1 NullPointerException
 main7-*
 
 ---
@@ -115,7 +115,7 @@ m0_true_drivers-media-video-cx88-cx8802-ko-*, m0_true_drivers-net-myri10ge-*,
 m0_true_sound-oss-*, main0_*, main1_*, main2_*, main3_false_*,
 main3_true_drivers-*, main4_false_*, main7_*, main8_*
 
-2 incomplete types
+2 assert rex.declCTypes.size() == rex.decl.size()
 m0_true_drivers-media-video-cx88-cx88-blackbird-*
 
 25 union
@@ -177,11 +177,11 @@ TODO
 
 [10278] ldv-regression (94):
 
-19 working
+20 working
 1_3.c_*, just_*, mutex_lock_int.c_false.cil, mutex_lock_struct.c_false.cil,
-nested_structure_noptr*, oomInt.c_*, rule57_ebda_blast.c_false.cil, structure_*,
-test08_*, test22_true, test24_false, test25_false, test28_false, test_cut_*,
-test_malloc-1_true, test_while_*
+nested_structure_noptr*, oomInt.c_*, rule57_ebda_blast.c_false.cil,
+stateful_check_false.cil, structure_*, test08_*, test22_true, test24_false,
+test25_false, test28_false, test_cut_*, test_malloc-1_true, test_while_*
 
 27 wrong result
 alias_of_return.c_true_1.cil, alias_of_return_2.c_true_1.cil,
@@ -205,8 +205,8 @@ test_union_cast-2_true, test18_*, test30_*
 1 double
 test_union_cast-2_true.cil
 
-2 empty identifier
-fo_*, stateful_check_false.cil
+1 function name hidden in parentheses
+fo_* 
 
 1 hexadecimals
 test_union_cast.c_true.cil
@@ -257,7 +257,7 @@ test-0158_*
 2 auxVar wrong type
 test-0019_*
 
-2 empty identifier
+2 empty enum identifier
 test-0214_*, test-0217_*
 
 2 memory access with struct operation
@@ -266,17 +266,17 @@ test-0214_*, test-0217_*
 4 struct pointer dereference
 test_0232_*, test_0504_*, test_0513_*
 
-6 typedef hides inner struct
+6 offset
 list_*, simple_*
 
 ---
 
 [10270] list-properties (17):
 
-6 empty identifier
+6 empty enum identifier
 *.cil
 
-11 typedef hides inner struct
+11 offset
 - all others -
 
 ---
@@ -330,7 +330,7 @@ n.c24_*
 2 float
 lu*
 
-1 incomplete types
+1 assert rex.declCTypes.size() == rex.decl.size()
 s3_false
 
 4 missing modifies
@@ -360,13 +360,13 @@ test-0134_true, test-0137_false-valid-deref
 1 ClassCastException: ResultExpression is no ResultExpressionListRec
 test-0521_true
 
-3 empty identifier
+3 empty enum identifier
 test-0214_true, test-0217_true, test-0218_true
 
 2 getWriteCall() rType == null
 test-0019_*
 
-5 incomplete types
+5 TODO mixed
 test-0232_*, test-0504_*, test-0513_*
 
 1 pointer struct II
@@ -397,7 +397,7 @@ test-0102_*
 
 -- Translation:
 
-10 union/typedef with function pointer
+10 typedef with function pointer
 - all -
 
 ---
@@ -435,7 +435,7 @@ Fibonacci04_false
 
 -- Translation:
 
-36 incomplete type
+36 assert rex.declCTypes.size() == rex.decl.size()
 - all -
 
 ---
@@ -459,11 +459,12 @@ Matthias:
 StrongestPostDeterminizer.reviewInductiveInternal()
 
 
-union                                           82      ---
+union                                           68      ---
 incomplete struct                               70      incompleteStruct
-incomplete types                                45      *
-typedef hides inner struct                      17      typedefHidesInnerStruct
-empty identifier                                13      *
+assert rex.declCTypes.size() == rex.decl.size() 17      *
+offset                                          17      *
+empty enum identifier                           11      *
+typedef with function pointer                   10      *
 array in struct in struct                       9       arrayInStructInStruct
 getWriteCall() rType == null                    9       *
 type error: expected pointer, got INT           7       pointerTypeError
@@ -493,6 +494,7 @@ array cast fail                                 1       arrayAsParam
 assert mapped.typeDeclarations.isEmpty()        1       *
 continue                                        1       continue
 double                                          1       double
+function name hidden in parentheses             1       *
 function pointer used                           1       *
 hexadecimals                                    1       *
 implementation                                  1       --- (error in example)
