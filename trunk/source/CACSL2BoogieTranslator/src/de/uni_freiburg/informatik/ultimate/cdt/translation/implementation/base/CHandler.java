@@ -579,7 +579,7 @@ public class CHandler implements ICHandler {
 		}
 		checkForACSL(main, stmt, null, node);
 		if (isNewScopeRequired(parent)){
-			stmt = functionHandler.handleMallocs(main, loc, memoryHandler, stmt);
+			stmt = functionHandler.insertMallocs(main, loc, memoryHandler, stmt);
 			//			symbolTable.endScope();
 			this.endScope();
 		}
@@ -2373,7 +2373,7 @@ public class CHandler implements ICHandler {
 					}
 				}
 				if (((IASTForStatement) node).getInitializerStatement() != null) {
-					bodyBlock = functionHandler.handleMallocs(main, loc, memoryHandler, bodyBlock);
+					bodyBlock = functionHandler.insertMallocs(main, loc, memoryHandler, bodyBlock);
 //					main.cHandler.getSymbolTable().endScope();
 					this.endScope();
 				}

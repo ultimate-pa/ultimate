@@ -714,7 +714,7 @@ public class FunctionHandler {
 		// 2)
 		Body body = ((Body) main.dispatch(node.getBody()).node);
 		// 3)
-		stmts.addAll(handleMallocs(main, loc, memoryHandler,
+		stmts.addAll(insertMallocs(main, loc, memoryHandler,
 		        new ArrayList<Statement>(Arrays.asList(body.getBlock()))));
 		// 4)
         for (VariableDeclaration declaration : body.getLocalVars()) {
@@ -734,17 +734,17 @@ public class FunctionHandler {
 		return new Result(impl);
 	}
 	
-	public ArrayList<Statement> handleMallocs(Dispatcher main, ILocation loc, MemoryHandler memoryHandler, ArrayList<Statement> block) {
+	public ArrayList<Statement> insertMallocs(Dispatcher main, ILocation loc, MemoryHandler memoryHandler, ArrayList<Statement> block) {
 		ArrayList<Statement> mallocs = new ArrayList<Statement>();
 		for (LocalLValue llv : this.mallocedAuxPointers.currentScope()) 
 			mallocs.addAll(memoryHandler.getMallocCall(main, this, memoryHandler.calculateSizeOf(llv.cType), llv, loc).stmt);
 		ArrayList<Statement> frees = new ArrayList<Statement>();
-		for (LocalLValue llv : this.mallocedAuxPointers.currentScope()) 
-			frees.addAll(memoryHandler.getFreeCall(main, this, llv.getValue(), loc).stmt);
+//		for (LocalLValue llv : this.mallocedAuxPointers.currentScope())  //frees are inserted in handleReturnStm
+//			frees.addAll(memoryHandler.getFreeCall(main, this, llv.getValue(), loc).stmt);
 		ArrayList<Statement> newBlockAL = new ArrayList<Statement>();
 		newBlockAL.addAll(mallocs);
 		newBlockAL.addAll(block);
-		newBlockAL.addAll(frees);
+//		newBlockAL.addAll(frees);
 		return newBlockAL;
 	}
 
@@ -964,6 +964,11 @@ public class FunctionHandler {
 			}
 		}
 		stmt.addAll(Dispatcher.createHavocsForAuxVars(auxVars));
+	
+		// we need to insert a free for each malloc of an auxvar before each return
+		for (LocalLValue llv : this.mallocedAuxPointers.currentScope())  //frees are inserted in handleReturnStm
+			stmt.addAll(memoryHandler.getFreeCall(main, this, llv.getValue(), loc).stmt);
+		
 		stmt.add(new ReturnStatement(loc));
 		Map<VariableDeclaration, CACSLLocation> emptyAuxVars =
 		        new HashMap<VariableDeclaration, CACSLLocation>(0);
