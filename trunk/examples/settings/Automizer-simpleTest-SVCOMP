@@ -1,8 +1,0 @@
-file_export_version=3.0
-/instance/CACSL2BoogieTranslator/CheckedMethod=main
-/instance/CACSL2BoogieTranslator/CheckPointerValidity=false
-/instance/CACSL2BoogieTranslator/Translation-Mode=SV_COMP14
-/instance/RCFGBuilder/Solver=Z3
-/instance/RCFGBuilder/Interpolants=ForwardPredicates
-/instance/RCFGBuilder/HoareAnnotation=true
-/instance/RCFGBuilder/Timeout=10

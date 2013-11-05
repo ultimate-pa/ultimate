@@ -1,8 +1,0 @@
-file_export_version=3.0
-/configuration/CACSL2BoogieTranslator/CheckedMethod=main
-/configuration/CACSL2BoogieTranslator/CheckPointerValidity=true
-/configuration/CACSL2BoogieTranslator/Translation-Mode=SV_COMP14
-/configuration/RCFGBuilder/BlockSize=sequence of program statements
-/configuration/RCFGBuilder/Interpolants=Craig_TreeInterpolation
-/configuration/RCFGBuilder/HoareAnnotation=false
-/configuration/RCFGBuilder/Timeout=90
