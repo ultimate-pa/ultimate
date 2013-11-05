@@ -7,6 +7,7 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Queue;
 
 import org.eclipse.cdt.core.dom.ast.IASTDeclSpecifier;
@@ -80,6 +81,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietransla
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.PreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.result.Check;
 import de.uni_freiburg.informatik.ultimate.result.SyntaxErrorResult.SyntaxErrorType;
+import de.uni_freiburg.informatik.ultimate.util.ScopedHashMap;
 import de.uni_freiburg.informatik.ultimate.util.ScopedHashSet;
 
 /**
@@ -124,7 +126,7 @@ public class FunctionHandler {
 	 * This set contains those pointers that we have to malloc at the beginning
 	 * and free at the end of the current procedure;
 	 */
-	ScopedHashSet<LocalLValue> mallocedAuxPointers;
+	ScopedHashMap<LocalLValue, Integer> mallocedAuxPointers;
 	/**
 	 * map that is used to communicate the returned CType of a procedure from 
 	 * its declaration to its definition.
@@ -146,7 +148,7 @@ public class FunctionHandler {
 		this.procedureToReturnCType = new HashMap<String, CType>();
 		this.procedureToParamCType = new HashMap<String, ArrayList<CType>>(); 
 		this.modifiedGlobalsIsUserDefined = new HashSet<String>();
-		this.mallocedAuxPointers = new ScopedHashSet<LocalLValue>();
+		this.mallocedAuxPointers = new ScopedHashMap<LocalLValue, Integer>();
 		m_CheckMemoryLeakAtEndOfMain = 
 				(new UltimatePreferenceStore(Activator.s_PLUGIN_ID)).
 				getBoolean(PreferenceInitializer.LABEL_CHECK_MemoryLeakInMain);
@@ -736,15 +738,15 @@ public class FunctionHandler {
 	
 	public ArrayList<Statement> insertMallocs(Dispatcher main, ILocation loc, MemoryHandler memoryHandler, ArrayList<Statement> block) {
 		ArrayList<Statement> mallocs = new ArrayList<Statement>();
-		for (LocalLValue llv : this.mallocedAuxPointers.currentScope()) 
+		for (LocalLValue llv : this.mallocedAuxPointers.currentScopeKeys()) 
 			mallocs.addAll(memoryHandler.getMallocCall(main, this, memoryHandler.calculateSizeOf(llv.cType), llv, loc).stmt);
 		ArrayList<Statement> frees = new ArrayList<Statement>();
-//		for (LocalLValue llv : this.mallocedAuxPointers.currentScope())  //frees are inserted in handleReturnStm
-//			frees.addAll(memoryHandler.getFreeCall(main, this, llv.getValue(), loc).stmt);
+		for (LocalLValue llv : this.mallocedAuxPointers.currentScopeKeys())  //frees are inserted in handleReturnStm
+			frees.addAll(memoryHandler.getFreeCall(main, this, llv.getValue(), loc).stmt);
 		ArrayList<Statement> newBlockAL = new ArrayList<Statement>();
 		newBlockAL.addAll(mallocs);
 		newBlockAL.addAll(block);
-//		newBlockAL.addAll(frees);
+		newBlockAL.addAll(frees);
 		return newBlockAL;
 	}
 
@@ -966,8 +968,9 @@ public class FunctionHandler {
 		stmt.addAll(Dispatcher.createHavocsForAuxVars(auxVars));
 	
 		// we need to insert a free for each malloc of an auxvar before each return
-		for (LocalLValue llv : this.mallocedAuxPointers.currentScope())  //frees are inserted in handleReturnStm
-			stmt.addAll(memoryHandler.getFreeCall(main, this, llv.getValue(), loc).stmt);
+		for (Entry<LocalLValue, Integer> entry : this.mallocedAuxPointers.entrySet())  //frees are inserted in handleReturnStm
+			if (entry.getValue() >= 1)
+				stmt.addAll(memoryHandler.getFreeCall(main, this, entry.getKey().getValue(), loc).stmt);
 		
 		stmt.add(new ReturnStatement(loc));
 		Map<VariableDeclaration, CACSLLocation> emptyAuxVars =
@@ -1080,10 +1083,10 @@ public class FunctionHandler {
 	
 	public void addMallocedAuxPointer(Dispatcher main, LocalLValue thisLVal) {
 		if (!main.typeHandler.isStructDeclaration())
-			this.mallocedAuxPointers.add(thisLVal);
+			this.mallocedAuxPointers.put(thisLVal, mallocedAuxPointers.getActiveScopeNum());
 	}
 	
-	public ScopedHashSet<LocalLValue> getMallocedAuxPointers() {
+	public ScopedHashMap<LocalLValue, Integer> getMallocedAuxPointers() {
 		return mallocedAuxPointers;
 	}
 }
