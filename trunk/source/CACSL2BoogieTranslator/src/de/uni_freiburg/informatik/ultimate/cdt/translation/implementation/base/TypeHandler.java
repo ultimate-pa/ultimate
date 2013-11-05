@@ -109,6 +109,13 @@ public class TypeHandler implements ITypeHandler {
         assert structCounter >= 0;
         return structCounter != 0;
     }
+    
+    /**
+     * for svcomp2014 hack
+     */
+    public int getStructCounter() {
+    	return structCounter;
+    }
 
     @Override
     public Result visit(Dispatcher main, IASTNode node) {

@@ -19,6 +19,7 @@ import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
 import org.eclipse.cdt.core.dom.ast.IASTBreakStatement;
 import org.eclipse.cdt.core.dom.ast.IASTCaseStatement;
 import org.eclipse.cdt.core.dom.ast.IASTCastExpression;
+import org.eclipse.cdt.core.dom.ast.IASTCompositeTypeSpecifier;
 import org.eclipse.cdt.core.dom.ast.IASTCompoundStatement;
 import org.eclipse.cdt.core.dom.ast.IASTConditionalExpression;
 import org.eclipse.cdt.core.dom.ast.IASTDeclSpecifier;
@@ -671,11 +672,13 @@ public class CHandler implements ICHandler {
 						 */
 						assert arrayType != null;
 						result.declCTypes.add(arrayType);
-					}
+					}
+//					} else {
 					result.stmt.addAll(rArray.stmt);
 					result.decl.addAll(rArray.decl);
 					result.auxVars.putAll(rArray.auxVars);
 					result.overappr.addAll(rArray.overappr);
+//					}
 					
 					ASTType type = MemoryHandler.POINTER_TYPE;
 					VarList var = new VarList(loc, new String[] { bId }, type);
@@ -754,8 +757,19 @@ public class CHandler implements ICHandler {
 //						result.stmt.addAll(mallocRex.stmt);
 						functionHandler.addMallocedAuxPointer(main, thisLVal);
 					}
-
-					if (resultCType instanceof CStruct && !isGlobal) {
+					
+					//hack for the svComp -- we want to consider structs in structs as global for this case..
+					IASTNode parent = node.getParent();
+					int structCounter = ((TypeHandler) main.typeHandler).getStructCounter();
+					while (structCounter > 0) {
+						if (parent instanceof IASTSimpleDeclaration)
+							structCounter--;
+						parent = parent.getParent();
+					}
+					boolean isGlobalStruct = parent instanceof IASTTranslationUnit;
+					
+//					if (resultCType instanceof CStruct && !isGlobal) {
+					if (resultCType instanceof CStruct && !isGlobalStruct) {
 						//when declaring a local struct that contains an array (on the heap) we have to malloc for that array
 						String[] fieldIds = ((CStruct) resultCType).getFieldIds();
 						for (String fieldId : fieldIds) {
