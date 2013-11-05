@@ -873,11 +873,6 @@ public class MemoryHandler {
                 fh.getCallGraph().put(SFO.MALLOC, new HashSet<String>());
             }
             fh.getCallGraph().get(fh.getCurrentProcedureID()).add(SFO.MALLOC);
-//        } else { //we are initializing something global -- in Ultimate.init
-//        	HashSet<String> cgInit = fh.getCallGraph().get(SFO.INIT);
-//        	if (cgInit == null)
-//        		fh.getCallGraph().put(SFO.INIT, new HashSet<String>());
-//            fh.getCallGraph().get(SFO.INIT).add(SFO.MALLOC);
         }
         ArrayList<Declaration> decl = new ArrayList<Declaration>();
 		Map<VariableDeclaration, CACSLLocation> auxVars = 
