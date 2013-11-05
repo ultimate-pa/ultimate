@@ -79,10 +79,10 @@ public class UltimateTest {
 							{
 //								put("MemorySafety",
 //										getPathFromTrunk("examples\\settings\\AlexSVCOMPmemsafety"));
-//								put("Simple",
-//										getPathFromTrunk("examples\\settings\\AlexSVCOMPstandard"));
-								put("ControlFlowInteger",
+								put("Simple",
 										getPathFromTrunk("examples\\settings\\AlexSVCOMPstandard"));
+//								put("ControlFlowInteger",
+//										getPathFromTrunk("examples\\settings\\AlexSVCOMPstandard"));
 							}
 						},
 						getPathFromTrunk("examples\\toolchains\\KojakC.xml"),
@@ -95,10 +95,10 @@ public class UltimateTest {
 							{
 //								put("MemorySafety",
 //										getPathFromTrunk("examples\\settings\\AutomizerSvcompSafety1Minute.bpl"));
-//								put("Simple",
-//										getPathFromTrunk("examples\\settings\\AutomizerSvcompSafety1Minute.bpl"));
-								put("ControlFlowInteger",
+								put("Simple",
 										getPathFromTrunk("examples\\settings\\AutomizerSvcompSafety1Minute.bpl"));
+//								put("ControlFlowInteger",
+//										getPathFromTrunk("examples\\settings\\AutomizerSvcompSafety1Minute.bpl"));
 							}
 						},
 						getPathFromTrunk("examples\\toolchains\\TraceAbstractionC.xml"),
