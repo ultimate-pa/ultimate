@@ -102,6 +102,7 @@ public class RcfgProgramExecution implements IProgramExecution<RcfgElement, Expr
 	@Override
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
+		sb.append("=== Start of program execution");
 		sb.append("initial values:");
 		sb.append(ppstoString(getInitialProgramState()));
 		sb.append(System.getProperty("line.separator"));
@@ -117,6 +118,7 @@ public class RcfgProgramExecution implements IProgramExecution<RcfgElement, Expr
 			sb.append(ppstoString(getProgramState(i)));
 			sb.append(System.getProperty("line.separator"));
 		}
+		sb.append("=== End of program execution");
 		return sb.toString();
 	}
 
