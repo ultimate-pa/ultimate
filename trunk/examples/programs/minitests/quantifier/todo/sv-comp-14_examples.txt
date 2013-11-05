@@ -42,7 +42,7 @@ implicitfloatconversion_*
 
 -- Translation:
 
-13 incomplete struct
+13 enum
 - all -
 
 ---
@@ -107,7 +107,7 @@ m0_true_drivers-hwmon-s3c-*
 1 assert mapped.typeDeclarations.isEmpty()
 m0_false_drivers-net-b44-*
 
-31 incomplete struct
+31 enum
 m0_false_drivers-media-*, m0_false_drivers-scsi-*, m0_false_sound-*,
 m0_true_drivers-media-radio-*, m0_true_drivers-media-rc-*,
 m0_true_drivers-media-video-cx88-cx88-dvb-*,
@@ -146,7 +146,7 @@ module_get_put-drivers-scsi-*, module_get_put-drivers-tty-*,
 usb_urb-drivers-media-video-*, usb_urb-drivers-usb-misc-*,
 usb_urb-drivers-vhost-*
 
-26 incomplete struct
+26 enum
 module_get_put-drivers-atm-*, module_get_put-drivers-block-paride*,
 module_get_put-drivers-hid-*, module_get_put-drivers-hwmon-*,
 module_get_put-drivers-isdn-*, module_get_put-drivers-net-pppox*,
@@ -266,7 +266,7 @@ test-0214_*, test-0217_*
 4 struct pointer dereference
 test_0232_*, test_0504_*, test_0513_*
 
-6 offset
+6 recursive struct
 list_*, simple_*
 
 ---
@@ -276,7 +276,7 @@ list_*, simple_*
 6 empty enum identifier
 *.cil
 
-11 offset
+11 recursive struct
 - all others -
 
 ---
@@ -460,9 +460,9 @@ StrongestPostDeterminizer.reviewInductiveInternal()
 
 
 union                                           68      ---
-incomplete struct                               70      incompleteStruct
+enum                                            70      *
 assert rex.declCTypes.size() == rex.decl.size() 17      *
-offset                                          17      *
+recursive struct                                          17      recursiveStruct
 empty enum identifier                           11      *
 typedef with function pointer                   10      *
 array in struct in struct                       9       arrayInStructInStruct
