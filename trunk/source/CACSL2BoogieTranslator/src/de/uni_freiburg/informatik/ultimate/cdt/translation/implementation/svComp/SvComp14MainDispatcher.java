@@ -26,7 +26,7 @@ public class SvComp14MainDispatcher extends MainDispatcher {
     protected void init() {
         sideEffectHandler = new SideEffectHandler();
         cHandler = new SvComp14CHandler(this, backtranslator);
-        typeHandler = new TypeHandler();
+        typeHandler = new SvComp14TypeHandler();
         acslHandler = new ACSLHandler();
         nameHandler = new NameHandler();
         preprocessorHandler = new SvComp14PreprocessorHandler();
