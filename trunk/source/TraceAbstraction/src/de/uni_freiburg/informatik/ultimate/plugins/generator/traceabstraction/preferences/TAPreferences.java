@@ -1,9 +1,8 @@
-package de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences;
+package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences;
 
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.Activator;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.PreferenceInitializer.INTERPOLATION;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.PreferenceInitializer.Solver;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.PreferenceInitializer.INTERPOLATION;
 
 public class TAPreferences {
 
@@ -14,7 +13,6 @@ public class TAPreferences {
 	private final INTERPOLATION m_Interpolation;
 	private final boolean m_Edges2True;
 	private final InterpolantAutomaton m_InterpolantAutomaton;
-	private final boolean m_DumpFormulas;
 	private final boolean m_DumpAutomata;
 	private final String m_DumpPath;
 	private final Determinization m_Determiniation;
@@ -40,13 +38,9 @@ public class TAPreferences {
 		FINITE_AUTOMATA, PETRI_NET
 	}
 
-	public enum Letter {
-		STATEMENT, SEQUENCE, BLOCK
-	}
-
 	public TAPreferences() {
 
-		m_Prefs = new UltimatePreferenceStore(Activator.PLUGIN_ID);
+		m_Prefs = new UltimatePreferenceStore(Activator.s_PLUGIN_ID);
 
 		m_Interprocedural = m_Prefs
 				.getBoolean(PreferenceInitializer.LABEL_INTERPROCEDUTAL);
@@ -72,9 +66,6 @@ public class TAPreferences {
 		m_InterpolantAutomaton = m_Prefs.getEnum(
 				PreferenceInitializer.LABEL_InterpolantAutomaton,
 				InterpolantAutomaton.class);
-
-		m_DumpFormulas = m_Prefs
-				.getBoolean(PreferenceInitializer.LABEL_DUMPFORMULAS);
 
 		m_DumpAutomata = m_Prefs
 				.getBoolean(PreferenceInitializer.LABEL_DUMPAUTOMATA);
@@ -114,18 +105,6 @@ public class TAPreferences {
 		return m_Prefs.getBoolean(PreferenceInitializer.LABEL_AllErrorsAtOnce);
 	}
 
-	public Letter letter() {
-		return m_Prefs
-				.getEnum(PreferenceInitializer.LABEL_LETTER, Letter.class);
-	}
-
-	/**
-	 * @return the solver
-	 */
-	public Solver solver() {
-		return m_Prefs
-				.getEnum(PreferenceInitializer.LABEL_SOLVER, Solver.class);
-	}
 
 	/**
 	 * @return the timeout in seconds
@@ -174,17 +153,6 @@ public class TAPreferences {
 	 */
 	public InterpolantAutomaton interpolantAutomaton() {
 		return m_InterpolantAutomaton;
-	}
-
-	public boolean dumpScript() {
-		return m_Prefs.getBoolean(PreferenceInitializer.LABEL_DUMPSCRIPT);
-	}
-
-	/**
-	 * @return the dumpFormulas
-	 */
-	public boolean dumpFormulas() {
-		return m_DumpFormulas;
 	}
 
 	/**
@@ -249,11 +217,6 @@ public class TAPreferences {
 	public boolean SimplifyCodeBlocks() {
 		return m_Prefs
 				.getBoolean(PreferenceInitializer.LABEL_simplifyCodeBlocks);
-	}
-
-	public boolean PreserveGotoEdges() {
-		return m_Prefs
-				.getBoolean(PreferenceInitializer.LABEL_PreserveGotoEdges);
 	}
 
 }

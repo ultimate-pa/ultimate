@@ -24,12 +24,12 @@ import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.TAPreferences;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.TAPreferences.InterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.ISLPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.InterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceChecker;
 
 /**
@@ -301,9 +301,6 @@ public class InterpolantAutomataBuilder {
 			m_Unsat++;
 			addTransition(newOccurrence-1, newOccurrence, oldOccurrence);
 			addTransition(newOccurrence, oldOccurrence+1, oldOccurrence+1);
-			if (m_Pref.dumpFormulas()) {
-				dumpBackedgeInfo(oldOccurrence, newOccurrence, isSat);
-			}
 			break;
 		case SAT:
 			m_Sat++;
@@ -372,10 +369,6 @@ public class InterpolantAutomataBuilder {
 			if (isInductive == Script.LBool.UNSAT) {
 				m_IA.addReturnTransition(pred, hier, symbol, succ);
 				s_Logger.debug("Added return from alternative call Pred");
-				if (m_Pref.dumpFormulas()) {
-					dumpAlternativeReturnBackedgeInfo(
-											callPos, pred, hier, symbol, succ);
-				}
 			}
 		}
 	}

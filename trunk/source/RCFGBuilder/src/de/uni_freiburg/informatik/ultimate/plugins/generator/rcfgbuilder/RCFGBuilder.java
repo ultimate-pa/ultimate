@@ -3,17 +3,17 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder;
 import java.util.Collections;
 import java.util.List;
 
+import org.eclipse.core.runtime.preferences.IEclipsePreferences;
+import org.eclipse.core.runtime.preferences.IScopeContext;
+
 import de.uni_freiburg.informatik.ultimate.access.IObserver;
+import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.IGenerator;
 import de.uni_freiburg.informatik.ultimate.model.GraphType;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.MarkedTrace;
 import de.uni_freiburg.informatik.ultimate.model.TokenMap;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.PreferenceInitializer;
-import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceInitializer;
-
-import org.eclipse.core.runtime.preferences.IEclipsePreferences;
-import org.eclipse.core.runtime.preferences.IScopeContext;
 
 /**
  * Main class of Plug-In RCFGBuilder
@@ -25,7 +25,7 @@ import org.eclipse.core.runtime.preferences.IScopeContext;
 public class RCFGBuilder implements IGenerator {
 
 	private static final String s_PLUGIN_NAME = Activator.PLUGIN_NAME;
-	private static final String s_PLUGIN_ID = Activator.PLUGIN_ID;
+	public static final String s_PLUGIN_ID = Activator.PLUGIN_ID;
 	
 	private RCFGBuilderObserver m_Observer;
 	private GraphType m_InputDefinition;

@@ -29,10 +29,10 @@ public class PreferenceInitializer extends UltimatePreferenceInitializer {
 						LABEL_CHECK_FREE_VALID, true,
 						PreferenceType.Boolean),
 				new UltimatePreferenceItem<Boolean>(
-						LABEL_CHECK_MemoryLeakInMain, true,
+						LABEL_CHECK_MemoryLeakInMain, false,
 						PreferenceType.Boolean),
 				new UltimatePreferenceItem<Boolean>(
-						LABEL_CHECK_MallocNonNegative, true,
+						LABEL_CHECK_MallocNonNegative, false,
 						PreferenceType.Boolean) 
 		};
 	}

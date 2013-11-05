@@ -17,13 +17,13 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Pro
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RcfgElement;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootAnnot;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.TAPreferences;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.TAPreferences.Concurrency;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbstractCegarLoop;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.TimingStatistics;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbstractCegarLoop.Result;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.Concurrency;
 import de.uni_freiburg.informatik.ultimate.result.CounterExampleResult;
 import de.uni_freiburg.informatik.ultimate.result.IResult;
 import de.uni_freiburg.informatik.ultimate.result.PositiveResult;
@@ -49,17 +49,14 @@ public class TraceAbstractionConcurrentObserver implements IUnmanagedObserver {
 		RootAnnot rootAnnot = ((RootNode) root).getRootAnnot();
 		
 		RootNode rootNode = (RootNode) root;
-		TAPreferences taPrefs = rootNode.getRootAnnot().getTaPrefs();
+		TAPreferences taPrefs = new TAPreferences();
 
 		s_Logger.warn(taPrefs.dumpPath());
 		
 		SmtManager smtManager = new ConcurrentSmtManager(
 					rootNode.getRootAnnot().getBoogie2SMT(),
-					taPrefs.solver(),
 					rootNode.getRootAnnot().getGlobalVars(),
-					rootNode.getRootAnnot().getModGlobVarManager(),
-					false,
-					taPrefs.dumpPath());
+					rootNode.getRootAnnot().getModGlobVarManager());
 		TimingStatistics timingStatistics = new TimingStatistics(smtManager);
 		
 		Map<String, Collection<ProgramPoint>> proc2errNodes = rootAnnot.getErrorNodes();

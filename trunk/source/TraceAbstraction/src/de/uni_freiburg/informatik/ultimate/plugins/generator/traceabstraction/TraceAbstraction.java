@@ -15,6 +15,7 @@ import de.uni_freiburg.informatik.ultimate.model.GraphType;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.MarkedTrace;
 import de.uni_freiburg.informatik.ultimate.model.TokenMap;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.PreferenceInitializer;
 
 /**
  * Main class of Plug-In TraceAbstraction
@@ -142,7 +143,6 @@ public class TraceAbstraction implements IGenerator {
 
 	@Override
 	public UltimatePreferenceInitializer getPreferences() {
-		// TODO Auto-generated method stub
-		return null;
+		return new PreferenceInitializer();
 	}
 }

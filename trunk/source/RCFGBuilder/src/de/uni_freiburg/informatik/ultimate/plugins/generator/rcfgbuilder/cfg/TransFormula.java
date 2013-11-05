@@ -13,6 +13,7 @@ import java.util.Set;
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
+import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
 import de.uni_freiburg.informatik.ultimate.logic.FormulaUnLet;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
@@ -24,6 +25,8 @@ import de.uni_freiburg.informatik.ultimate.logic.simplification.SimplifyDDA;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.Activator;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.RCFGBuilder;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.PreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.NaiveDestructiveEqualityResolution;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.normalForms.Cnf;
@@ -68,7 +71,7 @@ public class TransFormula implements Serializable {
 
 	private static int s_FreshVarNumber = 10000; 
 	
-	private final static boolean s_TransformToCNF = false;
+//	private final static boolean s_TransformToCNF = false;
 	
 	private final Term m_Formula;
 	private final Set<TermVariable> m_Vars;
@@ -474,6 +477,9 @@ public class TransFormula implements Serializable {
 			infeasibility = Infeasibility.UNPROVEABLE;
 		}
 		
+	   boolean s_TransformToCNF = (new UltimatePreferenceStore(
+		   RCFGBuilder.s_PLUGIN_ID)).getBoolean(PreferenceInitializer.LABEL_CNF);
+		
 		if (s_TransformToCNF) {
 			formula = (new Cnf(script)).transform(formula);
 		}
@@ -877,6 +883,10 @@ public class TransFormula implements Serializable {
 		}
 		TransFormula.removeSuperfluousVars(resultFormula, 
 				newInVars, newOutVars, auxVars);
+		
+	   boolean s_TransformToCNF = (new UltimatePreferenceStore(
+			   RCFGBuilder.s_PLUGIN_ID)).getBoolean(PreferenceInitializer.LABEL_CNF);
+
 		if (s_TransformToCNF) {
 			resultFormula = (new Cnf(script)).transform(resultFormula);
 		}

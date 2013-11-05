@@ -16,10 +16,10 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Pro
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RcfgElement;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootAnnot;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.ISLPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.result.GenericResult;
 import de.uni_freiburg.informatik.ultimate.result.GenericResult.Severity;
 import de.uni_freiburg.informatik.ultimate.result.IResult;
@@ -49,23 +49,20 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 	@Override
 	public boolean process(IElement root) {
 		rootAnnot = ((RootNode) root).getRootAnnot();
-		TAPreferences taPrefs = rootAnnot.getTaPrefs();
+		TAPreferences taPrefs = new TAPreferences();
 		m_graphroot = root;
 		
 		String settings = "Automizer settings:";
 		settings += " Hoare:"+ taPrefs.computeHoareAnnotation();
 		settings += " " + (taPrefs.differenceSenwa() ? "SeNWA" : "NWA");
-		settings += " Solver:" + taPrefs.solver();
 		settings += " Determinization: " + taPrefs.determinization();
-		settings += " Letter:" + taPrefs.letter();
 		settings += " Timeout:" + taPrefs.timeout();
 		System.out.println(settings);
 
 		smtManager = new SmtManager(rootAnnot.getBoogie2SMT(),
-				taPrefs.solver(), rootAnnot.getGlobalVars(), rootAnnot.getModGlobVarManager(),
-				taPrefs.dumpFormulas(), taPrefs.dumpPath());
+				rootAnnot.getGlobalVars(), rootAnnot.getModGlobVarManager());
 
-		m_Pref = rootAnnot.getTaPrefs();
+		m_Pref = taPrefs;
 		
 		BuchiCegarLoop bcl = new BuchiCegarLoop((RootNode) root, smtManager, m_Pref);
 		Result result = bcl.iterate();

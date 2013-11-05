@@ -41,9 +41,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Seq
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.TransFormula;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.PreferenceInitializer.INTERPOLATION;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.PreferenceInitializer.Solver;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceChecker;
@@ -51,6 +48,9 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager.TermVarsProc;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.PreferenceInitializer.INTERPOLATION;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.PreferenceInitializer.Solver;
 import de.uni_freiburg.informatik.ultimate.result.CounterExampleResult;
 import de.uni_freiburg.informatik.ultimate.result.IResult;
 import de.uni_freiburg.informatik.ultimate.result.PositiveResult;
@@ -71,7 +71,7 @@ public class ReImpactObserver implements IUnmanagedObserver {
 	private int m_currentPreOrderIndex = 0;
 	private TreeSet<UnwindingNode> m_openNodes;
 	private ArrayList<UnwindingNode> m_allNodes;
-	private TAPreferences m_taPrefs;
+//	private TAPreferences m_taPrefs;
 	
 	RootNode m_graphRoot;
 	
@@ -110,10 +110,9 @@ public class ReImpactObserver implements IUnmanagedObserver {
 		
 		m_graphRoot = (RootNode) root;
 		m_rootAnnot = m_graphRoot.getRootAnnot();
-		m_taPrefs = m_rootAnnot.getTaPrefs();
 		m_smtManager = new SmtManager(m_rootAnnot.getBoogie2SMT(), 
-				Solver.SMTInterpol, m_rootAnnot.getGlobalVars(), 
-				m_rootAnnot.getModGlobVarManager(), false, "");
+				m_rootAnnot.getGlobalVars(), 
+				m_rootAnnot.getModGlobVarManager());
 		
 		m_truePredicate = m_smtManager.newTruePredicate();
 		m_falsePredicate = m_smtManager.newFalsePredicate();
@@ -770,7 +769,7 @@ public class ReImpactObserver implements IUnmanagedObserver {
 	
 	private PrintWriter dumpInitialize() {
 		File file = 
-			new File(m_taPrefs.dumpPath() + "/" + ".txt");
+			new File("dump" + "/" + ".txt");
 		FileWriter fileWriter;
 		try {
 			fileWriter = new FileWriter(file);

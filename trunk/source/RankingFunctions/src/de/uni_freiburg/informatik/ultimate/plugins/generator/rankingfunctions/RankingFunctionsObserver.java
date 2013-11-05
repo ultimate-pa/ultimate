@@ -30,8 +30,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCF
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RcfgElement;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.TransFormula;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.PreferenceInitializer.Solver;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.result.IResult;
 import de.uni_freiburg.informatik.ultimate.result.NoResult;
 import de.uni_freiburg.informatik.ultimate.result.RankingFunctionResult;
@@ -56,6 +54,8 @@ public class RankingFunctionsObserver implements IUnmanagedObserver {
 	
 	private ProgramPoint honda;
 	
+	public static final boolean m_ExternalSolver = false;
+	
 	public RankingFunctionsObserver() {
 		m_templates = new ArrayList<Class<? extends RankingTemplate>>();
 		
@@ -79,20 +79,17 @@ public class RankingFunctionsObserver implements IUnmanagedObserver {
 		// de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CfgBuilder
 		// since there is no obvious way to implement it as shared code.
 		
-		TAPreferences taPref = new TAPreferences();
 		Logger solverLogger = Logger.getLogger("interpolLogger");
 		Script script;
 		
-		if (taPref.solver() == Solver.SMTInterpol) {
-			script = new SMTInterpol(solverLogger,false);
-		} else if (taPref.solver() == Solver.Z3) {
+		if (m_ExternalSolver) {
 			script = new Scriptor("z3 -smt2 -in", solverLogger);
 		} else {
-			throw new AssertionError();
+			script = new SMTInterpol(solverLogger,false);
 		}
 		
-		if (taPref.dumpScript()) {
-			String dumpFileName = taPref.dumpPath();
+		if (false) {
+			String dumpFileName = ""; //enter path here
 			String fileSep = System.getProperty("file.separator");
 			dumpFileName += (dumpFileName.endsWith(fileSep) ? "" : fileSep);
 			dumpFileName = dumpFileName + "rankingFunctions.smt2";
@@ -106,13 +103,13 @@ public class RankingFunctionsObserver implements IUnmanagedObserver {
 		
 //		script.setOption(":produce-unsat-cores", true);
 		script.setOption(":produce-models", true);
-		if (taPref.solver() == Solver.SMTInterpol) {
+//		if (taPref.solver() == Solver.SMTInterpol) {
 			script.setLogic(nonlinear ? "QF_NRA" : "QF_LRA");
-		} else if (taPref.solver() == Solver.Z3) {
-			script.setLogic(nonlinear ? "QF_NRA" : "QF_LRA");
-		} else {
-			throw new AssertionError();
-		}
+//		} else if (taPref.solver() == Solver.Z3) {
+//			script.setLogic(nonlinear ? "QF_NRA" : "QF_LRA");
+//		} else {
+//			throw new AssertionError();
+//		}
 		return script;
 	}
 	

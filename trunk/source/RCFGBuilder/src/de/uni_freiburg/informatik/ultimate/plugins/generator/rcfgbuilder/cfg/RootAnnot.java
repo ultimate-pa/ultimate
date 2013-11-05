@@ -14,7 +14,6 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.RequiresSpecificatio
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Smt2Boogie;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.Backtranslator;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.TAPreferences;
 
 /**
  * Stores information about about a program that is not represented by the
@@ -157,7 +156,6 @@ public class RootAnnot extends AbstractAnnotations {
 	ModifiableGlobalVariableManager m_ModifiableGlobalVariableManager;
 
 
-	private TAPreferences m_TaPrefs;
 
 
 
@@ -179,9 +177,8 @@ public class RootAnnot extends AbstractAnnotations {
 		"BoogieVar2SmtVar"
 	};
 	
-	public RootAnnot(TAPreferences taPrefs,
+	public RootAnnot(
 			Boogie2SMT m_Boogie2smt, Backtranslator backtranslator) {
-		m_TaPrefs = taPrefs;
 		m_BoogieVar2SmtVar = m_Boogie2smt.getSmt2Boogie();
 		m_Boogie2SMT = m_Boogie2smt;
 		m_Backtranslator = backtranslator;
@@ -269,10 +266,7 @@ public class RootAnnot extends AbstractAnnotations {
 		return m_LoopLocations;
 	}
 
-	public TAPreferences getTaPrefs() {
-		return m_TaPrefs;
-	}
-	
+
 	
 	
 }

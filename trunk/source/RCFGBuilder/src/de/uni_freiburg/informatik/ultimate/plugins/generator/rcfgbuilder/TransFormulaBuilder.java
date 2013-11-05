@@ -10,6 +10,7 @@ import java.util.Set;
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
+import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -40,6 +41,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Sta
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.TransFormula;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.TransFormula.Infeasibility;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.PreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.NaiveDestructiveEqualityResolution;
 import de.uni_freiburg.informatik.ultimate.result.SyntaxErrorResult;
 import de.uni_freiburg.informatik.ultimate.result.SyntaxErrorResult.SyntaxErrorType;
@@ -58,10 +60,13 @@ public class TransFormulaBuilder {
 	//We use Boogie2SMT to translate boogie Statements to SMT formulas 
 	private final Boogie2SMT m_Boogie2smt;
 	private final RootAnnot m_RootAnnot;
+	private final boolean m_SimplifyCodeBlocks;
 
 	public TransFormulaBuilder(Boogie2SMT boogie2smt, RootAnnot rootAnnot) {
 		m_Boogie2smt = boogie2smt;
 		m_RootAnnot = rootAnnot;
+		m_SimplifyCodeBlocks = (new UltimatePreferenceStore(
+				   RCFGBuilder.s_PLUGIN_ID)).getBoolean(PreferenceInitializer.LABEL_Simplify);
 	}
 	
 	/**
@@ -130,7 +135,7 @@ public class TransFormulaBuilder {
 	private TransFormula getTransitionFormula(Summary summary) {
 		m_Boogie2smt.startBlock();
 		m_Boogie2smt.addProcedureCall(summary.getCallStatement());
-		TransFormula tf = constructTransFormula(summary, m_RootAnnot.getTaPrefs().SimplifyCodeBlocks());
+		TransFormula tf = constructTransFormula(summary, m_SimplifyCodeBlocks);
 		m_Boogie2smt.incGeneration();
 		m_Boogie2smt.endBlock();
 		return tf;
@@ -162,7 +167,7 @@ public class TransFormulaBuilder {
 						+ " Assume, Assignment or Havoc Statement");
 			}
 		}
-		TransFormula tf = constructTransFormula(stseq, m_RootAnnot.getTaPrefs().SimplifyCodeBlocks());
+		TransFormula tf = constructTransFormula(stseq, m_SimplifyCodeBlocks);
 		m_Boogie2smt.incGeneration();
 		m_Boogie2smt.endBlock();
 		return tf;

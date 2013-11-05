@@ -28,10 +28,10 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCF
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RcfgElement;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootAnnot;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.TAPreferences;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.TAPreferences.InterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbstractCegarLoop.Result;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.InterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.RcfgProgramExecutionBuilder;
 import de.uni_freiburg.informatik.ultimate.result.Check;
 import de.uni_freiburg.informatik.ultimate.result.CounterExampleResult;
@@ -72,22 +72,19 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 	public boolean process(IElement root) {
 		m_StartingTime = System.currentTimeMillis();
 		RootAnnot rootAnnot = ((RootNode) root).getRootAnnot();
-		TAPreferences taPrefs = rootAnnot.getTaPrefs();
+		TAPreferences taPrefs = new TAPreferences();
 		
 		String settings = "Automizer settings:";
 		settings += " Hoare:"+ taPrefs.computeHoareAnnotation();
 		settings += " " + (taPrefs.differenceSenwa() ? "SeNWA" : "NWA");
-		settings += " Solver:" + taPrefs.solver();
 		settings += " Interpolation:"+ taPrefs.interpolation();
 		settings += " Determinization: " + taPrefs.determinization();
-		settings += " Letter:" + taPrefs.letter();
 		settings += " Timeout:" + taPrefs.timeout();
 		System.out.println(settings);
 
 		SmtManager smtManager = new SmtManager(rootAnnot.getBoogie2SMT(),
-				taPrefs.solver(), rootAnnot.getGlobalVars(),
-				rootAnnot.getModGlobVarManager(),
-				taPrefs.dumpFormulas(), taPrefs.dumpPath());
+				rootAnnot.getGlobalVars(),
+				rootAnnot.getModGlobVarManager());
 		TimingStatistics timingStatistics = new TimingStatistics(smtManager);
 
 		Map<String, Collection<ProgramPoint>> proc2errNodes = rootAnnot.getErrorNodes();

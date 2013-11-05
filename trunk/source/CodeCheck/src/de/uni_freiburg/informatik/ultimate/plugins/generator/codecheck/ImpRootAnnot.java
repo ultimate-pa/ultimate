@@ -4,9 +4,9 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.Backtranslator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootAnnot;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 
 public class ImpRootAnnot extends RootAnnot {
 	
@@ -14,9 +14,9 @@ public class ImpRootAnnot extends RootAnnot {
 	
 //	HashMap<AnnotatedProgramPoint, ArrayList<AnnotatedProgramPoint>> callPredToReturnPreds;
 
-	public ImpRootAnnot(TAPreferences taPrefs, Boogie2SMT m_Boogie2smt,
+	public ImpRootAnnot(Boogie2SMT m_Boogie2smt,
 			Backtranslator backtranslator) { //, HashMap<AnnotatedProgramPoint, ArrayList<AnnotatedProgramPoint>> callPredToReturnPreds) {
-		super(taPrefs, m_Boogie2smt, backtranslator);
+		super(m_Boogie2smt, backtranslator);
 //		this.callPredToReturnPreds = callPredToReturnPreds;
 	}
 

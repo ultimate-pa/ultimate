@@ -37,11 +37,11 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Roo
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.SequentialComposition;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.TAPreferences;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.TAPreferences.Artifact;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.ISLPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.Artifact;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.AnnotateAndAsserter;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceChecker;
 
@@ -275,7 +275,6 @@ public abstract class AbstractCegarLoop {
 	
 	public final Result iterate() {
 		s_Logger.info("Interprodecural is " + m_Pref.interprocedural());		
-		s_Logger.info("Solver is " + m_Pref.solver());
 		s_Logger.info("Hoare is " + m_Pref.computeHoareAnnotation());
 		s_Logger.info("Compute interpolants for " + m_Pref.interpolation());
 		s_Logger.info("Backedges2True is " + m_Pref.edges2True());
@@ -289,7 +288,7 @@ public abstract class AbstractCegarLoop {
 		s_Logger.info("======== Iteration " + m_Iteration + "==of CEGAR loop == " + m_Name + "========");
 		
 		// intialize dump of debugging output to files if necessary
-		if (m_Pref.dumpFormulas() || m_Pref.dumpAutomata()) {
+		if (m_Pref.dumpAutomata()) {
 			dumpInitinalize();
 		}
 		try {
@@ -332,7 +331,7 @@ public abstract class AbstractCegarLoop {
 		for (m_Iteration=1; m_Iteration<=m_Pref.maxIterations(); m_Iteration++){
 			s_Logger.info("====== " + errorLocs() + "== Iteration " + m_Iteration + "============");
 			m_SmtManager.setIteration(m_Iteration);
-			if (m_Pref.dumpFormulas() || m_Pref.dumpAutomata()) {
+			if (m_Pref.dumpAutomata()) {
 				dumpInitinalize();
 			}
 

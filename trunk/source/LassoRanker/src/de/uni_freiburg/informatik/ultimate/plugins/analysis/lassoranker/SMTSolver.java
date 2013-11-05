@@ -9,7 +9,6 @@ import org.apache.log4j.Logger;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.logic.LoggingScript;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.smtsolver.external.Scriptor;
 
 
@@ -41,9 +40,8 @@ class SMTSolver {
 		Script script = new Scriptor("z3 -smt2 -in", solverLogger);
 		
 		// Accesses the RCFGBuilder preferences for solver settings.
-		TAPreferences taPref = new TAPreferences();
-		if (taPref.dumpScript()) {
-			String dumpFileName = taPref.dumpPath();
+		if (false) {
+			String dumpFileName = ""; //enter path here
 			String fileSep = System.getProperty("file.separator");
 			dumpFileName += (dumpFileName.endsWith(fileSep) ? "" : fileSep);
 			dumpFileName += generateFilename();

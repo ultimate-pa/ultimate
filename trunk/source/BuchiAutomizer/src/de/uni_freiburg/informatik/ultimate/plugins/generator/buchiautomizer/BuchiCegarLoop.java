@@ -59,10 +59,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Roo
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.SequentialComposition;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.TransFormula;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.TransFormula.Infeasibility;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.PreferenceInitializer.INTERPOLATION;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.PreferenceInitializer.Solver;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.TAPreferences;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.TAPreferences.Artifact;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CFG2NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.HoareAnnotationFragments;
@@ -75,6 +71,10 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.ISLPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.InductivityCheck;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.PreferenceInitializer.INTERPOLATION;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.PreferenceInitializer.Solver;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.Artifact;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceChecker.AllIntegers;
@@ -191,6 +191,9 @@ public class BuchiCegarLoop {
 		private final boolean m_Eager = true;
 		private final boolean m_Difference = true;
 		private final boolean m_UseDoubleDeckers = !true;
+		
+		private static final boolean m_ExternalSolver = false;
+		private static final boolean m_SimplifyCodeBlocks = true;
 
 		public BuchiCegarLoop(RootNode rootNode,
 				SmtManager smtManager,
@@ -227,7 +230,6 @@ public class BuchiCegarLoop {
 		
 		public final Result iterate() {
 			s_Logger.info("Interprodecural is " + m_Pref.interprocedural());		
-			s_Logger.info("Solver is " + m_Pref.solver());
 			s_Logger.info("Hoare is " + m_Pref.computeHoareAnnotation());
 			s_Logger.info("Compute interpolants for " + m_Pref.interpolation());
 			s_Logger.info("Backedges2True is " + m_Pref.edges2True());
@@ -480,14 +482,14 @@ public class BuchiCegarLoop {
 			TransFormula stemTF = SequentialComposition.getInterproceduralTransFormula(
 					m_RootNode.getRootAnnot().getBoogie2SMT(),
 					m_RootNode.getRootAnnot().getModGlobVarManager(),
-					m_RootNode.getRootAnnot().getTaPrefs().SimplifyCodeBlocks(), false, stemCBs);
+					m_SimplifyCodeBlocks, false, stemCBs);
 			int stemVars = stemTF.getFormula().getFreeVars().length;
 
 			@SuppressWarnings("deprecation")
 			TransFormula loopTF = SequentialComposition.getInterproceduralTransFormula(
 					m_RootNode.getRootAnnot().getBoogie2SMT(),
 					m_RootNode.getRootAnnot().getModGlobVarManager(),
-					m_RootNode.getRootAnnot().getTaPrefs().SimplifyCodeBlocks(),false, loopCBs);
+					m_SimplifyCodeBlocks,false, loopCBs);
 			int loopVars = loopTF.getFormula().getFreeVars().length;
 			s_Logger.info("Statistics: stemVars: " + stemVars + "loopVars: " + loopVars);
 			{
@@ -498,7 +500,7 @@ public class BuchiCegarLoop {
 				TransFormula composed = SequentialComposition.getInterproceduralTransFormula(
 						m_RootNode.getRootAnnot().getBoogie2SMT(),
 						m_RootNode.getRootAnnot().getModGlobVarManager(),
-						false, m_RootNode.getRootAnnot().getTaPrefs().SimplifyCodeBlocks(), composedCB.toArray(new CodeBlock[0])); 
+						false, m_SimplifyCodeBlocks, composedCB.toArray(new CodeBlock[0])); 
 						//TransFormula.sequentialComposition(10000, rootAnnot.getBoogie2SMT(), stemTF, loopTF);
 				if (composed.isInfeasible() == Infeasibility.INFEASIBLE) {
 					throw new AssertionError("suddently infeasible");
@@ -638,15 +640,13 @@ public class BuchiCegarLoop {
 			Logger solverLogger = Logger.getLogger("interpolLogger");
 			Script script;
 			
-			if (taPref.solver() == Solver.SMTInterpol) {
-				script = new SMTInterpol(solverLogger,false);
-			} else if (taPref.solver() == Solver.Z3) {
+			if (m_ExternalSolver) {
 				script = new Scriptor("z3 -smt2 -in", solverLogger);
 			} else {
-				throw new AssertionError();
+				script = new SMTInterpol(solverLogger,false);
 			}
 			
-			if (taPref.dumpScript()) {
+			if (false) {
 				String dumpFileName = taPref.dumpPath();
 				String fileSep = System.getProperty("file.separator");
 				dumpFileName += (dumpFileName.endsWith(fileSep) ? "" : fileSep);
@@ -661,13 +661,7 @@ public class BuchiCegarLoop {
 			
 			script.setOption(":produce-unsat-cores", true);
 			script.setOption(":produce-models", true);
-			if (taPref.solver() == Solver.SMTInterpol) {
-				script.setLogic(nonlinear ? "QF_NRA" : "QF_LRA");
-			} else if (taPref.solver() == Solver.Z3) {
-				script.setLogic(nonlinear ? "QF_NRA" : "QF_LRA");
-			} else {
-				throw new AssertionError();
-			}
+			script.setLogic(nonlinear ? "QF_NRA" : "QF_LRA");
 			return script;
 		}
 		

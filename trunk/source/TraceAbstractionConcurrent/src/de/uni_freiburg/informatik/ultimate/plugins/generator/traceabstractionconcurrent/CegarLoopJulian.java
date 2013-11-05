@@ -17,13 +17,13 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.PetriNetUnfo
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.TAPreferences;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.TAPreferences.Artifact;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.BasicCegarLoop;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.RunAnalyzer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.TimingStatistics;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.Artifact;
 
 
 public class CegarLoopJulian extends BasicCegarLoop {
@@ -94,7 +94,7 @@ public class CegarLoopJulian extends BasicCegarLoop {
 			return true;
 		}
 		else {
-			if (m_Pref.dumpFormulas() || m_Pref.dumpAutomata()) {
+			if (m_Pref.dumpAutomata()) {
 				dumpNestedRun(m_Counterexample, m_IterationPW);
 			}
 			m_RunAnalyzer = new RunAnalyzer(m_Counterexample);

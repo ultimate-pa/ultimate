@@ -47,11 +47,11 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Roo
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.TransFormula;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.TransFormula.Infeasibility;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.PreferenceInitializer.Solver;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.HoareAnnotation;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.PreferenceInitializer.Solver;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.RelevantVariables;
 import de.uni_freiburg.informatik.ultimate.util.ScopedHashMap;
 
@@ -70,8 +70,6 @@ public class SmtManager {
 	private final Script m_Script;
 	private final Map<String,ASTType> m_GlobalVars;
 	private final ModifiableGlobalVariableManager m_ModifiableGlobals;
-	private final boolean m_DumpFormulaToFile;
-	private final String m_DumpPath;
 	private int m_Iteration;
 	private int m_satProbNumber;
 	
@@ -123,11 +121,8 @@ public class SmtManager {
 	protected static String[] m_NoProcedure = new String[0];
 	
 	public SmtManager(Boogie2SMT boogie2smt,
-					Solver solver, 
 					Map<String,ASTType> globalVars,
-					ModifiableGlobalVariableManager modifiableGlobals, 
-					boolean dumpFormulaToFile,
-					String dumpPath) {
+					ModifiableGlobalVariableManager modifiableGlobals) {
 		m_DontCareTerm = new AuxilliaryTerm("don't care");
 		m_EmptyStackTerm = new AuxilliaryTerm("emptyStack");
 		m_Boogie2Smt = boogie2smt;
@@ -135,8 +130,6 @@ public class SmtManager {
 		m_Script = m_Smt2Boogie.getScript();
 		m_GlobalVars = globalVars;
 		m_ModifiableGlobals =  modifiableGlobals;
-		m_DumpFormulaToFile = dumpFormulaToFile;
-		m_DumpPath = dumpPath;
 	}
 	
 	public boolean isIdle() {
@@ -591,10 +584,6 @@ public class SmtManager {
 			m_IndexedConstants = new ScopedHashMap<String, Term>();
 			Term negImpl = Util.and(m_Script,formula1, Util.not(m_Script,formula2));
 
-			if (m_DumpFormulaToFile) {
-				dumpSatProblem(negImpl, m_Iteration, m_satProbNumber, m_DumpPath, m_Script);
-				m_satProbNumber++;
-			}
 
 			//replace all vars by constants
 			{
@@ -716,10 +705,6 @@ public class SmtManager {
 		f = Util.and(m_Script,ps1renamed, f);
 		
 //		f = new FormulaUnLet().unlet(f);
-		if (m_DumpFormulaToFile) {
-			dumpSatProblem(f,m_Iteration,m_satProbNumber,m_DumpPath,m_Script);
-			m_satProbNumber++;
-		}
 		LBool result = this.checkSatisfiable(f);
 		if (expectUnsat) {
 			if (result == LBool.SAT) {
@@ -910,10 +895,6 @@ public class SmtManager {
 		f = Util.and(m_Script,fTrans,f);
 		f = Util.and(m_Script,ps1renamed, f);
 		
-		if (m_DumpFormulaToFile) {
-			dumpSatProblem(f,m_Iteration,m_satProbNumber,m_DumpPath,m_Script);
-			m_satProbNumber++;
-		}
 		LBool result = this.checkSatisfiable(f);
 		m_IndexedConstants = null;
 		m_Script.pop(1);
@@ -1001,10 +982,6 @@ public class SmtManager {
 		f = Util.and(m_Script,fCall, f);
 		f = Util.and(m_Script,pskrenamed, f);
 		
-		if (m_DumpFormulaToFile) {
-			dumpSatProblem(f,m_Iteration,m_satProbNumber,m_DumpPath,m_Script);
-			m_satProbNumber++;
-		}
 		LBool result = this.checkSatisfiable(f);
 		m_Script.pop(1);
 		m_IndexedConstants = null;

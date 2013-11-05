@@ -17,13 +17,13 @@ import org.apache.log4j.Logger;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.PrimitiveType;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
+import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
 import de.uni_freiburg.informatik.ultimate.logic.LoggingScript;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.model.BoogieLocation;
 import de.uni_freiburg.informatik.ultimate.model.IAnnotations;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.ILocation;
-import de.uni_freiburg.informatik.ultimate.model.ModelUtils;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssertStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssignmentStatement;
@@ -59,12 +59,12 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.RenameProcedureSpec;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.Backtranslator;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.RCFGBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.TransFormulaBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.WeakestPrecondition;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence.Origin;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.PreferenceInitializer.Solver;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.TAPreferences;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.TAPreferences.Letter;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.PreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.PreferenceInitializer.CodeBlockSize;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.SMTInterpol;
 import de.uni_freiburg.informatik.ultimate.smtsolver.external.Scriptor;
 
@@ -99,7 +99,7 @@ public class CfgBuilder {
 	
 	
 	public static final String Z3_COMMAND =
-			"z3 SMTLIB2_COMPLIANT=true -memory:256 -smt2 -in";
+			"z3 SMTLIB2_COMPLIANT=true -memory:2256 -smt2 -in";
 	
 	/**
      * Root Node of this Ultimate model. I use this to store information that
@@ -121,26 +121,33 @@ public class CfgBuilder {
 
 	private Backtranslator m_Backtranslator;
 
+
+	private CodeBlockSize m_CodeBlockSize;
+
 	
 	
    public CfgBuilder(Unit unit, Backtranslator backtranslator) {
 	   m_Backtranslator = backtranslator;
-	   TAPreferences taPref = new TAPreferences();
+	   boolean useExternalSolver = (new UltimatePreferenceStore(
+			   RCFGBuilder.s_PLUGIN_ID)).getBoolean(PreferenceInitializer.LABEL_ExtSolverFlag);
 	   
 	   Logger solverLogger = Logger.getLogger("interpolLogger");
 	   solverLogger.setLevel(Level.ERROR);
 	   
-	   if (taPref.solver() == Solver.SMTInterpol) {
+	   if (useExternalSolver) {
+		   String command = 
+				   (new UltimatePreferenceStore(RCFGBuilder.s_PLUGIN_ID)).getString(PreferenceInitializer.LABEL_ExtSolverCommand);
+		   m_Script = new Scriptor(command, solverLogger);
+	   } else {
 		   m_Script = new SMTInterpol(solverLogger,false);
-	   } else if (taPref.solver() == Solver.Z3) {	   
-		   m_Script = new Scriptor(Z3_COMMAND, solverLogger);
-	   }
-	   else {
-		   throw new AssertionError();
 	   }
 	   
-	   if (taPref.dumpScript()) {
-		   String dumpFileName = taPref.dumpPath();
+	   
+	   boolean dumpToFile = (new UltimatePreferenceStore(
+			   RCFGBuilder.s_PLUGIN_ID)).getBoolean(PreferenceInitializer.LABEL_DumpToFile);
+	   if (dumpToFile) {
+		   String dumpFileName = (new UltimatePreferenceStore(
+				   RCFGBuilder.s_PLUGIN_ID)).getString(PreferenceInitializer.LABEL_Path);
 		   dumpFileName += (dumpFileName.endsWith(System.getProperty("file.separator"))?"":System.getProperty("file.separator"));
 		   dumpFileName = dumpFileName + "script" + 
 				   filenameWithoutPathAndExtension(unit) + ".smt2";
@@ -152,7 +159,7 @@ public class CfgBuilder {
 	   }
 	   
 	   boolean blackHolesArrays;
-	   if (taPref.solver() == Solver.SMTInterpol) {
+	   if (!useExternalSolver) {
 		   m_Script.setOption(":produce-models", true);
 		   m_Script.setOption(":produce-interpolants", true);
 		   m_Script.setOption(":produce-unsat-cores", true);
@@ -164,7 +171,7 @@ public class CfgBuilder {
 		   m_Script.setLogic("QF_UFLIRA");
 //		   m_Script.setOption(":verbosity", 0);
 		   blackHolesArrays = false;
-	   } else if (taPref.solver() == Solver.Z3) {
+	   } else {
 		   m_Script.setOption(":produce-models", true);
 		   m_Script.setOption(":produce-proofs", true);
 		   m_Script.setOption(":produce-unsat-cores", true);
@@ -173,12 +180,9 @@ public class CfgBuilder {
 //		   m_Script.setOption(":verbosity", 0);
 		   blackHolesArrays = false;
 	   }
-	   else {
-		   throw new AssertionError();
-	   }
 	   
 	   m_Boogie2smt = new Boogie2SMT(m_Script, false, blackHolesArrays);
-	   m_RootAnnot = new RootAnnot(taPref,m_Boogie2smt, m_Backtranslator);
+	   m_RootAnnot = new RootAnnot(m_Boogie2smt, m_Backtranslator);
 
 	}
    
@@ -323,8 +327,9 @@ public class CfgBuilder {
 		}
 		m_RootAnnot.m_ModifiableGlobalVariableManager = 
 				new ModifiableGlobalVariableManager(m_RootAnnot.m_ModifiedVars, m_Boogie2smt);
-		
-		if (m_RootAnnot.getTaPrefs().letter() == Letter.BLOCK) {
+		m_CodeBlockSize = (new UltimatePreferenceStore(
+				RCFGBuilder.s_PLUGIN_ID)).getEnum(PreferenceInitializer.LABEL_CodeBlockSize, CodeBlockSize.class);
+		if (m_CodeBlockSize == CodeBlockSize.LoopFreeBlock) {
 			new LargeBlockEncoding();
 		}
 		
@@ -763,7 +768,9 @@ public class CfgBuilder {
 			assertAndAssumeEnsures();
 						
 			// Remove auxiliary GotoTransitions
-			if (!(new TAPreferences().PreserveGotoEdges())) {
+			boolean removeGotoEdges = (new UltimatePreferenceStore(
+				   RCFGBuilder.s_PLUGIN_ID)).getBoolean(PreferenceInitializer.LABEL_RemoveGotoEdges);
+			if (removeGotoEdges) {
 				s_Logger.debug("Starting removal of auxiliaryGotoTransitions");
 				while (!(m_GotoEdges.isEmpty())) {
 					GotoEdge gotoEdge = m_GotoEdges.remove(0);
@@ -1177,7 +1184,8 @@ public class CfgBuilder {
 				m_current = codeBlock; 
 			}
 			else if (m_current instanceof CodeBlock) {
-				if (m_RootAnnot.getTaPrefs().letter() == Letter.SEQUENCE || m_RootAnnot.getTaPrefs().letter() == Letter.BLOCK) {
+				if (m_CodeBlockSize == CodeBlockSize.SequenceOfStatements || 
+						m_CodeBlockSize == CodeBlockSize.LoopFreeBlock) {
 					StatementSequence stSeq = (StatementSequence) m_current;
 					stSeq.addStatement(st);
 					stSeq.updatePayloadName();
@@ -1455,8 +1463,11 @@ public class CfgBuilder {
 		Set<ProgramPoint> sequentialQueue = new HashSet<ProgramPoint>();
 		Map<ProgramPoint, List<CodeBlock>> parallelQueue = 
 				new HashMap<ProgramPoint, List<CodeBlock>>();
+		final boolean m_SimplifyCodeBlocks;
 		
 		public LargeBlockEncoding() {
+			m_SimplifyCodeBlocks = (new UltimatePreferenceStore(
+					   RCFGBuilder.s_PLUGIN_ID)).getBoolean(PreferenceInitializer.LABEL_Simplify);
 		
 			for (String proc : m_RootAnnot.m_LocNodes.keySet()) {
 				for (String position : m_RootAnnot.m_LocNodes.get(proc).keySet()) {
@@ -1499,7 +1510,7 @@ public class CfgBuilder {
 			ProgramPoint successor = (ProgramPoint) outgoing.getTarget();
 			new SequentialComposition(predecessor, successor, m_Boogie2smt, 
 					m_RootAnnot.getModGlobVarManager(),
-					m_RootAnnot.getTaPrefs().SimplifyCodeBlocks(), incoming, outgoing);
+					m_SimplifyCodeBlocks, incoming, outgoing);
 			if (!sequentialQueue.contains(predecessor)) {
 				List<CodeBlock> outEdges = superfluousParallel(predecessor);
 				if (outEdges != null) {

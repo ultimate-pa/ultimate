@@ -8,7 +8,6 @@ import java.util.HashSet;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
@@ -17,6 +16,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Roo
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.EdgeChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.PredicateUnifier;
 
 
@@ -181,7 +181,7 @@ public class ImpulseChecker extends CodeChecker {
 	 */
 	private boolean defaultRedirectEdges(AnnotatedProgramPoint[] nodes, 
 			NestedRun<CodeBlock, AnnotatedProgramPoint> errorRun, AnnotatedProgramPoint[] copies) {
-		//TODO: für Impulse braucht man wohl den error run im sinne von AppEdges -- zumindst für das default redirecting
+		//TODO: fï¿½r Impulse braucht man wohl den error run im sinne von AppEdges -- zumindst fï¿½r das default redirecting
 		 // kann man rekonstruieren aus den beiden angrenzenden Knoten, dem label aus dem errorRun und ggf der NestingRelation
 		 // --> lohnt sich's?
 		

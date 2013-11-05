@@ -31,7 +31,7 @@ public class RCFG2AnnotatedRCFG {
 	public ImpRootNode convert(RootNode oldRoot, IPredicate truePredicate) {
 //		m_callPredToReturnPreds =
 //				new HashMap<AnnotatedProgramPoint, ArrayList<AnnotatedProgramPoint>>();
-		ImpRootAnnot ira = new ImpRootAnnot(oldRoot.getRootAnnot().getTaPrefs(),
+		ImpRootAnnot ira = new ImpRootAnnot(
 				oldRoot.getRootAnnot().getBoogie2SMT(), null); //, m_callPredToReturnPreds);
 		
 		ImpRootNode newRoot = new ImpRootNode(ira);
