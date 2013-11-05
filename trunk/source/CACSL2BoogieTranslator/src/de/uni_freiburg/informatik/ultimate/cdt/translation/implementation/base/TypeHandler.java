@@ -40,6 +40,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CStruct;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CUnion;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.IncorrectSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.Result;
@@ -290,9 +291,18 @@ public class TypeHandler implements ITypeHandler {
     public Result visit(Dispatcher main, IASTElaboratedTypeSpecifier node) {
         CACSLLocation loc = new CACSLLocation(node);
         if (node.getKind() == IASTElaboratedTypeSpecifier.k_struct
-                || node.getKind() == IASTElaboratedTypeSpecifier.k_enum) {
+                || node.getKind() == IASTElaboratedTypeSpecifier.k_enum
+                || node.getKind() == IASTElaboratedTypeSpecifier.k_union) {
             String type = node.getName().getRawSignature();
-            String name = "STRUCT~" + type;
+            String name;
+            if (node.getKind() == IASTElaboratedTypeSpecifier.k_struct) {
+            	name = "STRUCT~" + type;
+            } else if (node.getKind() == IASTElaboratedTypeSpecifier.k_union) {
+            	name = "UNION~" + type;
+            } else {
+            	throw new UnsupportedOperationException("TODO: enums");
+            }
+            
             if (m_DefinedTypes.containsKey(type)) {
                 if (node.getStorageClass() == IASTDeclSpecifier.sc_typedef) {
                     assert node.getParent() instanceof IASTSimpleDeclaration;
@@ -324,9 +334,16 @@ public class TypeHandler implements ITypeHandler {
             if (node.getKind() == IASTElaboratedTypeSpecifier.k_enum) {
             	throw new UnsupportedOperationException("TODO: support incomplete enums");
             }
-            CStruct struct = new CStruct(node, true);
+            CType ctype;
+            if (node.getKind() == IASTElaboratedTypeSpecifier.k_struct) {
+            	ctype = new CStruct(node, true);
+            } else if (node.getKind() == IASTElaboratedTypeSpecifier.k_union) {
+            	ctype = new CUnion(node, true);
+            } else {
+            	throw new UnsupportedOperationException("TODO: enums");
+            }
             ResultTypes r = new ResultTypes(new NamedType(loc, name,
-                  new ASTType[0]), false, false, struct);
+                  new ASTType[0]), false, false, ctype);
             
 
             m_DefinedTypes.put(type, r);
@@ -417,8 +434,16 @@ public class TypeHandler implements ITypeHandler {
 //                SFO.POINTER, new String[0], new StructType(loc, fields.toArray(new VarList[0])));
         
         ASTType type = namedType;
-        CStruct cvar = new CStruct(node, fNames.toArray(new String[0]),
-                fTypes.toArray(new CType[0]));
+        CStruct cvar;
+        if (node.getKey() == IASTCompositeTypeSpecifier.k_struct) {
+        	cvar = new CStruct(node, fNames.toArray(new String[0]),
+                    fTypes.toArray(new CType[0]));
+        } else if (node.getKey() == IASTCompositeTypeSpecifier.k_union) {
+        	cvar = new CUnion(node, fNames.toArray(new String[0]),
+                    fTypes.toArray(new CType[0]));
+        } else {
+        	throw new UnsupportedOperationException();
+        }
         ResultTypes result = new ResultTypes(type, false, false, cvar);
         
         if (node.getStorageClass() == IASTDeclSpecifier.sc_typedef) {
