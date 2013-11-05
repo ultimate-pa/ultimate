@@ -241,6 +241,7 @@
 							<useUIHarness>false</useUIHarness>
 							<useUIThread>false</useUIThread>
 							<showEclipseLog>true</showEclipseLog>
+							<argLine>-Xmx4096M</argLine>
 						</configuration>
 					</plugin>
 

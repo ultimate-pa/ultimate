@@ -74,34 +74,34 @@ public class UltimateTest {
 
 		UltimateTestDescriptor[] alex = SVCOMP14TestDescriptor
 				.createDescriptorsFromSVCOMPRootDirectory(
-						getPathFromTrunk("..\\..\\svcomp"),
+						getPathFromTrunk("../../svcomp"),
 						new HashMap<String, String>() {
 							{
 								put("MemorySafety",
-										getPathFromTrunk("examples\\settings\\AlexSVCOMPmemsafety"));
+										getPathFromTrunk("examples/settings/AlexSVCOMPmemsafety"));
 //								put("Simple",
-//										getPathFromTrunk("examples\\settings\\AlexSVCOMPstandard"));
+//										getPathFromTrunk("examples/settings/AlexSVCOMPstandard"));
 //								put("ControlFlowInteger",
-//										getPathFromTrunk("examples\\settings\\AlexSVCOMPstandard"));
+//										getPathFromTrunk("examples/settings/AlexSVCOMPstandard"));
 							}
 						},
-						getPathFromTrunk("examples\\toolchains\\KojakC.xml"),
+						getPathFromTrunk("examples/toolchains/KojakC.xml"),
 						30000,"CodeCheck");
 
 		UltimateTestDescriptor[] matthias = SVCOMP14TestDescriptor
 				.createDescriptorsFromSVCOMPRootDirectory(
-						getPathFromTrunk("..\\..\\svcomp"),
+						getPathFromTrunk("../../svcomp"),
 						new HashMap<String, String>() {
 							{
 								put("MemorySafety",
-										getPathFromTrunk("examples\\settings\\AutomizerSvcompSafety1Minute.bpl"));
+										getPathFromTrunk("examples/settings/AutomizerSvcompSafety1Minute.bpl"));
 //								put("Simple",
 //										getPathFromTrunk("examples\\settings\\AutomizerSvcompSafety1Minute.bpl"));
 //								put("ControlFlowInteger",
 //										getPathFromTrunk("examples\\settings\\AutomizerSvcompSafety1Minute.bpl"));
 							}
 						},
-						getPathFromTrunk("examples\\toolchains\\TraceAbstractionC.xml"),
+						getPathFromTrunk("examples/toolchains/TraceAbstractionC.xml"),
 						30000,"Automizer");
 
 		all.addAll(Arrays.asList(alex));
