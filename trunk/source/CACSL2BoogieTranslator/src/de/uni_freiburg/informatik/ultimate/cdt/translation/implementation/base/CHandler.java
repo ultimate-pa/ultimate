@@ -547,10 +547,11 @@ public class CHandler implements ICHandler {
 		ArrayList<VariableDeclaration> lVarDecl = new ArrayList<VariableDeclaration>();
 		ArrayList<Statement> stmt = new ArrayList<Statement>();
 		IASTNode parent = node.getParent();
-		if (parent instanceof IASTFunctionDefinition) {
-			functionHandler.handleFunctionsInParams(main, loc, decl, stmt,
-					parent);
-		}
+//		moved to FunctionHandler.handleFunctionDefinition() (better architecture)
+//		if (parent instanceof IASTFunctionDefinition) {
+//			functionHandler.handleFunctionsInParams(main, loc, decl, stmt,
+//					parent);
+//		}
 		if (isNewScopeRequired(parent))
 			this.beginScope();
 //			symbolTable.beginScope();

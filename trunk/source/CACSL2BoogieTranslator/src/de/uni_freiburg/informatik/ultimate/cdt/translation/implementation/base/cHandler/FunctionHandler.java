@@ -359,7 +359,7 @@ public class FunctionHandler {
 	 * @param parent
 	 */
 	public void handleFunctionsInParams(Dispatcher main, ILocation loc,
-			ArrayList<Declaration> decl, ArrayList<Statement> stmt,
+			ArrayList<VariableDeclaration> decl, ArrayList<Statement> stmt,
 			IASTNode parent) {
 		for (VarList varList : currentProcedure.getInParams()) {
 			for (final String bId : varList.getIdentifiers()) {
@@ -665,11 +665,32 @@ public class FunctionHandler {
 					new HashSet<String>());
 		}
 		
+		/*
+		 * The structure is as follows:
+		 * 1) Preprocessing of the method body:
+		 *    - add new variables for parameters
+		 *    - havoc them
+		 *    - etc.
+		 * 2) dispatch body
+		 * 4) handle mallocs
+         * 3) add statements and declarations to new body
+		 */
+		ArrayList<Statement> stmts = new ArrayList<Statement>();
+		ArrayList<VariableDeclaration> decls =
+		        new ArrayList<VariableDeclaration>();
+		// 1)
+		handleFunctionsInParams(main, loc, decls, stmts, node);
+		// 2)
 		Body body = ((Body) main.dispatch(node.getBody()).node);
-
-		
-		body.setBlock(handleMallocs(main, loc, memoryHandler, new ArrayList<Statement>(Arrays.asList(body.getBlock())))
-				.toArray(new Statement[0]));
+		// 3)
+		stmts.addAll(handleMallocs(main, loc, memoryHandler,
+		        new ArrayList<Statement>(Arrays.asList(body.getBlock()))));
+		// 4)
+        for (VariableDeclaration declaration : body.getLocalVars()) {
+            decls.add(declaration);
+        }
+		body = new Body(loc, decls.toArray(new VariableDeclaration[0]),
+		        stmts.toArray(new Statement[0]));
 		
 		proc = currentProcedure;
 		// Implementation -> Specification always null!
