@@ -3,6 +3,13 @@
 if [ "$1" = "svcompMatthiasSafetyBench1" ]; then
 echo "specified folder in a test setting"
 trunk/examples/toolchains/TraceAbstractionTestDir.sh -da 90 $2 \
+"TraceAbstraction.xml;TraceAbstractionC.xml;AutomizerSvcompSafety1Minute.bpl" \
+"TraceAbstraction.xml;TraceAbstractionC.xml;AutomizerSvcompSafety1MinuteSeq.bpl"
+fi
+
+if [ "$1" = "svcompMatthiasSafetyBench1" ]; then
+echo "specified folder in a test setting"
+trunk/examples/toolchains/TraceAbstractionTestDir.sh -da 90 $2 \
 "TraceAbstraction.xml;TraceAbstractionC.xml;AutomizerSvcompSafety1Minute.bpl"
 fi
 
