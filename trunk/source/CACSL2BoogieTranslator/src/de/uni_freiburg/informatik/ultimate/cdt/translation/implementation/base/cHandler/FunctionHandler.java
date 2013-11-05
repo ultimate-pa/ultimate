@@ -22,10 +22,10 @@ import org.eclipse.cdt.core.dom.ast.IASTParameterDeclaration;
 import org.eclipse.cdt.core.dom.ast.IASTReturnStatement;
 import org.eclipse.cdt.core.dom.ast.IASTSimpleDeclaration;
 import org.eclipse.cdt.internal.core.dom.parser.c.CASTFunctionDeclarator;
-import org.eclipse.cdt.internal.core.dom.rewrite.astwriter.DeclSpecWriter;
 
-import de.uni_freiburg.informatik.ultimate.cdt.decorator.DecoratorNode;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CACSLLocation;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CHandler;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.MainDispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.InferredType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.InferredType.Type;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.SymbolTableValue;
@@ -44,7 +44,6 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ResultSkip;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ResultTypes;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ResultVarList;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.ConvExpr;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.TarjanSCC;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
@@ -53,7 +52,6 @@ import de.uni_freiburg.informatik.ultimate.model.ILocation;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLNode;
 import de.uni_freiburg.informatik.ultimate.model.annotations.Overapprox;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ASTType;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssignmentStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression;
@@ -78,7 +76,6 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.Activator;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.TranslationMode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.PreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.result.Check;
 import de.uni_freiburg.informatik.ultimate.result.SyntaxErrorResult.SyntaxErrorType;
@@ -549,7 +546,8 @@ public class FunctionHandler {
 //		main.cHandler.getSymbolTable().beginScope();
 		main.cHandler.beginScope();
 		ILocation loc = new CACSLLocation(node);
-		String methodName = node.getDeclarator().getName().toString();
+		IASTDeclarator decl = node.getDeclarator();
+        String methodName = decl.getName().toString();
 		VarList[] in = ((ResultVarList) main.dispatch(node.getDeclarator())).varList;
 		VarList[] out = new VarList[0]; // at most one out param in C
 		// we check the type via typeHandler
@@ -558,19 +556,28 @@ public class FunctionHandler {
 		procedureToReturnCType.put(methodName, resType.cvar);
 		
 		// fill map of parameter types
-        ArrayList<CType> paramTypes =
-                new ArrayList<CType>();
+        ArrayList<CType> paramTypes = new ArrayList<CType>();
         procedureToParamCType.put(methodName, paramTypes);
-        IASTDeclarator decls = node.getDeclarator();
-        IASTParameterDeclaration[] funDec =
-                ((CASTFunctionDeclarator)decls).getParameters();
-        for (int i = 0; i < funDec.length; ++i) {
-            IASTDeclSpecifier declSpec = funDec[i].getDeclSpecifier();
-            IASTDeclarator declarator = funDec[i].getDeclarator();
+        IASTParameterDeclaration[] paramDecs =
+                ((CASTFunctionDeclarator)decl).getParameters();
+        for (int i = 0; i < paramDecs.length; ++i) {
+            IASTParameterDeclaration paramDec = paramDecs[i];
+            IASTDeclSpecifier declSpec = paramDec.getDeclSpecifier();
+            IASTDeclarator declarator = paramDec.getDeclarator();
             ResultTypes paramResType = (ResultTypes) main.dispatch(declSpec);
+            boolean isOnHeap = ((MainDispatcher) main).getVariablesForHeap().
+                    contains(paramDec);
             paramResType = main.cHandler.checkForPointer(
                     main, declarator.getPointerOperators(), paramResType, false);
-            paramTypes.add(i, paramResType.cvar);
+            if (isOnHeap) {
+                paramTypes.add(i, new CPointer(paramResType.cvar));
+//                FIXME
+                ((CHandler)main.cHandler).addBoogieIdsOfHeapVars(
+                        declarator.getName().toString(), loc);
+            }
+            else {
+                paramTypes.add(i, paramResType.cvar);
+            }
         }
         
 		ResultTypes checkedType = main.cHandler.checkForPointer(main, node
@@ -585,15 +592,15 @@ public class FunctionHandler {
 					new PrimitiveType(loc, new InferredType(Type.Integer),
 							SFO.INT));
 		}
-		Procedure decl = procedures.get(methodName);
-		if (decl == null) {
+		Procedure proc = procedures.get(methodName);
+		if (proc == null) {
 			Attribute[] attr = new Attribute[0];
 			String[] typeParams = new String[0];
 			Specification[] spec = new Specification[0];
 			if (isInParamVoid(in)) {
 				in = new VarList[0]; // in parameter is "void"
 			}
-			decl = new Procedure(loc, attr, methodName, typeParams, in, out,
+			proc = new Procedure(loc, attr, methodName, typeParams, in, out,
 					spec, null);
 			if (procedures.containsKey(methodName)) {
 				String msg = "Duplicated method identifier: " + methodName
@@ -601,20 +608,20 @@ public class FunctionHandler {
 				Dispatcher.error(loc, SyntaxErrorType.IncorrectSyntax, msg);
 				throw new IncorrectSyntaxException(msg);
 			}
-			procedures.put(methodName, decl);
+			procedures.put(methodName, proc);
 		} else { // check declaration against its implementation
-			VarList[] declIn = decl.getInParams();
+			VarList[] declIn = proc.getInParams();
 			boolean checkInParams = true;
-			if (in.length != decl.getInParams().length
-					|| out.length != decl.getOutParams().length
-					|| isInParamVoid(decl.getInParams())) {
-				if (decl.getInParams().length == 0) {
+			if (in.length != proc.getInParams().length
+					|| out.length != proc.getOutParams().length
+					|| isInParamVoid(proc.getInParams())) {
+				if (proc.getInParams().length == 0) {
 					// the implementation can have 0 to n in parameters!
 					// do not check, but use the in params of the implementation
 					// as we will take the ones of the implementation anyway
 					checkInParams = false;
 					declIn = in;
-				} else if (isInParamVoid(decl.getInParams())
+				} else if (isInParamVoid(proc.getInParams())
 						&& (in.length == 0 || isInParamVoid(in))) {
 					// decl(void) && [impl() || impl(void)]
 					declIn = new VarList[0];
@@ -629,7 +636,7 @@ public class FunctionHandler {
 			if (checkInParams) {
 				for (int i = 0; i < in.length; i++) {
 					if (!(in[i].getType().toString()
-							.equals(decl.getInParams()[i].getType().toString()))) {
+							.equals(proc.getInParams()[i].getType().toString()))) {
 						String msg = "Implementation does not match declaration!"
 								+ "Type missmatch on in-parameters!";
 						Dispatcher.error(loc, SyntaxErrorType.IncorrectSyntax,
@@ -638,15 +645,15 @@ public class FunctionHandler {
 					}
 				}
 			}
-			decl = new Procedure(decl.getLocation(), decl.getAttributes(),
-					decl.getIdentifier(), decl.getTypeParams(), declIn,
-					decl.getOutParams(), decl.getSpecification(), null);
-			procedures.put(methodName, decl);
+			proc = new Procedure(proc.getLocation(), proc.getAttributes(),
+					proc.getIdentifier(), proc.getTypeParams(), declIn,
+					proc.getOutParams(), proc.getSpecification(), null);
+			procedures.put(methodName, proc);
 		}
 		Procedure declWithCorrectlyNamedInParams = new Procedure(
-				decl.getLocation(), decl.getAttributes(), decl.getIdentifier(),
-				decl.getTypeParams(), in, decl.getOutParams(),
-				decl.getSpecification(), null);
+				proc.getLocation(), proc.getAttributes(), proc.getIdentifier(),
+				proc.getTypeParams(), in, proc.getOutParams(),
+				proc.getSpecification(), null);
 		currentProcedure = declWithCorrectlyNamedInParams;
 		currentProcedureIsVoid = resType.isVoid;
 		if (!modifiedGlobals.containsKey(currentProcedure.getIdentifier())) {
@@ -664,10 +671,10 @@ public class FunctionHandler {
 		body.setBlock(handleMallocs(main, loc, memoryHandler, new ArrayList<Statement>(Arrays.asList(body.getBlock())))
 				.toArray(new Statement[0]));
 		
-		decl = currentProcedure;
+		proc = currentProcedure;
 		// Implementation -> Specification always null!
-		Procedure impl = new Procedure(loc, decl.getAttributes(), methodName,
-				decl.getTypeParams(), in, decl.getOutParams(), null, body);
+		Procedure impl = new Procedure(loc, proc.getAttributes(), methodName,
+				proc.getTypeParams(), in, proc.getOutParams(), null, body);
 		currentProcedure = null;
 		currentProcedureIsVoid = false;
 //		main.cHandler.getSymbolTable().endScope();

@@ -2968,6 +2968,18 @@ public class CHandler implements ICHandler {
 				new IntegerLiteral(loc, SFO.NR1),
 				new IntegerLiteral(loc, SFO.NR0));
 	}
+	
+	/**
+	 * Adds a Boogie ID to the heap variables.
+	 * The Boogie ID is retrieved from the symbol table via the input
+	 * parameters.
+	 * 
+	 * @param cId ID from C
+	 * @param loc location
+	 */
+	public void addBoogieIdsOfHeapVars(String cId, ILocation loc) {
+	    boogieIdsOfHeapVars.add(symbolTable.get(cId, loc).getBoogieName());
+	}
 
 //	void addHeapModifiedGlobals() {
 //		for (String t : new String[] { SFO.INT, SFO.POINTER,

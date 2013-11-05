@@ -200,7 +200,7 @@ public class MainDispatcher extends Dispatcher {
     /**
      * Variables that need some special memory handling.
      */
-    private HashSet<IASTDeclaration> variablesOnHeap;
+    private HashSet<IASTNode> variablesOnHeap;
     /**
      * Functions used as pointer.
      */
@@ -247,7 +247,7 @@ public class MainDispatcher extends Dispatcher {
      * @return a set of variables, that have to be handled using the memory
      *         model.
      */
-    public HashSet<IASTDeclaration> getVariablesForHeap() {
+    public HashSet<IASTNode> getVariablesForHeap() {
         return variablesOnHeap;
     }
 

@@ -41,7 +41,7 @@ public class PreRunner extends ASTVisitor {
     /**
      * Variables, that have to go on the heap.
      */
-    private HashSet<IASTDeclaration> variablesOnHeap;
+    private HashSet<IASTNode> variablesOnHeap;
     /**
      * The table containing all functions.
      */
@@ -53,7 +53,7 @@ public class PreRunner extends ASTVisitor {
     /**
      * The symbol table during the translation.
      */
-    ScopedHashMap<String, IASTDeclaration> sT;
+    ScopedHashMap<String, IASTNode> sT;
     /**
      * Whether or not the memory model is required.
      */
@@ -67,8 +67,8 @@ public class PreRunner extends ASTVisitor {
         this.shouldVisitExpressions = true;
         this.shouldVisitStatements = true;
         this.isMMRequired = false;
-        this.sT = new ScopedHashMap<String, IASTDeclaration>();
-        this.variablesOnHeap = new HashSet<IASTDeclaration>();
+        this.sT = new ScopedHashMap<String, IASTNode>();
+        this.variablesOnHeap = new HashSet<IASTNode>();
         this.functionTable = new HashMap<String, IASTFunctionDefinition>();
         this.functionPointers = new HashMap<String, IASTFunctionDefinition>();
     }
@@ -80,7 +80,7 @@ public class PreRunner extends ASTVisitor {
      * @return a set of variables, that have to be translated using the memory
      *         model.
      */
-    public HashSet<IASTDeclaration> getVarsForHeap() {
+    public HashSet<IASTNode> getVarsForHeap() {
     	return variablesOnHeap;
     }
     
@@ -103,7 +103,6 @@ public class PreRunner extends ASTVisitor {
 
     @Override
     public int visit(IASTExpression expression) {
-
     	if (expression instanceof IASTUnaryExpression) {
     		ILocation loc = new CACSLLocation(expression);
     		IASTUnaryExpression ue = (IASTUnaryExpression) expression;
@@ -150,9 +149,9 @@ public class PreRunner extends ASTVisitor {
                 this.isMMRequired = true;
             }
         }
-        if (expression instanceof IASTIdExpression) {
+    	else if (expression instanceof IASTIdExpression) {
             String identifier = ((IASTIdExpression) expression).getName().toString();
-            IASTDeclaration d = sT.get(identifier); // don't check contains here!
+            IASTNode d = sT.get(identifier); // don't check contains here!
             if (d instanceof IASTSimpleDeclaration) {
             	IASTSimpleDeclaration sd = (IASTSimpleDeclaration) d;
             	for (IASTDeclarator dec : sd.getDeclarators()) {
@@ -177,11 +176,11 @@ public class PreRunner extends ASTVisitor {
             	}
             }
         }
-        if (expression instanceof IASTFieldReference) {
+    	else if (expression instanceof IASTFieldReference) {
             // TODO
             // if field is an array and there is no array sub expr!
         }
-        if (expression instanceof IASTFunctionCallExpression) {
+    	else if (expression instanceof IASTFunctionCallExpression) {
             IASTFunctionCallExpression fce = (IASTFunctionCallExpression) expression;
             if (fce.getFunctionNameExpression().getRawSignature()
                     .equals("malloc")) {
@@ -219,8 +218,8 @@ public class PreRunner extends ASTVisitor {
                 CASTFunctionDeclarator dec =
                         (CASTFunctionDeclarator)funDef.getDeclarator();
                 for (IASTParameterDeclaration param : dec.getParameters()) {
-                    String key = param.getDeclarator().getName().getRawSignature();
-                    sT.put(key, declaration);
+                    String key = param.getDeclarator().getName().toString();
+                    sT.put(key, param);
                     IASTPointerOperator[] pointerOps =
                             param.getDeclarator().getPointerOperators();
                     //--> that's the simple solution, if there are pointers declared,
@@ -286,7 +285,7 @@ public class PreRunner extends ASTVisitor {
      *            the location for the error, if the String is not contained.
      * @return the corresponding declaration for the given name.
      */
-    private IASTDeclaration get(String n, ILocation l) {
+    private IASTNode get(String n, ILocation l) {
         if (!sT.containsKey(n)) {
             String m = "PR: Missing declaration of " + n;
             Dispatcher.error(l, SyntaxErrorType.IncorrectSyntax, m);
