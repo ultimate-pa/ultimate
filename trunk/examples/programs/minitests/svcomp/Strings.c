@@ -10,7 +10,7 @@ int main(void) {
   char *s;
   s = "Waldkirch";
   char *t;
-  t = "Buchholz";
+  t = (char *) "Buchholz"; // with cast
   if (s == t) {
        ERROR:
        goto ERROR;
