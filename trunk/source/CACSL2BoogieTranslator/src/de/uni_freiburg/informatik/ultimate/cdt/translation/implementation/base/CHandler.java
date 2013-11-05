@@ -6,6 +6,7 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -136,6 +137,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Label;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.LeftHandSide;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.LoopInvariantSpecification;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.NamedType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.PrimitiveType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.RealLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Specification;
@@ -1039,9 +1041,8 @@ public class CHandler implements ICHandler {
 
 	@Override
 	public Result visit(Dispatcher main, IASTLiteralExpression node) {
-		ILocation loc = new CACSLLocation(node);
-		Map<VariableDeclaration, CACSLLocation> auxVars = new HashMap<VariableDeclaration, CACSLLocation>(
-				0);
+		CACSLLocation loc = new CACSLLocation(node);
+
 		switch (node.getKind()) {
 		case IASTLiteralExpression.lk_float_constant:
 			String val = new String(node.getValue());
@@ -1061,10 +1062,22 @@ public class CHandler implements ICHandler {
 					new InferredType(InferredType.Type.Integer), val),
 					new CPrimitive(PRIMITIVE.INT)));
 		case IASTLiteralExpression.lk_string_literal:
-			// TODO : StringLiteral is not correct - we need a char[]...
-			return new ResultExpression(new RValue(new StringLiteral(loc,
-					new InferredType(InferredType.Type.String), new String(
-							node.getValue())), (CType) null));
+			// Translate string to uninitialized char pointer
+			String tId = main.nameHandler.getTempVarUID(SFO.AUXVAR.NONDET);
+			NamedType boogiePointerType = 
+				new NamedType(null, new InferredType(Type.Struct), SFO.POINTER, new ASTType[0]);
+            VariableDeclaration tVarDecl = new VariableDeclaration(loc, new Attribute[0],
+                    new VarList[] { new VarList(loc, new String[] {tId}, boogiePointerType) });
+            CPrimitive charType = new CPrimitive(PRIMITIVE.CHAR);
+            CPointer cPointer = new CPointer(charType);
+            RValue rvalue = new RValue(new IdentifierExpression(
+            		loc, new InferredType(Type.Struct), tId), cPointer);
+            ArrayList<Declaration> decls = new ArrayList<Declaration>();
+            decls.add(tVarDecl);
+    		Map<VariableDeclaration, CACSLLocation> auxVars = 
+    				new HashMap<VariableDeclaration, CACSLLocation>(0);
+    		auxVars.put(tVarDecl, loc);
+			return new ResultExpression(new ArrayList<Statement>(), rvalue, decls, auxVars );
 		case IASTLiteralExpression.lk_false:
 			return new ResultExpression(new RValue(new BooleanLiteral(loc,
 					new InferredType(InferredType.Type.Boolean), false),
