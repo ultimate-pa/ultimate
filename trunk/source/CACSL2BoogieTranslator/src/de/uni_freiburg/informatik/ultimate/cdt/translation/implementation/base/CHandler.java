@@ -63,6 +63,7 @@ import org.eclipse.cdt.core.dom.ast.IASTTypeIdExpression;
 import org.eclipse.cdt.core.dom.ast.IASTUnaryExpression;
 import org.eclipse.cdt.core.dom.ast.IASTWhileStatement;
 import org.eclipse.cdt.internal.core.dom.parser.c.CASTDesignatedInitializer;
+import org.eclipse.cdt.internal.core.model.TranslationUnit;
 
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CACSLLocation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.SymbolTable;
@@ -76,6 +77,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.SymbolTableValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CArray;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CEnum;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CFunction;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CNamed;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
@@ -655,8 +657,8 @@ public class CHandler implements ICHandler {
 				if (putOnHeap)
 					boogieIdsOfHeapVars.add(bId);//store it independent from the symbol table
 
-				// TODO Christian: to be modified/tested
-				if (d instanceof IASTFunctionDeclarator) {
+				
+				if ((d instanceof IASTFunctionDeclarator) && !isLocalFunctionDeclaration(d)) {
 					Result rFunc = functionHandler.handleFunctionDeclaration(main,
 							contract, node, index);
 					assert (rFunc instanceof ResultSkip);
@@ -706,8 +708,14 @@ public class CHandler implements ICHandler {
 				} else {// standard variable case
 					ResultTypes checkedType = null;
 					//changes the type into pointer -- in case of an actual pointer decl or a heapVar
-					checkedType = checkForPointer(main,
-							d.getPointerOperators(), resType, putOnHeap);
+					//FIXME: this should be done recursively
+					if (d.getNestedDeclarator() != null) {
+						checkedType = checkForPointer(main,
+								d.getNestedDeclarator().getPointerOperators(), resType, putOnHeap);
+					} else {
+						checkedType = checkForPointer(main,
+								d.getPointerOperators(), resType, putOnHeap);
+					}
 
 					CType cvar = checkedType.cvar;
 					if (main.typeHandler.isStructDeclaration()) {
@@ -919,6 +927,21 @@ public class CHandler implements ICHandler {
 		return node.getDeclSpecifier().getStorageClass() == IASTDeclSpecifier.sc_static;
 	}
 	
+	
+	/**
+	 * Hack by Matthias for finding function pointers.
+	 */
+	private boolean isLocalFunctionDeclaration(IASTDeclarator d) {
+		if (d instanceof IASTFunctionDeclarator) {
+			if (d.getParent() instanceof TranslationUnit) {
+				return false;
+			} else {
+				return true;
+			}
+		}
+		return false;
+	}
+	
 
 
 
@@ -1118,7 +1141,7 @@ public class CHandler implements ICHandler {
 		IASTFunctionDefinition funDef =
 		        ((MainDispatcher) main).getFunctionPointers().get(cId);
 		if (funDef != null) {
-            cT = new CPointer(new CPrimitive(funDef.getDeclSpecifier()));
+            cT = new CPointer(new CFunction(funDef.getDeclSpecifier()));
 		    t = new InferredType(cT);
     		bId = SFO.FUNCTION_ADDRESS + cId;
     		useHeap = true;
