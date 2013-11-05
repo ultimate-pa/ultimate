@@ -502,18 +502,21 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 		ctxRes.setLongDescription(bpe.toString());
 		ctxRes.setFailurePath(bpe.getLocationSequence());
 		ctxRes.setValuation(bpe.getValuation());
+		
+		System.out.println("=== Start of program execution");
+		System.out.println("--- Error Path: ---");
+		for (ILocation loc : bpe.getLocationSequence()) {
+			System.out.println(loc.toString());
+		}
+		System.out.println("--- Valuation: ---");
+		System.out.println(bpe.toString());
+		System.out.println("=== End of program execution");
+
 		reportResult(ctxRes);
 		s_Logger.warn(ctxMessage);
 	}
 
 	private void reportResult(IResult res) {
-		if (res instanceof CounterExampleResult<?>) {
-			System.out.println("Error path start");
-			for (ILocation loc : ((CounterExampleResult<?>) res).getFailurePath()) {
-				System.out.println(loc.toString());
-			}
-			System.out.println("Error path end");
-		}
 		UltimateServices.getInstance().reportResult(Activator.s_PLUGIN_ID, res);
 	}
 
