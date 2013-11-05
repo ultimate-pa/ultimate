@@ -2,10 +2,12 @@ import sys
 import subprocess
 
 #locations of files
-ultimateBin = '/storage/stalin/trunk/source/BA_SiteRepository/target/products/CLI-E3/linux/gtk/x86_64/Ultimate'
-toolchain = '/storage/stalin/trunk/examples/toolchains/TraceAbstractionC.xml'
-settingsFileErrorReachability = './KojakSvComp2014.settings'
-settingsFileMemSafety = './KojakSvComp2014.settings'
+#ultimateBin = '/storage/stalin/trunk/source/BA_SiteRepository/target/products/CLI-E3/linux/gtk/x86_64/Ultimate'
+#ultimateBin = '../../source/BA_SiteRepository/target/products/CLI-E3/linux/gtk/x86_64/Ultimate'
+ultimateBin = './Ultimate'
+toolchain = './ToolchainKojakC.xml'
+settingsFileErrorReachability = './SettingsKojakSvComp'
+settingsFileMemSafety = './SettingsKojakSvComp'
 #special strings in ultimate output
 safetyString = 'Ultimate proved your program to be correct'
 unsafetyString = 'Ultimate proved your program to be incorrect'
