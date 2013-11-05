@@ -47,6 +47,8 @@ public class SymbolTableValue {
      *            not.
      * @param cvar
      *            a description of the C variable.
+     * @param isStatic
+     *            whether the variable is static in the C program or not
      */
     public SymbolTableValue(String bId, Declaration decl,
             boolean isGlobal, CType cvar, boolean isStatic) {
