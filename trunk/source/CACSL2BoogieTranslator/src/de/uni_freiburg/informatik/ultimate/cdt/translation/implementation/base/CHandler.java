@@ -636,7 +636,8 @@ public class CHandler implements ICHandler {
 				assert resType.getType() != null || resType.isVoid;
 				
 				//true iff the declared variable will be addressoffed in the program (alex)
-				boolean putOnHeap = ((MainDispatcher) main).getVariablesForHeap().contains(node);
+//				boolean putOnHeap = ((MainDispatcher) main).getVariablesForHeap().contains(node);
+				boolean putOnHeap = ((MainDispatcher) main).getVariablesForHeap().contains(d);
 				
 				/*
 				 * unwrap nested declarators (e.g., int ((x)) = 0) to get a

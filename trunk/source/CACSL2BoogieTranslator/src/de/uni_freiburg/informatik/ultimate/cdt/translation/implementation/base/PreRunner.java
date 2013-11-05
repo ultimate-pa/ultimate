@@ -199,7 +199,7 @@ public class PreRunner extends ASTVisitor {
             CASTSimpleDeclaration cd = (CASTSimpleDeclaration) declaration;
             for (IASTDeclarator d : cd.getDeclarators()) {
                 String key = d.getName().getRawSignature();
-                sT.put(key, declaration);
+                sT.put(key, d);
 
                 //--> that's the simple solution, if there are pointers declared, we introduce the (full) memory model
                 // might be done better in the future..
