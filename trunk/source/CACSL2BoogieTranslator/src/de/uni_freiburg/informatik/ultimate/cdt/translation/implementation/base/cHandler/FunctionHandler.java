@@ -365,8 +365,24 @@ public class FunctionHandler {
 			ArrayList<Declaration> decl, ArrayList<Statement> stmt,
 			IASTFunctionDefinition parent) {
 	    VarList[] varListArray = currentProcedure.getInParams();
-	    IASTParameterDeclaration[] paramDecs =
-                ((CASTFunctionDeclarator)parent.getDeclarator()).getParameters();
+	    IASTParameterDeclaration[] paramDecs;
+	    if (varListArray.length == 0) {
+	        /*
+	         * In C it is possible to write
+	         *    func(void) {
+	         *       ...
+	         *    }
+	         * This results in the empty name.
+	         */
+	        assert ((CASTFunctionDeclarator)parent.getDeclarator()).getParameters().length == 0 ||
+	                (((CASTFunctionDeclarator)parent.getDeclarator()).getParameters().length == 1 &&
+	                ((CASTFunctionDeclarator)parent.getDeclarator()).getParameters()[0].getDeclarator().getName().toString().equals(""));
+	        paramDecs = new IASTParameterDeclaration[0];
+	    }
+	    else {
+	        paramDecs = ((CASTFunctionDeclarator)parent.getDeclarator()).
+	                getParameters();
+	    }
 	    assert varListArray.length == paramDecs.length;
 		for (int i = 0; i < paramDecs.length; ++i) {
 		    VarList varList  = varListArray[i];
