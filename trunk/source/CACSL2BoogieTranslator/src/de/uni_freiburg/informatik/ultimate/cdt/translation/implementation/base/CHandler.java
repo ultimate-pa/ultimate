@@ -525,7 +525,7 @@ public class CHandler implements ICHandler {
 
 	@Override
 	public Result visit(Dispatcher main, IASTFunctionDefinition node) {
-		return functionHandler.handleFunctionDefinition(main, node);
+		return functionHandler.handleFunctionDefinition(main, memoryHandler, node);
 	}
 
 	/**
@@ -552,7 +552,8 @@ public class CHandler implements ICHandler {
 					parent);
 		}
 		if (isNewScopeRequired(parent))
-			symbolTable.beginScope();
+			this.beginScope();
+//			symbolTable.beginScope();
 
 		for (IASTNode child : node.getChildren()) {
 			checkForACSL(main, stmt, child, null);
@@ -576,8 +577,11 @@ public class CHandler implements ICHandler {
 			}
 		}
 		checkForACSL(main, stmt, null, node);
-		if (isNewScopeRequired(parent))
-			symbolTable.endScope();
+		if (isNewScopeRequired(parent)){
+			stmt = functionHandler.handleMallocs(main, loc, memoryHandler, stmt);
+			//			symbolTable.endScope();
+			this.endScope();
+		}
 		return new Result(new Body(loc,
 				decl.toArray(new VariableDeclaration[0]),
 				stmt.toArray(new Statement[0])));
@@ -605,10 +609,6 @@ public class CHandler implements ICHandler {
 			return r;
 		if (r instanceof ResultTypes) {
 			ResultTypes resType = (ResultTypes) r;
-//			Map<VariableDeclaration, CACSLLocation> auxVars =
-//					new HashMap<VariableDeclaration, CACSLLocation>();
-//			Map<VariableDeclaration, CACSLLocation> emptyAuxVars =
-//					new HashMap<VariableDeclaration, CACSLLocation>(0);
 			ResultExpression result = new ResultExpression(null);
 			ResultExpression staticVarStorage = new ResultExpression(null);
 			boolean isGlobal = node.getParent() == node.getTranslationUnit();
@@ -639,7 +639,7 @@ public class CHandler implements ICHandler {
 				boolean putOnHeap = ((MainDispatcher) main).getVariablesForHeap().contains(node);
 				
 				/*
-				 * unwrap nested declaraters (e.g., int ((x)) = 0) to get a
+				 * unwrap nested declarators (e.g., int ((x)) = 0) to get a
 				 * nonempty cId
 				 */
 				IASTDeclarator declaraterForCid = d;
@@ -652,35 +652,30 @@ public class CHandler implements ICHandler {
 				if (putOnHeap)
 					boogieIdsOfHeapVars.add(bId);//store it independent from the symbol table
 
-				
-				
 				// TODO Christian: to be modified/tested
 				if (d instanceof IASTFunctionDeclarator) {
 					Result rFunc = functionHandler.handleFunctionDeclaration(main,
 							contract, node, index);
 					assert (rFunc instanceof ResultSkip);
 				} else if (d instanceof IASTArrayDeclarator) {
-//					Result rArray = arrayHandler.handleArrayDeclaration(main,
-//							memoryHandler, structHandler, node, globalVariables,
-//							globalVariablesInits, index);
 					ResultExpression rArray = arrayHandler.handleArrayDeclarationOnHeap(main,
-							memoryHandler, structHandler, functionHandler,// globalVariables,
-							//globalVariablesInits, 
+							memoryHandler, structHandler, functionHandler,
 							(IASTArrayDeclarator) d, node.getDeclSpecifier(), resType,
 							bId, loc);
 					CType arrayType = rArray.lrVal.cType;
-					
+					if (main.typeHandler.isStructDeclaration()) {
+						/* store C variable information into this result, as this is a struct field! 
+						 * We need this information to build the structs C variable information recursively.
+						 */
+						assert arrayType != null;
+						result.declCTypes.add(arrayType);
+					}
 					result.stmt.addAll(rArray.stmt);
 					result.decl.addAll(rArray.decl);
 					result.auxVars.putAll(rArray.auxVars);
 					result.overappr.addAll(rArray.overappr);
-//					result.lrVal = rArray.lrVal;
 					
-					
-//					ASTType type = new PrimitiveType(loc, new InferredType(Type.Pointer), SFO.POINTER);
 					ASTType type = MemoryHandler.POINTER_TYPE;
-//					ASTType type = new NamedType(loc, new InferredType(Type.Pointer), SFO.POINTER, new ASTType[0]);
-//					ASTType type = resType.getType();
 					VarList var = new VarList(loc, new String[] { bId }, type);
 					Attribute[] attr = new Attribute[0];
 					if (resType.isConst) {
@@ -693,13 +688,7 @@ public class CHandler implements ICHandler {
 					symbolTable.put(cId, new SymbolTableValue(bId, decl, isGlobal,
 							arrayType, staticStorageClass(node)));
 					
-					if (main.typeHandler.isStructDeclaration()) {
-						/* store C variable information into this result, as this is a struct field! 
-						 * We need this information to build the structs C variable information recursively.
-						 */
-						assert arrayType != null;
-						result.declCTypes.add(arrayType);
-					}
+					
 					
 					if (staticStorageClass(node) && !isGlobal) {
 						staticVarStorage.decl.add(decl);
@@ -745,7 +734,7 @@ public class CHandler implements ICHandler {
 					}
 					CType resultCType = null;
 					if (cvar != null) {
-						if (isHeapVar(bId))// || checkedType.getType() == MemoryHandler.POINTER_TYPE )
+						if (putOnHeap)// || checkedType.getType() == MemoryHandler.POINTER_TYPE )
 							resultCType = ((CPointer)cvar).pointsToType;	
 						else
 							resultCType = cvar;
@@ -753,77 +742,70 @@ public class CHandler implements ICHandler {
 								((CNamed) resultCType).getUnderlyingType() : 
 									resultCType;
 					}
-					
+
 					LocalLValue thisLVal = new LocalLValue(new VariableLHS(loc, new InferredType(resultCType), bId), resultCType);
-					if (resultCType instanceof CStruct) {
+					
+//					variables we put on the heap must be malloced an freed by us
+					if (putOnHeap) {
+//						ResultExpression mallocRex = memoryHandler.getMallocCall(main, functionHandler, 
+//								memoryHandler.calculateSizeOf(resultCType), thisLVal, loc);
+//						result.stmt.addAll(mallocRex.stmt);
+						functionHandler.addMallocedAuxPointer(main, thisLVal);
+					}
+
+					if (resultCType instanceof CStruct && !isGlobal) {
 						//when declaring a local struct that contains an array (on the heap) we have to malloc for that array
-						if (!isGlobal) {
-							String[] fieldIds = ((CStruct) resultCType).getFieldIds();
-							for (String fieldId : fieldIds) {
-								CType fieldType = ((CStruct) resultCType).getFieldType(fieldId).getUnderlyingType();
-								if (fieldType instanceof CArray) {
-//									String tmpId = main.nameHandler.getTempVarUID(SFO.AUXVAR.MALLOC);
-//									InferredType tmpIType = new InferredType(Type.Pointer);
-//									VariableDeclaration tVarDecl = SFO.getTempVarVariableDeclaration(tmpId, tmpIType, loc);
-//									LocalLValue tmpLval = new LocalLValue(new VariableLHS(loc, tmpIType, tmpId), fieldType);
+						String[] fieldIds = ((CStruct) resultCType).getFieldIds();
+						for (String fieldId : fieldIds) {
+							CType fieldType = ((CStruct) resultCType).getFieldType(fieldId).getUnderlyingType();
+							if (fieldType instanceof CArray) {
+								LocalLValue arrayId = new LocalLValue(
+										new StructLHS(loc, 
+												new InferredType(Type.Pointer), 
+												thisLVal.getLHS(), fieldId), 
+												fieldType);
+//								ResultExpression mallocCall = memoryHandler.getMallocCall(main, functionHandler, 
+//										memoryHandler.calculateSizeOf(fieldType), 
+//										//tmpLval,//arrayId, 
+//										loc);	
+								String tmpId = main.nameHandler.getTempVarUID(SFO.AUXVAR.MALLOC);
+						        InferredType tmpIType = new InferredType(Type.Pointer);
+						        VariableDeclaration tVarDecl = SFO.getTempVarVariableDeclaration(tmpId, tmpIType, loc);
+						        
+						        functionHandler.addMallocedAuxPointer(main, new LocalLValue(
+						        		new VariableLHS(loc, new InferredType(fieldType), tmpId), fieldType));
 
-									LocalLValue arrayId = new LocalLValue(
-											new StructLHS(loc, 
-													new InferredType(Type.Pointer), 
-													thisLVal.getLHS(), fieldId), 
-													fieldType);
-									ResultExpression mallocCall = memoryHandler.getMallocCall(main, functionHandler, 
-											memoryHandler.calculateSizeOf(fieldType), 
-											//tmpLval,//arrayId, 
-											loc);	
-
-									Statement assignment = new AssignmentStatement(loc, 
-											new LeftHandSide[] {arrayId.getLHS()}, 
-											new Expression[] { mallocCall.lrVal.getValue() });//new IdentifierExpression(loc, ((VariableLHS) tmpLval.getLHS()).getIdentifier())});
-									HashMap<String, IAnnotations> annots = assignment.getPayload().getAnnotations();
-									for (Overapprox overapprItem : mallocCall.overappr) {
-										annots.put(Overapprox.getIdentifier(),
-												overapprItem);
-									}
-
-									if (staticStorageClass(node)) {
-										staticVarStorage.stmt.addAll(mallocCall.stmt);
-										staticVarStorage.stmt.add(assignment);
-//										staticVarStorage.decl.add(tVarDecl);
-										staticVarStorage.decl.addAll(mallocCall.decl);
-//										staticVarStorage.auxVars.put(tVarDecl, loc);
-										staticVarStorage.auxVars.putAll(mallocCall.auxVars);
-										staticVarStorage.overappr.addAll(mallocCall.overappr);
-									} else {
-										result.stmt.addAll(mallocCall.stmt);
-										result.stmt.add(assignment);
-										result.decl.addAll(mallocCall.decl);
-										result.auxVars.putAll(mallocCall.auxVars);
-										result.overappr.addAll(mallocCall.overappr);
-									}
+								Statement assignment = new AssignmentStatement(loc, 
+										new LeftHandSide[] {arrayId.getLHS()}, 
+										new Expression[] { new IdentifierExpression(loc, 
+												new InferredType(fieldType), tmpId)} );
+//										new Expression[] { mallocCall.lrVal.getValue() });
+								HashMap<String, IAnnotations> annots = assignment.getPayload().getAnnotations();
+//								for (Overapprox overapprItem : mallocCall.overappr) { //mallocCall is done elsewhere
+//									annots.put(Overapprox.getIdentifier(), 
+//											overapprItem);
+//								}
+								if (staticStorageClass(node)) {
+//									staticVarStorage.stmt.addAll(mallocCall.stmt);
+									staticVarStorage.stmt.add(assignment);
+									staticVarStorage.decl.add(tVarDecl);
+									//										staticVarStorage.decl.add(tVarDecl);
+//									staticVarStorage.decl.addAll(mallocCall.decl);
+//									//										staticVarStorage.auxVars.put(tVarDecl, loc);
+//									staticVarStorage.auxVars.putAll(mallocCall.auxVars);
+//									staticVarStorage.overappr.addAll(mallocCall.overappr);
+								} else {
+//									result.stmt.addAll(mallocCall.stmt);
+									result.stmt.add(assignment);
+									result.decl.add(tVarDecl);
+//									result.decl.addAll(mallocCall.decl);
+//									result.auxVars.putAll(mallocCall.auxVars);
+//									result.overappr.addAll(mallocCall.overappr);
 								}
 							}
 						}
-//						} else {//global structs are initialized somewhere else
-//							ResultExpression initRex = new ResultExpression(null);
-//							ResultExpression structCons = structHandler.makeStructConstructorFromRERL(main, 
-//									loc, memoryHandler, arrayHandler, null, (CStruct) resultCType);
-//							initRex.stmt.addAll(structCons.stmt);
-//							initRex.decl.addAll(structCons.decl);
-//							initRex.auxVars.putAll(structCons.auxVars);
-//							initRex.overappr.addAll(structCons.overappr);
-//							initRex.lrVal = (RValue) structCons.lrVal;
-//							ResultExpression assignment = makeAssignment(
-//									main, loc, initRex.stmt, thisLVal,
-//									(RValue) initRex.lrVal, initRex.decl,
-//									initRex.auxVars, initRex.overappr);	
-//							result.decl.addAll(assignment.decl);
-//							result.stmt.addAll(assignment.stmt);
-//							result.auxVars.putAll(assignment.auxVars);
-//							result.overappr.addAll(assignment.overappr);
-//						}
 					}
-					
+
 					// Handle initializer clause
 					if (d.getInitializer() != null) {
 
@@ -868,12 +850,13 @@ public class CHandler implements ICHandler {
 							result.auxVars.putAll(assignment.auxVars);
 							result.overappr.addAll(assignment.overappr);
 						}
-					} else if (!cvar.isGlobalVariable() && !staticStorageClass(node)) {
+					} else if (!cvar.isGlobalVariable() && !staticStorageClass(node) && !putOnHeap) {
 						/*
 						 * if not initialized directly and if not global and not
 						 * static. This is required, since this variable could
 						 * be within a loop and needs to be havoc'ed to
 						 * represent C's behavior!
+						 * Variables on the heap are not havoced explicitly but only malloced.
 						 */
 						result.stmt.add(new HavocStatement(loc,
 								new VariableLHS[] { new VariableLHS(loc, bId) }));
@@ -1152,7 +1135,7 @@ public class CHandler implements ICHandler {
 		return result;
 	}
 
-	boolean isHeapVar(String boogieId) {
+	public boolean isHeapVar(String boogieId) {
 		return boogieIdsOfHeapVars.contains(boogieId);
 	}
 
@@ -1392,7 +1375,7 @@ public class CHandler implements ICHandler {
 						rop.decl, rop.auxVars, rop.overappr);
 	}
 
-	private ResultExpression makeAssignment(Dispatcher main, ILocation loc, ArrayList<Statement> stmt,
+	public ResultExpression makeAssignment(Dispatcher main, ILocation loc, ArrayList<Statement> stmt,
 			LRValue lrVal, RValue rVal, ArrayList<Declaration> decl,
 			Map<VariableDeclaration, CACSLLocation> auxVars,
 			List<Overapprox> overappr) {
@@ -2257,7 +2240,8 @@ public class CHandler implements ICHandler {
 			// add initialization for this for loop
 			IASTStatement cInitStmt = forStmt.getInitializerStatement();
 			if (cInitStmt != null) {
-				symbolTable.beginScope();
+//				symbolTable.beginScope();
+				this.beginScope();
 				Result initializer = main.dispatch(cInitStmt);
 				if (initializer instanceof ResultExpression) {
 					ResultExpression rExp = (ResultExpression) initializer;
@@ -2387,7 +2371,9 @@ public class CHandler implements ICHandler {
 					}
 				}
 				if (((IASTForStatement) node).getInitializerStatement() != null) {
-					main.cHandler.getSymbolTable().endScope();
+					bodyBlock = functionHandler.handleMallocs(main, loc, memoryHandler, bodyBlock);
+//					main.cHandler.getSymbolTable().endScope();
+					this.endScope();
 				}
 			}
 			spec = specList.toArray(new LoopInvariantSpecification[0]);
@@ -2527,7 +2513,8 @@ public class CHandler implements ICHandler {
 		String breakLabelName = "SWITCH~BREAK~" + node.hashCode();
 
 		ArrayList<Statement> ifBlock = new ArrayList<Statement>();
-		symbolTable.beginScope();
+		this.beginScope();
+//		symbolTable.beginScope();
 		for (IASTNode child : node.getBody().getChildren()) {
 			CACSLLocation locC = new CACSLLocation(child);
 			if (isFirst
@@ -3054,4 +3041,24 @@ public class CHandler implements ICHandler {
 			throw new AssertionError("Strange LeftHandSide " + lhs);
 		}
 	}
+	
+	public void beginScope() {
+		this.symbolTable.beginScope();
+		this.functionHandler.getMallocedAuxPointers().beginScope();
+	}
+	
+	public void endScope() {
+		this.symbolTable.endScope();
+		this.functionHandler.getMallocedAuxPointers().endScope();
+	}
+//	public ArrayList<Statement> handleMallocsEndScope() {
+//		ArrayList<Statement> al = new ArrayList<Statement>();
+//		for (LocalLValue llv : functionHandler.getMallocedAuxPointers()) {
+//			
+//		}
+//		
+//		symbolTable.beginScope();
+//		
+//		return al;
+//	}
 }

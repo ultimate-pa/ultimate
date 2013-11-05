@@ -35,6 +35,8 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.IncorrectSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LRValue;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LocalLValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.Result;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ResultContract;
@@ -80,6 +82,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietransla
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.PreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.result.Check;
 import de.uni_freiburg.informatik.ultimate.result.SyntaxErrorResult.SyntaxErrorType;
+import de.uni_freiburg.informatik.ultimate.util.ScopedHashSet;
 
 /**
  * Class that handles translation of functions.
@@ -119,6 +122,15 @@ public class FunctionHandler {
 	 */
 	private HashSet<String> methodsCalledBeforeDeclared;
 	
+	/**
+	 * This set contains those pointers that we have to malloc at the beginning
+	 * and free at the end of the current procedure;
+	 */
+	ScopedHashSet<LocalLValue> mallocedAuxPointers;
+	/**
+	 * map that is used to communicate the returned CType of a procedure from 
+	 * its declaration to its definition.
+	 */
 	private HashMap<String, CType> procedureToReturnCType;
 	private HashMap<String, ArrayList<CType>> procedureToParamCType;
 	
@@ -136,6 +148,7 @@ public class FunctionHandler {
 		this.procedureToReturnCType = new HashMap<String, CType>();
 		this.procedureToParamCType = new HashMap<String, ArrayList<CType>>(); 
 		this.modifiedGlobalsIsUserDefined = new HashSet<String>();
+		this.mallocedAuxPointers = new ScopedHashSet<LocalLValue>();
 		m_CheckMemoryLeakAtEndOfMain = 
 				(new UltimatePreferenceStore(Activator.s_PLUGIN_ID)).
 				getBoolean(PreferenceInitializer.LABEL_CHECK_MemoryLeakInMain);
@@ -222,7 +235,8 @@ public class FunctionHandler {
 		assert cDecl instanceof IASTFunctionDeclarator;
 		String methodName = cDecl.getName().toString();
 		// begin new scope for retranslation of ACSL specification
-		main.cHandler.getSymbolTable().beginScope();
+//		main.cHandler.getSymbolTable().beginScope();
+		main.cHandler.beginScope();
 		ResultVarList res = ((ResultVarList) main.dispatch(cDecl));
 		VarList[] in = res.varList;
 		if (in == null) {
@@ -314,7 +328,8 @@ public class FunctionHandler {
 		}
 		
 		// end scope for retranslation of ACSL specification
-		main.cHandler.getSymbolTable().endScope();
+//		main.cHandler.getSymbolTable().endScope();
+		main.cHandler.endScope();
 		return new ResultSkip();
 	}
 
@@ -529,9 +544,10 @@ public class FunctionHandler {
 	 *            the node to translate.
 	 * @return the translation result.
 	 */
-	public Result handleFunctionDefinition(Dispatcher main,
+	public Result handleFunctionDefinition(Dispatcher main, MemoryHandler memoryHandler,
 			IASTFunctionDefinition node) {
-		main.cHandler.getSymbolTable().beginScope();
+//		main.cHandler.getSymbolTable().beginScope();
+		main.cHandler.beginScope();
 		ILocation loc = new CACSLLocation(node);
 		String methodName = node.getDeclarator().getName().toString();
 		VarList[] in = ((ResultVarList) main.dispatch(node.getDeclarator())).varList;
@@ -641,19 +657,41 @@ public class FunctionHandler {
 			callGraph.put(currentProcedure.getIdentifier(),
 					new HashSet<String>());
 		}
+		
 		Body body = ((Body) main.dispatch(node.getBody()).node);
+
+		
+		body.setBlock(handleMallocs(main, loc, memoryHandler, new ArrayList<Statement>(Arrays.asList(body.getBlock())))
+				.toArray(new Statement[0]));
+		
 		decl = currentProcedure;
 		// Implementation -> Specification always null!
 		Procedure impl = new Procedure(loc, decl.getAttributes(), methodName,
 				decl.getTypeParams(), in, decl.getOutParams(), null, body);
 		currentProcedure = null;
 		currentProcedureIsVoid = false;
-		main.cHandler.getSymbolTable().endScope();
+//		main.cHandler.getSymbolTable().endScope();
+		main.cHandler.endScope();
 		return new Result(impl);
 	}
 	
+	public ArrayList<Statement> handleMallocs(Dispatcher main, ILocation loc, MemoryHandler memoryHandler, ArrayList<Statement> block) {
+		ArrayList<Statement> mallocs = new ArrayList<Statement>();
+		for (LocalLValue llv : this.mallocedAuxPointers.currentScope()) 
+			mallocs.addAll(memoryHandler.getMallocCall(main, this, memoryHandler.calculateSizeOf(llv.cType), llv, loc).stmt);
+		ArrayList<Statement> frees = new ArrayList<Statement>();
+		for (LocalLValue llv : this.mallocedAuxPointers.currentScope()) 
+			frees.addAll(memoryHandler.getFreeCall(main, this, llv.getValue(), loc).stmt);
+		ArrayList<Statement> newBlockAL = new ArrayList<Statement>();
+		newBlockAL.addAll(mallocs);
+		newBlockAL.addAll(block);
+		newBlockAL.addAll(frees);
+		return newBlockAL;
+	}
+
 	void beginUltimateInit(Dispatcher main, ILocation loc) {
-		main.cHandler.getSymbolTable().beginScope();
+//		main.cHandler.getSymbolTable().beginScope();
+		main.cHandler.beginScope();
 		callGraph.put(SFO.INIT, new HashSet<String>());
 		currentProcedure = new Procedure(loc, new Attribute[0], SFO.INIT, new String[0], new VarList[0], new VarList[0], new Specification[0], null);
 		procedures.put(SFO.INIT, currentProcedure);
@@ -663,7 +701,8 @@ public class FunctionHandler {
 	
 	void endUltimateInit(Dispatcher main, Procedure initDecl) {
 		procedures.put(SFO.INIT, initDecl);
-		main.cHandler.getSymbolTable().endScope();
+//		main.cHandler.getSymbolTable().endScope();
+		main.cHandler.endScope();
 	}
 
 	/**
@@ -973,5 +1012,14 @@ public class FunctionHandler {
 	 */
 	public HashMap<String, HashSet<String>> getCallGraph() {
 		return this.callGraph;
+	}
+	
+	public void addMallocedAuxPointer(Dispatcher main, LocalLValue thisLVal) {
+		if (!main.typeHandler.isStructDeclaration())
+			this.mallocedAuxPointers.add(thisLVal);
+	}
+	
+	public ScopedHashSet<LocalLValue> getMallocedAuxPointers() {
+		return mallocedAuxPointers;
 	}
 }

@@ -746,14 +746,16 @@ public class MemoryHandler {
      * </ul>
      */
     private boolean isPointer(CType ctype) {
-    	if (ctype instanceof CPointer) {
-    		return true;
-    	} else if (ctype instanceof CNamed) {
-    		CNamed cnamed = (CNamed) ctype;
-    		return (cnamed.getMappedType() instanceof CPointer);
-    	} else {
-    		return false;
-    	}
+    	CType ut = ctype.getUnderlyingType();
+    	return ut instanceof CPointer || ut instanceof CArray;
+//    	if (ctype instanceof CPointer) {
+//    		return true;
+//    	} else if (ctype instanceof CNamed) {
+//    		CNamed cnamed = (CNamed) ctype;
+//    		return (cnamed.getMappedType() instanceof CPointer);
+//    	} else {
+//    		return false;
+//    	}
     }
 
     /**
@@ -834,7 +836,7 @@ public class MemoryHandler {
 
     public ResultExpression getMallocCall(Dispatcher main,
 			FunctionHandler fh, Expression size,
-			LocalLValue arrayId, ILocation loc) {
+			LocalLValue resultPointer, ILocation loc) {
     	if (!(size.getType() instanceof InferredType)
     			|| ((InferredType) size.getType()).getType() != Type.Integer) {
     		String msg = "Invalid parameter for " + SFO.MALLOC;
@@ -844,9 +846,7 @@ public class MemoryHandler {
     	// Further checks are done in the precondition of ~malloc()!
         // ~malloc(SIZE);
         ArrayList<Statement> stmt = new ArrayList<Statement>();
-        ArrayList<Declaration> decl = new ArrayList<Declaration>();
-		Map<VariableDeclaration, CACSLLocation> auxVars = 
-				new HashMap<VariableDeclaration, CACSLLocation>();
+
         InferredType it = new InferredType(Type.Pointer);
         Expression[] args = new Expression[] { size };
         
@@ -857,7 +857,7 @@ public class MemoryHandler {
 //        auxVars.put(tVarDecl, loc);
 //        decl.add(tVarDecl);
         
-        stmt.add(new CallStatement(loc, false, new VariableLHS[] { (VariableLHS) arrayId.getLHS() },
+        stmt.add(new CallStatement(loc, false, new VariableLHS[] { (VariableLHS) resultPointer.getLHS() },
                 SFO.MALLOC, args));
         
         //TODO: extract this block and the one above to make the other getMallocCall nicer
@@ -879,8 +879,10 @@ public class MemoryHandler {
 //        		fh.getCallGraph().put(SFO.INIT, new HashSet<String>());
 //            fh.getCallGraph().get(SFO.INIT).add(SFO.MALLOC);
         }
-		assert (main.isAuxVarMapcomplete(decl, auxVars));
-        return new ResultExpression(stmt, arrayId, decl, auxVars);//FIXME pointsToType??
+        ArrayList<Declaration> decl = new ArrayList<Declaration>();
+		Map<VariableDeclaration, CACSLLocation> auxVars = 
+				new HashMap<VariableDeclaration, CACSLLocation>();
+        return new ResultExpression(stmt, resultPointer, decl, auxVars);//FIXME pointsToType??
 	}
 
 	/**

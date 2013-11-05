@@ -99,17 +99,19 @@ public class ArrayHandler {
 		LocalLValue arrayId = new LocalLValue(new VariableLHS(loc, new InferredType(Type.Pointer), bId), arrayType);
 
 		//malloc the space on the heap for the array
-		ResultExpression mallocCall = null;
-		Expression mallocSize = null;
-		mallocSize = CHandler.createArithmeticExpression(IASTBinaryExpression.op_multiply, 
-				overallSize,
-				sizeOfCell,
-				loc);
-		mallocCall = memoryHandler.getMallocCall(main, functionHandler, 
-				mallocSize, arrayId, loc);	
-		stmt.addAll(mallocCall.stmt);
-		decl.addAll(mallocCall.decl);
-		auxVars.putAll(mallocCall.auxVars);
+		functionHandler.addMallocedAuxPointer(main, arrayId);
+//		ResultExpression mallocCall = null;
+//		Expression mallocSize = null;
+//		mallocSize = CHandler.createArithmeticExpression(IASTBinaryExpression.op_multiply, 
+//				overallSize,
+//				sizeOfCell,
+//				loc);
+		
+//		mallocCall = memoryHandler.getMallocCall(main, functionHandler, 
+//				mallocSize, arrayId, loc);	
+//		stmt.addAll(mallocCall.stmt);
+//		decl.addAll(mallocCall.decl);
+//		auxVars.putAll(mallocCall.auxVars);
 		
 		//handle initialization
 		if (d.getInitializer() != null) {			

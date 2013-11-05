@@ -541,4 +541,15 @@ public interface ICHandler extends IHandler {
      * @return a result object
      */
     public Result visit(Dispatcher main, IASTTypeIdExpression node);
+    
+    /**
+     * central methods for beginning a scope in all necessary ScopedThings
+     * (f.i. symbolTable,..)
+     */
+    public void beginScope();
+    /**
+     * central methods for ending a scope in all necessary ScopedThings
+     * (f.i. symbolTable,..)
+     */
+    public void endScope();
 }

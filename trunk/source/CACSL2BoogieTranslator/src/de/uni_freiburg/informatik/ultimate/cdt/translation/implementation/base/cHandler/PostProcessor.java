@@ -12,6 +12,7 @@ import org.eclipse.cdt.internal.core.dom.parser.c.CPointerType;
 
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CACSLLocation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CHandler;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.MainDispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.InferredType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.InferredType.Type;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CArray;
@@ -234,6 +235,7 @@ public class PostProcessor {
 		decl.add(new Procedure(loc, new Attribute[0], SFO.INIT, new String[0],
 				new VarList[0], new VarList[0], null, initBody));
 		
+//		functionHandler.handleMallocs(main, loc, memoryHandler, block) //TODO..?
 		functionHandler.endUltimateInit(main, initProcedureDecl);
 		return decl;
 	}
@@ -287,6 +289,9 @@ public class PostProcessor {
 //			lCvar = ((CNamed) cvar).getUnderlyingType();
 //		}
 		//TODO: deal with varsOnHeap
+		boolean onHeap = false;
+		if (lhs instanceof VariableLHS) 
+			onHeap = ((CHandler )main.cHandler).isHeapVar(((VariableLHS) lhs).getIdentifier());
 	
 		ArrayList<Statement> stmt = new ArrayList<Statement>();
 		ArrayList<Declaration> decl = new ArrayList<Declaration>();
