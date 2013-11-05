@@ -397,7 +397,7 @@ test-0102_*
 
 -- Translation:
 
-10 union
+10 union/typedef with function pointer
 - all -
 
 ---
