@@ -121,7 +121,7 @@ public class PostProcessor {
 		decl.addAll(declareUndefinedTypes(loc, undefinedTypes));
 		decl.addAll(createUltimateInitProcedure(loc, main, memoryHandler, arrayHandler, functionHandler, structHandler,
 				initStatements, uninitGlobalVars));
-		decl.addAll(createUltimateStartProcedure(main, loc, procedures,
+		decl.addAll(createUltimateStartProcedure(main, loc, functionHandler, procedures,
 				modifiedGlobals));
 		decl.addAll(functions);
 		return decl;
@@ -167,7 +167,7 @@ public class PostProcessor {
 			Dispatcher main, MemoryHandler memoryHandler, ArrayHandler arrayHandler, FunctionHandler functionHandler,   
 			StructHandler structHandler, ArrayList<Statement> initStatements,
 			Collection<String> uninitGlobalVars) {
-		functionHandler.beginUltimateInit(main, loc);
+		functionHandler.beginUltimateInit(main, loc, SFO.INIT);
 		ArrayList<Declaration> decl = new ArrayList<Declaration>();
 		ArrayList<VariableDeclaration> initDecl = new ArrayList<VariableDeclaration>();
 		if (main.isMMRequired()) {
@@ -236,7 +236,7 @@ public class PostProcessor {
 				new VarList[0], new VarList[0], null, initBody));
 		
 //		functionHandler.handleMallocs(main, loc, memoryHandler, block) //TODO..?
-		functionHandler.endUltimateInit(main, initProcedureDecl);
+		functionHandler.endUltimateInit(main, initProcedureDecl, SFO.INIT);
 		return decl;
 	}
 
@@ -455,14 +455,24 @@ public class PostProcessor {
 	 * @return declarations and implementation of the start procedure.
 	 */
 	private ArrayList<Declaration> createUltimateStartProcedure(
-			Dispatcher main, ILocation loc,
+			Dispatcher main, ILocation loc, FunctionHandler functionHandler,
 			HashMap<String, Procedure> procedures,
 			HashMap<String, HashSet<String>> modifiedGlobals) {
+		functionHandler.beginUltimateInit(main, loc, SFO.START);
 		ArrayList<Declaration> decl = new ArrayList<Declaration>();
 		String checkMethod = main.getCheckedMethod();
+		Procedure startDeclaration = null;
+		
+		if (functionHandler.getCallGraph().containsKey(SFO.START))
+				functionHandler.getCallGraph().put(SFO.START, new HashSet<String>());
+		functionHandler.getCallGraph().get(SFO.START).add(SFO.INIT);
+		
 		if (!checkMethod.equals(SFO.EMPTY)
 				&& procedures.containsKey(checkMethod)) {
 			IHandler.s_Logger.info("Settings: Checked method=" + checkMethod);
+
+			functionHandler.getCallGraph().get(SFO.START).add(checkMethod);
+			
 			ArrayList<Statement> startStmt = new ArrayList<Statement>();
 			ArrayList<VariableDeclaration> startDecl = new ArrayList<VariableDeclaration>();
 			Specification[] specsStart = new Specification[1];
@@ -508,9 +518,10 @@ public class PostProcessor {
 				startModifiesClause.add(new VariableLHS(loc, id));
 			specsStart[0] = new ModifiesSpecification(loc, false,
 					startModifiesClause.toArray(new VariableLHS[0]));
-			decl.add(new Procedure(loc, new Attribute[0], SFO.START,
+			startDeclaration = new Procedure(loc, new Attribute[0], SFO.START,
 					new String[0], new VarList[0], new VarList[0], specsStart,
-					null));
+					null);
+//			decl.add(startDecl);
 			Body startBody = new Body(loc,
 					startDecl.toArray(new VariableDeclaration[0]),
 					startStmt.toArray(new Statement[0]));
@@ -531,6 +542,7 @@ public class PostProcessor {
 				Dispatcher.warn(loc, "Program has main procedure", msg);
 			}
 		}
+		functionHandler.endUltimateInit(main, startDeclaration, SFO.START);
 		return decl;
 	}
 }

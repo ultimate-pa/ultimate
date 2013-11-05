@@ -717,18 +717,18 @@ public class FunctionHandler {
 		return newBlockAL;
 	}
 
-	void beginUltimateInit(Dispatcher main, ILocation loc) {
+	void beginUltimateInit(Dispatcher main, ILocation loc, String startOrInit) {
 //		main.cHandler.getSymbolTable().beginScope();
 		main.cHandler.beginScope();
-		callGraph.put(SFO.INIT, new HashSet<String>());
-		currentProcedure = new Procedure(loc, new Attribute[0], SFO.INIT, new String[0], new VarList[0], new VarList[0], new Specification[0], null);
-		procedures.put(SFO.INIT, currentProcedure);
+		callGraph.put(startOrInit, new HashSet<String>());
+		currentProcedure = new Procedure(loc, new Attribute[0], startOrInit, new String[0], new VarList[0], new VarList[0], new Specification[0], null);
+		procedures.put(startOrInit, currentProcedure);
 		modifiedGlobals.put(currentProcedure.getIdentifier(),
 				new HashSet<String>());
 	}
 	
-	void endUltimateInit(Dispatcher main, Procedure initDecl) {
-		procedures.put(SFO.INIT, initDecl);
+	void endUltimateInit(Dispatcher main, Procedure initDecl, String startOrInit) {
+		procedures.put(startOrInit, initDecl);
 //		main.cHandler.getSymbolTable().endScope();
 		main.cHandler.endScope();
 	}
