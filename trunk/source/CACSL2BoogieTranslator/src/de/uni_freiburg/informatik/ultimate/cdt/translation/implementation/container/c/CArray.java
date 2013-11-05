@@ -166,6 +166,9 @@ public class CArray extends CType {
      * @return the result as an int
      */
     private int getArithmeticResultAsInteger(Expression e) {
+        if (e instanceof IntegerLiteral) {
+            return Integer.parseInt(((IntegerLiteral)e).getValue());
+        }
         assert (e instanceof UnaryExpression || e instanceof BinaryExpression);
         if (e instanceof BinaryExpression) {
             BinaryExpression be = (BinaryExpression)e;
