@@ -909,8 +909,11 @@ public class MemoryHandler {
             if (cvar instanceof CArray) {
                 CArray ca = (CArray) cvar;
                 Expression valSize = calculateSizeOf(ca.getValueType());
-                Expression nrElem = new IntegerLiteral(loc, SFO.EMPTY
-                        + ca.getDimensions().length);
+//                Expression nrElem = new IntegerLiteral(loc, SFO.EMPTY
+//                        + ca.getDimensions().length);
+                Expression nrElem = new IntegerLiteral(loc, "1");
+                for (Expression dim : ca.getDimensions()) 
+                	nrElem = CHandler.createArithmeticExpression(IASTBinaryExpression.op_multiply, nrElem, dim, loc);
                 Expression size = new BinaryExpression(loc, Operator.ARITHMUL,
                         nrElem, valSize);
                 Expression f = new BinaryExpression(loc, Operator.COMPEQ, idex,

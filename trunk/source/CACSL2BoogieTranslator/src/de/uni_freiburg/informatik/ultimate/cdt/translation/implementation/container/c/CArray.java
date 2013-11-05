@@ -119,7 +119,18 @@ public class CArray extends CType {
     @Override
     public String toString() {
         StringBuilder id = new StringBuilder("ARRAY#");
-        id.append(getDimensions().length);
+        StringBuilder dimString = new StringBuilder("_");
+        for (Expression dim : getDimensions()) {
+        	if (dim instanceof IntegerLiteral) {
+        		dimString.append(((IntegerLiteral) dim).getValue());
+        		dimString.append("_");
+        	} else {
+        		dimString = new StringBuilder("incomplete");
+        		break;
+        	}
+        }
+//        id.append(getDimensions().length);
+        id.append(dimString.toString());
         id.append("~");
         id.append(valueType.toString());
         id.append("#");
