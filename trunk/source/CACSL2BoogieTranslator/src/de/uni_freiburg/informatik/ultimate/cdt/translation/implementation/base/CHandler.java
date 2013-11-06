@@ -658,7 +658,7 @@ public class CHandler implements ICHandler {
 					boogieIdsOfHeapVars.add(bId);//store it independent from the symbol table
 
 				
-				if ((d instanceof IASTFunctionDeclarator) && !isLocalFunctionDeclaration(d)) {
+				if ((d instanceof IASTFunctionDeclarator)) {
 					Result rFunc = functionHandler.handleFunctionDeclaration(main,
 							contract, node, index);
 					assert (rFunc instanceof ResultSkip);
@@ -925,21 +925,6 @@ public class CHandler implements ICHandler {
 	
 	private static boolean staticStorageClass(IASTSimpleDeclaration node) {
 		return node.getDeclSpecifier().getStorageClass() == IASTDeclSpecifier.sc_static;
-	}
-	
-	
-	/**
-	 * Hack by Matthias for finding function pointers.
-	 */
-	private boolean isLocalFunctionDeclaration(IASTDeclarator d) {
-		if (d instanceof IASTFunctionDeclarator) {
-			if (d.getParent() instanceof TranslationUnit) {
-				return false;
-			} else {
-				return true;
-			}
-		}
-		return false;
 	}
 	
 
