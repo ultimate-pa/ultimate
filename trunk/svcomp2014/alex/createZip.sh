@@ -5,5 +5,6 @@ cp ../LICENSE* kojak/
 cp ./ToolchainKojakC.xml kojak/
 cp ../../examples/settings/AlexSVCOMPstandard kojak/
 cp ../../examples/settings/AlexSVCOMPmemsafety kojak/
+cp ./Ultimate.ini kojak/
 cp KojakSvComp.py kojak/
 zip UltimateKojakCommandline.zip -r kojak/*

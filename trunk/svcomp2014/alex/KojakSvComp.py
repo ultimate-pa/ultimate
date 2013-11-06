@@ -29,21 +29,24 @@ if (len(sys.argv) != 4):
 	print('wrong number of arguments')
 	sys.exit(0)
 
-propertyFile = sys.argv[1]
+propertyFileName = sys.argv[1]
 cFile = sys.argv[2]
 errorPathFileName = sys.argv[3]
 
 memSafetyMode = False
 
-if (propertyFile.endswith('PropertyMemSafety.prp')):
+propFile = open(propertyFileName, 'r')
+for line in propFile:
+	if line.find('valid-') != -1:
+		memSafetyMode = True
+
+if memSafetyMode:
 	print('checking for memory safety')
-	memSafetyMode = True
-elif (propertyFile.endswith('PropertyERROR.prp')):
+else: 
 	print('checking for ERROR reachability')
-	memSafetyMode = False
-else:
-	print('unknown property file')
-	sys.exit(0)
+#else:
+#	print('unknown property file')
+#	sys.exit(0)
 
 if (memSafetyMode):
 	settingsArgument = '--settings ' + settingsFileMemSafety
