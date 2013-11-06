@@ -1,0 +1,16 @@
+#Wed Nov 06 02:41:51 CET 2013
+/instance/RCFGBuilder/Command\ for\ external\ solver=z3 SMTLIB2_COMPLIANT\=true -memory\:2056 -smt2 -in
+file_export_version=3.0
+\!/instance/RCFGBuilder=
+/instance/RCFGBuilder/Size\ of\ a\ code\ block=SequenceOfStatements
+@RCFGBuilder=0.0.1
+/instance/RCFGBuilder/Convert\ code\ blocks\ to\ CNF=false
+#Wed Nov 06 02:41:51 CET 2013
+\!/instance/CACSL2BoogieTranslator=
+/instance/CACSL2BoogieTranslator/Check\ if\ freed\ pointer\ was\ valid=false
+file_export_version=3.0
+@CACSL2BoogieTranslator=0.0.1
+/instance/CACSL2BoogieTranslator/Pointer\ base\ address\ is\ valid\ at\ dereference=IGNORE
+/instance/CACSL2BoogieTranslator/Pointer\ to\ allocated\ memory\ at\ dereference=IGNORE
+/instance/CACSL2BoogieTranslator/Checked\ method.\ Library\ mode\ if\ empty.=main
+/instance/CACSL2BoogieTranslator/Translation\ Mode\:=SV_COMP14
