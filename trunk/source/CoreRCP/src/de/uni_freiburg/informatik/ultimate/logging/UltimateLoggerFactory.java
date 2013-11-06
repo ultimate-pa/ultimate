@@ -83,9 +83,19 @@ public class UltimateLoggerFactory {
 								|| ek.equals(CorePreferenceInitializer.PREFID_TOOLS)
 								|| ek.equals(CorePreferenceInitializer.PREFID_CONTROLLER)
 								|| ek.equals(CorePreferenceInitializer.PREFID_CORE)
-								|| ek.equals(CorePreferenceInitializer.PREFID_DETAILS)) {
-							//do nothing
+								|| ek.equals(CorePreferenceInitializer.PREFID_DETAILS)
+								|| ek.equals(CorePreferenceInitializer.LABEL_ROOT_PREF)
+								|| ek.equals(CorePreferenceInitializer.LABEL_TOOLS_PREF)
+								|| ek.equals(CorePreferenceInitializer.LABEL_CORE_PREF)
+								|| ek.equals(CorePreferenceInitializer.LABEL_CONTROLLER_PREF)
+								|| ek.equals(CorePreferenceInitializer.LABEL_PLUGINS_PREF)
+								|| ek.equals(CorePreferenceInitializer.LABEL_PLUGIN_DETAIL_PREF)
+								
+								) 
+						{
+							//its relevant 
 						} else {
+							// it does not concern us, just break 
 							return;
 						}
 						initializeAppenders();
@@ -245,8 +255,9 @@ public class UltimateLoggerFactory {
 	private void refreshPropertiesLoggerHierarchie() {
 		presentLoggers = new LinkedList<String>();
 		Logger rootLogger = Logger.getRootLogger();
-		rootLogger.setLevel(Level.toLevel(mPreferenceStore
-				.getString(CorePreferenceInitializer.PREFID_ROOT)));
+		String level = mPreferenceStore
+				.getString(CorePreferenceInitializer.LABEL_ROOT_PREF);
+		rootLogger.setLevel(Level.toLevel(level));
 
 		// now create children of the rootLogger
 
@@ -255,7 +266,7 @@ public class UltimateLoggerFactory {
 		Logger pluginsLogger = rootRepos.getLogger(LOGGER_NAME_PLUGINS);
 		presentLoggers.add(LOGGER_NAME_PLUGINS);
 		String pluginslevel = mPreferenceStore
-				.getString(CorePreferenceInitializer.PREFID_PLUGINS);
+				.getString(CorePreferenceInitializer.LABEL_PLUGINS_PREF);
 		if (!pluginslevel.isEmpty())
 			pluginsLogger.setLevel(Level.toLevel(pluginslevel));
 
@@ -263,14 +274,14 @@ public class UltimateLoggerFactory {
 		Logger toolslog = rootRepos.getLogger(LOGGER_NAME_TOOLS);
 		presentLoggers.add(LOGGER_NAME_TOOLS);
 		String toolslevel = mPreferenceStore
-				.getString(CorePreferenceInitializer.PREFID_TOOLS);
+				.getString(CorePreferenceInitializer.LABEL_TOOLS_PREF);
 		if (!toolslevel.isEmpty())
 			toolslog.setLevel(Level.toLevel(toolslevel));
 
 		// controller
 		Logger controllogger = rootRepos.getLogger(LOGGER_NAME_CONTROLLER);
 		String controllevel = mPreferenceStore
-				.getString(CorePreferenceInitializer.PREFID_CONTROLLER);
+				.getString(CorePreferenceInitializer.LABEL_CONTROLLER_PREF);
 		if (!controllevel.isEmpty())
 			controllogger.setLevel(Level.toLevel(controllevel));
 		presentLoggers.add(LOGGER_NAME_CONTROLLER);
@@ -278,7 +289,7 @@ public class UltimateLoggerFactory {
 		// core
 		Logger corelogger = rootRepos.getLogger(Activator.s_PLUGIN_ID);
 		String corelevel = mPreferenceStore
-				.getString(CorePreferenceInitializer.PREFID_CORE);
+				.getString(CorePreferenceInitializer.LABEL_CORE_PREF);
 		if (!corelevel.isEmpty())
 			corelogger.setLevel(Level.toLevel(corelevel));
 		presentLoggers.add(Activator.s_PLUGIN_ID);

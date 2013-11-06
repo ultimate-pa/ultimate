@@ -1286,9 +1286,5 @@ public class Boogie2SMT {
 		m_Script.declareFun(name, new Sort[0], sort);
 		return m_Script.term(name);
 	}
-	
 
-	
-	
-	
 }
