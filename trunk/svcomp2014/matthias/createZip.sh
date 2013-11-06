@@ -6,4 +6,6 @@ cp ../../examples/toolchains/TraceAbstractionC.xml automizer/
 cp ../../examples/settings/AutomizerSvcomp.settings automizer/
 cp AutomizerSvcomp.py automizer/
 cp Ultimate.ini automizer/
+cp AutomizerSvcompMemsafety.settings automizer/
+cp AutomizerSvcompSafety.settings automizer/
 zip UltimateCommandline.zip -r automizer/*

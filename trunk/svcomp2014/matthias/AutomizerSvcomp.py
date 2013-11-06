@@ -2,10 +2,12 @@ import sys
 import subprocess
 
 #locations of files
+#ultimateBin = '/storage/stalin/trunk/source/BA_SiteRepository/target/products/CLI-E3/linux/gtk/x86_64/Ultimate'
+#ultimateBin = '../../source/BA_SiteRepository/target/products/CLI-E3/linux/gtk/x86_64/Ultimate'
 ultimateBin = './Ultimate'
-toolchain = 'TraceAbstractionC.xml'
-settingsFileErrorReachability = 'AutomizerSvcomp.settings'
-settingsFileMemSafety = 'AutomizerSvcomp.settings'
+toolchain = './TraceAbstractionC.xml'
+settingsFileErrorReachability = './AutomizerSvcompSafety.settings'
+settingsFileMemSafety = './AutomizerSvcompMemsafety.settings'
 #special strings in ultimate output
 safetyString = 'Ultimate proved your program to be correct'
 unsafetyString = 'Ultimate proved your program to be incorrect'
@@ -13,11 +15,14 @@ unknownSafetyString = 'Ultimate could not prove your program'
 memDerefUltimateString = 'pointer dereference may fail'
 memFreeUltimateString = 'free of unallocated memory possible'
 memMemtrackUltimateString = 'not all allocated memory was freed' 
+errorPathBeginString = '=== Start of program execution'
+errorPathEndString = '=== End of program execution'
 memDerefResult = 'valid-deref'
 memFreeResult = 'valid-free'
 memMemtrackResult = 'valid-memtrack'
 
-alwaysWriteUltimateOutputToFile = False
+writeUltimateOutputToFile = True
+outputFileName = './ultimateOut.txt'
 
 #parse command line arguments
 if (len(sys.argv) != 4):
@@ -26,7 +31,7 @@ if (len(sys.argv) != 4):
 
 propertyFile = sys.argv[1]
 cFile = sys.argv[2]
-outputFileName = sys.argv[3]
+errorPathFileName = sys.argv[3]
 
 memSafetyMode = False
 
@@ -63,11 +68,15 @@ except:
 
 safetyResult = 'UNKNOWN'
 memResult = 'NONE'
+readingErrorPath = False
 
 #poll the output
 ultimateOutput = ''
+errorPath = ''
 while True:
 	line = ultimateProcess.stdout.readline().decode('utf-8')
+	if readingErrorPath:
+		errorPath += line
 	ultimateOutput += line
 	sys.stdout.write('.')
 	#sys.stdout.write('Ultimate: ' + line)
@@ -84,6 +93,10 @@ while True:
 		memResult = memFreeResult
 	if (line.find(memMemtrackUltimateString) != -1):
 		memResult = memMemtrackResult
+	if (line.find(errorPathBeginString) != -1):
+		readingErrorPath = True
+	if (line.find(errorPathEndString) != -1):
+		readingErrorPath = False
 	if (line == ''):
 		print('wrong executable or arguments?')
 		break
@@ -92,11 +105,16 @@ while True:
 		break
 
 #summarize results
-if safetyResult == 'FALSE' or alwaysWriteUltimateOutputToFile:
+if writeUltimateOutputToFile:
 	print('writing output to file {}'.format(outputFileName))
 	outputFile = open(outputFileName, 'wb')
 	outputFile.write(ultimateOutput.encode('utf-8'))
-	
+
+if safetyResult == 'FALSE':
+	print('writing output to file {}'.format(errorPathFileName))
+	errOutputFile = open(errorPathFileName, 'wb')
+	errOutputFile.write(errorPath.encode('utf-8'))
+
 if (memSafetyMode and safetyResult == 'FALSE'):
 	result = 'FALSE({})'.format(memResult)
 else:

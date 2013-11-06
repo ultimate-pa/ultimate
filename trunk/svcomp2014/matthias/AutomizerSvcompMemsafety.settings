@@ -11,3 +11,12 @@ file_export_version=3.0
 /instance/CACSL2BoogieTranslator/Check\ for\ the\ main\ procedure\ if\ all\ allocated\ memory\ was\ freed=true
 /instance/CACSL2BoogieTranslator/Checked\ method.\ Library\ mode\ if\ empty.=main
 /instance/CACSL2BoogieTranslator/Translation\ Mode\:=SV_COMP14
+#Wed Nov 06 03:21:57 CET 2013
+file_export_version=3.0
+/instance/UltimateCore/Log\ Level\ for\ Controller\ Plugin=info
+/instance/UltimateCore/Log\ Level\ for\ Core\ Plugin=info
+\!/instance/UltimateCore=
+/instance/UltimateCore/Log\ Level\ for\ External\ Tools=info
+@UltimateCore=0.0.1
+/instance/UltimateCore/Root\ Log\ Level=info
+/instance/UltimateCore/Log\ Level\ for\ Plugins=info
