@@ -39,8 +39,8 @@ Declaration ::=
 	    * A type can have type parameters (typeParams), e.g., you can
 	    * define array types as follows.
 	    * <pre>type Array Index Elem = [Index]Elem;</pre>
-	    * Then &lquot;Array&rquot; itself is not a type, but 
-	    * &lquot;Array int real&rquot; is a type and its definition is
+	    * Then &ldquo;Array&rdquo; itself is not a type, but 
+	    * &ldquo;Array int real&rdquo; is a type and its definition is
 	    * <code>[int]real</code>.
 	    */
 	    TypeDeclaration}
@@ -438,10 +438,10 @@ Statement ::=
 		 * The arguments.  This must contain the same number of expressions
 		 * as there are input parameters to the procedure.
 		 * If {@link #isForall()} is true, the argument can be a wildcard
-		 * and the procedure is &lquot;called&rquot; for all possible values.
+		 * and the procedure is &ldquo;called&rdquo; for all possible values.
 		 * This is used for lemma procedures which should not have any
 		 * side effects.
-		 */  
+		 */
 		arguments : Expression[]
 	| { /**
 	     * An if statements.  The condition is evaluated and according to
