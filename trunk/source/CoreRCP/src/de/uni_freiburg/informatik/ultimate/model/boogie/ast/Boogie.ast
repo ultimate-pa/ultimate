@@ -7,16 +7,70 @@ import de.uni_freiburg.informatik.ultimate.model.ILocation;
 
 Project ::= units: Unit[];
  
+/**
+ * A Boogie-Unit is representing a Boogie-file. It just consists of
+ * a bunch of {@link Declaration Declarations}.  The order of the 
+ * declarations is not relevant.  Every declaration is one of
+ * {@link TypeDeclaration}, {@link ConstDeclaration}, 
+ * {@link Axiom}, {@link FunctionDeclaration}, {@link VariableDeclaration},
+ * or {@link Procedure}.
+ */
 Unit ::= declarations: &Declaration[];
 
-Declaration ::= 
+/**
+ * Every declaration is one of
+ * {@link TypeDeclaration}, {@link ConstDeclaration}, 
+ * {@link Axiom}, {@link FunctionDeclaration}, {@link VariableDeclaration},
+ * or {@link Procedure}.
+ * A declaration can have attributes, which are all implementation specific.
+ */
+Declaration ::=
+    /**
+     * The implementation specific attributes of this declaration.
+     * Usually this is the empty array.
+     */ 
 	attributes: Attribute[]
-	( {TypeDeclaration} 
+	( {/**
+	    * A type declaration declares/defines a new type.  There are two
+	    * kinds of type declarations, those declaring unspecified types
+	    * (synonym is null) and those giving an existing type a new name
+	    * (synonym is the existing type).<br/>
+	    *
+	    * A type can have type parameters (typeParams), e.g., you can
+	    * define array types as follows.
+	    * <pre>type Array Index Elem = [Index]Elem;</pre>
+	    * Then &lquot;Array&rquot; itself is not a type, but 
+	    * &lquot;Array int real&rquot; is a type and its definition is
+	    * <code>[int]real</code>.
+	    */
+	    TypeDeclaration}
+	    /**
+	     * True, iff the type was declared as finite.  A finite type
+	     * is a type that is not guaranteed to be infinite.  This should
+	     * only be used for unspecified types, i.e., getSynonym() is null. 
+	     */ 
 		isFinite   : boolean
+	    /**
+	     * The name of the type that is declared or defined. 
+	     */ 
 		identifier : String
+		/**
+		 * An array containing the names of the type parameters.  If the
+		 * type does not have parameters, this is an empty array.  For
+		 * unspecified types, the contents of the array has no semantics.
+		 * For defined types, the synonym may reference these type
+		 * parameters using a NamedType with zero arguments.  
+		 */
 		typeParams : String[]
+	    /**
+	     * The type definition.  This is null for unspecified types. 
+	     */ 
 		synonym    : ?ASTType
-	| {ConstDeclaration}
+	| {/* A const declaration defines globally visible constants.  The
+	    * constants are uninterpreted, but you can use axioms to specify
+	    * a value.
+		*/
+	   ConstDeclaration}
 		/**
 		 * True iff the constants are unique.  A unique constant
 		 * is disjoint from all other unique constants.
@@ -38,22 +92,82 @@ Declaration ::=
 		 * of those constants, that list this object in the parentInfo.
 		 */
 		isComplete  : boolean
-	| {Axiom}
+	| {/**
+	    * An axiom is a boolean expression that is assumed to be true and
+	    * can be used by the verifier to proof contracts.
+	    */
+	    Axiom}
+		/* A boolean formula, that is assumed to be true.
+		 */
 		formula     : Expression
-	| {FunctionDeclaration}
+	| {/**
+	    * A function declaration declares (<code>getBody() == null</code>) 
+	    * or defines a mathematical function.   A function cannot have
+	    * side-effects.  If it is only declared, then it is an uninterpreted
+	    * function and its meaning can be given by axioms.  Otherwise
+	    * the function definition basically defines an abbreviation and
+	    * <code>getBody()</code> contains the expression for which the
+	    * function stands for.
+	    */
+	    FunctionDeclaration}
+	    /**
+	     * The name of the function.
+	     */
 		identifier  : String
+	    /**
+	     * The type parameters of the function.  This is used for 
+	     * polymorphic functions, that take input of an arbitrary type.
+		 * For non-polymorphic functions the array is empty.
+	     */
 		typeParams : String[]
+		/**
+		 * The input parameters of the function.
+		 */
 		inParams    : VarList[]
+		/**
+		 * The output parameter of the function.  Note that the VarList
+		 * must only contain a single identifier.
+		 */
 		outParam    : VarList
+		/**
+		 * The definition of the function.  This is <code>null</code> for 
+		 * uninterpreted function.  Otherwise it is an expression with the
+		 * same type as the output paramter.  It may contain identifier 
+		 * expressions referencing the input parameters.
+		 */
 		body        : ?Expression
-	| {VariableDeclaration}
+	| {/**
+		* A variable declaration declares global variables.
+		*/
+		VariableDeclaration}
+		/* The declared variables
+		 */
 		variables   : VarList[]
 	| {/**
 		* Represents a procedure or an implementation.
+		*
+		* An implementation does not have specifications, i.e. 
+		* getSpecification() returns null.  A procedure must
+		* have a specification, but does not need an implementation,
+		* i.e., body may be null.  Procedures can also contain both
+		* specification and implementation. 
 		*/ Procedure}
+		/**
+		 * The name of the procedure.
+		 */
 		identifier  : String
+		/**
+		 * The type parameters.  This is used for polymorphic procedures.
+		 * For non-polymorphic procedures the array is empty.
+		 */
 		typeParams : String[]
+		/**
+		 * The input parameters.
+		 */
 		inParams    : VarList[]
+		/**
+		 * The output parameters.
+		 */
 		outParams   : VarList[]
 		/**
 		 * The specification. It is null for an implementation and
@@ -67,14 +181,29 @@ Declaration ::=
 		body        : Body
 	);
 
+
 /**
- * Represents an ast type.
- * This is different from BoogieType, as it is not unified and still contains the
- * names of the type parameters.
+ * Represents an AST type.
+ * This is different from BoogieType (in the type checker package), as 
+ * it is not unified and still 
+ * contains the names of the type parameters.  You can think of this as
+ * the syntactic type.  For example, for defined types it just contains
+ * the name, not the definition.
  */
 ASTType ::=
+        /** The semantic type that is represented by this type.  This
+         * is computed by the type checker.
+         */
 		boogieType : ?&IType
-	( {PrimitiveType}
+	( {/**
+	    * This class is used to represent primitive types.  This must only
+	    * be used for the builtin types <code>bool, int, real, 
+	    * and bv[0-9]*</code> (the last stands for the bit-vector types).
+	    *
+	    * All other non-array and non-structure types are represented as
+	    * {@link NamedType named type}.
+	    */
+	   PrimitiveType}
 		name : String
 	| {NamedType}
 		name : String
@@ -90,6 +219,10 @@ ASTType ::=
         fields         : VarList[]
 	);
 
+/**
+ * Attributes are implementation-specific annotations that may appear
+ * in all declarations and in quantifiers (for triggers).
+ */
 Attribute ::=
 	  {Trigger}
 		triggers: Expression[]
@@ -100,10 +233,11 @@ Attribute ::=
 	
 /**
  * This node represents an expression.
- * This base class is almost empty, the sub classes contain the possible types.
+ * This base class is almost empty, the sub classes contain the possible
+ * expressions. 
  */
 Expression ::=
-	    /** The type of this expression.  This is set by the type-checker */
+	    /** The type of this expression.  This is set by the type-checker. */
 		type   : ?&IType
 	( { BinaryExpression }
 		operator : Operator { LOGICIFF, LOGICIMPLIES, LOGICAND, LOGICOR,
@@ -159,10 +293,23 @@ Expression ::=
 		StructConstructor }
 		fieldIdentifiers : String[]
 		fieldValues      : Expression[] 
-	| { IdentifierExpression }
+	| { /** Represents a read operation of some identifier.  The identifier
+	     * can be anything declared by a {@see VarList} that is visible in
+	     * the current scope, i.e., global constants, variables, input
+	     * or output parameters of procedures, local variables,
+	     * and input parameters of
+	     * functions (output parameters of functions are not readable).
+	     */
+	    IdentifierExpression }
 		identifier : String
-	| { FunctionApplication }
+	| { /** Represents a function application of a (mathematical) function
+	     * declared by a {@see FunctionDeclaration}.	     
+	     */
+	    FunctionApplication }
 		identifier : String
+		/** The function arguments.  The number and types must match the
+		 * input parameters declared for these functions.
+		 */
 		arguments  : Expression[]
 	| { IfThenElseExpression }
 		condition  : Expression
@@ -191,8 +338,26 @@ Expression ::=
  * implementations) and in variable declarations.
  */
 VarList ::=
+    /**
+     * The names of the declared identifiers.  This can be 
+     * the empty array for unnamed function parameters.  It should 
+     * never be null.
+     */
 	identifiers : String[]
+	/**
+	 * The type of the declared identifiers.
+	 */
 	type        : ASTType
+	/**
+	 * A where clause can restrict the type by a boolean expression.
+	 * The boolean expression usually mentions one of the identifiers
+	 * of the VarList.  See the Boogie documentation for details.
+	 * A where clause may only appear at restricted places and its 
+	 * semantics is sometimes a bit tricky.
+	 * This is <code>null</code> if there is no where clause present.
+	 * Note that in many places no where clause is allowed and this
+	 * must be <code>null</code>.
+	 */
 	whereClause : ?Expression
 	;
 	
@@ -214,47 +379,177 @@ Body ::=
 	;
 
 Statement ::=
-	{ Label }
+	{ /**
+	   * Represents a label.  We see labels as statements of their own,
+	   * that do nothing and let the program continue with the
+	   * statement that follows it.
+	   */
+	  Label }
 		name    : String
-	| { AssertStatement }
+	| { /**
+	     * Assert that a boolean formula holds.  Program will terminate
+	     * with an error if it does not.
+	     */
+	    AssertStatement }
 		formula : Expression
-	| { AssumeStatement }
+	| { /**
+	     * Assume that a boolean formula holds.  Program will terminate
+	     * successfully if it does not.
+	     */
+	    AssumeStatement }
 		formula : Expression
-	| { HavocStatement }
+	| { /**
+	     * Destroy the contents of variables by over-writing them
+	     * with non-deterministically chosen values.
+	     */
+	    HavocStatement }
 		identifiers : VariableLHS[]
-	| { AssignmentStatement }
+	| { /**
+	     * An assignment operator.  Multiple variables may be assigned
+	     * simultaneously, i.e., the right hand side are all evaluated
+	     * in the pre-state (and they do not have side-effects) and the
+	     * assignments are then all applied atomically.
+	     */
+	    AssignmentStatement }
 		lhs     : LeftHandSide[]
 		rhs     : Expression[]
-	| { CallStatement }
+	| { /**
+	     * A procedure call.  This is always combined with an assignment.
+	     * The left hand side must be variables, arrays are not allowed.
+	     * The arguments are evaluated before the procedure call and then
+	     * the side-effects of the procedure call occur.
+	     */
+	    CallStatement }
+	    /**
+	     * True if this is a forall procedure call.
+	     * In Boogie there are special forall procedure calls. See the
+	     * Boogie documentation for more details.  This is usually false.
+	     */
 		isForall  : boolean
+		/**
+		 * The variables where the return values are written to.
+		 */
 		lhs       : VariableLHS[]
+		/**
+		 * The name of the procedure.
+		 */
 		methodName: String
+		/**
+		 * The arguments.  This must contain the same number of expressions
+		 * as there are input parameters to the procedure.
+		 * If {@link #isForall()} is true, the argument can be a wildcard
+		 * and the procedure is &lquot;called&rquot; for all possible values.
+		 * This is used for lemma procedures which should not have any
+		 * side effects.
+		 */  
 		arguments : Expression[]
-	| { IfStatement }
+	| { /**
+	     * An if statements.  The condition is evaluated and according to
+	     * the result either the then part or else part is executed.  Note
+	     * that the condition cannot have side-effects.
+	     */
+	    IfStatement }
+	    /**
+	     * The condition. It can be
+		 * a {@link WildcardExpression} to indicate non-deterministic
+		 * control flow. 
+		 */
 		condition : Expression
 		thenPart  : Statement[]
 		elsePart  : Statement[]
-	| { WhileStatement }
+	| { /**
+	     * A while statements.  The condition is evaluated and as long as
+	     * it is true, the body is executed.
+	     * Note that the condition cannot have side-effects.
+	     */
+	    WhileStatement }
+		/**
+		 * The loop condition.  This is a boolean expression.  It can be
+		 * a {@link WildcardExpression} to indicate that the loop is taken
+		 * an arbitrary number of times. 
+		 */
 		condition  : Expression
+		/**
+		 * The invariants that hold at the beginning of every iteration. 
+		 * I.e., it holds before the loop condition is evaluated (and also
+		 * afterwards since the condition has no side-effects).
+		 */
 		invariants : LoopInvariantSpecification[]
+		/**
+		 * The loop body.
+		 */
 		body       : Statement[]         
-	| { BreakStatement }
-		/** The label.  If null breaks the immediate surrounding while loop */
+	| { /**
+	     * The break statement is used to jump out of a while loop.
+		 */
+		BreakStatement }
+		/** The label of the while loop.  
+		 * If null breaks the immediate surrounding while loop. Otherwise
+		 * it must be a label that immediately precedes a surrounding 
+		 * while-loop (there may only be other labels between the label and
+		 * the while-loop).  Note that this does not jump to the label but
+		 * to the statement after the while loop.
+		 */
 		label : ?String
-	| { ReturnStatement }
-	| { GotoStatement }
+	| { /**
+	     * The return statement terminates the current procedure.
+		 */
+		ReturnStatement }
+	| { /**
+	     * A goto statement.  This can be a non-deterministic goto with
+	     * several labels.
+	     */
+	    GotoStatement }
+		/**
+		 * A list of labels.  Execution continues non-deterministically at
+		 * one of the labels from the list.
+		 */
 		labels : String[]
 	;
 	
+/**
+ * The left hand side represents an object that can appear on the
+ * left-hand side of an assignment.  In Boogie this can be variables
+ * ({@link VariableLHS} or array elements {@link ArrayLHS}.  Our 
+ * extension also allows struct fields {@link StructLHS}.
+ */
 LeftHandSide ::=
+        /**
+         * The type of the object, i.e., the type that can be stored
+         * in the object.  This is computed by the type checker.  You
+         * can set it to null, if you call the type checker afterwards.
+         */
 	    type : ?&IType
-	( { VariableLHS }
+	( { /** A variable left-hand-side represents a variable.
+		 */
+		VariableLHS }
+	    /**
+	     * The name of the variable. This can be a global variable,
+	     * a local variable or an output parameter of a procedure.
+	     */
 		identifier : String
-	| { ArrayLHS }
+	| { /**
+	     * An array left-hand-side represents an element of an array.
+	     */
+	    ArrayLHS }
+	    /**
+	     * A left-hand-side for the array whose element we represent.
+	     */
 		array   : LeftHandSide
+		/**
+		 * The indices (can be more than one for multi-dimensional arrays).
+		 * The number of indices must match the type of the array.
+		 */
 		indices : Expression[]
-	| { StructLHS }
+	| { /**
+	     * A struct left-hand-side represents a field of an array.
+	     */
+	    StructLHS }
+	   /** The struct whose field we represent.
+	    */ 
 	   struct  : LeftHandSide
+	   /** The name of the field.
+	    */
 	   field   : String
 	);
 ParentEdge ::=
