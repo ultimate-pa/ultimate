@@ -63,7 +63,7 @@ public class SmtManager {
 	enum Status { IDLE, TRACECHECK, CODEBLOCKCHECK1, 
 		CODEBLOCKCHECK2, EDGECHECK };
 	
-	Status m_Status = Status.IDLE; 
+	private Status m_Status = Status.IDLE; 
 	
 	private final Boogie2SMT m_Boogie2Smt;
 	private final Smt2Boogie m_Smt2Boogie;
@@ -133,7 +133,7 @@ public class SmtManager {
 	}
 	
 	public boolean isIdle() {
-		return m_Status == Status.IDLE;
+		return getStatus() == Status.IDLE;
 	}
 	
 	
@@ -378,24 +378,24 @@ public class SmtManager {
 	
 	
 	public void startTraceCheck() {
-		if (m_Status != Status.IDLE) {
+		if (getStatus() != Status.IDLE) {
 			throw new AssertionError("SmtManager is busy");
 		} else {
 			assert m_TraceCheckStartTime == Long.MIN_VALUE;
 			m_TraceCheckStartTime = System.nanoTime();
-			m_Status = Status.TRACECHECK;
+			setStatus(Status.TRACECHECK);
 			m_IndexedConstants = new ScopedHashMap<String, Term>();
 			m_Script.push(1);
 		}
 	}
 	
 	public void endTraceCheck() {
-		if (m_Status != Status.TRACECHECK) {
+		if (getStatus() != Status.TRACECHECK) {
 			throw new AssertionError("SmtManager is not performing a traceCheck");
 		} else {
 			m_TraceCheckTime += (System.nanoTime() - m_TraceCheckStartTime);
 			m_TraceCheckStartTime = Long.MIN_VALUE;
-			m_Status = Status.IDLE;
+			setStatus(Status.IDLE);
 			m_IndexedConstants = null;
 			m_Script.pop(1);
 		}
@@ -621,7 +621,7 @@ public class SmtManager {
 	
 	
 	public LBool isCovered(Term formula1, Term formula2) {
-		assert (m_Status == Status.IDLE);
+		assert (getStatus() == Status.IDLE);
 		long startTime = System.nanoTime();
 		 
 		LBool result = null;
@@ -2869,6 +2869,14 @@ public class SmtManager {
 		return buchi;
 	}
 	
+	Status getStatus() {
+		return m_Status;
+	}
+
+	void setStatus(Status status) {
+		m_Status = status;
+	}
+
 	public class TermVarsProc {
 		private final Term m_Term;
 		private final Set<BoogieVar> m_Vars;

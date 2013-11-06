@@ -49,10 +49,10 @@ public class EdgeChecker {
 	}
 	
 	public LBool assertPrecondition(IPredicate p) {
-		if (m_SmtManager.m_Status == SmtManager.Status.IDLE) {
-			m_SmtManager.m_Status = Status.EDGECHECK;
+		if (m_SmtManager.getStatus() == SmtManager.Status.IDLE) {
+			m_SmtManager.setStatus(Status.EDGECHECK);
 		}
-		assert (m_SmtManager.m_Status == Status.EDGECHECK) : "SmtManager is busy";
+		assert (m_SmtManager.getStatus() == Status.EDGECHECK) : "SmtManager is busy";
 		assert m_PrePred == null : "PrePred already asserted";
 		assert m_CodeBlock != null : "Assert CodeBlock first!";
 		m_PrePred = p;
@@ -93,7 +93,7 @@ public class EdgeChecker {
 	}
 	
 	public void unAssertPrecondition() {
-		assert m_SmtManager.m_Status == Status.EDGECHECK : "No edgecheck in progress";
+		assert m_SmtManager.getStatus() == Status.EDGECHECK : "No edgecheck in progress";
 		assert m_PrePred != null : "No PrePred asserted";
 		m_PrePred = null;
 		m_Script.pop(1);
@@ -101,16 +101,16 @@ public class EdgeChecker {
 			m_HierConstants.endScope();
 		}
 		if (m_CodeBlock == null) {
-			m_SmtManager.m_Status = Status.IDLE;
+			m_SmtManager.setStatus(Status.IDLE);
 		}
 	}
 	
 	
 	public LBool assertCodeBlock(CodeBlock cb) {
-		if (m_SmtManager.m_Status == Status.IDLE) {
-			m_SmtManager.m_Status = Status.EDGECHECK;
+		if (m_SmtManager.getStatus() == Status.IDLE) {
+			m_SmtManager.setStatus(Status.EDGECHECK);
 		}
-		assert (m_SmtManager.m_Status == Status.EDGECHECK) : "SmtManager is busy";
+		assert (m_SmtManager.getStatus() == Status.EDGECHECK) : "SmtManager is busy";
 		assert m_CodeBlock == null : "CodeBlock already asserted";
 		m_CodeBlock = cb;
 		long startTime = System.nanoTime();
@@ -181,14 +181,14 @@ public class EdgeChecker {
 		m_HierConstants = null;
 		m_Script.pop(1);
 		if (m_PrePred == null) {
-			m_SmtManager.m_Status = Status.IDLE;
+			m_SmtManager.setStatus(Status.IDLE);
 		}
 
 	}
 	
 	
 	public LBool assertHierPred(IPredicate p) {
-		assert m_SmtManager.m_Status == Status.EDGECHECK;
+		assert m_SmtManager.getStatus() == Status.EDGECHECK;
 		assert m_CodeBlock != null : "assert Return first";
 		assert m_CodeBlock instanceof Return : "assert Return first";
 		assert m_HierPred == null : "HierPred already asserted";
@@ -228,7 +228,7 @@ public class EdgeChecker {
 	}
 	
 	public void unAssertHierPred() {
-		assert m_SmtManager.m_Status == Status.EDGECHECK : "No edgecheck in progress";
+		assert m_SmtManager.getStatus() == Status.EDGECHECK : "No edgecheck in progress";
 		assert m_HierPred != null : "No HierPred asserted";
 		m_HierPred = null;
 		m_Script.pop(1);
@@ -1011,11 +1011,18 @@ public class EdgeChecker {
 		} else {
 			return false;
 		}
-		
 	}
 
 	
-
+	public boolean isAssertionStackEmpty() {
+		if (m_CodeBlock == null) {
+			assert m_PrePred == null;
+			assert m_HierPred == null;
+			return true;
+		} else {
+			return false;
+		}
+	}
 	
 	
 }
