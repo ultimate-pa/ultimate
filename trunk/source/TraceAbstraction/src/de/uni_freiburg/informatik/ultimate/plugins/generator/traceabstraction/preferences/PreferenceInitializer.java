@@ -104,13 +104,10 @@ public class PreferenceInitializer extends UltimatePreferenceInitializer {
 	public static final String LABEL_Order = "Order in Petri net unfolding";
 	public static final String LABEL_cutOff = "cut-off requires same transition";
 	public static final String LABEL_unfolding2Net = "use unfolding as abstraction";
-	public static final String LABEL_simplifyCodeBlocks = "simplify CodeBlocks";
 
 	public static final String VALUE_LETTER_STATEMENT = "single program statement";
 	public static final String VALUE_LETTER_SEQUENCE = "sequence of program statements";
 	public static final String VALUE_LETTER_BLOCK = "loop free block";
-	public static final Solver VALUE_SOLVER_SMTINTERPOL = Solver.SMTInterpol;
-	public static final Solver VALUE_SOLVER_Z3 = Solver.Z3;
 	public static final String VALUE_ABSTRACTION = "Abstraction";
 	public static final String VALUE_RCFG = "RecursiveControlFlowGraph";
 	public static final String VALUE_INTERPOLANT_AUTOMATON = "InterpolantAutomaton";
@@ -141,7 +138,6 @@ public class PreferenceInitializer extends UltimatePreferenceInitializer {
 	 */
 	public static final boolean DEF_INTERPROCEDUTAL = true;
 	public static final String DEF_LETTER = VALUE_LETTER_BLOCK;
-	public static final Solver DEF_SOLVER = Solver.SMTInterpol;
 	public static final int DEF_ITERATIONS = 10000;
 	public static final int DEF_TIMEOUT = 1000;
 	public static final String DEF_ARTIFACT = VALUE_RCFG;
@@ -163,10 +159,6 @@ public class PreferenceInitializer extends UltimatePreferenceInitializer {
 	public static final String DEF_Order = VALUE_EVR;
 	public static final boolean DEF_simplifyCodeBlocks = false;
 	public static final boolean DEF_PreserveGotoEdges = false;
-
-	public enum Solver {
-		Z3, SMTInterpol
-	}
 
 	public enum INTERPOLATION {
 		Craig_NestedInterpolation, Craig_TreeInterpolation, ForwardPredicates, BackwardPredicates, FPandSP
