@@ -64,6 +64,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Ho
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.InterpolantAutomataBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryRefinement;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.InterpolantAutomataTransitionAppender.EagerInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.InterpolantAutomataTransitionAppender.PostDeterminizer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.EdgeChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IPredicate;
@@ -186,12 +187,15 @@ public class BuchiCegarLoop {
 		
 
 		private final boolean m_ReduceAbstractionSize = true;
-		private final boolean m_Eager = true;
 		private final boolean m_Difference = true;
 		private final boolean m_UseDoubleDeckers = !true;
 		
 		private static final boolean m_ExternalSolver = false;
-		private static final boolean m_SimplifyCodeBlocks = true;
+		private static final boolean m_SimplifyStemAndLoop = true;
+		
+		private enum InterpolantAutomaton { LassoAutomaton, DeterministicEager, NondeterministicEager };
+		
+		private InterpolantAutomaton m_InterpolantAutomaton = InterpolantAutomaton.LassoAutomaton;
 
 		public BuchiCegarLoop(RootNode rootNode,
 				SmtManager smtManager,
@@ -480,14 +484,14 @@ public class BuchiCegarLoop {
 			TransFormula stemTF = SequentialComposition.getInterproceduralTransFormula(
 					m_RootNode.getRootAnnot().getBoogie2SMT(),
 					m_RootNode.getRootAnnot().getModGlobVarManager(),
-					m_SimplifyCodeBlocks, true, false, stemCBs);
+					m_SimplifyStemAndLoop, true, false, stemCBs);
 			int stemVars = stemTF.getFormula().getFreeVars().length;
 
 			@SuppressWarnings("deprecation")
 			TransFormula loopTF = SequentialComposition.getInterproceduralTransFormula(
 					m_RootNode.getRootAnnot().getBoogie2SMT(),
 					m_RootNode.getRootAnnot().getModGlobVarManager(),
-					m_SimplifyCodeBlocks, true,false, loopCBs);
+					m_SimplifyStemAndLoop, true,false, loopCBs);
 			int loopVars = loopTF.getFormula().getFreeVars().length;
 			s_Logger.info("Statistics: stemVars: " + stemVars + "loopVars: " + loopVars);
 			{
@@ -498,7 +502,7 @@ public class BuchiCegarLoop {
 				TransFormula composed = SequentialComposition.getInterproceduralTransFormula(
 						m_RootNode.getRootAnnot().getBoogie2SMT(),
 						m_RootNode.getRootAnnot().getModGlobVarManager(),
-						false, m_SimplifyCodeBlocks, true, composedCB.toArray(new CodeBlock[0])); 
+						false, m_SimplifyStemAndLoop, true, composedCB.toArray(new CodeBlock[0])); 
 						//TransFormula.sequentialComposition(10000, rootAnnot.getBoogie2SMT(), stemTF, loopTF);
 				if (composed.isInfeasible() == Infeasibility.INFEASIBLE) {
 					throw new AssertionError("suddently infeasible");
@@ -721,16 +725,23 @@ public class BuchiCegarLoop {
 			
 
 			INestedWordAutomatonSimple<CodeBlock, IPredicate> interpolAutomatonUsedInRefinement;
-			if (m_Eager) {
+			switch (m_InterpolantAutomaton) {
+			case LassoAutomaton:
+				interpolAutomatonUsedInRefinement = m_InterpolAutomaton;
+				break;
+			case DeterministicEager:
+				interpolAutomatonUsedInRefinement = 
+					new EagerInterpolantAutomaton(ec, m_InterpolAutomaton);
+				break;
+			case NondeterministicEager:
 				interpolAutomatonUsedInRefinement = new BuchiInterpolantAutomaton(
 						m_SmtManager, ec, m_Bspm.getStemPrecondition(), 
 						stemInterpolants, m_Bspm.getHondaPredicate(), 
 						m_Bspm.getRankEqAndSi(), loopInterpolants, 
 						stem.getSymbol(stem.length()-1), 
-						loop.getSymbol(loop.length()-1), m_Abstraction); 
-						//new EagerInterpolantAutomaton(ec, m_InterpolAutomaton);
-			} else {
-				interpolAutomatonUsedInRefinement = m_InterpolAutomaton;
+						loop.getSymbol(loop.length()-1), m_Abstraction);
+			default:
+				throw new UnsupportedOperationException("unknown automaton");
 			}
 			IStateDeterminizer<CodeBlock, IPredicate> stateDeterminizer = 
 					new PowersetDeterminizer<CodeBlock, IPredicate>(interpolAutomatonUsedInRefinement, m_UseDoubleDeckers);
@@ -740,11 +751,13 @@ public class BuchiCegarLoop {
 						new BuchiDifferenceFKV<CodeBlock, IPredicate>(
 								m_Abstraction, interpolAutomatonUsedInRefinement, 
 								stateDeterminizer, m_StateFactoryForRefinement);
+				finishComputation(interpolAutomatonUsedInRefinement);
 				assert diff.checkResult(defaultStateFactory);
 				newAbstraction = diff.getResult();
 			} else {
 				BuchiComplementFKV<CodeBlock, IPredicate> complNwa = 
 						new BuchiComplementFKV<CodeBlock, IPredicate>(interpolAutomatonUsedInRefinement, stateDeterminizer);
+				finishComputation(interpolAutomatonUsedInRefinement);
 				assert(complNwa.checkResult(defaultStateFactory));
 				INestedWordAutomatonOldApi<CodeBlock, IPredicate>  complement = 
 						complNwa.getResult();
@@ -759,18 +772,28 @@ public class BuchiCegarLoop {
 				assert(interNwa.checkResult(defaultStateFactory));
 				newAbstraction = interNwa.getResult();
 			}
-			if (interpolAutomatonUsedInRefinement instanceof BuchiInterpolantAutomaton) {
-				BuchiInterpolantAutomaton bia = ((BuchiInterpolantAutomaton) interpolAutomatonUsedInRefinement);
-				bia.clearAssertionStack();
-//				bia.computationFinished();
-				INestedWordAutomatonOldApi<CodeBlock, IPredicate> oldApi = (new RemoveUnreachable<CodeBlock, IPredicate>(bia)).getResult();
-				assert (new BuchiAccepts<CodeBlock, IPredicate>(oldApi,m_Counterexample.getNestedLassoWord())).getResult();
-			}
-			assert !(new BuchiAccepts<CodeBlock, IPredicate>(newAbstraction,m_Counterexample.getNestedLassoWord())).getResult();
+			INestedWordAutomatonOldApi<CodeBlock, IPredicate> oldApi = (new RemoveUnreachable<CodeBlock, IPredicate>(interpolAutomatonUsedInRefinement)).getResult();
+			assert (new BuchiAccepts<CodeBlock, IPredicate>(oldApi,m_Counterexample.getNestedLassoWord())).getResult() : "interpolant automaton does not accept lasso.";
+
+			assert !(new BuchiAccepts<CodeBlock, IPredicate>(newAbstraction,m_Counterexample.getNestedLassoWord())).getResult()  : "no progress";
 			m_Abstraction = newAbstraction;
 			if (m_Pref.dumpAutomata()) {
 				String filename = "interpolAutomatonUsedInRefinement"+m_Iteration+"after";
 				writeAutomatonToFile(interpolAutomatonUsedInRefinement, filename);
+			}
+		}
+		
+		private void finishComputation(INestedWordAutomatonSimple<CodeBlock, IPredicate> interpolantAutomaton) {
+			switch (m_InterpolantAutomaton) {
+			case LassoAutomaton:
+				// do nothing
+				break;
+			case DeterministicEager:
+				((EagerInterpolantAutomaton) interpolantAutomaton).clearAssertionStack();
+			case NondeterministicEager:
+				((BuchiInterpolantAutomaton) interpolantAutomaton).computationFinished();
+			default:
+				throw new UnsupportedOperationException("unknown automaton");
 			}
 		}
 		

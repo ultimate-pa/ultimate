@@ -131,6 +131,7 @@ public class BuchiInterpolantAutomaton implements
 			throw new AssertionError("Computation already finished.");
 		} else {
 			m_ComputationFinished = true;
+			clearAssertionStack();
 		}
 		
 	}
@@ -287,7 +288,7 @@ public class BuchiInterpolantAutomaton implements
 	
 	
 	
-	public void clearAssertionStack() {
+	private void clearAssertionStack() {
 		if (m_AssertedState != null) {
 			m_EdgeChecker.unAssertPrecondition();
 			m_AssertedState = null;
