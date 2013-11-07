@@ -60,7 +60,7 @@ public class Difference<LETTER,STATE> implements IOperation<LETTER,STATE>, IOpWi
 	
 	
 	public Difference(INestedWordAutomatonOldApi<LETTER,STATE> fstOperand,
-			INestedWordAutomatonOldApi<LETTER,STATE> sndOperand
+			INestedWordAutomatonSimple<LETTER,STATE> sndOperand
 			) throws AutomataLibraryException {
 		m_FstOperand = fstOperand;
 		m_SndOperand = sndOperand;
@@ -73,7 +73,7 @@ public class Difference<LETTER,STATE> implements IOperation<LETTER,STATE>, IOpWi
 	
 	
 	public Difference(INestedWordAutomatonOldApi<LETTER,STATE> fstOperand,
-			INestedWordAutomatonOldApi<LETTER,STATE> sndOperand,
+			INestedWordAutomatonSimple<LETTER,STATE> sndOperand,
 			IStateDeterminizer<LETTER, STATE> stateDeterminizer,
 			StateFactory<STATE> sf,
 			boolean finalIsTrap) throws AutomataLibraryException {
