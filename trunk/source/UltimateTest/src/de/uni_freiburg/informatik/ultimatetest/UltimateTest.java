@@ -31,6 +31,7 @@ public class UltimateTest {
 	// just add to this method (for now)
 
 	public static UltimateTestDescriptor[] getDescriptors() throws Exception {
+
 		// return new UltimateTestDescriptor[] {
 		// new UltimateTestDescriptor(
 		// "F:\\repos\\ultimate fresher co\\trunk\\examples\\settings\\AutomizerSvcomp.settings",
@@ -152,6 +153,24 @@ public class UltimateTest {
 		return relative.getAbsolutePath();
 	}
 
+	private static String getPathFromHere(String path) {
+		File here = new File(System.getProperty("user.dir"));
+		File relative = new File(here.getAbsolutePath() + File.separator + path);
+		return relative.getAbsolutePath();
+	}
+
+	private static String getPathFromSurefire(String path) {
+		File trunk = new File(System.getProperty("user.dir"));
+		File relative = new File(trunk.getAbsolutePath() + File.separator
+				+ "target" + File.separator + "surefire-reports"
+				+ File.separator + UltimateTest.class.getCanonicalName()
+				+ File.separator + path);
+		
+
+
+		return relative.getAbsolutePath();
+	}
+
 	@Test
 	public void testSingleFile() {
 		Application ultimate = new Application(Ultimate_Mode.EXTERNAL_EXECUTION);
@@ -204,11 +223,13 @@ public class UltimateTest {
 
 		System.out.println("Writing " + sTestSummaries.size() + " summaries");
 		for (TestSummary summary : sTestSummaries) {
-			File logFile = summary.getSummaryLogFile();
-			if (logFile == null) {
-				return;
-			}
+			File logFile = new File(getPathFromSurefire(summary
+					.getSummaryLogFile().getName()));
 
+			if(!logFile.isDirectory()){
+				logFile.getParentFile().mkdirs();
+			}
+			
 			String summaryLog = summary.getSummaryLog();
 			if (summaryLog == null || summaryLog.isEmpty()) {
 				return;
