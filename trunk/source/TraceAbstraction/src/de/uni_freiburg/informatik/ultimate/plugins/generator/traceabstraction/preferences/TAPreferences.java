@@ -214,9 +214,5 @@ public class TAPreferences {
 		return m_Prefs.getString(PreferenceInitializer.LABEL_Order);
 	}
 
-	public boolean SimplifyCodeBlocks() {
-		return m_Prefs
-				.getBoolean(PreferenceInitializer.LABEL_simplifyCodeBlocks);
-	}
 
 }
