@@ -269,10 +269,9 @@ public class SmtManager {
 			ModifiableGlobalVariableManager modGlobVarManager) {
 		Set<BoogieVar> vars = new HashSet<BoogieVar>();
 		Term term = getScript().term("true");
-		for (String id : modGlobVarManager.getGlobals().keySet()) {
-			BoogieVar bv = modGlobVarManager.getGlobals().get(id);
+		for (BoogieVar bv : modGlobVarManager.getGlobalVarsAssignment(proc).getAssignedVars()) {
 			vars.add(bv);
-			BoogieVar bvOld = modGlobVarManager.getOldGlobals().get(id);
+			BoogieVar bvOld = getOldVar(bv);
 			vars.add(bvOld);
 			TermVariable tv = bv.getTermVariable();
 			TermVariable tvOld = bvOld.getTermVariable();
