@@ -45,6 +45,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.Accept
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.IOpWithDelayedDeadEndRemoval.UpDownEntry;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.StateContainer.DownStateProp;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
+import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
 import de.uni_freiburg.informatik.ultimate.util.HashUtils;
 
 public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INestedWordAutomatonOldApi<LETTER,STATE>, INestedWordAutomaton<LETTER,STATE>, IDoubleDeckerAutomaton<LETTER, STATE> {
@@ -90,6 +91,8 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 	private AncestorComputation m_OnlyLiveStates;
 	private AcceptingSummeariesComputation m_AcceptingSummaries;
 	private StronglyConnectedComponents m_StronglyConnectedComponents;
+
+	public final static boolean m_TestRunConstruction = true;
 	
 
 	
@@ -603,28 +606,27 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 	
 	////////////////////////////////////////////////////////////////////////////
 	
+	
+	/**
+	 * Compute the set of reachable doubledeckers. 
+	 * Construct a state container for each reachable state, add both (state 
+	 * and StateContainer) to m_States and set the reachability down state 
+	 * information in the state container.  
+	 *
+	 */
 	private class ReachableStatesComputation {
 		private int m_NumberOfConstructedStates = 0;
 		private final LinkedList<StateContainer<LETTER,STATE>> m_ForwardWorklist = 
 				new LinkedList<StateContainer<LETTER,STATE>>();
 		private final LinkedList<StateContainer<LETTER,STATE>> m_DownPropagationWorklist =
 				new LinkedList<StateContainer<LETTER,STATE>>();
-		
-		
-//		/**
-//		 * Contains states that are in the worklist or processed at the moment.
-//		 * Used to avoid insertion of elements to doubleDecker worklist whose
-//		 * up state will be processed anyway.
-//		 */
-//		private final Set<STATE> m_WorklistAndCurrentState = 
-//				new HashSet<STATE>();
 
 		ReachableStatesComputation() throws OperationCanceledException {
 			addInitialStates(m_Operand.getInitialStates());
 
 			do {
 				while (!m_ForwardWorklist.isEmpty()) {
-					StateContainer<LETTER,STATE> cont = m_ForwardWorklist.remove(0);
+					final StateContainer<LETTER,STATE> cont = m_ForwardWorklist.remove(0);
 					cont.eraseUnpropagatedDownStates();
 					Set<STATE> newDownStatesFormSelfloops = null;
 					
@@ -642,7 +644,6 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 							}
 						}
 					}
-
 					addInternalsAndSuccessors(cont);
 					{
 						Set<STATE> newDownStates = addCallsAndSuccessors(cont);
@@ -653,7 +654,6 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 							newDownStatesFormSelfloops.addAll(newDownStates);
 						}
 					}
-					
 					if (newDownStatesFormSelfloops != null) {
 						assert !newDownStatesFormSelfloops.isEmpty();
 						for (STATE down : newDownStatesFormSelfloops) {
@@ -661,12 +661,10 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 						}
 						m_DownPropagationWorklist.add(cont);
 					}
-
 					if (!UltimateServices.getInstance().continueProcessing()) {
 						throw new OperationCanceledException();
 					}
 				}
-				
 				while(m_ForwardWorklist.isEmpty() && !m_DownPropagationWorklist.isEmpty()) {
 					StateContainer<LETTER,STATE> cont = 
 							m_DownPropagationWorklist.remove(0);
@@ -679,11 +677,12 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 			assert (m_DownPropagationWorklist.isEmpty());
 			assert checkTransitionsReturnedConsistent();
 			
-			
-			//TODO: This is a test for constructRun
-			for (STATE fin : getFinalStates()) {
-				NestedRun<LETTER,STATE> run = (new RunConstructor(m_States.get(fin), null)).constructRun();
-				assert (new Accepts<LETTER, STATE>(NestedWordAutomatonReachableStates.this, run.getWord())).getResult();
+			if (m_TestRunConstruction ) {
+				for (STATE fin : getFinalStates()) {
+					s_Logger.debug(new DebugMessage("Test if can find an accepting run for final state {0}",fin));
+					NestedRun<LETTER,STATE> run = (new RunConstructor(m_States.get(fin), null)).constructRun();
+					assert (new Accepts<LETTER, STATE>(NestedWordAutomatonReachableStates.this, run.getWord())).getResult();
+				}
 			}
 		}
 		
@@ -698,14 +697,9 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 			}
 		}
 		
-		
-		
 		/**
 		 * Construct State Container. Add to CommonEntriesComponent<LETTER,STATE>. Add to
 		 * ForwardWorklist.
-		 * @param state
-		 * @param cec
-		 * @return
 		 */
 		private StateContainer<LETTER, STATE> addState(STATE state, HashMap<STATE,Integer> downStates) {
 			assert !m_States.containsKey(state);
@@ -724,18 +718,6 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 		
 		private boolean candidateForOutgoingReturn(STATE state) {
 			return !m_Operand.lettersReturn(state).isEmpty();
-//			return true;
-		}
-		
-
-		private <E> Set<E> differenceSet(Set<E> minuend, Set<E> subtrahend) {
-			Set<E> result = new HashSet<E>();
-			for (E elem : minuend) {
-				if (!subtrahend.contains(elem)) {
-					result.add(elem);
-				}
-			}
-			return result;
 		}
 		
 		private void addInternalsAndSuccessors(StateContainer<LETTER,STATE> cont) {
@@ -757,9 +739,6 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 		}
 		
 		
-
-
-
 		private Set<STATE> addCallsAndSuccessors(StateContainer<LETTER,STATE> cont) {
 			boolean addedSelfloop = false;
 			STATE state = cont.getState();
@@ -790,9 +769,7 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 			} else {
 				return null;
 			}
-
 		}
-		
 		
 
 		private Set<STATE> addReturnsAndSuccessors(StateContainer<LETTER,STATE> cont, STATE down) {
@@ -831,12 +808,6 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 		}
 
 
-		/**
-		 * @param cont
-		 * @param newDownStatesSelfloop
-		 * @param downCont
-		 * @return
-		 */
 		private Set<STATE> newDownStatesSelfloop(StateContainer<LETTER, STATE> cont,
 				Set<STATE> propagatedDownStates) {
 			Set<STATE> newDownStates = null;
@@ -921,12 +892,29 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 	
 
 ////////////////////////////////////////////////////////////////////////////////
+	/**
+	 * Compute all ancestor double deckers  for a given set of states which we
+	 * call the precious states. (In a dead end computation the precious states
+	 * are the final states, in a non-live computation the precious states are
+	 * all states of accepting SCCs).
+	 * 
+	 * If a state <i>up</i> can reach a precious state via a run without 
+	 * pending returns, we known that all double deckers <i>(up,down)</i> can
+	 * reach a precious state and <i>up</i> gets the property "allDownProp".
+	 * 
+	 * If a state <i>up</i> can reach a precious state only via a run with 
+	 * pending calls we identify the down states such that the double decker
+	 * <i>(up,down)</i> can reach a precious state. The up state gets the
+	 * property "someDownProp", and the double decker gets the property 
+	 * "downStateProp" (this information is stored in the state container of 
+	 * <i>up</i>.
+	 *
+	 */
 	public class AncestorComputation {
 		
 		private final ReachProp m_rpAllDown;
 		private final ReachProp m_rpSomeDown;
 		private final DownStateProp m_DownStateProp;
-		
 		
 		private final Set<STATE> m_Ancestors = new HashSet<STATE>();
 		private final Set<STATE> m_AncestorsInitial = new HashSet<STATE>();
@@ -939,8 +927,6 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 		private ArrayDeque<StateContainer<LETTER,STATE>> m_PropagationWorklist =
 				new ArrayDeque<StateContainer<LETTER,STATE>>();
 
-		
-		
 		public Set<STATE> getStates() {
 			return m_Ancestors;
 		}
@@ -955,14 +941,13 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 			return m_AncestorsAccepting;
 		}
 
-
-		AncestorComputation(HashSet<StateContainer<LETTER,STATE>> startSet, 
-				ReachProp allDown, ReachProp someDown, DownStateProp downStateProp) {
-			m_rpAllDown = allDown;
-			m_rpSomeDown = someDown;
+		AncestorComputation(HashSet<StateContainer<LETTER,STATE>> preciousStates, 
+				ReachProp allDownProp, ReachProp someDownProp, DownStateProp downStateProp) {
+			m_rpAllDown = allDownProp;
+			m_rpSomeDown = someDownProp;
 			m_DownStateProp = downStateProp;
 			
-			for (StateContainer<LETTER,STATE> cont : startSet) {
+			for (StateContainer<LETTER,STATE> cont : preciousStates) {
 				cont.setReachProp(m_rpAllDown);
 				m_Ancestors.add(cont.getState());
 				m_NonReturnBackwardWorklist.add(cont);
@@ -1222,7 +1207,7 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 		
 		/**
 		 * Return true if the DoubleDecker (state,auxiliaryEmptyStackState) can
-		 * reach a state in the TargetSet (finals DeadEndComputation, accepting
+		 * reach a precious state (finals DeadEndComputation, accepting
 		 * SSCs in non-live computation)
 		 */
 		public boolean isInitial(STATE state) {
