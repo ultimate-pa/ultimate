@@ -1,6 +1,16 @@
 #!/bin/bash
 Ultimate_PATH=`pwd`;
 
+assertionString=$1
+
+if [[ "$assertionString" != "-da" && "$assertionString" != "-ea" ]]; then
+	echo "first argument has to be -ea or -da"
+	exit
+fi
+
+shift
+
+
 Timeout=80;
 
 
@@ -34,28 +44,34 @@ if [ ! -e "$UltimateEXE" ]; then
     exit
 fi
 
-#------------------------------------------------------------------------------
-# set enable assertions
-#------------------------------------------------------------------------------
-UltimateINI="trunk/source/BA_SiteRepository/target/products/CLI-E3/linux/gtk/$arch/Ultimate.ini";
-if [ ! -e "$UltimateINI" ]; then
-    echo "unable to find Ultimate.ini $UltimateINI"
-    exit
-fi
+function setAssertions {
+	#------------------------------------------------------------------------------
+	# set enable assertions
+	#------------------------------------------------------------------------------
+	UltimateINI="trunk/source/BA_SiteRepository/target/products/CLI-E3/linux/gtk/$arch/Ultimate.ini";
+	if [ ! -e "$UltimateINI" ]; then
+		echo "unable to find Ultimate.ini $UltimateINI"
+		exit
+	fi
 
-# detect if -da is already set
-DA=`grep "\-da$" "$UltimateINI"`
-if [ "$DA" ]; then
-	echo "assertions disabled - while writing this script this was not expected"
-	exit
-fi
+oldAssertionString=
+	# detect if -da is already set
+	oldDA=`grep "\-da$" "$UltimateINI"`
+	oldEA=`grep "\-ea$" "$UltimateINI"`
+	if [ "$oldDA" ]; then
+		echo "status of assertions before: -da"
+		sed -i "s/-da/$assertionString/g" "$UltimateINI"
+	elif [ "$oldEA" ]; then
+		echo "status of assertions before: -ea"
+		sed -i "s/-ea/$assertionString/g" "$UltimateINI"
+	else 
+		echo "assertions were not set before"
+		echo "$assertionString" >> "$UltimateINI"
+	fi
+	echo "status of assertions now $assertionString"
+}
 
-# add -ea if not already added
-EA=`grep "\-ea" "$UltimateINI"`
-if [ ! "$EA" ]; then
-	echo "-ea" >> "$UltimateINI"
-	echo "adding -ea to $UltimateINI"
-fi
+setAssertions
 
 files=`find "$examplesFolder" -name "*.ats"|sort`
 
