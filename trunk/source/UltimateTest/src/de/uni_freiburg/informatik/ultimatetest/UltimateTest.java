@@ -74,35 +74,34 @@ public class UltimateTest {
 
 		UltimateTestDescriptor[] alex = SVCOMP14TestDescriptor
 				.createDescriptorsFromSVCOMPRootDirectory(
-						getPathFromTrunk("../../svcomp"),
+						getPathFromTrunk("../svcomp"),
 						new HashMap<String, String>() {
 							{
 								put("MemorySafety",
 										getPathFromTrunk("examples/settings/AlexSVCOMPmemsafety"));
-//								put("Simple",
-//										getPathFromTrunk("examples/settings/AlexSVCOMPstandard"));
-//								put("ControlFlowInteger",
-//										getPathFromTrunk("examples/settings/AlexSVCOMPstandard"));
+								// put("Simple",
+								// getPathFromTrunk("examples/settings/AlexSVCOMPstandard"));
+								// put("ControlFlowInteger",
+								// getPathFromTrunk("examples/settings/AlexSVCOMPstandard"));
 							}
-						},
-						getPathFromTrunk("examples/toolchains/KojakC.xml"),
-						30000,"CodeCheck");
+						}, getPathFromTrunk("examples/toolchains/KojakC.xml"),
+						30000, "CodeCheck");
 
 		UltimateTestDescriptor[] matthias = SVCOMP14TestDescriptor
 				.createDescriptorsFromSVCOMPRootDirectory(
-						getPathFromTrunk("../../svcomp"),
+						getPathFromTrunk("../svcomp"),
 						new HashMap<String, String>() {
 							{
 								put("MemorySafety",
 										getPathFromTrunk("examples/settings/AutomizerSvcompSafety1Minute.bpl"));
-//								put("Simple",
-//										getPathFromTrunk("examples\\settings\\AutomizerSvcompSafety1Minute.bpl"));
-//								put("ControlFlowInteger",
-//										getPathFromTrunk("examples\\settings\\AutomizerSvcompSafety1Minute.bpl"));
+								// put("Simple",
+								// getPathFromTrunk("examples\\settings\\AutomizerSvcompSafety1Minute.bpl"));
+								// put("ControlFlowInteger",
+								// getPathFromTrunk("examples\\settings\\AutomizerSvcompSafety1Minute.bpl"));
 							}
 						},
 						getPathFromTrunk("examples/toolchains/TraceAbstractionC.xml"),
-						30000,"Automizer");
+						30000, "Automizer");
 
 		all.addAll(Arrays.asList(alex));
 		all.addAll(Arrays.asList(matthias));
@@ -162,31 +161,37 @@ public class UltimateTest {
 		ultimate.setToolchainXML(mDescriptor.getPathToolchain());
 
 		FileAppender appender = null;
+		String logfilepath = mDescriptor.generateLogFilename();
 		try {
 			appender = new FileAppender(
 					new PatternLayout(
 							new UltimatePreferenceStore(ultimate.getPluginID())
 									.getString(CorePreferenceInitializer.LABEL_LOG4J_PATTERN)),
-					mDescriptor.generateLogFilename());
+					logfilepath);
 			UltimateLoggerFactory.getInstance().addAppender(appender);
 		} catch (IOException e1) {
 			e1.printStackTrace();
-			UltimateLoggerFactory.getInstance().removeAppender(appender);
+			completeSingleTest(appender, logfilepath);
 			fail("Could not create log file");
 		}
 
 		try {
 			ultimate.start(null);
 			boolean fail = mDescriptor.testFailed();
-			UltimateLoggerFactory.getInstance().removeAppender(appender);
+			completeSingleTest(appender, logfilepath);
 			if (fail) {
 				fail();
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
-			UltimateLoggerFactory.getInstance().removeAppender(appender);
+			completeSingleTest(appender, logfilepath);
 			fail("Ultimate should run without exception");
 		}
+	}
+
+	public void completeSingleTest(FileAppender appender, String logPath) {
+		UltimateLoggerFactory.getInstance().removeAppender(appender);
+		System.out.println("[[ATTACHMENT|" + logPath + "]]");
 	}
 
 	@After
@@ -197,7 +202,7 @@ public class UltimateTest {
 			return;
 		}
 
-		System.out.println("Writing "+sTestSummaries.size()+" summaries");
+		System.out.println("Writing " + sTestSummaries.size() + " summaries");
 		for (TestSummary summary : sTestSummaries) {
 			File logFile = summary.getSummaryLogFile();
 			if (logFile == null) {
