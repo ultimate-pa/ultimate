@@ -1,5 +1,16 @@
 #!/bin/bash
 
+
+if [ "$1" = "determinization" ]; then
+echo "test trace abstraction with different determinizations"
+trunk/examples/toolchains/TraceAbstractionTestDir.sh -da 20 $2 \
+"TraceAbstraction.xml;TraceAbstractionC.xml;determinization/eagerpost.settings" \
+"TraceAbstraction.xml;TraceAbstractionC.xml;determinization/lazypost.settings" \
+"TraceAbstraction.xml;TraceAbstractionC.xml;determinization/newEager.settings" \
+"TraceAbstraction.xml;TraceAbstractionC.xml;determinization/strongestpost.settings"
+fi
+
+
 if [ "$1" = "svcompMatthiasSafetyBench1" ]; then
 echo "specified folder in a test setting"
 trunk/examples/toolchains/TraceAbstractionTestDir.sh -da 90 $2 \
