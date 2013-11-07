@@ -31,6 +31,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.InterpolantAutomataTransitionAppender.BestApproximationDeterminizer;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.InterpolantAutomataTransitionAppender.EagerInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.InterpolantAutomataTransitionAppender.PostDeterminizer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.InterpolantAutomataTransitionAppender.SelfloopDeterminizer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.InterpolantAutomataTransitionAppender.StrongestPostDeterminizer;
@@ -375,6 +376,22 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 							explointSigmaStarConcatOfIA);
 				}
 			break;
+			case NEWEAGER:
+				if (m_Pref.differenceSenwa()) {
+					throw new UnsupportedOperationException();
+				} else {
+					EagerInterpolantAutomaton determinized = 
+							new EagerInterpolantAutomaton(edgeChecker, m_InterpolAutomaton);
+					PowersetDeterminizer<CodeBlock, IPredicate> psd2 = 
+							new PowersetDeterminizer<CodeBlock, IPredicate>(determinized, true);
+					diff = new Difference<CodeBlock, IPredicate>(
+							oldAbstraction, determinized, psd2, 
+							m_StateFactoryForRefinement,
+							explointSigmaStarConcatOfIA);
+					determinized.finishConstruction();
+					assert(edgeChecker.isAssertionStackEmpty());
+				}
+				break;
 			default:
 				throw new UnsupportedOperationException();
 			}

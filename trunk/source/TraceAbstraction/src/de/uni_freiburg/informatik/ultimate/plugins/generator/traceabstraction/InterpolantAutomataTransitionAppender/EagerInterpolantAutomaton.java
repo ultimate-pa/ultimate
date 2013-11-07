@@ -26,6 +26,8 @@ public class EagerInterpolantAutomaton implements
 	private final NestedWordAutomaton<CodeBlock, IPredicate> m_Ia;
 	private final NestedWordAutomatonCache<CodeBlock, IPredicate> m_RejectionCache;
 	
+	private boolean m_ComputationFinished = false;
+	
 	private CodeBlock m_AssertedCodeBlock;
 	private IPredicate m_AssertedState;
 	private IPredicate m_AssertedHier;
@@ -263,13 +265,21 @@ public class EagerInterpolantAutomaton implements
 	}
 	
 	
+	/**
+	 * Announce that computation is finished. From now on this automaton
+	 * returns only existing transitions but does not compute new ones.
+	 */
+	public void finishConstruction() {
+		if (m_ComputationFinished) {
+			throw new AssertionError("Computation already finished.");
+		} else {
+			m_ComputationFinished = true;
+			clearAssertionStack();
+		}
+		
+	}
 	
-	
-	
-	
-	
-	
-	public void clearAssertionStack() {
+	private void clearAssertionStack() {
 		if (m_AssertedState != null) {
 			m_EdgeChecker.unAssertPrecondition();
 			m_AssertedState = null;
