@@ -9,6 +9,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Queue;
 
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
@@ -59,7 +60,19 @@ public class Product {
 		this.aut = aut;
 		this.rcfg = rcfg;
 		
+		/*
+		 * Can't acces the items in general so just making a copy and
+		 * clearing the maps.
+		 */
+		//TODO: make deep copy of rootannot 
 		this.rootNode = new RootNode(this.rcfg.getRootAnnot());
+		//will be refilled when generating product nodes
+		this.rootNode.getRootAnnot().getProgramPoints().clear();
+		//note: used only for iterating procedures in automaizer, so 
+		//may or may not work empty...
+		this.rootNode.getRootAnnot().getEntryNodes().clear();
+		this.rootNode.getRootAnnot().getExitNodes().clear();
+		this.rootNode.getRootAnnot().getLoopLocations().clear();
 		
 		
 		
@@ -232,10 +245,15 @@ public class Product {
 	 */
 	private void createProductStates()
 	{
+		Map<String, Map<String, ProgramPoint>> productLocations = this.rootNode.getRootAnnot().getProgramPoints();
+		
 		ProgramPoint productNode;
 		final AcceptingNodeAnnotation acceptingNodeAnnotation = new AcceptingNodeAnnotation();
 		
 		for(ProgramPoint pp: this.rcfgLocations){
+			if (!productLocations.containsKey(pp.getProcedure())){
+				productLocations.put(pp.getProcedure(), new HashMap<String, ProgramPoint>());
+			}
 			for(String n: this.aut.getStates()){ 
 				productNode = new ProgramPoint
 									(		
@@ -254,8 +272,13 @@ public class Product {
 				//inital states
 				if (pp.getLocationName().equals("mainENTRY"))
 					if (this.aut.isInitial(n))
+						//TODO: inital node special name?
 						new RootEdge(this.rootNode, productNode);
-			}	
+				
+				
+				//add to annotation
+				productLocations.get(pp.getProcedure()).put(this.stateNameGenerator(pp.getLocationName(), n), productNode);
+			}
 				
 		}
 	
