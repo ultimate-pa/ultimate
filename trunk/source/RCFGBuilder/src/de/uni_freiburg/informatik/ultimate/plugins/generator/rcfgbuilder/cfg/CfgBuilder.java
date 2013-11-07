@@ -131,6 +131,10 @@ public class CfgBuilder {
 	   boolean useExternalSolver = (new UltimatePreferenceStore(
 			   RCFGBuilder.s_PLUGIN_ID)).getBoolean(PreferenceInitializer.LABEL_ExtSolverFlag);
 	   
+	   
+	   m_CodeBlockSize = (new UltimatePreferenceStore(
+			   RCFGBuilder.s_PLUGIN_ID)).getEnum(PreferenceInitializer.LABEL_CodeBlockSize, CodeBlockSize.class);
+	   
 	   Logger solverLogger = Logger.getLogger("interpolLogger");
 	   solverLogger.setLevel(Level.ERROR);
 	   
