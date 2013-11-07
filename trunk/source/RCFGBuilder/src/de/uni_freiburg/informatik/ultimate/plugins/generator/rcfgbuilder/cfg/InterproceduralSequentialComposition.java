@@ -9,8 +9,8 @@ public class InterproceduralSequentialComposition extends SequentialComposition 
 	public InterproceduralSequentialComposition(ProgramPoint source,
 			ProgramPoint target, Boogie2SMT boogie2smt, 
 			ModifiableGlobalVariableManager modGlobVarManager, 
-			boolean simplify, CodeBlock[] codeBlocks) {
-		super(source, target, boogie2smt, modGlobVarManager, simplify, codeBlocks);
+			boolean simplify, boolean extPqe, CodeBlock[] codeBlocks) {
+		super(source, target, boogie2smt, modGlobVarManager, simplify, extPqe, codeBlocks);
 	}
 
 	@Override

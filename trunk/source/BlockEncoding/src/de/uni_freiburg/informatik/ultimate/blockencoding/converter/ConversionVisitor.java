@@ -206,7 +206,7 @@ public class ConversionVisitor implements IMinimizationVisitor {
 					if (cb instanceof ShortcutCodeBlock) {
 						cb = new InterproceduralSequentialComposition(null,
 								null, boogie2smt, modGlobalVarManager, false,
-								((ShortcutCodeBlock) cb).getCodeBlocks());
+								false, ((ShortcutCodeBlock) cb).getCodeBlocks());
 					} else {
 						throw new IllegalArgumentException(
 								"Converted CodeBlock for ShortcutErrEdge"
@@ -421,7 +421,7 @@ public class ConversionVisitor implements IMinimizationVisitor {
 										gotoEdges.get(0), gotoEdges.get(1)) });
 					}
 					return new SequentialComposition(null, null, boogie2smt,
-							modGlobalVarManager, false, 
+							modGlobalVarManager, false, false,
 							replaceGotoEdge(gotoEdges.get(0), gotoEdges.get(1)));
 				}
 				if (edge instanceof ShortcutErrEdge) {
@@ -429,7 +429,7 @@ public class ConversionVisitor implements IMinimizationVisitor {
 							composeEdges.toArray(new CodeBlock[0]));
 				}
 				return new SequentialComposition(null, null, boogie2smt,
-						modGlobalVarManager, false,
+						modGlobalVarManager, false, false,
 						composeEdges.toArray(new CodeBlock[0]));
 			}
 			if (edge instanceof DisjunctionEdge) {

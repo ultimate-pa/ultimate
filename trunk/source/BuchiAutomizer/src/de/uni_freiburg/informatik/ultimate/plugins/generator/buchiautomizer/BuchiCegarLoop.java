@@ -482,14 +482,14 @@ public class BuchiCegarLoop {
 			TransFormula stemTF = SequentialComposition.getInterproceduralTransFormula(
 					m_RootNode.getRootAnnot().getBoogie2SMT(),
 					m_RootNode.getRootAnnot().getModGlobVarManager(),
-					m_SimplifyCodeBlocks, false, stemCBs);
+					m_SimplifyCodeBlocks, true, false, stemCBs);
 			int stemVars = stemTF.getFormula().getFreeVars().length;
 
 			@SuppressWarnings("deprecation")
 			TransFormula loopTF = SequentialComposition.getInterproceduralTransFormula(
 					m_RootNode.getRootAnnot().getBoogie2SMT(),
 					m_RootNode.getRootAnnot().getModGlobVarManager(),
-					m_SimplifyCodeBlocks,false, loopCBs);
+					m_SimplifyCodeBlocks, true,false, loopCBs);
 			int loopVars = loopTF.getFormula().getFreeVars().length;
 			s_Logger.info("Statistics: stemVars: " + stemVars + "loopVars: " + loopVars);
 			{
@@ -500,7 +500,7 @@ public class BuchiCegarLoop {
 				TransFormula composed = SequentialComposition.getInterproceduralTransFormula(
 						m_RootNode.getRootAnnot().getBoogie2SMT(),
 						m_RootNode.getRootAnnot().getModGlobVarManager(),
-						false, m_SimplifyCodeBlocks, composedCB.toArray(new CodeBlock[0])); 
+						false, m_SimplifyCodeBlocks, true, composedCB.toArray(new CodeBlock[0])); 
 						//TransFormula.sequentialComposition(10000, rootAnnot.getBoogie2SMT(), stemTF, loopTF);
 				if (composed.isInfeasible() == Infeasibility.INFEASIBLE) {
 					throw new AssertionError("suddently infeasible");

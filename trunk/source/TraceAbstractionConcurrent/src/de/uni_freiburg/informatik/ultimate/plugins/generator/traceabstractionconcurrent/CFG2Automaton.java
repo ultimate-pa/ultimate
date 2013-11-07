@@ -121,7 +121,7 @@ public abstract class CFG2Automaton {
 		}
 		return new SequentialComposition(entry, exit, 
 				m_RootAnnot.getBoogie2SMT(), m_RootAnnot.getModGlobVarManager(),
-				true, codeBlocks.toArray(new CodeBlock[0]));
+				true, false, codeBlocks.toArray(new CodeBlock[0]));
 	}
 	
 	

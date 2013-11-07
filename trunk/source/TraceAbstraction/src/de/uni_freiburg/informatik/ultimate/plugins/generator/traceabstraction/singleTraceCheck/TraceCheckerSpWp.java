@@ -138,7 +138,7 @@ public class TraceCheckerSpWp extends TraceChecker {
 				transFormulasToComputeSummaryFor[i] = rv.getFormulaFromNonCallPos(i+offset);
 			}
 		}
-		return TransFormula.sequentialComposition(m_SmtManager.getBoogie2Smt(), true, transFormulasToComputeSummaryFor);
+		return TransFormula.sequentialComposition(m_SmtManager.getBoogie2Smt(), true, false, transFormulasToComputeSummaryFor);
 	}
 	
 	private TransFormula computeSummaryForTrace(Word<CodeBlock> trace, TransFormula Call, 
@@ -147,7 +147,7 @@ public class TraceCheckerSpWp extends TraceChecker {
 			RelevantTransFormulas rv,
 			int call_pos) {
 		TransFormula procedureSummary = computeSummaryForTrace(trace, rv, call_pos);
-		return TransFormula.sequentialCompositionWithCallAndReturn(m_SmtManager.getBoogie2Smt(), true, Call, oldVarsAssignment, procedureSummary, Return);
+		return TransFormula.sequentialCompositionWithCallAndReturn(m_SmtManager.getBoogie2Smt(), true, false, Call, oldVarsAssignment, procedureSummary, Return);
 	}
 	
 	

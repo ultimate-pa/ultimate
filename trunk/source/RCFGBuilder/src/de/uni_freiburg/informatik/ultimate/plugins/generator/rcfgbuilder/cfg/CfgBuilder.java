@@ -1510,7 +1510,7 @@ public class CfgBuilder {
 			ProgramPoint successor = (ProgramPoint) outgoing.getTarget();
 			new SequentialComposition(predecessor, successor, m_Boogie2smt, 
 					m_RootAnnot.getModGlobVarManager(),
-					m_SimplifyCodeBlocks, incoming, outgoing);
+					m_SimplifyCodeBlocks, false, incoming, outgoing);
 			if (!sequentialQueue.contains(predecessor)) {
 				List<CodeBlock> outEdges = superfluousParallel(predecessor);
 				if (outEdges != null) {
