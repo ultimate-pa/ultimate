@@ -126,14 +126,13 @@ public class BuchiInterpolantAutomaton implements
 	 * Announce that computation is finished. From now on this automaton
 	 * returns only existing transitions but does not compute new ones.
 	 */
-	public void computationFinished() {
+	public void finishConstruction() {
 		if (m_ComputationFinished) {
 			throw new AssertionError("Computation already finished.");
 		} else {
 			m_ComputationFinished = true;
 			clearAssertionStack();
 		}
-		
 	}
 
 

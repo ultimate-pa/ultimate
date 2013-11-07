@@ -789,9 +789,9 @@ public class BuchiCegarLoop {
 				// do nothing
 				break;
 			case DeterministicEager:
-				((EagerInterpolantAutomaton) interpolantAutomaton).clearAssertionStack();
+				((EagerInterpolantAutomaton) interpolantAutomaton).finishConstruction();
 			case NondeterministicEager:
-				((BuchiInterpolantAutomaton) interpolantAutomaton).computationFinished();
+				((BuchiInterpolantAutomaton) interpolantAutomaton).finishConstruction();
 			default:
 				throw new UnsupportedOperationException("unknown automaton");
 			}
