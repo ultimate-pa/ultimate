@@ -33,7 +33,7 @@ public class LassoExtractor<LETTER, STATE> implements IOperation<LETTER,STATE> {
 			m_Reach = new NestedWordAutomatonReachableStates<LETTER, STATE>(m_Operand);
 		}
 		NestedWordAutomatonReachableStates<LETTER, STATE>.StronglyConnectedComponents sccs = 
-				m_Reach.getStronglyConnectedComponents();
+				m_Reach.getOrComputeStronglyConnectedComponents();
 		m_NestedLassoRuns = sccs.getAllNestedLassoRuns();
 		m_NestedLassoWords = new ArrayList<NestedLassoWord<LETTER>>(m_NestedLassoRuns.size());
 		if (m_NestedLassoRuns.isEmpty() && sccs.getNestedLassoRun() == null) {

@@ -83,27 +83,27 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 	
 
 
-	private Map<StateContainer<LETTER,STATE>,Set<StateContainer<LETTER,STATE>>> m_Summaries = new HashMap<StateContainer<LETTER,STATE>,Set<StateContainer<LETTER,STATE>>>();
+//	private Map<StateContainer<LETTER,STATE>,Set<StateContainer<LETTER,STATE>>> m_Summaries = new HashMap<StateContainer<LETTER,STATE>,Set<StateContainer<LETTER,STATE>>>();
 
 	private Set<LETTER> m_EmptySetOfLetters = Collections.emptySet();
 
 	private AncestorComputation m_WithOutDeadEnds;
 	private AncestorComputation m_OnlyLiveStates;
-	private AcceptingSummeariesComputation m_AcceptingSummaries;
+	private AcceptingSummariesComputation m_AcceptingSummaries;
 	private StronglyConnectedComponents m_StronglyConnectedComponents;
 
-	public final static boolean m_TestRunConstruction = true;
+	public final static boolean m_TestRunConstruction = false;
 	
 
 	
-	private void addSummary(StateContainer<LETTER,STATE> callPred, StateContainer<LETTER,STATE> returnSucc) {
-		Set<StateContainer<LETTER,STATE>> returnSuccs = m_Summaries.get(callPred);
-		if (returnSuccs == null) {
-			returnSuccs = new HashSet<StateContainer<LETTER,STATE>>();
-			m_Summaries.put(callPred, returnSuccs);
-		}
-		returnSuccs.add(returnSucc);
-	}
+//	private void addSummary(StateContainer<LETTER,STATE> callPred, StateContainer<LETTER,STATE> returnSucc) {
+//		Set<StateContainer<LETTER,STATE>> returnSuccs = m_Summaries.get(callPred);
+//		if (returnSuccs == null) {
+//			returnSuccs = new HashSet<StateContainer<LETTER,STATE>>();
+//			m_Summaries.put(callPred, returnSuccs);
+//		}
+//		returnSuccs.add(returnSucc);
+//	}
 	
 	public NestedWordAutomatonReachableStates(INestedWordAutomatonSimple<LETTER,STATE> operand) throws OperationCanceledException {
 		this.m_Operand = operand;
@@ -115,8 +115,11 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 			new ReachableStatesComputation();
 //			computeDeadEnds();
 //			new NonLiveStateComputation();
-			computeStronglyConnectedComponents();
-			getStronglyConnectedComponents().computeNestedLassoRuns(false);
+			boolean testLassoComputation = false;
+			if (testLassoComputation) {
+				computeStronglyConnectedComponents();
+				getOrComputeStronglyConnectedComponents().computeNestedLassoRuns(false);
+			}
 			s_Logger.info(stateContainerInformation());
 			assert (new TransitionConsitenceCheck<LETTER, STATE>(this)).consistentForAll();
 
@@ -169,7 +172,10 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 		return m_OnlyLiveStates;
 	}
 	
-	public StronglyConnectedComponents getStronglyConnectedComponents() {
+	public StronglyConnectedComponents getOrComputeStronglyConnectedComponents() {
+		if (m_StronglyConnectedComponents == null) {
+			computeStronglyConnectedComponents();
+		}
 		return m_StronglyConnectedComponents;
 	}
 
@@ -569,7 +575,7 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 			throw new AssertionError("SCCs are already computed");
 		}
 		assert m_AcceptingSummaries == null;
-		m_AcceptingSummaries = new AcceptingSummeariesComputation();
+		m_AcceptingSummaries = new AcceptingSummariesComputation();
 		m_StronglyConnectedComponents = new StronglyConnectedComponents(m_AcceptingSummaries);
 	}
 	
@@ -578,7 +584,7 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 			return;
 //			throw new AssertionError("non-live states are already computed");
 		}
-		if (getStronglyConnectedComponents() == null) {
+		if (getOrComputeStronglyConnectedComponents() == null) {
 			computeStronglyConnectedComponents();
 		}
 
@@ -798,7 +804,7 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 				succCont.addReturnIncoming(
 						new IncomingReturnTransition<LETTER, STATE>(cont.getState(), down, trans.getLetter()));
 				addReturnSummary(state, down, trans.getLetter(), succ);
-				addSummary(downCont, succCont);
+//				addSummary(downCont, succCont);
 			}
 			if (addedSelfloop) {
 				return newDownStatesSelfloop(cont, downCont.getDownStates().keySet());
@@ -1351,21 +1357,30 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 
 	////////////////////////////////////////////////////////////////////////////
 	
-	private class AcceptingSummeariesComputation {
+	/**
+	 * Detect which summaries are accepting. Find states q and q' such that q'
+	 * is reachable from q via a run that
+	 * <ul>
+	 * <li> starts with a call
+	 * <li> ends with a return
+	 * <li> contains an accepting state
+	 * </ul>
+	 * The resulting map has call predecessors in its keySet and sets of return
+	 * successors in its values.
+	 */
+	private class AcceptingSummariesComputation {
 		private final ArrayDeque<StateContainer<LETTER,STATE>> m_FinAncWorklist =
 				new ArrayDeque<StateContainer<LETTER,STATE>>();
 		private final Map<StateContainer<LETTER, STATE>, Set<StateContainer<LETTER, STATE>>> m_AcceptingSummaries = 
 				new HashMap<StateContainer<LETTER, STATE>, Set<StateContainer<LETTER, STATE>>>();
 
-		
-		public AcceptingSummeariesComputation() {
+		public AcceptingSummariesComputation() {
 			init();
 			while (!m_FinAncWorklist.isEmpty()) {
 				StateContainer<LETTER, STATE> cont = m_FinAncWorklist.removeFirst();
 				propagateNewDownStates(cont);
 			}
 		}
-		
 		
 		public Map<StateContainer<LETTER, STATE>, Set<StateContainer<LETTER, STATE>>> getAcceptingSummaries() {
 			return m_AcceptingSummaries;
@@ -1377,7 +1392,6 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 				addNewDownStates(null, cont, cont.getDownStates().keySet());
 			}
 		}
-		
 		
 		private void addNewDownStates(StateContainer<LETTER, STATE> cont,
 				StateContainer<LETTER, STATE> succCont,
@@ -1398,7 +1412,6 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 			}
 		}
 
-		
 		private void propagateNewDownStates(StateContainer<LETTER, STATE> cont) {
 			Set<STATE> unpropagatedDownStates = cont.getUnpropagatedDownStates();
 			if (unpropagatedDownStates  == null) {
@@ -1423,7 +1436,6 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 				}
 			}
 		}
-
 
 		private void addAcceptingSummary(
 				StateContainer<LETTER, STATE> callPred,
@@ -1502,7 +1514,7 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
     	}
 
     	
-        public StronglyConnectedComponents(AcceptingSummeariesComputation asc) {
+        public StronglyConnectedComponents(AcceptingSummariesComputation asc) {
         	m_AcceptingSummaries = asc.getAcceptingSummaries();
         	for (STATE state : m_initialStates) {
         		StateContainer<LETTER, STATE> cont = m_States.get(state);
@@ -1556,15 +1568,56 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
             		}
             	}
             }        	
-        	
-        	
         }
         
+        public void computeShortNestedLassoRun() {
+        	StateContainer<LETTER, STATE> lowestSerialNumber = null;
+        	StateContainer<LETTER, STATE> newlowestSerialNumber = null;
+        	SCC sccOfLowest = null;
+			for (SCC scc : m_Balls) {
+            	if (scc.isAccepting()) {
+            		StateContainer<LETTER, STATE> lowestOfScc = scc.getAcceptingWithLowestSerialNumber();
+            		newlowestSerialNumber = StateContainer.returnLower(lowestSerialNumber, lowestOfScc);
+            		if (newlowestSerialNumber != lowestSerialNumber) {
+            			lowestSerialNumber = newlowestSerialNumber;
+            			sccOfLowest = scc;
+            		}
+            	}
+            } 
+			NestedLassoRun<LETTER, STATE> method0 = (new LassoExtractor(sccOfLowest.getStateWithLowestSerialNumber(), sccOfLowest,  m_AcceptingSummaries)).getNestedLassoRun();
+			s_Logger.debug("Method0: stem" + method0.getStem().getLength() + " loop" + method0.getLoop().getLength());
+//			NestedLassoRun<LETTER, STATE> method1 = (new LassoExtractor(lowestSerialNumber, sccOfLowest,  m_AcceptingSummaries)).getNestedLassoRun();
+//			s_Logger.debug("Method1: stem" + method1.getStem().getLength() + " loop" + method1.getLoop().getLength());
+			NestedLassoRun<LETTER, STATE> method2 = (new ShortestLassoExtractor(lowestSerialNumber)).getNestedLassoRun();
+			s_Logger.debug("Method2: stem" + method2.getStem().getLength() + " loop" + method2.getLoop().getLength());
+			int method0size = method0.getStem().getLength() + method0.getLoop().getLength();
+//			int method1size = method1.getStem().getLength() + method1.getLoop().getLength();
+//			int method2size = method2.getStem().getLength() + method1.getLoop().getLength();
+//			s_Logger.debug("Method0size" + method0size +" Method1size" + method1size + " Method2size" + method2size);
+			m_NestedLassoRun = method0;
+        }
+    
+        
+        
         public List<NestedLassoRun<LETTER, STATE>> getAllNestedLassoRuns() {
-        	return m_NestedLassoRuns;
+        	if (buchiIsEmpty()) {
+        		return null;
+        	} else {
+        		if (m_NestedLassoRun == null) {
+        			computeNestedLassoRuns(false);
+        		}
+        		return m_NestedLassoRuns;
+        	}
         }
         public NestedLassoRun<LETTER, STATE> getNestedLassoRun() {
-        	return m_NestedLassoRun;
+        	if (buchiIsEmpty()) {
+        		return null;
+        	} else {
+        		if (m_NestedLassoRun == null) {
+        			computeShortNestedLassoRun();
+        		}
+        		return m_NestedLassoRun;
+        	}
         }
 
 
@@ -1644,16 +1697,6 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
         }
         
         
-//        /**
-//         * @return List of SCCs of the game graph in reverse topological order.
-//         * (This means: If scc1 occurs in this list before scc2 then ss2 is not
-//         * reachable from scc1).
-//         */
-//        public List<SCC> getSCCs() {
-//        	assert(gameGraphPartitionedBySCCs());
-//        	return m_SCCs;
-//        }
-        
         /**
          * @return true iff the SCCS form a partition of the automaton.
          */
@@ -1680,7 +1723,15 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 	    			new HashSet<StateContainer<LETTER, STATE>>();
 	    	final Set<StateContainer<LETTER, STATE>> m_AllStates = 
 	    			new HashSet<StateContainer<LETTER, STATE>>();
+	    	/**
+	    	 * State of SCC with lowest serial number.
+	    	 */
 	    	private StateContainer<LETTER, STATE> m_StateWithLowestSerialNumber;
+	    	/**
+	    	 * State of SCC with lowest serial number that is accepting or
+	    	 * successor 
+	    	 */
+	    	private StateContainer<LETTER, STATE> m_AcceptingWithLowestSerialNumber;
 	    	
 	    	public void addState(StateContainer<LETTER, STATE> cont) {
 	    		if (m_RootNode != null) {
@@ -1688,18 +1739,20 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 	    					"If root node is set SCC may not be modified");
 	    		}
 	    		m_AllStates.add(cont);
-	    		if (m_StateWithLowestSerialNumber == null || 
-	    				cont.getSerialNumber() < m_StateWithLowestSerialNumber.getSerialNumber()) {
-	    			m_StateWithLowestSerialNumber = cont;
-	    		}
+	    		m_StateWithLowestSerialNumber = StateContainer.
+	    				returnLower(m_StateWithLowestSerialNumber, cont);
+
 	    		if (isFinal(cont.getState())) {
 	    			m_AcceptingStates.add(cont);
+	    			m_AcceptingWithLowestSerialNumber = StateContainer.
+		    				returnLower(m_AcceptingWithLowestSerialNumber, cont);
 	    		}
 	    		if (m_AcceptingSummaries.containsKey(cont)) {
 	    			m_HasOutgoingAcceptingSum.add(cont);
+	    			m_AcceptingWithLowestSerialNumber = StateContainer.
+		    				returnLower(m_AcceptingWithLowestSerialNumber, cont);
 	    		}
 	    	}
-	    	
 
 			public void setRootNode(StateContainer<LETTER, STATE> rootNode) {
 	    		if (m_RootNode != null) {
@@ -1741,9 +1794,25 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 			public StateContainer<LETTER, STATE> getStateWithLowestSerialNumber() {
 				return m_StateWithLowestSerialNumber;
 			}
+			
+			public boolean isAccepting() {
+				return m_AcceptingWithLowestSerialNumber != null;
+			}
+			
+			/**
+			 * Returns the state with the lowest serial number that is accepting
+			 * or call predecessor of an accepting summary.
+			 * Returns null if no such state exists.
+			 * @return 
+			 */
+			public StateContainer<LETTER, STATE> getAcceptingWithLowestSerialNumber() {
+				return m_AcceptingWithLowestSerialNumber;
+			}
 	    }
     }
     
+    
+
     
     
     class LassoExtractor {
@@ -1760,6 +1829,7 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
     			LoopFinder lf = new LoopFinder(honda, scc, true, 
     					acceptingSummaries, forbiddenSummaries);
     			NestedRun<LETTER, STATE> loop = lf.getNestedRun();
+    			assert loop.getLength() > 1 : "looping epsilon transition";
     			NestedRun<LETTER, STATE> stem = (new RunConstructor(honda, null)).constructRun();
     			s_Logger.debug("Stem length: " + stem.getLength());
     			s_Logger.debug("Loop length: " + loop.getLength());
@@ -2780,7 +2850,8 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 	
 	
 	
-	
+	///////////////////////////////////////////////////////////////////////////
+	// 8.11.2013 Matthias: seems like these Finders are obsolete
 
 
 	abstract class RunFinder {

@@ -34,7 +34,7 @@ public class BuchiIsEmpty<LETTER,STATE> implements IOperation<LETTER,STATE> {
 		} else {
 			m_Reach = new NestedWordAutomatonReachableStates<LETTER, STATE>(m_Nwa);
 		}
-		m_Sccs = m_Reach.getStronglyConnectedComponents();
+		m_Sccs = m_Reach.getOrComputeStronglyConnectedComponents();
 		m_Result = m_Sccs.buchiIsEmpty();
 		s_Logger.info(exitMessage());
 	}
@@ -71,7 +71,6 @@ public class BuchiIsEmpty<LETTER,STATE> implements IOperation<LETTER,STATE> {
 			return null;
 		} else {
 			s_Logger.info("Starting construction of run");
-			m_Sccs.computeNestedLassoRuns(true);
 			return m_Sccs.getNestedLassoRun();
 		}
 	}
