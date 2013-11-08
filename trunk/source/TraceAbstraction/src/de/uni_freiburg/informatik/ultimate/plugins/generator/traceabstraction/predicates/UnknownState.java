@@ -44,12 +44,14 @@ public class UnknownState implements ISLPredicate {
 	
 	@Override
 	public String toString() {
+		String result = m_SerialNumber + "#";
 		if (m_ProgramPoint != null) {
-			return m_ProgramPoint.getPosition();
+			result += m_ProgramPoint.getPosition();
 		}
 		else {
-			return "unknown";
+			result += "unknown";
 		}
+		return result;
 	}
 	
 	@Override
