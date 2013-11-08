@@ -270,5 +270,26 @@ public abstract class StateContainer<LETTER, STATE> {
 	abstract void addReturnOutgoing(OutgoingReturnTransition<LETTER, STATE> returnOutgoing);
 
 	abstract void addReturnIncoming(IncomingReturnTransition<LETTER, STATE> returnIncoming);
+	
+	/**
+	 * Returns the StateContainer that has the lower serial number.
+	 * If one is null return the other. If both are null return null;
+	 */
+	public static <LETTER, STATE> StateContainer<LETTER, STATE> returnLower(
+			StateContainer<LETTER, STATE> fst, StateContainer<LETTER, STATE> snd) {
+		if (fst == null) {
+			return snd;
+		} else if (snd == null) {
+				return fst;
+		} else {
+			if (fst.getSerialNumber() < snd.getSerialNumber()) {
+				return fst;
+			} else {
+				assert fst.getSerialNumber() != snd.getSerialNumber() || fst == snd :
+					"two state container with similar serial number";
+				return snd;
+			}
+		}
+	}
 
 }
