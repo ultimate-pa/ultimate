@@ -1,0 +1,48 @@
+// Author: heizmann@informatik.uni-freiburg.de
+// Date: 08.11.2013
+
+print(nwa);
+print(removeNonLiveStates(nwa));
+
+NestedWordAutomaton nwa = (
+	callAlphabet = {"call #t~ret1 := nondet();" "call ULTIMATE.init();" "call #t~ret0 := nondet();" "call #t~ret2 := main();" },
+	internalAlphabet = {"assume !!(~x~2 > 0 &..." "assume #t~ret0 != 0;" "assume true;" "assume !(~x~2 > 0 &&..." "~x~2 := #t~ret1;havo..." "assume !true;" "assume !(#t~ret0 != ..." "havoc ~anyValue~1;#r..." "havoc ~x~2;havoc ~y~..." },
+	returnAlphabet = {"return call #t~ret0 := nondet();" "return call #t~ret2 := main();" "return call #t~ret1 := nondet();" "return call ULTIMATE.init();" },
+	states = {"83#nondetFINAL" "65#nondetENTRY" "76#nondetEXIT" "59#L18" "39#ULTIMATE.initEXIT" "84#nondetEXIT" "81#L21" "68#nondetENTRY" "53#L17" "79#L18'" "72#nondetFINAL" "q0" "77#L18'" "80#L21" "88#L18" "70#nondetFINAL" "86#L18'''" "87#L17" "85#L21'" "71#nondetFINAL" "89#L18'" "75#nondetEXIT" "46#mainENTRY" "62#L18" "50#L18'''" "67#nondetENTRY" "82#nondetENTRY" "q1" "78#L18'" "54#L17" "74#nondetEXIT" },
+	initialStates = {"q0" },
+	finalStates = {"83#nondetFINAL" "65#nondetENTRY" "84#nondetEXIT" "q0" "77#L18'" "80#L21" "88#L18" "70#nondetFINAL" "86#L18'''" "87#L17" "85#L21'" "89#L18'" "62#L18" "82#nondetENTRY" "74#nondetEXIT" },
+	callTransitions = {
+		 ("q1" "call #t~ret0 := nondet();" "68#nondetENTRY")
+		 ("81#L21" "call #t~ret1 := nondet();" "82#nondetENTRY")
+// 		 ("q0" "call ULTIMATE.init();" "q1")
+		 ("88#L18" "call #t~ret0 := nondet();" "82#nondetENTRY")
+		 ("q1" "call #t~ret2 := main();" "46#mainENTRY")
+	},
+	internalTransitions = {
+		 ("83#nondetFINAL" "assume true;" "84#nondetEXIT")
+		 ("68#nondetENTRY" "havoc ~anyValue~1;#r..." "72#nondetFINAL")
+		 ("68#nondetENTRY" "havoc ~anyValue~1;#r..." "71#nondetFINAL")
+		 ("79#L18'" "assume #t~ret0 != 0;" "50#L18'''")
+		 ("79#L18'" "assume !(#t~ret0 != ..." "81#L21")
+		 ("53#L17" "assume !!(~x~2 > 0 &..." "q1")
+		 ("72#nondetFINAL" "assume true;" "76#nondetEXIT")
+// 		 ("q1" "assume true;" "39#ULTIMATE.initEXIT")
+		 ("q0" "assume true;" "q1")
+		 ("86#L18'''" "assume true;" "87#L17")
+		 ("87#L17" "assume !!(~x~2 > 0 &..." "88#L18")
+		 ("85#L21'" "~x~2 := #t~ret1;havo..." "86#L18'''")
+		 ("71#nondetFINAL" "assume true;" "74#nondetEXIT")
+		 ("89#L18'" "assume #t~ret0 != 0;" "86#L18'''")
+		 ("46#mainENTRY" "havoc ~x~2;havoc ~y~..." "50#L18'''")
+		 ("50#L18'''" "assume true;" "53#L17")
+		 ("82#nondetENTRY" "havoc ~anyValue~1;#r..." "83#nondetFINAL")
+	},
+	returnTransitions = {
+		 ("76#nondetEXIT" "q1" "return call #t~ret0 := nondet();" "79#L18'")
+		 ("84#nondetEXIT" "88#L18" "return call #t~ret0 := nondet();" "89#L18'")
+		 ("84#nondetEXIT" "81#L21" "return call #t~ret1 := nondet();" "85#L21'")
+		 ("84#nondetEXIT" "80#L21" "return call #t~ret1 := nondet();" "85#L21'")
+		 ("74#nondetEXIT" "q1" "return call #t~ret0 := nondet();" "77#L18'")
+	}
+);
+
