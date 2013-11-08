@@ -195,7 +195,7 @@ public class BuchiCegarLoop {
 		
 		private enum InterpolantAutomaton { LassoAutomaton, DeterministicEager, NondeterministicEager };
 		
-		private InterpolantAutomaton m_InterpolantAutomaton = InterpolantAutomaton.LassoAutomaton;
+		private InterpolantAutomaton m_InterpolantAutomaton = InterpolantAutomaton.NondeterministicEager;
 
 		public BuchiCegarLoop(RootNode rootNode,
 				SmtManager smtManager,
@@ -740,6 +740,7 @@ public class BuchiCegarLoop {
 						m_Bspm.getRankEqAndSi(), loopInterpolants, 
 						stem.getSymbol(stem.length()-1), 
 						loop.getSymbol(loop.length()-1), m_Abstraction);
+				break;
 			default:
 				throw new UnsupportedOperationException("unknown automaton");
 			}
@@ -790,8 +791,10 @@ public class BuchiCegarLoop {
 				break;
 			case DeterministicEager:
 				((EagerInterpolantAutomaton) interpolantAutomaton).finishConstruction();
+				break;
 			case NondeterministicEager:
 				((BuchiInterpolantAutomaton) interpolantAutomaton).finishConstruction();
+				break;
 			default:
 				throw new UnsupportedOperationException("unknown automaton");
 			}
