@@ -38,7 +38,7 @@ file_export_version=3.0
 file_export_version=3.0
 @TraceAbstraction=0.0.1
 /instance/TraceAbstraction/Timeout\ in\ seconds=90
-/instance/TraceAbstraction/Determinization\ algorithm=LAZYPOST
+/instance/TraceAbstraction/Determinization\ algorithm=EAGERPOST
 \!/instance/TraceAbstraction=
 /instance/TraceAbstraction/Compute\ Interpolants\ along\ a\ Counterexample=Craig_TreeInterpolation
 #Fri Nov 08 17:36:39 CET 2013
