@@ -6,6 +6,19 @@ import java.util.Map;
 import java.util.Set;
 
 
+/**
+ * If you write a nested word automaton that compute its transitions on demand,
+ * then use this class to store which transitions are already computed.
+ * 
+ * Use this together with NestedWordAutomatonCache.
+ * Problem solved by this class: Assume you query an on demand build automaton
+ * for a transition, the automaton checks its cache an returns null.
+ * Does this mean there is no such transition or does this mean the transition
+ * was not yet computed? If you want to distinguish both cases you have to do
+ * some bookkeeping to remember which transition have been already computed.
+ * 
+ * @author Matthias Heizmann
+ */
 public class NwaCacheBookkeeping<LETTER,STATE> {
 	
 	private final Map<STATE,Set<LETTER>> m_CachedInternal = new HashMap<STATE,Set<LETTER>>();
