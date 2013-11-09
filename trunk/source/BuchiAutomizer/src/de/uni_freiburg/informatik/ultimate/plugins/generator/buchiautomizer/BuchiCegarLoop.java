@@ -28,6 +28,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.BuchiDif
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.BuchiIntersect;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.BuchiIsEmpty;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.NestedLassoRun;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.NestedLassoWord;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.Accepts;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IStateDeterminizer;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.MinimizeSevpa;
@@ -367,6 +368,7 @@ public class BuchiCegarLoop {
 				return true;
 			} else {
 				m_Counterexample = ec.getAcceptingNestedLassoRun();
+				assert m_Counterexample.getLoop().getLength() > 1;
 				return false;
 			}
 		}
@@ -739,7 +741,7 @@ public class BuchiCegarLoop {
 						stemInterpolants, m_Bspm.getHondaPredicate(), 
 						m_Bspm.getRankEqAndSi(), loopInterpolants, 
 						stem.getSymbol(stem.length()-1), 
-						loop.getSymbol(loop.length()-1), m_Abstraction);
+						loop.getSymbol(loop.length()-1), m_Abstraction, false, true, false);
 				break;
 			default:
 				throw new UnsupportedOperationException("unknown automaton");
@@ -762,11 +764,8 @@ public class BuchiCegarLoop {
 				assert(complNwa.checkResult(defaultStateFactory));
 				INestedWordAutomatonOldApi<CodeBlock, IPredicate>  complement = 
 						complNwa.getResult();
-				if (interpolAutomatonUsedInRefinement instanceof BuchiInterpolantAutomaton) {
-					BuchiInterpolantAutomaton bia = ((BuchiInterpolantAutomaton) interpolAutomatonUsedInRefinement);
-					INestedWordAutomatonOldApi<CodeBlock, IPredicate> oldApi = (new RemoveUnreachable<CodeBlock, IPredicate>(bia)).getResult();
-					assert (new BuchiAccepts<CodeBlock, IPredicate>(oldApi,m_Counterexample.getNestedLassoWord())).getResult();
-				}
+				finishComputation(interpolAutomatonUsedInRefinement);
+				assert complNwa.checkResult(defaultStateFactory);
 				assert !(new BuchiAccepts<CodeBlock, IPredicate>(complement,m_Counterexample.getNestedLassoWord())).getResult();
 				BuchiIntersect<CodeBlock, IPredicate> interNwa = 
 						new BuchiIntersect<CodeBlock, IPredicate>(m_Abstraction, complement,m_StateFactoryForRefinement);
@@ -775,7 +774,7 @@ public class BuchiCegarLoop {
 			}
 			INestedWordAutomatonOldApi<CodeBlock, IPredicate> oldApi = (new RemoveUnreachable<CodeBlock, IPredicate>(interpolAutomatonUsedInRefinement)).getResult();
 			assert (new BuchiAccepts<CodeBlock, IPredicate>(oldApi,m_Counterexample.getNestedLassoWord())).getResult() : "interpolant automaton does not accept lasso.";
-
+			checkInterpolantAutomaton(interpolAutomatonUsedInRefinement, m_Counterexample);
 			assert !(new BuchiAccepts<CodeBlock, IPredicate>(newAbstraction,m_Counterexample.getNestedLassoWord())).getResult()  : "no progress";
 			m_Abstraction = newAbstraction;
 			if (m_Pref.dumpAutomata()) {
@@ -784,6 +783,36 @@ public class BuchiCegarLoop {
 			}
 		}
 		
+		private void checkInterpolantAutomaton(
+				INestedWordAutomatonSimple<CodeBlock, IPredicate> interpolAutomatonUsedInRefinement,
+				NestedLassoRun<CodeBlock, IPredicate> counterexample) {
+			INestedWordAutomatonOldApi<CodeBlock, IPredicate> oldApi;
+			try {
+				oldApi = (new RemoveUnreachable<CodeBlock, IPredicate>(interpolAutomatonUsedInRefinement)).getResult();
+			} catch (OperationCanceledException e) {
+				throw new AssertionError();
+			}
+			NestedWord<CodeBlock> stem = counterexample.getStem().getWord();
+			NestedWord<CodeBlock> loop = counterexample.getLoop().getWord();
+			NestedWord<CodeBlock> stemAndLoop = stem.concatenate(loop);
+			NestedLassoWord<CodeBlock> stemExtension = new NestedLassoWord<CodeBlock>(stemAndLoop, loop);
+			NestedWord<CodeBlock> loopAndLoop = loop.concatenate(loop);
+			NestedLassoWord<CodeBlock> loopExtension = new NestedLassoWord<CodeBlock>(stem, loopAndLoop);
+			boolean wordAccepted = (new BuchiAccepts<CodeBlock, IPredicate>(oldApi, m_Counterexample.getNestedLassoWord())).getResult();
+			if (!wordAccepted) {
+				throw new AssertionError("Bad chosen interpolant automaton: word not accepted");
+			}
+			boolean stemExtensionAccepted = (new BuchiAccepts<CodeBlock, IPredicate>(oldApi, stemExtension)).getResult();
+			if (!stemExtensionAccepted) {
+				throw new AssertionError("Bad chosen interpolant automaton: stem extension not accepted");
+			}
+			boolean loopExtensionAccepted = (new BuchiAccepts<CodeBlock, IPredicate>(oldApi, loopExtension)).getResult();
+			if (!loopExtensionAccepted) {
+				throw new AssertionError("Bad chosen interpolant automaton: loop extension not accepted");
+			}
+
+		}
+
 		private void finishComputation(INestedWordAutomatonSimple<CodeBlock, IPredicate> interpolantAutomaton) {
 			switch (m_InterpolantAutomaton) {
 			case LassoAutomaton:
