@@ -13,6 +13,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.linearTerms.AffineSubtermNormalizer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
@@ -26,6 +27,7 @@ import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
 		
 		private final SmtManager m_SmtManager;
 		private final Map<Term, IPredicate> m_Term2Predicates;
+		private boolean m_BringTermsToPositiveNormalForm = true;
 		
 		public PredicateUnifier(SmtManager smtManager, IPredicate... initialPredicates) {
 			m_SmtManager = smtManager;
@@ -145,6 +147,9 @@ import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
 				}
 				TraceChecker.s_Logger.warn("Interpolant was equivalent to false");
 			} else {
+				if (m_BringTermsToPositiveNormalForm ) {
+					term = (new AffineSubtermNormalizer(m_SmtManager.getScript())).transform(term);
+				}
 				Term closedTerm = SmtManager.computeClosedFormula(
 										term, vars, m_SmtManager.getScript());
 				predicate = m_SmtManager.newPredicate(
