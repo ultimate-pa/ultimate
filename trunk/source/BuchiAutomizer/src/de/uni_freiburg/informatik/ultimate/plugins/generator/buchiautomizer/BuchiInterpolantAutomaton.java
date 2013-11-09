@@ -78,9 +78,9 @@ public class BuchiInterpolantAutomaton implements
 	
 
 	public BuchiInterpolantAutomaton(SmtManager smtManager, EdgeChecker edgeChecker,
-			IPredicate precondition, IPredicate[] stemInterpolants, 
-			IPredicate hondaPredicate, IPredicate rankEqAndSi, 
-			IPredicate[] loopInterpolants, CodeBlock hondaEntererStem, CodeBlock hondaEntererLoop,
+			IPredicate precondition, Set<IPredicate> stemInterpolants, 
+			IPredicate hondaPredicate, 
+			Set<IPredicate> loopInterpolants, CodeBlock hondaEntererStem, CodeBlock hondaEntererLoop,
 			INestedWordAutomatonSimple<CodeBlock, IPredicate> abstraction,
 			boolean scroogeNondeterminism, boolean hondaBouncerStem, boolean hondaBouncerLoop) {
 		super();
@@ -121,9 +121,6 @@ public class BuchiInterpolantAutomaton implements
 		m_Result.addState(false, true, hondaPredicate);
 		m_InputSuccessorCache.addState(false, true, hondaPredicate);
 		m_RejectionCache.addState(false, true, hondaPredicate);
-		m_InputLoopPredicates.add(rankEqAndSi);
-		m_InputSuccessorCache.addState(false, false, rankEqAndSi);
-		m_RejectionCache.addState(false, false, rankEqAndSi);
 		for (IPredicate loopPredicate : loopInterpolants) {
 			if (!m_InputLoopPredicates.contains(loopPredicate)) {
 				m_InputLoopPredicates.add(loopPredicate);

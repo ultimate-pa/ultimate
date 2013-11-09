@@ -736,10 +736,13 @@ public class BuchiCegarLoop {
 					new EagerInterpolantAutomaton(ec, m_InterpolAutomaton);
 				break;
 			case NondeterministicEager:
+				Set<IPredicate> cannibalizedStemInterpolants = pu.cannibalizeAll(stemInterpolants);
+				Set<IPredicate> cannibalizedLoopInterpolants = pu.cannibalizeAll(loopInterpolants);
+				cannibalizedLoopInterpolants.addAll(pu.cannibalize(m_Bspm.getRankEqAndSi().getFormula()));
 				interpolAutomatonUsedInRefinement = new BuchiInterpolantAutomaton(
 						m_SmtManager, ec, m_Bspm.getStemPrecondition(), 
-						stemInterpolants, m_Bspm.getHondaPredicate(), 
-						m_Bspm.getRankEqAndSi(), loopInterpolants, 
+						cannibalizedStemInterpolants, m_Bspm.getHondaPredicate(), 
+						cannibalizedLoopInterpolants, 
 						stem.getSymbol(stem.length()-1), 
 						loop.getSymbol(loop.length()-1), m_Abstraction, false, true, false);
 				break;
