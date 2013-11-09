@@ -13,9 +13,13 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.linearTerms.AffineSubtermNormalizer;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.normalForms.Cnf;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.normalForms.Dnf;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager.TermVarsProc;
 import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
 
 	/**
@@ -216,5 +220,30 @@ import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
 			default:
 				throw new AssertionError();
 			}
+		}
+		
+		
+		/**
+		 * Given a term "cut up" all its conjuncts. We bring the term in CNF
+		 * and return an IPredicate for each conjunct.
+		 */
+		public Set<IPredicate> cannibalize(Term term) {
+			Set<IPredicate> result = new HashSet<IPredicate>();
+			Term cnf = (new Cnf(m_SmtManager.getScript())).transform(term);
+			Term[] conjuncts = PartialQuantifierElimination.getConjuncts(cnf);
+			for (Term conjunct : conjuncts) {
+				TermVarsProc tvp = m_SmtManager.computeTermVarsProc(conjunct);
+				IPredicate predicate = getOrConstructPredicate(tvp.getFormula(), tvp.getVars(), tvp.getProcedures());
+				result.add(predicate);
+			}
+			return result;
+		}
+		
+		public Set<IPredicate> cannibalizeAll(IPredicate... predicates) {
+			final Set<IPredicate> result = new HashSet<IPredicate>();
+			for (IPredicate pred : predicates) {
+				result.addAll(cannibalize(pred.getFormula()));
+			}
+			return result;
 		}
 	}
