@@ -747,7 +747,7 @@ public class BuchiCegarLoop {
 						cannibalizedStemInterpolants, m_Bspm.getHondaPredicate(), 
 						cannibalizedLoopInterpolants, 
 						stem.getSymbol(stem.length()-1), 
-						loop.getSymbol(loop.length()-1), m_Abstraction, false, false, false);
+						loop.getSymbol(loop.length()-1), m_Abstraction, true, false, false);
 				break;
 			default:
 				throw new UnsupportedOperationException("unknown automaton");
