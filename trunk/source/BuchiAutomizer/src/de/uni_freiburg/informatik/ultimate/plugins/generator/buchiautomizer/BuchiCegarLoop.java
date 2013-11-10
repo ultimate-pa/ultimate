@@ -739,12 +739,15 @@ public class BuchiCegarLoop {
 				Set<IPredicate> cannibalizedStemInterpolants = pu.cannibalizeAll(stemInterpolants);
 				Set<IPredicate> cannibalizedLoopInterpolants = pu.cannibalizeAll(loopInterpolants);
 				cannibalizedLoopInterpolants.addAll(pu.cannibalize(m_Bspm.getRankEqAndSi().getFormula()));
+				LoopCannibalizer lc = new LoopCannibalizer(m_Counterexample, 
+						cannibalizedLoopInterpolants, m_Bspm, pu, m_SmtManager, buchiModGlobalVarManager);
+				cannibalizedLoopInterpolants = lc.getResult();
 				interpolAutomatonUsedInRefinement = new BuchiInterpolantAutomaton(
 						m_SmtManager, ec, m_Bspm.getStemPrecondition(), 
 						cannibalizedStemInterpolants, m_Bspm.getHondaPredicate(), 
 						cannibalizedLoopInterpolants, 
 						stem.getSymbol(stem.length()-1), 
-						loop.getSymbol(loop.length()-1), m_Abstraction, false, true, false);
+						loop.getSymbol(loop.length()-1), m_Abstraction, false, false, false);
 				break;
 			default:
 				throw new UnsupportedOperationException("unknown automaton");

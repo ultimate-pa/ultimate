@@ -1,0 +1,149 @@
+package de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer;
+
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
+
+import org.apache.log4j.Logger;
+
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.NestedLassoRun;
+import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
+import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
+import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.PreferenceInitializer.INTERPOLATION;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.PredicateUnifier;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceChecker;
+
+
+/**
+ * Extract many predicates from a loop. Given a termination argument (given by
+ * a honda predicate) we check for some shifts of the loop if the termination
+ * argument is also sufficient compute interpolants. 
+ * @author Matthias Heizmann
+ */
+public class LoopCannibalizer {
+
+	private final NestedLassoRun<CodeBlock, IPredicate> m_Counterexample;
+	private final BinaryStatePredicateManager m_Bspm;
+	private final PredicateUnifier m_PredicateUnifier;
+	private final SmtManager m_SmtManager;
+	private final BuchiModGlobalVarManager m_buchiModGlobalVarManager;
+	private final Set<IPredicate> m_ResultPredicates;
+	private final Set<IPredicate> m_OriginalLoopInterpolants;
+	private NestedWord<CodeBlock> m_Loop;
+	
+	private static Logger s_Logger = 
+			UltimateServices.getInstance().getLogger(Activator.s_PLUGIN_ID);
+	
+	
+	
+	
+	
+	public LoopCannibalizer(
+			NestedLassoRun<CodeBlock, IPredicate> counterexample,
+			Set<IPredicate> loopInterpolants,
+			BinaryStatePredicateManager bspm,
+			PredicateUnifier predicateUnifier, SmtManager smtManager, 
+			BuchiModGlobalVarManager buchiModGlobalVarManager) {
+		super();
+		m_Counterexample = counterexample;
+		m_Bspm = bspm;
+		m_PredicateUnifier = predicateUnifier;
+		m_SmtManager = smtManager;
+		m_buchiModGlobalVarManager = buchiModGlobalVarManager;
+		m_OriginalLoopInterpolants = loopInterpolants;
+		m_ResultPredicates = new HashSet<IPredicate>(loopInterpolants);
+		m_Loop = m_Counterexample.getLoop().getWord();
+		cannibalize();
+		s_Logger.info(exitMessage());
+	}
+	
+	private StringBuilder exitMessage() {
+		StringBuilder sb = new StringBuilder();
+		sb.append(m_OriginalLoopInterpolants.size());
+		sb.append(" predicates before loop cannibalization ");
+		sb.append(m_ResultPredicates.size());
+		sb.append(" predicates after loop cannibalization ");
+		return sb;
+	}
+
+	private void cannibalize() {
+		int i=1;
+		while (i<m_Loop.length()-1) {
+			if (checkForNewPredicates(i)) {
+				NestedWord<CodeBlock> before = m_Loop.subWord(0, i);
+				NestedWord<CodeBlock> after = m_Loop.subWord(i+1, m_Loop.length()-1);
+				NestedWord<CodeBlock> shifted = after.concatenate(before);
+				TraceChecker traceChecker = new TraceChecker(m_Bspm.getRankEqAndSi(), 
+						m_Bspm.getHondaPredicate(), null, shifted, m_SmtManager,
+						m_buchiModGlobalVarManager);
+				LBool loopCheck = traceChecker.isCorrect();
+				if (loopCheck == LBool.UNSAT) {
+					IPredicate[] loopInterpolants;
+					traceChecker.computeInterpolants(new TraceChecker.AllIntegers(), m_PredicateUnifier, INTERPOLATION.Craig_TreeInterpolation);
+					loopInterpolants = traceChecker.getInterpolants();
+					Set<IPredicate> cannibalized = m_PredicateUnifier.cannibalizeAll(loopInterpolants);
+					m_ResultPredicates.addAll(cannibalized);
+				} else {
+					s_Logger.info("termination argument not suffcient for all loop shiftings");
+				}
+			}
+			if (m_Loop.isCallPosition(i+1) && !!m_Loop.isPendingCall(i+1)) {
+				int correspondingReturn = m_Loop.getReturnPosition(i+1);
+				i = correspondingReturn;
+			} else {
+				i++;
+			}
+		}
+	}
+	
+	/**
+	 * We check for new predicates if the CodeBlock at i uses a variable of the
+	 * HondaPredicate, if the CodeBlock at i is a Return or the CodeBlock at 
+	 * i+1 is a non-pending call.
+	 */
+	private boolean checkForNewPredicates(int i) {
+		if (codeBlockContainsVarOfHondaPredicate(m_Loop.getSymbol(i))) {
+			return true;
+		}
+		if (m_Loop.isReturnPosition(i)) {
+			assert !m_Loop.isPendingReturn(i) : "not yet supported";
+			return true;
+		}
+		if (m_Loop.isCallPosition(i+1)) {
+			if (!m_Loop.isPendingCall(i+1)) {
+				return true;
+			}
+		}
+		return false;
+	}
+	
+	private boolean codeBlockContainsVarOfHondaPredicate(CodeBlock cb) {
+		Set<BoogieVar> hondaVars = m_Bspm.getHondaPredicate().getVars();
+		Set<BoogieVar> inVars = cb.getTransitionFormula().getInVars().keySet();
+		if (!Collections.disjoint(hondaVars, inVars)) {
+			return true;
+		}
+		Set<BoogieVar> outVars = cb.getTransitionFormula().getOutVars().keySet();
+		if (!Collections.disjoint(hondaVars, outVars)) {
+			return true;
+		}
+		return false;
+	}
+	
+	public Set<IPredicate> getResult() {
+		return m_ResultPredicates;
+	}
+
+
+
+
+
+
+
+}
