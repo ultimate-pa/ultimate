@@ -73,30 +73,38 @@ public class LoopCannibalizer {
 	}
 
 	private void cannibalize() {
-		int i=1;
+		final int startPosition;
+		if (m_Loop.isCallPosition(0) && !m_Loop.isPendingCall(0)) {
+			int correspondingReturn = m_Loop.getReturnPosition(0);
+			startPosition = correspondingReturn;
+		} else {
+			startPosition = 1;
+		}
+		int i = startPosition;
 		while (i<m_Loop.length()-1) {
-			if (checkForNewPredicates(i)) {
-				NestedWord<CodeBlock> before = m_Loop.subWord(0, i);
-				NestedWord<CodeBlock> after = m_Loop.subWord(i+1, m_Loop.length()-1);
-				NestedWord<CodeBlock> shifted = after.concatenate(before);
-				TraceChecker traceChecker = new TraceChecker(m_Bspm.getRankEqAndSi(), 
-						m_Bspm.getHondaPredicate(), null, shifted, m_SmtManager,
-						m_buchiModGlobalVarManager);
-				LBool loopCheck = traceChecker.isCorrect();
-				if (loopCheck == LBool.UNSAT) {
-					IPredicate[] loopInterpolants;
-					traceChecker.computeInterpolants(new TraceChecker.AllIntegers(), m_PredicateUnifier, INTERPOLATION.Craig_TreeInterpolation);
-					loopInterpolants = traceChecker.getInterpolants();
-					Set<IPredicate> cannibalized = m_PredicateUnifier.cannibalizeAll(loopInterpolants);
-					m_ResultPredicates.addAll(cannibalized);
-				} else {
-					s_Logger.info("termination argument not suffcient for all loop shiftings");
-				}
-			}
-			if (m_Loop.isCallPosition(i+1) && !!m_Loop.isPendingCall(i+1)) {
-				int correspondingReturn = m_Loop.getReturnPosition(i+1);
+			if (m_Loop.isCallPosition(i) && !m_Loop.isPendingCall(i)) {
+				int correspondingReturn = m_Loop.getReturnPosition(i);
 				i = correspondingReturn;
 			} else {
+				if (checkForNewPredicates(i)) {
+					NestedWord<CodeBlock> before = m_Loop.subWord(0, i);
+					NestedWord<CodeBlock> after = m_Loop.subWord(i+1, m_Loop.length()-1);
+					NestedWord<CodeBlock> shifted = after.concatenate(before);
+					TraceChecker traceChecker = new TraceChecker(m_Bspm.getRankEqAndSi(), 
+							m_Bspm.getHondaPredicate(), null, shifted, m_SmtManager,
+							m_buchiModGlobalVarManager);
+					LBool loopCheck = traceChecker.isCorrect();
+					if (loopCheck == LBool.UNSAT) {
+						IPredicate[] loopInterpolants;
+						traceChecker.computeInterpolants(new TraceChecker.AllIntegers(), m_PredicateUnifier, INTERPOLATION.Craig_TreeInterpolation);
+						loopInterpolants = traceChecker.getInterpolants();
+						Set<IPredicate> cannibalized = m_PredicateUnifier.cannibalizeAll(loopInterpolants);
+						m_ResultPredicates.addAll(cannibalized);
+					} else {
+						traceChecker.unlockSmtManager();
+						s_Logger.info("termination argument not suffcient for all loop shiftings");
+					}
+				}
 				i++;
 			}
 		}
