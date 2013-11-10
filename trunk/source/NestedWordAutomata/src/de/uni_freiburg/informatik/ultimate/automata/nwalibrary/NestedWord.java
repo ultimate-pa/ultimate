@@ -1,6 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.TreeMap;
@@ -518,5 +519,48 @@ public class NestedWord<LETTER> extends Word<LETTER> {
 			}
 		}
 		return sb.toString();
+	}
+	
+	
+	/**
+	 * Return the subWord starting with firstIndex and lastIndex.
+	 */
+	public NestedWord<LETTER> subWord(int firstIndex, int lastIndex) {
+		if (firstIndex < 0) {
+			throw new IllegalArgumentException(
+					"first index must be >=0");
+		}
+		if (firstIndex > lastIndex) {
+			throw new IllegalArgumentException(
+					"last index must be >= first index");
+		}
+		if (lastIndex >= length()) {
+			throw new IllegalArgumentException(
+					"last index must smaller strictly smaller than length");
+		}
+		LETTER[] subWord = Arrays.copyOfRange(m_Word, firstIndex, lastIndex+1);
+		int[] subNestingRelation = new int[lastIndex-firstIndex+1];
+		for (int i = firstIndex; i<=lastIndex; i++) {
+			int translatedNestingCode;
+			if (m_NestingRelation[i] == -2 || 
+					m_NestingRelation[i] == Integer.MIN_VALUE || 
+					m_NestingRelation[i] == Integer.MAX_VALUE) {
+				translatedNestingCode = m_NestingRelation[i];
+			} else if (m_NestingRelation[i] < firstIndex) {
+				//becomes pending return
+				assert m_NestingRelation[i] >=0;
+				translatedNestingCode = Integer.MIN_VALUE;
+			} else if (m_NestingRelation[i] > lastIndex) {
+				//becomes pending call
+				assert m_NestingRelation[i] < length();
+				translatedNestingCode = Integer.MAX_VALUE;
+			} else {
+				assert m_NestingRelation[i] >= firstIndex && m_NestingRelation[i] <= lastIndex;
+				translatedNestingCode = m_NestingRelation[i] - firstIndex;
+			}
+			subNestingRelation[i-firstIndex] = translatedNestingCode; 
+		}
+		assert subWord.length == subNestingRelation.length;
+		return new NestedWord<LETTER>(subWord, subNestingRelation);
 	}
 }
