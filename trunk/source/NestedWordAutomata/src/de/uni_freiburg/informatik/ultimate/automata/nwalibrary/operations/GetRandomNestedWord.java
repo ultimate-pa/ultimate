@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Random;
+import java.util.Stack;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
@@ -28,6 +29,8 @@ public class GetRandomNestedWord<LETTER, STATE> implements IOperation<LETTER, ST
 	private final List<LETTER> m_InternalAlphabet;
 	private final List<LETTER> m_CallAlphabet;
 	private final List<LETTER> m_ReturnAlphabet;
+	
+	private final static int s_TemporaryPendingCall = -7;
 	
 	private final NestedWord<LETTER> m_Result;
 	
@@ -104,22 +107,33 @@ public class GetRandomNestedWord<LETTER, STATE> implements IOperation<LETTER, ST
 			throw new IllegalArgumentException(errorMessage);
 		}
 
-		NestedWord<LETTER> result = new NestedWord<LETTER>();
+		LETTER[] word = (LETTER[]) new Object[length];
+		int[] nestingRelation = new int[length];
+		Stack<Integer> callPositionStack = new Stack<Integer>();
 		int pendingCalls = 0;
 		for (int i=0; i<length; i++) {
-			NestedWord<LETTER> singletonAtPosi;
 			double inORcaORre = m_Random.nextDouble();
 			if (inORcaORre < probabilityCall) {
+				word[i] = getRandomLetter(m_CallAlphabet);
+				nestingRelation[i] = s_TemporaryPendingCall;
+				callPositionStack.push(i);
 				pendingCalls++;
-				singletonAtPosi = pendingCallSingleton();
 			} else if (pendingCalls > 0 && inORcaORre < probabilityCall + probabilityReturn ) {
+				word[i] = getRandomLetter(m_ReturnAlphabet);
+				int correspondingCallPosition = callPositionStack.pop();
+				nestingRelation[i] = correspondingCallPosition;
+				nestingRelation[correspondingCallPosition] = i;
 				pendingCalls--;
-				singletonAtPosi = pendingReturnSingleton();
 			} else {
-				singletonAtPosi = internalSingleton();
+				word[i] = getRandomLetter(m_InternalAlphabet);
+				nestingRelation[i] = NestedWord.INTERNAL_POSITION;
 			}
-			result = result.concatenate(singletonAtPosi);
 		}
+		while (!callPositionStack.isEmpty()) {
+			int pendingCallPosition = callPositionStack.pop();
+			nestingRelation[pendingCallPosition] = NestedWord.PLUS_INFINITY;
+		}
+		NestedWord<LETTER> result = new NestedWord<LETTER>(word, nestingRelation);
 		return result;
 	}
 	
