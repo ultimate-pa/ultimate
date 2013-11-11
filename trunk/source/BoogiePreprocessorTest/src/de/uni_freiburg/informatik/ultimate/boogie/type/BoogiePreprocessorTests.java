@@ -1,6 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.boogie.type;
 
-import static org.junit.Assert.* ;
+import static org.junit.Assert.*;
+
 import org.junit.Test;
 
 public class BoogiePreprocessorTests {
