@@ -49,5 +49,13 @@ public class HashRelation<D,R> {
 		return m_Map.get(domainElem);
 	}
 	
+	public int size() {
+		int result = 0;
+		for (HashSet<R> rangeSet : m_Map.values()) {
+			result += rangeSet.size();
+		}
+		return result;
+	}
+	
 
 }
