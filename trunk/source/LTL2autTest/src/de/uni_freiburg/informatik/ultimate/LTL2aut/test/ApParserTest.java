@@ -2,9 +2,12 @@ package de.uni_freiburg.informatik.ultimate.LTL2aut.test;
 
 import java.io.InputStreamReader;
 
+
+
 import junit.framework.TestCase;
 
 import org.apache.commons.io.IOUtils;
+
 import de.uni_freiburg.informatik.ultimate.LTL2aut.LexerAP;
 import de.uni_freiburg.informatik.ultimate.LTL2aut.parserAP;
 import de.uni_freiburg.informatik.ultimate.LTL2aut.ast.AstNode;

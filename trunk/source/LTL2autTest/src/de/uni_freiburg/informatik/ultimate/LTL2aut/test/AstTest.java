@@ -1,7 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.LTL2aut.test;
 
-import de.uni_freiburg.informatik.ultimate.LTL2aut.ast.*;
 import junit.framework.TestCase;
+import de.uni_freiburg.informatik.ultimate.LTL2aut.ast.*;
 
 public class AstTest extends TestCase {
 	

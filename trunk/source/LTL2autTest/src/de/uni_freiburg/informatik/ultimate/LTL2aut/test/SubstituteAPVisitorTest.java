@@ -4,6 +4,9 @@ import java.io.InputStreamReader;
 import java.util.HashMap;
 import java.util.Map;
 
+
+
+
 import org.apache.commons.io.IOUtils;
 
 import de.uni_freiburg.informatik.ultimate.LTL2aut.Lexer;
@@ -41,7 +44,7 @@ public class SubstituteAPVisitorTest extends TestCase {
 		
 		// pasrse aps
 		String[] aps = {"a : x *4 + 2 >= y", "b : x > 2", "c : 1 = 1", "d : ding+dong = derp" };
-		Map apmap= new HashMap<String,AstNode>();
+		Map<String, AstNode> apmap= new HashMap<String,AstNode>();
 		
 		for (String ap: aps)
 		{
