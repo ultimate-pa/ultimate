@@ -9,6 +9,7 @@ var x,y,z,u: int;
 procedure main()
 modifies x, y, z, u;
 {
+  assume true;
   while (x>0 && y>0 && z>0 && u>0) {
     if (*) {
       x := x - 1;
@@ -23,7 +24,7 @@ modifies x, y, z, u;
       havoc x;
       havoc y;
       havoc z;
-      u := u - 1;
+      u := u;
     }
   }
 }

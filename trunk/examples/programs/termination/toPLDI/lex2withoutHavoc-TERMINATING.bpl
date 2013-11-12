@@ -9,6 +9,7 @@ var x,y: int;
 procedure main()
 modifies x, y;
 {
+  assume true;
   while (x>0 && y>0) {
     if (*) {
       x := x - 1;
