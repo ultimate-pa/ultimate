@@ -124,8 +124,10 @@ public class BuchiInterpolantAutomaton implements
 		for (IPredicate loopPredicate : loopInterpolants) {
 			if (!m_InputLoopPredicates.contains(loopPredicate)) {
 				m_InputLoopPredicates.add(loopPredicate);
-				m_InputSuccessorCache.addState(false, false, loopPredicate);
-				m_RejectionCache.addState(false, false, loopPredicate);
+				if (!m_InputStemPredicates.contains(loopPredicate)) {
+					m_InputSuccessorCache.addState(false, false, loopPredicate);
+					m_RejectionCache.addState(false, false, loopPredicate);
+				}
 			}
 		}
 		m_InputBookkeeping = new NwaCacheBookkeeping<CodeBlock, IPredicate>();
