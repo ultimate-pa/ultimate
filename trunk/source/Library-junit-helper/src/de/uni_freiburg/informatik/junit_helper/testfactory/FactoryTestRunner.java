@@ -1,6 +1,5 @@
 package de.uni_freiburg.informatik.junit_helper.testfactory;
 
-import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -31,8 +30,7 @@ public class FactoryTestRunner extends BlockJUnit4ClassRunner {
 		Object currentInstance = null;
 		try {
 			currentInstance = classUnderTest.getOnlyConstructor().newInstance();
-		} catch (InstantiationException | IllegalAccessException
-				| IllegalArgumentException | InvocationTargetException e1) {
+		} catch (Exception e1) {
 			e1.printStackTrace();
 			return tests;
 		}
@@ -46,8 +44,7 @@ public class FactoryTestRunner extends BlockJUnit4ClassRunner {
 			try {
 
 				factoryMethod = method.getMethod().invoke(currentInstance);
-			} catch (IllegalAccessException | IllegalArgumentException
-					| InvocationTargetException e) {
+			} catch (Exception e) {
 				e.printStackTrace();
 				continue;
 			}
