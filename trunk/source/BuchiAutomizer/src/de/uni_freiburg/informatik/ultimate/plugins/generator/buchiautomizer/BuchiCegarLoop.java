@@ -189,7 +189,7 @@ public class BuchiCegarLoop {
 
 		private final boolean m_ReduceAbstractionSize = true;
 		private final boolean m_Difference = true;
-		private final boolean m_UseDoubleDeckers = !true;
+		private final boolean m_UseDoubleDeckers = true;
 		
 		private static final boolean m_ExternalSolver = false;
 		private static final boolean m_SimplifyStemAndLoop = true;
@@ -691,18 +691,16 @@ public class BuchiCegarLoop {
 					m_Bspm.getStemPostcondition(), null, stem, m_SmtManager,
 					buchiModGlobalVarManager);
 			LBool stemCheck = m_TraceChecker.isCorrect();
+			PredicateUnifier pu = new PredicateUnifier(m_SmtManager, 
+					m_Bspm.getStemPrecondition(), m_Bspm.getHondaPredicate(), m_Bspm.getRankEqAndSi(), m_Bspm.getStemPostcondition());
 			IPredicate[] stemInterpolants;
 			if (stemCheck == LBool.UNSAT) {
-				PredicateUnifier pu = new PredicateUnifier(m_SmtManager, 
-						m_Bspm.getStemPrecondition(), m_Bspm.getStemPostcondition());
 				m_TraceChecker.computeInterpolants(new TraceChecker.AllIntegers(), pu, INTERPOLATION.Craig_TreeInterpolation);
 				stemInterpolants = m_TraceChecker.getInterpolants();
 			} else {
 				throw new AssertionError();
 			}
 
-			PredicateUnifier pu = new PredicateUnifier(m_SmtManager, 
-					m_Bspm.getRankEqAndSi(), m_Bspm.getHondaPredicate());
 			m_TraceChecker = new TraceChecker(m_Bspm.getRankEqAndSi(), 
 					m_Bspm.getHondaPredicate(), null, loop, m_SmtManager,
 					buchiModGlobalVarManager);
@@ -773,8 +771,6 @@ public class BuchiCegarLoop {
 				assert(complNwa.checkResult(defaultStateFactory));
 				INestedWordAutomatonOldApi<CodeBlock, IPredicate>  complement = 
 						complNwa.getResult();
-				finishComputation(interpolAutomatonUsedInRefinement);
-				assert complNwa.checkResult(defaultStateFactory);
 				assert !(new BuchiAccepts<CodeBlock, IPredicate>(complement,m_Counterexample.getNestedLassoWord())).getResult();
 				BuchiIntersect<CodeBlock, IPredicate> interNwa = 
 						new BuchiIntersect<CodeBlock, IPredicate>(m_Abstraction, complement,m_StateFactoryForRefinement);
