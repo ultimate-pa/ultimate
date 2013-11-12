@@ -1,0 +1,33 @@
+// Date: November 2013
+// Matthias Heizmann
+// revealed bugs in buchiComplementFKV
+
+print(numberOfStates(nwa));
+NestedWordAutomaton complement = buchiComplementFKV(nwa);
+print(numberOfStates(complement));
+print(complement);
+
+NestedWordAutomaton nwa = (
+    callAlphabet = {},
+    internalAlphabet = {"a" "b" },
+    returnAlphabet = {},
+    states = {"q2" "q1" "q4" "q3" "q0" },
+    initialStates = {"q0" },
+    finalStates = {"q4" "q3" },
+    callTransitions = {
+    },
+    internalTransitions = {
+         ("q2" "a" "q3")
+         ("q1" "a" "q1")
+         ("q1" "b" "q4")
+         ("q4" "a" "q2")
+         ("q4" "a" "q3")
+         ("q4" "b" "q0")
+         ("q3" "a" "q1")
+         ("q0" "a" "q4")
+         ("q0" "a" "q0")
+         ("q0" "b" "q0")
+    },
+    returnTransitions = {
+    }
+);
