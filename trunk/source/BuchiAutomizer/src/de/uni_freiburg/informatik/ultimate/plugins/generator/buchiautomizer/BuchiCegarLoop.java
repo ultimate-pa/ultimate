@@ -393,6 +393,9 @@ public class BuchiCegarLoop {
 			s_Logger.info("Stem: " + stem);
 			NestedRun<CodeBlock, IPredicate> loop = m_Counterexample.getLoop();
 			s_Logger.info("Loop: " + loop);
+			if (stem.getLength() == 1) {
+				throw new UnsupportedOperationException("stem of length 0 not yet supported");
+			}
 
 			m_TruePredicate = m_SmtManager.newTruePredicate();
 			m_FalsePredicate = m_SmtManager.newFalsePredicate();
@@ -747,7 +750,7 @@ public class BuchiCegarLoop {
 						cannibalizedStemInterpolants, m_Bspm.getHondaPredicate(), 
 						cannibalizedLoopInterpolants, 
 						stem.getSymbol(stem.length()-1), 
-						loop.getSymbol(loop.length()-1), m_Abstraction, false, false, false);
+						loop.getSymbol(loop.length()-1), m_Abstraction, true, false, false);
 				break;
 			default:
 				throw new UnsupportedOperationException("unknown automaton");
