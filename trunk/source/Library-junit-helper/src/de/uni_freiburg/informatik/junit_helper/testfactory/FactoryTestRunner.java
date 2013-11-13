@@ -21,7 +21,6 @@ public class FactoryTestRunner extends BlockJUnit4ClassRunner {
 	}
 
 	protected Collection<? extends FrameworkMethod> generateFactoryTests() {
-		System.out.println(this + ".generateFactoryTests()");
 		List<FrameworkFactoryTest> tests = new ArrayList<FrameworkFactoryTest>();
 		TestClass classUnderTest = getTestClass();
 
