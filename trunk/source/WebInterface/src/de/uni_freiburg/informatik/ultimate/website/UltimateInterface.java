@@ -24,8 +24,8 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
-import de.uni_freiburg.informatik.ultimate.core.coreplugin.Application;
-import de.uni_freiburg.informatik.ultimate.core.coreplugin.Application.Ultimate_Mode;
+import de.uni_freiburg.informatik.ultimate.core.coreplugin.UltimateCore;
+import de.uni_freiburg.informatik.ultimate.core.coreplugin.UltimateCore.Ultimate_Mode;
 import de.uni_freiburg.informatik.ultimate.model.ILocation;
 import de.uni_freiburg.informatik.ultimate.result.CounterExampleResult;
 import de.uni_freiburg.informatik.ultimate.result.GenericResult;
@@ -308,7 +308,7 @@ public class UltimateInterface extends HttpServlet {
 					}
 				}
 				// execute ultimate with the calculated toolchain settings
-				Application app = new Application(
+				UltimateCore app = new UltimateCore(
 						Ultimate_Mode.EXTERNAL_EXECUTION);
 				String fileExtension;
 				if (taskId.equals("VerifyC")) {

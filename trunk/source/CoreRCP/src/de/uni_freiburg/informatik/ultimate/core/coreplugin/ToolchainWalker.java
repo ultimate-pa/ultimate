@@ -51,13 +51,13 @@ public class ToolchainWalker {
 	// references to same-named objects in the Core
 	// when they change in the core, they will also be 
 	// changed here
-	private Application m_Core;
+	private UltimateCore m_Core;
 	private Benchmark m_Bench;
 	private IModelManager m_ModelManager;
 	private HashMap<String, ITool> m_Id2Plugin;
 
 	
-	public ToolchainWalker(Application caller, Benchmark bench, IModelManager mmanager, HashMap<String, ITool> id2plugin) {
+	public ToolchainWalker(UltimateCore caller, Benchmark bench, IModelManager mmanager, HashMap<String, ITool> id2plugin) {
 		m_Core = caller;
 		m_Bench = bench;
 		m_ModelManager = mmanager;

@@ -8,6 +8,8 @@ public interface ITestSummary {
 	public String getSummaryLog();
 
 	public File getSummaryLogFile();
+	
+	public String getTestSuiteCanonicalName();
 
 	public void addFail(IResult result, String filename, String message);
 

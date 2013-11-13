@@ -13,8 +13,8 @@ import java.util.Map;
 
 import org.apache.log4j.Logger;
 
-import de.uni_freiburg.informatik.ultimate.core.coreplugin.Application;
-import de.uni_freiburg.informatik.ultimate.core.coreplugin.Application.Ultimate_Mode;
+import de.uni_freiburg.informatik.ultimate.core.coreplugin.UltimateCore;
+import de.uni_freiburg.informatik.ultimate.core.coreplugin.UltimateCore.Ultimate_Mode;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.preferences.CorePreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.IStorable;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.ITool;
@@ -28,6 +28,7 @@ import de.uni_freiburg.informatik.ultimate.model.UltimateUID;
 import de.uni_freiburg.informatik.ultimate.model.repository.IRepository;
 import de.uni_freiburg.informatik.ultimate.model.repository.StoreObjectException;
 import de.uni_freiburg.informatik.ultimate.result.IResult;
+import de.uni_freiburg.informatik.ultimate.util.MonitoredProcess;
 
 /**
  * UltimateServices
@@ -38,7 +39,7 @@ import de.uni_freiburg.informatik.ultimate.result.IResult;
  * 
  * Usage: Plug-ins obtain a singleton instance via the static getter
  * {@link UltimateServices#getInstance()}. The instance is created and maintained
- * by {@link Application} and has knowledge of all necessary internal states.
+ * by {@link UltimateCore} and has knowledge of all necessary internal states.
  * 
  * 
  * @since 2.0
@@ -53,12 +54,13 @@ public class UltimateServices {
 	 * @param modelManager
 	 *            the current {@link IModelManager}
 	 * @param application
-	 *            the current instance of {@link Application}
+	 *            the current instance of {@link UltimateCore}
 	 */
-	private UltimateServices(IModelManager modelManager, Application application) {
+	private UltimateServices(IModelManager modelManager, UltimateCore application) {
 		this.m_Application = application;
 		this.m_ModelManager = modelManager;
 		this.m_ResultMap = new HashMap<String, List<IResult>>();
+		mMonitoredProcesses = new ArrayList<MonitoredProcess>();
 	}
 
 	/**
@@ -71,7 +73,7 @@ public class UltimateServices {
 	 */
 
 	private IModelManager m_ModelManager;
-	private Application m_Application;
+	private UltimateCore m_Application;
 	
 	/**
 	 * Here we store the parsed AST from the CDT-Plugin.
@@ -94,6 +96,25 @@ public class UltimateServices {
 	@Deprecated
 	private List<ITranslator<?,?,?,?>> m_TranslatorSequence;
 
+	
+	private List<MonitoredProcess> mMonitoredProcesses;
+	
+	public void registerProcess(MonitoredProcess mp){
+		mMonitoredProcesses.add(mp);
+	}
+	
+	public void unregisterProcess(MonitoredProcess mp){
+		mMonitoredProcesses.remove(mp);
+	}
+	
+	public void terminateExternalProcesses(){
+		for(MonitoredProcess mp : mMonitoredProcesses){
+			mp.forceShutdown();
+		}
+		mMonitoredProcesses.clear();
+	}
+	
+	
 	/**
 	 * Getter for the singleton instance. Plug-ins should always call this
 	 * method to obtain a instance of UltimateServices. The core takes care that
@@ -111,18 +132,18 @@ public class UltimateServices {
 
 	/**
 	 * Creates the singleton instance. Should only be called by
-	 * {@link Application}
+	 * {@link UltimateCore}
 	 * 
 	 * @param application
-	 *            the current instance of {@link Application}
+	 *            the current instance of {@link UltimateCore}
 	 */
-	public static void createInstance(Application application) {
+	public static void createInstance(UltimateCore application) {
 		s_Instance = new UltimateServices(null, application);
 	}
 
 	/**
 	 * Sets the current ModelManager. Should only be called by
-	 * {@link Application}
+	 * {@link UltimateCore}
 	 * 
 	 * @param modelManager
 	 *            the current instance of {@link IModelManager}

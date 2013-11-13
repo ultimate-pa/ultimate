@@ -8,7 +8,7 @@ import de.uni_freiburg.informatik.ultimate.access.walker.DFSTreeWalker;
 import de.uni_freiburg.informatik.ultimate.access.walker.IWalker;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.Activator;
-import de.uni_freiburg.informatik.ultimate.core.coreplugin.Application.Ultimate_Mode;
+import de.uni_freiburg.informatik.ultimate.core.coreplugin.UltimateCore.Ultimate_Mode;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.IController;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.IGenerator;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.ITool;

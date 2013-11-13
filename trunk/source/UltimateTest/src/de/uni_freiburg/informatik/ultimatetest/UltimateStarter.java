@@ -7,15 +7,16 @@ import org.apache.log4j.FileAppender;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PatternLayout;
 
-import de.uni_freiburg.informatik.ultimate.core.coreplugin.Application;
-import de.uni_freiburg.informatik.ultimate.core.coreplugin.Application.Ultimate_Mode;
+import de.uni_freiburg.informatik.ultimate.core.coreplugin.UltimateCore;
+import de.uni_freiburg.informatik.ultimate.core.coreplugin.UltimateCore.Ultimate_Mode;
 
 /**
  * 
  * This class wraps the Ultimate application and allows to start it without
  * setting an IController object.
  * 
- * Call runUltimate() to execute it and complete after processing the results (to release resources).
+ * Call runUltimate() to execute it and complete after processing the results
+ * (to release resources).
  * 
  * @author dietsch
  * 
@@ -32,6 +33,7 @@ public class UltimateStarter {
 
 	private String mLogPattern;
 	private File mLogFile;
+	private UltimateCore mCurrentUltimateInstance;
 
 	public UltimateStarter(File inputFile, File settingsFile,
 			File toolchainFile, long deadline) {
@@ -51,13 +53,19 @@ public class UltimateStarter {
 	}
 
 	public void runUltimate() throws Exception {
-		Application ultimate = new Application(Ultimate_Mode.EXTERNAL_EXECUTION);
-		ultimate.setM_InputFile(mInputFile);
-		ultimate.setDeadline(mDeadline);
-		ultimate.setSettingsFile(mSettingsFile);
-		ultimate.setToolchainXML(mToolchainFile);
+		if (mCurrentUltimateInstance != null) {
+			throw new Exception(
+					"You must call complete() before re-using this instance ");
+		}
+		mCurrentUltimateInstance = new UltimateCore(
+				Ultimate_Mode.EXTERNAL_EXECUTION);
+		mCurrentUltimateInstance.setM_InputFile(mInputFile);
+		mCurrentUltimateInstance.setSettingsFile(mSettingsFile);
+		mCurrentUltimateInstance.setToolchainXML(mToolchainFile);
 		attachLogger();
-		ultimate.start(null);
+		mCurrentUltimateInstance.setDeadline(System.currentTimeMillis()
+				+ mDeadline);
+		mCurrentUltimateInstance.start(null);
 	}
 
 	public void complete() {

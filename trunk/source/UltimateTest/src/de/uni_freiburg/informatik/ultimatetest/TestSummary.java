@@ -9,11 +9,13 @@ public abstract class TestSummary implements ITestSummary{
 	protected HashMap<String, Summary> mSuccess;
 	protected HashMap<String, Summary> mUnknown;
 	protected HashMap<String, Summary> mFailure;
+	protected String mTestSuiteCanonicalName;
 
-	public TestSummary() {
+	public TestSummary( String testSuiteCanonicalName) {
 		mSuccess = new HashMap<String, Summary>();
 		mFailure = new HashMap<String, Summary>();
 		mUnknown = new HashMap<String, Summary>();
+		mTestSuiteCanonicalName =  testSuiteCanonicalName;
 	}
 
 	private Summary getSummary(HashMap<String, Summary> map, IResult result) {
@@ -46,6 +48,11 @@ public abstract class TestSummary implements ITestSummary{
 	private void add(Summary s, String filename, String message) {
 		s.setCount(s.getCount() + 1);
 		s.getFileToMessage().put(filename, message);
+	}
+	
+	@Override
+	public String getTestSuiteCanonicalName() {
+		return mTestSuiteCanonicalName;
 	}
 	
 	public class Summary {

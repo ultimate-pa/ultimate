@@ -12,6 +12,8 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import org.apache.log4j.Logger;
+
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.Activator;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.preferences.CorePreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
@@ -22,8 +24,6 @@ import de.uni_freiburg.informatik.ultimatetest.UltimateTestSuite;
 import de.uni_freiburg.informatik.ultimatetest.Util;
 
 public abstract class AbstractSVCOMP14TestSuite extends UltimateTestSuite {
-
-	protected int mTotalNumberOfTestCases;
 
 	/**
 	 * Provide a path to an XML file describing the toolchain that should be
@@ -70,7 +70,7 @@ public abstract class AbstractSVCOMP14TestSuite extends UltimateTestSuite {
 
 	@Override
 	public Collection<UltimateTestCase> createTestCases() {
-		ArrayList<UltimateTestCase> rtr = new ArrayList<UltimateTestCase>();
+		Collection<UltimateTestCase> rtr = new ArrayList<UltimateTestCase>();
 
 		String svcompRootDir = Util.getPathFromTrunk("../svcomp");
 		String toolchainPath = getToolchainPath();
@@ -81,7 +81,8 @@ public abstract class AbstractSVCOMP14TestSuite extends UltimateTestSuite {
 		Collection<File> setFiles = getAllSetFiles(svcompRootDir);
 
 		if (inputFiles == null || setFiles == null) {
-			System.err.println("inputFiles or setFiles are null");
+			System.err.println("inputFiles or setFiles are null: did you specify the svcomp root directory correctly? Currently it is: "
+							+ svcompRootDir);
 			return rtr;
 		}
 
@@ -100,13 +101,7 @@ public abstract class AbstractSVCOMP14TestSuite extends UltimateTestSuite {
 				e.printStackTrace();
 			}
 		}
-		mTotalNumberOfTestCases = rtr.size();
 		return rtr;
-	}
-
-	@Override
-	protected int getTotalNumerOfTestCases() {
-		return mTotalNumberOfTestCases;
 	}
 
 	private File findFile(String filename, Collection<File> files) {
@@ -150,8 +145,9 @@ public abstract class AbstractSVCOMP14TestSuite extends UltimateTestSuite {
 		String summaryLogfileName = Util.generateSummaryLogFilename(svcomproot,
 				description + " " + categoryName);
 		ITestSummary summary = new SVCOMP14TestSummary(categoryName,
-				summaryLogfileName);
-		getSummaries().add(summary);
+				summaryLogfileName, this.getClass().getCanonicalName());
+		Collection<ITestSummary> summaries = getSummaries();
+		summaries.add(summary);
 
 		Collection<File> currentFiles = getFilesForSetFile(allFiles, setFile);
 		File toolchainFile = new File(toolchainPath);
@@ -188,7 +184,7 @@ public abstract class AbstractSVCOMP14TestSuite extends UltimateTestSuite {
 			rtr.add(testCase);
 
 		}
-		 return rtr;
+		return rtr;
 	}
 
 	private Collection<File> getFilesForSetFile(Collection<File> allFiles,

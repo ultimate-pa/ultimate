@@ -19,10 +19,10 @@ public class Util {
 
 		String name = "UltimateTest ";
 		if (description != null && description.length() > 0) {
-			name = name + description + " ";
+			name = name + description + "_";
 		}
 
-		name = name + originalFileName + " "
+		name = name + originalFileName + "_"
 				+ dateFormat.format(Calendar.getInstance().getTime()) + ".log";
 		name = name.replaceAll(" ", "_");
 		return dir + name;
@@ -46,11 +46,11 @@ public class Util {
 		return relative.getAbsolutePath();
 	}
 
-	public static String getPathFromSurefire(String path) {
+	public static String getPathFromSurefire(String path, String canonicalClassName) {
 		File trunk = new File(System.getProperty("user.dir"));
 		File relative = new File(trunk.getAbsolutePath() + File.separator
 				+ "target" + File.separator + "surefire-reports"
-				+ File.separator + Util.class.getCanonicalName()
+				+ File.separator + canonicalClassName
 				+ File.separator + path);
 
 		return relative.getAbsolutePath();
@@ -186,6 +186,20 @@ public class Util {
 			}
 		}
 		return rtr;
+	}
+	
+	public static <E> Collection<E> firstN(Collection<E> collection, int n){
+		ArrayList<E> rtr = new ArrayList<E>(n);
+		int i = 1;
+		for(E elem : collection){
+			rtr.add(elem);
+			++i;
+			if(n<i){
+				break;
+			}
+		}
+		return rtr;
+		
 	}
 
 }

@@ -13,12 +13,12 @@ import java.util.Map;
 import org.apache.log4j.Logger;
 
 import java_cup.runtime.Symbol;
-
 import de.uni_freiburg.informatik.ultimate.logic.Assignments;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.util.MonitoredProcess;
 
 /**
  * This class runs an external SMT solver.  The main methods are 
@@ -27,16 +27,16 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
  * 
  * @author Oday Jubran
  */
-public class Executor {
+class Executor {
 
 	private String m_Solver;
-	private Process m_Process;
+	private MonitoredProcess m_Process;
 	private Lexer m_Lexer;
 	private BufferedWriter m_Writer;
 	private Logger m_Logger;
 	private Script m_Script;
 	
-	public Executor(String solverCommand, Script script, Logger logger)
+	Executor(String solverCommand, Script script, Logger logger)
 	{
 		m_Solver = solverCommand;
 		m_Script = script;
@@ -48,7 +48,7 @@ public class Executor {
 	{
 //		m_Logger = Logger.getRootLogger();
 		try {
-			m_Process = Runtime.getRuntime().exec(m_Solver);
+			m_Process = MonitoredProcess.exec(m_Solver,"(exit)");
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -74,6 +74,20 @@ public class Executor {
 		} catch (IOException e) {
 			throw new SMTLIBException("Connection to SMT solver broken", e);
 		}
+	}
+	
+	public void exit(){
+		input("(exit)");
+		parseSuccess();
+		m_Process.forceShutdown();
+		m_Process = null;
+		
+	}
+	
+	@Override
+	protected void finalize() throws Throwable {
+		exit();
+		super.finalize();
 	}
 
 	private List<Symbol> parseSexpr(Lexer lexer) throws IOException {
@@ -110,7 +124,7 @@ public class Executor {
 		} catch (IOException e) {
 			/* ignore */
 		}
-		m_Process.destroy();
+		m_Process.forceShutdown();
 		createProcess();	
 	}
 	

@@ -37,7 +37,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.preferences.PreferencePage;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CACSLLocation;
 import de.uni_freiburg.informatik.ultimate.cdt.views.resultlist.ResultList;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
-import de.uni_freiburg.informatik.ultimate.core.coreplugin.Application;
+import de.uni_freiburg.informatik.ultimate.core.coreplugin.UltimateCore;
 import de.uni_freiburg.informatik.ultimate.result.CounterExampleResult;
 import de.uni_freiburg.informatik.ultimate.result.GenericResult;
 import de.uni_freiburg.informatik.ultimate.result.GenericResult.Severity;
@@ -77,7 +77,7 @@ public class UltimateCChecker extends AbstractFullAstChecker {
 
 	@Override
 	public void processAst(IASTTranslationUnit ast) {		
-		Application app = Activator.app;
+		UltimateCore app = Activator.app;
 		// First we have to set the AST of the Applicationstem.err.println(e);
 		app.setM_ParsedAST(ast);
 		// Second we need to set the .dummy-File

@@ -12,8 +12,8 @@ import org.eclipse.ui.plugin.AbstractUIPlugin;
 import org.osgi.framework.BundleContext;
 
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
-import de.uni_freiburg.informatik.ultimate.core.coreplugin.Application;
-import de.uni_freiburg.informatik.ultimate.core.coreplugin.Application.Ultimate_Mode;
+import de.uni_freiburg.informatik.ultimate.core.coreplugin.UltimateCore;
+import de.uni_freiburg.informatik.ultimate.core.coreplugin.UltimateCore.Ultimate_Mode;
 
 /**
  * @author Markus Lindenmann
@@ -34,7 +34,7 @@ public class Activator extends AbstractUIPlugin {
 	/**
 	 * The used application (holds the reference to ultimate).
 	 */
-	public static Application app;
+	public static UltimateCore app;
 
 	/**
 	 * The constructor
@@ -42,7 +42,7 @@ public class Activator extends AbstractUIPlugin {
 	public Activator() {
 		// UltimateServices.createInstance(app); //FIXME : will crash ultimate
 		if (UltimateServices.getInstance() == null) {
-			app = new Application(Ultimate_Mode.EXTERNAL_EXECUTION);
+			app = new UltimateCore(Ultimate_Mode.EXTERNAL_EXECUTION);
 			UltimateServices.createInstance(app);
 		}
 	}

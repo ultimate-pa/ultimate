@@ -270,10 +270,15 @@ public class Scriptor extends NoopScript {
 
 	@Override
 	public void exit() {
-		m_Executor.input("(exit)");
-		m_Executor.parseSuccess();
+		m_Executor.exit();
 		
-		
+	}
+	
+	@Override
+	protected void finalize() throws Throwable {
+		exit();
+		m_Executor = null;
+		super.finalize();
 	}
 
 	@Override

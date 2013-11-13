@@ -10,13 +10,13 @@
 
    <extension id="CoreOSGi" point="org.eclipse.core.runtime.applications">
       <application cardinality="*" thread="any" visible="true">
-         <run class="de.uni_freiburg.informatik.ultimate.core.coreplugin.Application"/>   
+         <run class="de.uni_freiburg.informatik.ultimate.core.coreplugin.UltimateCore"/>   
       </application>
    </extension>
    
    <extension id="CoreRCP" point="org.eclipse.core.runtime.applications">
       <application cardinality="*" thread="main" visible="true">
-         <run class="de.uni_freiburg.informatik.ultimate.core.coreplugin.Application"/>   
+         <run class="de.uni_freiburg.informatik.ultimate.core.coreplugin.UltimateCore"/>   
       </application>
    </extension>
    

@@ -13,8 +13,8 @@ public class SVCOMP14TestSummary extends TestSummary {
 	private String mCategoryName;
 	private String mLogFilePath;
 
-	public SVCOMP14TestSummary(String categoryName, String logFilePath) {
-		super();
+	public SVCOMP14TestSummary(String categoryName, String logFilePath, String testSuiteCanonicalName) {
+		super(testSuiteCanonicalName);
 		mCategoryName = categoryName;
 		mLogFilePath = logFilePath;
 	}

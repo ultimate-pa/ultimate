@@ -66,7 +66,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.ResultNotifier;
  * 
  * @author Jakob, Dietsch, Bjoern Buchhold, Christian Simon
  */
-public class Application implements IApplication, ICore, IRCPPlugin {
+public class UltimateCore implements IApplication, ICore, IRCPPlugin {
 
 	/**
 	 * In what mode is Ultimate supposed tu run? With a GUI? With an interactive
@@ -140,7 +140,7 @@ public class Application implements IApplication, ICore, IRCPPlugin {
 	private ToolchainWalker mToolchainWalker;
 
 	private IProgressMonitor mCurrentToolchainMonitor;
-	private long mDeadline = Long.MAX_VALUE;
+	private long mDeadline;
 	/**
 	 * Only for EXTERNAL_EXECUTION mode.
 	 */
@@ -163,7 +163,7 @@ public class Application implements IApplication, ICore, IRCPPlugin {
 	/**
 	 * This Default-Constructor is needed to start up the application
 	 */
-	public Application() {
+	public UltimateCore() {
 
 	}
 
@@ -173,8 +173,8 @@ public class Application implements IApplication, ICore, IRCPPlugin {
 	 * @param mode
 	 *            the execution mode.
 	 */
-	public Application(Application.Ultimate_Mode mode) {
-		if (mode != Application.Ultimate_Mode.EXTERNAL_EXECUTION) {
+	public UltimateCore(UltimateCore.Ultimate_Mode mode) {
+		if (mode != UltimateCore.Ultimate_Mode.EXTERNAL_EXECUTION) {
 			throw new IllegalArgumentException(
 					"We expect EXTERNAL_EXECUTION mode here!");
 		}
@@ -199,10 +199,10 @@ public class Application implements IApplication, ICore, IRCPPlugin {
 
 			// throwing classes exported by plugins into arraylists
 			loadExtension();
-			
+
 			// initialize the tools map
 			initiateToolMaps();
-			
+
 			if (mSettingsFile != null) {
 				loadPreferencesInternal(mSettingsFile.getPath());
 			}
@@ -221,6 +221,7 @@ public class Application implements IApplication, ICore, IRCPPlugin {
 				}
 			}
 
+			cleanup();
 			// this must be returned
 			return IApplication.EXIT_OK;
 		}
@@ -280,7 +281,7 @@ public class Application implements IApplication, ICore, IRCPPlugin {
 			}
 		}
 		// this must be returned
-
+		cleanup();
 		return IApplication.EXIT_OK;
 	}
 
@@ -324,7 +325,7 @@ public class Application implements IApplication, ICore, IRCPPlugin {
 		mSourcePlugins = new ArrayList<ISource>();
 		mGeneratorPlugins = new ArrayList<IGenerator>();
 		mAnalysisPlugins = new ArrayList<IAnalysis>();
-
+		mDeadline = Long.MAX_VALUE;
 		mIdToTool = new HashMap<String, ITool>();
 		mCurrentParser = null;
 		mCurrentFiles = null;
@@ -363,7 +364,8 @@ public class Application implements IApplication, ICore, IRCPPlugin {
 		logDefaultPreferences(Activator.s_PLUGIN_ID);
 
 		if (mCurrentController == null) {
-			mLogger.warn("CurrentController is null (CurrentMode: "+mCoreMode+")");
+			mLogger.warn("CurrentController is null (CurrentMode: " + mCoreMode
+					+ ")");
 		} else {
 			attachLogPreferenceChangeListenerToPlugin(mCurrentController
 					.getPluginID());
@@ -1223,7 +1225,7 @@ public class Application implements IApplication, ICore, IRCPPlugin {
 	}
 
 	/**
-	 * Return true iff cancellation of toolchain is requested or deadline is
+	 * Return false iff cancellation of toolchain is requested or deadline is
 	 * exceeded.
 	 */
 	public boolean continueProcessing() {
@@ -1238,9 +1240,20 @@ public class Application implements IApplication, ICore, IRCPPlugin {
 	}
 
 	/**
-	 * Set time limit in ms, after which the toolchain should be stopped.
+	 * Set a time limit after which the toolchain should be stopped.
+	 * 
+	 * A convenient way of setting this deadline is using
+	 * System.currentTimeMillis() + timelimit (in ms) as value right before
+	 * calling start(...).
+	 * 
+	 * @param date
+	 *            A date in the future (aka, the difference, measured in
+	 *            milliseconds, between the current time and midnight, January
+	 *            1, 1970 UTC) after which a running toolchain should be
+	 *            stopped.
 	 */
 	public void setDeadline(long date) {
+
 		mDeadline = date;
 	}
 
@@ -1361,6 +1374,14 @@ public class Application implements IApplication, ICore, IRCPPlugin {
 	@Override
 	public UltimatePreferenceInitializer getPreferences() {
 		return new CorePreferenceInitializer();
+	}
+
+	private void cleanup() {
+		// we should provide a method for the external execution mode to release
+		// all external resources acquired through an ultimate run
+
+		UltimateServices.getInstance().terminateExternalProcesses();
+
 	}
 
 }
