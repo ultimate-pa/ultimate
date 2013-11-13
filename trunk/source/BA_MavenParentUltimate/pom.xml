@@ -108,7 +108,7 @@
 					<useUIHarness>false</useUIHarness>
 					<useUIThread>false</useUIThread>
 					<showEclipseLog>true</showEclipseLog>
-					<argLine>-Xmx256M</argLine>
+					<argLine>-Xmx4096M</argLine>
 					<includes>
 						<include>**/*.java</include>
 					</includes>

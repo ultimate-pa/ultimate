@@ -70,7 +70,7 @@ public abstract class AbstractSVCOMP14TestSuite extends UltimateTestSuite {
 	public Collection<UltimateTestCase> createTestCases() {
 		Collection<UltimateTestCase> rtr = new ArrayList<UltimateTestCase>();
 
-		String svcompRootDir = Util.getPathFromTrunk("../svcomp");
+		String svcompRootDir = Util.getPathFromTrunk("../../svcomp");
 		String toolchainPath = getToolchainPath();
 		long deadline = getDeadline();
 		String description = this.getClass().getSimpleName();
