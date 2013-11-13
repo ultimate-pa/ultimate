@@ -47,11 +47,11 @@
 			<layout>p2</layout>
 			<url>http://download.eclipse.org/releases/indigo</url>
 		</repository>
-<!-- 		<repository> -->
-<!-- 			<id>eclipse-kepler</id> -->
-<!-- 			<layout>p2</layout> -->
-<!-- 			<url>http://download.eclipse.org/releases/kepler</url> -->
-<!-- 		</repository> -->
+		<!-- <repository> -->
+		<!-- <id>eclipse-kepler</id> -->
+		<!-- <layout>p2</layout> -->
+		<!-- <url>http://download.eclipse.org/releases/kepler</url> -->
+		<!-- </repository> -->
 		<repository>
 			<id>javaxRepository</id>
 			<name>Java.net Repository for Maven</name>
@@ -99,18 +99,33 @@
 					</environments>
 				</configuration>
 			</plugin>
+			<plugin>
+				<groupId>org.eclipse.tycho</groupId>
+				<artifactId>tycho-surefire-plugin</artifactId>
+				<version>${tycho-version}</version>
+				<configuration>
+					<providerHint>junit47</providerHint>
+					<useUIHarness>false</useUIHarness>
+					<useUIThread>false</useUIThread>
+					<showEclipseLog>true</showEclipseLog>
+					<argLine>-Xmx256M</argLine>
+					<includes>
+						<include>**/*.java</include>
+					</includes>
+
+				</configuration>
+			</plugin>
+			<!-- fix sonar plugin version -->
+			<plugin>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>sonar-maven-plugin</artifactId>
+				<version>2.1</version>
+			</plugin>
 
 		</plugins>
 
 		<pluginManagement>
 			<plugins>
-				<!-- fix sonar plugin version -->
-				<plugin>
-					<groupId>org.codehaus.mojo</groupId>
-					<artifactId>sonar-maven-plugin</artifactId>
-					<version>2.1</version>
-				</plugin>
-
 				<!--This plugin's configuration is used to store Eclipse m2e settings 
 					only. It has no influence on the Maven build itself. -->
 				<plugin>
@@ -231,20 +246,6 @@
 							</filesets>
 						</configuration>
 					</plugin>
-
-					<plugin>
-						<groupId>org.eclipse.tycho</groupId>
-						<artifactId>tycho-surefire-plugin</artifactId>
-						<version>${tycho-version}</version>
-						<configuration>
-							<providerHint>junit47</providerHint>
-							<useUIHarness>false</useUIHarness>
-							<useUIThread>false</useUIThread>
-							<showEclipseLog>true</showEclipseLog>
-							<argLine>-Xmx4096M</argLine>
-						</configuration>
-					</plugin>
-
 
 					<!-- Code Coverage Analysis -->
 					<plugin>

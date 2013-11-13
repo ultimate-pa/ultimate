@@ -12,8 +12,6 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import org.apache.log4j.Logger;
-
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.Activator;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.preferences.CorePreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;

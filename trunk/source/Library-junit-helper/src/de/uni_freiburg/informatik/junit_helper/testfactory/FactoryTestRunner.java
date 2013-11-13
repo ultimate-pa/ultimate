@@ -6,12 +6,11 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-import org.junit.After;
-import org.junit.Before;
 import org.junit.runners.BlockJUnit4ClassRunner;
 import org.junit.runners.model.FrameworkMethod;
 import org.junit.runners.model.InitializationError;
 import org.junit.runners.model.TestClass;
+import static org.junit.Assert.*;
 
 public class FactoryTestRunner extends BlockJUnit4ClassRunner {
 
@@ -19,10 +18,10 @@ public class FactoryTestRunner extends BlockJUnit4ClassRunner {
 
 	public FactoryTestRunner(Class<?> claaas) throws InitializationError {
 		super(claaas);
-		mTests = new ArrayList<FrameworkMethod>();
 	}
 
 	protected Collection<? extends FrameworkMethod> generateFactoryTests() {
+		System.out.println(this + ".generateFactoryTests()");
 		List<FrameworkFactoryTest> tests = new ArrayList<FrameworkFactoryTest>();
 		TestClass classUnderTest = getTestClass();
 
@@ -83,22 +82,41 @@ public class FactoryTestRunner extends BlockJUnit4ClassRunner {
 	 */
 	@Override
 	protected List<FrameworkMethod> computeTestMethods() {
-		// computeTestMethods returns all methods that are marked with @Test
-		mTests.addAll(super.computeTestMethods());
+		if (mTests == null) {
+			mTests = new ArrayList<FrameworkMethod>();
+		}
+		if (mTests.size() == 0) {
+			// generateFactoryTests collects all tests from invoking methods
+			// that
+			// are marked with @TestFactory
+			mTests.addAll(generateFactoryTests());
 
-		// generateFactoryTests collects all tests from invoking methods that
-		// are marked with @TestFactory
-		mTests.addAll(generateFactoryTests());
+			if (mTests.size() == 0) {
+				// ok, so no factory tests were generated; in this case, we add
+				// our own factory test that will a) always fail and b) report
+				// to the user that no dynamic test was generated and that this
+				// is failure
+				try {
+					final String errorMsg = getTestClass().getName()
+							+ " did not return any dynamic tests";
+					mTests.add(new FrameworkFactoryTest(FailingTest.class
+							.getMethod("NoFactoryTestMethod"),
+							new FailingTest(), errorMsg));
+				} catch (Exception e) {
+					// this reflection is always safe
+				}
+
+			}
+
+			// computeTestMethods returns all methods that are marked with @Test
+			mTests.addAll(super.computeTestMethods());
+		}
 		return mTests;
 	}
 
-	@Override
-	protected void validateInstanceMethods(List<Throwable> errors) {
-		// this method is overriden to allow for "empty" test classes, i.e.
-		// classes containing only methods with @TestFactory
-		validatePublicVoidNoArgMethods(After.class, false, errors);
-		validatePublicVoidNoArgMethods(Before.class, false, errors);
-		validateTestMethods(errors);
+	public class FailingTest {
+		public void NoFactoryTestMethod() {
+			fail("TestSuite run with custom runner FactoryTestRunner must return at least one dynamic generated test through their @TestFactory methods");
+		}
 	}
-
 }

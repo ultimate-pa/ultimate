@@ -2,9 +2,6 @@ package de.uni_freiburg.informatik.ultimatetest.svcomp;
 
 import java.util.HashMap;
 import java.util.Map;
-
-import org.junit.Test;
-
 import de.uni_freiburg.informatik.ultimatetest.Util;
 
 public class CodeCheckTestSuite extends AbstractSVCOMP14TestSuite {
@@ -30,10 +27,4 @@ public class CodeCheckTestSuite extends AbstractSVCOMP14TestSuite {
 	protected boolean getCreateLogfileForEachTestCase() {
 		return true;
 	}
-	
-	@Test
-	public void blabla(){
-		System.out.println("Irgendein Pseudo-Test");
-	}
-
 }
