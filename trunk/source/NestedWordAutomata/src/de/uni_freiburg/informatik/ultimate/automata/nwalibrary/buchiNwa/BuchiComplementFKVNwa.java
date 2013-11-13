@@ -13,7 +13,6 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeSet;
 
-
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.automata.Activator;
@@ -27,7 +26,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingCallTrans
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.BuchiComplementFKVNwa.LevelRankingState;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IStateDeterminizer;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.DeterminizedState;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.IDeterminizedState;
@@ -1126,12 +1124,12 @@ public class BuchiComplementFKVNwa<LETTER,STATE> implements INestedWordAutomaton
 			return m_Result;
 		}
 		
-		private Set<DoubleDecker<STATE>> getAllWithRank(int rank) {
-			Set<DoubleDecker<STATE>> result;
+		private DoubleDecker<STATE>[] getAllWithRank(int rank) {
+			DoubleDecker<STATE>[] result;
 			if (m_UnrestrictedRank2DoubleDecker.getDomain().contains(rank)) {
-				result = m_UnrestrictedRank2DoubleDecker.getImage(rank);
+				result = m_UnrestrictedRank2DoubleDecker.getImage(rank).toArray(new DoubleDecker[0]);
 			} else {
-				result = Collections.emptySet(); 
+				result = new DoubleDecker[0]; 
 			}
 			return result;
 		}
@@ -1142,8 +1140,8 @@ public class BuchiComplementFKVNwa<LETTER,STATE> implements INestedWordAutomaton
 			assert rank % 2 == 0;
 			assert assignedUnrestricted + unassignedUnrestricted == super.m_UnrestrictedDoubleDecker.size();
 			
-			Set<DoubleDecker<STATE>> boundToRank = getAllWithRank(rank);
-			if (unassignedUnrestricted == boundToRank.size()) {
+			DoubleDecker<STATE>[] boundToRank = getAllWithRank(rank);
+			if (unassignedUnrestricted == boundToRank.length) {
 				// the even ranks are already all unassigned
 				// no chance for rank+1
 				// we have to give them the odd rank-1
@@ -1154,124 +1152,63 @@ public class BuchiComplementFKVNwa<LETTER,STATE> implements INestedWordAutomaton
 			}
 			
 			
-			Set<DoubleDecker<STATE>> boundToRankPlusOne = getAllWithRank(rank+1);
+			final DoubleDecker<STATE>[] boundToRankPlusOne = getAllWithRank(rank+1);
 			
 			if (lrwsi.numberUnassignedLowerRanks() + 1 > unassignedUnrestricted) {
 				throw new AssertionError("unable to assign all ranks");
-			} 
-			
-			if (lrwsi.numberUnassignedLowerRanks() + 1 < unassignedUnrestricted - boundToRank.size()) {
-				// no need to worry that we can not assign all unassigned lower 
-				// ranks
-				if (rank > 0) {
-					unassignedUnrestricted -= boundToRank.size();
-					assignedUnrestricted += boundToRank.size();
-					unassignedUnrestricted -= boundToRankPlusOne.size();
-					assignedUnrestricted += boundToRankPlusOne.size();
-					List<DoubleDecker<STATE>> boundToRankAndInO = new ArrayList<DoubleDecker<STATE>>();
-					List<DoubleDecker<STATE>> boundToRankAndNotInO = new ArrayList<DoubleDecker<STATE>>();
-					for (DoubleDecker<STATE> dd  : boundToRank) {
-						if (super.m_Constraint.inO(dd.getDown(), dd.getUp())) {
-							boundToRankAndInO.add(dd);
-						} else {
-							boundToRankAndNotInO.add(dd);
-						}
-					}
-					DoubleDecker<STATE>[] boundToRankAndInOA = boundToRankAndInO.toArray(new DoubleDecker[0]);
-					int numberOfCopies = (int) Math.pow(2, boundToRankAndInOA.length);
-					List<LevelRankingWithSacrificeInformation> copies;
-					if (numberOfCopies == 1) {
-						copies = Collections.singletonList(lrwsi);
-					} else {
-						copies = new ArrayList<LevelRankingWithSacrificeInformation>(numberOfCopies);
-						for (int i=0; i<numberOfCopies-1; i++) {
-							copies.add(new LevelRankingWithSacrificeInformation(lrwsi));
-						}
-						copies.add(lrwsi);
-					}
-					for (int i=0; i<numberOfCopies; i++) {
-						for (int j=0; j<boundToRankAndInOA.length; j++) {
-							if (!BigInteger.valueOf(i).testBit(j)) {
-								copies.get(i).addOddRank(boundToRankAndInOA[j], rank-1);
-							}
-						}
-						
-						copies.get(i).increaseCurrentRank();
-						for (int j=0; j<boundToRankAndInOA.length; j++) {
-							if (BigInteger.valueOf(i).testBit(j)) {
-								copies.get(i).addEvenRank(boundToRankAndInOA[j], rank);
-							}
-						}
-						copies.get(i).addEvenRank(boundToRankAndNotInO, rank);
-						copies.get(i).increaseCurrentRank();
-						copies.get(i).addOddRank(boundToRankPlusOne, rank+1);
-						if (unassignedUnrestricted == 0) {
-							addResult(copies.get(i).assignRestictedAndgetLevelRankingState());
-							continue;
-						} else {
-							stipulate(rank+2, copies.get(i), assignedUnrestricted, unassignedUnrestricted);
-							continue;
-						}
-					}
-					return;
-				} else {
-					assert rank == 0;
-					lrwsi.increaseCurrentRank();
-					lrwsi.addEvenRank(boundToRank, rank);
-					unassignedUnrestricted -= boundToRank.size();
-					assignedUnrestricted += boundToRank.size();
-					lrwsi.increaseCurrentRank();
-					lrwsi.addOddRank(boundToRankPlusOne, rank+1);
-					unassignedUnrestricted -= boundToRankPlusOne.size();
-					assignedUnrestricted += boundToRankPlusOne.size();
-					if (unassignedUnrestricted == 0) {
-						addResult(lrwsi.assignRestictedAndgetLevelRankingState());
-						return;
-					} else {
-						stipulate(rank+2, lrwsi, assignedUnrestricted, unassignedUnrestricted);
-						return;
-					}
-				}
-			} else {
-				assert lrwsi.numberUnassignedLowerRanks() + 1 >= unassignedUnrestricted - boundToRank.size();
-				assert lrwsi.numberUnassignedLowerRanks() + 1 <= unassignedUnrestricted;
-				// without sacrifice we have to assign all in this iteration
-				// the highest rank of the result will be rank+1
-				{
-					Set<DoubleDecker<STATE>> boundToRankPlusTwo = getAllWithRank(rank+2);
-					if (unassignedUnrestricted == boundToRank.size() + 
-							boundToRankPlusOne.size() + boundToRankPlusTwo.size()) {
-						// no need to do sacrifices we won't achieve a higher
-						// rank than rank+1 anyway
-					} else {
-						// sacrifice section: in the current ranking there might
-						// be states with an even rank where a lower odd rank
-						// is still unassigned.
-						// we now consider a copy, where this DoubleDecker
-						// sacrifices its even rank (and takes the odd rank 
-						// below) to allow a higher maximum rank
-						for (DoubleDecker<STATE> dd : lrwsi.m_Sacrificable.keySet()) {
-							LevelRankingWithSacrificeInformation copy = lrwsi.sacrifice(dd);
-							stipulate(rank, copy, assignedUnrestricted, unassignedUnrestricted);
-							s_Logger.debug("In a copy " + dd + " sacrifices its even rank");
-						}
-					}
-				}
-				// the ones with rank have to give up their even rank in order
-				// to provide enough odd ranks
-				assert rank != 0 || boundToRank.isEmpty();
-				lrwsi.addOddRank(boundToRank, rank-1);
-				unassignedUnrestricted -= boundToRank.size();
-				assignedUnrestricted += boundToRank.size();
-				lrwsi.increaseCurrentRank();
-				lrwsi.increaseCurrentRank();
-				lrwsi.addOddRank(boundToRankPlusOne, rank+1);
-				unassignedUnrestricted -= boundToRankPlusOne.size();
-				assignedUnrestricted += boundToRankPlusOne.size();
-				lrwsi.assignRemainingUnrestricted(rank+1, unassignedUnrestricted);
-				addResult(lrwsi.assignRestictedAndgetLevelRankingState());
-				return;
 			}
+			
+			final int numberOfCopies;
+			if (rank > 0) {
+				numberOfCopies = (int) Math.pow(2, boundToRank.length);
+			} else {
+				numberOfCopies = 1;
+			}
+			List<LevelRankingWithSacrificeInformation> copies;
+			if (numberOfCopies == 1) {
+				copies = Collections.singletonList(lrwsi);
+			} else {
+				copies = new ArrayList<LevelRankingWithSacrificeInformation>(numberOfCopies);
+				for (int i=0; i<numberOfCopies-1; i++) {
+					copies.add(new LevelRankingWithSacrificeInformation(lrwsi));
+				}
+				copies.add(lrwsi);
+			}
+			final int maxNumberOfEvenRanksWeMayAssign = unassignedUnrestricted -( lrwsi.numberUnassignedLowerRanks() + 1);
+			final int unassignedUnrestrictedAfterThisTurn = unassignedUnrestricted - boundToRank.length - boundToRankPlusOne.length;
+			final int assignedUnrestrictedAfterThisTurn = assignedUnrestricted + boundToRank.length + boundToRankPlusOne.length;
+			for (int i=0; i<numberOfCopies; i++) {
+				for (int j=0; j<boundToRank.length; j++) {
+					if (!BigInteger.valueOf(i).testBit(j)) {
+						copies.get(i).addOddRank(boundToRank[j], rank-1);
+					}
+				}
+				int evenRanksAssignedSoFar = 0;
+				copies.get(i).increaseCurrentRank();
+				for (int j=0; j<boundToRank.length; j++) {
+					if (BigInteger.valueOf(i).testBit(j)) {
+						copies.get(i).addEvenRank(boundToRank[j], rank);
+						evenRanksAssignedSoFar++;
+					}
+				}
+				if (evenRanksAssignedSoFar > maxNumberOfEvenRanksWeMayAssign) {
+					// we give up this branch, we can not achieve that each
+					// odd rank is assigned once.
+					continue;
+				}
+				copies.get(i).increaseCurrentRank();
+				copies.get(i).addOddRank(boundToRankPlusOne, rank+1);
+				int numberUnassignedLowerRanks = copies.get(i).numberUnassignedLowerRanks();
+				if (unassignedUnrestrictedAfterThisTurn == numberUnassignedLowerRanks) {
+					copies.get(i).assignRemainingUnrestricted(rank+1, unassignedUnrestrictedAfterThisTurn);
+					addResult(copies.get(i).assignRestictedAndgetLevelRankingState());
+					continue;
+				} else {
+					stipulate(rank+2, copies.get(i), assignedUnrestrictedAfterThisTurn, unassignedUnrestrictedAfterThisTurn);
+					continue;
+				}
+			}
+			return;
 		}
 		
 		private class LevelRankingWithSacrificeInformation {
@@ -1307,7 +1244,7 @@ public class BuchiComplementFKVNwa<LETTER,STATE> implements INestedWordAutomaton
 					updateSacrificable(removed);
 				}
 			}
-			void addOddRank(Collection<DoubleDecker<STATE>> dds, int rank) {
+			void addOddRank(DoubleDecker<STATE>[] dds, int rank) {
 				for (DoubleDecker<STATE> dd : dds) {
 					addOddRank(dd, rank);
 				}
@@ -1342,7 +1279,7 @@ public class BuchiComplementFKVNwa<LETTER,STATE> implements INestedWordAutomaton
 				}
 			}
 			
-			void addEvenRank(Collection<DoubleDecker<STATE>> dds, int rank) {
+			void addEvenRank(DoubleDecker<STATE>[] dds, int rank) {
 				for (DoubleDecker<STATE> dd : dds) {
 					addEvenRank(dd, rank);
 				}
