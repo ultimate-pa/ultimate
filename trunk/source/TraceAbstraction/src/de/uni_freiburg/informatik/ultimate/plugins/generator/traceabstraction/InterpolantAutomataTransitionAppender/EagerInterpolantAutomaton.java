@@ -372,7 +372,7 @@ public class EagerInterpolantAutomaton implements
 	@Override
 	public Iterable<OutgoingInternalTransition<CodeBlock, IPredicate>> internalSuccessors(
 			IPredicate state, CodeBlock letter) {
-		if (!isCachedInternal(state, letter)) {
+		if (!isCachedInternal(state, letter) && !m_ComputationFinished) {
 			computeSuccInternal(state, letter);
 			reportCachedInternal(state, letter);
 		}
@@ -383,7 +383,7 @@ public class EagerInterpolantAutomaton implements
 	public Iterable<OutgoingInternalTransition<CodeBlock, IPredicate>> internalSuccessors(
 			IPredicate state) {
 		for (CodeBlock letter : lettersInternal(state)) {
-			if (!isCachedInternal(state, letter)) {
+			if (!isCachedInternal(state, letter) && !m_ComputationFinished) {
 				computeSuccInternal(state, letter);
 				reportCachedInternal(state, letter);
 			}
@@ -395,7 +395,7 @@ public class EagerInterpolantAutomaton implements
 	public Iterable<OutgoingCallTransition<CodeBlock, IPredicate>> callSuccessors(
 			IPredicate state, CodeBlock letter) {
 		Call call = (Call) letter;
-		if (!isCachedCall(state, call)) {
+		if (!isCachedCall(state, call) && !m_ComputationFinished) {
 			computeSuccCall(state, call);
 			reportCachedCall(state, call);
 		}
@@ -407,7 +407,7 @@ public class EagerInterpolantAutomaton implements
 			IPredicate state) {
 		for (CodeBlock letter : lettersCall(state)) {
 			Call call = (Call) letter;
-			if (!isCachedCall(state, call)) {
+			if (!isCachedCall(state, call) && !m_ComputationFinished) {
 				computeSuccCall(state, call);
 				reportCachedCall(state, call);
 			}
@@ -419,7 +419,7 @@ public class EagerInterpolantAutomaton implements
 	public Iterable<OutgoingReturnTransition<CodeBlock, IPredicate>> returnSucccessors(
 			IPredicate state, IPredicate hier, CodeBlock letter) {
 		Return ret = (Return) letter;
-		if (!isCachedReturn(state, hier, ret)) {
+		if (!isCachedReturn(state, hier, ret) && !m_ComputationFinished) {
 			computeSuccReturn(state, hier, ret);
 			reportCachedReturn(state, hier, ret);
 		}
@@ -431,7 +431,7 @@ public class EagerInterpolantAutomaton implements
 			IPredicate state, IPredicate hier) {
 		for (CodeBlock letter : lettersReturn(state)) {
 			Return ret = (Return) letter;
-			if (!isCachedReturn(state, hier, ret)) {
+			if (!isCachedReturn(state, hier, ret) && !m_ComputationFinished) {
 				computeSuccReturn(state, hier, ret);
 				reportCachedReturn(state, hier, ret);
 			}
