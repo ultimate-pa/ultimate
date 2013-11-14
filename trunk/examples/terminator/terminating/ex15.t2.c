@@ -6,13 +6,13 @@ int v2 = nondet();
 int v3 = nondet();
 int v4 = nondet();
 int v5 = nondet();
-goto loc2;
-loc2:
+goto loc_2;
+loc_2:
  if (nondet_bool()) {
-  goto loc0;
+  goto loc_0;
  }
  goto end;
-loc0:
+loc_0:
  if (nondet_bool()) {
   v1 = 0;
   v2 = v1;
@@ -23,10 +23,10 @@ loc0:
   v1 = 1+v1;
   v5 = v1;
   v1 = 1+v1;
-  goto loc1;
+  goto loc_1;
  }
  goto end;
-loc1:
+loc_1:
 end:
 ;
 }

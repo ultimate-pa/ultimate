@@ -4,61 +4,64 @@ int main() {
 int v1 = nondet();
 int v2 = nondet();
 int v3 = nondet();
-int v4 = nondet();
-goto loc7;
-loc7:
+goto loc_7;
+loc_7:
  if (nondet_bool()) {
-  goto loc6;
+  goto loc_6;
  }
  goto end;
-loc0:
+loc_CP_0:
  if (nondet_bool()) {
-  if (!( -1*v3 <= 0 )) goto end;
+  if (!( -1*v2 <= 0 )) goto end;
   v1 = nondet();
-  goto loc1;
+  goto loc_1;
  }
  if (nondet_bool()) {
-  if (!( 0 <= -1-v3 )) goto end;
-  goto loc3;
+  if (!( 0 <= -1-v2 )) goto end;
+  goto loc_3;
  }
  if (nondet_bool()) {
-  if (!( 0 <= -1-v3 )) goto end;
-  if (!( v4 <= -1 )) goto end;
-  if (!( -1 <= v4 )) goto end;
-  v4 = 1+v4;
-  v3 = -99+v3;
-  goto loc5;
- }
- goto end;
-loc3:
- if (nondet_bool()) {
-  v2 = v2;
-  goto loc4;
- }
- goto end;
-loc4:
- if (nondet_bool()) {
+  if (!( 0 <= -1-v2 )) goto end;
+  if (!( v3 <= -1 )) goto end;
+  if (!( -1 <= v3 )) goto end;
   v3 = 1+v3;
-  v4 = 1+v4;
-  goto loc2;
+  v2 = -99+v2;
+  goto loc_5;
  }
  goto end;
-loc2:
+loc_3:
  if (nondet_bool()) {
-  goto loc0;
+  if (!( 1+v3 <= -1 )) goto end;
+  goto loc_4;
  }
- goto end;
-loc5:
  if (nondet_bool()) {
-  goto loc0;
+  if (!( 0 <= v3 )) goto end;
+  goto loc_4;
  }
  goto end;
-loc6:
+loc_4:
  if (nondet_bool()) {
-  goto loc0;
+  v2 = 1+v2;
+  v3 = 1+v3;
+  goto loc_2;
  }
  goto end;
-loc1:
+loc_2:
+ if (nondet_bool()) {
+  goto loc_CP_0;
+ }
+ goto end;
+loc_5:
+ if (nondet_bool()) {
+  goto loc_CP_0;
+ }
+ goto end;
+loc_6:
+ if (nondet_bool()) {
+  goto loc_CP_0;
+ }
+ goto end;
+loc_1:
 end:
 ;
 }

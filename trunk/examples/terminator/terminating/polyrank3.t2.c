@@ -4,39 +4,39 @@ int main() {
 int v1 = nondet();
 int v2 = nondet();
 int v3 = nondet();
-goto loc4;
-loc4:
+goto loc_4;
+loc_4:
  if (nondet_bool()) {
-  goto loc3;
+  goto loc_3;
  }
  goto end;
-loc0:
+loc_CP_0:
  if (nondet_bool()) {
   if (!( 1 <= v1 )) goto end;
   v1 = v1+v3;
   v3 = -1+v3;
-  goto loc1;
+  goto loc_1;
  }
  if (nondet_bool()) {
   if (!( 1 <= v1 )) goto end;
   v1 = v1+v2;
   v2 = -1+v2;
-  goto loc2;
+  goto loc_2;
  }
  goto end;
-loc1:
+loc_1:
  if (nondet_bool()) {
-  goto loc0;
+  goto loc_CP_0;
  }
  goto end;
-loc2:
+loc_2:
  if (nondet_bool()) {
-  goto loc0;
+  goto loc_CP_0;
  }
  goto end;
-loc3:
+loc_3:
  if (nondet_bool()) {
-  goto loc0;
+  goto loc_CP_0;
  }
  goto end;
 end:

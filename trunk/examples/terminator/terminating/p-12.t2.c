@@ -3,35 +3,35 @@ _Bool nondet_bool() { _Bool a; return a; }
 int main() {
 int v1 = nondet();
 int v2 = nondet();
-goto loc4;
-loc4:
+goto loc_4;
+loc_4:
  if (nondet_bool()) {
-  goto loc0;
+  goto loc_0;
  }
  goto end;
-loc1:
+loc_CP_1:
  if (nondet_bool()) {
   if (!( -1*v2 <= 0 )) goto end;
   v2 = -1+v2;
-  goto loc2;
+  goto loc_2;
  }
  if (nondet_bool()) {
   if (!( 0 <= -1-v2 )) goto end;
   v1 = nondet();
-  goto loc3;
+  goto loc_3;
  }
  goto end;
-loc0:
+loc_0:
  if (nondet_bool()) {
-  goto loc1;
+  goto loc_CP_1;
  }
  goto end;
-loc2:
+loc_2:
  if (nondet_bool()) {
-  goto loc1;
+  goto loc_CP_1;
  }
  goto end;
-loc3:
+loc_3:
 end:
 ;
 }

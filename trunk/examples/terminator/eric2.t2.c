@@ -30,23 +30,23 @@ int v26 = nondet();
 int v27 = nondet();
 int v28 = nondet();
 int v29 = nondet();
-goto loc7;
-loc7:
+goto loc_7;
+loc_7:
  if (nondet_bool()) {
-  goto loc0;
+  goto loc_0;
  }
  goto end;
-loc1:
+loc_CP_1:
  if (nondet_bool()) {
   if (!( 1 <= v14 )) goto end;
   v15 = -1+v14+v15;
   v14 = 0;
   v21 = 1+v21;
   v1 = 1+v1;
-  goto loc3;
+  goto loc_CP_3;
  }
  goto end;
-loc3:
+loc_CP_3:
  if (nondet_bool()) {
   if (!( 1 <= v15 )) goto end;
   v18 = -1+v15+v18;
@@ -65,7 +65,7 @@ loc3:
   v27 = 0;
   v3 = 0;
   v10 = 0;
-  goto loc6;
+  goto loc_6;
  }
  if (nondet_bool()) {
   if (!( 1 <= v21 )) goto end;
@@ -77,15 +77,15 @@ loc3:
   v15 = 0;
   v21 = 0;
   v1 = 0;
-  goto loc4;
+  goto loc_CP_4;
  }
  if (nondet_bool()) {
   v14 = v14+v15;
   v15 = 0;
-  goto loc1;
+  goto loc_CP_1;
  }
  goto end;
-loc4:
+loc_CP_4:
  if (nondet_bool()) {
   if (!( 1 <= v29 )) goto end;
   if (!( v29 <= v24 )) goto end;
@@ -118,7 +118,7 @@ loc4:
   v11 = 0;
   v12 = 0;
   v13 = 0;
-  goto loc5;
+  goto loc_5;
  }
  if (nondet_bool()) {
   if (!( 1 <= v16 )) goto end;
@@ -132,15 +132,15 @@ loc4:
   v24 = 0;
   v4 = 0;
   v7 = 0;
-  goto loc2;
+  goto loc_2;
  }
  if (nondet_bool()) {
   v14 = v14+v16;
   v16 = 0;
-  goto loc1;
+  goto loc_CP_1;
  }
  goto end;
-loc0:
+loc_0:
  if (nondet_bool()) {
   if (!( 0 <= v14 )) goto end;
   if (!( v15 <= 0 )) goto end;
@@ -197,14 +197,14 @@ loc0:
   if (!( 0 <= v12 )) goto end;
   if (!( v13 <= 0 )) goto end;
   if (!( 0 <= v13 )) goto end;
-  goto loc1;
+  goto loc_CP_1;
  }
  goto end;
-loc2:
+loc_2:
  if (nondet_bool()) {
   v14 = v14+v17;
   v17 = 0;
-  goto loc1;
+  goto loc_CP_1;
  }
  if (nondet_bool()) {
   v15 = v15+v17;
@@ -213,7 +213,7 @@ loc2:
   v17 = 0;
   v22 = 0;
   v2 = 0;
-  goto loc3;
+  goto loc_CP_3;
  }
  if (nondet_bool()) {
   v16 = v16+v17;
@@ -224,17 +224,17 @@ loc2:
   v25 = 0;
   v5 = 0;
   v8 = 0;
-  goto loc4;
+  goto loc_CP_4;
  }
  goto end;
-loc5:
+loc_5:
  if (nondet_bool()) {
-  goto loc4;
+  goto loc_CP_4;
  }
  goto end;
-loc6:
+loc_6:
  if (nondet_bool()) {
-  goto loc3;
+  goto loc_CP_3;
  }
  goto end;
 end:

@@ -10,24 +10,24 @@ int v6 = nondet();
 int v7 = nondet();
 int v8 = nondet();
 int v9 = nondet();
-goto loc4;
-loc4:
+goto loc_4;
+loc_4:
  if (nondet_bool()) {
-  goto loc3;
+  goto loc_3;
  }
  goto end;
-loc2:
+loc_CP_2:
  if (nondet_bool()) {
-  goto loc0;
+  goto loc_0;
  }
  goto end;
-loc0:
+loc_0:
  if (nondet_bool()) {
   if (!( 1+v6 <= v5 )) goto end;
   v4 = v1;
   v7 = v4;
   v9 = v7;
-  goto loc1;
+  goto loc_1;
  }
  if (nondet_bool()) {
   if (!( v5 <= v6 )) goto end;
@@ -35,20 +35,20 @@ loc0:
   v1 = v1+v2;
   v2 = v8;
   v5 = 1+v5;
-  goto loc2;
+  goto loc_CP_2;
  }
  goto end;
-loc3:
+loc_3:
  if (nondet_bool()) {
   v3 = 30;
   v6 = v3;
   v1 = 1;
   v2 = 0;
   v5 = 2;
-  goto loc2;
+  goto loc_CP_2;
  }
  goto end;
-loc1:
+loc_1:
 end:
 ;
 }

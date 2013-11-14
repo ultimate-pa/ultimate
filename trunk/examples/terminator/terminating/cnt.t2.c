@@ -18,62 +18,62 @@ int v14 = nondet();
 int v15 = nondet();
 int v16 = nondet();
 int v17 = nondet();
-goto loc12;
-loc12:
+goto loc_12;
+loc_12:
  if (nondet_bool()) {
-  goto loc11;
+  goto loc_11;
  }
  goto end;
-loc0:
+loc_CP_0:
  if (nondet_bool()) {
-  goto loc1;
+  goto loc_1;
  }
  goto end;
-loc3:
+loc_CP_3:
  if (nondet_bool()) {
-  goto loc7;
+  goto loc_7;
  }
  goto end;
-loc4:
+loc_CP_4:
  if (nondet_bool()) {
-  goto loc5;
+  goto loc_5;
  }
  goto end;
-loc8:
+loc_CP_8:
  if (nondet_bool()) {
-  goto loc9;
+  goto loc_9;
  }
  goto end;
-loc2:
+loc_2:
  if (nondet_bool()) {
   v1 = 1+v1;
-  goto loc3;
+  goto loc_CP_3;
  }
  goto end;
-loc6:
+loc_6:
  if (nondet_bool()) {
   v12 = nondet();
   v9 = 1+v9;
-  goto loc2;
+  goto loc_2;
  }
  if (nondet_bool()) {
   v6 = nondet();
   v3 = 1+v3;
-  goto loc2;
+  goto loc_2;
  }
  goto end;
-loc7:
+loc_7:
  if (nondet_bool()) {
   if (!( 10 <= v1 )) goto end;
   v7 = 1+v7;
-  goto loc8;
+  goto loc_CP_8;
  }
  if (nondet_bool()) {
   if (!( 1+v1 <= 10 )) goto end;
-  goto loc6;
+  goto loc_6;
  }
  goto end;
-loc9:
+loc_9:
  if (nondet_bool()) {
   if (!( 10 <= v7 )) goto end;
   v11 = v12;
@@ -82,29 +82,29 @@ loc9:
   v4 = v3;
   v15 = 1500;
   v16 = nondet();
-  goto loc10;
+  goto loc_10;
  }
  if (nondet_bool()) {
   if (!( 1+v7 <= 10 )) goto end;
   v1 = 0;
-  goto loc3;
+  goto loc_CP_3;
  }
  goto end;
-loc5:
+loc_5:
  if (nondet_bool()) {
   if (!( 10 <= v2 )) goto end;
   v8 = 1+v8;
-  goto loc0;
+  goto loc_CP_0;
  }
  if (nondet_bool()) {
   if (!( 1+v2 <= 10 )) goto end;
   v13 = nondet();
   v17 = v13;
   v2 = 1+v2;
-  goto loc4;
+  goto loc_CP_4;
  }
  goto end;
-loc1:
+loc_1:
  if (nondet_bool()) {
   if (!( 10 <= v8 )) goto end;
   v14 = 1000;
@@ -113,22 +113,22 @@ loc1:
   v9 = 0;
   v3 = 0;
   v7 = 0;
-  goto loc8;
+  goto loc_CP_8;
  }
  if (nondet_bool()) {
   if (!( 1+v8 <= 10 )) goto end;
   v2 = 0;
-  goto loc4;
+  goto loc_CP_4;
  }
  goto end;
-loc11:
+loc_11:
  if (nondet_bool()) {
   v13 = 0;
   v8 = 0;
-  goto loc0;
+  goto loc_CP_0;
  }
  goto end;
-loc10:
+loc_10:
 end:
 ;
 }

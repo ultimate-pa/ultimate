@@ -3,83 +3,89 @@ _Bool nondet_bool() { _Bool a; return a; }
 int main() {
 int v1 = nondet();
 int v2 = nondet();
-int v3 = nondet();
-int v4 = nondet();
-goto loc9;
-loc9:
+goto loc_9;
+loc_9:
  if (nondet_bool()) {
-  goto loc0;
+  goto loc_0;
  }
  goto end;
-loc1:
+loc_CP_1:
  if (nondet_bool()) {
-  v4 = -1+v4;
-  goto loc3;
+  v2 = -1+v2;
+  goto loc_3;
  }
  if (nondet_bool()) {
-  v4 = -1+v4;
-  goto loc6;
+  v2 = -1+v2;
+  goto loc_6;
  }
  if (nondet_bool()) {
-  v4 = -1+v4;
-  if (!( v4 <= 13 )) goto end;
-  if (!( 13 <= v4 )) goto end;
-  v4 = nondet();
-  if (!( -1*v4 <= 0 )) goto end;
-  goto loc8;
+  v2 = -1+v2;
+  if (!( v2 <= 13 )) goto end;
+  if (!( 13 <= v2 )) goto end;
+  v2 = nondet();
+  if (!( -1*v2 <= 0 )) goto end;
+  goto loc_8;
  }
  if (nondet_bool()) {
-  v4 = -1+v4;
-  if (!( v4 <= 13 )) goto end;
-  if (!( 13 <= v4 )) goto end;
-  v4 = nondet();
-  if (!( 0 <= -1-v4 )) goto end;
+  v2 = -1+v2;
+  if (!( v2 <= 13 )) goto end;
+  if (!( 13 <= v2 )) goto end;
+  v2 = nondet();
+  if (!( 0 <= -1-v2 )) goto end;
   v1 = nondet();
-  goto loc5;
+  goto loc_5;
  }
  goto end;
-loc0:
+loc_0:
  if (nondet_bool()) {
-  goto loc1;
+  goto loc_CP_1;
  }
  goto end;
-loc3:
+loc_3:
  if (nondet_bool()) {
-  v2 = v2;
-  goto loc4;
+  if (!( 1+v2 <= 13 )) goto end;
+  goto loc_4;
+ }
+ if (nondet_bool()) {
+  if (!( 14 <= v2 )) goto end;
+  goto loc_4;
  }
  goto end;
-loc4:
+loc_4:
  if (nondet_bool()) {
-  if (!( -1*v4 <= 0 )) goto end;
-  goto loc2;
+  if (!( -1*v2 <= 0 )) goto end;
+  goto loc_2;
  }
  goto end;
-loc2:
+loc_2:
  if (nondet_bool()) {
-  goto loc1;
+  goto loc_CP_1;
  }
  goto end;
-loc6:
+loc_6:
  if (nondet_bool()) {
-  v3 = v3;
-  goto loc7;
+  if (!( 1+v2 <= 13 )) goto end;
+  goto loc_7;
+ }
+ if (nondet_bool()) {
+  if (!( 14 <= v2 )) goto end;
+  goto loc_7;
  }
  goto end;
-loc7:
+loc_7:
  if (nondet_bool()) {
-  if (!( 0 <= -1-v4 )) goto end;
+  if (!( 0 <= -1-v2 )) goto end;
   v1 = nondet();
-  goto loc5;
+  goto loc_5;
  }
  goto end;
-loc8:
+loc_8:
  if (nondet_bool()) {
-  goto loc1;
+  goto loc_CP_1;
  }
  goto end;
-loc5:
-loc5:
+loc_5:
+loc_5:
 end:
 ;
 }

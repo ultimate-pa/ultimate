@@ -3,43 +3,43 @@ _Bool nondet_bool() { _Bool a; return a; }
 int main() {
 int v1 = nondet();
 int v2 = nondet();
-goto loc5;
-loc5:
+goto loc_5;
+loc_5:
  if (nondet_bool()) {
-  goto loc2;
+  goto loc_2;
  }
  goto end;
-loc0:
+loc_CP_0:
  if (nondet_bool()) {
-  goto loc1;
+  goto loc_1;
  }
  goto end;
-loc3:
+loc_CP_3:
  if (nondet_bool()) {
   if (!( 1 <= v2 )) goto end;
   v2 = -1+v2;
-  goto loc4;
+  goto loc_4;
  }
  if (nondet_bool()) {
   if (!( v2 <= 0 )) goto end;
   v1 = -1;
-  goto loc0;
+  goto loc_CP_0;
  }
  goto end;
-loc1:
+loc_1:
  if (nondet_bool()) {
-  goto loc0;
+  goto loc_CP_0;
  }
  goto end;
-loc2:
+loc_2:
  if (nondet_bool()) {
   v1 = 0;
-  goto loc3;
+  goto loc_CP_3;
  }
  goto end;
-loc4:
+loc_4:
  if (nondet_bool()) {
-  goto loc3;
+  goto loc_CP_3;
  }
  goto end;
 end:

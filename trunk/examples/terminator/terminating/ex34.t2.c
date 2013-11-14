@@ -49,13 +49,13 @@ int v45 = nondet();
 int v46 = nondet();
 int v47 = nondet();
 int v48 = nondet();
-goto loc2;
-loc2:
+goto loc_2;
+loc_2:
  if (nondet_bool()) {
-  goto loc0;
+  goto loc_0;
  }
  goto end;
-loc0:
+loc_0:
  if (nondet_bool()) {
   v9 = 2;
   v34 = nondet();
@@ -105,10 +105,10 @@ loc0:
   v32 = v24;
   v48 = v32;
   v8 = v48;
-  goto loc1;
+  goto loc_1;
  }
  goto end;
-loc1:
+loc_1:
 end:
 ;
 }

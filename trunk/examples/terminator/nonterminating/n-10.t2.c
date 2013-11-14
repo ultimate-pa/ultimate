@@ -12,77 +12,80 @@ int v8 = nondet();
 int v9 = nondet();
 int v10 = nondet();
 int v11 = nondet();
-int v12 = nondet();
-goto loc7;
-loc7:
+goto loc_7;
+loc_7:
  if (nondet_bool()) {
-  goto loc6;
+  goto loc_6;
  }
  goto end;
-loc0:
+loc_CP_0:
  if (nondet_bool()) {
+  v5 = v2;
   v6 = v3;
-  v7 = v4;
-  if (!( -1*v6+v7 <= 0 )) goto end;
-  v6 = nondet();
-  v7 = nondet();
-  v1 = nondet();
-  goto loc1;
- }
- if (nondet_bool()) {
-  v6 = v3;
-  v7 = v4;
-  if (!( 0 <= -1-v6+v7 )) goto end;
-  v6 = nondet();
-  v7 = nondet();
-  v10 = nondet();
-  if (!( v10 <= 0 )) goto end;
-  if (!( 0 <= v10 )) goto end;
-  goto loc2;
- }
- if (nondet_bool()) {
-  v6 = v3;
-  v7 = v4;
-  if (!( 0 <= -1-v6+v7 )) goto end;
-  v6 = nondet();
-  v7 = nondet();
-  v10 = nondet();
-  goto loc4;
- }
- goto end;
-loc2:
- if (nondet_bool()) {
-  goto loc0;
- }
- goto end;
-loc4:
- if (nondet_bool()) {
-  v2 = v2;
-  goto loc5;
- }
- goto end;
-loc5:
- if (nondet_bool()) {
-  v5 = v3;
+  if (!( -1*v5+v6 <= 0 )) goto end;
   v5 = nondet();
-  goto loc3;
+  v6 = nondet();
+  v1 = nondet();
+  goto loc_1;
+ }
+ if (nondet_bool()) {
+  v5 = v2;
+  v6 = v3;
+  if (!( 0 <= -1-v5+v6 )) goto end;
+  v5 = nondet();
+  v6 = nondet();
+  v9 = nondet();
+  if (!( v9 <= 0 )) goto end;
+  if (!( 0 <= v9 )) goto end;
+  goto loc_2;
+ }
+ if (nondet_bool()) {
+  v5 = v2;
+  v6 = v3;
+  if (!( 0 <= -1-v5+v6 )) goto end;
+  v5 = nondet();
+  v6 = nondet();
+  v9 = nondet();
+  goto loc_4;
  }
  goto end;
-loc3:
+loc_2:
  if (nondet_bool()) {
-  goto loc0;
+  goto loc_CP_0;
  }
  goto end;
-loc6:
+loc_4:
  if (nondet_bool()) {
-  v12 = nondet();
+  if (!( 1+v9 <= 0 )) goto end;
+  goto loc_5;
+ }
+ if (nondet_bool()) {
+  if (!( 1 <= v9 )) goto end;
+  goto loc_5;
+ }
+ goto end;
+loc_5:
+ if (nondet_bool()) {
+  v4 = v2;
+  v4 = nondet();
+  goto loc_3;
+ }
+ goto end;
+loc_3:
+ if (nondet_bool()) {
+  goto loc_CP_0;
+ }
+ goto end;
+loc_6:
+ if (nondet_bool()) {
   v11 = nondet();
-  v9 = v11;
-  v8 = v12;
-  goto loc0;
+  v10 = nondet();
+  v8 = v10;
+  v7 = v11;
+  goto loc_CP_0;
  }
  goto end;
-loc1:
+loc_1:
 end:
 ;
 }

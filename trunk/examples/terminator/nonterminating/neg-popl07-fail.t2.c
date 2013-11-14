@@ -26,80 +26,80 @@ int v22 = nondet();
 int v23 = nondet();
 int v24 = nondet();
 int v25 = nondet();
-goto loc13;
-loc13:
+goto loc_13;
+loc_13:
  if (nondet_bool()) {
-  goto loc12;
+  goto loc_12;
  }
  goto end;
-loc3:
+loc_CP_3:
  if (nondet_bool()) {
-  goto loc11;
+  goto loc_11;
  }
  goto end;
-loc8:
+loc_CP_8:
  if (nondet_bool()) {
-  goto loc9;
+  goto loc_9;
  }
  goto end;
-loc0:
+loc_0:
  if (nondet_bool()) {
-  goto loc1;
+  goto loc_1;
  }
  goto end;
-loc2:
+loc_2:
  if (nondet_bool()) {
   v17 = 0;
   v25 = 1;
   v25 = 0;
-  goto loc3;
+  goto loc_CP_3;
  }
  goto end;
-loc4:
+loc_4:
  if (nondet_bool()) {
-  goto loc2;
+  goto loc_2;
  }
  goto end;
-loc5:
+loc_5:
  if (nondet_bool()) {
   if (!( 1+v22 <= 2 )) goto end;
-  goto loc4;
+  goto loc_4;
  }
  if (nondet_bool()) {
   if (!( 3 <= v22 )) goto end;
-  goto loc4;
+  goto loc_4;
  }
  if (nondet_bool()) {
   if (!( 2 <= v22 )) goto end;
   if (!( v22 <= 2 )) goto end;
   v8 = v1;
   v17 = 1+v17;
-  goto loc4;
+  goto loc_4;
  }
  goto end;
-loc6:
+loc_6:
  if (nondet_bool()) {
   v3 = 0;
-  goto loc5;
+  goto loc_5;
  }
  goto end;
-loc7:
+loc_7:
  if (nondet_bool()) {
   if (!( 1 <= v22 )) goto end;
   if (!( v22 <= 1 )) goto end;
   v15 = 1+v15;
-  goto loc8;
+  goto loc_CP_8;
  }
  if (nondet_bool()) {
   if (!( 1+v22 <= 1 )) goto end;
-  goto loc6;
+  goto loc_6;
  }
  if (nondet_bool()) {
   if (!( 2 <= v22 )) goto end;
-  goto loc6;
+  goto loc_6;
  }
  goto end;
-loc10:
+loc_10:
  if (nondet_bool()) {
   if (!( v1 <= 0 )) goto end;
   v9 = v1;
@@ -110,19 +110,19 @@ loc10:
   v18 = 1;
   v18 = 0;
   v22 = v6;
-  goto loc7;
+  goto loc_7;
  }
  if (nondet_bool()) {
   if (!( 1 <= v1 )) goto end;
-  goto loc2;
+  goto loc_2;
  }
  goto end;
-loc11:
+loc_11:
  if (nondet_bool()) {
-  goto loc3;
+  goto loc_CP_3;
  }
  goto end;
-loc9:
+loc_9:
  if (nondet_bool()) {
   if (!( 1+v15 <= v4 )) goto end;
   v7 = v16;
@@ -133,23 +133,23 @@ loc9:
   v20 = v23;
   v5 = v20;
   v1 = v5;
-  goto loc10;
+  goto loc_10;
  }
  if (nondet_bool()) {
   if (!( v4 <= v15 )) goto end;
-  goto loc2;
+  goto loc_2;
  }
  goto end;
-loc12:
+loc_12:
  if (nondet_bool()) {
   v25 = 0;
   v21 = v25;
   v21 = 1;
   v21 = 0;
-  goto loc8;
+  goto loc_CP_8;
  }
  goto end;
-loc1:
+loc_1:
 end:
 ;
 }

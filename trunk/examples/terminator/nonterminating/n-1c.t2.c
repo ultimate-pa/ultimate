@@ -10,75 +10,78 @@ int v6 = nondet();
 int v7 = nondet();
 int v8 = nondet();
 int v9 = nondet();
-int v10 = nondet();
-goto loc7;
-loc7:
+goto loc_7;
+loc_7:
  if (nondet_bool()) {
-  goto loc0;
+  goto loc_0;
  }
  goto end;
-loc1:
+loc_CP_1:
  if (nondet_bool()) {
-  v7 = v3;
-  v5 = v4;
-  if (!( v5-v7 <= 0 )) goto end;
-  v7 = nondet();
-  v5 = nondet();
-  v1 = nondet();
-  goto loc2;
- }
- if (nondet_bool()) {
-  v7 = v3;
-  v5 = v4;
-  if (!( 0 <= -1+v5-v7 )) goto end;
-  v7 = nondet();
-  v5 = nondet();
-  v8 = nondet();
-  if (!( v8 <= 0 )) goto end;
-  if (!( 0 <= v8 )) goto end;
-  goto loc3;
- }
- if (nondet_bool()) {
-  v7 = v3;
-  v5 = v4;
-  if (!( 0 <= -1+v5-v7 )) goto end;
-  v7 = nondet();
-  v5 = nondet();
-  v8 = nondet();
-  goto loc5;
- }
- goto end;
-loc0:
- if (nondet_bool()) {
-  v10 = nondet();
-  v9 = nondet();
-  goto loc1;
- }
- goto end;
-loc3:
- if (nondet_bool()) {
-  goto loc1;
- }
- goto end;
-loc5:
- if (nondet_bool()) {
-  v2 = v2;
-  goto loc6;
- }
- goto end;
-loc6:
- if (nondet_bool()) {
-  v6 = v3;
+  v6 = v2;
+  v4 = v3;
+  if (!( v4-v6 <= 0 )) goto end;
   v6 = nondet();
-  goto loc4;
+  v4 = nondet();
+  v1 = nondet();
+  goto loc_2;
  }
- goto end;
-loc4:
  if (nondet_bool()) {
-  goto loc1;
+  v6 = v2;
+  v4 = v3;
+  if (!( 0 <= -1+v4-v6 )) goto end;
+  v6 = nondet();
+  v4 = nondet();
+  v7 = nondet();
+  if (!( v7 <= 0 )) goto end;
+  if (!( 0 <= v7 )) goto end;
+  goto loc_3;
+ }
+ if (nondet_bool()) {
+  v6 = v2;
+  v4 = v3;
+  if (!( 0 <= -1+v4-v6 )) goto end;
+  v6 = nondet();
+  v4 = nondet();
+  v7 = nondet();
+  goto loc_5;
  }
  goto end;
-loc2:
+loc_0:
+ if (nondet_bool()) {
+  v9 = nondet();
+  v8 = nondet();
+  goto loc_CP_1;
+ }
+ goto end;
+loc_3:
+ if (nondet_bool()) {
+  goto loc_CP_1;
+ }
+ goto end;
+loc_5:
+ if (nondet_bool()) {
+  if (!( 1+v7 <= 0 )) goto end;
+  goto loc_6;
+ }
+ if (nondet_bool()) {
+  if (!( 1 <= v7 )) goto end;
+  goto loc_6;
+ }
+ goto end;
+loc_6:
+ if (nondet_bool()) {
+  v5 = v2;
+  v5 = nondet();
+  goto loc_4;
+ }
+ goto end;
+loc_4:
+ if (nondet_bool()) {
+  goto loc_CP_1;
+ }
+ goto end;
+loc_2:
 end:
 ;
 }

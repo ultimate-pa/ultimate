@@ -2,28 +2,28 @@ int nondet() { int a; return a; }
 _Bool nondet_bool() { _Bool a; return a; }
 int main() {
 int v1 = nondet();
-goto loc3;
-loc3:
+goto loc_3;
+loc_3:
  if (nondet_bool()) {
-  goto loc0;
+  goto loc_0;
  }
  goto end;
-loc1:
+loc_CP_1:
  if (nondet_bool()) {
   if (!( 0 <= v1 )) goto end;
   v1 = v1;
   v1 = -1+v1;
-  goto loc2;
+  goto loc_2;
  }
  goto end;
-loc0:
+loc_0:
  if (nondet_bool()) {
-  goto loc1;
+  goto loc_CP_1;
  }
  goto end;
-loc2:
+loc_2:
  if (nondet_bool()) {
-  goto loc1;
+  goto loc_CP_1;
  }
  goto end;
 end:

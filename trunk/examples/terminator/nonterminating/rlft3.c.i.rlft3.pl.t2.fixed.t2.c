@@ -23,142 +23,142 @@ int v19 = nondet();
 int v20 = nondet();
 int v21 = nondet();
 int v22 = nondet();
-goto loc26;
-loc26:
+goto loc_26;
+loc_26:
  if (nondet_bool()) {
-  goto loc20;
+  goto loc_20;
  }
  goto end;
-loc7:
+loc_CP_7:
  if (nondet_bool()) {
-  goto loc12;
+  goto loc_12;
  }
  goto end;
-loc13:
+loc_CP_13:
  if (nondet_bool()) {
-  goto loc14;
+  goto loc_14;
  }
  goto end;
-loc15:
+loc_CP_15:
  if (nondet_bool()) {
-  goto loc19;
+  goto loc_19;
  }
  goto end;
-loc23:
+loc_CP_23:
  if (nondet_bool()) {
-  goto loc25;
+  goto loc_25;
  }
  goto end;
-loc24:
+loc_CP_24:
  if (nondet_bool()) {
-  goto loc22;
+  goto loc_22;
  }
  goto end;
-loc0:
+loc_0:
  if (nondet_bool()) {
-  goto loc1;
+  goto loc_1;
  }
  goto end;
-loc2:
+loc_2:
  if (nondet_bool()) {
   if (!( 0 <= v11 )) goto end;
-  goto loc0;
+  goto loc_0;
  }
  if (nondet_bool()) {
   if (!( 1+v11 <= -1 )) goto end;
-  goto loc0;
+  goto loc_0;
  }
  if (nondet_bool()) {
   if (!( v11 <= -1 )) goto end;
   if (!( -1 <= v11 )) goto end;
-  goto loc0;
+  goto loc_0;
  }
  goto end;
-loc3:
+loc_3:
  if (nondet_bool()) {
   v14 = nondet();
   v4 = nondet();
   v3 = nondet();
   v5 = nondet();
   v6 = nondet();
-  goto loc4;
+  goto loc_4;
  }
  goto end;
-loc5:
+loc_5:
  if (nondet_bool()) {
   v13 = 2-v8+v16;
-  goto loc3;
+  goto loc_3;
  }
  goto end;
-loc6:
+loc_6:
  if (nondet_bool()) {
   if (!( v8 <= 1 )) goto end;
   if (!( 1 <= v8 )) goto end;
   v13 = 1;
-  goto loc3;
+  goto loc_3;
  }
  if (nondet_bool()) {
   if (!( 2 <= v8 )) goto end;
-  goto loc5;
+  goto loc_5;
  }
  if (nondet_bool()) {
   if (!( 1+v8 <= 1 )) goto end;
-  goto loc5;
+  goto loc_5;
  }
  goto end;
-loc4:
+loc_4:
  if (nondet_bool()) {
   v8 = 1+v8;
-  goto loc7;
+  goto loc_CP_7;
  }
  goto end;
-loc8:
+loc_8:
  if (nondet_bool()) {
   v4 = nondet();
   v3 = nondet();
   v5 = nondet();
   v6 = nondet();
-  goto loc4;
+  goto loc_4;
  }
  goto end;
-loc9:
+loc_9:
  if (nondet_bool()) {
   v13 = nondet();
-  goto loc8;
+  goto loc_8;
  }
  goto end;
-loc10:
+loc_10:
  if (nondet_bool()) {
   if (!( v8 <= 1 )) goto end;
   if (!( 1 <= v8 )) goto end;
   v13 = 1;
-  goto loc8;
+  goto loc_8;
  }
  if (nondet_bool()) {
   if (!( 2 <= v8 )) goto end;
-  goto loc9;
+  goto loc_9;
  }
  if (nondet_bool()) {
   if (!( 1+v8 <= 1 )) goto end;
-  goto loc9;
+  goto loc_9;
  }
  goto end;
-loc11:
+loc_11:
  if (nondet_bool()) {
   if (!( 2 <= v9 )) goto end;
-  goto loc6;
+  goto loc_6;
  }
  if (nondet_bool()) {
   if (!( 1+v9 <= 1 )) goto end;
-  goto loc6;
+  goto loc_6;
  }
  if (nondet_bool()) {
   if (!( v9 <= 1 )) goto end;
   if (!( 1 <= v9 )) goto end;
-  goto loc10;
+  goto loc_10;
  }
  goto end;
-loc12:
+loc_12:
  if (nondet_bool()) {
   if (!( 1+v16 <= v8 )) goto end;
   v22 = v21;
@@ -166,62 +166,62 @@ loc12:
   v18 = nondet();
   v9 = 1+v9;
   v10 = 2+v10;
-  goto loc13;
+  goto loc_CP_13;
  }
  if (nondet_bool()) {
   if (!( v8 <= v16 )) goto end;
-  goto loc11;
+  goto loc_11;
  }
  goto end;
-loc14:
+loc_14:
  if (nondet_bool()) {
   v7 = 1+v7;
-  goto loc15;
+  goto loc_CP_15;
  }
  if (nondet_bool()) {
-  goto loc7;
+  goto loc_CP_7;
  }
  goto end;
-loc16:
+loc_16:
  if (nondet_bool()) {
   v21 = 1;
   v18 = 0;
-  goto loc13;
+  goto loc_CP_13;
  }
  goto end;
-loc17:
+loc_17:
  if (nondet_bool()) {
   v12 = 2-v7+v15;
-  goto loc16;
+  goto loc_16;
  }
  goto end;
-loc18:
+loc_18:
  if (nondet_bool()) {
   if (!( v7 <= 1 )) goto end;
   if (!( 1 <= v7 )) goto end;
   v12 = 1;
-  goto loc16;
+  goto loc_16;
  }
  if (nondet_bool()) {
   if (!( 2 <= v7 )) goto end;
-  goto loc17;
+  goto loc_17;
  }
  if (nondet_bool()) {
   if (!( 1+v7 <= 1 )) goto end;
-  goto loc17;
+  goto loc_17;
  }
  goto end;
-loc19:
+loc_19:
  if (nondet_bool()) {
   if (!( 1+v15 <= v7 )) goto end;
-  goto loc2;
+  goto loc_2;
  }
  if (nondet_bool()) {
   if (!( v7 <= v15 )) goto end;
-  goto loc18;
+  goto loc_18;
  }
  goto end;
-loc20:
+loc_20:
  if (nondet_bool()) {
   v1 = nondet();
   v2 = nondet();
@@ -229,49 +229,49 @@ loc20:
   v22 = nondet();
   v20 = nondet();
   v19 = nondet();
-  goto loc21;
+  goto loc_21;
  }
  goto end;
-loc22:
+loc_22:
  if (nondet_bool()) {
   if (!( 1+v16 <= v8 )) goto end;
   v7 = 1+v7;
-  goto loc23;
+  goto loc_CP_23;
  }
  if (nondet_bool()) {
   if (!( v8 <= v16 )) goto end;
   v13 = 1+v13;
   v13 = 1+v13;
   v8 = 1+v8;
-  goto loc24;
+  goto loc_CP_24;
  }
  goto end;
-loc25:
+loc_25:
  if (nondet_bool()) {
   if (!( 1+v15 <= v7 )) goto end;
-  goto loc15;
+  goto loc_CP_15;
  }
  if (nondet_bool()) {
   if (!( v7 <= v15 )) goto end;
-  goto loc24;
+  goto loc_CP_24;
  }
  goto end;
-loc21:
+loc_21:
  if (nondet_bool()) {
   if (!( 2 <= v11 )) goto end;
-  goto loc15;
+  goto loc_CP_15;
  }
  if (nondet_bool()) {
   if (!( 1+v11 <= 1 )) goto end;
-  goto loc15;
+  goto loc_CP_15;
  }
  if (nondet_bool()) {
   if (!( v11 <= 1 )) goto end;
   if (!( 1 <= v11 )) goto end;
-  goto loc23;
+  goto loc_CP_23;
  }
  goto end;
-loc1:
+loc_1:
 end:
 ;
 }
