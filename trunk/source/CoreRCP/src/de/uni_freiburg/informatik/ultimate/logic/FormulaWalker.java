@@ -18,7 +18,13 @@
  */
 package de.uni_freiburg.informatik.ultimate.logic;
 
-
+/**
+ * A walker according to the visitor pattern.  This walker is recursive.  Since
+ * this is dangerous for big terms, it should not be used anymore.  Consider
+ * {@link NonRecursive} or {@link TermTransformer} instead.
+ * @author Juergen Christ
+ */
+@Deprecated
 public class FormulaWalker {
 	public interface SymbolVisitor {
 		/**
@@ -56,7 +62,7 @@ public class FormulaWalker {
 		public void quantifier(TermVariable[] tvs);
 		/**
 		 * End scopes of multiple variables.
-		 * @param tvs All variables whose scope ends.
+		 * @param tv All variables whose scope ends.
 		 */
 		public void endscope(TermVariable[] tv);
 	}

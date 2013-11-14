@@ -25,7 +25,7 @@ import java.util.HashMap;
 import de.uni_freiburg.informatik.ultimate.util.HashUtils;
 
 /**
- * Represents an smtlib sort.  We distinguish real sorts (which
+ * Represents an SMTLIB sort.  We distinguish real sorts (which
  * are declared with declare-sort or pre-defined in the logic) from
  * defined sort (which are defined with define-sort to some other sort.
  * For a real sort, <tt>getRealSort() == this</tt> holds.
@@ -42,9 +42,9 @@ import de.uni_freiburg.informatik.ultimate.util.HashUtils;
  * 
  * @author Jochen Hoenicke
  */
-public class Sort {
+public final class Sort {
 	/**
-	 * The sort symbol
+	 * The sort symbol.
 	 */
 	SortSymbol m_Symbol;
 	/**
@@ -67,7 +67,7 @@ public class Sort {
 	//@ invariant m_RealSort == null || m_RealSort.getRealSort() == m_RealSort
 	Sort       m_RealSort;
 	
-	int m_Hash;
+	private int m_Hash;
 	
 	Sort(SortSymbol sym, BigInteger[] indices, Sort[] args) {
 		assert args.length == (sym.isParametric() ? 0 : sym.m_NumParams) 
@@ -115,10 +115,25 @@ public class Sort {
 		return m_Indices;
 	}
 	
+	/**
+	 * Get the sort arguments for a sort.  This is used for a sort, whose
+	 * sort symbol was declared with 
+	 * {@link Script#declareSort(String, int) declare-sort(name, int)}
+	 * where the second parameter is not zero.  In that case the sort is created
+	 * with sort arguments and these arguments are returned by this method.
+	 * @return An array containing the sort arguments for this sort.
+	 * You must never write to this array.     
+	 */
 	public Sort[] getArguments() {
 		return m_Args;
 	}
 	
+	/**
+	 * Get the real sort.  This is used for sorts that are defined with
+	 * {@link Script#defineSort(String, Sort[], Sort) define-sort}.
+	 * For other sorts this just returns this.
+	 * @return the sort representation where all sort definitions are expanded.     
+	 */
 	public Sort getRealSort() {
 		if (m_RealSort == null) {
 			if (m_Symbol.m_SortDefinition == null) {
@@ -234,10 +249,21 @@ public class Sort {
 		return result;
 	}
 
+	/**
+	 * This returns true if and only if the sort was created with
+	 * {@link Script#sortVariables(String...)}.  These are only used for a 
+	 * later {@link Script#defineSort(String, Sort[], Sort) define-sort}
+	 * command.
+	 * @return true iff this is a sort variable.     
+	 */
 	public boolean isParametric() {
 		return m_Symbol.isParametric();
 	}
 
+	/**
+	 * This returns the SMTLIB string represenation of this sort.
+	 * @return the SMTLIB string representation.     
+	 */
 	public String toString() {
 		if (m_Args.length == 0)
 			return getIndexedName();
@@ -251,7 +277,7 @@ public class Sort {
 	 * @param m_Todo The stack where to put the strings and sub sorts.
 	 * @see PrintTerm
 	 */
-	public void toStringHelper(ArrayDeque<Object> m_Todo) {
+	void toStringHelper(ArrayDeque<Object> m_Todo) {
 		String name = getIndexedName();
 		Sort[] args = getArguments();
 		if (args.length == 0) {
@@ -271,13 +297,28 @@ public class Sort {
 		return m_Symbol.m_Theory;
 	}
 
+	/**
+	 * Returns true if this is an array sort.  This is any instantiation
+	 * of the parametric sort Array defined by the SMTLIB array theory.
+	 * @return true if this is an array sort.
+	 */
 	public boolean isArraySort() {
 		return getRealSort().m_Symbol.isArray();
 	}
+	/**
+	 * Returns true if this is a numeric sort.  Numeric sorts are only the
+	 * sorts Int and Real defined by the corresponding SMTLIB theories.
+	 * @return true if this is a numeric sort.
+	 */
 	public boolean isNumericSort() {
 		return getRealSort().m_Symbol.isNumeric();
 	}
 
+	/**
+	 * Returns true if this sort is internal, i.e., defined by an SMTLIB 
+	 * theory.
+	 * @return true if the sort is internal, false if it is user defined.
+	 */
 	public boolean isInternal() {
 		return m_Symbol.isIntern();
 	}

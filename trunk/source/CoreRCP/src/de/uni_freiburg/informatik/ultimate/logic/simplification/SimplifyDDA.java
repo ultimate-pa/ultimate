@@ -19,11 +19,18 @@
 package de.uni_freiburg.informatik.ultimate.logic.simplification;
 
 
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.FormulaUnLet;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
+import de.uni_freiburg.informatik.ultimate.logic.NonRecursive;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
@@ -40,22 +47,477 @@ import de.uni_freiburg.informatik.ultimate.logic.Util;
  * This implementation extends this approach to formulas which are not in NNF,
  * contain "=>" and "ite".
  * 
- * @author heizmann@informatik.uni-freiburg.de, Jochen Hoenicke, Markus Pomrehn
+ * The new implementation is DAG-based an non-recursive.  We collect contexts
+ * 
+ * @author Matthias Heizmann, Jochen Hoenicke, Markus Pomrehn
  *
  */
-public class SimplifyDDA {
-	private final Script m_Script;
-	private final Term m_True;
-	private final Term m_False;
+public class SimplifyDDA extends NonRecursive {
+
+	private static class TermInfo {
+		int    m_numPredecessors;
+		int    m_seen;
+		int    m_prepared;
+		Term[] m_context;
+		Term   m_simplified;
+		
+		public String toString() {
+			return "TermInfo["+m_numPredecessors+","+m_seen+","+m_prepared
+			+(m_context != null ? ",context:"+Arrays.toString(m_context): "")
+			+(m_simplified != null ? "->"+m_simplified : "")+"]";
+		}
+	}
+	
+	HashMap<Term, TermInfo> m_termInfos; 
+	Term m_Result;
+	Script m_Script;
+	Term m_True;
+	Term m_False;
+	boolean m_SimplifyRepeatedly;
+
+	/**
+	 * This class counts the predecessors of every term to enable the
+	 * next passes to determine whether we need to collect information.
+	 * 
+	 * @author hoenicke
+	 */
+	private static class TermCounter implements Walker {
+		protected Term m_Term;
+		public TermCounter(Term term) {
+			/* directly descend into not-terms as if the not is not there */
+			while (term instanceof ApplicationTerm) {
+				ApplicationTerm appTerm = (ApplicationTerm) term;
+				if (appTerm.getFunction().getName() == "not")
+					term = appTerm.getParameters()[0];
+				else
+					break;
+			}
+			m_Term = term;
+		}
+
+		@Override
+		public void walk(NonRecursive engine) {
+			SimplifyDDA simplifier = (SimplifyDDA) engine;
+			TermInfo info = simplifier.m_termInfos.get(m_Term);
+			if (info == null) {
+				info = new TermInfo();
+				simplifier.m_termInfos.put(m_Term, info);
+
+				if (m_Term instanceof ApplicationTerm) {
+					ApplicationTerm appTerm = (ApplicationTerm) m_Term;
+					String connective = appTerm.getFunction().getName();
+					
+					if (connective == "ite" || connective == "and" || 
+						connective == "or" || connective == "=>") {
+						for (Term subTerm : appTerm.getParameters()) {
+							engine.enqueueWalker(new TermCounter(subTerm));
+						}
+					}
+				}
+			}
+			info.m_numPredecessors++;
+		}
+	}
 	
 	/**
-	 * The constructor gets the script interface and the logger for output
+	 * This class collects the contexts (for the context simplifier)
+	 * in which a term occurs.  It does not simplify the term.
+	 * 
+	 * @author hoenicke
 	 */
-	public SimplifyDDA(final Script script) 
-			throws SMTLIBException {
+	private static class ContextCollector implements Walker {
+		boolean m_negated;
+		Term m_term;
+		ArrayDeque<Term> m_context;
+		int m_paramCtr;
+		
+		public ContextCollector(boolean negated, Term term, 
+				                ArrayDeque<Term> context) {
+			/* directly descend into not-terms as if the not is not there */
+			while (term instanceof ApplicationTerm) {
+				ApplicationTerm appTerm = (ApplicationTerm) term;
+				if (appTerm.getFunction().getName() == "not") {
+					term = appTerm.getParameters()[0];
+					negated = !negated;
+				} else
+					break;
+			}
+			m_negated = negated;
+			m_term = term;
+			m_context = context;
+			m_paramCtr = 0;
+		}
+
+		@Override
+		public void walk(NonRecursive engine) {
+			SimplifyDDA simplifier = (SimplifyDDA) engine;
+			if (m_paramCtr > 0) {
+				walkNextParameter(simplifier);
+				return;
+			}
+			TermInfo info = simplifier.m_termInfos.get(m_term);
+			assert info != null;
+			info.m_seen++;
+			assert info.m_seen <= info.m_numPredecessors;
+			if (info.m_numPredecessors > 1) {
+				// merge context
+				if (info.m_context == null) {
+					info.m_context = m_context.toArray(new Term[m_context.size()]);
+				} else {
+					HashSet<Term> oldContext = new HashSet<Term>(info.m_context.length);
+					oldContext.addAll(Arrays.asList(info.m_context));
+					ArrayList<Term> newContext = new ArrayList<Term>(info.m_context.length);
+					for (Term t : m_context) {
+						if (oldContext.contains(t))
+							newContext.add(t);
+					}
+					info.m_context = newContext.toArray(new Term[newContext.size()]);
+				}
+				if (info.m_seen < info.m_numPredecessors)
+					return;
+			}
+		
+			if (m_term instanceof ApplicationTerm) {
+				walkNextParameter(simplifier);
+			}
+		}
+
+		public void walkNextParameter(SimplifyDDA simplifier) {
+			ApplicationTerm appTerm = (ApplicationTerm) m_term;
+			String connective = appTerm.getFunction().getName();
+			Term[] params = appTerm.getParameters();
+				
+			if (connective == "ite") {
+				Term cond = params[0];
+				if (m_paramCtr == 0) {
+					simplifier.enqueueWalker(this);
+					simplifier.enqueueWalker(new ContextCollector(false, cond, m_context));
+				} else if (m_paramCtr == 1) {
+					m_context.push(cond);
+					simplifier.enqueueWalker(this);
+					simplifier.enqueueWalker(new ContextCollector(m_negated, params[1], m_context));
+				} else if (m_paramCtr == 2) {
+					m_context.pop();
+					m_context.push(Util.not(simplifier.m_Script, cond));
+					simplifier.enqueueWalker(this);
+					simplifier.enqueueWalker(new ContextCollector(m_negated, params[2], m_context));
+				} else if (m_paramCtr == 3) {
+					m_context.pop();
+				}
+				m_paramCtr++;
+			} else if (connective == "and" || 
+					   connective == "or" || connective == "=>") {
+				if (m_paramCtr == 0) {
+					for (int i = params.length-1; i > 0; i--) {
+						Term sibling = simplifier.negateSibling(params[i], connective, i, params.length);
+						m_context.push(sibling);
+					}
+					simplifier.enqueueWalker(this);
+					simplifier.enqueueWalker(new ContextCollector(m_negated, params[m_paramCtr], m_context));
+				} else if (m_paramCtr < params.length) {
+					// The context contains:
+					//  param[len-1] ... param[m_paramCtr] 
+					//      simplify(param[m_paramCtr-2])... simplify(param[0])
+					// we need to replace param[m_paramCtr]
+					// by simplify(param[m_paramCtr-1]).
+					/*  this is dangerous:  the simplified formulas may depend
+					 * on their context, therefore we cannot simply merge them.
+					for (int i = 0; i < m_paramCtr; i++) {
+						m_context.pop();
+					}
+					for (int i = m_paramCtr-1; i >= 0; i--) {
+						Term sibling = simplifier.negateSibling(params[i], connective, i, params.length);
+						sibling = simplifier.createSimplify(sibling);
+						m_context.push(sibling);
+					}
+					*/
+					m_context.pop();
+					simplifier.enqueueWalker(this);
+					simplifier.enqueueWalker(new ContextCollector(m_negated, params[m_paramCtr], m_context));
+				} else {
+					/*
+					for (int i = 0; i < m_paramCtr-1; i++) {
+						m_context.pop();
+					}
+					*/
+				}
+				m_paramCtr++;
+			}
+		}
+	}
+
+	/**
+	 * This class simplifies the terms in a post-order traversal.  First we
+	 * descend into children doing nothing.  When getting back to the parent
+	 * again we simplify it, provided it has more than one predecessor.
+	 * 
+	 * @author hoenicke
+	 */
+	private static class PrepareSimplifier implements Walker {
+		Term m_term;
+		
+		public PrepareSimplifier(boolean negated, Term term) {
+			/* directly descend into not-terms as if the not is not there */
+			while (term instanceof ApplicationTerm) {
+				ApplicationTerm appTerm = (ApplicationTerm) term;
+				if (appTerm.getFunction().getName() == "not") {
+					term = appTerm.getParameters()[0];
+				} else
+					break;
+			}
+			m_term = term;
+		}
+
+		@Override
+		public void walk(NonRecursive engine) {
+			SimplifyDDA simplifier = (SimplifyDDA) engine;
+			TermInfo info = simplifier.m_termInfos.get(m_term);
+			if (info.m_prepared++ > 0)
+				return;
+			
+			if (info.m_numPredecessors > 1) {
+				engine.enqueueWalker(new StoreSimplified(m_term));
+				engine.enqueueWalker(new Simplifier(false, m_term, info.m_context));
+			}
+			if (m_term instanceof ApplicationTerm) {
+				ApplicationTerm appTerm = (ApplicationTerm) m_term;
+				String connective = appTerm.getFunction().getName();
+				Term[] params = appTerm.getParameters();
+			
+				if (connective == "ite" || connective == "and" || 
+					connective == "or" || connective == "=>") {
+					for (int i = 0; i < params.length; i++)
+						engine.enqueueWalker(new PrepareSimplifier(false, params[i]));
+				}
+			}
+		}
+	}
+	
+	private static class StoreSimplified implements Walker {
+		Term m_term;
+		
+		public StoreSimplified(Term term) {
+			m_term = term;
+		}
+
+		@Override
+		public void walk(NonRecursive engine) {
+			SimplifyDDA simplifier = (SimplifyDDA) engine;
+			TermInfo info = simplifier.m_termInfos.get(m_term);
+			info.m_simplified = simplifier.popResult();
+		}
+	}
+
+	private static class Simplifier implements Walker {
+		boolean m_negated;
+		Term m_term;
+		Term[] m_context;
+		int m_paramCtr;
+		Term[] m_simplifiedParams;
+		
+		public Simplifier(boolean negated, Term term, Term[] context) {
+			/* directly descend into not-terms as if the not is not there */
+			while (term instanceof ApplicationTerm) {
+				ApplicationTerm appTerm = (ApplicationTerm) term;
+				if (appTerm.getFunction().getName() == "not") {
+					term = appTerm.getParameters()[0];
+					negated = !negated;
+				} else
+					break;
+			}
+			m_negated = negated;
+			m_term = term;
+			m_context = context;
+			m_paramCtr = 0;
+		}
+
+		public Simplifier(boolean negated, Term term) {
+			/* directly descend into not-terms as if the not is not there */
+			while (term instanceof ApplicationTerm) {
+				ApplicationTerm appTerm = (ApplicationTerm) term;
+				if (appTerm.getFunction().getName() == "not") {
+					term = appTerm.getParameters()[0];
+					negated = !negated;
+				} else
+					break;
+			}
+			m_negated = negated;
+			m_term = term;
+			m_context = null;
+			m_paramCtr = 0;
+		}
+
+		@Override
+		public void walk(NonRecursive engine) {		
+			SimplifyDDA simplifier = (SimplifyDDA) engine;
+			if (m_paramCtr > 0) {
+				walkParam(simplifier);
+				return;
+			}
+			if (m_context == null) {
+				/* check for redundancy, then for info */
+				Redundancy red = simplifier.getRedundancy(m_term);
+				if (red != Redundancy.NOT_REDUNDANT) {
+					if (red == Redundancy.NON_RELAXING)
+						simplifier.setResult(m_negated, simplifier.m_False);
+					else
+						simplifier.setResult(m_negated, simplifier.m_True);
+					return;
+				}
+				
+				TermInfo info = simplifier.m_termInfos.get(m_term);
+				if (info.m_numPredecessors > 1) {
+					assert info.m_simplified != null;
+					simplifier.setResult(m_negated, info.m_simplified);
+					return;
+				}
+			}
+			
+			if (m_context != null)
+				simplifier.pushContext(m_context);
+
+			if (m_term instanceof ApplicationTerm) {
+				ApplicationTerm appTerm = (ApplicationTerm) m_term;
+				String connective = appTerm.getFunction().getName();
+				Term[] params = appTerm.getParameters();
+
+				if (connective == "ite" || connective == "and" || 
+					connective == "or" || connective == "=>") {
+					m_simplifiedParams = new Term[params.length];
+					walkParam(simplifier);
+					return;
+				}
+			}
+			/* we could not simplify this term */
+			simplifier.setResult(m_negated, m_term);
+			if (m_context != null)
+				simplifier.popContext();
+		}
+
+		private void walkParam(SimplifyDDA simplifier) {
+			ApplicationTerm appTerm = (ApplicationTerm) m_term;
+			String connective = appTerm.getFunction().getName();
+			Term[] params = appTerm.getParameters();
+
+			if (m_paramCtr > 0)
+				m_simplifiedParams[m_paramCtr-1] = simplifier.popResult();
+
+			if (connective == "ite") {
+				switch (m_paramCtr++) {
+				case 0:
+					simplifier.enqueueWalker(this);
+					simplifier.enqueueWalker(new Simplifier(false, params[0]));
+					break;
+				case 1:
+					simplifier.enqueueWalker(this);
+					simplifier.pushContext(m_simplifiedParams[0]);
+					simplifier.enqueueWalker(new Simplifier(m_negated, params[1]));
+					break;
+				case 2:
+					simplifier.enqueueWalker(this);
+					simplifier.popContext();
+					simplifier.pushContext(Util.not(simplifier.m_Script, m_simplifiedParams[0]));
+					simplifier.enqueueWalker(new Simplifier(m_negated, params[2]));
+					break;
+				case 3:
+					simplifier.popContext();
+					Term result = Util.ite(simplifier.m_Script, 
+							m_simplifiedParams[0], m_simplifiedParams[1], m_simplifiedParams[2]);
+					simplifier.setResult(false, result);
+					if (m_context != null)
+						simplifier.popContext();
+					break;
+				}
+			} else {
+				assert (connective == "and" || connective == "or" 
+					|| connective == "=>");
+				if (m_paramCtr == params.length) {
+					simplifier.popContext();
+					ArrayList<Term> newparams = new ArrayList<Term>();
+					Term result = null;
+					for (int i = 0; i < m_simplifiedParams.length; i++) {
+						Term param = m_simplifiedParams[i];
+						if (param == simplifier.m_True) {
+							if (connective == "and" || 
+								(connective == "=>" && i < m_simplifiedParams.length - 1))
+								continue;
+							if (connective == "or" ||
+								(connective == "=>" && i == m_simplifiedParams.length - 1)) {
+								result = simplifier.m_True;
+								break;
+							}
+						} else if (param == simplifier.m_False) {
+							if (connective == "or")
+								continue;
+							if (connective == "and") {
+								result = simplifier.m_False;
+								break;
+							}
+							if (connective == "=>" && i < m_simplifiedParams.length - 1) {
+								result = simplifier.m_True;
+								break;
+							}
+						}
+						newparams.add(param);
+					}
+					if (result == null) {
+						if (newparams.isEmpty()) {
+							result = connective == "and" ? simplifier.m_True  
+									: simplifier.m_False;
+						} else if (newparams.size() == 1) {
+							result = newparams.get(0);
+						} else {
+							Term[] p = newparams.toArray(new Term[newparams.size()]);
+							result = simplifier.m_Script.term(connective, p);
+						}
+					}
+					simplifier.setResult(m_negated, result);
+					if (m_context != null)
+						simplifier.popContext();
+					return;
+				}
+				if (m_paramCtr == 0) {
+					simplifier.pushContext();
+					for (int i = params.length-1; i >= 1; i--) {
+						Term sibling = simplifier.negateSibling(params[i], connective, i, params.length);
+						simplifier.pushContext(sibling);
+					}
+				} else {
+					simplifier.popContext();
+					for (int i = 0; i < m_paramCtr; i++) {
+						Term sibling = simplifier.negateSibling(m_simplifiedParams[i], connective, i, params.length);
+						simplifier.m_Script.assertTerm(sibling);
+					}
+				}
+				simplifier.enqueueWalker(this);
+				simplifier.enqueueWalker(new Simplifier(false, params[m_paramCtr]));
+				m_paramCtr++;
+			}
+		}	
+	}
+	
+	/**
+	 * Creates a simplifier.  This will simplify repeatedly until a fixpoint
+	 * is reached.
+	 * @param script A Script object that will be used to check for equivalent
+	 * formulas. 
+	 */
+	public SimplifyDDA(Script script) {
+		this(script, true);
+	}
+	
+	/**
+	 * Creates a simplifier.  
+	 * @param script A Script object that will be used to check for equivalent
+	 * formulas. 
+	 * @param simplifyRepeatedly true if the simplifier should run until a 
+	 * fixpoint is reached.
+	 */
+	public SimplifyDDA(final Script script, boolean simplifyRepeatedly) {
 		m_Script = script;
 		m_True = m_Script.term("true");
 		m_False = m_Script.term("false");
+		m_SimplifyRepeatedly = simplifyRepeatedly;
 	}
 	
 	/**
@@ -81,8 +543,15 @@ public class SimplifyDDA {
 	 */
 	public LBool checkEquivalence (Term termA, Term termB) throws SMTLIBException {
 		Term equivalentTestTerm = m_Script.term("=", termA, termB);
+		String checktype = null;
+		try {
+			checktype = (String) m_Script.getOption(":check-type");
+			m_Script.setOption(":check-type", "FULL");
+		} catch (UnsupportedOperationException ignored) {}
 		LBool areTermsEquivalent = 
 				Util.checkSat(m_Script, Util.not(m_Script, equivalentTestTerm));
+		if (checktype != null)
+			m_Script.setOption(":check-type", checktype);
 		return areTermsEquivalent;
 		
 	}
@@ -119,6 +588,19 @@ public class SimplifyDDA {
 		Term result = script.term(name);
 		return result;
 	}
+	
+	public Term simplifyOnce(Term term) {
+		m_termInfos = new HashMap<Term, TermInfo>(); 
+
+		run(new TermCounter(term));
+		run(new ContextCollector(false, term, new ArrayDeque<Term>()));
+		run(new PrepareSimplifier(false, term));
+		run(new Simplifier(false, term));
+		Term output = popResult();
+
+		m_termInfos = null;
+		return output;
+	}
 
 	/**
 	 * Return a Term which is equivalent to term but whose number of leaves is
@@ -131,7 +613,10 @@ public class SimplifyDDA {
 	 */
 	public Term getSimplifiedTerm(Term inputTerm) throws SMTLIBException {
 //		m_Logger.debug("Simplifying " + term);
-		Term term =inputTerm;
+		/* We can only simplify boolean terms. */
+		if (!inputTerm.getSort().getName().equals("Bool"))
+			return inputTerm;
+		Term term = inputTerm;
 		m_Script.push(1);
 		final TermVariable[] vars = term.getFreeVars();
 		final Term[] values = new Term[vars.length];
@@ -141,7 +626,16 @@ public class SimplifyDDA {
 		term = m_Script.let(vars, values, term);
 
 		term = new FormulaUnLet().unlet(term);
-		term = this.simplifySubTerm(term);
+
+		Term output = simplifyOnce(term);
+		if (m_SimplifyRepeatedly) {
+			while (output != term) {
+				term = output;
+				output = simplifyOnce(term);
+			}
+		} else {
+			term = output;
+		}
 		
 		term = new TermTransformer() {
 			@Override
@@ -153,141 +647,8 @@ public class SimplifyDDA {
 			}
 		}.transform(term);
 		m_Script.pop(1);
-		assert (checkEquivalence(inputTerm, term) != LBool.SAT) : "Simplification unsound";
+		assert (checkEquivalence(inputTerm, term) == LBool.UNSAT) : "Simplification unsound?";
 		return term;
-	}
-	
-	
-	/**
-	 * Simplify the inputTerm with respect to the critical constraint on the
-	 * assertion stack of m_Script.
-	 * 
-	 * We use the algorithm by Dillig, Dillig, Aiken.  The function is
-	 * recursively called.
-	 * <ul>
-	 * <li> We simplify a sibling of an "and" under the assumption that all other
-	 * siblings hold.
-	 * <li> We simplify a sibling of an "or" under the assumption that all other
-	 * siblings do not hold.
-	 * <li> We simplify a sibling of "=>" under the corresponding assumptions.
-	 * <li> We simplify ite as follows: The condition without further 
-	 * assumptions, the if part under the assumption that the condition holds,
-	 * the else part under the assumption that the condition does not hold.
-	 * </ul> 
-	 * 
-	 * @param inputTerm term whose Sort is Boolean
-	 */
-	private Term simplifySubTerm(Term inputTerm)	throws SMTLIBException {
-		Redundancy redundancy = this.getRedundancy(inputTerm);
-		switch (redundancy) {
-				case NON_CONSTRAINING: return m_True;
-				case NON_RELAXING: return m_False;
-				default: break;
-		}
-		if (inputTerm instanceof ApplicationTerm) {
-			final ApplicationTerm applicationTerm = (ApplicationTerm) inputTerm;
-			Term[] parameters = applicationTerm.getParameters();
-			Term[] newParameters = new Term[parameters.length];
-			
-			final String connective = applicationTerm.getFunction().getName();
-			
-			if (connective == "not") {
-				return Util.not(m_Script, this.simplifySubTerm(parameters[0]));
-			}
-				
-			if (connective == "ite") {
-				Term simpCond = this.simplifySubTerm(parameters[0]);
-				m_Script.push(1);
-				m_Script.assertTerm(simpCond);
-				Term simpThen = this.simplifySubTerm(parameters[1]);
-				m_Script.pop(1);
-				m_Script.push(1);
-				m_Script.assertTerm(Util.not(m_Script, simpCond));
-				Term simpElse = this.simplifySubTerm(parameters[2]);
-				m_Script.pop(1);
-				return Util.ite(m_Script, simpCond, simpThen, simpElse);
-			}
-			if (connective == "and" || connective == "or" || connective == "=>") {
-				boolean parameterSimplifiedInLastIteration = true;
-				boolean parameterSimplifiedInAnyIteration = false;
-				while (parameterSimplifiedInLastIteration) {
-					
-					parameterSimplifiedInLastIteration = false;
-					// create n pushes with the original constraints on it.
-					m_Script.push(1);
-					for (int i = parameters.length-1; i > 0; i--) {
-						m_Script.push(1);
-						final Term contribution = negateSibling(
-								parameters[i], connective, i, parameters.length);
-						m_Script.assertTerm(contribution);
-					}
-
-					for (int i = 0; i < parameters.length; i++) {
-						// push all already simplified siblings
-						for (int k=0; k < i; k++) {
-							final Term contribution = negateSibling(
-									newParameters[k], connective, k, parameters.length);
-							m_Script.assertTerm(contribution);
-						}
-						// simplify parameter recursively
-						newParameters[i] = this.simplifySubTerm(parameters[i]);
-						m_Script.pop(1);
-						final Term earlyResult;
-						if (newParameters[i] == m_False) {
-							if (connective == "and") {
-								earlyResult = m_False;
-							} else if (connective == "=>" && i != parameters.length-1) {
-								earlyResult = m_True;
-							} else {
-								earlyResult = null;
-							}
-						} else if (newParameters[i] == m_True) {
-							if (connective == "or") {
-								earlyResult = m_True;
-							} else if (connective == "=>" && i == parameters.length-1) {
-								earlyResult = m_True;
-							} else {
-								earlyResult = null;
-							}
-						} else {
-							earlyResult = null;
-						}
-						
-						if (earlyResult != null) {
-							while (++i < parameters.length) {
-								m_Script.pop(1);
-							}
-							return earlyResult;
-						} 
-						
-						if (newParameters[i] != parameters[i]) {
-							parameterSimplifiedInLastIteration = true;
-							parameterSimplifiedInAnyIteration = true;
-						}
-					}
-					parameters = newParameters;
-				}
-				// if a parameter was simplified
-				if (parameterSimplifiedInAnyIteration) {
-					// Building the return term
-					if (connective == "and") {
-						return Util.and(m_Script, newParameters);
-					} else if (connective == "or") {
-						return Util.or(m_Script, newParameters);
-					} else if (connective == "=>") {
-						return Util.implies(m_Script, newParameters);
-					} else {
-						throw new AssertionError("unknown connective");
-					}
-				}
-				// no parameter could be simplified so return the input term
-				else {
-					return inputTerm;
-				}
-				
-			}
-		}
-		return inputTerm;
 	}
 	
 	/**
@@ -313,5 +674,27 @@ public class SimplifyDDA {
 		}
 	}
 	
-	
+	void pushContext(Term... context) {
+		m_Script.push(1);
+		for (Term t : context) {
+			m_Script.assertTerm(t);
+		}
+	}
+
+	void popContext() {
+		m_Script.pop(1);
+	}
+
+	void setResult(boolean negated, Term term) {
+		if (negated)
+			term = Util.not(m_Script, term);
+		assert (m_Result == null);
+		m_Result = term;
+	}
+
+	Term popResult() {
+		Term result = m_Result;
+		m_Result = null;
+		return result;
+	}
 }

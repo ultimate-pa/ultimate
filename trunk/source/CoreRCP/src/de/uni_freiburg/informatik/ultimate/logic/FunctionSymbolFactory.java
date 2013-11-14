@@ -23,6 +23,10 @@ import java.util.Arrays;
 
 import de.uni_freiburg.informatik.ultimate.util.UnifyHash;
 
+/**
+ * Factory for overloaded and/or polymorphic function symbols.
+ * @author hoenicke
+ */
 public abstract class FunctionSymbolFactory {
 	String m_FuncName;
 	UnifyHash<FunctionSymbol> m_Instances;

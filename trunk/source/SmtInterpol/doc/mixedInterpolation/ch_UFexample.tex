@@ -1,0 +1,138 @@
+\subsection{Example}
+
+We demonstrate our algorithm on the following example:
+\begin{align*}
+  A\equiv&(\lnot q \lor a=s_1)\land(q \lor a=s_2)\land f(a)=t\\
+  B\equiv&(\lnot q \lor b=s_1)\land(q \lor b=s_2)\land f(b)\neq t
+\end{align*}
+The conjunction $A\land B$ is unsatisfiable.  In this example, $a$ is
+$A$-local, $b$ is $B$-local and the remaining symbols are shared.
+
+Assume the theory solver for \euf introduces the mixed literal $a=b$ and
+provides the lemmas (i) $f(a)\neq t\lor a\neq b\lor 
+f(b)=t$, (ii) $a\neq s_1\lor b\neq s_1\lor a=b$, and (iii) $a\neq
+s_2\lor b\neq s_2\lor a=b$.  
+Let the variable $x$ be
+associated with the equality $a=b$.  Then, we label the lemmas with (i)
+$f(x)=t$, (ii) $EQ(x,s_1)$, and (iii) $EQ(x,s_2)$.
+
+We compute an interpolant for $A$ and $B$ using Pudl\'ak's algorithm.  Since
+the input is already in conjunctive normal form, we can directly apply resolution.
+\begin{tacas}
+  From lemma (ii) and the input clauses $\lnot q \lor a=s_1$ and $\lnot q \lor
+  b=s_1$ we can derive the clause $\lnot q\lor a=b$.  The partial interpolant
+  of the derived clause is still $EQ(x,s_1)$, since the partial interpolants
+  of the input clauses are $\bot$ resp.\ $\top$.  Similarly, from 
+  lemma (iii) and the input clauses $q \lor a=s_2$
+  and $q \lor b=s_2$ we can derive the clause $q\lor a=b$ with partial
+  interpolant $EQ(x,s_2)$.  A resolution step on these two clauses with $q$ as
+  pivot yields the clause $a=b$. Since $q$ is a shared literal, Pudl\'ak's
+  algorithm introduces 
+  the case distinction.  Hence, we get the partial interpolant
+  $(EQ(x,s_2)\lor q)\land(EQ(x,s_1)\lor \lnot q)$.  Note that this interpolant
+  has the
+  form $I_1[EQ(x,s_1)][EQ(x,s_2)]$ and, therefore, satisfies the syntactical
+  restrictions required by our scheme.
+
+  From the \euf-lemma (i) and the input clauses $f(a)=t$ and $f(b)\neq t$, we
+  can derive the clause $a\neq b$ with partial interpolant $f(x)=t$.  Note that
+  this interpolant has the form $I_2(x)$ which also corresponds to the syntactical
+  restrictions needed for our method.
+
+  If we apply the final resolution step on the mixed literal $a=b$ using
+  (\ref{rule:inteq}), we get the
+  interpolant $I_1[I_2(s_1)][I_2(s_2)]$ which corresponds to the interpolant
+  $(f(s_2)=t\lor q)\land(f(s_1)=t\lor \lnot q)$.
+\end{tacas}
+\begin{techreport}
+  Note that for Pudl\'ak's algorithm every input clause has the partial
+  interpolant $\bot$ ($\top$) if it is part of $A$ ($B$).  In the following
+  derivation trees we apply the following simplifications without explicitely
+  stating them:
+  \begin{align*}
+    F\land\top&\equiv F\\
+    F\lor\bot&\equiv F
+  \end{align*}
+
+  From lemma (ii) and the input clauses $\lnot q \lor a=s_1$ and $\lnot q \lor
+  b=s_1$ we can derive the clause $\lnot q\lor a=b$.  The partial interpolant
+  of the derived clause is still $EQ(x,s_1)$.
+  \[
+  \inferrule*{ \inferrule*{
+    \lnot q \lor a=s_1 : \bot \\
+    a\neq s_1\lor b\neq s_1\lor a=b : EQ(x,s_1)}
+            {b\neq s_1\lor \lnot q \lor a=b : EQ(x,s_1)}\\
+            b=s_1\lor\lnot q : \top}
+            {\lnot q\lor a=b : EQ(x,s_1)}
+  \]
+  Similarly, from 
+  lemma (iii) and the input clauses $q \lor a=s_2$
+  and $q \lor b=s_2$ we can derive the clause $q\lor a=b$ with partial
+  interpolant $EQ(x,s_2)$.
+  \[
+  \inferrule*{ \inferrule*{
+    q \lor a=s_2 : \bot \\
+    a\neq s_2\lor b\neq s_2\lor a=b : EQ(x,s_2)}
+            {b\neq s_2\lor q \lor a=b : EQ(x,s_2)}\\
+            b=s_2\lor q : \top}
+            {q\lor a=b : EQ(x,s_2)}
+  \]
+  A resolution step on these two clauses with $q$ as
+  pivot yields the clause $a=b$. Since $q$ is a shared literal, Pudl\'ak's
+  algorithm introduces 
+  the case distinction.  Hence, we get the partial interpolant
+  $(EQ(x,s_2) \lor q)\land(EQ(x,s_1) \lor \lnot q)$.  Note that this interpolant
+  has the
+  form $I_1[EQ(x,s_1)][EQ(x,s_2)]$ and, therefore, satisfies the syntactical
+  restrictions.
+  \[
+  \inferrule*
+      { q\lor a=b : EQ(x,s_2) \\ \lnot q\lor a=b : EQ(x,s_1) }
+      {a=b : (EQ(x,s_2) \lor q)\land(EQ(x,s_1) \lor \lnot q)}
+  \]
+  From the \euf-lemma (i) and the input clauses $f(a)=t$ and $f(b)\neq t$, we
+  can derive the clause $a\neq b$ with partial interpolant $f(x)=t$.  Note that
+  this interpolant has the form $I_2(x)$ which also corresponds to the syntactical
+  restrictions needed for our method.
+  \[
+  \inferrule*
+  {
+  \inferrule*
+  { f(a)=t : \bot \\ f(a)\neq t\lor a\neq b\lor f(b)=t : f(x)=t }
+  { f(b)=t \lor a\neq b : f(x)=t } \\ f(b)\neq t : \top }
+  { a\neq b : f(x)=t }
+  \]
+  If we apply the final resolution step on the mixed literal $a=b$ using
+  (\ref{rule:inteq}), we get the
+  interpolant $I_1[I_2(s_1)][I_2(s_2)]$ which corresponds to the interpolant
+  $(f(s_2)=t\lor q)\land(f(s_1)=t \lor \lnot q)$.
+  \[
+  \inferrule*
+  { a=b : (EQ(x,s_2) \lor q)\land(EQ(x,s_1) \lor \lnot q) \\ a\neq b : f(x)=t }
+  { \bot : (f(s_2)=t \lor q)\land(f(s_1)=t \lor \lnot q) }
+  \]
+  When resolving on $q$ in the derivations above, the mixed literal $a=b$
+  occurs in both antecedents.  This leads to the form
+  $I[EQ(x,s_1)][EQ(x,s_2)]$.  We can prevent this by resolving in a different
+  order.
+  We could first resolve the clause $q\lor a=b$ with the clause $a\neq b$ and
+  obtain the partial interpolant $f(s_2)=t$ using (\ref{rule:inteq}).
+  \[
+  \inferrule*{ a=b \lor q : EQ(x,s_2) \\ a\neq b : f(x) = t }
+            { q : f(s_2) = t }
+  \]
+  Then we could resolve the clause $\lnot q\lor a=b$ with the clause $a\neq b$ and
+  obtain the partial interpolant $f(s_1)=t$ again using (\ref{rule:inteq}).
+  \[
+  \inferrule*{ a=b \lor \lnot q : EQ(x,s_1) \\ a\neq b : f(x) = t }
+    { \lnot q : f(s_1) = t }
+  \]
+  The final resolution step on $q$ will then introduce the case distinction
+  according to Pudl\'ak's algorithm.  This results in the same interpolant.
+  \[
+  \inferrule*
+  { q : f(s_2)=t \\
+    \lnot q : f(s_1)=t }
+  { \bot : (f(s_2)=t \lor q)\land(f(s_1)=t \lor \lnot q) }
+  \]
+\end{techreport}

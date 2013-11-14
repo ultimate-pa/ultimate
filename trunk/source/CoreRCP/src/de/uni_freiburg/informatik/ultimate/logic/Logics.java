@@ -44,6 +44,8 @@ public enum Logics {
 	QF_UFIDL,
 	QF_UFLIA,
 	QF_UFLRA,
+	// This logic is SMTInterpol specific and captures the cominbation UF, LIA,
+	// and LRA
 	QF_UFLIRA,
 	QF_UFNRA,
 	UFLRA,

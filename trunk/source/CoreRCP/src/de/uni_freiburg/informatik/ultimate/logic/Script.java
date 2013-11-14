@@ -68,25 +68,6 @@ public interface Script {
 				return "sat";
 			}
 		};
-		public static LBool fromInt(int i) {
-			if (i < 0)
-				return UNSAT;
-			if (i > 0)
-				return SAT;
-			return UNKNOWN;
-		}
-		public static int toInt(LBool l) {
-			switch (l) {
-			case UNSAT:
-				return -1;
-			case UNKNOWN:
-				return 0;
-			case SAT:
-				return 1;
-			default:
-				throw new IllegalArgumentException();
-			}
-		}
 	}
 	/**
 	 * Set the logic for the solver.  The logic should be the name of one of the
@@ -446,7 +427,8 @@ public interface Script {
 	 */
 //	public Theory getTheory();
 	/**
-	 * Interface to the term simplifier.
+	 * Simplify a term.  This returns a term that is under the current
+	 * assertions equivalent to the input term.
 	 * @param term A (usually Boolean) term to simplify.
 	 * @return The simplified term.
 	 * @throws SMTLIBException If an error occurred or unsupported.
@@ -507,4 +489,16 @@ public interface Script {
 	 */
 	public Iterable<Term[]> checkAllsat(Term[] predicates)
 		throws SMTLIBException, UnsupportedOperationException;
+	/**
+	 * Try to find an equality between <code>x</code> and <code>y</code> that
+	 * is implied in the current satisfiable context.  If successful, this
+	 * method returns an array of parameters <code>a,b,c</code> such that the
+	 * equality <code>a*x = b*y + c</code> is implied by the current context.
+	 * Note that the <code>x</code> array and the <code>y</code> array must be
+	 * of equal length and of length at least 2.
+	 * @param x The different incarnations of the lhs variable.
+	 * @param y The different incarnations of the rhs variable.
+	 * @return Array of length 3 or array of length 0 if no equality is implied.
+	 */
+	public Term[] findImpliedEquality(Term[] x, Term[] y);
 }

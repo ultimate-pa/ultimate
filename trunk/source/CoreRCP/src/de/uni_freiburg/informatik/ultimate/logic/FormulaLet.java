@@ -24,6 +24,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Compute the common-subexpression-elimination (cse) form of a term.  A term is
+ * in cse form if all nodes with an out-degree of at least 1 and an in-degree of
+ * at least 2 are eliminated, i.e., factored out into a let.
+ * @author hoenicke
+ */
 public class FormulaLet extends NonRecursive {
 	private ArrayDeque<Map<Term, TermInfo>> m_Visited;
 	private ArrayDeque<Term> m_ResultStack;
@@ -40,7 +46,12 @@ public class FormulaLet extends NonRecursive {
 	public FormulaLet(LetFilter filter) {
 		this.m_Filter = filter;
 	}
-	
+	/**
+	 * Compute the cse form of a term.  Note that all lets will be removed from
+	 * the input before computing the cse form.
+	 * @param input The input term.
+	 * @return A term in cse form that represents the same DAG than the input.
+	 */
 	public Term let(Term input) {
 		input = new FormulaUnLet().unlet(input);
 		m_CseNum = 0;

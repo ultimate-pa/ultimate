@@ -1,0 +1,984 @@
+\documentclass[a4paper]{article}
+\usepackage{xspace}
+\usepackage{relsize}
+\usepackage{xcolor}
+\usepackage{amsmath}
+\usepackage{pxfonts}
+\usepackage{mathpartir}
+\newcommand\mT{\mathcal{T}}
+\newcommand\T{$\mT$\xspace}
+\newcommand\Tp{$\mT'$\xspace}
+\newcommand\mtp{\models_{\mT'}}
+\newcommand\syms{\mathop{\mathit{syms}}}
+\newcommand\si{SMTInterpol\xspace}
+\newcommand\sversion{2.0}
+\newcommand\siv{\si~\sversion}
+\newcommand\gen[1]{\mathop{gen}\nolimits_{#1}}
+\newcommand\dom{\mathop{dom}}
+\newcommand\todo[1]{\textcolor{red}{TODO: #1}}
+\newcommand\seqcomp{\circledwedge}
+\newcommand\choicecomp{\circledvee}
+\newcommand\quoted[1]{\ulcorner #1 \urcorner}
+
+\title{Proposal: Proof System for \siv}
+\author{J{\"u}rgen Christ}
+\date{2013/10/24}
+\begin{document}
+\maketitle
+\section{Motivation}
+With the increase of complexity of the SMT solver \si, soundness gets a major
+concern.  For satisfiable formulas, the solver can generate a model that
+should satisfy all input formulas.  Checking this becomes hard when the input
+contains quantifiers.  For unsatisfiable formulas, the solver can deliver a
+proof of unsatisfiability, i.\,e., a derivation of \texttt{false} from the
+input formulas.  This proof should contain all the steps needed to show
+inconsistency of the current set of formulas.  To achieve this, a proof system
+has to be given.  This system, however, should be as close to the operations
+of the solver as possible.  Unfortunately, tracking every step of the solver
+becomes challenging as the resulting proof might quickly grow to a size that is
+too big to keep in memory.
+
+In this document, we propose a new proof system that completely captures the
+inferences done by \si at an adequate level while keeping a reasonably small
+memory overhead.  Main design goals of the new system are easy integration
+into \si and the possibility to reconstruct the proof in another verification
+system, e.\,g., Isabelle.
+
+\section{Partial Proof System}
+The partial proof system consists of only three rules: assertions given from
+the user, theory lemmas, and resolution steps are represented by different
+rules.  Proofs reported by \si are not really proofs of the inconsistency of
+the input formulas, but of the inconsistency of the CNF created by \si from
+the these formulas.
+
+Since the proofs in \si were originally only constructed to produce
+interpolants, the proofs were cut at the CNF-level since interpolants for
+the CNF are also valid interpolants for the original formula.  Furthermore,
+unsatisfiable cores are extracted from the resolution proof currently produced
+by \si.  Since resolution proofs are sufficient for these two techniques, the
+new proof system should keep this separation.  That way, \si won't have
+performance penalties on these techniques.  If, however, a user wants to
+retrieve a complete proof, the conversion of the original formula into CNF
+should be tracked.
+
+\section{Missing Feature in the Partial Proof System}
+Next, we present a list of different steps performed by the solver that are
+not part of current proofs.  To get a complete proof, additional
+rules explaining these steps have to be added.
+
+\paragraph{Generation of clauses.}  Even if the input is already in CNF, the
+formula could be a conjunction of disjunctions.  Then, a proof should explain
+how one of the disjunctions gets extracted from the conjunction, i.\,e., a
+rule with antecedent $\bigwedge_i\bigvee_j l_{ij}$ and conclusion $\bigvee_j
+l_{ij}$ for some $i$ is needed.
+
+\paragraph{Boolean simplification steps.}  \si does some elementary Boolean
+simplifications before producing the CNF.  Examples are the removal of double
+negations or neutral elements,  or the simplification of $\phi\land\bot$ to
+$\bot$.
+
+\paragraph{Expansion of definitions.}  SMTLIB allows users to define functions
+and use them as macros.  \si then expands these function applications and uses
+the expansion in the remainder of the process.  Hence, a complete proof has to
+justify why a term $n(\overline{t})$ is equal to $f[\overline{t}]$ where $n$
+is the name for a function $f[\overline{x}]$ with free variables
+$\overline{x}$.
+
+\paragraph{Unfolding of operators.}  SMTLIB allows left- or right-associative
+operators as well as chainable and pairwise functions.  This is just syntactic
+sugar to abbreviate a sequence of applications of that function.  Internally,
+\si cannot deal with most of these abbreviations.  Hence, \si expands the
+function application.  Since this modifies the original formula, we need
+a proof rule justifying this step.
+
+\paragraph{Elimination of Boolean connectives.}  Before \si produces clauses,
+it transforms the formula into an intermediate representation that only
+contains negation, or, equality, if-then-else, and $\leq$ as top-level Boolean
+connectives.  The remaining connectives are replaced by a combination of the
+connectives mentioned above.  Rules to justify these replacements are needed.
+
+\paragraph{Normalization rewrites.}  \si transforms literals for linear
+arithmetic into the (possibly negated) form $\sum_i c_i x_i + c\leq 0$.
+During this conversion, terms are added, subtracted, multiplied and reordered.
+Proof rules for these terms are especially difficult since we use a lot of
+implicit applications of associativity and commutativity axioms.
+
+\paragraph{Unification of atoms.}  When \si converts a term into an atom, it
+unifies the atoms.  This is done by implicitly reordering linear sums
+according to an internal order or implicit applications of the symmetry
+axiom.  Furthermore, an equality $a=b$ might be converted into the linear
+arithmetic form $a-b=0$.  Since these steps happen implicitly and very often,
+a proof rule for these steps becomes challenging.
+
+\paragraph{Skipping annotations.}  The SMTLIB term language allows users to
+annotate terms with (almost) arbitrary data.  \si ignores most of these
+annotations.  Before clauses are produced, all annotations are removed
+from the formula.  While annotations do not influence the semantics of a term,
+a rule might be needed to justify the equivalence of the annotated term and
+its sub-term.
+
+\paragraph{IRA-Hack.}  The SMTLIB standard defines that in mixed integer
+logics, applications of a binary function symbol expecting two reals can also
+be called with one real and one integer.  Implicitly, the second integer
+argument is converted to real.  \si inserts the \verb+to_real+ function for
+such arguments.  Since this is a modification of the original input formula, a
+proof rule should justify this modification.  Note that this rule essentially
+just clarifies the interpretation of the original term.
+
+\paragraph{Divisibility rewrite.}  SMTLIB contains the divisible-predicate.
+This predicate is parameterized by a positive integer and should evaluate to
+true if and only if the value of the (single) argument is divisible by this
+constant.  \si transforms applications of the divisible-predicate into an
+equality containing the div-function.  The proof tree has to reflect this
+rewrite.
+
+\paragraph{Modulo rewrite.}  Even though the SMTLIB standard forbids the use
+of modulo in linear arithmetic, \si allows to use modulo where the second
+argument is a constant.  Internally, modulo applications are removed from the
+formula unless the second argument is $0$.  This rewrite step can be seen as
+an expansion of the definition of modulo, but should be present in a proof.
+
+\section{Current Proof System}
+Since the current proof system is a superset of the old proof system, we
+only present the new rules and describe which of the problems mentioned in the
+previous section can be solved by this rule.
+
+The presentation is divided into two parts.  Similar to the solver, we first
+consider rules to build a simplified canonical form of the input formula.
+Then, from this canonical form, we present rules to create clauses, auxiliary
+clauses, and literals.
+
+\subsection{Formula Transformation and Simplification}
+
+\paragraph{Equality folding.}  This proof rule takes a term\footnote{We treat
+  formulas as Boolean terms.} and an equality and produces a new term where
+some occurrences of the left hand side of the equality are replaced by the
+right hand side.
+\[
+\inferrule*[left=eq]{t[t_1] \\ t_1=t_1'}
+{t[t_1']}
+\]
+
+In \si, this rule is left-associative to compress the proof tree as much as
+possible.  Furthermore, when \si applies this rule, it rewrites \emph{all}
+occurrences of $t_1$ into $t_1'$.  Applications of this rule are compressed
+into
+\[
+\inferrule*{t[t_1,\ldots,t_n] \\ t_1 = t_1' \\ \ldots \\ t_n = t_n'}
+           {t[t_1',\ldots,t_n']}
+\]
+
+\paragraph{Expanding definitions.}  A proof rule that justifies the expansion
+of a defined function.  Let $n(\overline{t})$ be the application of
+$\overline{t}$ to the function named $n$, and $d[\overline{t}]$ be the
+definition where the free variables are substituted by the corresponding
+terms.  Then, this rule justifies the replacement of $n(\overline{t})$ by its
+definition.
+\[
+\inferrule*[left=ExpandDef]{ }{n(\overline{t}) = d[\overline{t}]}
+\]
+
+\paragraph{Expanding $n$-ary function applications.}  \si expands function
+applications that use associativity, chainability, or the pairwise attribute.
+The expansion transforms a left-associative function application
+$f(t_1,t_2\ldots,t_n)$ with $n>2$ into $f(f(\ldots f(t_1,t_2),\ldots),t_n)$.
+Similarly, right associative function applications $f(t_1,\ldots,t_{n-1},t_n)$
+with $n>2$ are expanded into $f(t_1,f(\ldots,f(t_{n-1},t_n)))$.  Chainable
+function applications $f(t_1,\ldots,t_n)$ are expanded into
+$f(t_1,t_2)\land\ldots\land f(t_{n-1},t_n)$.
+
+This step gets complicated since \si does not expand all such functions; it
+keeps $n$-ary disjunctions, conjunctions, and implications.  Furthermore,
+equalities and distinct applications are expanded after simplification.  
+Hence, we will use different proof rules for these cases.
+
+The remaining symbols are \texttt{xor} from the core theory, and the
+arithmetic symbols \texttt{+}, \texttt{-}, \texttt{*}, the division symbols
+\texttt{div} and \texttt{/}, and the comparison symbols \texttt{<},
+\texttt{<=}, \texttt{>=}, and \texttt{>}.  For applications of these symbols
+with more than 2 arguments, the following rewrite axiom will be introduced.
+\[
+\inferrule*[left=expand,right={$F'\equiv F$}]{ }{F = F'}
+\]
+
+\paragraph{Equality simplification.}
+This set of rules justifies the simplification of an $n$-ary equality.  The
+result depends on the simplification.  In general, it will be an equality with
+up to $n$ arguments or a single term.  \si currently does the following
+equality simplifications.
+\begin{itemize}
+\item Remove duplicated terms from the equality.  If the equality only
+  contains duplicates, simplify to \verb+true+.
+\item Simplify numeric equalities with different constants.
+\item Simplify Boolean equalities:
+  \begin{itemize}
+  \item Simplify equalities containing \verb+true+ and \verb+false+ to
+    \verb+false+.
+  \item Simplify equalities containing \verb+true+ into conjunctions.
+  \item Simplify equalities containing \verb+false+ into disjunctions.
+  \end{itemize}
+\end{itemize}
+
+Equality simplification is split into several rules to ease proof validation.
+\begin{mathpar}
+  \inferrule*[left=TrueNotFalse,right={$\exists j,k\in I.\ t_j=true \land
+      t_k=false$}]{ } {(=_{i\in I}\ t_i) = false}\\
+  \inferrule*[left=ConstDiff,right={$\exists j,k\in I.\ t_j=c_j \land
+      t_k=c_k\land c_j\neq c_k$}]{ } {(=_{i\in I}\ t_i) = false}\\
+  \inferrule*[left=EqTrue,right={$\exists j\in I.\ t_j=true\land I'\subset
+      I\land j\not\in I'$}]{ } {(=_{i\in I}\ t_i) = (and_{i'\in I'}\ t_{i'})}\\
+  \inferrule*[left=EqFalse,right={$\exists j\in I.\ t_j=false\land I'\subset
+      I\land j\not\in I'$}]{ } {(=_{i\in I}\ t_i) = (not\ (or_{i'\in I'}\
+    t_{i'}))}\\
+  \inferrule*[left=EqSame,right={$\forall i,j\in I.\ t_i\equiv t_j$}]{
+  }{(=_{i\in I}\ t_i) = true}\\
+  \inferrule*[left=EqSimp,right={$I'\subset I\land |I'| = |\{t_i.\ i\in
+      I\}|\land\{t_i.\ i\in I\} = \{t_j.\ j\in I'\} $}]{ }{(=_{i\in I}\ t_i) =
+    (=_{i'\in I'}\ t_{i'})}\\
+  \inferrule*[left=EqBinary]{(=_{i\in I}\ t_i) = (=_{i'\in I'}
+    t_{i'})}{(=_{i\in I} t_i) = (not\ (or_{i',i''\in I'}\ (not\ (=\ t_{i'}\ t_{i''}))))}
+\end{mathpar}
+
+The last rule is used to convert an $n$-ary equality into a conjunction of
+binary equalities.  Note that we represent the conjunction as a negated
+disjunction as is done in the canonical form used by \si.
+
+\paragraph{Distinct simplification.}
+This set of rules is similar to the equality simplification rules.  It
+contains axioms for the following cases.
+\begin{itemize}
+\item Simplify Boolean distinct-applications with more than two terms to
+  \verb+false+.
+\item Simplify binary Boolean distinct-applications where one argument is
+  \verb+true+ resp.\ \verb+false+ to the other term or the negation of that
+  term.
+\item Simplify distinct-applications containing the same element multiple
+  times to \verb+false+.
+\end{itemize}
+
+\begin{mathpar}
+  \inferrule*[left=DistinctBool,right={$|I| > 2\land sort(t_i)=Bool$}]{
+  }{(distinct_{i\in I}\ t_i) =
+    false}\\ \inferrule*[left=DistinctSame,right={$\exists j,k\in I.\ t_j
+      \equiv t_k \land j\neq k$}]{ }{(= distinct_{i\in I}\ t_i) =
+    false}\\ \inferrule*[left=DistinctNeg,right={$t_0$ is negation of $t_1$}]{
+  }{(distinct\ t_0\ t_1) =
+    true}\\ \inferrule*[left=DistinctTrue,right={$t_i\equiv true$ for
+      $i=0,1$}]{ }{(distinct\ t_0\ t_1) =
+    (not\ t_{1-i})}\\ \inferrule*[left=DistinctFalse,right={$t_i\equiv false$
+      for $i=0,1$}]{ }{(distinct\ t_0\ t_1) =
+    t_{1-i}}\\ \inferrule*[left=DistinctBinary]{ }{(distinct_{i\in I}\ t_i) =
+    (not\ (or_{i',i''\in I}\ (= t_{i'}\ t_{i''})))}
+\end{mathpar}
+The last rule is used to convert distinct applications into negated binary
+equalities.
+
+\paragraph{Negation simplification.}  \si simplifies negation to prevent
+double negation and negations of \verb+true+ or \verb+false+.
+\[
+\inferrule*[left=NotSimp,right={$F'\equiv
+    \left\{\begin{array}{l@{\quad\mbox{if}\quad}l}false & F\equiv true\\true &
+    F\equiv false\\ G&F\equiv(not\ G)\end{array}\right.$}]{ }
+           {(not\ F) = F'}
+\]
+
+\paragraph{Disjunction simplification.}  \si simplifies disjunctions by removing
+duplicates or falsety and simplifying trivial tautologies to \verb+true+.  We
+justify these steps by two axioms.
+\begin{mathpar}
+  \inferrule*[left=OrSimp,right={$F \equiv (or_{i\in I'}\ t_i)$ where
+      $I'\subset I$ or $F \equiv t_i$}]{ }{(or_{i\in I}\ t_i) = F}\\
+  \inferrule*[left=OrTaut,right={$\exists j\in I.\ t_i\equiv\ true\lor\exists
+      j,k\in I.\ t_j\equiv\ (not\ t_k)$}]{ }{(or_{i\in I}\ t_i) = true}
+\end{mathpar}
+
+\paragraph{If-then-else simplification.}  \si applies trivial Boolean
+simplification to if-then-else terms.  These simplifications are again
+justified by axioms.
+\begin{mathpar}
+  \inferrule*[left=IteTrue]{ }{(ite\ true\ t_1\ t_2) = t_1}\quad
+  \inferrule*[left=IteFalse]{ }{(ite\ false\ t_1\ t_2) = t_2}\\
+  \inferrule*[left=IteSame]{ }{(ite\ t_0\ t_1\ t_1) = t_1}\\
+  \inferrule*[left=IteBool1]{ }{(ite\ t_0\ true\ false) = t_0}\quad
+  \inferrule*[left=IteBool2]{ }{(ite\ t_0\ false\ true) = (not\ t_0)}\\
+  \inferrule*[left=IteBool3]{ }{(ite\ t_0\ true\ t_2) = (or\ t_0\ t_2)}\\
+  \inferrule*[left=IteBool4]{ }{(ite\ t_0\ false\ t_2) =
+    (not\ (or\ t_0\ (not\ t_2)))}\\
+  \inferrule*[left=IteBool5]{ }{(ite\ t_0\ t_1\ true) = (or\ (not\ t_0)\ t_1)}\\
+  \inferrule*[left=IteBool6]{ }{(ite\ t_0\ t_1\ false) =
+    (not\ (or\ (not\ t_0)\ (not\ t_1)))}
+\end{mathpar}
+
+\paragraph{Removal of Boolean connectives.}  Before producing clauses, \si
+converts the formula into an equivalent form with less Boolean connectives.
+These conversion steps are justified by several proof axioms.
+\begin{mathpar}
+  \inferrule*[left=AndToOr]{ }{(and\ t_i) = (not\ (or\ (not\ t_i)))}\\
+  \inferrule*[left=XorToDistinct]{ }{(xor\ t_1\ t_2) = (distinct\ t_1\ t_2)}\\
+  \inferrule*[left=ImpToOr]{ }{(implies_{i\in I}\ t_i\ t) = (or_{i\in
+      I}\ t\ (not\ t_i))}\\
+
+\end{mathpar}
+These axioms might be followed by simplification steps for \verb+or+ or
+\verb+distinct+ to further transform the resulting formula.
+
+\paragraph{Removing Annotations.}  This axiom justifies the equality
+between \verb+F+ and \verb+(! F :annotations)+, i.\,e., the semantic
+equivalence of these terms.
+\[
+\inferrule*[left=strip]{ }{(!\ F\ :\!annotations) = F}
+\]
+
+\paragraph{Normalizing arithmetic expressions.}  \si normalizes arithmetic
+expressions into a canonical form.  This canonical form is then used to
+transform a term into an internal form.  With this set of axioms, we describe
+the transformation of a term in the input into canonical form.
+\begin{mathpar}
+  \inferrule*[left=CanonicalSum,right={$t' \cong t$}]{ }{t =
+    t'}\\
+  \inferrule*[left=LeqToLeq0,right={$t' \cong t_1-t_2$}]{
+    }{(<=\ t_1\ t_2) = (<=\ t'\ 0)}\\
+  \inferrule*[left=LtToLeq0,right={$t' \cong t_2-t_1$}]{
+    }{(<\ t_1\ t_2) = (not\ (<=\ t'\ 0))}\\
+  \inferrule*[left=GeqToLeq0,right={$t' \cong t_2-t_1$}]{
+    }{(>=\ t_1\ t_2) = (<=\ t'\ 0)}\\
+  \inferrule*[left=GtToLeq0,right={$t' \cong t_1-t_2$}]{
+    }{(>\ t_1\ t_2) = (not\ (<=\ t'\ 0))}
+\end{mathpar}
+\si computes the polynomial sum of two polynomials by summing up identical
+monomials and cancel them, if the factors sum to 0.  As example, consider
+$t_1\equiv (+\ (*\ 3\ x)\ (*\ 2\ y))$ and $t_2\equiv (+\ y\ (*\ 3\ x))$.  The
+monomials in these terms are $x$ and $y$.  Computing $t_1-t_2$, we cancel $x$
+and sum up the factors of $y$, i.\,e., we compute $2-1=1$ and get
+$t_1-t_2\equiv y$.  Note that \si does not produce any intermediate proof
+steps to justify associativity or commutativity of arithmetic operators.
+
+\paragraph{Arithmetic simplification.}  \si simplifies arithmetic comparisons
+after transforming them into normal form.
+\begin{mathpar}
+  \inferrule*[left=LeqTrue,right={$c \leq 0$}]{ }{(<=\ c\ 0) = true}\quad
+  \inferrule*[left=LeqFalse,right={$c > 0$}]{ }{(<=\ c\ 0) = false}
+\end{mathpar}
+
+\paragraph{Removing syntactic sugar.}  This proof rule is used whenever the
+IRA-Hack inserts \verb+to_real+ conversions.  Remember that the IRA-Hack is
+only used in mixed integer logics.  The hack basically ensures proper
+type-checking in formulas, i.,e., it inserts casts at appropriate positions.
+For example the term $(<=\ 3\ 5.2)$ only type-checks due to this hack.  It
+inserts to cast of $3$ from integer to real such that the comparison operator
+over the reals can be used, i.\,e., it transforms the term into
+$(<=\ 3.0\ 5.2)$.  For integer constants, \si does not use the \verb+to_real+
+function but directly evaluates it.  For an integer term $t$, this rule
+changes to term $t$ to $(to\_real\ t)$ to ensure proper type checking.
+\begin{mathpar}
+\inferrule*[left={desugar},right={$t$ is an integer}]{ }{F[t] =
+  F[t.0]}\quad
+\inferrule*[left={desugar},right={$t$ is not an integer}]{ }{F[t] =
+  F[to\_real(t)]}
+\end{mathpar}
+
+\paragraph{Divisible rewrite.}  This axiom justifies the rewrite of
+\verb+((_ divisible n) t)+ into \verb+(= t (* n (div t n)))+.  Hence, it
+removes the divisible operator from the formula.  Furthermore, if $t$ is a
+constant, this rules justifies the static evaluation of this construct.
+\begin{mathpar}
+\inferrule*[left=divisible]{ }{((\_\ divisible\ 1)\ t) = true}\\
+\inferrule*[left=divisible,right={$t$ is integer constant not divisible by
+    $n$}]{ }{((\_\ divisible\ n)\ t) = false}\\
+\inferrule*[left=divisible,right={$t$ is integer constant divisible by $n$}]{
+}{((\_\ divisible\ n)\ t) = true}\\
+\inferrule*[left=divisible]{ }{((\_\ divisible\ n)\ t) =
+  (=\ t\ (*\ n\ (div\ t\ n)))}
+\end{mathpar}
+
+\paragraph{Division rewrites.}  Integer division can be simplified if either
+the divisor is $1$ or $-1$, or the dividend and the divisor are constant.  \si
+uses different rewrite axioms for these.  The rules mimic the SMTLIB semantic
+of ``rounding towards 0''.
+\begin{mathpar}
+  \inferrule*[left=div1]{ }{(div\ c\ 1) = c}\quad
+  \inferrule*[left=div-1,right={$d\equiv-c$}]{ }{(div\ c\ (-\ 1)) = d}\\
+  \inferrule*[left=divConst,right={$d\equiv\left\{\begin{array}{l@{\ \mbox{if}\ }l}\lfloor\frac{c_1}{c_2}\rfloor&c_2>0\\ \lceil\frac{c_1}{c_2}\rceil&c_2<0\end{array}\right.$}]{ }{(div\ c_1\ c_2) = d}
+\end{mathpar}
+
+\paragraph{Modulo rewrites.}  This axiom justifies the rewrite of
+\verb+(mod x y)+.  The result of the rewrite depends on the values of 
+\verb+x+ and \verb+y+.  If \verb+y+ is either $1$ or $-1$, the result is 0, if
+\verb+x+ is constant, and \verb+y+ is a constant different from $0$, \si
+replaces the modulo by the correct value.  Otherwise, if \verb+y+ is a
+constant different from $0$, the modulo is rewritten into
+\verb+(- x (* y (div x y)))+.  The rules mimic the SMTLIB semantic of the
+Euclidian definition of div and mod.
+\begin{mathpar}
+  \inferrule*[left=mod1]{ }{(mod\ c\ 1) = 0}\quad
+  \inferrule*[left=mod-1]{ }{(mod\ c\ (-\ 1)) = 0}\\
+  \inferrule*[left=modConst,right={$d\equiv\left\{\begin{array}{l@{\ \mbox{if}\ }l}c_1-c_2\lfloor\frac{c_1}{c_2}\rfloor&c_2>0\\ c_1-c_2\lceil\frac{c_1}{c_2}\rceil&c_2<0\end{array}\right.$}]{ }{(mod\ c_1\ c_2) = d}\\
+  \inferrule*[left=modulo]{ }{(mod\ x\ y) = (+\ x\ (*\ (- y)\ (div\ x\ y)))}
+\end{mathpar}
+Note that the right hand side of the \verb+modulo+ rule is equivalent to the
+internal form of $(-\ x\ (*\ y\ (div\ x\ y)))$.  This saves one additional
+rewrite step into canonical form.
+
+\paragraph{Integer injection.}  The \verb+to_int+ operator can be used to
+convert a real term into an integer.  The SMTLIB semantic describes this
+conversion as the standard floor operation on reals.  If this is applied to a
+constant, \si replaces the application by the result.
+\[
+\inferrule*[left=toInt,right={$v\equiv\lfloor r\rfloor$}]{ }{(to\_int\ r) = v}
+\]
+
+\paragraph{Real injection.}  The \verb+to_real+ operator can be used to
+convert an integer term into a real term.  This is essentially no change in
+the meaning of this term since any integer term is also a real term, but the
+term representation changes.  For constants, we statically evaluate the
+application by appending a \verb+.0+ to the original constant.
+\[
+\inferrule*[left=toReal]{ }{(to\_real c) = c.0}
+\]
+
+\paragraph{Array rewrites.}  The theory of arrays contains several constructs
+that can be the target of rewrites.  \si implements the following rewrites for
+arrays:
+\begin{itemize}
+\item Static store-over-store:  If a store overwrites the value of a directly
+  adjacent store term, the inner store term is removed.  This is justified by
+  the following rewrite axiom.
+\[
+\inferrule*[left=storeOverStore]{ }{(store\ (store\ a\ i\ v_1)\ i\ v_2) =
+  (store\ a\ i\ v_2)}
+\]
+\item Static select-over-store:  If the select-over-store axiom can be
+  statically evaluated, \si replaces the application of the term by its
+  conclusion.  Static evaluation can be done if the index terms are known to
+  be equivalent or distinct.  Since \si does not include congruence closure in
+  the simplification phase, it only simplifies if the index terms are
+  syntactically equal or numerical.  The rewrite is justified by the following
+  axioms:
+\begin{mathpar}
+  \inferrule*[left=selectOverStore]{ }{(select\ (store\ a\ i\ v)\ i) = v}\\
+  \inferrule*[left=selectOverStore,right={$c_1\neq c_2$}]{
+  }{(select\ (store\ a\ c_1\ v)\ c_2) = (select\ a\ c_2)}
+\end{mathpar}
+\item Store rewrite:  In the array theory it is possible to have store terms
+  that only describe values for the base array.  In this case, the store term
+  can be rewritten into a select.  The following axiom justifies this rewrite.
+\begin{mathpar}
+\inferrule*[left=storeRewrite]{ }{(=\ a\ (store\ a\ i\ v)) =
+  (=\ (select\ a\ i)\ v)}\\
+\inferrule*[left=storeRewrite]{ }{(=\ (store\ a\ i\ v)\ a) =
+  (=\ (select\ a\ i)\ v)}
+\end{mathpar}
+\end{itemize}
+
+\subsection{Building CNF}
+After normalization and simplification, \si produces CNF from the modified
+input formula.  The proof rules described before justify the equivalence of
+the input assertion and the canonical form.  The rules in this section justify
+the transformation of the canonical form into an equisatisfiable CNF.  The
+basic operations performed during this process are creation of literals from
+the leaves of the Boolean part of the term, structural splitting of the
+formula, and introduction of auxiliary atoms for a Plaisted--Greenbaum- or
+Tseitin-style encoding of the input formula.
+
+\paragraph{Structural splitting.}  
+The top-level structure of the canonical form now corresponds to a term-DAG
+containing only negation, disjunction, equality between Boolean terms,
+if-then-else terms, and terms corresponding to atoms.  To compute CNF from
+this DAG, \si splits the DAG according to the remaining structure.  The rule
+mostly used by \si splits conjunctions into one of the individual conjuncts.
+The negations produced by this rule might be further simplified using
+\texttt{NotSimp}.  Hence, an equality folding steps might follow directly upon
+an application of this rule.
+
+\begin{mathpar}
+  \inferrule*[left=NotOrElim,right={$j\in I$}]{(not\ (or_{i\in
+      I}\ t_i))}{(not\ t_j)}\quad
+\end{mathpar}
+
+Equalities between Boolean terms and if-then-else terms are not transformed by
+this rule.  Note that the equalities are binary since we are dealing with
+canonical form.  The rules to remove such connectives create pseudo-clauses,
+i.\,e., clauses that are not actually inserted into the clause database of
+\si, but further processed by rewrite rules.  The negations might be
+simplified by \texttt{NotSimp} and an equality folding step.
+\begin{mathpar}
+  \inferrule*[left={=+1}]{(=\ F_1\ F_2)}{(or\ F_1\ (not\ F_2))}\quad
+  \inferrule*[left={=+2}]{(=\ F_1\ F_2)}{(or\ (not\ F_1)\ F_2)}\\
+  \inferrule*[left={=-1}]{(not\ (=\ F_1\ F_2))}{(or\ F_1\ F_2)}\quad
+  \inferrule*[left={=-2}]{(not\ (=\ F_1\ F_2))}{(or\ (not\ F_1)\ (not\ F_2))}\\
+  \inferrule*[left={ite+1}]{(ite\ F_1\ F_2\ F_3)}{(or\ (not\ F_1) F_2)}\quad
+  \inferrule*[left={ite+2}]{(ite\ F_1\ F_2\ F_3)}{(or\ F_1 F_3)}\\
+  \inferrule*[left={ite-1}]{(not\ (ite\ F_1\ F_2\ F_3))}{(or\ (not\ F_1) (not\ F_2))}\quad
+  \inferrule*[left={ite-2}]{(not\ (ite\ F_1\ F_2\ F_3))}{(or\ F_1 (not\ F_3))}
+\end{mathpar}
+
+\paragraph{Building Literals.}
+After splitting the term-DAG into clauses, every term in every clause is
+transformed into a literal\footnote{This process sometimes is called
+  \emph{internalization}.}.  This step might slightly change the term
+representation due to implicit application of symmetry or associativity
+axioms, or might even simplify the term to \texttt{false} if theory reasoning
+allows further simplification, e.\,g., in the case of linear equalities over
+the integer (e.\, g., $2x=1$).  We justify this step by another rewrite rule.
+\[
+\inferrule*[left=intern,right={$F\equiv F'$}]{ }{F = F'}
+\]
+This axiom also justifies the introduction of a proxy literal as needed by
+Plaisted--Greenbaum- or Tseitin-style CNF encoding. The proxy literal captures
+the truth value of the corresponding sub-formula.  The proxy literal
+\emph{quotes} the sub-formula and is used as a regular literal in the
+remaining proof.  \si highlights quotation of a sub-formula by wrapping it in
+a \texttt{:quoted} annotation, e.\,g., $(!\ (or\ A\ B)\ :quoted)$ is the proxy
+literal for $(or\ A\ B)$.  Note that \si does not produce proxy literals for
+negated formulas but negates the proxy for the positive formula instead.
+
+\paragraph{Flattening nested disjunctions.}
+Clauses are built from disjunctions.  So far, the proof system does not care
+about nesting of these disjunctions.  However, the \texttt{flatten} rule is
+used to transform the nested disjunction into one disjunction without the
+nesting.  It works recursively on the nested disjunctions.
+\todo{The way it is implemented right now, it simply replaces a nested or by
+  its arguments in a top-down manner.  While this is nice for the reader, it
+  is unnecessarily complex for the implementation.  Is this order really
+  necessary or can we just move the disjuncts of nested disjunctions to the
+  back of the result?}
+
+\paragraph{Building clauses.}
+The \texttt{intern} rules induces another rewrite system.
+This system is again applied by the equality folding rule \texttt{eq}.  The
+resulting formula might still contain nested disjunctions.  The rule
+\texttt{clause} permutes the resulting clause.
+\begin{mathpar}
+\inferrule*[left=clause]{(or\ t_1\ldots t_n)}{(or\ t_i')}
+\end{mathpar}
+Note that we do not use $0$-ary or unary or-applications.  Instead, we write
+\texttt{false} or the unit literal, respectively.
+
+\todo{This rule now only serves the purposes of permuting a clause from its
+  derivation and to visualize the clauses before they are fed into the
+  resolution proof.  In my opinion, permuting is unnecessary since it does not
+  change validity of the proof.  Seeing the clause before they are fed into
+  the resolution proof is nice if one only wants to track the resolution
+  steps.  But then why use the full proof mode?  For proper proof validation,
+  seeing the clause is actually unnecessary unless the derived clause deviates
+  from its derivation.  However, I expect the resolution proof to fail in this
+  case as well.  So I vote for the removal of this rule since all useful
+  functionality has been replaced by a combination of flatten and simpOr.}
+
+\section{Implementation}
+After presenting the set of rules used by \si, we now describe some
+major issues to ensure soundness/correctness of the generated proofs.
+
+\subsection{Proof Tree Structure}
+The proof trees produced by \si should be as small as possible.  We achieve
+this by treating the \texttt{Eq} rule as left-associative and collecting all
+the rewrite steps.  The final proof tree will then consist of three parts:
+\begin{enumerate}
+\item transforming into canonical form,\label{it:tocan}
+\item transforming into clausal form,\label{it:tocnf} and
+\item the resolution proof\label{it:resproof}.
+\end{enumerate}
+The proof tree structure will correspond to this ordering.
+\[
+\inferrule*[Left=res,sep=1em]{
+  \inferrule*[Left=Eq]{
+    \inferrule*[Left=split]{
+    \inferrule*[Left=Eq]{
+      F_{input} \\ (=\ t_i\ t_i')}
+               {F_{canonical}}}{(or_{j\in J_1}\ t_j)} \\ (=\ t_j\ t_j')}{(or\ t_i)}
+  \\ \ldots \\
+  \inferrule*[Left=eq]{
+    \inferrule*[Left=split]{
+      \inferrule*[Left=Eq]{
+        F_{input} \\ (=\ t_i\ t_i')}
+                 {F_{canonical}}}{(or_{j\in J_n}\ t_j)} \\ (=\ t_j\ t_j')}{(or\ t_i)}
+  \\ \mathcal{T}\!-lemmas
+}{\bot}
+\]
+\todo{Should we include the flatten-rule in this picture?}
+
+Note that the conversion steps from $F_{input}$ into $F_{canonical}$ are always
+the same and will be eliminated by common subexpression elimination.  Only the
+step producing the clauses from the canonical formula will change.
+Furthermore note that we do not give a derivation for theory lemmas.
+These clauses are annotated with enough information to reconstruct a proof of
+validity.
+
+\subsection{Ensuring Confluence}
+The transformation from input formula into canonical form is done by a term
+rewriting system.  This system, however, has to be confluent to ensure
+canonical form.  Otherwise, the same term might be rewritten into two
+different terms and the canonical form will not be unique.  In this section, we
+describe how we ensure confluence of the rewrite system and relate the
+confluence property to the actual implementation.
+
+The term-DAG is transformed in a bottom-up manner.  The DAG is traversed using
+a post-order DAG traversal, i.\,e., the children of a node are visited only if
+they have not yet been visited before, but before the current node is visited.
+For every node, a replacement is registered and used if another path through
+the DAG leads to the current node.  Hence, once a substitution for a node in
+the DAG is computed, we can directly replace it on all paths.  This leads to
+the intuition behind the order of rewrites.
+
+We collect the rewrites as produced during bottom-up traversal of the term-DAG
+and apply them in the same order.  Hence, once a rewrite has been done, we
+apply this rewrite to the whole term-DAG.  Further rewrites will then be done
+against the resulting term-DAG.
+
+Unfortunately expansion of $n$-ary applications of binary functions into a
+series of binary applications is done before the children are visited.  Hence,
+by expanding such an application, new terms might be created.  As some of
+these terms might already exist and even be rewritten, the \texttt{expand} and
+\texttt{ExpandDef} rules are a major problem for confluence.  A simple trick
+resolves this issue.  Instead of appending applications of these axiom to the
+set of rewrite axioms, we prepend these applications.  This change in the
+order can be seen as another preprocessing step.  Every $n$-ary application of
+a binary function is expanded in a top-down manner.  The resulting term-DAG is
+then transformed into canonical form using a bottom-up DAG rewrite.  This way,
+confluence of the system that rewrites the input formula into canonical form
+is guaranteed.
+
+\section{Proof Terms in \si}
+Proofs are represented as terms of sort \verb+@Proof+ in \si.  Note that the
+\verb+@+ is part of the name of the sort to prevent unintentional clashes with
+user-defined sorts since \verb+@+ and \verb+.+ are reserved for solvers in the
+SMTLIB standard.
+
+There are several rules to convert a Boolean formula into a proof.  In the
+following we will show these rules and discuss their annotations.
+
+\paragraph{Asserted terms.}  Terms asserted by the users are converted into
+proof objects by the \verb+@asserted+ function.  This function has type
+$Bool\rightarrow @Proof$.  The formula still contains all annotations.
+Especially the \verb+:named+ annotation is kept and can be used to recognize
+the input formula.
+
+There is a fundamental difference between the internal representation of the
+proof and the printed version.  Internally, the \verb+@asserted+ function
+wraps a term asserted by the user in exactly the form, the user inserted it,
+i.\,e., including all lets.  Once we print the proof term in
+non-common-subexpression-elimination-mode\footnote{Note that this is in
+  general a bad idea.}, we still get this property.  If common subexpression
+elimination is enabled, we loose this property since all let-bindings in the
+proof term are first removed and later replaced by new once if the
+subexpression gets eliminated.
+\todo{We should think about a nice way to print out proofs and maybe always
+  preserve input terms since otherwise, recognizing the input term in the
+  proof will become quite hard!}
+Note that this is a consequence of the usage of FormulaLet which will remove
+all let-bindings before compute new ones, i.~e., before eliminating common
+subexpressions.  This leads to an interesting problem:  To recognize a formula
+in the input, we either prevent common subexpression elimination, or we have
+to remove all let-bindings in the asserted terms (locally).  Note that
+eliminating common subexpressions only in terms of type \verb+@Proof+ is no
+solution since the asserted formula might have contained let-bindings to get a
+propositional representation of the formula.  Removing the let-bindings would
+give (in the worst case) an exponential size formula and writing/comparing
+these formulas would be expensive.  However, on the API side, we are safe
+since the let-structure can be transformed into the non-let-structure in
+polynomial space and comparing two terms is in $O(1)$ since we only compare
+pointers.  Note that this only works, if the terms to be compared do not
+contain let-bindings.
+
+Adding specialized names to asserted formulas to simplify recognition is not a
+good idea.  Naming a formula has some side-effects and leads to an application
+of the \verb+strip+-rule.  While the latter might not be too bad, we can avoid
+the side-effects by annotating the formula with a keyword different from
+\verb+:named+ (or \verb+:pattern+, or \verb+:pat+).  This new keyword has no
+meaning to the solver.  Hence it will be ignored (except for stripping it from
+the formula) and can be used to recognize the input formula.
+
+\paragraph{Rewrites.}  Most of the rules presented above introduce equalities
+that are later used to rewrite an input term.  To introduce these axioms into
+the proof tree, \si uses the \verb+@rewrite+ function which introduces a
+Boolean formula $old = new$ to rewrite all occurrences of $old$ in a formula
+into $new$.  The function has signature $Bool\rightarrow @Proof$.  The
+argument to the \verb+@rewrite+ function is annotated with the name of the
+rewrite axiom used.  Similarly to \verb+@rewrite+, the \verb+@intern+ function
+introduces rewrite equalities.  It has the same signature, but the Boolean
+term will not be annotated.
+
+\paragraph{Structural Splitting.}  If the Boolean structure of the input is
+more complex and cannot be transformed into disjunctive form during
+canonicalization, \si uses structural splitting.  The proof tree uses the
+\verb+@split+ function to describe a structural split.  This function has
+signature $@Proof\times Bool\rightarrow @Proof$ where the first argument is
+annotated with the rule used in this splitting step and the second argument is
+the result of the split.
+
+Splitting conjunctions is a special case here.  \si might insert another
+\verb+@eq+ rewrite to rewrite double negations directly after the rewrite.
+The reason for this asymmetric behavior in structural splitting is that after
+splitting a conjunction, we might directly split another time on either
+another (nested) conjunction, or a different operator.  Hence, if a
+conjunction split produces a double negation, the next proof step will be an
+equality rewrite that replaces the double negation.
+
+\paragraph{Applying rewrites.}  The \verb+@eq+ function is used to apply
+rewrites to a proof.  This function is left-associative and has signature
+$@Proof\times@Proof\rightarrow @Proof$.  This signature, however, is not
+strong enough to express all details.  The second proof is a proof of a
+rewrite equality that is introduced with \verb+@rewrite+ or \verb+@intern+
+while the first proof can be \verb+@asserted+ or a derivation sequence.
+
+\paragraph{Creating literals}  After converting an input formula in canonical
+form and possibly splitting it, \si creates clauses.  The input to this
+process is a (possibly nested) disjunction.  For every disjunct, a literal
+will be created.  This literal should replace the term in the (flattened)
+clause.  We distinguish different kinds of literals, but all literals are
+introduced into the proof tree using the \verb+@intern+ function with
+signature $Bool\rightarrow @Proof$.  Essentially, this function is the
+justification for another rewrite axiom.
+
+Depending on the literal, the \verb+@intern+ function might have different
+effects:
+\begin{description}
+\item[Proxy Literal] For a proxy literal, the term is simply wrapped by the
+  annotation \verb+:quoted+.
+\item[Equalities] An equality $(=\ t_1\ t_2)$ might be transformed into
+  $(=\ t_2\ t_1)$ by an implicit application of symmetry.  This usually
+  happens to unify two literals, i.\,e., when a literal for the latter form
+  already exists.  If the equality is a numeric equality, it might be
+  transformed into its numeric form $(=\ (-\ t_1\ t_2)\ 0)$.  Note that during
+  this conversion, arithmetic simplification and symmetry might be used.
+
+  The equality might be transformed to $true$ if it holds trivially, or
+  $false$ if it cannot hold trivially (e.\,g., $x=x+1$) or due to a failed GCD
+  test over the integers (e.\,g., $2x=1$).  In these cases, no literal will be
+  created.
+\item[Inequalities] Inequalities of the form $(<=\ t\ 0)$ will be transformed
+  into inequality literals of the form $(<=\ t'\ 0)$ where $t'=t$ is the
+  result of applying commutativity to (sub-terms of) $t$.
+\end{description}
+
+\paragraph{Tautologies.}  Various constructs create tautologies during the
+transformation into CNF.  These tautologies are clauses that are annotated
+with the kind of the tautology.  The \verb+@tautology+ function transforms a
+clause annotated with the kind of tautology into a proof.  The function has
+signature $Bool\rightarrow @Proof$.
+\begin{table}[htbp]
+  \begin{tabular}{l|l}
+    Kind & Description\\\hline
+    trueNotFalse & For the CC-Equality $true\neq false$\\
+    or+ & Positive polarity or auxiliary axiom\\
+    or- & Negative polarity or auxiliary axiom\\
+    ite+1 & Positive polarity if-then-else auxiliary axiom\\
+    ite+2 & Positive polarity if-then-else auxiliary axiom\\
+    ite+Red & Redundant positive polarity if-then-else auxiliary axiom\\
+    ite-1 & Negative polarity if-then-else auxiliary axiom\\
+    ite-2 & Negative polarity if-then-else auxiliary axiom\\
+    ite-Red & Redundant negative polarity if-then-else auxiliary axiom\\
+    =+1 & Positive polarity (Boolean) equivalence auxiliary axiom\\
+    =+2 & Positive polarity (Boolean) equivalence auxiliary axiom\\
+    =-1 & Negative polarity (Boolean) equivalence auxiliary axiom\\
+    =-2 & Negative polarity (Boolean) equivalence auxiliary axiom\\
+    excludedMiddle1 & Law of excluded middle for Boolean terms\\
+    excludedMiddle2 & Law of excluded middle for Boolean terms\\
+    termITE & Term if-then-else auxiliary axiom\\
+    divLow & Lower bound on integer division\\
+    divHigh & Upper bound on integer division\\
+    toIntLow & Lower bound on real-to-integer conversion\\
+    toIntHigh & Upper bound on real-to-integer conversion\\
+    eq & Equality propagation tautologies
+  \end{tabular}
+  \caption{\label{tab:tautkinds}Different Kinds of Tautologies.}
+\end{table}
+
+Table~\ref{tab:tautkinds} describes the different kinds of tautologies present
+in \si and Table~\ref{tab:tautforms} shows the corresponding clauses.  In
+Table~\ref{tab:tautforms}, $\quoted{F}$ denotes the proxy
+literal\footnote{These literals appear in proofs with the annotation
+  \texttt{:quoted}.} for formula $F$, $F$ denotes formulas, $t$ denotes terms,
+and $t_F$ denotes the term corresponding to $F$\footnote{In the proof returned
+  by \si, $t_F$ and $F$ are equal.  The distinction is only done internally
+  since $F$ is a Boolean term handled by the DPLL core and $t_F$ is the term
+  used by congruence closure.}.
+\si internally collects the disjunctive parts of the individual formulas.  The
+\texttt{termITE} tautology is also used when term if-then-else trees are
+minimized, i.\,e., when the then- or else-part of the if-then-else is an
+if-then-else again.  Then, only one term might be used and the $t$ in the
+result is one leaf or a shared if-then-else tree that is a sub-term of the
+left-hand-side of the equality.
+\begin{table}[htbp]
+  \begin{tabular}{l|l}
+    Kind & Clause\\\hline
+    trueNotFalse & $true\neq false$\\
+    or+ & $\neg\quoted{F_1\lor \ldots \lor F_n}\lor F_1\lor \ldots\lor F_n$\\
+    or- & $\quoted{F_1\lor \ldots \lor F_n}\lor \neg F_i$\\
+    ite+1 & $\neg\quoted{if F_1 then F_2 else F_3}\lor\neg F_1\lor F_2$\\
+    ite+2 & $\neg\quoted{if F_1 then F_2 else F_3}\lor F_1\lor F_3$\\
+    ite+Red & $\neg\quoted{if F_1 then F_2 else F_3}\lor F_2\lor F_3$\\
+    ite-1 & $\quoted{if F_1 then F_2 else F_3}\lor\neg F_1\lor\neg F_2$\\
+    ite-2 & $\quoted{if F_1 then F_2 else F_3}\lor F_1\lor\neg F_3$\\
+    ite-Red & $\quoted{if F_1 then F_2 else F_3}\lor\neg F_2\lor\neg F_3$\\
+    =+1 & $\neg\quoted{F_1=F_2}\lor F_1\lor\neg F_2$\\
+    =+2 & $\neg\quoted{F_1=F_2}\lor\neg F_1\lor F_2$\\
+    =-1 & $\quoted{F_1=F_2}\lor F_1\lor F_2$\\
+    =-2 & $\quoted{F_1=F_2}\lor\neg F_1\lor\neg F_2$\\
+    excludedMiddle1 & $\neg F\lor t_F = true$\\
+    excludedMiddle2 & $F\lor t_F = false$\\
+    termITE & $\neg F_1\lor\ldots\lor\neg F_n if F then t_1 else t_2 = t$\\
+    divLow & $d\cdot (x\div d) - x \leq 0$\\
+    divHigh & $\neg (|d| - x + d\cdot (x\div d)\leq 0)$\\
+    toIntLow & $to\_real(to\_int(x)) - x \leq 0$\\
+    toIntHigh & $\neg (1 - x + to\_real(to\_int(x))\leq 0)$\\
+    eq & $c_1t_1=c_2t_2\lor
+    \pm\frac{c_1}{gcd(c_1,c_2)}t_1\mp\frac{c_2}{gcd(c_1,c_2)}t_2\neq 0$ or\\
+    &$c_1t_1\neq c_2t_2\lor \pm\frac{c_1}{gcd(c_1,c_2)}t_1\mp\frac{c_2}{gcd(c_1,c_2)}t_2=0$
+  \end{tabular}
+  \caption{\label{tab:tautforms}Different Kinds of Tautology Clauses.}
+\end{table}
+
+Note that the rewrite rules are applied to almost all tautologies to produce
+proof objects for the clauses created from these tautologies.  The exception
+to this rule is the \verb+trueNotFalse+ rule which would be simplified to
+true.  This tautology is actually a proof for a unit clause.  Further note
+that the absolute value in the \verb+divHigh+ rule is directly computed
+without introduction of a function application for absolute values.  This is
+possible since the divisor is constant.
+
+\paragraph{Lemmas.}  The resolution proof produced by \si contains lemmas
+created by theory solvers.  These lemmas are valid Boolean terms.  The
+function \verb+@lemma+ transforms the clause into a proof term.  Hence, it has
+signature $Bool\rightarrow @Proof$.
+
+The lemmas are annotated with a theory identifier and further,
+theory-specific annotations.  The theory identifiers currently supported are
+\verb+LA+ and \verb+CC+.  Proofs from the LA-solver additionally carry the
+coefficients used by the solver when applying Farkas' lemma to the input
+problem.  The coefficients are given in the same order the negated literals
+appear in the lemma.  Proofs from congruence closure are annotated with the
+paths through the congruence graph and, optionally, a disequality that is
+violated.
+
+Some lemmas might be annotated with \verb+:trichotomy+.  This annotation is
+used for a clause of the form $t_1=t_2\lor t_1<t_2\lor t_1 > t_2$.  Note that
+this clause is a special form of theory lemma that justifies a case split in
+the linear arithmetic solver if $t_1$ and $t_2$ are not equal.
+
+\paragraph{Creating clauses.}  The final step in the conversion of an input
+formula into CNF is the creation of clauses from disjunctive parts of the
+input formula.  We get these parts by structural splitting of the input
+formula that is proven by the \verb+@split+ function.
+
+Once a (possibly nested) disjunction is created by a split \si produces a
+clause for this disjunction.  First, if needed, the disjunction is flattened.
+This replaces all nested disjunctions by their disjuncts.  Then, the
+individual disjuncts are replaced by literals.  This step is justified by the
+\verb+@eq+-rule that applies the rewrite system whose rewrite rules are stated
+by \verb+@intern+-axioms.   Note that \verb+@intern+ might rewrite a formula
+into a negated formula.  If this is the case and the resulting literal should
+be negated once more, \si will add a negation simplification rewrite.
+Furthermore, some disjuncts might be internalized to false\footnote{Currently
+  this only happens for unsatisfiable integer equalities, e.~g., $2x=1$} and
+the disjunction might contain duplicated terms due to flattening.  In these
+cases, the \verb+orSimp+ rule is used to compute the resulting clause.
+
+Since \si internally permutes the literals in a clause, a final proof step is
+used to represent the resulting clause.
+This step is represented by the \verb+@clause+
+function in the proof tree.  This function has
+signature $@Proof\times Bool\rightarrow@Proof$.
+It is correct, if the first argument is a proof for a (possibly nested)
+disjunction that can be flattened and reordered into the second argument.
+\todo{Do we really need this function?}
+
+\paragraph{Resolution.}  The resolution function \verb+@res+ is
+left-associative and has signature $@Proof\times@Proof\rightarrow@Proof$.  The
+second proof is annotated with the pivot of the resolution.  This pivot
+literal occurs negative in the first (the one not containing the pivot
+annotation) and positive in the second argument.
+
+\paragraph{Showing Results.}  The rules in SMTLIB format produce an implicit
+result.  To overcome this restriction, \si appends the results of structural
+splitting and clause creation to the rules as described above.
+
+\paragraph{Compressing Proofs.}  Besides the compression possible by
+exploiting left-associativity of \verb+@eq+ and \verb+@res+, we can further
+compress the proof tree.  If no rewrite takes place to transform a formula
+into canonical form or to create a clause, the rule \verb+@eq+ will be
+suppressed.
+
+\section{Example Proof}
+In this section, we will see an except of a proof produced by \si for the
+formula $2x=z \land 2y + 1 = z$ where the variables $x,y,z$ are integer
+variables.  We will focus on the steps taken by \si to transform this formula
+into a set of clauses and omit the resolution refutation\footnote{The
+  refutation needs two lemmas from the theory of linear integer arithmetic and
+  some resolution steps.  The actual proof depends on the proof transformation
+  used when printing the proof.  The derivation of the clauses, however, is
+  not affected by the proof transformation.}.
+
+We assume the formula is given in SMTLIB syntax as
+\begin{verbatim}
+(and (= (* 2 x) z) (= (+ (* 2 y) 1) z))
+\end{verbatim}
+
+The axiom \texttt{AndToOr} produces the equality
+\[
+(and (=\ (*\ 2\ x)\ z)\ (=\ (+\ (*\ 2\ y)\ 1)\ z)) =
+(not (or (not (=\ (*\ 2\ x)\ z))\ (not (=\ (+\ (*\ 2\ y)\ 1)\ z))))
+\]
+which is the only rewrite step needed to transform the formula into canonical
+form.  The rule \texttt{Eq} is then used to rewrite the input formula
+into the canonical form
+\[
+(not\ (or\ (not\ (=\ (*\ 2\ x)\ z))\ (not\ (=\ (+\ (*\ 2\ y)\ 1)\ z))))\tag{canonical}\label{f:canonical}.
+\]
+
+Next, \si produces two clauses from this canonical form.  The first step in
+this production is structural splitting of the negated or.  We will only
+present the proof for the creation of a clause from the first ``conjunct''
+since the steps for the second are similar.
+\[
+\inferrule*[Left=Eq,sep=.1em]{
+  \inferrule*[left=NotOrElim]{(\ref{f:canonical})}{(not (not (= (*\ 2\ x) z)))}\\
+  \inferrule*[left=NotSimp]{ }{(not (not (= (*\ 2\ x) z))) =
+    (= (*\ 2\ x)\ z)}}
+           {(=\ (*\ 2\ x)\ z)}
+\]
+
+Next, the rule \texttt{intern} produces the internal representation of the
+atom.  Since we have a unit, the rule \texttt{clause} will not be used to
+build the unit clause, and \si only applies \texttt{Eq}.
+\[
+\inferrule*[left=Eq]{(=\ (*\ 2\ x)\ z) \\
+  \inferrule*[left=intern]{ }{(=\ (*\ 2\ x)\ z) = (=\ (+\ (*\ (-\ 2)\ x)\ z)\ 
+    0)}}
+           {(=\ (+\ (*\ (-\ 2)\ x)\ z)\ 0)}
+\]
+
+The whole proof then uses the unit clause just created and the unit clause
+created for the second ``disjunct'' to conclude unsatisfiability of this
+formula in linear integer arithmetic.  As mentioned above, we do not present
+the complete proof here.  Instead, we show the part of the proof that
+corresponds to the previous steps.
+\begin{verbatim}
+(@eq
+   (@eq
+    (@split
+     (! 
+      (@eq
+       (@asserted (and (= (* 2 x) z) (= (+ (* 2 y) 1) z)))
+       (@rewrite (! (= (and (= (* 2 x) z) (= (+ (* 2 y) 1) z))
+           (not (or (not (= (* 2 x) z)) (not (= (+ (* 2 y) 1) z)))))
+         :andToOr))
+       )
+     :notOr)
+     (not (not (= (* 2 x) z)))
+     )
+    (@rewrite (! (= (not (not (= (* 2 x) z))) (= (* 2 x) z)) :notSimp))
+    )
+   (@intern (= (= (* 2 x) z) (! (= (+ z (* (- 2) x)) 0) :quoted)))
+   )
+\end{verbatim}
+
+For a proof containing the rule \verb:flatten: and the \verb:@clause: function
+simply use the formula $(A\lor(B\lor(C\lor\bot)))\land\lnot A\land\lnot
+B\land\lnot C$.
+\end{document}
+
+%% Local Variables:
+%% compile-command: "pdflatex -halt-on-error proof"
+%% compilation-read-command: nil
+%% End:

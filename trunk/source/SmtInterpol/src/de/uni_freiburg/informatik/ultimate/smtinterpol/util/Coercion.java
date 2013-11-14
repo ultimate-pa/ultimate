@@ -59,10 +59,11 @@ public class Coercion {
 	}
 	/// BE CAREFUL: args might be modified!!!
 	public static Term buildApp(FunctionSymbol fsymb, Term[] args) {
+		Sort[] paramSorts = fsymb.getParameterSorts();
 		if (fsymb.getTheory().getLogic().isIRA())
 			for (int i = 0; i < args.length; ++i)
-				if (args[i].getSort() != fsymb.getParameterSort(i))
-					args[i] = coerce(args[i], fsymb.getParameterSort(i));
+				if (args[i].getSort() != paramSorts[i])
+					args[i] = coerce(args[i], paramSorts[i]);
 		return fsymb.getTheory().term(fsymb, args);
 	}
 	

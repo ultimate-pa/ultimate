@@ -20,23 +20,54 @@ package de.uni_freiburg.informatik.ultimate.logic;
 
 import java.util.ArrayDeque;
 
-public abstract class Term {	
-	protected int m_Hash;
+/**
+ * This is the base class for representing SMTLIB 2 terms.
+ * You can assume that every term is one of the following sub-classes:
+ * <ul>
+ * <li>{@link ApplicationTerm} represents a function application <code>(name ...)</code>.</li>
+ * <li>{@link AnnotatedTerm} represents an annotated term <code>(! term ...)</code>.</li>
+ * <li>{@link ConstantTerm} represents a numeral, decimal, bit vector, or string literal.</li>
+ * <li>{@link LetTerm} represents a let term <code>(let ((var term)...) term)</code>.</li>
+ * <li>{@link TermVariable} represents a term variable <code>var</code> used in quantifier or let term.
+ * 	    Note that constants are represented by ApplicationTerm.</li>
+ * <li>{@link QuantifiedFormula} represents a quantified formula <code>(exists/forall ...)</code>.</li>
+ * </ul>
+ * 
+ * In principle it is possible to write your own sub-classes, but that is
+ * dangerous and only recommend for the advanced SMTInterpol hacker.
+ * 
+ * @author Juergen Christ, Jochen Hoenicke
+ */
+public abstract class Term {
+	private int m_Hash;
 	
 	/**
 	 * A temporary counter used e.g. to count the number of occurrences of this
 	 * term in a bigger term.
+	 * Don't use this!!!!
 	 */
 	public int tmpCtr;
 	
 	TermVariable[] m_freeVars;
 	
+	/**
+	 * Create a term.
+	 * @param hash the hash code of the term.  This should be stable.
+	 */
 	protected Term(int hash) {
 		m_Hash = hash;
 	}
 
+	/**
+	 * Returns the SMTLIB sort of this term.
+	 * @return the sort of the term.
+	 */
 	public abstract Sort getSort();
 
+	/**
+	 * Computes and returns the free variables occurring in this term.
+	 * @return the free variables.
+	 */
 	public TermVariable[] getFreeVars() {
 		if (m_freeVars == null)
 			new NonRecursive().run(new ComputeFreeVariables(this));
@@ -46,12 +77,25 @@ public abstract class Term {
 	public Theory getTheory() {
 		return getSort().m_Symbol.m_Theory;
 	}
-	
+
+	/**
+	 * Prints an SMTLIB representation of this term.  This 
+	 * {@link FormulaLet introduces lets for common subexpressions} 
+	 * to prevent exponential blow-up when printing
+	 * a term with lots of sharing. 
+	 * @return an SMTLIB representation.
+	 */
 	public String toString() {
 		Term letted = (new FormulaLet()).let(this);
 		return letted.toStringDirect();
 	}
 	
+	/**
+	 * Prints the canonical SMTLIB representation of this term.
+	 * This does not eliminate common sub-expressions and can cause
+	 * exponential blow-up.
+	 * @return the canonical SMTLIB representation.
+	 */
 	public String toStringDirect() {
 		StringBuilder sb = new StringBuilder();
 		new PrintTerm().append(sb, this);
@@ -69,5 +113,5 @@ public abstract class Term {
 	 * @param m_Todo The stack where to put the strings and sub terms.
 	 * @see PrintTerm
 	 */
-	public abstract void toStringHelper(ArrayDeque<Object> m_Todo);
+	protected abstract void toStringHelper(ArrayDeque<Object> m_Todo);
 }

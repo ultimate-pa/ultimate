@@ -39,6 +39,7 @@ import de.uni_freiburg.informatik.ultimate.logic.AnnotatedTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Annotation;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Assignments;
+import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.FormulaUnLet;
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbolFactory;
@@ -47,6 +48,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Model;
 import de.uni_freiburg.informatik.ultimate.logic.NoopScript;
 import de.uni_freiburg.informatik.ultimate.logic.PrintTerm;
 import de.uni_freiburg.informatik.ultimate.logic.QuotedObject;
+import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.ReasonUnknown;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
@@ -359,7 +361,7 @@ public class SMTInterpol extends NoopScript {
 		private Option[] options;
 		private int numOptions;
 		public OptionMap() {
-			options = new Option[0x10];
+			options = new Option[0x20];
 			numOptions = 0;
 		}
 		private void grow() {
@@ -477,6 +479,7 @@ public class SMTInterpol extends NoopScript {
 	
 	private boolean m_SimplifyInterpolants = false;
 	private CheckType m_SimplifyCheckType = CheckType.QUICK;
+	private boolean m_SimplifyRepeatedly = true;
 	
 	// The option numbers
 	private final static int OPT_PRINT_SUCCESS = 0;
@@ -500,6 +503,7 @@ public class SMTInterpol extends NoopScript {
 	private final static int OPT_CHECK_TYPE = 18;
 	private final static int OPT_SIMPLIFY_INTERPOLANTS = 19;
 	private final static int OPT_SIMPLIFY_CHECK_TYPE = 20;
+	private final static int OPT_SIMPLIFY_REPEATEDLY = 21;
 	//// Add a new option number for every new option
 	
 	// The Options Map
@@ -559,6 +563,9 @@ public class SMTInterpol extends NoopScript {
 		new StringOption(":simplify-check-type",
 				"Strength of check used in simplify command", true,
 				OPT_SIMPLIFY_CHECK_TYPE);
+		new BoolOption(":simplify-repeatedly",
+				"Simplify until the fixpoint is reached", true,
+				OPT_SIMPLIFY_REPEATEDLY);
 		//// Create new option object for every new option
 	}
 	
@@ -955,6 +962,8 @@ public class SMTInterpol extends NoopScript {
 			return m_SimplifyInterpolants;
 		case OPT_SIMPLIFY_CHECK_TYPE:
 			return m_SimplifyCheckType.name().toLowerCase();
+		case OPT_SIMPLIFY_REPEATEDLY:
+			return m_SimplifyRepeatedly;
 		default:
 			throw new InternalError("This should be implemented!!!");
 		}
@@ -1175,7 +1184,10 @@ public class SMTInterpol extends NoopScript {
 					("generated interpolants did not pass sanity check");
 		}
 		if (m_SimplifyInterpolants) {
-			SimplifyDDA simplifier = getSimplifier();
+			SimplifyDDA simplifier = new SimplifyDDA(new SMTInterpol(this, 
+					Collections.singletonMap(
+							":check-type", (Object) m_SimplifyCheckType.name())),
+							m_SimplifyRepeatedly);
 			for (int i = 0; i < ipls.length; ++i)
 				ipls[i] = simplifier.getSimplifiedTerm(ipls[i]);
 		}
@@ -1434,23 +1446,25 @@ public class SMTInterpol extends NoopScript {
 		case OPT_SIMPLIFY_CHECK_TYPE:
 			m_SimplifyCheckType = CheckType.fromOption(o, value);
 			break;
+		case OPT_SIMPLIFY_REPEATEDLY:
+			m_SimplifyRepeatedly = o.checkArg(value, m_SimplifyRepeatedly);
+			break;
 		default:
 			throw new InternalError("This should be implemented!!!");
 		}
 	}
 	
-	private SimplifyDDA getSimplifier() {
-		return new SimplifyDDA(new SMTInterpol(this, 
-				Collections.singletonMap(
-						":check-type", (Object) m_SimplifyCheckType.name())));
-	}
-	
 	public Term simplify(Term term) throws SMTLIBException {
-//		if (m_Engine == null)
-//			throw new SMTLIBException("No logic set!");
-//		return m_Converter.simplify(term);
-		return getSimplifier().getSimplifiedTerm(term);
-//		throw new UnsupportedOperationException();
+		CheckType old = m_CheckType;
+		int oldNumScopes = m_StackLevel;
+		try {
+			m_CheckType = m_SimplifyCheckType;
+			return new SimplifyDDA(this, m_SimplifyRepeatedly).
+					getSimplifiedTerm(term);
+		} finally {
+			m_CheckType = old;
+			assert (m_StackLevel == oldNumScopes);
+		}
 	}
 
 	/**
@@ -1586,6 +1600,103 @@ public class SMTInterpol extends NoopScript {
 				return m_Engine.new AllSatIterator(lits, input);
 			}
 		};
+	}
+	
+	@Override
+	public Term[] findImpliedEquality(Term[] x, Term[] y)
+			throws SMTLIBException, UnsupportedOperationException{
+		if (x.length != y.length)
+			throw new SMTLIBException("Different number of x's and y's");
+		if (x.length < 2)
+			throw new SMTLIBException("Need at least two elements to find equality");
+		for (int i = 0; i < x.length; ++i)
+			if (!x[i].getSort().isNumericSort() || 
+					!y[i].getSort().isNumericSort())
+				throw new SMTLIBException("Only numeric types supported");
+		LBool isSat = checkSat();
+		if (isSat == LBool.UNSAT)
+			throw new SMTLIBException("Context is inconsistent!");
+		// TODO: If we get unknown, we can nevertheless try.  But quick-check
+		//       on numerals won't work since it produces a really dull model
+		//       since it does not allow pivoting
+//		if (isSat == LBool.UNKNOWN)
+//			// We cannot even prove satisfiability of the context.  No chance to
+//			// prove inductivity of an equality!
+//			return new Term[0];
+		Term[] terms = new Term[x.length + y.length];
+		System.arraycopy(x, 0, terms, 0, x.length);
+		System.arraycopy(y, 0, terms, x.length, y.length);
+		Map<Term, Term> vals = getValue(terms);
+		Rational x0 = (Rational) ((ConstantTerm) vals.get(x[0])).getValue();
+		Rational y0 = (Rational) ((ConstantTerm) vals.get(y[0])).getValue();
+		Rational x1 = null, y1 = null;
+		for (int i = 1; i < x.length; ++i) {
+			x1 = (Rational) ((ConstantTerm) vals.get(x[i])).getValue();
+			y1 = (Rational) ((ConstantTerm) vals.get(y[i])).getValue();
+			if (x1.equals(x0)) {
+				if (!y1.equals(y0))
+					// There is no implied equality!
+					return new Term[0];
+			} else
+				break;
+		}
+		Rational xdiff = x0.sub(x1);
+		if (xdiff.equals(Rational.ZERO))
+			// There is no implied equality
+			return new Term[0];
+		Rational a = y0.subdiv(y1, xdiff);
+		Rational b = Rational.ONE;
+		Rational c = y0.mul(x1).subdiv(x0.mul(y1), xdiff);
+		Sort s = x[0].getSort();
+		// Check for integers
+		if (x[0].getSort().getName().equals("Int") &&
+				y[0].getSort().getName().equals("Int")) {
+			if (!a.isIntegral()) {
+				BigInteger denom = a.denominator();
+				a = a.mul(denom);
+				b = b.mul(denom);
+				c = c.mul(denom);
+			}
+			if (!c.isIntegral()) {
+				BigInteger denom = c.denominator();
+				a = a.mul(denom);
+				b = b.mul(denom);
+				c = c.mul(denom);
+			}
+		} else if (s.getName().equals("Int"))
+			s = sort("Real");
+		Term at = a.toTerm(s), bt = b.toTerm(s), ct = c.toTerm(s);
+		// Check implication
+		// This version only works with full checks.  If we forbid case splits,
+		// we cannot refute the disjunction created by this method.
+//		Term[] disj = new Term[x.length];
+//		for (int i = 0; i < x.length; ++i)
+//			disj[i] = term("not", term("=", term("*", at, x[i]),
+//						term("+", term("*", bt, y[i]), ct)));
+//		try {
+//			push(1);
+//			assertTerm(term("or", disj));
+//			LBool isImplied = checkSat();
+//			if (isImplied != LBool.UNSAT)
+//				return new Term[] {};
+//		} finally {
+//			pop(1);
+//		}
+		// This method works for all modes
+		for (int i = 0; i < x.length; ++i) {
+			Term neq = term("not", term("=", term("*", at, x[i]),
+					term("+", term("*", bt, y[i]), ct)));
+			try {
+				push(1);
+				assertTerm(neq);
+				LBool isImplied = checkSat();
+				if (isImplied != LBool.UNSAT)
+					return new Term[] {};
+			} finally {
+				pop(1);
+			}
+		}
+		return new Term[] {at, bt, ct};
 	}
 
 }

@@ -430,4 +430,25 @@ public class LoggingScript implements Script {
 		m_Pw.println("))");
 		return m_Script.checkAllsat(predicates);
 	}
+
+	@Override
+	public Term[] findImpliedEquality(Term[] x, Term[] y) {
+		PrintTerm pt = new PrintTerm();
+		m_Pw.print("(find-implied-equality (");
+		String spacer = "";
+		for (Term p : x) {
+			m_Pw.print(spacer);
+			pt.append(m_Pw, p);
+			spacer = " ";
+		}
+		m_Pw.print(") (");
+		spacer = "";
+		for (Term p : x) {
+			m_Pw.print(spacer);
+			pt.append(m_Pw, p);
+			spacer = " ";
+		}
+		m_Pw.println("))");
+		return m_Script.findImpliedEquality(x, y);
+	}
 }

@@ -23,6 +23,11 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 
+/**
+ * Helper to compute the free variables contained in a term.  This class uses
+ * memoization in the terms to compute the free variables efficiently on DAGs.
+ * @author hoenicke
+ */
 public class ComputeFreeVariables extends NonRecursive.TermWalker {
 	static final TermVariable[] NOFREEVARS = new TermVariable[0];
 	

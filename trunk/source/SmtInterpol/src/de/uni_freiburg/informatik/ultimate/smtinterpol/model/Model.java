@@ -117,7 +117,7 @@ public class Model implements de.uni_freiburg.informatik.ultimate.logic.Model {
 	}
 	
 	public void extend(FunctionSymbol symb, ExecTerm value) {
-		assert(symb.getParameterCount() == 0);
+		assert(symb.getParameterSorts().length == 0);
 		extendSortInterpretation(symb.getReturnSort(), value);
 		if (!m_FuncVals.containsKey(symb)) {
 			Term tmp = value.toSMTLIB(symb.getTheory(), null);
@@ -138,7 +138,7 @@ public class Model implements de.uni_freiburg.informatik.ultimate.logic.Model {
 	}
 	
 	public void extend(FunctionSymbol symb, ExecTerm[] args, ExecTerm value) {
-		if (symb.getParameterCount() == 0)
+		if (symb.getParameterSorts().length == 0)
 			extend(symb, value);
 		else {
 			value = coerce(value, symb.getReturnSort());
@@ -162,8 +162,9 @@ public class Model implements de.uni_freiburg.informatik.ultimate.logic.Model {
 	}
 	
 	private ExecTerm[] coerce(FunctionSymbol fs, ExecTerm[] args) {
+		Sort[] paramSorts = fs.getParameterSorts();
 		for (int i = 0; i < args.length; ++i)
-			args[i] = coerce(args[i], fs.getParameterSort(i));
+			args[i] = coerce(args[i], paramSorts[i]);
 		return args;
 	}
 
@@ -290,8 +291,8 @@ public class Model implements de.uni_freiburg.informatik.ultimate.logic.Model {
 			if (arg.isUndefined())
 				return new Undefined(fun.getReturnSort());
 		if (fun == m_Theory.m_Implies) {
-			assert(args[0] == m_Theory.TRUE || args[0] == m_Theory.FALSE);
 			Term val = args[0].toSMTLIB(m_Theory, null);
+			assert (val == m_Theory.TRUE || val == m_Theory.FALSE);
 			for (int i = 1; i < args.length; ++i) {
 				Term argi = args[i].toSMTLIB(m_Theory, null);
 				assert(argi == m_Theory.TRUE || argi == m_Theory.FALSE);

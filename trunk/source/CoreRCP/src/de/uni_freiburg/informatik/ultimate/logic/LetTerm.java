@@ -23,27 +23,37 @@ import java.util.ArrayDeque;
 
 import de.uni_freiburg.informatik.ultimate.util.HashUtils;
 
+/**
+ * Representation of a let term.  This class represents the SMTLIB 2 construct
+ * <pre>
+ * (let ((var_0 val_0) ... (var_n val_n)) ...)
+ * </pre>
+ * 
+ * A let term is created by {@link Script#let(TermVariable[], Term[], Term)}.
+ * 
+ * @author hoenicke
+ */
 public class LetTerm extends Term {
 	private TermVariable[] m_Variables;
 	private Term[] m_Values;
 	private Term m_Subterm;
 	
 	/**
-	 * @return the variable
+	 * @return The variables
 	 */
 	public TermVariable[] getVariables() {
 		return m_Variables;
 	}
 
 	/**
-	 * @return the value
+	 * @return The values
 	 */
 	public Term[] getValues() {
 		return m_Values;
 	}
 
 	/**
-	 * @return the subformula
+	 * @return The subformula
 	 */
 	public Term getSubTerm() {
 		return m_Subterm;

@@ -1004,6 +1004,12 @@ public class LinArSolve implements ITheory {
 	}
 
 	private void prepareModel() {
+		/* Shortcut: If info log level is enabled we prepare the model to dump
+		 * it as info message and later on when we have to produce a model.
+		 * This work can be avoided.
+		 */
+		if (m_Eps != null)
+			return;
 //		HashSet<Rational> prohibitions = new HashSet<Rational>();
 		TreeSet<Rational> prohibitions = new TreeSet<Rational>();
 		InfinitNumber maxeps = computeMaxEpsilon(prohibitions);

@@ -460,6 +460,12 @@ public class NoopScript implements Script {
 	public Iterable<Term[]> checkAllsat(Term[] predicates) throws SMTLIBException,
 			UnsupportedOperationException {
 		throw new UnsupportedOperationException();
-	}		
+	}
+
+	@Override
+	public Term[] findImpliedEquality(Term[] x, Term[] y) throws SMTLIBException,
+			UnsupportedOperationException {
+		throw new UnsupportedOperationException();
+	}
 
 }

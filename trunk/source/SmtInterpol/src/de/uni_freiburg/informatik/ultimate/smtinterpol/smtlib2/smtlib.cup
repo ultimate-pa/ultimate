@@ -231,7 +231,7 @@ terminal String UNDERSCORE, BANG,
          INCOMPLETE, LET, LOGIC, NONE, NUMERALSYM, MEMOUT, PAR, POP, PUSH,
          DECIMALSYM, SAT, SUCCESS, SETLOGIC, SETINFO, SETOPTION, STRINGSYM,
          THEORY, TRUE, UNKNOWN, UNSUPPORTED, UNSAT,
-         INCLUDE, RESET, SIMPLIFY, TIMED, ALLSAT, ECHO;
+         INCLUDE, RESET, SIMPLIFY, TIMED, ALLSAT, ECHO, FINDIMPLIEDEQUALITY;
 
 /* Predefined Keywords */
 terminal String /* attribute */
@@ -739,6 +739,17 @@ command ::= SETLOGIC symbol:logic
           	 :}
            | ECHO STRING:msg
              {: parser.env.printResponse(new QuotedObject(msg)); :}
+           | FINDIMPLIEDEQUALITY LPAR term+:x RPAR LPAR term+:y RPAR
+             {: if (hasError())
+            	  parser.env.printError(getError());
+              else {
+                try {
+          			parser.env.printResponse(parser.env.getScript().findImpliedEquality(x, y));
+          	   	} catch (SMTLIBException se) {
+          	   		parser.env.printError(se.getMessage());
+          	   	}
+          	  }
+          	 :}
           ;
 commandPar ::= LPAR command RPAR
              | error;

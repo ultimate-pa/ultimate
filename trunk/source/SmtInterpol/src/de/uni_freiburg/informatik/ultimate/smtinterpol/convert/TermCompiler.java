@@ -34,6 +34,7 @@ import de.uni_freiburg.informatik.ultimate.logic.NonRecursive;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
+import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
@@ -174,6 +175,7 @@ public class TermCompiler extends TermTransformer {
 	@Override
 	public void convertApplicationTerm(ApplicationTerm appTerm, Term[] args) {
 		FunctionSymbol fsym = appTerm.getFunction();
+		Sort[] paramSorts = fsym.getParameterSorts();
 		Theory theory = appTerm.getTheory();
 		
  		if (fsym.getDefinition() != null) {
@@ -188,9 +190,9 @@ public class TermCompiler extends TermTransformer {
 		 		
 		Term[] origArgs = null;
 		if (theory.getLogic().isIRA()
-			&& fsym.getParameterCount() == 2 
-			&& fsym.getParameterSort(0).getName().equals("Real") 
-			&& fsym.getParameterSort(1) == fsym.getParameterSort(0)) {
+			&& paramSorts.length == 2 
+			&& paramSorts[0].getName().equals("Real") 
+			&& paramSorts[1] == paramSorts[0]) {
 			// IRA-Hack
 			if (args == appTerm.getParameters())
 				args = args.clone();				
@@ -199,7 +201,7 @@ public class TermCompiler extends TermTransformer {
 					if (origArgs == null)
 						origArgs = m_Tracker.prepareIRAHack(args);
 					args[i] = SMTAffineTerm.create(args[i])
-						.toReal(fsym.getParameterSort(0));
+						.toReal(paramSorts[0]);
 				}
 			}
 		}
@@ -293,7 +295,7 @@ public class TermCompiler extends TermTransformer {
 				setResult(res);
 				return;
 			}
-			else if (fsym.getName().equals("-") && fsym.getParameterCount() == 2) {
+			else if (fsym.getName().equals("-") && paramSorts.length == 2) {
 				SMTAffineTerm res = SMTAffineTerm.create(args[0])
 						.add(SMTAffineTerm.create(Rational.MONE, args[1]));
 				m_Tracker.sum(fsym, args, res);
@@ -329,7 +331,7 @@ public class TermCompiler extends TermTransformer {
 				} else {
 					throw new UnsupportedOperationException("Unsupported non-linear arithmetic");
 				}
-			} else if (fsym.getName().equals("div") && fsym.getParameterCount() == 2) {
+			} else if (fsym.getName().equals("div")) {
 				SMTAffineTerm arg0 = SMTAffineTerm.create(args[0]);
 				SMTAffineTerm arg1 = SMTAffineTerm.create(args[1]);
 				Rational divisor = arg1.getConstant();
@@ -407,18 +409,18 @@ public class TermCompiler extends TermTransformer {
 				} else {
 					throw new UnsupportedOperationException("Unsupported non-linear arithmetic");
 				}
-			} else if (fsym.getName().equals("-") && fsym.getParameterCount() == 1) {
+			} else if (fsym.getName().equals("-") && paramSorts.length == 1) {
 				SMTAffineTerm res = SMTAffineTerm.create(args[0]).negate();
 				m_Tracker.sum(fsym, args, res);
 				setResult(res);
 				return;
-			} else if (fsym.getName().equals("to_real") && fsym.getParameterCount() == 1) {
+			} else if (fsym.getName().equals("to_real")) {
 				SMTAffineTerm arg = SMTAffineTerm.create(args[0]);
 				SMTAffineTerm res = arg.toReal(fsym.getReturnSort());
 				setResult(res);
 				m_Tracker.toReal(arg, res);
 				return;
-			} else if (fsym.getName().equals("to_int") && fsym.getParameterCount() == 1) {
+			} else if (fsym.getName().equals("to_int")) {
 				// We don't convert to_int here but defer it to the clausifier
 				// But we simplify it here...
 				SMTAffineTerm arg0 = SMTAffineTerm.create(args[0]);

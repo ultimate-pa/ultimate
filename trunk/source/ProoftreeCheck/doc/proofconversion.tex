@@ -1,0 +1,1899 @@
+\documentclass[10pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath,amssymb}
+\usepackage{xspace,array,xcolor,longtable}
+\usepackage{multirow}
+\usepackage[left=3cm,right=3cm,top=3cm,bottom=3cm,includeheadfoot]{geometry}
+\usepackage{bussproofs}
+\EnableBpAbbreviations
+\usepackage{hyperref}
+\hypersetup{colorlinks=true,linkcolor=blue,urlcolor=blue,citecolor=blue,pdfpagemode=UseNone}
+\usepackage{listings}
+\lstloadlanguages{Java}
+\lstset{language=Java,showstringspaces=false,basicstyle=\ttfamily\small,tabsize=3,frame=single,
+numbers=left,keywordstyle=\color{red!80!black},commentstyle=\color{green!50!black},breaklines=true}
+%
+\title{Converting SMTInterpol Proofs to Isabelle}
+\author{Christian Schilling}
+\date{\today}
+%
+\newcommand{\resa}{\ensuremath{(P)}\xspace}
+\newcommand{\resb}{\ensuremath{(Q)}\xspace}
+\newcommand{\si}{\texttt{SMTInterpol}\xspace}
+\newcommand{\isa}{\texttt{Isabelle}\xspace}
+\newcommand{\slib}{\texttt{SMT-LIB}\xspace}
+\newcommand{\jav}{\texttt{Java}\xspace}
+\newenvironment{formu}{\begin{center}\begin{tt}}{\end{tt}\end{center}}
+\newcommand{\ttt}{\texttt}
+\newcommand{\negat}{\ensuremath{\sim}}
+\newcommand{\nega}{\negat\xspace}
+\newcommand{\Ra}{\Rightarrow}
+\newcommand{\LoRa}{\Longrightarrow}
+\newcommand{\pat}[2]{\ttt{?#1} $\mapsto$ \ttt{#2}}
+\newcommand{\metaimp}{\ensuremath{\Longrightarrow}\xspace}
+\newcommand{\TTx}{\emph{TT}}
+\newcommand{\TT}{\TTx\xspace}
+\newcommand{\smtdiv}[2]{\ensuremath{#1 \, \texttt{div} \, #2}}
+\newcommand{\torealx}{\texttt{to\_real}}
+\newcommand{\tointx}{\texttt{to\_int}}
+\newcommand{\toreal}{\torealx\xspace}
+\newcommand{\toint}{\tointx\xspace}
+\newcommand{\proxy}[1]{\ensuremath{\ulcorner}#1\ensuremath{\urcorner}}
+\newcommand{\cs}[1]{\ensuremath{[#1]}}
+\newcommand{\hl}[1]{{\color{red}#1}}
+\newcommand{\true}{\ttt{true}\xspace}
+\newcommand{\false}{\ttt{false}\xspace}
+\newcommand{\eq}{\ensuremath{\doteq}\xspace}
+\newcommand{\ex}[2]{\ensuremath{\exists #1.\, #2}}
+\newcommand{\fa}[2]{\ensuremath{\forall #1.\, #2}}
+\newcommand{\note}{NOTE}
+\newcommand{\CC}{\emph{CC}\xspace}
+\newcommand{\x}{\xX\xspace}
+\newcommand{\y}{\yX\xspace}
+\newcommand{\f}{\ttt{f}\xspace}
+\newcommand{\xX}{\ttt{x}}
+\newcommand{\yX}{\ttt{y}}
+%
+\newenvironment{pt}[1]{\begin{center}\begin{tt}\begin{tabular}{#1}\hline}{\end{tabular}\end{tt}\end{center}}
+\newenvironment{ptlong}[1]{\begin{center}\begin{tt}\begin{longtable}{#1}\\[-4mm]\hline}{\end{longtable}\end{tt}\end{center}}
+\newcommand{\pl}[1]{#1 \\[1mm]}
+\newcommand{\pll}[1]{#1 \\\hline}
+\newenvironment{rt}{\begin{center}\begin{tabular}{|l l|}\hline}{\end{tabular}\end{center}}
+\newcommand{\rl}[2]{\rm{#1} & \tt{#2} \\[1mm]}
+\newcommand{\rll}[2]{\rm{#1} & \tt{#2} \\\hline}
+\def\ind{\quad}
+\newcommand{\exl}[2]{\exlm{#1}{\ttt{#2}}}
+\newcommand{\exlm}[2]{#1 & #2 \\[1mm]}
+\newcommand{\exmc}[2]{\multicolumn{2}{l}{\ttt{#1} #2} \\[1mm]}
+\newcommand{\exmcf}[1]{\multicolumn{2}{l}{\ttt{#1}}}
+% -------------------------------------------------------------------
+\begin{document}
+\maketitle
+\tableofcontents
+%
+\section{Outline}
+%
+We describe the conversion of proofs of unsatisfiability given by \si\footnote{\url{http://ultimate.informatik.uni-freiburg.de/smtinterpol/}}. The proofs are converted to an input file for the interactive theorem prover \isa\footnote{\url{http://isabelle.in.tum.de/documentation.html}}, which then can be used to check the correctness of the proof.
+
+The goal was to fully support the \slib\footnote{\url{http://smtlib.org/}} syntax and translate each proof step without relying on automatic methods in \isa. Moreover, the proof should run through in reasonable time (and it turned out that \isa is much slower than \si or the proof conversion).
+
+We assume the reader familiar with \slib, \si, and \isa. There are good documentations of the features used in the project  \cite{smtlibStandard, isabelle} and a tutorial with the \slib supported functions \cite{smtlibTutorial} on the respective webpage.
+
+The document is structured as follows: In Section~\ref{sec:genproc} the general approach is presented. The low-level conversion is explained in Section~\ref{sec:bascon}. Section~\ref{sec:mainelem} covers the more detailed conversion of sub-proofs. Section~\ref{sec:summary} summarizes the document.
+%
+\section{General Proceeding}\label{sec:genproc}
+%
+The respective \jav class file is \ttt{ProofChecker extends SMTInterpol}.
+
+\medskip
+
+If a formula of any supported theory is passed to \si and turns out to be unsatifiable, \si can generate a proof. Note that we do not support quantified formulae, since \si currently does not support them either.
+
+The syntax follows \si's internal syntax, which again is closely related to the \slib 2.0 syntax. But for simplification many redundant symbols are not used, such as $\land, >,\geq$, and multiple $\neg$. Therefore formulae always appear as (possibly negated) disjunctions (clauses).
+
+\smallskip
+
+The input file is given to the converter, which generates a proof. The \si proof is received and then translated to an \isa proof, which is written to a file. In the end \isa can read and check the file. Some sub-proofs (resolution, LA lemma, and some rewrites) are introduced as pattern proofs (proofs with free variables that fit the structure of the concrete proofs), where \isa only has to apply the rule after proving it. These are written to another theory file, which allows to resign an additional parse of the proof tree. The reason for writing to a different file is because the proof may be reused, but could be inside another scope, so \isa would not know it.
+
+\smallskip
+
+There are the following input parameters:
+%
+\begin{enumerate}
+	\item A flag allows to automatically invoke \isa after writing the proof file.
+	\item A flag enables use of \emph{X-Symbols} in the \isa file for nicer logical symbols.
+	\item A flag determines whether a fast proof should be created or not. The motivation of using a slower proof is mainly for debugging reasons: In case a proof does no run through, the proofs with several intermediate steps (such as the LA lemma) will run until the rule step that cannot be applied in this mode. With fast proofs, \isa will just stop at the start of the lemma. The mode can also be used to visualize how the proofs work in more details.
+	\item A flag sets the proof mode to partial or extended. The partial proof will not use substitution and splitting rules (see later sections) and hence tautologies and derivations from input formulae are just proven by \isa's automatic reasoner \emph{auto} here. Note that to our experience \isa is able to prove quite complicated formulae this way, but sometimes even for short ones it does not work.
+\end{enumerate}
+%
+\section{Basic Conversion}\label{sec:bascon}
+%
+The respective \jav class files are \ttt{ProofConverter \& TermConverter extend NonRecursive}, and \ttt{LetHandler}.
+%
+\subsection*{Proof Conversion}
+The proof is given as a binary tree of proof nodes, where the leaves are (theory or logic) lemmata or assertions from the input and the inner nodes are justified by resolution (see Figure~\ref{fig:prooftree} for a survey). Their respective conversion is explained later in Section~\ref{sec:mainelem}, here we describe the ``infrastructure''.
+%
+\begin{figure}
+	\begin{prooftree}
+		 \AXC{\ttt{@assert/@tautology}}
+		 \AXC{\ttt{@lemma}}
+		\LL{\ttt{@res}} \BIC{$\bot$}
+	\end{prooftree}
+	%
+	\begin{prooftree}
+		    \AXC{\ttt{@assert/@tautology}}
+		    \AXC{\ttt{@rewrite/@intern}}
+		   \LL{\ttt{@eq}} \BIC{$F_i$}
+		  \LL{\ttt{@split}} \UIC{$F_j$}
+		  \AXC{\ttt{@rewrite/@intern}}
+		 \LL{\ttt{@eq}} \BIC{$F_k$}
+		 \AXC{\ttt{@lemma}}
+		\LL{\ttt{@res}} \BIC{$\bot$}
+	\end{prooftree}
+	\caption{proof tree example (partial and extended mode)}
+	\label{fig:prooftree}
+\end{figure}
+
+The proof tree is traversed by a \ttt{ProofConverter} from the root to the leaves. But since the \ttt{Isabelle-ISAR} syntax suggests forward proofs, we use the \ttt{NonRecursive} class to start with the leaves and end with the root. By pushing child nodes of a resolution node to the stack, we can delay its conversion and start the proof with the children. When they have been converted, the resolution node itself is converted. This is achieved with the \ttt{Walker} classes. We need \ttt{StringWalker} for writing delayed strings, \ttt{ScopingLemmaWalker} for catching lemmata (see later) inside scoping parentheses, and \ttt{ProofWalker} for the proof nodes.
+
+The latter discriminates the type of proof node (explained in Section~\ref{sec:mainelem}) and invokes the correct conversion. To avoid an if-then-else chain or a string switch (\jav~1.7) on the proof node type, we have an interface \ttt{IProofNode} with implementing classes for each proof node type and a hash map that maps the node name to such an object. This way the respective handler is found almost instantly (the technique is also used in some other classes).
+%
+\subsection*{Term Conversion}
+The proof translation only covers the \isa keywords for the overall structure and the proof commands. The conversion of the terms themselves is executed by the \ttt{TermConverter}, which also uses the \ttt{NonRecursive} structure. For each sub-type of \ttt{Term} there is a handler. Interpreted \slib functions are translated with special methods due to the syntactic sugar of \slib such as associative or chainable functions, which \isa does not support. Uninterpreted functions both go with a prefix (\ttt{smt\_}) and we replace each symbol being no letter or numeral by an underscore followed by the respective Unicode number. This way we receive an injective mapping to \isa conform identifiers.
+
+We also add type information for the three common types (Boolean, Integer, Real) and a fourth type \ttt{'a} for all the uninterpreted domains. We add many parentheses, since we want to handle as many similar functions the same way and not run into trouble here (for instance, \isa will see \mbox{\ttt{\nega p = q}} as \mbox{\ttt{\nega (p = q)}} even for Boolean \ttt{p}).
+%
+\subsection*{Let Lemmata}
+%
+A nice feature of \si is the \ttt{Letter}. It can bind arbitrary terms to a \ttt{TermVariable} with the common \emph{let} expression. We use this class on a high level: only proof nodes are abbreviated. This way we can also use this abbreviation in the \isa proof as a lemma -- hence we call it \emph{let lemma}.
+
+The \ttt{LetHandler} keeps a hash map from term variables to the abbreviated terms, which are in most cases the result of the proof node. But there is an exception: The rewrite equalities from the substitution nodes are stored in their full form due to special treatment issues (cp. Section~\ref{ssec:rewriteDesc}). The lemma name is a prefix with a number, which is taken from the \jav name of the term variable.
+
+The \ttt{ScopingLemmaWalker} binds the resolution and substitution nodes result, since the translation to \isa adds a pair of scoping parentheses and hence the normal let lemma could not be used later on. This is handled by adding \mbox{\ttt{note} \textit{lemma\_name} \ttt{= this}} right after the closing parenthesis.
+%
+\section{Main Proof Elements}\label{sec:mainelem}
+Having explained the general approach in the last section, the conversion of the single steps (or nodes, \emph{ProofNodes}) in the proof tree are given here. Currently there exist four different types in the partial proof mode (1. - 4.), with another four types in the extended proof mode (5. - 8.). We list them here including the number of arguments (other proof nodes):
+%
+\begin{itemize}
+	\item[1.] resolution (\ttt{@res}), arguments: $2^+$ (left-associative)
+	\item[2.] lemma (\ttt{@lemma}), arguments: 0 (axiom)
+	\begin{itemize}
+		\item equality theory (\ttt{:CC})
+		\item linear arithmetic theory (\ttt{:LA})
+		\item trichotomy (\ttt{:trichotomy})
+	\end{itemize}
+	\item[3.] assertion (\ttt{@asserted}), arguments: 0 (axiom)
+	\item[4.] tautology (\ttt{@tautology}), arguments: 0 (axiom)
+	\item[5.] substitution (\ttt{@eq}), arguments: $2^+$ (left-associative), using 
+	\begin{enumerate}
+		\item[6.] annotated rewrite equality (\ttt{@rewrite})
+		\item[7.] internal rewrite equality (\ttt{@intern})
+	\end{enumerate}
+	\item[8.] splitting (\ttt{@split}), arguments: 1
+\end{itemize}
+%
+We can distinguish between the (low) resolution level and the (high) leaf-and-normalize level. The resolution proof nodes are on the resolution level and the other nodes are on the higher level. Substitution and splitting are used to bring assertions and tautologies to the normal form used in the resolution proofs. A lemma is already in normal form, so there are no further nodes to the resolution level.
+
+We explain the conversion approaches for each proof node in full details in the following subsections, but first we introduce some related terminology.
+
+Describing the proofs (and also in the example file) we use certain variables with fixed sorts. These are:
+\begin{center}
+	\begin{tabular}{r|l}
+		\multicolumn{1}{c|}{sort} & \multicolumn{1}{c}{names} \\
+		\hline
+		Bool & $p, q, r, s$ \\
+		Int & $x, y, z$ \\
+		Real & $u, v, w$ \\
+		Constants & $c, d$ \\
+		terms in if-then-else & $c, t, e$ \\
+		arbitrary terms & $a, b$
+	\end{tabular}
+\end{center}
+
+When considering proof rules, we often want to talk about a specific term. We will then call this the \emph{target term}, or \TT for short.
+
+A proxy literal (representing a variable from the Tseitin transformation of more complicated terms) \ttt{F} is written \proxy{\ttt{F}}.
+
+The canonical sum of \si (the form which arithmetic terms are converted to) cannot be explicitly written down, since for instance the order of the variables is not unique (for different input problems). We write \cs{x} for $x$ in canonical sum.
+
+Proof examples will be given in a listing manner. On the left-hand side will be the keyword for the next step and on the right-hand side will be the resulting formula (either in \slib or \isa syntax). Some recurring keywords are \emph{Input} for the input formula, \emph{Proof} for an excerpt of the \si proof, \emph{Isabelle} for the translation into \isa syntax, and \emph{Result} for the resulting formula of the recent proof step in \isa (together with instantiations of pattern variables).
+%
+\subsection{Resolution}\label{sec:res}
+The respective \jav class file is \ttt{ResolutionConverter}, the proof node is \ttt{@res}.
+%
+\subsubsection*{Description}
+The resolution rule is the main rule with an argument and hence the ``constructive'' rule for creating the proof tree. It takes two proof nodes and returns another proof node:
+%
+\begin{equation*}
+	\ttt{@res}: \emph{ProofNode} \times \emph{ProofNode} \rightarrow \emph{ProofNode}
+\end{equation*}
+%
+We can derive that in the partial proof mode a tree with $n > 1$ leaves always contains exactly $n - 1$ resolution steps, so half of the sub-proofs in the whole proof tree are resolution proofs. To put it differently: The (partial) proof tree is always a binary tree, where the inner nodes are the resolution nodes and the leaves are other proof nodes (without any arguments) (see Figure~\ref{fig:prooftree} for an illustration).
+
+The arguments are two clauses, and for discrimination we call them \resa and \resb. The only assertion known about them is the fact that one particular disjunct -- the so-called \emph{pivot} -- is contained. This is the only information given in the \si proof. The pivot appears in \resb and negated in \resa (note that double negations are solved). With a set-based view on clauses we have this structure (where $p$ is the pivot):
+%
+\begin{equation*}
+	\resa = \{\neg p, \dots\}, \quad \resb = \{p, \dots\}
+\end{equation*}
+%
+The resolution uses this fact: We can ``unite'' two disjunctions with a literal (the \emph{pivot}) positive in one and negative in the other disjunction, while removing these literals. That gives us the following rule:
+%
+\begin{align}\label{al:res1}
+	 \AXC{$\neg p \lor x_1 \lor \dots \lor x_k$}
+	 \AXC{$p \lor x_{k+1} \lor \dots \lor x_\ell$}
+	\RL{pivot = $p$} \BIC{$x_1 \lor \dots \lor x_\ell$}
+	\DisplayProof
+\end{align}
+%
+To be more exact, recall the set-based view of a clause. The rule translates to:
+%
+\begin{prooftree}
+	 \AXC{$\resa \equiv \{\neg p, \bigvee_{i = 1}^k x_i\}$}
+	 \AXC{$\resb \equiv \{p, \bigvee_{i = k+1}^\ell x_i\}$}
+	\RL{pivot = $p$} \BIC{$(\resa \setminus \{\neg p\}) \cup (\resb \setminus \{p\})$}
+\end{prooftree}
+%
+Note that there is no limitation that the $x_i$ have to be pairwise disjunct. In fact, the more literals occur in both clauses, the shorter the result gets (which is desirable), because we only have to keep them once in the clause. Further note the following invariant:
+%
+\begin{center}
+	\textbf{Invariant:} All clauses in the proof tree contain their literals exactly once.
+\end{center}
+%
+This is automatically assured by the leaves in the tree. By guaranteeing that the result of the resolution rule does not violate it, it must always hold. So version~(\ref{al:res1}) is only useful if the clauses do not share any $x_i$. This gives rise to a more specific rule that is closer to the characteristics of a set containing elements only once.
+%
+\begin{align}\label{al:res2}
+	 \AXC{$\neg p \lor \bigvee_{i = 1}^j x_i \lor \bigvee_{i = j+1}^k x_i$}
+	 \AXC{$p \lor \bigvee_{i = j+1}^k x_i \lor \bigvee_{i = k+1}^\ell x_i$}
+	\RL{pivot = $p$} \BIC{$\bigvee_{i = 1}^j x_i \lor \bigvee_{i = j+1}^k x_i \lor \bigvee_{i = k+1}^\ell x_i$}
+	\DisplayProof
+\end{align}
+%
+Here the $x_1$ to $x_j$ are only contained in \resa, the $x_{j+1}$ to $x_k$ are contained in both clauses and the $x_{k+1}$ to $x_\ell$ are only contained in \resb. Note that this formulation may suggest that the pivot does not occur in these three groups, but this is not the case.
+%
+\subsection*{Translation}
+We only describe the translation on a high level, the implementation is straight-forward (and the data structures are only wrappers of multiple return types), but has some special cases to consider.
+
+Since \isa does not offer set-based disjunctions but rather uses list-based disjunctions with a fixed position, there are several possible translations at hand:
+%
+\begin{enumerate}
+	\item We could totally rely on the automatic proof methods, but one main goal was to do a hand-crafted proof everywhere. The main problem would be that the literals can have arbitrary size and so \isa might try to do simplifications in there, which is not intended.
+	\item The disjunctions are brought to a normal form and then the proof goes by a simple rule. This is in fact what we do, but there are again more than one ways to do this. The normal form could look like in version~(\ref{al:res2}) (this is what we chose).
+	%
+	\begin{enumerate}
+		\item The disjuncts are moved to their target position by explicit rules. The problem here is that this must be done by substitution. For this \isa scans the disjunction from left to right for the first occurrence of the term to replace. But the disjunct may be a sub-term of another disjunct left of it, so the substitution does not work as planned. In fact, this was our first version.
+		\item To overcome this problem, we bound the disjuncts to identifiers, so there were no ambiguities anymore. However, this caused much overhead, since we had to repeat the whole disjunctions (arguments and result) again.
+		\item In the end, we decided to introduce the proof as a pattern proof. This way, there are no ambiguities, but we do not have to repeat the formulae (in fact, there is even the possibility of dropping some proofs that already occured).
+		\item Since we used the old version for quite a long time, we realized that bringing into normal form by hand takes too much time -- the simplifier is much faster on its own. So now that there are no sub-terms anymore where unintended simplifications could take place we do not give the substitution steps for the sake of speed (remember that resolution typically is the most occurring sub-proof). Note that this requires the normal form to be given explicitly, so in the worst case again we have to repeat the arguments (but this time not the result) again. But in practice this still gives the best results.
+	\end{enumerate}
+	%
+\end{enumerate}
+
+Some terminology: We call the disjuncts only occurring in the first disjunction \emph{L terms}, the disjuncts occurring in both disjunctions \emph{C terms}, and the disjuncts only occurring in the second disjunction \emph{R terms}.
+
+Now we explain how we detect already proven patterns. When starting a resolution proof we create a pattern data structure from the two argument disjunctions. We keep a hash map that maps this pattern to the lemma index if it exists. Else the pattern is new and we must construct another lemma. To keep the storage memory low, the pattern should be as small as possible -- even if this means some more effort for the runtime. We came up with an integer array with the size of the smaller disjunction (which can be much smaller than the other one) and two further integers with the size and the pivot index of the first disjunction. For this purpose we swap the disjunctions such that \resa is always the bigger disjunction and \resb is the smaller one. Note that in order to have a constant-time hash code calculation we only consider the first five indices in the array. We also only keep patterns up to size five (of \resa) in the map due to memory reasons and the fact that the permutations in the patterns reduce the chance of reusing bigger ones drastically.
+
+The construction is easier to understand if we also add the integer array for \resa and then ``forget'' it:
+
+Consider the following two disjunctions (third example in the examples file, \ttt{f = fBI}):
+%
+\begin{center}
+	$\resa :=$ \ttt{(f False \negat= 1) | (f p \negat= 0) | (p = True)} \\
+	$\resb :=$ \ttt{(p \negat= True) | (f p \negat= 0) | (f True \negat= 2)}
+\end{center}
+
+We directly abstract from the real contents of the literals, so we get:
+%
+\begin{center}
+	$\resa := l \lor c \lor p$ \\
+	$\resb := \neg p \lor c \lor r$
+\end{center}
+
+We create two arrays of integer indices. We insert $-1$ for the pivot and else the index of the first occurrence of the disjunct when reading from left to right. The indices in \resb start with the greatest index of the first pattern $+ 1$. Consider the example:
+%
+\begin{center}
+	$[0, \ 1, \ -1] [-1, \ 1, \ 3]$
+\end{center}
+
+Now we see that in the pattern for \resb the indices less than the size of \resa are the C terms (except $-1$ for the pivot) (here: less than 3 $\leadsto$ 1) and all the other indices are the R terms (here:~3). The L terms are all the indices from $0$ to the size of $\resa - 1$ without the shared indices (here: 0 and 1 without 1 $\leadsto$ 0). So it is easy to reconstruct the whole structure of the disjunctions from this information.
+
+The whole procedure then looks as follows:
+%
+\begin{lstlisting}[mathescape=true,keywordstyle=\bf,deletekeywords={short}]
+input: disjunctions 1 and 2
+possibly swap so $\resa$ is the bigger and $\resb$ is the smaller disjunction
+create pattern
+if (pattern not proven before) {
+	create lemma structure from pattern
+	write lemma proof
+}
+create resulting disjunction
+write short proof by recalling the lemma
+\end{lstlisting}
+%
+\subsection*{Proof}
+In each disjunction there is at least the (negated) pivot. Apart from that, there can be L terms, C terms, and R terms. We distinguish six cases:
+\begin{center}
+	\begin{tabular}{c|c}
+		without C terms & with C terms \\
+		\hline
+		none & C \\
+		L & L \& C \\
+		L \& R & L \& C \& R
+	\end{tabular}
+\end{center}
+
+For each of those cases we have a proof rule.
+%
+\begin{pt}{ll}
+	\pl{res\_false & [|pl; pr; (\nega pl) = pr|] ==> False}
+	\pl{res\_c & [|p; q; (\nega pl) = pr; p = (pl | c); q = (pr | c)|] ==> c}
+	\pl{res\_l & [|p; pr; (\nega pl) = pr; p = (pl | l)|] ==> l}
+	\pl{res\_lc & [|p; q; (\nega pl) = pr; p = (pl | l | c); q = (pr | c);}
+		\pl{& \ind s = (l | c)|] ==> s}
+	\pl{res\_lr & [|p; q; (\nega pl) = pr; p = (pl | l); q = (pr | r); s = (l | r)|]}
+		\pl{& \ind ==> s}
+	\pl{res\_lcr & [|p; q; (\nega pl) = pr; p = (pl | l | c); q = (pr | c | r);}
+		\pl{& \ind s = (l | c | r)|] ==> s}
+	\pl{HOL.refl & t = t}
+	\pll{HOL.not\_not & (\nega \nega P) = P}
+\end{pt}
+
+The proof obligation \ttt{(\nega pl) = pr} is present in order to handle both the double negation elimination and the swapping of the disjunctions: The individual proof always  uses the proven lemma and finishes this obligation either by reflexivity or by double negation.
+
+For the first three cases we do not have to give any formulae as parameters, since they can be derived. The fourth rule needs \ttt{l} and \ttt{c}, the fifth rule needs \ttt{l} and \ttt{r}, and the sixth rule needs \ttt{l}, \ttt{c}, and \ttt{r} explicitly passed to \isa. The \ttt{p} and \ttt{q} equalities are used to bring \resa and \resb into normal form and the \ttt{s} equality is used to bring the result to normal form.
+%
+\begin{rt}
+	\rl{swap and reflexivity}{(rotate\_tac, rule resX, rule HOL.refl)}
+	\rll{no swap and double negation}{(rule resX, rule HOL.not\_not)}
+\end{rt}
+
+Here \ttt{resX} stands for the assigned lemma name.
+%
+\subsection*{Example}
+The example from above produces the following lemma and needs only the last two lines in the real proof:
+%
+\begin{center}
+\begin{tabular}{ll}
+	\exl{Lemma}{[|(l0 | c1 | pl); (pr | c1 | r3); (\nega pl) = pr|] ==> (l0 | c1 | r3)}
+	\exl{Rule}{apply (erule (2) res\_lcr [where l = "l0" and c = "c1" and r = "r3"])}
+	\exl{Simp}{by (simp only:~HOL.disj\_commute HOL.disj\_left\_commute HOL.disj\_assoc) +}
+	\hline
+	\exl{Lemma}{apply (rule res3)}
+	\exl{Finish}{by (rule HOL.refl)}
+\end{tabular}
+\end{center}
+%
+\subsection{Lemma CC}\label{sec:cc}
+The respective \jav class file is \ttt{LemmaCCConverter}, the proof node is \ttt{@lemma (! $\dots$ :CC $\dots$)}.
+%
+\subsubsection*{Description}
+The \CC lemma handles problems for the theory of equality and uninterpreted functions. \CC stands for \emph{Congruence Closure}, which is the procedure inside \si for checking satisfiability for this theory.
+
+We have a look at the running example: We consider an uninterpreted non-empty domain \ttt{U} with 0-ary functions \x and \y and binary function \f (in the examples file, they are called \ttt{xU}, \ttt{yU}, and \ttt{fUUU}).
+%
+\begin{center}
+	\ttt{(and (= \x \y) (= (\f \x \x) \x) (not (= (\f (\f \x \x) \y) (\f \y \x))))}
+\end{center}
+
+Obviously, this is unsatisfiable, since \f must be a congruence. \si gives us the following lemma proof:
+%
+\begin{center}
+	\begin{tabular}{l}
+		\ttt{(@lemma (! $\underbrace{\ttt{(or }\overbrace{\ttt{(= (\f (\f \x \x) \y) (\f \y \x))}}^{A} \ \overbrace{\ttt{(not (= (\f \x \x) \x)) (not (= \x \y))}}^{B}\ttt{)}}_{\text{result}}$} \\[3mm]
+		\ttt{\ind :CC ($\underbrace{\ttt{(= (\f (\f \x \x) \y) (\f \y \x))}}_{\text{Diseq}}$} \\[5mm]
+		\ttt{\ind \ind :subpath $\underbrace{\ttt{((\f (\f \x \x) \y) (\f \y \x))}}_{\text{main path}}$} \\[5mm]
+		\ttt{\ind \ind :subpath $\underbrace{\ttt{((\f \x \x) \x \y)}}_{\text{second sub-path}}$} \\[5mm]
+		\ttt{\ind \ind :subpath $\underbrace{\ttt{(\y \x)}}_{\text{third sub-path}}$))}
+	\end{tabular}
+\end{center}
+
+The \emph{result} is self-explanatory. It is a disjunction of length $n$ (at least 2), but undetermined order. We partition it into $A \lor B$. Each disjunct is a binary equality literal. There is at most one positive equality $A$, if not this means $A$ is \false. For the explanation we assume that $A$ is present. $B$ consists of negated equalities. Note that $A$ is not necessarily the first disjunct, but for the explanation we consider this order (which is also used in the implementation).
+
+We have to show $\neg A \Ra B$ (in fact, we show the equivalent formula $\neg B \Ra A$). This justifies the validity of the lemma by the rule of the excluded middle ($A \lor \neg A$). Note that $B$ ($b_1 \neq b_2 \lor \dots \lor b_{k-1} \neq b_k$) becomes ($b_1 = b_2 \land \dots \land b_{k-1} = b_k$) by de Morgan's rule when negated.
+
+The \emph{Diseq} is a repeated $A$, so it is the equality that is violated by the $B$ term. If $A$ is \false, the Diseq will not be present as well. Note that it is not necessary to have the Diseq, since we only have to search for a non-negated equality in the result (or alternatively read it from the main path, see next paragraph).
+	 
+The \ttt{subpath} annotations guide the proof. It is an array of terms representing an equality chain. The first one occurring is always the \emph{main path}. This fact can be used to reconstruct a missing $A$. In the example there are two additional terms in between. The other sub-paths can be seen as sub-lemmata explaining an equality in other sub-paths. Equality holds for each pair of neighbored terms in a \ttt{subpath}, either by an equality $b_i = b_{i+1}$ or by another justification (transitivity or congruence (function application of equal terms is equal)). This implies that the Diseq (and so $A$) is also true.
+
+In the example we have for the main path \ttt{(\f (\f \x \x) \y) = (\f \y \x)}, which is a non-trivial congruence application justified by other sub-paths. The second sub-path says \ttt{\f \x \x) = \x} and \ttt{\x = \y}, which both follow from an equality in $B$. The third sub-path reads \ttt{\x = \y} and justifies the second argument difference in the main path.
+%
+\subsubsection*{Data Structures}
+\paragraph*{\ttt{TermTuple}} is an unsorted pair of two terms (i.e., a binary set) used for hashing (binary) equalities, since the order can alter (implicit use of symmetry).
+%
+\paragraph*{\ttt{SubPathStack}} is an array-based stack representation. It is used for two purposes:
+%
+\begin{enumerate}
+	\item The order of the sub-path lemmata is determined.
+	\item The sub-path inspection is performed in depth-first manner.
+\end{enumerate}
+%
+There is only the array (the size is always the number of sub-path annotations), an index pointing to the current top, and the usual stack operations.
+%
+\paragraph*{\ttt{ISubPathStep}} is an interface that represents a step in a sub-path annotation in the proof by \si, that is, a step from a term in the array to the neighbor. A step can be justified either by an assumption ($[b_i \, b_{i+1}]$ for an $i$) or by another sub-path, which means by congruence. The only method is:
+%
+\begin{itemize}
+	\item \ttt{boolean isAssumption()} -- returns true if and only if the step is justified by an assumption
+\end{itemize}
+%
+\paragraph*{\ttt{AssumptionStep implements ISubPathStep}}
+An assumption step justifies an equality of two terms that is given in the assumptions in \isa, which means is given as a $B$ equality. The object only stores the information whether symmetry must be used. Since there are only two different objects possible (the ones with symmetry and the ones without), we only create two such objects and share them.
+%
+\paragraph*{\ttt{CongruenceStep implements ISubPathStep}}
+A congruence step justifies an equality of two function terms, where the function symbols are the same, but at least one argument differs. Then for each different argument another sub-path information exists, proving the equality, even if it is trivial from the assumptions. 
+
+The single argument equalities are given as \ttt{CongruenceSubstep}s. For this purpose there is an array of sub-steps and the current argument index.
+%
+\paragraph*{\ttt{CongruenceSubstep}} is used by a \ttt{CongruenceStep} to justify the single equalities for non-trivial (syntactically different arguments) cases. Due to the fact that each non-trivial equality is justified by another sub-path, there is no need for recursive application of steps, but the sub-steps are final.
+
+The sub-step stores the pointer to the sub-path and whether symmetry must be used.
+%
+\paragraph*{\ttt{SubPathInformation}} is the main data structure for the \emph{CC} lemma. Each sub-path object from the proof annotation is wrapped into such an object.
+
+It consists of a \ttt{Term} array (from the \ttt{subpath} annotation), a collection of equalities for the proof of this sub-path (initially a hash set), an array for the steps (see \ttt{SubPathStep} structure), a local index for the steps array, a global index for the data structure itself (which is stored in a \ttt{SubPathStack}), and a lemma number. There are the following methods:
+%
+\begin{itemize}
+	\item \ttt{void~stepAssumption(ApplicationTerm~equality, AssumptionStep~step)} \hfill -- \hfill updates the steps array with an assumption step
+	\item \ttt{void~stepCongruence(Collection<ApplicationTerm>~equalities)} -- updates the steps array with a congruence step
+	\item \ttt{boolean~isFinished()} -- returns true if and only all steps were performed
+	\item \ttt{boolean~isTrivial()} -- returns true if and only if the sub-path is of the form $[b_i \, b_{i+1}]$ for an $i$ (this shortens the \isa)
+	\item \ttt{void~finalize()} -- turns the hash set to an array list for memory efficiency and faster iteration
+\end{itemize}
+
+Note that equalities are not stored for the main path, since that would be all equalities and hence just a waste of memory. The steps are performed from left to right and in the end the object is finalized.
+%
+\subsubsection*{Translation}
+We start by searching for $A$ if it exists and make sure it is the very first disjunct of the result. This is possible, since a lemma is directly followed by a resolution step (where the order does not matter anyway). We rely on this fact in the \isa proof. Note that we have never encountered a case where $A$ was not the first disjunct, so this is usually no real effort.
+
+The main path information given by \si is used to show the transitivity resulting in $b_1 = b_k$ (which is $A$) and hence to finish the proof. Sub-paths behave like lemmata which have to be sorted topologically and then be proven in \isa in the correct order. To find this order, the data structure \ttt{SubPathInformation} is used. We wrap all the sub-paths into a \ttt{SubPathInformation} array.
+
+Then we set up two hash maps for fast access: The first one provides for each $B$ equality $b_i = b_{i+1}$ a mapping of a \ttt{TermTuple} $\{b_i, b_{i+1}\}$ to the equality term. The second map provides for each sub-path the mapping from the covered terms equality (that is, the left-most and the right-most term) to the sub-path wrapper. So if we have the sub-path \ttt{[x y z]}, it will map \ttt{TermTuple} $\{x, z\}$ to the wrapper of this sub-path. This is important to know the next sub-path to justify a step.
+
+After that, we have to construct the lemmata (transitivity and congruence steps for the sub-paths, \ttt{constructSubpathLemmata()}) and prove them (\ttt{proveLemmata()}).
+%
+\paragraph*{\ttt{constructSubpathLemmata()}} initializes a \ttt{SubPathStack} with the main path and then runs until the stack is empty.
+
+If the topmost \ttt{SubPathInformation} is finished, we finalize it, pop it from the stack, and push it to another stack (the lemma order stack). If the sub-path was not the main path, we also do a congruence step of the next sub-path (because that was the reason why this previous sub-path was pushed on the stack before).
+
+Else (if the topmost \ttt{SubPathInformation} is not finished) we do one further step in the sub-path. For this purpose we take the two next terms to justify from the sub-path and check if there is a $B$ equality with these terms. If so, we have an assumption step and can continue the loop. Else we have a congruence step, which means we do a congruence sub-step (justify the equality of one pair of arguments). If the arguments are syntactically equal, we insert a placeholder step object. Else we search for the sub-path justifying the equality (remember that the proof always justifies such equalities, even if they are from an assumption). If this sub-path is not finished, it is pushed on the stack to be processed before the old sub-path. Note that a sub-path can be at most once on the stack.
+
+This way each sub-path is processed (except some were not necessary, but that would not matter) and we found a feasible topological ordering (the reverse storage order on the lemma order stack).
+%
+\paragraph*{\ttt{proveLemmata()}} writes the \isa proof. The idea is for each non-trivial sub-path to introduce a sub-lemma, which only relies on lemmata proven before (therefore the topological ordering). For each non-trivial sub-path we add the proof (in the topological order). This is explained in the next subsection.
+%
+\subsubsection*{Proof}
+We prove every sub-lemma from the lemma stack in reverse order. By the topological ordering we know that we only need sub-lemmata proven before. There is a special treatment for the last path (the main path), since this proves the whole lemma itself. The difference is only in the first steps, the rest works the same: Remember that we want to show $\neg B \LoRa A$ here. Two cases are possible:
+%
+\begin{enumerate}
+	\item $A$ exists. Then we start with the form $A \lor B$. First the $B$ literals are taken to the left hand side of the meta-implication (thereby negated) by the rules \ttt{cc\_to\_asm*}.
+	\item $A$ is \false (does not exist). From the main path we can reconstruct it as $b_1 = b_k$ (explained above), which then is equal to \false according to the theory (shown by the simplifier) -- currently this must be an arithmetic reason, so we have something like \ttt{0 = 1}. This is indicated by the rule \ttt{cc\_false}. The rest works as in the first case.
+\end{enumerate}
+%
+\begin{pt}{ll}
+	\pl{cc\_false & [|p = False; p | q|] ==> q}
+	\pl{cc\_to\_asm & [|q ==> p | r|] ==> p | ((\nega q) | r)}
+	\pll{cc\_to\_asm\_bin & [|q ==> p|] ==> p | (\nega q)}
+\end{pt}
+%
+\begin{rt}
+	\rl{moving $B$ literals to the left}{(intro cc\_to\_asm, rule cc\_to\_asm\_bin)}
+	\rll{moving $B$ \& adding \false}{(rule cc\_false, intro cc\_to\_asm, rule cc\_to\_asm\_bin)}
+\end{rt}
+%
+If we are not in the main path, we have to write down the sub-lemma. This means we need all necessary equalities in the assumptions (which is why we stored them in the \ttt{SubPathInformation}).
+
+Now comes the part that is equal for all sub-paths. We have to prove each step iteratively. If there is at least one step in between the current (starting with the first) and the last term, we apply the transitivity rule and then discriminate between the type of the step. If we have an assumption step, we can immediately close the step proof by assumption (either with or without symmetry). Else we have a congruence step, which means we have to justify equality of each argument. We do this again by iterated transitivity rules where each time one more argument changes and apply \ttt{cc\_cong}, which is a faster congruence rule where the function symbols are the same. Remember that there is a sub-path for each argument not syntactically equal, so we have proven this as a sub-lemma before, i.e., we do not run into recursion here. We just close the transitivity goals either by assumption or applying the sub-lemma (both cases possibly including symmetry). The sub-lemma is applied with the \ttt{drule} command, which allows for obligations of the applied rule to be immediately closed by assumption.
+%
+\begin{pt}{ll}
+	\pl{HOL.trans & [|r = s; s = t|] ==> r = t}
+	\pl{HOL.sym & s = t ==> t = s}
+	\pll{cc\_cong: & x = y ==> f x = f y}
+\end{pt}
+
+We suggest to run an example proof (slow version) in \isa to fully understand the flow.
+%
+\subsection*{Example}
+We give the proof for the running example (with reduced parentheses). There is one sub-lemma \ttt{cc1}.
+
+\begin{center}
+	\tt
+	\begin{tabular}{rl}
+		1 & have "((\f (\f \x \x) \y) = (\f \y \x)) | ((\f \x \x) \negat= \x) | (\x \negat= \y)" \\
+		2 & proof - $\lbrace$ \\
+		3 & have cc1: "[|(\f \x \x) = \x; \x = \yX|] ==> (\f \x \x) = \yX" \\
+		4 & apply (rule HOL.trans [where s = "\xX"]) \\
+		5 & apply assumption \\
+		6 & apply assumption \\
+		7 & done \\
+		8 & show ?thesis \\
+		9 & apply (intro cc\_to\_asm, rule cc\_to\_asm\_bin) \\
+		10 & apply (rule HOL.trans [where s = "(\f \y \y)"]) \\
+		11 & apply (rule cc\_cong [where x = "(\f \x \x)"]) \\
+		12 & apply (drule (2) cc1) \\
+		13 & apply (rule cc\_cong [where x = "\yX"]) \\
+		14 & apply (erule HOL.sym) \\
+		15 & done \\
+		16 & $\rbrace$ qed
+	\end{tabular}
+\end{center}
+
+Lines~1, 2, and 16 are the usual proof frame. Line~3 introduces the sub-lemma. Note that we have to give the equalities in the assumptions explicitly. Line~4 splits into the two goals \mbox{\ttt{(\f \x \x) = \x}} and \mbox{\ttt{\x = \y}}, which can be closed by assumption in lines~5-6. Line~7 closes the sub-lemma proof and line~8 starts the proof for the main path. Line~9 moves the $B$ literals to the left. Line~10 splits again into \mbox{\ttt{(\f (\f \x \x) \y) = (\f \y \y)}} and \mbox{\ttt{(\f \y \y) = (\f \y \x)}}, so the last arguments (\y) are equal in the first goal. Line~11 replaces the first goal by \mbox{\ttt{(\f \x \x) = \y}} (the first argument of \f). This is then closed by the sub-lemma in line~12. Now we have the second goal left and the second argument of \f differs. Luckily, in \isa the $\lambda$-calculus allows us to see \mbox{\ttt{(\f \y \y)}} as \mbox{\ttt{((\f \y) \y)}}, so we can just use the binary congruence rule in line~13 to replace the goal with \mbox{\ttt{\y = \x}}. This is a $B$ equality, but in symmetric order, so line~14 closes this goal and line~15 finishes the main path.
+%
+\subsection{Lemma LA}\label{sec:la}
+The respective \jav class file is \ttt{LemmaLAConverter}, the proof node is \ttt{@lemma (! $\dots$ :LA $\dots$)}.
+%
+\subsubsection*{Description}
+The proven formula is a disjunction of one of the following inequality literals $\bar{\ell_i}$:
+%
+\begin{center}
+	\begin{tabular}{rl}
+		$a_1 x_1 + \dots + a_n x_{k_i} + c_i \preceq 0\color{white}{)}$ & where $\preceq \, \in \{<, \leq\}$ \\
+		$\neg(a_1 x_1 + \dots + a_n x_{k_i} + c_i \preceq 0)$ & where $\preceq \, \in \{<, \leq, =\}$
+	\end{tabular}
+\end{center}
+%
+The proof goes by contraposition, hence we assume $\neg(\bar{\ell_1} \lor \dots \lor \bar{\ell_n})$. After applying de Morgan's rule we receive a conjunction of negated literals $\ell_i$. For the remaining description we only refer to these negated literals. Note that equality can only appear in positive literals now.
+
+The proof annotation given by \si gives a Farkas coefficient $f_i$ for each literal, which is just an integer different from zero. The basic idea is to multiply the literals with the respective factor and sum up the resulting inequalities. Of course, then the inequality signs must be equal (or at least similar, i.e. only $<$ and $\leq$), but this is always the case for the proven formulae (for equality, see the explanation below). In case of an inequality the Farkas coefficient always fits the sign, i.e., a negative literal has a negative coefficient and vice versa. In case of an equality, the coefficient can be arbitrary, so it looks like
+%
+\begin{equation*}
+	f \cdot (a_1 x_1 + \dots + a_n x_{k_i} + c_i) = 0,
+\end{equation*}
+%
+which is equivalent to
+%
+\begin{equation*}
+	(f \cdot (a_1 x_1 + \dots + a_n x_{k_i} + c_i) \leq 0) \land (f \cdot (a_1 x_1 + \dots + a_n x_{k_i} + c_i) \geq 0).
+\end{equation*}
+%
+We can safely drop the second conjunct, since this only weakens the formula (remember that it became a conjunction).
+
+The only two kinds of literals we receive are thereby:
+%
+\begin{center}
+	\begin{tabular}{rl}
+		$|f| \cdot (a_1 x_1 + \dots + a_n x_{k_i} + c_i) \preceq 0\color{white}{)}$ & where $\preceq \, \in \{<, \leq\}$ \\
+	\end{tabular}
+\end{center}
+%
+There are three kinds of linear arithmetic logics supported by \si. We call them \ttt{integer}, \ttt{real} and \ttt{mixed}. In the integer case we can even assure that $<$ never occurs: Simply rewrite $x < 0$ by $x + 1 \leq 0$. For negated literals, this has to be done before we multiply with the coefficient, otherwise some proofs do not go through. This can be seen in the example: If we multiplied the third literal before doing this transformation, we would end up with $0 \leq 0$, which is no contradiction.
+
+The \ttt{real} case must keep the $<$ signs and in the \ttt{mixed} case we have to differentiate by whether the literal is \ttt{integer} or \ttt{real}.
+%
+\subsubsection*{Data Structures}
+\paragraph*{\ttt{FarkasResult}} is a wrapper for the important information used in one iterative step (see later). It contains a flag for using distributivity, the order sign information of the two first literals (used for merging), and a flag that indicates whether the current literal is integral or not (interesting in the \ttt{mixed} case).
+%
+\paragraph*{\ttt{IneqLiteral}} contains the abstract view of a literal. That is, the summands array, the type of (in)equality sign, and a flag about integrality of the literal.
+%
+\paragraph*{\ttt{IneqInfo}} is the big wrapper for both \ttt{IneqLiteral}s and the Farkas coefficients with some helper methods.
+%
+\paragraph*{\ttt{FactorWrapper}} helps calculating integer and real factors using polymorphism.
+%
+\paragraph*{\ttt{Var2FactorMap}} keeps track of the current factors in the first literal during the merging process (explained later).
+%
+\subsubsection*{Translation}
+After determining the type of logic and setting up the data structures, we iteratively apply the steps we described in a binary manner. The order is:
+\begin{enumerate}
+	\item apply a partial de Morgan's rule
+	\item multiply with Farkas coefficient
+	\item calculate result (distributivity)
+	\item merge the current first two literals
+	\item simplify merging result
+\end{enumerate}
+
+The first three steps are applied to the current second disjunct and step~4 then merges it with the current first one. Of course, in the very beginning we have to apply the three steps to the first literal as well. Note that this is only the description for what will happen in the \isa proof, so there is no explicit merging in \jav. Instead, we just keep track of the current factors for the terms already merged into the first literal.
+
+So the basic idea is not that complicated, but in practice we have to pay attention to many special cases. For instance, the first and last steps have to use slightly different \isa rules. Especially in \ttt{mixed} mode we must make sure the typed rules are correctly applied -- automatically applied type casts of \isa are one reason we decided to drop some intermediate steps and leave them to the simplifier (but this should be faster anyway). Another problem is the canonical sum of \si, since for example constants can be fractions or negative numbers, which has to be checked.
+%
+\subsubsection*{Proof}
+For each rule in this section there often exist special case rules for the first and the last disjunct, too. We do not list them, since they are straight-forward.
+
+\smallskip
+
+The proof starts by contraposition and hence should result in falsity. Reflexivity is also used quite often.
+%
+\begin{pt}{ll}
+	\pl{HOL.FalseE & False ==> P}
+	\pll{HOL.refl & t = t}
+\end{pt}
+
+De Morgan's rule is used to swap the negation and turn disjunction to conjunction. We have two cases to avoid double negations.
+
+\begin{pt}{ll}
+	\pl{de\_Morgan\_disj\_neg & [|p \& \nega ((\nega q) | r); p \& q \& (\nega r) ==> False|] ==> False}
+	\pll{de\_Morgan\_disj\_pos & [|p \& \nega(q | r); p \& (\nega q) \& (\nega r) ==> False|] ==> False}
+\end{pt}
+
+The multiplication of inequalities with Farkas coefficients uses one rule per positive $\leq$, negated $<$, and = cases. But for the negative $\leq$ and positive $<$ case the rule depends on the type of the literal due to the integer constant.
+%
+\begin{pt}{ll}
+	\pl{farkas\_pos\_le & [|p \& ((x::'a::linordered\_idom) <= 0) \& q; 0 < c;}
+		\pl{& \ind p \& (c * x <= 0) \& q ==> False|] ==> False}
+	\pl{farkas\_neg\_less & [|p \& (\nega((x::'a::linordered\_idom) < 0)) \& q; c < 0;}
+		\pl{& \ind p \& (c * x <= 0) \& q ==> False|] ==> False}
+	\pl{farkas\_eq & [|p \& (x::'a::linordered\_idom) = 0 \& q;}
+		\pl{& \ind p \& c * x <= 0 \& q ==> False|] ==> False}
+	\pl{int\_farkas\_neg\_le & [|p \& (\nega((x::int) <= 0)) \& q; c < 0;}
+		\pl{& \ind p \& (c * (x + - 1) <= 0) \& q ==> False|] ==> False}
+	\pl{int\_farkas\_pos\_less & [|p \& ((x::int) < 0) \& q; 0 < c;}
+		\pl{& \ind p \& (c * (x + 1) <= 0) \& q ==> False|] ==> False}
+	\pl{real\_farkas\_neg\_le & [|p \& (\nega((x::real) <= 0)) \& q; c < 0;}
+		\pl{& \ind p \& (c * x < 0) \& q ==> False|] ==> False}
+	\pl{real\_farkas\_pos\_less & [|p \& ((x::real) < 0) \& q; 0 < c;}
+		\pll{& \ind p \& (c * x < 0) \& q ==> False|] ==> False}
+\end{pt}
+
+The first two distributivity rules start a new sub-goal to abstract from the sign ($\leq$ vs. $<$).
+
+The next five rules then use stepwise distributivity to expand the multiplication with the Farkas coefficient by substitution rules.
+
+The last three substitution rules are factor normalizations of the resulting summand after applying the other rules.
+
+The two \ttt{*factor} rules have a calculational proof obligation, which is left to the simplifier.
+
+Note that it would be possible to drop the first rule application and replace the substitutions by forward rules, but this would mean way more special cases and we wanted to keep the control logic simple here.
+%
+\begin{pt}{ll}
+	\pl{dist\_le & [|p \& (c::'a::linordered\_idom) * x <= 0 \& q; c * x = y;}
+		\pl{& \ind p \& y <= 0 \& q ==> False|] ==> False}
+	\pl{dist\_less & [|p \& (c::'a::linordered\_idom) * x < 0 \& q; c * x = y;}
+		\pl{& \ind p \& y < 0 \& q ==> False|] ==> False}
+	\pl{s\_dist\_pos\_pos & ((c::'a::linordered\_idom) * (x + y)) = (c * x + c * y)}
+	\pl{s\_dist\_pos\_neg & ((c::'a::linordered\_idom) * (x + - y)) = (c * x + - c * y)}
+	\pl{s\_dist\_neg\_pos & (- (c::'a::linordered\_idom) * (x + y)) = (- c * x + - c * y)}
+	\pl{s\_dist\_neg\_neg & (- (c::'a::linordered\_idom) * (x + - y)) = (- c * x + c * y)}
+	\pl{s\_dist\_factor & (c::'a::linordered\_idom) * c2 = c3}
+		\pl{& \ind ==> (c * (x + c2 * y)) = (c * x + c3 * y)}
+	\pl{s\_minus\_minus & - (x::'a::linordered\_idom) * - y = x * y}
+	\pl{s\_plus\_minus & (x::'a::linordered\_idom) * - y = - x * y}
+	\pl{s\_factor & (c::'a::linordered\_idom) * c2 = c3}
+		\pll{& \ind ==> (c * (c2 * x)) = (c3 * y)}
+\end{pt}
+
+The merging rule depends on the inequality sign of the two literals. The first four rules are used in the non-mixed logic and the other four rules are used in the mixed logic.
+%
+\begin{pt}{ll}
+	\pl{merge\_ineqs\_le\_le & [|(x::'a::linordered\_idom) <= 0 \& y <= 0 \& q;}
+		\pl{& \ind x + y <= 0 \& q ==> False|] ==> False}
+	\pl{merge\_ineqs\_le\_less & [|(x::'a::linordered\_idom) <= 0 \& y < 0 \& q;}
+		\pl{& \ind x + y < 0 \& q ==> False|] ==> False}
+	\pl{merge\_ineqs\_less\_le & [|(x::'a::linordered\_idom) < 0 \& y <= 0 \& q;}
+		\pl{& \ind x + y <= 0 \& q ==> False|] ==> False}
+	\pl{merge\_ineqs\_less\_less & [|(x::'a::linordered\_idom) < 0 \& y < 0 \& q;}
+		\pl{& \ind x + y < 0 \& q ==> False|] ==> False}
+	\pl{ir\_merge\_ineqs\_le\_le & [|(x::int) <= 0 \& (y::real) <= 0 \& q;}
+		\pl{& \ind x + y <= 0 \& q ==> False|] ==> False}
+	\pl{ri\_merge\_ineqs\_le\_le & [|(x::real) <= 0 \& (y::int) <= 0 \& q;}
+		\pl{& \ind x + y <= 0 \& q ==> False|] ==> False}
+	\pl{ir\_merge\_ineqs\_le\_less & [|(x::int) <= 0 \& (y::real) < 0 \& q;}
+		\pl{& \ind x + y < 0 \& q ==> False|] ==> False}
+	\pl{ri\_merge\_ineqs\_less\_le & [|(x::real) < 0 \& (y::int) <= 0 \& q;}
+		\pll{& \ind x + y <= 0 \& q ==> False|] ==> False}
+\end{pt}
+
+The simplification rules let \isa simplify the expressions after the merging step, i.e., sum up the factors of the summands with the same (pattern) variable. This is achieved by extracting the first literal and passing the result to the simplifier.
+%
+\begin{pt}{ll}
+	\pl{simplify\_le & [|x <= 0 \& p; x = y; y <= 0 \& p ==> False|] ==> False}
+	\pll{simplify\_less & [|x < 0 \& p; x = y; y < 0 \& p ==> False|] ==> False}
+\end{pt}
+%
+\subsubsection*{Example}
+%
+Let $x_1, x_2 \in \mathbb{Z}$. Instead of showing the binary steps, we give them in one go, so this does not reflect the exact way the proof works in \isa. We prove the lemma given in line 1 of the following proof.
+%
+\begin{center}
+	\begin{tabular}{lrcrcr}
+		Input & $\neg(3 x_1 - 2 x_2 - 2 \leq 0)$ & $\lor$ & $(x_2 \leq 0)$ & $\lor$ & $\neg(x_1 - 1 = 0)$ \ \\[1mm]
+		Assume & $\neg \, (\neg(3 x_1 - 2 x_2 - 2 \leq 0)$ & $\lor$ & $(x_2 \leq 0)$ & $\lor$ & $\neg(x_1 - 1 = 0))$ \\[1mm]
+		De Morgan & $(3 x_1 - 2 x_2 - 2 \leq 0)$ & $\land$ & $\neg(x_2 \leq 0)$ & $\land$ & $(x_1 - 1 = 0)$ \ \\[1mm]
+		Transformation = & $(3 x_1 - 2 x_2 - 2 \leq 0)$ & $\land$ & $\neg(x_2 \leq 0)$ & $\land$ & $(x_1 - 1 \leq 0)$ \ \\[1mm]
+		Farkas coefficients & $-1 \cdot (3 x_1 - 2 x_2 - 2 \leq 0)$ & $\land$ & $-2 \cdot \neg(x_2 \leq 0)$ & $\land$ & $3 \cdot (x_1 - 1 \leq 0)$ \ \\[1mm]
+		Transformation $\mathbb{Z}$ & $-1 \cdot (3 x_1 - 2 x_2 - 2 \leq 0)$ & $\land$ & $-2 \cdot (x_2 - 1\geq 0)$ & $\land$ & $3 \cdot (x_1 - 1 \leq 0)$ \ \\[1mm]
+		Calculation & $(-3 x_1 + 2 x_2 + 2 \leq 0)$ & $\land$ & $(-2 x_2 + 2\leq 0)$ & $\land$ & $(3 x_1 - 3 \leq 0)$ \ \\[1mm]
+		Total sum & \multicolumn{5}{c}{$(0 x_1 + 0 x_2 + 1 \leq 0)$}
+	\end{tabular}
+\end{center}
+%
+So we end up with the contradiction $1 \leq 0$. Hence the lemma is proven. \hfill $\square$
+
+Note again that the step ``Transformation $\mathbb{Z}$'' must be applied before ``Calculation''.
+%
+\subsection{Lemma Trichotomy}\label{sec:tricho}
+The respective \jav class file is \ttt{LemmaTrichotomyConverter}, the proof node is \ttt{@lemma (! $\dots$ :trichotomy)}.
+%
+\subsubsection*{Description}
+Trichotomy is the three-partition of numbers by the usual order relation: In comparison to $0$, a number $x$ is either less, equal, or greater ($x < 0$, $x = 0$, or $x > 0$).
+
+In \si this becomes the following ternary disjunction:
+%
+\begin{formu}
+	(or E L G)
+\end{formu}
+%
+where the disjuncts are dependent on the variable sort (integer or real). Note that the order of the disjuncts can vary. They are already given in canonical form, so we have:
+%
+\begin{center}
+	\begin{tabular}{l|c|c}
+		& integer case & real case \\
+		\hline
+		\ttt E & \ttt{(= x 0)} & \ttt{(= x 0.0)} \\
+		\ttt L & \ttt{(<= (+ x 1) 0)} & \ttt{(< x 0.0)} \\
+		\ttt G & \ttt{(not (<= x 0))} & \ttt{(not (<= x 0.0))}
+	\end{tabular}
+\end{center}
+%
+\subsubsection*{Translation}
+The translation first detects the order of the disjuncts. This is trivial, since the \ttt{E} disjunct always has equality and the \ttt{G} disjunct always has negation as function symbol. In case the order deviates from \ttt{ELG}, we bring the disjunction to this form. This is possible, since the trichotomy is only followed by resolution steps. Then the proof rule just depends on the variable sort.
+%
+\subsubsection*{Proof}
+\begin{pt}{ll}
+	\pl{trichotomy\_int & (y::int) = (x + 1) ==> \\ & \ind (x = 0) | (y <= 0) | \nega (x <= 0)}
+	\pll{trichotomy\_real & ((u::real) = 0) | (u < 0) | \nega (u <= 0)}
+\end{pt}
+%
+For real $x$ the lemma is proven with a single rule. For integer $x$ the rule has an obligation $y = x + 1$, where $y$ is the left-hand side of the \ttt{<=} disjunct. This cannot be covered by the rule, because $x$ itself can be a sum with a constant, which \si already adds, so we really need a mathematical computation. This is finally done by the simplifier.
+%
+\begin{rt}
+	\rl{integer case}{(rule trichotomy\_int, simp)}
+	\rll{real case}{(rule trichotomy\_real)}
+\end{rt}
+%
+\subsubsection*{Example}
+\begin{tabular}{ll}
+	\exl{Input}{(not (or (= x y) (< x y) (> x y)))}
+	\exlm{Proof}{\ttt{(or (<= (+ y (- x) 1) 0) (= (+ y (- x)) 0)} \\ & \ind \ttt{(not (<= (+ y (- x)) 0)))}}
+	\exlm{Reorder}{\ttt{(or (= (+ y (- x)) 0) (<= (+ y (- x) 1) 0)} \\ & \ind \ttt{(not (<= (+ y (- x)) 0)))}}
+	\exl{Isabelle}{(y + - x = 0) | (y + - x + 1 <= 0) | \nega(y + - x <= 0)}
+	\exmc{rule trichotomy\_int:}{\pat{x}{(y + - x)}, \pat{y}{(y + - x + 1)}}
+	\exl{Result}{(y + - x + 1) = ((y + - x) + 1)}
+	\exmcf{\ttt{simp}}
+\end{tabular}
+%
+\subsection{Assertion}\label{sec:assert}
+proof node: \ttt{@asserted}
+
+\medskip
+
+In the partial proof mode this proof node just tells from which assertion a given formula is derived. This is only proven with the help of the built-in automatic tactic \emph{auto}. In many cases this works perfectly, but there are (even short) examples where this tactic does not find the proof. That is the price for having short proofs.
+
+In the extended proof mode, this proof node only introduces the assertion from the input as an axiom. The translation is just by \ttt{note F}, where \ttt{F} is the name associated with the assertion (cp.~\ref{sec:mainelem}).
+%
+\subsection{Tautology}\label{sec:taut}
+The respective \jav class file is \ttt{TautologyConverter}, the proof node is \ttt{@tautology}.
+%
+\subsubsection*{Description}
+A tautology is used as an axiom in the proof tree. There are 21 tautologies in total, most of them being just Boolean axioms, so only some of them use the theory.
+
+The several possible tautologies are indicated by an annotation. We now list them with the respective form (cp. Table 1 \& 2 \cite[sec.~6]{proof}).
+%
+\begin{center}
+	\begin{tabular}{c|l}
+		annotation & \multicolumn{1}{c}{\si clauses} \\
+		\hline
+		\ttt{:trueNotFalse} & \ttt{(not (= true false))} \\
+		\ttt{:or+} & \ttt{(or (not \proxy{(or F$_1$ $\dots$ F$_n$)}) F$_1$ $\dots$ F$_n$)} \\
+		\hl{\ttt{:or-}} & \ttt{(or \proxy{(or F$_1$ $\dots$ F$_n$)} (not F$_i$))} -- ($i \in [1..n]$) \\
+		\ttt{:ite+1} & \ttt{(or (not \proxy{(ite C T E)}) (not C) T)} \\
+		\ttt{:ite+2} & \ttt{(or (not \proxy{(ite C T E)}) C E)} \\
+		\ttt{:ite+Red} & \ttt{(or (not \proxy{(ite C T E)}) T E)} \\
+		\ttt{:ite-1} & \ttt{(or \proxy{(ite C T E)} (not C) (not T))} \\
+		\ttt{:ite-2} & \ttt{(or \proxy{(ite C T E)} C (not E))} \\
+		\ttt{:ite-Red} & \ttt{(or \proxy{(ite C T E)} (not T) (not E))} \\
+		\ttt{:=+1} & \ttt{(or (not \proxy{(= L R)}) L (not R))} \\
+		\ttt{:=+2} & \ttt{(or (not \proxy{(= L R)}) (not L) R)} \\
+		\ttt{:=-1} & \ttt{(or \proxy{(= L R)} L R)} \\
+		\ttt{:=-2} & \ttt{(or \proxy{(= L R)} (not L) (not R))} \\
+		\hl{\ttt{:excludedMiddle1}} & \ttt{(or (not F) (= F true))} \\
+		\hl{\ttt{:excludedMiddle2}} & \ttt{(or F (= F false))} \\
+		\hl{\ttt{:termITE}} & \ttt{(or (not F$_1$) $\dots$ (not F$_n$) (= (ite F t e) x))} \\
+		\hl{\ttt{:divLow}} & \ttt{(<= \cs{d \cdot (\smtdiv{x}{d}) - x} 0)} \\
+		\hl{\ttt{:divHigh}} & \ttt{(not (<= \cs{d \cdot (\smtdiv{x}{d}) - x + |d|} 0))} \\
+		\hl{\ttt{:toIntLow}} & \ttt{(<= \cs{\torealx(\tointx(x)) - x} 0)} \\
+		\hl{\ttt{:toIntHigh}} & \ttt{(not (<= \cs{\torealx(\tointx(x)) - x + 1} 0))} \\
+		\ttt{:eq} & \ttt{(or (= (* c t$_1$) (* d t$_2$)) (not (= \cs{\frac{c}{gcd(c,d)} \cdot t_1 \ \frac{d}{gcd(c,d)} \cdot t_2} 0)))} \\
+		& \multicolumn{1}{c}{or} \\
+		& \ttt{(or (not (= (* c t$_1$) (* d t$_2$))) (= \cs{\frac{c}{gcd(c,d)} \cdot t_1 \ \frac{d}{gcd(c,d)} \cdot t_2} 0))}
+	\end{tabular}
+\end{center}
+
+Many proofs for the tautologies go straight by a lemma. Only the \hl{highlighted} rules need more effort.
+
+To judge the triviality of the \ttt{:or+} tautology: If we translate the rule to \isa, we get \mbox{\ttt{(\nega (F$_1$ | $\dots$ | F$_n$)) | (F$_1$ | $\dots$ | F$_n$)}}. Here we can find the shorter pattern \mbox{\ttt{(\nega F) | F}}, which is just the rule of the excluded middle.
+
+The \ttt{:div} and \ttt{:toInt} tautologies give lower and upper bounds for the \ttt{div} and \toint functions, which are the only complicated arithmetical functions in the canonical form. Note that $d$ is a constant and that $|d|$ is already calculated, so if $d = -2$, then $2$ is inserted rather than $|-2|$. Further note that $x$ is not a constant, but apart from that it can be an arbitrary arithmetic term.
+
+The \ttt{:eq} tautology justifies the transformation between equality and arithmetic theory. An equality is put into canonical form, which we let the automatic reasoner \emph{auto} do (there are very short examples the simplifier cannot handle).
+%
+\subsubsection*{Translation}
+For each \hl{highlighted} rule in the table we explain the special translation:
+
+\smallskip
+
+The \ttt{:or-} tautology has the form of a binary disjunction, where the first disjunct is a proxy disjunction itself and the second disjunct is a negated term (possibly doubly negated). The second term without the outermost negation (\TT) can be found in the proxy disjunction.
+
+The translation is based on the introduction method (\emph{intro}). If the \TT can be found on the lowest level of the disjunction, a slightly faster translation is used. But the proxy disjunction may have to be flattened (that is, inner disjunctions have to be unpacked). We do not help any further in this case, but let \isa automatically find the disjunction by adding a flattening rule.
+
+\smallskip
+
+The \ttt{:excludedMiddle1} and \ttt{:excludedMiddle2} tautologies are very similar. The only problem here is that the order of the equality is not fixed, so we need to find the correct order (trivial) and use the according rule. Note that we could still use an alternativity operator and include both rules, but this is slightly slower.
+
+\smallskip
+
+The \ttt{:termITE} tautology is hard to write down correctly, so we explain it here: It consists of an $(n + 1)$-ary disjunction, where the first $n$ disjuncts are the (possibly doubly) negated conditions of the chained if-then-else at position $n+1$. The $n$ disjuncts give the path through the if-then-else tree. Whenever the \emph{then} branch is taken, the respective disjunct is the negated condition, and whenever the \emph{else} branch is taken, the respective disjunct is the doubly negated condition. There is a problem for the Isabelle proof: To get to the rightmost disjunct, the whole disjunction has to be unrolled. This is done at the beginning. Then the rules are straight-forward.
+
+\smallskip
+
+The \ttt{:toInt} and \ttt{:div} tautologies look easy, but the canonical form of arithmetical terms destroys the pattern: The summands can swap places and the minus sign can be eliminated (if $x$ is already negative) or slip into the factor (if $x$ is of the form $c * y$). For the \ttt{:div} tautologies we also need to show that the constant is different from zero and that the constant at the place of $|d|$ is indeed the absolute value of $d$. This is left to the simplifier, but note that $d$ is always a constant, so there is no danger that the simplifier unpacks a complicated term.
+
+The hard part on the \jav side here is to identify the $x$ term (\TT), since it can also have the outer form of the other term. Consider $x := -2 \cdot (\smtdiv{y}{2})$. Then the \ttt{:divLow} rule can be \mbox{\ttt{(<= \cs{2 \cdot (\smtdiv{-2 \cdot (\smtdiv{y}{2})}{2}) + 2 \cdot (\smtdiv{y}{2})} 0)}}. We have to compare the $x$ candidates up to the sign, which is quite tricky. It turns out that we have to ignore a minus sign or a factor if it exists to compare the terms. In the example the candidates for $x$ are $-2 \cdot (\smtdiv{y}{2})$ and $y$, so we would start comparing $(\smtdiv{y}{2})$ (ignoring the factor) and see that this pattern fits, hence the order is according to the rule. This is similar for the other three tautologies, because the constant ($|d|$ and 1) is always on the right-hand side and the other two terms are no constants, so they cannot be mixed up.
+%
+\subsubsection*{Proof}
+\begin{ptlong}{ll}
+	\pl{taut\_orM\_fin & (p | q) | \nega p}
+	\pl{taut\_orM\_fin\_bin & p | \nega p}
+	\pl{taut\_orM\_flat & (p | q | r) | \nega s ==> ((p | q) | r) | \nega s}
+	\pl{taut\_orM\_intro & q | \nega r ==> (p | q) | \nega r}
+	\hline & \\[-3mm]
+	\pl{taut\_iteP1 & (\nega (if c then t else e)) | (\nega c) | t}
+	\pl{taut\_iteP2 & (\nega (if c then t else e)) | c | e}
+	\pl{taut\_itePRed & (\nega (if c then t else e)) | t | e}
+	\pl{taut\_iteM1 & (if c then t else e) | (\nega c) | \nega t}
+	\pl{taut\_iteM2 & (if c then t else e) | c | \nega e}
+	\pl{taut\_iteMRed & (if c then t else e) | (\nega t) | \nega e}
+	\pl{taut\_EqP1 & (p \negat= q) | p | \nega q}
+	\pl{taut\_EqP2 & (p \negat= q) | (\nega p) | q}
+	\pl{taut\_EqM1 & (p = q) | p | q}
+	\pl{taut\_EqM2 & (p = q) | (\nega p) | \nega q}
+	\hline & \\[-3mm]
+	\pl{taut\_exclMid\_tr & (\nega p) | (p = True)}
+	\pl{taut\_exclMid\_tl & (\nega p) | (True = p)}
+	\hline & \\[-3mm]
+	\pl{taut\_exclMid\_fr & p | (p = False)}
+	\pl{taut\_exclMid\_fl & p | (False = p)}
+	\hline & \\[-3mm]
+	\pl{taut\_termITE\_unroll & (p | q) | r ==> p | q | r}
+	\pl{taut\_termITE\_then & q | (t = x) ==>}
+		\pl{& \ind ((\nega p) | q) | ((if p then t else e) = x)}
+	\pl{taut\_termITE\_then\_last & (\nega p) | ((if p then t else e) = t)}
+	\pl{taut\_termITE\_else & q | (e = x) ==>}
+		\pl{& \ind ((\nega (\nega p)) | q) | ((if p then t else e) = x)}
+	\pl{taut\_termITE\_else\_last & (\nega (\nega p)) | ((if p then t else e) = e)}
+	\hline & \\[-3mm]
+	\pl{taut\_toIntLow\_pos1 & \torealx(\tointx(u::real)) + - u <= 0}
+	\pl{taut\_toIntLow\_pos2 & \torealx(\tointx(c * (u::real))) + (- c) * u <= 0}
+	\pl{taut\_toIntLow\_neg1 & \torealx(\tointx(- u::real)) + u <= 0}
+	\pl{taut\_toIntLow\_neg2 & \torealx(\tointx((- c) * (u::real))) + c * u <= 0}
+	\hline & \\[-3mm]
+	\pl{taut\_toIntHigh\_pos1 & \nega (\torealx(\tointx(u::real)) + - u + 1 <= 0)}
+	\pl{taut\_toIntHigh\_pos2 & \nega (\torealx(\tointx(c * (u::real))) +}
+		\pl{& \ind\ind (- c) * u + 1 <= 0)}
+	\pl{taut\_toIntHigh\_neg1 & \nega (\torealx(\tointx(- (u::real))) + u + 1 <= 0)}
+	\pl{taut\_toIntHigh\_neg2 & \nega (\torealx(\tointx((- c) * (u::real))) +}
+		\pl{& \ind\ind c * u + 1 <= 0)}
+	\hline & \\[-3mm]
+	\pl{taut\_divLow\_pos1 & (d::int) \negat= 0 ==> d * (x SMTdiv d) + - x <= 0}
+	\pl{taut\_divLow\_pos2 & (d::int) \negat= 0 ==>}
+		\pl{& \ind d * (c * x SMTdiv d) + (- c) * x <= 0}
+	\pl{taut\_divLow\_neg1 & (d::int) \negat= 0 ==> d * (- x SMTdiv d) + x <= 0}
+	\pl{taut\_divLow\_neg2 & (d::int) \negat= 0 ==>}
+		\pl{& \ind d * ((- c) * x SMTdiv d) + c * x <= 0}
+	\hline & \\[-3mm]
+	\pl{taut\_divHigh\_pos1 & (d::int) \negat= 0 \& abs d = d2 ==>}
+		\pl{& \ind (\nega d * (x SMTdiv d) + - x + d2 <= 0)}
+	\pl{taut\_divHigh\_pos2 & (d::int) \negat= 0 \& abs d = d2 ==>}
+		\pl{& \ind (\nega d * (c * x SMTdiv d) + (- c) * x + d2 <= 0)}
+	\pl{taut\_divHigh\_neg1 & (d::int) \negat= 0 \& abs d = d2 ==>}
+		\pl{& \ind (\nega d * (- x SMTdiv d) + x + d2 <= 0)}
+	\pl{taut\_divHigh\_neg2 & (d::int) \negat= 0 \& abs d = d2 ==>}
+		\pl{& \ind (\nega d * ((- c) * x SMTdiv d) + c * x + d2 <= 0)}
+\end{ptlong}
+
+Additional rules used by \ttt{:toInt*} and \ttt{:div*}:
+%
+\begin{pt}{ll}
+	\pl{taut\_swap\_sum\_bin & (x::'a::linordered\_idom) + y <= 0 ==> y + x <= 0}
+	\pl{taut\_swap\_sum\_ter & \nega ((x::'a::linordered\_idom) + y + c <= 0) ==>}
+		\pll{& \ind \nega (y + x + c <= 0)}
+\end{pt}
+
+The \ttt{:or-} tautology consists of four rules (\ttt{*orM*}). The first two rules stop the iteration when finding the \TT, where the second one is only necessary for the last disjunct (but is still necessary, in case the \TT itself is a disjunction again). The third rule flattens the first disjunct if possible. Note that we only deal with binary disjunctions in \isa. The last rule drops the first disjunct.
+
+\begin{rt}
+	\rl{no flattening, \TT is not the last}{(intro taut\_orM\_fin taut\_orM\_intro)}
+	\rl{no flattening, \TT is the last}{(intro taut\_orM\_fin\_bin taut\_orM\_intro)}
+	\rl{flattening}{(intro taut\_orM\_fin taut\_orM\_fin\_bin}
+	\rll{}{\ind taut\_orM\_flat taut\_orM\_intro)}
+\end{rt}
+
+\smallskip
+
+The \ttt{:termITE} tautology is straight-forward after unrolling the disjunction (except in the binary case). This must be done, since Isabelle considers disjunctions right-associative. Since we always want to talk about the first and the last disjunct (\TT), we first take the last disjunct to an outer level, so we have \mbox{\ttt{(F$_1$ | $\dots$ | F$_n$) | \TT}}. Then we can iteratively drop the first disjunct and step one level into the if-then-else tree in \TT with the \emph{intro} method. In the end an analogous rule is used. Since this is just one rule application, we again let \emph{intro} decide which is the last branch. This could also be found out in the translation, but this is no real effort for \isa.
+
+\begin{rt}
+	\rl{binary, then}{(intro taut\_termITE\_then\_last taut\_termITE\_else\_last)}
+	\rl{$n$-ary, else}{(intro taut\_termITE\_unroll,}
+		\rl{}{\ind intro taut\_termITE\_then taut\_termITE\_else,}
+		\rll{}{\ind intro taut\_termITE\_then\_last taut\_termITE\_else\_last)}
+\end{rt}
+
+\smallskip
+
+The \ttt{:toIntLow} tautology possibly swaps the summands using the \ttt{taut\_swap\_sum\_bin} rule to the correct order to save unnecessary proof rules. Then a rule is chosen according to the factor (say,~$\alpha$) of \TT. There are four cases.
+%
+\begin{rt}
+	\rl{$\alpha = 1$: no factor}{(rule taut\_toIntLow\_pos1)}
+	\rl{$\alpha > 0, \alpha \neq 1$: no factor, but a minus sign}{(rule taut\_toIntLow\_pos2)}
+	\rl{$\alpha = -1$: positive factor}{(rule taut\_toIntLow\_neg1)}
+	\rll{$\alpha < 0, \alpha \neq -1$: negative factor}{(rule taut\_toIntLow\_neg2)}
+\end{rt}
+
+The \ttt{:toIntHigh} tautology uses the \ttt{taut\_swap\_sum\_ter} rule to swap. The rest works completely analogous to \ttt{:toIntLow} (even the rules are almost equivalent up to the \ttt{+ 1}). We do not copy the rules.
+
+\smallskip
+
+The \ttt{:div*} tautologies work the same way as the \ttt{:toInt*} tautologies, except that there is a proof obligation: $d$ has to be different from zero and $|d|$ has to be the absolute value of $d$. We already mentioned that this is riskless, because $d$ is a constant. Just add an additional \ttt{simp} to the rule, for example \ttt{(rule taut\_toIntHigh\_pos2, simp)} if there is a positive factor. We wrote the obligation as a conjunction on purpose to just have one call to the simplifier.
+%
+\subsubsection*{Example}
+The only interesting tautology are \ttt{:or-} and \ttt{:termITE}, since the others simply go by one or two rules. For the \ttt{:or-} rule consider the following example (excerpt from the examples file):
+
+\bigskip \noindent \begin{tabular}{ll}
+	\exl{Proof}{(or (!~(or p q (not (or (not (or (not p) (not q))) q))) :quoted)}
+		\exl{}{\ind (not q))}
+	\exl{Isabelle}{(p | q | \nega (\nega (\nega p | \nega q) | q)) | \nega q}
+	\exmc{(intro taut\_orM\_fin taut\_orM\_intro)}{}
+	\exl{try}{rule taut\_orM\_fin \rm{-- not applicable}}
+	\exl{try}{rule taut\_orM\_intro \rm{-- applicable}}
+	\exmc{\ind \pat{p}{p}, \pat{q}{q | \nega (\nega (\nega p | \nega q) | q)}, \pat{r}{q}}{}
+	\exl{Result}{(q | \nega (\nega (\nega p | \nega q) | q)) | \nega q}
+	\exl{try}{rule taut\_orM\_fin \rm{-- applicable}}
+	\exmcf{\ind \pat{p}{p}, \pat{q}{q | \nega (\nega (\nega p | \nega q) | q)}, \pat{r}{q}}{}
+\end{tabular}
+
+\bigskip \noindent Now we have an example for the \ttt{:termITE} rule (again an excerpt from the examples file):
+
+\bigskip \noindent \begin{tabular}{ll}
+	\exl{Proof}{(or (not p) (not q) (= (ite p (ite q x y) z) x))}
+	\exl{Isabelle}{(\nega p) | (\nega q) | ((if p then (if q then x else y) else z) = x)}
+	\exmc{(intro taut\_termITE\_unroll, intro taut\_termITE\_then taut\_termITE\_else,}{}
+		\exmc{\ind intro taut\_termITE\_then\_last taut\_termITE\_else\_last)}{}
+	\exl{Unroll}{intro taut\_termITE\_unroll \rm{(merge left-hand side disjunction)}}
+	\exl{Result}{((\nega p) | (\nega q)) | ((if p then (if q then x else y) else z) = x)}
+	\exl{Tree}{intro taut\_termITE\_then taut\_termITE\_else \rm{(unfold the tree)}}
+	\exl{try}{rule taut\_termITE\_then \rm{-- applicable}}
+	\exmc{\ind \pat{p}{p}, \pat{q}{\nega q}, \pat{t}{if q then x else y}, \pat{e}{z}, \pat{x}{x}}{}
+	\exl{Result}{(\nega q) | ((if q then x else y) = x)}
+	\exl{try}{rule taut\_termITE\_then \rm{-- not applicable}}
+	\exl{try}{rule taut\_termITE\_else \rm{-- not applicable}}
+	\exl{Last}{intro taut\_termITE\_then\_last taut\_termITE\_else\_last \rm{(last if-then-else)}}
+	\exl{try}{rule taut\_termITE\_then\_last \rm{-- applicable}}
+	\exmcf{\ind \pat{p}{q}, \pat{t}{x}, \pat{e}{y}}{}
+\end{tabular}
+%
+\subsection{Substitution}\label{sec:subst}
+The respective \jav class file is \ttt{SubstitutionConverter}, the proof node is \ttt{@eq}.
+%
+\subsubsection*{Description}
+A substitution proof node works similar to a resolution proof node: It takes two arguments and uses the result as the new first argument until all inner proof nodes were used. The first argument is an axiom (usually an assertion or a tautology) with no further derivation. All the other arguments are rewrite equalities, which shall be applied to the term from the last step. \si uses complete substitution, meaning all occurrences of the term are replaced.
+
+This is different to \isa, where partial substitution is applied, so an arbitrary amount of the terms is replaced using the proof method \ttt{(rule subst)}. Fortunately, \isa automatically infers the correct number of replacement when the substitution is the last step in a sub-proof. Since we only need one step, this is always the case.
+
+The rewrite equalities are given as further proof nodes only occurring within substitution proof nodes. They are individually created tautologies, for which validity has to be shown in \isa. Two types are possible: \ttt{@rewrite} for annotated rewrites and \ttt{@intern} for rewrites without annotations. The annotations help giving the right proof steps, but we leave \ttt{@intern} to \ttt{auto}.
+%
+\subsubsection*{Translation}
+The translation to \isa is trivial -- just one application of the substitution rule. But similar to the resolution proof, we have to compute the resulting term in \jav as well. For this we have to search through the whole term tree (remember that all occurrences of the left-hand side (\TT) of the rewrite equality are replaced -- and there can be arbitrarily many). Since the substitution occurs quite often in a proof at the higher levels, efficiency is important here.
+
+Since it is hard to detect needless rewrites during the \si proof construction, they can occur. In order to be able to ignore them, the rewrite rules are not directly translated, but only the proof string is remembered. Then the substition is applied in \jav and when no change occured, the whole step including the introduction of the rewrite rule is ignored. Else we first prove the rewrite rule (by just printing the remembered proof) and then finish the susbtitution as usual. Note that this also works with the \ttt{Letter}, since the proof is only needed the first time.
+
+A first quick test checks if the \TT is already the whole term. Then nothing has to be done and the proof goes by the built-in rule \ttt{HOL.rev\_iffD1}. Else the tree is unpacked on-the-fly (influenced by a model-checking algorithm \cite{gerth}).
+
+We abstract the term tree to a tree with special nodes, which wrap all information needed.
+%
+\subsubsection*{Implementation}
+Starting with the original term in the root node, we go through the tree in a depth-first manner, so we need to store only have as few nodes as possible. There are two cases:
+%
+\begin{enumerate}
+	\item Whenever an occurrence of \TT was found, the current path is pruned and the parent node is informed about a change in its child node. If all child nodes have been expanded, the parent node rewrites its own term to capture the substitution and recursively informs its own parent node.
+	\item All child nodes expanded themselves to the leaf level. In this case the parent node needs not change its term and just informs its parent node. This way in the end the root node is reached again and the method terminates.
+\end{enumerate}
+
+We must consider the following types of terms in the term tree in \jav: \ttt{ApplicationTerm}, \ttt{AnnotatedTerm}, \ttt{QuantifiedFormula}, \ttt{ConstantTerm}, and \ttt{TermVariable}. The latter two are the leaf nodes, so they have special treatment. For the remaining three we have use an individual node data type for polymorphic handling. They are explained more detailed later.
+
+\ttt{ATermNode} is the abstract class with a member \ttt{ATermNode~parent} (the parent pointer, \ttt{null} for the root node) and the following methods:
+%
+\begin{itemize}
+	\item \ttt{void~isNew()} -- indicates if the term has changed
+	\item \ttt{Term~getTerm()} -- returns the original term if no change occurred and the changed term otherwise
+	\item \ttt{Term~next()} -- returns the next child node or null if all of them have been visited (a child is the next parameter for an \ttt{ApplicationTerm} and the sub-term for an \ttt{AnnotatedTerm} or a \ttt{QuantifiedFormula})
+	\item \ttt{void~replace(Term~replace)} -- replaces the current child node with the given term
+\end{itemize}
+
+With this we can already give the iterative algorithm: We start by pushing a new node containing the original term on a stack. The free variables \ttt{pattern} and \ttt{replace} are given by the rewrite equality \ttt{pattern = replace}.
+%
+\begin{lstlisting}
+while (true) {
+	ATermNode node = stack.pop();
+	Term next = node.next();
+	// no parameters left, finalize node
+	if (next == null) {
+		ATermNode parent = node.parent;
+		// root node, stop
+		if (parent == null) {
+			break;
+		}
+		// go on with parent node; also inform about changes
+		else {
+			if (node.isNew()) {
+				parent.replace(node.getTerm());
+			}
+			node = parent;
+		}
+	}
+	// still parameters left
+	else {
+		// pattern fits, term is replaced
+		if (next == pattern) {
+			node.replace(replace);
+		}
+		// create a new node for an ApplicationTerm
+		else if (next instanceof ApplicationTerm) {
+			node = new AppTermNode(node, (ApplicationTerm)next);
+		}
+	}
+	stack.push(node);
+}
+// root node with substitutions applied
+return node;
+\end{lstlisting}
+
+The outer \ttt{else} case unfolds and expands the sub-terms. If there is still one, we test if it is the \TT and else push a new node depending on the term type on the stack. Note that in the second case the old node is not pushed again. This will happen when the node is finalized.
+
+The outer \ttt{if} case is used for the reverse folding when all sub-terms of a node have been expanded. If we are at the root node, the procedure terminates. Else we push the parent node on the stack (remember that we did not push it back before), but also check if there was a change in the old node, in which case we inform the parent node.
+
+\smallskip
+
+Now we give the implementing classes of \ttt{ATermNode}:
+
+\smallskip
+
+There are two implementations for \ttt{AnnotatedTerm} and \ttt{QuantifiedFormula}, but they are not used. The only possible annotations currently are \ttt{:quoted}, where no substitution should be applied, and \ttt{:named}, where the  \ttt{:strip} rewrite (see Section~\ref{sec:rewrite}) replaces only the whole term. Quantifiers are neither supported by \si nor by our translation system (except for this special case).
+
+\smallskip
+
+The implementation for an \ttt{ApplicationTerm} is called \ttt{AppTermNode}. An \ttt{ApplicationTerm} can have arbitrarily many parameters and replacements can occur anywhere. The node stores the original term, an index representing the parameter currently looked at (intially the number of parameters), and a replacement array (initially null), which stores replaced sub-terms. As long as no replacement took place in any child node, the replacement array is not used. If a child node reports a replacement, this is stored in the array and when finalizing the whole node a new \ttt{ApplicationTerm} is created with the new nodes from the array.
+
+\ttt{isNew()} can be determined by the replacement array pointing to null or not.
+
+\ttt{getTerm()} returns the original term if no change occurred, else it constructs a new term with the information in the replacement array (using the original subterms where nothing had changed). Note that the method is called exactly once for each node, so there is no need to store the result.
+
+\ttt{next()} decrements the index and returns the corresponding parameter if possible, else it returns null.
+
+\ttt{replace()} inserts the term in the replacement array (and initializes it, if this is the first replacement).
+%
+\subsubsection*{Proof}
+The proof goes like the one for resolution: We introduce a pair of scoping parentheses (\{\}) and in between we introduce the proofs with a \ttt{moreover - ultimately} chaining. There are two possible proof rules, depending on whether the whole term was replaced or not.
+%
+\begin{pt}{ll}
+	\pl{HOL.rev\_iffD1 & [|Q; Q = P|] ==> P}
+	\pl{eq & [|P(s); s = t|] ==> P(t)}
+\end{pt}
+
+Note that \ttt{eq} looks similar to the built-in rule \ttt{subst}, which only permutes the parameters. Since this rule is applied quite often, we still introduced this new rule to forgo additional proof commands.
+%
+\begin{rt}
+	\rl{full term substituted}{(rule HOL.rev\_iffD1)}
+	\rll{partial term substituted}{(rule eq)}
+\end{rt}
+%
+\subsubsection*{Example}
+Since we have not explained the rewriting yet, we exclude the proofs (also for the assertion), marked by \ttt{[!]}.
+
+Note that in the first substitution two occurrences of the term are replaced and that the last substitution replaces the whole term. We do not give the instantiations here -- they are obvious.
+%
+\begin{center}
+	\begin{tabular}{ll}
+		\exl{Input}{(not (or (or (not (not p)) p) (not (not (not p)))))}
+		\exlm{Proof}{\ttt{(@eq (@asserted (not (or (or (not (not p)) p) (not (not (not p))))))} \\
+			& \ind \ttt{(@rewrite (! (= (not (not p)) p) :notSimp))} \\
+			& \ind \ttt{(@rewrite (! (= (or p p) p) :orSimp))} \\
+			& \ind \ttt{(@rewrite (! (= (or p (not p)) true) :orTaut))} \\
+			& \ind \ttt{(@rewrite (! (= (not true) false) :notSimp)))}}
+		\exlm{Isabelle}{\ttt{have "\nega ((\nega \nega p) | \nega \nega \nega p)" [!]} \\
+			& \ttt{moreover have "(\nega \nega p) = p" [!]} \\
+			& \ind \ttt{ultimately have "\nega (p | \nega p)" by (rule eq)} \\
+			& \ttt{moreover have "(p | \nega p) = True" [!]} \\
+			& \ind \ttt{ultimately have "\nega True" by (rule eq)} \\
+			& \ttt{moreover have "(\nega True) = False" [!]} \\
+			& \ind \ttt{ultimately have "False" by (rule HOL.rev\_iffD1)}}
+	\end{tabular}
+\end{center}
+%
+\subsection{Rewrite}\label{sec:rewrite}
+The respective \jav class file is \ttt{RewriteConverter}, the proof node is \ttt{@rewrite}.
+%
+\subsubsection*{Description}\label{ssec:rewriteDesc}
+Rewrite rules are used for substitution only and come with an annotation to help the proof system. We give them in the following table in the form \ttt{F \eq G}, where \ttt{F} is rewritten to \ttt{G} (cp. \cite[sec.~4.1]{proof}).
+
+$I$ will be an index set for terms starting with 0. When we write $I' = E(I)$, we mean $I'$ is the greatest subset of $I$ where duplicate terms have been eliminated. By $\equiv$ we mean syntactic equivalence.
+%
+\begin{center}
+	\begin{longtable}{c|>{\centering}m{48mm}|>{\centering}m{61mm}}
+		annotation & description & equality \tabularnewline
+		\hline
+		& & \tabularnewline[-2mm]
+		\hl{\ttt{:expand}} & expands some $n$-ary \slib functions with syntactic sugar &
+			\AXC{\ttt{F'} is \ttt{F} unsugared}
+			\UIC{\ttt{F \eq F'}} \DisplayProof \tabularnewline[4mm]
+		\ttt{:expandDef} & expands a function defined in the input problem &
+			\AXC{\ttt{F'} is the definition of \ttt{F}}
+			\UIC{\ttt{F(t) \eq F'(t)}} \DisplayProof \tabularnewline[4mm]
+		\hl{\ttt{:trueNotFalse}} & Boolean equality with \true and \false is \false &
+			\AXC{\ex{j, k \in I}{\ttt{t}_j \equiv \true \land \ttt{t}_k \equiv \false}}
+			\UIC{\ttt{(=$_{i \in I}$ t$_i$) \eq \false}} \DisplayProof \tabularnewline[4mm]
+		\hl{\ttt{:constDiff}} & equality with distinct constants is \false &
+			\AXC{\ex{j, k \in I}{\ttt{t}_j, \ttt{t}_k \text{ are distinct constants}}}
+			\UIC{\ttt{(=$_{i \in I}$ t$_i$) \eq \false}} \DisplayProof \tabularnewline[4mm]
+		\hl{\ttt{:eqTrue}} & Boolean equality with \true is a conjunction &
+			\AXC{\ex{j \in I}{\ttt{t}_j \equiv \true \land I' = E(I) \setminus \{j\}}}
+			\UIC{\ttt{(=$_{i \in I}$ t$_i$) \eq (and$_{i' \in I'}$ t$_{i'}$)}} \DisplayProof \tabularnewline[4mm]
+		\hl{\ttt{:eqFalse}} & Boolean equality with \false is a negated disjunction &
+			\AXC{$\exists j \in I. \ttt{t}_j \equiv \false \land I' = E(I) \setminus \{j\}$}
+			\UIC{\ttt{(=$_{i  I}$ t$_i$) \eq (not (or$_{i' \in I'}$ t$_{i'}$))}} \DisplayProof \tabularnewline[4mm]
+		\hl{\ttt{:eqSame}} & equality with syntactically equivalent terms is \true &
+			\AXC{\fa{i, j}{\ttt{t}_i \equiv \ttt{t}_j}}
+			\UIC{\ttt{(=$_{i \in I}$ t$_i$) \eq \true}} \DisplayProof \tabularnewline[4mm]
+		\hl{\ttt{:eqSimp}} & duplicate elimination in equality &
+			\AXC{$I' = E(I)$}
+			\UIC{\ttt{(=$_{i \in I}$ t$_i$) \eq (=$_{i' \in I'}$ t$_{i}$)}} \DisplayProof \tabularnewline[4mm]
+		\hl{\ttt{:eqBinary}} & \multicolumn{2}{c}{\begin{tabular}{c}$n$-ary equality to \\ binary equality\end{tabular}
+			\hfill \ttt{(=$_{i \in I}$ t$_i$) \eq (not (or$_{0 < i \in I}$ (not (= t$_{i-1}$ t$_i$))))}} \tabularnewline[4mm]
+		\hl{\ttt{:distinctBool}} & Boolean distinct with more than two arguments is \false &
+			\AXC{$|I| > 2 \land \textit{sort}(\ttt{t}_0) = \text{Bool}$}
+			\UIC{\ttt{(distinct$_{i \in I}$ t$_i$) \eq \false}} \DisplayProof \tabularnewline[4mm]
+		\hl{\ttt{:distinctSame}} & distinct with syntactically equivalent terms is \false &
+			\AXC{\ex{j < k \in I}{\ttt{t}_j \equiv \ttt{t}_k}}
+			\UIC{\ttt{(distinct$_{i \in I}$ t$_i$) \eq \false}} \DisplayProof \tabularnewline[4mm]
+		\hl{\ttt{:distinctNeg}} & binary distinct of opposite formulae is \false &
+			\AXC{t$_i$ is the negation of t$_{1-i}$ for $i \in \{0, 1\}$}
+			\UIC{\ttt{(distinct t$_0$ t$_1$) \eq \true}} \DisplayProof \tabularnewline[4mm]
+		\hl{\ttt{:distinctTrue}} & binary distinct with \true is the other formula negated &
+			\AXC{t$_i \equiv$ \true for $i = 1$ or $i = 1$}
+			\UIC{\ttt{(distinct t$_0$ t$_1$) \eq (not t$_{1-i}$)}} \DisplayProof \tabularnewline[4mm]
+		\hl{\ttt{:distinctFalse}} & binary distinct with \false is the other formula &
+			\AXC{t$_i \equiv$ \false for $i = 1$ or $i = 1$}
+			\UIC{\ttt{(distinct t$_0$ t$_1$) \eq t$_{1-i}$}} \DisplayProof \tabularnewline[4mm]
+		\hl{\ttt{:distinctBinary}} & \multicolumn{2}{c}{\begin{tabular}{cr}
+			$n$-ary distinct to & \ttt{(distinct (not F) G) \eq (= (not (not F)) G)} \\
+			binary inequality & \hfill else \hfill \ttt{(distinct F G) \eq (= F (not G))} \hfill else \hfill \\
+			(precedences!) & \ttt{(distinct$_{i \in I}$ t$_i$) \eq (not (or$_{i < j \in I}$ (= t$_i$ t$_j$)))}
+			\end{tabular}} \tabularnewline[6mm]
+		\hl{\ttt{:notSimp}} & negation of Boolean constants and double negation &
+			\AX$(\ttt{F}, \ttt{F'}) \in \{\fCenter (\true, \false),$
+				\noLine
+				\UI$\hspace*{12mm} (\fCenter \false, \true), (\ttt{(not G)}, \ttt{G})\}$
+			\UI$\fCenter\ttt{\ttt{(not F)} \eq \ttt{F'}}$ \DisplayProof \tabularnewline[8mm]
+		\hl{\ttt{:orSimp}} & duplicate and falsity elimination in disjunction (possibly resulting in an atom) &
+			\AXC{$I' = E(I) \land \big((|I'| = 1 \land \ttt{F} \equiv \ttt{t}_0)$}
+			\noLine
+			\UIC{$\lor\, (|I'| > 1 \land \ttt{F} \equiv \ttt{(or$_{i' \in I'}$ t$_{i'}$)})\big)$}
+			\UIC{\ttt{(or$_{i \in I}$ t$_i$) \eq \ttt{F}}} \DisplayProof \tabularnewline[8mm]
+		\hl{\ttt{:orTaut}} & disjunction with \true or \ttt{P} and \ttt{(not P)} is \true &
+			\AXC{(\ex{j \in I}{\ttt{t}_j \equiv \true})}
+			\noLine
+			\UIC{$\lor$ (\ex{j, k \in I}{\ttt{t}_j \equiv \ttt{(not t$_k$)}})}
+			\UIC{\ttt{(or$_{i \in I}$ t$_i$) \eq \true}} \DisplayProof \tabularnewline[8mm]
+		\ttt{:iteTrue} & if-then-else with condition \true & \ttt{(ite \true t$_1$ t$_2$) \eq t$_1$} \tabularnewline[4mm]
+		\ttt{:iteFalse} & if-then-else with condition \false & \ttt{(ite \false t$_1$ t$_2$) \eq t$_2$} \tabularnewline[4mm]
+		\ttt{:iteSame} & if-then-else with both cases syntactically equivalent & \ttt{(ite t$_0$ t$_1$ t$_1$) \eq t$_1$} \tabularnewline[4mm]
+		\ttt{:iteBool1} & if-then-else with Boolean constant cases 1 & \ttt{(ite t$_0$ \true \false) \eq t$_0$} \tabularnewline[4mm]
+		\ttt{:iteBool2} & if-then-else with Boolean constant cases 2 & \ttt{(ite t$_0$ \false \true) \eq (not t$_0$)} \tabularnewline[4mm]
+		\ttt{:iteBool3} & if-then-else with Boolean constant case 3 & \ttt{(ite t$_0$ \true t$_2$) \eq (or t$_0$ t$_2$)} \tabularnewline[4mm]
+		\ttt{:iteBool4} & if-then-else with Boolean constant case 4 &
+		\AX$\ttt{(ite t}_0 \fCenter \ \ttt{\false t}_2 \ttt{)} \eq$
+			\noLine
+			\UI$\fCenter \ttt{(not (or t}_0 \ttt{ (not t}_2\ttt{)))}$ \DisplayProof \tabularnewline[4mm]
+		\ttt{:iteBool5} & if-then-else with Boolean constant case 5 &
+		\AX$\ttt{(ite t}_0 \ \ttt{t}_1 \ \ttt{\true)} \fCenter \ \eq$
+			\noLine
+			\UI$\fCenter\ttt{(or (not t}_0\ttt{) t}_1\ttt{)}$ \DisplayProof \tabularnewline[4mm]
+		\ttt{:iteBool6} & if-then-else with Boolean constant case 6 &
+		\AX$\ttt{(ite t}_0 \fCenter \ \ttt{t}_1 \ \ttt{\false)} \eq$
+			\noLine
+			\UI$\ttt{(not}\fCenter \ttt{ (or (not t}_0\ttt{) (not t}_1\ttt{)))}$ \DisplayProof \tabularnewline[4mm]
+		\hl{\ttt{:andToOr}} & \multicolumn{2}{c}{\begin{tabular}{c}conjunction to \\ negated disjunction\end{tabular}
+			\hfill \ttt{(and$_{i \in I}$ t$_i$) \eq (not (or$_{i \in I}$ (not t$_i$)))}} \tabularnewline[4mm]
+		\ttt{:xorToDistinct} & exclusive-or to distinct & \ttt{(xor t$_1$ t$_2$) \eq (distinct t$_1$ t$_2$)} \tabularnewline[4mm]
+		\hl{\ttt{:impToOr}} & implication to disjunction & \ttt{(=>$_{i \in I}$ t$_i$ t) \eq (or$_{i \in I}$ t (not t$_i$))} \tabularnewline[4mm]
+		\ttt{:strip} & removing annotations & \ttt{(! F :annotations) \eq F} \tabularnewline[4mm]
+		\ttt{:canonicalSum} & bring an arithmetic term to canonical form &
+			\AXC{\ttt{t'} $\equiv \cs{\ttt{t}}$}
+			\UIC{\ttt{t \eq t'}} \DisplayProof \tabularnewline[4mm]
+		\ttt{:leqToLeq0} & bring a less-than term to canonical form &
+			\AXC{\ttt{t} $\equiv \cs{\ttt{t}_0 - \ttt{t}_1}$}
+			\UIC{\ttt{(<= t$_0$ t$_1$) \eq (<= t 0)}} \DisplayProof \tabularnewline[4mm]
+		\ttt{:ltToLeq0} & elimination of less-than to canonical form &
+			\AXC{\ttt{t} $\equiv \cs{\ttt{t}_1 - \ttt{t}_0}$}
+			\UIC{\ttt{(< t$_0$ t$_1$) \eq (not (<= t 0))}} \DisplayProof \tabularnewline[4mm]
+		\ttt{:geqToLeq0} & elimination of greater-equal to canonical forml &
+			\AXC{\ttt{t} $\equiv \cs{\ttt{t}_1 - \ttt{t}_0}$}
+			\UIC{\ttt{(>= t$_0$ t$_1$) \eq (<= t 0)}} \DisplayProof \tabularnewline[4mm]
+		\ttt{:gtToLeq0} & elimination of greater-than to canonical form &
+			\AXC{\ttt{t} $\equiv \cs{\ttt{t}_0 - \ttt{t}_1}$}
+			\UIC{\ttt{(> t$_0$ t$_1$) \eq (not (<= t 0))}} \DisplayProof \tabularnewline[4mm]
+		\ttt{:leqTrue} & true comparison with a constant &
+			\AXC{$c \leq 0$}
+			\UIC{\ttt{(<= c 0) \eq \true}} \DisplayProof \tabularnewline[4mm]
+		\ttt{:leqFalse} & false comparison with a constant &
+			\AXC{$c \not\leq 0$}
+			\UIC{\ttt{(<= c 0) \eq \false}} \DisplayProof \tabularnewline[4mm]
+		\ttt{:desugar} & mixed arithmetic type inference &
+			\AXC{\ttt{F} is a mixed term $\land$ \ttt{x} is an integer $\land$}
+			\noLine
+			\UIC{$\ttt{y} \equiv \begin{cases} x.0 & x \text{ is a constant} \\ \ttt{\torealx(x)} & \text{else} \end{cases}$}
+			\UIC{\ttt{F(x) \eq F(y)}} \DisplayProof \tabularnewline[8mm]
+		\hl{\ttt{:divisible}} & divisibility: calculate result for constants; representation with \ttt{div} &
+			\AXC{\ttt{F} $\equiv \left\{ \begin{tabular}{ll}\true \hspace*{1cm} & $n = 1$ \\ \true & \ttt{t} $\equiv c \land n \mid c$ \\ \false & \ttt{t} $\equiv c \land n \nmid c$ \\ \multicolumn{2}{l}{\ttt{(= t (* n (div t n)))}} \\ & else \end{tabular}\right.$}
+			\UIC{\ttt{((\_ divisible n) t) \eq F}} \DisplayProof \tabularnewline[16mm]
+		\ttt{:modulo} & modulo representation with \ttt{div} & \ttt{(mod x y) \eq $[x - y * (\smtdiv{x}{y})]$} \tabularnewline[4mm]
+		\ttt{:modulo1} & modulo with 1 is 0 & \ttt{(mod x 1) \eq 0} \tabularnewline[4mm]
+		\ttt{:modulo-1} & modulo with $-1$ is 0 & \ttt{(mod x (- 1)) \eq 0} \tabularnewline[4mm]
+		\ttt{:moduloConst} & modulo result of two constants &
+			\AXC{$\ttt{d} \equiv c_1 \mod c_2$}
+			\UIC{\ttt{(mod c$_1$ c$_2$ \eq d)}} \DisplayProof \tabularnewline[4mm]
+		\ttt{:div1} & \ttt{div} with 1 stays the same & \ttt{(div c 1) \eq c} \tabularnewline[4mm]
+		\hl{\ttt{:div-1}} & \ttt{div} with $-1$ &
+			\AXC{$\ttt{d} \equiv [-c]$}
+			\UIC{\ttt{(div c (- 1)) \eq d}} \DisplayProof \tabularnewline[4mm]
+		\ttt{:divConst} & \ttt{div} result of two constants &
+			\AXC{$\ttt{d} \equiv \smtdiv{\ttt{c}_1}{\ttt{c}_2}$}
+			\UIC{\ttt{div c$_1$ c$_2$ \eq d}} \DisplayProof \tabularnewline[4mm]
+		\hl{\ttt{:toInt}} & \toint result of a constant &
+			\AXC{$\ttt{d} \equiv \lfloor \ttt{c} \rfloor$}
+			\UIC{\ttt{(\toint c) \eq d}} \DisplayProof \tabularnewline[4mm]
+		\hl{\ttt{:toReal}} & \toreal result of a constant & \ttt{(\toreal c) \eq c.0} \tabularnewline[4mm]
+		\ttt{:flatten} & flattening of a nested disjunction & \ttt{(or $\dots$ (or $\dots$) $\dots$) \eq (or $\dots$)}
+	\end{longtable}
+\end{center}
+
+All the \hl{highlighted} rewrites need a closer look. Unfortunately, these are most of the cases. But first we explain why the other cases are trivial:
+
+The \ttt{:expand} rule is automatically covered by the function translation, since \isa does not support the syntactic sugar of \slib \ -- so there is no need to add the rewrite -- except the comparison predicates still need this rewrite. Similarly for \ttt{:strip}: It removes the user-defined annotations from input terms, which are not translated to \isa. To cover these two cases, we had to add a more complex control logic. The rewrite equality proof nodes (\ttt{@rewrite} and \ttt{@intern}) can only appear inside a substitution (\ttt{@eq}), but can also be abbreviated by the \ttt{Letter}. This is why we remember the whole proof node (that is, including the annotation), so we know which annotation a rewrite equality had when it was bound to a \emph{let} variable. The overhead on the \jav side is only to unpack the equality from its annotation. Note that it is still reasonable to abbreviate rewrite equality proof nodes, since they would have to be justified by an individual proof each time, which is bad for both translating and proving.
+
+The \ttt{:expandDef} rule expands a function definition that is not pre-defined in \slib. This is totally equivalent in the \isa translation (by the \ttt{unfold} command).
+
+The if-then-else (\ttt{:ite*}) and \ttt{:xorToDistinct} rules are obviously independent of the instantiations.
+
+The \ttt{:canonicalSum} rule needs calculations and reordering of the summands, so we totally rely on the simplifier here. Similarly, the four rules for bringing to canonical form (\ttt{:*ToLeq0}) are started by a rule applying the pattern, but then again the simplifier adds the missing steps of the canonical form. Furthermore, there are some rules that just do a calculation: \ttt{:leqTrue}, \ttt{:leqFalse}, \ttt{:moduloConst}, \ttt{:divConst}, and \ttt{:toInt}. This is also left to the simplifier (note that we have to unfold the definitions for \ttt{mod} and \ttt{div} first).
+
+The \ttt{:desugar} rule brings integer terms to real terms when used inside mixed arithmetical terms. It is quite complicated. Not only does it apply changes to the whole term, but there are also two different changes (converting constants by adding a \ttt{.0} and changing the sort vs. adding a \torealx). We let the simplifier handle this. Note that we tried to limit the arguments with a \ttt{(simp only:~$\dots$)}, but failed: There are too many cases (for instance, 0 and 1 need a special treatment, the rules are dependant on the outer function symbol (\ttt{=}, \ttt{<}, etc.), and so on).
+
+The \ttt{:toReal} rule is just a calculation, so we let the simplifier handle this (adding the respective rule). The reason why the rule itself is not enough is that type conversions are not totally trivial in \isa. This could be achieved by transitivity, but then 0, 1, and negative numbers needed extra rules afterwards. Since we are dealing with constants anyway, there should be no remarkable slowdown compared to a more complicated hand-crafted conversion.
+%
+\subsubsection*{Translation}
+For each \hl{highlighted} rule in the table we explain the special translation:
+
+\smallskip
+
+The \ttt{:expand} rule for comparison predicates with more than three parameters is translated in a straight-forward way, so we only have to detect this case.
+
+The \ttt{:trueNotFalse} rule is used for showing falsity of an equality chain with both \true and \false. We search for the first occurring Boolean constant and then for the first occurrence of the opposite constant. The rule is proven with the \emph{intro} method: The first constant will be propagated to the right until the constants will meet and the proof be finished. There are sixteen possible cases distinguished (which is not necessary, but gives a faster \isa proof).
+
+The \ttt{:constDiff} rule is similar, but used for arithmetic constants. Since the annotation does not say anything about the constants, we just search for the first two \ttt{ConstantTerm}s that occur. if the equality only has two terms, we do not have to search and give a shorter proof. Note that showing inequality of the constants needs the simplifier.
+
+The \ttt{:eqTrue} rule converts a Boolean equality with \true into a conjunction. Any occurrence of \true is removed as well as any duplicate term. Without the duplicate elimination this could also be achieved by a direct proof, but since this is even harder than \ttt{:eqSimp} (see below), we also use the simplifier in a pattern proof.
+
+The \ttt{:eqTrue} rule converts a Boolean equality with \false into a negated disjunction. It is very similar to the \ttt{:eqTrue} rule, so (almost) the same translation is used.
+
+The \ttt{:eqSame} rule is used to justify an equality chain of syntactically equal terms. The only check on the \jav side is whether the equality is binary, ternary, or $n$-ary, since the rules rely on this.
+
+The \ttt{:eqSimp} rule shortens an equality by dropping duplicates. Since the duplicates can be anywhere, we rely on the simplifier here. To prevent rewrites in the possibly arbitrarily complicated sub-terms, we do this in a pattern proof.
+
+The \ttt{:eqBinary} rule brings an $n$-ary equality to a conjunction of binary equalities. The conjuncts are already put into normal form. There is nothing to do here, only the proof is not trivial.
+
+The \ttt{:distinctBool} rule says that there are at most two distinct Boolean terms. The translation just shows the incorrect distinctness for the first three terms. So we have the case that there are exactly three terms and the case with more terms.
+
+The \ttt{:distinctSame} rule justifies falsity of distinctness of syntactically equivalent terms. We let the \emph{intro} method do the search, so the translation itself is trivial.
+
+The \ttt{:distinctNeg} rule is a binary \ttt{distinct}, where one term is the negation of the other one. We have to distinguish between Boolean constants (which are negated directly) and where the negation is situated to have a faster proof.
+
+The \ttt{:distinctTrue} rule expresses that distinctness of a Boolean term and \true is the negated term. We only check the order of the arguments.
+
+The \ttt{:distinctFalse} rule expresses that distinctness of a Boolean term and \false is the term itself. We only check the order of the arguments.
+
+The \ttt{:distinctBinary} rule brings any \ttt{distinct} term for which no other rewrite is applicable to normal form. That is, to binary negated equalities. Note that even binary applications are rewritten, so \ttt{distinct} does not occur anymore afterwards. But binary applications are already translated correctly by chance, so if we catch this case we ignore the whole rewrite step -- except the terms are Boolean, in this case the rule differs.
+
+The \ttt{:notSimp} rule removes negations from Boolean constants and double negations. So we have to distinguish three cases (negation of \true, \false, or negated terms).
+
+The \ttt{:orSimp} rule removes duplicates and falsity from disjunctions. We tried a direct version (and it is indeed possible, but with a bad worst case complexity), but there were too many cases to consider, so in the end we decided to use a pattern proof, which is proven by the simplifier.
+
+The \ttt{:orTaut} rule replaces disjunctions with \true or a Boolean term both positive and negated by \true. We search for the first occurrence of \true or a term in its second occurrence with different polarity. Whatever is found first determines the further proof.
+
+The \ttt{:andToOr} rule transforms conjunctions to the normal form, which is obvious by an iterated de Morgan's rule.
+
+The \ttt{:impToOr} rule brings implications to normal form. We need a case distinction whether the implication has two or more arguments.
+
+The \ttt{:divisible} rule contains four different cases, so we have to determine which one we need.
+
+The \ttt{:div-1} rule multiplies a term by $-1$, so we have to pay attention to the canonical form.
+
+The \ttt{:toInt} rule is just a calculation, but the proof is not trivial.
+
+The \ttt{:flatten} rule flattens a nested disjunction to a one-level disjunction. We just drop the first disjuncts if they are equal. Else the left one must be a disjunction, so it is flattened.
+%
+\subsubsection*{Proof}
+First we present the proofs for the trivial rules.
+
+\begin{pt}{ll}
+	\pl{HOL.if\_True & (if True then x else y) = x}
+	\pl{HOL.if\_False & (if False then x else y) = y}
+	\pl{HOL.if\_cancel & (if c then x else x) = x}
+	\pl{rw\_iteBool1 & (if c then True else False) = c}
+	\pl{rw\_iteBool2 & (if c then False else True) = (\nega c)}
+	\pl{rw\_iteBool3 & (if c then True else e) = (c | e)}
+	\pl{rw\_iteBool4 & (if c then False else e) = (\nega (c | (\nega e)))}
+	\pl{rw\_iteBool5 & (if c then t else True) = ((\nega c) | t)}
+	\pl{rw\_iteBool6 & (if c then t else False) = (\nega ((\nega c) | (\nega t)))}
+	\pl{rw\_xorToDistinct & (p xor q) = (p \negat= q)}
+	\pl{rw\_leqToLeq0 & ((x::'a::linordered\_idom) - y = z) ==>}
+		\pl{& \ind (x <= y) = (z <= 0)}
+	\pl{rw\_ltToLeq0 & ((y::'a::linordered\_idom) - x = z) ==>}
+		\pl{& \ind (x < y) = (\nega (z <= 0))}
+	\pl{rw\_geqToLeq0 & ((y::'a::linordered\_idom) - x = z) ==>}
+		\pl{& \ind (x >= y) = (z <= 0)}
+	\pl{rw\_gtToLeq0 & ((x::'a::linordered\_idom) - y = z) ==>}
+		\pl{& \ind (x > y) = (\nega (z <= 0))}
+	\pl{rw\_modulo & y \negat= 0 ==> x SMTmod y = - y * (x SMTdiv y) + x}
+	\pl{rw\_modulo1 & x SMTmod 1 = 0}
+	\pl{rw\_moduloM1 & x SMTmod - 1 = 0}
+	\pl{rw\_div1 & x SMTdiv 1 = x}
+	\pll{THF\_Arith.int\_to\_real\_def & \toreal (n::int) = real n}
+\end{pt}
+%
+\begin{rt}
+	\rl{\ttt{:iteTrue}}{(rule HOL.if\_True)}
+	\rl{\ttt{:iteFalse}}{(rule HOL.if\_False)}
+	\rl{\ttt{:iteSame}}{(rule HOL.if\_cancel)}
+	\rl{\ttt{:iteBool1}}{(rule rw\_iteBool1)}
+	\rl{\ttt{:iteBool2}}{(rule rw\_iteBool2)}
+	\rl{\ttt{:iteBool3}}{(rule rw\_iteBool3)}
+	\rl{\ttt{:iteBool4}}{(rule rw\_iteBool4)}
+	\rl{\ttt{:iteBool5}}{(rule rw\_iteBool5)}
+	\rl{\ttt{:iteBool6}}{(rule rw\_iteBool6)}
+	\rl{\ttt{:xorToDistinct}}{(rule rw\_xorToDistinct)}
+	\rl{\ttt{:leqToLeq0}}{(rule rw\_leqToLeq0, simp)}
+	\rl{\ttt{:ltToLeq0}}{(rule rw\_ltToLeq0, simp)}
+	\rl{\ttt{:geqToLeq0}}{(rule rw\_geqToLeq0, simp)}
+	\rl{\ttt{:gtToLeq0}}{(rule rw\_gtToLeq0, simp)}
+	\rl{\ttt{:leqTrue}}{simp}
+	\rl{\ttt{:leqFalse}}{simp}
+	\rl{\ttt{:modulo}}{(rule rw\_modulo, simp)}
+	\rl{\ttt{:modulo1}}{(rule rw\_modulo1)}
+	\rl{\ttt{:modulo-1}}{(rule rw\_moduloM1)}
+	\rl{\ttt{:moduloConst}}{(unfold SMTmod\_def, simp)}
+	\rl{\ttt{:div1}}{(rule rw\_div1)}
+	\rl{\ttt{:divConst}}{(unfold SMTdiv\_def, simp)}
+	\rll{\ttt{:toReal}}{(simp only:~THF\_Arith.int\_to\_real\_def)}
+\end{rt}
+
+Now we present the more complicated proofs. Since there are so many different rewrite rules, we present them separately.
+
+\smallskip
+
+The \ttt{:expand} is only translated for comparison predicates, since they are concatenated with additional conjunctions, but unfortunately with parentheses different from \isa, so we have to unfold the conjunction by the associativity law. This is done with the \emph{intro} method and finished by reflexivity.
+%
+\begin{pt}{ll}
+	\pl{rw\_expand & p = (q \& r \& s) ==> p = ((q \& r) \& s)}
+	\pll{HOL.refl & t = t}
+\end{pt}
+%
+\begin{rt}
+	\rll{comparison predicates case}{(intro rw\_expand, rule HOL.refl)}
+\end{rt}
+
+For the \ttt{:trueNotFalse} rule the lemma \ttt{rw\_tnf\_elim} is added as the last \emph{intro} argument whenever there are terms previous to the first Boolean constant to drop them. We have to consider which constant comes first, indicated by a letter (\ttt{T} for \true and \ttt{F} for \false). We insert \ttt{X} here for an abstract view.
+
+Then we have to discriminate whether the two constants are neighboring or not. In the first case, we use \ttt{rw\_tnf\_nbX} (possibly with the \ttt{\_last} suffix if there are no terms afterwards). In the second case, we have to propagate the first constant to the second one. If the second constant is the last term, we use \ttt{rw\_tnf\_propX\_last} for finishing, else we use \ttt{rw\_tnf\_nbX} again, because then the propagation will bring the constants next to each other.
+%
+\begin{pt}{ll}
+	\pl{rw\_tnf\_elim & q = False ==> (p \& q) = False}
+	\pl{rw\_tnf\_propT\_last & ((True = p) \& (p = False)) = False}
+	\pl{rw\_tnf\_propT & ((True = q) \& r) = False ==>}
+		\pl{& \ind (True = p) \& (p = q) \& r) = False}
+	\pl{rw\_tnf\_nbT & ((True = False) \& p) = False}
+	\pl{rw\_tnf\_nbT\_last & (True = False) = False}
+	\pl{rw\_tnf\_propF\_last & ((False = p) \& (p = True)) = False}
+	\pl{rw\_tnf\_propF & ((False = q) \& r) = False ==>}
+		\pl{& \ind ((False = p) \& (p = q) \& r) = False}
+	\pl{rw\_tnf\_nbF & ((False = True) \& p) = False}
+	\pll{rw\_tnf\_nbF\_last & (False = True) = False}
+\end{pt}
+
+All in all we have two (neighboring or not) times two (last term or not) times two (elimination or not) times two (which term comes first) possible cases. We give examples for the first four cases without elimination and with \true as the first constant, but also one example with \false as first constant and previous terms.
+%
+\begin{rt}
+	\rl{\true-first \& neighbors \& last case}{(intro rw\_tnf\_nbT\_last)}
+	\rl{\true-first \& neighbors \& not-last case}{(intro rw\_tnf\_nbT)}
+	\rl{\true-first \& not-neighbors \& last case}{(intro rw\_tnf\_propT\_last rw\_tnf\_propT)}
+	\rl{\true-first \& not-neighbors \& not-last case}{(intro rw\_tnf\_nbT rw\_tnf\_propT)}
+	\hline
+	\rll{\false-first \& neighbors \& last \& not-first case}{(intro rw\_tnf\_nbF\_last rw\_tnf\_elim)}
+\end{rt}
+
+The \ttt{:constDiff} rule has a short-cut proof for a binary equality (note that this is not necessary, the other proof would still work with just one more trivial proof step).
+
+Else the \ttt{rw\_constDiff\_start} lemma is given the constants as arguments and the simplifier shows their inequality. This brings the goal to a form helpful for the other rules. Then the propagation starts (lemma \ttt{rw\_constDiff\_step}).
+
+If the first constant is not the first term, we have to add an elimination lemma to drop the first terms (\ttt{rw\_constDiff\_elim}).
+
+If the second constant is the last term, the last state will be \ttt{c = d ==> c = d}, which will be automatically proven by the \emph{by} command. Else we have to add a lemma (\ttt{rw\_constDiff\_fin}) that stops the propagation when the second term was found.
+%
+\begin{pt}{ll}
+	\pl{rw\_constDiff\_bin & c \negat= d ==> (c = d) = False}
+	\pl{rw\_constDiff\_start & [|c \negat= d; p ==> (c = d)|] ==> p = False}
+	\pl{rw\_constDiff\_elim & [|(p \& q); q ==> c = d|] ==> (c = d)}
+	\pl{rw\_constDiff\_step & [|((c = a) \& p); p ==> a = d|] ==> (c = d)}
+	\pll{rw\_constDiff\_fin & ((c = d) \& p) ==> (c = d)}
+\end{pt}
+
+All in all we have two (neighboring or not) times two (last term or not) times two (elimination or not) possible cases (one of the being the binary equality). We give some examples, only the \emph{elim} arguments are adjusted. Let $c, d$ be the distinct constants we found.
+%
+\begin{rt}
+	\rl{binary equality case}{(rule rw\_constDiff\_bin, simp)}
+	\rl{first \& last \&}{(rule rw\_constDiff\_start [where c = "$c$" and d = "$d$"], simp,}
+		\rl{\ind not-neighbors case}{\ind elim rw\_constDiff\_step)}
+	\rl{first \& not-last case}{(rule rw\_constDiff\_start [where c = "$c$" and d = "$d$"], simp,}
+		\rl{\ind neighbors case}{\ind elim rw\_constDiff\_fin)}
+	\rl{not-first \& last case}{(rule rw\_constDiff\_start [where c = "$c$" and d = "$d$"], simp,}
+		\rl{\ind neighbors case}{\ind elim rw\_constDiff\_elim)}
+	\rl{not-first \& not-last \&}{(rule rw\_constDiff\_start [where c = "$c$" and d = "$d$"], simp,}
+		\rll{\ind not-neighbors case}{\ind elim rw\_constDiff\_fin rw\_constDiff\_step rw\_constDiff\_elim)}
+\end{rt}
+
+The \ttt{:eqTrue} rule translates binary equalities directly, since there are only two cases. For bigger equalities a pattern proof is added, which is solved by the simplifier. There are many arguments necessary in some cases, and since finding the minimal count is too hard, we do not discriminate any further here. Note that equalities are already translated to a conjunction of binary equalities. The idea is to find the conjunct(s) with \mbox{\ttt{True = p}} (or the symmetric case) and replace this by \ttt{p}. Then a neighbored equality is of the form \mbox{\ttt{p = q}} and together they can hence be simplified to \mbox{\ttt{p \& q}}. This way the equalities are eliminated and the result is a conjunction with possible duplicates. Those are eliminated in an optional (indicated by \ttt{?}) elimination (again by the simplifier).
+%
+\begin{pt}{ll}
+	\pl{rw\_eqTrue\_merge\_left & (p \& (p = q) \& r) = (p \& q \& r)}
+	\pl{rw\_eqTrue\_merge\_left\_bin & (p \& (p = q)) = (p \& q)}
+	\pl{rw\_eqTrue\_merge\_right & ((p = q) \& q \& r) = (p \& q \& r)}
+	\pl{rw\_eqTrue\_merge\_right\_bin & ((p = q) \& q) = (p \& q)}
+	\pl{HOL.simp\_thms(11) & (True = P) = P}
+	\pl{HOL.eq\_True & (P = True) = P}
+	\pl{HOL.simp\_thms(21) & (P \& True) = P}
+	\pl{HOL.simp\_thms(22) & (True \& P) = P}
+	\pl{HOL.conj\_absorb & (A \& A) = A}
+	\pl{HOL.conj\_left\_absorb & (A \& A \& B) = (A \& B)}
+	\pl{HOL.conj\_commute & (P \& Q) = (Q \& P)}
+	\pll{HOL.conj\_left\_commute & (P \& Q \& R) = (Q \& P \& R)}
+\end{pt}
+%
+\begin{rt}
+	\rl{\ttt{(\true = p) = p}}{(rule HOL.simp\_thms(11))}
+	\rl{\ttt{(p = \true) = p}}{(rule HOL.eq\_True)}
+	\rl{singleton conjunction}{(simp only:~HOL.simp\_thms(11) HOL.eq\_True HOL.simp\_thms(21)}
+		\rl{}{\ind HOL.simp\_thms(22),}
+		\rl{}{(simp only:~HOL.conj\_absorb HOL.conj\_left\_absorb}
+		\rl{}{\ind HOL.conj\_commute HOL.conj\_left\_commute) ?)}
+	\rl{$n$-ary equality}{(simp only:~HOL.simp\_thms(11) HOL.eq\_True HOL.simp\_thms(21)}
+		\rl{}{\ind HOL.simp\_thms(22) rw\_eqTrue\_merge\_left}
+		\rl{}{\ind rw\_eqTrue\_merge\_right rw\_eqTrue\_merge\_left\_bin}
+		\rl{}{\ind rw\_eqTrue\_merge\_right\_bin,}
+		\rl{}{(simp only:~HOL.conj\_absorb HOL.conj\_left\_absorb}
+		\rll{}{\ind HOL.conj\_commute HOL.conj\_left\_commute) ?)}
+\end{rt}
+
+The \ttt{:eqFalse} rule is proven almost the same way as the \ttt{:eqTrue} rule with two exceptions: Firstly, we need reflexivity to get rid of \mbox{\ttt{\false = \false}} conjuncts. We also tried a rule that immediately removes the whole conjunct, but the simplifier does not use it. Secondly, in the end the result is \mbox{\ttt{(\nega p$_1$ \& $\dots$ \& \nega p$_n$)}}\ttt{ = }\mbox{\ttt{\nega (p$_1$ | $\dots$ | \nega p$_n$)}}, which is solved by another run with the \emph{intro} method.
+%
+\begin{pt}{ll}
+	\pl{rw\_eqFalse\_merge\_left & ((\nega p) \& (p = q) \& r) = ((\nega p) \& (\nega q) \& r)}
+	\pl{rw\_eqFalse\_merge\_left\_bin & ((\nega p) \& (p = q)) = ((\nega p) \& (\nega q))}
+	\pl{rw\_eqFalse\_merge\_right & ((p = q) \& (\nega q) \& r) = ((\nega p) \& (\nega q) \& r)}
+	\pl{rw\_eqFalse\_merge\_right\_bin & ((p = q) \& (\nega q)) = ((\nega p) \& (\nega q))}
+	\pl{rw\_eqFalse\_deMorgan & q = (\nega r) ==> ((\nega p) \& q) = (\nega (p | r))}
+	\pl{HOL.refl & t = t}
+	\pl{HOL.simp\_thms(13) & (False = P) = (\nega P)}
+	\pl{HOL.simp\_thms(14) & (P = False) = (\nega P)}
+	\pl{HOL.simp\_thms(21) & (P \& True) = P}
+	\pl{HOL.simp\_thms(22) & (True \& P) = P}
+	\pl{HOL.conj\_absorb & (A \& A) = A}
+	\pl{HOL.conj\_left\_absorb & (A \& A \& B) = (A \& B)}
+	\pl{HOL.conj\_commute & (P \& Q) = (Q \& P)}
+	\pll{HOL.conj\_left\_commute & (P \& Q \& R) = (Q \& P \& R)}
+\end{pt}
+%
+\begin{rt}
+	\rl{\ttt{(\false = p) = p}}{(rule HOL.simp\_thms(13))}
+	\rl{\ttt{(p = \false) = p}}{(rule HOL.simp\_thms(14))}
+	\rl{singleton disjunction}{(simp only:~HOL.refl HOL.simp\_thms(13) HOL.simp\_thms(14)}
+		\rl{}{\ind HOL.simp\_thms(21) HOL.simp\_thms(22),}
+		\rl{}{(simp only:~HOL.conj\_absorb HOL.conj\_left\_absorb}
+		\rl{}{\ind HOL.conj\_commute HOL.conj\_left\_commute) ?)}
+	\rl{$n$-ary equality}{(simp only:~HOL.refl HOL.simp\_thms(13) HOL.simp\_thms(14)}
+		\rl{}{\ind HOL.simp\_thms(21) HOL.simp\_thms(22) rw\_eqFalse\_merge\_left}
+		\rl{}{\ind rw\_eqFalse\_merge\_right rw\_eqFalse\_merge\_left\_bin}
+		\rl{}{\ind rw\_eqFalse\_merge\_right\_bin,}
+		\rl{}{(simp only:~HOL.conj\_absorb HOL.conj\_left\_absorb}
+		\rl{}{\ind HOL.conj\_commute HOL.conj\_left\_commute) ?),}
+		\rll{}{(intro rw\_eqFalse\_deMorgan HOL.refl))}
+\end{rt}
+
+The \ttt{:eqSame} rule is rather easy. If the equality is binary, we use a reflexivity variation (\ttt{HOL.simp\_thms(6)}). If it is ternary, we use a special rule (\ttt{rw\_eqSame\_bin}). Else we have to add an \emph{intro} to run through the equality chain with the third rule as argument. This naturally stops with a ternary equality chain, so we finish the proof with this case again.
+
+\begin{pt}{ll}
+	\pl{HOL.simp\_thms(6) & (x = x) = True}
+	\pl{rw\_eqSame\_bin & ((a = a) \& (a = a)) = True}
+	\pll{rw\_eqSame & (p \& q) = True ==> (p \& p \& q) = True}
+\end{pt}
+%
+\begin{rt}
+	\rl{binary case}{(rule HOL.simp\_thms(6))}
+	\rl{ternary case}{(rule rw\_eqSame\_bin)}
+	\rll{$n$-ary case}{(intro rw\_eqSame, rule rw\_eqSame\_bin)}
+\end{rt}
+
+The \ttt{:eqSimp} rule is translated by using the simplifier. The idea is that the equalities are moved until they are neighboring and then one of them is eliminated. All the rules are built-in.
+%
+\begin{pt}{ll}
+	\pl{HOL.conj\_absorb & (A \& A) = A}
+	\pl{HOL.conj\_left\_absorb & (A \& A \& B) = (A \& B)}
+	\pl{HOL.conj\_commute & (P \& Q) = (Q \& P)}
+	\pl{HOL.conj\_left\_commute & (P \& Q \& R) = (Q \& P \& R)}
+	\pll{HOL.eq\_commute & (a = b) = (b = a)}
+\end{pt}
+%
+\begin{rt}
+	\rl{\ttt{(simp only:}}{HOL.conj\_absorb HOL.conj\_left\_commute HOL.eq\_commute}
+	\rll{}{\ind HOL.conj\_left\_absorb HOL.conj\_commute)}
+\end{rt}
+
+The \ttt{:eqBinary} rule uses the \emph{intro} rule to step-wise eliminate the first term on both sides. Remember that an equality is translated to a conjunction chain, so we have a conjunction on the left-hand side and a negated disjunction of the negated conjuncts on the right-hand side. In the end a double negation has to be eliminated. Note that the equality always contains more than two terms, so there are no special cases here.
+%
+\begin{pt}{ll}
+	\pl{rw\_eqBinary & p = (\nega q) ==> ((a = b) \& p) = (\nega ((a \negat= b) | q))}
+	\pll{HOL.not\_not & (\nega \nega P) = P}
+\end{pt}
+%
+\begin{rt}
+	\rll{only case}{(intro rw\_eqBinary, rule not\_not [symmetric])}
+\end{rt}
+
+The \ttt{:distinctBool} rule considers two possibilities: There are exactly three terms or there are more terms. The first case can be directly translated. The other case needs the \emph{intro} method, since the \ttt{distinct} translation first adds binary inequality of the first term and all the other terms. To have the contradiction, we have to eliminate the conjuncts up until we have the inequality of the second and the third term.
+%
+\begin{pt}{ll}
+	\pl{rw\_distinctBool\_ter & (((p::bool) \negat= q) \& (p \negat= r) \& (q \negat= r)) = False}
+	\pl{rw\_distinctBool\_start & s --> ((q::bool) \negat= r) ==>}
+		\pl{& \ind ((p \negat= q) \& (p \negat= r) \& s) = False}
+	\pl{rw\_distinctBool\_fin & ((p \negat= q) \& r) --> (p \negat= q)}
+	\pll{rw\_distinctBool\_elim & q --> (r \negat= s) ==> (p \& q) --> (r \negat= s)}
+\end{pt}
+%
+\begin{rt}
+	\rl{ternary case}{(rule rw\_distinctBool\_ter)}
+	\rl{$n$-ary case}{(rule rw\_distinctBool\_start,}
+	\rll{}{\ind intro rw\_distinctBool\_fin rw\_distinctBool\_elim)}
+\end{rt}
+
+The \ttt{:distinctSame} rule produces a big conjunction, where at least once the first conjunct is \ttt{a \negat= a}, which can be used to finish the proof. The \emph{intro} method iteratively removes the first conjunct, if it does not fit to this pattern. In case the conjunct will be the very last, another lemma must be added. Note that we could detect this by comparing all terms in \jav and only if the two last terms are syntactically equivalent we would add the lemma. But this is a huge overhead and anyway, if we add the rule as the last argument, there is no efficiency loss in \isa, since the arguments order is considered (and so the rule application will only be attempted in the very end).
+%
+\begin{pt}{ll}
+	\pl{rw\_distinctSame\_fin & (a \negat= a \& p) = False}
+	\pl{rw\_distinctSame\_fin\_bin & (a \negat= a) = False}
+	\pll{rw\_distinctSame\_step & q = False ==> (p \& q) = False}
+\end{pt}
+%
+\begin{rt}
+	\rl{only case}{(intro rw\_distinctSame\_fin}
+		\rll{}{\ind rw\_distinctSame\_step rw\_distinctSame\_fin\_bin)}
+\end{rt}
+
+The \ttt{:distinctNeg} rule has four cases, two for the Boolean constants and two for the negated term being the first or the second one.
+%
+\begin{pt}{ll}
+	\pl{rw\_distinctNeg\_tf & (True \negat= False) = True}
+	\pl{rw\_distinctNeg\_ft & (False \negat= True) = True}
+	\pl{rw\_distinctNeg\_pn & (p \negat= (\nega p)) = True}
+	\pll{rw\_distinctNeg\_np & ((\nega p) \negat= p) = True}
+\end{pt}
+%
+\begin{rt}
+	\rl{\true-\false case}{(rule rw\_distinctNeg\_tf)}
+	\rl{\false-\true case}{(rule rw\_distinctNeg\_ft)}
+	\rl{negation second case}{(rule rw\_distinctNeg\_pn)}
+	\rll{negation first case}{(rule rw\_distinctNeg\_np)}
+\end{rt}
+
+The \ttt{:distinctTrue} rule discriminates the cases where \true is the first or the second term.
+%
+\begin{pt}{ll}
+	\pl{rw\_distinctTrue\_l & (True \negat= p) = (\nega p)}
+	\pll{rw\_distinctTrue\_r & (p \negat= True) = (\nega p)}
+\end{pt}
+%
+\begin{rt}
+	\rl{\true first case}{(rule rw\_distinctTrue\_l)}
+	\rll{\true second case}{(rule rw\_distinctTrue\_r)}
+\end{rt}
+
+The \ttt{:distinctFalse} rule discriminates the cases where \false is the first or the second term.
+%
+\begin{pt}{ll}
+	\pl{rw\_distinctFalse\_l & (False \negat= p) = p}
+	\pll{rw\_distinctFalse\_r & (p \negat= False) = p}
+\end{pt}
+%
+\begin{rt}
+	\rl{\false first case}{(rule rw\_distinctFalse\_l)}
+	\rll{\false second case}{(rule rw\_distinctFalse\_r)}
+\end{rt}
+
+The \ttt{:distinctBinary} rule iteratively applies de Morgan's rule with the \emph{intro} method. In the end this results in a reflexivity obligation, which finishes the proof.
+%
+\begin{pt}{ll}
+	\pl{rw\_distinctBinary & p = (\nega q) ==> ((a \negat= b) \& p) = (\nega ((a = b) | q))}
+	\pll{HOL.refl & t = t}
+\end{pt}
+%
+\begin{rt}
+	\rl{binary case}{\textrm{ignored}}
+	\rll{$n$-ary case case}{(intro rw\_distinctBinary, rule HOL.refl)}
+\end{rt}
+
+
+The \ttt{:notSimp} rule is obvious by one lemma for each of the three cases.
+%
+\begin{pt}{ll}
+	\pl{HOL.not\_True\_eq\_False & (\nega True) = False}
+	\pl{HOL.not\_False\_eq\_True & (\nega False) = True}
+	\pll{HOL.not\_not & (\nega \nega P) = P}
+\end{pt}
+%
+\begin{rt}
+	\rl{negation of \true}{(rule HOL.not\_True\_eq\_False)}
+	\rl{negation of \false}{(rule HOL.not\_False\_eq\_True)}
+	\rll{double negation}{(rule HOL.not\_not)}
+\end{rt}
+
+The \ttt{:orSimp} rule creates a pattern proof from the disjuncts, which is proven by the simplifier. Note that \false must not be replaced by a pattern variable. If the whole disjunction simplifies to \false (that is, the disjunction only contains \false), a simpler proof is used.
+%
+\begin{pt}{ll}
+	\pl{HOL.disj\_commute & (P | Q) = (Q | P)}
+	\pl{HOL.disj\_left\_commute & (P | Q | R) = (Q | P | R)}
+	\pl{HOL.disj\_absorb & (A | A) = A}
+	\pl{HOL.disj\_left\_absorb & (A | A | B) = (A | B)}
+	\pl{HOL.simp\_thms(31) & (P | False) = P}
+	\pll{HOL.simp\_thms(32) & (False | P) = P}
+\end{pt}
+%
+\begin{rt}
+	\rl{only \false}{(simp only:~HOL.simp\_thms(32))}
+	\rl{further terms}{(simp only:~HOL.disj\_commute HOL.disj\_left\_commute HOL.disj\_absorb}
+		\rll{}{\ind HOL.disj\_left\_absorb HOL.simp\_thms(31) HOL.simp\_thms(32))}
+\end{rt}
+
+The \ttt{:orTaut} rule first checks which of the two cases can be proven faster, and that means which reason can be found further on the left. We will consider the negation case if a term (\TT) can be found both positive and negated left of any occurrence of \true, otherwise the \true case.
+
+The latter (case~I) just drops the first term of the disjunction until \true is found, which finishes the proof. We have three cases, depending on the position of the first occurrence: \true is the first disjunct, \true is only the last disjunct, or else.
+
+In the negation case (case~II) we discriminate whether the first occurrence of \TT is negated (NP) or not (PN). Also, if the disjunction is binary, a simpler proof is used. If the second occurrence is the very last disjunct, the proof stops in the state \mbox{\ttt{\TT ==> \TT}}. This is automatically solved by the \emph{by} method, so this case does not have to be considered (we still included it in the examples file). The non-binary case uses the \emph{intro} method and matches \TT, so only the correct term is considered. After finding the first occurrence the goal structure changes, so \emph{intro} will stop and the second part of the proof will start, which uses \emph{erule} to stop only if \TT was found in its dual form -- otherwise the second argument of \ttt{|} is executed and the alternative is tried again (\ttt{+}).
+%
+\begin{pt}{ll}
+	\pl{rw\_orTaut\_elim & r = True ==> (q | r) = True}
+	\pl{rw\_orTaut\_pos & (\nega p ==> q) ==> (p | q) = True}
+	\pl{rw\_orTaut\_neg & (p ==> q) ==> ((\nega p) | q) = True}
+	\pl{HOL.disjI1 & P ==> (P | Q)}
+	\pl{HOL.disjI2 & Q ==> (P | Q)}
+	\pl{HOL.simp\_thms(4) & (P | (\nega P)) = True}
+	\pl{HOL.simp\_thms(5) & ((\nega P) | P) = True}
+	\pl{HOL.simp\_thms(30) & (True | P) = True}
+	\pll{HOL.refl & t = t}
+\end{pt}
+
+The parameter \TT in the last two proofs is always the \TT without negation.
+%
+\begin{rt}
+	\rl{case I first}{(rule HOL.simp\_thms(30))}
+	\rl{case I last}{(intro HOL.simp\_thms(30) rw\_orTaut\_elim, rule HOL.refl)}
+	\rl{case I else}{(intro HOL.simp\_thms(30) rw\_orTaut\_elim)}
+	\rl{binary case II PN}{(rule HOL.simp\_thms(4))}
+	\rl{binary case II NP}{(rule HOL.simp\_thms(5))}
+	\rl{$n$-ary case II PN}{(intro rw\_orTaut\_pos [where p = "\TTx"] rw\_orTaut\_elim,}
+		\rl{}{\ind (erule HOL.disjI1 | rule HOL.disjI2) +)}
+	\rl{$n$-ary case II NP}{(intro rw\_orTaut\_neg [where p = "\TTx"] rw\_orTaut\_elim,}
+		\rll{}{\ind (erule HOL.disjI1 | rule HOL.disjI2) +)}
+\end{rt}
+
+The \ttt{:andToOr} rule uses the \emph{intro} method for stepwise application of de Morgan's rule. In the end a double negation has to be applied.
+%
+\begin{pt}{ll}
+	\pl{rw\_andToOr & q = (\nega r) ==> (p \& q) = (\nega ((\nega p) | q))}
+	\pll{HOL.not\_not & (\nega \nega P) = P}
+\end{pt}
+%
+\begin{rt}
+	\rll{only case}{(intro rw\_andToOr, rule HOL.not\_not [symmetric])}
+\end{rt}
+
+The \ttt{:impToOr} rule uses a starting lemma (which translates back the outermost target disjunction to an implication) and a finishing lemma, which are enough if we only have a binary implication. Else the \emph{intro} method iteratively removes the first term until there are only two terms left.
+%
+\begin{pt}{ll}
+	\pl{rw\_impToOr\_start & p = ((\nega r) --> q) ==> p = (q | r)}
+	\pl{rw\_impToOr\_step & q = ((\nega r) --> s) ==> (p --> q) = ((\nega ((\nega p) | r)) --> s)}
+	\pll{rw\_impToOr\_fin & (p --> q) = ((\nega (\nega p)) --> q)}
+\end{pt}
+%
+\begin{rt}
+	\rl{binary case}{(rule rw\_impToOr\_start, rule rw\_impToOr\_fin)}
+	\rll{$n$-ary case}{(rule rw\_impToOr\_start, intro rw\_impToOr\_step, rule rw\_impToOr\_fin)}
+\end{rt}
+
+The \ttt{:divisible} rule has four cases. The first one is trivial by a lemma. The second and third one just calculate the result for a constant, so the simplifier is just. The fourth case rewrites to a form with \smtdiv. This can also be done by a lemma, but with an additional obligation to show that the constant is not zero (again a job for the simplifier).
+%
+\begin{pt}{ll}
+	\pl{rw\_divisible1 & (1::int) dvd x = True}
+	\pll{rw\_divisible & (x::int) \negat= 0 ==> (x dvd y) = (y = (x * (y SMTdiv x)))}
+\end{pt}
+%
+\begin{rt}
+	\rl{divisible by 1 case}{(rule rw\_divisible1)}
+	\rl{constants \true case}{simp}
+	\rl{constants \false case}{simp}
+	\rll{general rewrite case}{(rule rw\_divisible, simp)}
+\end{rt}
+
+The \ttt{:div-1} rule must be adjusted to the canonical form. That is, a term with factor $-1$ drops its factor, a term with positive factor $\neq 1$ will have the minus sign in the factor, and a term with negative factor $\neq -1$ will drop the minus in the factor (see also the \ttt{:div*} tautologies in Section~\ref{sec:taut}).
+%
+\begin{pt}{ll}
+	\pl{rw\_divM1\_pos & x SMTdiv - 1 = - x}
+	\pl{rw\_divM1\_neg & (- x) SMTdiv - 1 = x}
+	\pl{rw\_divM1\_fac\_pos & (c * x) SMTdiv - 1 = (- c) * x}
+	\pll{rw\_divM1\_fac\_neg & ((- c) * x) SMTdiv - 1 = c * x}
+\end{pt}
+%
+\begin{rt}
+	\rl{factor 1 case}{(rule rw\_divM1\_pos)}
+	\rl{factor $-1$ \true case}{(rule rw\_divM1\_neg)}
+	\rl{positive factor case}{(rule rw\_divM1\_fac\_pos)}
+	\rll{negative factor case}{(rule rw\_divM1\_fac\_neg)}
+\end{rt}
+
+The \ttt{:toInt} rule just needs a calculation, which should be a job for the simplifier. Unfortunately, it is not able to prove the equality (not even \ttt{auto}). But it works when first applying the substitution rule \ttt{Orderings.order\_class.eq\_iff}. In general, this could blow up the proof, but we are dealing with constants here, so this should be fine. Note that the substitution is unambiguous.
+%
+\begin{pt}{ll}
+	\pll{Orderings.order\_class.eq\_iff & (x = y) = (x <= y \& y <= x)}
+\end{pt}
+%
+\begin{rt}
+	\rll{only case}{(subst Orderings.order\_class.eq\_iff, simp)}
+\end{rt}
+
+The \ttt{:flatten} rule uses the \emph{intro} method again. It first tries reflexivity to be able to finish with an already flattened suffix. If there are still unflattened disjuncts, we next try to eliminate the first disjunct on both sides if they are syntactically equivalent. If not, we know that the first left disjunct must be a disjunction, and so we flatten it. Note that this order is necessary to not accidentally flatten inside a proxy literal.
+%
+\begin{pt}{ll}
+	\pl{rw\_flatten\_par & (p | q | r) = s ==> ((p | q) | r) = s}
+	\pl{rw\_flatten\_drop & q = r ==> (p | q) = (p | r)}
+	\pll{HOL.refl & t = t}
+\end{pt}
+%
+\begin{rt}
+	\rll{\ttt{:flatten}}{(intro HOL.refl rw\_flatten\_drop rw\_flatten\_par)}
+\end{rt}
+%
+\subsection{Splitting}\label{sec:split}
+The respective \jav class file is \ttt{SplitConverter}, the proof node is \ttt{@split}.
+%
+\subsubsection*{Description}
+The splitting starts with the canonical term form (the DAG) and afterwards (and after some further rewrites such as elimination of double negation) the resulting formula is in CNF and hence passed to the solver/to the resolution level. The name splitting may be disturbing: There is only one application of this proof node that really does a split (but it is also by far the most often occurring one). The other applications are rather used as rewrites.
+
+The several possible applications are indicated by an annotation. We now list them with the respective proof (cp. section~4.2 \cite{proof}).
+%
+\begin{center}
+	\begin{tabular}{c|c|>{\centering}m{43mm}}
+		annotation & description & \si proof rule \tabularnewline
+		\hline
+		& & \tabularnewline[-2mm]
+		\ttt{:notOr} & split conjunct from conjunction &
+		\AXC{\ttt{(not (or$_{i \in I}$ F$_i$))}} \RL{$j \in I$} \UIC{\ttt{(not F$_j$)}} \DisplayProof \tabularnewline[4mm]
+		\ttt{:=+1} & positive Boolean equality 1 &
+		\AXC{\ttt{(= L R)}} \UIC{\ttt{(or L (not R))}} \DisplayProof \tabularnewline[4mm]
+		\ttt{:=+2} & positive Boolean equality 2 & 
+		\AXC{\ttt{(= L R)}} \UIC{\ttt{(or (not L) R)}} \DisplayProof \tabularnewline[4mm]
+		\ttt{:=-1} & negative Boolean equality 1 & 
+		\AXC{\ttt{(not (= L R))}} \UIC{\ttt{(or L R)}} \DisplayProof \tabularnewline[4mm]
+		\ttt{:=-2} & negative Boolean equality 2 & 
+		\AXC{\ttt{(not (= L R))}} \UIC{\ttt{(or (not L) (not R))}} \DisplayProof \tabularnewline[4mm]
+		\ttt{:ite+1} & positive if-then-else 1 & 
+		\AXC{\ttt{(ite C T E)}} \UIC{\ttt{(or (not C) T)}} \DisplayProof \tabularnewline[4mm]
+		\ttt{:ite+2} & positive if-then-else 2 & 
+		\AXC{\ttt{(ite C T E)}} \UIC{\ttt{(or C E)}} \DisplayProof \tabularnewline[4mm]
+		\ttt{:ite-1} & negative if-then-else 1 & 
+		\AXC{\ttt{(not (ite C T E))}} \UIC{\ttt{(or (not C) (not T))}} \DisplayProof \tabularnewline[4mm]
+		\ttt{:ite-2} & negative if-then-else 2 & 
+		\AXC{\ttt{(not (ite C T E))}} \UIC{\ttt{(or C (not E))}} \DisplayProof
+	\end{tabular}
+\end{center}
+%
+\subsubsection*{Translation}
+The translation depends on the annotation. The only important rule is \ttt{:notOr}, the others are straight-forward transformations (no pitfalls).
+
+For this rule we split a conjunct from a conjunction (which is fine). Since \si uses the clauses as negated disjunctions, we really split a disjunct (\TT, \ttt{t}$_j$ in the rule) from a negated disjunction and negate the result.
+
+Disjunction is right-associative in \isa, so we only consider binary disjunctions. The proof goes by the elimination method (\emph{elim}), that is, the rules are repeatedly applied until either none is available or the goal is closed. If the first (negated) disjunct is the \TT, the proof is finished with a binary split rule. If not, the left-hand side of the disjunction is dropped and the search goes on recursively within the right-hand part. Note that this relies on the fact that the \TT is at the lowest level of the disjunction (no flattening applied).
+
+If the \TT is the rightmost (negated) disjunct, the proof will end up with the obligation \ttt{\nega p \metaimp \nega p}. Normally, this is automatically solved by the \emph{by} command in \isa. But \ttt{p} itself can be a disjunction. To prevent \emph{elim} to go on searching there, another rule is necessary for this special case.
+
+We look at the last disjunct and depending on if it is the \TT we insert the according finishing rule. Note that this is not necessary, we could just insert both finishing rules, but the check is cheap and this way the \isa proof works faster.
+%
+\subsubsection*{Proof}
+\begin{pt}{ll}
+	\pl{split\_notOr\_elim & [|\nega (p | q); \nega q ==> r|] ==> r}
+	\pl{split\_notOr\_finL & \nega (p | q) ==> \nega p}
+	\pll{split\_notOr\_finR & \nega (p | q) ==> \nega q}
+\end{pt}
+%
+The first rule is the elimination step: If we have a negated disjunction, we can drop the first disjunct, assuming that the rest will still show the goal.
+
+The second rule stops the elimination if the first disjunct is the \TT.
+
+The third rule is necessary for the special case that the \TT is the right-most disjunct. It stops the elimination when there is only a binary disjunction left.
+%
+\begin{rt}
+	\rl{normal case}{(elim split\_notOr\_finL split\_notOr\_elim)}
+	\rll{special case}{(elim split\_notOr\_finR split\_notOr\_elim)}
+\end{rt}
+%
+The other rules are just listed, for they are obvious. The proof always goes like \ttt{(rule RULE)}, where \ttt{RULE} is the name of the rule from the table.
+%
+\begin{pt}{ll}
+	\pl{split\_eqP1 & p = q ==> p | \nega q}
+	\pl{split\_eqP2 & p = q ==> (\nega p) | q}
+	\pl{split\_eqM1 & p \negat= q ==> p | q}
+	\pl{split\_eqM2 & p \negat= q ==> (\nega p) | \nega q}
+	\pl{split\_iteP1 & if c then t else e ==> (\nega c) | t}
+	\pl{split\_iteP2 & if c then t else e ==> c | e}
+	\pl{split\_iteM1 & \nega (if c then t else e) ==> (\nega c) | \nega t}
+	\pll{split\_iteM2 & \nega (if c then t else e) ==> c | \nega e}
+\end{pt}
+%
+\subsubsection*{Example}
+Since all the other rules are straight-forward, we only give an example for the \ttt{:notOr} rule. However, the examples file also contains applications for the other cases.
+%
+\begin{center}
+	\begin{tabular}{ll}
+		\exl{Input}{(and (not p) (not q) (or (and p q) q))}
+		\exlm{Proof}{\ttt{(not (or p q (not (or (not (or (not p) (not q))) q))))} \\ & \ind \ttt{split (not q)}}
+		\exl{Isabelle}{\nega (p | [q | (\nega ((\nega ((\nega p) | (\nega q))) | q))]) ==> \nega q}
+		\exmc{elim split\_notOr\_finL split\_notOr\_elim}{}
+		\exl{try}{rule split\_notOr\_finL \rm{-- not applicable}}
+		\exl{try}{rule split\_notOr\_elim \rm{-- applicable}}
+		\exmc{\ind \pat{p}{p}, \pat{q}{(q | (\nega ((\nega ((\nega p) | (\nega q))) | q)))}, \pat{r}{q}}{}
+		\exl{Result}{\nega (q | (\nega ((\nega ((\nega p) | (\nega q))) | q))) ==> \nega q}
+		\exl{try}{rule split\_notOr\_finL \rm{-- applicable}}
+	\end{tabular}
+\end{center}
+
+Note that the whole proof for the example also contains an application of the special case.
+%
+\section{Summary}\label{sec:summary}
+In this project we have set up a translation for proofs of unsatisfiability by \si to \isa.
+
+The main aspects were to elaborate the conversion in \jav, to come up with feasible and efficient proof methods in \isa for each proof node, and to prove the correctness of the rules in \isa (the latter being just a necessary evil). Since the proof translation must be trusted inherently, the overall goal was to have a manageable, trustworthy system. This was partially accomplished, but the resolution and lemma translations have more than 1{,}000 lines of code each -- a tribute to special case handling.
+
+The project suffered from some conceptional mistakes in the \isa proofs (mainly how substitution works in \isa). This came up to the surface after everything was implemented (but luckily it came up after all). The positive impact is that now the proof runs faster than before.
+%
+\subsubsection*{Acknowledgment}
+
+We would like to thank Jochen Hoenicke for the supervision of the project, explanations of the \si features and proof details, and many suggestions we cannot enumerate here. We would also like to thank J\"urgen Christ for the extension of the proof system (extended proof mode) and countless explanations and quick-fixes.
+%
+%
+\bibliographystyle{unsrtnat}
+\begin{thebibliography}{100}
+\bibitem{smtlibStandard}
+Clark Barrett and Aaron Stump and Cesare Tinelli, \emph{The SMT-LIB Standard}, 2012
+\bibitem{isabelle}
+Makarius Wenzel, \emph{The Isabelle/Isar Reference Manual}, 2012
+\bibitem{smtlibTutorial}
+David Cok, \emph{The SMT-LIBv2 Language and Tools: A Tutorial}, 2012
+\bibitem{proof}
+J\"urgen Christ, \emph{Proof System for SMTInterpol 2.0}, 2012
+\bibitem{gerth}
+Gerth et al., \emph{Simple On-the-fly Automatic Verification of Linear Temporal Logic}, 1995
+\end{thebibliography}
+\end{document}

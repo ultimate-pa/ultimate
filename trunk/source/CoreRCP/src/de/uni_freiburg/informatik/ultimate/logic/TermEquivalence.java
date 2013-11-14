@@ -20,6 +20,14 @@ package de.uni_freiburg.informatik.ultimate.logic;
 
 import de.uni_freiburg.informatik.ultimate.util.ScopedHashMap;
 
+/**
+ * This class checks if two terms are syntactically equivalent modulo
+ * renaming of variables.  E. g.,
+ * <code>(let ((x 0)) x)</code> is equivalent to <code>(let ((y 0)) y)</code>,
+ * but not to <code>0</code> or <code>(let ((y 0)) 0)</code>.
+ * 
+ * @author Juergen Christ
+ */
 public class TermEquivalence extends NonRecursive{
 	
 	private ScopedHashMap<TermVariable, TermVariable> m_Renaming =
@@ -172,6 +180,12 @@ public class TermEquivalence extends NonRecursive{
 		}
 	}
 	
+	/**
+	 * Returns true if the terms are equivalent. 
+	 * @param lhs the left hand side term.
+	 * @param rhs the right hand side term.
+	 * @return true if the terms are equivalent modulo variable renaming.
+	 */
 	public boolean equal(Term lhs, Term rhs) {
 		try {
 			run(new TermEq(lhs, rhs));

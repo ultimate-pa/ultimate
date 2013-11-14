@@ -31,7 +31,11 @@ public class PrintTerm {
 	 * it uses a todo stack, which contains terms and/or strings.
 	 */
 	private ArrayDeque<Object> m_Todo = new ArrayDeque<Object>();
-	
+	/**
+	 * Convert a term into an appendable.
+	 * @param appender The appendable.
+	 * @param term     The term.
+	 */
 	public void append(Appendable appender, Term term) {
 		try {
 			m_Todo.push(term);
@@ -40,7 +44,12 @@ public class PrintTerm {
 			throw new RuntimeException("Appender throws IOException", ex);
 		}
 	}
-	
+	/**
+	 * Convert a sort into an appendable.  Note that sorts can get pretty long,
+	 * too.  Hence we do this non-recursively to prevent stack overflows.
+	 * @param appender The appendable.
+	 * @param sort     The sort.
+	 */
 	public void append(Appendable appender, Sort sort) {
 		try {
 			m_Todo.push(sort);
@@ -49,7 +58,11 @@ public class PrintTerm {
 			throw new RuntimeException("Appender throws IOException", ex);
 		}
 	}
-	
+	/**
+	 * Append an s-expression.  The s-expression might contain terms.
+	 * @param appender The appendable.
+	 * @param sexpr    The s-expression.
+	 */
 	public void append(Appendable appender, Object[] sexpr) {
 		try {
 			m_Todo.push(sexpr);
@@ -58,7 +71,13 @@ public class PrintTerm {
 			throw new RuntimeException("Appender throws IOException", ex);
 		}
 	}
-
+	/**
+	 * Ensure the identifier is SMTLIB 2 compliant.  If a symbol that is not
+	 * allowed due to the SMTLIB 2 standard is encountered, the whole identifier
+	 * will be quoted.
+	 * @param id An unquoted identifier.
+	 * @return SMTLIB 2 compliant identifier.
+	 */
 	public static String quoteIdentifier(String id) {
 		assert id.indexOf('|')  < 0 && id.indexOf('\\') < 0;
 		for (int idx = 0; idx < id.length(); idx++) {

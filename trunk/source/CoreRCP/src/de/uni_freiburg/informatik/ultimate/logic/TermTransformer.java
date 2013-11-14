@@ -83,8 +83,8 @@ public class TermTransformer extends NonRecursive {
 	}
 	
 	/**
-	 * Push all terms in the array on the todo stack as CONVERT work item.
-	 * @param terms the array of terms.
+	 * Push a term on the todo stack as CONVERT work item.
+	 * @param term the term to convert.
 	 */
 	protected final void pushTerm(Term term) {
 		enqueueWalker(new Convert(term));

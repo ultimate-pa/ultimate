@@ -18,18 +18,41 @@
  */
 package de.uni_freiburg.informatik.ultimate.logic;
 
+/**
+ * A quoted object is used as value for string literals in SMTLIB 2.
+ * The SMTLIB string literal
+ * <pre>"..."</pre>
+ * is represented by a ConstantTerm whose value is a quoted object.  The
+ * underlying value is the string in parsed form, i.e., escape sequences using
+ * backslash are removed and the surrounding quotes are removed.
+ * 
+ * A QuotedObject can also be used to quote arbitrary java objects.  These can
+ * be used in annotations and will produce syntactically correct SMTLIB
+ * scripts if they are dumped.
+ * 
+ * @author hoenicke
+ */
 public class QuotedObject {
 	/**
 	 * The underlying Object.
 	 */
-	private Object m_Obj;
-	
+	private Object m_value;
+
+	/**
+	 * Create a quoted object.
+	 * @param value the value that is quoted.  Usually this is a string
+	 * 	without the quotes.
+	 */
 	public QuotedObject(Object value) {
-		m_Obj = value;
+		m_value = value;
 	}
 	
+	/**
+	 * Get the underlying object.  
+	 * @return the underlying object.
+	 */
 	public Object getValue() {
-		return m_Obj;
+		return m_value;
 	}
 
 	private static String quoteString(String str) {
@@ -52,7 +75,12 @@ public class QuotedObject {
 		return sb.append('\"').toString();
 	}
 
+	/**
+	 * Returns the SMTLIB 2 representation of the string.  This adds the
+	 * quotes and converts escape sequences appropriately.
+	 * @return the SMTLIB 2 compatible string representation.
+	 */
 	public String toString() {
-		return quoteString(m_Obj.toString());
+		return quoteString(m_value.toString());
 	}
 }

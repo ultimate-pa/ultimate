@@ -28,6 +28,11 @@ import java.util.Map;
  * time, but we want to give the user the freedom to use the model in an
  * interactive way.  Note that symbols defined by model generation might be
  * removed once the assertion stack level is popped off the stack.
+ * 
+ * Values for numeric sorts in linear arithmetic logics are
+ * {@link ConstantTerm ConstantTerms} whose value is of type {@link Rational}.
+ * For non-numeric sorts, we return some term of the corresponding sort.  No
+ * further guarantees are made.  
  * @author Juergen Christ
  */
 public interface Model {

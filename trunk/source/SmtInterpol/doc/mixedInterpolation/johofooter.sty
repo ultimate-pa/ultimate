@@ -1,0 +1,50 @@
+
+\def\ps@johofooterlncs{\ps@empty\def\@oddfoot{%
+\noindent\begin{minipage}[t]{.82\textwidth}
+\vspace{0cm}
+\footnotesize
+This is the author's version of the work published in
+\johofootertext\
+The orginal publication is available at
+\href{http://www.springerlink.com/index/\johofooterdoi}%
+{\nolinkurl{www.springerlink.com/index/\johofooterdoi}}
+\end{minipage}\hfil
+\begin{minipage}[t]{1.5cm}
+\vspace{0cm}\href{http://dx.doi.org/\johofooterdoi}{\includegraphics[width=1.5cm]{doi}}
+\end{minipage}}}
+
+\def\ps@johofooterIEEE{\ps@empty\def\@oddhead{%
+\noindent\begin{minipage}[t]{.88\textwidth}
+\vspace{-1.3cm}
+\footnotesize\copyright\ \johofooteryear\ IEEE. Personal use of this material is
+permitted.  Permission from IEEE must be obtained for all other uses,
+in any current or future media, including reprinting/republishing this
+material for advertising or promotional purposes, creating new
+collective works, for resale or redistribution to servers or lists, or
+reuse of any copyrighted component of this work in other works.
+The original paper was published in \johofootertext\
+\url{http://dx.doi.org/\johofooterdoi}
+\end{minipage}\hfil
+\begin{minipage}[t]{1.5cm}
+\vspace{-1.3cm}\href{http://dx.doi.org/\johofooterdoi}{\includegraphics[width=1.5cm]{doi}}
+\end{minipage}}}
+
+\def\ps@johofooterACM{\ps@empty\def\@oddhead{%
+\noindent\begin{minipage}[t]{.88\textwidth}
+\vspace{-1.5cm}
+\footnotesize
+\copyright\ ACM \johofooteryear. This is the author's version of the work. 
+It is posted here by permission of ACM for your personal use. 
+Not for re\-dis\-tri\-bu\-tion. 
+The definitive version was published in 
+\johofootertext\ 
+\url{http://doi.acm.org/\johofooterdoi}
+\end{minipage}\hfil
+\begin{minipage}[t]{1.5cm}
+\vspace{-1.5cm}\href{http://dx.doi.org/\johofooterdoi}{\includegraphics[width=1.5cm]{doi}}
+\end{minipage}}}
+
+\def\joholncsfooter#1#2{\johofooter{lncs}{#1}{#2}{}}
+\def\johofooter#1#2#3#4{\gdef\johofootertext{#2}\gdef\johofooterdoi{#3}%
+  \gdef\johofooteryear{#4}%
+  \thispagestyle{johofooter#1}}

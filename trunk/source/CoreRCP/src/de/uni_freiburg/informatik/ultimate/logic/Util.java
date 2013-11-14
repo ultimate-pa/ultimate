@@ -22,6 +22,12 @@ import java.util.LinkedHashSet;
 
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 
+/**
+ * This class contains some static methods to help creating terms, checking
+ * formulas, etc.
+ * 
+ * @author christ, heizmann, hoenicke 
+ */
 public class Util {
 	
 	private static Sort[] EMPTY_SORT_ARRAY = {};
@@ -122,8 +128,16 @@ public class Util {
 		return script.term(connector, arrforms);
 	}
 	
-	
-	
+	/**
+	 * Create a slightly simplified if-then-else term.  This mainly
+	 * optimizes the special cases where one of the parameters is true or 
+	 * false.
+	 * @param script the script where the term is created.
+	 * @param cond  the if condition.
+	 * @param thenPart the then part.
+	 * @param elsePart the else part.
+	 * @return the simplified if-then-else term.
+	 */
 	public static Term ite(Script script, Term cond, Term thenPart, Term elsePart) {
 		Term trueTerm = script.term("true");
 		Term falseTerm = script.term("false");
@@ -156,6 +170,14 @@ public class Util {
 //	}
 	
 	
+	/**
+	 * Create a slightly simplified implies term.  This mainly
+	 * optimizes the special cases where one of the parameters is true or 
+	 * false or if a left-hand-side term occurs more than once.
+	 * @param script the script where the term is created.
+	 * @param subforms the terms
+	 * @return A simplified version of <code>(=&gt; subforms...)</code>.
+	 */
 	public static Term implies(Script script, Term... subforms)	{
 		Term trueTerm = script.term("true");
 		Term falseTerm = script.term("false");
@@ -181,5 +203,4 @@ public class Util {
 		newParams[newParams.length - 1] = lastFormula;
 		return script.term("=>", newParams);
 	}
-
 }

@@ -18,7 +18,10 @@
  */
 package de.uni_freiburg.informatik.ultimate.smtinterpol.util;
 
+import java.util.AbstractSet;
+import java.util.Collections;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.AnnotatedTerm;
@@ -79,6 +82,29 @@ public class DAGSize extends NonRecursive {
 		
 	}
 	
+	private final static class ConstantEmptySet extends AbstractSet<Term> {
+		
+		private final static Set<Term> EMPTY = new ConstantEmptySet();
+
+		@Override
+		public Iterator<Term> iterator() {
+			// Collections.emptyIterator() is Java 1.7!!!
+			return Collections.<Term>emptySet().iterator();
+		}
+
+		@Override
+		public int size() {
+			return 0;
+		}
+
+		@Override
+		public boolean add(Term e) {
+			// Intentionally break the contract of add...
+			return true;
+		}
+		
+	}
+	
 	private Set<Term> m_Seen;
 	private int m_Size;
 	
@@ -95,6 +121,14 @@ public class DAGSize extends NonRecursive {
 	
 	public int size(Term term) {
 		run(new TermOnceWalker(new FormulaUnLet().unlet(term)));
+		return m_Size;
+	}
+	
+	public int treesize(Term term) {
+		Set<Term> old = m_Seen;
+		m_Seen = ConstantEmptySet.EMPTY;
+		run(new TermOnceWalker(new FormulaUnLet().unlet(term)));
+		m_Seen = old;
 		return m_Size;
 	}
 }

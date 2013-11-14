@@ -41,75 +41,74 @@ public class EqualityDestructor extends NonRecursive {
 	
 	private static final class SearchEqualities implements NonRecursive.Walker {
 		private Term m_Term;
+		private boolean m_Positive;
 		public SearchEqualities(Term term) {
+			this(term, true);
+		}
+		public SearchEqualities(Term term, boolean positive) {
 			m_Term = term;
+			m_Positive = positive;
 		}
 		@Override
 		public void walk(NonRecursive engine) {
 			if (m_Term instanceof ApplicationTerm) {
 				ApplicationTerm at = (ApplicationTerm) m_Term;
-				if (at.getFunction() == at.getTheory().m_Not) {
-					Term arg = at.getParameters()[0];
-					if (arg instanceof ApplicationTerm) {
-						ApplicationTerm argat = (ApplicationTerm) arg;
-						if (argat.getFunction() == at.getTheory().m_Or) {
-							for (Term t : argat.getParameters())
-								engine.enqueueWalker(new SearchEqualities(t));
-						} else if (argat.getFunction().getName().equals("=")) {
-							// An interesting equality?
-							Term[] args = argat.getParameters();
-							assert args.length == 2;
-							EqualityDestructor ed =
-								(EqualityDestructor) engine;
-							if (args[0] instanceof TermVariable) {
-								TermVariable v0 = (TermVariable) args[0];
-								if (args[1] instanceof TermVariable) {
-									TermVariable v1 = (TermVariable) args[1];
-									// This cannot happen due to simplification
+				if (at.getFunction() == at.getTheory().m_Not)
+					engine.enqueueWalker(new SearchEqualities(
+							at.getParameters()[0], !m_Positive));
+				else if (!m_Positive && at.getFunction() == at.getTheory().m_Or)
+					for (Term t : at.getParameters())
+						engine.enqueueWalker(new SearchEqualities(t, false));
+				else if (at.getFunction().getName().equals("=")) {
+					// An interesting equality?
+					Term[] args = at.getParameters();
+					assert args.length == 2;
+					EqualityDestructor ed =
+						(EqualityDestructor) engine;
+					if (args[0] instanceof TermVariable) {
+						TermVariable v0 = (TermVariable) args[0];
+						if (args[1] instanceof TermVariable) {
+							TermVariable v1 = (TermVariable) args[1];
+							// This cannot happen due to simplification
 //									if (v0 == v1)
 //										return;
-									if (ed.m_Eqs.containsKey(v0)) {
-										if (ed.m_Eqs.containsKey(v1))
-											// We are already rewriting v0, v1
-											// Skip this equality.
-											return;
-										// Rewrite v1 to the same value we are
-										// rewriting v0
-										ed.m_Eqs.put(v1, ed.m_Eqs.get(v0));
-									} else if (ed.m_Eqs.containsKey(v1))
-										// See above
-										ed.m_Eqs.put(v0, ed.m_Eqs.get(v1));
-									else
-										// Use one variable from now on
-										ed.m_Eqs.put(v1, v0);
-								} else { // (= x c)
-									// rewrite loop check
-									// FIXME: This is ugly
-									TermVariable[] freeVars =
-											SMTAffineTerm.cleanup(args[1]).getFreeVars();
-									for (TermVariable v : freeVars)
-										if (v == v0)
-											return;
-									if (!ed.m_Eqs.containsKey(v0))
-										ed.m_Eqs.put(v0, args[1]);
-								}
-							} else if (args[1] instanceof TermVariable) {
-								// (= c x)
-								TermVariable v1 = (TermVariable) args[1];
-								// rewrite loop check
-								// FIXME: This is ugly
-								TermVariable[] freeVars =
-										SMTAffineTerm.cleanup(args[0]).getFreeVars();
-								for (TermVariable v : freeVars)
-									if (v == v1)
-										return;
-								if (!ed.m_Eqs.containsKey(v1))
-									ed.m_Eqs.put(v1, args[0]);
-							}
+							if (ed.m_Eqs.containsKey(v0)) {
+								if (ed.m_Eqs.containsKey(v1))
+									// We are already rewriting v0, v1
+									// Skip this equality.
+									return;
+								// Rewrite v1 to the same value we are
+								// rewriting v0
+								ed.m_Eqs.put(v1, ed.m_Eqs.get(v0));
+							} else if (ed.m_Eqs.containsKey(v1))
+								// See above
+								ed.m_Eqs.put(v0, ed.m_Eqs.get(v1));
+							else
+								// Use one variable from now on
+								ed.m_Eqs.put(v1, v0);
+						} else { // (= x c)
+							checkVariable(ed, v0, args[1]);
 						}
+					} else if (args[1] instanceof TermVariable) {
+						// (= c x)
+						TermVariable v1 = (TermVariable) args[1];
+						checkVariable(ed, v1, args[0]);						
 					}
-				}// Not a not, so not interesting...
+				}// Not interesting...
 			}
+		}
+		
+		private void checkVariable(EqualityDestructor ed,
+				TermVariable var, Term val) {
+			// rewrite loop check
+			// FIXME: This is ugly
+			TermVariable[] freeVars =
+					SMTAffineTerm.cleanup(val).getFreeVars();
+			for (TermVariable v : freeVars)
+				if (v == var)
+					return;
+			if (!ed.m_Eqs.containsKey(var))
+				ed.m_Eqs.put(var, val);
 		}
 	}
 	

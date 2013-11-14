@@ -40,7 +40,7 @@
     <head1>API</head1>
     <txt>See the <link url="doc/index.html">JavaDOC Documentation</link> for details.</txt>
     <head1>Interpolation</head1>
-    <txt><s /> supports Craig interpolation via an extension of the <link url="http://smtlib.org">SMTLIB language</link>.  Names of terms asserted in the form <verb>(assert (! t :named f))</verb> can be used to describe interpolation partitions.  The syntax for the corresponding interpolation call is <verb>(get-interpolants p*)</verb> where <tt>p</tt> is either the name of a term asserted in the way described above or a conjunction of such names.</txt>
+    <txt><s /> supports Craig interpolation via an extension of the <link url="http://smtlib.org">SMTLIB language</link>.  Names of terms asserted in the form <verb>(assert (! t :named f))</verb> can be used to describe interpolation partitions.  The syntax for the corresponding interpolation call is <verb>(get-interpolants p*)</verb> where <tt>p</tt> is either the name of a term asserted in the way described above or a conjunction of such names.  <link url="proposal.pdf">Our format is described in an SMTLIB proposal</link>.</txt>
     <head1>Additional SMTLIB Commands</head1>
     <txt>Besides the <tt>get-interpolants</tt> command <s /> supports additional non-standard SMTLIB commands.  The following table summarizes these commands and describes their effects.</txt>
     <table>

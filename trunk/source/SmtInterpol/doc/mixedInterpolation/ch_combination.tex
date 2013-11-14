@@ -1,0 +1,260 @@
+\def\vt{\vphantom{t}}
+
+\section{An Example for the Combined Theory}
+The previous examples showed how to use our technique to compute an
+interpolant in the theory of uninterpreted functions, or the theory of linear
+arithmetic. We will now present an example in the combination of these
+theories by applying our scheme to a proof of unsatisfiability of the
+interpolation problem
+\begin{align*}
+  A &\equiv t\leq 2a \land 2a \leq s \land f(a)=q\\
+  B &\equiv s\leq 2b \land 2b \leq t+1 \land \lnot(f(b)= q)
+\end{align*}
+where $a$, $b$, $s$, and $t$ are integer constants, $q$ is a constant of the
+uninterpreted sort $U$, and $f$ is a function from integer to $U$.
+
+We derive the interpolant using Pudl\'ak's algorithm and the rules shown in this
+paper. Note that the formula is already in conjunctive normal form. Since we
+use Pudl\'ak's algorithm, every input clause is labelled with $\bot$ if it is
+an input clause from $A$, and $\top$ if it is an input clause from $B$.  We
+will simplify the interpolants by removing neutral elements of Boolean
+connectives.
+
+Since the variables $a$ and $b$ are shared between the theory of uninterpreted
+functions and the theory of linear arithmetic, we get some theory combination
+clauses for $a$ and $b$.  The only theory combination clause needed to prove
+unsatisfiability of $A\land B$ is $a=b\lor\lnot(b\leq a)\lor\lnot(a\leq b)$
+which has the partial interpolant $LA(x_1+x_2,0,\ifnewinterpolation F[EQ(x,x_1)]\else EQ(x,x_1)\fi)$\ifnewinterpolation{} where $F[G] \equiv x_1\leq -x_2 \land (x_1\geq -x_2 \rightarrow G)$\fi.  Here, $x_1$ is
+used to purify\footnote{Note that we purify the conflict, i.\,e., the negated
+  clause} $b\leq a$ and $x_2$ is used to purify $a\leq b$.
+
+We get two lemmas from \laz: The first one, $\lnot(2a\leq s)\lor \lnot(s\leq
+2b)\lor a\leq b$, states that we can derive $a\leq b$ from $2a\leq s$ and
+$s\leq 2b$. Let $x_3$ be the variable used to purify $\lnot(a\leq b)$.  Note
+that we purify the literals in the conflict, i.\,e., the negation of the
+lemma. Then, this lemma can be annotated with the partial interpolant
+$LA(2x_3-s,-1,\ifnewinterpolation 2x_3 \leq s\else \bot\fi)$.  We can resolve this lemma with the unit clauses from
+the input to get $a\leq b$.
+\begin{gather*}
+\inferrule*
+{ 
+  \inferrule*[rightskip=\ifnewinterpolation2cm \else .5cm \fi]
+  { \lnot(2a\leq s)\lor \lnot(s\leq 2b)\lor a\leq b : LA(2x_3-s,-1,\ifnewinterpolation 2x_3 \leq s\else \bot\fi) \\
+    2a\leq s : \bot }
+  { \lnot(s\leq 2b)\lor a\leq b : LA(2x_3-s,-1,\ifnewinterpolation 2x_3 \leq s\else \bot\fi) }\\
+  s\leq 2b : \top }
+{ a\leq b : LA(2x_3-s,-1,\ifnewinterpolation 2x_3 \leq s\else\bot\fi) }
+\end{gather*}
+
+The second \laz-lemma, $\lnot(t\leq 2a)\lor\lnot(2b\leq t+1)\lor b\leq a$,
+states that we can derive $b\leq a$ from $t\leq 2a$ and $2b\leq t+1$. Let
+$x_4$ be the variable used to purify $\lnot(b\leq a)$. Then, we can annotate
+the lemma with the partial interpolant $LA(2x_4+t,-1,\ifnewinterpolation 2x_4 + t \leq 0\else\bot\fi)$ and propagate this
+partial interpolant to the unit clause $b\leq a$ by resolution with input
+clauses.
+\begin{gather*}
+\inferrule*{
+  \inferrule*[rightskip=\ifnewinterpolation 2.5cm \else 1.5cm\fi]
+  { \lnot(t\leq 2a)\lor\lnot(2b\leq t+1)\lor b\leq a : LA(2x_4+t,-1,\ifnewinterpolation 2x_4+t \leq 0\else\bot\fi)\quad
+    t\leq 2a : \bot }
+  { \lnot(2b\leq t+1)\lor b\leq a : LA(2x_4+t,-1,\ifnewinterpolation 2x_4+t \leq 0\else\bot\fi) } \\
+   2b\leq t+1 : \top }
+{ b\leq a : LA(2x_4+t,-1,\ifnewinterpolation 2x_4+t \leq 0\else\bot\fi) }
+\end{gather*}
+
+Additionally, we get one lemma from \euf,
+$f(b)=q\lor\lnot(f(a)=q)\lor\lnot(a=b)$, that states that, given $f(a)=q$ and
+$a=b$, by congruence, $f(b)=q$ has to hold. Let $x$ be the variable used to
+purify $a=b$. Then, we can label this lemma with the partial interpolant
+$f(x)=q$. Note that this interpolant has the form $I(x)$ as required by our
+interpolation scheme. We propagate this partial interpolant to the unit clause
+$\lnot(a=b)$ by resolving the lemma with the input clauses.
+\[
+\inferrule*
+{ 
+  \inferrule*[rightskip=.5cm]
+  { f(b)=q\lor\lnot(f(a)=q)\lor\lnot(a=b) : f(x)=q \\ f(b)=q : \top}
+  { \lnot(f(a)=q)\lor\lnot(a=b) : f(x)=q}\\
+  f(a)=q : \bot}
+{ \lnot(a=b) : f(x) = q }
+\]
+
+From the theory combination clause $a=b\lor
+\lnot(b\leq a)\lor\lnot(a\leq b)$ 
+and the three unit clauses derived above, we show a contradiction.  
+We start by resolving with the unit clause $a=b$ using (\ref{rule:inteq}) and 
+produce the partial interpolant $LA(x_1+x_2,0,f(x_1)=q)$.
+\[
+\inferrule*
+{ a=b\lor\lnot(b\leq a)\lor\lnot(a\leq b) : LA(x_1+x_2,0,\ifnewinterpolation F[EQ(x,x_1)] \else EQ(x,x_1)\fi) \\ 
+  \lnot(a=b) : f(x) = q}
+{ \lnot(b\leq a)\lor\lnot(a\leq b) : LA(x_1+x_2,0,
+\ifnewinterpolation F[f(x_1) = q] \else f(x_1) = q\fi) }
+\]
+
+The next step resolves on $b\leq a$ using (\ref{rule:intla}).  Note that we
+used $x_1$ to purify $b\leq a$ and $x_4$ to purify $\lnot(b\leq a)$.  Hence,
+these variables will be removed from the resulting partial interpolant. From
+the partial interpolants of the antecedents, $LA(2x_4+t,-1,\ifnewinterpolation 2 x_4 + t \leq 0 \else \bot \fi)$ and
+$LA(x_1+x_2,0,\ifnewinterpolation F[f(x_1)=q] \else f(x_1) = q\fi)$, we get the following components:
+\begin{align*}
+  c_1&=2
+  &s_1&=t
+  &k_1&=-1
+  &F_1(x_4)&\equiv \ifnewinterpolation 2 x_4 + t \leq 0 \else \bot \fi \\
+  c_2&=1
+  &s_2&=x_2
+  &k_2&=0
+  &F_2(x_1)&\equiv \ifnewinterpolation F[f(x_1) = q] \else f(x_1) = q\fi
+\end{align*}
+
+These components yield $k_3=1\cdot (-1)+2\cdot 0+2\cdot 1=1$.  Furthermore,
+$\ceilfrac{k_1+1}{c_1} = 0$ leads to one disjunct in $F_3$. The corresponding
+values are $\floorfrac{-t}{2}$, resp.\ $-\floorfrac{-t}{2}$.
+\ifnewinterpolation $F_1(\floorfrac{-t}{2})$ is always true and can be omitted.
+\fi
+The resulting formula $G(x_2) := F_3(\vec x)$ is
+\ifnewinterpolation
+\begin{align*}
+  G(x_2)\equiv{} & -\floorfrac{-t}{2} \leq -x_2\land \left(\floorfrac{-t}{2}\geq -x_2\rightarrow f\left(-\floorfrac{-t}{2}\right)=q\right).
+\end{align*}
+\else
+\begin{align*}
+  G(x_2)\equiv{} &t+2\floorfrac{-t}{2}\leq 0\land\left(t+2\floorfrac{-t}{2}\geq 1\rightarrow \bot\right)\land{}\\
+  &x_2-\floorfrac{-t}{2}\leq 0\land\left(x_2-\floorfrac{-t}{2}\geq 0\rightarrow f\left(-\floorfrac{-t}{2}\right)=q\right)\\
+  {}\equiv{} & x_2-\floorfrac{-t}{2}\leq 0\land \left(x_2-\floorfrac{-t}{2}\geq 0\rightarrow f\left(-\floorfrac{-t}{2}\right)=q\right).
+\end{align*}
+Note that the first two conjuncts simplify to $\top$ and we remove
+them.
+\fi
+The partial interpolant for the clause $\lnot(a\leq b)$ is
+$LA(t+2x_2,1,G(x_2))$.
+\[
+\inferrule*{
+  b\leq a : LA(2x_4+t,-1,\ifnewinterpolation 2x_4 + t \leq 0 \else \bot\fi) \\
+  \lnot(b\leq a)\lor\lnot(a\leq b) : LA(x_1+x_2,0,f(x_1) = q) }
+{
+  \lnot(a\leq b) : LA(t+2x_2,1,G(x_2))
+}
+\]
+
+In the final resolution step, we resolve $a\leq b$ labelled with partial
+interpolant $LA(2x_3-s,-1,\ifnewinterpolation 2 x_3 \leq s \else \bot\fi)$ against $\lnot(a\leq b)$ labelled with
+$LA(t+2x_2,1,G(x_2))$. Note that the literals have been purified with $x_3$ and
+$x_2$, respectively. We get the components
+\begin{align*}
+  c_1&=2
+  &s_1&=-s
+  &k_1&=-1
+  &F_1(x_3)&\equiv\ifnewinterpolation 2 x_3 \leq s \else \bot\fi\\
+  c_2&=2
+  &s_2&=t
+  &k_2&=1
+  &F_2(x_2)&\equiv G(x_2).
+\end{align*}
+
+We get $k_3=2\cdot (-1)+2\cdot 1 + 2\cdot 2=4$.  Again,
+$\ceilfrac{k_1+1}{c_1}=0$ yields one disjunct in $F_3$ with the values
+$\floorfrac{s}{2}$, and $-\floorfrac{s}{2}$, respectively.  
+\ifnewinterpolation Again, $F_1(\floorfrac{s}{2})$ is always true and can be omitted.
+\fi
+The resulting
+formula is
+\ifnewinterpolation
+\begin{align*}
+H\equiv{}& G\left(-\floorfrac{s\vt}{2}\right)\\
+{}\equiv{}& -\floorfrac{-t}{2} \leq \floorfrac{s\vt}{2}\land \left(\floorfrac{-t}{2}\geq \floorfrac{s\vt}{2}\rightarrow f\left(-\floorfrac{-t}{2}\right)=q\right).
+\end{align*}
+\else
+\begin{align*}
+H\equiv{}&{-s}+2\floorfrac{s\vt}{2}\leq 0\land\left(-s+2\floorfrac{s\vt}{2}\geq 1 \rightarrow\bot\right)\land{}\\
+&t-2\floorfrac{s\vt}{2}\leq 0\land\left(t-2\floorfrac{s\vt}{2}\geq -1 \rightarrow G\left(-\floorfrac{s\vt}{2}\right)\right)\\
+{}\equiv{}&t-2\floorfrac{s\vt}{2}\leq 0\land\left(t-2\floorfrac{s\vt}{2}\geq -1 \rightarrow -\floorfrac{s\vt}{2}-\floorfrac{-t}{2}\leq 0 \land{} \right.\\
+&\quad\left.\left(-\floorfrac{s\vt}{2}-\floorfrac{-t}{2}\geq 0\rightarrow f\left(-\floorfrac{-t}{2}\right)=q\right)\right).
+\end{align*}
+Again, the first two conjuncts trivially simplify to $\top$ and can be removed.
+\fi
+
+The final resolution step yields an interpolant for this problem.
+\[
+\inferrule{
+  a\leq b : LA(2x_3-s,-1,\bot) \\
+  \lnot(a\leq b) : LA(t+2x_2,1,G(x_2))
+}
+{
+  \bot : LA(-2s+2t,4,H)
+}
+\]
+
+\ifnewinterpolation
+Thus $H$ is the final interpolant.
+\else
+We obtain the final interpolant by unfolding the $LA$-form
+and some simplifications:
+\[
+  t\leq s \land \left(t \geq s-2\rightarrow
+  \left(t\leq 2\floorfrac{s\vt}{2}\land\left(-\floorfrac{-t}{2}\geq \floorfrac{s\vt}{2}\rightarrow
+  f\left(-\floorfrac{-t}{2}\right)=q\right)\right)\right).
+\]
+\fi
+%or with more simplifications and using the identity $\lceil x\rceil = -\floor{-x}$:
+%\[
+%  t\leq s \land \left(t \geq s-2\rightarrow
+%  \left(\frac{t}{2} \leq \floorfrac{s\vt}{2}\land\left(\ceilfrac{t}{2}\geq \floorfrac{s\vt}{2}\rightarrow
+%  f\left(\ceilfrac{t}{2}\right)=q\right)\right)\right).
+%\]
+% 
+Now we argue validity of this interpolant.
+\paragraph{Interpolant follows from the $A$-part.}
+\ifnewinterpolation
+The $A$-part contains $2a\leq s$, which implies $a \leq \floorfrac{s}{2}$.
+From $t\leq 2a$ we get $-\floorfrac{-t}{2}\leq a$.  Hence,
+$-\floorfrac{-t}{2} \leq\floorfrac{s}{2}$.
+Moreover, $-\floorfrac{-t}{2}\geq \floorfrac{s}{2}$ implies
+$-\floorfrac{-t}{2}=a$.
+So with the $A$-part we get $f(-\floorfrac{-t}{2})=q$.
+\else
+The interpolant expresses that $t\leq s$ holds, which can be deduced from 
+the $A$-part.
+Moreover from $2a\leq s$, we get $a \leq \floorfrac{s}{2}$.
+With $t\leq 2a$ we get $t\leq 2\floorfrac{s}{2}$.  Finally, we show 
+$-\floorfrac{-t}{2}\geq \floorfrac{s}{2} \rightarrow f(-\floorfrac{-t}{2})=q$.
+Using $-2a \leq -t$, we get $-a \leq \floorfrac{-t}{2}$.
+Hence, $a \leq \floorfrac{s}{2} \leq -\floorfrac{-t}{2} \leq a$ implies 
+$a=-\floorfrac{-t}{2}$, so with the $A$-part $f(-\floorfrac{-t}{2})=q$
+follows.
+\fi
+
+\paragraph{Interpolant is inconsistent with the $B$-part.}
+The $B$-part implies $s\leq 2b \leq t+1$.  
+Hence, we have $\floorfrac{s}{2} \leq b\leq \floorfrac{t+1}{2}$.
+A case distinction on whether $t$ is even or odd yields
+ $\floorfrac{t+1}{2} = -\floorfrac{-t}{2}$.  Therefore,
+$\floorfrac{s}{2} \leq b\leq -\floorfrac{-t}{2}$ holds.
+Hence, the interpolant guarantees $f(-\floorfrac{-t}{2})=q$ and
+\ifnewinterpolation
+$-\floorfrac{-t}{2} \leq \floorfrac{s}{2}$. 
+\else
+$t\leq 2\floorfrac{s}{2}$. The latter implies
+$-\floorfrac{-t}{2} \leq \floorfrac{s}{2}$. 
+\fi
+Hence, $b=-\floorfrac{-t}{2}$
+and with $f(b)\neq q$ from the $B$-part we get a contradiction.
+
+\paragraph{Symbol condition is satisfied.}
+The symbol condition is trivially satisfied since $\symb(A)=\{a,t,s,f,q\}$ and
+$\symb(B)=\{b,t,s,f,q\}$.  The shared symbols are $t$, $s$, $f$, and $q$ which
+are exactly the symbols occurring in the interpolant.
+
+%Since the interpolant follows from the $A$-part, is inconsistent with the
+%$B$-part, and only contains shared symbols, it is a valid interpolant for the
+%interpolation problem $A$ and $B$.
+
+\ifnewinterpolation\else
+A close inspection of the last proof reveals that $H$ is already a valid
+interpolant of $A$ and $B$. 
+This shows that in a certain sense the produced interpolants are not minimal.
+It may be useful to investigate more closely which parts can be safely
+omitted.
+\fi
+

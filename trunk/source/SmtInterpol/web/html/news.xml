@@ -9,6 +9,10 @@
 <page id="news">
   <name>News</name>
   <content>
+    <head1>New release</head1>
+    <txt>A new release is available.  This release fixes a bug in the tree interpolation engine and provides SMTLIB 2 compliant models for IRA logics.</txt>
+    <head1>New bugfix release</head1>
+    <txt>A new release of <s /> is available. It now allows users to define functions that take arguments in QF_LIA and QF_LRA. Thanks to Hans-Martin Adorf for reporting this bug.</txt>
     <head1>SMT Competition 2012</head1>
     <txt><s /> participates in the <link
     url="http://www.smtcomp.org/2012">SMT-COMP 2012</link> in the <link

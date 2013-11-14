@@ -26,8 +26,13 @@ import de.uni_freiburg.informatik.ultimate.util.HashUtils;
  * Represents a function application term.  This consists of a function 
  * symbol and zero or more sub-terms (the parameters of the function).
  * A constant is represented as function application with zero parameters.
- * @author hoenicke
  *
+ * An application term is created by 
+ * {@link Script#term(String, Term...)} or
+ * for indexed function symbols or for symbols with generic return sort by
+ * {@link Script#term(String, java.math.BigInteger[], Sort, Term...)}.
+ *
+ * @author hoenicke
  */
 public class ApplicationTerm extends Term {
 	final FunctionSymbol m_Function;
@@ -39,24 +44,40 @@ public class ApplicationTerm extends Term {
 		this.m_Function   = function;
 		this.m_Parameters = parameters;
 	}
-		
+
+	/**
+	 * Get the function symbol.
+	 * @return the function symbol. 
+	 * @see FunctionSymbol#getName()
+	 */
 	public FunctionSymbol getFunction() {
 		return m_Function;
 	}
 
+	/**
+	 * Get the parameters of the function application.
+	 * @return the parameters.  For constants this array is empty.
+	 * Never write to this array!
+	 */
 	public Term[] getParameters() {
 		return m_Parameters;
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	public Sort getSort() {
 		return m_Function.m_ReturnSort.getRealSort();
 	}
 		
-	public static final int hashApplication(
+	static final int hashApplication(
 			FunctionSymbol func, Term[] parameters) {
 		return HashUtils.hashJenkins(func.hashCode(), (Object[])parameters);
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public void toStringHelper(ArrayDeque<Object> m_Todo) {
 		String func = getFunction().getApplicationString();

@@ -319,8 +319,8 @@ public class Rational implements Comparable<Rational> {
 	 * may be to big to fit in an int.  This method normalizes
 	 * the rational number.  
 	 *   
-	 * @param nom   Numerator
-	 * @param denom Denominator
+	 * @param mbignum   Numerator
+	 * @param mbigdenom Denominator
 	 */
 	public static Rational valueOf(BigInteger mbignum, BigInteger mbigdenom) {
 		int cp = mbigdenom.signum();//mbigdenom.compareTo(BigInteger.ZERO);
@@ -351,8 +351,8 @@ public class Rational implements Comparable<Rational> {
 	 * This method does not work if called with value 
 	 * Long.MIN_VALUE.
 	 *   
-	 * @param nom   Numerator.
-	 * @param denom Denominator.
+	 * @param newnum   Numerator.
+	 * @param newdenom Denominator.
 	 */
 	public static Rational valueOf(long newnum, long newdenom) {
 		if (newdenom != 1) {
@@ -487,26 +487,20 @@ public class Rational implements Comparable<Rational> {
 	}
 	
 	/**
-	 * Returns <code>this+(fac1*fac2)</code>
-	 * @param fac1
-	 * @param fac2
-	 * @return
+	 * Returns <code>this+(fac1*fac2)</code>.
 	 */
 	public Rational addmul(Rational fac1,Rational fac2) {
 		return add(fac1.mul(fac2));
 	}
 	/**
-	 * Returns <code>(this-s)/d</code>
-	 * @param s
-	 * @param d
-	 * @return
+	 * Returns <code>(this-s)/d</code>.
 	 */
 	public Rational subdiv(Rational s,Rational d) {
 		return sub(s).div(d);
 	}
 	/**
 	 * Returns a new rational equal to <code>-this</code>.
-	 * @return <code>-this</code>
+	 * @return <code>-this</code>.
 	 */
 	public Rational negate() {
 		return Rational.valueOf(-(long)mnum, mdenom);		
@@ -628,7 +622,11 @@ public class Rational implements Comparable<Rational> {
 	public boolean isNegative() {
 		return mnum < 0;
 	}
-	
+	/**
+	 * Return the sign of this rational.  The sign will be -1, 0, or 1 if this
+	 * rational is negative, zero, or positive.
+	 * @return The sign of this rational.
+	 */
 	public int signum() {
 		return mnum < 0 ? -1 : mnum == 0 ? 0 : 1;
 	}
@@ -645,7 +643,7 @@ public class Rational implements Comparable<Rational> {
 		long valo = (long)o.mnum * mdenom;
 		return valt < valo ? -1 : valt == valo ? 0 : 1; 
 	}
-	
+	@Override
 	public boolean equals(Object o) {
 		if (o instanceof Rational) {
 			if (o instanceof BigRational)
@@ -658,18 +656,15 @@ public class Rational implements Comparable<Rational> {
 			return ((MutableRational) o).equals(this);
 		return false;
 	}
-
 	public BigInteger numerator() {
 		return BigInteger.valueOf(mnum);
 	}
 	public BigInteger denominator() {
 		return BigInteger.valueOf(mdenom);
 	}
-	
 	public int hashCode() {
 		return mnum * 257 + mdenom;
 	}
-	
 	public String toString() {
 		if (mdenom == 0)
 			return mnum > 0 ? "inf" : mnum == 0 ? "nan" : "-inf";
@@ -677,7 +672,6 @@ public class Rational implements Comparable<Rational> {
 			return String.valueOf(mnum);
 		return mnum + "/" + mdenom;
 	}
-
 	/**
 	 * Check whether this rational represents an integral value. Both infinity
 	 * values are treated as integral.
@@ -737,6 +731,10 @@ public class Rational implements Comparable<Rational> {
 			div++;
 		return valueOf(div, 1);
 	}
+	/**
+	 * Compute the absolute of this rational.
+	 * @return Rational that is equal to the absolute value of this rational.
+	 */
 	public Rational abs() {
 		return valueOf(Math.abs((long) mnum), mdenom);
 	}
@@ -748,16 +746,27 @@ public class Rational implements Comparable<Rational> {
 	public final static Rational ONE = new Rational(1,1);
 	public final static Rational MONE = new Rational(-1,1);
 	public static final Rational TWO = new Rational(2,1);
+	
+	/**
+	 * Creates a constant term containing this rational.
+	 * @param sort the sort of the constant term that should be created.
+	 * @return a constant term with this rational value. 
+	 * @throws SMTLIBException if term is infinite or NaN, if the
+	 * sort is not numeric, or if the term is not integral and the sort 
+	 * is Int.
+	 */
 	public Term toTerm(Sort sort) {
 		return sort.getTheory().constant(this, sort);
 	}
 	public Term toSMTLIB(Theory t) {
-		// Transform this rational to an SMTLIB term.
-		BigInteger num = numerator();
-		BigInteger denom = denominator();
-		assert (!denom.equals(BigInteger.ZERO));
-		if (denom.equals(BigInteger.ONE))
-			return t.numeral(num);
-		return t.term("/", t.numeral(num), t.numeral(denom));
+		return t.rational(numerator(), denominator());
+	}
+	/**
+	 * Check whether this rational corresponds to a (finite) rational value.
+	 * This function can be used to test for infinites and NaNs.
+	 * @return true if and only if this rational is not infinite or NaN.
+	 */
+	public boolean isRational() {
+		return mdenom != 0; 
 	}
 }

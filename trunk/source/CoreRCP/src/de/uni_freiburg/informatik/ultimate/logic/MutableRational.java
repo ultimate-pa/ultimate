@@ -21,7 +21,7 @@ package de.uni_freiburg.informatik.ultimate.logic;
 import java.math.BigInteger;
 
 /**
- * Mutable version of the {@link InfinitNumber} class. All arithmetic
+ * Mutable version of the {@link Rational} class. All arithmetic
  * operations change the value of this object.
  * 
  * This class is intended to save some unneeded temporary objects in bigger
@@ -259,27 +259,18 @@ public class MutableRational implements Comparable<MutableRational> {
 	}
 	/**
 	 * Returns <code>this+(fac1*fac2)</code>
-	 * @param fac1
-	 * @param fac2
-	 * @return
 	 */
 	public MutableRational addmul(Rational fac1,Rational fac2) {
 		return add(fac1.mul(fac2));
 	}
 	/**
 	 * Returns <code>this+(fac1*fac2)</code>
-	 * @param fac1
-	 * @param fac2
-	 * @return
 	 */
 	public MutableRational addmul(Rational fac1,BigInteger fac2) {
 		return add(fac1.mul(fac2));
 	}
 	/**
 	 * Returns <code>(this-s)/d</code>
-	 * @param s
-	 * @param d
-	 * @return
 	 */
 	public MutableRational subdiv(Rational s,Rational d) {
 		return sub(s).div(d);

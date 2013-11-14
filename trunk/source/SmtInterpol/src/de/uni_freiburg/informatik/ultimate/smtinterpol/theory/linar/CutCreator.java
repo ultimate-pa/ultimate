@@ -343,6 +343,12 @@ public class CutCreator {
 					m_rows[nr] = tr;
 				}
 			}
+			// make positive
+			if (m_columns[nr].mCoeffs[0].signum() < 0) {
+				m_columns[nr].negate();
+				m_rows[nr].negate();
+			}
+			
 			// now reduce all other rows with row[nr].
 			BigInteger coeffNr = m_columns[nr].mCoeffs[0];
 			BigInteger coeffNr2 = coeffNr.shiftRight(1);
@@ -350,21 +356,17 @@ public class CutCreator {
 				assert(m_columns[i].mIndices[0] == row);
 				BigInteger coeffI = m_columns[i].mCoeffs[0];
 				if (coeffI.signum() < 0) {
-					coeffI.subtract(coeffNr2);
+					coeffI = coeffI.subtract(coeffNr2);
 				} else {
-					coeffI.add(coeffNr2);
+					coeffI = coeffI.add(coeffNr2);
 				}
 				BigInteger div = coeffI.divide(coeffNr);
 				assert (div.signum() != 0);
 				m_columns[i].addmul(m_columns[nr], div.negate());
+				assert(m_columns[i].mIndices[0] != row
+					   || m_columns[i].mCoeffs[0].abs().compareTo(coeffNr2.abs())<=0);
 				m_rows[nr].addmul(m_rows[i], div);
 			}
-		}
-		
-		// make positive
-		if (m_columns[nr].mCoeffs[0].signum() < 0) {
-			m_columns[nr].negate();
-			m_rows[nr].negate();
 		}
 		
 		// Finally reduce the rows left of this column.
@@ -388,9 +390,9 @@ public class CutCreator {
 				 * make remainder small, i.e rem.abs() <= coeffNr2
 				 */
 				if (coeffI.signum() < 0) {
-					coeffI.subtract(coeffNr2);
+					coeffI = coeffI.subtract(coeffNr2);
 				} else {
-					coeffI.add(coeffNr2);
+					coeffI = coeffI.add(coeffNr2);
 				}
 			} else {
 				/* This is an lessequal constraint 

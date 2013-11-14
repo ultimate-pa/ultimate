@@ -23,6 +23,18 @@ import java.util.ArrayDeque;
 
 import de.uni_freiburg.informatik.ultimate.util.HashUtils;
 
+/**
+ * Representation of annotated terms in SMTLIB 2.  This class stores terms of
+ * the form
+ * <pre>
+ * (! ... :key_1 value_1 ... :key_n value_n)
+ * </pre>
+ *
+ * An annotated term is created by 
+ * {@link Script#annotate(Term, Annotation...)}.
+ *
+ * @author hoenicke
+ */
 public class AnnotatedTerm extends Term {
 	Term m_Subterm;
 	private Annotation[] m_Annotations;
@@ -37,11 +49,18 @@ public class AnnotatedTerm extends Term {
 	public Sort getSort() {
 		return m_Subterm.getSort();
 	}
-	
+	/**
+	 * Get the term that is annotated by the annotations stored in this term.
+	 * @return The subterm of this term.
+	 */
 	public Term getSubterm() {
 		return m_Subterm;
 	}
-
+	/**
+	 * Get all annotations stored in this term.  The resulting array should not
+	 * be modified!
+	 * @return The annotations stored in this term.
+	 */
 	public Annotation[] getAnnotations() {
 		return m_Annotations;
 	}

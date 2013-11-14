@@ -70,6 +70,12 @@ public class NonRecursive {
 	 */
 	private ArrayDeque<Walker> m_Todo = new ArrayDeque<Walker>();
 	
+	/**
+	 * Walker that does some piece of work.  This can be added to
+	 * the todo stack to be executed later. 
+	 * 
+	 * @author hoenicke
+	 */
 	protected interface Walker {
 		/**
 		 * Do one step of the recursive algorithm.  This may enqueue new
@@ -89,6 +95,10 @@ public class NonRecursive {
 		m_Todo.clear();
 	}
 	
+	/**
+	 * Enqueues a walker on the todo stack.
+	 * @param item the walker to enqueue.
+	 */
 	public void enqueueWalker(Walker item) {
 		m_Todo.addLast(item);
 	}
@@ -96,11 +106,17 @@ public class NonRecursive {
 	/**
 	 * The main work horse.  This will repeat doing work items until the
 	 * todo stack is empty.
+	 * @param item the walker to execute initially.
 	 */
 	public void run(Walker item) {
 		m_Todo.addLast(item);
 		run();
 	}
+	/**
+	 * The main work horse.  This will repeat doing work items until the
+	 * todo stack is empty.  This method expects that some Walker are on
+	 * the todo stack.
+	 */
 	public void run() {
 		while (!m_Todo.isEmpty()) {
 			m_Todo.removeLast().walk(this);
@@ -111,6 +127,13 @@ public class NonRecursive {
 		return m_Todo.toString();
 	}
 	
+	/**
+	 * Walker that walks non-recursively over terms.
+	 * This dispatches the walk function.  You still have to provide
+	 * the code that chooses which sub terms to walk.
+	 * 
+	 * @author hoenicke
+	 */
 	public static abstract class TermWalker implements Walker {
 		protected Term m_Term;
 		public TermWalker(Term term) {

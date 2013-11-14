@@ -1,795 +1,102 @@
-%\documentclass[english]{scrartcl}
-\documentclass{llncs}
-%\usepackage[T1]{fontenc}
-%\usepackage[latin9]{inputenc}
-\setlength{\parskip}{\smallskipamount}
-\setlength{\parindent}{0pt}
-%\usepackage{units}
-%\usepackage{amsthm}
+\documentclass[runningheads,a4paper]{llncs}
+
+\usepackage[OT1]{fontenc}
+\usepackage{fancyhdr}
+%\usepackage{a4wide}
+\usepackage{atrtitle}
+
+\usepackage[pdftex, bookmarks=true, bookmarksopen=true]{hyperref}
 \usepackage{amsmath}
 \usepackage{amssymb}
+\usepackage{tikz}
+\usepackage{comment}
+\usepackage{xspace}
+\usepackage{varwidth}
 
-\newcommand{\ceilfrac}[2]{\left\lceil \frac{#1}{#2} \right\rceil}
-\newcommand{\floorfrac}[2]{\left\lfloor \frac{#1}{#2} \right\rfloor}
-\newcommand{\proj}[2]{#1\downharpoonright #2}
+\excludecomment{tacas}
+\includecomment{techreport}
+\newif\ifnewinterpolation
+\newinterpolationfalse
+
+\usetikzlibrary{decorations.pathreplacing, calc}%patterns}
+
+\setlength{\tabcolsep}{6pt}
+
+\input{macros}
 
 \usepackage{mathpartir}
 
-\usepackage[pdftex, bookmarks=true, bookmarksopen=true]{hyperref}
+\hypersetup{colorlinks
+  ,linkcolor=black
+  ,filecolor=black
+  ,urlcolor=black
+  ,citecolor=black
+  ,pdftitle={Proof Tree Preserving Interpolation},
+  pdfauthor={J{\"u}rgen Christ, Jochen Hoenicke, Alexander Nutz},
+  pdfkeywords={Craig interpolation }{SMT }{mixed literals }{theory combination }, 
+  pdfsubject={Craig Interpolation in SMT }
+}
+
+\title{Proof Tree Preserving Interpolation
+\thanks{This work is supported by the
+  German Research Council (DFG) as part of the Transregional Collaborative
+  Research Center ``Automatic Verification and Analysis of Complex Systems''
+  (SFB/TR14 AVACS)}}
+\global\toctitle={Proof Tree Preserving Interpolation}
 
 
-\newcommand{\sod}{s_1\negthinspace\downarrow}
-\newcommand{\stu}{s_2\negthinspace\uparrow}
+\author{J{\"u}rgen Christ \and Jochen Hoenicke \and Alexander Nutz}
+\institute{Chair of Software Engineering, University of Freiburg}
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%^M
 
-\title{Interpolation of Mixed Literals for the Theories of 
-Linear Arithmetic (Integer and Real)  and Uninterpreted Functions}
+% Provide name of contact person here (this should of course be one
+% of the authors
+\newcommand{\atrcontactname}{J{\"u}rgen Christ\xspace}
+\newcommand{\atrcontactemail}{christj@informatik.uni-freiburg.de}
+\newcommand{\atrnumber}{89\xspace}
+\newcommand{\atrdate}{February 2013\xspace}
 
-\author{J\"urgen Christ, Jochen Hoenicke, Alexander Nutz}
-
-%\institute{Chair of Software Engineering, Uni Freiburg}
-
-\setcounter{tocdepth}{3} %useful (only) for hyperref bookmarks
+\setcounter{tocdepth}{3}
 
 \begin{document}
 
+%\typeout{headheight ist \the\headheight}
+\newlength{\headheightsafe}
+\setlength{\headheightsafe}{\headheight}
+
+\atrmaketitle
 \maketitle
 
-%\tableofcontents
+\setlength{\headheight}{\headheightsafe}
+%\typeout{headheight ist \the\headheight}
 
-%----------------------------------------
-\section{Introduction}
-%----------------------------------------
+\setlength{\headheight}{0cm}
 
-Motivate Craig Interpolation.
-McMillan/Pudl\'ak algorithm.
-Nelson-Oppen theory combination.
-problems with mixed Literals.
+\input{abstract}
 
+\input{ch_introduction}
 
-%----------------------------------------
-\section{Related Work}
-%----------------------------------------
+\input{ch_related_work}
 
-%----------------------------------------
-\section{Preliminaries}
-%----------------------------------------
+\input{ch_preliminaries}
 
-craig interpolants
+\input{ch_proofinterpolation}
 
-partial interpolants 
+\input{ch_purification}
 
-(purification)
+\input{ch_lemmas}
 
-% Given an interpolation problem $F_1,\dots,F_n$, we define for a
-% literal $\ell$ and every partition $i$ a projection $\proj{\ell}{i}$ with
-% the following porperties:
-% \begin{itemize}
-% \item $\ell \equiv \exists y_{\ell} (\proj{\ell}{1} \land \dots \land \proj{\ell}{n})$,
-% \item $symbols(\proj{\ell}{i}) \subseteq symbols(F_i)$,
-% \item $vars(\proj{\ell}{i}) \subseteq \{ y_{\ell}\}$.
-% \end{itemize}
-% Here $y_{\ell}$ is a fresh variable that may be used if the literal
-% contains symbols from different partitions.
-% 
-% 
-% Examples Given the formulas $F_1 \equiv a=s \land s=t$ and $F_2\equiv
-% t=b \land s\neq b$.  We can define:
-% 
-% \[
-% \begin{array}{cc}
-% \proj{a=s}{1} \equiv a=s & \proj{a=s}{2} \equiv \bot \\
-% \proj{b\neq s}{1} \equiv \bot  & \proj{b\neq s}{2} \equiv b\neq s \\
-% \proj{s = t}{1} \equiv s=t & \proj{s=t}{2} \equiv s=t \\
-% \proj{a= b}{1} \equiv a=y_{a=b}  & \proj{a= b}{2} \equiv y_{a=b}= b \\
-% \proj{a\neq b}{1} \equiv a=y_{a=b}  & \proj{a\neq b}{2} \equiv y_{a=b}\neq b
-% \end{array}
-% \]
-% 
-% 
-% $x_1 + x_2 + x_3 \leq 5$ is projected to
-% 
-% $x_1 = y_{\ell,1}$, $y_{\ell,1}+x_2 = y_{ell,2}$ and
-% $y_{\ell,2} + x_3 \leq 5$.
-% 
-%  If $s$ and $t$ are contained
-% in $F_1$ and $F_2$
-% 
-% A conflict $C$ for an interpolation problem $F_1,\dots,F_n$ is a
-% conjunction of literals that is unsatisfiable in the context
-% $F_1,\dots,F_n$.  Every clause in the proof tree is the negation of a
-% conflict.  We define a projection $\proj{C}{i}$ as the conjunction of the projection of the literals, i.e.
-% \[\proj{(\ell_1\land \dots\land\ell_m)}{i} = 
-% \proj{\ell_1}{i} \land \dots\land  \proj{\ell_m}{i}\]
-% 
-% 
-% 
-% 
-% \begin{definition}[Partial Interpolants]
-% Given an interpolation problem $F_1,\dots, F_n$.  A sequence of
-% partial interpolants $I_0,I_1,\dots,I_n$ for a conflict $C$ has the
-% following properties:
-% \begin{itemize}
-% \item $I_0 = \top$ and $I_n= \bot$
-% \item $I_{i-1} \land F_i \land (\proj{C}{i}) \Rightarrow I_i$
-% \end{itemize}
-% \end{definition}
+\input{ch_UF}
+\input{ch_UFexample}
 
-\subsubsection{Restriction to A/B}
+\input{ch_LA}
 
-For computing the partial interpolants we need a notion of what $C|A$ and $C|B$ 
-are for any clause $C$. Normally we can just divide the literals accordingly: 
-Literal with A-local symbols belong to $C|A$, and analogously for $C|B$, by 
-convention literals with only shared symbols belong to $C|B$. But what if a 
-theory introduces mixed literals like $a=b$ where $a$ is A-local and $b$ is 
-B-local?
+\input{ch_combination}
 
-We replace ab-mixed literals by introducing a fresh auxiliary variable which we 
-denote by $x$ in the following. We count this variable as shared between A and B. 
-It will be removed from the partial interpolants by a special interpolation rule
-at the node in the proof tree where the mixed literal is pivoted by resolution. 
-Rules for the different theories will be introduced in the following sections.
+\input{ch_conclusion}
 
-To remove a mixed literal $\ell$ from a conflict, we replace it by the 
-equisatisfiable formula $\ell|A \wedge \ell|B$.
-
-Suppose we have a mixed literal $a=b$:
-
-\begin{align*}
-(a=b)|A & := (a=x) \\
-(a=b)|B & := (x=b) \\
-(a\neq b)|A & := (a=x) \\
-(a\neq b)|B & := (x\neq b)
-\end{align*}
-
-Suppose we have a mixed literal $a\leq b$:
-
-\begin{align*}
-(a\leq b)|A & := (a\leq x) \\
-(a\leq b)|B & := (x\leq b) \\
-(a > b)|A & := (a\geq x) \\
-(a > b)|B & := (x > b)
-\end{align*}
-
-For this purification to be correct we must be sure that for any formulae $F,A,B$: 
-$F \leftrightarrow \exists x. F|A \wedge F|B$. This is clearly the case.
-
-\subsubsection{Some Lemmas}
-
-The following lemmas will help us prove the correctness of our proposed new 
-interpolation rules.
-
-\paragraph{Notation} In the following we denote by $F[\phi]$ a formula 
-in negation normal form (NNF) with a placeholder $\phi$ that occurs
-positive in the formula.  Substituting this placeholder by a formula
-$G$ is denoted by $F[G]$.  By $F(x)$ we denote a formula with a
-placeholder $x$ that stands for an arbitrary subterm of some literal
-in $F(x)$.  The substitution of $x$ with a term $t$ is denoted by $F(t)$.
-
-\begin{lemma}[monotonicity]
-  Given a formula $F[\phi]$ in negation normal form with a placeholder
-  formula $\phi$ occuring only positive in the formula.  Then
-  \[ G_1 \rightarrow G_2 \implies F[G_1] \rightarrow F[G_2] \]
-\end{lemma}
-\begin{proof}
-  Induction over the number of logical connectives in $F[\phi]$.  The
-  base case $F[\phi] \equiv \phi$ is trivial.  For the induction step
-  observe that if $F_1[G_1]\rightarrow  F_1[G_2]$ and
-  $F_2[G_1]\rightarrow  F_2[G_2]$, then 
-  \[F_1[G_1] \land F_2[G_1] \rightarrow F_1[G_2] \land F_2[G_2] 
-  \text{ and }
-  F_1[G_1] \lor F_2[G_1] \rightarrow F_1[G_2] \lor F_2[G_2]\]
-\end{proof}
-
-\begin{lemma}[deep substitution]
-  Let $F_1[\phi]$ and $F_2[\phi]$ be two formulas with the place holder
-  formula $\phi$.  
-  
-  1. If $G_1\land G_2\rightarrow G_3$ holds, then
-
-  \[ F_1[G_1] \land F_2[G_2] \rightarrow F_1[F_2[G_3]]. \]
-
-  2. If $G_3 \rightarrow G_1\lor G_2$ holds, then
-  \[ F_1[F_2[G_3]] \rightarrow F_1[G_1] \lor F_2[G_2]. \]
-
-  3. If $G_3 \rightarrow G_1\land G_2$ holds, then
-  \[ F_1[F_2[G_3]] \rightarrow (F_1[G_1] \land F_2[G_2]) \lor F_1[\bot] \lor F_2[\bot]. \]  
-\end{lemma}
-\begin{proof}
-  \begin{align*}
-  1.\qquad &\quad
-    (G_1 \land G_2) \rightarrow G_3)\\
-    \Leftrightarrow&\quad
-    G_1 \rightarrow (G_2 \rightarrow G_3)\\
-    \text{\{monotonicity\}}\Rightarrow&\quad 
-    G_1 \rightarrow (F_2[G_2] \rightarrow F_2[G_3])\\
-    \Leftrightarrow&\quad
-    F_2[G_2] \rightarrow (G_1 \rightarrow F_2[G_3])\\
-    \text{\{monotonicity\}}\Rightarrow&\quad 
-    F_2[G_2] \rightarrow (F_1[G_1] \rightarrow F_1[F_2[G_3]])\\
-    \Leftrightarrow&\quad
-    F_1[G_1] \land F_2[G_2] \rightarrow F_1[F_2[G_3]]\\
-  \end{align*}
-
-  \begin{align*}
-    2.\qquad &\quad
-    (G_3 \rightarrow G_1\lor G_2)\\
-    \Leftrightarrow&\quad
-    \lnot G_1 \rightarrow (G_3 \rightarrow G_2)\\
-    \text{\{monotonicity\}}\Rightarrow&\quad 
-    \lnot G_1 \rightarrow (F_2[G_3] \rightarrow F_2[G_2])\\
-    \Leftrightarrow&\quad
-    \lnot F_2[G_2] \rightarrow (F_2[G_3] \rightarrow G_1)\\
-    \text{\{monotonicity\}}\Rightarrow&\quad 
-    \lnot F_2[G_2] \rightarrow (F_1[F_2[G_3]] \rightarrow F_1[G_1])\\
-    \Leftrightarrow&\quad
-    F_1[F_2[G_3]] \rightarrow F_1[G_1] \lor F_2[G_2] \\
-  \end{align*}
-
-  3. From $G_3\rightarrow G_1\land G_2$ we get 
-  $G_3\rightarrow G_1 \lor \bot$ and $G_3 \rightarrow \bot \lor G_2$.  Hence by 2.:
-  \begin{align*}
-    F_1[F_2[G_3]] \rightarrow& F_1[G_1] \lor F_2[\bot]\\
-    F_1[F_2[G_3]] \rightarrow& F_1[\bot] \lor F_2[G_2]
-  \end{align*}
-
-  Combining these results, we get
-  \begin{align*}
-    F_1[F_2[G_3]] &\rightarrow
-    (F_1[G_1] \lor F_2[\bot]) \land (F_1[\bot] \lor F_2[G_2])\\
-  &\leftrightarrow
-  ((F_1[G_1] \lor F_2[\bot]) \land F_1[\bot]) \lor
-  (F_1[G_1]\land F_2[G_2]) \lor (F_2[\bot] \land F_2[G_2]) \\
-  &\rightarrow
-  (F_1[G_1]\land F_2[G_2]) \lor F_1[\bot] \lor F_2[\bot] 
-  \end{align*}
-\end{proof}
-
-%----------------------------------------
-\section{Uninterpreted Functions}
-%----------------------------------------
-
-\subsection{Leaf Interpolation}
-
-\begin{itemize}
- \item for reasoning over UF we use DAG-based approach
- \item  for interpolation we use a cycle in the cc-graph that contains exactly one 
- inequality
- (there must be at least one such cycle as we need one for proving unsat)
- \item  the normal procedure generates an interpolant by summarizing the ``red'' edges
- in the cycle
-  problem: an edge between an a-local and a b-local term does not have a color.
-   thus we need mixed interpolation when the cycle contains such an edge 
- \item  two cases: the edge is either an equality, or a disequality
- \begin{itemize}
-  \item if it is a disequality we insert a fresh auxiliary variable, say $x$, which is 
-  considered as shared, (it will be removed when the literal is pivoted, thus it does
-  not occur in the final interpolant) like this:
-  $a=x\neq b$, the $a=x$-edge becomes red, the other one blue, we can interpolate as 
-  normal. 
-  Our interpolant will definitely contain the summary of $a=x=...=s$ for some other 
-  DAG-node $s$, this summary is $a=s$. (this will become important for the 
-  interpolation rule later which removes the $x$)
-  (in the disequality-case, $a\neq b$ can not influence the interpolant in any other 
-  way because disequalities only introduce one edge each, in contrast to equalities 
-  which may introduce more edges by function congruence)
-  \item if it is an equality, it may occur in the cycle ``as its self'', or it may have
-  created mixed edges by function congruence, i.e. in the cycle there may be an edge
-  $f(..,a,..)=f(..,b,..)$. This edge does not have a color either. Thus we purify
-  $a=b$ to $a=x=b$ (even if $a=b$ is not in the cycle), lift the function application we 
-  need, and insert the congruence edges that follow from the new equalities (it suffices to
-  do the ones from the cycle)
-  Thus we get $f(..,a,..)=f(..,x,..)=f(..,b,..)$ over which we can interpolate as usual.
- \end{itemize}
-\end{itemize}
-  
-  
-\subsection{Pivoting of Mixed Literals}
-
-\[\inferrule {a=b \vee C_1:I_1[x=s] \\ a \neq b \vee C_2: I_2(x) } {C_1 \vee C_2: I_1[I_2(s)] } \]
-
-\begin{theorem}
-  $I_1[I_2(s)]$ is a partial interpolant of $A$ and $B$ at clause $C_1 \vee C_2$.
-\end{theorem}
-
-\begin{proof}
-
-First we need to show \[A \wedge \neg C_1|A \wedge \neg C_2|A \stackrel{!}{\models} I_1[I_2(s)]\]
-
-By assumption $I_1[x=s]$ is a partial interpolant, at clause $C_1 \vee a=b$:
-\begin{align*}
-  & A \wedge \neg C_1|A \wedge a\neq b|A \models I_1[x=s] & (1)
-\end{align*}
-Also by assumption $I_2(s)$ is a partial interpolant, at clause $C_2 \vee a \neq b$:
-\begin{align*}
-  & A \wedge \neg C_2|A \wedge a=b|A \models I_2(x) \quad & (2)
-\end{align*}
-We assume $A \wedge \neg C_1|A \wedge \neg C_2|A$, the antecedent of our proof goal, so $I_1[I_2(s)]$ 
-remains to be shown.
-
-$(1)$ and the previously defined restricion rules give us:
-\begin{align*}
-  & a=x \models I_1[x=s]  \\
-  \Rightarrow & \models I_1[a=s] (*)
-\end{align*}
-
-$(2)$ gives us:
-\begin{align*}
-  & a=x \models I_2(x) \\
-  \text{\{inst x:=s\}} & \Rightarrow a=s \models I_2(s) \\
-  & \Rightarrow I_1[a=s] \models I_1[I_2(s)] \\
-  (*) & \Rightarrow \models I_1[I_2(s)]
-\end{align*}
-
-Second we need to show \[B \wedge \neg C_1|B \wedge \neg C_2|B \wedge I_1[I_2(s)] \stackrel{!}{\models} \bot\]
-
-Assume $B \wedge \neg C_1|B \wedge \neg C_2|B$. Then our proof goal is $I_1[I_2(s)] \models \bot$.
-
-  $I_1[x=s]$ is a partial interpolant, at clause $C_1 \vee a=b$, thus (for any x):
-
-\begin{align*}
-  & x\neq b \wedge I_1[x=s] \models  \bot (1)\\
-  \text{\{inst x:=s\}} \Rightarrow & s \neq b \wedge I_1[\top] \models \bot (1')
-\end{align*}
-
-$I_2(s)$ is a partial interpolant, at clause $C_2 \vee a\neq b$, thus:
-
-\begin{align*}
-  & x=b \wedge I_2(x) \models  \bot (2)\\
-  \text{\{inst x:=s\}} \Rightarrow & s=b \wedge I_2(s) \models \bot (2')\\
-\end{align*}
-
-Case $s\neq b$:
-\begin{align*}
-  & I_2(s) \models \top \\
-  \text{\{monotonicity\}} & I_1[I_2(s)] \models I_1[\top] \\
-  (1'), case & I_1[I_2(s)] \models \bot \\
-\end{align*}
-
-Case $s=b$
-\begin{align*}
-  (2) & I_2(s) \models \bot & \\
-  \text{\{monotonicity\}} & I_1[I_2(s)] \models I_1[\bot] & (*) \\
-  \text{\{in (1) choose $x\neq s$ \footnote{Here we need our assumption that the domain has at least two elements.}\}}  & I_1[\bot] \models \bot & \\
-  \text{\{$(*)$, transitivity\}} & I_1[I_2(s)] \models \bot & \\
-\end{align*}
-\qed 
-\end{proof}
-
-
-%----------------------------------------
-\section{Linear Real and Integer Arithmetic}
-%----------------------------------------
-
-
-The interpolants for mixed inequalities contain subformulas of the
-form $EQ(s(\vec x), k, F(\vec x))$, where $k\in
-\mathbb{Q}$ is a constant, $F$ an arbitrary formula, and $s(\vec
-x_+,\vec x_-) = \sum c_i x_i + t$ is an affine
-term, $c_i \neq 0$ and $t$ does not depend on $\vec x$.  We denote
-by $\vec x_+$ the variables in $x_i \in \vec x$ with $c_i > 0$ and
-by $\vec x_-$ the variables in $x_i \in \vec x$ with $c_i < 0$.
-
-The formula $EQ(s,k,F)$ stands for two different interpolants, one
-strong and one weak.   These are:
-\begin{align*}
-EQ_S\left(s(\vec x), k, F(\vec x)\right) :\equiv & 
-  s(\vec x) \leq 0 \land 
-  \forall \vec x'_+ \leq \vec x_+, \vec x'_-\geq \vec x_-: 
-	  s(\vec x') < -k \vee F(\vec x')\\
-EQ_{W} \left(s(\vec x),k,F(\vec x)\right) :\equiv & 
-  s(\vec x) < -k \vee F(\vec x)
-\end{align*}
-Having two interpolants gives more flexibility.  The strong
-interpolant allows for changing the free variables in $F$, provided
-that we change them only in the direction that will decrease $s$.
-Obviously, the strong interpolant $EQ_S(s,k,F)$ implies the weak
-interpolant $EQ_W(s,k,F)$ but not vice versa.  Having quantifiers in
-the strong interpolant is no problem; in the end, we return
-the weak interpolant. We will show that the strong interpolant follows
-from the strong interpolant of the parent proof nodes or the $A$ part
-for leaves and that the weak interpolant implies the weak
-interpolants of the parent proof nodes, or the negation of the $B$
-part for leaves.
-
-The number $k$ in $EQ(s,k,F)$ can either be $-\varepsilon$, or is an
-epsilon-free term $k \in \mathbb{Q}$.  If $k < 0$, then
-$F = \bot$ must hold.
-
-\subsection{Leaf Interpolation}
-
-\subsection{Pivoting of Mixed Literals}
-
-We will first define how to merge the $EQ$ formulas when pivoting on a
-mixed literal.  Let $y$ be the variable introduced by the mixed
-literal, then the interpolant of the first clause may only contain $y$
-with positive coefficient, i.e. $EQ(c_1 y + s_1(\vec x_1), k_1, F_1(y,
-\vec x_1))$, and the interpolant of the second clause may contain $y$
-only in subformulas of the form $EQ(-c_2 y + s_2(\vec x_1), k_2,
-F_1(y, \vec x_2))$.  
-
-We combine these two formulas to a single formula $EQ(s, k, F_3)$ with
-$s := \frac{s_1}{c_1} + \frac{s_2}{c_2}$.  We combine the variables
-(except $y$), i.\,e., $\vec x = \vec x_1 \cup \vec x_2$.  Note that
-$\vec x_{1+} \cap \vec x_{2-} = \emptyset = \vec x_{2+} \cap \vec
-x_{1-}$.  Otherwise the resolvent would contain the corresponding
-literal both positively and negatively which is not possible in a
-well-formed proof tree.
-
-If $y$ is an integer variable, then 
-$k_3 = \frac{k_1}{c_1} + \frac{k_2}{c_2} + 1$.  
-
-For a real variable, we set $k_3 = \frac{k_1}{c_1} + \frac{k_2}{c_2}$;
-however, if $k_1=k_2=-\varepsilon$ then $k_3 = -\varepsilon$ and if
-$k_{i}\in\mathbb{Q}, k_{\frac{2}{i}}=-\varepsilon, i=1,2$, then $k_3 =
-\frac{k_i}{c_i}$.  Finally we compute $F_3$ as follows
-
-\begin{align*}
-  &&\textnormal{(int case)} \\F_3(\vec x) & :\equiv 
-  \bigvee_{i=0}^{\ceilfrac{k_1+1}{c_1}}
-  (EQ^1_W\left(\ceilfrac{-s_1(\vec x_1) - i c_1}{c_1}\right)
-    \land EQ^2_W\left(\ceilfrac{-s_1(\vec x_1) - i c_1}{c_1}\right)\\
-&&\textnormal{(real case)} \\F_3(\vec x) & :\equiv
-  EQ^1_W\left(\frac{-s_1(\vec x)}{c_1}\right)
-  \land EQ^2_W\left(\frac{-s_1(\vec x)}{c_1}\right)\\
-\end{align*}
-
-Note that the formula is asymmetric.  If $\ceilfrac{k_2+1}{c_2} <
-\ceilfrac{k_1+1}{c_1}$ we can replace $-s_1$ by $s_2$, $k_1$ by $k_2$,
-and $c_1$ by $c_2$ and change ceiling to flooring.  In
-the real case we require that $k_1 \leq 0$.  If both $k_1$ and $k_2$
-are positive (which can happen only for LIRA logics that mix integer
-and real arithmetic), our algorithm will fail.
-
-
-\begin{lemma}
-  For all $s(\vec x_+, \vec x_-),k,F(\vec x_+,\vec x_-)$:
-\[  EQ_S(s(\vec x_+,\vec x_-),k,F(\vec x_+,\vec x_-)) \Rightarrow EQ_W(s(\vec x_+,\vec x_-),k,F(\vec x_+,\vec x_-))\]
-\end{lemma}
-\begin{proof}
-  Instantiate the vector $\vec x'_+,\vec x'_-$ in $EQ_{S}$ with $\vec x_+,\vec x_-$.
-\end{proof}
-
-
-\subsubsection{Pivoting Rule}
-The pivoting rule for pivot element $t\leq0$ with auxiliary variable $y$ is:
-
-\[\inferrule 
-{t\leq 0 \vee C_1 : I_1[EQ{(c_1y + s_1, k_1, F_1(y))}] \\
-t > 0 \vee C_2: I_2[EQ{(-c_2y + s_2, k_2, F_2(y))}]} 
-{C_1 \vee C_2: I_1[I_2[EQ(s_1/c_1 + s_2/c_2, k, F_3)] } 
-\]
-
-with $k$ and $F_3$ as defined above.
-
-
-
-\subsection{proof of correctness}
-
-Shorthands: 
-
-For later reference we write out all the interpolants that occur in the rule as follows:\\
-
-
-\begin{align*}
-EQ_S^1(y) & := \underbrace{c_{1}y+s_{1}(\vec x) \leq 0}_{(1.1)} \wedge 
-( \underbrace{ \forall y'\leq y,\vec x'_+\leq \vec x_+, \vec x'_-\geq \vec x_-: -k_1 \leq c_{1}y'+s_{1}(\vec x')
-\rightarrow F_1 (y',\vec x')}_{(1.2)} ) \\
-EQ_S^2(y) & := \underbrace{-c_2 y+s_2(\vec x) \leq 0}_{(2.1)} \wedge 
-( \underbrace{  \forall y'\geq y,\vec x'_+\leq \vec x_+, \vec x'_- \geq \vec x_-: -k_2 \leq -c_{2}y'+s_{2}(\vec x')
-\rightarrow F_2 (y', \vec x')}_{(2.2)} ) \\
-EQ_S^3 & := \underbrace{s_1(\vec x)/c_1 + s_2(\vec x)/c_2 \leq 0}_{(3.1)} \wedge 
-( \underbrace{ \forall \vec x'_+\leq \vec x_+, \vec x'_- \geq \vec x'_+: -k_3 \leq s_2(\vec x')/c_2 + s_1(\vec x')/c_1
-\rightarrow F_3(\vec x')}_{(3.2)} \\
-& & \\
-EQ_W^1(y) & := 
-( \underbrace{ - k_1 \leq c_{1}y+s_{1}(\vec x)}_{(1.3)} \rightarrow
-\underbrace{F_1 (y, \vec x)}_{(1.4)} ) \\
-EQ_W^2(y) & := 
-( \underbrace{- k_2 \leq -c_{2}y+s_{2}(\vec x)}_{(2.3)} \rightarrow
-\underbrace{F_2 (y, \vec x))}_{(2.4)} ) \\
-EQ_W^3 & := 
-( \underbrace{ - k_3 \leq s_1(\vec x)/c_1 + s_2(\vec x)/c_2}_{(3.3)} \rightarrow 
-\underbrace{F_3(\vec x)}_{(3.4)} ) \\
-\end{align*}
-
-\begin{lemma}\label{lemma_la1}
-$\exists y. EQ_S^1(y) \wedge EQ_S^2(y) \rightarrow EQ_S^3$
-\end{lemma}
-
-\begin{proof}
-
-(integer case)
-
-Fix $y$ such that $EQ_S^1(y)$ and $EQ_S^2(y)$
-From (1.1) and (2.1) it follows that 
-  \[\frac{s_2(\vec x)}{c_2} \leq y \leq -\frac{s_1(\vec x)}{c_1}.\] 
-By transitivity and some simple transformations we get (3.1).
-
-Now we show that (3.2) holds for all $\vec x'_+ \leq \vec x_+$ and
-all $\vec x'_- \leq \vec x_-$.  Instantiate (1.2) and (2.2) with the
-same $\vec x'$.  
-We show that $F_3(\vec x')$ holds using a case distinction on $y$.
-
-\paragraph{Case $y < \floorfrac{-s_1(\vec x')-c_1\ceilfrac{k_1+1}{c_1}}{c_1}$:}
-%  Since $y$ occurs negatively in $-c_2y-s_2$, 
-Instantiate $y'$ in (2.2) with 
-$\floorfrac{-s_1(\vec x')-c_1\ceilfrac{k_1+1}{c_1}}{c_1}$ 
-(which we can do because the universal quantifier in (2.2) ranges over all $y'\geq y$)
-and obtain
-$EQ^2_W(\floorfrac{-s_1(\vec x')-c_1\ceilfrac{k_1+1}{c_1}}{c_1})$, which is part of the
-last disjunct in $F_3(x)$ where $i=\ceilfrac{k_1+1}{c_1}$.
-
-Also $EQ^1_W(y')$, which is the other part of the last
-disjunct of $F_3(x)$, holds for the same $y'$ since $s_1(\vec x') + c_1 y' < -k_1$:
-
-\begin{align*}
-  & \phantom{\Rightarrow} s_1(\vec x') + c_1 y' < -k_1 \\
-  & \Leftrightarrow y' < \frac{-s_1(\vec x') -k_1}{c_1} \\
-  & \Leftrightarrow 
-    \floorfrac{-s_1(\vec x')-c_1\ceilfrac{k_1+1}{c_1}}{c_1} < \frac{-s_1(\vec x') -k_1}{c_1}
-\end{align*}
-
-Hence $F_3$ holds.
-
-\paragraph{Case $\floorfrac{-s_1(\vec x')-c_1\ceilfrac{k_1+1}{c_1}}{c_1}\leq y$:}
-%  From (1.1) we know $y\leq \floorfrac{-s_1(\vec x)}{c_1}$.
-We can instantiate $y'$ in both (1.2) and (2.2) with $y$ (and $x'$ with $x$). 
-
-The resulting terms are
-identical with  $EQ^1_W(y)$ and $EQ^2_W(y)$.  Since $-s_1(\vec x) \leq
--s_1(\vec x')$, there is an $i$ with $0\leq i \leq
-\ceilfrac{k_1+1}{c_1}$ such that $y = \floorfrac{-s_1(\vec
-  x')-ic_1}{c_1}$, so the corresponding disjunct in $F_3(\vec x)$ holds.  
-%    Hence (3.2) and thus $EQ^3_S$ holds.
-  \qed
-\end{proof}
-
-\begin{proof}
-(real case)
-
-As in the integer case we can prove (3.1) from (1.1) and (2.1), and on the way we get:
-
-\[\frac{s_2(x)}{c_2} \leq y\leq \frac{-s_1(x)}{c_1} (*)\]
-
-Because the universal quantifier in (2.2) ranges over all $y'\geq y$, we can choose 
-$y'=\frac{-s_1(x)}{c_1}$ and we get that $EQ^2_W(y')$ holds. This is the right conjunct
-in $F_3(x)$.
-  
-For showing (3.2) it suffices to show $F_3(x)$ under the condition that the antecedent 
-$-k_3\leq \frac{s_1(x)}{c_1} + \frac{s_2(x)}{c_2}$ holds. 
-Together with (3.1) the antecedent of (3.2) gives us:
-\begin{align*}
-  & -k_3  \leq \frac{s_1(x)}{c_1} + \frac{s_2(x)}{c_2} \leq 0 \\
-  \text{\{$k_3 \leq 0$\}} & \Rightarrow  k_3 = 0 \wedge \frac{s_1(x)}{c_1} + \frac{s_2(x)}{c_2}=0 \\
-  & \Rightarrow \frac{s_2(x)}{c_2} = - \frac{s_1(x)}{c_1} \\
-  \text{\{$(*)$\}} & \Rightarrow  y = - \frac{s_1(x)}{c_1}
-\end{align*}
-
-Because $y=\frac{-s_1(x)}{c_1}$, we can instantiate $y'$ with it in (1.1) and obtain that 
-$EQ^2_W(y')$ holds. This is the other conjunct in $F_3$.
-
-\qed
-
-%  If $y$ is a real variable, the proof works analogously.  One needs to
-%  omit the flooring and ceiling operators.  Moreover, we use
-%  $\varepsilon$ to get the smallest real number greater than $s_2+k_2$.
-%  If $k_2$ is $-\varepsilon$, this will just remove the $\varepsilon$.
-%  Otherwise the $\varepsilon$ may change the outcome of ceiling and
-%  flooring operations hidden inside $F_1$ and $F_2$.
-\end{proof}
-
-
-
-\begin{theorem}
-$I_1[I_2[EQ(s_1/c_1 + s_2/c_2, k, F_3)]$ has the inductive property of a partial interpolant
-of $A$ and $B$, at clause $C_1 \vee C_2$. 
-\end{theorem}
-\begin{proof}
-To show:
-\begin{align*}
-A\wedge\neg C_{1}\backslash B\wedge\neg C_{2}\backslash B 
-& \models I_1[I_2[EQ(c_2 s_1 + c_1 s_2, k_3, F_3)] \label{eq:15}
-\end{align*}
-
-In the following assume that $A\wedge\neg C_{1}\backslash B\wedge\neg C_{2}\backslash B$ holds,
-we have to show $I_1[I_2[EQ_S^3]]$.
-
-$I_1[EQ_S^1(y)]$ and $I_2[EQ_S^2(y)]$ are partial interpolants of $A$ and $B$ at clauses
-$(C_1 \vee a - y \leq 0)$ and $(C_2 \vee a - y > 0)$ respectively. So given the assumption above
-we know:
-\begin{align*}
-a - y \geq 0 & \models I_1[EQ_S^1(y)] \\
-a - y \leq 0 & \models I_2[EQ_S^2(y)]
-\end{align*}
-
-Thus, in our context, $\models I_1[EQ_S^1(t_A)]$ and $\models I_2[EQ_S^2(t_A)]$ hold.
-
-By Lemma \ref{lemma_la1} we know that $\exists y. EQ_S^1(y) \wedge EQ_S^2(y) \rightarrow EQ_S^3$.
-
-With the first part of the deep substitution lemma, we obtain that our proof goal is implied by what we already know:
-\begin{align*}
-  &  & I_{2}\left[EQ_S^2\left(t_{A}\right)\right]\wedge I_{1}\left[EQ_S^1\left(t_{A}\right)\right]\rightarrow I_{1}\left[I_{2}\left[EQ_S^3\right]\right]
-\end{align*}
-
-% As we have shown that 
-% $I_{2}\left[EQ_{R}^{\left(2\right)}\left(t_{A}\right)\right]\wedge I_{1}\left[EQ_{R}^{\left(1\right)}\left(t_{A}\right)\right]$
-% holds, we are done.
-\end{proof}
-
-\begin{lemma} \label{lemma_la2}
-$EQ_W^3 \rightarrow \exists y. (EQ_W^1(y) \wedge EQ_W^2(y))$
-\end{lemma}
-\begin{proof}
-(integer case)
-
-Case (3.3) holds:
-Then (3.4), that is $F_3(x)$, has to hold which immediately implies that there is one $y$ fulfilling
-$EQ^1_W(y) \wedge EQ^2_W(y)$.
-
-Case (3.3) does not hold:
-Then one can choose $y = \ceilfrac{s_2+k_2+\varepsilon}{c_2}$ which refutes (1.3) and (2.3):
-
-$y = \ceilfrac{s_2+k_2+\varepsilon}{c_2}$ in (2.3) immediately gives a contradiction:
-
-\begin{align*} 
-& - k_2 \leq -c_{2} \ceilfrac{s_2(\vec x)+k_2+\varepsilon}{c_2} +s_{2}(\vec x) \\
-& \Leftrightarrow \ceilfrac{s_2(\vec x)+k_2+\varepsilon}{c_2} \leq \frac{s_2(\vec x) + k_2}{c_2} 
-\end{align*}
-
-For showing (1.3) we make use of the negation of (3.3):
-
-\begin{align*} 
-\text{negation of (3.3):} & s_1(\vec x)/c_1 + s_2(\vec x)/c_2 < -k_3 \\
-\text{unfold $k_3$:} & 
-  \Leftrightarrow \frac{s_1(\vec x)}{c_1} + \frac{s_2(\vec x)}{c_2} < -\frac{k_1}{c_1} - \frac{k_2}{c_2} - 1\\
-  & \Leftrightarrow  \frac{s_2(\vec x) + k_2}{c_2} + 1 < \frac{- s_1(\vec x) - k_1}{c_1} \\
-  & \Leftrightarrow \ceilfrac{s_2+k_2+\varepsilon}{c_2} < \frac{-s_1(x)-k_1}{c_1} \\
-  & \Leftrightarrow c_1 \ceilfrac{s_2+k_2+\varepsilon}{c_2} + s_1(x) < -k_1
-\end{align*}
-
-The last line is exactly the negation of the instantiation of \text{inst $y = \ceilfrac{s_2+k_2+\varepsilon}{c_2}$ in (1.3)}.
-\qed
-\end{proof}
-
-\begin{proof}
-(real case)
-
-Case (3.3) holds: 
-This is perfectly analogous to the integer case. ($F_3$ holds, thus $EQ^1_W \wedge EQ^2_W$)
-
-Case (3.3) does not hold:
-Choose $y = \frac{s_2(x)+k_2+\varepsilon}{c_2}.$
-Then $EQ^2_W(y)$ holds because (2.3) gives a contradiction:
-\begin{align*}
-  & -k_2 \leq -c_2\frac{s_2(x)+k_2+\varepsilon}{c_2}+s_2(x) \\
-  &\Leftrightarrow s_2(x)+\varepsilon \leq s_2(x) \\
-  &\Leftrightarrow 0<0
-\end{align*}
-Last we show that $EQ^1_W(y)$ holds because (1.3) and the negation of (3.3) (from the case split)
-lead to a contradiction. To show this we need a second case split on the value
-of $k_3$.
-  
-case $k_3 = \frac{k_1}{c_1} + \frac{k_2}{c_2}$:
-\begin{align*}
-  \text{\{negation of (3.3)\}} & \phantom{\Rightarrow} \frac{s_1(x)}{c_1} + \frac{s_2(x)}{c_2} 
-  < - k_3 \\
-  & \Rightarrow \frac{s_1(x)}{c_1} + \frac{s_2(x)}{c_2} 
-  < - \frac{k_1}{c_1} - \frac{k_2}{c_2} \\
-  & \Rightarrow \frac{s_2(x)+k_2}{c_2} < \frac{-s_1(x)-k_1}{c_1} & (*) \\
-  \text{\{(1.3) with $y$ instantiated\}} & 
-  \phantom{\Rightarrow} -k_1 \leq c_1 \frac{s_2(x)+k_2}{c_2}  + s_1(x) \\
-  \text{\{$(*)$\}} & 
-  \Rightarrow -k_1 < c_1 \frac{-s_1(x)-k_1}{c_1} + s_1(x) \\
-  &\Rightarrow 0<0
-\end{align*}
-
-case $k_1=-\varepsilon, k_2\in \mathbb{Q}, k_3 = \frac{k_2}{c_2}$:
-\begin{align*}
-  \text{\{negation of (3.3)\}} & \phantom{\Rightarrow} \frac{s_1(x)}{c_1} + \frac{s_2(x)}{c_2} 
-  < - k_3 \\
-  & \Rightarrow \frac{s_1(x)}{c_1} + \frac{s_2(x)}{c_2} 
-  < - \frac{k_2}{c_2} \\
-  & \Rightarrow \frac{s_2(x)+k_2}{c_2} < \frac{-s_1(x)}{c_1} & (*) \\
-  \text{\{(1.3) with $y$ instantiated, $k_1=-\varepsilon$\}} & 
-  \phantom{\Rightarrow} \varepsilon \leq c_1 \frac{s_2(x)+k_2}{c_2}  + s_1(x) \\
-  \text{\{$(*)$\}} & 
-  \Rightarrow \varepsilon < c_1 \frac{-s_1(x)}{c_1} + s_1(x) \\
-  &\Rightarrow \varepsilon<0
-\end{align*}
-
-case $k_1\in \mathbb{Q}, k_2=-\varepsilon,  k_3 = \frac{k_1}{c_1}$:
-\begin{align*}
-  \text{\{negation of (3.3)\}} & \phantom{\Rightarrow} \frac{s_1(x)}{c_1} + \frac{s_2(x)}{c_2} 
-  < - k_3 \\
-  & \Rightarrow \frac{s_1(x)}{c_1} + \frac{s_2(x)}{c_2} 
-  < - \frac{k_1}{c_1} \\
-  & \Rightarrow \frac{s_2(x)}{c_2} < \frac{-s_1(x)-k_1}{c_1} & (*) \\
-  \text{\{(1.3) with $y$ instantiated, $k_1=-\varepsilon$\}} & 
-  \phantom{\Rightarrow} -k_1 \leq c_1 \frac{s_2(x)+k_2}{c_2}  + s_1(x) \\
-  \text{\{$(*),k_2=\varepsilon$\}} & 
-  \Rightarrow -k_1 < c_1 (\frac{-s_1(x)-k_1}{c_1}-\varepsilon) + s_1(x) \\
-  &\Rightarrow 0<-\varepsilon
-\end{align*}
-
-case $k_1=k_2=k_3=-\varepsilon$:
-\begin{align*}
-  \text{\{negation of (3.3)\}} & \phantom{\Rightarrow} \frac{s_1(x)}{c_1} + \frac{s_2(x)}{c_2} 
-  < - k_3 \\
-  & \Rightarrow \frac{s_1(x)}{c_1} + \frac{s_2(x)}{c_2} < \varepsilon \\
-  & \Rightarrow \frac{s_2(x)}{c_2} < \frac{-s_1(x)}{c_1} + \varepsilon & (*) \\
-  \text{\{(1.3) with $y$ instantiated, $k_1=k_2=-\varepsilon$\}} & 
-  \phantom{\Rightarrow} \varepsilon \leq c_1 (\frac{s_2(x)}{c_2}+\varepsilon)  + s_1(x) \\
-  \text{\{$(*)$\}} & 
-  \Rightarrow \varepsilon < c_1 (\frac{-s_1(x)}{c_1} + \varepsilon - \varepsilon) + s_1(x) \\
-  &\Rightarrow \varepsilon<0
-\end{align*}
-\phantom{phantom}
-\qed
-\end{proof}
-
-
-\begin{theorem}
-$I_1[I_2[EQ(c_2 s_1 + c_1 s_2, k_3, F_3)]$ has the contradictory property of a partial interpolant
-of $A$ and $B$ at clause $C_1 \vee C_2$. 
-\end{theorem}
-\begin{proof}
-To be shown: 
-\begin{align*}
-B\wedge\neg C_{1}|B \wedge \neg C_{2}|B \wedge I_1[I_2[EQ_W^3]] & \models \bot%\label{eq:10}
-\end{align*}
-
-Assume $B\wedge\neg C_1|B\wedge\neg C_2| B$, then we need to show $I_1[I_2[EQ_W^3]] \models \bot$.
-
-By induction premise $I_1[EQ_W^1(y)]$ and $I_2[EQ_W^2(y)]$ are partial interpolants of $A$ and $B$ and 
-thus have the following properties (for any $y$):
-\begin{eqnarray}
-y - b > 0 \wedge I_1[EQ_W^1(y)] & \models \bot \label{itpB1} \\
-y - b \leq 0 \wedge I_2[EQ_W^2(y)] & \models \bot \label{itpB2} 
-\end{eqnarray}
-
-Remember lemma \ref{lemma_la2}:
-\begin{align*}
-  & EQ_W^3 \rightarrow \exists x. (EQ_W^1(x) \wedge EQ_W^2(x)) \\
-  \Rightarrow & EQ_W^3 \rightarrow \exists x. EQ_W^1(x) \wedge \exists x. EQ_W^2(x)
-\end{align*}
-
-This and the third part of the deep substitution lemma give us:
-\begin{align*}
-I_1[I_2[EQ_W^3]] & \rightarrow (I_1[\exists x. EQ_W^1(x)] \wedge I_2[\exists x. EQ_W^2(x)]) \vee
-I_1[\bot] \vee I_2[\bot]
-\end{align*}
-
-We prove for the three disjuncts in the succedent separately that they must be wrong, starting with:
-\begin{align*}
-& I_1[\exists x. EQ_W^1(x)] \wedge I_2[\exists x. EQ_W^2(x)] \stackrel{!}{\rightarrow} \bot \\
-\Leftrightarrow & (I_1[\exists x. EQ_W^1(x)] \rightarrow \bot) \vee 
-(I_2[\exists x. EQ_W^2(x)] \rightarrow \bot)
-\end{align*}
-
-If $y - b > 0$ holds, equation \ref{itpB1} gives us $(I_1(EQ_W^1(y)) \rightarrow \bot)$ for any $y$,
-i.e. for any $y$, $I_1(EQ_W^1(y))$ is false, that means there is no $y$ which fulfills ist. So
-$(I_1[\exists x. EQ_W^1(x)] \rightarrow \bot)$ holds. %TODO: zu umstaendlich erklaert??
-
-Otherwise we can use equation \ref{itpB2} for asserting the second conjunct.
-
-Next we prove $I_1[\bot] \stackrel{!}{\rightarrow} \bot$:
-
-\begin{align*}
-\text{\{ex falso quod libet\}} & \phantom{\Rightarrow} \bot \rightarrow EQ_W^1(y) \\
-\text{\{monotonicity\}} & \Rightarrow I_1[\bot] \rightarrow I_1[EQ_W^1(y)] \\
-\text{\{inst y:= $b + 1$\}} & \Rightarrow I_1[\bot] \rightarrow I_1[EQ_W^1(b + 1)] \\
-\text{ \{equation \ref{itpB1} and transitivity\}} & \Rightarrow I_1[\bot] \rightarrow \bot 
-\end{align*}
-
-$I_2[\bot] \stackrel{!}{\rightarrow} \bot$ can be proven completely analogously with $y:=b$ and 
-using equation (\ref{itpB2}).
-
-\end{proof}
-
-
-%----------------------------------------
-\section{Conclusion}
-%----------------------------------------
+\bibliographystyle{plain}
+\bibliography{mixedInterpolation-techReport}
 
 \end{document}

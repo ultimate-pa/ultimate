@@ -177,12 +177,11 @@ public class FormulaUnLet extends TermTransformer {
 	}
 	
 	/**
-	 * Collect the sub term of a quantified formula and build the converted 
-	 * formula.  The converted sub formula is expected to be on the
-	 * converted stack. This also ends the scope of the quantifier.
-	 * It stores the converted quantifier on the converted stack and in the
-	 * cache.
-	 * @param quant the quantifier to convert.
+	 * Build the converted formula for a quantified formula. 
+	 * This also ends the scope of the quantifier.
+	 * It stores the converted quantifier using {@link #setResult(Term)}.
+	 * @param old the quantifier to convert.
+	 * @param newBody the converted sub formula.
 	 */
 	@Override
 	public void postConvertQuantifier(QuantifiedFormula old, Term newBody) {

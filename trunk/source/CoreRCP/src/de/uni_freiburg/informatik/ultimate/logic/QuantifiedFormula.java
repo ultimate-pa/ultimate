@@ -23,6 +23,21 @@ import java.util.ArrayDeque;
 
 import de.uni_freiburg.informatik.ultimate.util.HashUtils;
 
+/**
+ * Represents a quantified formula in SMTLIB 2.  This class represents the
+ * SMTLIB 2 construct
+ * <pre>
+ * (forall ((var_1 sort_1) ... (var_n sort_n)) ...)
+ * </pre> or
+ * <pre>
+ * (exists ((var_1 sort_1) ... (var_n sort_n)) ...)
+ * </pre>.
+ *
+ * A quantified formula is created by 
+ * {@link Script#quantifier(int, TermVariable[], Term, Term[][])}.
+ *
+ * @author hoenicke
+ */
 public class QuantifiedFormula extends Term {
 	public static final int EXISTS = 0;
 	public static final int FORALL = 1;

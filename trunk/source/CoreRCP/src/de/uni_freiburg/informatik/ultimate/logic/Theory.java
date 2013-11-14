@@ -30,6 +30,9 @@ import de.uni_freiburg.informatik.ultimate.util.UnifyHash;
 
 
 /**
+ * The theory is not intended for public use.  Please stick to the {@link Script}
+ * interface and use the functions in {@link Util} to simplify logical formulas.
+ * 
  * The theory is a container for the function symbols, sort symbols and a
  * unifier for all terms created by this theory.  Each sort belongs to one
  * theory and since every function symbol and every term has a sort, they also
@@ -337,6 +340,15 @@ public class Theory {
 	/******************** CONSTANTS *************************************/
 
 	public Term constant(Object value, Sort sort) {
+		if (value instanceof Rational) {
+			Rational v = (Rational) value;
+			if (!sort.isNumericSort())
+				throw new SMTLIBException("Not a numeric sort");
+			if (!v.isRational())
+				throw new SMTLIBException("Infinite/NaN value");
+			if (sort.getName().equals("Int") && !v.isIntegral())
+				throw new SMTLIBException("Non-integral value with integer sort");
+		}
 		int hash = ConstantTerm.hashConstant(value, sort);
 		for (Term t : m_TermCache.iterateHashCode(hash) ) {
 			if( t instanceof ConstantTerm ) {
@@ -422,11 +434,20 @@ public class Theory {
 		num = num.divide(gcd);
 		denom = denom.divide(gcd);
 		
-		if (denom.equals(BigInteger.ONE)) {
-			return decimal(new BigDecimal(num));
+		if (denom.equals(BigInteger.ONE) && !m_Logic.isIRA()) {
+			return numeral(num);
 		} else {
-			FunctionSymbol div = getFunction("/", m_NumericSort, m_NumericSort);
-			return term(div, numeral(num), numeral(denom));
+			if (m_Logic.isIRA()) {
+				FunctionSymbol div = getFunction("/", m_RealSort, m_RealSort);
+				FunctionSymbol toreal = getFunction("to_real", m_NumericSort);
+				Term numeralTerm = term(toreal, numeral(num.abs()));
+				if (num.signum() < 0)
+					numeralTerm = term("-", numeralTerm);
+				return term(div, numeralTerm, term(toreal, numeral(denom)));
+			} else  {
+				FunctionSymbol div = getFunction("/", m_NumericSort, m_NumericSort);
+				return term(div, numeral(num), numeral(denom));
+			}
 		}
 	}
 	
@@ -959,8 +980,8 @@ public class Theory {
 	/**
 	 * Defines a new function symbol.  This corresponds to define-fun in SMT-lib. 
 	 * @param name name of the function.
-	 * @param paramTypes the sorts of the parameters of the function.
-	 * @param resultType the sort of the result type of the function.
+	 * @param definitionVars the variables of the function.
+	 * @param definition the definition of the function.
 	 * @throws IllegalArgumentException 
 	 *    if a function with that name is already defined or
 	 *    if the sorts are not visible in this scope.
@@ -1103,7 +1124,7 @@ public class Theory {
 		m_DeclaredFuns.endScope();
 		m_DeclaredSorts.endScope();
 	}
-
+	
 	/******************** SKOLEMIZATION SUPPORT ***************************/
 	// TODO Check for overflows in the m_SkolemCounter
 	public FunctionSymbol skolemize(TermVariable tv) {

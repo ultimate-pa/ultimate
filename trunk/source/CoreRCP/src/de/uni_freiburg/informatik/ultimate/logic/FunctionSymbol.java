@@ -24,8 +24,11 @@ import java.math.BigInteger;
  * Represents a function symbol.  Each function symbol has a name, a sort and
  * zero or more parameter sorts.  A constant symbol is represented as a function 
  * symbols with zero parameters.
+ * 
+ * For parametric functions we create a different FunctionSymbol for every 
+ * instantiation.
+ * 
  * @author hoenicke
- *
  */
 public class FunctionSymbol {
 	public static final int INTERNAL   = 1;
@@ -74,6 +77,13 @@ public class FunctionSymbol {
 		return m_Name.hashCode();
 	}
 	
+	/**
+	 * Get the name of the function. This is the name as used in an SMTLIB
+	 * script.  It can also contain symbols not allowed by the SMTLIB standard.
+	 * In that case the string representation uses <code>|</code> to quote
+	 * the name.  The name may not contain <code>|</code> symbols. 
+	 * @return the name of the function.
+	 */
 	public String getName() {
 		return m_Name;
 	}
@@ -81,7 +91,13 @@ public class FunctionSymbol {
 	public BigInteger[] getIndices() {
 		return m_Indices;
 	}
-	
+	/**
+	 * Check whether this function symbol is created by the solver.  Symbols
+	 * created by the solver are assumed to be special symbols like
+	 * <code>+</code>, <code>-</code>, or internal symbols only used by the
+	 * solver. 
+	 * @return true if and only if the function symbol was flagged as internal.
+	 */
 	public boolean isIntern() {
 		return (m_Flags & INTERNAL) != 0;
 	}
@@ -90,44 +106,80 @@ public class FunctionSymbol {
 		return m_ReturnSort.m_Symbol.m_Theory;
 	}
 	
+	/**
+	 * @deprecated use getParamterSorts().length 
+	 */
 	public int getParameterCount() {
 		return m_ParamSort.length;
 	}
 	
+	/**
+	 * @deprecated use getParamterSorts()[i] 
+	 */
 	public Sort getParameterSort(int i) {
 		return m_ParamSort[i];
 	}
-	
+	/**
+	 * Retrieve the variables used in the definition of this function symbol.
+	 * A definition only exists if the function symbol is a macro created by the 
+	 * {@link Script#defineFun(String, TermVariable[], Sort, Term) define-fun}
+	 * command or a <code>:named</code> annotation.
+	 * @return The variables used in the definition of this function symbol or 
+	 *         <code>null</code> if this function symbol is not a macro.
+	 */
 	public TermVariable[] getDefinitionVars() {
 		return m_DefinitionVars;
 	}
-
+	/**
+	 * Retrieve the definition of this function symbol.  A definition only
+	 * exists if the function symbol is a macro created by the 
+	 * {@link Script#defineFun(String, TermVariable[], Sort, Term) define-fun}
+	 * command or a <code>:named</code> annotation.
+	 * @return The definition of this function symbol or <code>null</code> if
+	 *         this function symbol is not a macro.
+	 */
 	public Term getDefinition() {
 		return m_Definition;
 	}
 	
+	/**
+	 * Get the return sort of this function.
+	 * @return the return sort.
+	 */
 	public Sort getReturnSort() {
 		return m_ReturnSort;
 	}
 	
-	Sort[] getParameterSorts() {
+	/**
+	 * Get the sort of the parameters for this function.
+	 * @return An array with the parameter sorts.  Never write to this array!
+	 */
+	public Sort[] getParameterSorts() {
 		return m_ParamSort;
 	}
 	
-	private final void checkSort(Term arg, Sort sort, boolean mixRealInt) {
+	private final void checkSort(Term arg, Sort sort, boolean mixRealInt)
+		throws SMTLIBException
+	{
 		Sort argSort = arg.getSort();
 		if (!sort.equalsSort(argSort)) {
 			if (argSort.toString().equals(sort.toString()))
-				throw new IllegalArgumentException
+				throw new SMTLIBException
 					("Argument "+arg+" comes from wrong theory.");
 			else if (!mixRealInt || !argSort.getName().equals("Int"))
-				throw new IllegalArgumentException
+				throw new SMTLIBException
 					("Argument "+arg+" has type "+argSort+
 					 " but function "+m_Name+" expects "+sort);
 		}
 	}
 	
-	public void typecheck(Term[] params) {
+	/**
+	 * Check if this function symbol can be called on the given argument terms.
+	 * This throws an exception if the type check fails.
+	 * @param params the arguments for the function symbols.
+	 */
+	public void typecheck(Term[] params) throws SMTLIBException
+	{
 		boolean mixRealInt = false;
 		if (getTheory().getLogic() != null && getTheory().getLogic().isIRA()
 			&& m_ParamSort.length == 2
@@ -137,7 +189,7 @@ public class FunctionSymbol {
 		if ((m_Flags & (ASSOCMASK)) != 0) {
 			// All arguments should have the same type.
 			if (params.length < 2)
-				throw new IllegalArgumentException
+				throw new SMTLIBException
 					("Function "+m_Name+" expects at least two arguments.");
 			checkSort(params[0], m_ParamSort[0], mixRealInt);
 			checkSort(params[params.length-1], m_ParamSort[1], mixRealInt);
@@ -147,7 +199,7 @@ public class FunctionSymbol {
 			}
 		} else {
 			if (params.length != m_ParamSort.length)
-				throw new IllegalArgumentException
+				throw new SMTLIBException
 					("Function "+m_Name+" expects "+m_ParamSort.length+" arguments.");
 			for (int i = 0; i < m_ParamSort.length; i++) {
 				checkSort(params[i], m_ParamSort[i], mixRealInt);
@@ -155,6 +207,11 @@ public class FunctionSymbol {
 		}
 	}
 	
+	/**
+	 * Check if this function symbol can be called on terms with the given sort.
+	 * @param params the sort of the arguments for the function symbols.
+	 * @return true if the type check succeeds, false otherwise.
+	 */
 	public boolean typecheck(Sort[] params) {
 		boolean mixRealInt = false;
 		if (getTheory().getLogic().isIRA()
@@ -190,6 +247,12 @@ public class FunctionSymbol {
 		return true;
 	}
 	
+	/**
+	 * Returns a string representation of this object.  This is a SMTLIB
+	 * like representation of the following form:
+	 * <pre>(name paramsort1 ... paramsortn returnsort)</pre>
+	 * where name is the (possibly indexed and quoted) function name.
+	 */
 	public String toString() {
 		StringBuffer sb = new StringBuffer();
 		String name = PrintTerm.quoteIdentifier(m_Name);
@@ -211,19 +274,45 @@ public class FunctionSymbol {
 		return sb.toString();
 	}
 
+	/**
+	 * Checks if this function symbol was declared as chainable.
+	 * This should only be true for the internal equality function.
+	 * @return true if the function symbol is chainable.
+	 */
 	public boolean isChainable() {
 		return (m_Flags & ASSOCMASK) == CHAINABLE;
 	}
+	/**
+	 * Checks if this function symbol was declared as pairwise.
+	 * This should only be true for the internal distinct function.
+	 * @return true if the function symbol is pairwise.
+	 */
 	public boolean isPairwise() {
 		return (m_Flags & ASSOCMASK) == PAIRWISE;
 	}
+	/**
+	 * Checks if this function symbol was declared as left associative.
+	 * This should only be true for internal function symbols.
+	 * @return true if the function symbol is left associative.
+	 */
 	public boolean isLeftAssoc() {
 		return (m_Flags & ASSOCMASK) == LEFTASSOC;
 	}
+	/**
+	 * Checks if this function symbol was declared as right associative.
+	 * This should only be true for internal function symbols.
+	 * @return true if the function symbol is right associative.
+	 */
 	public boolean isRightAssoc() {
 		return (m_Flags & ASSOCMASK) == RIGHTASSOC;
 	}
 	
+	/**
+	 * Checks if this function symbol was created with the SMTLIB
+	 * syntax <code>(as name sort)</code> to give it a different result 
+	 * sort.
+	 * @return true if the sort was explicitly given, false if it is implicit.
+	 */
 	public boolean isReturnOverload() {
 		return (m_Flags & RETURNOVERLOAD) != 0;
 	}
@@ -252,7 +341,12 @@ public class FunctionSymbol {
 			sb.append(" ").append(getReturnSort()).append(")");
 		return sb.toString();
 	}
-	
+	/**
+	 * Check whether this function symbol is an internal symbol that has a fixed
+	 * semantic.
+	 * @return true if and only if the symbol is an internal symbol with a fixed
+	 *         semantic.
+	 */
 	public boolean isInterpreted() {
 		return isIntern() && (!m_Name.startsWith("@") || !m_Name.endsWith("0"));
 	}

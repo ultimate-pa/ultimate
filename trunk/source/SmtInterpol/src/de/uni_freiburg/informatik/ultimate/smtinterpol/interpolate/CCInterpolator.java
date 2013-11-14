@@ -437,8 +437,8 @@ public class CCInterpolator {
 			while (m_Head.m_Color < m_numInterpolants ||
 					m_Tail.m_Color < m_numInterpolants) {
 				if (m_Head.m_Color < m_Tail.m_Color) {
-					m_Head.addPre(m_Head.m_Color, Coercion.buildDistinct
-							(m_Head.getBoundTerm(m_Head.m_Color), m_Tail.getBoundTerm(m_Head.m_Color)));
+					m_Head.addPre(m_Head.m_Color, Coercion.buildEq
+							(m_Head.getBoundTerm(m_Head.m_Color), m_Tail.getBoundTerm(m_MaxColor)));
 					addInterpolantClause(m_Head.m_Color, m_Head.m_Pre[m_Head.m_Color]);
 					int parent = m_Head.m_Color + 1;
 					while (m_Interpolator.m_startOfSubtrees[parent] > m_Head.m_Color)
@@ -458,8 +458,8 @@ public class CCInterpolator {
 					m_Head.m_Color = parent;
 					m_Tail.m_Color = parent;
 				} else {
-					m_Tail.addPre(m_Tail.m_Color, Coercion.buildDistinct
-							(m_Head.getBoundTerm(m_Tail.m_Color), m_Tail.getBoundTerm(m_Tail.m_Color)));
+					m_Tail.addPre(m_Tail.m_Color, Coercion.buildEq
+							(m_Head.getBoundTerm(m_MaxColor), m_Tail.getBoundTerm(m_Tail.m_Color)));
 					addInterpolantClause(m_Tail.m_Color, m_Tail.m_Pre[m_Tail.m_Color]);
 					int parent = m_Tail.m_Color + 1;
 					while (m_Interpolator.m_startOfSubtrees[parent] > m_Tail.m_Color)

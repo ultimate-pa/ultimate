@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2009-2012 University of Freiburg
+ * Copyright (C) 2009-2013 University of Freiburg
  *
  * This file is part of SMTInterpol.
  *
@@ -16,19 +16,27 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with SMTInterpol.  If not, see <http://www.gnu.org/licenses/>.
  */
-package de.uni_freiburg.informatik.ultimate.logic;
+package de.uni_freiburg.informatik.ultimate.smtinterpol;
 
-/**
- * Representation of the response to a get-value command.
- * @author Juergen Christ
- */
-@Deprecated
-public interface Valuation {
-	/**
-	 * Get the value for a term.  This function returns <code>null</code> if and
-	 * only if the input term was not part of the get-value call. 
-	 * @param t The term to get a value for.
-	 * @return Value of the term or <code>null</code>.
-	 */
-	public Term get(Term t);
+import java.io.FileNotFoundException;
+
+import de.uni_freiburg.informatik.ultimate.logic.FormulaUnLet;
+import de.uni_freiburg.informatik.ultimate.logic.LoggingScript;
+import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
+
+public class Unletter extends LoggingScript {
+
+	private FormulaUnLet m_Unletter = new FormulaUnLet();
+	
+	public Unletter()
+			throws FileNotFoundException {
+		super("<stdout>", true);
+	}
+
+	@Override
+	public LBool assertTerm(Term term) throws SMTLIBException {
+		return super.assertTerm(m_Unletter.unlet(term));
+	}
+
 }

@@ -1,0 +1,83 @@
+\documentclass[runningheads,a4paper]{llncs}
+
+\usepackage[OT1]{fontenc}
+\usepackage{fancyhdr}
+
+\usepackage[pdftex, bookmarks=true, bookmarksopen=true]{hyperref}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{tikz}
+\usepackage{comment}
+\usepackage{xspace}
+\usepackage{varwidth}
+
+\excludecomment{tacas}
+\includecomment{techreport}
+\newif\ifnewinterpolation
+\newinterpolationtrue
+
+\usetikzlibrary{decorations.pathreplacing, calc}%patterns}
+
+\setlength{\tabcolsep}{6pt}
+
+\input{macros}
+
+\usepackage{mathpartir}
+
+\hypersetup{colorlinks
+  ,linkcolor=black
+  ,filecolor=black
+  ,urlcolor=black
+  ,citecolor=black
+  ,pdftitle={Proof Tree Preserving Interpolation},
+  pdfauthor={J{\"u}rgen Christ, Jochen Hoenicke, Alexander Nutz},
+  pdfkeywords={Craig interpolation }{SMT }{mixed literals }{theory combination }, 
+  pdfsubject={Craig Interpolation in SMT }
+}
+
+\title{Proof Tree Preserving Interpolation
+\thanks{This work is supported by the
+  German Research Council (DFG) as part of the Transregional Collaborative
+  Research Center ``Automatic Verification and Analysis of Complex Systems''
+  (SFB/TR14 AVACS)}}
+\global\toctitle={Proof Tree Preserving Interpolation}
+
+
+\author{J{\"u}rgen Christ \and Jochen Hoenicke \and Alexander Nutz}
+\institute{Chair of Software Engineering, University of Freiburg}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%^M
+
+\setcounter{tocdepth}{3}
+
+\begin{document}
+
+\maketitle
+
+\input{abstract}
+
+\input{ch_introduction}
+
+\input{ch_related_work}
+
+\input{ch_preliminaries}
+
+\input{ch_proofinterpolation}
+
+\input{ch_purification}
+
+\input{ch_lemmas}
+
+\input{ch_UF}
+\input{ch_UFexample}
+
+\input{ch_LA}
+
+\input{ch_combination}
+
+\input{ch_conclusion}
+
+\bibliographystyle{plain}
+\bibliography{mixedInterpolation-techReport}
+
+\end{document}

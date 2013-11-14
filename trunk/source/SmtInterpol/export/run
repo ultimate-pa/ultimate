@@ -1,0 +1,5 @@
+#/bin/sh
+
+# Run script for SmtInterpol for the SMT-COMP 2011
+
+exec java -Xms1536m -Xmx1536m -da -dsa -XX:-UseGCOverheadLimit -jar `dirname $0`/smtinterpol.jar

@@ -20,6 +20,15 @@ package de.uni_freiburg.informatik.ultimate.logic;
 
 import java.util.ArrayDeque;
 
+/**
+ * Represents a term variable that is used in a {@link LetTerm lets}, 
+ * {@link QuantifiedFormula quantified formulas}, and
+ * {@link Script#defineFun(String, TermVariable[], Sort, Term) define-fun}.
+ * 
+ * Term variables are created by {@link Script#variable(String, Sort)}.
+ * 
+ * @author Juergen Christ
+ */
 public class TermVariable extends Term {
 	private String m_Name;
 	private Sort m_Sort;
@@ -30,26 +39,45 @@ public class TermVariable extends Term {
 		m_Sort = s;
 	}
 	
+	/**
+	 * Return the name of the variable.
+	 * @return the name of the variable.
+	 */
 	public String getName() {
 		return m_Name;
 	}
 
+	/**
+	 * Return the declared sort of the variable.
+	 * @return the sort of the variable that was used to declare the variable.
+	 * This is not expanded if the sort is a defined sort.
+	 */
 	public Sort getDeclaredSort() {
 		return m_Sort;
 	}
 	
+	/**
+	 * Return the (expanded) sort of the variable.
+	 * @return the expanded sort of the variable.
+	 */
 	public Sort getSort() {
 		return m_Sort.getRealSort();
 	}
 	
+	/**
+	 * The SMTLIB representation of the term.
+	 */
 	public String toString() {
 		return PrintTerm.quoteIdentifier(m_Name);
 	}
 
-	public static final int hashVariable(String name, Sort sort) {
+	static final int hashVariable(String name, Sort sort) {
 		return name.hashCode() ^ sort.hashCode();
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public void toStringHelper(ArrayDeque<Object> m_Todo) {
 		m_Todo.add(toString());

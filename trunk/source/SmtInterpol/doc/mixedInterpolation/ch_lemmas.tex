@@ -1,0 +1,62 @@
+\begin{techreport}
+
+\subsection{Lemma Used in the Correctness Proof}
+
+The following lemma will help us prove the correctness of our proposed new 
+interpolation rules.
+
+%\paragraph{Notation} In the following we denote by $F[\phi]$ a formula %TODO in die preliminaries
+%in negation normal form (NNF) with a placeholder $\phi$ that occurs
+%positive in the formula.  Substituting this placeholder by a formula
+%$G$ is denoted by $F[G]$.  By $F(x)$ we denote a formula with a
+%placeholder $x$ that stands for an arbitrary subterm of some literal
+%in $F(x)$.  The substitution of $x$ with a term $t$ is denoted by $F(t)$.
+
+\begin{lemma}[Deep Substitution]
+  Let $F_1[G_{11}]\dots[G_{1n}]$ and $F_2[G_{21}]\dots[G_{2m}]$ be two formulae with sub-formulae $G_{1i}$ for $1 \leq i \leq n$ and $G_{2j}$ for $1 \leq j \leq m$ occurring positively in $F_1$ and $F_2$.
+
+    If $\bigwedge_{i\in \{1,\dots,n\}} \bigwedge_{j\in \{1,\dots,m\}} G_{1i} \land G_{2j} \rightarrow G_{3ij}$ 
+    holds, then
+    \begin{align*}
+      &F_1[G_{11}]\dots [G_{1n}] \land F_2[G_{21}]\dots [G_{2m}] 
+      \rightarrow\\& F_1[F_2[G_{311}]\dots[G_{31m}]]\dots
+                   [F_2[G_{3n1}]\dots[G_{3nm}]].
+    \end{align*}
+
+\end{lemma}
+\begin{proof}
+  \begin{align*}
+   &\hphantom{{}\Rightarrow}
+    \bigwedge_{i\in \{1,\dots,n\}} \bigwedge_{j\in \{1,\dots,m\}} 
+     ((G_{1i} \land G_{2j}) \rightarrow G_{3ij})\\
+    &\Leftrightarrow
+    \bigwedge_{i\in \{1,\dots,n\}} \bigwedge_{j\in \{1,\dots,m\}} 
+     (G_{1i} \rightarrow (G_{2j} \rightarrow G_{3ij}))\\
+    &\Leftrightarrow
+    \bigwedge_{i\in \{1,\dots,n\}} (G_{1i} \rightarrow 
+      \bigwedge_{j\in \{1,\dots,m\}} (G_{2j} \rightarrow G_{3ij}))\\
+    \text{\{monotonicity\}} &\Rightarrow
+    \bigwedge_{i\in \{1,\dots,n\}} (G_{1i} \rightarrow 
+      (F_2[G_{21}]\dots [G_{2m}] \rightarrow F_2[G_{3i1}]\dots [G_{3im}]))\\
+    &\Leftrightarrow
+    \bigwedge_{i\in \{1,\dots,n\}} (F_2[G_{21}]\dots [G_{2m}] \rightarrow
+     (G_{1i} \rightarrow 
+      F_2[G_{3i1}]\dots [G_{3im}]))\\
+    &\Leftrightarrow
+    (F_2[G_{21}]\dots [G_{2m}] \rightarrow
+    \bigwedge_{i\in \{1,\dots,n\}} (G_{1i} \rightarrow 
+      F_2[G_{3i1}]\dots [G_{3im}]))\\
+    \text{\{monotonicity\}}&\Rightarrow
+    (F_2[G_{21}]\dots [G_{2m}] \rightarrow (F_1[G_{11}]\dots [G_{1n}]
+    \rightarrow \\
+     & \qquad
+    F_1[F_2[G_{311}]\dots [G_{31m}]]\dots [F_2[G_{3n1}]\dots
+      [G_{3nm}]]))\\
+    &\Leftrightarrow
+     (F_1[G_{11}]\dots [G_{1n}] \land F_2[G_{21}]\dots [G_{2m}]) \rightarrow \\
+       &\qquad F_1[F_2[G_{311}]\dots [G_{31m}]]\dots [F_2[G_{3n1}]\dots [G_{3nm}]]))
+  \end{align*}
+  \vspace{-12pt}\strut\qed
+\end{proof}
+
+\end{techreport}

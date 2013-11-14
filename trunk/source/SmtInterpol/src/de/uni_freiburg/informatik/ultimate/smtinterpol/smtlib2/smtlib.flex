@@ -145,6 +145,7 @@ Keyword = ":" {SMTLetterDigit}+
   "timed"                { return symbol(LexerSymbols.TIMED, yytext()); }
   "check-allsat"         { return symbol(LexerSymbols.ALLSAT, yytext()); }
   "echo"                 { return symbol(LexerSymbols.ECHO, yytext()); }
+  "find-implied-equality" { return symbol(LexerSymbols.FINDIMPLIEDEQUALITY, yytext()); }
 
   /* Predefined Keywords */
   ":named"               { return symbol(LexerSymbols.CNAMED, yytext()); }

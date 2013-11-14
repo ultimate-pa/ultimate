@@ -23,33 +23,42 @@ import java.util.Arrays;
 
 import de.uni_freiburg.informatik.ultimate.util.UnifyHash;
 
-
+/**
+ * A sort symbol is the name of an SMTLIB sort.  In SMTLIB, sorts can be
+ * parametric over other sorts, e.g., the array sort 
+ * <code>Array IndexSort ElemSort</code> is parametric over the index and
+ * element sort.  The sort symbol represents only the name, i.e., Array and
+ * stores the number of sort parameters.  Then several objects of type Sort
+ * can be instantiated with different sort parameters.   
+ * 
+ * @author Jochen Hoenicke
+ */
 public class SortSymbol {
 	/**
 	 * Flag to indicate that this is an internal sort symbol.  An internal
 	 * sort is one, that is defined by the theory, i.e., Bool, Int, Real,
 	 * BitVec, Array.
 	 */
-	public static final int INTERNAL  = 1;
+	static final int INTERNAL  = 1;
 	/**
 	 * Flag to indicate that this sort is really a sort variable.  Sort
 	 * variables are only used in sort definitions.  Outside of these every
 	 * sort should not contain any sort variable. 
 	 */
-	public static final int TYPEPARAM = 2;
+	static final int TYPEPARAM = 2;
 	/**
 	 * Flag to indicate that this sort expects index parameter.  The only
 	 * such sort is currently BitVec.
 	 */
-	public static final int INDEXED   = 4;
+	static final int INDEXED   = 4;
 	/**
 	 * Flag to indicate numeric types.
 	 */
-	public static final int NUMERIC   = 8;
+	static final int NUMERIC   = 8;
 	/**
 	 * Flag to indicate array types.
 	 */
-	public static final int ARRAY     = 0x10;
+	static final int ARRAY     = 0x10;
 	
 	Theory m_Theory;
 	String m_Name;

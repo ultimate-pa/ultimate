@@ -20,12 +20,32 @@ package de.uni_freiburg.informatik.ultimate.logic;
 
 import java.math.BigDecimal;
 import java.util.ArrayDeque;
-import java.util.Map;
 
+/**
+ * A term representing constants.  The Java-type of the constant depends on the
+ * SMTLIB-type and the origin of the term.  If this term has numeral sort and
+ * stems from model evaluation, the Java-type of the constant will be
+ * {@link Rational}.  If it comes from user input it typically is BigInteger for
+ * numerals or BigDecimal for decimals (note that you can also use Rational with
+ * the API, but the parser won't do that).
+ * 
+ * A constant term is created by the 
+ * {@link Script#numeral(java.math.BigInteger)},
+ * {@link Script#decimal(BigDecimal)},
+ * {@link Script#binary(String)},
+ * {@link Script#hexadecimal(String)}, and
+ * {@link Script#string(String)}.
+ * 
+ * Also {@link Rational#toTerm(Sort)} creates a constant term.
+ * 
+ * @author hoenicke, Juergen Christ
+ */
 public class ConstantTerm extends Term {
-	/**
+	/*
 	 * The value of this term.  For numeral terms this is a BigInteger,
-	 * for decimal terms a BigDecimal and for string terms this is a QuotedObject.
+	 * for decimal terms a BigDecimal and for string terms this is a
+	 * QuotedObject.  For terms returned by our model, we use Rational for all
+	 * numeric sorts.
 	 */
 	private Object m_Value;
 	private Sort m_Sort;
@@ -36,6 +56,17 @@ public class ConstantTerm extends Term {
 		this.m_Sort = sort;
 	}
 	
+	/**
+	 * Gets the constant value.
+	 * If this term has numeral sort and stems from model evaluation, 
+	 * the Java-type of the constant will be {@link Rational}.  If it comes 
+	 * from user input it typically is BigInteger for numerals or 
+	 * BigDecimal for decimals (note that you can also use Rational with
+	 * the API, but the parser won't do that). For string literals this
+	 * is a {@link QuotedObject} containing a string.  Bit vector constants
+	 * are represented by BigInteger.
+	 * @return the value.
+	 */
 	public Object getValue() {
 		return m_Value;
 	}
@@ -44,21 +75,10 @@ public class ConstantTerm extends Term {
 		return m_Sort;
 	}
 	
-	//@Override
-	public void countTerms(Map<Term,Integer> map) {
-		if (!map.containsKey(this)) {
-			map.put(this, 1);
-		} else {
-			map.put(this, map.get(this) + 1);
-		}
-	}
-	
 	public String toString() {
 		if (m_Value instanceof BigDecimal) {
 			BigDecimal decimal = (BigDecimal)m_Value; 
 			String str = decimal.toPlainString();
-//			if (decimal.scale() <= 0)
-//				str += ".0";
 			return str;
 		}
 		if (m_Value instanceof Rational)

@@ -63,13 +63,14 @@ public class ModelFormatter {
 	public void appendValue(FunctionSymbol f, ExecTerm et, Theory t) {
 		m_Indent += Config.INDENTATION;
 		newline();
-		TermVariable[] vars = new TermVariable[f.getParameterCount()];
+		Sort[] paramSorts = f.getParameterSorts();
+		TermVariable[] vars = new TermVariable[paramSorts.length];
 		for (int i = 0; i < vars.length; ++i)
-			vars[i] = t.createTermVariable("@" + i, f.getParameterSort(i));
+			vars[i] = t.createTermVariable("@" + i, paramSorts[i]);
 		m_String.append("(define-fun ").append(f.getName()).append(" (");
 		for (int i = 0; i < vars.length; ++i)
 			m_String.append('(').append(vars[i]).append(' ').
-				append(f.getParameterSort(i)).append(')');
+				append(paramSorts[i]).append(')');
 		m_String.append(") ").append(f.getReturnSort());
 		m_Indent += Config.INDENTATION;
 		appendExecTerm(et, vars, t);
