@@ -322,7 +322,7 @@ public class BuchiCegarLoop {
 						Collection<Set<IPredicate>> partition = BuchiCegarLoop.computePartition(m_Abstraction);
 						MinimizeSevpa<CodeBlock, IPredicate> minimizeOp = 
 								new MinimizeSevpa<CodeBlock, IPredicate>(m_Abstraction, partition, false, false, m_StateFactoryForRefinement);
-						minimizeOp.checkResult(defaultStateFactory);
+						assert (minimizeOp.checkResult(defaultStateFactory));
 						INestedWordAutomatonOldApi<CodeBlock, IPredicate> minimized = minimizeOp.getResult();
 						if (m_Pref.computeHoareAnnotation()) {
 							Map<IPredicate, IPredicate> oldState2newState = minimizeOp.getOldState2newState();
@@ -748,7 +748,7 @@ public class BuchiCegarLoop {
 						cannibalizedStemInterpolants, m_Bspm.getHondaPredicate(), 
 						cannibalizedLoopInterpolants, 
 						stem.getSymbol(stem.length()-1), 
-						loop.getSymbol(loop.length()-1), m_Abstraction, true, false, false);
+						loop.getSymbol(loop.length()-1), m_Abstraction, true, true, false);
 				break;
 			default:
 				throw new UnsupportedOperationException("unknown automaton");
