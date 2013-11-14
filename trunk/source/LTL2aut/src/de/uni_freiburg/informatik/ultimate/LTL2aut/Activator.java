@@ -9,7 +9,7 @@ import org.osgi.framework.BundleContext;
 public class Activator extends Plugin {
 
 	// The plug-in ID
-	public static final String PLUGIN_ID = "de.uni_freiburg.informatik.ultimate.LTL2Aut";
+	public static final String PLUGIN_ID = "LTL2aut";
 
 	/**
 	 * The constructor

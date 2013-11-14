@@ -57,7 +57,12 @@ public class DummyLTL2autObserver implements IUnmanagedObserver {
 			
 		//String fileContent = "a U [] b \n a: x > y";
 		//String fileContent = "a U [] b";
-		String fileContent = "[] a";
+		
+		// [](temp <= 8 -> error == false)
+		//String fileContent = "[] (!a || F b) \n a: temp <= 8 \n b: chainBroken = false";
+		
+		
+		String fileContent = "[] b \n b: bla > 40";
 		
 		AstNode node;
 		String line;

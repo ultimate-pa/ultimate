@@ -16,13 +16,15 @@ public class PreferenceInitializer extends UltimatePreferenceInitializer {
 	 */
 	public static final String LABEL_TOOLLOCATION = "Path to ltl->ba tool (LTL2BA, LTL3BA) :";
 	public static final String LABEL_TOOLARGUMENT = "Command line string:";
+	public static final String LABEL_PPROPERTY = "Property to check:";
 
 
 	/*
 	 * default values for the different preferences
 	 */
 	public static final String DEF_TOOLLOCATION = "./";
-	public static final String DEF_TOOLARGUMENT = " -f \" $1 \"";
+	public static final String DEF_TOOLARGUMENT = " -f \"!( $1 )\"";
+	public static final String DEF_PPROPERTY = "[] a \n a: x > 42";
 	
 
 	@Override
@@ -33,7 +35,9 @@ public class PreferenceInitializer extends UltimatePreferenceInitializer {
 				new UltimatePreferenceItem<String>(this.LABEL_TOOLLOCATION, 
 						this.DEF_TOOLLOCATION, PreferenceType.String),
 				new UltimatePreferenceItem<String>(this.LABEL_TOOLARGUMENT,
-						this.DEF_TOOLARGUMENT, PreferenceType.String)
+						this.DEF_TOOLARGUMENT, PreferenceType.String),
+				new UltimatePreferenceItem<String>(this.LABEL_PPROPERTY,
+						this.DEF_PPROPERTY, PreferenceType.String)
 		};
 	}
 
