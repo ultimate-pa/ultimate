@@ -196,7 +196,7 @@ public class BuchiCegarLoop {
 		
 		private enum InterpolantAutomaton { LassoAutomaton, DeterministicEager, NondeterministicEager };
 		
-		private InterpolantAutomaton m_InterpolantAutomaton = InterpolantAutomaton.NondeterministicEager;
+		private InterpolantAutomaton m_InterpolantAutomaton = InterpolantAutomaton.DeterministicEager;
 
 		public BuchiCegarLoop(RootNode rootNode,
 				SmtManager smtManager,
