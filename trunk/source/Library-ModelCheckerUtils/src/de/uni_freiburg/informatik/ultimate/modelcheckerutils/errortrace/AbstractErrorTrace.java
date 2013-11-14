@@ -3,6 +3,7 @@ package de.uni_freiburg.informatik.ultimate.modelcheckerutils.errortrace;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.UUID;
 
 import org.apache.log4j.Logger;
@@ -12,7 +13,6 @@ import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
-import de.uni_freiburg.informatik.ultimate.logic.Valuation;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.ILocation;
@@ -38,14 +38,14 @@ public class AbstractErrorTrace extends IErrorTrace{
 	 */
 	private static final long serialVersionUID = 6467244318295470692L;
 	private ErrorTrace mErrorTrace = null;
-	private Valuation mValuation = null;
+	private Map<Term, Term> mValuation = null;
 	private HashMap<BoogieVar, Term> mInputVariables = null;
 	private Logger logger = UltimateServices.getInstance().getLogger("AbstractErrorTrace");
 	
 	private HashMap<Integer, Integer> mStatementToScopeMap = new HashMap<Integer, Integer>();
 	private HashMap<Integer, Term> mScopeToFormulaMap = new HashMap<Integer, Term>();
 	
-	public AbstractErrorTrace(ErrorTrace errorTrace, HashMap<BoogieVar, Term> inputVariables, Valuation valuation) {
+	public AbstractErrorTrace(ErrorTrace errorTrace, HashMap<BoogieVar, Term> inputVariables, Map<Term, Term> valuation) {
 		super(errorTrace.getScript());
 		mErrorTrace = errorTrace;
 		mValuation = valuation;
