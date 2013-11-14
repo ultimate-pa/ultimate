@@ -150,11 +150,14 @@ public class Product {
 										currentpp,
 										helper,
 										new Call(
-												this.productLocations.get(
+												this.productLocations.get(                   //source state
 															this.stateNameGenerator(
 																	((ProgramPoint)((Return)rcfgEdge).getSource()).getLocationName(),
 																	nn)), 
-												null,
+												this.productLocations.get(                   //fake target. Will never have valid word through self loop :) HACKME
+														this.stateNameGenerator(
+																((ProgramPoint)((Return)rcfgEdge).getSource()).getLocationName(),
+																nn)),
 												((Return)rcfgEdge).getCallStatement())
 										);
 							}
@@ -253,12 +256,13 @@ public class Product {
 		for(ProgramPoint pp: this.rcfgLocations){
 			if (!productLocations.containsKey(pp.getProcedure())){
 				productLocations.put(pp.getProcedure(), new HashMap<String, ProgramPoint>());
+				System.out.println(pp.getProcedure());
 			}
 			for(String n: this.aut.getStates()){ 
 				productNode = new ProgramPoint
 									(		
 									this.stateNameGenerator(pp.getLocationName(), n),
-									pp.getPosition(),
+									pp.getProcedure(),
 									false,
 									pp.getAstNode());
 				
@@ -270,11 +274,12 @@ public class Product {
 				}
 					
 				//inital states
-				if (pp.getLocationName().equals("mainENTRY"))
+				if (pp.getLocationName().equals("ULTIMATE.startENTRY"))
 					if (this.aut.isInitial(n))
-						//TODO: inital node special name?
+					{
 						new RootEdge(this.rootNode, productNode);
-				
+						this.rootNode.getRootAnnot().getEntryNodes().put("ULTIMATE.start", productNode);
+					}
 				
 				//add to annotation
 				productLocations.get(pp.getProcedure()).put(this.stateNameGenerator(pp.getLocationName(), n), productNode);
@@ -322,7 +327,10 @@ public class Product {
 	 */
 	private String stateNameGenerator(String name1, String name2)
 	{
-		return name1 + "__" + name2;
+		if (name1.equals("ULTIMATE.startENTRY") && this.aut.isInitial(name2))
+			return "ULTIMATE.start";
+		else
+			return name1 + "__" + name2;
 	}
 	
 	public RootNode getRCFG()
