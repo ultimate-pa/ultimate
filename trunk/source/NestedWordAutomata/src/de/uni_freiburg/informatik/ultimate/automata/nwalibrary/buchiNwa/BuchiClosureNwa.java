@@ -375,7 +375,7 @@ public class BuchiClosureNwa<LETTER, STATE> implements INestedWordAutomatonOldAp
 
 
 	public boolean finalIsTrap() {
-		return m_Operand.finalIsTrap();
+		throw new UnsupportedOperationException();
 	}
 
 
