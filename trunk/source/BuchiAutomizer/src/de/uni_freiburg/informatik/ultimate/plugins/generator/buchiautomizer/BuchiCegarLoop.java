@@ -415,9 +415,6 @@ public class BuchiCegarLoop {
 			s_Logger.info("Stem: " + stem);
 			NestedRun<CodeBlock, IPredicate> loop = m_Counterexample.getLoop();
 			s_Logger.info("Loop: " + loop);
-			if (stem.getLength() == 1) {
-				throw new UnsupportedOperationException("stem of length 0 not yet supported");
-			}
 
 			m_TruePredicate = m_SmtManager.newTruePredicate();
 			m_FalsePredicate = m_SmtManager.newFalsePredicate();
@@ -530,7 +527,7 @@ public class BuchiCegarLoop {
 				TransFormula composed = SequentialComposition.getInterproceduralTransFormula(
 						m_RootNode.getRootAnnot().getBoogie2SMT(),
 						m_RootNode.getRootAnnot().getModGlobVarManager(),
-						false, m_SimplifyStemAndLoop, true, composedCB.toArray(new CodeBlock[0])); 
+						m_SimplifyStemAndLoop, true, true, composedCB.toArray(new CodeBlock[0])); 
 						//TransFormula.sequentialComposition(10000, rootAnnot.getBoogie2SMT(), stemTF, loopTF);
 				if (composed.isInfeasible() == Infeasibility.INFEASIBLE) {
 					throw new AssertionError("suddently infeasible");
