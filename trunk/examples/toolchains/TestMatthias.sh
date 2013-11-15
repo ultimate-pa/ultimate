@@ -7,6 +7,16 @@ trunk/examples/toolchains/TraceAbstractionTestDir.sh -ea 120 "$2" \
 fi
 
 
+if [ "$1" = "terminatorSettings" ]; then
+echo "buchiAutomizer for folder $2"
+trunk/examples/toolchains/TraceAbstractionTestDir.sh -ea 120 "$2" \
+ "BuchiAutomizerWithBlockEncoding.xml;BuchiAutomizerCWithBlockEncoding.xml;buchiAutomizer/defaultWithLBE" \
+ "BuchiAutomizerWithBlockEncoding.xml;BuchiAutomizerCWithBlockEncoding.xml;buchiAutomizer/eagerNondeterminism" \
+ "BuchiAutomizerWithBlockEncoding.xml;BuchiAutomizerCWithBlockEncoding.xml;buchiAutomizer/ignoreDownStates" \
+ "BuchiAutomizerWithBlockEncoding.xml;BuchiAutomizerCWithBlockEncoding.xml;buchiAutomizer/withoutBouncer"
+fi
+
+
 if [ "$1" = "determinization" ]; then
 echo "test trace abstraction with different determinizations"
 trunk/examples/toolchains/TraceAbstractionTestDir.sh -da 20 $2 \
