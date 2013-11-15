@@ -249,6 +249,11 @@ public class BuchiCegarLoop {
 			return m_Counterexample;
 		}
 		
+		boolean emptyStem(NestedLassoRun<CodeBlock, IPredicate> nlr) {
+			assert nlr.getStem().getLength() > 0;
+			return nlr.getStem().getLength() == 1;
+		}
+		
 		
 		
 		public final Result iterate() {
@@ -421,14 +426,20 @@ public class BuchiCegarLoop {
 			
 			LBool feasibility;
 			m_ConcatenatedCounterexample = stem;
-			m_TraceChecker = new TraceChecker(m_TruePredicate, 
+			if (emptyStem(m_Counterexample)) {
+				feasibility = LBool.SAT;
+			} else {
+				m_TraceChecker = new TraceChecker(m_TruePredicate, 
 					m_FalsePredicate, null, m_ConcatenatedCounterexample.getWord(), 
 					m_SmtManager, m_RootNode.getRootAnnot().getModGlobVarManager());
-			feasibility = m_TraceChecker.isCorrect();
+				feasibility = m_TraceChecker.isCorrect();
+				if (feasibility != LBool.UNSAT) {
+					m_TraceChecker.unlockSmtManager();
+				}
+			}
 			if (feasibility == LBool.UNSAT) {
 				s_Logger.info("stem already infeasible");
 			} else {
-				m_TraceChecker.unlockSmtManager();
 				m_ConcatenatedCounterexample = loop;
 				m_TraceChecker = new TraceChecker(m_TruePredicate, 
 						m_FalsePredicate, null, m_ConcatenatedCounterexample.getWord(),
@@ -700,7 +711,12 @@ public class BuchiCegarLoop {
 
 		private void refineBuchi() throws AutomataLibraryException {
 			assert m_InterpolAutomaton == null;
-			NestedWord<CodeBlock> stem = m_Counterexample.getStem().getWord();
+			NestedWord<CodeBlock> stem;
+			if (emptyStem(m_Counterexample)) {
+				stem = m_Counterexample.getLoop().getWord();
+			} else {
+				stem = m_Counterexample.getStem().getWord();
+			}
 			NestedWord<CodeBlock> loop = m_Counterexample.getLoop().getWord();
 			
 //			assert m_TraceChecker == null;
