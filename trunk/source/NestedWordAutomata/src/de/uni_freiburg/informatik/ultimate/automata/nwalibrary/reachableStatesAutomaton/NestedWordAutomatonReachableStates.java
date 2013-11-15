@@ -1588,13 +1588,13 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 			s_Logger.debug("Method0: stem" + method0.getStem().getLength() + " loop" + method0.getLoop().getLength());
 			NestedLassoRun<LETTER, STATE> method1 = (new LassoExtractor(lowestSerialNumber, sccOfLowest,  m_AcceptingSummaries)).getNestedLassoRun();
 			s_Logger.debug("Method1: stem" + method1.getStem().getLength() + " loop" + method1.getLoop().getLength());
-			NestedLassoRun<LETTER, STATE> method2 = (new ShortestLassoExtractor(lowestSerialNumber)).getNestedLassoRun();
-			s_Logger.debug("Method2: stem" + method2.getStem().getLength() + " loop" + method2.getLoop().getLength());
+//			NestedLassoRun<LETTER, STATE> method2 = (new ShortestLassoExtractor(lowestSerialNumber)).getNestedLassoRun();
+//			s_Logger.debug("Method2: stem" + method2.getStem().getLength() + " loop" + method2.getLoop().getLength());
 			int method0size = method0.getStem().getLength() + method0.getLoop().getLength();
 			int method1size = method1.getStem().getLength() + method1.getLoop().getLength();
-			int method2size = method2.getStem().getLength() + method1.getLoop().getLength();
-			s_Logger.debug("Method0size" + method0size +" Method1size" + method1size + " Method2size" + method2size);
-			m_NestedLassoRun = method2;
+//			int method2size = method2.getStem().getLength() + method1.getLoop().getLength();
+//			s_Logger.debug("Method0size" + method0size +" Method1size" + method1size + " Method2size" + method2size);
+			m_NestedLassoRun = method0;
         }
     
         
