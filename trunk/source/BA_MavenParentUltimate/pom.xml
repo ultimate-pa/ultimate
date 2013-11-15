@@ -113,6 +113,8 @@
 					<systemProperties>
 						<svcompdir>../svcomp</svcompdir>
 					</systemProperties>
+					<forkedProcessTimeoutInSeconds>360</forkedProcessTimeoutInSeconds>
+					<reuseForks>false</reuseForks>
 					<includes>
 						<include>**/*.java</include>
 					</includes>
