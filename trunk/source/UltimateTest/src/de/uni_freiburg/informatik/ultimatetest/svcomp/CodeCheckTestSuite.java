@@ -3,8 +3,11 @@ package de.uni_freiburg.informatik.ultimatetest.svcomp;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.junit.Ignore;
+
 import de.uni_freiburg.informatik.ultimatetest.Util;
 
+@Ignore
 public class CodeCheckTestSuite extends AbstractSVCOMP14TestSuite {
 
 	@Override
