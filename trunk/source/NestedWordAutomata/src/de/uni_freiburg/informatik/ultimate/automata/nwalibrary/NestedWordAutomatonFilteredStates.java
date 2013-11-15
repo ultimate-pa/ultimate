@@ -109,7 +109,7 @@ public class NestedWordAutomatonFilteredStates<LETTER, STATE> implements
 
 	@Override
 	public boolean isFinal(STATE state) {
-		return m_Nwa.isFinal(state);
+		return m_newFinals.contains(state);
 	}
 
 	@Override
