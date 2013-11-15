@@ -1,10 +1,17 @@
 #!/bin/bash
 
-if [ "$1" = "terminator" ]; then
+if [ "$1" = "terminator-ea" ]; then
 echo "buchiAutomizer for folder $2"
 trunk/examples/toolchains/TraceAbstractionTestDir.sh -ea 120 "$2" \
  "BuchiAutomizerWithBlockEncoding.xml;BuchiAutomizerCWithBlockEncoding.xml;buchiAutomizer/defaultWithLBE"
 fi
+
+if [ "$1" = "terminator-da" ]; then
+echo "buchiAutomizer for folder $2"
+trunk/examples/toolchains/TraceAbstractionTestDir.sh -ea 200 "$2" \
+ "BuchiAutomizerWithBlockEncoding.xml;BuchiAutomizerCWithBlockEncoding.xml;buchiAutomizer/defaultWithLBE"
+fi
+
 
 
 if [ "$1" = "terminator2" ]; then
