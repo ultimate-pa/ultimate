@@ -1,5 +1,9 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer;
 import java.text.MessageFormat;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map.Entry;
+import java.util.TreeMap;
 
 import org.apache.log4j.Logger;
 
@@ -9,6 +13,9 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.NestedLa
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.ILocation;
+import de.uni_freiburg.informatik.ultimate.model.ITranslator;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.model.boogie.output.BoogieStatementPrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.BuchiCegarLoop.Result;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rankingfunctions.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
@@ -68,10 +75,9 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 		Result result = bcl.iterate();
 		
 		if (result == Result.TERMINATING) {
-			for (String proc : rootAnnot.getEntryNodes().keySet()) {
-				ProgramPoint position = rootAnnot.getEntryNodes().get(proc);
-				String shortDescr = "Terminating procedure";
-				String longDescr = "Procedure " + proc + " is terminating";
+			ProgramPoint position = rootAnnot.getEntryNodes().values().iterator().next();
+				String shortDescr = "Program is terminating";
+				String longDescr = statistics(bcl);
 				ILocation loc = position.getPayload().getLocation();
 				IResult reportRes= new GenericResult<RcfgElement>(position, 
 						Activator.s_PLUGIN_ID, 
@@ -81,7 +87,6 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 						longDescr, Severity.INFO);
 				s_Logger.info(shortDescr + longDescr + " line" + loc.getStartLine());
 				reportResult(reportRes);
-			}
 			s_Logger.info("Ultimate Buchi Automizer: Termination proven.");
 		} else if (result == Result.UNKNOWN) {
 			NestedLassoRun<CodeBlock, IPredicate> counterexample = bcl.getCounterexample();
@@ -189,11 +194,47 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 			
 
 	
-
+	private String backtranslateExprWorkaround(Expression expr) {
+		List<ITranslator<?, ?, ?, ?>> translators = 
+				UltimateServices.getInstance().getTranslatorSequence();
+		List<ITranslator<?, ?, ?, ?>> copy = new ArrayList<ITranslator<?, ?, ?, ?>>(translators);
+		ITranslator<?, ?, ?, ?> first = copy.remove(0);
+		Object backExpr = first.translateExpressionIteratively(expr, copy.toArray(new ITranslator[0]));
+		String ppExpr;
+		if (backExpr instanceof String) {
+			ppExpr = (String) backExpr;
+//			ppExpr += "  Internal BoogieExpression: ";
+//			ppExpr += BoogieStatementPrettyPrinter.print((Expression) expr);
+		} else if (backExpr instanceof Expression) {
+			ppExpr = BoogieStatementPrettyPrinter.print((Expression) backExpr);
+		} else {
+			throw new AssertionError();
+		}
+		return ppExpr;
+	}
 	
 	
 
-	
+	private String statistics(BuchiCegarLoop bcl) {
+		TreeMap<Integer, Integer> ms = bcl.getModuleSize();
+		TreeMap<Integer, Expression> rf = bcl.getRankingFunction();
+		StringBuilder sb = new StringBuilder();
+		for (Entry<Integer, Integer> entry  : ms.entrySet()) {
+			sb.append("Module");
+			sb.append(entry.getKey());
+			sb.append(" has");
+			if (rf.containsKey(entry.getKey())) {
+				sb.append(" ranking function ");
+				sb.append(backtranslateExprWorkaround(rf.get(entry.getKey())));
+			} else {
+				sb.append(" trivial ranking function");
+			}
+			sb.append(" and consists of ");
+			sb.append(entry.getValue());
+			sb.append(" states. ");
+		}
+		return sb.toString();
+	}
 	
 
 	

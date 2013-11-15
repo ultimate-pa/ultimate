@@ -9,6 +9,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 
 import org.apache.log4j.Logger;
 
@@ -23,6 +24,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.BuchiAccepts;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.BuchiClosureNwa;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.BuchiComplementFKV;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.BuchiDifferenceFKV;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.BuchiIntersect;
@@ -37,6 +39,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.Remove
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.RemoveUnreachable;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.DifferenceDD;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
+import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
 import de.uni_freiburg.informatik.ultimate.logic.LoggingScript;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -45,6 +48,8 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.preferences.PreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.preferences.PreferenceInitializer.BInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rankingfunctions.RankingFunctionsObserver;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rankingfunctions.RankingFunctionsSynthesizer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rankingfunctions.SupportingInvariant;
@@ -59,7 +64,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Roo
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.SequentialComposition;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.TransFormula;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.TransFormula.Infeasibility;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CFG2NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.HoareAnnotationFragments;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.InterpolantAutomataBuilder;
@@ -184,19 +188,24 @@ public class BuchiCegarLoop {
 		private PredicateFactoryRefinement m_StateFactoryForRefinement;
 
 		private BuchiModGlobalVarManager buchiModGlobalVarManager;
-
 		
+		private final TreeMap<Integer,Integer> m_ModuleSize = new TreeMap<Integer,Integer>();
+		private final TreeMap<Integer,Expression> m_RankingFunction = new TreeMap<Integer,Expression>();
 
-		private final boolean m_ReduceAbstractionSize = true;
-		private final boolean m_Difference = true;
-		private final boolean m_UseDoubleDeckers = true;
 		
 		private static final boolean m_ExternalSolver = false;
 		private static final boolean m_SimplifyStemAndLoop = true;
+		private static final boolean m_ReduceAbstractionSize = true;
 		
-		private enum InterpolantAutomaton { LassoAutomaton, DeterministicEager, NondeterministicEager };
 		
-		private InterpolantAutomaton m_InterpolantAutomaton = InterpolantAutomaton.DeterministicEager;
+		private final boolean m_Difference;
+		private final boolean m_UseDoubleDeckers;
+		private final BInterpolantAutomaton m_InterpolantAutomaton;
+		private final boolean m_BouncerStem;
+		private final boolean m_BouncerLoop;
+		private final boolean m_BouncerCannibalizeLoop;
+		private final int m_MaxNumberOfLoopUnwindings;
+
 
 		public BuchiCegarLoop(RootNode rootNode,
 				SmtManager smtManager,
@@ -223,6 +232,16 @@ public class BuchiCegarLoop {
 					m_Pref,
 					false && m_Pref.computeHoareAnnotation(),
 					m_Haf);
+			
+			UltimatePreferenceStore baPref = new UltimatePreferenceStore(Activator.s_PLUGIN_ID);
+			
+			m_UseDoubleDeckers = !baPref.getBoolean(PreferenceInitializer.LABEL_IgnoreDownStates);
+			m_Difference = baPref.getBoolean(PreferenceInitializer.LABEL_DeterminizationOnDemand);
+			m_InterpolantAutomaton = baPref.getEnum(PreferenceInitializer.LABEL_BuchiInterpolantAutomaton, BInterpolantAutomaton.class);
+			m_BouncerStem = baPref.getBoolean(PreferenceInitializer.LABEL_BouncerStem);
+			m_BouncerLoop = baPref.getBoolean(PreferenceInitializer.LABEL_BouncerLoop);
+			m_BouncerCannibalizeLoop = baPref.getBoolean(PreferenceInitializer.LABEL_CannibalizeLoop);
+			m_MaxNumberOfLoopUnwindings = baPref.getInt(PreferenceInitializer.LABEL_LoopUnwindings);
 		}
 		
 		NestedLassoRun<CodeBlock, IPredicate> getCounterexample() {
@@ -318,6 +337,7 @@ public class BuchiCegarLoop {
 					
 					if (m_ReduceAbstractionSize ) {
 						m_Abstraction = (new RemoveNonLiveStates<CodeBlock, IPredicate>(m_Abstraction)).getResult();
+						m_Abstraction = (INestedWordAutomatonOldApi<CodeBlock, IPredicate>) (new BuchiClosureNwa(m_Abstraction));
 						s_Logger.info("Abstraction has " + m_Abstraction.sizeInformation());
 						Collection<Set<IPredicate>> partition = BuchiCegarLoop.computePartition(m_Abstraction);
 						MinimizeSevpa<CodeBlock, IPredicate> minimizeOp = 
@@ -452,6 +472,7 @@ public class BuchiCegarLoop {
 					throw new AssertionError();
 				}
 			}
+			m_ModuleSize.put(m_Iteration,m_InterpolAutomaton.size());
 			assert (new InductivityCheck(m_InterpolAutomaton, ec, false, true)).getResult();
 			m_Abstraction = diff.getResult();
 			m_ConcatenatedCounterexample = null;
@@ -604,6 +625,7 @@ public class BuchiCegarLoop {
 					m_SiList = synthesizer.getSupportingInvariants();
 					assert (m_SiList != null);
 					m_LinRf = (LinearRankingFunction) rf;
+					m_RankingFunction.put(m_Infeasible,m_LinRf.asExpression(m_SmtManager.getScript(), m_SmtManager.getSmt2Boogie()));
 					m_Bspm.computePredicates(m_LinRf, m_SiList);
 					
 					for (SupportingInvariant si : m_SiList) {
@@ -732,23 +754,27 @@ public class BuchiCegarLoop {
 			case LassoAutomaton:
 				interpolAutomatonUsedInRefinement = m_InterpolAutomaton;
 				break;
-			case DeterministicEager:
+			case EagerNondeterminism:
 				interpolAutomatonUsedInRefinement = 
 					new EagerInterpolantAutomaton(ec, m_InterpolAutomaton);
 				break;
-			case NondeterministicEager:
+			case ScroogeNondeterminism:
+			case Deterministic:
+				boolean deterministic = (m_InterpolantAutomaton == BInterpolantAutomaton.Deterministic);
 				Set<IPredicate> cannibalizedStemInterpolants = pu.cannibalizeAll(stemInterpolants);
 				Set<IPredicate> cannibalizedLoopInterpolants = pu.cannibalizeAll(loopInterpolants);
 				cannibalizedLoopInterpolants.addAll(pu.cannibalize(m_Bspm.getRankEqAndSi().getFormula()));
-				LoopCannibalizer lc = new LoopCannibalizer(m_Counterexample, 
-						cannibalizedLoopInterpolants, m_Bspm, pu, m_SmtManager, buchiModGlobalVarManager);
-				cannibalizedLoopInterpolants = lc.getResult();
+				if (m_BouncerCannibalizeLoop) {
+					LoopCannibalizer lc = new LoopCannibalizer(m_Counterexample, 
+							cannibalizedLoopInterpolants, m_Bspm, pu, m_SmtManager, buchiModGlobalVarManager);
+					cannibalizedLoopInterpolants = lc.getResult();
+				}
 				interpolAutomatonUsedInRefinement = new BuchiInterpolantAutomaton(
 						m_SmtManager, ec, m_Bspm.getStemPrecondition(), 
 						cannibalizedStemInterpolants, m_Bspm.getHondaPredicate(), 
 						cannibalizedLoopInterpolants, 
 						stem.getSymbol(stem.length()-1), 
-						loop.getSymbol(loop.length()-1), m_Abstraction, true, true, false);
+						loop.getSymbol(loop.length()-1), m_Abstraction, !deterministic, m_BouncerStem, m_BouncerLoop);
 				break;
 			default:
 				throw new UnsupportedOperationException("unknown automaton");
@@ -786,6 +812,7 @@ public class BuchiCegarLoop {
 				String filename = "interpolAutomatonUsedInRefinement"+m_Iteration+"after";
 				writeAutomatonToFile(interpolAutomatonUsedInRefinement, filename);
 			}
+			m_ModuleSize.put(m_Iteration,interpolAutomatonUsedInRefinement.size());
 		}
 		
 		private void checkInterpolantAutomaton(
@@ -823,10 +850,11 @@ public class BuchiCegarLoop {
 			case LassoAutomaton:
 				// do nothing
 				break;
-			case DeterministicEager:
+			case EagerNondeterminism:
 				((EagerInterpolantAutomaton) interpolantAutomaton).finishConstruction();
 				break;
-			case NondeterministicEager:
+			case ScroogeNondeterminism:
+			case Deterministic:
 				((BuchiInterpolantAutomaton) interpolantAutomaton).finishConstruction();
 				break;
 			default:
@@ -937,6 +965,14 @@ public class BuchiCegarLoop {
 				IAutomaton<CodeBlock, IPredicate> automaton, String filename) {
 			new AtsDefinitionPrinter<String,String>(filename, 
 					m_Pref.dumpPath()+"/"+filename, Labeling.TOSTRING,"",automaton);
+		}
+
+		public TreeMap<Integer, Integer> getModuleSize() {
+			return m_ModuleSize;
+		}
+
+		public TreeMap<Integer, Expression> getRankingFunction() {
+			return m_RankingFunction;
 		}
 		
 }

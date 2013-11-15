@@ -9,6 +9,7 @@ import de.uni_freiburg.informatik.ultimate.model.GraphType;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.MarkedTrace;
 import de.uni_freiburg.informatik.ultimate.model.TokenMap;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.preferences.PreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceInitializer;
 
@@ -138,13 +139,11 @@ public class BuchiAutomizer implements IGenerator {
 	@Override
 	public IEclipsePreferences[] getPreferences(IScopeContext cs,
 			IScopeContext is) {
-		// TODO Auto-generated method stub
-		return null;
+		return new IEclipsePreferences[] {cs.getNode(s_PLUGIN_ID)};
 	}
 
 	@Override
 	public UltimatePreferenceInitializer getPreferences() {
-		// TODO Auto-generated method stub
-		return null;
+		return new PreferenceInitializer();
 	}
 }
