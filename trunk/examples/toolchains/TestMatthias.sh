@@ -9,7 +9,7 @@ fi
 if [ "$1" = "terminator-da" ]; then
 echo "buchiAutomizer for folder $2"
 trunk/examples/toolchains/TraceAbstractionTestDir.sh -ea 200 "$2" \
- "BuchiAutomizerWithBlockEncoding.xml;BuchiAutomizerCWithBlockEncoding.xml;buchiAutomizer/defaultWithLBE"
+ "BuchiAutomizerWithBlockEncoding.xml;BuchiAutomizerCWithBlockEncoding.xml;buchiAutomizer/def180"
 fi
 
 
