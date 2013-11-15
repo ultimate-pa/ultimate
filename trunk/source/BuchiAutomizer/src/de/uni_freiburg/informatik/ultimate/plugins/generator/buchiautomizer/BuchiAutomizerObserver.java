@@ -65,6 +65,9 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 		settings += " Determinization: " + taPrefs.determinization();
 		settings += " Timeout:" + taPrefs.timeout();
 		System.out.println(settings);
+		long timoutMilliseconds = taPrefs.timeout() * 1000L;
+		UltimateServices.getInstance().setDeadline(
+				System.currentTimeMillis() + timoutMilliseconds);
 
 		smtManager = new SmtManager(rootAnnot.getBoogie2SMT(),
 				rootAnnot.getGlobalVars(), rootAnnot.getModGlobVarManager());
@@ -76,7 +79,7 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 		
 		if (result == Result.TERMINATING) {
 			ProgramPoint position = rootAnnot.getEntryNodes().values().iterator().next();
-				String shortDescr = "Program is terminating";
+				String shortDescr = "Buchi Automizer proved that your program is terminating";
 				String longDescr = statistics(bcl);
 				ILocation loc = position.getPayload().getLocation();
 				IResult reportRes= new GenericResult<RcfgElement>(position, 
@@ -85,17 +88,18 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 						loc, 
 						shortDescr, 
 						longDescr, Severity.INFO);
-				s_Logger.info(shortDescr + longDescr + " line" + loc.getStartLine());
+//				s_Logger.info(shortDescr + longDescr + " line" + loc.getStartLine());
 				reportResult(reportRes);
 			s_Logger.info("Ultimate Buchi Automizer: Termination proven.");
 		} else if (result == Result.UNKNOWN) {
 			NestedLassoRun<CodeBlock, IPredicate> counterexample = bcl.getCounterexample();
 			IPredicate hondaPredicate = counterexample.getLoop().getStateAtPosition(0);
 			ProgramPoint honda = ((ISLPredicate) hondaPredicate).getProgramPoint();
-			String shortDescr = "Program might not terminate.";
+			String shortDescr = "Buchi Automizer was unable to prove termination";
 			StringBuilder longDescr = new StringBuilder();
-			longDescr.append("Maybe this program point can be visited infinitely often. ");
-			longDescr.append("Unable to synthesize ranking function for the following lasso. ");
+//			longDescr.append("Maybe this program point can be visited infinitely often. ");
+			longDescr.append("Maybe your program is nonterminating!?! ");
+			longDescr.append("I was unable to synthesize ranking function for the following lasso. ");
 			longDescr.append(System.getProperty("line.separator"));
 			longDescr.append("Stem: ");
 			longDescr.append(counterexample.getStem().getWord());
@@ -109,23 +113,29 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 					loc, 
 					shortDescr, 
 					longDescr.toString(), Severity.ERROR);
-			s_Logger.info(shortDescr + longDescr + " line" + loc.getStartLine());
+//			s_Logger.info(shortDescr + longDescr + " line" + loc.getStartLine());
 			reportResult(reportRes);
-			
 			s_Logger.info("Ultimate Buchi Automizer: Unable to prove termination. Nonterminating?");
 		} else if (result == Result.TIMEOUT) {
-			for (String proc : rootAnnot.getEntryNodes().keySet()) {
-				ProgramPoint position = rootAnnot.getEntryNodes().get(proc);
-				String longDescr = "Unable to prove termination of procedure" + proc;
-				ILocation loc = position.getPayload().getLocation();
-				IResult reportRes= new TimeoutResult<RcfgElement>(position, 
-						Activator.s_PLUGIN_ID, 
-						UltimateServices.getInstance().getTranslatorSequence(), 
-						loc, 
-						longDescr);
-				s_Logger.info(longDescr + " line" + loc.getStartLine());
+			ProgramPoint position = rootAnnot.getEntryNodes().values().iterator().next();
+			String longDescr = "Timeout while trying to prove termination";
+			IResult reportRes= new TimeoutResult<RcfgElement>(position, 
+					Activator.s_PLUGIN_ID, 
+					UltimateServices.getInstance().getTranslatorSequence(), 
+					position.getPayload().getLocation(), 
+					longDescr);
+//			for (String proc : rootAnnot.getEntryNodes().keySet()) {
+//				ProgramPoint position = rootAnnot.getEntryNodes().get(proc);
+//				String longDescr = "Unable to prove termination of procedure" + proc;
+//				ILocation loc = position.getPayload().getLocation();
+//				IResult reportRes= new TimeoutResult<RcfgElement>(position, 
+//						Activator.s_PLUGIN_ID, 
+//						UltimateServices.getInstance().getTranslatorSequence(), 
+//						loc, 
+//						longDescr);
+//				s_Logger.info(longDescr + " line" + loc.getStartLine());
 				reportResult(reportRes);
-			}
+//			}
 		} else {
 			throw new AssertionError();
 		}
