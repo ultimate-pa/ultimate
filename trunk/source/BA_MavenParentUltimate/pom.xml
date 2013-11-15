@@ -39,6 +39,7 @@
 		<sonar.jacoco.reportPath>${project.basedir}/../target/jacoco.exec</sonar.jacoco.reportPath>
 		<sonar.jacoco.itReportPath>${project.basedir}/../target/jacoco-it.exec</sonar.jacoco.itReportPath>
 		<sonar.dynamicAnalysis>reuseReports</sonar.dynamicAnalysis>
+
 	</properties>
 
 	<repositories>
@@ -108,13 +109,16 @@
 					<useUIHarness>false</useUIHarness>
 					<useUIThread>false</useUIThread>
 					<showEclipseLog>true</showEclipseLog>
-					<argLine>-Xmx4096M</argLine>
+					<argLine>-Xmx256M</argLine>
+					<systemProperties>
+						<svcompdir>../svcomp</svcompdir>
+					</systemProperties>
 					<includes>
 						<include>**/*.java</include>
 					</includes>
-
 				</configuration>
 			</plugin>
+
 			<!-- fix sonar plugin version -->
 			<plugin>
 				<groupId>org.codehaus.mojo</groupId>

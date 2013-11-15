@@ -2,6 +2,7 @@ package de.uni_freiburg.informatik.ultimatetest.svcomp;
 
 import java.util.HashMap;
 import java.util.Map;
+
 import de.uni_freiburg.informatik.ultimatetest.Util;
 
 public class CodeCheckTestSuite extends AbstractSVCOMP14TestSuite {
@@ -26,5 +27,10 @@ public class CodeCheckTestSuite extends AbstractSVCOMP14TestSuite {
 	@Override
 	protected boolean getCreateLogfileForEachTestCase() {
 		return true;
+	}
+
+	@Override
+	protected String getSVCOMP14RootDirectory() {
+		return Util.getPathFromTrunk("../../svcomp");
 	}
 }

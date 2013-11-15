@@ -66,11 +66,25 @@ public abstract class AbstractSVCOMP14TestSuite extends UltimateTestSuite {
 	 */
 	protected abstract boolean getCreateLogfileForEachTestCase();
 
+	/**
+	 * Clients should provide a path to the root of their local svcomp
+	 * repository here (the place were the .set files lie).
+	 * 
+	 * During Maven builds, this function will only be used if no svcompdir
+	 * property is specified in the BA_MavenParentUltimate pom.xml.
+	 * 
+	 * @return An absolute path to the root of the local SVCOMP repository (the
+	 *         place were the .set files lie).
+	 */
+	protected abstract String getSVCOMP14RootDirectory();
+
 	@Override
 	public Collection<UltimateTestCase> createTestCases() {
 		Collection<UltimateTestCase> rtr = new ArrayList<UltimateTestCase>();
 
-		String svcompRootDir = Util.getPathFromTrunk("../../svcomp");
+		String svcompRootDir = Util
+				.getFromMavenVariableSVCOMPRoot(getSVCOMP14RootDirectory());
+
 		String toolchainPath = getToolchainPath();
 		long deadline = getDeadline();
 		String description = this.getClass().getSimpleName();
@@ -79,7 +93,8 @@ public abstract class AbstractSVCOMP14TestSuite extends UltimateTestSuite {
 		Collection<File> setFiles = getAllSetFiles(svcompRootDir);
 
 		if (inputFiles == null || setFiles == null) {
-			System.err.println("inputFiles or setFiles are null: did you specify the svcomp root directory correctly? Currently it is: "
+			System.err
+					.println("inputFiles or setFiles are null: did you specify the svcomp root directory correctly? Currently it is: "
 							+ svcompRootDir);
 			return rtr;
 		}

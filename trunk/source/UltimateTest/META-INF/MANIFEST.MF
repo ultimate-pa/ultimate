@@ -7,7 +7,7 @@ Fragment-Host: UltimateCore
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
 Bundle-ActivationPolicy: lazy
 Require-Bundle: Library-junit-helper,
- Library-log4j
+ Library-log4j, CodeCheck, RCFGBuilder, BlockEncoding, CACSL2BoogieTranslator, CDTParser, BoogiePreprocessor
 Import-Package: org.junit,
  org.junit.experimental.categories,
  org.junit.runner,

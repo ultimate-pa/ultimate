@@ -1,6 +1,7 @@
 package de.uni_freiburg.informatik.ultimatetest.svcomp;
 
 import java.io.File;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 import java.util.Map.Entry;
@@ -17,6 +18,7 @@ import de.uni_freiburg.informatik.ultimate.result.UnprovableResult;
 import de.uni_freiburg.informatik.ultimatetest.ITestResultDecider;
 import de.uni_freiburg.informatik.ultimatetest.ITestSummary;
 import de.uni_freiburg.informatik.ultimatetest.TestSummary;
+import de.uni_freiburg.informatik.ultimatetest.Util;
 
 public class SVCOMP14TestResultDecider implements ITestResultDecider {
 
@@ -149,29 +151,11 @@ public class SVCOMP14TestResultDecider implements ITestResultDecider {
 
 	private void logResults(boolean fail, boolean shouldbesafe,
 			ToolchainResult toolchainresult) {
-		mLogger.debug("========== TEST RESULTS ==========");
-		mLogger.debug("Results for " + mInputFile);
 
-		for (Entry<String, List<IResult>> entry : UltimateServices
-				.getInstance().getResultMap().entrySet()) {
-			int i = 0;
-			for (IResult result : entry.getValue()) {
-				mLogger.debug("[" + i + "] " + entry.getKey() + " --> ["
-						+ result.getClass().getSimpleName() + "] "
-						+ result.getLongDescription());
-				++i;
-			}
-		}
+		Util.logResults(mLogger, mInputFile.getAbsolutePath(), fail, Arrays
+				.asList("Result should be CORRECT: " + shouldbesafe,
+						"Toolchain result was: " + toolchainresult));
 
-		mLogger.debug("Result should be CORRECT: " + shouldbesafe);
-		mLogger.debug("Toolchain result was: " + toolchainresult);
-
-		if (fail) {
-			mLogger.debug("TEST FAILED");
-		} else {
-			mLogger.debug("TEST SUCCEEDED");
-		}
-		mLogger.debug("============== END ==============");
 	}
 
 }

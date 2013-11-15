@@ -35,21 +35,29 @@ public class UltimateStarter {
 	private File mLogFile;
 	private UltimateCore mCurrentUltimateInstance;
 
+	public UltimateStarter(File inputFile, File toolchainFile, long deadline) {
+		this(inputFile, null, toolchainFile, deadline, null, null);
+	}
+
 	public UltimateStarter(File inputFile, File settingsFile,
 			File toolchainFile, long deadline) {
-		mLogger = Logger.getLogger(UltimateStarter.class);
-		mInputFile = inputFile;
-		mSettingsFile = settingsFile;
-		mToolchainFile = toolchainFile;
-		mDeadline = deadline;
-		detachLogger();
+		this(inputFile, settingsFile, toolchainFile, deadline, null, null);
 	}
 
 	public UltimateStarter(File inputFile, File settingsFile,
 			File toolchainFile, long deadline, File logFile, String logPattern) {
-		this(inputFile, settingsFile, toolchainFile, deadline);
+		mLogger = Logger.getLogger(UltimateStarter.class);
+		mInputFile = inputFile;
+		mToolchainFile = toolchainFile;
+		if (mInputFile == null || mToolchainFile == null) {
+			throw new IllegalArgumentException(
+					"Toolchain and Input may not be null");
+		}
+		mSettingsFile = settingsFile;
+		mDeadline = deadline;
 		mLogFile = logFile;
 		mLogPattern = logPattern;
+		detachLogger();
 	}
 
 	public void runUltimate() throws Exception {
@@ -60,7 +68,9 @@ public class UltimateStarter {
 		mCurrentUltimateInstance = new UltimateCore(
 				Ultimate_Mode.EXTERNAL_EXECUTION);
 		mCurrentUltimateInstance.setM_InputFile(mInputFile);
-		mCurrentUltimateInstance.setSettingsFile(mSettingsFile);
+		if (mSettingsFile != null) {
+			mCurrentUltimateInstance.setSettingsFile(mSettingsFile);
+		}
 		mCurrentUltimateInstance.setToolchainXML(mToolchainFile);
 		attachLogger();
 		mCurrentUltimateInstance.setDeadline(System.currentTimeMillis()
@@ -71,7 +81,7 @@ public class UltimateStarter {
 	public void complete() {
 		detachLogger();
 	}
-
+	
 	private void attachLogger() {
 		if (mLogFile == null) {
 			return;

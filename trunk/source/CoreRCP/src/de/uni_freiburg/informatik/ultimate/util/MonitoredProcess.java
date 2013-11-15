@@ -28,7 +28,7 @@ public final class MonitoredProcess {
 		mProcess = process;
 		mProcessCompleted = false;
 		mExitCommand = null;
-		mCommand = exitCommand;
+		mCommand = command;
 		mReturnCode = -1;
 		mMonitor = null;
 	}

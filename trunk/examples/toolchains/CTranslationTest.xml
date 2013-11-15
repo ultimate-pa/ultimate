@@ -1,0 +1,4 @@
+<toolchain>
+	<plugin id="CACSL2BoogieTranslator"/>
+	<plugin id="de.uni_freiburg.informatik.ultimate.boogie.preprocessor"/>
+</toolchain>

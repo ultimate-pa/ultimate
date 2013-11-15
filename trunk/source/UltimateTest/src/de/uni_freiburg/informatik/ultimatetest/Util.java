@@ -6,6 +6,13 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collection;
+import java.util.List;
+import java.util.Map.Entry;
+
+import org.apache.log4j.Logger;
+
+import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
+import de.uni_freiburg.informatik.ultimate.result.IResult;
 
 public class Util {
 
@@ -46,12 +53,12 @@ public class Util {
 		return relative.getAbsolutePath();
 	}
 
-	public static String getPathFromSurefire(String path, String canonicalClassName) {
+	public static String getPathFromSurefire(String path,
+			String canonicalClassName) {
 		File trunk = new File(System.getProperty("user.dir"));
 		File relative = new File(trunk.getAbsolutePath() + File.separator
 				+ "target" + File.separator + "surefire-reports"
-				+ File.separator + canonicalClassName
-				+ File.separator + path);
+				+ File.separator + canonicalClassName + File.separator + path);
 
 		return relative.getAbsolutePath();
 	}
@@ -187,19 +194,134 @@ public class Util {
 		}
 		return rtr;
 	}
-	
-	public static <E> Collection<E> firstN(Collection<E> collection, int n){
+
+	public static <E> Collection<E> firstN(Collection<E> collection, int n) {
 		ArrayList<E> rtr = new ArrayList<E>(n);
 		int i = 1;
-		for(E elem : collection){
+		for (E elem : collection) {
 			rtr.add(elem);
 			++i;
-			if(n<i){
+			if (n < i) {
 				break;
 			}
 		}
 		return rtr;
-		
+	}
+
+	public static void logResults(Logger logger, String inputFile,
+			boolean fail, Collection<String> customMessages) {
+
+		logger.info("#################### TEST RESULT ####################");
+		logger.info("Results for " + inputFile);
+
+		for (Entry<String, List<IResult>> entry : UltimateServices
+				.getInstance().getResultMap().entrySet()) {
+			int i = 0;
+			for (IResult result : entry.getValue()) {
+				logger.info("[" + i + "] " + entry.getKey() + " --> ["
+						+ result.getClass().getSimpleName() + "] "
+						+ result.getLongDescription());
+				++i;
+			}
+		}
+
+		if (customMessages != null && customMessages.size() > 0) {
+			for (String s : customMessages) {
+				if (s != null) {
+					logger.info(s);
+				}
+			}
+		}
+
+		if (fail) {
+			logger.info("TEST FAILED");
+		} else {
+			logger.info("TEST SUCCEEDED");
+		}
+
+		// Get current size of heap in bytes
+		long heapSize = Runtime.getRuntime().totalMemory();
+
+		// Get amount of free memory within the heap in bytes. This size will
+		// increase // after garbage collection and decrease as new objects are
+		// created.
+		long heapFreeSize = Runtime.getRuntime().freeMemory();
+
+		// Get maximum size of heap in bytes. The heap cannot grow beyond this
+		// size.// Any attempt will result in an OutOfMemoryException.
+		long heapMaxSize = Runtime.getRuntime().maxMemory();
+
+		logger.info(String.format(
+				"Statistics: heapSize=%s heapFreeSize=%s heapMaxSize=%s",
+				humanReadableByteCount(heapSize, true),
+				humanReadableByteCount(heapFreeSize, true),
+				humanReadableByteCount(heapMaxSize, true)));
+
+		logger.info("#################### END TEST RESULT ####################");
+	}
+
+	/**
+	 * Converts a number of bytes to a human readable String containing the byte
+	 * number as the highest compatible unit.
+	 * 
+	 * @param bytes
+	 *            A number of bytes
+	 * @param si
+	 *            true iff SI units should be used (base 1000, without the "i") 
+	 * @return
+	 */
+	public static String humanReadableByteCount(long bytes, boolean si) {
+		int unit = si ? 1000 : 1024;
+		if (bytes < unit)
+			return bytes + " B";
+		int exp = (int) (Math.log(bytes) / Math.log(unit));
+		String pre = (si ? "kMGTPE" : "KMGTPE").charAt(exp - 1)
+				+ (si ? "" : "i");
+		return String.format("%.1f %sB", bytes / Math.pow(unit, exp), pre);
+	}
+
+	/**
+	 * Returns an absolute path to the SVCOMP root directory specified by the
+	 * Maven variable "svcompdir". If there is no variable with such a name, the
+	 * parameter fallback will be used. The method converts relative paths to
+	 * absolute ones.
+	 * 
+	 * @param fallback
+	 *            A string describing a relative or absolute path to an existing
+	 *            directory (which is hopefully the SVCOMP root directory).
+	 * @return An absolute path to an existing directory or null
+	 */
+	public static String getFromMavenVariableSVCOMPRoot(String fallback) {
+		String svcompDir = makeAbsolutePath(System.getProperty("svcompdir"));
+		if (svcompDir != null) {
+			return svcompDir;
+		}
+
+		svcompDir = makeAbsolutePath(fallback);
+		return svcompDir;
+	}
+
+	/**
+	 * Converts a relative path to an absolute one and checks if this path
+	 * exists.
+	 * 
+	 * @param somepath
+	 *            A relative or absolute path
+	 * @return An absolute path to an existing file or directory or null
+	 */
+	public static String makeAbsolutePath(String somepath) {
+		if (somepath == null) {
+			return null;
+		}
+		File path = new File(somepath);
+		if (!path.isAbsolute()) {
+			path = new File(Util.getPathFromTrunk(path.getPath()));
+		}
+		if (path.exists()) {
+			return path.getAbsolutePath();
+		} else {
+			return null;
+		}
 	}
 
 }
