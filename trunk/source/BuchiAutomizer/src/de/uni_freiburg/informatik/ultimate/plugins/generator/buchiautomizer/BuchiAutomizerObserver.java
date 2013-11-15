@@ -228,21 +228,33 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 	private String statistics(BuchiCegarLoop bcl) {
 		TreeMap<Integer, Integer> ms = bcl.getModuleSize();
 		TreeMap<Integer, Expression> rf = bcl.getRankingFunction();
-		StringBuilder sb = new StringBuilder();
-		for (Entry<Integer, Integer> entry  : ms.entrySet()) {
-			sb.append("Module");
-			sb.append(entry.getKey());
-			sb.append(" has");
-			if (rf.containsKey(entry.getKey())) {
-				sb.append(" ranking function ");
-				sb.append(backtranslateExprWorkaround(rf.get(entry.getKey())));
-			} else {
-				sb.append(" trivial ranking function");
-			}
-			sb.append(" and consists of ");
-			sb.append(entry.getValue());
-			sb.append(" states. ");
+		if (ms.isEmpty()) {
+			return "Trivially terminating. There is no loop in your program.";
 		}
+		int modulesWithTrivialRankingFunction = 0;
+		int maxNumberOfStatesOfModuleWithTrivialRankingFunction = 0;
+		StringBuilder sb = new StringBuilder();
+		sb.append("Your program was decomposed into ");
+		sb.append(ms.keySet().size());
+		sb.append(" modules. ");
+		for (Entry<Integer, Integer> entry  : ms.entrySet()) {
+			if (rf.containsKey(entry.getKey())) {
+				sb.append("One module has ranking function ");
+				sb.append(backtranslateExprWorkaround(rf.get(entry.getKey())));
+				sb.append(" and consists of ");
+				sb.append(entry.getValue());
+				sb.append(" states. ");
+			} else {
+				modulesWithTrivialRankingFunction++;
+				if (entry.getValue() > maxNumberOfStatesOfModuleWithTrivialRankingFunction) {
+					maxNumberOfStatesOfModuleWithTrivialRankingFunction = entry.getValue();
+				}
+			}
+		}
+		sb.append(modulesWithTrivialRankingFunction);
+		sb.append(" modules have a trivial ranking function, the largest among these consists of ");
+		sb.append(maxNumberOfStatesOfModuleWithTrivialRankingFunction);
+		sb.append(" states.");
 		return sb.toString();
 	}
 	
