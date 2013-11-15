@@ -213,7 +213,7 @@ do
 	if [ "$VCCPRELUDE" ]; then 
 	    Ultimate_OUTPUT=`bash -c "ulimit -t $timeout; $Ultimate_PATH/$UltimateEXE --console "$TOOLCHAIN" "$f" --prelude "$Ultimate_PATH/trunk/examples/programs/translated-vcc/Vcc2Prelude.bpl" --settings "$SETTINGS" 2>&1"`    
 	else
-	    echo $Ultimate_PATH/$UltimateEXE --console "$TOOLCHAIN" "$examplesFolder/$f" --settings "$SETTINGS"
+	    # echo $Ultimate_PATH/$UltimateEXE --console "$TOOLCHAIN" "$examplesFolder/$f" --settings "$SETTINGS"
 	    Ultimate_OUTPUT=`bash -c "ulimit -t $timeout; $Ultimate_PATH/$UltimateEXE --console "$TOOLCHAIN" "$f" --settings "$SETTINGS" 2>&1"`
 	fi
 
