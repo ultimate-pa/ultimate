@@ -551,11 +551,13 @@ public class BuchiCegarLoop {
 			if (withoutStem) {
 				m_RankWithoutSi++;
 				reportRankingFunction(m_LinRf, honda, stem, loop);
+				m_RankingFunction.put(m_Iteration,m_LinRf.asExpression(m_SmtManager.getScript(), m_SmtManager.getSmt2Boogie()));
 				return true;
 			}
 			boolean witStem = synthesize(stem, loop, stemTF, loopTF);
 			if (witStem) {
 				reportRankingFunction(m_LinRf, honda, stem, loop);
+				m_RankingFunction.put(m_Iteration,m_LinRf.asExpression(m_SmtManager.getScript(), m_SmtManager.getSmt2Boogie()));
 				m_RankWithSi++;
 				return true;
 			}
@@ -635,7 +637,6 @@ public class BuchiCegarLoop {
 					m_SiList = synthesizer.getSupportingInvariants();
 					assert (m_SiList != null);
 					m_LinRf = (LinearRankingFunction) rf;
-					m_RankingFunction.put(m_Infeasible,m_LinRf.asExpression(m_SmtManager.getScript(), m_SmtManager.getSmt2Boogie()));
 					m_Bspm.computePredicates(m_LinRf, m_SiList);
 					
 					for (SupportingInvariant si : m_SiList) {
