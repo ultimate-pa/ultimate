@@ -109,7 +109,7 @@
 					<useUIHarness>false</useUIHarness>
 					<useUIThread>false</useUIThread>
 					<showEclipseLog>true</showEclipseLog>
-					<argLine>-Xmx256M</argLine>
+					<argLine>-Xmx1024M</argLine>
 					<systemProperties>
 						<svcompdir>../svcomp</svcompdir>
 					</systemProperties>
