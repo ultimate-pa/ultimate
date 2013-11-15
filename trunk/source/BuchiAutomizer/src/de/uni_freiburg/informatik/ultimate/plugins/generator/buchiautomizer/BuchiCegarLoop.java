@@ -35,6 +35,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.Accept
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IStateDeterminizer;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.MinimizeSevpa;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.PowersetDeterminizer;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.RemoveDeadEnds;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.RemoveNonLiveStates;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.RemoveUnreachable;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.DifferenceDD;
@@ -338,6 +339,7 @@ public class BuchiCegarLoop {
 					if (m_ReduceAbstractionSize ) {
 						m_Abstraction = (new RemoveNonLiveStates<CodeBlock, IPredicate>(m_Abstraction)).getResult();
 						m_Abstraction = (INestedWordAutomatonOldApi<CodeBlock, IPredicate>) (new BuchiClosureNwa(m_Abstraction));
+						m_Abstraction = (new RemoveDeadEnds<CodeBlock, IPredicate>(m_Abstraction)).getResult();
 						s_Logger.info("Abstraction has " + m_Abstraction.sizeInformation());
 						Collection<Set<IPredicate>> partition = BuchiCegarLoop.computePartition(m_Abstraction);
 						MinimizeSevpa<CodeBlock, IPredicate> minimizeOp = 
