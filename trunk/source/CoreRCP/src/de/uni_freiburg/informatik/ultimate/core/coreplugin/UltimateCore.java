@@ -6,6 +6,7 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -944,6 +945,7 @@ public class UltimateCore implements IApplication, ICore, IRCPPlugin {
 	@Override
 	public IStatus processToolchain(IProgressMonitor monitor) throws Exception {
 
+		Date startDate = new Date();
 		if (mModelManager.size() < 1) {
 			mLogger.error("no model present, aborting...");
 			throw new Exception("There is no model present");
@@ -952,8 +954,10 @@ public class UltimateCore implements IApplication, ICore, IRCPPlugin {
 		mToolchainWalker.walk(monitor);
 		new ResultNotifier(mCurrentController).processResults();
 		mCurrentToolchain.clearStore();
+		Date endDate = new Date();
+		long elapsedTime = endDate.getTime() - startDate.getTime();
 
-		mLogger.info("Finished executing Toolchain !");
+		mLogger.info("Finished toolchain execution after " + elapsedTime + "ms");
 		mBenchmark.report();
 		mLogger.info("--------------------------------------------------------------------------------");
 
