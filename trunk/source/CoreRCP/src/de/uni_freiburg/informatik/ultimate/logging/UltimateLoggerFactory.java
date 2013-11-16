@@ -234,6 +234,10 @@ public class UltimateLoggerFactory {
 		if (id.equals(UltimateServices.getInstance().getActiveControllerId())) {
 			return Logger.getLogger(LOGGER_NAME_CONTROLLER);
 		}
+		// it is something that wants the contoller logger
+		if (id.equals(LOGGER_NAME_CONTROLLER)) {
+			return Logger.getLogger(LOGGER_NAME_CONTROLLER);
+		}
 		// it is a declared one for no tool
 		if (presentLoggers.contains(LOGGER_NAME_PLUGINS + "." + id)
 				&& !isExternalTool(id)) {
