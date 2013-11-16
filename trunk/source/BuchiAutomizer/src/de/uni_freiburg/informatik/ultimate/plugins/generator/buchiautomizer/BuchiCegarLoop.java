@@ -404,12 +404,12 @@ public class BuchiCegarLoop {
 		private void getInitialAbstraction() {
 			CFG2NestedWordAutomaton cFG2NestedWordAutomaton = 
 					new CFG2NestedWordAutomaton(m_Pref,m_SmtManager);
-			Collection<ProgramPoint> allpp = new HashSet<ProgramPoint>();
+			Collection<ProgramPoint> acceptingNodes = new HashSet<ProgramPoint>();
 			for (Map<String, ProgramPoint> test : m_RootNode.getRootAnnot().getProgramPoints().values()) {
-				allpp.addAll(test.values());
+				acceptingNodes.addAll(test.values());
 			}
 			m_Abstraction = cFG2NestedWordAutomaton.getNestedWordAutomaton(
-					m_RootNode, defaultStateFactory, allpp);
+					m_RootNode, defaultStateFactory, acceptingNodes);
 		}
 		
 		
