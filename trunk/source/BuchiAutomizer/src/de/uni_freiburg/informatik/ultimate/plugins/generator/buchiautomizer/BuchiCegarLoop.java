@@ -49,6 +49,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.model.structure.BasePayloadContainer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.preferences.PreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.preferences.PreferenceInitializer.BInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rankingfunctions.RankingFunctionsObserver;
@@ -162,6 +163,8 @@ public class BuchiCegarLoop {
 		private final BinaryStatePredicateManager m_Bspm;
 		
 		protected IAutomaton<CodeBlock, IPredicate> m_ArtifactAutomaton;
+		
+		private static final String LTL_MODE_IDENTIFIER = "BuchiProgramProrduct";
 		
 		// used for the collection of statistics
 		public int m_BiggestAbstractionIteration = 0;
@@ -404,12 +407,32 @@ public class BuchiCegarLoop {
 		private void getInitialAbstraction() {
 			CFG2NestedWordAutomaton cFG2NestedWordAutomaton = 
 					new CFG2NestedWordAutomaton(m_Pref,m_SmtManager);
-			Collection<ProgramPoint> acceptingNodes = new HashSet<ProgramPoint>();
+			Collection<ProgramPoint> acceptingNodes;
+			Collection<ProgramPoint> allNodes = new HashSet<ProgramPoint>();
 			for (Map<String, ProgramPoint> test : m_RootNode.getRootAnnot().getProgramPoints().values()) {
-				acceptingNodes.addAll(test.values());
+				allNodes.addAll(test.values());
+			}
+			if (hasLtlAnnotation(m_RootNode)) {
+				acceptingNodes = new HashSet<ProgramPoint>();
+				for (ProgramPoint pp : allNodes) {
+					if (hasLtlAnnotation(pp)) {
+						acceptingNodes.add(pp);
+					}
+				}
+			} else {
+				acceptingNodes = allNodes;
 			}
 			m_Abstraction = cFG2NestedWordAutomaton.getNestedWordAutomaton(
 					m_RootNode, defaultStateFactory, acceptingNodes);
+		}
+		
+		
+		private boolean hasLtlAnnotation(BasePayloadContainer bpc) {
+			if (bpc.getPayload().hasAnnotation()) {
+				return bpc.getPayload().getAnnotations().containsKey(LTL_MODE_IDENTIFIER);
+			} else {
+				return false;
+			}
 		}
 		
 		
