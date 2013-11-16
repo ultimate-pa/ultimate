@@ -64,7 +64,7 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 		settings += " " + (taPrefs.differenceSenwa() ? "SeNWA" : "NWA");
 		settings += " Determinization: " + taPrefs.determinization();
 		settings += " Timeout:" + taPrefs.timeout();
-		System.out.println(settings);
+//		System.out.println(settings);
 		long timoutMilliseconds = taPrefs.timeout() * 1000L;
 		UltimateServices.getInstance().setDeadline(
 				System.currentTimeMillis() + timoutMilliseconds);
