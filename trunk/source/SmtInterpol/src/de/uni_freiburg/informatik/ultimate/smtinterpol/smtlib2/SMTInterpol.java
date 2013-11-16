@@ -1186,7 +1186,8 @@ public class SMTInterpol extends NoopScript {
 		if (m_SimplifyInterpolants) {
 			SimplifyDDA simplifier = new SimplifyDDA(new SMTInterpol(this, 
 					Collections.singletonMap(
-							":check-type", (Object) m_SimplifyCheckType.name())));
+							":check-type", (Object) m_SimplifyCheckType.name())),
+							m_SimplifyRepeatedly);
 			for (int i = 0; i < ipls.length; ++i)
 				ipls[i] = simplifier.getSimplifiedTerm(ipls[i]);
 		}
@@ -1458,7 +1459,7 @@ public class SMTInterpol extends NoopScript {
 		int oldNumScopes = m_StackLevel;
 		try {
 			m_CheckType = m_SimplifyCheckType;
-			return new SimplifyDDA(this).
+			return new SimplifyDDA(this, m_SimplifyRepeatedly).
 					getSimplifiedTerm(term);
 		} finally {
 			m_CheckType = old;
