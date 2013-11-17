@@ -1139,6 +1139,9 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 						predCont.setReachProp(m_rpSomeDown);
 						assert !m_Ancestors.contains(predCont.getState());
 						m_Ancestors.add(predCont.getState());
+						if (isFinal(predCont.getState())) {
+							m_AncestorsAccepting.add(predCont.getState());
+						}
 					}
 				}
 			}
