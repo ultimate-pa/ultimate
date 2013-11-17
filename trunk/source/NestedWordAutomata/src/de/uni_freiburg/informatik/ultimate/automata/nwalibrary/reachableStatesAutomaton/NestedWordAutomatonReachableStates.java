@@ -2576,14 +2576,26 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 			Stack<Iterator<?>> predStack = new Stack<Iterator<?>>();
 			Stack<NestedRun<LETTER, STATE>> takenStack = new Stack<NestedRun<LETTER, STATE>>();
 			
+			// if this is set the last round
+			boolean backtrack = false;
 			while (true) {
-				assert !m_Visited.contains(current);
-				m_Visited.add(current);
-				assert predStack.size() == takenStack.size();
-				Collection<?> predecessors = findSuitablePredecessors(current);
-				predStack.push(predecessors.iterator());
+				if (backtrack) {
+					backtrack = false;
+				} else {
+					assert !m_Visited.contains(current);
+					m_Visited.add(current);
+					assert predStack.size() == takenStack.size();
+					Collection<?> predecessors = findSuitablePredecessors(current);
+					predStack.push(predecessors.iterator());
+				}
 				while (!predStack.peek().hasNext()) {
 					predStack.pop();
+					if (takenStack.isEmpty()) {
+						// I am not able to find a run.
+						// Maybe taking this summary was a bad descision.
+						assert m_Goal != null;
+						return null;
+					}
 					NestedRun<LETTER, STATE> wrongDescision = takenStack.pop();
 					StateContainer<LETTER, STATE> sc = m_States.get(wrongDescision.getStateAtPosition(0));
 					assert m_Visited.contains(sc);
@@ -2625,6 +2637,12 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 							m_States.get(inTrans.getHierPred()), 
 							forbiddenSummaries);
 					NestedRun<LETTER, STATE> summaryRun = runConstuctor.constructRun();
+					if (summaryRun == null) {
+						// no summary found (because of forbidden summaries?)
+						// we have to backtrack
+						backtrack = true;
+						continue;
+					}
 					NestedRun<LETTER, STATE> returnSuffix = 
 							new NestedRun<LETTER, STATE>(inTrans.getLinPred(), 
 									inTrans.getLetter(), 
