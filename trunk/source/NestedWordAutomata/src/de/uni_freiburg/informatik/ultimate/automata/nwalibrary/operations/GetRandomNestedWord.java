@@ -125,8 +125,16 @@ public class GetRandomNestedWord<LETTER, STATE> implements IOperation<LETTER, ST
 				nestingRelation[correspondingCallPosition] = i;
 				pendingCalls--;
 			} else {
-				word[i] = getRandomLetter(m_InternalAlphabet);
-				nestingRelation[i] = NestedWord.INTERNAL_POSITION;
+				if (m_InternalAlphabet.isEmpty()) {
+					// if internal alphabet is empty we use a call instead
+					word[i] = getRandomLetter(m_CallAlphabet);
+					nestingRelation[i] = s_TemporaryPendingCall;
+					callPositionStack.push(i);
+					pendingCalls++;
+				} else {
+					word[i] = getRandomLetter(m_InternalAlphabet);
+					nestingRelation[i] = NestedWord.INTERNAL_POSITION;
+				}
 			}
 		}
 		while (!callPositionStack.isEmpty()) {
