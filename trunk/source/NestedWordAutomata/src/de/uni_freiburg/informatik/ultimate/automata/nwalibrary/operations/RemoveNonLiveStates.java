@@ -54,7 +54,7 @@ public class RemoveNonLiveStates<LETTER,STATE> implements IOperation<LETTER,STAT
 		m_Reach.computeNonLiveStates();
 		m_Result = new NestedWordAutomatonFilteredStates<LETTER, STATE>(m_Reach, m_Reach.getOnlyLiveStates());
 		s_Logger.info(exitMessage());
-		assert (new TransitionConsitenceCheck<LETTER, STATE>(m_Result)).consistentForAll();
+//		assert (new TransitionConsitenceCheck<LETTER, STATE>(m_Result)).consistentForAll();
 	}
 	
 

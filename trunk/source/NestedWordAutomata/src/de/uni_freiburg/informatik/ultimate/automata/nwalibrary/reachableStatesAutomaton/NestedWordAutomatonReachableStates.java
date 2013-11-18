@@ -122,7 +122,7 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 				getOrComputeStronglyConnectedComponents().computeNestedLassoRuns(false);
 			}
 			s_Logger.info(stateContainerInformation());
-			assert (new TransitionConsitenceCheck<LETTER, STATE>(this)).consistentForAll();
+//			assert (new TransitionConsitenceCheck<LETTER, STATE>(this)).consistentForAll();
 
 			assert (checkTransitionsReturnedConsistent());
 
