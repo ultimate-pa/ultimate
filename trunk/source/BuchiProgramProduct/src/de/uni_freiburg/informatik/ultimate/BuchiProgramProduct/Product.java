@@ -75,6 +75,8 @@ public class Product {
 		this.rootNode.getRootAnnot().getLoopLocations().clear();
 		
 		
+		final AcceptingNodeAnnotation acceptingNodeAnnotation = new AcceptingNodeAnnotation();
+		this.rootNode.getPayload().getAnnotations().put(Activator.PLUGIN_ID, acceptingNodeAnnotation);
 		
 		
 		this.collectRCFGLocations();
@@ -146,20 +148,26 @@ public class Product {
 								targetpp = this.productLocations.get(
 										this.stateNameGenerator(
 												((ProgramPoint)rcfgEdge.getTarget()).getLocationName(),n));
+								Call call = new Call(
+										this.productLocations.get(                   //source state
+												this.stateNameGenerator(
+														((ProgramPoint)((Return)rcfgEdge).getSource()).getLocationName(),
+														nn)), 
+												null,
+												((Return)rcfgEdge).getCallStatement()
+												);
 								Return r = new Return(
 										currentpp,
 										helper,
-										new Call(
-												this.productLocations.get(                   //source state
-															this.stateNameGenerator(
-																	((ProgramPoint)((Return)rcfgEdge).getSource()).getLocationName(),
-																	nn)), 
-												this.productLocations.get(                   //fake target. Will never have valid word through self loop :) HACKME
-														this.stateNameGenerator(
-																((ProgramPoint)((Return)rcfgEdge).getSource()).getLocationName(),
-																nn)),
-												((Return)rcfgEdge).getCallStatement())
+										call
 										);
+								//remove call from originating node, because new Call(... will automaticcaly attatch the edge to 
+								//the location it is originating from....
+								this.productLocations.get(                   //source state
+										this.stateNameGenerator(
+												((ProgramPoint)((Return)rcfgEdge).getSource()).getLocationName(),
+												nn)).removeOutgoing(call);
+								
 							}
 							//From the helpernode, the original call target is connected with a new
 							//edge with the fitting assumption of the call. The edge is calculated 
