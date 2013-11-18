@@ -7,6 +7,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -18,6 +19,7 @@ import org.apache.log4j.Logger;
 import de.uni_freiburg.informatik.ultimate.automata.Activator;
 import de.uni_freiburg.informatik.ultimate.automata.HashRelation;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
+import de.uni_freiburg.informatik.ultimate.automata.TreeRelation;
 import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.DoubleDecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
@@ -1095,12 +1097,12 @@ public class BuchiComplementFKVNwa<LETTER,STATE> implements INestedWordAutomaton
 	public class HeiMatTightLevelRankingStateGenerator extends
 		TightLevelRankingStateGenerator {
 		
-		private final HashRelation<Integer, DoubleDecker<STATE>> m_UnrestrictedRank2DoubleDecker;
+		private final TreeRelation<Integer, DoubleDecker<STATE>> m_UnrestrictedRank2DoubleDecker;
 //		private final int numberOfDoubleDeckers;
 
 		public HeiMatTightLevelRankingStateGenerator(LevelRankingConstraint constraint) {
 			super(constraint);
-			m_UnrestrictedRank2DoubleDecker = new HashRelation<Integer, DoubleDecker<STATE>>();
+			m_UnrestrictedRank2DoubleDecker = new TreeRelation<Integer, DoubleDecker<STATE>>();
 //			numberOfDoubleDeckers = super.m_UnrestrictedDoubleDecker.size();
 			for (DoubleDecker<STATE> dd : super.m_UnrestrictedDoubleDecker) {
 				Integer rank = constraint.m_LevelRanking.get(dd.getDown()).get(dd.getUp());
@@ -1135,86 +1137,189 @@ public class BuchiComplementFKVNwa<LETTER,STATE> implements INestedWordAutomaton
 		}
 
 		
-		private void stipulate(final Integer rank, final LevelRankingWithSacrificeInformation lrwsi, 
+		private void stipulate(final Integer rk, final LevelRankingWithSacrificeInformation lrwsi, 
 				int assignedUnrestricted, int unassignedUnrestricted) {
-			assert rank % 2 == 0;
+			assert rk % 2 == 0;
 			assert assignedUnrestricted + unassignedUnrestricted == super.m_UnrestrictedDoubleDecker.size();
 			
-			DoubleDecker<STATE>[] boundToRank = getAllWithRank(rank);
+			DoubleDecker<STATE>[] boundToRank = getAllWithRank(rk);
 			if (unassignedUnrestricted == boundToRank.length) {
 				// the even ranks are already all unassigned
-				// no chance for rank+1
-				// we have to give them the odd rank-1
+				// no chance for rk+1
+				// we have to give them the odd rk-1
 				// and finish afterwards
-				lrwsi.addOddRank(boundToRank, rank-1);
+				lrwsi.addOddRank(boundToRank, rk-1);
 				addResult(lrwsi.assignRestictedAndgetLevelRankingState());
 				return;
 			}
 			
 			
-			final DoubleDecker<STATE>[] boundToRankPlusOne = getAllWithRank(rank+1);
+			final DoubleDecker<STATE>[] boundToRankPlusOne = getAllWithRank(rk+1);
 			
 			if (lrwsi.numberUnassignedLowerRanks() + 1 > unassignedUnrestricted) {
 				throw new AssertionError("unable to assign all ranks");
 			}
 			
+			List<DoubleDecker<STATE>> boundToRankInO = new ArrayList<DoubleDecker<STATE>>();
+			List<DoubleDecker<STATE>> boundToRankNotInO = new ArrayList<DoubleDecker<STATE>>();
+			for (DoubleDecker<STATE> dd : boundToRank) {
+				if (super.m_Constraint.inO(dd.getDown(), dd.getUp())) {
+					boundToRankInO.add(dd);
+				} else {
+					boundToRankNotInO.add(dd);
+				}
+				
+			}
+			
 			final int numberOfCopies;
-			if (rank > 0) {
+			if (rk > 0) {
 				numberOfCopies = (int) Math.pow(2, boundToRank.length);
 			} else {
 				numberOfCopies = 1;
 			}
-			LevelRankingWithSacrificeInformation[] copies = 
-					(LevelRankingWithSacrificeInformation[]) Array.newInstance(
-					LevelRankingWithSacrificeInformation.class, numberOfCopies);
-			copies[0] = lrwsi;
+			int surplus = surplus(rk);
+			surplus = surplus(rk);
 			final int maxNumberOfEvenRanksWeMayAssign = unassignedUnrestricted -( lrwsi.numberUnassignedLowerRanks() + 1);
+			// number of odd ranks that we have to assign with even-candidates 
+			// in order to be able to assign the odd rank rk+1 
+			final int numberOfOddRanksThatWeHaveToAssignAdditionally = lrwsi.numberUnassignedLowerRanks() + 1 - (unassignedUnrestricted - boundToRank.length);
+			final int surplusRk = surplus(rk);
+			final int netSurplus = surplusRk - lrwsi.numberUnassignedLowerRanks();
+			final int numberOfOddRankTheWeCouldAssignAdditionally = Math.max(lrwsi.numberUnassignedLowerRanks() - surplusRk, 0);
 			final int unassignedUnrestrictedAfterThisTurn = unassignedUnrestricted - boundToRank.length - boundToRankPlusOne.length;
 			final int assignedUnrestrictedAfterThisTurn = assignedUnrestricted + boundToRank.length + boundToRankPlusOne.length;
-
-			for (int i=1; i<numberOfCopies; i++) {
-				if (Integer.bitCount(i) <= maxNumberOfEvenRanksWeMayAssign) {
-					copies[i] = new LevelRankingWithSacrificeInformation(lrwsi);
-				} else {
-					// we gave up this branch, we can not achieve that each
-					// odd rank is assigned once.
-				}
-			}
-			for (int i=0; i<numberOfCopies; i++) {
-				if (Integer.bitCount(i) > maxNumberOfEvenRanksWeMayAssign) {
-					continue;
+			assert boundToRank.length - maxNumberOfEvenRanksWeMayAssign == numberOfOddRanksThatWeHaveToAssignAdditionally;
+			int inOmultiplier = (int) Math.pow(2, boundToRankInO.size());
+			int notInOmultiplier = (int) Math.pow(2, boundToRankNotInO.size());
+			assert (numberOfCopies == inOmultiplier * notInOmultiplier);
+			for (int i=0; i<inOmultiplier; i++) {
+				int bitcount_i = Integer.bitCount(i);
+				if (bitcount_i + boundToRankNotInO.size() < numberOfOddRanksThatWeHaveToAssignAdditionally) {
 					// we give up this branch, we can not achieve that each
 					// odd rank is assigned once.
- 
-				}
-				for (int j=0; j<boundToRank.length; j++) {
-					if (!BigInteger.valueOf(i).testBit(j)) {
-						copies[i].addOddRank(boundToRank[j], rank-1);
-					}
-				}
-				int evenRanksAssignedSoFar = 0;
-				copies[i].increaseCurrentRank();
-				for (int j=0; j<boundToRank.length; j++) {
-					if (BigInteger.valueOf(i).testBit(j)) {
-						copies[i].addEvenRank(boundToRank[j], rank);
-						evenRanksAssignedSoFar++;
-					}
-				}
-				assert (evenRanksAssignedSoFar <= maxNumberOfEvenRanksWeMayAssign);
-				copies[i].increaseCurrentRank();
-				copies[i].addOddRank(boundToRankPlusOne, rank+1);
-				int numberUnassignedLowerRanks = copies[i].numberUnassignedLowerRanks();
-				if (unassignedUnrestrictedAfterThisTurn == numberUnassignedLowerRanks) {
-					copies[i].assignRemainingUnrestricted(rank+1, unassignedUnrestrictedAfterThisTurn);
-					addResult(copies[i].assignRestictedAndgetLevelRankingState());
 					continue;
-				} else {
-					stipulate(rank+2, copies[i], assignedUnrestrictedAfterThisTurn, unassignedUnrestrictedAfterThisTurn);
-					continue;
+				}
+				for (int j=0; j<notInOmultiplier; j++) {
+					int bitcount_j = Integer.bitCount(j);
+					if (bitcount_i + bitcount_j < numberOfOddRanksThatWeHaveToAssignAdditionally) {
+						// we give up this branch, we can not achieve that each
+						// odd rank is assigned once.
+						continue;
+					}
+					if ((bitcount_i + bitcount_j > numberOfOddRankTheWeCouldAssignAdditionally) && (j != 0)) {
+						// we give up this branch, sacrificing that many even
+						// ranks wont' bring us a higher maximal rank
+						continue;
+					}
+					LevelRankingWithSacrificeInformation copy = new LevelRankingWithSacrificeInformation(lrwsi);
+					for (int k=0; k<boundToRankInO.size(); k++) {
+						if (BigInteger.valueOf(i).testBit(k)) {
+							copy.addOddRank(boundToRankInO.get(k), rk-1);
+						}
+					}
+					for (int k=0; k<boundToRankNotInO.size(); k++) {
+						if (BigInteger.valueOf(j).testBit(k)) {
+							copy.addOddRank(boundToRankNotInO.get(k), rk-1);
+						}
+					}
+					copy.increaseCurrentRank();
+					int evenRanksAssignedSoFar = 0;
+					for (int k=0; k<boundToRankInO.size(); k++) {
+						if (!BigInteger.valueOf(i).testBit(k)) {
+							copy.addEvenRank(boundToRankInO.get(k), rk);
+							evenRanksAssignedSoFar++;
+						}
+					}
+					for (int k=0; k<boundToRankNotInO.size(); k++) {
+						if (!BigInteger.valueOf(j).testBit(k)) {
+							copy.addEvenRank(boundToRankNotInO.get(k), rk);
+							evenRanksAssignedSoFar++;
+						}
+					}
+					assert (evenRanksAssignedSoFar <= maxNumberOfEvenRanksWeMayAssign);
+					copy.increaseCurrentRank();
+					copy.addOddRank(boundToRankPlusOne, rk+1);
+					int numberUnassignedLowerRanks = copy.numberUnassignedLowerRanks();
+					if (unassignedUnrestrictedAfterThisTurn == numberUnassignedLowerRanks) {
+						copy.assignRemainingUnrestricted(rk+1, unassignedUnrestrictedAfterThisTurn);
+						addResult(copy.assignRestictedAndgetLevelRankingState());
+						continue;
+					} else {
+						stipulate(rk+2, copy, assignedUnrestrictedAfterThisTurn, unassignedUnrestrictedAfterThisTurn);
+						continue;
+					}
 				}
 			}
 			return;
 		}
+		
+		/**
+		 * If we assign ranks starting from the highest down to i such that we
+		 * given even ranks for even bounds, how many ranks do we have as 
+		 * surplus that we can use to satisfy odd ranks < i without having
+		 * DoubleDeckers for this rank.
+		 * E.g.,
+		 * for the ranks 5 3 1, the surplus for i = 3 is 0
+		 * for the ranks 3 3 1, the surplus for i = 3 is 1
+		 * for the ranks 3 2 1, the surplus for i = 3 is 0
+		 * for the ranks 4 3 1, the surplus for i = 3 is 1
+		 * for the ranks ∞ ∞ 3, the surplus for i = 3 is 0
+		 * for the ranks ∞ ∞ 3, 3 the surplus for i = 3 is 1
+		 * for the ranks ∞ ∞ 4, 3 the surplus for i = 3 is 0
+		 * for the ranks 11 9 5 5 3 the surplus for i = 3 is 1
+		 * 
+		 */
+		private int surplus(int i) {
+			int unbounded = m_UnrestrictedRank2DoubleDecker.getImage(Integer.MAX_VALUE).size();
+			final int highestBound;
+			{
+				Iterator<Integer> it = m_UnrestrictedRank2DoubleDecker.descendingDomain().iterator();
+				assert it.hasNext();
+				Integer first = it.next();
+				if (first == Integer.MAX_VALUE) {
+					if (it.hasNext()) {
+						highestBound = it.next();
+					} else {
+						// no surplus, all have rank = ∞ = Integer.MAX_VALUE
+						return 0;
+					}
+				} else {
+					highestBound = first;
+				}
+			}
+			int rank;
+			int surplus;
+			if (isEven(highestBound)) {
+				// if rank is even
+				// if there some with ∞-bound these even rank do not contribute
+				// to the surplus
+				// if there no with ∞-bound all these have to take the next odd
+				// rank
+				if (unbounded > 0) {
+					surplus = 0;
+				} else {
+					surplus = m_UnrestrictedRank2DoubleDecker.getImage(highestBound).size();
+				}
+				rank = highestBound - 1;
+			} else {
+				surplus = 0;
+				rank = highestBound;
+			}
+			while (rank >= i) {
+				assert isOdd(rank);
+				Set<DoubleDecker<STATE>> ddWithRank = 
+						m_UnrestrictedRank2DoubleDecker.getImage(rank);
+				surplus += (ddWithRank.size() - 1);
+				if (surplus < 0) {
+					assert surplus == -1;
+					surplus = 0;
+				}
+				rank -= 2;
+			}
+			return surplus;
+		}
+		
+		
 		
 		private class LevelRankingWithSacrificeInformation {
 			private final LevelRankingState m_Lrs;
@@ -1421,6 +1526,21 @@ public class BuchiComplementFKVNwa<LETTER,STATE> implements INestedWordAutomaton
 
 
 
+	boolean isOdd(int i) {
+		if (i >= 0) {
+			return i % 2 == 1;
+		} else {
+			throw new IllegalArgumentException();
+		}
+	}
+	
+	boolean isEven(int i) {
+		if (i >= 0) {
+			return i % 2 == 0;
+		} else {
+			throw new IllegalArgumentException();
+		}
+	}
 
 
 
