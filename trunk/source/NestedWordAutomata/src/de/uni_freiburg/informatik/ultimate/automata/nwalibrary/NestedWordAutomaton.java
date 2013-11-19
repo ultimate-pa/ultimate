@@ -1961,10 +1961,10 @@ public class NestedWordAutomaton<LETTER,STATE> implements INestedWordAutomatonOl
 	
 	public void addInternalTransition(STATE pred, LETTER letter, STATE succ) {
 		if (!contains(pred)) {
-			throw new IllegalArgumentException();
+			throw new IllegalArgumentException("State " + pred + " not in automaton");
 		}
-		assert contains(pred);
-		assert contains(succ);
+		assert contains(pred) : "State " + pred + " not in automaton";
+		assert contains(succ) : "State " + succ + " not in automaton";
 		Map<LETTER, Set<STATE>> letter2succs = m_InternalOut.get(pred);
 		if (letter2succs == null) {
 			letter2succs = new HashMap<LETTER, Set<STATE>>();
@@ -1993,8 +1993,8 @@ public class NestedWordAutomaton<LETTER,STATE> implements INestedWordAutomatonOl
 	
 
 	public void addCallTransition(STATE pred, LETTER letter, STATE succ) {
-		assert contains(pred);
-		assert contains(succ);
+		assert contains(pred) : "State " + pred + " not in automaton";
+		assert contains(succ) : "State " + succ + " not in automaton";
 		Map<LETTER, Set<STATE>> letter2succs = m_CallOut.get(pred);
 		if (letter2succs == null) {
 			letter2succs = new HashMap<LETTER, Set<STATE>>();
@@ -2023,9 +2023,9 @@ public class NestedWordAutomaton<LETTER,STATE> implements INestedWordAutomatonOl
 	
 
 	public void addReturnTransition(STATE pred, STATE hier, LETTER letter, STATE succ) {
-		assert contains(pred);
-		assert contains(hier);
-		assert contains(succ);
+		assert contains(pred) : "State " + pred + " not in automaton";
+		assert contains(succ) : "State " + succ + " not in automaton";
+		assert contains(hier) : "State " + hier + " not in automaton";
 		Map<LETTER, Map<STATE, Set<STATE>>> letter2hier2succs = m_ReturnOut.get(pred);
 		if (letter2hier2succs == null) {
 			letter2hier2succs = new HashMap<LETTER, Map<STATE, Set<STATE>>>();
