@@ -86,7 +86,9 @@ public class Never2Automaton{
 		if (branch instanceof LabeledBlock) 			//add nodes
 		{
 			String n = ((Name)((LabeledBlock)branch).getValue()).getIdent();
-			this.automaton.addState(n.endsWith("init"), n.startsWith("accept"), n);
+			if( !this.automaton.getStates().contains(n)){
+				this.automaton.addState(n.endsWith("init"), n.startsWith("accept"), n);
+			}
 			for(AstNode a: branch.getOutgoingNodes())
 				this.collectStates(a, n);
 		}
@@ -103,6 +105,11 @@ public class Never2Automaton{
 			ASTNode cond = this.toBoogieAst(((OptionStatement)branch).getCondition());
 			//			  option.body                     		 .goto					    .name
 			String succ = ((Name)branch.getOutgoingNodes().get(0).getOutgoingNodes().get(0)).getIdent();
+			
+			if( !this.automaton.getStates().contains(succ)){
+				this.automaton.addState(succ.endsWith("init"), succ.startsWith("accept"), succ);
+			}
+				
 			this.automaton.addInternalTransition(pred, cond, succ);
 		}
 		else
