@@ -50,10 +50,12 @@ public class WrapLTL2Never {
 		String result = "";
 		
 	      String line;
-	      System.out.println(  prefs.getString(PreferenceInitializer.LABEL_TOOLLOCATION)+" "
-	    		  + prefs.getString(PreferenceInitializer.LABEL_TOOLARGUMENT).replace("$1", ltlFormula));
-	      Process p = Runtime.getRuntime().exec( prefs.getString(PreferenceInitializer.LABEL_TOOLLOCATION)+" "
-	    		  + prefs.getString(PreferenceInitializer.LABEL_TOOLARGUMENT).replace("$1", ltlFormula));
+	      //TODO: fixme, no hard coded arguements!!
+	      ProcessBuilder pb = new ProcessBuilder( new String[]{
+	    		  prefs.getString(PreferenceInitializer.LABEL_TOOLLOCATION), "-f",
+	    		  prefs.getString(PreferenceInitializer.LABEL_TOOLARGUMENT).replace("$1", ltlFormula)
+	      });
+	      Process p = pb.start();
 	      BufferedReader bri = new BufferedReader(new InputStreamReader(p.getInputStream()));
 	      
 	      while ((line = bri.readLine()) != null) {
