@@ -250,7 +250,7 @@ public class NestedSsaBuilder {
 			} else {
 				tf = m_Formulas.getFormulaFromNonCallPos(i);
 			}
-			
+			assert tf != null : "CodeBlock " + symbol + " has no TransFormula";
 			VariableVersioneer tfVV = new VariableVersioneer(tf);
 			tfVV.versionInVars();
 			
