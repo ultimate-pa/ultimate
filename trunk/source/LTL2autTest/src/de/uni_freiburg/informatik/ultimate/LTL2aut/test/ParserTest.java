@@ -120,8 +120,11 @@ public class ParserTest extends TestCase {
 		public void testErrorCases() throws Exception{
 		
 		String[] errorStrings = new String[]{
-			"never { accept_init:	if	:: (!a) || (r) -> goto accept_init	:: (!p) || (!r && s) -> goto accept_S2	:: (!r) -> goto T0_S3	:: (!r && s) || (!p) -> goto T1_S4	:: (!r) -> goto T0_S5	fi;T0_S3:	if	:: (!r) -> goto T0_S3	:: (!r) -> goto T0_S10	:: (!r && s) -> goto accept_S2	:: (!r && s) -> goto T1_S11	fi;T0_S10:	if	:: (!r) -> goto T0_S10	:: (!r && s) -> goto T1_S11	fi;T1_S11:	if	:: (!p) || (!r && s) -> goto T1_S11	:: (!r) -> goto T1_S10	:: (r && !p) -> goto accept_S2	fi;T1_S10:	if	:: (!r) -> goto T1_S10	:: (!r && s) -> goto T1_S11	fi;accept_S2:	if	:: (!p) || (!r && s) -> goto accept_S2	:: (!p) || (!r && s) -> goto T1_S11	:: (!r) -> goto T0_S3	:: (!r) -> goto T0_S10	fi;T0_S5:	if	:: (!r) -> goto T0_S5	:: (!r && s) -> goto T1_S4	fi;T1_S4:	if	:: (!p) || (!r && s) -> goto T1_S4	:: (!r) -> goto T1_S5	:: (r) -> goto accept_init	fi;T1_S5:	if	:: (!r) -> goto T1_S5	:: (!r && s) -> goto T1_S4	fi;}"
-			};
+			"never { accept_init:	if	:: (!a) || (r) -> goto accept_init	:: (!p) || (!r && s) -> goto accept_S2	:: (!r) -> goto T0_S3	:: (!r && s) || (!p) -> goto T1_S4	:: (!r) -> goto T0_S5	fi;T0_S3:	if	:: (!r) -> goto T0_S3	:: (!r) -> goto T0_S10	:: (!r && s) -> goto accept_S2	:: (!r && s) -> goto T1_S11	fi;T0_S10:	if	:: (!r) -> goto T0_S10	:: (!r && s) -> goto T1_S11	fi;T1_S11:	if	:: (!p) || (!r && s) -> goto T1_S11	:: (!r) -> goto T1_S10	:: (r && !p) -> goto accept_S2	fi;T1_S10:	if	:: (!r) -> goto T1_S10	:: (!r && s) -> goto T1_S11	fi;accept_S2:	if	:: (!p) || (!r && s) -> goto accept_S2	:: (!p) || (!r && s) -> goto T1_S11	:: (!r) -> goto T0_S3	:: (!r) -> goto T0_S10	fi;T0_S5:	if	:: (!r) -> goto T0_S5	:: (!r && s) -> goto T1_S4	fi;T1_S4:	if	:: (!p) || (!r && s) -> goto T1_S4	:: (!r) -> goto T1_S5	:: (r) -> goto accept_init	fi;T1_S5:	if	:: (!r) -> goto T1_S5	:: (!r && s) -> goto T1_S4	fi;}",
+			"never { /* !( <> b  ) */accept_init:	if	:: (!b) -> goto accept_init	fi;}",
+			"never { /* !( []( !a -> <>[] b ) ) */T0_init:	if	:: (1) -> goto T1_S1	:: (!a) -> goto T0_S3	fi;T1_S1:	if	:: (1) -> goto T1_S1	:: (!a) -> goto accept_S3	fi;accept_S3:	if	:: (1) -> goto T0_S3	:: (!b) -> goto accept_S3	fi;T0_S3:	if	:: (1) -> goto T0_S3	:: (!b) -> goto accept_S3	fi;}"
+
+		};
 			
 		for (String s: errorStrings)
 		{
@@ -133,7 +136,7 @@ public class ParserTest extends TestCase {
 		
 			// just looking for parser errors with big input
 			assertTrue(true);
-		}
+		}		
 
 	}
 		

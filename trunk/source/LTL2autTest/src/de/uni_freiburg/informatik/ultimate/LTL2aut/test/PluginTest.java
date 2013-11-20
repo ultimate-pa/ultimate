@@ -10,7 +10,7 @@ public class PluginTest extends TestCase {
 	public void testInvokeAutomatonBuilder() throws IOException, InterruptedException
 	{
 		WrapLTL2Never wrap = new WrapLTL2Never();
-		String result = wrap.execLTLXBA("[] a");
+		String result = wrap.execLTLXBA("\"[] a\"");
 		
 		assertNotSame("", result);
 	}

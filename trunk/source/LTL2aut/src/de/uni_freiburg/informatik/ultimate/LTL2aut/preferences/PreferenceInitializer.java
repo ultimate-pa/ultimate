@@ -23,7 +23,7 @@ public class PreferenceInitializer extends UltimatePreferenceInitializer {
 	 * default values for the different preferences
 	 */
 	public static final String DEF_TOOLLOCATION = "./";
-	public static final String DEF_TOOLARGUMENT = " -f \"!( $1 )\"";
+	public static final String DEF_TOOLARGUMENT = "\"!( $1 )\"";
 	public static final String DEF_PPROPERTY = "[] a \n a: x > 42";
 	
 

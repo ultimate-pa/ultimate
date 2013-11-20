@@ -34,7 +34,6 @@ LineTerminator = \r|\n|\r\n
 InputCharacter = [^\r\n]
 WhiteSpace     = {LineTerminator} | [ \t\f]
 
-/* comments */
 Identifier = [a-zA-Z][a-zA-Z0-9_-]*
 Int = [0-9]+
  
