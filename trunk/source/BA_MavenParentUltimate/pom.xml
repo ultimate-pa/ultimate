@@ -35,11 +35,6 @@
 
 		<!-- Sonar parameters -->
 		<sonar.language>java</sonar.language>
-		<sonar.java.coveragePlugin>jacoco</sonar.java.coveragePlugin>
-		<sonar.jacoco.reportPath>${project.basedir}/../target/jacoco.exec</sonar.jacoco.reportPath>
-		<sonar.jacoco.itReportPath>${project.basedir}/../target/jacoco-it.exec</sonar.jacoco.itReportPath>
-		<sonar.dynamicAnalysis>reuseReports</sonar.dynamicAnalysis>
-
 	</properties>
 
 	<repositories>
@@ -230,22 +225,35 @@
 
 		<profile>
 			<id>coverage</id>
+			
+			<properties>
+				<!-- Jacoco version -->
+				<jacoco.version>0.5.6.201201232323</jacoco.version>
+
+				<!-- Sonar properties -->
+				<sonar.core.codeCoveragePlugin>jacoco</sonar.core.codeCoveragePlugin>
+				<sonar.java.coveragePlugin>jacoco</sonar.java.coveragePlugin>
+				<sonar.dynamicAnalysis>reuseReports</sonar.dynamicAnalysis>
+				<sonar.jacoco.reportPath>${project.basedir}/../target/jacoco.exec</sonar.jacoco.reportPath>
+				<sonar.jacoco.itReportPath>${project.basedir}/../target/jacoco-it.exec</sonar.jacoco.itReportPath>
+				<sonar.dynamicAnalysis>reuseReports</sonar.dynamicAnalysis>
+			</properties>
 			<build>
 				<plugins>
 					<!-- Code Coverage Analysis -->
 					<plugin>
 						<groupId>org.jacoco</groupId>
 						<artifactId>jacoco-maven-plugin</artifactId>
-						<version>0.5.3.201107060350</version>
-						<configuration>
-							<destFile>${sonar.jacoco.reportPath}</destFile>
-							<append>true</append>
-						</configuration>
+						<version>${jacoco.version}</version>
 						<executions>
 							<execution>
 								<goals>
 									<goal>prepare-agent</goal>
 								</goals>
+								<configuration>
+									<destFile>${sonar.jacoco.reportPath}</destFile>
+									<append>true</append>
+								</configuration>
 							</execution>
 						</executions>
 					</plugin>
