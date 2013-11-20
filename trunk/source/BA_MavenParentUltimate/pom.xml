@@ -232,27 +232,6 @@
 			<id>coverage</id>
 			<build>
 				<plugins>
-					<!-- Clean Up -->
-					<plugin>
-						<groupId>org.apache.maven.plugins</groupId>
-						<artifactId>maven-clean-plugin</artifactId>
-						<version>2.2</version>
-						<!-- do not execute this plugin on each module! (only once at the beginning) -->
-						<inherited>false</inherited>
-						<configuration>
-							<filesets>
-								<fileset>
-									<directory>${workspaceDir}/target</directory>
-									<includes>
-										<!-- If you do not delete jacoco.exec, then this file will increase 
-											in size after each build, because the "append" property in given in Jacoco. -->
-										<include>jacoco.exec</include>
-									</includes>
-								</fileset>
-							</filesets>
-						</configuration>
-					</plugin>
-
 					<!-- Code Coverage Analysis -->
 					<plugin>
 						<groupId>org.jacoco</groupId>
