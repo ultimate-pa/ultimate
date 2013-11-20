@@ -23,6 +23,10 @@ public class PreferenceInitializer extends UltimatePreferenceInitializer {
 						true, PreferenceType.Boolean),
 				new UltimatePreferenceItem<Boolean>(LABEL_BouncerLoop,
 						false, PreferenceType.Boolean),
+				new UltimatePreferenceItem<Boolean>(LABEL_ScroogeNondeterminismStem,
+						true, PreferenceType.Boolean),
+				new UltimatePreferenceItem<Boolean>(LABEL_ScroogeNondeterminismLoop,
+						false, PreferenceType.Boolean),
 				new UltimatePreferenceItem<Boolean>(LABEL_CannibalizeLoop,
 						false, PreferenceType.Boolean),
 				new UltimatePreferenceItem<Integer>(LABEL_LoopUnwindings, 2,
@@ -47,6 +51,8 @@ public class PreferenceInitializer extends UltimatePreferenceInitializer {
 	public static final String LABEL_BuchiInterpolantAutomaton = "Buchi interpolant automaton";
 	public static final String LABEL_BouncerStem = "Bouncer stem";
 	public static final String LABEL_BouncerLoop = "Bouncer loop";
+	public static final String LABEL_ScroogeNondeterminismStem = "ScroogeNondeterminism stem";
+	public static final String LABEL_ScroogeNondeterminismLoop = "ScroogeNondeterminism loop";
 	public static final String LABEL_CannibalizeLoop = "Cannibalize loop";
 	public static final String LABEL_LoopUnwindings = "Max number of loop unwindings";
 	

@@ -207,6 +207,8 @@ public class BuchiCegarLoop {
 		private final BInterpolantAutomaton m_InterpolantAutomaton;
 		private final boolean m_BouncerStem;
 		private final boolean m_BouncerLoop;
+		private final boolean m_ScroogeNondeterminismStem;
+		private final boolean m_ScroogeNondeterminismLoop;
 		private final boolean m_BouncerCannibalizeLoop;
 		private final int m_MaxNumberOfLoopUnwindings;
 
@@ -244,6 +246,14 @@ public class BuchiCegarLoop {
 			m_InterpolantAutomaton = baPref.getEnum(PreferenceInitializer.LABEL_BuchiInterpolantAutomaton, BInterpolantAutomaton.class);
 			m_BouncerStem = baPref.getBoolean(PreferenceInitializer.LABEL_BouncerStem);
 			m_BouncerLoop = baPref.getBoolean(PreferenceInitializer.LABEL_BouncerLoop);
+			m_ScroogeNondeterminismStem = baPref.getBoolean(PreferenceInitializer.LABEL_ScroogeNondeterminismStem);
+			m_ScroogeNondeterminismLoop = baPref.getBoolean(PreferenceInitializer.LABEL_ScroogeNondeterminismLoop);
+			if ((m_ScroogeNondeterminismStem || m_ScroogeNondeterminismLoop) && m_InterpolantAutomaton != BInterpolantAutomaton.ScroogeNondeterminism) {
+				throw new IllegalArgumentException("illegal combination of settings");
+			}
+			if ((!m_ScroogeNondeterminismStem && !m_ScroogeNondeterminismLoop) && m_InterpolantAutomaton == BInterpolantAutomaton.ScroogeNondeterminism) {
+				throw new IllegalArgumentException("illegal combination of settings");
+			}
 			m_BouncerCannibalizeLoop = baPref.getBoolean(PreferenceInitializer.LABEL_CannibalizeLoop);
 			m_MaxNumberOfLoopUnwindings = baPref.getInt(PreferenceInitializer.LABEL_LoopUnwindings);
 		}
@@ -799,7 +809,6 @@ public class BuchiCegarLoop {
 				break;
 			case ScroogeNondeterminism:
 			case Deterministic:
-				boolean deterministic = (m_InterpolantAutomaton == BInterpolantAutomaton.Deterministic);
 				Set<IPredicate> cannibalizedStemInterpolants = pu.cannibalizeAll(stemInterpolants);
 				Set<IPredicate> cannibalizedLoopInterpolants = pu.cannibalizeAll(loopInterpolants);
 				cannibalizedLoopInterpolants.addAll(pu.cannibalize(m_Bspm.getRankEqAndSi().getFormula()));
@@ -813,7 +822,9 @@ public class BuchiCegarLoop {
 						cannibalizedStemInterpolants, m_Bspm.getHondaPredicate(), 
 						cannibalizedLoopInterpolants, 
 						stem.getSymbol(stem.length()-1), 
-						loop.getSymbol(loop.length()-1), m_Abstraction, !deterministic, m_BouncerStem, m_BouncerLoop);
+						loop.getSymbol(loop.length()-1), m_Abstraction, 
+						m_ScroogeNondeterminismStem, m_ScroogeNondeterminismLoop, 
+						m_BouncerStem, m_BouncerLoop);
 				break;
 			default:
 				throw new UnsupportedOperationException("unknown automaton");

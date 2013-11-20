@@ -65,7 +65,8 @@ public class BuchiInterpolantAutomaton implements
 
 	private boolean m_ComputationFinished = false;
 	
-	private final boolean m_ScroogeNondeterminism;
+	private final boolean m_ScroogeNondeterminismStem;
+	private final boolean m_ScroogeNondeterminismLoop;
 	private final boolean m_HondaBouncerStem;
 	private final boolean m_HondaBouncerLoop;
 	
@@ -82,7 +83,8 @@ public class BuchiInterpolantAutomaton implements
 			IPredicate hondaPredicate, 
 			Set<IPredicate> loopInterpolants, CodeBlock hondaEntererStem, CodeBlock hondaEntererLoop,
 			INestedWordAutomatonSimple<CodeBlock, IPredicate> abstraction,
-			boolean scroogeNondeterminism, boolean hondaBouncerStem, boolean hondaBouncerLoop) {
+			boolean scroogeNondeterminismStem, boolean scroogeNondeterminismLoop,
+			boolean hondaBouncerStem, boolean hondaBouncerLoop) {
 		super();
 		m_SmtManager = smtManager;
 		m_EdgeChecker = edgeChecker;
@@ -141,7 +143,8 @@ public class BuchiInterpolantAutomaton implements
 		 * - the letter is m_HondaEntererStem
 		 * - the successor is the honda state
 		 */
-		m_ScroogeNondeterminism = scroogeNondeterminism;
+		m_ScroogeNondeterminismStem = scroogeNondeterminismStem;
+		m_ScroogeNondeterminismLoop = scroogeNondeterminismLoop;
 		/**
 		 * If set, the nondeterministic transition from the stem predicates
 		 * into the honda is only allowed for the letter m_HondaEntererStem
@@ -157,8 +160,16 @@ public class BuchiInterpolantAutomaton implements
 	
 	private StringBuilder startMessage() {
 		StringBuilder sb = new StringBuilder();
-		if (m_ScroogeNondeterminism) {
-			sb.append("Defining Buchi interpolant automaton with scrooge nondeterministic");
+		if (m_ScroogeNondeterminismStem || m_ScroogeNondeterminismLoop) {
+			sb.append("Defining Buchi interpolant automaton with scrooge nondeterminism ");
+			if (m_ScroogeNondeterminismStem) {
+				sb.append("in stem");
+				if (m_ScroogeNondeterminismLoop) {
+					sb.append("in loop");
+				}
+			} else {
+				sb.append("in loop");
+			}
 		} else {
 			sb.append("Defining deterministic Buchi interpolant automaton ");
 		}
@@ -548,7 +559,7 @@ public class BuchiInterpolantAutomaton implements
 					m_Result.addInternalTransition(resPred, letter, m_HondaPredicate);
 				}
 			}
-			if (!leadsToHonda || m_ScroogeNondeterminism) {
+			if (!leadsToHonda || m_ScroogeNondeterminismStem) {
 				Set<IPredicate> succs = addSuccInternal(resPred, letter, m_InputStemPredicates);
 				if (!succs.isEmpty()) {
 					IPredicate stemSucc = getOrConstructPredicate(succs, m_ResultStemPredicates);
@@ -565,7 +576,7 @@ public class BuchiInterpolantAutomaton implements
 					leadsToHonda = true;
 				}
 			}
-			if (!leadsToHonda) {
+			if (!leadsToHonda || m_ScroogeNondeterminismLoop) {
 				Set<IPredicate> succs = addSuccInternal(resPred, letter, m_InputLoopPredicates);
 				if (!succs.isEmpty()) {
 					IPredicate stemSucc = getOrConstructPredicate(succs, m_ResultLoopPredicates);
@@ -616,7 +627,7 @@ public class BuchiInterpolantAutomaton implements
 					m_Result.addCallTransition(resPred, letter, m_HondaPredicate);
 				}
 			}
-			if (!leadsToHonda || m_ScroogeNondeterminism) {
+			if (!leadsToHonda || m_ScroogeNondeterminismStem) {
 				Set<IPredicate> succs = addSuccCall(resPred, letter, m_InputStemPredicates);
 				if (!succs.isEmpty()) {
 					IPredicate stemSucc = getOrConstructPredicate(succs, m_ResultStemPredicates);
@@ -626,15 +637,15 @@ public class BuchiInterpolantAutomaton implements
 
 		} else {
 			assert (m_ResultLoopPredicates.contains(resPred) || resPred == m_HondaPredicate);
-			boolean hondaTransition = false;
+			boolean leadsToHonda = false;
 			if (!m_HondaBouncerLoop || letter.equals(m_HondaEntererLoop)) {
 				LBool sat = computeSuccCallSolver(resPred, letter, m_HondaPredicate);
 				if (sat == LBool.UNSAT) {
 					m_Result.addCallTransition(resPred, letter, m_HondaPredicate);
-					hondaTransition = true;
+					leadsToHonda = true;
 				}
 			}
-			if (!hondaTransition) {
+			if (!leadsToHonda || m_ScroogeNondeterminismLoop) {
 				Set<IPredicate> succs = addSuccCall(resPred, letter, m_InputLoopPredicates);
 				if (!succs.isEmpty()) {
 					IPredicate stemSucc = getOrConstructPredicate(succs, m_ResultLoopPredicates);
@@ -685,7 +696,7 @@ public class BuchiInterpolantAutomaton implements
 					m_Result.addReturnTransition(resPred, resHier, letter, m_HondaPredicate);
 				}
 			}
-			if (!leadsToHonda || m_ScroogeNondeterminism) {
+			if (!leadsToHonda || m_ScroogeNondeterminismStem) {
 				Set<IPredicate> succs = addSuccReturn(resPred, resHier, letter, m_InputStemPredicates);
 				if (!succs.isEmpty()) {
 					IPredicate stemSucc = getOrConstructPredicate(succs, m_ResultStemPredicates);
@@ -694,15 +705,15 @@ public class BuchiInterpolantAutomaton implements
 			}
 		} else {
 			assert (m_ResultLoopPredicates.contains(resPred) || resPred == m_HondaPredicate);
-			boolean hondaTransition = false;
+			boolean leadsToHonda = false;
 			if (!m_HondaBouncerLoop || letter.equals(m_HondaEntererLoop)) {
 				LBool sat = computeSuccReturnSolver(resPred, resHier, letter, m_HondaPredicate);
 				if (sat == LBool.UNSAT) {
 					m_Result.addReturnTransition(resPred, resHier, letter, m_HondaPredicate);
-					hondaTransition = true;
+					leadsToHonda = true;
 				}
 			}
-			if (!hondaTransition) {
+			if (!leadsToHonda || m_ScroogeNondeterminismLoop) {
 				Set<IPredicate> succs = addSuccReturn(resPred, resHier, letter, m_InputLoopPredicates);
 				if (!succs.isEmpty()) {
 					IPredicate stemSucc = getOrConstructPredicate(succs, m_ResultLoopPredicates);
