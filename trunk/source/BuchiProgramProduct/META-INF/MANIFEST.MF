@@ -11,6 +11,8 @@ Bundle-ActivationPolicy: lazy
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
 Import-Package: de.uni_freiburg.informatik.ultimate.LTL2aut.ast,
  de.uni_freiburg.informatik.ultimate.automata.nwalibrary,
+ de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie,
+ de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder,
  de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg,
  junit.framework,
  org.apache.commons.io,

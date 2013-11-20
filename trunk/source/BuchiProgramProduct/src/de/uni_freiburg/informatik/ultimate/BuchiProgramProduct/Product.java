@@ -21,8 +21,10 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssertStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BooleanLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Procedure;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.wrapper.ASTNode;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.TransFormulaBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
@@ -92,6 +94,15 @@ public class Product {
 	{
 		ProgramPoint targetpp, currentpp;
 		
+		//HACKMEHARDER... adding local variables ... again....
+		for (String key: this.rootNode.getRootAnnot().getProcedures().keySet())
+			this.rootNode.getRootAnnot().getBoogie2SMT().declareLocals(this.rootNode.getRootAnnot().getProcedures().get(key));
+		
+		TransFormulaBuilder transFormulaBuilder = new TransFormulaBuilder(
+				this.rootNode.getRootAnnot().getBoogie2SMT(),
+				this.rootNode.getRootAnnot()
+				);
+		
 		//for Node x Node 
 		for(ProgramPoint pp: this.rcfgLocations){
 			for(String n: this.aut.getStates()){
@@ -108,11 +119,12 @@ public class Product {
 										false, 
 										currentpp.getAstNode());
 							
-							new Call(
+							Call c = new Call(
 									currentpp, 
 									helper,
 									((Call) rcfgEdge).getCallStatement()
 									);
+							c.setTransitionFormula(((Call) rcfgEdge).getTransitionFormula());
 							//From the helpernode, the original call target is connected with a new
 							//edge with the fitting assumption of the call. The edge is calculated 
 							//like any other edge in the graph.
@@ -126,11 +138,13 @@ public class Product {
 								ArrayList<Statement> stmts = new ArrayList<Statement>();
 								stmts.add(new AssumeStatement(null, ((Expression)autTrans.getLetter())));
 								//edge
-								new StatementSequence(
+								StatementSequence s = new StatementSequence(
 										helper, 
 										targetpp, 
 										stmts,
 										Origin.IMPLEMENTATION);	
+								
+								transFormulaBuilder.addTransitionFormulas(s);
 							}
 						} else if (rcfgEdge instanceof Return) {
 							//The calls used for the returns are dummy calls, that have nothing common with the original 
@@ -161,6 +175,7 @@ public class Product {
 										helper,
 										call
 										);
+								r.setTransitionFormula(((Return) rcfgEdge).getTransitionFormula());
 								//remove call from originating node, because new Call(... will automaticcaly attatch the edge to 
 								//the location it is originating from....
 								this.productLocations.get(                   //source state
@@ -182,30 +197,32 @@ public class Product {
 								ArrayList<Statement> stmts = new ArrayList<Statement>();
 								stmts.add(new AssumeStatement(null, ((Expression)autTrans.getLetter())));
 								//edge
-								new StatementSequence(
+								StatementSequence s = new StatementSequence(
 										helper, 
 										targetpp, 
 										stmts,
 										Origin.IMPLEMENTATION);	
+								
+								transFormulaBuilder.addTransitionFormulas(s);
 							}
 						} else if (rcfgEdge instanceof Summary) {
 							//Summary summarizes a call compuation and return from another procedure
 							//It - like calls and returns that also can take no assumtion edge on
 							//its own - is handled like a call edge, first the summary to a helper node
 							//then the helper node x Loc_psi to the original target
-							ProgramPoint helper = new ProgramPoint(
+							/*ProgramPoint helper = new ProgramPoint(
 									"h_summary_"+currentpp.getPosition(),
 									currentpp.getProcedure(), 
 									false, 
 									currentpp.getAstNode());
 
-							new Summary(
+							Summary summary = new Summary(
 									currentpp, 
 									helper,
 									((Summary) rcfgEdge).getCallStatement(),
 									false
 									);
-							
+							summary.setTransitionFormula(((Summary) rcfgEdge).getTransitionFormula());
 							//From the helpernode, the original summary target is connected with a new
 							//edge with the fitting assumption of the call. The edge is calculated 
 							//like any other edge in the graph.
@@ -219,12 +236,14 @@ public class Product {
 								ArrayList<Statement> stmts = new ArrayList<Statement>();
 								stmts.add(new AssumeStatement(null, ((Expression)autTrans.getLetter())));
 								//edge
-								new StatementSequence(
+								StatementSequence s = new StatementSequence(
 										helper, 
 										targetpp, 
 										stmts,
-										Origin.IMPLEMENTATION);	
-							}
+										Origin.IMPLEMENTATION);
+								
+								transFormulaBuilder.addTransitionFormulas(s);
+							}*/
 						} else if(rcfgEdge instanceof StatementSequence){
 							for(OutgoingInternalTransition<ASTNode, String> autTrans: this.aut.internalSuccessors(n)){
 								targetpp = this.productLocations.get(
@@ -237,11 +256,13 @@ public class Product {
 								stmts.addAll(((StatementSequence)rcfgEdge).getStatements());
 								stmts.add(new AssumeStatement(null, ((Expression)autTrans.getLetter())));
 								//edge
-								new StatementSequence(
+								StatementSequence s = new StatementSequence(
 										currentpp, 
 										targetpp, 
 										stmts,
 										Origin.IMPLEMENTATION);
+								
+								transFormulaBuilder.addTransitionFormulas(s);
 							}
 						} else
 							throw new Exception("RCFG Edgetype " + rcfgEdge.getClass() + " is currently not supported.");		
