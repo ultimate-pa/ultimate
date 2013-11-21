@@ -55,6 +55,8 @@ public class Product {
 	private HashMap<String,ProgramPoint> productLocations = new HashMap<String, ProgramPoint>();
 	
 	private RootNode rootNode;
+	
+	private int helperUnifique = 0;
 
 	
 	
@@ -99,10 +101,13 @@ public class Product {
 			Procedure proc = rootAnnot.getImplementations().get(procIdent);
 			b2smt.declareLocals(proc);
 		
-			for (ProgramPoint node : rootAnnot.getProgramPoints().get(procIdent).values())
+			for (ProgramPoint node : rootAnnot.getProgramPoints().get(procIdent).values()){
+				if (node.getLocationName().startsWith("h_"))
+					System.out.println(node.getLocationName());
 				for(RCFGEdge edge: node.getOutgoingEdges())
 					if(edge instanceof StatementSequence)
 						tfb.addTransitionFormulas(edge);
+			}
 		
 			b2smt.removeLocals(proc);
 		}
@@ -132,12 +137,13 @@ public class Product {
 						if (rcfgEdge instanceof Call){
 							//Call has to have a helper node, so that first the call can targeta
 							//the helper node	
+							String helperName = this.getHelperLoc(this.helperUnifique+currentpp.getPosition());
 							ProgramPoint helper = new ProgramPoint(
-										"h_"+currentpp.getPosition(),
+										helperName,
 										currentpp.getProcedure(), 
 										false, 
 										currentpp.getAstNode());
-							
+							this.rootNode.getRootAnnot().getProgramPoints().get(currentpp.getProcedure()).put(helperName, helper);
 							Call c = new Call(
 									currentpp, 
 									helper,
@@ -169,13 +175,18 @@ public class Product {
 							//call except the caller location, that has to be popped from the stack.
 							//The target pp and call statement are never used and therefore left blank
 							
-							//for all possible call origins: CallPP x LTLStates be able to return to the helper state
+							String helperName = this.getHelperLoc(((ProgramPoint)rcfgEdge.getTarget()).getPosition());
 							ProgramPoint helper = new ProgramPoint(
-									"h_"+currentpp.getPosition(),
-									currentpp.getProcedure(), 
+									helperName,
+									((ProgramPoint)rcfgEdge.getTarget()).getProcedure(), 
 									false, 
-									currentpp.getAstNode());
-							
+									((ProgramPoint)rcfgEdge.getTarget()).getAstNode());
+							//add helper node to procedures nodes
+							//note that this node is already behin the return and in the NEXT procedure
+							this.rootNode.getRootAnnot().getProgramPoints().get(
+									((ProgramPoint)rcfgEdge.getTarget()).getProcedure())
+										.put(helperName, helper);
+							//for all possible call origins: CallPP x LTLStates be able to return to the helper state
 							for(String nn: this.aut.getStates()){
 								targetpp = this.productLocations.get(
 										this.stateNameGenerator(
@@ -188,6 +199,7 @@ public class Product {
 												null,
 												((Return)rcfgEdge).getCallStatement()
 												);
+								call.setTransitionFormula(((Return)rcfgEdge).getCorrespondingCall().getTransitionFormula());								
 								Return r = new Return(
 										currentpp,
 										helper,
@@ -381,6 +393,12 @@ public class Product {
 	public RootNode getRCFG()
 	{
 		return this.rootNode;
+	}
+	
+	private String getHelperLoc(String location)
+	{
+		this.helperUnifique++;
+		return "h_" + Integer.toString(this.helperUnifique) + location;
 	}
 
 }
