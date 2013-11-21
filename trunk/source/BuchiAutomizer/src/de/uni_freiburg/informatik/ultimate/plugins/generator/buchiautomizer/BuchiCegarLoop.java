@@ -209,7 +209,7 @@ public class BuchiCegarLoop {
 		private final boolean m_BouncerLoop;
 		private final boolean m_ScroogeNondeterminismStem;
 		private final boolean m_ScroogeNondeterminismLoop;
-		private final boolean m_BouncerCannibalizeLoop;
+		private final boolean m_CannibalizeLoop;
 		private final int m_MaxNumberOfLoopUnwindings;
 
 
@@ -254,7 +254,7 @@ public class BuchiCegarLoop {
 			if ((!m_ScroogeNondeterminismStem && !m_ScroogeNondeterminismLoop) && m_InterpolantAutomaton == BInterpolantAutomaton.ScroogeNondeterminism) {
 				throw new IllegalArgumentException("illegal combination of settings");
 			}
-			m_BouncerCannibalizeLoop = baPref.getBoolean(PreferenceInitializer.LABEL_CannibalizeLoop);
+			m_CannibalizeLoop = baPref.getBoolean(PreferenceInitializer.LABEL_CannibalizeLoop);
 			m_MaxNumberOfLoopUnwindings = baPref.getInt(PreferenceInitializer.LABEL_LoopUnwindings);
 		}
 		
@@ -812,7 +812,7 @@ public class BuchiCegarLoop {
 				Set<IPredicate> cannibalizedStemInterpolants = pu.cannibalizeAll(stemInterpolants);
 				Set<IPredicate> cannibalizedLoopInterpolants = pu.cannibalizeAll(loopInterpolants);
 				cannibalizedLoopInterpolants.addAll(pu.cannibalize(m_Bspm.getRankEqAndSi().getFormula()));
-				if (m_BouncerCannibalizeLoop) {
+				if (m_CannibalizeLoop) {
 					LoopCannibalizer lc = new LoopCannibalizer(m_Counterexample, 
 							cannibalizedLoopInterpolants, m_Bspm, pu, m_SmtManager, buchiModGlobalVarManager);
 					cannibalizedLoopInterpolants = lc.getResult();
