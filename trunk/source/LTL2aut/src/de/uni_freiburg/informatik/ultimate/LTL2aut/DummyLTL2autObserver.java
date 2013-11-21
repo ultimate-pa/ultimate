@@ -62,7 +62,13 @@ public class DummyLTL2autObserver implements IUnmanagedObserver {
 		//String fileContent = "[] (!a || F b) \n a: temp <= 8 \n b: chainBroken = false";
 		
 		
-		String fileContent = "[] b \n b: bla > 40";
+		/*String fileContent = "[]( !a -> <>[] b )\n"
+				+ "a: tempIn >= 0 \n"
+				+ "b: error = true";*/
+		
+		String fileContent = "[]( x -> <> y )\n"
+		+ "x: a > 42 \n"
+		+ "y: a = 2";
 		
 		AstNode node;
 		String line;
@@ -101,7 +107,7 @@ public class DummyLTL2autObserver implements IUnmanagedObserver {
 			this.rootNode = node;
 			
 		}catch(Exception e){
-			System.out.println("Something went wrong parsing");
+			System.out.println("Something went wrong parsing the Atomic Propositions");
 			//TODO: log error to console (not implemented because logger breaks tests, rethrowing error breaks interface!)
 			return false;
 		}

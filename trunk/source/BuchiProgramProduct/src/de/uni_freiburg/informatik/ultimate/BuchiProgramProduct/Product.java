@@ -24,6 +24,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Procedure;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.wrapper.ASTNode;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.TransFormulaBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
@@ -84,6 +85,28 @@ public class Product {
 		this.collectRCFGLocations();
 		this.createProductStates();
 		this.createEdges();
+		this.generateTransFormula();
+	}
+	
+	
+	private void generateTransFormula()
+	{
+		Boogie2SMT b2smt = this.rootNode.getRootAnnot().getBoogie2SMT();
+		RootAnnot rootAnnot = this.rootNode.getRootAnnot();
+		TransFormulaBuilder tfb = new TransFormulaBuilder(b2smt, rootAnnot);
+
+		for (String procIdent : rootAnnot.getImplementations().keySet()) {
+			Procedure proc = rootAnnot.getImplementations().get(procIdent);
+			b2smt.declareLocals(proc);
+		
+			for (ProgramPoint node : rootAnnot.getProgramPoints().get(procIdent).values())
+				for(RCFGEdge edge: node.getOutgoingEdges())
+					if(edge instanceof StatementSequence)
+						tfb.addTransitionFormulas(edge);
+		
+			b2smt.removeLocals(proc);
+		}
+		
 	}
 	
 	/**
@@ -93,10 +116,6 @@ public class Product {
 	private void createEdges() throws Exception
 	{
 		ProgramPoint targetpp, currentpp;
-		
-		//HACKMEHARDER... adding local variables ... again....
-		for (String key: this.rootNode.getRootAnnot().getProcedures().keySet())
-			this.rootNode.getRootAnnot().getBoogie2SMT().declareLocals(this.rootNode.getRootAnnot().getProcedures().get(key));
 		
 		TransFormulaBuilder transFormulaBuilder = new TransFormulaBuilder(
 				this.rootNode.getRootAnnot().getBoogie2SMT(),
@@ -144,7 +163,6 @@ public class Product {
 										stmts,
 										Origin.IMPLEMENTATION);	
 								
-								transFormulaBuilder.addTransitionFormulas(s);
 							}
 						} else if (rcfgEdge instanceof Return) {
 							//The calls used for the returns are dummy calls, that have nothing common with the original 
@@ -203,7 +221,6 @@ public class Product {
 										stmts,
 										Origin.IMPLEMENTATION);	
 								
-								transFormulaBuilder.addTransitionFormulas(s);
 							}
 						} else if (rcfgEdge instanceof Summary) {
 							//Summary summarizes a call compuation and return from another procedure
@@ -262,7 +279,6 @@ public class Product {
 										stmts,
 										Origin.IMPLEMENTATION);
 								
-								transFormulaBuilder.addTransitionFormulas(s);
 							}
 						} else
 							throw new Exception("RCFG Edgetype " + rcfgEdge.getClass() + " is currently not supported.");		

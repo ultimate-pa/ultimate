@@ -50,7 +50,11 @@ expr ::= expr:e1 PLUS expr:e2
 	| name:n	
 	{: RESULT = n; :}
 	| INT:i
-	{: RESULT = new IntLiteral(i); :};
+	{: RESULT = new IntLiteral(i); :}
+	| TRUE
+	{: RESULT = new BoolLiteral(true); :}
+	| FALSE
+	{: RESULT = new BoolLiteral(false); :};
 	
 name ::= NAME:m
 		{: RESULT = new Name(m); :};	
