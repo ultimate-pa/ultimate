@@ -104,12 +104,12 @@
 					<useUIHarness>false</useUIHarness>
 					<useUIThread>false</useUIThread>
 					<showEclipseLog>true</showEclipseLog>
-					<argLine>-Xmx1024M</argLine>
+					<argLine>-Xmx2048M</argLine>
 					<systemProperties>
 						<svcompdir>../svcomp</svcompdir>
 					</systemProperties>
-					<forkedProcessTimeoutInSeconds>360</forkedProcessTimeoutInSeconds>
-					<reuseForks>false</reuseForks>
+					<forkedProcessTimeoutInSeconds>600</forkedProcessTimeoutInSeconds>
+					<!--<reuseForks>false</reuseForks>-->
 					<includes>
 						<include>**/*.java</include>
 					</includes>
@@ -231,7 +231,6 @@
 				<jacoco.version>0.5.6.201201232323</jacoco.version>
 
 				<!-- Sonar properties -->
-				<sonar.core.codeCoveragePlugin>jacoco</sonar.core.codeCoveragePlugin>
 				<sonar.java.coveragePlugin>jacoco</sonar.java.coveragePlugin>
 				<sonar.dynamicAnalysis>reuseReports</sonar.dynamicAnalysis>
 				<sonar.jacoco.reportPath>${project.basedir}/../target/jacoco.exec</sonar.jacoco.reportPath>
