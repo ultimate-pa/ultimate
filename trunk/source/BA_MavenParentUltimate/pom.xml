@@ -104,7 +104,8 @@
 					<useUIHarness>false</useUIHarness>
 					<useUIThread>false</useUIThread>
 					<showEclipseLog>true</showEclipseLog>
-					<argLine>-Xmx2048M</argLine>
+					<!-- if we use argline, jacocos argline will be overwritten, resulting in no coverage -->  
+					<!--<argLine>-Xmx2048M</argLine>-->
 					<systemProperties>
 						<svcompdir>../svcomp</svcompdir>
 					</systemProperties>
