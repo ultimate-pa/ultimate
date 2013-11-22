@@ -44,7 +44,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.BuchiAcc
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.NestedLassoRun;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.Accepts;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.IOpWithDelayedDeadEndRemoval.UpDownEntry;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.NestedWordAutomatonReachableStates.Info;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.NestedWordAutomatonReachableStates.SuccessorInfo;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.NestedWordAutomatonReachableStates.StronglyConnectedComponents.SCC;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.StateContainer.DownStateProp;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
@@ -118,7 +118,7 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 			new ReachableStatesComputation();
 //			computeDeadEnds();
 //			new NonLiveStateComputation();
-			boolean testLassoComputation = false;
+			boolean testLassoComputation = !false;
 			if (testLassoComputation) {
 				computeStronglyConnectedComponents();
 				getOrComputeStronglyConnectedComponents().computeNestedLassoRuns(false);
@@ -1552,6 +1552,11 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
             	}
             	for (StateContainer<LETTER, STATE> fin  : scc.getAcceptingStates()) {
             		NestedLassoRun<LETTER, STATE> nlr = (new ShortestLassoExtractor(fin)).getNestedLassoRun();
+            		int nlrSize = nlr.getStem().getLength() + nlr.getLoop().getLength();
+            		NestedLassoRun<LETTER, STATE> nlr2 = (new LassoConstructor(fin, scc)).getNestedLassoRun();
+            		int nlr2Size = nlr2.getStem().getLength() + nlr2.getLoop().getLength();
+            		NestedLassoRun<LETTER, STATE> nlr3 = (new LassoExtractor(fin, scc,  m_AcceptingSummaries)).getNestedLassoRun();
+            		int nlr3Size = nlr3.getStem().getLength() + nlr3.getLoop().getLength();
             		if (computeOnlyOne) {
             			m_NestedLassoRun = nlr;
             		} else {
@@ -2407,9 +2412,10 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
         private final StateContainer<LETTER,STATE> m_Goal;
         private final Set<StateContainer<LETTER,STATE>> m_Visited =
                         new HashSet<StateContainer<LETTER,STATE>>();
-        private final ArrayList<Map<StateContainer<LETTER,STATE>,Info>> m_Info = 
-        		new ArrayList<Map<StateContainer<LETTER,STATE>,Info>>();
+        private final ArrayList<Map<StateContainer<LETTER,STATE>,SuccessorInfo>> m_SuccInfos = 
+        		new ArrayList<Map<StateContainer<LETTER,STATE>,SuccessorInfo>>();
         private final SCC m_Scc;
+        private final boolean m_FindAcceptingSummary;
         private int m_Iteration;
         private boolean m_GoalFound = false;
         private NestedRun<LETTER, STATE> m_Loop;
@@ -2419,33 +2425,70 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 			super();
 			m_Goal = goal;
 			m_Scc = scc;
+			m_FindAcceptingSummary = false;
 			//first, find a run, while doing a backward breadth first search
 			{
 				m_Iteration = 0;
-				Map<StateContainer<LETTER, STATE>, Info> map = 
-						new HashMap<StateContainer<LETTER,STATE>,Info>();
-				m_Info.add(map);
+				Map<StateContainer<LETTER, STATE>, SuccessorInfo> map = 
+						new HashMap<StateContainer<LETTER,STATE>,SuccessorInfo>();
+				m_SuccInfos.add(map);
 				addPredecessors(m_Goal, map);
 			}
+			findRunBackwards();
+			constructRunOfLoop();
+			m_Stem = (new RunConstructor(m_Goal, null)).constructRun();
+			m_Lasso = new NestedLassoRun<LETTER, STATE>(m_Stem, m_Loop);
+		}
+		
+//		public LassoConstructor(StateContainer<LETTER, STATE> goal, SCC scc) {
+//			super();
+//			m_Goal = goal;
+//			m_Scc = scc;
+//			m_FindAcceptingSummary = false;
+//			//first, find a run, while doing a backward breadth first search
+//			{
+//				m_Iteration = 0;
+//				Map<StateContainer<LETTER, STATE>, SuccessorInfo> map = 
+//						new HashMap<StateContainer<LETTER,STATE>,SuccessorInfo>();
+//				m_SuccInfos.add(map);
+//				addPredecessors(m_Goal, map);
+//			}
+//			findRunBackwards();
+//			constructRunOfLoop();
+//			m_Stem = (new RunConstructor(m_Goal, null)).constructRun();
+//			m_Lasso = new NestedLassoRun<LETTER, STATE>(m_Stem, m_Loop);
+//		}
+
+		
+		/**
+		 * Check iteratively precedessors and add SuccInfos to m_SuccInfos
+		 */
+		private void findRunBackwards() {
 			while (!m_GoalFound) {
 				if (m_Iteration > m_Scc.getNumberOfStates()) {
 					throw new AssertionError("unable to find state in SCC");
 				}
-				assert m_Info.size() == m_Iteration + 1;
+				assert m_SuccInfos.size() == m_Iteration + 1;
 				m_Iteration++;
-				Map<StateContainer<LETTER, STATE>, Info> map = 
-						new HashMap<StateContainer<LETTER,STATE>,Info>();
-				m_Info.add(map);
-				for (StateContainer<LETTER, STATE> sc  : m_Info.get(m_Iteration-1).keySet()) {
+				Map<StateContainer<LETTER, STATE>, SuccessorInfo> map = 
+						new HashMap<StateContainer<LETTER,STATE>,SuccessorInfo>();
+				m_SuccInfos.add(map);
+				for (StateContainer<LETTER, STATE> sc  : m_SuccInfos.get(m_Iteration-1).keySet()) {
 					addPredecessors(sc, map);
 				}
 			}
+		}
+
+		/**
+		 * Use m_SuccInfos to construct a run for a loop that has been found.
+		 */
+		private void constructRunOfLoop() {
 			//then we reconstruct the run
 			m_Loop = new NestedRun<LETTER, STATE>(m_Goal.getState());
 			StateContainer<LETTER, STATE> current = m_Goal;
 			for (int i=m_Iteration; i>=0; i--) {
 				NestedRun<LETTER, STATE> newSuffix;
-				Info info = m_Info.get(i).get(current);
+				SuccessorInfo info = m_SuccInfos.get(i).get(current);
 				if (info.getTransition() instanceof IncomingInternalTransition) {
 					IncomingInternalTransition<LETTER, STATE> inTrans = (IncomingInternalTransition) info.getTransition();
 					newSuffix = new NestedRun<LETTER, STATE>(current.getState(), inTrans.getLetter(), NestedWord.INTERNAL_POSITION, info.getSuccessor().getState());
@@ -2469,15 +2512,17 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 				m_Loop = m_Loop.concatenate(newSuffix);
 				current = info.getSuccessor();
 			}
-			m_Stem = (new RunConstructor(m_Goal, null)).constructRun();
-			m_Lasso = new NestedLassoRun<LETTER, STATE>(m_Stem, m_Loop);
 		}
         
         public NestedLassoRun<LETTER, STATE> getNestedLassoRun() {
 			return m_Lasso;
 		}
 
-		private void addPredecessors(StateContainer<LETTER,STATE> sc, Map<StateContainer<LETTER,STATE>,Info> succInfo) {
+        /**
+         * Add for all predecessors of sc that have not yet been visited the
+         * successor information to map.
+         */
+		private void addPredecessors(StateContainer<LETTER,STATE> sc, Map<StateContainer<LETTER,STATE>,SuccessorInfo> succInfo) {
 			for (IncomingReturnTransition<LETTER, STATE> inTrans : returnPredecessors(sc.getState())) {
 				StateContainer<LETTER, STATE> predSc = m_States.get(inTrans.getHierPred());
 				checkAndAddPredecessor(sc, succInfo, inTrans, predSc);
@@ -2497,12 +2542,12 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 		 * SCC and has not been visited before.
 		 */
 		private void checkAndAddPredecessor(StateContainer<LETTER, STATE> sc,
-				Map<StateContainer<LETTER, STATE>, Info> succInfo,
+				Map<StateContainer<LETTER, STATE>, SuccessorInfo> succInfo,
 				Object inTrans,
 				StateContainer<LETTER, STATE> predSc) {
 			if (m_Scc.getAllStates().contains(predSc) && !m_Visited.contains(predSc)) {
 				m_Visited.add(predSc);
-				Info info = new Info(inTrans, sc);
+				SuccessorInfo info = new SuccessorInfo(inTrans, sc);
 				succInfo.put(predSc, info);
 				if (m_Goal.equals(predSc)) {
 					m_GoalFound = true;
@@ -2514,10 +2559,10 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 	
 	
 	
-	class Info {
+	class SuccessorInfo {
 		private final Object m_Transition;
 		private final StateContainer<LETTER,STATE> m_Successor;
-		public Info(Object transition, StateContainer<LETTER, STATE> successor) {
+		public SuccessorInfo(Object transition, StateContainer<LETTER, STATE> successor) {
 			super();
 			m_Transition = transition;
 			m_Successor = successor;
@@ -2534,7 +2579,6 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 	
 	
 
-	
 
 	
 	
