@@ -105,12 +105,11 @@
 					<useUIThread>false</useUIThread>
 					<showEclipseLog>true</showEclipseLog>
 					<!-- if we use argline, jacocos argline will be overwritten, resulting in no coverage -->  
-					<!--<argLine>-Xmx2048M</argLine>-->
+					<argLine>-Xmx2048M</argLine>
 					<systemProperties>
 						<svcompdir>../svcomp</svcompdir>
 					</systemProperties>
 					<forkedProcessTimeoutInSeconds>600</forkedProcessTimeoutInSeconds>
-					<!--<reuseForks>false</reuseForks>-->
 					<includes>
 						<include>**/*.java</include>
 					</includes>
