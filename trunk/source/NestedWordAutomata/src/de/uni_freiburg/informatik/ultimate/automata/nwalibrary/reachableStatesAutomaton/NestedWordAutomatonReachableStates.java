@@ -39,12 +39,10 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingInternalT
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.SummaryReturnTransition;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.TransitionConsitenceCheck;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.BuchiAccepts;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.NestedLassoRun;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.Accepts;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.IOpWithDelayedDeadEndRemoval.UpDownEntry;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.NestedWordAutomatonReachableStates.SuccessorInfo;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.NestedWordAutomatonReachableStates.StronglyConnectedComponents.SCC;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.StateContainer.DownStateProp;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
@@ -1377,8 +1375,8 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 	private class AcceptingSummariesComputation {
 		private final ArrayDeque<StateContainer<LETTER,STATE>> m_FinAncWorklist =
 				new ArrayDeque<StateContainer<LETTER,STATE>>();
-		private final Map<StateContainer<LETTER, STATE>, Set<StateContainer<LETTER, STATE>>> m_AcceptingSummaries = 
-				new HashMap<StateContainer<LETTER, STATE>, Set<StateContainer<LETTER, STATE>>>();
+		private final HashRelation<StateContainer<LETTER, STATE>, Summary<LETTER, STATE>> m_AcceptingSummaries = 
+				new HashRelation<StateContainer<LETTER, STATE>, Summary<LETTER, STATE>>();
 
 		public AcceptingSummariesComputation() {
 			init();
@@ -1388,7 +1386,7 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 			}
 		}
 		
-		public Map<StateContainer<LETTER, STATE>, Set<StateContainer<LETTER, STATE>>> getAcceptingSummaries() {
+		public HashRelation<StateContainer<LETTER, STATE>, Summary<LETTER, STATE>> getAcceptingSummaries() {
 			return m_AcceptingSummaries;
 		}
 		
@@ -1438,20 +1436,18 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 				STATE hierPred = trans.getHierPred();
 				if (cont.hasDownProp(hierPred,DownStateProp.REACHABLE_FROM_FINAL_WITHOUT_CALL)) {
 					addNewDownStates(null, succCont, hierCont.getDownStates().keySet());
-					addAcceptingSummary(hierCont,succCont);
+					addAcceptingSummary(hierCont, cont, succCont);
 				}
 			}
 		}
 
 		private void addAcceptingSummary(
 				StateContainer<LETTER, STATE> callPred,
+				StateContainer<LETTER, STATE> returnPred,
 				StateContainer<LETTER, STATE> returnSucc) {
-			Set<StateContainer<LETTER, STATE>> returnSuccs = m_AcceptingSummaries.get(callPred);
-			if (returnSuccs == null) {
-				returnSuccs = new HashSet<StateContainer<LETTER,STATE>>();
-				m_AcceptingSummaries.put(callPred, returnSuccs);
-			}
-			returnSuccs.add(returnSucc);
+			Summary<LETTER, STATE> summary = 
+					new Summary<LETTER, STATE>(callPred, returnPred, returnSucc);
+			m_AcceptingSummaries.addPair(callPred, summary);
 		}
 		
 		
@@ -1496,7 +1492,7 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
     	final Collection<SCC> m_Balls = new ArrayList<SCC>();
     	int m_NumberOfNonBallSCCs = 0;
     	
-		private final Map<StateContainer<LETTER, STATE>, Set<StateContainer<LETTER, STATE>>> m_AcceptingSummaries;
+		private final HashRelation<StateContainer<LETTER, STATE>, Summary<LETTER, STATE>> m_AcceptingSummaries;
 		
 		private final Set<StateContainer<LETTER, STATE>> m_AllStatesOfSccsWithoutCallAndReturn = 
 				new HashSet<StateContainer<LETTER, STATE>>();
@@ -1738,8 +1734,8 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 	    	 */
 	    	Set<StateContainer<LETTER, STATE>> m_HasOutgoingAcceptingSum = 
 	    			new HashSet<StateContainer<LETTER, STATE>>();
-	    	final HashRelation<StateContainer<LETTER, STATE>, StateContainer<LETTER, STATE>>m_AcceptingSummariesOfSCC =
-	    			new HashRelation<StateContainer<LETTER, STATE>, StateContainer<LETTER, STATE>>();
+	    	final HashRelation<StateContainer<LETTER, STATE>, Summary<LETTER, STATE>>m_AcceptingSummariesOfSCC =
+	    			new HashRelation<StateContainer<LETTER, STATE>, Summary<LETTER, STATE>>();
 	    	final Set<StateContainer<LETTER, STATE>> m_AllStates = 
 	    			new HashSet<StateContainer<LETTER, STATE>>();
 	    	/**
@@ -1766,7 +1762,7 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 	    			m_AcceptingWithLowestSerialNumber = StateContainer.
 		    				returnLower(m_AcceptingWithLowestSerialNumber, cont);
 	    		}
-	    		if (m_AcceptingSummaries.containsKey(cont)) {
+	    		if (m_AcceptingSummaries.getDomain().contains(cont)) {
 	    			m_HasOutgoingAcceptingSum.add(cont);
 	    			// if we have to update lowest is determined later
 	    		}
@@ -1781,11 +1777,11 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 				//TODO: Optimization: compute this only if there is no 
 				// accepting state in SCC
 				for (StateContainer<LETTER, STATE> pred : m_HasOutgoingAcceptingSum) {
-	    			for (StateContainer<LETTER, STATE> succ : m_AcceptingSummaries.get(pred)) {
-	    				if (m_AllStates.contains(succ)) {
+	    			for (Summary<LETTER, STATE> summary : m_AcceptingSummaries.getImage(pred)) {
+	    				if (m_AllStates.contains(summary.getSucc())) {
 	    	    			m_AcceptingWithLowestSerialNumber = StateContainer.
 	    		    				returnLower(m_AcceptingWithLowestSerialNumber, pred);
-	    					m_AcceptingSummariesOfSCC.addPair(pred, succ);
+	    					m_AcceptingSummariesOfSCC.addPair(pred, summary);
 	    				}
 	    			}
 				}
@@ -1808,7 +1804,7 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 				return m_AcceptingStates;
 			}
 			
-			public HashRelation<StateContainer<LETTER, STATE>, StateContainer<LETTER, STATE>> getAcceptingSummariesOfSCC() {
+			public HashRelation<StateContainer<LETTER, STATE>, Summary<LETTER, STATE>> getAcceptingSummariesOfSCC() {
 				return m_AcceptingSummariesOfSCC;
 			}
 
@@ -1837,14 +1833,12 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
     
     
     class LassoExtractor {
-    	private final Map<StateContainer<LETTER, STATE>, Set<StateContainer<LETTER, STATE>>> m_AcceptingSummaries;
     	
     	private final NestedLassoRun<LETTER, STATE> m_nlr;
     	
     	public LassoExtractor(StateContainer<LETTER, STATE> honda, 
     			StronglyConnectedComponents.SCC scc, 
-    			Map<StateContainer<LETTER, STATE>, Set<StateContainer<LETTER, STATE>>> acceptingSummaries) {
-    			m_AcceptingSummaries = acceptingSummaries;
+    			HashRelation<StateContainer<LETTER, STATE>, Summary<LETTER, STATE>> acceptingSummaries) {
     			
     			Set<SuccInfo> forbiddenSummaries = Collections.emptySet();
     			LoopFinder lf = new LoopFinder(honda, scc, true, 
@@ -1873,8 +1867,9 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
     		private final StronglyConnectedComponents.SCC m_Scc;
     		
 			public LoopFinder(StateContainer<LETTER, STATE> goal, StronglyConnectedComponents.SCC scc, 
-					boolean visitAccepting, Map<StateContainer<LETTER, STATE>, 
-					Set<StateContainer<LETTER, STATE>>> acceptingSummaries, Set<SuccInfo> forbiddenSummaries) {
+					boolean visitAccepting, 
+					HashRelation<StateContainer<LETTER, STATE>, Summary<LETTER, STATE>> acceptingSummaries, 
+					Set<SuccInfo> forbiddenSummaries) {
 				super(goal, goal, visitAccepting, acceptingSummaries, forbiddenSummaries);
 				m_Scc = scc;
 			}
@@ -2596,7 +2591,7 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 	class RunConstructor {
 		private final StateContainer<LETTER,STATE> m_Start;
 		private final StateContainer<LETTER,STATE> m_Goal;
-		private final Set<Summary<STATE>> m_ForbiddenSummaries;
+		private final Set<Summary<LETTER, STATE>> m_ForbiddenSummaries;
 		private final boolean m_FindSummary;
 		private boolean m_GoalFound = false;
 		private final Set<StateContainer<LETTER,STATE>> m_Visited =
@@ -2625,7 +2620,7 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 		 */
 		private RunConstructor(StateContainer<LETTER, STATE> start,
 				StateContainer<LETTER, STATE> goal,
-				Set<Summary<STATE>> forbiddenSummaries) {
+				Set<Summary<LETTER, STATE>> forbiddenSummaries) {
 			m_Start = start;
 			m_Goal = goal;
 			m_ForbiddenSummaries = forbiddenSummaries;
@@ -2681,8 +2676,9 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 			}
 			
 			for (IncomingReturnTransition<LETTER, STATE> inTrans : returnPredecessors(current.getState())) {
-				Summary<STATE> summary = new Summary<STATE>(inTrans.getHierPred(), 
-						inTrans.getLinPred(), current.getState());
+				Summary<LETTER, STATE> summary = new Summary<LETTER, STATE>(
+						m_States.get(inTrans.getHierPred()), 
+						m_States.get(inTrans.getLinPred()), current);
 				if (m_ForbiddenSummaries.contains(summary)) {
 					continue;
 				}
@@ -2799,10 +2795,11 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 				} else if (transitionToLowest instanceof IncomingReturnTransition) {
 					IncomingReturnTransition<LETTER, STATE> inTrans = 
 							(IncomingReturnTransition<LETTER, STATE>) transitionToLowest;
-					Set<Summary<STATE>> forbiddenSummaries = new HashSet<Summary<STATE>>();
+					Set<Summary<LETTER, STATE>> forbiddenSummaries = new HashSet<Summary<LETTER, STATE>>();
 					forbiddenSummaries.addAll(m_ForbiddenSummaries);
-					Summary<STATE> summary = new Summary<STATE>(inTrans.getHierPred(), 
-							inTrans.getLinPred(), current.getState());
+					Summary<LETTER, STATE> summary = new Summary<LETTER, STATE>(
+							m_States.get(inTrans.getHierPred()), 
+							m_States.get(inTrans.getLinPred()), current);
 					assert (!forbiddenSummaries.contains(summary));
 					forbiddenSummaries.add(summary);
 					RunConstructor runConstuctor = new RunConstructor(
@@ -2853,23 +2850,25 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 
 	
 	
-	private static class Summary<STATE> {
-		private final STATE m_HierPred;
-		private final STATE m_LinPred;
-		private final STATE m_Succ;
-		public Summary(STATE hierPred, STATE linPred, STATE succ) {
+	private static class Summary<LETTER, STATE> {
+		private final StateContainer<LETTER, STATE> m_HierPred;
+		private final StateContainer<LETTER, STATE> m_LinPred;
+		private final StateContainer<LETTER, STATE> m_Succ;
+		public Summary(StateContainer<LETTER, STATE> hierPred, 
+				StateContainer<LETTER, STATE> linPred, 
+				StateContainer<LETTER, STATE> succ) {
 			super();
 			m_HierPred = hierPred;
 			m_LinPred = linPred;
 			m_Succ = succ;
 		}
-		public STATE getHierPred() {
+		public StateContainer<LETTER, STATE> getHierPred() {
 			return m_HierPred;
 		}
-		public STATE getLinPred() {
+		public StateContainer<LETTER, STATE> getLinPred() {
 			return m_LinPred;
 		}
-		public STATE getSucc() {
+		public StateContainer<LETTER, STATE> getSucc() {
 			return m_Succ;
 		}
 		
@@ -3108,8 +3107,7 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 		 * 
 		 * May be null if visiting an accepting state is not required.
 		 */
-		private final Map<StateContainer<LETTER, STATE>, 
-					Set<StateContainer<LETTER, STATE>>> m_AcceptingSummaries;
+		private final HashRelation<StateContainer<LETTER, STATE>, Summary<LETTER, STATE>> m_AcceptingSummaries;
 		
 		
 		protected final List<Map<StateContainer<LETTER,STATE>, SuccInfo>> m_SuccessorsWithSummary;
@@ -3131,7 +3129,7 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 		private int m_IterationFoundWithSummary;
 		
 		public RunFinder(StateContainer<LETTER, STATE> start, StateContainer<LETTER, STATE> goal, boolean visitAccepting, 
-				Map<StateContainer<LETTER, STATE>, Set<StateContainer<LETTER, STATE>>> acceptingSummaries, Set<SuccInfo> forbiddenSummaries) {
+				HashRelation<StateContainer<LETTER, STATE>, Summary<LETTER, STATE>> acceptingSummaries, Set<SuccInfo> forbiddenSummaries) {
 			assert (start != null);
 			assert (goal != null);
 			m_Start = start;
@@ -3156,12 +3154,17 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 		
 		protected boolean isAcceptingSummary(StateContainer<LETTER, STATE> predSc,
 										StateContainer<LETTER, STATE> succSc) {
-			Set<StateContainer<LETTER, STATE>> postCandidates = 
-												m_AcceptingSummaries.get(predSc);
-			if (postCandidates == null) {
+			Set<Summary<LETTER, STATE>> summaries = m_AcceptingSummaries.getImage(predSc);
+			if (summaries == null) {
 				return false;
 			} else {
-				return postCandidates.contains(succSc);
+				for (Summary<LETTER, STATE> summary : summaries) {
+					if (summary.getSucc().equals(succSc)) {
+						return true;
+					}
+					
+				}
+				return false;
 			}
 		}
 		
@@ -3391,8 +3394,8 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 		
 	
 		public SummaryFinder(StateContainer<LETTER, STATE> returnPredecessor, StateContainer<LETTER, STATE> callPredecessor, 
-				boolean visitAccepting,	Map<StateContainer<LETTER, STATE>, 
-						Set<StateContainer<LETTER, STATE>>> acceptingSummaries,
+				boolean visitAccepting,	
+				HashRelation<StateContainer<LETTER, STATE>, Summary<LETTER, STATE>> acceptingSummaries,
 						Set<SuccInfo> forbiddenSummaries) {
 			super(returnPredecessor, callPredecessor, visitAccepting, acceptingSummaries, forbiddenSummaries);
 		}
