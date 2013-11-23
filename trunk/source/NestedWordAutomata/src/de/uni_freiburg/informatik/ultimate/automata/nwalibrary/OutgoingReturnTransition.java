@@ -11,7 +11,7 @@ import java.text.MessageFormat;
  * @param <LETTER>
  * @param <STATE>
  */
-public class OutgoingReturnTransition<LETTER,STATE> {
+public class OutgoingReturnTransition<LETTER,STATE> implements Transitionlet<LETTER,STATE> {
 	
 	private final STATE m_HierPred;
 	private final LETTER m_Letter; 

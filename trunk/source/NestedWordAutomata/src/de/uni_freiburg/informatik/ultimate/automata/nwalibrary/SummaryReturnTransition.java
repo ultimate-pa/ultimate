@@ -9,7 +9,7 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary;
  * @param <LETTER>
  * @param <STATE>
  */
-public class SummaryReturnTransition<LETTER,STATE> {
+public class SummaryReturnTransition<LETTER,STATE> implements Transitionlet<LETTER,STATE> {
 	
 	private final STATE m_LinPred;
 	private final LETTER m_Letter; 
