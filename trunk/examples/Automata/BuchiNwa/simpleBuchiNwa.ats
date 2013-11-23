@@ -13,6 +13,8 @@ assert(!buchiAccepts(infinitelyManyAWithCallReturn, [ a a , c< >r ]));
 assert(buchiAccepts(infinitelyManyAWithCallReturn, [ a a , c< a b >r ]));
 assert(buchiAccepts(infinitelyManyAWithCallReturn, [  , a c< ]));
 
+assert(!buchiIsEmpty(acceptingSummary));
+
 NestedWordAutomaton finitelyManyAInEachContext = (
 	callAlphabet = { a b c r },
 	internalAlphabet = { a b c r },
@@ -49,4 +51,27 @@ NestedWordAutomaton infinitelyManyAWithCallReturn = (
 	returnTransitions = {
 		(q0 q0 r q0) (q0 q1 r q0) (q1 q0 r q0) (q1 q1 r q0)
 	}
+);
+
+
+NestedWordAutomaton acceptingSummary = (
+    callAlphabet = { a b c r },
+    internalAlphabet = { a b c r },
+    returnAlphabet = { a b c r },
+    states = {q0 s0 s1 s2 s3 s9 t0 t1 t2},
+    initialStates = {q0},
+    finalStates = {t1},
+    callTransitions = {
+        (q0 c s0)
+        (s2 c t0)
+    },
+    internalTransitions = {
+        (s0 a s1) (s1 b s2) (s2 a s3) (s3 b s9)
+        (s0 a s9)
+        (t0 a t1) (t1 a t2)
+    }, 
+    returnTransitions = {
+        (s9 q0 r q0)
+        (t2 s2 r s3)
+    }
 );
