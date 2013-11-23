@@ -62,6 +62,7 @@ public class Never2Automaton{
 				);
 		
 		this.collectStates(this.ast, null);
+		System.out.println(this.automaton.toString());
 	}
 	
 	/**

@@ -20,6 +20,7 @@ import de.uni_freiburg.informatik.ultimate.model.IPayload;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssertStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BooleanLiteral;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Procedure;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
@@ -58,7 +59,7 @@ public class Product {
 	
 	private int helperUnifique = 0;
 
-	
+	HashMap< ProgramPoint, ArrayList<Call>> callEdges = new HashMap< ProgramPoint, ArrayList<Call>>();
 	
 	public Product(NestedWordAutomaton<ASTNode, String> aut, RootNode rcfg) throws Exception 
 	{
@@ -128,13 +129,16 @@ public class Product {
 				);
 		
 		//for Node x Node 
+		for(int mode = 0; mode < 2; mode ++)
 		for(ProgramPoint pp: this.rcfgLocations){
+			System.out.println(pp.toString());
 			for(String n: this.aut.getStates()){
 				currentpp = this.productLocations.get(this.stateNameGenerator(pp.getLocationName(), n));
 				// For Edge of Node x Edge of node
-				for(RCFGEdge rcfgEdge: pp.getOutgoingEdges())								
+				for(RCFGEdge rcfgEdge: pp.getOutgoingEdges())
 						//distinguish between the different Edges of the RCFG in the input
-						if (rcfgEdge instanceof Call){
+						if (rcfgEdge instanceof Call){ 
+							if (mode == 1) continue; 
 							//Call has to have a helper node, so that first the call can targeta
 							//the helper node	
 							String helperName = this.getHelperLoc(this.helperUnifique+currentpp.getPosition());
@@ -144,12 +148,21 @@ public class Product {
 										false, 
 										currentpp.getAstNode());
 							this.rootNode.getRootAnnot().getProgramPoints().get(currentpp.getProcedure()).put(helperName, helper);
+							
+			
 							Call c = new Call(
 									currentpp, 
 									helper,
 									((Call) rcfgEdge).getCallStatement()
 									);
 							c.setTransitionFormula(((Call) rcfgEdge).getTransitionFormula());
+							
+							//store all call edge s in hashmap for later return edge generation
+							if (!this.callEdges.containsKey(pp))
+								this.callEdges.put(pp,new ArrayList<Call>());
+							this.callEdges.get(pp).add(c);
+							
+							
 							//From the helpernode, the original call target is connected with a new
 							//edge with the fitting assumption of the call. The edge is calculated 
 							//like any other edge in the graph.
@@ -171,6 +184,7 @@ public class Product {
 								
 							}
 						} else if (rcfgEdge instanceof Return) {
+							if (mode == 0) continue; 
 							//The calls used for the returns are dummy calls, that have nothing common with the original 
 							//call except the caller location, that has to be popped from the stack.
 							//The target pp and call statement are never used and therefore left blank
@@ -187,7 +201,11 @@ public class Product {
 									((ProgramPoint)rcfgEdge.getTarget()).getProcedure())
 										.put(helperName, helper);
 							//for all possible call origins: CallPP x LTLStates be able to return to the helper state
-							for(String nn: this.aut.getStates()){
+							
+							
+							
+							
+							/*for(String nn: this.aut.getStates()){
 								targetpp = this.productLocations.get(
 										this.stateNameGenerator(
 												((ProgramPoint)rcfgEdge.getTarget()).getLocationName(),n));
@@ -199,20 +217,21 @@ public class Product {
 												null,
 												((Return)rcfgEdge).getCallStatement()
 												);
-								call.setTransitionFormula(((Return)rcfgEdge).getCorrespondingCall().getTransitionFormula());								
+								call.setTransitionFormula(((Return)rcfgEdge).getCorrespondingCall().getTransitionFormula());*/
+							ProgramPoint key = 	((ProgramPoint)((Return)rcfgEdge).getCallerProgramPoint());
+							for(Call call: this.callEdges.get(key)){
 								Return r = new Return(
 										currentpp,
 										helper,
 										call
 										);
-								r.setTransitionFormula(((Return) rcfgEdge).getTransitionFormula());
+							r.setTransitionFormula(((Return) rcfgEdge).getTransitionFormula());
 								//remove call from originating node, because new Call(... will automaticcaly attatch the edge to 
 								//the location it is originating from....
-								this.productLocations.get(                   //source state
+								/*this.productLocations.get(                   //source state
 										this.stateNameGenerator(
 												((ProgramPoint)((Return)rcfgEdge).getSource()).getLocationName(),
-												nn)).removeOutgoing(call);
-								
+												nn)).removeOutgoing(call);*/
 							}
 							//From the helpernode, the original call target is connected with a new
 							//edge with the fitting assumption of the call. The edge is calculated 
@@ -274,6 +293,7 @@ public class Product {
 								transFormulaBuilder.addTransitionFormulas(s);
 							}*/
 						} else if(rcfgEdge instanceof StatementSequence){
+							if (mode == 1) continue; 
 							for(OutgoingInternalTransition<ASTNode, String> autTrans: this.aut.internalSuccessors(n)){
 								targetpp = this.productLocations.get(
 										this.stateNameGenerator(
@@ -363,9 +383,11 @@ public class Product {
 			//if (!this.RCFGLocations.contains(cp))
 				this.rcfgLocations.add(cp);
 			for (RCFGEdge p: cp.getOutgoingEdges())
+			{
+				if (p instanceof Summary) continue;
 				if(!(this.rcfgLocations.contains(p.getTarget()) || unhandledLocations.contains(p.getTarget())))
 					unhandledLocations.offer((ProgramPoint)p.getTarget());
-			
+			}
 			//append selfloopst o leafs of the rcfg
 			if (cp.getOutgoingEdges().size() == 0)
 			{
