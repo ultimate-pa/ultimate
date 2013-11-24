@@ -88,7 +88,7 @@ public class MinimizeBrzozowski<LETTER, STATE>
 	private INestedWordAutomaton<LETTER, STATE> reverse(
 			final INestedWordAutomaton<LETTER, STATE> automaton) {
 		NestedWordAutomaton<LETTER, STATE> reversed =
-				new NestedWordAutomaton<>(automaton.getInternalAlphabet(),
+				new NestedWordAutomaton<LETTER, STATE>(automaton.getInternalAlphabet(),
 						automaton.getCallAlphabet(),
 						automaton.getReturnAlphabet(),
 						automaton.getStateFactory());
