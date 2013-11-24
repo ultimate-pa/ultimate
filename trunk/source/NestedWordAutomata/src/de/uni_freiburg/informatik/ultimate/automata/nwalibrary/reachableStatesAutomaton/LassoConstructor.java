@@ -67,7 +67,7 @@ class LassoConstructor<LETTER, STATE> {
 			SuccessorInfo succInfo = new SuccessorInfo(
 					summary.obtainIncomingReturnTransition(m_Nwars), m_Goal);
 			map.put(summary.getHierPred(), succInfo);
-			addPredecessors(m_Goal, map);
+//			addPredecessors(m_Goal, map);
 		}
 		findRunBackwards();
 		constructRunOfLoop();
