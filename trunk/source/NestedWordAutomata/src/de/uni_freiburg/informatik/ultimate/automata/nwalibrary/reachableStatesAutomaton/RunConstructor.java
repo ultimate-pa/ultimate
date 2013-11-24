@@ -84,26 +84,24 @@ class RunConstructor<LETTER,STATE> {
 	private Collection<TransitionWithObligation> findSuitablePredecessors(StateContainerWithObligation current) {
 		SortedMap<Integer, Object> number2transition = new TreeMap<Integer, Object>(); 
 		for (IncomingInternalTransition<LETTER, STATE> inTrans : m_Nwars.internalPredecessors(current.getObject().getState())) {
-			StateContainer<LETTER,STATE> predSc = m_Nwars.obtainSC(inTrans.getPred());
-			boolean predObligation = current.hasObligation();
-			if (m_Visited.contains(predSc)) {
-				continue;
-			}
 			if (!m_FindSummary && m_Nwars.isInitial(inTrans.getPred())) {
 				m_GoalFound = true;
 				return Collections.singleton(new TransitionWithObligation((Transitionlet<LETTER,STATE>) inTrans, false));
 			}
+			StateContainer<LETTER,STATE> predSc = m_Nwars.obtainSC(inTrans.getPred());
 			if (m_FindSummary && !predSc.getDownStates().containsKey(m_Goal.getState())) {
 				continue;
 			}
-			if (current.hasObligation()) {
+			final boolean predObligation = current.hasObligation() && !m_Nwars.isFinal(predSc.getState());
+			if (predObligation) {
 				assert m_FindSummary;
 				if (!predSc.hasDownProp(m_Goal.getState(), DownStateProp.REACHABLE_FROM_FINAL_WITHOUT_CALL)) {
 					continue;
 				}
-				if (m_Nwars.isFinal(predSc.getState())) {
-					predObligation = false;
-				}
+			}
+			StateContainerWithObligation predWithObligation = new StateContainerWithObligation(predSc, predObligation);
+			if (m_Visited.contains(predWithObligation)) {
+				continue;
 			}
 			int predSerialNumber = predSc.getSerialNumber();
 			number2transition.put(predSerialNumber, 
@@ -124,10 +122,10 @@ class RunConstructor<LETTER,STATE> {
 					m_GoalFound = true;
 					return Collections.singleton(new TransitionWithObligation((Transitionlet<LETTER,STATE>) inTrans, false));
 				}
-				if (m_Visited.contains(predSc)) {
+				StateContainerWithObligation predWithObligation = new StateContainerWithObligation(predSc, false);
+				if (m_Visited.contains(predWithObligation)) {
 					continue;
 				}
-
 				int predSerialNumber = predSc.getSerialNumber();
 				if (!number2transition.containsKey(predSerialNumber)) {
 					number2transition.put(predSerialNumber, 
@@ -144,32 +142,28 @@ class RunConstructor<LETTER,STATE> {
 			if (m_ForbiddenSummaries.contains(summary)) {
 				continue;
 			}
-			StateContainer<LETTER,STATE> predSc = m_Nwars.obtainSC(inTrans.getHierPred());
-			boolean predObligation = current.hasObligation();
-			if (m_Visited.contains(predSc)) {
-				continue;
-			}
 			if (!m_FindSummary && m_Nwars.isInitial(inTrans.getHierPred())) {
 				m_GoalFound = true;
 				return Collections.singleton(new TransitionWithObligation((Transitionlet<LETTER,STATE>) inTrans, false));
 			}
+			StateContainer<LETTER,STATE> predSc = m_Nwars.obtainSC(inTrans.getHierPred());
 			if (m_FindSummary && !predSc.getDownStates().containsKey(m_Goal.getState())) {
 				continue;
-			}
-			if (current.hasObligation()) {
+			}			
+			final boolean predObligation = current.hasObligation() && !m_Nwars.isFinal(predSc.getState()) && !m_Nwars.isAccepting(summary);
+			if (predObligation) {
 				assert m_FindSummary;
-				if (!predSc.hasDownProp(m_Goal.getState(), DownStateProp.REACHABLE_FROM_FINAL_WITHOUT_CALL) && !m_Nwars.isAccepting(summary)) {
+				if (!predSc.hasDownProp(m_Goal.getState(), DownStateProp.REACHABLE_FROM_FINAL_WITHOUT_CALL)) {
 					continue;
 				}
-				if (m_Nwars.isFinal(predSc.getState()) || m_Nwars.isAccepting(summary)) {
-					predObligation = false;
-				}
+			}
+			StateContainerWithObligation predWithObligation = new StateContainerWithObligation(predSc, predObligation);
+			if (m_Visited.contains(predWithObligation)) {
+				continue;
 			}
 			int predSerialNumber = predSc.getSerialNumber();
 			Object previousEntry = number2transition.get(predSerialNumber);
-			if (previousEntry instanceof IncomingInternalTransition) {
-				// do nothing
-			} else if (previousEntry instanceof IncomingCallTransition) {
+			if (previousEntry instanceof RunConstructor.TransitionWithObligation) {
 				// do nothing
 			} else {
 				assert previousEntry == null || (previousEntry instanceof SortedMap);
@@ -282,13 +276,14 @@ class RunConstructor<LETTER,STATE> {
 						m_Nwars.obtainSC(inTrans.getLinPred()),
 						inTrans.getLetter(), current.getObject());
 				assert (!forbiddenSummaries.contains(summary));
-				boolean isAcceptingSummary = m_Nwars.isAccepting(summary);
+				boolean isAcceptingSummaryRequired = 
+						current.hasObligation() && m_Nwars.isAccepting(summary);
 				forbiddenSummaries.add(summary);
 				RunConstructor<LETTER,STATE> runConstuctor = new RunConstructor<LETTER,STATE>(
 						m_Nwars,
 						m_Nwars.obtainSC(inTrans.getLinPred()), 
 						m_Nwars.obtainSC(inTrans.getHierPred()),
-						isAcceptingSummary && current.hasObligation(),
+						isAcceptingSummaryRequired,
 						forbiddenSummaries);
 				NestedRun<LETTER, STATE> summaryRun = runConstuctor.constructRun();
 				if (summaryRun == null) {
@@ -379,6 +374,13 @@ class RunConstructor<LETTER,STATE> {
 		private RunConstructor getOuterType() {
 			return RunConstructor.this;
 		}
+		@Override
+		public String toString() {
+			return "ObjectWithObligation [m_Object=" + m_Object + ", m_Flag="
+					+ m_Flag + "]";
+		}
+		
+		
 	}
 	
 	private class TransitionWithObligation extends ObjectWithObligation<Transitionlet<LETTER,STATE>> {
