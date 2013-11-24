@@ -1,4 +1,4 @@
-package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations;
+package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -20,13 +20,7 @@ import java.util.Map.Entry;
 import java.util.PriorityQueue;
 import java.util.Set;
 
-import org.apache.log4j.Logger;
-
-import de.uni_freiburg.informatik.ultimate.automata.Activator;
-import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
-import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
-import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.IDoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
@@ -75,11 +69,8 @@ import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
  * 
  * @author Christian Schilling <schillic@informatik.uni-freiburg.de>
  */
-public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
-	private static Logger s_Logger = 
-			UltimateServices.getInstance().getLogger(Activator.PLUGIN_ID);
+public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE> {
 	// old automaton
-	private INestedWordAutomaton<LETTER, STATE> m_operand;
 	private IDoubleDeckerAutomaton<LETTER, STATE> m_doubleDecker;
 	// partition object
 	private Partition m_partition;
@@ -235,6 +226,7 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 			final int firstReturnSplitAlternative,
 			final boolean splitAllCallPreds, final boolean returnSplitNaive)
 					throws OperationCanceledException {
+		super("shrinkNwa", operand);
 		if (STAT_RETURN_SIZE) {
 			try {
 				m_writer1 = new BufferedWriter(
@@ -250,7 +242,6 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 			m_writer2 = null;
 		}
 		
-		m_operand = operand;
 		// TODO<DoubleDecker> check this?
 		m_doubleDecker = (IDoubleDeckerAutomaton<LETTER, STATE>)m_operand;
 		m_stateFactory = (stateFactory == null)
@@ -315,9 +306,9 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 		}
 		
 		// must be the last part of the constructor
-		s_Logger.info(startMessage());
+		s_logger.info(startMessage());
 		minimize(isFiniteAutomaton, equivalenceClasses, includeMapping);
-		s_Logger.info(exitMessage());
+		s_logger.info(exitMessage());
 		
 		if (STATISTICS) {
 			m_wholeTime += new GregorianCalendar().getTimeInMillis();
@@ -617,7 +608,7 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 				}
 			}
 			
-			s_Logger.info("Finished analysis, constructing result of size " +
+			s_logger.info("Finished analysis, constructing result of size " +
 					m_partition.m_equivalenceClasses.size());
 			
 			// automaton construction
@@ -4244,48 +4235,9 @@ public class ShrinkNwa<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	// --- [start] framework methods --- //
 	
 	@Override
-	public String operationName() {
-		return "shrinkNwa";
-	}
-	
-	@Override
-	public String startMessage() {
-		return "Start " + operationName() + ". Operand has " +
-			m_operand.sizeInformation();
-	}
-	
-	@Override
-	public String exitMessage() {
-		return "Finished " + operationName() + ". Reduced states from " +
-			m_result.m_oldNwa.size() + " to " +
-			m_result.size() + ".";
-	}
-	
-	@Override
-	public INestedWordAutomatonSimple<LETTER,STATE> getResult()
-			throws OperationCanceledException {
+	public INestedWordAutomatonSimple<LETTER,STATE> getResult() {
+		assert m_result != null;
 		return m_result;
-	}
-	
-	@Override
-	public boolean checkResult(StateFactory<STATE> stateFactory)
-			throws AutomataLibraryException {
-		s_Logger.info("Start testing correctness of " + operationName());
-		boolean correct = true;
-		correct &= (ResultChecker.nwaLanguageInclusion(
-				ResultChecker.getOldApiNwa(m_operand),
-				ResultChecker.getOldApiNwa(m_result),
-				stateFactory) == null);
-		correct &= (ResultChecker.nwaLanguageInclusion(
-				ResultChecker.getOldApiNwa(m_result),
-				ResultChecker.getOldApiNwa(m_operand),
-				stateFactory) == null);
-		if (!correct) {
-			ResultChecker.writeToFileIfPreferred(operationName() + " failed",
-					"", m_operand);
-		}
-		s_Logger.info("Finished testing correctness of " + operationName());
-		return correct;
 	}
 	
 	// --- [end] framework methods --- //

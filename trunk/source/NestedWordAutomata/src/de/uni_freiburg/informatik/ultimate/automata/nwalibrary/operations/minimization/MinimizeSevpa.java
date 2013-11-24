@@ -1,4 +1,4 @@
-package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations;
+package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization;
 
 import java.util.Collection;
 import java.util.Comparator;
@@ -24,7 +24,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.SummaryReturnTransition;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.MinimizeSevpa.EquivalenceClass;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 
 /**
@@ -3052,7 +3051,7 @@ public class MinimizeSevpa<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	@Override
 	public String startMessage() {
 		return "Start " + operationName() + ". Operand " +
-			m_operand.sizeInformation() + ".";
+			m_operand.sizeInformation();
 	}
 	
 	@Override

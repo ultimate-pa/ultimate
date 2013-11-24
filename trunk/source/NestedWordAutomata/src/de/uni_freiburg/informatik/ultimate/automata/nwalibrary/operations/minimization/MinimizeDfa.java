@@ -3,7 +3,7 @@
  * NestedWordAutomaton Tool. It can also be used to reduce the state space of
  * NFAs. However: Unreachable states cannot be handled!
  */
-package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations;
+package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -20,6 +20,7 @@ import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.HasUnreachableStates;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 
 /**
