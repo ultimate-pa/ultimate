@@ -52,6 +52,7 @@ public abstract class UltimatePreferenceInitializer extends
 				break;
 			case Directory:
 			case String:
+			case MultilineString:
 			case Combo:
 			case Radio:
 			case Path:

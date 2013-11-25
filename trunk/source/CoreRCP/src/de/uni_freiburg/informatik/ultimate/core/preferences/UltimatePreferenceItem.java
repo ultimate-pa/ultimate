@@ -3,7 +3,7 @@ package de.uni_freiburg.informatik.ultimate.core.preferences;
 public class UltimatePreferenceItem<T> {
 
 	public enum PreferenceType {
-		Boolean, Directory, String, Label, Combo, Radio, Integer, Path
+		Boolean, Directory, String, Label, Combo, Radio, Integer, Path, MultilineString
 	}
 
 	private String mLabel;

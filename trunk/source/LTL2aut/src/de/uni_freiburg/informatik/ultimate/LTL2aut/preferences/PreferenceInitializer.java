@@ -37,7 +37,7 @@ public class PreferenceInitializer extends UltimatePreferenceInitializer {
 				new UltimatePreferenceItem<String>(this.LABEL_TOOLARGUMENT,
 						this.DEF_TOOLARGUMENT, PreferenceType.String),
 				new UltimatePreferenceItem<String>(this.LABEL_PPROPERTY,
-						this.DEF_PPROPERTY, PreferenceType.String)
+						this.DEF_PPROPERTY, PreferenceType.MultilineString)
 		};
 	}
 

@@ -79,6 +79,9 @@ public class UltimateGeneratedPreferencePage extends FieldEditorPreferencePage
 			case Path:
 				editor = createPathFieldEditor(item);
 				break;
+			case MultilineString:
+				editor = createMultilineFieldEditor(item.getLabel());
+				break;
 			default:
 				throw new UnsupportedOperationException(
 						"You need to implement the new enum type \""
@@ -91,6 +94,8 @@ public class UltimateGeneratedPreferencePage extends FieldEditorPreferencePage
 		}
 
 	}
+
+
 
 	@Override
 	protected void checkState() {
@@ -179,6 +184,12 @@ public class UltimateGeneratedPreferencePage extends FieldEditorPreferencePage
 		}
 	}
 
+	private MultiLineTextFieldEditor createMultilineFieldEditor(String label) {
+		MultiLineTextFieldEditor editor = new MultiLineTextFieldEditor(label,label,getFieldEditorParent());
+		addField(editor);
+		return editor;
+	}
+	
 	private PathEditor createPathFieldEditor(UltimatePreferenceItem<?> item) {
 		PathEditor editor = new PathEditor(item.getLabel(), item.getLabel(),
 				item.getLabel(), getFieldEditorParent());
@@ -236,6 +247,7 @@ public class UltimateGeneratedPreferencePage extends FieldEditorPreferencePage
 	private StringFieldEditor createStringEditor(String label) {
 		StringFieldEditor editor = new StringFieldEditor(label, label,
 				getFieldEditorParent());
+		
 		addField(editor);
 		return editor;
 	}

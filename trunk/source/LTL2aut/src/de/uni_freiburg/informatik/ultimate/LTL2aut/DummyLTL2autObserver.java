@@ -8,8 +8,10 @@ import org.apache.commons.io.IOUtils;
 
 import de.uni_freiburg.informatik.ultimate.LTL2aut.ast.AstNode;
 import de.uni_freiburg.informatik.ultimate.LTL2aut.ast.AtomicProposition;
+import de.uni_freiburg.informatik.ultimate.LTL2aut.preferences.PreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.access.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.access.WalkerOptions;
+import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 
 
@@ -62,9 +64,9 @@ public class DummyLTL2autObserver implements IUnmanagedObserver {
 		//String fileContent = "[] (!a || F b) \n a: temp <= 8 \n b: chainBroken = false";
 		
 		
-		String fileContent = "[]( !a )\n"
-				+ "a: tempIn >= 0 \n"
-				+ "b: error = true";
+//		String fileContent = "[]( !a )\n"
+//				+ "a: tempIn >= 0 \n"
+//				+ "b: error = true";
 		
 		/*String fileContent = "[]( x -> <> y )\n"
 		+ "x: a > 42 \n"
@@ -73,7 +75,9 @@ public class DummyLTL2autObserver implements IUnmanagedObserver {
 		AstNode node;
 		String line;
 		
-		BufferedReader br = new BufferedReader(new InputStreamReader(IOUtils.toInputStream(fileContent)));
+		String property = new UltimatePreferenceStore(Activator.PLUGIN_ID).getString(PreferenceInitializer.LABEL_PPROPERTY);
+		
+		BufferedReader br = new BufferedReader(new InputStreamReader(IOUtils.toInputStream(property)));
 		try{	
 			//read the LTLT formula from the first line and pass it to the parser
 			line = br.readLine();
