@@ -1486,8 +1486,8 @@ public class BuchiComplementFKVNwa<LETTER,STATE> implements INestedWordAutomaton
 					}
 				}
 				rankBound++;
-				if (rankBound > 100) {
-					throw new AssertionError("forgotten rank bound?, there are no automata with rank > 100 in the nature");
+				if (rankBound > 1000) {
+					throw new AssertionError("forgotten rank bound?, there are no automata with rank > 1000 in the nature");
 				}
 			}
 		}
