@@ -20,6 +20,7 @@ import java.util.Map.Entry;
 import java.util.PriorityQueue;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.IDoubleDeckerAutomaton;
@@ -69,7 +70,8 @@ import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
  * 
  * @author Christian Schilling <schillic@informatik.uni-freiburg.de>
  */
-public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE> {
+public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>  
+										implements IOperation<LETTER,STATE> {
 	// old automaton
 	private IDoubleDeckerAutomaton<LETTER, STATE> m_doubleDecker;
 	// partition object
