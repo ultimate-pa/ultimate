@@ -92,14 +92,14 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 	 * Use this only while developing/debugging/testing the construction
 	 * of runs.
 	 */
-	public final static boolean m_ExtRunConstructionTesting = !false;
+	public final static boolean m_ExtRunConstructionTesting = false;
 	
 	/**
 	 * Construct a lasso for each accepting state/accepting summary.
 	 * Use this only while developing/debugging/testing the construction
 	 * of lassos.
 	 */
-	public final static boolean m_ExtLassoConstructionTesting = !false;
+	public final static boolean m_ExtLassoConstructionTesting = false;
 	
 
 	
