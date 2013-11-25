@@ -4,7 +4,7 @@
 
 parseAutomata("../nwa/crafted.ats");
 
-assert(numberOfStates(complement(sameCalldifferentReturns)) == 7);
+assert(numberOfStates(complement(sameCalldifferentReturns)) == 4);
 assert(numberOfStates(complement(wBenjamin)) == 8);
 assert(numberOfStates(complement(pendingReturnNwa)) == 2);
 assert(numberOfStates(complement(bugBfsEmptinessLowPriorityCallQueue)) == 11);

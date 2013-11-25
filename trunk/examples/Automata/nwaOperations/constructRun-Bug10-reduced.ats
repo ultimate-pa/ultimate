@@ -3,14 +3,15 @@
 // Author: heizmann@informatik.uni-freiburg.de
 
 
-NestedWordAutomaton result = removeUnreachable(nwa);
+NestedWordAutomaton result = RemoveNonLiveStates(nwa);
+print(buchiIsEmpty(nwa));
 
 
 NestedWordAutomaton nwa = (
     callAlphabet = {"c" },
     internalAlphabet = {"a" },
     returnAlphabet = {"r" },
-    states = {"f" "q1" "q3" "q0" },
+    states = {"f" "q1" "q3" "q0" "g" },
     initialStates = {"q0" },
     finalStates = {"f" },
     callTransitions = {

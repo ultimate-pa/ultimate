@@ -4,7 +4,7 @@
 // bug in run construction - not checked yet
 
 
-NestedWordAutomaton result = buchiComplementFKV(nwa)
+NestedWordAutomaton result = buchiComplementFKV(nwa);
 
 
 NestedWordAutomaton nwa = (
