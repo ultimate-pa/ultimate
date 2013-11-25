@@ -9,7 +9,7 @@
 NestedWordAutomaton complement1 = buchiComplementFKV(InterpolantAutomatonBuchi1);
 NestedWordAutomaton difference1 = buchiIntersect(BuchiCegarLoopAbstraction0, complement1);
 NestedLassoWord nw1 = [ a4 c0<,  a0 a1 c1<  ];
-NestedLassoWord nw1 = [ a4 c0<,  a0 a2 a3 >r0 a6 a7  ];
+//NestedLassoWord nw1 = [ a4 c0<,  a0 a2 a3 >r0 a6 a7  ];
 assert(buchiAccepts(BuchiCegarLoopAbstraction0, nw1));
 assert(buchiAccepts(InterpolantAutomatonBuchi1, nw1));
 assert(!buchiAccepts(complement1, nw1));
