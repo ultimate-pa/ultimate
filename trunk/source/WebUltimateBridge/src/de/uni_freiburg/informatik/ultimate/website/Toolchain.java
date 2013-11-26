@@ -191,7 +191,7 @@ public abstract class Toolchain {
 				if(s.getSettingString().equals("")) {
 					settings.append("\\!");
 				}
-				settings.append("/configuration/");
+				settings.append("/instance/");
 				settings.append(t.getId());
 				settings.append(s.getSettingString());
 				settings.append("=");
@@ -202,7 +202,7 @@ public abstract class Toolchain {
 		settings.append("# User changeable settings:").append(EOL);
 		for (Tool t : tools) {
 			for (Setting s : t.getUserChangeableSettings()) {
-				settings.append("/configuration/");
+				settings.append("/instance/");
 				settings.append(t.getId());
 				settings.append(s.getSettingString());
 				settings.append("=");

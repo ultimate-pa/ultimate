@@ -78,12 +78,15 @@ public class BoogieTraceAbstractionTC extends Toolchain {
 		List<Setting> oRCFGB = new ArrayList<Setting>();
 		List<Setting> mRCFGB = new ArrayList<Setting>();
 		tools.add(new Tool("RCFGBuilder", oRCFGB, mRCFGB, LoggingLevel.WARN));
-        oRCFGB.add(new Setting("/HoareAnnotation", Setting.SettingType.BOOLEAN,
-                "Compute Hoare Annotation", "true", true));
-        oRCFGB.add(new Setting("/Timeout", Setting.SettingType.INTEGER,
-                "Timeout", "60", false));
+        oRCFGB.add(new Setting("/Use\\ external\\ solver\\ instead\\ of\\ SMTInterpol", Setting.SettingType.BOOLEAN,
+                "external solver", "true", false));
+
         List<Setting> oTrAbs = new ArrayList<Setting>();
         List<Setting> mTrAbs = new ArrayList<Setting>();
+        oTrAbs.add(new Setting("/HoareAnnotation", Setting.SettingType.BOOLEAN,
+                "Compute Hoare Annotation", "true", true));
+        oTrAbs.add(new Setting("/Timeout", Setting.SettingType.INTEGER,
+                "Timeout", "60", false));
         mTrAbs.add(new Setting("/DumpPath", Setting.SettingType.STRING,
                 "Where to dump", "C:\\Code\\log\\dump", false));
         tools.add(new Tool("TraceAbstraction", oTrAbs, mTrAbs,

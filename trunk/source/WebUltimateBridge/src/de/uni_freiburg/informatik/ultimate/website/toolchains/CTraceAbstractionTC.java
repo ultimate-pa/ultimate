@@ -69,11 +69,11 @@ public class CTraceAbstractionTC extends Toolchain {
     protected List<Tool> setTools() {
         List<Tool> tools = new ArrayList<Tool>();
         List<Setting> oCACSL = new ArrayList<Setting>();
-        oCACSL.add(new Setting("/CheckedMethod", Setting.SettingType.STRING,
+        oCACSL.add(new Setting("/Checked\\ method.\\ Library\\ mode\\ if\\ empty.", Setting.SettingType.STRING,
                 "Starting procedure: ", "main", true));
-        oCACSL.add(new Setting("/Translation-Mode", "Translation Mode",
+        oCACSL.add(new Setting("/Translation\\ Mode\\:", "Translation Mode",
 				new String[] { "Best SV_COMP" }, false, new String[] {
-						"BASE", "SV_COMP" }, true));
+						"BASE", "SV_COMP14" }, true));
         List<Setting> mCACSL = new ArrayList<Setting>();
         tools.add(new Tool("CACSL2BoogieTranslator", oCACSL, mCACSL,
                 LoggingLevel.WARN));
@@ -87,7 +87,10 @@ public class CTraceAbstractionTC extends Toolchain {
         List<Setting> oRCFGB = new ArrayList<Setting>();
         List<Setting> mRCFGB = new ArrayList<Setting>();
         tools.add(new Tool("RCFGBuilder", oRCFGB, mRCFGB, LoggingLevel.WARN));
-
+        oRCFGB.add(new Setting("/Use\\ external\\ solver\\ instead\\ of\\ SMTInterpol", Setting.SettingType.BOOLEAN,
+                "external solver", "false", false));
+        oRCFGB.add(new Setting("/Compute\\ Interpolants\\ along\\ a\\ Counterexample", Setting.SettingType.STRING,
+                "interpolation", "Craig_NestedInterpolation", false));
         List<Setting> oTrAbs = new ArrayList<Setting>();
 //        oTrAbs.add(new Setting("", Setting.SettingType.STRING, "Mode",
 //                "StrongestPost", true));
@@ -95,9 +98,11 @@ public class CTraceAbstractionTC extends Toolchain {
 //        		"check all specifications at once", "false", true));
 //        oTrAbs.add(new Setting("/Minimize", Setting.SettingType.BOOLEAN,
 //                "Use Minimization", "true", true));
-        oRCFGB.add(new Setting("/HoareAnnotation", Setting.SettingType.BOOLEAN,
+        oTrAbs.add(new Setting("/HoareAnnotation", Setting.SettingType.BOOLEAN,
                 "Compute Hoare Annotation", "true", true));
-        oRCFGB.add(new Setting("/Timeout", Setting.SettingType.INTEGER,
+        oTrAbs.add(new Setting("/Compute\\ Interpolants\\ along\\ a\\ Counterexample", Setting.SettingType.STRING,
+                "interpolation", "Craig_NestedInterpolation", false));
+        oTrAbs.add(new Setting("Timeout\\ in\\ seconds", Setting.SettingType.INTEGER,
                 "Timeout", "60", false));
 //        oTrAbs.add(new Setting("/Edges2True", Setting.SettingType.BOOLEAN,
 //                "Edges to true", "true", true));
