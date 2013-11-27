@@ -501,7 +501,7 @@ public class BuchiCegarLoop {
 			constructInterpolantAutomaton(m_TraceChecker);
 			EdgeChecker ec = new EdgeChecker(m_SmtManager, buchiModGlobalVarManager);
 			PostDeterminizer spd = new PostDeterminizer(
-					ec, m_Pref, m_InterpolAutomaton, false);
+					ec, m_Pref, m_InterpolAutomaton, true);
 			DifferenceDD<CodeBlock, IPredicate> diff = null;
 			try {
 				diff = new DifferenceDD<CodeBlock, IPredicate>(
@@ -514,6 +514,10 @@ public class BuchiCegarLoop {
 				} else {
 					throw new AssertionError();
 				}
+			}
+			if (m_Pref.dumpAutomata()) {
+				String filename = "interpolAutomatonUsedInRefinement"+m_Iteration+"after";
+				writeAutomatonToFile(m_InterpolAutomaton, filename);
 			}
 			m_ModuleSize.put(m_Iteration,m_InterpolAutomaton.size());
 			assert (new InductivityCheck(m_InterpolAutomaton, ec, false, true)).getResult();
@@ -859,7 +863,7 @@ public class BuchiCegarLoop {
 			assert !(new BuchiAccepts<CodeBlock, IPredicate>(newAbstraction,m_Counterexample.getNestedLassoWord())).getResult()  : "no progress";
 			m_Abstraction = newAbstraction;
 			if (m_Pref.dumpAutomata()) {
-				String filename = "interpolAutomatonUsedInRefinement"+m_Iteration+"after";
+				String filename = "interpolBuchiAutomatonUsedInRefinement"+m_Iteration+"after";
 				writeAutomatonToFile(interpolAutomatonUsedInRefinement, filename);
 			}
 			m_ModuleSize.put(m_Iteration,interpolAutomatonUsedInRefinement.size());
