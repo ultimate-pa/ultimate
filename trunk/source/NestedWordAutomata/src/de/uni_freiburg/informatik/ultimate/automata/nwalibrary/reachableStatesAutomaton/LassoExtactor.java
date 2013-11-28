@@ -53,7 +53,7 @@ class LassoExtractor<LETTER, STATE> {
 				acceptingSummaries, forbiddenSummaries);
 		NestedRun<LETTER, STATE> loop = lf.getNestedRun();
 		assert loop.getLength() > 1 : "looping epsilon transition";
-		NestedRun<LETTER, STATE> stem = (new RunConstructor<LETTER, STATE>(m_Nwars, honda, null, false)).constructRun();
+		NestedRun<LETTER, STATE> stem = (new RunConstructor<LETTER, STATE>(m_Nwars, honda)).constructRun();
 		s_Logger.debug("Stem length: " + stem.getLength());
 		s_Logger.debug("Loop length: " + loop.getLength());
 		m_nlr = new NestedLassoRun<LETTER, STATE>(stem, loop);

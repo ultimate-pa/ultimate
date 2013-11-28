@@ -714,7 +714,8 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 			if (m_ExtRunConstructionTesting ) {
 				for (STATE fin : getFinalStates()) {
 					s_Logger.debug(new DebugMessage("Test if can find an accepting run for final state {0}",fin));
-					NestedRun<LETTER,STATE> run = (new RunConstructor<LETTER, STATE>(NestedWordAutomatonReachableStates.this, m_States.get(fin), null, false)).constructRun();
+					NestedRun<LETTER,STATE> run = (new RunConstructor<LETTER, STATE>(
+							NestedWordAutomatonReachableStates.this, m_States.get(fin))).constructRun();
 					assert (new Accepts<LETTER, STATE>(NestedWordAutomatonReachableStates.this, run.getWord())).getResult();
 				}
 			}

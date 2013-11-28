@@ -47,7 +47,7 @@ class LassoConstructor<LETTER, STATE> {
 		}
 		findRunBackwards();
 		constructRunOfLoop();
-		m_Stem = (new RunConstructor<LETTER, STATE>(m_Nwars, m_Goal, null, false)).constructRun();
+		m_Stem = (new RunConstructor<LETTER, STATE>(m_Nwars, m_Goal)).constructRun();
 		m_Lasso = new NestedLassoRun<LETTER, STATE>(m_Stem, m_Loop);
 	}
 	
@@ -71,7 +71,7 @@ class LassoConstructor<LETTER, STATE> {
 		}
 		findRunBackwards();
 		constructRunOfLoop();
-		m_Stem = (new RunConstructor<LETTER, STATE>(m_Nwars, m_Goal, null, false)).constructRun();
+		m_Stem = (new RunConstructor<LETTER, STATE>(m_Nwars, m_Goal)).constructRun();
 		m_Lasso = new NestedLassoRun<LETTER, STATE>(m_Stem, m_Loop);
 	}
 
@@ -114,16 +114,15 @@ class LassoConstructor<LETTER, STATE> {
 			} else if (info.getTransition() instanceof IncomingReturnTransition) {
 				IncomingReturnTransition<LETTER, STATE> inTrans = (IncomingReturnTransition<LETTER, STATE>) info.getTransition();
 				StateContainer<LETTER, STATE> returnPredSc = m_Nwars.obtainSC(inTrans.getLinPred());
+				assert current.getState().equals(inTrans.getHierPred());
+				Summary<LETTER,STATE> summary = new Summary<LETTER, STATE>(
+						current,
+						returnPredSc,
+						inTrans.getLetter(),
+						info.getSuccessor());
 				boolean summaryMustContainAccepting = m_FindAcceptingSummary && i == 0;
-				NestedRun<LETTER, STATE> summaryPrefix = (new RunConstructor<LETTER, STATE>(m_Nwars, returnPredSc, current, summaryMustContainAccepting)).constructRun();
-				assert summaryPrefix != null : "no run for summary found";
-				NestedRun<LETTER, STATE> returnSuffix = 
-					new NestedRun<LETTER, STATE>(inTrans.getLinPred(), 
-								inTrans.getLetter(), 
-								NestedWord.MINUS_INFINITY, info.getSuccessor().getState());
-				NestedRun<LETTER, STATE> summaryRun = summaryPrefix.concatenate(returnSuffix);
-				newSuffix = summaryRun;
-				
+				newSuffix = (new RunConstructor<LETTER, STATE>(m_Nwars, summary, summaryMustContainAccepting)).constructRun();
+				assert newSuffix != null : "no run for summary found";
 			} else {
 				throw new AssertionError("unsupported transition");
 			}
