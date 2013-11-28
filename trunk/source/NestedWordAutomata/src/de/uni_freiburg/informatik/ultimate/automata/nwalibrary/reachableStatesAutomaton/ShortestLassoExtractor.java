@@ -170,6 +170,9 @@ class ShortestLassoExtractor<LETTER, STATE> {
 		assert m_ConstructedNestedRun == null;
 		Set<StackOfFlaggedStates> initIteration = m_Iterations.get(m_InitFoundIteration);
 		StackOfFlaggedStates stack = new StackOfFlaggedStates(m_FirstFoundInitialState, true);
+		if (!initIteration.contains(stack)) { 
+			stack = new StackOfFlaggedStates(m_FirstFoundInitialState, false);
+		}
 
 		assert initIteration.contains(stack);
 		StateContainer<LETTER, STATE> cont = m_FirstFoundInitialState;
