@@ -1561,7 +1561,7 @@ public class NestedWordAutomaton<LETTER,STATE> implements INestedWordAutomatonOl
 
 		// assert checkTransitionsStoredConsistent();
 		assert checkTransitionsReturnedConsistent();
-		assert sizeInformation() != "";
+		assert sizeInformation().length() > 0;
 	}
 	
 	

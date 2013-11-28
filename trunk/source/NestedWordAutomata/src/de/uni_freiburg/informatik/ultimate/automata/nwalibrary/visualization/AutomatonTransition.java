@@ -33,7 +33,7 @@ public class AutomatonTransition extends ModifiableMultigraphEdge<AutomatonState
 		}
 		m_Name = m_Name + ": " + transitionLabel;
 		if (type == Transition.RETURN) {
-			m_Name = m_Name + " " + linPred.toString();
+			m_Name = m_Name + " " + linPred;
 		}
 		
 		if (transitionLabel instanceof IAnnotations) {

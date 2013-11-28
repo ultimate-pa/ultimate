@@ -21,8 +21,6 @@ public class NestedWordAutomata implements IGenerator {
 	
 	private NestedWordAutomataObserver m_NestedWordAutomataObserver;
 	
-	public static boolean TEST = true;
-
 	private GraphType m_InputType;
 	
     public String getName() {

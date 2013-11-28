@@ -170,22 +170,6 @@ class ShortestLassoExtractor<LETTER, STATE> {
 		assert m_ConstructedNestedRun == null;
 		Set<StackOfFlaggedStates> initIteration = m_Iterations.get(m_InitFoundIteration);
 		StackOfFlaggedStates stack = new StackOfFlaggedStates(m_FirstFoundInitialState, true);
-		int sHash = stack.hashCode();
-		StackOfFlaggedStates stack1 = initIteration.iterator().next();
-		int sHash1  = stack1.hashCode();
-		if (!initIteration.contains(stack)) {
-			stack = new StackOfFlaggedStates(m_FirstFoundInitialState, false);
-			sHash = stack.hashCode();
-		}
-		sHash = stack.hashCode();
-		sHash1  = stack1.hashCode();
-		sHash = stack.hashCode();
-		sHash1  = stack1.hashCode();
-		sHash = stack.hashCode();
-		sHash1  = stack1.hashCode();
-		stack.equals(stack1);
-		stack.equals(stack1);
-		stack.equals(stack1);
 
 		assert initIteration.contains(stack);
 		StateContainer<LETTER, STATE> cont = m_FirstFoundInitialState;
@@ -443,7 +427,7 @@ class ShortestLassoExtractor<LETTER, STATE> {
 
 		@Override
 		public int hashCode() {
-			int result = HashUtils.hashJenkins((new Boolean(m_TopmostFlag)).hashCode(), m_TopmostState);
+			int result = HashUtils.hashJenkins(((Boolean) m_TopmostFlag).hashCode(), m_TopmostState);
 //			result = HashUtils.hashJenkins(result, m_FlagStack);
 			result = HashUtils.hashJenkins(result, m_StateStack);
 			return result;

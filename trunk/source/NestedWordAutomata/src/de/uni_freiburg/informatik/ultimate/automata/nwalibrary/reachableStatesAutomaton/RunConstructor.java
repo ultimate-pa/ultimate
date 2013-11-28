@@ -405,6 +405,9 @@ class RunConstructor<LETTER,STATE> {
 				return true;
 			if (obj == null)
 				return false;
+			if (!(obj instanceof ObjectWithObligation)) {
+				return false;
+			}
 			ObjectWithObligation<E> other = (ObjectWithObligation) obj;
 			if (m_Flag != other.m_Flag)
 				return false;

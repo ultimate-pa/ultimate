@@ -427,7 +427,6 @@ public class IsEmpty<LETTER,STATE> implements IOperation<LETTER,STATE> {
 		Map<STATE, STATE> succK2FirstStateK = 
 				m_callFirst.get(succ);
 		if (succK2stateK2Run == null) {
-			assert(succK2stateK2Run == null);
 			succK2stateK2Run = 
 				new HashMap<STATE, Map<STATE, NestedRun<LETTER,STATE>>>();
 			m_callSubRun.put(succ,succK2stateK2Run);

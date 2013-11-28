@@ -33,7 +33,7 @@ import de.uni_freiburg.informatik.ultimate.automata.preferences.PreferenceInitia
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
 
-@SuppressWarnings("unchecked")
+@Deprecated
 public class ResultChecker<LETTER,STATE> {
 	
 	private static Logger s_Logger = 
@@ -43,8 +43,6 @@ public class ResultChecker<LETTER,STATE> {
 	public static final int maxResultCheckStackHeight = 1;
 	
 	public final static boolean m_InvariantCheck_DetComplementBuchi = false;
-	
-	public static boolean m_AlreadyDoingInvariantCheck = false;
 	
 	public static boolean doingInvariantCheck() {
 		return resultCheckStackHeight > 0;

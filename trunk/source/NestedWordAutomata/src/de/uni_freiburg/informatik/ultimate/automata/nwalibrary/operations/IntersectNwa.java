@@ -155,6 +155,9 @@ public class IntersectNwa<LETTER, STATE> implements INestedWordAutomatonSimple<L
 	
 	@Override
 	public boolean isInitial(STATE state) {
+		if (m_InitialStates == null) {
+			m_InitialStates = constructInitialState();
+		}
 		return m_InitialStates.contains(state);
 	}
 
