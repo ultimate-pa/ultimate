@@ -25,6 +25,8 @@ import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
  * <li> there is exactly one initial state
  * <li> each state but the last of the run has exactly one successor
  * <li> each state but the first of the run has exactly one predecessor
+ * <li> no state occurs more than once in the handle (automaton does not have
+ * a cycle shape)
  * </ul>
  * @author Matthias Heizmann
  */
@@ -49,16 +51,22 @@ public class GetHandle<LETTER, STATE> implements IOperation<LETTER,STATE> {
 				// do nothing
 			} else {
 				while (true) {
-					STATE current = m_Handle.getStateAtPosition(m_Handle.getLength());
-					boolean singlePred = hasSinglePredecessor(current);
+					STATE knownPredecessor = m_Handle.getStateAtPosition(m_Handle.getLength()-2);
+					STATE current = m_Handle.getStateAtPosition(m_Handle.getLength()-1);
+					boolean singlePred = hasSinglePredecessor(current, knownPredecessor);
 					if (!singlePred) {
-						return;
+						break;
 					}
 					NestedRun<LETTER, STATE> newSuffix = getSingleSuccessor(current);
 					if (newSuffix == null) {
-						return;
+						break;
 					} else {
 						m_Handle = m_Handle.concatenate(newSuffix);
+					}
+					if (m_Handle.getLength() > m_Operand.size()) {
+						s_Logger.info("automaton has cycle shape");
+						m_Handle = null;
+						break;
 					}
 				}
 			}
@@ -102,7 +110,7 @@ public class GetHandle<LETTER, STATE> implements IOperation<LETTER,STATE> {
 		return result;
 	}
 	
-	public boolean hasSinglePredecessor(STATE state) {
+	public boolean hasSinglePredecessor(STATE state, STATE knownPredecessor) {
 		STATE predecessor = null;
 		for (IncomingInternalTransition<LETTER, STATE> inTrans : m_Operand.internalPredecessors(state)) {
 			if (predecessor == null) {
@@ -131,7 +139,7 @@ public class GetHandle<LETTER, STATE> implements IOperation<LETTER,STATE> {
 		if (predecessor == null) {
 			return false;
 		} else {
-			assert predecessor == state : "wrong state";
+			assert predecessor == knownPredecessor : "wrong state";
 			return true;
 		}
 	}
@@ -154,8 +162,13 @@ public class GetHandle<LETTER, STATE> implements IOperation<LETTER,STATE> {
 
 	@Override
 	public String exitMessage() {
-		return "Finished " + operationName() + ". Found word of length "
-				+ m_Handle.getLength();
+		String result = "Finished " + operationName();
+		if (m_Handle == null) {
+			result += ". Automaton has no handle. ";
+		} else {
+			result += ". Found word of length " + m_Handle.getLength();
+		}
+		return result;
 	}
 
 	@Override
