@@ -33,6 +33,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.BuchiIsE
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.NestedLassoRun;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.NestedLassoWord;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.Accepts;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.GetHandle;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IStateDeterminizer;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.PowersetDeterminizer;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.RemoveDeadEnds;
@@ -408,6 +409,7 @@ public class BuchiCegarLoop {
 			if (ec.getResult()) {
 				return true;
 			} else {
+				GetHandle<CodeBlock, IPredicate> gh = (new GetHandle<CodeBlock, IPredicate>(m_Abstraction));
 				m_Counterexample = ec.getAcceptingNestedLassoRun();
 				assert m_Counterexample.getLoop().getLength() > 1;
 				return false;
@@ -751,11 +753,11 @@ public class BuchiCegarLoop {
 		private void refineBuchi() throws AutomataLibraryException {
 			assert m_InterpolAutomaton == null;
 			NestedWord<CodeBlock> stem = m_Counterexample.getStem().getWord();
-			if (emptyStem(m_Counterexample)) {
-				stem = m_Counterexample.getLoop().getWord();
-			} else {
-				stem = m_Counterexample.getStem().getWord();
-			}
+//			if (emptyStem(m_Counterexample)) {
+//				stem = m_Counterexample.getLoop().getWord();
+//			} else {
+//				stem = m_Counterexample.getStem().getWord();
+//			}
 			NestedWord<CodeBlock> loop = m_Counterexample.getLoop().getWord();
 			
 			PredicateUnifier pu = new PredicateUnifier(m_SmtManager, 
