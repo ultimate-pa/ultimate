@@ -4,6 +4,7 @@ import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -749,7 +750,7 @@ public class BuchiCegarLoop {
 
 		private void refineBuchi() throws AutomataLibraryException {
 			assert m_InterpolAutomaton == null;
-			NestedWord<CodeBlock> stem;
+			NestedWord<CodeBlock> stem = m_Counterexample.getStem().getWord();
 			if (emptyStem(m_Counterexample)) {
 				stem = m_Counterexample.getLoop().getWord();
 			} else {
@@ -757,23 +758,22 @@ public class BuchiCegarLoop {
 			}
 			NestedWord<CodeBlock> loop = m_Counterexample.getLoop().getWord();
 			
-//			assert m_TraceChecker == null;
-//			m_TraceChecker = new TraceChecker(m_SmtManager,
-//					m_RootNode.getRootAnnot().getModifiedVars(),
-//					m_RootNode.getRootAnnot().getEntryNodes(),
-//					null);
-			m_TraceChecker = new TraceChecker(m_Bspm.getStemPrecondition(), 
-					m_Bspm.getStemPostcondition(), null, stem, m_SmtManager,
-					buchiModGlobalVarManager);
-			LBool stemCheck = m_TraceChecker.isCorrect();
 			PredicateUnifier pu = new PredicateUnifier(m_SmtManager, 
 					m_Bspm.getStemPrecondition(), m_Bspm.getHondaPredicate(), m_Bspm.getRankEqAndSi(), m_Bspm.getStemPostcondition());
 			IPredicate[] stemInterpolants;
-			if (stemCheck == LBool.UNSAT) {
-				m_TraceChecker.computeInterpolants(new TraceChecker.AllIntegers(), pu, INTERPOLATION.Craig_TreeInterpolation);
-				stemInterpolants = m_TraceChecker.getInterpolants();
+			if (emptyStem(m_Counterexample)) {
+				stemInterpolants = null;
 			} else {
-				throw new AssertionError();
+				m_TraceChecker = new TraceChecker(m_Bspm.getStemPrecondition(), 
+						m_Bspm.getStemPostcondition(), null, stem, m_SmtManager,
+						buchiModGlobalVarManager);
+				LBool stemCheck = m_TraceChecker.isCorrect();
+				if (stemCheck == LBool.UNSAT) {
+					m_TraceChecker.computeInterpolants(new TraceChecker.AllIntegers(), pu, INTERPOLATION.Craig_TreeInterpolation);
+					stemInterpolants = m_TraceChecker.getInterpolants();
+				} else {
+					throw new AssertionError("wrong predicates");
+				}
 			}
 
 			m_TraceChecker = new TraceChecker(m_Bspm.getRankEqAndSi(), 
@@ -813,7 +813,12 @@ public class BuchiCegarLoop {
 				break;
 			case ScroogeNondeterminism:
 			case Deterministic:
-				Set<IPredicate> cannibalizedStemInterpolants = pu.cannibalizeAll(stemInterpolants);
+				Set<IPredicate> cannibalizedStemInterpolants;
+				if (emptyStem(m_Counterexample)) {
+					cannibalizedStemInterpolants = Collections.emptySet();
+				} else {
+					cannibalizedStemInterpolants = pu.cannibalizeAll(stemInterpolants);
+				}
 				Set<IPredicate> cannibalizedLoopInterpolants = pu.cannibalizeAll(loopInterpolants);
 				cannibalizedLoopInterpolants.addAll(pu.cannibalize(m_Bspm.getRankEqAndSi().getFormula()));
 				if (m_CannibalizeLoop) {
@@ -825,7 +830,7 @@ public class BuchiCegarLoop {
 						m_SmtManager, ec, m_Bspm.getStemPrecondition(), 
 						cannibalizedStemInterpolants, m_Bspm.getHondaPredicate(), 
 						cannibalizedLoopInterpolants, 
-						stem.getSymbol(stem.length()-1), 
+						emptyStem(m_Counterexample) ? null : stem.getSymbol(stem.length()-1), 
 						loop.getSymbol(loop.length()-1), m_Abstraction, 
 						m_ScroogeNondeterminismStem, m_ScroogeNondeterminismLoop, 
 						m_BouncerStem, m_BouncerLoop);
@@ -925,13 +930,18 @@ public class BuchiCegarLoop {
 					new NestedWordAutomaton<CodeBlock, IPredicate>(abstraction.getInternalAlphabet(), 
 							abstraction.getCallAlphabet(), abstraction.getReturnAlphabet(), 
 							abstraction.getStateFactory());
-			result.addState(true, false, precondition);
-			for (int i=0; i<stemInterpolants.length; i++) {
-				addState(stemInterpolants[i], result);
-				addTransition(i, precondition, stemInterpolants, honda, stem, result);
+			boolean emptyStem = emptyStem(m_Counterexample);
+			if (emptyStem) {
+				result.addState(true, true, honda);
+			} else {
+				result.addState(true, false, precondition);
+				for (int i=0; i<stemInterpolants.length; i++) {
+					addState(stemInterpolants[i], result);
+					addTransition(i, precondition, stemInterpolants, honda, stem, result);
+				}
+				result.addState(false, true, honda);
+				addTransition(stemInterpolants.length, precondition, stemInterpolants, honda, stem, result);
 			}
-			result.addState(false, true, honda);
-			addTransition(stemInterpolants.length, precondition, stemInterpolants, honda, stem, result);
 			for (int i=0; i<loopInterpolants.length; i++) {
 				addState(loopInterpolants[i], result);
 				addTransition(i, honda, loopInterpolants, honda, loop, result);
