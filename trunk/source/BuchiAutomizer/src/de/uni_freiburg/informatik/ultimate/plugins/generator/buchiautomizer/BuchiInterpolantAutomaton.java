@@ -11,6 +11,7 @@ import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.automata.AtsDefinitionPrinter;
 import de.uni_freiburg.informatik.ultimate.automata.Word;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomatonCache;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NwaCacheBookkeeping;
@@ -82,7 +83,7 @@ public class BuchiInterpolantAutomaton implements
 			IPredicate precondition, Set<IPredicate> stemInterpolants, 
 			IPredicate hondaPredicate, 
 			Set<IPredicate> loopInterpolants, CodeBlock hondaEntererStem, CodeBlock hondaEntererLoop,
-			INestedWordAutomatonSimple<CodeBlock, IPredicate> abstraction,
+			INestedWordAutomaton<CodeBlock, IPredicate> abstraction,
 			boolean scroogeNondeterminismStem, boolean scroogeNondeterminismLoop,
 			boolean hondaBouncerStem, boolean hondaBouncerLoop) {
 		super();
@@ -552,7 +553,7 @@ public class BuchiInterpolantAutomaton implements
 	private void computeSuccInternal(IPredicate resPred, CodeBlock letter) {
 		if (m_ResultStemPredicates.contains(resPred)) {
 			boolean leadsToHonda = false;
-			if (!m_HondaBouncerStem || letter.equals(m_HondaEntererStem)) {
+			if (mayEnterHondaFromStem(letter)) {
 				LBool sat = computeSuccInternalSolver(resPred, letter, m_HondaPredicate);
 				if (sat == LBool.UNSAT) {
 					leadsToHonda = true;
@@ -569,7 +570,7 @@ public class BuchiInterpolantAutomaton implements
 		} else {
 			assert (m_ResultLoopPredicates.contains(resPred) || resPred == m_HondaPredicate);
 			boolean leadsToHonda = false;
-			if (!m_HondaBouncerLoop || letter.equals(m_HondaEntererLoop)) {
+			if (mayEnterHondaFromLoop(letter)) {
 				LBool sat = computeSuccInternalSolver(resPred, letter, m_HondaPredicate);
 				if (sat == LBool.UNSAT) {
 					m_Result.addInternalTransition(resPred, letter, m_HondaPredicate);
@@ -585,6 +586,24 @@ public class BuchiInterpolantAutomaton implements
 			}
 		}
 
+	}
+
+	/**
+	 * Do we allow that a transition labeled with letter has the honda as target.
+	 * @param letter
+	 * @return
+	 */
+	protected boolean mayEnterHondaFromLoop(CodeBlock letter) {
+		return !m_HondaBouncerLoop || letter.equals(m_HondaEntererLoop);
+	}
+
+	/**
+	 * Do we allow that a transition labeled with letter has the honda as target.
+	 * @param letter
+	 * @return
+	 */
+	protected boolean mayEnterHondaFromStem(CodeBlock letter) {
+		return !m_HondaBouncerStem || letter.equals(m_HondaEntererStem);
 	}
 	
 	/**
@@ -620,7 +639,7 @@ public class BuchiInterpolantAutomaton implements
 	private void computeSuccCall(IPredicate resPred, CodeBlock letter) {
 		if (m_ResultStemPredicates.contains(resPred)) {
 			boolean leadsToHonda = false;
-			if (!m_HondaBouncerStem || letter.equals(m_HondaEntererStem)) {
+			if (mayEnterHondaFromStem(letter)) {
 				LBool sat = computeSuccCallSolver(resPred, letter, m_HondaPredicate);
 				if (sat == LBool.UNSAT) {
 					leadsToHonda = true;
@@ -638,7 +657,7 @@ public class BuchiInterpolantAutomaton implements
 		} else {
 			assert (m_ResultLoopPredicates.contains(resPred) || resPred == m_HondaPredicate);
 			boolean leadsToHonda = false;
-			if (!m_HondaBouncerLoop || letter.equals(m_HondaEntererLoop)) {
+			if (mayEnterHondaFromLoop(letter)) {
 				LBool sat = computeSuccCallSolver(resPred, letter, m_HondaPredicate);
 				if (sat == LBool.UNSAT) {
 					m_Result.addCallTransition(resPred, letter, m_HondaPredicate);
@@ -689,7 +708,7 @@ public class BuchiInterpolantAutomaton implements
 	private void computeSuccReturn(IPredicate resPred, IPredicate resHier, CodeBlock letter) {
 		if (m_ResultStemPredicates.contains(resPred)) {
 			boolean leadsToHonda = false;
-			if (!m_HondaBouncerStem || letter.equals(m_HondaEntererStem)) {
+			if (mayEnterHondaFromStem(letter)) {
 				LBool sat = computeSuccReturnSolver(resPred, resHier, letter, m_HondaPredicate);
 				if (sat == LBool.UNSAT) {
 					leadsToHonda = true;
@@ -706,7 +725,7 @@ public class BuchiInterpolantAutomaton implements
 		} else {
 			assert (m_ResultLoopPredicates.contains(resPred) || resPred == m_HondaPredicate);
 			boolean leadsToHonda = false;
-			if (!m_HondaBouncerLoop || letter.equals(m_HondaEntererLoop)) {
+			if (mayEnterHondaFromLoop(letter)) {
 				LBool sat = computeSuccReturnSolver(resPred, resHier, letter, m_HondaPredicate);
 				if (sat == LBool.UNSAT) {
 					m_Result.addReturnTransition(resPred, resHier, letter, m_HondaPredicate);
