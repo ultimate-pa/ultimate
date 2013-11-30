@@ -828,7 +828,7 @@ public class BuchiCegarLoop {
 							cannibalizedLoopInterpolants, m_Bspm, pu, m_SmtManager, buchiModGlobalVarManager);
 					cannibalizedLoopInterpolants = lc.getResult();
 				}
-				interpolAutomatonUsedInRefinement = new BuchiInterpolantAutomaton(
+				interpolAutomatonUsedInRefinement = new BuchiInterpolantAutomatonWithHandle(
 						m_SmtManager, ec, m_Bspm.getStemPrecondition(), 
 						cannibalizedStemInterpolants, m_Bspm.getHondaPredicate(), 
 						cannibalizedLoopInterpolants, 
