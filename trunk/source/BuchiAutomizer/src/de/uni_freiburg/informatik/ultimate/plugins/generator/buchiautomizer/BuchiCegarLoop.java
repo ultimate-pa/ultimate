@@ -409,7 +409,6 @@ public class BuchiCegarLoop {
 			if (ec.getResult()) {
 				return true;
 			} else {
-				GetHandle<CodeBlock, IPredicate> gh = (new GetHandle<CodeBlock, IPredicate>(m_Abstraction));
 				m_Counterexample = ec.getAcceptingNestedLassoRun();
 				assert m_Counterexample.getLoop().getLength() > 1;
 				return false;

@@ -51,7 +51,7 @@ public class BuchiInterpolantAutomatonWithHandle extends
 
 	@Override
 	protected boolean mayEnterHondaFromStem(CodeBlock letter) {
-		if (m_Position < m_Handle.getLength() - 1) {
+		if (m_Handle != null && m_Position < m_Handle.getLength() - 1) {
 			assert letter.equals(m_Handle.getWord().getSymbolAt(m_Position));
 			m_Position++;
 			return false;
