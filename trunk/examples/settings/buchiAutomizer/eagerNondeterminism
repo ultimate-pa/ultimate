@@ -1,3 +1,7 @@
+\!/instance/CACSL2BoogieTranslator=
+file_export_version=3.0
+@CACSL2BoogieTranslator=0.0.1
+/instance/CACSL2BoogieTranslator/Checked\ method.\ Library\ mode\ if\ empty.=main
 #Fri Nov 15 04:24:38 CET 2013
 file_export_version=3.0
 /instance/BlockEncoding/Minimize\ Call\ and\ Return\ Edges=true
