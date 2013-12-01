@@ -828,7 +828,8 @@ public class BuchiCegarLoop {
 					cannibalizedLoopInterpolants = lc.getResult();
 				}
 				interpolAutomatonUsedInRefinement = new BuchiInterpolantAutomaton(
-						m_SmtManager, ec, m_Bspm.getStemPrecondition(), 
+						m_SmtManager, ec,  emptyStem(m_Counterexample),
+						m_Bspm.getStemPrecondition(), 
 						cannibalizedStemInterpolants, m_Bspm.getHondaPredicate(), 
 						cannibalizedLoopInterpolants, 
 						emptyStem(m_Counterexample) ? null : stem.getSymbol(stem.length()-1), 

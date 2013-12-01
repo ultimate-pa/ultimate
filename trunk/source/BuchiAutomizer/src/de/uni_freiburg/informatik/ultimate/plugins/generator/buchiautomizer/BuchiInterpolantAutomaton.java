@@ -80,6 +80,7 @@ public class BuchiInterpolantAutomaton implements
 	
 
 	public BuchiInterpolantAutomaton(SmtManager smtManager, EdgeChecker edgeChecker,
+			boolean emtpyStem,
 			IPredicate precondition, Set<IPredicate> stemInterpolants, 
 			IPredicate hondaPredicate, 
 			Set<IPredicate> loopInterpolants, CodeBlock hondaEntererStem, CodeBlock hondaEntererLoop,
@@ -108,22 +109,29 @@ public class BuchiInterpolantAutomaton implements
 		m_InputLoopPredicates = new HashSet<IPredicate>();
 		m_ResultStemPredicates = new HashSet<IPredicate>();
 		m_ResultLoopPredicates = new HashSet<IPredicate>();
-		m_InputStemPredicates.add(precondition);
-		m_ResultStemPredicates.add(precondition);
-		m_Result.addState(true, false, precondition);
-		m_InputSuccessorCache.addState(true, false, precondition);
-		m_RejectionCache.addState(true, false, precondition);
-		for (IPredicate stemPredicate : stemInterpolants) {
-			if (!m_InputStemPredicates.contains(stemPredicate)) {
-				m_InputStemPredicates.add(stemPredicate);
-				m_InputSuccessorCache.addState(false, false, stemPredicate);
-				m_RejectionCache.addState(false, false, stemPredicate);
+		if (emtpyStem) {
+			m_HondaPredicate = hondaPredicate;
+			m_Result.addState(true, true, hondaPredicate);
+			m_InputSuccessorCache.addState(true, true, hondaPredicate);
+			m_RejectionCache.addState(true, true, hondaPredicate);
+		} else {
+			m_InputStemPredicates.add(precondition);
+			m_ResultStemPredicates.add(precondition);
+			m_Result.addState(true, false, precondition);
+			m_InputSuccessorCache.addState(true, false, precondition);
+			m_RejectionCache.addState(true, false, precondition);
+			for (IPredicate stemPredicate : stemInterpolants) {
+				if (!m_InputStemPredicates.contains(stemPredicate)) {
+					m_InputStemPredicates.add(stemPredicate);
+					m_InputSuccessorCache.addState(false, false, stemPredicate);
+					m_RejectionCache.addState(false, false, stemPredicate);
+				}
 			}
+			m_HondaPredicate = hondaPredicate;
+			m_Result.addState(false, true, hondaPredicate);
+			m_InputSuccessorCache.addState(false, true, hondaPredicate);
+			m_RejectionCache.addState(false, true, hondaPredicate);
 		}
-		m_HondaPredicate = hondaPredicate;
-		m_Result.addState(false, true, hondaPredicate);
-		m_InputSuccessorCache.addState(false, true, hondaPredicate);
-		m_RejectionCache.addState(false, true, hondaPredicate);
 		for (IPredicate loopPredicate : loopInterpolants) {
 			if (!m_InputLoopPredicates.contains(loopPredicate)) {
 				m_InputLoopPredicates.add(loopPredicate);

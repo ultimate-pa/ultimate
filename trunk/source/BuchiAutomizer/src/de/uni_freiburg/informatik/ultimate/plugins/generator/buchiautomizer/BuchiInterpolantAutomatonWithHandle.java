@@ -26,7 +26,7 @@ public class BuchiInterpolantAutomatonWithHandle extends
 	
 
 	public BuchiInterpolantAutomatonWithHandle(SmtManager smtManager,
-			EdgeChecker edgeChecker, IPredicate precondition,
+			EdgeChecker edgeChecker, boolean emptyStem, IPredicate precondition,
 			Set<IPredicate> stemInterpolants, IPredicate hondaPredicate,
 			Set<IPredicate> loopInterpolants, CodeBlock hondaEntererStem,
 			CodeBlock hondaEntererLoop,
@@ -34,7 +34,7 @@ public class BuchiInterpolantAutomatonWithHandle extends
 			boolean scroogeNondeterminismStem,
 			boolean scroogeNondeterminismLoop, boolean hondaBouncerStem,
 			boolean hondaBouncerLoop) {
-		super(smtManager, edgeChecker, precondition, stemInterpolants,
+		super(smtManager, edgeChecker, emptyStem, precondition, stemInterpolants,
 				hondaPredicate, loopInterpolants, hondaEntererStem,
 				hondaEntererLoop, abstraction, scroogeNondeterminismStem,
 				scroogeNondeterminismLoop, hondaBouncerStem, hondaBouncerLoop);
