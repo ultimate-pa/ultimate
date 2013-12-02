@@ -188,7 +188,7 @@ public class BuchiCegarLoop {
 
 		private Collection<SupportingInvariant> m_SiList;
 
-		private PredicateFactory defaultStateFactory;
+		private PredicateFactory m_DefaultStateFactory;
 
 		private HoareAnnotationFragments m_Haf;
 
@@ -235,7 +235,7 @@ public class BuchiCegarLoop {
 					m_RootNode.getRootAnnot().getBoogie2SMT());
 
 			this.m_Pref = taPrefs;
-			defaultStateFactory = new PredicateFactory(
+			m_DefaultStateFactory = new PredicateFactory(
 					m_SmtManager,
 					m_Pref);
 			
@@ -267,21 +267,29 @@ public class BuchiCegarLoop {
 			
 			m_RefineBuchi = new RefineBuchi(m_SmtManager, m_Bspm, 
 					buchiModGlobalVarManager, m_Pref.dumpAutomata(), 
-					m_Difference, defaultStateFactory, m_StateFactoryForRefinement, m_UseDoubleDeckers, 
+					m_Difference, m_DefaultStateFactory, m_StateFactoryForRefinement, m_UseDoubleDeckers, 
 					m_Pref.dumpPath(), m_CannibalizeLoop);
 			m_BuchiRefinementSettingSequence = new ArrayList<RefineBuchi.RefinementSetting>();
-			if (m_InterpolantAutomaton == BInterpolantAutomaton.Staged) {
+			switch (m_InterpolantAutomaton) {
+			case Staged:
 				m_BuchiRefinementSettingSequence.add( 
-						m_RefineBuchi.new RefinementSetting(BInterpolantAutomaton.Deterministic, true, false, false, false));
+						m_RefineBuchi.new RefinementSetting(BInterpolantAutomaton.Deterministic, true, true, false, false));
+				m_BuchiRefinementSettingSequence.add( 
+						m_RefineBuchi.new RefinementSetting(BInterpolantAutomaton.ScroogeNondeterminism, true, true, true, false));
 				m_BuchiRefinementSettingSequence.add( 
 						m_RefineBuchi.new RefinementSetting(BInterpolantAutomaton.ScroogeNondeterminism, true, false, true, false));
 				m_BuchiRefinementSettingSequence.add( 
 						m_RefineBuchi.new RefinementSetting(BInterpolantAutomaton.ScroogeNondeterminism, false, false, true, true));
-			} else if (m_InterpolantAutomaton == BInterpolantAutomaton.ScroogeNondeterminism) {
+				break;
+			case LassoAutomaton:
+			case EagerNondeterminism:
+			case ScroogeNondeterminism:
+			case Deterministic:
 				m_BuchiRefinementSettingSequence.add( 
 						m_RefineBuchi.new RefinementSetting(m_InterpolantAutomaton, m_BouncerStem, m_BouncerLoop, m_ScroogeNondeterminismStem, m_ScroogeNondeterminismLoop));
-			} else {
-				throw new UnsupportedOperationException();
+				break;
+			default:
+				throw new UnsupportedOperationException("unknown automaton");
 			}
 		}
 		
@@ -391,7 +399,7 @@ public class BuchiCegarLoop {
 						Collection<Set<IPredicate>> partition = BuchiCegarLoop.computePartition(m_Abstraction);
 						MinimizeSevpa<CodeBlock, IPredicate> minimizeOp = 
 								new MinimizeSevpa<CodeBlock, IPredicate>(m_Abstraction, partition, false, false, m_StateFactoryForRefinement);
-						assert (minimizeOp.checkResult(defaultStateFactory));
+						assert (minimizeOp.checkResult(m_DefaultStateFactory));
 						INestedWordAutomatonOldApi<CodeBlock, IPredicate> minimized = minimizeOp.getResult();
 						if (m_Pref.computeHoareAnnotation()) {
 							Map<IPredicate, IPredicate> oldState2newState = minimizeOp.getOldState2newState();
@@ -431,7 +439,11 @@ public class BuchiCegarLoop {
 		}
 		
 		INestedWordAutomatonOldApi<CodeBlock, IPredicate> refineBuchi() throws AutomataLibraryException {
+			int stage = 0;
 			for (RefinementSetting rs  : m_BuchiRefinementSettingSequence) {
+				if (stage > 1) {
+					s_Logger.info("Statistics: We needed stage " + stage);
+				}
 				INestedWordAutomatonOldApi<CodeBlock, IPredicate> newAbstraction = 
 						m_RefineBuchi.refineBuchi(m_Abstraction,m_Counterexample, m_Iteration, rs);
 				if (newAbstraction != null) {
@@ -453,6 +465,7 @@ public class BuchiCegarLoop {
 					
 					return newAbstraction;
 				}
+				stage++;
 			}
 			throw new AssertionError("no settings was sufficient");
 			
@@ -490,7 +503,7 @@ public class BuchiCegarLoop {
 				acceptingNodes = allNodes;
 			}
 			m_Abstraction = cFG2NestedWordAutomaton.getNestedWordAutomaton(
-					m_RootNode, defaultStateFactory, acceptingNodes);
+					m_RootNode, m_DefaultStateFactory, acceptingNodes);
 		}
 		
 		
