@@ -181,4 +181,15 @@ public abstract class AMinimizeNwa<LETTER, STATE>
 			throw new OperationCanceledException();
 		}
 	}
+	
+	/**
+	 * This method computes the capacity size for hash sets and hash maps
+	 * given the expected number of elements to avoid resizing. 
+	 * 
+	 * @param size expected number of elements before resizing
+	 * @return the parameter for initializing the hash structure
+	 */
+	protected final int computeHashCap(int size) {
+		return (int) (size * 1.34 + 1);
+	}
 }

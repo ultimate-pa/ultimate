@@ -41,7 +41,7 @@ public class MinimizeBrzozowski<LETTER, STATE>
 	 * Constructor.
 	 * 
 	 * @param operand input (finite, possibly nondeterministic) automaton
-	 * @throws OperationCanceledException 
+	 * @throws OperationCanceledException thrown when execution is cancelled
 	 */
 	public MinimizeBrzozowski(INestedWordAutomaton<LETTER, STATE> operand)
 			throws OperationCanceledException {
@@ -59,7 +59,7 @@ public class MinimizeBrzozowski<LETTER, STATE>
 	 * results in the minimal DFA.
 	 * 
 	 * @return the minimal DFA
-	 * @throws OperationCanceledException thrown when 
+	 * @throws OperationCanceledException thrown when execution is cancelled
 	 */
 	private INestedWordAutomaton<LETTER, STATE> minimize()
 			throws OperationCanceledException {
@@ -103,7 +103,7 @@ public class MinimizeBrzozowski<LETTER, STATE>
 			for (final OutgoingInternalTransition<LETTER, STATE> trans :
 					automaton.internalSuccessors(state)) {
 				reversed.addInternalTransition(
-						state, trans.getLetter(), trans.getSucc());
+						trans.getSucc(), trans.getLetter(), state);
 			}
 		}
 		

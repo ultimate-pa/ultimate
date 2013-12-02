@@ -34,7 +34,7 @@ public abstract class AMinimizeIncremental<LETTER, STATE>
 			final Interrupt interrupt) {
 		super(name, operand);
 		m_interrupt = interrupt;
-		assert (! m_interrupt.getStatus()) :
+		assert ((m_interrupt == null) || (! m_interrupt.getStatus())) :
 			"The interrupt tells to terminate right at the beginning.";
 	}
 }
