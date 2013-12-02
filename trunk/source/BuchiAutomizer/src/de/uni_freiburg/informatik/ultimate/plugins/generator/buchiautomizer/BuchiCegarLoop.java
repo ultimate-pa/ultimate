@@ -196,7 +196,9 @@ public class BuchiCegarLoop {
 
 		private BuchiModGlobalVarManager buchiModGlobalVarManager;
 		
-		private final TreeMap<Integer,Integer> m_ModuleSize = new TreeMap<Integer,Integer>();
+		private final TreeMap<Integer,Integer> m_ModuleSizeTrivial = new TreeMap<Integer,Integer>();
+		private final TreeMap<Integer,Integer> m_ModuleSizeDeterministic = new TreeMap<Integer,Integer>();
+		private final TreeMap<Integer,Integer> m_ModuleSizeNondeterministic = new TreeMap<Integer,Integer>();
 		private final TreeMap<Integer,Expression> m_RankingFunction = new TreeMap<Integer,Expression>();
 
 		
@@ -373,7 +375,6 @@ public class BuchiCegarLoop {
 
 							INestedWordAutomatonOldApi<CodeBlock, IPredicate> newAbstraction = refineBuchi();
 							m_Abstraction = newAbstraction;
-							m_ModuleSize.put(m_Iteration,m_RefineBuchi.getInterpolAutomatonUsedInRefinement().size());
 						}
 					} else {
 						throw new AssertionError();
@@ -434,10 +435,27 @@ public class BuchiCegarLoop {
 				INestedWordAutomatonOldApi<CodeBlock, IPredicate> newAbstraction = 
 						m_RefineBuchi.refineBuchi(m_Abstraction,m_Counterexample, m_Iteration, rs);
 				if (newAbstraction != null) {
+					switch (rs.getInterpolantAutomaton()) {
+					case Deterministic:
+					case LassoAutomaton:
+						m_ModuleSizeDeterministic.put(m_Iteration,m_RefineBuchi.getInterpolAutomatonUsedInRefinement().size());
+						break;
+					case ScroogeNondeterminism:
+					case EagerNondeterminism:
+						m_ModuleSizeNondeterministic.put(m_Iteration,m_RefineBuchi.getInterpolAutomatonUsedInRefinement().size());
+						break;
+					default:
+						throw new AssertionError("unsupported");
+					}
+					if (rs.getInterpolantAutomaton() == BInterpolantAutomaton.Deterministic) {
+						
+					} else if (rs.getInterpolantAutomaton() == BInterpolantAutomaton.ScroogeNondeterminism)
+					
 					return newAbstraction;
 				}
 			}
 			throw new AssertionError("no settings was sufficient");
+			
 		}
 
 
@@ -558,7 +576,7 @@ public class BuchiCegarLoop {
 				String filename = "interpolAutomatonUsedInRefinement"+m_Iteration+"after";
 				writeAutomatonToFile(m_InterpolAutomaton, m_Pref.dumpPath(), filename);
 			}
-			m_ModuleSize.put(m_Iteration,m_InterpolAutomaton.size());
+			m_ModuleSizeTrivial.put(m_Iteration,m_InterpolAutomaton.size());
 			assert (new InductivityCheck(m_InterpolAutomaton, ec, false, true)).getResult();
 			m_Abstraction = diff.getResult();
 			m_ConcatenatedCounterexample = null;
@@ -836,8 +854,19 @@ public class BuchiCegarLoop {
 					path+"/"+filename, Labeling.TOSTRING,"",automaton);
 		}
 
-		public TreeMap<Integer, Integer> getModuleSize() {
-			return m_ModuleSize;
+
+		
+		
+		public TreeMap<Integer, Integer> getModuleSizeTrivial() {
+			return m_ModuleSizeTrivial;
+		}
+
+		public TreeMap<Integer, Integer> getModuleSizeDeterministic() {
+			return m_ModuleSizeDeterministic;
+		}
+
+		public TreeMap<Integer, Integer> getModuleSizeNondeterministic() {
+			return m_ModuleSizeNondeterministic;
 		}
 
 		public TreeMap<Integer, Expression> getRankingFunction() {

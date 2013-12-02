@@ -226,20 +226,42 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 	
 
 	private String statistics(BuchiCegarLoop bcl) {
-		TreeMap<Integer, Integer> ms = bcl.getModuleSize();
+//		TreeMap<Integer, Integer> ms = bcl.getModuleSize();
+		int modules = bcl.getModuleSizeTrivial().size() + bcl.getModuleSizeDeterministic().size() + bcl.getModuleSizeNondeterministic().size();
 		TreeMap<Integer, Expression> rf = bcl.getRankingFunction();
-		if (ms.isEmpty()) {
+		if (modules == 0) {
 			return "Trivially terminating. There is no loop in your program.";
 		}
 		int modulesWithTrivialRankingFunction = 0;
 		int maxNumberOfStatesOfModuleWithTrivialRankingFunction = 0;
 		StringBuilder sb = new StringBuilder();
 		sb.append("Your program was decomposed into ");
-		sb.append(ms.keySet().size());
+		sb.append(modules);
 		sb.append(" modules. ");
-		for (Entry<Integer, Integer> entry  : ms.entrySet()) {
+		sb.append("(");
+		sb.append(bcl.getModuleSizeTrivial().size());
+		sb.append(" trivial, ");
+		sb.append(bcl.getModuleSizeDeterministic().size());
+		sb.append(" deterministic, ");
+		sb.append(bcl.getModuleSizeNondeterministic().size());
+		sb.append(" nondeterministic)");
+		for (Entry<Integer, Integer> entry  : bcl.getModuleSizeDeterministic().entrySet()) {
 			if (rf.containsKey(entry.getKey())) {
-				sb.append("One module has ranking function ");
+				sb.append("One deterministic module has ranking function ");
+				sb.append(backtranslateExprWorkaround(rf.get(entry.getKey())));
+				sb.append(" and consists of ");
+				sb.append(entry.getValue());
+				sb.append(" states. ");
+			} else {
+				modulesWithTrivialRankingFunction++;
+				if (entry.getValue() > maxNumberOfStatesOfModuleWithTrivialRankingFunction) {
+					maxNumberOfStatesOfModuleWithTrivialRankingFunction = entry.getValue();
+				}
+			}
+		}
+		for (Entry<Integer, Integer> entry  : bcl.getModuleSizeNondeterministic().entrySet()) {
+			if (rf.containsKey(entry.getKey())) {
+				sb.append("One nondeterministic module has ranking function ");
 				sb.append(backtranslateExprWorkaround(rf.get(entry.getKey())));
 				sb.append(" and consists of ");
 				sb.append(entry.getValue());
