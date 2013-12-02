@@ -56,6 +56,6 @@ public class PreferenceInitializer extends UltimatePreferenceInitializer {
 	public static final String LABEL_CannibalizeLoop = "Cannibalize loop";
 	public static final String LABEL_LoopUnwindings = "Max number of loop unwindings";
 	
-	public enum BInterpolantAutomaton { LassoAutomaton, EagerNondeterminism, ScroogeNondeterminism, Deterministic };
+	public enum BInterpolantAutomaton { LassoAutomaton, EagerNondeterminism, ScroogeNondeterminism, Deterministic, Staged };
 	
 }
