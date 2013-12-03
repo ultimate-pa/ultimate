@@ -1,7 +1,7 @@
 //#rTermination
 /*
  * Date: 2012-03-05
- * Author: leikej@informatik.uni-freiburg.de, heizmann@informatik.uni-freiburg.de
+ * Author: leike@informatik.uni-freiburg.de, heizmann@informatik.uni-freiburg.de
  *
  * Does not have a linear ranking function, but two succesive loop iterations
  * have a linear ranking function.

@@ -1,7 +1,7 @@
 //#rTermination
 /*
  * Date: 2013-01-15
- * Author: leikej@informatik.uni-freiburg.de
+ * Author: leike@informatik.uni-freiburg.de
  *
  * Ranking function: f(y) = y
  * with supporting invariant x8 >= x0 + 1.

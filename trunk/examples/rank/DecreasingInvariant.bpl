@@ -1,7 +1,7 @@
 //#rTermination
 /*
  * Date: 2013-01-09
- * Author: leikej@informatik.uni-freiburg.de
+ * Author: leike@informatik.uni-freiburg.de
  *
  * Ranking function: f(x, y, oldy) = x;
  * needs the loop invariant y >= 1, which decreases.

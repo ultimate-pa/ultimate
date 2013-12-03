@@ -1,7 +1,7 @@
 //#rTermination
 /*
  * Date: 2012-02-12
- * Author: leikej@informatik.uni-freiburg.de
+ * Author: leike@informatik.uni-freiburg.de
  *
  * Does not terminate for 0 <= x <= 10
  * due to rounding issues with integer division.

@@ -1,7 +1,7 @@
 //#rTerminationDerivable
 /*
  * Date: 2012-02-12
- * Author: leikej@informatik.uni-freiburg.de
+ * Author: leike@informatik.uni-freiburg.de
  *
  * Ranking function: f(x, y) = 2x + y.
  */

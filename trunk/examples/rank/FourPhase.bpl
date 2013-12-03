@@ -1,7 +1,7 @@
 //#rTerminationDerivable
 /*
  * Date: 2012-08-10
- * Author: leikej@informatik.uni-freiburg.de
+ * Author: leike@informatik.uni-freiburg.de
  *
  * This program has the following multiphase ranking function:
  * f_0(c, x, y, z, w) = w + 1

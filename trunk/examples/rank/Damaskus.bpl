@@ -1,7 +1,7 @@
 //#rTermination
 /*
  * Date: 2012-07-31
- * Author: leikej@informatik.uni-freiburg.de
+ * Author: leike@informatik.uni-freiburg.de
  *
  */
 

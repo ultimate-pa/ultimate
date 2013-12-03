@@ -1,7 +1,7 @@
 //#rTerminationDerivable
 /*
  * Date: 2012-07-06
- * Author: leikej@informatik.uni-freiburg.de
+ * Author: leike@informatik.uni-freiburg.de
  *
  * Ranking function: f(x) = 0.
  * Loop iteration is impossible.

@@ -1,7 +1,7 @@
 //#rTerminationDerivable
 /*
  * Date: 2012-04-02
- * Author: leikej@informatik.uni-freiburg.de
+ * Author: leike@informatik.uni-freiburg.de
  *
  * Test case for the correct handling of disjunctions in the loop condition
  */

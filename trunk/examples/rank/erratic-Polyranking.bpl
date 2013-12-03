@@ -1,7 +1,7 @@
 //#rTerminationDerivable
 /*
  * Date: 21.09.2013
- * Author: leikej@informatik.uni-freiburg.de
+ * Author: leike@informatik.uni-freiburg.de
  *
  * This example is from
  * A. R. Bradley, Z. Manna, and H. B. Sipma.

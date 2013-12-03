@@ -1,10 +1,11 @@
 //#rTerminationDerivable
 /*
  * Date: 2013-03-06
- * Author: leikej@informatik.uni-freiburg.de
+ * Author: leike@informatik.uni-freiburg.de
  *
  * Ranking function: f(x) = x
  * with supporting invariant y >= 0
+ * (this supporting invariant is not non-decreasing)
  *
  */
 

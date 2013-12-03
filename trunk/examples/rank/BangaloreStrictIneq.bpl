@@ -1,7 +1,7 @@
 //#rTerminationDerivable
 /*
  * Date: 2013-01-11
- * Author: leikej@informatik.uni-freiburg.de
+ * Author: leike@informatik.uni-freiburg.de
  *
  * Ranking function: f(x, y) = x
  * provided with the supporting invariant y > 0.

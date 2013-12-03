@@ -1,7 +1,7 @@
 //#rTerminationError
 /*
  * Date: 2012-02-12
- * Author: leikej@informatik.uni-freiburg.de
+ * Author: leike@informatik.uni-freiburg.de
  *
  * Termination unknown as of this date.
  */
