@@ -11,8 +11,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.logic.UtilExperimental;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.preferences.Preferences;
-
 
 /**
  * This class applies the equivalence transformation given by
@@ -201,7 +199,8 @@ public class MotzkinTransformation extends InstanceCounting {
 					summands.add(s);
 				}
 			}
-			Term sum = UtilExperimental.sum(m_script, summands.toArray(new Term[0]));
+			Term sum = UtilExperimental.sum(m_script, m_script.sort("Real"),
+					summands.toArray(new Term[0]));
 			conjunction.add(m_script.term("=", sum, m_script.decimal("0")));
 		}
 		
@@ -215,7 +214,8 @@ public class MotzkinTransformation extends InstanceCounting {
 					summands.add(s);
 				}
 			}
-			Term sum = UtilExperimental.sum(m_script, summands.toArray(new Term[0]));
+			Term sum = UtilExperimental.sum(m_script, m_script.sort("Real"),
+					summands.toArray(new Term[0]));
 			conjunction.add(m_script.term("<=", sum, m_script.decimal("0")));
 		}
 		
@@ -230,7 +230,8 @@ public class MotzkinTransformation extends InstanceCounting {
 					summands.add(s);
 				}
 			}
-			Term sum = UtilExperimental.sum(m_script, summands.toArray(new Term[0]));
+			Term sum = UtilExperimental.sum(m_script, m_script.sort("Real"),
+					summands.toArray(new Term[0]));
 			Term classical = m_script.term("<", sum, m_script.decimal("0"));
 			
 			// μ ≠ 0   -- strict inequalities
@@ -242,7 +243,8 @@ public class MotzkinTransformation extends InstanceCounting {
 					summands.add(m_coefficients.get(i));
 				}
 			}
-			sum = UtilExperimental.sum(m_script, summands.toArray(new Term[0]));
+			sum = UtilExperimental.sum(m_script, m_script.sort("Real"),
+					summands.toArray(new Term[0]));
 			Term non_classical = m_script.term(">", sum, m_script.decimal("0"));
 			
 			conjunction.add(Util.or(m_script, classical, non_classical));

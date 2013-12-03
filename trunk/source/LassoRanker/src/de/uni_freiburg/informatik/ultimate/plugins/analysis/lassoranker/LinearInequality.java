@@ -76,7 +76,7 @@ public class LinearInequality {
 				for (int i = 1; i < appt.getParameters().length; ++i)
 					li.add(fromTerm(script, appt.getParameters()[i]));
 			} else if (appt.getFunction().getName() == "-") {
-				if (appt.getFunction().getParameterCount() == 1) {
+				if (appt.getFunction().getParameterSorts().length == 1) {
 					// unary minus
 					li = fromTerm(script, appt.getParameters()[0]);
 					li.mult(Rational.MONE);
