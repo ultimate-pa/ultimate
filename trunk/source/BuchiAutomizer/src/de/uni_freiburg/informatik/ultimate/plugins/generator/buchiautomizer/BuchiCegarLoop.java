@@ -273,7 +273,7 @@ public class BuchiCegarLoop {
 			switch (m_InterpolantAutomaton) {
 			case Staged:
 				m_BuchiRefinementSettingSequence.add( 
-						m_RefineBuchi.new RefinementSetting(BInterpolantAutomaton.Deterministic, true, true, false, false));
+						m_RefineBuchi.new RefinementSetting(BInterpolantAutomaton.Deterministic, true, false, false, false));
 				m_BuchiRefinementSettingSequence.add( 
 						m_RefineBuchi.new RefinementSetting(BInterpolantAutomaton.ScroogeNondeterminism, true, true, true, false));
 				m_BuchiRefinementSettingSequence.add( 
