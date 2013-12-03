@@ -9,8 +9,9 @@ import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.logic.*;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.Preferences.UseDivision;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.exceptions.TermException;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.preferences.Preferences;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.preferences.Preferences.UseDivision;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.preprocessors.DNF;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.preprocessors.InequalityConverter;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.preprocessors.IntegralHull;
@@ -58,8 +59,7 @@ public class Synthesizer {
 	
 	private Collection<TermVariable> m_auxVars;
 	
-	public int num_strict_invariants;
-	public int num_non_strict_invariants;
+	public final Preferences m_preferences;
 	
 	/**
 	 * Constructor for the ranking function synthesizer.
@@ -69,18 +69,19 @@ public class Synthesizer {
 	 * @throws Exception If something goes wrong ;)
 	 */
 	public Synthesizer(Script old_script, TransFormula stem_transition,
-			TransFormula loop_transition) throws Exception {
+			TransFormula loop_transition, Preferences preferences)
+					throws Exception {
+		m_preferences = preferences;
+		
 		m_old_script = old_script;
-		m_script = SMTSolver.newScript();
+		m_script = SMTSolver.newScript(preferences.smt_solver_command,
+				preferences.annotate_terms);
 		
 		m_auxVars = new ArrayList<TermVariable>();
 		m_supporting_invariants = new ArrayList<SupportingInvariant>();
 		
 		m_stem_transition = stem_transition;
 		m_loop_transition = loop_transition;
-		
-		num_strict_invariants = Preferences.num_strict_invariants;
-		num_non_strict_invariants = Preferences.num_non_strict_invariants;
 		
 		s_Logger.debug("Stem: " + stem_transition);
 		s_Logger.debug("Loop: " + loop_transition);
@@ -127,7 +128,7 @@ public class Synthesizer {
 		
 		// Do preprocessing
 		PreProcessor[] preprocessors = {
-				new RewriteDivision(),
+				new RewriteDivision(m_preferences.use_division),
 				new RewriteBooleans(),
 				new RewriteEquality(),
 				new DNF()
@@ -142,7 +143,7 @@ public class Synthesizer {
 		Collection<Term> stem_clauses = toClauses(stem_term);
 		Collection<Term> loop_clauses = toClauses(loop_term);
 		
-		if (!Preferences.enable_disjunction &&
+		if (!m_preferences.enable_disjunction &&
 				(stem_clauses.size() > 1 || loop_clauses.size() > 1)) {
 			throw new UnsupportedOperationException(
 					"Support for non-conjunctive lasso programs " +
@@ -153,7 +154,7 @@ public class Synthesizer {
 		m_stem = new ArrayList<List<LinearInequality>>();
 		for (Term clause : stem_clauses) {
 			List<LinearInequality> lli = InequalityConverter.convert(m_old_script, clause);
-			if (Preferences.compute_integral_hull) {
+			if (m_preferences.compute_integral_hull) {
 				lli.addAll(IntegralHull.compute(lli));
 			}
 			m_stem.add(lli);
@@ -161,7 +162,7 @@ public class Synthesizer {
 		m_loop = new ArrayList<List<LinearInequality>>();
 		for (Term clause : loop_clauses) {
 			List<LinearInequality> lli = InequalityConverter.convert(m_old_script, clause);
-			if (Preferences.compute_integral_hull) {
+			if (m_preferences.compute_integral_hull) {
 				lli.addAll(IntegralHull.compute(lli));
 			}
 			m_loop.add(lli);
@@ -177,13 +178,14 @@ public class Synthesizer {
 	 * Issues a bunch of logger infos and warnings.
 	 */
 	private void checkPreferences() {
-		assert(num_strict_invariants >= 0);
-		assert(num_non_strict_invariants >= 0);
-		if (num_strict_invariants == 0 && num_non_strict_invariants == 0) {
+		assert(m_preferences.num_strict_invariants >= 0);
+		assert(m_preferences.num_non_strict_invariants >= 0);
+		if (m_preferences.num_strict_invariants == 0 &&
+				m_preferences.num_non_strict_invariants == 0) {
 			s_Logger.warn("Generation of supporting invariants is disabled.");
 		}
-		if (Preferences.use_division == UseDivision.C_STYLE
-				&& !Preferences.enable_disjunction) {
+		if (m_preferences.use_division == UseDivision.C_STYLE
+				&& !m_preferences.enable_disjunction) {
 			s_Logger.warn("Using C-style integer division, but support for " +
 				"disjunctions is disabled.");
 		}
@@ -238,14 +240,15 @@ public class Synthesizer {
 		for (List<LinearInequality> loopConj : m_loop) {
 			for (int m = 0; m < templateConstraints.size(); ++m) {
 				MotzkinTransformation motzkin =
-						new MotzkinTransformation(m_script);
+						new MotzkinTransformation(m_script,
+								m_preferences.annotate_terms);
 				motzkin.annotation = annotations.get(m);
 				motzkin.add_inequalities(loopConj);
 				motzkin.add_inequalities(templateConstraints.get(m));
 				
 				// Add supporting invariants
-				assert(num_strict_invariants >= 0);
-				for (int i = 0; i < num_strict_invariants; ++ i) {
+				assert(m_preferences.num_strict_invariants >= 0);
+				for (int i = 0; i < m_preferences.num_strict_invariants; ++i) {
 					SupportingInvariantGenerator sig =
 							new SupportingInvariantGenerator(m_script, siVars,
 									true);
@@ -253,8 +256,9 @@ public class Synthesizer {
 					motzkin.add_inequality(sig.generate(
 							m_loop_transition.getInVars()));
 				}
-				assert(num_non_strict_invariants >= 0);
-				for (int i = 0; i < num_non_strict_invariants; ++ i) {
+				assert(m_preferences.num_non_strict_invariants >= 0);
+				for (int i = 0; i < m_preferences.num_non_strict_invariants;
+						++i) {
 					SupportingInvariantGenerator sig =
 							new SupportingInvariantGenerator(m_script, siVars,
 									false);
@@ -274,7 +278,8 @@ public class Synthesizer {
 			// stem(x0) -> si(x0)
 			for (List<LinearInequality> stemConj : m_stem) {
 				MotzkinTransformation motzkin =
-						new MotzkinTransformation(m_script);
+						new MotzkinTransformation(m_script,
+								m_preferences.annotate_terms);
 				motzkin.annotation = "invariant initiation";
 				motzkin.add_inequalities(stemConj);
 				LinearInequality li =
@@ -287,7 +292,8 @@ public class Synthesizer {
 			// si(x) /\ loop(x, x') -> si(x')
 			for (List<LinearInequality> loopConj : m_loop) {
 				MotzkinTransformation motzkin =
-						new MotzkinTransformation(m_script);
+						new MotzkinTransformation(m_script,
+								m_preferences.annotate_terms);
 				motzkin.annotation = "invariant consecution";
 				motzkin.add_inequalities(loopConj);
 				motzkin.add_inequality(sig.generate(
@@ -295,7 +301,7 @@ public class Synthesizer {
 				LinearInequality li = sig.generate(
 						m_loop_transition.getOutVars()); // ~si(x')
 				li.needs_motzkin_coefficient =
-						!Preferences.nondecreasing_invariants;
+						!m_preferences.only_nondecreasing_invariants;
 				li.negate();
 				motzkin.add_inequality(li);
 //				s_Logger.debug(motzkin);
@@ -353,8 +359,8 @@ public class Synthesizer {
 		if (siVars.isEmpty()) {
 			s_Logger.info("There is no variables for invariants; "
 					+ "disabling supporting invariant generation.");
-			num_strict_invariants = 0;
-			num_non_strict_invariants = 0;
+			m_preferences.num_strict_invariants = 0;
+			m_preferences.num_non_strict_invariants = 0;
 		}
 		
 		// Check if the loop transition is trivial

@@ -16,6 +16,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.output.BoogieStatementPrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Smt2Boogie;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.exceptions.TermException;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.preferences.Preferences;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.rankingfunctions.LinearRankingFunction;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.rankingfunctions.Ordinal;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.rankingfunctions.RankingFunction;
@@ -55,30 +56,36 @@ public class LassoRankerObserver implements IUnmanagedObserver {
 	private static Logger s_Logger =
 			UltimateServices.getInstance().getLogger(Activator.s_PLUGIN_ID);
 	
-	/**
-	 * Collection of ranking templates to be instantiated
-	 */
-	public Collection<RankingFunctionTemplate> m_templates;
-	
 	private ProgramPoint honda;
 	
 	public LassoRankerObserver() {
-		m_templates = new ArrayList<RankingFunctionTemplate>();
 		
-		// Fill the templates list with all relevant template classes
-		if (Preferences.use_affine_template) {
-			m_templates.add(new AffineTemplate());
+	}
+	
+	/**
+	 * Build a list of templates
+	 * @param preferences
+	 * @return the templates specified in the preferences
+	 */
+	protected Collection<RankingFunctionTemplate> getTemplates(
+			Preferences preferences) {
+		Collection<RankingFunctionTemplate> templates =
+				new ArrayList<RankingFunctionTemplate>();
+		
+		if (preferences.use_affine_template) {
+			templates.add(new AffineTemplate());
 		}
-		if (Preferences.use_multiphase_template) {
-			m_templates.add(new MultiphaseTemplate(Preferences.multiphase_template_phases));
+		if (preferences.use_multiphase_template) {
+			templates.add(new MultiphaseTemplate(preferences.multiphase_template_size));
 		}
-		if (Preferences.use_piecewise_template) {
+		if (preferences.use_piecewise_template) {
 			s_Logger.error("Piecewise Template is currently broken. :'("); // FIXME
-			m_templates.add(new PiecewiseTemplate(Preferences.piecewise_template_pieces));
+			templates.add(new PiecewiseTemplate(preferences.piecewise_template_size));
 		}
-		if (Preferences.use_lex_template) {
-			m_templates.add(new LexicographicTemplate(Preferences.lex_template_functions));
+		if (preferences.use_lex_template) {
+			templates.add(new LexicographicTemplate(preferences.lex_template_size));
 		}
+		return templates;
 	}
 	
 	/**
@@ -141,6 +148,10 @@ public class LassoRankerObserver implements IUnmanagedObserver {
 	
 	@Override
 	public boolean process(IElement root) {
+		// TODO: insert preferences here
+		Preferences preferences = new Preferences();
+		s_Logger.info("Preferences:\n" + preferences.show());
+		
 		RootNode rootNode = (RootNode) root;
 		List<RCFGNode> rootSucc = rootNode.getOutgoingNodes();
 		RCFGNode firstNode;
@@ -196,11 +207,11 @@ public class LassoRankerObserver implements IUnmanagedObserver {
 		}
 		
 		// Try a number of possible templates
-		for (RankingFunctionTemplate template : m_templates) {
+		for (RankingFunctionTemplate template : getTemplates(preferences)) {
 			try {
 				// Call the synthesizer
 				Synthesizer synthesizer =
-						new Synthesizer(script, stem, loop);
+						new Synthesizer(script, stem, loop, preferences);
 				
 				if (synthesizer.synthesize(template)) {
 					RankingFunction rf = synthesizer.getRankingFunction();
@@ -323,7 +334,6 @@ public class LassoRankerObserver implements IUnmanagedObserver {
 
 	@Override
 	public void init() {
-		s_Logger.info("Preferences:\n" + Preferences.show());
 		Ordinal.testcases();
 	}
 

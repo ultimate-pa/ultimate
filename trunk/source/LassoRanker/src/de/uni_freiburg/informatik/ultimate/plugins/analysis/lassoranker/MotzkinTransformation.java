@@ -11,6 +11,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.logic.UtilExperimental;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.preferences.Preferences;
 
 
 /**
@@ -64,6 +65,11 @@ public class MotzkinTransformation extends InstanceCounting {
 	private int m_numberSIneeded = 0;
 	
 	/**
+	 * Whether the generated terms should be annotated
+	 */
+	private boolean m_annotate_terms = false;
+	
+	/**
 	 * An optional description string
 	 */
 	public String annotation = null;
@@ -82,9 +88,10 @@ public class MotzkinTransformation extends InstanceCounting {
 	 * 
 	 * @param script The SMTLib script
 	 */
-	public MotzkinTransformation(Script script) {
+	public MotzkinTransformation(Script script, boolean annotate) {
 		m_script = script;
 		m_inequalities = new ArrayList<LinearInequality>();
+		m_annotate_terms = annotate;
 	}
 	
 	/**
@@ -257,7 +264,7 @@ public class MotzkinTransformation extends InstanceCounting {
 		}
 		
 		Term t = Util.and(m_script, conjunction.toArray(new Term[0]));
-		if (Preferences.annotate_terms) {
+		if (m_annotate_terms) {
 			t = m_script.annotate(t, new Annotation(":named", annotation));
 		}
 		return t;

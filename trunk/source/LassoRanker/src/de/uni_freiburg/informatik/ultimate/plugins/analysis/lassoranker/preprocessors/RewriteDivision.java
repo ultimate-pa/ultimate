@@ -10,8 +10,7 @@ import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.AuxVarGenerator;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.Preferences;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.Preferences.UseDivision;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.preferences.Preferences.UseDivision;
 
 
 /**
@@ -33,6 +32,12 @@ public class RewriteDivision extends TermTransformer implements PreProcessor {
 	private Script m_script;
 	private AuxVarGenerator m_auxVarGenerator;
 	private Collection<Term> m_auxTerms;
+	
+	private UseDivision m_use_division;
+	
+	public RewriteDivision(UseDivision use_division) {
+		 m_use_division = use_division;
+	}
 	
 	@Override
 	public String getDescription() {
@@ -74,7 +79,7 @@ public class RewriteDivision extends TermTransformer implements PreProcessor {
 		TermVariable auxVar = m_auxVarGenerator.newAuxVar(s_auxPrefix,
 				m_script.sort("Int"));
 		
-		if (Preferences.use_division == UseDivision.C_STYLE) {
+		if (m_use_division == UseDivision.C_STYLE) {
 			// x < 0 \/ (y*z ≤ x /\ x < (y + 1)*z)
 			Term conj1 = m_script.term("and",
 				m_script.term("<=", m_script.term("*", divident, divisor),
@@ -98,10 +103,10 @@ public class RewriteDivision extends TermTransformer implements PreProcessor {
 					m_script.term(">=", divident,
 							m_script.numeral(BigInteger.ZERO)), conj2)
 			);
-		} else if (Preferences.use_division == UseDivision.SAFE) {
+		} else if (m_use_division == UseDivision.SAFE) {
 			m_auxTerms.add(m_script.term("=", m_script.term("*", auxVar, divisor),
 					divident));
-		} else if (Preferences.use_division == UseDivision.RATIONALS_ONLY) {
+		} else if (m_use_division == UseDivision.RATIONALS_ONLY) {
 			assert(!divident.getSort().equals(m_script.sort("Int")));
 		} else {
 			assert(false);
