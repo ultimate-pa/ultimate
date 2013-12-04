@@ -1,6 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.normalForms;
 
 import java.util.HashSet;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -32,27 +33,61 @@ public abstract class Xnf extends Nnf {
 			String functionSymbolName = appTerm.getFunction().getName();
 			Term result;
 			if (functionSymbolName.equals(innerConnectiveSymbol())) {
-				HashSet<Term> outerTerms = new HashSet<Term>();
-				outerTerms.add(m_Script.term(innerConnectiveNeutralElement()));
-				HashSet<Term> oldOuterTerms;
-				for (Term inner : newArgs) {
-					oldOuterTerms = outerTerms;
-					outerTerms = new HashSet<Term>();
-					if ((inner instanceof ApplicationTerm) && 
-							((ApplicationTerm) inner).getFunction().getName().equals(outerConnectiveSymbol())) {
-						Term[] atoms = ((ApplicationTerm) inner).getParameters();
-						for (Term atom : atoms) {
-							for (Term oldOuter : oldOuterTerms) {
-								outerTerms.add(innerConnective(m_Script, oldOuter, atom));
+				// case where the connective of the formula is inner connective
+				// of the normal form.
+				
+				// result set of sets e.g. for CNF this is a conjunction of 
+				// disjuncts
+				HashSet<Set<Term>> resOuterSet = new HashSet<Set<Term>>();
+				HashSet<Term> resOuterTerms = new HashSet<Term>();
+				// for CNF we start with the empty disjunction (which is false)
+				resOuterTerms.add(m_Script.term(innerConnectiveNeutralElement()));
+				resOuterSet.add(new HashSet<Term>());
+				for (Term inputInner : newArgs) {
+					//e.g. for CNF we iterate over each disjunct of the input
+					HashSet<Term> oldResOuterTerms = resOuterTerms;
+					HashSet<Set<Term>> oldResOuterSet = resOuterSet;
+					resOuterTerms = new HashSet<Term>();
+					resOuterSet = new HashSet<Set<Term>>();
+					if ((inputInner instanceof ApplicationTerm) && 
+							((ApplicationTerm) inputInner).getFunction().getName().equals(outerConnectiveSymbol())) {
+						// for CNF: if this input conjunct is a disjunction we
+						// have a construct a copy of each result disjunction
+						// and add this disjunct
+						Term[] inputOuters = ((ApplicationTerm) inputInner).getParameters();
+						// for CNF: we iterate over all disjuncts
+						for (Term inputOuter : inputOuters) {
+							for (Term oldOuter : oldResOuterTerms) {
+								resOuterTerms.add(innerConnective(m_Script, oldOuter, inputOuter));
+							}
+							for (Set<Term> oldOuter : oldResOuterSet) {
+								HashSet<Term> newOuter = new HashSet<Term>(oldOuter);
+								newOuter.add(inputOuter);
+								resOuterSet.add(newOuter);
 							}
 						}
 					} else {
-						for (Term oldOuter : oldOuterTerms) {
-							outerTerms.add(innerConnective(m_Script, oldOuter, inner));
+						// for CNF if this input conjunct is an atom have to add
+						// this atom to each result disjunction
+						for (Term oldOuter : oldResOuterTerms) {
+							resOuterTerms.add(innerConnective(m_Script, oldOuter, inputInner));
+						}
+						for (Set<Term> oldOuter : oldResOuterSet) {
+							// for efficiency we reuse the old set in this case
+							Set<Term> newOuter = oldOuter;
+							newOuter.add(inputInner);
+							resOuterSet.add(newOuter);
 						}
 					}
 				}
-				result = outerConnective(m_Script, outerTerms.toArray(new Term[0]));
+				Term[] resInnerTerms = new Term[resOuterSet.size()];
+				int i = 0;
+				for (Set<Term> resInnerSet : resOuterSet) {
+					resInnerTerms[i] = innerConnective(m_Script, resInnerSet.toArray(new Term[0]));
+					i++;
+				}
+				assert i==resInnerTerms.length;
+				result = outerConnective(m_Script, resInnerTerms);
 			} else if (functionSymbolName.equals(outerConnectiveSymbol())) {
 				result = outerConnective(m_Script, newArgs);
 			} else {
