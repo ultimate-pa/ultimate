@@ -114,6 +114,17 @@ public class RefineBuchi {
 		public boolean isScroogeNondeterminismLoop() {
 			return m_ScroogeNondeterminismLoop;
 		}
+		@Override
+		public String toString() {
+			return "RefinementSetting [m_InterpolantAutomaton="
+					+ m_InterpolantAutomaton + ", m_BouncerStem="
+					+ m_BouncerStem + ", m_BouncerLoop=" + m_BouncerLoop
+					+ ", m_ScroogeNondeterminismStem="
+					+ m_ScroogeNondeterminismStem
+					+ ", m_ScroogeNondeterminismLoop="
+					+ m_ScroogeNondeterminismLoop + "]";
+		}
+		
 	}
 	
 	
