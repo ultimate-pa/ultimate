@@ -31,6 +31,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.prefere
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.DagSizePrinter;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.NaiveDestructiveEqualityResolution;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.PartialQuantifierElimination;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.normalForms.Cnf;
 import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
@@ -456,6 +457,9 @@ public class TransFormula implements Serializable {
 		
 		formula = new FormulaUnLet().unlet(formula);
 		if (simplify) {
+			s_Logger.debug(new DebugMessage(
+					"simplifying formula of DAG size {0}", 
+					new DagSizePrinter(formula)));
 			Term simplified = (new SimplifyDDA(script)).getSimplifiedTerm(formula);
 			s_Logger.debug(new DebugMessage(
 					"DAG size before simplification {0}, DAG size after simplification {1}", 
@@ -496,9 +500,12 @@ public class TransFormula implements Serializable {
 	   boolean s_TransformToCNF = (new UltimatePreferenceStore(
 		   RCFGBuilder.s_PLUGIN_ID)).getBoolean(PreferenceInitializer.LABEL_CNF);
 		
+	   SmtUtils.simplify(script, formula);
 		if (s_TransformToCNF) {
-			formula = (new Cnf(script)).transform(formula);
+			Term cnf = (new Cnf(script)).transform(formula);
+			formula = cnf;
 		}
+		SmtUtils.simplify(script, formula);
 
 		Term closedFormula = computeClosedFormula(formula, 
 				inVars, outVars, auxVars, boogie2smt);

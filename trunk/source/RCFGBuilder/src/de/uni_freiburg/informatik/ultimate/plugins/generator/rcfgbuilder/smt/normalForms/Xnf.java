@@ -1,6 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.normalForms;
 
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
@@ -58,7 +59,8 @@ public abstract class Xnf extends Nnf {
 						// for CNF: we iterate over all disjuncts
 						for (Term inputOuter : inputOuters) {
 							for (Term oldOuter : oldResOuterTerms) {
-								resOuterTerms.add(innerConnective(m_Script, oldOuter, inputOuter));
+								resOuterTerms.add(
+										innerConnective(m_Script, oldOuter, inputOuter));
 							}
 							for (Set<Term> oldOuter : oldResOuterSet) {
 								HashSet<Term> newOuter = new HashSet<Term>(oldOuter);
@@ -70,7 +72,8 @@ public abstract class Xnf extends Nnf {
 						// for CNF if this input conjunct is an atom have to add
 						// this atom to each result disjunction
 						for (Term oldOuter : oldResOuterTerms) {
-							resOuterTerms.add(innerConnective(m_Script, oldOuter, inputInner));
+							resOuterTerms.add(
+									innerConnective(m_Script, oldOuter, inputInner));
 						}
 						for (Set<Term> oldOuter : oldResOuterSet) {
 							// for efficiency we reuse the old set in this case
@@ -80,10 +83,27 @@ public abstract class Xnf extends Nnf {
 						}
 					}
 				}
-				Term[] resInnerTerms = new Term[resOuterSet.size()];
-				int i = 0;
+				// remove all sets for which a strict subset is contained
+				// for CNF: if there is {A,B} and {A} we may remove {A,B}
+				// (A || B) && A is equivalent to A
+				Set<Set<Term>> tidyResOuterSet = new HashSet<Set<Term>>(resOuterSet);
 				for (Set<Term> resInnerSet : resOuterSet) {
-					resInnerTerms[i] = innerConnective(m_Script, resInnerSet.toArray(new Term[0]));
+					if (tidyResOuterSet.contains(resInnerSet)) {
+						Iterator<Set<Term>> it = tidyResOuterSet.iterator();
+						while (it.hasNext()) {
+							Set<Term> tidyResInnerSet = it.next();
+							if (tidyResInnerSet != resInnerSet && 
+									tidyResInnerSet.containsAll(resInnerSet)) {
+								it.remove();
+							}
+						}
+					}
+				}
+				Term[] resInnerTerms = new Term[tidyResOuterSet.size()];
+				int i = 0;
+				for (Set<Term> resInnerSet : tidyResOuterSet) {
+					resInnerTerms[i] = 
+							innerConnective(m_Script, resInnerSet.toArray(new Term[0]));
 					i++;
 				}
 				assert i==resInnerTerms.length;

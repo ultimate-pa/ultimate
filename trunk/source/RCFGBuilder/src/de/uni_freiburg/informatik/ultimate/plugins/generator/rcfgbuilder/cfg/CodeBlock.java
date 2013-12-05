@@ -65,7 +65,7 @@ public abstract class CodeBlock extends RCFGEdge {
 	/**
 	 * Defines the maximum length of this edges name.
 	 */
-	private static final int MAX_NAME_LENGTH = 20;
+	private static final int MAX_NAME_LENGTH = 400;
 
 	public CodeBlock(ProgramPoint source, ProgramPoint target) {
 		super(source, target);
