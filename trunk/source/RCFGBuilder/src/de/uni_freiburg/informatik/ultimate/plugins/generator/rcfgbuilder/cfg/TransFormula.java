@@ -500,12 +500,10 @@ public class TransFormula implements Serializable {
 	   boolean s_TransformToCNF = (new UltimatePreferenceStore(
 		   RCFGBuilder.s_PLUGIN_ID)).getBoolean(PreferenceInitializer.LABEL_CNF);
 		
-	   SmtUtils.simplify(script, formula);
 		if (s_TransformToCNF) {
 			Term cnf = (new Cnf(script)).transform(formula);
 			formula = cnf;
 		}
-		SmtUtils.simplify(script, formula);
 
 		Term closedFormula = computeClosedFormula(formula, 
 				inVars, outVars, auxVars, boogie2smt);
