@@ -54,7 +54,6 @@ public class RefineBuchi {
 	private final  PredicateFactoryRefinement m_StateFactoryForRefinement;
 	private final boolean m_UseDoubleDeckers;
 	private final String m_DumpPath;
-	private final boolean m_CannibalizeLoop;
 	/**
 	 * Interpolant automaton of this iteration.
 	 */
@@ -68,7 +67,7 @@ public class RefineBuchi {
 			boolean dumpAutomata, boolean difference,
 			PredicateFactory stateFactory,
 			PredicateFactoryRefinement stateFactoryForRefinement,
-			boolean useDoubleDeckers, String dumpPath, boolean cannibalizeLoop) {
+			boolean useDoubleDeckers, String dumpPath) {
 		super();
 		m_SmtManager = smtManager;
 		m_Bspm = bspm;
@@ -79,7 +78,6 @@ public class RefineBuchi {
 		m_StateFactoryForRefinement = stateFactoryForRefinement;
 		m_UseDoubleDeckers = useDoubleDeckers;
 		m_DumpPath = dumpPath;
-		m_CannibalizeLoop = cannibalizeLoop;
 	}
 
 	class RefinementSetting {
@@ -88,16 +86,19 @@ public class RefineBuchi {
 		private final boolean m_BouncerLoop;
 		private final boolean m_ScroogeNondeterminismStem;
 		private final boolean m_ScroogeNondeterminismLoop;
+		private final boolean m_CannibalizeLoop;
 		public RefinementSetting(BInterpolantAutomaton interpolantAutomaton,
 				boolean bouncerStem, boolean bouncerLoop,
 				boolean scroogeNondeterminismStem,
-				boolean scroogeNondeterminismLoop) {
+				boolean scroogeNondeterminismLoop,
+				boolean cannibalizeLoop) {
 			super();
 			m_InterpolantAutomaton = interpolantAutomaton;
 			m_BouncerStem = bouncerStem;
 			m_BouncerLoop = bouncerLoop;
 			m_ScroogeNondeterminismStem = scroogeNondeterminismStem;
 			m_ScroogeNondeterminismLoop = scroogeNondeterminismLoop;
+			m_CannibalizeLoop = cannibalizeLoop;
 		}
 		public BInterpolantAutomaton getInterpolantAutomaton() {
 			return m_InterpolantAutomaton;
@@ -114,6 +115,9 @@ public class RefineBuchi {
 		public boolean isScroogeNondeterminismLoop() {
 			return m_ScroogeNondeterminismLoop;
 		}
+		public boolean cannibalizeLoop() {
+			return m_CannibalizeLoop;
+		}
 		@Override
 		public String toString() {
 			return "RefinementSetting [m_InterpolantAutomaton="
@@ -122,9 +126,9 @@ public class RefineBuchi {
 					+ ", m_ScroogeNondeterminismStem="
 					+ m_ScroogeNondeterminismStem
 					+ ", m_ScroogeNondeterminismLoop="
-					+ m_ScroogeNondeterminismLoop + "]";
+					+ m_ScroogeNondeterminismLoop + ", m_CannibalizeLoop="
+					+ m_CannibalizeLoop + "]";
 		}
-		
 	}
 	
 	
@@ -209,7 +213,7 @@ public class RefineBuchi {
 			}
 			Set<IPredicate> cannibalizedLoopInterpolants = pu.cannibalizeAll(loopInterpolants);
 			cannibalizedLoopInterpolants.addAll(pu.cannibalize(m_Bspm.getRankEqAndSi().getFormula()));
-			if (m_CannibalizeLoop) {
+			if (setting.cannibalizeLoop()) {
 				LoopCannibalizer lc = new LoopCannibalizer(m_Counterexample, 
 						cannibalizedLoopInterpolants, m_Bspm, pu, m_SmtManager, m_BuchiModGlobalVarManager);
 				cannibalizedLoopInterpolants = lc.getResult();

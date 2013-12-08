@@ -268,25 +268,25 @@ public class BuchiCegarLoop {
 			m_RefineBuchi = new RefineBuchi(m_SmtManager, m_Bspm, 
 					buchiModGlobalVarManager, m_Pref.dumpAutomata(), 
 					m_Difference, m_DefaultStateFactory, m_StateFactoryForRefinement, m_UseDoubleDeckers, 
-					m_Pref.dumpPath(), m_CannibalizeLoop);
+					m_Pref.dumpPath());
 			m_BuchiRefinementSettingSequence = new ArrayList<RefineBuchi.RefinementSetting>();
 			switch (m_InterpolantAutomaton) {
 			case Staged:
 				m_BuchiRefinementSettingSequence.add( 
-						m_RefineBuchi.new RefinementSetting(BInterpolantAutomaton.Deterministic, true, false, false, false));
+						m_RefineBuchi.new RefinementSetting(BInterpolantAutomaton.Deterministic, true, false, false, false, true));
 				m_BuchiRefinementSettingSequence.add( 
-						m_RefineBuchi.new RefinementSetting(BInterpolantAutomaton.ScroogeNondeterminism, true, true, true, false));
+						m_RefineBuchi.new RefinementSetting(BInterpolantAutomaton.ScroogeNondeterminism, true, true, true, false, false));
 				m_BuchiRefinementSettingSequence.add( 
-						m_RefineBuchi.new RefinementSetting(BInterpolantAutomaton.ScroogeNondeterminism, true, false, true, false));
+						m_RefineBuchi.new RefinementSetting(BInterpolantAutomaton.ScroogeNondeterminism, true, false, true, false, false));
 				m_BuchiRefinementSettingSequence.add( 
-						m_RefineBuchi.new RefinementSetting(BInterpolantAutomaton.ScroogeNondeterminism, false, false, true, true));
+						m_RefineBuchi.new RefinementSetting(BInterpolantAutomaton.ScroogeNondeterminism, false, false, true, true, false));
 				break;
 			case LassoAutomaton:
 			case EagerNondeterminism:
 			case ScroogeNondeterminism:
 			case Deterministic:
 				m_BuchiRefinementSettingSequence.add( 
-						m_RefineBuchi.new RefinementSetting(m_InterpolantAutomaton, m_BouncerStem, m_BouncerLoop, m_ScroogeNondeterminismStem, m_ScroogeNondeterminismLoop));
+						m_RefineBuchi.new RefinementSetting(m_InterpolantAutomaton, m_BouncerStem, m_BouncerLoop, m_ScroogeNondeterminismStem, m_ScroogeNondeterminismLoop, m_CannibalizeLoop));
 				break;
 			default:
 				throw new UnsupportedOperationException("unknown automaton");
