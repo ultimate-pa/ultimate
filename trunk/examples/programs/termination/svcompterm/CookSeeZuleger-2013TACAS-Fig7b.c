@@ -1,6 +1,6 @@
 //#terminating
 /*
- * Progam in Fig.7b of 
+ * Progam from Fig.7b of
  * 2013TACAS - Cook,See,Zuleger - Ramsey vs. Lexicographic Termination Proving
  *
  * Date: 9.6.2013
