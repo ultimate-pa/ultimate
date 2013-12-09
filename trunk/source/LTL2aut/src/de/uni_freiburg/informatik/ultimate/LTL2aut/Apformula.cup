@@ -10,7 +10,7 @@ option symbols=symbolsAP;
 /* exprinals (tokens returned by the scanner). */
 terminal           	COLON, LPAR, RPAR, PLUS, MINUS , TIMES, EQUALS, GREATER, GEQ, UMINUS, TRUE, FALSE;
 terminal String 			NAME;
-terminal int 				INT;
+terminal Integer 				INT;
 
 /* Non-exprinals */
 non terminal AstNode     		 ap, assign, name, expr;
