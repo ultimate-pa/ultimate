@@ -44,11 +44,13 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.HavocStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IdentifierExpression;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IfStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.PrimitiveType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableLHS;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.WildcardExpression;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.Backtranslator;
 import de.uni_freiburg.informatik.ultimate.result.Check;
 import de.uni_freiburg.informatik.ultimate.result.Check.Spec;
@@ -89,28 +91,6 @@ public class SvComp14CHandler extends CHandler {
         super.functionHandler = new SVCompFunctionHandler();
     }
 
-    //
-    // ERROR lables and goto ERROR:
-    //
-
-    @Override
-    public Result visit(Dispatcher main, IASTGotoStatement node) {
-        String label = node.getName().toString();
-        if (label.equals(ERROR_STRING)) {
-            Check check = new Check(Spec.ERROR_LABEL);
-            CACSLLocation loc = new CACSLLocation(node, check);
-            ArrayList<Statement> stmt = new ArrayList<Statement>();
-            AssertStatement assertStmt = new AssertStatement(loc, new BooleanLiteral(loc,
-                    new InferredType(Type.Boolean), false));
-            check.addToNodeAnnot(assertStmt);
-            stmt.add(assertStmt);
-            return new ResultExpression(stmt, null,
-                    new ArrayList<Declaration>(),
-                    new HashMap<VariableDeclaration, CACSLLocation>(0));
-        } // else
-        return super.visit(main, node);
-    }
-
     @Override
     public Result visit(Dispatcher main, IASTLabelStatement node) {
         ResultExpression r = (ResultExpression) super.visit(main, node);
@@ -122,7 +102,14 @@ public class SvComp14CHandler extends CHandler {
                     new BooleanLiteral(loc, new InferredType(Type.Boolean),
                             false));
             check.addToNodeAnnot(assertStmt);
-            r.stmt.add(1, assertStmt);
+            // We do not add the assert(false) directly, but add an 
+            // nondeterministic if that contains this assert.
+            // Adding the assert(false) directly would leads to an unsound
+            // nontermination analysis.
+            IfStatement ifStatement = new IfStatement(loc, 
+            		new WildcardExpression(loc), 
+            		new Statement[] { assertStmt }, new Statement[0]);
+            r.stmt.add(1, ifStatement);
         }
         return r;
     }
