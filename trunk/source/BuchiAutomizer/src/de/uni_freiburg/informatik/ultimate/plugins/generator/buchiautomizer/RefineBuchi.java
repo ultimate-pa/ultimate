@@ -1,6 +1,8 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer;
 
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Set;
 
 import org.apache.log4j.Logger;
@@ -205,24 +207,33 @@ public class RefineBuchi {
 			break;
 		case ScroogeNondeterminism:
 		case Deterministic:
-			Set<IPredicate> cannibalizedStemInterpolants;
+			Set<IPredicate> stemInterpolantsForRefinement;
 			if (BuchiCegarLoop.emptyStem(m_Counterexample)) {
-				cannibalizedStemInterpolants = Collections.emptySet();
+				stemInterpolantsForRefinement = Collections.emptySet();
 			} else {
-				cannibalizedStemInterpolants = pu.cannibalizeAll(stemInterpolants);
+				if (setting.cannibalizeLoop()) {
+					stemInterpolantsForRefinement = pu.cannibalizeAll(stemInterpolants);
+				} else {
+					stemInterpolantsForRefinement = new HashSet<IPredicate>(Arrays.asList(stemInterpolants));
+				}
 			}
-			Set<IPredicate> cannibalizedLoopInterpolants = pu.cannibalizeAll(loopInterpolants);
-			cannibalizedLoopInterpolants.addAll(pu.cannibalize(m_Bspm.getRankEqAndSi().getFormula()));
+			Set<IPredicate> loopInterpolantsForRefinement;
 			if (setting.cannibalizeLoop()) {
+			loopInterpolantsForRefinement = pu.cannibalizeAll(loopInterpolants);
+			loopInterpolantsForRefinement.addAll(pu.cannibalize(m_Bspm.getRankEqAndSi().getFormula()));
+			
 				LoopCannibalizer lc = new LoopCannibalizer(m_Counterexample, 
-						cannibalizedLoopInterpolants, m_Bspm, pu, m_SmtManager, m_BuchiModGlobalVarManager);
-				cannibalizedLoopInterpolants = lc.getResult();
+						loopInterpolantsForRefinement, m_Bspm, pu, m_SmtManager, m_BuchiModGlobalVarManager);
+				loopInterpolantsForRefinement = lc.getResult();
+			} else {
+				loopInterpolantsForRefinement = new HashSet<IPredicate>(Arrays.asList(loopInterpolants));
+				loopInterpolantsForRefinement.add(m_Bspm.getRankEqAndSi());
 			}
 			m_InterpolAutomatonUsedInRefinement = new BuchiInterpolantAutomaton(
 					m_SmtManager, ec,  BuchiCegarLoop.emptyStem(m_Counterexample),
 					m_Bspm.getStemPrecondition(), 
-					cannibalizedStemInterpolants, m_Bspm.getHondaPredicate(), 
-					cannibalizedLoopInterpolants, 
+					stemInterpolantsForRefinement, m_Bspm.getHondaPredicate(), 
+					loopInterpolantsForRefinement, 
 					BuchiCegarLoop.emptyStem(m_Counterexample) ? null : stem.getSymbol(stem.length()-1), 
 					loop.getSymbol(loop.length()-1), m_Abstraction, 
 					setting.isScroogeNondeterminismStem(), setting.isScroogeNondeterminismLoop(), 

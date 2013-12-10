@@ -69,6 +69,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Roo
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.SequentialComposition;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.TransFormula;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.TransFormula.Infeasibility;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.DagSizePrinter;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CFG2NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.HoareAnnotationFragments;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.InterpolantAutomataBuilder;
@@ -275,9 +277,11 @@ public class BuchiCegarLoop {
 				m_BuchiRefinementSettingSequence.add( 
 						m_RefineBuchi.new RefinementSetting(BInterpolantAutomaton.Deterministic, true, false, false, false, true));
 				m_BuchiRefinementSettingSequence.add( 
-						m_RefineBuchi.new RefinementSetting(BInterpolantAutomaton.ScroogeNondeterminism, true, true, true, false, false));
+						m_RefineBuchi.new RefinementSetting(BInterpolantAutomaton.Deterministic, true, true, false, false, true));
 				m_BuchiRefinementSettingSequence.add( 
 						m_RefineBuchi.new RefinementSetting(BInterpolantAutomaton.ScroogeNondeterminism, true, false, true, false, false));
+				m_BuchiRefinementSettingSequence.add( 
+						m_RefineBuchi.new RefinementSetting(BInterpolantAutomaton.ScroogeNondeterminism, true, true, true, false, false));
 				m_BuchiRefinementSettingSequence.add( 
 						m_RefineBuchi.new RefinementSetting(BInterpolantAutomaton.ScroogeNondeterminism, false, false, true, true, false));
 				break;
@@ -441,7 +445,7 @@ public class BuchiCegarLoop {
 		INestedWordAutomatonOldApi<CodeBlock, IPredicate> refineBuchi() throws AutomataLibraryException {
 			int stage = 0;
 			for (RefinementSetting rs  : m_BuchiRefinementSettingSequence) {
-				if (stage > 1) {
+				if (stage > 0) {
 					s_Logger.info("Statistics: We needed stage " + stage);
 				}
 				INestedWordAutomatonOldApi<CodeBlock, IPredicate> newAbstraction = 
@@ -459,10 +463,6 @@ public class BuchiCegarLoop {
 					default:
 						throw new AssertionError("unsupported");
 					}
-					if (rs.getInterpolantAutomaton() == BInterpolantAutomaton.Deterministic) {
-						
-					} else if (rs.getInterpolantAutomaton() == BInterpolantAutomaton.ScroogeNondeterminism)
-					
 					return newAbstraction;
 				}
 				stage++;
