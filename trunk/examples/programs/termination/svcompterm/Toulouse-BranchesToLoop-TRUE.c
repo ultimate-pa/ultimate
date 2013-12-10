@@ -19,4 +19,5 @@ int main() {
     y = y+x;
     z = z-x;
   }
+  return 0;
 }
