@@ -140,7 +140,22 @@ public class LiveVariables {
 	
 	private void generateLiveVariablesFromLiveConstants() {
 		assert m_LiveVariables != null;
-		m_LiveVariables[0] = new HashSet<BoogieVar>();
+		m_LiveVariables[0] = new HashSet<BoogieVar>(); 
+		{
+			for (Term t : m_LiveConstants[0]) {
+				BoogieVar bv = m_Constants2BoogieVar.get(t);
+				if (bv.isGlobal()) {
+					m_LiveVariables[0].add(bv);
+					if (bv.isOldvar()) {
+						m_LiveVariables[0].add(m_SmtManager.getNonOldVar(bv));
+					} else {
+						m_LiveVariables[0].add(m_SmtManager.getOldVar(bv));
+					}
+				} else {
+					m_LiveVariables[0].add(bv);
+				}
+			}
+		}
 		for (int i = 1; i < m_LiveConstants.length; i++) {
 			Set<BoogieVar> liveVars = new HashSet<BoogieVar>();
 			for (Term t : m_LiveConstants[i]) {
