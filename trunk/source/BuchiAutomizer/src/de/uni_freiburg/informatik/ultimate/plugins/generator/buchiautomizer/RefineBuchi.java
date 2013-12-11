@@ -37,6 +37,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.PreferenceInitializer.INTERPOLATION;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceChecker;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceCheckerSpWp;
 
 public class RefineBuchi {
 	
@@ -56,6 +57,7 @@ public class RefineBuchi {
 	private final  PredicateFactoryRefinement m_StateFactoryForRefinement;
 	private final boolean m_UseDoubleDeckers;
 	private final String m_DumpPath;
+	private final INTERPOLATION m_Interpolation;
 	/**
 	 * Interpolant automaton of this iteration.
 	 */
@@ -69,7 +71,8 @@ public class RefineBuchi {
 			boolean dumpAutomata, boolean difference,
 			PredicateFactory stateFactory,
 			PredicateFactoryRefinement stateFactoryForRefinement,
-			boolean useDoubleDeckers, String dumpPath) {
+			boolean useDoubleDeckers, String dumpPath,
+			INTERPOLATION interpolation) {
 		super();
 		m_SmtManager = smtManager;
 		m_Bspm = bspm;
@@ -80,6 +83,7 @@ public class RefineBuchi {
 		m_StateFactoryForRefinement = stateFactoryForRefinement;
 		m_UseDoubleDeckers = useDoubleDeckers;
 		m_DumpPath = dumpPath;
+		m_Interpolation = interpolation;
 	}
 
 	class RefinementSetting {
@@ -155,30 +159,31 @@ public class RefineBuchi {
 		PredicateUnifier pu = new PredicateUnifier(m_SmtManager, 
 				m_Bspm.getStemPrecondition(), m_Bspm.getHondaPredicate(), m_Bspm.getRankEqAndSi(), m_Bspm.getStemPostcondition());
 		IPredicate[] stemInterpolants;
-		TraceChecker m_TraceChecker;
+		TraceChecker traceChecker;
 		if (BuchiCegarLoop.emptyStem(m_Counterexample)) {
 			stemInterpolants = null;
 		} else {
-			m_TraceChecker = new TraceChecker(m_Bspm.getStemPrecondition(), 
+			
+			traceChecker = constructTraceChecker(m_Bspm.getStemPrecondition(), 
 					m_Bspm.getStemPostcondition(), null, stem, m_SmtManager,
 					m_BuchiModGlobalVarManager);
-			LBool stemCheck = m_TraceChecker.isCorrect();
+			LBool stemCheck = traceChecker.isCorrect();
 			if (stemCheck == LBool.UNSAT) {
-				m_TraceChecker.computeInterpolants(new TraceChecker.AllIntegers(), pu, INTERPOLATION.Craig_TreeInterpolation);
-				stemInterpolants = m_TraceChecker.getInterpolants();
+				traceChecker.computeInterpolants(new TraceChecker.AllIntegers(), pu, m_Interpolation);
+				stemInterpolants = traceChecker.getInterpolants();
 			} else {
 				throw new AssertionError("wrong predicates");
 			}
 		}
 
-		m_TraceChecker = new TraceChecker(m_Bspm.getRankEqAndSi(), 
+		traceChecker = constructTraceChecker(m_Bspm.getRankEqAndSi(), 
 				m_Bspm.getHondaPredicate(), null, loop, m_SmtManager,
 				m_BuchiModGlobalVarManager);
-		LBool loopCheck = m_TraceChecker.isCorrect();
+		LBool loopCheck = traceChecker.isCorrect();
 		IPredicate[] loopInterpolants;
 		if (loopCheck == LBool.UNSAT) {
-			m_TraceChecker.computeInterpolants(new TraceChecker.AllIntegers(), pu, INTERPOLATION.Craig_TreeInterpolation);
-			loopInterpolants = m_TraceChecker.getInterpolants();
+			traceChecker.computeInterpolants(new TraceChecker.AllIntegers(), pu, m_Interpolation);
+			loopInterpolants = traceChecker.getInterpolants();
 		} else {
 			throw new AssertionError();
 		}
@@ -282,6 +287,27 @@ public class RefineBuchi {
 		return newAbstraction;
 	}
 	
+	private TraceChecker constructTraceChecker(IPredicate precond,
+			IPredicate postcond, Object object,
+			NestedWord<CodeBlock> word, SmtManager smtManager,
+			BuchiModGlobalVarManager buchiModGlobalVarManager) {
+		switch (m_Interpolation) {
+		case Craig_NestedInterpolation:
+		case Craig_TreeInterpolation:
+			return new TraceChecker(precond, postcond, 
+					null, NestedWord.nestedWord(word),m_SmtManager,
+					buchiModGlobalVarManager);
+		case ForwardPredicates:
+		case BackwardPredicates:
+		case FPandSP:
+			return new TraceCheckerSpWp(precond, postcond, 
+					NestedWord.nestedWord(word),m_SmtManager,
+					buchiModGlobalVarManager);
+		default:
+			throw new UnsupportedOperationException("unsupported interpolation");
+		}
+	}
+
 	private boolean isUsefulInterpolantAutomaton(
 			INestedWordAutomatonSimple<CodeBlock, IPredicate> interpolAutomatonUsedInRefinement,
 			NestedLassoRun<CodeBlock, IPredicate> counterexample) {

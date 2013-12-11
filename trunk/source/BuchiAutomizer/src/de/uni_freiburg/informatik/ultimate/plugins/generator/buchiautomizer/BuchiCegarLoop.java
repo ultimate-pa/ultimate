@@ -63,6 +63,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rankingfunctions.fu
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rankingfunctions.functions.RankingFunction;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rankingfunctions.templates.LinearTemplate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RcfgElement;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
@@ -88,6 +89,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.Artifact;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceChecker;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceCheckerSpWp;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceChecker.AllIntegers;
 import de.uni_freiburg.informatik.ultimate.result.IResult;
 import de.uni_freiburg.informatik.ultimate.result.RankingFunctionResult;
@@ -270,7 +272,7 @@ public class BuchiCegarLoop {
 			m_RefineBuchi = new RefineBuchi(m_SmtManager, m_Bspm, 
 					buchiModGlobalVarManager, m_Pref.dumpAutomata(), 
 					m_Difference, m_DefaultStateFactory, m_StateFactoryForRefinement, m_UseDoubleDeckers, 
-					m_Pref.dumpPath());
+					m_Pref.dumpPath(), m_Pref.interpolation());
 			m_BuchiRefinementSettingSequence = new ArrayList<RefineBuchi.RefinementSetting>();
 			switch (m_InterpolantAutomaton) {
 			case Staged:
@@ -532,7 +534,7 @@ public class BuchiCegarLoop {
 			if (emptyStem(m_Counterexample)) {
 				feasibility = LBool.SAT;
 			} else {
-				m_TraceChecker = new TraceChecker(m_TruePredicate, 
+				m_TraceChecker = constructTraceChecker(m_TruePredicate, 
 					m_FalsePredicate, null, m_ConcatenatedCounterexample.getWord(), 
 					m_SmtManager, m_RootNode.getRootAnnot().getModGlobVarManager());
 				feasibility = m_TraceChecker.isCorrect();
@@ -544,7 +546,7 @@ public class BuchiCegarLoop {
 				s_Logger.info("stem already infeasible");
 			} else {
 				m_ConcatenatedCounterexample = loop;
-				m_TraceChecker = new TraceChecker(m_TruePredicate, 
+				m_TraceChecker = constructTraceChecker(m_TruePredicate, 
 						m_FalsePredicate, null, m_ConcatenatedCounterexample.getWord(),
 						m_SmtManager, m_RootNode.getRootAnnot().getModGlobVarManager());
 				feasibility = m_TraceChecker.isCorrect();
@@ -553,7 +555,7 @@ public class BuchiCegarLoop {
 				} else {
 					m_TraceChecker.unlockSmtManager();
 					m_ConcatenatedCounterexample = stem.concatenate(loop);
-					m_TraceChecker = new TraceChecker(m_TruePredicate, 
+					m_TraceChecker = constructTraceChecker(m_TruePredicate, 
 							m_FalsePredicate, null, m_ConcatenatedCounterexample.getWord(), 
 							m_SmtManager, m_RootNode.getRootAnnot().getModGlobVarManager());
 					feasibility = m_TraceChecker.isCorrect();
@@ -567,7 +569,7 @@ public class BuchiCegarLoop {
 			AllIntegers allInt = new TraceChecker.AllIntegers();
 			PredicateUnifier pu = new PredicateUnifier(m_SmtManager, 
 					m_TruePredicate, m_FalsePredicate);
-			m_TraceChecker.computeInterpolants(allInt, pu, INTERPOLATION.Craig_TreeInterpolation);
+			m_TraceChecker.computeInterpolants(allInt, pu, m_Pref.interpolation());
 			constructInterpolantAutomaton(m_TraceChecker);
 			EdgeChecker ec = new EdgeChecker(m_SmtManager, buchiModGlobalVarManager);
 			PostDeterminizer spd = new PostDeterminizer(
@@ -885,5 +887,27 @@ public class BuchiCegarLoop {
 		public TreeMap<Integer, Expression> getRankingFunction() {
 			return m_RankingFunction;
 		}
+		
+		private TraceChecker constructTraceChecker(IPredicate precond,
+				IPredicate postcond, Object object,
+				NestedWord<CodeBlock> word, SmtManager smtManager,
+				ModifiableGlobalVariableManager modGlobalVarManager) {
+			switch (m_Pref.interpolation()) {
+			case Craig_NestedInterpolation:
+			case Craig_TreeInterpolation:
+				return new TraceChecker(precond, postcond, 
+						null, NestedWord.nestedWord(word),m_SmtManager,
+						modGlobalVarManager);
+			case ForwardPredicates:
+			case BackwardPredicates:
+			case FPandSP:
+				return new TraceCheckerSpWp(precond, postcond, 
+						NestedWord.nestedWord(word),m_SmtManager,
+						modGlobalVarManager);
+			default:
+				throw new UnsupportedOperationException("unsupported interpolation");
+			}
+		}
+
 		
 }
