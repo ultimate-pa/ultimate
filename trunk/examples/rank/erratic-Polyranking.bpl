@@ -1,11 +1,11 @@
-//#rTerminationDerivable
+//#rTermination
 /*
  * Date: 21.09.2013
  * Author: leike@informatik.uni-freiburg.de
  *
  * This example is from
  * A. R. Bradley, Z. Manna, and H. B. Sipma.
- * The polyranking principle.
+ * The Polyranking Principle.
  * In ICALP, pages 1349–1361. Springer, 2005.
  *
  * This program has a lexicographic multiphase ranking function.
