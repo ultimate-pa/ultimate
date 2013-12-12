@@ -10,7 +10,12 @@
 
 int __VERIFIER_nondet_int() { int val; return val; }
 
-void cyclic(int id, int maxId) {
+
+int main() {
+	int id = __VERIFIER_nondet_int();
+	int maxId = __VERIFIER_nondet_int();
+
+
     if(0 <= id && id < maxId) {
         int tmp = id+1;
         while(tmp!=id && __VERIFIER_nondet_int()) {
@@ -21,12 +26,8 @@ void cyclic(int id, int maxId) {
             }
         }
     }
-}
 
-int main() {
-	int id = __VERIFIER_nondet_int();
-	int maxId = __VERIFIER_nondet_int();
-	cyclic(id,maxId);
+
     return 0;
 }
 
