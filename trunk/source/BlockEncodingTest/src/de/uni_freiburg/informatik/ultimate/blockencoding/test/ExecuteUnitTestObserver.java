@@ -1,7 +1,7 @@
 /**
  * 
  */
-package de.uni_freiburg.informatik.ultimate.plugins.generator.blockendcoding;
+package de.uni_freiburg.informatik.ultimate.blockencoding.test;
 
 import org.apache.log4j.Logger;
 import org.junit.runner.JUnitCore;
@@ -13,6 +13,7 @@ import de.uni_freiburg.informatik.ultimate.access.WalkerOptions;
 import de.uni_freiburg.informatik.ultimate.blockencoding.test.util.RCFGStore;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.blockendcoding.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGNode;
 
 /**
@@ -92,6 +93,7 @@ public class ExecuteUnitTestObserver implements IUnmanagedObserver {
 		if (res.getFailureCount() > 0) {
 			s_Logger.error("A JUnit Test Case have failed!");
 		}
+		
 		for (Failure failure : res.getFailures()) {
 			s_Logger.error(failure);
 			s_Logger.error(failure.getDescription());

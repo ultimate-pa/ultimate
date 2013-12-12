@@ -1,6 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.result;
 
-import de.uni_freiburg.informatik.ultimate.model.AbstractAnnotations;
+import de.uni_freiburg.informatik.ultimate.model.annotation.AbstractAnnotations;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.wrapper.ASTNode;
 
 /**

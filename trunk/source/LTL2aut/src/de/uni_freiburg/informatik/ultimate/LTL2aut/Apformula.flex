@@ -4,7 +4,7 @@ import java_cup.runtime.*;
 
 %%
 
-%cupsym symbolsAP
+%cupsym SymbolsAP
 %class LexerAP
 %unicode
 %cup
@@ -44,27 +44,27 @@ Int = [0-9]+
  */
 
 <YYINITIAL>{ 
-	":"				{ return symbol(symbolsAP.COLON); }
+	":"				{ return symbol(SymbolsAP.COLON); }
 
-	"("				{ return symbol(symbolsAP.LPAR); }
-	")"				{ return symbol(symbolsAP.RPAR); }
+	"("				{ return symbol(SymbolsAP.LPAR); }
+	")"				{ return symbol(SymbolsAP.RPAR); }
 	
-	"+"				{ return symbol(symbolsAP.PLUS); }
-	"-"				{ return symbol(symbolsAP.MINUS); }
-	"*"				{ return symbol(symbolsAP.TIMES); }
+	"+"				{ return symbol(SymbolsAP.PLUS); }
+	"-"				{ return symbol(SymbolsAP.MINUS); }
+	"*"				{ return symbol(SymbolsAP.TIMES); }
 
-	"="				{ return symbol(symbolsAP.EQUALS); }
-	">"				{ return symbol(symbolsAP.GREATER); }
-	">="			{ return symbol(symbolsAP.GEQ); }
+	"="				{ return symbol(SymbolsAP.EQUALS); }
+	">"				{ return symbol(SymbolsAP.GREATER); }
+	">="			{ return symbol(SymbolsAP.GEQ); }
 	
-	"true"			{ return symbol(symbolsAP.TRUE); }
-	"false"			{ return symbol(symbolsAP.FALSE); }
+	"true"			{ return symbol(SymbolsAP.TRUE); }
+	"false"			{ return symbol(SymbolsAP.FALSE); }
 
 	
-	{Int}			{ return symbol(symbolsAP.INT, Integer.parseInt(yytext())); }
+	{Int}			{ return symbol(SymbolsAP.INT, Integer.parseInt(yytext())); }
 	{WhiteSpace}    { /* ignore */ }
 	
-	{Identifier}    { return symbol(symbolsAP.NAME, yytext()); }
+	{Identifier}    { return symbol(SymbolsAP.NAME, yytext()); }
 
 	
 

@@ -4,9 +4,9 @@ import java.io.Serializable;
 import java.util.LinkedList;
 import java.util.List;
 
-import de.uni_freiburg.informatik.ultimate.model.BoogieLocation;
-import de.uni_freiburg.informatik.ultimate.model.ILocation;
 import de.uni_freiburg.informatik.ultimate.model.Payload;
+import de.uni_freiburg.informatik.ultimate.model.location.BoogieLocation;
+import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 
 public abstract class ASTNode implements Serializable{
 	/**

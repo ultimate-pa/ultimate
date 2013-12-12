@@ -6,6 +6,7 @@ import java.util.HashSet;
 import junit.framework.TestCase;
 
 import org.apache.log4j.Logger;
+import org.junit.Before;
 import org.junit.Test;
 
 import de.uni_freiburg.informatik.ultimate.blockencoding.algorithm.PrintEdgeVisitor;
@@ -51,12 +52,8 @@ public class TestAbstractMinimizationVisitor extends TestCase {
 
 	private HashSet<MinimizedNode> visitedMinNodes;
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see junit.framework.TestCase#setUp()
-	 */
-	@Override
+
+	@Before
 	protected void setUp() throws Exception {
 		rcfgNode = RCFGStore.getRCFG();
 		s_Logger = UltimateServices.getInstance().getLogger(

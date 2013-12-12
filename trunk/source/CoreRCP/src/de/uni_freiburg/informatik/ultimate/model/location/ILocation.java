@@ -1,7 +1,7 @@
 /**
  * 
  */
-package de.uni_freiburg.informatik.ultimate.model;
+package de.uni_freiburg.informatik.ultimate.model.location;
 
 import de.uni_freiburg.informatik.ultimate.result.Check;
 

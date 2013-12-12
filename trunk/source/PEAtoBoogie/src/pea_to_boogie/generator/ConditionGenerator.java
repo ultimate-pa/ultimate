@@ -4,6 +4,7 @@ import pea_to_boogie.translator.CDDTranslator;
 import pea_to_boogie.translator.Translator;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.*;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression.Operator;
+import de.uni_freiburg.informatik.ultimate.model.location.BoogieLocation;
 import de.uni_freiburg.informatik.ultimate.model.*;
 
 import java.util.*;

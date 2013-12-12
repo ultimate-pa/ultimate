@@ -7,8 +7,6 @@ import java.util.Collections;
 import java.util.List;
 
 import org.apache.log4j.Logger;
-import org.eclipse.core.runtime.preferences.IEclipsePreferences;
-import org.eclipse.core.runtime.preferences.IScopeContext;
 
 import de.uni_freiburg.informatik.ultimate.access.IObserver;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
@@ -16,8 +14,6 @@ import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceIn
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.IGenerator;
 import de.uni_freiburg.informatik.ultimate.model.GraphType;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
-import de.uni_freiburg.informatik.ultimate.model.MarkedTrace;
-import de.uni_freiburg.informatik.ultimate.model.TokenMap;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.PreferenceInitializer;
 
 /**
@@ -94,14 +90,6 @@ public class CACSL2BoogieTranslator implements IGenerator {
 		return null;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see de.uni_freiburg.informatik.ultimate.ep.interfaces.ITool#setTokenMap(de.uni_freiburg.informatik.ultimate.model.TokenMap)
-	 */
-	@Override
-	public void setTokenMap(TokenMap tokenMap) {
-		// not required
-	}
 
 	/*
 	 * (non-Javadoc)
@@ -149,24 +137,6 @@ public class CACSL2BoogieTranslator implements IGenerator {
 		return false;
 	}
 	
-	/*
-	 * (non-Javadoc)
-	 * @see de.uni_freiburg.informatik.ultimate.ep.interfaces.IModifyingTool#getMarkedTraces()
-	 */
-	@Override
-	public List<MarkedTrace> getMarkedTraces(){
-		return null;
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * @see de.uni_freiburg.informatik.ultimate.ep.interfaces.ITool#getPreferences(org.eclipse.core.runtime.preferences.IScopeContext, org.eclipse.core.runtime.preferences.IScopeContext)
-	 */
-	@Override
-	public IEclipsePreferences[] getPreferences(IScopeContext cs,
-			IScopeContext is) {
-		return new IEclipsePreferences[] {cs.getNode(s_PLUGIN_ID)};
-	}
 
 	@Override
 	public UltimatePreferenceInitializer getPreferences() {

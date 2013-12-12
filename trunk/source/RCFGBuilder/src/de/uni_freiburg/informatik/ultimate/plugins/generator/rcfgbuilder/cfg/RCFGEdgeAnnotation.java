@@ -1,6 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg;
 
-import de.uni_freiburg.informatik.ultimate.model.AbstractAnnotations;
+import de.uni_freiburg.informatik.ultimate.model.annotation.AbstractAnnotations;
 
 public abstract class RCFGEdgeAnnotation extends AbstractAnnotations{
 

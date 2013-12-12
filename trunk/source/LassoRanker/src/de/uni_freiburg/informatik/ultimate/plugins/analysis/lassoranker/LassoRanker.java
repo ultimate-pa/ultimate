@@ -7,11 +7,6 @@ import de.uni_freiburg.informatik.ultimate.access.IObserver;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.IAnalysis;
 import de.uni_freiburg.informatik.ultimate.model.GraphType;
-import de.uni_freiburg.informatik.ultimate.model.MarkedTrace;
-import de.uni_freiburg.informatik.ultimate.model.TokenMap;
-
-import org.eclipse.core.runtime.preferences.IEclipsePreferences;
-import org.eclipse.core.runtime.preferences.IScopeContext;
 
 /**
  * Main class of Plug-In LassoRanker
@@ -67,12 +62,6 @@ public class LassoRanker implements IAnalysis {
 	}
 
 	@Override
-	public void setTokenMap(TokenMap tokenMap) {
-		// TODO Auto-generated method stub
-
-	}
-
-	@Override
 	public void setInputDefinition(GraphType graphType) {
 		this.m_InputDefinition = graphType;
 	}
@@ -96,20 +85,6 @@ public class LassoRanker implements IAnalysis {
 		return false;
 	}
 	
-	/**
-	* @return marked traces or null if no special markers shall be added for output plug-ins
-	*/
-	public List<MarkedTrace> getMarkedTraces(){
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public IEclipsePreferences[] getPreferences(IScopeContext cs,
-			IScopeContext is) {
-		// TODO Auto-generated method stub
-		return null;
-	}
 
 	@Override
 	public UltimatePreferenceInitializer getPreferences() {

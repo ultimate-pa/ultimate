@@ -6,23 +6,20 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
+
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.ISource;
-import de.uni_freiburg.informatik.ultimate.model.BoogieLocation;
 import de.uni_freiburg.informatik.ultimate.model.GraphType;
 import de.uni_freiburg.informatik.ultimate.model.INode;
-import de.uni_freiburg.informatik.ultimate.model.IPayload;
-import de.uni_freiburg.informatik.ultimate.model.ILocation;
 import de.uni_freiburg.informatik.ultimate.model.Payload;
-import de.uni_freiburg.informatik.ultimate.model.TokenMap;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Unit;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.wrapper.WrapperNode;
-import de.uni_freiburg.informatik.ultimate.plugins.Constants;
-
-import org.apache.log4j.Level;
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.model.location.BoogieLocation;
+import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 
 /**
  * This is the main Boogie 2 parser class that creates the lexer and parser
@@ -123,7 +120,6 @@ public class BoogieParser implements ISource {
     public INode parseAST(File file) throws IOException {
     	m_FileNames = new ArrayList<String>();
         INode tree = parseDir(file);
-//        return cleanTree(tree);
         return tree;
     }
     
@@ -149,22 +145,7 @@ public class BoogieParser implements ISource {
         return in;
     }
     
-//    private INode cleanTree(INode tree)
-//    {
-//        List<INode> units = getUnits(tree);
-//        Payload t = new Payload(units.get(0).getPayload().getLocation(), "PROJECT");
-//        INode newTree = new TreeNode((IPayload)t);
-//        String locTemp = "";
-//        String fileSep = Constants.getFileSep();
-//
-//        for(INode n : units) {
-//            newTree.addOutgoingNode(n);
-//            locTemp += n.getPayload().getLocation().getFileName() + fileSep;
-//        }
-//        newTree.getPayload().getLocation().setFileName(locTemp.substring(0, locTemp.length() - 2));
-//        return newTree;
-//    }
-    
+   
     private List<INode> getUnits(INode tree) {
         List<INode> returnList = new ArrayList<INode>();
         if(tree.getPayload().getName()=="PROJECT") {
@@ -217,14 +198,6 @@ public class BoogieParser implements ISource {
         return m_FileTypes;
     }
     
-    /**
-     * get a mapping for this parser
-     */
-    public TokenMap getTokenMap() {
-    	return new TokenMap();
-    }
-
-
 
 	/* (non-Javadoc)
 	 * @see de.uni_freiburg.informatik.ultimate.ep.interfaces.IOutputDefinition#getOutputDefinition()

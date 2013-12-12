@@ -35,7 +35,6 @@ import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceSt
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.ISource;
 import de.uni_freiburg.informatik.ultimate.model.GraphType;
 import de.uni_freiburg.informatik.ultimate.model.INode;
-import de.uni_freiburg.informatik.ultimate.model.TokenMap;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.wrapper.WrapperNode;
 
 /**
@@ -210,34 +209,6 @@ public class CDTParser implements ISource {
 		return new WrapperNode(null, translationUnit);
 	}
 
-//	/**
-//	 * In this method we can declare some macros, which should be included into
-//	 * every read C-File.
-//	 * 
-//	 * Possible Workaround: - First QUICK PARSE and then get all include files -
-//	 * Parse the include files and get all Macros - Add to the preprocessor all
-//	 * macros
-//	 * 
-//	 * @return defined macros
-//	 */
-//	private static Map<String, String> defineUserMacros() {
-//		HashMap<String, String> map = new HashMap<String, String>();
-//		map.put("bool", "_Bool");
-//		map.put("true", "1");
-//		map.put("false", "0");
-//		return map;
-//	}
-
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * de.uni_freiburg.informatik.ultimate.ep.interfaces.ISource#getTokens()
-	 */
-	@Override
-	public String[] getTokens() {
-		return null;
-	}
 
 	/*
 	 * (non-Javadoc)
@@ -250,16 +221,6 @@ public class CDTParser implements ISource {
 		return m_FileTypes;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * de.uni_freiburg.informatik.ultimate.ep.interfaces.ISource#getTokenMap()
-	 */
-	@Override
-	public TokenMap getTokenMap() {
-		return null;
-	}
 
 	/*
 	 * (non-Javadoc)

@@ -12,7 +12,3 @@ Bundle-ActivationPolicy: lazy
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
 Export-Package: de.uni_freiburg.informatik.ultimate.blockencoding.model,
  de.uni_freiburg.informatik.ultimate.blockencoding.model.interfaces
-Import-Package: junit.framework,
- org.junit,
- org.junit.runner,
- org.junit.runner.notification

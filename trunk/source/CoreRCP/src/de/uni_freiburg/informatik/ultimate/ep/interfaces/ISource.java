@@ -4,7 +4,6 @@ import java.io.File;
 
 import de.uni_freiburg.informatik.ultimate.model.GraphType;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
-import de.uni_freiburg.informatik.ultimate.model.TokenMap;
 
 /**
  * A generic parser interface which has to be implemented by parsers
@@ -57,23 +56,12 @@ public interface ISource extends IUltimatePlugin {
 	 */
 	IElement parseAST(File file) throws Exception;
 	
-	/**
-	 * Ask the parser for it's supported tokens.
-	 * @return a Sting array with the tokens
-	 */
-	String[] getTokens();
     
     /**
      * Use this to get a list of file types supported by this parser
      * @return Filename extensions supported by this parser.
      */
     String[] getFileTypes();
-    
-    /**
-     * retrieves a map with all token mappings
-     * @return the map
-     */
-    public TokenMap getTokenMap();
     
 	/**
 	 * This method is called by the core before a parser is executed. 

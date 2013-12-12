@@ -3,7 +3,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.result;
 
-import de.uni_freiburg.informatik.ultimate.model.ILocation;
+import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 
 /**
  * Result produced by a plugin of ULTIMATE and visualized by a frontend of 

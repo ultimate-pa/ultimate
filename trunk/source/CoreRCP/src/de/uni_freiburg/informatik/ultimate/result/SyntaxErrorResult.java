@@ -2,8 +2,8 @@ package de.uni_freiburg.informatik.ultimate.result;
 
 import java.util.List;
 
-import de.uni_freiburg.informatik.ultimate.model.ILocation;
 import de.uni_freiburg.informatik.ultimate.model.ITranslator;
+import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 
 /**
  * Class to describe one of the following results

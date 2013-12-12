@@ -6,16 +6,12 @@ package de.uni_freiburg.informatik.ultimate.boogie.printer;
 import java.util.Collections;
 import java.util.List;
 
-import org.eclipse.core.runtime.preferences.IEclipsePreferences;
-import org.eclipse.core.runtime.preferences.IScopeContext;
 
 import de.uni_freiburg.informatik.ultimate.access.IObserver;
 import de.uni_freiburg.informatik.ultimate.boogie.printer.preferences.PreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.IOutput;
 import de.uni_freiburg.informatik.ultimate.model.GraphType;
-import de.uni_freiburg.informatik.ultimate.model.MarkedTrace;
-import de.uni_freiburg.informatik.ultimate.model.TokenMap;
 
 /**
  * @author hoenicke
@@ -94,18 +90,6 @@ public class BoogiePrinter implements IOutput {
 		return null;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * de.uni_freiburg.informatik.ultimate.ep.interfaces.ITool#setTokenMap(de
-	 * .uni_freiburg.informatik.ultimate.model.TokenMap)
-	 */
-	@Override
-	public void setTokenMap(TokenMap tokenMap) {
-		// not required | not used right now
-	}
-
 	/**
 	 * Getter for GraphType.
 	 * 
@@ -142,38 +126,11 @@ public class BoogiePrinter implements IOutput {
 	 * (non-Javadoc)
 	 * 
 	 * @see
-	 * de.uni_freiburg.informatik.ultimate.ep.interfaces.IOutput#setMarkedTraces
-	 * (java.util.List)
-	 */
-	@Override
-	public void setMarkedTraces(List<MarkedTrace> traces) {
-		/* ignore marked traces */
-		return;
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
 	 * de.uni_freiburg.informatik.ultimate.ep.interfaces.ITool#isGuiRequired()
 	 */
 	@Override
 	public boolean isGuiRequired() {
 		return false;
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * de.uni_freiburg.informatik.ultimate.ep.interfaces.ITool#getPreferences
-	 * (org.eclipse.core.runtime.preferences.IScopeContext,
-	 * org.eclipse.core.runtime.preferences.IScopeContext)
-	 */
-	@Override
-	public IEclipsePreferences[] getPreferences(IScopeContext cs,
-			IScopeContext is) {
-		return null;
 	}
 
 	@Override

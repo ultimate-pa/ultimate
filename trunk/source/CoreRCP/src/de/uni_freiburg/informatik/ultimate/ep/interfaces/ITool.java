@@ -2,12 +2,9 @@ package de.uni_freiburg.informatik.ultimate.ep.interfaces;
 
 import java.util.List;
 
-import org.eclipse.core.runtime.preferences.IEclipsePreferences;
-import org.eclipse.core.runtime.preferences.IScopeContext;
 
 import de.uni_freiburg.informatik.ultimate.access.IObserver;
 import de.uni_freiburg.informatik.ultimate.model.GraphType;
-import de.uni_freiburg.informatik.ultimate.model.TokenMap;
 
 public interface ITool extends IUltimatePlugin{
 	
@@ -57,17 +54,6 @@ public interface ITool extends IUltimatePlugin{
 	 */
 	boolean isGuiRequired(); 
 	
-	/**
-	 * This method will be called by the core after a parser is choosen. It
-	 * gives you the actual token mapping supplied by the used parser. If you
-	 * dont need the token mapping leave this method blank.
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.model.TokenMap
-	 * @see de.uni_freiburg.informatik.ultimate.ep.interfaces.ISource
-	 * @param tokenMap
-	 *            The tokenMap
-	 */
-	void setTokenMap(TokenMap tokenMap);
 	
 	/**
 	 * The core calls this method to determine which model he has to provide (AST, transformed AST, generated graphs like CG etc) 
@@ -107,15 +93,5 @@ public interface ITool extends IUltimatePlugin{
 	 * 
 	 * @return All observers which should be run for this tool.
 	 */
-	List<IObserver> getObservers();
-	
-	/**
-	 * Return all preferences used by the plugin.
-	 * @param is Instance Scope to use.
-	 * @param cs Configuration Scope to use.
-	 * @return All preferences such used by this plugin.
-	 */
-	IEclipsePreferences[] getPreferences(IScopeContext cs, IScopeContext is);
-	
-	
+	List<IObserver> getObservers();	
 }

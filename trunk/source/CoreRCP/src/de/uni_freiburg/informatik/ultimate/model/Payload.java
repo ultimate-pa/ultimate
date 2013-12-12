@@ -2,6 +2,10 @@ package de.uni_freiburg.informatik.ultimate.model;
 
 import java.util.HashMap;
 
+import de.uni_freiburg.informatik.ultimate.model.annotation.IAnnotations;
+import de.uni_freiburg.informatik.ultimate.model.location.BoogieLocation;
+import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
+
 
 /**
  * 

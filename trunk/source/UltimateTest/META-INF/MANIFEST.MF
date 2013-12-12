@@ -13,7 +13,6 @@ Require-Bundle: Library-junit-helper,
  CACSL2BoogieTranslator,
  CDTParser,
  BoogiePreprocessor,
- org.junit4,
  BlockEncoding
 Import-Package: org.junit,
  org.junit.experimental.categories,

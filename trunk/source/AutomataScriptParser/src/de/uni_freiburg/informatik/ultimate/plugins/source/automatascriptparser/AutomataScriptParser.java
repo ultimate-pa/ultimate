@@ -13,8 +13,7 @@ import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceIn
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.ISource;
 import de.uni_freiburg.informatik.ultimate.model.GraphType;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
-import de.uni_freiburg.informatik.ultimate.model.ILocation;
-import de.uni_freiburg.informatik.ultimate.model.TokenMap;
+import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.AutomataDefinitions;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.AutomataTestFile;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.Automaton;
@@ -253,24 +252,6 @@ public class AutomataScriptParser implements ISource {
 			s_Logger.fatal(ex.getMessage());
 			return null;
 		}
-	}
-
-	/* (non-Javadoc)
-	 * @see de.uni_freiburg.informatik.ultimate.ep.interfaces.ISource#getTokenMap()
-	 */
-	@Override
-	public TokenMap getTokenMap() {
-		// I don't use TokenMap
-		return null;
-	}
-
-	/* (non-Javadoc)
-	 * @see de.uni_freiburg.informatik.ultimate.ep.interfaces.ISource#getTokens()
-	 */
-	@Override
-	public String[] getTokens() {
-		// TODO Auto-generated method stub
-		return null;
 	}
 
 	/* (non-Javadoc)

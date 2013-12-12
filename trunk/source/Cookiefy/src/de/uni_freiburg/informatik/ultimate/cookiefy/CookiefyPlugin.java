@@ -4,18 +4,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.log4j.Logger;
-import org.eclipse.core.runtime.preferences.IEclipsePreferences;
-import org.eclipse.core.runtime.preferences.IScopeContext;
 
 import de.uni_freiburg.informatik.ultimate.access.IObserver;
-import de.uni_freiburg.informatik.ultimate.cookiefy.Activator;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.IGenerator;
 import de.uni_freiburg.informatik.ultimate.model.GraphType;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
-import de.uni_freiburg.informatik.ultimate.model.MarkedTrace;
-import de.uni_freiburg.informatik.ultimate.model.TokenMap;
 
 public class CookiefyPlugin implements IGenerator {
 	
@@ -38,11 +33,6 @@ public class CookiefyPlugin implements IGenerator {
 			return null;	
 		}
 	}
-
-	@Override
-	public List<MarkedTrace> getMarkedTraces() {
-		return null;
-	}
 	
 	@Override
 	public IElement getModel() {
@@ -54,11 +44,7 @@ public class CookiefyPlugin implements IGenerator {
 		return false;
 	}
 
-	/**
-	 * don't used.
-	 */
-	@Override
-	public void setTokenMap(TokenMap tokenMap) {}
+
 
 	@Override
 	public QueryKeyword getQueryKeyword() {
@@ -87,14 +73,6 @@ public class CookiefyPlugin implements IGenerator {
 		//toolchain.
 		observers.add(m_CookiefyAlgorithm);
 		return observers;
-	}
-
-	@Override
-	public IEclipsePreferences[] getPreferences(IScopeContext cs,
-			IScopeContext is) {
-		return null;
-		//look how it is done in DSITransformer
-		//return new IEclipsePreferences[] {cs.getNode(s_PLUGIN_ID)};
 	}
 
 	@Override

@@ -3,7 +3,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.cdt.views.locationtrace;
 
-import de.uni_freiburg.informatik.ultimate.model.ILocation;
+import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 
 /**
  * We need this class, because it is necessary that every Object in the

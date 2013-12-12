@@ -7,7 +7,6 @@ import java.util.List;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 
-import pea.PhaseEventAutomata;
 import pea_to_boogie.Activator;
 import pea_to_boogie.translator.Translator;
 import req_to_pea.ReqToPEA;
@@ -17,7 +16,6 @@ import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceIn
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.ISource;
 import de.uni_freiburg.informatik.ultimate.model.GraphType;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
-import de.uni_freiburg.informatik.ultimate.model.TokenMap;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Unit;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.wrapper.WrapperNode;
 
@@ -70,11 +68,6 @@ public class PeaToBoogie implements ISource {
  		return new WrapperNode(null, unit);
 	}
 
-	@Override
-	public String[] getTokens() {
-		// TODO Auto-generated method stub
-		return null;
-	}
 
 	@Override
 	public String[] getFileTypes() {
@@ -82,11 +75,6 @@ public class PeaToBoogie implements ISource {
 		return new String[] { ".req" };
 	}
 
-	@Override
-	public TokenMap getTokenMap() {
-		// TODO Auto-generated method stub
-		return null;
-	}
 
 	@Override
 	public GraphType getOutputDefinition() {

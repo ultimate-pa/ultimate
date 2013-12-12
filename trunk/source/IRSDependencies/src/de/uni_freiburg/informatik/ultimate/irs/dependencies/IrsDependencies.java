@@ -4,19 +4,14 @@ import java.util.LinkedList;
 import java.util.List;
 
 import org.apache.log4j.Logger;
-import org.eclipse.core.runtime.preferences.IEclipsePreferences;
-import org.eclipse.core.runtime.preferences.IScopeContext;
 
 import de.uni_freiburg.informatik.ultimate.access.IObserver;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.IAnalysis;
-import de.uni_freiburg.informatik.ultimate.irs.dependencies.observers.ASTDependencyFinder;
 import de.uni_freiburg.informatik.ultimate.irs.dependencies.observers.DependencyFinder;
 import de.uni_freiburg.informatik.ultimate.irs.dependencies.observers.SymbolTableCreator;
 import de.uni_freiburg.informatik.ultimate.model.GraphType;
-import de.uni_freiburg.informatik.ultimate.model.MarkedTrace;
-import de.uni_freiburg.informatik.ultimate.model.TokenMap;
 
 public class IrsDependencies implements IAnalysis {
 
@@ -35,20 +30,14 @@ public class IrsDependencies implements IAnalysis {
 		return null;
 	}
 
-	@Override
-	public List<MarkedTrace> getMarkedTraces() {
-		return null;
-	}
+
 
 	@Override
 	public boolean isGuiRequired() {
 		return false;
 	}
 
-	@Override
-	public void setTokenMap(TokenMap tokenMap) {
 
-	}
 
 	@Override
 	public QueryKeyword getQueryKeyword() {
@@ -85,12 +74,6 @@ public class IrsDependencies implements IAnalysis {
 	@Override
 	public List<IObserver> getObservers() {
 		return mObservers;
-	}
-
-	@Override
-	public IEclipsePreferences[] getPreferences(IScopeContext cs,
-			IScopeContext is) {
-		return null;
 	}
 
 	@Override

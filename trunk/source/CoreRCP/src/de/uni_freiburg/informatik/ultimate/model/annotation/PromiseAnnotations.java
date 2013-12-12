@@ -1,4 +1,4 @@
-package de.uni_freiburg.informatik.ultimate.model;
+package de.uni_freiburg.informatik.ultimate.model.annotation;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;

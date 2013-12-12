@@ -1,10 +1,10 @@
 package de.uni_freiburg.informatik.ultimate.BuchiProgramProduct;
 
-import de.uni_freiburg.informatik.ultimate.model.AbstractAnnotations;
-import de.uni_freiburg.informatik.ultimate.model.annotations.Overapprox;
+import de.uni_freiburg.informatik.ultimate.model.annotation.AbstractAnnotations;
+import de.uni_freiburg.informatik.ultimate.model.annotation.Overapprox;
 
 /**
- * When the RCFG is used as a Büchi program, use this Annotation
+ * When the RCFG is used as a Bï¿½chi program, use this Annotation
  * to mark accepting Locations.
  * 
  * 

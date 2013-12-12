@@ -33,7 +33,7 @@ public class ParserTest extends TestCase {
 			InputStreamReader file = new InputStreamReader(IOUtils.toInputStream(code));		
 	
 			Lexer lexer = new Lexer(file);
-			parser p = new parser(lexer);
+			Parser p = new Parser(lexer);
 			AstNode n = (AstNode)p.parse().value;
 			
 			System.out.println(n.toString());
@@ -62,7 +62,7 @@ public class ParserTest extends TestCase {
 			InputStreamReader file = new InputStreamReader(IOUtils.toInputStream(code));		
 	
 			Lexer lexer = new Lexer(file);
-			parser p = new parser(lexer);
+			Parser p = new Parser(lexer);
 			AstNode n = (AstNode)p.parse().value;
 	
 			assertEquals(code.replaceAll("\\s", "")
@@ -84,7 +84,7 @@ public class ParserTest extends TestCase {
 		InputStreamReader file = new InputStreamReader(IOUtils.toInputStream(code));		
 	
 		Lexer lexer = new Lexer(file);
-		parser p = new parser(lexer);
+		Parser p = new Parser(lexer);
 		AstNode n = (AstNode)p.parse().value;
 	
 		assertEquals(code.replaceAll("\\s", "")
@@ -107,7 +107,7 @@ public class ParserTest extends TestCase {
 		InputStreamReader file = new InputStreamReader(IOUtils.toInputStream(code));		
 	
 		Lexer lexer = new Lexer(file);
-		parser p = new parser(lexer);
+		Parser p = new Parser(lexer);
 		AstNode n = (AstNode)p.parse().value;
 	
 		//comments are not parsed!
@@ -131,10 +131,10 @@ public class ParserTest extends TestCase {
 			InputStreamReader file = new InputStreamReader(IOUtils.toInputStream(s));		
 		
 			Lexer lexer = new Lexer(file);
-			parser p = new parser(lexer);
+			Parser p = new Parser(lexer);
 			AstNode n = (AstNode)p.parse().value;
 		
-			// just looking for parser errors with big input
+			// just looking for Parser errors with big input
 			assertTrue(true);
 		}		
 

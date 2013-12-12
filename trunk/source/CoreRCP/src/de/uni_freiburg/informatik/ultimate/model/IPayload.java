@@ -3,6 +3,9 @@ package de.uni_freiburg.informatik.ultimate.model;
 import java.io.Serializable;
 import java.util.HashMap;
 
+import de.uni_freiburg.informatik.ultimate.model.annotation.IAnnotations;
+import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
+
 /**
  * 
  * This interface describes all information contained in an INode. We use it to

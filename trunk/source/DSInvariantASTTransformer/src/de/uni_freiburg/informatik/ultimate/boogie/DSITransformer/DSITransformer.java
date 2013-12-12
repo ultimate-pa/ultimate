@@ -3,16 +3,12 @@ package de.uni_freiburg.informatik.ultimate.boogie.DSITransformer;
 import java.util.Collections;
 import java.util.List;
 
-import org.eclipse.core.runtime.preferences.IEclipsePreferences;
-import org.eclipse.core.runtime.preferences.IScopeContext;
 
 import de.uni_freiburg.informatik.ultimate.access.IObserver;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.IGenerator;
 import de.uni_freiburg.informatik.ultimate.model.GraphType;
 import de.uni_freiburg.informatik.ultimate.model.INode;
-import de.uni_freiburg.informatik.ultimate.model.MarkedTrace;
-import de.uni_freiburg.informatik.ultimate.model.TokenMap;
 
 /**
  * This Class transforms a Boogie AST into a new one to generate data structure invariants
@@ -34,11 +30,6 @@ public class DSITransformer implements IGenerator {
 	 * I don't need a special tool
 	 */
 	public List<String> getDesiredToolID() {
-		return null;
-	}
-
-    @Override
-	public List<MarkedTrace> getMarkedTraces() {
 		return null;
 	}
 
@@ -91,16 +82,6 @@ public class DSITransformer implements IGenerator {
 		this.m_InputType = graphType;
 	}
 
-	/**
-	 * I don't use the TokenMap right now.
-	 */
-	public void setTokenMap(TokenMap tokenMap) {
-	}
-
-	@Override
-	public IEclipsePreferences[] getPreferences(IScopeContext cs, IScopeContext is) {
-		return new IEclipsePreferences[] {cs.getNode(s_PLUGIN_ID)};
-	}
 
 	@Override
 	public UltimatePreferenceInitializer getPreferences() {

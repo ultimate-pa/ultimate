@@ -1,6 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.annotations;
 
-import de.uni_freiburg.informatik.ultimate.model.AbstractAnnotations;
+import de.uni_freiburg.informatik.ultimate.model.annotation.AbstractAnnotations;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 
 public class Boogie2SMTAnnotation extends AbstractAnnotations {

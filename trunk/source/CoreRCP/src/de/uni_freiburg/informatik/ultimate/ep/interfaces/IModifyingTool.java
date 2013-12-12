@@ -3,10 +3,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.ep.interfaces;
 
-import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.model.GraphType;
-import de.uni_freiburg.informatik.ultimate.model.MarkedTrace;
 
 /**
  * @author dietsch
@@ -22,13 +20,5 @@ public interface IModifyingTool extends ITool {
 	 * @return A GraphType object which describes the underlying graph structure of a model
 	 */
 	GraphType getOutputDefinition();
-	
-	/**
-	 * This method can be called by the toolchain to receive a plugins list
-	 * of marked traces that can then be passed to an output plugin.
-	 * 
-	 * @return list of marked traces
-	 */
-	List<MarkedTrace> getMarkedTraces();
 	
 }

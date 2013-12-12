@@ -2,8 +2,6 @@ package de.uni_freiburg.informatik.ultimate.core.coreplugin;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.access.PluginConnector;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
@@ -14,13 +12,10 @@ import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.PluginType;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.SerializeType;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.SubchainType;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.Toolchain;
-import de.uni_freiburg.informatik.ultimate.ep.interfaces.IModifyingTool;
-import de.uni_freiburg.informatik.ultimate.ep.interfaces.IOutput;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.ITool;
 import de.uni_freiburg.informatik.ultimate.model.GraphNotFoundException;
 import de.uni_freiburg.informatik.ultimate.model.GraphType;
 import de.uni_freiburg.informatik.ultimate.model.IModelManager;
-import de.uni_freiburg.informatik.ultimate.model.MarkedTrace;
 import de.uni_freiburg.informatik.ultimate.model.repository.StoreObjectException;
 import org.apache.log4j.Logger;
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -42,12 +37,6 @@ public class ToolchainWalker {
 	private HashMap<String, PluginConnector> m_OpenPlugins;
 	
 	
-	/**
-	 * Toolchain's internal variable that stores the traces
-	 * returned by plugins implementing IModifyingTool.
-	 */
-	private List<MarkedTrace> m_MarkedTraces;
-	
 	// references to same-named objects in the Core
 	// when they change in the core, they will also be 
 	// changed here
@@ -64,7 +53,6 @@ public class ToolchainWalker {
 		m_Id2Plugin = id2plugin;
 		s_Logger = UltimateServices.getInstance().getLogger(Activator.s_PLUGIN_ID);
 		m_OpenPlugins = new HashMap<String, PluginConnector>();
-		m_MarkedTraces = new LinkedList<MarkedTrace>();
 	}
 	
 	public void walk(IProgressMonitor monitor) throws Exception {
@@ -125,14 +113,6 @@ public class ToolchainWalker {
 			this.m_ToolchainCancelRequest = true;
 			return true;
 		}
-		tool.setTokenMap(m_Core.getParser().getTokenMap());
-		
-		// are we dealing with an Output Plugin?
-		// if so, set the traces
-		if (tool instanceof IOutput) {
-			((IOutput) tool).setMarkedTraces(this.m_MarkedTraces);
-		}
-		
 		
 		PluginConnector pc;
 		if (!m_OpenPlugins.containsKey(plugin.getId())) {
@@ -161,12 +141,6 @@ public class ToolchainWalker {
 		if (dt != null) 
 			processDropmodelStmt(dt);
 
-		// get the traces when dealing with IModifiyingTool
-		if (tool instanceof IModifyingTool) {
-			List<MarkedTrace> foo = ((IModifyingTool) tool).getMarkedTraces();
-			if (foo != null)
-				this.m_MarkedTraces.addAll(foo);
-		}
 		return true;
 	}
 	
@@ -370,7 +344,6 @@ public class ToolchainWalker {
 	
 	public void reset() {
 		this.m_OpenPlugins.clear();
-		this.m_MarkedTraces.clear();
 		this.m_ToolchainCancelRequest = false;
 	}
 	

@@ -4,7 +4,7 @@
  * File:	IAnnotation.java created on Mar 7, 2010 by Björn Buchhold
  *
  */
-package de.uni_freiburg.informatik.ultimate.model;
+package de.uni_freiburg.informatik.ultimate.model.annotation;
 
 import java.io.Serializable;
 import java.util.Map;

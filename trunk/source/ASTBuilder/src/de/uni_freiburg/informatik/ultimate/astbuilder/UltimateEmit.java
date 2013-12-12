@@ -79,7 +79,7 @@ public class UltimateEmit extends Emit {
     public void emitPreamble(Node node) throws IOException {
         super.emitPreamble(node);
         writer.println("import java.util.List;");
-        writer.println("import de.uni_freiburg.informatik.ultimate.model.ILocation;");
+        writer.println("import de.uni_freiburg.informatik.ultimate.model.location.ILocation;");
         if (node.getParent() == null)
             writer.println("import de.uni_freiburg.informatik.ultimate.model.boogie.ast.wrapper.ASTNode;");
 

@@ -8,11 +8,6 @@ import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceIn
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.IGenerator;
 import de.uni_freiburg.informatik.ultimate.model.GraphType;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
-import de.uni_freiburg.informatik.ultimate.model.MarkedTrace;
-import de.uni_freiburg.informatik.ultimate.model.TokenMap;
-
-import org.eclipse.core.runtime.preferences.IEclipsePreferences;
-import org.eclipse.core.runtime.preferences.IScopeContext;
 
 /**
  * Main class of Plug-In RankingFunctions
@@ -73,14 +68,6 @@ public class RankingFunctions implements IGenerator {
 		return null;
 	}
 
-	/* (non-Javadoc)
-	 * @see local.stalin.ep.interfaces.ITool#setTokenMap(local.stalin.model.TokenMap)
-	 */
-	@Override
-	public void setTokenMap(TokenMap tokenMap) {
-		// TODO Auto-generated method stub
-
-	}
 
 	/* (non-Javadoc)
 	 * @see local.stalin.ep.interfaces.ITool#setInputDefinition(local.stalin.model.GraphType)
@@ -122,21 +109,6 @@ public class RankingFunctions implements IGenerator {
 	@Override
 	public boolean isGuiRequired() {
 		return false;
-	}
-	
-	/**
-	* @return marked traces or null if no special markers shall be added for output plug-ins
-	*/
-	public List<MarkedTrace> getMarkedTraces(){
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public IEclipsePreferences[] getPreferences(IScopeContext cs,
-			IScopeContext is) {
-		// TODO Auto-generated method stub
-		return null;
 	}
 
 	@Override

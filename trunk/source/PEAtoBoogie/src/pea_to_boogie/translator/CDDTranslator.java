@@ -1,6 +1,7 @@
 package pea_to_boogie.translator;
 import pea.*;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.*;
+import de.uni_freiburg.informatik.ultimate.model.location.BoogieLocation;
 import de.uni_freiburg.informatik.ultimate.model.*;
 public class CDDTranslator {
 

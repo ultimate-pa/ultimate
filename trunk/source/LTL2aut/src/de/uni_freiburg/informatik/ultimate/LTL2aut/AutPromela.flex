@@ -4,6 +4,7 @@ import java_cup.runtime.*;
 
 %%
 
+%cupsym Symbols
 %class Lexer
 %unicode
 %cup
@@ -51,46 +52,32 @@ CommentContent       = ( [^*] | \*+ [^/*] )*
  */
 
 <YYINITIAL>{ 
-	"never"  		{ return symbol(sym.NEVER); }
-	"{"    			{ return symbol(sym.LCB); }
-	"}"    			{ return symbol(sym.RCB); }
-	"if" 	   		{ return symbol(sym.IF); }
-	"fi" 			{ return symbol(sym.FI); }
-	"skip"			{ return symbol(sym.SKIP); }
-	"goto"			{ return symbol(sym.GOTO); }
-	"->"			{ return symbol(sym.TO); }
-	";"				{ return symbol(sym.SEMICOLON); }
-	":"				{ return symbol(sym.COLON); }
+	"never"  		{ return symbol(Symbols.NEVER); }
+	"{"    			{ return symbol(Symbols.LCB); }
+	"}"    			{ return symbol(Symbols.RCB); }
+	"if" 	   		{ return symbol(Symbols.IF); }
+	"fi" 			{ return symbol(Symbols.FI); }
+	"skip"			{ return symbol(Symbols.SKIP); }
+	"goto"			{ return symbol(Symbols.GOTO); }
+	"->"			{ return symbol(Symbols.TO); }
+	";"				{ return symbol(Symbols.SEMICOLON); }
+	":"				{ return symbol(Symbols.COLON); }
 	
-	"&&"			{ return symbol(sym.AND); }
-	"||"			{ return symbol(sym.OR); }
-	"!"				{ return symbol(sym.NOT); }
+	"&&"			{ return symbol(Symbols.AND); }
+	"||"			{ return symbol(Symbols.OR); }
+	"!"				{ return symbol(Symbols.NOT); }
 
-	"("				{ return symbol(sym.LPAR); }
-	")"				{ return symbol(sym.RPAR); }
+	"("				{ return symbol(Symbols.LPAR); }
+	")"				{ return symbol(Symbols.RPAR); }
 	
-	"1"				{ return symbol(sym.TRUE); }
+	"1"				{ return symbol(Symbols.TRUE); }
 	
 	{WhiteSpace}    { /* ignore */ }
 	
-	{Identifier}    { return symbol(sym.NAME, yytext()); }
+	{Identifier}    { return symbol(Symbols.NAME, yytext()); }
 	{Comment}		{ /* ignore */ }
 
 	
 
- }
-
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
+ } 
  

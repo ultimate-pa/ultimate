@@ -97,7 +97,7 @@ public class DummyLTL2autObserver implements IUnmanagedObserver {
 			line = br.readLine(); 
 			while(line != null){
 				LexerAP lexer = new LexerAP(new InputStreamReader(IOUtils.toInputStream(line)));
-				parserAP p = new parserAP(lexer);
+				ParserAP p = new ParserAP(lexer);
 				AstNode nodea = (AstNode)p.parse().value;			
 				// append node to dictionary of atomic propositions
 				if (nodea instanceof AtomicProposition)

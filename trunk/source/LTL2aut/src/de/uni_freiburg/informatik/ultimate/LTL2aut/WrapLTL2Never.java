@@ -27,17 +27,17 @@ public class WrapLTL2Never {
 	//protected static Logger Logger = UltimateServices.getInstance().getLogger(Activator.PLUGIN_ID);
 	
 	/**
-	 * location of the ltl to Büchi tool
+	 * location of the ltl to Bï¿½chi tool
 	 */
 	//public File toolLocatoin = new File("C:\\ltl2ba.exe");
 	/**
-	 * Command line options to start the ltl to Büchi tool.
+	 * Command line options to start the ltl to Bï¿½chi tool.
 	 * Use $1 as a placeholder for the ltl formula.
 	 */
 	//public String commandLineArgument = " -f \"!( $1 )\"";
 	
 	/**
-	 * Returns a Büchi automaton for the ltl formula as a promela never claim.
+	 * Returns a Bï¿½chi automaton for the ltl formula as a promela never claim.
 	 * 
 	 * @param ltlFomula ltl formula in the form accepted by the called tool
 	 * @throws IOException 
@@ -70,9 +70,9 @@ public class WrapLTL2Never {
 	
 	/**
 	 * Returns the Ast of the Promela never claim description of 
-	 * the Büchi automaton returned by the ltl2büchi tool.
+	 * the Bï¿½chi automaton returned by the ltl2bï¿½chi tool.
 	 * @param ltlFormula ltl formula in the format accepted by the tool
-	 * @return Ast of Büchi automaton description
+	 * @return Ast of Bï¿½chi automaton description
 	 * @throws Exception
 	 */
 	public AstNode ltl2Ast(String ltlFormula) throws Exception
@@ -84,7 +84,7 @@ public class WrapLTL2Never {
 		AstNode n = null;
 		//try
 			Lexer lexer = new Lexer(file);
-			parser p = new parser(lexer); 
+			Parser p = new Parser(lexer);
 			n = (AstNode)p.parse().value;
 
 		

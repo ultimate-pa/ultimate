@@ -2,8 +2,8 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.visualization;
 
 import java.util.HashMap;
 
-import de.uni_freiburg.informatik.ultimate.model.DefaultAnnotations;
-import de.uni_freiburg.informatik.ultimate.model.IAnnotations;
+import de.uni_freiburg.informatik.ultimate.model.annotation.DefaultAnnotations;
+import de.uni_freiburg.informatik.ultimate.model.annotation.IAnnotations;
 import de.uni_freiburg.informatik.ultimate.model.structure.ModifiableExplicitEdgesMultigraph;
 
 /**

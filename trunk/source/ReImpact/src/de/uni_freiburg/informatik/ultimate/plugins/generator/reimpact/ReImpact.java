@@ -7,16 +7,8 @@ import de.uni_freiburg.informatik.ultimate.access.IObserver;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.IGenerator;
 import de.uni_freiburg.informatik.ultimate.model.GraphType;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
-import de.uni_freiburg.informatik.ultimate.model.MarkedTrace;
-import de.uni_freiburg.informatik.ultimate.model.TokenMap;
-import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceInitializer;
 
-import org.apache.log4j.Logger;
-import org.eclipse.core.runtime.IPath;
-import org.eclipse.core.runtime.preferences.IEclipsePreferences;
-import org.eclipse.core.runtime.preferences.IPreferencesService;
-import org.eclipse.core.runtime.preferences.IScopeContext;
 
 /**
  * Main class of Plug-In ReImpact
@@ -32,9 +24,6 @@ public class ReImpact implements IGenerator {
 	
 	private ReImpactObserver m_Observer;
 	private GraphType m_InputDefinition;
-	
-	private static Logger s_Logger = UltimateServices.getInstance().getLogger(Activator.s_PLUGIN_ID);
-	
 	
 	
 	/* (non-Javadoc)
@@ -79,14 +68,7 @@ public class ReImpact implements IGenerator {
 		return null;
 	}
 
-	/* (non-Javadoc)
-	 * @see de.uni_freiburg.informatik.ultimate.ep.interfaces.ITool#setTokenMap(de.uni_freiburg.informatik.ultimate.model.TokenMap)
-	 */
-	@Override
-	public void setTokenMap(TokenMap tokenMap) {
-		// TODO Auto-generated method stub
 
-	}
 
 	/* (non-Javadoc)
 	 * @see de.uni_freiburg.informatik.ultimate.ep.interfaces.ITool#setInputDefinition(de.uni_freiburg.informatik.ultimate.model.GraphType)
@@ -129,20 +111,7 @@ public class ReImpact implements IGenerator {
 		return false;
 	}
 	
-	/**
-	* @return marked traces or null if no special markers shall be added for output plug-ins
-	*/
-	public List<MarkedTrace> getMarkedTraces(){
-		// TODO Auto-generated method stub
-		return null;
-	}
 
-	@Override
-	public IEclipsePreferences[] getPreferences(IScopeContext cs,
-			IScopeContext is) {
-		// TODO Auto-generated method stub
-		return null;
-	}
 
 	@Override
 	public UltimatePreferenceInitializer getPreferences() {
@@ -150,16 +119,6 @@ public class ReImpact implements IGenerator {
 		return null;
 	}
 	
-//	public IEclipsePreferences getNode(String qualifier) {
-//		// TODO: added because of IScopeContext interface
-//		// not sure what it's used for
-//		return null;
-//	}
-//
-//	public IPath getLocation() {
-//		// TODO: added because of IScopeContext interface
-//		// not sure what it's used for
-//		return null;
-//	}
+
 
 }

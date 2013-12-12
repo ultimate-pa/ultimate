@@ -4,8 +4,8 @@ import java.util.HashMap;
 
 import de.uni_freiburg.informatik.ultimate.automata.Activator;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.Event;
-import de.uni_freiburg.informatik.ultimate.model.DefaultAnnotations;
-import de.uni_freiburg.informatik.ultimate.model.IAnnotations;
+import de.uni_freiburg.informatik.ultimate.model.annotation.DefaultAnnotations;
+import de.uni_freiburg.informatik.ultimate.model.annotation.IAnnotations;
 
 /**
  * Ultimate model of a OcurrenceNet event.

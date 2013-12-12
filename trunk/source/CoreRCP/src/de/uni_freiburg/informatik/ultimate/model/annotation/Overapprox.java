@@ -1,10 +1,9 @@
-package de.uni_freiburg.informatik.ultimate.model.annotations;
+package de.uni_freiburg.informatik.ultimate.model.annotation;
 
 import java.util.Collections;
 import java.util.Map;
 
-import de.uni_freiburg.informatik.ultimate.model.AbstractAnnotations;
-import de.uni_freiburg.informatik.ultimate.model.ILocation;
+import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 import de.uni_freiburg.informatik.ultimate.result.Check;
 
 /**

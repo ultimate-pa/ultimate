@@ -3,16 +3,11 @@ package de.uni_freiburg.informatik.ultimate.boogie.preprocessor;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.eclipse.core.runtime.preferences.IEclipsePreferences;
-import org.eclipse.core.runtime.preferences.IScopeContext;
-
 import de.uni_freiburg.informatik.ultimate.access.IObserver;
 import de.uni_freiburg.informatik.ultimate.boogie.preferences.PreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.IAnalysis;
 import de.uni_freiburg.informatik.ultimate.model.GraphType;
-import de.uni_freiburg.informatik.ultimate.model.MarkedTrace;
-import de.uni_freiburg.informatik.ultimate.model.TokenMap;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.wrapper.ASTNode;
 
 /**
@@ -25,7 +20,6 @@ public class BoogiePreprocessor implements IAnalysis {
 
     private static final String s_PLUGIN_NAME = "Boogie Preprocessor";
     private static final String s_PLUGIN_ID = Activator.PLUGIN_ID;
-    private List<MarkedTrace> m_MarkedTraces;
 
     public String getName() {
         return s_PLUGIN_NAME;
@@ -53,12 +47,6 @@ public class BoogiePreprocessor implements IAnalysis {
         return null;
     }
 
-    /**
-     * I don't use the TokenMap right now.
-     */
-    public void setTokenMap(TokenMap tokenMap) {
-        // not required.
-    }
 
     public GraphType getOutputDefinition() {
         /* use old graph type definition */
@@ -85,17 +73,6 @@ public class BoogiePreprocessor implements IAnalysis {
         return false;
     }
 
-    @Override
-    public List<MarkedTrace> getMarkedTraces() {
-        // TODO implement traces
-        return m_MarkedTraces;
-    }
-
-    @Override
-    public IEclipsePreferences[] getPreferences(IScopeContext cs,
-            IScopeContext is) {
-        return new IEclipsePreferences[] { cs.getNode(s_PLUGIN_ID) };
-    }
 
     /**
      * Add all annotation from annot to node. annot should not be null.

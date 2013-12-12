@@ -5,7 +5,7 @@ package pea_to_boogie.translator;
 
 import java.io.Serializable;
 
-import de.uni_freiburg.informatik.ultimate.model.ILocation;
+import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 import de.uni_freiburg.informatik.ultimate.result.Check;
 
 /**

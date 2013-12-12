@@ -1,8 +1,8 @@
 package de.uni_freiburg.informatik.ultimate.irs.dependencies.rcfg.annotations;
 
 import de.uni_freiburg.informatik.ultimate.irs.dependencies.Activator;
-import de.uni_freiburg.informatik.ultimate.model.AbstractAnnotations;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
+import de.uni_freiburg.informatik.ultimate.model.annotation.AbstractAnnotations;
 
 public abstract class IRSDependenciesAnnotation extends AbstractAnnotations {
 

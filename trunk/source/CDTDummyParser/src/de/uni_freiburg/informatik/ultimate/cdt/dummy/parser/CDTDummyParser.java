@@ -15,7 +15,6 @@ import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceIn
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.ISource;
 import de.uni_freiburg.informatik.ultimate.model.GraphType;
 import de.uni_freiburg.informatik.ultimate.model.INode;
-import de.uni_freiburg.informatik.ultimate.model.TokenMap;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.wrapper.WrapperNode;
 
 /**
@@ -155,16 +154,6 @@ public class CDTDummyParser implements ISource {
 		return new WrapperNode(null, (IASTTranslationUnit) ast);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * de.uni_freiburg.informatik.ultimate.ep.interfaces.ISource#getTokens()
-	 */
-	@Override
-	public String[] getTokens() {
-		return null;
-	}
 
 	/*
 	 * (non-Javadoc)
@@ -177,16 +166,6 @@ public class CDTDummyParser implements ISource {
 		return m_FileTypes;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * de.uni_freiburg.informatik.ultimate.ep.interfaces.ISource#getTokenMap()
-	 */
-	@Override
-	public TokenMap getTokenMap() {
-		return null;
-	}
 
 	/*
 	 * (non-Javadoc)

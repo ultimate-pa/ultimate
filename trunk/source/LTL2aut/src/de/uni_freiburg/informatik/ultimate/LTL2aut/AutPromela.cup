@@ -4,6 +4,9 @@ import java_cup.runtime.*;
 import de.uni_freiburg.informatik.ultimate.LTL2aut.ast.*;
 import java.util.ArrayList;
 
+parser Parser;
+option symbols=Symbols;
+
 /* Terminals (tokens returned by the scanner). */
 terminal           	NEVER, LCB, RCB, IF, FI, SKIP, GOTO, TO, SEMICOLON, COLON, TRUE; 				
 terminal 			AND, OR, LPAR , RPAR, NOT;

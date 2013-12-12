@@ -4,16 +4,13 @@ import java.io.InputStreamReader;
 import java.util.HashMap;
 import java.util.Map;
 
-
-
-
 import org.apache.commons.io.IOUtils;
 
 import de.uni_freiburg.informatik.ultimate.LTL2aut.Lexer;
 import de.uni_freiburg.informatik.ultimate.LTL2aut.LexerAP;
+import de.uni_freiburg.informatik.ultimate.LTL2aut.Parser;
+import de.uni_freiburg.informatik.ultimate.LTL2aut.ParserAP;
 import de.uni_freiburg.informatik.ultimate.LTL2aut.SubstituteAPVisitor;
-import de.uni_freiburg.informatik.ultimate.LTL2aut.parser;
-import de.uni_freiburg.informatik.ultimate.LTL2aut.parserAP;
 import de.uni_freiburg.informatik.ultimate.LTL2aut.ast.AstNode;
 import de.uni_freiburg.informatik.ultimate.LTL2aut.ast.AtomicProposition;
 import junit.framework.TestCase;
@@ -39,7 +36,7 @@ public class SubstituteAPVisitorTest extends TestCase {
 		InputStreamReader file = new InputStreamReader(IOUtils.toInputStream(code));		
 	
 		Lexer lexer = new Lexer(file);
-		parser p = new parser(lexer);
+		Parser p = new Parser(lexer);
 		AstNode ast = (AstNode)p.parse().value;
 		
 		// pasrse aps
@@ -51,7 +48,7 @@ public class SubstituteAPVisitorTest extends TestCase {
 			file = new InputStreamReader(IOUtils.toInputStream(ap));		
 		
 			LexerAP lexerAP = new LexerAP(file);
-			parserAP pAP = new parserAP(lexerAP);
+			ParserAP pAP = new ParserAP(lexerAP);
 			AstNode nodea = (AstNode)pAP.parse().value;
 
 			if (nodea instanceof AtomicProposition) 
