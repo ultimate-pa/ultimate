@@ -302,7 +302,7 @@ public class LassoRankerObserver implements IUnmanagedObserver {
 		String message = "This is not a lasso program (a lasso program is a single procedure with a single while loop and without branching, neither in the stem nor in the body of the while loop)";
 		s_Logger.error(message);
 		
-		@SuppressWarnings("deprecation")
+		@SuppressWarnings("deprecation") // Daniels ModelContainer
 		SyntaxErrorResult<RcfgElement> unsupp = 
 				new SyntaxErrorResult<RcfgElement>(
 				position,
@@ -315,7 +315,7 @@ public class LassoRankerObserver implements IUnmanagedObserver {
 	}
 	
 	public static String backtranslateExprWorkaround(Expression expr) {
-		@SuppressWarnings("deprecation")
+		@SuppressWarnings("deprecation") // Daniels ModelContainer
 		ITranslator<?, ?, Expression, ?> iback = 
 				(ITranslator<?, ?, Expression, ?>) UltimateServices.getInstance().getTranslatorSequence().get(0);
 		Object backExpr = iback.translateExpression(expr);
