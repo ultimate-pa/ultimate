@@ -1,28 +1,18 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck;
 
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ModifiableGlobalVariableManager;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.TransFormula;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CfgBuilder.GotoEdge;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.NestedSsaBuilder.VariableVersioneer;
 
 /**
  * TODO: documentation
@@ -99,14 +89,6 @@ public class LiveVariables {
 	private void computeLiveVariables() {
 		fetchConstantsForEachPosition();
 		computeLiveConstants();
-//		assert m_LiveConstants != null;
-//		// Compute live constants using forward live constants and backward live constants.
-//		for (int i = 0; i < m_ForwardLiveConstants.length; i++) {
-//			assert m_LiveConstants[i] == null : "Live constants already computed!";
-//			m_ForwardLiveConstants[i].retainAll(m_BackwardLiveConstants[i]);
-//			m_LiveConstants[i] = m_ForwardLiveConstants[i];
-//		}
-		
 		generateLiveVariablesFromLiveConstants();
 	}
 	
