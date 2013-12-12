@@ -12,8 +12,8 @@ extern int __VERIFIER_nondet_int(void);
 
 
 int main() {
-	int id = __VERIFIER_nondet_int();
-	int maxId = __VERIFIER_nondet_int();
+    int id = __VERIFIER_nondet_int();
+    int maxId = __VERIFIER_nondet_int();
 
 
     if(0 <= id && id < maxId) {
