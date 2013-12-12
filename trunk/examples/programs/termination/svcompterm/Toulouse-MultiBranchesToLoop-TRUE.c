@@ -6,7 +6,7 @@
  * 
  */
 
-__VERIFIER_nondet_int() { int val; return val; }
+extern int __VERIFIER_nondet_int(void);
 
 int main() {
     int x,y,z,m,n;

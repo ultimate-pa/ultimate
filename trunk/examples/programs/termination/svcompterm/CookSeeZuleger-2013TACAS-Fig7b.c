@@ -8,22 +8,19 @@
  *
  */
 
-int nondet() {
-	int anyValue;
-	return anyValue;
-}
+extern int __VERIFIER_nondet_int(void);
 
 int main() {
 	int x,y,z;
 	while (x>0 && y>0 && z>0) {
-		if (nondet()) {
+		if (__VERIFIER_nondet_int()) {
 			x = x - 1;
-		} else if (nondet()) {
+		} else if (__VERIFIER_nondet_int()) {
 			y = y - 1;
-			z = nondet();
+			z = __VERIFIER_nondet_int();
 		} else {
 			z = z - 1;
-			x = nondet();
+			x = __VERIFIER_nondet_int();
 		}
 	}
 }
