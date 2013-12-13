@@ -83,7 +83,7 @@ public class BoogieTraceAbstractionTC extends Toolchain {
 
         List<Setting> oTrAbs = new ArrayList<Setting>();
         List<Setting> mTrAbs = new ArrayList<Setting>();
-        oTrAbs.add(new Setting("/HoareAnnotation", Setting.SettingType.BOOLEAN,
+        oTrAbs.add(new Setting("/Compute\\ Hoare\\ Annotation\\ of\\ negated\\ interpolant\\ automaton,\\ abstraction\\ and\\ CFG", Setting.SettingType.BOOLEAN,
                 "Compute Hoare Annotation", "true", true));
         oTrAbs.add(new Setting("/Timeout", Setting.SettingType.INTEGER,
                 "Timeout", "60", false));

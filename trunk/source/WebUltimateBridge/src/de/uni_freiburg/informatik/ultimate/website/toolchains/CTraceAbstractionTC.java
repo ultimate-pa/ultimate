@@ -98,7 +98,7 @@ public class CTraceAbstractionTC extends Toolchain {
 //        		"check all specifications at once", "false", true));
 //        oTrAbs.add(new Setting("/Minimize", Setting.SettingType.BOOLEAN,
 //                "Use Minimization", "true", true));
-        oTrAbs.add(new Setting("/HoareAnnotation", Setting.SettingType.BOOLEAN,
+        oTrAbs.add(new Setting("/Compute\\ Hoare\\ Annotation\\ of\\ negated\\ interpolant\\ automaton,\\ abstraction\\ and\\ CFG", Setting.SettingType.BOOLEAN,
                 "Compute Hoare Annotation", "true", true));
         oTrAbs.add(new Setting("/Compute\\ Interpolants\\ along\\ a\\ Counterexample", Setting.SettingType.STRING,
                 "interpolation", "Craig_NestedInterpolation", false));
