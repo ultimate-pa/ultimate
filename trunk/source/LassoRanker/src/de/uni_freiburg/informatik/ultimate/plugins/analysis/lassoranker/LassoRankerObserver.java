@@ -114,8 +114,8 @@ public class LassoRankerObserver implements IUnmanagedObserver {
 		StringBuilder sb = new StringBuilder();
 		if (rf instanceof LinearRankingFunction) {
 			LinearRankingFunction linRf = (LinearRankingFunction) rf;
-			Expression rfExp = linRf.asExpression(script, smt2boogie);
-			String rfString = backtranslateExprWorkaround(rfExp);
+			List<Expression> rfLexExp = linRf.asLexExpression(script, smt2boogie);
+			String rfString = backtranslateExprWorkaround(rfLexExp.get(0));
 			String siString = "";
 			for (SupportingInvariant si : si_list) {
 				if (!si.isTrue()) {

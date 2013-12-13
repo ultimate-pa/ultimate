@@ -1,5 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.rankingfunctions;
 
+import java.math.BigInteger;
 import java.util.*;
 
 import de.uni_freiburg.informatik.ultimate.logic.*;
@@ -37,7 +38,9 @@ public class PiecewiseRankingFunction extends RankingFunction {
 	@Override
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
-		sb.append("f(");
+		sb.append(m_ranking.size());
+		sb.append("-priece ranking function:\n");
+		sb.append("  f(");
 		boolean first = true;
 		for (BoogieVar var : m_ranking.get(0).getVariables()) {
 			if (!first) {
@@ -48,6 +51,7 @@ public class PiecewiseRankingFunction extends RankingFunction {
 		}
 		sb.append(") = {\n");
 		for (int i = 0; i < pieces; ++i) {
+			sb.append("    ");
 			sb.append(m_ranking.get(i));
 			sb.append(",\tif ");
 			sb.append(m_predicates.get(i));
@@ -63,9 +67,17 @@ public class PiecewiseRankingFunction extends RankingFunction {
 	}
 	
 	@Override
-	public Term asTerm(Script script) throws SMTLIBException {
-		// m_ranking.asTerm(script);
-		return null; // TODO
+	public List<Term> asLexTerm(Script script) throws SMTLIBException {
+		Term value = script.numeral(BigInteger.ZERO);
+			// ZERO should never be attained
+		for (int i = m_ranking.size() - 1; i >= 0; --i) {
+			AffineFunction af = m_ranking.get(i);
+			AffineFunction gf = m_predicates.get(i);
+			Term pred = script.term(">=", gf.asTerm(script),
+					script.numeral(BigInteger.ZERO));
+			value = script.term("ifthenelse", pred, af.asTerm(script), value);
+		}
+		return Collections.singletonList(value);
 	}
 	
 	@Override

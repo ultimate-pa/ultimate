@@ -1,5 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.rankingfunctions;
 
+import java.math.BigInteger;
 import java.util.*;
 
 import de.uni_freiburg.informatik.ultimate.logic.*;
@@ -31,8 +32,10 @@ public class MultiphaseRankingFunction extends RankingFunction {
 	@Override
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
+		sb.append(m_ranking.size());
+		sb.append("-phase ranking function:\n");
 		for (int i = 0; i < phases; ++i) {
-			sb.append("f" + i);
+			sb.append("  f" + i);
 			sb.append(" = ");
 			sb.append(m_ranking.get(i));
 			if (i < phases - 1) {
@@ -43,9 +46,24 @@ public class MultiphaseRankingFunction extends RankingFunction {
 	}
 	
 	@Override
-	public Term asTerm(Script script) throws SMTLIBException {
-		// m_ranking.asTerm(script);
-		return null; // TODO
+	public List<Term> asLexTerm(Script script) throws SMTLIBException {
+		BigInteger n = BigInteger.ZERO;
+		Term value = script.numeral(n);
+		Term phase = m_ranking.get(m_ranking.size() - 1).asTerm(script);
+		for (int i = m_ranking.size() - 2; i >= 0; --i) {
+			n = n.add(BigInteger.ONE);
+			
+			Term f_term = m_ranking.get(i).asTerm(script);
+			Term cond = script.term(">", f_term,
+					script.numeral(BigInteger.ZERO));
+			value = script.term("ifthenelse", cond, script.numeral(n), value);
+			phase = script.term("ifthenelse", cond, f_term, phase);
+		}
+		
+		List<Term> lex = new ArrayList<Term>(2);
+		lex.add(phase);
+		lex.add(value);
+		return lex;
 	}
 	
 	@Override

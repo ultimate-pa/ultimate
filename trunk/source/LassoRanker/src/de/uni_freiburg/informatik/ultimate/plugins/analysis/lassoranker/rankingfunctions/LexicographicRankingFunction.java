@@ -32,7 +32,9 @@ public class LexicographicRankingFunction extends RankingFunction {
 	@Override
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
-		sb.append("f(");
+		sb.append(m_ranking.size());
+		sb.append("-lexicographic ranking function:\n");
+		sb.append("  f(");
 		boolean first = true;
 		for (BoogieVar var : m_ranking.get(0).getVariables()) {
 			if (!first) {
@@ -53,9 +55,12 @@ public class LexicographicRankingFunction extends RankingFunction {
 	}
 	
 	@Override
-	public Term asTerm(Script script) throws SMTLIBException {
-		// m_ranking.asTerm(script);
-		return null; // TODO
+	public List<Term> asLexTerm(Script script) throws SMTLIBException {
+		List<Term> lex = new ArrayList<Term>(m_ranking.size());
+		for (AffineFunction af : m_ranking) {
+			lex.add(af.asTerm(script));
+		}
+		return lex;
 	}
 	
 	@Override
