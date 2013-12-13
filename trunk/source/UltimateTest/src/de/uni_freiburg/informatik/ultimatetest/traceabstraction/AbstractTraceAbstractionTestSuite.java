@@ -20,7 +20,8 @@ public abstract class AbstractTraceAbstractionTestSuite extends UltimateTestSuit
 
 		File toolchainFile = new File(
 				Util.getPathFromTrunk("examples/toolchains/TraceAbstraction.xml"));
-		long deadline = 20;
+		// (musab): It seems to be that the deadline is not respected.
+		long deadline = 1;
 
 		for (File inputFile : inputFiles) {
 

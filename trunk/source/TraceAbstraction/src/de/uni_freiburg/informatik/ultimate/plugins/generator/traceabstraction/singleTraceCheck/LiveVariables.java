@@ -43,7 +43,7 @@ public class LiveVariables {
 		m_SmtManager = smtManager;
 		// We don't need the constants for the post-condition, because we do not compute
 		// live variables for the post-condition
-		m_ConstantsForEachPosition = new Collection[traceWithConstants.getTrace().length() + 1];
+		m_ConstantsForEachPosition = new Collection[traceWithConstants.getTrace().length() + 2];
 		m_ForwardLiveConstants = new Set[m_ConstantsForEachPosition.length + 1];
 		m_BackwardLiveConstants = new Set[m_ForwardLiveConstants.length];
 		m_LiveConstants = new Set[m_ForwardLiveConstants.length];
@@ -59,9 +59,14 @@ public class LiveVariables {
 	 */
 	private void fetchConstantsForEachPosition() {
 		assert m_ConstantsForEachPosition != null;
+		// Add constants for the precondition
 		Set<Term> constants = new HashSet<Term>();
 		constants.addAll(m_TraceWithConstants.getPrecondition().values());
 		m_ConstantsForEachPosition[0] = constants;
+		// add constants for the post-condition
+		constants = new HashSet<Term>();
+		constants.addAll(m_TraceWithConstants.getPostcondition().values());
+		m_ConstantsForEachPosition[m_TraceWithConstants.getTrace().length() + 1] = constants;
 		for (int i = 0; i < m_TraceWithConstants.getTrace().length(); i++) {
 			constants = new HashSet<Term>();
 			if (m_TraceWithConstants.getTrace().isCallPosition(i)) {
