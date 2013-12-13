@@ -1,5 +1,5 @@
 /*
- * Progam from Fig.2 of
+ * Program from Fig.2 of
  * 2013WST - Urban - Piecewise-Defined Ranking Functions
  *
  * Date: 12.12.2012

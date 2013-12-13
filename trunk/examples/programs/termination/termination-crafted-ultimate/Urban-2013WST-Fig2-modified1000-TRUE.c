@@ -1,5 +1,5 @@
 /*
- * Progam from Fig.1 of
+ * Program from Fig.1 of
  * 2013WST - Urban - Piecewise-Defined Ranking Functions
  *
  * Date: 12.12.2012
@@ -12,7 +12,7 @@ extern int __VERIFIER_nondet_int(void);
 int main() {
     int x1, x2;
     while (x1 <= 10) {
-        x2 = 10;
+        x2 = 1000;
         while (x2 > 1) {
             x2 = x2 -1;
         }

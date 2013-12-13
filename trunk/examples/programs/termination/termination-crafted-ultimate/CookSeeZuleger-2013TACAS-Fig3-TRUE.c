@@ -1,9 +1,8 @@
-//#terminating
 /*
- * Progam from Fig.7a of
+ * Program from Fig.3 of
  * 2013TACAS - Cook,See,Zuleger - Ramsey vs. Lexicographic Termination Proving
  *
- * Date: 9.6.2013
+ * Date: 8.6.2013
  * Author: heizmann@informatik.uni-freiburg.de
  *
  */
@@ -11,15 +10,13 @@
 extern int __VERIFIER_nondet_int(void);
 
 int main() {
-    int x,y,d;
-    while (x>0 && y>0 && d>0) {
+    int x,y;
+    while (x>0 && y>0) {
         if (__VERIFIER_nondet_int()) {
             x = x - 1;
-            d = __VERIFIER_nondet_int();
         } else {
             x = __VERIFIER_nondet_int();
             y = y - 1;
-            d = d - 1;
         }
     }
 }
