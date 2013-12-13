@@ -7,6 +7,7 @@
       <plugin id="ASTBuilder"/>
       <plugin id="AutomataScriptInterpreter"/>
       <plugin id="AutomataScriptParser"/>
+      <plugin id="BlockEncoding"/>
       <plugin id="BoogieParser"/>
       <plugin id="BoogiePreprocessor"/>
       <plugin id="BoogiePrinter"/>
@@ -84,6 +85,7 @@
       <plugin id="ASTBuilder" autoStart="true" startLevel="0" />
       <plugin id="AutomataScriptInterpreter" autoStart="true" startLevel="0" />
       <plugin id="AutomataScriptParser" autoStart="true" startLevel="0" />
+      <plugin id="BlockEncoding" autoStart="true" startLevel="0" />
       <plugin id="BoogieParser" autoStart="true" startLevel="0" />
       <plugin id="BoogiePreprocessor" autoStart="true" startLevel="0" />
       <plugin id="BoogiePrinter" autoStart="true" startLevel="0" />
