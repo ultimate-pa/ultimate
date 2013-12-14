@@ -163,7 +163,7 @@ public class LiveVariables {
 			}
 			m_LiveVariables[i] = liveVars;
 		}
-		for (int i = 1; i < m_LiveConstants.length-1; i++) {
+		for (int i = 1; i < m_LiveConstants.length-2; i++) {
 			if (m_TraceWithConstants.getTrace().isCallPosition(i-1)) {
 				if(!m_TraceWithConstants.getTrace().isPendingCall(i-1)) {
 					addNonModifiableGlobalsAlongCalledProcedure(m_LiveVariables[i-1], i-1);
