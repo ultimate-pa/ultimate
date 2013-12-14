@@ -112,7 +112,9 @@ public class AffineTermTransformer extends TermTransformer {
 			if (!constant.getSort().getName().equals("Int")) {
 				throw new UnsupportedOperationException();
 			} else {
-				return convertConstantNumericTerm(constant);
+				AffineTerm intTerm = convertConstantNumericTerm(constant);
+				AffineTerm realTerm = new AffineTerm(term.getSort(), intTerm.getConstant());
+				return realTerm;
 			}
 		} else {
 			throw new UnsupportedOperationException();
