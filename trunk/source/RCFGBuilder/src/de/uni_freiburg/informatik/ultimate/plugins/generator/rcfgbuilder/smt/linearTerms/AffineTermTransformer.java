@@ -40,7 +40,11 @@ public class AffineTermTransformer extends TermTransformer {
 			if (isAffineSymbol(funName)) {
 				super.convert(term);
 				return;
-			} else  {
+			} else if (funName.equals("to_real")) {
+				AffineTerm result = convertToReal(appTerm);
+				setResult(result);
+				return;
+			} else {
 				AffineTerm result = new AffineTerm(appTerm);
 				setResult(result);
 				return;
@@ -48,34 +52,71 @@ public class AffineTermTransformer extends TermTransformer {
 		} else if (term instanceof ConstantTerm) {
 			ConstantTerm constTerm = (ConstantTerm) term;
 			if (constTerm.getSort().isNumericSort()) {
-				Object value = constTerm.getValue();
-				Rational rational;
-				if (constTerm.getSort().getName().equals("Int")) {
-					if (value instanceof BigInteger) {
-						rational = Rational.valueOf((BigInteger) value, BigInteger.ONE);
-					} else if (value instanceof Rational) {
-						rational = (Rational) value;
-					} else {
-						throw new UnsupportedOperationException();
-					}
-				} else  if (constTerm.getSort().getName().equals("Real")) {
-					if (value instanceof BigDecimal) {
-						rational = decimalToRational((BigDecimal) value);
-					} else if (value instanceof Rational) {
-						rational = (Rational) value;
-					} else {
-						throw new UnsupportedOperationException();
-					}
-				} 
-				else {
-					throw new UnsupportedOperationException();
-				}
-				AffineTerm result = new AffineTerm(constTerm.getSort(), rational);
+				AffineTerm result = convertConstantNumericTerm(constTerm);
 				setResult(result);
 				return;
 			}
 		}
 		super.convert(term);
+	}
+
+	/**
+	 * Convert ConstantTerm with numericSort to AffineTerm
+	 * 
+	 */
+	private AffineTerm convertConstantNumericTerm(ConstantTerm constTerm) {
+		assert constTerm.getSort().isNumericSort();
+		Object value = constTerm.getValue();
+		Rational rational;
+		if (constTerm.getSort().getName().equals("Int")) {
+			if (value instanceof BigInteger) {
+				rational = Rational.valueOf((BigInteger) value, BigInteger.ONE);
+			} else if (value instanceof Rational) {
+				rational = (Rational) value;
+			} else {
+				throw new UnsupportedOperationException();
+			}
+		} else  if (constTerm.getSort().getName().equals("Real")) {
+			if (value instanceof BigDecimal) {
+				rational = decimalToRational((BigDecimal) value);
+			} else if (value instanceof Rational) {
+				rational = (Rational) value;
+			} else {
+				throw new UnsupportedOperationException();
+			}
+		} 
+		else {
+			throw new UnsupportedOperationException();
+		}
+		AffineTerm result = new AffineTerm(constTerm.getSort(), rational);
+		return result;
+	}
+
+	/**
+	 * Convert tem of the form "to_real(param)" to affine term.
+	 * At the moment we support only the case where param in an integer literal
+	 * @param term
+	 * @return
+	 */
+	private AffineTerm convertToReal(ApplicationTerm term) {
+		if (!term.getFunction().getName().equals("to_real")) {
+			throw new IllegalArgumentException("no to_real term");
+		}
+		Term[] params = ((ApplicationTerm) term).getParameters();
+		if (params.length > 1) {
+			throw new UnsupportedOperationException();
+		}
+		Term param = params[0];
+		if (param instanceof ConstantTerm) {
+			ConstantTerm constant = (ConstantTerm) param;
+			if (!constant.getSort().getName().equals("Int")) {
+				throw new UnsupportedOperationException();
+			} else {
+				return convertConstantNumericTerm(constant);
+			}
+		} else {
+			throw new UnsupportedOperationException();
+		}
 	}
 
 	private boolean isAffineSymbol(String funName) {
@@ -96,6 +137,8 @@ public class AffineTermTransformer extends TermTransformer {
 		}
 		String funName = appTerm.getFunction().getName();
 		if (funName.equals("*")) {
+			// the result is the product of at most one affineTerm and one
+			// multiplier (that may be obtained from a product of constants)
 			AffineTerm affineTerm = null;
 			Rational multiplier = Rational.ONE;
 			Sort sort = appTerm.getSort();
@@ -146,6 +189,48 @@ public class AffineTermTransformer extends TermTransformer {
 					affineArgs[i] = new AffineTerm((AffineTerm) newArgs[i], Rational.MONE);
 				}
 				result = new AffineTerm(affineArgs);
+			}
+			setResult(result);
+			return;
+		} else if (funName.equals("/")) {
+			// the result is the product of at most one affineTerm and one
+			// multiplier (that may be obtained from a division of constants)
+			final AffineTerm affineTerm;
+			Rational multiplier;
+			if (!(newArgs[0] instanceof AffineTerm)) {
+				resultIsNotAffine();
+				return;
+			} else {
+				AffineTerm affineArg0 = (AffineTerm) newArgs[0];
+				if (affineArg0.isConstant()) {
+					affineTerm = null;
+					multiplier = affineArg0.getConstant();
+				} else {
+					affineTerm = affineArg0;
+					multiplier = Rational.ONE;
+				}
+			}
+			for (int i=1; i<newArgs.length; i++) {
+				if (!(newArgs[i] instanceof AffineTerm)) {
+					resultIsNotAffine();
+					return;
+				} else {
+					AffineTerm affineArgi = (AffineTerm) newArgs[i];
+					if (affineArgi.isConstant()) {
+						multiplier = multiplier.mul(affineArgi.getConstant().inverse());
+					} else {
+						// unsupported terms in divisor
+						resultIsNotAffine();
+						return;
+					}
+				}
+			}
+			Sort sort = appTerm.getSort();
+			AffineTerm result;
+			if (affineTerm == null) {
+				result = new AffineTerm(sort, multiplier);
+			} else {
+				result = new AffineTerm(affineTerm, multiplier);
 			}
 			setResult(result);
 			return;
