@@ -609,6 +609,7 @@ public class TraceChecker {
 	
 
 	/**
+	 * Deprecated: Use RCFGProgramExecutions instead
 	 * Return the locations of this trace.
 	 * While using large block encoding this sequence is not unique.
 	 * If <ul>
@@ -619,6 +620,7 @@ public class TraceChecker {
 	 * <li> if the trace fulfills its specification we return any coherent
 	 * sequence of locations.
 	 */
+	@Deprecated
 	public List<CodeBlock> getFailurePath() {
 		if (m_Trace == null) {
 			throw new AssertionError("Check a trace first");
