@@ -2,6 +2,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -25,6 +26,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rankingfunctions.Su
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rankingfunctions.functions.LinearRankingFunction;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rankingfunctions.functions.RankingFunction;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootAnnot;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IPredicate;
@@ -39,60 +41,128 @@ public class BinaryStatePredicateManager {
 	
 	public final static String s_SeedSuffix = "_seed";
 	
+
+	
 	private final Script m_Script;
 	private final SmtManager m_SmtManager;
 	private final BoogieVar m_OldRankVariable;
 	private final BoogieVar m_UnseededVariable;
 	
+	/**
+	 * True if predicates have been computed.
+	 * False if predicates have been cleared or predicates have never been
+	 * computed so far.
+	 */
+	private boolean m_ProvidesPredicates;
+	
 	private IPredicate m_StemPrecondition;
 	private IPredicate m_StemPostcondition;
-//	private IPredicate m_HondaPredicate;
-//	private IPredicate m_RankDecreaseAndSi;
 	private IPredicate m_Honda;
 	private IPredicate m_RankEqualityAndSi;
 
 	private IPredicate m_RankDecrease;
 
-	private Boogie2SMT m_Boogie2Smt;
 	
-	public BinaryStatePredicateManager(SmtManager smtManager, Boogie2SMT boogie2Smt) {
+	private Collection<SupportingInvariant> m_SiList;
+	private LinearRankingFunction m_LinRf;
+
+	/**
+	 * Is the loop also terminating without the stem?
+	 */
+	private Boolean m_LoopTermination;
+	
+	
+	public BinaryStatePredicateManager(SmtManager smtManager) {
 		m_Script = smtManager.getScript();
 		m_SmtManager = smtManager;
-		m_Boogie2Smt = boogie2Smt;
+		Boogie2SMT boogie2Smt = smtManager.getBoogie2Smt();
 		m_OldRankVariable = boogie2Smt.constructBoogieVar("oldRank", null, BoogieType.intType, false, null);
 		boogie2Smt.constructBoogieVar("oldRank", null, BoogieType.intType, true, null);
 		m_UnseededVariable = boogie2Smt.constructBoogieVar("unseeded", null, BoogieType.boolType, false, null);
 		boogie2Smt.constructBoogieVar("unseeded", null, BoogieType.boolType, true, null);
 	}
 	
+	public boolean providesPredicates() {
+		return m_ProvidesPredicates;
+	}
+
+	public boolean isLoopWithoutStemTerminating() {
+		assert m_ProvidesPredicates;
+		return m_LoopTermination;
+	}
+	
+	public LinearRankingFunction getLinRf() {
+		assert m_ProvidesPredicates;
+		return m_LinRf;
+	}
+
+	public Collection<SupportingInvariant> getSiList() {
+		assert m_ProvidesPredicates;
+		return m_SiList;
+	}
+
 	public IPredicate getStemPrecondition() {
+		assert m_ProvidesPredicates;
 		return m_StemPrecondition;
 	}
 
 	public IPredicate getStemPostcondition() {
+		assert m_ProvidesPredicates;
 		return m_StemPostcondition;
 	}
 
 	public IPredicate getHondaPredicate() {
+		assert m_ProvidesPredicates;
 		return m_Honda;
 	}
 
 	public IPredicate getRankEqAndSi() {
+		assert m_ProvidesPredicates;
 		return m_RankEqualityAndSi;
 	}
 	
 	public BoogieVar getUnseededVariable() {
+		assert m_ProvidesPredicates;
 		return m_UnseededVariable;
 	}
 	
 	public BoogieVar getOldRankVariable() {
+		assert m_ProvidesPredicates;
 		return m_OldRankVariable;
 	}
+	
+	public void clearPredicates() {
+		if (!m_ProvidesPredicates) {
+			throw new AssertionError("no predicates provided cannot clear");
+		}
+		m_LoopTermination = null;
+		m_SiList = null;
+		m_LinRf = null;
+		m_StemPrecondition = null;
+		m_StemPostcondition = null;
+		m_Honda = null;
+		m_RankEqualityAndSi = null;
+		m_RankDecrease = null;
+		m_ProvidesPredicates = false;
+	}
 
-	public void computePredicates(LinearRankingFunction rf, Iterable<SupportingInvariant> siList) {
+	public void computePredicates(boolean loopTermination,
+			LinearRankingFunction linRf, 
+			Collection<SupportingInvariant> siList) {
+		assert m_LoopTermination == null;
+		assert m_SiList == null;
+		assert m_LinRf == null;
+		assert m_StemPrecondition == null;
+		assert m_StemPostcondition == null;
+		assert m_Honda == null;
+		assert m_RankEqualityAndSi == null;
+		assert m_RankDecrease == null;
+		m_LoopTermination = loopTermination;
+		m_SiList = siList;
+		m_LinRf = linRf;
 		IPredicate unseededPredicate = unseededPredicate();
 		m_StemPrecondition = unseededPredicate;
-		IPredicate siConjunction = computeSiConjunction(siList);
+		IPredicate siConjunction = computeSiConjunction(m_SiList);
 		boolean siConjunctionIsTrue = isTrue(siConjunction);
 		if (siConjunctionIsTrue) {
 			m_StemPostcondition = unseededPredicate;
@@ -101,7 +171,7 @@ public class BinaryStatePredicateManager {
 			m_StemPostcondition = m_SmtManager.newPredicate(tvp.getFormula(), 
 					tvp.getProcedures(), tvp.getVars(), tvp.getClosedFormula()); 
 		}
-		IPredicate rankEquality = getRankEquality(rf);
+		IPredicate rankEquality = getRankEquality(m_LinRf);
 		if (siConjunctionIsTrue) {
 			m_RankEqualityAndSi = rankEquality;
 		} else {
@@ -109,7 +179,7 @@ public class BinaryStatePredicateManager {
 			m_RankEqualityAndSi = m_SmtManager.newPredicate(tvp.getFormula(), 
 					tvp.getProcedures(), tvp.getVars(), tvp.getClosedFormula()); 
 		}
-		m_RankDecrease = getRankDecrease(rf);
+		m_RankDecrease = getRankDecrease(m_LinRf);
 		IPredicate unseededOrRankDecrease; 
 		{
 			TermVarsProc tvp = m_SmtManager.or(unseededPredicate, m_RankDecrease);
@@ -123,7 +193,7 @@ public class BinaryStatePredicateManager {
 			m_Honda = m_SmtManager.newPredicate(tvp.getFormula(), 
 					tvp.getProcedures(), tvp.getVars(), tvp.getClosedFormula());
 		}
-
+		m_ProvidesPredicates = true;
 	}
 
 
@@ -249,7 +319,7 @@ public class BinaryStatePredicateManager {
 	
 	public boolean checkSupportingInvariant(SupportingInvariant si, 
 			NestedWord<CodeBlock> stem, NestedWord<CodeBlock> loop, 
-			RootAnnot rootAnnot) {
+			ModifiableGlobalVariableManager modGlobVarManager) {
 		boolean result = true;
 		TraceChecker traceChecker;
 		IPredicate truePredicate = m_SmtManager.newTruePredicate();
@@ -258,7 +328,7 @@ public class BinaryStatePredicateManager {
 			siPred = truePredicate;
 		}
 		traceChecker = new TraceChecker(truePredicate, siPred, null, stem, m_SmtManager,
-				rootAnnot.getModGlobVarManager());
+				modGlobVarManager);
 		LBool stemCheck = traceChecker.isCorrect();
 		if (stemCheck == LBool.UNSAT) {
 			traceChecker.unlockSmtManager();
@@ -268,7 +338,7 @@ public class BinaryStatePredicateManager {
 			result = false;			
 		}
 		traceChecker = new TraceChecker(siPred, siPred, null, stem, m_SmtManager,
-				rootAnnot.getModGlobVarManager());
+				modGlobVarManager);
 		LBool loopCheck = traceChecker.isCorrect();
 		if (loopCheck == LBool.UNSAT) {
 			traceChecker.unlockSmtManager();
@@ -280,9 +350,10 @@ public class BinaryStatePredicateManager {
 		return result;
 	}
 	
-	public boolean checkRankDecrease(NestedWord<CodeBlock> loop, RootAnnot rootAnnot) {
+	public boolean checkRankDecrease(NestedWord<CodeBlock> loop, 
+			ModifiableGlobalVariableManager modGlobVarManager) {
 		TraceChecker traceChecker = new TraceChecker(m_RankEqualityAndSi, 
-				m_RankDecrease, null, loop, m_SmtManager,	rootAnnot.getModGlobVarManager());
+				m_RankDecrease, null, loop, m_SmtManager, modGlobVarManager);
 		LBool loopCheck = traceChecker.isCorrect();
 		traceChecker.unlockSmtManager();
 		if (loopCheck == LBool.UNSAT) {
@@ -304,5 +375,8 @@ public class BinaryStatePredicateManager {
 		}
 		return false;
 	}
+	
+	
+
 
 }

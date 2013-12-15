@@ -1,8 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer;
 
-import java.io.FileNotFoundException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -32,33 +30,18 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimi
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.DifferenceDD;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
-import de.uni_freiburg.informatik.ultimate.logic.LoggingScript;
-import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
-import de.uni_freiburg.informatik.ultimate.logic.Script;
-import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
-import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.structure.BasePayloadContainer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.RefineBuchi.RefinementSetting;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.preferences.PreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.preferences.PreferenceInitializer.BInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rankingfunctions.RankingFunctionsObserver;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rankingfunctions.RankingFunctionsSynthesizer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rankingfunctions.SupportingInvariant;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rankingfunctions.TermIsNotAffineException;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rankingfunctions.functions.LinearRankingFunction;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rankingfunctions.functions.RankingFunction;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rankingfunctions.templates.LinearTemplate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RcfgElement;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.SequentialComposition;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.TransFormula;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.TransFormula.Infeasibility;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CFG2NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.HoareAnnotationFragments;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.InterpolantAutomataBuilder;
@@ -72,14 +55,9 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.Artifact;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceChecker;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceChecker.AllIntegers;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceCheckerSpWp;
 import de.uni_freiburg.informatik.ultimate.result.IResult;
 import de.uni_freiburg.informatik.ultimate.result.RankingFunctionResult;
-import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.SMTInterpol;
-import de.uni_freiburg.informatik.ultimate.smtsolver.external.Scriptor;
 
 public class BuchiCegarLoop {
 	protected final static Logger s_Logger = 
@@ -96,7 +74,7 @@ public class BuchiCegarLoop {
 		 * abstraction refinement.
 		 * <li> TIMEOUT: 
 		 */
-		public enum Result { TERMINATING, TIMEOUT , UNKNOWN }
+		public enum Result { TERMINATING, TIMEOUT , UNKNOWN, NONTERMINATING }
 		
 		
 		private final String m_Name;
@@ -113,6 +91,7 @@ public class BuchiCegarLoop {
 		 */
 		protected final SmtManager m_SmtManager;
 		
+		protected final BinaryStatePredicateManager m_BinaryStatePredicateManager;
 		
 		/**
 		 * Intermediate layer to encapsulate preferences.
@@ -142,17 +121,9 @@ public class BuchiCegarLoop {
 		
 		
 		/**
-		 * TraceChecker of this iteration.
-		 */
-		protected TraceChecker m_TraceChecker;
-		
-
-		/**
 		 * Interpolant automaton of this iteration.
 		 */
 		protected NestedWordAutomaton<CodeBlock, IPredicate> m_InterpolAutomaton;
-		
-		private final BinaryStatePredicateManager m_Bspm;
 		
 		protected IAutomaton<CodeBlock, IPredicate> m_ArtifactAutomaton;
 		
@@ -167,32 +138,22 @@ public class BuchiCegarLoop {
 		int m_RankWithoutSi = 0;
 		int m_RankWithSi = 0;
 
-		private NestedRun<CodeBlock, IPredicate> m_ConcatenatedCounterexample;
+
 		
-		private LinearRankingFunction m_LinRf;
-
-		private IPredicate m_TruePredicate;
-
-		private IPredicate m_FalsePredicate;
-
-		private Collection<SupportingInvariant> m_SiList;
-
 		private PredicateFactory m_DefaultStateFactory;
 
 		private HoareAnnotationFragments m_Haf;
 
 		private PredicateFactoryRefinement m_StateFactoryForRefinement;
 
-		private BuchiModGlobalVarManager buchiModGlobalVarManager;
-		
 		private final TreeMap<Integer,Integer> m_ModuleSizeTrivial = new TreeMap<Integer,Integer>();
 		private final TreeMap<Integer,Integer> m_ModuleSizeDeterministic = new TreeMap<Integer,Integer>();
 		private final TreeMap<Integer,Integer> m_ModuleSizeNondeterministic = new TreeMap<Integer,Integer>();
 		private final TreeMap<Integer,Expression> m_RankingFunction = new TreeMap<Integer,Expression>();
 
 		
-		private static final boolean m_ExternalSolver = false;
-		private static final boolean m_SimplifyStemAndLoop = true;
+
+
 		private static final boolean m_ReduceAbstractionSize = true;
 		
 		
@@ -216,12 +177,11 @@ public class BuchiCegarLoop {
 			this.m_Name = "BuchiCegarLoop";
 			this.m_RootNode = rootNode;
 			this.m_SmtManager = smtManager;
-			this.m_Bspm = new BinaryStatePredicateManager(smtManager, 
-					m_RootNode.getRootAnnot().getBoogie2SMT());
-			this.buchiModGlobalVarManager = new BuchiModGlobalVarManager(
-					m_Bspm.getUnseededVariable(), m_Bspm.getOldRankVariable(), 
-					m_RootNode.getRootAnnot().getModGlobVarManager(),
-					m_RootNode.getRootAnnot().getBoogie2SMT());
+			this.m_BinaryStatePredicateManager = new BinaryStatePredicateManager(m_SmtManager);
+//			this.buchiModGlobalVarManager = new BuchiModGlobalVarManager(
+//					m_Bspm.getUnseededVariable(), m_Bspm.getOldRankVariable(), 
+//					m_RootNode.getRootAnnot().getModGlobVarManager(),
+//					m_RootNode.getRootAnnot().getBoogie2SMT());
 
 			this.m_Pref = taPrefs;
 			m_DefaultStateFactory = new PredicateFactory(
@@ -254,8 +214,7 @@ public class BuchiCegarLoop {
 			m_CannibalizeLoop = baPref.getBoolean(PreferenceInitializer.LABEL_CannibalizeLoop);
 			m_MaxNumberOfLoopUnwindings = baPref.getInt(PreferenceInitializer.LABEL_LoopUnwindings);
 			
-			m_RefineBuchi = new RefineBuchi(m_SmtManager, m_Bspm, 
-					buchiModGlobalVarManager, m_Pref.dumpAutomata(), 
+			m_RefineBuchi = new RefineBuchi(m_SmtManager, m_Pref.dumpAutomata(), 
 					m_Difference, m_DefaultStateFactory, m_StateFactoryForRefinement, m_UseDoubleDeckers, 
 					m_Pref.dumpPath(), m_Pref.interpolation());
 			m_BuchiRefinementSettingSequence = new ArrayList<RefineBuchi.RefinementSetting>();
@@ -358,27 +317,43 @@ public class BuchiCegarLoop {
 					return Result.TERMINATING;
 				}
 				
+				LassoChecker lassoChecker = new LassoChecker(
+						m_Pref.interpolation(), m_SmtManager, 
+						m_RootNode.getRootAnnot().getModGlobVarManager(),
+						m_BinaryStatePredicateManager,
+						m_Counterexample);
+				
 				try {
-					LBool isCounterexampleFeasible = isCounterexampleFeasible();
-					if (isCounterexampleFeasible == Script.LBool.UNSAT) {
-						refineFinite();
+					switch (lassoChecker.getContinueDirective()) {
+					case REFINE_FINITE:
+						refineFinite(lassoChecker);
 						m_Infeasible++;
-					} else if (isCounterexampleFeasible == Script.LBool.SAT) {
-						m_TraceChecker.unlockSmtManager();
-						boolean terminating = isCounterexampleTerminating(
-								m_Counterexample.getStem().getWord(), m_Counterexample.getLoop().getWord());
-						if (!terminating) {
-							return Result.UNKNOWN;
+						break;
+					case REFINE_BUCHI:
+						BinaryStatePredicateManager bspm = lassoChecker.getBinaryStatePredicateManager();
+						if (bspm.isLoopWithoutStemTerminating()) {
+							m_RankWithoutSi++;	
 						} else {
-							m_ConcatenatedCounterexample = null;
-
-							INestedWordAutomatonOldApi<CodeBlock, IPredicate> newAbstraction = refineBuchi();
-							m_Abstraction = newAbstraction;
+							m_RankWithSi++;
 						}
-					} else {
-						throw new AssertionError();
-					}
+						ISLPredicate hondaISLP = (ISLPredicate) m_Counterexample.getLoop().getStateAtPosition(0);
+						ProgramPoint hondaPP = hondaISLP.getProgramPoint();
+						reportRankingFunction(bspm.getLinRf(), bspm.getSiList(), hondaPP, m_Counterexample.getStem().getWord(), m_Counterexample.getLoop().getWord());
+						m_RankingFunction.put(m_Iteration, bspm.getLinRf().asExpression(m_SmtManager.getScript(), m_SmtManager.getSmt2Boogie()));
 
+						
+						INestedWordAutomatonOldApi<CodeBlock, IPredicate> newAbstraction = refineBuchi(lassoChecker);
+						m_Abstraction = newAbstraction;
+						m_BinaryStatePredicateManager.clearPredicates();
+						break;
+					case REPORT_UNKNOWN:
+						return Result.UNKNOWN;
+					case REPORT_NONTERMINATION:
+						return Result.NONTERMINATING;
+					default:
+						break;
+					}
+				
 					s_Logger.info("Abstraction has " + m_Abstraction.sizeInformation());
 //					s_Logger.info("Interpolant automaton has " + m_RefineBuchi.getInterpolAutomatonUsedInRefinement().sizeInformation());
 					
@@ -401,10 +376,6 @@ public class BuchiCegarLoop {
 					}
 
 
-//					if (m_Pref.computeHoareAnnotation()) {
-//						assert (m_SmtManager.checkInductivity(m_Abstraction, false, true));
-//					}
-
 					if (m_Iteration <= m_Pref.watchIteration() && m_Pref.artifact() == Artifact.ABSTRACTION) {
 						m_ArtifactAutomaton = m_Abstraction;
 					}
@@ -422,21 +393,27 @@ public class BuchiCegarLoop {
 				} catch (AutomataLibraryException e) {
 					return Result.TIMEOUT;
 				}
-				m_TraceChecker = null;
 				m_InterpolAutomaton = null;
 				
 			}
 			return Result.TIMEOUT;
 		}
 		
-		INestedWordAutomatonOldApi<CodeBlock, IPredicate> refineBuchi() throws AutomataLibraryException {
+		private INestedWordAutomatonOldApi<CodeBlock, IPredicate> refineBuchi(LassoChecker lassoChecker) throws AutomataLibraryException {
 			int stage = 0;
-			for (RefinementSetting rs  : m_BuchiRefinementSettingSequence) {
+			BuchiModGlobalVarManager bmgvm = new BuchiModGlobalVarManager(
+					lassoChecker.getBinaryStatePredicateManager().getUnseededVariable(), 
+					lassoChecker.getBinaryStatePredicateManager().getOldRankVariable(), 
+					m_RootNode.getRootAnnot().getModGlobVarManager(),
+					m_RootNode.getRootAnnot().getBoogie2SMT());
+			for (RefinementSetting rs : m_BuchiRefinementSettingSequence) {
 				if (stage > 0) {
 					s_Logger.info("Statistics: We needed stage " + stage);
 				}
+
+				
 				INestedWordAutomatonOldApi<CodeBlock, IPredicate> newAbstraction = 
-						m_RefineBuchi.refineBuchi(m_Abstraction,m_Counterexample, m_Iteration, rs);
+						m_RefineBuchi.refineBuchi(m_Abstraction, m_Counterexample, m_Iteration, rs, lassoChecker.getBinaryStatePredicateManager(), bmgvm);
 				if (newAbstraction != null) {
 					switch (rs.getInterpolantAutomaton()) {
 					case Deterministic:
@@ -503,60 +480,21 @@ public class BuchiCegarLoop {
 		}
 		
 		
-		private LBool isCounterexampleFeasible() {
-			assert m_ConcatenatedCounterexample == null;
-			assert m_TraceChecker == null;
-			NestedRun<CodeBlock, IPredicate> stem = m_Counterexample.getStem();
-			s_Logger.info("Stem: " + stem);
-			NestedRun<CodeBlock, IPredicate> loop = m_Counterexample.getLoop();
-			s_Logger.info("Loop: " + loop);
 
-			m_TruePredicate = m_SmtManager.newTruePredicate();
-			m_FalsePredicate = m_SmtManager.newFalsePredicate();
-			
-			LBool feasibility;
-			m_ConcatenatedCounterexample = stem;
-			if (emptyStem(m_Counterexample)) {
-				feasibility = LBool.SAT;
-			} else {
-				m_TraceChecker = constructTraceChecker(m_TruePredicate, 
-					m_FalsePredicate, null, m_ConcatenatedCounterexample.getWord(), 
-					m_SmtManager, m_RootNode.getRootAnnot().getModGlobVarManager());
-				feasibility = m_TraceChecker.isCorrect();
-				if (feasibility != LBool.UNSAT) {
-					m_TraceChecker.unlockSmtManager();
-				}
-			}
-			if (feasibility == LBool.UNSAT) {
-				s_Logger.info("stem already infeasible");
-			} else {
-				m_ConcatenatedCounterexample = loop;
-				m_TraceChecker = constructTraceChecker(m_TruePredicate, 
-						m_FalsePredicate, null, m_ConcatenatedCounterexample.getWord(),
-						m_SmtManager, m_RootNode.getRootAnnot().getModGlobVarManager());
-				feasibility = m_TraceChecker.isCorrect();
-				if (feasibility == LBool.UNSAT) {
-					s_Logger.info("loop already infeasible");
-				} else {
-					m_TraceChecker.unlockSmtManager();
-					m_ConcatenatedCounterexample = stem.concatenate(loop);
-					m_TraceChecker = constructTraceChecker(m_TruePredicate, 
-							m_FalsePredicate, null, m_ConcatenatedCounterexample.getWord(), 
-							m_SmtManager, m_RootNode.getRootAnnot().getModGlobVarManager());
-					feasibility = m_TraceChecker.isCorrect();
-
-				}
-			}
-			return feasibility;
-		}
 		
-		private void refineFinite() throws OperationCanceledException {
-			AllIntegers allInt = new TraceChecker.AllIntegers();
-			PredicateUnifier pu = new PredicateUnifier(m_SmtManager, 
-					m_TruePredicate, m_FalsePredicate);
-			m_TraceChecker.computeInterpolants(allInt, pu, m_Pref.interpolation());
-			constructInterpolantAutomaton(m_TraceChecker);
-			EdgeChecker ec = new EdgeChecker(m_SmtManager, buchiModGlobalVarManager);
+		private void refineFinite(LassoChecker lassoChecker) throws OperationCanceledException {
+			TraceChecker traceChecker;
+			NestedRun<CodeBlock, IPredicate> run;
+			if (lassoChecker.isStemInfeasible()) {
+				traceChecker = lassoChecker.getStemCheck();
+				run = m_Counterexample.getStem();
+			} else {
+				assert lassoChecker.isConcatInfeasible();
+				traceChecker = lassoChecker.getConcatCheck();
+				run = lassoChecker.getConcatenatedCounterexample();
+			}
+			constructInterpolantAutomaton(traceChecker, run);
+			EdgeChecker ec = new EdgeChecker(m_SmtManager, m_RootNode.getRootAnnot().getModGlobVarManager());
 			PostDeterminizer spd = new PostDeterminizer(
 					ec, m_Pref, m_InterpolAutomaton, true);
 			DifferenceDD<CodeBlock, IPredicate> diff = null;
@@ -579,12 +517,11 @@ public class BuchiCegarLoop {
 			m_ModuleSizeTrivial.put(m_Iteration,m_InterpolAutomaton.size());
 			assert (new InductivityCheck(m_InterpolAutomaton, ec, false, true)).getResult();
 			m_Abstraction = diff.getResult();
-			m_ConcatenatedCounterexample = null;
 		}
 		
-		protected void constructInterpolantAutomaton(TraceChecker traceChecker) throws OperationCanceledException {
+		protected void constructInterpolantAutomaton(TraceChecker traceChecker, NestedRun<CodeBlock, IPredicate> run) throws OperationCanceledException {
 			InterpolantAutomataBuilder iab = new InterpolantAutomataBuilder(
-							m_ConcatenatedCounterexample,
+							run,
 							traceChecker,
 							m_Pref.interpolantAutomaton(), m_Pref.edges2True(),
 							m_SmtManager, m_Pref,
@@ -592,7 +529,7 @@ public class BuchiCegarLoop {
 			m_InterpolAutomaton = iab.buildInterpolantAutomaton(
 					m_Abstraction, m_Abstraction.getStateFactory());
 			
-			assert((new Accepts<CodeBlock, IPredicate>(m_InterpolAutomaton, m_ConcatenatedCounterexample.getWord())).getResult()) :
+			assert((new Accepts<CodeBlock, IPredicate>(m_InterpolAutomaton, run.getWord())).getResult()) :
 				"Interpolant automaton broken!";
 //			assert((new BuchiAccepts<CodeBlock, IPredicate>(m_InterpolAutomaton, m_Counterexample.getNestedLassoWord())).getResult()) :
 //				"Interpolant automaton broken!";
@@ -601,79 +538,14 @@ public class BuchiCegarLoop {
 		
 		
 		
-		boolean isCounterexampleTerminating(NestedWord<CodeBlock> stem, NestedWord<CodeBlock> loop) {
-			CodeBlock[] stemCBs = new CodeBlock[stem.length()];
-			for (int i=0; i<stem.length(); i++) {
-				stemCBs[i] = stem.getSymbol(i);
-			}
-			CodeBlock[] loopCBs = new CodeBlock[loop.length()];
-			for (int i=0; i<loop.length(); i++) {
-				loopCBs[i] = loop.getSymbol(i);
-			}
-			@SuppressWarnings("deprecation")
-			TransFormula stemTF = SequentialComposition.getInterproceduralTransFormula(
-					m_RootNode.getRootAnnot().getBoogie2SMT(),
-					m_RootNode.getRootAnnot().getModGlobVarManager(),
-					m_SimplifyStemAndLoop, true, false, stemCBs);
-			int stemVars = stemTF.getFormula().getFreeVars().length;
-
-			@SuppressWarnings("deprecation")
-			TransFormula loopTF = SequentialComposition.getInterproceduralTransFormula(
-					m_RootNode.getRootAnnot().getBoogie2SMT(),
-					m_RootNode.getRootAnnot().getModGlobVarManager(),
-					m_SimplifyStemAndLoop, true,false, loopCBs);
-			int loopVars = loopTF.getFormula().getFreeVars().length;
-			s_Logger.info("Statistics: stemVars: " + stemVars + "loopVars: " + loopVars);
-			{
-				List<CodeBlock> composedCB = new ArrayList<CodeBlock>();
-				composedCB.addAll(Arrays.asList(stemCBs));
-				composedCB.addAll(Arrays.asList(loopCBs));
-//				composedCB.addAll(Arrays.asList(loopCBs));
-				TransFormula composed = SequentialComposition.getInterproceduralTransFormula(
-						m_RootNode.getRootAnnot().getBoogie2SMT(),
-						m_RootNode.getRootAnnot().getModGlobVarManager(),
-						m_SimplifyStemAndLoop, true, true, composedCB.toArray(new CodeBlock[0])); 
-						//TransFormula.sequentialComposition(10000, rootAnnot.getBoogie2SMT(), stemTF, loopTF);
-				if (composed.isInfeasible() == Infeasibility.INFEASIBLE) {
-					throw new AssertionError("suddently infeasible");
-				}
-			}
-			NestedWord<CodeBlock> emptyWord = new NestedWord<CodeBlock>();
-			IPredicate hondaPredicate = m_Counterexample.getLoop().getStateAtPosition(0);
-			ProgramPoint honda = ((ISLPredicate) hondaPredicate).getProgramPoint();
-			boolean withoutStem = synthesize(emptyWord, loop, getDummyTF(), loopTF);
-			if (withoutStem) {
-				m_RankWithoutSi++;
-				reportRankingFunction(m_LinRf, honda, stem, loop);
-				m_RankingFunction.put(m_Iteration,m_LinRf.asExpression(m_SmtManager.getScript(), m_SmtManager.getSmt2Boogie()));
-				return true;
-			}
-			boolean witStem = synthesize(stem, loop, stemTF, loopTF);
-			if (witStem) {
-				reportRankingFunction(m_LinRf, honda, stem, loop);
-				m_RankingFunction.put(m_Iteration,m_LinRf.asExpression(m_SmtManager.getScript(), m_SmtManager.getSmt2Boogie()));
-				m_RankWithSi++;
-				return true;
-			}
-			return false;
-		}
 
 
-		private	TransFormula getDummyTF() {
-			Term term = m_SmtManager.getScript().term("true");
-			Map<BoogieVar,TermVariable> inVars = new HashMap<BoogieVar,TermVariable>();
-			Map<BoogieVar,TermVariable> outVars = new HashMap<BoogieVar,TermVariable>();
-			Set<TermVariable> auxVars = new HashSet<TermVariable>();
-			Set<TermVariable> branchEncoders = new HashSet<TermVariable>();
-			Infeasibility infeasibility = Infeasibility.UNPROVEABLE;
-			Term closedFormula = term;
-			return new TransFormula(term, inVars, outVars, auxVars, branchEncoders, 
-					infeasibility, closedFormula);
-		}
+
+
 		
 		
-		private void reportRankingFunction(LinearRankingFunction m_LinRf2,
-				ProgramPoint honda, NestedWord<CodeBlock> stem,
+		private void reportRankingFunction(LinearRankingFunction m_LinRf,
+				Collection<SupportingInvariant> m_SiList, ProgramPoint honda, NestedWord<CodeBlock> stem,
 				NestedWord<CodeBlock> loop) {
 			Expression rfExp = m_LinRf.asExpression(m_SmtManager.getScript(),
 					m_SmtManager.getSmt2Boogie());
@@ -712,92 +584,9 @@ public class BuchiCegarLoop {
 			BuchiAutomizerObserver.reportResult(reportRes);
 		}
 		
-		private boolean synthesize(NestedWord<CodeBlock> stem, NestedWord<CodeBlock> loop, TransFormula stemTF, TransFormula loopTF) {
-			RankingFunctionsSynthesizer synthesizer = null;
-			try {
-				synthesizer = new RankingFunctionsSynthesizer(
-						m_SmtManager.getScript(), new_Script(false), stemTF,
-						loopTF);
-			} catch (Exception e1) {
-				e1.printStackTrace();
-				throw new AssertionError(e1);
-			}
-			boolean found = false;
-			try {
-				found = synthesizer.synthesize(LinearTemplate.class);
-				if (found) {
-					RankingFunction rf = synthesizer.getRankingFunction();
-					assert (rf != null);
-					m_SiList = synthesizer.getSupportingInvariants();
-					assert (m_SiList != null);
-					m_LinRf = (LinearRankingFunction) rf;
-					m_Bspm.computePredicates(m_LinRf, m_SiList);
-					
-					for (SupportingInvariant si : m_SiList) {
-						if (stem.length() > 0) {
-							assert m_Bspm.checkSupportingInvariant(
-									si, stem, loop, m_RootNode.getRootAnnot()) : 
-									"Wrong supporting invariant " + si;
-						}
-					}
-//					boolean correctWithoutSi = checkRankDecrease();
-//					if (correctWithoutSi) {
-//						s_Logger.info("Statistics: For this ranking function no si needed");
-//					} else {
-//						s_Logger.info("Statistics: We need si for this ranking function");
-//					}
-					assert m_Bspm.checkRankDecrease(loop, m_RootNode.getRootAnnot()) : 
-						"Wrong ranking function " + rf;
 
-				} else {
-//					s_Logger.info("Statistics: No ranking function has been found "
-//							+ "with this template.");
-				}
-			} catch (SMTLIBException e) {
-				throw new AssertionError(e.getMessage());
-			} catch (TermIsNotAffineException e) {
-				throw new AssertionError(e.getMessage());
-			} catch (InstantiationException e) {
-				throw new AssertionError(e.getMessage());
-			} catch (AssertionError e) {
-				throw new AssertionError(e.getMessage());
-			}
-			return found;
-		}
 		
-		Script new_Script(boolean nonlinear) {
-			// This code is essentially copied from 
-			// de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CfgBuilder
-			// since there is no obvious way to implement it as shared code.
-			
-			TAPreferences taPref = new TAPreferences();
-			Logger solverLogger = Logger.getLogger("interpolLogger");
-			Script script;
-			
-			if (m_ExternalSolver) {
-				script = new Scriptor("z3 -smt2 -in", solverLogger);
-			} else {
-				script = new SMTInterpol(solverLogger,false);
-			}
-			
-			if (false) {
-				String dumpFileName = taPref.dumpPath();
-				String fileSep = System.getProperty("file.separator");
-				dumpFileName += (dumpFileName.endsWith(fileSep) ? "" : fileSep);
-				dumpFileName = dumpFileName + "rankingFunctions.smt2";
-				// FIXME: add file name
-				try {
-					script = new LoggingScript(script, dumpFileName, true);
-				} catch (FileNotFoundException e) {
-					throw new AssertionError(e);
-				}
-			}
-			
-			script.setOption(":produce-unsat-cores", true);
-			script.setOption(":produce-models", true);
-			script.setLogic(nonlinear ? "QF_NRA" : "QF_LRA");
-			return script;
-		}
+
 		
 
 		
@@ -873,26 +662,7 @@ public class BuchiCegarLoop {
 			return m_RankingFunction;
 		}
 		
-		private TraceChecker constructTraceChecker(IPredicate precond,
-				IPredicate postcond, Object object,
-				NestedWord<CodeBlock> word, SmtManager smtManager,
-				ModifiableGlobalVariableManager modGlobalVarManager) {
-			switch (m_Pref.interpolation()) {
-			case Craig_NestedInterpolation:
-			case Craig_TreeInterpolation:
-				return new TraceChecker(precond, postcond, 
-						null, NestedWord.nestedWord(word),m_SmtManager,
-						modGlobalVarManager);
-			case ForwardPredicates:
-			case BackwardPredicates:
-			case FPandSP:
-				return new TraceCheckerSpWp(precond, postcond, 
-						NestedWord.nestedWord(word),m_SmtManager,
-						modGlobalVarManager);
-			default:
-				throw new UnsupportedOperationException("unsupported interpolation");
-			}
-		}
+
 
 		
 }
