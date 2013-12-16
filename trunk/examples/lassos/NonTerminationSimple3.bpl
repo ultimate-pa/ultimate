@@ -1,4 +1,4 @@
-//#rNonTermination
+//#rNonTerminationDerivable
 /*
  * Date: 2013-12-16
  * Author: leike@informatik.uni-freiburg.de

@@ -3,8 +3,11 @@ package de.uni_freiburg.informatik.ultimatetest.translation;
 import java.io.File;
 import java.util.Collection;
 
+import org.junit.Ignore;
+
 import de.uni_freiburg.informatik.ultimatetest.Util;
 
+@Ignore
 public class ExamplesDirectoryCTranslationTestSuite extends
 		AbstractCTranslationTestSuite {
 

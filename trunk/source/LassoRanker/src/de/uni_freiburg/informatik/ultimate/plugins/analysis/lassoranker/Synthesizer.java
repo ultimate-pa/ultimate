@@ -365,10 +365,10 @@ public class Synthesizer {
 						new LinearRankingFunction(new AffineFunction());
 				return true;
 			}
-			if (loopf.getFunction().getName() == "true") {
+/*			if (loopf.getFunction().getName() == "true") {
 				s_Logger.info("Loop transition is equivalent to true.");
 				return false;
-			}
+			} */
 		}
 		
 		// Check for non-termination
@@ -381,7 +381,7 @@ public class Synthesizer {
 		boolean nonterminating = nt.checkForNonTermination();
 		if (nonterminating) {
 			s_Logger.error("Proved non-termination.");
-			s_Logger.info(nt.extractArgument());
+			s_Logger.info(nt.getArgument());
 			return false;
 		}
 		m_script.pop(1);
@@ -434,7 +434,7 @@ public class Synthesizer {
 	}
 	
 	private void cleanUp() {
-		m_script.exit();
+//		m_script.exit();
 	}
 	
 	/**

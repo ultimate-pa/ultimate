@@ -3,6 +3,10 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.nonterm
 import java.util.*;
 import java.util.Map.Entry;
 
+import org.apache.log4j.Logger;
+
+import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
+import de.uni_freiburg.informatik.ultimate.logic.Model;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -11,6 +15,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.logic.UtilExperimental;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.AuxiliaryMethods;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.InstanceCounting;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.LinearInequality;
@@ -37,7 +42,9 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Tra
  * @author Jan Leike
  */
 public class NonTermination extends InstanceCounting {
-
+	private static Logger s_Logger =
+			UltimateServices.getInstance().getLogger(Activator.s_PLUGIN_ID);
+	
 	private static final String s_prefix_start = "start_"; // x0
 	private static final String s_prefix_end = "end_";     // x0'
 	private static final String s_prefix_ray = "ray_";     // y
@@ -123,8 +130,10 @@ public class NonTermination extends InstanceCounting {
 		Term lambda = AuxiliaryMethods.newRealConstant(m_script, s_lambda_name);
 		
 		// A_stem * (x0, x0') <= b_stem
-		m_script.assertTerm(this.generateConstraint(m_stem_transition, m_stem,
-				vars_start, vars_end, false));
+		Term t = this.generateConstraint(m_stem_transition, m_stem, vars_start,
+				vars_end, false);
+		s_Logger.debug(t);
+		m_script.assertTerm(t);
 		
 		// A_loop * (x0', x0' + y) <= b_loop
 		Map<BoogieVar, Term> vars_end_plus_ray = new HashMap<BoogieVar, Term>();
@@ -139,8 +148,10 @@ public class NonTermination extends InstanceCounting {
 				vars_end_plus_ray.put(entry.getKey(), entry.getValue());
 			}
 		}
-		m_script.assertTerm(this.generateConstraint(m_loop_transition, m_loop,
-				vars_end, vars_end_plus_ray, false));
+		t = this.generateConstraint(m_loop_transition, m_loop, vars_end,
+				vars_end_plus_ray, false);
+		s_Logger.debug(t);
+		m_script.assertTerm(t);
 		
 		// A_loop * (y, lambda * y) <= 0
 		if (!m_non_decreasing) {
@@ -150,18 +161,20 @@ public class NonTermination extends InstanceCounting {
 				vars_ray_times_lambda.put(entry.getKey(),
 						m_script.term("*", entry.getValue(), lambda));
 			}
-			m_script.assertTerm(this.generateConstraint(m_loop_transition,
-					m_loop, vars_ray, vars_ray_times_lambda, true));
+			t = this.generateConstraint(m_loop_transition, m_loop, vars_ray,
+					vars_ray_times_lambda, true);
 		} else {
-			m_script.assertTerm(this.generateConstraint(m_loop_transition,
-					m_loop, vars_ray, vars_ray, true));
+			t = this.generateConstraint(m_loop_transition, m_loop, vars_ray,
+					vars_ray, true);
 		}
+		s_Logger.debug(t);
+		m_script.assertTerm(t);
 		
 		// Check for satisfiability
 		boolean success = false;
 		if (m_script.checkSat() == LBool.SAT) {
 			success = true;
-			// TODO: extract non-termination argument
+			m_argument = extractArgument(vars_start, vars_end, vars_ray);
 		}
 		
 		return success;
@@ -230,8 +243,29 @@ public class NonTermination extends InstanceCounting {
 		return Util.or(m_script, disjunction);
 	}
 	
-	public NonTerminationArgument extractArgument()
+	/**
+	 * Extract the non-termination argument from a satisfiable script
+	 * @return
+	 * @throws SMTLIBException
+	 */
+	private NonTerminationArgument extractArgument(
+			Map<BoogieVar, Term> vars_start,
+			Map<BoogieVar, Term> vars_end,
+			Map<BoogieVar, Term> vars_ray)
 			throws SMTLIBException {
+		assert m_script.checkSat() == LBool.SAT;
+		
+//		Model model = m_script.getModel();
+		
+		// TODO
+		
+		return null;
+	}
+	
+	/**
+	 * @return the non-termination argument discovered
+	 */
+	public NonTerminationArgument getArgument() {
 		return m_argument;
 	}
 }

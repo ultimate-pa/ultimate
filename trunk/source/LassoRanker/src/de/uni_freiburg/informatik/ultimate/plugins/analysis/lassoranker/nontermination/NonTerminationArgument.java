@@ -24,6 +24,10 @@ public class NonTerminationArgument implements IResult {
 	private IProgramExecution m_loop_execution;
 	private RecurrentSet m_recurrent_set;
 	
+	public NonTerminationArgument(IProgramExecution stem_execution) {
+		
+	}
+	
 	@Override
 	public ILocation getLocation() {
 		// TODO Auto-generated method stub
@@ -31,12 +35,15 @@ public class NonTerminationArgument implements IResult {
 	}
 	@Override
 	public String getShortDescription() {
-		// TODO Auto-generated method stub
-		return null;
+		return "Non-Termination Argument";
 	}
 	@Override
 	public String getLongDescription() {
-		// TODO Auto-generated method stub
-		return null;
+		StringBuilder sb = new StringBuilder();
+		sb.append("Non-Termination argument consisting of\n");
+		sb.append(m_stem_execution);
+		sb.append(m_loop_execution);
+		sb.append(m_recurrent_set);
+		return sb.toString();
 	}
 }
