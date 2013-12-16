@@ -1,4 +1,4 @@
-//#rTerminationError
+//#rUnknown
 /*
  * Date: 2012-02-12
  * Author: leike@informatik.uni-freiburg.de
