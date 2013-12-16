@@ -3,11 +3,15 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstractionco
 import java.util.Collection;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
+import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
-import de.uni_freiburg.informatik.ultimate.automata.AtsDefinitionPrinter;
+import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.ComplementDD;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNet2FiniteAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.BranchingProcess;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.DifferenceBlackAndWhite;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.FinitePrefix2PetriNet;
@@ -124,7 +128,7 @@ public class CegarLoopJulian extends BasicCegarLoop {
 		//Complement the interpolant automaton
 		INestedWordAutomatonOldApi<CodeBlock, IPredicate> nia = 
 				(new ComplementDD<CodeBlock, IPredicate>(dia)).getResult();
-		assert(!nia.accepts(m_Counterexample.getWord())) : 
+		assert(!accepts(nia, m_Counterexample.getWord())) : 
 			"Complementation broken!";
 		s_Logger.info("Complemented interpolant automaton has "+nia.getStates().size() +" states");
 
@@ -143,7 +147,7 @@ public class CegarLoopJulian extends BasicCegarLoop {
 		}
 
 
-		assert(!m_Abstraction.accepts(m_Counterexample.getWord())) : "Intersection broken!";
+		assert(!acceptsPetriViaFA(m_Abstraction, m_Counterexample.getWord())) : "Intersection broken!";
 
 
 		//		int[] statistic = m_Abstraction.transitions();
@@ -169,6 +173,13 @@ public class CegarLoopJulian extends BasicCegarLoop {
 	@Override
 	protected void computeCFGHoareAnnotation() {
 		throw new UnsupportedOperationException();
+	}
+	
+	private static boolean acceptsPetriViaFA(IAutomaton<CodeBlock, IPredicate> automaton, Word<CodeBlock> word) throws OperationCanceledException {
+		NestedWord<CodeBlock> nw = new NestedWord<CodeBlock>(word);
+		INestedWordAutomatonOldApi<CodeBlock, IPredicate> petriNetAsFA = (new PetriNet2FiniteAutomaton<CodeBlock, IPredicate>((IPetriNet<CodeBlock, IPredicate>) automaton)).getResult();
+		return BasicCegarLoop.accepts(petriNetAsFA, nw);
+
 	}
 	
 
