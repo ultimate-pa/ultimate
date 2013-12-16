@@ -79,10 +79,12 @@ public class BoogieTraceAbstractionTC extends Toolchain {
 		List<Setting> mRCFGB = new ArrayList<Setting>();
 		tools.add(new Tool("RCFGBuilder", oRCFGB, mRCFGB, LoggingLevel.WARN));
         oRCFGB.add(new Setting("/Use\\ external\\ solver\\ instead\\ of\\ SMTInterpol", Setting.SettingType.BOOLEAN,
-                "external solver", "true", false));
+                "external solver", "false", false));
 
         List<Setting> oTrAbs = new ArrayList<Setting>();
         List<Setting> mTrAbs = new ArrayList<Setting>();
+        oRCFGB.add(new Setting("/Compute\\ Interpolants\\ along\\ a\\ Counterexample", Setting.SettingType.STRING,
+                "interpolation", "Craig_NestedInterpolation", false));
         oTrAbs.add(new Setting("/Compute\\ Hoare\\ Annotation\\ of\\ negated\\ interpolant\\ automaton,\\ abstraction\\ and\\ CFG", Setting.SettingType.BOOLEAN,
                 "Compute Hoare Annotation", "true", true));
         oTrAbs.add(new Setting("/Timeout", Setting.SettingType.INTEGER,
