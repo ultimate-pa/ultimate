@@ -992,14 +992,6 @@ public class NestedWordAutomatonCache<LETTER,STATE> implements INestedWordAutoma
 	
 	
 	
-	@Override
-	public boolean accepts(Word<LETTER> word) {
-		throw new UnsupportedOperationException();
-	}
-	
-	
-
-
 	
 	
 	public int numberOfOutgoingInternalTransitions(STATE state) {

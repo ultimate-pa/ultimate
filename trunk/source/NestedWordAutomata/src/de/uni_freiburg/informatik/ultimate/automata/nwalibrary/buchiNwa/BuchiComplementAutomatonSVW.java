@@ -419,11 +419,6 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE>
 
 
 	@Override
-	public boolean accepts(Word<LETTER> word) {
-		throw new UnsupportedOperationException(UnsupportedOperationMessage);
-	}
-
-	@Override
 	public Set<LETTER> getCallAlphabet() {
 		s_Logger.warn("No nwa. Has no call alphabet.");
 		return new HashSet<LETTER>(0);

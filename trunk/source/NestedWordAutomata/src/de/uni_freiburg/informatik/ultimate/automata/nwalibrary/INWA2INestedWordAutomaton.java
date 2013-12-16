@@ -179,11 +179,6 @@ public class INWA2INestedWordAutomaton<LETTER, STATE> implements
 	}
 
 	@Override
-	public boolean accepts(Word<LETTER> word) {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
 	public Collection<STATE> getFinalStates() {
 		throw new UnsupportedOperationException();
 	}

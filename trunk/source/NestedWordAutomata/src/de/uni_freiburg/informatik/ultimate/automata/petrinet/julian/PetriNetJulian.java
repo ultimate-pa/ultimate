@@ -220,21 +220,6 @@ public class PetriNetJulian<S, C> implements IPetriNet<S, C> {
 
 
 
-	/**
-	 * Uses the acceptance check based on translation to finite automata
-	 * 
-	 * @param nw
-	 * @return
-	 */
-	@Deprecated
-	public boolean acceptsFA(Word<S> word) {
-		NestedWord<S> nw = new NestedWord<S>(word);
-		return (new PetriNet2FiniteAutomaton<S, C>(this)).getResult().accepts(
-				nw);
-
-	}
-
-
 	public PetriNetRun<S, C> acceptingRun() throws OperationCanceledException {
 		// NestedRun<S, C> test = getAcceptingNestedRun();
 		// System.out.print(test);

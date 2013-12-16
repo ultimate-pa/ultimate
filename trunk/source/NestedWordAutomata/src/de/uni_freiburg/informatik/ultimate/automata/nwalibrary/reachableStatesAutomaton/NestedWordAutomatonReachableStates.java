@@ -214,11 +214,6 @@ public class NestedWordAutomatonReachableStates<LETTER,STATE> implements INested
 	}
 
 	@Override
-	public boolean accepts(Word<LETTER> word) {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
 	public int size() {
 		return m_States.size();
 	}

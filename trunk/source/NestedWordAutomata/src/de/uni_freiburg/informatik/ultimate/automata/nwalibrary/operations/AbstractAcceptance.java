@@ -7,8 +7,11 @@ import java.util.Stack;
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.automata.Activator;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingCallTransition;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingInternalTransition;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 
 
@@ -40,7 +43,7 @@ public abstract class AbstractAcceptance<LETTER,STATE> {
 	 * Returns true iff the topmost stack element is an accepting state.
 	 */
 	public boolean isAcceptingConfiguration(Stack<STATE> configuration,
-			INestedWordAutomatonOldApi<LETTER,STATE> nwa) {
+			INestedWordAutomaton<LETTER,STATE> nwa) {
 			STATE state = configuration.peek();
 			if (nwa.isFinal(state)) {
 				return true;
@@ -69,7 +72,7 @@ public abstract class AbstractAcceptance<LETTER,STATE> {
 	 * 
 	 */
 	public Set<Stack<STATE>> successorConfigurations(Set<Stack<STATE>> configurations,
-			NestedWord<LETTER> nw, int position, INestedWordAutomatonOldApi<LETTER,STATE> nwa,
+			NestedWord<LETTER> nw, int position, INestedWordAutomaton<LETTER,STATE> nwa,
 			boolean addInitial) {
 		Set<Stack<STATE>> succConfigs = new HashSet<Stack<STATE>>();
 		if (addInitial) {
@@ -79,15 +82,19 @@ public abstract class AbstractAcceptance<LETTER,STATE> {
 			STATE state = config.pop();
 			LETTER symbol = nw.getSymbol(position);
 			if (nw.isInternalPosition(position)) {
-				Iterable<STATE> succs = nwa.succInternal(state, symbol);
-				for (STATE succ : succs) {
+				Iterable<OutgoingInternalTransition<LETTER, STATE>> outTransitions = 
+						nwa.internalSuccessors(state, symbol);
+				for (OutgoingInternalTransition<LETTER, STATE> outRans :outTransitions) {
+					STATE succ = outRans.getSucc();
 					Stack<STATE> succConfig = (Stack<STATE>) config.clone();
 					succConfig.push(succ);
 					succConfigs.add(succConfig);
 				}
 			} else if (nw.isCallPosition(position)) {
-				Iterable<STATE> succs = nwa.succCall(state, symbol);
-				for (STATE succ : succs) {
+				Iterable<OutgoingCallTransition<LETTER, STATE>> outTransitions = 
+						nwa.callSuccessors(state, symbol);
+				for (OutgoingCallTransition<LETTER, STATE> outRans :outTransitions) {
+					STATE succ = outRans.getSucc();
 					Stack<STATE> succConfig = (Stack<STATE>) config.clone();
 					succConfig.push(state);
 					succConfig.push(succ);
@@ -99,8 +106,10 @@ public abstract class AbstractAcceptance<LETTER,STATE> {
 				}
 				else {
 					STATE callPred = config.pop();
-					Iterable<STATE> succs = nwa.succReturn(state, callPred, symbol);
-					for (STATE succ : succs) {
+					Iterable<OutgoingReturnTransition<LETTER, STATE>> outTransitions = 
+							nwa.returnSucccessors(state, callPred, symbol);
+					for (OutgoingReturnTransition<LETTER, STATE> outRans :outTransitions) {
+						STATE succ = outRans.getSucc();
 						Stack<STATE> succConfig = (Stack<STATE>) config.clone();
 						succConfig.push(succ);
 						succConfigs.add(succConfig);

@@ -324,12 +324,6 @@ public class IntersectNwa<LETTER, STATE> implements INestedWordAutomatonSimple<L
 	}
 
 	@Override
-	public boolean accepts(Word<LETTER> word) {
-		// TODO Auto-generated method stub
-		return false;
-	}
-
-	@Override
 	public int size() {
 		// TODO Auto-generated method stub
 		return 0;

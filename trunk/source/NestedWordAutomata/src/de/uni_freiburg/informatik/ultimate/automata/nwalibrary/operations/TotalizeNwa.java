@@ -264,11 +264,6 @@ public class TotalizeNwa<LETTER, STATE> implements INestedWordAutomatonSimple<LE
 	}
 
 	@Override
-	public boolean accepts(Word<LETTER> word) {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
 	public int size() {
 		throw new UnsupportedOperationException();
 	}

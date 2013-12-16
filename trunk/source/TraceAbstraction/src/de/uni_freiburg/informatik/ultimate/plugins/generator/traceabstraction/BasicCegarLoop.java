@@ -11,6 +11,8 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.Automaton2UltimateModel;
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
+import de.uni_freiburg.informatik.ultimate.automata.Word;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.Accepts;
@@ -194,7 +196,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 	
 	
 	@Override
-	protected void constructInterpolantAutomaton() {
+	protected void constructInterpolantAutomaton() throws OperationCanceledException {
 		m_TimingStatistics.startBasicInterpolantAutomaton();
 		if (m_Pref.interpolantAutomaton() == InterpolantAutomaton.TWOTRACK) {
 			TwoTrackInterpolantAutomatonBuilder ttiab = 
@@ -213,7 +215,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 			s_Logger.info("Interpolatants " + m_InterpolAutomaton.getStates());
 		}
 		m_TimingStatistics.finishBasicInterpolantAutomaton();		
-		assert(m_InterpolAutomaton.accepts(m_Counterexample.getWord())) :
+		assert(accepts(m_InterpolAutomaton, m_Counterexample.getWord())) :
 			"Interpolant automaton broken!";
 		assert (m_SmtManager.checkInductivity(m_InterpolAutomaton, false, true));
 	}
@@ -421,7 +423,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 			s_Logger.debug("Start complementation");
 			INestedWordAutomatonOldApi<CodeBlock, IPredicate> nia = 
 				(new ComplementDD<CodeBlock, IPredicate>(dia)).getResult();
-			assert(!nia.accepts(m_Counterexample.getWord()));
+			assert(!accepts(nia,m_Counterexample.getWord()));
 			s_Logger.info("Complemented interpolant automaton has "+nia.size() +" states");
 			
 			if (m_Iteration <= m_Pref.watchIteration() && m_Pref.artifact() == Artifact.NEG_INTERPOLANT_AUTOMATON) {
@@ -515,6 +517,13 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 	
 	
 	
+
+
+
+
+
+
+
 	private static Collection<Set<IPredicate>> computePartitionDistinguishFinalNonFinal(INestedWordAutomatonOldApi<CodeBlock, IPredicate> automaton) {
 		s_Logger.info("Start computation of initial partition.");
 		Collection<IPredicate> states = automaton.getStates();
@@ -654,7 +663,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 			String filename = "InterpolantAutomatonDeterminized_Iteration" + m_Iteration; 
 			writeAutomatonToFile(dia, filename);
 		}
-		assert(dia.accepts(m_Counterexample.getWord()));
+		assert(accepts(dia, m_Counterexample.getWord()));
 		s_Logger.debug("Sucessfully determinized");
 		return dia;
 	}
@@ -720,6 +729,12 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 	}
 	
 
+	
+	protected static boolean accepts(
+			INestedWordAutomaton<CodeBlock, IPredicate> nia,
+			Word<CodeBlock> word) throws OperationCanceledException {
+		return (new Accepts<CodeBlock, IPredicate>(nia, new NestedWord(word), false, false)).getResult();
+	}
 
 
 }

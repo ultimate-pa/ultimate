@@ -2293,25 +2293,6 @@ public class NestedWordAutomaton<LETTER,STATE> implements INestedWordAutomatonOl
 	
 	
 	
-	@Override
-	public boolean accepts(Word<LETTER> word) {
-		
-		NestedWord<LETTER> nw = NestedWord.nestedWord(word);
-		try {
-			return (new Accepts<LETTER, STATE>(this, nw, false, false)).getResult();
-		} catch (OperationCanceledException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-			throw new AssertionError();
-		}
-
-	}
-	
-	
-
-
-	
-	
 	
 
 	

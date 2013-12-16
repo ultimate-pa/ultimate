@@ -10,6 +10,7 @@ import org.apache.log4j.Logger;
 import de.uni_freiburg.informatik.ultimate.automata.Activator;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
@@ -31,7 +32,7 @@ import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 public class Accepts<LETTER,STATE> extends AbstractAcceptance<LETTER,STATE>
 									  implements IOperation<LETTER,STATE> {
 
-	private final INestedWordAutomatonOldApi<LETTER,STATE> m_Automaton;
+	private final INestedWordAutomaton<LETTER,STATE> m_Automaton;
 	private final NestedWord<LETTER> m_Word;
 	private final boolean m_PrefixOfInputIsAccepted;
 	private final boolean m_InputIsSuffixOfAcceptedWord;
@@ -41,7 +42,7 @@ public class Accepts<LETTER,STATE> extends AbstractAcceptance<LETTER,STATE>
 			Activator.PLUGIN_ID);
 
 
-	public Accepts(INestedWordAutomatonOldApi<LETTER,STATE> automaton, NestedWord<LETTER> word,
+	public Accepts(INestedWordAutomaton<LETTER,STATE> automaton, NestedWord<LETTER> word,
 			boolean prefixOfIntputIsAccepted,
 			boolean inputIsSuffixOfAcceptedWord) {
 		super();
@@ -53,7 +54,7 @@ public class Accepts<LETTER,STATE> extends AbstractAcceptance<LETTER,STATE>
 		m_IsAccepted = isAccepted();
 		s_Logger.info(exitMessage());
 	}
-	public Accepts(INestedWordAutomatonOldApi<LETTER,STATE> automaton, NestedWord<LETTER> word) {
+	public Accepts(INestedWordAutomaton<LETTER,STATE> automaton, NestedWord<LETTER> word) {
 		this(automaton, word, false, false);
 	}
 
@@ -124,7 +125,7 @@ public class Accepts<LETTER,STATE> extends AbstractAcceptance<LETTER,STATE>
 	 * accepting state.
 	 */
 	public boolean containsAcceptingConfiguration(Set<Stack<STATE>> configurations,
-			INestedWordAutomatonOldApi<LETTER,STATE> nwa) {
+			INestedWordAutomaton<LETTER,STATE> nwa) {
 		for (Stack<STATE> config : configurations) {
 			if (isAcceptingConfiguration(config, m_Automaton)) {
 				return true;

@@ -295,11 +295,6 @@ public class EagerInterpolantAutomaton implements
 	}
 
 	@Override
-	public boolean accepts(Word<CodeBlock> word) {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
 	public int size() {
 		return m_Ia.size();
 	}

@@ -42,7 +42,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.Artifact;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.AnnotateAndAsserter;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceChecker;
 
 
@@ -212,8 +211,9 @@ public abstract class AbstractCegarLoop {
 	 * <li> accepts the trace of m_Counterexample,
 	 * <li> accepts only infeasible traces.
 	 * </ul>
+	 * @throws OperationCanceledException 
 	 */
-	protected abstract void constructInterpolantAutomaton();
+	protected abstract void constructInterpolantAutomaton() throws OperationCanceledException;
 	
 	
 	/**
@@ -343,8 +343,12 @@ public abstract class AbstractCegarLoop {
 			
 
 			
-			
-			constructInterpolantAutomaton();
+			try {
+				constructInterpolantAutomaton();
+			} catch (OperationCanceledException e1) {
+				s_Logger.warn("Verification cancelled");
+				return Result.TIMEOUT;
+			} 			
 			
 			s_Logger.info("Interpolant Automaton has "+m_InterpolAutomaton.getStates().size() +" states");
 			

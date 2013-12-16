@@ -355,12 +355,6 @@ public class BuchiIntersectNwa<LETTER, STATE> implements INestedWordAutomatonSim
 	}
 
 	@Override
-	public boolean accepts(Word<LETTER> word) {
-		// TODO Auto-generated method stub
-		return false;
-	}
-
-	@Override
 	public int size() {
 		// TODO Auto-generated method stub
 		return 0;

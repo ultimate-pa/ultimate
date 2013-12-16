@@ -4101,11 +4101,6 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 		}
 		
 		@Override
-		public boolean accepts(Word<LETTER> word) {
-			// TODO Auto-generated method stub
-			return m_oldNwa.accepts(word);
-		}
-		@Override
 		public Set<LETTER> lettersInternal(STATE state) {
 			final HashSet<LETTER> result = new HashSet<LETTER>();
 			for (final OutgoingInternalTransition<LETTER, STATE> edge :

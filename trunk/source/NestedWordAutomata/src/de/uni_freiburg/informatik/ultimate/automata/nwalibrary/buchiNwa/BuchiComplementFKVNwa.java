@@ -390,11 +390,6 @@ public class BuchiComplementFKVNwa<LETTER,STATE> implements INestedWordAutomaton
 	}
 
 	@Override
-	public boolean accepts(Word<LETTER> word) {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
 	public int size() {
 		throw new UnsupportedOperationException();
 	}

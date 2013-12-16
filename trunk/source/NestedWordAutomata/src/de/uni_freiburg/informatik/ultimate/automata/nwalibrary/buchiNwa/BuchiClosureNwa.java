@@ -217,12 +217,6 @@ public class BuchiClosureNwa<LETTER, STATE> implements INestedWordAutomatonOldAp
 	}
 
 	@Override
-	public boolean accepts(Word<LETTER> word) {
-		// TODO Auto-generated method stub
-		return false;
-	}
-
-	@Override
 	public int size() {
 		return m_Operand.size();
 	}

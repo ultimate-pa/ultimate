@@ -378,11 +378,6 @@ public class BranchingProcess<S, C> implements IAutomaton<S, C> {
 	}
 
 	@Override
-	public boolean accepts(Word<S> word) {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
 	public int size() {
 		throw new UnsupportedOperationException();
 	}

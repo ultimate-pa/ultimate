@@ -207,12 +207,6 @@ public class NWAEmptinessCheck implements IEmptinessCheck {
 		}
 
 		@Override
-		public boolean accepts(Word<CodeBlock> word) {
-			assert false;
-			return false;
-		}
-
-		@Override
 		public int size() {
 			assert false;
 			return _size;

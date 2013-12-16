@@ -245,11 +245,6 @@ public class DeterminizeNwa<LETTER, STATE> implements INestedWordAutomatonSimple
 	}
 
 	@Override
-	public boolean accepts(Word<LETTER> word) {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
 	public int size() {
 		throw new UnsupportedOperationException();
 	}
