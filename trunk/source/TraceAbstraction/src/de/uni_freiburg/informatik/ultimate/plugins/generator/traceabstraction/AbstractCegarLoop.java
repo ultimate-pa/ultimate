@@ -140,10 +140,10 @@ public abstract class AbstractCegarLoop {
 	
 	
 	/**
-	 * Failure path. Only computed in the last iteration of the CEGAR loop.
+	 * Program execution that leads to error. 
+	 * Only computed in the last iteration of the CEGAR loop if the program is
+	 * incorrect.
 	 */
-	protected List<CodeBlock> m_FailurePath;
-	
 	protected RcfgProgramExecution m_RcfgProgramExecution;
 	
 	
@@ -255,10 +255,6 @@ public abstract class AbstractCegarLoop {
 		return m_Iteration;
 	}
 	
-	public List<CodeBlock> getFailurePath() {
-		return m_FailurePath;
-	}
-	
 	public RcfgProgramExecution getRcfgProgramExecution() {
 		return m_RcfgProgramExecution;
 	}
@@ -366,8 +362,8 @@ public abstract class AbstractCegarLoop {
 				boolean progress = refineAbstraction();
 				if (!progress) {
 					s_Logger.warn("No progress! Counterexample is still accepted by refined abstraction.");
-					m_FailurePath = AnnotateAndAsserter.constructFailureTrace(m_Counterexample.getWord(), null);
-					return Result.UNKNOWN;
+					throw new AssertionError("No progress! Counterexample is still accepted by refined abstraction.");
+//					return Result.UNKNOWN;
 				}
 			} catch (OperationCanceledException e) {
 				s_Logger.warn("Verification cancelled");

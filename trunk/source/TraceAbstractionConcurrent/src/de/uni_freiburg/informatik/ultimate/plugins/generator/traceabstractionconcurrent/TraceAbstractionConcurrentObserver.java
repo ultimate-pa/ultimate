@@ -10,8 +10,13 @@ import de.uni_freiburg.informatik.ultimate.access.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.access.WalkerOptions;
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
+import de.uni_freiburg.informatik.ultimate.model.ITranslator;
+import de.uni_freiburg.informatik.ultimate.model.annotation.IAnnotations;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 import de.uni_freiburg.informatik.ultimate.plugins.ResultNotifier;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.Backtranslator;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.RcfgProgramExecution;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.boogie.BoogieProgramExecution;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RcfgElement;
@@ -24,6 +29,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Ac
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.Concurrency;
+import de.uni_freiburg.informatik.ultimate.result.Check;
 import de.uni_freiburg.informatik.ultimate.result.CounterExampleResult;
 import de.uni_freiburg.informatik.ultimate.result.IResult;
 import de.uni_freiburg.informatik.ultimate.result.PositiveResult;
@@ -99,9 +105,8 @@ public class TraceAbstractionConcurrentObserver implements IUnmanagedObserver {
 			break;
 		case UNSAFE:
 		{
-			List<CodeBlock> errorTrace = abstractCegarLoop.getFailurePath();
-			reportCounterexampleResult(errorTrace.get(errorTrace.size()-1),
-					AbstractCegarLoop.trace2path(errorTrace));
+			RcfgProgramExecution pe = abstractCegarLoop.getRcfgProgramExecution();
+			reportCounterexampleResult(pe);
 			break;
 		}
 		case TIMEOUT:
@@ -109,10 +114,8 @@ public class TraceAbstractionConcurrentObserver implements IUnmanagedObserver {
 			break;
 		case UNKNOWN:
 		{
-			List<CodeBlock> errorTrace = abstractCegarLoop.getFailurePath();
-			reportUnproveableResult(errorTrace.get(errorTrace.size()-1),
-					AbstractCegarLoop.trace2path(errorTrace));
-			break;
+			RcfgProgramExecution pe = abstractCegarLoop.getRcfgProgramExecution();
+			reportUnproveableResult(pe);
 		}
 		}
 		
@@ -206,19 +209,29 @@ public class TraceAbstractionConcurrentObserver implements IUnmanagedObserver {
 		}
 	}
 	
-	private void reportCounterexampleResult(CodeBlock position, List<ILocation> failurePath) {
-		ILocation errorLoc = failurePath.get(failurePath.size()-1);
-		ILocation origin = errorLoc.getOrigin();
+	private void reportCounterexampleResult(RcfgProgramExecution pe) {
+		ProgramPoint errorPP = getErrorPP(pe);
+		List<ILocation> failurePath = pe.getLocationList();
+		ILocation origin = errorPP.getPayload().getLocation().getOrigin();
+		
+		List<ITranslator<?, ?, ?, ?>> translatorSequence = UltimateServices.getInstance().getTranslatorSequence();
+		if (pe.isOverapproximation()) {
+			reportUnproveableResult(pe);
+			return;
+		}
 		CounterExampleResult<RcfgElement> ctxRes = new CounterExampleResult<RcfgElement>(
-				position,
+				errorPP,
 				Activator.s_PLUGIN_NAME,
-				UltimateServices.getInstance().getTranslatorSequence(),
+				translatorSequence,
 				origin, null);
-		ctxRes.setFailurePath(failurePath);
-		String ctxMessage = origin.checkedSpecification().getNegativeMessage();
+		String ctxMessage = getCheckedSpecification(errorPP).getNegativeMessage();
 		ctxRes.setShortDescription(ctxMessage);		
 		ctxMessage += " (line " + origin.getStartLine() + ")";
-		ctxRes.setLongDescription(failurePath.toString());
+		Backtranslator backtrans = (Backtranslator) translatorSequence.get(translatorSequence.size()-1);
+		BoogieProgramExecution bpe = (BoogieProgramExecution) backtrans.translateProgramExecution(pe);
+		ctxRes.setLongDescription(bpe.toString());
+		ctxRes.setFailurePath(bpe.getLocationSequence());
+		ctxRes.setValuation(bpe.getValuation());
 		reportResult(ctxRes);
 		s_Logger.warn(ctxMessage);
 	}
@@ -240,17 +253,18 @@ public class TraceAbstractionConcurrentObserver implements IUnmanagedObserver {
 		}
 	}
 		
-	private void reportUnproveableResult(CodeBlock position, List<ILocation> failurePath) {
-		ILocation errorLoc = failurePath.get(failurePath.size()-1);
-		ILocation origin = errorLoc.getOrigin();
+	private void reportUnproveableResult(RcfgProgramExecution pe) {
+		ProgramPoint errorPP = getErrorPP(pe);
+		List<ILocation> failurePath = pe.getLocationList();
+		ILocation origin = errorPP.getPayload().getLocation().getOrigin();
 		UnprovableResult<RcfgElement> uknRes = new UnprovableResult<RcfgElement>(
-				position,
+				errorPP,
 				Activator.s_PLUGIN_NAME,
 				UltimateServices.getInstance().getTranslatorSequence(),
 				origin);
 		uknRes.setFailurePath(failurePath);
 		String uknMessage = "Unable to prove that " + 
-				origin.checkedSpecification().getPositiveMessage();
+				getCheckedSpecification(errorPP).getPositiveMessage();
 		uknRes.setShortDescription(uknMessage);
 		uknMessage += " (line " + origin.getStartLine() + ")";
 		uknRes.setLongDescription(failurePath.toString());
@@ -298,6 +312,24 @@ public class TraceAbstractionConcurrentObserver implements IUnmanagedObserver {
 	public boolean performedChanges() {
 		// TODO Auto-generated method stub
 		return false;
+	}
+	
+	/**
+	 * Return the checked specification that is checked at the error location.
+	 */
+	private static Check getCheckedSpecification(ProgramPoint errorLoc) {
+		if (errorLoc.getPayload().hasAnnotation()) {
+			IAnnotations check = errorLoc.getPayload().getAnnotations().get(Check.getIdentifier());
+			return (Check) check;
+		}
+		return errorLoc.getAstNode().getLocation().getOrigin().checkedSpecification();
+	}
+	
+	public ProgramPoint getErrorPP(RcfgProgramExecution rcfgProgramExecution) {
+		int lastPosition = rcfgProgramExecution.getLength() - 1;
+		CodeBlock last = rcfgProgramExecution.getTraceElement(lastPosition);
+		ProgramPoint errorPP = (ProgramPoint) last.getTarget();
+		return errorPP;
 	}
 
 }

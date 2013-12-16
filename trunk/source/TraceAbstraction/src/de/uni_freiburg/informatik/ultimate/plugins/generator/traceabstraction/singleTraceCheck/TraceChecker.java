@@ -277,6 +277,7 @@ public class TraceChecker {
 				}
 			}
 		}
+		unlockSmtManager();
 		return rpeb.getRcfgProgramExecution();
 	}
 	

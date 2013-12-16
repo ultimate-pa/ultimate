@@ -49,7 +49,7 @@ public class PredicateAbstractionCegarLoop extends BasicCegarLoop {
 				String stmts = counterexample.getSymbol(j).getPrettyPrintedStatements();
 				s_Logger.info(stmts);
 			}
-			m_FailurePath = m_TraceChecker.getFailurePath();
+			m_RcfgProgramExecution = m_TraceChecker.getRcfgProgramExecution();
 		} else {
 			m_TraceChecker.unlockSmtManager();
 		}

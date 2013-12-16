@@ -617,7 +617,7 @@ public class SmtManager {
 	
 	
 	public LBool isCovered(Term formula1, Term formula2) {
-		assert (getStatus() == Status.IDLE);
+		assert (getStatus() == Status.IDLE) : "SmtManager is busy";
 		long startTime = System.nanoTime();
 		 
 		LBool result = null;
@@ -657,6 +657,7 @@ public class SmtManager {
 	 * that the theorem prover was not able give an answer to our question. 
 	 */
 	public LBool isInductive(IPredicate ps1, CodeBlock ta, IPredicate ps2, boolean expectUnsat) {
+		assert (getStatus() == Status.IDLE) : "SmtManager is busy";
 		long startTime = System.nanoTime();
 
 		if (isDontCare(ps1) || isDontCare(ps2)) {
@@ -855,6 +856,7 @@ public class SmtManager {
 
 	public LBool isInductiveCall(IPredicate ps1, 
 						Call ta, IPredicate ps2, boolean expectUnsat) {
+		assert (getStatus() == Status.IDLE) : "SmtManager is busy";
 		long startTime = System.nanoTime();
 		 
 		if (isDontCare(ps1) || isDontCare(ps2)) {
@@ -918,6 +920,7 @@ public class SmtManager {
 			Return ta, 
 			IPredicate ps2,
 			boolean expectUnsat) {
+		assert (getStatus() == Status.IDLE) : "SmtManager is busy";
 		long startTime = System.nanoTime();
 		
 		if (isDontCare(ps1) || isDontCare(ps2) || isDontCare(psk)) {

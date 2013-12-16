@@ -263,9 +263,8 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 			break;
 		case UNSAFE: 
 			{
-				List<CodeBlock> errorTrace = abstractCegarLoop.getFailurePath();
-				reportCounterexampleResult(errorTrace.get(errorTrace.size()-1),
-						AbstractCegarLoop.trace2path(errorTrace), abstractCegarLoop.getRcfgProgramExecution());
+				RcfgProgramExecution pe = abstractCegarLoop.getRcfgProgramExecution();
+				reportCounterexampleResult(pe);
 				m_OverallResult = result;
 				break;
 			}
@@ -277,9 +276,8 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 			break;
 		case UNKNOWN: 
 			{
-				List<CodeBlock> errorTrace = abstractCegarLoop.getFailurePath();
-				reportUnproveableResult(errorTrace.get(errorTrace.size()-1),
-						AbstractCegarLoop.trace2path(errorTrace));
+				RcfgProgramExecution pe = abstractCegarLoop.getRcfgProgramExecution();
+				reportUnproveableResult(pe);
 				if (m_OverallResult != Result.UNSAFE) {
 					m_OverallResult = result;
 				}
@@ -348,19 +346,18 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 		}
 	}
 	
-	private void reportCounterexampleResult(CodeBlock position, List<ILocation> failurePath, 
-			RcfgProgramExecution pe) {
-		ProgramPoint errorPP = (ProgramPoint) position.getTarget();
-		ILocation errorLoc = failurePath.get(failurePath.size()-1);
-		ILocation origin = errorLoc.getOrigin();
+	private void reportCounterexampleResult(RcfgProgramExecution pe) {
+		ProgramPoint errorPP = getErrorPP(pe);
+		List<ILocation> failurePath = pe.getLocationList();
+		ILocation origin = errorPP.getPayload().getLocation().getOrigin();
 		
 		List<ITranslator<?, ?, ?, ?>> translatorSequence = UltimateServices.getInstance().getTranslatorSequence();
 		if (pe.isOverapproximation()) {
-			reportUnproveableResult(position, failurePath);
+			reportUnproveableResult(pe);
 			return;
 		}
 		CounterExampleResult<RcfgElement> ctxRes = new CounterExampleResult<RcfgElement>(
-				position,
+				errorPP,
 				Activator.s_PLUGIN_NAME,
 				translatorSequence,
 				origin, null);
@@ -393,12 +390,12 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 		}
 	}
 		
-	private void reportUnproveableResult(CodeBlock position, List<ILocation> failurePath) {
-		ProgramPoint errorPP = (ProgramPoint) position.getTarget();
-		ILocation errorLoc = failurePath.get(failurePath.size()-1);
-		ILocation origin = errorLoc.getOrigin();
+	private void reportUnproveableResult(RcfgProgramExecution pe) {
+		ProgramPoint errorPP = getErrorPP(pe);
+		List<ILocation> failurePath = pe.getLocationList();
+		ILocation origin = errorPP.getPayload().getLocation().getOrigin();
 		UnprovableResult<RcfgElement> uknRes = new UnprovableResult<RcfgElement>(
-				position,
+				errorPP,
 				Activator.s_PLUGIN_NAME,
 				UltimateServices.getInstance().getTranslatorSequence(),
 				origin);
@@ -499,6 +496,13 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 	public static HoareAnnotation getHoareAnnotation(ProgramPoint programPoint) {
 		return ((HoareAnnotation) programPoint.getPayload().getAnnotations()
 				.get(Activator.s_PLUGIN_ID));
+	}
+	
+	public ProgramPoint getErrorPP(RcfgProgramExecution rcfgProgramExecution) {
+		int lastPosition = rcfgProgramExecution.getLength() - 1;
+		CodeBlock last = rcfgProgramExecution.getTraceElement(lastPosition);
+		ProgramPoint errorPP = (ProgramPoint) last.getTarget();
+		return errorPP;
 	}
 
 }
