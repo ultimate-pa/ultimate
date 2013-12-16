@@ -13,11 +13,11 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
  *  <li> the result is returned via the getResult() method
  *  <li> start and end of the operation are reported to the logger using log
  *   level info
- *  <li> a check of this operation is written to ResultChecker and correctness
- *  of this check is asserted after computing or before returning the result.
+ *  <li> correctness checks for this operation are implemented in the
+ *  checkResult method. Whoever executes this operation should add an
+ *  assert checkResult()
+ *  in his code.
  * </ul>
- * 
- * 
  * 
  * @author heizmann@informatik.uni-freiburg.de
  *
@@ -57,6 +57,7 @@ public interface IOperation<LETTER,STATE> {
 	 * @return true iff all tests succeeded.
 	 * @throws AutomataLibraryException 
 	 */
-	boolean checkResult(StateFactory<STATE> stateFactory) throws OperationCanceledException, AutomataLibraryException;
+	boolean checkResult(StateFactory<STATE> stateFactory) 
+			throws AutomataLibraryException;
 
 }
