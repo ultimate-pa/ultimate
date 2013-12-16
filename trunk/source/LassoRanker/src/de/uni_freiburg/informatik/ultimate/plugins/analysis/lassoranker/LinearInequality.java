@@ -28,7 +28,7 @@ public class LinearInequality {
 	/**
 	 * Whether the inequality is strict (">") versus non-strict ("≥")
 	 */
-	public boolean strict = false;
+	private boolean m_strict = false;
 	
 	/**
 	 * Whether this inequality needs its own Motzkin coefficient
@@ -144,6 +144,27 @@ public class LinearInequality {
 	}
 	
 	/**
+	 * Is this a strict inequality?
+	 */
+	public boolean isStrict() {
+		return m_strict;
+	}
+	
+	/**
+	 * Set whether this is a strict inequality
+	 */
+	public void setStrict(boolean strict) {
+		m_strict = strict;
+	}
+	
+	/**
+	 * Returns '>' if this is a strict inequality and '>=' otherwise
+	 */
+	public String getInequalitySymbol() {
+		return m_strict ? ">" : ">=";
+	}
+	
+	/**
 	 * Return a variable's coefficient
 	 * @param var a variable
 	 * @return zero if the variable does not occur
@@ -230,7 +251,7 @@ public class LinearInequality {
 	 */
 	public void negate() {
 		mult(Rational.MONE);
-		strict = !strict;
+		m_strict = !m_strict;
 	}
 	
 	@Override
@@ -256,7 +277,8 @@ public class LinearInequality {
 			}
 			sb.append(m_constant);
 		}
-		sb.append(strict ? " > 0" : " >= 0");
+		sb.append(getInequalitySymbol());
+		sb.append(" 0");
 		return sb.toString();
 	}
 }

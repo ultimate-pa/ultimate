@@ -100,7 +100,7 @@ public class MultiphaseTemplate extends RankingFunctionTemplate {
 				new ArrayList<LinearInequality>();
 		for (int i = 0; i < phases; ++i) {
 			LinearInequality li = m_fgens[i].generate(inVars);
-			li.strict = true;
+			li.setStrict(true);
 			li.needs_motzkin_coefficient = i > 0;
 			disjunction.add(li);
 		}
@@ -116,13 +116,13 @@ public class MultiphaseTemplate extends RankingFunctionTemplate {
 			ParameterizedRational p = new ParameterizedRational(m_deltas[i]);
 			p.coefficient = Rational.MONE;
 			li.add(p);
-			li.strict = true;
+			li.setStrict(true);
 			li.needs_motzkin_coefficient = false;
 			disjunction.add(li);
 			
 			for (int j = i - 1; j >= 0; --j) {
 				LinearInequality li3 = m_fgens[j].generate(inVars);
-				li3.strict = true;
+				li3.setStrict(true);
 				li3.needs_motzkin_coefficient = j > 0;
 				disjunction.add(li3);
 			}

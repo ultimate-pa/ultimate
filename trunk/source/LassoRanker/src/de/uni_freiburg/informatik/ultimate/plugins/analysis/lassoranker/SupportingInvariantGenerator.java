@@ -46,7 +46,7 @@ public class SupportingInvariantGenerator extends AffineFunctionGenerator {
 	public LinearInequality generate(Map<BoogieVar, TermVariable> vars) {
 		LinearInequality li = super.generate(vars);
 		li.needs_motzkin_coefficient = false;
-		li.strict = this.strict;
+		li.setStrict(this.strict);
 		return li;
 	}
 	

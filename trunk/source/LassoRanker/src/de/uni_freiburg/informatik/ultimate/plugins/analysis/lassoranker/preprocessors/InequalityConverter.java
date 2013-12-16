@@ -46,22 +46,22 @@ public class InequalityConverter {
 			li2.mult(Rational.MONE);
 			res = li1;
 			res.add(li2);
-			res.strict = false;
+			res.setStrict(false);
 		} else if (fname == "<=") {
 			li1.mult(Rational.MONE);
 			res = li1;
 			res.add(li2);
-			res.strict = false;
+			res.setStrict(false);
 		} else if (fname == ">") {
 			li2.mult(Rational.MONE);
 			res = li1;
 			res.add(li2);
-			res.strict = true;
+			res.setStrict(true);
 		} else if (fname == "<") {
 			res = li1;
 			res.mult(Rational.MONE);
 			res.add(li2);
-			res.strict = true;
+			res.setStrict(true);
 		} else {
 			throw new TermIsNotAffineException("Expected an inequality.", term);
 		}

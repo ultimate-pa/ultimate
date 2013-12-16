@@ -41,7 +41,7 @@ public class LexicographicTemplate extends RankingFunctionTemplate {
 	private AffineFunctionGenerator[] m_fgens;
 	
 	/**
-	 * @param num_functions number of lexicographic entries
+	 * @param num_functions number of lexicographic components
 	 */
 	public LexicographicTemplate(int num_lex) {
 		assert(num_lex > 0);
@@ -101,7 +101,7 @@ public class LexicographicTemplate extends RankingFunctionTemplate {
 		// /\_i f_i(x) > 0
 		for (int i = 0; i < lex; ++i) {
 			LinearInequality li = m_fgens[i].generate(inVars);
-			li.strict = true;
+			li.setStrict(true);
 			li.needs_motzkin_coefficient = false;
 			conjunction.add(Collections.singletonList(li));
 		}
@@ -114,7 +114,7 @@ public class LexicographicTemplate extends RankingFunctionTemplate {
 			LinearInequality li2 = m_fgens[i].generate(outVars);
 			li2.negate();
 			li.add(li2);
-			li.strict = false;
+			li.setStrict(false);
 			li.needs_motzkin_coefficient = false;
 			disjunction.add(li);
 			
@@ -127,7 +127,7 @@ public class LexicographicTemplate extends RankingFunctionTemplate {
 						new ParameterizedRational(m_deltas[j]);
 				p.coefficient = Rational.MONE;
 				li.add(p);
-				li.strict = true;
+				li.setStrict(true);
 				li.needs_motzkin_coefficient = j > 0;
 				disjunction.add(li);
 			}
@@ -144,7 +144,7 @@ public class LexicographicTemplate extends RankingFunctionTemplate {
 			ParameterizedRational p = new ParameterizedRational(m_deltas[i]);
 			p.coefficient = Rational.MONE;
 			li.add(p);
-			li.strict = true;
+			li.setStrict(true);
 			li.needs_motzkin_coefficient = i > 0 && i < lex - 1;
 			disjunction.add(li);
 		}

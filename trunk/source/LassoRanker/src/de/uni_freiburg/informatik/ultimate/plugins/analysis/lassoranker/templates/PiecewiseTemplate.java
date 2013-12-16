@@ -111,13 +111,13 @@ public class PiecewiseTemplate extends RankingFunctionTemplate {
 				
 				LinearInequality li1 = m_pgens[i].generate(inVars);
 				li1.negate();
-				li1.strict = true;
+				li1.setStrict(true);
 				li1.needs_motzkin_coefficient = i != j;
 				disjunction.add(li1);
 				
 				LinearInequality li2 = m_pgens[j].generate(outVars);
 				li2.negate();
-				li2.strict = true;
+				li2.setStrict(true);
 				li2.needs_motzkin_coefficient = true;
 				disjunction.add(li2);
 				
@@ -128,7 +128,7 @@ public class PiecewiseTemplate extends RankingFunctionTemplate {
 				ParameterizedRational p = new ParameterizedRational(m_delta);
 				p.coefficient = Rational.MONE;
 				li3.add(p);
-				li3.strict = true;
+				li3.setStrict(true);
 				li3.needs_motzkin_coefficient = false;
 				disjunction.add(li3);
 			}
@@ -137,7 +137,7 @@ public class PiecewiseTemplate extends RankingFunctionTemplate {
 		// /\_i f_i(x) > 0
 		for (int i = 0; i < pieces; ++i) {
 			LinearInequality li = m_fgens[i].generate(inVars);
-			li.strict = true;
+			li.setStrict(true);
 			li.needs_motzkin_coefficient = false;
 			conjunction.add(Collections.singletonList(li));
 		}
@@ -146,7 +146,7 @@ public class PiecewiseTemplate extends RankingFunctionTemplate {
 		List<LinearInequality> disjunction = new ArrayList<LinearInequality>();
 		for (int i = 0; i < pieces; ++i) {
 			LinearInequality li = m_pgens[i].generate(inVars);
-			li.strict = false;
+			li.setStrict(false);
 			li.needs_motzkin_coefficient = i > 0;
 			disjunction.add(li);
 		}

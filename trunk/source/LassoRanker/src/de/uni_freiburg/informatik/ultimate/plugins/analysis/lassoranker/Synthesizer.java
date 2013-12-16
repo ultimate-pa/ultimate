@@ -10,6 +10,7 @@ import de.uni_freiburg.informatik.ultimate.logic.*;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.exceptions.TermException;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.nontermination.NonTermination;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.preferences.Preferences;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.preferences.Preferences.UseDivision;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.preprocessors.DNF;
@@ -192,7 +193,7 @@ public class Synthesizer {
 	}
 	
 	/**
-	 * @return boogie variables that are relevant for supporting invariants
+	 * @return Boogie variables that are relevant for supporting invariants
 	 */
 	private Collection<BoogieVar> getSIVars() { 
 		return m_stem_transition.getOutVars().keySet();
@@ -332,20 +333,11 @@ public class Synthesizer {
 	 * resulting ranking function and supporting invariant can be retrieved
 	 * using the methods getRankingFunction() and getSupportingInvariant().
 	 * 
-	 * @param TemplateClass the class of the ranking template to be used
+	 * @param template the ranking template to be used
 	 * @return whether a ranking function was found
-	 * @throws SMTLIBException in case of trouble with the theorem prover
-	 * @throws TermIsNotAffineException if the supplied transitions contain
+	 * @throws SMTLIBException error with the SMT solver
+	 * @throws TermException if the supplied transitions contain
 	 *          non-affine update statements
-	 * @throws InstantiationException if something went wrong during
-	 *          instantiation of the template class
-	 */
-	/**
-	 * 
-	 * @param template
-	 * @return
-	 * @throws SMTLIBException
-	 * @throws TermException
 	 */
 	public boolean synthesize(RankingFunctionTemplate template)
 			throws SMTLIBException, TermException {
@@ -379,6 +371,21 @@ public class Synthesizer {
 			}
 		}
 		
+		// Check for non-termination
+		// FIXME: this is a hack as dirty as your Mom and should be thoroughly
+		// refactored asap
+		s_Logger.info("Checking for non-termination...");
+		m_script.push(1);
+		NonTermination nt = new NonTermination(true, m_script, m_stem, m_loop,
+				m_stem_transition, m_loop_transition); // FIXME: use preferences
+		boolean nonterminating = nt.checkForNonTermination();
+		if (nonterminating) {
+			s_Logger.error("Proved non-termination.");
+			s_Logger.info(nt.extractArgument());
+			return false;
+		}
+		m_script.pop(1);
+		
 		s_Logger.info("Using template '" + template.getClass().getSimpleName()
 				+ "'.");
 		s_Logger.info("Template has degree " + template.getDegree() + ".");
@@ -401,6 +408,7 @@ public class Synthesizer {
 		}
 		
 		// Check for a model
+		boolean success = false;
 		if (m_script.checkSat() == LBool.SAT) {
 			s_Logger.debug("Found a model, " +
 					"proceeding to extract ranking function.");
@@ -417,9 +425,16 @@ public class Synthesizer {
 				m_supporting_invariants.add(sig.extractSupportingInvariant(
 						val_si));
 			}
-			return true;
+			success = true;
 		}
-		return false;
+		
+		cleanUp();
+		
+		return success;
+	}
+	
+	private void cleanUp() {
+		m_script.exit();
 	}
 	
 	/**

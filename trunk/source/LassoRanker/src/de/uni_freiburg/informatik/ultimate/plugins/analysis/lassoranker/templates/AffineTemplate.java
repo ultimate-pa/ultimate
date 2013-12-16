@@ -56,7 +56,7 @@ public class AffineTemplate extends RankingFunctionTemplate {
 		// f(x) > 0
 		{
 			LinearInequality li = m_fgen.generate(inVars);
-			li.strict = true;
+			li.setStrict(true);
 			li.needs_motzkin_coefficient = false;
 			conjunction.add(Collections.singletonList(li));
 		}
@@ -70,7 +70,7 @@ public class AffineTemplate extends RankingFunctionTemplate {
 			ParameterizedRational p = new ParameterizedRational(m_delta);
 			p.coefficient = Rational.MONE;
 			li.add(p);
-			li.strict = true;
+			li.setStrict(true);
 			li.needs_motzkin_coefficient = false;
 			conjunction.add(Collections.singletonList(li));
 		}
