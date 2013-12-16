@@ -1,5 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -9,6 +10,7 @@ import de.uni_freiburg.informatik.ultimate.model.annotation.IAnnotations;
 import de.uni_freiburg.informatik.ultimate.model.annotation.Overapprox;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.output.BoogieStatementPrettyPrinter;
+import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RcfgElement;
 import de.uni_freiburg.informatik.ultimate.result.IProgramExecution;
@@ -120,6 +122,19 @@ public class RcfgProgramExecution implements IProgramExecution<RcfgElement, Expr
 		}
 		sb.append("=== End of program execution");
 		return sb.toString();
+	}
+	
+	/**
+	 * Workaround to satisfy the parameters of results.
+	 * @return
+	 */
+	@Deprecated
+	public List<ILocation> getLocationList() {
+		List<ILocation> result = new ArrayList<ILocation>();
+		for (CodeBlock cb  : m_Trace) {
+			result.add(cb.getPayload().getLocation());
+		}
+		return result;
 	}
 
 }
