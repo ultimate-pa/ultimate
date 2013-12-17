@@ -376,9 +376,14 @@ public class LassoChecker {
 		NestedWord<CodeBlock> loop = m_Counterexample.getLoop().getWord();
 		s_Logger.info("Loop: " + loop);
 		boolean siCorrect = true;
-		for (SupportingInvariant si : m_Bspm.getSiList()) {
-			siCorrect &= m_Bspm.checkSupportingInvariant(
-					si, stem, loop, m_ModifiableGlobalVariableManager);
+		if (stem.length() == 0) {
+			// do nothing
+			// TODO: check that si is equivalent to true
+		} else {
+			for (SupportingInvariant si : m_Bspm.getSiList()) {
+				siCorrect &= m_Bspm.checkSupportingInvariant(
+						si, stem, loop, m_ModifiableGlobalVariableManager);
+			}
 		}
 		return siCorrect;
 	}

@@ -360,6 +360,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 								+ iterationsCount + " iterations.");
 						allSafe = false;
 						realErrorRun = errorRun;
+						traceChecker.computeRcfgProgramExecution();
 						realErrorProgramExecution = traceChecker
 								.getRcfgProgramExecution();
 						realErrorFailurePath = traceChecker.getFailurePath();
