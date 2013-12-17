@@ -215,7 +215,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 			s_Logger.info("Interpolatants " + m_InterpolAutomaton.getStates());
 		}
 		m_TimingStatistics.finishBasicInterpolantAutomaton();		
-		assert(accepts(m_InterpolAutomaton, m_Counterexample.getWord())) :
+		assert(!accepts(m_InterpolAutomaton, m_Counterexample.getWord())) :
 			"Interpolant automaton broken!";
 		assert (m_SmtManager.checkInductivity(m_InterpolAutomaton, false, true));
 	}
