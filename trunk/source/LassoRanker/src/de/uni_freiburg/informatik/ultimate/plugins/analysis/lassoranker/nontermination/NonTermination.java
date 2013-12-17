@@ -93,8 +93,18 @@ public class NonTermination extends InstanceCounting {
 	}
 	
 	
-	public boolean checkForNonTermination() {
-		// Collect variables
+	private Collection<BoogieVar> getBoogieVars() {
+		Collection<BoogieVar> boogieVars = new HashSet<BoogieVar>();
+		boogieVars.addAll(m_stem_transition.getAssignedVars());
+		boogieVars.addAll(m_stem_transition.getInVars().keySet());
+		boogieVars.addAll(m_stem_transition.getOutVars().keySet());
+		boogieVars.addAll(m_loop_transition.getAssignedVars());
+		boogieVars.addAll(m_loop_transition.getInVars().keySet());
+		boogieVars.addAll(m_loop_transition.getOutVars().keySet());
+		return boogieVars;
+	}
+	
+	private Collection<TermVariable> getAllVars() {
 		Collection<TermVariable> vars = new HashSet<TermVariable>();
 		for (List<LinearInequality> stem_conj : m_stem) {
 			for (LinearInequality ieq : stem_conj) {
@@ -106,20 +116,19 @@ public class NonTermination extends InstanceCounting {
 				vars.addAll(ieq.getVariables());
 			}
 		}
+		return vars;
+	}
+	
+	public boolean checkForNonTermination() {
+		// Collect variables
+		Collection<TermVariable> allVars = getAllVars();
+		Collection<BoogieVar> boogieVars = getBoogieVars();
 		
 		// Create new variables
 		Map<BoogieVar, Term> vars_start = new HashMap<BoogieVar, Term>();
 		Map<BoogieVar, Term> vars_end = new HashMap<BoogieVar, Term>();
 		Map<BoogieVar, Term> vars_ray = new HashMap<BoogieVar, Term>();
-		for (BoogieVar var : m_stem_transition.getAssignedVars()) {
-			vars_start.put(var, AuxiliaryMethods.newRealConstant(m_script,
-					s_prefix_start + var.getIdentifier()));
-			vars_end.put(var, AuxiliaryMethods.newRealConstant(m_script,
-					s_prefix_end + var.getIdentifier()));
-			vars_ray.put(var, AuxiliaryMethods.newRealConstant(m_script,
-					s_prefix_ray + var.getIdentifier()));
-		}
-		for (BoogieVar var : m_loop_transition.getAssignedVars()) {
+		for (BoogieVar var : boogieVars) {
 			vars_start.put(var, AuxiliaryMethods.newRealConstant(m_script,
 					s_prefix_start + var.getIdentifier()));
 			vars_end.put(var, AuxiliaryMethods.newRealConstant(m_script,
@@ -128,6 +137,7 @@ public class NonTermination extends InstanceCounting {
 					s_prefix_ray + var.getIdentifier()));
 		}
 		Term lambda = AuxiliaryMethods.newRealConstant(m_script, s_lambda_name);
+		m_script.assertTerm(m_script.term(">=", lambda, m_script.decimal("0")));
 		
 		// A_stem * (x0, x0') <= b_stem
 		Term t = this.generateConstraint(m_stem_transition, m_stem, vars_start,
@@ -138,15 +148,9 @@ public class NonTermination extends InstanceCounting {
 		// A_loop * (x0', x0' + y) <= b_loop
 		Map<BoogieVar, Term> vars_end_plus_ray = new HashMap<BoogieVar, Term>();
 		vars_end_plus_ray.putAll(vars_end);
-		for (Entry<BoogieVar, Term> entry : vars_ray.entrySet()) {
-			if (vars_end_plus_ray.containsKey(entry.getKey())) {
-				vars_end_plus_ray.put(entry.getKey(),
-						m_script.term("+",
-								vars_end_plus_ray.get(entry.getKey()),
-								entry.getValue()));
-			} else {
-				vars_end_plus_ray.put(entry.getKey(), entry.getValue());
-			}
+		for (BoogieVar bv : boogieVars) {
+			vars_end_plus_ray.put(bv, m_script.term("+", vars_end.get(bv),
+					vars_ray.get(bv)));
 		}
 		t = this.generateConstraint(m_loop_transition, m_loop, vars_end,
 				vars_end_plus_ray, false);
@@ -157,9 +161,9 @@ public class NonTermination extends InstanceCounting {
 		if (!m_non_decreasing) {
 			Map<BoogieVar, Term> vars_ray_times_lambda =
 					new HashMap<BoogieVar, Term>();
-			for (Entry<BoogieVar, Term> entry : vars_ray.entrySet()) {
-				vars_ray_times_lambda.put(entry.getKey(),
-						m_script.term("*", entry.getValue(), lambda));
+			for (BoogieVar bv : boogieVars) {
+				vars_ray_times_lambda.put(bv,
+						m_script.term("*", vars_ray.get(bv), lambda));
 			}
 			t = this.generateConstraint(m_loop_transition, m_loop, vars_ray,
 					vars_ray_times_lambda, true);
@@ -185,6 +189,7 @@ public class NonTermination extends InstanceCounting {
 			Map<BoogieVar, Term> varsIn,
 			Map<BoogieVar, Term> varsOut,
 			boolean rays) {
+		Map<TermVariable, Term> auxVars = new HashMap<TermVariable, Term>();
 		Term[] disjunction = new Term[trans_ieqs.size()];
 		int i = 0;
 		for (List<LinearInequality> trans_conj : trans_ieqs) {
@@ -194,21 +199,9 @@ public class NonTermination extends InstanceCounting {
 				List<Term> summands = new ArrayList<Term>();
 				Collection<TermVariable> added_vars = new HashSet<TermVariable>();
 				
-				// inVars
-				for (Entry<BoogieVar, TermVariable> entry :
-						trans_formula.getInVars().entrySet()) {
-					if (trans_formula.getOutVars().containsValue(entry.getValue())) {
-						continue;
-					}
-					summands.add(m_script.term("*", varsIn.get(entry.getKey()),
-							ieq.getCoefficient(entry.getValue()).asTerm(m_script)));
-					added_vars.add(entry.getValue());
-				}
-				
 				// outVars
 				for (Entry<BoogieVar, TermVariable> entry :
 						trans_formula.getOutVars().entrySet()) {
-					assert(!added_vars.contains(entry.getValue()));
 					if (!varsOut.containsKey(entry.getKey())) {
 						continue;
 					}
@@ -217,13 +210,33 @@ public class NonTermination extends InstanceCounting {
 					added_vars.add(entry.getValue());
 				}
 				
+				// inVars
+				for (Entry<BoogieVar, TermVariable> entry :
+						trans_formula.getInVars().entrySet()) {
+					if (added_vars.contains(entry.getValue())) {
+						continue;
+					}
+//					if (trans_formula.getOutVars().containsValue(entry.getValue())) {
+//						continue;
+//					}
+					summands.add(m_script.term("*", varsIn.get(entry.getKey()),
+							ieq.getCoefficient(entry.getValue()).asTerm(m_script)));
+					added_vars.add(entry.getValue());
+				}
+				
 				// tmpVars
 				Set<TermVariable> all_vars = new HashSet<TermVariable>(ieq.getVariables());
 				all_vars.removeAll(added_vars);
 				for (TermVariable var : all_vars) {
-					summands.add(m_script.term("*",
-							AuxiliaryMethods.newRealConstant(m_script,
-									s_prefix_aux + m_aux_counter),
+					Term v;
+					if (auxVars.containsKey(var)) {
+						v = auxVars.get(var);
+					} else {
+						v = AuxiliaryMethods.newRealConstant(m_script,
+								s_prefix_aux + m_aux_counter);
+						auxVars.put(var, v);
+					}
+					summands.add(m_script.term("*", v,
 							ieq.getCoefficient(var).asTerm(m_script)
 					));
 					++m_aux_counter;
