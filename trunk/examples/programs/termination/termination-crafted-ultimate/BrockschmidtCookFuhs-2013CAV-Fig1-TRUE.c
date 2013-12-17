@@ -1,5 +1,5 @@
 /*
- * Program from the introduction of
+ * Program from Fig.1 of
  * 2013CAV - Brockschmidt,Cook,Fuhs - Better termination proving through cooperation -draft
  *
  * Date: 12.12.2013
@@ -11,13 +11,13 @@ extern int __VERIFIER_nondet_int(void);
 
 
 int main() {
-	int x,y;
-	y = 1;
-	while (x > 0) {
-		x = x - y;
-		y = y + 1;
-	}
-	return 0;
+    int i,j, n;
+    while (i < n) {
+        j = 0;
+        while (j <= i) {
+            j = j + 1;
+        }
+        i = i + 1;
+    }
+    return 0;
 }
-
-
