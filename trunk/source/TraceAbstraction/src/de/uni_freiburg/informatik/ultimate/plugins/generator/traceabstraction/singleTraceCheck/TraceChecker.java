@@ -130,8 +130,8 @@ public class TraceChecker {
 	 * valuations in the context to which the return leads the trace.
 	 */
 	public TraceChecker(IPredicate precondition, IPredicate postcondition,
-			SortedMap<Integer, IPredicate> pendingContexts, NestedWord<CodeBlock> trace,
-			SmtManager smtManager,
+			SortedMap<Integer, IPredicate> pendingContexts, 
+			NestedWord<CodeBlock> trace, SmtManager smtManager,
 			ModifiableGlobalVariableManager modifiedGlobals) {
 		m_SmtManager = smtManager;
 		m_PredicateUnifier = new PredicateUnifier(m_SmtManager);
@@ -145,7 +145,8 @@ public class TraceChecker {
 			m_PendingContexts = pendingContexts;
 		}
 		m_DefaultTransFormulas = new DefaultTransFormulas(m_Trace, 
-				m_Precondition, m_Postcondition, m_PendingContexts, m_ModifiedGlobals, false);
+				m_Precondition, m_Postcondition, m_PendingContexts, 
+				m_ModifiedGlobals, false);
 		m_IsSafe = checkTrace();
 	}
 	
@@ -154,7 +155,8 @@ public class TraceChecker {
 	 * 
 	 */
 	private TraceChecker(IPredicate precondition, IPredicate postcondition,
-			SortedMap<Integer, IPredicate> pendingContexts, NestedWord<CodeBlock> trace,
+			SortedMap<Integer, IPredicate> pendingContexts, 
+			NestedWord<CodeBlock> trace,
 			SmtManager smtManager,
 			ModifiableGlobalVariableManager modifiedGlobals,
 			DefaultTransFormulas defaultTransFormulas) {
@@ -213,7 +215,28 @@ public class TraceChecker {
 				throw e;
 			}
 		}
-		if (isSafe==LBool.SAT) {
+		return isSafe;
+	}
+
+
+	/**
+	 * Compute a program execution for the checked trace. 
+	 * <ul>
+	 * <li> If the checked trace violates its specification (result of trace 
+	 * check is SAT), we compute a program execution that contains program 
+	 * states that witness the violation of the specification (however, this
+	 * can still be partial program states e.g., no values assigned to arrays)
+	 * and that contains information which branch of a parallel composed
+	 * CodeBlock violates the specification.
+	 * <li> If we can not determine if the trace violates its specification 
+	 * (result of trace check is UNKNOWN) we compute a program execution
+	 * trace that contains neither states nor information about which branch
+	 * of a parallel composed CodeBlock violates the specification.
+	 * <li> If we have proven that the trace satisfies its specification (result
+	 * of trace check is UNSAT) we throw an Error.
+	 */
+	public void computeRcfgProgramExecution() {
+		if (m_IsSafe==LBool.SAT) {
 			if (!m_DefaultTransFormulas.hasBranchEncoders()) {
 				unlockSmtManager();
 				DefaultTransFormulas withBE = new DefaultTransFormulas(
@@ -229,35 +252,53 @@ public class TraceChecker {
 						m_DefaultTransFormulas.getTrace(), m_SmtManager, 
 						m_ModifiedGlobals, withBE);
 				assert tc.isCorrect() == LBool.SAT;
+				tc.computeRcfgProgramExecution();
 				m_RcfgProgramExecution = tc.getRcfgProgramExecution();
 			} else {
-				m_RcfgProgramExecution = computeRcfgProgramExecution(m_Nsb);
+				m_RcfgProgramExecution = computeRcfgProgramExecutionCaseSAT(m_Nsb);
 			}
-		} else if (isSafe == LBool.UNKNOWN) {
-			Map<Integer, ProgramState<Expression>> emptyMap = Collections.emptyMap();
-			m_RcfgProgramExecution = new RcfgProgramExecution(
-					m_DefaultTransFormulas.getTrace().lettersAsList(), 
-					emptyMap, new Map[0]);
+		} else if (m_IsSafe == LBool.UNKNOWN) {
+			m_RcfgProgramExecution = computeRcfgProgramExecutionCaseUNKNOWN();
+		} else if (m_IsSafe == LBool.UNSAT) {
+			throw new AssertionError("specification satisfied - "
+					+ "cannot compute counterexample");
+		} else {
+			throw new AssertionError("unexpected result of correctness check");
 		}
-		return isSafe;
+		unlockSmtManager();
 	}
-
+	
 
 	/**
-	 * @param nsb
-	 * @return
+	 * Compute program execution in the case that we do not know if the checked
+	 * specification is violated (result of trace check is UNKNOWN). 
 	 */
-	private RcfgProgramExecution computeRcfgProgramExecution(
+	private RcfgProgramExecution computeRcfgProgramExecutionCaseUNKNOWN() {
+			Map<Integer, ProgramState<Expression>> emptyMap = Collections.emptyMap();
+			Map<TermVariable, Boolean>[] branchEncoders = new Map[0];
+			return new RcfgProgramExecution(
+					m_DefaultTransFormulas.getTrace().lettersAsList(), 
+					emptyMap, branchEncoders);
+	}
+	
+	/**
+	 * Compute program execution in the case that the checked specification
+	 * is violated (result of trace check is SAT). 
+	 */
+	private RcfgProgramExecution computeRcfgProgramExecutionCaseSAT(
 			NestedSsaBuilder nsb) {
 		RelevantVariables relVars = new RelevantVariables(m_DefaultTransFormulas);
-		RcfgProgramExecutionBuilder rpeb = new RcfgProgramExecutionBuilder(m_ModifiedGlobals, (NestedWord<CodeBlock>) m_Trace, relVars);
+		RcfgProgramExecutionBuilder rpeb = new RcfgProgramExecutionBuilder(
+				m_ModifiedGlobals, (NestedWord<CodeBlock>) m_Trace, relVars);
 		for (int i=0; i<m_Trace.length(); i++) {
 			CodeBlock cb = m_Trace.getSymbolAt(i);
 			TransFormula tf = cb.getTransitionFormulaWithBranchEncoders();
 			if (tf.getBranchEncoders().size() > 0) {
-				Map<TermVariable, Boolean> beMapping = new HashMap<TermVariable, Boolean>();
+				Map<TermVariable, Boolean> beMapping = 
+						new HashMap<TermVariable, Boolean>();
 				for (TermVariable tv : tf.getBranchEncoders()) {
-					String nameOfConstant = NestedSsaBuilder.branchEncoderConstantName(tv, i);
+					String nameOfConstant = 
+							NestedSsaBuilder.branchEncoderConstantName(tv, i);
 					Term indexedBe = m_SmtManager.getScript().term(nameOfConstant);
 					Term value = getValue(indexedBe);
 					Boolean booleanValue = getBooleanValue(value);
@@ -277,7 +318,6 @@ public class TraceChecker {
 				}
 			}
 		}
-		unlockSmtManager();
 		return rpeb.getRcfgProgramExecution();
 	}
 	
@@ -410,13 +450,15 @@ public class TraceChecker {
 	}
 	
 
+	/**
+	 * Return the RcfgProgramExecution that has been computed by 
+	 * computeRcfgProgramExecution().
+	 */
 	public RcfgProgramExecution getRcfgProgramExecution() {
-		if (m_IsSafe == LBool.SAT || m_IsSafe == LBool.UNKNOWN) {
-			assert m_RcfgProgramExecution != null;
-			return m_RcfgProgramExecution;
-		} else {
-			throw new AssertionError("only available if trace is feasible");
+		if (m_RcfgProgramExecution == null) {
+			throw new AssertionError("program execution has not yet been computed");
 		}
+		return m_RcfgProgramExecution;
 	}
 
 
@@ -434,7 +476,8 @@ public class TraceChecker {
 			throw new AssertionError("You already computed interpolants");
 		}
 		NestedInterpolantsBuilder nib = new NestedInterpolantsBuilder(
-				m_SmtManager, m_AAA.getAnnotatedSsa(), m_Nsb.getConstants2BoogieVar(), m_PredicateUnifier, 
+				m_SmtManager, m_AAA.getAnnotatedSsa(), 
+				m_Nsb.getConstants2BoogieVar(), m_PredicateUnifier, 
 				interpolatedPositions, true);
 		m_Interpolants = nib.getNestedInterpolants();
 		assert !inductivityOfSequenceCanBeRefuted();
@@ -443,7 +486,7 @@ public class TraceChecker {
 	
 	
 	/**
-	 * Use Matthias old naive interative method to compute nested interpolants.
+	 * Use Matthias old naive iterative method to compute nested interpolants.
 	 * (Recursive interpolation queries, one for each call-return pair)
 	 */
 	private void computeInterpolants_Recursive(Set<Integer> interpolatedPositions,
@@ -592,12 +635,16 @@ public class TraceChecker {
 		return newInterpolatedPositions;		
 	}
 	
-	
-	
+
+	public void finishTraceCheckWithoutWitness() {
+		
+	}
+
 	/**
-	 * After start of a trace check until the computation of interpolants or
-	 * an error path, the SmtManager is locked. If you do not compute
-	 * interpolants or an error path, use this method to unlock the SmtManager.
+	 * After start of a trace check until the computation of interpolants or a
+	 * RcfgProgramExecution the SmtManager is locked. If you do not compute 
+	 * interpolants or a RcfgProgramExecution, use this method to finish the
+	 * trace check and unlock the SmtManager.
 	 */
 	public void unlockSmtManager() {
 		m_SmtManager.endTraceCheck();
