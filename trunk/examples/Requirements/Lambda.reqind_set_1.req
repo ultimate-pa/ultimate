@@ -1,0 +1,2 @@
+Between "x0000" and "x0001", it is always the case that "x0000" holds
+Globally, it is always the case that if "x0002" holds, then "x0000" holds as well

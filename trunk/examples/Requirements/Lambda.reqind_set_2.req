@@ -1,0 +1,38 @@
+Globally, it is never the case that "x0000 && (x0001 || x0002)" holds
+Globally, it is never the case that "x0003 && x0004 || x0005 && x0004 || x0006 && x0004 || x0007 && x0004 || x0008 && x0004 || x0009 && x0004" holds
+Globally, it is never the case that "x0003 && x0010 || x0005 && x0010 || x0006 && x0010 || x0007 && x0010 || x0008 && x0010 || x0009 && x0010 || x0010 && (x0011 || x0004)" holds
+Globally, it is never the case that "x0000 && (x0012 || x0013 || x0014 || x0015)" holds
+Globally, it is never the case that "x0008 && x0009" holds
+Globally, it is always the case that "x0003 || x0005 || x0006 || x0007 || x0008 || x0009 || x0010 || x0011 || x0004" holds
+Globally, it is never the case that "x0003 && x0011 || x0005 && x0011 || x0006 && x0011 || x0007 && x0011 || x0008 && x0011 || x0009 && x0011 || x0011 && x0004" holds
+After "x0016" until "x0011", it is always the case that "x0007" holds
+Globally, it is never the case that "x0007 && (x0008 || x0009)" holds
+After "x0017" until "x0008", it is always the case that "x0006" holds
+Globally, it is never the case that "x0000 && x0018" holds
+Globally, it is never the case that "x0000 && x0019" holds
+Globally, it is always the case that if "x0019" holds, then "x0005" holds after at most "100" time units
+After "x0018" until "x0010", it is always the case that "x0003" holds
+Globally, it is always the case that if "x0000" holds, then "x0004" holds after at most "100" time units
+Globally, it is always the case that if "x0017" holds, then "x0008" holds after at most "100" time units
+Globally, it is always the case that if "x0016" holds, then "x0011" holds after at most "100" time units
+Globally, it is always the case that if "x0014" holds, then "x0006" holds after at most "10" time units
+After "x0020" until "x0008", it is always the case that "x0005" holds
+After "x0021" until "x0022", it is always the case that if "x0021" holds, then "x0023" holds after at most "100" time units
+Globally, it is always the case that if "x0015" holds, then "x0003" holds after at most "100" time units
+Before "x0024", it is always the case that if "x0013" holds, then "x0010" holds after at most "10" time units
+Globally, it is always the case that if "x0025" holds, then "x0008" holds after at most "100" time units
+Between "x0008 || x0011" and "x0026", it is always the case that if "x0023" holds, then "!x0010 || !x0026" holds for at least "19" time units
+Globally, it is always the case that if "x0014" holds, then "x0005" holds for at least "5" time units
+After "x0027" until "x0011", it is always the case that "x0006" holds
+Globally, it is always the case that if "x0001" holds, then "x0003" holds for at least "99" time units
+Before "x0024", it is always the case that if "x0013" holds, then "x0004" holds for at least "5" time units
+Globally, it is always the case that if "x0001" holds, then "x0007" holds after at most "100" time units
+Globally, it is always the case that if "x0002" holds, then "x0011" holds after at most "100" time units
+Globally, it is always the case that if "x0027" holds, then "x0011" holds after at most "100" time units
+Globally, it is always the case that if "x0018" holds, then "x0010" holds after at most "100" time units
+After "x0025" until "x0008", it is always the case that "x0007" holds
+Globally, it is always the case that if "x0020" holds, then "x0008" holds after at most "100" time units
+After "x0019" until "x0005", it is always the case that "x0003" holds
+Globally, it is always the case that if "x0015" holds, then "x0009" holds for at least "99" time units
+Between "x0008 || x0011" and "x0026", it is always the case that if "x0023" holds, then "x0026 && x0010" holds after at most "10" time units
+Globally, it is always the case that if "x0012" holds, then "x0010" holds for at least "99" time units

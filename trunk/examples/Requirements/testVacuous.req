@@ -1,0 +1,2 @@
+Globally, it is always the case that if "x0000" holds, then  "x0001" holds after at most 10 time units.
+Globally, it is never the case that "x0000" holds.

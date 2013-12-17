@@ -1,0 +1,17 @@
+Globally, it is always the case that if "x0000 && !x0001" holds, then "x0000" holds for at least "1" time units
+Globally, it is always the case that if "!x0002" holds, then "x0003" holds after at most "1" time units
+Globally, it is always the case that if "x0002 && x0004" holds, then "x0005" holds as well
+Globally, it is always the case that if "x0002 && !x0004" holds, then "!x0005" holds as well
+Globally, it is always the case that if "!x0006 && !x0001" holds, then "!x0006" holds for at least "1" time units
+Globally, it is always the case that if "x0001" holds, then "x0003" holds after at most "1" time units
+Globally, it is always the case that if "x0007" holds, then "!x0008" holds as well
+Globally, it is always the case that if "!x0009 && !x0000 && !x0010 && !x0006 && !x0002" holds, then "x0003" holds as well
+Globally, it is always the case that if "x0011 || !x0012" holds, then "x0001" holds as well
+Globally, it is always the case that if "x0008 || !x0013 || !x0014" holds, then "x0011" holds as well
+After "x0003" until "!x0000 && !x0010", it is always the case that "x0003" holds
+Globally, it is always the case that if "x0002 && !x0001" holds, then "x0002" holds for at least "1" time units
+Globally, it is always the case that if "x0009 && !x0001" holds, then "x0009" holds for at least "1" time units
+After "x0015" until "!x0015", it is always the case that if "x0015" holds, then "!x0008" holds after at most "200" time units
+Globally, it is always the case that if "x0010 && !x0001" holds, then "x0010" holds for at least "1" time units
+Globally, it is always the case that if "!x0005 && x0002" holds, then "!x0002" holds after at most "1" time units
+After "x0003" until "!x0002", it is always the case that "x0003" holds
