@@ -48,8 +48,8 @@ public class LinearRankingFunction extends RankingFunction {
 	}
 	
 	@Override
-	public List<Term> asLexTerm(Script script) throws SMTLIBException {
-		return Collections.singletonList(m_ranking.asTerm(script));
+	public Term[] asLexTerm(Script script) throws SMTLIBException {
+		return new Term[] { m_ranking.asTerm(script) };
 	}
 	
 	@Override

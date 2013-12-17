@@ -25,12 +25,13 @@ public abstract class RankingFunction implements Serializable {
 	
 	/**
 	 * Return the ranking function as a lexicographically ordered list of
-	 * SMTLib terms, with the highest entry being the first.
+	 * SMTLib terms, with the highest component being the list's first item.
 	 * The length of this list is asserted to be constant throughout the
 	 * lifetime of this object.
+	 * 
 	 * @param script the current script
 	 */
-	public abstract List<Term> asLexTerm(Script script) throws SMTLIBException;
+	public abstract Term[] asLexTerm(Script script) throws SMTLIBException;
 	
 	/**
 	 * Return the ranking function as a Boogie AST expression
@@ -38,11 +39,11 @@ public abstract class RankingFunction implements Serializable {
 	 * @param smt2boogie the variable translation
 	 * @return ranking function as boolean term
 	 */
-	public List<Expression> asLexExpression(Script script, Smt2Boogie smt2boogie) {
-		List<Term> lex = this.asLexTerm(script);
-		List<Expression> lexExpressions = new ArrayList<Expression>();
-		for (Term term : lex) {
-			lexExpressions.add(smt2boogie.translate(term));
+	public Expression[] asLexExpression(Script script, Smt2Boogie smt2boogie) {
+		Term[] lex = this.asLexTerm(script);
+		Expression[] lexExpressions = new Expression[lex.length];
+		for (int i = 0; i < lex.length; ++i) {
+			lexExpressions[i] = smt2boogie.translate(lex[i]);
 		}
 		return lexExpressions;
 	}

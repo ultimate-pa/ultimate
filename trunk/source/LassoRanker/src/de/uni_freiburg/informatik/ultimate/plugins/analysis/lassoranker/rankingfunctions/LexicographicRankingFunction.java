@@ -55,10 +55,10 @@ public class LexicographicRankingFunction extends RankingFunction {
 	}
 	
 	@Override
-	public List<Term> asLexTerm(Script script) throws SMTLIBException {
-		List<Term> lex = new ArrayList<Term>(m_ranking.size());
-		for (AffineFunction af : m_ranking) {
-			lex.add(af.asTerm(script));
+	public Term[] asLexTerm(Script script) throws SMTLIBException {
+		Term[] lex = new Term[m_ranking.size()];
+		for (int i = 0; i < m_ranking.size(); ++i) {
+			lex[i] = m_ranking.get(i).asTerm(script);
 		}
 		return lex;
 	}

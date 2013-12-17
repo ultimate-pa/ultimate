@@ -67,7 +67,7 @@ public class PiecewiseRankingFunction extends RankingFunction {
 	}
 	
 	@Override
-	public List<Term> asLexTerm(Script script) throws SMTLIBException {
+	public Term[] asLexTerm(Script script) throws SMTLIBException {
 		Term value = script.numeral(BigInteger.ZERO);
 			// ZERO should never be attained
 		for (int i = m_ranking.size() - 1; i >= 0; --i) {
@@ -75,9 +75,9 @@ public class PiecewiseRankingFunction extends RankingFunction {
 			AffineFunction gf = m_predicates.get(i);
 			Term pred = script.term(">=", gf.asTerm(script),
 					script.numeral(BigInteger.ZERO));
-			value = script.term("ifthenelse", pred, af.asTerm(script), value);
+			value = script.term("ite", pred, af.asTerm(script), value);
 		}
-		return Collections.singletonList(value);
+		return new Term[] { value };
 	}
 	
 	@Override
