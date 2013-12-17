@@ -43,13 +43,15 @@ import de.uni_freiburg.informatik.ultimate.result.SyntaxErrorResult.SyntaxErrorT
  * Observer for LassoRanker.
  * 
  * Extract the lasso program's stem and loop transition from the RCFG builder's
- * transition graph.  This is then passed to the Synthesizer, which tries to
- * find a ranking function for this lasso program.
+ * transition graph. This is then passed to the LassoRankerTerminationAnalysis
+ * class, which serves as an interface to LassoRanker's termination and
+ * non-termination analysis methods.
  * 
- * Ranking function synthesis is done via constraint solving.  The generated
- * constraints are non-linear algebraic constraints.
+ * Termination and non-termination arguments are synthesizer via constraint
+ * solving. The generated constraints are non-linear algebraic constraints.
+ * We use an external SMT solver to solve these constraints.
+ * 
  * @see SMTSolver SMTSolver for access to the smt solver script
- * 
  * @author Matthias Heizmann, Jan Leike
  */
 public class LassoRankerObserver implements IUnmanagedObserver {
@@ -58,17 +60,12 @@ public class LassoRankerObserver implements IUnmanagedObserver {
 	
 	private ProgramPoint honda;
 	
-	public LassoRankerObserver() {
-		
-	}
-	
 	/**
 	 * Build a list of templates
 	 * @param preferences
 	 * @return the templates specified in the preferences
 	 */
-	protected Collection<RankingFunctionTemplate> getTemplates(
-			Preferences preferences) {
+	private RankingFunctionTemplate[] getTemplates(Preferences preferences) {
 		Collection<RankingFunctionTemplate> templates =
 				new ArrayList<RankingFunctionTemplate>();
 		
@@ -85,7 +82,7 @@ public class LassoRankerObserver implements IUnmanagedObserver {
 		if (preferences.use_lex_template) {
 			templates.add(new LexicographicTemplate(preferences.lex_template_size));
 		}
-		return templates;
+		return templates.toArray(new RankingFunctionTemplate[0]);
 	}
 	
 	/**
@@ -93,10 +90,9 @@ public class LassoRankerObserver implements IUnmanagedObserver {
 	 * @param synthesizer the synthesizer after calling .synthesize()
 	 * @return long descriptive message
 	 */
-	private String resultMessage(Synthesizer synthesizer, Script script, Smt2Boogie smt2boogie) {
-		RankingFunction rf = synthesizer.getRankingFunction();
-		Collection<SupportingInvariant> si_list =
-				synthesizer.getSupportingInvariants();
+	private String resultMessage(TerminationArgument arg, Script script, Smt2Boogie smt2boogie) {
+		RankingFunction rf = arg.getRankingFunction();
+		Collection<SupportingInvariant> si_list = arg.getSupportingInvariants();
 		if (rf == null) {
 			return "No ranking function found.";
 		}
@@ -114,8 +110,8 @@ public class LassoRankerObserver implements IUnmanagedObserver {
 		StringBuilder sb = new StringBuilder();
 		if (rf instanceof LinearRankingFunction) {
 			LinearRankingFunction linRf = (LinearRankingFunction) rf;
-			List<Expression> rfLexExp = linRf.asLexExpression(script, smt2boogie);
-			String rfString = backtranslateExprWorkaround(rfLexExp.get(0));
+			Expression[] rfLexExp = linRf.asLexExpression(script, smt2boogie);
+			String rfString = backtranslateExprWorkaround(rfLexExp[0]);
 			String siString = "";
 			for (SupportingInvariant si : si_list) {
 				if (!si.isTrue()) {
@@ -206,21 +202,48 @@ public class LassoRankerObserver implements IUnmanagedObserver {
 			loop = tvr.renameVars(loop, "Loop");
 		}
 		
+		// To the termination analysis
+		LassoRankerTerminationAnalysis tanalysis;
+		try {
+			tanalysis = new LassoRankerTerminationAnalysis(script, stem, loop,
+							preferences);
+		} catch (TermException e) {
+			s_Logger.error(e);
+			return false;
+		} catch (SMTLIBException e) {
+			s_Logger.error(e);
+			return false;
+		} catch (Exception e) {
+			s_Logger.error(e);
+			return false;
+		}
+		
+		// Try to prove non-termination
+		try {
+			NonTerminationArgument arg = tanalysis.checkNonTermination(0);
+			if (arg != null) {
+				reportResult(arg);
+				return true;
+			}
+		} catch (SMTLIBException e) {
+			s_Logger.error(e);
+		} catch (Exception e) {
+			s_Logger.error(e);
+		}
+		
 		// Try a number of possible templates
 		for (RankingFunctionTemplate template : getTemplates(preferences)) {
 			try {
-				// Call the synthesizer
-				Synthesizer synthesizer =
-						new Synthesizer(script, stem, loop, preferences);
+				TerminationArgument arg = tanalysis.tryTemplate(template, 0);
 				
-				if (synthesizer.synthesize(template)) {
-					RankingFunction rf = synthesizer.getRankingFunction();
+				if (arg != null) {
+					RankingFunction rf = arg.getRankingFunction();
 					Collection<SupportingInvariant> si_list =
-							synthesizer.getSupportingInvariants();
+							arg.getSupportingInvariants();
 					assert(rf != null);
 					assert(si_list != null);
 					
-					String longMessage = resultMessage(synthesizer, script,
+					String longMessage = resultMessage(arg, script,
 							rootNode.getRootAnnot().getBoogie2Smt());
 					s_Logger.info(longMessage);
 					

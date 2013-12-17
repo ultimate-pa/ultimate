@@ -14,6 +14,9 @@ import java.util.*;
  * 
  * Ordinals are immutable.
  * 
+ * WARNING: this class is not part of functional code and has not been
+ * properly debugged!
+ * 
  * @author Jan Leike
  * @see http://www.volny.cz/behounek/logic/papers/ordcalc/index.html
  *

@@ -2,6 +2,9 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Map.Entry;
 
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
@@ -145,5 +148,15 @@ public class AuxiliaryMethods {
 			}
 		}
 		throw new TermException("Unkown term structure", t);
+	}
+	
+	static Map<Term, Rational> preprocessValuation(Map<Term, Term> val)
+			throws TermException {
+		Map<Term, Rational> new_val = new HashMap<Term, Rational>();
+		for (Entry<Term, Term> entry : val.entrySet()) {
+			new_val.put(entry.getKey(),
+					AuxiliaryMethods.const2Rational(entry.getValue()));
+		}
+		return new_val;
 	}
 }

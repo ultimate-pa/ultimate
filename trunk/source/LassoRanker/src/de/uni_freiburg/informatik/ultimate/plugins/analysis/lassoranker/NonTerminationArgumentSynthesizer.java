@@ -1,4 +1,4 @@
-package de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.nontermination;
+package de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker;
 
 import java.util.*;
 import java.util.Map.Entry;
@@ -6,7 +6,7 @@ import java.util.Map.Entry;
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.core.api.UltimateServices;
-import de.uni_freiburg.informatik.ultimate.logic.Model;
+import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -15,10 +15,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.logic.UtilExperimental;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.Activator;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.AuxiliaryMethods;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.InstanceCounting;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.LinearInequality;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.exceptions.TermException;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.TransFormula;
 
 
@@ -41,7 +38,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Tra
  * 
  * @author Jan Leike
  */
-public class NonTermination extends InstanceCounting {
+public class NonTerminationArgumentSynthesizer extends InstanceCounting {
 	private static Logger s_Logger =
 			UltimateServices.getInstance().getLogger(Activator.s_PLUGIN_ID);
 	
@@ -79,7 +76,7 @@ public class NonTermination extends InstanceCounting {
 	 */
 	private NonTerminationArgument m_argument = null;
 	
-	public NonTermination(boolean non_decreasing, Script script,
+	public NonTerminationArgumentSynthesizer(boolean non_decreasing, Script script,
 			List<List<LinearInequality>> stem,
 			List<List<LinearInequality>> loop,
 			TransFormula stem_transition,
@@ -93,6 +90,9 @@ public class NonTermination extends InstanceCounting {
 	}
 	
 	
+	/**
+	 * @return all BoogieVars that occur in the program
+	 */
 	private Collection<BoogieVar> getBoogieVars() {
 		Collection<BoogieVar> boogieVars = new HashSet<BoogieVar>();
 		boogieVars.addAll(m_stem_transition.getAssignedVars());
@@ -104,24 +104,8 @@ public class NonTermination extends InstanceCounting {
 		return boogieVars;
 	}
 	
-	private Collection<TermVariable> getAllVars() {
-		Collection<TermVariable> vars = new HashSet<TermVariable>();
-		for (List<LinearInequality> stem_conj : m_stem) {
-			for (LinearInequality ieq : stem_conj) {
-				vars.addAll(ieq.getVariables());
-			}
-		}
-		for (List<LinearInequality> loop_conj : m_loop) {
-			for (LinearInequality ieq : loop_conj) {
-				vars.addAll(ieq.getVariables());
-			}
-		}
-		return vars;
-	}
-	
 	public boolean checkForNonTermination() {
 		// Collect variables
-		Collection<TermVariable> allVars = getAllVars();
 		Collection<BoogieVar> boogieVars = getBoogieVars();
 		
 		// Create new variables
@@ -216,9 +200,6 @@ public class NonTermination extends InstanceCounting {
 					if (added_vars.contains(entry.getValue())) {
 						continue;
 					}
-//					if (trans_formula.getOutVars().containsValue(entry.getValue())) {
-//						continue;
-//					}
 					summands.add(m_script.term("*", varsIn.get(entry.getKey()),
 							ieq.getCoefficient(entry.getValue()).asTerm(m_script)));
 					added_vars.add(entry.getValue());
@@ -257,6 +238,29 @@ public class NonTermination extends InstanceCounting {
 	}
 	
 	/**
+	 * Extract a program state from the SMT script's model
+	 * 
+	 * @param vars a map from the program variables to corresponding SMT
+	 *             variables
+	 * @return the program state as a map from program variables to rational
+	 *         numbers
+	 */
+	private Map<BoogieVar, Rational> extractState(Map<BoogieVar, Term> vars)
+			throws SMTLIBException, UnsupportedOperationException,
+			TermException {
+		assert(m_script.checkSat() == LBool.SAT);
+		Map<Term, Rational> val = AuxiliaryMethods.preprocessValuation(
+				m_script.getValue(vars.values().toArray(new Term[0])));
+		// Concatinate vars and val
+		Map<BoogieVar, Rational> state = new HashMap<BoogieVar, Rational>();
+		for (Entry<BoogieVar, Term> entry : vars.entrySet()) {
+			assert(val.containsKey(entry.getValue()));
+			state.put(entry.getKey(), val.get(entry.getValue()));
+		}
+		return state;
+	}
+	
+	/**
 	 * Extract the non-termination argument from a satisfiable script
 	 * @return
 	 * @throws SMTLIBException
@@ -264,14 +268,19 @@ public class NonTermination extends InstanceCounting {
 	private NonTerminationArgument extractArgument(
 			Map<BoogieVar, Term> vars_start,
 			Map<BoogieVar, Term> vars_end,
-			Map<BoogieVar, Term> vars_ray)
-			throws SMTLIBException {
+			Map<BoogieVar, Term> vars_ray) {
 		assert m_script.checkSat() == LBool.SAT;
 		
-//		Model model = m_script.getModel();
-		
-		// TODO
-		
+		try {
+			Map<BoogieVar, Rational> state0 = extractState(vars_start);
+			Map<BoogieVar, Rational> state1 = extractState(vars_end);
+			Map<BoogieVar, Rational> ray = extractState(vars_ray);
+			return new NonTerminationArgument(state0, state1, ray);
+		} catch (UnsupportedOperationException e) {
+			// do nothing
+		} catch (TermException e) {
+			// do nothing
+		}
 		return null;
 	}
 	

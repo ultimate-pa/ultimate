@@ -1,7 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker;
 
 import java.util.*;
-import java.util.Map.Entry;
 
 import org.apache.log4j.Logger;
 
@@ -10,16 +9,7 @@ import de.uni_freiburg.informatik.ultimate.logic.*;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.exceptions.TermException;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.nontermination.NonTermination;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.preferences.Preferences;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.preferences.Preferences.UseDivision;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.preprocessors.DNF;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.preprocessors.InequalityConverter;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.preprocessors.IntegralHull;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.preprocessors.PreProcessor;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.preprocessors.RewriteBooleans;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.preprocessors.RewriteDivision;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.preprocessors.RewriteEquality;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.rankingfunctions.LinearRankingFunction;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.rankingfunctions.RankingFunction;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.templates.RankingFunctionTemplate;
@@ -31,15 +21,10 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Tra
  * 
  * @author Jan Leike
  */
-public class Synthesizer {
+class TerminationArgumentSynthesizer {
 	
 	private static Logger s_Logger =
 			UltimateServices.getInstance().getLogger(Activator.s_PLUGIN_ID);
-	
-	/**
-	 * SMT script of the transition formulae
-	 */
-	private Script m_old_script;
 	
 	/**
 	 * SMT script for the template instance
@@ -58,8 +43,6 @@ public class Synthesizer {
 	private RankingFunction m_ranking_function = null;
 	private Collection<SupportingInvariant> m_supporting_invariants = null;
 	
-	private Collection<TermVariable> m_auxVars;
-	
 	public final Preferences m_preferences;
 	
 	/**
@@ -69,127 +52,18 @@ public class Synthesizer {
 	 * @param script SMT Solver
 	 * @throws Exception If something goes wrong ;)
 	 */
-	public Synthesizer(Script old_script, TransFormula stem_transition,
-			TransFormula loop_transition, Preferences preferences)
-					throws Exception {
+	public TerminationArgumentSynthesizer(Script script, TransFormula stem_transition,
+			TransFormula loop_transition, List<List<LinearInequality>> stem,
+			List<List<LinearInequality>> loop, Preferences preferences) {
 		m_preferences = preferences;
+		m_script = script;
 		
-		m_old_script = old_script;
-		m_script = SMTSolver.newScript(preferences.smt_solver_command,
-				preferences.annotate_terms);
-		
-		m_auxVars = new ArrayList<TermVariable>();
 		m_supporting_invariants = new ArrayList<SupportingInvariant>();
 		
 		m_stem_transition = stem_transition;
+		m_stem = stem;
 		m_loop_transition = loop_transition;
-		
-		s_Logger.debug("Stem: " + stem_transition);
-		s_Logger.debug("Loop: " + loop_transition);
-		
-		preprocess();
-	}
-	
-	/**
-	 * Convert a term into a list of clauses
-	 * @param term a term in disjunctive normal form
-	 * @return list of clauses
-	 */
-	private static List<Term> toClauses(Term term) {
-		List<Term> l = new ArrayList<Term>();
-		if (!(term instanceof ApplicationTerm)) {
-			l.add(term);
-			return l;
-		}
-		ApplicationTerm appt = (ApplicationTerm) term;
-		if (!appt.getFunction().getName().equals("or")) {
-			l.add(term);
-			return l;
-		}
-		for (Term t : appt.getParameters()) {
-			l.addAll(toClauses(t));
-		}
-		return l;
-	}
-	
-	/**
-	 * Preprocess the stem and loop transition.
-	 * The preprocessing step applies various transformations on the stem
-	 * and loop formulae:
-	 * rewrite ≠, rewrite division, rewrite booleans, convert to DNF, ...
-	 * 
-	 * See de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker.preprocessors
-	 * @throws TermException
-	 */
-	private void preprocess() throws TermException {
-		s_Logger.info("Start preprocessing the stem and loop formulae.");
-		
-		Term stem_term = m_stem_transition.getFormula();
-		Term loop_term = m_loop_transition.getFormula();
-		
-		// Do preprocessing
-		PreProcessor[] preprocessors = {
-				new RewriteDivision(m_preferences.use_division),
-				new RewriteBooleans(),
-				new RewriteEquality(),
-				new DNF()
-		};
-		for (PreProcessor preprocessor : preprocessors) {
-			stem_term = preprocessor.process(m_old_script, stem_term);
-			loop_term = preprocessor.process(m_old_script, loop_term);
-			m_auxVars.addAll(preprocessor.getAuxVars());
-		}
-		
-		// Extract clauses
-		Collection<Term> stem_clauses = toClauses(stem_term);
-		Collection<Term> loop_clauses = toClauses(loop_term);
-		
-		if (!m_preferences.enable_disjunction &&
-				(stem_clauses.size() > 1 || loop_clauses.size() > 1)) {
-			throw new UnsupportedOperationException(
-					"Support for non-conjunctive lasso programs " +
-					"is disabled.");
-		}
-		
-		// Transform the stem and loop transition into linear inequalities
-		m_stem = new ArrayList<List<LinearInequality>>();
-		for (Term clause : stem_clauses) {
-			List<LinearInequality> lli = InequalityConverter.convert(m_old_script, clause);
-			if (m_preferences.compute_integral_hull) {
-				lli.addAll(IntegralHull.compute(lli));
-			}
-			m_stem.add(lli);
-		}
-		m_loop = new ArrayList<List<LinearInequality>>();
-		for (Term clause : loop_clauses) {
-			List<LinearInequality> lli = InequalityConverter.convert(m_old_script, clause);
-			if (m_preferences.compute_integral_hull) {
-				lli.addAll(IntegralHull.compute(lli));
-			}
-			m_loop.add(lli);
-		}
-		s_Logger.debug("Stem transition:\n" + m_stem);
-		s_Logger.debug("Loop transition:\n" + m_loop);
-		
-		s_Logger.info("Done with preprocessing.");
-	}
-	
-	/**
-	 * Verify that the preferences are set self-consistent and sensible
-	 * Issues a bunch of logger infos and warnings.
-	 */
-	private void checkPreferences() {
-		assert(m_preferences.num_strict_invariants >= 0);
-		assert(m_preferences.num_non_strict_invariants >= 0);
-		if (m_preferences.num_strict_invariants == 0 &&
-				m_preferences.num_non_strict_invariants == 0) {
-			s_Logger.warn("Generation of supporting invariants is disabled.");
-		}
-		if (m_preferences.use_division == UseDivision.C_STYLE
-				&& !m_preferences.enable_disjunction) {
-			s_Logger.warn("Using C-style integer division, but support for " +
-				"disjunctions is disabled.");
-		}
+		m_loop = loop;
 	}
 	
 	/**
@@ -312,16 +186,6 @@ public class Synthesizer {
 		return conj;
 	}
 	
-	private Map<Term, Rational> preprocessValuation(Map<Term, Term> val)
-			throws TermException {
-		Map<Term, Rational> new_val = new HashMap<Term, Rational>();
-		for (Entry<Term, Term> entry : val.entrySet()) {
-			new_val.put(entry.getKey(),
-					AuxiliaryMethods.const2Rational(entry.getValue()));
-		}
-		return new_val;
-	}
-	
 	/**
 	 * Ranking function generation for lasso programs
 	 * 
@@ -341,8 +205,6 @@ public class Synthesizer {
 	 */
 	public boolean synthesize(RankingFunctionTemplate template)
 			throws SMTLIBException, TermException {
-		checkPreferences();
-		
 		Collection<BoogieVar> rankVars = getRankVars();
 		Collection<BoogieVar> siVars = getSIVars();
 		template.init(m_script, rankVars);
@@ -365,31 +227,11 @@ public class Synthesizer {
 						new LinearRankingFunction(new AffineFunction());
 				return true;
 			}
-/*			if (loopf.getFunction().getName() == "true") {
+			if (loopf.getFunction().getName() == "true") {
 				s_Logger.info("Loop transition is equivalent to true.");
 				return false;
-			} */
+			}
 		}
-		
-		// Check for non-termination
-		// FIXME: this is a hack as dirty as your Mom and should be thoroughly
-		// refactored asap
-		s_Logger.info("Checking for non-termination...");
-		m_script.push(1);
-		NonTermination nt = new NonTermination(true, m_script, m_stem, m_loop,
-				m_stem_transition, m_loop_transition); // FIXME: use preferences
-		boolean nonterminating = nt.checkForNonTermination();
-		if (nonterminating) {
-			s_Logger.error("Proved non-termination.");
-			s_Logger.info(nt.getArgument());
-			return false;
-		}
-		m_script.pop(1);
-		
-		s_Logger.info("Using template '" + template.getClass().getSimpleName()
-				+ "'.");
-		s_Logger.info("Template has degree " + template.getDegree() + ".");
-		s_Logger.debug(template);
 		
 		// List of all used supporting invariant generators
 		Collection<SupportingInvariantGenerator> si_generators =
@@ -414,42 +256,27 @@ public class Synthesizer {
 					"proceeding to extract ranking function.");
 			
 			// Extract ranking function
-			Map<Term, Rational> val_rf = preprocessValuation(m_script.getValue(
-					template.getVariables().toArray(new Term[0])));
+			Map<Term, Rational> val_rf =
+					AuxiliaryMethods.preprocessValuation(m_script.getValue(
+							template.getVariables().toArray(new Term[0])));
 			m_ranking_function = template.extractRankingFunction(val_rf);
 			
 			// Extract supporting invariants
 			for (SupportingInvariantGenerator sig : si_generators) {
-				Map<Term, Rational> val_si = preprocessValuation(m_script.getValue(
-						sig.getVariables().toArray(new Term[0])));
+				Map<Term, Rational> val_si =
+						AuxiliaryMethods.preprocessValuation(m_script.getValue(
+								sig.getVariables().toArray(new Term[0])));
 				m_supporting_invariants.add(sig.extractSupportingInvariant(
 						val_si));
 			}
 			success = true;
 		}
 		
-		cleanUp();
-		
 		return success;
 	}
 	
-	private void cleanUp() {
-//		m_script.exit();
-	}
-	
-	/**
-	 * Return the generated ranking function.
-	 * Call after synthesize().
-	 */
-	public RankingFunction getRankingFunction() {
-		return m_ranking_function;
-	}
-	
-	/**
-	 * Return the generated supporting invariant.
-	 * Call after synthesize().
-	 */
-	public Collection<SupportingInvariant> getSupportingInvariants() {
-		return m_supporting_invariants;
+	public TerminationArgument getArgument() {
+		return new TerminationArgument(m_ranking_function,
+				m_supporting_invariants);
 	}
 }
