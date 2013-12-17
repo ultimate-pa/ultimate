@@ -187,8 +187,16 @@ public class NestedInterpolantsBuilder {
 		// special case: if first position is non pending call, then we add the
 		// precondition to the corresponding return. 
 		if (m_Trace.isCallPosition(0) && !m_Trace.isPendingCall(0)) {
-			int correspondingReturn = m_Trace.getReturnPosition(0);
-			interpolInput[correspondingReturn] = Util.and(m_Script, interpolInput[correspondingReturn], m_AnnotSSA.getPrecondition());
+			final int correspondingReturn = m_Trace.getReturnPosition(0);
+			// if we do not interpolate at each position
+			// interpolInput[correspondingReturn] might be the wrong position
+			int interpolInputPositionOfReturn = 0;
+			for (int i=0; i<correspondingReturn; i++) {
+				if (m_InterpolatedPositions.contains(i)) {
+					interpolInputPositionOfReturn++;
+				}
+			}
+			interpolInput[interpolInputPositionOfReturn] = Util.and(m_Script, interpolInput[interpolInputPositionOfReturn], m_AnnotSSA.getPrecondition());
 		} else {
 			interpolInput[0] = Util.and(m_Script, interpolInput[0], m_AnnotSSA.getPrecondition());
 		}
