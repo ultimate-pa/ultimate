@@ -38,7 +38,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Tra
  * 
  * @author Jan Leike
  */
-public class NonTerminationArgumentSynthesizer extends InstanceCounting {
+public class NonTerminationArgumentSynthesizer {
 	private static Logger s_Logger =
 			UltimateServices.getInstance().getLogger(Activator.s_PLUGIN_ID);
 	
@@ -162,7 +162,8 @@ public class NonTerminationArgumentSynthesizer extends InstanceCounting {
 		boolean success = false;
 		if (m_script.checkSat() == LBool.SAT) {
 			success = true;
-			m_argument = extractArgument(vars_start, vars_end, vars_ray);
+			m_argument = extractArgument(vars_start, vars_end, vars_ray,
+					lambda);
 		}
 		
 		return success;
@@ -268,14 +269,17 @@ public class NonTerminationArgumentSynthesizer extends InstanceCounting {
 	private NonTerminationArgument extractArgument(
 			Map<BoogieVar, Term> vars_start,
 			Map<BoogieVar, Term> vars_end,
-			Map<BoogieVar, Term> vars_ray) {
+			Map<BoogieVar, Term> vars_ray,
+			Term var_lambda) {
 		assert m_script.checkSat() == LBool.SAT;
 		
 		try {
 			Map<BoogieVar, Rational> state0 = extractState(vars_start);
 			Map<BoogieVar, Rational> state1 = extractState(vars_end);
 			Map<BoogieVar, Rational> ray = extractState(vars_ray);
-			return new NonTerminationArgument(state0, state1, ray);
+			Rational lambda = AuxiliaryMethods.const2Rational(
+					m_script.getValue(new Term[] {var_lambda}).get(var_lambda));
+			return new NonTerminationArgument(state0, state1, ray, lambda);
 		} catch (UnsupportedOperationException e) {
 			// do nothing
 		} catch (TermException e) {
