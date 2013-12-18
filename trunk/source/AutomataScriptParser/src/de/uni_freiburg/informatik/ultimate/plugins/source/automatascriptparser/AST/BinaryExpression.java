@@ -20,13 +20,20 @@ public class BinaryExpression extends AtsASTNode {
 	private BinaryOperator m_operator;
 	
 	public BinaryExpression() {
-		m_returnType = Integer.class;
-		m_expectingType = m_returnType;
+		// The default type of a binary expression is Integer 
+		setBothTypesTo(Integer.class);
+	}
+
+	/**
+	 * 
+	 */
+	private void setBothTypesTo(Class<?> type) {
+		m_returnType = type;
+		m_expectingType = type;
 	}
 	
 	public BinaryExpression(AtsASTNode leftChild, AtsASTNode rightChild) {
-		m_returnType = Integer.class;
-		m_expectingType = m_returnType;
+		setBothTypesTo(Integer.class);
 		addOutgoingNode(leftChild);
 		addOutgoingNode(rightChild);
 	}
@@ -34,6 +41,17 @@ public class BinaryExpression extends AtsASTNode {
 	
 	public void setOperator(BinaryOperator op) {
 		m_operator = op;
+		// If the operator is '+' and if one of the operands has type 'String'
+		// then the operation is 'String concatenation' and not 'Addition'
+		// therefore the return type is 'String.
+		if (op == BinaryOperator.PLUS) {
+			for (AtsASTNode astn : getOutgoingNodes()) {
+				if (astn.getReturnType() == String.class) {
+					setBothTypesTo(String.class);
+					break;
+				}
+			}
+		}
 	}
 	
 	public BinaryOperator getOperator()

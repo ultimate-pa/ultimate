@@ -197,6 +197,12 @@ public class TestFileInterpreter {
 			checkType(children.get(0));
 			checkType(children.get(1));
 			
+			// If the return type of this binary expression is 'String', we do not need to type check the operands
+			// because we just call the toString-Method of every operand.
+			if (be.getReturnType() == String.class) {
+				return;
+			}
+			
 			// Check whether first child has expected type.
 			boolean firstChildHasCorrectType = false;
 			for (Class<?> c : getTypes(children.get(0))) {
@@ -204,6 +210,7 @@ public class TestFileInterpreter {
 					firstChildHasCorrectType = true;
 				}
 			}
+			
 			if(!firstChildHasCorrectType) {
 				String message = "Left operand of \"" + be.getOperatorAsString() + "\" has incorrect type." + System.getProperty("line.separator");
 				message = message.concat("Expected: " + be.getReturnType().getSimpleName() + "\tGot: " + children.get(0).getReturnType().getSimpleName());
@@ -221,7 +228,6 @@ public class TestFileInterpreter {
 			message = message.concat("Expected: " + be.getReturnType().getSimpleName() + "\tGot: " + children.get(1).getReturnType().getSimpleName() + "");
 			m_longDescription = message;
 			throw new IllegalArgumentException(message);
-
 		}
 		
 		private void checkType(ConditionalBooleanExpression cbe)  throws IllegalArgumentException {
@@ -809,8 +815,15 @@ public class TestFileInterpreter {
 		return result;
 	}
 
-	private Integer interpret(BinaryExpression be) throws InterpreterException {
+	private Object interpret(BinaryExpression be) throws InterpreterException {
 		List<AtsASTNode> children = be.getOutgoingNodes();
+		// If the return type is 'String', we just call the toString method of each operand
+		// and return the concatenation of these strings.
+		if (be.getReturnType() == String.class) {
+			String result = interpret(children.get(0)).toString();
+			result = result.concat(interpret(children.get(1)).toString());
+			return result;
+		}
 		Integer v1 = (Integer) interpret(children.get(0));
 		Integer v2 = (Integer) interpret(children.get(1));
 		
