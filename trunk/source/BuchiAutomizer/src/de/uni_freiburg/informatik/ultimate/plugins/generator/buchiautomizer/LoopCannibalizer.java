@@ -101,7 +101,7 @@ public class LoopCannibalizer {
 						Set<IPredicate> cannibalized = m_PredicateUnifier.cannibalizeAll(loopInterpolants);
 						m_ResultPredicates.addAll(cannibalized);
 					} else {
-						traceChecker.unlockSmtManager();
+//						traceChecker.unlockSmtManager();
 						s_Logger.info("termination argument not suffcient for all loop shiftings");
 					}
 				}
