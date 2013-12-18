@@ -3,8 +3,12 @@ Bundle-ManifestVersion: 2
 Bundle-Name: Library-CZT
 Bundle-SymbolicName: Library-CZT
 Bundle-Version: 1.5.0
-Bundle-ClassPath: .
-Export-Package: net.sourceforge.czt.animation.eval,
+Bundle-ClassPath: czt_1_5_0_bin.jar
+Export-Package: junit.extensions,
+ junit.framework,
+ junit.runner,
+ junit.textui,
+ net.sourceforge.czt.animation.eval,
  net.sourceforge.czt.animation.eval.flatpred,
  net.sourceforge.czt.animation.eval.flatvisitor,
  net.sourceforge.czt.animation.eval.result,
@@ -84,5 +88,27 @@ Export-Package: net.sourceforge.czt.animation.eval,
  net.sourceforge.czt.zpatt.jaxb,
  net.sourceforge.czt.zpatt.jaxb.gen,
  net.sourceforge.czt.zpatt.util,
- net.sourceforge.czt.zpatt.visitor
-Bundle-RequiredExecutionEnvironment: J2SE-1.5
+ net.sourceforge.czt.zpatt.visitor,
+ org.hamcrest,
+ org.hamcrest.core,
+ org.hamcrest.internal,
+ org.junit,
+ org.junit.experimental.results,
+ org.junit.experimental.runners,
+ org.junit.experimental.theories,
+ org.junit.experimental.theories.internal,
+ org.junit.experimental.theories.suppliers,
+ org.junit.internal,
+ org.junit.internal.builders,
+ org.junit.internal.matchers,
+ org.junit.internal.requests,
+ org.junit.internal.runners,
+ org.junit.internal.runners.model,
+ org.junit.internal.runners.statements,
+ org.junit.matchers,
+ org.junit.runner,
+ org.junit.runner.manipulation,
+ org.junit.runner.notification,
+ org.junit.runners,
+ org.junit.runners.model
+Bundle-RequiredExecutionEnvironment: JavaSE-1.6
