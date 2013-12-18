@@ -298,9 +298,7 @@ public class LassoChecker {
 		if (result.isCorrect() == LBool.UNSAT) {
 				result.computeInterpolants(new TraceChecker.AllIntegers(), 
 						m_PredicateUnifier, m_Interpolation);
-		} else {
-			result.unlockSmtManager();
-		}
+		} 
 		return result;
 	}
 	
