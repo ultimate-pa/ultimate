@@ -39,7 +39,9 @@ public class BinaryStatePredicateManager {
 	private static Logger s_Logger = 
 			UltimateServices.getInstance().getLogger(Activator.s_PLUGIN_ID);
 	
-	public final static String s_SeedSuffix = "_seed";
+	public final static String s_UnseededIdentifier = "unseeded";
+	public final static String s_OldRankIdentifier = "oldRank";
+	public final static int s_MaxLexComponents = 10;
 	
 
 	
@@ -47,6 +49,7 @@ public class BinaryStatePredicateManager {
 	private final SmtManager m_SmtManager;
 	private final BoogieVar m_OldRankVariable;
 	private final BoogieVar m_UnseededVariable;
+	private final BoogieVar[] m_OldRankVariables;
 	
 	/**
 	 * True if predicates have been computed.
@@ -65,6 +68,11 @@ public class BinaryStatePredicateManager {
 	
 	private Collection<SupportingInvariant> m_SiList;
 	private LinearRankingFunction m_LinRf;
+	
+	
+	private Term[] m_LexTerms;
+	private IPredicate[] m_LexEquality;
+	private IPredicate[] m_LexDecrease;
 
 	/**
 	 * Is the loop also terminating without the stem?
@@ -76,11 +84,31 @@ public class BinaryStatePredicateManager {
 		m_Script = smtManager.getScript();
 		m_SmtManager = smtManager;
 		Boogie2SMT boogie2Smt = smtManager.getBoogie2Smt();
-		m_OldRankVariable = boogie2Smt.constructBoogieVar("oldRank", null, BoogieType.intType, false, null);
-		boogie2Smt.constructBoogieVar("oldRank", null, BoogieType.intType, true, null);
-		m_UnseededVariable = boogie2Smt.constructBoogieVar("unseeded", null, BoogieType.boolType, false, null);
-		boogie2Smt.constructBoogieVar("unseeded", null, BoogieType.boolType, true, null);
+		m_OldRankVariable = constructGlobalBoogieVar(s_OldRankIdentifier, boogie2Smt);
+		m_UnseededVariable = constructGlobalBoogieVar(s_UnseededIdentifier, boogie2Smt);
+		
+		m_OldRankVariables = new BoogieVar[s_MaxLexComponents];
+		for (int i=0; i<s_MaxLexComponents; i++) {
+			String name = s_OldRankIdentifier + i;
+			m_OldRankVariables[i] = constructGlobalBoogieVar(name, boogie2Smt);
+		}
 	}
+
+
+	/**
+	 * Construct a global BoogieVar and the corresponding oldVar. Return the
+	 * global var.
+	 */
+	private BoogieVar constructGlobalBoogieVar(String name,
+			Boogie2SMT boogie2Smt) {
+		BoogieVar globalBv;
+		globalBv = boogie2Smt.constructBoogieVar(
+				name, null, BoogieType.intType, false, null);
+		boogie2Smt.constructBoogieVar(
+				name, null, BoogieType.intType, true, null);
+		return globalBv;
+	}
+	
 	
 	public boolean providesPredicates() {
 		return m_ProvidesPredicates;
@@ -171,7 +199,8 @@ public class BinaryStatePredicateManager {
 			m_StemPostcondition = m_SmtManager.newPredicate(tvp.getFormula(), 
 					tvp.getProcedures(), tvp.getVars(), tvp.getClosedFormula()); 
 		}
-		IPredicate rankEquality = getRankEquality(m_LinRf);
+		Term rfTerm = m_LinRf.asFormula(m_Script, m_SmtManager.getSmt2Boogie());
+		IPredicate rankEquality = getRankEquality(rfTerm);
 		if (siConjunctionIsTrue) {
 			m_RankEqualityAndSi = rankEquality;
 		} else {
@@ -179,7 +208,7 @@ public class BinaryStatePredicateManager {
 			m_RankEqualityAndSi = m_SmtManager.newPredicate(tvp.getFormula(), 
 					tvp.getProcedures(), tvp.getVars(), tvp.getClosedFormula()); 
 		}
-		m_RankDecrease = getRankDecrease(m_LinRf);
+		m_RankDecrease = getRankDecrease(rfTerm);
 		IPredicate unseededOrRankDecrease; 
 		{
 			TermVarsProc tvp = m_SmtManager.or(unseededPredicate, m_RankDecrease);
@@ -278,28 +307,69 @@ public class BinaryStatePredicateManager {
 		return result;
 	}
 	
-	private IPredicate getRankEquality(RankingFunction rf) {
-		return getRankInEquality(rf, "=", false);
+	private IPredicate getRankEquality(Term rfTerm) {
+		return getRankInEquality(rfTerm, "=", m_OldRankVariable, false);
 	}
 	
-	private IPredicate getRankDecrease(RankingFunction rf) {
-		return getRankInEquality(rf, ">", true);
+	private IPredicate getRankDecrease(Term rfTerm) {
+		return getRankInEquality(rfTerm, ">", m_OldRankVariable, true);
+	}
+	
+	private void decodeLex(LinearRankingFunction rf) {
+		Term term = m_LinRf.asFormula(m_Script, m_SmtManager.getSmt2Boogie());
+		m_LexTerms = new Term[] { term };
+		m_LexEquality = new IPredicate[m_LexTerms.length];
+		for (int i=0; i<m_LexTerms.length; i++) {
+			m_LexEquality[i] = getRankInEquality(
+					m_LexTerms[i], "=", m_OldRankVariable, false);
+		}
+		m_LexDecrease = new IPredicate[m_LexTerms.length];
+		for (int i=0; i<m_LexTerms.length; i++) {
+			m_LexDecrease[i] = getRankInEquality(
+					m_LexTerms[i], "=", m_OldRankVariable, false);
+		}
+	}
+	
+	
+	private IPredicate getRankEquality(Term[] lexTerms) {
+		TermVarsProc tvp = m_SmtManager.and(m_LexEquality);
+		IPredicate result = m_SmtManager.newPredicate(tvp.getFormula(), 
+				tvp.getProcedures(), tvp.getVars(), tvp.getClosedFormula());
+		return result;
+	}
+	
+	
+	private IPredicate getRankDecrease(Term[] lexTerms) {
+		IPredicate[] disjuncts = new IPredicate[lexTerms.length];
+		for (int i=lexTerms.length-1; i>=0; i--) {
+			IPredicate[] conjuncts = new IPredicate[lexTerms.length-i];
+			for (int j=lexTerms.length-1; j>=i+1; j--) {
+				conjuncts[lexTerms.length-j] = m_LexEquality[j];
+			}
+			conjuncts[0] = m_LexDecrease[i];
+			TermVarsProc tvp = m_SmtManager.and(conjuncts);
+			disjuncts[i] = m_SmtManager.newPredicate(tvp);
+		}
+		
+		TermVarsProc tvp = m_SmtManager.or(disjuncts);
+		IPredicate result = m_SmtManager.newPredicate(tvp);
+		return result;
 	}
 
 	
 	
-	private IPredicate getRankInEquality(RankingFunction rf, String symbol, boolean addGeq0) {
+	private IPredicate getRankInEquality(Term rfTerm, String symbol, 
+			BoogieVar oldRankVariable,boolean addGeq0) {
 		assert symbol.equals("=") || symbol.equals(">");
-		Term rfTerm = rf.asFormula(m_Script, m_SmtManager.getSmt2Boogie());
 		TermVarsProc termVarsProc = m_SmtManager.computeTermVarsProc(rfTerm);
-		
-		Term equality = m_Script.term(symbol, m_OldRankVariable.getTermVariable(), rfTerm);
+
+		Term equality = m_Script.term(symbol, oldRankVariable.getTermVariable(), rfTerm);
 		if (addGeq0) {
-			equality = Util.and(m_Script, equality, getRankGeq0());
+			equality = Util.and(m_Script, equality, getRankGeq0(oldRankVariable));
 		}
 		
 		Set<BoogieVar> vars = new HashSet<BoogieVar>();
-		vars.add(m_OldRankVariable);
+		vars.add(oldRankVariable);
 		vars.addAll(termVarsProc.getVars());
 		
 		Term closedFormula = SmtManager.computeClosedFormula(equality, vars, m_Script);
@@ -310,8 +380,8 @@ public class BinaryStatePredicateManager {
 	}
 	
 	
-	private Term getRankGeq0() {
-		Term geq = m_Script.term(">=", m_OldRankVariable.getTermVariable(), m_Script.numeral(BigInteger.ZERO));
+	private Term getRankGeq0(BoogieVar oldRankVariable) {
+		Term geq = m_Script.term(">=", oldRankVariable.getTermVariable(), m_Script.numeral(BigInteger.ZERO));
 		return geq;
 	}
 	

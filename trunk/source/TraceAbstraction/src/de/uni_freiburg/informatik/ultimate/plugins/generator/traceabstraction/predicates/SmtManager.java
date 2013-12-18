@@ -2812,6 +2812,13 @@ public class SmtManager {
 				procedures, term, vars, closedTerm);
 		return predicate;
 	}
+	
+	public BasicPredicate newPredicate(TermVarsProc termVarsProc) {
+		BasicPredicate predicate = new BasicPredicate(m_SerialNumber++,
+				termVarsProc.getProcedures(), termVarsProc.getFormula(), 
+				termVarsProc.getVars(), termVarsProc.getClosedFormula());
+		return predicate;
+	}
 
 	public IPredicate newTruePredicate() {
 		IPredicate pred = new BasicPredicate(m_SerialNumber++, m_NoProcedure,
