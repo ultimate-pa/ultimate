@@ -32,7 +32,8 @@ char *(cstrchr)(const char *s, int c)
  }
 
 int main() {
-    return *cstrchr(__VERIFIER_nondet_String(),__VERIFIER_nondet_int());
+    *cstrchr(__VERIFIER_nondet_String(),__VERIFIER_nondet_int());
+    return 0;
 }
 
 

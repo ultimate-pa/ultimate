@@ -42,7 +42,8 @@ int (cstrncmp)(const char *s1, const char *s2, int n)
  }
 
 int main() {
-    return cstrncmp(__VERIFIER_nondet_String(),__VERIFIER_nondet_String(),__VERIFIER_nondet_int());
+    cstrncmp(__VERIFIER_nondet_String(),__VERIFIER_nondet_String(),__VERIFIER_nondet_int());
+    return 0;
 }
 
 

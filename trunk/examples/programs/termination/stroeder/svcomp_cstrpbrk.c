@@ -38,7 +38,8 @@ char *(cstrpbrk)(const char *s1, const char *s2)
  }
 
 int main() {
-    return *cstrpbrk(__VERIFIER_nondet_String(),__VERIFIER_nondet_String());
+    *cstrpbrk(__VERIFIER_nondet_String(),__VERIFIER_nondet_String());
+    return 0;
 }
 
 

@@ -31,7 +31,8 @@ int (cstrlen)(const char *s)
  }
 
 int main() {
-    return cstrlen(__VERIFIER_nondet_String());
+    cstrlen(__VERIFIER_nondet_String());
+    return 0;
 }
 
 

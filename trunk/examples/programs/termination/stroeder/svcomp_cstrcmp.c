@@ -39,7 +39,8 @@ int (cstrcmp)(const char *s1, const char *s2)
  }
 
 int main() {
-    return cstrcmp(__VERIFIER_nondet_String(),__VERIFIER_nondet_String());
+    cstrcmp(__VERIFIER_nondet_String(),__VERIFIER_nondet_String());
+    return 0;
 }
 
 

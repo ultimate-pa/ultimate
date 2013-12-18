@@ -37,7 +37,8 @@ int (cstrcspn)(const char *s1, const char *s2)
  }
 
 int main() {
-    return cstrcspn(__VERIFIER_nondet_String(),__VERIFIER_nondet_String());
+    cstrcspn(__VERIFIER_nondet_String(),__VERIFIER_nondet_String());
+    return 0;
 }
 
 
