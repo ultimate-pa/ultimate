@@ -136,9 +136,9 @@ public class NestedWord<LETTER> extends Word<LETTER> {
 	 * TODO: Preserve nesting relation if word is nested word
 	 * @param word
 	 */
-	public NestedWord(Word<LETTER> word) {
+	private NestedWord(Word<LETTER> word) {
+		this.m_Word = word.asArray().clone();
 		int length = word.length();
-		this.m_Word = (LETTER[]) new Object[length];
 		this.m_NestingRelation = new int[length];
 		for (int i=0; i<length; i++) {
 			m_Word[i] = word.getSymbol(i);
@@ -146,12 +146,12 @@ public class NestedWord<LETTER> extends Word<LETTER> {
 		}
 	}
 	
-	public static NestedWord nestedWord(Word word) {
+	public static <LETTER> NestedWord<LETTER> nestedWord(Word<LETTER> word) {
 		if (word instanceof NestedWord) {
-			return (NestedWord) word;
+			return (NestedWord<LETTER>) word;
 		}
 		else {
-			return new NestedWord(word);
+			return new NestedWord<LETTER>(word);
 		}
 	}
 	

@@ -733,7 +733,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 	protected static boolean accepts(
 			INestedWordAutomaton<CodeBlock, IPredicate> nia,
 			Word<CodeBlock> word) throws OperationCanceledException {
-		return (new Accepts<CodeBlock, IPredicate>(nia, new NestedWord(word), false, false)).getResult();
+		return (new Accepts<CodeBlock, IPredicate>(nia, NestedWord.nestedWord(word), false, false)).getResult();
 	}
 
 

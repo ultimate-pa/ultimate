@@ -108,7 +108,7 @@ public class Accepts<S, C> implements IOperation<S, C> {
 
 		s_Logger.info("Testing correctness of accepts");
 
-		NestedWord nw = new NestedWord(nWord);
+		NestedWord nw = NestedWord.nestedWord(nWord);
 		boolean resultAutomata = (new de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.Accepts(
 				(new PetriNet2FiniteAutomaton(net)).getResult(), nw))
 				.getResult();

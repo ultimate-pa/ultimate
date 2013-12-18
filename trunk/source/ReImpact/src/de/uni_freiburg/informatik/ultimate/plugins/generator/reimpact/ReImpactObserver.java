@@ -277,7 +277,7 @@ public class ReImpactObserver implements IUnmanagedObserver {
 			refineTrace(errorNWP, interpolants);
 			setPreCallNodeImportantFlags(errorNWP.getFirst(), 0, getFirstPendingReturnIndex(nestingRelation));
 		} else {
-			traceChecker.unlockSmtManager();
+			traceChecker.finishTraceCheckWithoutInterpolantsOrProgramExecution();
 			if (isSafe == LBool.SAT)
 				m_currentResult = Result.INCORRECT;
 			else if (isSafe == LBool.UNKNOWN)
@@ -606,7 +606,7 @@ public class ReImpactObserver implements IUnmanagedObserver {
 			assert v.m_isCovered && v.m_coveringNode == w;
 			return true;
 		} else {
-			traceChecker.unlockSmtManager();
+			traceChecker.finishTraceCheckWithoutInterpolantsOrProgramExecution();
 			return false;
 		}
 	}

@@ -331,7 +331,7 @@ public class BinaryStatePredicateManager {
 				modGlobVarManager);
 		LBool stemCheck = traceChecker.isCorrect();
 		if (stemCheck == LBool.UNSAT) {
-			traceChecker.unlockSmtManager();
+			traceChecker.finishTraceCheckWithoutInterpolantsOrProgramExecution();
 //			IPredicate[] interpolants = m_TraceChecker.getInterpolants(new TraceChecker.AllIntegers());
 //			interpolants.toString();
 		} else {
@@ -341,7 +341,7 @@ public class BinaryStatePredicateManager {
 				modGlobVarManager);
 		LBool loopCheck = traceChecker.isCorrect();
 		if (loopCheck == LBool.UNSAT) {
-			traceChecker.unlockSmtManager();
+			traceChecker.finishTraceCheckWithoutInterpolantsOrProgramExecution();
 //			IPredicate[] interpolants = m_TraceChecker.getInterpolants(new TraceChecker.AllIntegers());
 //			interpolants.toString();
 		} else {
@@ -355,7 +355,7 @@ public class BinaryStatePredicateManager {
 		TraceChecker traceChecker = new TraceChecker(m_RankEqualityAndSi, 
 				m_RankDecrease, null, loop, m_SmtManager, modGlobVarManager);
 		LBool loopCheck = traceChecker.isCorrect();
-		traceChecker.unlockSmtManager();
+		traceChecker.finishTraceCheckWithoutInterpolantsOrProgramExecution();
 		if (loopCheck == LBool.UNSAT) {
 			return true;
 		} else {

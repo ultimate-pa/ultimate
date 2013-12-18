@@ -265,7 +265,7 @@ public class TraceChecker {
 		} else {
 			throw new AssertionError("unexpected result of correctness check");
 		}
-		unlockSmtManager();
+		
 	}
 	
 
@@ -276,6 +276,7 @@ public class TraceChecker {
 	private RcfgProgramExecution computeRcfgProgramExecutionCaseUNKNOWN() {
 			Map<Integer, ProgramState<Expression>> emptyMap = Collections.emptyMap();
 			Map<TermVariable, Boolean>[] branchEncoders = new Map[0];
+			unlockSmtManager();
 			return new RcfgProgramExecution(
 					m_DefaultTransFormulas.getTrace().lettersAsList(), 
 					emptyMap, branchEncoders);
@@ -318,6 +319,7 @@ public class TraceChecker {
 				}
 			}
 		}
+		unlockSmtManager();
 		return rpeb.getRcfgProgramExecution();
 	}
 	
@@ -646,44 +648,17 @@ public class TraceChecker {
 	 * interpolants or a RcfgProgramExecution, use this method to finish the
 	 * trace check and unlock the SmtManager.
 	 */
-	public void unlockSmtManager() {
+	public void finishTraceCheckWithoutInterpolantsOrProgramExecution() {
+		unlockSmtManager();
+	}
+	
+	
+	protected void unlockSmtManager() {
 		m_SmtManager.endTraceCheck();
 		if (m_Interpolants != null) { 
 			assert !inductivityOfSequenceCanBeRefuted();
 		}
 	}
-	
-	
-	
-
-	/**
-	 * Deprecated: Use RCFGProgramExecutions instead
-	 * Return the locations of this trace.
-	 * While using large block encoding this sequence is not unique.
-	 * If <ul>
-	 * <li> the trace does not fulfill its specification we return locations
-	 * that correspond to a path which violated the specification.
-	 * <li> we don't know if the traces fulfills its specification we return
-	 * locations that might be a feasible path which violates the specification.
-	 * <li> if the trace fulfills its specification we return any coherent
-	 * sequence of locations.
-	 */
-	@Deprecated
-	public List<CodeBlock> getFailurePath() {
-		if (m_Trace == null) {
-			throw new AssertionError("Check a trace first");
-		}
-		//TODO: implement solution for this
-		if (isCorrect() == LBool.UNKNOWN) {
-			throw new UnsupportedOperationException("not yet implmented: "
-					+ "failure path if trace feasibility is unknown");
-		}
-		List<CodeBlock> result = 
-				AnnotateAndAsserter.constructFailureTrace(m_Trace, m_SmtManager);
-		unlockSmtManager();
-		return result;
-	}
-	
 	
 	
 	

@@ -176,7 +176,7 @@ public class CegarLoopJulian extends BasicCegarLoop {
 	}
 	
 	private static boolean acceptsPetriViaFA(IAutomaton<CodeBlock, IPredicate> automaton, Word<CodeBlock> word) throws OperationCanceledException {
-		NestedWord<CodeBlock> nw = new NestedWord<CodeBlock>(word);
+		NestedWord<CodeBlock> nw = NestedWord.nestedWord(word);
 		INestedWordAutomatonOldApi<CodeBlock, IPredicate> petriNetAsFA = (new PetriNet2FiniteAutomaton<CodeBlock, IPredicate>((IPetriNet<CodeBlock, IPredicate>) automaton)).getResult();
 		return BasicCegarLoop.accepts(petriNetAsFA, nw);
 

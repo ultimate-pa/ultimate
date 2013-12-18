@@ -1,6 +1,5 @@
 package de.uni_freiburg.informatik.ultimate.automata;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -24,6 +23,10 @@ import java.util.List;
 		 */
 		public int length() {
 			return m_Word.length;
+		}
+		
+		public Symbol[] asArray() {
+			return m_Word.clone();
 		}
 		
 		

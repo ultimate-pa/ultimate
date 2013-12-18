@@ -38,7 +38,7 @@ public class PredicateAbstractionCegarLoop extends BasicCegarLoop {
 		IPredicate precondition = super.m_SmtManager.newTruePredicate();
 		IPredicate postcondition = super.m_SmtManager.newFalsePredicate();
 		m_TraceChecker = new TraceChecker(precondition, 
-				postcondition, null, new NestedWord(m_Counterexample.getWord()), m_SmtManager,
+				postcondition, null, NestedWord.nestedWord(m_Counterexample.getWord()), m_SmtManager,
 				m_RootNode.getRootAnnot().getModGlobVarManager());
 
 		LBool feasibility = m_TraceChecker.isCorrect();
@@ -52,7 +52,7 @@ public class PredicateAbstractionCegarLoop extends BasicCegarLoop {
 			m_TraceChecker.computeRcfgProgramExecution();
 			m_RcfgProgramExecution = m_TraceChecker.getRcfgProgramExecution();
 		} else {
-			m_TraceChecker.unlockSmtManager();
+			m_TraceChecker.finishTraceCheckWithoutInterpolantsOrProgramExecution();
 		}
 		return feasibility;
 	}

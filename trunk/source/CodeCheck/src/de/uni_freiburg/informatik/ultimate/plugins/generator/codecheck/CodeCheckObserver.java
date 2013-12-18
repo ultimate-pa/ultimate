@@ -244,7 +244,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 		boolean verificationInterrupted = false;
 		NestedRun<CodeBlock, AnnotatedProgramPoint> realErrorRun = null;
 		RcfgProgramExecution realErrorProgramExecution = null;
-		List<CodeBlock> realErrorFailurePath = null;
+		List<ILocation> realErrorFailurePath = null;
 
 		for (AnnotatedProgramPoint procRoot : procRootsToCheck) {
 			if (!UltimateServices.getInstance().continueProcessing()) {
@@ -363,7 +363,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 						traceChecker.computeRcfgProgramExecution();
 						realErrorProgramExecution = traceChecker
 								.getRcfgProgramExecution();
-						realErrorFailurePath = traceChecker.getFailurePath();
+						realErrorFailurePath = realErrorProgramExecution.getLocationList();
 
 						if (DEBUG)
 							codeChecker.debug();
@@ -421,7 +421,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 			reportCounterexampleResult(
 					realErrorRun.getWord().getSymbol(
 							realErrorRun.getWord().length() - 1),
-					AbstractCegarLoop.trace2path(realErrorFailurePath),
+							realErrorFailurePath,
 					realErrorProgramExecution);
 		} else {
 			UnprovableResult<CodeBlock> result = new UnprovableResult<CodeBlock>(
