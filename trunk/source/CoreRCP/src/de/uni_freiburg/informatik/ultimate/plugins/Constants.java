@@ -2,7 +2,6 @@ package de.uni_freiburg.informatik.ultimate.plugins;
 
 import java.io.File;
 
-import de.uni_freiburg.informatik.ultimate.model.UniversalTokens;
 
 /**
  * 
@@ -12,25 +11,7 @@ import de.uni_freiburg.informatik.ultimate.model.UniversalTokens;
  */
 public class Constants {
     private static String s_FileSeparator = ", ";
-    private static String s_UndefinedTokenName = UniversalTokens.UNDEFINED.toString();
     private static final String s_PathSeparator = File.pathSeparator;
-
-    /**
-	 * @return  the tokenUndefined
-	 * @uml.property  name="tokenUndefined"
-	 */
-    public static String getTokenUndefined() {
-    	return s_UndefinedTokenName;
-    }
-
-    /**
-	 * @param tokenUndefined  the tokenUndefined to set
-	 * @uml.property  name="tokenUndefined"
-	 */
-    public static void setTokenUndefined(String tokenUndefined) {
-        s_UndefinedTokenName = tokenUndefined;
-    }
-
 
     /**
      * Gets a separator for files, this is just cosmetic

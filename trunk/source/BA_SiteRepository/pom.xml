@@ -52,6 +52,10 @@
 							<id>Debug-E3</id>
 							<attachId>UltimateDebug</attachId>
 						</product>
+						<product>
+							<id>BOSCHReqAnalyzer</id>
+							<attachId>BOSCHReqAnalyzer</attachId>
+						</product>
 					</products>
 				</configuration>
 			</plugin>

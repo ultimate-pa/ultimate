@@ -29,7 +29,7 @@
 		<dimacsDir>${workspaceDir}/SmtInterpol/src/de/uni_freiburg/informatik/ultimate/smtinterpol/dimacs</dimacsDir>
 		<externalsmtsolverDir>${workspaceDir}/SMTSolverBridge/src/de/uni_freiburg/informatik/ultimate/smtsolver/external</externalsmtsolverDir>
 		<automatascriptparserDir>${workspaceDir}/AutomataScriptParser/src/de/uni_freiburg/informatik/ultimate/plugins/source/automatascriptparser</automatascriptparserDir>
-
+		<srparseparserDir>${workspaceDir}/Library-srParse/src/srParse</srparseparserDir>
 		<!-- Encoding settings -->
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
@@ -186,6 +186,7 @@
 		<module>../BA_FeatureUltimateCommandLine</module>
 		<module>../BA_FeatureDependenciesCommandlineE3</module>
 		<module>../BA_FeatureDependenciesDebugE3</module>
+		<module>../BA_FeatureUltimateBOSCHReqAnalyzer</module>
 
 		<module>../CoreRCP</module>
 		<module>../GuiRCP</module>
@@ -219,6 +220,12 @@
 		<module>../AutomataScriptInterpreter</module>
 		<module>../BlockEncoding</module>
 		<module>../BuchiAutomizer</module>
+		<module>../PEAtoBoogie</module>
+		<module>../Library-xerces</module>
+		<module>../Library-srParse</module>
+		<module>../Library-PEA</module>
+		<module>../Library-CZT</module>
+		<module>../Library-jdom</module>
 	</modules>
 
 	<profiles>

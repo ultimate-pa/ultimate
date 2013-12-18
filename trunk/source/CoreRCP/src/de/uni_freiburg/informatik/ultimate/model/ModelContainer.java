@@ -56,7 +56,6 @@ public class ModelContainer implements Serializable {
 
 	public String toString() {
 		return this.mGraphType.toString();
-		// return this.m_GraphName+" ("+m_GraphType.getType()+")";
 	}
 
 	protected GraphType getType() {
@@ -77,7 +76,8 @@ public class ModelContainer implements Serializable {
 		/*
 		 * int acc=1; for(INode n : root.getOutgoing()){ acc=acc+countNodes(n);
 		 * } return acc;
-		 */}
+		 */
+	}
 
 	protected IElement findNode(String outerAnnotationKey,
 			String innerAnnotationKey, Object innerAnnotationValue) {

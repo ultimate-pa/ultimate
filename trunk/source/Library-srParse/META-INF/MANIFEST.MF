@@ -2,10 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: Library-srParse
 Bundle-SymbolicName: Library-srParse
-Bundle-Version: 1.0.0.qualifier
-Bundle-ClassPath: Library-srParse.jar,
- src/caseStudies,
- antlr-runtime-3.2.jar
+Bundle-Version: 1.0.0
 Export-Package: srParse;
   uses:="java_cup.runtime,
    org.antlr.runtime.debug,
@@ -13,5 +10,6 @@ Export-Package: srParse;
    pea.reqCheck,
    org.antlr.runtime,
    PatternLanguage"
-Require-Bundle: Library-PEA;bundle-version="89.0.0",
- JavaCup;bundle-version="1.0.0"
+Require-Bundle: Library-PEA,
+ JavaCup
+Bundle-RequiredExecutionEnvironment: JavaSE-1.6

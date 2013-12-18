@@ -1,0 +1,67 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  
+  	<parent>
+		<artifactId>MavenParentUltimate</artifactId>
+		<groupId>Ultimate</groupId>
+		<version>0.0.1</version>
+		<relativePath>../BA_MavenParentUltimate/pom.xml</relativePath>
+	</parent>
+  
+  <groupId>Library-srParse</groupId>
+  <artifactId>Library-srParse</artifactId>
+  <version>1.0.0</version>
+  <packaging>eclipse-plugin</packaging>
+  
+  <build>
+		<plugins>
+			<plugin>
+				<artifactId>maven-antrun-plugin</artifactId>
+				<version>1.7</version>
+				<executions>
+					<execution>
+						<id>generate parser sources</id>
+						<phase>generate-sources</phase>
+						<configuration>
+							<tasks>
+								<echo>Library-srParse: workspaceDir is ${workspaceDir}</echo>
+								<echo>Library-srParse: cupDir is ${cupDir}</echo>
+								<echo>Library-srParse: srparseparserDir is ${srparseparserDir}</echo>
+								<echo>Library-srParse: flexBinary is ${flexBinary}</echo>
+
+								<java classname="java_cup.Main" classpath="${cupDir}" fork="true"
+									dir="${srparseparserDir}">
+									<arg value="Requirements.cup" />
+								</java>
+								<java jar="${flexBinary}" fork="true" dir="${srparseparserDir}">
+									<arg value="Requirements.flex" />
+								</java>
+							</tasks>
+						</configuration>
+						<goals>
+							<goal>run</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<artifactId>maven-clean-plugin</artifactId>
+				<version>2.4.1</version>
+				<configuration>
+					<filesets>
+						<fileset>
+							<directory>${boogieparserDir}</directory>
+							<includes>
+								<include>ReqParser.java</include>
+								<include>ReqLexer.java</include>
+								<include>ReqLexer.java~</include>
+								<include>ReqSymbols.java</include>
+							</includes>
+						</fileset>
+					</filesets>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
+  
+</project>

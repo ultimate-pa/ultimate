@@ -2,12 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: Library-PEA
 Bundle-SymbolicName: Library-PEA
-Bundle-Version: 089
-Bundle-ClassPath: Library-PEA.jar,
- lib/xerces/xercesImpl.jar,
- lib/log4j/log4j-1.2.13.jar,
- jdom-1.1.1.jar,
- lib/czt/czt_1_5_0_bin.jar
+Bundle-Version: 0.89.0
 Export-Package: pea,
  pea.modelchecking,
  pea.modelchecking.CaseStudy,
@@ -19,7 +14,7 @@ Export-Package: pea,
  pea.test,
  pea.util,
  pea.util.z
-Require-Bundle: Library-log4j;bundle-version="1.2.15",
- Library-jdom;bundle-version="1.1.1",
- Library-xerces;bundle-version="1.0.0",
- Library-CZT;bundle-version="1.5.0"
+Require-Bundle: Library-log4j,
+ Library-jdom,
+ Library-xerces,
+ Library-CZT
