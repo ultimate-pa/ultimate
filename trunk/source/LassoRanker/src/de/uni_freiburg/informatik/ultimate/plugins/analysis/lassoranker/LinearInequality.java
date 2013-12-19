@@ -263,20 +263,41 @@ public class LinearInequality {
 			if (entry.getValue().isZero()) {
 				continue;
 			}
-			if (!first) {
-				sb.append(" + ");
+			String param = entry.getValue().toString();
+			if (param.startsWith("-")) {
+				if (!first) {
+					sb.append(" - ");
+					sb.append(param.substring(1));
+				} else {
+					sb.append(param);
+				}
+			} else {
+				if (!first) {
+					sb.append(" + ");
+				}
+				sb.append(param);
 			}
-			sb.append(entry.getValue());
 			sb.append("*");
 			sb.append(entry.getKey());
 			first = false;
 		}
-		if (!m_constant.isZero() || m_coefficients.isEmpty()) {
-			if (!m_coefficients.isEmpty()) {
-				sb.append(" + ");
+		if (!m_constant.isZero() || first) {
+			String s = m_constant.toString();
+			if (s.startsWith("-")) {
+				if (!first) {
+					sb.append(" - ");
+					sb.append(s.substring(1));
+				} else {
+					sb.append(s);
+				}
+			} else {
+				if (!first) {
+					sb.append(" + ");
+				}
+				sb.append(s);
 			}
-			sb.append(m_constant);
 		}
+		sb.append(" ");
 		sb.append(getInequalitySymbol());
 		sb.append(" 0");
 		return sb.toString();
