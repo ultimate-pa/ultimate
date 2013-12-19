@@ -4,9 +4,6 @@ import java.io.File;
 import java.util.*;
 
 import de.uni_freiburg.informatik.junit_helper.testfactory.TestFactory;
-import de.uni_freiburg.informatik.ultimate.core.coreplugin.Activator;
-import de.uni_freiburg.informatik.ultimate.core.coreplugin.preferences.CorePreferenceInitializer;
-import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
 import de.uni_freiburg.informatik.ultimatetest.UltimateStarter;
 import de.uni_freiburg.informatik.ultimatetest.UltimateTestCase;
 import de.uni_freiburg.informatik.ultimatetest.UltimateTestSuite;
@@ -62,8 +59,8 @@ public class LassoRankerTestSuite extends UltimateTestSuite {
 
 		File toolchainFile = new File(Util.getPathFromTrunk(s_toolchain));
 		File settingsFile = new File(Util.getPathFromTrunk(s_settings_file));
-		String logPattern = new UltimatePreferenceStore(Activator.s_PLUGIN_ID)
-				.getString(CorePreferenceInitializer.LABEL_LOG4J_PATTERN);
+//		String logPattern = new UltimatePreferenceStore(Activator.s_PLUGIN_ID)
+//				.getString(CorePreferenceInitializer.LABEL_LOG4J_PATTERN);
 		for (File inputFile : inputFiles) {
 			UltimateStarter starter = new UltimateStarter(
 					inputFile,
